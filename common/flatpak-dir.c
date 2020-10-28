@@ -11950,6 +11950,7 @@ flatpak_dir_remote_has_ref (FlatpakDir *self,
 static void
 populate_hash_table_from_refs_map (GHashTable         *ret_all_refs,
                                    GHashTable         *ref_timestamps,
+                                   gboolean            decompose,
                                    VarRefMapRef        ref_map,
                                    FlatpakRemoteState *state)
 {
@@ -11965,6 +11966,7 @@ populate_hash_table_from_refs_map (GHashTable         *ret_all_refs,
       VarRefInfoRef info;
       char *ref_name_dup;
       guint64 *new_timestamp = NULL;
+      g_autoptr(FlatpakDecomposed) decomposed = NULL;
 
       if (!flatpak_remote_state_allow_ref (state, ref_name))
         continue;
@@ -11974,6 +11976,13 @@ populate_hash_table_from_refs_map (GHashTable         *ret_all_refs,
       csum_bytes = var_ref_info_peek_checksum (info, &csum_len);
       if (csum_len != OSTREE_SHA256_DIGEST_LEN)
         continue;
+
+      if (decompose)
+        {
+          decomposed = flatpak_decomposed_new_from_ref (ref_name, NULL);
+          if (decomposed == NULL)
+            continue;
+        }
 
       if (ref_timestamps)
         {
@@ -11990,22 +11999,32 @@ populate_hash_table_from_refs_map (GHashTable         *ret_all_refs,
           new_timestamp = g_memdup (&timestamp, sizeof (guint64));
         }
 
-      ref_name_dup = g_strdup (ref_name);
-      g_hash_table_replace (ret_all_refs, ref_name_dup, ostree_checksum_from_bytes (csum_bytes));
+      if (decompose)
+        {
+          g_hash_table_replace (ret_all_refs, g_steal_pointer (&decomposed), ostree_checksum_from_bytes (csum_bytes));
+        }
+      else
+        {
+          ref_name_dup = g_strdup (ref_name);
+          g_hash_table_replace (ret_all_refs, ref_name_dup, ostree_checksum_from_bytes (csum_bytes));
+        }
+
       if (new_timestamp)
-        g_hash_table_replace (ref_timestamps, ref_name_dup, new_timestamp);
+        g_hash_table_replace (ref_timestamps, g_strdup (ref_name), new_timestamp);
     }
 }
+
 
 /* This tries to list all available remote refs but also tries to keep
  * working when offline, so it looks in sideloaded repos. Also it uses
  * in-memory cached summaries which ostree doesn't. */
-gboolean
-flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
-                                  FlatpakRemoteState *state,
-                                  GHashTable        **out_all_refs,
-                                  GCancellable       *cancellable,
-                                  GError            **error)
+static gboolean
+_flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
+                                   FlatpakRemoteState *state,
+                                   gboolean            decompose,
+                                   GHashTable        **out_all_refs,
+                                   GCancellable       *cancellable,
+                                   GError            **error)
 {
   g_autoptr(GHashTable) ret_all_refs = NULL;
   VarSummaryRef summary;
@@ -12014,7 +12033,10 @@ flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
   VarVariantRef v;
 
   /* This is  ref->commit */
-  ret_all_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+  if (decompose)
+    ret_all_refs = g_hash_table_new_full ((GHashFunc)flatpak_decomposed_hash, (GEqualFunc)flatpak_decomposed_equal, (GDestroyNotify)flatpak_decomposed_unref, g_free);
+  else
+    ret_all_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 
   if (state->index != NULL)
     {
@@ -12023,7 +12045,7 @@ flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
         {
           summary = var_summary_from_gvariant (subsummary);
           ref_map = var_summary_get_ref_map (summary);
-          populate_hash_table_from_refs_map (ret_all_refs, NULL, ref_map, state);
+          populate_hash_table_from_refs_map (ret_all_refs, NULL, decompose, ref_map, state);
         }
     }
   else if (state->summary != NULL)
@@ -12036,11 +12058,11 @@ flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
 
       /* refs that match the main collection-id */
       ref_map = var_summary_get_ref_map (summary);
-      populate_hash_table_from_refs_map (ret_all_refs, NULL, ref_map, state);
+      populate_hash_table_from_refs_map (ret_all_refs, NULL, decompose, ref_map, state);
     }
   else if (state->collection_id)
     {
-      g_autoptr(GHashTable) ref_mtimes = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, g_free); /* Keys owned by ret_all_refs */
+      g_autoptr(GHashTable) ref_mtimes = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 
       /* No main summary, add just all sideloded refs, with the latest version of each checksum */
 
@@ -12056,7 +12078,7 @@ flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
               VarCollectionMapRef map = var_collection_map_from_variant (v);
 
               if (var_collection_map_lookup (map, state->collection_id, NULL, &ref_map))
-                populate_hash_table_from_refs_map (ret_all_refs, ref_mtimes, ref_map, state);
+                populate_hash_table_from_refs_map (ret_all_refs, ref_mtimes, decompose, ref_map, state);
             }
         }
     }
@@ -12071,7 +12093,29 @@ flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
   return TRUE;
 }
 
-/* Guarantees to return refs which are decomposable. */
+/* This tries to list all available remote refs but also tries to keep
+ * working when offline, so it looks in sideloaded repos. Also it uses
+ * in-memory cached summaries which ostree doesn't. */
+gboolean
+flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
+                                  FlatpakRemoteState *state,
+                                  GHashTable        **out_all_refs,
+                                  GCancellable       *cancellable,
+                                  GError            **error)
+{
+  return _flatpak_dir_list_all_remote_refs (self, state, FALSE, out_all_refs, cancellable, error);
+}
+
+gboolean
+flatpak_dir_list_all_remote_refs_decomposed (FlatpakDir         *self,
+                                             FlatpakRemoteState *state,
+                                             GHashTable        **out_all_refs,
+                                             GCancellable       *cancellable,
+                                             GError            **error)
+{
+  return _flatpak_dir_list_all_remote_refs (self, state, TRUE, out_all_refs, cancellable, error);
+}
+
 static GPtrArray *
 find_matching_refs (GHashTable           *refs,
                     const char           *opt_name,
@@ -12086,8 +12130,6 @@ find_matching_refs (GHashTable           *refs,
   g_autoptr(GPtrArray) matched_refs = NULL;
   const char **arches = flatpak_get_arches ();
   const char *opt_arches[] = {opt_arch, NULL};
-  GHashTableIter hash_iter;
-  gpointer key;
   g_autoptr(GError) local_error = NULL;
   gboolean found_exact_name_match = FALSE;
   gboolean found_default_branch_match = FALSE;
@@ -12109,66 +12151,43 @@ find_matching_refs (GHashTable           *refs,
       return NULL;
     }
 
-  matched_refs = g_ptr_array_new_with_free_func (g_free);
+  matched_refs = g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_decomposed_unref);
 
-  g_hash_table_iter_init (&hash_iter, refs);
-  while (g_hash_table_iter_next (&hash_iter, &key, NULL))
+  GLNX_HASH_TABLE_FOREACH (refs, FlatpakDecomposed *, ref)
     {
-      const char *ref_name = key;
-      g_autofree char *ref = NULL;
-      g_auto(GStrv) parts = NULL;
-      gboolean is_app, is_runtime;
-
-      /* Unprefix any remote name if needed */
-      ostree_parse_refspec (ref_name, NULL, &ref, NULL);
-      if (ref == NULL)
+      if ((flatpak_decomposed_get_kind (ref) & kinds) == 0)
         continue;
 
-      is_app = g_str_has_prefix (ref, "app/");
-      is_runtime = g_str_has_prefix (ref, "runtime/");
-
-      if ((!(kinds & FLATPAK_KINDS_APP) && is_app) ||
-          (!(kinds & FLATPAK_KINDS_RUNTIME) && is_runtime) ||
-          (!is_app && !is_runtime))
-        continue;
-
-      parts = flatpak_decompose_ref (ref, NULL);
-      if (parts == NULL)
-        continue;
-
-      if ((flags & FIND_MATCHING_REFS_FLAGS_FUZZY) && !flatpak_id_has_subref_suffix (parts[1], -1))
+      if (opt_name)
         {
-          /* See if the given name looks similar to this ref name. The
-           * Levenshtein distance constant was chosen pretty arbitrarily. */
-          if (opt_name != NULL && strcasestr (parts[1], opt_name) == NULL &&
-              flatpak_levenshtein_distance (opt_name, -1, parts[1], -1) > 2)
-            continue;
-        }
-      else
-        {
-          if (opt_name != NULL && strcmp (opt_name, parts[1]) != 0)
-            continue;
+          if ((flags & FIND_MATCHING_REFS_FLAGS_FUZZY) && !flatpak_decomposed_id_is_subref (ref))
+            {
+              if (!flatpak_decomposed_is_id_fuzzy (ref, opt_name))
+                continue;
+            }
+          else
+            {
+              if (!flatpak_decomposed_is_id (ref, opt_name))
+                continue;
+           }
         }
 
-      if (!g_strv_contains (arches, parts[2]))
+      if (!flatpak_decomposed_is_arches (ref, arches))
         continue;
 
-      if (opt_branch != NULL && strcmp (opt_branch, parts[3]) != 0)
+      if (opt_branch != NULL && !flatpak_decomposed_is_branch (ref, opt_branch))
         continue;
 
-      if (opt_name != NULL && strcmp (opt_name, parts[1]) == 0)
+      if (opt_name != NULL && flatpak_decomposed_is_id (ref, opt_name))
         found_exact_name_match = TRUE;
 
-      if (opt_default_arch != NULL && strcmp (opt_default_arch, parts[2]) == 0)
+      if (opt_default_arch != NULL && flatpak_decomposed_is_arch (ref, opt_default_arch))
         found_default_arch_match = TRUE;
 
-      if (opt_default_branch != NULL && strcmp (opt_default_branch, parts[3]) == 0)
+      if (opt_default_branch != NULL && flatpak_decomposed_is_branch (ref, opt_default_branch))
         found_default_branch_match = TRUE;
 
-      if (flags & FIND_MATCHING_REFS_FLAGS_KEEP_REMOTE)
-        g_ptr_array_add (matched_refs, g_strdup (ref_name));
-      else
-        g_ptr_array_add (matched_refs, g_steal_pointer (&ref));
+      g_ptr_array_add (matched_refs, flatpak_decomposed_ref (ref));
     }
 
   /* Don't show fuzzy matches if we found at least one exact name match, and
@@ -12180,18 +12199,13 @@ find_matching_refs (GHashTable           *refs,
       /* Walk through the array backwards so we can safely remove */
       for (i = matched_refs->len; i > 0; i--)
         {
-          const char *matched_refspec = g_ptr_array_index (matched_refs, i - 1);
-          g_auto(GStrv) matched_parts = NULL;
-          g_autofree char *matched_ref = NULL;
+          FlatpakDecomposed *matched_ref = g_ptr_array_index (matched_refs, i - 1);
 
-          ostree_parse_refspec (matched_refspec, NULL, &matched_ref, NULL);
-          matched_parts = flatpak_decompose_ref (matched_ref, NULL);
-
-          if (found_exact_name_match && strcmp (matched_parts[1], opt_name) != 0)
+          if (found_exact_name_match && !flatpak_decomposed_is_id (matched_ref, opt_name))
             g_ptr_array_remove_index (matched_refs, i - 1);
-          else if (found_default_arch_match && strcmp (matched_parts[2], opt_default_arch) != 0)
+          else if (found_default_arch_match && !flatpak_decomposed_is_arch (matched_ref, opt_default_arch))
             g_ptr_array_remove_index (matched_refs, i - 1);
-          else if (found_default_branch_match && strcmp (matched_parts[3], opt_default_branch) != 0)
+          else if (found_default_branch_match && !flatpak_decomposed_is_branch (matched_ref, opt_default_branch))
             g_ptr_array_remove_index (matched_refs, i - 1);
         }
     }
@@ -12199,8 +12213,7 @@ find_matching_refs (GHashTable           *refs,
   return g_steal_pointer (&matched_refs);
 }
 
-
-static char *
+static FlatpakDecomposed *
 find_matching_ref (GHashTable  *refs,
                    const char  *name,
                    const char  *opt_branch,
@@ -12238,7 +12251,7 @@ find_matching_ref (GHashTable  *refs,
         continue;
 
       if (matched_refs->len == 1)
-        return g_strdup (g_ptr_array_index (matched_refs, 0));
+        return flatpak_decomposed_ref (g_ptr_array_index (matched_refs, 0));
 
       /* Nothing to do other than reporting the different choices */
       g_autoptr(GString) err = g_string_new ("");
@@ -12246,16 +12259,17 @@ find_matching_ref (GHashTable  *refs,
       g_ptr_array_sort (matched_refs, flatpak_strcmp0_ptr);
       for (j = 0; j < matched_refs->len; j++)
         {
-          g_auto(GStrv) parts = flatpak_decompose_ref (g_ptr_array_index (matched_refs, j), NULL);
-          g_assert (parts != NULL);
+          FlatpakDecomposed *ref = g_ptr_array_index (matched_refs, j);
           if (j != 0)
             g_string_append (err, ", ");
+
+          const char *branch = flatpak_decomposed_peek_branch (ref);
 
           g_string_append (err,
                            g_strdup_printf ("%s/%s/%s",
                                             name,
                                             opt_arch ? opt_arch : "",
-                                            parts[3]));
+                                            branch));
         }
 
       flatpak_fail (error, "%s", err->str);
@@ -12281,6 +12295,21 @@ flatpak_dir_get_remote_collection_id (FlatpakDir *self,
   return collection_id;
 }
 
+
+static char **
+decomposed_refs_to_strv (GPtrArray *decomposed)
+{
+  GPtrArray *res = g_ptr_array_new ();
+  for (int i = 0; i < decomposed->len; i++)
+    {
+      FlatpakDecomposed *ref = g_ptr_array_index (decomposed, i);
+      g_ptr_array_add (res, flatpak_decomposed_get_ref (ref));
+    }
+  g_ptr_array_add (res, NULL);
+
+  return (char **) g_ptr_array_free (res, FALSE);
+}
+
 char **
 flatpak_dir_find_remote_refs (FlatpakDir           *self,
                               FlatpakRemoteState   *state,
@@ -12295,10 +12324,10 @@ flatpak_dir_find_remote_refs (FlatpakDir           *self,
                               GError              **error)
 {
   g_autoptr(GHashTable) remote_refs = NULL;
-  GPtrArray *matched_refs;
+  g_autoptr(GPtrArray) matched_refs = NULL;
 
-  if (!flatpak_dir_list_all_remote_refs (self, state,
-                                         &remote_refs, cancellable, error))
+  if (!flatpak_dir_list_all_remote_refs_decomposed (self, state,
+                                                    &remote_refs, cancellable, error))
     return NULL;
 
 
@@ -12321,28 +12350,26 @@ flatpak_dir_find_remote_refs (FlatpakDir           *self,
       return NULL;
     }
 
-  g_ptr_array_add (matched_refs, NULL);
-  return (char **) g_ptr_array_free (matched_refs, FALSE);
+  return decomposed_refs_to_strv (matched_refs);
 }
 
-static char *
+static FlatpakDecomposed *
 find_ref_for_refs_set (GHashTable   *refs,
                        const char   *name,
                        const char   *opt_branch,
                        const char   *opt_default_branch,
                        const char   *opt_arch,
                        FlatpakKinds  kinds,
-                       FlatpakKinds *out_kind,
                        GError      **error)
 {
   g_autoptr(GError) my_error = NULL;
-  g_autofree gchar *ref = find_matching_ref (refs,
-                                             name,
-                                             opt_branch,
-                                             opt_default_branch,
-                                             opt_arch,
-                                             kinds,
-                                             &my_error);
+  g_autoptr(FlatpakDecomposed) ref = find_matching_ref (refs,
+                                                        name,
+                                                        opt_branch,
+                                                        opt_default_branch,
+                                                        opt_arch,
+                                                        kinds,
+                                                        &my_error);
   if (ref == NULL)
     {
       if (g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
@@ -12355,14 +12382,6 @@ find_ref_for_refs_set (GHashTable   *refs,
     }
   else
     {
-      if (out_kind != NULL)
-        {
-          if (g_str_has_prefix (ref, "app/"))
-            *out_kind = FLATPAK_KINDS_APP;
-          else
-            *out_kind = FLATPAK_KINDS_RUNTIME;
-        }
-
       return g_steal_pointer (&ref);
     }
 
@@ -12388,7 +12407,7 @@ flatpak_dir_find_remote_ref (FlatpakDir   *self,
                              GCancellable *cancellable,
                              GError      **error)
 {
-  g_autofree char *remote_ref = NULL;
+  g_autoptr(FlatpakDecomposed) remote_ref = NULL;
   g_autoptr(GHashTable) remote_refs = NULL;
   g_autoptr(GError) my_error = NULL;
 
@@ -12404,13 +12423,13 @@ flatpak_dir_find_remote_ref (FlatpakDir   *self,
         return flatpak_build_runtime_ref (name, opt_branch, opt_arch);
     }
 
-  if (!flatpak_dir_list_all_remote_refs (self, state,
-                                         &remote_refs, cancellable, error))
+  if (!flatpak_dir_list_all_remote_refs_decomposed (self, state,
+                                                    &remote_refs, cancellable, error))
     return NULL;
 
   remote_ref = find_ref_for_refs_set (remote_refs, name, opt_branch,
                                       opt_default_branch, opt_arch,
-                                      kinds, out_kind, &my_error);
+                                      kinds,  &my_error);
   if (!remote_ref)
     {
       if (g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
@@ -12428,7 +12447,44 @@ flatpak_dir_find_remote_ref (FlatpakDir   *self,
         }
     }
 
-  return g_steal_pointer (&remote_ref);
+  if (out_kind != NULL)
+    *out_kind = flatpak_decomposed_get_kind (remote_ref);
+
+  return flatpak_decomposed_get_ref (remote_ref);
+}
+
+static GHashTable *
+refspecs_decompose_steal (GHashTable *refspecs)
+{
+  g_autoptr(GHashTable) refs = NULL;
+  GHashTableIter iter;
+  gpointer key, value;
+
+  refs = g_hash_table_new_full ((GHashFunc)flatpak_decomposed_hash, (GEqualFunc)flatpak_decomposed_equal,
+                                (GDestroyNotify)flatpak_decomposed_unref, g_free);
+
+  g_hash_table_iter_init (&iter, refspecs);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+      char *checksum = value;
+      char *refspec = key;
+      FlatpakDecomposed *decomposed;
+
+      g_hash_table_iter_steal (&iter);
+
+      decomposed = flatpak_decomposed_new_from_refspec_take (refspec, NULL);
+      if (decomposed)
+        {
+          g_hash_table_insert (refs, decomposed, checksum);
+        }
+      else
+        {
+          g_free (checksum);
+          g_free (refspec);
+        }
+    }
+
+  return g_steal_pointer (&refs);
 }
 
 char **
@@ -12445,17 +12501,20 @@ flatpak_dir_find_local_refs (FlatpakDir           *self,
                              GError              **error)
 {
   g_autoptr(GHashTable) local_refs = NULL;
+  g_autoptr(GHashTable) local_refspecs = NULL;
   g_autoptr(GError) my_error = NULL;
   g_autofree char *refspec_prefix = g_strconcat (remote, ":.", NULL);
-  GPtrArray *matched_refs;
+  g_autoptr(GPtrArray) matched_refs = NULL;
 
   if (!flatpak_dir_ensure_repo (self, NULL, error))
     return NULL;
 
   if (!ostree_repo_list_refs (self->repo,
                               refspec_prefix,
-                              &local_refs, cancellable, error))
+                              &local_refspecs, cancellable, error))
     return NULL;
+
+  local_refs = refspecs_decompose_steal (local_refspecs);
 
   matched_refs = find_matching_refs (local_refs,
                                      name,
@@ -12482,8 +12541,7 @@ flatpak_dir_find_local_refs (FlatpakDir           *self,
         }
     }
 
-  g_ptr_array_add (matched_refs, NULL);
-  return (char **) g_ptr_array_free (matched_refs, FALSE);
+  return decomposed_refs_to_strv (matched_refs);
 }
 
 static GHashTable *
@@ -12522,6 +12580,50 @@ flatpak_dir_get_all_installed_refs (FlatpakDir  *self,
   return g_steal_pointer (&local_refs);
 }
 
+static GHashTable *
+flatpak_dir_get_all_installed_refs_decomposed (FlatpakDir  *self,
+                                               FlatpakKinds kinds,
+                                               GError     **error)
+{
+  g_autoptr(GHashTable) local_refs = NULL;
+  int i;
+
+  if (!flatpak_dir_maybe_ensure_repo (self, NULL, error))
+    return NULL;
+
+  local_refs = g_hash_table_new_full ((GHashFunc)flatpak_decomposed_hash, (GEqualFunc)flatpak_decomposed_equal, (GDestroyNotify)flatpak_decomposed_unref, NULL);
+  if (kinds & FLATPAK_KINDS_APP)
+    {
+      g_auto(GStrv) app_refs = NULL;
+
+      if (!flatpak_dir_list_refs (self, "app", &app_refs, NULL, error))
+        return NULL;
+
+      for (i = 0; app_refs[i] != NULL; i++)
+        {
+          FlatpakDecomposed *d = flatpak_decomposed_new_from_ref (app_refs[i], NULL);
+          if (d)
+            g_hash_table_add (local_refs, d);
+        }
+    }
+  if (kinds & FLATPAK_KINDS_RUNTIME)
+    {
+      g_auto(GStrv) runtime_refs = NULL;
+
+      if (!flatpak_dir_list_refs (self, "runtime", &runtime_refs, NULL, error))
+        return NULL;
+
+      for (i = 0; runtime_refs[i] != NULL; i++)
+        {
+          FlatpakDecomposed *d = flatpak_decomposed_new_from_ref (runtime_refs[i], NULL);
+          if (d)
+            g_hash_table_add (local_refs, d);
+        }
+    }
+
+  return g_steal_pointer (&local_refs);
+}
+
 char **
 flatpak_dir_find_installed_refs (FlatpakDir           *self,
                                  const char           *opt_name,
@@ -12532,9 +12634,9 @@ flatpak_dir_find_installed_refs (FlatpakDir           *self,
                                  GError              **error)
 {
   g_autoptr(GHashTable) local_refs = NULL;
-  GPtrArray *matched_refs;
+  g_autoptr(GPtrArray) matched_refs = NULL;
 
-  local_refs = flatpak_dir_get_all_installed_refs (self, kinds, error);
+  local_refs = flatpak_dir_get_all_installed_refs_decomposed (self, kinds, error);
   if (local_refs == NULL)
     return NULL;
 
@@ -12550,8 +12652,7 @@ flatpak_dir_find_installed_refs (FlatpakDir           *self,
   if (matched_refs == NULL)
     return NULL;
 
-  g_ptr_array_add (matched_refs, NULL);
-  return (char **) g_ptr_array_free (matched_refs, FALSE);
+  return decomposed_refs_to_strv (matched_refs);
 }
 
 char *
@@ -12563,11 +12664,11 @@ flatpak_dir_find_installed_ref (FlatpakDir   *self,
                                 FlatpakKinds *out_kind,
                                 GError      **error)
 {
-  g_autofree char *local_ref = NULL;
+  g_autoptr(FlatpakDecomposed) local_ref = NULL;
   g_autoptr(GHashTable) local_refs = NULL;
   g_autoptr(GError) my_error = NULL;
 
-  local_refs = flatpak_dir_get_all_installed_refs (self, kinds, error);
+  local_refs = flatpak_dir_get_all_installed_refs_decomposed (self, kinds, error);
   if (local_refs == NULL)
     return NULL;
 
@@ -12586,14 +12687,9 @@ flatpak_dir_find_installed_ref (FlatpakDir   *self,
   else
     {
       if (out_kind != NULL)
-        {
-          if (g_str_has_prefix (local_ref, "app/"))
-            *out_kind = FLATPAK_KINDS_APP;
-          else
-            *out_kind = FLATPAK_KINDS_RUNTIME;
-        }
+        *out_kind = flatpak_decomposed_get_kind (local_ref);
 
-      return g_steal_pointer (&local_ref);
+      return flatpak_decomposed_get_ref (local_ref);
     }
 
   g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
@@ -12604,7 +12700,7 @@ flatpak_dir_find_installed_ref (FlatpakDir   *self,
   return NULL;
 }
 
-/* Given a list of refs in local_refspecs, remove any refs that have already
+/* Given a list of decomposed refs in local_refspecs, remove any refs that have already
  * been deployed and return a new GPtrArray containing only the undeployed
  * refs. This is used by flatpak_dir_cleanup_undeployed_refs to determine
  * which undeployed refs need to be removed from the local repository.
@@ -12616,22 +12712,19 @@ filter_out_deployed_refs (FlatpakDir *self,
                           GPtrArray  *local_refspecs,
                           GError    **error)
 {
-  g_autoptr(GPtrArray) undeployed_refs = g_ptr_array_new_full (local_refspecs->len, g_free);
+  g_autoptr(GPtrArray) undeployed_refs = g_ptr_array_new_full (local_refspecs->len, (GDestroyNotify)flatpak_decomposed_unref);
   gsize i;
 
   for (i = 0; i < local_refspecs->len; ++i)
     {
-      const gchar *refspec = g_ptr_array_index (local_refspecs, i);
-      g_autofree gchar *ref = NULL;
+      FlatpakDecomposed *decomposed = g_ptr_array_index (local_refspecs, i);
+      const gchar *ref = flatpak_decomposed_peek_ref (decomposed);
       g_autoptr(GBytes) deploy_data = NULL;
-
-      if (!ostree_parse_refspec (refspec, NULL, &ref, error))
-        return FALSE;
 
       deploy_data = flatpak_dir_get_deploy_data (self, ref, FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
 
       if (!deploy_data)
-        g_ptr_array_add (undeployed_refs, g_strdup (refspec));
+        g_ptr_array_add (undeployed_refs, flatpak_decomposed_ref (decomposed));
     }
 
   return g_steal_pointer (&undeployed_refs);
@@ -12659,6 +12752,7 @@ flatpak_dir_cleanup_undeployed_refs (FlatpakDir   *self,
                                      GError      **error)
 {
   g_autoptr(GHashTable) local_refspecs = NULL;
+  g_autoptr(GHashTable) local_refs = NULL;
   g_autoptr(GPtrArray)  local_flatpak_refspecs = NULL;
   g_autoptr(GPtrArray) undeployed_refs = NULL;
   gsize i = 0;
@@ -12666,12 +12760,13 @@ flatpak_dir_cleanup_undeployed_refs (FlatpakDir   *self,
   if (!ostree_repo_list_refs (self->repo, NULL, &local_refspecs, cancellable, error))
     return FALSE;
 
-  local_flatpak_refspecs = find_matching_refs (local_refspecs,
+  local_refs = refspecs_decompose_steal (local_refspecs);
+
+  local_flatpak_refspecs = find_matching_refs (local_refs,
                                                NULL, NULL, NULL, NULL, NULL,
                                                FLATPAK_KINDS_APP |
                                                FLATPAK_KINDS_RUNTIME,
-                                               FIND_MATCHING_REFS_FLAGS_KEEP_REMOTE,
-                                               error);
+                                               0, error);
 
   if (!local_flatpak_refspecs)
     return FALSE;
@@ -12683,12 +12778,9 @@ flatpak_dir_cleanup_undeployed_refs (FlatpakDir   *self,
 
   for (; i < undeployed_refs->len; ++i)
     {
-      const char *refspec = g_ptr_array_index (undeployed_refs, i);
-      g_autofree gchar *remote = NULL;
-      g_autofree gchar *ref = NULL;
-
-      if (!ostree_parse_refspec (refspec, &remote, &ref, error))
-        return FALSE;
+      FlatpakDecomposed *decomposed = g_ptr_array_index (undeployed_refs, i);
+      const gchar *ref = flatpak_decomposed_peek_ref (decomposed);
+      g_autofree gchar *remote = flatpak_decomposed_get_remote (decomposed);
 
       if (!flatpak_dir_remove_ref (self, remote, ref, cancellable, error))
         return FALSE;
