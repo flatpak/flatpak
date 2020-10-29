@@ -4609,9 +4609,6 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
   if (needs_prune && !priv->disable_prune)
     flatpak_dir_prune (priv->dir, cancellable, NULL);
 
-  GLNX_HASH_TABLE_FOREACH_KV(priv->remote_states, const char *, remote, FlatpakRemoteState *, state)
-    flatpak_remote_state_prune_subsummaries (state, priv->dir);
-
   for (i = 0; i < priv->added_origin_remotes->len; i++)
     flatpak_dir_prune_origin_remote (priv->dir, g_ptr_array_index (priv->added_origin_remotes, i));
 
