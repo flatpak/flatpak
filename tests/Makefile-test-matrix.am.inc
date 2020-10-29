@@ -24,6 +24,8 @@ TEST_MATRIX= \
 	tests/test-update-remote-configuration@oldsummary.wrap \
 	tests/test-update-portal@user.wrap \
 	tests/test-update-portal@system.wrap \
+	tests/test-summaries@user.wrap \
+	tests/test-summaries@system.wrap \
 	$(NULL)
 TEST_MATRIX_DIST= \
 	tests/test-basic.sh \
@@ -47,4 +49,5 @@ TEST_MATRIX_EXTRA_DIST= \
 	tests/test-oci-registry.sh \
 	tests/test-update-remote-configuration.sh \
 	tests/test-update-portal.sh \
+	tests/test-summaries.sh \
 	$(NULL)
