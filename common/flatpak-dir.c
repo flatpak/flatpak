@@ -139,6 +139,7 @@ static gboolean flatpak_dir_remote_fetch_summary_index (FlatpakDir   *self,
 
 static gboolean flatpak_dir_remote_fetch_indexed_summary (FlatpakDir   *self,
                                                           const char   *name_or_uri,
+                                                          const char   *arch,
                                                           GVariant     *subsummary_info_v,
                                                           gboolean      only_cached,
                                                           GBytes      **out_summary,
@@ -147,7 +148,7 @@ static gboolean flatpak_dir_remote_fetch_indexed_summary (FlatpakDir   *self,
 
 static gboolean flatpak_dir_gc_cached_digested_summaries (FlatpakDir   *self,
                                                           const char   *remote_name,
-                                                          GVariant     *index_v,
+                                                          const char   *dont_prune_file,
                                                           GCancellable *cancellable,
                                                           GError      **error);
 
@@ -449,19 +450,6 @@ flatpak_remote_state_ensure_summary (FlatpakRemoteState *self,
   return TRUE;
 }
 
-void
-flatpak_remote_state_prune_subsummaries (FlatpakRemoteState *self,
-                                         FlatpakDir         *dir)
-{
-  g_autoptr(GError) error = NULL;
-
-  if (self->index != NULL &&
-      !flatpak_dir_gc_cached_digested_summaries (dir, self->remote_name,
-                                                 self->index, NULL,
-                                                 &error))
-    g_warning ("Failed to GC old subsummaries: %s", error->message);
-}
-
 gboolean
 flatpak_remote_state_ensure_subsummary (FlatpakRemoteState *self,
                                         FlatpakDir         *dir,
@@ -496,7 +484,7 @@ flatpak_remote_state_ensure_subsummary (FlatpakRemoteState *self,
   if (subsummary_info_v == NULL)
     return TRUE; /* No refs for this arch */
 
-  if (!flatpak_dir_remote_fetch_indexed_summary (dir, self->remote_name, subsummary_info_v, only_cached,
+  if (!flatpak_dir_remote_fetch_indexed_summary (dir, self->remote_name, arch, subsummary_info_v, only_cached,
                                                  &bytes, cancellable, error))
     return FALSE;
 
@@ -11031,34 +11019,26 @@ flatpak_dir_remote_make_oci_summary (FlatpakDir   *self,
   return TRUE;
 }
 
+typedef struct {
+  char *filename;
+  gint64 mtime;
+} CachedSummaryData;
+
+static void
+cached_summary_data_free (CachedSummaryData *data)
+{
+  g_free (data->filename);
+  g_free (data);
+}
+
 static gboolean
 flatpak_dir_gc_cached_digested_summaries (FlatpakDir   *self,
                                           const char   *remote_name,
-                                          GVariant     *index_v,
+                                          const char   *dont_prune_file,
                                           GCancellable *cancellable,
                                           GError      **error)
 {
-  g_autoptr(GHashTable) digests = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
-  VarSummaryIndexRef index = var_summary_index_from_gvariant (index_v);
-  VarSummaryIndexSubsummariesRef subsummaries = var_summary_index_get_subsummaries (index);
-  gsize n_subsummaries = var_summary_index_subsummaries_get_length (subsummaries);
-
-  for (gsize i = 0; i < n_subsummaries; i++)
-    {
-      VarSummaryIndexSubsummariesEntryRef entry = var_summary_index_subsummaries_get_at (subsummaries, i);
-      VarSubsummaryRef subsummary = var_summary_index_subsummaries_entry_get_value (entry);
-      gsize checksum_bytes_len;
-      const guchar *checksum_bytes;
-      g_autofree char *digest = NULL;
-
-      checksum_bytes = var_subsummary_peek_checksum (subsummary, &checksum_bytes_len);
-      if (G_UNLIKELY (checksum_bytes_len != OSTREE_SHA256_DIGEST_LEN))
-        continue;
-      digest = ostree_checksum_from_bytes (checksum_bytes);
-
-      g_hash_table_add (digests, g_steal_pointer (&digest));
-    }
-
+  g_autoptr(GHashTable) cached_data_for_arch = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, (GDestroyNotify)cached_summary_data_free);
   g_autoptr(GFile) cache_dir = flatpak_build_file (self->cache_dir, "summaries", NULL);
   g_auto(GLnxDirFdIterator) iter = {0};
   struct dirent *dent;
@@ -11077,25 +11057,59 @@ flatpak_dir_gc_cached_digested_summaries (FlatpakDir   *self,
 
   while (TRUE)
     {
+      struct stat stbuf;
+      const char *arch_start, *arch_end;
+      g_autofree char *arch = NULL;
+
       if (!glnx_dirfd_iterator_next_dent_ensure_dtype (&iter, &dent, cancellable, error))
         return FALSE;
 
       if (dent == NULL)
         break;
 
-      /* Cached are regular file named "${remote-name}-${sha256}.sub", ignore anything else */
+      /* Cached are regular file named "${remote-name}-${arch}-${sha256}.sub", ignore anything else */
       if (dent->d_type != DT_REG ||
           !g_str_has_prefix (dent->d_name, prefix) ||
-          !g_str_has_suffix (dent->d_name, ".sub") ||
-          strlen (dent->d_name) != strlen (prefix) + 64 + strlen(".sub"))
+          !g_str_has_suffix (dent->d_name, ".sub"))
         continue;
 
-      g_autofree char *file_digest = g_strndup (dent->d_name + strlen (prefix), 64);
+      arch_start = dent->d_name + strlen (prefix);
+      arch_end = strchr (arch_start, '-');
+      if (arch_end == NULL)
+        continue;
 
-      if (!g_hash_table_contains (digests, file_digest))
+      /* Keep the latest subsummary for each remote-name + arch so we can use it for deltas */
+      if (fstatat (iter.fd, dent->d_name, &stbuf, AT_SYMLINK_NOFOLLOW) == -1)
         {
-          g_debug ("Removing old digested summary cache %s", dent->d_name);
-          if (unlinkat (iter.fd, dent->d_name, 0) != 0)
+          glnx_set_error_from_errno (error);
+          return FALSE;
+        }
+
+      arch = g_strndup (arch_start, arch_end - arch_start);
+
+      CachedSummaryData *old_data = g_hash_table_lookup (cached_data_for_arch, arch);
+      if (old_data == NULL || stbuf.st_mtime > old_data->mtime)
+        {
+          CachedSummaryData *new_data;
+
+          if (old_data &&
+              strcmp (dont_prune_file, old_data->filename) != 0 &&
+              unlinkat (iter.fd, old_data->filename, 0) != 0)
+            {
+              glnx_set_error_from_errno (error);
+              return FALSE;
+            }
+
+          new_data = g_new0 (CachedSummaryData, 1);
+          new_data->filename = g_strdup (dent->d_name);
+          new_data->mtime = stbuf.st_mtime;
+          g_hash_table_insert (cached_data_for_arch, g_steal_pointer (&arch), new_data);
+        }
+      else /* stbuf.st_mtime <= old_data->mtime */
+        {
+          if (stbuf.st_mtime < old_data->mtime &&
+              strcmp (dont_prune_file, dent->d_name) != 0 &&
+              unlinkat (iter.fd, dent->d_name, 0) != 0)
             {
               glnx_set_error_from_errno (error);
               return FALSE;
@@ -11481,6 +11495,7 @@ flatpak_dir_remote_fetch_summary_index (FlatpakDir   *self,
 static gboolean
 flatpak_dir_remote_fetch_indexed_summary (FlatpakDir   *self,
                                           const char   *name_or_uri,
+                                          const char   *arch,
                                           GVariant     *subsummary_info_v,
                                           gboolean      only_cached,
                                           GBytes      **out_summary,
@@ -11525,7 +11540,7 @@ flatpak_dir_remote_fetch_indexed_summary (FlatpakDir   *self,
         return TRUE;
     }
 
-  cache_name = g_strconcat (name_or_uri, "-", checksum, NULL);
+  cache_name = g_strconcat (name_or_uri, "-", arch, "-", checksum, NULL);
 
   /* First look for an on-disk cache */
   if (!flatpak_dir_remote_load_cached_summary (self, cache_name, ".sub", NULL,
@@ -11553,7 +11568,7 @@ flatpak_dir_remote_fetch_indexed_summary (FlatpakDir   *self,
             continue;
 
           old_checksum = ostree_checksum_from_bytes (var_checksum_peek (old));
-          old_cache_name = g_strconcat (name_or_uri, "-", old_checksum, NULL);
+          old_cache_name = g_strconcat (name_or_uri, "-", arch, "-", old_checksum, NULL);
           if (flatpak_dir_remote_load_cached_summary (self, old_cache_name, ".sub", NULL,
                                                       &old_summary, NULL, cancellable, NULL))
             break;
@@ -11611,11 +11626,17 @@ flatpak_dir_remote_fetch_indexed_summary (FlatpakDir   *self,
         }
 
       /* Save to disk */
-      if (!is_local &&
-          !flatpak_dir_remote_save_cached_summary (self, cache_name, ".sub", NULL,
-                                                   summary, NULL,
-                                                   cancellable, error))
-        return FALSE;
+      if (!is_local)
+        {
+          if (!flatpak_dir_remote_save_cached_summary (self, cache_name, ".sub", NULL,
+                                                       summary, NULL,
+                                                       cancellable, error))
+            return FALSE;
+
+          if (!flatpak_dir_gc_cached_digested_summaries (self, name_or_uri, cache_name,
+                                                         cancellable, error))
+            return FALSE;
+        }
     }
   else
     g_debug ("Loaded indexed summary file %s from cache for remote ‘%s’", checksum, name_or_uri);
