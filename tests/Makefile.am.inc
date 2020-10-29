@@ -204,6 +204,7 @@ TEST_MATRIX_SOURCE = \
 	tests/test-update-portal.sh{user+system} \
 	tests/test-auth.sh \
 	tests/test-unused.sh \
+	tests/test-summaries.sh{user+system} \
 	$(NULL)
 
 update-test-matrix:
