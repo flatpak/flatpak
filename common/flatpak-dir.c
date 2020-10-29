@@ -15956,10 +15956,7 @@ flatpak_dir_list_unused_refs (FlatpakDir         *self,
             }
 
           if (!is_eol)
-            {
-              g_debug ("Ref %s is not EOL, considering as used", ref);
-              continue;
-            }
+            continue;
         }
 
       g_ptr_array_add (refs, g_strdup (ref));
