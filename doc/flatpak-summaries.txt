@@ -1,0 +1,52 @@
+Since version 1.9.1 flatpak uses custom format for repo summaries, in
+order to keep the sizes of summary files down, both for transfer and
+on-disk storage. The core format is still an OSTree summary file, but
+there are some differences both in how it is used and what it
+contains.
+
+Flatpak still generates the old summary file for backwards compatibility. However
+the summary-arches option in the [flatpak] group of the repo config can limit
+which arches has refs put into the compatibility summary.
+
+In addition flatpak generates a set of new summaries for named subsets
+of the refs in the repo, as well as a summary index that refers to
+these.  By default there are one subset for each architecture (each
+architecture subset also includes refs of compat arches, such as i386
+for x86-64). In addition, any commit that has a `xa.subsets` key (of
+type `as`) will generate extra summaries named `$subset-$arch` in the
+index in addition to the normal ones named `$arch`.
+
+The summary index is a GVariant of type `(a{s(ayaaya{sv})}a{sv})`.
+The first is an array of information for each sub-summary containing:
+the subsummary name, the sha256 checksum and an array of checksums for
+previous versions of the subsummary and an extensible metadata dict.
+The second part is a toplevel extensible metadata dict, which is used
+similarly to the toplevel dict in the summary. In fact, it contains
+many of the the same global keys that previously were in the summary
+dict (and which no longer are in the sub-summary dicts), such as
+repo title, icon, url updates, etc.
+
+The index is stored in the file `summary.idx` and in addition there is
+a GPG signature of this in the `summary.idx.sig` file. The
+subsummaries are stored in the `summaries` subdirectory and are named
+`$digest.gz". These contain gzip-compressed ostree summary files (with
+the sha256 checksum being of the *uncompressed* data).
+
+Flatpak stores up to `[flatpak].summary-history-length` (default 16)
+old versions of the sub-summaries and generates deltas between these
+and the current version, named `$from-$to.delta" which are very simple
+binary diffs that clients can use to efficiently update from older
+versions of the summaries.
+
+The sub-summary files don't contain any delta information, instead
+relying on the delta-index support in OSTree 2020.8. They also don't
+contain any timestamps in the per-ref dict, as these are quite large
+and not currently used by flatpak. The format of the flatpak metadata
+caching in the summary is also different. Instead of using separate
+`xa.cache` and `xa.sparse-cache` the same information is now stored
+in the regular per-ref metadata dict in the summary.
+
+On the client side flatpak keeps a cache of the current summary index
+(named `$remote.idx` and `$remote.idx.sig`), as well as one subsummary
+per remote and arch (named $remote-$arch-$digest.sub`). Only the
+subsummary with the most recent mtime is kept.
