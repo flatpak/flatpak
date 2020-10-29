@@ -370,6 +370,8 @@ flatpak_progress_update_extra_data (FlatpakProgress *self,
 
   self->transferred_extra_data_bytes = self->extra_data_previous_dl + downloaded_bytes;
   update_status_progress_and_estimating (self);
+
+  self->callback (self->status, self->progress, self->estimating, self->user_data);
 }
 
 void
