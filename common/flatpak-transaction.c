@@ -914,7 +914,7 @@ flatpak_transaction_operation_get_old_metadata (FlatpakTransactionOperation *sel
  * This information is available when the transaction is resolved,
  * i.e. when #FlatpakTransaction::ready is emitted.
  *
- * Returns: (transfer none): the old metadata #GKeyFile
+ * Returns: the old metadata #GKeyFile
  * Since: 1.9.1
  */
 gboolean
