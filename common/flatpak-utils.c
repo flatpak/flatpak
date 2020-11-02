@@ -4008,17 +4008,30 @@ flatpak_repo_load_summary_index (OstreeRepo *repo,
 static gboolean
 flatpak_repo_save_compat_summary (OstreeRepo   *repo,
                                   GVariant     *summary,
+                                  time_t       *out_old_sig_mtime,
                                   GCancellable *cancellable,
                                   GError      **error)
 {
   int repo_dfd = ostree_repo_get_dfd (repo);
+  struct stat stbuf;
+  time_t old_sig_mtime = 0;
+  GLnxFileReplaceFlags flags;
+
+  flags = GLNX_FILE_REPLACE_INCREASING_MTIME;
+  if (ostree_repo_get_disable_fsync (repo))
+    flags |= GLNX_FILE_REPLACE_NODATASYNC;
+  else
+    flags |= GLNX_FILE_REPLACE_DATASYNC_NEW;
 
   if (!glnx_file_replace_contents_at (repo_dfd, "summary",
                                       g_variant_get_data (summary),
                                       g_variant_get_size (summary),
-                                      ostree_repo_get_disable_fsync (repo) ? GLNX_FILE_REPLACE_NODATASYNC : GLNX_FILE_REPLACE_DATASYNC_NEW,
+                                      flags,
                                       cancellable, error))
     return FALSE;
+
+  if (fstatat (repo_dfd, "summary.sig", &stbuf, AT_SYMLINK_NOFOLLOW) == 0)
+    old_sig_mtime = stbuf.st_mtime;
 
   if (unlinkat (repo_dfd, "summary.sig", 0) != 0 &&
       G_UNLIKELY (errno != ENOENT))
@@ -4027,6 +4040,7 @@ flatpak_repo_save_compat_summary (OstreeRepo   *repo,
       return FALSE;
     }
 
+  *out_old_sig_mtime = old_sig_mtime;
   return TRUE;
 }
 
@@ -4038,6 +4052,7 @@ flatpak_repo_save_summary_index (OstreeRepo   *repo,
                                  GError      **error)
 {
   int repo_dfd = ostree_repo_get_dfd (repo);
+  GLnxFileReplaceFlags  flags;
 
   if (index == NULL)
     {
@@ -4057,10 +4072,16 @@ flatpak_repo_save_summary_index (OstreeRepo   *repo,
       return TRUE;
     }
 
+  flags = GLNX_FILE_REPLACE_INCREASING_MTIME;
+  if (ostree_repo_get_disable_fsync (repo))
+    flags |= GLNX_FILE_REPLACE_NODATASYNC;
+  else
+    flags |= GLNX_FILE_REPLACE_DATASYNC_NEW;
+
   if (!glnx_file_replace_contents_at (repo_dfd, "summary.idx",
                                       g_variant_get_data (index),
                                       g_variant_get_size (index),
-                                      ostree_repo_get_disable_fsync (repo) ? GLNX_FILE_REPLACE_NODATASYNC : GLNX_FILE_REPLACE_DATASYNC_NEW,
+                                      flags,
                                       cancellable, error))
     return FALSE;
 
@@ -4069,7 +4090,7 @@ flatpak_repo_save_summary_index (OstreeRepo   *repo,
       if (!glnx_file_replace_contents_at (repo_dfd, "summary.idx.sig",
                                           g_bytes_get_data (index_sig, NULL),
                                           g_bytes_get_size (index_sig),
-                                          ostree_repo_get_disable_fsync (repo) ? GLNX_FILE_REPLACE_NODATASYNC : GLNX_FILE_REPLACE_DATASYNC_NEW,
+                                          flags,
                                           cancellable, error))
         return FALSE;
     }
@@ -5722,6 +5743,7 @@ flatpak_repo_update (OstreeRepo   *repo,
   g_autoptr(GHashTable) digested_summaries = NULL;
   g_autoptr(GHashTable) digested_summary_cache = NULL;
   g_autoptr(GBytes) index_sig = NULL;
+  time_t old_compat_sig_mtime;
   GKeyFile *config;
   gboolean disable_index = (flags & FLATPAK_REPO_UPDATE_FLAG_DISABLE_INDEX) != 0;
 
@@ -5850,7 +5872,7 @@ flatpak_repo_update (OstreeRepo   *repo,
   if (!flatpak_repo_save_summary_index (repo, summary_index, index_sig, cancellable, error))
     return FALSE;
 
-  if (!flatpak_repo_save_compat_summary (repo, compat_summary, cancellable, error))
+  if (!flatpak_repo_save_compat_summary (repo, compat_summary, &old_compat_sig_mtime, cancellable, error))
     return FALSE;
 
   if (gpg_key_ids)
@@ -5861,6 +5883,21 @@ flatpak_repo_update (OstreeRepo   *repo,
                                                   cancellable,
                                                   error))
         return FALSE;
+
+
+      if (old_compat_sig_mtime != 0)
+        {
+          int repo_dfd = ostree_repo_get_dfd (repo);
+          struct stat stbuf;
+
+          /* Ensure we increase (in sec precision) */
+          if (fstatat (repo_dfd, "summary.sig", &stbuf, AT_SYMLINK_NOFOLLOW) == 0 &&
+              stbuf.st_mtime <= old_compat_sig_mtime)
+            {
+              struct timespec ts[2] = { {0, UTIME_OMIT}, {old_compat_sig_mtime + 1, 0} };
+              (void) utimensat (repo_dfd, "summary.sig", ts, AT_SYMLINK_NOFOLLOW);
+            }
+        }
     }
 
   if (!disable_index &&
