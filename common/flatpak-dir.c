@@ -11120,6 +11120,46 @@ flatpak_dir_gc_cached_digested_summaries (FlatpakDir   *self,
   return TRUE;
 }
 
+static gboolean
+_flatpak_dir_remote_clear_cached_summary (FlatpakDir   *self,
+                                          const char   *remote,
+                                          const char   *extension,
+                                          GCancellable *cancellable,
+                                          GError      **error)
+{
+  g_autoptr(GFile) cache_dir = flatpak_build_file (self->cache_dir, "summaries", NULL);
+  g_autofree char *filename = g_strconcat (remote, extension, NULL);
+  g_autoptr(GFile) file = flatpak_build_file (cache_dir, filename, NULL);
+  g_autoptr(GError) local_error = NULL;
+
+  if (!g_file_delete (file, NULL, &local_error) &&
+      !g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+    {
+      g_propagate_error (error, g_steal_pointer (&local_error));
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+static gboolean
+flatpak_dir_remote_clear_cached_summary (FlatpakDir   *self,
+                                         const char   *remote,
+                                         GCancellable *cancellable,
+                                         GError      **error)
+{
+  g_debug ("Clearing cached summaries for remote %s", remote);
+  if (!_flatpak_dir_remote_clear_cached_summary (self, remote, NULL, cancellable, error))
+    return FALSE;
+  if (!_flatpak_dir_remote_clear_cached_summary (self, remote, ".sig", cancellable, error))
+    return FALSE;
+  if (!_flatpak_dir_remote_clear_cached_summary (self, remote, ".idx", cancellable, error))
+    return FALSE;
+  if (!_flatpak_dir_remote_clear_cached_summary (self, remote, ".idx.sig", cancellable, error))
+    return FALSE;
+  return TRUE;
+}
+
 
 static gboolean
 flatpak_dir_remote_save_cached_summary (FlatpakDir   *self,
@@ -14509,6 +14549,10 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
           if (summary_sig_path)
             unlink (summary_sig_path);
 
+
+          if (!flatpak_dir_remote_clear_cached_summary (self, remote, cancellable, error))
+            return FALSE;
+
           if (updated_out)
             *updated_out = TRUE;
         }
@@ -14516,7 +14560,13 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
       return TRUE;
     }
 
-  return flatpak_dir_update_remote_configuration_for_state (self, state, FALSE, updated_out, cancellable, error);
+  if (!flatpak_dir_update_remote_configuration_for_state (self, state, FALSE, updated_out, cancellable, error))
+    return FALSE;
+
+  if (!flatpak_dir_remote_clear_cached_summary (self, remote, cancellable, error))
+    return FALSE;
+
+  return TRUE;
 }
 
 void
