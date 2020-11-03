@@ -14129,6 +14129,10 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
                                                             cancellable, error))
         return FALSE;
 
+      /* If we e.g. changed url or gpg config the cached summary may be invalid */
+      if (!flatpak_dir_remote_clear_cached_summary (self, remote_name, cancellable, error))
+        return FALSE;
+
       return TRUE;
     }
 
@@ -14198,6 +14202,10 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
           g_debug ("Failed to read filter %s file while making a backup copy: %s\n", filter_path, local_error->message);
         }
     }
+
+  /* If we e.g. changed url or gpg config the cached summary may be invalid */
+  if (!flatpak_dir_remote_clear_cached_summary (self, remote_name, cancellable, error))
+    return FALSE;
 
   if (!flatpak_dir_mark_changed (self, error))
     return FALSE;
