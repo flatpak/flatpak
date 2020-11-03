@@ -493,16 +493,6 @@ GFile *     flatpak_dir_get_unmaintained_extension_dir_if_exists (FlatpakDir   *
                                                                   const char   *branch,
                                                                   GCancellable *cancellable);
 
-char **     flatpak_dir_search_for_local_dependency (FlatpakDir   *self,
-                                                     const char   *prioritized_remote,
-                                                     const char   *runtime_ref,
-                                                     GCancellable *cancellable,
-                                                     GError      **error);
-char **     flatpak_dir_search_for_dependency (FlatpakDir   *self,
-                                               const char   *prioritized_remote,
-                                               const char   *runtime_ref,
-                                               GCancellable *cancellable,
-                                               GError      **error);
 gboolean    flatpak_dir_ref_is_masked (FlatpakDir *self,
                                        const char *ref);
 gboolean    flatpak_dir_ref_is_pinned (FlatpakDir *self,
@@ -871,6 +861,9 @@ char     **flatpak_dir_list_remotes (FlatpakDir   *self,
                                      GCancellable *cancellable,
                                      GError      **error);
 char     **flatpak_dir_list_enumerated_remotes (FlatpakDir   *self,
+                                                GCancellable *cancellable,
+                                                GError      **error);
+char     **flatpak_dir_list_dependency_remotes (FlatpakDir   *self,
                                                 GCancellable *cancellable,
                                                 GError      **error);
 gboolean   flatpak_dir_modify_remote (FlatpakDir   *self,
