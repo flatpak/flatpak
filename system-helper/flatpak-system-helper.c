@@ -393,6 +393,7 @@ handle_deploy (FlatpakSystemHelper   *object,
   g_autofree char *url = NULL;
   g_autoptr(OngoingPull) ongoing_pull = NULL;
   g_autofree gchar *src_dir = NULL;
+  g_autoptr(FlatpakDecomposed) ref = NULL;
 
   g_debug ("Deploy %s %u %s %s %s", arg_repo_path, arg_flags, arg_ref, arg_origin, arg_installation);
 
@@ -457,6 +458,13 @@ handle_deploy (FlatpakSystemHelper   *object,
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
                                              "Path does not exist");
+      return TRUE;
+    }
+
+  ref = flatpak_decomposed_new_from_ref (arg_ref, &error);
+  if (ref == NULL)
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
       return TRUE;
     }
 
@@ -582,14 +590,14 @@ handle_deploy (FlatpakSystemHelper   *object,
       /* We need to use list_all_remote_refs because we don't care about
        * enumerate vs. noenumerate.
        */
-      if (!flatpak_dir_list_all_remote_refs (system, state, &remote_refs, NULL, &error))
+      if (!flatpak_dir_list_all_remote_refs_decomposed (system, state, &remote_refs, NULL, &error))
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
                                                  "%s: Can't list refs: %s", arg_origin, error->message);
           return TRUE;
         }
 
-      verified_digest = g_hash_table_lookup (remote_refs, arg_ref);
+      verified_digest = g_hash_table_lookup (remote_refs, ref);
       if (!verified_digest)
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
