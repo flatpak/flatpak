@@ -563,14 +563,6 @@ static gboolean
 flatpak_http_should_retry_request (const GError *error,
                                    guint         n_retries_remaining)
 {
-  if (error == NULL)
-    g_debug ("%s: error: unset, n_retries_remaining: %u",
-             G_STRFUNC, n_retries_remaining);
-  else
-    g_debug ("%s: error: %u:%u %s, n_retries_remaining: %u",
-             G_STRFUNC, error->domain, error->code, error->message,
-             n_retries_remaining);
-
   if (error == NULL || n_retries_remaining == 0)
     return FALSE;
 
