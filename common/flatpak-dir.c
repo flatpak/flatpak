@@ -11256,7 +11256,6 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
   g_autoptr(GError) local_error = NULL;
   g_autoptr(GBytes) summary = NULL;
   g_autoptr(GBytes) summary_sig = NULL;
-  g_autofree char *cache_key = NULL;
 
   if (!ostree_repo_remote_get_url (self->repo, name_or_uri, &url, error))
     return FALSE;
@@ -11269,14 +11268,6 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
     }
 
   is_local = g_str_has_prefix (url, "file:");
-
-  /* No in-memory caching for local files */
-  if (!is_local)
-    {
-      cache_key = g_strconcat ("summary-", name_or_uri, NULL);
-      if (flatpak_dir_lookup_cached_summary (self, out_summary, out_summary_sig, cache_key, url))
-        return TRUE;
-    }
 
   /* Seems ostree asserts if this is NULL */
   if (error == NULL)
@@ -11315,7 +11306,10 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
     return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Remote listing for %s not available; server has no summary file. Check the URL passed to remote-add was valid."), name_or_uri);
 
   if (!is_local && !only_cached)
-    flatpak_dir_cache_summary (self, summary, summary_sig, cache_key, url);
+    {
+      g_autofree char *cache_key = g_strconcat ("summary-", name_or_uri, NULL);
+      flatpak_dir_cache_summary (self, summary, summary_sig, cache_key, url);
+    }
 
   *out_summary = g_steal_pointer (&summary);
   if (out_summary_sig)
@@ -11390,7 +11384,6 @@ flatpak_dir_remote_fetch_summary_index (FlatpakDir   *self,
   g_autoptr(GBytes) cached_index_sig = NULL;
   g_autoptr(GBytes) index = NULL;
   g_autoptr(GBytes) index_sig = NULL;
-  g_autofree char *cache_key = NULL;
   gboolean gpg_verify_summary;
 
   ensure_soup_session (self);
@@ -11416,14 +11409,6 @@ flatpak_dir_remote_fetch_summary_index (FlatpakDir   *self,
     }
 
   is_local = g_str_has_prefix (url, "file:");
-
-  /* No in-memory caching for local files */
-  if (!is_local)
-    {
-      cache_key = g_strconcat ("index-", name_or_uri, NULL);
-      if (flatpak_dir_lookup_cached_summary (self, out_index, out_index_sig, cache_key, url))
-        return TRUE;
-    }
 
   /* Seems ostree asserts if this is NULL */
   if (error == NULL)
@@ -11523,7 +11508,10 @@ flatpak_dir_remote_fetch_summary_index (FlatpakDir   *self,
 
   /* Cache in memory */
   if (!is_local && !only_cached)
-    flatpak_dir_cache_summary (self, index, index_sig, cache_key, url);
+    {
+      g_autofree char *cache_key = g_strconcat ("index-", name_or_uri, NULL);
+      flatpak_dir_cache_summary (self, index, index_sig, cache_key, url);
+    }
 
   *out_index = g_steal_pointer (&index);
   if (out_index_sig)
@@ -11704,10 +11692,15 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
 {
   g_autoptr(FlatpakRemoteState) state = flatpak_remote_state_new ();
   g_autoptr(GPtrArray) sideload_paths = NULL;
+  g_autofree char *url = NULL;
   g_autoptr(GError) my_error = NULL;
   gboolean is_local;
   gboolean got_summary = FALSE;
   const char *arch = flatpak_get_default_arch ();
+  g_autoptr(GBytes) index_bytes = NULL;
+  g_autoptr(GBytes) index_sig_bytes = NULL;
+  g_autoptr(GBytes) summary_bytes = NULL;
+  g_autoptr(GBytes) summary_sig_bytes = NULL;
 
   if (error == NULL)
     error = &my_error;
@@ -11725,6 +11718,8 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
         return NULL;
       if (!flatpak_dir_lookup_remote_filter (self, remote_or_uri, FALSE, NULL, &state->allow_refs, &state->deny_refs, error))
         return NULL;
+      if (!ostree_repo_remote_get_url (self->repo, remote_or_uri, &url, error))
+        return FALSE;
 
       state->default_token_type = flatpak_dir_get_remote_default_token_type (self, remote_or_uri);
     }
@@ -11753,42 +11748,51 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
           if (gpg_result == NULL ||
               !ostree_gpg_verify_result_require_valid_signature (gpg_result, error))
             return NULL;
-
         }
 
       if (opt_summary_is_index)
         {
           if (opt_summary_sig)
-            state->index_sig_bytes = g_bytes_ref (opt_summary_sig);
-          state->index = g_variant_ref_sink (g_variant_new_from_bytes (FLATPAK_SUMMARY_INDEX_GVARIANT_FORMAT,
-                                                                       opt_summary, FALSE));
+            index_sig_bytes = g_bytes_ref (opt_summary_sig);
+          index_bytes = g_bytes_ref (opt_summary);
         }
       else
         {
           if (opt_summary_sig)
-            state->summary_sig_bytes = g_bytes_ref (opt_summary_sig);
-          state->summary_bytes = g_bytes_ref (opt_summary);
-          state->summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
-                                                                         opt_summary, FALSE));
+            summary_sig_bytes = g_bytes_ref (opt_summary_sig);
+          summary_bytes = g_bytes_ref (opt_summary);
         }
+
       got_summary = TRUE;
     }
 
+  /* First try the memory cache. Note: No in-memory caching for local files. */
+  if (!is_local)
+    {
+      if (!got_summary)
+        {
+          g_autofree char *index_cache_key = g_strconcat ("index-", remote_or_uri, NULL);
+          if (flatpak_dir_lookup_cached_summary (self, &index_bytes, &index_sig_bytes, index_cache_key, url))
+            got_summary = TRUE;
+        }
 
-  /* First look for an indexed summary */
+      if (!got_summary)
+        {
+          g_autofree char *summary_cache_key = g_strconcat ("summary-", remote_or_uri, NULL);
+          if (flatpak_dir_lookup_cached_summary (self, &summary_bytes, &summary_sig_bytes, summary_cache_key, url))
+            got_summary = TRUE;
+        }
+    }
+
+  /* Then look for an indexed summary on disk/network */
   if (!got_summary)
     {
       g_autoptr(GError) local_error = NULL;
-      g_autoptr(GBytes) index_bytes = NULL;
-      g_autoptr(GBytes) index_sig_bytes = NULL;
 
       if (flatpak_dir_remote_fetch_summary_index (self, remote_or_uri, only_cached, &index_bytes, &index_sig_bytes,
                                                   cancellable, &local_error))
         {
           got_summary = TRUE;
-          state->index = g_variant_ref_sink (g_variant_new_from_bytes (FLATPAK_SUMMARY_INDEX_GVARIANT_FORMAT,
-                                                                       index_bytes, FALSE));
-          state->index_sig_bytes = g_steal_pointer (&index_sig_bytes);
         }
       else
         {
@@ -11814,18 +11818,12 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
   if (!got_summary)
     {
       /* No index, fall back to full summary */
-      got_summary = TRUE;
       g_autoptr(GError) local_error = NULL;
-      g_autoptr(GBytes) summary_bytes = NULL;
-      g_autoptr(GBytes) summary_sig_bytes = NULL;
 
       if (flatpak_dir_remote_fetch_summary (self, remote_or_uri, only_cached, &summary_bytes, &summary_sig_bytes,
                                             cancellable, &local_error))
         {
-          state->summary_sig_bytes = g_steal_pointer (&summary_sig_bytes);
-          state->summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
-                                                                         summary_bytes, FALSE));
-          state->summary_bytes = g_steal_pointer (&summary_bytes);
+          got_summary = TRUE;
         }
       else
         {
@@ -11840,6 +11838,20 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
               return NULL;
             }
         }
+    }
+
+  if (index_bytes)
+    {
+      state->index = g_variant_ref_sink (g_variant_new_from_bytes (FLATPAK_SUMMARY_INDEX_GVARIANT_FORMAT,
+                                                                   index_bytes, FALSE));
+      state->index_sig_bytes = g_steal_pointer (&index_sig_bytes);
+    }
+  else if (summary_bytes)
+    {
+      state->summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
+                                                                     summary_bytes, FALSE));
+      state->summary_bytes = g_steal_pointer (&summary_bytes);
+      state->summary_sig_bytes = g_steal_pointer (&summary_sig_bytes);
     }
 
   if (state->index)
