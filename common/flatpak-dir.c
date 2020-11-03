@@ -11990,24 +11990,6 @@ flatpak_dir_get_remote_state_local_only (FlatpakDir   *self,
   return _flatpak_dir_get_remote_state (self, remote, TRUE, TRUE, FALSE, FALSE, NULL, NULL, cancellable, error);
 }
 
-static gboolean
-flatpak_dir_remote_has_ref (FlatpakDir *self,
-                            const char *remote,
-                            const char *ref)
-{
-  g_autoptr(GError) local_error = NULL;
-  g_autoptr(FlatpakRemoteState) state = NULL;
-
-  state = flatpak_dir_get_remote_state_optional (self, remote, FALSE, NULL, &local_error);
-  if (state == NULL)
-    {
-      g_debug ("Can't get state for remote %s: %s", remote, local_error->message);
-      return FALSE;
-    }
-
-  return flatpak_remote_state_lookup_ref (state, ref, NULL, NULL, NULL, NULL, NULL);
-}
-
 static void
 populate_hash_table_from_refs_map (GHashTable         *ret_all_refs,
                                    GHashTable         *ref_timestamps,
@@ -13825,116 +13807,37 @@ flatpak_dir_list_enumerated_remotes (FlatpakDir   *self,
   return (char **) g_ptr_array_free (g_steal_pointer (&res), FALSE);
 }
 
-typedef struct {
-  FlatpakDir *dir;
-  const char *prioritized_remote;
-} RemoteSortData;
-
-static gint
-cmp_remote_with_prioritized (gconstpointer a,
-                             gconstpointer b,
-                             gpointer      user_data)
-{
-  RemoteSortData *rsd = user_data;
-  FlatpakDir *self = rsd->dir;
-  const char *a_name = *(const char **) a;
-  const char *b_name = *(const char **) b;
-  int prio_a, prio_b;
-
-  prio_a = flatpak_dir_get_remote_prio (self, a_name);
-  prio_b = flatpak_dir_get_remote_prio (self, b_name);
-
-  /* Here we are assuming the array is already sorted by cmp_remote() and only
-   * putting a particular remote at the top of its priority level */
-  if (prio_b != prio_a)
-    return prio_b - prio_a;
-  else
-    {
-      if (strcmp (a_name, rsd->prioritized_remote) == 0)
-        return -1;
-      if (strcmp (b_name, rsd->prioritized_remote) == 0)
-        return 1;
-    }
-
-  return 0;
-}
-
 char **
-flatpak_dir_search_for_dependency (FlatpakDir   *self,
-                                   const char   *prioritized_remote,
-                                   const char   *runtime_ref,
-                                   GCancellable *cancellable,
-                                   GError      **error)
+flatpak_dir_list_dependency_remotes (FlatpakDir   *self,
+                                     GCancellable *cancellable,
+                                     GError      **error)
 {
-  g_autoptr(GPtrArray) found = g_ptr_array_new_with_free_func (g_free);
+  g_autoptr(GPtrArray) res = g_ptr_array_new_with_free_func (g_free);
   g_auto(GStrv) remotes = NULL;
-  RemoteSortData rsd = { NULL };
   int i;
 
-  remotes = flatpak_dir_list_enumerated_remotes (self, cancellable, error);
+  remotes = flatpak_dir_list_remotes (self, cancellable, error);
   if (remotes == NULL)
     return NULL;
-
-  /* Put @prioritized_remote before the others at its priority level */
-  rsd.dir = self;
-  rsd.prioritized_remote = prioritized_remote;
-  g_qsort_with_data (remotes, g_strv_length (remotes), sizeof (char *),
-                     cmp_remote_with_prioritized, &rsd);
 
   for (i = 0; remotes != NULL && remotes[i] != NULL; i++)
     {
       const char *remote = remotes[i];
 
-      if (flatpak_dir_get_remote_nodeps (self, remote))
+      if (flatpak_dir_get_remote_disabled (self, remote))
         continue;
 
-      if (flatpak_dir_remote_has_ref (self, remote, runtime_ref))
-        g_ptr_array_add (found, g_strdup (remote));
-    }
-
-  g_ptr_array_add (found, NULL);
-
-  return (char **) g_ptr_array_free (g_steal_pointer (&found), FALSE);
-}
-
-char **
-flatpak_dir_search_for_local_dependency (FlatpakDir   *self,
-                                         const char   *prioritized_remote,
-                                         const char   *runtime_ref,
-                                         GCancellable *cancellable,
-                                         GError      **error)
-{
-  g_autoptr(GPtrArray) found = g_ptr_array_new_with_free_func (g_free);
-  g_auto(GStrv) remotes = NULL;
-  RemoteSortData rsd = { NULL };
-  int i;
-
-  remotes = flatpak_dir_list_enumerated_remotes (self, cancellable, error);
-  if (remotes == NULL)
-    return NULL;
-
-  /* Put @prioritized_remote before the others at its priority level */
-  rsd.dir = self;
-  rsd.prioritized_remote = prioritized_remote;
-  g_qsort_with_data (remotes, g_strv_length (remotes), sizeof (char *),
-                     cmp_remote_with_prioritized, &rsd);
-
-  for (i = 0; remotes != NULL && remotes[i] != NULL; i++)
-    {
-      const char *remote = remotes[i];
-      g_autofree char *commit = NULL;
+      if (flatpak_dir_get_remote_noenumerate (self, remote))
+        continue;
 
       if (flatpak_dir_get_remote_nodeps (self, remote))
         continue;
 
-      commit = flatpak_dir_read_latest (self, remote, runtime_ref, NULL, NULL, NULL);
-      if (commit != NULL)
-        g_ptr_array_add (found, g_strdup (remote));
+      g_ptr_array_add (res, g_strdup (remote));
     }
 
-  g_ptr_array_add (found, NULL);
-
-  return (char **) g_ptr_array_free (g_steal_pointer (&found), FALSE);
+  g_ptr_array_add (res, NULL);
+  return (char **) g_ptr_array_free (g_steal_pointer (&res), FALSE);
 }
 
 gboolean

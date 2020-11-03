@@ -2100,30 +2100,136 @@ add_related (FlatpakTransaction          *self,
   return TRUE;
 }
 
+typedef struct {
+  FlatpakDir *dir;
+  const char *prioritized_remote;
+} RemoteSortData;
+
+static gint
+cmp_remote_with_prioritized (gconstpointer a,
+                             gconstpointer b,
+                             gpointer      user_data)
+{
+  RemoteSortData *rsd = user_data;
+  FlatpakDir *self = rsd->dir;
+  const char *a_name = *(const char **) a;
+  const char *b_name = *(const char **) b;
+  int prio_a, prio_b;
+
+  prio_a = flatpak_dir_get_remote_prio (self, a_name);
+  prio_b = flatpak_dir_get_remote_prio (self, b_name);
+
+  /* Here we are assuming the array is already sorted by cmp_remote() and only
+   * putting a particular remote at the top of its priority level */
+  if (prio_b != prio_a)
+    return prio_b - prio_a;
+  else
+    {
+      if (strcmp (a_name, rsd->prioritized_remote) == 0)
+        return -1;
+      if (strcmp (b_name, rsd->prioritized_remote) == 0)
+        return 1;
+    }
+
+  return 0;
+}
+
+static char **
+search_for_dependency (FlatpakTransaction  *self,
+                       char               **remotes,
+                       const char          *runtime_ref,
+                       GCancellable        *cancellable,
+                       GError             **error)
+{
+  g_autoptr(GPtrArray) found = g_ptr_array_new_with_free_func (g_free);
+  int i;
+
+  for (i = 0; remotes != NULL && remotes[i] != NULL; i++)
+    {
+      const char *remote = remotes[i];
+      g_autoptr(GError) local_error = NULL;
+      g_autoptr(FlatpakRemoteState) state = NULL;
+
+      state = flatpak_transaction_ensure_remote_state (self, FLATPAK_TRANSACTION_OPERATION_INSTALL, remote, &local_error);
+      if (state == NULL)
+        {
+          g_debug ("Can't get state for remote %s: %s", remote, local_error->message);
+          return FALSE;
+        }
+
+      if (flatpak_remote_state_lookup_ref (state, runtime_ref, NULL, NULL, NULL, NULL, NULL))
+        g_ptr_array_add (found, g_strdup (remote));
+    }
+
+  g_ptr_array_add (found, NULL);
+
+  return (char **) g_ptr_array_free (g_steal_pointer (&found), FALSE);
+}
+
+static char **
+search_for_local_dependency (FlatpakTransaction *self,
+                             char              **remotes,
+                             const char         *runtime_ref,
+                             GCancellable       *cancellable,
+                             GError            **error)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  g_autoptr(GPtrArray) found = g_ptr_array_new_with_free_func (g_free);
+  int i;
+
+  for (i = 0; remotes != NULL && remotes[i] != NULL; i++)
+    {
+      const char *remote = remotes[i];
+      g_autofree char *commit = NULL;
+
+      commit = flatpak_dir_read_latest (priv->dir, remote, runtime_ref, NULL, NULL, NULL);
+      if (commit != NULL)
+        g_ptr_array_add (found, g_strdup (remote));
+    }
+
+  g_ptr_array_add (found, NULL);
+
+  return (char **) g_ptr_array_free (g_steal_pointer (&found), FALSE);
+}
+
 static char *
 find_runtime_remote (FlatpakTransaction             *self,
                      const char                     *app_ref,
                      const char                     *app_remote,
                      const char                     *runtime_ref,
                      FlatpakTransactionOperationType source_kind,
+                     GCancellable                   *cancellable,
                      GError                        **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
-  g_auto(GStrv) remotes = NULL;
+  g_auto(GStrv) all_remotes = NULL;
+  g_auto(GStrv) found_remotes = NULL;
   const char *app_pref;
   const char *runtime_pref;
+  RemoteSortData rsd = { NULL };
   int res = -1;
+
+  all_remotes = flatpak_dir_list_dependency_remotes (priv->dir, cancellable, error);
+  if (all_remotes == NULL)
+    return NULL;
+
+  /* Put @app_remote before the others at its priority level */
+  rsd.dir = priv->dir;
+  rsd.prioritized_remote = app_remote;
+  g_qsort_with_data (all_remotes, g_strv_length (all_remotes), sizeof (char *),
+                     cmp_remote_with_prioritized, &rsd);
+
 
   app_pref = strchr (app_ref, '/') + 1;
   runtime_pref = strchr (runtime_ref, '/') + 1;
 
   /* Here we are passing along app_remote so it gets priority */
   if (transaction_is_local_only (self, source_kind))
-    remotes = flatpak_dir_search_for_local_dependency (priv->dir, app_remote, runtime_ref, NULL, NULL);
+    found_remotes = search_for_local_dependency (self, all_remotes, runtime_ref, NULL, NULL);
   else
-    remotes = flatpak_dir_search_for_dependency (priv->dir, app_remote, runtime_ref, NULL, NULL);
+    found_remotes = search_for_dependency (self, all_remotes, runtime_ref, NULL, NULL);
 
-  if (remotes == NULL || *remotes == NULL)
+  if (found_remotes == NULL || *found_remotes == NULL)
     {
       flatpak_fail_error (error, FLATPAK_ERROR_RUNTIME_NOT_FOUND,
                           _("The application %s requires the runtime %s which was not found"),
@@ -2133,13 +2239,13 @@ find_runtime_remote (FlatpakTransaction             *self,
 
   /* In the no-pull case, if only one local ref is available, assume that is the one because
      the user chose it interactively when pulling */
-  if (priv->no_pull && g_strv_length (remotes) == 1)
+  if (priv->no_pull && g_strv_length (found_remotes) == 1)
     res = 0;
   else
-    g_signal_emit (self, signals[CHOOSE_REMOTE_FOR_REF], 0, app_ref, runtime_ref, remotes, &res);
+    g_signal_emit (self, signals[CHOOSE_REMOTE_FOR_REF], 0, app_ref, runtime_ref, found_remotes, &res);
 
-  if (res >= 0 && res < g_strv_length (remotes))
-    return g_strdup (remotes[res]);
+  if (res >= 0 && res < g_strv_length (found_remotes))
+    return g_strdup (found_remotes[res]);
 
   flatpak_fail_error (error, FLATPAK_ERROR_RUNTIME_NOT_FOUND,
                       _("The application %s requires the runtime %s which is not installed"),
@@ -2206,7 +2312,7 @@ add_deps (FlatpakTransaction          *self,
     {
       if (!ref_is_installed (self, full_runtime_ref))
         {
-          runtime_remote = find_runtime_remote (self, op->ref, op->remote, full_runtime_ref, op->kind, error);
+          runtime_remote = find_runtime_remote (self, op->ref, op->remote, full_runtime_ref, op->kind, NULL, error);
           if (runtime_remote == NULL)
             return FALSE;
 
