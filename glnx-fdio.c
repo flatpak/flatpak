@@ -1105,6 +1105,11 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
 {
   char *dnbuf = strdupa (subpath);
   const char *dn = dirname (dnbuf);
+  gboolean increasing_mtime = (flags & GLNX_FILE_REPLACE_INCREASING_MTIME) != 0;
+  gboolean nodatasync = (flags & GLNX_FILE_REPLACE_NODATASYNC) != 0;
+  gboolean datasync_new = (flags & GLNX_FILE_REPLACE_DATASYNC_NEW) != 0;
+  struct stat stbuf;
+  gboolean has_stbuf = FALSE;
 
   dfd = glnx_dirfd_canonicalize (dfd);
 
@@ -1128,33 +1133,54 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
   if (glnx_loop_write (tmpf.fd, buf, len) < 0)
     return glnx_throw_errno_prefix (error, "write");
 
-  if (!(flags & GLNX_FILE_REPLACE_NODATASYNC))
+  if (!nodatasync || increasing_mtime)
     {
-      struct stat stbuf;
-      gboolean do_sync;
-
       if (!glnx_fstatat_allow_noent (dfd, subpath, &stbuf, AT_SYMLINK_NOFOLLOW, error))
         return FALSE;
-      if (errno == ENOENT)
-        do_sync = (flags & GLNX_FILE_REPLACE_DATASYNC_NEW) > 0;
+      has_stbuf = errno != ENOENT;
+    }
+
+  if (!nodatasync)
+    {
+      gboolean do_sync;
+      if (!has_stbuf)
+        do_sync = datasync_new;
       else
         do_sync = TRUE;
 
       if (do_sync)
         {
-          if (fdatasync (tmpf.fd) != 0)
+          if (TEMP_FAILURE_RETRY (fdatasync (tmpf.fd)) != 0)
             return glnx_throw_errno_prefix (error, "fdatasync");
         }
     }
 
   if (uid != (uid_t) -1)
     {
-      if (fchown (tmpf.fd, uid, gid) != 0)
+      if (TEMP_FAILURE_RETRY (fchown (tmpf.fd, uid, gid)) != 0)
         return glnx_throw_errno_prefix (error, "fchown");
     }
 
-  if (fchmod (tmpf.fd, mode) != 0)
+  if (TEMP_FAILURE_RETRY (fchmod (tmpf.fd, mode)) != 0)
     return glnx_throw_errno_prefix (error, "fchmod");
+
+  if (increasing_mtime && has_stbuf)
+    {
+      struct stat fd_stbuf;
+
+      if (fstat (tmpf.fd, &fd_stbuf) != 0)
+        return glnx_throw_errno_prefix (error, "fstat");
+
+      /* We want to ensure that the new file has a st_mtime (i.e. the second precision)
+       * is incrementing to avoid mtime check issues when files change often.
+       */
+      if (fd_stbuf.st_mtime <= stbuf.st_mtime)
+        {
+          struct timespec ts[2] = { {0, UTIME_OMIT}, {stbuf.st_mtime + 1, 0} };
+          if (TEMP_FAILURE_RETRY (futimens (tmpf.fd, ts)) != 0)
+            return glnx_throw_errno_prefix (error, "futimens");
+        }
+    }
 
   if (!glnx_link_tmpfile_at (&tmpf, GLNX_LINK_TMPFILE_REPLACE,
                              dfd, subpath, error))
