@@ -194,7 +194,7 @@ typedef struct
 {
   GBytes *bytes;
   GBytes *bytes_sig;
-  char   *remote;
+  char   *name;
   char   *url;
   guint64 time;
 } CachedSummary;
@@ -10827,7 +10827,7 @@ cached_summary_free (CachedSummary *summary)
   g_bytes_unref (summary->bytes);
   if (summary->bytes_sig)
     g_bytes_unref (summary->bytes_sig);
-  g_free (summary->remote);
+  g_free (summary->name);
   g_free (summary->url);
   g_free (summary);
 }
@@ -10835,7 +10835,7 @@ cached_summary_free (CachedSummary *summary)
 static CachedSummary *
 cached_summary_new (GBytes     *bytes,
                     GBytes     *bytes_sig,
-                    const char *remote,
+                    const char *name,
                     const char *url)
 {
   CachedSummary *summary = g_new0 (CachedSummary, 1);
@@ -10844,7 +10844,7 @@ cached_summary_new (GBytes     *bytes,
   if (bytes_sig)
     summary->bytes_sig = g_bytes_ref (bytes_sig);
   summary->url = g_strdup (url);
-  summary->remote = g_strdup (remote);
+  summary->name = g_strdup (name);
   summary->time = g_get_monotonic_time ();
   return summary;
 }
@@ -10917,7 +10917,7 @@ flatpak_dir_cache_summary (FlatpakDir *self,
   g_assert (self->summary_cache != NULL);
 
   summary = cached_summary_new (bytes, bytes_sig, name, url);
-  g_hash_table_replace (self->summary_cache, summary->remote, summary);
+  g_hash_table_replace (self->summary_cache, summary->name, summary);
 
   G_UNLOCK (cache);
 }
