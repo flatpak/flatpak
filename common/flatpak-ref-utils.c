@@ -907,6 +907,15 @@ flatpak_decomposed_new_from_parts (FlatpakKinds        kind,
                                    const char         *branch,
                                    GError            **error)
 {
+  g_assert (kind == FLATPAK_KINDS_APP || kind == FLATPAK_KINDS_RUNTIME);
+  g_assert (id != NULL);
+
+  if (branch == NULL)
+    branch = "master";
+
+  if (arch == NULL)
+    arch = flatpak_get_arch ();
+
   return flatpak_decomposed_new_from_decomposed (NULL, kind, id, arch, branch, error);
 }
 
