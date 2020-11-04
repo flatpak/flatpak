@@ -6306,6 +6306,147 @@ out:
   return ret;
 }
 
+static gboolean
+flatpak_dir_list_refs_for_name_decomposed (FlatpakDir   *self,
+                                           FlatpakKinds kind,
+                                           const char   *name,
+                                           GPtrArray    *refs,
+                                           GCancellable *cancellable,
+                                           GError      **error)
+{
+  g_autoptr(GFile) base = NULL;
+  g_autoptr(GFile) dir = NULL;
+  g_autoptr(GFileEnumerator) dir_enum = NULL;
+  g_autoptr(GFileInfo) child_info = NULL;
+  GError *temp_error = NULL;
+
+  base = g_file_get_child (flatpak_dir_get_path (self), kind == FLATPAK_KINDS_APP ? "app" : "runtime");
+  dir = g_file_get_child (base, name);
+
+  if (!g_file_query_exists (dir, cancellable))
+    return TRUE;
+
+  dir_enum = g_file_enumerate_children (dir, OSTREE_GIO_FAST_QUERYINFO,
+                                        G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                        cancellable, error);
+  if (!dir_enum)
+    return FALSE;
+
+  while ((child_info = g_file_enumerator_next_file (dir_enum, cancellable, &temp_error)))
+    {
+      g_autoptr(GFile) child = NULL;
+      g_autoptr(GFileEnumerator) dir_enum2 = NULL;
+      g_autoptr(GFileInfo) child_info2 = NULL;
+      const char *arch;
+
+      arch = g_file_info_get_name (child_info);
+
+      if (g_file_info_get_file_type (child_info) != G_FILE_TYPE_DIRECTORY ||
+          strcmp (arch, "data") == 0 /* There used to be a data dir here, lets ignore it */)
+        {
+          g_clear_object (&child_info);
+          continue;
+        }
+
+      child = g_file_get_child (dir, arch);
+      g_clear_object (&dir_enum2);
+      dir_enum2 = g_file_enumerate_children (child, OSTREE_GIO_FAST_QUERYINFO,
+                                             G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                             cancellable, error);
+      if (!dir_enum2)
+        return FALSE;
+
+      while ((child_info2 = g_file_enumerator_next_file (dir_enum2, cancellable, &temp_error)))
+        {
+          const char *branch = g_file_info_get_name (child_info2);
+
+          if (g_file_info_get_file_type (child_info2) == G_FILE_TYPE_DIRECTORY)
+            {
+              g_autoptr(GFile) deploy = flatpak_build_file (child, branch, "active/deploy", NULL);
+
+              if (g_file_query_exists (deploy, NULL))
+                {
+                  FlatpakDecomposed *ref = flatpak_decomposed_new_from_parts (kind, name, arch, branch, NULL);
+                  if (ref)
+                    g_ptr_array_add (refs, ref);
+                }
+            }
+
+          g_clear_object (&child_info2);
+        }
+
+      if (temp_error != NULL)
+        {
+          g_propagate_error (error, temp_error);
+          return FALSE;
+        }
+
+      g_clear_object (&child_info);
+    }
+
+  if (temp_error != NULL)
+    {
+      g_propagate_error (error, temp_error);
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+GPtrArray *
+flatpak_dir_list_refs_decomposed (FlatpakDir   *self,
+                                  FlatpakKinds kind,
+                                  GCancellable *cancellable,
+                                  GError      **error)
+{
+  g_autoptr(GFile) base = NULL;
+  g_autoptr(GFileEnumerator) dir_enum = NULL;
+  g_autoptr(GFileInfo) child_info = NULL;
+  GError *temp_error = NULL;
+  g_autoptr(GPtrArray) refs = NULL;
+
+  refs = g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_decomposed_unref);
+
+  base = g_file_get_child (flatpak_dir_get_path (self), kind == FLATPAK_KINDS_APP ? "app" : "runtime");
+
+  if (!g_file_query_exists (base, cancellable))
+    return g_steal_pointer (&refs);
+
+  dir_enum = g_file_enumerate_children (base, OSTREE_GIO_FAST_QUERYINFO,
+                                        G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                        cancellable, error);
+  if (!dir_enum)
+    return NULL;
+
+  while ((child_info = g_file_enumerator_next_file (dir_enum, cancellable, &temp_error)))
+    {
+      const char *name;
+
+      if (g_file_info_get_file_type (child_info) != G_FILE_TYPE_DIRECTORY)
+        {
+          g_clear_object (&child_info);
+          continue;
+        }
+
+      name = g_file_info_get_name (child_info);
+
+      if (!flatpak_dir_list_refs_for_name_decomposed (self, kind, name, refs, cancellable, error))
+        return NULL;
+
+      g_clear_object (&child_info);
+    }
+
+  if (temp_error != NULL)
+    {
+      g_propagate_error (error, temp_error);
+      return NULL;
+    }
+
+  g_ptr_array_sort (refs, (GCompareFunc)flatpak_decomposed_strcmp_p);
+
+  return g_steal_pointer (&refs);
+}
+
 GVariant *
 flatpak_dir_read_latest_commit (FlatpakDir   *self,
                                 const char   *remote,
