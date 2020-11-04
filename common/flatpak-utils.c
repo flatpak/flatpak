@@ -2059,6 +2059,71 @@ flatpak_decomposed_dup_id (FlatpakDecomposed  *ref)
   return g_strndup (ref_id, len);
 }
 
+char *
+flatpak_decomposed_dup_readable_id (FlatpakDecomposed  *ref)
+{
+  gsize len;
+  const char *ref_id = flatpak_decomposed_peek_id (ref, &len);
+  const char *start;
+  gboolean is_debug, is_sources, is_locale, is_docs, is_sdk, is_platform, is_baseapp;
+  GString *s;
+
+  is_debug = str_has_suffix (ref_id, len, ".Debug");
+  if (is_debug)
+    len -= strlen (".Debug");
+
+  is_sources = str_has_suffix (ref_id, len, ".Sources");
+  if (is_sources)
+    len -= strlen (".Sources");
+
+  is_locale = str_has_suffix (ref_id, len, ".Locale");
+  if (is_locale)
+    len -= strlen (".Locale");
+
+  is_docs = str_has_suffix (ref_id, len, ".Docs");
+  if (is_docs)
+    len -= strlen (".Docs");
+
+  is_baseapp = str_has_suffix (ref_id, len, ".BaseApp");
+  if (is_baseapp)
+    len -= strlen (".BaseApp");
+
+  is_platform = str_has_suffix (ref_id, len, ".Platform");
+  if (is_platform)
+    len -= strlen (".Platform");
+
+  is_sdk = str_has_suffix (ref_id, len, ".Sdk");
+  if (is_sdk)
+    len -= strlen (".Sdk");
+
+  start = ref_id + len;
+
+  while (start > ref_id && start[-1] != '.')
+    start--;
+
+  len -= (start - ref_id);
+
+  s = g_string_new ("");
+  g_string_append_len (s, start, len);
+  if (is_sdk)
+    g_string_append (s, _(" development platform"));
+  if (is_platform)
+    g_string_append (s, _(" platform"));
+  if (is_baseapp)
+    g_string_append (s, _(" application base"));
+
+  if (is_debug)
+    g_string_append (s, _(" debug symbols"));
+  if (is_sources)
+    g_string_append (s, _(" sourcecode"));
+  if (is_locale)
+    g_string_append (s, _(" translations"));
+  if (is_docs)
+    g_string_append (s, _(" docs"));
+
+  return g_string_free (s, FALSE);
+}
+
 gboolean
 flatpak_decomposed_is_id (FlatpakDecomposed  *ref,
                           const char         *id)
