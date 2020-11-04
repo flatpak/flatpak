@@ -920,6 +920,11 @@ gboolean   flatpak_dir_list_remote_refs (FlatpakDir         *self,
                                          GHashTable        **refs,
                                          GCancellable       *cancellable,
                                          GError            **error);
+gboolean   flatpak_dir_list_remote_refs_decomposed (FlatpakDir         *self,
+                                                    FlatpakRemoteState *state,
+                                                    GHashTable        **refs,
+                                                    GCancellable       *cancellable,
+                                                    GError            **error);
 gboolean   flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
                                              FlatpakRemoteState *state,
                                              GHashTable        **out_all_refs,
