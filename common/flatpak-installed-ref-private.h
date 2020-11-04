@@ -28,7 +28,7 @@
 #include <flatpak-installed-ref.h>
 #include <flatpak-dir-private.h>
 
-FlatpakInstalledRef *flatpak_installed_ref_new (const char  *full_ref,
+FlatpakInstalledRef *flatpak_installed_ref_new (FlatpakDecomposed *ref,
                                                 const char  *commit,
                                                 const char  *latest_commit,
                                                 const char  *origin,

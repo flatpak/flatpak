@@ -319,32 +319,29 @@ flatpak_remote_ref_get_eol_rebase (FlatpakRemoteRef *self)
 }
 
 FlatpakRemoteRef *
-flatpak_remote_ref_new (const char           *full_ref,
-                        const char           *commit,
-                        const char           *remote_name,
-                        const char           *collection_id,
-                        FlatpakRemoteState   *state)
+flatpak_remote_ref_new (FlatpakDecomposed   *decomposed,
+                        const char          *commit,
+                        const char          *remote_name,
+                        const char          *collection_id,
+                        FlatpakRemoteState  *state)
 {
-  FlatpakRefKind kind = FLATPAK_REF_KIND_APP;
   guint64 download_size = 0, installed_size = 0;
   g_autofree char *metadata = NULL;
   g_autoptr(GBytes) metadata_bytes = NULL;
-  g_auto(GStrv) parts = NULL;
-  FlatpakRemoteRef *ref;
   VarMetadataRef sparse_cache;
   const char *eol = NULL;
   const char *eol_rebase = NULL;
+  FlatpakRemoteRef *ref;
 
-  parts = flatpak_decompose_ref (full_ref, NULL);
-  if (parts == NULL)
-    return NULL;
+  if (collection_id == NULL)
+    collection_id = flatpak_decomposed_get_collection_id (decomposed);
 
   if (state &&
-      !flatpak_remote_state_load_data (state, full_ref,
+      !flatpak_remote_state_load_data (state, flatpak_decomposed_get_ref (decomposed),
                                        &download_size, &installed_size, &metadata,
                                        NULL))
     {
-      g_debug ("Can't find metadata for ref %s", full_ref);
+      g_debug ("Can't find metadata for ref %s", flatpak_decomposed_get_ref (decomposed));
     }
 
   if (metadata)
@@ -354,20 +351,17 @@ flatpak_remote_ref_new (const char           *full_ref,
     }
 
   if (state &&
-      flatpak_remote_state_lookup_sparse_cache (state, full_ref, &sparse_cache, NULL))
+      flatpak_remote_state_lookup_sparse_cache (state, flatpak_decomposed_get_ref (decomposed), &sparse_cache, NULL))
     {
       eol = var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE, NULL);
       eol_rebase = var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, NULL);
     }
 
-  if (strcmp (parts[0], "app") != 0)
-    kind = FLATPAK_REF_KIND_RUNTIME;
-
   ref = g_object_new (FLATPAK_TYPE_REMOTE_REF,
-                      "kind", kind,
-                      "name", parts[1],
-                      "arch", parts[2],
-                      "branch", parts[3],
+                      "kind", flatpak_decomposed_get_kind (decomposed),
+                      "name", flatpak_decomposed_peek_id (decomposed, NULL),
+                      "arch", flatpak_decomposed_peek_arch (decomposed, NULL),
+                      "branch", flatpak_decomposed_peek_branch (decomposed, NULL),
                       "commit", commit,
                       "remote-name", remote_name,
                       "collection-id", collection_id,

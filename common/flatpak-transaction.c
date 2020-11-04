@@ -4022,7 +4022,7 @@ flatpak_transaction_resolve_flatpakrefs (FlatpakTransaction *self,
     {
       GKeyFile *flatpakref = l->data;
       g_autofree char *remote = NULL;
-      g_autofree char *ref = NULL;
+      g_autoptr(FlatpakDecomposed) ref = NULL;
 
       /* Handle this before the runtime deps, because they might be the same */
       if (!handle_suggested_remote_name (self, flatpakref, error))
@@ -4041,7 +4041,7 @@ flatpak_transaction_resolve_flatpakrefs (FlatpakTransaction *self,
 
       flatpak_installation_drop_caches (priv->installation, NULL, NULL);
 
-      if (!flatpak_transaction_add_install (self, remote, ref, NULL, error))
+      if (!flatpak_transaction_add_install (self, remote, flatpak_decomposed_get_ref (ref), NULL, error))
         return FALSE;
     }
 

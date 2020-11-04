@@ -694,7 +694,7 @@ flatpak_installed_ref_get_appdata_content_rating (FlatpakInstalledRef *self)
 }
 
 FlatpakInstalledRef *
-flatpak_installed_ref_new (const char  *full_ref,
+flatpak_installed_ref_new (FlatpakDecomposed *decomposed,
                            const char  *commit,
                            const char  *latest_commit,
                            const char  *origin,
@@ -712,24 +712,17 @@ flatpak_installed_ref_new (const char  *full_ref,
                            const char  *appdata_content_rating_type,
                            GHashTable  *appdata_content_rating)
 {
-  FlatpakRefKind kind = FLATPAK_REF_KIND_APP;
   FlatpakInstalledRef *ref;
-  g_auto(GStrv) parts = NULL;
-
-  parts = g_strsplit (full_ref, "/", -1);
-
-  if (strcmp (parts[0], "app") != 0)
-    kind = FLATPAK_REF_KIND_RUNTIME;
 
   /* Canonicalize the "no subpaths" case */
   if (subpaths && *subpaths == NULL)
     subpaths = NULL;
 
   ref = g_object_new (FLATPAK_TYPE_INSTALLED_REF,
-                      "kind", kind,
-                      "name", parts[1],
-                      "arch", parts[2],
-                      "branch", parts[3],
+                      "kind", flatpak_decomposed_get_kind (decomposed),
+                      "name", flatpak_decomposed_peek_id (decomposed, NULL),
+                      "arch", flatpak_decomposed_peek_arch (decomposed, NULL),
+                      "branch", flatpak_decomposed_peek_branch (decomposed, NULL),
                       "commit", commit,
                       "latest-commit", latest_commit,
                       "origin", origin,

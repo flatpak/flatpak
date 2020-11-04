@@ -968,28 +968,41 @@ test_list_refs_in_remotes (void)
   g_assert_nonnull (refs1);
   g_assert_true (refs1->len > 1);
 
-  /* Ensure that the number of different collection IDs is the same as the
-   * number of apps */
+  /* Listing from the remote only gets refs for the main collection id of the remote, and no collection ids */
   for (guint i = 0; i < refs1->len; ++i)
     {
       FlatpakRef *ref = g_ptr_array_index (refs1, i);
-      g_hash_table_add (ref_specs, (gpointer)flatpak_ref_format_ref_cached (ref));
+      const char *ref_spec = flatpak_ref_format_ref_cached (ref);
+      const char *collection_id = flatpak_ref_get_collection_id (ref);
+
+      /* There is no collection ref defined for the remote, so collection id is NULL */
+      g_assert (collection_id == NULL);
+
+      g_hash_table_add (ref_specs, (char *)ref_spec);
     }
 
-  /* Ensure that listing the refs by using a remote's URI will get us the
-   * same results as using the name */
+  /* But listing by file: uri gives us all */
   repo_uri = flatpak_remote_get_url (remote);
   refs2 = flatpak_installation_list_remote_refs_sync (inst, repo_uri, NULL, &error);
 
   g_assert_no_error (error);
   g_assert_nonnull (refs2);
-  g_assert_cmpuint (refs2->len, ==, refs1->len);
+  g_assert_cmpuint (refs2->len, ==, 3 * refs1->len);
 
   for (guint i = 0; i < refs2->len; ++i)
     {
       FlatpakRef *ref = g_ptr_array_index (refs2, i);
       const char *ref_spec = flatpak_ref_format_ref_cached (ref);
-      g_assert_nonnull (g_hash_table_lookup (ref_specs, ref_spec));
+      const char *collection_id = flatpak_ref_get_collection_id (ref);
+
+      /* Directly listing a file:/ uri remore returns collection ids for all refs */
+      g_assert_nonnull (collection_id);
+
+      /* All the main 1 collection ids should have been recorded above */
+      if (g_str_has_suffix (collection_id, "1"))
+        g_assert_nonnull (g_hash_table_lookup (ref_specs, ref_spec));
+      else
+        g_assert_null (g_hash_table_lookup (ref_specs, ref_spec));
     }
 }
 
