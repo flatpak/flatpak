@@ -785,7 +785,13 @@ flatpak_decomposed_new_from_decomposed (FlatpakDecomposed  *old,
   char *ref;
   gsize offset;
 
-  g_assert (old != NULL);
+  if (old == NULL)
+    {
+      g_assert (opt_kind != 0);
+      g_assert (opt_id != NULL);
+      g_assert (opt_arch != NULL);
+      g_assert (opt_branch != NULL);
+    }
 
   if (opt_kind == 0)
     kind_str = flatpak_decomposed_get_kind_str (old);
@@ -885,6 +891,17 @@ flatpak_decomposed_new_from_decomposed (FlatpakDecomposed  *old,
 
   return decomposed;
 }
+
+FlatpakDecomposed *
+flatpak_decomposed_new_from_parts (FlatpakKinds        kind,
+                                   const char         *id,
+                                   const char         *arch,
+                                   const char         *branch,
+                                   GError            **error)
+{
+  return flatpak_decomposed_new_from_decomposed (NULL, kind, id, arch, branch, error);
+}
+
 
 FlatpakDecomposed *
 flatpak_decomposed_ref (FlatpakDecomposed  *ref)
