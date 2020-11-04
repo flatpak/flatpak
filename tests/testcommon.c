@@ -113,6 +113,7 @@ test_decompose (void)
   g_autofree char *runtime_id = NULL;
   g_autofree char *runtime_arch = NULL;
   g_autofree char *runtime_branch = NULL;
+  gsize len, len2;
 
   g_assert_null (flatpak_decomposed_new_from_ref ("app/wrong/x86_64/master", &error));
   g_assert (error != NULL);
@@ -154,30 +155,33 @@ test_decompose (void)
   g_assert (runtime_ref != NULL);
   g_assert_null (error);
 
-  g_assert_cmpstr (flatpak_decomposed_peek_ref (runtime_ref), ==, "runtime/org.the.runtime/x86_64/master");
-  g_assert_cmpstr (flatpak_decomposed_peek_refspec (runtime_ref), ==, "runtime/org.the.runtime/x86_64/master");
+  g_assert_cmpstr (flatpak_decomposed_get_ref (runtime_ref), ==, "runtime/org.the.runtime/x86_64/master");
+  g_assert_cmpstr (flatpak_decomposed_get_refspec (runtime_ref), ==, "runtime/org.the.runtime/x86_64/master");
   g_assert (flatpak_decomposed_equal (runtime_ref, runtime_ref));
   g_assert (flatpak_decomposed_hash (runtime_ref) == g_str_hash ("runtime/org.the.runtime/x86_64/master"));
   g_assert (!flatpak_decomposed_is_app (runtime_ref));
   g_assert (flatpak_decomposed_is_runtime (runtime_ref));
   g_assert (flatpak_decomposed_get_kind (runtime_ref) == FLATPAK_KINDS_RUNTIME);
 
-  g_assert_cmpstr (flatpak_decomposed_peek_id (runtime_ref), ==, "org.the.runtime/x86_64/master");
-  runtime_id = flatpak_decomposed_get_id (runtime_ref);
+  g_assert_cmpstr (flatpak_decomposed_peek_id (runtime_ref, &len), ==, "org.the.runtime/x86_64/master");
+  g_assert (len == strlen("org.the.runtime"));
+  runtime_id = flatpak_decomposed_dup_id (runtime_ref);
   g_assert_cmpstr (runtime_id, ==, "org.the.runtime");
   g_assert (flatpak_decomposed_is_id (runtime_ref, "org.the.runtime"));
   g_assert (!flatpak_decomposed_is_id (runtime_ref, "org.the.runtim"));
   g_assert (!flatpak_decomposed_is_id (runtime_ref, "org.the.runtimee"));
 
-  g_assert_cmpstr (flatpak_decomposed_peek_arch (runtime_ref), ==, "x86_64/master");
-  runtime_arch = flatpak_decomposed_get_arch (runtime_ref);
+  g_assert_cmpstr (flatpak_decomposed_peek_arch (runtime_ref, &len), ==, "x86_64/master");
+  g_assert (len == strlen ("x86_64"));
+  runtime_arch = flatpak_decomposed_dup_arch (runtime_ref);
   g_assert_cmpstr (runtime_arch, ==, "x86_64");
   g_assert (flatpak_decomposed_is_arch (runtime_ref, "x86_64"));
   g_assert (!flatpak_decomposed_is_arch (runtime_ref, "x86_6"));
   g_assert (!flatpak_decomposed_is_arch (runtime_ref, "x86_644"));
 
-  g_assert_cmpstr (flatpak_decomposed_peek_branch (runtime_ref), ==, "master");
-  runtime_branch = flatpak_decomposed_get_branch (runtime_ref);
+  g_assert_cmpstr (flatpak_decomposed_peek_branch (runtime_ref, &len), ==, "master");
+  g_assert (len == strlen ("master"));
+  runtime_branch = flatpak_decomposed_dup_branch (runtime_ref);
   g_assert_cmpstr (runtime_branch, ==, "master");
   g_assert (flatpak_decomposed_is_branch (runtime_ref, "master"));
   g_assert (!flatpak_decomposed_is_arch (runtime_ref, "maste"));
@@ -187,8 +191,8 @@ test_decompose (void)
   g_assert (app_ref != NULL);
   g_assert_null (error);
 
-  g_assert_cmpstr (flatpak_decomposed_peek_ref (app_ref), ==, "app/org.the.app/x86_64/master");
-  g_assert_cmpstr (flatpak_decomposed_peek_refspec (app_ref), ==, "app/org.the.app/x86_64/master");
+  g_assert_cmpstr (flatpak_decomposed_get_ref (app_ref), ==, "app/org.the.app/x86_64/master");
+  g_assert_cmpstr (flatpak_decomposed_get_refspec (app_ref), ==, "app/org.the.app/x86_64/master");
   g_assert (flatpak_decomposed_equal (app_ref, app_ref));
   g_assert (!flatpak_decomposed_equal (app_ref, runtime_ref));
   g_assert (flatpak_decomposed_hash (app_ref) == g_str_hash ("app/org.the.app/x86_64/master"));
@@ -196,22 +200,26 @@ test_decompose (void)
   g_assert (!flatpak_decomposed_is_runtime (app_ref));
   g_assert (flatpak_decomposed_get_kind (app_ref) == FLATPAK_KINDS_APP);
 
-  g_assert_cmpstr (flatpak_decomposed_peek_id (app_ref), ==, "org.the.app/x86_64/master");
-  app_id = flatpak_decomposed_get_id (app_ref);
+  g_assert_cmpstr (flatpak_decomposed_peek_id (app_ref, &len), ==, "org.the.app/x86_64/master");
+  g_assert (len == strlen ("org.the.app"));
+  app_id = flatpak_decomposed_dup_id (app_ref);
   g_assert_cmpstr (app_id, ==, "org.the.app");
   g_assert (flatpak_decomposed_is_id (app_ref, "org.the.app"));
   g_assert (!flatpak_decomposed_is_id (app_ref, "org.the.ap"));
   g_assert (!flatpak_decomposed_is_id (app_ref, "org.the.appp"));
 
-  g_assert_cmpstr (flatpak_decomposed_peek_arch (app_ref), ==, "x86_64/master");
-  app_arch = flatpak_decomposed_get_arch (app_ref);
+  g_assert_cmpstr (flatpak_decomposed_peek_arch (app_ref, &len), ==, "x86_64/master");
+  g_assert (len == strlen ("x86_64"));
+  app_arch = flatpak_decomposed_dup_arch (app_ref);
   g_assert_cmpstr (app_arch, ==, "x86_64");
   g_assert (flatpak_decomposed_is_arch (app_ref, "x86_64"));
   g_assert (!flatpak_decomposed_is_arch (app_ref, "x86_6"));
   g_assert (!flatpak_decomposed_is_arch (app_ref, "x86_644"));
 
-  g_assert_cmpstr (flatpak_decomposed_peek_branch (app_ref), ==, "master");
-  app_branch = flatpak_decomposed_get_branch (app_ref);
+  g_assert_cmpstr (flatpak_decomposed_get_branch (app_ref), ==, "master");
+  g_assert_cmpstr (flatpak_decomposed_peek_branch (app_ref, &len), ==, "master");
+  g_assert (len == strlen ("master"));
+  app_branch = flatpak_decomposed_dup_branch (app_ref);
   g_assert_cmpstr (app_branch, ==, "master");
   g_assert (flatpak_decomposed_is_branch (app_ref, "master"));
   g_assert (!flatpak_decomposed_is_arch (app_ref, "maste"));
@@ -235,14 +243,141 @@ test_decompose (void)
   g_assert (refspec != NULL);
   g_assert_null (error);
 
-  g_assert_cmpstr (flatpak_decomposed_peek_ref (refspec), ==, "app/org.the.app/x86_64/master");
-  g_assert_cmpstr (flatpak_decomposed_peek_refspec (refspec), ==, "remote:app/org.the.app/x86_64/master");
-  g_autofree char *refspec_remote = flatpak_decomposed_get_remote (refspec);
+  g_assert_cmpstr (flatpak_decomposed_get_ref (refspec), ==, "app/org.the.app/x86_64/master");
+  g_assert_cmpstr (flatpak_decomposed_get_refspec (refspec), ==, "remote:app/org.the.app/x86_64/master");
+  g_autofree char *refspec_remote = flatpak_decomposed_dup_remote (refspec);
   g_assert_cmpstr (refspec_remote, ==, "remote");
-  g_autofree char *refspec_ref = flatpak_decomposed_get_ref (refspec);
+  g_autofree char *refspec_ref = flatpak_decomposed_dup_ref (refspec);
   g_assert_cmpstr (refspec_ref, ==, "app/org.the.app/x86_64/master");
-  g_autofree char *refspec_refspec = flatpak_decomposed_get_refspec (refspec);
+  g_autofree char *refspec_refspec = flatpak_decomposed_dup_refspec (refspec);
   g_assert_cmpstr (refspec_refspec, ==, "remote:app/org.the.app/x86_64/master");
+
+  {
+    FlatpakDecomposed *old = runtime_ref;
+    g_autoptr(FlatpakDecomposed) new = flatpak_decomposed_new_from_decomposed (old, 0, NULL, NULL, NULL, &error);
+    g_assert (new != NULL);
+    g_assert_null (error);
+
+    g_assert_cmpstr (flatpak_decomposed_get_ref (new), ==, flatpak_decomposed_get_ref (old));
+    g_assert_cmpstr (flatpak_decomposed_peek_id (new, &len), ==, flatpak_decomposed_peek_id (old, &len2));
+    g_assert (len == len2);
+    g_assert_cmpstr (flatpak_decomposed_peek_arch (new, &len), ==, flatpak_decomposed_peek_arch (old, &len2));
+    g_assert (len == len2);
+    g_assert_cmpstr (flatpak_decomposed_peek_branch (new, &len), ==, flatpak_decomposed_peek_branch (old, &len2));
+    g_assert (len == len2);
+  }
+
+  {
+    FlatpakDecomposed *old = app_ref;
+    g_autoptr(FlatpakDecomposed) new = flatpak_decomposed_new_from_decomposed (old, 0, NULL, NULL, NULL, &error);
+    g_assert (new != NULL);
+    g_assert_null (error);
+
+    g_assert_cmpstr (flatpak_decomposed_get_ref (new), ==, flatpak_decomposed_get_ref (old));
+    g_assert_cmpstr (flatpak_decomposed_peek_id (new, &len), ==, flatpak_decomposed_peek_id (old, &len2));
+    g_assert (len == len2);
+    g_assert_cmpstr (flatpak_decomposed_peek_arch (new, &len), ==, flatpak_decomposed_peek_arch (old, &len2));
+    g_assert (len == len2);
+    g_assert_cmpstr (flatpak_decomposed_peek_branch (new, &len), ==, flatpak_decomposed_peek_branch (old, &len2));
+    g_assert (len == len2);
+  }
+
+  {
+    FlatpakDecomposed *old = app_ref;
+    g_autofree gchar *new_id = NULL;
+
+    g_autoptr(FlatpakDecomposed) new = flatpak_decomposed_new_from_decomposed (old, FLATPAK_KINDS_RUNTIME, "org.new.app", NULL, NULL, &error);
+    g_assert (new != NULL);
+    g_assert_null (error);
+
+    g_assert_cmpstr (flatpak_decomposed_get_ref (new), ==, "runtime/org.new.app/x86_64/master");
+
+    g_assert (flatpak_decomposed_get_kind (new) == FLATPAK_KINDS_RUNTIME);
+    new_id = flatpak_decomposed_dup_id (new);
+    g_assert_cmpstr (new_id, ==, "org.new.app");
+
+    g_assert_cmpstr (flatpak_decomposed_peek_arch (new, &len), ==, flatpak_decomposed_peek_arch (old, &len2));
+    g_assert (len == len2);
+    g_assert_cmpstr (flatpak_decomposed_peek_branch (new, &len), ==, flatpak_decomposed_peek_branch (old, &len2));
+    g_assert (len == len2);
+  }
+
+  {
+    FlatpakDecomposed *old = app_ref;
+    g_autofree gchar *old_id = NULL;
+    g_autofree gchar *new_id = NULL;
+    g_autofree gchar *new_arch = NULL;
+    g_autofree gchar *old_branch = NULL;
+    g_autofree gchar *new_branch = NULL;
+
+    g_autoptr(FlatpakDecomposed) new = flatpak_decomposed_new_from_decomposed (old, 0, NULL, "i386", NULL, &error);
+    g_assert (new != NULL);
+    g_assert_null (error);
+
+    g_assert_cmpstr (flatpak_decomposed_get_ref (new), ==, "app/org.the.app/i386/master");
+
+    g_assert (flatpak_decomposed_get_kind (new) == FLATPAK_KINDS_APP);
+
+    new_id = flatpak_decomposed_dup_id (new);
+    old_id = flatpak_decomposed_dup_id (old);
+    g_assert_cmpstr (new_id, ==, old_id);
+
+    new_arch = flatpak_decomposed_dup_arch (new);
+    g_assert_cmpstr (new_arch, ==, "i386");
+
+    new_branch = flatpak_decomposed_dup_branch (new);
+    old_branch = flatpak_decomposed_dup_branch (old);
+    g_assert_cmpstr (new_branch, ==, old_branch);
+  }
+
+  {
+    FlatpakDecomposed *old = app_ref;
+    g_autofree gchar *old_id = NULL;
+    g_autofree gchar *new_id = NULL;
+    g_autofree gchar *new_arch = NULL;
+    g_autofree gchar *old_arch = NULL;
+    g_autofree gchar *new_branch = NULL;
+
+    g_autoptr(FlatpakDecomposed) new = flatpak_decomposed_new_from_decomposed (old, 0, NULL, NULL, "beta", &error);
+    g_assert (new != NULL);
+    g_assert_null (error);
+
+    g_assert_cmpstr (flatpak_decomposed_get_ref (new), ==, "app/org.the.app/x86_64/beta");
+
+    g_assert (flatpak_decomposed_get_kind (new) == FLATPAK_KINDS_APP);
+
+    new_id = flatpak_decomposed_dup_id (new);
+    old_id = flatpak_decomposed_dup_id (old);
+    g_assert_cmpstr (new_id, ==, old_id);
+
+    new_arch = flatpak_decomposed_dup_arch (new);
+    old_arch = flatpak_decomposed_dup_arch (old);
+    g_assert_cmpstr (new_arch, ==, old_arch);
+
+    new_branch = flatpak_decomposed_dup_branch (new);
+    g_assert_cmpstr (new_branch, ==, "beta");
+  }
+
+  {
+    FlatpakDecomposed *old = app_ref;
+    g_autofree gchar *new_id = NULL;
+    g_autofree gchar *new_arch = NULL;
+    g_autofree gchar *new_branch = NULL;
+
+    g_autoptr(FlatpakDecomposed) new = flatpak_decomposed_new_from_decomposed (old, FLATPAK_KINDS_RUNTIME, "org.new.app", "i386", "beta", &error);
+    g_assert (new != NULL);
+    g_assert_null (error);
+
+    g_assert_cmpstr (flatpak_decomposed_get_ref (new), ==, "runtime/org.new.app/i386/beta");
+
+    g_assert (flatpak_decomposed_get_kind (new) == FLATPAK_KINDS_RUNTIME);
+    new_id = flatpak_decomposed_dup_id (new);
+    g_assert_cmpstr (new_id, ==, "org.new.app");
+    new_arch = flatpak_decomposed_dup_arch (new);
+    g_assert_cmpstr (new_arch, ==, "i386");
+    new_branch = flatpak_decomposed_dup_branch (new);
+    g_assert_cmpstr (new_branch, ==, "beta");
+  }
 }
 
 

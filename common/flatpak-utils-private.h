@@ -206,6 +206,9 @@ gboolean flatpak_is_valid_branch (const char *string,
                                   GError    **error);
 gboolean flatpak_has_name_prefix (const char *string,
                                   const char *name);
+gboolean flatpak_is_valid_arch (const char *string,
+                                gssize      len,
+                                GError    **error);
 
 char * flatpak_make_valid_id_prefix (const char *orig_id);
 gboolean flatpak_id_has_subref_suffix (const char *id,
@@ -220,40 +223,62 @@ const char *flatpak_get_compat_arch_reverse (const char *compat_arch);
 typedef struct _FlatpakDecomposed FlatpakDecomposed;
 FlatpakDecomposed *flatpak_decomposed_new_from_ref          (const char         *ref,
                                                              GError            **error);
+FlatpakDecomposed *flatpak_decomposed_new_from_col_ref      (const char         *ref,
+                                                             const char         *collection_id,
+                                                             GError            **error);
 FlatpakDecomposed *flatpak_decomposed_new_from_refspec      (const char         *refspec,
                                                              GError            **error);
 FlatpakDecomposed *flatpak_decomposed_new_from_ref_take     (char               *ref,
                                                              GError            **error);
 FlatpakDecomposed *flatpak_decomposed_new_from_refspec_take (char               *refspec,
                                                              GError            **error);
+FlatpakDecomposed *flatpak_decomposed_new_from_decomposed   (FlatpakDecomposed  *ref,
+                                                             FlatpakKinds        opt_kind,
+                                                             const char         *opt_id,
+                                                             const char         *opt_arch,
+                                                             const char         *opt_branch,
+                                                             GError            **error);
 FlatpakDecomposed *flatpak_decomposed_ref                   (FlatpakDecomposed  *ref);
 void               flatpak_decomposed_unref                 (FlatpakDecomposed  *ref);
-const char *       flatpak_decomposed_peek_ref              (FlatpakDecomposed  *ref);
-const char *       flatpak_decomposed_peek_refspec          (FlatpakDecomposed  *ref);
-char *             flatpak_decomposed_get_ref               (FlatpakDecomposed  *ref);
-char *             flatpak_decomposed_get_refspec           (FlatpakDecomposed  *ref);
-char *             flatpak_decomposed_get_remote            (FlatpakDecomposed  *ref);
+const char *       flatpak_decomposed_get_ref               (FlatpakDecomposed  *ref);
+const char *       flatpak_decomposed_get_refspec           (FlatpakDecomposed  *ref);
+char *             flatpak_decomposed_dup_ref               (FlatpakDecomposed  *ref);
+char *             flatpak_decomposed_dup_refspec           (FlatpakDecomposed  *ref);
+char *             flatpak_decomposed_dup_remote            (FlatpakDecomposed  *ref);
+const char *       flatpak_decomposed_get_collection_id     (FlatpakDecomposed  *ref);
+char *             flatpak_decomposed_dup_collection_id     (FlatpakDecomposed  *ref);
 gboolean           flatpak_decomposed_equal                 (FlatpakDecomposed  *ref_a,
                                                              FlatpakDecomposed  *ref_b);
+gint               flatpak_decomposed_strcmp                (FlatpakDecomposed  *ref_a,
+                                                             FlatpakDecomposed  *ref_b);
+gint               flatpak_decomposed_strcmp_p              (FlatpakDecomposed **ref_a,
+                                                             FlatpakDecomposed **ref_b);
 guint              flatpak_decomposed_hash                  (FlatpakDecomposed  *ref);
 gboolean           flatpak_decomposed_is_app                (FlatpakDecomposed  *ref);
 gboolean           flatpak_decomposed_is_runtime            (FlatpakDecomposed  *ref);
 FlatpakKinds       flatpak_decomposed_get_kind              (FlatpakDecomposed  *ref);
-const char *       flatpak_decomposed_peek_id               (FlatpakDecomposed  *ref);
-char *             flatpak_decomposed_get_id                (FlatpakDecomposed  *ref);
+const char *       flatpak_decomposed_get_kind_str          (FlatpakDecomposed  *ref);
+const char *       flatpak_decomposed_get_pref              (FlatpakDecomposed  *ref);
+char *             flatpak_decomposed_dup_pref              (FlatpakDecomposed  *ref);
+const char *       flatpak_decomposed_peek_id               (FlatpakDecomposed  *ref,
+                                                             gsize              *out_len);
+char *             flatpak_decomposed_dup_id                (FlatpakDecomposed  *ref);
 gboolean           flatpak_decomposed_is_id                 (FlatpakDecomposed  *ref,
                                                              const char         *id);
 gboolean           flatpak_decomposed_is_id_fuzzy           (FlatpakDecomposed  *ref,
                                                              const char         *id);
 gboolean           flatpak_decomposed_id_is_subref          (FlatpakDecomposed  *ref);
-const char *       flatpak_decomposed_peek_arch             (FlatpakDecomposed  *ref);
-char *             flatpak_decomposed_get_arch              (FlatpakDecomposed  *ref);
+const char *       flatpak_decomposed_peek_arch             (FlatpakDecomposed  *ref,
+                                                             gsize              *out_len);
+char *             flatpak_decomposed_dup_arch              (FlatpakDecomposed  *ref);
 gboolean           flatpak_decomposed_is_arch               (FlatpakDecomposed  *ref,
                                                              const char         *arch);
 gboolean           flatpak_decomposed_is_arches             (FlatpakDecomposed  *ref,
                                                              const char        **arches);
-const char *       flatpak_decomposed_peek_branch           (FlatpakDecomposed  *ref);
-char *             flatpak_decomposed_get_branch            (FlatpakDecomposed  *ref);
+const char *       flatpak_decomposed_peek_branch           (FlatpakDecomposed  *ref,
+                                                             gsize              *out_len);
+const char *       flatpak_decomposed_get_branch            (FlatpakDecomposed  *ref);
+char *             flatpak_decomposed_dup_branch            (FlatpakDecomposed  *ref);
 gboolean           flatpak_decomposed_is_branch             (FlatpakDecomposed  *ref,
                                                              const char         *branch);
 
