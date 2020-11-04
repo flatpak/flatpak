@@ -11716,7 +11716,7 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
     return NULL;
 
   state->remote_name = g_strdup (remote_or_uri);
-  is_local = g_str_has_prefix (remote_or_uri, "file:");
+  state->is_file_uri = is_local = g_str_has_prefix (remote_or_uri, "file:");
   if (!is_local)
     {
       if (!flatpak_dir_has_remote (self, remote_or_uri, error))
@@ -11995,6 +11995,7 @@ populate_hash_table_from_refs_map (GHashTable         *ret_all_refs,
                                    GHashTable         *ref_timestamps,
                                    gboolean            decompose,
                                    VarRefMapRef        ref_map,
+                                   const char         *opt_collection_id,
                                    FlatpakRemoteState *state)
 {
   gsize len, i;
@@ -12022,7 +12023,7 @@ populate_hash_table_from_refs_map (GHashTable         *ret_all_refs,
 
       if (decompose)
         {
-          decomposed = flatpak_decomposed_new_from_ref (ref_name, NULL);
+          decomposed = flatpak_decomposed_new_from_col_ref (ref_name, opt_collection_id, NULL);
           if (decomposed == NULL)
             continue;
         }
@@ -12088,20 +12089,41 @@ _flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
         {
           summary = var_summary_from_gvariant (subsummary);
           ref_map = var_summary_get_ref_map (summary);
-          populate_hash_table_from_refs_map (ret_all_refs, NULL, decompose, ref_map, state);
+          populate_hash_table_from_refs_map (ret_all_refs, NULL, decompose, ref_map, NULL, state);
         }
     }
   else if (state->summary != NULL)
     {
       /* We're online, so report only the refs from the summary */
-
       summary = var_summary_from_gvariant (state->summary);
 
       exts = var_summary_get_metadata (summary);
 
+      if (state->is_file_uri && decompose)
+        {
+          /* This is a local repo, generally this means we gave a file: uri to a sideload repo so
+           * we can enumerate it. We special case this by also adding all the collection_ref maps,
+           * with collection_id set on the decomposed refs.
+           */
+          if (var_metadata_lookup (exts, "ostree.summary.collection-map", NULL, &v))
+            {
+              VarCollectionMapRef map = var_collection_map_from_variant (v);
+
+              gsize len = var_collection_map_get_length (map);
+              for (gsize i = 0; i < len; i++)
+                {
+                  VarCollectionMapEntryRef entry = var_collection_map_get_at (map, i);
+                  const char *collection_id = var_collection_map_entry_get_key (entry);
+                  ref_map = var_collection_map_entry_get_value (entry);
+
+                  populate_hash_table_from_refs_map (ret_all_refs, NULL, decompose, ref_map, collection_id, state);
+                }
+            }
+        }
+
       /* refs that match the main collection-id */
       ref_map = var_summary_get_ref_map (summary);
-      populate_hash_table_from_refs_map (ret_all_refs, NULL, decompose, ref_map, state);
+      populate_hash_table_from_refs_map (ret_all_refs, NULL, decompose, ref_map, NULL, state);
     }
   else if (state->collection_id)
     {
@@ -12121,7 +12143,7 @@ _flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
               VarCollectionMapRef map = var_collection_map_from_variant (v);
 
               if (var_collection_map_lookup (map, state->collection_id, NULL, &ref_map))
-                populate_hash_table_from_refs_map (ret_all_refs, ref_mtimes, decompose, ref_map, state);
+                populate_hash_table_from_refs_map (ret_all_refs, ref_mtimes, decompose, ref_map, NULL, state);
             }
         }
     }
