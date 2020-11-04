@@ -161,7 +161,8 @@ test_decompose (void)
   g_assert (flatpak_decomposed_hash (runtime_ref) == g_str_hash ("runtime/org.the.runtime/x86_64/master"));
   g_assert (!flatpak_decomposed_is_app (runtime_ref));
   g_assert (flatpak_decomposed_is_runtime (runtime_ref));
-  g_assert (flatpak_decomposed_get_kind (runtime_ref) == FLATPAK_KINDS_RUNTIME);
+  g_assert (flatpak_decomposed_get_kinds (runtime_ref) == FLATPAK_KINDS_RUNTIME);
+  g_assert (flatpak_decomposed_get_kind (runtime_ref) == FLATPAK_REF_KIND_RUNTIME);
 
   g_assert_cmpstr (flatpak_decomposed_peek_id (runtime_ref, &len), ==, "org.the.runtime/x86_64/master");
   g_assert (len == strlen("org.the.runtime"));
@@ -198,7 +199,8 @@ test_decompose (void)
   g_assert (flatpak_decomposed_hash (app_ref) == g_str_hash ("app/org.the.app/x86_64/master"));
   g_assert (flatpak_decomposed_is_app (app_ref));
   g_assert (!flatpak_decomposed_is_runtime (app_ref));
-  g_assert (flatpak_decomposed_get_kind (app_ref) == FLATPAK_KINDS_APP);
+  g_assert (flatpak_decomposed_get_kinds (app_ref) == FLATPAK_KINDS_APP);
+  g_assert (flatpak_decomposed_get_kind (app_ref) == FLATPAK_REF_KIND_APP);
 
   g_assert_cmpstr (flatpak_decomposed_peek_id (app_ref, &len), ==, "org.the.app/x86_64/master");
   g_assert (len == strlen ("org.the.app"));
@@ -292,7 +294,7 @@ test_decompose (void)
 
     g_assert_cmpstr (flatpak_decomposed_get_ref (new), ==, "runtime/org.new.app/x86_64/master");
 
-    g_assert (flatpak_decomposed_get_kind (new) == FLATPAK_KINDS_RUNTIME);
+    g_assert (flatpak_decomposed_get_kinds (new) == FLATPAK_KINDS_RUNTIME);
     new_id = flatpak_decomposed_dup_id (new);
     g_assert_cmpstr (new_id, ==, "org.new.app");
 
@@ -316,7 +318,7 @@ test_decompose (void)
 
     g_assert_cmpstr (flatpak_decomposed_get_ref (new), ==, "app/org.the.app/i386/master");
 
-    g_assert (flatpak_decomposed_get_kind (new) == FLATPAK_KINDS_APP);
+    g_assert (flatpak_decomposed_get_kinds (new) == FLATPAK_KINDS_APP);
 
     new_id = flatpak_decomposed_dup_id (new);
     old_id = flatpak_decomposed_dup_id (old);
@@ -344,7 +346,7 @@ test_decompose (void)
 
     g_assert_cmpstr (flatpak_decomposed_get_ref (new), ==, "app/org.the.app/x86_64/beta");
 
-    g_assert (flatpak_decomposed_get_kind (new) == FLATPAK_KINDS_APP);
+    g_assert (flatpak_decomposed_get_kinds (new) == FLATPAK_KINDS_APP);
 
     new_id = flatpak_decomposed_dup_id (new);
     old_id = flatpak_decomposed_dup_id (old);
@@ -370,7 +372,7 @@ test_decompose (void)
 
     g_assert_cmpstr (flatpak_decomposed_get_ref (new), ==, "runtime/org.new.app/i386/beta");
 
-    g_assert (flatpak_decomposed_get_kind (new) == FLATPAK_KINDS_RUNTIME);
+    g_assert (flatpak_decomposed_get_kinds (new) == FLATPAK_KINDS_RUNTIME);
     new_id = flatpak_decomposed_dup_id (new);
     g_assert_cmpstr (new_id, ==, "org.new.app");
     new_arch = flatpak_decomposed_dup_arch (new);

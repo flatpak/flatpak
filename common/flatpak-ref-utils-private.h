@@ -19,6 +19,7 @@
  */
 
 #include <flatpak-common-types-private.h>
+#include <flatpak-ref.h>
 
 #ifndef __FLATPAK_REF_UTILS_H__
 #define __FLATPAK_REF_UTILS_H__
@@ -47,6 +48,7 @@ char **flatpak_decompose_ref (const char *ref,
 char * flatpak_get_arch_for_ref (const char *ref);
 const char *flatpak_get_compat_arch_reverse (const char *compat_arch);
 
+FlatpakKinds flatpak_kinds_from_kind (FlatpakRefKind kind);
 
 typedef struct _FlatpakDecomposed FlatpakDecomposed;
 FlatpakDecomposed *flatpak_decomposed_new_from_ref          (const char         *ref,
@@ -89,7 +91,8 @@ gint               flatpak_decomposed_strcmp_p              (FlatpakDecomposed *
 guint              flatpak_decomposed_hash                  (FlatpakDecomposed  *ref);
 gboolean           flatpak_decomposed_is_app                (FlatpakDecomposed  *ref);
 gboolean           flatpak_decomposed_is_runtime            (FlatpakDecomposed  *ref);
-FlatpakKinds       flatpak_decomposed_get_kind              (FlatpakDecomposed  *ref);
+FlatpakKinds       flatpak_decomposed_get_kinds             (FlatpakDecomposed  *ref);
+FlatpakRefKind     flatpak_decomposed_get_kind              (FlatpakDecomposed  *ref);
 const char *       flatpak_decomposed_get_kind_str          (FlatpakDecomposed  *ref);
 const char *       flatpak_decomposed_get_pref              (FlatpakDecomposed  *ref);
 char *             flatpak_decomposed_dup_pref              (FlatpakDecomposed  *ref);

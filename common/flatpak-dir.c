@@ -12232,7 +12232,7 @@ find_matching_refs (GHashTable           *refs,
 
   GLNX_HASH_TABLE_FOREACH (refs, FlatpakDecomposed *, ref)
     {
-      if ((flatpak_decomposed_get_kind (ref) & kinds) == 0)
+      if ((flatpak_decomposed_get_kinds (ref) & kinds) == 0)
         continue;
 
       if (opt_name)
@@ -12525,7 +12525,7 @@ flatpak_dir_find_remote_ref (FlatpakDir   *self,
     }
 
   if (out_kind != NULL)
-    *out_kind = flatpak_decomposed_get_kind (remote_ref);
+    *out_kind = flatpak_decomposed_get_kinds (remote_ref);
 
   return flatpak_decomposed_dup_ref (remote_ref);
 }
@@ -12764,7 +12764,7 @@ flatpak_dir_find_installed_ref (FlatpakDir   *self,
   else
     {
       if (out_kind != NULL)
-        *out_kind = flatpak_decomposed_get_kind (local_ref);
+        *out_kind = flatpak_decomposed_get_kinds (local_ref);
 
       return flatpak_decomposed_dup_ref (local_ref);
     }
