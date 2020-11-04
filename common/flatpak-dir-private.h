@@ -118,6 +118,7 @@ typedef struct {
 typedef struct
 {
   char     *remote_name;
+  gboolean  is_file_uri;
   char     *collection_id;
 
   /* New format summary */
