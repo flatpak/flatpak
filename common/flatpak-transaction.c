@@ -1207,8 +1207,14 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
    * transaction to be modified in order to e.g. install the rebased
    * ref.
    *
+   * If the caller wants to install the rebased ref, they should call
+   * flatpak_transaction_add_uninstall() on @ref,
+   * flatpak_transaction_add_rebase() on @rebased_to_ref, and return %TRUE.
+   * Otherwise %FALSE may be returned.
+   *
    * Returns: %TRUE if the operation on this end-of-lifed ref should
-   * be skipped, %FALSE if it should remain.
+   * be skipped (e.g. because the rebased ref has been added to the
+   * transaction), %FALSE if it should remain.
    */
   signals[END_OF_LIFED_WITH_REBASE] =
     g_signal_new ("end-of-lifed-with-rebase",
@@ -2545,9 +2551,9 @@ flatpak_transaction_add_install (FlatpakTransaction *self,
  * @error: return location for a #GError
  *
  * Adds updating the @previous_ids of the given ref to this transaction, via either
- * installing the @ref if it was not already present. The will treat @ref as the
- * result of following an eol-rebase, and data migration from the refs in
- * @previous_ids will be set up.
+ * installing the @ref if it was not already present or updating it. This will
+ * treat @ref as the result of following an eol-rebase, and data migration from
+ * the refs in @previous_ids will be set up.
  *
  * See flatpak_transaction_add_install() for a description of @remote.
  *
