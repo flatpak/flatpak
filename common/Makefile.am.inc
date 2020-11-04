@@ -150,6 +150,8 @@ libflatpak_common_la_SOURCES = \
 	common/flatpak-progress-private.h \
 	common/flatpak-progress.c \
 	common/flatpak-ref.c \
+	common/flatpak-ref-utils-private.h \
+	common/flatpak-ref-utils.c \
 	common/flatpak-related-ref-private.h \
 	common/flatpak-related-ref.c \
 	common/flatpak-remote-private.h \

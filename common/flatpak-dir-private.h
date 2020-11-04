@@ -27,6 +27,7 @@
 #include "flatpak-context-private.h"
 #include "flatpak-progress-private.h"
 #include "flatpak-variant-private.h"
+#include "flatpak-ref-utils-private.h"
 #include "libglnx/libglnx.h"
 
 /* Version history:
