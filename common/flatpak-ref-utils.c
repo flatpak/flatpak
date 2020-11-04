@@ -30,6 +30,14 @@
 #include "flatpak-error.h"
 #include "flatpak-utils-private.h"
 
+FlatpakKinds
+flatpak_kinds_from_kind (FlatpakRefKind kind)
+{
+  if (kind == FLATPAK_REF_KIND_RUNTIME)
+    return FLATPAK_KINDS_RUNTIME;
+  return FLATPAK_KINDS_APP;
+}
+
 static gboolean
 is_valid_initial_name_character (gint c, gboolean allow_dash)
 {
@@ -1030,12 +1038,21 @@ flatpak_decomposed_is_runtime (FlatpakDecomposed  *ref)
 }
 
 FlatpakKinds
-flatpak_decomposed_get_kind (FlatpakDecomposed  *ref)
+flatpak_decomposed_get_kinds (FlatpakDecomposed  *ref)
 {
   if (flatpak_decomposed_is_app (ref))
     return FLATPAK_KINDS_APP;
   else
     return FLATPAK_KINDS_RUNTIME;
+}
+
+FlatpakRefKind
+flatpak_decomposed_get_kind (FlatpakDecomposed  *ref)
+{
+  if (flatpak_decomposed_is_app (ref))
+    return FLATPAK_REF_KIND_APP;
+  else
+    return FLATPAK_REF_KIND_RUNTIME;
 }
 
 const char *
