@@ -60,6 +60,11 @@ FlatpakDecomposed *flatpak_decomposed_new_from_ref_take     (char               
                                                              GError            **error);
 FlatpakDecomposed *flatpak_decomposed_new_from_refspec_take (char               *refspec,
                                                              GError            **error);
+FlatpakDecomposed *flatpak_decomposed_new_from_parts        (FlatpakKinds        kind,
+                                                             const char         *id,
+                                                             const char         *arch,
+                                                             const char         *branch,
+                                                             GError            **error);
 FlatpakDecomposed *flatpak_decomposed_new_from_decomposed   (FlatpakDecomposed  *ref,
                                                              FlatpakKinds        opt_kind,
                                                              const char         *opt_id,
