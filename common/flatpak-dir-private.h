@@ -848,13 +848,13 @@ char      *flatpak_dir_create_origin_remote (FlatpakDir   *self,
                                              GError      **error);
 void       flatpak_dir_prune_origin_remote (FlatpakDir *self,
                                             const char *remote);
-gboolean   flatpak_dir_create_remote_for_ref_file (FlatpakDir *self,
-                                                   GKeyFile   *keyfile,
-                                                   const char *default_arch,
-                                                   char      **remote_name_out,
-                                                   char      **collection_id_out,
-                                                   char      **ref_out,
-                                                   GError    **error);
+gboolean   flatpak_dir_create_remote_for_ref_file (FlatpakDir         *self,
+                                                   GKeyFile           *keyfile,
+                                                   const char         *default_arch,
+                                                   char              **remote_name_out,
+                                                   char              **collection_id_out,
+                                                   FlatpakDecomposed **ref_out,
+                                                   GError            **error);
 gboolean   flatpak_dir_create_suggested_remote_for_ref_file (FlatpakDir *self,
                                                              GBytes     *data,
                                                              GError    **error);

@@ -89,6 +89,22 @@ flatpak_ref_finalize (GObject *object)
   G_OBJECT_CLASS (flatpak_ref_parent_class)->finalize (object);
 }
 
+/* These support setting e.g. the arch from referencing a ref.
+ * i.e. it would get "x86_64/master" as an argument. */
+static char *
+value_dup_ref_part (const GValue *value)
+{
+  const char *part = value->data[0].v_pointer;
+  const char *slash;
+
+  slash = strchr (part, '/');
+
+  if (slash)
+    return g_strndup (part, slash - part);
+
+  return g_strdup (part);
+}
+
 static void
 flatpak_ref_set_property (GObject      *object,
                           guint         prop_id,
@@ -102,17 +118,17 @@ flatpak_ref_set_property (GObject      *object,
     {
     case PROP_NAME:
       g_assert (priv->name == NULL); /* Construct-only */
-      priv->name = g_value_dup_string (value);
+      priv->name = value_dup_ref_part (value);
       break;
 
     case PROP_ARCH:
       g_assert (priv->arch == NULL); /* Construct-only */
-      priv->arch = g_value_dup_string (value);
+      priv->arch = value_dup_ref_part (value);
       break;
 
     case PROP_BRANCH:
       g_assert (priv->branch == NULL); /* Construct-only */
-      priv->branch = g_value_dup_string (value);
+      priv->branch = value_dup_ref_part (value);
       break;
 
     case PROP_COMMIT:

@@ -13779,13 +13779,13 @@ parse_ref_file (GKeyFile *keyfile,
 }
 
 gboolean
-flatpak_dir_create_remote_for_ref_file (FlatpakDir *self,
-                                        GKeyFile   *keyfile,
-                                        const char *default_arch,
-                                        char      **remote_name_out,
-                                        char      **collection_id_out,
-                                        char      **ref_out,
-                                        GError    **error)
+flatpak_dir_create_remote_for_ref_file (FlatpakDir         *self,
+                                        GKeyFile           *keyfile,
+                                        const char         *default_arch,
+                                        char              **remote_name_out,
+                                        char              **collection_id_out,
+                                        FlatpakDecomposed **ref_out,
+                                        GError            **error)
 {
   g_autoptr(GBytes) gpg_data = NULL;
   g_autofree char *name = NULL;
@@ -13797,12 +13797,17 @@ flatpak_dir_create_remote_for_ref_file (FlatpakDir *self,
   gboolean is_runtime = FALSE;
   g_autofree char *collection_id = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
+  g_autoptr(FlatpakDecomposed) decomposed = NULL;
 
   if (!parse_ref_file (keyfile, &name, &branch, &url, &title, &gpg_data, &is_runtime, &collection_id, error))
     return FALSE;
 
   ref = flatpak_compose_ref (!is_runtime, name, branch, default_arch, error);
   if (ref == NULL)
+    return FALSE;
+
+  decomposed = flatpak_decomposed_new_from_ref (ref, error);
+  if (decomposed == NULL)
     return FALSE;
 
   deploy_dir = flatpak_dir_get_if_deployed (self, ref, NULL, NULL);
@@ -13830,7 +13835,7 @@ flatpak_dir_create_remote_for_ref_file (FlatpakDir *self,
     *collection_id_out = g_steal_pointer (&collection_id);
 
   *remote_name_out = g_steal_pointer (&remote);
-  *ref_out = (char *) g_steal_pointer (&ref);
+  *ref_out = g_steal_pointer (&decomposed);
   return TRUE;
 }
 

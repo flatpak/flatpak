@@ -28,10 +28,10 @@
 #include <flatpak-remote-ref.h>
 #include <flatpak-dir-private.h>
 
-FlatpakRemoteRef *flatpak_remote_ref_new (const char           *ref,
-                                          const char           *commit,
-                                          const char           *remote_name,
-                                          const char           *collection_id,
-                                          FlatpakRemoteState   *remote_state);
+FlatpakRemoteRef *flatpak_remote_ref_new (FlatpakDecomposed *ref,
+                                          const char         *commit,
+                                          const char         *remote_name,
+                                          const char         *collection_id,
+                                          FlatpakRemoteState *remote_state);
 
 #endif /* __FLATPAK_REMOTE_REF_PRIVATE_H__ */
