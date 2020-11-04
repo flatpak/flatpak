@@ -12236,6 +12236,8 @@ _flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
   else if (state->summary != NULL)
     {
       /* We're online, so report only the refs from the summary */
+      const char *main_collection_id = NULL;
+
       summary = var_summary_from_gvariant (state->summary);
 
       exts = var_summary_get_metadata (summary);
@@ -12244,8 +12246,10 @@ _flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
         {
           /* This is a local repo, generally this means we gave a file: uri to a sideload repo so
            * we can enumerate it. We special case this by also adding all the collection_ref maps,
-           * with collection_id set on the decomposed refs.
+           * with collection_id set on the decomposed refs and setting the right collection id for
+           * the main ref_map.
            */
+          main_collection_id = var_metadata_lookup_string (exts, "ostree.summary.collection-id", NULL);
           if (var_metadata_lookup (exts, "ostree.summary.collection-map", NULL, &v))
             {
               VarCollectionMapRef map = var_collection_map_from_variant (v);
@@ -12262,9 +12266,10 @@ _flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
             }
         }
 
-      /* refs that match the main collection-id */
+      /* refs that match the main collection-id,
+         NOTE: We only set collection id if this is a file: uri remote */
       ref_map = var_summary_get_ref_map (summary);
-      populate_hash_table_from_refs_map (ret_all_refs, NULL, decompose, ref_map, NULL, state);
+      populate_hash_table_from_refs_map (ret_all_refs, NULL, decompose, ref_map, main_collection_id, state);
     }
   else if (state->collection_id)
     {
