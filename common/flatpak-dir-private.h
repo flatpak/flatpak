@@ -641,6 +641,10 @@ gboolean    flatpak_dir_list_refs (FlatpakDir   *self,
                                    char       ***refs,
                                    GCancellable *cancellable,
                                    GError      **error);
+GPtrArray *flatpak_dir_list_refs_decomposed (FlatpakDir   *self,
+                                             FlatpakKinds kind,
+                                             GCancellable *cancellable,
+                                             GError      **error);
 GVariant *  flatpak_dir_read_latest_commit (FlatpakDir   *self,
                                             const char   *remote,
                                             const char   *ref,
