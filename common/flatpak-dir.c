@@ -12318,7 +12318,7 @@ find_matching_ref (GHashTable  *refs,
           if (j != 0)
             g_string_append (err, ", ");
 
-          const char *branch = flatpak_decomposed_peek_branch (ref);
+          const char *branch = flatpak_decomposed_get_branch (ref);
 
           g_string_append (err,
                            g_strdup_printf ("%s/%s/%s",
@@ -12358,7 +12358,7 @@ decomposed_refs_to_strv (GPtrArray *decomposed)
   for (int i = 0; i < decomposed->len; i++)
     {
       FlatpakDecomposed *ref = g_ptr_array_index (decomposed, i);
-      g_ptr_array_add (res, flatpak_decomposed_get_ref (ref));
+      g_ptr_array_add (res, flatpak_decomposed_dup_ref (ref));
     }
   g_ptr_array_add (res, NULL);
 
@@ -12505,7 +12505,7 @@ flatpak_dir_find_remote_ref (FlatpakDir   *self,
   if (out_kind != NULL)
     *out_kind = flatpak_decomposed_get_kind (remote_ref);
 
-  return flatpak_decomposed_get_ref (remote_ref);
+  return flatpak_decomposed_dup_ref (remote_ref);
 }
 
 static GHashTable *
@@ -12744,7 +12744,7 @@ flatpak_dir_find_installed_ref (FlatpakDir   *self,
       if (out_kind != NULL)
         *out_kind = flatpak_decomposed_get_kind (local_ref);
 
-      return flatpak_decomposed_get_ref (local_ref);
+      return flatpak_decomposed_dup_ref (local_ref);
     }
 
   g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
@@ -12773,7 +12773,7 @@ filter_out_deployed_refs (FlatpakDir *self,
   for (i = 0; i < local_refspecs->len; ++i)
     {
       FlatpakDecomposed *decomposed = g_ptr_array_index (local_refspecs, i);
-      const gchar *ref = flatpak_decomposed_peek_ref (decomposed);
+      const gchar *ref = flatpak_decomposed_get_ref (decomposed);
       g_autoptr(GBytes) deploy_data = NULL;
 
       deploy_data = flatpak_dir_get_deploy_data (self, ref, FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
@@ -12834,8 +12834,8 @@ flatpak_dir_cleanup_undeployed_refs (FlatpakDir   *self,
   for (; i < undeployed_refs->len; ++i)
     {
       FlatpakDecomposed *decomposed = g_ptr_array_index (undeployed_refs, i);
-      const gchar *ref = flatpak_decomposed_peek_ref (decomposed);
-      g_autofree gchar *remote = flatpak_decomposed_get_remote (decomposed);
+      const gchar *ref = flatpak_decomposed_get_ref (decomposed);
+      g_autofree gchar *remote = flatpak_decomposed_dup_remote (decomposed);
 
       if (!flatpak_dir_remove_ref (self, remote, ref, cancellable, error))
         return FALSE;

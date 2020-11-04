@@ -933,6 +933,50 @@ flatpak_name_matches_one_wildcard_prefix (const char         *name,
     !is_valid_name_character (*remainder, FALSE);
 }
 
+
+static gboolean
+is_valid_arch_character (char c)
+{
+  return
+    (c >= 'A' && c <= 'Z') ||
+    (c >= 'a' && c <= 'z') ||
+    (c >= '0' && c <= '9') ||
+    (c == '_');
+}
+
+gboolean
+flatpak_is_valid_arch (const char *string,
+                       gssize      len,
+                       GError    **error)
+{
+  const gchar *end;
+
+  if (len < 0)
+    len = strlen (string);
+
+  if (G_UNLIKELY (len == 0))
+    {
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME,
+                          _("Arch can't be empty"));
+      return FALSE;
+    }
+
+  end = string + len;
+
+  while (string != end)
+    {
+      if (G_UNLIKELY (!is_valid_arch_character (*string)))
+        {
+          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME,
+                              _("Arch can't contain %c"), *string);
+          return FALSE;
+        }
+      string += 1;
+    }
+
+  return TRUE;
+}
+
 gboolean
 flatpak_get_allowed_exports (const char     *source_path,
                              const char     *app_id,
@@ -1465,7 +1509,12 @@ struct _FlatpakDecomposed {
   guint16 id_offset;
   guint16 arch_offset;
   guint16 branch_offset;
-  char *ref;
+  char *data;
+
+  /* This is only used when we're directly manipulating sideload repos, by giving
+   * a file:// uri as the remote name. Typically we don't really care about collection ids
+   * internally in flatpak as we use refs tied to a remote. */
+  char *collection_id;
 };
 
 static gboolean
@@ -1588,9 +1637,9 @@ _flatpak_decomposed_new (char            *ref,
       return NULL;
     }
 
-  if (slash - p == 0) /* empty arch */
+  if (!flatpak_is_valid_arch (p, slash - p, &local_error))
     {
-      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("Invalid arch %.*s"), (int)(slash - p), p);
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("Invalid arch: %.*s: %s"), (int)(slash - p), p, local_error->message);
       return NULL;
     }
 
@@ -1610,13 +1659,13 @@ _flatpak_decomposed_new (char            *ref,
       return NULL;
     }
 
-  decomposed = g_malloc (sizeof (struct _FlatpakDecomposed) + len); /* len == strlen, and then the terminating zero fits in data[1] */
+  decomposed = g_new0 (FlatpakDecomposed, 1);
   decomposed->ref_count = 1;
   decomposed->ref_offset = (guint16)ref_offset;
   decomposed->id_offset = (guint16)id_offset;
   decomposed->arch_offset = (guint16)arch_offset;
   decomposed->branch_offset = (guint16)branch_offset;
-  decomposed->ref = take ? ref : g_strdup (ref);
+  decomposed->data = take ? ref : g_strdup (ref);
 
   return decomposed;
 }
@@ -1650,6 +1699,146 @@ flatpak_decomposed_new_from_refspec_take (char         *refspec,
 }
 
 FlatpakDecomposed *
+flatpak_decomposed_new_from_col_ref      (const char         *ref,
+                                          const char         *collection_id,
+                                          GError            **error)
+{
+  g_autoptr(FlatpakDecomposed) decomposed = NULL;
+
+  if (collection_id != NULL &&
+      !ostree_validate_collection_id (collection_id, error))
+    return FALSE;
+
+  decomposed = flatpak_decomposed_new_from_ref (ref, error);
+  if (decomposed == NULL)
+    return FALSE;
+
+  decomposed->collection_id = g_strdup (collection_id);
+
+  return g_steal_pointer (&decomposed);
+}
+
+FlatpakDecomposed *
+flatpak_decomposed_new_from_decomposed (FlatpakDecomposed  *old,
+                                        FlatpakKinds        opt_kind,
+                                        const char         *opt_id,
+                                        const char         *opt_arch,
+                                        const char         *opt_branch,
+                                        GError            **error)
+{
+  FlatpakDecomposed *decomposed;
+  g_autoptr(GError) local_error = NULL;
+  const char *kind_str;
+  gsize kind_len;
+  gsize id_len;
+  gsize arch_len;
+  gsize branch_len;
+  gsize ref_len;
+  char *ref;
+  gsize offset;
+
+  g_assert (old != NULL);
+
+  if (opt_kind == 0)
+    kind_str = flatpak_decomposed_get_kind_str (old);
+  else if (opt_kind == FLATPAK_KINDS_APP)
+    kind_str = "app";
+  else
+    kind_str = "runtime";
+
+  kind_len = strlen (kind_str);
+
+  if (opt_id)
+    {
+      if (!flatpak_is_valid_name (opt_id, -1, &local_error))
+        {
+          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("Invalid name %s: %s"), opt_id, local_error->message);
+          return NULL;
+        }
+
+      id_len = strlen (opt_id);
+    }
+  else
+    {
+      opt_id = flatpak_decomposed_peek_id (old, &id_len);
+    }
+
+  if (opt_arch)
+    {
+      if (!flatpak_is_valid_arch (opt_arch, -1, &local_error))
+        {
+          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("Invalid arch: %s: %s"), opt_arch, local_error->message);
+          return NULL;
+        }
+
+      arch_len = strlen (opt_arch);
+    }
+  else
+    {
+      opt_arch = flatpak_decomposed_peek_arch (old, &arch_len);
+    }
+
+  if (opt_branch)
+    {
+      if (!flatpak_is_valid_branch (opt_branch, -1, &local_error))
+        {
+          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("Invalid branch: %s: %s"), opt_branch, local_error->message);
+          return NULL;
+        }
+
+      branch_len = strlen (opt_branch);
+    }
+  else
+    {
+      opt_branch = flatpak_decomposed_peek_branch (old, &branch_len);
+    }
+
+  ref_len = kind_len + 1 + id_len + 1 + arch_len + 1 + branch_len;
+  if (ref_len > 0xffff)
+    {
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("Ref too long"));
+      return NULL;
+    }
+
+  decomposed = g_new0 (FlatpakDecomposed, 1);
+  decomposed->ref_count = 1;
+  decomposed->data = g_malloc (ref_len + 1);
+
+  ref = decomposed->data;
+  offset = 0;
+
+  decomposed->ref_offset = (guint16)offset;
+  memcpy (ref + offset, kind_str, kind_len);
+  offset += kind_len;
+
+  memcpy (ref + offset, "/", 1);
+  offset += 1;
+
+  decomposed->id_offset = (guint16)offset;
+  memcpy (ref + offset, opt_id, id_len);
+  offset += id_len;
+
+  memcpy (ref + offset, "/", 1);
+  offset += 1;
+
+  decomposed->arch_offset = (guint16)offset;
+  memcpy (ref + offset, opt_arch, arch_len);
+  offset += arch_len;
+
+  memcpy (ref + offset, "/", 1);
+  offset += 1;
+
+  decomposed->branch_offset = (guint16)offset;
+  memcpy (ref + offset, opt_branch, branch_len);
+  offset += branch_len;
+
+  g_assert (offset == ref_len);
+  *(ref + offset) = 0;
+
+  return decomposed;
+}
+
+FlatpakDecomposed *
 flatpak_decomposed_ref (FlatpakDecomposed  *ref)
 {
   g_atomic_int_inc (&ref->ref_count);
@@ -1661,67 +1850,118 @@ flatpak_decomposed_unref (FlatpakDecomposed  *ref)
 {
   if (g_atomic_int_dec_and_test (&ref->ref_count))
     {
-      g_free (ref->ref);
+      g_free (ref->data);
+      g_free (ref->collection_id);
       g_free (ref);
     }
 }
 
 const char *
-flatpak_decomposed_peek_ref (FlatpakDecomposed  *ref)
+flatpak_decomposed_get_ref (FlatpakDecomposed  *ref)
 {
-  return (const char *)&ref->ref[ref->ref_offset];
+  return (const char *)&ref->data[ref->ref_offset];
 }
 
 char *
-flatpak_decomposed_get_ref (FlatpakDecomposed  *ref)
+flatpak_decomposed_dup_ref (FlatpakDecomposed  *ref)
 {
-  return g_strdup (flatpak_decomposed_peek_ref (ref));
+  return g_strdup (flatpak_decomposed_get_ref (ref));
 }
 
 const char *
-flatpak_decomposed_peek_refspec (FlatpakDecomposed  *ref)
-{
-  return (const char *)&ref->ref[0];
-}
-
-char *
 flatpak_decomposed_get_refspec (FlatpakDecomposed  *ref)
 {
-  return g_strdup (flatpak_decomposed_peek_refspec (ref));
+  return (const char *)&ref->data[0];
 }
 
 char *
-flatpak_decomposed_get_remote (FlatpakDecomposed  *ref)
+flatpak_decomposed_dup_refspec (FlatpakDecomposed  *ref)
+{
+  return g_strdup (flatpak_decomposed_get_refspec (ref));
+}
+
+char *
+flatpak_decomposed_dup_remote (FlatpakDecomposed  *ref)
 {
   if (ref->ref_offset == 0)
     return NULL;
 
-  return g_strndup (ref->ref, ref->ref_offset - 1);
+  return g_strndup (ref->data, ref->ref_offset - 1);
+}
+
+/* Note: These are always NULL for regular refs, as they generally
+ * tied to a remote and uses the collection_id from that.
+ * The only case this is set is if we enumerate a remote
+ * of the form `file:///path/to/repo`, as we don't then know
+ * which remote name it is from.
+ */
+const char *
+flatpak_decomposed_get_collection_id (FlatpakDecomposed  *ref)
+{
+  return ref->collection_id;
+}
+
+/* Note: These are always NULL for regular refs, as they generally
+ * tied to a remote and uses the collection_id from that.
+ * The only case this is set is if we enumerate a remote
+ * of the form `file:///path/to/repo`, as we don't then know
+ * which remote name it is from.
+ */
+char *
+flatpak_decomposed_dup_collection_id (FlatpakDecomposed  *ref)
+{
+  return g_strdup (ref->collection_id);
 }
 
 gboolean
 flatpak_decomposed_equal (FlatpakDecomposed  *ref_a,
                           FlatpakDecomposed  *ref_b)
 {
-  return strcmp (ref_a->ref, ref_b->ref) == 0;
+  return strcmp (ref_a->data, ref_b->data) == 0 &&
+    g_strcmp0 (ref_a->collection_id, ref_b->collection_id) == 0;
+}
+
+gint
+flatpak_decomposed_strcmp (FlatpakDecomposed  *ref_a,
+                           FlatpakDecomposed  *ref_b)
+{
+  int res = strcmp (ref_a->data, ref_b->data);
+  if (res != 0)
+    return res;
+
+  return g_strcmp0 (ref_a->collection_id, ref_b->collection_id);
+}
+
+gint
+flatpak_decomposed_strcmp_p (FlatpakDecomposed  **ref_a,
+                             FlatpakDecomposed  **ref_b)
+{
+  return flatpak_decomposed_strcmp (*ref_a, *ref_b);
 }
 
 guint
 flatpak_decomposed_hash (FlatpakDecomposed  *ref)
 {
-  return g_str_hash (ref->ref);
+  guint h = g_str_hash (ref->data);
+
+  if (ref->collection_id)
+    h |= g_str_hash (ref->collection_id);
+
+  return h;
 }
 
 gboolean
 flatpak_decomposed_is_app (FlatpakDecomposed  *ref)
 {
-  return ref->ref[0] == 'a';
+  const char *r = flatpak_decomposed_get_ref (ref);
+  return r[0] == 'a';
 }
 
 gboolean
 flatpak_decomposed_is_runtime (FlatpakDecomposed  *ref)
 {
-  return ref->ref[0] == 'r';
+  const char *r = flatpak_decomposed_get_ref (ref);
+  return r[0] == 'r';
 }
 
 FlatpakKinds
@@ -1731,6 +1971,15 @@ flatpak_decomposed_get_kind (FlatpakDecomposed  *ref)
     return FLATPAK_KINDS_APP;
   else
     return FLATPAK_KINDS_RUNTIME;
+}
+
+const char *
+flatpak_decomposed_get_kind_str (FlatpakDecomposed  *ref)
+{
+  if (flatpak_decomposed_is_app (ref))
+    return "app";
+  else
+    return "runtime";
 }
 
 /* A slashed string ends at '/' instead of nul */
@@ -1781,24 +2030,40 @@ slashed_str_strcasestr (const char *haystack,
 }
 
 const char *
-flatpak_decomposed_peek_id (FlatpakDecomposed  *ref)
+flatpak_decomposed_get_pref (FlatpakDecomposed  *ref)
 {
-  return &ref->ref[ref->id_offset];
+  return &ref->data[ref->id_offset];
 }
 
 char *
-flatpak_decomposed_get_id (FlatpakDecomposed  *ref)
+flatpak_decomposed_dup_pref (FlatpakDecomposed  *ref)
 {
-  const char *ref_id = flatpak_decomposed_peek_id (ref);
+  return g_strdup (flatpak_decomposed_get_pref (ref));
+}
 
-  return g_strndup (ref_id, ref->arch_offset - ref->id_offset - 1);
+const char *
+flatpak_decomposed_peek_id (FlatpakDecomposed  *ref,
+                            gsize              *out_len)
+{
+  if (out_len)
+    *out_len = ref->arch_offset - ref->id_offset - 1;
+  return &ref->data[ref->id_offset];
+}
+
+char *
+flatpak_decomposed_dup_id (FlatpakDecomposed  *ref)
+{
+  gsize len;
+  const char *ref_id = flatpak_decomposed_peek_id (ref, &len);
+
+  return g_strndup (ref_id, len);
 }
 
 gboolean
 flatpak_decomposed_is_id (FlatpakDecomposed  *ref,
                           const char         *id)
 {
-  const char *ref_id = flatpak_decomposed_peek_id (ref);
+  const char *ref_id = flatpak_decomposed_peek_id (ref, NULL);
 
   return slashed_str_equal (ref_id, id);
 }
@@ -1809,8 +2074,8 @@ gboolean
 flatpak_decomposed_is_id_fuzzy (FlatpakDecomposed  *ref,
                                 const char         *id)
 {
-  const char *ref_id = flatpak_decomposed_peek_id (ref);
-  gsize ref_id_len = ref->arch_offset - ref->id_offset - 1;
+  gsize ref_id_len;
+  const char *ref_id = flatpak_decomposed_peek_id (ref, &ref_id_len);
 
   if (slashed_str_strcasestr (ref_id, ref_id_len, id))
     return TRUE;
@@ -1821,31 +2086,35 @@ flatpak_decomposed_is_id_fuzzy (FlatpakDecomposed  *ref,
 gboolean
 flatpak_decomposed_id_is_subref (FlatpakDecomposed  *ref)
 {
-  const char *ref_id = flatpak_decomposed_peek_id (ref);
-  gsize ref_id_len = ref->arch_offset - ref->id_offset - 1;
+  gsize ref_id_len;
+  const char *ref_id = flatpak_decomposed_peek_id (ref, &ref_id_len);
 
   return flatpak_id_has_subref_suffix (ref_id, ref_id_len);
 }
 
 const char *
-flatpak_decomposed_peek_arch (FlatpakDecomposed  *ref)
+flatpak_decomposed_peek_arch (FlatpakDecomposed  *ref,
+                              gsize *out_len)
 {
-  return &ref->ref[ref->arch_offset];
+  if (out_len)
+    *out_len = ref->branch_offset - ref->arch_offset - 1;
+  return &ref->data[ref->arch_offset];
 }
 
 char *
-flatpak_decomposed_get_arch (FlatpakDecomposed  *ref)
+flatpak_decomposed_dup_arch (FlatpakDecomposed  *ref)
 {
-  const char *ref_arch = flatpak_decomposed_peek_arch (ref);
+  gsize len;
+  const char *ref_arch = flatpak_decomposed_peek_arch (ref, &len);
 
-  return g_strndup (ref_arch, ref->branch_offset - ref->arch_offset - 1);
+  return g_strndup (ref_arch, len);
 }
 
 gboolean
 flatpak_decomposed_is_arch (FlatpakDecomposed  *ref,
                             const char         *arch)
 {
-  const char *ref_arch = flatpak_decomposed_peek_arch (ref);
+  const char *ref_arch = flatpak_decomposed_peek_arch (ref, NULL);
 
   return slashed_str_equal (ref_arch, arch);
 }
@@ -1854,7 +2123,7 @@ gboolean
 flatpak_decomposed_is_arches (FlatpakDecomposed  *ref,
                               const char        **arches)
 {
-  const char *ref_arch = flatpak_decomposed_peek_arch (ref);
+  const char *ref_arch = flatpak_decomposed_peek_arch (ref, NULL);
 
   for (int i = 0; arches[i] != NULL; i++)
     {
@@ -1865,16 +2134,27 @@ flatpak_decomposed_is_arches (FlatpakDecomposed  *ref,
   return FALSE;
 }
 
+/* We can add a getter for this, because the branch is last so guaranteed to be null-terminated */
 const char *
-flatpak_decomposed_peek_branch (FlatpakDecomposed  *ref)
+flatpak_decomposed_get_branch (FlatpakDecomposed  *ref)
 {
-  return &ref->ref[ref->branch_offset];
+  return &ref->data[ref->branch_offset];
+}
+
+const char *
+flatpak_decomposed_peek_branch (FlatpakDecomposed  *ref,
+                                gsize              *out_len)
+{
+  const char *branch = flatpak_decomposed_get_branch (ref);
+  if (out_len)
+    *out_len = strlen (branch);
+  return branch;
 }
 
 char *
-flatpak_decomposed_get_branch (FlatpakDecomposed  *ref)
+flatpak_decomposed_dup_branch (FlatpakDecomposed  *ref)
 {
-  const char *ref_branch = flatpak_decomposed_peek_branch (ref);
+  const char *ref_branch = flatpak_decomposed_peek_branch (ref, NULL);
 
   return g_strdup (ref_branch);
 }
@@ -1883,7 +2163,7 @@ gboolean
 flatpak_decomposed_is_branch (FlatpakDecomposed  *ref,
                               const char         *branch)
 {
-  const char *ref_branch = flatpak_decomposed_peek_branch (ref);
+  const char *ref_branch = flatpak_decomposed_get_branch (ref);
 
   return strcmp (ref_branch, branch) == 0;
 }
