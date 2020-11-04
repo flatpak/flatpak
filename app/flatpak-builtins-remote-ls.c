@@ -301,11 +301,15 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
               if (strcmp (columns[j].name, "name") == 0)
                 {
                   const char *name = NULL;
+                  g_autofree char *readable_id = NULL;
 
                   if (app)
                     name = as_app_get_localized_name (app);
 
-                  flatpak_table_printer_add_column (printer, name ? name : strrchr (id, '.') + 1);
+                  if (name == NULL)
+                    readable_id = flatpak_decomposed_dup_readable_id (ref);
+
+                  flatpak_table_printer_add_column (printer, name ? name : readable_id);
                 }
               else if (strcmp (columns[j].name, "description") == 0)
                 {
