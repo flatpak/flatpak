@@ -10049,33 +10049,42 @@ flatpak_dir_uninstall (FlatpakDir                 *self,
 
   if (flatpak_decomposed_is_runtime (decomposed) && !force_remove)
     {
-      g_auto(GStrv) app_refs = NULL;
-      g_autoptr(GPtrArray) blocking = g_ptr_array_new_with_free_func (g_free);
+      g_autoptr(GPtrArray) app_refs = NULL;
+      g_autoptr(GPtrArray) blocking = g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_decomposed_unref);
       const char *pref = flatpak_decomposed_get_pref (decomposed);
       int i;
 
       /* Look for apps that need this runtime */
 
-      flatpak_dir_list_refs (self, "app", &app_refs, NULL, NULL);
-      for (i = 0; app_refs != NULL && app_refs[i] != NULL; i++)
+      app_refs = flatpak_dir_list_refs_decomposed (self, FLATPAK_KINDS_APP, NULL, NULL);
+      for (i = 0; app_refs != NULL && i < app_refs->len; i++)
         {
-          g_autoptr(GBytes) app_deploy_data = flatpak_dir_get_deploy_data (self, app_refs[i], FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
+          FlatpakDecomposed *app_ref = g_ptr_array_index (app_refs, i);
+          g_autoptr(GBytes) app_deploy_data = flatpak_dir_get_deploy_data (self, flatpak_decomposed_get_ref (app_ref), FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
 
           if (app_deploy_data)
             {
               const char *app_runtime = flatpak_deploy_data_get_runtime (app_deploy_data);
 
               if (g_strcmp0 (app_runtime, pref) == 0)
-                g_ptr_array_add (blocking, g_strdup (app_refs[i] + strlen ("app/")));
+                g_ptr_array_add (blocking, flatpak_decomposed_ref (app_ref));
             }
         }
-      g_ptr_array_add (blocking, NULL);
 
-      if (blocking->len > 1)
+      if (blocking->len > 0)
         {
-          g_autofree char *joined = g_strjoinv (", ", (char **) blocking->pdata);
+          g_autoptr(GString) joined = g_string_new ("");
+          for (i = 0; i < blocking->len; i++)
+            {
+              FlatpakDecomposed *blocking_ref = g_ptr_array_index (blocking, i);
+              g_autofree char *id = flatpak_decomposed_dup_id (blocking_ref);
+              if (i != 0)
+                g_string_append (joined, ", ");
+              g_string_append (joined, id);
+            }
+
           return flatpak_fail_error (error, FLATPAK_ERROR_RUNTIME_USED,
-                                     _("Can't remove %s, it is needed for: %s"), pref, joined);
+                                     _("Can't remove %s, it is needed for: %s"), pref, joined->str);
         }
     }
 
