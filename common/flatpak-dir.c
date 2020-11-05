@@ -12146,7 +12146,6 @@ flatpak_dir_get_remote_state_local_only (FlatpakDir   *self,
 static void
 populate_hash_table_from_refs_map (GHashTable         *ret_all_refs,
                                    GHashTable         *ref_timestamps,
-                                   gboolean            decompose,
                                    VarRefMapRef        ref_map,
                                    const char         *opt_collection_id,
                                    FlatpakRemoteState *state)
@@ -12161,7 +12160,6 @@ populate_hash_table_from_refs_map (GHashTable         *ret_all_refs,
       const guint8 *csum_bytes;
       gsize csum_len;
       VarRefInfoRef info;
-      char *ref_name_dup;
       guint64 *new_timestamp = NULL;
       g_autoptr(FlatpakDecomposed) decomposed = NULL;
 
@@ -12174,12 +12172,9 @@ populate_hash_table_from_refs_map (GHashTable         *ret_all_refs,
       if (csum_len != OSTREE_SHA256_DIGEST_LEN)
         continue;
 
-      if (decompose)
-        {
-          decomposed = flatpak_decomposed_new_from_col_ref (ref_name, opt_collection_id, NULL);
-          if (decomposed == NULL)
-            continue;
-        }
+      decomposed = flatpak_decomposed_new_from_col_ref (ref_name, opt_collection_id, NULL);
+      if (decomposed == NULL)
+        continue;
 
       if (ref_timestamps)
         {
@@ -12196,16 +12191,7 @@ populate_hash_table_from_refs_map (GHashTable         *ret_all_refs,
           new_timestamp = g_memdup (&timestamp, sizeof (guint64));
         }
 
-      if (decompose)
-        {
-          g_hash_table_replace (ret_all_refs, g_steal_pointer (&decomposed), ostree_checksum_from_bytes (csum_bytes));
-        }
-      else
-        {
-          ref_name_dup = g_strdup (ref_name);
-          g_hash_table_replace (ret_all_refs, ref_name_dup, ostree_checksum_from_bytes (csum_bytes));
-        }
-
+      g_hash_table_replace (ret_all_refs, g_steal_pointer (&decomposed), ostree_checksum_from_bytes (csum_bytes));
       if (new_timestamp)
         g_hash_table_replace (ref_timestamps, g_strdup (ref_name), new_timestamp);
     }
@@ -12215,13 +12201,12 @@ populate_hash_table_from_refs_map (GHashTable         *ret_all_refs,
 /* This tries to list all available remote refs but also tries to keep
  * working when offline, so it looks in sideloaded repos. Also it uses
  * in-memory cached summaries which ostree doesn't. */
-static gboolean
-_flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
-                                   FlatpakRemoteState *state,
-                                   gboolean            decompose,
-                                   GHashTable        **out_all_refs,
-                                   GCancellable       *cancellable,
-                                   GError            **error)
+gboolean
+flatpak_dir_list_all_remote_refs_decomposed (FlatpakDir         *self,
+                                             FlatpakRemoteState *state,
+                                             GHashTable        **out_all_refs,
+                                             GCancellable       *cancellable,
+                                             GError            **error)
 {
   g_autoptr(GHashTable) ret_all_refs = NULL;
   VarSummaryRef summary;
@@ -12230,10 +12215,7 @@ _flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
   VarVariantRef v;
 
   /* This is  ref->commit */
-  if (decompose)
-    ret_all_refs = g_hash_table_new_full ((GHashFunc)flatpak_decomposed_hash, (GEqualFunc)flatpak_decomposed_equal, (GDestroyNotify)flatpak_decomposed_unref, g_free);
-  else
-    ret_all_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+  ret_all_refs = g_hash_table_new_full ((GHashFunc)flatpak_decomposed_hash, (GEqualFunc)flatpak_decomposed_equal, (GDestroyNotify)flatpak_decomposed_unref, g_free);
 
   if (state->index != NULL)
     {
@@ -12242,7 +12224,7 @@ _flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
         {
           summary = var_summary_from_gvariant (subsummary);
           ref_map = var_summary_get_ref_map (summary);
-          populate_hash_table_from_refs_map (ret_all_refs, NULL, decompose, ref_map, NULL, state);
+          populate_hash_table_from_refs_map (ret_all_refs, NULL, ref_map, NULL, state);
         }
     }
   else if (state->summary != NULL)
@@ -12254,7 +12236,7 @@ _flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
 
       exts = var_summary_get_metadata (summary);
 
-      if (state->is_file_uri && decompose)
+      if (state->is_file_uri)
         {
           /* This is a local repo, generally this means we gave a file: uri to a sideload repo so
            * we can enumerate it. We special case this by also adding all the collection_ref maps,
@@ -12273,7 +12255,7 @@ _flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
                   const char *collection_id = var_collection_map_entry_get_key (entry);
                   ref_map = var_collection_map_entry_get_value (entry);
 
-                  populate_hash_table_from_refs_map (ret_all_refs, NULL, decompose, ref_map, collection_id, state);
+                  populate_hash_table_from_refs_map (ret_all_refs, NULL, ref_map, collection_id, state);
                 }
             }
         }
@@ -12281,7 +12263,7 @@ _flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
       /* refs that match the main collection-id,
          NOTE: We only set collection id if this is a file: uri remote */
       ref_map = var_summary_get_ref_map (summary);
-      populate_hash_table_from_refs_map (ret_all_refs, NULL, decompose, ref_map, main_collection_id, state);
+      populate_hash_table_from_refs_map (ret_all_refs, NULL, ref_map, main_collection_id, state);
     }
   else if (state->collection_id)
     {
@@ -12301,7 +12283,7 @@ _flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
               VarCollectionMapRef map = var_collection_map_from_variant (v);
 
               if (var_collection_map_lookup (map, state->collection_id, NULL, &ref_map))
-                populate_hash_table_from_refs_map (ret_all_refs, ref_mtimes, decompose, ref_map, NULL, state);
+                populate_hash_table_from_refs_map (ret_all_refs, ref_mtimes, ref_map, NULL, state);
             }
         }
     }
@@ -12314,29 +12296,6 @@ _flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
   *out_all_refs = g_steal_pointer (&ret_all_refs);
 
   return TRUE;
-}
-
-/* This tries to list all available remote refs but also tries to keep
- * working when offline, so it looks in sideloaded repos. Also it uses
- * in-memory cached summaries which ostree doesn't. */
-gboolean
-flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
-                                  FlatpakRemoteState *state,
-                                  GHashTable        **out_all_refs,
-                                  GCancellable       *cancellable,
-                                  GError            **error)
-{
-  return _flatpak_dir_list_all_remote_refs (self, state, FALSE, out_all_refs, cancellable, error);
-}
-
-gboolean
-flatpak_dir_list_all_remote_refs_decomposed (FlatpakDir         *self,
-                                             FlatpakRemoteState *state,
-                                             GHashTable        **out_all_refs,
-                                             GCancellable       *cancellable,
-                                             GError            **error)
-{
-  return _flatpak_dir_list_all_remote_refs (self, state, TRUE, out_all_refs, cancellable, error);
 }
 
 static GPtrArray *
@@ -14304,68 +14263,6 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
   else
     flatpak_dir_log (self, "add remote", remote_name, NULL, NULL, NULL, url,
                      "Added remote %s to %s", remote_name, url);
-
-  return TRUE;
-}
-
-static gboolean
-remove_unless_ref_in_hash (gpointer key,
-                           gpointer value,
-                           gpointer user_data)
-{
-  GHashTable *table = user_data;
-  const char *ref_name = key;
-
-  return !g_hash_table_contains (table, ref_name);
-}
-
-gboolean
-flatpak_dir_list_remote_refs (FlatpakDir         *self,
-                              FlatpakRemoteState *state,
-                              GHashTable        **refs,
-                              GCancellable       *cancellable,
-                              GError            **error)
-{
-  g_autoptr(GError) my_error = NULL;
-
-  if (error == NULL)
-    error = &my_error;
-
-  if (!flatpak_dir_list_all_remote_refs (self, state, refs,
-                                         cancellable, error))
-    return FALSE;
-
-  if (flatpak_dir_get_remote_noenumerate (self, state->remote_name))
-    {
-      g_autoptr(GHashTable) unprefixed_local_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
-      g_autoptr(GHashTable) local_refs = NULL;
-      GHashTableIter hash_iter;
-      gpointer key;
-      g_autofree char *refspec_prefix = g_strconcat (state->remote_name, ":.", NULL);
-
-      /* For noenumerate remotes, only return data for already locally
-       * available refs */
-
-      if (!ostree_repo_list_refs (self->repo, refspec_prefix, &local_refs,
-                                  cancellable, error))
-        return FALSE;
-
-      /* First we need to unprefix the remote name from the local refs */
-      g_hash_table_iter_init (&hash_iter, local_refs);
-      while (g_hash_table_iter_next (&hash_iter, &key, NULL))
-        {
-          char *ref = NULL;
-          ostree_parse_refspec (key, NULL, &ref, NULL);
-
-          if (ref)
-            g_hash_table_insert (unprefixed_local_refs, ref, NULL);
-        }
-
-      /* Then we remove all remote refs not in the local refs set */
-      g_hash_table_foreach_remove (*refs,
-                                   remove_unless_ref_in_hash,
-                                   unprefixed_local_refs);
-    }
 
   return TRUE;
 }
