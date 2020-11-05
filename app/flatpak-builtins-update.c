@@ -165,9 +165,9 @@ flatpak_builtin_update (int           argc,
     {
       const char *pref = NULL;
       FlatpakKinds matched_kinds;
-      g_autofree char *id = NULL;
-      g_autofree char *arch = NULL;
-      g_autofree char *branch = NULL;
+      g_autofree char *match_id = NULL;
+      g_autofree char *match_arch = NULL;
+      g_autofree char *match_branch = NULL;
       gboolean found = FALSE;
 
       if (n_prefs == 0)
@@ -178,7 +178,7 @@ flatpak_builtin_update (int           argc,
         {
           pref = prefs[j];
           if (!flatpak_split_partial_ref_arg (pref, kinds, opt_arch, default_branch,
-                                              &matched_kinds, &id, &arch, &branch, error))
+                                              &matched_kinds, &match_id, &match_arch, &match_branch, error))
             return FALSE;
         }
 
@@ -186,85 +186,38 @@ flatpak_builtin_update (int           argc,
         {
           FlatpakDir *dir = g_ptr_array_index (dirs, k);
           FlatpakTransaction *transaction = g_ptr_array_index (transactions, k);
+          g_autoptr(GPtrArray) refs = NULL;
 
-          if (kinds & FLATPAK_KINDS_APP)
+          refs = flatpak_dir_list_refs_decomposed (dir, kinds, cancellable, error);
+          if (refs == NULL)
+            return FALSE;
+
+          for (i = 0; i < refs->len; i++)
             {
-              g_auto(GStrv) refs = NULL;
+              FlatpakDecomposed *ref = g_ptr_array_index (refs, i);
 
-              if (!flatpak_dir_list_refs (dir, "app", &refs,
-                                          cancellable,
-                                          error))
-                return FALSE;
+              if (match_id != NULL && !flatpak_decomposed_is_id (ref, match_id))
+                continue;
 
-              for (i = 0; refs != NULL && refs[i] != NULL; i++)
+              if (match_arch != NULL && !flatpak_decomposed_is_arch (ref, match_arch))
+                continue;
+
+              if (match_branch != NULL && !flatpak_decomposed_is_branch (ref, match_branch))
+                continue;
+
+              found = TRUE;
+              if (flatpak_transaction_add_update (transaction, flatpak_decomposed_get_ref (ref),
+                                                  (const char **) opt_subpaths, opt_commit, error))
+                continue;
+
+              if (g_error_matches (*error, FLATPAK_ERROR, FLATPAK_ERROR_REMOTE_NOT_FOUND))
                 {
-                  g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], error);
-                  if (parts == NULL)
-                    return FALSE;
-
-                  if (id != NULL && strcmp (parts[1], id) != 0)
-                    continue;
-
-                  if (arch != NULL && strcmp (parts[2], arch) != 0)
-                    continue;
-
-                  if (branch != NULL && strcmp (parts[3], branch) != 0)
-                    continue;
-
-                  found = TRUE;
-                  if (flatpak_transaction_add_update (transaction, refs[i], (const char **) opt_subpaths, opt_commit, error))
-                    continue;
-
-                  if (g_error_matches (*error, FLATPAK_ERROR, FLATPAK_ERROR_REMOTE_NOT_FOUND))
-                    {
-                      g_printerr (_("Unable to update %s: %s\n"), refs[i], (*error)->message);
-                      g_clear_error (error);
-                    }
-                  else
-                    {
-                      return FALSE;
-                    }
+                  g_printerr (_("Unable to update %s: %s\n"), flatpak_decomposed_get_ref (ref), (*error)->message);
+                  g_clear_error (error);
                 }
-            }
-
-          if (kinds & FLATPAK_KINDS_RUNTIME)
-            {
-              g_auto(GStrv) refs = NULL;
-
-              if (!flatpak_dir_list_refs (dir, "runtime", &refs,
-                                          cancellable,
-                                          error))
-                return FALSE;
-
-              for (i = 0; refs != NULL && refs[i] != NULL; i++)
+              else
                 {
-                  g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], error);
-
-                  if (parts == NULL)
-                    return FALSE;
-
-                  if (id != NULL && strcmp (parts[1], id) != 0)
-                    continue;
-
-                  if (arch != NULL && strcmp (parts[2], arch) != 0)
-                    continue;
-
-                  if (branch != NULL && strcmp (parts[3], branch) != 0)
-                    continue;
-
-                  found = TRUE;
-                  if (flatpak_transaction_add_update (transaction, refs[i], (const char **) opt_subpaths, opt_commit, error))
-                    continue;
-
-                  if (g_error_matches (*error, FLATPAK_ERROR, FLATPAK_ERROR_REMOTE_NOT_FOUND))
-                    {
-                      g_printerr (_("Unable to update %s: %s\n"), refs[i], (*error)->message);
-                      g_clear_error (error);
-                    }
-                  else
-                    {
-                      return FALSE;
-                    }
+                  return FALSE;
                 }
             }
         }
