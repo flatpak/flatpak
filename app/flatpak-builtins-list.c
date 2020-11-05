@@ -76,18 +76,16 @@ static Column all_columns[] = {
 typedef struct
 {
   FlatpakDir *dir;
-  GStrv       app_refs;
-  GStrv       runtime_refs;
+  GPtrArray  *refs;
 } RefsData;
 
 static RefsData *
-refs_data_new (FlatpakDir *dir, const GStrv app_refs, const GStrv runtime_refs)
+refs_data_new (FlatpakDir *dir, GPtrArray *refs)
 {
   RefsData *refs_data = g_new0 (RefsData, 1);
 
   refs_data->dir = g_object_ref (dir);
-  refs_data->app_refs = g_strdupv ((char **) app_refs);
-  refs_data->runtime_refs = g_strdupv ((char **) runtime_refs);
+  refs_data->refs = g_ptr_array_ref (refs);
   return refs_data;
 }
 
@@ -95,52 +93,22 @@ static void
 refs_data_free (RefsData *refs_data)
 {
   g_object_unref (refs_data->dir);
-  g_strfreev (refs_data->app_refs);
-  g_strfreev (refs_data->runtime_refs);
+  g_ptr_array_unref (refs_data->refs);
   g_free (refs_data);
 }
 
-static char **
-join_strv (char **a, char **b)
+static char *
+strip_last_element (const char *id)
 {
-  gsize len = 1, i, j;
-  char **res;
+  gsize id_len = strlen (id);
+  while (id_len > 0 &&
+         id[id_len - 1] != '.')
+    id_len--;
 
-  if (a)
-    len += g_strv_length (a);
-  if (b)
-    len += g_strv_length (b);
+  if (id_len > 0)
+    id_len--; /* Remove the dot too */
 
-  res = g_new (char *, len);
-
-  i = 0;
-
-  for (j = 0; a != NULL && a[j] != NULL; j++)
-    res[i++] = g_strdup (a[j]);
-
-  for (j = 0; b != NULL && b[j] != NULL; j++)
-    res[i++] = g_strdup (b[j]);
-
-  res[i++] = NULL;
-  return res;
-}
-
-static gboolean
-find_refs_for_dir (FlatpakDir   *dir,
-                   GStrv        *apps,
-                   GStrv        *runtimes,
-                   GCancellable *cancellable,
-                   GError      **error)
-{
-  if (flatpak_dir_ensure_repo (dir, cancellable, NULL))
-    {
-      if (apps != NULL && !flatpak_dir_list_refs (dir, "app", apps, cancellable, error))
-        return FALSE;
-      if (runtimes != NULL && !flatpak_dir_list_refs (dir, "runtime", runtimes, cancellable, error))
-        return FALSE;
-    }
-
-  return TRUE;
+  return g_strndup (id, id_len);
 }
 
 static gboolean
@@ -179,25 +147,25 @@ print_table_for_refs (gboolean      print_apps,
     {
       RefsData *refs_data = NULL;
       FlatpakDir *dir = NULL;
-      g_auto(GStrv) dir_refs = NULL;
+      GPtrArray *dir_refs = NULL;
       g_autoptr(GHashTable) pref_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
       int j;
 
       refs_data = (RefsData *) g_ptr_array_index (refs_array, i);
       dir = refs_data->dir;
-      dir_refs = join_strv (refs_data->app_refs, refs_data->runtime_refs);
+      dir_refs = refs_data->refs;
 
-      for (j = 0; dir_refs[j] != NULL; j++)
+      for (j = 0; j < dir_refs->len; j++)
         {
-          char *ref = dir_refs[j];
-          char *partial_ref = flatpak_make_valid_id_prefix (strchr (ref, '/') + 1);
+          FlatpakDecomposed *ref = g_ptr_array_index (dir_refs, j);
+          char *partial_ref = flatpak_make_valid_id_prefix (flatpak_decomposed_get_pref (ref));
           g_hash_table_insert (pref_hash, partial_ref, ref);
         }
 
-      for (j = 0; dir_refs[j] != NULL; j++)
+      for (j = 0; j < dir_refs->len; j++)
         {
-          char *ref, *partial_ref;
-          g_auto(GStrv) parts = NULL;
+          FlatpakDecomposed *ref = g_ptr_array_index (dir_refs, j);
+          const char *partial_ref;
           const char *repo = NULL;
           g_autoptr(FlatpakDeploy) deploy = NULL;
           g_autoptr(GBytes) deploy_data = NULL;
@@ -213,15 +181,12 @@ print_table_for_refs (gboolean      print_apps,
           g_autofree const char **subpaths = NULL;
           int k;
 
-          ref = dir_refs[j];
+          partial_ref = flatpak_decomposed_get_pref (ref);
 
-          parts = g_strsplit (ref, "/", -1);
-          partial_ref = strchr (ref, '/') + 1;
-
-          if (arch != NULL && strcmp (arch, parts[2]) != 0)
+          if (arch != NULL && !flatpak_decomposed_is_arch (ref, arch))
             continue;
 
-          deploy = flatpak_dir_load_deployed (dir, ref, NULL, cancellable, NULL);
+          deploy = flatpak_dir_load_deployed (dir, flatpak_decomposed_get_ref (ref), NULL, cancellable, NULL);
           deploy_data = flatpak_deploy_get_deploy_data (deploy, FLATPAK_DEPLOY_VERSION_CURRENT, cancellable, NULL);
           if (deploy_data == NULL)
             continue;
@@ -240,20 +205,20 @@ print_table_for_refs (gboolean      print_apps,
                 }
             }
 
-          if (!opt_all && strcmp (parts[0], "runtime") == 0 &&
-              flatpak_id_has_subref_suffix (parts[1], -1))
-            {
-              g_autofree char *prefix_partial_ref = NULL;
-              char *last_dot = strrchr (parts[1], '.');
+          g_autofree char *ref_id = flatpak_decomposed_dup_id (ref);
+          g_autofree char *ref_arch = flatpak_decomposed_dup_arch (ref);
+          g_autofree char *ref_branch = flatpak_decomposed_dup_branch (ref);
 
-              *last_dot = 0;
-              prefix_partial_ref = g_strconcat (parts[1], "/", parts[2], "/", parts[3], NULL);
-              *last_dot = '.';
+          if (!opt_all &&
+              flatpak_decomposed_is_runtime (ref) &&
+              flatpak_decomposed_id_is_subref (ref))
+            {
+              g_autofree char *parent_id = strip_last_element (ref_id);
+              g_autofree char *prefix_partial_ref = g_strconcat (parent_id, "/", ref_arch, "/", ref_branch, NULL);
 
               if (g_hash_table_lookup (pref_hash, prefix_partial_ref))
                 continue;
             }
-
 
           repo = flatpak_deploy_data_get_origin (deploy_data);
 
@@ -265,7 +230,7 @@ print_table_for_refs (gboolean      print_apps,
           appdata_summary = flatpak_deploy_data_get_appdata_summary (deploy_data);
           appdata_version = flatpak_deploy_data_get_appdata_version (deploy_data);
 
-          latest = flatpak_dir_read_latest (dir, repo, ref, NULL, NULL, NULL);
+          latest = flatpak_dir_read_latest (dir, repo, flatpak_decomposed_get_ref (ref), NULL, NULL, NULL);
           if (latest)
             {
               if (strcmp (active, latest) == 0)
@@ -287,7 +252,16 @@ print_table_for_refs (gboolean      print_apps,
             {
               if (strcmp (columns[k].name, "name") == 0)
                 {
-                  const char *name = appdata_name ? appdata_name : strrchr (parts[1], '.') + 1;
+                  const char *name = NULL;
+                  g_autofree char *readable_id = NULL;
+
+                  if (appdata_name)
+                    name = appdata_name;
+                  else
+                    {
+                      readable_id = flatpak_decomposed_dup_readable_id (ref);
+                      name = readable_id;
+                    }
 
                   flatpak_table_printer_add_column (printer, name);
                 }
@@ -305,11 +279,11 @@ print_table_for_refs (gboolean      print_apps,
               else if (strcmp (columns[k].name, "ref") == 0)
                 flatpak_table_printer_add_column (printer, partial_ref);
               else if (strcmp (columns[k].name, "application") == 0)
-                flatpak_table_printer_add_column (printer, parts[1]);
+                flatpak_table_printer_add_column (printer, ref_id);
               else if (strcmp (columns[k].name, "arch") == 0)
-                flatpak_table_printer_add_column (printer, parts[2]);
+                flatpak_table_printer_add_column (printer, ref_arch);
               else if (strcmp (columns[k].name, "branch") == 0)
-                flatpak_table_printer_add_column (printer, parts[3]);
+                flatpak_table_printer_add_column (printer, ref_branch);
               else if (strcmp (columns[k].name, "origin") == 0)
                 flatpak_table_printer_add_column (printer, repo);
               else if (strcmp (columns[k].name, "active") == 0)
@@ -338,10 +312,10 @@ print_table_for_refs (gboolean      print_apps,
                   if (alt_id)
                     flatpak_table_printer_append_with_comma_printf (printer, "alt-id=%.12s", alt_id);
 
-                  if (strcmp (parts[0], "app") == 0)
+                  if (flatpak_decomposed_is_app (ref))
                     {
-                      g_autoptr(FlatpakDecomposed) current = flatpak_dir_current_ref (dir, parts[1], cancellable);
-                      if (current && strcmp (ref, flatpak_decomposed_get_ref (current)) == 0)
+                      g_autoptr(FlatpakDecomposed) current = flatpak_dir_current_ref (dir, ref_id, cancellable);
+                      if (current && flatpak_decomposed_equal (ref, current))
                         flatpak_table_printer_append_with_comma (printer, "current");
                     }
                   else
@@ -365,7 +339,7 @@ print_table_for_refs (gboolean      print_apps,
                 }
             }
 
-          flatpak_table_printer_set_key (printer, ref);
+          flatpak_table_printer_set_key (printer, flatpak_decomposed_get_ref (ref));
           flatpak_table_printer_finish_row (printer);
         }
     }
@@ -402,12 +376,14 @@ print_installed_refs (gboolean      app,
   for (i = 0; i < dirs->len; i++)
     {
       FlatpakDir *dir = g_ptr_array_index (dirs, i);
-      g_auto(GStrv) apps = NULL;
-      g_auto(GStrv) runtimes = NULL;
+      g_autoptr(GPtrArray) refs = NULL;
 
-      if (!find_refs_for_dir (dir, app ? &apps : NULL, runtime ? &runtimes : NULL, cancellable, error))
+      refs = flatpak_dir_list_refs_decomposed (dir, flatpak_kinds_from_bools (app, runtime),
+                                               cancellable, error);
+      if (refs == NULL)
         return FALSE;
-      g_ptr_array_add (refs_array, refs_data_new (dir, apps, runtimes));
+
+      g_ptr_array_add (refs_array, refs_data_new (dir, refs));
     }
 
   if (!print_table_for_refs (app, refs_array, arch, app_runtime, cols, cancellable, error))
