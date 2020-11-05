@@ -380,6 +380,57 @@ test_decompose (void)
     new_branch = flatpak_decomposed_dup_branch (new);
     g_assert_cmpstr (new_branch, ==, "beta");
   }
+
+  {
+    g_autoptr(FlatpakDecomposed) pref = NULL;
+    g_autofree gchar *id = NULL;
+    g_autofree gchar *arch = NULL;
+    g_autofree gchar *branch = NULL;
+
+    pref = flatpak_decomposed_new_from_pref (FLATPAK_KINDS_RUNTIME, "org.the.@pp.Locale/x86_64/master", &error);
+    g_assert_null (pref);
+    g_assert (error != NULL);
+    g_assert (error->domain == FLATPAK_ERROR);
+    g_assert (error->code == FLATPAK_ERROR_INVALID_REF);
+    g_clear_error (&error);
+
+    pref = flatpak_decomposed_new_from_pref (FLATPAK_KINDS_RUNTIME, "org.the.app.Locale/x86@64/master", &error);
+    g_assert_null (pref);
+    g_assert (error != NULL);
+    g_assert (error->domain == FLATPAK_ERROR);
+    g_assert (error->code == FLATPAK_ERROR_INVALID_REF);
+    g_clear_error (&error);
+
+    pref = flatpak_decomposed_new_from_pref (FLATPAK_KINDS_RUNTIME, "org.the.app.Locale//master", &error);
+    g_assert_null (pref);
+    g_assert (error != NULL);
+    g_assert (error->domain == FLATPAK_ERROR);
+    g_assert (error->code == FLATPAK_ERROR_INVALID_REF);
+    g_clear_error (&error);
+
+    pref = flatpak_decomposed_new_from_pref (FLATPAK_KINDS_RUNTIME, "org.the.app.Locale/x86_64", &error);
+    g_assert_null (pref);
+    g_assert (error != NULL);
+    g_assert (error->domain == FLATPAK_ERROR);
+    g_assert (error->code == FLATPAK_ERROR_INVALID_REF);
+    g_clear_error (&error);
+
+    pref = flatpak_decomposed_new_from_pref (FLATPAK_KINDS_RUNTIME, "org.the.app.Locale/x86_64/master", &error);
+    if (error)
+      g_print ("XXXXXXXX error: %s\n", error->message);
+    g_assert_nonnull (pref);
+    g_assert (error == NULL);
+
+    g_assert_cmpstr (flatpak_decomposed_get_ref (pref), ==, "runtime/org.the.app.Locale/x86_64/master");
+
+    g_assert (flatpak_decomposed_get_kinds (pref) == FLATPAK_KINDS_RUNTIME);
+    id = flatpak_decomposed_dup_id (pref);
+    g_assert_cmpstr (id, ==, "org.the.app.Locale");
+    arch = flatpak_decomposed_dup_arch (pref);
+    g_assert_cmpstr (arch, ==, "x86_64");
+    branch = flatpak_decomposed_dup_branch (pref);
+    g_assert_cmpstr (branch, ==, "master");
+  }
 }
 
 
