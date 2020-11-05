@@ -102,6 +102,8 @@ char *             flatpak_decomposed_dup_id                (FlatpakDecomposed  
 char *             flatpak_decomposed_dup_readable_id       (FlatpakDecomposed  *ref);
 gboolean           flatpak_decomposed_is_id                 (FlatpakDecomposed  *ref,
                                                              const char         *id);
+gboolean           flatpak_decomposed_id_has_suffix         (FlatpakDecomposed  *ref,
+                                                             const char         *suffix);
 gboolean           flatpak_decomposed_is_id_fuzzy           (FlatpakDecomposed  *ref,
                                                              const char         *id);
 gboolean           flatpak_decomposed_id_is_subref          (FlatpakDecomposed  *ref);

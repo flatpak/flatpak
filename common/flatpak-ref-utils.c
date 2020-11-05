@@ -1224,6 +1224,16 @@ flatpak_decomposed_is_id (FlatpakDecomposed  *ref,
   return slashed_str_equal (ref_id, id);
 }
 
+gboolean
+flatpak_decomposed_id_has_suffix (FlatpakDecomposed  *ref,
+                                  const char         *suffix)
+{
+  gsize id_len;
+  const char *ref_id = flatpak_decomposed_peek_id (ref, &id_len);
+  return str_has_suffix (ref_id, id_len, suffix);
+}
+
+
 /* See if the given id looks similar to this ref. The
  * Levenshtein distance constant was chosen pretty arbitrarily. */
 gboolean
