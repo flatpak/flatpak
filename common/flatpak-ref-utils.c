@@ -789,13 +789,16 @@ flatpak_decomposed_new_from_col_ref      (const char         *ref,
   return g_steal_pointer (&decomposed);
 }
 
-FlatpakDecomposed *
-flatpak_decomposed_new_from_decomposed (FlatpakDecomposed  *old,
-                                        FlatpakKinds        opt_kind,
-                                        const char         *opt_id,
-                                        const char         *opt_arch,
-                                        const char         *opt_branch,
-                                        GError            **error)
+static FlatpakDecomposed *
+_flatpak_decomposed_new_from_decomposed (FlatpakDecomposed  *old,
+                                         FlatpakKinds        opt_kind,
+                                         const char         *opt_id,
+                                         gssize              opt_id_len,
+                                         const char         *opt_arch,
+                                         gssize              opt_arch_len,
+                                         const char         *opt_branch,
+                                         gssize              opt_branch_len,
+                                         GError            **error)
 {
   FlatpakDecomposed *decomposed;
   g_autoptr(GError) local_error = NULL;
@@ -828,13 +831,16 @@ flatpak_decomposed_new_from_decomposed (FlatpakDecomposed  *old,
 
   if (opt_id)
     {
-      if (!flatpak_is_valid_name (opt_id, -1, &local_error))
+      if (opt_id_len == -1)
+        id_len = strlen (opt_id);
+      else
+        id_len = opt_id_len;
+
+      if (!flatpak_is_valid_name (opt_id, id_len, &local_error))
         {
           flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("Invalid name %s: %s"), opt_id, local_error->message);
           return NULL;
         }
-
-      id_len = strlen (opt_id);
     }
   else
     {
@@ -843,13 +849,17 @@ flatpak_decomposed_new_from_decomposed (FlatpakDecomposed  *old,
 
   if (opt_arch)
     {
-      if (!flatpak_is_valid_arch (opt_arch, -1, &local_error))
+      if (opt_arch_len == -1)
+        arch_len = strlen (opt_arch);
+      else
+        arch_len = opt_arch_len;
+
+      if (!flatpak_is_valid_arch (opt_arch, arch_len, &local_error))
         {
           flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("Invalid arch: %s: %s"), opt_arch, local_error->message);
           return NULL;
         }
 
-      arch_len = strlen (opt_arch);
     }
   else
     {
@@ -858,13 +868,16 @@ flatpak_decomposed_new_from_decomposed (FlatpakDecomposed  *old,
 
   if (opt_branch)
     {
-      if (!flatpak_is_valid_branch (opt_branch, -1, &local_error))
+      if (opt_branch_len == -1)
+        branch_len = strlen (opt_branch);
+      else
+        branch_len = opt_branch_len;
+
+      if (!flatpak_is_valid_branch (opt_branch, branch_len, &local_error))
         {
           flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("Invalid branch: %s: %s"), opt_branch, local_error->message);
           return NULL;
         }
-
-      branch_len = strlen (opt_branch);
     }
   else
     {
@@ -921,6 +934,21 @@ flatpak_decomposed_new_from_decomposed (FlatpakDecomposed  *old,
 }
 
 FlatpakDecomposed *
+flatpak_decomposed_new_from_decomposed (FlatpakDecomposed  *old,
+                                        FlatpakKinds        opt_kind,
+                                        const char         *opt_id,
+                                        const char         *opt_arch,
+                                        const char         *opt_branch,
+                                        GError            **error)
+{
+  return _flatpak_decomposed_new_from_decomposed (old, opt_kind,
+                                                  opt_id, -1,
+                                                  opt_arch, -1,
+                                                  opt_branch, -1,
+                                                  error);
+}
+
+FlatpakDecomposed *
 flatpak_decomposed_new_from_parts (FlatpakKinds        kind,
                                    const char         *id,
                                    const char         *arch,
@@ -939,6 +967,49 @@ flatpak_decomposed_new_from_parts (FlatpakKinds        kind,
   return flatpak_decomposed_new_from_decomposed (NULL, kind, id, arch, branch, error);
 }
 
+FlatpakDecomposed *
+flatpak_decomposed_new_from_pref (FlatpakKinds        kind,
+                                  const char         *pref,
+                                  GError            **error)
+{
+  const char *slash;
+  const char *id;
+  const char *arch;
+  const char *branch;
+
+  g_assert (kind == FLATPAK_KINDS_APP || kind == FLATPAK_KINDS_RUNTIME);
+  g_assert (pref != NULL);
+
+  id = pref;
+  slash = strchr (id, '/');
+  if (slash == NULL)
+    {
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("Wrong number of components in partial ref %s"), pref);
+      return NULL;
+    }
+
+  arch = slash + 1;
+  slash = strchr (arch, '/');
+  if (slash == NULL)
+    {
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("Wrong number of components in partial ref %s"), pref);
+      return NULL;
+    }
+
+  branch = slash + 1;
+  slash = strchr (branch, '/');
+  if (slash != NULL)
+    {
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("Wrong number of components in partial ref %s"), pref);
+      return NULL;
+    }
+
+  return _flatpak_decomposed_new_from_decomposed (NULL, kind,
+                                                  id, arch - id - 1,
+                                                  arch, branch - arch - 1,
+                                                  branch, -1,
+                                                  error);
+}
 
 FlatpakDecomposed *
 flatpak_decomposed_ref (FlatpakDecomposed  *ref)

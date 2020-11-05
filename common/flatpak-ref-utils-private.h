@@ -73,6 +73,9 @@ FlatpakDecomposed *flatpak_decomposed_new_from_decomposed   (FlatpakDecomposed  
                                                              const char         *opt_arch,
                                                              const char         *opt_branch,
                                                              GError            **error);
+FlatpakDecomposed *flatpak_decomposed_new_from_pref         (FlatpakKinds        kind,
+                                                             const char         *pref,
+                                                             GError            **error);
 FlatpakDecomposed *flatpak_decomposed_ref                   (FlatpakDecomposed  *ref);
 void               flatpak_decomposed_unref                 (FlatpakDecomposed  *ref);
 const char *       flatpak_decomposed_get_ref               (FlatpakDecomposed  *ref);
