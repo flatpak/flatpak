@@ -921,21 +921,11 @@ gboolean   flatpak_dir_compare_remote_filter (FlatpakDir *self,
                                               const char *filter);
 gboolean   flatpak_dir_get_remote_disabled (FlatpakDir *self,
                                             const char *remote_name);
-gboolean   flatpak_dir_list_remote_refs (FlatpakDir         *self,
-                                         FlatpakRemoteState *state,
-                                         GHashTable        **refs,
-                                         GCancellable       *cancellable,
-                                         GError            **error);
 gboolean   flatpak_dir_list_remote_refs_decomposed (FlatpakDir         *self,
                                                     FlatpakRemoteState *state,
                                                     GHashTable        **refs,
                                                     GCancellable       *cancellable,
                                                     GError            **error);
-gboolean   flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
-                                             FlatpakRemoteState *state,
-                                             GHashTable        **out_all_refs,
-                                             GCancellable       *cancellable,
-                                             GError            **error);
 gboolean   flatpak_dir_list_all_remote_refs_decomposed (FlatpakDir         *self,
                                                         FlatpakRemoteState *state,
                                                         GHashTable        **out_all_refs,
