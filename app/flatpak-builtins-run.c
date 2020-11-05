@@ -215,9 +215,12 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
             {
               const char *ref = *iter;
               RefDirPair *pair;
-
-              pair = ref_dir_pair_new (ref, dir);
-              g_ptr_array_add (ref_dir_pairs, pair);
+              g_autoptr(FlatpakDecomposed) d = flatpak_decomposed_new_from_ref (ref, NULL);
+              if (d)
+                {
+                  pair = ref_dir_pair_new (d, dir);
+                  g_ptr_array_add (ref_dir_pairs, pair);
+                }
             }
         }
 
@@ -239,7 +242,7 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
            * something that's not deployed */
           chosen_dir_array = g_ptr_array_new ();
           g_ptr_array_add (chosen_dir_array, chosen_pair->dir);
-          runtime_deploy = flatpak_find_deploy_for_ref_in (chosen_dir_array, chosen_pair->ref,
+          runtime_deploy = flatpak_find_deploy_for_ref_in (chosen_dir_array, flatpak_decomposed_get_ref (chosen_pair->ref),
                                                            opt_commit ? opt_commit : opt_runtime_commit,
                                                            cancellable, &local_error2);
         }
@@ -260,7 +263,7 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
           return FALSE;
         }
 
-      runtime_ref = g_strdup (chosen_pair->ref);
+      runtime_ref = flatpak_decomposed_dup_ref (chosen_pair->ref);
 
       /* Clear app-kind error */
       g_clear_error (&local_error);

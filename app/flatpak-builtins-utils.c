@@ -51,11 +51,11 @@ remote_dir_pair_new (const char *remote_name, FlatpakDir *dir)
 }
 
 RefDirPair *
-ref_dir_pair_new (const char *ref, FlatpakDir *dir)
+ref_dir_pair_new (FlatpakDecomposed *ref, FlatpakDir *dir)
 {
   RefDirPair *pair = g_new (RefDirPair, 1);
 
-  pair->ref = g_strdup (ref);
+  pair->ref = flatpak_decomposed_ref (ref);
   pair->dir = g_object_ref (dir);
   return pair;
 }
@@ -63,10 +63,11 @@ ref_dir_pair_new (const char *ref, FlatpakDir *dir)
 void
 ref_dir_pair_free (RefDirPair *pair)
 {
-  g_free (pair->ref);
+  flatpak_decomposed_unref (pair->ref);
   g_object_unref (pair->dir);
   g_free (pair);
 }
+
 
 gboolean
 looks_like_branch (const char *branch)
@@ -475,10 +476,8 @@ flatpak_resolve_matching_installed_refs (gboolean    assume_yes,
       else
         {
           RefDirPair *pair = g_ptr_array_index (ref_dir_pairs, 0);
-          g_auto(GStrv) parts = NULL;
-          parts = flatpak_decompose_ref (pair->ref, NULL);
-          g_assert (parts != NULL);
-          if (opt_search_ref != NULL && strcmp (parts[1], opt_search_ref) == 0)
+          g_autofree char *id = flatpak_decomposed_dup_id (pair->ref);
+          if (opt_search_ref != NULL && strcmp (id, opt_search_ref) == 0)
             chosen = 1;
         }
     }
@@ -496,7 +495,7 @@ flatpak_resolve_matching_installed_refs (gboolean    assume_yes,
           const char *dir_name = flatpak_dir_get_name_cached (pair->dir);
           if (flatpak_yes_no_prompt (TRUE, /* default to yes on Enter */
                                      _("Found installed ref ‘%s’ (%s). Is this correct?"),
-                                     pair->ref, dir_name))
+                                     flatpak_decomposed_get_ref (pair->ref), dir_name))
             chosen = 1;
           else
             return flatpak_fail (error, _("No ref chosen to resolve matches for ‘%s’"), opt_search_ref);
@@ -508,7 +507,7 @@ flatpak_resolve_matching_installed_refs (gboolean    assume_yes,
           for (i = 0; i < ref_dir_pairs->len; i++)
             {
               RefDirPair *pair = g_ptr_array_index (ref_dir_pairs, i);
-              names[i] = g_strdup_printf ("%s (%s)", pair->ref, flatpak_dir_get_name_cached (pair->dir));
+              names[i] = g_strdup_printf ("%s (%s)", flatpak_decomposed_get_ref (pair->ref), flatpak_dir_get_name_cached (pair->dir));
             }
           if (!only_one)
             names[i] = g_strdup_printf (_("All of the above"));
