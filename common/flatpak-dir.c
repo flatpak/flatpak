@@ -12784,48 +12784,11 @@ flatpak_dir_find_local_refs (FlatpakDir           *self,
 }
 
 static GHashTable *
-flatpak_dir_get_all_installed_refs (FlatpakDir  *self,
-                                    FlatpakKinds kinds,
-                                    GError     **error)
-{
-  g_autoptr(GHashTable) local_refs = NULL;
-  int i;
-
-  if (!flatpak_dir_maybe_ensure_repo (self, NULL, error))
-    return NULL;
-
-  local_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
-  if (kinds & FLATPAK_KINDS_APP)
-    {
-      g_auto(GStrv) app_refs = NULL;
-
-      if (!flatpak_dir_list_refs (self, "app", &app_refs, NULL, error))
-        return NULL;
-
-      for (i = 0; app_refs[i] != NULL; i++)
-        g_hash_table_add (local_refs, g_strdup (app_refs[i]));
-    }
-  if (kinds & FLATPAK_KINDS_RUNTIME)
-    {
-      g_auto(GStrv) runtime_refs = NULL;
-
-      if (!flatpak_dir_list_refs (self, "runtime", &runtime_refs, NULL, error))
-        return NULL;
-
-      for (i = 0; runtime_refs[i] != NULL; i++)
-        g_hash_table_add (local_refs, g_strdup (runtime_refs[i]));
-    }
-
-  return g_steal_pointer (&local_refs);
-}
-
-static GHashTable *
 flatpak_dir_get_all_installed_refs_decomposed (FlatpakDir  *self,
                                                FlatpakKinds kinds,
                                                GError     **error)
 {
   g_autoptr(GHashTable) local_refs = NULL;
-  int i;
 
   if (!flatpak_dir_maybe_ensure_repo (self, NULL, error))
     return NULL;
@@ -12833,30 +12796,26 @@ flatpak_dir_get_all_installed_refs_decomposed (FlatpakDir  *self,
   local_refs = g_hash_table_new_full ((GHashFunc)flatpak_decomposed_hash, (GEqualFunc)flatpak_decomposed_equal, (GDestroyNotify)flatpak_decomposed_unref, NULL);
   if (kinds & FLATPAK_KINDS_APP)
     {
-      g_auto(GStrv) app_refs = NULL;
-
-      if (!flatpak_dir_list_refs (self, "app", &app_refs, NULL, error))
+      g_autoptr(GPtrArray) app_refs = flatpak_dir_list_refs_decomposed (self, FLATPAK_KINDS_APP, NULL, error);
+      if (app_refs == NULL)
         return NULL;
 
-      for (i = 0; app_refs[i] != NULL; i++)
+      for (int i = 0; i < app_refs->len; i++)
         {
-          FlatpakDecomposed *d = flatpak_decomposed_new_from_ref (app_refs[i], NULL);
-          if (d)
-            g_hash_table_add (local_refs, d);
+          FlatpakDecomposed *app_ref = g_ptr_array_index (app_refs, i);
+          g_hash_table_add (local_refs, flatpak_decomposed_ref (app_ref));
         }
     }
   if (kinds & FLATPAK_KINDS_RUNTIME)
     {
-      g_auto(GStrv) runtime_refs = NULL;
-
-      if (!flatpak_dir_list_refs (self, "runtime", &runtime_refs, NULL, error))
+      g_autoptr(GPtrArray) runtime_refs = flatpak_dir_list_refs_decomposed (self, FLATPAK_KINDS_RUNTIME, NULL, error);
+      if (runtime_refs == NULL)
         return NULL;
 
-      for (i = 0; runtime_refs[i] != NULL; i++)
+      for (int i = 0; i < runtime_refs->len; i++)
         {
-          FlatpakDecomposed *d = flatpak_decomposed_new_from_ref (runtime_refs[i], NULL);
-          if (d)
-            g_hash_table_add (local_refs, d);
+          FlatpakDecomposed *runtime_ref = g_ptr_array_index (runtime_refs, i);
+          g_hash_table_add (local_refs, flatpak_decomposed_ref (runtime_ref));
         }
     }
 
@@ -13530,15 +13489,15 @@ flatpak_dir_remote_has_deploys (FlatpakDir *self,
   GHashTableIter hash_iter;
   gpointer key;
 
-  refs = flatpak_dir_get_all_installed_refs (self, FLATPAK_KINDS_APP | FLATPAK_KINDS_RUNTIME, NULL);
+  refs = flatpak_dir_get_all_installed_refs_decomposed (self, FLATPAK_KINDS_APP | FLATPAK_KINDS_RUNTIME, NULL);
   if (refs == NULL)
     return FALSE;
 
   g_hash_table_iter_init (&hash_iter, refs);
   while (g_hash_table_iter_next (&hash_iter, &key, NULL))
     {
-      const char *ref = key;
-      g_autofree char *origin = flatpak_dir_get_origin (self, ref, NULL, NULL);
+      FlatpakDecomposed *ref = key;
+      g_autofree char *origin = flatpak_dir_get_origin (self, flatpak_decomposed_get_ref (ref), NULL, NULL);
 
       if (strcmp (remote, origin) == 0)
         return TRUE;
