@@ -158,18 +158,13 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
   if (branch == NULL || arch == NULL)
     {
-      g_autofree char *current_ref = flatpak_find_current_ref (id, NULL, NULL);
-
+      g_autoptr(FlatpakDecomposed) current_ref = flatpak_find_current_ref (id, NULL, NULL);
       if (current_ref)
         {
-          g_auto(GStrv) parts = flatpak_decompose_ref (current_ref, NULL);
-          if (parts)
-            {
-              if (branch == NULL)
-                branch = g_strdup (parts[3]);
-              if (arch == NULL)
-                arch = g_strdup (parts[2]);
-            }
+          if (branch == NULL)
+            branch = flatpak_decomposed_dup_branch (current_ref);
+          if (arch == NULL)
+            arch = flatpak_decomposed_dup_arch (current_ref);
         }
     }
 

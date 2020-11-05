@@ -755,8 +755,8 @@ get_ref (FlatpakDir        *dir,
   if (flatpak_decomposed_is_app (ref))
     {
       g_autofree char *id = flatpak_decomposed_dup_id (ref);
-      g_autofree char *current = flatpak_dir_current_ref (dir, id, cancellable);
-      if (current && strcmp (flatpak_decomposed_get_ref (ref), current) == 0)
+      g_autoptr(FlatpakDecomposed) current = flatpak_dir_current_ref (dir, id, cancellable);
+      if (current && flatpak_decomposed_equal (ref, current))
         is_current = TRUE;
     }
 
@@ -853,8 +853,7 @@ flatpak_installation_get_current_installed_app (FlatpakInstallation *self,
 {
   g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(GFile) deploy = NULL;
-  g_autofree char *current = NULL;
-  g_autoptr(FlatpakDecomposed) ref = NULL;
+  g_autoptr(FlatpakDecomposed) current = NULL;
 
   dir = flatpak_installation_get_dir (self, error);
   if (dir == NULL)
@@ -863,7 +862,7 @@ flatpak_installation_get_current_installed_app (FlatpakInstallation *self,
   current = flatpak_dir_current_ref (dir, name, cancellable);
   if (current)
     deploy = flatpak_dir_get_if_deployed (dir,
-                                          current, NULL, cancellable);
+                                          flatpak_decomposed_get_ref (current), NULL, cancellable);
 
   if (deploy == NULL)
     {
@@ -872,11 +871,7 @@ flatpak_installation_get_current_installed_app (FlatpakInstallation *self,
       return NULL;
     }
 
-  ref = flatpak_decomposed_new_from_ref (current, error);
-  if (ref == NULL)
-    return NULL;
-
-  return get_ref (dir, ref, cancellable, error);
+  return get_ref (dir, current, cancellable, error);
 }
 
 /**

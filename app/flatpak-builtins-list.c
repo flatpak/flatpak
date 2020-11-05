@@ -340,8 +340,8 @@ print_table_for_refs (gboolean      print_apps,
 
                   if (strcmp (parts[0], "app") == 0)
                     {
-                      g_autofree char *current = flatpak_dir_current_ref (dir, parts[1], cancellable);
-                      if (current && strcmp (ref, current) == 0)
+                      g_autoptr(FlatpakDecomposed) current = flatpak_dir_current_ref (dir, parts[1], cancellable);
+                      if (current && strcmp (ref, flatpak_decomposed_get_ref (current)) == 0)
                         flatpak_table_printer_append_with_comma (printer, "current");
                     }
                   else

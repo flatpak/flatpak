@@ -195,9 +195,9 @@ gboolean flatpak_get_allowed_exports (const char     *source_path,
                                       char         ***allowed_prefixes_out,
                                       gboolean       *require_exact_match_out);
 
-char * flatpak_find_current_ref (const char   *app_id,
-                                 GCancellable *cancellable,
-                                 GError      **error);
+FlatpakDecomposed *flatpak_find_current_ref (const char   *app_id,
+                                             GCancellable *cancellable,
+                                             GError      **error);
 GFile *flatpak_find_deploy_dir_for_ref (const char   *ref,
                                         FlatpakDir  **dir_out,
                                         GCancellable *cancellable,

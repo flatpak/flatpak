@@ -53,6 +53,7 @@ flatpak_builtin_make_current_app (int argc, char **argv, GCancellable *cancellab
   g_autofree char *id = NULL;
   g_autofree char *arch = NULL;
   g_autofree char *branch = NULL;
+  g_autoptr(FlatpakDecomposed) decomposed = NULL;
   FlatpakKinds kinds;
 
   context = g_option_context_new (_("APP BRANCH - Make branch of application current"));
@@ -88,6 +89,10 @@ flatpak_builtin_make_current_app (int argc, char **argv, GCancellable *cancellab
   if (ref == NULL)
     return FALSE;
 
+  decomposed = flatpak_decomposed_new_from_ref (ref, error);
+  if (decomposed == NULL)
+    return FALSE;
+
   if (!flatpak_dir_lock (dir, &lock,
                          cancellable, error))
     return FALSE;
@@ -96,7 +101,7 @@ flatpak_builtin_make_current_app (int argc, char **argv, GCancellable *cancellab
   if (!g_file_query_exists (deploy_base, cancellable))
     return flatpak_fail (error, _("App %s branch %s is not installed"), id, branch);
 
-  if (!flatpak_dir_make_current_ref (dir, ref, cancellable, error))
+  if (!flatpak_dir_make_current_ref (dir, decomposed, cancellable, error))
     return FALSE;
 
   if (!flatpak_dir_update_exports (dir, id, cancellable, error))

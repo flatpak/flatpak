@@ -670,15 +670,15 @@ gboolean    flatpak_dir_set_active (FlatpakDir   *self,
                                     const char   *checksum,
                                     GCancellable *cancellable,
                                     GError      **error);
-char *      flatpak_dir_current_ref (FlatpakDir   *self,
-                                     const char   *name,
-                                     GCancellable *cancellable);
+FlatpakDecomposed *flatpak_dir_current_ref (FlatpakDir   *self,
+                                            const char   *name,
+                                            GCancellable *cancellable);
 gboolean    flatpak_dir_drop_current_ref (FlatpakDir   *self,
                                           const char   *name,
                                           GCancellable *cancellable,
                                           GError      **error);
 gboolean    flatpak_dir_make_current_ref (FlatpakDir   *self,
-                                          const char   *ref,
+                                          FlatpakDecomposed *ref,
                                           GCancellable *cancellable,
                                           GError      **error);
 gboolean    flatpak_dir_list_deployed (FlatpakDir   *self,
