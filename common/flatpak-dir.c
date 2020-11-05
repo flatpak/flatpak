@@ -6307,21 +6307,20 @@ out:
 }
 
 static gboolean
-flatpak_dir_list_refs_for_name_decomposed (FlatpakDir   *self,
-                                           FlatpakKinds kind,
-                                           const char   *name,
-                                           GPtrArray    *refs,
-                                           GCancellable *cancellable,
-                                           GError      **error)
+_flatpak_dir_list_refs_for_name_decomposed (FlatpakDir   *self,
+                                            GFile        *base_dir,
+                                            FlatpakKinds kind,
+                                            const char   *name,
+                                            GPtrArray    *refs,
+                                            GCancellable *cancellable,
+                                            GError      **error)
 {
-  g_autoptr(GFile) base = NULL;
   g_autoptr(GFile) dir = NULL;
   g_autoptr(GFileEnumerator) dir_enum = NULL;
   g_autoptr(GFileInfo) child_info = NULL;
   GError *temp_error = NULL;
 
-  base = g_file_get_child (flatpak_dir_get_path (self), kind == FLATPAK_KINDS_APP ? "app" : "runtime");
-  dir = g_file_get_child (base, name);
+  dir = g_file_get_child (base_dir, name);
 
   if (!g_file_query_exists (dir, cancellable))
     return TRUE;
@@ -6394,6 +6393,32 @@ flatpak_dir_list_refs_for_name_decomposed (FlatpakDir   *self,
 }
 
 GPtrArray *
+flatpak_dir_list_refs_for_name_decomposed (FlatpakDir   *self,
+                                           FlatpakKinds kind,
+                                           const char   *name,
+                                           GCancellable *cancellable,
+                                           GError      **error)
+{
+  g_autoptr(GFile) base = NULL;
+  g_autoptr(GFile) dir = NULL;
+  g_autoptr(GFileEnumerator) dir_enum = NULL;
+  g_autoptr(GFileInfo) child_info = NULL;
+  GError *temp_error = NULL;
+  g_autoptr(GPtrArray) refs = NULL;
+
+  refs = g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_decomposed_unref);
+
+  base = g_file_get_child (flatpak_dir_get_path (self), kind == FLATPAK_KINDS_APP ? "app" : "runtime");
+
+  if (!_flatpak_dir_list_refs_for_name_decomposed (self, base, kind, name, refs, cancellable, error))
+    return NULL;
+
+  g_ptr_array_sort (refs, (GCompareFunc)flatpak_decomposed_strcmp_p);
+
+  return g_steal_pointer (&refs);
+}
+
+GPtrArray *
 flatpak_dir_list_refs_decomposed (FlatpakDir   *self,
                                   FlatpakKinds kind,
                                   GCancellable *cancellable,
@@ -6430,7 +6455,7 @@ flatpak_dir_list_refs_decomposed (FlatpakDir   *self,
 
       name = g_file_info_get_name (child_info);
 
-      if (!flatpak_dir_list_refs_for_name_decomposed (self, kind, name, refs, cancellable, error))
+      if (!_flatpak_dir_list_refs_for_name_decomposed (self, base, kind, name, refs, cancellable, error))
         return NULL;
 
       g_clear_object (&child_info);

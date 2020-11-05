@@ -641,6 +641,11 @@ gboolean    flatpak_dir_list_refs (FlatpakDir   *self,
                                    char       ***refs,
                                    GCancellable *cancellable,
                                    GError      **error);
+GPtrArray * flatpak_dir_list_refs_for_name_decomposed (FlatpakDir   *self,
+                                                       FlatpakKinds kind,
+                                                       const char   *name,
+                                                       GCancellable *cancellable,
+                                                       GError      **error);
 GPtrArray *flatpak_dir_list_refs_decomposed (FlatpakDir   *self,
                                              FlatpakKinds kind,
                                              GCancellable *cancellable,
