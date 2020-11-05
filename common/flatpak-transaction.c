@@ -2262,7 +2262,6 @@ static FlatpakDecomposed *
 op_get_runtime_ref (FlatpakTransactionOperation *op)
 {
   g_autofree char *runtime_pref = NULL;
-  char *ref = NULL;
   FlatpakDecomposed *decomposed;
 
   if (!op->resolved_metakey)
@@ -2280,13 +2279,9 @@ op_get_runtime_ref (FlatpakTransactionOperation *op)
   if (runtime_pref == NULL)
     return NULL;
 
-  ref = g_strconcat ("runtime/", runtime_pref, NULL);
-  decomposed = flatpak_decomposed_new_from_ref_take (ref, NULL);
+  decomposed = flatpak_decomposed_new_from_pref (FLATPAK_KINDS_RUNTIME, runtime_pref, NULL);
   if (decomposed == NULL)
-    {
-      g_debug ("Invalid runtime ref %s in metadata", ref);
-      g_free (ref);
-    }
+    g_debug ("Invalid runtime ref %s in metadata", runtime_pref);
 
   return decomposed;
 }
