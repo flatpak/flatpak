@@ -6323,6 +6323,8 @@ _flatpak_dir_list_refs_for_name_decomposed (FlatpakDir   *self,
   g_autoptr(GFileInfo) child_info = NULL;
   GError *temp_error = NULL;
 
+  g_assert (kind == FLATPAK_KINDS_RUNTIME || kind == FLATPAK_KINDS_APP);
+
   dir = g_file_get_child (base_dir, name);
 
   if (!g_file_query_exists (dir, cancellable))
@@ -6432,51 +6434,94 @@ flatpak_dir_list_refs_for_name_decomposed (FlatpakDir   *self,
 
 GPtrArray *
 flatpak_dir_list_refs_decomposed (FlatpakDir   *self,
-                                  FlatpakKinds kind,
+                                  FlatpakKinds kinds,
                                   GCancellable *cancellable,
                                   GError      **error)
 {
-  g_autoptr(GFile) base = NULL;
-  g_autoptr(GFileEnumerator) dir_enum = NULL;
-  g_autoptr(GFileInfo) child_info = NULL;
-  GError *temp_error = NULL;
   g_autoptr(GPtrArray) refs = NULL;
 
   refs = g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_decomposed_unref);
 
-  base = g_file_get_child (flatpak_dir_get_path (self), kind == FLATPAK_KINDS_APP ? "app" : "runtime");
-
-  if (!g_file_query_exists (base, cancellable))
-    return g_steal_pointer (&refs);
-
-  dir_enum = g_file_enumerate_children (base, OSTREE_GIO_FAST_QUERYINFO,
-                                        G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
-                                        cancellable, error);
-  if (!dir_enum)
-    return NULL;
-
-  while ((child_info = g_file_enumerator_next_file (dir_enum, cancellable, &temp_error)))
+  if (kinds & FLATPAK_KINDS_APP)
     {
-      const char *name;
+      g_autoptr(GFile) base = NULL;
+      g_autoptr(GFileEnumerator) dir_enum = NULL;
+      g_autoptr(GFileInfo) child_info = NULL;
+      GError *temp_error = NULL;
 
-      if (g_file_info_get_file_type (child_info) != G_FILE_TYPE_DIRECTORY)
+      base = g_file_get_child (flatpak_dir_get_path (self), "app");
+
+      if (g_file_query_exists (base, cancellable))
         {
-          g_clear_object (&child_info);
-          continue;
+          dir_enum = g_file_enumerate_children (base, OSTREE_GIO_FAST_QUERYINFO,
+                                                G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                                cancellable, error);
+          if (!dir_enum)
+            return NULL;
+
+          while ((child_info = g_file_enumerator_next_file (dir_enum, cancellable, &temp_error)))
+            {
+              const char *name = g_file_info_get_name (child_info);
+
+              if (g_file_info_get_file_type (child_info) != G_FILE_TYPE_DIRECTORY)
+                {
+                  g_clear_object (&child_info);
+                  continue;
+                }
+
+              if (!_flatpak_dir_list_refs_for_name_decomposed (self, base, FLATPAK_KINDS_APP, name, refs, cancellable, error))
+                return NULL;
+
+              g_clear_object (&child_info);
+            }
+
+          if (temp_error != NULL)
+            {
+              g_propagate_error (error, temp_error);
+              return NULL;
+            }
         }
-
-      name = g_file_info_get_name (child_info);
-
-      if (!_flatpak_dir_list_refs_for_name_decomposed (self, base, kind, name, refs, cancellable, error))
-        return NULL;
-
-      g_clear_object (&child_info);
     }
 
-  if (temp_error != NULL)
+  if (kinds & FLATPAK_KINDS_RUNTIME)
     {
-      g_propagate_error (error, temp_error);
-      return NULL;
+      g_autoptr(GFile) base = NULL;
+      g_autoptr(GFileEnumerator) dir_enum = NULL;
+      g_autoptr(GFileInfo) child_info = NULL;
+      GError *temp_error = NULL;
+
+      base = g_file_get_child (flatpak_dir_get_path (self), "runtime");
+
+      if (g_file_query_exists (base, cancellable))
+        {
+          dir_enum = g_file_enumerate_children (base, OSTREE_GIO_FAST_QUERYINFO,
+                                                G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                                cancellable, error);
+          if (!dir_enum)
+            return NULL;
+
+          while ((child_info = g_file_enumerator_next_file (dir_enum, cancellable, &temp_error)))
+            {
+              const char *name = g_file_info_get_name (child_info);
+
+              if (g_file_info_get_file_type (child_info) != G_FILE_TYPE_DIRECTORY)
+                {
+                  g_clear_object (&child_info);
+                  continue;
+                }
+
+              if (!_flatpak_dir_list_refs_for_name_decomposed (self, base, FLATPAK_KINDS_RUNTIME, name, refs, cancellable, error))
+                return NULL;
+
+              g_clear_object (&child_info);
+            }
+
+          if (temp_error != NULL)
+            {
+              g_propagate_error (error, temp_error);
+              return NULL;
+            }
+        }
     }
 
   g_ptr_array_sort (refs, (GCompareFunc)flatpak_decomposed_strcmp_p);

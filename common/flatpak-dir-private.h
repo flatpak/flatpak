@@ -647,7 +647,7 @@ GPtrArray * flatpak_dir_list_refs_for_name_decomposed (FlatpakDir   *self,
                                                        GCancellable *cancellable,
                                                        GError      **error);
 GPtrArray *flatpak_dir_list_refs_decomposed (FlatpakDir   *self,
-                                             FlatpakKinds kind,
+                                             FlatpakKinds kinds,
                                              GCancellable *cancellable,
                                              GError      **error);
 GVariant *  flatpak_dir_read_latest_commit (FlatpakDir   *self,
