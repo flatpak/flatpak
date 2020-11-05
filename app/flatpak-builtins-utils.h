@@ -39,12 +39,12 @@ typedef struct RemoteDirPair
 
 typedef struct RefDirPair
 {
-  gchar      *ref;
+  FlatpakDecomposed *ref;
   FlatpakDir *dir;
 } RefDirPair;
 
 void         ref_dir_pair_free (RefDirPair *pair);
-RefDirPair * ref_dir_pair_new (const char *ref,
+RefDirPair * ref_dir_pair_new (FlatpakDecomposed *ref,
                                FlatpakDir *dir);
 
 void            remote_dir_pair_free (RemoteDirPair *pair);
