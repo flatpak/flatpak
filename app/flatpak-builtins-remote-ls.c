@@ -124,7 +124,6 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
   guint n_keys;
   g_autofree FlatpakDecomposed **keys = NULL;
   int i, j;
-  g_autoptr(GHashTable) pref_hash = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, NULL); /* content owned by refs_hash */
   FlatpakKinds match_kinds;
   g_autofree char *match_id = NULL;
   g_autofree char *match_arch = NULL;
@@ -164,12 +163,13 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
       FlatpakRemoteState *state = remote_state_dir_pair->state;
       const char *remote = state->remote_name;
       g_autoptr(AsStore) store = NULL;
+      g_autoptr(GHashTable) pref_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL); /* value owned by refs */
       g_autoptr(GHashTable) names = g_hash_table_new_full ((GHashFunc)flatpak_decomposed_hash, (GEqualFunc)flatpak_decomposed_equal, (GDestroyNotify)flatpak_decomposed_unref, g_free);
 
       GLNX_HASH_TABLE_FOREACH (refs, FlatpakDecomposed *, ref)
         {
-          const char *partial_ref = flatpak_decomposed_get_pref (ref);
-          g_hash_table_insert (pref_hash, (char *)partial_ref, ref); /* both key and values are owned by refs */
+          char *partial_ref = flatpak_make_valid_id_prefix (flatpak_decomposed_get_pref (ref));
+          g_hash_table_insert (pref_hash, partial_ref, ref);
         }
 
       GLNX_HASH_TABLE_FOREACH_KV (refs, FlatpakDecomposed *, ref, const char *, checksum)
