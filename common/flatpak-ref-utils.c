@@ -715,13 +715,28 @@ _flatpak_decomposed_new (char            *ref,
       return NULL;
     }
 
-  decomposed = g_new0 (FlatpakDecomposed, 1);
+  if (take)
+    {
+      decomposed = g_malloc (sizeof (FlatpakDecomposed));
+      decomposed->data = ref;
+    }
+  else
+    {
+      char *inline_data;
+
+      /* Store the dup:ed ref inline */
+      decomposed = g_malloc (sizeof (FlatpakDecomposed) + strlen (ref) + 1);
+      inline_data = (char *)decomposed + sizeof (FlatpakDecomposed);
+
+      strcpy (inline_data, ref);
+      decomposed->data = inline_data;
+    }
   decomposed->ref_count = 1;
+  decomposed->collection_id = NULL;
   decomposed->ref_offset = (guint16)ref_offset;
   decomposed->id_offset = (guint16)id_offset;
   decomposed->arch_offset = (guint16)arch_offset;
   decomposed->branch_offset = (guint16)branch_offset;
-  decomposed->data = take ? ref : g_strdup (ref);
 
   return decomposed;
 }
@@ -784,6 +799,7 @@ flatpak_decomposed_new_from_decomposed (FlatpakDecomposed  *old,
 {
   FlatpakDecomposed *decomposed;
   g_autoptr(GError) local_error = NULL;
+  char *inline_data;
   const char *kind_str;
   gsize kind_len;
   gsize id_len;
@@ -862,11 +878,15 @@ flatpak_decomposed_new_from_decomposed (FlatpakDecomposed  *old,
       return NULL;
     }
 
-  decomposed = g_new0 (FlatpakDecomposed, 1);
-  decomposed->ref_count = 1;
-  decomposed->data = g_malloc (ref_len + 1);
+  /* Store the ref inline */
+  decomposed = g_malloc (sizeof (FlatpakDecomposed) + ref_len + 1);
+  inline_data = (char *)decomposed + sizeof (FlatpakDecomposed);
 
-  ref = decomposed->data;
+  decomposed->ref_count = 1;
+  decomposed->data = inline_data;
+  decomposed->collection_id = NULL;
+
+  ref = inline_data;
   offset = 0;
 
   decomposed->ref_offset = (guint16)offset;
@@ -932,7 +952,9 @@ flatpak_decomposed_unref (FlatpakDecomposed  *ref)
 {
   if (g_atomic_int_dec_and_test (&ref->ref_count))
     {
-      g_free (ref->data);
+      char *inline_data = (char *)ref + sizeof (FlatpakDecomposed);
+      if (ref->data != inline_data)
+        g_free (ref->data);
       g_free (ref->collection_id);
       g_free (ref);
     }
