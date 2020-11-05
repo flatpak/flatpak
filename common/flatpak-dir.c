@@ -15737,9 +15737,9 @@ flatpak_dir_delete_mirror_refs (FlatpakDir    *self,
 
 
 static gboolean
-dir_get_metadata (FlatpakDir  *dir,
-                  const char  *ref,
-                  GKeyFile   **out_metakey)
+dir_get_metadata (FlatpakDir        *dir,
+                  FlatpakDecomposed *ref,
+                  GKeyFile         **out_metakey)
 {
   g_autoptr(GFile) deploy_dir = NULL;
   g_autoptr(GKeyFile) metakey = NULL;
@@ -15747,7 +15747,7 @@ dir_get_metadata (FlatpakDir  *dir,
   g_autofree char *metadata_contents = NULL;
   gsize metadata_size;
 
-  deploy_dir = flatpak_dir_get_if_deployed (dir, ref, NULL, NULL);
+  deploy_dir = flatpak_dir_get_if_deployed (dir, flatpak_decomposed_get_ref (ref), NULL, NULL);
   if (deploy_dir == NULL)
     return FALSE;
 
@@ -15765,12 +15765,12 @@ dir_get_metadata (FlatpakDir  *dir,
 }
 
 static gboolean
-maybe_get_metakey (FlatpakDir  *dir,
-                   FlatpakDir  *shadowing_dir,
-                   const char  *ref,
-                   GHashTable  *metadata_injection,
-                   GKeyFile   **out_metakey,
-                   gboolean    *out_ref_is_shadowed)
+maybe_get_metakey (FlatpakDir        *dir,
+                   FlatpakDir        *shadowing_dir,
+                   FlatpakDecomposed *ref,
+                   GHashTable        *metadata_injection,
+                   GKeyFile         **out_metakey,
+                   gboolean          *out_ref_is_shadowed)
 {
   if (shadowing_dir &&
       dir_get_metadata (shadowing_dir, ref, out_metakey))
@@ -15781,7 +15781,7 @@ maybe_get_metakey (FlatpakDir  *dir,
 
   if (metadata_injection != NULL)
     {
-      GKeyFile *injected_metakey = g_hash_table_lookup (metadata_injection, ref);
+      GKeyFile *injected_metakey = g_hash_table_lookup (metadata_injection, flatpak_decomposed_get_ref (ref));
       if (injected_metakey != NULL)
         {
           *out_ref_is_shadowed = FALSE;
@@ -15799,49 +15799,20 @@ maybe_get_metakey (FlatpakDir  *dir,
   return FALSE;
 }
 
-static gboolean
-ref_is_arch (const char *ref,
-             const char *arch)
-{
-  char *p;
-  gsize arch_len;
-
-  if (arch == NULL)
-    return TRUE; /* NULL => match any arch */
-
-  /* Skip app/ or runtime/ */
-  p = strchr (ref, '/');
-  if (p == NULL)
-    return FALSE;
-  p++;
-
-  /* Skip app/rutime id */
-  p = strchr (p, '/');
-  if (p == NULL)
-    return FALSE;
-  p++;
-
-  arch_len = strlen (arch);
-  return strncmp (p, arch, arch_len) == 0 && p[arch_len] == '/';
-}
-
 static void
-queue_ref_for_analysis (const char *ref,
+queue_ref_for_analysis (FlatpakDecomposed *ref,
                         const char *arch,
                         GHashTable *analyzed_refs,
                         GQueue     *refs_to_analyze)
 {
-  char *ref_copy;
-
-  if (!ref_is_arch (ref, arch))
+  if (arch != NULL && !flatpak_decomposed_is_arch (ref, arch))
     return;
 
   if (g_hash_table_lookup (analyzed_refs, ref) != NULL)
     return;
 
-  ref_copy = g_strdup (ref);
-  g_hash_table_add (analyzed_refs, ref_copy);
-  g_queue_push_tail (refs_to_analyze, ref_copy); /* owned by analyzed_refs */
+  g_hash_table_add (analyzed_refs, flatpak_decomposed_ref (ref));
+  g_queue_push_tail (refs_to_analyze, ref); /* owned by analyzed_refs */
 }
 
 /* This traverses from all the "root" refs and into for any recursive dependencies in @self
@@ -15866,41 +15837,46 @@ find_used_refs (FlatpakDir         *self,
                 GCancellable       *cancellable,
                 GError            **error)
 {
-  g_auto(GStrv) root_app_refs = NULL;
-  g_auto(GStrv) root_runtime_refs = NULL;
+  g_autoptr(GPtrArray) root_app_refs = NULL;
+  g_autoptr(GPtrArray) root_runtime_refs = NULL;
   g_autoptr(GHashTable) analyzed_refs = NULL;
   g_autoptr(GQueue) refs_to_analyze = NULL;
   FlatpakDir *root_ref_dir;
-  const char *ref_to_analyze;
-  int i;
+  FlatpakDecomposed *ref_to_analyze;
 
   refs_to_analyze = g_queue_new ();
-  analyzed_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  analyzed_refs = g_hash_table_new_full ((GHashFunc)flatpak_decomposed_hash, (GEqualFunc)flatpak_decomposed_equal, (GDestroyNotify)flatpak_decomposed_unref, NULL);
 
   if (shadowing_dir)
     root_ref_dir = shadowing_dir;
   else
     root_ref_dir = self;
 
-  if (!flatpak_dir_list_refs (root_ref_dir, "app", &root_app_refs, cancellable, error))
+  root_app_refs = flatpak_dir_list_refs_decomposed (root_ref_dir, FLATPAK_KINDS_APP, cancellable, error);
+  if (root_app_refs == NULL)
     return NULL;
 
-  for (i = 0; root_app_refs[i] != NULL; i++)
-    queue_ref_for_analysis (root_app_refs[i], arch, analyzed_refs, refs_to_analyze);
-
-  if (!flatpak_dir_list_refs (root_ref_dir, "runtime", &root_runtime_refs, cancellable, error))
-    return NULL;
-
-  for (i = 0; root_runtime_refs[i] != NULL; i++)
+  for (int i = 0; i < root_app_refs->len; i++)
     {
+      FlatpakDecomposed *root_app_ref = g_ptr_array_index (root_app_refs, i);
+      queue_ref_for_analysis (root_app_ref, arch, analyzed_refs, refs_to_analyze);
+    }
+
+  root_runtime_refs = flatpak_dir_list_refs_decomposed (root_ref_dir, FLATPAK_KINDS_RUNTIME, cancellable, error);
+  if (root_runtime_refs == NULL)
+    return NULL;
+
+  for (int i = 0; i < root_runtime_refs->len; i++)
+    {
+      FlatpakDecomposed *root_runtime_ref = g_ptr_array_index (root_runtime_refs, i);
       /* Consider all shadow dir runtimes as roots because we don't really do full analysis for shadowing_dir.
        * For example a system installed app could end up using the user version of a runtime, which in turn
        * uses a system gl extension.
        *
        * However, for non-shadowed runtime refs, only pinned ones are roots */
       if (root_ref_dir == shadowing_dir ||
-          flatpak_dir_ref_is_pinned (root_ref_dir, root_runtime_refs[i]))
-        queue_ref_for_analysis (root_runtime_refs[i], arch, analyzed_refs, refs_to_analyze);
+          flatpak_dir_ref_is_pinned (root_ref_dir, flatpak_decomposed_get_ref (root_runtime_ref)))
+        queue_ref_for_analysis (root_runtime_ref, arch, analyzed_refs, refs_to_analyze);
     }
 
   /* Any injected refs are considered used, because this is used by transaction
@@ -15910,7 +15886,9 @@ find_used_refs (FlatpakDir         *self,
     {
       GLNX_HASH_TABLE_FOREACH (metadata_injection, const char *, injected_ref)
         {
-          queue_ref_for_analysis (injected_ref, arch, analyzed_refs, refs_to_analyze);
+          g_autoptr(FlatpakDecomposed) injected = flatpak_decomposed_new_from_ref (injected_ref, NULL);
+          if (injected)
+            queue_ref_for_analysis (injected, arch, analyzed_refs, refs_to_analyze);
         }
     }
 
@@ -15920,7 +15898,7 @@ find_used_refs (FlatpakDir         *self,
       gboolean ref_is_shadowed;
       gboolean is_app;
       g_autoptr(GPtrArray) related = NULL;
-      const char *sdk;
+      g_autofree char *sdk = NULL;
 
       if (!maybe_get_metakey (self, shadowing_dir, ref_to_analyze, metadata_injection,
                               &metakey, &ref_is_shadowed))
@@ -15930,7 +15908,7 @@ find_used_refs (FlatpakDir         *self,
         {
           /* Mark the analyzed ref used as it wasn't shadowed */
           if (!g_hash_table_contains (used_refs, ref_to_analyze))
-            g_hash_table_add (used_refs, g_strdup (ref_to_analyze));
+            g_hash_table_add (used_refs, flatpak_decomposed_ref (ref_to_analyze));
 
           /* For excluded refs we mark them as used (above) so that they don't get listed as
            * unused, but we don't analyze them for any dependencies. Note that refs_to_exclude only
@@ -15943,16 +15921,17 @@ find_used_refs (FlatpakDir         *self,
        * Find all dependencies and queue for analysis *
        ***********************************************/
 
-      is_app = g_str_has_prefix (ref_to_analyze, "app/");
+      is_app = flatpak_decomposed_is_app (ref_to_analyze);
 
       /* App directly depends on its runtime */
       if (is_app)
         {
-          const char *runtime = g_key_file_get_string (metakey, "Application", "runtime", NULL);
+          g_autofree char *runtime = g_key_file_get_string (metakey, "Application", "runtime", NULL);
           if (runtime)
             {
-              g_autofree char *runtime_ref = g_strconcat ("runtime/", runtime, NULL);
-              queue_ref_for_analysis (runtime_ref, arch, analyzed_refs, refs_to_analyze);
+              g_autoptr(FlatpakDecomposed) runtime_ref = flatpak_decomposed_new_from_pref (FLATPAK_KINDS_RUNTIME, runtime, NULL);
+              if (runtime_ref)
+                queue_ref_for_analysis (runtime_ref, arch, analyzed_refs, refs_to_analyze);
             }
         }
 
@@ -15960,8 +15939,9 @@ find_used_refs (FlatpakDir         *self,
       sdk = g_key_file_get_string (metakey, is_app ? "Application" : "Runtime", "sdk", NULL);
       if (sdk)
         {
-          g_autofree char *sdk_ref = g_strconcat ("runtime/", sdk, NULL);
-          queue_ref_for_analysis (sdk_ref, arch, analyzed_refs, refs_to_analyze);
+          g_autoptr(FlatpakDecomposed) sdk_ref = flatpak_decomposed_new_from_pref (FLATPAK_KINDS_RUNTIME, sdk, NULL);
+          if (sdk_ref)
+            queue_ref_for_analysis (sdk_ref, arch, analyzed_refs, refs_to_analyze);
         }
 
       /* Extensions with extra data, that are not specially marked NoRuntime needs the runtime at install.
@@ -15970,19 +15950,28 @@ find_used_refs (FlatpakDir         *self,
           g_key_file_has_group (metakey, "Extra Data") &&
           !g_key_file_get_boolean (metakey, "Extra Data", "NoRuntime", NULL))
         {
-          const char *extension_runtime_ref = g_key_file_get_string (metakey, "ExtensionOf", "runtime", NULL);
+          g_autofree char *extension_runtime_ref = g_key_file_get_string (metakey, "ExtensionOf", "runtime", NULL);
           if (extension_runtime_ref != NULL)
-            queue_ref_for_analysis (extension_runtime_ref, arch, analyzed_refs, refs_to_analyze);
+            {
+              g_autoptr(FlatpakDecomposed) d = flatpak_decomposed_new_from_ref (extension_runtime_ref, NULL);
+              if (d)
+                queue_ref_for_analysis (d, arch, analyzed_refs, refs_to_analyze);
+            }
         }
 
       /* We pass NULL for remote-name here, because we want to consider related refs from all remotes */
-      related = flatpak_dir_find_local_related_for_metadata (self, ref_to_analyze, NULL, metakey, NULL, NULL);
-      for (i = 0; related != NULL && i < related->len; i++)
+      related = flatpak_dir_find_local_related_for_metadata (self, flatpak_decomposed_get_ref (ref_to_analyze),
+                                                             NULL, metakey, NULL, NULL);
+      for (int i = 0; related != NULL && i < related->len; i++)
         {
           FlatpakRelated *rel = g_ptr_array_index (related, i);
 
           if (!rel->auto_prune)
-            queue_ref_for_analysis (rel->ref, arch, analyzed_refs, refs_to_analyze);
+            {
+              g_autoptr(FlatpakDecomposed) rel_ref = flatpak_decomposed_new_from_ref (rel->ref, NULL);
+              if (rel_ref)
+                queue_ref_for_analysis (rel_ref, arch, analyzed_refs, refs_to_analyze);
+            }
         }
     }
 
@@ -16005,18 +15994,22 @@ flatpak_dir_list_unused_refs (FlatpakDir         *self,
   g_autoptr(GHashTable) used_refs = NULL;
   g_autoptr(GHashTable) excluded_refs_ht = NULL;
   g_autoptr(GPtrArray) refs =  NULL;
-  g_auto(GStrv) runtime_refs = NULL;
-  int i;
+  g_autoptr(GPtrArray) runtime_refs = NULL;
 
   /* Convert refs_to_exclude to hashtable for fast repeated lookups */
   if (refs_to_exclude)
     {
-      excluded_refs_ht = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, NULL);
-      for (i = 0; refs_to_exclude[i] != NULL; i++)
-        g_hash_table_add (excluded_refs_ht, (char *)refs_to_exclude[i]);
+      excluded_refs_ht = g_hash_table_new_full ((GHashFunc)flatpak_decomposed_hash, (GEqualFunc)flatpak_decomposed_equal, (GDestroyNotify)flatpak_decomposed_unref, NULL);
+      for (int i = 0; refs_to_exclude[i] != NULL; i++)
+        {
+          const char *ref_to_exclude = refs_to_exclude[i];
+          g_autoptr(FlatpakDecomposed) d = flatpak_decomposed_new_from_ref (ref_to_exclude, NULL);
+          if (d)
+            g_hash_table_add (excluded_refs_ht, flatpak_decomposed_ref (d));
+        }
     }
 
-  used_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  used_refs = g_hash_table_new_full ((GHashFunc)flatpak_decomposed_hash, (GEqualFunc)flatpak_decomposed_equal, (GDestroyNotify)flatpak_decomposed_unref, NULL);
 
   if (!find_used_refs (self, NULL, arch, metadata_injection, excluded_refs_ht,
                        used_refs, cancellable, error))
@@ -16041,26 +16034,27 @@ flatpak_dir_list_unused_refs (FlatpakDir         *self,
         }
     }
 
-  if (!flatpak_dir_list_refs (self, "runtime", &runtime_refs, cancellable, error))
+  runtime_refs = flatpak_dir_list_refs_decomposed (self, FLATPAK_KINDS_RUNTIME, cancellable, error);
+  if (runtime_refs == NULL)
     return NULL;
 
   refs = g_ptr_array_new_with_free_func (g_free);
 
-  for (i = 0; runtime_refs[i] != NULL; i++)
+  for (int i = 0; i < runtime_refs->len; i++)
     {
-      const char *ref = runtime_refs[i];
+      FlatpakDecomposed *ref = g_ptr_array_index (runtime_refs, i);
 
       if (g_hash_table_contains (used_refs, ref))
         continue;
 
-      if (!ref_is_arch (ref, arch))
+      if (arch != NULL && !flatpak_decomposed_is_arch (ref, arch))
         continue;
 
       if (filter_by_eol)
         {
           gboolean is_eol = FALSE;
 
-          if (eol_injection && g_hash_table_contains (eol_injection, ref))
+          if (eol_injection && g_hash_table_contains (eol_injection, flatpak_decomposed_get_ref (ref)))
             {
               is_eol = GPOINTER_TO_INT (g_hash_table_lookup (eol_injection, ref));
             }
@@ -16068,8 +16062,8 @@ flatpak_dir_list_unused_refs (FlatpakDir         *self,
             {
               g_autoptr(GBytes) deploy_data = NULL;
 
-              deploy_data = flatpak_dir_get_deploy_data (self, ref, FLATPAK_DEPLOY_VERSION_ANY,
-                                                         cancellable, NULL);
+              deploy_data = flatpak_dir_get_deploy_data (self, flatpak_decomposed_get_ref (ref),
+                                                         FLATPAK_DEPLOY_VERSION_ANY, cancellable, NULL);
               is_eol = deploy_data != NULL &&
                 (flatpak_deploy_data_get_eol (deploy_data) != NULL ||
                  flatpak_deploy_data_get_eol_rebase (deploy_data));
@@ -16079,7 +16073,7 @@ flatpak_dir_list_unused_refs (FlatpakDir         *self,
             continue;
         }
 
-      g_ptr_array_add (refs, g_strdup (ref));
+      g_ptr_array_add (refs, flatpak_decomposed_dup_ref (ref));
     }
 
   g_ptr_array_add (refs, NULL);
