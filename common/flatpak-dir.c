@@ -6024,7 +6024,7 @@ out:
   return ret;
 }
 
-char *
+FlatpakDecomposed *
 flatpak_dir_current_ref (FlatpakDir   *self,
                          const char   *name,
                          GCancellable *cancellable)
@@ -6033,6 +6033,8 @@ flatpak_dir_current_ref (FlatpakDir   *self,
   g_autoptr(GFile) dir = NULL;
   g_autoptr(GFile) current_link = NULL;
   g_autoptr(GFileInfo) file_info = NULL;
+  FlatpakDecomposed *decomposed;
+  char *ref;
 
   base = g_file_get_child (flatpak_dir_get_path (self), "app");
   dir = g_file_get_child (base, name);
@@ -6045,7 +6047,12 @@ flatpak_dir_current_ref (FlatpakDir   *self,
   if (file_info == NULL)
     return NULL;
 
-  return g_strconcat ("app/", name, "/", g_file_info_get_symlink_target (file_info), NULL);
+  ref = g_strconcat ("app/", name, "/", g_file_info_get_symlink_target (file_info), NULL);
+  decomposed = flatpak_decomposed_new_from_ref_take (ref, NULL);
+  if (decomposed == NULL)
+    g_free (ref);
+
+  return decomposed;
 }
 
 gboolean
@@ -6057,30 +6064,32 @@ flatpak_dir_drop_current_ref (FlatpakDir   *self,
   g_autoptr(GFile) base = NULL;
   g_autoptr(GFile) dir = NULL;
   g_autoptr(GFile) current_link = NULL;
-  g_auto(GStrv) refs = NULL;
-  g_autofree char *current_ref = NULL;
-  const char *other_ref = NULL;
-
-  base = g_file_get_child (flatpak_dir_get_path (self), "app");
-  dir = g_file_get_child (base, name);
+  g_autoptr(GPtrArray) refs = NULL;
+  g_autoptr(FlatpakDecomposed) current_ref = NULL;
+  FlatpakDecomposed *other_ref = NULL;
 
   current_ref = flatpak_dir_current_ref (self, name, cancellable);
-
-  if (flatpak_dir_list_refs_for_name (self, "app", name, &refs, cancellable, NULL))
+  if (current_ref)
     {
-      int i;
-      for (i = 0; refs[i] != NULL; i++)
+      refs = flatpak_dir_list_refs_for_name_decomposed (self, FLATPAK_KINDS_APP, name, cancellable, NULL);
+      if (refs)
         {
-          if (g_strcmp0 (refs[i], current_ref) != 0)
+          for (int i = 0; i < refs->len; i++)
             {
-              other_ref = refs[i];
-              break;
+              FlatpakDecomposed *ref = g_ptr_array_index (refs, i);
+              if (!flatpak_decomposed_equal (ref, current_ref))
+                {
+                  other_ref = ref;
+                  break;
+                }
             }
         }
     }
 
-  current_link = g_file_get_child (dir, "current");
+  base = g_file_get_child (flatpak_dir_get_path (self), "app");
+  dir = g_file_get_child (base, name);
 
+  current_link = g_file_get_child (dir, "current");
   if (!g_file_delete (current_link, cancellable, error))
     return FALSE;
 
@@ -6094,41 +6103,35 @@ flatpak_dir_drop_current_ref (FlatpakDir   *self,
 }
 
 gboolean
-flatpak_dir_make_current_ref (FlatpakDir   *self,
-                              const char   *ref,
-                              GCancellable *cancellable,
-                              GError      **error)
+flatpak_dir_make_current_ref (FlatpakDir        *self,
+                              FlatpakDecomposed *ref,
+                              GCancellable      *cancellable,
+                              GError           **error)
 {
   g_autoptr(GFile) base = NULL;
   g_autoptr(GFile) dir = NULL;
   g_autoptr(GFile) current_link = NULL;
   g_auto(GStrv) ref_parts = NULL;
-  g_autofree char *rest = NULL;
-  gboolean ret = FALSE;
+  g_autofree char *id = NULL;
+  const char *rest;
 
-  ref_parts = g_strsplit (ref, "/", -1);
+  if (!flatpak_decomposed_is_app (ref))
+    return flatpak_fail (error, _("Only applications can be made current"));
 
-  g_assert (g_strv_length (ref_parts) == 4);
-  g_assert (strcmp (ref_parts[0], "app") == 0);
+  base = g_file_get_child (flatpak_dir_get_path (self), flatpak_decomposed_get_kind_str (ref));
 
-  base = g_file_get_child (flatpak_dir_get_path (self), ref_parts[0]);
-  dir = g_file_get_child (base, ref_parts[1]);
+  id = flatpak_decomposed_dup_id (ref);
+  dir = g_file_get_child (base, id);
 
   current_link = g_file_get_child (dir, "current");
 
   g_file_delete (current_link, cancellable, NULL);
 
-  if (*ref_parts[3] != 0)
-    {
-      rest = g_strdup_printf ("%s/%s", ref_parts[2], ref_parts[3]);
-      if (!g_file_make_symbolic_link (current_link, rest, cancellable, error))
-        goto out;
-    }
+  rest = flatpak_decomposed_peek_arch (ref, NULL);
+  if (!g_file_make_symbolic_link (current_link, rest, cancellable, error))
+    return FALSE;
 
-  ret = TRUE;
-
-out:
-  return ret;
+  return TRUE;
 }
 
 gboolean
@@ -6394,24 +6397,33 @@ _flatpak_dir_list_refs_for_name_decomposed (FlatpakDir   *self,
 
 GPtrArray *
 flatpak_dir_list_refs_for_name_decomposed (FlatpakDir   *self,
-                                           FlatpakKinds kind,
+                                           FlatpakKinds kinds,
                                            const char   *name,
                                            GCancellable *cancellable,
                                            GError      **error)
 {
-  g_autoptr(GFile) base = NULL;
   g_autoptr(GFile) dir = NULL;
   g_autoptr(GFileEnumerator) dir_enum = NULL;
   g_autoptr(GFileInfo) child_info = NULL;
-  GError *temp_error = NULL;
   g_autoptr(GPtrArray) refs = NULL;
 
   refs = g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_decomposed_unref);
 
-  base = g_file_get_child (flatpak_dir_get_path (self), kind == FLATPAK_KINDS_APP ? "app" : "runtime");
+  if ((kinds & FLATPAK_KINDS_APP) != 0)
+    {
+      g_autoptr(GFile) base = g_file_get_child (flatpak_dir_get_path (self), "app");
 
-  if (!_flatpak_dir_list_refs_for_name_decomposed (self, base, kind, name, refs, cancellable, error))
-    return NULL;
+      if (!_flatpak_dir_list_refs_for_name_decomposed (self, base, FLATPAK_KINDS_APP, name, refs, cancellable, error))
+        return NULL;
+    }
+
+  if ((kinds & FLATPAK_KINDS_RUNTIME) != 0)
+    {
+      g_autoptr(GFile) base = g_file_get_child (flatpak_dir_get_path (self), "runtime");
+
+      if (!_flatpak_dir_list_refs_for_name_decomposed (self, base, FLATPAK_KINDS_RUNTIME, name, refs, cancellable, error))
+        return NULL;
+    }
 
   g_ptr_array_sort (refs, (GCompareFunc)flatpak_decomposed_strcmp_p);
 
@@ -7559,7 +7571,7 @@ flatpak_dir_update_exports (FlatpakDir   *self,
 {
   gboolean ret = FALSE;
   g_autoptr(GFile) exports = NULL;
-  g_autofree char *current_ref = NULL;
+  g_autoptr(FlatpakDecomposed) current_ref = NULL;
   g_autofree char *active_id = NULL;
   g_autofree char *symlink_prefix = NULL;
 
@@ -7570,13 +7582,13 @@ flatpak_dir_update_exports (FlatpakDir   *self,
 
   if (changed_app &&
       (current_ref = flatpak_dir_current_ref (self, changed_app, cancellable)) &&
-      (active_id = flatpak_dir_read_active (self, current_ref, cancellable)))
+      (active_id = flatpak_dir_read_active (self, flatpak_decomposed_get_ref (current_ref), cancellable)))
     {
       g_autoptr(GFile) deploy_base = NULL;
       g_autoptr(GFile) active = NULL;
       g_autoptr(GFile) export = NULL;
 
-      deploy_base = flatpak_dir_get_deploy_dir (self, current_ref);
+      deploy_base = flatpak_dir_get_deploy_dir (self, flatpak_decomposed_get_ref (current_ref));
       active = g_file_get_child (deploy_base, active_id);
       export = g_file_get_child (active, "export");
 
@@ -8567,10 +8579,14 @@ flatpak_dir_deploy_install (FlatpakDir   *self,
   gboolean created_deploy_base = FALSE;
   gboolean ret = FALSE;
   g_autoptr(GError) local_error = NULL;
-  g_auto(GStrv) ref_parts = g_strsplit (ref, "/", -1);
   g_autofree char *remove_ref_from_remote = NULL;
   g_autofree char *commit = NULL;
   g_autofree char *old_active = NULL;
+  g_autoptr(FlatpakDecomposed) decomposed = NULL;
+
+  decomposed = flatpak_decomposed_new_from_ref (ref, error);
+  if (decomposed == NULL)
+    return FALSE;
 
   if (!flatpak_dir_lock (self, &lock,
                          cancellable, error))
@@ -8603,8 +8619,10 @@ flatpak_dir_deploy_install (FlatpakDir   *self,
         }
       else
         {
+          g_autofree char *id = flatpak_decomposed_dup_id (decomposed);
+          g_autofree char *branch = flatpak_decomposed_dup_branch (decomposed);
           g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
-                       _("%s branch %s already installed"), ref_parts[1], ref_parts[3]);
+                       _("%s branch %s already installed"), id, branch);
           goto out;
         }
     }
@@ -8626,12 +8644,14 @@ flatpak_dir_deploy_install (FlatpakDir   *self,
                            previous_ids, cancellable, error))
     goto out;
 
-  if (g_str_has_prefix (ref, "app/"))
+  if (flatpak_decomposed_is_app (decomposed))
     {
-      if (!flatpak_dir_make_current_ref (self, ref, cancellable, error))
+      g_autofree char *id = flatpak_decomposed_dup_id (decomposed);
+
+      if (!flatpak_dir_make_current_ref (self, decomposed, cancellable, error))
         goto out;
 
-      if (!flatpak_dir_update_exports (self, ref_parts[1], cancellable, error))
+      if (!flatpak_dir_update_exports (self, id, cancellable, error))
         goto out;
     }
 
@@ -9982,21 +10002,22 @@ flatpak_dir_uninstall (FlatpakDir                 *self,
                        GError                    **error)
 {
   const char *repository;
-  g_autofree char *current_ref = NULL;
+  g_autoptr(FlatpakDecomposed) current_ref = NULL;
   gboolean was_deployed;
   gboolean is_app;
-  const char *name;
+  g_autofree char *name = NULL;
   g_autofree char *old_active = NULL;
-  g_auto(GStrv) parts = NULL;
   g_auto(GLnxLockFile) lock = { 0, };
   g_autoptr(GBytes) deploy_data = NULL;
   gboolean keep_ref = flags & FLATPAK_HELPER_UNINSTALL_FLAGS_KEEP_REF;
   gboolean force_remove = flags & FLATPAK_HELPER_UNINSTALL_FLAGS_FORCE_REMOVE;
+  g_autoptr(FlatpakDecomposed) decomposed = NULL;
 
-  parts = flatpak_decompose_ref (ref, error);
-  if (parts == NULL)
+  decomposed = flatpak_decomposed_new_from_ref (ref, error);
+  if (decomposed == NULL)
     return FALSE;
-  name = parts[1];
+
+  name = flatpak_decomposed_dup_id (decomposed);
 
   if (flatpak_dir_use_system_helper (self, NULL))
     {
@@ -10026,11 +10047,11 @@ flatpak_dir_uninstall (FlatpakDir                 *self,
   if (repository == NULL)
     return FALSE;
 
-  if (g_str_has_prefix (ref, "runtime/") && !force_remove)
+  if (flatpak_decomposed_is_runtime (decomposed) && !force_remove)
     {
       g_auto(GStrv) app_refs = NULL;
       g_autoptr(GPtrArray) blocking = g_ptr_array_new_with_free_func (g_free);
-      const char *pref = ref + strlen ("runtime/");
+      const char *pref = flatpak_decomposed_get_pref (decomposed);
       int i;
 
       /* Look for apps that need this runtime */
@@ -10068,7 +10089,8 @@ flatpak_dir_uninstall (FlatpakDir                 *self,
   if (is_app)
     {
       current_ref = flatpak_dir_current_ref (self, name, cancellable);
-      if (g_strcmp0 (ref, current_ref) == 0)
+      if (current_ref != NULL &&
+          flatpak_decomposed_equal (decomposed, current_ref))
         {
           g_debug ("dropping current ref");
           if (!flatpak_dir_drop_current_ref (self, name, cancellable, error))
@@ -10108,8 +10130,9 @@ flatpak_dir_uninstall (FlatpakDir                 *self,
 
   if (!was_deployed)
     {
+      const char *branch = flatpak_decomposed_get_branch (decomposed);
       g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
-                   _("%s branch %s is not installed"), name, parts[3]);
+                   _("%s branch %s is not installed"), name, branch);
       return FALSE;
     }
 

@@ -429,7 +429,7 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
         {
           GFileInfo *info;
           GFile *file;
-          g_autofree char *ref = NULL;
+          g_autoptr(FlatpakDecomposed) ref = NULL;
 
           if (!g_file_enumerator_iterate (enumerator, &info, &file, cancellable, error))
             return FALSE;

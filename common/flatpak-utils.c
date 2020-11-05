@@ -1186,12 +1186,12 @@ flatpak_find_unmaintained_extension_dir_if_exists (const char   *name,
   return g_steal_pointer (&extension_dir);
 }
 
-char *
+FlatpakDecomposed *
 flatpak_find_current_ref (const char   *app_id,
                           GCancellable *cancellable,
                           GError      **error)
 {
-  g_autofree char *current_ref = NULL;
+  g_autoptr(FlatpakDecomposed) current_ref = NULL;
   g_autoptr(FlatpakDir) user_dir = flatpak_dir_get_user ();
   int i;
 
