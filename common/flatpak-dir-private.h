@@ -697,7 +697,7 @@ gboolean    flatpak_dir_repo_lock (FlatpakDir   *self,
                                    GError      **error);
 gboolean    flatpak_dir_deploy (FlatpakDir          *self,
                                 const char          *origin,
-                                const char          *ref,
+                                FlatpakDecomposed   *ref,
                                 const char          *checksum_or_latest,
                                 const char * const * subpaths,
                                 const char * const * previous_ids,
