@@ -1888,7 +1888,7 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
                             (flags & FLATPAK_INSTALL_FLAGS_NO_DEPLOY) != 0,
                             (flags & FLATPAK_INSTALL_FLAGS_NO_STATIC_DELTAS) != 0,
                             FALSE, FALSE, state,
-                            flatpak_decomposed_get_ref (ref), NULL, (const char **) subpaths, NULL, NULL, NULL, NULL,
+                            ref, NULL, (const char **) subpaths, NULL, NULL, NULL, NULL,
                             progress, cancellable, error))
     return NULL;
 

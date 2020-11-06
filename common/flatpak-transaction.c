@@ -4226,7 +4226,7 @@ _run_op_kind (FlatpakTransaction           *self,
                                    priv->disable_static_deltas,
                                    priv->reinstall,
                                    priv->max_op >= APP_UPDATE,
-                                   remote_state, flatpak_decomposed_get_ref (op->ref),
+                                   remote_state, op->ref,
                                    op->resolved_commit,
                                    (const char **) op->subpaths,
                                    (const char **) op->previous_ids,
@@ -4282,7 +4282,7 @@ _run_op_kind (FlatpakTransaction           *self,
                                                                        op->resolved_metakey, &local_error))
             res = FALSE;
           else if (op->update_only_deploy)
-            res = flatpak_dir_deploy_update (priv->dir, flatpak_decomposed_get_ref (op->ref),
+            res = flatpak_dir_deploy_update (priv->dir, op->ref,
                                              op->resolved_commit,
                                              (const char **) op->subpaths,
                                              (const char **) op->previous_ids,

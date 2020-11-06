@@ -1926,24 +1926,22 @@ flatpak_dir_remove_oci_files (FlatpakDir   *self,
 }
 
 static gchar *
-flatpak_dir_revokefs_fuse_create_mountpoint (const gchar *ref,
-                                             GError     **error)
+flatpak_dir_revokefs_fuse_create_mountpoint (FlatpakDecomposed *ref,
+                                             GError           **error)
 {
   g_autoptr(GFile) cache_dir = NULL;
-  g_auto(GStrv) parts = NULL;
   g_autofree gchar *cache_dir_path = NULL;
   g_autofree gchar *mnt_dir = NULL;
+  g_autofree gchar *id = NULL;
   g_autofree gchar *mountpoint = NULL;
 
   cache_dir = flatpak_ensure_system_user_cache_dir_location (error);
   if (cache_dir == NULL)
     return NULL;
 
-  parts = flatpak_decompose_ref (ref, error);
-  if (parts == NULL)
-    return NULL;
+  id = flatpak_decomposed_dup_id (ref);
   cache_dir_path = g_file_get_path (cache_dir);
-  mnt_dir = g_strdup_printf ("%s-XXXXXX", parts[1]);
+  mnt_dir = g_strdup_printf ("%s-XXXXXX", id);
   mountpoint = g_mkdtemp_full (g_build_filename (cache_dir_path, mnt_dir, NULL), 0755);
   if (mountpoint == NULL)
     {
@@ -8407,14 +8405,14 @@ flatpak_dir_prune_origin_remote (FlatpakDir *self,
 }
 
 gboolean
-flatpak_dir_deploy_install (FlatpakDir   *self,
-                            const char   *ref_str,
-                            const char   *origin,
-                            const char  **subpaths,
-                            const char  **previous_ids,
-                            gboolean      reinstall,
-                            GCancellable *cancellable,
-                            GError      **error)
+flatpak_dir_deploy_install (FlatpakDir        *self,
+                            FlatpakDecomposed *ref,
+                            const char        *origin,
+                            const char       **subpaths,
+                            const char       **previous_ids,
+                            gboolean           reinstall,
+                            GCancellable      *cancellable,
+                            GError           **error)
 {
   g_auto(GLnxLockFile) lock = { 0, };
   g_autoptr(GFile) deploy_base = NULL;
@@ -8425,11 +8423,6 @@ flatpak_dir_deploy_install (FlatpakDir   *self,
   g_autofree char *remove_ref_from_remote = NULL;
   g_autofree char *commit = NULL;
   g_autofree char *old_active = NULL;
-  g_autoptr(FlatpakDecomposed) ref = NULL;
-
-  ref = flatpak_decomposed_new_from_ref (ref_str, error);
-  if (ref == NULL)
-    return FALSE;
 
   if (!flatpak_dir_lock (self, &lock,
                          cancellable, error))
@@ -8530,13 +8523,13 @@ out:
 
 
 gboolean
-flatpak_dir_deploy_update (FlatpakDir   *self,
-                           const char   *ref_str,
-                           const char   *checksum_or_latest,
-                           const char  **opt_subpaths,
-                           const char  **opt_previous_ids,
-                           GCancellable *cancellable,
-                           GError      **error)
+flatpak_dir_deploy_update (FlatpakDir        *self,
+                           FlatpakDecomposed *ref,
+                           const char        *checksum_or_latest,
+                           const char       **opt_subpaths,
+                           const char       **opt_previous_ids,
+                           GCancellable      *cancellable,
+                           GError           **error)
 {
   g_autoptr(GBytes) old_deploy_data = NULL;
   g_auto(GLnxLockFile) lock = { 0, };
@@ -8545,10 +8538,6 @@ flatpak_dir_deploy_update (FlatpakDir   *self,
   const char *old_origin;
   g_autofree char *commit = NULL;
   g_auto(GStrv) previous_ids = NULL;
-
-  g_autoptr(FlatpakDecomposed) ref = flatpak_decomposed_new_from_ref (ref_str, error);
-  if (ref == NULL)
-    return FALSE;
 
   if (!flatpak_dir_lock (self, &lock,
                          cancellable, error))
@@ -8811,7 +8800,7 @@ flatpak_dir_create_system_child_repo (FlatpakDir   *self,
 
 static gboolean
 flatpak_dir_setup_revokefs_fuse_mount (FlatpakDir    *self,
-                                       const gchar   *ref,
+                                       FlatpakDecomposed *ref,
                                        const gchar   *installation,
                                        gchar        **out_src_dir,
                                        gchar        **out_mnt_dir,
@@ -8921,7 +8910,7 @@ flatpak_dir_install (FlatpakDir          *self,
                      gboolean             reinstall,
                      gboolean             app_hint,
                      FlatpakRemoteState  *state,
-                     const char          *ref,
+                     FlatpakDecomposed   *ref,
                      const char          *opt_commit,
                      const char         **opt_subpaths,
                      const char         **opt_previous_ids,
@@ -8990,7 +8979,7 @@ flatpak_dir_install (FlatpakDir          *self,
 
           child_repo_path = g_file_get_path (registry_file);
 
-          if (!flatpak_dir_mirror_oci (self, registry, state, ref, opt_commit, NULL, token, progress, cancellable, error))
+          if (!flatpak_dir_mirror_oci (self, registry, state, flatpak_decomposed_get_ref (ref), opt_commit, NULL, token, progress, cancellable, error))
             return FALSE;
         }
       else if (!gpg_verify_summary || !gpg_verify)
@@ -9084,7 +9073,7 @@ flatpak_dir_install (FlatpakDir          *self,
 
           flatpak_flags |= FLATPAK_PULL_FLAGS_SIDELOAD_EXTRA_DATA;
 
-          if (!flatpak_dir_pull (self, state, ref, opt_commit, subpaths, sideload_repo, require_metadata, token,
+          if (!flatpak_dir_pull (self, state, flatpak_decomposed_get_ref (ref), opt_commit, subpaths, sideload_repo, require_metadata, token,
                                  child_repo,
                                  flatpak_flags,
                                  0,
@@ -9133,7 +9122,7 @@ flatpak_dir_install (FlatpakDir          *self,
 
       if (!flatpak_dir_system_helper_call_deploy (self,
                                                   child_repo_path ? child_repo_path : "",
-                                                  helper_flags, ref, state->remote_name,
+                                                  helper_flags, flatpak_decomposed_get_ref (ref), state->remote_name,
                                                   (const char * const *) subpaths,
                                                   (const char * const *) opt_previous_ids,
                                                   installation ? installation : "",
@@ -9149,7 +9138,7 @@ flatpak_dir_install (FlatpakDir          *self,
 
   if (!no_pull)
     {
-      if (!flatpak_dir_pull (self, state, ref, opt_commit, opt_subpaths, sideload_repo, require_metadata, token, NULL,
+      if (!flatpak_dir_pull (self, state, flatpak_decomposed_get_ref (ref), opt_commit, opt_subpaths, sideload_repo, require_metadata, token, NULL,
                              flatpak_flags, OSTREE_REPO_PULL_FLAGS_NONE,
                              progress, cancellable, error))
         return FALSE;
@@ -9321,11 +9310,11 @@ flatpak_dir_install_bundle (FlatpakDir   *self,
                             GCancellable *cancellable,
                             GError      **error)
 {
-  g_autofree char *ref = NULL;
+  g_autofree char *ref_str = NULL;
+  g_autoptr(FlatpakDecomposed) ref = NULL;
   g_autoptr(GBytes) deploy_data = NULL;
   g_autoptr(GVariant) metadata = NULL;
   g_autofree char *origin = NULL;
-  g_auto(GStrv) parts = NULL;
   g_autofree char *to_checksum = NULL;
   gboolean gpg_verify;
 
@@ -9340,13 +9329,13 @@ flatpak_dir_install_bundle (FlatpakDir   *self,
                                                           flatpak_file_get_path_cached (file),
                                                           0, remote,
                                                           installation ? installation : "",
-                                                          &ref,
+                                                          &ref_str,
                                                           cancellable,
                                                           error))
         return FALSE;
 
       if (out_ref)
-        *out_ref = g_steal_pointer (&ref);
+        *out_ref = g_steal_pointer (&ref_str);
 
       return TRUE;
     }
@@ -9355,7 +9344,7 @@ flatpak_dir_install_bundle (FlatpakDir   *self,
     return FALSE;
 
   metadata = flatpak_bundle_load (file, &to_checksum,
-                                  &ref,
+                                  &ref_str,
                                   &origin,
                                   NULL, NULL,
                                   NULL, NULL, NULL,
@@ -9363,17 +9352,18 @@ flatpak_dir_install_bundle (FlatpakDir   *self,
   if (metadata == NULL)
     return FALSE;
 
-  parts = flatpak_decompose_ref (ref, error);
-  if (parts == NULL)
+  ref = flatpak_decomposed_new_from_ref (ref_str, error);
+  if (ref == NULL)
     return FALSE;
 
-  deploy_data = flatpak_dir_get_deploy_data (self, ref, FLATPAK_DEPLOY_VERSION_ANY, cancellable, NULL);
+  deploy_data = flatpak_dir_get_deploy_data (self, flatpak_decomposed_get_ref (ref), FLATPAK_DEPLOY_VERSION_ANY, cancellable, NULL);
   if (deploy_data != NULL)
     {
       if (strcmp (flatpak_deploy_data_get_commit (deploy_data), to_checksum) == 0)
         {
+          g_autofree char *id = flatpak_decomposed_dup_id (ref);
           g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
-                       _("This version of %s is already installed"), parts[1]);
+                       _("This version of %s is already installed"), id);
           return FALSE;
         }
 
@@ -9392,7 +9382,7 @@ flatpak_dir_install_bundle (FlatpakDir   *self,
   if (!flatpak_pull_from_bundle (self->repo,
                                  file,
                                  remote,
-                                 ref,
+                                 flatpak_decomposed_get_ref (ref),
                                  gpg_verify,
                                  cancellable,
                                  error))
@@ -9442,7 +9432,7 @@ flatpak_dir_install_bundle (FlatpakDir   *self,
     }
 
   if (out_ref)
-    *out_ref = g_steal_pointer (&ref);
+    *out_ref = flatpak_decomposed_dup_ref (ref);
 
   return TRUE;
 }
@@ -9589,7 +9579,7 @@ flatpak_dir_update (FlatpakDir                           *self,
                     gboolean                              app_hint,
                     gboolean                              install_hint,
                     FlatpakRemoteState                   *state,
-                    const char                           *ref,
+                    const char                           *ref_str,
                     const char                           *commit,
                     const char                          **opt_subpaths,
                     const char                          **opt_previous_ids,
@@ -9607,6 +9597,10 @@ flatpak_dir_update (FlatpakDir                           *self,
   g_autofree const char **old_subpaths = NULL;
   gboolean is_oci;
 
+  g_autoptr(FlatpakDecomposed) ref = flatpak_decomposed_new_from_ref (ref_str, error);
+  if (ref == NULL)
+    return FALSE;
+
   /* This is calculated in check_for_update */
   g_assert (commit != NULL);
 
@@ -9616,7 +9610,7 @@ flatpak_dir_update (FlatpakDir                           *self,
   if (no_static_deltas)
     flatpak_flags |= FLATPAK_PULL_FLAGS_NO_STATIC_DELTAS;
 
-  deploy_data = flatpak_dir_get_deploy_data (self, ref, FLATPAK_DEPLOY_VERSION_ANY,
+  deploy_data = flatpak_dir_get_deploy_data (self, flatpak_decomposed_get_ref (ref), FLATPAK_DEPLOY_VERSION_ANY,
                                              cancellable, NULL);
 
   if (deploy_data != NULL)
@@ -9677,7 +9671,8 @@ flatpak_dir_update (FlatpakDir                           *self,
 
           child_repo_path = g_file_get_path (registry_file);
 
-          if (!flatpak_dir_mirror_oci (self, registry, state, ref, commit, NULL, token, progress, cancellable, error))
+          if (!flatpak_dir_mirror_oci (self, registry, state, flatpak_decomposed_get_ref (ref),
+                                       commit, NULL, token, progress, cancellable, error))
             return FALSE;
         }
       else if (!gpg_verify_summary || !gpg_verify)
@@ -9756,7 +9751,8 @@ flatpak_dir_update (FlatpakDir                           *self,
             }
 
           flatpak_flags |= FLATPAK_PULL_FLAGS_SIDELOAD_EXTRA_DATA;
-          if (!flatpak_dir_pull (self, state, ref, commit, subpaths, sideload_repo, require_metadata, token,
+          if (!flatpak_dir_pull (self, state, flatpak_decomposed_get_ref (ref),
+                                 commit, subpaths, sideload_repo, require_metadata, token,
                                  child_repo,
                                  flatpak_flags, 0,
                                  progress, cancellable, error))
@@ -9799,7 +9795,7 @@ flatpak_dir_update (FlatpakDir                           *self,
 
       if (!flatpak_dir_system_helper_call_deploy (self,
                                                   child_repo_path ? child_repo_path : "",
-                                                  helper_flags, ref, state->remote_name,
+                                                  helper_flags, flatpak_decomposed_get_ref (ref), state->remote_name,
                                                   subpaths, opt_previous_ids,
                                                   installation ? installation : "",
                                                   cancellable,
@@ -9814,7 +9810,8 @@ flatpak_dir_update (FlatpakDir                           *self,
 
   if (!no_pull)
     {
-      if (!flatpak_dir_pull (self, state, ref, commit, subpaths, sideload_repo, require_metadata, token,
+      if (!flatpak_dir_pull (self, state, flatpak_decomposed_get_ref (ref),
+                             commit, subpaths, sideload_repo, require_metadata, token,
                              NULL, flatpak_flags, OSTREE_REPO_PULL_FLAGS_NONE,
                              progress, cancellable, error))
         return FALSE;

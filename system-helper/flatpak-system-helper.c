@@ -673,7 +673,7 @@ handle_deploy (FlatpakSystemHelper   *object,
     {
       if (deploy_dir && !reinstall)
         {
-          if (!flatpak_dir_deploy_update (system, arg_ref, NULL,
+          if (!flatpak_dir_deploy_update (system, ref, NULL,
                                           (const char **) arg_subpaths,
                                           (const char **) arg_previous_ids,
                                           NULL, &error))
@@ -684,7 +684,7 @@ handle_deploy (FlatpakSystemHelper   *object,
         }
       else
         {
-          if (!flatpak_dir_deploy_install (system, arg_ref, arg_origin,
+          if (!flatpak_dir_deploy_install (system, ref, arg_origin,
                                            (const char **) arg_subpaths,
                                            (const char **) arg_previous_ids,
                                            reinstall, NULL, &error))
