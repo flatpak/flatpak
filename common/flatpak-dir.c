@@ -8148,7 +8148,7 @@ flatpak_dir_update_deploy_ref (FlatpakDir *self,
 gboolean
 flatpak_dir_deploy (FlatpakDir          *self,
                     const char          *origin,
-                    const char          *ref,
+                    const char          *ref_str,
                     const char          *checksum_or_latest,
                     const char * const * subpaths,
                     const char * const * previous_ids,
@@ -8156,6 +8156,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
                     GError             **error)
 {
   g_autofree char *resolved_ref = NULL;
+  g_autofree char *ref_id = NULL;
   g_autoptr(GFile) root = NULL;
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(GFile) checkoutdir = NULL;
@@ -8183,16 +8184,16 @@ flatpak_dir_deploy (FlatpakDir          *self,
   g_auto(GLnxLockFile) lock = { 0, };
   g_autoptr(GFile) metadata_file = NULL;
   g_autofree char *metadata_contents = NULL;
-  g_auto(GStrv) ref_parts = NULL;
-  gboolean is_app;
   gboolean is_oci;
 
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     return FALSE;
 
-  ref_parts = flatpak_decompose_ref (ref, error);
-  if (ref_parts == NULL)
+  g_autoptr(FlatpakDecomposed) ref = flatpak_decomposed_new_from_ref (ref_str, error);
+  if (ref == NULL)
     return FALSE;
+
+  ref_id = flatpak_decomposed_dup_id (ref);
 
   /* Keep a shared repo lock to avoid prunes removing objects we're relying on
    * while we do the checkout. This could happen if the ref changes after we
@@ -8200,16 +8201,16 @@ flatpak_dir_deploy (FlatpakDir          *self,
   if (!flatpak_dir_repo_lock (self, &lock, LOCK_SH, cancellable, error))
     return FALSE;
 
-  deploy_base = flatpak_dir_get_deploy_dir (self, ref);
+  deploy_base = flatpak_dir_get_deploy_dir (self, flatpak_decomposed_get_ref (ref));
 
   if (checksum_or_latest == NULL)
     {
-      g_debug ("No checksum specified, getting tip of %s from origin %s", ref, origin);
+      g_debug ("No checksum specified, getting tip of %s from origin %s", flatpak_decomposed_get_ref (ref), origin);
 
-      resolved_ref = flatpak_dir_read_latest (self, origin, ref, NULL, cancellable, error);
+      resolved_ref = flatpak_dir_read_latest (self, origin, flatpak_decomposed_get_ref (ref), NULL, cancellable, error);
       if (resolved_ref == NULL)
         {
-          g_prefix_error (error, _("While trying to resolve ref %s: "), ref);
+          g_prefix_error (error, _("While trying to resolve ref %s: "), flatpak_decomposed_get_ref (ref));
           return FALSE;
         }
 
@@ -8221,7 +8222,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
       checksum = checksum_or_latest;
       g_debug ("Looking for checksum %s in local repo", checksum);
       if (!ostree_repo_read_commit (self->repo, checksum, NULL, NULL, cancellable, NULL))
-        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("%s is not available"), ref);
+        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("%s is not available"), flatpak_decomposed_get_ref (ref));
     }
 
   if (!ostree_repo_load_commit (self->repo, checksum, &commit_data, NULL, error))
@@ -8233,7 +8234,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
   real_checkoutdir = g_file_get_child (deploy_base, checkout_basename);
   if (g_file_query_exists (real_checkoutdir, cancellable))
     return flatpak_fail_error (error, FLATPAK_ERROR_ALREADY_INSTALLED,
-                               _("%s commit %s already installed"), ref, checksum);
+                               _("%s commit %s already installed"), flatpak_decomposed_get_ref (ref), checksum);
 
   g_autofree char *template = g_strdup_printf (".%s-XXXXXX", checkout_basename);
   tmp_dir_template = g_file_get_child (deploy_base, template);
@@ -8362,17 +8363,10 @@ flatpak_dir_deploy (FlatpakDir          *self,
            * So, to support this we report branch discrepancies as a warning, rather than as an error.
            * See https://github.com/flatpak/flatpak/pull/1013 for more discussion.
            */
-          g_auto(GStrv) checkout_ref = NULL;
-          g_auto(GStrv) commit_ref = NULL;
+          FlatpakDecomposed *checkout_ref = ref;
+          g_autoptr(FlatpakDecomposed) commit_ref = NULL;
 
-          checkout_ref = flatpak_decompose_ref (ref, error);
-          if (checkout_ref == NULL)
-            {
-              g_prefix_error (error, _("Invalid deployed ref %s: "), ref);
-              return FALSE;
-            }
-
-          commit_ref = flatpak_decompose_ref (xa_ref, error);
+          commit_ref = flatpak_decomposed_new_from_ref (xa_ref, error);
           if (commit_ref == NULL)
             {
               g_prefix_error (error, _("Invalid commit ref %s: "), xa_ref);
@@ -8380,38 +8374,22 @@ flatpak_dir_deploy (FlatpakDir          *self,
             }
 
           /* Fatal if kind/name/arch don't match. Warn for branch mismatch. */
-          if (strcmp (checkout_ref[0], commit_ref[0]) != 0)
+          if (!flatpak_decomposed_equal_except_branch (checkout_ref, commit_ref))
             {
               g_set_error (error, G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED,
-                           _("Deployed ref %s kind does not match commit (%s)"),
-                           ref, xa_ref);
+                           _("Deployed ref %s does not match commit (%s)"),
+                           flatpak_decomposed_get_ref (ref), xa_ref);
               return FALSE;
             }
 
-          if (strcmp (checkout_ref[1], commit_ref[1]) != 0)
-            {
-              g_set_error (error, G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED,
-                           _("Deployed ref %s name does not match commit (%s)"),
-                           ref, xa_ref);
-              return FALSE;
-            }
-
-          if (strcmp (checkout_ref[2], commit_ref[2]) != 0)
-            {
-              g_set_error (error, G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED,
-                           _("Deployed ref %s arch does not match commit (%s)"),
-                           ref, xa_ref);
-              return FALSE;
-            }
-
-          if (strcmp (checkout_ref[3], commit_ref[3]) != 0)
+          if (strcmp (flatpak_decomposed_get_branch (checkout_ref), flatpak_decomposed_get_branch (commit_ref)) != 0)
             g_warning (_("Deployed ref %s branch does not match commit (%s)"),
-                       ref, xa_ref);
+                       flatpak_decomposed_get_ref (ref), xa_ref);
         }
-      else if (strcmp (ref, xa_ref) != 0)
+      else if (strcmp (flatpak_decomposed_get_ref (ref), xa_ref) != 0)
         {
           g_set_error (error, G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED,
-                       _("Deployed ref %s does not match commit (%s)"), ref, xa_ref);
+                       _("Deployed ref %s does not match commit (%s)"), flatpak_decomposed_get_ref (ref), xa_ref);
           return FALSE;
         }
     }
@@ -8427,7 +8405,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
                                       0, error))
         return FALSE;
 
-      if (!flatpak_check_required_version (ref, keyfile, error))
+      if (!flatpak_check_required_version (flatpak_decomposed_get_ref (ref), keyfile, error))
         return FALSE;
     }
 
@@ -8438,7 +8416,8 @@ flatpak_dir_deploy (FlatpakDir          *self,
    * since this was lacking in fedora builds.
    */
   is_oci = flatpak_dir_get_remote_oci (self, origin);
-  if (!validate_commit_metadata (commit_data, ref, metadata_contents, !is_oci, error))
+  if (!validate_commit_metadata (commit_data, flatpak_decomposed_get_ref (ref),
+                                 metadata_contents, !is_oci, error))
     return FALSE;
 
   dotref = g_file_resolve_relative_path (checkoutdir, "files/.ref");
@@ -8453,9 +8432,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
   if (!flatpak_rm_rf (bindir, cancellable, error))
     return FALSE;
 
-  is_app = g_str_has_prefix (ref, "app/");
-
-  if (!is_app) /* is runtime */
+  if (flatpak_decomposed_is_runtime (ref))
     {
       /* Ensure that various files exists as regular files in /usr/etc, as we
          want to bind-mount over them */
@@ -8504,17 +8481,19 @@ flatpak_dir_deploy (FlatpakDir          *self,
     }
   else /* is app */
     {
-      g_autoptr(GFile) wrapper = g_file_get_child (bindir, ref_parts[1]);
-      g_autofree char *escaped_app = maybe_quote (ref_parts[1]);
-      g_autofree char *escaped_branch = maybe_quote (ref_parts[3]);
-      g_autofree char *escaped_arch = maybe_quote (ref_parts[2]);
+      g_autofree char *ref_arch = flatpak_decomposed_dup_arch (ref);
+      g_autofree char *ref_branch = flatpak_decomposed_dup_branch (ref);
+      g_autoptr(GFile) wrapper = g_file_get_child (bindir, ref_id);
+      g_autofree char *escaped_app = maybe_quote (ref_id);
+      g_autofree char *escaped_branch = maybe_quote (ref_branch);
+      g_autofree char *escaped_arch = maybe_quote (ref_arch);
       g_autofree char *bin_data = NULL;
       int r;
 
       if (!flatpak_mkdir_p (bindir, cancellable, error))
         return FALSE;
 
-      if (!flatpak_rewrite_export_dir (ref_parts[1], ref_parts[3], ref_parts[2],
+      if (!flatpak_rewrite_export_dir (ref_id, ref_branch, ref_arch,
                                        keyfile, previous_ids, export,
                                        cancellable,
                                        error))
@@ -8538,7 +8517,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
                                              commit_data,
                                              commit_metadata,
                                              keyfile,
-                                             ref_parts[1],
+                                             ref_id,
                                              origin,
                                              checksum,
                                              (char **) subpaths,
@@ -8547,7 +8526,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
 
   /* Check the app is actually allowed to be used by this user. This can block
    * on getting authorisation. */
-  if (!flatpak_dir_check_parental_controls (self, ref, deploy_data, cancellable, error))
+  if (!flatpak_dir_check_parental_controls (self, flatpak_decomposed_get_ref (ref), deploy_data, cancellable, error))
     return FALSE;
 
   deploy_data_file = g_file_get_child (checkoutdir, "deploy");
@@ -8567,10 +8546,10 @@ flatpak_dir_deploy (FlatpakDir          *self,
                     cancellable, NULL, NULL, error))
     return FALSE;
 
-  if (!flatpak_dir_set_active (self, ref, checkout_basename, cancellable, error))
+  if (!flatpak_dir_set_active (self, flatpak_decomposed_get_ref (ref), checkout_basename, cancellable, error))
     return FALSE;
 
-  if (!flatpak_dir_update_deploy_ref (self, ref, checksum, error))
+  if (!flatpak_dir_update_deploy_ref (self, flatpak_decomposed_get_ref (ref), checksum, error))
     return FALSE;
 
   return TRUE;
