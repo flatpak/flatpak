@@ -437,7 +437,8 @@ flatpak_make_valid_id_prefix (const char *orig_id)
 }
 
 static gboolean
-str_has_suffix (const gchar *str, gsize str_len,
+str_has_suffix (const gchar *str,
+                gsize        str_len,
                 const gchar *suffix)
 {
   gsize suffix_len;
@@ -461,6 +462,21 @@ flatpak_id_has_subref_suffix (const char *id,
     str_has_suffix (id, id_len, ".Locale") ||
     str_has_suffix (id, id_len, ".Debug") ||
     str_has_suffix (id, id_len, ".Sources");
+}
+
+
+static gboolean
+str_has_prefix (const gchar *str,
+                gsize        str_len,
+                const gchar *prefix)
+{
+  gsize prefix_len;
+
+  prefix_len = strlen (prefix);
+  if (str_len < prefix_len)
+    return FALSE;
+
+  return strncmp (str, prefix, prefix_len) == 0;
 }
 
 static const char *
@@ -1345,6 +1361,15 @@ flatpak_decomposed_id_has_suffix (FlatpakDecomposed  *ref,
   gsize id_len;
   const char *ref_id = flatpak_decomposed_peek_id (ref, &id_len);
   return str_has_suffix (ref_id, id_len, suffix);
+}
+
+gboolean
+flatpak_decomposed_id_has_prefix (FlatpakDecomposed  *ref,
+                                  const char         *prefix)
+{
+  gsize id_len;
+  const char *ref_id = flatpak_decomposed_peek_id (ref, &id_len);
+  return str_has_prefix (ref_id, id_len, prefix);
 }
 
 
