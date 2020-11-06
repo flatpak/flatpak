@@ -96,14 +96,13 @@ looks_like_branch (const char *branch)
 FlatpakDir *
 flatpak_find_installed_pref (const char *pref, FlatpakKinds kinds, const char *default_arch, const char *default_branch,
                              gboolean search_all, gboolean search_user, gboolean search_system, char **search_installations,
-                             char **out_ref, GCancellable *cancellable, GError **error)
+                             FlatpakDecomposed **out_ref, GCancellable *cancellable, GError **error)
 {
   g_autofree char *id = NULL;
   g_autofree char *arch = NULL;
   g_autofree char *branch = NULL;
   g_autoptr(GError) lookup_error = NULL;
-  g_autofree char *ref = NULL;
-  FlatpakKinds kind = 0;
+  g_autoptr(FlatpakDecomposed) ref = NULL;
   g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(GPtrArray) system_dirs = NULL;
 
@@ -116,10 +115,8 @@ flatpak_find_installed_pref (const char *pref, FlatpakKinds kinds, const char *d
       g_autoptr(FlatpakDir) user_dir = flatpak_dir_get_user ();
 
       ref = flatpak_dir_find_installed_ref (user_dir,
-                                            id,
-                                            branch,
-                                            arch,
-                                            kinds, &kind,
+                                            id, branch, arch,
+                                            kinds,
                                             &lookup_error);
       if (ref)
         dir = g_steal_pointer (&user_dir);
@@ -146,10 +143,8 @@ flatpak_find_installed_pref (const char *pref, FlatpakKinds kinds, const char *d
           g_clear_error (&lookup_error);
 
           ref = flatpak_dir_find_installed_ref (system_dir,
-                                                id,
-                                                branch,
-                                                arch,
-                                                kinds, &kind,
+                                                id, branch, arch,
+                                                kinds,
                                                 &lookup_error);
           if (ref)
             {
@@ -183,10 +178,8 @@ flatpak_find_installed_pref (const char *pref, FlatpakKinds kinds, const char *d
                   g_clear_error (&lookup_error);
 
                   ref = flatpak_dir_find_installed_ref (installation_dir,
-                                                        id,
-                                                        branch,
-                                                        arch,
-                                                        kinds, &kind,
+                                                        id, branch, arch,
+                                                        kinds,
                                                         &lookup_error);
                   if (ref)
                     {
@@ -210,10 +203,8 @@ flatpak_find_installed_pref (const char *pref, FlatpakKinds kinds, const char *d
           g_clear_error (&lookup_error);
 
           ref = flatpak_dir_find_installed_ref (system_dir,
-                                                id,
-                                                branch,
-                                                arch,
-                                                kinds, &kind,
+                                                id, branch, arch,
+                                                kinds,
                                                 &lookup_error);
 
           if (ref)

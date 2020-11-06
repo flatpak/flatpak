@@ -530,14 +530,9 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
         {
           FlatpakDir *candidate_dir = g_ptr_array_index (dirs, j);
           g_autoptr(FlatpakDecomposed) ref = NULL;
-          g_autofree char *ref_str = NULL;
-          FlatpakKinds kind;
 
-          ref_str = flatpak_dir_find_installed_ref (candidate_dir, id, branch, arch,
-                                                    kinds, &kind, &local_error);
-          if (ref_str != NULL)
-            ref = flatpak_decomposed_new_from_ref (ref_str, error);
-
+          ref = flatpak_dir_find_installed_ref (candidate_dir, id, branch, arch,
+                                                kinds, &local_error);
           if (ref == NULL)
             {
               if (g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED))
@@ -558,7 +553,7 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
               if (installed_ref == NULL)
                 {
                   installed_ref = flatpak_decomposed_ref (ref);
-                  installed_ref_kind = kind;
+                  installed_ref_kind = flatpak_decomposed_get_kinds (ref);
                 }
             }
         }

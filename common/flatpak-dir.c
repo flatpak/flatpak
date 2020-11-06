@@ -12698,13 +12698,12 @@ flatpak_dir_find_installed_refs (FlatpakDir           *self,
   return decomposed_refs_to_strv (matched_refs);
 }
 
-char *
+FlatpakDecomposed *
 flatpak_dir_find_installed_ref (FlatpakDir   *self,
                                 const char   *opt_name,
                                 const char   *opt_branch,
                                 const char   *opt_arch,
                                 FlatpakKinds  kinds,
-                                FlatpakKinds *out_kind,
                                 GError      **error)
 {
   g_autoptr(FlatpakDecomposed) local_ref = NULL;
@@ -12729,10 +12728,7 @@ flatpak_dir_find_installed_ref (FlatpakDir   *self,
     }
   else
     {
-      if (out_kind != NULL)
-        *out_kind = flatpak_decomposed_get_kinds (local_ref);
-
-      return flatpak_decomposed_dup_ref (local_ref);
+      return g_steal_pointer (&local_ref);
     }
 
   g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,

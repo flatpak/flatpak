@@ -239,12 +239,8 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
 
   kinds = FLATPAK_KINDS_RUNTIME;
   sdk_dir = flatpak_find_installed_pref (sdk_pref, kinds, opt_arch, default_branch, TRUE, FALSE, FALSE, NULL,
-                                         &sdk_ref_str, cancellable, error);
+                                         &sdk_ref, cancellable, error);
   if (sdk_dir == NULL)
-    return FALSE;
-
-  sdk_ref = flatpak_decomposed_new_from_ref (sdk_ref_str, error);
-  if (sdk_ref == NULL)
     return FALSE;
 
   kinds = FLATPAK_KINDS_RUNTIME;
@@ -252,12 +248,8 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
     kinds |= FLATPAK_KINDS_APP;
 
   runtime_dir = flatpak_find_installed_pref (runtime_pref, kinds, opt_arch, default_branch, TRUE, FALSE, FALSE, NULL,
-                                             &runtime_ref_str, cancellable, error);
+                                             &runtime_ref, cancellable, error);
   if (runtime_dir == NULL)
-    return FALSE;
-
-  runtime_ref = flatpak_decomposed_new_from_ref (runtime_ref_str, error);
-  if (runtime_ref == NULL)
     return FALSE;
 
   if (is_extension)
