@@ -181,13 +181,14 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   const char *sdk_pref;
   const char *runtime_pref;
   const char *default_branch = NULL;
-  const char *sdk_branch = NULL;
+  g_autofree char *sdk_branch = NULL;
   g_autofree char *base_ref = NULL;
-  g_autofree char *runtime_ref = NULL;
-  g_autofree char *extension_runtime_id = NULL;
+  g_autofree char *runtime_ref_str = NULL;
+  g_autoptr(FlatpakDecomposed) runtime_ref = NULL;
+  g_autofree char *extension_runtime_pref = NULL;
   g_autofree char *var_ref = NULL;
-  g_autofree char *sdk_ref = NULL;
-  g_auto(GStrv) sdk_ref_parts = NULL;
+  g_autofree char *sdk_ref_str = NULL;
+  g_autoptr(FlatpakDecomposed) sdk_ref = NULL;
   FlatpakKinds kinds;
   int i;
   g_autoptr(FlatpakDir) sdk_dir = NULL;
@@ -238,8 +239,12 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
 
   kinds = FLATPAK_KINDS_RUNTIME;
   sdk_dir = flatpak_find_installed_pref (sdk_pref, kinds, opt_arch, default_branch, TRUE, FALSE, FALSE, NULL,
-                                         &sdk_ref, cancellable, error);
+                                         &sdk_ref_str, cancellable, error);
   if (sdk_dir == NULL)
+    return FALSE;
+
+  sdk_ref = flatpak_decomposed_new_from_ref (sdk_ref_str, error);
+  if (sdk_ref == NULL)
     return FALSE;
 
   kinds = FLATPAK_KINDS_RUNTIME;
@@ -247,13 +252,18 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
     kinds |= FLATPAK_KINDS_APP;
 
   runtime_dir = flatpak_find_installed_pref (runtime_pref, kinds, opt_arch, default_branch, TRUE, FALSE, FALSE, NULL,
-                                             &runtime_ref, cancellable, error);
+                                             &runtime_ref_str, cancellable, error);
   if (runtime_dir == NULL)
+    return FALSE;
+
+  runtime_ref = flatpak_decomposed_new_from_ref (runtime_ref_str, error);
+  if (runtime_ref == NULL)
     return FALSE;
 
   if (is_extension)
     {
-      if (g_str_has_prefix (runtime_ref, "app/"))
+      /* The "runtime" can be an app in case we're building an extension */
+      if (flatpak_decomposed_is_app (runtime_ref))
         {
           g_autoptr(GKeyFile) runtime_metadata = NULL;
 
@@ -262,12 +272,12 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
             return FALSE;
 
           runtime_metadata = flatpak_deploy_get_metadata (runtime_deploy);
-          extension_runtime_id = g_key_file_get_string (runtime_metadata, FLATPAK_METADATA_GROUP_APPLICATION,
-                                                       FLATPAK_METADATA_KEY_RUNTIME, NULL);
-          g_assert (extension_runtime_id);
+          extension_runtime_pref = g_key_file_get_string (runtime_metadata, FLATPAK_METADATA_GROUP_APPLICATION,
+                                                          FLATPAK_METADATA_KEY_RUNTIME, NULL);
+          g_assert (extension_runtime_pref);
         }
       else
-        extension_runtime_id = g_strdup (runtime_ref + strlen ("runtime/"));
+        extension_runtime_pref = flatpak_decomposed_dup_pref (runtime_ref);
     }
 
   base = g_file_new_for_commandline_arg (directory);
@@ -316,10 +326,7 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
         return FALSE;
     }
 
-  sdk_ref_parts = flatpak_decompose_ref (sdk_ref, error);
-  if (sdk_ref_parts == NULL)
-    return FALSE;
-  sdk_branch = sdk_ref_parts[3];
+  sdk_branch = flatpak_decomposed_dup_branch (sdk_ref);
 
   if (opt_sdk_extensions &&
       !ensure_extensions (sdk_deploy, sdk_branch,
@@ -395,15 +402,15 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
                           app_id);
 
   /* The "runtime" can be an app in case we're building an extension */
-  if (g_str_has_prefix (runtime_ref, "runtime/"))
+  if (flatpak_decomposed_is_runtime (runtime_ref))
     g_string_append_printf (metadata_contents,
                             "runtime=%s\n",
-                            runtime_ref + strlen ("runtime/"));
+                            flatpak_decomposed_get_pref (runtime_ref));
 
-  if (g_str_has_prefix (sdk_ref, "runtime/"))
+  if (flatpak_decomposed_is_runtime (sdk_ref))
     g_string_append_printf (metadata_contents,
                             "sdk=%s\n",
-                            sdk_ref + strlen ("runtime/"));
+                            flatpak_decomposed_get_pref (sdk_ref));
 
   if (base_ref)
     g_string_append_printf (metadata_contents,
@@ -430,8 +437,8 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
                               "ref=%s\n"
                               "runtime=%s\n"
                               "%s\n",
-                              runtime_ref,
-                              extension_runtime_id,
+                              flatpak_decomposed_get_ref (runtime_ref),
+                              extension_runtime_pref,
                               optional_extension_tag);
     }
 
