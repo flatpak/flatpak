@@ -1183,6 +1183,12 @@ print_aligned (int len, const char *title, const char *value)
   g_print ("%s%*s%s%s %s\n", on, len - (int) cell_width (title), "", title, off, value);
 }
 
+void
+print_aligned_take (int len, const char *title, char *value)
+{
+  print_aligned (len, title, value);
+  g_free (value);
+}
 
 static const char *
 skip_escape_sequence (const char *p)

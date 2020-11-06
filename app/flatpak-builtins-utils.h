@@ -151,6 +151,9 @@ char *  ellipsize_string_full (const char          *text,
 void print_aligned (int         len,
                     const char *title,
                     const char *value);
+void print_aligned_take (int         len,
+                         const char *title,
+                         char       *value);
 
 AsApp *as_store_find_app (AsStore    *store,
                           const char *ref);
