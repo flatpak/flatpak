@@ -161,8 +161,8 @@ gboolean flatpak_remote_state_lookup_ref (FlatpakRemoteState *self,
                                           VarRefInfoRef      *out_info,
                                           GFile             **out_sideload_path,
                                           GError            **error);
-char **flatpak_remote_state_match_subrefs (FlatpakRemoteState *self,
-                                           const char         *ref);
+GPtrArray *flatpak_remote_state_match_subrefs (FlatpakRemoteState *self,
+                                               FlatpakDecomposed *ref);
 GFile *flatpak_remote_state_lookup_sideload_checksum (FlatpakRemoteState *self,
                                                       char               *checksum);
 gboolean flatpak_remote_state_lookup_cache (FlatpakRemoteState *self,

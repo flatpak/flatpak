@@ -677,22 +677,21 @@ flatpak_remote_state_lookup_ref (FlatpakRemoteState *self,
   return TRUE;
 }
 
-char **
+GPtrArray *
 flatpak_remote_state_match_subrefs (FlatpakRemoteState *self,
-                                    const char         *ref)
+                                    FlatpakDecomposed *ref)
 {
   GVariant *summary;
-  const char *empty[] = { NULL };
 
   if (self->summary == NULL && self->index == NULL)
     {
       g_debug ("flatpak_remote_state_match_subrefs with no summary");
-      return g_strdupv ((char **) empty);
+      return g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_decomposed_unref);
     }
 
-  summary = get_summary_for_ref (self, ref);
+  summary = get_summary_for_ref (self, flatpak_decomposed_get_ref (ref));
   if (summary == NULL)
-    return g_strdupv ((char **) empty);
+    return g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_decomposed_unref);
 
   return flatpak_summary_match_subrefs (summary, NULL, ref);
 }
@@ -14798,15 +14797,11 @@ flatpak_dir_find_remote_related_for_metadata (FlatpakDir         *self,
                 }
               else if (subdirectories)
                 {
-                  g_auto(GStrv) refs = flatpak_remote_state_match_subrefs (state, flatpak_decomposed_get_ref (extension_ref));
-                  int j;
-                  for (j = 0; refs[j] != NULL; j++)
+                  g_autoptr(GPtrArray) subref_refs = flatpak_remote_state_match_subrefs (state, extension_ref);
+                  for (int j = 0; j < subref_refs->len; j++)
                     {
+                      FlatpakDecomposed *subref_ref = g_ptr_array_index (subref_refs, j);
                       g_autofree char *subref_checksum = NULL;
-                      g_autoptr(FlatpakDecomposed) subref_ref = flatpak_decomposed_new_from_ref (refs[j], NULL);
-
-                      if (ref == NULL)
-                        continue;
 
                       if (flatpak_remote_state_lookup_ref (state, flatpak_decomposed_get_ref (subref_ref),
                                                            &subref_checksum, NULL, NULL, NULL, NULL) &&
