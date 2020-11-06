@@ -629,15 +629,15 @@ gboolean    flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
                                               FlatpakProgress     *progress,
                                               GCancellable        *cancellable,
                                               GError             **error);
-GPtrArray * flatpak_dir_list_refs_for_name_decomposed (FlatpakDir   *self,
-                                                       FlatpakKinds kind,
-                                                       const char   *name,
-                                                       GCancellable *cancellable,
-                                                       GError      **error);
-GPtrArray *flatpak_dir_list_refs_decomposed (FlatpakDir   *self,
-                                             FlatpakKinds kinds,
-                                             GCancellable *cancellable,
-                                             GError      **error);
+GPtrArray * flatpak_dir_list_refs_for_name (FlatpakDir   *self,
+                                            FlatpakKinds kind,
+                                            const char   *name,
+                                            GCancellable *cancellable,
+                                            GError      **error);
+GPtrArray *flatpak_dir_list_refs (FlatpakDir   *self,
+                                  FlatpakKinds kinds,
+                                  GCancellable *cancellable,
+                                  GError      **error);
 GVariant *  flatpak_dir_read_latest_commit (FlatpakDir   *self,
                                             const char   *remote,
                                             const char   *ref,
@@ -914,16 +914,16 @@ gboolean   flatpak_dir_compare_remote_filter (FlatpakDir *self,
                                               const char *filter);
 gboolean   flatpak_dir_get_remote_disabled (FlatpakDir *self,
                                             const char *remote_name);
-gboolean   flatpak_dir_list_remote_refs_decomposed (FlatpakDir         *self,
-                                                    FlatpakRemoteState *state,
-                                                    GHashTable        **refs,
-                                                    GCancellable       *cancellable,
-                                                    GError            **error);
-gboolean   flatpak_dir_list_all_remote_refs_decomposed (FlatpakDir         *self,
-                                                        FlatpakRemoteState *state,
-                                                        GHashTable        **out_all_refs,
-                                                        GCancellable       *cancellable,
-                                                        GError            **error);
+gboolean   flatpak_dir_list_remote_refs (FlatpakDir         *self,
+                                         FlatpakRemoteState *state,
+                                         GHashTable        **refs,
+                                         GCancellable       *cancellable,
+                                         GError            **error);
+gboolean   flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
+                                             FlatpakRemoteState *state,
+                                             GHashTable        **out_all_refs,
+                                             GCancellable       *cancellable,
+                                             GError            **error);
 gboolean flatpak_dir_update_remote_configuration (FlatpakDir   *self,
                                                   const char   *remote,
                                                   FlatpakRemoteState *optional_remote_state,

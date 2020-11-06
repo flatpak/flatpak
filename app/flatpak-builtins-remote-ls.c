@@ -453,8 +453,8 @@ flatpak_builtin_remote_ls (int argc, char **argv, GCancellable *cancellable, GEr
           !ensure_remote_state_all_arches (preferred_dir, state, opt_cached, opt_sideloaded, cancellable, error))
         return FALSE;
 
-      if (!flatpak_dir_list_remote_refs_decomposed (preferred_dir, state, &refs,
-                                                    cancellable, error))
+      if (!flatpak_dir_list_remote_refs (preferred_dir, state, &refs,
+                                         cancellable, error))
         return FALSE;
 
       remote_state_dir_pair = remote_state_dir_pair_new (preferred_dir, g_steal_pointer (&state));
@@ -493,8 +493,8 @@ flatpak_builtin_remote_ls (int argc, char **argv, GCancellable *cancellable, GEr
                   !ensure_remote_state_all_arches (dir, state, opt_cached, opt_sideloaded, cancellable, error))
                 return FALSE;
 
-              if (!flatpak_dir_list_remote_refs_decomposed (dir, state, &refs,
-                                                            cancellable, error))
+              if (!flatpak_dir_list_remote_refs (dir, state, &refs,
+                                                 cancellable, error))
                 return FALSE;
 
               remote_state_dir_pair = remote_state_dir_pair_new (dir, g_steal_pointer (&state));
