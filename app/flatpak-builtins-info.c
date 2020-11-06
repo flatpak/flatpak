@@ -137,12 +137,8 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
 
   dir = flatpak_find_installed_pref (pref, kinds, opt_arch, default_branch,
                                      search_all, opt_user, opt_system, opt_installations,
-                                     &ref_str, cancellable, error);
+                                     &ref, cancellable, error);
   if (dir == NULL)
-    return FALSE;
-
-  ref = flatpak_decomposed_new_from_ref (ref_str, error);
-  if (ref == NULL)
     return FALSE;
 
   deploy_data = flatpak_dir_get_deploy_data (dir, flatpak_decomposed_get_ref (ref), FLATPAK_DEPLOY_VERSION_CURRENT, cancellable, error);

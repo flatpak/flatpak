@@ -48,12 +48,11 @@ flatpak_builtin_make_current_app (int argc, char **argv, GCancellable *cancellab
   g_autoptr(GFile) deploy_base = NULL;
   const char *pref;
   const char *default_branch = NULL;
-  g_autofree char *ref = NULL;
   g_auto(GLnxLockFile) lock = { 0, };
   g_autofree char *id = NULL;
   g_autofree char *arch = NULL;
   g_autofree char *branch = NULL;
-  g_autoptr(FlatpakDecomposed) decomposed = NULL;
+  g_autoptr(FlatpakDecomposed) ref = NULL;
   FlatpakKinds kinds;
 
   context = g_option_context_new (_("APP BRANCH - Make branch of application current"));
@@ -85,23 +84,19 @@ flatpak_builtin_make_current_app (int argc, char **argv, GCancellable *cancellab
     return usage_error (context, _("BRANCH must be specified"), error);
 
   ref = flatpak_dir_find_installed_ref (dir, id, branch, arch, FLATPAK_KINDS_APP,
-                                        NULL, error);
+                                        error);
   if (ref == NULL)
-    return FALSE;
-
-  decomposed = flatpak_decomposed_new_from_ref (ref, error);
-  if (decomposed == NULL)
     return FALSE;
 
   if (!flatpak_dir_lock (dir, &lock,
                          cancellable, error))
     return FALSE;
 
-  deploy_base = flatpak_dir_get_deploy_dir (dir, ref);
+  deploy_base = flatpak_dir_get_deploy_dir (dir, flatpak_decomposed_get_ref (ref));
   if (!g_file_query_exists (deploy_base, cancellable))
     return flatpak_fail (error, _("App %s branch %s is not installed"), id, branch);
 
-  if (!flatpak_dir_make_current_ref (dir, decomposed, cancellable, error))
+  if (!flatpak_dir_make_current_ref (dir, ref, cancellable, error))
     return FALSE;
 
   if (!flatpak_dir_update_exports (dir, id, cancellable, error))

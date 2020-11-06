@@ -57,17 +57,17 @@ GBytes * flatpak_load_gpg_keys (char        **gpg_import,
                                 GCancellable *cancellable,
                                 GError      **error);
 
-FlatpakDir * flatpak_find_installed_pref (const char   *pref,
-                                          FlatpakKinds  kinds,
-                                          const char   *default_arch,
-                                          const char   *default_branch,
-                                          gboolean      search_all,
-                                          gboolean      search_user,
-                                          gboolean      search_system,
-                                          char        **search_installations,
-                                          char        **out_ref,
-                                          GCancellable *cancellable,
-                                          GError      **error);
+FlatpakDir * flatpak_find_installed_pref (const char         *pref,
+                                          FlatpakKinds        kinds,
+                                          const char         *default_arch,
+                                          const char         *default_branch,
+                                          gboolean            search_all,
+                                          gboolean            search_user,
+                                          gboolean            search_system,
+                                          char              **search_installations,
+                                          FlatpakDecomposed **out_ref,
+                                          GCancellable       *cancellable,
+                                          GError            **error);
 
 gboolean flatpak_resolve_duplicate_remotes (GPtrArray    *dirs,
                                             const char   *remote_name,
