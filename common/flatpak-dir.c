@@ -7829,8 +7829,8 @@ apply_extra_data (FlatpakDir   *self,
   gsize metadata_size;
   g_autoptr(GKeyFile) metakey = NULL;
   g_autofree char *id = NULL;
-  g_autofree char *runtime = NULL;
-  g_autofree char *runtime_ref = NULL;
+  g_autofree char *runtime_pref = NULL;
+  g_autoptr(FlatpakDecomposed) runtime_ref = NULL;
   g_autoptr(FlatpakDeploy) runtime_deploy = NULL;
   g_autoptr(FlatpakBwrap) bwrap = NULL;
   g_autoptr(GFile) app_files = NULL;
@@ -7839,9 +7839,9 @@ apply_extra_data (FlatpakDir   *self,
   g_autoptr(GFile) extra_export_file = NULL;
   g_autoptr(GFile) extra_files = NULL;
   g_autoptr(GFile) runtime_files = NULL;
-  g_auto(GStrv) runtime_ref_parts = NULL;
   g_autoptr(FlatpakContext) app_context = NULL;
   g_auto(GStrv) minimal_envp = NULL;
+  g_autofree char *runtime_arch = NULL;
   int exit_status;
   const char *group = FLATPAK_METADATA_GROUP_APPLICATION;
   g_autoptr(GError) local_error = NULL;
@@ -7874,24 +7874,23 @@ apply_extra_data (FlatpakDir   *self,
       g_clear_error (&local_error);
     }
 
-  runtime = g_key_file_get_string (metakey, group,
-                                   FLATPAK_METADATA_KEY_RUNTIME, error);
-  if (runtime == NULL)
-    runtime = g_key_file_get_string (metakey, FLATPAK_METADATA_GROUP_EXTENSION_OF,
-                                     FLATPAK_METADATA_KEY_RUNTIME, NULL);
-  if (runtime == NULL)
+  runtime_pref = g_key_file_get_string (metakey, group,
+                                        FLATPAK_METADATA_KEY_RUNTIME, error);
+  if (runtime_pref == NULL)
+    runtime_pref = g_key_file_get_string (metakey, FLATPAK_METADATA_GROUP_EXTENSION_OF,
+                                          FLATPAK_METADATA_KEY_RUNTIME, NULL);
+  if (runtime_pref == NULL)
     return FALSE;
 
-  runtime_ref = g_build_filename ("runtime", runtime, NULL);
-
-  runtime_ref_parts = flatpak_decompose_ref (runtime_ref, error);
-  if (runtime_ref_parts == NULL)
+  runtime_ref = flatpak_decomposed_new_from_pref (FLATPAK_KINDS_RUNTIME, runtime_pref, error);
+  if (runtime_ref == NULL)
     return FALSE;
+  runtime_arch = flatpak_decomposed_dup_arch (runtime_ref);
 
   if (!g_key_file_get_boolean (metakey, FLATPAK_METADATA_GROUP_EXTRA_DATA,
                                FLATPAK_METADATA_KEY_NO_RUNTIME, NULL))
     {
-      runtime_deploy = flatpak_find_deploy_for_ref (runtime_ref, NULL, cancellable, error);
+      runtime_deploy = flatpak_find_deploy_for_ref (flatpak_decomposed_get_ref (runtime_ref), NULL, cancellable, error);
       if (runtime_deploy == NULL)
         return FALSE;
       runtime_files = flatpak_deploy_get_files (runtime_deploy);
@@ -7920,7 +7919,7 @@ apply_extra_data (FlatpakDir   *self,
                           "--cap-drop", "ALL",
                           NULL);
 
-  if (!flatpak_run_setup_base_argv (bwrap, runtime_files, NULL, runtime_ref_parts[2],
+  if (!flatpak_run_setup_base_argv (bwrap, runtime_files, NULL, runtime_arch,
                                     /* Might need multiarch in apply_extra (see e.g. #3742). Should be pretty safe in this limited context */
                                     FLATPAK_RUN_FLAG_MULTIARCH |
                                     FLATPAK_RUN_FLAG_NO_SESSION_HELPER | FLATPAK_RUN_FLAG_NO_PROC,
