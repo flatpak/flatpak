@@ -389,7 +389,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
                   g_autofree char *arch = NULL;
                   g_autofree char *branch = NULL;
                   FlatpakKinds matched_kinds;
-                  g_auto(GStrv) refs = NULL;
+                  g_autoptr(GPtrArray) refs = NULL;
                   g_autoptr(GError) local_error = NULL;
 
                   if (flatpak_dir_get_remote_disabled (this_dir, this_remote) ||
@@ -425,7 +425,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
                         }
                     }
 
-                  if (g_strv_length (refs) == 0)
+                  if (refs->len == 0)
                     continue;
                   else
                     {
@@ -493,8 +493,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
       g_autofree char *arch = NULL;
       g_autofree char *branch = NULL;
       g_autofree char *ref = NULL;
-      g_auto(GStrv) refs = NULL;
-      guint refs_len;
+      g_autoptr(GPtrArray) refs = NULL;
       g_autoptr(GError) local_error = NULL;
 
       flatpak_split_partial_ref_arg_novalidate (pref, kinds, opt_arch, target_branch,
@@ -530,8 +529,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
             return FALSE;
         }
 
-      refs_len = g_strv_length (refs);
-      if (refs_len == 0)
+      if (refs->len == 0)
         {
           if (opt_no_pull)
             g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND, _("Nothing matches %s in local repository for remote %s"), id, remote);

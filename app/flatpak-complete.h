@@ -51,6 +51,10 @@ void               flatpak_complete_word (FlatpakCompletion *completion,
                                           ...) G_GNUC_PRINTF (2, 3);
 void               flatpak_complete_ref (FlatpakCompletion *completion,
                                          OstreeRepo        *repo);
+void               flatpak_complete_ref_id (FlatpakCompletion *completion,
+                                            GPtrArray         *refs);
+void               flatpak_complete_ref_branch (FlatpakCompletion *completion,
+                                                GPtrArray         *refs);
 void               flatpak_complete_partial_ref (FlatpakCompletion *completion,
                                                  FlatpakKinds       kinds,
                                                  const char        *only_arch,

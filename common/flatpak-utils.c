@@ -6225,22 +6225,23 @@ flatpak_bundle_get_installed_size (GVariant *bundle, gboolean byte_swap)
 }
 
 GVariant *
-flatpak_bundle_load (GFile   *file,
-                     char   **commit,
-                     char   **ref,
-                     char   **origin,
-                     char   **runtime_repo,
-                     char   **app_metadata,
-                     guint64 *installed_size,
-                     GBytes **gpg_keys,
-                     char   **collection_id,
-                     GError **error)
+flatpak_bundle_load (GFile              *file,
+                     char              **commit,
+                     FlatpakDecomposed **ref,
+                     char              **origin,
+                     char              **runtime_repo,
+                     char              **app_metadata,
+                     guint64            *installed_size,
+                     GBytes            **gpg_keys,
+                     char              **collection_id,
+                     GError             **error)
 {
   g_autoptr(GVariant) delta = NULL;
   g_autoptr(GVariant) metadata = NULL;
   g_autoptr(GBytes) bytes = NULL;
   g_autoptr(GBytes) copy = NULL;
   g_autoptr(GVariant) to_csum_v = NULL;
+
   guint8 endianness_char;
   gboolean byte_swap = FALSE;
 
@@ -6288,11 +6289,21 @@ flatpak_bundle_load (GFile   *file,
 
   if (ref != NULL)
     {
-      if (!g_variant_lookup (metadata, "ref", "s", ref))
+      FlatpakDecomposed *the_ref = NULL;
+      g_autofree char *ref_str = NULL;
+
+      if (!g_variant_lookup (metadata, "ref", "s", &ref_str))
         {
           flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid bundle, no ref in metadata"));
           return NULL;
         }
+
+      the_ref = flatpak_decomposed_new_from_ref (ref_str, error);
+      if (the_ref == NULL)
+        return NULL;
+
+      g_clear_pointer (ref, flatpak_decomposed_unref);
+      *ref = the_ref;
     }
 
   if (origin != NULL)

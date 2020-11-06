@@ -296,30 +296,25 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
           for (k = 0; k < dirs->len; k++)
             {
               FlatpakDir *dir = g_ptr_array_index (dirs, k);
-              g_auto(GStrv) refs = NULL;
-              char **iter;
+              g_autoptr(GPtrArray)  refs = NULL;
 
               refs = flatpak_dir_find_installed_refs (dir, match_id, match_branch, match_arch, kinds,
                                                       FIND_MATCHING_REFS_FLAGS_FUZZY, error);
               if (refs == NULL)
                 return FALSE;
-              else if (g_strv_length (refs) == 0)
+              else if (refs->len == 0)
                 continue;
 
-              for (iter = refs; iter && *iter; iter++)
+              for (int m = 0; m < refs->len; m++)
                 {
-                  const char *ref = *iter;
-                  g_autoptr(FlatpakDecomposed) d = flatpak_decomposed_new_from_ref (ref, NULL);
+                  FlatpakDecomposed *ref = g_ptr_array_index (refs, m);
                   RefDirPair *pair;
 
-                  if (d)
-                    {
-                      if (match_id != NULL && flatpak_decomposed_is_id (d, match_id))
-                        found_exact_name_match = TRUE;
+                  if (match_id != NULL && flatpak_decomposed_is_id (ref, match_id))
+                    found_exact_name_match = TRUE;
 
-                      pair = ref_dir_pair_new (d, dir);
-                      g_ptr_array_add (ref_dir_pairs, pair);
-                    }
+                  pair = ref_dir_pair_new (ref, dir);
+                  g_ptr_array_add (ref_dir_pairs, pair);
                 }
             }
 

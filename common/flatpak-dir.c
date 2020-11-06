@@ -9154,23 +9154,22 @@ flatpak_dir_install (FlatpakDir          *self,
 }
 
 char *
-flatpak_dir_ensure_bundle_remote (FlatpakDir   *self,
-                                  GFile        *file,
-                                  GBytes       *extra_gpg_data,
-                                  char        **out_ref,
-                                  char        **out_checksum,
-                                  char        **out_metadata,
-                                  gboolean     *out_created_remote,
-                                  GCancellable *cancellable,
-                                  GError      **error)
+flatpak_dir_ensure_bundle_remote (FlatpakDir         *self,
+                                  GFile              *file,
+                                  GBytes             *extra_gpg_data,
+                                  FlatpakDecomposed **out_ref,
+                                  char              **out_checksum,
+                                  char              **out_metadata,
+                                  gboolean           *out_created_remote,
+                                  GCancellable       *cancellable,
+                                  GError            **error)
 {
-  g_autofree char *ref = NULL;
+  g_autoptr(FlatpakDecomposed) ref = NULL;
   gboolean created_remote = FALSE;
   g_autoptr(GBytes) deploy_data = NULL;
   g_autoptr(GVariant) metadata = NULL;
   g_autofree char *origin = NULL;
   g_autofree char *fp_metadata = NULL;
-  g_auto(GStrv) parts = NULL;
   g_autofree char *basename = NULL;
   g_autoptr(GBytes) included_gpg_data = NULL;
   GBytes *gpg_data = NULL;
@@ -9193,11 +9192,7 @@ flatpak_dir_ensure_bundle_remote (FlatpakDir   *self,
 
   gpg_data = extra_gpg_data ? extra_gpg_data : included_gpg_data;
 
-  parts = flatpak_decompose_ref (ref, error);
-  if (parts == NULL)
-    return NULL;
-
-  deploy_data = flatpak_dir_get_deploy_data (self, ref, FLATPAK_DEPLOY_VERSION_ANY, cancellable, NULL);
+  deploy_data = flatpak_dir_get_deploy_data (self, flatpak_decomposed_get_ref (ref), FLATPAK_DEPLOY_VERSION_ANY, cancellable, NULL);
   if (deploy_data != NULL)
     {
       remote = g_strdup (flatpak_deploy_data_get_origin (deploy_data));
@@ -9216,13 +9211,14 @@ flatpak_dir_ensure_bundle_remote (FlatpakDir   *self,
     }
   else
     {
+      g_autofree char *id = flatpak_decomposed_dup_id (ref);
       /* Add a remote for later updates */
       basename = g_file_get_basename (file);
       remote = flatpak_dir_create_origin_remote (self,
                                                  origin,
-                                                 parts[1],
+                                                 id,
                                                  basename,
-                                                 ref,
+                                                 flatpak_decomposed_get_ref (ref),
                                                  gpg_data,
                                                  collection_id,
                                                  &created_remote,
@@ -9343,16 +9339,12 @@ flatpak_dir_install_bundle (FlatpakDir   *self,
     return FALSE;
 
   metadata = flatpak_bundle_load (file, &to_checksum,
-                                  &ref_str,
+                                  &ref,
                                   &origin,
                                   NULL, NULL,
                                   NULL, NULL, NULL,
                                   error);
   if (metadata == NULL)
-    return FALSE;
-
-  ref = flatpak_decomposed_new_from_ref (ref_str, error);
-  if (ref == NULL)
     return FALSE;
 
   deploy_data = flatpak_dir_get_deploy_data (self, flatpak_decomposed_get_ref (ref), FLATPAK_DEPLOY_VERSION_ANY, cancellable, NULL);
@@ -12388,22 +12380,7 @@ flatpak_dir_get_remote_collection_id (FlatpakDir *self,
   return collection_id;
 }
 
-
-static char **
-decomposed_refs_to_strv (GPtrArray *decomposed)
-{
-  GPtrArray *res = g_ptr_array_new ();
-  for (int i = 0; i < decomposed->len; i++)
-    {
-      FlatpakDecomposed *ref = g_ptr_array_index (decomposed, i);
-      g_ptr_array_add (res, flatpak_decomposed_dup_ref (ref));
-    }
-  g_ptr_array_add (res, NULL);
-
-  return (char **) g_ptr_array_free (res, FALSE);
-}
-
-char **
+GPtrArray *
 flatpak_dir_find_remote_refs (FlatpakDir           *self,
                               FlatpakRemoteState   *state,
                               const char           *name,
@@ -12443,7 +12420,7 @@ flatpak_dir_find_remote_refs (FlatpakDir           *self,
       return NULL;
     }
 
-  return decomposed_refs_to_strv (matched_refs);
+  return g_steal_pointer (&matched_refs);
 }
 
 static FlatpakDecomposed *
@@ -12580,7 +12557,7 @@ refspecs_decompose_steal (GHashTable *refspecs)
   return g_steal_pointer (&refs);
 }
 
-char **
+GPtrArray *
 flatpak_dir_find_local_refs (FlatpakDir           *self,
                              const char           *remote,
                              const char           *name,
@@ -12634,7 +12611,7 @@ flatpak_dir_find_local_refs (FlatpakDir           *self,
         }
     }
 
-  return decomposed_refs_to_strv (matched_refs);
+  return g_steal_pointer (&matched_refs);
 }
 
 static GHashTable *
@@ -12676,7 +12653,7 @@ flatpak_dir_get_all_installed_refs (FlatpakDir  *self,
   return g_steal_pointer (&local_refs);
 }
 
-char **
+GPtrArray *
 flatpak_dir_find_installed_refs (FlatpakDir           *self,
                                  const char           *opt_name,
                                  const char           *opt_branch,
@@ -12704,7 +12681,7 @@ flatpak_dir_find_installed_refs (FlatpakDir           *self,
   if (matched_refs == NULL)
     return NULL;
 
-  return decomposed_refs_to_strv (matched_refs);
+  return g_steal_pointer (&matched_refs);
 }
 
 FlatpakDecomposed *

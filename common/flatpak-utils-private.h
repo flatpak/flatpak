@@ -508,17 +508,16 @@ gboolean flatpak_mtree_create_dir (OstreeRepo         *repo,
                                    OstreeMutableTree **dir_out,
                                    GError            **error);
 
-
-GVariant * flatpak_bundle_load (GFile   *file,
-                                char   **commit,
-                                char   **ref,
-                                char   **origin,
-                                char   **runtime_repo,
-                                char   **app_metadata,
-                                guint64 *installed_size,
-                                GBytes **gpg_keys,
-                                char   **collection_id,
-                                GError **error);
+GVariant *flatpak_bundle_load (GFile              *file,
+                               char              **commit,
+                               FlatpakDecomposed **ref,
+                               char              **origin,
+                               char              **runtime_repo,
+                               char              **app_metadata,
+                               guint64            *installed_size,
+                               GBytes            **gpg_keys,
+                               char              **collection_id,
+                               GError            **error);
 
 gboolean flatpak_pull_from_bundle (OstreeRepo   *repo,
                                    GFile        *file,

@@ -367,34 +367,46 @@ flatpak_resolve_duplicate_remotes (GPtrArray    *dirs,
   return TRUE;
 }
 
+static char **
+decomposed_refs_to_strv (GPtrArray *decomposed)
+{
+  GPtrArray *res = g_ptr_array_new ();
+  for (int i = 0; i < decomposed->len; i++)
+    {
+      FlatpakDecomposed *ref = g_ptr_array_index (decomposed, i);
+      g_ptr_array_add (res, flatpak_decomposed_dup_ref (ref));
+    }
+  g_ptr_array_add (res, NULL);
+
+  return (char **) g_ptr_array_free (res, FALSE);
+}
+
 gboolean
 flatpak_resolve_matching_refs (const char *remote_name,
                                FlatpakDir *dir,
                                gboolean    assume_yes,
-                               char      **refs,
+                               GPtrArray  *refs,
                                const char *opt_search_ref,
                                char      **out_ref,
                                GError    **error)
 {
   guint chosen = 0;
-  guint refs_len;
 
-  refs_len = g_strv_length (refs);
-  g_assert (refs_len > 0);
+  g_assert (refs->len > 0);
 
   /* When there's only one match, we only choose it without user interaction if
    * either the --assume-yes option was used or it's an exact match
    */
-  if (refs_len == 1)
+  if (refs->len == 1)
     {
       if (assume_yes)
         chosen = 1;
       else
         {
-          g_auto(GStrv) parts = NULL;
-          parts = flatpak_decompose_ref (refs[0], NULL);
-          g_assert (parts != NULL);
-          if (opt_search_ref != NULL && strcmp (parts[1], opt_search_ref) == 0)
+          FlatpakDecomposed *ref = g_ptr_array_index (refs, 0);
+          g_autofree char *id = flatpak_decomposed_dup_id (ref);
+
+          if (opt_search_ref != NULL && strcmp (id, opt_search_ref) == 0)
             chosen = 1;
         }
     }
@@ -402,28 +414,33 @@ flatpak_resolve_matching_refs (const char *remote_name,
   if (chosen == 0)
     {
       const char *dir_name = flatpak_dir_get_name_cached (dir);
-      if (refs_len == 1)
+      if (refs->len == 1)
         {
+          FlatpakDecomposed *ref = g_ptr_array_index (refs, 0);
           if (flatpak_yes_no_prompt (TRUE, /* default to yes on Enter */
                                      _("Found ref ‘%s’ in remote ‘%s’ (%s).\nUse this ref?"),
-                                     refs[0], remote_name, dir_name))
+                                     flatpak_decomposed_get_ref (ref), remote_name, dir_name))
             chosen = 1;
           else
             return flatpak_fail (error, _("No ref chosen to resolve matches for ‘%s’"), opt_search_ref);
         }
       else
         {
-          flatpak_format_choices ((const char **) refs,
+          g_auto(GStrv) refs_str = decomposed_refs_to_strv (refs);
+          flatpak_format_choices ((const char **) refs_str,
                                   _("Similar refs found for ‘%s’ in remote ‘%s’ (%s):"),
                                   opt_search_ref, remote_name, dir_name);
-          chosen = flatpak_number_prompt (TRUE, 0, refs_len, _("Which do you want to use (0 to abort)?"));
+          chosen = flatpak_number_prompt (TRUE, 0, refs->len, _("Which do you want to use (0 to abort)?"));
           if (chosen == 0)
             return flatpak_fail (error, _("No ref chosen to resolve matches for ‘%s’"), opt_search_ref);
         }
     }
 
   if (out_ref)
-    *out_ref = g_strdup (refs[chosen - 1]);
+    {
+      FlatpakDecomposed *ref = g_ptr_array_index (refs, chosen - 1);
+      *out_ref = flatpak_decomposed_dup_ref (ref);
+    }
 
   return TRUE;
 }
