@@ -173,9 +173,9 @@ GVariant *flatpak_repo_load_summary_index (OstreeRepo *repo,
 GVariant *flatpak_repo_load_digested_summary (OstreeRepo *repo,
                                               const char *digest,
                                               GError    **error);
-char **  flatpak_summary_match_subrefs (GVariant   *summary,
-                                        const char *collection_id,
-                                        const char *ref);
+GPtrArray *flatpak_summary_match_subrefs (GVariant   *summary,
+                                          const char *collection_id,
+                                          FlatpakDecomposed *ref);
 gboolean flatpak_summary_lookup_ref (GVariant      *summary,
                                      const char    *collection_id,
                                      const char    *ref,

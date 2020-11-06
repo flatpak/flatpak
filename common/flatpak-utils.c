@@ -2077,12 +2077,12 @@ flatpak_summary_find_ref_map (VarSummaryRef summary,
 }
 
 /* This matches all refs from @collection_id that have ref, followed by '.'  as prefix */
-char **
-flatpak_summary_match_subrefs (GVariant   *summary_v,
-                               const char *collection_id,
-                               const char *ref)
+GPtrArray *
+flatpak_summary_match_subrefs (GVariant          *summary_v,
+                               const char        *collection_id,
+                               FlatpakDecomposed *ref)
 {
-  GPtrArray *res = g_ptr_array_new ();
+  GPtrArray *res = g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_decomposed_unref);
   gsize n, i;
   g_auto(GStrv) parts = NULL;
   g_autofree char *parts_prefix = NULL;
@@ -2097,11 +2097,13 @@ flatpak_summary_match_subrefs (GVariant   *summary_v,
   if (flatpak_summary_find_ref_map (summary, collection_id, &ref_map))
     {
       /* Match against the refs. */
-      parts = g_strsplit (ref, "/", 0);
-      parts_prefix = g_strconcat (parts[1], ".", NULL);
+      g_autofree char *id = flatpak_decomposed_dup_id (ref);
+      g_autofree char *arch = flatpak_decomposed_dup_arch (ref);
+      g_autofree char *branch = flatpak_decomposed_dup_branch (ref);
+      parts_prefix = g_strconcat (id, ".", NULL);
 
-      ref_prefix = g_strconcat (parts[0], "/", NULL);
-      ref_suffix = g_strconcat ("/", parts[2], "/", parts[3], NULL);
+      ref_prefix = g_strconcat (flatpak_decomposed_get_kind_str (ref), "/", NULL);
+      ref_suffix = g_strconcat ("/", arch, "/", branch, NULL);
 
       n = var_ref_map_get_length (ref_map);
       for (i = 0; i < n; i++)
@@ -2128,12 +2130,13 @@ flatpak_summary_match_subrefs (GVariant   *summary_v,
           if (!g_str_has_prefix (id_start + 1, parts_prefix))
             continue;
 
-          g_ptr_array_add (res, g_strdup (cur));
+          FlatpakDecomposed *d = flatpak_decomposed_new_from_ref (cur, NULL);
+          if (d)
+            g_ptr_array_add (res, d);
         }
     }
 
-  g_ptr_array_add (res, NULL);
-  return (char **) g_ptr_array_free (res, FALSE);
+  return g_steal_pointer (&res);
 }
 
 gboolean
