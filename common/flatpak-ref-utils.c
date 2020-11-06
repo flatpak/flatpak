@@ -27,6 +27,7 @@
 
 #include <glib.h>
 #include "flatpak-ref-utils-private.h"
+#include "flatpak-run-private.h"
 #include "flatpak-error.h"
 #include "flatpak-utils-private.h"
 
@@ -1164,6 +1165,15 @@ flatpak_decomposed_get_kind_str (FlatpakDecomposed  *ref)
     return "app";
   else
     return "runtime";
+}
+
+const char *
+flatpak_decomposed_get_kind_metadata_group (FlatpakDecomposed  *ref)
+{
+  if (flatpak_decomposed_is_app (ref))
+    return FLATPAK_METADATA_GROUP_APPLICATION;
+  else
+    return FLATPAK_METADATA_GROUP_RUNTIME;
 }
 
 /* A slashed string ends at '/' instead of nul */

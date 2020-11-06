@@ -97,6 +97,7 @@ gboolean           flatpak_decomposed_is_runtime            (FlatpakDecomposed  
 FlatpakKinds       flatpak_decomposed_get_kinds             (FlatpakDecomposed  *ref);
 FlatpakRefKind     flatpak_decomposed_get_kind              (FlatpakDecomposed  *ref);
 const char *       flatpak_decomposed_get_kind_str          (FlatpakDecomposed  *ref);
+const char *       flatpak_decomposed_get_kind_metadata_group(FlatpakDecomposed  *ref);
 const char *       flatpak_decomposed_get_pref              (FlatpakDecomposed  *ref);
 char *             flatpak_decomposed_dup_pref              (FlatpakDecomposed  *ref);
 const char *       flatpak_decomposed_peek_id               (FlatpakDecomposed  *ref,
