@@ -974,27 +974,27 @@ FlatpakRemoteState * flatpak_dir_get_remote_state_local_only (FlatpakDir   *self
                                                               GError      **error);
 GPtrArray * flatpak_dir_find_remote_related_for_metadata (FlatpakDir         *self,
                                                           FlatpakRemoteState *state,
-                                                          const char         *ref,
+                                                          FlatpakDecomposed  *ref,
                                                           GKeyFile           *metakey,
                                                           GCancellable       *cancellable,
                                                           GError            **error);
 GPtrArray * flatpak_dir_find_remote_related (FlatpakDir         *dir,
                                              FlatpakRemoteState *state,
-                                             const char         *ref,
+                                             FlatpakDecomposed  *ref,
                                              GCancellable       *cancellable,
                                              GError            **error);
-GPtrArray * flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
-                                                         const char   *ref,
-                                                         const char   *remote_name,
-                                                         GKeyFile     *metakey,
-                                                         GCancellable *cancellable,
-                                                         GError      **error);
-GPtrArray * flatpak_dir_find_local_related (FlatpakDir   *self,
-                                            const char   *ref,
-                                            const char   *remote_name,
-                                            gboolean      deployed,
-                                            GCancellable *cancellable,
-                                            GError      **error);
+GPtrArray *flatpak_dir_find_local_related_for_metadata (FlatpakDir         *self,
+                                                        FlatpakDecomposed  *ref,
+                                                        const char         *remote_name,
+                                                        GKeyFile           *metakey,
+                                                        GCancellable       *cancellable,
+                                                        GError            **error);
+GPtrArray *flatpak_dir_find_local_related (FlatpakDir         *self,
+                                           FlatpakDecomposed  *ref,
+                                           const char         *remote_name,
+                                           gboolean            deployed,
+                                           GCancellable       *cancellable,
+                                           GError            **error);
 gboolean flatpak_dir_find_latest_rev (FlatpakDir               *self,
                                       FlatpakRemoteState       *state,
                                       const char               *ref,
