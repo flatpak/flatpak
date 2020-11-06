@@ -897,8 +897,8 @@ flatpak_installation_list_installed_refs (FlatpakInstallation *self,
   g_autoptr(GPtrArray) refs = g_ptr_array_new_with_free_func (g_object_unref);
   int i;
 
-  decomposed_app = flatpak_dir_list_refs_decomposed (dir, FLATPAK_KINDS_APP,
-                                                     cancellable, error);
+  decomposed_app = flatpak_dir_list_refs (dir, FLATPAK_KINDS_APP,
+                                          cancellable, error);
   if (decomposed_app == NULL)
     return NULL;
 
@@ -913,8 +913,8 @@ flatpak_installation_list_installed_refs (FlatpakInstallation *self,
         g_warning ("Unexpected failure getting ref for %s: %s", flatpak_decomposed_get_ref (decomposed), local_error->message);
     }
 
-  decomposed_runtime = flatpak_dir_list_refs_decomposed (dir,FLATPAK_KINDS_RUNTIME,
-                                                         cancellable, error);
+  decomposed_runtime = flatpak_dir_list_refs (dir,FLATPAK_KINDS_RUNTIME,
+                                              cancellable, error);
   if (decomposed_runtime == NULL)
     return NULL;
 
@@ -955,8 +955,8 @@ flatpak_installation_list_installed_refs_by_kind (FlatpakInstallation *self,
   g_autoptr(GPtrArray) refs = g_ptr_array_new_with_free_func (g_object_unref);
   int i;
 
-  all_decomposed = flatpak_dir_list_refs_decomposed (dir, flatpak_kinds_from_kind (kind),
-                                                 cancellable, error);
+  all_decomposed = flatpak_dir_list_refs (dir, flatpak_kinds_from_kind (kind),
+                                          cancellable, error);
   if (all_decomposed == NULL)
     return NULL;
 
@@ -2391,8 +2391,8 @@ flatpak_installation_list_remote_refs_sync_full (FlatpakInstallation *self,
   if (state == NULL)
     return NULL;
 
-  if (!flatpak_dir_list_remote_refs_decomposed (dir, state, &ht,
-                                                cancellable, &local_error))
+  if (!flatpak_dir_list_remote_refs (dir, state, &ht,
+                                     cancellable, &local_error))
     {
       if (flags & FLATPAK_QUERY_FLAGS_ONLY_SIDELOADED)
         {
@@ -2503,8 +2503,8 @@ flatpak_installation_fetch_remote_ref_sync_full (FlatpakInstallation *self,
   if (state == NULL)
     return NULL;
 
-  if (!flatpak_dir_list_remote_refs_decomposed (dir, state, &ht,
-                                                cancellable, error))
+  if (!flatpak_dir_list_remote_refs (dir, state, &ht,
+                                     cancellable, error))
     return NULL;
 
   checksum = g_hash_table_lookup (ht, ref);
@@ -3013,8 +3013,8 @@ flatpak_installation_list_pinned_refs (FlatpakInstallation *self,
   if (dir == NULL)
     return NULL;
 
-  runtime_refs = flatpak_dir_list_refs_decomposed (dir, FLATPAK_KINDS_RUNTIME,
-                                                   cancellable, error);
+  runtime_refs = flatpak_dir_list_refs (dir, FLATPAK_KINDS_RUNTIME,
+                                        cancellable, error);
   if (runtime_refs == NULL)
     return NULL;
 

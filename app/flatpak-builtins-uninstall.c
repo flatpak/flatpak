@@ -196,7 +196,7 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
 
           udir = uninstall_dir_ensure (uninstall_dirs, dir);
 
-          refs = flatpak_dir_list_refs_decomposed (dir, FLATPAK_KINDS_APP | FLATPAK_KINDS_RUNTIME, cancellable, error);
+          refs = flatpak_dir_list_refs (dir, FLATPAK_KINDS_APP | FLATPAK_KINDS_RUNTIME, cancellable, error);
           if (refs == NULL)
             return FALSE;
 

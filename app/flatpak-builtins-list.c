@@ -378,8 +378,8 @@ print_installed_refs (gboolean      app,
       FlatpakDir *dir = g_ptr_array_index (dirs, i);
       g_autoptr(GPtrArray) refs = NULL;
 
-      refs = flatpak_dir_list_refs_decomposed (dir, flatpak_kinds_from_bools (app, runtime),
-                                               cancellable, error);
+      refs = flatpak_dir_list_refs (dir, flatpak_kinds_from_bools (app, runtime),
+                                    cancellable, error);
       if (refs == NULL)
         return FALSE;
 

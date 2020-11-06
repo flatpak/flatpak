@@ -188,7 +188,7 @@ flatpak_builtin_update (int           argc,
           FlatpakTransaction *transaction = g_ptr_array_index (transactions, k);
           g_autoptr(GPtrArray) refs = NULL;
 
-          refs = flatpak_dir_list_refs_decomposed (dir, kinds, cancellable, error);
+          refs = flatpak_dir_list_refs (dir, kinds, cancellable, error);
           if (refs == NULL)
             return FALSE;
 

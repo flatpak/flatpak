@@ -6067,7 +6067,7 @@ flatpak_dir_drop_current_ref (FlatpakDir   *self,
   current_ref = flatpak_dir_current_ref (self, name, cancellable);
   if (current_ref)
     {
-      refs = flatpak_dir_list_refs_for_name_decomposed (self, FLATPAK_KINDS_APP, name, cancellable, NULL);
+      refs = flatpak_dir_list_refs_for_name (self, FLATPAK_KINDS_APP, name, cancellable, NULL);
       if (refs)
         {
           for (int i = 0; i < refs->len; i++)
@@ -6131,13 +6131,13 @@ flatpak_dir_make_current_ref (FlatpakDir        *self,
 }
 
 static gboolean
-_flatpak_dir_list_refs_for_name_decomposed (FlatpakDir   *self,
-                                            GFile        *base_dir,
-                                            FlatpakKinds kind,
-                                            const char   *name,
-                                            GPtrArray    *refs,
-                                            GCancellable *cancellable,
-                                            GError      **error)
+_flatpak_dir_list_refs_for_name (FlatpakDir   *self,
+                                 GFile        *base_dir,
+                                 FlatpakKinds kind,
+                                 const char   *name,
+                                 GPtrArray    *refs,
+                                 GCancellable *cancellable,
+                                 GError      **error)
 {
   g_autoptr(GFile) dir = NULL;
   g_autoptr(GFileEnumerator) dir_enum = NULL;
@@ -6219,11 +6219,11 @@ _flatpak_dir_list_refs_for_name_decomposed (FlatpakDir   *self,
 }
 
 GPtrArray *
-flatpak_dir_list_refs_for_name_decomposed (FlatpakDir   *self,
-                                           FlatpakKinds kinds,
-                                           const char   *name,
-                                           GCancellable *cancellable,
-                                           GError      **error)
+flatpak_dir_list_refs_for_name (FlatpakDir   *self,
+                                FlatpakKinds kinds,
+                                const char   *name,
+                                GCancellable *cancellable,
+                                GError      **error)
 {
   g_autoptr(GFile) dir = NULL;
   g_autoptr(GFileEnumerator) dir_enum = NULL;
@@ -6236,7 +6236,7 @@ flatpak_dir_list_refs_for_name_decomposed (FlatpakDir   *self,
     {
       g_autoptr(GFile) base = g_file_get_child (flatpak_dir_get_path (self), "app");
 
-      if (!_flatpak_dir_list_refs_for_name_decomposed (self, base, FLATPAK_KINDS_APP, name, refs, cancellable, error))
+      if (!_flatpak_dir_list_refs_for_name (self, base, FLATPAK_KINDS_APP, name, refs, cancellable, error))
         return NULL;
     }
 
@@ -6244,7 +6244,7 @@ flatpak_dir_list_refs_for_name_decomposed (FlatpakDir   *self,
     {
       g_autoptr(GFile) base = g_file_get_child (flatpak_dir_get_path (self), "runtime");
 
-      if (!_flatpak_dir_list_refs_for_name_decomposed (self, base, FLATPAK_KINDS_RUNTIME, name, refs, cancellable, error))
+      if (!_flatpak_dir_list_refs_for_name (self, base, FLATPAK_KINDS_RUNTIME, name, refs, cancellable, error))
         return NULL;
     }
 
@@ -6254,10 +6254,10 @@ flatpak_dir_list_refs_for_name_decomposed (FlatpakDir   *self,
 }
 
 GPtrArray *
-flatpak_dir_list_refs_decomposed (FlatpakDir   *self,
-                                  FlatpakKinds kinds,
-                                  GCancellable *cancellable,
-                                  GError      **error)
+flatpak_dir_list_refs (FlatpakDir   *self,
+                       FlatpakKinds kinds,
+                       GCancellable *cancellable,
+                       GError      **error)
 {
   g_autoptr(GPtrArray) refs = NULL;
 
@@ -6290,7 +6290,7 @@ flatpak_dir_list_refs_decomposed (FlatpakDir   *self,
                   continue;
                 }
 
-              if (!_flatpak_dir_list_refs_for_name_decomposed (self, base, FLATPAK_KINDS_APP, name, refs, cancellable, error))
+              if (!_flatpak_dir_list_refs_for_name (self, base, FLATPAK_KINDS_APP, name, refs, cancellable, error))
                 return NULL;
 
               g_clear_object (&child_info);
@@ -6331,7 +6331,7 @@ flatpak_dir_list_refs_decomposed (FlatpakDir   *self,
                   continue;
                 }
 
-              if (!_flatpak_dir_list_refs_for_name_decomposed (self, base, FLATPAK_KINDS_RUNTIME, name, refs, cancellable, error))
+              if (!_flatpak_dir_list_refs_for_name (self, base, FLATPAK_KINDS_RUNTIME, name, refs, cancellable, error))
                 return NULL;
 
               g_clear_object (&child_info);
@@ -9900,7 +9900,7 @@ flatpak_dir_uninstall (FlatpakDir                 *self,
 
       /* Look for apps that need this runtime */
 
-      app_refs = flatpak_dir_list_refs_decomposed (self, FLATPAK_KINDS_APP, NULL, NULL);
+      app_refs = flatpak_dir_list_refs (self, FLATPAK_KINDS_APP, NULL, NULL);
       for (i = 0; app_refs != NULL && i < app_refs->len; i++)
         {
           FlatpakDecomposed *app_ref = g_ptr_array_index (app_refs, i);
@@ -12113,11 +12113,11 @@ populate_hash_table_from_refs_map (GHashTable         *ret_all_refs,
  * working when offline, so it looks in sideloaded repos. Also it uses
  * in-memory cached summaries which ostree doesn't. */
 gboolean
-flatpak_dir_list_all_remote_refs_decomposed (FlatpakDir         *self,
-                                             FlatpakRemoteState *state,
-                                             GHashTable        **out_all_refs,
-                                             GCancellable       *cancellable,
-                                             GError            **error)
+flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
+                                  FlatpakRemoteState *state,
+                                  GHashTable        **out_all_refs,
+                                  GCancellable       *cancellable,
+                                  GError            **error)
 {
   g_autoptr(GHashTable) ret_all_refs = NULL;
   VarSummaryRef summary;
@@ -12419,8 +12419,8 @@ flatpak_dir_find_remote_refs (FlatpakDir           *self,
   g_autoptr(GHashTable) remote_refs = NULL;
   g_autoptr(GPtrArray) matched_refs = NULL;
 
-  if (!flatpak_dir_list_all_remote_refs_decomposed (self, state,
-                                                    &remote_refs, cancellable, error))
+  if (!flatpak_dir_list_all_remote_refs (self, state,
+                                         &remote_refs, cancellable, error))
     return NULL;
 
 
@@ -12516,8 +12516,8 @@ flatpak_dir_find_remote_ref (FlatpakDir   *self,
         return flatpak_build_runtime_ref (name, opt_branch, opt_arch);
     }
 
-  if (!flatpak_dir_list_all_remote_refs_decomposed (self, state,
-                                                    &remote_refs, cancellable, error))
+  if (!flatpak_dir_list_all_remote_refs (self, state,
+                                         &remote_refs, cancellable, error))
     return NULL;
 
   remote_ref = find_ref_for_refs_set (remote_refs, name, opt_branch,
@@ -12638,9 +12638,9 @@ flatpak_dir_find_local_refs (FlatpakDir           *self,
 }
 
 static GHashTable *
-flatpak_dir_get_all_installed_refs_decomposed (FlatpakDir  *self,
-                                               FlatpakKinds kinds,
-                                               GError     **error)
+flatpak_dir_get_all_installed_refs (FlatpakDir  *self,
+                                    FlatpakKinds kinds,
+                                    GError     **error)
 {
   g_autoptr(GHashTable) local_refs = NULL;
 
@@ -12650,7 +12650,7 @@ flatpak_dir_get_all_installed_refs_decomposed (FlatpakDir  *self,
   local_refs = g_hash_table_new_full ((GHashFunc)flatpak_decomposed_hash, (GEqualFunc)flatpak_decomposed_equal, (GDestroyNotify)flatpak_decomposed_unref, NULL);
   if (kinds & FLATPAK_KINDS_APP)
     {
-      g_autoptr(GPtrArray) app_refs = flatpak_dir_list_refs_decomposed (self, FLATPAK_KINDS_APP, NULL, error);
+      g_autoptr(GPtrArray) app_refs = flatpak_dir_list_refs (self, FLATPAK_KINDS_APP, NULL, error);
       if (app_refs == NULL)
         return NULL;
 
@@ -12662,7 +12662,7 @@ flatpak_dir_get_all_installed_refs_decomposed (FlatpakDir  *self,
     }
   if (kinds & FLATPAK_KINDS_RUNTIME)
     {
-      g_autoptr(GPtrArray) runtime_refs = flatpak_dir_list_refs_decomposed (self, FLATPAK_KINDS_RUNTIME, NULL, error);
+      g_autoptr(GPtrArray) runtime_refs = flatpak_dir_list_refs (self, FLATPAK_KINDS_RUNTIME, NULL, error);
       if (runtime_refs == NULL)
         return NULL;
 
@@ -12688,7 +12688,7 @@ flatpak_dir_find_installed_refs (FlatpakDir           *self,
   g_autoptr(GHashTable) local_refs = NULL;
   g_autoptr(GPtrArray) matched_refs = NULL;
 
-  local_refs = flatpak_dir_get_all_installed_refs_decomposed (self, kinds, error);
+  local_refs = flatpak_dir_get_all_installed_refs (self, kinds, error);
   if (local_refs == NULL)
     return NULL;
 
@@ -12719,7 +12719,7 @@ flatpak_dir_find_installed_ref (FlatpakDir   *self,
   g_autoptr(GHashTable) local_refs = NULL;
   g_autoptr(GError) my_error = NULL;
 
-  local_refs = flatpak_dir_get_all_installed_refs_decomposed (self, kinds, error);
+  local_refs = flatpak_dir_get_all_installed_refs (self, kinds, error);
   if (local_refs == NULL)
     return NULL;
 
@@ -13339,7 +13339,7 @@ flatpak_dir_remote_has_deploys (FlatpakDir *self,
   GHashTableIter hash_iter;
   gpointer key;
 
-  refs = flatpak_dir_get_all_installed_refs_decomposed (self, FLATPAK_KINDS_APP | FLATPAK_KINDS_RUNTIME, NULL);
+  refs = flatpak_dir_get_all_installed_refs (self, FLATPAK_KINDS_APP | FLATPAK_KINDS_RUNTIME, NULL);
   if (refs == NULL)
     return FALSE;
 
@@ -14145,19 +14145,19 @@ remove_unless_decomposed_in_hash (gpointer key,
 }
 
 gboolean
-flatpak_dir_list_remote_refs_decomposed (FlatpakDir         *self,
-                                         FlatpakRemoteState *state,
-                                         GHashTable        **refs,
-                                         GCancellable       *cancellable,
-                                         GError            **error)
+flatpak_dir_list_remote_refs (FlatpakDir         *self,
+                              FlatpakRemoteState *state,
+                              GHashTable        **refs,
+                              GCancellable       *cancellable,
+                              GError            **error)
 {
   g_autoptr(GError) my_error = NULL;
 
   if (error == NULL)
     error = &my_error;
 
-  if (!flatpak_dir_list_all_remote_refs_decomposed (self, state, refs,
-                                                    cancellable, error))
+  if (!flatpak_dir_list_all_remote_refs (self, state, refs,
+                                         cancellable, error))
     return FALSE;
 
   if (flatpak_dir_get_remote_noenumerate (self, state->remote_name))
@@ -15723,7 +15723,7 @@ find_used_refs (FlatpakDir         *self,
   else
     root_ref_dir = self;
 
-  root_app_refs = flatpak_dir_list_refs_decomposed (root_ref_dir, FLATPAK_KINDS_APP, cancellable, error);
+  root_app_refs = flatpak_dir_list_refs (root_ref_dir, FLATPAK_KINDS_APP, cancellable, error);
   if (root_app_refs == NULL)
     return NULL;
 
@@ -15733,7 +15733,7 @@ find_used_refs (FlatpakDir         *self,
       queue_ref_for_analysis (root_app_ref, arch, analyzed_refs, refs_to_analyze);
     }
 
-  root_runtime_refs = flatpak_dir_list_refs_decomposed (root_ref_dir, FLATPAK_KINDS_RUNTIME, cancellable, error);
+  root_runtime_refs = flatpak_dir_list_refs (root_ref_dir, FLATPAK_KINDS_RUNTIME, cancellable, error);
   if (root_runtime_refs == NULL)
     return NULL;
 
@@ -15903,7 +15903,7 @@ flatpak_dir_list_unused_refs (FlatpakDir         *self,
         }
     }
 
-  runtime_refs = flatpak_dir_list_refs_decomposed (self, FLATPAK_KINDS_RUNTIME, cancellable, error);
+  runtime_refs = flatpak_dir_list_refs (self, FLATPAK_KINDS_RUNTIME, cancellable, error);
   if (runtime_refs == NULL)
     return NULL;
 

@@ -460,8 +460,8 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
         return FALSE;
     }
 
-  refs = flatpak_dir_list_refs_decomposed (dir, FLATPAK_KINDS_APP | FLATPAK_KINDS_RUNTIME,
-                                           cancellable, error);
+  refs = flatpak_dir_list_refs (dir, FLATPAK_KINDS_APP | FLATPAK_KINDS_RUNTIME,
+                                cancellable, error);
 
   transaction = flatpak_quiet_transaction_new (dir, error);
   if (transaction == NULL)

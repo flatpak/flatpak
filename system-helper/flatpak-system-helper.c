@@ -590,7 +590,7 @@ handle_deploy (FlatpakSystemHelper   *object,
       /* We need to use list_all_remote_refs because we don't care about
        * enumerate vs. noenumerate.
        */
-      if (!flatpak_dir_list_all_remote_refs_decomposed (system, state, &remote_refs, NULL, &error))
+      if (!flatpak_dir_list_all_remote_refs (system, state, &remote_refs, NULL, &error))
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
                                                  "%s: Can't list refs: %s", arg_origin, error->message);
