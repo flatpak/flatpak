@@ -2018,11 +2018,11 @@ op_get_related (FlatpakTransaction           *self,
     }
 
   if (transaction_is_local_only (self, op->kind))
-    related = flatpak_dir_find_local_related_for_metadata (priv->dir, flatpak_decomposed_get_ref (op->ref),
+    related = flatpak_dir_find_local_related_for_metadata (priv->dir, op->ref,
                                                            op->remote, op->resolved_metakey,
                                                            NULL, &related_error);
   else
-    related = flatpak_dir_find_remote_related_for_metadata (priv->dir, state, flatpak_decomposed_get_ref (op->ref),
+    related = flatpak_dir_find_remote_related_for_metadata (priv->dir, state, op->ref,
                                                             op->resolved_metakey, NULL, &related_error);
 
   if (related_error != NULL)

@@ -14684,21 +14684,18 @@ flatpak_dir_ref_is_pinned (FlatpakDir *self,
 GPtrArray *
 flatpak_dir_find_remote_related_for_metadata (FlatpakDir         *self,
                                               FlatpakRemoteState *state,
-                                              const char         *ref,
+                                              FlatpakDecomposed  *ref,
                                               GKeyFile           *metakey,
                                               GCancellable       *cancellable,
                                               GError            **error)
 {
   int i;
-  g_auto(GStrv) parts = NULL;
   g_autoptr(GPtrArray) related = g_ptr_array_new_with_free_func ((GDestroyNotify) flatpak_related_free);
   g_autofree char *url = NULL;
   g_auto(GStrv) groups = NULL;
   g_autoptr(GRegex) masked = NULL;
-
-  parts = flatpak_decompose_ref (ref, error);
-  if (parts == NULL)
-    return NULL;
+  g_autofree char *ref_arch = flatpak_decomposed_dup_arch (ref);
+  g_autofree char *ref_branch = flatpak_decomposed_dup_branch (ref);
 
   if (!ostree_repo_remote_get_url (self->repo,
                                    state->remote_name,
@@ -14751,7 +14748,7 @@ flatpak_dir_find_remote_related_for_metadata (FlatpakDir         *self,
               if (version)
                 default_branches[0] = version;
               else
-                default_branches[0] = parts[3];
+                default_branches[0] = ref_branch;
               branches = default_branches;
             }
 
@@ -14762,7 +14759,7 @@ flatpak_dir_find_remote_related_for_metadata (FlatpakDir         *self,
               const char *branch = branches[branch_i];
 
               extension_ref = flatpak_decomposed_new_from_parts (FLATPAK_KINDS_RUNTIME,
-                                                                 extension, parts[2], branch, NULL);
+                                                                 extension, ref_arch, branch, NULL);
               if (extension_ref == NULL)
                 continue;
 
@@ -14797,19 +14794,14 @@ flatpak_dir_find_remote_related_for_metadata (FlatpakDir         *self,
 GPtrArray *
 flatpak_dir_find_remote_related (FlatpakDir         *self,
                                  FlatpakRemoteState *state,
-                                 const char         *ref,
+                                 FlatpakDecomposed  *ref,
                                  GCancellable       *cancellable,
                                  GError            **error)
 {
   g_autofree char *metadata = NULL;
   g_autoptr(GKeyFile) metakey = g_key_file_new ();
-  g_auto(GStrv) parts = NULL;
   g_autoptr(GPtrArray) related = g_ptr_array_new_with_free_func ((GDestroyNotify) flatpak_related_free);
   g_autofree char *url = NULL;
-
-  parts = flatpak_decompose_ref (ref, error);
-  if (parts == NULL)
-    return NULL;
 
   if (!ostree_repo_remote_get_url (self->repo,
                                    state->remote_name,
@@ -14820,7 +14812,7 @@ flatpak_dir_find_remote_related (FlatpakDir         *self,
   if (*url == 0)
     return g_steal_pointer (&related);  /* Empty url, silently disables updates */
 
-  if (flatpak_remote_state_load_data (state, ref,
+  if (flatpak_remote_state_load_data (state, flatpak_decomposed_get_ref (ref),
                                       NULL, NULL, &metadata,
                                       NULL) &&
       g_key_file_load_from_data (metakey, metadata, -1, 0, NULL))
@@ -14913,23 +14905,20 @@ local_match_prefix (FlatpakDir        *self,
 
 /* Finds all the locally installed ref related to ref, if remote_name is set it is limited to refs from that remote */
 GPtrArray *
-flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
-                                             const char   *ref,
-                                             const char   *remote_name, /* nullable */
-                                             GKeyFile     *metakey,
-                                             GCancellable *cancellable,
-                                             GError      **error)
+flatpak_dir_find_local_related_for_metadata (FlatpakDir        *self,
+                                             FlatpakDecomposed *ref,
+                                             const char        *remote_name, /* nullable */
+                                             GKeyFile          *metakey,
+                                             GCancellable      *cancellable,
+                                             GError           **error)
 {
   int i;
-  g_auto(GStrv) parts = NULL;
   g_autoptr(GPtrArray) related = g_ptr_array_new_with_free_func ((GDestroyNotify) flatpak_related_free);
   g_auto(GStrv) groups = NULL;
+  g_autofree char *ref_arch = flatpak_decomposed_dup_arch (ref);
+  g_autofree char *ref_branch = flatpak_decomposed_dup_branch (ref);
 
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
-    return NULL;
-
-  parts = flatpak_decompose_ref (ref, error);
-  if (parts == NULL)
     return NULL;
 
   groups = g_key_file_get_groups (metakey, NULL);
@@ -14972,7 +14961,7 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
               if (version)
                 default_branches[0] = version;
               else
-                default_branches[0] = parts[3];
+                default_branches[0] = ref_branch;
               branches = default_branches;
             }
 
@@ -14984,7 +14973,7 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
               const char *branch = branches[branch_i];
 
               extension_ref = flatpak_decomposed_new_from_parts (FLATPAK_KINDS_RUNTIME,
-                                                                 extension, parts[2], branch, NULL);
+                                                                 extension, ref_arch, branch, NULL);
               if (remote_name != NULL &&
                   flatpak_repo_resolve_rev (self->repo,
                                             NULL,
@@ -15055,12 +15044,12 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
 
 
 GPtrArray *
-flatpak_dir_find_local_related (FlatpakDir   *self,
-                                const char   *ref,
-                                const char   *remote_name,
-                                gboolean      deployed,
-                                GCancellable *cancellable,
-                                GError      **error)
+flatpak_dir_find_local_related (FlatpakDir        *self,
+                                FlatpakDecomposed *ref,
+                                const char        *remote_name,
+                                gboolean           deployed,
+                                GCancellable      *cancellable,
+                                GError           **error)
 {
   g_autoptr(GFile) deploy_dir = NULL;
   g_autoptr(GBytes) deploy_data = NULL;
@@ -15074,15 +15063,15 @@ flatpak_dir_find_local_related (FlatpakDir   *self,
 
   if (deployed)
     {
-      deploy_dir = flatpak_dir_get_if_deployed (self, ref, NULL, cancellable);
+      deploy_dir = flatpak_dir_get_if_deployed (self, flatpak_decomposed_get_ref (ref), NULL, cancellable);
       if (deploy_dir == NULL)
         {
           g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
-                       _("%s not installed"), ref);
+                       _("%s not installed"), flatpak_decomposed_get_ref (ref));
           return NULL;
         }
 
-      deploy_data = flatpak_load_deploy_data (deploy_dir, ref, FLATPAK_DEPLOY_VERSION_ANY, cancellable, error);
+      deploy_data = flatpak_load_deploy_data (deploy_dir, flatpak_decomposed_get_ref (ref), FLATPAK_DEPLOY_VERSION_ANY, cancellable, error);
       if (deploy_data == NULL)
         return NULL;
 
@@ -15096,13 +15085,13 @@ flatpak_dir_find_local_related (FlatpakDir   *self,
   else
     {
       g_autofree char *checksum = NULL;
-      g_autoptr(GVariant) commit_data = flatpak_dir_read_latest_commit (self, remote_name, ref, &checksum, NULL, NULL);
+      g_autoptr(GVariant) commit_data = flatpak_dir_read_latest_commit (self, remote_name, flatpak_decomposed_get_ref (ref), &checksum, NULL, NULL);
       if (commit_data)
         {
           g_autoptr(GVariant) commit_metadata = g_variant_get_child_value (commit_data, 0);
           g_variant_lookup (commit_metadata, "xa.metadata", "s", &metadata_contents);
           if (metadata_contents == NULL)
-            g_debug ("No xa.metadata in local commit %s ref %s", checksum, ref);
+            g_debug ("No xa.metadata in local commit %s ref %s", checksum, flatpak_decomposed_get_ref (ref));
         }
     }
 
@@ -15808,7 +15797,7 @@ find_used_refs (FlatpakDir         *self,
         }
 
       /* We pass NULL for remote-name here, because we want to consider related refs from all remotes */
-      related = flatpak_dir_find_local_related_for_metadata (self, flatpak_decomposed_get_ref (ref_to_analyze),
+      related = flatpak_dir_find_local_related_for_metadata (self, ref_to_analyze,
                                                              NULL, metakey, NULL, NULL);
       for (int i = 0; related != NULL && i < related->len; i++)
         {
