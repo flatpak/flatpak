@@ -1115,6 +1115,17 @@ flatpak_decomposed_strcmp_p (FlatpakDecomposed  **ref_a,
   return flatpak_decomposed_strcmp (*ref_a, *ref_b);
 }
 
+gboolean
+flatpak_decomposed_equal_except_branch (FlatpakDecomposed  *ref_a,
+                                        FlatpakDecomposed  *ref_b)
+{
+  return
+    ref_a->branch_offset == ref_b->branch_offset &&
+    strncmp (ref_a->data, ref_b->data, ref_a->branch_offset) == 0 &&
+    g_strcmp0 (ref_a->collection_id, ref_b->collection_id) == 0;
+}
+
+
 guint
 flatpak_decomposed_hash (FlatpakDecomposed  *ref)
 {
