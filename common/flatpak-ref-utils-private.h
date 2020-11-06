@@ -87,6 +87,8 @@ const char *       flatpak_decomposed_get_collection_id     (FlatpakDecomposed  
 char *             flatpak_decomposed_dup_collection_id     (FlatpakDecomposed  *ref);
 gboolean           flatpak_decomposed_equal                 (FlatpakDecomposed  *ref_a,
                                                              FlatpakDecomposed  *ref_b);
+gboolean           flatpak_decomposed_equal_except_branch   (FlatpakDecomposed  *ref_a,
+                                                             FlatpakDecomposed  *ref_b);
 gint               flatpak_decomposed_strcmp                (FlatpakDecomposed  *ref_a,
                                                              FlatpakDecomposed  *ref_b);
 gint               flatpak_decomposed_strcmp_p              (FlatpakDecomposed **ref_a,
