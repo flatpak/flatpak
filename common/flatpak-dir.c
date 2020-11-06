@@ -10011,6 +10011,12 @@ flatpak_dir_collect_deployed_refs (FlatpakDir   *self,
   g_autoptr(GFileEnumerator) dir_enum = NULL;
   g_autoptr(GFileInfo) child_info = NULL;
   GError *temp_error = NULL;
+  FlatpakKinds kind;
+
+  if (strcmp (type, "app") == 0)
+    kind = FLATPAK_KINDS_APP;
+  else
+    kind = FLATPAK_KINDS_RUNTIME;
 
   dir = g_file_get_child (self->basedir, type);
   if (!g_file_query_exists (dir, cancellable))
@@ -10036,7 +10042,11 @@ flatpak_dir_collect_deployed_refs (FlatpakDir   *self,
           g_autoptr(GFile) active = g_file_get_child (child3, "active");
 
           if (g_file_query_exists (active, cancellable))
-            g_hash_table_add (hash, g_strdup (name));
+            {
+              FlatpakDecomposed *ref = flatpak_decomposed_new_from_parts (kind, name, arch, branch, NULL);
+              if (ref)
+                g_hash_table_add (hash, ref);
+            }
         }
 
       g_clear_object (&child_info);
@@ -14483,36 +14493,42 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
 void
 flatpak_related_free (FlatpakRelated *self)
 {
-  g_free (self->ref);
+  flatpak_decomposed_unref (self->ref);
   g_free (self->commit);
   g_strfreev (self->subpaths);
   g_free (self);
 }
 
 static void
-add_related (FlatpakDir *self,
-             GPtrArray  *related,
-             const char *extension,
-             const char *extension_ref,
-             const char *checksum,
-             gboolean    no_autodownload,
-             const char *download_if,
-             const char *autoprune_unless,
-             gboolean    autodelete,
-             gboolean    locale_subset)
+add_related (FlatpakDir        *self,
+             GPtrArray         *related,
+             const char        *extension,
+             FlatpakDecomposed *extension_ref,
+             const char        *checksum,
+             gboolean           no_autodownload,
+             const char        *download_if,
+             const char        *autoprune_unless,
+             gboolean           autodelete,
+             gboolean           locale_subset)
 {
   g_autoptr(GBytes) deploy_data = NULL;
   g_autofree const char **old_subpaths = NULL;
+  g_autofree const char *id = NULL;
+  g_autofree const char *arch = NULL;
+  g_autofree const char *branch = NULL;
   g_auto(GStrv) extra_subpaths = NULL;
   g_auto(GStrv) subpaths = NULL;
   FlatpakRelated *rel;
   gboolean download;
   gboolean delete = autodelete;
   gboolean auto_prune = FALSE;
-  g_auto(GStrv) ref_parts = g_strsplit (extension_ref, "/", -1);
   g_autoptr(GFile) unmaintained_path = NULL;
 
-  deploy_data = flatpak_dir_get_deploy_data (self, extension_ref, FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
+  deploy_data = flatpak_dir_get_deploy_data (self, flatpak_decomposed_get_ref (extension_ref), FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
+
+  id = flatpak_decomposed_dup_id (extension_ref);
+  arch = flatpak_decomposed_dup_arch (extension_ref);
+  branch = flatpak_decomposed_dup_branch (extension_ref);
 
   if (deploy_data)
     old_subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
@@ -14520,22 +14536,20 @@ add_related (FlatpakDir *self,
   /* Only respect no-autodownload/download-if for uninstalled refs, we
      always want to update if you manually installed something */
   download =
-    flatpak_extension_matches_reason (ref_parts[1], download_if, !no_autodownload) ||
+    flatpak_extension_matches_reason (id, download_if, !no_autodownload) ||
     deploy_data != NULL;
 
-  if (!flatpak_extension_matches_reason (ref_parts[1], autoprune_unless, TRUE))
+  if (!flatpak_extension_matches_reason (id, autoprune_unless, TRUE))
     auto_prune = TRUE;
 
   /* Don't download if there is an unmaintained extension already installed */
   unmaintained_path =
-    flatpak_find_unmaintained_extension_dir_if_exists (ref_parts[1],
-                                                       ref_parts[2],
-                                                       ref_parts[3], NULL);
+    flatpak_find_unmaintained_extension_dir_if_exists (id, arch, branch, NULL);
   if (unmaintained_path != NULL && deploy_data == NULL)
     {
       g_debug ("Skipping related extension ‘%s’ because it is already "
                "installed as an unmaintained extension in ‘%s’.",
-               ref_parts[1], flatpak_file_get_path_cached (unmaintained_path));
+               id, flatpak_file_get_path_cached (unmaintained_path));
       download = FALSE;
     }
 
@@ -14563,7 +14577,7 @@ add_related (FlatpakDir *self,
   subpaths = flatpak_subpaths_merge ((char **) old_subpaths, extra_subpaths);
 
   rel = g_new0 (FlatpakRelated, 1);
-  rel->ref = g_strdup (extension_ref);
+  rel->ref = flatpak_decomposed_ref (extension_ref);
   rel->commit = g_strdup (checksum);
   rel->subpaths = g_steal_pointer (&subpaths);
   rel->download = download;
@@ -14767,29 +14781,37 @@ flatpak_dir_find_remote_related_for_metadata (FlatpakDir         *self,
 
           for (branch_i = 0; branches[branch_i] != NULL; branch_i++)
             {
-              g_autofree char *extension_ref = NULL;
+              g_autoptr(FlatpakDecomposed) extension_ref = NULL;
               g_autofree char *checksum = NULL;
               const char *branch = branches[branch_i];
 
-              extension_ref = g_build_filename ("runtime", extension, parts[2], branch, NULL);
+              extension_ref = flatpak_decomposed_new_from_parts (FLATPAK_KINDS_RUNTIME,
+                                                                 extension, parts[2], branch, NULL);
+              if (extension_ref == NULL)
+                continue;
 
-              if (flatpak_remote_state_lookup_ref (state, extension_ref, &checksum, NULL, NULL, NULL, NULL))
+              if (flatpak_remote_state_lookup_ref (state, flatpak_decomposed_get_ref (extension_ref), &checksum, NULL, NULL, NULL, NULL))
                 {
-                  if (flatpak_filters_allow_ref (NULL, masked, extension_ref))
+                  if (flatpak_filters_allow_ref (NULL, masked, flatpak_decomposed_get_ref (extension_ref)))
                     add_related (self, related, extension, extension_ref, checksum,
                                  no_autodownload, download_if, autoprune_unless, autodelete, locale_subset);
                 }
               else if (subdirectories)
                 {
-                  g_auto(GStrv) refs = flatpak_remote_state_match_subrefs (state, extension_ref);
+                  g_auto(GStrv) refs = flatpak_remote_state_match_subrefs (state, flatpak_decomposed_get_ref (extension_ref));
                   int j;
                   for (j = 0; refs[j] != NULL; j++)
                     {
                       g_autofree char *subref_checksum = NULL;
+                      g_autoptr(FlatpakDecomposed) subref_ref = flatpak_decomposed_new_from_ref (refs[j], NULL);
 
-                      if (flatpak_remote_state_lookup_ref (state, refs[j], &subref_checksum, NULL, NULL, NULL, NULL) &&
-                          flatpak_filters_allow_ref (NULL, masked,  refs[j]))
-                        add_related (self, related, extension, refs[j], subref_checksum,
+                      if (ref == NULL)
+                        continue;
+
+                      if (flatpak_remote_state_lookup_ref (state, flatpak_decomposed_get_ref (subref_ref),
+                                                           &subref_checksum, NULL, NULL, NULL, NULL) &&
+                          flatpak_filters_allow_ref (NULL, masked,  flatpak_decomposed_get_ref (subref_ref)))
+                        add_related (self, related, extension, subref_ref, subref_checksum,
                                      no_autodownload, download_if, autoprune_unless, autodelete, locale_subset);
                     }
                 }
@@ -14839,21 +14861,31 @@ flatpak_dir_find_remote_related (FlatpakDir         *self,
 }
 
 static GHashTable *
-local_match_prefix (FlatpakDir *self,
-                    const char *extension_ref,
-                    const char *remote)
+local_match_prefix (FlatpakDir        *self,
+                    FlatpakDecomposed *extension_ref,
+                    const char        *remote)
 {
-  GHashTable *matches = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
-  g_auto(GStrv) parts = NULL;
-  g_autofree char *parts_prefix = NULL;
+  GHashTable *matches = g_hash_table_new_full ((GHashFunc)flatpak_decomposed_hash, (GEqualFunc)flatpak_decomposed_equal, (GDestroyNotify)flatpak_decomposed_unref, NULL);
+  FlatpakKinds kind;
+  g_autofree char *id = NULL;
+  g_autofree char *arch = NULL;
+  g_autofree char *branch = NULL;
+  g_autofree char *id_prefix = NULL;
   g_autoptr(GHashTable) refs = NULL;
   g_autofree char *list_prefix = NULL;
+  const char *kind_str;
 
-  parts = g_strsplit (extension_ref, "/", -1);
-  parts_prefix = g_strconcat (parts[1], ".", NULL);
+  kind = flatpak_decomposed_get_kinds (extension_ref);
+  id = flatpak_decomposed_dup_id (extension_ref);
+  arch = flatpak_decomposed_dup_arch (extension_ref);
+  branch = flatpak_decomposed_dup_branch (extension_ref);
+
+  id_prefix = g_strconcat (id, ".", NULL);
+
+  kind_str = flatpak_decomposed_get_kind_str (extension_ref);
 
   if (remote)
-    list_prefix = g_strdup_printf ("%s:%s", remote, parts[0]);
+    list_prefix = g_strdup_printf ("%s:%s", remote, kind_str);
 
   if (ostree_repo_list_refs (self->repo, list_prefix, &refs, NULL, NULL))
     {
@@ -14866,7 +14898,7 @@ local_match_prefix (FlatpakDir *self,
           const char *partial_ref_and_origin = key;
           g_autofree char *partial_ref_store = NULL;
           const char *partial_ref;
-          g_auto(GStrv) cur_parts = NULL;
+          g_autoptr(FlatpakDecomposed) matched = NULL;
 
           ostree_parse_refspec (partial_ref_and_origin, NULL, &partial_ref_store, NULL);
           if (remote == NULL)
@@ -14876,31 +14908,33 @@ local_match_prefix (FlatpakDir *self,
               if (slash == NULL)
                 continue;
               *slash = 0;
-              if (strcmp (partial_ref_store, parts[0]) != 0)
+              if (strcmp (partial_ref_store, kind_str) != 0)
                 continue;
               partial_ref = slash + 1;
             }
           else
             partial_ref = partial_ref_store;
 
-          cur_parts = g_strsplit (partial_ref, "/", -1);
+          matched = flatpak_decomposed_new_from_pref (kind, partial_ref, NULL);
+          if (matched == NULL)
+            continue;
 
           /* Must match type, arch, branch */
-          if (strcmp (parts[2], cur_parts[1]) != 0 ||
-              strcmp (parts[3], cur_parts[2]) != 0)
+          if (!flatpak_decomposed_is_arch (matched, arch) ||
+              !flatpak_decomposed_is_branch (matched, branch))
             continue;
 
           /* But only prefix of id */
-          if (!g_str_has_prefix (cur_parts[0], parts_prefix))
+          if (!flatpak_decomposed_id_has_prefix (matched, id_prefix))
             continue;
 
-          g_hash_table_add (matches, g_strconcat (parts[0], "/", partial_ref, NULL));
+          g_hash_table_add (matches, g_steal_pointer (&matched));
         }
     }
 
   /* Also check deploys. In case remote-delete --force is run, we can end up
    * with a deploy without a corresponding ref in the repo. */
-  flatpak_dir_collect_deployed_refs (self, parts[0], parts_prefix, parts[2], parts[3], matches, NULL, NULL);
+  flatpak_dir_collect_deployed_refs (self, kind_str, id_prefix, arch, branch, matches, NULL, NULL);
 
   return matches;
 }
@@ -14972,17 +15006,18 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
 
           for (branch_i = 0; branches[branch_i] != NULL; branch_i++)
             {
-              g_autofree char *extension_ref = NULL;
+              g_autoptr(FlatpakDecomposed) extension_ref = NULL;
               g_autofree char *checksum = NULL;
               g_autoptr(GBytes) deploy_data = NULL;
               const char *branch = branches[branch_i];
 
-              extension_ref = g_build_filename ("runtime", extension, parts[2], branch, NULL);
+              extension_ref = flatpak_decomposed_new_from_parts (FLATPAK_KINDS_RUNTIME,
+                                                                 extension, parts[2], branch, NULL);
               if (remote_name != NULL &&
                   flatpak_repo_resolve_rev (self->repo,
                                             NULL,
                                             remote_name,
-                                            extension_ref,
+                                            flatpak_decomposed_get_ref (extension_ref),
                                             FALSE,
                                             &checksum,
                                             NULL,
@@ -14991,7 +15026,7 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
                   add_related (self, related, extension, extension_ref,
                                checksum, no_autodownload, download_if, autoprune_unless, autodelete, locale_subset);
                 }
-              else if ((deploy_data = flatpak_dir_get_deploy_data (self, extension_ref,
+              else if ((deploy_data = flatpak_dir_get_deploy_data (self, flatpak_decomposed_get_ref (extension_ref),
                                                                    FLATPAK_DEPLOY_VERSION_ANY,
                                                                    NULL, NULL)) != NULL &&
                        (remote_name == NULL || g_strcmp0 (flatpak_deploy_data_get_origin (deploy_data), remote_name) == 0))
@@ -15007,7 +15042,7 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
               else if (subdirectories)
                 {
                   g_autoptr(GHashTable) matches = local_match_prefix (self, extension_ref, remote_name);
-                  GLNX_HASH_TABLE_FOREACH (matches, const char *, match)
+                  GLNX_HASH_TABLE_FOREACH (matches, FlatpakDecomposed *, match)
                     {
                       g_autofree char *match_checksum = NULL;
                       g_autoptr(GBytes) match_deploy_data = NULL;
@@ -15016,7 +15051,7 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
                           flatpak_repo_resolve_rev (self->repo,
                                                     NULL,
                                                     remote_name,
-                                                    match,
+                                                    flatpak_decomposed_get_ref (match),
                                                     FALSE,
                                                     &match_checksum,
                                                     NULL,
@@ -15025,7 +15060,7 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir   *self,
                           add_related (self, related, extension, match, match_checksum,
                                        no_autodownload, download_if, autoprune_unless, autodelete, locale_subset);
                         }
-                      else if ((match_deploy_data = flatpak_dir_get_deploy_data (self, match,
+                      else if ((match_deploy_data = flatpak_dir_get_deploy_data (self, flatpak_decomposed_get_ref (match),
                                                                                  FLATPAK_DEPLOY_VERSION_ANY,
                                                                                  NULL, NULL)) != NULL &&
                                (remote_name == NULL || g_strcmp0 (flatpak_deploy_data_get_origin (match_deploy_data), remote_name) == 0))
@@ -15809,9 +15844,7 @@ find_used_refs (FlatpakDir         *self,
 
           if (!rel->auto_prune)
             {
-              g_autoptr(FlatpakDecomposed) rel_ref = flatpak_decomposed_new_from_ref (rel->ref, NULL);
-              if (rel_ref)
-                queue_ref_for_analysis (rel_ref, arch, analyzed_refs, refs_to_analyze);
+              queue_ref_for_analysis (rel->ref, arch, analyzed_refs, refs_to_analyze);
             }
         }
     }

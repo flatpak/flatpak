@@ -2681,7 +2681,7 @@ flatpak_installation_list_remote_related_refs_sync (FlatpakInstallation *self,
       FlatpakRelated *rel = g_ptr_array_index (related, i);
       FlatpakRelatedRef *rel_ref;
 
-      rel_ref = flatpak_related_ref_new (rel->ref, rel->commit,
+      rel_ref = flatpak_related_ref_new (flatpak_decomposed_get_ref (rel->ref), rel->commit,
                                          rel->subpaths, rel->download, rel->delete);
 
       if (rel_ref)
@@ -2741,7 +2741,7 @@ flatpak_installation_list_installed_related_refs_sync (FlatpakInstallation *self
       FlatpakRelated *rel = g_ptr_array_index (related, i);
       FlatpakRelatedRef *rel_ref;
 
-      rel_ref = flatpak_related_ref_new (rel->ref, rel->commit,
+      rel_ref = flatpak_related_ref_new (flatpak_decomposed_get_ref (rel->ref), rel->commit,
                                          rel->subpaths, rel->download, rel->delete);
 
       if (rel_ref)

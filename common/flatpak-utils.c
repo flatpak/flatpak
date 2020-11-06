@@ -998,11 +998,9 @@ flatpak_list_deployed_refs (const char   *type,
   g_autoptr(GHashTable) hash = NULL;
   g_autoptr(FlatpakDir) user_dir = NULL;
   g_autoptr(GPtrArray) system_dirs = NULL;
-  const char *key;
-  GHashTableIter iter;
   int i;
 
-  hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  hash = g_hash_table_new_full ((GHashFunc)flatpak_decomposed_hash, (GEqualFunc)flatpak_decomposed_equal, (GDestroyNotify)flatpak_decomposed_unref, NULL);
 
   user_dir = flatpak_dir_get_user ();
   system_dirs = flatpak_dir_get_system_list (cancellable, error);
@@ -1024,9 +1022,11 @@ flatpak_list_deployed_refs (const char   *type,
     }
 
   names = g_ptr_array_new ();
-  g_hash_table_iter_init (&iter, hash);
-  while (g_hash_table_iter_next (&iter, (gpointer *) &key, NULL))
-    g_ptr_array_add (names, g_strdup (key));
+
+  GLNX_HASH_TABLE_FOREACH (hash, FlatpakDecomposed *, ref)
+    {
+      g_ptr_array_add (names, flatpak_decomposed_dup_id (ref));
+    }
 
   g_ptr_array_sort (names, flatpak_strcmp0_ptr);
   g_ptr_array_add (names, NULL);
@@ -5793,25 +5793,26 @@ add_extension (GKeyFile   *metakey,
                                    FLATPAK_METADATA_KEY_SUBDIRECTORIES, NULL))
     {
       g_autofree char *prefix = g_strconcat (extension, ".", NULL);
-      g_auto(GStrv) refs = NULL;
+      g_auto(GStrv) ids = NULL;
       g_auto(GStrv) unmaintained_refs = NULL;
       int j;
 
-      refs = flatpak_list_deployed_refs ("runtime", prefix, arch, branch,
-                                         NULL, NULL);
-      for (j = 0; refs != NULL && refs[j] != NULL; j++)
+      ids = flatpak_list_deployed_refs ("runtime", prefix, arch, branch,
+                                        NULL, NULL);
+      for (j = 0; ids != NULL && ids[j] != NULL; j++)
         {
-          g_autofree char *extended_dir = g_build_filename (directory, refs[j] + strlen (prefix), NULL);
-          g_autofree char *dir_ref = g_build_filename ("runtime", refs[j], arch, branch, NULL);
+          const char *id = ids[j];
+          g_autofree char *extended_dir = g_build_filename (directory, id + strlen (prefix), NULL);
+          g_autofree char *dir_ref = g_build_filename ("runtime", id, arch, branch, NULL);
           g_autoptr(GFile) subdir_deploy_dir = NULL;
           g_autoptr(GFile) subdir_files = NULL;
           subdir_deploy_dir = flatpak_find_deploy_dir_for_ref (dir_ref, NULL, NULL, NULL);
           if (subdir_deploy_dir)
             subdir_files = g_file_get_child (subdir_deploy_dir, "files");
 
-          if (subdir_files && flatpak_extension_matches_reason (refs[j], enable_if, TRUE))
+          if (subdir_files && flatpak_extension_matches_reason (id, enable_if, TRUE))
             {
-              ext = flatpak_extension_new (extension, refs[j], dir_ref, extended_dir, add_ld_path, subdir_suffix, merge_dirs, subdir_files, subdir_deploy_dir, FALSE);
+              ext = flatpak_extension_new (extension, id, dir_ref, extended_dir, add_ld_path, subdir_suffix, merge_dirs, subdir_files, subdir_deploy_dir, FALSE);
               ext->needs_tmpfs = TRUE;
               res = g_list_prepend (res, ext);
             }
