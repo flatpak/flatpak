@@ -96,12 +96,12 @@ GType flatpak_deploy_get_type (void);
 
 typedef struct
 {
-  char    *ref;
-  char    *commit;
-  char   **subpaths;
-  gboolean download;
-  gboolean        delete;
-  gboolean auto_prune;
+  FlatpakDecomposed *ref;
+  char              *commit;
+  char             **subpaths;
+  gboolean           download;
+  gboolean           delete;
+  gboolean           auto_prune;
 } FlatpakRelated;
 
 void         flatpak_related_free (FlatpakRelated *related);

@@ -2058,12 +2058,11 @@ add_related (FlatpakTransaction          *self,
         {
           FlatpakRelated *rel = g_ptr_array_index (related, i);
           FlatpakTransactionOperation *related_op;
-          g_autoptr(FlatpakDecomposed) rel_ref = flatpak_decomposed_new_from_ref (rel->ref, NULL);
 
-          if (rel_ref == NULL || !rel->delete)
+          if (!rel->delete)
             continue;
 
-          related_op = flatpak_transaction_add_op (self, op->remote, rel_ref,
+          related_op = flatpak_transaction_add_op (self, op->remote, rel->ref,
                                                    NULL, NULL, NULL, NULL,
                                                    FLATPAK_TRANSACTION_OPERATION_UNINSTALL,
                                                    error);
@@ -2082,12 +2081,11 @@ add_related (FlatpakTransaction          *self,
         {
           FlatpakRelated *rel = g_ptr_array_index (related, i);
           FlatpakTransactionOperation *related_op;
-          g_autoptr(FlatpakDecomposed) rel_ref = flatpak_decomposed_new_from_ref (rel->ref, NULL);
 
-          if (rel_ref == NULL || !rel->download)
+          if (!rel->download)
             continue;
 
-          related_op = flatpak_transaction_add_op (self, op->remote, rel_ref,
+          related_op = flatpak_transaction_add_op (self, op->remote, rel->ref,
                                                    (const char **) rel->subpaths,
                                                    NULL, NULL, NULL,
                                                    FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE,
