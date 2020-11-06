@@ -285,13 +285,15 @@ FlatpakBundleRef *
 flatpak_bundle_ref_new (GFile   *file,
                         GError **error)
 {
-  FlatpakRefKind kind = FLATPAK_REF_KIND_APP;
+  FlatpakRefKind kind;
   FlatpakBundleRefPrivate *priv;
-  g_auto(GStrv) parts = NULL;
   FlatpakBundleRef *ref;
   g_autoptr(GVariant) metadata = NULL;
   g_autofree char *commit = NULL;
-  g_autofree char *full_ref = NULL;
+  g_autofree char *id = NULL;
+  g_autofree char *arch = NULL;
+  g_autofree char *branch = NULL;
+  g_autoptr(FlatpakDecomposed) full_ref = NULL;
   g_autofree char *origin = NULL;
   g_autofree char *runtime_repo = NULL;
   g_autofree char *metadata_contents = NULL;
@@ -306,18 +308,16 @@ flatpak_bundle_ref_new (GFile   *file,
   if (metadata == NULL)
     return NULL;
 
-  parts = flatpak_decompose_ref (full_ref, error);
-  if (parts == NULL)
-    return NULL;
-
-  if (strcmp (parts[0], "app") != 0)
-    kind = FLATPAK_REF_KIND_RUNTIME;
+  kind = flatpak_decomposed_get_kind (full_ref);
+  id = flatpak_decomposed_dup_id (full_ref);
+  arch = flatpak_decomposed_dup_arch (full_ref);
+  branch = flatpak_decomposed_dup_branch (full_ref);
 
   ref = g_object_new (FLATPAK_TYPE_BUNDLE_REF,
                       "kind", kind,
-                      "name", parts[1],
-                      "arch", parts[2],
-                      "branch", parts[3],
+                      "name", id,
+                      "arch", arch,
+                      "branch", branch,
                       "commit", commit,
                       "file", file,
                       "collection-id", collection_id,

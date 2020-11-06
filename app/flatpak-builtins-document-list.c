@@ -198,7 +198,6 @@ flatpak_complete_document_list (FlatpakCompletion *completion)
   g_autoptr(FlatpakDir) user_dir = NULL;
   g_autoptr(FlatpakDir) system_dir = NULL;
   g_autoptr(GError) error = NULL;
-  int i;
 
   context = g_option_context_new ("");
 
@@ -216,34 +215,26 @@ flatpak_complete_document_list (FlatpakCompletion *completion)
 
       user_dir = flatpak_dir_get_user ();
       {
-        g_auto(GStrv) refs = flatpak_dir_find_installed_refs (user_dir, NULL, NULL, NULL,
-                                                              FLATPAK_KINDS_APP,
-                                                              FIND_MATCHING_REFS_FLAGS_NONE,
-                                                              &error);
+        g_autoptr(GPtrArray) refs = flatpak_dir_find_installed_refs (user_dir, NULL, NULL, NULL,
+                                                                     FLATPAK_KINDS_APP,
+                                                                     FIND_MATCHING_REFS_FLAGS_NONE,
+                                                                     &error);
         if (refs == NULL)
           flatpak_completion_debug ("find local refs error: %s", error->message);
-        for (i = 0; refs != NULL && refs[i] != NULL; i++)
-          {
-            g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], NULL);
-            if (parts)
-              flatpak_complete_word (completion, "%s ", parts[1]);
-          }
+
+        flatpak_complete_ref_id (completion, refs);
       }
 
       system_dir = flatpak_dir_get_system_default ();
       {
-        g_auto(GStrv) refs = flatpak_dir_find_installed_refs (system_dir, NULL, NULL, NULL,
-                                                              FLATPAK_KINDS_APP,
-                                                              FIND_MATCHING_REFS_FLAGS_NONE,
-                                                              &error);
+        g_autoptr(GPtrArray) refs = flatpak_dir_find_installed_refs (system_dir, NULL, NULL, NULL,
+                                                                     FLATPAK_KINDS_APP,
+                                                                     FIND_MATCHING_REFS_FLAGS_NONE,
+                                                                     &error);
         if (refs == NULL)
           flatpak_completion_debug ("find local refs error: %s", error->message);
-        for (i = 0; refs != NULL && refs[i] != NULL; i++)
-          {
-            g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], NULL);
-            if (parts)
-              flatpak_complete_word (completion, "%s ", parts[1]);
-          }
+
+        flatpak_complete_ref_id (completion, refs);
       }
 
       break;

@@ -521,7 +521,7 @@ flatpak_complete_info (FlatpakCompletion *completion)
   g_autoptr(GPtrArray) dirs = NULL;
   g_autoptr(GError) error = NULL;
   FlatpakKinds kinds;
-  int i, j;
+  int i;
 
   context = g_option_context_new ("");
   if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv,
@@ -540,16 +540,12 @@ flatpak_complete_info (FlatpakCompletion *completion)
       for (i = 0; i < dirs->len; i++)
         {
           FlatpakDir *dir = g_ptr_array_index (dirs, i);
-          g_auto(GStrv) refs = flatpak_dir_find_installed_refs (dir, NULL, NULL, opt_arch,
-                                                                kinds, FIND_MATCHING_REFS_FLAGS_NONE, &error);
+          g_autoptr(GPtrArray) refs = flatpak_dir_find_installed_refs (dir, NULL, NULL, opt_arch,
+                                                                       kinds, FIND_MATCHING_REFS_FLAGS_NONE, &error);
           if (refs == NULL)
             flatpak_completion_debug ("find local refs error: %s", error->message);
-          for (j = 0; refs != NULL && refs[j] != NULL; j++)
-            {
-              g_auto(GStrv) parts = flatpak_decompose_ref (refs[j], NULL);
-              if (parts)
-                flatpak_complete_word (completion, "%s ", parts[1]);
-            }
+
+          flatpak_complete_ref_id (completion, refs);
         }
       break;
 
@@ -557,16 +553,12 @@ flatpak_complete_info (FlatpakCompletion *completion)
       for (i = 0; i < dirs->len; i++)
         {
           FlatpakDir *dir = g_ptr_array_index (dirs, i);
-          g_auto(GStrv) refs = flatpak_dir_find_installed_refs (dir, completion->argv[1], NULL, opt_arch,
-                                                                kinds, FIND_MATCHING_REFS_FLAGS_NONE, &error);
+          g_autoptr(GPtrArray) refs = flatpak_dir_find_installed_refs (dir, completion->argv[1], NULL, opt_arch,
+                                                                       kinds, FIND_MATCHING_REFS_FLAGS_NONE, &error);
           if (refs == NULL)
             flatpak_completion_debug ("find remote refs error: %s", error->message);
-          for (j = 0; refs != NULL && refs[j] != NULL; j++)
-            {
-              g_auto(GStrv) parts = flatpak_decompose_ref (refs[j], NULL);
-              if (parts)
-                flatpak_complete_word (completion, "%s ", parts[3]);
-            }
+
+          flatpak_complete_ref_branch (completion, refs);
         }
 
       break;

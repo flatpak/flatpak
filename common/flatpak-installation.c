@@ -1706,8 +1706,7 @@ flatpak_installation_install_bundle (FlatpakInstallation    *self,
 {
   g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(FlatpakDir) dir_clone = NULL;
-  g_autoptr(FlatpakDecomposed) decomposed = NULL;
-  g_autofree char *ref = NULL;
+  g_autoptr(FlatpakDecomposed) ref = NULL;
   g_autofree char *remote = NULL;
   FlatpakInstalledRef *result = NULL;
   gboolean created_remote;
@@ -1718,10 +1717,6 @@ flatpak_installation_install_bundle (FlatpakInstallation    *self,
 
   remote = flatpak_dir_ensure_bundle_remote (dir, file, NULL, &ref, NULL, NULL, &created_remote, cancellable, error);
   if (remote == NULL)
-    return NULL;
-
-  decomposed = flatpak_decomposed_new_from_ref (ref, error);
-  if (decomposed == NULL)
     return NULL;
 
   /* Make sure we pick up the new config */
@@ -1737,10 +1732,10 @@ flatpak_installation_install_bundle (FlatpakInstallation    *self,
                                    cancellable, error))
     return NULL;
 
-  if (flatpak_decomposed_is_app (decomposed))
+  if (flatpak_decomposed_is_app (ref))
     flatpak_dir_run_triggers (dir_clone, cancellable, NULL);
 
-  result = get_ref (dir, decomposed, cancellable, error);
+  result = get_ref (dir, ref, cancellable, error);
   if (result == NULL)
     return NULL;
 

@@ -78,7 +78,7 @@ gboolean flatpak_resolve_duplicate_remotes (GPtrArray    *dirs,
 gboolean flatpak_resolve_matching_refs (const char *remote_name,
                                         FlatpakDir *dir,
                                         gboolean    assume_yes,
-                                        char      **refs,
+                                        GPtrArray  *refs,
                                         const char *opt_search_ref,
                                         char      **out_ref,
                                         GError    **error);

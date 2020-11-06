@@ -72,7 +72,7 @@ flatpak_builtin_remote_delete (int argc, char **argv, GCancellable *cancellable,
 
   if (!opt_force)
     {
-      g_auto(GStrv) refs = NULL;
+      g_autoptr(GPtrArray) refs = NULL;
       g_autoptr(GPtrArray) refs_to_remove = NULL;
       int i;
 
@@ -82,11 +82,12 @@ flatpak_builtin_remote_delete (int argc, char **argv, GCancellable *cancellable,
 
       refs_to_remove = g_ptr_array_new_with_free_func (g_free);
 
-      for (i = 0; refs[i]; i++)
+      for (i = 0; refs != NULL && i < refs->len; i++)
         {
-          g_autofree char *origin = flatpak_dir_get_origin (preferred_dir, refs[i], NULL, NULL);
+          FlatpakDecomposed *ref = g_ptr_array_index (refs, i);
+          g_autofree char *origin = flatpak_dir_get_origin (preferred_dir, flatpak_decomposed_get_ref (ref), NULL, NULL);
           if (g_strcmp0 (origin, remote_name) == 0)
-            g_ptr_array_add (refs_to_remove, g_strdup (refs[i]));
+            g_ptr_array_add (refs_to_remove, flatpak_decomposed_dup_ref (ref));
         }
 
       if (refs_to_remove->len > 0)

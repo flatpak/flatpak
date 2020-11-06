@@ -4089,9 +4089,9 @@ handle_runtime_repo_deps_from_bundle (FlatpakTransaction *self,
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   g_autofree char *dep_url = NULL;
-  g_autofree char *ref = NULL;
-  g_auto(GStrv) ref_parts = NULL;
+  g_autoptr(FlatpakDecomposed) ref = NULL;
   g_autoptr(GVariant) metadata = NULL;
+  g_autofree char *id = NULL;
 
   if (priv->disable_deps)
     return TRUE;
@@ -4110,9 +4110,9 @@ handle_runtime_repo_deps_from_bundle (FlatpakTransaction *self,
   if (metadata == NULL || dep_url == NULL || ref == NULL)
     return TRUE;
 
-  ref_parts = g_strsplit (ref, "/", -1);
+  id = flatpak_decomposed_dup_id (ref);
 
-  return handle_runtime_repo_deps (self, ref_parts[1], dep_url, cancellable, error);
+  return handle_runtime_repo_deps (self, id, dep_url, cancellable, error);
 }
 
 static gboolean
@@ -4127,10 +4127,9 @@ flatpak_transaction_resolve_bundles (FlatpakTransaction *self,
     {
       BundleData *data = l->data;
       g_autofree char *remote = NULL;
-      g_autofree char *ref = NULL;
       g_autofree char *commit = NULL;
       g_autofree char *metadata = NULL;
-      g_autoptr(FlatpakDecomposed) decomposed = NULL;
+      g_autoptr(FlatpakDecomposed) ref = NULL;
       gboolean created_remote;
 
       if (!handle_runtime_repo_deps_from_bundle (self, data->file, cancellable, error))
@@ -4145,14 +4144,10 @@ flatpak_transaction_resolve_bundles (FlatpakTransaction *self,
       if (remote == NULL)
         return FALSE;
 
-      decomposed = flatpak_decomposed_new_from_ref (ref, error);
-      if (decomposed == NULL)
-        return FALSE;
-
       if (created_remote)
         flatpak_installation_drop_caches (priv->installation, NULL, NULL);
 
-      if (!flatpak_transaction_add_ref (self, remote, decomposed, NULL, NULL, commit,
+      if (!flatpak_transaction_add_ref (self, remote, ref, NULL, NULL, commit,
                                         FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE,
                                         data->file, metadata, error))
         return FALSE;

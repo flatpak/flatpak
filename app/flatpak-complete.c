@@ -117,6 +117,36 @@ flatpak_complete_word (FlatpakCompletion *completion,
 }
 
 void
+flatpak_complete_ref_id (FlatpakCompletion *completion,
+                         GPtrArray         *refs)
+{
+  if (refs == NULL)
+    return;
+
+  for (int i = 0; i < refs->len; i++)
+    {
+      FlatpakDecomposed *ref = g_ptr_array_index (refs, i);
+      g_autofree char *id = flatpak_decomposed_dup_id (ref);
+      flatpak_complete_word (completion, "%s ", id);
+    }
+}
+
+void
+flatpak_complete_ref_branch (FlatpakCompletion *completion,
+                             GPtrArray         *refs)
+{
+  if (refs == NULL)
+    return;
+
+  for (int i = 0; i < refs->len; i++)
+    {
+      FlatpakDecomposed *ref = g_ptr_array_index (refs, i);
+      g_autofree char *branch = flatpak_decomposed_dup_branch (ref);
+      flatpak_complete_word (completion, "%s ", branch);
+    }
+}
+
+void
 flatpak_complete_ref (FlatpakCompletion *completion,
                       OstreeRepo        *repo)
 {
@@ -175,7 +205,7 @@ flatpak_complete_partial_ref (FlatpakCompletion *completion,
   g_autofree char *id = NULL;
   g_autofree char *arch = NULL;
   g_autofree char *branch = NULL;
-  g_auto(GStrv) refs = NULL;
+  g_autoptr(GPtrArray) refs = NULL;
   int element;
   const char *cur_parts[4] = { NULL };
   g_autoptr(GError) error = NULL;
@@ -220,13 +250,13 @@ flatpak_complete_partial_ref (FlatpakCompletion *completion,
     }
   if (refs == NULL)
     flatpak_completion_debug ("find refs error: %s", error->message);
-  for (i = 0; refs != NULL && refs[i] != NULL; i++)
+
+  for (i = 0; refs != NULL && i < refs->len; i++)
     {
+      FlatpakDecomposed *ref = g_ptr_array_index (refs, i);
       int j;
       g_autoptr(GString) comp = NULL;
-      g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], NULL);
-      if (parts == NULL)
-        continue;
+      g_auto(GStrv) parts = g_strsplit (flatpak_decomposed_get_ref (ref), "/", 0);
 
       if (!g_str_has_prefix (parts[element], cur_parts[element]))
         continue;

@@ -138,7 +138,7 @@ import_bundle (OstreeRepo *repo, GFile *file,
                GCancellable *cancellable, GError **error)
 {
   g_autoptr(GVariant) metadata = NULL;
-  g_autofree char *bundle_ref = NULL;
+  g_autoptr(FlatpakDecomposed) bundle_ref = NULL;
   g_autofree char *to_checksum = NULL;
   const char *ref;
 
@@ -154,7 +154,7 @@ import_bundle (OstreeRepo *repo, GFile *file,
   if (opt_ref != NULL)
     ref = opt_ref;
   else
-    ref = bundle_ref;
+    ref = flatpak_decomposed_get_ref (bundle_ref);
 
   g_print (_("Importing %s (%s)\n"), ref, to_checksum);
   if (!flatpak_pull_from_bundle (repo, file,

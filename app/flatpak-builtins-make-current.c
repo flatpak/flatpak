@@ -117,8 +117,7 @@ flatpak_complete_make_current_app (FlatpakCompletion *completion)
   g_autoptr(GPtrArray) dirs = NULL;
   FlatpakDir *dir;
   g_autoptr(GError) error = NULL;
-  g_auto(GStrv) refs = NULL;
-  int i;
+  g_autoptr(GPtrArray) refs = NULL;
 
   context = g_option_context_new ("");
   if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv,
@@ -142,12 +141,7 @@ flatpak_complete_make_current_app (FlatpakCompletion *completion)
                                               &error);
       if (refs == NULL)
         flatpak_completion_debug ("find installed refs error: %s", error->message);
-      for (i = 0; refs != NULL && refs[i] != NULL; i++)
-        {
-          g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], NULL);
-          if (parts)
-            flatpak_complete_word (completion, "%s ", parts[1]);
-        }
+      flatpak_complete_ref_id (completion, refs);
       break;
 
     case 2: /* Branch */
@@ -157,12 +151,8 @@ flatpak_complete_make_current_app (FlatpakCompletion *completion)
                                               &error);
       if (refs == NULL)
         flatpak_completion_debug ("find installed refs error: %s", error->message);
-      for (i = 0; refs != NULL && refs[i] != NULL; i++)
-        {
-          g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], NULL);
-          if (parts)
-            flatpak_complete_word (completion, "%s ", parts[3]);
-        }
+
+      flatpak_complete_ref_branch (completion, refs);
       break;
 
     default:
