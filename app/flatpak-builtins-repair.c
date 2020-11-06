@@ -250,7 +250,7 @@ fsck_commit (OstreeRepo *repo,
 static void
 transaction_add_local_ref (FlatpakDir         *dir,
                            FlatpakTransaction *transaction,
-                           const char         *ref)
+                           FlatpakDecomposed  *ref)
 {
   g_autoptr(GBytes) deploy_data = NULL;
   g_autoptr(GError) local_error = NULL;
@@ -258,11 +258,11 @@ transaction_add_local_ref (FlatpakDir         *dir,
   const char *origin;
   const char **subpaths;
 
-  deploy_data = flatpak_dir_get_deploy_data (dir, ref, FLATPAK_DEPLOY_VERSION_ANY, NULL, &local_error);
+  deploy_data = flatpak_dir_get_deploy_data (dir, flatpak_decomposed_get_ref (ref), FLATPAK_DEPLOY_VERSION_ANY, NULL, &local_error);
   if (deploy_data == NULL)
     {
       if (!g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED))
-        g_printerr (_("Problems loading data for %s: %s\n"), ref, local_error->message);
+        g_printerr (_("Problems loading data for %s: %s\n"), flatpak_decomposed_get_ref (ref), local_error->message);
       g_clear_error (&local_error);
       return;
     }
@@ -270,12 +270,12 @@ transaction_add_local_ref (FlatpakDir         *dir,
   origin = flatpak_deploy_data_get_origin (deploy_data);
   subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
 
-  repo_checksum = flatpak_dir_read_latest (dir, origin, ref, NULL, NULL, NULL);
+  repo_checksum = flatpak_dir_read_latest (dir, origin, flatpak_decomposed_get_ref (ref), NULL, NULL, NULL);
   if (repo_checksum == NULL || opt_reinstall_all)
     {
-      if (!flatpak_transaction_add_install (transaction, origin, ref, subpaths, &local_error))
+      if (!flatpak_transaction_add_install (transaction, origin, flatpak_decomposed_get_ref (ref), subpaths, &local_error))
         {
-          g_printerr (_("Error reinstalling %s: %s\n"), ref, local_error->message);
+          g_printerr (_("Error reinstalling %s: %s\n"), flatpak_decomposed_get_ref (ref), local_error->message);
           g_clear_error (&local_error);
         }
     }
@@ -287,12 +287,11 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GPtrArray) dirs = NULL;
+  g_autoptr(GPtrArray) refs = NULL;
   FlatpakDir *dir = NULL;
   g_autoptr(GHashTable) all_refs = NULL;
   g_autoptr(GHashTable) invalid_refs = NULL;
   g_autoptr(GHashTable) object_status_cache = NULL;
-  g_auto(GStrv) app_refs = NULL;
-  g_auto(GStrv) runtime_refs = NULL;
   g_autoptr(FlatpakTransaction) transaction = NULL;
   OstreeRepo *repo;
   g_autoptr(GFile) file = NULL;
@@ -461,11 +460,8 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
         return FALSE;
     }
 
-  if (!flatpak_dir_list_refs (dir, "app", &app_refs, cancellable, NULL))
-    return FALSE;
-
-  if (!flatpak_dir_list_refs (dir, "runtime", &runtime_refs, cancellable, NULL))
-    return FALSE;
+  refs = flatpak_dir_list_refs_decomposed (dir, FLATPAK_KINDS_APP | FLATPAK_KINDS_RUNTIME,
+                                           cancellable, error);
 
   transaction = flatpak_quiet_transaction_new (dir, error);
   if (transaction == NULL)
@@ -475,17 +471,9 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
   flatpak_transaction_set_disable_related (transaction, TRUE);
   flatpak_transaction_set_reinstall (transaction, TRUE);
 
-  for (i = 0; app_refs[i] != NULL; i++)
+  for (i = 0; i < refs->len; i++)
     {
-      const char *ref = app_refs[i];
-
-      transaction_add_local_ref (dir, transaction, ref);
-    }
-
-  for (i = 0; runtime_refs[i] != NULL; i++)
-    {
-      const char *ref = runtime_refs[i];
-
+      FlatpakDecomposed *ref = g_ptr_array_index (refs, i);
       transaction_add_local_ref (dir, transaction, ref);
     }
 
