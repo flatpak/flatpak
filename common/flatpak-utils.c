@@ -2084,7 +2084,6 @@ flatpak_summary_match_subrefs (GVariant          *summary_v,
 {
   GPtrArray *res = g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_decomposed_unref);
   gsize n, i;
-  g_auto(GStrv) parts = NULL;
   g_autofree char *parts_prefix = NULL;
   g_autofree char *ref_prefix = NULL;
   g_autofree char *ref_suffix = NULL;

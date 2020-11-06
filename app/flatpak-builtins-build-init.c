@@ -183,11 +183,9 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   const char *default_branch = NULL;
   g_autofree char *sdk_branch = NULL;
   g_autofree char *base_ref = NULL;
-  g_autofree char *runtime_ref_str = NULL;
   g_autoptr(FlatpakDecomposed) runtime_ref = NULL;
   g_autofree char *extension_runtime_pref = NULL;
   g_autofree char *var_ref = NULL;
-  g_autofree char *sdk_ref_str = NULL;
   g_autoptr(FlatpakDecomposed) sdk_ref = NULL;
   FlatpakKinds kinds;
   int i;

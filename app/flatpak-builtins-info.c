@@ -84,7 +84,6 @@ gboolean
 flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autofree char *ref_str = NULL;
   g_autoptr(FlatpakDecomposed) ref = NULL;
   g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(GBytes) deploy_data = NULL;
