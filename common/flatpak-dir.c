@@ -2809,7 +2809,6 @@ flatpak_dir_load_deployed (FlatpakDir        *self,
   g_autoptr(GFile) deploy_dir = NULL;
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(GFile) metadata = NULL;
-  g_auto(GStrv) ref_parts = NULL;
   g_autofree char *metadata_contents = NULL;
   FlatpakDeploy *deploy;
   gsize metadata_size;
@@ -6107,7 +6106,6 @@ flatpak_dir_make_current_ref (FlatpakDir        *self,
   g_autoptr(GFile) base = NULL;
   g_autoptr(GFile) dir = NULL;
   g_autoptr(GFile) current_link = NULL;
-  g_auto(GStrv) ref_parts = NULL;
   g_autofree char *id = NULL;
   const char *rest;
 
@@ -6225,9 +6223,6 @@ flatpak_dir_list_refs_for_name (FlatpakDir   *self,
                                 GCancellable *cancellable,
                                 GError      **error)
 {
-  g_autoptr(GFile) dir = NULL;
-  g_autoptr(GFileEnumerator) dir_enum = NULL;
-  g_autoptr(GFileInfo) child_info = NULL;
   g_autoptr(GPtrArray) refs = NULL;
 
   refs = g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_decomposed_unref);
