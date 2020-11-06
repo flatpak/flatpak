@@ -251,15 +251,15 @@ typedef struct
 
 struct FlatpakDeploy
 {
-  GObject         parent;
+  GObject            parent;
 
-  char           *ref;
-  GFile          *dir;
-  GKeyFile       *metadata;
-  FlatpakContext *system_overrides;
-  FlatpakContext *user_overrides;
-  FlatpakContext *system_app_overrides;
-  FlatpakContext *user_app_overrides;
+  FlatpakDecomposed *ref;
+  GFile             *dir;
+  GKeyFile          *metadata;
+  FlatpakContext    *system_overrides;
+  FlatpakContext    *user_overrides;
+  FlatpakContext    *system_app_overrides;
+  FlatpakContext    *user_app_overrides;
 };
 
 typedef struct
@@ -1285,7 +1285,7 @@ flatpak_deploy_finalize (GObject *object)
 {
   FlatpakDeploy *self = FLATPAK_DEPLOY (object);
 
-  g_clear_pointer (&self->ref, g_free);
+  g_clear_pointer (&self->ref, flatpak_decomposed_unref);
   g_clear_object (&self->dir);
   g_clear_pointer (&self->metadata, g_key_file_unref);
   g_clear_pointer (&self->system_overrides, flatpak_context_free);
@@ -1348,7 +1348,7 @@ flatpak_deploy_get_deploy_data (FlatpakDeploy *deploy,
                                 GError       **error)
 {
   return flatpak_load_deploy_data (deploy->dir,
-                                   deploy->ref,
+                                   flatpak_decomposed_get_ref (deploy->ref),
                                    required_version,
                                    cancellable,
                                    error);
@@ -1387,12 +1387,12 @@ flatpak_deploy_get_metadata (FlatpakDeploy *deploy)
 }
 
 static FlatpakDeploy *
-flatpak_deploy_new (GFile *dir, const char *ref, GKeyFile *metadata)
+flatpak_deploy_new (GFile *dir, FlatpakDecomposed *ref, GKeyFile *metadata)
 {
   FlatpakDeploy *deploy;
 
   deploy = g_object_new (FLATPAK_TYPE_DEPLOY, NULL);
-  deploy->ref = g_strdup (ref);
+  deploy->ref = flatpak_decomposed_ref (ref);
   deploy->dir = g_object_ref (dir);
   deploy->metadata = g_key_file_ref (metadata);
 
@@ -2803,11 +2803,11 @@ flatpak_remove_override_keyfile (const char *app_id,
    currently passed from flatpak_installation_launch() when launching
    a particular version of an app, which is not used for locales. */
 FlatpakDeploy *
-flatpak_dir_load_deployed (FlatpakDir   *self,
-                           const char   *ref,
-                           const char   *checksum,
-                           GCancellable *cancellable,
-                           GError      **error)
+flatpak_dir_load_deployed (FlatpakDir        *self,
+                           FlatpakDecomposed *ref,
+                           const char        *checksum,
+                           GCancellable      *cancellable,
+                           GError           **error)
 {
   g_autoptr(GFile) deploy_dir = NULL;
   g_autoptr(GKeyFile) metakey = NULL;
@@ -2817,15 +2817,15 @@ flatpak_dir_load_deployed (FlatpakDir   *self,
   FlatpakDeploy *deploy;
   gsize metadata_size;
 
-  deploy_dir = flatpak_dir_get_if_deployed (self, ref, checksum, cancellable);
+  deploy_dir = flatpak_dir_get_if_deployed (self, flatpak_decomposed_get_ref (ref), checksum, cancellable);
   if (deploy_dir == NULL)
     {
       if (checksum == NULL)
         g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
-                     _("%s not installed"), ref);
+                     _("%s not installed"), flatpak_decomposed_get_ref (ref));
       else
         g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
-                     _("%s (commit %s) not installed"), ref, checksum);
+                     _("%s (commit %s) not installed"), flatpak_decomposed_get_ref (ref), checksum);
       return NULL;
     }
 
@@ -2838,9 +2838,6 @@ flatpak_dir_load_deployed (FlatpakDir   *self,
     return NULL;
 
   deploy = flatpak_deploy_new (deploy_dir, ref, metakey);
-
-  ref_parts = g_strsplit (ref, "/", -1);
-  g_assert (g_strv_length (ref_parts) == 4);
 
   /* Only load system global overrides for system installed apps */
   if (!self->user)
@@ -2856,18 +2853,20 @@ flatpak_dir_load_deployed (FlatpakDir   *self,
     return NULL;
 
   /* Only apps have app overrides */
-  if (strcmp (ref_parts[0], "app") == 0)
+  if (flatpak_decomposed_is_app (ref))
     {
+      g_autofree char *id = flatpak_decomposed_dup_id (ref);
+
       /* Only load system overrides for system installed apps */
       if (!self->user)
         {
-          deploy->system_app_overrides = flatpak_load_override_file (ref_parts[1], FALSE, error);
+          deploy->system_app_overrides = flatpak_load_override_file (id, FALSE, error);
           if (deploy->system_app_overrides == NULL)
             return NULL;
         }
 
       /* Always load user overrides */
-      deploy->user_app_overrides = flatpak_load_override_file (ref_parts[1], TRUE, error);
+      deploy->user_app_overrides = flatpak_load_override_file (id, TRUE, error);
       if (deploy->user_app_overrides == NULL)
         return NULL;
     }

@@ -675,7 +675,7 @@ flatpak_installation_launch_full (FlatpakInstallation *self,
 {
   g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(FlatpakDeploy) app_deploy = NULL;
-  g_autofree char *app_ref = NULL;
+  g_autoptr(FlatpakDecomposed) app_ref = NULL;
   g_autofree char *instance_dir = NULL;
   FlatpakRunFlags run_flags;
 
@@ -683,8 +683,9 @@ flatpak_installation_launch_full (FlatpakInstallation *self,
   if (dir == NULL)
     return FALSE;
 
-  app_ref =
-    flatpak_build_app_ref (name, branch, arch);
+  app_ref = flatpak_decomposed_new_from_parts (FLATPAK_KINDS_APP, name, arch, branch, error);
+  if (app_ref == NULL)
+    return FALSE;
 
   app_deploy =
     flatpak_dir_load_deployed (dir, app_ref,
@@ -697,7 +698,7 @@ flatpak_installation_launch_full (FlatpakInstallation *self,
   if (flags & FLATPAK_LAUNCH_FLAGS_DO_NOT_REAP)
     run_flags |= FLATPAK_RUN_FLAG_DO_NOT_REAP;
 
-  if (!flatpak_run_app (app_ref,
+  if (!flatpak_run_app (flatpak_decomposed_get_ref (app_ref),
                         app_deploy,
                         NULL, NULL,
                         NULL, NULL,

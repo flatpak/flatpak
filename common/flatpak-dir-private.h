@@ -545,11 +545,11 @@ char **     flatpak_dir_find_installed_refs (FlatpakDir           *self,
                                              FlatpakKinds          kinds,
                                              FindMatchingRefsFlags flags,
                                              GError              **error);
-FlatpakDeploy *flatpak_dir_load_deployed (FlatpakDir   *self,
-                                          const char   *ref,
-                                          const char   *checksum,
-                                          GCancellable *cancellable,
-                                          GError      **error);
+FlatpakDeploy *flatpak_dir_load_deployed (FlatpakDir        *self,
+                                          FlatpakDecomposed *ref,
+                                          const char        *checksum,
+                                          GCancellable      *cancellable,
+                                          GError           **error);
 char *    flatpak_dir_load_override (FlatpakDir *dir,
                                      const char *app_id,
                                      gsize      *length,

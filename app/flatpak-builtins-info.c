@@ -84,7 +84,8 @@ gboolean
 flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autofree char *ref = NULL;
+  g_autofree char *ref_str = NULL;
+  g_autoptr(FlatpakDecomposed) ref = NULL;
   g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(GBytes) deploy_data = NULL;
   g_autoptr(FlatpakDeploy) deploy = NULL;
@@ -105,7 +106,6 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   gboolean search_all = FALSE;
   gboolean first = TRUE;
   FlatpakKinds kinds;
-  g_auto(GStrv) parts = NULL;
   const char *path;
   g_autofree char *formatted_size = NULL;
   gboolean friendly = TRUE;
@@ -137,19 +137,21 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
 
   dir = flatpak_find_installed_pref (pref, kinds, opt_arch, default_branch,
                                      search_all, opt_user, opt_system, opt_installations,
-                                     &ref, cancellable, error);
+                                     &ref_str, cancellable, error);
   if (dir == NULL)
     return FALSE;
 
-  deploy_data = flatpak_dir_get_deploy_data (dir, ref, FLATPAK_DEPLOY_VERSION_CURRENT, cancellable, error);
+  ref = flatpak_decomposed_new_from_ref (ref_str, error);
+  if (ref == NULL)
+    return FALSE;
+
+  deploy_data = flatpak_dir_get_deploy_data (dir, flatpak_decomposed_get_ref (ref), FLATPAK_DEPLOY_VERSION_CURRENT, cancellable, error);
   if (deploy_data == NULL)
     return FALSE;
 
   deploy = flatpak_dir_load_deployed (dir, ref, NULL, cancellable, error);
   if (deploy == NULL)
     return FALSE;
-
-  parts = g_strsplit (ref, "/", 0);
 
   commit = flatpak_deploy_data_get_commit (deploy_data);
   alt_id = flatpak_deploy_data_get_alt_id (deploy_data);
@@ -194,7 +196,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
             print_wrapped (MIN (cols, 80), "\n%s\n", name);
         }
 
-      latest = flatpak_dir_read_latest (dir, origin, ref, NULL, NULL, NULL);
+      latest = flatpak_dir_read_latest (dir, origin, flatpak_decomposed_get_ref (ref), NULL, NULL, NULL);
       if (latest == NULL)
         latest = g_strdup (_("ref not present in origin"));
 
@@ -229,7 +231,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
         len = MAX (len, g_utf8_strlen (_("Collection:"), -1));
       len = MAX (len, g_utf8_strlen (_("Installation:"), -1));
       len = MAX (len, g_utf8_strlen (_("Installed:"), -1));
-      if (strcmp (parts[0], "app") == 0)
+      if (flatpak_decomposed_is_app (ref))
         {
           len = MAX (len, g_utf8_strlen (_("Runtime:"), -1));
           len = MAX (len, g_utf8_strlen (_("Sdk:"), -1));
@@ -259,10 +261,10 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
 
       width = cols - (len + 1);
 
-      print_aligned (len, _("ID:"), parts[1]);
-      print_aligned (len, _("Ref:"), ref);
-      print_aligned (len, _("Arch:"), parts[2]);
-      print_aligned (len, _("Branch:"), parts[3]);
+      print_aligned_take (len, _("ID:"), flatpak_decomposed_dup_id (ref));
+      print_aligned (len, _("Ref:"), flatpak_decomposed_get_ref (ref));
+      print_aligned_take (len, _("Arch:"), flatpak_decomposed_dup_arch (ref));
+      print_aligned_take (len, _("Branch:"), flatpak_decomposed_dup_branch (ref));
       if (version)
         print_aligned (len, _("Version:"), version);
       if (license)
@@ -272,7 +274,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
         print_aligned (len, _("Collection:"), collection_id);
       print_aligned (len, _("Installation:"), flatpak_dir_get_name_cached (dir));
       print_aligned (len, _("Installed:"), formatted_size);
-      if (strcmp (parts[0], "app") == 0)
+      if (flatpak_decomposed_is_app (ref))
         {
           g_autofree char *runtime = NULL;
           runtime = g_key_file_get_string (metakey,
@@ -281,7 +283,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
                                            error);
           print_aligned (len, _("Runtime:"), runtime ? runtime : "-");
         }
-      if (strcmp (parts[0], "app") == 0)
+      if (flatpak_decomposed_is_app (ref))
         {
           g_autofree char *sdk = NULL;
           sdk = g_key_file_get_string (metakey,
@@ -338,7 +340,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
       if (opt_show_ref)
         {
           maybe_print_space (&first);
-          g_print ("%s", ref);
+          g_print ("%s", flatpak_decomposed_get_ref (ref));
         }
 
       if (opt_show_origin)
@@ -370,16 +372,10 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
           g_autofree char *runtime = NULL;
           maybe_print_space (&first);
 
-          if (strcmp (parts[0], "app") == 0)
-            runtime = g_key_file_get_string (metakey,
-                                             FLATPAK_METADATA_GROUP_APPLICATION,
-                                             FLATPAK_METADATA_KEY_RUNTIME,
-                                             NULL);
-          else
-            runtime = g_key_file_get_string (metakey,
-                                             FLATPAK_METADATA_GROUP_RUNTIME,
-                                             FLATPAK_METADATA_KEY_RUNTIME,
-                                             NULL);
+          runtime = g_key_file_get_string (metakey,
+                                           flatpak_decomposed_get_kind_metadata_group (ref),
+                                           FLATPAK_METADATA_KEY_RUNTIME,
+                                           NULL);
           g_print ("%s", runtime ? runtime : "-");
         }
 
@@ -388,16 +384,10 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
           g_autofree char *sdk = NULL;
           maybe_print_space (&first);
 
-          if (strcmp (parts[0], "app") == 0)
-            sdk = g_key_file_get_string (metakey,
-                                         FLATPAK_METADATA_GROUP_APPLICATION,
-                                         FLATPAK_METADATA_KEY_SDK,
-                                         NULL);
-          else
-            sdk = g_key_file_get_string (metakey,
-                                         FLATPAK_METADATA_GROUP_RUNTIME,
-                                         FLATPAK_METADATA_KEY_SDK,
-                                         NULL);
+          sdk = g_key_file_get_string (metakey,
+                                       flatpak_decomposed_get_kind_metadata_group (ref),
+                                       FLATPAK_METADATA_KEY_SDK,
+                                       NULL);
           g_print ("%s", sdk ? sdk : "-");
         }
 
@@ -441,7 +431,8 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
 
           if (opt_file_access)
             {
-              g_autoptr(FlatpakExports) exports = flatpak_context_get_exports (app_context, parts[1]);
+              g_autofree char *id = flatpak_decomposed_dup_id (ref);
+              g_autoptr(FlatpakExports) exports = flatpak_context_get_exports (app_context, id);
               FlatpakFilesystemMode mode;
 
               mode = flatpak_exports_path_get_mode (exports, opt_file_access);
@@ -458,6 +449,8 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   if (opt_show_extensions)
     {
       GList *extensions, *l;
+      g_autofree char *ref_arch = flatpak_decomposed_dup_arch (ref);
+      g_autofree char *ref_branch = flatpak_decomposed_dup_branch (ref);
 
       len = MAX (len, g_utf8_strlen (_("Extension:"), -1));
       len = MAX (len, g_utf8_strlen (_("ID:"), -1));
@@ -469,7 +462,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
       flatpak_get_window_size (&rows, &cols);
       width = cols - (len + 1);
 
-      extensions = flatpak_list_extensions (metakey, parts[2], parts[3]);
+      extensions = flatpak_list_extensions (metakey, ref_arch, ref_branch);
       for (l = extensions; l; l = l->next)
         {
           FlatpakExtension *ext = l->data;

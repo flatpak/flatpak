@@ -1222,7 +1222,7 @@ flatpak_find_current_ref (const char   *app_id,
 
 FlatpakDeploy *
 flatpak_find_deploy_for_ref_in (GPtrArray    *dirs,
-                                const char   *ref,
+                                const char   *ref_str,
                                 const char   *commit,
                                 GCancellable *cancellable,
                                 GError      **error)
@@ -1230,6 +1230,10 @@ flatpak_find_deploy_for_ref_in (GPtrArray    *dirs,
   FlatpakDeploy *deploy = NULL;
   int i;
   g_autoptr(GError) my_error = NULL;
+
+  g_autoptr(FlatpakDecomposed) ref = flatpak_decomposed_new_from_ref (ref_str, error);
+  if (ref == NULL)
+    return NULL;
 
   for (i = 0; deploy == NULL && i < dirs->len; i++)
     {
