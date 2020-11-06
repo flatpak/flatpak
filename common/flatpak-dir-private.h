@@ -630,17 +630,6 @@ gboolean    flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
                                               FlatpakProgress     *progress,
                                               GCancellable        *cancellable,
                                               GError             **error);
-gboolean    flatpak_dir_list_refs_for_name (FlatpakDir   *self,
-                                            const char   *kind,
-                                            const char   *name,
-                                            char       ***refs,
-                                            GCancellable *cancellable,
-                                            GError      **error);
-gboolean    flatpak_dir_list_refs (FlatpakDir   *self,
-                                   const char   *kind,
-                                   char       ***refs,
-                                   GCancellable *cancellable,
-                                   GError      **error);
 GPtrArray * flatpak_dir_list_refs_for_name_decomposed (FlatpakDir   *self,
                                                        FlatpakKinds kind,
                                                        const char   *name,
