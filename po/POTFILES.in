@@ -53,6 +53,7 @@ common/flatpak-dir.c
 common/flatpak-installation.c
 common/flatpak-oci-registry.c
 common/flatpak-progress.c
+common/flatpak-ref-utils.c
 common/flatpak-remote.c
 common/flatpak-run.c
 common/flatpak-transaction.c
