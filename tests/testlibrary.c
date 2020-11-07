@@ -1636,9 +1636,11 @@ test_install_launch_uninstall (void)
   g_ptr_array_unref (refs);
 }
 
+static void make_test_app (const char *app_repo_name);
 static void update_test_app (void);
 static void update_test_runtime (void);
 static void update_repo (const char *update_repo_name);
+static void rename_test_app (const char *update_repo_name);
 
 static const char *
 flatpak_deploy_data_get_origin (GVariant *deploy_data)
@@ -2004,6 +2006,73 @@ test_list_undeployed_updates (void)
 }
 
 static void
+test_list_rename_updates (void)
+{
+  g_autoptr(FlatpakInstallation) inst = NULL;
+  g_autoptr(FlatpakTransaction) transaction = NULL;
+  g_autoptr(GError) error = NULL;
+  g_autoptr(GPtrArray) refs = NULL;
+  FlatpakInstalledRef *update_ref = NULL;
+  g_autofree gchar *app = NULL;
+  gboolean res;
+
+  app = g_strdup_printf ("app/org.test.Hello/%s/master",
+                         flatpak_get_default_arch ());
+
+  inst = flatpak_installation_new_user (NULL, &error);
+  g_assert_no_error (error);
+
+  empty_installation (inst);
+
+  /* Rename the app on the server before installing it. This will follow a
+   * different code path than if we the installed commit is older than the
+   * commit with the eol-rebase metadata.
+   */
+  rename_test_app ("test");
+
+  transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (transaction);
+
+  /* install org.test.Hello, and have org.test.Hello.Locale and org.test.Platform
+   * added as deps/related
+   */
+  res = flatpak_transaction_add_install (transaction, repo_name, app, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  res = flatpak_transaction_run (transaction, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+  g_clear_object (&transaction);
+
+  refs = flatpak_installation_list_installed_refs (inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (refs);
+  g_assert_cmpint (refs->len, ==, 3);
+  g_clear_pointer (&refs, g_ptr_array_unref);
+
+  /* Check that the app shows as updatable */
+  refs = flatpak_installation_list_installed_refs_for_update (inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (refs);
+  g_assert_cmpint (refs->len, ==, 2);
+  update_ref = g_ptr_array_index (refs, 0);
+  g_assert_cmpstr (flatpak_ref_get_name (FLATPAK_REF (update_ref)), ==, "org.test.Hello");
+  g_assert_cmpint (flatpak_ref_get_kind (FLATPAK_REF (update_ref)), ==, FLATPAK_REF_KIND_APP);
+  update_ref = g_ptr_array_index (refs, 1);
+  g_assert_cmpstr (flatpak_ref_get_name (FLATPAK_REF (update_ref)), ==, "org.test.Hello.Locale");
+  g_assert_cmpint (flatpak_ref_get_kind (FLATPAK_REF (update_ref)), ==, FLATPAK_REF_KIND_RUNTIME);
+
+  /* Uninstall the runtime and app */
+  empty_installation (inst);
+
+  /* Undo the rename for the benefit of future tests */
+  make_test_app ("test");
+  update_repo ("test");
+}
+
+static void
 test_list_updates_offline (void)
 {
   g_autoptr(FlatpakInstallation) inst = NULL;
@@ -2182,6 +2251,36 @@ update_test_app (void)
   arg0 = g_test_build_filename (G_TEST_DIST, "make-test-app.sh", NULL);
   argv[0] = arg0;
   argv[4] = repo_collection_id;
+
+  run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
+}
+
+static void
+rename_test_app (const char *update_repo_name)
+{
+  g_autofree char *arg5 = NULL;
+  g_autofree char *arg6 = NULL;
+  g_autofree char *app_ref = NULL;
+  g_autofree char *app_locale_ref = NULL;
+  char *argv[] = { "flatpak", "build-commit-from", "--gpg-homedir=", "--gpg-sign=",
+                   "--end-of-life-rebase=org.test.Hello=org.test.Hello2",
+                   "--src-repo=",
+                   NULL, NULL, NULL, NULL };
+  g_auto(GStrv) gpgargs = NULL;
+
+  gpgargs = g_strsplit (gpg_args, " ", 0);
+  arg5 = g_strdup_printf ("--src-repo=repos/%s", update_repo_name);
+  arg6 = g_strdup_printf ("repos/%s", update_repo_name);
+  app_ref = g_strdup_printf ("app/org.test.Hello/%s/master",
+                             flatpak_get_default_arch ());
+  app_locale_ref = g_strdup_printf ("runtime/org.test.Hello.Locale/%s/master",
+                                    flatpak_get_default_arch ());
+  argv[2] = gpgargs[0];
+  argv[3] = gpgargs[1];
+  argv[5] = arg5;
+  argv[6] = arg6;
+  argv[7] = app_ref;
+  argv[8] = app_locale_ref;
 
   run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
 }
@@ -4454,6 +4553,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/library/list-refs-in-remote", test_list_refs_in_remotes);
   g_test_add_func ("/library/list-updates", test_list_updates);
   g_test_add_func ("/library/list-undeployed-updates", test_list_undeployed_updates);
+  g_test_add_func ("/library/list-rename-updates", test_list_rename_updates);
   g_test_add_func ("/library/list-updates-offline", test_list_updates_offline);
   g_test_add_func ("/library/transaction", test_misc_transaction);
   g_test_add_func ("/library/transaction-install-uninstall", test_transaction_install_uninstall);
