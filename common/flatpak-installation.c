@@ -979,6 +979,26 @@ flatpak_installation_list_installed_refs_by_kind (FlatpakInstallation *self,
 }
 
 static gboolean
+end_of_lifed_with_rebase (FlatpakTransaction *transaction,
+                          const char         *remote,
+                          const char         *ref,
+                          const char         *reason,
+                          const char         *rebased_to_ref,
+                          const char        **previous_ids,
+                          GPtrArray         **eol_rebase_refs)
+{
+  if (rebased_to_ref == NULL || remote == NULL)
+    return FALSE;
+
+  /* No need to call flatpak_transaction_add_uninstall() and
+   * flatpak_transaction_add_rebase() here since we only care about what needs
+   * an update
+   */
+  g_ptr_array_add (*eol_rebase_refs, g_strdup (ref));
+  return TRUE;
+}
+
+static gboolean
 transaction_ready (FlatpakTransaction  *transaction,
                    GHashTable         **related_to_ops)
 {
@@ -1054,6 +1074,7 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
   g_autoptr(GPtrArray) installed_refs_for_update = NULL; /* (element-type FlatpakInstalledRef) */
   g_autoptr(GHashTable) installed_refs_for_update_set = NULL; /* (element-type utf8) */
   g_autoptr(GHashTable) related_to_ops = NULL; /* (element-type FlatpakTransactionOperation GPtrArray<FlatpakTransactionOperation>) */
+  g_autoptr(GPtrArray) eol_rebase_refs = NULL; /* (element-type utf8) */
   g_autoptr(FlatpakTransaction) transaction = NULL;
   g_autoptr(GError) local_error = NULL;
 
@@ -1094,8 +1115,10 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
         }
     }
 
+  eol_rebase_refs = g_ptr_array_new_with_free_func (g_free);
   related_to_ops = g_hash_table_new_full (g_direct_hash, g_direct_equal, g_object_unref, null_safe_g_ptr_array_unref);
 
+  g_signal_connect (transaction, "end-of-lifed-with-rebase", G_CALLBACK (end_of_lifed_with_rebase), &eol_rebase_refs);
   g_signal_connect (transaction, "ready-pre-auth", G_CALLBACK (transaction_ready), &related_to_ops);
 
   flatpak_transaction_run (transaction, cancellable, &local_error);
@@ -1165,6 +1188,23 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
       /* Note: installed_ref could be NULL if for example op is installing a
        * related ref of a missing runtime.
        */
+    }
+
+  /* Also handle any renames since those won't be in related_to_ops */
+  for (guint i = 0; i < eol_rebase_refs->len; i++)
+    {
+      const char *rebased_ref = g_ptr_array_index (eol_rebase_refs, i);
+      FlatpakInstalledRef *installed_ref = g_hash_table_lookup (installed_refs_hash, rebased_ref);
+      if (installed_ref != NULL)
+        {
+          if (!g_hash_table_contains (installed_refs_for_update_set, rebased_ref))
+            {
+              g_hash_table_add (installed_refs_for_update_set, (char *)rebased_ref);
+              g_debug ("%s: Installed ref %s needs update", G_STRFUNC, rebased_ref);
+              g_ptr_array_add (installed_refs_for_update,
+                               g_object_ref (installed_ref));
+            }
+        }
     }
 
   /* Remove non-determinism for the sake of the unit tests */
