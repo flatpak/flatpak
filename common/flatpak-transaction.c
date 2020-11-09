@@ -692,6 +692,12 @@ flatpak_transaction_operation_get_ref (FlatpakTransactionOperation *self)
   return flatpak_decomposed_get_ref (self->ref);
 }
 
+FlatpakDecomposed *
+flatpak_transaction_operation_get_decomposed (FlatpakTransactionOperation *self)
+{
+  return self->ref;
+}
+
 /**
  * flatpak_transaction_operation_get_related_to_ops:
  * @self: a #FlatpakTransactionOperation

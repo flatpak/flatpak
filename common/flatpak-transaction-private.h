@@ -22,11 +22,14 @@
 #define __FLATPAK_TRANSACTION_PRIVATE_H__
 
 #include "flatpak-transaction.h"
+#include "flatpak-ref-utils-private.h"
 
 FlatpakRemoteState *flatpak_transaction_ensure_remote_state (FlatpakTransaction             *self,
                                                              FlatpakTransactionOperationType kind,
                                                              const char                     *remote,
                                                              GError                        **error);
+
+FlatpakDecomposed * flatpak_transaction_operation_get_decomposed (FlatpakTransactionOperation *self);
 
 #include "flatpak-dir-private.h"
 
