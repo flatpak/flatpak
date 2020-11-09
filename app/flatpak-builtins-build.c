@@ -167,8 +167,8 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   g_autoptr(GFile) runtime_files = NULL;
   g_autoptr(GFile) metadata = NULL;
   g_autofree char *metadata_contents = NULL;
-  g_autofree char *runtime = NULL;
-  g_autofree char *runtime_ref = NULL;
+  g_autofree char *runtime_pref = NULL;
+  g_autoptr(FlatpakDecomposed) runtime_ref = NULL;
   g_autofree char *extensionof_ref = NULL;
   g_autofree char *extensionof_tag = NULL;
   g_autofree char *extension_point = NULL;
@@ -186,7 +186,6 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   g_autoptr(FlatpakContext) arg_context = NULL;
   g_autoptr(FlatpakContext) app_context = NULL;
   gboolean custom_usr;
-  g_auto(GStrv) runtime_ref_parts = NULL;
   FlatpakRunFlags run_flags;
   const char *group = NULL;
   const char *runtime_key = NULL;
@@ -194,6 +193,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   gboolean is_app = FALSE;
   gboolean is_extension = FALSE;
   gboolean is_app_extension = FALSE;
+  g_autofree char *arch = NULL;
   g_autofree char *app_info_path = NULL;
   g_autofree char *app_extensions = NULL;
   g_autofree char *runtime_extensions = NULL;
@@ -280,15 +280,15 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   else
     runtime_key = FLATPAK_METADATA_KEY_SDK;
 
-  runtime = g_key_file_get_string (metakey, group, runtime_key, error);
-  if (runtime == NULL)
+  runtime_pref = g_key_file_get_string (metakey, group, runtime_key, error);
+  if (runtime_pref == NULL)
     return FALSE;
 
-  runtime_ref = g_build_filename ("runtime", runtime, NULL);
-
-  runtime_ref_parts = flatpak_decompose_ref (runtime_ref, error);
-  if (runtime_ref_parts == NULL)
+  runtime_ref = flatpak_decomposed_new_from_pref (FLATPAK_KINDS_RUNTIME, runtime_pref, error);
+  if (runtime_ref == NULL)
     return FALSE;
+
+  arch = flatpak_decomposed_dup_arch (runtime_ref);
 
   custom_usr = FALSE;
   usr = g_file_get_child (res_deploy,  opt_sdk_dir ? opt_sdk_dir : "usr");
@@ -299,7 +299,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
     }
   else
     {
-      runtime_deploy = flatpak_find_deploy_for_ref (runtime_ref, NULL, cancellable, error);
+      runtime_deploy = flatpak_find_deploy_for_ref (flatpak_decomposed_get_ref (runtime_ref), NULL, cancellable, error);
       if (runtime_deploy == NULL)
         return FALSE;
 
@@ -455,7 +455,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   /* Never set up an a11y bus for builds */
   run_flags |= FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY;
 
-  if (!flatpak_run_setup_base_argv (bwrap, runtime_files, app_id_dir, runtime_ref_parts[2],
+  if (!flatpak_run_setup_base_argv (bwrap, runtime_files, app_id_dir, arch,
                                     run_flags, error))
     return FALSE;
 
@@ -494,7 +494,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   flatpak_bwrap_add_args (bwrap,
                           "--setenv", "FLATPAK_DEST", dest,
                           "--setenv", "FLATPAK_ID", id,
-                          "--setenv", "FLATPAK_ARCH", runtime_ref_parts[2],
+                          "--setenv", "FLATPAK_ARCH", arch,
                           NULL);
 
   /* Persist some stuff in /var. We can't persist everything because  that breaks /var things
@@ -515,8 +515,10 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
     {
       /* We don't actually know the final branchname yet, so use "nobranch" as fallback to avoid unexpected matches.
          This means any extension point used at build time must have explicit versions to work. */
-      g_autofree char *fake_ref = g_strdup_printf ("app/%s/%s/nobranch", id, runtime_ref_parts[2]);
-      if (!flatpak_run_add_extension_args (bwrap, metakey, fake_ref, FALSE, &app_extensions, cancellable, error))
+      g_autoptr(FlatpakDecomposed) fake_ref =
+        flatpak_decomposed_new_from_parts (FLATPAK_KINDS_APP, id, arch, "nobranch", NULL);
+      if (fake_ref != NULL &&
+          !flatpak_run_add_extension_args (bwrap, metakey, fake_ref, FALSE, &app_extensions, cancellable, error))
         return FALSE;
     }
 

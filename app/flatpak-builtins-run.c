@@ -91,8 +91,8 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(FlatpakDeploy) app_deploy = NULL;
-  g_autofree char *app_ref = NULL;
-  g_autofree char *runtime_ref = NULL;
+  g_autoptr(FlatpakDecomposed) app_ref = NULL;
+  g_autoptr(FlatpakDecomposed) runtime_ref = NULL;
   const char *pref;
   int i;
   int rest_argv_start, rest_argc;
@@ -170,11 +170,10 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
   if ((kinds & FLATPAK_KINDS_APP) != 0)
     {
-      app_ref = flatpak_compose_ref (TRUE, id, branch, arch, &local_error);
-      if (app_ref == NULL)
-        return FALSE;
+      app_ref = flatpak_decomposed_new_from_parts (FLATPAK_KINDS_APP, id, arch, branch, &local_error);
+      if (app_ref != NULL)
+        app_deploy = flatpak_find_deploy_for_ref_in (dirs, flatpak_decomposed_get_ref (app_ref), opt_commit, cancellable, &local_error);
 
-      app_deploy = flatpak_find_deploy_for_ref_in (dirs, app_ref, opt_commit, cancellable, &local_error);
       if (app_deploy == NULL &&
           (!g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED) ||
            (kinds & FLATPAK_KINDS_RUNTIME) == 0))
@@ -257,7 +256,7 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
           return FALSE;
         }
 
-      runtime_ref = flatpak_decomposed_dup_ref (chosen_pair->ref);
+      runtime_ref = flatpak_decomposed_ref (chosen_pair->ref);
 
       /* Clear app-kind error */
       g_clear_error (&local_error);
