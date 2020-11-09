@@ -1075,7 +1075,6 @@ transaction_ready_pre_auth (FlatpakTransaction *transaction)
           type == FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE ||
           type == FLATPAK_TRANSACTION_OPERATION_UPDATE)
         {
-          g_autoptr(FlatpakRef) rref = flatpak_ref_parse (ref, NULL);
           guint64 download_size;
           g_autofree char *formatted = NULL;
           g_autofree char *text = NULL;
@@ -1090,7 +1089,7 @@ transaction_ready_pre_auth (FlatpakTransaction *transaction)
             prefix = "";
 
           flatpak_table_printer_add_column (printer, remote);
-          if (g_str_has_suffix (flatpak_ref_get_name (rref), ".Locale"))
+          if (flatpak_transaction_operation_get_subpaths (op) != NULL)
             text = g_strdup_printf ("%s%s (%s)", prefix, formatted, _("partial"));
           else
             text = g_strdup_printf ("%s%s", prefix, formatted);
