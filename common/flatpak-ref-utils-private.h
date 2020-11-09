@@ -121,6 +121,7 @@ char *             flatpak_decomposed_dup_arch              (FlatpakDecomposed  
 gboolean           flatpak_decomposed_is_arch               (FlatpakDecomposed  *ref,
                                                              const char         *arch);
 gboolean           flatpak_decomposed_is_arches             (FlatpakDecomposed  *ref,
+                                                             gssize              len,
                                                              const char        **arches);
 const char *       flatpak_decomposed_peek_branch           (FlatpakDecomposed  *ref,
                                                              gsize              *out_len);

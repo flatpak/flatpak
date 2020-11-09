@@ -188,7 +188,7 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
                 continue;
             }
 
-          if (arches != NULL && !flatpak_decomposed_is_arches (ref, arches))
+          if (arches != NULL && !flatpak_decomposed_is_arches (ref, -1, arches))
             continue;
 
           if (flatpak_decomposed_is_runtime (ref) && !opt_runtime)
