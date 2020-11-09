@@ -535,47 +535,6 @@ flatpak_compare_ref (const char *ref1, const char *ref2)
   return 0;
 }
 
-char **
-flatpak_decompose_ref (const char *full_ref,
-                       GError    **error)
-{
-  g_auto(GStrv) parts = NULL;
-  g_autoptr(GError) local_error = NULL;
-
-  parts = g_strsplit (full_ref, "/", 0);
-  if (g_strv_length (parts) != 4)
-    {
-      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("Wrong number of components in %s"), full_ref);
-      return NULL;
-    }
-
-  if (strcmp (parts[0], "app") != 0 && strcmp (parts[0], "runtime") != 0)
-    {
-      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("%s is not application or runtime"), full_ref);
-      return NULL;
-    }
-
-  if (!flatpak_is_valid_name (parts[1], -1, &local_error))
-    {
-      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("Invalid name %s: %s"), parts[1], local_error->message);
-      return NULL;
-    }
-
-  if (strlen (parts[2]) == 0)
-    {
-      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("Invalid arch %s"), parts[2]);
-      return NULL;
-    }
-
-  if (!flatpak_is_valid_branch (parts[3], -1, &local_error))
-    {
-      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("Invalid branch %s: %s"), parts[3], local_error->message);
-      return NULL;
-    }
-
-  return g_steal_pointer (&parts);
-}
-
 struct _FlatpakDecomposed {
   int ref_count;
   guint16 ref_offset;
@@ -1635,34 +1594,6 @@ flatpak_split_partial_ref_arg_novalidate (const char   *partial_ref,
                                          out_arch,
                                          out_branch,
                                          NULL);
-}
-
-
-char *
-flatpak_compose_ref (gboolean    app,
-                     const char *name,
-                     const char *branch,
-                     const char *arch,
-                     GError    **error)
-{
-  g_autoptr(GError) local_error = NULL;
-
-  if (!flatpak_is_valid_name (name, -1, &local_error))
-    {
-      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("'%s' is not a valid name: %s"), name, local_error->message);
-      return NULL;
-    }
-
-  if (branch && !flatpak_is_valid_branch (branch, -1, &local_error))
-    {
-      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("'%s' is not a valid branch name: %s"), branch, local_error->message);
-      return NULL;
-    }
-
-  if (app)
-    return flatpak_build_app_ref (name, branch, arch);
-  else
-    return flatpak_build_runtime_ref (name, branch, arch);
 }
 
 char *

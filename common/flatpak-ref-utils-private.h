@@ -43,8 +43,6 @@ char * flatpak_make_valid_id_prefix (const char *orig_id);
 gboolean flatpak_id_has_subref_suffix (const char *id,
                                        gssize      id_len);
 
-char **flatpak_decompose_ref (const char *ref,
-                              GError    **error);
 char * flatpak_get_arch_for_ref (const char *ref);
 const char *flatpak_get_compat_arch_reverse (const char *compat_arch);
 
@@ -155,12 +153,6 @@ gboolean flatpak_split_partial_ref_arg_novalidate (const char   *partial_ref,
 
 int flatpak_compare_ref (const char *ref1,
                          const char *ref2);
-
-char * flatpak_compose_ref (gboolean    app,
-                            const char *name,
-                            const char *branch,
-                            const char *arch,
-                            GError    **error);
 
 char * flatpak_build_untyped_ref (const char *runtime,
                                   const char *branch,
