@@ -5098,14 +5098,14 @@ copy_icon (const char        *id,
 }
 
 static gboolean
-extract_appstream (OstreeRepo   *repo,
-                   FlatpakXml   *appstream_root,
-                   const char   *ref,
-                   const char   *id,
+extract_appstream (OstreeRepo        *repo,
+                   FlatpakXml        *appstream_root,
+                   FlatpakDecomposed *ref,
+                   const char        *id,
                    OstreeMutableTree *size1_mtree,
                    OstreeMutableTree *size2_mtree,
-                   GCancellable *cancellable,
-                   GError      **error)
+                   GCancellable       *cancellable,
+                   GError            **error)
 {
   g_autoptr(GFile) root = NULL;
   g_autoptr(GFile) app_info_dir = NULL;
@@ -5118,7 +5118,7 @@ extract_appstream (OstreeRepo   *repo,
   g_autoptr(FlatpakXml) xml_root = NULL;
   g_autoptr(GKeyFile) keyfile = NULL;
 
-  if (!ostree_repo_read_commit (repo, ref, &root, NULL, NULL, error))
+  if (!ostree_repo_read_commit (repo, flatpak_decomposed_get_ref (ref), &root, NULL, NULL, error))
     return FALSE;
 
   keyfile = g_key_file_new ();
@@ -5152,7 +5152,7 @@ extract_appstream (OstreeRepo   *repo,
     return FALSE;
 
   if (flatpak_appstream_xml_migrate (xml_root, appstream_root,
-                                     ref, id, keyfile))
+                                     flatpak_decomposed_get_ref (ref), id, keyfile))
     {
       g_autoptr(GError) my_error = NULL;
       FlatpakXml *components = appstream_root->first_child;
@@ -5320,6 +5320,42 @@ flatpak_appstream_xml_filter (FlatpakXml *appstream,
     }
 }
 
+/* This is similar to ostree_repo_list_refs(), but returns only valid flatpak
+ * refs, as FlatpakDecomposed. */
+static GHashTable *
+flatpak_repo_list_flatpak_refs (OstreeRepo   *repo,
+                                GCancellable *cancellable,
+                                GError      **error)
+{
+  g_autoptr(GHashTable) refspecs = NULL;
+  g_autoptr(GHashTable) refs = NULL;
+  GHashTableIter iter;
+  gpointer key, value;
+
+  if (!ostree_repo_list_refs_ext (repo, NULL, &refspecs,
+                                  OSTREE_REPO_LIST_REFS_EXT_EXCLUDE_REMOTES | OSTREE_REPO_LIST_REFS_EXT_EXCLUDE_MIRRORS,
+                                  cancellable, error))
+    return NULL;
+
+  refs = g_hash_table_new_full ((GHashFunc)flatpak_decomposed_hash, (GEqualFunc)flatpak_decomposed_equal, (GDestroyNotify)flatpak_decomposed_unref, g_free);
+
+  g_hash_table_iter_init (&iter, refspecs);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+      const char *refstr = key;
+      const char *checksum = value;
+      FlatpakDecomposed *ref = NULL;
+
+      ref = flatpak_decomposed_new_from_ref_take ((char *)refstr, NULL);
+      if (ref)
+        {
+          g_hash_table_iter_steal (&iter);
+          g_hash_table_insert (refs, ref, (char *)checksum);
+        }
+    }
+
+  return g_steal_pointer (&refs);
+}
 
 gboolean
 flatpak_repo_generate_appstream (OstreeRepo   *repo,
@@ -5330,261 +5366,255 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
                                  GError      **error)
 {
   g_autoptr(GHashTable) all_refs = NULL;
-  g_autofree const char **all_refs_keys = NULL;
+  g_autofree FlatpakDecomposed **all_refs_keys = NULL;
   guint n_keys;
-  gsize i;
-  g_autoptr(GHashTable) arches = NULL;  /* (element-type utf8 utf8) */
+  g_autoptr(GPtrArray) arches = NULL;  /* (element-type utf8 utf8) */
   const char *collection_id;
 
-  arches = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  arches = g_ptr_array_new_with_free_func (g_free);
 
   collection_id = ostree_repo_get_collection_id (repo);
 
-  if (!ostree_repo_list_refs (repo,
-                              NULL,
-                              &all_refs,
-                              cancellable,
-                              error))
+  all_refs = flatpak_repo_list_flatpak_refs (repo, cancellable, error);
+  if (all_refs == NULL)
     return FALSE;
 
-  all_refs_keys = (const char **) g_hash_table_get_keys_as_array (all_refs, &n_keys);
+  all_refs_keys = (FlatpakDecomposed **) g_hash_table_get_keys_as_array (all_refs, &n_keys);
 
   /* Sort refs so that appdata order is stable for e.g. deltas */
-  g_qsort_with_data (all_refs_keys, n_keys, sizeof (char *), (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
+  g_qsort_with_data (all_refs_keys, n_keys, sizeof (FlatpakDecomposed *), (GCompareDataFunc) flatpak_decomposed_strcmp_p, NULL);
 
-  for (i = 0; i < n_keys; i++)
+  for (int i = 0; i < n_keys; i++)
     {
-      const char *ref = all_refs_keys[i];
-      g_auto(GStrv) split = NULL;
-      const char *arch;
+      FlatpakDecomposed *ref = all_refs_keys[i];
+      const char *reverse_compat_arch;
+      char *new_arch = NULL;
 
-      split = flatpak_decompose_ref (ref, NULL);
-      if (!split)
+      if (flatpak_decomposed_is_arches (ref, arches->len, (const char **) arches->pdata))
         continue;
 
-      arch = split[2];
-      if (!g_hash_table_contains (arches, arch))
-        {
-          const char *reverse_compat_arch;
-          g_hash_table_add (arches, g_strdup (arch));
+      new_arch = flatpak_decomposed_dup_arch (ref);
+      g_ptr_array_add (arches, new_arch);
 
-          /* If repo contains e.g. i386, also generated x86-64 appdata */
-          reverse_compat_arch = flatpak_get_compat_arch_reverse (arch);
-          if (reverse_compat_arch)
-            g_hash_table_add (arches, g_strdup (reverse_compat_arch));
-        }
+      /* If repo contains e.g. i386, also generated x86-64 appdata */
+      reverse_compat_arch = flatpak_get_compat_arch_reverse (new_arch);
+      if (reverse_compat_arch != NULL &&
+          !flatpak_g_ptr_array_contains_string (arches, reverse_compat_arch))
+        g_ptr_array_add (arches, g_strdup (reverse_compat_arch));
     }
 
-  GLNX_HASH_TABLE_FOREACH (arches, const char *, arch)
-  {
-    OstreeRepoTransactionStats stats;
-    g_autoptr(FlatpakXml) appstream_root = NULL;
-    g_autoptr(GBytes) xml_data = NULL;
-    g_autoptr(GBytes) xml_gz_data = NULL;
-    g_autoptr(OstreeMutableTree) mtree = ostree_mutable_tree_new ();
-    g_autoptr(OstreeMutableTree) icons_mtree = NULL;
-    g_autoptr(OstreeMutableTree) icons_flatpak_mtree = NULL;
-    g_autoptr(OstreeMutableTree) size1_mtree = NULL;
-    g_autoptr(OstreeMutableTree) size2_mtree = NULL;
-    const char *compat_arch;
-    g_autoptr(FlatpakRepoTransaction) transaction = NULL;
-    compat_arch = flatpak_get_compat_arch (arch);
-    const char *branch_names[] = { "appstream", "appstream2" };
+  g_ptr_array_sort (arches, flatpak_strcmp0_ptr);
 
-    if (!flatpak_mtree_ensure_dir_metadata (repo, mtree, cancellable, error))
-      return FALSE;
+  for (int k = 0; k < arches->len; k++)
+    {
+      const char *arch = g_ptr_array_index (arches, k);
+      OstreeRepoTransactionStats stats;
+      g_autoptr(FlatpakXml) appstream_root = NULL;
+      g_autoptr(GBytes) xml_data = NULL;
+      g_autoptr(GBytes) xml_gz_data = NULL;
+      g_autoptr(OstreeMutableTree) mtree = ostree_mutable_tree_new ();
+      g_autoptr(OstreeMutableTree) icons_mtree = NULL;
+      g_autoptr(OstreeMutableTree) icons_flatpak_mtree = NULL;
+      g_autoptr(OstreeMutableTree) size1_mtree = NULL;
+      g_autoptr(OstreeMutableTree) size2_mtree = NULL;
+      const char *compat_arch;
+      g_autoptr(FlatpakRepoTransaction) transaction = NULL;
+      compat_arch = flatpak_get_compat_arch (arch);
+      const char *branch_names[] = { "appstream", "appstream2" };
 
-    if (!flatpak_mtree_create_dir (repo, mtree, "icons", &icons_mtree, error))
-      return FALSE;
+      if (!flatpak_mtree_ensure_dir_metadata (repo, mtree, cancellable, error))
+        return FALSE;
 
-    if (!flatpak_mtree_create_dir (repo, icons_mtree, "64x64", &size1_mtree, error))
-      return FALSE;
+      if (!flatpak_mtree_create_dir (repo, mtree, "icons", &icons_mtree, error))
+        return FALSE;
 
-    if (!flatpak_mtree_create_dir (repo, icons_mtree, "128x128", &size2_mtree, error))
-      return FALSE;
+      if (!flatpak_mtree_create_dir (repo, icons_mtree, "64x64", &size1_mtree, error))
+        return FALSE;
 
-    /* For compatibility with libappstream we create a $origin ("flatpak") subdirectory with symlinks
-     * to the size directories thus matching the standard merged appstream layout if we assume the
-     * appstream has origin=flatpak, which flatpak-builder creates.
-     *
-     * See https://github.com/ximion/appstream/pull/224 for details.
-     */
-    if (!flatpak_mtree_create_dir (repo, icons_mtree, "flatpak", &icons_flatpak_mtree, error))
-      return FALSE;
-    if (!flatpak_mtree_create_symlink (repo, icons_flatpak_mtree, "64x64", "../64x64", error))
-      return FALSE;
-    if (!flatpak_mtree_create_symlink (repo, icons_flatpak_mtree, "128x128", "../128x128", error))
-      return FALSE;
+      if (!flatpak_mtree_create_dir (repo, icons_mtree, "128x128", &size2_mtree, error))
+        return FALSE;
 
-    appstream_root = flatpak_appstream_xml_new ();
+      /* For compatibility with libappstream we create a $origin ("flatpak") subdirectory with symlinks
+       * to the size directories thus matching the standard merged appstream layout if we assume the
+       * appstream has origin=flatpak, which flatpak-builder creates.
+       *
+       * See https://github.com/ximion/appstream/pull/224 for details.
+       */
+      if (!flatpak_mtree_create_dir (repo, icons_mtree, "flatpak", &icons_flatpak_mtree, error))
+        return FALSE;
+      if (!flatpak_mtree_create_symlink (repo, icons_flatpak_mtree, "64x64", "../64x64", error))
+        return FALSE;
+      if (!flatpak_mtree_create_symlink (repo, icons_flatpak_mtree, "128x128", "../128x128", error))
+        return FALSE;
 
-    for (i = 0; i < n_keys; i++)
-      {
-        const char *ref = all_refs_keys[i];
-        const char *commit;
-        g_autoptr(GVariant) commit_v = NULL;
-        g_autoptr(GVariant) commit_metadata = NULL;
-        g_auto(GStrv) split = NULL;
-        g_autoptr(GError) my_error = NULL;
-        const char *eol = NULL;
-        const char *eol_rebase = NULL;
+      appstream_root = flatpak_appstream_xml_new ();
 
-        split = flatpak_decompose_ref (ref, NULL);
-        if (!split)
-          continue;
+      for (int i = 0; i < n_keys; i++)
+        {
+          FlatpakDecomposed *ref = all_refs_keys[i];
+          const char *commit;
+          g_autoptr(GVariant) commit_v = NULL;
+          g_autoptr(GVariant) commit_metadata = NULL;
+          g_autoptr(GError) my_error = NULL;
+          g_autofree char *id = NULL;
+          const char *eol = NULL;
+          const char *eol_rebase = NULL;
 
-        if (strcmp (split[2], arch) != 0)
-          {
-            g_autofree char *main_ref = NULL;
-            /* Include refs that don't match the main arch (e.g. x86_64), if they match
-               the compat arch (e.g. i386) and the main arch version is not in the repo */
-            if (g_strcmp0 (split[2], compat_arch) == 0)
-              main_ref = g_strdup_printf ("%s/%s/%s/%s",
-                                          split[0], split[1], arch, split[3]);
-            if (main_ref == NULL ||
-                g_hash_table_lookup (all_refs, main_ref))
+          if (!flatpak_decomposed_is_arch (ref, arch))
+            {
+              g_autoptr(FlatpakDecomposed) main_ref = NULL;
+
+              /* Include refs that don't match the main arch (e.g. x86_64), if they match
+                 the compat arch (e.g. i386) and the main arch version is not in the repo */
+              if (compat_arch != NULL && flatpak_decomposed_is_arch (ref, compat_arch))
+                main_ref = flatpak_decomposed_new_from_decomposed (ref, 0, NULL, compat_arch, NULL, NULL);
+
+              if (main_ref == NULL ||
+                  g_hash_table_lookup (all_refs, main_ref))
+                continue;
+            }
+
+          commit = g_hash_table_lookup (all_refs, ref);
+          g_assert (commit != NULL);
+
+          if (!ostree_repo_load_variant (repo, OSTREE_OBJECT_TYPE_COMMIT, commit,
+                                         &commit_v, NULL))
+            {
+              g_warning ("Couldn't load commit %s (ref %s)", commit, flatpak_decomposed_get_ref (ref));
               continue;
-          }
+            }
 
-        commit = g_hash_table_lookup (all_refs, ref);
+          commit_metadata = g_variant_get_child_value (commit_v, 0);
+          g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE, "&s", &eol);
+          g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE_REBASE, "&s", &eol_rebase);
+          if (eol || eol_rebase)
+            {
+              g_debug (_("%s is end-of-life, ignoring for appstream\n"), flatpak_decomposed_get_ref (ref));
+              continue;
+            }
 
-        if (!ostree_repo_load_variant (repo, OSTREE_OBJECT_TYPE_COMMIT, commit,
-                                       &commit_v, NULL))
-          {
-            g_warning ("Couldn't load commit %s (ref %s)", commit, ref);
-            continue;
-          }
+          id = flatpak_decomposed_dup_id (ref);
+          if (!extract_appstream (repo, appstream_root,
+                                  ref, id, size1_mtree, size2_mtree,
+                                  cancellable, &my_error))
+            {
+              if (flatpak_decomposed_is_app (ref))
+                g_print (_("No appstream data for %s: %s\n"), flatpak_decomposed_get_ref (ref), my_error->message);
+              continue;
+            }
+        }
 
-        commit_metadata = g_variant_get_child_value (commit_v, 0);
-        g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE, "&s", &eol);
-        g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE_REBASE, "&s", &eol_rebase);
-        if (eol || eol_rebase)
-          {
-            g_print (_("%s is end-of-life, ignoring for appstream\n"), ref);
-            continue;
-          }
+      if (!flatpak_appstream_xml_root_to_data (appstream_root, &xml_data, &xml_gz_data, error))
+        return FALSE;
 
-        if (!extract_appstream (repo, appstream_root,
-                                ref, split[1], size1_mtree, size2_mtree,
-                                cancellable, &my_error))
-          {
-            if (g_str_has_prefix (ref, "app/"))
-              g_print (_("No appstream data for %s: %s\n"), ref, my_error->message);
-            continue;
-          }
-      }
+      transaction = flatpak_repo_transaction_start (repo, cancellable, error);
+      if (transaction == NULL)
+        return FALSE;
 
-    if (!flatpak_appstream_xml_root_to_data (appstream_root, &xml_data, &xml_gz_data, error))
-      return FALSE;
+      for (int i = 0; i < G_N_ELEMENTS (branch_names); i++)
+        {
+          gboolean skip_commit = FALSE;
+          const char *branch_prefix = branch_names[i];
+          g_autoptr(GFile) root = NULL;
+          g_autofree char *branch = NULL;
+          g_autofree char *parent = NULL;
+          g_autofree char *commit_checksum = NULL;
 
-    transaction = flatpak_repo_transaction_start (repo, cancellable, error);
-    if (transaction == NULL)
-      return FALSE;
+          branch = g_strdup_printf ("%s/%s", branch_prefix, arch);
+          if (!flatpak_repo_resolve_rev (repo, collection_id, NULL, branch, TRUE,
+                                         &parent, cancellable, error))
+            return FALSE;
 
-    for (i = 0; i < G_N_ELEMENTS (branch_names); i++)
-      {
-        gboolean skip_commit = FALSE;
-        const char *branch_prefix = branch_names[i];
-        g_autoptr(GFile) root = NULL;
-        g_autofree char *branch = NULL;
-        g_autofree char *parent = NULL;
-        g_autofree char *commit_checksum = NULL;
+          if (i == 0)
+            {
+              if (!flatpak_mtree_add_file_from_bytes (repo, xml_gz_data, mtree, "appstream.xml.gz", cancellable, error))
+                return FALSE;
+            }
+          else
+            {
+              if (!ostree_mutable_tree_remove (mtree, "appstream.xml.gz", TRUE, error))
+                return FALSE;
 
-        branch = g_strdup_printf ("%s/%s", branch_prefix, arch);
-        if (!flatpak_repo_resolve_rev (repo, collection_id, NULL, branch, TRUE,
-                                       &parent, cancellable, error))
-          return FALSE;
+              if (!flatpak_mtree_add_file_from_bytes (repo, xml_data, mtree, "appstream.xml", cancellable, error))
+                return FALSE;
+            }
 
-        if (i == 0)
-          {
-            if (!flatpak_mtree_add_file_from_bytes (repo, xml_gz_data, mtree, "appstream.xml.gz", cancellable, error))
-              return FALSE;
-          }
-        else
-          {
-            if (!ostree_mutable_tree_remove (mtree, "appstream.xml.gz", TRUE, error))
-              return FALSE;
+          if (!ostree_repo_write_mtree (repo, mtree, &root, cancellable, error))
+            return FALSE;
 
-            if (!flatpak_mtree_add_file_from_bytes (repo, xml_data, mtree, "appstream.xml", cancellable, error))
-              return FALSE;
-          }
+          /* No need to commit if nothing changed */
+          if (parent)
+            {
+              g_autoptr(GFile) parent_root = NULL;
 
-        if (!ostree_repo_write_mtree (repo, mtree, &root, cancellable, error))
-          return FALSE;
+              if (!ostree_repo_read_commit (repo, parent, &parent_root, NULL, cancellable, error))
+                return FALSE;
 
-        /* No need to commit if nothing changed */
-        if (parent)
-          {
-            g_autoptr(GFile) parent_root = NULL;
+              if (g_file_equal (root, parent_root))
+                {
+                  skip_commit = TRUE;
+                  g_debug ("Not updating %s, no change", branch);
+                }
+            }
 
-            if (!ostree_repo_read_commit (repo, parent, &parent_root, NULL, cancellable, error))
-              return FALSE;
+          if (!skip_commit)
+            {
+              g_autoptr(GVariantDict) metadata_dict = NULL;
+              g_autoptr(GVariant) metadata = NULL;
 
-            if (g_file_equal (root, parent_root))
-              {
-                skip_commit = TRUE;
-                g_debug ("Not updating %s, no change", branch);
-              }
-          }
+              /* Add bindings to the metadata. Do this even if P2P support is not
+               * enabled, as it might be enable for other flatpak builds. */
+              metadata_dict = g_variant_dict_new (NULL);
+              g_variant_dict_insert (metadata_dict, "ostree.collection-binding",
+                                     "s", (collection_id != NULL) ? collection_id : "");
+              g_variant_dict_insert_value (metadata_dict, "ostree.ref-binding",
+                                           g_variant_new_strv ((const gchar * const *) &branch, 1));
+              metadata = g_variant_ref_sink (g_variant_dict_end (metadata_dict));
 
-        if (!skip_commit)
-          {
-            g_autoptr(GVariantDict) metadata_dict = NULL;
-            g_autoptr(GVariant) metadata = NULL;
+              if (timestamp > 0)
+                {
+                  if (!ostree_repo_write_commit_with_time (repo, parent, "Update", NULL, metadata,
+                                                           OSTREE_REPO_FILE (root),
+                                                           timestamp,
+                                                           &commit_checksum,
+                                                           cancellable, error))
+                    return FALSE;
+                }
+              else
+                {
+                  if (!ostree_repo_write_commit (repo, parent, "Update", NULL, metadata,
+                                                 OSTREE_REPO_FILE (root),
+                                                 &commit_checksum, cancellable, error))
+                    return FALSE;
+                }
 
-            /* Add bindings to the metadata. Do this even if P2P support is not
-             * enabled, as it might be enable for other flatpak builds. */
-            metadata_dict = g_variant_dict_new (NULL);
-            g_variant_dict_insert (metadata_dict, "ostree.collection-binding",
-                                   "s", (collection_id != NULL) ? collection_id : "");
-            g_variant_dict_insert_value (metadata_dict, "ostree.ref-binding",
-                                         g_variant_new_strv ((const gchar * const *) &branch, 1));
-            metadata = g_variant_ref_sink (g_variant_dict_end (metadata_dict));
+              if (gpg_key_ids)
+                {
+                  for (int j = 0; gpg_key_ids[j] != NULL; j++)
+                    {
+                      const char *keyid = gpg_key_ids[j];
 
-            if (timestamp > 0)
-              {
-                if (!ostree_repo_write_commit_with_time (repo, parent, "Update", NULL, metadata,
-                                                         OSTREE_REPO_FILE (root),
-                                                         timestamp,
-                                                         &commit_checksum,
-                                                         cancellable, error))
-                  return FALSE;
-              }
-            else
-              {
-                if (!ostree_repo_write_commit (repo, parent, "Update", NULL, metadata,
-                                               OSTREE_REPO_FILE (root),
-                                               &commit_checksum, cancellable, error))
-                  return FALSE;
-              }
+                      if (!ostree_repo_sign_commit (repo,
+                                                    commit_checksum,
+                                                    keyid,
+                                                    gpg_homedir,
+                                                    cancellable,
+                                                    error))
+                        return FALSE;
+                    }
+                }
 
-            if (gpg_key_ids)
-              {
-                for (int j = 0; gpg_key_ids[j] != NULL; j++)
-                  {
-                    const char *keyid = gpg_key_ids[j];
-
-                    if (!ostree_repo_sign_commit (repo,
-                                                  commit_checksum,
-                                                  keyid,
-                                                  gpg_homedir,
-                                                  cancellable,
-                                                  error))
-                      return FALSE;
-                  }
-              }
-
-            if (collection_id != NULL)
-              {
-                const OstreeCollectionRef collection_ref = { (char *) collection_id, branch };
-                ostree_repo_transaction_set_collection_ref (repo, &collection_ref, commit_checksum);
-              }
-            else
-              {
-                ostree_repo_transaction_set_ref (repo, NULL, branch, commit_checksum);
-              }
-          }
-      }
+              if (collection_id != NULL)
+                {
+                  const OstreeCollectionRef collection_ref = { (char *) collection_id, branch };
+                  ostree_repo_transaction_set_collection_ref (repo, &collection_ref, commit_checksum);
+                }
+              else
+                {
+                  ostree_repo_transaction_set_ref (repo, NULL, branch, commit_checksum);
+                }
+            }
+        }
 
     if (!ostree_repo_commit_transaction (repo, &stats, cancellable, error))
       return FALSE;
