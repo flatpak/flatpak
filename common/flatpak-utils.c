@@ -1092,10 +1092,10 @@ flatpak_list_unmaintained_refs (const char   *name_prefix,
 }
 
 GFile *
-flatpak_find_deploy_dir_for_ref (const char   *ref,
-                                 FlatpakDir  **dir_out,
-                                 GCancellable *cancellable,
-                                 GError      **error)
+flatpak_find_deploy_dir_for_ref (FlatpakDecomposed *ref,
+                                 FlatpakDir       **dir_out,
+                                 GCancellable      *cancellable,
+                                 GError           **error)
 {
   g_autoptr(FlatpakDir) user_dir = NULL;
   g_autoptr(GPtrArray) system_dirs = NULL;
@@ -1123,7 +1123,7 @@ flatpak_find_deploy_dir_for_ref (const char   *ref,
 
   if (deploy == NULL)
     {
-      flatpak_fail_error (error, FLATPAK_ERROR_NOT_INSTALLED, _("%s not installed"), ref);
+      flatpak_fail_error (error, FLATPAK_ERROR_NOT_INSTALLED, _("%s not installed"), flatpak_decomposed_get_ref (ref));
       return NULL;
     }
 
@@ -1133,9 +1133,9 @@ flatpak_find_deploy_dir_for_ref (const char   *ref,
 }
 
 GFile *
-flatpak_find_files_dir_for_ref (const char   *ref,
-                                GCancellable *cancellable,
-                                GError      **error)
+flatpak_find_files_dir_for_ref (FlatpakDecomposed *ref,
+                                GCancellable      *cancellable,
+                                GError           **error)
 {
   g_autoptr(GFile) deploy = NULL;
 
@@ -5599,7 +5599,7 @@ flatpak_extension_free (FlatpakExtension *extension)
   g_free (extension->id);
   g_free (extension->installed_id);
   g_free (extension->commit);
-  g_free (extension->ref);
+  flatpak_decomposed_unref (extension->ref);
   g_free (extension->directory);
   g_free (extension->files_path);
   g_free (extension->add_ld_path);
@@ -5619,23 +5619,23 @@ flatpak_extension_compare (gconstpointer _a,
 }
 
 static FlatpakExtension *
-flatpak_extension_new (const char *id,
-                       const char *extension,
-                       const char *ref,
-                       const char *directory,
-                       const char *add_ld_path,
-                       const char *subdir_suffix,
-                       char      **merge_dirs,
-                       GFile      *files,
-                       GFile      *deploy_dir,
-                       gboolean    is_unmaintained)
+flatpak_extension_new (const char        *id,
+                       const char        *extension,
+                       FlatpakDecomposed *ref,
+                       const char        *directory,
+                       const char        *add_ld_path,
+                       const char        *subdir_suffix,
+                       char             **merge_dirs,
+                       GFile             *files,
+                       GFile             *deploy_dir,
+                       gboolean           is_unmaintained)
 {
   FlatpakExtension *ext = g_new0 (FlatpakExtension, 1);
   g_autoptr(GBytes) deploy_data = NULL;
 
   ext->id = g_strdup (id);
   ext->installed_id = g_strdup (extension);
-  ext->ref = g_strdup (ref);
+  ext->ref = flatpak_decomposed_ref (ref);
   ext->directory = g_strdup (directory);
   ext->files_path = g_file_get_path (files);
   ext->add_ld_path = g_strdup (add_ld_path);
@@ -5645,7 +5645,7 @@ flatpak_extension_new (const char *id,
 
   if (deploy_dir)
     {
-      deploy_data = flatpak_load_deploy_data (deploy_dir, ref, FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
+      deploy_data = flatpak_load_deploy_data (deploy_dir, flatpak_decomposed_get_ref (ref), FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
       if (deploy_data)
         ext->commit = g_strdup (flatpak_deploy_data_get_commit (deploy_data));
     }
@@ -5761,7 +5761,7 @@ add_extension (GKeyFile   *metakey,
   g_autofree char *subdir_suffix = g_key_file_get_string (metakey, group,
                                                           FLATPAK_METADATA_KEY_SUBDIRECTORY_SUFFIX,
                                                           NULL);
-  g_autofree char *ref = NULL;
+  g_autoptr(FlatpakDecomposed) ref = NULL;
   gboolean is_unmaintained = FALSE;
   g_autoptr(GFile) files = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
@@ -5769,7 +5769,9 @@ add_extension (GKeyFile   *metakey,
   if (directory == NULL)
     return res;
 
-  ref = g_build_filename ("runtime", extension, arch, branch, NULL);
+  ref = flatpak_decomposed_new_from_parts (FLATPAK_KINDS_RUNTIME, extension, arch, branch, NULL);
+  if (ref == NULL)
+    return res;
 
   files = flatpak_find_unmaintained_extension_dir_if_exists (extension, arch, branch, NULL);
 
@@ -5805,9 +5807,14 @@ add_extension (GKeyFile   *metakey,
         {
           const char *id = ids[j];
           g_autofree char *extended_dir = g_build_filename (directory, id + strlen (prefix), NULL);
-          g_autofree char *dir_ref = g_build_filename ("runtime", id, arch, branch, NULL);
+          g_autoptr(FlatpakDecomposed) dir_ref = NULL;
           g_autoptr(GFile) subdir_deploy_dir = NULL;
           g_autoptr(GFile) subdir_files = NULL;
+
+          dir_ref = flatpak_decomposed_new_from_parts (FLATPAK_KINDS_RUNTIME, id, arch, branch, NULL);
+          if (dir_ref == NULL)
+            continue;
+
           subdir_deploy_dir = flatpak_find_deploy_dir_for_ref (dir_ref, NULL, NULL, NULL);
           if (subdir_deploy_dir)
             subdir_files = g_file_get_child (subdir_deploy_dir, "files");
@@ -5825,8 +5832,12 @@ add_extension (GKeyFile   *metakey,
       for (j = 0; unmaintained_refs != NULL && unmaintained_refs[j] != NULL; j++)
         {
           g_autofree char *extended_dir = g_build_filename (directory, unmaintained_refs[j] + strlen (prefix), NULL);
-          g_autofree char *dir_ref = g_build_filename ("runtime", unmaintained_refs[j], arch, branch, NULL);
+          g_autoptr(FlatpakDecomposed) dir_ref = NULL;
           g_autoptr(GFile) subdir_files = flatpak_find_unmaintained_extension_dir_if_exists (unmaintained_refs[j], arch, branch, NULL);
+
+          dir_ref = flatpak_decomposed_new_from_parts (FLATPAK_KINDS_RUNTIME, unmaintained_refs[j], arch, branch, NULL);
+          if (dir_ref == NULL)
+            continue;
 
           if (subdir_files && flatpak_extension_matches_reason (unmaintained_refs[j], enable_if, TRUE))
             {

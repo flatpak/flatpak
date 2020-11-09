@@ -85,7 +85,7 @@ flatpak_builtin_remote_delete (int argc, char **argv, GCancellable *cancellable,
       for (i = 0; refs != NULL && i < refs->len; i++)
         {
           FlatpakDecomposed *ref = g_ptr_array_index (refs, i);
-          g_autofree char *origin = flatpak_dir_get_origin (preferred_dir, flatpak_decomposed_get_ref (ref), NULL, NULL);
+          g_autofree char *origin = flatpak_dir_get_origin (preferred_dir, ref, NULL, NULL);
           if (g_strcmp0 (origin, remote_name) == 0)
             g_ptr_array_add (refs_to_remove, flatpak_decomposed_dup_ref (ref));
         }

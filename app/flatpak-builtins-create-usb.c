@@ -116,7 +116,7 @@ add_related (GHashTable        *all_refs,
   arch = flatpak_decomposed_dup_arch (ref);
   branch = flatpak_decomposed_dup_branch (ref);
 
-  deploy_data = flatpak_dir_get_deploy_data (dir, flatpak_decomposed_get_ref (ref), FLATPAK_DEPLOY_VERSION_ANY, cancellable, error);
+  deploy_data = flatpak_dir_get_deploy_data (dir, ref, FLATPAK_DEPLOY_VERSION_ANY, cancellable, error);
   if (deploy_data == NULL)
     return FALSE;
 
@@ -154,14 +154,14 @@ add_related (GHashTable        *all_refs,
       if (ext_deploy_data == NULL)
         {
           g_printerr (_("Warning: Omitting related ref ‘%s’ because it is not installed.\n"),
-                      ext->ref);
+                      flatpak_decomposed_get_ref (ext->ref));
           continue;
         }
 
       if (flatpak_deploy_data_has_subpaths (ext_deploy_data) && !opt_allow_partial)
         {
           g_printerr (_("Warning: Related ref ‘%s’ is partially installed. Use --allow-partial to suppress this message.\n"),
-                      ext->ref);
+                      flatpak_decomposed_get_ref (ext->ref));
         }
 
       ext_remote = flatpak_deploy_data_get_origin (ext_deploy_data);
@@ -171,7 +171,7 @@ add_related (GHashTable        *all_refs,
       if (ext_collection_id == NULL)
         {
           g_printerr (_("Warning: Omitting related ref ‘%s’ because its remote ‘%s’ does not have a collection ID set.\n"),
-                      ext->ref, ext_remote);
+                      flatpak_decomposed_get_ref (ext->ref), ext_remote);
           continue;
         }
 
@@ -181,7 +181,7 @@ add_related (GHashTable        *all_refs,
       c_s = commit_and_subpaths_new (ext_commit, (const char * const *) resolved_ext_subpaths);
 
       g_hash_table_insert (all_collection_ids, g_strdup (ext_collection_id), g_strdup (ext_remote));
-      ext_collection_ref = ostree_collection_ref_new (ext_collection_id, ext->ref);
+      ext_collection_ref = ostree_collection_ref_new (ext_collection_id, flatpak_decomposed_get_ref (ext->ref));
       g_hash_table_insert (all_refs, g_steal_pointer (&ext_collection_ref), c_s);
     }
 
@@ -218,7 +218,7 @@ add_runtime (GHashTable        *all_refs,
 
   g_debug ("Finding the runtime for ‘%s’", flatpak_decomposed_get_ref (ref));
 
-  deploy_data = flatpak_dir_get_deploy_data (dir, flatpak_decomposed_get_ref (ref), FLATPAK_DEPLOY_VERSION_ANY, cancellable, error);
+  deploy_data = flatpak_dir_get_deploy_data (dir, ref, FLATPAK_DEPLOY_VERSION_ANY, cancellable, error);
   if (deploy_data == NULL)
     return FALSE;
 
@@ -237,10 +237,10 @@ add_runtime (GHashTable        *all_refs,
   if (runtime_ref == NULL)
     return FALSE;
 
-  runtime_deploy_data = flatpak_dir_get_deploy_data (dir, flatpak_decomposed_get_ref (runtime_ref), FLATPAK_DEPLOY_VERSION_ANY, cancellable, error);
+  runtime_deploy_data = flatpak_dir_get_deploy_data (dir, runtime_ref, FLATPAK_DEPLOY_VERSION_ANY, cancellable, error);
   if (runtime_deploy_data == NULL)
     return FALSE;
-  runtime_remote = flatpak_dir_get_origin (dir, flatpak_decomposed_get_ref (runtime_ref), cancellable, error);
+  runtime_remote = flatpak_dir_get_origin (dir, runtime_ref, cancellable, error);
   if (runtime_remote == NULL)
     return FALSE;
   runtime_collection_id = flatpak_dir_get_remote_collection_id (dir, runtime_remote);
@@ -602,7 +602,7 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
       if (branch == NULL)
         branch = flatpak_decomposed_dup_branch (installed_ref);
 
-      remote = flatpak_dir_get_origin (dir, flatpak_decomposed_get_ref (installed_ref), cancellable, error);
+      remote = flatpak_dir_get_origin (dir, installed_ref, cancellable, error);
       if (remote == NULL)
         return FALSE;
 
@@ -636,7 +636,7 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
         const char *commit;
         CommitAndSubpaths *c_s;
 
-        deploy_data = flatpak_dir_get_deploy_data (dir, flatpak_decomposed_get_ref (installed_ref), FLATPAK_DEPLOY_VERSION_ANY, cancellable, error);
+        deploy_data = flatpak_dir_get_deploy_data (dir, installed_ref, FLATPAK_DEPLOY_VERSION_ANY, cancellable, error);
         if (deploy_data == NULL)
           return FALSE;
 

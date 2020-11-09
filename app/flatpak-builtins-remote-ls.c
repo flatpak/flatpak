@@ -174,11 +174,9 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
 
       GLNX_HASH_TABLE_FOREACH_KV (refs, FlatpakDecomposed *, ref, const char *, checksum)
         {
-          const char *ref_str = flatpak_decomposed_get_ref (ref);
-
           if (opt_only_updates)
             {
-              g_autoptr(GBytes) deploy_data = flatpak_dir_get_deploy_data (dir, ref_str, FLATPAK_DEPLOY_VERSION_ANY, cancellable, NULL);
+              g_autoptr(GBytes) deploy_data = flatpak_dir_get_deploy_data (dir, ref, FLATPAK_DEPLOY_VERSION_ANY, cancellable, NULL);
 
               if (deploy_data == NULL)
                 continue;

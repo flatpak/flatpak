@@ -451,14 +451,14 @@ update_metadata (GFile *base, FlatpakContext *arg_context, gboolean is_runtime, 
       if (!opt_no_inherit_permissions)
         {
           g_autofree char *runtime_pref = NULL;
-          g_autofree char *runtime_ref = NULL;
           g_autoptr(GFile) runtime_deploy_dir = NULL;
 
           runtime_pref = g_key_file_get_string (keyfile, group, FLATPAK_METADATA_KEY_RUNTIME, NULL);
           if (runtime_pref != NULL)
             {
-              runtime_ref = g_strconcat ("runtime/", runtime_pref, NULL);
-              runtime_deploy_dir = flatpak_find_deploy_dir_for_ref (runtime_ref, NULL, cancellable, NULL);
+              g_autoptr(FlatpakDecomposed) runtime_ref = flatpak_decomposed_new_from_pref (FLATPAK_KINDS_RUNTIME, runtime_pref, NULL);
+              if (runtime_ref)
+                runtime_deploy_dir = flatpak_find_deploy_dir_for_ref (runtime_ref, NULL, cancellable, NULL);
             }
 
           /* This is optional, because some weird uses of flatpak build-finish (like the test suite)

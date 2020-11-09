@@ -140,7 +140,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   if (dir == NULL)
     return FALSE;
 
-  deploy_data = flatpak_dir_get_deploy_data (dir, flatpak_decomposed_get_ref (ref), FLATPAK_DEPLOY_VERSION_CURRENT, cancellable, error);
+  deploy_data = flatpak_dir_get_deploy_data (dir, ref, FLATPAK_DEPLOY_VERSION_CURRENT, cancellable, error);
   if (deploy_data == NULL)
     return FALSE;
 
@@ -494,7 +494,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
             }
 
           g_print ("\n");
-          print_aligned (len, _("Extension:"), ext->ref);
+          print_aligned (len, _("Extension:"), flatpak_decomposed_get_ref (ext->ref));
           print_aligned (len, _("ID:"), ext->id);
           print_aligned (len, _("Origin:"), origin ? origin : "-");
           print_aligned (len, _("Commit:"), formatted_commit);

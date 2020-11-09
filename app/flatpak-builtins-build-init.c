@@ -185,7 +185,7 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   g_autofree char *base_ref = NULL;
   g_autoptr(FlatpakDecomposed) runtime_ref = NULL;
   g_autofree char *extension_runtime_pref = NULL;
-  g_autofree char *var_ref = NULL;
+  g_autoptr(FlatpakDecomposed) var_ref = NULL;
   g_autoptr(FlatpakDecomposed) sdk_ref = NULL;
   FlatpakKinds kinds;
   int i;
@@ -325,7 +325,9 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
 
   if (opt_var)
     {
-      var_ref = flatpak_build_runtime_ref (opt_var, default_branch, opt_arch);
+      var_ref = flatpak_decomposed_new_from_parts (FLATPAK_KINDS_RUNTIME, opt_var, opt_arch, default_branch, error);
+      if (var_ref == NULL)
+        return FALSE;
 
       var_deploy_files = flatpak_find_files_dir_for_ref (var_ref, cancellable, error);
       if (var_deploy_files == NULL)

@@ -472,13 +472,13 @@ handle_deploy (FlatpakSystemHelper   *object,
   local_pull = (arg_flags & FLATPAK_HELPER_DEPLOY_FLAGS_LOCAL_PULL) != 0;
   reinstall = (arg_flags & FLATPAK_HELPER_DEPLOY_FLAGS_REINSTALL) != 0;
 
-  deploy_dir = flatpak_dir_get_if_deployed (system, arg_ref, NULL, NULL);
+  deploy_dir = flatpak_dir_get_if_deployed (system, ref, NULL, NULL);
 
   is_update = (deploy_dir && !reinstall);
   if (is_update)
     {
       g_autofree char *real_origin = NULL;
-      real_origin = flatpak_dir_get_origin (system, arg_ref, NULL, NULL);
+      real_origin = flatpak_dir_get_origin (system, ref, NULL, NULL);
       if (g_strcmp0 (real_origin, arg_origin) != 0)
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
@@ -1856,7 +1856,7 @@ handle_generate_oci_summary (FlatpakSystemHelper   *object,
 
 static gboolean
 dir_ref_is_installed (FlatpakDir *dir,
-                      const char *ref)
+                      FlatpakDecomposed *ref)
 {
   g_autoptr(GBytes) deploy_data = NULL;
 
@@ -1894,23 +1894,33 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
   else if (g_strcmp0 (method_name, "Deploy") == 0)
     {
       const char *installation;
-      const char *ref, *origin;
+      const char *ref_str, *origin;
       guint32 flags;
 
       g_variant_get_child (parameters, 1, "u", &flags);
-      g_variant_get_child (parameters, 2, "&s", &ref);
+      g_variant_get_child (parameters, 2, "&s", &ref_str);
       g_variant_get_child (parameters, 3, "&s", &origin);
       g_variant_get_child (parameters, 6, "&s", &installation);
 
       /* For metadata updates, redirect to the metadata-update action which
        * should basically always be allowed */
-      if (ref != NULL && g_strcmp0 (ref, OSTREE_REPO_METADATA_REF) == 0)
+      if (ref_str != NULL && g_strcmp0 (ref_str, OSTREE_REPO_METADATA_REF) == 0)
         {
           action = "org.freedesktop.Flatpak.metadata-update";
         }
       else
         {
+          g_autoptr(GError) error = NULL;
+          g_autoptr(FlatpakDecomposed) ref = NULL;
           gboolean is_app, is_install;
+
+          ref = flatpak_decomposed_new_from_ref (ref_str, &error);
+          if (ref == NULL)
+            {
+              g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                     "Error deployings: %s", error->message);
+              return FALSE;
+            }
 
           /* These flags allow clients to "upgrade" the permission,
            * avoiding the need for multiple polkit dialogs when we first
@@ -1925,14 +1935,13 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
           if ((flags & FLATPAK_HELPER_DEPLOY_FLAGS_APP_HINT) != 0)
             is_app = TRUE;
           else
-            is_app = g_str_has_prefix (ref, "app/");
+            is_app = flatpak_decomposed_is_app (ref);
 
           if ((flags & FLATPAK_HELPER_DEPLOY_FLAGS_INSTALL_HINT) != 0 ||
               (flags & FLATPAK_HELPER_DEPLOY_FLAGS_REINSTALL) != 0)
             is_install = TRUE;
           else
             {
-              g_autoptr(GError) error = NULL;
               g_autoptr(FlatpakDir) system = dir_get_system (installation, 0, &error);
 
               if (system == NULL)
@@ -1964,7 +1973,7 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
         }
 
       polkit_details_insert (details, "origin", origin);
-      polkit_details_insert (details, "ref", ref);
+      polkit_details_insert (details, "ref", ref_str);
     }
   else if (g_strcmp0 (method_name, "DeployAppstream") == 0)
     {
@@ -1997,15 +2006,25 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
   else if (g_strcmp0 (method_name, "Uninstall") == 0)
     {
       const char *installation;
-      const char *ref;
+      const char *ref_str;
       gboolean is_app;
       guint32 flags;
+      g_autoptr(GError) error = NULL;
+      g_autoptr(FlatpakDecomposed) ref = NULL;
 
       g_variant_get_child (parameters, 0, "u", &flags);
-      g_variant_get_child (parameters, 1, "&s", &ref);
+      g_variant_get_child (parameters, 1, "&s", &ref_str);
       g_variant_get_child (parameters, 2, "&s", &installation);
 
-      is_app = g_str_has_prefix (ref, "app/");
+      ref = flatpak_decomposed_new_from_ref (ref_str, &error);
+      if (ref == NULL)
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "Error uninstalling: %s", error->message);
+          return FALSE;
+        }
+
+      is_app = flatpak_decomposed_is_app (ref);
       if (is_app)
         action = "org.freedesktop.Flatpak.app-uninstall";
       else
@@ -2038,10 +2057,10 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
           if (name != NULL && *name != '\0')
             polkit_details_insert (details, "ref", name);
           else
-            polkit_details_insert (details, "ref", ref);
+            polkit_details_insert (details, "ref", flatpak_decomposed_get_ref (ref));
         }
       else
-        polkit_details_insert (details, "ref", ref);
+        polkit_details_insert (details, "ref", flatpak_decomposed_get_ref (ref));
     }
   else if (g_strcmp0 (method_name, "ConfigureRemote") == 0)
     {
