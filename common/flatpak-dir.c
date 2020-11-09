@@ -12430,7 +12430,7 @@ find_ref_for_refs_set (GHashTable   *refs,
   return NULL;
 }
 
-char *
+FlatpakDecomposed *
 flatpak_dir_find_remote_ref (FlatpakDir   *self,
                              FlatpakRemoteState *state,
                              const char   *name,
@@ -12438,7 +12438,6 @@ flatpak_dir_find_remote_ref (FlatpakDir   *self,
                              const char   *opt_default_branch,
                              const char   *opt_arch,
                              FlatpakKinds  kinds,
-                             FlatpakKinds *out_kind,
                              GCancellable *cancellable,
                              GError      **error)
 {
@@ -12448,15 +12447,7 @@ flatpak_dir_find_remote_ref (FlatpakDir   *self,
 
   /* Avoid work if the entire ref was specified */
   if (opt_branch != NULL && opt_arch != NULL && (kinds == FLATPAK_KINDS_APP || kinds == FLATPAK_KINDS_RUNTIME))
-    {
-      if (out_kind)
-        *out_kind = kinds;
-
-      if (kinds == FLATPAK_KINDS_APP)
-        return flatpak_build_app_ref (name, opt_branch, opt_arch);
-      else
-        return flatpak_build_runtime_ref (name, opt_branch, opt_arch);
-    }
+    return flatpak_decomposed_new_from_parts (kinds, name, opt_arch, opt_branch, error);
 
   if (!flatpak_dir_list_all_remote_refs (self, state,
                                          &remote_refs, cancellable, error))
@@ -12482,10 +12473,7 @@ flatpak_dir_find_remote_ref (FlatpakDir   *self,
         }
     }
 
-  if (out_kind != NULL)
-    *out_kind = flatpak_decomposed_get_kinds (remote_ref);
-
-  return flatpak_decomposed_dup_ref (remote_ref);
+  return g_steal_pointer (&remote_ref);
 }
 
 static GHashTable *
