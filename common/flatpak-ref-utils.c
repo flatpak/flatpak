@@ -1426,11 +1426,19 @@ flatpak_decomposed_is_arch (FlatpakDecomposed  *ref,
 
 gboolean
 flatpak_decomposed_is_arches (FlatpakDecomposed  *ref,
+                              gssize              len,
                               const char        **arches)
 {
   const char *ref_arch = flatpak_decomposed_peek_arch (ref, NULL);
 
-  for (int i = 0; arches[i] != NULL; i++)
+  if (len < 0)
+    {
+      len = 0;
+      while (arches[len] != NULL)
+        len++;
+    }
+
+  for (int i = 0; i < len; i++)
     {
       if (slashed_str_equal (ref_arch, arches[i]))
         return TRUE;

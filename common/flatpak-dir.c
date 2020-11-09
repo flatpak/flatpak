@@ -12222,7 +12222,7 @@ find_matching_refs (GHashTable           *refs,
            }
         }
 
-      if (!flatpak_decomposed_is_arches (ref, arches))
+      if (!flatpak_decomposed_is_arches (ref, -1, arches))
         continue;
 
       if (opt_branch != NULL && !flatpak_decomposed_is_branch (ref, opt_branch))
