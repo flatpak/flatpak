@@ -925,11 +925,19 @@ handle_uninstall (FlatpakSystemHelper   *object,
 {
   g_autoptr(FlatpakDir) system = NULL;
   g_autoptr(GError) error = NULL;
+  g_autoptr(FlatpakDecomposed) ref = NULL;
 
   g_debug ("Uninstall %u %s %s", arg_flags, arg_ref, arg_installation);
 
   system = dir_get_system (arg_installation, get_sender_pid (invocation), &error);
   if (system == NULL)
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return TRUE;
+    }
+
+  ref = flatpak_decomposed_new_from_ref (arg_ref, &error);
+  if (ref == NULL)
     {
       g_dbus_method_invocation_return_gerror (invocation, error);
       return TRUE;
@@ -948,7 +956,7 @@ handle_uninstall (FlatpakSystemHelper   *object,
       return TRUE;
     }
 
-  if (!flatpak_dir_uninstall (system, arg_ref, arg_flags, NULL, &error))
+  if (!flatpak_dir_uninstall (system, ref, arg_flags, NULL, &error))
     {
       flatpak_invocation_return_error (invocation, error, "Error uninstalling");
       return TRUE;
