@@ -88,12 +88,10 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
   g_autofree char *default_branch = NULL;
   FlatpakKinds kinds;
   FlatpakKinds matched_kinds;
-  g_autofree char *id = NULL;
-  g_autofree char *arch = NULL;
-  g_autofree char *branch = NULL;
-  g_auto(GStrv) parts = NULL;
-  FlatpakKinds kind;
-  g_autofree char *ref = NULL;
+  g_autofree char *match_id = NULL;
+  g_autofree char *match_arch = NULL;
+  g_autofree char *match_branch = NULL;
+  g_autoptr(FlatpakDecomposed) ref = NULL;
   g_autofree char *commit = NULL;
   g_autofree char *parent = NULL;
   g_autoptr(FlatpakRemoteState) state = NULL;
@@ -135,15 +133,15 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
   if (!flatpak_split_partial_ref_arg (pref, kinds, opt_arch, NULL,
-                                      &matched_kinds, &id, &arch, &branch, error))
+                                      &matched_kinds, &match_id, &match_arch, &match_branch, error))
     return FALSE;
 
-  state = get_remote_state (preferred_dir, remote, opt_cached, opt_sideloaded, arch, NULL, NULL, error);
+  state = get_remote_state (preferred_dir, remote, opt_cached, opt_sideloaded, match_arch, NULL, NULL, error);
   if (state == NULL)
     return FALSE;
 
-  ref = flatpak_dir_find_remote_ref (preferred_dir, state, id, branch, default_branch, arch,
-                                     matched_kinds, &kind, cancellable, error);
+  ref = flatpak_dir_find_remote_ref (preferred_dir, state, match_id, match_branch, default_branch, match_arch,
+                                     matched_kinds, cancellable, error);
   if (ref == NULL)
     return FALSE;
 
@@ -153,25 +151,27 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
         commit = g_strdup (opt_commit);
       else
         {
-          flatpak_remote_state_lookup_ref (state, ref, &commit, NULL, NULL, NULL, error);
+          flatpak_remote_state_lookup_ref (state, flatpak_decomposed_get_ref (ref), &commit, NULL, NULL, NULL, error);
           if (commit == NULL)
             {
               if (error != NULL && *error == NULL)
                 flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
                                     _("Couldn't find latest checksum for ref %s in remote %s"),
-                                    ref, remote);
+                                    flatpak_decomposed_get_ref (ref), remote);
               return FALSE;
             }
         }
     }
   else
     {
-      commit_v = flatpak_remote_state_load_ref_commit (state, preferred_dir, ref, opt_commit, NULL, &commit, cancellable, error);
+      commit_v = flatpak_remote_state_load_ref_commit (state, preferred_dir, flatpak_decomposed_get_ref (ref),
+                                                       opt_commit, NULL, &commit, cancellable, error);
       if (commit_v == NULL)
         return FALSE;
     }
 
-  if (flatpak_remote_state_lookup_sparse_cache (state, ref, &sparse_cache, NULL))
+  if (flatpak_remote_state_lookup_sparse_cache (state, flatpak_decomposed_get_ref (ref),
+                                                &sparse_cache, NULL))
     {
       eol = var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE, NULL);
       eol_rebase = var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, NULL);
@@ -179,8 +179,6 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
 
   if (opt_show_ref || opt_show_commit || opt_show_parent || opt_show_metadata || opt_show_runtime || opt_show_sdk)
     friendly = FALSE;
-
-  parts = g_strsplit (ref, "/", 0);
 
   if (friendly)
     {
@@ -191,6 +189,7 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
       AsApp *app = NULL;
       const char *version = NULL;
       const char *license = NULL;
+      g_autofree char *id = flatpak_decomposed_dup_id (ref);
 
       flatpak_get_window_size (&rows, &cols);
 
@@ -198,8 +197,8 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
       as_store_set_add_flags (store, as_store_get_add_flags (store) | AS_STORE_ADD_FLAG_USE_UNIQUE_ID);
 #endif
 
-      flatpak_dir_load_appstream_store (preferred_dir, remote, parts[2], store, NULL, NULL);
-      app = as_store_find_app (store, ref);
+      flatpak_dir_load_appstream_store (preferred_dir, remote, id, store, NULL, NULL);
+      app = as_store_find_app (store, flatpak_decomposed_get_ref (ref));
       if (app)
         {
           const char *name = as_app_get_localized_name (app);
@@ -257,7 +256,7 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
         len = MAX (len, g_utf8_strlen (_("Download:"), -1));
       if (formatted_installed_size)
         len = MAX (len, g_utf8_strlen (_("Installed:"), -1));
-      if (strcmp (parts[0], "app") == 0 && metakey != NULL)
+      if (flatpak_decomposed_is_app (ref) == 0 && metakey != NULL)
         {
           len = MAX (len, g_utf8_strlen (_("Runtime:"), -1));
           len = MAX (len, g_utf8_strlen (_("Sdk:"), -1));
@@ -278,10 +277,10 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
 
       width = cols - (len + 1);
 
-      print_aligned (len, _("ID:"), parts[1]);
-      print_aligned (len, _("Ref:"), ref);
-      print_aligned (len, _("Arch:"), parts[2]);
-      print_aligned (len, _("Branch:"), parts[3]);
+      print_aligned (len, _("ID:"), id);
+      print_aligned (len, _("Ref:"), flatpak_decomposed_get_ref (ref));
+      print_aligned_take (len, _("Arch:"), flatpak_decomposed_dup_arch (ref));
+      print_aligned (len, _("Branch:"), flatpak_decomposed_dup_arch (ref));
       if (version != NULL)
         print_aligned (len, _("Version:"), version);
       if (license != NULL)
@@ -292,12 +291,12 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
         print_aligned (len, _("Download:"), formatted_download_size);
       if (formatted_installed_size)
         print_aligned (len, _("Installed:"), formatted_installed_size);
-      if (strcmp (parts[0], "app") == 0 && metakey != NULL)
+      if (flatpak_decomposed_is_app (ref) && metakey != NULL)
         {
           g_autofree char *runtime = g_key_file_get_string (metakey, "Application", "runtime", error);
           print_aligned (len, _("Runtime:"), runtime ? runtime : "-");
         }
-      if (strcmp (parts[0], "app") == 0 && metakey != NULL)
+      if (flatpak_decomposed_is_app (ref) && metakey != NULL)
         {
           g_autofree char *sdk = g_key_file_get_string (metakey, "Application", "sdk", error);
           print_aligned (len, _("Sdk:"), sdk ? sdk : "-");
@@ -343,7 +342,8 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
               g_autoptr(GVariant) p_commit_v = NULL;
               VarCommitRef p_commit;
 
-              p_commit_v = flatpak_remote_state_load_ref_commit (state, preferred_dir, ref, p, NULL, NULL, cancellable, NULL);
+              p_commit_v = flatpak_remote_state_load_ref_commit (state, preferred_dir, flatpak_decomposed_get_ref (ref),
+                                                                 p, NULL, NULL, cancellable, NULL);
               if (p_commit_v == NULL)
                 break;
 
@@ -401,7 +401,7 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
           if (opt_show_ref)
             {
               maybe_print_space (&first);
-              g_print ("%s", ref);
+              g_print ("%s", flatpak_decomposed_get_ref (ref));
             }
 
           if (opt_show_commit)
@@ -422,12 +422,7 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
               maybe_print_space (&first);
 
               if (metakey)
-                {
-                  if (strcmp (parts[0], "app") == 0)
-                    runtime = g_key_file_get_string (metakey, "Application", "runtime", NULL);
-                  else
-                    runtime = g_key_file_get_string (metakey, "Runtime", "runtime", NULL);
-                }
+                runtime = g_key_file_get_string (metakey, flatpak_decomposed_get_kind_metadata_group (ref), "runtime", NULL);
               g_print ("%s", runtime ? runtime : "-");
             }
 
@@ -437,12 +432,7 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
               maybe_print_space (&first);
 
               if (metakey)
-                {
-                  if (strcmp (parts[0], "app") == 0)
-                    sdk = g_key_file_get_string (metakey, "Application", "sdk", NULL);
-                  else
-                    sdk = g_key_file_get_string (metakey, "Runtime", "sdk", NULL);
-                }
+                sdk = g_key_file_get_string (metakey, flatpak_decomposed_get_kind_metadata_group (ref), "sdk", NULL);
               g_print ("%s", sdk ? sdk : "-");
             }
 
@@ -464,7 +454,9 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
           c_v = NULL;
 
           if (c && opt_log)
-            c_v = flatpak_remote_state_load_ref_commit (state, preferred_dir, ref, c, NULL, NULL, cancellable, NULL);
+            c_v = flatpak_remote_state_load_ref_commit (state, preferred_dir,
+                                                        flatpak_decomposed_get_ref (ref),
+                                                        c, NULL, NULL, cancellable, NULL);
         }
       while (c_v != NULL);
     }
