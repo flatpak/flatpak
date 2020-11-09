@@ -2196,14 +2196,14 @@ flatpak_installation_uninstall_full (FlatpakInstallation    *self,
                                      GError                **error)
 {
   g_autoptr(FlatpakDir) dir = NULL;
-  g_autofree char *ref = NULL;
+  g_autoptr(FlatpakDecomposed) ref = NULL;
   g_autoptr(FlatpakDir) dir_clone = NULL;
 
   dir = flatpak_installation_get_dir (self, error);
   if (dir == NULL)
     return FALSE;
 
-  ref = flatpak_compose_ref (kind == FLATPAK_REF_KIND_APP, name, branch, arch, error);
+  ref = flatpak_decomposed_new_from_parts (flatpak_kinds_from_kind (kind), name, arch, branch, error);
   if (ref == NULL)
     return FALSE;
 
@@ -2212,12 +2212,12 @@ flatpak_installation_uninstall_full (FlatpakInstallation    *self,
   if (!flatpak_dir_ensure_repo (dir_clone, cancellable, error))
     return FALSE;
 
-  if (!flatpak_dir_uninstall (dir_clone, ref, FLATPAK_HELPER_UNINSTALL_FLAGS_NONE,
+  if (!flatpak_dir_uninstall (dir_clone, flatpak_decomposed_get_ref (ref), FLATPAK_HELPER_UNINSTALL_FLAGS_NONE,
                               cancellable, error))
     return FALSE;
 
   if (!(flags & FLATPAK_UNINSTALL_FLAGS_NO_TRIGGERS) &&
-      g_str_has_prefix (ref, "app"))
+      flatpak_decomposed_is_app (ref))
     flatpak_dir_run_triggers (dir_clone, cancellable, NULL);
 
   if (!(flags & FLATPAK_UNINSTALL_FLAGS_NO_PRUNE))
