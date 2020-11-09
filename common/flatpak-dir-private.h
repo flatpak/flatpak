@@ -1007,32 +1007,6 @@ gboolean flatpak_dir_find_latest_rev (FlatpakDir               *self,
 char * flatpak_dir_get_remote_auto_install_authenticator_ref (FlatpakDir         *self,
                                                               const char         *remote_name);
 
-typedef struct
-{
-  /* in */
-  char *remote;
-  char *ref;
-  char *opt_commit;
-
-  /* out */
-  char   *resolved_commit;
-  GBytes *resolved_metadata;
-  guint64 download_size;
-  guint64 installed_size;
-  char   *eol;
-  char   *eol_rebase;
-  gint32  token_type;
-} FlatpakDirResolve;
-
-
-FlatpakDirResolve  *flatpak_dir_resolve_new  (const char        *remote,
-                                              const char        *ref,
-                                              const char        *opt_commit);
-void                flatpak_dir_resolve_free (FlatpakDirResolve *resolve);
-
-gboolean flatpak_dir_resolve_maybe_resolve_from_metadata (FlatpakDirResolve *resolve,
-                                                          FlatpakRemoteState *state);
-
 char ** flatpak_dir_get_default_locales (FlatpakDir *self);
 char ** flatpak_dir_get_default_locale_languages (FlatpakDir *self);
 char ** flatpak_dir_get_locales (FlatpakDir *self);

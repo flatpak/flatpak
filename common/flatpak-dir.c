@@ -4547,36 +4547,6 @@ flatpak_dir_find_latest_rev (FlatpakDir               *self,
   return TRUE;
 }
 
-FlatpakDirResolve *
-flatpak_dir_resolve_new (const char *remote,
-                         const char *ref,
-                         const char *opt_commit)
-{
-  FlatpakDirResolve *resolve = g_new0 (FlatpakDirResolve, 1);
-
-  resolve->remote = g_strdup (remote);
-  resolve->ref = g_strdup (ref);
-  resolve->opt_commit = g_strdup (opt_commit);
-  return resolve;
-}
-
-void
-flatpak_dir_resolve_free (FlatpakDirResolve *resolve)
-{
-  if (resolve)
-    {
-      g_free (resolve->remote);
-      g_free (resolve->ref);
-      g_free (resolve->opt_commit);
-      g_free (resolve->resolved_commit);
-      g_bytes_unref (resolve->resolved_metadata);
-      g_free (resolve->eol);
-      g_free (resolve->eol_rebase);
-      g_free (resolve);
-
-    }
-}
-
 static gboolean
 get_mtime (GFile        *file,
            GTimeVal     *result,
