@@ -913,6 +913,38 @@ flatpak_transaction_operation_get_old_metadata (FlatpakTransactionOperation *sel
 }
 
 /**
+ * flatpak_transaction_operation_get_subpaths:
+ * @self: a #FlatpakTransactionOperation
+ *
+ * Gets the set of subpaths that will be pulled from this ref.
+ *
+ * Some refs are only partially installed, such as translations. These
+ * are subset by the toplevel directory (typically by translation name).
+ * The subset to install can be specified at install time, but is otherwise
+ * decided based on configurations and things like the current locale and
+ * how the app was previously installed.
+ *
+ * If there is no subsetting active, this will always return %NULL
+ * (even though some other APIs also take an empty string to mean no
+ * subsetting).
+ *
+ * This information is available when the transaction is resolved,
+ * i.e. when #FlatpakTransaction::ready is emitted.
+ *
+ * Returns: (transfer none): the set of subpaths that will be pulled, or %NULL if no subsetting.
+ * Since: 1.9.1
+ */
+const char * const *
+flatpak_transaction_operation_get_subpaths (FlatpakTransactionOperation *self)
+{
+  if (self->subpaths == NULL || self->subpaths[0] == NULL)
+    return NULL;
+
+  return (const char * const *) self->subpaths;
+}
+
+
+/**
  * flatpak_transaction_operation_get_requires_authentication:
  * @self: a #FlatpakTransactionOperation
  *
@@ -2380,7 +2412,7 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   g_autofree char *origin = NULL;
-  g_auto(GStrv) merged_subpaths = NULL;
+  g_auto(GStrv) new_subpaths = NULL;
   const char *pref;
   g_autofree char *origin_remote = NULL;
   g_autoptr(FlatpakRemoteState) state = NULL;
@@ -2429,16 +2461,25 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
         }
       remote = origin;
 
-      /* As stated in the documentation for flatpak_transaction_add_update(),
-       * for locale extensions we merge existing subpaths with the set of
-       * configured languages, to match the behavior of add_related().
-       */
-      if (subpaths == NULL && flatpak_decomposed_id_has_suffix (ref, ".Locale"))
+      if (subpaths == NULL)
         {
           g_autofree const char **old_subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
-          g_auto(GStrv) extra_subpaths = flatpak_dir_get_locale_subpaths (priv->dir);
-          merged_subpaths = flatpak_subpaths_merge ((char **)old_subpaths, extra_subpaths);
-          subpaths = (const char **)merged_subpaths;
+
+          /* As stated in the documentation for flatpak_transaction_add_update(),
+           * for locale extensions we merge existing subpaths with the set of
+           * configured languages, to match the behavior of add_related().
+           */
+          if (flatpak_decomposed_id_has_suffix (ref, ".Locale"))
+            {
+              g_auto(GStrv) extra_subpaths = flatpak_dir_get_locale_subpaths (priv->dir);
+              new_subpaths = flatpak_subpaths_merge ((char **)old_subpaths, extra_subpaths);
+            }
+          else
+            {
+              /* Otherwise we resolve to the current subpaths here so we can know in operation-done what subpaths will be pulled */
+              new_subpaths = g_strdupv ((char **)old_subpaths);
+            }
+          subpaths = (const char **)new_subpaths;
         }
     }
   else if (kind == FLATPAK_TRANSACTION_OPERATION_INSTALL)
@@ -2657,7 +2698,7 @@ flatpak_transaction_add_install_flatpakref (FlatpakTransaction *self,
  * @ref: the ref
  * @subpaths: (nullable) (array zero-terminated=1): subpaths to install; %NULL
  *  to use the current set plus the set of configured languages, or
- *  `{ "", NULL }` to pull all subpaths.
+ *  `{ NULL }` or `{ "", NULL }` to pull all subpaths.
  * @commit: (nullable): the commit to update to, or %NULL to use the latest
  * @error: return location for a #GError
  *

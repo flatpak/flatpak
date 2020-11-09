@@ -198,6 +198,8 @@ GKeyFile *                      flatpak_transaction_operation_get_metadata (Flat
 FLATPAK_EXTERN
 GKeyFile *                      flatpak_transaction_operation_get_old_metadata (FlatpakTransactionOperation *self);
 FLATPAK_EXTERN
+const char * const *            flatpak_transaction_operation_get_subpaths (FlatpakTransactionOperation *self);
+FLATPAK_EXTERN
 gboolean                        flatpak_transaction_operation_get_requires_authentication (FlatpakTransactionOperation *self);
 FLATPAK_EXTERN
 const char *                    flatpak_transaction_operation_type_to_string (FlatpakTransactionOperationType kind);
