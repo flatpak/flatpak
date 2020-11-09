@@ -4330,7 +4330,7 @@ _run_op_kind (FlatpakTransaction           *self,
                                       priv->max_op >= APP_UPDATE,
                                       priv->max_op == APP_INSTALL || priv->max_op == RUNTIME_INSTALL,
                                       remote_state,
-                                      flatpak_decomposed_get_ref (op->ref),
+                                      op->ref,
                                       op->resolved_commit,
                                       (const char **) op->subpaths,
                                       (const char **) op->previous_ids,
@@ -4401,7 +4401,7 @@ _run_op_kind (FlatpakTransaction           *self,
 
       emit_new_op (self, op, progress);
 
-      res = flatpak_dir_uninstall (priv->dir, flatpak_decomposed_get_ref (op->ref), flags,
+      res = flatpak_dir_uninstall (priv->dir, op->ref, flags,
                                    cancellable, error);
 
       flatpak_transaction_progress_done (progress);

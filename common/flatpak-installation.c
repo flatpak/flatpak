@@ -2048,7 +2048,7 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
                            (flags & FLATPAK_UPDATE_FLAGS_NO_DEPLOY) != 0,
                            (flags & FLATPAK_UPDATE_FLAGS_NO_STATIC_DELTAS) != 0,
                            FALSE, FALSE, FALSE, state,
-                           flatpak_decomposed_get_ref (ref), target_commit,
+                           ref, target_commit,
                            (const char **) subpaths, NULL, NULL, NULL, NULL,
                            progress, cancellable, error))
     return NULL;
@@ -2212,7 +2212,7 @@ flatpak_installation_uninstall_full (FlatpakInstallation    *self,
   if (!flatpak_dir_ensure_repo (dir_clone, cancellable, error))
     return FALSE;
 
-  if (!flatpak_dir_uninstall (dir_clone, flatpak_decomposed_get_ref (ref), FLATPAK_HELPER_UNINSTALL_FLAGS_NONE,
+  if (!flatpak_dir_uninstall (dir_clone, ref, FLATPAK_HELPER_UNINSTALL_FLAGS_NONE,
                               cancellable, error))
     return FALSE;
 
