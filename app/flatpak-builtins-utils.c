@@ -1091,15 +1091,12 @@ as_store_find_app (AsStore    *store,
   g_autofree char *desktopid = g_strconcat (appid, ".desktop", NULL);
   int j;
 
-  g_debug ("Looking for AsApp for '%s'", ref);
-
   for (j = 0; j < 2; j++)
     {
       const char *id = j == 0 ? appid : desktopid;
       g_autoptr(GPtrArray) apps = as_store_get_apps_by_id (store, id);
       int i;
 
-      g_debug ("sifting through %d apps for %s", apps->len, id);
       for (i = 0; i < apps->len; i++)
         {
           AsApp *app = g_ptr_array_index (apps, i);
