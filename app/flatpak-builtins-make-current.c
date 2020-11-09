@@ -92,7 +92,7 @@ flatpak_builtin_make_current_app (int argc, char **argv, GCancellable *cancellab
                          cancellable, error))
     return FALSE;
 
-  deploy_base = flatpak_dir_get_deploy_dir (dir, flatpak_decomposed_get_ref (ref));
+  deploy_base = flatpak_dir_get_deploy_dir (dir, ref);
   if (!g_file_query_exists (deploy_base, cancellable))
     return flatpak_fail (error, _("App %s branch %s is not installed"), id, branch);
 

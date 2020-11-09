@@ -463,8 +463,8 @@ char *      flatpak_dir_get_name (FlatpakDir *self);
 const char *flatpak_dir_get_name_cached (FlatpakDir *self);
 gint        flatpak_dir_get_priority (FlatpakDir *self);
 FlatpakDirStorageType flatpak_dir_get_storage_type (FlatpakDir *self);
-GFile *     flatpak_dir_get_deploy_dir (FlatpakDir *self,
-                                        const char *ref);
+GFile *     flatpak_dir_get_deploy_dir (FlatpakDir         *self,
+                                        FlatpakDecomposed *ref);
 char *      flatpak_dir_get_deploy_subdir (FlatpakDir          *self,
                                            const char          *checksum,
                                            const char * const * subpaths);
@@ -649,14 +649,14 @@ char *      flatpak_dir_read_latest (FlatpakDir   *self,
                                      char        **out_alt_id,
                                      GCancellable *cancellable,
                                      GError      **error);
-char *      flatpak_dir_read_active (FlatpakDir   *self,
-                                     const char   *ref,
-                                     GCancellable *cancellable);
-gboolean    flatpak_dir_set_active (FlatpakDir   *self,
-                                    const char   *ref,
-                                    const char   *checksum,
-                                    GCancellable *cancellable,
-                                    GError      **error);
+char *      flatpak_dir_read_active (FlatpakDir        *self,
+                                     FlatpakDecomposed *ref,
+                                     GCancellable      *cancellable);
+gboolean    flatpak_dir_set_active (FlatpakDir        *self,
+                                    FlatpakDecomposed *ref,
+                                    const char        *checksum,
+                                    GCancellable      *cancellable,
+                                    GError           **error);
 FlatpakDecomposed *flatpak_dir_current_ref (FlatpakDir   *self,
                                             const char   *name,
                                             GCancellable *cancellable);
