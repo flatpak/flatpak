@@ -2877,9 +2877,9 @@ flatpak_dir_load_deployed (FlatpakDir        *self,
 
 GFile *
 flatpak_dir_get_deploy_dir (FlatpakDir *self,
-                            const char *ref)
+                            FlatpakDecomposed *ref)
 {
-  return g_file_resolve_relative_path (self->basedir, ref);
+  return g_file_resolve_relative_path (self->basedir, flatpak_decomposed_get_ref (ref));
 }
 
 char *
@@ -6378,9 +6378,9 @@ flatpak_dir_read_latest (FlatpakDir   *self,
 }
 
 char *
-flatpak_dir_read_active (FlatpakDir   *self,
-                         const char   *ref,
-                         GCancellable *cancellable)
+flatpak_dir_read_active (FlatpakDir        *self,
+                         FlatpakDecomposed *ref,
+                         GCancellable      *cancellable)
 {
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(GFile) active_link = NULL;
@@ -6399,11 +6399,11 @@ flatpak_dir_read_active (FlatpakDir   *self,
 }
 
 gboolean
-flatpak_dir_set_active (FlatpakDir   *self,
-                        const char   *ref,
-                        const char   *active_id,
-                        GCancellable *cancellable,
-                        GError      **error)
+flatpak_dir_set_active (FlatpakDir        *self,
+                        FlatpakDecomposed *ref,
+                        const char        *active_id,
+                        GCancellable      *cancellable,
+                        GError           **error)
 {
   gboolean ret = FALSE;
   g_autoptr(GFile) deploy_base = NULL;
@@ -7418,13 +7418,13 @@ flatpak_dir_update_exports (FlatpakDir   *self,
 
   if (changed_app &&
       (current_ref = flatpak_dir_current_ref (self, changed_app, cancellable)) &&
-      (active_id = flatpak_dir_read_active (self, flatpak_decomposed_get_ref (current_ref), cancellable)))
+      (active_id = flatpak_dir_read_active (self, current_ref, cancellable)))
     {
       g_autoptr(GFile) deploy_base = NULL;
       g_autoptr(GFile) active = NULL;
       g_autoptr(GFile) export = NULL;
 
-      deploy_base = flatpak_dir_get_deploy_dir (self, flatpak_decomposed_get_ref (current_ref));
+      deploy_base = flatpak_dir_get_deploy_dir (self, current_ref);
       active = g_file_get_child (deploy_base, active_id);
       export = g_file_get_child (active, "export");
 
@@ -7989,7 +7989,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
   if (!flatpak_dir_repo_lock (self, &lock, LOCK_SH, cancellable, error))
     return FALSE;
 
-  deploy_base = flatpak_dir_get_deploy_dir (self, flatpak_decomposed_get_ref (ref));
+  deploy_base = flatpak_dir_get_deploy_dir (self, ref);
 
   if (checksum_or_latest == NULL)
     {
@@ -8334,7 +8334,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
                     cancellable, NULL, NULL, error))
     return FALSE;
 
-  if (!flatpak_dir_set_active (self, flatpak_decomposed_get_ref (ref), checkout_basename, cancellable, error))
+  if (!flatpak_dir_set_active (self, ref, checkout_basename, cancellable, error))
     return FALSE;
 
   if (!flatpak_dir_update_deploy_ref (self, flatpak_decomposed_get_ref (ref), checksum, error))
@@ -8400,7 +8400,7 @@ flatpak_dir_deploy_install (FlatpakDir        *self,
   old_deploy_dir = flatpak_dir_get_if_deployed (self, ref, NULL, cancellable);
   if (old_deploy_dir != NULL)
     {
-      old_active = flatpak_dir_read_active (self, flatpak_decomposed_get_ref (ref), cancellable);
+      old_active = flatpak_dir_read_active (self, ref, cancellable);
 
       if (reinstall)
         {
@@ -8432,7 +8432,7 @@ flatpak_dir_deploy_install (FlatpakDir        *self,
         }
     }
 
-  deploy_base = flatpak_dir_get_deploy_dir (self, flatpak_decomposed_get_ref (ref));
+  deploy_base = flatpak_dir_get_deploy_dir (self, ref);
   if (!g_file_make_directory_with_parents (deploy_base, cancellable, &local_error))
     {
       if (!g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_EXISTS))
@@ -8479,7 +8479,7 @@ flatpak_dir_deploy_install (FlatpakDir        *self,
 
   ret = TRUE;
 
-  commit = flatpak_dir_read_active (self, flatpak_decomposed_get_ref (ref), cancellable);
+  commit = flatpak_dir_read_active (self, ref, cancellable);
   flatpak_dir_log (self, "deploy install", origin, flatpak_decomposed_get_ref (ref), commit, old_active, NULL,
                    "Installed %s from %s", flatpak_decomposed_get_ref (ref), origin);
 
@@ -8518,7 +8518,7 @@ flatpak_dir_deploy_update (FlatpakDir        *self,
   if (old_deploy_data == NULL)
     return FALSE;
 
-  old_active = flatpak_dir_read_active (self, flatpak_decomposed_get_ref (ref), cancellable);
+  old_active = flatpak_dir_read_active (self, ref, cancellable);
 
   old_origin = flatpak_deploy_data_get_origin (old_deploy_data);
   old_subpaths = flatpak_deploy_data_get_subpaths (old_deploy_data);
@@ -8561,7 +8561,7 @@ flatpak_dir_deploy_update (FlatpakDir        *self,
 
   flatpak_dir_cleanup_removed (self, cancellable, NULL);
 
-  commit = flatpak_dir_read_active (self, flatpak_decomposed_get_ref (ref), cancellable);
+  commit = flatpak_dir_read_active (self, ref, cancellable);
   flatpak_dir_log (self, "deploy update", old_origin, flatpak_decomposed_get_ref (ref), commit, old_active, NULL,
                    "Updated %s from %s", flatpak_decomposed_get_ref (ref), old_origin);
 
@@ -9895,7 +9895,7 @@ flatpak_dir_uninstall (FlatpakDir                 *self,
   old_active = g_strdup (flatpak_deploy_data_get_commit (deploy_data));
 
   g_debug ("dropping active ref");
-  if (!flatpak_dir_set_active (self, flatpak_decomposed_get_ref (ref), NULL, cancellable, error))
+  if (!flatpak_dir_set_active (self, ref, NULL, cancellable, error))
     return FALSE;
 
   if (flatpak_decomposed_is_app (ref))
@@ -10078,7 +10078,7 @@ out:
 
 gboolean
 flatpak_dir_list_deployed (FlatpakDir   *self,
-                           const char   *ref,
+                           const char   *ref_str,
                            char       ***deployed_ids,
                            GCancellable *cancellable,
                            GError      **error)
@@ -10091,6 +10091,10 @@ flatpak_dir_list_deployed (FlatpakDir   *self,
   g_autoptr(GFile) child = NULL;
   g_autoptr(GFileInfo) child_info = NULL;
   g_autoptr(GError) my_error = NULL;
+
+  g_autoptr(FlatpakDecomposed) ref = flatpak_decomposed_new_from_ref (ref_str, error);
+  if (ref == NULL)
+    return FALSE;
 
   deploy_base = flatpak_dir_get_deploy_dir (self, ref);
 
@@ -10170,7 +10174,7 @@ dir_is_locked (GFile *dir)
 
 gboolean
 flatpak_dir_undeploy (FlatpakDir   *self,
-                      const char   *ref,
+                      const char   *ref_str,
                       const char   *active_id,
                       gboolean      is_update,
                       gboolean      force_remove,
@@ -10181,12 +10185,16 @@ flatpak_dir_undeploy (FlatpakDir   *self,
   g_autoptr(GFile) checkoutdir = NULL;
   g_autoptr(GFile) removed_subdir = NULL;
   g_autoptr(GFile) removed_dir = NULL;
+  g_autofree char *id = NULL;
   g_autofree char *dirname = NULL;
   g_autofree char *current_active = NULL;
   g_autoptr(GFile) change_file = NULL;
   g_autoptr(GError) child_error = NULL;
-  g_auto(GStrv) ref_parts = NULL;
   int i, retry;
+
+  g_autoptr(FlatpakDecomposed) ref = flatpak_decomposed_new_from_ref (ref_str, error);
+  if (ref == NULL)
+    return FALSE;
 
   g_assert (ref != NULL);
   g_assert (active_id != NULL);
@@ -10197,7 +10205,8 @@ flatpak_dir_undeploy (FlatpakDir   *self,
   if (!g_file_query_exists (checkoutdir, cancellable))
     {
       g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
-                   _("%s commit %s not installed"), ref, active_id);
+                   _("%s commit %s not installed"),
+                   flatpak_decomposed_get_ref (ref), active_id);
       return FALSE;
     }
 
@@ -10213,7 +10222,7 @@ flatpak_dir_undeploy (FlatpakDir   *self,
       /* We're removing the active deployment, start by repointing that
          to another deployment if one exists */
 
-      if (!flatpak_dir_list_deployed (self, ref,
+      if (!flatpak_dir_list_deployed (self, flatpak_decomposed_get_ref (ref),
                                       &deployed_ids,
                                       cancellable, error))
         return FALSE;
@@ -10236,8 +10245,8 @@ flatpak_dir_undeploy (FlatpakDir   *self,
   if (!flatpak_mkdir_p (removed_dir, cancellable, error))
     return FALSE;
 
-  ref_parts = g_strsplit (ref, "/", -1);
-  dirname = g_strdup_printf ("%s-%s", ref_parts[1], active_id);
+  id = flatpak_decomposed_dup_id (ref);
+  dirname = g_strdup_printf ("%s-%s", id, active_id);
 
   removed_subdir = g_file_get_child (removed_dir, dirname);
 
@@ -10301,7 +10310,7 @@ flatpak_dir_undeploy (FlatpakDir   *self,
 
 gboolean
 flatpak_dir_undeploy_all (FlatpakDir   *self,
-                          const char   *ref,
+                          const char   *ref_str,
                           gboolean      force_remove,
                           gboolean     *was_deployed_out,
                           GCancellable *cancellable,
@@ -10315,13 +10324,17 @@ flatpak_dir_undeploy_all (FlatpakDir   *self,
   int i;
   gboolean was_deployed;
 
-  if (!flatpak_dir_list_deployed (self, ref, &deployed, cancellable, error))
+  g_autoptr(FlatpakDecomposed) ref = flatpak_decomposed_new_from_ref (ref_str, error);
+  if (ref == NULL)
+    return FALSE;
+
+  if (!flatpak_dir_list_deployed (self, flatpak_decomposed_get_ref (ref), &deployed, cancellable, error))
     return FALSE;
 
   for (i = 0; deployed[i] != NULL; i++)
     {
       g_debug ("undeploying %s", deployed[i]);
-      if (!flatpak_dir_undeploy (self, ref, deployed[i], FALSE, force_remove, cancellable, error))
+      if (!flatpak_dir_undeploy (self, flatpak_decomposed_get_ref (ref), deployed[i], FALSE, force_remove, cancellable, error))
         return FALSE;
     }
 
@@ -10599,7 +10612,7 @@ flatpak_dir_get_if_deployed (FlatpakDir        *self,
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
 
-  deploy_base = flatpak_dir_get_deploy_dir (self, flatpak_decomposed_get_ref (ref));
+  deploy_base = flatpak_dir_get_deploy_dir (self, ref);
 
   if (checksum != NULL)
     {

@@ -748,7 +748,7 @@ get_ref (FlatpakDir        *dir,
   subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
   installed_size = flatpak_deploy_data_get_installed_size (deploy_data);
 
-  deploy_dir = flatpak_dir_get_deploy_dir (dir, flatpak_decomposed_get_ref (ref));
+  deploy_dir = flatpak_dir_get_deploy_dir (dir, ref);
   deploy_subdirname = flatpak_dir_get_deploy_subdir (dir, commit, subpaths);
   deploy_subdir = g_file_get_child (deploy_dir, deploy_subdirname);
   deploy_path = g_file_get_path (deploy_subdir);
