@@ -5675,7 +5675,7 @@ flatpak_extension_new (const char        *id,
 
   if (deploy_dir)
     {
-      deploy_data = flatpak_load_deploy_data (deploy_dir, flatpak_decomposed_get_ref (ref), FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
+      deploy_data = flatpak_load_deploy_data (deploy_dir, ref, FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
       if (deploy_data)
         ext->commit = g_strdup (flatpak_deploy_data_get_commit (deploy_data));
     }

@@ -2917,7 +2917,7 @@ load_deployed_metadata (FlatpakTransaction *self, FlatpakDecomposed *ref, char *
   if (out_commit || out_remote)
     {
       g_autoptr(GBytes) deploy_data = NULL;
-      deploy_data = flatpak_load_deploy_data (deploy_dir, flatpak_decomposed_get_ref (ref), FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
+      deploy_data = flatpak_load_deploy_data (deploy_dir, ref, FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
       if (deploy_data == NULL)
         return NULL;
 

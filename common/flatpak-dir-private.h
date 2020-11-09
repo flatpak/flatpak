@@ -425,11 +425,11 @@ const char **       flatpak_deploy_data_get_previous_ids (GBytes *deploy_data,
 
 
 GFile *        flatpak_deploy_get_dir (FlatpakDeploy *deploy);
-GBytes *       flatpak_load_deploy_data (GFile        *deploy_dir,
-                                         const char   *ref,
-                                         int           required_version,
-                                         GCancellable *cancellable,
-                                         GError      **error);
+GBytes *       flatpak_load_deploy_data (GFile             *deploy_dir,
+                                         FlatpakDecomposed *ref,
+                                         int                required_version,
+                                         GCancellable      *cancellable,
+                                         GError           **error);
 GBytes *       flatpak_deploy_get_deploy_data (FlatpakDeploy *deploy,
                                                int            required_version,
                                                GCancellable  *cancellable,

@@ -186,9 +186,9 @@ static void flatpak_dir_log (FlatpakDir *self,
   (flatpak_dir_log) (self, __FILE__, __LINE__, __FUNCTION__, \
                      NULL, change, remote, ref, commit, old_commit, url, format, __VA_ARGS__)
 
-static GBytes *upgrade_deploy_data (GBytes     *deploy_data,
-                                    GFile      *deploy_dir,
-                                    const char *ref);
+static GBytes *upgrade_deploy_data (GBytes            *deploy_data,
+                                    GFile             *deploy_dir,
+                                    FlatpakDecomposed *ref);
 
 typedef struct
 {
@@ -1320,11 +1320,11 @@ flatpak_deploy_get_dir (FlatpakDeploy *deploy)
 }
 
 GBytes *
-flatpak_load_deploy_data (GFile        *deploy_dir,
-                          const char   *ref,
-                          int           required_version,
-                          GCancellable *cancellable,
-                          GError      **error)
+flatpak_load_deploy_data (GFile             *deploy_dir,
+                          FlatpakDecomposed *ref,
+                          int                required_version,
+                          GCancellable      *cancellable,
+                          GError           **error)
 {
   g_autoptr(GFile) data_file = NULL;
   g_autoptr(GBytes) deploy_data = NULL;
@@ -1352,7 +1352,7 @@ flatpak_deploy_get_deploy_data (FlatpakDeploy *deploy,
                                 GError       **error)
 {
   return flatpak_load_deploy_data (deploy->dir,
-                                   flatpak_decomposed_get_ref (deploy->ref),
+                                   deploy->ref,
                                    required_version,
                                    cancellable,
                                    error);
@@ -3392,7 +3392,9 @@ flatpak_dir_new_deploy_data (FlatpakDir         *self,
 }
 
 static GBytes *
-upgrade_deploy_data (GBytes *deploy_data, GFile *deploy_dir, const char *ref)
+upgrade_deploy_data (GBytes *deploy_data,
+                     GFile *deploy_dir,
+                     FlatpakDecomposed *ref)
 {
   VarDeployDataRef deploy_ref = var_deploy_data_from_bytes (deploy_data);
   g_autoptr(GVariant) metadata = g_variant_ref_sink (var_metadata_peek_as_gvariant (var_deploy_data_get_metadata (deploy_ref)));
@@ -3421,9 +3423,8 @@ upgrade_deploy_data (GBytes *deploy_data, GFile *deploy_dir, const char *ref)
   old_version = flatpak_deploy_data_get_version (deploy_data);
   if (old_version < 1)
     {
-      g_auto(GStrv) ref_parts = NULL;
-      ref_parts = g_strsplit (ref, "/", -1);
-      add_appdata_to_deploy_data (&metadata_builder, deploy_dir, ref_parts[1]);
+      g_autofree char *id = flatpak_decomposed_dup_id (ref);
+      add_appdata_to_deploy_data (&metadata_builder, deploy_dir, id);
     }
 
   if (old_version < 3)
@@ -3461,7 +3462,7 @@ flatpak_dir_get_deploy_data (FlatpakDir        *self,
     }
 
   return flatpak_load_deploy_data (deploy_dir,
-                                   flatpak_decomposed_get_ref (ref),
+                                   ref,
                                    required_version,
                                    cancellable,
                                    error);
@@ -8406,7 +8407,7 @@ flatpak_dir_deploy_install (FlatpakDir        *self,
           g_autoptr(GBytes) old_deploy = NULL;
           const char *old_origin;
 
-          old_deploy = flatpak_load_deploy_data (old_deploy_dir, flatpak_decomposed_get_ref (ref), FLATPAK_DEPLOY_VERSION_ANY, cancellable, error);
+          old_deploy = flatpak_load_deploy_data (old_deploy_dir, ref, FLATPAK_DEPLOY_VERSION_ANY, cancellable, error);
           if (old_deploy == NULL)
             goto out;
 
@@ -15020,7 +15021,7 @@ flatpak_dir_find_local_related (FlatpakDir        *self,
           return NULL;
         }
 
-      deploy_data = flatpak_load_deploy_data (deploy_dir, flatpak_decomposed_get_ref (ref), FLATPAK_DEPLOY_VERSION_ANY, cancellable, error);
+      deploy_data = flatpak_load_deploy_data (deploy_dir, ref, FLATPAK_DEPLOY_VERSION_ANY, cancellable, error);
       if (deploy_data == NULL)
         return NULL;
 
