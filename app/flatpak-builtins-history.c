@@ -217,20 +217,34 @@ print_history (GPtrArray    *dirs,
                      strcmp (columns[k].name, "arch") == 0 ||
                      strcmp (columns[k].name, "branch") == 0)
               {
-                g_autofree char *ref = get_field (j, "REF", error);
+                g_autoptr(FlatpakDecomposed) ref = NULL;
+                g_autofree char *ref_str = get_field (j, "REF", error);
                 if (*error)
                   return FALSE;
+
+                if (ref_str)
+                  {
+                    ref = flatpak_decomposed_new_from_ref (ref_str, error);
+                    if (ref == NULL)
+                      return FALSE;
+                  }
+
                 if (strcmp (columns[k].name, "ref") == 0)
-                  flatpak_table_printer_add_column (printer, ref);
+                  flatpak_table_printer_add_column (printer, ref_str);
                 else
                   {
-                    g_auto(GStrv) pref = flatpak_decompose_ref (ref, NULL);
-                    if (strcmp (columns[k].name, "application") == 0)
-                      flatpak_table_printer_add_column (printer, pref ? pref[1] : "");
-                    else if (strcmp (columns[k].name, "arch") == 0)
-                      flatpak_table_printer_add_column (printer, pref ? pref[2] : "");
-                    else
-                      flatpak_table_printer_add_column (printer, pref ? pref[3] : "");
+                    g_autofree char *value = NULL;
+                    if (ref)
+                      {
+                        if (strcmp (columns[k].name, "application") == 0)
+                          value = flatpak_decomposed_dup_id (ref);
+                        else if (strcmp (columns[k].name, "arch") == 0)
+                          value = flatpak_decomposed_dup_arch (ref);
+                        else
+                          value = flatpak_decomposed_dup_branch (ref);
+                      }
+
+                    flatpak_table_printer_add_column (printer, value);
                   }
               }
             else if (strcmp (columns[k].name, "installation") == 0)

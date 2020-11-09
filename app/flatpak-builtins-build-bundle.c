@@ -454,7 +454,7 @@ generate_labels (FlatpakOciDescriptor *layer_desc,
 
 static gboolean
 build_oci (OstreeRepo *repo, const char *commit_checksum, GFile *dir,
-           const char *name, const char *ref,
+           const char *name, const char *ref_str,
            GCancellable *cancellable, GError **error)
 {
   g_autoptr(GFile) root = NULL;
@@ -473,7 +473,8 @@ build_oci (OstreeRepo *repo, const char *commit_checksum, GFile *dir,
   g_autoptr(FlatpakOciManifest) manifest = NULL;
   g_autoptr(FlatpakOciIndex) index = NULL;
   g_autoptr(GHashTable) flatpak_labels = NULL;
-  g_auto(GStrv) ref_parts = NULL;
+  g_autoptr(FlatpakDecomposed) ref = NULL;
+  g_autofree char *arch = NULL;
   int history_index;
   GTimeVal tv;
 
@@ -486,9 +487,11 @@ build_oci (OstreeRepo *repo, const char *commit_checksum, GFile *dir,
   if (!ostree_repo_read_commit_detached_metadata (repo, commit_checksum, &commit_metadata, cancellable, error))
     return FALSE;
 
-  ref_parts = flatpak_decompose_ref (ref, error);
-  if (ref_parts == NULL)
+  ref = flatpak_decomposed_new_from_ref (ref_str, error);
+  if (ref == NULL)
     return FALSE;
+
+  arch = flatpak_decomposed_dup_arch (ref);
 
   dir_uri = g_file_get_uri (dir);
   registry = flatpak_oci_registry_new (dir_uri, TRUE, -1, cancellable, error);
@@ -512,13 +515,13 @@ build_oci (OstreeRepo *repo, const char *commit_checksum, GFile *dir,
                                        error))
     return FALSE;
 
-  flatpak_labels = generate_labels (layer_desc, repo, root, name, ref, commit_checksum, commit_data, cancellable, error);
+  flatpak_labels = generate_labels (layer_desc, repo, root, name, flatpak_decomposed_get_ref (ref), commit_checksum, commit_data, cancellable, error);
   if (flatpak_labels == NULL)
     return FALSE;
 
   image = flatpak_oci_image_new ();
   flatpak_oci_image_set_layer (image, uncompressed_digest);
-  flatpak_oci_image_set_architecture (image, flatpak_arch_to_oci_arch (ref_parts[2]));
+  flatpak_oci_image_set_architecture (image, flatpak_arch_to_oci_arch (arch));
   history_index = flatpak_oci_image_add_history (image);
 
   g_get_current_time (&tv);
@@ -547,7 +550,7 @@ build_oci (OstreeRepo *repo, const char *commit_checksum, GFile *dir,
   if (index == NULL)
     index = flatpak_oci_index_new ();
 
-  flatpak_oci_index_add_manifest (index, ref, manifest_desc);
+  flatpak_oci_index_add_manifest (index, flatpak_decomposed_get_ref (ref), manifest_desc);
 
   if (!flatpak_oci_registry_save_index (registry, index, cancellable, error))
     return FALSE;
