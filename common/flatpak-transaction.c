@@ -534,10 +534,9 @@ flatpak_transaction_add_default_dependency_sources (FlatpakTransaction *self)
  */
 static gboolean
 ref_is_installed (FlatpakTransaction *self,
-                  FlatpakDecomposed *decomposed)
+                  FlatpakDecomposed *ref)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
-  const char *ref = flatpak_decomposed_get_ref (decomposed);
   g_autoptr(GFile) deploy_dir = NULL;
   FlatpakDir *dir = priv->dir;
   int i;
@@ -559,10 +558,9 @@ ref_is_installed (FlatpakTransaction *self,
 }
 
 static gboolean
-dir_ref_is_installed (FlatpakDir *dir, FlatpakDecomposed *decomposed, char **remote_out, GBytes **deploy_data_out)
+dir_ref_is_installed (FlatpakDir *dir, FlatpakDecomposed *ref, char **remote_out, GBytes **deploy_data_out)
 {
   g_autoptr(GBytes) deploy_data = NULL;
-  const char *ref = flatpak_decomposed_get_ref (decomposed);
 
   deploy_data = flatpak_dir_get_deploy_data (dir, ref, FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
   if (deploy_data == NULL)
@@ -2842,7 +2840,7 @@ flatpak_transaction_add_auto_install (FlatpakTransaction *self,
   for (int i = 0; remotes[i] != NULL; i++)
     {
       char *remote = remotes[i];
-      g_autofree char *auto_install_ref = NULL;
+      g_autoptr(FlatpakDecomposed) auto_install_ref = NULL;
 
       if (flatpak_dir_get_remote_disabled (priv->dir, remote))
         continue;
@@ -2859,19 +2857,16 @@ flatpak_transaction_add_auto_install (FlatpakTransaction *self,
               g_autoptr(FlatpakRemoteState) state = flatpak_transaction_ensure_remote_state (self, FLATPAK_TRANSACTION_OPERATION_UPDATE, remote, NULL);
 
               if (state != NULL &&
-                  flatpak_remote_state_lookup_ref (state, auto_install_ref, NULL, NULL, NULL, NULL, NULL))
+                  flatpak_remote_state_lookup_ref (state, flatpak_decomposed_get_ref (auto_install_ref), NULL, NULL, NULL, NULL, NULL))
                 {
-                  g_autoptr(FlatpakDecomposed) decomposed = NULL;
+                  g_debug ("Auto adding install of %s from remote %s", flatpak_decomposed_get_ref (auto_install_ref), remote);
 
-                  g_debug ("Auto adding install of %s from remote %s", auto_install_ref, remote);
-
-                  decomposed = flatpak_decomposed_new_from_ref (auto_install_ref, NULL);
-                  if (decomposed != NULL &&
-                      !flatpak_transaction_add_ref (self, remote, decomposed, NULL, NULL, NULL,
+                  if (!flatpak_transaction_add_ref (self, remote, auto_install_ref, NULL, NULL, NULL,
                                                     FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE,
                                                     NULL, NULL,
                                                     &local_error))
-                    g_debug ("Failed to add auto-install ref %s: %s", auto_install_ref, local_error->message);
+                    g_debug ("Failed to add auto-install ref %s: %s", flatpak_decomposed_get_ref (auto_install_ref),
+                             local_error->message);
                 }
             }
         }
@@ -2898,7 +2893,7 @@ emit_op_done (FlatpakTransaction          *self,
     commit = flatpak_dir_read_latest (priv->dir, op->remote, flatpak_decomposed_get_ref (op->ref), NULL, NULL, NULL);
   else
     {
-      g_autoptr(GBytes) deploy_data = flatpak_dir_get_deploy_data (priv->dir, flatpak_decomposed_get_ref (op->ref), FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
+      g_autoptr(GBytes) deploy_data = flatpak_dir_get_deploy_data (priv->dir, op->ref, FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
       if (deploy_data)
         commit = g_strdup (flatpak_deploy_data_get_commit (deploy_data));
     }
@@ -2915,7 +2910,7 @@ load_deployed_metadata (FlatpakTransaction *self, FlatpakDecomposed *ref, char *
   g_autofree char *metadata_contents = NULL;
   gsize metadata_contents_length;
 
-  deploy_dir = flatpak_dir_get_if_deployed (priv->dir, flatpak_decomposed_get_ref (ref), NULL, NULL);
+  deploy_dir = flatpak_dir_get_if_deployed (priv->dir, ref, NULL, NULL);
   if (deploy_dir == NULL)
     return NULL;
 
@@ -3542,8 +3537,7 @@ request_tokens_for_remote (FlatpakTransaction *self,
   g_autofree char *remote_url = NULL;
   g_autoptr(GVariantBuilder) extra_builder = NULL;
   FlatpakRemoteState *state;
-  g_autofree char *auto_install_ref = NULL;
-
+  g_autoptr(FlatpakDecomposed) auto_install_ref = NULL;
 
   auto_install_ref = flatpak_dir_get_remote_auto_install_authenticator_ref (priv->dir, remote);
   if (auto_install_ref != NULL)
@@ -3552,7 +3546,7 @@ request_tokens_for_remote (FlatpakTransaction *self,
       deploy = flatpak_dir_get_if_deployed (priv->dir, auto_install_ref, NULL, cancellable);
       if (deploy == NULL)
         g_signal_emit (self, signals[INSTALL_AUTHENTICATOR], 0,
-                       remote, auto_install_ref);
+                       remote, flatpak_decomposed_get_ref (auto_install_ref));
       deploy = flatpak_dir_get_if_deployed (priv->dir, auto_install_ref, NULL, cancellable);
       if (deploy == NULL)
         return flatpak_fail (error, _("No authenticator installed for remote '%s'"), remote);
@@ -4309,7 +4303,7 @@ _run_op_kind (FlatpakTransaction           *self,
     {
       g_assert (op->resolved_commit != NULL); /* We resolved this before */
 
-      if (flatpak_dir_needs_update_for_commit_and_subpaths (priv->dir, op->remote, flatpak_decomposed_get_ref (op->ref),
+      if (flatpak_dir_needs_update_for_commit_and_subpaths (priv->dir, op->remote, op->ref,
                                                             op->resolved_commit, (const char **) op->subpaths))
         {
           g_autoptr(FlatpakTransactionProgress) progress = flatpak_transaction_progress_new ();
@@ -4457,7 +4451,7 @@ flatpak_transaction_normalize_ops (FlatpakTransaction *self)
         }
 
       if (op->kind == FLATPAK_TRANSACTION_OPERATION_UPDATE &&
-          !flatpak_dir_needs_update_for_commit_and_subpaths (priv->dir, op->remote, flatpak_decomposed_get_ref (op->ref),
+          !flatpak_dir_needs_update_for_commit_and_subpaths (priv->dir, op->remote, op->ref,
                                                              op->resolved_commit, (const char **) op->subpaths))
         {
           /* If this is a rebase, then at minimum a redeploy needs to happen */
@@ -4560,28 +4554,28 @@ add_uninstall_unused_ops (FlatpakTransaction  *self,
   for (i = 0; unused_refs[i] != NULL; i++)
     {
       FlatpakTransactionOperation *uninstall_op;
-      const char *unused_ref = unused_refs[i];
+      const char *unused_ref_str = unused_refs[i];
+      g_autoptr(FlatpakDecomposed) unused_ref = flatpak_decomposed_new_from_ref (unused_ref_str, NULL);
       g_autofree char *origin = NULL;
+
+      if (unused_ref == NULL)
+        continue;
 
       /* Don't uninstall refs that were already unused before the transaction (unless include_unused_uninstall_ops is set) */
       if (old_unused_refs &&
-          g_strv_contains ((const char * const*)old_unused_refs, unused_ref))
+          g_strv_contains ((const char * const*)old_unused_refs, flatpak_decomposed_get_ref (unused_ref)))
         continue;
 
       origin = flatpak_dir_get_origin (priv->dir, unused_ref, NULL, NULL);
       if (origin)
         {
-          g_autoptr(FlatpakDecomposed) decomposed = flatpak_decomposed_new_from_ref (unused_ref, NULL);
-          if (decomposed != NULL)
-            {
-              /* These get added last and have no dependencies, so will run last */
-              uninstall_op = flatpak_transaction_add_op (self, origin, decomposed,
-                                                         NULL, NULL, NULL, NULL,
-                                                         FLATPAK_TRANSACTION_OPERATION_UNINSTALL,
-                                                         NULL);
-              if (uninstall_op)
-                run_operation_last (uninstall_op);
-            }
+          /* These get added last and have no dependencies, so will run last */
+          uninstall_op = flatpak_transaction_add_op (self, origin, unused_ref,
+                                                     NULL, NULL, NULL, NULL,
+                                                     FLATPAK_TRANSACTION_OPERATION_UNINSTALL,
+                                                     NULL);
+          if (uninstall_op)
+            run_operation_last (uninstall_op);
         }
     }
 
@@ -4763,7 +4757,7 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
       if (res)
         {
           g_autoptr(GBytes) deploy_data = NULL;
-          deploy_data = flatpak_dir_get_deploy_data (priv->dir, flatpak_decomposed_get_ref (op->ref),
+          deploy_data = flatpak_dir_get_deploy_data (priv->dir, op->ref,
                                                      FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
 
           if (deploy_data)

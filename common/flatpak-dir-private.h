@@ -472,23 +472,23 @@ GFile *     flatpak_dir_get_unmaintained_extension_dir (FlatpakDir *self,
                                                         const char *name,
                                                         const char *arch,
                                                         const char *branch);
-GBytes *    flatpak_dir_get_deploy_data (FlatpakDir   *dir,
-                                         const char   *ref,
-                                         int           required_version,
-                                         GCancellable *cancellable,
-                                         GError      **error);
-char *      flatpak_dir_get_origin (FlatpakDir   *self,
-                                    const char   *ref,
-                                    GCancellable *cancellable,
-                                    GError      **error);
+GBytes *    flatpak_dir_get_deploy_data (FlatpakDir         *dir,
+                                         FlatpakDecomposed  *ref,
+                                         int                 required_version,
+                                         GCancellable       *cancellable,
+                                         GError            **error);
+char *      flatpak_dir_get_origin (FlatpakDir        *self,
+                                    FlatpakDecomposed *ref,
+                                    GCancellable      *cancellable,
+                                    GError           **error);
 GFile *     flatpak_dir_get_exports_dir (FlatpakDir *self);
 GFile *     flatpak_dir_get_removed_dir (FlatpakDir *self);
 GFile *     flatpak_dir_get_sideload_repos_dir (FlatpakDir *self);
 GFile *     flatpak_dir_get_runtime_sideload_repos_dir (FlatpakDir *self);
-GFile *     flatpak_dir_get_if_deployed (FlatpakDir   *self,
-                                         const char   *ref,
-                                         const char   *checksum,
-                                         GCancellable *cancellable);
+GFile *     flatpak_dir_get_if_deployed (FlatpakDir        *self,
+                                         FlatpakDecomposed *ref,
+                                         const char        *checksum,
+                                         GCancellable      *cancellable);
 GFile *     flatpak_dir_get_unmaintained_extension_dir_if_exists (FlatpakDir   *self,
                                                                   const char   *name,
                                                                   const char   *arch,
@@ -738,14 +738,14 @@ gboolean flatpak_dir_install_bundle (FlatpakDir   *self,
                                      char        **out_ref,
                                      GCancellable *cancellable,
                                      GError      **error);
-gboolean flatpak_dir_needs_update_for_commit_and_subpaths (FlatpakDir  *self,
-                                                           const char  *remote,
-                                                           const char  *ref,
-                                                           const char  *target_commit,
-                                                           const char **opt_subpaths);
+gboolean flatpak_dir_needs_update_for_commit_and_subpaths (FlatpakDir         *self,
+                                                           const char         *remote,
+                                                           FlatpakDecomposed  *ref,
+                                                           const char         *target_commit,
+                                                           const char        **opt_subpaths);
 char * flatpak_dir_check_for_update (FlatpakDir               *self,
                                      FlatpakRemoteState       *state,
-                                     const char               *ref,
+                                     FlatpakDecomposed        *ref,
                                      const char               *checksum_or_latest,
                                      const char              **opt_subpaths,
                                      gboolean                  no_pull,
@@ -1004,8 +1004,8 @@ gboolean flatpak_dir_find_latest_rev (FlatpakDir               *self,
                                       GFile                   **out_sideload_path,
                                       GCancellable             *cancellable,
                                       GError                  **error);
-char * flatpak_dir_get_remote_auto_install_authenticator_ref (FlatpakDir         *self,
-                                                              const char         *remote_name);
+FlatpakDecomposed * flatpak_dir_get_remote_auto_install_authenticator_ref (FlatpakDir         *self,
+                                                                           const char         *remote_name);
 
 char ** flatpak_dir_get_default_locales (FlatpakDir *self);
 char ** flatpak_dir_get_default_locale_languages (FlatpakDir *self);

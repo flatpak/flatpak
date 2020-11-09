@@ -739,7 +739,7 @@ get_ref (FlatpakDir        *dir,
   gboolean is_current = FALSE;
   guint64 installed_size = 0;
 
-  deploy_data = flatpak_dir_get_deploy_data (dir, flatpak_decomposed_get_ref (ref), FLATPAK_DEPLOY_VERSION_CURRENT, cancellable, error);
+  deploy_data = flatpak_dir_get_deploy_data (dir, ref, FLATPAK_DEPLOY_VERSION_CURRENT, cancellable, error);
   if (deploy_data == NULL)
     return NULL;
   origin = flatpak_deploy_data_get_origin (deploy_data);
@@ -821,8 +821,7 @@ flatpak_installation_get_installed_ref (FlatpakInstallation *self,
   if (ref == NULL)
     return NULL;
 
-  deploy = flatpak_dir_get_if_deployed (dir,
-                                        flatpak_decomposed_get_ref (ref), NULL, cancellable);
+  deploy = flatpak_dir_get_if_deployed (dir, ref, NULL, cancellable);
   if (deploy == NULL)
     {
       flatpak_fail_error (error, FLATPAK_ERROR_NOT_INSTALLED,
@@ -862,8 +861,7 @@ flatpak_installation_get_current_installed_app (FlatpakInstallation *self,
 
   current = flatpak_dir_current_ref (dir, name, cancellable);
   if (current)
-    deploy = flatpak_dir_get_if_deployed (dir,
-                                          flatpak_decomposed_get_ref (current), NULL, cancellable);
+    deploy = flatpak_dir_get_if_deployed (dir, current, NULL, cancellable);
 
   if (deploy == NULL)
     {
@@ -1858,7 +1856,7 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
   if (ref == NULL)
     return NULL;
 
-  deploy_dir = flatpak_dir_get_if_deployed (dir, flatpak_decomposed_get_ref (ref), NULL, cancellable);
+  deploy_dir = flatpak_dir_get_if_deployed (dir, ref, NULL, cancellable);
   if (deploy_dir != NULL)
     {
       flatpak_fail_error (error, FLATPAK_ERROR_ALREADY_INSTALLED,
@@ -2014,7 +2012,7 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
   if (ref == NULL)
     return NULL;
 
-  deploy_dir = flatpak_dir_get_if_deployed (dir, flatpak_decomposed_get_ref (ref), NULL, cancellable);
+  deploy_dir = flatpak_dir_get_if_deployed (dir, ref, NULL, cancellable);
   if (deploy_dir == NULL)
     {
       flatpak_fail_error (error, FLATPAK_ERROR_NOT_INSTALLED,
@@ -2022,7 +2020,7 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
       return NULL;
     }
 
-  remote_name = flatpak_dir_get_origin (dir, flatpak_decomposed_get_ref (ref), cancellable, error);
+  remote_name = flatpak_dir_get_origin (dir, ref, cancellable, error);
   if (remote_name == NULL)
     return NULL;
 
@@ -2030,7 +2028,7 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
   if (state == NULL)
     return NULL;
 
-  target_commit = flatpak_dir_check_for_update (dir, state, flatpak_decomposed_get_ref (ref), NULL,
+  target_commit = flatpak_dir_check_for_update (dir, state, ref, NULL,
                                                 (const char **) subpaths,
                                                 (flags & FLATPAK_UPDATE_FLAGS_NO_PULL) != 0,
                                                 cancellable, error);

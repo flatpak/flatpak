@@ -198,13 +198,13 @@ gboolean flatpak_get_allowed_exports (const char     *source_path,
 FlatpakDecomposed *flatpak_find_current_ref (const char   *app_id,
                                              GCancellable *cancellable,
                                              GError      **error);
-GFile *flatpak_find_deploy_dir_for_ref (const char   *ref,
-                                        FlatpakDir  **dir_out,
-                                        GCancellable *cancellable,
-                                        GError      **error);
-GFile * flatpak_find_files_dir_for_ref (const char   *ref,
-                                        GCancellable *cancellable,
-                                        GError      **error);
+GFile *flatpak_find_deploy_dir_for_ref (FlatpakDecomposed  *ref,
+                                        FlatpakDir        **dir_out,
+                                        GCancellable       *cancellable,
+                                        GError            **error);
+GFile * flatpak_find_files_dir_for_ref (FlatpakDecomposed *ref,
+                                        GCancellable      *cancellable,
+                                        GError           **error);
 GFile * flatpak_find_unmaintained_extension_dir_if_exists (const char   *name,
                                                            const char   *arch,
                                                            const char   *branch,
@@ -563,18 +563,18 @@ gboolean flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
 
 typedef struct
 {
-  char    *id;
-  char    *installed_id;
-  char    *commit;
-  char    *ref;
-  char    *directory;
-  char    *files_path;
-  char    *subdir_suffix;
-  char    *add_ld_path;
-  char   **merge_dirs;
-  int      priority;
-  gboolean needs_tmpfs;
-  gboolean is_unmaintained;
+  char               *id;
+  char               *installed_id;
+  char               *commit;
+  FlatpakDecomposed *ref;
+  char              *directory;
+  char              *files_path;
+  char              *subdir_suffix;
+  char              *add_ld_path;
+  char             **merge_dirs;
+  int                priority;
+  gboolean           needs_tmpfs;
+  gboolean           is_unmaintained;
 } FlatpakExtension;
 
 void flatpak_extension_free (FlatpakExtension *extension);
