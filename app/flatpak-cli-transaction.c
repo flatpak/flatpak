@@ -1059,16 +1059,18 @@ transaction_ready_pre_auth (FlatpakTransaction *transaction)
     {
       FlatpakTransactionOperation *op = l->data;
       FlatpakTransactionOperationType type = flatpak_transaction_operation_get_operation_type (op);
-      const char *ref = flatpak_transaction_operation_get_ref (op);
+      FlatpakDecomposed *ref = flatpak_transaction_operation_get_decomposed (op);
       const char *remote = flatpak_transaction_operation_get_remote (op);
-      g_auto(GStrv) parts = flatpak_decompose_ref (ref, NULL);
+      g_autofree char *id = flatpak_decomposed_dup_id (ref);
+      const char *branch = flatpak_decomposed_get_branch (ref);
+      g_autofree char *arch = flatpak_decomposed_dup_arch (ref);
       g_autofree char *rownum = g_strdup_printf ("%2d.", i);
 
       flatpak_table_printer_add_column (printer, rownum);
       flatpak_table_printer_add_column (printer, "   ");
-      flatpak_table_printer_add_column (printer, parts[1]);
-      flatpak_table_printer_add_column (printer, parts[2]);
-      flatpak_table_printer_add_column (printer, parts[3]);
+      flatpak_table_printer_add_column (printer, id);
+      flatpak_table_printer_add_column (printer, arch);
+      flatpak_table_printer_add_column (printer, branch);
       flatpak_table_printer_add_column (printer, op_shorthand[type]);
 
       if (type == FLATPAK_TRANSACTION_OPERATION_INSTALL ||
