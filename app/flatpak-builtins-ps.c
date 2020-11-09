@@ -174,20 +174,25 @@ enumerate_instances (Column *columns, GError **error)
                                                   12);
           else if (strcmp (columns[i].name, "runtime") == 0)
             {
-              const char *full_ref = flatpak_instance_get_runtime (instance);
-              if (full_ref != NULL)
+              const char *ref_str = flatpak_instance_get_runtime (instance);
+              if (ref_str != NULL)
                 {
-                  g_auto(GStrv) ref = flatpak_decompose_ref (full_ref, NULL);
-                  flatpak_table_printer_add_column (printer, ref[1]);
+                  g_autoptr(FlatpakDecomposed) ref = flatpak_decomposed_new_from_ref (ref_str, NULL);
+                  if (ref)
+                    {
+                      g_autofree char *id = flatpak_decomposed_dup_id (ref);
+                      flatpak_table_printer_add_column (printer, id);
+                    }
                 }
             }
           else if (strcmp (columns[i].name, "runtime-branch") == 0)
             {
-              const char *full_ref = flatpak_instance_get_runtime (instance);
-              if (full_ref != NULL)
+              const char *ref_str = flatpak_instance_get_runtime (instance);
+              if (ref_str != NULL)
                 {
-                  g_auto(GStrv) ref = flatpak_decompose_ref (full_ref, NULL);
-                  flatpak_table_printer_add_column (printer, ref[3]);
+                  g_autoptr(FlatpakDecomposed) ref = flatpak_decomposed_new_from_ref (ref_str, NULL);
+                  if (ref)
+                    flatpak_table_printer_add_column (printer, flatpak_decomposed_get_branch (ref));
                 }
             }
           else if (strcmp (columns[i].name, "runtime-commit") == 0)
