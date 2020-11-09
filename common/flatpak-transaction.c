@@ -3176,8 +3176,7 @@ resolve_ops (FlatpakTransaction *self,
       /* Should we use local state */
       if (transaction_is_local_only (self, op->kind))
         {
-          g_autoptr(GVariant) commit_data = flatpak_dir_read_latest_commit (priv->dir, op->remote,
-                                                                            flatpak_decomposed_get_ref (op->ref),
+          g_autoptr(GVariant) commit_data = flatpak_dir_read_latest_commit (priv->dir, op->remote, op->ref,
                                                                             &checksum, NULL, error);
           if (commit_data == NULL)
             return FALSE;
@@ -3201,8 +3200,7 @@ resolve_ops (FlatpakTransaction *self,
               g_autoptr(GFile) latest_sideload_path = NULL;
               g_autofree char *local_checksum = NULL;
               guint64 latest_timestamp;
-              g_autoptr(GVariant) local_commit_data = flatpak_dir_read_latest_commit (priv->dir, op->remote,
-                                                                                      flatpak_decomposed_get_ref (op->ref),
+              g_autoptr(GVariant) local_commit_data = flatpak_dir_read_latest_commit (priv->dir, op->remote, op->ref,
                                                                                       &local_checksum, NULL, NULL);
 
               if (flatpak_dir_find_latest_rev (priv->dir, state, flatpak_decomposed_get_ref (op->ref), op->commit,
