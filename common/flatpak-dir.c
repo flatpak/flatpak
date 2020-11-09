@@ -6321,17 +6321,17 @@ flatpak_dir_list_refs (FlatpakDir   *self,
 }
 
 GVariant *
-flatpak_dir_read_latest_commit (FlatpakDir   *self,
-                                const char   *remote,
-                                const char   *ref,
-                                char        **out_checksum,
-                                GCancellable *cancellable,
-                                GError      **error)
+flatpak_dir_read_latest_commit (FlatpakDir        *self,
+                                const char        *remote,
+                                FlatpakDecomposed *ref,
+                                char             **out_checksum,
+                                GCancellable      *cancellable,
+                                GError           **error)
 {
   g_autofree char *res = NULL;
   g_autoptr(GVariant) commit_data = NULL;
 
-  if (!flatpak_repo_resolve_rev (self->repo, NULL, remote, ref, FALSE,
+  if (!flatpak_repo_resolve_rev (self->repo, NULL, remote, flatpak_decomposed_get_ref (ref), FALSE,
                                  &res, cancellable, error))
     return NULL;
 
@@ -9268,12 +9268,12 @@ flatpak_dir_check_add_remotes_config_dir (FlatpakDir *self,
 }
 
 gboolean
-flatpak_dir_install_bundle (FlatpakDir   *self,
-                            GFile        *file,
-                            const char   *remote,
-                            char        **out_ref,
-                            GCancellable *cancellable,
-                            GError      **error)
+flatpak_dir_install_bundle (FlatpakDir         *self,
+                            GFile              *file,
+                            const char         *remote,
+                            FlatpakDecomposed **out_ref,
+                            GCancellable       *cancellable,
+                            GError            **error)
 {
   g_autofree char *ref_str = NULL;
   g_autoptr(FlatpakDecomposed) ref = NULL;
@@ -9299,8 +9299,13 @@ flatpak_dir_install_bundle (FlatpakDir   *self,
                                                           error))
         return FALSE;
 
+
+      ref = flatpak_decomposed_new_from_ref (ref_str, error);
+      if (ref == NULL)
+        return FALSE;
+
       if (out_ref)
-        *out_ref = g_steal_pointer (&ref_str);
+        *out_ref = g_steal_pointer (&ref);
 
       return TRUE;
     }
@@ -9393,7 +9398,7 @@ flatpak_dir_install_bundle (FlatpakDir   *self,
     }
 
   if (out_ref)
-    *out_ref = flatpak_decomposed_dup_ref (ref);
+    *out_ref = g_steal_pointer (&ref);
 
   return TRUE;
 }
@@ -15027,7 +15032,7 @@ flatpak_dir_find_local_related (FlatpakDir        *self,
   else
     {
       g_autofree char *checksum = NULL;
-      g_autoptr(GVariant) commit_data = flatpak_dir_read_latest_commit (self, remote_name, flatpak_decomposed_get_ref (ref), &checksum, NULL, NULL);
+      g_autoptr(GVariant) commit_data = flatpak_dir_read_latest_commit (self, remote_name, ref, &checksum, NULL, NULL);
       if (commit_data)
         {
           g_autoptr(GVariant) commit_metadata = g_variant_get_child_value (commit_data, 0);

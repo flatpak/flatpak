@@ -978,7 +978,7 @@ handle_install_bundle (FlatpakSystemHelper   *object,
   g_autoptr(FlatpakDir) system = NULL;
   g_autoptr(GFile) bundle_file = g_file_new_for_path (arg_bundle_path);
   g_autoptr(GError) error = NULL;
-  g_autofree char *ref = NULL;
+  g_autoptr(FlatpakDecomposed) ref = NULL;
 
   g_debug ("InstallBundle %s %u %s %s", arg_bundle_path, arg_flags, arg_remote, arg_installation);
 
@@ -1009,7 +1009,7 @@ handle_install_bundle (FlatpakSystemHelper   *object,
       return TRUE;
     }
 
-  flatpak_system_helper_complete_install_bundle (object, invocation, ref);
+  flatpak_system_helper_complete_install_bundle (object, invocation, flatpak_decomposed_get_ref (ref));
 
   return TRUE;
 }
