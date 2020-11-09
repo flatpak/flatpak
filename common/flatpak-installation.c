@@ -698,7 +698,7 @@ flatpak_installation_launch_full (FlatpakInstallation *self,
   if (flags & FLATPAK_LAUNCH_FLAGS_DO_NOT_REAP)
     run_flags |= FLATPAK_RUN_FLAG_DO_NOT_REAP;
 
-  if (!flatpak_run_app (flatpak_decomposed_get_ref (app_ref),
+  if (!flatpak_run_app (app_ref,
                         app_deploy,
                         NULL, NULL,
                         NULL, NULL,
