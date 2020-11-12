@@ -52,6 +52,7 @@ static char *opt_comment;
 static char *opt_description;
 static char *opt_homepage;
 static char *opt_icon;
+static char *opt_subset;
 static char *opt_default_branch;
 static char *opt_url;
 static char *opt_collection_id = NULL;
@@ -66,6 +67,7 @@ static GOptionEntry modify_options[] = {
   { "enumerate", 0, 0, G_OPTION_ARG_NONE, &opt_do_enumerate, N_("Mark the remote as enumerate"), NULL },
   { "use-for-deps", 0, 0, G_OPTION_ARG_NONE, &opt_do_deps, N_("Mark the remote as used for dependencies"), NULL },
   { "url", 0, 0, G_OPTION_ARG_STRING, &opt_url, N_("Set a new url"), N_("URL") },
+  { "subset", 0, 0, G_OPTION_ARG_STRING, &opt_subset, N_("Set a new subset to use"), N_("SUBSET") },
   { "enable", 0, 0, G_OPTION_ARG_NONE, &opt_enable, N_("Enable the remote"), NULL },
   { "update-metadata", 0, 0, G_OPTION_ARG_NONE, &opt_update_metadata, N_("Update extra metadata from the summary file"), NULL },
   { NULL }
@@ -138,6 +140,13 @@ get_config_from_opts (FlatpakDir *dir, const char *remote_name, gboolean *change
   if (opt_collection_id)
     {
       g_key_file_set_string (config, group, "collection-id", opt_collection_id);
+      *changed = TRUE;
+    }
+
+  if (opt_subset)
+    {
+      g_key_file_set_string (config, group, "xa.subset", opt_subset);
+      g_key_file_set_boolean (config, group, "xa.subset-is-set", TRUE);
       *changed = TRUE;
     }
 

@@ -2192,6 +2192,7 @@ flatpak_parse_repofile (const char   *remote_name,
   g_autofree char *icon = NULL;
   g_autofree char *homepage = NULL;
   g_autofree char *filter = NULL;
+  g_autofree char *subset = NULL;
   g_autofree char *authenticator_name = NULL;
   gboolean nodeps;
   const char *source_group;
@@ -2231,6 +2232,11 @@ flatpak_parse_repofile (const char   *remote_name,
     }
 
   g_key_file_set_string (config, group, "url", uri);
+
+  subset = g_key_file_get_locale_string (keyfile, source_group,
+                                         FLATPAK_REPO_SUBSET_KEY, NULL, NULL);
+  if (subset != NULL)
+    g_key_file_set_string (config, group, "xa.subset", subset);
 
   title = g_key_file_get_locale_string (keyfile, source_group,
                                         FLATPAK_REPO_TITLE_KEY, NULL, NULL);
