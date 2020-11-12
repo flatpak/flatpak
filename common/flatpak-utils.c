@@ -3515,14 +3515,31 @@ _ostree_repo_static_delta_superblock_digest (OstreeRepo    *repo,
                                   FALSE, g_free, FALSE);
 }
 
+static char *
+appstream_ref_get_subset (const char *ref)
+{
+  if (!g_str_has_prefix (ref, "appstream2/"))
+    return NULL;
+
+  const char *rest = ref + strlen ("appstream2/");
+  const char *dash = strrchr (rest, '-');
+  if (dash == NULL)
+    return NULL;
+
+  return g_strndup (rest, dash - rest);
+}
+
 char *
 flatpak_get_arch_for_ref (const char *ref)
 {
   if (g_str_has_prefix (ref, "appstream/") ||
       g_str_has_prefix (ref, "appstream2/"))
     {
-      const char *slash = strchr (ref, '/') + 1; /* Guaranteed to exist per above check */
-      return g_strdup (slash);
+      const char *rest = strchr (ref, '/') + 1; /* Guaranteed to exist per above check */
+      const char *dash = strrchr (rest, '-'); /*  Subset appstream refs are appstream2/$subset-$arch */
+      if (dash != NULL)
+        rest = dash + 1;
+      return g_strdup (rest);
     }
     else if (g_str_has_prefix (ref, "app/") ||
       g_str_has_prefix (ref, "runtime/"))
@@ -4231,11 +4248,39 @@ generate_summary (OstreeRepo   *repo,
         }
 
       rev_data = g_hash_table_lookup (commit_data_cache, rev);
-      if (rev_data && *subset != 0)
+      if (*subset != 0)
         {
-          if (rev_data->subsets == NULL ||
-              !flatpak_g_ptr_array_contains_string (rev_data->subsets, subset))
-            continue; /* Ref is not in this subset */
+          /* Subset summaries keep the appstream2/$subset-$arch, and have no appstream/ compat branch */
+
+          if (g_str_has_prefix (ref, "appstream/"))
+            {
+              continue; /* No compat branch in subsets */
+            }
+          else if (g_str_has_prefix (ref, "appstream2/"))
+            {
+              g_autofree char *ref_subset = appstream_ref_get_subset (ref);
+              if (ref_subset == NULL)
+                continue; /* Non-subset, ignore */
+
+              if (strcmp (subset, ref_subset) != 0)
+                continue; /* Different subset, ignore */
+
+              /* Otherwise, keep */
+            }
+          else if (rev_data)
+            {
+              if (rev_data->subsets == NULL ||
+                  !flatpak_g_ptr_array_contains_string (rev_data->subsets, subset))
+                continue; /* Ref is not in this subset */
+            }
+        }
+      else
+        {
+          /* non-subset, keep everything but subset appstream refs */
+
+          g_autofree char *ref_subset = appstream_ref_get_subset (ref);
+          if (ref_subset != NULL)
+            continue; /* Subset appstream ref, ignore */
         }
 
       g_hash_table_add (commits, (char *)rev);
@@ -4251,7 +4296,7 @@ generate_summary (OstreeRepo   *repo,
       guint64 commit_size;
 
       if (!g_hash_table_contains (commits, rev))
-        continue; /* Filter out commit (by arch) */
+        continue; /* Filter out commit (by arch & subset) */
 
       if (is_flatpak_ref (ref))
         rev_data = g_hash_table_lookup (commit_data_cache, rev);
