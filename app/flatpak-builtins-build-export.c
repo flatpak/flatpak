@@ -50,6 +50,7 @@ static char *opt_metadata;
 static char *opt_timestamp = NULL;
 static char *opt_endoflife;
 static char *opt_endoflife_rebase;
+static char **opt_subsets;
 static char *opt_collection_id = NULL;
 static int opt_token_type = -1;
 static gboolean opt_no_summary_index = FALSE;
@@ -67,6 +68,7 @@ static GOptionEntry options[] = {
   { "exclude", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_exclude, N_("Files to exclude"), N_("PATTERN") },
   { "include", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_include, N_("Excluded files to include"), N_("PATTERN") },
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, N_("GPG Homedir to use when looking for keyrings"), N_("HOMEDIR") },
+  { "subset", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_subsets, "Add to a named subset", "SUBSET" },
   { "end-of-life", 0, 0, G_OPTION_ARG_STRING, &opt_endoflife, N_("Mark build as end-of-life"), N_("REASON") },
   { "end-of-life-rebase", 0, 0, G_OPTION_ARG_STRING, &opt_endoflife_rebase, N_("Mark build as end-of-life, to be replaced with the given ID"), N_("ID") },
   { "token-type", 0, 0, G_OPTION_ARG_INT, &opt_token_type, N_("Set type of token needed to install this commit"), N_("VAL") },
@@ -604,6 +606,32 @@ validate_service_file (GFile      *service_file,
 }
 
 static gboolean
+get_subsets (char **subsets, GVariant **out)
+{
+  g_autoptr(GVariantBuilder) builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
+  gboolean found = FALSE;
+
+  if (subsets == NULL)
+    return FALSE;
+
+  for (int i = 0; subsets[i] != NULL; i++)
+    {
+      const char *subset = subsets[i];
+      if (*subset != 0)
+        {
+          found = TRUE;
+          g_variant_builder_add (builder, "s", subset);
+        }
+    }
+
+  if (!found)
+    return FALSE;
+
+  *out = g_variant_ref_sink (g_variant_builder_end (builder));
+  return TRUE;
+}
+
+static gboolean
 validate_exports (GFile *export, GFile *files, const char *app_id, GError **error)
 {
   g_autofree char *desktop_path = NULL;
@@ -781,6 +809,7 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   CommitData commit_data = {0};
   g_auto(GVariantDict) metadata_dict = FLATPAK_VARIANT_DICT_INITIALIZER;
   g_autoptr(GVariant) metadata_dict_v = NULL;
+  g_autoptr(GVariant) subsets_v = NULL;
   gboolean is_runtime = FALSE;
   gboolean is_extension = FALSE;
   guint64 installed_size = 0, download_size = 0;
@@ -1038,6 +1067,10 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   if (opt_token_type >= 0)
     g_variant_dict_insert_value (&metadata_dict, "xa.token-type",
                                  g_variant_new_int32 (GINT32_TO_LE (opt_token_type)));
+
+  /* Skip "" subsets as they mean everything, so no  */
+  if (get_subsets (opt_subsets, &subsets_v))
+    g_variant_dict_insert_value (&metadata_dict, "xa.subsets", subsets_v);
 
   metadata_dict_v = g_variant_ref_sink (g_variant_dict_end (&metadata_dict));
 
