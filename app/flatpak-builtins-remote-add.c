@@ -48,6 +48,7 @@ static char *opt_comment;
 static char *opt_description;
 static char *opt_homepage;
 static char *opt_icon;
+static char *opt_subset;
 static char *opt_default_branch;
 static char *opt_url;
 static char *opt_collection_id = NULL;
@@ -69,6 +70,7 @@ static GOptionEntry common_options[] = {
   { "no-enumerate", 0, 0, G_OPTION_ARG_NONE, &opt_no_enumerate, N_("Mark the remote as don't enumerate"), NULL },
   { "no-use-for-deps", 0, 0, G_OPTION_ARG_NONE, &opt_no_deps, N_("Mark the remote as don't use for deps"), NULL },
   { "prio", 0, 0, G_OPTION_ARG_INT, &opt_prio, N_("Set priority (default 1, higher is more prioritized)"), N_("PRIORITY") },
+  { "subset", 0, 0, G_OPTION_ARG_STRING, &opt_subset, N_("The named subset to use for this remote"), N_("SUBSET") },
   { "title", 0, 0, G_OPTION_ARG_STRING, &opt_title, N_("A nice name to use for this remote"), N_("TITLE") },
   { "comment", 0, 0, G_OPTION_ARG_STRING, &opt_comment, N_("A one-line comment for this remote"), N_("COMMENT") },
   { "description", 0, 0, G_OPTION_ARG_STRING, &opt_description, N_("A full-paragraph description for this remote"), N_("DESCRIPTION") },
@@ -118,6 +120,12 @@ get_config_from_opts (GKeyFile *config,
 
   if (opt_collection_id)
     g_key_file_set_string (config, group, "collection-id", opt_collection_id);
+
+  if (opt_subset)
+    {
+      g_key_file_set_string (config, group, "xa.subset", opt_subset);
+      g_key_file_set_boolean (config, group, "xa.subset-is-set", TRUE);
+    }
 
   if (opt_title)
     {
