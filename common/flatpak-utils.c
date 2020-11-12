@@ -3198,7 +3198,7 @@ populate_commit_data_cache (OstreeRepo *repo,
         }
       digest = ostree_checksum_from_bytes (checksum_bytes);
 
-      s = strchr (name, '-');
+      s = strrchr (name, '-');
       if (s != NULL)
         subset = g_strndup (name, s - name);
       else
