@@ -120,6 +120,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--subset=SUBSET</option></term>
+
+                <listitem><para>
+                  Limit the refs available from the remote to those that are part of the named subset.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--no-enumerate</option></term>
 
                 <listitem><para>
