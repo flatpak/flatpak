@@ -50,6 +50,7 @@ static Column all_columns[] = {
   { "title",      N_("Title"),         N_("Show the title"),         0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
   { "url",        N_("URL"),           N_("Show the URL"),           0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
   { "collection", N_("Collection ID"), N_("Show the collection ID"), 0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
+  { "subset",     N_("Subset"),        N_("Show the subset"),        0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
   { "filter",     N_("Filter"),        N_("Show filter file"),       0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
   { "priority",   N_("Priority"),      N_("Show the priority"),      0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
   { "options",    N_("Options"),       N_("Show options"),           0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
@@ -100,6 +101,14 @@ list_remotes (GPtrArray *dirs, Column *columns, GCancellable *cancellable, GErro
                   g_autofree char *title = flatpak_dir_get_remote_title (dir, remote_name);
                   if (title)
                     flatpak_table_printer_add_column (printer, title);
+                  else
+                    flatpak_table_printer_add_column (printer, "-");
+                }
+              else if (strcmp (columns[k].name, "subset") == 0)
+                {
+                  g_autofree char *subset = flatpak_dir_get_remote_subset (dir, remote_name);
+                  if (subset)
+                    flatpak_table_printer_add_column (printer, subset);
                   else
                     flatpak_table_printer_add_column (printer, "-");
                 }
