@@ -4276,6 +4276,7 @@ flatpak_dir_deploy_appstream (FlatpakDir   *self,
   g_autofree char *filter_checksum = NULL;
   g_autoptr(GRegex) allow_refs = NULL;
   g_autoptr(GRegex) deny_refs = NULL;
+  g_autofree char *subset = NULL;
 
   /* Keep a shared repo lock to avoid prunes removing objects we're relying on
    * while we do the checkout. This could happen if the ref changes after we
@@ -4309,14 +4310,20 @@ flatpak_dir_deploy_appstream (FlatpakDir   *self,
   if (file_info != NULL)
     old_dir =  g_file_info_get_symlink_target (file_info);
 
-  branch = g_strdup_printf ("appstream2/%s", arch);
+  subset = flatpak_dir_get_remote_subset (self, remote);
+
+  if (subset)
+    branch = g_strdup_printf ("appstream2/%s-%s", subset, arch);
+  else
+    branch = g_strdup_printf ("appstream2/%s", arch);
+
   if (!flatpak_repo_resolve_rev (self->repo, NULL, remote, branch, TRUE,
                                  &new_checksum, cancellable, error))
     return FALSE;
 
-  if (new_checksum == NULL)
+  if (new_checksum == NULL && subset == NULL)
     {
-      /* Fall back to old branch */
+      /* Fall back to old branch (only exist on non-subsets) */
       g_clear_pointer (&branch, g_free);
       branch = g_strdup_printf ("appstream/%s", arch);
       if (!flatpak_repo_resolve_rev (self->repo, NULL, remote, branch, TRUE,
@@ -4751,6 +4758,7 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
   g_autoptr(GError) second_error = NULL;
   g_autoptr(FlatpakRemoteState) state = NULL;
   g_autofree char *appstream_commit = NULL;
+  g_autofree char *subset = NULL;
   g_autoptr(GFile) appstream_sideload_path = NULL;
   const char *installation;
   gboolean is_oci;
@@ -4761,8 +4769,18 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
   if (arch == NULL)
     arch = flatpak_get_arch ();
 
-  new_branch = g_strdup_printf ("appstream2/%s", arch);
-  old_branch = g_strdup_printf ("appstream/%s", arch);
+  subset = flatpak_dir_get_remote_subset (self, remote);
+
+  if (subset)
+    {
+      new_branch = g_strdup_printf ("appstream2/%s-%s", subset, arch);
+      old_branch = g_strdup_printf ("appstream/%s-%s", subset, arch);
+    }
+  else
+    {
+      new_branch = g_strdup_printf ("appstream2/%s", arch);
+      old_branch = g_strdup_printf ("appstream/%s", arch);
+    }
 
   is_oci = flatpak_dir_get_remote_oci (self, remote);
 
@@ -13218,11 +13236,16 @@ flatpak_dir_get_remote_subset (FlatpakDir *self,
 {
   GKeyFile *config = flatpak_dir_get_repo_config (self);
   g_autofree char *group = get_group (remote_name);
+  g_autofree char *subset = NULL;
 
   if (config == NULL)
     return NULL;
 
-  return g_key_file_get_string (config, group, "xa.subset", NULL);
+  subset = g_key_file_get_string (config, group, "xa.subset", NULL);
+  if (subset == NULL || *subset == 0)
+    return NULL;
+
+  return g_steal_pointer (&subset);
 }
 
 gboolean

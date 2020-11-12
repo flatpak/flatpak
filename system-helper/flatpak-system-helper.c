@@ -767,6 +767,7 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
   g_autoptr(GError) error = NULL;
   g_autofree char *new_branch = NULL;
   g_autofree char *old_branch = NULL;
+  g_autofree char *subset = NULL;
   gboolean is_oci;
 
   g_debug ("DeployAppstream %s %u %s %s %s", arg_repo_path, arg_flags, arg_origin, arg_arch, arg_installation);
@@ -798,8 +799,18 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
 
   is_oci = flatpak_dir_get_remote_oci (system, arg_origin);
 
-  new_branch = g_strdup_printf ("appstream2/%s", arg_arch);
-  old_branch = g_strdup_printf ("appstream/%s", arg_arch);
+  subset = flatpak_dir_get_remote_subset (system, arg_origin);
+
+  if (subset)
+    {
+      new_branch = g_strdup_printf ("appstream2/%s-%s", subset, arg_arch);
+      old_branch = g_strdup_printf ("appstream/%s-%s", subset, arg_arch);
+    }
+  else
+    {
+      new_branch = g_strdup_printf ("appstream2/%s", arg_arch);
+      old_branch = g_strdup_printf ("appstream/%s", arg_arch);
+    }
 
   if (is_oci)
     {
