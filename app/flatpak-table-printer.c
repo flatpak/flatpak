@@ -788,6 +788,37 @@ flatpak_table_printer_append_cell_with_comma (FlatpakTablePrinter *printer,
 }
 
 void
+flatpak_table_printer_append_cell_with_comma_unique (FlatpakTablePrinter *printer,
+                                                     int                  r,
+                                                     int                  c,
+                                                     const char          *text)
+{
+  Row *row;
+  Cell *cell;
+
+  row = (Row *) g_ptr_array_index (printer->rows, r);
+  g_assert (row);
+  cell = (Cell *) g_ptr_array_index (row->cells, c);
+  g_assert (cell);
+
+  /* Look for existing text in comma separated text */
+  if (cell->text != NULL && *text != 0)
+    {
+      gsize len = strlen (text);
+      const char *match = cell->text;
+      while ((match = strstr (match, text)) != NULL)
+        {
+          if (match[len] == 0 || match[len] == ',' )
+            return; /* Already in string, do nothing */
+          /* Look for next match */
+          match = match + len;
+        }
+    }
+
+  set_cell (printer, r, c, text, -1, 2);
+}
+
+void
 flatpak_table_printer_set_decimal_cell (FlatpakTablePrinter *printer,
                                         int                  r,
                                         int                  c,
