@@ -84,6 +84,10 @@
                     <listitem><para>The default branch to use for this remote.</para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>Subset</option> (string)</term>
+                    <listitem><para>Limit the remote to the named subset of refs.</para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>Title</option> (string)</term>
                     <listitem><para>The title of the remote. This should be a user-friendly name that can be displayed e.g. in an app store.</para></listitem>
                 </varlistentry>

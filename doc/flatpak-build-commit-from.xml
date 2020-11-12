@@ -113,6 +113,16 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--subset=SUBSET</option></term>
+
+                <listitem><para>
+                    Mark the commit to be included in the named subset. This will cause the commit
+                    to be put in the named subset summary (in addition to the main one), allowing
+                    users to see only this subset instead of the whole repo.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--untrusted</option></term>
 
                 <listitem><para>
