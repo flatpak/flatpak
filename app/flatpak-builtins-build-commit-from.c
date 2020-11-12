@@ -642,10 +642,7 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
 
       /* Skip "" subsets as they mean everything. This way --subsets= causes old subsets to be stripped from the original commit */
       if (get_subsets (opt_subsets, &subsets_v))
-        {
-          g_print ("subsets: %s\n", g_variant_print (subsets_v, FALSE));
-          g_variant_builder_add (&metadata_builder, "{sv}", "xa.subsets", subsets_v);
-        }
+        g_variant_builder_add (&metadata_builder, "{sv}", "xa.subsets", subsets_v);
 
       timestamp = ostree_commit_get_timestamp (src_commitv);
       if (opt_timestamp)
