@@ -79,6 +79,10 @@ void                flatpak_table_printer_append_cell_with_comma (FlatpakTablePr
                                                                   int                  row,
                                                                   int                  col,
                                                                   const char          *cell);
+void                flatpak_table_printer_append_cell_with_comma_unique (FlatpakTablePrinter *printer,
+                                                                         int                  row,
+                                                                         int                  col,
+                                                                         const char          *cell);
 void                flatpak_table_printer_set_decimal_cell (FlatpakTablePrinter *printer,
                                                             int                  row,
                                                             int                  col,
