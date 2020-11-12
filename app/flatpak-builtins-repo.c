@@ -189,11 +189,20 @@ print_branches_for_subsummary (FlatpakTablePrinter *printer,
 {
   g_autoptr(GVariant) meta = NULL;
   guint summary_version = 0;
+  g_autofree char *subset = NULL;
 
-  if (subsummary != NULL && opt_subset != NULL)
+  if (subsummary != NULL)
     {
-      if (!g_str_has_prefix (subsummary, opt_subset))
-        return;
+      const char *dash = strrchr (subsummary, '-');
+      if (dash)
+        subset = g_strndup (subsummary, dash - subsummary);
+    }
+
+  if (opt_subset != NULL)
+    {
+      if (subset == NULL ||
+          strcmp (subset, opt_subset) != 0)
+        return; /* Not the requested subset, ignore */
     }
 
   meta = g_variant_get_child_value (summary, 1);
@@ -224,8 +233,8 @@ print_branches_for_subsummary (FlatpakTablePrinter *printer,
           int old_row = flatpak_table_printer_lookup_row (printer, ref);
           if (old_row >= 0)
             {
-              if (subsummary)
-                flatpak_table_printer_append_cell_with_comma (printer, old_row, 4, subsummary);
+              if (subset)
+                flatpak_table_printer_append_cell_with_comma_unique (printer, old_row, 4, subset);
               continue;
             }
 
@@ -246,8 +255,8 @@ print_branches_for_subsummary (FlatpakTablePrinter *printer,
           if (g_variant_lookup (ref_meta, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, "&s", &eol))
             flatpak_table_printer_append_with_comma_printf (printer, "eol-rebase=%s", eol);
 
-          if (subsummary)
-            flatpak_table_printer_add_column (printer, subsummary);
+          if (subset)
+            flatpak_table_printer_add_column (printer, subset);
           else
             flatpak_table_printer_add_column (printer, "");
 
@@ -280,8 +289,8 @@ print_branches_for_subsummary (FlatpakTablePrinter *printer,
               int old_row = flatpak_table_printer_lookup_row (printer, ref);
               if (old_row >= 0)
                 {
-                  if (subsummary)
-                    flatpak_table_printer_append_cell_with_comma (printer, old_row, 4, subsummary);
+                  if (subset)
+                    flatpak_table_printer_append_cell_with_comma_unique (printer, old_row, 4, subset);
                   continue;
                 }
 
@@ -305,8 +314,8 @@ print_branches_for_subsummary (FlatpakTablePrinter *printer,
                     }
                 }
 
-              if (subsummary)
-                flatpak_table_printer_add_column (printer, subsummary);
+              if (subset)
+                flatpak_table_printer_add_column (printer, subset);
               else
                 flatpak_table_printer_add_column (printer, "");
 
