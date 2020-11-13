@@ -234,7 +234,7 @@ print_branches_for_subsummary (FlatpakTablePrinter *printer,
           if (old_row >= 0)
             {
               if (subset)
-                flatpak_table_printer_append_cell_with_comma_unique (printer, old_row, 4, subset);
+                flatpak_table_printer_append_cell_with_comma_unique (printer, old_row, 3, subset);
               continue;
             }
 
@@ -248,6 +248,9 @@ print_branches_for_subsummary (FlatpakTablePrinter *printer,
           flatpak_table_printer_add_decimal_column (printer, installed);
           flatpak_table_printer_add_decimal_column (printer, download);
 
+          /* Subset */
+          flatpak_table_printer_add_column (printer, subset);
+
           flatpak_table_printer_add_column (printer, ""); /* Options */
 
           if (g_variant_lookup (ref_meta, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE, "&s", &eol))
@@ -255,10 +258,6 @@ print_branches_for_subsummary (FlatpakTablePrinter *printer,
           if (g_variant_lookup (ref_meta, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, "&s", &eol))
             flatpak_table_printer_append_with_comma_printf (printer, "eol-rebase=%s", eol);
 
-          if (subset)
-            flatpak_table_printer_add_column (printer, subset);
-          else
-            flatpak_table_printer_add_column (printer, "");
 
           flatpak_table_printer_finish_row (printer);
         }
@@ -290,7 +289,7 @@ print_branches_for_subsummary (FlatpakTablePrinter *printer,
               if (old_row >= 0)
                 {
                   if (subset)
-                    flatpak_table_printer_append_cell_with_comma_unique (printer, old_row, 4, subset);
+                    flatpak_table_printer_append_cell_with_comma_unique (printer, old_row, 3, subset);
                   continue;
                 }
 
@@ -298,6 +297,8 @@ print_branches_for_subsummary (FlatpakTablePrinter *printer,
               flatpak_table_printer_add_column (printer, ref);
               flatpak_table_printer_add_decimal_column (printer, installed);
               flatpak_table_printer_add_decimal_column (printer, download);
+
+              flatpak_table_printer_add_column (printer, subset);
 
               flatpak_table_printer_add_column (printer, ""); /* Options */
 
@@ -313,11 +314,6 @@ print_branches_for_subsummary (FlatpakTablePrinter *printer,
                         flatpak_table_printer_append_with_comma_printf (printer, "eol-rebase=%s", eol);
                     }
                 }
-
-              if (subset)
-                flatpak_table_printer_add_column (printer, subset);
-              else
-                flatpak_table_printer_add_column (printer, "");
 
               flatpak_table_printer_finish_row (printer);
             }
@@ -337,8 +333,8 @@ print_branches (OstreeRepo *repo,
   flatpak_table_printer_set_column_title (printer, 0, _("Ref"));
   flatpak_table_printer_set_column_title (printer, 1, _("Installed"));
   flatpak_table_printer_set_column_title (printer, 2, _("Download"));
-  flatpak_table_printer_set_column_title (printer, 3, _("Options"));
-  flatpak_table_printer_set_column_title (printer, 4, _("Subsets"));
+  flatpak_table_printer_set_column_title (printer, 3, _("Subsets"));
+  flatpak_table_printer_set_column_title (printer, 4, _("Options"));
 
   if (index != NULL)
     {
