@@ -363,7 +363,8 @@ ${FLATPAK} ${U} remote-ls -d -a test-repo > remote-ls-log
 assert_file_has_content remote-ls-log "app/org\.test\.Hello/.*eol=Reason2"
 
 ${FLATPAK} ${U} update -y org.test.Hello > update-log
-assert_file_has_content update-log "org\.test\.Hello.*Reason2"
+assert_file_has_content update-log "org\.test\.Hello.*end-of-life"
+assert_file_has_content update-log "Reason2"
 
 ${FLATPAK} ${U} info org.test.Hello > info-log
 assert_file_has_content info-log "End-of-life: Reason2"
