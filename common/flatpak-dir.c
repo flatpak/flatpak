@@ -15755,7 +15755,7 @@ find_used_refs (FlatpakDir         *self,
           if (runtime)
             {
               g_autoptr(FlatpakDecomposed) runtime_ref = flatpak_decomposed_new_from_pref (FLATPAK_KINDS_RUNTIME, runtime, NULL);
-              if (runtime_ref)
+              if (runtime_ref && !flatpak_decomposed_equal (runtime_ref, ref_to_analyze))
                 queue_ref_for_analysis (runtime_ref, arch, analyzed_refs, refs_to_analyze);
             }
         }
@@ -15765,7 +15765,7 @@ find_used_refs (FlatpakDir         *self,
       if (sdk)
         {
           g_autoptr(FlatpakDecomposed) sdk_ref = flatpak_decomposed_new_from_pref (FLATPAK_KINDS_RUNTIME, sdk, NULL);
-          if (sdk_ref)
+          if (sdk_ref && !flatpak_decomposed_equal (sdk_ref, ref_to_analyze))
             queue_ref_for_analysis (sdk_ref, arch, analyzed_refs, refs_to_analyze);
         }
 
