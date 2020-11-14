@@ -431,6 +431,54 @@ test_decompose (void)
     branch = flatpak_decomposed_dup_branch (pref);
     g_assert_cmpstr (branch, ==, "master");
   }
+
+
+  {
+    g_autoptr(FlatpakDecomposed) a = flatpak_decomposed_new_from_ref ("app/org.app.A/x86_64/master", NULL);
+    g_autoptr(FlatpakDecomposed) a_l = flatpak_decomposed_new_from_ref ("runtime/org.app.A.Locale/x86_64/master", NULL);
+    g_autoptr(FlatpakDecomposed) b = flatpak_decomposed_new_from_ref ("app/org.app.B/x86_64/master", NULL);
+    g_autoptr(FlatpakDecomposed) b_l = flatpak_decomposed_new_from_ref ("runtime/org.app.B.Locale/x86_64/master", NULL);
+    g_autoptr(FlatpakDecomposed) c = flatpak_decomposed_new_from_ref ("app/org.app.A/i386/master", NULL);
+    g_autoptr(FlatpakDecomposed) c_l = flatpak_decomposed_new_from_ref ("runtime/org.app.A.Locale/i386/master", NULL);
+    g_autoptr(FlatpakDecomposed) d = flatpak_decomposed_new_from_ref ("app/org.app.A/x86_64/beta", NULL);
+    g_autoptr(FlatpakDecomposed) d_l = flatpak_decomposed_new_from_ref ("runtime/org.app.A.Locale/x86_64/beta", NULL);
+
+    g_assert (flatpak_decomposed_id_is_subref_of (a_l, a));
+    g_assert (!flatpak_decomposed_id_is_subref_of (b_l, a));
+    g_assert (!flatpak_decomposed_id_is_subref_of (c_l, a));
+    g_assert (!flatpak_decomposed_id_is_subref_of (d_l, a));
+    g_assert (!flatpak_decomposed_id_is_subref_of (a, a));
+    g_assert (!flatpak_decomposed_id_is_subref_of (b, a));
+    g_assert (!flatpak_decomposed_id_is_subref_of (c, a));
+    g_assert (!flatpak_decomposed_id_is_subref_of (d, a));
+
+    g_assert (!flatpak_decomposed_id_is_subref_of (a_l, b));
+    g_assert (flatpak_decomposed_id_is_subref_of (b_l, b));
+    g_assert (!flatpak_decomposed_id_is_subref_of (c_l, b));
+    g_assert (!flatpak_decomposed_id_is_subref_of (d_l, b));
+    g_assert (!flatpak_decomposed_id_is_subref_of (a, b));
+    g_assert (!flatpak_decomposed_id_is_subref_of (b, b));
+    g_assert (!flatpak_decomposed_id_is_subref_of (c, b));
+    g_assert (!flatpak_decomposed_id_is_subref_of (d, b));
+
+    g_assert (!flatpak_decomposed_id_is_subref_of (a_l, c));
+    g_assert (!flatpak_decomposed_id_is_subref_of (b_l, c));
+    g_assert (flatpak_decomposed_id_is_subref_of (c_l, c));
+    g_assert (!flatpak_decomposed_id_is_subref_of (d_l, c));
+    g_assert (!flatpak_decomposed_id_is_subref_of (a, c));
+    g_assert (!flatpak_decomposed_id_is_subref_of (b, c));
+    g_assert (!flatpak_decomposed_id_is_subref_of (c, c));
+    g_assert (!flatpak_decomposed_id_is_subref_of (d, c));
+
+    g_assert (!flatpak_decomposed_id_is_subref_of (a_l, d));
+    g_assert (!flatpak_decomposed_id_is_subref_of (b_l, d));
+    g_assert (!flatpak_decomposed_id_is_subref_of (c_l, d));
+    g_assert (flatpak_decomposed_id_is_subref_of (d_l, d));
+    g_assert (!flatpak_decomposed_id_is_subref_of (a, d));
+    g_assert (!flatpak_decomposed_id_is_subref_of (b, d));
+    g_assert (!flatpak_decomposed_id_is_subref_of (c, d));
+    g_assert (!flatpak_decomposed_id_is_subref_of (d, d));
+  }
 }
 
 

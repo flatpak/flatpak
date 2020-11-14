@@ -113,6 +113,8 @@ gboolean           flatpak_decomposed_id_has_prefix         (FlatpakDecomposed  
 gboolean           flatpak_decomposed_is_id_fuzzy           (FlatpakDecomposed  *ref,
                                                              const char         *id);
 gboolean           flatpak_decomposed_id_is_subref          (FlatpakDecomposed  *ref);
+gboolean           flatpak_decomposed_id_is_subref_of       (FlatpakDecomposed  *ref,
+                                                             FlatpakDecomposed  *parent_ref);
 const char *       flatpak_decomposed_peek_arch             (FlatpakDecomposed  *ref,
                                                              gsize              *out_len);
 char *             flatpak_decomposed_dup_arch              (FlatpakDecomposed  *ref);
