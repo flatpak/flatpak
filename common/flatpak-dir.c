@@ -6338,6 +6338,33 @@ flatpak_dir_list_refs (FlatpakDir   *self,
   return g_steal_pointer (&refs);
 }
 
+GPtrArray *
+flatpak_dir_list_app_refs_with_runtime (FlatpakDir        *self,
+                                        FlatpakDecomposed *runtime_ref,
+                                        GCancellable      *cancellable,
+                                        GError           **error)
+{
+  g_autoptr(GPtrArray) app_refs = NULL;
+  const char *runtime_pref = flatpak_decomposed_get_pref (runtime_ref);
+  g_autoptr(GPtrArray) apps = g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_decomposed_unref);
+
+  app_refs = flatpak_dir_list_refs (self, FLATPAK_KINDS_APP, NULL, NULL);
+  for (int i = 0; app_refs != NULL && i < app_refs->len; i++)
+    {
+      FlatpakDecomposed *app_ref = g_ptr_array_index (app_refs, i);
+      g_autoptr(GBytes) app_deploy_data = flatpak_dir_get_deploy_data (self, app_ref, FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
+
+      if (app_deploy_data)
+        {
+          const char *app_runtime = flatpak_deploy_data_get_runtime (app_deploy_data);
+          if (g_strcmp0 (app_runtime, runtime_pref) == 0)
+            g_ptr_array_add (apps, flatpak_decomposed_ref (app_ref));
+        }
+    }
+
+  return g_steal_pointer (&apps);
+}
+
 GVariant *
 flatpak_dir_read_latest_commit (FlatpakDir        *self,
                                 const char        *remote,
@@ -9868,32 +9895,17 @@ flatpak_dir_uninstall (FlatpakDir                 *self,
 
   if (flatpak_decomposed_is_runtime (ref) && !force_remove)
     {
-      g_autoptr(GPtrArray) app_refs = NULL;
-      g_autoptr(GPtrArray) blocking = g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_decomposed_unref);
-      const char *pref = flatpak_decomposed_get_pref (ref);
-      int i;
+      g_autoptr(GPtrArray) blocking = NULL;
 
       /* Look for apps that need this runtime */
-
-      app_refs = flatpak_dir_list_refs (self, FLATPAK_KINDS_APP, NULL, NULL);
-      for (i = 0; app_refs != NULL && i < app_refs->len; i++)
-        {
-          FlatpakDecomposed *app_ref = g_ptr_array_index (app_refs, i);
-          g_autoptr(GBytes) app_deploy_data = flatpak_dir_get_deploy_data (self, app_ref, FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
-
-          if (app_deploy_data)
-            {
-              const char *app_runtime = flatpak_deploy_data_get_runtime (app_deploy_data);
-
-              if (g_strcmp0 (app_runtime, pref) == 0)
-                g_ptr_array_add (blocking, flatpak_decomposed_ref (app_ref));
-            }
-        }
+      blocking = flatpak_dir_list_app_refs_with_runtime (self, ref, cancellable, error);
+      if (blocking == NULL)
+        return FALSE;
 
       if (blocking->len > 0)
         {
           g_autoptr(GString) joined = g_string_new ("");
-          for (i = 0; i < blocking->len; i++)
+          for (int i = 0; i < blocking->len; i++)
             {
               FlatpakDecomposed *blocking_ref = g_ptr_array_index (blocking, i);
               g_autofree char *id = flatpak_decomposed_dup_id (blocking_ref);
@@ -9903,7 +9915,7 @@ flatpak_dir_uninstall (FlatpakDir                 *self,
             }
 
           return flatpak_fail_error (error, FLATPAK_ERROR_RUNTIME_USED,
-                                     _("Can't remove %s, it is needed for: %s"), pref, joined->str);
+                                     _("Can't remove %s, it is needed for: %s"), flatpak_decomposed_get_pref (ref), joined->str);
         }
     }
 
