@@ -710,19 +710,20 @@ end_of_lifed_with_rebase (FlatpakTransaction *transaction,
   if (action == EOL_UNDECIDED)
     {
       gboolean is_pinned = flatpak_dir_ref_is_pinned (dir, flatpak_decomposed_get_ref (ref));
+      g_autofree char *branch = flatpak_decomposed_dup_branch (ref);
       action = EOL_IGNORE;
 
       if (rebased_to_ref)
         if (is_pinned)
-          g_print (_("Info: (pinned) %s is end-of-life, in favor of %s\n"), name, rebased_to_ref);
+          g_print (_("Info: (pinned) %s//%s is end-of-life, in favor of %s\n"), name, branch, rebased_to_ref);
         else
-          g_print (_("Info: %s is end-of-life, in favor of %s\n"), name, rebased_to_ref);
+          g_print (_("Info: %s//%s is end-of-life, in favor of %s\n"), name, branch, rebased_to_ref);
       else if (reason)
         {
           if (is_pinned)
-            g_print (_("Info: (pinned) %s is end-of-life, with reason:\n"), name);
+            g_print (_("Info: (pinned) %s//%s is end-of-life, with reason:\n"), name, branch);
           else
-            g_print (_("Info: %s is end-of-life, with reason:\n"), name);
+            g_print (_("Info: %s//%s is end-of-life, with reason:\n"), name, branch);
           g_print ("   %s\n", reason);
         }
 
