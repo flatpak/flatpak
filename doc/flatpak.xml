@@ -178,6 +178,28 @@
                 </para></listitem>
             </varlistentry>
 
+            <varlistentry>
+                <term><option>--print-system-only</option></term>
+
+                <listitem><para>
+                    When the <command>flatpak --print-updated-env</command>
+                    command is run, only print the environment for system
+                    flatpak installations, not including the user’s home
+                    installation.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--print-updated-env</option></term>
+
+                <listitem><para>
+                    Print the set of environment variables needed to use
+                    flatpaks, amending the current set of environment variables.
+                    This is intended to be used in a systemd environment
+                    generator, and should not need to be run manually.
+                </para></listitem>
+            </varlistentry>
+
         </variablelist>
     </refsect1>
 

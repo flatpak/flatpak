@@ -69,6 +69,8 @@ ${FLATPAK} complete "flatpak --" 10 "--" | sort > complete_out
 --installation=
 --installations 
 --ostree-verbose 
+--print-system-only 
+--print-updated-env 
 --supported-arches 
 --system 
 --user 
