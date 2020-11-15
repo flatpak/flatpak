@@ -24,7 +24,7 @@ set -euo pipefail
 # This test looks for specific localized strings.
 export LC_ALL=C
 
-echo "1..10"
+echo "1..11"
 
 ${FLATPAK} --version > version_out
 
@@ -46,6 +46,16 @@ ${FLATPAK} --supported-arches > arches
 assert_streq `head -1 arches` `cat arch`
 
 ok "default arch"
+
+${FLATPAK} --print-updated-env > updated_env
+${FLATPAK} --print-updated-env --print-system-only > updated_env_system
+
+assert_file_has_content updated_env "exports/share"
+assert_file_has_content updated_env "^XDG_DATA_DIRS="
+assert_file_has_content updated_env_system "exports/share"
+assert_file_has_content updated_env_system "^XDG_DATA_DIRS="
+
+ok "print updated env"
 
 ${FLATPAK} --gl-drivers > drivers
 
