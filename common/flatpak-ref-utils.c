@@ -1353,8 +1353,54 @@ flatpak_decomposed_id_is_subref (FlatpakDecomposed  *ref)
   gsize ref_id_len;
   const char *ref_id = flatpak_decomposed_peek_id (ref, &ref_id_len);
 
+  if (!flatpak_decomposed_is_runtime (ref))
+    return FALSE;
+
   return flatpak_id_has_subref_suffix (ref_id, ref_id_len);
 }
+
+gboolean
+flatpak_decomposed_id_is_subref_of (FlatpakDecomposed  *ref,
+                                    FlatpakDecomposed  *parent_ref)
+{
+  gsize ref_id_len;
+  const char *ref_id = flatpak_decomposed_peek_id (ref, &ref_id_len);
+  gsize parent_id_len;
+  const char *parent_id = flatpak_decomposed_peek_id (parent_ref, &parent_id_len);
+
+  /* All subrefs are runtimes, even for apps */
+  if (!flatpak_decomposed_is_runtime (ref))
+    return FALSE;
+
+  if (!flatpak_id_has_subref_suffix (ref_id, ref_id_len))
+    return FALSE;
+
+  /* Guaranteed to have a dot in it from the above check, so strip last element  */
+  while (ref_id[ref_id_len-1] != '.')
+    ref_id_len--;
+  ref_id_len--; /* And strip dot */
+
+  /* Any dashes in the last element of parent_id got converted to
+     underscores to make it a valid prefix, so custom compare here. */
+
+  if (ref_id_len != parent_id_len)
+    return FALSE;
+
+  for (int i = 0; i < ref_id_len; i++)
+    {
+      char c = parent_id[i];
+      if (c == '-')
+        c = '_';
+
+      if (c != ref_id[i])
+        return FALSE;
+    }
+
+  /* Check the rest of the ref */
+  return strcmp (flatpak_decomposed_peek_arch (ref, NULL),
+                 flatpak_decomposed_peek_arch (parent_ref, NULL)) == 0;
+}
+
 
 const char *
 flatpak_decomposed_peek_arch (FlatpakDecomposed  *ref,
