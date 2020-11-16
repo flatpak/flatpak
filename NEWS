@@ -1,3 +1,120 @@
+Changes in 1.9.1
+~~~~~~~~~~~~~~~~
+Released: 2020-11-xx
+
+This is the first unstable release in the series that will lead to
+1.10. The main change in this version is a new format for the summary
+file used when accessing an OSTree repository on the network. For this
+reason we now require OSTree version 2020.8.
+
+The new format should make getting the initial metadata required for
+most flatpak operations much faster, and use less network
+bandwitdh. This will allow repostories to scale to more apps and more
+architectures without affecting clients. The old format is still
+generated for compatibilty with older clients.
+
+The new format also allows repositories to publish named subsets, and
+for clients to declare that they only want to see that subset. The
+goal here is to allow for example flathub to mark all FOSS apps, and
+make it possible for users to use a flathub-foss remote without
+flathub having to maintain two duplicated repositories. This is
+accessible by passing --subset=SUBSET to the build-commit-from and
+build-export commands.
+
+The new repo option `flatpak.summary-arches` controls which architectures
+are put in the old format summary. This can be used to avoid newly added
+architectures making old clients slower, at the cost of requiring a newer
+flatpak client version for the new architecture.
+
+Other major changes
+ * There is a new `flatpak pin` command that lets you pin runtimes
+   so that they are not considered unused. Also, we now by default pin
+   runtimes that are installed explicitly (i.e. not as a dependency of an
+   app).
+ * During a regular update or uninstall of an app, if the operation
+   makes a previously used runtime unused, and the runtime is marked
+   as end-of-lifed, then the runtime is automatically uninstalled.
+ * During `flatpak update` (i.e. with no specific app given) flatpak
+   now automatically adds uninstall operations for end-of-life runtimes
+   that are unused.
+ * The end-of-life warnings in the flatpak CLI are now better, showing
+   more useful details (like version and what apps are using the runtime)
+   and less unuseful details.
+ * Some changes was made in which dconf paths were considered "similar"
+   to the app id, allowing for example `org.gnome.SoundJuicer` to
+   migrate from `/org/gnome/sound-juicer`.
+ * Flatpak run now implements the new standard for os-release in containers
+   (https://www.freedesktop.org/software/systemd/man/os-release.html).
+ * There is now a tcsh profile snippet
+ * The origin remote for an app is now prioritized over other remotes with
+   the same priority when looking for dependencies.
+ * We now allow extra-data apply_extra processes to run multiarch code.
+ * A new internal representation for ostree ref strings was added which
+   is more efficient. This should not affect the behaviour of flatpak
+   but the large amounts of changes to use this may have accidentally
+   introduced regressions.
+ * Some fixes to the in-memory summary cache make it more efficient.
+ * --filesystem=/ is now explicitly forbidden as it doesn't work (and never
+   did).
+ * Flatpak install/update now only prints `(partial)` for an update that
+   actually is partial (not just for all locales).
+ * Flatpak remote-ls on a file: uri (for example a sideloaded repo) now
+   correctly lists the refs in the repo.
+ * New library APIS: flatpak_installation_list_pinned_refs,
+   flatpak_transaction_set_disable_auto_pin,
+   flatpak_transaction_set_include_unused_uninstall_ops,
+   flatpak_transaction_operation_get_subpaths,
+   flatpak_transaction_operation_get_requires_authentication.
+ * flatpak_installation_list_installed_refs_for_update() now returns
+   refs that have a end-of-life rebase that it could be updated to.
+ * There is a new `ready-pre-auth` signal in FlatpakTransaction allowing
+   clients new ways to handling authentication.
+
+Changes in 1.8.3
+~~~~~~~~~~~~~~~~
+Released: 2020-11-17
+
+  * Fixed progress reporting for OCI and extra-data
+  * The in-memory summary cache is more efficient
+  * Fixed authentication getting stuck in a loop in some cases
+  * Fixed authentication error reporting
+  * We now extract OCI info for runtimes as well as apps
+  * Fixed crash if anonymous authentication fails and -y is specified
+  * flatpak info now only looks at the specified installation
+    if one is specified
+  * Better error reporting for server HTTP errors during download
+  * Uninstall now removes applications before the runtime it depends on
+  * Fixed test-suite to pass with the latest OSTree version
+  * Fixed dbus environment variables in flatpak enter
+  * Avoid updating metadata from the remote when uninstalling
+  * Fixed error message handling in various places
+  * FlatpakTransaction now verifies all passed in refs to avoid
+    potential issues with invalid names
+  * Updated translations
+
+Changes in 1.8.2
+================
+
+ * Added validation of collection id settins for remotes
+ * Fix seccomp filters on s390
+ * Robustness fixes to the spawn portal
+ * Fix support for masking update in the system installation
+ * Better support for distros with uncommon models of merged /usr
+ * Cache responses from localed/AccoutService
+ * Fix hangs in cases where xdg-dbus-proxy fails to start
+ * Fix double-free in cups socket detection
+ * OCI authenticator now doesn't ask for auth in case of http errors
+
+Changes in 1.8.1
+================
+
+ * Avoid calling authenticator in update if ref didn't change
+ * Don't fail transaction if ref is already installed (after transaction start)
+ * Fix flatpak run handling of userns in the --device=all case
+ * Fix handling of extensions from different remotes
+ * Fix flatpak run --no-session-bus
+ * Updated translations
+
 Changes in 1.8.0
 ================
 
