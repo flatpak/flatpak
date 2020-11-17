@@ -326,7 +326,7 @@ else
 fi
 
 ostree init --repo=repos/test-copy --mode=archive-z2 ${copy_collection_args}
-${FLATPAK} build-commit-from --end-of-life=Reason1 --src-repo=repos/test repos/test-copy app/org.test.Hello/$ARCH/master
+${FLATPAK} build-commit-from --no-update-summary --end-of-life=Reason1 --src-repo=repos/test repos/test-copy app/org.test.Hello/$ARCH/master
 update_repo test-copy ${COPY_COLLECTION_ID}
 
 # Ensure we have no eol app in appdata
@@ -388,7 +388,7 @@ else
 fi
 
 ostree init --repo=repos/test-rebase --mode=archive-z2 ${rebase_collection_args}
-${FLATPAK} build-commit-from --src-repo=repos/test ${FL_GPGARGS} repos/test-rebase app/org.test.Hello/$ARCH/master runtime/org.test.Hello.Locale/$ARCH/master
+${FLATPAK} build-commit-from --no-update-summary --src-repo=repos/test ${FL_GPGARGS} repos/test-rebase app/org.test.Hello/$ARCH/master runtime/org.test.Hello.Locale/$ARCH/master
 update_repo test-rebase ${REBASE_COLLECTION_ID}
 
 flatpak remote-add ${U} --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg test-rebase "http://127.0.0.1:${port}/test-rebase"
@@ -400,8 +400,9 @@ ${CMD_PREFIX} flatpak run --command=bash org.test.Hello -c 'echo foo > $XDG_DATA
 assert_has_dir $HOME/.var/app/org.test.Hello
 assert_has_file $HOME/.var/app/org.test.Hello/data/a-file
 
-${FLATPAK} build-commit-from --end-of-life-rebase=org.test.Hello=org.test.NewHello --src-repo=repos/test ${FL_GPGARGS} repos/test-rebase app/org.test.Hello/$ARCH/master runtime/org.test.Hello.Locale/$ARCH/master
+${FLATPAK} build-commit-from --no-update-summary --end-of-life-rebase=org.test.Hello=org.test.NewHello --src-repo=repos/test ${FL_GPGARGS} repos/test-rebase app/org.test.Hello/$ARCH/master runtime/org.test.Hello.Locale/$ARCH/master
 GPGARGS="${FL_GPGARGS}" $(dirname $0)/make-test-app.sh repos/test-rebase org.test.NewHello master "${REBASE_COLLECTION_ID}" "NEW" > /dev/null
+update_repo test-rebase
 
 ${FLATPAK} ${U} update -y org.test.Hello
 

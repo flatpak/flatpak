@@ -40,7 +40,8 @@ EOF
     touch ${DIR}/usr/exists
     touch ${DIR}/usr/extension-$ID:$VERSION
 
-    ${FLATPAK} build-export --runtime ${GPGARGS-} repos/test ${DIR} ${VERSION}
+    ${FLATPAK} build-export --no-update-summary --runtime ${GPGARGS-} repos/test ${DIR} ${VERSION}
+    update_repo
     rm -rf ${DIR}
 
     ${FLATPAK} --user install -y test-repo $ID $VERSION
@@ -101,8 +102,8 @@ $(dirname $0)/make-test-app.sh repos/test "" master "" > /dev/null
 # Modify platform metadata
 ostree checkout -U --repo=repos/test runtime/org.test.Platform/${ARCH}/master platform
 add_extensions platform
-${FLATPAK} build-export --disable-sandbox repos/test platform --files=files master
-${FLATPAK} build-update-repo repos/test
+${FLATPAK} build-export --no-update-summary --disable-sandbox repos/test platform --files=files master
+update_repo
 
 ${FLATPAK} remote-add --user --no-gpg-verify test-repo repos/test
 ${FLATPAK} --user install -y test-repo org.test.Platform master
@@ -155,8 +156,8 @@ ok "runtime extensions"
 # Modify app metadata
 ostree checkout -U --repo=repos/test app/org.test.Hello/${ARCH}/master hello
 add_extensions hello
-${FLATPAK} build-export --disable-sandbox repos/test hello master
-${FLATPAK} build-update-repo repos/test
+${FLATPAK} build-export --no-update-summary --disable-sandbox repos/test hello master
+update_repo
 
 ${FLATPAK} --user update -y org.test.Hello master
 

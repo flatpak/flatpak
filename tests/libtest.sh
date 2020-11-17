@@ -303,7 +303,7 @@ make_runtime () {
         ostree --repo=repos/${REPONAME} init --mode=archive-z2 ${collection_args}
     fi
 
-    flatpak build-commit-from --disable-fsync --src-repo=${RUNTIME_REPO} --force ${GPGARGS} ${EXPORT_ARGS-}  repos/${REPONAME}  ${RUNTIME_REF}
+    flatpak build-commit-from --disable-fsync --no-update-summary --src-repo=${RUNTIME_REPO} --force ${GPGARGS} ${EXPORT_ARGS-}  repos/${REPONAME}  ${RUNTIME_REF}
 }
 
 httpd () {
