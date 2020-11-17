@@ -1,3 +1,25 @@
+Changes in 1.8.3
+~~~~~~~~~~~~~~~~
+Released: 2020-11-17
+
+  * Fixed progress reporting for OCI and extra-data
+  * The in-memory summary cache is more efficient
+  * Fixed authentication getting stuck in a loop in some cases
+  * Fixed authentication error reporting
+  * We now extract OCI info for runtimes as well as apps
+  * Fixed crash if anonymous authentication fails and -y is specified
+  * flatpak info now only looks at the specified installation
+    if one is specified
+  * Better error reporting for server HTTP errors during download
+  * Uninstall now removes applications before the runtime it depends on
+  * Fixed test-suite to pass with the latest OSTree version
+  * Fixed dbus environment variables in flatpak enter
+  * Avoid updating metadata from the remote when uninstalling
+  * Fixed error message handling in various places
+  * FlatpakTransaction now verifies all passed in refs to avoid
+    potential issues with invalid names
+  * Updated translations
+
 Changes in 1.8.2
 ================
 
