@@ -38,7 +38,7 @@ ${FLATPAK} build-init ${DIR} org.test.App org.test.Platform org.test.Platform
 mkdir -p ${DIR}/files/a
 echo "a" > ${DIR}/files/a/data
 ${FLATPAK} build-finish ${DIR} --socket=x11 --share=network --command=true
-${FLATPAK} build-export ${FL_GPGARGS} --update-appstream repos/test ${DIR} master
+${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} --update-appstream repos/test ${DIR} master
 update_repo
 
 ${FLATPAK} ${U} install -y test-repo org.test.App master
@@ -53,7 +53,7 @@ assert_not_file_has_content ${FL_DIR}/repo/config '^collection-id='
 # but don’t mark the collection ID as to be deployed yet. Ensure it doesn’t
 # appear in the client’s configuration.
 echo -e "[core]\ncollection-id=org.test.Collection" >> repos/test/config
-${FLATPAK} build-export ${FL_GPGARGS} --update-appstream repos/test --collection-id org.test.Collection ${DIR} master
+${FLATPAK} build-export --no-update-summary  ${FL_GPGARGS} --update-appstream repos/test --collection-id org.test.Collection ${DIR} master
 UPDATE_REPO_ARGS="--collection-id=org.test.Collection" update_repo
 
 ${FLATPAK} ${U} update -y org.test.App master

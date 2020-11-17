@@ -130,7 +130,7 @@ ln -s -t ${DIR}/files/share/locale ../../share/runtime/locale/fr/share/fr
 
 flatpak build-finish ${BUILD_FINISH_ARGS-} --command=hello.sh ${DIR}
 mkdir -p repos
-flatpak build-export --disable-sandbox ${collection_args} ${GPGARGS-} ${EXPORT_ARGS-} ${REPO} ${DIR} ${BRANCH}
+flatpak build-export --no-update-summary --disable-sandbox ${collection_args} ${GPGARGS-} ${EXPORT_ARGS-} ${REPO} ${DIR} ${BRANCH}
 rm -rf ${DIR}
 
 # build a locale extension
@@ -161,7 +161,5 @@ msgfmt --output-file ${DIR}/files/fr/share/fr/LC_MESSAGES/helloworld.mo fr.po
 
 flatpak build-finish ${DIR}
 mkdir -p repos
-flatpak build-export --runtime ${collection_args} ${GPGARGS-} ${EXPORT_ARGS-} ${REPO} ${DIR} ${BRANCH}
+flatpak build-export --no-update-summary --runtime ${collection_args} ${GPGARGS-} ${EXPORT_ARGS-} ${REPO} ${DIR} ${BRANCH}
 rm -rf ${DIR}
-
-
