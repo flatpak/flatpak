@@ -278,6 +278,10 @@ update_repo () {
         collection_args=
     fi
 
+    if test -f repos/${REPONAME}/summary; then
+        sleep 1 # ensure we get a new timestamp on the summary files
+    fi
+
     ${FLATPAK} build-update-repo ${collection_args} ${GPGARGS:-${FL_GPGARGS}} ${UPDATE_REPO_ARGS-} repos/${REPONAME}
 }
 
