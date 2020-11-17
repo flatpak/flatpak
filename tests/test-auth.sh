@@ -113,7 +113,8 @@ make_updated_app test "" master UPDATE3
 ${FLATPAK} ${U} update -y org.test.Hello
 
 # Use build-commit-from to add it to a new version
-$FLATPAK build-commit-from  ${FL_GPGARGS} --token-type=2 --disable-fsync --src-ref=app/org.test.Hello/$ARCH/master repos/test app/org.test.Hello/$ARCH/copy
+$FLATPAK build-commit-from  --no-update-summary ${FL_GPGARGS} --token-type=2 --disable-fsync --src-ref=app/org.test.Hello/$ARCH/master repos/test app/org.test.Hello/$ARCH/copy
+update_repo
 mark_need_token app/org.test.Hello/$ARCH/copy the-secret
 
 # Install with wrong token
