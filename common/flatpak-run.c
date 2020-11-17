@@ -3514,7 +3514,7 @@ check_sudo (GError **error)
   /* SUDO_COMMAND could be a value like `/usr/bin/flatpak run foo` */
   split_command = g_strsplit (sudo_command_env, " ", 2);
   if (g_str_has_suffix (split_command[0], "flatpak"))
-    return flatpak_fail_error (error, FLATPAK_ERROR, _("\"flatpak run\" is not intended to be ran with sudo"));
+    return flatpak_fail_error (error, FLATPAK_ERROR, _("\"flatpak run\" is not intended to be ran with `sudo`, use `sudo -i` or `su -l` instead"));
 
   return TRUE;
 }
