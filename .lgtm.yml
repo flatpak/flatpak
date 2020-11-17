@@ -14,8 +14,6 @@ extraction:
         - dbus
         - gtk-doc-tools
         - libfuse-dev
-        - ostree
-        - libostree-dev
         - libarchive-dev
         - libcap-dev
         - libattr1-dev
@@ -38,3 +36,16 @@ extraction:
         - libdconf-dev
         - socat
         - libdbus-1-dev
+        - e2fslibs-dev
+    after_prepare:
+      - git clone --branch v2020.8 --depth 1 --no-tags https://github.com/ostreedev/ostree.git ./ostree
+      - pushd ./ostree
+      - mkdir -p $LGTM_WORKSPACE/installdir
+      - ./autogen.sh --prefix=$LGTM_WORKSPACE/installdir/usr --libdir=$LGTM_WORKSPACE/installdir/usr/lib --without-libsystemd
+      - make -j $(getconf _NPROCESSORS_ONLN)
+      - make install
+      - popd
+      - export PKG_CONFIG_PATH="$LGTM_WORKSPACE/installdir/usr/lib/pkgconfig"
+      - export LD_LIBRARY_PATH="$LGTM_WORKSPACE/installdir/usr/lib"
+      - export LD_RUN_PATH="$LGTM_WORKSPACE/installdir/usr/lib"
+      - export LD_DEBUG=libs
