@@ -2110,6 +2110,8 @@ flatpak_summary_match_subrefs (GVariant          *summary_v,
           VarRefMapEntryRef entry = var_ref_map_get_at (ref_map, i);
           const char *cur;
           const char *id_start;
+          const char *id_suffix;
+          const char *id_end;
 
           cur = var_ref_map_entry_get_ref (entry);
 
@@ -2124,9 +2126,19 @@ flatpak_summary_match_subrefs (GVariant          *summary_v,
           id_start = strchr (cur, '/');
           if (id_start == NULL)
             continue;
+          id_start += 1;
+
+          id_end = strchr (id_start, '/');
+          if (id_end == NULL)
+            continue;
 
           /* But only prefix of id */
-          if (!g_str_has_prefix (id_start + 1, parts_prefix))
+          if (!g_str_has_prefix (id_start, parts_prefix))
+            continue;
+
+          /* And no dots (we want to install prefix.$ID, but not prefix.$ID.Sources) */
+          id_suffix = id_start + strlen (parts_prefix);
+          if (memchr (id_suffix, '.', id_end - id_suffix) != NULL)
             continue;
 
           FlatpakDecomposed *d = flatpak_decomposed_new_from_ref (cur, NULL);
