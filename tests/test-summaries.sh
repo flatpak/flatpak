@@ -71,7 +71,7 @@ EOF
     cp $(dirname $0)/org.test.Hello.png ${DIR}/files/share/app-info/icons/flatpak/64x64/${APP_ID}.png
 
     $FLATPAK build-finish --command=hello.sh ${DIR} &> /dev/null
-    $FLATPAK build-export ${GPGARGS} --arch=$APPARCH --disable-sandbox  ${REPO} ${DIR} &> /dev/null
+    $FLATPAK build-export --no-update-summary ${GPGARGS} --arch=$APPARCH --disable-sandbox  ${REPO} ${DIR} &> /dev/null
     rm -rf ${DIR}
 }
 
@@ -144,7 +144,7 @@ fi
 
 # Set up some arches, including the current one
 declare -A arches
-for A in aarch64 arm $($FLATPAK --supported-arches); do
+for A in x86_64 aarch64 arm $($FLATPAK --supported-arches); do
     arches[$A]=1
 done
 ARCHES=${!arches[@]}
@@ -160,6 +160,8 @@ for A in $ARCHES; do
         make_app org.app.App$I $A repos/test
     done
 
+    update_repo
+
     # Make sure we have no superfluous summary files
     verify_subsummaries repos/test
 done
@@ -171,10 +173,14 @@ ok subsummary update generations
 ACTIVE_SUBSET=$(active_subset repos/test)
 ACTIVE_SUBSET_OTHER=$(active_subset_for_arch repos/test $OTHER_ARCH)
 
+# Ensure we have no initial cache
+rm -rf $FL_CACHE_DIR/summaries/*
+
 assert_not_has_file $FL_CACHE_DIR/summaries/test-repo-${ACTIVE_SUBSET}.sub
 assert_not_has_file $FL_CACHE_DIR/summaries/test-repo-${ACTIVE_SUBSET_OTHER}.sub
 
 httpd_clear_log
+# Prime cache for default arch
 $FLATPAK $U remote-ls test-repo  > /dev/null
 
 assert_has_file $FL_CACHE_DIR/summaries/test-repo-${ARCH}-${ACTIVE_SUBSET}.sub
