@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2020-11-17 03:26+0000\n"
+"POT-Creation-Date: 2020-11-19 11:02+0100\n"
 "PO-Revision-Date: 2020-11-17 11:41+0200\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <kde-i18n-uk@kde.org>\n"
@@ -2361,7 +2361,6 @@ msgid "PRIORITY"
 msgstr "ПРІОРИТЕТНІСТЬ"
 
 #: app/flatpak-builtins-remote-add.c:73
-#| msgid "A nice name to use for this remote"
 msgid "The named subset to use for this remote"
 msgstr ""
 "Іменований піднабір, яким слід скористатися для цього віддаленого сховища"
@@ -2574,7 +2573,6 @@ msgid "Subset"
 msgstr "Піднабір"
 
 #: app/flatpak-builtins-remote-list.c:53
-#| msgid "Show the ref"
 msgid "Show the subset"
 msgstr "Показати піднабір"
 
@@ -2681,7 +2679,6 @@ msgid "Set a new url"
 msgstr "Встановити нову адресу"
 
 #: app/flatpak-builtins-remote-modify.c:70
-#| msgid "Set a new url"
 msgid "Set a new subset to use"
 msgstr "Встановити новий піднабір для використання"
 
@@ -3537,33 +3534,26 @@ msgstr "Пароль"
 
 #: app/flatpak-cli-transaction.c:718
 #, c-format
-#| msgid "Info: %s is end-of-life, in favor of %s\n"
 msgid "Info: (pinned) %s//%s is end-of-life, in favor of %s\n"
 msgstr ""
 "Інформація: (пришпилено) термін підтримки %s//%s сплив, встановіть %s\n"
 
 #: app/flatpak-cli-transaction.c:720
 #, c-format
-#| msgid "Info: %s is end-of-life, in favor of %s\n"
 msgid "Info: %s//%s is end-of-life, in favor of %s\n"
 msgstr "Інформація: термін підтримки %s//%s сплив, встановіть %s\n"
 
 #: app/flatpak-cli-transaction.c:724
 #, c-format
-#| msgid "Info: %s is end-of-life, with reason: %s\n"
 msgid "Info: (pinned) %s//%s is end-of-life, with reason:\n"
 msgstr "Інформація: (пришпилено) термін підтримки %s//%s сплив, причина:\n"
 
 #: app/flatpak-cli-transaction.c:726
 #, c-format
-#| msgid "Info: %s is end-of-life, with reason: %s\n"
 msgid "Info: %s//%s is end-of-life, with reason:\n"
 msgstr "Інформація: термін підтримки %s//%s сплив, причина:\n"
 
 #: app/flatpak-cli-transaction.c:735
-#| msgid ""
-#| "\n"
-#| " Finding applications and runtimes"
 msgid "Applications using this runtime:\n"
 msgstr "Програми, що використовують це середовище:\n"
 
@@ -4265,7 +4255,7 @@ msgid "Couldn't find ref %s in remote %s"
 msgstr "Не вдалося знайти посилання %s у віддаленому сховищі %s"
 
 #: common/flatpak-dir.c:986 common/flatpak-dir.c:5563
-#: common/flatpak-utils.c:6728 common/flatpak-utils.c:6733
+#: common/flatpak-utils.c:6740 common/flatpak-utils.c:6745
 msgid "Image is not a manifest"
 msgstr "Образ не є маніфестом"
 
@@ -4405,7 +4395,7 @@ msgstr "%s, внесок %s вже встановлено"
 msgid "While pulling %s from remote %s: "
 msgstr "Під час отримання %s з віддаленого сховища %s: "
 
-#: common/flatpak-dir.c:5909 common/flatpak-utils.c:6623
+#: common/flatpak-dir.c:5909 common/flatpak-utils.c:6635
 msgid "GPG signatures found, but none are in trusted keyring"
 msgstr ""
 "Знайдено підписи GPG, але жоден із них не зберігається у сховищі надійних "
@@ -4661,7 +4651,7 @@ msgstr "Не вдалося знайти встановлення %s"
 msgid "Invalid file format, no %s group"
 msgstr "Некоректний формат файла, немає групи %s"
 
-#: common/flatpak-dir.c:13516 common/flatpak-utils.c:2230
+#: common/flatpak-dir.c:13516 common/flatpak-utils.c:2242
 #, c-format
 msgid "Invalid version %s, only 1 supported"
 msgstr "Некоректна версія %s, передбачено підтримку лише версії 1"
@@ -4676,7 +4666,7 @@ msgstr "Некоректний формат файла, не вказано %s"
 msgid "Invalid file format, gpg key invalid"
 msgstr "Некоректний формат файла, ключ gpg є некоректним"
 
-#: common/flatpak-dir.c:13567 common/flatpak-utils.c:2288
+#: common/flatpak-dir.c:13567 common/flatpak-utils.c:2300
 msgid "Collection ID requires GPG key to be provided"
 msgstr "Визначення ідентифікатора збірки потребує надання ключа GPG"
 
@@ -5207,97 +5197,96 @@ msgstr "у рядку %d"
 msgid "Unexpected word '%s' on line %d"
 msgstr "Неочікуване слово «%s» у рядку %d"
 
-#: common/flatpak-utils.c:2211
+#: common/flatpak-utils.c:2223
 #, c-format
 msgid "Invalid %s: Missing group ‘%s’"
 msgstr "Некоректний %s: пропущено групу «%s»"
 
-#: common/flatpak-utils.c:2220
+#: common/flatpak-utils.c:2232
 #, c-format
 msgid "Invalid %s: Missing key ‘%s’"
 msgstr "Некоректний %s: пропущено ключ «%s»"
 
-#: common/flatpak-utils.c:2267
+#: common/flatpak-utils.c:2279
 msgid "Invalid gpg key"
 msgstr "Некоректний ключ gpg"
 
-#: common/flatpak-utils.c:2652
+#: common/flatpak-utils.c:2664
 msgid "No extra data sources"
 msgstr "Немає джерел додаткових даних"
 
-#: common/flatpak-utils.c:5247
+#: common/flatpak-utils.c:5259
 #, c-format
 msgid "Error copying 64x64 icon for component %s: %s\n"
 msgstr "Помилка під час копіювання піктограми 64x64 для компонента %s: %s\n"
 
-#: common/flatpak-utils.c:5253
+#: common/flatpak-utils.c:5265
 #, c-format
 msgid "Error copying 128x128 icon for component %s: %s\n"
 msgstr "Помилка під час копіювання піктограми 128x128 для компонента %s: %s\n"
 
-#: common/flatpak-utils.c:5500
+#: common/flatpak-utils.c:5512
 #, c-format
-#| msgid "%s is end-of-life, ignoring for appstream\n"
 msgid "%s is end-of-life, ignoring for appstream"
 msgstr "Строк підтримки %s минув, ігноруємо для appstream"
 
-#: common/flatpak-utils.c:5535
+#: common/flatpak-utils.c:5547
 #, c-format
 msgid "No appstream data for %s: %s\n"
 msgstr "Немає даних appstream для %s: %s\n"
 
-#: common/flatpak-utils.c:6485
+#: common/flatpak-utils.c:6497
 msgid "Invalid bundle, no ref in metadata"
 msgstr "Некоректний пакунок, немає сховища у метаданих"
 
-#: common/flatpak-utils.c:6583
+#: common/flatpak-utils.c:6595
 #, c-format
 msgid "Collection ‘%s’ of bundle doesn’t match collection ‘%s’ of remote"
 msgstr "Збірка «%s» пакунка не відповідає збірці «%s» віддаленого сховища"
 
-#: common/flatpak-utils.c:6662
+#: common/flatpak-utils.c:6674
 msgid "Metadata in header and app are inconsistent"
 msgstr "Метадані у заголовку і програмі є несумісними"
 
-#: common/flatpak-utils.c:6747 common/flatpak-utils.c:6906
+#: common/flatpak-utils.c:6759 common/flatpak-utils.c:6918
 msgid "Invalid OCI image config"
 msgstr "Некоректне налаштування образу OCI"
 
-#: common/flatpak-utils.c:6809 common/flatpak-utils.c:7055
+#: common/flatpak-utils.c:6821 common/flatpak-utils.c:7067
 #, c-format
 msgid "Wrong layer checksum, expected %s, was %s"
 msgstr "Помилкова контрольна сума шару, мало бути %s, маємо %s"
 
-#: common/flatpak-utils.c:6889
+#: common/flatpak-utils.c:6901
 #, c-format
 msgid "No ref specified for OCI image %s"
 msgstr "Не вказано сховища для образу OCI %s"
 
-#: common/flatpak-utils.c:6895
+#: common/flatpak-utils.c:6907
 #, c-format
 msgid "Wrong ref (%s) specified for OCI image %s, expected %s"
 msgstr "Вказано помилкове сховище (%s) для образу OCI %s, мало бути %s"
 
-#: common/flatpak-utils.c:7723
+#: common/flatpak-utils.c:7735
 #, c-format
 msgid "Invalid require-flatpak argument %s"
 msgstr "Некоректний аргумент require-flatpak, %s"
 
-#: common/flatpak-utils.c:7733 common/flatpak-utils.c:7752
+#: common/flatpak-utils.c:7745 common/flatpak-utils.c:7764
 #, c-format
 msgid "%s needs a later flatpak version (%s)"
 msgstr "%s потребує новішої версії flatpak (%s)"
 
-#: common/flatpak-utils.c:7796
+#: common/flatpak-utils.c:7808
 msgid "Empty string is not a number"
 msgstr "Порожній рядок не є числом"
 
-#: common/flatpak-utils.c:7822
+#: common/flatpak-utils.c:7834
 #, c-format
 msgid "“%s” is not an unsigned number"
 msgstr "«%s» не є додатним числом"
 
-#: common/flatpak-utils.c:7832
+#: common/flatpak-utils.c:7844
 #, c-format
 msgid "Number “%s” is out of bounds [%s, %s]"
 msgstr "Число «%s» не належить до діапазону [%s, %s]"
