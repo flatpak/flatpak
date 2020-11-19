@@ -152,7 +152,7 @@ ARCHES=${!arches[@]}
 for A in $ARCHES; do
     # Create runtimes for all arches (based on $ARCH version)
     if [ $A != $ARCH ]; then
-        $FLATPAK build-commit-from  ${GPGARGS} --src-ref=runtime/org.test.Platform/x86_64/master repos/test runtime/org.test.Platform/$A/master
+        $FLATPAK build-commit-from  ${GPGARGS} --src-ref=runtime/org.test.Platform/$ARCH/master repos/test runtime/org.test.Platform/$A/master
     fi
 
     # Create a bunch of apps (for all arches)
