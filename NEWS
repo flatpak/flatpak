@@ -1,6 +1,6 @@
 Changes in 1.9.1
 ~~~~~~~~~~~~~~~~
-Released: 2020-11-xx
+Released: 2020-11-19
 
 This is the first unstable release in the series that will lead to
 1.10. The main change in this version is a new format for the summary
@@ -9,9 +9,9 @@ reason we now require OSTree version 2020.8.
 
 The new format should make getting the initial metadata required for
 most flatpak operations much faster, and use less network
-bandwitdh. This will allow repostories to scale to more apps and more
+bandwidth. This will allow repositories to scale to more apps and more
 architectures without affecting clients. The old format is still
-generated for compatibilty with older clients.
+generated for compatibility with older clients.
 
 The new format also allows repositories to publish named subsets, and
 for clients to declare that they only want to see that subset. The
@@ -69,6 +69,7 @@ Other major changes
    refs that have a end-of-life rebase that it could be updated to.
  * There is a new `ready-pre-auth` signal in FlatpakTransaction allowing
    clients new ways to handling authentication.
+ * Fix bug where extension sources were sometimes auto-installed
 
 Changes in 1.8.3
 ~~~~~~~~~~~~~~~~
