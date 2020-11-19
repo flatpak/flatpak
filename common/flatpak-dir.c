@@ -184,9 +184,12 @@ static void flatpak_dir_log (FlatpakDir *self,
   (flatpak_dir_log) (self, __FILE__, __LINE__, __FUNCTION__, \
                      NULL, change, remote, ref, commit, old_commit, url, format, __VA_ARGS__)
 
-static GBytes *upgrade_deploy_data (GBytes            *deploy_data,
-                                    GFile             *deploy_dir,
-                                    FlatpakDecomposed *ref);
+static GBytes *upgrade_deploy_data (GBytes             *deploy_data,
+                                    GFile              *deploy_dir,
+                                    FlatpakDecomposed  *ref,
+                                    OstreeRepo         *repo,
+                                    GCancellable       *cancellable,
+                                    GError            **error);
 
 typedef struct
 {
@@ -258,6 +261,7 @@ struct FlatpakDeploy
   FlatpakContext    *user_overrides;
   FlatpakContext    *system_app_overrides;
   FlatpakContext    *user_app_overrides;
+  OstreeRepo        *repo;
 };
 
 typedef struct
@@ -1294,6 +1298,7 @@ flatpak_deploy_finalize (GObject *object)
   g_clear_pointer (&self->user_overrides, flatpak_context_free);
   g_clear_pointer (&self->system_app_overrides, flatpak_context_free);
   g_clear_pointer (&self->user_app_overrides, flatpak_context_free);
+  g_clear_object (&self->repo);
 
   G_OBJECT_CLASS (flatpak_deploy_parent_class)->finalize (object);
 }
@@ -1320,6 +1325,7 @@ flatpak_deploy_get_dir (FlatpakDeploy *deploy)
 GBytes *
 flatpak_load_deploy_data (GFile             *deploy_dir,
                           FlatpakDecomposed *ref,
+                          OstreeRepo        *repo,
                           int                required_version,
                           GCancellable      *cancellable,
                           GError           **error)
@@ -1337,7 +1343,7 @@ flatpak_load_deploy_data (GFile             *deploy_dir,
   deploy_data = g_bytes_new_take (contents, len);
 
   if (flatpak_deploy_data_get_version (deploy_data) < required_version)
-    return upgrade_deploy_data (deploy_data, deploy_dir, ref);
+    return upgrade_deploy_data (deploy_data, deploy_dir, ref, repo, cancellable, error);
 
   return g_steal_pointer (&deploy_data);
 }
@@ -1351,6 +1357,7 @@ flatpak_deploy_get_deploy_data (FlatpakDeploy *deploy,
 {
   return flatpak_load_deploy_data (deploy->dir,
                                    deploy->ref,
+                                   deploy->repo,
                                    required_version,
                                    cancellable,
                                    error);
@@ -1389,7 +1396,10 @@ flatpak_deploy_get_metadata (FlatpakDeploy *deploy)
 }
 
 static FlatpakDeploy *
-flatpak_deploy_new (GFile *dir, FlatpakDecomposed *ref, GKeyFile *metadata)
+flatpak_deploy_new (GFile             *dir,
+                    FlatpakDecomposed *ref,
+                    GKeyFile          *metadata,
+                    OstreeRepo        *repo)
 {
   FlatpakDeploy *deploy;
 
@@ -1397,6 +1407,7 @@ flatpak_deploy_new (GFile *dir, FlatpakDecomposed *ref, GKeyFile *metadata)
   deploy->ref = flatpak_decomposed_ref (ref);
   deploy->dir = g_object_ref (dir);
   deploy->metadata = g_key_file_ref (metadata);
+  deploy->repo = g_object_ref (repo);
 
   return deploy;
 }
@@ -2828,6 +2839,9 @@ flatpak_dir_load_deployed (FlatpakDir        *self,
       return NULL;
     }
 
+  if (!flatpak_dir_ensure_repo (self, cancellable, error))
+    return NULL;
+
   metadata = g_file_get_child (deploy_dir, "metadata");
   if (!g_file_load_contents (metadata, cancellable, &metadata_contents, &metadata_size, NULL, error))
     return NULL;
@@ -2836,7 +2850,7 @@ flatpak_dir_load_deployed (FlatpakDir        *self,
   if (!g_key_file_load_from_data (metakey, metadata_contents, metadata_size, 0, error))
     return NULL;
 
-  deploy = flatpak_deploy_new (deploy_dir, ref, metakey);
+  deploy = flatpak_deploy_new (deploy_dir, ref, metakey, self->repo);
 
   /* Only load system global overrides for system installed apps */
   if (!self->user)
@@ -3235,9 +3249,9 @@ read_appdata_xml_from_deploy_dir (GFile *deploy_dir, const char *id)
 }
 
 static void
-add_locale_metadata_string (GVariantBuilder *metadata_builder,
-                            const char      *keyname,
-                            GHashTable      *values)
+add_locale_metadata_string (GVariantDict *metadata_dict,
+                            const char   *keyname,
+                            GHashTable   *values)
 {
   if (values == NULL)
     return;
@@ -3255,8 +3269,8 @@ add_locale_metadata_string (GVariantBuilder *metadata_builder,
         key = key_free;
       }
 
-    g_variant_builder_add (metadata_builder, "{s@v}", key,
-                           g_variant_new_variant (g_variant_new_string (value)));
+    g_variant_dict_insert_value (metadata_dict, key,
+                                 g_variant_new_string (value));
   }
 }
 
@@ -3287,9 +3301,9 @@ appdata_content_rating_to_variant (const char *content_rating_type,
 }
 
 static void
-add_appdata_to_deploy_data (GVariantBuilder *metadata_builder,
-                            GFile           *deploy_dir,
-                            const char      *id)
+add_appdata_to_deploy_data (GVariantDict *metadata_dict,
+                            GFile        *deploy_dir,
+                            const char   *id)
 {
   g_autofree char *appdata_xml = NULL;
   g_autoptr(GHashTable) names = NULL;
@@ -3306,18 +3320,63 @@ add_appdata_to_deploy_data (GVariantBuilder *metadata_builder,
   if (flatpak_parse_appdata (appdata_xml, id, &names, &comments, &version, &license,
                              &content_rating_type, &content_rating))
     {
-      add_locale_metadata_string (metadata_builder, "appdata-name", names);
-      add_locale_metadata_string (metadata_builder, "appdata-summary", comments);
+      add_locale_metadata_string (metadata_dict, "appdata-name", names);
+      add_locale_metadata_string (metadata_dict, "appdata-summary", comments);
       if (version)
-        g_variant_builder_add (metadata_builder, "{s@v}", "appdata-version",
-                               g_variant_new_variant (g_variant_new_string (version)));
+        g_variant_dict_insert_value (metadata_dict, "appdata-version",
+                                     g_variant_new_string (version));
       if (license)
-        g_variant_builder_add (metadata_builder, "{s@v}", "appdata-license",
-                               g_variant_new_variant (g_variant_new_string (license)));
+        g_variant_dict_insert_value (metadata_dict, "appdata-license",
+                                     g_variant_new_string (license));
       if (content_rating_type != NULL && content_rating != NULL)
-        g_variant_builder_add (metadata_builder, "{s@v}", "appdata-content-rating",
-                               g_variant_new_variant (appdata_content_rating_to_variant (content_rating_type, content_rating)));
+        g_variant_dict_insert_value (metadata_dict, "appdata-content-rating",
+                                     appdata_content_rating_to_variant (content_rating_type, content_rating));
     }
+}
+
+static void
+add_commit_metadata_to_deploy_data (GVariantDict *metadata_dict,
+                                    GVariant     *commit_metadata)
+{
+  const char *alt_id = NULL;
+  const char *eol = NULL;
+  const char *eol_rebase = NULL;
+
+  g_variant_lookup (commit_metadata, "xa.alt-id", "&s", &alt_id);
+  g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE, "&s", &eol);
+  g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE_REBASE, "&s", &eol_rebase);
+
+  if (alt_id)
+    g_variant_dict_insert_value (metadata_dict, "alt-id",
+                                 g_variant_new_string (alt_id));
+  if (eol)
+    g_variant_dict_insert_value (metadata_dict, "eol",
+                                 g_variant_new_string (eol));
+  if (eol_rebase)
+    g_variant_dict_insert_value (metadata_dict, "eolr",
+                                 g_variant_new_string (eol_rebase));
+}
+
+static void
+add_metadata_to_deploy_data (GVariantDict *metadata_dict,
+                             GKeyFile     *keyfile)
+{
+  g_autofree char *application_runtime = NULL;
+  g_autofree char *extension_of = NULL;
+
+  application_runtime = g_key_file_get_string (keyfile,
+                                               FLATPAK_METADATA_GROUP_APPLICATION,
+                                               FLATPAK_METADATA_KEY_RUNTIME, NULL);
+  extension_of = g_key_file_get_string (keyfile,
+                                        FLATPAK_METADATA_GROUP_EXTENSION_OF,
+                                        FLATPAK_METADATA_KEY_REF, NULL);
+
+  if (application_runtime)
+    g_variant_dict_insert_value (metadata_dict, "runtime",
+                                 g_variant_new_string (application_runtime));
+  if (extension_of)
+    g_variant_dict_insert_value (metadata_dict, "extension-of",
+                                 g_variant_new_string (extension_of));
 }
 
 static GBytes *
@@ -3334,102 +3393,113 @@ flatpak_dir_new_deploy_data (FlatpakDir         *self,
                              const char * const *previous_ids)
 {
   char *empty_subpaths[] = {NULL};
-  GVariantBuilder metadata_builder;
-  g_autofree char *application_runtime = NULL;
-  g_autofree char *extension_of = NULL;
-  const char *alt_id = NULL;
-  const char *eol = NULL;
-  const char *eol_rebase = NULL;
+  g_auto(GVariantDict) metadata_dict = FLATPAK_VARIANT_DICT_INITIALIZER;
   g_autoptr(GVariant) res = NULL;
 
-  g_variant_lookup (commit_metadata, "xa.alt-id", "&s", &alt_id);
-  g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE, "&s", &eol);
-  g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE_REBASE, "&s", &eol_rebase);
-
-  application_runtime = g_key_file_get_string (metadata,
-                                               FLATPAK_METADATA_GROUP_APPLICATION,
-                                               FLATPAK_METADATA_KEY_RUNTIME, NULL);
-  extension_of = g_key_file_get_string (metadata,
-                                        FLATPAK_METADATA_GROUP_EXTENSION_OF,
-                                        FLATPAK_METADATA_KEY_REF, NULL);
-
-  g_variant_builder_init (&metadata_builder, G_VARIANT_TYPE ("a{sv}"));
-  g_variant_builder_add (&metadata_builder, "{s@v}", "deploy-version",
-                         g_variant_new_variant (g_variant_new_int32 (FLATPAK_DEPLOY_VERSION_CURRENT)));
-  g_variant_builder_add (&metadata_builder, "{s@v}", "timestamp",
-                         g_variant_new_variant (g_variant_new_uint64 (ostree_commit_get_timestamp (commit_data))));
-  if (alt_id)
-    g_variant_builder_add (&metadata_builder, "{s@v}", "alt-id",
-                           g_variant_new_variant (g_variant_new_string (alt_id)));
-  if (eol)
-    g_variant_builder_add (&metadata_builder, "{s@v}", "eol",
-                           g_variant_new_variant (g_variant_new_string (eol)));
-  if (eol_rebase)
-    g_variant_builder_add (&metadata_builder, "{s@v}", "eolr",
-                           g_variant_new_variant (g_variant_new_string (eol_rebase)));
-  if (application_runtime)
-    g_variant_builder_add (&metadata_builder, "{s@v}", "runtime",
-                           g_variant_new_variant (g_variant_new_string (application_runtime)));
-  if (extension_of)
-    g_variant_builder_add (&metadata_builder, "{s@v}", "extension-of",
-                           g_variant_new_variant (g_variant_new_string (extension_of)));
+  g_variant_dict_init (&metadata_dict, NULL);
+  g_variant_dict_insert_value (&metadata_dict, "deploy-version",
+                               g_variant_new_int32 (FLATPAK_DEPLOY_VERSION_CURRENT));
+  g_variant_dict_insert_value (&metadata_dict, "timestamp",
+                               g_variant_new_uint64 (ostree_commit_get_timestamp (commit_data)));
 
   if (previous_ids)
-    g_variant_builder_add (&metadata_builder, "{s@v}", "previous-ids",
-                           g_variant_new_variant (g_variant_new_strv (previous_ids, -1)));
+    g_variant_dict_insert_value (&metadata_dict, "previous-ids",
+                                 g_variant_new_strv (previous_ids, -1));
 
-  add_appdata_to_deploy_data (&metadata_builder, deploy_dir, id);
+  add_commit_metadata_to_deploy_data (&metadata_dict, commit_metadata);
+  add_metadata_to_deploy_data (&metadata_dict, metadata);
+  add_appdata_to_deploy_data (&metadata_dict, deploy_dir, id);
 
   res = g_variant_ref_sink (g_variant_new ("(ss^ast@a{sv})",
                                            origin,
                                            commit,
                                            subpaths ? subpaths : empty_subpaths,
                                            GUINT64_TO_BE (installed_size),
-                                           g_variant_builder_end (&metadata_builder)));
+                                           g_variant_dict_end (&metadata_dict)));
   return g_variant_get_data_as_bytes (res);
 }
 
 static GBytes *
-upgrade_deploy_data (GBytes *deploy_data,
-                     GFile *deploy_dir,
-                     FlatpakDecomposed *ref)
+upgrade_deploy_data (GBytes             *deploy_data,
+                     GFile              *deploy_dir,
+                     FlatpakDecomposed  *ref,
+                     OstreeRepo         *repo,
+                     GCancellable       *cancellable,
+                     GError            **error)
 {
   VarDeployDataRef deploy_ref = var_deploy_data_from_bytes (deploy_data);
   g_autoptr(GVariant) metadata = g_variant_ref_sink (var_metadata_peek_as_gvariant (var_deploy_data_get_metadata (deploy_ref)));
-  GVariantBuilder metadata_builder;
+  g_auto(GVariantDict) metadata_dict = FLATPAK_VARIANT_DICT_INITIALIZER;
   g_autofree const char **subpaths = NULL;
   g_autoptr(GVariant) res = NULL;
   int i, n, old_version;
 
-  g_variant_builder_init (&metadata_builder, G_VARIANT_TYPE ("a{sv}"));
-
-  g_variant_builder_add (&metadata_builder, "{s@v}", "deploy-version",
-                         g_variant_new_variant (g_variant_new_int32 (FLATPAK_DEPLOY_VERSION_CURRENT)));
+  g_variant_dict_init (&metadata_dict, NULL);
+  g_variant_dict_insert_value (&metadata_dict, "deploy-version",
+                               g_variant_new_int32 (FLATPAK_DEPLOY_VERSION_CURRENT));
 
   /* Copy all metadata except version from old */
   n = g_variant_n_children (metadata);
   for (i = 0; i < n; i++)
     {
-      g_autoptr(GVariant) child = g_variant_get_child_value (metadata, i);
       const char *key;
-      g_variant_get_child (child, 0, "&s", &key);
+      g_autoptr(GVariant) value = NULL;
+
+      g_variant_get_child (metadata, i, "{&s@v}", &key, &value);
       if (strcmp (key, "deploy-version") == 0)
         continue;
-      g_variant_builder_add_value (&metadata_builder, child);
+      g_variant_dict_insert_value (&metadata_dict, key, g_steal_pointer (&value));
     }
 
   old_version = flatpak_deploy_data_get_version (deploy_data);
   if (old_version < 1)
     {
       g_autofree char *id = flatpak_decomposed_dup_id (ref);
-      add_appdata_to_deploy_data (&metadata_builder, deploy_dir, id);
+      add_appdata_to_deploy_data (&metadata_dict, deploy_dir, id);
     }
 
   if (old_version < 3)
     {
       /* We don't know what timestamp to use here, use 0 and special case that for update checks */
-      g_variant_builder_add (&metadata_builder, "{s@v}", "timestamp",
-                             g_variant_new_variant (g_variant_new_uint64 (0)));
+      g_variant_dict_insert_value (&metadata_dict, "timestamp",
+                                   g_variant_new_uint64 (0));
+    }
+
+  /* Deploy versions older than 4 might have some of the below fields, but it's
+   * not guaranteed if the deploy was first created with an old Flatpak version
+   */
+  if (old_version < 4)
+    {
+      const char *commit;
+      g_autoptr(GVariant) commit_data = NULL;
+      g_autoptr(GVariant) commit_metadata = NULL;
+      g_autoptr(GKeyFile) keyfile = NULL;
+      g_autoptr(GFile) metadata_file = NULL;
+      g_autofree char *metadata_contents = NULL;
+      g_autofree char *id = flatpak_decomposed_dup_id (ref);
+
+      /* Add fields from commit metadata to deploy */
+      commit = flatpak_deploy_data_get_commit (deploy_data);
+      if (!ostree_repo_load_commit (repo, commit, &commit_data, NULL, error))
+        return NULL;
+      commit_metadata = g_variant_get_child_value (commit_data, 0);
+      add_commit_metadata_to_deploy_data (&metadata_dict, commit_metadata);
+
+      /* Add fields from metadata file to deploy */
+      keyfile = g_key_file_new ();
+      metadata_file = g_file_resolve_relative_path (deploy_dir, "metadata");
+      if (!g_file_load_contents (metadata_file, cancellable,
+                                 &metadata_contents, NULL, NULL, error))
+        return NULL;
+      if (!g_key_file_load_from_data (keyfile, metadata_contents, -1, 0, error))
+        return NULL;
+      add_metadata_to_deploy_data (&metadata_dict, keyfile);
+
+      /* Add fields from appdata to deploy, since appdata-content-rating wasn't
+       * added when upgrading from version 2 as it should have been
+       */
+      if (old_version >= 1)
+        add_appdata_to_deploy_data (&metadata_dict, deploy_dir, id);
     }
 
   subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
@@ -3438,7 +3508,7 @@ upgrade_deploy_data (GBytes *deploy_data,
                                            flatpak_deploy_data_get_commit (deploy_data),
                                            subpaths,
                                            GUINT64_TO_BE (flatpak_deploy_data_get_installed_size (deploy_data)),
-                                           g_variant_builder_end (&metadata_builder)));
+                                           g_variant_dict_end (&metadata_dict)));
   return g_variant_get_data_as_bytes (res);
 }
 
@@ -3459,8 +3529,12 @@ flatpak_dir_get_deploy_data (FlatpakDir        *self,
       return NULL;
     }
 
+  if (!flatpak_dir_ensure_repo (self, cancellable, error))
+    return NULL;
+
   return flatpak_load_deploy_data (deploy_dir,
                                    ref,
+                                   self->repo,
                                    required_version,
                                    cancellable,
                                    error);
@@ -8452,7 +8526,7 @@ flatpak_dir_deploy_install (FlatpakDir        *self,
           g_autoptr(GBytes) old_deploy = NULL;
           const char *old_origin;
 
-          old_deploy = flatpak_load_deploy_data (old_deploy_dir, ref, FLATPAK_DEPLOY_VERSION_ANY, cancellable, error);
+          old_deploy = flatpak_load_deploy_data (old_deploy_dir, ref, self->repo, FLATPAK_DEPLOY_VERSION_ANY, cancellable, error);
           if (old_deploy == NULL)
             goto out;
 
@@ -15058,7 +15132,7 @@ flatpak_dir_find_local_related (FlatpakDir        *self,
           return NULL;
         }
 
-      deploy_data = flatpak_load_deploy_data (deploy_dir, ref, FLATPAK_DEPLOY_VERSION_ANY, cancellable, error);
+      deploy_data = flatpak_load_deploy_data (deploy_dir, ref, self->repo, FLATPAK_DEPLOY_VERSION_ANY, cancellable, error);
       if (deploy_data == NULL)
         return NULL;
 

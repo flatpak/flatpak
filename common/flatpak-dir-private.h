@@ -36,8 +36,10 @@
  * Version 1 added appdata-name/summary/version/license
  * Version 2 added extension-of/appdata-content-rating
  * Version 3 added timestamp
+ * Version 4 guarantees that alt-id/eol/eolr/runtime/extension-of/appdata-content-rating
+ *           are present if in the commit metadata or metadata file or appdata
  */
-#define FLATPAK_DEPLOY_VERSION_CURRENT 3
+#define FLATPAK_DEPLOY_VERSION_CURRENT 4
 #define FLATPAK_DEPLOY_VERSION_ANY 0
 
 #define FLATPAK_TYPE_DIR flatpak_dir_get_type ()
@@ -427,6 +429,7 @@ const char **flatpak_deploy_data_get_previous_ids                (GBytes *deploy
 GFile *         flatpak_deploy_get_dir         (FlatpakDeploy      *deploy);
 GBytes *        flatpak_load_deploy_data       (GFile              *deploy_dir,
                                                 FlatpakDecomposed  *ref,
+                                                OstreeRepo         *repo,
                                                 int                 required_version,
                                                 GCancellable       *cancellable,
                                                 GError            **error);
