@@ -5843,7 +5843,8 @@ flatpak_extension_new (const char        *id,
                        char             **merge_dirs,
                        GFile             *files,
                        GFile             *deploy_dir,
-                       gboolean           is_unmaintained)
+                       gboolean           is_unmaintained,
+                       OstreeRepo        *repo)
 {
   FlatpakExtension *ext = g_new0 (FlatpakExtension, 1);
   g_autoptr(GBytes) deploy_data = NULL;
@@ -5858,9 +5859,11 @@ flatpak_extension_new (const char        *id,
   ext->merge_dirs = g_strdupv (merge_dirs);
   ext->is_unmaintained = is_unmaintained;
 
-  if (deploy_dir)
+  /* Unmaintained extensions won't have a deploy or commit; see
+   * https://github.com/flatpak/flatpak/issues/167 */
+  if (deploy_dir && !is_unmaintained)
     {
-      deploy_data = flatpak_load_deploy_data (deploy_dir, ref, FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
+      deploy_data = flatpak_load_deploy_data (deploy_dir, ref, repo, FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
       if (deploy_data)
         ext->commit = g_strdup (flatpak_deploy_data_get_commit (deploy_data));
     }
@@ -5980,6 +5983,7 @@ add_extension (GKeyFile   *metakey,
   gboolean is_unmaintained = FALSE;
   g_autoptr(GFile) files = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
+  g_autoptr(FlatpakDir) dir = NULL;
 
   if (directory == NULL)
     return res;
@@ -5992,7 +5996,7 @@ add_extension (GKeyFile   *metakey,
 
   if (files == NULL)
     {
-      deploy_dir = flatpak_find_deploy_dir_for_ref (ref, NULL, NULL, NULL);
+      deploy_dir = flatpak_find_deploy_dir_for_ref (ref, &dir, NULL, NULL);
       if (deploy_dir)
         files = g_file_get_child (deploy_dir, "files");
     }
@@ -6004,7 +6008,10 @@ add_extension (GKeyFile   *metakey,
     {
       if (flatpak_extension_matches_reason (extension, enable_if, TRUE))
         {
-          ext = flatpak_extension_new (extension, extension, ref, directory, add_ld_path, subdir_suffix, merge_dirs, files, deploy_dir, is_unmaintained);
+          ext = flatpak_extension_new (extension, extension, ref, directory,
+                                       add_ld_path, subdir_suffix, merge_dirs,
+                                       files, deploy_dir, is_unmaintained,
+                                       is_unmaintained ? NULL : flatpak_dir_get_repo (dir));
           res = g_list_prepend (res, ext);
         }
     }
@@ -6025,18 +6032,22 @@ add_extension (GKeyFile   *metakey,
           g_autoptr(FlatpakDecomposed) dir_ref = NULL;
           g_autoptr(GFile) subdir_deploy_dir = NULL;
           g_autoptr(GFile) subdir_files = NULL;
+          g_autoptr(FlatpakDir) subdir_dir = NULL;
 
           dir_ref = flatpak_decomposed_new_from_parts (FLATPAK_KINDS_RUNTIME, id, arch, branch, NULL);
           if (dir_ref == NULL)
             continue;
 
-          subdir_deploy_dir = flatpak_find_deploy_dir_for_ref (dir_ref, NULL, NULL, NULL);
+          subdir_deploy_dir = flatpak_find_deploy_dir_for_ref (dir_ref, &subdir_dir, NULL, NULL);
           if (subdir_deploy_dir)
             subdir_files = g_file_get_child (subdir_deploy_dir, "files");
 
           if (subdir_files && flatpak_extension_matches_reason (id, enable_if, TRUE))
             {
-              ext = flatpak_extension_new (extension, id, dir_ref, extended_dir, add_ld_path, subdir_suffix, merge_dirs, subdir_files, subdir_deploy_dir, FALSE);
+              ext = flatpak_extension_new (extension, id, dir_ref, extended_dir,
+                                           add_ld_path, subdir_suffix, merge_dirs,
+                                           subdir_files, subdir_deploy_dir, FALSE,
+                                           flatpak_dir_get_repo (subdir_dir));
               ext->needs_tmpfs = TRUE;
               res = g_list_prepend (res, ext);
             }
@@ -6056,7 +6067,9 @@ add_extension (GKeyFile   *metakey,
 
           if (subdir_files && flatpak_extension_matches_reason (unmaintained_refs[j], enable_if, TRUE))
             {
-              ext = flatpak_extension_new (extension, unmaintained_refs[j], dir_ref, extended_dir, add_ld_path, subdir_suffix, merge_dirs, subdir_files, NULL, TRUE);
+              ext = flatpak_extension_new (extension, unmaintained_refs[j], dir_ref,
+                                           extended_dir, add_ld_path, subdir_suffix,
+                                           merge_dirs, subdir_files, NULL, TRUE, NULL);
               ext->needs_tmpfs = TRUE;
               res = g_list_prepend (res, ext);
             }
