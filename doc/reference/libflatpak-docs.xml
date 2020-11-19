@@ -33,6 +33,7 @@
   <chapter>
     <title>D-Bus APIs</title>
     <xi:include href="dbus-org.freedesktop.Flatpak.Authenticator.xml"/>
+    <xi:include href="dbus-org.freedesktop.Flatpak.AuthenticatorRequest.xml"/>
     <xi:include href="dbus-org.freedesktop.Flatpak.Development.xml"/>
     <xi:include href="dbus-org.freedesktop.Flatpak.SessionHelper.xml"/>
     <xi:include href="dbus-org.freedesktop.Flatpak.SystemHelper.xml"/>

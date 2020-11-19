@@ -47,19 +47,36 @@ EXTRA_HFILES =
 
 HTML_IMAGES =
 
-content_files = \
+dbus_stamp_files = \
 	dbus-org.freedesktop.Flatpak.Authenticator.stamp \
 	dbus-org.freedesktop.Flatpak.stamp \
 	dbus-org.freedesktop.impl.portal.PermissionStore.stamp \
 	dbus-org.freedesktop.portal.Documents.stamp \
 	dbus-org.freedesktop.portal.Flatpak.stamp \
 	$(NULL)
-expand_content_files = 
+
+# Generated from the above stamps
+xml_files = \
+	dbus-org.freedesktop.Flatpak.AuthenticatorRequest.xml \
+	dbus-org.freedesktop.Flatpak.Authenticator.xml \
+	dbus-org.freedesktop.Flatpak.Development.xml \
+	dbus-org.freedesktop.Flatpak.SessionHelper.xml \
+	dbus-org.freedesktop.Flatpak.SystemHelper.xml \
+	dbus-org.freedesktop.impl.portal.PermissionStore.xml \
+	dbus-org.freedesktop.portal.Documents.xml \
+	dbus-org.freedesktop.portal.Flatpak.UpdateMonitor.xml \
+	dbus-org.freedesktop.portal.Flatpak.xml \
+	$(NULL)
+
+content_files =
+expand_content_files =
 
 AM_CPPFLAGS = -I$(top_srcdir)/common -I$(top_builddir)/common $(BASE_CFLAGS)
 GTKDOC_LIBS = $(top_builddir)/libflatpak.la $(BASE_LIBS)
 
 include $(top_srcdir)/gtk-doc.make
+
+CLEANFILES += $(xml_files)
 
 EXTRA_DIST += version.xml.in
 
@@ -70,8 +87,7 @@ TESTS_ENVIRONMENT = \
 TESTS = $(GTKDOC_CHECK)
 endif
 
-libflatpak-docs.html: libflatpak-docs.xml docs
-	$(AM_V_GEN) $(XMLTO) $(XMLTO_FLAGS) --skip-validation xhtml-nochunks -m $(srcdir)/../xmlto-config.xsl $<
+sgml.stamp: $(dbus_stamp_files)
 
 dbus-%.stamp: $(top_srcdir)/data/%.xml
 	$(AM_V_GEN)$(GDBUS_CODEGEN) --generate-docbook=dbus $<
