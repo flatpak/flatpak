@@ -4791,7 +4791,7 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
                   break;
                 }
 
-              flatpak_fail_error (error, FLATPAK_ERROR_ABORTED, _("Aborted due to failure"));
+              flatpak_fail_error (error, FLATPAK_ERROR_ABORTED, _("Aborted due to failure (%s)"), local_error->message);
               succeeded = FALSE;
               break;
             }
