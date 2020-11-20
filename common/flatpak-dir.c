@@ -15846,14 +15846,21 @@ flatpak_dir_list_unused_refs (FlatpakDir         *self,
    */
   if (!flatpak_dir_is_user (self))
     {
-      g_autoptr(GFile) user_base_dir = flatpak_get_user_base_dir_location ();
-      if (g_file_query_exists (user_base_dir, cancellable))
-        {
-          g_autoptr(FlatpakDir) user_dir = flatpak_dir_get_user ();
+      g_autoptr(FlatpakDir) user_dir = flatpak_dir_get_user ();
+      g_autoptr(GError) local_error = NULL;
 
-          if (!find_used_refs (self, user_dir, arch, metadata_injection, excluded_refs_ht,
-                               used_refs, cancellable, error))
-            return NULL;
+      if (!find_used_refs (self, user_dir, arch, metadata_injection, excluded_refs_ht,
+                           used_refs, cancellable, &local_error))
+        {
+          /* We may get permission denied if the process is sandboxed with
+           * systemd's ProtectHome=
+           */
+          if (!g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND) &&
+              !g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED))
+            {
+              g_propagate_error (error, g_steal_pointer (&local_error));
+              return NULL;
+            }
         }
     }
 
