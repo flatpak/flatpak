@@ -4459,6 +4459,12 @@ test_installation_unused_refs_across_installations (void)
   FlatpakInstalledRef *unused_ref;
   gboolean res;
 
+  if (!g_file_test ("/etc/mtab", G_FILE_TEST_EXISTS))
+    {
+      g_test_skip ("fusermount won't work without /etc/mtab");
+      return;
+    }
+
   runtime = g_strdup_printf ("runtime/org.test.Platform/%s/master",
                              flatpak_get_default_arch ());
   app = g_strdup_printf ("app/org.test.Hello/%s/master",
