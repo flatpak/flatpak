@@ -67,8 +67,6 @@
 #include <systemd/sd-journal.h>
 #endif
 
-#define OSTREE_COMMIT_TIMESTAMP "ostree.commit.timestamp"
-
 #define NO_SYSTEM_HELPER ((FlatpakSystemHelper *) (gpointer) 1)
 
 #define SUMMARY_CACHE_TIMEOUT_SEC (60 * 5)
