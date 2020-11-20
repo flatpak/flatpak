@@ -14337,6 +14337,7 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
   gboolean is_oci;
   g_autoptr(FlatpakRemoteState) local_state = NULL;
   FlatpakRemoteState *state;
+  gboolean has_changed = FALSE;
 
   /* Initialize if we exit early */
   if (updated_out)
@@ -14361,7 +14362,6 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
 
   if (flatpak_dir_use_system_helper (self, NULL))
     {
-      gboolean has_changed = FALSE;
       gboolean gpg_verify_summary;
       gboolean gpg_verify;
 
@@ -14432,18 +14432,23 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
           if (!flatpak_dir_remote_clear_cached_summary (self, remote, cancellable, error))
             return FALSE;
 
-          if (updated_out)
-            *updated_out = TRUE;
         }
+
+      if (updated_out)
+        *updated_out = has_changed;
 
       return TRUE;
     }
 
-  if (!flatpak_dir_update_remote_configuration_for_state (self, state, FALSE, updated_out, cancellable, error))
+  if (!flatpak_dir_update_remote_configuration_for_state (self, state, FALSE, &has_changed, cancellable, error))
     return FALSE;
 
-  if (!flatpak_dir_remote_clear_cached_summary (self, remote, cancellable, error))
+  if (has_changed &&
+      !flatpak_dir_remote_clear_cached_summary (self, remote, cancellable, error))
     return FALSE;
+
+  if (updated_out)
+    *updated_out = has_changed;
 
   return TRUE;
 }
