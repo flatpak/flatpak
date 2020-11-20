@@ -54,13 +54,18 @@
 #define FLATPAK_ANSI_ROW_N "\x1b[%d;1H"
 #define FLATPAK_ANSI_CLEAR "\x1b[0J"
 
-#define FLATPAK_XA_CACHE_VERSION 1
+#define FLATPAK_XA_CACHE_VERSION 2
 /* version 1 added extra data download size */
+/* version 2 added ot.ts timestamps (to new format) */
 
 #define FLATPAK_XA_SUMMARY_VERSION 1
 /* version 0/missing is standard ostree summary,
  * version 1 is compact format with inline cache and no deltas
  */
+
+/* Thse are key names in the per-ref metadata in the summary */
+#define OSTREE_COMMIT_TIMESTAMP "ostree.commit.timestamp"
+#define OSTREE_COMMIT_TIMESTAMP2 "ot.ts" /* Shorter version of the above */
 
 #define FLATPAK_SUMMARY_DIFF_HEADER "xadf"
 

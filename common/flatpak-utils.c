@@ -3150,6 +3150,7 @@ typedef struct
   GPtrArray *subsets;
   GVariant  *sparse_data;
   gsize      commit_size;
+  guint64    commit_timestamp;
 } CommitData;
 
 static void
@@ -3276,6 +3277,7 @@ populate_commit_data_cache (OstreeRepo *repo,
               rev_data->download_size = var_cache_data_get_download_size (xa_data);
               rev_data->metadata_contents = g_strdup (var_cache_data_get_metadata (xa_data));
               rev_data->commit_size = commit_size;
+              rev_data->commit_timestamp = GUINT64_FROM_BE (var_metadata_lookup_uint64 (commit_metadata, OSTREE_COMMIT_TIMESTAMP2, 0));
 
               /* Get sparse data */
               gsize len = var_metadata_get_length (commit_metadata);
@@ -3283,7 +3285,9 @@ populate_commit_data_cache (OstreeRepo *repo,
                 {
                   VarMetadataEntryRef m = var_metadata_get_at (commit_metadata, k);
                   const char *m_key = var_metadata_entry_get_key (m);
-                  if (!g_str_has_prefix (m_key, "ostree.") && strcmp (m_key, "xa.data") != 0)
+                  if (!g_str_has_prefix (m_key, "ot.") &&
+                      !g_str_has_prefix (m_key, "ostree.") &&
+                      strcmp (m_key, "xa.data") != 0)
                     {
                       VarVariantRef v = var_metadata_entry_get_value (m);
                       GVariant *vv = var_variant_dup_to_gvariant (v);
@@ -3379,6 +3383,7 @@ read_commit_data (OstreeRepo   *repo,
   rev_data->metadata_contents = g_steal_pointer (&metadata_contents);
   rev_data->subsets = g_steal_pointer (&subsets);
   rev_data->commit_size = g_variant_get_size (commit_v);
+  rev_data->commit_timestamp = ostree_commit_get_timestamp (commit_v);
 
   g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE, "&s", &eol);
   g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE_REBASE, "&s", &eol_rebase);
@@ -4312,6 +4317,7 @@ generate_summary (OstreeRepo   *repo,
       const CommitData *rev_data = NULL;
       g_auto(GVariantDict) commit_metadata_builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
       guint64 commit_size;
+      guint64 commit_timestamp;
 
       if (!g_hash_table_contains (commits, rev))
         continue; /* Filter out commit (by arch & subset) */
@@ -4320,13 +4326,17 @@ generate_summary (OstreeRepo   *repo,
         rev_data = g_hash_table_lookup (commit_data_cache, rev);
 
       if (rev_data != NULL)
-        commit_size = rev_data->commit_size;
+        {
+          commit_size = rev_data->commit_size;
+          commit_timestamp = rev_data->commit_timestamp;
+        }
       else
         {
           g_autoptr(GVariant) commit_obj = NULL;
           if (!ostree_repo_load_variant (repo, OSTREE_OBJECT_TYPE_COMMIT, rev, &commit_obj, error))
             return NULL;
           commit_size = g_variant_get_size (commit_obj);
+          commit_timestamp = ostree_commit_get_timestamp (commit_obj);
         }
 
       g_variant_dict_init (&commit_metadata_builder, NULL);
@@ -4338,6 +4348,12 @@ generate_summary (OstreeRepo   *repo,
                                  rev_data->metadata_contents);
           variant_dict_merge (&commit_metadata_builder, rev_data->sparse_data);
         }
+
+      /* For the new format summary we use a shorter name for the timestamp to save space */
+      g_variant_dict_insert_value (&commit_metadata_builder,
+                                   compat_format ? OSTREE_COMMIT_TIMESTAMP  : OSTREE_COMMIT_TIMESTAMP2,
+                                   g_variant_new_uint64 (GUINT64_TO_BE (commit_timestamp)));
+
       g_variant_builder_add_value (refs_builder,
                                    g_variant_new ("(s(t@ay@a{sv}))", ref,
                                                   commit_size,
