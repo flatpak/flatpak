@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2020-11-19 11:02+0100\n"
+"POT-Creation-Date: 2020-11-20 15:24+0100\n"
 "PO-Revision-Date: 2017-01-23 18:19+0100\n"
 "Last-Translator: Dušan Kazik <prescott66@gmail.com>\n"
 "Language-Team: Slovak <gnome-sk-list@gnome.org>\n"
@@ -159,14 +159,14 @@ msgid "'%s' is not a valid repository: "
 msgstr "„%s“ nie je platným repozitárom"
 
 #: app/flatpak-builtins-build-bundle.c:660 app/flatpak-builtins-build-sign.c:87
-#: common/flatpak-dir.c:12223
+#: common/flatpak-dir.c:12221
 #, c-format
 msgid "'%s' is not a valid name: %s"
 msgstr "„%s“ nie je platným názvom: %s"
 
 #: app/flatpak-builtins-build-bundle.c:663
 #: app/flatpak-builtins-build-export.c:854 app/flatpak-builtins-build-sign.c:90
-#: common/flatpak-dir.c:12229
+#: common/flatpak-dir.c:12227
 #, c-format
 msgid "'%s' is not a valid branch name: %s"
 msgstr "„%s“ nie je platným názvom vetvy: %s"
@@ -2456,7 +2456,7 @@ msgstr ""
 msgid "Can't load uri %s: %s\n"
 msgstr ""
 
-#: app/flatpak-builtins-remote-add.c:269 common/flatpak-dir.c:3755
+#: app/flatpak-builtins-remote-add.c:269 common/flatpak-dir.c:3753
 #, c-format
 msgid "Can't load file %s: %s\n"
 msgstr ""
@@ -2541,9 +2541,9 @@ msgstr ""
 msgid "REMOTE and REF must be specified"
 msgstr "ADRESÁR musí byť určený"
 
-#: app/flatpak-builtins-remote-info.c:159 common/flatpak-dir.c:1147
-#: common/flatpak-dir.c:4553 common/flatpak-dir.c:5471
-#: common/flatpak-dir.c:5540 common/flatpak-dir.c:5664
+#: app/flatpak-builtins-remote-info.c:159 common/flatpak-dir.c:1145
+#: common/flatpak-dir.c:4551 common/flatpak-dir.c:5469
+#: common/flatpak-dir.c:5538 common/flatpak-dir.c:5662
 #, fuzzy, c-format
 msgid "Couldn't find latest checksum for ref %s in remote %s"
 msgstr "Nedá sa nájsť %s vo vzdialenom repozitári %s"
@@ -3231,7 +3231,7 @@ msgstr ""
 msgid "Nothing unused to uninstall\n"
 msgstr ""
 
-#: app/flatpak-builtins-uninstall.c:326 common/flatpak-dir.c:12703
+#: app/flatpak-builtins-uninstall.c:326 common/flatpak-dir.c:12701
 #, fuzzy, c-format
 msgid "%s/%s/%s not installed"
 msgstr "Aplikácia %s %s nie je nainštalovaná"
@@ -3540,15 +3540,15 @@ msgid "Info: %s was skipped"
 msgstr ""
 
 #: app/flatpak-cli-transaction.c:520 app/flatpak-quiet-transaction.c:136
-#: common/flatpak-dir.c:9560
+#: common/flatpak-dir.c:9558
 #, fuzzy, c-format
 msgid "%s already installed"
 msgstr "Aplikácia %s vetva %s je už nainštalovaná"
 
 #: app/flatpak-cli-transaction.c:522 app/flatpak-cli-transaction.c:524
 #: app/flatpak-quiet-transaction.c:138 app/flatpak-quiet-transaction.c:140
-#: common/flatpak-dir.c:2826 common/flatpak-dir.c:3460
-#: common/flatpak-dir.c:15052 common/flatpak-transaction.c:2453
+#: common/flatpak-dir.c:2824 common/flatpak-dir.c:3458
+#: common/flatpak-dir.c:15055 common/flatpak-transaction.c:2453
 #: common/flatpak-transaction.c:2501 common/flatpak-utils.c:1126
 #: common/flatpak-utils.c:1219
 #, c-format
@@ -4279,490 +4279,490 @@ msgstr "NÁZOV_SÚBORU"
 msgid "Don't require a running session (no cgroups creation)"
 msgstr ""
 
-#: common/flatpak-dir.c:395
+#: common/flatpak-dir.c:393
 #, c-format
 msgid "Configured collection ID ‘%s’ not in summary file"
 msgstr ""
 
-#: common/flatpak-dir.c:447
+#: common/flatpak-dir.c:445
 #, c-format
 msgid "Unable to load summary from remote %s: %s"
 msgstr ""
 
-#: common/flatpak-dir.c:567 common/flatpak-dir.c:639
+#: common/flatpak-dir.c:565 common/flatpak-dir.c:637
 #, fuzzy, c-format
 msgid "No such ref '%s' in remote %s"
 msgstr "Nedá sa nájsť %s vo vzdialenom repozitári %s"
 
-#: common/flatpak-dir.c:624 common/flatpak-dir.c:761 common/flatpak-dir.c:790
+#: common/flatpak-dir.c:622 common/flatpak-dir.c:759 common/flatpak-dir.c:788
 #, c-format
 msgid "No entry for %s in remote '%s' summary flatpak cache "
 msgstr ""
 
-#: common/flatpak-dir.c:779
+#: common/flatpak-dir.c:777
 #, c-format
 msgid "No summary or Flatpak cache available for remote %s"
 msgstr ""
 
-#: common/flatpak-dir.c:802
+#: common/flatpak-dir.c:800
 #, c-format
 msgid "No entry for %s in remote '%s' summary cache "
 msgstr ""
 
-#: common/flatpak-dir.c:807
+#: common/flatpak-dir.c:805
 #, fuzzy, c-format
 msgid "Missing xa.data in summary for remote %s"
 msgstr "Aplikácia %s vetva %s je už nainštalovaná"
 
-#: common/flatpak-dir.c:813 common/flatpak-dir.c:1229
+#: common/flatpak-dir.c:811 common/flatpak-dir.c:1227
 #, fuzzy, c-format
 msgid "Unsupported summary version %d for remote %s"
 msgstr "Aplikácia %s vetva %s je už nainštalovaná"
 
-#: common/flatpak-dir.c:900
+#: common/flatpak-dir.c:898
 #, fuzzy
 msgid "Remote OCI index has no registry uri"
 msgstr "NÁZOV [UMIESTNENIE] - Pridanie vzdialeného repozitára"
 
-#: common/flatpak-dir.c:969
+#: common/flatpak-dir.c:967
 #, fuzzy, c-format
 msgid "Couldn't find ref %s in remote %s"
 msgstr "Nedá sa nájsť %s vo vzdialenom repozitári %s"
 
-#: common/flatpak-dir.c:986 common/flatpak-dir.c:5563
-#: common/flatpak-utils.c:6740 common/flatpak-utils.c:6745
+#: common/flatpak-dir.c:984 common/flatpak-dir.c:5561
+#: common/flatpak-utils.c:6756 common/flatpak-utils.c:6761
 msgid "Image is not a manifest"
 msgstr ""
 
-#: common/flatpak-dir.c:1007 common/flatpak-dir.c:1080
+#: common/flatpak-dir.c:1005 common/flatpak-dir.c:1078
 #, c-format
 msgid "Commit has no requested ref ‘%s’ in ref binding metadata"
 msgstr ""
 
-#: common/flatpak-dir.c:1111
+#: common/flatpak-dir.c:1109
 #, c-format
 msgid "Configured collection ID ‘%s’ not in binding metadata"
 msgstr ""
 
-#: common/flatpak-dir.c:1200 common/flatpak-dir.c:1235
+#: common/flatpak-dir.c:1198 common/flatpak-dir.c:1233
 #, c-format
 msgid "No entry for %s in remote summary flatpak sparse cache "
 msgstr ""
 
-#: common/flatpak-dir.c:1771
+#: common/flatpak-dir.c:1769
 #, c-format
 msgid "Commit metadata for %s not matching expected metadata"
 msgstr ""
 
-#: common/flatpak-dir.c:2035
+#: common/flatpak-dir.c:2033
 msgid "Unable to connect to system bus"
 msgstr ""
 
-#: common/flatpak-dir.c:2628
+#: common/flatpak-dir.c:2626
 #, fuzzy
 msgid "User installation"
 msgstr "Inštalovanie: %s\n"
 
-#: common/flatpak-dir.c:2635
+#: common/flatpak-dir.c:2633
 #, fuzzy, c-format
 msgid "System (%s) installation"
 msgstr "Inštalovanie: %s\n"
 
-#: common/flatpak-dir.c:2680
+#: common/flatpak-dir.c:2678
 #, c-format
 msgid "No overrides found for %s"
 msgstr ""
 
-#: common/flatpak-dir.c:2829
+#: common/flatpak-dir.c:2827
 #, fuzzy, c-format
 msgid "%s (commit %s) not installed"
 msgstr "Aplikácia %s %s nie je nainštalovaná"
 
-#: common/flatpak-dir.c:3762
+#: common/flatpak-dir.c:3760
 #, fuzzy, c-format
 msgid "Error parsing system flatpakrepo file for %s: %s"
 msgstr ""
 "Chyba počas aktualizácie metaúdajov navyše pre „%s“: %s\n"
 "\n"
 
-#: common/flatpak-dir.c:3885
+#: common/flatpak-dir.c:3883
 #, c-format
 msgid "While opening repository %s: "
 msgstr "Počas otvárania repozitára %s: "
 
-#: common/flatpak-dir.c:4056
+#: common/flatpak-dir.c:4054
 #, c-format
 msgid "The config key %s is not set"
 msgstr ""
 
-#: common/flatpak-dir.c:4189
+#: common/flatpak-dir.c:4187
 #, c-format
 msgid "No current %s pattern matching %s"
 msgstr ""
 
-#: common/flatpak-dir.c:4342
+#: common/flatpak-dir.c:4340
 msgid "No appstream commit to deploy"
 msgstr ""
 
-#: common/flatpak-dir.c:4373 common/flatpak-dir.c:8079
+#: common/flatpak-dir.c:4371 common/flatpak-dir.c:8077
 msgid "Can't create deploy directory"
 msgstr ""
 
-#: common/flatpak-dir.c:4849 common/flatpak-dir.c:5885
-#: common/flatpak-dir.c:9010 common/flatpak-dir.c:9699
+#: common/flatpak-dir.c:4847 common/flatpak-dir.c:5883
+#: common/flatpak-dir.c:9008 common/flatpak-dir.c:9697
 msgid "Can't pull from untrusted non-gpg verified remote"
 msgstr ""
 
-#: common/flatpak-dir.c:5258 common/flatpak-dir.c:5295
+#: common/flatpak-dir.c:5256 common/flatpak-dir.c:5293
 msgid "Extra data not supported for non-gpg-verified local system installs"
 msgstr ""
 
-#: common/flatpak-dir.c:5324
+#: common/flatpak-dir.c:5322
 #, fuzzy, c-format
 msgid "Invalid checksum for extra data uri %s"
 msgstr "Nesprávna veľkosť pre údaje navyše %s"
 
-#: common/flatpak-dir.c:5329
+#: common/flatpak-dir.c:5327
 #, c-format
 msgid "Empty name for extra data uri %s"
 msgstr ""
 
-#: common/flatpak-dir.c:5336
+#: common/flatpak-dir.c:5334
 #, c-format
 msgid "Unsupported extra data uri %s"
 msgstr ""
 
-#: common/flatpak-dir.c:5350
+#: common/flatpak-dir.c:5348
 #, fuzzy, c-format
 msgid "Failed to load local extra-data %s: %s"
 msgstr "Zlyhalo čítanie začlenenia %s: "
 
-#: common/flatpak-dir.c:5353
+#: common/flatpak-dir.c:5351
 #, fuzzy, c-format
 msgid "Wrong size for extra-data %s"
 msgstr "Nesprávna veľkosť pre údaje navyše %s"
 
-#: common/flatpak-dir.c:5368
+#: common/flatpak-dir.c:5366
 #, fuzzy, c-format
 msgid "While downloading %s: "
 msgstr "Počas otvárania repozitára %s: "
 
-#: common/flatpak-dir.c:5375
+#: common/flatpak-dir.c:5373
 #, c-format
 msgid "Wrong size for extra data %s"
 msgstr "Nesprávna veľkosť pre údaje navyše %s"
 
-#: common/flatpak-dir.c:5384
+#: common/flatpak-dir.c:5382
 #, c-format
 msgid "Invalid checksum for extra data %s"
 msgstr ""
 
-#: common/flatpak-dir.c:5479 common/flatpak-dir.c:8070
-#: common/flatpak-dir.c:9580
+#: common/flatpak-dir.c:5477 common/flatpak-dir.c:8068
+#: common/flatpak-dir.c:9578
 #, fuzzy, c-format
 msgid "%s commit %s already installed"
 msgstr "Aplikácia %s vetva %s je už nainštalovaná"
 
-#: common/flatpak-dir.c:5719 common/flatpak-dir.c:5968
+#: common/flatpak-dir.c:5717 common/flatpak-dir.c:5966
 #, c-format
 msgid "While pulling %s from remote %s: "
 msgstr ""
 
-#: common/flatpak-dir.c:5909 common/flatpak-utils.c:6635
+#: common/flatpak-dir.c:5907 common/flatpak-utils.c:6651
 msgid "GPG signatures found, but none are in trusted keyring"
 msgstr ""
 
-#: common/flatpak-dir.c:5926
+#: common/flatpak-dir.c:5924
 #, c-format
 msgid "Commit for ‘%s’ has no ref binding"
 msgstr ""
 
-#: common/flatpak-dir.c:5931
+#: common/flatpak-dir.c:5929
 #, c-format
 msgid "Commit for ‘%s’ is not in expected bound refs: %s"
 msgstr ""
 
-#: common/flatpak-dir.c:6106
+#: common/flatpak-dir.c:6104
 #, fuzzy
 msgid "Only applications can be made current"
 msgstr "Podpíše aplikáciu alebo prostredie"
 
-#: common/flatpak-dir.c:6626
+#: common/flatpak-dir.c:6624
 msgid "Not enough memory"
 msgstr "Nedostatok pamäte"
 
-#: common/flatpak-dir.c:6645
+#: common/flatpak-dir.c:6643
 msgid "Failed to read from exported file"
 msgstr "Zlyhalo čítanie z exportovaného súboru"
 
-#: common/flatpak-dir.c:6837
+#: common/flatpak-dir.c:6835
 msgid "Error reading mimetype xml file"
 msgstr ""
 
-#: common/flatpak-dir.c:6842
+#: common/flatpak-dir.c:6840
 msgid "Invalid mimetype xml file"
 msgstr ""
 
-#: common/flatpak-dir.c:6932
+#: common/flatpak-dir.c:6930
 #, c-format
 msgid "D-Bus service file '%s' has wrong name"
 msgstr ""
 
-#: common/flatpak-dir.c:7535
+#: common/flatpak-dir.c:7533
 msgid "While getting detached metadata: "
 msgstr ""
 
-#: common/flatpak-dir.c:7540 common/flatpak-dir.c:7545
-#: common/flatpak-dir.c:7549
+#: common/flatpak-dir.c:7538 common/flatpak-dir.c:7543
+#: common/flatpak-dir.c:7547
 msgid "Extra data missing in detached metadata"
 msgstr ""
 
-#: common/flatpak-dir.c:7553
+#: common/flatpak-dir.c:7551
 msgid "While creating extradir: "
 msgstr ""
 
-#: common/flatpak-dir.c:7574 common/flatpak-dir.c:7607
+#: common/flatpak-dir.c:7572 common/flatpak-dir.c:7605
 msgid "Invalid checksum for extra data"
 msgstr ""
 
-#: common/flatpak-dir.c:7603
+#: common/flatpak-dir.c:7601
 msgid "Wrong size for extra data"
 msgstr ""
 
-#: common/flatpak-dir.c:7616
+#: common/flatpak-dir.c:7614
 #, c-format
 msgid "While writing extra data file '%s': "
 msgstr ""
 
-#: common/flatpak-dir.c:7624
+#: common/flatpak-dir.c:7622
 #, c-format
 msgid "Extra data %s missing in detached metadata"
 msgstr ""
 
-#: common/flatpak-dir.c:7811
+#: common/flatpak-dir.c:7809
 #, c-format
 msgid "apply_extra script failed, exit status %d"
 msgstr ""
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-dir.c:7959
+#: common/flatpak-dir.c:7957
 #, c-format
 msgid "Installing %s is not allowed by the policy set by your administrator"
 msgstr ""
 
-#: common/flatpak-dir.c:8046
+#: common/flatpak-dir.c:8044
 #, c-format
 msgid "While trying to resolve ref %s: "
 msgstr ""
 
-#: common/flatpak-dir.c:8058
+#: common/flatpak-dir.c:8056
 #, c-format
 msgid "%s is not available"
 msgstr "Aplikácia %s nie je dostupná"
 
-#: common/flatpak-dir.c:8087
+#: common/flatpak-dir.c:8085
 #, c-format
 msgid "Failed to read commit %s: "
 msgstr "Zlyhalo čítanie začlenenia %s: "
 
-#: common/flatpak-dir.c:8107
+#: common/flatpak-dir.c:8105
 #, c-format
 msgid "While trying to checkout %s into %s: "
 msgstr ""
 
-#: common/flatpak-dir.c:8126
+#: common/flatpak-dir.c:8124
 msgid "While trying to checkout metadata subpath: "
 msgstr ""
 
-#: common/flatpak-dir.c:8157
+#: common/flatpak-dir.c:8155
 #, c-format
 msgid "While trying to checkout subpath ‘%s’: "
 msgstr ""
 
-#: common/flatpak-dir.c:8167
+#: common/flatpak-dir.c:8165
 msgid "While trying to remove existing extra dir: "
 msgstr "Počas pokusu o odstránenie existujúceho adresára navyše: "
 
-#: common/flatpak-dir.c:8178
+#: common/flatpak-dir.c:8176
 msgid "While trying to apply extra data: "
 msgstr "Počas pokusu o aplikáciu údajov navyše: "
 
-#: common/flatpak-dir.c:8205
+#: common/flatpak-dir.c:8203
 #, fuzzy, c-format
 msgid "Invalid commit ref %s: "
 msgstr "Neplatný identifikátor pid %s"
 
-#: common/flatpak-dir.c:8213 common/flatpak-dir.c:8225
+#: common/flatpak-dir.c:8211 common/flatpak-dir.c:8223
 #, c-format
 msgid "Deployed ref %s does not match commit (%s)"
 msgstr ""
 
-#: common/flatpak-dir.c:8219
+#: common/flatpak-dir.c:8217
 #, c-format
 msgid "Deployed ref %s branch does not match commit (%s)"
 msgstr ""
 
-#: common/flatpak-dir.c:8475 common/flatpak-installation.c:1903
+#: common/flatpak-dir.c:8473 common/flatpak-installation.c:1903
 #, c-format
 msgid "%s branch %s already installed"
 msgstr "Aplikácia %s vetva %s je už nainštalovaná"
 
-#: common/flatpak-dir.c:9114
+#: common/flatpak-dir.c:9112
 #, c-format
 msgid "Could not unmount revokefs-fuse filesystem at %s: "
 msgstr ""
 
-#: common/flatpak-dir.c:9377
+#: common/flatpak-dir.c:9375
 #, c-format
 msgid "This version of %s is already installed"
 msgstr "Táto verzia aplikácie %s je už nainštalovaná"
 
-#: common/flatpak-dir.c:9384
+#: common/flatpak-dir.c:9382
 msgid "Can't change remote during bundle install"
 msgstr ""
 
-#: common/flatpak-dir.c:9652
+#: common/flatpak-dir.c:9650
 msgid "Can't update to a specific commit without root permissions"
 msgstr ""
 
-#: common/flatpak-dir.c:9918
+#: common/flatpak-dir.c:9916
 #, c-format
 msgid "Can't remove %s, it is needed for: %s"
 msgstr ""
 
-#: common/flatpak-dir.c:9974 common/flatpak-installation.c:2059
+#: common/flatpak-dir.c:9972 common/flatpak-installation.c:2059
 #, c-format
 msgid "%s branch %s is not installed"
 msgstr "Aplikácia %s vetva %s nie je nainštalovaná"
 
-#: common/flatpak-dir.c:10227
+#: common/flatpak-dir.c:10225
 #, fuzzy, c-format
 msgid "%s commit %s not installed"
 msgstr "Aplikácia %s %s nie je nainštalovaná"
 
-#: common/flatpak-dir.c:10563
+#: common/flatpak-dir.c:10561
 #, c-format
 msgid "Pruning repo failed: %s"
 msgstr ""
 
-#: common/flatpak-dir.c:10731 common/flatpak-dir.c:10737
+#: common/flatpak-dir.c:10729 common/flatpak-dir.c:10735
 #, fuzzy, c-format
 msgid "Failed to load filter '%s'"
 msgstr "Zlyhalo čítanie začlenenia %s: "
 
-#: common/flatpak-dir.c:10743
+#: common/flatpak-dir.c:10741
 #, fuzzy, c-format
 msgid "Failed to parse filter '%s'"
 msgstr "Zlyhalo čítanie začlenenia %s: "
 
-#: common/flatpak-dir.c:11028
+#: common/flatpak-dir.c:11026
 #, fuzzy
 msgid "Failed to write summary cache: "
 msgstr "Zlyhalo vytvorenie dočasného súboru"
 
-#: common/flatpak-dir.c:11047
+#: common/flatpak-dir.c:11045
 #, fuzzy, c-format
 msgid "No oci summary cached for remote '%s'"
 msgstr "Aplikácia %s vetva %s je už nainštalovaná"
 
-#: common/flatpak-dir.c:11269
+#: common/flatpak-dir.c:11267
 #, fuzzy, c-format
 msgid "No cached summary for remote '%s'"
 msgstr "Aplikácia %s vetva %s je už nainštalovaná"
 
-#: common/flatpak-dir.c:11344
+#: common/flatpak-dir.c:11342
 #, c-format
 msgid ""
 "Remote listing for %s not available; server has no summary file. Check the "
 "URL passed to remote-add was valid."
 msgstr ""
 
-#: common/flatpak-dir.c:11691
+#: common/flatpak-dir.c:11689
 #, fuzzy, c-format
 msgid "Invalid checksum for indexed summary %s for remote '%s'"
 msgstr "Nesprávna veľkosť pre údaje navyše %s"
 
-#: common/flatpak-dir.c:12337
+#: common/flatpak-dir.c:12335
 #, c-format
 msgid "Multiple branches available for %s, you must specify one of: "
 msgstr ""
 
-#: common/flatpak-dir.c:12359
+#: common/flatpak-dir.c:12357
 #, c-format
 msgid "Nothing matches %s"
 msgstr "Nič nevyhovuje názvu %s"
 
-#: common/flatpak-dir.c:12453
+#: common/flatpak-dir.c:12451
 #, fuzzy, c-format
 msgid "Can't find ref %s%s%s%s%s"
 msgstr "Nedá sa nájsť %s%s%s%s%s vo vzdialenom repozitári %s"
 
-#: common/flatpak-dir.c:12493
+#: common/flatpak-dir.c:12491
 #, c-format
 msgid "Error searching remote %s: %s"
 msgstr ""
 
-#: common/flatpak-dir.c:12585
+#: common/flatpak-dir.c:12583
 #, c-format
 msgid "Error searching local repository: %s"
 msgstr ""
 
-#: common/flatpak-dir.c:12906
+#: common/flatpak-dir.c:12904
 #, c-format
 msgid "Could not find installation %s"
 msgstr "Nepodarilo sa nájsť inštaláciu %s"
 
-#: common/flatpak-dir.c:13511
+#: common/flatpak-dir.c:13509
 #, fuzzy, c-format
 msgid "Invalid file format, no %s group"
 msgstr "Neplatný identifikátor pid %s"
 
-#: common/flatpak-dir.c:13516 common/flatpak-utils.c:2242
+#: common/flatpak-dir.c:13514 common/flatpak-utils.c:2242
 #, c-format
 msgid "Invalid version %s, only 1 supported"
 msgstr ""
 
-#: common/flatpak-dir.c:13521 common/flatpak-dir.c:13526
+#: common/flatpak-dir.c:13519 common/flatpak-dir.c:13524
 #, fuzzy, c-format
 msgid "Invalid file format, no %s specified"
 msgstr "Neplatný identifikátor pid %s"
 
 #. Check some minimal size so we don't get crap
-#: common/flatpak-dir.c:13549
+#: common/flatpak-dir.c:13547
 #, fuzzy
 msgid "Invalid file format, gpg key invalid"
 msgstr "Neplatný identifikátor pid %s"
 
-#: common/flatpak-dir.c:13567 common/flatpak-utils.c:2300
+#: common/flatpak-dir.c:13565 common/flatpak-utils.c:2300
 msgid "Collection ID requires GPG key to be provided"
 msgstr ""
 
-#: common/flatpak-dir.c:13612
+#: common/flatpak-dir.c:13610
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "Prostredie %s, vetva %s je už nainštalovaná"
 
-#: common/flatpak-dir.c:13613
+#: common/flatpak-dir.c:13611
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "Aplikácia %s, vetva %s je už nainštalovaná"
 
-#: common/flatpak-dir.c:13874
+#: common/flatpak-dir.c:13872
 #, c-format
 msgid "Can't remove remote '%s' with installed ref %s (at least)"
 msgstr ""
 
-#: common/flatpak-dir.c:13973
+#: common/flatpak-dir.c:13971
 #, fuzzy, c-format
 msgid "Invalid character '/' in remote name: %s"
 msgstr "Nedá sa nájsť %s vo vzdialenom repozitári %s"
 
-#: common/flatpak-dir.c:13979
+#: common/flatpak-dir.c:13977
 #, c-format
 msgid "No configuration for remote %s specified"
 msgstr ""
 
-#: common/flatpak-dir.c:15551
+#: common/flatpak-dir.c:15554
 #, fuzzy, c-format
 msgid "Skipping deletion of mirror ref (%s, %s)…\n"
 msgstr "Neplatný identifikátor pid %s"
@@ -5228,7 +5228,8 @@ msgid "Skipping %s due to previous error"
 msgstr ""
 
 #: common/flatpak-transaction.c:4794
-msgid "Aborted due to failure"
+#, c-format
+msgid "Aborted due to failure (%s)"
 msgstr ""
 
 #: common/flatpak-utils.c:795
@@ -5288,81 +5289,81 @@ msgstr "Neplatný identifikátor pid %s"
 msgid "No extra data sources"
 msgstr "Žiadne zdroje údajov navyše"
 
-#: common/flatpak-utils.c:5259
+#: common/flatpak-utils.c:5275
 #, fuzzy, c-format
 msgid "Error copying 64x64 icon for component %s: %s\n"
 msgstr "Aktualizovanie zhrnutia\n"
 
-#: common/flatpak-utils.c:5265
+#: common/flatpak-utils.c:5281
 #, fuzzy, c-format
 msgid "Error copying 128x128 icon for component %s: %s\n"
 msgstr "Aktualizovanie zhrnutia\n"
 
-#: common/flatpak-utils.c:5512
+#: common/flatpak-utils.c:5528
 #, c-format
 msgid "%s is end-of-life, ignoring for appstream"
 msgstr ""
 
-#: common/flatpak-utils.c:5547
+#: common/flatpak-utils.c:5563
 #, fuzzy, c-format
 msgid "No appstream data for %s: %s\n"
 msgstr ""
 "Chyba počas aktualizácie metaúdajov navyše pre „%s“: %s\n"
 "\n"
 
-#: common/flatpak-utils.c:6497
+#: common/flatpak-utils.c:6513
 #, fuzzy
 msgid "Invalid bundle, no ref in metadata"
 msgstr "Neplatný identifikátor pid %s"
 
-#: common/flatpak-utils.c:6595
+#: common/flatpak-utils.c:6611
 #, c-format
 msgid "Collection ‘%s’ of bundle doesn’t match collection ‘%s’ of remote"
 msgstr ""
 
-#: common/flatpak-utils.c:6674
+#: common/flatpak-utils.c:6690
 msgid "Metadata in header and app are inconsistent"
 msgstr ""
 
-#: common/flatpak-utils.c:6759 common/flatpak-utils.c:6918
+#: common/flatpak-utils.c:6775 common/flatpak-utils.c:6934
 msgid "Invalid OCI image config"
 msgstr ""
 
-#: common/flatpak-utils.c:6821 common/flatpak-utils.c:7067
+#: common/flatpak-utils.c:6837 common/flatpak-utils.c:7083
 #, c-format
 msgid "Wrong layer checksum, expected %s, was %s"
 msgstr ""
 
-#: common/flatpak-utils.c:6901
+#: common/flatpak-utils.c:6917
 #, c-format
 msgid "No ref specified for OCI image %s"
 msgstr ""
 
-#: common/flatpak-utils.c:6907
+#: common/flatpak-utils.c:6923
 #, c-format
 msgid "Wrong ref (%s) specified for OCI image %s, expected %s"
 msgstr ""
 
-#: common/flatpak-utils.c:7735
+#: common/flatpak-utils.c:7751
 #, c-format
 msgid "Invalid require-flatpak argument %s"
 msgstr ""
 
-#: common/flatpak-utils.c:7745 common/flatpak-utils.c:7764
+#: common/flatpak-utils.c:7761 common/flatpak-utils.c:7780
 #, c-format
 msgid "%s needs a later flatpak version (%s)"
 msgstr ""
 
-#: common/flatpak-utils.c:7808
+#: common/flatpak-utils.c:7824
 msgid "Empty string is not a number"
 msgstr ""
 
-#: common/flatpak-utils.c:7834
+#: common/flatpak-utils.c:7850
 #, c-format
 msgid "“%s” is not an unsigned number"
 msgstr ""
 
-#: common/flatpak-utils.c:7844
+#: common/flatpak-utils.c:7860
 #, c-format
 msgid "Number “%s” is out of bounds [%s, %s]"
 msgstr ""
