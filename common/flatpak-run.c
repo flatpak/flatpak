@@ -3581,7 +3581,7 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
     return FALSE;
 
   app_id = flatpak_decomposed_dup_id (app_ref);
-  app_arch = flatpak_decomposed_dup_id (app_ref);
+  app_arch = flatpak_decomposed_dup_arch (app_ref);
 
   /* Check the user is allowed to run this flatpak. */
   if (!check_parental_controls (app_ref, app_deploy, cancellable, error))
