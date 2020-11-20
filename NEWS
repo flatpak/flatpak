@@ -1,5 +1,16 @@
 Changes in 1.9.1
 ~~~~~~~~~~~~~~~~
+Released: 2020-11-20
+
+ * Some build fixes on non-x86-64 arches
+ * Fix permission issue in endless installer
+ * Fixed a bug where flatpak was accidentally clearing the summary cache
+   durin updates in the user installation.
+ * Fix handling of the multiarch permission.,
+ * Add back the commit timestamp to the summary file.
+
+Changes in 1.9.1
+~~~~~~~~~~~~~~~~
 Released: 2020-11-19
 
 This is the first unstable release in the series that will lead to
