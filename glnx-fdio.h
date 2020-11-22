@@ -43,7 +43,7 @@ G_BEGIN_DECLS
 static inline
 const char *glnx_basename (const char *path)
 {
-  gchar *base = strrchr (path, G_DIR_SEPARATOR);
+  const gchar *base = strrchr (path, G_DIR_SEPARATOR);
 
   if (base)
     return base + 1;
@@ -55,7 +55,7 @@ const char *glnx_basename (const char *path)
 static inline void
 glnx_stdio_file_cleanup (void *filep)
 {
-  FILE *f = filep;
+  FILE *f = (FILE*)filep;
   if (f)
     fclose (f);
 }
