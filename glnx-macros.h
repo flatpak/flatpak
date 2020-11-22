@@ -52,7 +52,7 @@ G_BEGIN_DECLS
                 unsigned _i_;                                           \
                 for (_i_ = 0; _i_ < G_N_ELEMENTS(_appendees_) && _appendees_[_i_]; _i_++) \
                         _len_ += strlen(_appendees_[_i_]);              \
-                _p_ = _d_ = alloca(_len_ + 1);                          \
+                _p_ = _d_ = (char*) alloca(_len_ + 1);                          \
                 for (_i_ = 0; _i_ < G_N_ELEMENTS(_appendees_) && _appendees_[_i_]; _i_++) \
                         _p_ = stpcpy(_p_, _appendees_[_i_]);            \
                 *_p_ = 0;                                               \
