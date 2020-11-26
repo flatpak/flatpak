@@ -772,8 +772,8 @@ end_of_lifed_with_rebase (FlatpakTransaction *transaction,
     {
       g_autoptr(GError) error = NULL;
 
-      if (!flatpak_transaction_add_uninstall (transaction, ref_str, &error) ||
-          !flatpak_transaction_add_rebase (transaction, remote, rebased_to_ref, NULL, previous_ids, &error))
+      if (!flatpak_transaction_add_rebase (transaction, remote, rebased_to_ref, NULL, previous_ids, &error) ||
+          !flatpak_transaction_add_uninstall (transaction, ref_str, &error))
         {
           g_propagate_prefixed_error (&self->first_operation_error,
                                       g_error_copy (error),

@@ -222,8 +222,8 @@ end_of_lifed_with_rebase (FlatpakTransaction *transaction,
 
       g_print (_("Updating to rebased version\n"));
 
-      if (!flatpak_transaction_add_uninstall (transaction, ref, &error) ||
-          !flatpak_transaction_add_rebase (transaction, remote, rebased_to_ref, NULL, previous_ids, &error))
+      if (!flatpak_transaction_add_rebase (transaction, remote, rebased_to_ref, NULL, previous_ids, &error) ||
+          !flatpak_transaction_add_uninstall (transaction, ref, &error))
         {
           g_printerr (_("Failed to rebase %s to %s: %s\n"),
                       flatpak_ref_get_name (rref), rebased_to_ref, error->message);
