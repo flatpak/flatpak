@@ -1084,6 +1084,9 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
   if (transaction == NULL)
     return NULL;
 
+  /* CLI transactions set this. */
+  flatpak_transaction_add_default_dependency_sources (transaction);
+
   installed_refs_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 
   for (guint i = 0; i < installed_refs->len; i++)
