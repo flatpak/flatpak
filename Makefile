@@ -5,7 +5,7 @@ PKG_CONFIG ?= pkg-config
 GLIB_CFLAGS = `$(PKG_CONFIG) --cflags glib-2.0`
 GLIB_LIBS = `$(PKG_CONFIG) --libs glib-2.0`
 
-all: sample ostree_test performance
+all: sample ostree_test performance selftests
 
 sample.h: variant-schema-compiler sample.gv
 	./variant-schema-compiler --internal-validation --outfile sample-impl.h --outfile-header=sample.h --prefix=sample sample.gv
@@ -24,6 +24,9 @@ ostree_test.h: variant-schema-compiler ostree.gv
 
 ostree_test: ostree_test.c ostree_test.h
 	$(CC) $(GLIB_CFLAGS) $(CFLAGS) -o ostree_test ostree_test.c $(GLIB_LIBS)
+
+selftests: selftests.c ostree_test.h
+	$(CC) $(GLIB_CFLAGS) $(CFLAGS) -o selftests -O2 selftests.c $(GLIB_LIBS)
 
 clean:
 	rm -f sample.h sample performance.h performance ostree_test.h ostree_test
