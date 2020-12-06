@@ -159,7 +159,7 @@
             </varlistentry>
 
             <varlistentry>
-                <term>version</term>
+                <term>branch</term>
 
                 <listitem><para>
                     Show the branch
