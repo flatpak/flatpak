@@ -136,7 +136,7 @@ G_BEGIN_DECLS
          guard && ({ g_hash_table_iter_init (&it, ht), TRUE; });               \
          guard = FALSE)                                                        \
             for (kt k; guard; guard = FALSE)                                   \
-                for (vt v; g_hash_table_iter_next (&it, (gpointer)&k, (gpointer)&v);)
+                for (vt v; g_hash_table_iter_next (&it, (void**)&k, (void**)&v);)
 
 
 /* Cleaner method to iterate over a GHashTable. I.e. rather than
