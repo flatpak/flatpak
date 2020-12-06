@@ -4757,8 +4757,8 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
       if (res)
         {
           g_autoptr(GBytes) deploy_data = NULL;
-          deploy_data = flatpak_dir_get_deploy_data (priv->dir, op->ref,
-                                                     FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
+          /* deploy v4 guarantees eol/eolr info */
+          deploy_data = flatpak_dir_get_deploy_data (priv->dir, op->ref, 4, NULL, NULL);
 
           if (deploy_data)
             {
