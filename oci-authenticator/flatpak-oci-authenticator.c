@@ -24,6 +24,7 @@
 #include <glib/gi18n-lib.h>
 #include <json-glib/json-glib.h>
 #include "flatpak-oci-registry-private.h"
+#include "flatpak-utils-base-private.h"
 #include "flatpak-utils-http-private.h"
 #include "flatpak-auth-private.h"
 #include "flatpak-dbus-generated.h"
@@ -135,7 +136,7 @@ handle_request_ref_tokens_close (FlatpakAuthenticatorRequest *object,
 
   cancel_basic_auth (auth);
 
-  return TRUE;
+  return G_DBUS_METHOD_INVOCATION_HANDLED;
 }
 
 static void
@@ -215,7 +216,7 @@ handle_request_ref_tokens_basic_auth_reply (FlatpakAuthenticatorRequest *object,
     }
   g_mutex_unlock (&auth->mutex);
 
-  return TRUE;
+  return G_DBUS_METHOD_INVOCATION_HANDLED;
 }
 
 static char *
@@ -306,7 +307,7 @@ cancel_request (FlatpakAuthenticatorRequest *request,
   flatpak_authenticator_request_emit_response (request,
                                                FLATPAK_AUTH_RESPONSE_CANCELLED,
                                                g_variant_builder_end (&results));
-  return TRUE;
+  return G_DBUS_METHOD_INVOCATION_HANDLED;
 }
 
 static gboolean
@@ -323,7 +324,7 @@ error_request_raw (FlatpakAuthenticatorRequest *request,
   flatpak_authenticator_request_emit_response (request,
                                                FLATPAK_AUTH_RESPONSE_ERROR,
                                                g_variant_builder_end (&results));
-  return TRUE;
+  return G_DBUS_METHOD_INVOCATION_HANDLED;
 }
 
 static gboolean
@@ -474,7 +475,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *f_authenticator,
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
                                              G_DBUS_ERROR_INVALID_ARGS,
                                              _("Not a OCI remote"));
-      return TRUE;
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
   g_variant_lookup (arg_options, "no-interaction", "b", &no_interaction);
 
@@ -485,7 +486,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *f_authenticator,
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
                                              G_DBUS_ERROR_INVALID_ARGS,
                                              _("Invalid token"));
-      return TRUE;
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
   request = flatpak_authenticator_request_skeleton_new ();
@@ -495,7 +496,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *f_authenticator,
                                          &error))
     {
       g_dbus_method_invocation_return_gerror (invocation, error);
-      return TRUE;
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
   flatpak_authenticator_complete_request_ref_tokens (f_authenticator, invocation, request_path);
@@ -616,7 +617,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *f_authenticator,
                                                FLATPAK_AUTH_RESPONSE_OK,
                                                g_variant_builder_end (&results));
 
-  return TRUE;
+  return G_DBUS_METHOD_INVOCATION_HANDLED;
 }
 
 static gboolean
