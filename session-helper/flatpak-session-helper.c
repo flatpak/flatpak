@@ -90,7 +90,7 @@ handle_request_session (FlatpakSessionHelper  *object,
   flatpak_session_helper_complete_request_session (object, invocation,
                                                    g_variant_builder_end (&builder));
 
-  return TRUE;
+  return G_DBUS_METHOD_INVOCATION_HANDLED;
 }
 
 
@@ -226,7 +226,7 @@ handle_host_command (FlatpakDevelopment    *object,
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
                                              G_DBUS_ERROR_INVALID_ARGS,
                                              "No command given");
-      return TRUE;
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
   if (!g_variant_is_of_type (arg_fds, G_VARIANT_TYPE ("a{uh}")) ||
@@ -237,7 +237,7 @@ handle_host_command (FlatpakDevelopment    *object,
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
                                              G_DBUS_ERROR_INVALID_ARGS,
                                              "Unexpected argument");
-      return TRUE;
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
   g_debug ("Running host command %s", arg_argv[0]);
@@ -342,7 +342,7 @@ handle_host_command (FlatpakDevelopment    *object,
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, code,
                                              "Failed to start command: %s",
                                              error->message);
-      return TRUE;
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
   pid_data = g_new0 (PidData, 1);
@@ -363,7 +363,7 @@ handle_host_command (FlatpakDevelopment    *object,
 
   flatpak_development_complete_host_command (object, invocation, NULL,
                                              pid_data->pid);
-  return TRUE;
+  return G_DBUS_METHOD_INVOCATION_HANDLED;
 }
 
 static gboolean
@@ -382,7 +382,7 @@ handle_host_command_signal (FlatpakDevelopment    *object,
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
                                              G_DBUS_ERROR_UNIX_PROCESS_ID_UNKNOWN,
                                              "No such pid");
-      return TRUE;
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
   g_debug ("Sending signal %d to client pid %d", arg_signal, arg_pid);
@@ -394,7 +394,7 @@ handle_host_command_signal (FlatpakDevelopment    *object,
 
   flatpak_development_complete_host_command_signal (object, invocation);
 
-  return TRUE;
+  return G_DBUS_METHOD_INVOCATION_HANDLED;
 }
 
 static void
