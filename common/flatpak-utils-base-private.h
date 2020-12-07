@@ -22,6 +22,12 @@
 #define __FLATPAK_UTILS_BASE_H__
 
 #include <glib.h>
+#include <gio/gio.h>
+
+#ifndef G_DBUS_METHOD_INVOCATION_HANDLED
+# define G_DBUS_METHOD_INVOCATION_HANDLED TRUE
+# define G_DBUS_METHOD_INVOCATION_UNHANDLED FALSE
+#endif
 
 char *flatpak_get_timezone (void);
 
