@@ -794,7 +794,7 @@ handle_spawn (PortalFlatpak         *object,
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
                                              G_DBUS_ERROR_INVALID_ARGS,
                                              "org.freedesktop.portal.Flatpak.Spawn only works in a flatpak");
-      return TRUE;
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
   if (*arg_cwd_path == 0)
@@ -805,14 +805,14 @@ handle_spawn (PortalFlatpak         *object,
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
                                              G_DBUS_ERROR_INVALID_ARGS,
                                              "No command given");
-      return TRUE;
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
   if ((arg_flags & ~FLATPAK_SPAWN_FLAGS_ALL) != 0)
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
                                              "Unsupported flags enabled: 0x%x", arg_flags & ~FLATPAK_SPAWN_FLAGS_ALL);
-      return TRUE;
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
   runtime_ref = g_key_file_get_string (app_info,
@@ -822,7 +822,7 @@ handle_spawn (PortalFlatpak         *object,
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
                                              "No runtime found");
-      return TRUE;
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
   runtime_parts = g_strsplit (runtime_ref, "/", -1);
@@ -865,7 +865,7 @@ handle_spawn (PortalFlatpak         *object,
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
                                              "Unsupported sandbox flags enabled: 0x%x", arg_flags & ~FLATPAK_SPAWN_SANDBOX_FLAGS_ALL);
-      return TRUE;
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
   if (instance_path == NULL &&
@@ -875,7 +875,7 @@ handle_spawn (PortalFlatpak         *object,
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
                                              G_DBUS_ERROR_INVALID_ARGS,
                                              "Invalid sandbox expose, caller has no instance path");
-      return TRUE;
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
   for (i = 0; sandbox_expose != NULL && sandbox_expose[i] != NULL; i++)
@@ -886,7 +886,7 @@ handle_spawn (PortalFlatpak         *object,
       if (!is_valid_expose (expose, &error))
         {
           g_dbus_method_invocation_return_gerror (invocation, error);
-          return TRUE;
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
     }
 
@@ -897,7 +897,7 @@ handle_spawn (PortalFlatpak         *object,
       if (!is_valid_expose (expose, &error))
         {
           g_dbus_method_invocation_return_gerror (invocation, error);
-          return TRUE;
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
     }
 
@@ -1042,7 +1042,7 @@ handle_spawn (PortalFlatpak         *object,
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
                                                  G_DBUS_ERROR_NOT_SUPPORTED,
                                                  "Expose pids not supported");
-          return TRUE;
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
       instance_id = g_key_file_get_string (app_info,
@@ -1060,7 +1060,7 @@ handle_spawn (PortalFlatpak         *object,
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
                                                  G_DBUS_ERROR_INVALID_ARGS,
                                                  "Could not find requesting pid");
-          return TRUE;
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
       g_ptr_array_add (flatpak_argv, g_strdup_printf ("--parent-pid=%d", sender_pid1));
@@ -1078,7 +1078,7 @@ handle_spawn (PortalFlatpak         *object,
                                                  g_io_error_from_errno (errsv),
                                                  "Failed to create instance ID pipe: %s",
                                                  g_strerror (errsv));
-          return TRUE;
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
       GInputStream *in_stream = G_INPUT_STREAM (g_unix_input_stream_new (pipe_fds[0], TRUE));
@@ -1219,7 +1219,7 @@ handle_spawn (PortalFlatpak         *object,
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, code,
                                              "Failed to start command: %s",
                                              error->message);
-      return TRUE;
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
   if (instance_id_read_data)
@@ -1242,7 +1242,7 @@ handle_spawn (PortalFlatpak         *object,
                         pid_data);
 
   portal_flatpak_complete_spawn (object, invocation, NULL, pid);
-  return TRUE;
+  return G_DBUS_METHOD_INVOCATION_HANDLED;
 }
 
 static gboolean
@@ -1263,7 +1263,7 @@ handle_spawn_signal (PortalFlatpak         *object,
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
                                              G_DBUS_ERROR_UNIX_PROCESS_ID_UNKNOWN,
                                              "No such pid");
-      return TRUE;
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
   g_debug ("Sending signal %d to client pid %d", arg_signal, arg_pid);
@@ -1275,7 +1275,7 @@ handle_spawn_signal (PortalFlatpak         *object,
 
   portal_flatpak_complete_spawn_signal (portal, invocation);
 
-  return TRUE;
+  return G_DBUS_METHOD_INVOCATION_HANDLED;
 }
 
 static gboolean
@@ -1784,7 +1784,7 @@ handle_create_update_monitor (PortalFlatpak *object,
   if (monitor == NULL)
     {
       g_dbus_method_invocation_return_gerror (invocation, error);
-      return TRUE;
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
   g_signal_connect (monitor, "handle-close", G_CALLBACK (handle_close), NULL);
@@ -1797,14 +1797,14 @@ handle_create_update_monitor (PortalFlatpak *object,
                                          &error))
     {
       g_dbus_method_invocation_return_gerror (invocation, error);
-      return TRUE;
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
   register_update_monitor ((PortalFlatpakUpdateMonitor*)monitor, obj_path);
 
   portal_flatpak_complete_create_update_monitor (portal, invocation, obj_path);
 
-  return TRUE;
+  return G_DBUS_METHOD_INVOCATION_HANDLED;
 }
 
 /* Runs in worker thread */
@@ -1818,7 +1818,7 @@ handle_close (PortalFlatpakUpdateMonitor *monitor,
 
   portal_flatpak_update_monitor_complete_close (monitor, invocation);
 
-  return TRUE;
+  return G_DBUS_METHOD_INVOCATION_HANDLED;
 }
 
 static void
@@ -2518,7 +2518,7 @@ handle_update (PortalFlatpakUpdateMonitor *monitor,
                                              G_DBUS_ERROR,
                                              G_DBUS_ERROR_FAILED,
                                              "Already installing");
-      return TRUE;
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
   task = g_task_new (monitor, NULL, NULL, NULL);
@@ -2527,7 +2527,7 @@ handle_update (PortalFlatpakUpdateMonitor *monitor,
 
   portal_flatpak_update_monitor_complete_update (monitor, invocation);
 
-  return TRUE;
+  return G_DBUS_METHOD_INVOCATION_HANDLED;
 }
 
 
