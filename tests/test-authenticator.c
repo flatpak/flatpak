@@ -22,6 +22,7 @@
 #include <locale.h>
 
 #include "flatpak-auth-private.h"
+#include "flatpak-utils-base-private.h"
 #include "flatpak-dbus-generated.h"
 
 static GMainLoop *main_loop;
@@ -171,7 +172,7 @@ handle_request_close (FlatpakAuthenticatorRequest *object,
 
   token_request_data_free (data);
 
-  return TRUE;
+  return G_DBUS_METHOD_INVOCATION_HANDLED;
 }
 
 static gboolean
@@ -212,7 +213,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
                                              G_DBUS_ERROR_INVALID_ARGS,
                                              "Invalid token");
-      return TRUE;
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
   request = flatpak_authenticator_request_skeleton_new ();
@@ -222,7 +223,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
                                          &error))
     {
       g_dbus_method_invocation_return_gerror (invocation, error);
-      return TRUE;
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
   server = g_socket_service_new ();
@@ -230,7 +231,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
   if (port == 0)
     {
       g_dbus_method_invocation_return_gerror (invocation, error);
-      return TRUE;
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
   refs = g_ptr_array_new_with_free_func (g_free);
@@ -268,7 +269,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *authenticator,
       token_request_data_free (data);
     }
 
-  return TRUE;
+  return G_DBUS_METHOD_INVOCATION_HANDLED;
 }
 
 static void
