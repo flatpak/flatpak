@@ -629,14 +629,15 @@ bubblewrap_remap_path (const char *path)
 }
 
 static char *
-verify_proc_self_fd (const char *proc_path)
+verify_proc_self_fd (const char *proc_path,
+                     GError **error)
 {
   char path_buffer[PATH_MAX + 1];
   ssize_t symlink_size;
 
   symlink_size = readlink (proc_path, path_buffer, PATH_MAX);
   if (symlink_size < 0)
-    return NULL;
+    return glnx_null_throw_errno_prefix (error, "readlink");
 
   path_buffer[symlink_size] = 0;
 
@@ -644,7 +645,8 @@ verify_proc_self_fd (const char *proc_path)
      don't, such as socket:[27345] or anon_inode:[eventfd].
      We don't support any of these */
   if (path_buffer[0] != '/')
-    return NULL;
+    return glnx_null_throw (error, "%s resolves to non-absolute path %s",
+                            proc_path, path_buffer);
 
   /* File descriptors to actually deleted files have " (deleted)"
      appended to them. This also happens to some fake fd types
@@ -653,14 +655,17 @@ verify_proc_self_fd (const char *proc_path)
      matches files with filenames that actually end in " (deleted)",
      but there is not much to do about this. */
   if (g_str_has_suffix (path_buffer, " (deleted)"))
-    return NULL;
+    return glnx_null_throw (error, "%s resolves to deleted path %s",
+                            proc_path, path_buffer);
 
   /* remap from sandbox to host if needed */
   return bubblewrap_remap_path (path_buffer);
 }
 
 static char *
-get_path_for_fd (int fd, gboolean *writable_out)
+get_path_for_fd (int fd,
+                 gboolean *writable_out,
+                 GError **error)
 {
   g_autofree char *proc_path = NULL;
   int fd_flags;
@@ -673,11 +678,11 @@ get_path_for_fd (int fd, gboolean *writable_out)
   /* Must be able to get fd flags */
   fd_flags = fcntl (fd, F_GETFL);
   if (fd_flags == -1)
-    return NULL;
+    return glnx_null_throw_errno_prefix (error, "fcntl F_GETFL");
 
   /* Must be O_PATH */
   if ((fd_flags & O_PATH) != O_PATH)
-    return NULL;
+    return glnx_null_throw (error, "not opened with O_PATH");
 
   /* We don't want to allow exposing symlinks, because if they are
    * under the callers control they could be changed between now and
@@ -685,21 +690,21 @@ get_path_for_fd (int fd, gboolean *writable_out)
    * and verify that stat is not a link.
    */
   if ((fd_flags & O_NOFOLLOW) != O_NOFOLLOW)
-    return NULL;
+    return glnx_null_throw (error, "not opened with O_NOFOLLOW");
 
   /* Must be able to fstat */
   if (fstat (fd, &st_buf) < 0)
-    return NULL;
+    return glnx_null_throw_errno_prefix (error, "fstat");
 
   /* As per above, no symlinks */
   if (S_ISLNK (st_buf.st_mode))
-    return NULL;
+    return glnx_null_throw (error, "is a symbolic link");
 
   proc_path = g_strdup_printf ("/proc/self/fd/%d", fd);
 
   /* Must be able to read valid path from /proc/self/fd */
   /* This is an absolute and (at least at open time) symlink-expanded path */
-  path = verify_proc_self_fd (proc_path);
+  path = verify_proc_self_fd (proc_path, error);
   if (path == NULL)
     return NULL;
 
@@ -709,7 +714,8 @@ get_path_for_fd (int fd, gboolean *writable_out)
       st_buf.st_ino != real_st_buf.st_ino)
     {
       /* Different files on the inside and the outside, reject the request */
-      return NULL;
+      return glnx_null_throw (error,
+                              "different file inside and outside sandbox");
     }
 
   read_access_mode = R_OK;
@@ -719,7 +725,8 @@ get_path_for_fd (int fd, gboolean *writable_out)
   /* Must be able to access the path via the sandbox supplied O_PATH fd,
      which applies the sandbox side mount options (like readonly). */
   if (access (proc_path, read_access_mode) != 0)
-    return NULL;
+    return glnx_null_throw (error, "not %s in sandbox",
+                            read_access_mode & X_OK ? "accessible" : "readable");
 
   if (access (proc_path, W_OK) == 0)
     writable = TRUE;
@@ -1144,9 +1151,18 @@ handle_spawn (PortalFlatpak         *object,
               g_autofree char *path = NULL;
               gboolean writable = FALSE;
 
-              path = get_path_for_fd (handle_fd, &writable);
+              path = get_path_for_fd (handle_fd, &writable, &error);
+
               if (path)
-                g_ptr_array_add (flatpak_argv, filesystem_arg (path, !writable));
+                {
+                  g_ptr_array_add (flatpak_argv, filesystem_arg (path, !writable));
+                }
+              else
+                {
+                  g_debug ("unable to get path for sandbox-exposed fd %d, ignoring: %s",
+                           handle_fd, error->message);
+                  g_clear_error (&error);
+                }
             }
           else
             {
@@ -1172,9 +1188,18 @@ handle_spawn (PortalFlatpak         *object,
               g_autofree char *path = NULL;
               gboolean writable = FALSE;
 
-              path = get_path_for_fd (handle_fd, &writable);
+              path = get_path_for_fd (handle_fd, &writable, &error);
+
               if (path)
-                g_ptr_array_add (flatpak_argv, filesystem_arg (path, TRUE));
+                {
+                  g_ptr_array_add (flatpak_argv, filesystem_arg (path, TRUE));
+                }
+              else
+                {
+                  g_debug ("unable to get path for sandbox-exposed fd %d, ignoring: %s",
+                           handle_fd, error->message);
+                  g_clear_error (&error);
+                }
             }
           else
             {
