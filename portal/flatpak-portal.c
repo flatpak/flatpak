@@ -918,8 +918,16 @@ handle_spawn (PortalFlatpak         *object,
       int handle_fd;
 
       g_variant_get_child (arg_fds, i, "{uh}", &dest_fd, &handle);
+
       if (handle >= fds_len)
-        continue;
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
+                                                 G_DBUS_ERROR_INVALID_ARGS,
+                                                 "No file descriptor for handle %d",
+                                                 handle);
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
+        }
+
       handle_fd = fds[handle];
 
       fd_map[i].to = dest_fd;
@@ -1123,7 +1131,7 @@ handle_spawn (PortalFlatpak         *object,
       g_debug ("exposing %s", expose);
     }
 
-  if (fds && sandbox_expose_fd != NULL)
+  if (sandbox_expose_fd != NULL)
     {
       gsize len = g_variant_n_children (sandbox_expose_fd);
       for (i = 0; i < len; i++)
@@ -1140,10 +1148,18 @@ handle_spawn (PortalFlatpak         *object,
               if (path)
                 g_ptr_array_add (flatpak_argv, filesystem_arg (path, !writable));
             }
+          else
+            {
+              g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
+                                                     G_DBUS_ERROR_INVALID_ARGS,
+                                                     "No file descriptor for handle %d",
+                                                     handle);
+              return G_DBUS_METHOD_INVOCATION_HANDLED;
+            }
         }
     }
 
-  if (fds && sandbox_expose_fd_ro != NULL)
+  if (sandbox_expose_fd_ro != NULL)
     {
       gsize len = g_variant_n_children (sandbox_expose_fd_ro);
       for (i = 0; i < len; i++)
@@ -1159,6 +1175,14 @@ handle_spawn (PortalFlatpak         *object,
               path = get_path_for_fd (handle_fd, &writable);
               if (path)
                 g_ptr_array_add (flatpak_argv, filesystem_arg (path, TRUE));
+            }
+          else
+            {
+              g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
+                                                     G_DBUS_ERROR_INVALID_ARGS,
+                                                     "No file descriptor for handle %d",
+                                                     handle);
+              return G_DBUS_METHOD_INVOCATION_HANDLED;
             }
         }
     }
