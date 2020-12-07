@@ -59,6 +59,8 @@ static int opt_parent_pid;
 static gboolean opt_parent_expose_pids;
 static gboolean opt_parent_share_pids;
 static int opt_instance_id_fd = -1;
+static char *opt_app_path;
+static char *opt_usr_path;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to use"), N_("ARCH") },
@@ -85,6 +87,8 @@ static GOptionEntry options[] = {
   { "parent-expose-pids", 0, 0, G_OPTION_ARG_NONE, &opt_parent_expose_pids, N_("Make processes visible in parent namespace"), NULL },
   { "parent-share-pids", 0, 0, G_OPTION_ARG_NONE, &opt_parent_share_pids, N_("Share process ID namespace with parent"), NULL },
   { "instance-id-fd", 0, 0, G_OPTION_ARG_INT, &opt_instance_id_fd, N_("Write the instance ID to the given file descriptor"), NULL },
+  { "app-path", 0, 0, G_OPTION_ARG_FILENAME, &opt_app_path, N_("Use PATH instead of the app's /app"), N_("PATH") },
+  { "usr-path", 0, 0, G_OPTION_ARG_FILENAME, &opt_usr_path, N_("Use PATH instead of the runtime's /usr"), N_("PATH") },
   { NULL }
 };
 
@@ -297,10 +301,12 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
   if (!flatpak_run_app (app_deploy ? app_ref : runtime_ref,
                         app_deploy,
+                        opt_app_path,
                         arg_context,
                         opt_runtime,
                         opt_runtime_version,
                         opt_runtime_commit,
+                        opt_usr_path,
                         opt_parent_pid,
                         flags,
                         opt_cwd,

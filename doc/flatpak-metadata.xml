@@ -530,11 +530,42 @@
                         app files, as mounted at <filename>/app</filename>
                         inside the container. Available since 0.6.10.
                     </para></listitem>
+                    <listitem><para>
+                        Since 1.12.0, if <command>flatpak run</command>
+                        was run with the <option>--app-path</option> option,
+                        this key gives the absolute path of whatever files
+                        were mounted on <filename>/app</filename>, even if
+                        that differs from the app's normal app files.
+                    </para></listitem>
+                    <listitem><para>
+                        If <command>flatpak run</command> was run with
+                        <option>--app-path=</option> (resulting in an
+                        empty directory being mounted on
+                        <filename>/app</filename>), the value is set to
+                        the empty string.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>original-app-path</option> (string)</term>
+                    <listitem><para>
+                        If <command>flatpak run</command> was run with the
+                        <option>--app-path</option> option, this key gives
+                        the absolute path of the app's original files,
+                        as mounted at <filename>/run/parent/app</filename>
+                        inside the container. Available since 1.12.0.
+                    </para></listitem>
+                    <listitem><para>
+                        If this key is missing, the app files are given
+                        by <option>app-path</option>.
+                    </para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>app-commit</option> (string)</term>
                     <listitem><para>
                         The commit ID of the application that is running.
+                        The filename of a deployment of this commit can
+                        be found in <option>original-app-path</option>
+                        if present, or <option>app-path</option> otherwise.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
@@ -543,6 +574,10 @@
                         A list of app extensions that are mounted into
                         the running instance. The format for each list item is
                         <option>EXTENSION_ID=COMMIT</option>.
+                        If <option>original-app-path</option> is present,
+                        the extensions are mounted below
+                        <filename>/run/parent/app</filename>; otherwise,
+                        they are mounted below <filename>/app</filename>.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
@@ -573,11 +608,36 @@
                         runtime files, as mounted at <filename>/usr</filename>
                         inside the container. Available since 0.6.10.
                     </para></listitem>
+                    <listitem><para>
+                        Since 1.12.0, if <command>flatpak run</command>
+                        was run with the <option>--usr-path</option> option,
+                        this key gives the absolute path of whatever files
+                        were mounted on <filename>/usr</filename>, even if
+                        that differs from the app's normal runtime files.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>original-runtime-path</option> (string)</term>
+                    <listitem><para>
+                        If <command>flatpak run</command> was run with the
+                        <option>--runtime-path</option> option, this key gives
+                        the absolute path of the app's original runtime,
+                        as mounted at <filename>/run/parent/usr</filename>
+                        inside the container. Available since 1.12.0.
+                    </para></listitem>
+                    <listitem><para>
+                        If this key is missing, the runtime files are given
+                        by <option>runtime-path</option>.
+                    </para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>runtime-commit</option> (string)</term>
                     <listitem><para>
                         The commit ID of the runtime that is used.
+                        The filename of a deployment of this commit can be
+                        found in <option>original-runtime-path</option>
+                        if present, or <option>runtime-path</option>
+                        otherwise.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
@@ -586,6 +646,10 @@
                         A list of runtime extensions that are mounted into
                         the running instance. The format for each list item is
                         <option>EXTENSION_ID=COMMIT</option>.
+                        If <option>original-app-path</option> is present,
+                        the extensions are mounted below
+                        <filename>/run/parent/usr</filename>; otherwise,
+                        they are mounted below <filename>/usr</filename>.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>

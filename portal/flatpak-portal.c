@@ -735,7 +735,9 @@ get_path_for_fd (int fd,
   if (access (proc_path, W_OK) == 0)
     writable = TRUE;
 
-  *writable_out = writable;
+  if (writable_out != NULL)
+    *writable_out = writable;
+
   return g_steal_pointer (&path);
 }
 
@@ -780,6 +782,8 @@ handle_spawn (PortalFlatpak         *object,
   g_auto(GStrv) sandbox_expose_ro = NULL;
   g_autoptr(GVariant) sandbox_expose_fd = NULL;
   g_autoptr(GVariant) sandbox_expose_fd_ro = NULL;
+  g_autoptr(GVariant) app_fd = NULL;
+  g_autoptr(GVariant) usr_fd = NULL;
   g_autoptr(GOutputStream) instance_id_out_stream = NULL;
   guint sandbox_flags = 0;
   gboolean sandboxed;
@@ -787,6 +791,7 @@ handle_spawn (PortalFlatpak         *object,
   gboolean share_pids;
   gboolean notify_start;
   gboolean devel;
+  gboolean empty_app;
   g_autoptr(GString) env_string = g_string_new ("");
 
   child_setup_data.instance_id_fd = -1;
@@ -876,6 +881,8 @@ handle_spawn (PortalFlatpak         *object,
   sandbox_expose_fd = g_variant_lookup_value (arg_options, "sandbox-expose-fd", G_VARIANT_TYPE ("ah"));
   sandbox_expose_fd_ro = g_variant_lookup_value (arg_options, "sandbox-expose-fd-ro", G_VARIANT_TYPE ("ah"));
   g_variant_lookup (arg_options, "unset-env", "^as", &unset_env);
+  app_fd = g_variant_lookup_value (arg_options, "app-fd", G_VARIANT_TYPE_HANDLE);
+  usr_fd = g_variant_lookup_value (arg_options, "usr-fd", G_VARIANT_TYPE_HANDLE);
 
   if ((sandbox_flags & ~FLATPAK_SPAWN_SANDBOX_FLAGS_ALL) != 0)
     {
@@ -1322,6 +1329,76 @@ handle_spawn (PortalFlatpak         *object,
               return G_DBUS_METHOD_INVOCATION_HANDLED;
             }
         }
+    }
+
+  empty_app = (arg_flags & FLATPAK_SPAWN_FLAGS_EMPTY_APP) != 0;
+
+  if (app_fd != NULL)
+    {
+      gint32 handle = g_variant_get_handle (app_fd);
+      g_autofree char *path = NULL;
+
+      if (empty_app)
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
+                                                 G_DBUS_ERROR_INVALID_ARGS,
+                                                 "app-fd and EMPTY_APP cannot both be used");
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
+        }
+
+      if (handle >= fds_len)
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
+                                                 G_DBUS_ERROR_INVALID_ARGS,
+                                                 "No file descriptor for handle %d",
+                                                 handle);
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
+        }
+
+      path = get_path_for_fd (fds[handle], NULL, &error);
+
+      if (path == NULL)
+        {
+          g_prefix_error (&error, "Unable to convert /app fd %d into path: ",
+                          fds[handle]);
+          g_dbus_method_invocation_return_gerror (invocation, error);
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
+        }
+
+      g_debug ("Using %s as /app instead of app", path);
+      g_ptr_array_add (flatpak_argv, g_strdup_printf ("--app-path=%s", path));
+    }
+  else if (empty_app)
+    {
+      g_ptr_array_add (flatpak_argv, g_strdup ("--app-path="));
+    }
+
+  if (usr_fd != NULL)
+    {
+      gint32 handle = g_variant_get_handle (usr_fd);
+      g_autofree char *path = NULL;
+
+      if (handle >= fds_len)
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
+                                                 G_DBUS_ERROR_INVALID_ARGS,
+                                                 "No file descriptor for handle %d",
+                                                 handle);
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
+        }
+
+      path = get_path_for_fd (fds[handle], NULL, &error);
+
+      if (path == NULL)
+        {
+          g_prefix_error (&error, "Unable to convert /usr fd %d into path: ",
+                          fds[handle]);
+          g_dbus_method_invocation_return_gerror (invocation, error);
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
+        }
+
+      g_debug ("Using %s as /usr instead of runtime", path);
+      g_ptr_array_add (flatpak_argv, g_strdup_printf ("--usr-path=%s", path));
     }
 
   g_ptr_array_add (flatpak_argv, g_strdup_printf ("--runtime=%s", runtime_parts[1]));
@@ -2791,7 +2868,7 @@ on_bus_acquired (GDBusConnection *connection,
   g_dbus_interface_skeleton_set_flags (G_DBUS_INTERFACE_SKELETON (portal),
                                        G_DBUS_INTERFACE_SKELETON_FLAGS_HANDLE_METHOD_INVOCATIONS_IN_THREAD);
 
-  portal_flatpak_set_version (PORTAL_FLATPAK (portal), 5);
+  portal_flatpak_set_version (PORTAL_FLATPAK (portal), 6);
   portal_flatpak_set_supports (PORTAL_FLATPAK (portal), supports);
 
   g_signal_connect (portal, "handle-spawn", G_CALLBACK (handle_spawn), NULL);

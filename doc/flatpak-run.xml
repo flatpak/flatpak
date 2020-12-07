@@ -636,7 +636,54 @@ key=v1;v2;
                     permissions for the application.
                 </para></listitem>
             </varlistentry>
+
+            <varlistentry>
+                <term><option>--app-path=<replaceable>PATH</replaceable></option></term>
+                <listitem><para>
+                    Instead of mounting the app's content on
+                    <filename>/app</filename> in the sandbox, mount
+                    <replaceable>PATH</replaceable> on <filename>/app</filename>,
+                    and the app's content on
+                    <filename>/run/parent/app</filename>.
+                    If the app has extensions, they will also be redirected
+                    into <filename>/run/parent/app</filename>, and will not
+                    be included in the <envar>LD_LIBRARY_PATH</envar> inside
+                    the sandbox.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><option>--app-path=</option></term>
+                <listitem><para>
+                    As a special case, <option>--app-path=</option>
+                    (with an empty <replaceable>PATH</replaceable>)
+                    results in an empty directory being mounted on
+                    <filename>/app</filename>.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--usr-path=<replaceable>PATH</replaceable></option></term>
+                <listitem><para>
+                    Instead of mounting the runtime's files on
+                    <filename>/usr</filename> in the sandbox, mount
+                    <replaceable>PATH</replaceable> on
+                    <filename>/usr</filename>,
+                    and the runtime's normal files on
+                    <filename>/run/parent/usr</filename>.
+                    If the runtime has extensions, they will also be redirected
+                    into <filename>/run/parent/usr</filename>, and will not
+                    be included in the <envar>LD_LIBRARY_PATH</envar> inside
+                    the sandbox.
+                </para></listitem>
+                <listitem><para>
+                    This option will usually only be useful if it is
+                    combined with <option>--app-path=</option> and
+                    <option>--env=LD_LIBRARY_PATH=<replaceable>...</replaceable></option>.
+                </para></listitem>
+            </varlistentry>
+
         </variablelist>
+
     </refsect1>
 
     <refsect1>
