@@ -541,8 +541,8 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
                             NULL);
 
   if (!flatpak_run_add_app_info_args (bwrap,
-                                      app_files, NULL, app_extensions,
-                                      runtime_files, runtime_deploy_data, runtime_extensions,
+                                      app_files, app_files, NULL, app_extensions,
+                                      runtime_files, runtime_files, runtime_deploy_data, runtime_extensions,
                                       id, NULL,
                                       runtime_ref,
                                       app_id_dir, app_context, NULL,
