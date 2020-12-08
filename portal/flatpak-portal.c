@@ -919,7 +919,7 @@ handle_spawn (PortalFlatpak         *object,
 
       g_variant_get_child (arg_fds, i, "{uh}", &dest_fd, &handle);
 
-      if (handle >= fds_len)
+      if (handle >= fds_len || handle < 0)
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
                                                  G_DBUS_ERROR_INVALID_ARGS,
@@ -1138,7 +1138,7 @@ handle_spawn (PortalFlatpak         *object,
         {
           gint32 handle;
           g_variant_get_child (sandbox_expose_fd, i, "h", &handle);
-          if (handle < fds_len)
+          if (handle >= 0 && handle < fds_len)
             {
               int handle_fd = fds[handle];
               g_autofree char *path = NULL;
@@ -1166,7 +1166,7 @@ handle_spawn (PortalFlatpak         *object,
         {
           gint32 handle;
           g_variant_get_child (sandbox_expose_fd_ro, i, "h", &handle);
-          if (handle < fds_len)
+          if (handle >= 0 && handle < fds_len)
             {
               int handle_fd = fds[handle];
               g_autofree char *path = NULL;
