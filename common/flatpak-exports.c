@@ -388,7 +388,7 @@ flatpak_exports_append_bwrap_args (FlatpakExports *exports,
       /* /usr/local points to ../var/usrlocal on ostree systems,
 	 so bind-mount that too. */
       if (flatpak_exports_stat_in_host (exports, "/var/usrlocal", &buf, 0, NULL) &&
-	  S_ISDIR (buf.st_mode))
+	    S_ISDIR (buf.st_mode))
         flatpak_bwrap_add_args (bwrap,
                                 os_bind_mode, "/var/usrlocal", "/run/host/var/usrlocal", NULL);
 
