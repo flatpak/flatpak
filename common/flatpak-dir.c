@@ -7724,7 +7724,9 @@ apply_extra_data (FlatpakDir   *self,
   if (!g_key_file_get_boolean (metakey, FLATPAK_METADATA_GROUP_EXTRA_DATA,
                                FLATPAK_METADATA_KEY_NO_RUNTIME, NULL))
     {
-      runtime_deploy = flatpak_find_deploy_for_ref (flatpak_decomposed_get_ref (runtime_ref), NULL, cancellable, error);
+      /* We pass in self here so that we ensure that we find the runtime in case it only
+         exists in this installation (which might be custom) */
+      runtime_deploy = flatpak_find_deploy_for_ref (flatpak_decomposed_get_ref (runtime_ref), NULL, self, cancellable, error);
       if (runtime_deploy == NULL)
         return FALSE;
       runtime_files = flatpak_deploy_get_files (runtime_deploy);

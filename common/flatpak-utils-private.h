@@ -221,6 +221,7 @@ FlatpakDeploy * flatpak_find_deploy_for_ref_in (GPtrArray    *dirs,
                                                 GError      **error);
 FlatpakDeploy * flatpak_find_deploy_for_ref (const char   *ref,
                                              const char   *commit,
+                                             FlatpakDir   *opt_user_dir,
                                              GCancellable *cancellable,
                                              GError      **error);
 char ** flatpak_list_deployed_refs (const char   *type,

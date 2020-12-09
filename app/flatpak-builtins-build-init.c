@@ -348,7 +348,7 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
 
       base_branch = opt_base_version ? opt_base_version : "master";
       base_ref = flatpak_build_app_ref (opt_base, base_branch, opt_arch);
-      base_deploy = flatpak_find_deploy_for_ref (base_ref, NULL, cancellable, error);
+      base_deploy = flatpak_find_deploy_for_ref (base_ref, NULL, NULL, cancellable, error);
       if (base_deploy == NULL)
         return FALSE;
 
