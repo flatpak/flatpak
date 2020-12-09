@@ -3660,7 +3660,7 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
   else
     runtime_ref = flatpak_decomposed_ref (default_runtime);
 
-  runtime_deploy = flatpak_find_deploy_for_ref (flatpak_decomposed_get_ref (runtime_ref), custom_runtime_commit, cancellable, error);
+  runtime_deploy = flatpak_find_deploy_for_ref (flatpak_decomposed_get_ref (runtime_ref), custom_runtime_commit, NULL, cancellable, error);
   if (runtime_deploy == NULL)
     return FALSE;
 

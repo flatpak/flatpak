@@ -1253,6 +1253,7 @@ flatpak_find_deploy_for_ref_in (GPtrArray    *dirs,
 FlatpakDeploy *
 flatpak_find_deploy_for_ref (const char   *ref,
                              const char   *commit,
+                             FlatpakDir   *opt_user_dir,
                              GCancellable *cancellable,
                              GError      **error)
 {
@@ -1262,7 +1263,15 @@ flatpak_find_deploy_for_ref (const char   *ref,
   if (dirs == NULL)
     return NULL;
 
-  g_ptr_array_insert (dirs, 0, flatpak_dir_get_user ());
+  /* If an custom dir was passed, use that instead of the user dir.
+   * This is used when running apply-extra-data where if the target
+   * is a custom installation location the regular user one may not
+   * have the (possibly just installed in this transaction) runtime.
+   */
+  if (opt_user_dir)
+    g_ptr_array_insert (dirs, 0, g_object_ref (opt_user_dir));
+  else
+    g_ptr_array_insert (dirs, 0, flatpak_dir_get_user ());
 
   return flatpak_find_deploy_for_ref_in (dirs, ref, commit, cancellable, error);
 }
