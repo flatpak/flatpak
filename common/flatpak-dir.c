@@ -7855,6 +7855,11 @@ flatpak_dir_check_parental_controls (FlatpakDir    *self,
   g_autoptr(AutoPolkitAuthorizationResult) result = NULL;
   gboolean authorized;
   gboolean repo_installation_allowed, app_is_appropriate;
+  
+  /* Assume that root is allowed to install any ref and shouldn't have any
+   * parental controls restrictions applied to them */
+  if (getuid () == 0)
+    return TRUE;
 
   /* The ostree-metadata and appstream/ branches should not have any parental
    * controls restrictions. Similarly, for the moment, there is no point in
