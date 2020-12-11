@@ -48,16 +48,15 @@ jobs:
         submodules: true
     - name: Build malcontent dependency
       run: |
-        git clone https://gitlab.freedesktop.org/pwithnall/malcontent.git ./malcontent
+        git clone --branch 0.4.0 --depth 1 --no-tags https://gitlab.freedesktop.org/pwithnall/malcontent.git ./malcontent
         pushd ./malcontent
-        git checkout tags/0.4.0
         meson setup --prefix=/usr _build
         ninja -C _build
         sudo ninja -C _build install
         popd
     - name: Build ostree dependency
       run: |
-        git clone https://github.com/ostreedev/ostree.git ./ostree
+        git clone --branch master --shallow-since 2020-10-27 --no-tags https://github.com/ostreedev/ostree.git ./ostree
         pushd ./ostree
         git checkout 7bc53f006351fcf5d32d9427e61a4f842f57f67b
         ./autogen.sh --prefix=/usr --libdir=/usr/lib/x86_64-linux-gnu --sysconfdir=/etc --localstatedir=/var
@@ -113,7 +112,7 @@ jobs:
         libgirepository1.0-dev libappstream-glib-dev libdconf-dev clang e2fslibs-dev
     - name: Build ostree dependency
       run: |
-        git clone https://github.com/ostreedev/ostree.git ./ostree
+        git clone --branch master --shallow-since 2020-10-27 --no-tags https://github.com/ostreedev/ostree.git ./ostree
         pushd ./ostree
         git checkout 7bc53f006351fcf5d32d9427e61a4f842f57f67b
         ./autogen.sh --prefix=/usr --libdir=/usr/lib/x86_64-linux-gnu --sysconfdir=/etc --localstatedir=/var
@@ -151,7 +150,7 @@ jobs:
         submodules: true
     - name: Build ostree dependency
       run: |
-        git clone https://github.com/ostreedev/ostree.git ./ostree
+        git clone --branch master --shallow-since 2020-10-27 --no-tags https://github.com/ostreedev/ostree.git ./ostree
         pushd ./ostree
         git checkout 7bc53f006351fcf5d32d9427e61a4f842f57f67b
         ./autogen.sh --prefix=/usr --libdir=/usr/lib/x86_64-linux-gnu --sysconfdir=/etc --localstatedir=/var
@@ -186,7 +185,7 @@ jobs:
         submodules: true
     - name: Build ostree dependency
       run: |
-        git clone https://github.com/ostreedev/ostree.git ./ostree
+        git clone --branch master --shallow-since 2020-10-27 --no-tags https://github.com/ostreedev/ostree.git ./ostree
         pushd ./ostree
         git checkout 7bc53f006351fcf5d32d9427e61a4f842f57f67b
         ./autogen.sh --prefix=/usr --libdir=/usr/lib/x86_64-linux-gnu --sysconfdir=/etc --localstatedir=/var
