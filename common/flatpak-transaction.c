@@ -1175,7 +1175,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
    * FlatpakTransaction::operation-done:
    * @object: A #FlatpakTransaction
    * @operation: The #FlatpakTransactionOperation which finished
-   * @commit: The commit
+   * @commit: (nullable): The commit
    * @result: (type FlatpakTransactionResult): A #FlatpakTransactionResult giving details about the result
    *
    * The ::operation-done signal gets emitted during the execution of
