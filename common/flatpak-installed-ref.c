@@ -681,7 +681,8 @@ flatpak_installed_ref_get_appdata_content_rating_type (FlatpakInstalledRef *self
  * by the semantics of the content rating type (see
  * flatpak_installed_ref_get_appdata_content_rating_type()).
  *
- * Returns: (transfer none) (nullable): the content rating or %NULL
+ * Returns: (transfer none) (nullable) (element-type utf8 utf8): the content
+ * rating or %NULL
  *
  * Since: 1.4.2
  */
