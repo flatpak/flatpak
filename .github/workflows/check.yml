@@ -56,9 +56,8 @@ jobs:
         popd
     - name: Build ostree dependency
       run: |
-        git clone --branch master --shallow-since 2020-10-27 --no-tags https://github.com/ostreedev/ostree.git ./ostree
+        git clone --branch v2020.8 --depth 1 --no-tags https://github.com/ostreedev/ostree.git ./ostree
         pushd ./ostree
-        git checkout 7bc53f006351fcf5d32d9427e61a4f842f57f67b
         ./autogen.sh --prefix=/usr --libdir=/usr/lib/x86_64-linux-gnu --sysconfdir=/etc --localstatedir=/var
         make -j $(getconf _NPROCESSORS_ONLN)
         sudo make install
@@ -112,9 +111,8 @@ jobs:
         libgirepository1.0-dev libappstream-glib-dev libdconf-dev clang e2fslibs-dev
     - name: Build ostree dependency
       run: |
-        git clone --branch master --shallow-since 2020-10-27 --no-tags https://github.com/ostreedev/ostree.git ./ostree
+        git clone --branch v2020.8 --depth 1 --no-tags https://github.com/ostreedev/ostree.git ./ostree
         pushd ./ostree
-        git checkout 7bc53f006351fcf5d32d9427e61a4f842f57f67b
         ./autogen.sh --prefix=/usr --libdir=/usr/lib/x86_64-linux-gnu --sysconfdir=/etc --localstatedir=/var
         make -j $(getconf _NPROCESSORS_ONLN)
         sudo make install
@@ -150,9 +148,8 @@ jobs:
         submodules: true
     - name: Build ostree dependency
       run: |
-        git clone --branch master --shallow-since 2020-10-27 --no-tags https://github.com/ostreedev/ostree.git ./ostree
+        git clone --branch v2020.8 --depth 1 --no-tags https://github.com/ostreedev/ostree.git ./ostree
         pushd ./ostree
-        git checkout 7bc53f006351fcf5d32d9427e61a4f842f57f67b
         ./autogen.sh --prefix=/usr --libdir=/usr/lib/x86_64-linux-gnu --sysconfdir=/etc --localstatedir=/var
         make -j $(getconf _NPROCESSORS_ONLN)
         sudo make install
@@ -185,9 +182,8 @@ jobs:
         submodules: true
     - name: Build ostree dependency
       run: |
-        git clone --branch master --shallow-since 2020-10-27 --no-tags https://github.com/ostreedev/ostree.git ./ostree
+        git clone --branch v2020.8 --depth 1 --no-tags https://github.com/ostreedev/ostree.git ./ostree
         pushd ./ostree
-        git checkout 7bc53f006351fcf5d32d9427e61a4f842f57f67b
         ./autogen.sh --prefix=/usr --libdir=/usr/lib/x86_64-linux-gnu --sysconfdir=/etc --localstatedir=/var
         make -j $(getconf _NPROCESSORS_ONLN)
         sudo make install
