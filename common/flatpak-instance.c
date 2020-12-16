@@ -130,7 +130,7 @@ flatpak_instance_get_id (FlatpakInstance *self)
  *
  * Note that this may return %NULL for sandboxes that don't have an application.
  *
- * Returns: the application ID
+ * Returns: (nullable): the application ID or %NULL
  *
  * Since: 1.1
  */
