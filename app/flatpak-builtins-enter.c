@@ -121,7 +121,7 @@ flatpak_builtin_enter (int           argc,
       FlatpakInstance *instance = (FlatpakInstance *) g_ptr_array_index (instances, j);
 
       if (pid == flatpak_instance_get_pid (instance) ||
-          strcmp (pid_s, flatpak_instance_get_app (instance)) == 0 ||
+          g_strcmp0 (pid_s, flatpak_instance_get_app (instance)) == 0 ||
           strcmp (pid_s, flatpak_instance_get_id (instance)) == 0)
         {
           pid = flatpak_instance_get_child_pid (instance);
@@ -315,7 +315,11 @@ flatpak_complete_enter (FlatpakCompletion *completion)
       for (i = 0; i < instances->len; i++)
         {
           FlatpakInstance *instance = (FlatpakInstance *) g_ptr_array_index (instances, i);
-          flatpak_complete_word (completion, "%s ", flatpak_instance_get_app (instance));
+
+          const char *app_name = flatpak_instance_get_app (instance);
+          if (app_name)
+            flatpak_complete_word (completion, "%s ", app_name);
+
           flatpak_complete_word (completion, "%s ", flatpak_instance_get_id (instance));
         }
       break;
