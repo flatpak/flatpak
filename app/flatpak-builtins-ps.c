@@ -202,9 +202,9 @@ enumerate_instances (Column *columns, GError **error)
           else if (strcmp (columns[i].name, "active") == 0 ||
                    strcmp (columns[i].name, "background") == 0)
            {
-             if (compositor_apps)
+             const char *app = flatpak_instance_get_app (instance);
+             if (compositor_apps && app)
                {
-                 const char *app = flatpak_instance_get_app (instance);
                  guint state;
 
                  if (!g_variant_lookup (compositor_apps, app, "u", &state))

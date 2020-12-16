@@ -124,7 +124,11 @@ flatpak_complete_kill (FlatpakCompletion *completion)
       for (i = 0; i < instances->len; i++)
         {
           FlatpakInstance *instance = (FlatpakInstance *) g_ptr_array_index (instances, i);
-          flatpak_complete_word (completion, "%s ", flatpak_instance_get_app (instance));
+
+          const char *app_name = flatpak_instance_get_app (instance);
+          if (app_name)
+            flatpak_complete_word (completion, "%s ", app_name);
+
           flatpak_complete_word (completion, "%s ", flatpak_instance_get_id (instance));
         }
       break;
