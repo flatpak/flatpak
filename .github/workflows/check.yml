@@ -16,7 +16,6 @@ on:
     - INSTALL
     - COPYING
     - CODE_OF_CONDUCT.md
-    - .lgtm.yml
     - uncrustify.cfg
     - uncrustify.sh
     branches:
