@@ -2,8 +2,6 @@
   <img src="https://github.com/flatpak/flatpak/blob/master/flatpak.png?raw=true" alt="Flatpak icon"/>
 </p>
 
-[![Language Grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/flatpak/flatpak.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/flatpak/flatpak/context:cpp)<br/>
-
 Flatpak is a system for building, distributing, and running sandboxed
 desktop applications on Linux.
 
