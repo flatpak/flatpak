@@ -96,9 +96,25 @@ jobs:
         path: test-logs
 
   clang:
-    name: Build with clang
+    name: Build with clang and analyze
     runs-on: ubuntu-18.04
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'cpp', 'python' ]
+        # CodeQL supports [ 'cpp', 'csharp', 'go', 'java', 'javascript', 'python' ]
+        # Learn more:
+        # https://docs.github.com/en/free-pro-team@latest/github/finding-security-vulnerabilities-and-errors-in-your-code/configuring-code-scanning#changing-the-languages-that-are-analyzed
     steps:
+    # Initializes the CodeQL tools for scanning.
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v1
+      with:
+        languages: ${{ matrix.language }}
+        # If you wish to specify custom queries, you can do so here or in a config file.
+        # By default, queries listed here will override any specified in a config file.
+        # Prefix the list here with "+" to use these queries and those in the config file.
+        # queries: ./path/to/local/query, your-org/your-repo/queries@main
     - name: Install Dependencies
       run: |
         sudo add-apt-repository ppa:alexlarsson/flatpak
@@ -128,6 +144,8 @@ jobs:
         CFLAGS: -Werror=unused-variable
     - name: Build flatpak
       run: make -j $(getconf _NPROCESSORS_ONLN)
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v1
 
   xenial:
     name: Build with old glib
