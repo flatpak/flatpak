@@ -3448,7 +3448,7 @@ upgrade_deploy_data (GBytes             *deploy_data,
       g_variant_get_child (metadata, i, "{&s@v}", &key, &value);
       if (strcmp (key, "deploy-version") == 0)
         continue;
-      g_variant_dict_insert_value (&metadata_dict, key, g_steal_pointer (&value));
+      g_variant_dict_insert_value (&metadata_dict, key, value);
     }
 
   old_version = flatpak_deploy_data_get_version (deploy_data);
