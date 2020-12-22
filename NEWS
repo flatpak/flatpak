@@ -1,3 +1,40 @@
+Changes in 1.9.3
+~~~~~~~~~~~~~~~~
+Released: 2020-12-22
+
+I expect this to be the final 1.9.x release, and we can expect 1.10.0
+early next year, containing basically whats in this release in terms
+of features.
+
+A minor change in the new indexed summary format in this release. The
+gpg signature of the summary index is now stored in a filename indexed
+by the checksum of the index rather than a static filename. This fixes
+an update race between clients accessing the two files during and update.
+It also helps in keeping mirrors and cached coherent. The old filename
+is still created/used for backwards compat with 1.9.1, but may go
+away in the future.
+
+Other changes:
+
+ * --filesystem=host now exposed /var/usrlocal (as seen on ostree)
+ * Better error messages in flatpak portal.
+ * Rebases during update now install the new app before uninstalling
+   the old, which means failure during the first doesn't leave the app
+   uninstalled.
+ * flatpak_installation_list_installed_refs_for_update() now handles
+   some case better when apps in the user installation depends on
+   runtimes in the system installation.
+ * New version of the deploy files which guarantees the existance of
+   a bit more data. This is useful for eol detection of apps that were
+   installed with previous flatpak versions.
+ * Some corner cases when installing an app with extra-data into a nonstandard
+   installation were fixed.
+ * Fixed crashed when killing and entering running instance that have
+   was running a runtime, not an app.
+ * The root user can now bypass parental controls.
+ * Some fixes to library annotations.
+ * Updated translations
+
 Changes in 1.9.2
 ~~~~~~~~~~~~~~~~
 Released: 2020-11-20
