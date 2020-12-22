@@ -2954,6 +2954,7 @@ flatpak_repo_save_compat_summary (OstreeRepo   *repo,
 static gboolean
 flatpak_repo_save_summary_index (OstreeRepo   *repo,
                                  GVariant     *index,
+                                 const char   *index_digest,
                                  GBytes       *index_sig,
                                  GCancellable *cancellable,
                                  GError      **error)
@@ -2985,6 +2986,22 @@ flatpak_repo_save_summary_index (OstreeRepo   *repo,
   else
     flags |= GLNX_FILE_REPLACE_DATASYNC_NEW;
 
+  if (index_sig)
+    {
+      g_autofree char *path = g_strconcat ("summaries/", index_digest, ".idx.sig", NULL);
+
+      if (!glnx_shutil_mkdir_p_at (repo_dfd, "summaries",
+                                   0775, cancellable, error))
+        return FALSE;
+
+      if (!glnx_file_replace_contents_at (repo_dfd, path,
+                                          g_bytes_get_data (index_sig, NULL),
+                                          g_bytes_get_size (index_sig),
+                                          flags,
+                                          cancellable, error))
+        return FALSE;
+    }
+
   if (!glnx_file_replace_contents_at (repo_dfd, "summary.idx",
                                       g_variant_get_data (index),
                                       g_variant_get_size (index),
@@ -2992,6 +3009,9 @@ flatpak_repo_save_summary_index (OstreeRepo   *repo,
                                       cancellable, error))
     return FALSE;
 
+  /* Update the non-indexed summary.idx.sig file that was introduced in 1.9.1 but
+   * was made unnecessary in 1.9.3. Lets keep it for a while until everyone updates
+   */
   if (index_sig)
     {
       if (!glnx_file_replace_contents_at (repo_dfd, "summary.idx.sig",
@@ -4591,6 +4611,8 @@ generate_summary_index (OstreeRepo   *repo,
 
 static gboolean
 flatpak_repo_gc_digested_summaries (OstreeRepo *repo,
+                                    const char *index_digest,           /* The digest of the current (new) index (if any) */
+                                    const char *old_index_digest,       /* The digest of the previous index (if any) */
                                     GHashTable *digested_summaries,     /* generated */
                                     GHashTable *digested_summary_cache, /* generated + referenced */
                                     GCancellable *cancellable,
@@ -4658,6 +4680,19 @@ flatpak_repo_gc_digested_summaries (OstreeRepo *repo,
                   remove = TRUE;
                 }
             }
+          else if (strcmp (ext, ".idx.sig") == 0)
+            {
+              g_autofree char *digest = g_strndup (dent->d_name, strlen (dent->d_name) - strlen (".idx.sig"));
+
+              if (g_strcmp0 (digest, index_digest) == 0)
+                continue; /* Always keep current */
+
+              if (g_strcmp0 (digest, old_index_digest) == 0)
+                continue; /* Always keep previous one, to avoid some races */
+
+              /* Remove the rest */
+              remove = TRUE;
+            }
         }
 
       if (remove)
@@ -4714,6 +4749,8 @@ flatpak_repo_update (OstreeRepo   *repo,
   time_t old_compat_sig_mtime;
   GKeyFile *config;
   gboolean disable_index = (flags & FLATPAK_REPO_UPDATE_FLAG_DISABLE_INDEX) != 0;
+  g_autofree char *index_digest = NULL;
+  g_autofree char *old_index_digest = NULL;
 
   config = ostree_repo_get_config (repo);
 
@@ -4837,7 +4874,16 @@ flatpak_repo_update (OstreeRepo   *repo,
         return FALSE;
     }
 
-  if (!flatpak_repo_save_summary_index (repo, summary_index, index_sig, cancellable, error))
+  if (summary_index)
+    index_digest = g_compute_checksum_for_data (G_CHECKSUM_SHA256,
+                                                g_variant_get_data (summary_index),
+                                                g_variant_get_size (summary_index));
+  if (old_index)
+    old_index_digest = g_compute_checksum_for_data (G_CHECKSUM_SHA256,
+                                                    g_variant_get_data (old_index),
+                                                    g_variant_get_size (old_index));
+
+  if (!flatpak_repo_save_summary_index (repo, summary_index, index_digest, index_sig, cancellable, error))
     return FALSE;
 
   if (!flatpak_repo_save_compat_summary (repo, compat_summary, &old_compat_sig_mtime, cancellable, error))
@@ -4869,7 +4915,7 @@ flatpak_repo_update (OstreeRepo   *repo,
     }
 
   if (!disable_index &&
-      !flatpak_repo_gc_digested_summaries (repo, digested_summaries, digested_summary_cache, cancellable, error))
+      !flatpak_repo_gc_digested_summaries (repo, index_digest, old_index_digest, digested_summaries, digested_summary_cache, cancellable, error))
     return FALSE;
 
   return TRUE;
