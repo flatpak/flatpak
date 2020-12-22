@@ -1,3 +1,9 @@
+Changes in 1.8.4
+~~~~~~~~~~~~~~~~
+Released: 2020-12-22
+
+  * Fix support for ppc64
+
 Changes in 1.8.3
 ~~~~~~~~~~~~~~~~
 Released: 2020-11-17
