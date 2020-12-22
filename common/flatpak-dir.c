@@ -11486,6 +11486,35 @@ remote_verify_signature (OstreeRepo *repo,
   return TRUE;
 }
 
+static GBytes *
+load_uri_with_fallback (SoupSession           *soup_session,
+                        const char            *uri,
+                        const char            *uri2,
+                        FlatpakHTTPFlags       flags,
+                        const char            *token,
+                        GCancellable          *cancellable,
+                        GError               **error)
+{
+  g_autoptr(GError) local_error = NULL;
+  GBytes *res;
+
+  res = flatpak_load_uri (soup_session, uri, flags, token,
+                          NULL, NULL, NULL,
+                          cancellable, &local_error);
+  if (res)
+    return res;
+
+  if (!g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+    {
+      g_propagate_error (error, g_steal_pointer (&local_error));
+      return NULL;
+    }
+
+  return flatpak_load_uri (soup_session, uri2, flags, token,
+                           NULL, NULL, NULL,
+                           cancellable, error);
+}
+
 static gboolean
 flatpak_dir_remote_fetch_summary_index (FlatpakDir   *self,
                                         const char   *name_or_uri,
@@ -11546,80 +11575,74 @@ flatpak_dir_remote_fetch_summary_index (FlatpakDir   *self,
       g_debug ("Loaded summary index from cache for remote ‘%s’", name_or_uri);
 
       index = g_steal_pointer (&cached_index);
-      index_sig = g_steal_pointer (&cached_index_sig);
+      if (gpg_verify_summary)
+        index_sig = g_steal_pointer (&cached_index_sig);
     }
   else
     {
       g_autofree char *index_url = g_build_filename (url, "summary.idx", NULL);
+      g_autoptr(GBytes) dl_index = NULL;
+      gboolean used_download = FALSE;
 
       g_debug ("Fetching summary index file for remote ‘%s’", name_or_uri);
 
-      if (gpg_verify_summary)
+      dl_index = flatpak_load_uri (self->soup_session, index_url, 0, NULL,
+                                   NULL, NULL, NULL,
+                                   cancellable, error);
+      if (dl_index == NULL)
+        return FALSE;
+
+      /* If the downloaded index is the same as the cached one we need not re-download or
+       * re-verify, just use the cache (which we verified before) */
+      if (cached_index != NULL && g_bytes_equal (cached_index, dl_index))
         {
-          g_autofree char *index_sig_url = g_build_filename (url, "summary.idx.sig", NULL);
-          g_autoptr(GError) local_error2 = NULL;
-          g_autoptr (GBytes) dl_index_sig = NULL;
-
-          dl_index_sig = flatpak_load_uri (self->soup_session, index_sig_url, 0, NULL,
-                                           NULL, NULL, NULL,
-                                           cancellable, &local_error2);
-          if (dl_index_sig == NULL)
-            {
-              /* We report i/o errors here, and if it just doens't exist we report that
-                 below, and we want to report errors from the real summary dl instead */
-              if (!g_error_matches (local_error2, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
-                {
-                  g_propagate_error (error, g_steal_pointer (&local_error2));
-                  return FALSE;
-                }
-            }
-
-          /* If the downloaded sig is the same as the cached one we need not re-download or
-           * re-verify, just use the cache (which we verified before) */
-          if (dl_index_sig != NULL &&
-              cached_index != NULL && cached_index_sig != NULL &&
-              g_bytes_equal (cached_index_sig, dl_index_sig))
-            {
-              index = g_steal_pointer (&cached_index);
-              index_sig = g_steal_pointer (&cached_index_sig);
-            }
-          else
-            {
-              index_sig = g_steal_pointer (&dl_index_sig);
-            }
+          index = g_steal_pointer (&cached_index);
+          if (gpg_verify_summary)
+            index_sig = g_steal_pointer (&cached_index_sig);
+        }
+      else
+        {
+          index = g_steal_pointer (&dl_index);
+          used_download = TRUE;
         }
 
-      if (index == NULL)
+      if (gpg_verify_summary && index_sig == NULL)
         {
-          index = flatpak_load_uri (self->soup_session, index_url, 0, NULL,
-                                    NULL, NULL, NULL,
-                                    cancellable, error);
-          if (index == NULL)
+          g_autofree char *index_digest = g_compute_checksum_for_bytes (G_CHECKSUM_SHA256, index);
+          g_autofree char *index_sig_filename = g_strconcat (index_digest, ".idx.sig", NULL);
+          g_autofree char *index_sig_url = g_build_filename (url, "summaries", index_sig_filename, NULL);
+          g_autofree char *index_sig_url2 = g_build_filename (url, "summary.idx.sig", NULL);
+          g_autoptr(GError) dl_sig_error = NULL;
+          g_autoptr (GBytes) dl_index_sig = NULL;
+
+          dl_index_sig = load_uri_with_fallback (self->soup_session, index_sig_url, index_sig_url2, 0, NULL,
+                                                 cancellable, &dl_sig_error);
+          if (dl_index_sig == NULL)
+            {
+              if (g_error_matches (dl_sig_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+                g_set_error (error, OSTREE_GPG_ERROR, OSTREE_GPG_ERROR_NO_SIGNATURE,
+                             "GPG verification enabled, but no summary signatures found (use gpg-verify-summary=false in remote config to disable)");
+              else
+                g_propagate_error (error, g_steal_pointer (&dl_sig_error));
+
+              return FALSE;
+            }
+
+          if (!remote_verify_signature (self->repo, name_or_uri,
+                                        index, dl_index_sig,
+                                        cancellable, error))
             return FALSE;
 
-          if (gpg_verify_summary)
-            {
-              if (index_sig == NULL)
-                {
-                  g_set_error (error, OSTREE_GPG_ERROR, OSTREE_GPG_ERROR_NO_SIGNATURE,
-                               "GPG verification enabled, but no summary signatures found (use gpg-verify-summary=false in remote config to disable)");
-                  return FALSE;
-                }
-              else
-                {
-                  if (!remote_verify_signature (self->repo, name_or_uri,
-                                                index, index_sig,
-                                                cancellable, error))
-                    return FALSE;
-                }
-            }
+          index_sig = g_steal_pointer (&dl_index_sig);
+          used_download = TRUE;
         }
 
       g_assert (index != NULL);
       if (gpg_verify_summary)
         g_assert (index_sig != NULL);
 
-      if (!is_local &&
+      /* Update cache on disk if we downloaded anything, but never cache for file: repos */
+      if (used_download && !is_local &&
           !flatpak_dir_remote_save_cached_summary (self, name_or_uri, ".idx", ".idx.sig",
                                                    index, index_sig, cancellable, error))
         return FALSE;
