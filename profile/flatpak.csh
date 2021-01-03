@@ -5,7 +5,7 @@ if ( ${%_flatpak} > 0 ) then
     if ( ! ${?XDG_DATA_DIRS} ) setenv XDG_DATA_DIRS /usr/local/share:/usr/share
     if ( ${%XDG_DATA_DIRS} == 0 ) setenv XDG_DATA_DIRS /usr/local/share:/usr/share
     set _new_dirs=""
-    foreach _line (`(unset G_MESSAGES_DEBUG; echo "${XDG_DATA_HOME}"/flatpak; flatpak --installations)`)
+    foreach _line (`(unset G_MESSAGES_DEBUG; echo "${XDG_DATA_HOME}"/flatpak; setenv GIO_USE_VFS local; flatpak --installations)`)
         set _line=${_line}/exports/share
 	if ( ":${XDG_DATA_DIRS}:" =~ *:${_line}:* ) continue
 	if ( ":${XDG_DATA_DIRS}:" =~ *:${_line}/:* ) continue
