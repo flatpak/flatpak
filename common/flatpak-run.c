@@ -603,6 +603,15 @@ flatpak_run_add_pulseaudio_args (FlatpakBwrap *bwrap)
 }
 
 static void
+flatpak_run_add_resolved_args (FlatpakBwrap *bwrap)
+{
+  const char *resolved_socket = "/run/systemd/resolve/io.systemd.Resolve";
+
+  if (g_file_test (resolved_socket, G_FILE_TEST_EXISTS))
+    flatpak_bwrap_add_args (bwrap, "--bind", resolved_socket, resolved_socket, NULL);
+}
+
+static void
 flatpak_run_add_journal_args (FlatpakBwrap *bwrap)
 {
   g_autofree char *journal_socket_socket = g_strdup ("/run/systemd/journal/socket");
@@ -3885,6 +3894,9 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
                                          app_id, app_context, app_id_dir, previous_app_id_dirs,
                                          &exports, cancellable, error))
     return FALSE;
+
+  if ((app_context->shares & FLATPAK_CONTEXT_SHARED_NETWORK) != 0)
+    flatpak_run_add_resolved_args (bwrap);
 
   flatpak_run_add_journal_args (bwrap);
   add_font_path_args (bwrap);
