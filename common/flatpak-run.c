@@ -543,19 +543,127 @@ flatpak_run_parse_pulse_server (const char *value)
   return NULL;
 }
 
+/*
+ * Get the machine ID as used by PulseAudio. This is the systemd/D-Bus
+ * machine ID, or failing that, the hostname.
+ */
+static char *
+flatpak_run_get_pulse_machine_id (void)
+{
+  static const char * const machine_ids[] =
+  {
+    "/etc/machine-id",
+    "/var/lib/dbus/machine-id",
+  };
+  gsize i;
+
+  for (i = 0; i < G_N_ELEMENTS (machine_ids); i++)
+    {
+      g_autofree char *ret = NULL;
+
+      if (g_file_get_contents (machine_ids[i], &ret, NULL, NULL))
+        {
+          gsize j;
+
+          g_strstrip (ret);
+
+          for (j = 0; ret[j] != '\0'; j++)
+            {
+              if (!g_ascii_isxdigit (ret[j]))
+                break;
+            }
+
+          if (ret[0] != '\0' && ret[j] == '\0')
+            return g_steal_pointer (&ret);
+        }
+    }
+
+  return g_strdup (g_get_host_name ());
+}
+
+/*
+ * Get the directory used by PulseAudio for its configuration.
+ */
+static char *
+flatpak_run_get_pulse_home (void)
+{
+  /* Legacy path ~/.pulse is tried first, for compatibility */
+  {
+    const char *parent = g_get_home_dir ();
+    g_autofree char *ret = g_build_filename (parent, ".pulse", NULL);
+
+    if (g_file_test (ret, G_FILE_TEST_IS_DIR))
+      return g_steal_pointer (&ret);
+  }
+
+  /* The more modern path, usually ~/.config/pulse */
+  {
+    const char *parent = g_get_user_config_dir ();
+    /* Usually ~/.config/pulse */
+    g_autofree char *ret = g_build_filename (parent, "pulse", NULL);
+
+    if (g_file_test (ret, G_FILE_TEST_IS_DIR))
+      return g_steal_pointer (&ret);
+  }
+
+  return NULL;
+}
+
+/*
+ * Get the runtime directory used by PulseAudio for its socket.
+ */
+static char *
+flatpak_run_get_pulse_runtime_dir (void)
+{
+  const char *val = NULL;
+
+  val = g_getenv ("PULSE_RUNTIME_PATH");
+
+  if (val != NULL)
+    return realpath (val, NULL);
+
+  {
+    const char *user_runtime_dir = g_get_user_runtime_dir ();
+
+    if (user_runtime_dir != NULL)
+      {
+        g_autofree char *dir = g_build_filename (user_runtime_dir, "pulse", NULL);
+
+        if (g_file_test (dir, G_FILE_TEST_IS_DIR))
+          return realpath (dir, NULL);
+      }
+  }
+
+  {
+    g_autofree char *pulse_home = flatpak_run_get_pulse_home ();
+    g_autofree char *machine_id = flatpak_run_get_pulse_machine_id ();
+
+    if (pulse_home != NULL && machine_id != NULL)
+      {
+        /* This is usually a symlink, but we take its realpath() anyway */
+        g_autofree char *dir = g_strdup_printf ("%s/%s-runtime", pulse_home, machine_id);
+
+        if (g_file_test (dir, G_FILE_TEST_IS_DIR))
+          return realpath (dir, NULL);
+      }
+  }
+
+  return NULL;
+}
+
 static void
 flatpak_run_add_pulseaudio_args (FlatpakBwrap *bwrap)
 {
   g_autofree char *pulseaudio_server = flatpak_run_get_pulseaudio_server ();
   g_autofree char *pulseaudio_socket = NULL;
-  g_autofree char *user_runtime_dir = flatpak_get_real_xdg_runtime_dir ();
+  g_autofree char *pulse_runtime_dir = flatpak_run_get_pulse_runtime_dir ();
 
   if (pulseaudio_server)
     pulseaudio_socket = flatpak_run_parse_pulse_server (pulseaudio_server);
 
   if (!pulseaudio_socket)
     {
-      pulseaudio_socket = g_build_filename (user_runtime_dir, "pulse/native", NULL);
+      pulseaudio_socket = g_build_filename (pulse_runtime_dir, "native", NULL);
 
       if (!g_file_test (pulseaudio_socket, G_FILE_TEST_EXISTS))
         g_clear_pointer (&pulseaudio_socket, g_free);
