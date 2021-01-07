@@ -207,7 +207,7 @@ typedef struct
   char    *client;
   guint    child_watch;
   gboolean watch_bus;
-  gboolean expose_pids;
+  gboolean expose_or_share_pids;
 } PidData;
 
 static void
@@ -408,7 +408,7 @@ check_child_pid_status (void *user_data)
     }
 
   /* Only send the child PID if it's exposed */
-  if (pid_data->expose_pids)
+  if (pid_data->expose_or_share_pids)
     {
       g_autoptr(GError) error = NULL;
       relative_child_pid = get_child_pid_relative_to_parent_sandbox (child_pid, &error);
@@ -779,6 +779,7 @@ handle_spawn (PortalFlatpak         *object,
   guint sandbox_flags = 0;
   gboolean sandboxed;
   gboolean expose_pids;
+  gboolean share_pids;
   gboolean notify_start;
   gboolean devel;
 
@@ -1047,7 +1048,9 @@ handle_spawn (PortalFlatpak         *object,
     }
 
   expose_pids = (arg_flags & FLATPAK_SPAWN_FLAGS_EXPOSE_PIDS) != 0;
-  if (expose_pids)
+  share_pids = (arg_flags & FLATPAK_SPAWN_FLAGS_SHARE_PIDS) != 0;
+
+  if (expose_pids || share_pids)
     {
       g_autofree char *instance_id = NULL;
       int sender_pid1 = 0;
@@ -1056,7 +1059,7 @@ handle_spawn (PortalFlatpak         *object,
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
                                                  G_DBUS_ERROR_NOT_SUPPORTED,
-                                                 "Expose pids not supported");
+                                                 "Expose pids not supported with setuid bwrap");
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
@@ -1079,7 +1082,11 @@ handle_spawn (PortalFlatpak         *object,
         }
 
       g_ptr_array_add (flatpak_argv, g_strdup_printf ("--parent-pid=%d", sender_pid1));
-      g_ptr_array_add (flatpak_argv, g_strdup ("--parent-expose-pids"));
+
+      if (share_pids)
+        g_ptr_array_add (flatpak_argv, g_strdup ("--parent-share-pids"));
+      else
+        g_ptr_array_add (flatpak_argv, g_strdup ("--parent-expose-pids"));
     }
 
   notify_start = (arg_flags & FLATPAK_SPAWN_FLAGS_NOTIFY_START) != 0;
@@ -1278,7 +1285,7 @@ handle_spawn (PortalFlatpak         *object,
   pid_data->pid = pid;
   pid_data->client = g_strdup (g_dbus_method_invocation_get_sender (invocation));
   pid_data->watch_bus = (arg_flags & FLATPAK_SPAWN_FLAGS_WATCH_BUS) != 0;
-  pid_data->expose_pids = expose_pids;
+  pid_data->expose_or_share_pids = (expose_pids || share_pids);
   pid_data->child_watch = g_child_watch_add_full (G_PRIORITY_DEFAULT,
                                                   pid,
                                                   child_watch_died,
@@ -2679,7 +2686,7 @@ on_bus_acquired (GDBusConnection *connection,
   g_dbus_interface_skeleton_set_flags (G_DBUS_INTERFACE_SKELETON (portal),
                                        G_DBUS_INTERFACE_SKELETON_FLAGS_HANDLE_METHOD_INVOCATIONS_IN_THREAD);
 
-  portal_flatpak_set_version (PORTAL_FLATPAK (portal), 4);
+  portal_flatpak_set_version (PORTAL_FLATPAK (portal), 5);
   portal_flatpak_set_supports (PORTAL_FLATPAK (portal), supports);
 
   g_signal_connect (portal, "handle-spawn", G_CALLBACK (handle_spawn), NULL);

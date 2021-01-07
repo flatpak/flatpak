@@ -29,6 +29,7 @@ typedef enum {
   FLATPAK_SPAWN_FLAGS_WATCH_BUS = 1 << 4,
   FLATPAK_SPAWN_FLAGS_EXPOSE_PIDS = 1 << 5,
   FLATPAK_SPAWN_FLAGS_NOTIFY_START = 1 << 6,
+  FLATPAK_SPAWN_FLAGS_SHARE_PIDS = 1 << 7,
 } FlatpakSpawnFlags;
 
 typedef enum {
@@ -44,13 +45,18 @@ typedef enum {
   FLATPAK_SPAWN_SUPPORT_FLAGS_EXPOSE_PIDS = 1 << 0,
 } FlatpakSpawnSupportFlags;
 
+/* The same flag is reused: this feature is available under the same
+ * circumstances */
+#define FLATPAK_SPAWN_SUPPORT_FLAGS_SHARE_PIDS FLATPAK_SPAWN_SUPPORT_FLAGS_EXPOSE_PIDS
+
 #define FLATPAK_SPAWN_FLAGS_ALL (FLATPAK_SPAWN_FLAGS_CLEAR_ENV | \
                                  FLATPAK_SPAWN_FLAGS_LATEST_VERSION | \
                                  FLATPAK_SPAWN_FLAGS_SANDBOX | \
                                  FLATPAK_SPAWN_FLAGS_NO_NETWORK | \
                                  FLATPAK_SPAWN_FLAGS_WATCH_BUS | \
                                  FLATPAK_SPAWN_FLAGS_EXPOSE_PIDS | \
-                                 FLATPAK_SPAWN_FLAGS_NOTIFY_START)
+                                 FLATPAK_SPAWN_FLAGS_NOTIFY_START | \
+                                 FLATPAK_SPAWN_FLAGS_SHARE_PIDS)
 
 #define FLATPAK_SPAWN_SANDBOX_FLAGS_ALL (FLATPAK_SPAWN_SANDBOX_FLAGS_SHARE_DISPLAY | \
                                          FLATPAK_SPAWN_SANDBOX_FLAGS_SHARE_SOUND | \

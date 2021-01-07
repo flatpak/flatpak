@@ -48,6 +48,7 @@ typedef enum {
   FLATPAK_RUN_FLAG_DO_NOT_REAP        = (1 << 18),
   FLATPAK_RUN_FLAG_NO_PROC            = (1 << 19),
   FLATPAK_RUN_FLAG_PARENT_EXPOSE_PIDS = (1 << 20),
+  FLATPAK_RUN_FLAG_PARENT_SHARE_PIDS  = (1 << 21),
 } FlatpakRunFlags;
 
 typedef struct FlatpakDir          FlatpakDir;
