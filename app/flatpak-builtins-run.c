@@ -57,6 +57,7 @@ static char *opt_commit;
 static char *opt_runtime_commit;
 static int opt_parent_pid;
 static gboolean opt_parent_expose_pids;
+static gboolean opt_parent_share_pids;
 static int opt_instance_id_fd = -1;
 
 static GOptionEntry options[] = {
@@ -82,6 +83,7 @@ static GOptionEntry options[] = {
   { "die-with-parent", 'p', 0, G_OPTION_ARG_NONE, &opt_die_with_parent, N_("Kill processes when the parent process dies"), NULL },
   { "parent-pid", 0, 0, G_OPTION_ARG_INT, &opt_parent_pid, N_("Use PID as parent pid for sharing namespaces"), N_("PID") },
   { "parent-expose-pids", 0, 0, G_OPTION_ARG_NONE, &opt_parent_expose_pids, N_("Make processes visible in parent namespace"), NULL },
+  { "parent-share-pids", 0, 0, G_OPTION_ARG_NONE, &opt_parent_share_pids, N_("Share process ID namespace with parent"), NULL },
   { "instance-id-fd", 0, 0, G_OPTION_ARG_INT, &opt_instance_id_fd, N_("Write the instance ID to the given file descriptor"), NULL },
   { NULL }
 };
@@ -286,6 +288,8 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
     flags |= FLATPAK_RUN_FLAG_NO_DOCUMENTS_PORTAL;
   if (opt_parent_expose_pids)
     flags |= FLATPAK_RUN_FLAG_PARENT_EXPOSE_PIDS;
+  if (opt_parent_share_pids)
+    flags |= FLATPAK_RUN_FLAG_PARENT_SHARE_PIDS;
   if (!opt_a11y_bus)
     flags |= FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY;
   if (!opt_session_bus)

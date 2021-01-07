@@ -2918,8 +2918,10 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
                             "--proc", "/proc",
                             NULL);
 
+  if (!(flags & FLATPAK_RUN_FLAG_PARENT_SHARE_PIDS))
+    flatpak_bwrap_add_arg (bwrap, "--unshare-pid");
+
   flatpak_bwrap_add_args (bwrap,
-                          "--unshare-pid",
                           "--dir", "/tmp",
                           "--dir", "/var/tmp",
                           "--dir", "/run/host",
@@ -3574,7 +3576,7 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
   gboolean use_ld_so_cache = TRUE;
   gboolean sandboxed = (flags & FLATPAK_RUN_FLAG_SANDBOX) != 0;
   gboolean parent_expose_pids = (flags & FLATPAK_RUN_FLAG_PARENT_EXPOSE_PIDS) != 0;
-
+  gboolean parent_share_pids = (flags & FLATPAK_RUN_FLAG_PARENT_SHARE_PIDS) != 0;
   struct stat s;
 
   if (!check_sudo (error))
@@ -3886,7 +3888,7 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
   if (cwd)
     flatpak_bwrap_add_args (bwrap, "--chdir", cwd, NULL);
 
-  if (parent_expose_pids)
+  if (parent_expose_pids || parent_share_pids)
     {
       g_autofree char *userns_path = NULL;
       g_autofree char *pidns_path = NULL;

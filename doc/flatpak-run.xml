@@ -563,7 +563,8 @@ key=v1;v2;
                 <term><option>--parent-pid=PID</option></term>
 
                 <listitem><para>
-                    Specifies the pid of the "parent" flatpak, used by --parent-expose-pids.
+                    Specifies the pid of the "parent" flatpak, used by
+                    --parent-expose-pids and --parent-share-pids.
                 </para></listitem>
             </varlistentry>
 
@@ -573,6 +574,16 @@ key=v1;v2;
                 <listitem><para>
                     Make the processes of the new sandbox visible in the sandbox of the parent flatpak, as defined
                     by --parent-pid.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--parent-share-pids</option></term>
+
+                <listitem><para>
+                    Use the same process ID namespace for the processes of
+                    the new sandbox and the sandbox of the parent flatpak, as
+                    defined by --parent-pid. Implies --parent-expose-pids.
                 </para></listitem>
             </varlistentry>
 
