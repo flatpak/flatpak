@@ -554,11 +554,24 @@ flatpak_run_add_pulseaudio_args (FlatpakBwrap *bwrap)
     pulseaudio_socket = flatpak_run_parse_pulse_server (pulseaudio_server);
 
   if (!pulseaudio_socket)
-    pulseaudio_socket = g_build_filename (user_runtime_dir, "pulse/native", NULL);
+    {
+      pulseaudio_socket = g_build_filename (user_runtime_dir, "pulse/native", NULL);
+
+      if (!g_file_test (pulseaudio_socket, G_FILE_TEST_EXISTS))
+        g_clear_pointer (&pulseaudio_socket, g_free);
+    }
+
+  if (!pulseaudio_socket)
+    {
+      pulseaudio_socket = realpath ("/var/run/pulse/native", NULL);
+
+      if (pulseaudio_socket && !g_file_test (pulseaudio_socket, G_FILE_TEST_EXISTS))
+        g_clear_pointer (&pulseaudio_socket, g_free);
+    }
 
   flatpak_bwrap_unset_env (bwrap, "PULSE_SERVER");
 
-  if (g_file_test (pulseaudio_socket, G_FILE_TEST_EXISTS))
+  if (pulseaudio_socket && g_file_test (pulseaudio_socket, G_FILE_TEST_EXISTS))
     {
       gboolean share_shm = FALSE; /* TODO: When do we add this? */
       g_autofree char *client_config = g_strdup_printf ("enable-shm=%s\n", share_shm ? "yes" : "no");
