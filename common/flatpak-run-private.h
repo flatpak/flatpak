@@ -109,11 +109,16 @@ gboolean flatpak_run_in_transient_unit (const char *app_id,
 #define FLATPAK_METADATA_KEY_DCONF_PATHS "paths"
 #define FLATPAK_METADATA_KEY_DCONF_MIGRATE_PATH "migrate-path"
 
+void     flatpak_run_extend_ld_path       (FlatpakBwrap       *bwrap,
+                                           const char         *prepend,
+                                           const char         *append);
 gboolean flatpak_run_add_extension_args   (FlatpakBwrap       *bwrap,
                                            GKeyFile           *metakey,
                                            FlatpakDecomposed  *ref,
                                            gboolean            use_ld_so_cache,
+                                           const char         *target_path,
                                            char              **extensions_out,
+                                           char              **ld_path_out,
                                            GCancellable       *cancellable,
                                            GError            **error);
 gboolean flatpak_run_add_environment_args (FlatpakBwrap       *bwrap,

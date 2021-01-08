@@ -1168,12 +1168,40 @@ flatpak_extension_compare_by_path (gconstpointer _a,
   return g_strcmp0 (a->directory, b->directory);
 }
 
+void
+flatpak_run_extend_ld_path (FlatpakBwrap *bwrap,
+                            const char *prepend,
+                            const char *append)
+{
+  g_autoptr(GString) ld_library_path = g_string_new (g_environ_getenv (bwrap->envp, "LD_LIBRARY_PATH"));
+
+  if (prepend != NULL && *prepend != '\0')
+    {
+      if (ld_library_path->len > 0)
+        g_string_prepend (ld_library_path, ":");
+
+      g_string_prepend (ld_library_path, prepend);
+    }
+
+  if (append != NULL && *append != '\0')
+    {
+      if (ld_library_path->len > 0)
+        g_string_append (ld_library_path, ":");
+
+      g_string_append (ld_library_path, append);
+    }
+
+  flatpak_bwrap_set_env (bwrap, "LD_LIBRARY_PATH", ld_library_path->str, TRUE);
+}
+
 gboolean
 flatpak_run_add_extension_args (FlatpakBwrap      *bwrap,
                                 GKeyFile          *metakey,
                                 FlatpakDecomposed *ref,
                                 gboolean           use_ld_so_cache,
+                                const char        *target_path,
                                 char             **extensions_out,
+                                char             **ld_path_out,
                                 GCancellable      *cancellable,
                                 GError           **error)
 {
@@ -1187,7 +1215,8 @@ flatpak_run_add_extension_args (FlatpakBwrap      *bwrap,
     g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   g_autofree char *arch = flatpak_decomposed_dup_arch (ref);
   const char *branch = flatpak_decomposed_get_branch (ref);
-  gboolean is_app = flatpak_decomposed_is_app (ref);
+
+  g_return_val_if_fail (target_path != NULL, FALSE);
 
   extensions = flatpak_list_extensions (metakey, arch, branch);
 
@@ -1199,7 +1228,7 @@ flatpak_run_add_extension_args (FlatpakBwrap      *bwrap,
   for (l = path_sorted_extensions; l != NULL; l = l->next)
     {
       FlatpakExtension *ext = l->data;
-      g_autofree char *directory = g_build_filename (is_app ? "/app" : "/usr", ext->directory, NULL);
+      g_autofree char *directory = g_build_filename (target_path, ext->directory, NULL);
       g_autofree char *full_directory = g_build_filename (directory, ext->subdir_suffix, NULL);
       g_autofree char *ref_file = g_build_filename (full_directory, ".ref", NULL);
       g_autofree char *real_ref = g_build_filename (ext->files_path, ext->directory, ".ref", NULL);
@@ -1234,7 +1263,7 @@ flatpak_run_add_extension_args (FlatpakBwrap      *bwrap,
   for (l = extensions; l != NULL; l = l->next)
     {
       FlatpakExtension *ext = l->data;
-      g_autofree char *directory = g_build_filename (is_app ? "/app" : "/usr", ext->directory, NULL);
+      g_autofree char *directory = g_build_filename (target_path, ext->directory, NULL);
       g_autofree char *full_directory = g_build_filename (directory, ext->subdir_suffix, NULL);
       int i;
 
@@ -1299,29 +1328,11 @@ flatpak_run_add_extension_args (FlatpakBwrap      *bwrap,
 
   g_list_free_full (extensions, (GDestroyNotify) flatpak_extension_free);
 
-  if (ld_library_path->len != 0)
-    {
-      const gchar *old_ld_path = g_environ_getenv (bwrap->envp, "LD_LIBRARY_PATH");
-
-      if (old_ld_path != NULL && *old_ld_path != 0)
-        {
-          if (is_app)
-            {
-              g_string_append (ld_library_path, ":");
-              g_string_append (ld_library_path, old_ld_path);
-            }
-          else
-            {
-              g_string_prepend (ld_library_path, ":");
-              g_string_prepend (ld_library_path, old_ld_path);
-            }
-        }
-
-      flatpak_bwrap_set_env (bwrap, "LD_LIBRARY_PATH", ld_library_path->str, TRUE);
-    }
-
   if (extensions_out)
     *extensions_out = g_string_free (g_steal_pointer (&used_extensions), FALSE);
+
+  if (ld_path_out)
+    *ld_path_out = g_string_free (g_steal_pointer (&ld_library_path), FALSE);
 
   return TRUE;
 }
@@ -3640,6 +3651,7 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
   g_autofree char *app_id = NULL;
   g_autofree char *app_arch = NULL;
   g_autofree char *app_info_path = NULL;
+  g_autofree char *app_ld_path = NULL;
   g_autofree char *instance_id_host_dir = NULL;
   g_autoptr(FlatpakContext) app_context = NULL;
   g_autoptr(FlatpakContext) overrides = NULL;
@@ -3648,6 +3660,7 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
   g_autofree char *doc_mount_path = NULL;
   g_autofree char *app_extensions = NULL;
   g_autofree char *runtime_extensions = NULL;
+  g_autofree char *runtime_ld_path = NULL;
   g_autofree char *checksum = NULL;
   int ld_so_fd = -1;
   g_autoptr(GFile) runtime_ld_so_conf = NULL;
@@ -3656,6 +3669,7 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
   gboolean sandboxed = (flags & FLATPAK_RUN_FLAG_SANDBOX) != 0;
   gboolean parent_expose_pids = (flags & FLATPAK_RUN_FLAG_PARENT_EXPOSE_PIDS) != 0;
   gboolean parent_share_pids = (flags & FLATPAK_RUN_FLAG_PARENT_SHARE_PIDS) != 0;
+  const char *runtime_target_path = "/usr";
   struct stat s;
 
   if (!check_sudo (error))
@@ -3886,11 +3900,19 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
                             NULL);
 
   if (metakey != NULL &&
-      !flatpak_run_add_extension_args (bwrap, metakey, app_ref, use_ld_so_cache, &app_extensions, cancellable, error))
+      !flatpak_run_add_extension_args (bwrap, metakey, app_ref,
+                                       use_ld_so_cache, "/app",
+                                       &app_extensions, &app_ld_path,
+                                       cancellable, error))
     return FALSE;
 
-  if (!flatpak_run_add_extension_args (bwrap, runtime_metakey, runtime_ref, use_ld_so_cache, &runtime_extensions, cancellable, error))
+  if (!flatpak_run_add_extension_args (bwrap, runtime_metakey, runtime_ref,
+                                       use_ld_so_cache, runtime_target_path,
+                                       &runtime_extensions, &runtime_ld_path,
+                                       cancellable, error))
     return FALSE;
+
+  flatpak_run_extend_ld_path (bwrap, app_ld_path, runtime_ld_path);
 
   runtime_ld_so_conf = g_file_resolve_relative_path (runtime_files, "etc/ld.so.conf");
   if (lstat (flatpak_file_get_path_cached (runtime_ld_so_conf), &s) == 0)

@@ -196,7 +196,9 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   g_autofree char *arch = NULL;
   g_autofree char *app_info_path = NULL;
   g_autofree char *app_extensions = NULL;
+  g_autofree char *app_ld_path = NULL;
   g_autofree char *runtime_extensions = NULL;
+  g_autofree char *runtime_ld_path = NULL;
   g_autofree char *instance_id_host_dir = NULL;
   char pid_str[64];
   g_autofree char *pid_path = NULL;
@@ -518,13 +520,19 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
       g_autoptr(FlatpakDecomposed) fake_ref =
         flatpak_decomposed_new_from_parts (FLATPAK_KINDS_APP, id, arch, "nobranch", NULL);
       if (fake_ref != NULL &&
-          !flatpak_run_add_extension_args (bwrap, metakey, fake_ref, FALSE, &app_extensions, cancellable, error))
+          !flatpak_run_add_extension_args (bwrap, metakey, fake_ref, FALSE, "/app",
+                                           &app_extensions, &app_ld_path,
+                                           cancellable, error))
         return FALSE;
     }
 
   if (!custom_usr &&
-      !flatpak_run_add_extension_args (bwrap, runtime_metakey, runtime_ref, FALSE, &runtime_extensions, cancellable, error))
+      !flatpak_run_add_extension_args (bwrap, runtime_metakey, runtime_ref, FALSE, "/usr",
+                                       &runtime_extensions, &runtime_ld_path,
+                                       cancellable, error))
     return FALSE;
+
+  flatpak_run_extend_ld_path (bwrap, app_ld_path, runtime_ld_path);
 
   /* Mount this after the above extensions so we always win */
   if (extension_point)
