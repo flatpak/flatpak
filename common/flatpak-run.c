@@ -1314,24 +1314,6 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
   flatpak_run_add_system_dbus_args (bwrap, proxy_arg_bwrap, context, flags);
   flatpak_run_add_a11y_dbus_args (bwrap, proxy_arg_bwrap, context, flags);
 
-  if (g_environ_getenv (bwrap->envp, "LD_LIBRARY_PATH") != NULL)
-    {
-      /* LD_LIBRARY_PATH is overridden for setuid helper, so pass it as cmdline arg */
-      flatpak_bwrap_add_args (bwrap,
-                              "--setenv", "LD_LIBRARY_PATH", g_environ_getenv (bwrap->envp, "LD_LIBRARY_PATH"),
-                              NULL);
-      flatpak_bwrap_unset_env (bwrap, "LD_LIBRARY_PATH");
-    }
-
-  if (g_environ_getenv (bwrap->envp, "TMPDIR") != NULL)
-    {
-      /* TMPDIR is overridden for setuid helper, so pass it as cmdline arg */
-      flatpak_bwrap_add_args (bwrap,
-                              "--setenv", "TMPDIR", g_environ_getenv (bwrap->envp, "TMPDIR"),
-                              NULL);
-      flatpak_bwrap_unset_env (bwrap, "TMPDIR");
-    }
-
   /* Must run this before spawning the dbus proxy, to ensure it
      ends up in the app cgroup */
   if (!flatpak_run_in_transient_unit (app_id, &my_error))
@@ -3852,6 +3834,8 @@ flatpak_run_app (const char     *app_ref,
       command = default_command;
     }
 
+  flatpak_bwrap_envp_to_args (bwrap);
+
   if (!flatpak_bwrap_bundle_args (bwrap, 1, -1, FALSE, error))
     return FALSE;
 
@@ -3882,6 +3866,12 @@ flatpak_run_app (const char     *app_ref,
       /* We use LEAVE_DESCRIPTORS_OPEN to work around dead-lock, see flatpak_close_fds_workaround */
       spawn_flags |= G_SPAWN_LEAVE_DESCRIPTORS_OPEN;
 
+      /* flatpak_bwrap_envp_to_args() moved the environment variables to
+       * be set into --setenv instructions in argv, so the environment
+       * in which the bwrap command runs must be empty. */
+      g_assert (bwrap->envp != NULL);
+      g_assert (bwrap->envp[0] == NULL);
+
       if (!g_spawn_async (NULL,
                           (char **) bwrap->argv->pdata,
                           bwrap->envp,
@@ -3908,6 +3898,12 @@ flatpak_run_app (const char     *app_ref,
        * Note that this does not close fds that are not already marked O_CLOEXEC, because
        * we do want to allow inheriting fds into flatpak run. */
       flatpak_bwrap_child_setup (bwrap->fds, FALSE);
+
+      /* flatpak_bwrap_envp_to_args() moved the environment variables to
+       * be set into --setenv instructions in argv, so the environment
+       * in which the bwrap command runs must be empty. */
+      g_assert (bwrap->envp != NULL);
+      g_assert (bwrap->envp[0] == NULL);
 
       if (execvpe (flatpak_get_bwrap (), (char **) bwrap->argv->pdata, bwrap->envp) == -1)
         {
