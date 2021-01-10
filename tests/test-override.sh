@@ -95,7 +95,7 @@ if skip_one_without_bwrap "sandbox environment variables"; then
   :
 else
   ${FLATPAK} run --command=bash org.test.Hello \
-      -c 'echo "FOO=$FOO"; echo "BAR=$BAR"; echo "SECRET_TOKEN=$SECRET_TOKEN"; echo "TMPDIR=$TMPDIR"; echo "TZDIR=$TZDIR"' > out
+      -c 'echo "FOO=$FOO"; echo "BAR=${BAR-unset}"; echo "SECRET_TOKEN=$SECRET_TOKEN"; echo "TMPDIR=$TMPDIR"; echo "TZDIR=$TZDIR"' > out
   assert_file_has_content out '^FOO=BAR$'
   assert_file_has_content out '^BAR=$'
   assert_file_has_content out '^SECRET_TOKEN=3047225e-5e38-4357-b21c-eac83b7e8ea6$'

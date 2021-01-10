@@ -1678,7 +1678,7 @@ flatpak_run_apply_env_vars (FlatpakBwrap *bwrap, FlatpakContext *context)
       const char *var = key;
       const char *val = value;
 
-      if (val && val[0] != 0)
+      if (val)
         flatpak_bwrap_set_env (bwrap, var, val, TRUE);
       else
         flatpak_bwrap_unset_env (bwrap, var);
