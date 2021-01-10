@@ -284,6 +284,24 @@ key=v1;v2;
             </varlistentry>
 
             <varlistentry>
+                <term><option>--env-fd=<replaceable>FD</replaceable></option></term>
+
+                <listitem><para>
+                    Read environment variables from the file descriptor
+                    <replaceable>FD</replaceable>, and set them as if
+                    via <option>--env</option>. This can be used to avoid
+                    environment variables and their values becoming visible
+                    to other users.
+                </para><para>
+                    Each environment variable is in the form
+                    <replaceable>VAR</replaceable>=<replaceable>VALUE</replaceable>
+                    followed by a zero byte. This is the same format used by
+                    <literal>env -0</literal> and
+                    <filename>/proc/*/environ</filename>.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--own-name=NAME</option></term>
 
                 <listitem><para>
