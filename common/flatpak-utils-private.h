@@ -32,6 +32,7 @@
 #include "flatpak-context-private.h"
 #include "flatpak-error.h"
 #include "flatpak-utils-http-private.h"
+#include "flatpak-utils-memfd-private.h"
 #include <ostree.h>
 #include <json-glib/json-glib.h>
 
