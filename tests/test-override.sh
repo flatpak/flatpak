@@ -3,6 +3,11 @@
 set -euo pipefail
 
 . $(dirname $0)/libtest.sh
+if [ -e "${test_builddir}/.libs/libpreload.so" ]; then
+    install "${test_builddir}/.libs/libpreload.so" "${test_tmpdir}"
+else
+    install "${test_builddir}/libpreload.so" "${test_tmpdir}"
+fi
 
 reset_overrides () {
     ${FLATPAK} override --user --reset org.test.Hello
@@ -116,6 +121,7 @@ else
   ${FLATPAK} override --user --show org.test.Hello > override
 
   ${FLATPAK} run --command=bash \
+      --filesystem="${test_tmpdir}" \
       --env=FOO=BAR \
       --env=BAR= \
       --env-fd=3 \
@@ -133,6 +139,18 @@ else
   # The secret doesn't end up in bubblewrap's cmdline where other users
   # could see it
   assert_not_file_has_content out 3047225e-5e38-4357-b21c-eac83b7e8ea6
+
+  # libpreload.so will abort() if it gets loaded into the `flatpak run`
+  # or `bwrap` processes, so if this succeeds, everything's OK
+  ${FLATPAK} run --command=bash \
+      --filesystem="${test_tmpdir}" \
+      --env=LD_PRELOAD="${test_tmpdir}/libpreload.so" \
+      org.test.Hello -c ''
+  printf '%s\0' "LD_PRELOAD=${test_tmpdir}/libpreload.so" > env.ldpreload
+  ${FLATPAK} run --command=bash \
+      --filesystem="${test_tmpdir}" \
+      --env-fd=3 \
+      org.test.Hello -c '' 3<env.ldpreload
 
   ok "temporary environment variables"
 fi
