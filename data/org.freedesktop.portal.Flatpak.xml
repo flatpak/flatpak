@@ -384,6 +384,36 @@
     </method>
 
     <!--
+        Install:
+        @parent_window: Identifier for the application window,
+          see <link linkend="parent_window">Common Conventions</link>
+        @ref: ref to install
+        @options: Vardict with optional further information
+
+        Asks to install one or more Flatpak refs.
+        During the installation,
+        #org.freedesktop.portal.Flatpak.UpdateMonitor::Progress
+        signals will be emitted to communicate the status
+        and progress.
+
+        Note that installation is only allowed if the ref is an
+        extension of the application making the request or the
+        runtime it is using.
+        If that is not the case, the operation will fail with
+        the error org.freedesktop.DBus.Error.NotSupported
+        and the installation has to be done with the system tools.
+
+        Currently, no options are accepted.
+
+        This method was added in version 4 of the interface.
+    -->
+    <method name="Install">
+      <arg type="s" name="parent_window" direction="in"/>
+      <arg type="s" name="ref" direction="in"/>
+      <arg type="a{sv}" name="options" direction="in"/>
+    </method>
+
+    <!--
       Progress:
       @handle: the handle of the Request
       @info: More information about the update progress
