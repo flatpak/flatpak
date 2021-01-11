@@ -167,6 +167,16 @@ dist_installed_test_data = \
 	tests/org.flatpak.Authenticator.test.service.in \
 	$(NULL)
 
+test_ltlibraries = tests/libpreload.la
+
+tests_libpreload_la_SOURCES = tests/libpreload.c
+tests_libpreload_la_LDFLAGS = \
+	-avoid-version \
+	-module \
+	-no-undefined \
+	-rpath $(installed_testdir) \
+	$(NULL)
+
 installed_test_keyringdir = $(installed_testdir)/test-keyring
 installed_test_keyring2dir = $(installed_testdir)/test-keyring2
 
