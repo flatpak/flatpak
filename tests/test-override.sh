@@ -65,14 +65,16 @@ reset_overrides
 
 ${FLATPAK} override --user --env=FOO=BAR org.test.Hello
 ${FLATPAK} override --user --env=BAR= org.test.Hello
-# TODO: A future commit will add a way to avoid this ever being present in argv
-${FLATPAK} override --user --env=SECRET_TOKEN=3047225e-5e38-4357-b21c-eac83b7e8ea6 org.test.Hello
+# --env-fd with terminating \0 (strictly as documented).
+printf '%s\0' "SECRET_TOKEN=3047225e-5e38-4357-b21c-eac83b7e8ea6" > env.3
+# --env-fd without terminating \0 (which we also accept).
 # TMPDIR and TZDIR are filtered out by ld.so for setuid processes,
 # so setting these gives us a way to verify that we can pass them through
 # a setuid bwrap (without special-casing them, as we previously did for
 # TMPDIR).
-${FLATPAK} override --user --env=TMPDIR=/nonexistent/tmp org.test.Hello
-${FLATPAK} override --user --env=TZDIR=/nonexistent/tz org.test.Hello
+printf '%s\0%s' "TMPDIR=/nonexistent/tmp" "TZDIR=/nonexistent/tz" > env.4
+${FLATPAK} override --user --env-fd=3 --env-fd=4 org.test.Hello \
+    3<env.3 4<env.4
 ${FLATPAK} override --user --show org.test.Hello > override
 
 assert_file_has_content override "^\[Environment\]$"
@@ -118,11 +120,11 @@ else
   ${FLATPAK} run --command=bash \
       --env=FOO=BAR \
       --env=BAR= \
-      --env=SECRET_TOKEN=3047225e-5e38-4357-b21c-eac83b7e8ea6 \
-      --env=TMPDIR=/nonexistent/tmp \
-      --env=TZDIR=/nonexistent/tz \
+      --env-fd=3 \
+      --env-fd=4 \
       org.test.Hello \
-      -c 'echo "FOO=$FOO"; echo "BAR=$BAR"; echo "SECRET_TOKEN=$SECRET_TOKEN"; echo "TMPDIR=$TMPDIR"; echo "TZDIR=$TZDIR"' > out
+      -c 'echo "FOO=$FOO"; echo "BAR=$BAR"; echo "SECRET_TOKEN=$SECRET_TOKEN"; echo "TMPDIR=$TMPDIR"; echo "TZDIR=$TZDIR"' \
+      3<env.3 4<env.4 > out
   # The versions from `flatpak run` overrule `flatpak override`
   assert_file_has_content out '^FOO=BAR$'
   assert_file_has_content out '^BAR=$'
