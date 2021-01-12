@@ -1140,15 +1140,6 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
   flatpak_run_add_system_dbus_args (bwrap, proxy_arg_bwrap, context, flags);
   flatpak_run_add_a11y_dbus_args (bwrap, proxy_arg_bwrap, context, flags);
 
-  if (g_environ_getenv (bwrap->envp, "LD_LIBRARY_PATH") != NULL)
-    {
-      /* LD_LIBRARY_PATH is overridden for setuid helper, so pass it as cmdline arg */
-      flatpak_bwrap_add_args (bwrap,
-                              "--setenv", "LD_LIBRARY_PATH", g_environ_getenv (bwrap->envp, "LD_LIBRARY_PATH"),
-                              NULL);
-      flatpak_bwrap_unset_env (bwrap, "LD_LIBRARY_PATH");
-    }
-
   /* Must run this before spawning the dbus proxy, to ensure it
      ends up in the app cgroup */
   if (!flatpak_run_in_transient_unit (app_id, &my_error))
@@ -3376,6 +3367,8 @@ flatpak_run_app (const char     *app_ref,
       command = default_command;
     }
 
+  flatpak_bwrap_envp_to_args (bwrap);
+
   if (!flatpak_bwrap_bundle_args (bwrap, 1, -1, FALSE, error))
     return FALSE;
 
@@ -3403,6 +3396,12 @@ flatpak_run_app (const char     *app_ref,
       if (flags & FLATPAK_RUN_FLAG_DO_NOT_REAP)
         spawn_flags |= G_SPAWN_DO_NOT_REAP_CHILD;
 
+      /* flatpak_bwrap_envp_to_args() moved the environment variables to
+       * be set into --setenv instructions in argv, so the environment
+       * in which the bwrap command runs must be empty. */
+      g_assert (bwrap->envp != NULL);
+      g_assert (bwrap->envp[0] == NULL);
+
       if (!g_spawn_async (NULL,
                           (char **) bwrap->argv->pdata,
                           bwrap->envp,
@@ -3427,6 +3426,13 @@ flatpak_run_app (const char     *app_ref,
 
       /* Ensure we unset O_CLOEXEC */
       flatpak_bwrap_child_setup_cb (bwrap->fds);
+
+      /* flatpak_bwrap_envp_to_args() moved the environment variables to
+       * be set into --setenv instructions in argv, so the environment
+       * in which the bwrap command runs must be empty. */
+      g_assert (bwrap->envp != NULL);
+      g_assert (bwrap->envp[0] == NULL);
+
       if (execvpe (flatpak_get_bwrap (), (char **) bwrap->argv->pdata, bwrap->envp) == -1)
         {
           g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (errno),
