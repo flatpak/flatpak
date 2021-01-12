@@ -410,6 +410,17 @@ key=v1;v2;
             </varlistentry>
 
             <varlistentry>
+                <term><option>--unset-env=VAR</option></term>
+
+                <listitem><para>
+                    Unset an environment variable in the application.
+                    This overrides the unset-environment entry in the [Context]
+                    group of the metadata, and the [Environment] group.
+                    This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--env-fd=<replaceable>FD</replaceable></option></term>
 
                 <listitem><para>

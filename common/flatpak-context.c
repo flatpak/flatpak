@@ -1179,6 +1179,25 @@ option_env_fd_cb (const gchar *option_name,
 }
 
 static gboolean
+option_unset_env_cb (const gchar *option_name,
+                     const gchar *value,
+                     gpointer     data,
+                     GError     **error)
+{
+  FlatpakContext *context = data;
+
+  if (strchr (value, '=') != NULL)
+    {
+      g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
+                   _("Environment variable name must not contain '=': %s"), value);
+      return FALSE;
+    }
+
+  flatpak_context_set_env_var (context, value, NULL);
+  return TRUE;
+}
+
+static gboolean
 option_own_name_cb (const gchar *option_name,
                     const gchar *value,
                     gpointer     data,
@@ -1376,6 +1395,7 @@ static GOptionEntry context_options[] = {
   { "nofilesystem", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_nofilesystem_cb, N_("Don't expose filesystem to app"), N_("FILESYSTEM") },
   { "env", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_env_cb, N_("Set environment variable"), N_("VAR=VALUE") },
   { "env-fd", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_env_fd_cb, N_("Read environment variables in env -0 format from FD"), N_("FD") },
+  { "unset-env", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_unset_env_cb, N_("Remove variable from environment"), N_("VAR") },
   { "own-name", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_own_name_cb, N_("Allow app to own name on the session bus"), N_("DBUS_NAME") },
   { "talk-name", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_talk_name_cb, N_("Allow app to talk to name on the session bus"), N_("DBUS_NAME") },
   { "no-talk-name", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_no_talk_name_cb, N_("Don't allow app to talk to name on the session bus"), N_("DBUS_NAME") },
@@ -1632,6 +1652,30 @@ flatpak_context_load_metadata (FlatpakContext *context,
         }
     }
 
+  /* unset-environment is higher precedence than Environment, so that
+   * we can put unset keys in both places. Old versions of Flatpak will
+   * interpret the empty string as unset; new versions will obey
+   * unset-environment. */
+  if (g_key_file_has_key (metakey, FLATPAK_METADATA_GROUP_CONTEXT, FLATPAK_METADATA_KEY_UNSET_ENVIRONMENT, NULL))
+    {
+      g_auto(GStrv) vars = NULL;
+      gsize vars_count;
+
+      vars = g_key_file_get_string_list (metakey, FLATPAK_METADATA_GROUP_CONTEXT,
+                                         FLATPAK_METADATA_KEY_UNSET_ENVIRONMENT,
+                                         &vars_count, error);
+
+      if (vars == NULL)
+        return FALSE;
+
+      for (i = 0; i < vars_count; i++)
+        {
+          const char *var = vars[i];
+
+          flatpak_context_set_env_var (context, var, NULL);
+        }
+    }
+
   groups = g_key_file_get_groups (metakey, NULL);
   for (i = 0; groups[i] != NULL; i++)
     {
@@ -1678,6 +1722,7 @@ flatpak_context_save_metadata (FlatpakContext *context,
   g_auto(GStrv) sockets = NULL;
   g_auto(GStrv) devices = NULL;
   g_auto(GStrv) features = NULL;
+  g_autoptr(GPtrArray) unset_env = NULL;
   GHashTableIter iter;
   gpointer key, value;
   FlatpakContextShares shares_mask = context->shares;
@@ -1846,15 +1891,43 @@ flatpak_context_save_metadata (FlatpakContext *context,
                              (char *) key, flatpak_policy_to_string (policy));
     }
 
+  /* Elements are borrowed from context->env_vars */
+  unset_env = g_ptr_array_new ();
+
   g_key_file_remove_group (metakey, FLATPAK_METADATA_GROUP_ENVIRONMENT, NULL);
   g_hash_table_iter_init (&iter, context->env_vars);
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
-      g_key_file_set_string (metakey,
-                             FLATPAK_METADATA_GROUP_ENVIRONMENT,
-                             (char *) key, (char *) value);
+      if (value != NULL)
+        {
+          g_key_file_set_string (metakey,
+                                 FLATPAK_METADATA_GROUP_ENVIRONMENT,
+                                 (char *) key, (char *) value);
+        }
+      else
+        {
+          /* In older versions of Flatpak, [Environment] FOO=
+           * was interpreted as unsetting - so let's do both. */
+          g_key_file_set_string (metakey,
+                                 FLATPAK_METADATA_GROUP_ENVIRONMENT,
+                                 (char *) key, "");
+          g_ptr_array_add (unset_env, key);
+        }
     }
 
+  if (unset_env->len > 0)
+    {
+      g_ptr_array_add (unset_env, NULL);
+      g_key_file_set_string_list (metakey, FLATPAK_METADATA_GROUP_CONTEXT,
+                                  FLATPAK_METADATA_KEY_UNSET_ENVIRONMENT,
+                                  (const char * const *) unset_env->pdata,
+                                  unset_env->len - 1);
+    }
+  else
+    {
+      g_key_file_remove_key (metakey, FLATPAK_METADATA_GROUP_CONTEXT,
+                             FLATPAK_METADATA_KEY_UNSET_ENVIRONMENT, NULL);
+    }
 
   groups = g_key_file_get_groups (metakey, NULL);
   for (i = 0; groups[i] != NULL; i++)
@@ -2053,7 +2126,12 @@ flatpak_context_to_args (FlatpakContext *context,
 
   g_hash_table_iter_init (&iter, context->env_vars);
   while (g_hash_table_iter_next (&iter, &key, &value))
-    g_ptr_array_add (args, g_strdup_printf ("--env=%s=%s", (char *) key, (char *) value));
+    {
+      if (value != NULL)
+        g_ptr_array_add (args, g_strdup_printf ("--env=%s=%s", (char *) key, (char *) value));
+      else
+        g_ptr_array_add (args, g_strdup_printf ("--unset-env=%s", (char *) key));
+    }
 
   g_hash_table_iter_init (&iter, context->persistent);
   while (g_hash_table_iter_next (&iter, &key, &value))

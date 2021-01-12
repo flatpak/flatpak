@@ -303,6 +303,13 @@ test_full_context (void)
                         FLATPAK_METADATA_GROUP_ENVIRONMENT,
                         "HYPOTHETICAL_PATH", "/foo:/bar");
   g_key_file_set_value (keyfile,
+                        FLATPAK_METADATA_GROUP_ENVIRONMENT,
+                        "LD_PRELOAD", "");
+  g_key_file_set_value (keyfile,
+                        FLATPAK_METADATA_GROUP_CONTEXT,
+                        FLATPAK_METADATA_KEY_UNSET_ENVIRONMENT,
+                        "LD_PRELOAD;LD_AUDIT;");
+  g_key_file_set_value (keyfile,
                         FLATPAK_METADATA_GROUP_PREFIX_POLICY "MyPolicy",
                         "Colours", "blue;green;");
 
@@ -342,6 +349,15 @@ test_full_context (void)
                      FLATPAK_RUN_FLAG_MULTIARCH |
                      FLATPAK_RUN_FLAG_BLUETOOTH |
                      FLATPAK_RUN_FLAG_CANBUS));
+
+  g_assert_cmpuint (g_hash_table_size (context->env_vars), ==, 3);
+  g_assert_true (g_hash_table_contains (context->env_vars, "LD_AUDIT"));
+  g_assert_null (g_hash_table_lookup (context->env_vars, "LD_AUDIT"));
+  g_assert_true (g_hash_table_contains (context->env_vars, "LD_PRELOAD"));
+  g_assert_null (g_hash_table_lookup (context->env_vars, "LD_PRELOAD"));
+  g_assert_true (g_hash_table_contains (context->env_vars, "HYPOTHETICAL_PATH"));
+  g_assert_cmpstr (g_hash_table_lookup (context->env_vars, "HYPOTHETICAL_PATH"),
+                   ==, "/foo:/bar");
 
   exports = flatpak_context_get_exports (context, "com.example.App");
   g_assert_nonnull (exports);
@@ -442,6 +458,20 @@ test_full_context (void)
   g_assert_cmpuint (i, ==, n);
   g_clear_pointer (&strv, g_strfreev);
 
+  strv = g_key_file_get_string_list (keyfile, FLATPAK_METADATA_GROUP_CONTEXT,
+                                     FLATPAK_METADATA_KEY_UNSET_ENVIRONMENT,
+                                     &n, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (strv);
+  g_qsort_with_data (strv, n, sizeof (char *),
+                     (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
+  i = 0;
+  g_assert_cmpstr (strv[i++], ==, "LD_AUDIT");
+  g_assert_cmpstr (strv[i++], ==, "LD_PRELOAD");
+  g_assert_cmpstr (strv[i], ==, NULL);
+  g_assert_cmpuint (i, ==, n);
+  g_clear_pointer (&strv, g_strfreev);
+
   strv = g_key_file_get_keys (keyfile, FLATPAK_METADATA_GROUP_SESSION_BUS_POLICY,
                               &n, &error);
   g_assert_no_error (error);
@@ -486,6 +516,8 @@ test_full_context (void)
                      (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
   i = 0;
   g_assert_cmpstr (strv[i++], ==, "HYPOTHETICAL_PATH");
+  g_assert_cmpstr (strv[i++], ==, "LD_AUDIT");
+  g_assert_cmpstr (strv[i++], ==, "LD_PRELOAD");
   g_assert_cmpstr (strv[i], ==, NULL);
   g_assert_cmpuint (i, ==, n);
   g_clear_pointer (&strv, g_strfreev);
@@ -494,6 +526,16 @@ test_full_context (void)
                                 "HYPOTHETICAL_PATH", &error);
   g_assert_no_error (error);
   g_assert_cmpstr (text, ==, "/foo:/bar");
+  g_clear_pointer (&text, g_free);
+  text = g_key_file_get_string (keyfile, FLATPAK_METADATA_GROUP_ENVIRONMENT,
+                                "LD_AUDIT", &error);
+  g_assert_no_error (error);
+  g_assert_cmpstr (text, ==, "");
+  g_clear_pointer (&text, g_free);
+  text = g_key_file_get_string (keyfile, FLATPAK_METADATA_GROUP_ENVIRONMENT,
+                                "LD_PRELOAD", &error);
+  g_assert_no_error (error);
+  g_assert_cmpstr (text, ==, "");
   g_clear_pointer (&text, g_free);
 
   strv = g_key_file_get_keys (keyfile, FLATPAK_METADATA_GROUP_PREFIX_POLICY "MyPolicy",

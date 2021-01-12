@@ -483,6 +483,15 @@
                         are not allowed.
                     </para></listitem>
                 </varlistentry>
+                <varlistentry>
+                    <term><option>unset-environment</option> (list)</term>
+                    <listitem><para>
+                        A list of names of environment variables to unset.
+                        Note that environment variables to set to a value
+                        (possibly empty) appear in the [Environment]
+                        group instead.
+                    </para></listitem>
+                </varlistentry>
             </variablelist>
         </refsect2>
         <refsect2>
@@ -707,6 +716,12 @@
                 where <option>VAR</option> is the name of an environment variable
                 to set.
             </para>
+            <para>
+                Note that environment variables can also be unset (removed
+                from the environment) by listing them in the
+                <option>unset-environment</option> entry of the
+                [Context] group.
+              </para>
         </refsect2>
         <refsect2>
             <title>[Extension NAME]</title>

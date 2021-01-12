@@ -70,6 +70,7 @@ reset_overrides
 
 ${FLATPAK} override --user --env=FOO=BAR org.test.Hello
 ${FLATPAK} override --user --env=BAR= org.test.Hello
+${FLATPAK} override --user --unset-env=CLEARME org.test.Hello
 # --env-fd with terminating \0 (strictly as documented).
 printf '%s\0' "SECRET_TOKEN=3047225e-5e38-4357-b21c-eac83b7e8ea6" > env.3
 # --env-fd without terminating \0 (which we also accept).
@@ -88,20 +89,22 @@ assert_file_has_content override "^BAR=$"
 assert_file_has_content override "^SECRET_TOKEN=3047225e-5e38-4357-b21c-eac83b7e8ea6$"
 assert_file_has_content override "^TMPDIR=/nonexistent/tmp$"
 assert_file_has_content override "^TZDIR=/nonexistent/tz$"
+assert_file_has_content override "^unset-environment=CLEARME;$"
 
 ok "override --env"
 
 if skip_one_without_bwrap "sandbox environment variables"; then
   :
 else
-  ${FLATPAK} run --command=bash org.test.Hello \
-      -c 'echo "FOO=$FOO"; echo "BAR=${BAR-unset}"; echo "SECRET_TOKEN=$SECRET_TOKEN"; echo "TMPDIR=$TMPDIR"; echo "TZDIR=$TZDIR"' > out
+  CLEARME=wrong ${FLATPAK} run --command=bash org.test.Hello \
+      -c 'echo "FOO=$FOO"; echo "BAR=${BAR-unset}"; echo "SECRET_TOKEN=$SECRET_TOKEN"; echo "TMPDIR=$TMPDIR"; echo "TZDIR=$TZDIR"; echo "CLEARME=${CLEARME-unset}"' > out
   assert_file_has_content out '^FOO=BAR$'
   assert_file_has_content out '^BAR=$'
   assert_file_has_content out '^SECRET_TOKEN=3047225e-5e38-4357-b21c-eac83b7e8ea6$'
   # The variables that would be filtered out by a setuid bwrap get set
   assert_file_has_content out '^TZDIR=/nonexistent/tz$'
   assert_file_has_content out '^TMPDIR=/nonexistent/tmp$'
+  assert_file_has_content out '^CLEARME=unset$'
   ${FLATPAK} run --command=cat org.test.Hello -- /proc/1/cmdline > out
   # The secret doesn't end up in bubblewrap's cmdline where other users
   # could see it
@@ -116,20 +119,22 @@ if skip_one_without_bwrap "temporary environment variables"; then
   :
 else
   ${FLATPAK} override --user --env=FOO=wrong org.test.Hello
-  ${FLATPAK} override --user --env=BAR=wrong org.test.Hello
+  ${FLATPAK} override --user --unset-env=BAR org.test.Hello
   ${FLATPAK} override --user --env=SECRET_TOKEN=wrong org.test.Hello
   ${FLATPAK} override --user --env=TMPDIR=/nonexistent/wrong org.test.Hello
   ${FLATPAK} override --user --env=TZDIR=/nonexistent/wrong org.test.Hello
+  ${FLATPAK} override --user --env=CLEARME=wrong org.test.Hello
   ${FLATPAK} override --user --show org.test.Hello > override
 
-  ${FLATPAK} run --command=bash \
+  CLEARME=also-wrong ${FLATPAK} run --command=bash \
       --filesystem="${test_tmpdir}" \
+      --unset-env=CLEARME \
       --env=FOO=BAR \
       --env=BAR= \
       --env-fd=3 \
       --env-fd=4 \
       org.test.Hello \
-      -c 'echo "FOO=$FOO"; echo "BAR=$BAR"; echo "SECRET_TOKEN=$SECRET_TOKEN"; echo "TMPDIR=$TMPDIR"; echo "TZDIR=$TZDIR"' \
+      -c 'echo "FOO=$FOO"; echo "BAR=${BAR-unset}"; echo "SECRET_TOKEN=$SECRET_TOKEN"; echo "TMPDIR=$TMPDIR"; echo "TZDIR=$TZDIR"; echo "CLEARME=${CLEARME-unset}"' \
       3<env.3 4<env.4 > out
   # The versions from `flatpak run` overrule `flatpak override`
   assert_file_has_content out '^FOO=BAR$'
@@ -137,6 +142,7 @@ else
   assert_file_has_content out '^SECRET_TOKEN=3047225e-5e38-4357-b21c-eac83b7e8ea6$'
   assert_file_has_content out '^TZDIR=/nonexistent/tz$'
   assert_file_has_content out '^TMPDIR=/nonexistent/tmp$'
+  assert_file_has_content out '^CLEARME=unset$'
   ${FLATPAK} run --command=cat org.test.Hello -- /proc/1/cmdline > out
   # The secret doesn't end up in bubblewrap's cmdline where other users
   # could see it
