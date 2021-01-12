@@ -990,6 +990,11 @@ handle_spawn (PortalFlatpak         *object,
         fd_map[i].to = ++max_fd;
     }
 
+  /* TODO: Ideally we should let `flatpak run` inherit the portal's
+   * environment, in case e.g. a LD_LIBRARY_PATH is needed to be able
+   * to run `flatpak run`, but tell it to start from a blank environment
+   * when running the Flatpak app; but this isn't currently possible, so
+   * for now we preserve existing behaviour. */
   if (arg_flags & FLATPAK_SPAWN_FLAGS_CLEAR_ENV)
     {
       char *empty[] = { NULL };
