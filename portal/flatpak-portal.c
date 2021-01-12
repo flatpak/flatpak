@@ -775,6 +775,7 @@ handle_spawn (PortalFlatpak         *object,
   g_auto(GStrv) shares = NULL;
   g_auto(GStrv) sockets = NULL;
   g_auto(GStrv) devices = NULL;
+  g_auto(GStrv) unset_env = NULL;
   g_auto(GStrv) sandbox_expose = NULL;
   g_auto(GStrv) sandbox_expose_ro = NULL;
   g_autoptr(GVariant) sandbox_expose_fd = NULL;
@@ -874,6 +875,7 @@ handle_spawn (PortalFlatpak         *object,
   g_variant_lookup (arg_options, "sandbox-flags", "u", &sandbox_flags);
   sandbox_expose_fd = g_variant_lookup_value (arg_options, "sandbox-expose-fd", G_VARIANT_TYPE ("ah"));
   sandbox_expose_fd_ro = g_variant_lookup_value (arg_options, "sandbox-expose-fd-ro", G_VARIANT_TYPE ("ah"));
+  g_variant_lookup (arg_options, "unset-env", "^as", &unset_env);
 
   if ((sandbox_flags & ~FLATPAK_SPAWN_SANDBOX_FLAGS_ALL) != 0)
     {
@@ -1124,6 +1126,30 @@ handle_spawn (PortalFlatpak         *object,
       g_ptr_array_add (flatpak_argv,
                        g_strdup_printf ("--env-fd=%d",
                                         child_setup_data.env_fd));
+    }
+
+  for (i = 0; unset_env != NULL && unset_env[i] != NULL; i++)
+    {
+      const char *var = unset_env[i];
+
+      if (var[0] == '\0')
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
+                                                 G_DBUS_ERROR_INVALID_ARGS,
+                                                 "Environment variable cannot have empty name");
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
+        }
+
+      if (strchr (var, '=') != NULL)
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
+                                                 G_DBUS_ERROR_INVALID_ARGS,
+                                                 "Environment variable name cannot contain '='");
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
+        }
+
+      g_ptr_array_add (flatpak_argv,
+                       g_strdup_printf ("--unset-env=%s", var));
     }
 
   expose_pids = (arg_flags & FLATPAK_SPAWN_FLAGS_EXPOSE_PIDS) != 0;

@@ -223,6 +223,14 @@
              This was added in version 3 of this interface (available from flatpak 1.6.0 and later).
              </para></listitem>
            </varlistentry>
+           <varlistentry>
+             <term>unset-env as</term>
+             <listitem><para>
+             A list of environment variables to unset (remove from the environment).
+             </para><para>
+             This was added in version 5 of this interface (available from flatpak 1.10.0 and later).
+             </para></listitem>
+           </varlistentry>
          </variablelist>
 
     -->
