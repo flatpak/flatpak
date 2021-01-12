@@ -29,11 +29,13 @@ flatpak_portal_SOURCES = \
 	portal/flatpak-portal-app-info.h		\
 	common/flatpak-portal-error.c	\
 	common/flatpak-portal-error.h	\
+	common/flatpak-utils-memfd.c \
+	common/flatpak-utils-memfd-private.h \
 	$(NULL)
 
 BUILT_SOURCES += $(nodist_flatpak_portal_SOURCES)
 CLEANFILES += $(nodist_flatpak_portal_SOURCES)
 
-flatpak_portal_LDADD = $(AM_LDADD) $(BASE_LIBS)
+flatpak_portal_LDADD = $(AM_LDADD) $(BASE_LIBS) libglnx.la
 flatpak_portal_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) -DFLATPAK_COMPILATION
 flatpak_portal_CPPFLAGS = $(AM_CPPFLAGS) -I$(builddir)/portal
