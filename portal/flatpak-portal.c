@@ -249,6 +249,7 @@ typedef struct
   int         fd_map_len;
   gboolean    set_tty;
   int         tty;
+  int         env_fd;
 } ChildSetupData;
 
 static void
@@ -266,6 +267,9 @@ child_setup_func (gpointer user_data)
   int i;
 
   flatpak_close_fds_workaround (3);
+
+  if (data->env_fd != -1)
+    drop_cloexec (data->env_fd);
 
   /* Unblock all signals */
   sigemptyset (&set);
@@ -553,6 +557,9 @@ handle_spawn (PortalFlatpak         *object,
   gboolean sandboxed;
   gboolean devel;
   gboolean expose_pids;
+  g_autoptr(GString) env_string = g_string_new ("");
+
+  child_setup_data.env_fd = -1;
 
   if (fd_list != NULL)
     fds = g_unix_fd_list_peek_fds (fd_list, &fds_len);
@@ -805,7 +812,49 @@ handle_spawn (PortalFlatpak         *object,
   else
     {
       for (i = 0; extra_args != NULL && extra_args[i] != NULL; i++)
-        g_ptr_array_add (flatpak_argv, g_strdup (extra_args[i]));
+        {
+          if (g_str_has_prefix (extra_args[i], "--env="))
+            {
+              const char *var_val = extra_args[i] + strlen ("--env=");
+
+              if (var_val[0] == '\0' || var_val[0] == '=')
+                {
+                  g_warning ("Environment variable in extra-args has empty name");
+                  continue;
+                }
+
+              if (strchr (var_val, '=') == NULL)
+                {
+                  g_warning ("Environment variable in extra-args has no value");
+                  continue;
+                }
+
+              g_string_append (env_string, var_val);
+              g_string_append_c (env_string, '\0');
+            }
+          else
+            {
+              g_ptr_array_add (flatpak_argv, g_strdup (extra_args[i]));
+            }
+        }
+    }
+
+  if (env_string->len > 0)
+    {
+      g_auto(GLnxTmpfile) env_tmpf  = { 0, };
+
+      if (!flatpak_buffer_to_sealed_memfd_or_tmpfile (&env_tmpf, "environ",
+                                                      env_string->str,
+                                                      env_string->len, &error))
+        {
+          g_dbus_method_invocation_return_gerror (invocation, error);
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
+        }
+
+      child_setup_data.env_fd = glnx_steal_fd (&env_tmpf.fd);
+      g_ptr_array_add (flatpak_argv,
+                       g_strdup_printf ("--env-fd=%d",
+                                        child_setup_data.env_fd));
     }
 
   expose_pids = (arg_flags & FLATPAK_SPAWN_FLAGS_EXPOSE_PIDS) != 0;
