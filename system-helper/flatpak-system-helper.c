@@ -297,6 +297,12 @@ static void
 flatpak_invocation_return_error (GDBusMethodInvocation *invocation,
                                  GError                *error,
                                  const char            *fmt,
+                                 ...) G_GNUC_PRINTF (3, 4);
+
+static void
+flatpak_invocation_return_error (GDBusMethodInvocation *invocation,
+                                 GError                *error,
+                                 const char            *fmt,
                                  ...)
 {
   if (error->domain == FLATPAK_ERROR)
