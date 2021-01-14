@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2020-12-22 14:58+0100\n"
+"POT-Creation-Date: 2021-01-14 09:40+0100\n"
 "PO-Revision-Date: 2020-06-08 19:25+0300\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <kde-i18n-uk@kde.org>\n"
@@ -259,7 +259,7 @@ msgstr "Немає точки розширення, яка відповідає 
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Пропущено «=» у параметрі монтування прив’язки «%s»"
 
-#: app/flatpak-builtins-build.c:591 common/flatpak-run.c:3982
+#: app/flatpak-builtins-build.c:591 common/flatpak-run.c:3978
 msgid "Unable to start app"
 msgstr "Не вдалося запустити програму"
 
@@ -3904,150 +3904,158 @@ msgstr ""
 msgid "Invalid env format %s"
 msgstr "Некоректне форматування середовища, %s"
 
-#: common/flatpak-context.c:1153 common/flatpak-context.c:1161
+#: common/flatpak-context.c:1212 common/flatpak-context.c:1220
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 "Аргументи --add-policy має бути записано у такому форматі: ПІДСИСТЕМА."
 "КЛЮЧ=ЗНАЧЕННЯ"
 
-#: common/flatpak-context.c:1168
+#: common/flatpak-context.c:1227
 msgid "--add-policy values can't start with \"!\""
 msgstr "Значення --add-policy не можуть починатися з «!»"
 
-#: common/flatpak-context.c:1193 common/flatpak-context.c:1201
+#: common/flatpak-context.c:1252 common/flatpak-context.c:1260
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 "Аргументи --remove-policy має бути записано у такому форматі: ПІДСИСТЕМА."
 "КЛЮЧ=ЗНАЧЕННЯ"
 
-#: common/flatpak-context.c:1208
+#: common/flatpak-context.c:1267
 msgid "--remove-policy values can't start with \"!\""
 msgstr "Значення --remove-policy не можуть починатися з «!»"
 
-#: common/flatpak-context.c:1234
+#: common/flatpak-context.c:1293
 msgid "Share with host"
 msgstr "Надати спільний доступ вузлу"
 
-#: common/flatpak-context.c:1234 common/flatpak-context.c:1235
+#: common/flatpak-context.c:1293 common/flatpak-context.c:1294
 msgid "SHARE"
 msgstr "СПІЛЬНИЙ РЕСУРС"
 
-#: common/flatpak-context.c:1235
+#: common/flatpak-context.c:1294
 msgid "Unshare with host"
 msgstr "Скасувати надання спільного ресурсу вузлу"
 
-#: common/flatpak-context.c:1236
+#: common/flatpak-context.c:1295
 msgid "Expose socket to app"
 msgstr "Відкрити сокет програмі"
 
-#: common/flatpak-context.c:1236 common/flatpak-context.c:1237
+#: common/flatpak-context.c:1295 common/flatpak-context.c:1296
 msgid "SOCKET"
 msgstr "СОКЕТ"
 
-#: common/flatpak-context.c:1237
+#: common/flatpak-context.c:1296
 msgid "Don't expose socket to app"
 msgstr "Не відкривати сокет програми"
 
-#: common/flatpak-context.c:1238
+#: common/flatpak-context.c:1297
 msgid "Expose device to app"
 msgstr "Відкрити пристрій програмі"
 
-#: common/flatpak-context.c:1238 common/flatpak-context.c:1239
+#: common/flatpak-context.c:1297 common/flatpak-context.c:1298
 msgid "DEVICE"
 msgstr "ПРИСТРІЙ"
 
-#: common/flatpak-context.c:1239
+#: common/flatpak-context.c:1298
 msgid "Don't expose device to app"
 msgstr "Не відкривати пристрій програмі"
 
-#: common/flatpak-context.c:1240
+#: common/flatpak-context.c:1299
 msgid "Allow feature"
 msgstr "Увімкнути можливість"
 
-#: common/flatpak-context.c:1240 common/flatpak-context.c:1241
+#: common/flatpak-context.c:1299 common/flatpak-context.c:1300
 msgid "FEATURE"
 msgstr "МОЖЛИВІСТЬ"
 
-#: common/flatpak-context.c:1241
+#: common/flatpak-context.c:1300
 msgid "Don't allow feature"
 msgstr "Вимкнути можливість"
 
-#: common/flatpak-context.c:1242
+#: common/flatpak-context.c:1301
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr "Відкрити файлову систему програмі (:ro — лише для читання)"
 
-#: common/flatpak-context.c:1242
+#: common/flatpak-context.c:1301
 msgid "FILESYSTEM[:ro]"
 msgstr "ФАЙЛОВА_СИСТЕМА[:ro]"
 
-#: common/flatpak-context.c:1243
+#: common/flatpak-context.c:1302
 msgid "Don't expose filesystem to app"
 msgstr "Не відкривати файлову систему програмі"
 
-#: common/flatpak-context.c:1243
+#: common/flatpak-context.c:1302
 msgid "FILESYSTEM"
 msgstr "ФАЙЛОВА СИСТЕМА"
 
-#: common/flatpak-context.c:1244
+#: common/flatpak-context.c:1303
 msgid "Set environment variable"
 msgstr "Встановити змінну середовища"
 
-#: common/flatpak-context.c:1244
+#: common/flatpak-context.c:1303
 msgid "VAR=VALUE"
 msgstr "ЗМІННА=ЗНАЧЕННЯ"
 
-#: common/flatpak-context.c:1245
+#: common/flatpak-context.c:1304
+msgid "Read environment variables in env -0 format from FD"
+msgstr ""
+
+#: common/flatpak-context.c:1304
+msgid "FD"
+msgstr ""
+
+#: common/flatpak-context.c:1305
 msgid "Allow app to own name on the session bus"
 msgstr "Дозволити програмі бути власником назви на каналі сеансу"
 
-#: common/flatpak-context.c:1245 common/flatpak-context.c:1246
-#: common/flatpak-context.c:1247 common/flatpak-context.c:1248
-#: common/flatpak-context.c:1249 common/flatpak-context.c:1250
+#: common/flatpak-context.c:1305 common/flatpak-context.c:1306
+#: common/flatpak-context.c:1307 common/flatpak-context.c:1308
+#: common/flatpak-context.c:1309 common/flatpak-context.c:1310
 msgid "DBUS_NAME"
 msgstr "НАЗВА_DBUS"
 
-#: common/flatpak-context.c:1246
+#: common/flatpak-context.c:1306
 msgid "Allow app to talk to name on the session bus"
 msgstr "Дозволити програмі обмінюватися даними з назвою на каналі сеансу"
 
-#: common/flatpak-context.c:1247
+#: common/flatpak-context.c:1307
 msgid "Don't allow app to talk to name on the session bus"
 msgstr "Заборонити програмі обмінюватися даними з назвою на каналі сеансу"
 
-#: common/flatpak-context.c:1248
+#: common/flatpak-context.c:1308
 msgid "Allow app to own name on the system bus"
 msgstr "Дозволити програмі бути власником назви на каналі системи"
 
-#: common/flatpak-context.c:1249
+#: common/flatpak-context.c:1309
 msgid "Allow app to talk to name on the system bus"
 msgstr "Дозволити програмі обмінюватися даними з назвою на каналі системи"
 
-#: common/flatpak-context.c:1250
+#: common/flatpak-context.c:1310
 msgid "Don't allow app to talk to name on the system bus"
 msgstr "Заборонити програмі обмінюватися даними з назвою на каналі системи"
 
-#: common/flatpak-context.c:1251
+#: common/flatpak-context.c:1311
 msgid "Add generic policy option"
 msgstr "Додати параметр загальних правил"
 
-#: common/flatpak-context.c:1251 common/flatpak-context.c:1252
+#: common/flatpak-context.c:1311 common/flatpak-context.c:1312
 msgid "SUBSYSTEM.KEY=VALUE"
 msgstr "ПІДСИСТЕМА.КЛЮЧ=ЗНАЧЕННЯ"
 
-#: common/flatpak-context.c:1252
+#: common/flatpak-context.c:1312
 msgid "Remove generic policy option"
 msgstr "Вилучити параметр загальних правил"
 
-#: common/flatpak-context.c:1253
+#: common/flatpak-context.c:1313
 msgid "Persist home directory subpath"
 msgstr "Не змінювати підшлях домашнього каталогу"
 
-#: common/flatpak-context.c:1253
+#: common/flatpak-context.c:1313
 msgid "FILENAME"
 msgstr "НАЗВА ФАЙЛА"
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-context.c:1255
+#: common/flatpak-context.c:1315
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "Не вимагати запущеного сеансу (без створення cgroup)"
 
@@ -4663,92 +4671,92 @@ msgstr "Не вдалося виконати синхронізацію із п�
 msgid "Failed to determine parts from ref: %s"
 msgstr "Не вдалося визначити частини на основі посилання: %s"
 
-#: common/flatpak-run.c:1677
+#: common/flatpak-run.c:1659
 msgid "No systemd user session available, cgroups not available"
 msgstr "Немає доступного сеансу користувача systemd, cgroups є недоступними"
 
-#: common/flatpak-run.c:2226
+#: common/flatpak-run.c:2208
 msgid "Unable to allocate instance id"
 msgstr "Не вдалося розмістити у пам'яті ідентифікатор екземпляра"
 
-#: common/flatpak-run.c:2346 common/flatpak-run.c:2356
+#: common/flatpak-run.c:2328 common/flatpak-run.c:2338
 #, c-format
 msgid "Failed to open flatpak-info file: %s"
 msgstr "Не вдалося відкрити файл flatpak-info: %s"
 
-#: common/flatpak-run.c:2376
+#: common/flatpak-run.c:2358
 #, c-format
 msgid "Failed to open bwrapinfo.json file: %s"
 msgstr "Не вдалося відкрити файл bwrapinfo.json: %s"
 
-#: common/flatpak-run.c:2401
+#: common/flatpak-run.c:2383
 #, fuzzy, c-format
 msgid "Failed to write to instance id fd: %s"
 msgstr "Не вдалося записати кеш резюме: "
 
-#: common/flatpak-run.c:2721
+#: common/flatpak-run.c:2703
 msgid "Initialize seccomp failed"
 msgstr "Не вдалося ініціалізувати seccomp"
 
-#: common/flatpak-run.c:2760
+#: common/flatpak-run.c:2742
 msgid "Failed to add architecture to seccomp filter"
 msgstr "Не вдалося додати архітектуру до фільтра seccomp"
 
-#: common/flatpak-run.c:2769
+#: common/flatpak-run.c:2751
 msgid "Failed to add multiarch architecture to seccomp filter"
 msgstr "Не вдалося додати архітектуру multiarch до фільтра seccomp"
 
 #. unknown syscall
-#: common/flatpak-run.c:2788 common/flatpak-run.c:2802
+#: common/flatpak-run.c:2770 common/flatpak-run.c:2784
 #, c-format
 msgid "Failed to block syscall %d"
 msgstr "Не вдалося заблокувати системний виклик %d"
 
-#: common/flatpak-run.c:2833
+#: common/flatpak-run.c:2815
 msgid "Failed to export bpf"
 msgstr "Не вдалося експортувати bpf"
 
-#: common/flatpak-run.c:3068
+#: common/flatpak-run.c:3050
 #, c-format
 msgid "Failed to open ‘%s’"
 msgstr "Не вдалося відкрити «%s»"
 
-#: common/flatpak-run.c:3352
+#: common/flatpak-run.c:3334
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "Помилка ldconfig, стан виходу %d"
 
-#: common/flatpak-run.c:3359
+#: common/flatpak-run.c:3341
 msgid "Can't open generated ld.so.cache"
 msgstr "Не вдалося відкрити створений ld.so.cache"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-run.c:3468
+#: common/flatpak-run.c:3450
 #, c-format
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr ""
 "Запуск %s заборонено правилами, які встановлено адміністратором вашої системи"
 
-#: common/flatpak-run.c:3510
+#: common/flatpak-run.c:3492
 msgid "\"flatpak run\" is not intended to be ran with sudo"
 msgstr "«flatpak run» не призначено для запуску за допомогою sudo"
 
-#: common/flatpak-run.c:3618
+#: common/flatpak-run.c:3600
 #, c-format
 msgid "Wrong number of components in runtime %s"
 msgstr "Помилкова кількість компонентів у середовищі виконання %s"
 
-#: common/flatpak-run.c:3726
+#: common/flatpak-run.c:3708
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "Не вдалося перенести з %s: %s"
 
-#: common/flatpak-run.c:3741
+#: common/flatpak-run.c:3723
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr "Не вдалося перенести каталог даних старої програми %s до нового %s: %s"
 
-#: common/flatpak-run.c:3750
+#: common/flatpak-run.c:3732
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "Не вдалося створити символічне посилання під час перенесення %s: %s"
@@ -5082,44 +5090,44 @@ msgstr ""
 msgid "Invalid token"
 msgstr "Некоректний ключ gpg"
 
-#: portal/flatpak-portal.c:1987
+#: portal/flatpak-portal.c:2061
 msgid "No portal support found"
 msgstr "Не виявлено підтримки порталу"
 
-#: portal/flatpak-portal.c:1993
+#: portal/flatpak-portal.c:2067
 msgid "Deny"
 msgstr "Заборонити"
 
-#: portal/flatpak-portal.c:1995
+#: portal/flatpak-portal.c:2069
 msgid "Update"
 msgstr "Оновлення"
 
-#: portal/flatpak-portal.c:2000
+#: portal/flatpak-portal.c:2074
 #, c-format
 msgid "Update %s?"
 msgstr "Оновити %s?"
 
-#: portal/flatpak-portal.c:2012
+#: portal/flatpak-portal.c:2086
 msgid "The application wants to update itself."
 msgstr "Програма хоче оновити саму себе."
 
-#: portal/flatpak-portal.c:2013
+#: portal/flatpak-portal.c:2087
 msgid "Update access can be changed any time from the privacy settings."
 msgstr ""
 "Параметри доступу до оновлення може бути будь-коли змінено за допомогою "
 "налаштувань конфіденційності."
 
-#: portal/flatpak-portal.c:2038
+#: portal/flatpak-portal.c:2112
 msgid "Application update not allowed"
 msgstr "Оновлення програми заборонено"
 
-#: portal/flatpak-portal.c:2195
+#: portal/flatpak-portal.c:2269
 msgid "Self update not supported, new version requires new permissions"
 msgstr ""
 "Підтримки самостійного оновлення не передбачено. Нова версія потребує нових "
 "прав доступу."
 
-#: portal/flatpak-portal.c:2377 portal/flatpak-portal.c:2394
+#: portal/flatpak-portal.c:2451 portal/flatpak-portal.c:2468
 msgid "Update ended unexpectedly"
 msgstr "Результати оновлення є неочікуваними"
 

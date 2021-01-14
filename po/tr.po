@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2020-12-22 14:58+0100\n"
+"POT-Creation-Date: 2021-01-14 09:40+0100\n"
 "PO-Revision-Date: 2019-05-13 07:32+0300\n"
 "Last-Translator: Serdar Sağlam <teknomobil@yandex.com>\n"
 "Language-Team: Türkçe <gnome-turk@gnome.org>\n"
@@ -258,7 +258,7 @@ msgstr "%s'e uyan eklenti noktası %s'te yok"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Bağlama noktası seçeneği '%s'te eksik '='"
 
-#: app/flatpak-builtins-build.c:591 common/flatpak-run.c:3982
+#: app/flatpak-builtins-build.c:591 common/flatpak-run.c:3978
 msgid "Unable to start app"
 msgstr "Uygulama başlatılamadı"
 
@@ -3953,147 +3953,155 @@ msgstr ""
 msgid "Invalid env format %s"
 msgstr "Geçersiz env formatı %s"
 
-#: common/flatpak-context.c:1153 common/flatpak-context.c:1161
+#: common/flatpak-context.c:1212 common/flatpak-context.c:1220
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 
-#: common/flatpak-context.c:1168
+#: common/flatpak-context.c:1227
 msgid "--add-policy values can't start with \"!\""
 msgstr ""
 
-#: common/flatpak-context.c:1193 common/flatpak-context.c:1201
+#: common/flatpak-context.c:1252 common/flatpak-context.c:1260
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 
-#: common/flatpak-context.c:1208
+#: common/flatpak-context.c:1267
 msgid "--remove-policy values can't start with \"!\""
 msgstr ""
 
-#: common/flatpak-context.c:1234
+#: common/flatpak-context.c:1293
 msgid "Share with host"
 msgstr "Makinayla paylaş"
 
-#: common/flatpak-context.c:1234 common/flatpak-context.c:1235
+#: common/flatpak-context.c:1293 common/flatpak-context.c:1294
 msgid "SHARE"
 msgstr "PAYLAŞ"
 
-#: common/flatpak-context.c:1235
+#: common/flatpak-context.c:1294
 msgid "Unshare with host"
 msgstr "Makinayla paylaşma"
 
-#: common/flatpak-context.c:1236
+#: common/flatpak-context.c:1295
 msgid "Expose socket to app"
 msgstr "Soketi uygulamaya göster"
 
-#: common/flatpak-context.c:1236 common/flatpak-context.c:1237
+#: common/flatpak-context.c:1295 common/flatpak-context.c:1296
 msgid "SOCKET"
 msgstr "SOKET"
 
-#: common/flatpak-context.c:1237
+#: common/flatpak-context.c:1296
 msgid "Don't expose socket to app"
 msgstr "Soketi uygulamaya gösterme"
 
-#: common/flatpak-context.c:1238
+#: common/flatpak-context.c:1297
 msgid "Expose device to app"
 msgstr "Cihazı uygulamaya göster"
 
-#: common/flatpak-context.c:1238 common/flatpak-context.c:1239
+#: common/flatpak-context.c:1297 common/flatpak-context.c:1298
 msgid "DEVICE"
 msgstr "CİHAZ"
 
-#: common/flatpak-context.c:1239
+#: common/flatpak-context.c:1298
 msgid "Don't expose device to app"
 msgstr "Cihazı uygulamaya gösterme"
 
-#: common/flatpak-context.c:1240
+#: common/flatpak-context.c:1299
 msgid "Allow feature"
 msgstr "Özelliğe izin ver"
 
-#: common/flatpak-context.c:1240 common/flatpak-context.c:1241
+#: common/flatpak-context.c:1299 common/flatpak-context.c:1300
 msgid "FEATURE"
 msgstr "ÖZELLİK"
 
-#: common/flatpak-context.c:1241
+#: common/flatpak-context.c:1300
 msgid "Don't allow feature"
 msgstr "Özelliğe izin verme"
 
-#: common/flatpak-context.c:1242
+#: common/flatpak-context.c:1301
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr "Dosya sistemini uygulamaya göster (salt-okuma için :ro)"
 
-#: common/flatpak-context.c:1242
+#: common/flatpak-context.c:1301
 msgid "FILESYSTEM[:ro]"
 msgstr "DOSYASİSTEMİ[:ro]"
 
-#: common/flatpak-context.c:1243
+#: common/flatpak-context.c:1302
 msgid "Don't expose filesystem to app"
 msgstr "Dosya sistemini uygulamaya gösterme"
 
-#: common/flatpak-context.c:1243
+#: common/flatpak-context.c:1302
 msgid "FILESYSTEM"
 msgstr "DOSYASİSTEMİ"
 
-#: common/flatpak-context.c:1244
+#: common/flatpak-context.c:1303
 msgid "Set environment variable"
 msgstr "Ortam değişkeni tanımla"
 
-#: common/flatpak-context.c:1244
+#: common/flatpak-context.c:1303
 msgid "VAR=VALUE"
 msgstr "DEĞİŞKEN=DEĞER"
 
-#: common/flatpak-context.c:1245
+#: common/flatpak-context.c:1304
+msgid "Read environment variables in env -0 format from FD"
+msgstr ""
+
+#: common/flatpak-context.c:1304
+msgid "FD"
+msgstr ""
+
+#: common/flatpak-context.c:1305
 msgid "Allow app to own name on the session bus"
 msgstr "Uygulamanın oturum veri yolunda kendi adı olmasına izin ver"
 
-#: common/flatpak-context.c:1245 common/flatpak-context.c:1246
-#: common/flatpak-context.c:1247 common/flatpak-context.c:1248
-#: common/flatpak-context.c:1249 common/flatpak-context.c:1250
+#: common/flatpak-context.c:1305 common/flatpak-context.c:1306
+#: common/flatpak-context.c:1307 common/flatpak-context.c:1308
+#: common/flatpak-context.c:1309 common/flatpak-context.c:1310
 msgid "DBUS_NAME"
 msgstr "DBUS_İSMİ"
 
-#: common/flatpak-context.c:1246
+#: common/flatpak-context.c:1306
 msgid "Allow app to talk to name on the session bus"
 msgstr "Uygulamanın oturum veri yolunda isme konuşmasına izin ver"
 
-#: common/flatpak-context.c:1247
+#: common/flatpak-context.c:1307
 msgid "Don't allow app to talk to name on the session bus"
 msgstr "Uygulamanın oturum veriyolunda adıyla konuşmasına izin verme"
 
-#: common/flatpak-context.c:1248
+#: common/flatpak-context.c:1308
 msgid "Allow app to own name on the system bus"
 msgstr "Uygulamanın sistem veri yolunda kendi adı olmasına izin ver"
 
-#: common/flatpak-context.c:1249
+#: common/flatpak-context.c:1309
 msgid "Allow app to talk to name on the system bus"
 msgstr "Uygulamanın sistem veri yolunda isme konuşmasına izin ver"
 
-#: common/flatpak-context.c:1250
+#: common/flatpak-context.c:1310
 msgid "Don't allow app to talk to name on the system bus"
 msgstr "Uygulamaya, sistem veriyolunda ad vermek için izin verme"
 
-#: common/flatpak-context.c:1251
+#: common/flatpak-context.c:1311
 msgid "Add generic policy option"
 msgstr "Genel ilke seçeneği ekle"
 
-#: common/flatpak-context.c:1251 common/flatpak-context.c:1252
+#: common/flatpak-context.c:1311 common/flatpak-context.c:1312
 msgid "SUBSYSTEM.KEY=VALUE"
 msgstr "ALTSİSTEM.ANAHTAR=DEĞER"
 
-#: common/flatpak-context.c:1252
+#: common/flatpak-context.c:1312
 msgid "Remove generic policy option"
 msgstr "Genel ilke seçeneğini kaldır"
 
-#: common/flatpak-context.c:1253
+#: common/flatpak-context.c:1313
 #, fuzzy
 msgid "Persist home directory subpath"
 msgstr "Ev dizinini koru"
 
-#: common/flatpak-context.c:1253
+#: common/flatpak-context.c:1313
 msgid "FILENAME"
 msgstr "DOSYAİSMİ"
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-context.c:1255
+#: common/flatpak-context.c:1315
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "Çalışan oturum gerektirme (cgroups yaratımı yok)"
 
@@ -4702,96 +4710,96 @@ msgstr "Dbus vekiliyle eşzamanlanamadı"
 msgid "Failed to determine parts from ref: %s"
 msgstr "Geçici dosya açılamadı: %s"
 
-#: common/flatpak-run.c:1677
+#: common/flatpak-run.c:1659
 msgid "No systemd user session available, cgroups not available"
 msgstr ""
 
-#: common/flatpak-run.c:2226
+#: common/flatpak-run.c:2208
 #, fuzzy
 msgid "Unable to allocate instance id"
 msgstr "Eşzamanlama veri yolu yaratılamadı"
 
-#: common/flatpak-run.c:2346 common/flatpak-run.c:2356
+#: common/flatpak-run.c:2328 common/flatpak-run.c:2338
 #, fuzzy, c-format
 msgid "Failed to open flatpak-info file: %s"
 msgstr "Flatpak-info geçici dosyası açılamadı: %s"
 
-#: common/flatpak-run.c:2376
+#: common/flatpak-run.c:2358
 #, fuzzy, c-format
 msgid "Failed to open bwrapinfo.json file: %s"
 msgstr "Flatpak-info geçici dosyası açılamadı: %s"
 
-#: common/flatpak-run.c:2401
+#: common/flatpak-run.c:2383
 #, fuzzy, c-format
 msgid "Failed to write to instance id fd: %s"
 msgstr "Geçici dosya oluşturulamadı"
 
-#: common/flatpak-run.c:2721
+#: common/flatpak-run.c:2703
 #, fuzzy
 msgid "Initialize seccomp failed"
 msgstr "Uygulamaları adlandırılmış uygulamadan ilklendir"
 
-#: common/flatpak-run.c:2760
+#: common/flatpak-run.c:2742
 #, fuzzy
 msgid "Failed to add architecture to seccomp filter"
 msgstr "Geçici dosyaya yazılamadı"
 
-#: common/flatpak-run.c:2769
+#: common/flatpak-run.c:2751
 msgid "Failed to add multiarch architecture to seccomp filter"
 msgstr ""
 
 #. unknown syscall
-#: common/flatpak-run.c:2788 common/flatpak-run.c:2802
+#: common/flatpak-run.c:2770 common/flatpak-run.c:2784
 #, fuzzy, c-format
 msgid "Failed to block syscall %d"
 msgstr "Hata: %2$s'i %1$s başarılamadı: %3$s\n"
 
-#: common/flatpak-run.c:2833
+#: common/flatpak-run.c:2815
 #, fuzzy
 msgid "Failed to export bpf"
 msgstr "Dışa aktarılmış dosyadan okunamadı"
 
-#: common/flatpak-run.c:3068
+#: common/flatpak-run.c:3050
 #, fuzzy, c-format
 msgid "Failed to open ‘%s’"
 msgstr "Flatpak-info geçici dosyası açılamadı: %s"
 
-#: common/flatpak-run.c:3352
+#: common/flatpak-run.c:3334
 #, fuzzy, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "apply_extra betiği başarısız oldu"
 
-#: common/flatpak-run.c:3359
+#: common/flatpak-run.c:3341
 #, fuzzy
 msgid "Can't open generated ld.so.cache"
 msgstr "%s ad alanı açılamadı: %s"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-run.c:3468
+#: common/flatpak-run.c:3450
 #, c-format
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr ""
 
-#: common/flatpak-run.c:3510
+#: common/flatpak-run.c:3492
 msgid "\"flatpak run\" is not intended to be ran with sudo"
 msgstr ""
 
-#: common/flatpak-run.c:3618
+#: common/flatpak-run.c:3600
 #, fuzzy, c-format
 msgid "Wrong number of components in runtime %s"
 msgstr "Çok fazla argüman"
 
-#: common/flatpak-run.c:3726
+#: common/flatpak-run.c:3708
 #, fuzzy, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "Değişiklik %s okunamadı:"
 
-#: common/flatpak-run.c:3741
+#: common/flatpak-run.c:3723
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr ""
 
-#: common/flatpak-run.c:3750
+#: common/flatpak-run.c:3732
 #, fuzzy, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "Değişiklik %s okunamadı:"
@@ -5122,42 +5130,42 @@ msgstr ""
 msgid "Invalid token"
 msgstr "Geçersiz gpg anahtarı"
 
-#: portal/flatpak-portal.c:1987
+#: portal/flatpak-portal.c:2061
 #, fuzzy
 msgid "No portal support found"
 msgstr "Özet bulunamadı"
 
-#: portal/flatpak-portal.c:1993
+#: portal/flatpak-portal.c:2067
 msgid "Deny"
 msgstr ""
 
-#: portal/flatpak-portal.c:1995
+#: portal/flatpak-portal.c:2069
 #, fuzzy
 msgid "Update"
 msgstr "güncelle"
 
-#: portal/flatpak-portal.c:2000
+#: portal/flatpak-portal.c:2074
 #, fuzzy, c-format
 msgid "Update %s?"
 msgstr "Güncelleniyor %s\n"
 
-#: portal/flatpak-portal.c:2012
+#: portal/flatpak-portal.c:2086
 msgid "The application wants to update itself."
 msgstr ""
 
-#: portal/flatpak-portal.c:2013
+#: portal/flatpak-portal.c:2087
 msgid "Update access can be changed any time from the privacy settings."
 msgstr ""
 
-#: portal/flatpak-portal.c:2038
+#: portal/flatpak-portal.c:2112
 msgid "Application update not allowed"
 msgstr ""
 
-#: portal/flatpak-portal.c:2195
+#: portal/flatpak-portal.c:2269
 msgid "Self update not supported, new version requires new permissions"
 msgstr ""
 
-#: portal/flatpak-portal.c:2377 portal/flatpak-portal.c:2394
+#: portal/flatpak-portal.c:2451 portal/flatpak-portal.c:2468
 #, fuzzy
 msgid "Update ended unexpectedly"
 msgstr "İmzalı çalışma ortamı güncelle"

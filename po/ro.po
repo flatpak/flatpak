@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2020-12-22 14:58+0100\n"
+"POT-Creation-Date: 2021-01-14 09:40+0100\n"
 "PO-Revision-Date: 2020-07-02 15:35+0200\n"
 "Last-Translator: Florentina Mușat <florentina [dot] musat [dot] 28 [at] "
 "gmail [dot] com>\n"
@@ -260,7 +260,7 @@ msgstr "Nu există un punct de extensie care potrivește %s în %s"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Lipsește „=” în opțiunea de montare de legătură „%s”"
 
-#: app/flatpak-builtins-build.c:591 common/flatpak-run.c:3982
+#: app/flatpak-builtins-build.c:591 common/flatpak-run.c:3978
 msgid "Unable to start app"
 msgstr "Nu se poate porni aplicația"
 
@@ -3907,148 +3907,156 @@ msgstr ""
 msgid "Invalid env format %s"
 msgstr "Format env nevalid %s"
 
-#: common/flatpak-context.c:1153 common/flatpak-context.c:1161
+#: common/flatpak-context.c:1212 common/flatpak-context.c:1220
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 "Argumentele --add-policy trebuie să fie sub forma CHEIE.SUBSISTEM=VALOARE"
 
-#: common/flatpak-context.c:1168
+#: common/flatpak-context.c:1227
 msgid "--add-policy values can't start with \"!\""
 msgstr "Valorile --add-policy nu pot începe cu „!”"
 
-#: common/flatpak-context.c:1193 common/flatpak-context.c:1201
+#: common/flatpak-context.c:1252 common/flatpak-context.c:1260
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 "Argumentele --remove-policy trebuie să fie sub forma CHEIE.SUBSISTEM=VALOARE"
 
-#: common/flatpak-context.c:1208
+#: common/flatpak-context.c:1267
 msgid "--remove-policy values can't start with \"!\""
 msgstr "Valorile --remove-policy nu pot începe cu „!”"
 
-#: common/flatpak-context.c:1234
+#: common/flatpak-context.c:1293
 msgid "Share with host"
 msgstr "Partajează cu gazda"
 
-#: common/flatpak-context.c:1234 common/flatpak-context.c:1235
+#: common/flatpak-context.c:1293 common/flatpak-context.c:1294
 msgid "SHARE"
 msgstr "PARTAJEAZĂ"
 
-#: common/flatpak-context.c:1235
+#: common/flatpak-context.c:1294
 msgid "Unshare with host"
 msgstr "Anulați partajarea cu gazda"
 
-#: common/flatpak-context.c:1236
+#: common/flatpak-context.c:1295
 msgid "Expose socket to app"
 msgstr "Expune soclul la aplicație"
 
-#: common/flatpak-context.c:1236 common/flatpak-context.c:1237
+#: common/flatpak-context.c:1295 common/flatpak-context.c:1296
 msgid "SOCKET"
 msgstr "SOCLU"
 
-#: common/flatpak-context.c:1237
+#: common/flatpak-context.c:1296
 msgid "Don't expose socket to app"
 msgstr "Nu expune soclul la aplicație"
 
-#: common/flatpak-context.c:1238
+#: common/flatpak-context.c:1297
 msgid "Expose device to app"
 msgstr "Expune dispozitivul la aplicație"
 
-#: common/flatpak-context.c:1238 common/flatpak-context.c:1239
+#: common/flatpak-context.c:1297 common/flatpak-context.c:1298
 msgid "DEVICE"
 msgstr "DISPOZITIV"
 
-#: common/flatpak-context.c:1239
+#: common/flatpak-context.c:1298
 msgid "Don't expose device to app"
 msgstr "Nu expune dispozitivul la aplicație"
 
-#: common/flatpak-context.c:1240
+#: common/flatpak-context.c:1299
 msgid "Allow feature"
 msgstr "Permite funcționalitatea"
 
-#: common/flatpak-context.c:1240 common/flatpak-context.c:1241
+#: common/flatpak-context.c:1299 common/flatpak-context.c:1300
 msgid "FEATURE"
 msgstr "FUNCȚIONALITATE"
 
-#: common/flatpak-context.c:1241
+#: common/flatpak-context.c:1300
 msgid "Don't allow feature"
 msgstr "Nu permite funcționalitatea"
 
-#: common/flatpak-context.c:1242
+#: common/flatpak-context.c:1301
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr "Expune sistemul de fișiere la aplicație (:ro pentru doar citire)"
 
-#: common/flatpak-context.c:1242
+#: common/flatpak-context.c:1301
 msgid "FILESYSTEM[:ro]"
 msgstr "SISTEMFIȘIERE[:ro]"
 
-#: common/flatpak-context.c:1243
+#: common/flatpak-context.c:1302
 msgid "Don't expose filesystem to app"
 msgstr "Nu expune sistemul de fișiere la aplicație"
 
-#: common/flatpak-context.c:1243
+#: common/flatpak-context.c:1302
 msgid "FILESYSTEM"
 msgstr "SISTEMFIȘIERE"
 
-#: common/flatpak-context.c:1244
+#: common/flatpak-context.c:1303
 msgid "Set environment variable"
 msgstr "Stabilește variabila de mediu"
 
-#: common/flatpak-context.c:1244
+#: common/flatpak-context.c:1303
 msgid "VAR=VALUE"
 msgstr "VAR=VALOARE"
 
-#: common/flatpak-context.c:1245
+#: common/flatpak-context.c:1304
+msgid "Read environment variables in env -0 format from FD"
+msgstr ""
+
+#: common/flatpak-context.c:1304
+msgid "FD"
+msgstr ""
+
+#: common/flatpak-context.c:1305
 msgid "Allow app to own name on the session bus"
 msgstr "Permite aplicației să posede un nume la magistrala sesiunii"
 
-#: common/flatpak-context.c:1245 common/flatpak-context.c:1246
-#: common/flatpak-context.c:1247 common/flatpak-context.c:1248
-#: common/flatpak-context.c:1249 common/flatpak-context.c:1250
+#: common/flatpak-context.c:1305 common/flatpak-context.c:1306
+#: common/flatpak-context.c:1307 common/flatpak-context.c:1308
+#: common/flatpak-context.c:1309 common/flatpak-context.c:1310
 msgid "DBUS_NAME"
 msgstr "NUME_DBUS"
 
-#: common/flatpak-context.c:1246
+#: common/flatpak-context.c:1306
 msgid "Allow app to talk to name on the session bus"
 msgstr "Permite aplicației să vorbească numelui la magistrala sesiunii"
 
-#: common/flatpak-context.c:1247
+#: common/flatpak-context.c:1307
 msgid "Don't allow app to talk to name on the session bus"
 msgstr "Nu permite aplicației să vorbească numelui la magistrala sesiunii"
 
-#: common/flatpak-context.c:1248
+#: common/flatpak-context.c:1308
 msgid "Allow app to own name on the system bus"
 msgstr "Permite aplicației să posede un nume la magistrala sistemului"
 
-#: common/flatpak-context.c:1249
+#: common/flatpak-context.c:1309
 msgid "Allow app to talk to name on the system bus"
 msgstr "Permite aplicației să vorbească numelui la magistrala sistemului"
 
-#: common/flatpak-context.c:1250
+#: common/flatpak-context.c:1310
 msgid "Don't allow app to talk to name on the system bus"
 msgstr "Nu permite aplicației să vorbească numelui la magistrala sistemului"
 
-#: common/flatpak-context.c:1251
+#: common/flatpak-context.c:1311
 msgid "Add generic policy option"
 msgstr "Adaugă o opțiune de politică generică"
 
-#: common/flatpak-context.c:1251 common/flatpak-context.c:1252
+#: common/flatpak-context.c:1311 common/flatpak-context.c:1312
 msgid "SUBSYSTEM.KEY=VALUE"
 msgstr "CHEIE.SUBSISTEM=VALOARE"
 
-#: common/flatpak-context.c:1252
+#: common/flatpak-context.c:1312
 msgid "Remove generic policy option"
 msgstr "Elimină opțiunea de politică generică"
 
-#: common/flatpak-context.c:1253
+#: common/flatpak-context.c:1313
 msgid "Persist home directory subpath"
 msgstr "Persistă subcalea directorului personal"
 
-#: common/flatpak-context.c:1253
+#: common/flatpak-context.c:1313
 msgid "FILENAME"
 msgstr "NUME FIȘIER"
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-context.c:1255
+#: common/flatpak-context.c:1315
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "Nu necesită o sesiune care rulează (nicio creare de cgroups)"
 
@@ -4669,96 +4677,96 @@ msgstr "Nu s-a putut sincroniza cu proxy-ul dbus"
 msgid "Failed to determine parts from ref: %s"
 msgstr "Nu s-au putut determina părțile de la ref-ul: %s"
 
-#: common/flatpak-run.c:1677
+#: common/flatpak-run.c:1659
 msgid "No systemd user session available, cgroups not available"
 msgstr ""
 "Nu este disponibilă nicio sesiune de utilizator systemd, cgroups nu sunt "
 "disponibile"
 
-#: common/flatpak-run.c:2226
+#: common/flatpak-run.c:2208
 msgid "Unable to allocate instance id"
 msgstr "Nu se poate aloca id-ul de instanță"
 
-#: common/flatpak-run.c:2346 common/flatpak-run.c:2356
+#: common/flatpak-run.c:2328 common/flatpak-run.c:2338
 #, c-format
 msgid "Failed to open flatpak-info file: %s"
 msgstr "Nu s-a putut deschide fișierul de informații flatpak: %s"
 
-#: common/flatpak-run.c:2376
+#: common/flatpak-run.c:2358
 #, c-format
 msgid "Failed to open bwrapinfo.json file: %s"
 msgstr "Nu s-a putut deschide fișierul bwrapinfo.json: %s"
 
-#: common/flatpak-run.c:2401
+#: common/flatpak-run.c:2383
 #, c-format
 msgid "Failed to write to instance id fd: %s"
 msgstr "Nu s-a putut scrie id-ul instanței fd: %s"
 
-#: common/flatpak-run.c:2721
+#: common/flatpak-run.c:2703
 msgid "Initialize seccomp failed"
 msgstr "Inițializarea seccomp a eșuat"
 
-#: common/flatpak-run.c:2760
+#: common/flatpak-run.c:2742
 msgid "Failed to add architecture to seccomp filter"
 msgstr "Nu s-a putut adăuga arhitectura la filtrul seccomp"
 
-#: common/flatpak-run.c:2769
+#: common/flatpak-run.c:2751
 msgid "Failed to add multiarch architecture to seccomp filter"
 msgstr "Nu s-a putut adăuga arhitectura multi-arhitectură la filtrul seccomp"
 
 #. unknown syscall
-#: common/flatpak-run.c:2788 common/flatpak-run.c:2802
+#: common/flatpak-run.c:2770 common/flatpak-run.c:2784
 #, c-format
 msgid "Failed to block syscall %d"
 msgstr "Nu s-a putut bloca syscall-ul %d"
 
-#: common/flatpak-run.c:2833
+#: common/flatpak-run.c:2815
 msgid "Failed to export bpf"
 msgstr "Nu s-a putut exporta bpf"
 
-#: common/flatpak-run.c:3068
+#: common/flatpak-run.c:3050
 #, c-format
 msgid "Failed to open ‘%s’"
 msgstr "Nu s-a putut deschide „%s”"
 
-#: common/flatpak-run.c:3352
+#: common/flatpak-run.c:3334
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "idconfig a eșuat, stare de ieșire %d"
 
-#: common/flatpak-run.c:3359
+#: common/flatpak-run.c:3341
 msgid "Can't open generated ld.so.cache"
 msgstr "Nu s-a putut deschide ld.so.cache generat"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-run.c:3468
+#: common/flatpak-run.c:3450
 #, c-format
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr ""
 "Rularea %s nu este permisă de politica stabilită de către administrator"
 
-#: common/flatpak-run.c:3510
+#: common/flatpak-run.c:3492
 msgid "\"flatpak run\" is not intended to be ran with sudo"
 msgstr "„flatpak run” nu este intenționat să fie rulat cu sudo"
 
-#: common/flatpak-run.c:3618
+#: common/flatpak-run.c:3600
 #, c-format
 msgid "Wrong number of components in runtime %s"
 msgstr "Număr de componente greșit în executarea %s"
 
-#: common/flatpak-run.c:3726
+#: common/flatpak-run.c:3708
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "Nu s-a putut migra de la %s: %s"
 
-#: common/flatpak-run.c:3741
+#: common/flatpak-run.c:3723
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr ""
 "Nu s-a putut migra directorul vechi de date %s al aplicației la numele nou "
 "%s: %s"
 
-#: common/flatpak-run.c:3750
+#: common/flatpak-run.c:3732
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "Nu s-a putut crea legătura simbolică în timpul migrării %s: %s"
@@ -5092,44 +5100,44 @@ msgstr "Nu este un depozit de la distanță OCI"
 msgid "Invalid token"
 msgstr "Jeton nevalid"
 
-#: portal/flatpak-portal.c:1987
+#: portal/flatpak-portal.c:2061
 msgid "No portal support found"
 msgstr "Nu s-a găsit niciun suport pentru portal"
 
-#: portal/flatpak-portal.c:1993
+#: portal/flatpak-portal.c:2067
 msgid "Deny"
 msgstr "Refuză"
 
-#: portal/flatpak-portal.c:1995
+#: portal/flatpak-portal.c:2069
 msgid "Update"
 msgstr "Actualizează"
 
-#: portal/flatpak-portal.c:2000
+#: portal/flatpak-portal.c:2074
 #, c-format
 msgid "Update %s?"
 msgstr "Actualizați %s?"
 
-#: portal/flatpak-portal.c:2012
+#: portal/flatpak-portal.c:2086
 msgid "The application wants to update itself."
 msgstr "Aplicația vrea să se actualizeze."
 
-#: portal/flatpak-portal.c:2013
+#: portal/flatpak-portal.c:2087
 msgid "Update access can be changed any time from the privacy settings."
 msgstr ""
 "Accesul pentru actualizare poate fi modificat oricând din setările de "
 "confidențialitate."
 
-#: portal/flatpak-portal.c:2038
+#: portal/flatpak-portal.c:2112
 msgid "Application update not allowed"
 msgstr "Actualizarea aplicației nu este permisă"
 
-#: portal/flatpak-portal.c:2195
+#: portal/flatpak-portal.c:2269
 msgid "Self update not supported, new version requires new permissions"
 msgstr ""
 "Actualizarea de sine nu este suportată, versiunea nouă necesită permisiuni "
 "noi"
 
-#: portal/flatpak-portal.c:2377 portal/flatpak-portal.c:2394
+#: portal/flatpak-portal.c:2451 portal/flatpak-portal.c:2468
 msgid "Update ended unexpectedly"
 msgstr "Actualizarea s-a terminat neașteptat"
 
