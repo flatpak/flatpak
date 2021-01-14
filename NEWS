@@ -5,7 +5,7 @@ Released: 2020-01-14
 This is a security update that fixes a sandbox escape where a
 malicious application can execute code outside the sandbox
 by controlling the environment of the "flatpak run" command
-when spawning a sub-sandbox.
+when spawning a sub-sandbox. (CVE-2021-21261)
 
 See the advisory for details:
   https://github.com/flatpak/flatpak/security/advisories/GHSA-4ppf-fxf6-vxg2
