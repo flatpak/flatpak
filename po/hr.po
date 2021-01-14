@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2020-12-22 14:06+0100\n"
+"POT-Creation-Date: 2021-01-14 10:52+0100\n"
 "PO-Revision-Date: 2020-09-03 14:05+0200\n"
 "Last-Translator: Milo Ivir <mail@milotype.de>\n"
 "Language-Team: Croatian <hr@li.org>\n"
@@ -33,7 +33,7 @@ msgstr "Arhitektura za paketiranje za"
 #: app/flatpak-builtins-info.c:55 app/flatpak-builtins-install.c:63
 #: app/flatpak-builtins-list.c:49 app/flatpak-builtins-make-current.c:38
 #: app/flatpak-builtins-remote-info.c:53 app/flatpak-builtins-remote-ls.c:54
-#: app/flatpak-builtins-run.c:63 app/flatpak-builtins-search.c:36
+#: app/flatpak-builtins-run.c:64 app/flatpak-builtins-search.c:36
 #: app/flatpak-builtins-uninstall.c:54 app/flatpak-builtins-update.c:56
 msgid "ARCH"
 msgstr "ARHITEKTURA"
@@ -202,7 +202,7 @@ msgid "Start build in this directory"
 msgstr "Počni gradnju u ovom direktoriju"
 
 #: app/flatpak-builtins-build.c:52 app/flatpak-builtins-build.c:53
-#: app/flatpak-builtins-build-init.c:64 app/flatpak-builtins-run.c:65
+#: app/flatpak-builtins-build-init.c:64 app/flatpak-builtins-run.c:66
 msgid "DIR"
 msgstr "DIR"
 
@@ -214,7 +214,7 @@ msgstr "Gdje tražiti prilagođeni sdk direktorij (standardno je „usr”)"
 msgid "Use alternative file for the metadata"
 msgstr "Koristi alternativne datoteka za metapodatke"
 
-#: app/flatpak-builtins-build.c:55 app/flatpak-builtins-run.c:82
+#: app/flatpak-builtins-build.c:55 app/flatpak-builtins-run.c:83
 msgid "Kill processes when the parent process dies"
 msgstr "Ubij procese kad nadređeni proces umre"
 
@@ -222,11 +222,11 @@ msgstr "Ubij procese kad nadređeni proces umre"
 msgid "Export application homedir directory to build"
 msgstr "Izvezi početni direktorij aplikacije u direktorij gradnje"
 
-#: app/flatpak-builtins-build.c:57 app/flatpak-builtins-run.c:70
+#: app/flatpak-builtins-build.c:57 app/flatpak-builtins-run.c:71
 msgid "Log session bus calls"
 msgstr "Zapiši bus pozive sesije"
 
-#: app/flatpak-builtins-build.c:58 app/flatpak-builtins-run.c:71
+#: app/flatpak-builtins-build.c:58 app/flatpak-builtins-run.c:72
 msgid "Log system bus calls"
 msgstr "Zapiši bus pozive sustava"
 
@@ -257,7 +257,7 @@ msgstr "Nijedna točka proširenja se ne poklapa s %s u %s"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "U bind mount opciji „%s” nedostaje znak „=”"
 
-#: app/flatpak-builtins-build.c:593 common/flatpak-run.c:3996
+#: app/flatpak-builtins-build.c:593 common/flatpak-run.c:4127
 msgid "Unable to start app"
 msgstr "Nije moguće pokrenuti program"
 
@@ -584,8 +584,8 @@ msgstr "Zapisani bajtovi sadržaja:"
 msgid "Command to set"
 msgstr "Naredba za postavljanje"
 
-#: app/flatpak-builtins-build-finish.c:51 app/flatpak-builtins-run.c:64
-#: app/flatpak-main.c:204
+#: app/flatpak-builtins-build-finish.c:51 app/flatpak-builtins-run.c:65
+#: app/flatpak-main.c:208
 msgid "COMMAND"
 msgstr "NAREDBA"
 
@@ -620,7 +620,7 @@ msgstr "Ukloni informacije o točki proširenja"
 #: app/flatpak-builtins-build-finish.c:56
 #: app/flatpak-builtins-build-update-repo.c:76 app/flatpak-builtins-info.c:58
 #: app/flatpak-builtins-remote-add.c:84 app/flatpak-builtins-remote-modify.c:92
-#: app/flatpak-main.c:177
+#: app/flatpak-main.c:181
 msgid "NAME"
 msgstr "IME"
 
@@ -646,7 +646,7 @@ msgstr "Promijeni okruženje koji se koristi za program"
 
 #: app/flatpak-builtins-build-finish.c:59 app/flatpak-builtins-build-init.c:54
 #: app/flatpak-builtins-list.c:51 app/flatpak-builtins-remote-ls.c:56
-#: app/flatpak-builtins-run.c:68
+#: app/flatpak-builtins-run.c:69
 msgid "RUNTIME"
 msgstr "OKRUŽENJE"
 
@@ -779,7 +779,7 @@ msgid "LOCATION and FILENAME must be specified"
 msgstr "LOKACIJA i IME_DATOTEKE se moraju odrediti"
 
 #: app/flatpak-builtins-build-init.c:53 app/flatpak-builtins-info.c:55
-#: app/flatpak-builtins-run.c:63
+#: app/flatpak-builtins-run.c:64
 msgid "Arch to use"
 msgstr "Korištena arhitektura"
 
@@ -799,7 +799,7 @@ msgstr "PROGRAM"
 msgid "Specify version for --base"
 msgstr "Odredi verziju za --base"
 
-#: app/flatpak-builtins-build-init.c:56 app/flatpak-builtins-run.c:69
+#: app/flatpak-builtins-build-init.c:56 app/flatpak-builtins-run.c:70
 msgid "VERSION"
 msgstr "VERZIJA"
 
@@ -960,7 +960,7 @@ msgstr "Korištena standardna grana za ovaj repozitorij"
 #: app/flatpak-builtins-build-update-repo.c:71
 #: app/flatpak-builtins-remote-add.c:79 app/flatpak-builtins-remote-modify.c:86
 #: app/flatpak-builtins-repo.c:712 app/flatpak-builtins-repo.c:713
-#: app/flatpak-builtins-run.c:66
+#: app/flatpak-builtins-run.c:67
 msgid "BRANCH"
 msgstr "GRANA"
 
@@ -2115,7 +2115,7 @@ msgstr "Arhitektura za postaviti kao trenutačnu za"
 msgid "APP BRANCH - Make branch of application current"
 msgstr "PROGRAM GRANA – Postavi granu programa kao trenutačnu"
 
-#: app/flatpak-builtins-make-current.c:69 app/flatpak-builtins-run.c:150
+#: app/flatpak-builtins-make-current.c:69 app/flatpak-builtins-run.c:152
 msgid "APP must be specified"
 msgstr "PROGRAM se mora odrediti"
 
@@ -2256,7 +2256,7 @@ msgstr "Instanca"
 msgid "Show the instance ID"
 msgstr "Prikaži ID instance"
 
-#: app/flatpak-builtins-ps.c:48 app/flatpak-builtins-run.c:83
+#: app/flatpak-builtins-ps.c:48 app/flatpak-builtins-run.c:84
 msgid "PID"
 msgstr "PID"
 
@@ -2983,87 +2983,91 @@ msgstr ""
 msgid "LOCATION - Repository maintenance"
 msgstr "LOKACIJA – Održavanje repozitorija"
 
-#: app/flatpak-builtins-run.c:64
+#: app/flatpak-builtins-run.c:65
 msgid "Command to run"
 msgstr "Naredba za pokretanje"
 
-#: app/flatpak-builtins-run.c:65
+#: app/flatpak-builtins-run.c:66
 msgid "Directory to run the command in"
 msgstr "Direktorij u kojem se pokreće naredba"
 
-#: app/flatpak-builtins-run.c:66
+#: app/flatpak-builtins-run.c:67
 msgid "Branch to use"
 msgstr "Korištena grana"
 
-#: app/flatpak-builtins-run.c:67
+#: app/flatpak-builtins-run.c:68
 msgid "Use development runtime"
 msgstr "Koristi razvojno okruženje"
 
-#: app/flatpak-builtins-run.c:68
+#: app/flatpak-builtins-run.c:69
 msgid "Runtime to use"
 msgstr "Korišteno okruženje"
 
-#: app/flatpak-builtins-run.c:69
+#: app/flatpak-builtins-run.c:70
 msgid "Runtime version to use"
 msgstr "Korištena verzija okruženja"
 
-#: app/flatpak-builtins-run.c:72
+#: app/flatpak-builtins-run.c:73
 msgid "Log accessibility bus calls"
 msgstr "Zapiši bus pozive pristupačnosti"
 
-#: app/flatpak-builtins-run.c:73
+#: app/flatpak-builtins-run.c:74
 msgid "Don't proxy accessibility bus calls"
 msgstr "Nemoj bus pozive pristupačnosti proxija"
 
-#: app/flatpak-builtins-run.c:74
+#: app/flatpak-builtins-run.c:75
 msgid "Proxy accessibility bus calls (default except when sandboxed)"
 msgstr "Bus pozivi pristupačnosti proxija (standardno, osim ako je u sandboxu)"
 
-#: app/flatpak-builtins-run.c:75
+#: app/flatpak-builtins-run.c:76
 msgid "Don't proxy session bus calls"
 msgstr "Nemoj bus pozive sesije proxija"
 
-#: app/flatpak-builtins-run.c:76
+#: app/flatpak-builtins-run.c:77
 msgid "Proxy session bus calls (default except when sandboxed)"
 msgstr "Bus pozivi sesije proxija (standardno, osim ako je u sandboxu)"
 
-#: app/flatpak-builtins-run.c:77
+#: app/flatpak-builtins-run.c:78
 msgid "Don't start portals"
 msgstr "Nemoj pokrenuti portale"
 
-#: app/flatpak-builtins-run.c:78
+#: app/flatpak-builtins-run.c:79
 msgid "Enable file forwarding"
 msgstr "Aktiviraj proslijeđivanje datoteka"
 
-#: app/flatpak-builtins-run.c:79
+#: app/flatpak-builtins-run.c:80
 msgid "Run specified commit"
 msgstr "Pokreni određenu izmjenu"
 
-#: app/flatpak-builtins-run.c:80
+#: app/flatpak-builtins-run.c:81
 msgid "Use specified runtime commit"
 msgstr "Koristi određenu izmjenu okruženja"
 
-#: app/flatpak-builtins-run.c:81
+#: app/flatpak-builtins-run.c:82
 msgid "Run completely sandboxed"
 msgstr "Pokreni potpuno u sandboxu"
 
-#: app/flatpak-builtins-run.c:83
+#: app/flatpak-builtins-run.c:84
 msgid "Use PID as parent pid for sharing namespaces"
 msgstr "Koristi PID kao nadređeni PID za dijeljenje imenskih prostora"
 
-#: app/flatpak-builtins-run.c:84
+#: app/flatpak-builtins-run.c:85
 msgid "Make processes visible in parent namespace"
 msgstr "Omogući vidljivost procesa u nadređenom imenskom prostoru"
 
-#: app/flatpak-builtins-run.c:85
+#: app/flatpak-builtins-run.c:86
+msgid "Share process ID namespace with parent"
+msgstr ""
+
+#: app/flatpak-builtins-run.c:87
 msgid "Write the instance ID to the given file descriptor"
 msgstr "Zapiši ID instance navedenom deskriptoru datoteka"
 
-#: app/flatpak-builtins-run.c:108
+#: app/flatpak-builtins-run.c:110
 msgid "APP [ARGUMENT…] - Run an app"
 msgstr "PROGRAM [ARGUMENT …] – Pokreni jedan program"
 
-#: app/flatpak-builtins-run.c:252
+#: app/flatpak-builtins-run.c:254
 #, c-format
 msgid "runtime/%s/%s/%s not installed"
 msgstr "okruženje/%s/%s/%s nije instalirano"
@@ -3625,56 +3629,56 @@ msgid "There were one or more errors"
 msgstr "Ustanovljene su neke greške"
 
 #. translators: please keep the leading space
-#: app/flatpak-main.c:74
+#: app/flatpak-main.c:76
 msgid " Manage installed applications and runtimes"
 msgstr " Upravljaj instaliranim programima i okruženjima"
 
-#: app/flatpak-main.c:75
+#: app/flatpak-main.c:77
 msgid "Install an application or runtime"
 msgstr "Instaliraj program ili okruženje"
 
-#: app/flatpak-main.c:76
+#: app/flatpak-main.c:78
 msgid "Update an installed application or runtime"
 msgstr "Instaliraj jedan instalirani program ili okruženje"
 
-#: app/flatpak-main.c:79
+#: app/flatpak-main.c:81
 msgid "Uninstall an installed application or runtime"
 msgstr "Deinstaliraj jedan instalirani program ili okruženje"
 
-#: app/flatpak-main.c:82
+#: app/flatpak-main.c:84
 msgid "Mask out updates and automatic installation"
 msgstr "Maskiraj aktualiziranja i automatsku instalaciju"
 
-#: app/flatpak-main.c:83
+#: app/flatpak-main.c:85
 msgid "Pin a runtime to prevent automatic removal"
 msgstr "Prikvači okruženje kako bi se spriječilo automatsko uklanjanje"
 
-#: app/flatpak-main.c:84
+#: app/flatpak-main.c:86
 msgid "List installed apps and/or runtimes"
 msgstr "Izradi popis instaliranih programa i/ili okruženja"
 
-#: app/flatpak-main.c:85
+#: app/flatpak-main.c:87
 msgid "Show info for installed app or runtime"
 msgstr "Prikaži informacije za instalirani program ili okruženje"
 
-#: app/flatpak-main.c:86
+#: app/flatpak-main.c:88
 msgid "Show history"
 msgstr "Prikaži kronologiju"
 
-#: app/flatpak-main.c:87
+#: app/flatpak-main.c:89
 msgid "Configure flatpak"
 msgstr "Konfiguriraj flatpak"
 
-#: app/flatpak-main.c:88
+#: app/flatpak-main.c:90
 msgid "Repair flatpak installation"
 msgstr "Popravi Flatpak instalaciju"
 
-#: app/flatpak-main.c:89
+#: app/flatpak-main.c:91
 msgid "Put applications or runtimes onto removable media"
 msgstr "Stavi programe ili okurženja na prijenosne medije"
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:92
+#: app/flatpak-main.c:94
 msgid ""
 "\n"
 " Finding applications and runtimes"
@@ -3682,12 +3686,12 @@ msgstr ""
 "\n"
 " Pronalaženje programa i okruženja"
 
-#: app/flatpak-main.c:93
+#: app/flatpak-main.c:95
 msgid "Search for remote apps/runtimes"
 msgstr "Traži programe/okruženja na udaljenom repozitoriju"
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:96
+#: app/flatpak-main.c:98
 msgid ""
 "\n"
 " Running applications"
@@ -3695,32 +3699,32 @@ msgstr ""
 "\n"
 " Pokrenuti programi"
 
-#: app/flatpak-main.c:97
+#: app/flatpak-main.c:99
 msgid "Run an application"
 msgstr "Pokreni program"
 
-#: app/flatpak-main.c:98
+#: app/flatpak-main.c:100
 msgid "Override permissions for an application"
 msgstr "Nadjačaj dozvole za program"
 
-#: app/flatpak-main.c:99
+#: app/flatpak-main.c:101
 msgid "Specify default version to run"
 msgstr "Odredi standardnu verziju za pokretanje"
 
-#: app/flatpak-main.c:100
+#: app/flatpak-main.c:102
 msgid "Enter the namespace of a running application"
 msgstr "Upiši imenski prostor pokrenutog programa"
 
-#: app/flatpak-main.c:101
+#: app/flatpak-main.c:103
 msgid "Enumerate running applications"
 msgstr "Pobroji pokrenute programe"
 
-#: app/flatpak-main.c:102
+#: app/flatpak-main.c:104
 msgid "Stop a running application"
 msgstr "Zaustavi pokrenuti program"
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:105
+#: app/flatpak-main.c:107
 msgid ""
 "\n"
 " Manage file access"
@@ -3728,24 +3732,24 @@ msgstr ""
 "\n"
 " Upravljaj pristupima datotekama"
 
-#: app/flatpak-main.c:106
+#: app/flatpak-main.c:108
 msgid "List exported files"
 msgstr "Izradi popis izvezenih datoteka"
 
-#: app/flatpak-main.c:107
+#: app/flatpak-main.c:109
 msgid "Grant an application access to a specific file"
 msgstr "Dozvoli programu pristup određenoj datoteci"
 
-#: app/flatpak-main.c:108
+#: app/flatpak-main.c:110
 msgid "Revoke access to a specific file"
 msgstr "Oduzmi dozvole za pristup određenoj datoteci"
 
-#: app/flatpak-main.c:109
+#: app/flatpak-main.c:111
 msgid "Show information about a specific file"
 msgstr "Prikaži informacije o određenoj datoteci"
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:113
+#: app/flatpak-main.c:115
 msgid ""
 "\n"
 " Manage dynamic permissions"
@@ -3753,28 +3757,28 @@ msgstr ""
 "\n"
 " Upravljaj dinamičnim dozvolama"
 
-#: app/flatpak-main.c:114
+#: app/flatpak-main.c:116
 msgid "List permissions"
 msgstr "Izradi popis dozvola"
 
-#: app/flatpak-main.c:115
+#: app/flatpak-main.c:117
 msgid "Remove item from permission store"
 msgstr "Ukloni stavku iz spremišta dozvola"
 
-#: app/flatpak-main.c:117
+#: app/flatpak-main.c:119
 msgid "Set permissions"
 msgstr "Postavi dozvole"
 
-#: app/flatpak-main.c:118
+#: app/flatpak-main.c:120
 msgid "Show app permissions"
 msgstr "Prikaži dozvole programa"
 
-#: app/flatpak-main.c:119
+#: app/flatpak-main.c:121
 msgid "Reset app permissions"
 msgstr "Ponovo postavi dozvole programa"
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:122
+#: app/flatpak-main.c:124
 msgid ""
 "\n"
 " Manage remote repositories"
@@ -3782,32 +3786,32 @@ msgstr ""
 "\n"
 " Upravljaj udaljenim repozitorijima"
 
-#: app/flatpak-main.c:123
+#: app/flatpak-main.c:125
 msgid "List all configured remotes"
 msgstr "Izradi popis svih konfiguriranih udaljenih repozitorija"
 
-#: app/flatpak-main.c:124
+#: app/flatpak-main.c:126
 msgid "Add a new remote repository (by URL)"
 msgstr "Dodaj novi udaljeni repozitorij (pomoću URL-a)"
 
-#: app/flatpak-main.c:125
+#: app/flatpak-main.c:127
 msgid "Modify properties of a configured remote"
 msgstr "Promijeni svojstva konfiguriranog udaljenog repozitorija"
 
-#: app/flatpak-main.c:126
+#: app/flatpak-main.c:128
 msgid "Delete a configured remote"
 msgstr "Izbriši konfiguriran udaljeni repozitorij"
 
-#: app/flatpak-main.c:128
+#: app/flatpak-main.c:130
 msgid "List contents of a configured remote"
 msgstr "Izradi sadržaj konfiguriranog udaljenog okruženja"
 
-#: app/flatpak-main.c:129
+#: app/flatpak-main.c:131
 msgid "Show information about a remote app or runtime"
 msgstr "Prikaži informacije o programu ili okruženju u udaljenom repozitoriju"
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:132
+#: app/flatpak-main.c:134
 msgid ""
 "\n"
 " Build applications"
@@ -3815,91 +3819,99 @@ msgstr ""
 "\n"
 " Izgradi programe"
 
-#: app/flatpak-main.c:133
+#: app/flatpak-main.c:135
 msgid "Initialize a directory for building"
 msgstr "Inicijaliziraj direktorij za izgradnju"
 
-#: app/flatpak-main.c:134
+#: app/flatpak-main.c:136
 msgid "Run a build command inside the build dir"
 msgstr "Pokreni naredbu za izgradnju unutar direktorija gradnje"
 
-#: app/flatpak-main.c:135
+#: app/flatpak-main.c:137
 msgid "Finish a build dir for export"
 msgstr "Završi direktorij gradnje za izvoz"
 
-#: app/flatpak-main.c:136
+#: app/flatpak-main.c:138
 msgid "Export a build dir to a repository"
 msgstr "Izvezi direktorij gradnje u repozitorij"
 
-#: app/flatpak-main.c:137
+#: app/flatpak-main.c:139
 msgid "Create a bundle file from a ref in a local repository"
 msgstr "Stvori datoteku paketa iz reference u lokalnom repozitoriju"
 
-#: app/flatpak-main.c:138
+#: app/flatpak-main.c:140
 msgid "Import a bundle file"
 msgstr "Uvezi datoteku paketa"
 
-#: app/flatpak-main.c:139
+#: app/flatpak-main.c:141
 msgid "Sign an application or runtime"
 msgstr "Potpiši program ili okruženje"
 
-#: app/flatpak-main.c:140
+#: app/flatpak-main.c:142
 msgid "Update the summary file in a repository"
 msgstr "Aktualiziraj datoteku sažetka u repozitoriju"
 
-#: app/flatpak-main.c:141
+#: app/flatpak-main.c:143
 msgid "Create new commit based on existing ref"
 msgstr "Izradi novu izmjenu na osnovi postojeće reference"
 
-#: app/flatpak-main.c:142
+#: app/flatpak-main.c:144
 msgid "Show information about a repo"
 msgstr "Prikaži informacije o repozitoriju"
 
-#: app/flatpak-main.c:159
+#: app/flatpak-main.c:161
 msgid "Show debug information, -vv for more detail"
 msgstr "Prikaži informacije pronalaženja grešaka, -vv za više detalja"
 
-#: app/flatpak-main.c:160
+#: app/flatpak-main.c:162
 msgid "Show OSTree debug information"
 msgstr "Prikaži OSTree informacije pronalaženja grešaka"
 
-#: app/flatpak-main.c:166
+#: app/flatpak-main.c:168
 msgid "Print version information and exit"
 msgstr "Ispiši informacije o verziji i izađi"
 
-#: app/flatpak-main.c:167
+#: app/flatpak-main.c:169
 msgid "Print default arch and exit"
 msgstr "Ispiši standardnu arhitekturu i izađi"
 
-#: app/flatpak-main.c:168
+#: app/flatpak-main.c:170
 msgid "Print supported arches and exit"
 msgstr "Ispiši podržane arhitekture i izađi"
 
-#: app/flatpak-main.c:169
+#: app/flatpak-main.c:171
 msgid "Print active gl drivers and exit"
 msgstr "Ispiši aktivne gl upravljačke programe i izađi"
 
-#: app/flatpak-main.c:170
+#: app/flatpak-main.c:172
 msgid "Print paths for system installations and exit"
 msgstr "Ispiši stazu za instalacije sustava i izađi"
 
-#: app/flatpak-main.c:175
+#: app/flatpak-main.c:173
+msgid "Print the updated environment needed to run flatpaks"
+msgstr ""
+
+#: app/flatpak-main.c:174
+msgid "Only include the system installation with --print-updated-env"
+msgstr ""
+
+#: app/flatpak-main.c:179
 msgid "Work on the user installation"
 msgstr "Radi na korisničkoj instalaciji"
 
-#: app/flatpak-main.c:176
+#: app/flatpak-main.c:180
 msgid "Work on the system-wide installation (default)"
 msgstr "Radi na sustavskoj instalaciji (standardno)"
 
-#: app/flatpak-main.c:177
+#: app/flatpak-main.c:181
 msgid "Work on a non-default system-wide installation"
 msgstr "Radi na ne-standardnoj sustavskoj instalaciji"
 
-#: app/flatpak-main.c:207
+#: app/flatpak-main.c:211
 msgid "Builtin Commands:"
 msgstr "Ugrađene naredbe:"
 
-#: app/flatpak-main.c:293
+#: app/flatpak-main.c:297
 #, c-format
 msgid ""
 "Note that the directories %s are not in the search path set by the "
@@ -3911,7 +3923,7 @@ msgstr ""
 "programi možda neće pojaviti na radnoj površini, sve dok se sesija ponovo ne "
 "pokrene."
 
-#: app/flatpak-main.c:307
+#: app/flatpak-main.c:311
 #, c-format
 msgid ""
 "Note that the directory %s is not in the search path set by the "
@@ -3923,32 +3935,32 @@ msgstr ""
 "programi možda neće pojaviti na radnoj površini, sve dok se sesija ponovo ne "
 "pokrene."
 
-#: app/flatpak-main.c:436
+#: app/flatpak-main.c:440
 msgid ""
 "Multiple installations specified for a command that works on one installation"
 msgstr ""
 "Višestruke instalacije određene za naredbu koja radi na jednoj instalaciji"
 
-#: app/flatpak-main.c:485 app/flatpak-main.c:667
+#: app/flatpak-main.c:489 app/flatpak-main.c:671
 #, c-format
 msgid "See '%s --help'"
 msgstr "Pogledaj „%s --help”"
 
-#: app/flatpak-main.c:676
+#: app/flatpak-main.c:680
 #, c-format
 msgid "'%s' is not a flatpak command. Did you mean '%s%s'?"
 msgstr "„%s” nije flatpak naredba. Misliš možda na „%s%s”?"
 
-#: app/flatpak-main.c:679
+#: app/flatpak-main.c:683
 #, c-format
 msgid "'%s' is not a flatpak command"
 msgstr "„%s” nije flatpak naredba"
 
-#: app/flatpak-main.c:741
+#: app/flatpak-main.c:798
 msgid "No command specified"
 msgstr "Nijedna naredba nije određena"
 
-#: app/flatpak-main.c:901
+#: app/flatpak-main.c:958
 msgid "error:"
 msgstr "greška:"
 
@@ -4047,147 +4059,170 @@ msgstr ""
 msgid "Invalid env format %s"
 msgstr "Neispravan format okruženja %s"
 
-#: common/flatpak-context.c:1227 common/flatpak-context.c:1235
+#: common/flatpak-context.c:1192
+#, c-format
+msgid "Environment variable name must not contain '=': %s"
+msgstr ""
+
+#: common/flatpak-context.c:1305 common/flatpak-context.c:1313
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr "--add-policy argumenti moraju biti u obliku PODSUSTAV.KLJUČ=VRIJEDNOST"
 
-#: common/flatpak-context.c:1242
+#: common/flatpak-context.c:1320
 msgid "--add-policy values can't start with \"!\""
 msgstr "--add-policy vrijednosti ne smiju započeti s uskličnikom (!)"
 
-#: common/flatpak-context.c:1267 common/flatpak-context.c:1275
+#: common/flatpak-context.c:1345 common/flatpak-context.c:1353
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 "--remove-policy argumenti moraju biti u obliku PODSUSTAV.KLJUČ=VRIJEDNOST"
 
-#: common/flatpak-context.c:1282
+#: common/flatpak-context.c:1360
 msgid "--remove-policy values can't start with \"!\""
 msgstr "--remove-policy vrijednosti ne smiju započeti s uskličnikom (!)"
 
-#: common/flatpak-context.c:1308
+#: common/flatpak-context.c:1386
 msgid "Share with host"
 msgstr "Dijeli s računalom"
 
-#: common/flatpak-context.c:1308 common/flatpak-context.c:1309
+#: common/flatpak-context.c:1386 common/flatpak-context.c:1387
 msgid "SHARE"
 msgstr "DIJELI"
 
-#: common/flatpak-context.c:1309
+#: common/flatpak-context.c:1387
 msgid "Unshare with host"
 msgstr "Prekini dijeliti s računalom"
 
-#: common/flatpak-context.c:1310
+#: common/flatpak-context.c:1388
 msgid "Expose socket to app"
 msgstr "Omogući programu vidjeti utičnicu"
 
-#: common/flatpak-context.c:1310 common/flatpak-context.c:1311
+#: common/flatpak-context.c:1388 common/flatpak-context.c:1389
 msgid "SOCKET"
 msgstr "UTIČNICA"
 
-#: common/flatpak-context.c:1311
+#: common/flatpak-context.c:1389
 msgid "Don't expose socket to app"
 msgstr "Onemogući programu vidjeti utičnicu"
 
-#: common/flatpak-context.c:1312
+#: common/flatpak-context.c:1390
 msgid "Expose device to app"
 msgstr "Omogući programu vidjeti uređaj"
 
-#: common/flatpak-context.c:1312 common/flatpak-context.c:1313
+#: common/flatpak-context.c:1390 common/flatpak-context.c:1391
 msgid "DEVICE"
 msgstr "UREĐAJ"
 
-#: common/flatpak-context.c:1313
+#: common/flatpak-context.c:1391
 msgid "Don't expose device to app"
 msgstr "Onemogući programu vidjeti uređaj"
 
-#: common/flatpak-context.c:1314
+#: common/flatpak-context.c:1392
 msgid "Allow feature"
 msgstr "Dozvoli funkciju"
 
-#: common/flatpak-context.c:1314 common/flatpak-context.c:1315
+#: common/flatpak-context.c:1392 common/flatpak-context.c:1393
 msgid "FEATURE"
 msgstr "FUNKCIJA"
 
-#: common/flatpak-context.c:1315
+#: common/flatpak-context.c:1393
 msgid "Don't allow feature"
 msgstr "Nemoj dozvoliti funkciju"
 
-#: common/flatpak-context.c:1316
+#: common/flatpak-context.c:1394
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr "Omogući programu vidjeti datotečni sustav (:ro za samo-za-čitanje)"
 
-#: common/flatpak-context.c:1316
+#: common/flatpak-context.c:1394
 msgid "FILESYSTEM[:ro]"
 msgstr "DATOTEČNI-SUSTAV[:ro]"
 
-#: common/flatpak-context.c:1317
+#: common/flatpak-context.c:1395
 msgid "Don't expose filesystem to app"
 msgstr "Onemogući programu vidjeti datotečni sustav"
 
-#: common/flatpak-context.c:1317
+#: common/flatpak-context.c:1395
 msgid "FILESYSTEM"
 msgstr "DATOTEČNI-SUSTAV"
 
-#: common/flatpak-context.c:1318
+#: common/flatpak-context.c:1396
 msgid "Set environment variable"
 msgstr "Postavi varijablu okruženja"
 
-#: common/flatpak-context.c:1318
+#: common/flatpak-context.c:1396
 msgid "VAR=VALUE"
 msgstr "VARIJABLA=VRIJEDNOST"
 
-#: common/flatpak-context.c:1319
+#: common/flatpak-context.c:1397
+msgid "Read environment variables in env -0 format from FD"
+msgstr ""
+
+#: common/flatpak-context.c:1397
+msgid "FD"
+msgstr ""
+
+#: common/flatpak-context.c:1398
+#, fuzzy
+msgid "Remove variable from environment"
+msgstr "Ukloni stavku iz spremišta dozvola"
+
+#: common/flatpak-context.c:1398
+#, fuzzy
+msgid "VAR"
+msgstr "VRIJEDNOST"
+
+#: common/flatpak-context.c:1399
 msgid "Allow app to own name on the session bus"
 msgstr "Dozvoli programu posjedovati ime na busu sesije"
 
-#: common/flatpak-context.c:1319 common/flatpak-context.c:1320
-#: common/flatpak-context.c:1321 common/flatpak-context.c:1322
-#: common/flatpak-context.c:1323 common/flatpak-context.c:1324
+#: common/flatpak-context.c:1399 common/flatpak-context.c:1400
+#: common/flatpak-context.c:1401 common/flatpak-context.c:1402
+#: common/flatpak-context.c:1403 common/flatpak-context.c:1404
 msgid "DBUS_NAME"
 msgstr "DBUS_IME"
 
-#: common/flatpak-context.c:1320
+#: common/flatpak-context.c:1400
 msgid "Allow app to talk to name on the session bus"
 msgstr "Dozvoli programu komunicirati s imenom na busu sesije"
 
-#: common/flatpak-context.c:1321
+#: common/flatpak-context.c:1401
 msgid "Don't allow app to talk to name on the session bus"
 msgstr "Nemoj dozvoliti programu komunicirati s imenom na busu sesije"
 
-#: common/flatpak-context.c:1322
+#: common/flatpak-context.c:1402
 msgid "Allow app to own name on the system bus"
 msgstr "Dozvoli programu posjedovati ime na busu sustava"
 
-#: common/flatpak-context.c:1323
+#: common/flatpak-context.c:1403
 msgid "Allow app to talk to name on the system bus"
 msgstr "Dozvoli programu komunicirati s imenom na busu sustava"
 
-#: common/flatpak-context.c:1324
+#: common/flatpak-context.c:1404
 msgid "Don't allow app to talk to name on the system bus"
 msgstr "Nemoj dozvoliti programu komunicirati s imenom na busu sustava"
 
-#: common/flatpak-context.c:1325
+#: common/flatpak-context.c:1405
 msgid "Add generic policy option"
 msgstr "Dodaj opću opciju pravila"
 
-#: common/flatpak-context.c:1325 common/flatpak-context.c:1326
+#: common/flatpak-context.c:1405 common/flatpak-context.c:1406
 msgid "SUBSYSTEM.KEY=VALUE"
 msgstr "PODSUSTAV.KLJUČ=VRIJEDNOST"
 
-#: common/flatpak-context.c:1326
+#: common/flatpak-context.c:1406
 msgid "Remove generic policy option"
 msgstr "Ukloni opću opciju pravila"
 
-#: common/flatpak-context.c:1327
+#: common/flatpak-context.c:1407
 msgid "Persist home directory subpath"
 msgstr "Neka podstaza osnovnog direktorija postane trajna"
 
-#: common/flatpak-context.c:1327
+#: common/flatpak-context.c:1407
 msgid "FILENAME"
 msgstr "IME-DATOTEKE"
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-context.c:1329
+#: common/flatpak-context.c:1409
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "Ne zahtijevaj pokrenutu sesiju (cgroups se ne izrađuje)"
 
@@ -4946,101 +4981,101 @@ msgstr "Url nije određen"
 msgid "GPG verification must be enabled when a collection ID is set"
 msgstr "GPG provjera mora biti aktivirana, kad se postavlja ID oznaka zbirke"
 
-#: common/flatpak-run.c:865
+#: common/flatpak-run.c:995
 msgid "Failed to open app info file"
 msgstr "Neuspjelo otvaranje datoteke s informacijama o programu"
 
-#: common/flatpak-run.c:959
+#: common/flatpak-run.c:1089
 msgid "Unable to create sync pipe"
 msgstr "Nije moguće stvoriti pipe za sinkronizaciju"
 
-#: common/flatpak-run.c:998
+#: common/flatpak-run.c:1128
 msgid "Failed to sync with dbus proxy"
 msgstr "Neuspjela sinkronizacija s dbus proxijem"
 
-#: common/flatpak-run.c:1671
+#: common/flatpak-run.c:1783
 msgid "No systemd user session available, cgroups not available"
 msgstr "Nema korisničke sesije systemd, cgroups nije dostupno"
 
-#: common/flatpak-run.c:2220
+#: common/flatpak-run.c:2332
 msgid "Unable to allocate instance id"
 msgstr "Nije moguće alocirati id instance"
 
-#: common/flatpak-run.c:2340 common/flatpak-run.c:2350
+#: common/flatpak-run.c:2452 common/flatpak-run.c:2462
 #, c-format
 msgid "Failed to open flatpak-info file: %s"
 msgstr "Neuspjelo otvaranje datoteke flatpak-info: %s"
 
-#: common/flatpak-run.c:2381
+#: common/flatpak-run.c:2493
 #, c-format
 msgid "Failed to open bwrapinfo.json file: %s"
 msgstr "Neuspjelo otvaranje datoteke bwrapinfo.json: %s"
 
-#: common/flatpak-run.c:2406
+#: common/flatpak-run.c:2518
 #, c-format
 msgid "Failed to write to instance id fd: %s"
 msgstr "Neuspjelo zapisivanje ID-u instance fd: %s"
 
-#: common/flatpak-run.c:2726
+#: common/flatpak-run.c:2838
 msgid "Initialize seccomp failed"
 msgstr "Inicijaliziraj seccomp neuspjelo"
 
-#: common/flatpak-run.c:2765
+#: common/flatpak-run.c:2877
 msgid "Failed to add architecture to seccomp filter"
 msgstr "Neuspjelo dodavanje arhitekture seccomp filtru"
 
-#: common/flatpak-run.c:2773
+#: common/flatpak-run.c:2885
 msgid "Failed to add multiarch architecture to seccomp filter"
 msgstr "Neuspjelo dodavanje arhitekture višestrukih arhitektura seccomp filtru"
 
 #. unknown syscall
-#: common/flatpak-run.c:2792 common/flatpak-run.c:2806
+#: common/flatpak-run.c:2904 common/flatpak-run.c:2918
 #, c-format
 msgid "Failed to block syscall %d"
 msgstr "Neuspjelo blokiranje syscall %d"
 
-#: common/flatpak-run.c:2837
+#: common/flatpak-run.c:2949
 msgid "Failed to export bpf"
 msgstr "Neuspio bdf izvoz"
 
-#: common/flatpak-run.c:3072
+#: common/flatpak-run.c:3186
 #, c-format
 msgid "Failed to open ‘%s’"
 msgstr "Neuspjelo otvaranje „%s”"
 
-#: common/flatpak-run.c:3356
+#: common/flatpak-run.c:3470
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "ldconfig neuspjelo, stanje izlaza %d"
 
-#: common/flatpak-run.c:3363
+#: common/flatpak-run.c:3477
 msgid "Can't open generated ld.so.cache"
 msgstr "Nije moguće otvoriti generirani ld.so.cache"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-run.c:3475
+#: common/flatpak-run.c:3589
 #, c-format
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr ""
 "Pokretanje programa %s nije dozvoljeno na osnovi administratorskih pravila"
 
-#: common/flatpak-run.c:3517
+#: common/flatpak-run.c:3631
 msgid "\"flatpak run\" is not intended to be ran with sudo"
 msgstr "\"flatpak run\" nije mišljen za pokretanje sa sudo"
 
-#: common/flatpak-run.c:3740
+#: common/flatpak-run.c:3854
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "Neuspjelo migriranje iz %s: %s"
 
-#: common/flatpak-run.c:3755
+#: common/flatpak-run.c:3869
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr ""
 "Neuspjelo migriranje starog direktorija za podatke programa %s u novo ime "
 "%s: %s"
 
-#: common/flatpak-run.c:3764
+#: common/flatpak-run.c:3878
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr ""
@@ -5300,42 +5335,42 @@ msgstr "Nije udaljeni OCI"
 msgid "Invalid token"
 msgstr "Neispravan token"
 
-#: portal/flatpak-portal.c:2035
+#: portal/flatpak-portal.c:2147
 msgid "No portal support found"
 msgstr "Nema podrške za portal"
 
-#: portal/flatpak-portal.c:2041
+#: portal/flatpak-portal.c:2153
 msgid "Deny"
 msgstr "Odbij"
 
-#: portal/flatpak-portal.c:2043
+#: portal/flatpak-portal.c:2155
 msgid "Update"
 msgstr "Aktualiziraj"
 
-#: portal/flatpak-portal.c:2048
+#: portal/flatpak-portal.c:2160
 #, c-format
 msgid "Update %s?"
 msgstr "Aktualizirati %s?"
 
-#: portal/flatpak-portal.c:2060
+#: portal/flatpak-portal.c:2172
 msgid "The application wants to update itself."
 msgstr "Program se želi aktualizirati."
 
-#: portal/flatpak-portal.c:2061
+#: portal/flatpak-portal.c:2173
 msgid "Update access can be changed any time from the privacy settings."
 msgstr ""
 "Pristup aktualiziranju je uvijek moguće promijeniti u postavkama privatnosti."
 
-#: portal/flatpak-portal.c:2086
+#: portal/flatpak-portal.c:2198
 msgid "Application update not allowed"
 msgstr "Aktualiziranje programa nije dozvoljeno"
 
-#: portal/flatpak-portal.c:2243
+#: portal/flatpak-portal.c:2355
 msgid "Self update not supported, new version requires new permissions"
 msgstr ""
 "Samoauktualiziranje nije podržano, za novu verziju su potrebne nove dozvole"
 
-#: portal/flatpak-portal.c:2425 portal/flatpak-portal.c:2442
+#: portal/flatpak-portal.c:2537 portal/flatpak-portal.c:2554
 msgid "Update ended unexpectedly"
 msgstr "Aktualiziranje je neočekivano prekinuto"
 

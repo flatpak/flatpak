@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2020-12-22 14:06+0100\n"
+"POT-Creation-Date: 2021-01-14 10:52+0100\n"
 "PO-Revision-Date: 2018-03-10 00:00+0100\n"
 "Last-Translator: Balázs Úr <urbalazs@gmail.com>\n"
 "Language-Team: Hungarian <openscope at googlegroups dot com>\n"
@@ -33,7 +33,7 @@ msgstr "Csomagolás ezen architektúrához"
 #: app/flatpak-builtins-info.c:55 app/flatpak-builtins-install.c:63
 #: app/flatpak-builtins-list.c:49 app/flatpak-builtins-make-current.c:38
 #: app/flatpak-builtins-remote-info.c:53 app/flatpak-builtins-remote-ls.c:54
-#: app/flatpak-builtins-run.c:63 app/flatpak-builtins-search.c:36
+#: app/flatpak-builtins-run.c:64 app/flatpak-builtins-search.c:36
 #: app/flatpak-builtins-uninstall.c:54 app/flatpak-builtins-update.c:56
 msgid "ARCH"
 msgstr "ARCHITEKTÚRA"
@@ -201,7 +201,7 @@ msgid "Start build in this directory"
 msgstr "Összeállítás indítása ebben a könyvtárban"
 
 #: app/flatpak-builtins-build.c:52 app/flatpak-builtins-build.c:53
-#: app/flatpak-builtins-build-init.c:64 app/flatpak-builtins-run.c:65
+#: app/flatpak-builtins-build-init.c:64 app/flatpak-builtins-run.c:66
 msgid "DIR"
 msgstr "KÖNYVTÁR"
 
@@ -213,7 +213,7 @@ msgstr "Hol keresse az egyéni sdk könyvtárat (alapértelmezetten „usr”)"
 msgid "Use alternative file for the metadata"
 msgstr "Alternatív fájl használata a metaadatokhoz"
 
-#: app/flatpak-builtins-build.c:55 app/flatpak-builtins-run.c:82
+#: app/flatpak-builtins-build.c:55 app/flatpak-builtins-run.c:83
 msgid "Kill processes when the parent process dies"
 msgstr "Folyamatok kilövése, ha a szülőfolyamat véget ér"
 
@@ -221,11 +221,11 @@ msgstr "Folyamatok kilövése, ha a szülőfolyamat véget ér"
 msgid "Export application homedir directory to build"
 msgstr "Az alkalmazás saját könyvtárának exportálása az összeállításba"
 
-#: app/flatpak-builtins-build.c:57 app/flatpak-builtins-run.c:70
+#: app/flatpak-builtins-build.c:57 app/flatpak-builtins-run.c:71
 msgid "Log session bus calls"
 msgstr "Munkamenetbusz-hívások naplózása"
 
-#: app/flatpak-builtins-build.c:58 app/flatpak-builtins-run.c:71
+#: app/flatpak-builtins-build.c:58 app/flatpak-builtins-run.c:72
 msgid "Log system bus calls"
 msgstr "Rendszerbusz-hívások naplózása"
 
@@ -259,7 +259,7 @@ msgstr "Nincs %s illeszkedésű kiterjesztéspont ebben: %s"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Hiányzó „=” a(z) „%s” kötési csatolás kapcsolóban"
 
-#: app/flatpak-builtins-build.c:593 common/flatpak-run.c:3996
+#: app/flatpak-builtins-build.c:593 common/flatpak-run.c:4127
 msgid "Unable to start app"
 msgstr "Nem indítható el az alkalmazás"
 
@@ -592,8 +592,8 @@ msgstr "Kiírt tartalom bájtokban:"
 msgid "Command to set"
 msgstr "Beállítandó parancs"
 
-#: app/flatpak-builtins-build-finish.c:51 app/flatpak-builtins-run.c:64
-#: app/flatpak-main.c:204
+#: app/flatpak-builtins-build-finish.c:51 app/flatpak-builtins-run.c:65
+#: app/flatpak-main.c:208
 msgid "COMMAND"
 msgstr "PARANCS"
 
@@ -629,7 +629,7 @@ msgstr "Kiterjesztéspont-információk hozzáadása"
 #: app/flatpak-builtins-build-finish.c:56
 #: app/flatpak-builtins-build-update-repo.c:76 app/flatpak-builtins-info.c:58
 #: app/flatpak-builtins-remote-add.c:84 app/flatpak-builtins-remote-modify.c:92
-#: app/flatpak-main.c:177
+#: app/flatpak-main.c:181
 msgid "NAME"
 msgstr "NÉV"
 
@@ -656,7 +656,7 @@ msgstr "Az alkalmazáshoz használt futtatókörnyezet megváltoztatása"
 
 #: app/flatpak-builtins-build-finish.c:59 app/flatpak-builtins-build-init.c:54
 #: app/flatpak-builtins-list.c:51 app/flatpak-builtins-remote-ls.c:56
-#: app/flatpak-builtins-run.c:68
+#: app/flatpak-builtins-run.c:69
 msgid "RUNTIME"
 msgstr "FUTTATÓKÖRNYEZET"
 
@@ -792,7 +792,7 @@ msgid "LOCATION and FILENAME must be specified"
 msgstr "A HELY és FÁJLNÉV megadása kötelező"
 
 #: app/flatpak-builtins-build-init.c:53 app/flatpak-builtins-info.c:55
-#: app/flatpak-builtins-run.c:63
+#: app/flatpak-builtins-run.c:64
 msgid "Arch to use"
 msgstr "Használandó architektúra"
 
@@ -812,7 +812,7 @@ msgstr "ALKALMAZÁS"
 msgid "Specify version for --base"
 msgstr "Verzió megadása a --base kapcsolóhoz"
 
-#: app/flatpak-builtins-build-init.c:56 app/flatpak-builtins-run.c:69
+#: app/flatpak-builtins-build-init.c:56 app/flatpak-builtins-run.c:70
 msgid "VERSION"
 msgstr "VERZIÓ"
 
@@ -980,7 +980,7 @@ msgstr "Ehhez a tárolóhoz használandó alapértelmezett ág"
 #: app/flatpak-builtins-build-update-repo.c:71
 #: app/flatpak-builtins-remote-add.c:79 app/flatpak-builtins-remote-modify.c:86
 #: app/flatpak-builtins-repo.c:712 app/flatpak-builtins-repo.c:713
-#: app/flatpak-builtins-run.c:66
+#: app/flatpak-builtins-run.c:67
 msgid "BRANCH"
 msgstr "ÁG"
 
@@ -2190,7 +2190,7 @@ msgstr "Aktuálissá tétel ezen architektúrára"
 msgid "APP BRANCH - Make branch of application current"
 msgstr "ALKALMAZÁS ÁG - Az alkalmazás ágának aktuálissá tétele"
 
-#: app/flatpak-builtins-make-current.c:69 app/flatpak-builtins-run.c:150
+#: app/flatpak-builtins-make-current.c:69 app/flatpak-builtins-run.c:152
 msgid "APP must be specified"
 msgstr "Az ALKALMAZÁS megadása kötelező"
 
@@ -2334,7 +2334,7 @@ msgstr "Telepítve"
 msgid "Show the instance ID"
 msgstr "Csak futtatókörnyezetek megjelenítése"
 
-#: app/flatpak-builtins-ps.c:48 app/flatpak-builtins-run.c:83
+#: app/flatpak-builtins-ps.c:48 app/flatpak-builtins-run.c:84
 #, fuzzy
 msgid "PID"
 msgstr "ALKALMAZÁSAZONOSÍTÓ"
@@ -3101,93 +3101,97 @@ msgstr ""
 msgid "LOCATION - Repository maintenance"
 msgstr "HELY - Tároló karbantartása"
 
-#: app/flatpak-builtins-run.c:64
+#: app/flatpak-builtins-run.c:65
 msgid "Command to run"
 msgstr "Futtatandó parancs"
 
-#: app/flatpak-builtins-run.c:65
+#: app/flatpak-builtins-run.c:66
 msgid "Directory to run the command in"
 msgstr ""
 
-#: app/flatpak-builtins-run.c:66
+#: app/flatpak-builtins-run.c:67
 msgid "Branch to use"
 msgstr "Használandó ág"
 
-#: app/flatpak-builtins-run.c:67
+#: app/flatpak-builtins-run.c:68
 msgid "Use development runtime"
 msgstr "Fejlesztői futtatókörnyezet használata"
 
-#: app/flatpak-builtins-run.c:68
+#: app/flatpak-builtins-run.c:69
 msgid "Runtime to use"
 msgstr "Használandó futtatókörnyezet"
 
-#: app/flatpak-builtins-run.c:69
+#: app/flatpak-builtins-run.c:70
 msgid "Runtime version to use"
 msgstr "Használandó futtatókörnyezet-verzió"
 
-#: app/flatpak-builtins-run.c:72
+#: app/flatpak-builtins-run.c:73
 msgid "Log accessibility bus calls"
 msgstr "Akadálymentesítési busz hívások naplózása"
 
-#: app/flatpak-builtins-run.c:73
+#: app/flatpak-builtins-run.c:74
 #, fuzzy
 msgid "Don't proxy accessibility bus calls"
 msgstr "Akadálymentesítési busz hívások naplózása"
 
-#: app/flatpak-builtins-run.c:74
+#: app/flatpak-builtins-run.c:75
 msgid "Proxy accessibility bus calls (default except when sandboxed)"
 msgstr ""
 
-#: app/flatpak-builtins-run.c:75
+#: app/flatpak-builtins-run.c:76
 #, fuzzy
 msgid "Don't proxy session bus calls"
 msgstr "Akadálymentesítési busz hívások naplózása"
 
-#: app/flatpak-builtins-run.c:76
+#: app/flatpak-builtins-run.c:77
 msgid "Proxy session bus calls (default except when sandboxed)"
 msgstr ""
 
-#: app/flatpak-builtins-run.c:77
+#: app/flatpak-builtins-run.c:78
 #, fuzzy
 msgid "Don't start portals"
 msgstr "Ne használjon statikus deltákat"
 
-#: app/flatpak-builtins-run.c:78
+#: app/flatpak-builtins-run.c:79
 msgid "Enable file forwarding"
 msgstr "Fájltovábbítás engedélyezése"
 
-#: app/flatpak-builtins-run.c:79
+#: app/flatpak-builtins-run.c:80
 #, fuzzy
 msgid "Run specified commit"
 msgstr "Aktív kommit"
 
-#: app/flatpak-builtins-run.c:80
+#: app/flatpak-builtins-run.c:81
 #, fuzzy
 msgid "Use specified runtime commit"
 msgstr "Aláírt futtatókörnyezet frissítése"
 
-#: app/flatpak-builtins-run.c:81
+#: app/flatpak-builtins-run.c:82
 msgid "Run completely sandboxed"
 msgstr ""
 
-#: app/flatpak-builtins-run.c:83
+#: app/flatpak-builtins-run.c:84
 msgid "Use PID as parent pid for sharing namespaces"
 msgstr ""
 
-#: app/flatpak-builtins-run.c:84
+#: app/flatpak-builtins-run.c:85
 msgid "Make processes visible in parent namespace"
 msgstr ""
 
-#: app/flatpak-builtins-run.c:85
+#: app/flatpak-builtins-run.c:86
+msgid "Share process ID namespace with parent"
+msgstr ""
+
+#: app/flatpak-builtins-run.c:87
 msgid "Write the instance ID to the given file descriptor"
 msgstr ""
 
-#: app/flatpak-builtins-run.c:108
+#: app/flatpak-builtins-run.c:110
 #, fuzzy
 msgid "APP [ARGUMENT…] - Run an app"
 msgstr "ALKALMAZÁS [argumentumok…] - Alkalmazás futtatása"
 
-#: app/flatpak-builtins-run.c:252
+#: app/flatpak-builtins-run.c:254
 #, fuzzy, c-format
 msgid "runtime/%s/%s/%s not installed"
 msgstr "A(z) %s %s nincs telepítve"
@@ -3761,60 +3765,60 @@ msgid "There were one or more errors"
 msgstr ""
 
 #. translators: please keep the leading space
-#: app/flatpak-main.c:74
+#: app/flatpak-main.c:76
 #, fuzzy
 msgid " Manage installed applications and runtimes"
 msgstr " Telepített alkalmazások és futtatókörnyezetek kezelése"
 
-#: app/flatpak-main.c:75
+#: app/flatpak-main.c:77
 msgid "Install an application or runtime"
 msgstr "Egy alkalmazás vagy futtatókörnyezet telepítése"
 
-#: app/flatpak-main.c:76
+#: app/flatpak-main.c:78
 msgid "Update an installed application or runtime"
 msgstr "Telepített alkalmazás vagy futtatókörnyezet frissítése"
 
-#: app/flatpak-main.c:79
+#: app/flatpak-main.c:81
 msgid "Uninstall an installed application or runtime"
 msgstr "Telepített alkalmazás vagy futtatókörnyezet eltávolítása"
 
-#: app/flatpak-main.c:82
+#: app/flatpak-main.c:84
 msgid "Mask out updates and automatic installation"
 msgstr ""
 
-#: app/flatpak-main.c:83
+#: app/flatpak-main.c:85
 msgid "Pin a runtime to prevent automatic removal"
 msgstr ""
 
-#: app/flatpak-main.c:84
+#: app/flatpak-main.c:86
 msgid "List installed apps and/or runtimes"
 msgstr "Telepített alkalmazások és/vagy futtatókörnyezetek felsorolása"
 
-#: app/flatpak-main.c:85
+#: app/flatpak-main.c:87
 msgid "Show info for installed app or runtime"
 msgstr ""
 "Információk megjelenítése a telepített alkalmazáshoz vagy futtatókörnyezethez"
 
-#: app/flatpak-main.c:86
+#: app/flatpak-main.c:88
 #, fuzzy
 msgid "Show history"
 msgstr "Kommit megjelenítése"
 
-#: app/flatpak-main.c:87
+#: app/flatpak-main.c:89
 msgid "Configure flatpak"
 msgstr "Flatpak beállítása"
 
-#: app/flatpak-main.c:88
+#: app/flatpak-main.c:90
 #, fuzzy
 msgid "Repair flatpak installation"
 msgstr "Felhasználói telepítések megjelenítése"
 
-#: app/flatpak-main.c:89
+#: app/flatpak-main.c:91
 msgid "Put applications or runtimes onto removable media"
 msgstr ""
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:92
+#: app/flatpak-main.c:94
 msgid ""
 "\n"
 " Finding applications and runtimes"
@@ -3822,12 +3826,12 @@ msgstr ""
 "\n"
 "Alkalmazás és futtatókörnyezet keresése"
 
-#: app/flatpak-main.c:93
+#: app/flatpak-main.c:95
 msgid "Search for remote apps/runtimes"
 msgstr "Távoli alkalmazások vagy futtatókörnyezetek keresése"
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:96
+#: app/flatpak-main.c:98
 msgid ""
 "\n"
 " Running applications"
@@ -3835,30 +3839,30 @@ msgstr ""
 "\n"
 " Futó alkalmazások"
 
-#: app/flatpak-main.c:97
+#: app/flatpak-main.c:99
 msgid "Run an application"
 msgstr "Alkalmazás futtatása"
 
-#: app/flatpak-main.c:98
+#: app/flatpak-main.c:100
 msgid "Override permissions for an application"
 msgstr "Jogosultságok felülbírálása egy alkalmazásnál"
 
-#: app/flatpak-main.c:99
+#: app/flatpak-main.c:101
 msgid "Specify default version to run"
 msgstr "Alapértelmezett verzió megadása a futtatáshoz"
 
-#: app/flatpak-main.c:100
+#: app/flatpak-main.c:102
 msgid "Enter the namespace of a running application"
 msgstr "Futó alkalmazás névterének megadása"
 
-#: app/flatpak-main.c:101
+#: app/flatpak-main.c:103
 #, fuzzy
 msgid "Enumerate running applications"
 msgstr ""
 "\n"
 " Futó alkalmazások"
 
-#: app/flatpak-main.c:102
+#: app/flatpak-main.c:104
 #, fuzzy
 msgid "Stop a running application"
 msgstr ""
@@ -3866,7 +3870,7 @@ msgstr ""
 " Futó alkalmazások"
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:105
+#: app/flatpak-main.c:107
 msgid ""
 "\n"
 " Manage file access"
@@ -3874,57 +3878,57 @@ msgstr ""
 "\n"
 " Fájlhozzáférés kezelése"
 
-#: app/flatpak-main.c:106
+#: app/flatpak-main.c:108
 msgid "List exported files"
 msgstr "Exportált fájlok felsorolása"
 
-#: app/flatpak-main.c:107
+#: app/flatpak-main.c:109
 msgid "Grant an application access to a specific file"
 msgstr "Hozzáférés adása egy alkalmazásnak egy bizonyos fájlhoz"
 
-#: app/flatpak-main.c:108
+#: app/flatpak-main.c:110
 msgid "Revoke access to a specific file"
 msgstr "Hozzáférés visszavonása egy bizonyos fájlhoz"
 
-#: app/flatpak-main.c:109
+#: app/flatpak-main.c:111
 msgid "Show information about a specific file"
 msgstr "Információk megjelenítése egy bizonyos fájlról"
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:113
+#: app/flatpak-main.c:115
 #, fuzzy
 msgid ""
 "\n"
 " Manage dynamic permissions"
 msgstr "Jogosultságok megjelenítése"
 
-#: app/flatpak-main.c:114
+#: app/flatpak-main.c:116
 #, fuzzy
 msgid "List permissions"
 msgstr "Jogosultságok megjelenítése"
 
-#: app/flatpak-main.c:115
+#: app/flatpak-main.c:117
 #, fuzzy
 msgid "Remove item from permission store"
 msgstr "Az alkalmazás írási jogosultságának visszavonása"
 
-#: app/flatpak-main.c:117
+#: app/flatpak-main.c:119
 #, fuzzy
 msgid "Set permissions"
 msgstr "Jogosultságok megjelenítése"
 
-#: app/flatpak-main.c:118
+#: app/flatpak-main.c:120
 #, fuzzy
 msgid "Show app permissions"
 msgstr "Jogosultságok megjelenítése"
 
-#: app/flatpak-main.c:119
+#: app/flatpak-main.c:121
 #, fuzzy
 msgid "Reset app permissions"
 msgstr "Jogosultságok megjelenítése"
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:122
+#: app/flatpak-main.c:124
 msgid ""
 "\n"
 " Manage remote repositories"
@@ -3932,33 +3936,33 @@ msgstr ""
 "\n"
 " Távoli tárolók kezelése"
 
-#: app/flatpak-main.c:123
+#: app/flatpak-main.c:125
 msgid "List all configured remotes"
 msgstr "Az összes beállított távoli felsorolása"
 
-#: app/flatpak-main.c:124
+#: app/flatpak-main.c:126
 msgid "Add a new remote repository (by URL)"
 msgstr "Új távoli tároló hozzáadása (URL alapján)"
 
-#: app/flatpak-main.c:125
+#: app/flatpak-main.c:127
 msgid "Modify properties of a configured remote"
 msgstr "Beállított távoli tulajdonságainak módosítása"
 
-#: app/flatpak-main.c:126
+#: app/flatpak-main.c:128
 msgid "Delete a configured remote"
 msgstr "Beállított távoli törlése"
 
-#: app/flatpak-main.c:128
+#: app/flatpak-main.c:130
 msgid "List contents of a configured remote"
 msgstr "Beállított távoli tartalmának felsorolása"
 
-#: app/flatpak-main.c:129
+#: app/flatpak-main.c:131
 msgid "Show information about a remote app or runtime"
 msgstr ""
 "Információk megjelenítése a távoli alkalmazáshoz vagy futtatókörnyezethez"
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:132
+#: app/flatpak-main.c:134
 msgid ""
 "\n"
 " Build applications"
@@ -3966,100 +3970,108 @@ msgstr ""
 "\n"
 " Alkalmazások összeállítása"
 
-#: app/flatpak-main.c:133
+#: app/flatpak-main.c:135
 msgid "Initialize a directory for building"
 msgstr "Könyvtár előkészítése az összeállításhoz"
 
-#: app/flatpak-main.c:134
+#: app/flatpak-main.c:136
 msgid "Run a build command inside the build dir"
 msgstr "Összeállítási parancs futtatása az összeállítási könyvtáron belül"
 
-#: app/flatpak-main.c:135
+#: app/flatpak-main.c:137
 msgid "Finish a build dir for export"
 msgstr "Összeállítási könyvtár befejezése exportáláshoz"
 
-#: app/flatpak-main.c:136
+#: app/flatpak-main.c:138
 msgid "Export a build dir to a repository"
 msgstr "Összeállítási könyvtár exportálása tárolóba"
 
-#: app/flatpak-main.c:137
+#: app/flatpak-main.c:139
 msgid "Create a bundle file from a ref in a local repository"
 msgstr "Csomagfájl létrehozása egy hivatkozásból egy helyi tárolóban"
 
-#: app/flatpak-main.c:138
+#: app/flatpak-main.c:140
 msgid "Import a bundle file"
 msgstr "Csomagfájl importálása"
 
-#: app/flatpak-main.c:139
+#: app/flatpak-main.c:141
 msgid "Sign an application or runtime"
 msgstr "Alkalmazás vagy futtatókörnyezet aláírása"
 
-#: app/flatpak-main.c:140
+#: app/flatpak-main.c:142
 msgid "Update the summary file in a repository"
 msgstr "Az összegzőfájl frissítése egy tárolóban"
 
-#: app/flatpak-main.c:141
+#: app/flatpak-main.c:143
 msgid "Create new commit based on existing ref"
 msgstr "Új kommit létrehozása meglévő hivatkozás alapján"
 
-#: app/flatpak-main.c:142
+#: app/flatpak-main.c:144
 #, fuzzy
 msgid "Show information about a repo"
 msgstr "Információk kiírása egy tárolóról"
 
-#: app/flatpak-main.c:159
+#: app/flatpak-main.c:161
 #, fuzzy
 msgid "Show debug information, -vv for more detail"
 msgstr ""
 "Hibakeresési információk kiírása a parancsfeldolgozás közben, -vv a több "
 "részlethez"
 
-#: app/flatpak-main.c:160
+#: app/flatpak-main.c:162
 #, fuzzy
 msgid "Show OSTree debug information"
 msgstr "További információk megjelenítése"
 
-#: app/flatpak-main.c:166
+#: app/flatpak-main.c:168
 msgid "Print version information and exit"
 msgstr "Verzióinformációk kiírása és kilépés"
 
-#: app/flatpak-main.c:167
+#: app/flatpak-main.c:169
 msgid "Print default arch and exit"
 msgstr "Alapértelmezett architektúra kiírása és kilépés"
 
-#: app/flatpak-main.c:168
+#: app/flatpak-main.c:170
 msgid "Print supported arches and exit"
 msgstr "Támogatott architektúrák kiírása és kilépés"
 
-#: app/flatpak-main.c:169
+#: app/flatpak-main.c:171
 msgid "Print active gl drivers and exit"
 msgstr "Aktív gl illesztőprogramok kiírása és kilépés"
 
-#: app/flatpak-main.c:170
+#: app/flatpak-main.c:172
 #, fuzzy
 msgid "Print paths for system installations and exit"
 msgstr "Verzióinformációk kiírása és kilépés"
 
-#: app/flatpak-main.c:175
+#: app/flatpak-main.c:173
+msgid "Print the updated environment needed to run flatpaks"
+msgstr ""
+
+#: app/flatpak-main.c:174
+msgid "Only include the system installation with --print-updated-env"
+msgstr ""
+
+#: app/flatpak-main.c:179
 #, fuzzy
 msgid "Work on the user installation"
 msgstr "Munkavégzés a felhasználói telepítéseken"
 
-#: app/flatpak-main.c:176
+#: app/flatpak-main.c:180
 #, fuzzy
 msgid "Work on the system-wide installation (default)"
 msgstr "Munkavégzés a rendszerszintű telepítéseken (alapértelmezett)"
 
-#: app/flatpak-main.c:177
+#: app/flatpak-main.c:181
 #, fuzzy
 msgid "Work on a non-default system-wide installation"
 msgstr "Munkavégzés adott rendszerszintű telepítés(ek)en"
 
-#: app/flatpak-main.c:207
+#: app/flatpak-main.c:211
 msgid "Builtin Commands:"
 msgstr "Beépített parancsok:"
 
-#: app/flatpak-main.c:293
+#: app/flatpak-main.c:297
 #, c-format
 msgid ""
 "Note that the directories %s are not in the search path set by the "
@@ -4067,7 +4079,7 @@ msgid ""
 "not appear on your desktop until the session is restarted."
 msgstr ""
 
-#: app/flatpak-main.c:307
+#: app/flatpak-main.c:311
 #, c-format
 msgid ""
 "Note that the directory %s is not in the search path set by the "
@@ -4075,7 +4087,7 @@ msgid ""
 "not appear on your desktop until the session is restarted."
 msgstr ""
 
-#: app/flatpak-main.c:436
+#: app/flatpak-main.c:440
 #, fuzzy
 msgid ""
 "Multiple installations specified for a command that works on one installation"
@@ -4083,26 +4095,26 @@ msgstr ""
 "Az --installation kapcsoló többször volt használva egy olyan parancsnál, "
 "amely csak egy telepítésnél működik"
 
-#: app/flatpak-main.c:485 app/flatpak-main.c:667
+#: app/flatpak-main.c:489 app/flatpak-main.c:671
 #, c-format
 msgid "See '%s --help'"
 msgstr ""
 
-#: app/flatpak-main.c:676
+#: app/flatpak-main.c:680
 #, fuzzy, c-format
 msgid "'%s' is not a flatpak command. Did you mean '%s%s'?"
 msgstr "A(z) „%s” nem érvényes alkalmazásnév: %s"
 
-#: app/flatpak-main.c:679
+#: app/flatpak-main.c:683
 #, c-format
 msgid "'%s' is not a flatpak command"
 msgstr ""
 
-#: app/flatpak-main.c:741
+#: app/flatpak-main.c:798
 msgid "No command specified"
 msgstr "Nincs parancs megadva"
 
-#: app/flatpak-main.c:901
+#: app/flatpak-main.c:958
 msgid "error:"
 msgstr "hiba:"
 
@@ -4200,152 +4212,175 @@ msgstr ""
 msgid "Invalid env format %s"
 msgstr "Érvénytelen %s env formátum"
 
-#: common/flatpak-context.c:1227 common/flatpak-context.c:1235
+#: common/flatpak-context.c:1192
+#, c-format
+msgid "Environment variable name must not contain '=': %s"
+msgstr ""
+
+#: common/flatpak-context.c:1305 common/flatpak-context.c:1313
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 
-#: common/flatpak-context.c:1242
+#: common/flatpak-context.c:1320
 msgid "--add-policy values can't start with \"!\""
 msgstr ""
 
-#: common/flatpak-context.c:1267 common/flatpak-context.c:1275
+#: common/flatpak-context.c:1345 common/flatpak-context.c:1353
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 
-#: common/flatpak-context.c:1282
+#: common/flatpak-context.c:1360
 msgid "--remove-policy values can't start with \"!\""
 msgstr ""
 
-#: common/flatpak-context.c:1308
+#: common/flatpak-context.c:1386
 msgid "Share with host"
 msgstr "Megosztás a gazdagéppel"
 
-#: common/flatpak-context.c:1308 common/flatpak-context.c:1309
+#: common/flatpak-context.c:1386 common/flatpak-context.c:1387
 msgid "SHARE"
 msgstr "MEGOSZTÁS"
 
-#: common/flatpak-context.c:1309
+#: common/flatpak-context.c:1387
 msgid "Unshare with host"
 msgstr "Megosztás megszüntetése a gazdagéppel"
 
-#: common/flatpak-context.c:1310
+#: common/flatpak-context.c:1388
 msgid "Expose socket to app"
 msgstr "Foglalat elérhetővé tétele az alkalmazásnak"
 
-#: common/flatpak-context.c:1310 common/flatpak-context.c:1311
+#: common/flatpak-context.c:1388 common/flatpak-context.c:1389
 msgid "SOCKET"
 msgstr "FOGLALAT"
 
-#: common/flatpak-context.c:1311
+#: common/flatpak-context.c:1389
 msgid "Don't expose socket to app"
 msgstr "Ne tegye elérhetővé a foglalatot az alkalmazásnak"
 
-#: common/flatpak-context.c:1312
+#: common/flatpak-context.c:1390
 msgid "Expose device to app"
 msgstr "Eszköz elérhetővé tétele az alkalmazásnak"
 
-#: common/flatpak-context.c:1312 common/flatpak-context.c:1313
+#: common/flatpak-context.c:1390 common/flatpak-context.c:1391
 msgid "DEVICE"
 msgstr "ESZKÖZ"
 
-#: common/flatpak-context.c:1313
+#: common/flatpak-context.c:1391
 msgid "Don't expose device to app"
 msgstr "Ne tegye elérhetővé az eszközt az alkalmazásnak"
 
-#: common/flatpak-context.c:1314
+#: common/flatpak-context.c:1392
 msgid "Allow feature"
 msgstr "Jellemző engedélyezése"
 
-#: common/flatpak-context.c:1314 common/flatpak-context.c:1315
+#: common/flatpak-context.c:1392 common/flatpak-context.c:1393
 msgid "FEATURE"
 msgstr "JELLEMZŐ"
 
-#: common/flatpak-context.c:1315
+#: common/flatpak-context.c:1393
 msgid "Don't allow feature"
 msgstr "Ne engedélyezze a jellemzőt"
 
-#: common/flatpak-context.c:1316
+#: common/flatpak-context.c:1394
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr ""
 "Fájlrendszer elérhetővé tétele az alkalmazásnak (:ro a csak olvashatóhoz)"
 
-#: common/flatpak-context.c:1316
+#: common/flatpak-context.c:1394
 msgid "FILESYSTEM[:ro]"
 msgstr "FÁJLRENDSZER[:ro]"
 
-#: common/flatpak-context.c:1317
+#: common/flatpak-context.c:1395
 msgid "Don't expose filesystem to app"
 msgstr "Ne tegye elérhetővé a fájlrendszert az alkalmazásnak"
 
-#: common/flatpak-context.c:1317
+#: common/flatpak-context.c:1395
 msgid "FILESYSTEM"
 msgstr "FÁJLRENDSZER"
 
-#: common/flatpak-context.c:1318
+#: common/flatpak-context.c:1396
 msgid "Set environment variable"
 msgstr "Környezeti változó beállítása"
 
-#: common/flatpak-context.c:1318
+#: common/flatpak-context.c:1396
 msgid "VAR=VALUE"
 msgstr "VÁLTOZÓ=ÉRTÉK"
 
-#: common/flatpak-context.c:1319
+#: common/flatpak-context.c:1397
+msgid "Read environment variables in env -0 format from FD"
+msgstr ""
+
+#: common/flatpak-context.c:1397
+msgid "FD"
+msgstr ""
+
+#: common/flatpak-context.c:1398
+#, fuzzy
+msgid "Remove variable from environment"
+msgstr "Az alkalmazás írási jogosultságának visszavonása"
+
+#: common/flatpak-context.c:1398
+#, fuzzy
+msgid "VAR"
+msgstr "VÁLTOZÓ=ÉRTÉK"
+
+#: common/flatpak-context.c:1399
 msgid "Allow app to own name on the session bus"
 msgstr "Név birtoklásának lehetővé tétele az alkalmazásnak a munkamenetbuszon"
 
-#: common/flatpak-context.c:1319 common/flatpak-context.c:1320
-#: common/flatpak-context.c:1321 common/flatpak-context.c:1322
-#: common/flatpak-context.c:1323 common/flatpak-context.c:1324
+#: common/flatpak-context.c:1399 common/flatpak-context.c:1400
+#: common/flatpak-context.c:1401 common/flatpak-context.c:1402
+#: common/flatpak-context.c:1403 common/flatpak-context.c:1404
 msgid "DBUS_NAME"
 msgstr "DBUS_NÉV"
 
-#: common/flatpak-context.c:1320
+#: common/flatpak-context.c:1400
 msgid "Allow app to talk to name on the session bus"
 msgstr ""
 "A névhez való beszéd lehetővé tétele az alkalmazásnak a munkamenetbuszon"
 
-#: common/flatpak-context.c:1321
+#: common/flatpak-context.c:1401
 #, fuzzy
 msgid "Don't allow app to talk to name on the session bus"
 msgstr ""
 "A névhez való beszéd lehetővé tétele az alkalmazásnak a munkamenetbuszon"
 
-#: common/flatpak-context.c:1322
+#: common/flatpak-context.c:1402
 msgid "Allow app to own name on the system bus"
 msgstr "Név birtoklásának lehetővé tétele az alkalmazásnak a rendszerbuszon"
 
-#: common/flatpak-context.c:1323
+#: common/flatpak-context.c:1403
 msgid "Allow app to talk to name on the system bus"
 msgstr "A névhez való beszéd lehetővé tétele az alkalmazásnak a rendszerbuszon"
 
-#: common/flatpak-context.c:1324
+#: common/flatpak-context.c:1404
 #, fuzzy
 msgid "Don't allow app to talk to name on the system bus"
 msgstr "A névhez való beszéd lehetővé tétele az alkalmazásnak a rendszerbuszon"
 
-#: common/flatpak-context.c:1325
+#: common/flatpak-context.c:1405
 msgid "Add generic policy option"
 msgstr "Általános irányelv-lehetőség hozzáadása"
 
-#: common/flatpak-context.c:1325 common/flatpak-context.c:1326
+#: common/flatpak-context.c:1405 common/flatpak-context.c:1406
 msgid "SUBSYSTEM.KEY=VALUE"
 msgstr "ALRENDSZER.KULCS=ÉRTÉK"
 
-#: common/flatpak-context.c:1326
+#: common/flatpak-context.c:1406
 msgid "Remove generic policy option"
 msgstr "Általános irányelv-lehetőség eltávolítása"
 
-#: common/flatpak-context.c:1327
+#: common/flatpak-context.c:1407
 #, fuzzy
 msgid "Persist home directory subpath"
 msgstr "Saját könyvtár megőrzése"
 
-#: common/flatpak-context.c:1327
+#: common/flatpak-context.c:1407
 msgid "FILENAME"
 msgstr "FÁJLNÉV"
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-context.c:1329
+#: common/flatpak-context.c:1409
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "Ne követeljen meg egy futó munkamenetet (nincs cgroups létrehozás)"
 
@@ -5103,103 +5138,103 @@ msgstr "Nincs parancs megadva"
 msgid "GPG verification must be enabled when a collection ID is set"
 msgstr "GPG ellenőrzés szükséges, ha a gyűjtemények engedélyezettek"
 
-#: common/flatpak-run.c:865
+#: common/flatpak-run.c:995
 #, fuzzy
 msgid "Failed to open app info file"
 msgstr "Nem sikerült megnyitni az alkalmazás-információs fájlt: %s"
 
-#: common/flatpak-run.c:959
+#: common/flatpak-run.c:1089
 msgid "Unable to create sync pipe"
 msgstr "Nem hozható létre szinkronizálási cső"
 
-#: common/flatpak-run.c:998
+#: common/flatpak-run.c:1128
 msgid "Failed to sync with dbus proxy"
 msgstr "Nem sikerült szinkronizálni a dbus proxyval"
 
-#: common/flatpak-run.c:1671
+#: common/flatpak-run.c:1783
 msgid "No systemd user session available, cgroups not available"
 msgstr ""
 
-#: common/flatpak-run.c:2220
+#: common/flatpak-run.c:2332
 #, fuzzy
 msgid "Unable to allocate instance id"
 msgstr "Nem hozható létre szinkronizálási cső"
 
-#: common/flatpak-run.c:2340 common/flatpak-run.c:2350
+#: common/flatpak-run.c:2452 common/flatpak-run.c:2462
 #, fuzzy, c-format
 msgid "Failed to open flatpak-info file: %s"
 msgstr "Nem sikerült megnyitni a flatpak-információs átmeneti fájlt: %s"
 
-#: common/flatpak-run.c:2381
+#: common/flatpak-run.c:2493
 #, fuzzy, c-format
 msgid "Failed to open bwrapinfo.json file: %s"
 msgstr "Nem sikerült megnyitni a flatpak-információs átmeneti fájlt: %s"
 
-#: common/flatpak-run.c:2406
+#: common/flatpak-run.c:2518
 #, fuzzy, c-format
 msgid "Failed to write to instance id fd: %s"
 msgstr "Nem sikerült olvasni a(z) %s kommitot: "
 
-#: common/flatpak-run.c:2726
+#: common/flatpak-run.c:2838
 #, fuzzy
 msgid "Initialize seccomp failed"
 msgstr "Alkalmazások előkészítése egy elnevezett alkalmazásból"
 
-#: common/flatpak-run.c:2765
+#: common/flatpak-run.c:2877
 msgid "Failed to add architecture to seccomp filter"
 msgstr ""
 
-#: common/flatpak-run.c:2773
+#: common/flatpak-run.c:2885
 msgid "Failed to add multiarch architecture to seccomp filter"
 msgstr ""
 
 #. unknown syscall
-#: common/flatpak-run.c:2792 common/flatpak-run.c:2806
+#: common/flatpak-run.c:2904 common/flatpak-run.c:2918
 #, fuzzy, c-format
 msgid "Failed to block syscall %d"
 msgstr "Hiba: %s %s sikertelen: %s\n"
 
-#: common/flatpak-run.c:2837
+#: common/flatpak-run.c:2949
 #, fuzzy
 msgid "Failed to export bpf"
 msgstr "Nem sikerült olvasni az exportált fájlból"
 
-#: common/flatpak-run.c:3072
+#: common/flatpak-run.c:3186
 #, fuzzy, c-format
 msgid "Failed to open ‘%s’"
 msgstr "Nem sikerült megnyitni a flatpak-információs átmeneti fájlt: %s"
 
-#: common/flatpak-run.c:3356
+#: common/flatpak-run.c:3470
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "ldconfig meghiúsult, kilépési állapot: %d"
 
-#: common/flatpak-run.c:3363
+#: common/flatpak-run.c:3477
 #, fuzzy
 msgid "Can't open generated ld.so.cache"
 msgstr "Nem lehet megnyitni a(z) %s névteret: %s"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-run.c:3475
+#: common/flatpak-run.c:3589
 #, c-format
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr ""
 
-#: common/flatpak-run.c:3517
+#: common/flatpak-run.c:3631
 msgid "\"flatpak run\" is not intended to be ran with sudo"
 msgstr ""
 
-#: common/flatpak-run.c:3740
+#: common/flatpak-run.c:3854
 #, fuzzy, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "Nem sikerült olvasni a(z) %s kommitot: "
 
-#: common/flatpak-run.c:3755
+#: common/flatpak-run.c:3869
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr ""
 
-#: common/flatpak-run.c:3764
+#: common/flatpak-run.c:3878
 #, fuzzy, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "Nem sikerült olvasni a(z) %s kommitot: "
@@ -5456,42 +5491,42 @@ msgstr ""
 msgid "Invalid token"
 msgstr "Érvénytelen gpg kulcs"
 
-#: portal/flatpak-portal.c:2035
+#: portal/flatpak-portal.c:2147
 #, fuzzy
 msgid "No portal support found"
 msgstr "Nincs találat"
 
-#: portal/flatpak-portal.c:2041
+#: portal/flatpak-portal.c:2153
 msgid "Deny"
 msgstr ""
 
-#: portal/flatpak-portal.c:2043
+#: portal/flatpak-portal.c:2155
 #, fuzzy
 msgid "Update"
 msgstr "frissítés"
 
-#: portal/flatpak-portal.c:2048
+#: portal/flatpak-portal.c:2160
 #, fuzzy, c-format
 msgid "Update %s?"
 msgstr "Összegzés frissítése\n"
 
-#: portal/flatpak-portal.c:2060
+#: portal/flatpak-portal.c:2172
 msgid "The application wants to update itself."
 msgstr ""
 
-#: portal/flatpak-portal.c:2061
+#: portal/flatpak-portal.c:2173
 msgid "Update access can be changed any time from the privacy settings."
 msgstr ""
 
-#: portal/flatpak-portal.c:2086
+#: portal/flatpak-portal.c:2198
 msgid "Application update not allowed"
 msgstr ""
 
-#: portal/flatpak-portal.c:2243
+#: portal/flatpak-portal.c:2355
 msgid "Self update not supported, new version requires new permissions"
 msgstr ""
 
-#: portal/flatpak-portal.c:2425 portal/flatpak-portal.c:2442
+#: portal/flatpak-portal.c:2537 portal/flatpak-portal.c:2554
 #, fuzzy
 msgid "Update ended unexpectedly"
 msgstr "Aláírt futtatókörnyezet frissítése"

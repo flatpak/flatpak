@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2020-12-22 14:06+0100\n"
+"POT-Creation-Date: 2021-01-14 10:52+0100\n"
 "PO-Revision-Date: 2019-05-13 07:32+0300\n"
 "Last-Translator: Serdar Sağlam <teknomobil@yandex.com>\n"
 "Language-Team: Türkçe <gnome-turk@gnome.org>\n"
@@ -34,7 +34,7 @@ msgstr "Paketleneceği mimari"
 #: app/flatpak-builtins-info.c:55 app/flatpak-builtins-install.c:63
 #: app/flatpak-builtins-list.c:49 app/flatpak-builtins-make-current.c:38
 #: app/flatpak-builtins-remote-info.c:53 app/flatpak-builtins-remote-ls.c:54
-#: app/flatpak-builtins-run.c:63 app/flatpak-builtins-search.c:36
+#: app/flatpak-builtins-run.c:64 app/flatpak-builtins-search.c:36
 #: app/flatpak-builtins-uninstall.c:54 app/flatpak-builtins-update.c:56
 msgid "ARCH"
 msgstr "MİMARİ"
@@ -201,7 +201,7 @@ msgid "Start build in this directory"
 msgstr "İnşaya bu dizinde başla"
 
 #: app/flatpak-builtins-build.c:52 app/flatpak-builtins-build.c:53
-#: app/flatpak-builtins-build-init.c:64 app/flatpak-builtins-run.c:65
+#: app/flatpak-builtins-build-init.c:64 app/flatpak-builtins-run.c:66
 msgid "DIR"
 msgstr "DİZİN"
 
@@ -214,7 +214,7 @@ msgstr ""
 msgid "Use alternative file for the metadata"
 msgstr "Üst veri için alternatif dosya kullan"
 
-#: app/flatpak-builtins-build.c:55 app/flatpak-builtins-run.c:82
+#: app/flatpak-builtins-build.c:55 app/flatpak-builtins-run.c:83
 msgid "Kill processes when the parent process dies"
 msgstr "Ana işlem öldüğünde işlemleri sonlandır"
 
@@ -222,11 +222,11 @@ msgstr "Ana işlem öldüğünde işlemleri sonlandır"
 msgid "Export application homedir directory to build"
 msgstr ""
 
-#: app/flatpak-builtins-build.c:57 app/flatpak-builtins-run.c:70
+#: app/flatpak-builtins-build.c:57 app/flatpak-builtins-run.c:71
 msgid "Log session bus calls"
 msgstr "Oturum veri yolu çağrılarını günlükle"
 
-#: app/flatpak-builtins-build.c:58 app/flatpak-builtins-run.c:71
+#: app/flatpak-builtins-build.c:58 app/flatpak-builtins-run.c:72
 msgid "Log system bus calls"
 msgstr "Sistem veri yolu çağrılarını günlükle"
 
@@ -258,7 +258,7 @@ msgstr "%s'e uyan eklenti noktası %s'te yok"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Bağlama noktası seçeneği '%s'te eksik '='"
 
-#: app/flatpak-builtins-build.c:593 common/flatpak-run.c:3996
+#: app/flatpak-builtins-build.c:593 common/flatpak-run.c:4127
 msgid "Unable to start app"
 msgstr "Uygulama başlatılamadı"
 
@@ -582,8 +582,8 @@ msgstr ""
 msgid "Command to set"
 msgstr "Belirlenecek komut"
 
-#: app/flatpak-builtins-build-finish.c:51 app/flatpak-builtins-run.c:64
-#: app/flatpak-main.c:204
+#: app/flatpak-builtins-build-finish.c:51 app/flatpak-builtins-run.c:65
+#: app/flatpak-main.c:208
 msgid "COMMAND"
 msgstr "KOMUT"
 
@@ -619,7 +619,7 @@ msgstr "Eklenti noktası bilgisi ekle"
 #: app/flatpak-builtins-build-finish.c:56
 #: app/flatpak-builtins-build-update-repo.c:76 app/flatpak-builtins-info.c:58
 #: app/flatpak-builtins-remote-add.c:84 app/flatpak-builtins-remote-modify.c:92
-#: app/flatpak-main.c:177
+#: app/flatpak-main.c:181
 msgid "NAME"
 msgstr "İSİM"
 
@@ -645,7 +645,7 @@ msgstr "Uygulama için kullanılan çalışma ortamını değiştir"
 
 #: app/flatpak-builtins-build-finish.c:59 app/flatpak-builtins-build-init.c:54
 #: app/flatpak-builtins-list.c:51 app/flatpak-builtins-remote-ls.c:56
-#: app/flatpak-builtins-run.c:68
+#: app/flatpak-builtins-run.c:69
 msgid "RUNTIME"
 msgstr "ÇALIŞMAORTAMI"
 
@@ -777,7 +777,7 @@ msgid "LOCATION and FILENAME must be specified"
 msgstr "KONUM ve DOSYAADI belirtilmelidir"
 
 #: app/flatpak-builtins-build-init.c:53 app/flatpak-builtins-info.c:55
-#: app/flatpak-builtins-run.c:63
+#: app/flatpak-builtins-run.c:64
 msgid "Arch to use"
 msgstr "Kullanılacak mimari"
 
@@ -797,7 +797,7 @@ msgstr "UYGULAMA"
 msgid "Specify version for --base"
 msgstr "--base için sürüm belirt"
 
-#: app/flatpak-builtins-build-init.c:56 app/flatpak-builtins-run.c:69
+#: app/flatpak-builtins-build-init.c:56 app/flatpak-builtins-run.c:70
 msgid "VERSION"
 msgstr "SÜRÜM"
 
@@ -963,7 +963,7 @@ msgstr "Bu arşiv için kullanılacak öntanımlı dal"
 #: app/flatpak-builtins-build-update-repo.c:71
 #: app/flatpak-builtins-remote-add.c:79 app/flatpak-builtins-remote-modify.c:86
 #: app/flatpak-builtins-repo.c:712 app/flatpak-builtins-repo.c:713
-#: app/flatpak-builtins-run.c:66
+#: app/flatpak-builtins-run.c:67
 msgid "BRANCH"
 msgstr "DAL"
 
@@ -2148,7 +2148,7 @@ msgstr "Mevcutun yapılacağı mimariler"
 msgid "APP BRANCH - Make branch of application current"
 msgstr "UYGULAMA DAL - Uygulamanın dalını mevcut yap"
 
-#: app/flatpak-builtins-make-current.c:69 app/flatpak-builtins-run.c:150
+#: app/flatpak-builtins-make-current.c:69 app/flatpak-builtins-run.c:152
 msgid "APP must be specified"
 msgstr "UYGULAMA belirtilmelidir"
 
@@ -2292,7 +2292,7 @@ msgstr "Yüklü"
 msgid "Show the instance ID"
 msgstr "Sadece çalışma ortamlarını göster"
 
-#: app/flatpak-builtins-ps.c:48 app/flatpak-builtins-run.c:83
+#: app/flatpak-builtins-ps.c:48 app/flatpak-builtins-run.c:84
 msgid "PID"
 msgstr "PID"
 
@@ -3041,93 +3041,97 @@ msgstr ""
 msgid "LOCATION - Repository maintenance"
 msgstr "KONUM - Arşiv bakım"
 
-#: app/flatpak-builtins-run.c:64
+#: app/flatpak-builtins-run.c:65
 msgid "Command to run"
 msgstr "Çalıştırılacak komut"
 
-#: app/flatpak-builtins-run.c:65
+#: app/flatpak-builtins-run.c:66
 msgid "Directory to run the command in"
 msgstr ""
 
-#: app/flatpak-builtins-run.c:66
+#: app/flatpak-builtins-run.c:67
 msgid "Branch to use"
 msgstr "Kullanılacak dal"
 
-#: app/flatpak-builtins-run.c:67
+#: app/flatpak-builtins-run.c:68
 msgid "Use development runtime"
 msgstr "Geliştirme çalışma ortamı kullan"
 
-#: app/flatpak-builtins-run.c:68
+#: app/flatpak-builtins-run.c:69
 msgid "Runtime to use"
 msgstr "Kullanılacak çalışma ortamı"
 
-#: app/flatpak-builtins-run.c:69
+#: app/flatpak-builtins-run.c:70
 msgid "Runtime version to use"
 msgstr "Kullanılacak çalışma ortamı sürümü"
 
-#: app/flatpak-builtins-run.c:72
+#: app/flatpak-builtins-run.c:73
 #, fuzzy
 msgid "Log accessibility bus calls"
 msgstr "Oturum veri yolu çağrılarını günlükle"
 
-#: app/flatpak-builtins-run.c:73
+#: app/flatpak-builtins-run.c:74
 #, fuzzy
 msgid "Don't proxy accessibility bus calls"
 msgstr "Oturum veri yolu çağrılarını günlükle"
 
-#: app/flatpak-builtins-run.c:74
+#: app/flatpak-builtins-run.c:75
 msgid "Proxy accessibility bus calls (default except when sandboxed)"
 msgstr ""
 
-#: app/flatpak-builtins-run.c:75
+#: app/flatpak-builtins-run.c:76
 #, fuzzy
 msgid "Don't proxy session bus calls"
 msgstr "Oturum veri yolu çağrılarını günlükle"
 
-#: app/flatpak-builtins-run.c:76
+#: app/flatpak-builtins-run.c:77
 msgid "Proxy session bus calls (default except when sandboxed)"
 msgstr ""
 
-#: app/flatpak-builtins-run.c:77
+#: app/flatpak-builtins-run.c:78
 #, fuzzy
 msgid "Don't start portals"
 msgstr "Dural deltaları kullanma"
 
-#: app/flatpak-builtins-run.c:78
+#: app/flatpak-builtins-run.c:79
 msgid "Enable file forwarding"
 msgstr ""
 
-#: app/flatpak-builtins-run.c:79
+#: app/flatpak-builtins-run.c:80
 msgid "Run specified commit"
 msgstr ""
 
-#: app/flatpak-builtins-run.c:80
+#: app/flatpak-builtins-run.c:81
 #, fuzzy
 msgid "Use specified runtime commit"
 msgstr "İmzalı çalışma ortamı güncelle"
 
-#: app/flatpak-builtins-run.c:81
+#: app/flatpak-builtins-run.c:82
 msgid "Run completely sandboxed"
 msgstr ""
 
-#: app/flatpak-builtins-run.c:83
+#: app/flatpak-builtins-run.c:84
 msgid "Use PID as parent pid for sharing namespaces"
 msgstr ""
 
-#: app/flatpak-builtins-run.c:84
+#: app/flatpak-builtins-run.c:85
 msgid "Make processes visible in parent namespace"
 msgstr ""
 
-#: app/flatpak-builtins-run.c:85
+#: app/flatpak-builtins-run.c:86
+msgid "Share process ID namespace with parent"
+msgstr ""
+
+#: app/flatpak-builtins-run.c:87
 msgid "Write the instance ID to the given file descriptor"
 msgstr ""
 
-#: app/flatpak-builtins-run.c:108
+#: app/flatpak-builtins-run.c:110
 #, fuzzy
 msgid "APP [ARGUMENT…] - Run an app"
 msgstr "UYGULAMA [arg...] - Bir uygulamayı çalıştır"
 
-#: app/flatpak-builtins-run.c:252
+#: app/flatpak-builtins-run.c:254
 #, fuzzy, c-format
 msgid "runtime/%s/%s/%s not installed"
 msgstr "%s %s yüklü değil"
@@ -3683,56 +3687,56 @@ msgid "There were one or more errors"
 msgstr "Bir veya daha fazla hata oluştu"
 
 #. translators: please keep the leading space
-#: app/flatpak-main.c:74
+#: app/flatpak-main.c:76
 msgid " Manage installed applications and runtimes"
 msgstr "Yüklü uygulamaları ve çalışma sürelerini yönet"
 
-#: app/flatpak-main.c:75
+#: app/flatpak-main.c:77
 msgid "Install an application or runtime"
 msgstr "Bir uygulama veya çalışma ortamı yükle"
 
-#: app/flatpak-main.c:76
+#: app/flatpak-main.c:78
 msgid "Update an installed application or runtime"
 msgstr "Yüklü bir uygulamayı veya çalışma ortamını güncelle"
 
-#: app/flatpak-main.c:79
+#: app/flatpak-main.c:81
 msgid "Uninstall an installed application or runtime"
 msgstr "Yüklü bir uygulama veya çalışma ortamını kaldır"
 
-#: app/flatpak-main.c:82
+#: app/flatpak-main.c:84
 msgid "Mask out updates and automatic installation"
 msgstr ""
 
-#: app/flatpak-main.c:83
+#: app/flatpak-main.c:85
 msgid "Pin a runtime to prevent automatic removal"
 msgstr ""
 
-#: app/flatpak-main.c:84
+#: app/flatpak-main.c:86
 msgid "List installed apps and/or runtimes"
 msgstr "Yüklü uygulama ve/veya çalışma ortamlarını listele"
 
-#: app/flatpak-main.c:85
+#: app/flatpak-main.c:87
 msgid "Show info for installed app or runtime"
 msgstr "Yüklü uygulama veya çalışma ortamı için bilgi göster"
 
-#: app/flatpak-main.c:86
+#: app/flatpak-main.c:88
 msgid "Show history"
 msgstr "Geçmişi göster"
 
-#: app/flatpak-main.c:87
+#: app/flatpak-main.c:89
 msgid "Configure flatpak"
 msgstr "Flatpak'i yapılandır"
 
-#: app/flatpak-main.c:88
+#: app/flatpak-main.c:90
 msgid "Repair flatpak installation"
 msgstr "Flatpak kurulumunu onar"
 
-#: app/flatpak-main.c:89
+#: app/flatpak-main.c:91
 msgid "Put applications or runtimes onto removable media"
 msgstr "Uygulamaları veya çalışma sürelerini çıkarılabilir medyaya yerleştir"
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:92
+#: app/flatpak-main.c:94
 msgid ""
 "\n"
 " Finding applications and runtimes"
@@ -3740,12 +3744,12 @@ msgstr ""
 "\n"
 "Uygulamalar ve çalışma zamanları bul"
 
-#: app/flatpak-main.c:93
+#: app/flatpak-main.c:95
 msgid "Search for remote apps/runtimes"
 msgstr "Uzak uygulamaları/çalışma zamanlarını ara"
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:96
+#: app/flatpak-main.c:98
 msgid ""
 "\n"
 " Running applications"
@@ -3753,32 +3757,32 @@ msgstr ""
 "\n"
 " Çalışan uygulamalar"
 
-#: app/flatpak-main.c:97
+#: app/flatpak-main.c:99
 msgid "Run an application"
 msgstr "Bir uygulama çalıştır"
 
-#: app/flatpak-main.c:98
+#: app/flatpak-main.c:100
 msgid "Override permissions for an application"
 msgstr "Bir uygulama için izinleri geçersiz kıl"
 
-#: app/flatpak-main.c:99
+#: app/flatpak-main.c:101
 msgid "Specify default version to run"
 msgstr "Çalıştırılacak öntanımlı sürümü belirt"
 
-#: app/flatpak-main.c:100
+#: app/flatpak-main.c:102
 msgid "Enter the namespace of a running application"
 msgstr "Çalışan bir uygulamanın ad alanına gir"
 
-#: app/flatpak-main.c:101
+#: app/flatpak-main.c:103
 msgid "Enumerate running applications"
 msgstr "Çalışan uygulamaları numaralandır"
 
-#: app/flatpak-main.c:102
+#: app/flatpak-main.c:104
 msgid "Stop a running application"
 msgstr "Çalışan uygulamaları durdur"
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:105
+#: app/flatpak-main.c:107
 msgid ""
 "\n"
 " Manage file access"
@@ -3786,24 +3790,24 @@ msgstr ""
 "\n"
 "Dosya erişimini yönet"
 
-#: app/flatpak-main.c:106
+#: app/flatpak-main.c:108
 msgid "List exported files"
 msgstr "Dışa aktarılmış dosyaları listele"
 
-#: app/flatpak-main.c:107
+#: app/flatpak-main.c:109
 msgid "Grant an application access to a specific file"
 msgstr "Bir uygulamaya belirli bir dosyaya erişim tanı"
 
-#: app/flatpak-main.c:108
+#: app/flatpak-main.c:110
 msgid "Revoke access to a specific file"
 msgstr "Belirli bir dosyaya erişimi geri çek"
 
-#: app/flatpak-main.c:109
+#: app/flatpak-main.c:111
 msgid "Show information about a specific file"
 msgstr "Belirli bir dosya hakkında bilgi göster"
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:113
+#: app/flatpak-main.c:115
 msgid ""
 "\n"
 " Manage dynamic permissions"
@@ -3811,29 +3815,29 @@ msgstr ""
 "\n"
 "Dinamik izinleri yönet"
 
-#: app/flatpak-main.c:114
+#: app/flatpak-main.c:116
 msgid "List permissions"
 msgstr "İzinleri listele"
 
-#: app/flatpak-main.c:115
+#: app/flatpak-main.c:117
 msgid "Remove item from permission store"
 msgstr "Ögeyi izin deposundan kaldır"
 
-#: app/flatpak-main.c:117
+#: app/flatpak-main.c:119
 #, fuzzy
 msgid "Set permissions"
 msgstr "İzinleri listele"
 
-#: app/flatpak-main.c:118
+#: app/flatpak-main.c:120
 msgid "Show app permissions"
 msgstr "Uygulama izinlerini göster"
 
-#: app/flatpak-main.c:119
+#: app/flatpak-main.c:121
 msgid "Reset app permissions"
 msgstr "Uygulama izinlerini sıfırla"
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:122
+#: app/flatpak-main.c:124
 msgid ""
 "\n"
 " Manage remote repositories"
@@ -3841,32 +3845,32 @@ msgstr ""
 "\n"
 " Uzak arşivleri yönet"
 
-#: app/flatpak-main.c:123
+#: app/flatpak-main.c:125
 msgid "List all configured remotes"
 msgstr "Tüm yapılandırılmış uzakları listele"
 
-#: app/flatpak-main.c:124
+#: app/flatpak-main.c:126
 msgid "Add a new remote repository (by URL)"
 msgstr "Yeni bir uzak arşiv ekle (URL'yle)"
 
-#: app/flatpak-main.c:125
+#: app/flatpak-main.c:127
 msgid "Modify properties of a configured remote"
 msgstr "Yapılandırılmış bir uzağın niteliklerini düzenle"
 
-#: app/flatpak-main.c:126
+#: app/flatpak-main.c:128
 msgid "Delete a configured remote"
 msgstr "Yapılandırılmış bir uzağı sil"
 
-#: app/flatpak-main.c:128
+#: app/flatpak-main.c:130
 msgid "List contents of a configured remote"
 msgstr "Yapılandırılmış bir uzağın içeriklerini listele"
 
-#: app/flatpak-main.c:129
+#: app/flatpak-main.c:131
 msgid "Show information about a remote app or runtime"
 msgstr "Uzak bir uygulama veya çalışma zamanı hakkında bilgi göster"
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:132
+#: app/flatpak-main.c:134
 msgid ""
 "\n"
 " Build applications"
@@ -3874,98 +3878,106 @@ msgstr ""
 "\n"
 " Uygulamaları inşa et"
 
-#: app/flatpak-main.c:133
+#: app/flatpak-main.c:135
 msgid "Initialize a directory for building"
 msgstr "İnşa için bir dizini ilklendir"
 
-#: app/flatpak-main.c:134
+#: app/flatpak-main.c:136
 msgid "Run a build command inside the build dir"
 msgstr "İnşa dizininde bir inşa komutu çalıştır"
 
-#: app/flatpak-main.c:135
+#: app/flatpak-main.c:137
 msgid "Finish a build dir for export"
 msgstr "Bir inşa dizinini dışa aktarma için bitir"
 
-#: app/flatpak-main.c:136
+#: app/flatpak-main.c:138
 msgid "Export a build dir to a repository"
 msgstr "Bir inşa dizinini bir arşive dışa aktar"
 
-#: app/flatpak-main.c:137
+#: app/flatpak-main.c:139
 msgid "Create a bundle file from a ref in a local repository"
 msgstr "Yerel bir depodaki bir referanstan bir paket dosyası oluştur"
 
-#: app/flatpak-main.c:138
+#: app/flatpak-main.c:140
 msgid "Import a bundle file"
 msgstr "Bir paket dosyası içe aktar"
 
-#: app/flatpak-main.c:139
+#: app/flatpak-main.c:141
 msgid "Sign an application or runtime"
 msgstr "Bir uygulamayı veya çalışma ortamını imzala"
 
-#: app/flatpak-main.c:140
+#: app/flatpak-main.c:142
 msgid "Update the summary file in a repository"
 msgstr "Bir arşivdeki özet dosyasını güncelle"
 
-#: app/flatpak-main.c:141
+#: app/flatpak-main.c:143
 msgid "Create new commit based on existing ref"
 msgstr "Var olan referansa dayalı yeni değişiklik yarat"
 
-#: app/flatpak-main.c:142
+#: app/flatpak-main.c:144
 #, fuzzy
 msgid "Show information about a repo"
 msgstr "Bir arşiv hakkında bilgi yazdır"
 
-#: app/flatpak-main.c:159
+#: app/flatpak-main.c:161
 #, fuzzy
 msgid "Show debug information, -vv for more detail"
 msgstr "Komut işleme sırasında hata ayıklama bilgisini yaz"
 
-#: app/flatpak-main.c:160
+#: app/flatpak-main.c:162
 #, fuzzy
 msgid "Show OSTree debug information"
 msgstr "Ek bilgi göster"
 
-#: app/flatpak-main.c:166
+#: app/flatpak-main.c:168
 msgid "Print version information and exit"
 msgstr "Sürüm bilgisini yaz ve çık"
 
-#: app/flatpak-main.c:167
+#: app/flatpak-main.c:169
 msgid "Print default arch and exit"
 msgstr "Öntanımlı mimariyi yaz ve çık"
 
-#: app/flatpak-main.c:168
+#: app/flatpak-main.c:170
 msgid "Print supported arches and exit"
 msgstr "Desteklenen mimarileri yaz ve çık"
 
-#: app/flatpak-main.c:169
+#: app/flatpak-main.c:171
 msgid "Print active gl drivers and exit"
 msgstr "Etkin gl sürücülerini yazdır ve çık"
 
-#: app/flatpak-main.c:170
+#: app/flatpak-main.c:172
 #, fuzzy
 msgid "Print paths for system installations and exit"
 msgstr "Sürüm bilgisini yaz ve çık"
 
-#: app/flatpak-main.c:175
+#: app/flatpak-main.c:173
+msgid "Print the updated environment needed to run flatpaks"
+msgstr ""
+
+#: app/flatpak-main.c:174
+msgid "Only include the system installation with --print-updated-env"
+msgstr ""
+
+#: app/flatpak-main.c:179
 #, fuzzy
 msgid "Work on the user installation"
 msgstr "Kullanıcı yüklemeleri üzerinde çalış"
 
-#: app/flatpak-main.c:176
+#: app/flatpak-main.c:180
 #, fuzzy
 msgid "Work on the system-wide installation (default)"
 msgstr "Sistem geneli yüklemeler üzerinde çalış (öntanımlı)"
 
-#: app/flatpak-main.c:177
+#: app/flatpak-main.c:181
 #, fuzzy
 msgid "Work on a non-default system-wide installation"
 msgstr "Belirli bir sistem geneli yükleme üzerinde çalış"
 
-#: app/flatpak-main.c:207
+#: app/flatpak-main.c:211
 msgid "Builtin Commands:"
 msgstr "Yerleşik Komutlar:"
 
-#: app/flatpak-main.c:293
+#: app/flatpak-main.c:297
 #, c-format
 msgid ""
 "Note that the directories %s are not in the search path set by the "
@@ -3973,7 +3985,7 @@ msgid ""
 "not appear on your desktop until the session is restarted."
 msgstr ""
 
-#: app/flatpak-main.c:307
+#: app/flatpak-main.c:311
 #, c-format
 msgid ""
 "Note that the directory %s is not in the search path set by the "
@@ -3981,31 +3993,31 @@ msgid ""
 "not appear on your desktop until the session is restarted."
 msgstr ""
 
-#: app/flatpak-main.c:436
+#: app/flatpak-main.c:440
 msgid ""
 "Multiple installations specified for a command that works on one installation"
 msgstr ""
 
-#: app/flatpak-main.c:485 app/flatpak-main.c:667
+#: app/flatpak-main.c:489 app/flatpak-main.c:671
 #, c-format
 msgid "See '%s --help'"
 msgstr ""
 
-#: app/flatpak-main.c:676
+#: app/flatpak-main.c:680
 #, fuzzy, c-format
 msgid "'%s' is not a flatpak command. Did you mean '%s%s'?"
 msgstr "'%s' geçerli bir uygulama ismi değil: %s"
 
-#: app/flatpak-main.c:679
+#: app/flatpak-main.c:683
 #, c-format
 msgid "'%s' is not a flatpak command"
 msgstr ""
 
-#: app/flatpak-main.c:741
+#: app/flatpak-main.c:798
 msgid "No command specified"
 msgstr "Komut belirtilmemiş"
 
-#: app/flatpak-main.c:901
+#: app/flatpak-main.c:958
 msgid "error:"
 msgstr "hata:"
 
@@ -4105,147 +4117,170 @@ msgstr ""
 msgid "Invalid env format %s"
 msgstr "Geçersiz env formatı %s"
 
-#: common/flatpak-context.c:1227 common/flatpak-context.c:1235
+#: common/flatpak-context.c:1192
+#, c-format
+msgid "Environment variable name must not contain '=': %s"
+msgstr ""
+
+#: common/flatpak-context.c:1305 common/flatpak-context.c:1313
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 
-#: common/flatpak-context.c:1242
+#: common/flatpak-context.c:1320
 msgid "--add-policy values can't start with \"!\""
 msgstr ""
 
-#: common/flatpak-context.c:1267 common/flatpak-context.c:1275
+#: common/flatpak-context.c:1345 common/flatpak-context.c:1353
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 
-#: common/flatpak-context.c:1282
+#: common/flatpak-context.c:1360
 msgid "--remove-policy values can't start with \"!\""
 msgstr ""
 
-#: common/flatpak-context.c:1308
+#: common/flatpak-context.c:1386
 msgid "Share with host"
 msgstr "Makinayla paylaş"
 
-#: common/flatpak-context.c:1308 common/flatpak-context.c:1309
+#: common/flatpak-context.c:1386 common/flatpak-context.c:1387
 msgid "SHARE"
 msgstr "PAYLAŞ"
 
-#: common/flatpak-context.c:1309
+#: common/flatpak-context.c:1387
 msgid "Unshare with host"
 msgstr "Makinayla paylaşma"
 
-#: common/flatpak-context.c:1310
+#: common/flatpak-context.c:1388
 msgid "Expose socket to app"
 msgstr "Soketi uygulamaya göster"
 
-#: common/flatpak-context.c:1310 common/flatpak-context.c:1311
+#: common/flatpak-context.c:1388 common/flatpak-context.c:1389
 msgid "SOCKET"
 msgstr "SOKET"
 
-#: common/flatpak-context.c:1311
+#: common/flatpak-context.c:1389
 msgid "Don't expose socket to app"
 msgstr "Soketi uygulamaya gösterme"
 
-#: common/flatpak-context.c:1312
+#: common/flatpak-context.c:1390
 msgid "Expose device to app"
 msgstr "Cihazı uygulamaya göster"
 
-#: common/flatpak-context.c:1312 common/flatpak-context.c:1313
+#: common/flatpak-context.c:1390 common/flatpak-context.c:1391
 msgid "DEVICE"
 msgstr "CİHAZ"
 
-#: common/flatpak-context.c:1313
+#: common/flatpak-context.c:1391
 msgid "Don't expose device to app"
 msgstr "Cihazı uygulamaya gösterme"
 
-#: common/flatpak-context.c:1314
+#: common/flatpak-context.c:1392
 msgid "Allow feature"
 msgstr "Özelliğe izin ver"
 
-#: common/flatpak-context.c:1314 common/flatpak-context.c:1315
+#: common/flatpak-context.c:1392 common/flatpak-context.c:1393
 msgid "FEATURE"
 msgstr "ÖZELLİK"
 
-#: common/flatpak-context.c:1315
+#: common/flatpak-context.c:1393
 msgid "Don't allow feature"
 msgstr "Özelliğe izin verme"
 
-#: common/flatpak-context.c:1316
+#: common/flatpak-context.c:1394
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr "Dosya sistemini uygulamaya göster (salt-okuma için :ro)"
 
-#: common/flatpak-context.c:1316
+#: common/flatpak-context.c:1394
 msgid "FILESYSTEM[:ro]"
 msgstr "DOSYASİSTEMİ[:ro]"
 
-#: common/flatpak-context.c:1317
+#: common/flatpak-context.c:1395
 msgid "Don't expose filesystem to app"
 msgstr "Dosya sistemini uygulamaya gösterme"
 
-#: common/flatpak-context.c:1317
+#: common/flatpak-context.c:1395
 msgid "FILESYSTEM"
 msgstr "DOSYASİSTEMİ"
 
-#: common/flatpak-context.c:1318
+#: common/flatpak-context.c:1396
 msgid "Set environment variable"
 msgstr "Ortam değişkeni tanımla"
 
-#: common/flatpak-context.c:1318
+#: common/flatpak-context.c:1396
 msgid "VAR=VALUE"
 msgstr "DEĞİŞKEN=DEĞER"
 
-#: common/flatpak-context.c:1319
+#: common/flatpak-context.c:1397
+msgid "Read environment variables in env -0 format from FD"
+msgstr ""
+
+#: common/flatpak-context.c:1397
+msgid "FD"
+msgstr ""
+
+#: common/flatpak-context.c:1398
+#, fuzzy
+msgid "Remove variable from environment"
+msgstr "Ögeyi izin deposundan kaldır"
+
+#: common/flatpak-context.c:1398
+#, fuzzy
+msgid "VAR"
+msgstr "DEĞER"
+
+#: common/flatpak-context.c:1399
 msgid "Allow app to own name on the session bus"
 msgstr "Uygulamanın oturum veri yolunda kendi adı olmasına izin ver"
 
-#: common/flatpak-context.c:1319 common/flatpak-context.c:1320
-#: common/flatpak-context.c:1321 common/flatpak-context.c:1322
-#: common/flatpak-context.c:1323 common/flatpak-context.c:1324
+#: common/flatpak-context.c:1399 common/flatpak-context.c:1400
+#: common/flatpak-context.c:1401 common/flatpak-context.c:1402
+#: common/flatpak-context.c:1403 common/flatpak-context.c:1404
 msgid "DBUS_NAME"
 msgstr "DBUS_İSMİ"
 
-#: common/flatpak-context.c:1320
+#: common/flatpak-context.c:1400
 msgid "Allow app to talk to name on the session bus"
 msgstr "Uygulamanın oturum veri yolunda isme konuşmasına izin ver"
 
-#: common/flatpak-context.c:1321
+#: common/flatpak-context.c:1401
 msgid "Don't allow app to talk to name on the session bus"
 msgstr "Uygulamanın oturum veriyolunda adıyla konuşmasına izin verme"
 
-#: common/flatpak-context.c:1322
+#: common/flatpak-context.c:1402
 msgid "Allow app to own name on the system bus"
 msgstr "Uygulamanın sistem veri yolunda kendi adı olmasına izin ver"
 
-#: common/flatpak-context.c:1323
+#: common/flatpak-context.c:1403
 msgid "Allow app to talk to name on the system bus"
 msgstr "Uygulamanın sistem veri yolunda isme konuşmasına izin ver"
 
-#: common/flatpak-context.c:1324
+#: common/flatpak-context.c:1404
 msgid "Don't allow app to talk to name on the system bus"
 msgstr "Uygulamaya, sistem veriyolunda ad vermek için izin verme"
 
-#: common/flatpak-context.c:1325
+#: common/flatpak-context.c:1405
 msgid "Add generic policy option"
 msgstr "Genel ilke seçeneği ekle"
 
-#: common/flatpak-context.c:1325 common/flatpak-context.c:1326
+#: common/flatpak-context.c:1405 common/flatpak-context.c:1406
 msgid "SUBSYSTEM.KEY=VALUE"
 msgstr "ALTSİSTEM.ANAHTAR=DEĞER"
 
-#: common/flatpak-context.c:1326
+#: common/flatpak-context.c:1406
 msgid "Remove generic policy option"
 msgstr "Genel ilke seçeneğini kaldır"
 
-#: common/flatpak-context.c:1327
+#: common/flatpak-context.c:1407
 #, fuzzy
 msgid "Persist home directory subpath"
 msgstr "Ev dizinini koru"
 
-#: common/flatpak-context.c:1327
+#: common/flatpak-context.c:1407
 msgid "FILENAME"
 msgstr "DOSYAİSMİ"
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-context.c:1329
+#: common/flatpak-context.c:1409
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "Çalışan oturum gerektirme (cgroups yaratımı yok)"
 
@@ -4997,104 +5032,104 @@ msgstr "Komut belirtilmemiş"
 msgid "GPG verification must be enabled when a collection ID is set"
 msgstr ""
 
-#: common/flatpak-run.c:865
+#: common/flatpak-run.c:995
 #, fuzzy
 msgid "Failed to open app info file"
 msgstr "Uygulama bilgi dosyası açılamadı: %s"
 
-#: common/flatpak-run.c:959
+#: common/flatpak-run.c:1089
 msgid "Unable to create sync pipe"
 msgstr "Eşzamanlama veri yolu yaratılamadı"
 
-#: common/flatpak-run.c:998
+#: common/flatpak-run.c:1128
 msgid "Failed to sync with dbus proxy"
 msgstr "Dbus vekiliyle eşzamanlanamadı"
 
-#: common/flatpak-run.c:1671
+#: common/flatpak-run.c:1783
 msgid "No systemd user session available, cgroups not available"
 msgstr ""
 
-#: common/flatpak-run.c:2220
+#: common/flatpak-run.c:2332
 #, fuzzy
 msgid "Unable to allocate instance id"
 msgstr "Eşzamanlama veri yolu yaratılamadı"
 
-#: common/flatpak-run.c:2340 common/flatpak-run.c:2350
+#: common/flatpak-run.c:2452 common/flatpak-run.c:2462
 #, fuzzy, c-format
 msgid "Failed to open flatpak-info file: %s"
 msgstr "Flatpak-info geçici dosyası açılamadı: %s"
 
-#: common/flatpak-run.c:2381
+#: common/flatpak-run.c:2493
 #, fuzzy, c-format
 msgid "Failed to open bwrapinfo.json file: %s"
 msgstr "Flatpak-info geçici dosyası açılamadı: %s"
 
-#: common/flatpak-run.c:2406
+#: common/flatpak-run.c:2518
 #, fuzzy, c-format
 msgid "Failed to write to instance id fd: %s"
 msgstr "Geçici dosya oluşturulamadı"
 
-#: common/flatpak-run.c:2726
+#: common/flatpak-run.c:2838
 #, fuzzy
 msgid "Initialize seccomp failed"
 msgstr "Uygulamaları adlandırılmış uygulamadan ilklendir"
 
-#: common/flatpak-run.c:2765
+#: common/flatpak-run.c:2877
 #, fuzzy
 msgid "Failed to add architecture to seccomp filter"
 msgstr "Geçici dosyaya yazılamadı"
 
-#: common/flatpak-run.c:2773
+#: common/flatpak-run.c:2885
 msgid "Failed to add multiarch architecture to seccomp filter"
 msgstr ""
 
 #. unknown syscall
-#: common/flatpak-run.c:2792 common/flatpak-run.c:2806
+#: common/flatpak-run.c:2904 common/flatpak-run.c:2918
 #, fuzzy, c-format
 msgid "Failed to block syscall %d"
 msgstr "Hata: %2$s'i %1$s başarılamadı: %3$s\n"
 
-#: common/flatpak-run.c:2837
+#: common/flatpak-run.c:2949
 #, fuzzy
 msgid "Failed to export bpf"
 msgstr "Dışa aktarılmış dosyadan okunamadı"
 
-#: common/flatpak-run.c:3072
+#: common/flatpak-run.c:3186
 #, fuzzy, c-format
 msgid "Failed to open ‘%s’"
 msgstr "Flatpak-info geçici dosyası açılamadı: %s"
 
-#: common/flatpak-run.c:3356
+#: common/flatpak-run.c:3470
 #, fuzzy, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "apply_extra betiği başarısız oldu"
 
-#: common/flatpak-run.c:3363
+#: common/flatpak-run.c:3477
 #, fuzzy
 msgid "Can't open generated ld.so.cache"
 msgstr "%s ad alanı açılamadı: %s"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-run.c:3475
+#: common/flatpak-run.c:3589
 #, c-format
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr ""
 
-#: common/flatpak-run.c:3517
+#: common/flatpak-run.c:3631
 msgid "\"flatpak run\" is not intended to be ran with sudo"
 msgstr ""
 
-#: common/flatpak-run.c:3740
+#: common/flatpak-run.c:3854
 #, fuzzy, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "Değişiklik %s okunamadı:"
 
-#: common/flatpak-run.c:3755
+#: common/flatpak-run.c:3869
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr ""
 
-#: common/flatpak-run.c:3764
+#: common/flatpak-run.c:3878
 #, fuzzy, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "Değişiklik %s okunamadı:"
@@ -5352,42 +5387,42 @@ msgstr ""
 msgid "Invalid token"
 msgstr "Geçersiz gpg anahtarı"
 
-#: portal/flatpak-portal.c:2035
+#: portal/flatpak-portal.c:2147
 #, fuzzy
 msgid "No portal support found"
 msgstr "Özet bulunamadı"
 
-#: portal/flatpak-portal.c:2041
+#: portal/flatpak-portal.c:2153
 msgid "Deny"
 msgstr ""
 
-#: portal/flatpak-portal.c:2043
+#: portal/flatpak-portal.c:2155
 #, fuzzy
 msgid "Update"
 msgstr "güncelle"
 
-#: portal/flatpak-portal.c:2048
+#: portal/flatpak-portal.c:2160
 #, fuzzy, c-format
 msgid "Update %s?"
 msgstr "Güncelleniyor %s\n"
 
-#: portal/flatpak-portal.c:2060
+#: portal/flatpak-portal.c:2172
 msgid "The application wants to update itself."
 msgstr ""
 
-#: portal/flatpak-portal.c:2061
+#: portal/flatpak-portal.c:2173
 msgid "Update access can be changed any time from the privacy settings."
 msgstr ""
 
-#: portal/flatpak-portal.c:2086
+#: portal/flatpak-portal.c:2198
 msgid "Application update not allowed"
 msgstr ""
 
-#: portal/flatpak-portal.c:2243
+#: portal/flatpak-portal.c:2355
 msgid "Self update not supported, new version requires new permissions"
 msgstr ""
 
-#: portal/flatpak-portal.c:2425 portal/flatpak-portal.c:2442
+#: portal/flatpak-portal.c:2537 portal/flatpak-portal.c:2554
 #, fuzzy
 msgid "Update ended unexpectedly"
 msgstr "İmzalı çalışma ortamı güncelle"
