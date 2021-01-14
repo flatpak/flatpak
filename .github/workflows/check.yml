@@ -56,16 +56,16 @@ jobs:
     - name: Create logs dir
       run: mkdir test-logs
     - name: autogen.sh
-      run: NOCONFIGURE=1 ./autogen.sh --enable-internal-checks
+      run: NOCONFIGURE=1 ./autogen.sh
     - name: configure
       # TODO: Enable gtk-doc builds
       run: |
         mkdir _build
         pushd _build
-        ../configure
+        ../configure  --enable-internal-checks --enable-asan
         popd
       env:
-        CFLAGS: -fsanitize=undefined -fsanitize-undefined-trap-on-error -fsanitize=address -O2 -Wp,-D_FORTIFY_SOURCE=2
+        CFLAGS: -O2 -Wp,-D_FORTIFY_SOURCE=2
     - name: Build flatpak
       run: make -C _build -j $(getconf _NPROCESSORS_ONLN)
     - name: Run tests
