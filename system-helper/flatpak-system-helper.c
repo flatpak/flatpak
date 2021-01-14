@@ -2059,14 +2059,14 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
         {
           g_autoptr(FlatpakDir) system = NULL;
           g_autoptr(GBytes) deploy_data = NULL;
-          g_autoptr(GError) error = NULL;
+          g_autoptr(GError) sys_error = NULL;
           const char *name = NULL;
 
-          system = dir_get_system (installation, 0, &error);
+          system = dir_get_system (installation, 0, &sys_error);
           if (system == NULL)
             {
               g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                     "Error getting installation %s: %s", installation, error->message);
+                                                     "Error getting installation %s: %s", installation, sys_error->message);
               return FALSE;
             }
 
