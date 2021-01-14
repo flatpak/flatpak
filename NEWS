@@ -1,3 +1,33 @@
+Changes in 1.10.0
+~~~~~~~~~~~~~~~~~
+Released: 2020-01-14
+
+This is the first stable release after the 1.9.x unstable series.
+The major new feature in this series compared to 1.8 is the support
+for the new repo format which should make updates faster and download
+less data.
+
+This release also contains the security fixes from 1.8.5, so everyone
+on the 1.9.x series should update immediately.
+
+Other changes since 1.9.3:
+
+ * The systemd generator snippets now call flatpak --print-updated-env
+   in place of a bunch of shell for better login performance.
+ * The .profile snippets now disable GVfs when calling flatpak to
+   avoid spawning a gvfs daemon when logging in via ssh.
+ * Build fixes for GCC 11.
+ * Flatpak now finds the pulseaudio sockets better in uncommon
+   configurations.
+ * Sandboxes with network access it now also has access to the
+   systemd-resolved socket to do dns lookups.
+ * Flatpak supports unsetting env vars in the sandbox using --unset-env,
+   and `--env=FOO=` now sets FOO to the empty string instead of
+   unsetting it.
+ * Similarly the spawn portal has an option to unset an env var.
+ * The spawn portal now has an option to share the pid namespace
+   with the sub-sandbox.
+
 Changes in 1.9.3
 ~~~~~~~~~~~~~~~~
 Released: 2020-12-22
