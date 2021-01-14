@@ -360,6 +360,13 @@ AC_ARG_ENABLE(sudo,
               [SUDO_BIN="sudo"], [SUDO_BIN=""])
 AC_SUBST([SUDO_BIN])
 
+AC_ARG_ENABLE(asan,
+              [AS_HELP_STRING([--enable-asan],
+                              [Use build with address sanitazion])],
+              [],
+              [enable_asan=no])
+AM_CONDITIONAL([ENABLE_ASAN], [test "x$enable_asan" = xyes])
+
 AC_ARG_WITH(system-install-dir,
            [AS_HELP_STRING([--with-system-install-dir=DIR],
                            [Location of system installation [LOCALSTATEDIR/lib/flatpak]])],

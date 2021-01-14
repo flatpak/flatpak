@@ -56,7 +56,13 @@ AM_CPPFLAGS =							\
 	-include "config.h"					\
 	$(NULL)
 
-AM_CFLAGS = $(WARN_CFLAGS)
+ASAN_FLAGS=
+if ENABLE_ASAN
+ASAN_FLAGS = -fsanitize=undefined -fsanitize-undefined-trap-on-error -fsanitize=address
+endif
+
+AM_CFLAGS = $(WARN_CFLAGS) $(ASAN_FLAGS)
+AM_LDFLAGS = $(ASAN_FLAGS)
 
 if WITH_SYSTEM_BWRAP
 AM_CPPFLAGS += -DHELPER=\"$(BWRAP)\"
