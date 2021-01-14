@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2021-01-14 10:52+0100\n"
-"PO-Revision-Date: 2021-01-10 16:58+0200\n"
+"POT-Creation-Date: 2021-01-14 15:26+0000\n"
+"PO-Revision-Date: 2021-01-14 18:36+0200\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <kde-i18n-uk@kde.org>\n"
 "Language: uk\n"
@@ -3069,6 +3069,8 @@ msgstr "Зробити процеси видимими у батьківсько
 #: app/flatpak-builtins-run.c:86
 msgid "Share process ID namespace with parent"
 msgstr ""
+"Спільно використовувати простір назв ідентифікатора процесу із батьківським"
+" процесом"
 
 #: app/flatpak-builtins-run.c:87
 msgid "Write the instance ID to the given file descriptor"
@@ -4073,7 +4075,7 @@ msgstr "Некоректне форматування середовища, %s"
 #: common/flatpak-context.c:1192
 #, c-format
 msgid "Environment variable name must not contain '=': %s"
-msgstr ""
+msgstr "У змінній середовища не повинно бути символу «=»: %s"
 
 #: common/flatpak-context.c:1305 common/flatpak-context.c:1313
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
@@ -4170,20 +4172,19 @@ msgstr "ЗМІННА=ЗНАЧЕННЯ"
 #: common/flatpak-context.c:1397
 msgid "Read environment variables in env -0 format from FD"
 msgstr ""
+"Прочитати змінні середовища у форматі env -0 з файла із вказаним дескриптором"
 
 #: common/flatpak-context.c:1397
 msgid "FD"
-msgstr ""
+msgstr "ДФ"
 
 #: common/flatpak-context.c:1398
-#, fuzzy
 msgid "Remove variable from environment"
-msgstr "Вилучити пункт зі сховища прав доступу"
+msgstr "Вилучити змінну з середовища"
 
 #: common/flatpak-context.c:1398
-#, fuzzy
 msgid "VAR"
-msgstr "ЗНАЧЕННЯ"
+msgstr "ЗМІННА"
 
 #: common/flatpak-context.c:1399
 msgid "Allow app to own name on the session bus"
