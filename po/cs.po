@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2021-01-14 10:52+0100\n"
-"PO-Revision-Date: 2020-06-24 21:46+0200\n"
+"PO-Revision-Date: 2021-01-14 21:28+0100\n"
 "Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
 "Language: cs\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Generator: Poedit 2.3.1\n"
+"X-Generator: Poedit 2.4.2\n"
 
 #: app/flatpak-builtins-build-bundle.c:57
 msgid "Export runtime instead of app"
@@ -361,9 +361,8 @@ msgstr "TIMESTAMP"
 #: app/flatpak-builtins-build-export.c:79
 #: app/flatpak-builtins-build-import-bundle.c:51
 #: app/flatpak-builtins-build-update-repo.c:93
-#, fuzzy
 msgid "Don't generate a summary index"
-msgstr "Neaktualizovat shrnutí"
+msgstr "Negenerovat index shrnutí"
 
 #: app/flatpak-builtins-build-commit-from.c:277
 msgid "DST-REPO [DST-REF…] - Make a new commit from existing commits"
@@ -656,12 +655,12 @@ msgstr "Nedědit oprávnění z prostředí"
 #: app/flatpak-builtins-build-finish.c:154
 #, c-format
 msgid "Not exporting %s, wrong extension\n"
-msgstr ""
+msgstr "Neexportuje se %s, neplatné rozšíření\n"
 
 #: app/flatpak-builtins-build-finish.c:162
 #, c-format
 msgid "Not exporting %s, non-allowed export filename\n"
-msgstr ""
+msgstr "Neexportuje se %s, nepovolený název export souboru\n"
 
 #: app/flatpak-builtins-build-finish.c:166
 #, c-format
@@ -708,9 +707,9 @@ msgstr ""
 
 #: app/flatpak-builtins-build-finish.c:593
 #: app/flatpak-builtins-build-init.c:452
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid extension name %s"
-msgstr "Neplatný název autentikátoru %s"
+msgstr "Neplatný název rozšíření %s"
 
 #: app/flatpak-builtins-build-finish.c:636
 msgid "DIRECTORY - Finalize a build directory"
@@ -1399,6 +1398,8 @@ msgstr "%s není pid ani aplikace nebo ID instance"
 #: app/flatpak-builtins-enter.c:139
 msgid "entering not supported (need unprivileged user namespaces, or sudo -E)"
 msgstr ""
+"vstup není podporován (vyžaduje neprivilegované uživatelské jmenné prostory, "
+"nebo sudo -E)"
 
 #: app/flatpak-builtins-enter.c:140
 #, c-format
@@ -1431,6 +1432,7 @@ msgstr "Nelze otevřít jmenný prostor %s: %s"
 #: app/flatpak-builtins-enter.c:221
 msgid "entering not supported (need unprivileged user namespaces)"
 msgstr ""
+"vstup není podporován (vyžaduje neprivilegované uživatelské jmenné prostory)"
 
 #: app/flatpak-builtins-enter.c:222
 #, c-format
@@ -1604,11 +1606,11 @@ msgstr " - Zobrazit historii"
 
 #: app/flatpak-builtins-history.c:474
 msgid "Failed to parse the --since option"
-msgstr ""
+msgstr "Nelze zpracovat volbu --since"
 
 #: app/flatpak-builtins-history.c:485
 msgid "Failed to parse the --until option"
-msgstr ""
+msgstr "Nelze zpracovat volbu --until"
 
 #: app/flatpak-builtins-info.c:56
 msgid "Show user installations"
@@ -1848,7 +1850,7 @@ msgstr "Neověřovat/neinstalovat běhové závislosti"
 
 #: app/flatpak-builtins-install.c:68
 msgid "Don't automatically pin explicit installs"
-msgstr ""
+msgstr "Nepřipínat automaticky explicitní instalace"
 
 #: app/flatpak-builtins-install.c:69 app/flatpak-builtins-update.c:63
 msgid "Don't use static deltas"
@@ -2195,26 +2197,21 @@ msgid "APP_ID - Show permissions for an app"
 msgstr "APP_ID - Zobrazit oprávnění pro aplikaci"
 
 #: app/flatpak-builtins-pin.c:44
-#, fuzzy
 msgid "Remove matching pins"
-msgstr "Odstranit odpovídající masky"
+msgstr "Odstranit odpovídající připnutí"
 
 #: app/flatpak-builtins-pin.c:57
-#, fuzzy
 msgid "[PATTERN…] - disable automatic removal of runtimes matching patterns"
 msgstr ""
-"[VZOR…] - zakázat aktualizace a automatickou instalaci podle odpovídajících "
-"vzorů"
+"[VZOR…] - zakázat automatické odstranění prostředí podle odpovídajících vzorů"
 
 #: app/flatpak-builtins-pin.c:74
-#, fuzzy
 msgid "No pinned patterns\n"
-msgstr "Žádné maskované vzory\n"
+msgstr "Žádné připnuté vzory\n"
 
 #: app/flatpak-builtins-pin.c:79
-#, fuzzy
 msgid "Pinned patterns:\n"
-msgstr "Maskované vzory:\n"
+msgstr "Připnuté vzory:\n"
 
 #: app/flatpak-builtins-ps.c:47
 msgid "Instance"
@@ -2319,13 +2316,13 @@ msgid "PRIORITY"
 msgstr "PRIORITA"
 
 #: app/flatpak-builtins-remote-add.c:73
-#, fuzzy
 msgid "The named subset to use for this remote"
-msgstr "Hezký název, který bude použit pro tento vzdálený repozitář"
+msgstr ""
+"Pojmenovaná podmnožina, která bude použita pro tento vzdálený repozitář"
 
 #: app/flatpak-builtins-remote-add.c:73 app/flatpak-builtins-remote-modify.c:70
 msgid "SUBSET"
-msgstr ""
+msgstr "PODMNOŽINA"
 
 #: app/flatpak-builtins-remote-add.c:74 app/flatpak-builtins-remote-modify.c:81
 msgid "A nice name to use for this remote"
@@ -2529,12 +2526,11 @@ msgstr "Zobrazit ID kolekce"
 
 #: app/flatpak-builtins-remote-list.c:53 app/flatpak-builtins-repo.c:390
 msgid "Subset"
-msgstr ""
+msgstr "Podmnožina"
 
 #: app/flatpak-builtins-remote-list.c:53
-#, fuzzy
 msgid "Show the subset"
-msgstr "Zobrazit ref"
+msgstr "Zobrazit podmnožinu"
 
 #: app/flatpak-builtins-remote-list.c:54
 msgid "Filter"
@@ -2637,9 +2633,8 @@ msgid "Set a new url"
 msgstr "Nastavit novou url"
 
 #: app/flatpak-builtins-remote-modify.c:70
-#, fuzzy
 msgid "Set a new subset to use"
-msgstr "Nastavit novou url"
+msgstr "Nastavit novou podmnožinu k použití"
 
 #: app/flatpak-builtins-remote-modify.c:71
 msgid "Enable the remote"
@@ -2737,13 +2732,13 @@ msgid "Skipping non-deployed ref %s…\n"
 msgstr ""
 
 #: app/flatpak-builtins-repair.c:394
-#, fuzzy, c-format
+#, c-format
 msgid "[%d/%d] Verifying %s…\n"
-msgstr "Ověřuje se %s…\n"
+msgstr "[%d/%d] Ověřuje se %s…\n"
 
 #: app/flatpak-builtins-repair.c:400
 msgid "Dry run: "
-msgstr ""
+msgstr "Chod naprázdno: "
 
 #: app/flatpak-builtins-repair.c:405
 #, c-format
@@ -2808,7 +2803,7 @@ msgstr "Mód repozitáře: %s\n"
 #: app/flatpak-builtins-repo.c:111
 #, c-format
 msgid "Indexed summaries: %s\n"
-msgstr ""
+msgstr "Indexovaná shrnutí: %s\n"
 
 #: app/flatpak-builtins-repo.c:111 app/flatpak-builtins-repo.c:137
 #: app/flatpak-builtins-repo.c:170
@@ -2822,17 +2817,17 @@ msgstr "nepravda"
 
 #: app/flatpak-builtins-repo.c:119
 msgid "Subsummaries: "
-msgstr ""
+msgstr "Podshrnutí: "
 
 #: app/flatpak-builtins-repo.c:134
 #, c-format
 msgid "Cache version: %d\n"
-msgstr ""
+msgstr "Verze cache: %d\n"
 
 #: app/flatpak-builtins-repo.c:137
 #, c-format
 msgid "Indexed deltas: %s\n"
-msgstr ""
+msgstr "Indexované delty: %s\n"
 
 #: app/flatpak-builtins-repo.c:140
 #, c-format
@@ -2895,9 +2890,9 @@ msgid "GPG key hash: %s\n"
 msgstr "Hash klíče GPG: %s\n"
 
 #: app/flatpak-builtins-repo.c:182
-#, fuzzy, c-format
+#, c-format
 msgid "%zd summary branches\n"
-msgstr "%zd větví\n"
+msgstr "%zd větví shrnutí\n"
 
 #: app/flatpak-builtins-repo.c:334
 msgid "Installed"
@@ -2909,16 +2904,15 @@ msgstr "Stažení"
 
 #: app/flatpak-builtins-repo.c:336
 msgid "Subsets"
-msgstr ""
+msgstr "Podmnožiny"
 
 #: app/flatpak-builtins-repo.c:391
 msgid "Digest"
-msgstr ""
+msgstr "Výběr"
 
 #: app/flatpak-builtins-repo.c:392
-#, fuzzy
 msgid "History length"
-msgstr "Historie:"
+msgstr "Délka historie"
 
 #: app/flatpak-builtins-repo.c:710
 msgid "Print general information about the repository"
@@ -2937,9 +2931,8 @@ msgid "Show commits for a branch"
 msgstr "Zobrazit commity pro větev"
 
 #: app/flatpak-builtins-repo.c:714
-#, fuzzy
 msgid "Print information about the repo subsets"
-msgstr "Vypsat obecné informace o repozitáři"
+msgstr ""
 
 #: app/flatpak-builtins-repo.c:715
 msgid "Limit information to subsets with this prefix"
@@ -2984,6 +2977,8 @@ msgstr "Nepoužívat proxy pro volání sběrnice zpřístupnění"
 #: app/flatpak-builtins-run.c:75
 msgid "Proxy accessibility bus calls (default except when sandboxed)"
 msgstr ""
+"Používat proxy pro volání sběrnice zpřístupnění (výchozí, s výjimkou běhu v "
+"sandboxu)"
 
 #: app/flatpak-builtins-run.c:76
 msgid "Don't proxy session bus calls"
@@ -2992,6 +2987,8 @@ msgstr "Nepoužívat proxy pro volání sběrnice sezení"
 #: app/flatpak-builtins-run.c:77
 msgid "Proxy session bus calls (default except when sandboxed)"
 msgstr ""
+"Používat proxy pro volání sběrnice sezení (výchozí, s výjimkou běhu v "
+"sandboxu)"
 
 #: app/flatpak-builtins-run.c:78
 msgid "Don't start portals"
@@ -3118,6 +3115,9 @@ msgid ""
 "These runtimes in installation '%s' are pinned and won't be removed; see "
 "flatpak-pin(1):\n"
 msgstr ""
+"\n"
+"Tyto prostředí v instalaci „%s“ jsou připnuty a nebudou odstraněny; viz "
+"flatpak-pin(1):\n"
 
 #: app/flatpak-builtins-uninstall.c:267
 msgid "Nothing unused to uninstall\n"
@@ -3454,7 +3454,7 @@ msgstr "Na disku není dostatek místa k provedení této operace"
 
 #: app/flatpak-cli-transaction.c:532
 msgid "(internal error, please report)"
-msgstr ""
+msgstr "(vnitřní chyba, prosím nahlaste)"
 
 #: app/flatpak-cli-transaction.c:537
 #, c-format
@@ -3488,31 +3488,28 @@ msgid "Password"
 msgstr "Heslo"
 
 #: app/flatpak-cli-transaction.c:718
-#, fuzzy, c-format
+#, c-format
 msgid "Info: (pinned) %s//%s is end-of-life, in favor of %s\n"
-msgstr "Informace: %s je end-of-life, ve prospěch %s\n"
+msgstr "Informace: (připnuto) %s//%s je end-of-life, ve prospěch %s\n"
 
 #: app/flatpak-cli-transaction.c:720
-#, fuzzy, c-format
+#, c-format
 msgid "Info: %s//%s is end-of-life, in favor of %s\n"
-msgstr "Informace: %s je end-of-life, ve prospěch %s\n"
+msgstr "Informace: %s//%s je end-of-life, ve prospěch %s\n"
 
 #: app/flatpak-cli-transaction.c:724
-#, fuzzy, c-format
+#, c-format
 msgid "Info: (pinned) %s//%s is end-of-life, with reason:\n"
-msgstr "Informace: %s je end-of-life, z důvodu: %s\n"
+msgstr "Informace: (připnuto) %s//%s je end-of-life, z důvodu:\n"
 
 #: app/flatpak-cli-transaction.c:726
-#, fuzzy, c-format
+#, c-format
 msgid "Info: %s//%s is end-of-life, with reason:\n"
-msgstr "Informace: %s je end-of-life, z důvodu: %s\n"
+msgstr "Informace: %s//%s je end-of-life, z důvodu:\n"
 
 #: app/flatpak-cli-transaction.c:735
-#, fuzzy
 msgid "Applications using this runtime:\n"
-msgstr ""
-"\n"
-" Vyhledávání aplikací a prostředí"
+msgstr "Aplikace používající toto prostředí:\n"
 
 #: app/flatpak-cli-transaction.c:752
 #, c-format
@@ -3612,7 +3609,7 @@ msgstr "Maskovat aktualizace a automatickou instalaci"
 
 #: app/flatpak-main.c:85
 msgid "Pin a runtime to prevent automatic removal"
-msgstr ""
+msgstr "Připnout prostředí pro zabránění automatickému odstranění"
 
 #: app/flatpak-main.c:86
 msgid "List installed apps and/or runtimes"
@@ -3989,12 +3986,13 @@ msgstr "Neznámý typ funkce %s, platné typy jsou: %s"
 #: common/flatpak-context.c:778
 #, c-format
 msgid "Filesystem location \"%s\" contains \"..\""
-msgstr ""
+msgstr "Umístění systému souborů „%s“ obsahuje „..“"
 
 #: common/flatpak-context.c:816
 msgid ""
 "--filesystem=/ is not available, use --filesystem=host for a similar result"
 msgstr ""
+"--filesystem=/ není dostupné, pro podobný výsledek použijte --filesystem=host"
 
 #: common/flatpak-context.c:850
 #, c-format
@@ -4105,21 +4103,19 @@ msgstr "PROMĚNNÁ=HODNOTA"
 
 #: common/flatpak-context.c:1397
 msgid "Read environment variables in env -0 format from FD"
-msgstr ""
+msgstr "Číst proměnné prostředí ve formátu env -0 z FD"
 
 #: common/flatpak-context.c:1397
 msgid "FD"
-msgstr ""
+msgstr "FD"
 
 #: common/flatpak-context.c:1398
-#, fuzzy
 msgid "Remove variable from environment"
-msgstr "Odstranit položku z úložiště oprávnění"
+msgstr "Odstranit proměnnou z prostředí"
 
 #: common/flatpak-context.c:1398
-#, fuzzy
 msgid "VAR"
-msgstr "HODNOTA"
+msgstr "PROMĚNNÁ"
 
 #: common/flatpak-context.c:1399
 msgid "Allow app to own name on the session bus"
@@ -4194,7 +4190,8 @@ msgstr "Nemohu nalézt ref „%s“ ve vzdáleném repozitáři %s"
 #: common/flatpak-dir.c:626 common/flatpak-dir.c:763 common/flatpak-dir.c:792
 #, c-format
 msgid "No entry for %s in remote '%s' summary flatpak cache "
-msgstr "Žádný záznam pro %s v cache shrnutí vzdáleného repozitáře „%s“ "
+msgstr ""
+"Žádný záznam pro %s ve flatpak cache shrnutí vzdáleného repozitáře „%s“ "
 
 #: common/flatpak-dir.c:781
 #, c-format
@@ -4202,14 +4199,14 @@ msgid "No summary or Flatpak cache available for remote %s"
 msgstr "Žádné shrnutí nebo Flatpak cache dostupná pro vzdálený repozitář %s"
 
 #: common/flatpak-dir.c:804
-#, fuzzy, c-format
+#, c-format
 msgid "No entry for %s in remote '%s' summary cache "
 msgstr "Žádný záznam pro %s v cache shrnutí vzdáleného repozitáře „%s“ "
 
 #: common/flatpak-dir.c:809
-#, fuzzy, c-format
+#, c-format
 msgid "Missing xa.data in summary for remote %s"
-msgstr "Nelze načíst shrnutí ze vzdáleného repozitáře %s: %s"
+msgstr "Chybějící xa.data ve shrnutí pro vzdálený repozitář %s"
 
 #: common/flatpak-dir.c:815 common/flatpak-dir.c:1231
 #, c-format
@@ -4289,9 +4286,9 @@ msgid "The config key %s is not set"
 msgstr "Konfigurační klíč %s není nastaven"
 
 #: common/flatpak-dir.c:4261
-#, fuzzy, c-format
+#, c-format
 msgid "No current %s pattern matching %s"
-msgstr "Žádná současná maska odpovídající %s"
+msgstr "Žádný současný vzor %s odpovídající %s"
 
 #: common/flatpak-dir.c:4414
 msgid "No appstream commit to deploy"
@@ -4363,7 +4360,7 @@ msgstr "Během stahování %s ze vzdáleného repozitáře %s: "
 
 #: common/flatpak-dir.c:5981 common/flatpak-utils.c:6719
 msgid "GPG signatures found, but none are in trusted keyring"
-msgstr ""
+msgstr "GPG podpisy nalezeny, ale žádný není ve svazku důvěryhodných klíčů"
 
 #: common/flatpak-dir.c:5998
 #, c-format
@@ -4376,11 +4373,8 @@ msgid "Commit for ‘%s’ is not in expected bound refs: %s"
 msgstr ""
 
 #: common/flatpak-dir.c:6178
-#, fuzzy
 msgid "Only applications can be made current"
 msgstr ""
-"\n"
-" Vyhledávání aplikací a prostředí"
 
 #: common/flatpak-dir.c:6699
 msgid "Not enough memory"
@@ -4562,9 +4556,9 @@ msgid "No oci summary cached for remote '%s'"
 msgstr ""
 
 #: common/flatpak-dir.c:11350
-#, fuzzy, c-format
+#, c-format
 msgid "No cached summary for remote '%s'"
-msgstr "Žádná metadata v cache pro vzdálený repozitář „%s“"
+msgstr ""
 
 #: common/flatpak-dir.c:11425
 #, c-format
@@ -4574,9 +4568,9 @@ msgid ""
 msgstr ""
 
 #: common/flatpak-dir.c:11795
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid checksum for indexed summary %s for remote '%s'"
-msgstr "Neplatný kontrolní součet pro dodatečná data %s"
+msgstr ""
 
 #: common/flatpak-dir.c:12441
 #, c-format
@@ -4794,14 +4788,13 @@ msgid "Names must contain at least 2 periods"
 msgstr "Názvy musí obsahovat alespoň dvě tečky"
 
 #: common/flatpak-ref-utils.c:311
-#, fuzzy
 msgid "Arch can't be empty"
-msgstr "Větev nemůže být prázdná"
+msgstr "Architektura nemůže být prázdná"
 
 #: common/flatpak-ref-utils.c:322
-#, fuzzy, c-format
+#, c-format
 msgid "Arch can't contain %c"
-msgstr "Větev nemůže obsahovat %c"
+msgstr "Architektura nemůže obsahovat %c"
 
 #: common/flatpak-ref-utils.c:386
 msgid "Branch can't be empty"
@@ -4819,12 +4812,11 @@ msgstr "Větev nemůže obsahovat %c"
 
 #: common/flatpak-ref-utils.c:616 common/flatpak-ref-utils.c:866
 msgid "Ref too long"
-msgstr ""
+msgstr "Ref je příliš dlouhý"
 
 #: common/flatpak-ref-utils.c:628
-#, fuzzy
 msgid "Invalid remote name"
-msgstr "Neplatný název vzdáleného repozitáře: %s"
+msgstr "Neplatný název vzdáleného repozitáře"
 
 #: common/flatpak-ref-utils.c:642
 #, c-format
@@ -4838,14 +4830,14 @@ msgid "Wrong number of components in %s"
 msgstr "Špatný počet součástí v %s"
 
 #: common/flatpak-ref-utils.c:657
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid name %.*s: %s"
-msgstr "Neplatný název %s: %s"
+msgstr "Neplatný název %.*s: %s"
 
 #: common/flatpak-ref-utils.c:674
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid arch: %.*s: %s"
-msgstr "Neplatná větev %s: %s"
+msgstr "Neplatná architektura: %.*s: %s"
 
 #: common/flatpak-ref-utils.c:817
 #, c-format
@@ -4853,51 +4845,48 @@ msgid "Invalid name %s: %s"
 msgstr "Neplatný název %s: %s"
 
 #: common/flatpak-ref-utils.c:835
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid arch: %s: %s"
-msgstr "Neplatná větev %s: %s"
+msgstr "Neplatná architektura: %s: %s"
 
 #: common/flatpak-ref-utils.c:854
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid branch: %s: %s"
-msgstr "Neplatná větev %s: %s"
+msgstr "Neplatná větev: %s: %s"
 
 #: common/flatpak-ref-utils.c:963 common/flatpak-ref-utils.c:971
 #: common/flatpak-ref-utils.c:979
-#, fuzzy, c-format
+#, c-format
 msgid "Wrong number of components in partial ref %s"
-msgstr "Špatný počet součástí v prostředí %s"
+msgstr "Špatný počet součástí v částečném refu %s"
 
 #: common/flatpak-ref-utils.c:1289
-#, fuzzy
 msgid " development platform"
-msgstr "Použije vývojové prostředí"
+msgstr " vývojová platforma"
 
 #: common/flatpak-ref-utils.c:1291
 msgid " platform"
-msgstr ""
+msgstr " platforma"
 
 #: common/flatpak-ref-utils.c:1293
-#, fuzzy
 msgid " application base"
-msgstr "Aplikace"
+msgstr " základ aplikace"
 
 #: common/flatpak-ref-utils.c:1296
 msgid " debug symbols"
-msgstr ""
+msgstr " ladící symboly"
 
 #: common/flatpak-ref-utils.c:1298
 msgid " sourcecode"
-msgstr ""
+msgstr " zdrojový kód"
 
 #: common/flatpak-ref-utils.c:1300
-#, fuzzy
 msgid " translations"
-msgstr "Instalace"
+msgstr " překlady"
 
 #: common/flatpak-ref-utils.c:1302
 msgid " docs"
-msgstr ""
+msgstr " dokumentace"
 
 #: common/flatpak-ref-utils.c:1569
 #, c-format
@@ -5008,7 +4997,7 @@ msgstr "Selhala migrace z %s: %s"
 #: common/flatpak-run.c:3869
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
-msgstr ""
+msgstr "Selhala migrace starého adresáře dat aplikace %s na nový název %s: %s"
 
 #: common/flatpak-run.c:3878
 #, c-format
@@ -5118,9 +5107,9 @@ msgid "Skipping %s due to previous error"
 msgstr "Přeskakuje se %s z důvodu předchozí chyby"
 
 #: common/flatpak-transaction.c:4796
-#, fuzzy, c-format
+#, c-format
 msgid "Aborted due to failure (%s)"
-msgstr "Přerušeno z důvodu selhání"
+msgstr "Přerušeno z důvodu selhání (%s)"
 
 #: common/flatpak-utils.c:795
 msgid "Glob can't match apps"
@@ -5188,9 +5177,9 @@ msgid "Error copying 128x128 icon for component %s: %s\n"
 msgstr "Chyba během kopírování 128x128 ikony pro součást %s: %s\n"
 
 #: common/flatpak-utils.c:5583
-#, fuzzy, c-format
+#, c-format
 msgid "%s is end-of-life, ignoring for appstream"
-msgstr "%s je end-of-life, ignoruje se\n"
+msgstr "%s je end-of-life, ignoruje se pro appstream"
 
 #: common/flatpak-utils.c:5618
 #, c-format
