@@ -163,8 +163,13 @@ tests_libpreload_la_LDFLAGS = \
 	-avoid-version \
 	-module \
 	-no-undefined \
-	-rpath $(installed_testdir) \
 	$(NULL)
+
+if ENABLE_INSTALLED_TESTS
+tests_libpreload_la_LDFLAGS += -rpath $(installed_testdir)
+else
+tests_libpreload_la_LDFLAGS += -rpath  ${abs_builddir}
+endif
 
 installed_test_keyringdir = $(installed_testdir)/test-keyring
 installed_test_keyring2dir = $(installed_testdir)/test-keyring2
