@@ -109,6 +109,18 @@ flatpak_bwrap_add_arg (FlatpakBwrap *bwrap, const char *arg)
   g_ptr_array_add (bwrap->argv, g_strdup (arg));
 }
 
+/*
+ * flatpak_bwrap_take_arg:
+ * @arg: (transfer full): Take ownership of this argument
+ *
+ * Add @arg to @bwrap's argv, taking ownership of the pointer.
+ */
+void
+flatpak_bwrap_take_arg (FlatpakBwrap *bwrap, char *arg)
+{
+  g_ptr_array_add (bwrap->argv, arg);
+}
+
 void
 flatpak_bwrap_finish (FlatpakBwrap *bwrap)
 {
@@ -272,6 +284,37 @@ flatpak_bwrap_add_bind_arg (FlatpakBwrap *bwrap,
       g_autofree char *dest_real = g_build_filename (dest_dirname_real, dest_basename, NULL);
       flatpak_bwrap_add_args (bwrap, type, src, dest_real, NULL);
     }
+}
+
+/*
+ * Convert bwrap->envp into a series of --setenv arguments for bwrap(1),
+ * assumed to be applied to an empty environment. Reset envp to be an
+ * empty environment.
+ */
+void
+flatpak_bwrap_envp_to_args (FlatpakBwrap *bwrap)
+{
+  gsize i;
+
+  for (i = 0; bwrap->envp[i] != NULL; i++)
+    {
+      char *key_val = bwrap->envp[i];
+      char *eq = strchr (key_val, '=');
+
+      if (eq)
+        {
+          flatpak_bwrap_add_arg (bwrap, "--setenv");
+          flatpak_bwrap_take_arg (bwrap, g_strndup (key_val, eq - key_val));
+          flatpak_bwrap_add_arg (bwrap, eq + 1);
+        }
+      else
+        {
+          g_warn_if_reached ();
+        }
+    }
+
+  g_strfreev (g_steal_pointer (&bwrap->envp));
+  bwrap->envp = g_strdupv (flatpak_bwrap_empty_env);
 }
 
 gboolean

@@ -34,6 +34,10 @@ assert_not_reached () {
     echo $@ 1>&2; exit 1
 }
 
+ok () {
+    echo "ok $@"
+}
+
 test_tmpdir=$(pwd)
 
 # Sanity check that we're in a tmpdir that has
