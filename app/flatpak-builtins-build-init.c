@@ -111,7 +111,7 @@ ensure_extensions (FlatpakDeploy *src_deploy, const char *default_branch,
 
                   subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
                   if (subpaths[0] != NULL)
-                    return flatpak_fail (error, _("Requested extension %s is only partially installed"), ext->installed_id);
+                    return flatpak_fail (error, _("Requested extension %s//%s is only partially installed"), ext->installed_id, default_branch);
                 }
 
               if (top_dir)
@@ -140,7 +140,7 @@ ensure_extensions (FlatpakDeploy *src_deploy, const char *default_branch,
       if (!found)
         {
           g_list_free_full (extensions, (GDestroyNotify) flatpak_extension_free);
-          return flatpak_fail (error, _("Requested extension %s not installed"), requested_extension_name);
+          return flatpak_fail (error, _("Requested extension %s//%s not installed"), requested_extension_name, default_branch);
         }
     }
 
