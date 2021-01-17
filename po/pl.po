@@ -1,15 +1,15 @@
 # Polish translation for flatpak.
-# Copyright © 2016-2020 the flatpak authors.
+# Copyright © 2016-2021 the flatpak authors.
 # This file is distributed under the same license as the flatpak package.
-# Piotr Drąg <piotrdrag@gmail.com>, 2016-2020.
-# Aviary.pl <community-poland@mozilla.org>, 2016-2020.
+# Piotr Drąg <piotrdrag@gmail.com>, 2016-2021.
+# Aviary.pl <community-poland@mozilla.org>, 2016-2021.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2021-01-14 10:52+0100\n"
-"PO-Revision-Date: 2020-06-28 13:48+0200\n"
+"PO-Revision-Date: 2021-01-17 13:33+0100\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
 "Language: pl\n"
@@ -368,9 +368,8 @@ msgstr "CZAS"
 #: app/flatpak-builtins-build-export.c:79
 #: app/flatpak-builtins-build-import-bundle.c:51
 #: app/flatpak-builtins-build-update-repo.c:93
-#, fuzzy
 msgid "Don't generate a summary index"
-msgstr "Bez aktualizowania podsumowania"
+msgstr "Bez tworzenia indeksu podsumowania"
 
 #: app/flatpak-builtins-build-commit-from.c:277
 msgid "DST-REPO [DST-REF…] - Make a new commit from existing commits"
@@ -734,9 +733,9 @@ msgstr ""
 
 #: app/flatpak-builtins-build-finish.c:593
 #: app/flatpak-builtins-build-init.c:452
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid extension name %s"
-msgstr "Nieprawidłowa nazwa programu uwierzytelniającego %s"
+msgstr "Nieprawidłowa nazwa rozszerzenia %s"
 
 #: app/flatpak-builtins-build-finish.c:636
 msgid "DIRECTORY - Finalize a build directory"
@@ -1901,7 +1900,7 @@ msgstr "Bez sprawdzania poprawności/instalowania zależności wykonawczych"
 
 #: app/flatpak-builtins-install.c:68
 msgid "Don't automatically pin explicit installs"
-msgstr ""
+msgstr "Bez automatycznego przypinania instalacji przez użytkownika"
 
 #: app/flatpak-builtins-install.c:69 app/flatpak-builtins-update.c:63
 msgid "Don't use static deltas"
@@ -2256,25 +2255,22 @@ msgid "APP_ID - Show permissions for an app"
 msgstr "IDENTYFIKATOR_PROGRAMU — wyświetla uprawnienia programu"
 
 #: app/flatpak-builtins-pin.c:44
-#, fuzzy
 msgid "Remove matching pins"
-msgstr "Usuwa pasujące maski"
+msgstr "Usuwa pasujące przypięcia"
 
 #: app/flatpak-builtins-pin.c:57
-#, fuzzy
 msgid "[PATTERN…] - disable automatic removal of runtimes matching patterns"
 msgstr ""
-"[WZÓR…] — wyłącza aktualizacje i automatyczną instalację pasujących wzorów"
+"[WZÓR…] — wyłącza automatyczne usuwanie środowisk wykonawczych pasujących do "
+"wzorów"
 
 #: app/flatpak-builtins-pin.c:74
-#, fuzzy
 msgid "No pinned patterns\n"
-msgstr "Brak zamaskowanych wzorów\n"
+msgstr "Brak przypiętych wzorów\n"
 
 #: app/flatpak-builtins-pin.c:79
-#, fuzzy
 msgid "Pinned patterns:\n"
-msgstr "Zamaskowane wzory:\n"
+msgstr "Przypięte wzory:\n"
 
 #: app/flatpak-builtins-ps.c:47
 msgid "Instance"
@@ -2377,13 +2373,12 @@ msgid "PRIORITY"
 msgstr "PRIORYTET"
 
 #: app/flatpak-builtins-remote-add.c:73
-#, fuzzy
 msgid "The named subset to use for this remote"
-msgstr "Czytelna nazwa tego repozytorium"
+msgstr "Nazwany podzbiór używany dla tego repozytorium"
 
 #: app/flatpak-builtins-remote-add.c:73 app/flatpak-builtins-remote-modify.c:70
 msgid "SUBSET"
-msgstr ""
+msgstr "PODZBIÓR"
 
 #: app/flatpak-builtins-remote-add.c:74 app/flatpak-builtins-remote-modify.c:81
 msgid "A nice name to use for this remote"
@@ -2588,12 +2583,11 @@ msgstr "Wyświetla identyfikator kolekcji"
 
 #: app/flatpak-builtins-remote-list.c:53 app/flatpak-builtins-repo.c:390
 msgid "Subset"
-msgstr ""
+msgstr "Podzbiór"
 
 #: app/flatpak-builtins-remote-list.c:53
-#, fuzzy
 msgid "Show the subset"
-msgstr "Wyświetla odniesienie"
+msgstr "Wyświetla podzbiór"
 
 #: app/flatpak-builtins-remote-list.c:54
 msgid "Filter"
@@ -2697,9 +2691,8 @@ msgid "Set a new url"
 msgstr "Ustawia nowy adres URL"
 
 #: app/flatpak-builtins-remote-modify.c:70
-#, fuzzy
 msgid "Set a new subset to use"
-msgstr "Ustawia nowy adres URL"
+msgstr "Ustawia nowy podzbiór do użycia"
 
 #: app/flatpak-builtins-remote-modify.c:71
 msgid "Enable the remote"
@@ -2798,13 +2791,13 @@ msgid "Skipping non-deployed ref %s…\n"
 msgstr "Pomijanie niewdrożonego odniesienia %s…\n"
 
 #: app/flatpak-builtins-repair.c:394
-#, fuzzy, c-format
+#, c-format
 msgid "[%d/%d] Verifying %s…\n"
-msgstr "Sprawdzanie poprawności %s…\n"
+msgstr "[%d/%d] Sprawdzanie poprawności %s…\n"
 
 #: app/flatpak-builtins-repair.c:400
 msgid "Dry run: "
-msgstr ""
+msgstr "Próbne wykonanie: "
 
 #: app/flatpak-builtins-repair.c:405
 #, c-format
@@ -2823,7 +2816,7 @@ msgstr "Usuwanie odniesienia %s z powodu %d\n"
 
 #: app/flatpak-builtins-repair.c:427
 msgid "Checking remotes...\n"
-msgstr ""
+msgstr "Sprawdzanie repozytoriów…\n"
 
 #: app/flatpak-builtins-repair.c:445
 #, c-format
@@ -2869,7 +2862,7 @@ msgstr "Tryb repozytorium: %s\n"
 #: app/flatpak-builtins-repo.c:111
 #, c-format
 msgid "Indexed summaries: %s\n"
-msgstr ""
+msgstr "Zindeksowane podsumowania: %s\n"
 
 #: app/flatpak-builtins-repo.c:111 app/flatpak-builtins-repo.c:137
 #: app/flatpak-builtins-repo.c:170
@@ -2883,17 +2876,17 @@ msgstr "fałsz"
 
 #: app/flatpak-builtins-repo.c:119
 msgid "Subsummaries: "
-msgstr ""
+msgstr "Podsumowania podrzędne: "
 
 #: app/flatpak-builtins-repo.c:134
 #, c-format
 msgid "Cache version: %d\n"
-msgstr ""
+msgstr "Wersja pamięci podręcznej: %d\n"
 
 #: app/flatpak-builtins-repo.c:137
 #, c-format
 msgid "Indexed deltas: %s\n"
-msgstr ""
+msgstr "Zindeksowane delty: %s\n"
 
 #: app/flatpak-builtins-repo.c:140
 #, c-format
@@ -2956,9 +2949,9 @@ msgid "GPG key hash: %s\n"
 msgstr "Suma klucza GPG: %s\n"
 
 #: app/flatpak-builtins-repo.c:182
-#, fuzzy, c-format
+#, c-format
 msgid "%zd summary branches\n"
-msgstr "Gałęzie: %zd\n"
+msgstr "Gałęzie podsumowań: %zd\n"
 
 #: app/flatpak-builtins-repo.c:334
 msgid "Installed"
@@ -2970,16 +2963,15 @@ msgstr "Pobieranie"
 
 #: app/flatpak-builtins-repo.c:336
 msgid "Subsets"
-msgstr ""
+msgstr "Podzbiory"
 
 #: app/flatpak-builtins-repo.c:391
 msgid "Digest"
-msgstr ""
+msgstr "Skrót"
 
 #: app/flatpak-builtins-repo.c:392
-#, fuzzy
 msgid "History length"
-msgstr "Historia:"
+msgstr "Długość historii"
 
 #: app/flatpak-builtins-repo.c:710
 msgid "Print general information about the repository"
@@ -2998,13 +2990,12 @@ msgid "Show commits for a branch"
 msgstr "Wyświetla zatwierdzenia dla gałęzi"
 
 #: app/flatpak-builtins-repo.c:714
-#, fuzzy
 msgid "Print information about the repo subsets"
-msgstr "Wyświetla ogólne informacje o repozytorium"
+msgstr "Wyświetla informacje o podzbiorach repozytorium"
 
 #: app/flatpak-builtins-repo.c:715
 msgid "Limit information to subsets with this prefix"
-msgstr ""
+msgstr "Ogranicza informacje do podzbiorów o tym przedrostku"
 
 #: app/flatpak-builtins-repo.c:730
 msgid "LOCATION - Repository maintenance"
@@ -3087,7 +3078,7 @@ msgstr "Sprawia, że procesy są widoczne w nadrzędnej przestrzeni nazw"
 
 #: app/flatpak-builtins-run.c:86
 msgid "Share process ID namespace with parent"
-msgstr ""
+msgstr "Współdzieli przestrzeń nazw identyfikatora procesu z nadrzędnym"
 
 #: app/flatpak-builtins-run.c:87
 msgid "Write the instance ID to the given file descriptor"
@@ -3184,6 +3175,9 @@ msgid ""
 "These runtimes in installation '%s' are pinned and won't be removed; see "
 "flatpak-pin(1):\n"
 msgstr ""
+"\n"
+"Te środowiska wykonawcze w instalacji „%s” są przypięte i nie zostaną "
+"usunięte; flatpak-pin(1) zawiera więcej informacji:\n"
 
 #: app/flatpak-builtins-uninstall.c:267
 msgid "Nothing unused to uninstall\n"
@@ -3558,31 +3552,28 @@ msgid "Password"
 msgstr "Hasło"
 
 #: app/flatpak-cli-transaction.c:718
-#, fuzzy, c-format
+#, c-format
 msgid "Info: (pinned) %s//%s is end-of-life, in favor of %s\n"
-msgstr "Informacja: %s jest niewspierane, w zamian jest %s\n"
+msgstr "Informacja: (przypięte) %s//%s jest niewspierane, w zamian jest %s\n"
 
 #: app/flatpak-cli-transaction.c:720
-#, fuzzy, c-format
+#, c-format
 msgid "Info: %s//%s is end-of-life, in favor of %s\n"
-msgstr "Informacja: %s jest niewspierane, w zamian jest %s\n"
+msgstr "Informacja: %s//%s jest niewspierane, w zamian jest %s\n"
 
 #: app/flatpak-cli-transaction.c:724
-#, fuzzy, c-format
+#, c-format
 msgid "Info: (pinned) %s//%s is end-of-life, with reason:\n"
-msgstr "Informacja: %s jest niewspierane z powodu: %s\n"
+msgstr "Informacja: (przypięte) %s//%s jest niewspierane z powodu:\n"
 
 #: app/flatpak-cli-transaction.c:726
-#, fuzzy, c-format
+#, c-format
 msgid "Info: %s//%s is end-of-life, with reason:\n"
-msgstr "Informacja: %s jest niewspierane z powodu: %s\n"
+msgstr "Informacja: %s//%s jest niewspierane z powodu:\n"
 
 #: app/flatpak-cli-transaction.c:735
-#, fuzzy
 msgid "Applications using this runtime:\n"
-msgstr ""
-"\n"
-" Wyszukiwanie programów i środowisk wykonawczych"
+msgstr "Programy używające tego środowiska wykonawczego:\n"
 
 #: app/flatpak-cli-transaction.c:752
 #, c-format
@@ -3683,6 +3674,7 @@ msgstr "Maskuje aktualizacje i automatyczną instalację"
 #: app/flatpak-main.c:85
 msgid "Pin a runtime to prevent automatic removal"
 msgstr ""
+"Przypina środowisko wykonawcze, aby uniemożliwić automatyczne usunięcie"
 
 #: app/flatpak-main.c:86
 msgid "List installed apps and/or runtimes"
@@ -3923,10 +3915,11 @@ msgstr "Wyświetla ścieżki do instalacji systemowych i kończy działanie"
 #: app/flatpak-main.c:173
 msgid "Print the updated environment needed to run flatpaks"
 msgstr ""
+"Wyświetla zaktualizowane środowisko wymagane do uruchamiania pakietów Flatpak"
 
 #: app/flatpak-main.c:174
 msgid "Only include the system installation with --print-updated-env"
-msgstr ""
+msgstr "Zawiera tylko instalacje systemowe w --print-updated-env"
 
 #: app/flatpak-main.c:179
 msgid "Work on the user installation"
@@ -4070,12 +4063,14 @@ msgstr "Nieznany typ funkcji %s, prawidłowe typy: %s"
 #: common/flatpak-context.c:778
 #, c-format
 msgid "Filesystem location \"%s\" contains \"..\""
-msgstr ""
+msgstr "Położenie w systemie plików „%s” zawiera „..”"
 
 #: common/flatpak-context.c:816
 msgid ""
 "--filesystem=/ is not available, use --filesystem=host for a similar result"
 msgstr ""
+"--filesystem=/ jest niedostępne, należy użyć --filesystem=host, aby osiągnąć "
+"podobny efekt"
 
 #: common/flatpak-context.c:850
 #, c-format
@@ -4094,7 +4089,7 @@ msgstr "Nieznany format środowiska %s"
 #: common/flatpak-context.c:1192
 #, c-format
 msgid "Environment variable name must not contain '=': %s"
-msgstr ""
+msgstr "Nazwa zmiennej środowiskowej nie może zawierać „=”: %s"
 
 #: common/flatpak-context.c:1305 common/flatpak-context.c:1313
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
@@ -4186,21 +4181,19 @@ msgstr "ZMIENNA=WARTOŚĆ"
 
 #: common/flatpak-context.c:1397
 msgid "Read environment variables in env -0 format from FD"
-msgstr ""
+msgstr "Odczytuje zmienne środowiskowe w formacie env -0 z FD"
 
 #: common/flatpak-context.c:1397
 msgid "FD"
-msgstr ""
+msgstr "FD"
 
 #: common/flatpak-context.c:1398
-#, fuzzy
 msgid "Remove variable from environment"
-msgstr "Usuwa element z przechowalni uprawnień"
+msgstr "Usuwa zmienną ze środowiska"
 
 #: common/flatpak-context.c:1398
-#, fuzzy
 msgid "VAR"
-msgstr "WARTOŚĆ"
+msgstr "ZMIENNA"
 
 #: common/flatpak-context.c:1399
 msgid "Allow app to own name on the session bus"
@@ -4261,6 +4254,7 @@ msgstr "Bez wymagania działającej sesji (bez tworzenia cgroups)"
 #, c-format
 msgid "Configured collection ID ‘%s’ not in summary file"
 msgstr ""
+"Identyfikator skonfigurowanej kolekcji „%s” nie jest w pliku podsumowania"
 
 #: common/flatpak-dir.c:449
 #, c-format
@@ -4287,21 +4281,19 @@ msgstr ""
 "%s"
 
 #: common/flatpak-dir.c:804
-#, fuzzy, c-format
+#, c-format
 msgid "No entry for %s in remote '%s' summary cache "
-msgstr ""
-"Brak wpisu dla %s w pamięci podręcznej Flatpak podsumowania repozytorium "
-"„%s” "
+msgstr "Brak wpisu dla %s w pamięci podręcznej podsumowania repozytorium „%s” "
 
 #: common/flatpak-dir.c:809
-#, fuzzy, c-format
+#, c-format
 msgid "Missing xa.data in summary for remote %s"
-msgstr "Brak podsumowania OCI w pamięci podręcznej dla repozytorium „%s”"
+msgstr "Brak „xa.data” w podsumowaniu dla repozytorium %s"
 
 #: common/flatpak-dir.c:815 common/flatpak-dir.c:1231
-#, fuzzy, c-format
+#, c-format
 msgid "Unsupported summary version %d for remote %s"
-msgstr "Brak podsumowania w pamięci podręcznej dla repozytorium „%s”"
+msgstr "Nieobsługiwana wersja podsumowania %d dla repozytorium %s"
 
 #: common/flatpak-dir.c:902
 msgid "Remote OCI index has no registry uri"
@@ -4325,11 +4317,10 @@ msgstr ""
 "odniesienia"
 
 #: common/flatpak-dir.c:1113
-#, fuzzy, c-format
+#, c-format
 msgid "Configured collection ID ‘%s’ not in binding metadata"
 msgstr ""
-"Zatwierdzenie nie ma żądanego odniesienia „%s” w metadanych dowiązania "
-"odniesienia"
+"Identyfikator skonfigurowanej kolekcji „%s” nie jest w metadanych dowiązania"
 
 #: common/flatpak-dir.c:1202 common/flatpak-dir.c:1237
 #, c-format
@@ -4383,9 +4374,9 @@ msgid "The config key %s is not set"
 msgstr "Klucz konfiguracji %s nie jest ustawiony"
 
 #: common/flatpak-dir.c:4261
-#, fuzzy, c-format
+#, c-format
 msgid "No current %s pattern matching %s"
-msgstr "Brak obecnych masek pasujących do %s"
+msgstr "Brak obecnych wzorów %s pasujących do %s"
 
 #: common/flatpak-dir.c:4414
 msgid "No appstream commit to deploy"
@@ -4474,11 +4465,8 @@ msgstr ""
 "Zatwierdzenie dla „%s” nie jest w oczekiwanych dowiązanych odniesieniach: %s"
 
 #: common/flatpak-dir.c:6178
-#, fuzzy
 msgid "Only applications can be made current"
-msgstr ""
-"\n"
-" Wyszukiwanie programów i środowisk wykonawczych"
+msgstr "Tylko programy mogą być ustawione jako bieżące"
 
 #: common/flatpak-dir.c:6699
 msgid "Not enough memory"
@@ -4660,9 +4648,9 @@ msgid "No oci summary cached for remote '%s'"
 msgstr "Brak podsumowania OCI w pamięci podręcznej dla repozytorium „%s”"
 
 #: common/flatpak-dir.c:11350
-#, fuzzy, c-format
+#, c-format
 msgid "No cached summary for remote '%s'"
-msgstr "Brak podsumowania OCI w pamięci podręcznej dla repozytorium „%s”"
+msgstr "Brak podsumowania w pamięci podręcznej dla repozytorium „%s”"
 
 #: common/flatpak-dir.c:11425
 #, c-format
@@ -4675,9 +4663,11 @@ msgstr ""
 "jest prawidłowy."
 
 #: common/flatpak-dir.c:11795
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid checksum for indexed summary %s for remote '%s'"
-msgstr "Nieprawidłowa suma kontrolna dodatkowych danych %s"
+msgstr ""
+"Nieprawidłowa suma kontrolna zindeksowanego podsumowania %s dla repozytorium "
+"„%s”"
 
 #: common/flatpak-dir.c:12441
 #, c-format
@@ -4896,14 +4886,13 @@ msgid "Names must contain at least 2 periods"
 msgstr "Nazwy muszą zawierać co najmniej dwie kropki"
 
 #: common/flatpak-ref-utils.c:311
-#, fuzzy
 msgid "Arch can't be empty"
-msgstr "Gałąź nie może być pusta"
+msgstr "Architektura nie może być pusta"
 
 #: common/flatpak-ref-utils.c:322
-#, fuzzy, c-format
+#, c-format
 msgid "Arch can't contain %c"
-msgstr "Gałąź nie może zawierać %c"
+msgstr "Architektura nie może zawierać %c"
 
 #: common/flatpak-ref-utils.c:386
 msgid "Branch can't be empty"
@@ -4921,12 +4910,11 @@ msgstr "Gałąź nie może zawierać %c"
 
 #: common/flatpak-ref-utils.c:616 common/flatpak-ref-utils.c:866
 msgid "Ref too long"
-msgstr ""
+msgstr "Odniesienie jest za długie"
 
 #: common/flatpak-ref-utils.c:628
-#, fuzzy
 msgid "Invalid remote name"
-msgstr "Błędna nazwa repozytorium: %s"
+msgstr "Nieprawidłowa nazwa repozytorium"
 
 #: common/flatpak-ref-utils.c:642
 #, c-format
@@ -4940,14 +4928,14 @@ msgid "Wrong number of components in %s"
 msgstr "Błędna liczba składników w %s"
 
 #: common/flatpak-ref-utils.c:657
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid name %.*s: %s"
-msgstr "Nieprawidłowa nazwa %s: %s"
+msgstr "Nieprawidłowa nazwa %.*s: %s"
 
 #: common/flatpak-ref-utils.c:674
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid arch: %.*s: %s"
-msgstr "Nieprawidłowa gałąź %s: %s"
+msgstr "Nieprawidłowa architektura: %.*s: %s"
 
 #: common/flatpak-ref-utils.c:817
 #, c-format
@@ -4955,51 +4943,48 @@ msgid "Invalid name %s: %s"
 msgstr "Nieprawidłowa nazwa %s: %s"
 
 #: common/flatpak-ref-utils.c:835
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid arch: %s: %s"
-msgstr "Nieprawidłowa gałąź %s: %s"
+msgstr "Nieprawidłowa architektura: %s: %s"
 
 #: common/flatpak-ref-utils.c:854
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid branch: %s: %s"
-msgstr "Nieprawidłowa gałąź %s: %s"
+msgstr "Nieprawidłowa gałąź: %s: %s"
 
 #: common/flatpak-ref-utils.c:963 common/flatpak-ref-utils.c:971
 #: common/flatpak-ref-utils.c:979
-#, fuzzy, c-format
+#, c-format
 msgid "Wrong number of components in partial ref %s"
-msgstr "Błędna liczba składników w środowisku wykonawczym %s"
+msgstr "Błędna liczba składników w częściowym odniesieniu %s"
 
 #: common/flatpak-ref-utils.c:1289
-#, fuzzy
 msgid " development platform"
-msgstr "Używa programistycznego środowiska wykonawczego"
+msgstr " platforma programistyczna"
 
 #: common/flatpak-ref-utils.c:1291
 msgid " platform"
-msgstr ""
+msgstr " platforma"
 
 #: common/flatpak-ref-utils.c:1293
-#, fuzzy
 msgid " application base"
-msgstr "Program"
+msgstr " podstawa programu"
 
 #: common/flatpak-ref-utils.c:1296
 msgid " debug symbols"
-msgstr ""
+msgstr " symbole debugowania"
 
 #: common/flatpak-ref-utils.c:1298
 msgid " sourcecode"
-msgstr ""
+msgstr " kod źródłowy"
 
 #: common/flatpak-ref-utils.c:1300
-#, fuzzy
 msgid " translations"
-msgstr "Instalacja"
+msgstr " tłumaczenia"
 
 #: common/flatpak-ref-utils.c:1302
 msgid " docs"
-msgstr ""
+msgstr " dokumentacja"
 
 #: common/flatpak-ref-utils.c:1569
 #, c-format
@@ -5230,13 +5215,13 @@ msgid "Skipping %s due to previous error"
 msgstr "Pomijanie %s z powodu poprzedniego błędu"
 
 #: common/flatpak-transaction.c:4796
-#, fuzzy, c-format
+#, c-format
 msgid "Aborted due to failure (%s)"
-msgstr "Przerwano z powodu niepowodzenia"
+msgstr "Przerwano z powodu niepowodzenia (%s)"
 
 #: common/flatpak-utils.c:795
 msgid "Glob can't match apps"
-msgstr ""
+msgstr "Wzorzec nie pasuje do programów"
 
 #: common/flatpak-utils.c:820
 msgid "Empty glob"
@@ -5300,9 +5285,9 @@ msgid "Error copying 128x128 icon for component %s: %s\n"
 msgstr "Błąd podczas kopiowania ikony 128×128 dla składnika %s: %s\n"
 
 #: common/flatpak-utils.c:5583
-#, fuzzy, c-format
+#, c-format
 msgid "%s is end-of-life, ignoring for appstream"
-msgstr "%s jest niewspierane, ignorowanie\n"
+msgstr "%s jest niewspierane, ignorowanie dla AppStream"
 
 #: common/flatpak-utils.c:5618
 #, c-format
@@ -5640,28 +5625,3 @@ msgid ""
 msgstr ""
 "Wymagane jest uwierzytelnienie, aby zainstalować oprogramowanie ograniczane "
 "przez zasady kontroli rodzicielskiej"
-
-#, c-format
-#~ msgid "Invalid deployed ref %s: "
-#~ msgstr "Nieprawidłowe wdrożone odniesienie %s: "
-
-#, c-format
-#~ msgid "Deployed ref %s kind does not match commit (%s)"
-#~ msgstr "Rodzaj wdrożonego odniesienia %s nie pasuje do zatwierdzenia (%s)"
-
-#, c-format
-#~ msgid "Deployed ref %s name does not match commit (%s)"
-#~ msgstr "Nazwa wdrożonego odniesienia %s nie pasuje do zatwierdzenia (%s)"
-
-#, c-format
-#~ msgid "Deployed ref %s arch does not match commit (%s)"
-#~ msgstr ""
-#~ "Architektura wdrożonego odniesienia %s nie pasuje do zatwierdzenia (%s)"
-
-#, c-format
-#~ msgid "Failed to determine parts from ref: %s"
-#~ msgstr "Ustalenia części z odniesienia się nie powiodło: %s"
-
-#, c-format
-#~ msgid "Invalid arch %s"
-#~ msgstr "Nieprawidłowa architektura %s"
