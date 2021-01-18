@@ -1067,9 +1067,7 @@ start_dbus_proxy (FlatpakBwrap *app_bwrap,
   g_autoptr(FlatpakBwrap) proxy_bwrap = NULL;
   int sync_fds[2] = {-1, -1};
   int proxy_start_index;
-  g_auto(GStrv) minimal_envp = NULL;
 
-  minimal_envp = flatpak_run_get_minimal_env (FALSE, FALSE);
   proxy_bwrap = flatpak_bwrap_new (NULL);
 
   if (!add_bwrap_wrapper (proxy_bwrap, app_info_path, error))
