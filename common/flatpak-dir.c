@@ -7847,6 +7847,8 @@ apply_extra_data (FlatpakDir   *self,
                                          app_context, NULL, NULL, NULL, cancellable, error))
     return FALSE;
 
+  flatpak_bwrap_envp_to_args (bwrap);
+
   flatpak_bwrap_add_arg (bwrap, "/app/bin/apply_extra");
 
   flatpak_bwrap_finish (bwrap);
