@@ -571,6 +571,8 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
                               NULL);
     }
 
+  flatpak_bwrap_envp_to_args (bwrap);
+
   if (!flatpak_bwrap_bundle_args (bwrap, 1, -1, FALSE, error))
     return FALSE;
 
