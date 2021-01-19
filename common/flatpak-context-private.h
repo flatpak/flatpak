@@ -26,6 +26,7 @@
 #include <flatpak-common-types-private.h>
 #include "flatpak-exports-private.h"
 
+typedef struct FlatpakUsbDevice FlatpakUsbDevice;
 typedef struct FlatpakContext FlatpakContext;
 
 typedef enum {
@@ -59,6 +60,13 @@ typedef enum {
   FLATPAK_CONTEXT_FEATURE_CANBUS       = 1 << 3,
 } FlatpakContextFeatures;
 
+struct FlatpakUsbDevice
+{
+  char *subsystem;
+  char *vendor;
+  char *product;
+};
+
 struct FlatpakContext
 {
   FlatpakContextShares   shares;
@@ -72,6 +80,7 @@ struct FlatpakContext
   GHashTable            *env_vars;
   GHashTable            *persistent;
   GHashTable            *filesystems;
+  GHashTable            *usb_devices;
   GHashTable            *session_bus_policy;
   GHashTable            *system_bus_policy;
   GHashTable            *generic_policy;
@@ -82,10 +91,16 @@ extern const char *flatpak_context_devices[];
 extern const char *flatpak_context_features[];
 extern const char *flatpak_context_shares[];
 
+FlatpakUsbDevice *flatpak_usb_device_clone (FlatpakUsbDevice *device);
+void              flatpak_usb_device_free  (FlatpakUsbDevice *device);
+
 gboolean       flatpak_context_parse_filesystem (const char             *filesystem_and_mode,
                                                  char                  **filesystem_out,
                                                  FlatpakFilesystemMode  *mode_out,
                                                  GError                **error);
+gboolean       flatpak_context_parse_usb_device (const char        *device_string,
+                                                 FlatpakUsbDevice  *device_out,
+                                                 GError           **error);
 
 FlatpakContext *flatpak_context_new (void);
 void           flatpak_context_free (FlatpakContext *context);
@@ -142,5 +157,6 @@ void flatpak_context_append_bwrap_filesystem (FlatpakContext  *context,
                                               FlatpakExports **exports_out);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakContext, flatpak_context_free)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakUsbDevice, flatpak_usb_device_free)
 
 #endif /* __FLATPAK_CONTEXT_H__ */

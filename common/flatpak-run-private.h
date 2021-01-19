@@ -46,6 +46,7 @@ gboolean flatpak_run_in_transient_unit (const char *app_id,
 #define FLATPAK_METADATA_KEY_SHARED "shared"
 #define FLATPAK_METADATA_KEY_SOCKETS "sockets"
 #define FLATPAK_METADATA_KEY_FILESYSTEMS "filesystems"
+#define FLATPAK_METADATA_KEY_USB_DEVICES "usb-devices"
 #define FLATPAK_METADATA_KEY_PERSISTENT "persistent"
 #define FLATPAK_METADATA_KEY_DEVICES "devices"
 #define FLATPAK_METADATA_KEY_FEATURES "features"
