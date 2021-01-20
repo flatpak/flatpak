@@ -2078,6 +2078,8 @@ flatpak_dir_system_helper_call_deploy (FlatpakDir         *self,
 {
   const char *empty[] = { NULL };
 
+  if (arg_subpaths == NULL)
+    arg_subpaths = empty;
   if (arg_previous_ids == NULL)
     arg_previous_ids = empty;
 
