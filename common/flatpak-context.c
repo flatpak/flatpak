@@ -99,6 +99,9 @@ flatpak_context_new (void)
   context->persistent = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   /* filename or special filesystem name => FlatpakFilesystemMode */
   context->filesystems = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  /* USB device string => FlatpakUsbDevice */
+  context->usb_devices = g_hash_table_new_full (g_str_hash, g_str_equal, g_free,
+                                                (GDestroyNotify) flatpak_usb_device_free);
   context->session_bus_policy = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   context->system_bus_policy = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   context->generic_policy = g_hash_table_new_full (g_str_hash, g_str_equal,
@@ -107,12 +110,31 @@ flatpak_context_new (void)
   return context;
 }
 
+FlatpakUsbDevice *
+flatpak_usb_device_clone (FlatpakUsbDevice *usb_device)
+{
+  FlatpakUsbDevice *clone = g_new0 (FlatpakUsbDevice, 1);
+  clone->subsystem = g_strdup (usb_device->subsystem);
+  clone->vendor = g_strdup (usb_device->vendor);
+  clone->product = g_strdup (usb_device->product);
+  return clone;
+}
+
+void
+flatpak_usb_device_free(FlatpakUsbDevice *usb_device)
+{
+  g_clear_pointer (&usb_device->subsystem, g_free);
+  g_clear_pointer (&usb_device->vendor, g_free);
+  g_clear_pointer (&usb_device->product, g_free);
+}
+
 void
 flatpak_context_free (FlatpakContext *context)
 {
   g_hash_table_destroy (context->env_vars);
   g_hash_table_destroy (context->persistent);
   g_hash_table_destroy (context->filesystems);
+  g_hash_table_destroy (context->usb_devices);
   g_hash_table_destroy (context->session_bus_policy);
   g_hash_table_destroy (context->system_bus_policy);
   g_hash_table_destroy (context->generic_policy);
@@ -851,12 +873,91 @@ flatpak_context_parse_filesystem (const char             *filesystem_and_mode,
   return FALSE;
 }
 
+#define USB_ID_LENGTH 4
+
+static gboolean
+is_usb_vendor_product_id_valid (const char *id)
+{
+  gint i;
+
+  if (strlen (id) != USB_ID_LENGTH)
+    return FALSE;
+
+  for (i = 0; i < USB_ID_LENGTH; i++)
+    if (!g_ascii_isxdigit (id[i]))
+      return FALSE;
+
+  return TRUE;
+}
+
+gboolean
+flatpak_context_parse_usb_device (const char       *device_string,
+                                  FlatpakUsbDevice *device_out,
+                                  GError          **error)
+{
+  g_auto(GStrv) subsystem_id_parts = NULL;
+  g_auto(GStrv) vendor_product_parts = NULL;
+
+  device_out->subsystem = NULL;
+  device_out->product = NULL;
+  device_out->vendor = NULL;
+
+  if (strcmp (device_string, "all") == 0)
+    return TRUE;
+
+  subsystem_id_parts = g_strsplit (device_string, "/", 2);
+
+  if (g_strv_length (subsystem_id_parts) == 1 && strcmp (subsystem_id_parts[0], "*") == 0)
+    return TRUE;
+
+  if (g_strv_length (subsystem_id_parts) == 2)
+    {
+      device_out->subsystem = g_steal_pointer (&subsystem_id_parts[0]);
+
+      if (strcmp (subsystem_id_parts[1], "*") == 0)
+        return TRUE;
+
+      vendor_product_parts = g_strsplit (subsystem_id_parts[1], ":", 2);
+      if (g_strv_length (vendor_product_parts) == 2)
+        {
+          gboolean wildcard_product_id = strcmp (vendor_product_parts[1], "*") == 0;
+
+          if (!is_usb_vendor_product_id_valid (vendor_product_parts[0]) ||
+              (!wildcard_product_id &&
+                !is_usb_vendor_product_id_valid(vendor_product_parts[1])))
+            {
+              g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                            _("Invalid vendor/product ID in %s"), device_string);
+              return FALSE;
+            }
+
+          device_out->vendor = g_steal_pointer (&vendor_product_parts[0]);
+          if (!wildcard_product_id)
+            device_out->product = g_steal_pointer (&vendor_product_parts[1]);
+
+          return TRUE;
+        }
+    }
+
+  g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                _("Invalid USB device filter %s"), device_string);
+  return FALSE;
+}
+
 static void
 flatpak_context_take_filesystem (FlatpakContext        *context,
                                  char                  *fs,
                                  FlatpakFilesystemMode  mode)
 {
   g_hash_table_insert (context->filesystems, fs, GINT_TO_POINTER (mode));
+}
+
+static void
+flatpak_context_take_usb_device (FlatpakContext   *context,
+                                 const char       *name,
+                                 FlatpakUsbDevice *device)
+{
+  g_hash_table_insert (context->usb_devices, g_ascii_strdown (name, -1), device);
 }
 
 void
@@ -890,6 +991,11 @@ flatpak_context_merge (FlatpakContext *context,
   g_hash_table_iter_init (&iter, other->filesystems);
   while (g_hash_table_iter_next (&iter, &key, &value))
     g_hash_table_insert (context->filesystems, g_strdup (key), value);
+
+  g_hash_table_iter_init (&iter, other->usb_devices);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    g_hash_table_insert (context->usb_devices, g_strdup (key),
+                         flatpak_usb_device_clone (value));
 
   g_hash_table_iter_init (&iter, other->session_bus_policy);
   while (g_hash_table_iter_next (&iter, &key, &value))
@@ -1096,6 +1202,38 @@ option_nofilesystem_cb (const gchar *option_name,
 
   flatpak_context_take_filesystem (context, g_steal_pointer (&fs),
                                    FLATPAK_FILESYSTEM_MODE_NONE);
+  return TRUE;
+}
+
+static gboolean
+option_usb_device_cb (const gchar *option_name,
+                      const gchar *value,
+                      gpointer     data,
+                      GError     **error)
+{
+  FlatpakContext *context = data;
+  g_autoptr(FlatpakUsbDevice) device = g_new0 (FlatpakUsbDevice, 1);
+
+  if (!flatpak_context_parse_usb_device (value, device, error))
+    return FALSE;
+
+  flatpak_context_take_usb_device (context, value, g_steal_pointer (&device));
+  return TRUE;
+}
+
+static gboolean
+option_no_usb_device_cb (const gchar *option_name,
+                         const gchar *value,
+                         gpointer     data,
+                         GError     **error)
+{
+  FlatpakContext *context = data;
+  g_autoptr(FlatpakUsbDevice) device = g_new0 (FlatpakUsbDevice, 1);
+
+  if (!flatpak_context_parse_usb_device (value, device, error))
+    return FALSE;
+
+  flatpak_context_take_usb_device (context, value, NULL);
   return TRUE;
 }
 
@@ -1393,6 +1531,8 @@ static GOptionEntry context_options[] = {
   { "disallow", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_disallow_cb, N_("Don't allow feature"), N_("FEATURE") },
   { "filesystem", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_filesystem_cb, N_("Expose filesystem to app (:ro for read-only)"), N_("FILESYSTEM[:ro]") },
   { "nofilesystem", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_nofilesystem_cb, N_("Don't expose filesystem to app"), N_("FILESYSTEM") },
+  { "usb-device", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_usb_device_cb, N_("Expose USB device to app"), N_("SUBSYSTEM/VENDOR:PRODUCT") },
+  { "no-usb-device", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_no_usb_device_cb, N_("Don't expose USB device to app"), N_("SUBSYSTEM/VENDOR:PRODUCT") },
   { "env", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_env_cb, N_("Set environment variable"), N_("VAR=VALUE") },
   { "env-fd", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_env_fd_cb, N_("Read environment variables in env -0 format from FD"), N_("FD") },
   { "unset-env", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_unset_env_cb, N_("Remove variable from environment"), N_("VAR") },
@@ -1557,6 +1697,30 @@ flatpak_context_load_metadata (FlatpakContext *context,
             }
         }
     }
+
+  if (g_key_file_has_key (metakey, FLATPAK_METADATA_GROUP_CONTEXT, FLATPAK_METADATA_KEY_USB_DEVICES, NULL))
+  {
+    g_auto(GStrv) usb_devices = g_key_file_get_string_list (metakey, FLATPAK_METADATA_GROUP_CONTEXT,
+                                                            FLATPAK_METADATA_KEY_USB_DEVICES, NULL, error);
+    if (usb_devices == NULL)
+      return FALSE;
+
+    for (i = 0; usb_devices[i] != NULL; i++)
+      {
+        const char *usb_device_string = parse_negated(usb_devices[i], &remove);
+        g_autoptr(FlatpakUsbDevice) usb_device = NULL;
+
+        if (!flatpak_context_parse_usb_device (usb_device_string, usb_device, error))
+          g_debug ("Unknown device %s", usb_devices[i]);
+        else
+          {
+            if (remove)
+              flatpak_context_take_usb_device (context, usb_device_string, NULL);
+            else
+              flatpak_context_take_usb_device (context, usb_device_string, usb_device);
+          }
+      }
+  }
 
   if (g_key_file_has_key (metakey, FLATPAK_METADATA_GROUP_CONTEXT, FLATPAK_METADATA_KEY_FILESYSTEMS, NULL))
     {
@@ -1846,6 +2010,27 @@ flatpak_context_save_metadata (FlatpakContext *context,
                              NULL);
     }
 
+  if (g_hash_table_size (context->usb_devices) > 0)
+    {
+      g_autoptr(GPtrArray) array = g_ptr_array_new ();
+
+      g_hash_table_iter_init (&iter, context->usb_devices);
+      while (g_hash_table_iter_next (&iter, &key, NULL))
+        g_ptr_array_add (array, key);
+
+      g_key_file_set_string_list (metakey,
+                                  FLATPAK_METADATA_GROUP_CONTEXT,
+                                  FLATPAK_METADATA_KEY_USB_DEVICES,
+                                  (const char * const *) array->pdata, array->len);
+    }
+  else
+    {
+      g_key_file_remove_key (metakey,
+                             FLATPAK_METADATA_GROUP_CONTEXT,
+                             FLATPAK_METADATA_KEY_USB_DEVICES,
+                             NULL);
+    }
+
   if (g_hash_table_size (context->persistent) > 0)
     {
       g_autofree char **keys = (char **) g_hash_table_get_keys_as_array (context->persistent, NULL);
@@ -2059,6 +2244,31 @@ adds_filesystem_access (GHashTable *old, GHashTable *new)
   return FALSE;
 }
 
+static gboolean
+adds_usb_device_access (GHashTable *old,
+                        GHashTable *new)
+{
+  GLNX_HASH_TABLE_FOREACH_V (new, FlatpakUsbDevice *, new_device)
+    {
+      gboolean adds_access = TRUE;
+
+      GLNX_HASH_TABLE_FOREACH_V (old, FlatpakUsbDevice *, old_device)
+        {
+          if ((old_device->subsystem == NULL || g_strcmp0 (old_device->subsystem, new_device->subsystem) == 0)
+              && (old_device->vendor == NULL || g_strcmp0 (old_device->vendor, new_device->vendor) == 0)
+              && (old_device->product == NULL || g_strcmp0 (old_device->product, new_device->product) == 0))
+            {
+              adds_access = FALSE;
+              break;
+            }
+        }
+
+      if (adds_access)
+        return TRUE;
+    }
+
+  return FALSE;
+}
 
 gboolean
 flatpak_context_adds_permissions (FlatpakContext *old,
@@ -2100,6 +2310,9 @@ flatpak_context_adds_permissions (FlatpakContext *old,
     return TRUE;
 
   if (adds_filesystem_access (old->filesystems, new->filesystems))
+    return TRUE;
+
+  if (adds_usb_device_access (old->usb_devices, new->usb_devices))
     return TRUE;
 
   return FALSE;
@@ -2168,6 +2381,15 @@ flatpak_context_to_args (FlatpakContext *context,
       else
         g_ptr_array_add (args, g_strdup_printf ("--nofilesystem=%s", (char *) key));
     }
+
+  g_hash_table_iter_init (&iter, context->usb_devices);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+      if (value != NULL)
+        g_ptr_array_add (args, g_strdup_printf ("--usb-device=%s", (char *) key));
+      else
+        g_ptr_array_add (args, g_strdup_printf ("--no-usb-device=%s", (char *) key));
+    }
 }
 
 void
@@ -2231,6 +2453,7 @@ flatpak_context_reset_permissions (FlatpakContext *context)
 
   g_hash_table_remove_all (context->persistent);
   g_hash_table_remove_all (context->filesystems);
+  g_hash_table_remove_all (context->usb_devices);
   g_hash_table_remove_all (context->session_bus_policy);
   g_hash_table_remove_all (context->system_bus_policy);
   g_hash_table_remove_all (context->generic_policy);
@@ -2254,6 +2477,7 @@ flatpak_context_make_sandboxed (FlatpakContext *context)
 
   g_hash_table_remove_all (context->persistent);
   g_hash_table_remove_all (context->filesystems);
+  g_hash_table_remove_all (context->usb_devices);
   g_hash_table_remove_all (context->session_bus_policy);
   g_hash_table_remove_all (context->system_bus_policy);
   g_hash_table_remove_all (context->generic_policy);
