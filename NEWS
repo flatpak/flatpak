@@ -1,3 +1,13 @@
+Changes in 1.10.1
+~~~~~~~~~~~~~~~~~
+Released: 2020-01-21
+
+ * Fix flatpak build on systems with setuid bwrap
+ * Fix some compiler warnings
+ * Add --enable-asan configure option
+ * Fix crash on updating apps with no deploy data
+ * Update translations
+
 Changes in 1.10.0
 ~~~~~~~~~~~~~~~~~
 Released: 2020-01-14
