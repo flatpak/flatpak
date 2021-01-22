@@ -196,6 +196,16 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>-l</option></term>
+                <term><option>--show-location</option></term>
+
+                <listitem><para>
+                    Show the on-disk location of the app or runtime. See the
+                    examples below.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--verbose</option></term>
 
