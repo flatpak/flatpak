@@ -133,6 +133,13 @@ FlatpakContext *flatpak_context_load_for_deploy (FlatpakDeploy *deploy,
 
 FlatpakExports *flatpak_context_get_exports (FlatpakContext *context,
                                              const char     *app_id);
+FlatpakExports *flatpak_context_get_exports_full (FlatpakContext *context,
+                                                  GFile          *app_id_dir,
+                                                  GPtrArray      *extra_app_id_dirs,
+                                                  gboolean        do_create,
+                                                  gboolean        include_default_dirs,
+                                                  GString        *xdg_dirs_conf,
+                                                  gboolean       *home_access_out);
 
 void flatpak_context_append_bwrap_filesystem (FlatpakContext  *context,
                                               FlatpakBwrap    *bwrap,
