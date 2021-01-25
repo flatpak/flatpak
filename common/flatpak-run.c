@@ -1352,8 +1352,10 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
   g_autoptr(GError) my_error = NULL;
   g_autoptr(FlatpakExports) exports = NULL;
   g_autoptr(FlatpakBwrap) proxy_arg_bwrap = flatpak_bwrap_new (flatpak_bwrap_empty_env);
+  g_autofree char *xdg_dirs_conf = NULL;
   gboolean has_wayland = FALSE;
   gboolean allow_x11 = FALSE;
+  gboolean home_access = FALSE;
 
   if ((context->shares & FLATPAK_CONTEXT_SHARED_IPC) == 0)
     {
@@ -1460,7 +1462,13 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
         }
     }
 
-  flatpak_context_append_bwrap_filesystem (context, bwrap, app_id, app_id_dir, previous_app_id_dirs, &exports);
+
+  exports = flatpak_context_get_exports_full (context,
+                                              app_id_dir, previous_app_id_dirs,
+                                              TRUE, TRUE,
+                                              &xdg_dirs_conf, &home_access);
+  flatpak_context_append_bwrap_filesystem (context, bwrap, app_id, app_id_dir,
+                                           exports, xdg_dirs_conf, home_access);
 
   if (context->sockets & FLATPAK_CONTEXT_SOCKET_WAYLAND)
     {

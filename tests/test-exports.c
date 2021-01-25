@@ -167,6 +167,8 @@ test_empty_context (void)
   g_autoptr(FlatpakBwrap) bwrap = flatpak_bwrap_new (NULL);
   g_autoptr(FlatpakContext) context = flatpak_context_new ();
   g_autoptr(FlatpakExports) exports = NULL;
+  g_autofree char *xdg_dirs_conf = NULL;
+  gboolean home_access = FALSE;
 
   g_assert_cmpuint (g_hash_table_size (context->env_vars), ==, 0);
   g_assert_cmpuint (g_hash_table_size (context->persistent), ==, 0);
@@ -188,13 +190,17 @@ test_empty_context (void)
   g_assert_nonnull (exports);
 
   g_clear_pointer (&exports, flatpak_exports_free);
+  exports = flatpak_context_get_exports_full (context,
+                                              NULL, NULL,
+                                              TRUE, TRUE,
+                                              &xdg_dirs_conf, &home_access);
+  g_assert_nonnull (exports);
+  g_assert_nonnull (xdg_dirs_conf);
   flatpak_context_append_bwrap_filesystem (context, bwrap,
                                            "com.example.App",
-                                           NULL,
-                                           NULL,
-                                           &exports);
+                                           NULL, exports, xdg_dirs_conf,
+                                           home_access);
   print_bwrap (bwrap);
-  g_assert_nonnull (exports);
 }
 
 static void
@@ -206,8 +212,10 @@ test_full_context (void)
   g_autoptr(GError) error = NULL;
   g_autoptr(GKeyFile) keyfile = g_key_file_new ();
   g_autofree gchar *text = NULL;
+  g_autofree char *xdg_dirs_conf = NULL;
   g_auto(GStrv) strv = NULL;
   gsize i, n;
+  gboolean home_access = FALSE;
 
   g_key_file_set_value (keyfile,
                         FLATPAK_METADATA_GROUP_CONTEXT,
@@ -306,13 +314,17 @@ test_full_context (void)
   g_assert_nonnull (exports);
 
   g_clear_pointer (&exports, flatpak_exports_free);
+  exports = flatpak_context_get_exports_full (context,
+                                              NULL, NULL,
+                                              TRUE, TRUE,
+                                              &xdg_dirs_conf, &home_access);
+  g_assert_nonnull (exports);
+  g_assert_nonnull (xdg_dirs_conf);
   flatpak_context_append_bwrap_filesystem (context, bwrap,
                                            "com.example.App",
-                                           NULL,
-                                           NULL,
-                                           &exports);
+                                           NULL, exports, xdg_dirs_conf,
+                                           home_access);
   print_bwrap (bwrap);
-  g_assert_nonnull (exports);
 
   g_clear_pointer (&keyfile, g_key_file_unref);
   keyfile = g_key_file_new ();
