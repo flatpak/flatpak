@@ -2501,19 +2501,12 @@ flatpak_context_append_bwrap_filesystem (FlatpakContext  *context,
                                          FlatpakBwrap    *bwrap,
                                          const char      *app_id,
                                          GFile           *app_id_dir,
-                                         GPtrArray       *extra_app_id_dirs,
-                                         FlatpakExports **exports_out)
+                                         FlatpakExports  *exports,
+                                         const char      *xdg_dirs_conf,
+                                         gboolean         home_access)
 {
-  g_autoptr(FlatpakExports) exports = NULL;
-  g_autofree char *xdg_dirs_conf = NULL;
-  gboolean home_access = FALSE;
   GHashTableIter iter;
   gpointer key, value;
-
-  exports = flatpak_context_get_exports_full (context,
-                                              app_id_dir, extra_app_id_dirs,
-                                              TRUE, TRUE,
-                                              &xdg_dirs_conf, &home_access);
 
   if (app_id_dir != NULL)
     flatpak_run_apply_env_appid (bwrap, app_id_dir);
@@ -2610,7 +2603,4 @@ flatpak_context_append_bwrap_filesystem (FlatpakContext  *context,
       flatpak_bwrap_add_args_data (bwrap, "xdg-config-dirs",
                                    xdg_dirs_conf, strlen (xdg_dirs_conf), path, NULL);
     }
-
-  if (exports_out)
-    *exports_out = g_steal_pointer (&exports);
 }
