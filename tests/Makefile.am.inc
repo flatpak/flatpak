@@ -23,17 +23,23 @@ endif
 testlibrary_CFLAGS = \
 	$(AM_CFLAGS) \
 	$(BASE_CFLAGS) \
+	$(FUSE_CFLAGS) \
 	$(OSTREE_CFLAGS) \
 	-DFLATPAK_COMPILATION \
 	$(NULL)
 testlibrary_LDADD = \
 	$(AM_LDADD) \
 	$(BASE_LIBS) \
+	$(FUSE_LIBS) \
 	$(OSTREE_LIBS) \
 	libglnx.la \
 	libflatpak.la \
 	$(NULL)
-testlibrary_SOURCES = tests/testlibrary.c
+testlibrary_SOURCES = \
+	tests/can-use-fuse.c \
+	tests/can-use-fuse.h \
+	tests/testlibrary.c \
+	$(NULL)
 
 testcommon_CFLAGS = \
 	$(AM_CFLAGS) \

@@ -10,6 +10,8 @@
 #include "libglnx/libglnx.h"
 #include "flatpak.h"
 
+#include "can-use-fuse.h"
+
 static char *testdir;
 static char *flatpak_runtimedir;
 static char *flatpak_systemdir;
@@ -2611,6 +2613,12 @@ global_setup (void)
   g_setenv ("FLATPAK_SYSTEM_HELPER_ON_SESSION", "1", TRUE);
   g_setenv ("LANGUAGE", "en", TRUE);
 
+  if (!check_fuse ())
+    {
+      g_test_message ("FUSE doesn't seem to work? Disabling revokefs");
+      g_setenv ("FLATPAK_DISABLE_REVOKEFS", "1", TRUE);
+    }
+
   test_bus = g_test_dbus_new (G_TEST_DBUS_NONE);
 
   services_dir = g_test_build_filename (G_TEST_BUILT, "services", NULL);
@@ -4458,12 +4466,6 @@ test_installation_unused_refs_across_installations (void)
   g_autofree char *app = NULL;
   FlatpakInstalledRef *unused_ref;
   gboolean res;
-
-  if (!g_file_test ("/etc/mtab", G_FILE_TEST_EXISTS))
-    {
-      g_test_skip ("fusermount won't work without /etc/mtab");
-      return;
-    }
 
   runtime = g_strdup_printf ("runtime/org.test.Platform/%s/master",
                              flatpak_get_default_arch ());
