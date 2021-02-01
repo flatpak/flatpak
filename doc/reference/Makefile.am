@@ -88,6 +88,10 @@ TESTS = $(GTKDOC_CHECK)
 endif
 
 sgml.stamp: $(dbus_stamp_files)
+# gdbus-codegen hardcodes DocBook version
+	$(AM_V_GEN)$(SED) -i \
+		-e 's|http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd|http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd|' \
+		-e 's|-//OASIS//DTD DocBook XML V4.1.2//EN|-//OASIS//DTD DocBook XML V4.5//EN|' $(xml_files)
 
 dbus-%.stamp: $(top_srcdir)/data/%.xml
 	$(AM_V_GEN)$(GDBUS_CODEGEN) --generate-docbook=dbus $<
