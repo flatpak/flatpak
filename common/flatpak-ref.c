@@ -39,6 +39,13 @@
  * flatpak_ref_parse() and flatpak_ref_format_ref() can be used to convert
  * FlatpakRef objects into this string representation and back.
  *
+ * Note that the identifiers must be unique within a repo (e.g. Flathub) based
+ * only on the name, arch, and branch 3-tuple, without regard to the kind. In
+ * other words if app/org.gnome.evince/x86_64/master exists,
+ * runtime/org.gnome.evince/x86_64/master must not exist. This requirement is
+ * not enforced by libflatpak but is enforced by GNOME Software's use of
+ * libappstream, since Appstream IDs are assumed to be unique.
+ *
  * FlatpakRef objects are immutable and can be passed freely between threads.
  *
  * To uniquely identify a particular version of an application or runtime, you
