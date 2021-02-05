@@ -1340,10 +1340,10 @@ test_list_remote_related_refs (void)
   // Make the test with extra-languages, instead of languages
   clean_languages();
   configure_extra_languages();
-
-  inst = flatpak_installation_new_user (NULL, &error);
+  flatpak_installation_drop_caches (inst, NULL, &error);
   g_assert_no_error (error);
 
+  g_clear_pointer (&refs, g_ptr_array_unref);
   refs = flatpak_installation_list_remote_related_refs_sync (inst, repo_name, app, NULL, &error);
   g_assert_nonnull (refs);
   g_assert_no_error (error);
