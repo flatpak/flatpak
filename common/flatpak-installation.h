@@ -456,6 +456,11 @@ FLATPAK_EXTERN GPtrArray    *    flatpak_installation_list_remote_related_refs_s
                                                                                      const char          *ref,
                                                                                      GCancellable        *cancellable,
                                                                                      GError             **error);
+FLATPAK_EXTERN GPtrArray    *    flatpak_installation_list_remote_related_refs_for_installed_sync (FlatpakInstallation *self,
+                                                                                                   const char          *remote_name,
+                                                                                                   const char          *ref,
+                                                                                                   GCancellable        *cancellable,
+                                                                                                   GError             **error);
 FLATPAK_EXTERN GPtrArray    *    flatpak_installation_list_installed_related_refs_sync (FlatpakInstallation *self,
                                                                                         const char          *remote_name,
                                                                                         const char          *ref,

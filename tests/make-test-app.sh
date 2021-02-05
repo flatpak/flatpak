@@ -47,6 +47,25 @@ autodelete=true
 locale-subset=true
 EOF
 
+cat >> ${DIR}/metadata <<EOF
+[Extension $APP_ID.Plugin]
+directory=share/hello/extra
+autodelete=true
+no-autodownload=true
+subdirectories=true
+merge-dirs=plug-ins
+EOF
+
+if [ "$EXTRA" = "EXTENSIONS" ]; then
+cat >> ${DIR}/metadata <<EOF
+version=v2
+EOF
+else
+cat >> ${DIR}/metadata <<EOF
+version=v1
+EOF
+fi
+
 mkdir -p ${DIR}/files/bin
 cat > ${DIR}/files/bin/hello.sh <<EOF
 #!/bin/sh
@@ -162,4 +181,30 @@ msgfmt --output-file ${DIR}/files/fr/share/fr/LC_MESSAGES/helloworld.mo fr.po
 flatpak build-finish ${DIR}
 mkdir -p repos
 flatpak build-export --no-update-summary --runtime ${collection_args} ${GPGARGS-} ${EXPORT_ARGS-} ${REPO} ${DIR} ${BRANCH}
+rm -rf ${DIR}
+
+# build a plugin extension
+
+DIR=`mktemp -d`
+
+# Init dir
+cat > ${DIR}/metadata <<EOF
+[Runtime]
+name=${APP_ID}.Plugin.fun
+
+[ExtensionOf]
+ref=app/$APP_ID/$ARCH/$BRANCH
+EOF
+
+mkdir -p ${DIR}/files/plug-ins/fun
+
+flatpak build-finish ${DIR}
+mkdir -p repos
+
+if [ "$EXTRA" = "EXTENSIONS" ]; then
+  flatpak build-export --no-update-summary --runtime ${collection_args} ${GPGARGS-} ${EXPORT_ARGS-} ${REPO} ${DIR} v2
+else
+  flatpak build-export --no-update-summary --runtime ${collection_args} ${GPGARGS-} ${EXPORT_ARGS-} ${REPO} ${DIR} v1
+fi
+
 rm -rf ${DIR}

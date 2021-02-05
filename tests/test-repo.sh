@@ -608,7 +608,7 @@ ok "install with --no-deploy and then --no-pull"
 
 ${FLATPAK} ${U} uninstall -y org.test.Hello org.test.Platform
 
-${FLATPAK} ${U} install -y --no-deploy test-repo hello
+${FLATPAK} ${U} install -y --no-deploy --app test-repo hello
 
 ${FLATPAK} ${U} list -d > list-log
 assert_not_file_has_content list-log "org\.test\.Hello"
@@ -619,7 +619,7 @@ port=$(cat httpd-port)
 ${FLATPAK} ${U} remote-modify --url="http://127.0.0.1:${port}/disable-test" test-repo
 
 # Note: The partial ref is only auto-corrected without user interaction because we're using -y
-${FLATPAK} ${U} install -y --no-pull test-repo hello
+${FLATPAK} ${U} install -y --no-pull --app test-repo hello
 
 # re-enable remote
 ${FLATPAK} ${U} remote-modify --url="http://127.0.0.1:${port}/test" test-repo

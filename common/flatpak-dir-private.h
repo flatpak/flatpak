@@ -986,6 +986,7 @@ GPtrArray *           flatpak_dir_find_remote_related_for_metadata          (Fla
 GPtrArray *           flatpak_dir_find_remote_related                       (FlatpakDir                    *dir,
                                                                              FlatpakRemoteState            *state,
                                                                              FlatpakDecomposed             *ref,
+                                                                             gboolean                       use_installed_metadata,
                                                                              GCancellable                  *cancellable,
                                                                              GError                       **error);
 GPtrArray *           flatpak_dir_find_local_related_for_metadata           (FlatpakDir                    *self,
