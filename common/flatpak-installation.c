@@ -736,6 +736,7 @@ get_ref (FlatpakDir        *dir,
   g_autoptr(GBytes) deploy_data = NULL;
   g_autofree const char **subpaths = NULL;
   g_autofree char *collection_id = NULL;
+  g_autoptr(GHashTable) content_rating = NULL;
   gboolean is_current = FALSE;
   guint64 installed_size = 0;
 
@@ -764,6 +765,7 @@ get_ref (FlatpakDir        *dir,
   latest_commit = flatpak_dir_read_latest (dir, origin, flatpak_decomposed_get_ref (ref), &latest_alt_id, NULL, NULL);
 
   collection_id = flatpak_dir_get_remote_collection_id (dir, origin);
+  content_rating = flatpak_deploy_data_get_appdata_content_rating (deploy_data);
 
   return flatpak_installed_ref_new (ref,
                                     alt_id ? alt_id : commit,
@@ -779,7 +781,7 @@ get_ref (FlatpakDir        *dir,
                                     flatpak_deploy_data_get_appdata_version (deploy_data),
                                     flatpak_deploy_data_get_appdata_license (deploy_data),
                                     flatpak_deploy_data_get_appdata_content_rating_type (deploy_data),
-                                    flatpak_deploy_data_get_appdata_content_rating (deploy_data));
+                                    content_rating);
 }
 
 /**
