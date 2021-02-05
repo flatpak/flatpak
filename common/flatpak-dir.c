@@ -14893,6 +14893,7 @@ GPtrArray *
 flatpak_dir_find_remote_related (FlatpakDir         *self,
                                  FlatpakRemoteState *state,
                                  FlatpakDecomposed  *ref,
+                                 gboolean            use_installed_metadata,
                                  GCancellable       *cancellable,
                                  GError            **error)
 {
@@ -14900,6 +14901,9 @@ flatpak_dir_find_remote_related (FlatpakDir         *self,
   g_autoptr(GKeyFile) metakey = g_key_file_new ();
   g_autoptr(GPtrArray) related = g_ptr_array_new_with_free_func ((GDestroyNotify) flatpak_related_free);
   g_autofree char *url = NULL;
+
+  if (!flatpak_dir_ensure_repo (self, cancellable, error))
+    return NULL;
 
   if (!ostree_repo_remote_get_url (self->repo,
                                    state->remote_name,
@@ -14910,9 +14914,37 @@ flatpak_dir_find_remote_related (FlatpakDir         *self,
   if (*url == 0)
     return g_steal_pointer (&related);  /* Empty url, silently disables updates */
 
-  if (flatpak_remote_state_load_data (state, flatpak_decomposed_get_ref (ref),
-                                      NULL, NULL, &metadata,
-                                      NULL) &&
+  if (use_installed_metadata)
+    {
+      g_autoptr(GFile) deploy_dir = NULL;
+      g_autoptr(GBytes) deploy_data = NULL;
+      g_autoptr(GFile) metadata_file = NULL;
+
+      deploy_dir = flatpak_dir_get_if_deployed (self, ref, NULL, cancellable);
+      if (deploy_dir == NULL)
+        {
+          g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
+                       _("%s not installed"), flatpak_decomposed_get_ref (ref));
+          return NULL;
+        }
+
+      deploy_data = flatpak_load_deploy_data (deploy_dir, ref, self->repo, FLATPAK_DEPLOY_VERSION_ANY, cancellable, error);
+      if (deploy_data == NULL)
+        return NULL;
+
+      metadata_file = g_file_get_child (deploy_dir, "metadata");
+      if (!g_file_load_contents (metadata_file, cancellable, &metadata, NULL, NULL, NULL))
+        {
+          g_debug ("No metadata in local deploy");
+          /* No metadata => no related, but no error */
+        }
+    }
+  else
+    flatpak_remote_state_load_data (state, flatpak_decomposed_get_ref (ref),
+                                    NULL, NULL, &metadata,
+                                    NULL);
+
+  if (metadata != NULL &&
       g_key_file_load_from_data (metakey, metadata, -1, 0, NULL))
     {
       g_ptr_array_unref (related);

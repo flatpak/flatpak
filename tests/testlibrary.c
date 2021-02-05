@@ -34,6 +34,12 @@ typedef enum {
 static void run_test_subprocess (char                 **argv,
                                  RunTestSubprocessFlags flags);
 static void empty_installation (FlatpakInstallation *inst);
+static void make_test_app (const char *app_repo_name);
+static void update_test_app (void);
+static void update_test_app_extension_version (void);
+static void update_test_runtime (void);
+static void update_repo (const char *update_repo_name);
+static void rename_test_app (const char *update_repo_name);
 
 typedef struct
 {
@@ -1041,7 +1047,8 @@ test_list_remote_refs (void)
         {
           g_assert_cmpint (flatpak_ref_get_kind (ref), ==, FLATPAK_REF_KIND_APP);
         }
-      else if (strcmp ("org.test.Hello.Locale", flatpak_ref_get_name (ref)) == 0)
+      else if (strcmp ("org.test.Hello.Locale", flatpak_ref_get_name (ref)) == 0 ||
+               strcmp ("org.test.Hello.Plugin.fun", flatpak_ref_get_name (ref)) == 0)
         {
           g_assert_cmpint (flatpak_ref_get_kind (ref), ==, FLATPAK_REF_KIND_RUNTIME);
         }
@@ -1051,7 +1058,11 @@ test_list_remote_refs (void)
           g_assert_cmpint (flatpak_ref_get_kind (ref), ==, FLATPAK_REF_KIND_RUNTIME);
         }
 
-      g_assert_cmpstr (flatpak_ref_get_branch (ref), ==, "master");
+      if (strcmp ("org.test.Hello.Plugin.fun", flatpak_ref_get_name (ref)) == 0)
+        g_assert_cmpstr (flatpak_ref_get_branch (ref), ==, "v1");
+      else
+        g_assert_cmpstr (flatpak_ref_get_branch (ref), ==, "master");
+
       g_assert_cmpstr (flatpak_ref_get_commit (ref), !=, NULL);
       g_assert_cmpstr (flatpak_ref_get_arch (ref), ==, flatpak_get_default_arch ());
 
@@ -1312,7 +1323,7 @@ test_list_remote_related_refs (void)
   g_assert_nonnull (refs);
   g_assert_no_error (error);
 
-  g_assert_cmpint (refs->len, ==, 1);
+  g_assert_cmpint (refs->len, ==, 2);
   ref = g_ptr_array_index (refs, 0);
 
   g_assert_cmpstr (flatpak_ref_get_name (FLATPAK_REF (ref)), ==, "org.test.Hello.Locale");
@@ -1335,6 +1346,9 @@ test_list_remote_related_refs (void)
   g_assert_true (should_delete);
   g_assert_false (should_autoprune);
 
+  ref = g_ptr_array_index (refs, 1);
+  g_assert_cmpstr (flatpak_ref_get_name (FLATPAK_REF (ref)), ==, "org.test.Hello.Plugin.fun");
+
   // Make the test with extra-languages, instead of languages
   clean_languages();
   configure_extra_languages();
@@ -1346,7 +1360,7 @@ test_list_remote_related_refs (void)
   g_assert_nonnull (refs);
   g_assert_no_error (error);
 
-  g_assert_cmpint (refs->len, ==, 1);
+  g_assert_cmpint (refs->len, ==, 2);
   ref = g_ptr_array_index (refs, 0);
 
   g_assert_cmpstr (flatpak_ref_get_name (FLATPAK_REF (ref)), ==, "org.test.Hello.Locale");
@@ -1371,8 +1385,89 @@ test_list_remote_related_refs (void)
   g_assert_true (should_delete);
   g_assert_false (should_autoprune);
 
+  ref = g_ptr_array_index (refs, 1);
+  g_assert_cmpstr (flatpak_ref_get_name (FLATPAK_REF (ref)), ==, "org.test.Hello.Plugin.fun");
+
   configure_languages ("de");
   clean_extra_languages ();
+}
+
+static void
+test_list_remote_related_refs_for_installed (void)
+{
+  g_autoptr(FlatpakInstallation) inst = NULL;
+  g_autoptr(GError) error = NULL;
+  g_autoptr(GPtrArray) refs = NULL;
+  g_autoptr(FlatpakInstalledRef) iref = NULL;
+  FlatpakRelatedRef *ref;
+  g_autofree char *app = NULL;
+
+  app = g_strdup_printf ("app/org.test.Hello/%s/master",
+                         flatpak_get_default_arch ());
+  inst = flatpak_installation_new_user (NULL, &error);
+  g_assert_no_error (error);
+
+  empty_installation (inst);
+
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+  iref = flatpak_installation_install (inst, repo_name, FLATPAK_REF_KIND_APP, "org.test.Hello", NULL, "master", NULL, NULL, NULL, &error);
+  G_GNUC_END_IGNORE_DEPRECATIONS
+  g_assert_no_error (error);
+  g_assert_nonnull (iref);
+
+  refs = flatpak_installation_list_remote_related_refs_for_installed_sync (inst, repo_name, app, NULL, &error);
+  g_assert_nonnull (refs);
+  g_assert_no_error (error);
+
+  g_assert_cmpint (refs->len, ==, 2);
+  ref = g_ptr_array_index (refs, 0);
+
+  g_assert_cmpstr (flatpak_ref_get_name (FLATPAK_REF (ref)), ==, "org.test.Hello.Locale");
+
+  ref = g_ptr_array_index (refs, 1);
+  g_assert_cmpstr (flatpak_ref_get_name (FLATPAK_REF (ref)), ==, "org.test.Hello.Plugin.fun");
+  g_assert_cmpstr (flatpak_ref_get_branch (FLATPAK_REF (ref)), ==, "v1");
+
+  /* Update the app on the server so its extension version is v2 */
+  update_test_app_extension_version ();
+  update_repo ("test");
+  flatpak_installation_drop_caches (inst, NULL, &error);
+  g_assert_no_error (error);
+
+  g_clear_pointer (&refs, g_ptr_array_unref);
+  refs = flatpak_installation_list_remote_related_refs_for_installed_sync (inst, repo_name, app, NULL, &error);
+  g_assert_nonnull (refs);
+  g_assert_no_error (error);
+
+  g_assert_cmpint (refs->len, ==, 2);
+  ref = g_ptr_array_index (refs, 0);
+
+  g_assert_cmpstr (flatpak_ref_get_name (FLATPAK_REF (ref)), ==, "org.test.Hello.Locale");
+
+  /* The installed version needs v1 of the plugin even though v2 is available */
+  ref = g_ptr_array_index (refs, 1);
+  g_assert_cmpstr (flatpak_ref_get_name (FLATPAK_REF (ref)), ==, "org.test.Hello.Plugin.fun");
+  g_assert_cmpstr (flatpak_ref_get_branch (FLATPAK_REF (ref)), ==, "v1");
+
+  /* list_remote_related_refs_sync() should list only v2 since that's the only
+   * version the remote app is compatible with
+   */
+  g_clear_pointer (&refs, g_ptr_array_unref);
+  refs = flatpak_installation_list_remote_related_refs_sync (inst, repo_name, app, NULL, &error);
+  g_assert_nonnull (refs);
+  g_assert_no_error (error);
+
+  g_assert_cmpint (refs->len, ==, 2);
+  ref = g_ptr_array_index (refs, 0);
+
+  g_assert_cmpstr (flatpak_ref_get_name (FLATPAK_REF (ref)), ==, "org.test.Hello.Locale");
+
+  ref = g_ptr_array_index (refs, 1);
+  g_assert_cmpstr (flatpak_ref_get_name (FLATPAK_REF (ref)), ==, "org.test.Hello.Plugin.fun");
+  g_assert_cmpstr (flatpak_ref_get_branch (FLATPAK_REF (ref)), ==, "v2");
+
+  /* Reset things */
+  empty_installation (inst);
 }
 
 static void
@@ -1635,12 +1730,6 @@ test_install_launch_uninstall (void)
 
   g_ptr_array_unref (refs);
 }
-
-static void make_test_app (const char *app_repo_name);
-static void update_test_app (void);
-static void update_test_runtime (void);
-static void update_repo (const char *update_repo_name);
-static void rename_test_app (const char *update_repo_name);
 
 static const char *
 flatpak_deploy_data_get_origin (GVariant *deploy_data)
@@ -2247,6 +2336,19 @@ update_test_app (void)
 {
   g_autofree char *arg0 = NULL;
   char *argv[] = { NULL, "repos/test", "", "master", "", "SPIN", NULL };
+
+  arg0 = g_test_build_filename (G_TEST_DIST, "make-test-app.sh", NULL);
+  argv[0] = arg0;
+  argv[4] = repo_collection_id;
+
+  run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
+}
+
+static void
+update_test_app_extension_version (void)
+{
+  g_autofree char *arg0 = NULL;
+  char *argv[] = { NULL, "repos/test", "", "master", "", "EXTENSIONS", NULL };
 
   arg0 = g_test_build_filename (G_TEST_DIST, "make-test-app.sh", NULL);
   argv[0] = arg0;
@@ -4554,6 +4656,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/library/remote-new-from-file", test_remote_new_from_file);
   g_test_add_func ("/library/list-remote-refs", test_list_remote_refs);
   g_test_add_func ("/library/list-remote-related-refs", test_list_remote_related_refs);
+  g_test_add_func ("/library/list-remote-related-refs-for-installed", test_list_remote_related_refs_for_installed);
   g_test_add_func ("/library/list-refs", test_list_refs);
   g_test_add_func ("/library/install-launch-uninstall", test_install_launch_uninstall);
   g_test_add_func ("/library/list-refs-in-remote", test_list_refs_in_remotes);

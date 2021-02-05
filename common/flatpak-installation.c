@@ -2712,7 +2712,7 @@ flatpak_installation_list_remote_related_refs_sync (FlatpakInstallation *self,
   if (state == NULL)
     return NULL;
 
-  related = flatpak_dir_find_remote_related (dir, state, decomposed,
+  related = flatpak_dir_find_remote_related (dir, state, decomposed, FALSE,
                                              cancellable, error);
   if (related == NULL)
     return NULL;
@@ -2779,6 +2779,87 @@ flatpak_installation_list_installed_related_refs_sync (FlatpakInstallation *self
 
   related = flatpak_dir_find_local_related (dir, decomposed, remote_name, TRUE,
                                             cancellable, error);
+  if (related == NULL)
+    return NULL;
+
+  for (i = 0; i < related->len; i++)
+    {
+      FlatpakRelated *rel = g_ptr_array_index (related, i);
+      FlatpakRelatedRef *rel_ref;
+
+      rel_ref = flatpak_related_ref_new (flatpak_decomposed_get_ref (rel->ref), rel->commit,
+                                         rel->subpaths, rel->download, rel->delete);
+
+      if (rel_ref)
+        g_ptr_array_add (refs, rel_ref);
+    }
+
+  return g_steal_pointer (&refs);
+}
+
+/**
+ * flatpak_installation_list_remote_related_refs_for_installed_sync:
+ * @self: a #FlatpakInstallation
+ * @remote_name: the name of the remote
+ * @ref: the ref
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Lists all the available refs on @remote_name that are related to @ref, and
+ * which are appropriate for the installed version of @ref. For example if the
+ * installed version of org.videolan.VLC has a related ref of
+ * org.videolan.VLC.Plugin.bdj//3-19.08 and the remote version of VLC has a
+ * related ref of org.videolan.VLC.Plugin.bdj//3-20.08, this function will only
+ * return the 3-19.08 branch.
+ *
+ * See also the related functions
+ * flatpak_installation_list_remote_related_refs_sync() and
+ * flatpak_installation_list_installed_related_refs_sync().
+ *
+ * The returned list contains all available related refs, but not
+ * every one should always be installed. For example,
+ * flatpak_related_ref_should_download() returns %TRUE if the
+ * reference should be installed/updated with the app, and
+ * flatpak_related_ref_should_delete() returns %TRUE if it
+ * should be uninstalled with the main ref.
+ *
+ * The commit property of each #FlatpakRelatedRef is not guaranteed to be
+ * non-%NULL.
+ *
+ * Returns: (transfer container) (element-type FlatpakRelatedRef): a GPtrArray of
+ *   #FlatpakRelatedRef instances
+ *
+ * Since: 1.11.1
+ */
+GPtrArray *
+flatpak_installation_list_remote_related_refs_for_installed_sync (FlatpakInstallation *self,
+                                                                  const char          *remote_name,
+                                                                  const char          *ref,
+                                                                  GCancellable        *cancellable,
+                                                                  GError             **error)
+{
+  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(GPtrArray) related = NULL;
+  g_autoptr(GPtrArray) refs = g_ptr_array_new_with_free_func (g_object_unref);
+  g_autoptr(FlatpakRemoteState) state = NULL;
+  g_autoptr(FlatpakDecomposed) decomposed = NULL;
+  int i;
+
+  dir = flatpak_installation_get_dir (self, error);
+  if (dir == NULL)
+    return NULL;
+
+  decomposed = flatpak_decomposed_new_from_ref (ref, error);
+  if (decomposed == NULL)
+    return NULL;
+
+  state = flatpak_dir_get_remote_state_optional (dir, remote_name, FALSE, cancellable, error);
+  if (state == NULL)
+    return NULL;
+
+  related = flatpak_dir_find_remote_related (dir, state, decomposed,
+                                             TRUE, /* use_installed_metadata */
+                                             cancellable, error);
   if (related == NULL)
     return NULL;
 
