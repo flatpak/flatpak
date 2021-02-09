@@ -1000,8 +1000,11 @@ glnx_file_copy_at (int                   src_dfd,
   if (glnx_regfile_copy_bytes (src_fd, tmp_dest.fd, (off_t) -1) < 0)
     return glnx_throw_errno_prefix (error, "regfile copy");
 
-  if (fchown (tmp_dest.fd, src_stbuf->st_uid, src_stbuf->st_gid) != 0)
-    return glnx_throw_errno_prefix (error, "fchown");
+  if (!(copyflags & GLNX_FILE_COPY_NOCHOWN))
+    {
+      if (fchown (tmp_dest.fd, src_stbuf->st_uid, src_stbuf->st_gid) != 0)
+        return glnx_throw_errno_prefix (error, "fchown");
+    }
 
   if (!(copyflags & GLNX_FILE_COPY_NOXATTRS))
     {
