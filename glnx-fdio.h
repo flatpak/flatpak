@@ -189,7 +189,8 @@ glnx_regfile_copy_bytes (int fdf, int fdt, off_t max_bytes);
 typedef enum {
   GLNX_FILE_COPY_OVERWRITE = (1 << 0),
   GLNX_FILE_COPY_NOXATTRS = (1 << 1),
-  GLNX_FILE_COPY_DATASYNC = (1 << 2)
+  GLNX_FILE_COPY_DATASYNC = (1 << 2),
+  GLNX_FILE_COPY_NOCHOWN = (1 << 3)
 } GLnxFileCopyFlags;
 
 gboolean
