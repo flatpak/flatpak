@@ -30,6 +30,8 @@ typedef struct _FlatpakRelatedRef FlatpakRelatedRef;
 #include <gio/gio.h>
 #include <flatpak-ref.h>
 
+G_BEGIN_DECLS
+
 #define FLATPAK_TYPE_RELATED_REF flatpak_related_ref_get_type ()
 #define FLATPAK_RELATED_REF(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), FLATPAK_TYPE_RELATED_REF, FlatpakRelatedRef))
 #define FLATPAK_IS_RELATED_REF(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), FLATPAK_TYPE_RELATED_REF))
@@ -54,5 +56,7 @@ FLATPAK_EXTERN const char * const *flatpak_related_ref_get_subpaths (FlatpakRela
 FLATPAK_EXTERN gboolean     flatpak_related_ref_should_download (FlatpakRelatedRef *self);
 FLATPAK_EXTERN gboolean     flatpak_related_ref_should_delete (FlatpakRelatedRef *self);
 FLATPAK_EXTERN gboolean     flatpak_related_ref_should_autoprune (FlatpakRelatedRef *self);
+
+G_END_DECLS
 
 #endif /* __FLATPAK_RELATED_REF_H__ */
