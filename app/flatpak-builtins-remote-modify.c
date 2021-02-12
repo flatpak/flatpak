@@ -111,6 +111,7 @@ get_config_from_opts (FlatpakDir *dir, const char *remote_name, gboolean *change
   else
     config = ostree_repo_copy_config (repo);
 
+#ifndef FLATPAK_DISABLE_GPG
   if (opt_no_gpg_verify)
     {
       g_key_file_set_boolean (config, group, "gpg-verify", FALSE);
@@ -124,6 +125,13 @@ get_config_from_opts (FlatpakDir *dir, const char *remote_name, gboolean *change
       g_key_file_set_boolean (config, group, "gpg-verify-summary", TRUE);
       *changed = TRUE;
     }
+#else
+  g_key_file_set_boolean (config, group, "gpg-verify", FALSE);
+  g_key_file_set_boolean (config, group, "gpg-verify-summary", FALSE);
+
+  if (opt_do_gpg_verify)
+    g_warning (_("--gpg-verify specified, but GPG support disabled at build time."));
+#endif
 
   if (opt_url)
     {
@@ -335,10 +343,14 @@ flatpak_builtin_remote_modify (int argc, char **argv, GCancellable *cancellable,
 
   if (opt_gpg_import != NULL)
     {
+#ifndef FLATPAK_DISABLE_GPG
       gpg_data = flatpak_load_gpg_keys (opt_gpg_import, cancellable, error);
       if (gpg_data == NULL)
         return FALSE;
       changed = TRUE;
+#else
+      g_warning (_("--gpg-import specified, but GPG support disabled at build time."));
+#endif
     }
 
   if (!changed)
