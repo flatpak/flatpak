@@ -42,8 +42,8 @@ static gboolean opt_no_update_summary;
 static gboolean opt_untrusted;
 static gboolean opt_disable_fsync;
 static gboolean opt_force;
-static char **opt_gpg_key_ids;
-static char *opt_gpg_homedir;
+static char **opt_gpg_key_ids = NULL;
+static char *opt_gpg_homedir = NULL;
 static char *opt_endoflife;
 static char **opt_endoflife_rebase;
 static char **opt_endoflife_rebase_new;
@@ -64,8 +64,10 @@ static GOptionEntry options[] = {
   { "body", 'b', 0, G_OPTION_ARG_STRING, &opt_body, N_("Full description"), N_("BODY") },
   { "update-appstream", 0, 0, G_OPTION_ARG_NONE, &opt_update_appstream, N_("Update the appstream branch"), NULL },
   { "no-update-summary", 0, 0, G_OPTION_ARG_NONE, &opt_no_update_summary, N_("Don't update the summary"), NULL },
+#ifndef FLATPAK_DISABLE_GPG
   { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_key_ids, N_("GPG Key ID to sign the commit with"), N_("KEY-ID") },
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, N_("GPG Homedir to use when looking for keyrings"), N_("HOMEDIR") },
+#endif
   { "end-of-life", 0, 0, G_OPTION_ARG_STRING, &opt_endoflife, N_("Mark build as end-of-life"), N_("REASON") },
   { "end-of-life-rebase", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_endoflife_rebase, N_("Mark refs matching the OLDID prefix as end-of-life, to be replaced with the given NEWID"), N_("OLDID=NEWID") },
   { "token-type", 0, 0, G_OPTION_ARG_INT, &opt_token_type, N_("Set type of token needed to install this commit"), N_("VAL") },
