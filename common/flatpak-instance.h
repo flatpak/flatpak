@@ -29,6 +29,8 @@ typedef struct _FlatpakInstance FlatpakInstance;
 
 #include <glib-object.h>
 
+G_BEGIN_DECLS
+
 #define FLATPAK_TYPE_INSTANCE flatpak_instance_get_type ()
 #define FLATPAK_INSTANCE(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), FLATPAK_TYPE_INSTANCE, FlatpakInstance))
 #define FLATPAK_IS_INSTANCE(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), FLATPAK_TYPE_INSTANCE))
@@ -64,5 +66,7 @@ FLATPAK_EXTERN int          flatpak_instance_get_child_pid (FlatpakInstance *sel
 FLATPAK_EXTERN GKeyFile *   flatpak_instance_get_info (FlatpakInstance *self);
 
 FLATPAK_EXTERN gboolean     flatpak_instance_is_running (FlatpakInstance *self);
+
+G_END_DECLS
 
 #endif /* __FLATPAK_INSTANCE_H__ */
