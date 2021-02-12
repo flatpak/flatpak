@@ -30,6 +30,8 @@ typedef struct _FlatpakRemoteRef FlatpakRemoteRef;
 #include <gio/gio.h>
 #include <flatpak-ref.h>
 
+G_BEGIN_DECLS
+
 #define FLATPAK_TYPE_REMOTE_REF flatpak_remote_ref_get_type ()
 #define FLATPAK_REMOTE_REF(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), FLATPAK_TYPE_REMOTE_REF, FlatpakRemoteRef))
 #define FLATPAK_IS_REMOTE_REF(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), FLATPAK_TYPE_REMOTE_REF))
@@ -56,5 +58,7 @@ FLATPAK_EXTERN const char * flatpak_remote_ref_get_eol_rebase (FlatpakRemoteRef 
 #ifdef G_DEFINE_AUTOPTR_CLEANUP_FUNC
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakRemoteRef, g_object_unref)
 #endif
+
+G_END_DECLS
 
 #endif /* __FLATPAK_REMOTE_REF_H__ */

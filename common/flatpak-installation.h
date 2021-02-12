@@ -32,6 +32,8 @@ typedef struct _FlatpakInstallation FlatpakInstallation;
 #include <flatpak-instance.h>
 #include <flatpak-remote.h>
 
+G_BEGIN_DECLS
+
 #define FLATPAK_TYPE_INSTALLATION flatpak_installation_get_type ()
 #define FLATPAK_INSTALLATION(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), FLATPAK_TYPE_INSTALLATION, FlatpakInstallation))
 #define FLATPAK_IS_INSTALLATION(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), FLATPAK_TYPE_INSTALLATION))
@@ -477,5 +479,6 @@ FLATPAK_EXTERN gboolean          flatpak_installation_run_triggers (FlatpakInsta
                                                                     GCancellable        *cancellable,
                                                                     GError             **error);
 
+G_END_DECLS
 
 #endif /* __FLATPAK_INSTALLATION_H__ */
