@@ -20,6 +20,22 @@ else
 AM_TESTS_ENVIRONMENT += FLATPAK_BWRAP=$$(cd $(top_builddir) && pwd)/flatpak-bwrap
 endif
 
+noinst_LTLIBRARIES += libtestlib.la
+libtestlib_la_CFLAGS = \
+	$(AM_CFLAGS) \
+	$(BASE_CFLAGS) \
+	-DFLATPAK_COMPILATION \
+	$(NULL)
+libtestlib_la_SOURCES = \
+	tests/testlib.c \
+	tests/testlib.h \
+	$(NULL)
+libtestlib_la_LIBADD = \
+	$(AM_LDADD) \
+	$(BASE_LIBS) \
+	libglnx.la \
+	$(NULL)
+
 testlibrary_CFLAGS = \
 	$(AM_CFLAGS) \
 	$(BASE_CFLAGS) \
@@ -67,7 +83,7 @@ testcommon_LDADD = \
 testcommon_SOURCES = tests/testcommon.c
 
 test_exports_CFLAGS = $(testcommon_CFLAGS)
-test_exports_LDADD = $(testcommon_LDADD)
+test_exports_LDADD = $(testcommon_LDADD) libtestlib.la
 test_exports_SOURCES = tests/test-exports.c
 
 tests_httpcache_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFLAGS) $(JSON_CFLAGS) $(APPSTREAM_GLIB_CFLAGS) \
