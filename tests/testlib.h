@@ -20,6 +20,13 @@
 
 #include <glib.h>
 
+#ifndef g_assert_no_errno
+#define g_assert_no_errno(expr) \
+  g_assert_cmpstr ((expr) >= 0 ? NULL : g_strerror (errno), ==, NULL)
+#endif
+
+char *assert_mkdtemp (char *tmpl);
+
 extern char *isolated_test_dir;
 void isolated_test_dir_global_setup (void);
 void isolated_test_dir_global_teardown (void);
