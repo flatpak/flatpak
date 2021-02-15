@@ -420,6 +420,14 @@ flatpak_instance_new (const char *dir)
   return self;
 }
 
+char *
+flatpak_instance_get_instances_directory (void)
+{
+  g_autofree char *user_runtime_dir = flatpak_get_real_xdg_runtime_dir ();
+
+  return g_build_filename (user_runtime_dir, ".flatpak", NULL);
+}
+
 /*
  * @host_dir_out: (not optional): used to return the directory on the host
  *  system representing this instance
@@ -430,8 +438,7 @@ char *
 flatpak_instance_allocate_id (char **host_dir_out,
                               int *lock_fd_out)
 {
-  g_autofree char *user_runtime_dir = flatpak_get_real_xdg_runtime_dir ();
-  g_autofree char *base_dir = g_build_filename (user_runtime_dir, ".flatpak", NULL);
+  g_autofree char *base_dir = flatpak_instance_get_instances_directory ();
   int count;
 
   g_return_val_if_fail (host_dir_out != NULL, NULL);
@@ -488,17 +495,17 @@ flatpak_instance_allocate_id (char **host_dir_out,
 FlatpakInstance *
 flatpak_instance_new_for_id (const char *id)
 {
+  g_autofree char *base_dir = flatpak_instance_get_instances_directory ();
   g_autofree char *dir = NULL;
 
-  dir = g_build_filename (g_get_user_runtime_dir (), ".flatpak", id, NULL);
+  dir = g_build_filename (base_dir, id, NULL);
   return flatpak_instance_new (dir);
 }
 
 void
 flatpak_instance_iterate_all_and_gc (GPtrArray *out_instances)
 {
-
-  g_autofree char *base_dir = g_build_filename (g_get_user_runtime_dir (), ".flatpak", NULL);
+  g_autofree char *base_dir = flatpak_instance_get_instances_directory ();
   g_auto(GLnxDirFdIterator) iter = { 0 };
   struct dirent *dent;
 
