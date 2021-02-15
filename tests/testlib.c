@@ -23,6 +23,19 @@
 
 #include "libglnx/libglnx.h"
 
+char *
+assert_mkdtemp (char *tmpl)
+{
+  char *ret = g_mkdtemp (tmpl);
+
+  if (ret == NULL)
+    g_error ("%s", g_strerror (errno));
+  else
+    g_assert_true (ret == tmpl);
+
+  return ret;
+}
+
 char *isolated_test_dir = NULL;
 
 void
@@ -35,32 +48,32 @@ isolated_test_dir_global_setup (void)
   g_autofree char *runtimedir = NULL;
 
   isolated_test_dir = g_strdup ("/tmp/flatpak-test-XXXXXX");
-  g_mkdtemp (isolated_test_dir);
+  assert_mkdtemp (isolated_test_dir);
   g_test_message ("isolated_test_dir: %s", isolated_test_dir);
 
   homedir = g_strconcat (isolated_test_dir, "/home", NULL);
-  g_mkdir_with_parents (homedir, S_IRWXU | S_IRWXG | S_IRWXO);
+  g_assert_no_errno (g_mkdir_with_parents (homedir, S_IRWXU | S_IRWXG | S_IRWXO));
 
   g_setenv ("HOME", homedir, TRUE);
   g_test_message ("setting HOME=%s", homedir);
 
   cachedir = g_strconcat (isolated_test_dir, "/home/cache", NULL);
-  g_mkdir_with_parents (cachedir, S_IRWXU | S_IRWXG | S_IRWXO);
+  g_assert_no_errno (g_mkdir_with_parents (cachedir, S_IRWXU | S_IRWXG | S_IRWXO));
   g_setenv ("XDG_CACHE_HOME", cachedir, TRUE);
   g_test_message ("setting XDG_CACHE_HOME=%s", cachedir);
 
   configdir = g_strconcat (isolated_test_dir, "/home/config", NULL);
-  g_mkdir_with_parents (configdir, S_IRWXU | S_IRWXG | S_IRWXO);
+  g_assert_no_errno (g_mkdir_with_parents (configdir, S_IRWXU | S_IRWXG | S_IRWXO));
   g_setenv ("XDG_CONFIG_HOME", configdir, TRUE);
   g_test_message ("setting XDG_CONFIG_HOME=%s", configdir);
 
   datadir = g_strconcat (isolated_test_dir, "/home/share", NULL);
-  g_mkdir_with_parents (datadir, S_IRWXU | S_IRWXG | S_IRWXO);
+  g_assert_no_errno (g_mkdir_with_parents (datadir, S_IRWXU | S_IRWXG | S_IRWXO));
   g_setenv ("XDG_DATA_HOME", datadir, TRUE);
   g_test_message ("setting XDG_DATA_HOME=%s", datadir);
 
   runtimedir = g_strconcat (isolated_test_dir, "/runtime", NULL);
-  g_mkdir_with_parents (runtimedir, S_IRWXU);
+  g_assert_no_errno (g_mkdir_with_parents (runtimedir, S_IRWXU));
   g_setenv ("XDG_RUNTIME_DIR", runtimedir, TRUE);
   g_test_message ("setting XDG_RUNTIME_DIR=%s", runtimedir);
 
