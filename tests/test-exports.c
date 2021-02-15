@@ -29,64 +29,7 @@
 #include "flatpak-run-private.h"
 #include "flatpak-utils-base-private.h"
 
-static char *testdir;
-
-static void
-global_setup (void)
-{
-  g_autofree char *cachedir = NULL;
-  g_autofree char *configdir = NULL;
-  g_autofree char *datadir = NULL;
-  g_autofree char *homedir = NULL;
-  g_autofree char *runtimedir = NULL;
-
-  testdir = g_strdup ("/tmp/flatpak-test-XXXXXX");
-  g_mkdtemp (testdir);
-  g_test_message ("testdir: %s", testdir);
-
-  homedir = g_strconcat (testdir, "/home", NULL);
-  g_mkdir_with_parents (homedir, S_IRWXU | S_IRWXG | S_IRWXO);
-
-  g_setenv ("HOME", homedir, TRUE);
-  g_test_message ("setting HOME=%s", homedir);
-
-  cachedir = g_strconcat (testdir, "/home/cache", NULL);
-  g_mkdir_with_parents (cachedir, S_IRWXU | S_IRWXG | S_IRWXO);
-  g_setenv ("XDG_CACHE_HOME", cachedir, TRUE);
-  g_test_message ("setting XDG_CACHE_HOME=%s", cachedir);
-
-  configdir = g_strconcat (testdir, "/home/config", NULL);
-  g_mkdir_with_parents (configdir, S_IRWXU | S_IRWXG | S_IRWXO);
-  g_setenv ("XDG_CONFIG_HOME", configdir, TRUE);
-  g_test_message ("setting XDG_CONFIG_HOME=%s", configdir);
-
-  datadir = g_strconcat (testdir, "/home/share", NULL);
-  g_mkdir_with_parents (datadir, S_IRWXU | S_IRWXG | S_IRWXO);
-  g_setenv ("XDG_DATA_HOME", datadir, TRUE);
-  g_test_message ("setting XDG_DATA_HOME=%s", datadir);
-
-  runtimedir = g_strconcat (testdir, "/runtime", NULL);
-  g_mkdir_with_parents (runtimedir, S_IRWXU);
-  g_setenv ("XDG_RUNTIME_DIR", runtimedir, TRUE);
-  g_test_message ("setting XDG_RUNTIME_DIR=%s", runtimedir);
-
-  g_reload_user_special_dirs_cache ();
-
-  g_assert_cmpstr (g_get_user_cache_dir (), ==, cachedir);
-  g_assert_cmpstr (g_get_user_config_dir (), ==, configdir);
-  g_assert_cmpstr (g_get_user_data_dir (), ==, datadir);
-  g_assert_cmpstr (g_get_user_runtime_dir (), ==, runtimedir);
-}
-
-static void
-global_teardown (void)
-{
-  if (g_getenv ("SKIP_TEARDOWN"))
-    return;
-
-  glnx_shutil_rm_rf_at (-1, testdir, NULL, NULL);
-  g_free (testdir);
-}
+#include "tests/testlib.h"
 
 /*
  * Assert that the next few arguments starting from @i are setting up
@@ -715,7 +658,7 @@ test_full (void)
   g_autoptr(GError) error = NULL;
   g_autoptr(FlatpakBwrap) bwrap = flatpak_bwrap_new (NULL);
   g_autoptr(FlatpakExports) exports = flatpak_exports_new ();
-  g_autofree gchar *subdir = g_build_filename (testdir, "test_full", NULL);
+  g_autofree gchar *subdir = g_build_filename (isolated_test_dir, "test_full", NULL);
   g_autofree gchar *expose_rw = g_build_filename (subdir, "expose-rw", NULL);
   g_autofree gchar *in_expose_rw = g_build_filename (subdir, "expose-rw",
                                                      "file", NULL);
@@ -937,7 +880,7 @@ create_fake_files (const FakeFile *files)
   for (i = 0; files[i].name != NULL; i++)
     {
       g_autoptr(GError) error = NULL;
-      g_autofree gchar *path = g_build_filename (testdir, "host",
+      g_autofree gchar *path = g_build_filename (isolated_test_dir, "host",
                                                  files[i].name, NULL);
 
       g_assert (files[i].name[0] != '/');
@@ -979,7 +922,7 @@ test_host_exports (const FakeFile *files,
 {
   g_autoptr(FlatpakExports) exports = flatpak_exports_new ();
   g_autoptr(GError) error = NULL;
-  g_autofree gchar *host = g_build_filename (testdir, "host", NULL);
+  g_autofree gchar *host = g_build_filename (isolated_test_dir, "host", NULL);
   glnx_autofd int fd = -1;
 
   glnx_shutil_rm_rf_at (-1, host, NULL, &error);
@@ -1259,7 +1202,7 @@ main (int argc, char *argv[])
 {
   int res;
 
-  global_setup ();
+  isolated_test_dir_global_setup ();
 
   g_test_init (&argc, &argv, NULL);
 
@@ -1275,7 +1218,7 @@ main (int argc, char *argv[])
 
   res = g_test_run ();
 
-  global_teardown ();
+  isolated_test_dir_global_teardown ();
 
   return res;
 }
