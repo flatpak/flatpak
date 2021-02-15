@@ -3630,8 +3630,10 @@ flatpak_dir_migrate_config (FlatpakDir   *self,
     {
       g_autofree char *remote_collection_id = NULL;
       const char *remote = remotes[i];
+#ifndef FLATPAK_DISABLE_GPG
       gboolean gpg_verify_summary;
       gboolean gpg_verify;
+#endif
 
       if (flatpak_dir_get_remote_disabled (self, remote))
         continue;
@@ -3640,6 +3642,7 @@ flatpak_dir_migrate_config (FlatpakDir   *self,
       if (remote_collection_id == NULL)
         continue;
 
+#ifndef FLATPAK_DISABLE_GPG
       if (!ostree_repo_remote_get_gpg_verify_summary (self->repo, remote, &gpg_verify_summary, NULL))
         continue;
 
@@ -3655,6 +3658,7 @@ flatpak_dir_migrate_config (FlatpakDir   *self,
           g_debug ("Migrating remote '%s' to gpg-verify-summary", remote);
           g_key_file_set_boolean (config, group, "gpg-verify-summary", TRUE);
         }
+#endif
     }
 
   if (config != NULL)
@@ -4884,8 +4888,10 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
       g_autofree char *url = NULL;
       g_autoptr(GFile) child_repo_file = NULL;
       g_autofree char *child_repo_path = NULL;
+#ifndef FLATPAK_DISABLE_GPG
       gboolean gpg_verify_summary;
       gboolean gpg_verify;
+#endif
 
       if (!ostree_repo_remote_get_url (self->repo,
                                        state->remote_name,
@@ -4893,6 +4899,7 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
                                        error))
         return FALSE;
 
+#ifndef FLATPAK_DISABLE_GPG
       if (!ostree_repo_remote_get_gpg_verify_summary (self->repo, state->remote_name,
                                                       &gpg_verify_summary, error))
         return FALSE;
@@ -4900,6 +4907,7 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
       if (!ostree_repo_remote_get_gpg_verify (self->repo, state->remote_name,
                                               &gpg_verify, error))
         return FALSE;
+#endif
 
       if (is_oci)
         {
@@ -4911,6 +4919,7 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
            * if necessary.
            */
         }
+#ifndef FLATPAK_DISABLE_GPG
       else if (!gpg_verify_summary || !gpg_verify)
         {
           /* The remote is not gpg verified, so we don't want to allow installation via
@@ -4922,6 +4931,7 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
           if (!g_str_has_prefix (url, "file:"))
             return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("Can't pull from untrusted non-gpg verified remote"));
         }
+#endif
       else
         {
           g_autoptr(OstreeRepo) child_repo = flatpak_dir_create_system_child_repo (self, &child_repo_lock, NULL, error);
@@ -5879,8 +5889,13 @@ repo_pull_local_untrusted (FlatpakDir          *self,
                          g_variant_new_variant (g_variant_new_int32 (flags)));
   g_variant_builder_add (&builder, "{s@v}", "override-remote-name",
                          g_variant_new_variant (g_variant_new_string (remote_name)));
+#ifndef FLATPAK_DISABLE_GPG
   g_variant_builder_add (&builder, "{s@v}", "gpg-verify",
                          g_variant_new_variant (g_variant_new_boolean (TRUE)));
+#else
+  g_variant_builder_add (&builder, "{s@v}", "gpg-verify",
+                         g_variant_new_variant (g_variant_new_boolean (FALSE)));
+#endif
   g_variant_builder_add (&builder, "{s@v}", "gpg-verify-summary",
                          g_variant_new_variant (g_variant_new_boolean (FALSE)));
   g_variant_builder_add (&builder, "{s@v}", "inherit-transaction",
@@ -5921,8 +5936,10 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
   g_autofree char *url = g_file_get_uri (path_file);
   g_autofree char *checksum = NULL;
   g_autofree char *current_checksum = NULL;
+#ifndef FLATPAK_DISABLE_GPG
   gboolean gpg_verify_summary;
   gboolean gpg_verify;
+#endif
   g_autoptr(OstreeGpgVerifyResult) gpg_result = NULL;
   g_autoptr(GVariant) old_commit = NULL;
   g_autoptr(OstreeRepo) src_repo = NULL;
@@ -5946,6 +5963,7 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
   if (!flatpak_dir_repo_lock (self, &lock, LOCK_SH, cancellable, error))
     return FALSE;
 
+#ifndef FLATPAK_DISABLE_GPG
   if (!ostree_repo_remote_get_gpg_verify_summary (self->repo, remote_name,
                                                   &gpg_verify_summary, error))
     return FALSE;
@@ -5957,6 +5975,7 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
   /* This was verified in the client, but lets do it here too */
   if (!gpg_verify_summary || !gpg_verify)
     return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("Can't pull from untrusted non-gpg verified remote"));
+#endif
 
   if (!flatpak_repo_resolve_rev (self->repo, NULL, remote_name, ref, TRUE,
                                  &current_checksum, NULL, error))
@@ -5973,6 +5992,7 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
   if (!flatpak_repo_resolve_rev (src_repo, NULL, remote_name, ref, FALSE, &checksum, NULL, error))
     return FALSE;
 
+#ifndef FLATPAK_DISABLE_GPG
   if (gpg_verify)
     {
       gpg_result = ostree_repo_verify_commit_for_remote (src_repo, checksum, remote_name, cancellable, error);
@@ -5982,6 +6002,7 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
       if (ostree_gpg_verify_result_count_valid (gpg_result) == 0)
         return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("GPG signatures found, but none are in trusted keyring"));
     }
+#endif
 
   g_clear_object (&gpg_result);
 
@@ -9035,8 +9056,10 @@ flatpak_dir_install (FlatpakDir          *self,
       g_autofree char *child_repo_path = NULL;
       FlatpakHelperDeployFlags helper_flags = 0;
       g_autofree char *url = NULL;
+#ifndef FLATPAK_DISABLE_GPG
       gboolean gpg_verify_summary;
       gboolean gpg_verify;
+#endif
       gboolean is_oci;
       gboolean is_revokefs_pull = FALSE;
 
@@ -9051,6 +9074,7 @@ flatpak_dir_install (FlatpakDir          *self,
                                        error))
         return FALSE;
 
+#ifndef FLATPAK_DISABLE_GPG
       if (!ostree_repo_remote_get_gpg_verify_summary (self->repo, state->remote_name,
                                                       &gpg_verify_summary, error))
         return FALSE;
@@ -9058,6 +9082,7 @@ flatpak_dir_install (FlatpakDir          *self,
       if (!ostree_repo_remote_get_gpg_verify (self->repo, state->remote_name,
                                               &gpg_verify, error))
         return FALSE;
+#endif
 
       is_oci = flatpak_dir_get_remote_oci (self, state->remote_name);
       if (no_pull)
@@ -9080,6 +9105,7 @@ flatpak_dir_install (FlatpakDir          *self,
           if (!flatpak_dir_mirror_oci (self, registry, state, flatpak_decomposed_get_ref (ref), opt_commit, NULL, token, progress, cancellable, error))
             return FALSE;
         }
+#ifndef FLATPAK_DISABLE_GPG
       else if (!gpg_verify_summary || !gpg_verify)
         {
           /* The remote is not gpg verified, so we don't want to allow installation via
@@ -9093,6 +9119,7 @@ flatpak_dir_install (FlatpakDir          *self,
           else
             return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("Can't pull from untrusted non-gpg verified remote"));
         }
+#endif
       else
         {
           /* For system pulls, the pull has to be made in a child repo first,
@@ -9731,8 +9758,10 @@ flatpak_dir_update (FlatpakDir                           *self,
       g_auto(GLnxLockFile) child_repo_lock = { 0, };
       g_autofree char *child_repo_path = NULL;
       FlatpakHelperDeployFlags helper_flags = 0;
+#ifndef FLATPAK_DISABLE_GPG
       gboolean gpg_verify_summary;
       gboolean gpg_verify;
+#endif
       gboolean is_revokefs_pull = FALSE;
 
       if (allow_downgrade)
@@ -9741,6 +9770,7 @@ flatpak_dir_update (FlatpakDir                           *self,
 
       helper_flags = FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE;
 
+#ifndef FLATPAK_DISABLE_GPG
       if (!ostree_repo_remote_get_gpg_verify_summary (self->repo, state->remote_name,
                                                       &gpg_verify_summary, error))
         return FALSE;
@@ -9748,6 +9778,7 @@ flatpak_dir_update (FlatpakDir                           *self,
       if (!ostree_repo_remote_get_gpg_verify (self->repo, state->remote_name,
                                               &gpg_verify, error))
         return FALSE;
+#endif
 
       if (no_pull)
         {
@@ -9770,6 +9801,7 @@ flatpak_dir_update (FlatpakDir                           *self,
                                        commit, NULL, token, progress, cancellable, error))
             return FALSE;
         }
+#ifndef FLATPAK_DISABLE_GPG
       else if (!gpg_verify_summary || !gpg_verify)
         {
           /* The remote is not gpg verified, so we don't want to allow installation via
@@ -9786,6 +9818,7 @@ flatpak_dir_update (FlatpakDir                           *self,
           else
             return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("Can't pull from untrusted non-gpg verified remote"));
         }
+#endif
       else
         {
           /* First try to update using revokefs-fuse codepath. If it fails, try to update using a
@@ -13647,8 +13680,10 @@ parse_ref_file (GKeyFile *keyfile,
   is_runtime = g_key_file_get_boolean (keyfile, FLATPAK_REF_GROUP,
                                        FLATPAK_REF_IS_RUNTIME_KEY, NULL);
 
+#ifndef FLATPAK_DISABLE_GPG
   str = g_key_file_get_string (keyfile, FLATPAK_REF_GROUP,
                                FLATPAK_REF_GPGKEY_KEY, NULL);
+#endif
   if (str != NULL)
     {
       g_autofree guchar *decoded = NULL;
@@ -13674,8 +13709,10 @@ parse_ref_file (GKeyFile *keyfile,
   if (collection_id != NULL && *collection_id == '\0')
     collection_id = NULL;
 
+#ifndef FLATPAK_DISABLE_GPG
   if (collection_id != NULL && gpg_data == NULL)
     return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Collection ID requires GPG key to be provided"));
+#endif
 
   *name_out = g_steal_pointer (&name);
   *branch_out = g_steal_pointer (&branch);
@@ -14473,6 +14510,7 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
 
   if (flatpak_dir_use_system_helper (self, NULL))
     {
+#ifndef FLATPAK_DISABLE_GPG
       gboolean gpg_verify_summary;
       gboolean gpg_verify;
 
@@ -14494,6 +14532,7 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
           g_debug ("Can't update remote configuration as user, no GPG signature");
           return TRUE;
         }
+#endif
 
       if (!flatpak_dir_update_remote_configuration_for_state (self, state, TRUE, &has_changed, cancellable, error))
         return FALSE;
