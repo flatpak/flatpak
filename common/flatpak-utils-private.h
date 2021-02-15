@@ -910,6 +910,8 @@ null_safe_g_ptr_array_unref (gpointer data)
 int flatpak_envp_cmp (const void *p1,
                       const void *p2);
 
+gboolean flatpak_str_is_integer (const char *s);
+
 #define FLATPAK_MESSAGE_ID "c7b39b1e006b464599465e105b361485"
 
 #endif /* __FLATPAK_UTILS_H__ */
