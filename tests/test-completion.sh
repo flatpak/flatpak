@@ -122,6 +122,7 @@ bluetooth
 canbus 
 devel 
 multiarch 
+per-app-dev-shm 
 EOF
 
 ok "complete --allow"

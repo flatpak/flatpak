@@ -88,7 +88,11 @@ test_exports_SOURCES = tests/test-exports.c
 
 test_instance_CFLAGS = $(testcommon_CFLAGS)
 test_instance_LDADD = $(testcommon_LDADD) libtestlib.la
-test_instance_SOURCES = tests/test-instance.c
+test_instance_SOURCES = \
+	subprojects/libglnx/tests/libglnx-testlib.c \
+	subprojects/libglnx/tests/libglnx-testlib.h \
+	tests/test-instance.c \
+	$(NULL)
 
 tests_hold_lock_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS)
 tests_hold_lock_LDADD = $(AM_LDADD) $(BASE_LIBS) libglnx.la

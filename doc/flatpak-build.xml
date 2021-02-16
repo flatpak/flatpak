@@ -194,7 +194,9 @@
                 <listitem><para>
                     Allow access to a specific feature. This updates
                     the [Context] group in the metadata.
-                    <arg choice="plain">FEATURE</arg> must be one of: devel, multiarch, bluetooth, canbus.
+                    <arg choice="plain">FEATURE</arg> must be one of:
+                    devel, multiarch, bluetooth, canbus,
+                    per-app-dev-shm.
                     This option can be used multiple times.
                     </para><para>
                     See <citerefentry><refentrytitle>flatpak-build-finish</refentrytitle><manvolnum>1</manvolnum></citerefentry>
@@ -208,7 +210,9 @@
                 <listitem><para>
                     Disallow access to a specific feature. This updates
                     the [Context] group in the metadata.
-                    <arg choice="plain">FEATURE</arg> must be one of: devel, multiarch, bluetooth, canbus.
+                    <arg choice="plain">FEATURE</arg> must be one of:
+                    devel, multiarch, bluetooth, canbus,
+                    per-app-dev-shm.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>

@@ -30,12 +30,24 @@ char *flatpak_instance_get_instances_directory (void);
 char *flatpak_instance_allocate_id (char **host_dir_out,
                                     int *lock_fd_out);
 
+gboolean flatpak_instance_claim_per_app_temp_directory (const char *app_id,
+                                                        int per_app_dir_lock_fd,
+                                                        int at_fd,
+                                                        const char *link_path,
+                                                        const char *parent,
+                                                        char **path_out,
+                                                        GError **error);
+
 void flatpak_instance_iterate_all_and_gc (GPtrArray *out_instances);
 
 gboolean flatpak_instance_ensure_per_app_dir (const char *app_id,
                                               int *lock_fd_out,
                                               char **lock_path_out,
                                               GError **error);
+gboolean flatpak_instance_ensure_per_app_dev_shm (const char *app_id,
+                                                  int per_app_dir_lock_fd,
+                                                  char **shared_dev_shm_out,
+                                                  GError **error);
 gboolean flatpak_instance_ensure_per_app_tmp (const char *app_id,
                                               int per_app_dir_lock_fd,
                                               char **shared_tmp_out,

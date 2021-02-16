@@ -184,7 +184,8 @@
                 <listitem><para>
                     Allow access to a specific feature. This updates
                     the [Context] group in the metadata.
-                    FEATURE must be one of: devel, multiarch, bluetooth, canbus.
+                    FEATURE must be one of: devel, multiarch, bluetooth, canbus,
+                    per-app-dev-shm.
                     This option can be used multiple times.
                  </para><para>
                     The <code>devel</code> feature allows the application to
@@ -205,6 +206,13 @@
                     The <code>canbus</code> feature allows the application to
                     use canbus (AF_CAN) sockets.
                     Note, for this work you must also have network access.
+                </para>
+                <para>
+                    The <code>per-app-dev-shm</code> feature shares a single
+                    instance of <filename>/dev/shm</filename> between the
+                    application, any unrestricted subsandboxes that it creates,
+                    and any other instances of the application that are
+                    launched while it is running.
                 </para></listitem>
             </varlistentry>
 
@@ -214,7 +222,8 @@
                 <listitem><para>
                     Disallow access to a specific feature. This updates
                     the [Context] group in the metadata.
-                    FEATURE must be one of: devel, multiarch, bluetooth, canbus.
+                    FEATURE must be one of: devel, multiarch, bluetooth, canbus,
+                    per-app-dev-shm.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
