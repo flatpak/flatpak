@@ -233,7 +233,7 @@ test_full_context (void)
   g_key_file_set_value (keyfile,
                         FLATPAK_METADATA_GROUP_CONTEXT,
                         FLATPAK_METADATA_KEY_FEATURES,
-                        "devel;multiarch;bluetooth;canbus;");
+                        "devel;multiarch;bluetooth;canbus;per-app-dev-shm;");
   g_key_file_set_value (keyfile,
                         FLATPAK_METADATA_GROUP_CONTEXT,
                         FLATPAK_METADATA_KEY_FILESYSTEMS,
@@ -292,7 +292,8 @@ test_full_context (void)
                     (FLATPAK_CONTEXT_FEATURE_DEVEL |
                      FLATPAK_CONTEXT_FEATURE_MULTIARCH |
                      FLATPAK_CONTEXT_FEATURE_BLUETOOTH |
-                     FLATPAK_CONTEXT_FEATURE_CANBUS));
+                     FLATPAK_CONTEXT_FEATURE_CANBUS |
+                     FLATPAK_CONTEXT_FEATURE_PER_APP_DEV_SHM));
   g_assert_cmpuint (context->features_valid, ==, context->features);
 
   g_assert_cmpuint (flatpak_context_get_run_flags (context), ==,

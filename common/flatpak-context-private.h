@@ -57,6 +57,7 @@ typedef enum {
   FLATPAK_CONTEXT_FEATURE_MULTIARCH    = 1 << 1,
   FLATPAK_CONTEXT_FEATURE_BLUETOOTH    = 1 << 2,
   FLATPAK_CONTEXT_FEATURE_CANBUS       = 1 << 3,
+  FLATPAK_CONTEXT_FEATURE_PER_APP_DEV_SHM = 1 << 4,
 } FlatpakContextFeatures;
 
 struct FlatpakContext

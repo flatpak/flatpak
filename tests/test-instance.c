@@ -33,6 +33,7 @@
 #include "flatpak-run-private.h"
 
 #include "libglnx/libglnx.h"
+#include "libglnx/tests/libglnx-testlib.h"
 
 #include "testlib.h"
 
@@ -215,6 +216,274 @@ test_gc (void)
   g_spawn_close_pid (pid);
 }
 
+static void
+test_claim_per_app_temp_directory (void)
+{
+  /* Run in a temporary directory so we can create a bunch of symlinks */
+  _GLNX_TEST_SCOPED_TEMP_DIR;
+
+  gboolean ok;
+  glnx_autofd int lock_fd = -1;
+  glnx_autofd int fd = -1;
+  g_autofree char *result = NULL;
+  g_autofree char *flag_path = NULL;
+  g_autofree char *symlink_path = NULL;
+  g_autofree char *non_directory_path = NULL;
+  g_autofree char *dir_in_tmp = NULL;
+  g_autoptr(GError) error = NULL;
+  struct stat stat_buf;
+
+  /* In real life this would be the per-app-ID lock, but in fact
+   * we just need some sort of file descriptor - as currently
+   * implemented, we don't even need to lock it. */
+  lock_fd = open ("mock-per-app-id-lock",
+                  O_CLOEXEC | O_CREAT | O_NOCTTY | O_NOFOLLOW,
+                  0600);
+  g_assert_no_errno (lock_fd >= 0 ? 0 : -1);
+
+  /* This emulates the sort of directory that we want to reuse. */
+  dir_in_tmp = g_strdup ("/tmp/flatpak-com.example.App-XXXXXX");
+  g_assert_nonnull (g_mkdtemp (dir_in_tmp));
+
+  ok = flatpak_instance_claim_per_app_temp_directory ("com.example.App",
+                                                      lock_fd,
+                                                      AT_FDCWD,
+                                                      "doesnt-exist",
+                                                      "/tmp",
+                                                      &result,
+                                                      &error);
+  g_assert_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND);
+  g_assert_null (result);
+  g_assert_false (ok);
+  g_clear_error (&error);
+
+  /* If link_path is a symlink to a directory not in /tmp, we refuse
+   * to reuse it */
+  g_assert_no_errno (symlink ("/nope", "bad-prefix"));
+  ok = flatpak_instance_claim_per_app_temp_directory ("com.example.App",
+                                                      lock_fd,
+                                                      AT_FDCWD,
+                                                      "bad-prefix",
+                                                      "/tmp",
+                                                      &result,
+                                                      &error);
+  g_assert_nonnull (error);
+  g_assert_cmpstr (error->message, ==, "/nope does not start with /tmp");
+  g_assert_null (result);
+  g_assert_false (ok);
+  g_clear_error (&error);
+
+  /* Similar */
+  g_assert_no_errno (symlink ("/tmptation", "bad-prefix2"));
+  ok = flatpak_instance_claim_per_app_temp_directory ("com.example.App",
+                                                      lock_fd,
+                                                      AT_FDCWD,
+                                                      "bad-prefix2",
+                                                      "/tmp",
+                                                      &result,
+                                                      &error);
+  g_assert_nonnull (error);
+  g_assert_cmpstr (error->message, ==, "/tmptation does not start with /tmp/");
+  g_assert_null (result);
+  g_assert_false (ok);
+  g_clear_error (&error);
+
+  /* If link_path points to a subdirectory of /tmp that doesn't match the
+   * expected pattern, we refuse to reuse it */
+  g_assert_no_errno (symlink ("/tmp/nope", "bad-prefix3"));
+  ok = flatpak_instance_claim_per_app_temp_directory ("com.example.App",
+                                                      lock_fd,
+                                                      AT_FDCWD,
+                                                      "bad-prefix3",
+                                                      "/tmp",
+                                                      &result,
+                                                      &error);
+  g_assert_nonnull (error);
+  g_assert_cmpstr (error->message, ==, "/tmp/nope does not start with /tmp/flatpak-");
+  g_assert_null (result);
+  g_assert_false (ok);
+  g_clear_error (&error);
+
+  /* Similar */
+  g_assert_no_errno (symlink ("/tmp/flatpak-/nope", "too-many-levels"));
+  ok = flatpak_instance_claim_per_app_temp_directory ("com.example.App",
+                                                      lock_fd,
+                                                      AT_FDCWD,
+                                                      "too-many-levels",
+                                                      "/tmp",
+                                                      &result,
+                                                      &error);
+  g_assert_nonnull (error);
+  g_assert_cmpstr (error->message, ==,
+                   "/tmp/flatpak-/nope has too many directory separators");
+  g_assert_null (result);
+  g_assert_false (ok);
+  g_clear_error (&error);
+
+  /* Similar */
+  g_assert_no_errno (symlink ("/tmp/flatpak-abc/", "too-many-levels2"));
+  ok = flatpak_instance_claim_per_app_temp_directory ("com.example.App",
+                                                      lock_fd,
+                                                      AT_FDCWD,
+                                                      "too-many-levels2",
+                                                      "/tmp",
+                                                      &result,
+                                                      &error);
+  g_assert_nonnull (error);
+  g_assert_cmpstr (error->message, ==,
+                   "/tmp/flatpak-abc/ has too many directory separators");
+  g_assert_null (result);
+  g_assert_false (ok);
+  g_clear_error (&error);
+
+  g_assert_no_errno (symlink ("/tmp/flatpak-org.example.Other-XXXXXX", "wrong-app"));
+  ok = flatpak_instance_claim_per_app_temp_directory ("com.example.App",
+                                                      lock_fd,
+                                                      AT_FDCWD,
+                                                      "wrong-app",
+                                                      "/tmp",
+                                                      &result,
+                                                      &error);
+  g_assert_nonnull (error);
+  g_assert_cmpstr (error->message, ==,
+                   "/tmp/flatpak-org.example.Other-XXXXXX does not "
+                   "start with /tmp/flatpak-com.example.App");
+  g_assert_null (result);
+  g_assert_false (ok);
+  g_clear_error (&error);
+
+  g_assert_no_errno (symlink ("/tmp/flatpak-com.example.ApparentlyNot", "wrong-app2"));
+  ok = flatpak_instance_claim_per_app_temp_directory ("com.example.App",
+                                                      lock_fd,
+                                                      AT_FDCWD,
+                                                      "wrong-app2",
+                                                      "/tmp",
+                                                      &result,
+                                                      &error);
+  g_assert_nonnull (error);
+  g_assert_cmpstr (error->message, ==,
+                   "/tmp/flatpak-com.example.ApparentlyNot does not "
+                   "start with /tmp/flatpak-com.example.App-");
+  g_assert_null (result);
+  g_assert_false (ok);
+  g_clear_error (&error);
+
+  /* If it points to a filesystem object matching the right pattern, but
+   * that is not a directory, we refuse to reuse it */
+  non_directory_path = g_strdup ("/tmp/flatpak-com.example.App-XXXXXX");
+  g_assert_no_errno ((fd = g_mkstemp (non_directory_path)));
+  g_assert_no_errno (symlink (non_directory_path, "not-a-directory"));
+  ok = flatpak_instance_claim_per_app_temp_directory ("com.example.App",
+                                                      lock_fd,
+                                                      AT_FDCWD,
+                                                      "not-a-directory",
+                                                      "/tmp",
+                                                      &result,
+                                                      &error);
+  g_assert_error (error, G_IO_ERROR, G_IO_ERROR_NOT_DIRECTORY);
+  g_assert_null (result);
+  g_assert_false (ok);
+  g_clear_error (&error);
+
+  /* Reuse @non_directory_path as the name of a symlink to a directory:
+   * we consider that to be equally invalid. Create it inside our
+   * directory in /tmp so that we can rename() it into place,
+   * because symlink() does not overwrite, but rename() does. */
+  symlink_path = g_build_filename (dir_in_tmp, "symlink", NULL);
+  g_assert_no_errno (symlink (dir_in_tmp, symlink_path));
+  /* Overwrite the file with the symlink */
+  g_assert_no_errno (rename (symlink_path, non_directory_path));
+
+  /* We'll refuse to follow the symlink: for all we know it could be
+   * attacker-controlled. */
+  ok = flatpak_instance_claim_per_app_temp_directory ("com.example.App",
+                                                      lock_fd,
+                                                      AT_FDCWD,
+                                                      "not-a-directory",
+                                                      "/tmp",
+                                                      &result,
+                                                      &error);
+
+  /* Either of these would be reasonable */
+  if (error->code == G_IO_ERROR_TOO_MANY_LINKS)
+    g_assert_error (error, G_IO_ERROR, G_IO_ERROR_TOO_MANY_LINKS);
+  else
+    g_assert_error (error, G_IO_ERROR, G_IO_ERROR_NOT_DIRECTORY);
+
+  g_assert_null (result);
+  g_assert_false (ok);
+  g_clear_error (&error);
+
+  /* If link_path points to a directory owned by someone else, we refuse
+   * to use it. This part of the test will be skipped unless you pre-create
+   * this directory as root. */
+  if (stat ("/tmp/flatpak-com.example.App-OwnedByRoot", &stat_buf) == 0
+      && stat_buf.st_uid == 0
+      && geteuid () != 0)
+    {
+      g_assert_no_errno (symlink ("/tmp/flatpak-com.example.App-OwnedByRoot",
+                                  "not-our-directory"));
+      ok = flatpak_instance_claim_per_app_temp_directory ("com.example.App",
+                                                          lock_fd,
+                                                          AT_FDCWD,
+                                                          "not-our-directory",
+                                                          "/tmp",
+                                                          &result,
+                                                          &error);
+      g_assert_nonnull (error);
+      g_assert_cmpstr (error->message, ==,
+                       "/tmp/flatpak-com.example.App-OwnedByRoot does not "
+                       "belong to this user");
+      g_assert_null (result);
+      g_assert_false (ok);
+      g_clear_error (&error);
+    }
+
+  glnx_close_fd (&fd);
+  g_assert_no_errno (unlink (non_directory_path));
+  g_clear_pointer (&non_directory_path, g_free);
+
+  /* Even when we have a symlink to a directory matching the right pattern
+   * that we own, if it doesn't contain the flag file that indicates that
+   * it's one of our temp directories, we'll still refuse to use it. */
+  g_assert_no_errno (symlink (dir_in_tmp, "good-symlink"));
+  ok = flatpak_instance_claim_per_app_temp_directory ("com.example.App",
+                                                      lock_fd,
+                                                      AT_FDCWD,
+                                                      "good-symlink",
+                                                      "/tmp",
+                                                      &result,
+                                                      &error);
+  g_assert_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND);
+  g_assert_true (g_str_has_prefix (error->message,
+                                   "opening flag file /tmp/flatpak-com.example.App-"));
+  g_assert_nonnull (strstr (error->message, "/.flatpak-tmpdir:"));
+  g_assert_null (result);
+  g_assert_false (ok);
+  g_clear_error (&error);
+
+  /* Create the flag file (of course in real life this would have happened
+   * much sooner) */
+  flag_path = g_build_filename (dir_in_tmp, ".flatpak-tmpdir", NULL);
+  g_file_set_contents (flag_path, "", 0, &error);
+  g_assert_no_error (error);
+
+  /* Now we are finally willing to reuse the directory! A happy ending
+   * at last. */
+  ok = flatpak_instance_claim_per_app_temp_directory ("com.example.App",
+                                                      lock_fd,
+                                                      AT_FDCWD,
+                                                      "good-symlink",
+                                                      "/tmp",
+                                                      &result,
+                                                      &error);
+  g_assert_no_error (error);
+  g_assert_cmpstr (result, ==, dir_in_tmp);
+  g_assert_true (ok);
+
+  g_assert_no_errno (unlink (flag_path));
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -225,6 +494,8 @@ main (int argc, char *argv[])
   g_test_init (&argc, &argv, NULL);
 
   g_test_add_func ("/instance/gc", test_gc);
+  g_test_add_func ("/instance/claim-per-app-temp-directory",
+                   test_claim_per_app_temp_directory);
 
   res = g_test_run ();
 

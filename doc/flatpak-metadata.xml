@@ -478,6 +478,19 @@
                               Available since 1.0.3.
                             </para></listitem></varlistentry>
 
+                            <varlistentry><term><option>per-app-dev-shm</option></term>
+                            <listitem><para>
+                              Share a single instance of
+                              <filename>/dev/shm</filename> between all
+                              instances of this application run by the same
+                              user ID, including sub-sandboxes.
+                              If the application has the
+                              <option>shm</option> device permission in its
+                              <option>devices</option> list, then this
+                              feature flag is ignored.
+                              Available since 1.12.0.
+                            </para></listitem></varlistentry>
+
                         </variablelist>
                         A feature can be prefixed with <option>!</option> to
                         indicate the absence of that feature, for example
