@@ -30,6 +30,8 @@ typedef struct _FlatpakInstalledRef FlatpakInstalledRef;
 #include <gio/gio.h>
 #include <flatpak-ref.h>
 
+G_BEGIN_DECLS
+
 #define FLATPAK_TYPE_INSTALLED_REF flatpak_installed_ref_get_type ()
 #define FLATPAK_INSTALLED_REF(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), FLATPAK_TYPE_INSTALLED_REF, FlatpakInstalledRef))
 #define FLATPAK_IS_INSTALLED_REF(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), FLATPAK_TYPE_INSTALLED_REF))
@@ -70,5 +72,7 @@ FLATPAK_EXTERN GBytes      *flatpak_installed_ref_load_appdata (FlatpakInstalled
                                                                 GError             **error);
 FLATPAK_EXTERN const char * flatpak_installed_ref_get_eol (FlatpakInstalledRef *self);
 FLATPAK_EXTERN const char * flatpak_installed_ref_get_eol_rebase (FlatpakInstalledRef *self);
+
+G_END_DECLS
 
 #endif /* __FLATPAK_INSTALLED_REF_H__ */

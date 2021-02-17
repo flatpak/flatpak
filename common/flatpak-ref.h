@@ -29,6 +29,8 @@ typedef struct _FlatpakRef FlatpakRef;
 
 #include <glib-object.h>
 
+G_BEGIN_DECLS
+
 #define FLATPAK_TYPE_REF flatpak_ref_get_type ()
 #define FLATPAK_REF(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), FLATPAK_TYPE_REF, FlatpakRef))
 #define FLATPAK_IS_REF(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), FLATPAK_TYPE_REF))
@@ -72,5 +74,7 @@ FLATPAK_EXTERN const char *   flatpak_ref_format_ref_cached (FlatpakRef *self);
 FLATPAK_EXTERN FlatpakRef *   flatpak_ref_parse (const char *ref,
                                                  GError    **error);
 FLATPAK_EXTERN const char *   flatpak_ref_get_collection_id (FlatpakRef *self);
+
+G_END_DECLS
 
 #endif /* __FLATPAK_REF_H__ */

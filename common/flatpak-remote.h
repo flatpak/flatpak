@@ -44,6 +44,8 @@ typedef struct _FlatpakRemote FlatpakRemote;
 #include <gio/gio.h>
 #include <flatpak-remote-ref.h>
 
+G_BEGIN_DECLS
+
 #define FLATPAK_TYPE_REMOTE flatpak_remote_get_type ()
 #define FLATPAK_REMOTE(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), FLATPAK_TYPE_REMOTE, FlatpakRemote))
 #define FLATPAK_IS_REMOTE(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), FLATPAK_TYPE_REMOTE))
@@ -124,5 +126,6 @@ FLATPAK_EXTERN void          flatpak_remote_set_filter (FlatpakRemote *self,
 
 FLATPAK_EXTERN FlatpakRemoteType flatpak_remote_get_remote_type (FlatpakRemote *self);
 
+G_END_DECLS
 
 #endif /* __FLATPAK_REMOTE_H__ */

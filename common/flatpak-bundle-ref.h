@@ -30,6 +30,8 @@ typedef struct _FlatpakBundleRef FlatpakBundleRef;
 #include <gio/gio.h>
 #include <flatpak-ref.h>
 
+G_BEGIN_DECLS
+
 #define FLATPAK_TYPE_BUNDLE_REF flatpak_bundle_ref_get_type ()
 #define FLATPAK_BUNDLE_REF(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), FLATPAK_TYPE_BUNDLE_REF, FlatpakBundleRef))
 #define FLATPAK_IS_BUNDLE_REF(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), FLATPAK_TYPE_BUNDLE_REF))
@@ -61,5 +63,7 @@ FLATPAK_EXTERN char            *flatpak_bundle_ref_get_runtime_repo_url (Flatpak
 #ifdef G_DEFINE_AUTOPTR_CLEANUP_FUNC
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakBundleRef, g_object_unref)
 #endif
+
+G_END_DECLS
 
 #endif /* __FLATPAK_BUNDLE_REF_H__ */

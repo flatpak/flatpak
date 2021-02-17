@@ -28,6 +28,8 @@
 #include <gio/gio.h>
 #include <flatpak-installation.h>
 
+G_BEGIN_DECLS
+
 #define FLATPAK_TYPE_TRANSACTION flatpak_transaction_get_type ()
 #define FLATPAK_TYPE_TRANSACTION_PROGRESS flatpak_transaction_progress_get_type ()
 #define FLATPAK_TYPE_TRANSACTION_OPERATION flatpak_transaction_operation_get_type ()
@@ -314,5 +316,7 @@ gboolean            flatpak_transaction_add_uninstall (FlatpakTransaction *self,
                                                        GError            **error);
 FLATPAK_EXTERN
 gboolean            flatpak_transaction_is_empty (FlatpakTransaction *self);
+
+G_END_DECLS
 
 #endif /* __FLATPAK_TRANSACTION_H__ */
