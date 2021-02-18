@@ -1,6 +1,6 @@
 Changes in 1.10.1
 ~~~~~~~~~~~~~~~~~
-Released: 2020-01-21
+Released: 2021-01-21
 
  * Fix flatpak build on systems with setuid bwrap
  * Fix some compiler warnings
@@ -10,7 +10,7 @@ Released: 2020-01-21
 
 Changes in 1.10.0
 ~~~~~~~~~~~~~~~~~
-Released: 2020-01-14
+Released: 2021-01-14
 
 This is the first stable release after the 1.9.x unstable series.
 The major new feature in this series compared to 1.8 is the support
