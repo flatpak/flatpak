@@ -594,7 +594,7 @@ fi
 
 echo ""
 echo "          Flatpak $FLATPAK_VERSION"
-echo "          ============="
+echo "          =============="
 echo ""
 echo "          Build system helper:    $enable_system_helper"
 echo "          Build selinux module:   $enable_selinux_module"
