@@ -3514,7 +3514,6 @@ check_parental_controls (FlatpakDecomposed *app_ref,
 #ifdef HAVE_LIBMALCONTENT
   g_autoptr(MctManager) manager = NULL;
   g_autoptr(MctAppFilter) app_filter = NULL;
-  g_autoptr(GAsyncResult) app_filter_result = NULL;
   g_autoptr(GDBusConnection) system_bus = NULL;
   g_autoptr(GError) local_error = NULL;
   g_autoptr(GDesktopAppInfo) app_info = NULL;

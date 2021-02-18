@@ -7928,13 +7928,12 @@ flatpak_dir_check_parental_controls (FlatpakDir    *self,
   const char *content_rating_type;
   g_autoptr(GHashTable) content_rating = NULL;
   g_autoptr(AutoPolkitAuthority) authority = NULL;
-  g_autoptr(AutoPolkitDetails) details = NULL;
   g_autoptr(AutoPolkitSubject) subject = NULL;
   gint subject_uid;
   g_autoptr(AutoPolkitAuthorizationResult) result = NULL;
   gboolean authorized;
   gboolean repo_installation_allowed, app_is_appropriate;
-  
+
   /* Assume that root is allowed to install any ref and shouldn't have any
    * parental controls restrictions applied to them */
   if (getuid () == 0)
