@@ -118,7 +118,24 @@ xauth_entry_should_propagate (Xauth *xa,
 
   /* ensure entry is for this machine */
   if (xa->family == FamilyLocal && !auth_streq (hostname, xa->address, xa->address_length))
-    return FALSE;
+    {
+      /* OpenSUSE inherits the hostname value from DHCP without updating
+       * its X11 authentication cookie. The old hostname value can still
+       * be found in the environment variable XAUTHLOCALHOSTNAME.
+       * For reference:
+       * https://bugzilla.opensuse.org/show_bug.cgi?id=262309
+       * For this reason if we have a cookie whose address is equal to the
+       * variable XAUTHLOCALHOSTNAME, we still need to propagate it, but
+       * we also need to change its address to `unames.nodename`.
+       */
+      const char *xauth_local_hostname;
+      xauth_local_hostname = g_getenv ("XAUTHLOCALHOSTNAME");
+      if (xauth_local_hostname == NULL)
+        return FALSE;
+
+      if (!auth_streq ((char *) xauth_local_hostname, xa->address, xa->address_length))
+        return FALSE;
+    }
 
   /* ensure entry is for this session */
   if (xa->number != NULL && !auth_streq (number, xa->number, xa->number_length))
@@ -158,6 +175,17 @@ write_xauth (char *number, FILE *output)
             {
               local_xa.number = "99";
               local_xa.number_length = 2;
+            }
+
+          if (local_xa.family == FamilyLocal &&
+              !auth_streq (unames.nodename, local_xa.address, local_xa.address_length))
+            {
+              /* If we decided to propagate this cookie, but its address
+               * doesn't match `unames.nodename`, we need to change it or
+               * inside the container it will not work.
+               */
+              local_xa.address = unames.nodename;
+              local_xa.address_length = strlen (local_xa.address);
             }
 
           if (!XauWriteAuth (output, &local_xa))
