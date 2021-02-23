@@ -1557,6 +1557,70 @@ test_dconf_paths (void)
     }
 }
 
+static void
+test_envp_cmp (void)
+{
+  static const char * const unsorted[] =
+  {
+    "SAME_NAME=2",
+    "EARLY_NAME=a",
+    "SAME_NAME=222",
+    "Z_LATE_NAME=b",
+    "SUFFIX_ADDED=23",
+    "SAME_NAME=1",
+    "SAME_NAME=",
+    "SUFFIX=42",
+    "SAME_NAME=3",
+    "SAME_NAME",
+  };
+  static const char * const sorted[] =
+  {
+    "EARLY_NAME=a",
+    "SAME_NAME",
+    "SAME_NAME=",
+    "SAME_NAME=1",
+    "SAME_NAME=2",
+    "SAME_NAME=222",
+    "SAME_NAME=3",
+    "SUFFIX=42",
+    "SUFFIX_ADDED=23",
+    "Z_LATE_NAME=b",
+  };
+  const char **sort_this = NULL;
+  gsize i, j;
+
+  G_STATIC_ASSERT (G_N_ELEMENTS (sorted) == G_N_ELEMENTS (unsorted));
+
+  for (i = 0; i < G_N_ELEMENTS (sorted); i++)
+    {
+      g_autofree gchar *copy = g_strdup (sorted[i]);
+
+      g_test_message ("%s == %s", copy, sorted[i]);
+      g_assert_cmpint (flatpak_envp_cmp (&copy, &sorted[i]), ==, 0);
+      g_assert_cmpint (flatpak_envp_cmp (&sorted[i], &copy), ==, 0);
+
+      for (j = i + 1; j < G_N_ELEMENTS (sorted); j++)
+        {
+          g_test_message ("%s < %s", sorted[i], sorted[j]);
+          g_assert_cmpint (flatpak_envp_cmp (&sorted[i], &sorted[j]), <, 0);
+          g_assert_cmpint (flatpak_envp_cmp (&sorted[j], &sorted[i]), >, 0);
+        }
+    }
+
+  sort_this = g_new0 (const char *, G_N_ELEMENTS (unsorted));
+
+  for (i = 0; i < G_N_ELEMENTS (unsorted); i++)
+    sort_this[i] = unsorted[i];
+
+  qsort (sort_this, G_N_ELEMENTS (unsorted), sizeof (char *),
+         flatpak_envp_cmp);
+
+  for (i = 0; i < G_N_ELEMENTS (sorted); i++)
+    g_assert_cmpstr (sorted[i], ==, sort_this[i]);
+
+  g_free (sort_this);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -1585,6 +1649,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/common/dconf-app-id", test_dconf_app_id);
   g_test_add_func ("/common/dconf-paths", test_dconf_paths);
   g_test_add_func ("/common/decompose-ref", test_decompose);
+  g_test_add_func ("/common/envp-cmp", test_envp_cmp);
 
   g_test_add_func ("/app/looks-like-branch", test_looks_like_branch);
   g_test_add_func ("/app/columns", test_columns);

@@ -8611,4 +8611,71 @@ flatpak_dconf_path_is_similar (const char *path1,
   return (path1[i1] == '\0');
 }
 
+/**
+ * flatpak_envp_cmp:
+ * @p1: a `const char * const *`
+ * @p2: a `const char * const *`
+ *
+ * Compare two environment variables, given as pointers to pointers
+ * to the actual `KEY=value` string.
+ *
+ * In particular this is suitable for sorting a #GStrv using `qsort`.
+ *
+ * Returns: negative, 0 or positive if `*p1` compares before, equal to
+ *  or after `*p2`
+ */
+int
+flatpak_envp_cmp (const void *p1,
+                  const void *p2)
+{
+  const char * const * s1 = p1;
+  const char * const * s2 = p2;
+  size_t l1 = strlen (*s1);
+  size_t l2 = strlen (*s2);
+  size_t min;
+  const char *tmp;
+  int ret;
 
+  tmp = strchr (*s1, '=');
+
+  if (tmp != NULL)
+    l1 = tmp - *s1;
+
+  tmp = strchr (*s2, '=');
+
+  if (tmp != NULL)
+    l2 = tmp - *s2;
+
+  min = MIN (l1, l2);
+  ret = strncmp (*s1, *s2, min);
+
+  /* If they differ before the first '=' (if any) in either s1 or s2,
+   * then they are certainly different */
+  if (ret != 0)
+    return ret;
+
+  ret = strcmp (*s1, *s2);
+
+  /* If they do not differ at all, then they are equal */
+  if (ret == 0)
+    return ret;
+
+  /* FOO < FOO=..., and FOO < FOOBAR */
+  if ((*s1)[min] == '\0')
+    return -1;
+
+  /* FOO=... > FOO, and FOOBAR > FOO */
+  if ((*s2)[min] == '\0')
+    return 1;
+
+  /* FOO= < FOOBAR */
+  if ((*s1)[min] == '=' && (*s2)[min] != '=')
+    return -1;
+
+  /* FOOBAR > FOO= */
+  if ((*s2)[min] == '=' && (*s1)[min] != '=')
+    return 1;
+
+  /* Fall back to plain string comparison */
+  return ret;
+}

@@ -907,6 +907,9 @@ null_safe_g_ptr_array_unref (gpointer data)
   g_clear_pointer (&data, g_ptr_array_unref);
 }
 
+int flatpak_envp_cmp (const void *p1,
+                      const void *p2);
+
 #define FLATPAK_MESSAGE_ID "c7b39b1e006b464599465e105b361485"
 
 #endif /* __FLATPAK_UTILS_H__ */

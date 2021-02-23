@@ -3463,6 +3463,7 @@ regenerate_ld_cache (GPtrArray    *base_argv_array,
                           "--dev", "/dev",
                           "--bind", flatpak_file_get_path_cached (ld_so_dir), "/run/ld-so-cache-dir",
                           NULL);
+  flatpak_bwrap_sort_envp (bwrap);
   flatpak_bwrap_envp_to_args (bwrap);
 
   if (!flatpak_bwrap_bundle_args (bwrap, 1, -1, FALSE, error))
@@ -4076,6 +4077,7 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
       command = default_command;
     }
 
+  flatpak_bwrap_sort_envp (bwrap);
   flatpak_bwrap_envp_to_args (bwrap);
 
   if (!flatpak_bwrap_bundle_args (bwrap, 1, -1, FALSE, error))
