@@ -347,10 +347,21 @@ flatpak_bwrap_bundle_args (FlatpakBwrap *bwrap,
 
   fd = glnx_steal_fd (&args_tmpf.fd);
 
-  {
-    g_autofree char *commandline = flatpak_quote_argv ((const char **) bwrap->argv->pdata + start, end - start);
-    flatpak_debug2 ("bwrap --args %d = %s", fd, commandline);
-  }
+  flatpak_debug2 ("bwrap --args %d = ...", fd);
+
+  for (i = start; i < end; i++)
+    {
+      if (flatpak_argument_needs_quoting (bwrap->argv->pdata[i]))
+        {
+          g_autofree char *quoted = g_shell_quote (bwrap->argv->pdata[i]);
+
+          flatpak_debug2 ("    %s", quoted);
+        }
+      else
+        {
+          flatpak_debug2 ("    %s", (const char *) bwrap->argv->pdata[i]);
+        }
+    }
 
   flatpak_bwrap_add_fd (bwrap, fd);
   g_ptr_array_remove_range (bwrap->argv, start, end - start);
