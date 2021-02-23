@@ -1412,8 +1412,8 @@ flatpak_switch_symlink_and_remove (const char *symlink_path,
   return flatpak_fail (error, "flatpak_switch_symlink_and_remove looped too many times");
 }
 
-static gboolean
-needs_quoting (const char *arg)
+gboolean
+flatpak_argument_needs_quoting (const char *arg)
 {
   while (*arg != 0)
     {
@@ -1443,7 +1443,7 @@ flatpak_quote_argv (const char *argv[],
       if (i != 0)
         g_string_append_c (res, ' ');
 
-      if (needs_quoting (argv[i]))
+      if (flatpak_argument_needs_quoting (argv[i]))
         {
           g_autofree char *quoted = g_shell_quote (argv[i]);
           g_string_append (res, quoted);
