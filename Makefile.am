@@ -39,7 +39,7 @@ EXTRA_DIST += $(service_in_files)
 
 FLATPAK_BINDIR=$(bindir)
 
-ACLOCAL_AMFLAGS = -I m4 -I libglnx ${ACLOCAL_FLAGS}
+ACLOCAL_AMFLAGS = -I m4 -I subprojects/libglnx ${ACLOCAL_FLAGS}
 AM_CPPFLAGS =							\
 	-DFLATPAK_BINDIR=\"$(FLATPAK_BINDIR)\"			\
 	-DFLATPAK_SYSTEMDIR=\"$(SYSTEM_INSTALL_DIR)\"		\
@@ -50,7 +50,8 @@ AM_CPPFLAGS =							\
 	-DSYSTEM_HELPER_USER=\"$(SYSTEM_HELPER_USER)\"          \
 	-DSYSTEM_FONT_CACHE_DIRS=\"$(SYSTEM_FONT_CACHE_DIRS)\"		\
 	-DG_LOG_DOMAIN=\"flatpak\"				\
-	-I$(srcdir)/libglnx					\
+	-I$(srcdir)/subprojects					\
+	-I$(srcdir)/subprojects/libglnx				\
 	-I$(srcdir)/common					\
 	-I$(builddir)/common					\
 	-include "config.h"					\
@@ -89,7 +90,7 @@ INTERNAL_GPGME_LIBS = $(DEP_GPGME_LIBS) $(GPGME_PTHREAD_LIBS)
 
 lib_LTLIBRARIES =
 noinst_LTLIBRARIES += libglnx.la
-libglnx_srcpath := $(srcdir)/libglnx
+libglnx_srcpath := $(srcdir)/subprojects/libglnx
 libglnx_cflags := \
 	$(BASE_CFLAGS) \
 	"-I$(libglnx_srcpath)" \
@@ -97,7 +98,7 @@ libglnx_cflags := \
 	$(HIDDEN_VISIBILITY_CFLAGS) \
 	$(NULL)
 libglnx_libs := $(BASE_LIBS)
-include libglnx/Makefile-libglnx.am.inc
+include subprojects/libglnx/Makefile-libglnx.am.inc
 
 include common/Makefile.am.inc
 include data/Makefile.am.inc
@@ -114,11 +115,11 @@ include tests/Makefile.am.inc
 
 if !WITH_SYSTEM_DBUS_PROXY
 libexec_PROGRAMS+=flatpak-dbus-proxy
-flatpak_dbus_proxy_SOURCES =		\
-	dbus-proxy/flatpak-proxy.c	\
-	dbus-proxy/flatpak-proxy.h	\
-	dbus-proxy/dbus-proxy.c		\
-	dbus-proxy/backport-autoptr.h	\
+flatpak_dbus_proxy_SOURCES =				\
+	subprojects/dbus-proxy/flatpak-proxy.c		\
+	subprojects/dbus-proxy/flatpak-proxy.h		\
+	subprojects/dbus-proxy/dbus-proxy.c		\
+	subprojects/dbus-proxy/backport-autoptr.h	\
 	$(NULL)
 flatpak_dbus_proxy_LDADD = $(AM_LDADD) $(BASE_LIBS)
 flatpak_dbus_proxy_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS)
@@ -131,7 +132,7 @@ flatpak_bwrap_SOURCES = $(bwrap_SOURCES)
 flatpak_bwrap_CFLAGS = $(AM_CFLAGS) $(bwrap_CFLAGS)
 flatpak_bwrap_LDADD = $(AM_LDADD) $(bwrap_LDADD) $(CAP_LIB)
 bwrapdir = $(libexecdir)
-include bubblewrap/Makefile-bwrap.am.inc
+include subprojects/bubblewrap/Makefile-bwrap.am.inc
 
 endif # !WITH_SYSTEM_BWRAP
 
@@ -188,7 +189,7 @@ scriptsdir = $(bindir)
 scripts_SCRIPTS = scripts/flatpak-bisect scripts/flatpak-coredumpctl
 EXTRA_DIST += scripts/flatpak-bisect scripts/flatpak-coredumpctl
 
-EXTRA_DIST += variant-schema-compiler/variant-schema-compiler
+EXTRA_DIST += subprojects/variant-schema-compiler/variant-schema-compiler
 
 EXTRA_DIST += autogen.sh
 
