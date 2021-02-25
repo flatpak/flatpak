@@ -1,14 +1,14 @@
 [submodule "libglnx"]
-	path = libglnx
+	path = subprojects/libglnx
 	url = https://gitlab.gnome.org/GNOME/libglnx.git
 [submodule "bubblewrap"]
-	path = bubblewrap
+	path = subprojects/bubblewrap
 	url = https://github.com/projectatomic/bubblewrap.git
 	ignore = dirty
 [submodule "dbus-proxy"]
-	path = dbus-proxy
+	path = subprojects/dbus-proxy
 	url = https://github.com/flatpak/xdg-dbus-proxy.git
 	branch = master
 [submodule "variant-schema-compiler"]
-	path = variant-schema-compiler
+	path = subprojects/variant-schema-compiler
 	url = https://gitlab.gnome.org/alexl/variant-schema-compiler.git
