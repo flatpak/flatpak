@@ -51,7 +51,7 @@ image=oci/image/blobs/sha256/$DIGEST
 assert_has_file $image
 assert_file_has_content $image "org\.freedesktop\.appstream\.appdata.*<summary>Print a greeting</summary>"
 assert_file_has_content $image "org\.freedesktop\.appstream\.icon-64"
-assert_file_has_content $image org.flatpak.ref.*app/org.test.Hello/x86_64/master
+assert_file_has_content $image org.flatpak.ref.*app/"org.test.Hello/$ARCH/master"
 
 ok "export oci"
 
