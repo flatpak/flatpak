@@ -391,7 +391,7 @@ ok "list unused regular"
 
 mv unused.txt old-unused.txt
 
-${test_builddir}/list-unused --exclude app/org.app.APP_A/x86_64/stable | sed s@^app/@@g | sed s@^runtime/@@g | sort > unused.txt
+${test_builddir}/list-unused --exclude "app/org.app.APP_A/$ARCH/stable" | sed s@^app/@@g | sed s@^runtime/@@g | sort > unused.txt
 
 # We don't report the excluded ref itself as unused. It's as if it wasn't even installed
 assert_not_file_has_content unused.txt "org.app.APP_A/"
