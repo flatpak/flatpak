@@ -117,7 +117,11 @@ if [ x${USE_SYSTEMDIR-} == xyes ] ; then
     export FL_DIR=${SYSTEMDIR}
     export U=
     export INVERT_U=--user
-    export FL_CACHE_DIR=${XDG_CACHE_HOME}/flatpak/system-cache
+    if [ x${USER} == xroot ] ; then
+        export FL_CACHE_DIR=${FLATPAK_SYSTEM_DIR}/repo/tmp/cache
+    else
+        export FL_CACHE_DIR=${XDG_CACHE_HOME}/flatpak/system-cache
+    fi
 else
     export FL_DIR=${USERDIR}
     export U="--user"
