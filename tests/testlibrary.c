@@ -18,13 +18,17 @@ static char *flatpak_systemdir;
 static char *flatpak_systemcachedir;
 static char *flatpak_configdir;
 static char *flatpak_installationsdir;
+#ifndef FLATPAK_DISABLE_GPG
 static char *gpg_homedir;
 static char *gpg_args;
+#endif
 static char *repo_collection_id;
 static char *httpd_port; /* TODO: leaked? */
 int httpd_pid = -1;
 
+#ifndef FLATPAK_DISABLE_GPG
 static const char *gpg_id = "7B0961FD";
+#endif
 const char *repo_name = "test-repo";
 
 typedef enum {
@@ -582,7 +586,11 @@ test_remote_by_name (void)
   g_assert_cmpint (flatpak_remote_get_remote_type (remote), ==, FLATPAK_REMOTE_TYPE_STATIC);
   g_assert_false (flatpak_remote_get_noenumerate (remote));
   g_assert_false (flatpak_remote_get_disabled (remote));
+#ifndef FLATPAK_DISABLE_GPG
   g_assert_true (flatpak_remote_get_gpg_verify (remote));
+#else
+  g_assert_false (flatpak_remote_get_gpg_verify (remote));
+#endif
   g_assert_cmpint (flatpak_remote_get_prio (remote), ==, 1);
 
   g_assert_cmpstr (flatpak_remote_get_collection_id (remote), ==, repo_collection_id);
@@ -636,7 +644,11 @@ test_remote (void)
   res = ostree_repo_get_remote_boolean_option (repo, repo_name, "gpg-verify-summary", FALSE, &gpg_verify_summary, &error);
   g_assert_no_error (error);
   g_assert_true (res);
+#ifndef FLATPAK_DISABLE_GPG
   g_assert_true (gpg_verify_summary);
+#else
+  g_assert_false (gpg_verify_summary);
+#endif
 
   /* Temporarily unset the collection ID */
   flatpak_remote_set_collection_id (remote, NULL);
@@ -651,7 +663,11 @@ test_remote (void)
   res = ostree_repo_get_remote_boolean_option (repo, repo_name, "gpg-verify-summary", FALSE, &gpg_verify_summary, &error);
   g_assert_no_error (error);
   g_assert_true (res);
+#ifndef FLATPAK_DISABLE_GPG
   g_assert_true (gpg_verify_summary);
+#else
+  g_assert_false (gpg_verify_summary);
+#endif
 
   flatpak_remote_set_collection_id (remote, repo_collection_id);
   g_assert_cmpstr (flatpak_remote_get_collection_id (remote), ==, repo_collection_id);
@@ -680,6 +696,7 @@ test_remote (void)
   flatpak_remote_set_default_branch (remote, "master");
   g_assert_cmpstr (flatpak_remote_get_default_branch (remote), ==, "master");
 
+#ifndef FLATPAK_DISABLE_GPG
   /* It should be an error to disable GPG while a collection ID is set. */
   g_assert_true (flatpak_remote_get_gpg_verify (remote));
   flatpak_remote_set_gpg_verify (remote, FALSE);
@@ -693,6 +710,7 @@ test_remote (void)
   flatpak_remote_set_collection_id (remote, NULL);
   g_assert_cmpstr (flatpak_remote_get_collection_id (remote), ==, NULL);
   g_assert_false (flatpak_remote_get_gpg_verify (remote));
+#endif
 
   res = flatpak_installation_modify_remote (inst, remote, NULL, &error);
   g_assert_no_error (error);
@@ -717,8 +735,10 @@ test_remote (void)
   flatpak_remote_set_nodeps (remote, FALSE);
   flatpak_remote_set_disabled (remote, FALSE);
   flatpak_remote_set_default_branch (remote, NULL);
+#ifndef FLATPAK_DISABLE_GPG
   flatpak_remote_set_gpg_verify (remote, TRUE);
   flatpak_remote_set_collection_id (remote, repo_collection_id);
+#endif
 
   res = flatpak_installation_modify_remote (inst, remote, NULL, &error);
   g_assert_no_error (error);
@@ -955,8 +975,13 @@ test_list_refs_in_remotes (void)
 
   repo_url = g_strdup_printf ("file://%s", repo_dir);
 
+#ifndef FLATPAK_DISABLE_GPG
   const char *argv[] = { "flatpak", "remote-add", "--user", "--no-gpg-verify",
                          repo_name2, repo_url, NULL };
+#else
+  const char *argv[] = { "flatpak", "remote-add", "--user",
+                         repo_name2, repo_url, NULL };
+#endif
 
   /* Add the repo we created above, which holds one collection ID per ref */
   run_test_subprocess ((char **) argv, RUN_TEST_SUBPROCESS_DEFAULT);
@@ -2366,6 +2391,7 @@ rename_test_app (const char *update_repo_name)
   g_autofree char *arg6 = NULL;
   g_autofree char *app_ref = NULL;
   g_autofree char *app_locale_ref = NULL;
+#ifndef FLATPAK_DISABLE_GPG
   char *argv[] = { "flatpak", "build-commit-from", "--gpg-homedir=", "--gpg-sign=",
                    "--end-of-life-rebase=org.test.Hello=org.test.Hello2",
                    "--src-repo=",
@@ -2373,18 +2399,31 @@ rename_test_app (const char *update_repo_name)
   g_auto(GStrv) gpgargs = NULL;
 
   gpgargs = g_strsplit (gpg_args, " ", 0);
+#else
+  char *argv[] = { "flatpak", "build-commit-from",
+                   "--end-of-life-rebase=org.test.Hello=org.test.Hello2",
+                   "--src-repo=",
+                   NULL, NULL, NULL, NULL };
+#endif
   arg5 = g_strdup_printf ("--src-repo=repos/%s", update_repo_name);
   arg6 = g_strdup_printf ("repos/%s", update_repo_name);
   app_ref = g_strdup_printf ("app/org.test.Hello/%s/master",
                              flatpak_get_default_arch ());
   app_locale_ref = g_strdup_printf ("runtime/org.test.Hello.Locale/%s/master",
                                     flatpak_get_default_arch ());
+#ifndef FLATPAK_DISABLE_GPG
   argv[2] = gpgargs[0];
   argv[3] = gpgargs[1];
   argv[5] = arg5;
   argv[6] = arg6;
   argv[7] = app_ref;
   argv[8] = app_locale_ref;
+#else
+  argv[3] = arg5;
+  argv[4] = arg6;
+  argv[5] = app_ref;
+  argv[6] = app_locale_ref;
+#endif
 
   run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
 }
@@ -2406,14 +2445,23 @@ static void
 update_repo (const char *update_repo_name)
 {
   g_autofree char *arg4 = NULL;
+#ifndef FLATPAK_DISABLE_GPG
   char *argv[] = { "flatpak", "build-update-repo", "--gpg-homedir=", "--gpg-sign=", NULL, NULL };
   g_auto(GStrv) gpgargs = NULL;
 
   gpgargs = g_strsplit (gpg_args, " ", 0);
+#else
+  char *argv[] = { "flatpak", "build-update-repo", NULL, NULL };
+#endif
+
   arg4 = g_strdup_printf ("repos/%s", update_repo_name);
+#ifndef FLATPAK_DISABLE_GPG
   argv[2] = gpgargs[0];
   argv[3] = gpgargs[1];
   argv[4] = arg4;
+#else
+  argv[2] = arg4;
+#endif
 
   run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
 }
@@ -2451,13 +2499,19 @@ _add_remote (const char *remote_repo_name,
              const char *remote_name_override,
              gboolean    system)
 {
+#ifndef FLATPAK_DISABLE_GPG
   char *argv[] = { "flatpak", "remote-add", NULL, "--gpg-import=", "--collection-id=", "name", "url", NULL };
   g_autofree char *gpgimport = NULL;
+#else
+  char *argv[] = { "flatpak", "remote-add", NULL, "--collection-id=", "name", "url", NULL };
+#endif
   g_autofree char *collection_id_arg = NULL;
   g_autofree char *remote_name = NULL;
   g_autofree char *repo_url = NULL;
 
+#ifndef FLATPAK_DISABLE_GPG
   gpgimport = g_strdup_printf ("--gpg-import=%s/pubring.gpg", gpg_homedir);
+#endif
   repo_url = g_strdup_printf ("http://127.0.0.1:%s/%s", httpd_port, remote_repo_name);
   collection_id_arg = g_strdup_printf ("--collection-id=%s", repo_collection_id);
   if (remote_name_override != NULL)
@@ -2466,10 +2520,16 @@ _add_remote (const char *remote_repo_name,
     remote_name = g_strdup_printf ("%s-repo", remote_repo_name);
 
   argv[2] = system ? "--system" : "--user";
+#ifndef FLATPAK_DISABLE_GPG
   argv[3] = gpgimport;
   argv[4] = collection_id_arg;
   argv[5] = remote_name;
   argv[6] = repo_url;
+#else
+  argv[3] = collection_id_arg;
+  argv[4] = remote_name;
+  argv[5] = repo_url;
+#endif
 
   run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
 }
@@ -2608,6 +2668,7 @@ setup_repo (void)
   add_flatpakrepo ("test-runtime-only");
 }
 
+#ifndef FLATPAK_DISABLE_GPG
 static void
 copy_file (const char *src, const char *dest)
 {
@@ -2641,6 +2702,7 @@ copy_gpg (void)
   g_free (src);
   g_free (dest);
 }
+#endif
 
 GTestDBus *test_bus = NULL;
 
@@ -2698,12 +2760,14 @@ global_setup (void)
   g_setenv ("FLATPAK_CONFIG_DIR", flatpak_configdir, TRUE);
   g_test_message ("setting FLATPAK_CONFIG_DIR=%s", flatpak_configdir);
 
+#ifndef FLATPAK_DISABLE_GPG
   gpg_homedir = g_strconcat (testdir, "/gpghome", NULL);
   g_mkdir_with_parents (gpg_homedir, S_IRWXU | S_IRWXG | S_IRWXO);
 
   gpg_args = g_strdup_printf ("--gpg-homedir=%s --gpg-sign=%s", gpg_homedir, gpg_id);
   g_setenv ("GPGARGS", gpg_args, TRUE);
   g_test_message ("setting GPGARGS=%s", gpg_args);
+#endif
 
   g_reload_user_special_dirs_cache ();
 
@@ -2728,7 +2792,9 @@ global_setup (void)
 
   g_test_dbus_up (test_bus);
 
+#ifndef FLATPAK_DISABLE_GPG
   copy_gpg ();
+#endif
   setup_multiple_installations ();
   setup_repo ();
   make_bundle ();
@@ -2737,19 +2803,22 @@ global_setup (void)
 static void
 global_teardown (void)
 {
+#ifndef FLATPAK_DISABLE_GPG
   char *argv[] = { "gpg-connect-agent", "--homedir", "<placeholder>", "killagent", "/bye", NULL };
+#endif
 
   if (g_getenv ("SKIP_TEARDOWN"))
     return;
 
   g_test_dbus_down (test_bus);
 
-  argv[2] = gpg_homedir;
-
   if (httpd_pid != -1)
     kill (httpd_pid, SIGKILL);
 
+#ifndef FLATPAK_DISABLE_GPG
+  argv[2] = gpg_homedir;
   run_test_subprocess (argv, RUN_TEST_SUBPROCESS_IGNORE_FAILURE);
+#endif
 
   glnx_shutil_rm_rf_at (-1, testdir, NULL, NULL);
   g_free (testdir);

@@ -64,15 +64,18 @@ assert_file_has_content drivers "^host$";
 
 ok "gl drivers"
 
-for cmd in install update uninstall list info config repair create-usb \
-           search run override make-current enter ps document-export \
-           document-unexport document-info documents permission-remove \
-           permissions permission-show permission-reset remotes remote-add \
-           remote-modify remote-delete remote-ls remote-info build-init \
-           build build-finish build-export build-bundle build-import-bundle \
-           build-sign build-update-repo build-commit-from repo kill history \
-           mask;
-do
+CMD_LIST="install update uninstall list info config repair create-usb
+          search run override make-current enter ps document-export
+          document-unexport document-info documents permission-remove
+          permissions permission-show permission-reset remotes remote-add
+          remote-modify remote-delete remote-ls remote-info build-init
+          build build-finish build-export build-bundle build-import-bundle
+          build-update-repo build-commit-from repo kill history mask"
+if [ "$FLATPAK_USE_GPG" = "yes" ]; then
+  CMD_LIST="${CMD_LIST} build-sign"
+fi
+
+for cmd in ${CMD_LIST}; do
   ${FLATPAK} $cmd --help | head -2 > help_out
 
   assert_file_has_content help_out "^Usage:$"
