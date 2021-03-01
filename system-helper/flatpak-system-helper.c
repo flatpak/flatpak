@@ -1239,12 +1239,14 @@ handle_update_remote (FlatpakSystemHelper   *object,
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
+#ifndef FLATPAK_DISABLE_GPG
   if (summary_sig_bytes == NULL)
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
                                              "UpdateRemote requires a summary signature");
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
+#endif
 
   if (!flatpak_dir_update_remote_configuration_for_state (system, state, FALSE, NULL, NULL, &error))
     {
