@@ -299,7 +299,7 @@ set_hhmmss (parser_control *pc, long int hour, long int minutes,
 
 /* We want a reentrant parser, even if the TZ manipulation and the calls to
    localtime and gmtime are not reentrant.  */
-%pure-parser
+%define api.pure
 %parse-param { parser_control *pc }
 %lex-param { parser_control *pc }
 
