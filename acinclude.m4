@@ -1,3 +1,5 @@
+#serial 12
+
 # Checks the location of the XML Catalog
 # Usage:
 #   JH_PATH_XML_CATALOG([ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
@@ -109,8 +111,6 @@ AC_DEFUN([JH_CHECK_XML_CATALOG],
 #   permitted in any medium without royalty provided the copyright notice
 #   and this notice are preserved.  This file is offered as-is, without any
 #   warranty.
-
-#serial 4
 
 AC_DEFUN([AX_VALGRIND_CHECK],[
 	dnl Check for --enable-valgrind
@@ -317,8 +317,6 @@ MOSTLYCLEANFILES += $(valgrind_log_files)
 #   permitted in any medium without royalty provided the copyright notice
 #   and this notice are preserved. This file is offered as-is, without any
 #   warranty.
-
-#serial 11
 
 dnl #########################################################################
 AC_DEFUN([AX_COMPARE_VERSION], [
