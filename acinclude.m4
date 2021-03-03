@@ -412,3 +412,18 @@ x$B" | sed 's/^ *//' | sort -r | sed "s/x${A}/true/;s/x${B}/false/;1q"`
     m4_ifvaln([$5],[else $5])dnl
   fi
 ]) dnl AX_COMPARE_VERSION
+
+dnl #########################################################################
+
+# AC_PROG_BISON
+# ------------
+AN_MAKEVAR([BISON],  [AC_PROG_YACC])
+AN_PROGRAM([bison], [AC_PROG_YACC])
+AC_DEFUN([AC_PROG_BISON],
+[AC_CHECK_PROGS(BISON, 'bison')dnl
+AC_ARG_VAR(BISON,
+[The Bison implementation to use.  Defaults to `bison'.])dnl
+AC_ARG_VAR(BFLAGS,
+[The list of arguments that will be passed by default to $BISON.  This script
+will default BFLAGS to the empty string to avoid a default value of `-d' given
+by some make applications.])])
