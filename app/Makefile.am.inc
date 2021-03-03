@@ -127,7 +127,7 @@ nodist_flatpak_SOURCES = \
 	$(NULL)
 
 app/parse-datetime.c: app/parse-datetime.y Makefile
-	$(AM_V_GEN) $(YACC) $< -o $@
+	$(AM_V_GEN) $(BISON) $< -o $@
 
 BUILT_SOURCES += $(flatpak_dbus_built_sources)
 CLEANFILES += app/parse-datetime.c $(flatpak_dbus_built_sources)
