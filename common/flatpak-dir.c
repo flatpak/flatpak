@@ -7044,7 +7044,7 @@ export_desktop_file (const char         *app,
                 g_string_append_printf (new_exec, " @@ %s @@", arg);
               else if (strcasecmp (arg, "%u") == 0)
                 g_string_append_printf (new_exec, " @@u %s @@", arg);
-              else if (strcmp (arg, "@@") == 0 || strcmp (arg, "@@u") == 0)
+              else if (g_str_has_prefix (arg, "@@"))
                 g_print (_("Skipping invalid Exec argument %s\n"), arg);
               else
                 g_string_append_printf (new_exec, " %s", arg);
