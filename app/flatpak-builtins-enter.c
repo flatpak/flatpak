@@ -276,6 +276,9 @@ flatpak_builtin_enter (int           argc,
   if (g_file_test ("/run/dbus/system_bus_socket", G_FILE_TEST_EXISTS))
     g_ptr_array_add (envp_array, g_strdup ("DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket"));
 
+  if (getenv ("TERM"))
+    g_ptr_array_add (envp_array, g_strdup_printf ("TERM=%s", getenv ("TERM")));
+
   g_ptr_array_add (envp_array, NULL);
 
   argv_array = g_ptr_array_new_with_free_func (g_free);
