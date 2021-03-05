@@ -283,6 +283,7 @@ flatpak_builtin_enter (int           argc,
     g_ptr_array_add (argv_array, g_strdup (argv[rest_argv_start + i]));
   g_ptr_array_add (argv_array, NULL);
 
+  signal (SIGINT, SIG_IGN);
   if (!g_spawn_sync (NULL, (char **) argv_array->pdata, (char **) envp_array->pdata,
                      G_SPAWN_SEARCH_PATH_FROM_ENVP | G_SPAWN_CHILD_INHERITS_STDIN,
                      NULL, NULL,
