@@ -91,11 +91,11 @@ static FlatpakCommand commands[] = {
   { "create-usb", N_("Put applications or runtimes onto removable media"), flatpak_builtin_create_usb, flatpak_complete_create_usb },
 
   /* translators: please keep the leading newline and space */
-  { N_("\n Finding applications and runtimes") },
+  { N_("\n Find applications and runtimes") },
   { "search", N_("Search for remote apps/runtimes"), flatpak_builtin_search, flatpak_complete_search },
 
   /* translators: please keep the leading newline and space */
-  { N_("\n Running applications") },
+  { N_("\n Manage running applications") },
   { "run", N_("Run an application"), flatpak_builtin_run, flatpak_complete_run },
   { "override", N_("Override permissions for an application"), flatpak_builtin_override, flatpak_complete_override },
   { "make-current", N_("Specify default version to run"), flatpak_builtin_make_current_app, flatpak_complete_make_current_app },
