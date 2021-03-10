@@ -181,7 +181,7 @@ install_bundle (FlatpakDir *dir,
   for (int i = 0; opt_sideload_repos != NULL && opt_sideload_repos[i] != NULL; i++)
     flatpak_transaction_add_sideload_repo (transaction, opt_sideload_repos[i]);
 
-  if (!flatpak_transaction_add_install_bundle (transaction, file, gpg_data, error))
+  if (!flatpak_transaction_add_install_bundle (transaction, file, gpg_data, NULL, error))
     return FALSE;
 
   if (!flatpak_transaction_run (transaction, cancellable, error))

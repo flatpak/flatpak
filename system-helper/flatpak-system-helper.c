@@ -1028,7 +1028,7 @@ handle_install_bundle (FlatpakSystemHelper   *object,
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
-  if (!flatpak_dir_install_bundle (system, bundle_file, arg_remote, &ref, NULL, &error))
+  if (!flatpak_dir_install_bundle (system, bundle_file, NULL, arg_remote, &ref, NULL, &error))
     {
       flatpak_invocation_return_error (invocation, error, "Error installing bundle");
       return G_DBUS_METHOD_INVOCATION_HANDLED;

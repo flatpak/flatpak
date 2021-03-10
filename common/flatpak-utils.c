@@ -6737,6 +6737,8 @@ flatpak_xml_parse (GInputStream *in,
 #define OSTREE_STATIC_DELTA_META_ENTRY_FORMAT "(uayttay)"
 #define OSTREE_STATIC_DELTA_FALLBACK_FORMAT "(yaytt)"
 #define OSTREE_STATIC_DELTA_SUPERBLOCK_FORMAT "(a{sv}tayay" OSTREE_COMMIT_GVARIANT_STRING "aya" OSTREE_STATIC_DELTA_META_ENTRY_FORMAT "a" OSTREE_STATIC_DELTA_FALLBACK_FORMAT ")"
+#define OSTREE_STATIC_DELTA_SIGNED_FORMAT "(taya{sv})"
+#define OSTREE_STATIC_DELTA_SIGNED_MAGIC  0x4F535453474E4454 /* OSTSGNDT */
 
 static inline guint64
 maybe_swap_endian_u64 (gboolean swap,
@@ -6772,10 +6774,73 @@ flatpak_bundle_get_installed_size (GVariant *bundle, gboolean byte_swap)
   return total_usize;
 }
 
+static gboolean
+is_signed_delta (GVariant *delta)
+{
+  g_autoptr(GVariant) magic_v = NULL;
+  g_autoptr(GVariant) swapped_v = NULL;
+
+  magic_v = g_variant_get_child_value (delta, 0);
+  swapped_v = g_variant_byteswap (magic_v);
+
+  return (g_variant_get_uint64 (magic_v)   == OSTREE_STATIC_DELTA_SIGNED_MAGIC ||
+          g_variant_get_uint64 (swapped_v) == OSTREE_STATIC_DELTA_SIGNED_MAGIC);
+}
+
+static gboolean
+bundle_verify_signatures (GBytes *data,
+                          GBytes *signatures,
+                          GVariant *keys,
+                          GError **error)
+{
+  g_autoptr(GPtrArray) verifiers = NULL;
+  g_autoptr(GVariant) sigs_v = NULL;
+  g_autoptr(GError) my_error = NULL;
+  g_auto(GVariantDict) sigs_dict = FLATPAK_VARIANT_DICT_INITIALIZER;
+  g_auto(GVariantDict) keys_dict = FLATPAK_VARIANT_DICT_INITIALIZER;
+
+  sigs_v = g_variant_new_from_bytes (G_VARIANT_TYPE_VARDICT, signatures, FALSE);
+  g_variant_dict_init (&sigs_dict, sigs_v);
+  g_variant_dict_init (&keys_dict, keys);
+
+  verifiers = ostree_sign_get_all ();
+  for (guint i = 0; i < verifiers->len; i++)
+    {
+      g_autoptr(GVariant) sigs = NULL;
+      g_autoptr(GVariant) keys_v = NULL;
+      OstreeSign *sign = g_ptr_array_index (verifiers, i);
+
+      sigs = g_variant_dict_lookup_value (&sigs_dict, ostree_sign_metadata_key (sign),
+                                          G_VARIANT_TYPE (ostree_sign_metadata_format (sign)));
+      if (!sigs)
+        continue;
+
+      keys_v = g_variant_dict_lookup_value (&keys_dict, ostree_sign_metadata_key (sign),
+                                            G_VARIANT_TYPE_STRING_ARRAY);
+      if (keys_v)
+        {
+          gsize len;
+          g_autofree const gchar **keys_array = g_variant_get_strv (keys_v, &len);
+
+          for (guint j = 0; j < len; j++)
+            {
+              g_autoptr(GVariant) pkey = g_variant_new_string (keys_array[j]);
+              ostree_sign_add_pk (sign, pkey, NULL);
+            }
+        }
+
+      if (!ostree_sign_data_verify (sign, data, sigs, NULL, &my_error))
+          return flatpak_fail (error, _("Couldn't verify bundle: %s"), my_error->message);
+    }
+
+  return TRUE;
+}
+
 GVariant *
 flatpak_bundle_load (GFile              *file,
                      char              **commit,
                      FlatpakDecomposed **ref,
+                     GVariant           *sign_keys,
                      char              **origin,
                      char              **runtime_repo,
                      char              **app_metadata,
@@ -6789,6 +6854,7 @@ flatpak_bundle_load (GFile              *file,
   g_autoptr(GBytes) bytes = NULL;
   g_autoptr(GBytes) copy = NULL;
   g_autoptr(GVariant) to_csum_v = NULL;
+  g_autoptr(GVariant) superblock = NULL;
 
   guint8 endianness_char;
   gboolean byte_swap = FALSE;
@@ -6801,14 +6867,30 @@ flatpak_bundle_load (GFile              *file,
   bytes = g_mapped_file_get_bytes (mfile);
   g_mapped_file_unref (mfile);
 
-  delta = g_variant_new_from_bytes (G_VARIANT_TYPE (OSTREE_STATIC_DELTA_SUPERBLOCK_FORMAT), bytes, FALSE);
+  delta = g_variant_new_from_bytes (G_VARIANT_TYPE (OSTREE_STATIC_DELTA_SIGNED_FORMAT), bytes, FALSE);
   g_variant_ref_sink (delta);
+  if (is_signed_delta (delta))
+    {
+      g_autoptr (GVariant) super_v = g_variant_get_child_value (delta, 1);
+      g_autoptr (GVariant) signatures_v = g_variant_get_child_value (delta, 2);
+      g_autoptr (GBytes) super_bytes = g_variant_get_data_as_bytes (super_v);
+      g_autoptr (GBytes) signatures_bytes = g_variant_get_data_as_bytes (signatures_v);
 
-  to_csum_v = g_variant_get_child_value (delta, 3);
+      if (!bundle_verify_signatures (super_bytes, signatures_bytes, sign_keys, error))
+        return NULL;
+
+      superblock = g_variant_new_from_bytes (G_VARIANT_TYPE (OSTREE_STATIC_DELTA_SUPERBLOCK_FORMAT), super_bytes, FALSE);
+    }
+  else
+    {
+      superblock = g_variant_new_from_bytes (G_VARIANT_TYPE (OSTREE_STATIC_DELTA_SUPERBLOCK_FORMAT), bytes, FALSE);
+    }
+
+  to_csum_v = g_variant_get_child_value (superblock, 3);
   if (!ostree_validate_structureof_csum_v (to_csum_v, error))
     return NULL;
 
-  metadata = g_variant_get_child_value (delta, 0);
+  metadata = g_variant_get_child_value (superblock, 0);
 
   if (g_variant_lookup (metadata, "ostree.endianness", "y", &endianness_char))
     {
@@ -6833,7 +6915,7 @@ flatpak_bundle_load (GFile              *file,
     *commit = ostree_checksum_from_bytes_v (to_csum_v);
 
   if (installed_size)
-    *installed_size = flatpak_bundle_get_installed_size (delta, byte_swap);
+    *installed_size = flatpak_bundle_get_installed_size (superblock, byte_swap);
 
   if (ref != NULL)
     {
@@ -6915,6 +6997,8 @@ flatpak_pull_from_bundle (OstreeRepo   *repo,
                           const char   *remote,
                           const char   *ref,
                           gboolean      require_gpg_signature,
+                          gboolean      require_signature,
+                          GVariant     *sign_keys,
                           GCancellable *cancellable,
                           GError      **error)
 {
@@ -6925,13 +7009,16 @@ flatpak_pull_from_bundle (OstreeRepo   *repo,
   g_autoptr(GFile) metadata_file = NULL;
   g_autoptr(GInputStream) in = NULL;
   g_autoptr(OstreeGpgVerifyResult) gpg_result = NULL;
+  g_autoptr(GPtrArray) verifiers = NULL;
   g_autoptr(GError) my_error = NULL;
   g_autoptr(GVariant) metadata = NULL;
+  GVariantDict keys_dict;
   gboolean metadata_valid;
   g_autofree char *remote_collection_id = NULL;
   g_autofree char *collection_id = NULL;
+  gboolean verified = FALSE;
 
-  metadata = flatpak_bundle_load (file, &to_checksum, NULL, NULL, NULL, &metadata_contents, NULL, NULL, &collection_id, error);
+  metadata = flatpak_bundle_load (file, &to_checksum, NULL, sign_keys, NULL, NULL, &metadata_contents, NULL, NULL, &collection_id, error);
   if (metadata == NULL)
     return FALSE;
 
@@ -6986,6 +7073,36 @@ flatpak_pull_from_bundle (OstreeRepo   *repo,
           require_gpg_signature)
         return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("GPG signatures found, but none are in trusted keyring"));
     }
+
+  verifiers = ostree_sign_get_all ();
+  g_variant_dict_init (&keys_dict, sign_keys);
+  for (guint i = 0; i < verifiers->len; i++)
+    {
+      OstreeSign *sign = verifiers->pdata[i];
+      g_autoptr (GVariant) keys_v = NULL;
+
+      if (g_str_equal (ostree_sign_get_name (sign), "dummy"))
+        continue;
+
+      keys_v = g_variant_dict_lookup_value (&keys_dict, ostree_sign_metadata_key (sign),
+                                            G_VARIANT_TYPE_STRING_ARRAY);
+      if (keys_v)
+        {
+          gsize len;
+          g_autofree const gchar **keys_array = g_variant_get_strv (keys_v, &len);
+
+          for (guint j = 0; j < len; j++)
+            {
+              g_autoptr (GVariant) pkey = g_variant_new_string (keys_array[j]);
+              ostree_sign_add_pk (sign, pkey, NULL);
+            }
+        }
+
+      verified |= ostree_sign_commit_verify (sign, repo, to_checksum, NULL, cancellable, NULL);
+    }
+
+  if (!verified && require_signature)
+    return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("signatures found, but none could be verified using trusted keys"));
 
   if (!ostree_repo_read_commit (repo, to_checksum, &root, NULL, NULL, error))
     return FALSE;
