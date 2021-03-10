@@ -3738,6 +3738,48 @@ flatpak_dir_ensure_path (FlatpakDir   *self,
 }
 
 gboolean
+flatpak_dir_get_sign_verify_summary (FlatpakDir *self,
+                                     const char *remote,
+                                     gboolean   *sign_verify_summary,
+                                     GError    **error)
+{
+  return ostree_repo_get_remote_boolean_option (self->repo, remote,
+                                                "sign-verify-summary", FALSE,
+                                                sign_verify_summary, error);
+}
+
+gboolean
+flatpak_dir_get_sign_verify (FlatpakDir *self,
+                             const char *remote,
+                             gboolean   *sign_verify,
+                             GError    **error)
+{
+  g_autoptr(GError) temp_error = NULL;
+  gboolean ret = FALSE;
+
+  ret = ostree_repo_get_remote_boolean_option (self->repo, remote,
+                                               "sign-verify", FALSE,
+                                               sign_verify, &temp_error);
+  if (temp_error != NULL)
+    {
+      if (g_error_matches (temp_error, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_INVALID_VALUE))
+        {
+          /*
+           * INVALID_VALUE means the key exist but not as a boolean, meaning
+           * signature verification is enabled
+           */
+          ret = *sign_verify = TRUE;
+        }
+      else
+        {
+          g_propagate_error (error, g_steal_pointer (&temp_error));
+        }
+    }
+
+  return ret;
+}
+
+gboolean
 flatpak_dir_migrate_config (FlatpakDir   *self,
                             gboolean     *changed,
                             GCancellable *cancellable,

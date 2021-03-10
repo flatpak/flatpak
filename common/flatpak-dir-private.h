@@ -567,6 +567,14 @@ OstreeRepo *          flatpak_dir_get_repo                                  (Fla
 gboolean              flatpak_dir_ensure_path                               (FlatpakDir                    *self,
                                                                              GCancellable                  *cancellable,
                                                                              GError                       **error);
+gboolean              flatpak_dir_get_sign_verify_summary                   (FlatpakDir                    *dir,
+                                                                             const char                    *remote,
+                                                                             gboolean                      *sign_verify_summary,
+                                                                             GError                       **error);
+gboolean              flatpak_dir_get_sign_verify                           (FlatpakDir                    *dir,
+                                                                             const char                    *remote,
+                                                                             gboolean                      *sign_verify,
+                                                                             GError                       **error);
 gboolean              flatpak_dir_use_child_repo                            (FlatpakDir                    *self);
 gboolean              flatpak_dir_ensure_system_child_repo                  (FlatpakDir                    *self,
                                                                              GError                       **error);
