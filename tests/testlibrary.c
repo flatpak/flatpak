@@ -589,6 +589,7 @@ test_remote_by_name (void)
   g_assert_false (flatpak_remote_get_noenumerate (remote));
   g_assert_false (flatpak_remote_get_disabled (remote));
   g_assert_true (flatpak_remote_get_gpg_verify (remote));
+  g_assert (flatpak_remote_get_sign_verify (remote) == sign_enabled);
   g_assert_cmpint (flatpak_remote_get_prio (remote), ==, 1);
 
   g_assert_cmpstr (flatpak_remote_get_collection_id (remote), ==, repo_collection_id);
@@ -619,6 +620,7 @@ test_remote (void)
   g_autoptr(GFile) repo_file = NULL;
   g_autoptr(OstreeRepo) repo = NULL;
   gboolean gpg_verify_summary;
+  gboolean sign_verify_summary;
   gboolean res;
 
   inst = flatpak_installation_new_user (NULL, &error);
@@ -643,6 +645,10 @@ test_remote (void)
   g_assert_no_error (error);
   g_assert_true (res);
   g_assert_true (gpg_verify_summary);
+  res = ostree_repo_get_remote_boolean_option (repo, repo_name, "sign-verify-summary", FALSE, &sign_verify_summary, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+  g_assert (sign_verify_summary == sign_enabled);
 
   /* Temporarily unset the collection ID */
   flatpak_remote_set_collection_id (remote, NULL);
@@ -658,6 +664,10 @@ test_remote (void)
   g_assert_no_error (error);
   g_assert_true (res);
   g_assert_true (gpg_verify_summary);
+  res = ostree_repo_get_remote_boolean_option (repo, repo_name, "sign-verify-summary", FALSE, &sign_verify_summary, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+  g_assert (sign_verify_summary == sign_enabled);
 
   flatpak_remote_set_collection_id (remote, repo_collection_id);
   g_assert_cmpstr (flatpak_remote_get_collection_id (remote), ==, repo_collection_id);

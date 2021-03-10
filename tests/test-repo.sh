@@ -24,7 +24,11 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..45"
+if [ x${FL_SIGN_ENABLED} == xyes ]; then
+    echo "1..48"
+else
+    echo "1..45"
+fi
 
 #Regular repo
 setup_repo
@@ -73,6 +77,34 @@ fi
 port=$(cat httpd-port)
 if ${FLATPAK} remote-add ${U} --gpg-import=${FL_GPG_HOMEDIR2}/pubring.gpg test-wrong-gpg-repo "http://127.0.0.1:${port}/test" >&2; then
     assert_not_reached "Should fail metadata-update due to wrong gpg key"
+fi
+
+if [ x${FL_SIGN_ENABLED} == xyes ]; then
+    # Non-ED25519 signed repo
+    SIGNARGS="" SIGNPUBKEY="" setup_repo test-no-ed25519 org.test.Collection.NoEd25519
+
+    # Alternative ED25519 key repo
+    SIGNARGS="--sign=${FL_SIGN_PRIVKEY2}" SIGNPUBKEY="${FL_SIGN_PUBKEY2}" setup_repo test-alt-ed25519 org.test.Collection.AltEd25519
+
+    # Remote with wrong ED25519 key
+    port=$(cat httpd-port)
+    if ${FLATPAK} remote-add ${U} --sign-verify=ed25519=inline:${FL_SIGN_PUBKEY} test-wrong-ed25519-repo "http://127.0.0.1:${port}/test-alt-ed25519"; then
+        assert_not_reached "Should fail metadata-update due to wrong ed25519 key"
+    fi
+
+    # Remote with non-existent ED25519 key file
+    port=$(cat httpd-port)
+    if ${FLATPAK} remote-add ${U} --sign-verify=ed25519=file:/file/does/not/exist test-wrong-ed25519-file-repo "http://127.0.0.1:${port}/test"; then
+        assert_not_reached "Should fail metadata-update due to non-existent ed25519 key file"
+    fi
+
+    # Remote with wrong ED25519 key file
+    port=$(cat httpd-port)
+    if ${FLATPAK} remote-add ${U} --sign-verify=ed25519=file:${FL_SIGN_KEYFILE2} test-wrong-ed25519-file-repo "http://127.0.0.1:${port}/test"; then
+        assert_not_reached "Should fail metadata-update due to wrong ed25519 key file"
+    fi
+
+    ${FLATPAK} remote-add ${U} --sign-verify=ed25519=file:${FL_SIGN_KEYFILE} test-ed25519-file-repo "http://127.0.0.1:${port}/test"
 fi
 
 # Remove new appstream branch so we can test deploying the old one
@@ -129,6 +161,20 @@ ok "local without gpg key"
 install_repo test-gpg2
 ok "with alternative gpg key"
 
+if [ x${FL_SIGN_ENABLED} == xyes ]; then
+    ${FLATPAK} ${U} uninstall -y org.test.Platform org.test.Hello >&2
+    install_repo test-ed25519-file
+    ok "with ed25519 key read from file"
+
+    ${FLATPAK} ${U} uninstall -y org.test.Platform org.test.Hello >&2
+    install_repo test-no-ed25519
+    ok "without ed25519 key"
+
+    ${FLATPAK} ${U} uninstall -y org.test.Platform org.test.Hello >&2
+    install_repo test-alt-ed25519
+    ok "with alternative ed25519 key"
+fi
+
 if ${FLATPAK} ${U} install -y test-repo org.test.Platform &> install-error-log; then
     assert_not_reached "Should not be able to install again from different remote without reinstall"
 fi
@@ -167,6 +213,13 @@ ${FLATPAK} ${U} remote-modify --disable test-missing-gpg-repo >&2
 ${FLATPAK} ${U} remote-modify --disable test-wrong-gpg-repo >&2
 ${FLATPAK} ${U} remote-modify --disable test-gpg2-repo >&2
 ${FLATPAK} ${U} remote-modify --disable local-test-no-gpg-repo >&2
+if [ x${FL_SIGN_ENABLED} == xyes ]; then
+    ${FLATPAK} ${U} remote-modify --disable test-ed25519-file-repo >&2
+    ${FLATPAK} ${U} remote-modify --disable test-no-ed25519-repo >&2
+    ${FLATPAK} ${U} remote-modify --disable test-alt-ed25519-repo >&2
+    ${FLATPAK} ${U} remote-modify --disable test-wrong-ed25519-repo >&2
+    ${FLATPAK} ${U} remote-modify --disable test-wrong-ed25519-file-repo >&2
+fi
 if [ x${USE_COLLECTIONS_IN_CLIENT-} != xyes ] ; then
     ${FLATPAK} ${U} remote-modify --disable test-no-gpg-repo >&2
 fi
@@ -182,6 +235,13 @@ ${FLATPAK} ${U} remote-modify --enable test-missing-gpg-repo >&2
 ${FLATPAK} ${U} remote-modify --enable test-wrong-gpg-repo >&2
 ${FLATPAK} ${U} remote-modify --enable test-gpg2-repo >&2
 ${FLATPAK} ${U} remote-modify --enable local-test-no-gpg-repo >&2
+if [ x${FL_SIGN_ENABLED} == xyes ]; then
+    ${FLATPAK} ${U} remote-modify --enable test-ed25519-file-repo >&2
+    ${FLATPAK} ${U} remote-modify --enable test-no-ed25519-repo >&2
+    ${FLATPAK} ${U} remote-modify --enable test-alt-ed25519-repo >&2
+    ${FLATPAK} ${U} remote-modify --enable test-wrong-ed25519-repo >&2
+    ${FLATPAK} ${U} remote-modify --enable test-wrong-ed25519-file-repo >&2
+fi
 if [ x${USE_COLLECTIONS_IN_CLIENT-} != xyes ] ; then
     ${FLATPAK} ${U} remote-modify --enable test-no-gpg-repo >&2
 fi
