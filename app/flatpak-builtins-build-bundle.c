@@ -55,6 +55,8 @@ static gboolean opt_oci_use_labels = TRUE; // Unused now
 static char **opt_gpg_key_ids;
 static char *opt_gpg_homedir;
 #endif
+static char **opt_sign_keys;
+static char *opt_sign_name;
 static char *opt_from_commit;
 
 static GOptionEntry options[] = {
@@ -67,6 +69,8 @@ static GOptionEntry options[] = {
   { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_key_ids, N_("GPG Key ID to sign the OCI image with"), N_("KEY-ID") },
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, N_("GPG Homedir to use when looking for keyrings"), N_("HOMEDIR") },
 #endif
+  { "sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_sign_keys, "Key ID to sign the bundle with", "KEY-ID"},
+  { "sign-type", 0, 0, G_OPTION_ARG_STRING, &opt_sign_name, "Signature type to use (defaults to 'ed25519')", "NAME"},
   { "from-commit", 0, 0, G_OPTION_ARG_STRING, &opt_from_commit, N_("OSTree commit to create a delta bundle from"), N_("COMMIT") },
   { "oci", 0, 0, G_OPTION_ARG_NONE, &opt_oci, N_("Export oci image instead of flatpak bundle"), NULL },
   // This is not used anymore as it is the default, but accept it if old code uses it
@@ -330,6 +334,11 @@ build_bundle (OstreeRepo *repo, const char *commit_checksum, GFile *file,
   g_variant_builder_add (&param_builder, "{sv}", "inline-parts", g_variant_new_boolean (TRUE));
   g_variant_builder_add (&param_builder, "{sv}", "include-detached", g_variant_new_boolean (TRUE));
   g_variant_builder_add (&param_builder, "{sv}", "filename", g_variant_new_bytestring (flatpak_file_get_path_cached (file)));
+  if (opt_sign_keys)
+    {
+      g_variant_builder_add (&param_builder, "{sv}", "sign-name", g_variant_new_bytestring (opt_sign_name ?: OSTREE_SIGN_NAME_ED25519));
+      g_variant_builder_add (&param_builder, "{sv}", "sign-key-ids", g_variant_new_strv ((const gchar * const *) opt_sign_keys, -1));
+    }
 
   params = g_variant_ref_sink (g_variant_builder_end (&param_builder));
   metadata = g_variant_ref_sink (g_variant_builder_end (&metadata_builder));

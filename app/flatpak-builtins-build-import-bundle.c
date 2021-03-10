@@ -37,6 +37,8 @@ static char *opt_ref;
 static gboolean opt_oci = FALSE;
 static char **opt_gpg_key_ids = NULL;
 static char *opt_gpg_homedir = NULL;
+static char **opt_sign_keys = NULL;
+static char *opt_sign_name = NULL;
 static gboolean opt_update_appstream;
 static gboolean opt_no_update_summary;
 static gboolean opt_no_summary_index = FALSE;
@@ -48,6 +50,8 @@ static GOptionEntry options[] = {
   { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_key_ids, N_("GPG Key ID to sign the commit with"), N_("KEY-ID") },
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, N_("GPG Homedir to use when looking for keyrings"), N_("HOMEDIR") },
 #endif
+  { "sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_sign_keys, "Key ID to sign the commit with", "KEY-ID"},
+  { "sign-type", 0, 0, G_OPTION_ARG_STRING, &opt_sign_name, "Signature type to use (defaults to 'ed25519')", "NAME"},
   { "update-appstream", 0, 0, G_OPTION_ARG_NONE, &opt_update_appstream, N_("Update the appstream branch"), NULL },
   { "no-update-summary", 0, 0, G_OPTION_ARG_NONE, &opt_no_update_summary, N_("Don't update the summary"), NULL },
   { "no-summary-index", 0, 0, G_OPTION_ARG_NONE, &opt_no_summary_index, N_("Don't generate a summary index"), NULL },
@@ -239,8 +243,45 @@ flatpak_builtin_build_import (int argc, char **argv, GCancellable *cancellable, 
         }
     }
 
+  if (opt_sign_keys)
+    {
+      char **iter;
+      g_autoptr (OstreeSign) sign = NULL;
+
+      /* Initialize crypto system */
+      opt_sign_name = opt_sign_name ?: OSTREE_SIGN_NAME_ED25519;
+
+      sign = ostree_sign_get_by_name (opt_sign_name, error);
+      if (sign == NULL)
+        return FALSE;
+
+      for (iter = opt_sign_keys; iter && *iter; iter++)
+        {
+          const char *keyid = *iter;
+          g_autoptr (GVariant) secret_key = NULL;
+
+          secret_key = g_variant_new_string (keyid);
+          if (!ostree_sign_set_sk (sign, secret_key, error))
+            return FALSE;
+
+          if (!ostree_sign_commit (sign,
+                                   repo,
+                                   commit,
+                                   cancellable,
+                                   error))
+            return FALSE;
+        }
+    }
+
   if (opt_update_appstream &&
-      !flatpak_repo_generate_appstream (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, NULL, NULL, 0, cancellable, error))
+      !flatpak_repo_generate_appstream (repo,
+                                        (const char **) opt_gpg_key_ids,
+                                        opt_gpg_homedir,
+                                        (const char **) opt_sign_keys,
+                                        opt_sign_name,
+                                        0,
+                                        cancellable,
+                                        error))
     return FALSE;
 
   if (!opt_no_update_summary)
@@ -254,8 +295,8 @@ flatpak_builtin_build_import (int argc, char **argv, GCancellable *cancellable, 
       if (!flatpak_repo_update (repo, flags,
                                 (const char **) opt_gpg_key_ids,
                                 opt_gpg_homedir,
-                                NULL,
-                                NULL,
+                                (const char **) opt_sign_keys,
+                                opt_sign_name,
                                 cancellable,
                                 error))
         return FALSE;

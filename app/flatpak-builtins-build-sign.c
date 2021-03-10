@@ -34,10 +34,10 @@
 
 static char *opt_arch;
 static gboolean opt_runtime;
-#ifndef FLATPAK_DISABLE_GPG
-static char **opt_gpg_key_ids;
-static char *opt_gpg_homedir;
-#endif
+static char **opt_gpg_key_ids = NULL;
+static char *opt_gpg_homedir = NULL;
+static char **opt_sign_keys = NULL;
+static char *opt_sign_name = NULL;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to install for"), N_("ARCH") },
@@ -46,6 +46,8 @@ static GOptionEntry options[] = {
   { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_key_ids, N_("GPG Key ID to sign the commit with"), N_("KEY-ID") },
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, N_("GPG Homedir to use when looking for keyrings"), N_("HOMEDIR") },
 #endif
+  { "sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_sign_keys, "Key ID to sign the commit with", "KEY-ID"},
+  { "sign-type", 0, 0, G_OPTION_ARG_STRING, &opt_sign_name, "Signature type to use (defaults to 'ed25519')", "NAME"},
   { NULL }
 };
 
@@ -53,7 +55,6 @@ static GOptionEntry options[] = {
 gboolean
 flatpak_builtin_build_sign (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
-#ifndef FLATPAK_DISABLE_GPG
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GFile) repofile = NULL;
   g_autoptr(OstreeRepo) repo = NULL;
@@ -94,8 +95,8 @@ flatpak_builtin_build_sign (int argc, char **argv, GCancellable *cancellable, GE
   if (!flatpak_is_valid_branch (branch, -1, &my_error))
     return flatpak_fail (error, _("'%s' is not a valid branch name: %s"), branch, my_error->message);
 
-  if (opt_gpg_key_ids == NULL)
-    return flatpak_fail (error, _("No gpg key ids specified"));
+  if (opt_gpg_key_ids == NULL || opt_sign_keys == NULL)
+    return flatpak_fail (error, _("No signing key ids specified"));
 
   repofile = g_file_new_for_commandline_arg (location);
   repo = ostree_repo_new (repofile);
@@ -144,31 +145,60 @@ flatpak_builtin_build_sign (int argc, char **argv, GCancellable *cancellable, GE
                                      &commit_checksum, cancellable, error))
         return FALSE;
 
-      for (iter = opt_gpg_key_ids; iter && *iter; iter++)
+      if (opt_gpg_key_ids)
         {
-          const char *keyid = *iter;
-          g_autoptr(GError) local_error = NULL;
-
-          if (!ostree_repo_sign_commit (repo,
-                                        commit_checksum,
-                                        keyid,
-                                        opt_gpg_homedir,
-                                        cancellable,
-                                        &local_error))
+          for (iter = opt_gpg_key_ids; iter && *iter; iter++)
             {
-              if (!g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_EXISTS))
+              const char *keyid = *iter;
+              g_autoptr(GError) local_error = NULL;
+
+              if (!ostree_repo_sign_commit (repo,
+                                            commit_checksum,
+                                            keyid,
+                                            opt_gpg_homedir,
+                                            cancellable,
+                                            &local_error))
                 {
-                  g_propagate_error (error, g_steal_pointer (&local_error));
-                  return FALSE;
+                  if (!g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_EXISTS))
+                    {
+                      g_propagate_error (error, g_steal_pointer (&local_error));
+                      return FALSE;
+                    }
                 }
+            }
+        }
+
+      if (opt_sign_keys)
+        {
+          g_autoptr (OstreeSign) sign = NULL;
+
+          /* Initialize crypto system */
+          opt_sign_name = opt_sign_name ?: OSTREE_SIGN_NAME_ED25519;
+
+          sign = ostree_sign_get_by_name (opt_sign_name, error);
+          if (sign == NULL)
+            return FALSE;
+
+          for (iter = opt_sign_keys; iter && *iter; iter++)
+            {
+              const char *keyid = *iter;
+              g_autoptr (GVariant) secret_key = NULL;
+
+              secret_key = g_variant_new_string (keyid);
+              if (!ostree_sign_set_sk (sign, secret_key, error))
+                return FALSE;
+
+              if (!ostree_sign_commit (sign,
+                                       repo,
+                                       commit_checksum,
+                                       cancellable,
+                                       error))
+                return FALSE;
             }
         }
     }
 
   return TRUE;
-#else
-  return flatpak_fail (error, _("GPG support disabled at build time"));
-#endif
 }
 
 gboolean
