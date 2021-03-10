@@ -178,6 +178,7 @@ list_remotes (GPtrArray *dirs, Column *columns, GCancellable *cancellable, GErro
               else if (strcmp (columns[k].name, "options") == 0)
                 {
                   gboolean gpg_verify = TRUE;
+                  gboolean sign_verify = TRUE;
                   g_autofree char *filter = flatpak_dir_get_remote_filter (dir, remote_name);
 
                   flatpak_table_printer_add_column (printer, ""); /* Options */
@@ -200,8 +201,10 @@ list_remotes (GPtrArray *dirs, Column *columns, GCancellable *cancellable, GErro
                   if (!ostree_repo_remote_get_gpg_verify (flatpak_dir_get_repo (dir), remote_name,
                                                           &gpg_verify, error))
                       return FALSE; /* shouldn't happen unless repo config is modified out-of-band */
+                  if (!flatpak_dir_get_sign_verify (dir, remote_name, &sign_verify, error))
+                    return FALSE;
 
-                  if (!gpg_verify)
+                  if (!gpg_verify && !sign_verify)
                     flatpak_table_printer_append_with_comma (printer, "no-sign-verify");
 
                   if (filter != NULL && *filter != 0)
