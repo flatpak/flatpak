@@ -9464,6 +9464,64 @@ flatpak_verify_add_config_options (GKeyFile   *config,
   return g_strdup (ostree_sign_get_name (sign));
 }
 
+GVariant *
+flatpak_verify_parse_keys (char   **verify_keys,
+                           GError **error)
+{
+  g_auto (GVariantDict) dict = FLATPAK_VARIANT_DICT_INITIALIZER;
+  g_autoptr (GPtrArray) verifiers = ostree_sign_get_all ();
+
+  g_variant_dict_init (&dict, NULL);
+
+  for (guint i = 0; i < verifiers->len; i++)
+    {
+      g_autoptr(GVariantBuilder) builder = NULL;
+      g_autoptr(GVariant) keys = NULL;
+      OstreeSign *sign = verifiers->pdata[i];
+      const gchar *sign_name = ostree_sign_get_name (sign);
+
+      builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
+
+      for (char **iter = verify_keys; iter && *iter; iter++)
+        {
+          g_autofree char *keytype = NULL;
+          FlatpakVerifyKeyRef keyref;
+          g_autofree char *keydata = NULL;
+          g_auto (GStrv) file_keys = NULL;
+          g_autofree char *contents = NULL;
+          char **key;
+          gsize len;
+
+          if (!flatpak_verify_parse_keyspec (*iter, &keytype, &keyref, &keydata, error))
+            continue;
+
+          if (!g_str_equal (sign_name, keytype))
+            continue;
+
+          switch (keyref)
+            {
+            case FLATPAK_VERIFY_KEY_REF_INLINE:
+              g_variant_builder_add (builder, "s", keydata);
+              break;
+            case FLATPAK_VERIFY_KEY_REF_FILE:
+              if (!g_file_get_contents (keydata, &contents, &len, NULL))
+                return NULL;
+
+              file_keys = g_strsplit (contents, "\n", -1);
+              for (key = file_keys; key && *key; key++)
+                g_variant_builder_add (builder, "s", *key);
+              break;
+            }
+        }
+
+      keys = g_variant_ref_sink (g_variant_builder_end (builder));
+      if (g_variant_get_size (keys) > 0)
+        g_variant_dict_insert_value (&dict, ostree_sign_metadata_key (sign), keys);
+    }
+
+  return g_variant_ref_sink (g_variant_dict_end (&dict));
+}
+
 
 /**
  * flatpak_envp_cmp:

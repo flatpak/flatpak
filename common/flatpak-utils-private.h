@@ -937,6 +937,9 @@ char *flatpak_verify_add_config_options (GKeyFile   *config,
                                          const char *keyspec,
                                          GError    **error);
 
+GVariant *flatpak_verify_parse_keys (char   **verify_keys,
+                                     GError **error);
+
 static inline void
 null_safe_g_ptr_array_unref (gpointer data)
 {
