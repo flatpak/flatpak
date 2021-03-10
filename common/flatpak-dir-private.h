@@ -65,6 +65,8 @@ GType flatpak_deploy_get_type (void);
 #define FLATPAK_REF_SUGGEST_REMOTE_NAME_KEY "SuggestRemoteName"
 #define FLATPAK_REF_TITLE_KEY "Title"
 #define FLATPAK_REF_GPGKEY_KEY "GPGKey"
+#define FLATPAK_REF_SIGNATUREKEY_KEY "SignatureKey"
+#define FLATPAK_REF_SIGNATURETYPE_KEY "SignatureType"
 #define FLATPAK_REF_IS_RUNTIME_KEY "IsRuntime"
 #define FLATPAK_REF_NAME_KEY "Name"
 #define FLATPAK_REF_BRANCH_KEY "Branch"
@@ -848,6 +850,7 @@ char      *           flatpak_dir_create_origin_remote                      (Fla
                                                                              const char                    *title,
                                                                              const char                    *main_ref,
                                                                              GBytes                        *gpg_data,
+                                                                             GVariant                      *sign_data,
                                                                              const char                    *collection_id,
                                                                              gboolean                      *changed_config,
                                                                              GCancellable                  *cancellable,

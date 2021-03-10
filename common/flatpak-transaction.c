@@ -2427,6 +2427,7 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
                                                         flatpak_decomposed_get_ref (ref),
                                                         NULL,
                                                         NULL,
+                                                        NULL,
                                                         &changed_config,
                                                         NULL, error);
       if (origin_remote == NULL)
