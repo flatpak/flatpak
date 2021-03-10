@@ -81,6 +81,8 @@ GType flatpak_deploy_get_type (void);
 #define FLATPAK_REPO_TITLE_KEY "Title"
 #define FLATPAK_REPO_DEFAULT_BRANCH_KEY "DefaultBranch"
 #define FLATPAK_REPO_GPGKEY_KEY "GPGKey"
+#define FLATPAK_REPO_SIGNATUREKEY_KEY "SignatureKey"
+#define FLATPAK_REPO_SIGNATURETYPE_KEY "SignatureType"
 #define FLATPAK_REPO_NODEPS_KEY "NoDeps"
 #define FLATPAK_REPO_COMMENT_KEY "Comment"
 #define FLATPAK_REPO_DESCRIPTION_KEY "Description"

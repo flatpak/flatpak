@@ -2290,6 +2290,7 @@ flatpak_parse_repofile (const char   *remote_name,
   g_autofree char *uri = NULL;
   g_autofree char *title = NULL;
   g_autofree char *gpg_key = NULL;
+  g_autofree char *sign_key = NULL;
   g_autofree char *collection_id = NULL;
   g_autofree char *default_branch = NULL;
   g_autofree char *comment = NULL;
@@ -2362,7 +2363,7 @@ flatpak_parse_repofile (const char   *remote_name,
 
   gpg_key = g_key_file_get_string (keyfile, source_group,
                                    FLATPAK_REPO_GPGKEY_KEY, NULL);
-  if (gpg_key != NULL)
+  if (gpg_key != NULL && strlen (gpg_key) > 0)
     {
       guchar *decoded;
       gsize decoded_len;
@@ -2384,6 +2385,42 @@ flatpak_parse_repofile (const char   *remote_name,
       g_key_file_set_boolean (config, group, "gpg-verify", FALSE);
     }
 
+  g_key_file_set_boolean (config, group, "gpg-verify-summary",
+                          (gpg_key != NULL) && strlen (gpg_key) > 0);
+
+  sign_key = g_key_file_get_string (keyfile, source_group,
+                                   FLATPAK_REPO_SIGNATUREKEY_KEY, NULL);
+  if (sign_key != NULL && strlen (sign_key) > 0)
+    {
+      g_autofree guchar *decoded = NULL;
+      g_autofree gchar *sign_type = NULL;
+      g_autofree gchar *sign_optkey = NULL;
+      gsize decoded_len;
+
+      sign_type = g_key_file_get_string (keyfile, source_group,
+                                         FLATPAK_REPO_SIGNATURETYPE_KEY, NULL);
+      sign_type = sign_type ?: g_strdup (OSTREE_SIGN_NAME_ED25519);
+      sign_optkey = g_strdup_printf ("verification-%s-key", sign_type);
+
+      sign_key = g_strstrip (sign_key);
+      decoded = g_base64_decode (sign_key, &decoded_len);
+      if (decoded_len < 10) /* Check some minimal size so we don't get crap */
+        {
+          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid signature key"));
+          return NULL;
+        }
+
+      g_key_file_set_string (config, group, "sign-verify", sign_type);
+      g_key_file_set_string (config, group, sign_optkey, sign_key);
+    }
+  else
+    {
+      g_key_file_set_boolean (config, group, "sign-verify", FALSE);
+    }
+
+  g_key_file_set_boolean (config, group, "sign-verify-summary",
+                          (sign_key != NULL) && strlen (sign_key) > 0);
+
   /* We have a hierarchy of keys for setting the collection ID, which all have
    * the same effect. The only difference is which versions of Flatpak support
    * them, and therefore what P2P implementation is enabled by them:
@@ -2403,17 +2440,14 @@ flatpak_parse_repofile (const char   *remote_name,
                                                           FLATPAK_REPO_COLLECTION_ID_KEY);
   if (collection_id != NULL)
     {
-      if (gpg_key == NULL)
+      if (gpg_key == NULL && sign_key == NULL)
         {
-          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Collection ID requires GPG key to be provided"));
+          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Collection ID requires signature key to be provided"));
           return NULL;
         }
 
       g_key_file_set_string (config, group, "collection-id", collection_id);
     }
-
-  g_key_file_set_boolean (config, group, "gpg-verify-summary",
-                          (gpg_key != NULL));
 
   authenticator_name = g_key_file_get_string (keyfile, FLATPAK_REPO_GROUP,
                                               FLATPAK_REPO_AUTHENTICATOR_NAME_KEY, NULL);
