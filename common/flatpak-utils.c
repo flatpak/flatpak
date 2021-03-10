@@ -8956,3 +8956,62 @@ flatpak_verify_add_config_options (GKeyFile   *config,
   return g_strdup (ostree_sign_get_name (sign));
 }
 
+GVariant *
+flatpak_verify_parse_keys (char **verify_keys)
+{
+  g_auto (GVariantDict) dict = FLATPAK_VARIANT_DICT_INITIALIZER;
+  g_autoptr (GPtrArray) verifiers = ostree_sign_get_all ();
+
+  g_variant_dict_init (&dict, NULL);
+
+  for (guint i = 0; i < verifiers->len; i++)
+    {
+      g_autoptr (GVariantBuilder) builder = NULL;
+      g_autoptr (GVariant) keys = NULL;
+      OstreeSign *sign = verifiers->pdata[i];
+      const gchar *sign_name = ostree_sign_get_name (sign);
+
+      builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
+
+      for (char **iter = verify_keys; iter && *iter; iter++)
+        {
+          g_auto (GStrv) parts = NULL;
+          g_auto (GStrv) keyparts = NULL;
+
+          parts = g_strsplit (*iter, "=", 2);
+          if (!parts || !parts[0] || !parts[1])
+            continue;
+
+          if (!g_str_equal (parts[0], sign_name))
+            continue;
+
+          keyparts = g_strsplit (parts[1], ":", 2);
+          if (!keyparts || !keyparts[0] || !keyparts[1])
+            continue;
+
+          if (g_str_equal (keyparts[0], "inline"))
+            {
+              g_variant_builder_add_value (builder, g_variant_new_string (keyparts[1]));
+            }
+          else if (g_str_equal (keyparts[0], "file"))
+            {
+              g_auto (GStrv) file_keys = NULL;
+              g_autofree char *contents;
+              gsize len;
+
+              if (!g_file_get_contents (keyparts[1], &contents, &len, NULL))
+                return NULL;
+
+              file_keys = g_strsplit (contents, "\n", -1);
+              for (char **iter2 = file_keys; iter2 && *iter2; iter2++)
+                g_variant_builder_add_value (builder, g_variant_new_string (*iter2));
+            }
+        }
+
+      keys = g_variant_ref_sink (g_variant_builder_end (builder));
+      if (g_variant_get_size (keys) > 0)
+        g_variant_dict_insert_value (&dict, ostree_sign_metadata_key (sign), keys);
+    }
+
+  return g_variant_ref_sink (g_variant_dict_end (&dict));
+}
