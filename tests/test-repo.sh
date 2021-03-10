@@ -34,13 +34,13 @@ fi
 setup_repo
 
 ALT_GPG_PUBRING=
-OPT_NO_VERIFY=
+OPT_NO_VERIFY="--no-sign-verify"
 OPT_GPG_IMPORT=
 OPT_GPG_IMPORT2=
+OPT_SIGN_VERIFY="--sign-verify=ed25519=inline:${FL_SIGN_PUBKEY}"
 
 if [ "$FLATPAK_USE_GPG" = "yes" ]; then
     ALT_GPG_PUBRING="${FL_GPG_HOMEDIR2}/pubring.gpg"
-    OPT_NO_VERIFY="--no-gpg-verify"
     OPT_GPG_IMPORT="--gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg"
     OPT_GPG_IMPORT2="--gpg-import=${ALT_GPG_PUBRING}"
 fi
@@ -95,7 +95,7 @@ fi
 
 # Remove new appstream branch so we can test deploying the old one
 rm -rf repos/test/refs/heads/appstream2
-${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} --no-update-appstream ${FL_GPGARGS} repos/test
+${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} --no-update-appstream ${FL_GPGARGS} ${FL_SIGNARGS} repos/test
 
 flatpak ${U} --appstream update test-repo
 
@@ -213,6 +213,7 @@ Version=1
 Url=http://127.0.0.1:$(cat httpd-port)/flatpakref/
 Title=The Title
 GPGKey=${FL_GPG_BASE64}
+SignatureKey=${FL_SIGN_PUBKEY}
 EOF
 
 if [ x${USE_COLLECTIONS_IN_CLIENT-} == xyes ]; then
@@ -225,6 +226,7 @@ Name=org.test.Hello
 Branch=master
 Url=http://127.0.0.1:$(cat httpd-port)/flatpakref
 GPGKey=${FL_GPG_BASE64}
+SignatureKey=${FL_SIGN_PUBKEY}
 RuntimeRepo=http://127.0.0.1:$(cat httpd-port)/flatpakref/flatpakref-repo.flatpakrepo
 EOF
 
@@ -279,7 +281,7 @@ make_required_version_app () {
         CID=""
     fi
 
-    REQUIRED_VERSION="${VERSION}" GPGARGS="${FL_GPGARGS}" $(dirname $0)/make-test-app.sh repos/test ${APP_ID} master "${CID}" > /dev/null
+    REQUIRED_VERSION="${VERSION}" GPGARGS="${FL_GPGARGS}" SIGNARGS="${FL_SIGNARGS}" $(dirname $0)/make-test-app.sh repos/test ${APP_ID} master "${CID}" > /dev/null
 }
 
 CURRENT_VERSION=`cat "$test_builddir/package_version.txt"`
@@ -416,7 +418,7 @@ else
 fi
 
 ostree init --repo=repos/test-rebase --mode=archive-z2 ${rebase_collection_args}
-${FLATPAK} build-commit-from --no-update-summary --src-repo=repos/test ${FL_GPGARGS} repos/test-rebase app/org.test.Hello/$ARCH/master runtime/org.test.Hello.Locale/$ARCH/master
+${FLATPAK} build-commit-from --no-update-summary --src-repo=repos/test ${FL_GPGARGS} ${FL_SIGNARGS} repos/test-rebase app/org.test.Hello/$ARCH/master runtime/org.test.Hello.Locale/$ARCH/master
 update_repo test-rebase ${REBASE_COLLECTION_ID}
 
 flatpak remote-add ${U} ${OPT_GPG_IMPORT} test-rebase "http://127.0.0.1:${port}/test-rebase"
@@ -428,8 +430,8 @@ ${CMD_PREFIX} flatpak run --command=bash org.test.Hello -c 'echo foo > $XDG_DATA
 assert_has_dir $HOME/.var/app/org.test.Hello
 assert_has_file $HOME/.var/app/org.test.Hello/data/a-file
 
-${FLATPAK} build-commit-from --no-update-summary --end-of-life-rebase=org.test.Hello=org.test.NewHello --src-repo=repos/test ${FL_GPGARGS} repos/test-rebase app/org.test.Hello/$ARCH/master runtime/org.test.Hello.Locale/$ARCH/master
-GPGARGS="${FL_GPGARGS}" $(dirname $0)/make-test-app.sh repos/test-rebase org.test.NewHello master "${REBASE_COLLECTION_ID}" "NEW" > /dev/null
+${FLATPAK} build-commit-from --no-update-summary --end-of-life-rebase=org.test.Hello=org.test.NewHello --src-repo=repos/test ${FL_GPGARGS} ${FL_SIGNARGS} repos/test-rebase app/org.test.Hello/$ARCH/master runtime/org.test.Hello.Locale/$ARCH/master
+GPGARGS="${FL_GPGARGS}" SIGNARGS="${FL_SIGNARGS}" $(dirname $0)/make-test-app.sh repos/test-rebase org.test.NewHello master "${REBASE_COLLECTION_ID}" "NEW" > /dev/null
 update_repo test-rebase
 
 ${FLATPAK} ${U} update -y org.test.Hello

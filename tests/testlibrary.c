@@ -18,18 +18,23 @@ static char *flatpak_systemdir;
 static char *flatpak_systemcachedir;
 static char *flatpak_configdir;
 static char *flatpak_installationsdir;
-#ifndef FLATPAK_DISABLE_GPG
-static char *gpg_homedir;
-static char *gpg_args;
-#endif
+static char *gpg_homedir = NULL;
+static char *gpg_args = NULL;
+static char *sign_args;
 static char *repo_collection_id;
 static char *httpd_port; /* TODO: leaked? */
+#ifndef FLATPAK_DISABLE_GPG
+static gboolean gpg_enabled = TRUE;
+#else
+static gboolean gpg_enabled = FALSE;
+#endif
+static gboolean sign_enabled = FALSE;
 int httpd_pid = -1;
 
-#ifndef FLATPAK_DISABLE_GPG
 static const char *gpg_id = "7B0961FD";
-#endif
 const char *repo_name = "test-repo";
+const char *sign_key = "m8/rp9I9ax2w81yujZyeXTfZlbeBjEBUPQSQKo14iHgHdrzpKYH6xvL83midrFNeMrU4QBtk4jZ+x2veQoP4oQ==";
+const char *sign_pubkey = "B3a86SmB+sby/N5onaxTXjK1OEAbZOI2fsdr3kKD+KE=";
 
 typedef enum {
   RUN_TEST_SUBPROCESS_DEFAULT = 0,
@@ -586,14 +591,11 @@ test_remote_by_name (void)
   g_assert_cmpint (flatpak_remote_get_remote_type (remote), ==, FLATPAK_REMOTE_TYPE_STATIC);
   g_assert_false (flatpak_remote_get_noenumerate (remote));
   g_assert_false (flatpak_remote_get_disabled (remote));
-#ifndef FLATPAK_DISABLE_GPG
-  g_assert_true (flatpak_remote_get_gpg_verify (remote));
-#else
-  g_assert_false (flatpak_remote_get_gpg_verify (remote));
-#endif
+  g_assert (flatpak_remote_get_gpg_verify (remote) == gpg_enabled);
   g_assert_cmpint (flatpak_remote_get_prio (remote), ==, 1);
 
-  g_assert_cmpstr (flatpak_remote_get_collection_id (remote), ==, repo_collection_id);
+  if (gpg_enabled || sign_enabled)
+    g_assert_cmpstr (flatpak_remote_get_collection_id (remote), ==, repo_collection_id);
 
   g_object_get (remote,
                 "name", &name,
@@ -629,7 +631,8 @@ test_remote (void)
   remote = flatpak_installation_get_remote_by_name (inst, repo_name, NULL, &error);
   g_assert_no_error (error);
 
-  g_assert_cmpstr (flatpak_remote_get_collection_id (remote), ==, repo_collection_id);
+  if (gpg_enabled || sign_enabled)
+    g_assert_cmpstr (flatpak_remote_get_collection_id (remote), ==, repo_collection_id);
 
   /* Flatpak doesn't provide access to gpg-verify-summary, so use ostree */
   res = flatpak_installation_modify_remote (inst, remote, NULL, &error);
@@ -644,11 +647,7 @@ test_remote (void)
   res = ostree_repo_get_remote_boolean_option (repo, repo_name, "gpg-verify-summary", FALSE, &gpg_verify_summary, &error);
   g_assert_no_error (error);
   g_assert_true (res);
-#ifndef FLATPAK_DISABLE_GPG
-  g_assert_true (gpg_verify_summary);
-#else
-  g_assert_false (gpg_verify_summary);
-#endif
+  g_assert (gpg_verify_summary == gpg_enabled);
 
   /* Temporarily unset the collection ID */
   flatpak_remote_set_collection_id (remote, NULL);
@@ -663,14 +662,13 @@ test_remote (void)
   res = ostree_repo_get_remote_boolean_option (repo, repo_name, "gpg-verify-summary", FALSE, &gpg_verify_summary, &error);
   g_assert_no_error (error);
   g_assert_true (res);
-#ifndef FLATPAK_DISABLE_GPG
-  g_assert_true (gpg_verify_summary);
-#else
-  g_assert_false (gpg_verify_summary);
-#endif
+  g_assert (gpg_verify_summary == gpg_enabled);
 
-  flatpak_remote_set_collection_id (remote, repo_collection_id);
-  g_assert_cmpstr (flatpak_remote_get_collection_id (remote), ==, repo_collection_id);
+  if (gpg_enabled || sign_enabled)
+    {
+      flatpak_remote_set_collection_id (remote, repo_collection_id);
+      g_assert_cmpstr (flatpak_remote_get_collection_id (remote), ==, repo_collection_id);
+    }
 
   g_assert_cmpstr (flatpak_remote_get_title (remote), ==, NULL);
   flatpak_remote_set_title (remote, "Test Repo");
@@ -696,21 +694,34 @@ test_remote (void)
   flatpak_remote_set_default_branch (remote, "master");
   g_assert_cmpstr (flatpak_remote_get_default_branch (remote), ==, "master");
 
-#ifndef FLATPAK_DISABLE_GPG
-  /* It should be an error to disable GPG while a collection ID is set. */
-  g_assert_true (flatpak_remote_get_gpg_verify (remote));
-  flatpak_remote_set_gpg_verify (remote, FALSE);
-  g_assert_false (flatpak_remote_get_gpg_verify (remote));
-  res = flatpak_installation_modify_remote (inst, remote, NULL, &error);
-  g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_INVALID_DATA);
-  g_clear_error (&error);
-  g_assert_false (res);
+  if (gpg_enabled)
+    {
+      /* It should be an error to disable signatures while a collection ID is set. */
+      if (gpg_enabled)
+        {
+          g_assert_true (flatpak_remote_get_gpg_verify (remote));
+          flatpak_remote_set_gpg_verify (remote, FALSE);
+          g_assert_false (flatpak_remote_get_gpg_verify (remote));
+        }
 
-  /* Unset the collection ID and try again. */
-  flatpak_remote_set_collection_id (remote, NULL);
-  g_assert_cmpstr (flatpak_remote_get_collection_id (remote), ==, NULL);
-  g_assert_false (flatpak_remote_get_gpg_verify (remote));
-#endif
+      if (sign_enabled)
+        {
+          g_assert_true (flatpak_remote_get_sign_verify (remote));
+          flatpak_remote_set_sign_verify (remote, FALSE);
+          g_assert_false (flatpak_remote_get_sign_verify (remote));
+        }
+
+      res = flatpak_installation_modify_remote (inst, remote, NULL, &error);
+      g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_INVALID_DATA);
+      g_clear_error (&error);
+      g_assert_false (res);
+
+      /* Unset the collection ID and try again. */
+      flatpak_remote_set_collection_id (remote, NULL);
+      g_assert_cmpstr (flatpak_remote_get_collection_id (remote), ==, NULL);
+      g_assert_false (flatpak_remote_get_gpg_verify (remote));
+      g_assert_false (flatpak_remote_get_sign_verify (remote));
+    }
 
   res = flatpak_installation_modify_remote (inst, remote, NULL, &error);
   g_assert_no_error (error);
@@ -735,10 +746,12 @@ test_remote (void)
   flatpak_remote_set_nodeps (remote, FALSE);
   flatpak_remote_set_disabled (remote, FALSE);
   flatpak_remote_set_default_branch (remote, NULL);
-#ifndef FLATPAK_DISABLE_GPG
-  flatpak_remote_set_gpg_verify (remote, TRUE);
-  flatpak_remote_set_collection_id (remote, repo_collection_id);
-#endif
+  if (gpg_enabled || sign_enabled)
+    {
+      flatpak_remote_set_gpg_verify (remote, gpg_enabled);
+      flatpak_remote_set_sign_verify (remote, sign_enabled);
+      flatpak_remote_set_collection_id (remote, repo_collection_id);
+    }
 
   res = flatpak_installation_modify_remote (inst, remote, NULL, &error);
   g_assert_no_error (error);
@@ -975,13 +988,8 @@ test_list_refs_in_remotes (void)
 
   repo_url = g_strdup_printf ("file://%s", repo_dir);
 
-#ifndef FLATPAK_DISABLE_GPG
-  const char *argv[] = { "flatpak", "remote-add", "--user", "--no-gpg-verify",
+  const char *argv[] = { "flatpak", "remote-add", "--user", "--no-sign-verify",
                          repo_name2, repo_url, NULL };
-#else
-  const char *argv[] = { "flatpak", "remote-add", "--user",
-                         repo_name2, repo_url, NULL };
-#endif
 
   /* Add the repo we created above, which holds one collection ID per ref */
   run_test_subprocess ((char **) argv, RUN_TEST_SUBPROCESS_DEFAULT);
@@ -1619,7 +1627,8 @@ test_install_launch_uninstall (void)
   g_assert_cmpstr (flatpak_ref_get_arch (FLATPAK_REF (ref)), ==, flatpak_get_default_arch ());
   g_assert_cmpstr (flatpak_ref_get_branch (FLATPAK_REF (ref)), ==, "master");
   g_assert_cmpint (flatpak_ref_get_kind (FLATPAK_REF (ref)), ==, FLATPAK_REF_KIND_RUNTIME);
-  g_assert_cmpstr (flatpak_ref_get_collection_id (FLATPAK_REF (ref)), ==, repo_collection_id);
+  if (gpg_enabled || sign_enabled)
+    g_assert_cmpstr (flatpak_ref_get_collection_id (FLATPAK_REF (ref)), ==, repo_collection_id);
 
   g_assert_cmpuint (flatpak_installed_ref_get_installed_size (ref), >, 0);
 
@@ -1669,7 +1678,8 @@ test_install_launch_uninstall (void)
   g_assert_cmpstr (flatpak_ref_get_arch (FLATPAK_REF (ref)), ==, flatpak_get_default_arch ());
   g_assert_cmpstr (flatpak_ref_get_branch (FLATPAK_REF (ref)), ==, "master");
   g_assert_cmpint (flatpak_ref_get_kind (FLATPAK_REF (ref)), ==, FLATPAK_REF_KIND_APP);
-  g_assert_cmpstr (flatpak_ref_get_collection_id (FLATPAK_REF (ref)), ==, repo_collection_id);
+  if (gpg_enabled || sign_enabled)
+    g_assert_cmpstr (flatpak_ref_get_collection_id (FLATPAK_REF (ref)), ==, repo_collection_id);
 
   g_assert_cmpuint (flatpak_installed_ref_get_installed_size (ref), >, 0);
   g_assert_true (flatpak_installed_ref_get_is_current (ref));
@@ -2309,19 +2319,33 @@ run_test_subprocess (char                 **argv,
 static void
 make_bundle (void)
 {
+  g_autoptr (GVariantBuilder) builder = NULL;
+  g_autoptr (GVariant) args = NULL;
   g_autofree char *repo_url = g_strdup_printf ("http://127.0.0.1:%s/test", httpd_port);
-  g_autofree char *arg2 = g_strdup_printf ("--repo-url=%s", repo_url);
+  g_autofree char *arg_repo_url = g_strdup_printf ("--repo-url=%s", repo_url);
   g_autofree char *path = g_build_filename (testdir, "bundles", NULL);
   g_autofree char *file = g_build_filename (path, "hello.flatpak", NULL);
-  char *argv[] = { "flatpak", "build-bundle", "repo-url", "repos/test", "filename", "org.test.Hello", NULL };
+  g_autofree const char **argv = NULL;
 
-  argv[2] = arg2;
-  argv[4] = file;
+  builder = g_variant_builder_new (G_VARIANT_TYPE_STRING_ARRAY);
+  g_variant_builder_add_value (builder, g_variant_new_string ("flatpak"));
+  g_variant_builder_add_value (builder, g_variant_new_string ("build-bundle"));
+  g_variant_builder_add_value (builder, g_variant_new_string (arg_repo_url));
+
+  if (sign_enabled)
+    g_variant_builder_add_value (builder, g_variant_new_string (sign_args));
+
+  g_variant_builder_add_value (builder, g_variant_new_string ("repos/test"));
+  g_variant_builder_add_value (builder, g_variant_new_string (file));
+  g_variant_builder_add_value (builder, g_variant_new_string ("org.test.Hello"));
+
+  args = g_variant_builder_end (builder);
+  argv = g_variant_get_strv (args, NULL);
 
   g_debug ("Making dir %s", path);
   g_mkdir_with_parents (path, S_IRWXU | S_IRWXG | S_IRWXO);
 
-  run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
+  run_test_subprocess ((char **) argv, RUN_TEST_SUBPROCESS_DEFAULT);
 }
 
 static void
@@ -2337,7 +2361,8 @@ make_test_runtime (const char *runtime_repo_name)
   arg1 = g_strdup_printf ("repos/%s", runtime_repo_name);
   argv[0] = arg0;
   argv[1] = arg1;
-  argv[4] = repo_collection_id;
+  if (gpg_enabled || sign_enabled)
+    argv[4] = repo_collection_id;
 
   run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
 }
@@ -2353,7 +2378,8 @@ make_test_app (const char *app_repo_name)
   arg1 = g_strdup_printf ("repos/%s", app_repo_name);
   argv[0] = arg0;
   argv[1] = arg1;
-  argv[4] = repo_collection_id;
+  if (gpg_enabled || sign_enabled)
+    argv[4] = repo_collection_id;
 
   run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
 }
@@ -2366,7 +2392,8 @@ update_test_app (void)
 
   arg0 = g_test_build_filename (G_TEST_DIST, "make-test-app.sh", NULL);
   argv[0] = arg0;
-  argv[4] = repo_collection_id;
+  if (gpg_enabled || sign_enabled)
+    argv[4] = repo_collection_id;
 
   run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
 }
@@ -2379,7 +2406,8 @@ update_test_app_extension_version (void)
 
   arg0 = g_test_build_filename (G_TEST_DIST, "make-test-app.sh", NULL);
   argv[0] = arg0;
-  argv[4] = repo_collection_id;
+  if (gpg_enabled || sign_enabled)
+    argv[4] = repo_collection_id;
 
   run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
 }
@@ -2387,45 +2415,47 @@ update_test_app_extension_version (void)
 static void
 rename_test_app (const char *update_repo_name)
 {
-  g_autofree char *arg5 = NULL;
-  g_autofree char *arg6 = NULL;
+  g_autoptr (GVariantBuilder) builder = NULL;
+  g_autoptr (GVariant) args = NULL;
+  g_autofree char *src_repo = NULL;
+  g_autofree char *name = NULL;
   g_autofree char *app_ref = NULL;
   g_autofree char *app_locale_ref = NULL;
-#ifndef FLATPAK_DISABLE_GPG
-  char *argv[] = { "flatpak", "build-commit-from", "--gpg-homedir=", "--gpg-sign=",
-                   "--end-of-life-rebase=org.test.Hello=org.test.Hello2",
-                   "--src-repo=",
-                   NULL, NULL, NULL, NULL };
-  g_auto(GStrv) gpgargs = NULL;
+  g_autofree const char **argv = NULL;
 
-  gpgargs = g_strsplit (gpg_args, " ", 0);
-#else
-  char *argv[] = { "flatpak", "build-commit-from",
-                   "--end-of-life-rebase=org.test.Hello=org.test.Hello2",
-                   "--src-repo=",
-                   NULL, NULL, NULL, NULL };
-#endif
-  arg5 = g_strdup_printf ("--src-repo=repos/%s", update_repo_name);
-  arg6 = g_strdup_printf ("repos/%s", update_repo_name);
+  src_repo = g_strdup_printf ("--src-repo=repos/%s", update_repo_name);
+  name = g_strdup_printf ("repos/%s", update_repo_name);
   app_ref = g_strdup_printf ("app/org.test.Hello/%s/master",
                              flatpak_get_default_arch ());
   app_locale_ref = g_strdup_printf ("runtime/org.test.Hello.Locale/%s/master",
                                     flatpak_get_default_arch ());
-#ifndef FLATPAK_DISABLE_GPG
-  argv[2] = gpgargs[0];
-  argv[3] = gpgargs[1];
-  argv[5] = arg5;
-  argv[6] = arg6;
-  argv[7] = app_ref;
-  argv[8] = app_locale_ref;
-#else
-  argv[3] = arg5;
-  argv[4] = arg6;
-  argv[5] = app_ref;
-  argv[6] = app_locale_ref;
-#endif
 
-  run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
+  builder = g_variant_builder_new (G_VARIANT_TYPE_STRING_ARRAY);
+  g_variant_builder_add_value (builder, g_variant_new_string ("flatpak"));
+  g_variant_builder_add_value (builder, g_variant_new_string ("build-commit-from"));
+
+  if (gpg_enabled)
+    {
+      g_auto(GStrv) gpgargs = NULL;
+      gpgargs = g_strsplit (gpg_args, " ", 0);
+      g_variant_builder_add_value (builder, g_variant_new_string (gpgargs[0]));
+      g_variant_builder_add_value (builder, g_variant_new_string (gpgargs[1]));
+    }
+
+  if (sign_enabled)
+    g_variant_builder_add_value (builder, g_variant_new_string (sign_args));
+
+  g_variant_builder_add_value (builder,
+                         g_variant_new_string ("--end-of-life-rebase=org.test.Hello=org.test.Hello2"));
+  g_variant_builder_add_value (builder, g_variant_new_string (src_repo));
+  g_variant_builder_add_value (builder, g_variant_new_string (name));
+  g_variant_builder_add_value (builder, g_variant_new_string (app_ref));
+  g_variant_builder_add_value (builder, g_variant_new_string (app_locale_ref));
+
+  args = g_variant_builder_end (builder);
+  argv = g_variant_get_strv (args, NULL);
+
+  run_test_subprocess ((char **) argv, RUN_TEST_SUBPROCESS_DEFAULT);
 }
 
 static void
@@ -2436,7 +2466,8 @@ update_test_runtime (void)
 
   arg0 = g_test_build_filename (G_TEST_DIST, "make-test-runtime.sh", NULL);
   argv[0] = arg0;
-  argv[4] = repo_collection_id;
+  if (gpg_enabled || sign_enabled)
+    argv[4] = repo_collection_id;
 
   run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
 }
@@ -2444,26 +2475,33 @@ update_test_runtime (void)
 static void
 update_repo (const char *update_repo_name)
 {
-  g_autofree char *arg4 = NULL;
-#ifndef FLATPAK_DISABLE_GPG
-  char *argv[] = { "flatpak", "build-update-repo", "--gpg-homedir=", "--gpg-sign=", NULL, NULL };
-  g_auto(GStrv) gpgargs = NULL;
+  g_autoptr (GVariantBuilder) builder = NULL;
+  g_autoptr (GVariant) args = NULL;
+  g_autofree char *name = NULL;
+  g_autofree const char **argv = NULL;
 
-  gpgargs = g_strsplit (gpg_args, " ", 0);
-#else
-  char *argv[] = { "flatpak", "build-update-repo", NULL, NULL };
-#endif
+  builder = g_variant_builder_new (G_VARIANT_TYPE_STRING_ARRAY);
+  g_variant_builder_add_value (builder, g_variant_new_string ("flatpak"));
+  g_variant_builder_add_value (builder, g_variant_new_string ("build-update-repo"));
 
-  arg4 = g_strdup_printf ("repos/%s", update_repo_name);
-#ifndef FLATPAK_DISABLE_GPG
-  argv[2] = gpgargs[0];
-  argv[3] = gpgargs[1];
-  argv[4] = arg4;
-#else
-  argv[2] = arg4;
-#endif
+  if (gpg_enabled)
+    {
+      g_auto(GStrv) gpgargs = NULL;
+      gpgargs = g_strsplit (gpg_args, " ", 0);
+      g_variant_builder_add_value (builder, g_variant_new_string (gpgargs[0]));
+      g_variant_builder_add_value (builder, g_variant_new_string (gpgargs[1]));
+    }
 
-  run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
+  if (sign_enabled)
+    g_variant_builder_add_value (builder, g_variant_new_string (sign_args));
+
+  name = g_strdup_printf ("repos/%s", update_repo_name);
+  g_variant_builder_add_value (builder, g_variant_new_string (name));
+
+  args = g_variant_builder_end (builder);
+  argv = g_variant_get_strv (args, NULL);
+
+  run_test_subprocess ((char **) argv, RUN_TEST_SUBPROCESS_DEFAULT);
 }
 
 static void
@@ -2499,19 +2537,13 @@ _add_remote (const char *remote_repo_name,
              const char *remote_name_override,
              gboolean    system)
 {
-#ifndef FLATPAK_DISABLE_GPG
-  char *argv[] = { "flatpak", "remote-add", NULL, "--gpg-import=", "--collection-id=", "name", "url", NULL };
-  g_autofree char *gpgimport = NULL;
-#else
-  char *argv[] = { "flatpak", "remote-add", NULL, "--collection-id=", "name", "url", NULL };
-#endif
+  g_autoptr (GVariantBuilder) builder = NULL;
+  g_autoptr (GVariant) args = NULL;
   g_autofree char *collection_id_arg = NULL;
   g_autofree char *remote_name = NULL;
   g_autofree char *repo_url = NULL;
+  g_autofree const char **argv = NULL;
 
-#ifndef FLATPAK_DISABLE_GPG
-  gpgimport = g_strdup_printf ("--gpg-import=%s/pubring.gpg", gpg_homedir);
-#endif
   repo_url = g_strdup_printf ("http://127.0.0.1:%s/%s", httpd_port, remote_repo_name);
   collection_id_arg = g_strdup_printf ("--collection-id=%s", repo_collection_id);
   if (remote_name_override != NULL)
@@ -2519,19 +2551,35 @@ _add_remote (const char *remote_repo_name,
   else
     remote_name = g_strdup_printf ("%s-repo", remote_repo_name);
 
-  argv[2] = system ? "--system" : "--user";
-#ifndef FLATPAK_DISABLE_GPG
-  argv[3] = gpgimport;
-  argv[4] = collection_id_arg;
-  argv[5] = remote_name;
-  argv[6] = repo_url;
-#else
-  argv[3] = collection_id_arg;
-  argv[4] = remote_name;
-  argv[5] = repo_url;
-#endif
+  builder = g_variant_builder_new (G_VARIANT_TYPE_STRING_ARRAY);
+  g_variant_builder_add_value (builder, g_variant_new_string ("flatpak"));
+  g_variant_builder_add_value (builder, g_variant_new_string ("remote-add"));
+  g_variant_builder_add_value (builder, g_variant_new_string (system ? "--system" : "--user"));
 
-  run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
+  if (gpg_enabled)
+    {
+      g_autofree char *gpgimport = NULL;
+      gpgimport = g_strdup_printf ("--gpg-import=%s/pubring.gpg", gpg_homedir);
+      g_variant_builder_add_value (builder, g_variant_new_string (gpgimport));
+    }
+
+  if (sign_enabled)
+    {
+      g_autofree char *signverify = NULL;
+      signverify = g_strdup_printf ("--sign-verify=ed25519=inline:%s", sign_pubkey);
+      g_variant_builder_add_value (builder, g_variant_new_string (signverify));
+    }
+
+  if (gpg_enabled || sign_enabled)
+    g_variant_builder_add_value (builder, g_variant_new_string (collection_id_arg));
+
+  g_variant_builder_add_value (builder, g_variant_new_string (remote_name));
+  g_variant_builder_add_value (builder, g_variant_new_string (repo_url));
+
+  args = g_variant_builder_end (builder);
+  argv = g_variant_get_strv (args, NULL);
+
+  run_test_subprocess ((char **) argv, RUN_TEST_SUBPROCESS_DEFAULT);
 }
 
 static void
@@ -2668,7 +2716,6 @@ setup_repo (void)
   add_flatpakrepo ("test-runtime-only");
 }
 
-#ifndef FLATPAK_DISABLE_GPG
 static void
 copy_file (const char *src, const char *dest)
 {
@@ -2702,7 +2749,6 @@ copy_gpg (void)
   g_free (src);
   g_free (dest);
 }
-#endif
 
 GTestDBus *test_bus = NULL;
 
@@ -2760,14 +2806,22 @@ global_setup (void)
   g_setenv ("FLATPAK_CONFIG_DIR", flatpak_configdir, TRUE);
   g_test_message ("setting FLATPAK_CONFIG_DIR=%s", flatpak_configdir);
 
-#ifndef FLATPAK_DISABLE_GPG
-  gpg_homedir = g_strconcat (testdir, "/gpghome", NULL);
-  g_mkdir_with_parents (gpg_homedir, S_IRWXU | S_IRWXG | S_IRWXO);
+  if (gpg_enabled)
+    {
+      gpg_homedir = g_strconcat (testdir, "/gpghome", NULL);
+      g_mkdir_with_parents (gpg_homedir, S_IRWXU | S_IRWXG | S_IRWXO);
 
-  gpg_args = g_strdup_printf ("--gpg-homedir=%s --gpg-sign=%s", gpg_homedir, gpg_id);
-  g_setenv ("GPGARGS", gpg_args, TRUE);
-  g_test_message ("setting GPGARGS=%s", gpg_args);
-#endif
+      gpg_args = g_strdup_printf ("--gpg-homedir=%s --gpg-sign=%s", gpg_homedir, gpg_id);
+      g_setenv ("GPGARGS", gpg_args, TRUE);
+      g_test_message ("setting GPGARGS=%s", gpg_args);
+    }
+
+  if (sign_enabled)
+    {
+      sign_args = g_strdup_printf ("--sign=%s", sign_key);
+      g_setenv ("SIGNARGS", sign_args, TRUE);
+      g_test_message ("setting SIGNARGS=%s", sign_args);
+    }
 
   g_reload_user_special_dirs_cache ();
 
@@ -2792,9 +2846,9 @@ global_setup (void)
 
   g_test_dbus_up (test_bus);
 
-#ifndef FLATPAK_DISABLE_GPG
-  copy_gpg ();
-#endif
+  if (gpg_enabled)
+    copy_gpg ();
+
   setup_multiple_installations ();
   setup_repo ();
   make_bundle ();
@@ -2803,10 +2857,6 @@ global_setup (void)
 static void
 global_teardown (void)
 {
-#ifndef FLATPAK_DISABLE_GPG
-  char *argv[] = { "gpg-connect-agent", "--homedir", "<placeholder>", "killagent", "/bye", NULL };
-#endif
-
   if (g_getenv ("SKIP_TEARDOWN"))
     return;
 
@@ -2815,10 +2865,12 @@ global_teardown (void)
   if (httpd_pid != -1)
     kill (httpd_pid, SIGKILL);
 
-#ifndef FLATPAK_DISABLE_GPG
-  argv[2] = gpg_homedir;
-  run_test_subprocess (argv, RUN_TEST_SUBPROCESS_IGNORE_FAILURE);
-#endif
+  if (gpg_enabled)
+    {
+      char *argv[] = { "gpg-connect-agent", "--homedir", "<placeholder>", "killagent", "/bye", NULL };
+      argv[2] = gpg_homedir;
+      run_test_subprocess (argv, RUN_TEST_SUBPROCESS_IGNORE_FAILURE);
+    }
 
   glnx_shutil_rm_rf_at (-1, testdir, NULL, NULL);
   g_free (testdir);
@@ -4170,6 +4222,7 @@ test_bundle (void)
   g_autoptr(GBytes) metadata = NULL;
   g_autoptr(GBytes) appstream = NULL;
   g_autoptr(GBytes) icon = NULL;
+  g_autoptr(GVariant) sign_data = NULL;
 
   file = g_file_new_for_path ("/dev/null");
 
@@ -4180,9 +4233,25 @@ test_bundle (void)
 
   g_clear_object (&file);
 
+  if (sign_enabled)
+    {
+      g_auto (GVariantDict) dict;
+      g_autoptr (GVariantBuilder) builder = NULL;
+      g_autoptr (GVariant) keys = NULL;
+      g_autoptr (OstreeSign) sign = ostree_sign_get_by_name (OSTREE_SIGN_NAME_ED25519, NULL);
+
+      g_variant_dict_init (&dict, NULL);
+      builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
+      g_variant_builder_add_value (builder, g_variant_new_string (sign_pubkey));
+      keys = g_variant_ref_sink (g_variant_builder_end (builder));
+      g_variant_dict_insert_value (&dict, ostree_sign_metadata_key (sign), keys);
+
+      sign_data = g_variant_ref_sink (g_variant_dict_end (&dict));
+    }
+
   path = g_build_filename (testdir, "bundles", "hello.flatpak", NULL);
   file = g_file_new_for_path (path);
-  ref = flatpak_bundle_ref_new (file, NULL, &error);
+  ref = flatpak_bundle_ref_new (file, sign_data, &error);
   g_assert_no_error (error);
   g_assert_nonnull (ref);
 
@@ -4190,7 +4259,8 @@ test_bundle (void)
   g_assert_cmpstr (flatpak_ref_get_arch (FLATPAK_REF (ref)), ==, flatpak_get_default_arch ());
   g_assert_cmpstr (flatpak_ref_get_branch (FLATPAK_REF (ref)), ==, "master");
   g_assert_cmpint (flatpak_ref_get_kind (FLATPAK_REF (ref)), ==, FLATPAK_REF_KIND_APP);
-  g_assert_cmpstr (flatpak_ref_get_collection_id (FLATPAK_REF (ref)), ==, "com.example.Test");
+  if (gpg_enabled || sign_enabled)
+    g_assert_cmpstr (flatpak_ref_get_collection_id (FLATPAK_REF (ref)), ==, "com.example.Test");
 
   file2 = flatpak_bundle_ref_get_file (ref);
   g_assert_true (g_file_equal (file, file2));
@@ -4232,6 +4302,7 @@ test_install_bundle (void)
   g_autoptr(GFile) file = NULL;
   g_autofree char *path = NULL;
   g_autoptr(FlatpakInstalledRef) ref = NULL;
+  g_autoptr(GVariant) sign_data = NULL;
 
   inst = flatpak_installation_new_user (NULL, &error);
   g_assert_no_error (error);
@@ -4242,8 +4313,24 @@ test_install_bundle (void)
   path = g_build_filename (testdir, "bundles", "hello.flatpak", NULL);
   file = g_file_new_for_path (path);
 
+  if (sign_enabled)
+    {
+      g_auto (GVariantDict) dict;
+      g_autoptr (GVariantBuilder) builder = NULL;
+      g_autoptr (GVariant) keys = NULL;
+      g_autoptr (OstreeSign) sign = ostree_sign_get_by_name (OSTREE_SIGN_NAME_ED25519, NULL);
+
+      g_variant_dict_init (&dict, NULL);
+      builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
+      g_variant_builder_add_value (builder, g_variant_new_string (sign_pubkey));
+      keys = g_variant_ref_sink (g_variant_builder_end (builder));
+      g_variant_dict_insert_value (&dict, ostree_sign_metadata_key (sign), keys);
+
+      sign_data = g_variant_ref_sink (g_variant_dict_end (&dict));
+    }
+
   G_GNUC_BEGIN_IGNORE_DEPRECATIONS
-  ref = flatpak_installation_install_bundle (inst, file, NULL, NULL, NULL, NULL, &error);
+  ref = flatpak_installation_install_bundle (inst, file, sign_data, NULL, NULL, NULL, &error);
   G_GNUC_END_IGNORE_DEPRECATIONS
   g_assert_no_error (error);
   g_assert_nonnull (ref);
@@ -4708,6 +4795,12 @@ int
 main (int argc, char *argv[])
 {
   int res;
+  g_autofree char *output = NULL;
+  char *ostree_argv[] = { "ostree", "--version", NULL };
+
+  g_spawn_sync (NULL, ostree_argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &output, NULL, NULL, NULL);
+  if (output != NULL && output[0] != '\0' && strstr (output, "- sign-ed25519"))
+    sign_enabled = TRUE;
 
   g_test_init (&argc, &argv, NULL);
 
