@@ -39,6 +39,7 @@ static char **opt_gpg_key_ids = NULL;
 static char *opt_gpg_homedir = NULL;
 static char **opt_sign_keys = NULL;
 static char *opt_sign_name = NULL;
+static char **opt_sign_verify = NULL;
 static gboolean opt_update_appstream;
 static gboolean opt_no_update_summary;
 static gboolean opt_no_summary_index = FALSE;
@@ -52,6 +53,7 @@ static GOptionEntry options[] = {
 #endif
   { "sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_sign_keys, "Key ID to sign the commit with", "KEY-ID"},
   { "sign-type", 0, 0, G_OPTION_ARG_STRING, &opt_sign_name, "Signature type to use (defaults to 'ed25519')", "NAME"},
+  { "sign-verify", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_sign_verify, N_("Verify signatures using KEYTYPE=inline:PUBKEY or KEYTYPE=file:/path/to/key"), N_("KEYTYPE=[inline|file]:PUBKEY") },
   { "update-appstream", 0, 0, G_OPTION_ARG_NONE, &opt_update_appstream, N_("Update the appstream branch"), NULL },
   { "no-update-summary", 0, 0, G_OPTION_ARG_NONE, &opt_no_update_summary, N_("Don't update the summary"), NULL },
   { "no-summary-index", 0, 0, G_OPTION_ARG_NONE, &opt_no_summary_index, N_("Don't generate a summary index"), NULL },
@@ -140,7 +142,7 @@ import_oci (OstreeRepo *repo, GFile *file,
 }
 
 static char *
-import_bundle (OstreeRepo *repo, GFile *file,
+import_bundle (OstreeRepo *repo, GFile *file, GVariant *verify_keys,
                GCancellable *cancellable, GError **error)
 {
   g_autoptr(GVariant) metadata = NULL;
@@ -151,8 +153,8 @@ import_bundle (OstreeRepo *repo, GFile *file,
   /* Don’t need to check the collection ID of the bundle here;
    * flatpak_pull_from_bundle() does that. */
   metadata = flatpak_bundle_load (file, &to_checksum,
-                                  &bundle_ref,
-                                  NULL, NULL, NULL, NULL,
+                                  &bundle_ref, verify_keys,
+                                  NULL, NULL, NULL,
                                   NULL, NULL, NULL, error);
   if (metadata == NULL)
     return NULL;
@@ -165,9 +167,8 @@ import_bundle (OstreeRepo *repo, GFile *file,
   g_print (_("Importing %s (%s)\n"), ref, to_checksum);
   if (!flatpak_pull_from_bundle (repo, file,
                                  NULL, ref, FALSE,
-                                 FALSE, NULL,
-                                 cancellable,
-                                 error))
+                                 FALSE, verify_keys,
+                                 cancellable, error))
     return NULL;
 
   return g_strdup (to_checksum);
@@ -180,6 +181,7 @@ flatpak_builtin_build_import (int argc, char **argv, GCancellable *cancellable, 
   g_autoptr(GFile) file = NULL;
   g_autoptr(GFile) repofile = NULL;
   g_autoptr(OstreeRepo) repo = NULL;
+  g_autoptr(GVariant) verify_keys = NULL;
   const char *location;
   const char *filename;
   g_autofree char *commit = NULL;
@@ -212,10 +214,13 @@ flatpak_builtin_build_import (int argc, char **argv, GCancellable *cancellable, 
   if (!ostree_repo_open (repo, cancellable, error))
     return FALSE;
 
+  if (opt_sign_verify)
+    verify_keys = flatpak_verify_parse_keys (opt_sign_verify);
+
   if (opt_oci)
     commit = import_oci (repo, file, cancellable, error);
   else
-    commit = import_bundle (repo, file, cancellable, error);
+    commit = import_bundle (repo, file, verify_keys, cancellable, error);
   if (commit == NULL)
     return FALSE;
 
