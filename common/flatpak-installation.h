@@ -367,6 +367,7 @@ FLATPAK_EXTERN FlatpakInstalledRef * flatpak_installation_update_full (FlatpakIn
 G_GNUC_DEPRECATED_FOR(flatpak_transaction_add_install_bundle)
 FLATPAK_EXTERN FlatpakInstalledRef * flatpak_installation_install_bundle (FlatpakInstallation    *self,
                                                                           GFile                  *file,
+                                                                          GVariant               *sign_data,
                                                                           FlatpakProgressCallback progress,
                                                                           gpointer                progress_data,
                                                                           GCancellable           *cancellable,

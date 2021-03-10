@@ -282,8 +282,9 @@ flatpak_bundle_ref_get_installed_size (FlatpakBundleRef *self)
  * Returns: a new bundle ref.
  */
 FlatpakBundleRef *
-flatpak_bundle_ref_new (GFile   *file,
-                        GError **error)
+flatpak_bundle_ref_new (GFile    *file,
+                        GVariant *sign_data,
+                        GError  **error)
 {
   FlatpakRefKind kind;
   FlatpakBundleRefPrivate *priv;
@@ -303,8 +304,8 @@ flatpak_bundle_ref_new (GFile   *file,
   guint64 installed_size;
   g_autofree char *collection_id = NULL;
 
-  metadata = flatpak_bundle_load (file, &commit, &full_ref, &origin, &runtime_repo, &metadata_contents, &installed_size,
-                                  NULL, &collection_id, error);
+  metadata = flatpak_bundle_load (file, &commit, &full_ref, sign_data, &origin, &runtime_repo, &metadata_contents,
+                                  &installed_size, NULL, &collection_id, error);
   if (metadata == NULL)
     return NULL;
 

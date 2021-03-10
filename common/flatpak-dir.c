@@ -9363,6 +9363,7 @@ char *
 flatpak_dir_ensure_bundle_remote (FlatpakDir         *self,
                                   GFile              *file,
                                   GBytes             *extra_gpg_data,
+                                  GVariant           *sign_data,
                                   FlatpakDecomposed **out_ref,
                                   char              **out_checksum,
                                   char              **out_metadata,
@@ -9387,7 +9388,7 @@ flatpak_dir_ensure_bundle_remote (FlatpakDir         *self,
     return NULL;
 
   metadata = flatpak_bundle_load (file, &to_checksum,
-                                  &ref,
+                                  &ref, sign_data,
                                   &origin,
                                   NULL, &fp_metadata, NULL,
                                   &included_gpg_data,
@@ -9426,7 +9427,7 @@ flatpak_dir_ensure_bundle_remote (FlatpakDir         *self,
                                                  basename,
                                                  flatpak_decomposed_get_ref (ref),
                                                  gpg_data,
-                                                 NULL,
+                                                 sign_data,
                                                  collection_id,
                                                  &created_remote,
                                                  cancellable,
@@ -9507,6 +9508,7 @@ flatpak_dir_check_add_remotes_config_dir (FlatpakDir *self,
 gboolean
 flatpak_dir_install_bundle (FlatpakDir         *self,
                             GFile              *file,
+                            GVariant           *sign_data,
                             const char         *remote,
                             FlatpakDecomposed **out_ref,
                             GCancellable       *cancellable,
@@ -9519,6 +9521,7 @@ flatpak_dir_install_bundle (FlatpakDir         *self,
   g_autofree char *origin = NULL;
   g_autofree char *to_checksum = NULL;
   gboolean gpg_verify;
+  gboolean sign_verify;
 
   if (!flatpak_dir_check_add_remotes_config_dir (self, error))
     return FALSE;
@@ -9551,7 +9554,7 @@ flatpak_dir_install_bundle (FlatpakDir         *self,
     return FALSE;
 
   metadata = flatpak_bundle_load (file, &to_checksum,
-                                  &ref,
+                                  &ref, sign_data,
                                   &origin,
                                   NULL, NULL,
                                   NULL, NULL, NULL,
@@ -9582,11 +9585,17 @@ flatpak_dir_install_bundle (FlatpakDir         *self,
                                           &gpg_verify, error))
     return FALSE;
 
+  if (!flatpak_dir_get_sign_verify (self->repo, remote,
+                                    &sign_verify, error))
+    return FALSE;
+
   if (!flatpak_pull_from_bundle (self->repo,
                                  file,
                                  remote,
                                  flatpak_decomposed_get_ref (ref),
                                  gpg_verify,
+                                 sign_verify,
+                                 sign_data,
                                  cancellable,
                                  error))
     return FALSE;

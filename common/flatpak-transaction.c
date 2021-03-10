@@ -140,8 +140,9 @@ typedef struct _BundleData                BundleData;
 
 struct _BundleData
 {
-  GFile  *file;
-  GBytes *gpg_data;
+  GFile    *file;
+  GBytes   *gpg_data;
+  GVariant *sign_data;
 };
 
 typedef struct {
@@ -239,14 +240,17 @@ static gboolean request_required_tokens (FlatpakTransaction *self,
 
 
 static BundleData *
-bundle_data_new (GFile  *file,
-                 GBytes *gpg_data)
+bundle_data_new (GFile    *file,
+                 GBytes   *gpg_data,
+                 GVariant *sign_data)
 {
   BundleData *data = g_new0 (BundleData, 1);
 
   data->file = g_object_ref (file);
   if (gpg_data)
     data->gpg_data = g_bytes_ref (gpg_data);
+  if (sign_data)
+    data->sign_data = g_variant_ref (sign_data);
 
   return data;
 }
@@ -256,6 +260,11 @@ bundle_data_free (BundleData *data)
 {
   g_clear_object (&data->file);
   g_clear_object (&data->gpg_data);
+  if (data->sign_data)
+    {
+      g_variant_unref (data->sign_data);
+      data->sign_data = NULL;
+    }
   g_free (data);
 }
 
@@ -2651,11 +2660,12 @@ gboolean
 flatpak_transaction_add_install_bundle (FlatpakTransaction *self,
                                         GFile              *file,
                                         GBytes             *gpg_data,
+                                        GVariant           *sign_data,
                                         GError            **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
 
-  priv->bundles = g_list_append (priv->bundles, bundle_data_new (file, gpg_data));
+  priv->bundles = g_list_append (priv->bundles, bundle_data_new (file, gpg_data, sign_data));
 
   return TRUE;
 }
@@ -4126,6 +4136,7 @@ flatpak_transaction_resolve_flatpakrefs (FlatpakTransaction *self,
 static gboolean
 handle_runtime_repo_deps_from_bundle (FlatpakTransaction *self,
                                       GFile              *file,
+                                      GVariant           *sign_data,
                                       GCancellable       *cancellable,
                                       GError            **error)
 {
@@ -4141,6 +4152,7 @@ handle_runtime_repo_deps_from_bundle (FlatpakTransaction *self,
   metadata = flatpak_bundle_load (file,
                                   NULL,
                                   &ref,
+                                  sign_data,
                                   NULL,
                                   &dep_url,
                                   NULL,
@@ -4174,15 +4186,15 @@ flatpak_transaction_resolve_bundles (FlatpakTransaction *self,
       g_autoptr(FlatpakDecomposed) ref = NULL;
       gboolean created_remote;
 
-      if (!handle_runtime_repo_deps_from_bundle (self, data->file, cancellable, error))
+      if (!handle_runtime_repo_deps_from_bundle (self, data->file, data->sign_data, cancellable, error))
         return FALSE;
 
       if (!flatpak_dir_ensure_repo (priv->dir, cancellable, error))
         return FALSE;
 
       remote = flatpak_dir_ensure_bundle_remote (priv->dir, data->file, data->gpg_data,
-                                                 &ref, &commit, &metadata, &created_remote,
-                                                 NULL, error);
+                                                 data->sign_data, &ref, &commit, &metadata,
+                                                 &created_remote, NULL, error);
       if (remote == NULL)
         return FALSE;
 
@@ -4372,12 +4384,23 @@ _run_op_kind (FlatpakTransaction           *self,
   else if (op->kind == FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE)
     {
       g_autoptr(FlatpakTransactionProgress) progress = flatpak_transaction_progress_new ();
+      BundleData *data = NULL;
+      for (GList *l = priv->bundles; l != NULL; l = l->next)
+        {
+          BundleData *d = l->data;
+          if (d->file == op->bundle)
+          {
+              data = d;
+              break;
+          }
+        }
+
       emit_new_op (self, op, progress);
       if (op->resolved_metakey && !flatpak_check_required_version (flatpak_decomposed_get_ref (op->ref),
                                                                    op->resolved_metakey, error))
         res = FALSE;
       else
-        res = flatpak_dir_install_bundle (priv->dir, op->bundle,
+        res = flatpak_dir_install_bundle (priv->dir, op->bundle, data ? data->sign_data : NULL,
                                           op->remote, NULL,
                                           cancellable, error);
       flatpak_transaction_progress_done (progress);

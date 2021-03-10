@@ -4173,7 +4173,7 @@ test_bundle (void)
 
   file = g_file_new_for_path ("/dev/null");
 
-  ref = flatpak_bundle_ref_new (file, &error);
+  ref = flatpak_bundle_ref_new (file, NULL, &error);
   g_assert_nonnull (error);
   g_assert_null (ref);
   g_clear_error (&error);
@@ -4182,7 +4182,7 @@ test_bundle (void)
 
   path = g_build_filename (testdir, "bundles", "hello.flatpak", NULL);
   file = g_file_new_for_path (path);
-  ref = flatpak_bundle_ref_new (file, &error);
+  ref = flatpak_bundle_ref_new (file, NULL, &error);
   g_assert_no_error (error);
   g_assert_nonnull (ref);
 
@@ -4243,7 +4243,7 @@ test_install_bundle (void)
   file = g_file_new_for_path (path);
 
   G_GNUC_BEGIN_IGNORE_DEPRECATIONS
-  ref = flatpak_installation_install_bundle (inst, file, NULL, NULL, NULL, &error);
+  ref = flatpak_installation_install_bundle (inst, file, NULL, NULL, NULL, NULL, &error);
   G_GNUC_END_IGNORE_DEPRECATIONS
   g_assert_no_error (error);
   g_assert_nonnull (ref);

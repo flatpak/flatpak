@@ -743,6 +743,7 @@ gboolean              flatpak_dir_install                                   (Fla
 char *                flatpak_dir_ensure_bundle_remote                      (FlatpakDir                    *self,
                                                                              GFile                         *file,
                                                                              GBytes                        *extra_gpg_data,
+                                                                             GVariant                      *sign_data,
                                                                              FlatpakDecomposed            **out_ref,
                                                                              char                         **out_commit,
                                                                              char                         **out_metadata,
@@ -751,6 +752,7 @@ char *                flatpak_dir_ensure_bundle_remote                      (Fla
                                                                              GError                       **error);
 gboolean              flatpak_dir_install_bundle                            (FlatpakDir                    *self,
                                                                              GFile                         *file,
+                                                                             GVariant                      *sign_data,
                                                                              const char                    *remote,
                                                                              FlatpakDecomposed            **out_ref,
                                                                              GCancellable                  *cancellable,

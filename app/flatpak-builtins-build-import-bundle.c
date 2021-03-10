@@ -152,7 +152,7 @@ import_bundle (OstreeRepo *repo, GFile *file,
    * flatpak_pull_from_bundle() does that. */
   metadata = flatpak_bundle_load (file, &to_checksum,
                                   &bundle_ref,
-                                  NULL, NULL, NULL,
+                                  NULL, NULL, NULL, NULL,
                                   NULL, NULL, NULL, error);
   if (metadata == NULL)
     return NULL;
@@ -165,6 +165,7 @@ import_bundle (OstreeRepo *repo, GFile *file,
   g_print (_("Importing %s (%s)\n"), ref, to_checksum);
   if (!flatpak_pull_from_bundle (repo, file,
                                  NULL, ref, FALSE,
+                                 FALSE, NULL,
                                  cancellable,
                                  error))
     return NULL;

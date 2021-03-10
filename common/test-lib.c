@@ -160,7 +160,7 @@ main (int argc, char *argv[])
   g_print ("\n**** Loading bundle\n");
   {
     g_autoptr(GFile) f = g_file_new_for_commandline_arg ("tests/hello.pak");
-    g_autoptr(FlatpakBundleRef) bundle = flatpak_bundle_ref_new (f, &error);
+    g_autoptr(FlatpakBundleRef) bundle = flatpak_bundle_ref_new (f, NULL, &error);
     if (bundle == NULL)
       {
         g_print ("Error loading bundle: %s\n", error->message);
