@@ -609,7 +609,7 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
   if (!opt_no_update_appstream)
     {
       g_print (_("Updating appstream branch\n"));
-      if (!flatpak_repo_generate_appstream (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, 0, cancellable, error))
+      if (!flatpak_repo_generate_appstream (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, NULL, NULL, 0, cancellable, error))
         return FALSE;
     }
 
@@ -638,7 +638,7 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
         flags |= FLATPAK_REPO_UPDATE_FLAG_DISABLE_INDEX;
 
       g_print (_("Updating summary\n"));
-      if (!flatpak_repo_update (repo, flags, (const char **) opt_gpg_key_ids, opt_gpg_homedir, cancellable, error))
+      if (!flatpak_repo_update (repo, flags, (const char **) opt_gpg_key_ids, opt_gpg_homedir, NULL, NULL, cancellable, error))
         return FALSE;
     }
 

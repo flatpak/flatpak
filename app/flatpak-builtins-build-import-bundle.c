@@ -240,7 +240,7 @@ flatpak_builtin_build_import (int argc, char **argv, GCancellable *cancellable, 
     }
 
   if (opt_update_appstream &&
-      !flatpak_repo_generate_appstream (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, 0, cancellable, error))
+      !flatpak_repo_generate_appstream (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, NULL, NULL, 0, cancellable, error))
     return FALSE;
 
   if (!opt_no_update_summary)
@@ -254,6 +254,8 @@ flatpak_builtin_build_import (int argc, char **argv, GCancellable *cancellable, 
       if (!flatpak_repo_update (repo, flags,
                                 (const char **) opt_gpg_key_ids,
                                 opt_gpg_homedir,
+                                NULL,
+                                NULL,
                                 cancellable,
                                 error))
         return FALSE;
