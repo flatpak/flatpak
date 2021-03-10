@@ -249,6 +249,7 @@
       <arg type='u' name='flags' direction='in'/>
       <arg type='s' name='remote' direction='in'/>
       <arg type='s' name='installation' direction='in'/>
+      <arg type='v' name='sign_data' direction='in'/>
       <arg type='s' name='ref' direction='out'/>
     </method>
 
