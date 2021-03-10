@@ -9228,6 +9228,67 @@ flatpak_dconf_path_is_similar (const char *path1,
   return (path1[i1] == '\0');
 }
 
+char *
+flatpak_verify_add_config_options (GKeyFile   *config,
+                                   const char *group,
+                                   const char *keyspec,
+                                   GError    **error)
+{
+  g_autoptr(OstreeSign) sign = NULL;
+  g_auto(GStrv) parts = NULL;
+  g_auto(GStrv) keyparts = NULL;
+  g_autofree char *optname = NULL;
+  const gchar *keytype;
+  const gchar *rest;
+  const gchar *keyref;
+  const gchar *keydata;
+
+  parts = g_strsplit (keyspec, "=", 2);
+  if (!(keytype = parts[0]) || !(rest = parts[1]) || !strchr (rest, ':'))
+    {
+      flatpak_fail (error, _("Failed to parse KEYTYPE=[inline|file]:DATA in %s"), keyspec);
+      return NULL;
+    }
+
+  sign = ostree_sign_get_by_name (keytype, error);
+  if (!sign)
+    return NULL;
+
+  keyparts = g_strsplit (rest, ":", 2);
+  keyref = keyparts[0];
+  keydata = keyparts[1];
+  g_assert (keyref && keydata);
+
+  if (!*keydata)
+    {
+      flatpak_fail (error, _("Key data is empty"));
+      return NULL;
+    }
+
+  if (g_str_equal (keyref, "inline"))
+    {
+      optname = g_strdup_printf ("verification-%s-key", keytype);
+    }
+  else if (g_str_equal (keyref, "file"))
+    {
+      optname = g_strdup_printf ("verification-%s-file", keytype);
+      if (!g_file_test (keydata, G_FILE_TEST_EXISTS))
+        {
+          flatpak_fail (error, _("Verification file '%s' not found"), keydata);
+          return NULL;
+        }
+    }
+  else
+    {
+      flatpak_fail (error, _("Invalid key reference '%s', expected inline|file"), keyref);
+      return NULL;
+    }
+
+  g_key_file_set_string (config, group, optname, keydata);
+  return g_strdup (ostree_sign_get_name (sign));
+}
+
+
 /**
  * flatpak_envp_cmp:
  * @p1: a `const char * const *`

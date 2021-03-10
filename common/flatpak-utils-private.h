@@ -918,6 +918,11 @@ gboolean flatpak_repo_resolve_rev (OstreeRepo    *repo,
                                    GCancellable  *cancellable,
                                    GError       **error);
 
+char *flatpak_verify_add_config_options (GKeyFile   *config,
+                                         const char *group,
+                                         const char *keyspec,
+                                         GError    **error);
+
 static inline void
 null_safe_g_ptr_array_unref (gpointer data)
 {
