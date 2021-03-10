@@ -106,6 +106,9 @@ FLATPAK_EXTERN void          flatpak_remote_set_gpg_verify (FlatpakRemote *self,
                                                             gboolean       gpg_verify);
 FLATPAK_EXTERN void          flatpak_remote_set_gpg_key (FlatpakRemote *self,
                                                          GBytes        *gpg_key);
+FLATPAK_EXTERN gboolean      flatpak_remote_get_sign_verify (FlatpakRemote *self);
+FLATPAK_EXTERN void          flatpak_remote_set_sign_verify (FlatpakRemote *self,
+                                                             gboolean       sign_verify);
 FLATPAK_EXTERN gboolean      flatpak_remote_get_noenumerate (FlatpakRemote *self);
 FLATPAK_EXTERN void          flatpak_remote_set_noenumerate (FlatpakRemote *self,
                                                              gboolean       noenumerate);
