@@ -2155,6 +2155,7 @@ flatpak_dir_system_helper_call_install_bundle (FlatpakDir   *self,
                                                guint         arg_flags,
                                                const gchar  *arg_remote,
                                                const gchar  *arg_installation,
+                                               GVariant     *arg_sign_data,
                                                gchar       **out_ref,
                                                GCancellable *cancellable,
                                                GError      **error)
@@ -2164,11 +2165,12 @@ flatpak_dir_system_helper_call_install_bundle (FlatpakDir   *self,
 
   g_autoptr(GVariant) ret =
     flatpak_dir_system_helper_call (self, "InstallBundle",
-                                    g_variant_new ("(^ayuss)",
+                                    g_variant_new ("(^ayussv)",
                                                    arg_bundle_path,
                                                    arg_flags,
                                                    arg_remote,
-                                                   arg_installation),
+                                                   arg_installation,
+                                                   arg_sign_data),
                                     G_VARIANT_TYPE ("(s)"), NULL,
                                     cancellable, error);
   if (ret == NULL)
@@ -9529,11 +9531,16 @@ flatpak_dir_install_bundle (FlatpakDir         *self,
   if (flatpak_dir_use_system_helper (self, NULL))
     {
       const char *installation = flatpak_dir_get_id (self);
+      g_autoptr(GVariant) empty_sign_data = NULL;
+
+      if (!sign_data)
+        empty_sign_data = g_variant_ref_sink (g_variant_new_from_data (G_VARIANT_TYPE_VARDICT, "", 0, TRUE, NULL, NULL));
 
       if (!flatpak_dir_system_helper_call_install_bundle (self,
                                                           flatpak_file_get_path_cached (file),
                                                           0, remote,
                                                           installation ? installation : "",
+                                                          sign_data ? sign_data : empty_sign_data,
                                                           &ref_str,
                                                           cancellable,
                                                           error))

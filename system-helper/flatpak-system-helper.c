@@ -990,14 +990,19 @@ handle_install_bundle (FlatpakSystemHelper   *object,
                        const gchar           *arg_bundle_path,
                        guint32                arg_flags,
                        const gchar           *arg_remote,
-                       const gchar           *arg_installation)
+                       const gchar           *arg_installation,
+                       GVariant              *arg_sign_data)
 {
   g_autoptr(FlatpakDir) system = NULL;
   g_autoptr(GFile) bundle_file = g_file_new_for_path (arg_bundle_path);
   g_autoptr(GError) error = NULL;
   g_autoptr(FlatpakDecomposed) ref = NULL;
+  g_autoptr(GVariant) sign_data = NULL;
 
   g_debug ("InstallBundle %s %u %s %s", arg_bundle_path, arg_flags, arg_remote, arg_installation);
+
+  if (arg_sign_data)
+    sign_data = g_variant_get_child_value (arg_sign_data, 0);
 
   system = dir_get_system (arg_installation, get_sender_pid (invocation), &error);
   if (system == NULL)
@@ -1020,7 +1025,7 @@ handle_install_bundle (FlatpakSystemHelper   *object,
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
-  if (!flatpak_dir_install_bundle (system, bundle_file, NULL, arg_remote, &ref, NULL, &error))
+  if (!flatpak_dir_install_bundle (system, bundle_file, sign_data, arg_remote, &ref, NULL, &error))
     {
       flatpak_invocation_return_error (invocation, error, "Error installing bundle");
       return G_DBUS_METHOD_INVOCATION_HANDLED;
