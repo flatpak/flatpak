@@ -10166,6 +10166,7 @@ flatpak_dir_ensure_bundle_remote (FlatpakDir         *self,
                                                  basename,
                                                  flatpak_decomposed_get_ref (ref),
                                                  gpg_data,
+                                                 NULL,
                                                  collection_id,
                                                  &created_remote,
                                                  cancellable,
@@ -14497,6 +14498,7 @@ create_origin_remote_config (OstreeRepo *repo,
                              const char *title,
                              const char *main_ref,
                              gboolean    gpg_verify,
+                             GVariant   *sign_data,
                              const char *collection_id,
                              GKeyFile  **new_config)
 {
@@ -14541,6 +14543,53 @@ create_origin_remote_config (OstreeRepo *repo,
   g_key_file_set_string (*new_config, group, "xa.prio", "0");
   g_key_file_set_string (*new_config, group, "gpg-verify-summary", gpg_verify ? "true" : "false");
   g_key_file_set_string (*new_config, group, "gpg-verify", gpg_verify ? "true" : "false");
+
+  if (sign_data)
+    {
+      g_autoptr(GPtrArray) verifiers = NULL;
+      g_autoptr(GPtrArray) sign_names = g_ptr_array_new ();
+      g_auto(GVariantDict) dict = FLATPAK_VARIANT_DICT_INITIALIZER;
+      g_autofree char *sign_names_string = NULL;
+      gsize i;
+
+      g_variant_dict_init (&dict, sign_data);
+      verifiers = ostree_sign_get_all ();
+
+      for (i = 0; i < verifiers->len; i++)
+        {
+          g_autoptr(GVariant) keys = NULL;
+          g_autofree const gchar **keys_array = NULL;
+          g_autofree char *keys_string = NULL;
+          g_autofree gchar *opt = NULL;
+          OstreeSign *sign = verifiers->pdata[i];
+          gsize len;
+
+          keys = g_variant_dict_lookup_value (&dict, ostree_sign_metadata_key (sign),
+                                              G_VARIANT_TYPE_STRING_ARRAY);
+          if (!keys)
+            continue;
+
+          keys_array = g_variant_get_strv (keys, &len);
+          keys_string = g_strjoinv (",", (char **) keys_array);
+
+          opt = g_strdup_printf ("verification-%s-key", ostree_sign_get_name (sign));
+          g_key_file_set_string (*new_config, group, opt, keys_string);
+
+          g_ptr_array_add (sign_names, (char **) ostree_sign_get_name (sign));
+        }
+
+        g_ptr_array_add (sign_names, NULL);
+        sign_names_string = g_strjoinv (",", (char **) sign_names->pdata);
+
+        g_key_file_set_string (*new_config, group, "sign-verify-summary", "true");
+        g_key_file_set_string (*new_config, group, "sign-verify", sign_names_string);
+    }
+  else
+    {
+      g_key_file_set_string (*new_config, group, "sign-verify-summary", "false");
+      g_key_file_set_string (*new_config, group, "sign-verify", "false");
+    }
+
   if (main_ref)
     g_key_file_set_string (*new_config, group, "xa.main-ref", main_ref);
 
@@ -14557,6 +14606,7 @@ flatpak_dir_create_origin_remote (FlatpakDir   *self,
                                   const char   *title,
                                   const char   *main_ref,
                                   GBytes       *gpg_data,
+                                  GVariant     *sign_data,
                                   const char   *collection_id,
                                   gboolean     *changed_config,
                                   GCancellable *cancellable,
@@ -14565,7 +14615,9 @@ flatpak_dir_create_origin_remote (FlatpakDir   *self,
   g_autoptr(GKeyFile) new_config = NULL;
   g_autofree char *remote = NULL;
 
-  remote = create_origin_remote_config (self->repo, url, id, title, main_ref, gpg_data != NULL, collection_id, &new_config);
+  remote = create_origin_remote_config (self->repo, url, id, title, main_ref,
+                                        gpg_data != NULL, sign_data,
+                                        collection_id, &new_config);
 
   if (new_config &&
       !flatpak_dir_modify_remote (self, remote, new_config,
@@ -14582,23 +14634,27 @@ flatpak_dir_create_origin_remote (FlatpakDir   *self,
 }
 
 static gboolean
-parse_ref_file (GKeyFile *keyfile,
-                char    **name_out,
-                char    **branch_out,
-                char    **url_out,
-                GBytes  **gpg_data_out,
-                gboolean *is_runtime_out,
-                char    **collection_id_out,
-                GError  **error)
+parse_ref_file (GKeyFile  *keyfile,
+                char     **name_out,
+                char     **branch_out,
+                char     **url_out,
+                GBytes   **gpg_data_out,
+                GVariant **sign_data_out,
+                gboolean  *is_runtime_out,
+                char     **collection_id_out,
+                GError   **error)
 {
   g_autofree char *url = NULL;
   g_autofree char *name = NULL;
   g_autofree char *branch = NULL;
   g_autofree char *version = NULL;
   g_autoptr(GBytes) gpg_data = NULL;
+  g_autoptr(GVariant) sign_data = NULL;
   gboolean is_runtime = FALSE;
+  g_autofree char *sign_name = NULL;
   g_autofree char *collection_id = NULL;
-  g_autofree char *str = NULL;
+  g_autofree char *gpg_str = NULL;
+  g_autofree char *sign_str = NULL;
 
   *name_out = NULL;
   *branch_out = NULL;
@@ -14632,19 +14688,51 @@ parse_ref_file (GKeyFile *keyfile,
   is_runtime = g_key_file_get_boolean (keyfile, FLATPAK_REF_GROUP,
                                        FLATPAK_REF_IS_RUNTIME_KEY, NULL);
 
-  str = g_key_file_get_string (keyfile, FLATPAK_REF_GROUP,
-                               FLATPAK_REF_GPGKEY_KEY, NULL);
-  if (str != NULL)
+  gpg_str = g_key_file_get_string (keyfile, FLATPAK_REF_GROUP,
+                                   FLATPAK_REF_GPGKEY_KEY, NULL);
+  if (gpg_str != NULL && gpg_str[0])
     {
       g_autofree guchar *decoded = NULL;
       gsize decoded_len;
 
-      str = g_strstrip (str);
-      decoded = g_base64_decode (str, &decoded_len);
+      gpg_str = g_strstrip (gpg_str);
+      decoded = g_base64_decode (gpg_str, &decoded_len);
       if (decoded_len < 10) /* Check some minimal size so we don't get crap */
         return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid file format, gpg key invalid"));
 
       gpg_data = g_bytes_new_take (g_steal_pointer (&decoded), decoded_len);
+    }
+
+  sign_name = g_key_file_get_string (keyfile, FLATPAK_REF_GROUP,
+                                     FLATPAK_REF_SIGNATURETYPE_KEY, NULL);
+  if (sign_name == NULL)
+    sign_name = g_strdup (OSTREE_SIGN_NAME_ED25519);
+
+  sign_str = g_key_file_get_string (keyfile, FLATPAK_REF_GROUP,
+                                    FLATPAK_REF_SIGNATUREKEY_KEY, NULL);
+  if (sign_str != NULL && strlen (sign_str) > 0)
+    {
+      g_auto(GVariantDict) dict = FLATPAK_VARIANT_DICT_INITIALIZER;
+      g_autoptr(GVariantBuilder) builder = NULL;
+      g_autofree guchar *decoded = NULL;
+      g_autoptr(OstreeSign) sign = ostree_sign_get_by_name (sign_name, error);
+      gsize decoded_len;
+
+      if (!sign)
+        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid file format, signature type invalid"));
+
+      sign_str = g_strstrip (sign_str);
+      decoded = g_base64_decode (sign_str, &decoded_len);
+      if (decoded_len < 10) /* Check some minimal size so we don't get crap */
+        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid file format, signature key invalid"));
+
+      /* Build sign_data GVariant */
+      builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
+      g_variant_builder_add_value (builder, g_variant_new_string (sign_str));
+      g_variant_dict_init (&dict, NULL);
+      g_variant_dict_insert_value (&dict, ostree_sign_metadata_key (sign),
+                                   g_variant_builder_end (builder));
+      sign_data = g_variant_ref_sink (g_variant_dict_end (&dict));
     }
 
   /* We have a hierarchy of keys for setting the collection ID, which all have
@@ -14669,14 +14757,15 @@ parse_ref_file (GKeyFile *keyfile,
                                                             FLATPAK_REF_COLLECTION_ID_KEY);
     }
 
-  if (collection_id != NULL && gpg_data == NULL)
-    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Collection ID requires GPG key to be provided"));
+  if (collection_id != NULL && gpg_data == NULL && sign_data == NULL)
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Collection ID requires signature key to be provided"));
 
   *name_out = g_steal_pointer (&name);
   *branch_out = g_steal_pointer (&branch);
   *url_out = g_steal_pointer (&url);
   *gpg_data_out = g_steal_pointer (&gpg_data);
   *is_runtime_out = is_runtime;
+  *sign_data_out = g_steal_pointer (&sign_data);
   *collection_id_out = g_steal_pointer (&collection_id);
 
   return TRUE;
@@ -14698,10 +14787,11 @@ flatpak_dir_create_remote_for_ref_file (FlatpakDir         *self,
   g_autofree char *remote = NULL;
   gboolean is_runtime = FALSE;
   g_autofree char *collection_id = NULL;
+  g_autoptr(GVariant) sign_data = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
   g_autoptr(FlatpakDecomposed) ref = NULL;
 
-  if (!parse_ref_file (keyfile, &name, &branch, &url, &gpg_data, &is_runtime, &collection_id, error))
+  if (!parse_ref_file (keyfile, &name, &branch, &url, &gpg_data, &sign_data, &is_runtime, &collection_id, error))
     return FALSE;
 
   ref = flatpak_decomposed_new_from_parts (is_runtime ? FLATPAK_KINDS_RUNTIME : FLATPAK_KINDS_APP,
@@ -14724,9 +14814,8 @@ flatpak_dir_create_remote_for_ref_file (FlatpakDir         *self,
 
   if (remote == NULL)
     {
-      /* title is NULL because the title from the ref file is the title of the app not the remote */
       remote = flatpak_dir_create_origin_remote (self, url, name, NULL, flatpak_decomposed_get_ref (ref),
-                                                 gpg_data, collection_id, NULL, NULL, error);
+                                                 gpg_data, sign_data, collection_id, NULL, NULL, error);
       if (remote == NULL)
         return FALSE;
     }
