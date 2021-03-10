@@ -65,6 +65,7 @@ struct _FlatpakRemotePrivate
   char             *local_main_ref;
   char             *local_filter;
   gboolean          local_gpg_verify;
+  gboolean          local_sign_verify;
   gboolean          local_noenumerate;
   gboolean          local_nodeps;
   gboolean          local_disabled;
@@ -82,6 +83,7 @@ struct _FlatpakRemotePrivate
   guint             local_main_ref_set       : 1;
   guint             local_filter_set         : 1;
   guint             local_gpg_verify_set     : 1;
+  guint             local_sign_verify_set    : 1;
   guint             local_noenumerate_set    : 1;
   guint             local_nodeps_set         : 1;
   guint             local_disabled_set       : 1;
@@ -522,7 +524,7 @@ flatpak_remote_get_comment (FlatpakRemote *self)
 /**
  * flatpak_remote_set_comment:
  * @self: a #FlatpakRemote
- * @comment: The new comment 
+ * @comment: The new comment
  *
  * Sets the comment of this remote.
  *
@@ -549,7 +551,7 @@ flatpak_remote_set_comment (FlatpakRemote *self,
  *
  * Returns the description of the remote.
  *
- * Returns: (transfer full): the description 
+ * Returns: (transfer full): the description
  *
  * Since: 1.4
  */
@@ -1043,6 +1045,53 @@ flatpak_remote_new_with_dir (const char *name,
 }
 
 /**
+ * flatpak_remote_get_sign_verify:
+ * @self: a #FlatpakRemote
+ *
+ * Returns whether signature verification is enabled for the remote.
+ *
+ * Returns: whether signature verification is enabled
+ */
+gboolean
+flatpak_remote_get_sign_verify (FlatpakRemote *self)
+{
+  FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
+  gboolean res;
+
+  if (priv->local_sign_verify_set)
+    return priv->local_sign_verify;
+
+  if (priv->dir)
+    {
+      if (flatpak_dir_get_sign_verify (priv->dir, priv->name, &res, NULL))
+        return res;
+    }
+
+  return FALSE;
+}
+
+/**
+ * flatpak_remote_set_sign_verify:
+ * @self: a #FlatpakRemote
+ * @sign_verify: a bool
+ *
+ * Sets the sign_verify config of this remote. See flatpak_remote_get_sign_verify().
+ *
+ * Note: This is a local modification of this object, you must commit changes
+ * using flatpak_installation_modify_remote() for the changes to take
+ * effect.
+ */
+void
+flatpak_remote_set_sign_verify (FlatpakRemote *self,
+                               gboolean       sign_verify)
+{
+  FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
+
+  priv->local_sign_verify = sign_verify;
+  priv->local_sign_verify_set = TRUE;
+}
+
+/**
  * flatpak_remote_new:
  * @name: a name
  *
@@ -1257,17 +1306,28 @@ flatpak_remote_commit (FlatpakRemote *self,
   if (priv->local_main_ref_set)
     g_key_file_set_string (config, group, "xa.main-ref", priv->local_main_ref);
 
-  if (priv->local_gpg_verify_set)
+  if (priv->local_gpg_verify_set || priv->local_sign_verify_set)
     {
-      if (!priv->local_gpg_verify &&
+      if (!priv->local_gpg_verify && !priv->local_sign_verify &&
            priv->local_collection_id_set && priv->local_collection_id != NULL)
         return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
-                                   _("GPG verification must be enabled when a collection ID is set"));
+                                   _("signature verification must be enabled when a collection ID is set"));
 
-      g_key_file_set_boolean (config, group, "gpg-verify", priv->local_gpg_verify);
+      if (priv->local_gpg_verify_set)
+        {
+          g_key_file_set_boolean (config, group, "gpg-verify", priv->local_gpg_verify);
 
-      if (!priv->local_collection_id_set || priv->local_collection_id == NULL)
-        g_key_file_set_boolean (config, group, "gpg-verify-summary", priv->local_gpg_verify);
+          if (!priv->local_collection_id_set || priv->local_collection_id == NULL)
+            g_key_file_set_boolean (config, group, "gpg-verify-summary", priv->local_gpg_verify);
+        }
+
+      if (priv->local_sign_verify_set)
+        {
+          g_key_file_set_boolean (config, group, "sign-verify", priv->local_sign_verify);
+
+          if (!priv->local_collection_id_set || priv->local_collection_id == NULL)
+            g_key_file_set_boolean (config, group, "sign-verify-summary", priv->local_sign_verify);
+        }
     }
 
   if (priv->local_noenumerate_set)
