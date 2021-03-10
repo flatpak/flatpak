@@ -42,6 +42,7 @@
 
 static char *opt_arch;
 static char **opt_gpg_file;
+static char **opt_sign_keys;
 static char **opt_subpaths;
 static char **opt_sideload_repos;
 static gboolean opt_no_pull;
@@ -76,6 +77,7 @@ static GOptionEntry options[] = {
   { "bundle", 0, 0, G_OPTION_ARG_NONE, &opt_bundle, N_("Assume LOCATION is a .flatpak single-file bundle"), NULL },
   { "from", 0, 0, G_OPTION_ARG_NONE, &opt_from, N_("Assume LOCATION is a .flatpakref application description"), NULL },
   { "gpg-file", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_file, N_("Check bundle signatures with GPG key from FILE (- for stdin)"), N_("FILE") },
+  { "sign-verify", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_sign_keys, N_("Verify signatures using KEYTYPE=inline:PUBKEY or KEYTYPE=file:/path/to/key"), N_("KEYTYPE=[inline|file]:PUBKEY") },
   { "subpath", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_subpaths, N_("Only install this subpath"), N_("PATH") },
   { "assumeyes", 'y', 0, G_OPTION_ARG_NONE, &opt_yes, N_("Automatically answer yes for all questions"), NULL },
   { "reinstall", 0, 0, G_OPTION_ARG_NONE, &opt_reinstall, N_("Uninstall first if already installed"), NULL },
@@ -138,6 +140,7 @@ install_bundle (FlatpakDir *dir,
   g_autoptr(GFile) file = NULL;
   const char *filename;
   g_autoptr(GBytes) gpg_data = NULL;
+  g_autoptr(GVariant) sign_data = NULL;
   g_autoptr(FlatpakTransaction) transaction = NULL;
 
   if (argc < 2)
@@ -161,6 +164,13 @@ install_bundle (FlatpakDir *dir,
         return FALSE;
     }
 
+  if (opt_sign_keys)
+    {
+      sign_data = flatpak_verify_parse_keys (opt_sign_keys, error);
+      if (sign_data == NULL)
+        return FALSE;
+    }
+
   if (opt_noninteractive)
     transaction = flatpak_quiet_transaction_new (dir, error);
   else
@@ -181,7 +191,7 @@ install_bundle (FlatpakDir *dir,
   for (int i = 0; opt_sideload_repos != NULL && opt_sideload_repos[i] != NULL; i++)
     flatpak_transaction_add_sideload_repo (transaction, opt_sideload_repos[i]);
 
-  if (!flatpak_transaction_add_install_bundle (transaction, file, gpg_data, NULL, error))
+  if (!flatpak_transaction_add_install_bundle (transaction, file, gpg_data, sign_data, error))
     return FALSE;
 
   if (!flatpak_transaction_run (transaction, cancellable, error))
