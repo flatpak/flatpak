@@ -37,6 +37,7 @@
 static gboolean opt_no_gpg_verify;
 static gboolean opt_do_gpg_verify;
 #endif
+static gboolean opt_no_sign_verify;
 static gboolean opt_do_enumerate;
 static gboolean opt_no_enumerate;
 static gboolean opt_do_deps;
@@ -64,6 +65,7 @@ static gboolean opt_authenticator_install = -1;
 #ifndef FLATPAK_DISABLE_GPG
 static char **opt_gpg_import;
 #endif
+static char **opt_sign_keys = NULL;
 
 static GOptionEntry modify_options[] = {
 #ifndef FLATPAK_DISABLE_GPG
@@ -82,6 +84,7 @@ static GOptionEntry common_options[] = {
 #ifndef FLATPAK_DISABLE_GPG
   { "no-gpg-verify", 0, 0, G_OPTION_ARG_NONE, &opt_no_gpg_verify, N_("Disable GPG verification"), NULL },
 #endif
+  { "no-sign-verify", 0, 0, G_OPTION_ARG_NONE, &opt_no_sign_verify, N_("Disable signature verification"), NULL },
   { "no-enumerate", 0, 0, G_OPTION_ARG_NONE, &opt_no_enumerate, N_("Mark the remote as don't enumerate"), NULL },
   { "no-use-for-deps", 0, 0, G_OPTION_ARG_NONE, &opt_no_deps, N_("Mark the remote as don't use for deps"), NULL },
   { "prio", 0, 0, G_OPTION_ARG_INT, &opt_prio, N_("Set priority (default 1, higher is more prioritized)"), N_("PRIORITY") },
@@ -95,6 +98,7 @@ static GOptionEntry common_options[] = {
 #ifndef FLATPAK_DISABLE_GPG
   { "gpg-import", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_import, N_("Import GPG key from FILE (- for stdin)"), N_("FILE") },
 #endif
+  { "sign-verify", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_sign_keys, N_("Verify signatures using KEYTYPE=inline:PUBKEY or KEYTYPE=file:/path/to/key"), N_("KEYTYPE=[inline|file]:PUBKEY") },
   { "no-filter", 0, 0, G_OPTION_ARG_NONE, &opt_no_filter, N_("Disable local filter"), NULL },
   { "filter", 0, 0, G_OPTION_ARG_FILENAME, &opt_filter, N_("Set path to local filter FILE"), N_("FILE") },
   { "disable", 0, 0, G_OPTION_ARG_NONE, &opt_disable, N_("Disable the remote"), NULL },
@@ -121,7 +125,7 @@ get_config_from_opts (FlatpakDir *dir, const char *remote_name, gboolean *change
     config = ostree_repo_copy_config (repo);
 
 #ifndef FLATPAK_DISABLE_GPG
-  if (opt_no_gpg_verify)
+  if (opt_no_gpg_verify || opt_no_sign_verify)
     {
       g_key_file_set_boolean (config, group, "gpg-verify", FALSE);
       g_key_file_set_boolean (config, group, "gpg-verify-summary", FALSE);
@@ -138,6 +142,73 @@ get_config_from_opts (FlatpakDir *dir, const char *remote_name, gboolean *change
   g_key_file_set_boolean (config, group, "gpg-verify", FALSE);
   g_key_file_set_boolean (config, group, "gpg-verify-summary", FALSE);
 #endif
+
+  if (opt_no_sign_verify)
+    {
+      g_autoptr(GPtrArray) verifiers = ostree_sign_get_all ();
+
+      /* Remove all existing signature keys if any */
+      for (guint i = 0; i < verifiers->len; i++)
+        {
+          g_autofree char *optkey = NULL;
+          g_autofree char *optfile = NULL;
+          OstreeSign *sign = verifiers->pdata[i];
+
+          optkey = g_strdup_printf ("verification-%s-key", ostree_sign_get_name (sign));
+          optfile = g_strdup_printf ("verification-%s-file", ostree_sign_get_name (sign));
+
+          g_key_file_remove_key (config, group, optkey, NULL);
+          g_key_file_remove_key (config, group, optfile, NULL);
+        }
+
+      g_key_file_set_boolean (config, group, "sign-verify", FALSE);
+      g_key_file_set_boolean (config, group, "sign-verify-summary", FALSE);
+      *changed = TRUE;
+    }
+  else
+    {
+      g_autofree gchar *verify = g_key_file_get_string (config, group, "sign-verify", NULL);
+      g_autoptr(GString) sign_verify = NULL;
+
+      /*
+       * `sign-verify` can be either a boolean, or a string representing the
+       * signature type. In the latter case, this means it's enabled, so we
+       * have to read the full string and check it doesn't translate to a
+       * boolean false.
+       */
+      if (verify && !g_str_equal (verify, "false") && !g_str_equal (verify, "0"))
+        sign_verify = g_string_new (verify);
+
+      for (char **iter = opt_sign_keys; iter && *iter; iter++)
+        {
+          g_autofree char *signname = flatpak_verify_add_config_options (config, group, *iter, NULL);
+          if (!signname)
+            return FALSE;
+
+          if (!sign_verify)
+            {
+              sign_verify = g_string_new (signname);
+            }
+          else if (g_strstr_len (sign_verify->str, sign_verify->len, signname) == NULL)
+            {
+              g_string_append_c (sign_verify, ',');
+              g_string_append (sign_verify, signname);
+            }
+
+          *changed = TRUE;
+        }
+
+      if (sign_verify && sign_verify->len > 0)
+        {
+          g_key_file_set_string (config, group, "sign-verify", sign_verify->str);
+          g_key_file_set_boolean (config, group, "sign-verify-summary", TRUE);
+        }
+      else
+        {
+          g_key_file_set_boolean (config, group, "sign-verify", FALSE);
+          g_key_file_set_boolean (config, group, "sign-verify-summary", FALSE);
+        }
+    }
 
   if (opt_url)
     {
