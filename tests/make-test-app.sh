@@ -169,7 +169,7 @@ ln -s -t ${DIR}/files/share/locale ../../share/runtime/locale/fr/share/fr
 
 flatpak build-finish ${BUILD_FINISH_ARGS-} --command=hello.sh ${DIR} >&2
 mkdir -p repos
-flatpak build-export --no-update-summary --disable-sandbox ${collection_args} ${GPGARGS-} ${EXPORT_ARGS-} ${REPO} ${DIR} ${BRANCH} >&2
+flatpak build-export --no-update-summary --disable-sandbox ${collection_args} ${GPGARGS-} ${SIGNARGS-} ${EXPORT_ARGS-} ${REPO} ${DIR} ${BRANCH} >&2
 rm -rf ${DIR}
 
 # build a locale extension
@@ -200,7 +200,7 @@ msgfmt --output-file ${DIR}/files/fr/share/fr/LC_MESSAGES/helloworld.mo fr.po
 
 flatpak build-finish ${DIR} >&2
 mkdir -p repos
-flatpak build-export --no-update-summary --runtime ${collection_args} ${GPGARGS-} ${EXPORT_ARGS-} ${REPO} ${DIR} ${BRANCH} >&2
+flatpak build-export --no-update-summary --runtime ${collection_args} ${GPGARGS-} ${SIGNARGS-} ${EXPORT_ARGS-} ${REPO} ${DIR} ${BRANCH} >&2
 rm -rf ${DIR}
 
 # build a plugin extension
@@ -222,9 +222,9 @@ flatpak build-finish ${DIR} >&2
 mkdir -p repos
 
 if [ "$EXTRA" = "EXTENSIONS" ]; then
-  flatpak build-export --no-update-summary --runtime ${collection_args} ${GPGARGS-} ${EXPORT_ARGS-} ${REPO} ${DIR} v2 >&2
+  flatpak build-export --no-update-summary --runtime ${collection_args} ${GPGARGS-} ${SIGNARGS-} ${EXPORT_ARGS-} ${REPO} ${DIR} v2 >&2
 else
-  flatpak build-export --no-update-summary --runtime ${collection_args} ${GPGARGS-} ${EXPORT_ARGS-} ${REPO} ${DIR} v1 >&2
+  flatpak build-export --no-update-summary --runtime ${collection_args} ${GPGARGS-} ${SIGNARGS-} ${EXPORT_ARGS-} ${REPO} ${DIR} v1 >&2
 fi
 
 rm -rf ${DIR}

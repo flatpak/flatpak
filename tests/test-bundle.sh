@@ -25,27 +25,35 @@ skip_without_bwrap
 
 echo "1..8"
 
+OPT_GPG_KEYS="--gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg"
+OPT_SIGN_KEYS=
+OPT_SIGN_VERIFY=
+if [ x${FL_SIGN_ENABLED} == xyes ]; then
+    OPT_SIGN_KEYS="--sign=${FL_SIGN_PRIVKEY}"
+    OPT_SIGN_VERIFY="--sign-verify=ed25519=inline:${FL_SIGN_PUBKEY}"
+fi
+
 mkdir bundles
 
 setup_repo
 
-${FLATPAK} build-bundle repos/test --repo-url=file://`pwd`/repos/test --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/hello.flatpak org.test.Hello >&2
+${FLATPAK} build-bundle repos/test --repo-url=file://`pwd`/repos/test ${OPT_GPG_KEYS} ${OPT_SIGN_KEYS} bundles/hello.flatpak org.test.Hello >&2
 assert_has_file bundles/hello.flatpak
 
-${FLATPAK} build-bundle repos/test --runtime --repo-url=file://`pwd`/repos/test --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/platform.flatpak org.test.Platform >&2
+${FLATPAK} build-bundle repos/test --runtime --repo-url=file://`pwd`/repos/test ${OPT_GPG_KEYS} ${OPT_SIGN_KEYS} bundles/platform.flatpak org.test.Platform >&2
 assert_has_file bundles/platform.flatpak
 
 ok "create bundles server-side"
 
 rm bundles/hello.flatpak
-${FLATPAK} ${U} install -y test-repo org.test.Hello >&2
-${FLATPAK} build-bundle $FL_DIR/repo --repo-url=file://`pwd`/repos/test --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/hello.flatpak org.test.Hello >&2
+${FLATPAK} ${U} install -y test-repo org.test.Hello
+${FLATPAK} build-bundle $FL_DIR/repo --repo-url=file://`pwd`/repos/test ${OPT_GPG_KEYS} ${OPT_SIGN_KEYS} bundles/hello.flatpak org.test.Hello >&2
 assert_has_file bundles/hello.flatpak
 
 ok "create bundles client-side"
 
 ${FLATPAK} uninstall ${U} -y org.test.Hello >&2
-${FLATPAK} install ${U} -y --bundle bundles/hello.flatpak >&2
+${FLATPAK} install ${U} -y --bundle ${OPT_SIGN_VERIFY} bundles/hello.flatpak >&2
 
 # This should have installed the runtime dependency too
 assert_has_file $FL_DIR/repo/refs/remotes/test-repo/runtime/org.test.Platform/$ARCH/master
@@ -96,7 +104,7 @@ ${FLATPAK} uninstall -y --force-remove ${U} org.test.Platform >&2
 
 assert_not_has_file $FL_DIR/repo/refs/remotes/platform-origin/runtime/org.test.Platform/$ARCH/master
 
-${FLATPAK} install -y ${U} --bundle bundles/platform.flatpak >&2
+${FLATPAK} install -y ${U} ${OPT_SIGN_VERIFY} --bundle bundles/platform.flatpak >&2
 
 assert_has_file $FL_DIR/repo/refs/remotes/platform-origin/runtime/org.test.Platform/$ARCH/master
 RUNTIME_COMMIT=`cat $FL_DIR/repo/refs/remotes/platform-origin/runtime/org.test.Platform/$ARCH/master`
@@ -157,10 +165,10 @@ ok "update"
 
 make_updated_app test org.test.Collection.test master UPDATED2
 
-${FLATPAK} build-bundle repos/test --repo-url=file://`pwd`/repos/test --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/hello2.flatpak org.test.Hello >&2
+${FLATPAK} build-bundle repos/test --repo-url=file://`pwd`/repos/test ${OPT_GPG_KEYS} ${OPT_SIGN_KEYS} bundles/hello2.flatpak org.test.Hello >&2
 assert_has_file bundles/hello2.flatpak
 
-${FLATPAK} install ${U} -y --bundle bundles/hello2.flatpak >&2
+${FLATPAK} install ${U} -y --bundle ${OPT_SIGN_VERIFY} bundles/hello2.flatpak >&2
 
 NEW2_COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Hello`
 

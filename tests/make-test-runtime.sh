@@ -97,5 +97,5 @@ else
 fi
 
 mkdir -p repos
-flatpak build-export ${collection_args} --no-update-summary --disable-sandbox --runtime ${GPGARGS-} ${EXPORT_ARGS-} ${REPO} ${DIR} ${BRANCH} >&2
+flatpak build-export ${collection_args} --no-update-summary --disable-sandbox --runtime ${GPGARGS-} ${SIGNARGS-} ${EXPORT_ARGS-} ${REPO} ${DIR} ${BRANCH} >&2
 rm -rf ${DIR}
