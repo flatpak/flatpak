@@ -37,6 +37,7 @@ class RequestHandler(http_server.SimpleHTTPRequestHandler):
     def do_GET(self):
         if self.handle_tokens():
             return None
+        self.headers.__delitem__("If-Modified-Since")
         return super().do_GET()
 
 def run(dir):
