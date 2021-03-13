@@ -1005,7 +1005,7 @@ handle_spawn (PortalFlatpak         *object,
   else
     env = g_get_environ ();
 
-  g_ptr_array_add (flatpak_argv, g_strdup ("flatpak"));
+  g_ptr_array_add (flatpak_argv, g_strdup (FLATPAK_BINDIR "/flatpak"));
   g_ptr_array_add (flatpak_argv, g_strdup ("run"));
 
   sandboxed = (arg_flags & FLATPAK_SPAWN_FLAGS_SANDBOX) != 0;
