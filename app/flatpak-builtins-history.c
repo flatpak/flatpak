@@ -222,7 +222,7 @@ print_history (GPtrArray    *dirs,
                 if (*error)
                   return FALSE;
 
-                if (ref_str)
+                if (ref_str && ref_str[0])
                   {
                     ref = flatpak_decomposed_new_from_ref (ref_str, error);
                     if (ref == NULL)
