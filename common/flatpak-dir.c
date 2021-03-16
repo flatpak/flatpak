@@ -7939,6 +7939,8 @@ flatpak_dir_check_parental_controls (FlatpakDir    *self,
   g_autoptr(AutoPolkitAuthorizationResult) result = NULL;
   gboolean authorized;
   gboolean repo_installation_allowed, app_is_appropriate;
+  PolkitCheckAuthorizationFlags polkit_flags;
+  MctGetAppFilterFlags manager_flags;
 
   /* Assume that root is allowed to install any ref and shouldn't have any
    * parental controls restrictions applied to them */
@@ -7986,8 +7988,11 @@ flatpak_dir_check_parental_controls (FlatpakDir    *self,
     }
 
   manager = mct_manager_new (dbus_connection);
+  manager_flags = MCT_GET_APP_FILTER_FLAGS_NONE;
+  if (!flatpak_dir_get_no_interaction (self))
+    manager_flags |= MCT_GET_APP_FILTER_FLAGS_INTERACTIVE;
   app_filter = mct_manager_get_app_filter (manager, subject_uid,
-                                           MCT_GET_APP_FILTER_FLAGS_INTERACTIVE,
+                                           manager_flags,
                                            cancellable, &local_error);
   if (g_error_matches (local_error, MCT_APP_FILTER_ERROR, MCT_APP_FILTER_ERROR_DISABLED))
     {
@@ -8032,10 +8037,13 @@ flatpak_dir_check_parental_controls (FlatpakDir    *self,
   if (authority == NULL)
     return FALSE;
 
+  polkit_flags = POLKIT_CHECK_AUTHORIZATION_FLAGS_NONE;
+  if (!flatpak_dir_get_no_interaction (self))
+    polkit_flags |= POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION;
   result = polkit_authority_check_authorization_sync (authority, subject,
                                                       "org.freedesktop.Flatpak.override-parental-controls",
                                                       NULL,
-                                                      POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION,
+                                                      polkit_flags,
                                                       cancellable, error);
   if (result == NULL)
     return FALSE;
