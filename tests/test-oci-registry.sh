@@ -19,11 +19,13 @@
 
 set -euo pipefail
 
+TEST_DEBUG_CLEANUP=1
+
 . $(dirname $0)/libtest.sh
 
 skip_without_bwrap
 
-echo "1..14"
+echo "1..20"
 
 # Start the fake registry server
 

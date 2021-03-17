@@ -578,14 +578,32 @@ commit_to_path () {
 }
 
 cleanup () {
+    if test -n "${TEST_DEBUG_CLEANUP:-}"; then
+        echo "ok started cleanup"
+    fi
     /bin/kill -9 $DBUS_SESSION_BUS_PID
+    if test -n "${TEST_DEBUG_CLEANUP:-}"; then
+        echo "ok killed dbus"
+    fi
     gpg-connect-agent --homedir "${FL_GPG_HOMEDIR}" killagent /bye || true
+    if test -n "${TEST_DEBUG_CLEANUP:-}"; then
+        echo "ok killed agent"
+    fi
     fusermount -u $XDG_RUNTIME_DIR/doc || :
+    if test -n "${TEST_DEBUG_CLEANUP:-}"; then
+        echo "ok umounted doc fuse"
+    fi
     kill $(jobs -p) &> /dev/null || true
+    if test -n "${TEST_DEBUG_CLEANUP:-}"; then
+        echo "ok killed jobs"
+    fi
     if test -n "${TEST_SKIP_CLEANUP:-}"; then
         echo "Skipping cleanup of ${TEST_DATA_DIR}"
     else
         rm -rf $TEST_DATA_DIR
+    fi
+    if test -n "${TEST_DEBUG_CLEANUP:-}"; then
+        echo "ok cleaned data dir"
     fi
 }
 trap cleanup EXIT
