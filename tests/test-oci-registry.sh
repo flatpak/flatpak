@@ -25,7 +25,7 @@ TEST_DEBUG_CLEANUP=1
 
 skip_without_bwrap
 
-echo "1..20"
+echo "1..21"
 
 # Start the fake registry server
 
@@ -46,6 +46,8 @@ $client add hello latest $(pwd)/oci/app-image
 # Add an OCI remote
 
 ${FLATPAK} remote-add ${U} oci-registry "oci+http://127.0.0.1:${port}"
+
+ok "added remote"
 
 # Check that the images we expect are listed
 
