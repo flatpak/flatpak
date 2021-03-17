@@ -43,8 +43,7 @@ typedef struct
 
 typedef struct
 {
-  GMainContext          *context;
-  gboolean               done;
+  GMainLoop             *loop;
   GError                *error;
   gboolean               store_compressed;
 
@@ -351,8 +350,7 @@ stream_closed (GObject *source, GAsyncResult *res, gpointer user_data)
       g_clear_pointer (&data->out, g_object_unref);
     }
 
-  data->done = TRUE;
-  g_main_context_wakeup (data->context);
+  g_main_loop_quit (data->loop);
 }
 
 static void
@@ -420,8 +418,7 @@ load_uri_callback (GObject      *source_object,
   in = soup_request_send_finish (SOUP_REQUEST (request), res, &data->error);
   if (in == NULL)
     {
-      /* data->error has been set */
-      g_main_context_wakeup (data->context);
+      g_main_loop_quit (data->loop);
       return;
     }
 
@@ -486,7 +483,7 @@ load_uri_callback (GObject      *source_object,
                                  "Server returned status %u: %s",
                                  msg->status_code,
                                  soup_status_get_phrase (msg->status_code));
-      g_main_context_wakeup (data->context);
+      g_main_loop_quit (data->loop);
       return;
     }
 
@@ -604,6 +601,7 @@ flatpak_load_http_uri_once (SoupSession           *soup_session,
   GBytes *bytes = NULL;
   g_autoptr(GMainContext) context = NULL;
   g_autoptr(SoupRequestHTTP) request = NULL;
+  g_autoptr(GMainLoop) loop = NULL;
   g_autoptr(GString) content = g_string_new ("");
   LoadUriData data = { NULL };
   SoupMessage *m;
@@ -612,7 +610,8 @@ flatpak_load_http_uri_once (SoupSession           *soup_session,
 
   context = g_main_context_ref_thread_default ();
 
-  data.context = context;
+  loop = g_main_loop_new (context, TRUE);
+  data.loop = loop;
   data.content = content;
   data.progress = progress;
   data.cancellable = cancellable;
@@ -642,8 +641,7 @@ flatpak_load_http_uri_once (SoupSession           *soup_session,
                            cancellable,
                            load_uri_callback, &data);
 
-  while (data.error == NULL && !data.done)
-    g_main_context_iteration (data.context, TRUE);
+  g_main_loop_run (loop);
 
   if (data.error)
     {
@@ -723,6 +721,7 @@ flatpak_download_http_uri_once (SoupSession           *soup_session,
                                 GError               **error)
 {
   g_autoptr(SoupRequestHTTP) request = NULL;
+  g_autoptr(GMainLoop) loop = NULL;
   g_autoptr(GMainContext) context = NULL;
   LoadUriData data = { NULL };
   SoupMessage *m;
@@ -731,7 +730,8 @@ flatpak_download_http_uri_once (SoupSession           *soup_session,
 
   context = g_main_context_ref_thread_default ();
 
-  data.context = context;
+  loop = g_main_loop_new (context, TRUE);
+  data.loop = loop;
   data.out = out;
   data.progress = progress;
   data.cancellable = cancellable;
@@ -758,8 +758,7 @@ flatpak_download_http_uri_once (SoupSession           *soup_session,
                            cancellable,
                            load_uri_callback, &data);
 
-  while (data.error == NULL && !data.done)
-    g_main_context_iteration (data.context, TRUE);
+  g_main_loop_run (loop);
 
   if (out_bytes_written)
     *out_bytes_written = data.downloaded_bytes;
@@ -867,6 +866,7 @@ flatpak_cache_http_uri_once (SoupSession           *soup_session,
                              GError               **error)
 {
   g_autoptr(SoupRequestHTTP) request = NULL;
+  g_autoptr(GMainLoop) loop = NULL;
   g_autoptr(GMainContext) context = NULL;
   g_autoptr(CacheHttpData) cache_data = NULL;
   g_autofree char *parent_path = g_path_get_dirname (dest_subpath);
@@ -914,7 +914,8 @@ flatpak_cache_http_uri_once (SoupSession           *soup_session,
 
   context = g_main_context_ref_thread_default ();
 
-  data.context = context;
+  loop = g_main_loop_new (context, TRUE);
+  data.loop = loop;
   data.cache_data = cache_data;
   data.out_tmpfile = &out_tmpfile;
   data.out_tmpfile_parent_dfd = dfd;
@@ -955,8 +956,7 @@ flatpak_cache_http_uri_once (SoupSession           *soup_session,
                            cancellable,
                            load_uri_callback, &data);
 
-  while (data.error == NULL && !data.done)
-    g_main_context_iteration (data.context, TRUE);
+  g_main_loop_run (loop);
 
   if (data.error)
     {
