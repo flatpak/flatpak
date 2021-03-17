@@ -344,6 +344,10 @@ function handle_tap_plan(planned, skip_reason)
         skip_reason = "- "  skip_reason;
       report("SKIP", skip_reason);
     }
+  else
+    {
+    print "Saw test plan for " test_script_name;
+    }
 }
 
 function extract_tap_comment(line)
@@ -515,6 +519,8 @@ plan_seen = NO_PLAN
 ##  PARSING  ##
 ## --------- ##
 
+print "Started test " test_script_name;
+
 is_first_read = 1
 
 while (1)
@@ -630,6 +636,8 @@ if (!bailed_out)
   }
 
 write_test_results()
+
+print "Ended test " test_script_name;
 
 exit 0
 
