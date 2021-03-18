@@ -679,6 +679,10 @@ flatpak_main_context_pop_default_destroy (void *p)
 
   if (main_context)
     {
+      /* Ensure we don't leave some cleanup callbacks unhandled as we will never iterate this context again. */
+      while (g_main_context_pending (main_context))
+        g_main_context_iteration (main_context, TRUE);
+
       g_main_context_pop_thread_default (main_context);
       g_main_context_unref (main_context);
     }
