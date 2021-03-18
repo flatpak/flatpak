@@ -670,6 +670,9 @@ flatpak_load_uri (SoupSession           *soup_session,
 {
   g_autoptr(GError) local_error = NULL;
   guint n_retries_remaining = DEFAULT_N_NETWORK_RETRIES;
+  g_autoptr(GMainContextPopDefault) main_context = NULL;
+
+  main_context = flatpak_main_context_new_default ();
 
   /* Ensure we handle file: uris always */
   if (g_ascii_strncasecmp (uri, "file:", 5) == 0)
@@ -788,6 +791,9 @@ flatpak_download_http_uri (SoupSession           *soup_session,
 {
   g_autoptr(GError) local_error = NULL;
   guint n_retries_remaining = DEFAULT_N_NETWORK_RETRIES;
+  g_autoptr(GMainContextPopDefault) main_context = NULL;
+
+  main_context = flatpak_main_context_new_default ();
 
   do
     {
@@ -1032,6 +1038,9 @@ flatpak_cache_http_uri (SoupSession           *soup_session,
 {
   g_autoptr(GError) local_error = NULL;
   guint n_retries_remaining = DEFAULT_N_NETWORK_RETRIES;
+  g_autoptr(GMainContextPopDefault) main_context = NULL;
+
+  main_context = flatpak_main_context_new_default ();
 
   do
     {
