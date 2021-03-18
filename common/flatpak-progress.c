@@ -43,6 +43,10 @@ flatpak_main_context_finish (FlatpakMainContext *self)
   if (self->context == NULL)
     return;
 
+  /* Ensure we don't leave some cleanup callbacks unhandled as we will never iterate this context again. */
+  while (g_main_context_pending (self->context))
+    g_main_context_iteration (self->context, TRUE);
+
   if (self->flatpak_progress)
     flatpak_progress_revoke_ostree_progress (self->flatpak_progress, self->ostree_progress);
   else
