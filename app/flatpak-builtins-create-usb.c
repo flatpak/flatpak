@@ -144,6 +144,7 @@ add_related (GHashTable        *all_refs,
       const char *ext_remote;
       const char *ext_commit = NULL;
       CommitAndSubpaths *c_s;
+      g_autoptr(GVariant) extra_data_sources = NULL;
 
       if (ext->is_unmaintained)
         continue;
@@ -176,6 +177,17 @@ add_related (GHashTable        *all_refs,
         }
 
       ext_commit = flatpak_deploy_data_get_commit (ext_deploy_data);
+
+      /* Emit a warning and omit it if it's extra-data
+       * https://github.com/flatpak/flatpak/issues/969 */
+      extra_data_sources = flatpak_repo_get_extra_data_sources (flatpak_dir_get_repo (dir), ext_commit, NULL, NULL);
+      if (extra_data_sources != NULL && g_variant_n_children (extra_data_sources) > 0)
+        {
+           g_printerr (_("Warning: Omitting related ref ‘%s’ because it's extra-data.\n"),
+                       flatpak_decomposed_get_ref (ext->ref));
+           continue;
+        }
+
       ext_subpaths = flatpak_deploy_data_get_subpaths (ext_deploy_data);
       resolved_ext_subpaths = get_flatpak_subpaths_from_deploy_subpaths (ext_subpaths);
       c_s = commit_and_subpaths_new (ext_commit, (const char * const *) resolved_ext_subpaths);
@@ -214,7 +226,7 @@ add_runtime (GHashTable        *all_refs,
   const char *commit = NULL;
   const char *runtime_commit = NULL;
   CommitAndSubpaths *c_s;
-
+  g_autoptr(GVariant) extra_data_sources = NULL;
 
   g_debug ("Finding the runtime for ‘%s’", flatpak_decomposed_get_ref (ref));
 
@@ -250,6 +262,17 @@ add_runtime (GHashTable        *all_refs,
                          runtime_remote, flatpak_decomposed_get_ref (runtime_ref));
 
   runtime_commit = flatpak_deploy_data_get_commit (runtime_deploy_data);
+
+  /* Emit a warning and omit it if it's extra-data
+   * https://github.com/flatpak/flatpak/issues/969 */
+  extra_data_sources = flatpak_repo_get_extra_data_sources (flatpak_dir_get_repo (dir), runtime_commit, NULL, NULL);
+  if (extra_data_sources != NULL && g_variant_n_children (extra_data_sources) > 0)
+    {
+       g_printerr (_("Warning: Omitting ref ‘%s’ (runtime of ‘%s’) because it's extra-data.\n"),
+                   flatpak_decomposed_get_ref (runtime_ref), flatpak_decomposed_get_ref (ref));
+       return TRUE;
+    }
+
   runtime_subpaths = flatpak_deploy_data_get_subpaths (runtime_deploy_data);
   resolved_runtime_subpaths = get_flatpak_subpaths_from_deploy_subpaths (runtime_subpaths);
   c_s = commit_and_subpaths_new (runtime_commit, (const char * const *) resolved_runtime_subpaths);
@@ -633,6 +656,7 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
       /* Add the main ref */
       {
         g_autoptr(GBytes) deploy_data = NULL;
+        g_autoptr(GVariant) extra_data_sources = NULL;
         const char *commit;
         CommitAndSubpaths *c_s;
 
@@ -645,6 +669,16 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
                       flatpak_decomposed_get_ref (installed_ref));
 
         commit = flatpak_deploy_data_get_commit (deploy_data);
+
+        /* Extra-data flatpaks can't be copied to a USB (the installation will
+         * fail on the receiving end if they're offline) so error out if one
+         * was specified. https://github.com/flatpak/flatpak/issues/969 */
+        extra_data_sources = flatpak_repo_get_extra_data_sources (flatpak_dir_get_repo (dir), commit, NULL, NULL);
+        if (extra_data_sources != NULL && g_variant_n_children (extra_data_sources) > 0)
+          return flatpak_fail (error,
+                               _("Installed ref ‘%s’ is extra-data, and cannot be distributed offline"),
+                               flatpak_decomposed_get_ref (installed_ref));
+
         c_s = commit_and_subpaths_new (commit, NULL);
 
         g_hash_table_insert (all_collection_ids, g_strdup (ref_collection_id), g_strdup (remote));
