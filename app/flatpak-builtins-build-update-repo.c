@@ -44,12 +44,16 @@ static char *opt_collection_id = NULL;
 static gboolean opt_deploy_sideload_collection_id = FALSE;
 static gboolean opt_deploy_collection_id = FALSE;
 static gboolean opt_no_summary_index = FALSE;
+#ifndef FLATPAK_DISABLE_GPG
 static char **opt_gpg_import;
+#endif
 static char *opt_generate_delta_from;
 static char *opt_generate_delta_to;
 static char *opt_generate_delta_ref;
-static char *opt_gpg_homedir;
-static char **opt_gpg_key_ids;
+static char *opt_gpg_homedir = NULL;
+static char **opt_gpg_key_ids = NULL;
+static char **opt_sign_keys = NULL;
+static char *opt_sign_name = NULL;
 static gboolean opt_prune;
 static gboolean opt_generate_deltas;
 static gboolean opt_no_update_appstream;
@@ -77,9 +81,13 @@ static GOptionEntry options[] = {
   { "authenticator-install", 0, 0, G_OPTION_ARG_NONE, &opt_authenticator_install, N_("Autoinstall authenticator for this repository"), NULL },
   { "no-authenticator-install", 0, G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &opt_authenticator_install, N_("Don't autoinstall authenticator for this repository"), NULL },
   { "authenticator-option", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_authenticator_options, N_("Authenticator option"), N_("KEY=VALUE") },
+#ifndef FLATPAK_DISABLE_GPG
   { "gpg-import", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_import, N_("Import new default GPG public key from FILE"), N_("FILE") },
   { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_key_ids, N_("GPG Key ID to sign the summary with"), N_("KEY-ID") },
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, N_("GPG Homedir to use when looking for keyrings"), N_("HOMEDIR") },
+#endif
+  { "sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_sign_keys, "Key ID to sign the commit with", "KEY-ID"},
+  { "sign-type", 0, 0, G_OPTION_ARG_STRING, &opt_sign_name, "Signature type to use (defaults to 'ed25519')", "NAME"},
   { "generate-static-deltas", 0, 0, G_OPTION_ARG_NONE, &opt_generate_deltas, N_("Generate delta files"), NULL },
   { "no-update-summary", 0, 0, G_OPTION_ARG_NONE, &opt_no_update_summary, N_("Don't update the summary"), NULL },
   { "no-update-appstream", 0, 0, G_OPTION_ARG_NONE, &opt_no_update_appstream, N_("Don't update the appstream branch"), NULL },
@@ -590,6 +598,7 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
       !flatpak_repo_set_deploy_collection_id (repo, TRUE, error))
     return FALSE;
 
+#ifndef FLATPAK_DISABLE_GPG
   if (opt_gpg_import)
     {
       g_autoptr(GBytes) gpg_data = flatpak_load_gpg_keys (opt_gpg_import, cancellable, error);
@@ -599,11 +608,19 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
       if (!flatpak_repo_set_gpg_keys (repo, gpg_data, error))
         return FALSE;
     }
+#endif
 
   if (!opt_no_update_appstream)
     {
       g_print (_("Updating appstream branch\n"));
-      if (!flatpak_repo_generate_appstream (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, 0, cancellable, error))
+      if (!flatpak_repo_generate_appstream (repo,
+                                            (const char **) opt_gpg_key_ids,
+                                            opt_gpg_homedir,
+                                            (const char **) opt_sign_keys,
+                                            opt_sign_name,
+                                            0,
+                                            cancellable,
+                                            error))
         return FALSE;
     }
 
@@ -632,7 +649,13 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
         flags |= FLATPAK_REPO_UPDATE_FLAG_DISABLE_INDEX;
 
       g_print (_("Updating summary\n"));
-      if (!flatpak_repo_update (repo, flags, (const char **) opt_gpg_key_ids, opt_gpg_homedir, cancellable, error))
+      if (!flatpak_repo_update (repo, flags,
+                                (const char **) opt_gpg_key_ids,
+                                opt_gpg_homedir,
+                                (const char **) opt_sign_keys,
+                                opt_sign_name,
+                                cancellable,
+                                error))
         return FALSE;
     }
 

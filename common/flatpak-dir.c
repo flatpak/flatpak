@@ -2155,6 +2155,7 @@ flatpak_dir_system_helper_call_install_bundle (FlatpakDir   *self,
                                                guint         arg_flags,
                                                const gchar  *arg_remote,
                                                const gchar  *arg_installation,
+                                               GVariant     *arg_sign_data,
                                                gchar       **out_ref,
                                                GCancellable *cancellable,
                                                GError      **error)
@@ -2164,11 +2165,12 @@ flatpak_dir_system_helper_call_install_bundle (FlatpakDir   *self,
 
   g_autoptr(GVariant) ret =
     flatpak_dir_system_helper_call (self, "InstallBundle",
-                                    g_variant_new ("(^ayuss)",
+                                    g_variant_new ("(^ayussv)",
                                                    arg_bundle_path,
                                                    arg_flags,
                                                    arg_remote,
-                                                   arg_installation),
+                                                   arg_installation,
+                                                   arg_sign_data),
                                     G_VARIANT_TYPE ("(s)"), NULL,
                                     cancellable, error);
   if (ret == NULL)
@@ -3604,6 +3606,48 @@ flatpak_dir_ensure_path (FlatpakDir   *self,
 }
 
 gboolean
+flatpak_dir_get_sign_verify_summary (OstreeRepo *repo,
+                                     const char *remote,
+                                     gboolean   *sign_verify_summary,
+                                     GError    **error)
+{
+  return ostree_repo_get_remote_boolean_option (repo, remote,
+                                                "sign-verify-summary", FALSE,
+                                                sign_verify_summary, error);
+}
+
+gboolean
+flatpak_dir_get_sign_verify (OstreeRepo *repo,
+                             const char *remote,
+                             gboolean   *sign_verify,
+                             GError    **error)
+{
+  g_autoptr(GError) temp_error = NULL;
+  gboolean ret = FALSE;
+
+  ret = ostree_repo_get_remote_boolean_option (repo, remote,
+                                               "sign-verify", FALSE,
+                                               sign_verify, &temp_error);
+  if (temp_error != NULL)
+    {
+      if (g_error_matches (temp_error, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_INVALID_VALUE))
+        {
+          /*
+           * INVALID_VALUE means the key exist but not as a boolean, meaning
+           * signature verification is enabled
+           */
+          ret = *sign_verify = TRUE;
+        }
+      else
+        {
+          g_propagate_error (error, g_steal_pointer (&temp_error));
+        }
+    }
+
+  return ret;
+}
+
+gboolean
 flatpak_dir_migrate_config (FlatpakDir   *self,
                             gboolean     *changed,
                             GCancellable *cancellable,
@@ -3632,6 +3676,8 @@ flatpak_dir_migrate_config (FlatpakDir   *self,
       const char *remote = remotes[i];
       gboolean gpg_verify_summary;
       gboolean gpg_verify;
+      gboolean sign_verify_summary;
+      gboolean sign_verify;
 
       if (flatpak_dir_get_remote_disabled (self, remote))
         continue;
@@ -3654,6 +3700,22 @@ flatpak_dir_migrate_config (FlatpakDir   *self,
 
           g_debug ("Migrating remote '%s' to gpg-verify-summary", remote);
           g_key_file_set_boolean (config, group, "gpg-verify-summary", TRUE);
+        }
+
+      if (!flatpak_dir_get_sign_verify_summary (self->repo, remote, &sign_verify_summary, NULL))
+        continue;
+
+      if (!flatpak_dir_get_sign_verify (self->repo, remote, &sign_verify, NULL))
+        continue;
+
+      if (sign_verify && !sign_verify_summary)
+        {
+          g_autofree char *group = g_strdup_printf ("remote \"%s\"", remote);
+          if (config == NULL)
+            config = ostree_repo_copy_config (flatpak_dir_get_repo (self));
+
+          g_debug ("Migrating remote '%s' to sign-verify-summary", remote);
+          g_key_file_set_boolean (config, group, "sign-verify-summary", TRUE);
         }
     }
 
@@ -4886,6 +4948,8 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
       g_autofree char *child_repo_path = NULL;
       gboolean gpg_verify_summary;
       gboolean gpg_verify;
+      gboolean sign_verify_summary;
+      gboolean sign_verify;
 
       if (!ostree_repo_remote_get_url (self->repo,
                                        state->remote_name,
@@ -4901,6 +4965,14 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
                                               &gpg_verify, error))
         return FALSE;
 
+      if (!flatpak_dir_get_sign_verify_summary (self->repo, state->remote_name,
+                                                &sign_verify_summary, error))
+        return FALSE;
+
+      if (!flatpak_dir_get_sign_verify (self->repo, state->remote_name,
+                                        &sign_verify, error))
+        return FALSE;
+
       if (is_oci)
         {
           /* In the OCI case, we just ask the system helper do the network i/o, since
@@ -4911,17 +4983,19 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
            * if necessary.
            */
         }
-      else if (!gpg_verify_summary || !gpg_verify)
+#ifndef FLATPAK_DISABLE_GPG
+      else if ((!gpg_verify_summary || !gpg_verify) && (!sign_verify_summary || !sign_verify))
         {
-          /* The remote is not gpg verified, so we don't want to allow installation via
+          /* The remote is not verified, so we don't want to allow installation via
              a download in the home directory, as there is no way to verify you're not
              injecting anything into the remote. However, in the case of a remote
              configured to a local filesystem we can just let the system helper do
              the installation, as it can then avoid network i/o and be certain the
              data comes from the right place.  */
           if (!g_str_has_prefix (url, "file:"))
-            return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("Can't pull from untrusted non-gpg verified remote"));
+            return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("Can't pull from untrusted non-verified remote"));
         }
+#endif
       else
         {
           g_autoptr(OstreeRepo) child_repo = flatpak_dir_create_system_child_repo (self, &child_repo_lock, NULL, error);
@@ -5848,6 +5922,8 @@ repo_pull_local_untrusted (FlatpakDir          *self,
                            const char         **dirs_to_pull,
                            const char          *ref,
                            const char          *checksum,
+                           gboolean             gpg_verify,
+                           gboolean             verify,
                            FlatpakProgress     *progress,
                            GCancellable        *cancellable,
                            GError             **error)
@@ -5880,9 +5956,16 @@ repo_pull_local_untrusted (FlatpakDir          *self,
   g_variant_builder_add (&builder, "{s@v}", "override-remote-name",
                          g_variant_new_variant (g_variant_new_string (remote_name)));
   g_variant_builder_add (&builder, "{s@v}", "gpg-verify",
-                         g_variant_new_variant (g_variant_new_boolean (TRUE)));
+                         g_variant_new_variant (g_variant_new_boolean (gpg_verify)));
   g_variant_builder_add (&builder, "{s@v}", "gpg-verify-summary",
                          g_variant_new_variant (g_variant_new_boolean (FALSE)));
+  if (!verify)
+    {
+      g_variant_builder_add (&builder, "{s@v}", "disable-sign-verify",
+                             g_variant_new_variant (g_variant_new_boolean (TRUE)));
+    }
+  g_variant_builder_add (&builder, "{s@v}", "disable-sign-verify-summary",
+                         g_variant_new_variant (g_variant_new_boolean (TRUE)));
   g_variant_builder_add (&builder, "{s@v}", "inherit-transaction",
                          g_variant_new_variant (g_variant_new_boolean (TRUE)));
   g_variant_builder_add (&builder, "{s@v}", "update-frequency",
@@ -5923,6 +6006,8 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
   g_autofree char *current_checksum = NULL;
   gboolean gpg_verify_summary;
   gboolean gpg_verify;
+  gboolean sign_verify_summary;
+  gboolean sign_verify;
   g_autoptr(OstreeGpgVerifyResult) gpg_result = NULL;
   g_autoptr(GVariant) old_commit = NULL;
   g_autoptr(OstreeRepo) src_repo = NULL;
@@ -5954,9 +6039,19 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
                                           &gpg_verify, error))
     return FALSE;
 
+  if (!flatpak_dir_get_sign_verify_summary (self->repo, remote_name,
+                                            &sign_verify_summary, error))
+    return FALSE;
+
+  if (!flatpak_dir_get_sign_verify (self->repo, remote_name,
+                                    &sign_verify, error))
+    return FALSE;
+
+#ifndef FLATPAK_DISABLE_GPG
   /* This was verified in the client, but lets do it here too */
-  if (!gpg_verify_summary || !gpg_verify)
-    return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("Can't pull from untrusted non-gpg verified remote"));
+  if ((!gpg_verify_summary || !gpg_verify) && (!sign_verify_summary || !sign_verify))
+    return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("Can't pull from untrusted non-verified remote"));
+#endif
 
   if (!flatpak_repo_resolve_rev (self->repo, NULL, remote_name, ref, TRUE,
                                  &current_checksum, NULL, error))
@@ -5973,6 +6068,7 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
   if (!flatpak_repo_resolve_rev (src_repo, NULL, remote_name, ref, FALSE, &checksum, NULL, error))
     return FALSE;
 
+#ifndef FLATPAK_DISABLE_GPG
   if (gpg_verify)
     {
       gpg_result = ostree_repo_verify_commit_for_remote (src_repo, checksum, remote_name, cancellable, error);
@@ -5982,6 +6078,7 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
       if (ostree_gpg_verify_result_count_valid (gpg_result) == 0)
         return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("GPG signatures found, but none are in trusted keyring"));
     }
+#endif
 
   g_clear_object (&gpg_result);
 
@@ -6036,7 +6133,7 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
 
   if (!repo_pull_local_untrusted (self, self->repo, remote_name, url,
                                   subdirs_arg ? (const char **) subdirs_arg->pdata : NULL,
-                                  ref, checksum, progress,
+                                  ref, checksum, gpg_verify, sign_verify, progress,
                                   cancellable, error))
     {
       g_prefix_error (error, _("While pulling %s from remote %s: "), ref, remote_name);
@@ -9050,6 +9147,8 @@ flatpak_dir_install (FlatpakDir          *self,
       g_autofree char *url = NULL;
       gboolean gpg_verify_summary;
       gboolean gpg_verify;
+      gboolean sign_verify_summary;
+      gboolean sign_verify;
       gboolean is_oci;
       gboolean is_revokefs_pull = FALSE;
 
@@ -9070,6 +9169,14 @@ flatpak_dir_install (FlatpakDir          *self,
 
       if (!ostree_repo_remote_get_gpg_verify (self->repo, state->remote_name,
                                               &gpg_verify, error))
+        return FALSE;
+
+      if (!flatpak_dir_get_sign_verify_summary (self->repo, state->remote_name,
+                                                &sign_verify_summary, error))
+        return FALSE;
+
+      if (!flatpak_dir_get_sign_verify (self->repo, state->remote_name,
+                                        &sign_verify, error))
         return FALSE;
 
       is_oci = flatpak_dir_get_remote_oci (self, state->remote_name);
@@ -9093,9 +9200,10 @@ flatpak_dir_install (FlatpakDir          *self,
           if (!flatpak_dir_mirror_oci (self, registry, state, flatpak_decomposed_get_ref (ref), opt_commit, NULL, token, progress, cancellable, error))
             return FALSE;
         }
-      else if (!gpg_verify_summary || !gpg_verify)
+#ifndef FLATPAK_DISABLE_GPG
+      else if ((!gpg_verify_summary || !gpg_verify) && (!sign_verify_summary || !sign_verify))
         {
-          /* The remote is not gpg verified, so we don't want to allow installation via
+          /* The remote is not verified, so we don't want to allow installation via
              a download in the home directory, as there is no way to verify you're not
              injecting anything into the remote. However, in the case of a remote
              configured to a local filesystem we can just let the system helper do
@@ -9104,8 +9212,9 @@ flatpak_dir_install (FlatpakDir          *self,
           if (g_str_has_prefix (url, "file:"))
             helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_LOCAL_PULL;
           else
-            return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("Can't pull from untrusted non-gpg verified remote"));
+            return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("Can't pull from untrusted non-verified remote"));
         }
+#endif
       else
         {
           /* For system pulls, the pull has to be made in a child repo first,
@@ -9269,6 +9378,7 @@ char *
 flatpak_dir_ensure_bundle_remote (FlatpakDir         *self,
                                   GFile              *file,
                                   GBytes             *extra_gpg_data,
+                                  GVariant           *sign_data,
                                   FlatpakDecomposed **out_ref,
                                   char              **out_checksum,
                                   char              **out_metadata,
@@ -9293,7 +9403,7 @@ flatpak_dir_ensure_bundle_remote (FlatpakDir         *self,
     return NULL;
 
   metadata = flatpak_bundle_load (file, &to_checksum,
-                                  &ref,
+                                  &ref, sign_data,
                                   &origin,
                                   NULL, &fp_metadata, NULL,
                                   &included_gpg_data,
@@ -9332,6 +9442,7 @@ flatpak_dir_ensure_bundle_remote (FlatpakDir         *self,
                                                  basename,
                                                  flatpak_decomposed_get_ref (ref),
                                                  gpg_data,
+                                                 sign_data,
                                                  collection_id,
                                                  &created_remote,
                                                  cancellable,
@@ -9412,6 +9523,7 @@ flatpak_dir_check_add_remotes_config_dir (FlatpakDir *self,
 gboolean
 flatpak_dir_install_bundle (FlatpakDir         *self,
                             GFile              *file,
+                            GVariant           *sign_data,
                             const char         *remote,
                             FlatpakDecomposed **out_ref,
                             GCancellable       *cancellable,
@@ -9424,6 +9536,7 @@ flatpak_dir_install_bundle (FlatpakDir         *self,
   g_autofree char *origin = NULL;
   g_autofree char *to_checksum = NULL;
   gboolean gpg_verify;
+  gboolean sign_verify;
 
   if (!flatpak_dir_check_add_remotes_config_dir (self, error))
     return FALSE;
@@ -9431,11 +9544,16 @@ flatpak_dir_install_bundle (FlatpakDir         *self,
   if (flatpak_dir_use_system_helper (self, NULL))
     {
       const char *installation = flatpak_dir_get_id (self);
+      g_autoptr(GVariant) empty_sign_data = NULL;
+
+      if (!sign_data)
+        empty_sign_data = g_variant_ref_sink (g_variant_new_from_data (G_VARIANT_TYPE_VARDICT, "", 0, TRUE, NULL, NULL));
 
       if (!flatpak_dir_system_helper_call_install_bundle (self,
                                                           flatpak_file_get_path_cached (file),
                                                           0, remote,
                                                           installation ? installation : "",
+                                                          sign_data ? sign_data : empty_sign_data,
                                                           &ref_str,
                                                           cancellable,
                                                           error))
@@ -9456,7 +9574,7 @@ flatpak_dir_install_bundle (FlatpakDir         *self,
     return FALSE;
 
   metadata = flatpak_bundle_load (file, &to_checksum,
-                                  &ref,
+                                  &ref, sign_data,
                                   &origin,
                                   NULL, NULL,
                                   NULL, NULL, NULL,
@@ -9487,11 +9605,17 @@ flatpak_dir_install_bundle (FlatpakDir         *self,
                                           &gpg_verify, error))
     return FALSE;
 
+  if (!flatpak_dir_get_sign_verify (self->repo, remote,
+                                    &sign_verify, error))
+    return FALSE;
+
   if (!flatpak_pull_from_bundle (self->repo,
                                  file,
                                  remote,
                                  flatpak_decomposed_get_ref (ref),
                                  gpg_verify,
+                                 sign_verify,
+                                 sign_data,
                                  cancellable,
                                  error))
     return FALSE;
@@ -9746,6 +9870,8 @@ flatpak_dir_update (FlatpakDir                           *self,
       FlatpakHelperDeployFlags helper_flags = 0;
       gboolean gpg_verify_summary;
       gboolean gpg_verify;
+      gboolean sign_verify_summary;
+      gboolean sign_verify;
       gboolean is_revokefs_pull = FALSE;
 
       if (allow_downgrade)
@@ -9760,6 +9886,14 @@ flatpak_dir_update (FlatpakDir                           *self,
 
       if (!ostree_repo_remote_get_gpg_verify (self->repo, state->remote_name,
                                               &gpg_verify, error))
+        return FALSE;
+
+      if (!flatpak_dir_get_sign_verify_summary (self->repo, state->remote_name,
+                                                &sign_verify_summary, error))
+        return FALSE;
+
+      if (!flatpak_dir_get_sign_verify (self->repo, state->remote_name,
+                                        &sign_verify, error))
         return FALSE;
 
       if (no_pull)
@@ -9783,9 +9917,10 @@ flatpak_dir_update (FlatpakDir                           *self,
                                        commit, NULL, token, progress, cancellable, error))
             return FALSE;
         }
-      else if (!gpg_verify_summary || !gpg_verify)
+#ifndef FLATPAK_DISABLE_GPG
+      else if ((!gpg_verify_summary || !gpg_verify) && (!sign_verify_summary || !sign_verify))
         {
-          /* The remote is not gpg verified, so we don't want to allow installation via
+          /* The remote is not verified, so we don't want to allow installation via
              a download in the home directory, as there is no way to verify you're not
              injecting anything into the remote. However, in the case of a remote
              configured to a local filesystem we can just let the system helper do
@@ -9797,8 +9932,9 @@ flatpak_dir_update (FlatpakDir                           *self,
           if (g_str_has_prefix (url, "file:"))
             helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_LOCAL_PULL;
           else
-            return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("Can't pull from untrusted non-gpg verified remote"));
+            return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("Can't pull from untrusted non-verified remote"));
         }
+#endif
       else
         {
           /* First try to update using revokefs-fuse codepath. If it fails, try to update using a
@@ -11458,14 +11594,13 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
 }
 
 static gboolean
-remote_verify_signature (OstreeRepo *repo,
-                         const char *remote_name,
-                         GBytes *data,
-                         GBytes *sig_file,
-                         GCancellable *cancellable,
-                         GError **error)
+remote_verify_gpg_signature (OstreeRepo *repo,
+                             const char *remote_name,
+                             GBytes *data,
+                             GVariant *sig_variant,
+                             GCancellable *cancellable,
+                             GError **error)
 {
-  g_autoptr(GVariant) signatures_variant = NULL;
   g_autoptr(GVariant) signaturedata = NULL;
   g_autoptr (GBytes) signatures = NULL;
   g_autoptr(GByteArray) buffer = NULL;
@@ -11473,9 +11608,7 @@ remote_verify_signature (OstreeRepo *repo,
   GVariantIter iter;
   GVariant *child;
 
-  signatures_variant = g_variant_new_from_bytes (OSTREE_SUMMARY_SIG_GVARIANT_FORMAT,
-                                                 sig_file, FALSE);
-  signaturedata = g_variant_lookup_value (signatures_variant, "ostree.gpgsigs", G_VARIANT_TYPE ("aay"));
+  signaturedata = g_variant_lookup_value (sig_variant, "ostree.gpgsigs", G_VARIANT_TYPE ("aay"));
   if (signaturedata == NULL)
     {
       g_set_error_literal (error, OSTREE_GPG_ERROR, OSTREE_GPG_ERROR_NO_SIGNATURE,
@@ -11502,6 +11635,56 @@ remote_verify_signature (OstreeRepo *repo,
                                                cancellable, error);
   if (!ostree_gpg_verify_result_require_valid_signature (verify_result, error))
     return FALSE;
+
+  return TRUE;
+}
+
+static gboolean
+remote_verify_signature (OstreeRepo *repo,
+                         const char *remote_name,
+                         GBytes *data,
+                         GVariant *sig_variant,
+                         GCancellable *cancellable,
+                         GError **error)
+{
+  g_autoptr(GPtrArray) verifiers = ostree_sign_get_all ();
+
+  for (guint i = 0; i < verifiers->len; i++)
+    {
+      g_autoptr(GVariant) signatures = NULL;
+      OstreeSign *sign = verifiers->pdata[i];
+      g_autofree gchar *optkey = NULL;
+      g_autofree gchar *optfile = NULL;
+      g_autofree gchar *pk = NULL;
+      g_autofree gchar *keyfile = NULL;
+
+      optkey = g_strdup_printf ("verification-%s-key", ostree_sign_get_name (sign));
+      if (ostree_repo_get_remote_option (repo, remote_name, optkey, NULL, &pk, NULL) && pk != NULL)
+        ostree_sign_add_pk(sign, g_variant_new_string(pk), NULL);
+
+      optfile = g_strdup_printf ("verification-%s-file", ostree_sign_get_name (sign));
+      if (ostree_repo_get_remote_option (repo, remote_name, optfile, NULL, &keyfile, NULL) && keyfile != NULL)
+        {
+          g_auto (GStrv) keys = NULL;
+          g_autofree char *contents;
+          gsize len;
+
+          if (!g_file_get_contents (keyfile, &contents, &len, error))
+            return FALSE;
+
+          keys = g_strsplit (contents, "\n", -1);
+          for (char **iter = keys; iter && *iter; iter++)
+            ostree_sign_add_pk(sign, g_variant_new_string(*iter), NULL);
+        }
+
+      signatures = g_variant_lookup_value (sig_variant, ostree_sign_metadata_key (sign),
+                                              G_VARIANT_TYPE (ostree_sign_metadata_format (sign)));
+      if (signatures == NULL)
+          continue;
+
+      if (!ostree_sign_data_verify (sign, data, signatures, NULL, error))
+        return FALSE;
+    }
 
   return TRUE;
 }
@@ -11553,6 +11736,7 @@ flatpak_dir_remote_fetch_summary_index (FlatpakDir   *self,
   g_autoptr(GBytes) index = NULL;
   g_autoptr(GBytes) index_sig = NULL;
   gboolean gpg_verify_summary;
+  gboolean sign_verify_summary;
 
   ensure_soup_session (self);
 
@@ -11560,6 +11744,9 @@ flatpak_dir_remote_fetch_summary_index (FlatpakDir   *self,
     return FALSE;
 
   if (!ostree_repo_remote_get_gpg_verify_summary (self->repo, name_or_uri, &gpg_verify_summary, NULL))
+    return FALSE;
+
+  if (!flatpak_dir_get_sign_verify_summary (self->repo, name_or_uri, &sign_verify_summary, NULL))
     return FALSE;
 
   if (!g_str_has_prefix (name_or_uri, "file:") && flatpak_dir_get_remote_disabled (self, name_or_uri))
@@ -11626,12 +11813,13 @@ flatpak_dir_remote_fetch_summary_index (FlatpakDir   *self,
           used_download = TRUE;
         }
 
-      if (gpg_verify_summary && index_sig == NULL)
+      if ((gpg_verify_summary || sign_verify_summary) && index_sig == NULL)
         {
           g_autofree char *index_digest = g_compute_checksum_for_bytes (G_CHECKSUM_SHA256, index);
           g_autofree char *index_sig_filename = g_strconcat (index_digest, ".idx.sig", NULL);
           g_autofree char *index_sig_url = g_build_filename (url, "summaries", index_sig_filename, NULL);
           g_autofree char *index_sig_url2 = g_build_filename (url, "summary.idx.sig", NULL);
+          g_autoptr(GVariant) signatures_variant = NULL;
           g_autoptr(GError) dl_sig_error = NULL;
           g_autoptr (GBytes) dl_index_sig = NULL;
 
@@ -11641,16 +11829,25 @@ flatpak_dir_remote_fetch_summary_index (FlatpakDir   *self,
             {
               if (g_error_matches (dl_sig_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
                 g_set_error (error, OSTREE_GPG_ERROR, OSTREE_GPG_ERROR_NO_SIGNATURE,
-                             "GPG verification enabled, but no summary signatures found (use gpg-verify-summary=false in remote config to disable)");
+                             "Signature verification enabled, but no summary signatures found"
+                             "(use gpg-verify-summary=false and/or sign-verify-summary=false in remote config to disable)");
               else
                 g_propagate_error (error, g_steal_pointer (&dl_sig_error));
 
               return FALSE;
             }
 
-          if (!remote_verify_signature (self->repo, name_or_uri,
-                                        index, dl_index_sig,
-                                        cancellable, error))
+          signatures_variant = g_variant_new_from_bytes (OSTREE_SUMMARY_SIG_GVARIANT_FORMAT,
+                                                         dl_index_sig, FALSE);
+
+          if (gpg_verify_summary && !remote_verify_gpg_signature (self->repo, name_or_uri,
+                                                                  index, signatures_variant,
+                                                                  cancellable, error))
+            return FALSE;
+
+          if (sign_verify_summary && !remote_verify_signature (self->repo, name_or_uri,
+                                                               index, signatures_variant,
+                                                               cancellable, error))
             return FALSE;
 
           index_sig = g_steal_pointer (&dl_index_sig);
@@ -11658,7 +11855,7 @@ flatpak_dir_remote_fetch_summary_index (FlatpakDir   *self,
         }
 
       g_assert (index != NULL);
-      if (gpg_verify_summary)
+      if (gpg_verify_summary || sign_verify_summary)
         g_assert (index_sig != NULL);
 
       /* Update cache on disk if we downloaded anything, but never cache for file: repos */
@@ -11900,15 +12097,25 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
     {
       if (opt_summary_sig)
         {
-          /* If specified, must be valid signature */
-          g_autoptr(OstreeGpgVerifyResult) gpg_result =
-            ostree_repo_verify_summary (self->repo,
-                                        state->remote_name,
-                                        opt_summary,
-                                        opt_summary_sig,
-                                        NULL, error);
-          if (gpg_result == NULL ||
-              !ostree_gpg_verify_result_require_valid_signature (gpg_result, error))
+          g_autoptr (GVariant) gpgsigs = NULL;
+          g_autoptr (GVariant) sigs = g_variant_new_from_bytes (G_VARIANT_TYPE_VARDICT, opt_summary_sig, FALSE);
+
+          gpgsigs = g_variant_lookup_value (sigs, "ostree.gpgsigs", NULL);
+          if (gpgsigs)
+            {
+              /* If specified, must be valid signature */
+              g_autoptr(OstreeGpgVerifyResult) gpg_result =
+              ostree_repo_verify_summary (self->repo,
+                                          state->remote_name,
+                                          opt_summary,
+                                          opt_summary_sig,
+                                          NULL, error);
+              if (gpg_result == NULL ||
+                  !ostree_gpg_verify_result_require_valid_signature (gpg_result, error))
+                return NULL;
+            }
+
+          if (!remote_verify_signature(self->repo, remote_or_uri, opt_summary, sigs, NULL, error))
             return NULL;
         }
 
@@ -13519,6 +13726,7 @@ create_origin_remote_config (OstreeRepo *repo,
                              const char *title,
                              const char *main_ref,
                              gboolean    gpg_verify,
+                             GVariant   *sign_data,
                              const char *collection_id,
                              GKeyFile  **new_config)
 {
@@ -13563,6 +13771,65 @@ create_origin_remote_config (OstreeRepo *repo,
   g_key_file_set_string (*new_config, group, "xa.prio", "0");
   g_key_file_set_string (*new_config, group, "gpg-verify-summary", gpg_verify ? "true" : "false");
   g_key_file_set_string (*new_config, group, "gpg-verify", gpg_verify ? "true" : "false");
+  if (sign_data)
+    {
+      g_autoptr (GPtrArray) verifiers = NULL;
+      g_autoptr (GString) sign_name = NULL;
+      GVariantDict dict;
+
+      g_variant_dict_init (&dict, sign_data);
+      verifiers = ostree_sign_get_all ();
+
+      for (guint i = 0; i < verifiers->len; i++)
+        {
+          g_autoptr (GVariant) keys = NULL;
+          g_autofree gchar *opt = NULL;
+          g_autoptr (GString) key_string = NULL;
+          g_autofree const gchar **keys_array = NULL;
+          OstreeSign *sign = verifiers->pdata[i];
+          gsize len;
+
+          keys = g_variant_dict_lookup_value (&dict, ostree_sign_metadata_key (sign),
+                                              G_VARIANT_TYPE_STRING_ARRAY);
+          if (!keys)
+            continue;
+
+          keys_array = g_variant_get_strv (keys, &len);
+          for (guint j = 0; j < len; j++)
+            {
+              if (!key_string)
+                {
+                  key_string = g_string_new (keys_array[j]);
+                }
+              else
+                {
+                  g_string_append_c (key_string, ',');
+                  g_string_append (key_string, keys_array[j]);
+                }
+            }
+
+          opt = g_strdup_printf ("verification-%s-key", ostree_sign_get_name (sign));
+          g_key_file_set_string (*new_config, group, opt, key_string->str);
+
+          if (!sign_name)
+            {
+              sign_name = g_string_new (ostree_sign_get_name (sign));
+            }
+          else
+            {
+              g_string_append_c (sign_name, ',');
+              g_string_append (sign_name, ostree_sign_get_name (sign));
+            }
+        }
+
+        g_key_file_set_string (*new_config, group, "sign-verify-summary", "true");
+        g_key_file_set_string (*new_config, group, "sign-verify", sign_name->str);
+    }
+  else
+    {
+      g_key_file_set_string (*new_config, group, "sign-verify-summary", "false");
+      g_key_file_set_string (*new_config, group, "sign-verify", "false");
+    }
   if (main_ref)
     g_key_file_set_string (*new_config, group, "xa.main-ref", main_ref);
 
@@ -13579,6 +13846,7 @@ flatpak_dir_create_origin_remote (FlatpakDir   *self,
                                   const char   *title,
                                   const char   *main_ref,
                                   GBytes       *gpg_data,
+                                  GVariant     *sign_data,
                                   const char   *collection_id,
                                   gboolean     *changed_config,
                                   GCancellable *cancellable,
@@ -13587,7 +13855,9 @@ flatpak_dir_create_origin_remote (FlatpakDir   *self,
   g_autoptr(GKeyFile) new_config = NULL;
   g_autofree char *remote = NULL;
 
-  remote = create_origin_remote_config (self->repo, url, id, title, main_ref, gpg_data != NULL, collection_id, &new_config);
+  remote = create_origin_remote_config (self->repo, url, id, title, main_ref,
+                                        gpg_data != NULL, sign_data,
+                                        collection_id, &new_config);
 
   if (new_config &&
       !flatpak_dir_modify_remote (self, remote, new_config,
@@ -13604,15 +13874,16 @@ flatpak_dir_create_origin_remote (FlatpakDir   *self,
 }
 
 static gboolean
-parse_ref_file (GKeyFile *keyfile,
-                char    **name_out,
-                char    **branch_out,
-                char    **url_out,
-                char    **title_out,
-                GBytes  **gpg_data_out,
-                gboolean *is_runtime_out,
-                char    **collection_id_out,
-                GError  **error)
+parse_ref_file (GKeyFile  *keyfile,
+                char     **name_out,
+                char     **branch_out,
+                char     **url_out,
+                char     **title_out,
+                GBytes   **gpg_data_out,
+                GVariant **sign_data_out,
+                gboolean  *is_runtime_out,
+                char     **collection_id_out,
+                GError   **error)
 {
   g_autofree char *url = NULL;
   g_autofree char *title = NULL;
@@ -13620,7 +13891,9 @@ parse_ref_file (GKeyFile *keyfile,
   g_autofree char *branch = NULL;
   g_autofree char *version = NULL;
   g_autoptr(GBytes) gpg_data = NULL;
+  g_autoptr(GVariant) sign_data = NULL;
   gboolean is_runtime = FALSE;
+  g_autofree char *sign_name = NULL;
   g_autofree char *collection_id = NULL;
   g_autofree char *str = NULL;
 
@@ -13660,9 +13933,11 @@ parse_ref_file (GKeyFile *keyfile,
   is_runtime = g_key_file_get_boolean (keyfile, FLATPAK_REF_GROUP,
                                        FLATPAK_REF_IS_RUNTIME_KEY, NULL);
 
+#ifndef FLATPAK_DISABLE_GPG
   str = g_key_file_get_string (keyfile, FLATPAK_REF_GROUP,
                                FLATPAK_REF_GPGKEY_KEY, NULL);
-  if (str != NULL)
+#endif
+  if (str != NULL && strlen (str) > 0)
     {
       g_autofree guchar *decoded = NULL;
       gsize decoded_len;
@@ -13673,6 +13948,38 @@ parse_ref_file (GKeyFile *keyfile,
         return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid file format, gpg key invalid"));
 
       gpg_data = g_bytes_new_take (g_steal_pointer (&decoded), decoded_len);
+    }
+
+  sign_name = g_key_file_get_string (keyfile, FLATPAK_REF_GROUP,
+                                     FLATPAK_REF_SIGNATURETYPE_KEY, NULL);
+  if (sign_name == NULL)
+    sign_name = g_strdup (OSTREE_SIGN_NAME_ED25519);
+
+  str = g_key_file_get_string (keyfile, FLATPAK_REF_GROUP,
+                               FLATPAK_REF_SIGNATUREKEY_KEY, NULL);
+  if (str != NULL && strlen (str) > 0)
+    {
+      g_auto (GVariantDict) dict = FLATPAK_VARIANT_DICT_INITIALIZER;
+      g_autoptr (GVariantBuilder) builder = NULL;
+      g_autofree guchar *decoded = NULL;
+      gsize decoded_len;
+      g_autoptr (OstreeSign) sign = ostree_sign_get_by_name (sign_name, error);
+
+      if (!sign)
+        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid file format, signature type invalid"));
+
+      str = g_strstrip (str);
+      decoded = g_base64_decode (str, &decoded_len);
+      if (decoded_len < 10) /* Check some minimal size so we don't get crap */
+        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid file format, signature key invalid"));
+
+      // Build sign_data GVariant
+      g_variant_dict_init (&dict, NULL);
+      builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
+      g_variant_builder_add_value (builder, g_variant_new_string (str));
+      g_variant_dict_insert_value (&dict, ostree_sign_metadata_key (sign),
+                                   g_variant_ref_sink (g_variant_builder_end (builder)));
+      sign_data = g_variant_ref_sink (g_variant_dict_end (&dict));
     }
 
   collection_id = g_key_file_get_string (keyfile, FLATPAK_REF_GROUP,
@@ -13687,8 +13994,10 @@ parse_ref_file (GKeyFile *keyfile,
   if (collection_id != NULL && *collection_id == '\0')
     collection_id = NULL;
 
+#ifndef FLATPAK_DISABLE_GPG
   if (collection_id != NULL && gpg_data == NULL)
     return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Collection ID requires GPG key to be provided"));
+#endif
 
   *name_out = g_steal_pointer (&name);
   *branch_out = g_steal_pointer (&branch);
@@ -13696,6 +14005,7 @@ parse_ref_file (GKeyFile *keyfile,
   *title_out = g_steal_pointer (&title);
   *gpg_data_out = g_steal_pointer (&gpg_data);
   *is_runtime_out = is_runtime;
+  *sign_data_out = g_steal_pointer (&sign_data);
   *collection_id_out = g_steal_pointer (&collection_id);
 
   return TRUE;
@@ -13718,10 +14028,11 @@ flatpak_dir_create_remote_for_ref_file (FlatpakDir         *self,
   g_autofree char *remote = NULL;
   gboolean is_runtime = FALSE;
   g_autofree char *collection_id = NULL;
+  g_autoptr(GVariant) sign_data = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
   g_autoptr(FlatpakDecomposed) ref = NULL;
 
-  if (!parse_ref_file (keyfile, &name, &branch, &url, &title, &gpg_data, &is_runtime, &collection_id, error))
+  if (!parse_ref_file (keyfile, &name, &branch, &url, &title, &gpg_data, &sign_data, &is_runtime, &collection_id, error))
     return FALSE;
 
   ref = flatpak_decomposed_new_from_parts (is_runtime ? FLATPAK_KINDS_RUNTIME : FLATPAK_KINDS_APP,
@@ -13745,7 +14056,7 @@ flatpak_dir_create_remote_for_ref_file (FlatpakDir         *self,
   if (remote == NULL)
     {
       remote = flatpak_dir_create_origin_remote (self, url, name, title, flatpak_decomposed_get_ref (ref),
-                                                 gpg_data, collection_id, NULL, NULL, error);
+                                                 gpg_data, sign_data, collection_id, NULL, NULL, error);
       if (remote == NULL)
         return FALSE;
     }
@@ -14488,6 +14799,8 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
     {
       gboolean gpg_verify_summary;
       gboolean gpg_verify;
+      gboolean sign_verify_summary;
+      gboolean sign_verify;
 
       if (!ostree_repo_remote_get_gpg_verify_summary (self->repo, remote, &gpg_verify_summary, error))
         return FALSE;
@@ -14495,18 +14808,26 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
       if (!ostree_repo_remote_get_gpg_verify (self->repo, remote, &gpg_verify, error))
         return FALSE;
 
-      if (!gpg_verify_summary || !gpg_verify)
+      if (!flatpak_dir_get_sign_verify_summary (self->repo, remote, &sign_verify_summary, error))
+        return FALSE;
+
+      if (!flatpak_dir_get_sign_verify (self->repo, remote, &sign_verify, error))
+        return FALSE;
+
+#ifndef FLATPAK_DISABLE_GPG
+      if ((!gpg_verify_summary || !gpg_verify) && (!sign_verify_summary || !sign_verify))
         {
-          g_debug ("Ignoring automatic updates for system-helper remotes without gpg signatures");
+          g_debug ("Ignoring automatic updates for system-helper remotes without signatures");
           return TRUE;
         }
 
       if ((state->summary != NULL && state->summary_sig_bytes == NULL) ||
           (state->index != NULL && state->index_sig_bytes == NULL))
         {
-          g_debug ("Can't update remote configuration as user, no GPG signature");
+          g_debug ("Can't update remote configuration as user, no signature");
           return TRUE;
         }
+#endif
 
       if (!flatpak_dir_update_remote_configuration_for_state (self, state, TRUE, &has_changed, cancellable, error))
         return FALSE;

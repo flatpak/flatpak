@@ -65,6 +65,8 @@ GType flatpak_deploy_get_type (void);
 #define FLATPAK_REF_SUGGEST_REMOTE_NAME_KEY "SuggestRemoteName"
 #define FLATPAK_REF_TITLE_KEY "Title"
 #define FLATPAK_REF_GPGKEY_KEY "GPGKey"
+#define FLATPAK_REF_SIGNATUREKEY_KEY "SignatureKey"
+#define FLATPAK_REF_SIGNATURETYPE_KEY "SignatureType"
 #define FLATPAK_REF_IS_RUNTIME_KEY "IsRuntime"
 #define FLATPAK_REF_NAME_KEY "Name"
 #define FLATPAK_REF_BRANCH_KEY "Branch"
@@ -78,6 +80,8 @@ GType flatpak_deploy_get_type (void);
 #define FLATPAK_REPO_TITLE_KEY "Title"
 #define FLATPAK_REPO_DEFAULT_BRANCH_KEY "DefaultBranch"
 #define FLATPAK_REPO_GPGKEY_KEY "GPGKey"
+#define FLATPAK_REPO_SIGNATUREKEY_KEY "SignatureKey"
+#define FLATPAK_REPO_SIGNATURETYPE_KEY "SignatureType"
 #define FLATPAK_REPO_NODEPS_KEY "NoDeps"
 #define FLATPAK_REPO_COMMENT_KEY "Comment"
 #define FLATPAK_REPO_DESCRIPTION_KEY "Description"
@@ -558,6 +562,14 @@ OstreeRepo *          flatpak_dir_get_repo                                  (Fla
 gboolean              flatpak_dir_ensure_path                               (FlatpakDir                    *self,
                                                                              GCancellable                  *cancellable,
                                                                              GError                       **error);
+gboolean              flatpak_dir_get_sign_verify_summary                   (OstreeRepo                    *repo,
+                                                                             const char                    *remote,
+                                                                             gboolean                      *sign_verify_summary,
+                                                                             GError                       **error);
+gboolean              flatpak_dir_get_sign_verify                           (OstreeRepo                    *repo,
+                                                                             const char                    *remote,
+                                                                             gboolean                      *sign_verify,
+                                                                             GError                       **error);
 gboolean              flatpak_dir_use_child_repo                            (FlatpakDir                    *self);
 gboolean              flatpak_dir_ensure_system_child_repo                  (FlatpakDir                    *self,
                                                                              GError                       **error);
@@ -731,6 +743,7 @@ gboolean              flatpak_dir_install                                   (Fla
 char *                flatpak_dir_ensure_bundle_remote                      (FlatpakDir                    *self,
                                                                              GFile                         *file,
                                                                              GBytes                        *extra_gpg_data,
+                                                                             GVariant                      *sign_data,
                                                                              FlatpakDecomposed            **out_ref,
                                                                              char                         **out_commit,
                                                                              char                         **out_metadata,
@@ -739,6 +752,7 @@ char *                flatpak_dir_ensure_bundle_remote                      (Fla
                                                                              GError                       **error);
 gboolean              flatpak_dir_install_bundle                            (FlatpakDir                    *self,
                                                                              GFile                         *file,
+                                                                             GVariant                      *sign_data,
                                                                              const char                    *remote,
                                                                              FlatpakDecomposed            **out_ref,
                                                                              GCancellable                  *cancellable,
@@ -840,6 +854,7 @@ char      *           flatpak_dir_create_origin_remote                      (Fla
                                                                              const char                    *title,
                                                                              const char                    *main_ref,
                                                                              GBytes                        *gpg_data,
+                                                                             GVariant                      *sign_data,
                                                                              const char                    *collection_id,
                                                                              gboolean                      *changed_config,
                                                                              GCancellable                  *cancellable,

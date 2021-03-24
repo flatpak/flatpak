@@ -33,8 +33,11 @@
 #include "flatpak-builtins-utils.h"
 #include "flatpak-utils-private.h"
 
+#ifndef FLATPAK_DISABLE_GPG
 static gboolean opt_no_gpg_verify;
 static gboolean opt_do_gpg_verify;
+#endif
+static gboolean opt_no_sign_verify = FALSE;
 static gboolean opt_do_enumerate;
 static gboolean opt_no_enumerate;
 static gboolean opt_do_deps;
@@ -53,7 +56,10 @@ static char *opt_default_branch;
 static char *opt_url;
 static char *opt_collection_id = NULL;
 static gboolean opt_from;
+#ifndef FLATPAK_DISABLE_GPG
 static char **opt_gpg_import;
+#endif
+static char **opt_sign_keys = NULL;
 static char *opt_authenticator_name = NULL;
 static char **opt_authenticator_options = NULL;
 static gboolean opt_authenticator_install = -1;
@@ -66,7 +72,10 @@ static GOptionEntry add_options[] = {
 };
 
 static GOptionEntry common_options[] = {
+#ifndef FLATPAK_DISABLE_GPG
   { "no-gpg-verify", 0, 0, G_OPTION_ARG_NONE, &opt_no_gpg_verify, N_("Disable GPG verification"), NULL },
+#endif
+  { "no-sign-verify", 0, 0, G_OPTION_ARG_NONE, &opt_no_sign_verify, N_("Disable signature verification"), NULL },
   { "no-enumerate", 0, 0, G_OPTION_ARG_NONE, &opt_no_enumerate, N_("Mark the remote as don't enumerate"), NULL },
   { "no-use-for-deps", 0, 0, G_OPTION_ARG_NONE, &opt_no_deps, N_("Mark the remote as don't use for deps"), NULL },
   { "prio", 0, 0, G_OPTION_ARG_INT, &opt_prio, N_("Set priority (default 1, higher is more prioritized)"), N_("PRIORITY") },
@@ -78,7 +87,10 @@ static GOptionEntry common_options[] = {
   { "icon", 0, 0, G_OPTION_ARG_STRING, &opt_icon, N_("URL for an icon for this remote"), N_("URL") },
   { "default-branch", 0, 0, G_OPTION_ARG_STRING, &opt_default_branch, N_("Default branch to use for this remote"), N_("BRANCH") },
   { "collection-id", 0, 0, G_OPTION_ARG_STRING, &opt_collection_id, N_("Collection ID"), N_("COLLECTION-ID") },
+#ifndef FLATPAK_DISABLE_GPG
   { "gpg-import", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_import, N_("Import GPG key from FILE (- for stdin)"), N_("FILE") },
+#endif
+  { "sign-verify", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_sign_keys, N_("Verify signatures using KEYTYPE=inline:PUBKEY or KEYTYPE=file:/path/to/key"), N_("KEYTYPE=[inline|file]:PUBKEY") },
   { "filter", 0, 0, G_OPTION_ARG_FILENAME, &opt_filter, N_("Set path to local filter FILE"), N_("FILE") },
   { "disable", 0, 0, G_OPTION_ARG_NONE, &opt_disable, N_("Disable the remote"), NULL },
   { "authenticator-name", 0, 0, G_OPTION_ARG_STRING, &opt_authenticator_name, N_("Name of authenticator"), N_("NAME") },
@@ -98,7 +110,8 @@ get_config_from_opts (GKeyFile *config,
 {
   g_autofree char *group = g_strdup_printf ("remote \"%s\"", remote_name);
 
-  if (opt_no_gpg_verify)
+#ifndef FLATPAK_DISABLE_GPG
+  if (opt_no_gpg_verify || opt_no_sign_verify)
     {
       g_key_file_set_boolean (config, group, "gpg-verify", FALSE);
       g_key_file_set_boolean (config, group, "gpg-verify-summary", FALSE);
@@ -108,6 +121,58 @@ get_config_from_opts (GKeyFile *config,
     {
       g_key_file_set_boolean (config, group, "gpg-verify", TRUE);
       g_key_file_set_boolean (config, group, "gpg-verify-summary", TRUE);
+    }
+#else
+  g_key_file_set_boolean (config, group, "gpg-verify", FALSE);
+  g_key_file_set_boolean (config, group, "gpg-verify-summary", FALSE);
+#endif
+
+  if (opt_no_sign_verify)
+    {
+      g_key_file_set_boolean (config, group, "sign-verify", FALSE);
+      g_key_file_set_boolean (config, group, "sign-verify-summary", FALSE);
+    }
+  else
+    {
+      g_autofree gchar *verify = g_key_file_get_string (config, group, "sign-verify", NULL);
+      g_autoptr(GString) sign_verify = NULL;
+
+      /*
+       * `sign-verify` can be either a boolean, or a string representing the
+       * signature type. In the latter case, this means it's enabled, so we
+       * have to read the full string and check it doesn't translate to a
+       * boolean false.
+       */
+      if (verify && !g_str_equal (verify, "false") && !g_str_equal (verify, "0"))
+        sign_verify = g_string_new (verify);
+
+      for (char **iter = opt_sign_keys; iter && *iter; iter++)
+        {
+          g_autofree char *signname = flatpak_verify_add_config_options (config, group, *iter, error);
+          if (!signname)
+            return FALSE;
+
+          if (!sign_verify)
+            {
+              sign_verify = g_string_new (signname);
+            }
+          else if (g_strstr_len (sign_verify->str, sign_verify->len, signname) == NULL)
+            {
+              g_string_append_c (sign_verify, ',');
+              g_string_append (sign_verify, signname);
+            }
+        }
+
+      if (sign_verify && sign_verify->len > 0)
+        {
+          g_key_file_set_string (config, group, "sign-verify", sign_verify->str);
+          g_key_file_set_boolean (config, group, "sign-verify-summary", TRUE);
+        }
+      else
+        {
+          g_key_file_set_boolean (config, group, "sign-verify", FALSE);
+          g_key_file_set_boolean (config, group, "sign-verify-summary", FALSE);
+        }
     }
 
   if (opt_url)
@@ -187,6 +252,7 @@ get_config_from_opts (GKeyFile *config,
       g_key_file_set_string (config, group, "xa.prio", prio_as_string);
     }
 
+#ifndef FLATPAK_DISABLE_GPG
   if (opt_gpg_import != NULL)
     {
       g_clear_pointer (gpg_data, g_bytes_unref); /* Free if set from flatpakrepo file */
@@ -194,6 +260,7 @@ get_config_from_opts (GKeyFile *config,
       if (*gpg_data == NULL)
         return FALSE;
     }
+#endif
 
   if (opt_authenticator_name)
     {
@@ -320,8 +387,11 @@ flatpak_builtin_remote_add (int argc, char **argv,
     return flatpak_fail (error, _("‘%s’ is not a valid collection ID: %s"), opt_collection_id, local_error->message);
 
   if (opt_collection_id != NULL &&
-      (opt_no_gpg_verify || opt_gpg_import == NULL || opt_gpg_import[0] == NULL))
-    return flatpak_fail (error, _("GPG verification is required if collections are enabled"));
+#ifndef FLATPAK_DISABLE_GPG
+      (opt_no_gpg_verify || opt_gpg_import == NULL || opt_gpg_import[0] == NULL) &&
+#endif
+      (opt_no_sign_verify || opt_sign_keys == NULL || opt_sign_keys[0] == NULL))
+    return flatpak_fail (error, _("signature verification is required if collections are enabled"));
 
   remote_name = argv[1];
   location = argv[2];
@@ -335,7 +405,9 @@ flatpak_builtin_remote_add (int argc, char **argv,
     }
   else
     {
+#ifndef FLATPAK_DISABLE_GPG
       gboolean is_oci;
+#endif
 
       config = g_key_file_new ();
       file = g_file_new_for_commandline_arg (location);
@@ -345,10 +417,12 @@ flatpak_builtin_remote_add (int argc, char **argv,
         remote_url = g_strdup (location);
       opt_url = remote_url;
 
+#ifndef FLATPAK_DISABLE_GPG
       /* Default to gpg verify, except for OCI registries */
       is_oci = opt_url && g_str_has_prefix (opt_url, "oci+");
-      if (!opt_no_gpg_verify && !is_oci)
+      if (!opt_no_gpg_verify && !opt_no_sign_verify && !is_oci)
         opt_do_gpg_verify = TRUE;
+#endif
     }
 
   if (!get_config_from_opts (config, remote_name, &gpg_data, error))
@@ -386,6 +460,7 @@ flatpak_builtin_remote_add (int argc, char **argv,
       return flatpak_fail (error, _("Remote %s already exists"), remote_name);
     }
 
+#ifndef FLATPAK_DISABLE_GPG
   if (opt_gpg_import != NULL)
     {
       g_clear_pointer (&gpg_data, g_bytes_unref);
@@ -393,6 +468,7 @@ flatpak_builtin_remote_add (int argc, char **argv,
       if (gpg_data == NULL)
         return FALSE;
     }
+#endif
 
   if (opt_authenticator_name && !g_dbus_is_name (opt_authenticator_name))
     return flatpak_fail (error, _("Invalid authenticator name %s"), opt_authenticator_name);
@@ -410,7 +486,7 @@ flatpak_builtin_remote_add (int argc, char **argv,
      remote should already be usable. */
   if (!flatpak_dir_update_remote_configuration (dir, remote_name, NULL, NULL, cancellable, &local_error))
     {
-      if (local_error->domain == G_RESOLVER_ERROR || local_error->domain == G_IO_ERROR)
+      if (local_error->domain == G_RESOLVER_ERROR || (local_error->domain == G_IO_ERROR && strstr(local_error->message, "ed25519") == NULL))
         {
           g_printerr (_("Warning: Could not update extra metadata for '%s': %s\n"), remote_name, local_error->message);
         }

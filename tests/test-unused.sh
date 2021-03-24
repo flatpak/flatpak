@@ -31,8 +31,17 @@ echo "1..2"
 
 setup_empty_repo &> /dev/null > /dev/null
 
+OPT_GPG_IMPORT=
+OPT_SIGN_VERIFY=
+if [ x${FLATPAK_USE_GPG} == xyes ]; then
+    OPT_GPG_IMPORT="--gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg"
+fi
+if [ x${FL_SIGN_ENABLED} == xyes ]; then
+    OPT_SIGN_VERIFY="--sign-verify=ed25519=inline:${FL_SIGN_PUBKEY}"
+fi
+
 # Manually add the user remote too
-$FLATPAK remote-add --user --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg test-repo "http://127.0.0.1:${port}/test"
+$FLATPAK remote-add --user ${OPT_GPG_IMPORT} ${OPT_SIGN_VERIFY} test-repo "http://127.0.0.1:${port}/test"
 
 
 # This tests the detection of unused refs. Used refs are any that have
@@ -84,7 +93,7 @@ EOF
     fi
 
     $FLATPAK build-finish $DIR ${finish_args[$ID]:-} &> /dev/null > /dev/null
-    $FLATPAK build-export -v ${FL_GPGARGS} --disable-sandbox --runtime repos/test ${DIR} ${BRANCH} &> /dev/null > /dev/null
+    $FLATPAK build-export -v ${FL_GPGARGS} ${FL_SIGNARGS} --disable-sandbox --runtime repos/test ${DIR} ${BRANCH} &> /dev/null > /dev/null
     rm -rf ${DIR}
 }
 
@@ -112,7 +121,7 @@ EOF
     set -x
     $FLATPAK build-finish ${DIR}  ${finish_args[$ID]:-} &> /dev/null > /dev/null
 
-    $FLATPAK build-export ${FL_GPGARGS} --disable-sandbox repos/test ${DIR} ${BRANCH} &> /dev/null > /dev/null
+    $FLATPAK build-export ${FL_GPGARGS} ${FL_SIGNARGS} --disable-sandbox repos/test ${DIR} ${BRANCH} &> /dev/null > /dev/null
     rm -rf ${DIR}
 }
 

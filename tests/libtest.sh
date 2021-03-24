@@ -117,7 +117,11 @@ if [ x${USE_SYSTEMDIR-} == xyes ] ; then
     export FL_DIR=${SYSTEMDIR}
     export U=
     export INVERT_U=--user
-    export FL_CACHE_DIR=${XDG_CACHE_HOME}/flatpak/system-cache
+    if [ x${USER} == xroot ] ; then
+        export FL_CACHE_DIR=${FLATPAK_SYSTEM_DIR}/repo/tmp/cache
+    else
+        export FL_CACHE_DIR=${XDG_CACHE_HOME}/flatpak/system-cache
+    fi
 else
     export FL_DIR=${USERDIR}
     export U="--user"
@@ -257,26 +261,63 @@ assert_remote_has_no_config () {
     } 3> /dev/null
 }
 
-export FL_GPG_HOMEDIR=${TEST_DATA_DIR}/gpghome
-export FL_GPG_HOMEDIR2=${TEST_DATA_DIR}/gpghome2
-mkdir -p ${FL_GPG_HOMEDIR}
-mkdir -p ${FL_GPG_HOMEDIR2}
-# This need to be writable, so copy the keys
-cp $(dirname $0)/test-keyring/*.gpg ${FL_GPG_HOMEDIR}/
-cp $(dirname $0)/test-keyring2/*.gpg ${FL_GPG_HOMEDIR2}/
+if [ x${FLATPAK_USE_GPG} == xyes ]; then
+    export FL_GPG_HOMEDIR=${TEST_DATA_DIR}/gpghome
+    export FL_GPG_HOMEDIR2=${TEST_DATA_DIR}/gpghome2
+    mkdir -p ${FL_GPG_HOMEDIR}
+    mkdir -p ${FL_GPG_HOMEDIR2}
+    # This need to be writable, so copy the keys
+    cp $(dirname $0)/test-keyring/*.gpg ${FL_GPG_HOMEDIR}/
+    cp $(dirname $0)/test-keyring2/*.gpg ${FL_GPG_HOMEDIR2}/
 
-export FL_GPG_ID=7B0961FD
-export FL_GPG_ID2=B2314EFC
-export FL_GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${FL_GPG_ID}"
-export FL_GPGARGS2="--gpg-homedir=${FL_GPG_HOMEDIR2} --gpg-sign=${FL_GPG_ID2}"
-export FL_GPG_BASE64="mQENBFbPBvoBCADWbz5O+XzuyN+dDExK81pci+gIzBNWB+7SsN0EgoJppKgwBCX+Bd6ERe9Yz0nJbJB/tjazRp7MnnoPnh6fXnhIbHA766/Eciy4sL5X8laqDmWmROCqCe79QZH/w6vYTKsDmoLQrw9eKRP1ilCvECNGcVdhIyfTDlNrU//uy5U4h2PVUz1/Al87lvaJnrj5423m5GnX+qpEG8mmpmcw52lvXNPuC95ykylPQJjI0WnOuaTcxzRhm5eHPkqKQ+nPIS+66iw1SFdobYuye/vg/rDiyp8uyQkh7FWXnzHxz4J8ovesnrCM7pKI4VEHCnZ4/sj2v9E3l0wJlqZxLTULaV3lABEBAAG0D1hkZy1hcHAgdGVzdGluZ4kBOAQTAQIAIgUCVs8G+gIbAwYLCQgHAwIGFQgCCQoLBBYCAwECHgECF4AACgkQE4sx4HsJYf2DiAf7BQ8anU3CgYpJjuO2rT8jQPO0jGRCNaPyaeAcBx8IjFkjf8daKMPCAt6gQioEpC8OhDig86Bl5piYOB7L7JSB53mgUrADJXhgC/dG4soCt7/U4wW30MseXdlXSOqHGApblF/bIs4B30OBGReBj3DcWIqyb48GraSKlPlaCpkZFySNEAcGUCeCqbbygxCQAM8MDq9FgVRk5oVrE/nAUm6oScEBhseoB7+CaHaRTmLoe/SBs0z2AJ7alIH1Sv4X3mQXpfsAIcWf3Zu2MZydF/Vuh8vTMROwPYtOVEtGxZvEBN3h5uc88dHSk928maqsop9T6oEwM43mBKCOu1gdAOw4OLkBDQRWzwb6AQgAx/XuEaQvdI3J2YYmOE6RY0jJZXLauXH46cJR4q70mlDev/OqYKTSLlo4q06D4ozCwzTYflppDak7kmjWMN224/u1koqFOtF76LsglAeLaQmweWmX0ecbPrzFYaX30kaQAqQ9Wk0PRe0+arRzWDWfUv3qX3y1decKUrBCuEC6WvVVwooWs+zX0cUBS8CROhazTjvXFAz36mhK0u+B3WCBlK+T2tIPOjLjlYgzYARw+X7/J6B3C798r2Hw/yXqCDcKLrq7WWUB33kv3buuG2G6LUamctdD8IsTBxi+nIjAvQITFqq4cPbbXAJGaAnWGuLOddQ9e/GhCOI4JjopRnnjOwARAQABiQEfBBgBAgAJBQJWzwb6AhsMAAoJEBOLMeB7CWH9TC8H/A6oreCxeiL8DPOWN29OaQ5sEw7Dg7bnLSZLu8aREgwfCiFSv0numOABjn/G89Y5M6NiEXFZZhUa+SXOALiBLUy98O84lyp9hlP9qGbWRgBXwe5vOAJERqtoUwR5bygpAw5Nc4y3wddPC4vH7upJ8ftU/eEFtPdI0cKrrAZDFdhXFp3RxdCC6fD62wbofE0mo1Ea1iD3xqVh2t7jfWN1RhMV308htHRGkkmWcEbbvHqugwL6dWZEvQmLYi6/7tQyA1KdG4AZksBP/MBi3t2hthRqQx1v52JwdCaZNuItuEe5rWXhfvoGxPoqYZt9ZPjna6yJfcfJwPbMfjNwX2LR4p4="
-export FL_GPG_BASE642="mQENBFkSyx4BCACq/8XFcF+NTpJKfoo8F6YyR8RQXww6kCV47zN78Dt7aCh43WSYLRUBRt1tW5MRT8R60pwCsGvKnFiNS2Vqe4T1IW4mDnFMZIZJXdNVwKUqVBPL/jzkIDnQ9NXtuPNH0qET6VhYnb9aykLo/MiBmx6q+4MvYd/qwiN8kstRifRIxjjZx6wsg+muY6yx9fZKxlgvhc3nsrl3oyDo7/+V+b3heYLtMCQFwlHRKz3Yf2X9H0aUSbDYcgTy6w3q94HVNCpJSqeiR+kBG175BQYKR2l7WYdaVPFf5LMEvAJh0SGnqu77X+8TYYRQiiBB5fYjGOeHfOh6uH5GAJRQymVIJwy/ABEBAAG0KkZsYXRwYWsgKFRlc3Qga2V5IDIpIDxmbGF0cGFrQGZsYXRwYWsub3JnPokBOAQTAQIAIgUCWRLLHgIbAwYLCQgHAwIGFQgCCQoLBBYCAwECHgECF4AACgkQdZ9f0LIxTvyeUQf/euAZpipXBkGWxeW4G10r1QRi2tZAWNeLpy8SB17eo9E6yB61SdH80jALborVs/plnZzKcFf+nLvjCn51FLMh6QPL3S+079WHsed//qtUWfbJ85hLevfCMTZMLktUmqwwUh238WW/gKtbUjYOqr1IZSMBoMiQtc0iOVBP7HUdhYigxTKvs/MBEGHANeQkY07ZnX9oFXElOo+EIPAHScwEOSwEVrXUVHpQODzIfjOoPUHWAZtM1yJT+iWmVHe4HtU8CyBnPyUcnTmTWKr92QmgfWkb1T7ugT5gXt/6ZlYAaZGnr9yNuSk3MMhDMOyldtJBM5Zl8eScE9KBf7pRJoxnMLkBDQRZEsseAQgAvA29IyiJpB+jUHj3MOyVyTBOmvLme+0Ndhpt/mTh+swchJUvzb0IzQS9Le5yVAvn+ppAtDCMb+bV4Xh5zrbiH0Hu0qwK4Qk+KcIKRE8ImDiUM8NFE2SZoomZSsgZ1NBWbAdEyVpkBfrt3Dd8FssMrwPF6kqo02TZr7Pxng+BEHUZT6jPCxueqyXyv2cLbQMe1H0U7klsxPmnnIYUqdwOmPxUspVEYP9oJb5y123mx0yj5JuYdZMjWbP3cRLox1RKIlFWgQqOn2yJiEoWzpqdbtb7sE3ggnbZKJED0ZxUZIakjnyMhX+GAEA8ZMZ6+HfDt1iHV8qHcYiLW5A3AQTxZwARAQABiQEfBBgBAgAJBQJZEsseAhsMAAoJEHWfX9CyMU78Ns4IAJRQ5UJ9KkeZClHm1EjYlgsAq1UJr9wgbyBFKTEkGZ/CAvVmgg+BUXcN/SPAkELbEAOJZTyv8C5cuJC49iFHOxUbRZXZ5eN2SvhZzl+5gep2uHwVLdqRIxFDTHbLWnmtHxPeU7IRA9u86q3wV1N0pD7kreNN7BWKY3/tI33hY2/XVVFy0MN5sutPn+lVK66MqAHqtode5xqqz9Z8LmS7LlqokQkAytcGd6Xqsx99NTk8kk3bnk9HWsAvDO8tRZroeseKeRNmbhGvCNUxPSB6bpYBJLvQtjA9ZVv6sNm0E+SuiXKizZkBGO5AH50pDoy0+MCGoOhwwXeY5+1kZAOzkMI="
+    export FL_GPG_ID=7B0961FD
+    export FL_GPG_ID2=B2314EFC
+    export FL_GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${FL_GPG_ID}"
+    export FL_GPGARGS2="--gpg-homedir=${FL_GPG_HOMEDIR2} --gpg-sign=${FL_GPG_ID2}"
+    export FL_GPG_BASE64="mQENBFbPBvoBCADWbz5O+XzuyN+dDExK81pci+gIzBNWB+7SsN0EgoJppKgwBCX+Bd6ERe9Yz0nJbJB/tjazRp7MnnoPnh6fXnhIbHA766/Eciy4sL5X8laqDmWmROCqCe79QZH/w6vYTKsDmoLQrw9eKRP1ilCvECNGcVdhIyfTDlNrU//uy5U4h2PVUz1/Al87lvaJnrj5423m5GnX+qpEG8mmpmcw52lvXNPuC95ykylPQJjI0WnOuaTcxzRhm5eHPkqKQ+nPIS+66iw1SFdobYuye/vg/rDiyp8uyQkh7FWXnzHxz4J8ovesnrCM7pKI4VEHCnZ4/sj2v9E3l0wJlqZxLTULaV3lABEBAAG0D1hkZy1hcHAgdGVzdGluZ4kBOAQTAQIAIgUCVs8G+gIbAwYLCQgHAwIGFQgCCQoLBBYCAwECHgECF4AACgkQE4sx4HsJYf2DiAf7BQ8anU3CgYpJjuO2rT8jQPO0jGRCNaPyaeAcBx8IjFkjf8daKMPCAt6gQioEpC8OhDig86Bl5piYOB7L7JSB53mgUrADJXhgC/dG4soCt7/U4wW30MseXdlXSOqHGApblF/bIs4B30OBGReBj3DcWIqyb48GraSKlPlaCpkZFySNEAcGUCeCqbbygxCQAM8MDq9FgVRk5oVrE/nAUm6oScEBhseoB7+CaHaRTmLoe/SBs0z2AJ7alIH1Sv4X3mQXpfsAIcWf3Zu2MZydF/Vuh8vTMROwPYtOVEtGxZvEBN3h5uc88dHSk928maqsop9T6oEwM43mBKCOu1gdAOw4OLkBDQRWzwb6AQgAx/XuEaQvdI3J2YYmOE6RY0jJZXLauXH46cJR4q70mlDev/OqYKTSLlo4q06D4ozCwzTYflppDak7kmjWMN224/u1koqFOtF76LsglAeLaQmweWmX0ecbPrzFYaX30kaQAqQ9Wk0PRe0+arRzWDWfUv3qX3y1decKUrBCuEC6WvVVwooWs+zX0cUBS8CROhazTjvXFAz36mhK0u+B3WCBlK+T2tIPOjLjlYgzYARw+X7/J6B3C798r2Hw/yXqCDcKLrq7WWUB33kv3buuG2G6LUamctdD8IsTBxi+nIjAvQITFqq4cPbbXAJGaAnWGuLOddQ9e/GhCOI4JjopRnnjOwARAQABiQEfBBgBAgAJBQJWzwb6AhsMAAoJEBOLMeB7CWH9TC8H/A6oreCxeiL8DPOWN29OaQ5sEw7Dg7bnLSZLu8aREgwfCiFSv0numOABjn/G89Y5M6NiEXFZZhUa+SXOALiBLUy98O84lyp9hlP9qGbWRgBXwe5vOAJERqtoUwR5bygpAw5Nc4y3wddPC4vH7upJ8ftU/eEFtPdI0cKrrAZDFdhXFp3RxdCC6fD62wbofE0mo1Ea1iD3xqVh2t7jfWN1RhMV308htHRGkkmWcEbbvHqugwL6dWZEvQmLYi6/7tQyA1KdG4AZksBP/MBi3t2hthRqQx1v52JwdCaZNuItuEe5rWXhfvoGxPoqYZt9ZPjna6yJfcfJwPbMfjNwX2LR4p4="
+    export FL_GPG_BASE642="mQENBFkSyx4BCACq/8XFcF+NTpJKfoo8F6YyR8RQXww6kCV47zN78Dt7aCh43WSYLRUBRt1tW5MRT8R60pwCsGvKnFiNS2Vqe4T1IW4mDnFMZIZJXdNVwKUqVBPL/jzkIDnQ9NXtuPNH0qET6VhYnb9aykLo/MiBmx6q+4MvYd/qwiN8kstRifRIxjjZx6wsg+muY6yx9fZKxlgvhc3nsrl3oyDo7/+V+b3heYLtMCQFwlHRKz3Yf2X9H0aUSbDYcgTy6w3q94HVNCpJSqeiR+kBG175BQYKR2l7WYdaVPFf5LMEvAJh0SGnqu77X+8TYYRQiiBB5fYjGOeHfOh6uH5GAJRQymVIJwy/ABEBAAG0KkZsYXRwYWsgKFRlc3Qga2V5IDIpIDxmbGF0cGFrQGZsYXRwYWsub3JnPokBOAQTAQIAIgUCWRLLHgIbAwYLCQgHAwIGFQgCCQoLBBYCAwECHgECF4AACgkQdZ9f0LIxTvyeUQf/euAZpipXBkGWxeW4G10r1QRi2tZAWNeLpy8SB17eo9E6yB61SdH80jALborVs/plnZzKcFf+nLvjCn51FLMh6QPL3S+079WHsed//qtUWfbJ85hLevfCMTZMLktUmqwwUh238WW/gKtbUjYOqr1IZSMBoMiQtc0iOVBP7HUdhYigxTKvs/MBEGHANeQkY07ZnX9oFXElOo+EIPAHScwEOSwEVrXUVHpQODzIfjOoPUHWAZtM1yJT+iWmVHe4HtU8CyBnPyUcnTmTWKr92QmgfWkb1T7ugT5gXt/6ZlYAaZGnr9yNuSk3MMhDMOyldtJBM5Zl8eScE9KBf7pRJoxnMLkBDQRZEsseAQgAvA29IyiJpB+jUHj3MOyVyTBOmvLme+0Ndhpt/mTh+swchJUvzb0IzQS9Le5yVAvn+ppAtDCMb+bV4Xh5zrbiH0Hu0qwK4Qk+KcIKRE8ImDiUM8NFE2SZoomZSsgZ1NBWbAdEyVpkBfrt3Dd8FssMrwPF6kqo02TZr7Pxng+BEHUZT6jPCxueqyXyv2cLbQMe1H0U7klsxPmnnIYUqdwOmPxUspVEYP9oJb5y123mx0yj5JuYdZMjWbP3cRLox1RKIlFWgQqOn2yJiEoWzpqdbtb7sE3ggnbZKJED0ZxUZIakjnyMhX+GAEA8ZMZ6+HfDt1iHV8qHcYiLW5A3AQTxZwARAQABiQEfBBgBAgAJBQJZEsseAhsMAAoJEHWfX9CyMU78Ns4IAJRQ5UJ9KkeZClHm1EjYlgsAq1UJr9wgbyBFKTEkGZ/CAvVmgg+BUXcN/SPAkELbEAOJZTyv8C5cuJC49iFHOxUbRZXZ5eN2SvhZzl+5gep2uHwVLdqRIxFDTHbLWnmtHxPeU7IRA9u86q3wV1N0pD7kreNN7BWKY3/tI33hY2/XVVFy0MN5sutPn+lVK66MqAHqtode5xqqz9Z8LmS7LlqokQkAytcGd6Xqsx99NTk8kk3bnk9HWsAvDO8tRZroeseKeRNmbhGvCNUxPSB6bpYBJLvQtjA9ZVv6sNm0E+SuiXKizZkBGO5AH50pDoy0+MCGoOhwwXeY5+1kZAOzkMI="
+else
+    export FL_GPG_HOMEDIR=
+    export FL_GPG_HOMEDIR2=
+    export FL_GPG_ID=
+    export FL_GPG_ID2=
+    export FL_GPGARGS=
+    export FL_GPGARGS2=
+    export FL_GPG_BASE64=
+    export FL_GPG_BASE642=
+fi
+
+if ostree --version | grep -q -e '- sign-ed25519'; then
+    export FL_SIGN_ENABLED="yes"
+    export FL_SIGN_PUBKEY="B3a86SmB+sby/N5onaxTXjK1OEAbZOI2fsdr3kKD+KE="
+    export FL_SIGN_PUBKEY2="ZNO1G9znCBZcVEg5xD57mw/xbqkYLQ65l5kPONDbJS0="
+    export FL_SIGN_PRIVKEY="m8/rp9I9ax2w81yujZyeXTfZlbeBjEBUPQSQKo14iHgHdrzpKYH6xvL83midrFNeMrU4QBtk4jZ+x2veQoP4oQ=="
+    export FL_SIGN_PRIVKEY2="YCfgdnZI5jadZVUuQIOXBsmYqC3CB6Zo2aaaZeDHj7hk07Ub3OcIFlxUSDnEPnubD/FuqRgtDrmXmQ840NslLQ=="
+
+    mkdir -p ${TEST_DATA_DIR}/ed25519
+    export FL_SIGN_KEYFILE=${TEST_DATA_DIR}/ed25519/public
+    export FL_SIGN_KEYFILE2=${TEST_DATA_DIR}/ed25519/public.2
+
+    echo ${FL_SIGN_PUBKEY2} > ${FL_SIGN_KEYFILE}
+    echo ${FL_SIGN_PUBKEY} >> ${FL_SIGN_KEYFILE}
+    echo ${FL_SIGN_PUBKEY2} > ${FL_SIGN_KEYFILE2}
+
+    export FL_SIGNARGS="--sign=${FL_SIGN_PRIVKEY}"
+else
+    export FL_SIGN_ENABLED="no"
+    export FL_SIGN_PUBKEY=
+    export FL_SIGN_PUBKEY2=
+    export FL_SIGN_PRIVKEY=
+    export FL_SIGN_PRIVKEY2=
+    export FL_SIGNARGS=
+fi
 
 make_runtime () {
     REPONAME="$1"
     COLLECTION_ID="$2"
     BRANCH="$3"
     GPGARGS="$4"
+    SIGNARGS="$5"
 
     RUNTIME_REF="runtime/org.test.Platform/$(flatpak --default-arch)/${BRANCH}"
     if [ ! -z "${SRC_RUNTIME_REPO:-}" ]; then
@@ -303,7 +344,7 @@ make_runtime () {
         ostree --repo=repos/${REPONAME} init --mode=archive-z2 ${collection_args}
     fi
 
-    flatpak build-commit-from --disable-fsync --no-update-summary --src-repo=${RUNTIME_REPO} --force ${GPGARGS} ${EXPORT_ARGS-}  repos/${REPONAME}  ${RUNTIME_REF}
+    flatpak build-commit-from --disable-fsync --no-update-summary --src-repo=${RUNTIME_REPO} --force ${GPGARGS} ${SIGNARGS} ${EXPORT_ARGS-}  repos/${REPONAME}  ${RUNTIME_REF}
 }
 
 httpd () {
@@ -329,8 +370,9 @@ setup_repo_no_add () {
     fi
     BRANCH=${3:-master}
 
-    make_runtime "${REPONAME}" "${COLLECTION_ID}" "${BRANCH}" "${GPGARGS:-${FL_GPGARGS}}"
-    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" $(dirname $0)/make-test-app.sh repos/${REPONAME} "" "${BRANCH}" "${COLLECTION_ID}" > /dev/null
+    make_runtime "${REPONAME}" "${COLLECTION_ID}" "${BRANCH}" "${GPGARGS:-${FL_GPGARGS}}" "${SIGNARGS:-${FL_SIGNARGS}}"
+    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" SIGNARGS="${SIGNARGS:-${FL_SIGNARGS}}" $(dirname $0)/make-test-app.sh \
+                repos/${REPONAME} "" "${BRANCH}" "${COLLECTION_ID}" > /dev/null
     update_repo $REPONAME "${COLLECTION_ID}"
     if [ $REPONAME == "test" ]; then
         httpd
@@ -344,7 +386,7 @@ setup_repo () {
     setup_repo_no_add "$@"
 
     port=$(cat httpd-port)
-    if [ x${GPGPUBKEY:-${FL_GPG_HOMEDIR}/pubring.gpg} != x ]; then
+    if [ x${FLATPAK_USE_GPG} == xyes ] && [ x${GPGPUBKEY:-${FL_GPG_HOMEDIR}/pubring.gpg} != x ]; then
         import_args=--gpg-import=${GPGPUBKEY:-${FL_GPG_HOMEDIR}/pubring.gpg}
     else
         import_args=
@@ -354,8 +396,13 @@ setup_repo () {
     else
         collection_args=
     fi
+    if [ x${FL_SIGN_ENABLED} == xyes ] && [ x${SIGNPUBKEY:-${FL_SIGN_PUBKEY}} != x ]; then
+        sign_args=--sign-verify=ed25519=inline:${SIGNPUBKEY:-${FL_SIGN_PUBKEY}}
+    else
+        sign_args=
+    fi
 
-    flatpak remote-add ${U} ${collection_args} ${import_args} ${REPONAME}-repo "http://127.0.0.1:${port}/$REPONAME"
+    flatpak remote-add ${U} ${collection_args} ${import_args} ${sign_args} ${REPONAME}-repo "http://127.0.0.1:${port}/$REPONAME"
 }
 
 setup_empty_repo () {
@@ -376,7 +423,7 @@ setup_empty_repo () {
     fi
 
     port=$(cat httpd-port)
-    if [ x${GPGPUBKEY:-${FL_GPG_HOMEDIR}/pubring.gpg} != x ]; then
+    if [ x${FLATPAK_USE_GPG} == xyes ] && [ x${GPGPUBKEY:-${FL_GPG_HOMEDIR}/pubring.gpg} != x ]; then
         import_args=--gpg-import=${GPGPUBKEY:-${FL_GPG_HOMEDIR}/pubring.gpg}
     else
         import_args=
@@ -386,8 +433,13 @@ setup_empty_repo () {
     else
         collection_args=
     fi
+    if [ x${FL_SIGN_ENABLED} == xyes ] && [ x${SIGNPUBKEY:-${FL_SIGN_PUBKEY}} != x ]; then
+        sign_args=--sign-verify=ed25519=inline:${SIGNPUBKEY:-${FL_SIGN_PUBKEY}}
+    else
+        sign_args=
+    fi
 
-    flatpak remote-add ${U} ${collection_args} ${import_args} ${REPONAME}-repo "http://127.0.0.1:${port}/$REPONAME"
+    flatpak remote-add ${U} ${collection_args} ${import_args} ${sign_args} ${REPONAME}-repo "http://127.0.0.1:${port}/$REPONAME"
 }
 
 update_repo () {
@@ -400,7 +452,7 @@ update_repo () {
         collection_args=
     fi
 
-    ${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} ${collection_args} ${GPGARGS:-${FL_GPGARGS}} ${UPDATE_REPO_ARGS-} repos/${REPONAME}
+    ${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} ${collection_args} ${GPGARGS:-${FL_GPGARGS}} ${SIGNARGS:-${FL_SIGNARGS}} ${UPDATE_REPO_ARGS-} repos/${REPONAME}
     if [ x${SUMMARY_FORMAT-} == xold ] ; then
         assert_not_has_file repos/${REPONAME}/summary.idx
     else
@@ -420,7 +472,8 @@ make_updated_app () {
     APP_ID=${5:-""}
     RUNTIME_BRANCH=${6:-$BRANCH}
 
-    RUNTIME_BRANCH=$RUNTIME_BRANCH GPGARGS="${GPGARGS:-${FL_GPGARGS}}" $(dirname $0)/make-test-app.sh repos/${REPONAME} "${APP_ID}" "${BRANCH}" "${COLLECTION_ID}" "${TEXT}" > /dev/null
+    RUNTIME_BRANCH=$RUNTIME_BRANCH GPGARGS="${GPGARGS:-${FL_GPGARGS}}" SIGNARGS="${SIGNARGS:-${FL_SIGNARGS}}" $(dirname $0)/make-test-app.sh \
+            repos/${REPONAME} "${APP_ID}" "${BRANCH}" "${COLLECTION_ID}" "${TEXT}" > /dev/null
     update_repo $REPONAME "${COLLECTION_ID}"
 }
 
@@ -434,7 +487,7 @@ make_updated_runtime () {
     BRANCH=${3:-master}
     TEXT=${4:-UPDATED}
 
-    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" $(dirname $0)/make-test-runtime.sh repos/${REPONAME} org.test.Platform "${BRANCH}" "${COLLECTION_ID}" "${TEXT}" > /dev/null
+    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" SIGNARGS="${SIGNARGS:-${FL_SIGNARGS}}" $(dirname $0)/make-test-runtime.sh repos/${REPONAME} org.test.Platform "${BRANCH}" "${COLLECTION_ID}" "${TEXT}" > /dev/null
     update_repo $REPONAME "${COLLECTION_ID}"
 }
 
@@ -447,7 +500,7 @@ setup_sdk_repo () {
     fi
     BRANCH=${3:-master}
 
-    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-runtime.sh repos/${REPONAME} org.test.Sdk "${BRANCH}" "${COLLECTION_ID}" "" make mkdir cp touch > /dev/null
+    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" SIGNARGS="${SIGNARGS:-${FL_SIGNARGS}}" . $(dirname $0)/make-test-runtime.sh repos/${REPONAME} org.test.Sdk "${BRANCH}" "${COLLECTION_ID}" "" make mkdir cp touch > /dev/null
     update_repo $REPONAME "${COLLECTION_ID}"
 }
 
@@ -579,7 +632,9 @@ commit_to_path () {
 
 cleanup () {
     /bin/kill -9 $DBUS_SESSION_BUS_PID
-    gpg-connect-agent --homedir "${FL_GPG_HOMEDIR}" killagent /bye || true
+    if [ x${FLATPAK_USE_GPG} == xyes ]; then
+        gpg-connect-agent --homedir "${FL_GPG_HOMEDIR}" killagent /bye || true
+    fi
     fusermount -u $XDG_RUNTIME_DIR/doc || :
     kill $(jobs -p) &> /dev/null || true
     if test -n "${TEST_SKIP_CLEANUP:-}"; then
