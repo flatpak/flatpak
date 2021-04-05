@@ -1476,7 +1476,7 @@ flatpak_oci_registry_write_layer (FlatpakOciRegistry *self,
     }
 
   a = archive_write_new ();
-  if (archive_write_set_format_gnutar (a) != ARCHIVE_OK ||
+  if (archive_write_set_format_pax (a) != ARCHIVE_OK ||
       archive_write_add_filter_none (a) != ARCHIVE_OK)
     {
       propagate_libarchive_error (error, a);
