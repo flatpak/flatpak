@@ -22,7 +22,7 @@
   along with systemd; If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include "config.h"
+#include "libglnx-config.h"
 
 #include <stdlib.h>
 #include <stdbool.h>

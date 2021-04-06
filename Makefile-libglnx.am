@@ -21,6 +21,10 @@ EXTRA_DIST += \
 	$(libglnx_srcpath)/libglnx.m4 \
 	$(NULL)
 
+BUILT_SOURCES += $(top_builddir)/libglnx-config.h
+$(top_builddir)/libglnx-config.h: Makefile.am
+	echo '#include "config.h"' > $@
+
 libglnx_la_SOURCES = \
 	$(libglnx_srcpath)/glnx-macros.h \
 	$(libglnx_srcpath)/glnx-backport-autocleanups.h \
@@ -49,7 +53,7 @@ libglnx_la_SOURCES = \
 	$(libglnx_srcpath)/tests/libglnx-testlib.h \
 	$(NULL)
 
-libglnx_la_CFLAGS = $(AM_CFLAGS) $(libglnx_cflags)
+libglnx_la_CFLAGS = $(AM_CFLAGS) $(libglnx_cflags) -I$(builddir)
 libglnx_la_LDFLAGS = -avoid-version -Bsymbolic-functions -export-symbols-regex "^glnx_" -no-undefined -export-dynamic 
 libglnx_la_LIBADD = $(libglnx_libs)
 
