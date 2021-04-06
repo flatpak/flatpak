@@ -189,7 +189,6 @@ libflatpak_common_la_CFLAGS = \
 	$(BASE_CFLAGS) \
 	$(DCONF_CFLAGS) \
 	$(HIDDEN_VISIBILITY_CFLAGS) \
-	$(INTERNAL_GPGME_CFLAGS) \
 	$(JSON_CFLAGS) \
 	$(LIBSECCOMP_CFLAGS) \
 	$(MALCONTENT_CFLAGS) \
@@ -200,13 +199,19 @@ libflatpak_common_la_CFLAGS = \
 	$(XAUTH_CFLAGS) \
 	$(XML_CFLAGS) \
 	$(NULL)
+
+if USE_GPGME
+libflatpak_common_la_CFLAGS += \
+	$(INTERNAL_GPGME_CFLAGS) \
+	$(NULL)
+endif
+
 libflatpak_common_la_LIBADD = \
 	$(AM_LIBADD) \
 	$(ARCHIVE_LIBS) \
 	$(ZSTD_LIBS) \
 	$(BASE_LIBS) \
 	$(DCONF_LIBS) \
-	$(INTERNAL_GPGME_LIBS) \
 	$(JSON_LIBS) \
 	$(LIBSECCOMP_LIBS) \
 	$(MALCONTENT_LIBS) \
@@ -217,6 +222,12 @@ libflatpak_common_la_LIBADD = \
 	$(XAUTH_LIBS) \
 	$(XML_LIBS) \
 	$(NULL)
+
+if USE_GPGME
+libflatpak_common_la_LIBADD += \
+	$(INTERNAL_GPGME_LIBS) \
+	$(NULL)
+endif
 
 
 libflatpak_la_SOURCES = \

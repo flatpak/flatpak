@@ -25,21 +25,26 @@ skip_without_bwrap
 
 echo "1..8"
 
+OPT_GPG_KEYS=
+if [ x${FLATPAK_USE_GPG} == xyes ]; then
+    OPT_GPG_KEYS="--gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg"
+fi
+
 mkdir bundles
 
 setup_repo
 
-${FLATPAK} build-bundle repos/test --repo-url=file://`pwd`/repos/test --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/hello.flatpak org.test.Hello
+${FLATPAK} build-bundle repos/test --repo-url=file://`pwd`/repos/test ${OPT_GPG_KEYS} bundles/hello.flatpak org.test.Hello
 assert_has_file bundles/hello.flatpak
 
-${FLATPAK} build-bundle repos/test --runtime --repo-url=file://`pwd`/repos/test --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/platform.flatpak org.test.Platform
+${FLATPAK} build-bundle repos/test --runtime --repo-url=file://`pwd`/repos/test ${OPT_GPG_KEYS} bundles/platform.flatpak org.test.Platform
 assert_has_file bundles/platform.flatpak
 
 ok "create bundles server-side"
 
 rm bundles/hello.flatpak
 ${FLATPAK} ${U} install -y test-repo org.test.Hello
-${FLATPAK} build-bundle $FL_DIR/repo --repo-url=file://`pwd`/repos/test --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/hello.flatpak org.test.Hello
+${FLATPAK} build-bundle $FL_DIR/repo --repo-url=file://`pwd`/repos/test ${OPT_GPG_KEYS} bundles/hello.flatpak org.test.Hello
 assert_has_file bundles/hello.flatpak
 
 ok "create bundles client-side"
@@ -53,7 +58,10 @@ assert_has_file $FL_DIR/repo/refs/remotes/test-repo/runtime/org.test.Platform/$A
 assert_has_file $FL_DIR/repo/refs/remotes/hello-origin/app/org.test.Hello/$ARCH/master
 APP_COMMIT=`cat $FL_DIR/repo/refs/remotes/hello-origin/app/org.test.Hello/$ARCH/master`
 assert_has_file $FL_DIR/repo/objects/$(echo $APP_COMMIT | cut -b 1-2)/$(echo $APP_COMMIT | cut -b 3-).commit
-assert_has_file $FL_DIR/repo/objects/$(echo $APP_COMMIT | cut -b 1-2)/$(echo $APP_COMMIT | cut -b 3-).commitmeta
+# Unsigned commits don't have an associated .commitmeta file
+if [ x${FLATPAK_USE_GPG} == xyes ]; then
+    assert_has_file $FL_DIR/repo/objects/$(echo $APP_COMMIT | cut -b 1-2)/$(echo $APP_COMMIT | cut -b 3-).commitmeta
+fi
 
 assert_has_dir $FL_DIR/app/org.test.Hello
 assert_has_symlink $FL_DIR/app/org.test.Hello/current
@@ -88,7 +96,9 @@ $FLATPAK info ${U} org.test.Hello | grep $ID > /dev/null
 
 $FLATPAK remote-list ${U} -d | grep hello-origin > /dev/null
 $FLATPAK remote-list ${U} -d | grep hello-origin | grep no-enumerate > /dev/null
-assert_has_file $FL_DIR/repo/hello-origin.trustedkeys.gpg
+if [ x${FLATPAK_USE_GPG} == xyes ]; then
+    assert_has_file $FL_DIR/repo/hello-origin.trustedkeys.gpg
+fi
 
 ok "install app bundle"
 
@@ -101,7 +111,10 @@ ${FLATPAK} install -y ${U} --bundle bundles/platform.flatpak
 assert_has_file $FL_DIR/repo/refs/remotes/platform-origin/runtime/org.test.Platform/$ARCH/master
 RUNTIME_COMMIT=`cat $FL_DIR/repo/refs/remotes/platform-origin/runtime/org.test.Platform/$ARCH/master`
 assert_has_file $FL_DIR/repo/objects/$(echo $RUNTIME_COMMIT | cut -b 1-2)/$(echo $RUNTIME_COMMIT | cut -b 3-).commit
-assert_has_file $FL_DIR/repo/objects/$(echo $RUNTIME_COMMIT | cut -b 1-2)/$(echo $RUNTIME_COMMIT | cut -b 3-).commitmeta
+# Unsigned commits don't have an associated .commitmeta file
+if [ x${FLATPAK_USE_GPG} == xyes ]; then
+    assert_has_file $FL_DIR/repo/objects/$(echo $RUNTIME_COMMIT | cut -b 1-2)/$(echo $RUNTIME_COMMIT | cut -b 3-).commitmeta
+fi
 
 assert_has_dir $FL_DIR/runtime/org.test.Platform
 assert_has_dir $FL_DIR/runtime/org.test.Platform/$ARCH/master
@@ -121,7 +134,9 @@ $FLATPAK info ${U} org.test.Platform | grep $ID > /dev/null
 
 $FLATPAK remote-list ${U} -d | grep platform-origin > /dev/null
 $FLATPAK remote-list ${U} -d | grep platform-origin | grep no-enumerate > /dev/null
-assert_has_file $FL_DIR/repo/platform-origin.trustedkeys.gpg
+if [ x${FLATPAK_USE_GPG} == xyes ]; then
+    assert_has_file $FL_DIR/repo/platform-origin.trustedkeys.gpg
+fi
 
 ok "install runtime bundle"
 
@@ -157,7 +172,7 @@ ok "update"
 
 make_updated_app test org.test.Collection.test master UPDATED2
 
-${FLATPAK} build-bundle repos/test --repo-url=file://`pwd`/repos/test --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/hello2.flatpak org.test.Hello
+${FLATPAK} build-bundle repos/test --repo-url=file://`pwd`/repos/test ${OPT_GPG_KEYS} bundles/hello2.flatpak org.test.Hello
 assert_has_file bundles/hello2.flatpak
 
 ${FLATPAK} install ${U} -y --bundle bundles/hello2.flatpak

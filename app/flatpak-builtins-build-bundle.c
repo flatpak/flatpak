@@ -46,11 +46,15 @@ static char *opt_arch;
 static char *opt_repo_url;
 static char *opt_runtime_repo;
 static gboolean opt_runtime = FALSE;
+#ifndef FLATPAK_DISABLE_GPG
 static char **opt_gpg_file;
+#endif
 static gboolean opt_oci = FALSE;
 static gboolean opt_oci_use_labels = TRUE; // Unused now
+#ifndef FLATPAK_DISABLE_GPG
 static char **opt_gpg_key_ids;
 static char *opt_gpg_homedir;
+#endif
 static char *opt_from_commit;
 
 static GOptionEntry options[] = {
@@ -58,9 +62,11 @@ static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to bundle for"), N_("ARCH") },
   { "repo-url", 0, 0, G_OPTION_ARG_STRING, &opt_repo_url, N_("Url for repo"), N_("URL") },
   { "runtime-repo", 0, 0, G_OPTION_ARG_STRING, &opt_runtime_repo, N_("Url for runtime flatpakrepo file"), N_("URL") },
+#ifndef FLATPAK_DISABLE_GPG
   { "gpg-keys", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_file, N_("Add GPG key from FILE (- for stdin)"), N_("FILE") },
   { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_key_ids, N_("GPG Key ID to sign the OCI image with"), N_("KEY-ID") },
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, N_("GPG Homedir to use when looking for keyrings"), N_("HOMEDIR") },
+#endif
   { "from-commit", 0, 0, G_OPTION_ARG_STRING, &opt_from_commit, N_("OSTree commit to create a delta bundle from"), N_("COMMIT") },
   { "oci", 0, 0, G_OPTION_ARG_NONE, &opt_oci, N_("Export oci image instead of flatpak bundle"), NULL },
   // This is not used anymore as it is the default, but accept it if old code uses it
@@ -68,6 +74,7 @@ static GOptionEntry options[] = {
   { NULL }
 };
 
+#ifndef FLATPAK_DISABLE_GPG
 static GBytes *
 read_gpg_data (GCancellable *cancellable,
                GError      **error)
@@ -109,6 +116,7 @@ read_gpg_data (GCancellable *cancellable,
 
   return flatpak_read_stream (source_stream, FALSE, error);
 }
+#endif
 
 static gboolean
 get_bundle_appstream_data (GFile        *root,
@@ -297,12 +305,14 @@ build_bundle (OstreeRepo *repo, const char *commit_checksum, GFile *file,
   g_variant_builder_add (&metadata_builder, "{sv}", "collection-id",
                          g_variant_new_string (collection_id ? collection_id : ""));
 
+#ifndef FLATPAK_DISABLE_GPG
   if (opt_gpg_file != NULL)
     {
       gpg_data = read_gpg_data (cancellable, error);
       if (gpg_data == NULL)
         return FALSE;
     }
+#endif
 
   if (gpg_data)
     {

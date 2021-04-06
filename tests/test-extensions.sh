@@ -25,6 +25,11 @@ skip_without_bwrap
 
 echo "1..2"
 
+OPT_NO_VERIFY=
+if [ "$FLATPAK_USE_GPG" = "yes" ]; then
+    OPT_NO_VERIFY="--no-gpg-verify"
+fi
+
 make_extension () {
     local ID=$1
     local VERSION=$2
@@ -105,7 +110,7 @@ add_extensions platform
 ${FLATPAK} build-export --no-update-summary --disable-sandbox repos/test platform --files=files master
 update_repo
 
-${FLATPAK} remote-add --user --no-gpg-verify test-repo repos/test
+${FLATPAK} remote-add --user ${OPT_NO_VERIFY} test-repo repos/test
 ${FLATPAK} --user install -y test-repo org.test.Platform master
 ${FLATPAK} --user install -y test-repo org.test.Hello master
 

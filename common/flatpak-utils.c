@@ -2274,8 +2274,10 @@ flatpak_parse_repofile (const char   *remote_name,
   if (nodeps)
     g_key_file_set_boolean (config, group, "xa.nodeps", TRUE);
 
+#ifndef FLATPAK_DISABLE_GPG
   gpg_key = g_key_file_get_string (keyfile, source_group,
                                    FLATPAK_REPO_GPGKEY_KEY, NULL);
+#endif
   if (gpg_key != NULL)
     {
       guchar *decoded;
@@ -2304,11 +2306,13 @@ flatpak_parse_repofile (const char   *remote_name,
                                            FLATPAK_REPO_COLLECTION_ID_KEY, NULL);
   if (collection_id != NULL)
     {
+#ifndef FLATPAK_DISABLE_GPG
       if (gpg_key == NULL)
         {
           flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Collection ID requires GPG key to be provided"));
           return NULL;
         }
+#endif
 
       g_key_file_set_string (config, group, "collection-id", collection_id);
     }
@@ -6659,7 +6663,9 @@ flatpak_pull_from_bundle (OstreeRepo   *repo,
   g_autoptr(GFile) root = NULL;
   g_autoptr(GFile) metadata_file = NULL;
   g_autoptr(GInputStream) in = NULL;
+#ifndef FLATPAK_DISABLE_GPG
   g_autoptr(OstreeGpgVerifyResult) gpg_result = NULL;
+#endif
   g_autoptr(GError) my_error = NULL;
   g_autoptr(GVariant) metadata = NULL;
   gboolean metadata_valid;
@@ -6692,6 +6698,7 @@ flatpak_pull_from_bundle (OstreeRepo   *repo,
                                                  error))
     return FALSE;
 
+#ifndef FLATPAK_DISABLE_GPG
   gpg_result = ostree_repo_verify_commit_ext (repo, to_checksum,
                                               NULL, NULL, cancellable, &my_error);
   if (gpg_result == NULL)
@@ -6718,6 +6725,7 @@ flatpak_pull_from_bundle (OstreeRepo   *repo,
           require_gpg_signature)
         return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("GPG signatures found, but none are in trusted keyring"));
     }
+#endif
 
   if (!ostree_repo_read_commit (repo, to_checksum, &root, NULL, NULL, error))
     return FALSE;

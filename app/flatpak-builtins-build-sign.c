@@ -34,14 +34,18 @@
 
 static char *opt_arch;
 static gboolean opt_runtime;
+#ifndef FLATPAK_DISABLE_GPG
 static char **opt_gpg_key_ids;
 static char *opt_gpg_homedir;
+#endif
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to install for"), N_("ARCH") },
   { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, N_("Look for runtime with the specified name"), NULL },
+#ifndef FLATPAK_DISABLE_GPG
   { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_key_ids, N_("GPG Key ID to sign the commit with"), N_("KEY-ID") },
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, N_("GPG Homedir to use when looking for keyrings"), N_("HOMEDIR") },
+#endif
   { NULL }
 };
 
@@ -49,6 +53,7 @@ static GOptionEntry options[] = {
 gboolean
 flatpak_builtin_build_sign (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
+#ifndef FLATPAK_DISABLE_GPG
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GFile) repofile = NULL;
   g_autoptr(OstreeRepo) repo = NULL;
@@ -161,6 +166,9 @@ flatpak_builtin_build_sign (int argc, char **argv, GCancellable *cancellable, GE
     }
 
   return TRUE;
+#else
+  return flatpak_fail (error, _("GPG support disabled at build time"));
+#endif
 }
 
 gboolean

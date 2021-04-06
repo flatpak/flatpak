@@ -41,7 +41,9 @@
 #include "flatpak-chain-input-stream-private.h"
 
 static char *opt_arch;
+#ifndef FLATPAK_DISABLE_GPG
 static char **opt_gpg_file;
+#endif
 static char **opt_subpaths;
 static char **opt_sideload_repos;
 static gboolean opt_no_pull;
@@ -71,7 +73,9 @@ static GOptionEntry options[] = {
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, N_("Look for app with the specified name"), NULL },
   { "bundle", 0, 0, G_OPTION_ARG_NONE, &opt_bundle, N_("Assume LOCATION is a .flatpak single-file bundle"), NULL },
   { "from", 0, 0, G_OPTION_ARG_NONE, &opt_from, N_("Assume LOCATION is a .flatpakref application description"), NULL },
+#ifndef FLATPAK_DISABLE_GPG
   { "gpg-file", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_file, N_("Check bundle signatures with GPG key from FILE (- for stdin)"), N_("FILE") },
+#endif
   { "subpath", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_subpaths, N_("Only install this subpath"), N_("PATH") },
   { "assumeyes", 'y', 0, G_OPTION_ARG_NONE, &opt_yes, N_("Automatically answer yes for all questions"), NULL },
   { "reinstall", 0, 0, G_OPTION_ARG_NONE, &opt_reinstall, N_("Uninstall first if already installed"), NULL },
@@ -82,6 +86,7 @@ static GOptionEntry options[] = {
   { NULL }
 };
 
+#ifndef FLATPAK_DISABLE_GPG
 static GBytes *
 read_gpg_data (GCancellable *cancellable,
                GError      **error)
@@ -123,6 +128,7 @@ read_gpg_data (GCancellable *cancellable,
 
   return flatpak_read_stream (source_stream, FALSE, error);
 }
+#endif
 
 static gboolean
 install_bundle (FlatpakDir *dir,
@@ -149,6 +155,7 @@ install_bundle (FlatpakDir *dir,
   if (!g_file_is_native (file))
     return flatpak_fail (error, _("Remote bundles are not supported"));
 
+#ifndef FLATPAK_DISABLE_GPG
   if (opt_gpg_file != NULL)
     {
       /* Override gpg_data from file */
@@ -156,6 +163,7 @@ install_bundle (FlatpakDir *dir,
       if (gpg_data == NULL)
         return FALSE;
     }
+#endif
 
   if (opt_noninteractive)
     transaction = flatpak_quiet_transaction_new (dir, error);

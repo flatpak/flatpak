@@ -35,8 +35,8 @@
 
 static char *opt_ref;
 static gboolean opt_oci = FALSE;
-static char **opt_gpg_key_ids;
-static char *opt_gpg_homedir;
+static char **opt_gpg_key_ids = NULL;
+static char *opt_gpg_homedir = NULL;
 static gboolean opt_update_appstream;
 static gboolean opt_no_update_summary;
 static gboolean opt_no_summary_index = FALSE;
@@ -44,8 +44,10 @@ static gboolean opt_no_summary_index = FALSE;
 static GOptionEntry options[] = {
   { "ref", 0, 0, G_OPTION_ARG_STRING, &opt_ref, N_("Override the ref used for the imported bundle"), N_("REF") },
   { "oci", 0, 0, G_OPTION_ARG_NONE, &opt_oci, N_("Import oci image instead of flatpak bundle"), NULL },
+#ifndef FLATPAK_DISABLE_GPG
   { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_key_ids, N_("GPG Key ID to sign the commit with"), N_("KEY-ID") },
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, N_("GPG Homedir to use when looking for keyrings"), N_("HOMEDIR") },
+#endif
   { "update-appstream", 0, 0, G_OPTION_ARG_NONE, &opt_update_appstream, N_("Update the appstream branch"), NULL },
   { "no-update-summary", 0, 0, G_OPTION_ARG_NONE, &opt_no_update_summary, N_("Don't update the summary"), NULL },
   { "no-summary-index", 0, 0, G_OPTION_ARG_NONE, &opt_no_summary_index, N_("Don't generate a summary index"), NULL },

@@ -33,8 +33,10 @@
 #include "flatpak-builtins-utils.h"
 #include "flatpak-utils-private.h"
 
+#ifndef FLATPAK_DISABLE_GPG
 static gboolean opt_no_gpg_verify;
 static gboolean opt_do_gpg_verify;
+#endif
 static gboolean opt_do_enumerate;
 static gboolean opt_no_enumerate;
 static gboolean opt_do_deps;
@@ -59,11 +61,14 @@ static char *opt_collection_id = NULL;
 static char *opt_authenticator_name = NULL;
 static char **opt_authenticator_options = NULL;
 static gboolean opt_authenticator_install = -1;
+#ifndef FLATPAK_DISABLE_GPG
 static char **opt_gpg_import;
-
+#endif
 
 static GOptionEntry modify_options[] = {
+#ifndef FLATPAK_DISABLE_GPG
   { "gpg-verify", 0, 0, G_OPTION_ARG_NONE, &opt_do_gpg_verify, N_("Enable GPG verification"), NULL },
+#endif
   { "enumerate", 0, 0, G_OPTION_ARG_NONE, &opt_do_enumerate, N_("Mark the remote as enumerate"), NULL },
   { "use-for-deps", 0, 0, G_OPTION_ARG_NONE, &opt_do_deps, N_("Mark the remote as used for dependencies"), NULL },
   { "url", 0, 0, G_OPTION_ARG_STRING, &opt_url, N_("Set a new url"), N_("URL") },
@@ -74,7 +79,9 @@ static GOptionEntry modify_options[] = {
 };
 
 static GOptionEntry common_options[] = {
+#ifndef FLATPAK_DISABLE_GPG
   { "no-gpg-verify", 0, 0, G_OPTION_ARG_NONE, &opt_no_gpg_verify, N_("Disable GPG verification"), NULL },
+#endif
   { "no-enumerate", 0, 0, G_OPTION_ARG_NONE, &opt_no_enumerate, N_("Mark the remote as don't enumerate"), NULL },
   { "no-use-for-deps", 0, 0, G_OPTION_ARG_NONE, &opt_no_deps, N_("Mark the remote as don't use for deps"), NULL },
   { "prio", 0, 0, G_OPTION_ARG_INT, &opt_prio, N_("Set priority (default 1, higher is more prioritized)"), N_("PRIORITY") },
@@ -85,7 +92,9 @@ static GOptionEntry common_options[] = {
   { "icon", 0, 0, G_OPTION_ARG_STRING, &opt_icon, N_("URL for an icon for this remote"), N_("URL") },
   { "default-branch", 0, 0, G_OPTION_ARG_STRING, &opt_default_branch, N_("Default branch to use for this remote"), N_("BRANCH") },
   { "collection-id", 0, 0, G_OPTION_ARG_STRING, &opt_collection_id, N_("Collection ID"), N_("COLLECTION-ID") },
+#ifndef FLATPAK_DISABLE_GPG
   { "gpg-import", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_import, N_("Import GPG key from FILE (- for stdin)"), N_("FILE") },
+#endif
   { "no-filter", 0, 0, G_OPTION_ARG_NONE, &opt_no_filter, N_("Disable local filter"), NULL },
   { "filter", 0, 0, G_OPTION_ARG_FILENAME, &opt_filter, N_("Set path to local filter FILE"), N_("FILE") },
   { "disable", 0, 0, G_OPTION_ARG_NONE, &opt_disable, N_("Disable the remote"), NULL },
@@ -111,6 +120,7 @@ get_config_from_opts (FlatpakDir *dir, const char *remote_name, gboolean *change
   else
     config = ostree_repo_copy_config (repo);
 
+#ifndef FLATPAK_DISABLE_GPG
   if (opt_no_gpg_verify)
     {
       g_key_file_set_boolean (config, group, "gpg-verify", FALSE);
@@ -124,6 +134,10 @@ get_config_from_opts (FlatpakDir *dir, const char *remote_name, gboolean *change
       g_key_file_set_boolean (config, group, "gpg-verify-summary", TRUE);
       *changed = TRUE;
     }
+#else
+  g_key_file_set_boolean (config, group, "gpg-verify", FALSE);
+  g_key_file_set_boolean (config, group, "gpg-verify-summary", FALSE);
+#endif
 
   if (opt_url)
     {
@@ -333,6 +347,7 @@ flatpak_builtin_remote_modify (int argc, char **argv, GCancellable *cancellable,
 
   config = get_config_from_opts (preferred_dir, remote_name, &changed);
 
+#ifndef FLATPAK_DISABLE_GPG
   if (opt_gpg_import != NULL)
     {
       gpg_data = flatpak_load_gpg_keys (opt_gpg_import, cancellable, error);
@@ -340,6 +355,7 @@ flatpak_builtin_remote_modify (int argc, char **argv, GCancellable *cancellable,
         return FALSE;
       changed = TRUE;
     }
+#endif
 
   if (!changed)
     return TRUE;

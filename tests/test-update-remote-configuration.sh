@@ -43,11 +43,19 @@ update_repo
 
 ${FLATPAK} ${U} install -y test-repo org.test.App master
 
-assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=true$'
-assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=false$'
-assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify=true$'
-assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify=false$'
-assert_not_file_has_content ${FL_DIR}/repo/config '^collection-id='
+if [ x${FLATPAK_USE_GPG} == xyes ]; then
+    assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=true$'
+    assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=false$'
+    assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify=true$'
+    assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify=false$'
+    assert_not_file_has_content ${FL_DIR}/repo/config '^collection-id='
+else
+    assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=false$'
+    assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=true$'
+    assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify=false$'
+    assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify=true$'
+    assert_not_file_has_content ${FL_DIR}/repo/config '^collection-id='
+fi
 
 # Change its configuration to include a collection ID, update the repository,
 # but don’t mark the collection ID as to be deployed yet. Ensure it doesn’t
@@ -58,12 +66,19 @@ UPDATE_REPO_ARGS="--collection-id=org.test.Collection" update_repo
 
 ${FLATPAK} ${U} update -y org.test.App master
 
-assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=true$'
-assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=false$'
-assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify=true$'
-assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify=false$'
-assert_not_file_has_content ${FL_DIR}/repo/config '^collection-id='
-assert_not_file_has_content ${FL_DIR}/repo/config '^collection-id='
+if [ x${FLATPAK_USE_GPG} == xyes ]; then
+    assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=true$'
+    assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=false$'
+    assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify=true$'
+    assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify=false$'
+    assert_not_file_has_content ${FL_DIR}/repo/config '^collection-id='
+else
+    assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=false$'
+    assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=true$'
+    assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify=false$'
+    assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify=true$'
+    assert_not_file_has_content ${FL_DIR}/repo/config '^collection-id='
+fi
 
 ok "1 update repo config without deploying collection ID"
 
@@ -74,11 +89,19 @@ assert_file_has_content repos/test/config '^deploy-collection-id=true$'
 
 ${FLATPAK} ${U} update -y org.test.App master
 
-assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=true$'
-assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=false$'
-assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify=true$'
-assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify=false$'
-assert_file_has_content ${FL_DIR}/repo/config '^collection-id=org\.test\.Collection$'
+if [ x${FLATPAK_USE_GPG} == xyes ]; then
+    assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=true$'
+    assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=false$'
+    assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify=true$'
+    assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify=false$'
+    assert_file_has_content ${FL_DIR}/repo/config '^collection-id=org\.test\.Collection$'
+else
+    assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=false$'
+    assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=true$'
+    assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify=false$'
+    assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify=true$'
+    assert_file_has_content ${FL_DIR}/repo/config '^collection-id=org\.test\.Collection$'
+fi
 
 # Try the deploy for sideload only method
 sed -i "s/deploy-collection-id=true//" repos/test/config

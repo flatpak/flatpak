@@ -31,8 +31,13 @@ echo "1..2"
 
 setup_empty_repo &> /dev/null > /dev/null
 
+OPT_GPG_IMPORT=
+if [ x${FLATPAK_USE_GPG} == xyes ]; then
+    OPT_GPG_IMPORT="--gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg"
+fi
+
 # Manually add the user remote too
-$FLATPAK remote-add --user --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg test-repo "http://127.0.0.1:${port}/test"
+$FLATPAK remote-add --user ${OPT_GPG_IMPORT} test-repo "http://127.0.0.1:${port}/test"
 
 
 # This tests the detection of unused refs. Used refs are any that have

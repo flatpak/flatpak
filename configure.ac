@@ -260,14 +260,24 @@ AC_CHECK_FUNCS(archive_read_support_filter_all)
 LIBS=$save_LIBS
 
 LIBGPGME_DEPENDENCY="1.1.8"
-PKG_CHECK_MODULES(DEP_GPGME, gpgme-pthread >= $LIBGPGME_DEPENDENCY, have_gpgme=yes, [
-    m4_ifdef([AM_PATH_GPGME_PTHREAD], [
-       AM_PATH_GPGME_PTHREAD($LIBGPGME_DEPENDENCY, have_gpgme=yes, have_gpgme=no)
-    ],[ have_gpgme=no ])
-])
-AS_IF([ test x$have_gpgme = xno ], [
-   AC_MSG_ERROR([Need GPGME_PTHREAD version $LIBGPGME_DEPENDENCY or later])
-])
+AC_ARG_WITH(gpg,
+            AS_HELP_STRING([--with-gpg], [Enable gpg support using gpgme @<:@default=yes@:>@]),
+            [], [with_gpg=yes])
+AS_IF([test x$with_gpg != xno], [
+    PKG_CHECK_MODULES(DEP_GPGME, gpgme-pthread >= $LIBGPGME_DEPENDENCY, have_gpg=yes, [
+        m4_ifdef([AM_PATH_GPGME_PTHREAD], [
+           AM_PATH_GPGME_PTHREAD($LIBGPGME_DEPENDENCY, have_gpg=yes, have_gpg=no)
+        ],[ have_gpg=no ])
+    ])
+    AS_IF([ test x$have_gpg = xno ], [
+       AC_MSG_ERROR([Need GPGME_PTHREAD version $LIBGPGME_DEPENDENCY or later])
+    ])
+    ], [
+    AC_DEFINE([FLATPAK_DISABLE_GPG], 1, [Define to disable GPG support])
+    have_gpg=no
+    ]
+)
+AM_CONDITIONAL(USE_GPGME, test "x$have_gpg" = xyes)
 
 AC_ARG_ENABLE(selinux-module,
         [AS_HELP_STRING([--enable-selinux-module],[Enable selinux module for system-helper])],
@@ -605,6 +615,7 @@ echo "          Use seccomp:            $enable_seccomp"
 echo "          Privileged group:       $PRIVILEGED_GROUP"
 echo "          Privilege mode:         $with_priv_mode"
 echo "          Use dconf:              $have_dconf"
+echo "          Use gpg:                $have_gpg"
 echo "          Use libsystemd:         $have_libsystemd"
 echo "          Use libmalcontent:      $have_libmalcontent"
 echo "          Use libzstd:            $have_zstd"
