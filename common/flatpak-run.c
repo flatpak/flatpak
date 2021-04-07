@@ -2307,6 +2307,8 @@ flatpak_run_add_app_info_args (FlatpakBwrap       *bwrap,
   g_autofree char *instance_id_lock_file = NULL;
   g_autofree char *arch = flatpak_decomposed_dup_arch (runtime_ref);
 
+  g_return_val_if_fail (app_id != NULL, FALSE);
+
   instance_id = flatpak_instance_allocate_id (&instance_id_host_dir, &lock_fd);
   if (instance_id == NULL)
     return flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Unable to allocate instance id"));
@@ -3708,11 +3710,15 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
   const char *runtime_target_path = "/usr";
   struct stat s;
 
+  g_return_val_if_fail (app_ref != NULL, FALSE);
+
   if (!check_sudo (error))
     return FALSE;
 
   app_id = flatpak_decomposed_dup_id (app_ref);
+  g_return_val_if_fail (app_id != NULL, FALSE);
   app_arch = flatpak_decomposed_dup_arch (app_ref);
+  g_return_val_if_fail (app_arch != NULL, FALSE);
 
   /* Check the user is allowed to run this flatpak. */
   if (!check_parental_controls (app_ref, app_deploy, cancellable, error))
