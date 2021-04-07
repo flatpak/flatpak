@@ -36,5 +36,9 @@ gboolean flatpak_instance_ensure_per_app_dir (const char *app_id,
                                               int *lock_fd_out,
                                               char **lock_path_out,
                                               GError **error);
+gboolean flatpak_instance_ensure_per_app_tmp (const char *app_id,
+                                              int per_app_dir_lock_fd,
+                                              char **shared_tmp_out,
+                                              GError **error);
 
 #endif /* __FLATPAK_INSTANCE_PRIVATE_H__ */

@@ -63,7 +63,7 @@ test_gc (void)
   g_autofree char *hold_lock = g_test_build_filename (G_TEST_BUILT, "hold-lock", NULL);
   g_autofree char *alive_app_dir = NULL;
   g_autofree char *alive_app_lock = NULL;
-  g_autofree char *alive_app_test_cleanup = NULL;
+  g_autofree char *alive_app_tmp = NULL;
   g_autofree char *alive_instance_dir = NULL;
   g_autofree char *alive_instance_info = NULL;
   g_autofree char *alive_instance_lock = NULL;
@@ -72,7 +72,7 @@ test_gc (void)
   g_autofree char *alive_dead_instance_lock = NULL;
   g_autofree char *dead_app_dir = NULL;
   g_autofree char *dead_app_lock = NULL;
-  g_autofree char *dead_app_test_cleanup = NULL;
+  g_autofree char *dead_app_tmp = NULL;
   g_autofree char *dead_instance_dir = NULL;
   g_autofree char *dead_instance_info = NULL;
   g_autofree char *dead_instance_lock = NULL;
@@ -96,9 +96,9 @@ test_gc (void)
    * A second instance, #2, was running until recently but has exited. */
   alive_app_dir = g_build_filename (apps_dir, "com.example.Alive", NULL);
   g_assert_no_errno (g_mkdir_with_parents (alive_app_dir, 0700));
-  alive_app_test_cleanup = g_build_filename (alive_app_dir, "test-cleanup", NULL);
-  g_assert_no_errno (g_mkdir_with_parents (alive_app_test_cleanup, 0700));
-  populate_with_files (alive_app_test_cleanup);
+  alive_app_tmp = g_build_filename (alive_app_dir, "tmp", NULL);
+  g_assert_no_errno (g_mkdir_with_parents (alive_app_tmp, 0700));
+  populate_with_files (alive_app_tmp);
   alive_app_lock = g_build_filename (alive_app_dir, ".ref", NULL);
   g_file_set_contents (alive_app_lock, "", 0, &error);
   g_assert_no_error (error);
@@ -153,9 +153,9 @@ test_gc (void)
    * Instance #4 was running until recently but has exited. */
   dead_app_dir = g_build_filename (apps_dir, "com.example.Dead", NULL);
   g_assert_no_errno (g_mkdir_with_parents (dead_app_dir, 0700));
-  dead_app_test_cleanup = g_build_filename (dead_app_dir, "test-cleanup", NULL);
-  g_assert_no_errno (g_mkdir_with_parents (dead_app_test_cleanup, 0700));
-  populate_with_files (dead_app_test_cleanup);
+  dead_app_tmp = g_build_filename (dead_app_dir, "tmp", NULL);
+  g_assert_no_errno (g_mkdir_with_parents (dead_app_tmp, 0700));
+  populate_with_files (dead_app_tmp);
   dead_app_lock = g_build_filename (dead_app_dir, ".ref", NULL);
   g_file_set_contents (dead_app_lock, "", 0, &error);
   g_assert_no_error (error);
@@ -198,12 +198,10 @@ test_gc (void)
   g_assert_no_errno (stat (dead_app_dir, &stat_buf));
   g_assert_no_errno (stat (dead_app_lock, &stat_buf));
 
-  /* Until we implement something that actively uses this directory,
-   * use the test-cleanup subdirectory to check whether GC took place.
-   * We GC the test-cleanup subdirectory if there is no instance alive.
+  /* We GC the tmp subdirectory if there is no instance alive.
    * We do not GC it if there is still an instance holding the lock. */
-  g_assert_no_errno (stat (alive_app_test_cleanup, &stat_buf));
-  g_assert_cmpint (stat (dead_app_test_cleanup, &stat_buf) == 0 ? 0 : errno, ==, ENOENT);
+  g_assert_no_errno (stat (alive_app_tmp, &stat_buf));
+  g_assert_cmpint (stat (dead_app_tmp, &stat_buf) == 0 ? 0 : errno, ==, ENOENT);
 
   g_assert_cmpuint (instances->len, ==, 1);
   instance = g_ptr_array_index (instances, 0);

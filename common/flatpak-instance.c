@@ -531,6 +531,47 @@ flatpak_instance_ensure_per_app_dir (const char *app_id,
 }
 
 /*
+ * @app_id: $FLATPAK_ID
+ * @per_app_dir_lock_fd: Used to prove that we have already taken out
+ *  a per-app non-exclusive lock to stop this directory from being
+ *  garbage-collected
+ * @shared_tmp: (out) (not optional) (not nullable): Used to return
+ *  the path to the shared /tmp
+ *
+ * Create the per-app /tmp.
+ */
+gboolean
+flatpak_instance_ensure_per_app_tmp (const char *app_id,
+                                     int per_app_dir_lock_fd,
+                                     char **shared_tmp_out,
+                                     GError **error)
+{
+  g_autofree char *per_app_parent = NULL;
+  g_autofree char *shared_tmp = NULL;
+
+  g_return_val_if_fail (app_id != NULL, FALSE);
+  g_return_val_if_fail (shared_tmp_out != NULL, FALSE);
+  g_return_val_if_fail (*shared_tmp_out == NULL, FALSE);
+  g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+  /* We don't actually do anything with this, we just pass it in here as
+   * proof that we already set up the directory that contains the lock
+   * file for per-app things, to force us to get the sequence right */
+  g_return_val_if_fail (per_app_dir_lock_fd >= 0, FALSE);
+
+  per_app_parent = flatpak_instance_get_apps_directory ();
+  shared_tmp = g_build_filename (per_app_parent, app_id, "tmp", NULL);
+
+  if (g_mkdir_with_parents (shared_tmp, 0700) != 0)
+    return glnx_throw_errno_prefix (error,
+                                    _("Unable to create directory %s"),
+                                    shared_tmp);
+
+  *shared_tmp_out = g_steal_pointer (&shared_tmp);
+  return TRUE;
+}
+
+/*
  * @host_dir_out: (not optional): used to return the directory on the host
  *  system representing this instance
  * @lock_fd_out: (not optional): used to return a non-exclusive (read) lock
@@ -685,11 +726,9 @@ flatpak_instance_gc_per_app_dirs (const char *instance_id,
 
   g_debug ("Cleaning up per-app-ID state for %s", app_id);
 
-  /* We don't practically use per_app_dir for anything yet, so delete
-   * an arbitrary subdirectory in order to have something to test */
-  if (!glnx_shutil_rm_rf_at (per_app_dir_fd, "test-cleanup", NULL, &local_error))
+  if (!glnx_shutil_rm_rf_at (per_app_dir_fd, "tmp", NULL, &local_error))
     {
-      g_debug ("Unable to clean up %s/test-cleanup: %s", per_app_dir,
+      g_debug ("Unable to clean up %s/tmp: %s", per_app_dir,
                local_error->message);
       g_clear_error (&local_error);
     }
