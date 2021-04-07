@@ -25,10 +25,16 @@
 
 FlatpakInstance *flatpak_instance_new (const char *dir);
 FlatpakInstance *flatpak_instance_new_for_id (const char *id);
+char *flatpak_instance_get_apps_directory (void);
 char *flatpak_instance_get_instances_directory (void);
 char *flatpak_instance_allocate_id (char **host_dir_out,
                                     int *lock_fd_out);
 
 void flatpak_instance_iterate_all_and_gc (GPtrArray *out_instances);
+
+gboolean flatpak_instance_ensure_per_app_dir (const char *app_id,
+                                              int *lock_fd_out,
+                                              char **lock_path_out,
+                                              GError **error);
 
 #endif /* __FLATPAK_INSTANCE_PRIVATE_H__ */

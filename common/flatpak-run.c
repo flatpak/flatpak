@@ -3699,6 +3699,8 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
   g_autofree char *runtime_extensions = NULL;
   g_autofree char *runtime_ld_path = NULL;
   g_autofree char *checksum = NULL;
+  glnx_autofd int per_app_dir_lock_fd = -1;
+  g_autofree char *per_app_dir_lock_path = NULL;
   int ld_so_fd = -1;
   g_autoptr(GFile) runtime_ld_so_conf = NULL;
   gboolean generate_ld_so_conf = TRUE;
@@ -4092,6 +4094,15 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
 
   flags |= flatpak_context_get_run_flags (app_context);
 
+  if (!sandboxed)
+    {
+      if (!flatpak_instance_ensure_per_app_dir (app_id,
+                                                &per_app_dir_lock_fd,
+                                                &per_app_dir_lock_path,
+                                                error))
+        return FALSE;
+    }
+
   if (!flatpak_run_setup_base_argv (bwrap, runtime_files, app_id_dir, app_arch, flags, error))
     return FALSE;
 
@@ -4129,6 +4140,16 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
                                          app_id, app_context, app_id_dir, previous_app_id_dirs,
                                          &exports, cancellable, error))
     return FALSE;
+
+  if (per_app_dir_lock_path != NULL)
+    {
+      g_autofree char *dest = g_strdup_printf ("/run/user/%d/.app-ref", getuid ());
+
+      flatpak_bwrap_add_args (bwrap,
+                              "--ro-bind", per_app_dir_lock_path, dest,
+                              "--lock-file", dest,
+                              NULL);
+    }
 
   if ((app_context->shares & FLATPAK_CONTEXT_SHARED_NETWORK) != 0)
     flatpak_run_add_resolved_args (bwrap);
@@ -4206,6 +4227,9 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
                       doc_mount_path,
                       args, n_args, error))
     return FALSE;
+
+  /* Hold onto the lock until we execute bwrap */
+  flatpak_bwrap_add_noinherit_fd (bwrap, glnx_steal_fd (&per_app_dir_lock_fd));
 
   flatpak_bwrap_finish (bwrap);
 
