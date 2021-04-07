@@ -7852,7 +7852,8 @@ apply_extra_data (FlatpakDir   *self,
                                          FLATPAK_RUN_FLAG_NO_SYSTEM_BUS_PROXY |
                                          FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY,
                                          id,
-                                         app_context, NULL, NULL, NULL, cancellable, error))
+                                         app_context, NULL, NULL, -1,
+                                         NULL, cancellable, error))
     return FALSE;
 
   flatpak_bwrap_envp_to_args (bwrap);

@@ -130,6 +130,7 @@ gboolean flatpak_run_add_environment_args (FlatpakBwrap       *bwrap,
                                            FlatpakContext     *context,
                                            GFile              *app_id_dir,
                                            GPtrArray          *previous_app_id_dirs,
+                                           int                 per_app_dir_lock_fd,
                                            FlatpakExports    **exports_out,
                                            GCancellable       *cancellable,
                                            GError            **error);

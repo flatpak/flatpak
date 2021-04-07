@@ -209,6 +209,23 @@ flatpak_run_add_x11_args (FlatpakBwrap *bwrap,
   /* Always cover /tmp/.X11-unix, that way we never see the host one in case
    * we have access to the host /tmp. If you request X access we'll put the right
    * thing in this anyway.
+   *
+   * We need to be a bit careful here, because there are two situations in
+   * which potentially hostile processes have access to /tmp and could
+   * create symlinks, which in principle could cause us to create the
+   * directory and mount the tmpfs at the target of the symlink instead
+   * of in the intended place:
+   *
+   * - With --filesystem=/tmp, it's the host /tmp - but because of the
+   *   special historical status of /tmp/.X11-unix, we can assume that
+   *   it is pre-created by the host system before user code gets to run.
+   *
+   * - When /tmp is shared between all instances of the same app ID,
+   *   in principle the app has control over what's in /tmp, but in
+   *   practice it can't interfere with /tmp/.X11-unix, because we do
+   *   this unconditionally - therefore by the time app code runs,
+   *   /tmp/.X11-unix is already a mount point, meaning the app cannot
+   *   rename or delete it.
    */
   flatpak_bwrap_add_args (bwrap,
                           "--tmpfs", "/tmp/.X11-unix",
@@ -1337,6 +1354,10 @@ flatpak_run_add_extension_args (FlatpakBwrap      *bwrap,
   return TRUE;
 }
 
+/*
+ * @per_app_dir_lock_fd: If >= 0, make use of per-app directories in
+ *  the host's XDG_RUNTIME_DIR to share /tmp between instances.
+ */
 gboolean
 flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
                                   const char      *app_info_path,
@@ -1345,6 +1366,7 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
                                   FlatpakContext  *context,
                                   GFile           *app_id_dir,
                                   GPtrArray       *previous_app_id_dirs,
+                                  int              per_app_dir_lock_fd,
                                   FlatpakExports **exports_out,
                                   GCancellable    *cancellable,
                                   GError         **error)
@@ -1356,6 +1378,7 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
   gboolean has_wayland = FALSE;
   gboolean allow_x11 = FALSE;
   gboolean home_access = FALSE;
+  gboolean sandboxed = (flags & FLATPAK_RUN_FLAG_SANDBOX) != 0;
 
   if ((context->shares & FLATPAK_CONTEXT_SHARED_IPC) == 0)
     {
@@ -1467,6 +1490,35 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
                                               app_id_dir, previous_app_id_dirs,
                                               TRUE, TRUE,
                                               &xdg_dirs_conf, &home_access);
+
+  if (flatpak_exports_path_is_visible (exports, "/tmp"))
+    {
+      /* The original sandbox and any subsandboxes are both already
+       * going to share /tmp with the host, so by transitivity they will
+       * also share it with each other, and with all other instances. */
+    }
+  else if (per_app_dir_lock_fd >= 0 && !sandboxed)
+    {
+      g_autofree char *shared_tmp = NULL;
+
+      /* The host and the original sandbox have separate /tmp,
+       * but we want other instances to be able to share /tmp with the
+       * first sandbox, unless they were created by
+       * flatpak-spawn --sandbox.
+       *
+       * In apply_extra and `flatpak build`, per_app_dir_lock_fd is
+       * negative and we skip this. */
+      if (!flatpak_instance_ensure_per_app_tmp (app_id,
+                                                per_app_dir_lock_fd,
+                                                &shared_tmp,
+                                                error))
+        return FALSE;
+
+      flatpak_bwrap_add_args (bwrap,
+                              "--bind", shared_tmp, "/tmp",
+                              NULL);
+    }
+
   flatpak_context_append_bwrap_filesystem (context, bwrap, app_id, app_id_dir,
                                            exports, xdg_dirs_conf, home_access);
 
@@ -4146,6 +4198,7 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
 
   if (!flatpak_run_add_environment_args (bwrap, app_info_path, flags,
                                          app_id, app_context, app_id_dir, previous_app_id_dirs,
+                                         per_app_dir_lock_fd,
                                          &exports, cancellable, error))
     return FALSE;
 
