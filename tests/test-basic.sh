@@ -73,10 +73,11 @@ for cmd in install update uninstall list info config repair create-usb \
            build-sign build-update-repo build-commit-from repo kill history \
            mask;
 do
-  ${FLATPAK} $cmd --help | head -2 > help_out
+  ${FLATPAK} $cmd --help > help_out
+  head -2 help_out > help_out2
 
-  assert_file_has_content help_out "^Usage:$"
-  assert_file_has_content help_out "flatpak $cmd"
+  assert_file_has_content help_out2 "^Usage:$"
+  assert_file_has_content help_out2 "flatpak $cmd"
 done
 
 ok "command help"
