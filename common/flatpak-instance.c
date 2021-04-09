@@ -572,6 +572,47 @@ flatpak_instance_ensure_per_app_tmp (const char *app_id,
 }
 
 /*
+ * @app_id: $FLATPAK_ID
+ * @per_app_dir_lock_fd: Used to prove that we have already taken out
+ *  a per-app non-exclusive lock to stop this directory from being
+ *  garbage-collected
+ * @shared_dir_out: (out) (not optional) (not nullable): Used to return
+ *  the path to the shared $XDG_RUNTIME_DIR
+ *
+ * Create a per-app $XDG_RUNTIME_DIR.
+ */
+gboolean
+flatpak_instance_ensure_per_app_xdg_runtime_dir (const char *app_id,
+                                                 int per_app_dir_lock_fd,
+                                                 char **shared_dir_out,
+                                                 GError **error)
+{
+  g_autofree char *per_app_parent = NULL;
+  g_autofree char *shared_dir = NULL;
+
+  g_return_val_if_fail (app_id != NULL, FALSE);
+  g_return_val_if_fail (shared_dir_out != NULL, FALSE);
+  g_return_val_if_fail (*shared_dir_out == NULL, FALSE);
+  g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+  /* We don't actually do anything with this, we just pass it in here as
+   * proof that we already set up the directory that contains the lock
+   * file for per-app things, to force us to get the sequence right */
+  g_return_val_if_fail (per_app_dir_lock_fd >= 0, FALSE);
+
+  per_app_parent = flatpak_instance_get_apps_directory ();
+  shared_dir = g_build_filename (per_app_parent, app_id, "xdg-run", NULL);
+
+  if (g_mkdir_with_parents (shared_dir, 0700) != 0)
+    return glnx_throw_errno_prefix (error,
+                                    _("Unable to create directory %s"),
+                                    shared_dir);
+
+  *shared_dir_out = g_steal_pointer (&shared_dir);
+  return TRUE;
+}
+
+/*
  * @host_dir_out: (not optional): used to return the directory on the host
  *  system representing this instance
  * @lock_fd_out: (not optional): used to return a non-exclusive (read) lock

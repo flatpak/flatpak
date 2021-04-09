@@ -3769,6 +3769,7 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
   g_autofree char *checksum = NULL;
   glnx_autofd int per_app_dir_lock_fd = -1;
   g_autofree char *per_app_dir_lock_path = NULL;
+  g_autofree char *shared_xdg_runtime_dir = NULL;
   int ld_so_fd = -1;
   g_autoptr(GFile) runtime_ld_so_conf = NULL;
   gboolean generate_ld_so_conf = TRUE;
@@ -4196,6 +4197,16 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
                                                 &per_app_dir_lock_path,
                                                 error))
         return FALSE;
+
+      if (!flatpak_instance_ensure_per_app_xdg_runtime_dir (app_id,
+                                                            per_app_dir_lock_fd,
+                                                            &shared_xdg_runtime_dir,
+                                                            error))
+        return FALSE;
+
+      flatpak_bwrap_add_arg (bwrap, "--bind");
+      flatpak_bwrap_add_arg (bwrap, shared_xdg_runtime_dir);
+      flatpak_bwrap_add_arg_printf (bwrap, "/run/user/%d", getuid ());
     }
 
   if (!flatpak_run_add_dconf_args (bwrap, app_id, metakey, error))
@@ -4265,7 +4276,7 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
         flatpak_bwrap_add_args_data_fd (bwrap, "--pidns", pidns_fd, NULL);
     }
 
-  flatpak_bwrap_populate_runtime_dir (bwrap);
+  flatpak_bwrap_populate_runtime_dir (bwrap, shared_xdg_runtime_dir);
 
   if (custom_command)
     {
