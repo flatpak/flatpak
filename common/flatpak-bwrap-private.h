@@ -85,7 +85,8 @@ gboolean      flatpak_bwrap_bundle_args (FlatpakBwrap *bwrap,
                                          GError      **error);
 void          flatpak_bwrap_add_runtime_dir_member (FlatpakBwrap *bwrap,
                                                     const char *name);
-void          flatpak_bwrap_populate_runtime_dir (FlatpakBwrap *bwrap);
+void          flatpak_bwrap_populate_runtime_dir (FlatpakBwrap *bwrap,
+                                                  const char *shared_xdg_runtime_dir);
 
 void          flatpak_bwrap_child_setup_cb (gpointer user_data);
 void          flatpak_bwrap_child_setup (GArray *fd_array,

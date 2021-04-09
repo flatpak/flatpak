@@ -580,7 +580,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
                               NULL);
     }
 
-  flatpak_bwrap_populate_runtime_dir (bwrap);
+  flatpak_bwrap_populate_runtime_dir (bwrap, NULL);
 
   flatpak_bwrap_envp_to_args (bwrap);
 

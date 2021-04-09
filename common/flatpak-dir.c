@@ -7857,7 +7857,7 @@ apply_extra_data (FlatpakDir   *self,
                                          NULL, cancellable, error))
     return FALSE;
 
-  flatpak_bwrap_populate_runtime_dir (bwrap);
+  flatpak_bwrap_populate_runtime_dir (bwrap, NULL);
 
   flatpak_bwrap_envp_to_args (bwrap);
 

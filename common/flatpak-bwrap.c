@@ -417,12 +417,51 @@ flatpak_bwrap_add_runtime_dir_member (FlatpakBwrap *bwrap,
   g_ptr_array_add (bwrap->runtime_dir_members, g_strdup (name));
 }
 
-void
-flatpak_bwrap_populate_runtime_dir (FlatpakBwrap *bwrap)
+static void
+expect_symlink (const char *host_path,
+                const char *target)
 {
-  flatpak_bwrap_add_arg (bwrap, "--symlink");
-  flatpak_bwrap_add_arg (bwrap, "../../../.flatpak-info");
-  flatpak_bwrap_add_arg_printf (bwrap, "/run/user/%d/flatpak-info", getuid ());
+  /* This shouldn't fail in practice, so there's not much point in
+   * translating the warning */
+  if (symlink (target, host_path) < 0 && errno != EEXIST)
+    {
+      g_warning ("Unable to create symlink at %s: %s",
+                 host_path, g_strerror (errno));
+    }
+  else
+    {
+      g_autoptr(GError) local_error = NULL;
+      g_autofree char *got = glnx_readlinkat_malloc (AT_FDCWD,
+                                                     host_path,
+                                                     NULL,
+                                                     &local_error);
+
+      if (got == NULL)
+        g_warning ("%s is not a symlink to \"%s\" as expected: %s",
+                   host_path, target, local_error->message);
+      else if (strcmp (got, target) != 0)
+        g_warning ("%s is a symlink to \"%s\", not \"%s\" as expected",
+                   host_path, got, target);
+    }
+}
+
+void
+flatpak_bwrap_populate_runtime_dir (FlatpakBwrap *bwrap,
+                                    const char *shared_xdg_runtime_dir)
+{
+  if (shared_xdg_runtime_dir != NULL)
+    {
+      g_autofree char *host_path = g_build_filename (shared_xdg_runtime_dir,
+                                                     "flatpak-info", NULL);
+
+      expect_symlink (host_path, "../../../.flatpak-info");
+    }
+  else
+    {
+      flatpak_bwrap_add_arg (bwrap, "--symlink");
+      flatpak_bwrap_add_arg (bwrap, "../../../.flatpak-info");
+      flatpak_bwrap_add_arg_printf (bwrap, "/run/user/%d/flatpak-info", getuid ());
+    }
 
   if (bwrap->runtime_dir_members != NULL)
     {
@@ -431,10 +470,21 @@ flatpak_bwrap_populate_runtime_dir (FlatpakBwrap *bwrap)
       for (i = 0; i < bwrap->runtime_dir_members->len; i++)
         {
           const char *member = g_ptr_array_index (bwrap->runtime_dir_members, i);
+          g_autofree char *target = g_strdup_printf ("../../flatpak/%s", member);
 
-          flatpak_bwrap_add_arg (bwrap, "--symlink");
-          flatpak_bwrap_add_arg_printf (bwrap, "../../flatpak/%s", member);
-          flatpak_bwrap_add_arg_printf (bwrap, "/run/user/%d/%s", getuid (), member);
+          if (shared_xdg_runtime_dir != NULL)
+            {
+              g_autofree char *host_path = g_build_filename (shared_xdg_runtime_dir,
+                                                             member, NULL);
+
+              expect_symlink (host_path, target);
+            }
+          else
+            {
+              flatpak_bwrap_add_arg (bwrap, "--symlink");
+              flatpak_bwrap_add_arg (bwrap, target);
+              flatpak_bwrap_add_arg_printf (bwrap, "/run/user/%d/%s", getuid (), member);
+            }
         }
     }
 }
