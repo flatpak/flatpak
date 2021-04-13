@@ -73,3 +73,15 @@ type SummaryIndex {
  subsummaries: [sorted string]Subsummary;
  metadata: Metadata;
 };
+
+type ObjectListInfo {
+ is_loose: boolean;
+ packfiles: []string;
+};
+
+type ObjectName {
+ checksum: string;
+ objtype: uint32;
+};
+
+type ObjectNames []ObjectName;
