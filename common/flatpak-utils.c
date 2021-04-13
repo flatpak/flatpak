@@ -1415,6 +1415,9 @@ flatpak_switch_symlink_and_remove (const char *symlink_path,
 gboolean
 flatpak_argument_needs_quoting (const char *arg)
 {
+  if (*arg == '\0')
+    return TRUE;
+
   while (*arg != 0)
     {
       char c = *arg;
