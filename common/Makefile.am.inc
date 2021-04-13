@@ -167,6 +167,8 @@ libflatpak_common_la_SOURCES = \
 	common/flatpak-utils-http.c \
 	common/flatpak-utils-private.h \
 	common/flatpak-utils.c \
+	common/flatpak-prune.c \
+	common/flatpak-prune-private.h \
 	common/flatpak-zstd-decompressor.c \
 	common/flatpak-zstd-decompressor-private.h \
 	common/valgrind-private.h \
