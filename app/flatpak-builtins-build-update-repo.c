@@ -32,6 +32,7 @@
 #include "flatpak-builtins.h"
 #include "flatpak-utils-base-private.h"
 #include "flatpak-builtins-utils.h"
+#include "flatpak-prune-private.h"
 
 static char *opt_title;
 static char *opt_comment;
@@ -51,6 +52,7 @@ static char *opt_generate_delta_ref;
 static char *opt_gpg_homedir;
 static char **opt_gpg_key_ids;
 static gboolean opt_prune;
+static gboolean opt_prune_dry_run;
 static gboolean opt_generate_deltas;
 static gboolean opt_no_update_appstream;
 static gboolean opt_no_update_summary;
@@ -86,6 +88,7 @@ static GOptionEntry options[] = {
   { "static-delta-jobs", 0, 0, G_OPTION_ARG_INT, &opt_static_delta_jobs, N_("Max parallel jobs when creating deltas (default: NUMCPUs)"), N_("NUM-JOBS") },
   { "static-delta-ignore-ref", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_static_delta_ignore_refs, N_("Don't create deltas matching refs"), N_("PATTERN") },
   { "prune", 0, 0, G_OPTION_ARG_NONE, &opt_prune, N_("Prune unused objects"), NULL },
+  { "prune-dry-run", 0, 0, G_OPTION_ARG_NONE, &opt_prune_dry_run, N_("Prune but don't actually remove anything"), NULL },
   { "prune-depth", 0, 0, G_OPTION_ARG_INT, &opt_prune_depth, N_("Only traverse DEPTH parents for each commit (default: -1=infinite)"), N_("DEPTH") },
   { "generate-static-delta-from", 0, G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_STRING, &opt_generate_delta_from, NULL, NULL },
   { "generate-static-delta-to", 0, G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_STRING, &opt_generate_delta_to, NULL, NULL },
@@ -636,15 +639,18 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
         return FALSE;
     }
 
-  if (opt_prune)
+  if (opt_prune || opt_prune_dry_run)
     {
       gint n_objects_total;
       gint n_objects_pruned;
       guint64 objsize_total;
       g_autofree char *formatted_freed_size = NULL;
 
-      g_print ("Pruning old commits\n");
-      if (!ostree_repo_prune (repo, OSTREE_REPO_PRUNE_FLAGS_REFS_ONLY, opt_prune_depth,
+      if (opt_prune_dry_run)
+        g_print ("Pruning old commits (dry-run)\n");
+      else
+        g_print ("Pruning old commits\n");
+      if (!flatpak_repo_prune (repo, opt_prune_depth, opt_prune_dry_run,
                               &n_objects_total, &n_objects_pruned, &objsize_total,
                               cancellable, error))
         return FALSE;
