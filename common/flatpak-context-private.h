@@ -138,7 +138,7 @@ FlatpakExports *flatpak_context_get_exports_full (FlatpakContext *context,
                                                   GPtrArray      *extra_app_id_dirs,
                                                   gboolean        do_create,
                                                   gboolean        include_default_dirs,
-                                                  GString        *xdg_dirs_conf,
+                                                  gchar         **xdg_dirs_conf,
                                                   gboolean       *home_access_out);
 
 void flatpak_context_append_bwrap_filesystem (FlatpakContext  *context,
