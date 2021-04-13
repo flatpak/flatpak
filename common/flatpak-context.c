@@ -2270,13 +2270,17 @@ flatpak_context_export (FlatpakContext *context,
                         GFile          *app_id_dir,
                         GPtrArray       *extra_app_id_dirs,
                         gboolean        do_create,
-                        GString        *xdg_dirs_conf,
+                        gchar         **xdg_dirs_conf_out,
                         gboolean       *home_access_out)
 {
   gboolean home_access = FALSE;
+  g_autoptr(GString) xdg_dirs_conf = NULL;
   FlatpakFilesystemMode fs_mode, os_mode, etc_mode, home_mode;
   GHashTableIter iter;
   gpointer key, value;
+
+  if (xdg_dirs_conf_out != NULL)
+    xdg_dirs_conf = g_string_new ("");
 
   fs_mode = GPOINTER_TO_INT (g_hash_table_lookup (context->filesystems, "host"));
   if (fs_mode != FLATPAK_FILESYSTEM_MODE_NONE)
@@ -2423,6 +2427,12 @@ flatpak_context_export (FlatpakContext *context,
 
   if (home_access_out != NULL)
     *home_access_out = home_access;
+
+  if (xdg_dirs_conf_out != NULL)
+    {
+      g_assert (xdg_dirs_conf != NULL);
+      *xdg_dirs_conf_out = g_string_free (g_steal_pointer (&xdg_dirs_conf), FALSE);
+    }
 }
 
 FlatpakExports *
@@ -2462,14 +2472,14 @@ flatpak_context_get_exports_full (FlatpakContext *context,
                                   GPtrArray      *extra_app_id_dirs,
                                   gboolean        do_create,
                                   gboolean        include_default_dirs,
-                                  GString        *xdg_dirs_conf,
+                                  gchar         **xdg_dirs_conf_out,
                                   gboolean       *home_access_out)
 {
   g_autoptr(FlatpakExports) exports = flatpak_exports_new ();
 
   flatpak_context_export (context, exports,
                           app_id_dir, extra_app_id_dirs,
-                          do_create, xdg_dirs_conf, home_access_out);
+                          do_create, xdg_dirs_conf_out, home_access_out);
 
   if (include_default_dirs)
     {
@@ -2495,7 +2505,7 @@ flatpak_context_append_bwrap_filesystem (FlatpakContext  *context,
                                          FlatpakExports **exports_out)
 {
   g_autoptr(FlatpakExports) exports = NULL;
-  g_autoptr(GString) xdg_dirs_conf = g_string_new ("");
+  g_autofree char *xdg_dirs_conf = NULL;
   gboolean home_access = FALSE;
   GHashTableIter iter;
   gpointer key, value;
@@ -2503,7 +2513,7 @@ flatpak_context_append_bwrap_filesystem (FlatpakContext  *context,
   exports = flatpak_context_get_exports_full (context,
                                               app_id_dir, extra_app_id_dirs,
                                               TRUE, TRUE,
-                                              xdg_dirs_conf, &home_access);
+                                              &xdg_dirs_conf, &home_access);
 
   if (app_id_dir != NULL)
     flatpak_run_apply_env_appid (bwrap, app_id_dir);
@@ -2591,14 +2601,14 @@ flatpak_context_append_bwrap_filesystem (FlatpakContext  *context,
       if (g_file_test (src_path, G_FILE_TEST_EXISTS))
         flatpak_bwrap_add_bind_arg (bwrap, "--ro-bind", src_path, path);
     }
-  else if (xdg_dirs_conf->len > 0 && app_id_dir != NULL)
+  else if (xdg_dirs_conf != NULL && xdg_dirs_conf[0] != '\0' && app_id_dir != NULL)
     {
       g_autofree char *path =
         g_build_filename (flatpak_file_get_path_cached (app_id_dir),
                           "config/user-dirs.dirs", NULL);
 
       flatpak_bwrap_add_args_data (bwrap, "xdg-config-dirs",
-                                   xdg_dirs_conf->str, xdg_dirs_conf->len, path, NULL);
+                                   xdg_dirs_conf, strlen (xdg_dirs_conf), path, NULL);
     }
 
   if (exports_out)
