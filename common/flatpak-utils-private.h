@@ -224,6 +224,11 @@ FlatpakDeploy * flatpak_find_deploy_for_ref (const char   *ref,
                                              FlatpakDir   *opt_user_dir,
                                              GCancellable *cancellable,
                                              GError      **error);
+char ** flatpak_lookup_debuginfod_urls (FlatpakDeploy *deploy,
+                                        GBytes        *deploy_data,
+                                        FlatpakDir    *dir_hint,
+                                        GCancellable  *cancellable,
+                                        GError       **error);
 char ** flatpak_list_deployed_refs (const char   *type,
                                     const char   *name_prefix,
                                     const char   *arch,

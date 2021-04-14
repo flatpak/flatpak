@@ -1276,6 +1276,54 @@ flatpak_find_deploy_for_ref (const char   *ref,
   return flatpak_find_deploy_for_ref_in (dirs, ref, commit, cancellable, error);
 }
 
+static FlatpakDir *
+get_dir_for_deploy (FlatpakDeploy *deploy,
+                     GError      **error)
+{
+  g_autoptr(GFile) dir_path = NULL;
+
+  dir_path = flatpak_deploy_get_dir_path (deploy);
+  if (dir_path == NULL)
+    {
+      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                           "Can't find installation for deployment");
+      return NULL;
+    }
+
+  return flatpak_dir_get_by_path (dir_path);
+}
+
+
+char **
+flatpak_lookup_debuginfod_urls (FlatpakDeploy *deploy,
+                                GBytes        *deploy_data,
+                                FlatpakDir    *dir_hint,
+                                GCancellable  *cancellable,
+                                GError       **error)
+{
+  const char *origin = NULL;
+  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(FlatpakRemoteState) state = NULL;
+
+  if (dir_hint)
+    {
+      dir = g_object_ref (dir_hint);
+    }
+  else
+    {
+      dir = get_dir_for_deploy (deploy, error);
+      if (dir == NULL)
+        return NULL;
+    }
+
+  origin = flatpak_deploy_data_get_origin (deploy_data);
+  state = flatpak_dir_get_remote_state_optional (dir, origin, FALSE, cancellable, error);
+  if (!state)
+    return NULL;
+
+  return g_strdupv (state->debuginfod_urls);
+}
+
 static gboolean
 remove_dangling_symlinks (int           parent_fd,
                           const char   *name,

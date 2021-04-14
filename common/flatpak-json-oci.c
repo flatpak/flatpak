@@ -1132,6 +1132,8 @@ flatpak_oci_index_response_finalize (GObject *object)
   for (i = 0; self->results != NULL && self->results[i] != NULL; i++)
     flatpak_oci_index_repository_free (self->results[i]);
   g_free (self->results);
+  if (self->registry_annotations)
+    g_hash_table_destroy (self->registry_annotations);
 
   G_OBJECT_CLASS (flatpak_oci_index_response_parent_class)->finalize (object);
 }
@@ -1167,6 +1169,7 @@ flatpak_oci_index_response_class_init (FlatpakOciIndexResponseClass *klass)
   static FlatpakJsonProp props[] = {
     FLATPAK_JSON_STRING_PROP (FlatpakOciIndexResponse, registry, "Registry"),
     FLATPAK_JSON_STRUCTV_PROP (FlatpakOciIndexResponse, results, "Results", results_props),
+    FLATPAK_JSON_STRMAP_PROP (FlatpakOciIndexResponse, registry_annotations, "RegistryAnnotations"),
     FLATPAK_JSON_LAST_PROP
   };
 

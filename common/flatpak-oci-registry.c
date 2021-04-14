@@ -3006,6 +3006,37 @@ flatpak_oci_index_make_summary (GFile        *index,
   g_variant_builder_add (additional_metadata_builder, "{sv}", "xa.oci-registry-uri",
                          g_variant_new_string (registry_uri_s));
 
+  if (response->registry_annotations != NULL)
+    {
+      const char *debuginfod_urls = g_hash_table_lookup (response->registry_annotations,
+                                                         "org.flatpak.debuginfod-urls");
+      if (debuginfod_urls != NULL)
+        {
+          /* Splitting for DEBUGINFOD_URLS is defined as being non-empty sequences
+           * of characters other than ' '. Match that in a simple implementation.
+           */
+          g_auto(GStrv) split_urls = g_strsplit (debuginfod_urls, " ", -1);
+          g_autoptr(GPtrArray) nonempty_urls = g_ptr_array_new ();
+
+          for (i = 0; split_urls[i]; i++)
+            {
+              if (split_urls[i][0])
+                {
+                  /* Trim trailing "/" to make deduplication easier elsehwere
+                   */
+                  if (g_str_has_suffix (split_urls[i], "/"))
+                    split_urls[i][strlen(split_urls[i]) - 1] = '\0';
+
+                  g_ptr_array_add (nonempty_urls, split_urls[i]);
+                }
+            }
+          g_ptr_array_add (nonempty_urls, NULL);
+
+          g_variant_builder_add (additional_metadata_builder, "{sv}", "xa.debuginfod-urls",
+                                 g_variant_new_strv ((const char * const *)nonempty_urls->pdata, -1));
+        }
+    }
+
   summary_builder = g_variant_builder_new (OSTREE_SUMMARY_GVARIANT_FORMAT);
 
   g_variant_builder_add_value (summary_builder, g_variant_builder_end (refs_builder));

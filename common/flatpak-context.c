@@ -2462,11 +2462,13 @@ flatpak_context_append_bwrap_filesystem (FlatpakContext  *context,
                                          const char      *app_id,
                                          GFile           *app_id_dir,
                                          GPtrArray       *extra_app_id_dirs,
+                                         char           **debuginfod_urls,
                                          FlatpakExports **exports_out)
 {
   g_autoptr(FlatpakExports) exports = flatpak_exports_new ();
   g_autoptr(GString) xdg_dirs_conf = g_string_new ("");
   g_autoptr(GFile) user_flatpak_dir = NULL;
+  g_autoptr(GFile) debuginfod_cache_path = NULL;
   gboolean home_access = FALSE;
   GHashTableIter iter;
   gpointer key, value;
@@ -2474,6 +2476,38 @@ flatpak_context_append_bwrap_filesystem (FlatpakContext  *context,
   flatpak_context_export (context, exports, app_id_dir, extra_app_id_dirs, TRUE, xdg_dirs_conf, &home_access);
   if (app_id_dir != NULL)
     flatpak_run_apply_env_appid (bwrap, app_id_dir);
+
+  if (debuginfod_urls)
+    {
+      g_autofree char *joined_urls = NULL;
+      g_autoptr(GFile) user_cache_dir = NULL;
+
+      joined_urls = g_strjoinv (" ", debuginfod_urls);
+      flatpak_bwrap_set_env (bwrap, "DEBUGINFOD_URLS", joined_urls, TRUE);
+
+      user_cache_dir = g_file_new_for_path (g_get_user_cache_dir ());
+      debuginfod_cache_path = g_file_get_child (user_cache_dir, "debuginfod_client");
+
+      /* Create the cache directory if it doesn't exist, so we can mount it */
+      if (!g_file_query_exists (debuginfod_cache_path, NULL))
+        {
+          g_autoptr(GError) local_error = NULL;
+          if (!flatpak_mkdir_p (debuginfod_cache_path, NULL, &local_error))
+            {
+              g_warning ("Can't create %s: %s\n",
+                         flatpak_file_get_path_cached (debuginfod_cache_path),
+                         local_error->message);
+              g_clear_error (&local_error);
+              g_clear_pointer (&debuginfod_cache_path, g_object_unref);
+            }
+        }
+
+      if (debuginfod_cache_path)
+        flatpak_bwrap_set_env (bwrap,
+                               "DEBUGINFOD_CACHE_PATH",
+                               flatpak_file_get_path_cached (debuginfod_cache_path),
+                               TRUE);
+    }
 
   if (!home_access)
     {
@@ -2490,6 +2524,16 @@ flatpak_context_append_bwrap_filesystem (FlatpakContext  *context,
 
           flatpak_bwrap_add_bind_arg (bwrap, "--bind", src, dest);
         }
+    }
+
+  if (debuginfod_cache_path)
+    {
+      const char *path = flatpak_file_get_path_cached (debuginfod_cache_path);
+
+      /* If we're setting the DEBUGINFOD_CACHE_PATH environment variable, make sure it is accessible */
+
+      if (flatpak_exports_path_get_mode (exports, path) != FLATPAK_FILESYSTEM_MODE_READ_WRITE)
+        flatpak_exports_add_path_expose (exports, FLATPAK_FILESYSTEM_MODE_READ_WRITE, path);
     }
 
   if (app_id_dir != NULL)

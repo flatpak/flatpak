@@ -25,6 +25,9 @@ def get_index():
 
     return json.dumps({
         'Registry': '/',
+        'RegistryAnnotations': {
+            'org.flatpak.debuginfod-urls': ' https://debuginfod.example.com/  https://debuginfod2.example.com',
+        },
         'Results': results
         }, indent=4)
 

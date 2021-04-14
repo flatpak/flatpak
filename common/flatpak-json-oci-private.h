@@ -333,6 +333,7 @@ struct _FlatpakOciIndexResponse
 
   char                       *registry;
   FlatpakOciIndexRepository **results;
+  GHashTable                 *registry_annotations;
 };
 
 struct _FlatpakOciIndexResponseClass

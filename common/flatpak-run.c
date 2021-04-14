@@ -747,6 +747,70 @@ flatpak_run_add_resolved_args (FlatpakBwrap *bwrap)
     flatpak_bwrap_add_args (bwrap, "--bind", resolved_socket, resolved_socket, NULL);
 }
 
+static gboolean
+add_debuginfod_urls_from_deploy (GPtrArray     *result,
+                                 FlatpakDeploy *deploy,
+                                 GBytes        *deploy_data,
+                                 GCancellable  *cancellable,
+                                 GError       **error)
+{
+  g_autoptr(GError) local_error = NULL;
+  g_auto(GStrv) debuginfod_urls = NULL;
+
+  debuginfod_urls = flatpak_lookup_debuginfod_urls (deploy, deploy_data,
+                                                    NULL,
+                                                    cancellable, &local_error);
+
+  if (local_error)
+    {
+      g_propagate_error (error, g_steal_pointer (&local_error));
+      return FALSE;
+    }
+
+  if (debuginfod_urls)
+    {
+      int i;
+
+      for (i = 0; debuginfod_urls[i]; i++)
+        {
+          const char *url = debuginfod_urls[i];
+          if (!g_ptr_array_find_with_equal_func (result, url, g_str_equal, NULL))
+            g_ptr_array_add (result, g_strdup (url));
+        }
+    }
+
+  return TRUE;
+}
+
+static gboolean
+flatpak_run_get_debuginfod_urls (FlatpakDeploy *app_deploy,
+                                 GBytes        *app_deploy_data,
+                                 FlatpakDeploy *runtime_deploy,
+                                 GBytes        *runtime_deploy_data,
+                                 char        ***debuginfod_urls,
+                                 GCancellable  *cancellable,
+                                 GError       **error)
+{
+  g_autoptr(GPtrArray) result = g_ptr_array_new ();
+
+  *debuginfod_urls = NULL;
+
+  if (!add_debuginfod_urls_from_deploy (result, app_deploy, app_deploy_data,
+                                        cancellable, error))
+    return FALSE;
+
+  if (!add_debuginfod_urls_from_deploy (result, runtime_deploy, runtime_deploy_data,
+                                        cancellable, error))
+    return FALSE;
+
+  g_ptr_array_add (result, NULL);
+
+  if (result->len > 0)
+    *debuginfod_urls = (char **)g_ptr_array_free (g_steal_pointer (&result), FALSE);
+
+  return TRUE;
+}
+
 static void
 flatpak_run_add_journal_args (FlatpakBwrap *bwrap)
 {
@@ -1345,6 +1409,7 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
                                   FlatpakContext  *context,
                                   GFile           *app_id_dir,
                                   GPtrArray       *previous_app_id_dirs,
+                                  char           **debuginfod_urls,
                                   FlatpakExports **exports_out,
                                   GCancellable    *cancellable,
                                   GError         **error)
@@ -1361,8 +1426,12 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
       flatpak_bwrap_add_args (bwrap, "--unshare-ipc", NULL);
     }
 
-  if ((context->shares & FLATPAK_CONTEXT_SHARED_NETWORK) == 0)
+  if ((context->shares & FLATPAK_CONTEXT_SHARED_NETWORK) == 0 &&
+      debuginfod_urls == NULL)
     {
+      /* debuginfod_urls are passed in only for --devel, and in that case we automatically
+       * share the network to allow the downloading of debug information.
+       */
       g_debug ("Disallowing network access");
       flatpak_bwrap_add_args (bwrap, "--unshare-net", NULL);
     }
@@ -1460,7 +1529,8 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
         }
     }
 
-  flatpak_context_append_bwrap_filesystem (context, bwrap, app_id, app_id_dir, previous_app_id_dirs, &exports);
+  flatpak_context_append_bwrap_filesystem (context, bwrap, app_id, app_id_dir, previous_app_id_dirs,
+                                           debuginfod_urls, &exports);
 
   if (context->sockets & FLATPAK_CONTEXT_SOCKET_WAYLAND)
     {
@@ -3683,6 +3753,7 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
   g_autoptr(FlatpakDecomposed) runtime_ref = NULL;
   int i;
   g_autoptr(GPtrArray) previous_app_id_dirs = NULL;
+  g_auto(GStrv) debuginfod_urls = NULL;
   g_autofree char *app_id = NULL;
   g_autofree char *app_arch = NULL;
   g_autofree char *app_info_path = NULL;
@@ -4119,8 +4190,18 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
   if (!sandboxed && !(flags & FLATPAK_RUN_FLAG_NO_DOCUMENTS_PORTAL))
     add_document_portal_args (bwrap, app_id, &doc_mount_path);
 
+  if (flags & FLATPAK_RUN_FLAG_DEVEL)
+    {
+      if (!flatpak_run_get_debuginfod_urls (app_deploy, app_deploy_data,
+                                            runtime_deploy, runtime_deploy_data,
+                                            &debuginfod_urls,
+                                            cancellable, error))
+        return FALSE;
+    }
+
   if (!flatpak_run_add_environment_args (bwrap, app_info_path, flags,
                                          app_id, app_context, app_id_dir, previous_app_id_dirs,
+                                         debuginfod_urls,
                                          &exports, cancellable, error))
     return FALSE;
 
