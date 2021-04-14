@@ -29,6 +29,7 @@
 #include <gio/gio.h>
 #include <gio/gunixfdlist.h>
 #include "flatpak-dbus-generated.h"
+#include "flatpak-session-helper.h"
 #include "flatpak-utils-base-private.h"
 
 typedef enum {
@@ -107,8 +108,8 @@ child_watch_died (GPid     pid,
   signal_variant = g_variant_ref_sink (g_variant_new ("(uu)", pid, status));
   g_dbus_connection_emit_signal (session_bus,
                                  pid_data->client,
-                                 "/org/freedesktop/Flatpak/Development",
-                                 "org.freedesktop.Flatpak.Development",
+                                 FLATPAK_SESSION_HELPER_PATH_DEVELOPMENT,
+                                 FLATPAK_SESSION_HELPER_INTERFACE_DEVELOPMENT,
                                  "HostCommandExited",
                                  signal_variant,
                                  NULL);
@@ -469,7 +470,7 @@ on_bus_acquired (GDBusConnection *connection,
 
   if (!g_dbus_interface_skeleton_export (G_DBUS_INTERFACE_SKELETON (helper),
                                          connection,
-                                         "/org/freedesktop/Flatpak/SessionHelper",
+                                         FLATPAK_SESSION_HELPER_PATH,
                                          &error))
     {
       g_warning ("error: %s", error->message);
@@ -483,7 +484,7 @@ on_bus_acquired (GDBusConnection *connection,
 
   if (!g_dbus_interface_skeleton_export (G_DBUS_INTERFACE_SKELETON (devel),
                                          connection,
-                                         "/org/freedesktop/Flatpak/Development",
+                                         FLATPAK_SESSION_HELPER_PATH_DEVELOPMENT,
                                          &error))
     {
       g_warning ("error: %s", error->message);
@@ -863,7 +864,7 @@ main (int    argc,
     flags |= G_BUS_NAME_OWNER_FLAGS_REPLACE;
 
   owner_id = g_bus_own_name (G_BUS_TYPE_SESSION,
-                             "org.freedesktop.Flatpak",
+                             FLATPAK_SESSION_HELPER_BUS_NAME,
                              flags,
                              on_bus_acquired,
                              on_name_acquired,

@@ -62,6 +62,7 @@
 #include "flatpak-systemd-dbus-generated.h"
 #include "flatpak-document-dbus-generated.h"
 #include "flatpak-error.h"
+#include "session-helper/flatpak-session-helper.h"
 
 #define DEFAULT_SHELL "/bin/sh"
 
@@ -2587,8 +2588,8 @@ add_monitor_path_args (gboolean      use_session_helper,
       session_helper =
         flatpak_session_helper_proxy_new_for_bus_sync (G_BUS_TYPE_SESSION,
                                                        G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES | G_DBUS_PROXY_FLAGS_DO_NOT_CONNECT_SIGNALS,
-                                                       "org.freedesktop.Flatpak",
-                                                       "/org/freedesktop/Flatpak/SessionHelper",
+                                                       FLATPAK_SESSION_HELPER_BUS_NAME,
+                                                       FLATPAK_SESSION_HELPER_PATH,
                                                        NULL, NULL);
     }
 
