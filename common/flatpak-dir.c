@@ -379,6 +379,7 @@ flatpak_remote_state_unref (FlatpakRemoteState *remote_state)
       g_clear_pointer (&remote_state->allow_refs, g_regex_unref);
       g_clear_pointer (&remote_state->deny_refs, g_regex_unref);
       g_clear_pointer (&remote_state->sideload_repos, g_ptr_array_unref);
+      g_clear_pointer (&remote_state->debuginfod_urls, g_strfreev);
 
       g_free (remote_state);
     }
@@ -1393,6 +1394,28 @@ GKeyFile *
 flatpak_deploy_get_metadata (FlatpakDeploy *deploy)
 {
   return g_key_file_ref (deploy->metadata);
+}
+
+GFile *
+flatpak_deploy_get_dir_path (FlatpakDeploy *deploy)
+{
+  g_autoptr(GFile) parent = g_file_get_parent (deploy->dir);
+  while (parent != NULL)
+    {
+      g_autofree char *basename = g_file_get_basename (parent);
+      if (strcmp (basename, "app") == 0 || strcmp (basename, "runtime") == 0 || strcmp (basename, ".removed") == 0)
+        {
+          return g_file_get_parent (parent);
+        }
+      else
+        {
+          GFile *new_parent = g_file_get_parent (parent);
+          g_object_unref (parent);
+          parent = new_parent;
+        }
+    }
+
+  return NULL;
 }
 
 static FlatpakDeploy *
@@ -7852,7 +7875,8 @@ apply_extra_data (FlatpakDir   *self,
                                          FLATPAK_RUN_FLAG_NO_SYSTEM_BUS_PROXY |
                                          FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY,
                                          id,
-                                         app_context, NULL, NULL, NULL, cancellable, error))
+                                         app_context, NULL, NULL, NULL, NULL,
+                                         cancellable, error))
     return FALSE;
 
   flatpak_bwrap_envp_to_args (bwrap);
@@ -12090,6 +12114,15 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
       if (var_metadata_lookup (meta, "xa.default-token-type", NULL, &res) &&
           var_variant_is_type (res, G_VARIANT_TYPE_INT32))
         state->default_token_type = GINT32_FROM_LE (var_variant_get_int32 (res));
+
+      if (var_metadata_lookup (meta, "xa.debuginfod-urls", NULL, &res) &&
+          var_variant_is_type (res, G_VARIANT_TYPE_STRING_ARRAY))
+          {
+            g_autoptr(GVariant) variant = g_variant_ref_sink (var_variant_peek_as_variant (res));
+            g_autoptr(GVariant) child = g_variant_get_variant (variant);
+            g_autofree const char **debuginfod_urls = g_variant_get_strv (child, NULL);
+            state->debuginfod_urls = g_strdupv ((char **)debuginfod_urls);
+          }
     }
 
   return g_steal_pointer (&state);

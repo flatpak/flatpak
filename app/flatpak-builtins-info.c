@@ -47,6 +47,7 @@ static gboolean opt_show_sdk;
 static gboolean opt_show_permissions;
 static gboolean opt_show_extensions;
 static gboolean opt_show_location;
+static gboolean opt_show_debuginfod_urls;
 static char *opt_arch;
 static char **opt_installations;
 static char *opt_file_access;
@@ -67,6 +68,7 @@ static GOptionEntry options[] = {
   { "file-access", 0, 0, G_OPTION_ARG_FILENAME, &opt_file_access, N_("Query file access"), N_("PATH") },
   { "show-extensions", 'e', 0, G_OPTION_ARG_NONE, &opt_show_extensions, N_("Show extensions"), NULL },
   { "show-location", 'l', 0, G_OPTION_ARG_NONE, &opt_show_location, N_("Show location"), NULL },
+  { "show-debuginfod-urls", 0, 0, G_OPTION_ARG_NONE, &opt_show_debuginfod_urls, N_("Show debuginfod URLs"), NULL },
   { NULL }
 };
 
@@ -166,7 +168,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   metakey = flatpak_deploy_get_metadata (deploy);
 
   if (opt_show_ref || opt_show_origin || opt_show_commit || opt_show_size || opt_show_metadata || opt_show_permissions ||
-      opt_file_access || opt_show_location || opt_show_runtime || opt_show_sdk)
+      opt_file_access || opt_show_location || opt_show_runtime || opt_show_sdk || opt_show_debuginfod_urls)
     friendly = FALSE;
 
   if (friendly)
@@ -384,6 +386,30 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
                                        FLATPAK_METADATA_KEY_SDK,
                                        NULL);
           g_print ("%s", sdk ? sdk : "-");
+        }
+
+      if (opt_show_debuginfod_urls)
+        {
+          g_auto(GStrv) debuginfod_urls = NULL;
+          g_autoptr(GError) local_error = NULL;
+          g_autofree char *debuginfod_url_str = NULL;
+
+          maybe_print_space (&first);
+
+          debuginfod_urls = flatpak_lookup_debuginfod_urls (deploy, deploy_data,
+                                                            dir,
+                                                            cancellable, &local_error);
+          if (local_error)
+            {
+              g_propagate_error (error, g_steal_pointer (&local_error));
+              return FALSE;
+            }
+
+          if (debuginfod_urls)
+            {
+              debuginfod_url_str = g_strjoinv(" ", debuginfod_urls);
+              g_print ("%s", debuginfod_url_str);
+            }
         }
 
       if (!first)

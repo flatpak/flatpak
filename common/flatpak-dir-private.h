@@ -143,6 +143,7 @@ typedef struct
   int       refcount;
   gint32    default_token_type;
   GPtrArray *sideload_repos;
+  char     **debuginfod_urls;
 } FlatpakRemoteState;
 
 FlatpakRemoteState *flatpak_remote_state_ref (FlatpakRemoteState *remote_state);
@@ -440,6 +441,7 @@ GBytes *        flatpak_deploy_get_deploy_data (FlatpakDeploy      *deploy,
 GFile *         flatpak_deploy_get_files       (FlatpakDeploy      *deploy);
 FlatpakContext *flatpak_deploy_get_overrides   (FlatpakDeploy      *deploy);
 GKeyFile *      flatpak_deploy_get_metadata    (FlatpakDeploy      *deploy);
+GFile *         flatpak_deploy_get_dir_path    (FlatpakDeploy      *deploy);
 
 FlatpakDir *          flatpak_dir_new                                       (GFile                         *basedir,
                                                                              gboolean                       user);

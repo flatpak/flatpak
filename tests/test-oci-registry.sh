@@ -23,7 +23,7 @@ set -euo pipefail
 
 skip_without_bwrap
 
-echo "1..14"
+echo "1..16"
 
 # Start the fake registry server
 
@@ -98,6 +98,24 @@ run org.test.Hello > hello_out
 assert_file_has_content hello_out '^Hello world, from a sandbox$'
 
 ok "install"
+
+debuginfod_urls=$(${FLATPAK} ${U} info --show-debuginfod-urls org.test.Hello)
+
+assert_streq "$debuginfod_urls" "https://debuginfod.example.com https://debuginfod2.example.com"
+
+ok "debuginfod-urls"
+
+touch $XDG_CACHE_HOME/not_exposed
+run --devel --command=/bin/sh org.test.Hello -c '
+    echo DU=$DEBUGINFOD_URLS
+    echo DC=$DEBUGINFOD_CACHE_PATH
+    echo CH="$(ls $HOST_XDG_CACHE_HOME)"
+' > hello_out
+assert_file_has_content hello_out '^DU=https://debuginfod.example.com https://debuginfod2.example.com$'
+assert_file_has_content hello_out "^DC=$HOME/cache/debuginfod_client$"
+assert_file_has_content hello_out '^CH=debuginfod_client$'
+
+ok "debuginfo-urls-run"
 
 make_updated_app oci
 

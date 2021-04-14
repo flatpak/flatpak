@@ -192,6 +192,7 @@ test_empty_context (void)
                                            "com.example.App",
                                            NULL,
                                            NULL,
+                                           NULL,
                                            &exports);
   print_bwrap (bwrap);
   g_assert_nonnull (exports);
@@ -308,6 +309,7 @@ test_full_context (void)
   g_clear_pointer (&exports, flatpak_exports_free);
   flatpak_context_append_bwrap_filesystem (context, bwrap,
                                            "com.example.App",
+                                           NULL,
                                            NULL,
                                            NULL,
                                            &exports);
