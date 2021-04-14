@@ -21,6 +21,11 @@
 #ifndef __FLATPAK_PORTAL_H__
 #define __FLATPAK_PORTAL_H__
 
+#define FLATPAK_PORTAL_BUS_NAME "org.freedesktop.portal.Flatpak"
+#define FLATPAK_PORTAL_PATH "/org/freedesktop/portal/Flatpak"
+#define FLATPAK_PORTAL_INTERFACE FLATPAK_PORTAL_BUS_NAME
+#define FLATPAK_PORTAL_INTERFACE_UPDATE_MONITOR FLATPAK_PORTAL_BUS_NAME ".UpdateMonitor"
+
 typedef enum {
   FLATPAK_SPAWN_FLAGS_CLEAR_ENV = 1 << 0,
   FLATPAK_SPAWN_FLAGS_LATEST_VERSION = 1 << 1,

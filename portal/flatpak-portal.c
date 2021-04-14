@@ -230,8 +230,8 @@ child_watch_died (GPid     pid,
   signal_variant = g_variant_ref_sink (g_variant_new ("(uu)", pid, status));
   g_dbus_connection_emit_signal (session_bus,
                                  pid_data->client,
-                                 "/org/freedesktop/portal/Flatpak",
-                                 "org.freedesktop.portal.Flatpak",
+                                 FLATPAK_PORTAL_PATH,
+                                 FLATPAK_PORTAL_INTERFACE,
                                  "SpawnExited",
                                  signal_variant,
                                  NULL);
@@ -422,8 +422,8 @@ check_child_pid_status (void *user_data)
   signal_variant = g_variant_ref_sink (g_variant_new ("(uu)", pid, relative_child_pid));
   g_dbus_connection_emit_signal (session_bus,
                                  pid_data->client,
-                                 "/org/freedesktop/portal/Flatpak",
-                                 "org.freedesktop.portal.Flatpak",
+                                 FLATPAK_PORTAL_PATH,
+                                 FLATPAK_PORTAL_INTERFACE,
                                  "SpawnStarted",
                                  signal_variant,
                                  NULL);
@@ -813,7 +813,7 @@ handle_spawn (PortalFlatpak         *object,
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
                                              G_DBUS_ERROR_INVALID_ARGS,
-                                             "org.freedesktop.portal.Flatpak.Spawn only works in a flatpak");
+                                             FLATPAK_PORTAL_INTERFACE ".Spawn only works in a flatpak");
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
@@ -1896,7 +1896,7 @@ check_for_updates (PortalFlatpakUpdateMonitor *monitor)
           !g_dbus_connection_emit_signal (update_monitor_get_connection (monitor),
                                           m->sender,
                                           m->obj_path,
-                                          "org.freedesktop.portal.Flatpak.UpdateMonitor",
+                                          FLATPAK_PORTAL_INTERFACE_UPDATE_MONITOR,
                                           "UpdateAvailable",
                                           g_variant_new ("(a{sv})", &builder),
                                           &error))
@@ -2014,7 +2014,8 @@ handle_create_update_monitor (PortalFlatpak *object,
         sender_escaped[i] = '_';
     }
 
-  obj_path = g_strdup_printf ("/org/freedesktop/portal/Flatpak/update_monitor/%s/%s",
+  obj_path = g_strdup_printf ("%s/update_monitor/%s/%s",
+                              FLATPAK_PORTAL_PATH,
                               sender_escaped,
                               token);
 
@@ -2315,7 +2316,7 @@ emit_progress (PortalFlatpakUpdateMonitor *monitor,
   if (!g_dbus_connection_emit_signal (connection,
                                       m->sender,
                                       m->obj_path,
-                                      "org.freedesktop.portal.Flatpak.UpdateMonitor",
+                                      FLATPAK_PORTAL_INTERFACE_UPDATE_MONITOR,
                                       "Progress",
                                       g_variant_new ("(a{sv})", &builder),
                                       &error))
@@ -2879,7 +2880,7 @@ on_bus_acquired (GDBusConnection *connection,
 
   if (!g_dbus_interface_skeleton_export (G_DBUS_INTERFACE_SKELETON (portal),
                                          connection,
-                                         "/org/freedesktop/portal/Flatpak",
+                                         FLATPAK_PORTAL_PATH,
                                          &error))
     {
       g_warning ("error: %s", error->message);
@@ -3041,7 +3042,7 @@ main (int    argc,
     flags |= G_BUS_NAME_OWNER_FLAGS_REPLACE;
 
   name_owner_id = g_bus_own_name (G_BUS_TYPE_SESSION,
-                                  "org.freedesktop.portal.Flatpak",
+                                  FLATPAK_PORTAL_BUS_NAME,
                                   flags,
                                   on_bus_acquired,
                                   on_name_acquired,

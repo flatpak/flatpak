@@ -8,12 +8,13 @@
 #include <fcntl.h>
 
 #include <gio/gio.h>
+#include "portal/flatpak-portal.h"
 #include "portal/flatpak-portal-dbus.h"
 
 GDBusConnection *connection;
 
-const char *portal_name = "org.freedesktop.portal.Flatpak";
-const char *portal_path = "/org/freedesktop/portal/Flatpak";
+const char *portal_name = FLATPAK_PORTAL_BUS_NAME;
+const char *portal_path = FLATPAK_PORTAL_PATH;
 
 static PortalFlatpakUpdateMonitor *
 create_monitor (PortalFlatpak *portal,
@@ -36,7 +37,7 @@ create_monitor (PortalFlatpak *portal,
 
   token = g_strdup_printf ("test_token%d", counter++);
 
-  monitor_path = g_strdup_printf ("/org/freedesktop/portal/Flatpak/update_monitor/%s/%s", sender, token);
+  monitor_path = g_strdup_printf ("%s/update_monitor/%s/%s", FLATPAK_PORTAL_PATH, sender, token);
   monitor = portal_flatpak_update_monitor_proxy_new_sync (connection, G_DBUS_PROXY_FLAGS_NONE,
                                                           portal_name, monitor_path,
                                                           NULL, error);
