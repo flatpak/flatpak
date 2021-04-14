@@ -39,6 +39,7 @@
 #include "flatpak-error.h"
 #include "flatpak-oci-registry-private.h"
 #include "flatpak-progress-private.h"
+#include "flatpak-system-helper.h"
 #include "flatpak-utils-base-private.h"
 #include "flatpak-utils-private.h"
 
@@ -2236,7 +2237,7 @@ on_bus_acquired (GDBusConnection *connection,
 
   if (!g_dbus_interface_skeleton_export (G_DBUS_INTERFACE_SKELETON (helper),
                                          connection,
-                                         "/org/freedesktop/Flatpak/SystemHelper",
+                                         FLATPAK_SYSTEM_HELPER_PATH,
                                          &error))
     {
       g_warning ("error: %s", error->message);
@@ -2412,7 +2413,7 @@ main (int    argc,
     flags |= G_BUS_NAME_OWNER_FLAGS_REPLACE;
 
   name_owner_id = g_bus_own_name (on_session_bus ? G_BUS_TYPE_SESSION  : G_BUS_TYPE_SYSTEM,
-                                  "org.freedesktop.Flatpak.SystemHelper",
+                                  FLATPAK_SYSTEM_HELPER_BUS_NAME,
                                   flags,
                                   on_bus_acquired,
                                   on_name_acquired,

@@ -16,6 +16,7 @@ systemdsystemunit_DATA += system-helper/flatpak-system-helper.service
 
 flatpak_system_helper_SOURCES = \
 	system-helper/flatpak-system-helper.c	\
+	system-helper/flatpak-system-helper.h	\
 	$(NULL)
 
 flatpak_system_helper_LDADD = $(BASE_LIBS) $(OSTREE_LIBS) $(JSON_LIBS) $(POLKIT_LIBS) libflatpak-common.la libflatpak-common-base.la libglnx.la
