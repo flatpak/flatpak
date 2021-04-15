@@ -97,4 +97,6 @@ void               flatpak_table_printer_set_column_skip_unique (FlatpakTablePri
                                                                  int                  column,
                                                                  gboolean             skip_unique);
 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakTablePrinter, flatpak_table_printer_free)
+
 #endif /* __FLATPAK_TABLE_PRINTER_H__ */

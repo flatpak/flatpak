@@ -120,7 +120,7 @@ strip_last_element (const char *id,
 static gboolean
 ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, Column *columns, GCancellable *cancellable, GError **error)
 {
-  FlatpakTablePrinter *printer;
+  g_autoptr(FlatpakTablePrinter) printer = NULL;
   guint n_keys;
   g_autofree FlatpakDecomposed **keys = NULL;
   int i, j;
@@ -377,8 +377,6 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
       flatpak_table_printer_print_full (printer, 0, cols, NULL, NULL);
       g_print ("\n");
     }
-
-  flatpak_table_printer_free (printer);
 
   return TRUE;
 }
