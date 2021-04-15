@@ -323,8 +323,8 @@ flatpak_run_add_wayland_args (FlatpakBwrap *bwrap)
 static void
 flatpak_run_add_ssh_args (FlatpakBwrap *bwrap)
 {
+  static const char sandbox_auth_socket[] = "/run/flatpak/ssh-auth";
   const char * auth_socket;
-  g_autofree char * sandbox_auth_socket = NULL;
 
   auth_socket = g_getenv ("SSH_AUTH_SOCK");
 
@@ -337,8 +337,6 @@ flatpak_run_add_ssh_args (FlatpakBwrap *bwrap)
       flatpak_bwrap_unset_env (bwrap, "SSH_AUTH_SOCK");
       return;
     }
-
-  sandbox_auth_socket = g_strdup_printf ("/run/user/%d/ssh-auth", getuid ());
 
   flatpak_bwrap_add_args (bwrap,
                           "--ro-bind", auth_socket, sandbox_auth_socket,
