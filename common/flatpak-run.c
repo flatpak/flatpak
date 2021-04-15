@@ -270,7 +270,7 @@ flatpak_run_add_x11_args (FlatpakBwrap *bwrap,
               int tmp_fd = dup (glnx_steal_fd (&xauth_tmpf.fd));
               if (tmp_fd != -1)
                 {
-                  g_autofree char *dest = g_strdup_printf ("/run/user/%d/Xauthority", getuid ());
+                  static const char dest[] = "/run/flatpak/Xauthority";
 
                   write_xauth (d, output);
                   flatpak_bwrap_add_args_data_fd (bwrap, "--ro-bind-data", tmp_fd, dest);
