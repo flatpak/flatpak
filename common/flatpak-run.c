@@ -4270,11 +4270,11 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
 
   if (per_app_dir_lock_path != NULL)
     {
-      g_autofree char *dest = g_strdup_printf ("/run/user/%d/.app-ref", getuid ());
+      static const char lock[] = "/run/flatpak/per-app-dirs-ref";
 
       flatpak_bwrap_add_args (bwrap,
-                              "--ro-bind", per_app_dir_lock_path, dest,
-                              "--lock-file", dest,
+                              "--ro-bind", per_app_dir_lock_path, lock,
+                              "--lock-file", lock,
                               NULL);
     }
 
