@@ -950,6 +950,8 @@ flatpak_run_add_a11y_dbus_args (FlatpakBwrap   *app_bwrap,
                                 FlatpakContext *context,
                                 FlatpakRunFlags flags)
 {
+  static const char sandbox_socket_path[] = "/run/flatpak/at-spi-bus";
+  static const char sandbox_dbus_address[] = "unix:path=/run/flatpak/at-spi-bus";
   g_autoptr(GDBusConnection) session_bus = NULL;
   g_autofree char *a11y_address = NULL;
   g_autoptr(GError) local_error = NULL;
@@ -993,9 +995,6 @@ flatpak_run_add_a11y_dbus_args (FlatpakBwrap   *app_bwrap,
   proxy_socket = create_proxy_socket ("a11y-bus-proxy-XXXXXX");
   if (proxy_socket == NULL)
     return FALSE;
-
-  g_autofree char *sandbox_socket_path = g_strdup_printf ("/run/user/%d/at-spi-bus", getuid ());
-  g_autofree char *sandbox_dbus_address = g_strdup_printf ("unix:path=/run/user/%d/at-spi-bus", getuid ());
 
   flatpak_bwrap_add_args (proxy_arg_bwrap,
                           a11y_address,
