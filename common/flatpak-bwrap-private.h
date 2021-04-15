@@ -27,6 +27,7 @@ typedef struct
   GArray    *noinherit_fds; /* Just keep these open while the bwrap lives */
   GArray    *fds;
   GStrv      envp;
+  GPtrArray *runtime_dir_members;
 } FlatpakBwrap;
 
 extern char *flatpak_bwrap_empty_env[1];
@@ -82,6 +83,9 @@ gboolean      flatpak_bwrap_bundle_args (FlatpakBwrap *bwrap,
                                          int           end,
                                          gboolean      one_arg,
                                          GError      **error);
+void          flatpak_bwrap_add_runtime_dir_member (FlatpakBwrap *bwrap,
+                                                    const char *name);
+void          flatpak_bwrap_populate_runtime_dir (FlatpakBwrap *bwrap);
 
 void          flatpak_bwrap_child_setup_cb (gpointer user_data);
 void          flatpak_bwrap_child_setup (GArray *fd_array,
