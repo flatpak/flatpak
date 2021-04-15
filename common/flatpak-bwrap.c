@@ -223,6 +223,16 @@ flatpak_bwrap_append_bwrap (FlatpakBwrap *bwrap,
                                  key, eq + 1, TRUE);
         }
     }
+
+  if (other->runtime_dir_members != NULL)
+    {
+      if (bwrap->runtime_dir_members == NULL)
+        bwrap->runtime_dir_members = g_ptr_array_new_with_free_func (g_free);
+
+      for (i = 0; i < other->runtime_dir_members->len; i++)
+        g_ptr_array_add (bwrap->runtime_dir_members,
+                         g_strdup (g_ptr_array_index (other->runtime_dir_members, i)));
+    }
 }
 
 void
@@ -391,6 +401,42 @@ flatpak_bwrap_bundle_args (FlatpakBwrap *bwrap,
     }
 
   return TRUE;
+}
+
+/*
+ * Remember that we need to arrange for $XDG_RUNTIME_DIR/$name to be
+ * a symlink to /run/flatpak/$name.
+ */
+void
+flatpak_bwrap_add_runtime_dir_member (FlatpakBwrap *bwrap,
+                                      const char *name)
+{
+  if (bwrap->runtime_dir_members == NULL)
+    bwrap->runtime_dir_members = g_ptr_array_new_with_free_func (g_free);
+
+  g_ptr_array_add (bwrap->runtime_dir_members, g_strdup (name));
+}
+
+void
+flatpak_bwrap_populate_runtime_dir (FlatpakBwrap *bwrap)
+{
+  flatpak_bwrap_add_arg (bwrap, "--symlink");
+  flatpak_bwrap_add_arg (bwrap, "../../../.flatpak-info");
+  flatpak_bwrap_add_arg_printf (bwrap, "/run/user/%d/flatpak-info", getuid ());
+
+  if (bwrap->runtime_dir_members != NULL)
+    {
+      gsize i;
+
+      for (i = 0; i < bwrap->runtime_dir_members->len; i++)
+        {
+          const char *member = g_ptr_array_index (bwrap->runtime_dir_members, i);
+
+          flatpak_bwrap_add_arg (bwrap, "--symlink");
+          flatpak_bwrap_add_arg_printf (bwrap, "../../flatpak/%s", member);
+          flatpak_bwrap_add_arg_printf (bwrap, "/run/user/%d/%s", getuid (), member);
+        }
+    }
 }
 
 void

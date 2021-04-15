@@ -2531,7 +2531,7 @@ flatpak_context_append_bwrap_filesystem (FlatpakContext  *context,
   if (app_id_dir != NULL)
     {
       g_autofree char *user_runtime_dir = flatpak_get_real_xdg_runtime_dir ();
-      g_autofree char *run_user_app_dst = g_strdup_printf ("/run/user/%d/app/%s", getuid (), app_id);
+      g_autofree char *run_user_app_dst = g_strdup_printf ("/run/flatpak/app/%s", app_id);
       g_autofree char *run_user_app_src = g_build_filename (user_runtime_dir, "app", app_id, NULL);
 
       if (glnx_shutil_mkdir_p_at (AT_FDCWD,
@@ -2542,6 +2542,9 @@ flatpak_context_append_bwrap_filesystem (FlatpakContext  *context,
         flatpak_bwrap_add_args (bwrap,
                                 "--bind", run_user_app_src, run_user_app_dst,
                                 NULL);
+
+      /* Later, we'll make $XDG_RUNTIME_DIR/app a symlink to /run/flatpak/app */
+      flatpak_bwrap_add_runtime_dir_member (bwrap, "app");
     }
 
   /* This actually outputs the args for the hide/expose operations
