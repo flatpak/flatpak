@@ -4220,15 +4220,6 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
 
   flags |= flatpak_context_get_run_flags (app_context);
 
-  if (!sandboxed)
-    {
-      if (!flatpak_instance_ensure_per_app_dir (app_id,
-                                                &per_app_dir_lock_fd,
-                                                &per_app_dir_lock_path,
-                                                error))
-        return FALSE;
-    }
-
   if (!flatpak_run_setup_base_argv (bwrap, runtime_files, app_id_dir, app_arch, flags, error))
     return FALSE;
 
@@ -4255,6 +4246,15 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
                                       &app_info_path, instance_id_fd, &instance_id_host_dir,
                                       error))
     return FALSE;
+
+  if (!sandboxed)
+    {
+      if (!flatpak_instance_ensure_per_app_dir (app_id,
+                                                &per_app_dir_lock_fd,
+                                                &per_app_dir_lock_path,
+                                                error))
+        return FALSE;
+    }
 
   if (!flatpak_run_add_dconf_args (bwrap, app_id, metakey, error))
     return FALSE;
