@@ -245,7 +245,7 @@ print_app (Column *columns, MatchResult *res, FlatpakTablePrinter *printer)
 static void
 print_matches (Column *columns, GSList *matches)
 {
-  FlatpakTablePrinter *printer = NULL;
+  g_autoptr(FlatpakTablePrinter) printer = NULL;
   int rows, cols;
   GSList *s;
 
@@ -262,8 +262,6 @@ print_matches (Column *columns, GSList *matches)
   flatpak_get_window_size (&rows, &cols);
   flatpak_table_printer_print_full (printer, 0, cols, NULL, NULL);
   g_print ("\n");
-
-  flatpak_table_printer_free (printer);
 }
 
 gboolean

@@ -120,7 +120,7 @@ print_table_for_refs (gboolean      print_apps,
                       GCancellable *cancellable,
                       GError      **error)
 {
-  FlatpakTablePrinter *printer;
+  g_autoptr(FlatpakTablePrinter) printer = NULL;
   int i;
   FlatpakKinds match_kinds;
   g_autofree char *match_id = NULL;
@@ -352,8 +352,6 @@ print_table_for_refs (gboolean      print_apps,
       flatpak_table_printer_print_full (printer, 0, cols, NULL, NULL);
       g_print ("\n");
     }
-
-  flatpak_table_printer_free (printer);
 
   return TRUE;
 }

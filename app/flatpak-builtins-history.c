@@ -124,7 +124,7 @@ print_history (GPtrArray    *dirs,
                GCancellable *cancellable,
                GError      **error)
 {
-  FlatpakTablePrinter *printer;
+  g_autoptr(FlatpakTablePrinter) printer = NULL;
   sd_journal *j;
   int r;
   int i;
@@ -348,7 +348,6 @@ print_history (GPtrArray    *dirs,
       }
 
   flatpak_table_printer_print (printer);
-  flatpak_table_printer_free (printer);
 
   sd_journal_close (j);
 
