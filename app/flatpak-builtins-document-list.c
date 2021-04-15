@@ -64,7 +64,7 @@ print_documents (const char   *app_id,
   g_autoptr(GVariantIter) iter = NULL;
   const char *id;
   const char *origin;
-  FlatpakTablePrinter *printer;
+  g_autoptr(FlatpakTablePrinter) printer = NULL;
   g_autofree char *mountpoint = NULL;
   gboolean need_perms = FALSE;
   int i;
@@ -153,7 +153,6 @@ print_documents (const char   *app_id,
     }
 
   flatpak_table_printer_print (printer);
-  flatpak_table_printer_free (printer);
 
   return TRUE;
 }

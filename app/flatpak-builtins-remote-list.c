@@ -64,7 +64,7 @@ static Column all_columns[] = {
 static gboolean
 list_remotes (GPtrArray *dirs, Column *columns, GCancellable *cancellable, GError **error)
 {
-  FlatpakTablePrinter *printer;
+  g_autoptr(FlatpakTablePrinter) printer = NULL;
   int i, j, k;
 
   if (columns[0].name == NULL)
@@ -212,7 +212,6 @@ list_remotes (GPtrArray *dirs, Column *columns, GCancellable *cancellable, GErro
     }
 
   flatpak_table_printer_print (printer);
-  flatpak_table_printer_free (printer);
 
   return TRUE;
 }
