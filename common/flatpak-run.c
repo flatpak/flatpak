@@ -307,6 +307,14 @@ flatpak_run_add_wayland_args (FlatpakBwrap *bwrap)
     wayland_display = "wayland-0";
 
   wayland_socket = g_build_filename (user_runtime_dir, wayland_display, NULL);
+
+  if (!g_str_has_prefix (wayland_display, "wayland-") ||
+      strchr (wayland_display, '/') != NULL)
+    {
+      wayland_display = "wayland-0";
+      flatpak_bwrap_set_env (bwrap, "WAYLAND_DISPLAY", wayland_display, TRUE);
+    }
+
   sandbox_wayland_socket = g_strdup_printf ("/run/user/%d/%s", getuid (), wayland_display);
 
   if (stat (wayland_socket, &statbuf) == 0 &&
