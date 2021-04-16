@@ -176,6 +176,8 @@ test_gc (void)
   /* Wait for the child to be ready */
   bytes = glnx_fd_readall_bytes (stdout_fd, NULL, &error);
   g_assert_no_error (error);
+  g_assert_nonnull (bytes);
+  g_assert_cmpuint (g_bytes_get_size (bytes), ==, 0);
 
   /* Pretend the locks were created in early 1970, to bypass the workaround
    * for a race */
