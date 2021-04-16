@@ -232,7 +232,7 @@ flatpak_name_matches_one_wildcard_prefix (const char         *name,
     {
       const char *prefix = *iter;
       gsize prefix_len = strlen (prefix);
-      gsize match_len = strlen (prefix);
+      gsize match_len;
       gboolean has_wildcard = FALSE;
       const char *end_of_match;
 
