@@ -89,6 +89,8 @@ flatpak_builtin_enter (int           argc,
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   rest_argc = 0;
+  rest_argv_start = 0;
+
   for (i = 1; i < argc; i++)
     {
       /* The non-option is the command, take it out of the arguments */
@@ -109,6 +111,9 @@ flatpak_builtin_enter (int           argc,
       usage_error (context, _("INSTANCE and COMMAND must be specified"), error);
       return FALSE;
     }
+
+  /* If this wasn't true, rest_argc would still be 0 */
+  g_assert (rest_argv_start >= 1);
 
   pid_s = argv[rest_argv_start];
   pid = atoi (pid_s);
