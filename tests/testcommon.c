@@ -1349,6 +1349,7 @@ test_parse_datetime (void)
   g_assert_true (ts.tv_sec == now.tv_sec); // close enough
 
   ret = parse_datetime (&ts, "2018-10-29 00:19:07 +0000", NULL);
+  g_assert_true (ret);
   dt = g_date_time_new_utc (2018, 10, 29, 0, 19, 7);
   g_date_time_to_timeval (dt, &tv);
 
