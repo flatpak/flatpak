@@ -3933,7 +3933,7 @@ test_overrides (void)
 
   res = flatpak_installation_launch (inst, "org.test.Hello", NULL, "master", NULL, NULL, &error);
   g_assert_no_error (error);
-  g_assert_nonnull (ref);
+  g_assert_true (res);
 
   data = flatpak_installation_load_app_overrides (inst, "org.test.Hello", NULL, &error);
   g_assert_no_error (error);
