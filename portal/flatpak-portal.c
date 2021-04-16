@@ -1346,7 +1346,7 @@ handle_spawn (PortalFlatpak         *object,
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
-      if (handle >= fds_len)
+      if (handle >= fds_len || handle < 0)
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
                                                  G_DBUS_ERROR_INVALID_ARGS,
@@ -1355,6 +1355,7 @@ handle_spawn (PortalFlatpak         *object,
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
+      g_assert (fds != NULL);   /* otherwise fds_len would be 0 */
       path = get_path_for_fd (fds[handle], NULL, &error);
 
       if (path == NULL)
@@ -1378,7 +1379,7 @@ handle_spawn (PortalFlatpak         *object,
       gint32 handle = g_variant_get_handle (usr_fd);
       g_autofree char *path = NULL;
 
-      if (handle >= fds_len)
+      if (handle >= fds_len || handle < 0)
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
                                                  G_DBUS_ERROR_INVALID_ARGS,
@@ -1387,6 +1388,7 @@ handle_spawn (PortalFlatpak         *object,
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
+      g_assert (fds != NULL);   /* otherwise fds_len would be 0 */
       path = get_path_for_fd (fds[handle], NULL, &error);
 
       if (path == NULL)
