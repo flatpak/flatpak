@@ -2971,8 +2971,12 @@ mark_op_resolved (FlatpakTransactionOperation *op,
   g_assert (commit != NULL);
 
   op->resolved = TRUE;
-  g_free (op->resolved_commit); /* This is already set if we retry resolving to get a token, so free first */
-  op->resolved_commit = g_strdup (commit);
+
+  if (op->resolved_commit != commit)
+    {
+      g_free (op->resolved_commit); /* This is already set if we retry resolving to get a token, so free first */
+      op->resolved_commit = g_strdup (commit);
+    }
 
   if (sideload_path)
     op->resolved_sideload_path = g_object_ref (sideload_path);
