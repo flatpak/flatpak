@@ -876,7 +876,7 @@ do_writer (int basefd_arg,
 
       if (response_data_size < 0 || response_data_size > MAX_DATA_SIZE)
         {
-          g_printerr ("Invalid response size %ld", response_size);
+          g_printerr ("Invalid response size %ld", response_data_size);
           exit (1);
         }
 
