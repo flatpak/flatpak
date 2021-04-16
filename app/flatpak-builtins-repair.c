@@ -290,7 +290,6 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
   g_autoptr(GPtrArray) refs = NULL;
   FlatpakDir *dir = NULL;
   g_autoptr(GHashTable) all_refs = NULL;
-  g_autoptr(GHashTable) invalid_refs = NULL;
   g_autoptr(GHashTable) object_status_cache = NULL;
   g_autoptr(FlatpakTransaction) transaction = NULL;
   OstreeRepo *repo;
@@ -342,8 +341,6 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
 
   object_status_cache = g_hash_table_new_full (ostree_hash_object_name, g_variant_equal,
                                                (GDestroyNotify) g_variant_unref, NULL);
-
-  invalid_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 
   /* Validate that the commit for each ref is available */
   if (!ostree_repo_list_refs (repo, NULL, &all_refs, cancellable, error))

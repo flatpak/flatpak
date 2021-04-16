@@ -1927,14 +1927,10 @@ test_list_updates (void)
   FlatpakInstalledRef *update_ref = NULL;
   g_autoptr(FlatpakInstalledRef) updated_ref = NULL;
   g_autofree gchar *app = NULL;
-  g_autofree gchar *runtime = NULL;
   gboolean res;
 
   app = g_strdup_printf ("app/org.test.Hello/%s/master",
                          flatpak_get_default_arch ());
-
-  runtime = g_strdup_printf ("runtime/org.test.Platform/%s/master",
-                             flatpak_get_default_arch ());
 
   inst = flatpak_installation_new_user (NULL, &error);
   g_assert_no_error (error);

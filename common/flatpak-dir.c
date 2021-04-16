@@ -5594,7 +5594,6 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   g_autoptr(FlatpakOciRegistry) registry = NULL;
   g_autoptr(FlatpakOciVersioned) versioned = NULL;
   g_autoptr(FlatpakOciImage) image_config = NULL;
-  g_autofree char *full_ref = NULL;
   const char *oci_repository = NULL;
   const char *delta_url = NULL;
   g_autofree char *oci_digest = NULL;
@@ -5643,8 +5642,6 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
                                                          NULL, cancellable, error);
   if (image_config == NULL)
     return FALSE;
-
-  full_ref = g_strdup_printf ("%s:%s", state->remote_name, ref);
 
   if (repo == NULL)
     repo = self->repo;
@@ -6616,7 +6613,6 @@ flatpak_dir_run_triggers (FlatpakDir   *self,
       if (g_file_info_get_file_type (child_info) == G_FILE_TYPE_REGULAR &&
           g_str_has_suffix (name, ".trigger"))
         {
-          g_autoptr(GPtrArray) argv_array = NULL;
           /* We need to canonicalize the basedir, because if has a symlink
              somewhere the bind mount will be on the target of that, not
              at that exact path. */
@@ -6629,7 +6625,6 @@ flatpak_dir_run_triggers (FlatpakDir   *self,
 
           bwrap = flatpak_bwrap_new (NULL);
 
-          argv_array = g_ptr_array_new_with_free_func (g_free);
 #ifndef DISABLE_SANDBOXED_TRIGGERS
           flatpak_bwrap_add_arg (bwrap, flatpak_get_bwrap ());
           flatpak_bwrap_add_args (bwrap,
@@ -6853,14 +6848,12 @@ rewrite_mime_xml (xmlDoc *doc)
           xmlNode *sub_node = NULL;
           xmlNode *next_sub_node = NULL;
 
-          xml_autofree xmlChar *mimetype = NULL;
           if (mime_node->type != XML_ELEMENT_NODE)
             continue;
 
           if (strcmp ((char *) mime_node->name, "mime-type") != 0)
             return FALSE;
 
-          mimetype = xmlGetProp (mime_node, (xmlChar *) "type");
           for (sub_node = mime_node->children; sub_node; sub_node = next_sub_node)
             {
               next_sub_node = sub_node->next;
@@ -11077,7 +11070,6 @@ flatpak_dir_remote_make_oci_summary (FlatpakDir   *self,
   g_autoptr(GFile) index_cache = NULL;
   g_autofree char *index_uri = NULL;
   g_autoptr(GFile) summary_cache = NULL;
-  g_autofree char *self_name = NULL;
   g_autoptr(GError) local_error = NULL;
   g_autoptr(GMappedFile) mfile = NULL;
   g_autoptr(GBytes) cache_bytes = NULL;
@@ -11104,8 +11096,6 @@ flatpak_dir_remote_make_oci_summary (FlatpakDir   *self,
     }
   else
     {
-      self_name = flatpak_dir_get_name (self);
-
       index_cache = flatpak_dir_update_oci_index (self, remote, &index_uri, cancellable, error);
       if (index_cache == NULL)
         return FALSE;
@@ -12035,8 +12025,6 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
           const char *name = var_summary_index_subsummaries_entry_get_key (entry);
           VarSubsummaryRef subsummary = var_summary_index_subsummaries_entry_get_value (entry);
           gsize checksum_bytes_len;
-          const guchar *checksum_bytes;
-          g_autofree char *digest = NULL;
           const char *dash, *subsummary_arch;
 
           dash = strchr (name, '-');
@@ -12059,13 +12047,12 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
                 }
             }
 
-          checksum_bytes = var_subsummary_peek_checksum (subsummary, &checksum_bytes_len);
+          var_subsummary_peek_checksum (subsummary, &checksum_bytes_len);
           if (G_UNLIKELY (checksum_bytes_len != OSTREE_SHA256_DIGEST_LEN))
             {
               g_debug ("Invalid checksum for digested summary, not using cache");
               continue;
             }
-          digest = ostree_checksum_from_bytes (checksum_bytes);
 
           g_hash_table_insert (state->index_ht, g_strdup (subsummary_arch), var_subsummary_to_owned_gvariant (subsummary, state->index));
         }
