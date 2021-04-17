@@ -15121,6 +15121,9 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir        *self,
 
               extension_ref = flatpak_decomposed_new_from_parts (FLATPAK_KINDS_RUNTIME,
                                                                  extension, ref_arch, branch, NULL);
+              if (extension_ref == NULL)
+                continue;
+
               if (remote_name != NULL &&
                   flatpak_repo_resolve_rev (self->repo,
                                             NULL,
