@@ -102,3 +102,10 @@ quick intro to the major components of the flatpak repo:
 * `dbus-proxy`: a filtering proxy for D-Bus connections, as a submodule
 * `icon-validator`: A small utility that is used to validate icons
 * `revokefs`: A fuse filesystem that is used to transfer files to the system-helper without copying
+
+# Related Projects
+
+Here are some notable projects in the Flatpak ecosystem:
+* [Flatseal](https://github.com/tchx84/flatseal): An app for managing permissions of Flatpak apps without using the CLI
+* [Souk](https://gitlab.gnome.org/haecker-felix/souk): A Flatpak-only app store
+* [Flat-manager](https://github.com/flatpak/flat-manager): A tool for managing Flatpak repositories
