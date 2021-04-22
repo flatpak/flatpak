@@ -174,6 +174,24 @@ glnx_dirfd_iterator_next_dent (GLnxDirFdIterator  *dfd_iter,
 }
 
 /**
+ * glnx_dirfd_iterator_rewind:
+ * @dfd_iter: A directory iterator
+ *
+ * Rewind to the beginning of @dfd_iter. The next call to
+ * glnx_dirfd_iterator_next_dent() will provide the first entry in the
+ * directory.
+ */
+void
+glnx_dirfd_iterator_rewind (GLnxDirFdIterator  *dfd_iter)
+{
+  GLnxRealDirfdIterator *real_dfd_iter = (GLnxRealDirfdIterator*) dfd_iter;
+
+  g_return_if_fail (dfd_iter->initialized);
+
+  rewinddir (real_dfd_iter->d);
+}
+
+/**
  * glnx_dirfd_iterator_next_dent_ensure_dtype:
  * @dfd_iter: A directory iterator
  * @out_dent: (out) (transfer none): Pointer to dirent; do not free

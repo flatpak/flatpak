@@ -66,6 +66,7 @@ gboolean glnx_dirfd_iterator_next_dent_ensure_dtype (GLnxDirFdIterator  *dfd_ite
                                                      struct dirent     **out_dent,
                                                      GCancellable       *cancellable,
                                                      GError            **error);
+void glnx_dirfd_iterator_rewind (GLnxDirFdIterator  *dfd_iter);
 void glnx_dirfd_iterator_clear (GLnxDirFdIterator *dfd_iter);
 
 G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC(GLnxDirFdIterator, glnx_dirfd_iterator_clear)
