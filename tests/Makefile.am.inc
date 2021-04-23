@@ -255,6 +255,7 @@ TEST_MATRIX_SOURCE = \
 	tests/test-unused.sh \
 	tests/test-summaries.sh{user+system} \
 	tests/test-subset.sh{user+system} \
+	tests/test-prune.sh \
 	$(NULL)
 
 update-test-matrix:
