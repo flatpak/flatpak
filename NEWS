@@ -1,3 +1,45 @@
+Changes in 1.11.1
+~~~~~~~~~~~~~~~~~
+Released: not yet
+
+This is the first unstable release in the series that will lead to 1.12.
+
+New features:
+
+* All instances of the same app-ID share their /tmp directory
+* All instances of the same app-ID share their $XDG_RUNTIME_DIR
+* Instances of the same app-ID can optionally share their /dev/shm directory
+  (enabled by a new --allow flag, --allow=per-app-dev-shm)
+* Allow a subsandbox to have a different /usr and/or /app.
+  Steam will use this to launch games with its own container runtime
+  as /usr (the "Steam Linux Runtime" mechanism).
+* enter: Improve support for TUI programs like gdb
+* build-update-repo: Add a higher-performance reimplementation of
+  `ostree prune` specialized for archive-mode repositories
+
+Bug fixes:
+
+* Fix deploys of local remotes in system-helper
+* Fix test failures on non-x86_64 systems
+* Fix two intermittent test failures
+* Make polkit queries non-interactive when operating in non-interactive mode
+* Use a local main-context when using libsoup in a thread
+* create-usb: Skip copying extra-data flatpaks
+* OCI: Switch to pax-format tar archives
+* history: Handle transaction log entries with empty REF field
+* portal: Fix flatpak-spawn --clear-env on OSs where flatpak is not on
+  the fallback PATH, such as NixOS
+* Fix various issues detected by scan-build
+
+Internal changes:
+
+* Use GNU bison to build parse-datetime.y
+* Add information about security support and security vulnerability
+  reporting (see `SECURITY.md`)
+* Move all git submodules into subprojects/ directory
+* Several sockets are now created in /run/flatpak in the sandbox, with
+  symbolic links in $XDG_RUNTIME_DIR
+
 Changes in 1.10.2
 ~~~~~~~~~~~~~~~~~
 Released: 2021-03-10
