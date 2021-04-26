@@ -9,6 +9,7 @@ on:
     - flatpak-1.4.x
     - flatpak-1.6.x
     - flatpak-1.8.x
+    - flatpak-1.10.x
   pull_request:
     paths-ignore:
     - README.md
@@ -25,6 +26,7 @@ on:
     - flatpak-1.4.x
     - flatpak-1.6.x
     - flatpak-1.8.x
+    - flatpak-1.10.x
 
 jobs:
   check:
