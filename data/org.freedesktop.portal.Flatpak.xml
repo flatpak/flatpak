@@ -265,7 +265,7 @@
                <filename>/run/parent/usr</filename>, with filenames like
                <filename>/run/parent/usr/bin/env</filename>,
                and compatibility symlinks like
-               <filename>/run/parent/bin</filename> →
+               <filename>/run/parent/bin</filename> ->
                <filename>usr/bin</filename>.
              </para><para>
                The file descriptor must be opened with O_PATH and
