@@ -5085,7 +5085,7 @@ validate_component (FlatpakXml *component,
     }
 
   while ((bundle = flatpak_xml_find (component, "bundle", &prev)) != NULL)
-    flatpak_xml_free (flatpak_xml_unlink (component, bundle));
+    flatpak_xml_free (flatpak_xml_unlink (bundle, prev));
 
   bundle = flatpak_xml_new ("bundle");
   bundle->attribute_names = g_new0 (char *, 2 * 4);
