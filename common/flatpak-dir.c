@@ -3107,6 +3107,11 @@ flatpak_deploy_data_get_eol_rebase (GBytes *deploy_data)
   return flatpak_deploy_data_get_string (deploy_data, "eolr");
 }
 
+/*<private>
+ * flatpak_deploy_data_get_previous_ids:
+ *
+ * Returns: (array length=length zero-terminated=1) (transfer container): an array of constant strings
+ **/
 const char **
 flatpak_deploy_data_get_previous_ids (GBytes *deploy_data, gsize *length)
 {
@@ -8659,7 +8664,8 @@ flatpak_dir_deploy_update (FlatpakDir        *self,
   g_autofree char *old_active = NULL;
   const char *old_origin;
   g_autofree char *commit = NULL;
-  g_auto(GStrv) previous_ids = NULL;
+  g_autofree const char **previous_ids = NULL;
+  g_auto(GStrv) previous_ids_owned = NULL;
 
   if (!flatpak_dir_lock (self, &lock,
                          cancellable, error))
@@ -8676,19 +8682,21 @@ flatpak_dir_deploy_update (FlatpakDir        *self,
   old_origin = flatpak_deploy_data_get_origin (old_deploy_data);
   old_subpaths = flatpak_deploy_data_get_subpaths (old_deploy_data);
 
-  previous_ids = g_strdupv ((char **) flatpak_deploy_data_get_previous_ids (old_deploy_data, NULL));
+  previous_ids = flatpak_deploy_data_get_previous_ids (old_deploy_data, NULL);
   if (opt_previous_ids)
     {
-      g_auto(GStrv) old_previous_ids = previous_ids;
-      previous_ids = flatpak_strv_merge (old_previous_ids, (char **) opt_previous_ids);
+      previous_ids_owned = flatpak_strv_merge ((char **) previous_ids, (char **) opt_previous_ids);
+      g_clear_pointer (&previous_ids, g_free);
     }
+  else
+    previous_ids_owned = g_strdupv ((char **) previous_ids);
 
   if (!flatpak_dir_deploy (self,
                            old_origin,
                            ref,
                            checksum_or_latest,
                            opt_subpaths ? opt_subpaths : old_subpaths,
-                           (const char * const *) previous_ids,
+                           (const char * const *) previous_ids_owned,
                            cancellable, error))
     return FALSE;
 
