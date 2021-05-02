@@ -256,7 +256,7 @@ transaction_add_local_ref (FlatpakDir         *dir,
   g_autoptr(GError) local_error = NULL;
   g_autofree char *repo_checksum = NULL;
   const char *origin;
-  const char **subpaths;
+  g_autofree const char **subpaths = NULL;
 
   deploy_data = flatpak_dir_get_deploy_data (dir, ref, FLATPAK_DEPLOY_VERSION_ANY, NULL, &local_error);
   if (deploy_data == NULL)
