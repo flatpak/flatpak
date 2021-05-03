@@ -2300,7 +2300,9 @@ flatpak_parse_repofile (const char   *remote_name,
 
   collection_id = g_key_file_get_string (keyfile, source_group,
                                          FLATPAK_REPO_DEPLOY_COLLECTION_ID_KEY, NULL);
-  if (collection_id == NULL || *collection_id == '\0')
+  if (collection_id != NULL && *collection_id == '\0')
+    g_clear_pointer (&collection_id, g_free);
+  if (collection_id == NULL)
     collection_id = g_key_file_get_string (keyfile, source_group,
                                            FLATPAK_REPO_COLLECTION_ID_KEY, NULL);
   if (collection_id != NULL)
