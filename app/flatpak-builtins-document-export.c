@@ -90,8 +90,8 @@ flatpak_builtin_document_export (int argc, char **argv,
   g_autofree char *dirname = NULL;
   g_autofree char *doc_path = NULL;
   XdpDbusDocuments *documents;
-  int fd, fd_id;
-  int i;
+  glnx_autofd int fd = -1;
+  int i, fd_id;
   GUnixFDList *fd_list = NULL;
   const char *doc_id;
   struct stat stbuf;
@@ -173,7 +173,7 @@ flatpak_builtin_document_export (int argc, char **argv,
 
   fd_list = g_unix_fd_list_new ();
   fd_id = g_unix_fd_list_append (fd_list, fd, error);
-  close (fd);
+  glnx_close_fd (&fd);
 
   if (opt_noexist)
     {

@@ -2852,6 +2852,7 @@ flatpak_parse_repofile (const char   *remote_name,
       decoded = g_base64_decode (gpg_key, &decoded_len);
       if (decoded_len < 10) /* Check some minimal size so we don't get crap */
         {
+          g_free (decoded);
           flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid gpg key"));
           return NULL;
         }
