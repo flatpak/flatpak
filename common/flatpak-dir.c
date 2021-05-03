@@ -11812,6 +11812,7 @@ flatpak_dir_remote_fetch_indexed_summary (FlatpakDir   *self,
           if (summary == NULL)
             return FALSE;
 
+          g_free (sha256);
           sha256 = g_compute_checksum_for_bytes (G_CHECKSUM_SHA256, summary);
           if (strcmp (sha256, checksum) != 0)
             return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid checksum for indexed summary %s for remote '%s'"), checksum, name_or_uri);
@@ -12466,12 +12467,11 @@ find_matching_ref (GHashTable  *refs,
             g_string_append (err, ", ");
 
           const char *branch = flatpak_decomposed_get_branch (ref);
-
-          g_string_append (err,
-                           g_strdup_printf ("%s/%s/%s",
-                                            name,
-                                            opt_arch ? opt_arch : "",
-                                            branch));
+          g_string_append_printf (err,
+                                  "%s/%s/%s",
+                                  name,
+                                  opt_arch ? opt_arch : "",
+                                  branch);
         }
 
       flatpak_fail (error, "%s", err->str);
