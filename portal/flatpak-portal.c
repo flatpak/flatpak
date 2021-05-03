@@ -752,7 +752,7 @@ handle_spawn (PortalFlatpak         *object,
   const gint *fds = NULL;
   gint fds_len = 0;
   g_autofree FdMapEntry *fd_map = NULL;
-  gchar **env;
+  g_auto(GStrv) env = NULL;
   gint32 max_fd;
   GKeyFile *app_info;
   g_autoptr(GPtrArray) flatpak_argv = g_ptr_array_new_with_free_func (g_free);
