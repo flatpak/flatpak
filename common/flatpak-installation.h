@@ -131,6 +131,7 @@ typedef enum {
  * lot more efficient if you're doing many requests.
  * @FLATPAK_QUERY_FLAGS_ONLY_SIDELOADED: Only list refs available from sideload
  * repos; see flatpak(1). (Snce: 1.7)
+ * @FLATPAK_QUERY_FLAGS_ALL_ARCHES: Include refs from all arches, not just the primary ones. (Snce: 1.11.2)
  *
  * Flags to alter the behavior of e.g flatpak_installation_list_remote_refs_sync_full().
  *
@@ -140,6 +141,7 @@ typedef enum {
   FLATPAK_QUERY_FLAGS_NONE        = 0,
   FLATPAK_QUERY_FLAGS_ONLY_CACHED = (1 << 0),
   FLATPAK_QUERY_FLAGS_ONLY_SIDELOADED = (1 << 1),
+  FLATPAK_QUERY_FLAGS_ALL_ARCHES = (1 << 2),
 } FlatpakQueryFlags;
 
 /**

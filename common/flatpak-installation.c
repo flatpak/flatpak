@@ -2418,22 +2418,35 @@ flatpak_installation_list_remote_refs_sync_full (FlatpakInstallation *self,
   GHashTableIter iter;
   gpointer key;
   gpointer value;
+  gboolean only_sideloaded = (flags & FLATPAK_QUERY_FLAGS_ONLY_SIDELOADED) != 0;
+  gboolean only_cached = (flags & FLATPAK_QUERY_FLAGS_ONLY_CACHED) != 0;
+  gboolean all_arches = (flags & FLATPAK_QUERY_FLAGS_ALL_ARCHES) != 0;
 
   dir = flatpak_installation_get_dir (self, error);
   if (dir == NULL)
     return NULL;
 
-  if (flags & FLATPAK_QUERY_FLAGS_ONLY_SIDELOADED)
-    state = flatpak_dir_get_remote_state_local_only (dir, remote_or_uri, cancellable, error);
+  if (only_sideloaded)
+    {
+      state = flatpak_dir_get_remote_state_local_only (dir, remote_or_uri, cancellable, error);
+      if (state == NULL)
+        return NULL;
+    }
   else
-    state = flatpak_dir_get_remote_state (dir, remote_or_uri, (flags & FLATPAK_QUERY_FLAGS_ONLY_CACHED) != 0, cancellable, error);
-  if (state == NULL)
-    return NULL;
+    {
+      state = flatpak_dir_get_remote_state (dir, remote_or_uri, only_cached, cancellable, error);
+      if (state == NULL)
+        return NULL;
+
+      if (all_arches &&
+          !flatpak_remote_state_ensure_subsummary_all_arches (state, dir, only_cached, cancellable, error))
+        return NULL;
+    }
 
   if (!flatpak_dir_list_remote_refs (dir, state, &ht,
                                      cancellable, &local_error))
     {
-      if (flags & FLATPAK_QUERY_FLAGS_ONLY_SIDELOADED)
+      if (only_sideloaded)
         {
           /* Just return no sideloaded refs rather than a summary download failed error if there are none */
           return g_steal_pointer (&refs);

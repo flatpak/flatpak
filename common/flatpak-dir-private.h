@@ -155,6 +155,11 @@ gboolean flatpak_remote_state_ensure_subsummary (FlatpakRemoteState *self,
                                                  gboolean            only_cached,
                                                  GCancellable       *cancellable,
                                                  GError            **error);
+gboolean flatpak_remote_state_ensure_subsummary_all_arches (FlatpakRemoteState *self,
+                                                            FlatpakDir         *dir,
+                                                            gboolean            only_cached,
+                                                            GCancellable       *cancellable,
+                                                            GError            **error);
 gboolean flatpak_remote_state_allow_ref (FlatpakRemoteState *self,
                                          const char *ref);
 gboolean flatpak_remote_state_lookup_ref (FlatpakRemoteState *self,

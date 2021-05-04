@@ -498,6 +498,35 @@ flatpak_remote_state_ensure_subsummary (FlatpakRemoteState *self,
 }
 
 gboolean
+flatpak_remote_state_ensure_subsummary_all_arches (FlatpakRemoteState *self,
+                                                   FlatpakDir         *dir,
+                                                   gboolean            only_cached,
+                                                   GCancellable       *cancellable,
+                                                   GError            **error)
+{
+  if (self->index_ht == NULL)
+    return TRUE; /* No subsummaries, got all arches anyway */
+
+  GLNX_HASH_TABLE_FOREACH (self->index_ht, const char *, arch)
+    {
+      g_autoptr(GError) local_error = NULL;
+
+      if (!flatpak_remote_state_ensure_subsummary (self, dir, arch, only_cached, cancellable, &local_error))
+        {
+          /* Don't error on non-cached subsummaries */
+          if (only_cached && g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_CACHED))
+            continue;
+
+          g_propagate_error (error, g_steal_pointer (&local_error));
+          return FALSE;
+        }
+    }
+
+  return TRUE;
+}
+
+
+gboolean
 flatpak_remote_state_allow_ref (FlatpakRemoteState *self,
                                 const char *ref)
 {
