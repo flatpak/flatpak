@@ -27,6 +27,7 @@
 FlatpakRemoteState *flatpak_transaction_ensure_remote_state (FlatpakTransaction             *self,
                                                              FlatpakTransactionOperationType kind,
                                                              const char                     *remote,
+                                                             const char                     *opt_arch,
                                                              GError                        **error);
 
 FlatpakDecomposed * flatpak_transaction_operation_get_decomposed (FlatpakTransactionOperation *self);
