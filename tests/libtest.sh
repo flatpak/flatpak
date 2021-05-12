@@ -117,7 +117,14 @@ if [ x${USE_SYSTEMDIR-} == xyes ] ; then
     export FL_DIR=${SYSTEMDIR}
     export U=
     export INVERT_U=--user
-    export FL_CACHE_DIR=${XDG_CACHE_HOME}/flatpak/system-cache
+    if [ x${UID} == x0 ] ; then
+        # If running as root (which happens on some build machines), the
+        # system-helper will not be used, and hence the fallback cache dir will
+        # be used in _flatpak_dir_ensure_repo().
+        export FL_CACHE_DIR=$FL_DIR/repo/tmp/cache
+    else
+        export FL_CACHE_DIR=${XDG_CACHE_HOME}/flatpak/system-cache
+    fi
 else
     export FL_DIR=${USERDIR}
     export U="--user"
