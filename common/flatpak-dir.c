@@ -12346,22 +12346,17 @@ find_matching_refs (GHashTable           *refs,
                     const char           *opt_name,
                     const char           *opt_branch,
                     const char           *opt_default_branch,
-                    const char           *opt_arch,
+                    const char          **valid_arches, /* NULL => any arch */
                     const char           *opt_default_arch,
                     FlatpakKinds          kinds,
                     FindMatchingRefsFlags flags,
                     GError              **error)
 {
   g_autoptr(GPtrArray) matched_refs = NULL;
-  const char **arches = flatpak_get_arches ();
-  const char *opt_arches[] = {opt_arch, NULL};
   g_autoptr(GError) local_error = NULL;
   gboolean found_exact_name_match = FALSE;
   gboolean found_default_branch_match = FALSE;
   gboolean found_default_arch_match = FALSE;
-
-  if (opt_arch != NULL)
-    arches = opt_arches;
 
   if (opt_name && !(flags & FIND_MATCHING_REFS_FLAGS_FUZZY) &&
       !flatpak_is_valid_name (opt_name, -1, &local_error))
@@ -12397,7 +12392,8 @@ find_matching_refs (GHashTable           *refs,
            }
         }
 
-      if (!flatpak_decomposed_is_arches (ref, -1, arches))
+      if (valid_arches != NULL &&
+          !flatpak_decomposed_is_arches (ref, -1, valid_arches))
         continue;
 
       if (opt_branch != NULL && !flatpak_decomposed_is_branch (ref, opt_branch))
@@ -12438,66 +12434,91 @@ find_matching_refs (GHashTable           *refs,
   return g_steal_pointer (&matched_refs);
 }
 
+static GPtrArray *
+get_refs_for_arch (GPtrArray *refs, const char *arch)
+{
+  g_autoptr(GPtrArray) arched_refs = g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_decomposed_unref);
+
+  for (int i = 0; i < refs->len; i++)
+    {
+      FlatpakDecomposed *ref = g_ptr_array_index (refs, i);
+      if (flatpak_decomposed_is_arch (ref, arch))
+        g_ptr_array_add (arched_refs, flatpak_decomposed_ref (ref));
+    }
+
+  return g_steal_pointer (&arched_refs);
+}
+
+static gpointer
+fail_multiple_refs (GError    **error,
+                    const char *name,
+                    GPtrArray  *refs)
+{
+  g_autoptr(GString) err = g_string_new ("");
+
+  g_string_printf (err, _("Multiple branches available for %s, you must specify one of: "), name);
+  g_ptr_array_sort (refs, flatpak_strcmp0_ptr);
+
+  for (int i = 0; i < refs->len; i++)
+    {
+      FlatpakDecomposed *ref = g_ptr_array_index (refs, i);
+      if (i != 0)
+        g_string_append (err, ", ");
+
+      g_string_append (err, flatpak_decomposed_get_pref (ref));
+    }
+  flatpak_fail (error, "%s", err->str);
+
+  return NULL;
+}
+
 static FlatpakDecomposed *
 find_matching_ref (GHashTable  *refs,
                    const char  *name,
                    const char  *opt_branch,
                    const char  *opt_default_branch,
-                   const char  *opt_arch,
+                   const char **valid_arches, /* NULL => any arch */
+                   const char  *opt_default_arch,
                    FlatpakKinds kinds,
                    GError     **error)
 {
-  const char **arches = flatpak_get_arches ();
-  const char *opt_arches[] = {opt_arch, NULL};
-  int i;
+  g_autoptr(GPtrArray) matched_refs = NULL;
 
-  if (opt_arch != NULL)
-    arches = opt_arches;
+  matched_refs = find_matching_refs (refs,
+                                     name,
+                                     opt_branch,
+                                     opt_default_branch,
+                                     valid_arches,
+                                     opt_default_arch,
+                                     kinds,
+                                     FIND_MATCHING_REFS_FLAGS_NONE,
+                                     error);
+  if (matched_refs == NULL)
+    return NULL;
 
-  /* We stop at the first arch (in prio order) that has a match */
-  for (i = 0; arches[i] != NULL; i++)
+  if (valid_arches != NULL)
     {
-      g_autoptr(GPtrArray) matched_refs = NULL;
-      int j;
+      /* Filter by valid, arch. We stop at the first arch (in prio order) that has a match */
+      for (int i = 0; valid_arches[i] != NULL; i++)
+        {
+          const char *arch = valid_arches[i];
 
-      matched_refs = find_matching_refs (refs,
-                                         name,
-                                         opt_branch,
-                                         opt_default_branch,
-                                         arches[i],
-                                         NULL,
-                                         kinds,
-                                         FIND_MATCHING_REFS_FLAGS_NONE,
-                                         error);
-      if (matched_refs == NULL)
-        return NULL;
+          g_autoptr(GPtrArray) arched_refs = get_refs_for_arch (matched_refs, arch);
 
-      if (matched_refs->len == 0)
-        continue;
+          if (arched_refs->len == 1)
+            return flatpak_decomposed_ref (g_ptr_array_index (arched_refs, 0));
 
+          if (arched_refs->len > 1)
+            return fail_multiple_refs (error, name, arched_refs);
+        }
+    }
+  else
+    {
       if (matched_refs->len == 1)
         return flatpak_decomposed_ref (g_ptr_array_index (matched_refs, 0));
 
-      /* Nothing to do other than reporting the different choices */
-      g_autoptr(GString) err = g_string_new ("");
-      g_string_printf (err, _("Multiple branches available for %s, you must specify one of: "), name);
-      g_ptr_array_sort (matched_refs, flatpak_strcmp0_ptr);
-      for (j = 0; j < matched_refs->len; j++)
-        {
-          FlatpakDecomposed *ref = g_ptr_array_index (matched_refs, j);
-          if (j != 0)
-            g_string_append (err, ", ");
-
-          const char *branch = flatpak_decomposed_get_branch (ref);
-          g_string_append_printf (err,
-                                  "%s/%s/%s",
-                                  name,
-                                  opt_arch ? opt_arch : "",
-                                  branch);
-        }
-
-      flatpak_fail (error, "%s", err->str);
-      return NULL;
+      if (matched_refs->len > 1)
+        return fail_multiple_refs (error, name, matched_refs);
     }
 
   g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
@@ -12519,6 +12540,9 @@ flatpak_dir_get_remote_collection_id (FlatpakDir *self,
   return collection_id;
 }
 
+/* This tries to find all available refs based on the specified name/branch/arch
+ * triplet from  a remote. If arch is not specified, matches only on compatible arches.
+*/
 GPtrArray *
 flatpak_dir_find_remote_refs (FlatpakDir           *self,
                               FlatpakRemoteState   *state,
@@ -12534,17 +12558,21 @@ flatpak_dir_find_remote_refs (FlatpakDir           *self,
 {
   g_autoptr(GHashTable) remote_refs = NULL;
   g_autoptr(GPtrArray) matched_refs = NULL;
+  const char **valid_arches = flatpak_get_arches ();
+  const char *opt_arches[] = {opt_arch, NULL};
+
+  if (opt_arch != NULL)
+    valid_arches = opt_arches;
 
   if (!flatpak_dir_list_all_remote_refs (self, state,
                                          &remote_refs, cancellable, error))
     return NULL;
 
-
   matched_refs = find_matching_refs (remote_refs,
                                      name,
                                      opt_branch,
                                      opt_default_branch,
-                                     opt_arch,
+                                     valid_arches,
                                      opt_default_arch,
                                      kinds,
                                      flags,
@@ -12571,12 +12599,19 @@ find_ref_for_refs_set (GHashTable   *refs,
                        FlatpakKinds  kinds,
                        GError      **error)
 {
+  const char **valid_arches = flatpak_get_arches ();
+  const char *opt_arches[] = {opt_arch, NULL};
+
+  if (opt_arch != NULL)
+    valid_arches = opt_arches;
+
   g_autoptr(GError) my_error = NULL;
   g_autoptr(FlatpakDecomposed) ref = find_matching_ref (refs,
                                                         name,
                                                         opt_branch,
                                                         opt_default_branch,
-                                                        opt_arch,
+                                                        valid_arches,
+                                                        NULL,
                                                         kinds,
                                                         &my_error);
   if (ref == NULL)
@@ -12604,6 +12639,9 @@ find_ref_for_refs_set (GHashTable   *refs,
   return NULL;
 }
 
+/* This tries to find a single ref based on the specfied name/branch/arch
+ * triplet from  a remote. If arch is not specified, matches only on compatible arches.
+*/
 FlatpakDecomposed *
 flatpak_dir_find_remote_ref (FlatpakDir   *self,
                              FlatpakRemoteState *state,
@@ -12702,6 +12740,11 @@ flatpak_dir_find_local_refs (FlatpakDir           *self,
   g_autoptr(GError) my_error = NULL;
   g_autofree char *refspec_prefix = g_strconcat (remote, ":.", NULL);
   g_autoptr(GPtrArray) matched_refs = NULL;
+  const char **valid_arches = flatpak_get_arches ();
+  const char *opt_arches[] = {opt_arch, NULL};
+
+  if (opt_arch != NULL)
+    valid_arches = opt_arches;
 
   if (!flatpak_dir_ensure_repo (self, NULL, error))
     return NULL;
@@ -12717,7 +12760,7 @@ flatpak_dir_find_local_refs (FlatpakDir           *self,
                                      name,
                                      opt_branch,
                                      opt_default_branch,
-                                     opt_arch,
+                                     valid_arches,
                                      opt_default_arch,
                                      kinds,
                                      flags,
@@ -12780,6 +12823,9 @@ flatpak_dir_get_all_installed_refs (FlatpakDir  *self,
   return g_steal_pointer (&local_refs);
 }
 
+/* This tries to find a all installed refs based on the specfied name/branch/arch
+ * triplet. Matches on all arches.
+*/
 GPtrArray *
 flatpak_dir_find_installed_refs (FlatpakDir           *self,
                                  const char           *opt_name,
@@ -12791,6 +12837,11 @@ flatpak_dir_find_installed_refs (FlatpakDir           *self,
 {
   g_autoptr(GHashTable) local_refs = NULL;
   g_autoptr(GPtrArray) matched_refs = NULL;
+  const char **valid_arches = NULL; /* List all installed arches if unspecified */
+  const char *opt_arches[] = {opt_arch, NULL};
+
+  if (opt_arch != NULL)
+    valid_arches = opt_arches;
 
   local_refs = flatpak_dir_get_all_installed_refs (self, kinds, error);
   if (local_refs == NULL)
@@ -12800,7 +12851,7 @@ flatpak_dir_find_installed_refs (FlatpakDir           *self,
                                      opt_name,
                                      opt_branch,
                                      NULL, /* default branch */
-                                     opt_arch,
+                                     valid_arches,
                                      NULL, /* default arch */
                                      kinds,
                                      flags,
@@ -12811,6 +12862,10 @@ flatpak_dir_find_installed_refs (FlatpakDir           *self,
   return g_steal_pointer (&matched_refs);
 }
 
+/* This tries to find a single ref based on the specfied name/branch/arch
+ * triplet. This matches on all (installed) arches, but defaults to the primary
+ * arch if that is installed. Otherwise, ambiguity is an error.
+*/
 FlatpakDecomposed *
 flatpak_dir_find_installed_ref (FlatpakDir   *self,
                                 const char   *opt_name,
@@ -12822,13 +12877,20 @@ flatpak_dir_find_installed_ref (FlatpakDir   *self,
   g_autoptr(FlatpakDecomposed) local_ref = NULL;
   g_autoptr(GHashTable) local_refs = NULL;
   g_autoptr(GError) my_error = NULL;
+  const char **valid_arches = NULL; /* All are valid unless specified in opt_arch */
+  const char *default_arch = flatpak_get_arch ();
+  const char *opt_arches[] = {opt_arch, NULL};
+
+  if (opt_arch != NULL)
+    valid_arches = opt_arches;
 
   local_refs = flatpak_dir_get_all_installed_refs (self, kinds, error);
   if (local_refs == NULL)
     return NULL;
 
   local_ref = find_matching_ref (local_refs, opt_name, opt_branch, NULL,
-                                 opt_arch, kinds, &my_error);
+                                 valid_arches, default_arch,
+                                 kinds, &my_error);
   if (local_ref == NULL)
     {
       if (g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
