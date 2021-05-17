@@ -69,6 +69,7 @@ typedef struct
   gboolean             expand;
   FlatpakEllipsizeMode ellipsize;
   gboolean             skip_unique;
+  char                *skip_unique_str;
   gboolean             skip;
 } TableColumn;
 
@@ -78,6 +79,7 @@ free_column (gpointer data)
   TableColumn *column = data;
 
   g_free (column->title);
+  g_free (column->skip_unique_str);
   g_free (column);
 }
 
@@ -391,7 +393,8 @@ string_add_spaces (GString *str, int count)
 static gboolean
 column_is_unique (FlatpakTablePrinter *printer, int col)
 {
-  char *first_row = NULL;
+  TableColumn *column = get_table_column (printer, col);
+  char *first_row = column->skip_unique_str;
   int i;
 
   for (i = 0; i < printer->rows->len; i++)
@@ -402,7 +405,7 @@ column_is_unique (FlatpakTablePrinter *printer, int col)
 
       Cell *cell = g_ptr_array_index (row->cells, col);
 
-      if (i == 0)
+      if (i == 0 && first_row == NULL)
         first_row = cell->text;
       else
         {
@@ -853,6 +856,7 @@ flatpak_table_printer_set_column_ellipsize (FlatpakTablePrinter *printer,
   col->ellipsize = mode;
 }
 
+/* Specifies that the column should be skipped if all values are the same */
 void
 flatpak_table_printer_set_column_skip_unique (FlatpakTablePrinter *printer,
                                               int                  column,
@@ -861,4 +865,21 @@ flatpak_table_printer_set_column_skip_unique (FlatpakTablePrinter *printer,
   TableColumn *col = get_table_column (printer, column);
 
   col->skip_unique = skip_unique;
+}
+
+/* This modifies set_column_skip_unique to also require that the
+ * unique value of the column must be this particular string. Useful if you
+ * want to e.g. skip the arch list if everything is for the primary arch, but
+ * not if everything is for a non-standard arch.
+ */
+void
+flatpak_table_printer_set_column_skip_unique_string (FlatpakTablePrinter *printer,
+                                                     int                  column,
+                                                     const char          *str)
+{
+  TableColumn *col = get_table_column (printer, column);
+
+  g_assert (col->skip_unique_str == NULL);
+
+  col->skip_unique_str = g_strdup (str);
 }
