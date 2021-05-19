@@ -1388,6 +1388,7 @@ get_remote_state (FlatpakDir   *dir,
   return state;
 }
 
+/* Note: cached == TRUE here means prefer-cache, not only-cache */
 gboolean
 ensure_remote_state_arch (FlatpakDir         *dir,
                           FlatpakRemoteState *state,
@@ -1427,6 +1428,7 @@ ensure_remote_state_arch_for_ref (FlatpakDir         *dir,
   return ensure_remote_state_arch (dir, state, ref_arch, cached, only_sideloaded,cancellable, error);
 }
 
+/* Note: cached == TRUE here means prefer-cache, not only-cache */
 gboolean
 ensure_remote_state_all_arches (FlatpakDir         *dir,
                                 FlatpakRemoteState *state,
@@ -1435,15 +1437,19 @@ ensure_remote_state_all_arches (FlatpakDir         *dir,
                                 GCancellable       *cancellable,
                                 GError            **error)
 {
-  if (state->index_ht == NULL)
+  if (only_sideloaded)
     return TRUE;
 
-  GLNX_HASH_TABLE_FOREACH (state->index_ht, const char *, arch)
+  if (cached)
     {
-      if (!ensure_remote_state_arch (dir, state, arch,
-                                     cached, only_sideloaded,
-                                     cancellable, error))
+      /* First try cached, this will not error on uncached arches */
+      if (!flatpak_remote_state_ensure_subsummary_all_arches (state, dir, TRUE, cancellable, error))
         return FALSE;
     }
+
+  /* Then download rest */
+  if (!flatpak_remote_state_ensure_subsummary_all_arches (state, dir, FALSE, cancellable, error))
+    return FALSE;
+
   return TRUE;
 }

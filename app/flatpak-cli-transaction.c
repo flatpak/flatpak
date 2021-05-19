@@ -1125,7 +1125,10 @@ transaction_ready_pre_auth (FlatpakTransaction *transaction)
 
   flatpak_table_printer_set_column_expand (printer, i, TRUE);
   if (!self->non_default_arch)
-    flatpak_table_printer_set_column_skip_unique (printer, i, TRUE);
+    {
+      flatpak_table_printer_set_column_skip_unique (printer, i, TRUE);
+      flatpak_table_printer_set_column_skip_unique_string (printer, i, flatpak_get_arch ());
+    }
   flatpak_table_printer_set_column_title (printer, i++, _("Arch"));
 
   flatpak_table_printer_set_column_expand (printer, i, TRUE);

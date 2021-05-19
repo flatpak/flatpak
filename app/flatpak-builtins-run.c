@@ -198,6 +198,12 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
       g_autoptr(GError) local_error2 = NULL;
       g_autoptr(GPtrArray) ref_dir_pairs = NULL;
       RefDirPair *chosen_pair = NULL;
+      const char *runtime_arch = arch;
+
+      /* If arch is not specified, only run the default arch to avoid asking for prompts for non-primary arches,
+         still asks for prompts if there are multiple branches though */
+      if (runtime_arch == NULL)
+        runtime_arch = flatpak_get_arch ();
 
       /* Whereas for apps we want to default to using the "current" one (see
        * flatpak-make-current(1)) runtimes don't have a concept of currentness.
@@ -208,7 +214,7 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
           FlatpakDir *dir = g_ptr_array_index (dirs, i);
           g_autoptr(GPtrArray) refs = NULL;
 
-          refs = flatpak_dir_find_installed_refs (dir, id, branch, arch, FLATPAK_KINDS_RUNTIME,
+          refs = flatpak_dir_find_installed_refs (dir, id, branch, runtime_arch, FLATPAK_KINDS_RUNTIME,
                                                   FIND_MATCHING_REFS_FLAGS_NONE, error);
           if (refs == NULL)
             return FALSE;

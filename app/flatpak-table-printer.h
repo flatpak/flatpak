@@ -96,6 +96,10 @@ void               flatpak_table_printer_set_column_ellipsize (FlatpakTablePrint
 void               flatpak_table_printer_set_column_skip_unique (FlatpakTablePrinter *printer,
                                                                  int                  column,
                                                                  gboolean             skip_unique);
+void               flatpak_table_printer_set_column_skip_unique_string (FlatpakTablePrinter *printer,
+                                                                        int                  column,
+                                                                        const char          *str);
+
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakTablePrinter, flatpak_table_printer_free)
 

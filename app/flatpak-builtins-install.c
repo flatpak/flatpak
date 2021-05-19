@@ -513,12 +513,8 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
           g_autoptr(FlatpakRemoteState) state = NULL;
 
           state = flatpak_transaction_ensure_remote_state (transaction, FLATPAK_TRANSACTION_OPERATION_INSTALL,
-                                                           remote, error);
+                                                           remote, arch, error);
           if (state == NULL)
-            return FALSE;
-
-          if (arch != NULL &&
-              !flatpak_remote_state_ensure_subsummary (state, dir, arch, FALSE, cancellable, error))
             return FALSE;
 
           refs = flatpak_dir_find_remote_refs (dir, state, id, branch, default_branch, arch,
