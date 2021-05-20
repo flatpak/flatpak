@@ -122,14 +122,11 @@ flatpak_debug2 (const char *format, ...)
 {
   va_list var_args;
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat-nonliteral"
   va_start (var_args, format);
   g_logv (G_LOG_DOMAIN "2",
           G_LOG_LEVEL_DEBUG,
           format, var_args);
   va_end (var_args);
-#pragma GCC diagnostic pop
 }
 
 gboolean
@@ -7345,12 +7342,9 @@ flatpak_prompt (gboolean allow_empty,
   g_autofree char *s = NULL;
 
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat-nonliteral"
   va_start (var_args, prompt);
   s = g_strdup_vprintf (prompt, var_args);
   va_end (var_args);
-#pragma GCC diagnostic pop
 
   while (TRUE)
     {
@@ -7381,12 +7375,9 @@ flatpak_password_prompt (const char *prompt, ...)
   gboolean was_echo;
 
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat-nonliteral"
   va_start (var_args, prompt);
   s = g_strdup_vprintf (prompt, var_args);
   va_end (var_args);
-#pragma GCC diagnostic pop
 
   while (TRUE)
     {
@@ -7419,12 +7410,9 @@ flatpak_yes_no_prompt (gboolean default_yes, const char *prompt, ...)
   g_autofree char *s = NULL;
 
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat-nonliteral"
   va_start (var_args, prompt);
   s = g_strdup_vprintf (prompt, var_args);
   va_end (var_args);
-#pragma GCC diagnostic pop
 
   while (TRUE)
     {
