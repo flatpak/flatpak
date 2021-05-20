@@ -179,7 +179,7 @@ static void flatpak_dir_log (FlatpakDir *self,
                              const char *old_commit,
                              const char *url,
                              const char *format,
-                             ...);
+                             ...) G_GNUC_PRINTF (12, 13);
 
 #define flatpak_dir_log(self, change, remote, ref, commit, old_commit, url, format, ...) \
   (flatpak_dir_log) (self, __FILE__, __LINE__, __FUNCTION__, \
@@ -15689,11 +15689,7 @@ static void
   len = g_snprintf (message, sizeof (message), "%s: ", installation);
 
   va_start (args, format);
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat-nonliteral"
   g_vsnprintf (message + len, sizeof (message) - len, format, args);
-#pragma GCC diagnostic pop
-
   va_end (args);
 
   /* See systemd.journal-fields(7) for the meaning of the

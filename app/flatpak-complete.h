@@ -41,7 +41,7 @@ struct FlatpakCompletion
 };
 
 void flatpak_completion_debug (const gchar *format,
-                               ...);
+                               ...) G_GNUC_PRINTF (1, 2);
 
 FlatpakCompletion *flatpak_completion_new (const char *arg_line,
                                            const char *arg_point,
