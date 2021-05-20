@@ -788,6 +788,7 @@ handle_spawn (PortalFlatpak         *object,
   gboolean notify_start;
   gboolean devel;
   g_autoptr(GString) env_string = g_string_new ("");
+  glnx_autofd int env_fd = -1;
 
   child_setup_data.instance_id_fd = -1;
   child_setup_data.env_fd = -1;
@@ -1122,10 +1123,10 @@ handle_spawn (PortalFlatpak         *object,
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
-      child_setup_data.env_fd = glnx_steal_fd (&env_tmpf.fd);
+      env_fd = glnx_steal_fd (&env_tmpf.fd);
+      child_setup_data.env_fd = env_fd;
       g_ptr_array_add (flatpak_argv,
-                       g_strdup_printf ("--env-fd=%d",
-                                        child_setup_data.env_fd));
+                       g_strdup_printf ("--env-fd=%d", env_fd));
     }
 
   for (i = 0; unset_env != NULL && unset_env[i] != NULL; i++)
