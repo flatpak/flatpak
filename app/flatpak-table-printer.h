@@ -53,7 +53,7 @@ void                flatpak_table_printer_append_with_comma (FlatpakTablePrinter
                                                              const char          *text);
 void                flatpak_table_printer_append_with_comma_printf (FlatpakTablePrinter *printer,
                                                                     const char          *format,
-                                                                    ...);
+                                                                    ...) G_GNUC_PRINTF (2, 3);
 void                flatpak_table_printer_set_key (FlatpakTablePrinter *printer,
                                                    const char          *key);
 void                flatpak_table_printer_finish_row (FlatpakTablePrinter *printer);
