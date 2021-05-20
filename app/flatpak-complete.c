@@ -632,7 +632,7 @@ flatpak_completion_new (const char *arg_line,
 
   flatpak_completion_debug ("completion_argv %i:", completion->original_argc);
   for (i = 0; i < completion->original_argc; i++)
-    flatpak_completion_debug (completion->original_argv[i]);
+    flatpak_completion_debug ("%s", completion->original_argv[i]);
 
   flatpak_completion_debug ("----");
 
