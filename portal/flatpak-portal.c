@@ -1085,6 +1085,7 @@ handle_spawn (PortalFlatpak         *object,
 
   if (env_string->len > 0)
     {
+      FdMapEntry fd_map_entry;
       g_auto(GLnxTmpfile) env_tmpf  = { 0, };
 
       if (!flatpak_buffer_to_sealed_memfd_or_tmpfile (&env_tmpf, "environ",
@@ -1096,9 +1097,16 @@ handle_spawn (PortalFlatpak         *object,
         }
 
       env_fd = glnx_steal_fd (&env_tmpf.fd);
-      child_setup_data.env_fd = env_fd;
+
+      /* Use a fd that hasn't been used yet. We might have to reshuffle
+       * fd_map_entry.to, a bit later. */
+      fd_map_entry.from = env_fd;
+      fd_map_entry.to = ++max_fd;
+      fd_map_entry.final = fd_map_entry.to;
+      g_array_append_val (fd_map, fd_map_entry);
+
       g_ptr_array_add (flatpak_argv,
-                       g_strdup_printf ("--env-fd=%d", env_fd));
+                       g_strdup_printf ("--env-fd=%d", fd_map_entry.final));
     }
 
   for (i = 0; unset_env != NULL && unset_env[i] != NULL; i++)
