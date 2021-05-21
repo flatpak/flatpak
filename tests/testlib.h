@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020-2021 Collabora Ltd.
+ * Copyright © 2018-2021 Collabora Ltd.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,6 +19,7 @@
 #define TESTLIB_H
 
 #include <glib.h>
+#include <gio/gio.h>
 
 #ifndef g_assert_no_errno
 #define g_assert_no_errno(expr) \
@@ -30,5 +31,15 @@ char *assert_mkdtemp (char *tmpl);
 extern char *isolated_test_dir;
 void isolated_test_dir_global_setup (void);
 void isolated_test_dir_global_teardown (void);
+
+typedef struct
+{
+  GSubprocess *dbus_daemon;
+  gchar *dbus_address;
+  gchar *temp_dir;
+} TestsDBusDaemon;
+
+void tests_dbus_daemon_setup (TestsDBusDaemon *self);
+void tests_dbus_daemon_teardown (TestsDBusDaemon *self);
 
 #endif
