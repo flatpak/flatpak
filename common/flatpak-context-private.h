@@ -150,6 +150,14 @@ void flatpak_context_append_bwrap_filesystem (FlatpakContext  *context,
                                               const char      *xdg_dirs_conf,
                                               gboolean         home_access);
 
+gboolean flatpak_context_parse_env_block (FlatpakContext *context,
+                                          const char *data,
+                                          gsize length,
+                                          GError **error);
+gboolean flatpak_context_parse_env_fd (FlatpakContext *context,
+                                       int fd,
+                                       GError **error);
+
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakContext, flatpak_context_free)
 
 #endif /* __FLATPAK_CONTEXT_H__ */
