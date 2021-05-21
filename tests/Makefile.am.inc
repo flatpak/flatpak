@@ -82,6 +82,10 @@ testcommon_LDADD = \
 	$(NULL)
 testcommon_SOURCES = tests/testcommon.c
 
+test_context_CFLAGS = $(testcommon_CFLAGS)
+test_context_LDADD = $(testcommon_LDADD) libtestlib.la
+test_context_SOURCES = tests/test-context.c
+
 test_exports_CFLAGS = $(testcommon_CFLAGS)
 test_exports_LDADD = $(testcommon_LDADD) libtestlib.la
 test_exports_SOURCES = tests/test-exports.c
@@ -281,6 +285,7 @@ dist_test_scripts = ${TEST_MATRIX_DIST}
 dist_installed_test_extra_scripts += ${TEST_MATRIX_EXTRA_DIST}
 
 test_programs = \
+	test-context \
 	test-exports \
 	test-instance \
 	testcommon \
