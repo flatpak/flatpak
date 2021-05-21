@@ -794,6 +794,8 @@ handle_spawn (PortalFlatpak         *object,
   gboolean empty_app;
   g_autoptr(GString) env_string = g_string_new ("");
   glnx_autofd int env_fd = -1;
+  const char *flatpak;
+  gboolean testing = FALSE;
 
   child_setup_data.instance_id_fd = -1;
   child_setup_data.env_fd = -1;
@@ -810,6 +812,16 @@ handle_spawn (PortalFlatpak         *object,
   g_assert (app_id != NULL);
 
   g_debug ("spawn() called from app: '%s'", app_id);
+
+  if (*app_id == 0 && g_getenv ("FLATPAK_PORTAL_MOCK_FLATPAK") != NULL)
+    {
+      /* Pretend we had been called from an app for test purposes */
+      testing = TRUE;
+      g_debug ("In unit tests, behaving as though app ID was com.example.App");
+      g_clear_pointer (&app_id, g_free);
+      app_id = g_strdup ("com.example.App");
+    }
+
   if (*app_id == 0)
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
@@ -836,9 +848,13 @@ handle_spawn (PortalFlatpak         *object,
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
-  runtime_ref = g_key_file_get_string (app_info,
-                                       FLATPAK_METADATA_GROUP_APPLICATION,
-                                       FLATPAK_METADATA_KEY_RUNTIME, NULL);
+  if (testing)
+    runtime_ref = g_strdup ("runtime/com.example.Runtime/m68k/1.0");
+  else
+    runtime_ref = g_key_file_get_string (app_info,
+                                         FLATPAK_METADATA_GROUP_APPLICATION,
+                                         FLATPAK_METADATA_KEY_RUNTIME, NULL);
+
   if (runtime_ref == NULL)
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
@@ -985,7 +1001,13 @@ handle_spawn (PortalFlatpak         *object,
   else
     env = g_get_environ ();
 
-  g_ptr_array_add (flatpak_argv, g_strdup (FLATPAK_BINDIR "/flatpak"));
+  if ((flatpak = g_getenv ("FLATPAK_PORTAL_MOCK_FLATPAK")) != NULL)
+    g_ptr_array_add (flatpak_argv, g_strdup (flatpak));
+  else if ((flatpak = g_getenv ("FLATPAK")) != NULL)
+    g_ptr_array_add (flatpak_argv, g_strdup (flatpak));
+  else
+    g_ptr_array_add (flatpak_argv, g_strdup (FLATPAK_BINDIR "/flatpak"));
+
   g_ptr_array_add (flatpak_argv, g_strdup ("run"));
 
   sandboxed = (arg_flags & FLATPAK_SPAWN_FLAGS_SANDBOX) != 0;
