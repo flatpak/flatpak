@@ -253,7 +253,7 @@ typedef struct
 typedef struct
 {
   FdMapEntry *fd_map;
-  int         fd_map_len;
+  gsize       fd_map_len;
   int         instance_id_fd;
   gboolean    set_tty;
   int         tty;
@@ -479,7 +479,7 @@ child_setup_func (gpointer user_data)
   ChildSetupData *data = (ChildSetupData *) user_data;
   FdMapEntry *fd_map = data->fd_map;
   sigset_t set;
-  int i;
+  gsize i;
 
   flatpak_close_fds_workaround (3);
 
@@ -751,7 +751,7 @@ handle_spawn (PortalFlatpak         *object,
   gsize i, j, n_fds, n_envs;
   const gint *fds = NULL;
   gint fds_len = 0;
-  g_autofree FdMapEntry *fd_map = NULL;
+  g_autoptr(GArray) fd_map = NULL;
   g_auto(GStrv) env = NULL;
   gint32 max_fd;
   GKeyFile *app_info;
@@ -913,14 +913,13 @@ handle_spawn (PortalFlatpak         *object,
   n_fds = 0;
   if (fds != NULL)
     n_fds = g_variant_n_children (arg_fds);
-  fd_map = g_new0 (FdMapEntry, n_fds);
 
-  child_setup_data.fd_map = fd_map;
-  child_setup_data.fd_map_len = n_fds;
+  fd_map = g_array_sized_new (FALSE, FALSE, sizeof (FdMapEntry), n_fds);
 
   max_fd = -1;
   for (i = 0; i < n_fds; i++)
     {
+      FdMapEntry fd_map_entry;
       gint32 handle, dest_fd;
       int handle_fd;
 
@@ -929,9 +928,10 @@ handle_spawn (PortalFlatpak         *object,
         continue;
       handle_fd = fds[handle];
 
-      fd_map[i].to = dest_fd;
-      fd_map[i].from = handle_fd;
-      fd_map[i].final = fd_map[i].to;
+      fd_map_entry.to = dest_fd;
+      fd_map_entry.from = handle_fd;
+      fd_map_entry.final = fd_map_entry.to;
+      g_array_append_val (fd_map, fd_map_entry);
 
       /* If stdin/out/err is a tty we try to set it as the controlling
          tty for the app, this way we can use this to run in a terminal. */
@@ -943,36 +943,8 @@ handle_spawn (PortalFlatpak         *object,
           child_setup_data.tty = handle_fd;
         }
 
-      max_fd = MAX (max_fd, fd_map[i].to);
-      max_fd = MAX (max_fd, fd_map[i].from);
-    }
-
-  /* We make a second pass over the fds to find if any "to" fd index
-     overlaps an already in use fd (i.e. one in the "from" category
-     that are allocated randomly). If a fd overlaps "to" fd then its
-     a caller issue and not our fault, so we ignore that. */
-  for (i = 0; i < n_fds; i++)
-    {
-      int to_fd = fd_map[i].to;
-      gboolean conflict = FALSE;
-
-      /* At this point we're fine with using "from" values for this
-         value (because we handle to==from in the code), or values
-         that are before "i" in the fd_map (because those will be
-         closed at this point when dup:ing). However, we can't
-         reuse a fd that is in "from" for j > i. */
-      for (j = i + 1; j < n_fds; j++)
-        {
-          int from_fd = fd_map[j].from;
-          if (from_fd == to_fd)
-            {
-              conflict = TRUE;
-              break;
-            }
-        }
-
-      if (conflict)
-        fd_map[i].to = ++max_fd;
+      max_fd = MAX (max_fd, fd_map_entry.to);
+      max_fd = MAX (max_fd, fd_map_entry.from);
     }
 
   if (arg_flags & FLATPAK_SPAWN_FLAGS_CLEAR_ENV)
@@ -1274,6 +1246,37 @@ handle_spawn (PortalFlatpak         *object,
 
       g_debug ("Starting: %s\n", cmd->str);
     }
+
+  /* We make a second pass over the fds to find if any "to" fd index
+     overlaps an already in use fd (i.e. one in the "from" category
+     that are allocated randomly). If a fd overlaps "to" fd then its
+     a caller issue and not our fault, so we ignore that. */
+  for (i = 0; i < fd_map->len; i++)
+    {
+      int to_fd = g_array_index (fd_map, FdMapEntry, i).to;
+      gboolean conflict = FALSE;
+
+      /* At this point we're fine with using "from" values for this
+         value (because we handle to==from in the code), or values
+         that are before "i" in the fd_map (because those will be
+         closed at this point when dup:ing). However, we can't
+         reuse a fd that is in "from" for j > i. */
+      for (j = i + 1; j < fd_map->len; j++)
+        {
+          int from_fd = g_array_index(fd_map, FdMapEntry, j).from;
+          if (from_fd == to_fd)
+            {
+              conflict = TRUE;
+              break;
+            }
+        }
+
+      if (conflict)
+        g_array_index (fd_map, FdMapEntry, i).to = ++max_fd;
+    }
+
+  child_setup_data.fd_map = &g_array_index (fd_map, FdMapEntry, 0);
+  child_setup_data.fd_map_len = fd_map->len;
 
   /* We use LEAVE_DESCRIPTORS_OPEN to work around dead-lock, see flatpak_close_fds_workaround */
   if (!g_spawn_async_with_pipes (NULL,
