@@ -36,6 +36,7 @@ typedef enum {
   FLATPAK_SPAWN_FLAGS_NOTIFY_START = 1 << 6,
   FLATPAK_SPAWN_FLAGS_SHARE_PIDS = 1 << 7,
   FLATPAK_SPAWN_FLAGS_EMPTY_APP = 1 << 8,
+  FLATPAK_SPAWN_FLAGS_NONE = 0
 } FlatpakSpawnFlags;
 
 typedef enum {
@@ -44,11 +45,13 @@ typedef enum {
   FLATPAK_SPAWN_SANDBOX_FLAGS_SHARE_GPU = 1 << 2,
   FLATPAK_SPAWN_SANDBOX_FLAGS_ALLOW_DBUS = 1 << 3,
   FLATPAK_SPAWN_SANDBOX_FLAGS_ALLOW_A11Y = 1 << 4,
+  FLATPAK_SPAWN_SANDBOX_FLAGS_NONE = 0
 } FlatpakSpawnSandboxFlags;
 
 
 typedef enum {
   FLATPAK_SPAWN_SUPPORT_FLAGS_EXPOSE_PIDS = 1 << 0,
+  FLATPAK_SPAWN_SUPPORT_FLAGS_NONE = 0
 } FlatpakSpawnSupportFlags;
 
 /* The same flag is reused: this feature is available under the same
