@@ -29,6 +29,7 @@ jobs:
         for apt_file in `grep -lr microsoft /etc/apt/sources.list.d/`; do sudo rm $apt_file; done
         sudo add-apt-repository ppa:alexlarsson/flatpak
         sudo add-apt-repository ppa:alexlarsson/glib260
+        sudo add-apt-repository 'deb https://download.mono-project.com/repo/ubuntu stable-bionic main' # Needed for updates to work
         sudo apt-get update
         sudo apt-get install -y libglib2.0 attr automake gettext autopoint bison  dbus gtk-doc-tools \
         libfuse-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
@@ -91,6 +92,7 @@ jobs:
         for apt_file in `grep -lr microsoft /etc/apt/sources.list.d/`; do sudo rm $apt_file; done
         sudo add-apt-repository ppa:alexlarsson/flatpak
         sudo add-apt-repository ppa:alexlarsson/glib260
+        sudo add-apt-repository 'deb https://download.mono-project.com/repo/ubuntu stable-bionic main' # Needed for updates to work
         sudo apt-get update
         sudo apt-get install -y libglib2.0 attr automake gettext autopoint bison  dbus gtk-doc-tools \
         libfuse-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
@@ -116,6 +118,7 @@ jobs:
     - name: Install Dependencies
       run: |
         sudo add-apt-repository ppa:alexlarsson/flatpak
+        sudo add-apt-repository 'deb https://download.mono-project.com/repo/ubuntu stable-xenial main' # Needed for updates to work
         sudo apt-get update
         sudo apt-get install -y libglib2.0 attr automake gettext autopoint bison  dbus gtk-doc-tools \
         libfuse-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
