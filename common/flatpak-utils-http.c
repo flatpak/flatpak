@@ -539,13 +539,43 @@ flatpak_create_soup_session (const char *user_agent)
                                                 NULL);
   soup_session_remove_feature_by_type (soup_session, SOUP_TYPE_CONTENT_DECODER);
   http_proxy = g_getenv ("http_proxy");
-  if (http_proxy)
+  if (http_proxy != NULL && *http_proxy != '\0')
     {
-      g_autoptr(SoupURI) proxy_uri = soup_uri_new (http_proxy);
-      if (!proxy_uri)
-        g_warning ("Invalid proxy URI '%s'", http_proxy);
+      char *proxy_new = g_str_has_prefix (http_proxy, "http://")
+          ? g_strdup (http_proxy)
+          : g_strconcat ("http://", http_proxy, NULL);
+
+#if SOUP_CHECK_VERSION(2, 42, 2)
+      /* check for no_proxy environment variable that contains comma
+       * seperated domains or ip addresses to skip from proxy */
+      const char *no_proxy = g_getenv ("no_proxy");
+      char **ignored_hosts = NULL;
+      if (no_proxy)
+          ignored_hosts = g_strsplit (no_proxy, ",", 0);
+
+      g_autoptr(GProxyResolver) proxy = g_simple_proxy_resolver_new (proxy_new, ignored_hosts);
+      if (proxy)
+          g_object_set (soup_session, SOUP_SESSION_PROXY_RESOLVER, proxy, NULL);
+
+      g_strfreev (ignored_hosts);
+#else
+      g_autoptr(SoupURI) proxy = soup_uri_new (proxy_new);
+      if (proxy && SOUP_URI_VALID_FOR_HTTP(proxy))
+          g_object_set (soup_session, SOUP_SESSION_PROXY_URI, proxy, NULL);
       else
-        g_object_set (soup_session, SOUP_SESSION_PROXY_URI, proxy_uri, NULL);
+          g_warning ("Invalid proxy URI '%s'", proxy_new);
+#endif
+
+      g_free(proxy_new);
+    }
+  else
+    {
+      /* disable the proxy */
+#if SOUP_CHECK_VERSION(2, 42, 2)
+      g_object_set (soup_session, SOUP_SESSION_PROXY_RESOLVER, NULL, NULL);
+#else
+      g_object_set (soup_session, SOUP_SESSION_PROXY_URI, NULL, NULL);
+#endif
     }
 
   if (g_getenv ("OSTREE_DEBUG_HTTP"))
