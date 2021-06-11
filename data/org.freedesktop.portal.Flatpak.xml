@@ -138,10 +138,10 @@
              <listitem><para>
                Don't provide app files at <filename>/app</filename> in the
                new sandbox. Instead, <filename>/app</filename> will be an
-               empty directory. This flag and the <option>app-path</option>
+               empty directory. This flag and the <option>app-fd</option>
                option are mutually exclusive.
              </para><para>
-               As with the <option>app-path</option> option, the caller's
+               As with the <option>app-fd</option> option, the caller's
                Flatpak app files and extensions will be mounted on
                <filename>/run/parent/app</filename>, with
                filenames like <filename>/run/parent/app/bin/myapp</filename>.
