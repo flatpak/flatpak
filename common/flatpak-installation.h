@@ -114,7 +114,7 @@ typedef enum {
  * FlatpakLaunchFlags:
  * @FLATPAK_LAUNCH_FLAGS_NONE: Default
  * @FLATPAK_LAUNCH_FLAGS_DO_NOT_REAP: Do not reap the child. Use this if you want to wait
- * for the child with g_child_watch_add(). (Snce: 1.1)
+ * for the child with g_child_watch_add(). (Since: 1.1)
  *
  * Flags to alter the behavior of flatpak_installation_launch_full().
  */
@@ -130,8 +130,8 @@ typedef enum {
  * This can return stale data, or a #FLATPAK_ERROR_NOT_CACHED error, however it is a
  * lot more efficient if you're doing many requests.
  * @FLATPAK_QUERY_FLAGS_ONLY_SIDELOADED: Only list refs available from sideload
- * repos; see flatpak(1). (Snce: 1.7)
- * @FLATPAK_QUERY_FLAGS_ALL_ARCHES: Include refs from all arches, not just the primary ones. (Snce: 1.11.2)
+ * repos; see flatpak(1). (Since: 1.7)
+ * @FLATPAK_QUERY_FLAGS_ALL_ARCHES: Include refs from all arches, not just the primary ones. (Since: 1.11.2)
  *
  * Flags to alter the behavior of e.g flatpak_installation_list_remote_refs_sync_full().
  *
