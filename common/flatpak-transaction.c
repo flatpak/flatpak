@@ -2189,6 +2189,7 @@ search_for_dependency (FlatpakTransaction  *self,
 {
   g_autoptr(GPtrArray) found = g_ptr_array_new_with_free_func (g_free);
   int i;
+  g_autofree char *arch = flatpak_decomposed_dup_arch (runtime_ref);
 
   for (i = 0; remotes != NULL && remotes[i] != NULL; i++)
     {
@@ -2196,7 +2197,7 @@ search_for_dependency (FlatpakTransaction  *self,
       g_autoptr(GError) local_error = NULL;
       g_autoptr(FlatpakRemoteState) state = NULL;
 
-      state = flatpak_transaction_ensure_remote_state (self, FLATPAK_TRANSACTION_OPERATION_INSTALL, remote, NULL, &local_error);
+      state = flatpak_transaction_ensure_remote_state (self, FLATPAK_TRANSACTION_OPERATION_INSTALL, remote, arch, &local_error);
       if (state == NULL)
         {
           g_debug ("Can't get state for remote %s, ignoring: %s", remote, local_error->message);
