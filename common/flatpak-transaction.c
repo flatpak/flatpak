@@ -2199,8 +2199,8 @@ search_for_dependency (FlatpakTransaction  *self,
       state = flatpak_transaction_ensure_remote_state (self, FLATPAK_TRANSACTION_OPERATION_INSTALL, remote, NULL, &local_error);
       if (state == NULL)
         {
-          g_debug ("Can't get state for remote %s: %s", remote, local_error->message);
-          return FALSE;
+          g_debug ("Can't get state for remote %s, ignoring: %s", remote, local_error->message);
+          continue;
         }
 
       if (flatpak_remote_state_lookup_ref (state, flatpak_decomposed_get_ref (runtime_ref), NULL, NULL, NULL, NULL, NULL))
