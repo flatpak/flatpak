@@ -8,7 +8,7 @@ Flatpak release checklist
     * This will update `po/`; commit those changes too
 * Do any final smoke-testing, e.g. update a package, install and test it
 * `git evtag sign $VERSION`
-* `git push origin master $VERSION`
+* `git push --atomic origin master $VERSION`
 * https://github.com/flatpak/flatpak/releases/new
     * Fill in the new version's tag in the "Tag version" box
     * Title: `Release $VERSION`
@@ -17,3 +17,4 @@ Flatpak release checklist
     * Upload the tarball that you built with `make distcheck`
     * Get the `sha256sum` of the tarball and append it to the description
     * `Publish release`
+* Send an announcement to the mailing list
