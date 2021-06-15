@@ -103,9 +103,11 @@ test_instance_SOURCES = \
 test_portal_CFLAGS = $(testcommon_CFLAGS)
 test_portal_LDADD = $(testcommon_LDADD) libtestlib.la
 test_portal_SOURCES = \
+	tests/test-portal.c \
+	$(NULL)
+nodist_test_portal_SOURCES = \
 	portal/flatpak-portal-dbus.c \
 	portal/flatpak-portal-dbus.h \
-	tests/test-portal.c \
 	$(NULL)
 
 tests_hold_lock_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS)
