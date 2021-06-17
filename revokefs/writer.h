@@ -27,7 +27,7 @@ int request_rmdir (int writer_socket, const char *path);
 int request_unlink (int writer_socket, const char *path);
 int request_symlink (int writer_socket, const char *from, const char *to);
 int request_link (int writer_socket, const char *from, const char *to);
-int request_rename (int writer_socket, const char *from, const char *to);
+int request_rename (int writer_socket, const char *from, const char *to, unsigned int flags);
 int request_chmod(int writer_socket, const char *path, mode_t mode);
 int request_chown(int writer_socket, const char *path, uid_t uid, gid_t gid);
 int request_truncate (int writer_socket, const char *path, off_t size);
