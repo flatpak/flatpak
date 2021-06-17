@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2021-05-25 15:25+0000\n"
+"POT-Creation-Date: 2021-06-17 17:42+0100\n"
 "PO-Revision-Date: 2021-05-28 16:21+0700\n"
 "Last-Translator: Kukuh Syafaat <kukuhsyafaat@gnome.org>\n"
 "Language-Team: Indonesian <gnome-l10n-id@googlegroups.com>\n"
@@ -3476,7 +3476,7 @@ msgstr "%s sudah dipasang"
 #: app/flatpak-quiet-transaction.c:138 app/flatpak-quiet-transaction.c:140
 #: common/flatpak-dir.c:2867 common/flatpak-dir.c:3565
 #: common/flatpak-dir.c:15024 common/flatpak-dir.c:15300
-#: common/flatpak-transaction.c:2460 common/flatpak-transaction.c:2508
+#: common/flatpak-transaction.c:2461 common/flatpak-transaction.c:2509
 #: common/flatpak-utils.c:1123 common/flatpak-utils.c:1216
 #, c-format
 msgid "%s not installed"
@@ -5079,8 +5079,10 @@ msgstr ""
 "administrator Anda"
 
 #: common/flatpak-run.c:3775
-msgid "\"flatpak run\" is not intended to be ran with sudo"
-msgstr "\"flatpak run\" tidak dimaksudkan untuk dijalankan dengan sudo"
+msgid ""
+"\"flatpak run\" is not intended to be run as `sudo flatpak run`, use `sudo -"
+"i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell"
+msgstr ""
 
 #: common/flatpak-run.c:4033
 #, c-format
@@ -5102,47 +5104,47 @@ msgstr "Gagal membuat symlink saat memigrasi %s: %s"
 msgid "Warning: Problem looking for related refs: %s"
 msgstr "Peringatan: Masalah mencari ref terkait: %s"
 
-#: common/flatpak-transaction.c:2281
+#: common/flatpak-transaction.c:2282
 #, c-format
 msgid "The application %s requires the runtime %s which was not found"
 msgstr "Aplikasi %s membutuhkan runtime %s yang tidak ditemukan"
 
-#: common/flatpak-transaction.c:2297
+#: common/flatpak-transaction.c:2298
 #, c-format
 msgid "The application %s requires the runtime %s which is not installed"
 msgstr "Aplikasi %s membutuhkan runtime %s yang tidak dipasang"
 
-#: common/flatpak-transaction.c:2395
+#: common/flatpak-transaction.c:2396
 #, c-format
 msgid "Can't uninstall %s which is needed by %s"
 msgstr "Tidak dapat menghapus %s yang diperlukan untuk %s"
 
-#: common/flatpak-transaction.c:2464
+#: common/flatpak-transaction.c:2465
 #, c-format
 msgid "Remote %s disabled, ignoring %s update"
 msgstr "Remote %s dinonaktifkan, mengabaikan pemutakhiran %s"
 
-#: common/flatpak-transaction.c:2497
+#: common/flatpak-transaction.c:2498
 #, c-format
 msgid "%s is already installed"
 msgstr "%s sudah dipasang"
 
-#: common/flatpak-transaction.c:2500
+#: common/flatpak-transaction.c:2501
 #, c-format
 msgid "%s is already installed from remote %s"
 msgstr "%s sudah dipasang dari remote %s"
 
-#: common/flatpak-transaction.c:2695
+#: common/flatpak-transaction.c:2696
 #, c-format
 msgid "Invalid .flatpakref: %s"
 msgstr ".flatpakref tidak valid: %s"
 
-#: common/flatpak-transaction.c:2809
+#: common/flatpak-transaction.c:2810
 #, c-format
 msgid "Error updating remote metadata for '%s': %s"
 msgstr "Galat memutakhirkan metadata remote untuk '%s': %s"
 
-#: common/flatpak-transaction.c:3249
+#: common/flatpak-transaction.c:3255
 #, c-format
 msgid ""
 "Warning: Treating remote fetch error as non-fatal since %s is already "
@@ -5151,40 +5153,40 @@ msgstr ""
 "Peringatan: Memperlakukan kesalahan pengambilan remote sebagai non-fatal "
 "sejak %s sudah dipasang: %s"
 
-#: common/flatpak-transaction.c:3565
+#: common/flatpak-transaction.c:3571
 #, c-format
 msgid "No authenticator installed for remote '%s'"
 msgstr "Tidak ada autentikator yang dipasang untuk remote `%s`"
 
-#: common/flatpak-transaction.c:3669 common/flatpak-transaction.c:3676
+#: common/flatpak-transaction.c:3675 common/flatpak-transaction.c:3682
 #, c-format
 msgid "Failed to get tokens for ref: %s"
 msgstr "Gagal mendapatkan token untuk ref: %s"
 
-#: common/flatpak-transaction.c:3671 common/flatpak-transaction.c:3678
+#: common/flatpak-transaction.c:3677 common/flatpak-transaction.c:3684
 msgid "Failed to get tokens for ref"
 msgstr "Gagal mendapatkan token untuk ref"
 
-#: common/flatpak-transaction.c:4002
+#: common/flatpak-transaction.c:4008
 #, c-format
 msgid "Flatpakrepo URL %s not file, HTTP or HTTPS"
 msgstr "URL flatpakrepo %s bukan berkas, HTTP atau HTTPS"
 
-#: common/flatpak-transaction.c:4008
+#: common/flatpak-transaction.c:4014
 #, c-format
 msgid "Can't load dependent file %s: "
 msgstr "Tidak dapat memuat berkas dependen %s: "
 
-#: common/flatpak-transaction.c:4016
+#: common/flatpak-transaction.c:4022
 #, c-format
 msgid "Invalid .flatpakrepo: %s"
 msgstr ".flatpakrepo tidak valid: %s"
 
-#: common/flatpak-transaction.c:4612
+#: common/flatpak-transaction.c:4618
 msgid "Transaction already executed"
 msgstr "Transaksi sudah dijalankan"
 
-#: common/flatpak-transaction.c:4627
+#: common/flatpak-transaction.c:4633
 msgid ""
 "Refusing to operate on a user installation as root! This can lead to "
 "incorrect file ownership and permission errors."
@@ -5192,16 +5194,16 @@ msgstr ""
 "Menolak beroperasi pada pemasangan pengguna sebagai root! Ini dapat "
 "menyebabkan galat kepemilikan berkas dan izin."
 
-#: common/flatpak-transaction.c:4719 common/flatpak-transaction.c:4732
+#: common/flatpak-transaction.c:4725 common/flatpak-transaction.c:4738
 msgid "Aborted by user"
 msgstr "Dibatalkan oleh pengguna"
 
-#: common/flatpak-transaction.c:4757
+#: common/flatpak-transaction.c:4763
 #, c-format
 msgid "Skipping %s due to previous error"
 msgstr "Melewatkan %s karena galat sebelumnya"
 
-#: common/flatpak-transaction.c:4809
+#: common/flatpak-transaction.c:4815
 #, c-format
 msgid "Aborted due to failure (%s)"
 msgstr "Dibatalkan karena gagal (%s)"
@@ -5607,6 +5609,9 @@ msgid ""
 msgstr ""
 "Autentikasi diperlukan untuk memasang perangkat lunak yang dibatasi oleh "
 "kebijakan kontrol orang tua Anda"
+
+#~ msgid "\"flatpak run\" is not intended to be ran with sudo"
+#~ msgstr "\"flatpak run\" tidak dimaksudkan untuk dijalankan dengan sudo"
 
 #~ msgid "Related ref '%s' is only partially installed"
 #~ msgstr "Ref '%s' terkait hanya dipasang sebagian"
