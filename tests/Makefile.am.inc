@@ -42,6 +42,8 @@ testlibrary_CFLAGS = \
 	$(BASE_CFLAGS) \
 	$(FUSE_CFLAGS) \
 	$(OSTREE_CFLAGS) \
+	-D_GNU_SOURCE \
+	-D_FILE_OFFSET_BITS=64 \
 	-DFLATPAK_COMPILATION \
 	$(NULL)
 testlibrary_LDADD = \
