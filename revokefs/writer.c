@@ -19,6 +19,10 @@
  * Boston, MA 02111-1307, USA.
  */
 
+#ifndef FUSE_USE_VERSION
+#error config.h needs to define FUSE_USE_VERSION
+#endif
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
@@ -166,7 +170,7 @@ request_path (int writer_socket, RevokefsOps op, const char *path)
 
 static int
 request_path_data (int writer_socket, RevokefsOps op, const char *path,
-                   const char *data, size_t data_len)
+                   const char *data, size_t data_len, guint64 flags)
 {
   RevokefsRequest request = { op };
   RevokefsResponse response;
@@ -177,7 +181,8 @@ request_path_data (int writer_socket, RevokefsOps op, const char *path,
   if (total_len > MAX_DATA_SIZE)
     return -ENAMETOOLONG;
 
-  request.arg1 = strlen(path);
+  request.arg1 = path_len;
+  request.arg2 = flags;
 
   response_data_len = do_request (writer_socket, &request, path, path_len, data, data_len,
                                   &response, NULL, 0);
@@ -190,7 +195,7 @@ request_path_data (int writer_socket, RevokefsOps op, const char *path,
 static int
 request_path_path (int writer_socket, RevokefsOps op, const char *path1, const char *path2)
 {
-  return request_path_data (writer_socket, op, path1, path2, strlen(path2));
+  return request_path_data (writer_socket, op, path1, path2, strlen(path2), 0);
 }
 
 static gboolean
@@ -392,10 +397,12 @@ handle_rename (RevokefsRequest *request,
 {
   g_autofree char *from = NULL;
   g_autofree char *to = NULL;
+  unsigned int flags;
 
   get_valid_2path (request, data_size,  &from, &to);
+  flags = (unsigned int)request->arg2;
 
-  if (renameat (basefd, from, basefd, to) == -1)
+  if (renameat2 (basefd, from, basefd, to, flags) == -1)
     response->result = -errno;
   else
     response->result = 0;
@@ -404,9 +411,12 @@ handle_rename (RevokefsRequest *request,
 }
 
 int
-request_rename (int writer_socket, const char *from, const char *to)
+request_rename (int writer_socket,
+                const char *from,
+                const char *to,
+                unsigned int flags)
 {
-  return request_path_path (writer_socket, REVOKE_FS_RENAME, from, to);
+  return request_path_data (writer_socket, REVOKE_FS_RENAME, from, to, strlen (to), flags);
 }
 
 static ssize_t
@@ -515,7 +525,7 @@ int
 request_utimens (int writer_socket, const char *path, const struct timespec tv[2])
 {
   return request_path_data (writer_socket, REVOKE_FS_UTIMENS, path,
-                            (const char *)tv, sizeof (struct timespec) * 2);
+                            (const char *)tv, sizeof (struct timespec) * 2, 0);
 }
 
 static ssize_t

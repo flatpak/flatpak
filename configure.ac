@@ -315,7 +315,14 @@ AC_ARG_ENABLE([auto-sideloading],
               [enable_auto_sideloading=no])
 AM_CONDITIONAL(BUILD_AUTO_SIDELOADING, test x$enable_auto_sideloading = xyes)
 
-PKG_CHECK_MODULES(FUSE, fuse >= 2.9.2)
+PKG_CHECK_MODULES([FUSE3], [fuse3 >= 3.1.1],
+                  [
+                    FUSE_USE_VERSION=31
+                    FUSE_CFLAGS="$FUSE3_CFLAGS"
+                    FUSE_LIBS="$FUSE3_LIBS"
+                  ],
+                  [PKG_CHECK_MODULES([FUSE], [fuse >= 2.9.2], [FUSE_USE_VERSION=26])])
+AC_DEFINE_UNQUOTED([FUSE_USE_VERSION], [$FUSE_USE_VERSION], [Define to the FUSE API version])
 
 AC_ARG_ENABLE([xauth],
               AC_HELP_STRING([--disable-xauth],
