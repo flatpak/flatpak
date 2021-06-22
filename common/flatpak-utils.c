@@ -8057,16 +8057,16 @@ flatpak_get_cursor_pos (int * row, int *col)
   return res == 2;
 }
 
-void
+ssize_t
 flatpak_hide_cursor (void)
 {
-  write (STDOUT_FILENO, FLATPAK_ANSI_HIDE_CURSOR, strlen (FLATPAK_ANSI_HIDE_CURSOR));
+  return write (STDOUT_FILENO, FLATPAK_ANSI_HIDE_CURSOR, strlen (FLATPAK_ANSI_HIDE_CURSOR));
 }
 
-void
+ssize_t
 flatpak_show_cursor (void)
 {
-  write (STDOUT_FILENO, FLATPAK_ANSI_SHOW_CURSOR, strlen (FLATPAK_ANSI_SHOW_CURSOR));
+  return write (STDOUT_FILENO, FLATPAK_ANSI_SHOW_CURSOR, strlen (FLATPAK_ANSI_SHOW_CURSOR));
 }
 
 void

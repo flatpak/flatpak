@@ -76,8 +76,8 @@ void flatpak_get_window_size (int *rows,
                               int *cols);
 gboolean flatpak_get_cursor_pos (int *row,
                                  int *col);
-void flatpak_hide_cursor (void);
-void flatpak_show_cursor (void);
+ssize_t flatpak_hide_cursor (void);
+ssize_t flatpak_show_cursor (void);
 
 void flatpak_enable_raw_mode (void);
 void flatpak_disable_raw_mode (void);
