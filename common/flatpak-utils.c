@@ -8060,13 +8060,25 @@ flatpak_get_cursor_pos (int * row, int *col)
 void
 flatpak_hide_cursor (void)
 {
-  write (STDOUT_FILENO, FLATPAK_ANSI_HIDE_CURSOR, strlen (FLATPAK_ANSI_HIDE_CURSOR));
+  const size_t flatpak_hide_cursor_len = strlen (FLATPAK_ANSI_HIDE_CURSOR);
+  const ssize_t write_ret = write (STDOUT_FILENO, FLATPAK_ANSI_HIDE_CURSOR,
+                                   flatpak_hide_cursor_len);
+
+  if (write_ret < 0)
+    g_warning ("write() failed: %zd = write(STDOUT_FILENO, FLATPAK_ANSI_HIDE_CURSOR, %zu)",
+               write_ret, flatpak_hide_cursor_len);
 }
 
 void
 flatpak_show_cursor (void)
 {
-  write (STDOUT_FILENO, FLATPAK_ANSI_SHOW_CURSOR, strlen (FLATPAK_ANSI_SHOW_CURSOR));
+  const size_t flatpak_show_cursor_len = strlen (FLATPAK_ANSI_SHOW_CURSOR);
+  const ssize_t write_ret = write (STDOUT_FILENO, FLATPAK_ANSI_SHOW_CURSOR,
+                                   flatpak_show_cursor_len);
+
+  if (write_ret < 0)
+    g_warning ("write() failed: %zd = write(STDOUT_FILENO, FLATPAK_ANSI_SHOW_CURSOR, %zu)",
+               write_ret, flatpak_show_cursor_len);
 }
 
 void
