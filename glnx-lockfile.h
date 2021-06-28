@@ -22,8 +22,6 @@
   along with systemd; If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include "config.h"
-
 #include "glnx-backport-autoptr.h"
 
 typedef struct GLnxLockFile {
