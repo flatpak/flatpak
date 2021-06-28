@@ -261,7 +261,7 @@ text_percent_internal (const char *text,
       const guint textlen = MIN (input_textlen, ncolumns - bar_min);
       const guint barlen = MIN (MAX_PROGRESSBAR_COLUMNS, ncolumns - (textlen + 1));
 
-      if (textlen > 0)
+      if (text && textlen > 0)
         {
           fwrite (text, 1, textlen, stdout);
           fputc (' ', stdout);
