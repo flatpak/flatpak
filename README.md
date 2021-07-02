@@ -77,6 +77,6 @@ Development happens in GNOME Gitlab: https://gitlab.gnome.org/GNOME/libglnx
 
 <!--
 Copyright 2015-2018 Colin Walters
-Copyright 2019 Endless Mobile, Inc.
+Copyright 2019 Endless OS Foundation LLC
 SPDX-License-Identifier: LGPL-2.1-or-later
 -->
