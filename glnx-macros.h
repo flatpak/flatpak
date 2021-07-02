@@ -3,6 +3,7 @@
  * Copyright (C) 2017 Colin Walters <walters@verbum.org>
  * With original source from systemd:
  * Copyright 2010 Lennart Poettering
+ * SPDX-License-Identifier: LGPL-2.0-or-later
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

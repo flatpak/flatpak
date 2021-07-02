@@ -1,3 +1,6 @@
+# Copyright 2019 Endless Mobile, Inc.
+# SPDX-License-Identifier: LGPL-2.0-or-later
+
 image: registry.fedoraproject.org/fedora:30
 
 stages:

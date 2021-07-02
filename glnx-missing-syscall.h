@@ -3,6 +3,7 @@
 
   Copyright 2010 Lennart Poettering
   Copyright 2016 Zbigniew Jędrzejewski-Szmek
+  SPDX-License-Identifier: LGPL-2.1-or-later
 
   systemd is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as published by
