@@ -74,7 +74,11 @@ main (int argc, char *argv[])
     }
 
   g_print ("Started revokefs, press enter to revoke");
-  fgets(buf, sizeof(buf), stdin);
+  if (!fgets(buf, sizeof(buf), stdin))
+    {
+      perror ("fgets");
+    }
+
   g_print ("Revoking write permissions");
   shutdown (sockets[1], SHUT_RDWR);
 }
