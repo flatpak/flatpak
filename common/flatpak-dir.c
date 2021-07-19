@@ -7639,6 +7639,7 @@ flatpak_export_dir (GFile        *source,
     "share/dbus-1/services",               "../../..",
     "share/gnome-shell/search-providers",  "../../..",
     "share/mime/packages",                 "../../..",
+    "share/metainfo",                      "../..",
     "bin",                                 "..",
   };
   int i;
