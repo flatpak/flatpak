@@ -5266,15 +5266,15 @@ msgstr "सॉफ़्टवेयर को स्थापित करने
 
 #, c-format
 #~ msgid "Deployed ref %s kind does not match commit (%s)"
-#~ msgstr "तैनात ref %s तरह प्रतिबद्ध से मेल नहीं खाता (%s)"
+#~ msgstr "परिनियोजित रेफरी %s प्रकार प्रतिबद्ध से मेल नहीं खाता (%s)"
 
 #, c-format
 #~ msgid "Deployed ref %s name does not match commit (%s)"
-#~ msgstr "तैनात ref %s नाम कमिट से मेल नहीं खाता है (%s)"
+#~ msgstr "तैनात  %s नाम कमिट से मेल नहीं खाता है (%s)"
 
 #, c-format
 #~ msgid "Deployed ref %s arch does not match commit (%s)"
-#~ msgstr "तैनात ref %s arch टिप्पणियों से मेल नहीं खाता है (%s)"
+#~ msgstr "तैनात लिंक %s स्थापत्य कला टिप्पणियों से मेल नहीं खाता है (%s)"
 
 #, c-format
 #~ msgid "Failed to determine parts from ref: %s"
@@ -5306,7 +5306,7 @@ msgstr "सॉफ़्टवेयर को स्थापित करने
 
 #, c-format
 #~ msgid "No such ref (%s, %s) in remote %s or elsewhere"
-#~ msgstr "ऐसा कोई नहीं ref (%s, %s) रिमोट में %s या कहीं और"
+#~ msgstr "ऐसा कोई लिंक नहीं (%s, %s) रिमोट में %s या कहीं और"
 
 #, c-format
 #~ msgid "No remotes found which provide these refs: [%s]"
