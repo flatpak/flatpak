@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2021-06-17 17:42+0100\n"
-"PO-Revision-Date: 2021-06-01 03:08+0300\n"
+"PO-Revision-Date: 2021-07-19 16:53+0300\n"
 "Last-Translator: Filippe LeMarchand <gasinvein@gmail.com>\n"
 "Language-Team: Russian <gnome-cyr@gnome.org>\n"
 "Language: ru\n"
@@ -210,7 +210,7 @@ msgstr "КАТАЛОГ"
 
 #: app/flatpak-builtins-build.c:53
 msgid "Where to look for custom sdk dir (defaults to 'usr')"
-msgstr "Каталог для поиска других sdk (по умолчанию 'usr')"
+msgstr "Где искать модифицированный каталог sdk (по умолчанию 'usr')"
 
 #: app/flatpak-builtins-build.c:54 app/flatpak-builtins-build-export.c:66
 msgid "Use alternative file for the metadata"
@@ -666,12 +666,12 @@ msgstr "Не наследовать разрешения из среды вып�
 #: app/flatpak-builtins-build-finish.c:154
 #, c-format
 msgid "Not exporting %s, wrong extension\n"
-msgstr "Не экспортирован %s, некорректное расширение\n"
+msgstr "Не экспортируется %s, некорректное расширение\n"
 
 #: app/flatpak-builtins-build-finish.c:162
 #, c-format
 msgid "Not exporting %s, non-allowed export filename\n"
-msgstr "Не экспортирован %s, не разрешенное имя файла\n"
+msgstr "Не экспортируется %s, не разрешенное имя файла\n"
 
 #: app/flatpak-builtins-build-finish.c:166
 #, c-format
@@ -1977,7 +1977,7 @@ msgstr "Поиск совпадений…\n"
 #: app/flatpak-builtins-install.c:439
 #, c-format
 msgid "No remote refs found similar to ‘%s’"
-msgstr "Не удалённых ссылок, подходящих под ‘%s’"
+msgstr "Нет удалённых ссылок, похожих на ‘%s’"
 
 #: app/flatpak-builtins-install.c:504 app/flatpak-builtins-uninstall.c:293
 #: common/flatpak-ref-utils.c:690 common/flatpak-ref-utils.c:1586
@@ -2277,19 +2277,19 @@ msgstr "Показать ID экземпляра"
 
 #: app/flatpak-builtins-ps.c:48 app/flatpak-builtins-run.c:86
 msgid "PID"
-msgstr "ID процесса"
+msgstr "PID"
 
 #: app/flatpak-builtins-ps.c:48
 msgid "Show the PID of the wrapper process"
-msgstr "Показать ID процесса обёртки"
+msgstr "Показать PID обёртки"
 
 #: app/flatpak-builtins-ps.c:49
 msgid "Child-PID"
-msgstr "Дочерний-номер процесса"
+msgstr "PID потомка"
 
 #: app/flatpak-builtins-ps.c:49
 msgid "Show the PID of the sandbox process"
-msgstr "Показать ID процесса песочницы"
+msgstr "Показать PID песочницы"
 
 #: app/flatpak-builtins-ps.c:52 app/flatpak-builtins-search.c:47
 msgid "Show the application branch"
@@ -2305,7 +2305,7 @@ msgstr "Показать ID среды исполнения"
 
 #: app/flatpak-builtins-ps.c:55
 msgid "R.-Branch"
-msgstr "СР.-Ветка"
+msgstr "Ветка среды"
 
 #: app/flatpak-builtins-ps.c:55
 msgid "Show the runtime branch"
@@ -2313,7 +2313,7 @@ msgstr "Показать ветку среды исполнения"
 
 #: app/flatpak-builtins-ps.c:56
 msgid "R.-Commit"
-msgstr "СР.-Коммит"
+msgstr "Коммит среды"
 
 #: app/flatpak-builtins-ps.c:56
 msgid "Show the runtime commit"
@@ -3309,7 +3309,7 @@ msgstr "Похожие ссылки для '%s' найдены в репозит
 #: app/flatpak-builtins-utils.c:505
 #, c-format
 msgid "Found installed ref ‘%s’ (%s). Is this correct?"
-msgstr "Найдена установочная ссылка для '%s' (%s). Она верна?"
+msgstr "Найдена установленная ссылка '%s' (%s). Она верна?"
 
 #: app/flatpak-builtins-utils.c:521
 msgid "All of the above"
@@ -3327,7 +3327,7 @@ msgid ""
 "Found similar ref(s) for ‘%s’ in remote ‘%s’ (%s).\n"
 "Use this remote?"
 msgstr ""
-"Найдены похож(ая/ие) ссылк(а/и) для '%s' в репозитории '%s' (%s).\n"
+"Найдена одна или более ссылок, похожих на '%s', в репозитории '%s' (%s).\n"
 "Использовать этот репозиторий?"
 
 #: app/flatpak-builtins-utils.c:580 app/flatpak-builtins-utils.c:593
@@ -3338,7 +3338,7 @@ msgstr "Не выбран репозиторий для получения ре�
 #: app/flatpak-builtins-utils.c:590
 #, c-format
 msgid "Remotes found with refs similar to ‘%s’:"
-msgstr "Репозитории с похожими найденными запросами для '%s':"
+msgstr "Репозитории со ссылками, похожими на '%s':"
 
 #: app/flatpak-builtins-utils.c:690 app/flatpak-builtins-utils.c:693
 #, c-format
@@ -3378,24 +3378,24 @@ msgstr "Неверный суффикс '%s'."
 #: app/flatpak-builtins-utils.c:840
 #, c-format
 msgid "Ambiguous column: %s"
-msgstr "Неоднозначная колонна: %s"
+msgstr "Неоднозначный столбец: %s"
 
 #: app/flatpak-builtins-utils.c:853
 #, c-format
 msgid "Unknown column: %s"
-msgstr "Неизвестная колонна '%s'"
+msgstr "Неизвестный столбец '%s'"
 
 #: app/flatpak-builtins-utils.c:911
 msgid "Available columns:\n"
-msgstr "Доступные колонны:\n"
+msgstr "Доступные столбцы:\n"
 
 #: app/flatpak-builtins-utils.c:921
 msgid "Show all columns"
-msgstr "Показать все колонны"
+msgstr "Показать все столбцы"
 
 #: app/flatpak-builtins-utils.c:922
 msgid "Show available columns"
-msgstr "Показать доступные колонны"
+msgstr "Показать доступные столбцы"
 
 #: app/flatpak-builtins-utils.c:925
 msgid "Append :s[tart], :m[iddle], :e[nd] or :f[ull] to change ellipsization"
@@ -5117,6 +5117,9 @@ msgid ""
 "\"flatpak run\" is not intended to be run as `sudo flatpak run`, use `sudo -"
 "i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell"
 msgstr ""
+"\"flatpak run\" не предназначено для запуска через `sudo flatpak run`, "
+"вместо этого используйте `sudo -i` или `su -l` и запускайте \"flatpak run\" "
+"из новой командной оболочки"
 
 #: common/flatpak-run.c:4033
 #, c-format
