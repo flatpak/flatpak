@@ -5298,7 +5298,7 @@ msgstr "सॉफ़्टवेयर को स्थापित करने
 
 #, c-format
 #~ msgid "No such ref (%s, %s) in remote %s"
-#~ msgstr "ऐसा कोई नहीं [ref] (%s, %s) रिमोट में %s"
+#~ msgstr "ऐसा कोई नहीं [संपर्क] (%s, %s) रिमोट में %s"
 
 #, c-format
 #~ msgid "No flatpak cache in remote '%s' summary"
@@ -5310,11 +5310,11 @@ msgstr "सॉफ़्टवेयर को स्थापित करने
 
 #, c-format
 #~ msgid "No remotes found which provide these refs: [%s]"
-#~ msgstr "किसी रिमोट पाया जो इन refs प्रदान करते हैं: [%s]"
+#~ msgstr "किसी रिमोट पाया जो इन लिंक प्रदान करते हैं: [%s]"
 
 #, c-format
 #~ msgid "No remotes found which provide the ref (%s, %s)"
-#~ msgstr "कोई अवशेष नहीं मिला, जो ref प्रदान करता है (%s, %s)"
+#~ msgstr "कोई अवशेष नहीं मिला, जो लिंक प्रदान करता है (%s, %s)"
 
 #~ msgid "No summary found"
 #~ msgstr "कोई सारांश नहीं मिला"
