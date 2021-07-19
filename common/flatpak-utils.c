@@ -733,6 +733,10 @@ flatpak_get_allowed_exports (const char     *source_path,
     {
       g_ptr_array_add (allowed_extensions, g_strdup (".xml"));
     }
+  else if (strcmp (source_path, "share/appdata") == 0)
+    {
+      g_ptr_array_add (allowed_extensions, g_strdup (".xml"));
+    }
   else
     return FALSE;
 
