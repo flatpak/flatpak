@@ -5270,7 +5270,7 @@ msgstr "सॉफ़्टवेयर को स्थापित करने
 
 #, c-format
 #~ msgid "Deployed ref %s name does not match commit (%s)"
-#~ msgstr "तैनात  %s नाम कमिट से मेल नहीं खाता है (%s)"
+#~ msgstr "तैनात %s नाम कमिट से मेल नहीं खाता है (%s)"
 
 #, c-format
 #~ msgid "Deployed ref %s arch does not match commit (%s)"
