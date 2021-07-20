@@ -5153,7 +5153,7 @@ msgstr "ऐप अनइंस्टॉल करें"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:162
 msgid "Authentication is required to uninstall $(ref)"
-msgstr "स्थापना रद्द करने के लिए प्रमाणीकरण आवश्यक है $(ref)"
+msgstr "स्थापना रद्द करने के लिए प्रमाणीकरण आवश्यक है $(संदर्भ)"
 
 #. SECURITY:
 #. - Normal users need admin authentication to configure system-wide
