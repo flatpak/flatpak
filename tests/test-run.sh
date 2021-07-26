@@ -44,6 +44,7 @@ assert_has_file $FL_DIR/app/org.test.Hello/$ARCH/stable/active/metadata
 assert_has_dir $FL_DIR/app/org.test.Hello/$ARCH/stable/active/files
 assert_has_dir $FL_DIR/app/org.test.Hello/$ARCH/stable/active/export
 assert_has_file $FL_DIR/exports/share/applications/org.test.Hello.desktop
+assert_has_file $FL_DIR/exports/share/appdata/org.test.Hello.xml
 # Ensure Exec key is rewritten
 assert_file_has_content $FL_DIR/exports/share/applications/org.test.Hello.desktop "^Exec=.*flatpak run --branch=stable --arch=$ARCH --command=hello\.sh org\.test\.Hello$"
 assert_has_file $FL_DIR/exports/share/gnome-shell/search-providers/org.test.Hello.search-provider.ini

@@ -113,9 +113,8 @@ mkdir -p ${DIR}/files/share/icons/HighContrast/64x64/apps
 cp $(dirname $0)/org.test.Hello.png ${DIR}/files/share/icons/HighContrast/64x64/apps/${APP_ID}.png
 
 
-mkdir -p ${DIR}/files/share/app-info/xmls
-mkdir -p ${DIR}/files/share/app-info/icons/flatpak/64x64
-gzip -c > ${DIR}/files/share/app-info/xmls/${APP_ID}.xml.gz <<EOF
+mkdir -p ${DIR}/files/share/appdata
+cat <<EOF > ${DIR}/files/share/appdata/${APP_ID}.xml
 <?xml version="1.0" encoding="UTF-8"?>
 <components version="0.8">
   <component type="desktop">
@@ -133,6 +132,9 @@ gzip -c > ${DIR}/files/share/app-info/xmls/${APP_ID}.xml.gz <<EOF
   </component>
 </components>
 EOF
+mkdir -p ${DIR}/files/share/app-info/xmls
+mkdir -p ${DIR}/files/share/app-info/icons/flatpak/64x64
+gzip -c ${DIR}/files/share/appdata/${APP_ID}.xml > ${DIR}/files/share/app-info/xmls/${APP_ID}.xml.gz
 cp $(dirname $0)/org.test.Hello.png ${DIR}/files/share/app-info/icons/flatpak/64x64/${APP_ID}.png
 
 if [ x$COLLECTION_ID != x ]; then
