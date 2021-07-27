@@ -1020,6 +1020,56 @@ test_exports_arch (void)
 }
 
 /*
+ * Test --filesystem=host-os with an OS that looks like Fedora.
+ */
+static void
+test_exports_fedora (void)
+{
+  static const FakeFile files[] =
+  {
+    { "etc", FAKE_DIR },
+    { "etc/ld.so.cache", FAKE_FILE },
+    { "etc/ld.so.conf", FAKE_FILE },
+    { "etc/ld.so.conf.d", FAKE_DIR },
+    { "bin", FAKE_SYMLINK, "usr/bin" },
+    { "lib", FAKE_SYMLINK, "usr/lib" },
+    { "lib64", FAKE_SYMLINK, "usr/lib64" },
+    { "sbin", FAKE_SYMLINK, "usr/sbin" },
+    { "usr/bin", FAKE_DIR },
+    { "usr/lib", FAKE_DIR },
+    { "usr/lib64", FAKE_DIR },
+    { "usr/local", FAKE_SYMLINK, "../var/usrlocal" },
+    { "usr/sbin", FAKE_DIR },
+    { "usr/share", FAKE_DIR },
+    { "var/usrlocal", FAKE_DIR },
+    { NULL }
+  };
+  g_autoptr(FlatpakBwrap) bwrap = flatpak_bwrap_new (NULL);
+  gsize i;
+
+  test_host_exports (files, bwrap, FLATPAK_FILESYSTEM_MODE_NONE,
+                     FLATPAK_FILESYSTEM_MODE_READ_ONLY);
+
+  i = 0;
+  g_assert_cmpuint (i, <, bwrap->argv->len);
+  g_assert_cmpstr (bwrap->argv->pdata[i++], ==, "bwrap");
+
+  i = assert_next_is_bind (bwrap, i, "--ro-bind", "/usr", "/run/host/usr");
+  i = assert_next_is_bind (bwrap, i, "--ro-bind", "/var/usrlocal",
+                           "/run/host/var/usrlocal");
+  i = assert_next_is_symlink (bwrap, i, "usr/bin", "/run/host/bin");
+  i = assert_next_is_symlink (bwrap, i, "usr/lib", "/run/host/lib");
+  i = assert_next_is_symlink (bwrap, i, "usr/lib64", "/run/host/lib64");
+  i = assert_next_is_symlink (bwrap, i, "usr/sbin", "/run/host/sbin");
+  i = assert_next_is_bind (bwrap, i, "--ro-bind", "/etc/ld.so.cache",
+                           "/run/host/etc/ld.so.cache");
+
+  g_assert_cmpuint (i, ==, bwrap->argv->len - 1);
+  g_assert_cmpstr (bwrap->argv->pdata[i++], ==, NULL);
+  g_assert_cmpuint (i, ==, bwrap->argv->len);
+}
+
+/*
  * Test --filesystem=host-os with an OS that looks like Debian,
  * without the /usr merge, and with x86 and x32 multilib.
  */
@@ -1227,6 +1277,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/exports/host/arch", test_exports_arch);
   g_test_add_func ("/exports/host/debian", test_exports_debian);
   g_test_add_func ("/exports/host/debian-usrmerge", test_exports_debian_merged);
+  g_test_add_func ("/exports/host/fedora", test_exports_fedora);
   g_test_add_func ("/exports/ignored", test_exports_ignored);
 
   res = g_test_run ();
