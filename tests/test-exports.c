@@ -1260,6 +1260,46 @@ test_exports_ignored (void)
   g_assert_cmpuint (i, ==, bwrap->argv->len);
 }
 
+/*
+ * Test various corner-cases using a mock root.
+ */
+static void
+test_exports_unusual (void)
+{
+  static const FakeFile files[] =
+  {
+    { "etc", FAKE_DIR },
+    { "etc/ld.so.cache", FAKE_FILE },
+    { "etc/ld.so.conf", FAKE_FILE },
+    { "etc/ld.so.conf.d", FAKE_DIR },
+    { "bin", FAKE_SYMLINK, "usr/bin" },
+    { "lib", FAKE_SYMLINK, "usr/lib" },
+    { "usr/bin", FAKE_DIR },
+    { "usr/lib", FAKE_DIR },
+    { "usr/share", FAKE_DIR },
+    { NULL }
+  };
+  g_autoptr(FlatpakBwrap) bwrap = flatpak_bwrap_new (NULL);
+  gsize i;
+
+  test_host_exports (files, bwrap, FLATPAK_FILESYSTEM_MODE_NONE,
+                     FLATPAK_FILESYSTEM_MODE_READ_ONLY);
+
+  i = 0;
+  g_assert_cmpuint (i, <, bwrap->argv->len);
+  g_assert_cmpstr (bwrap->argv->pdata[i++], ==, "bwrap");
+
+  i = assert_next_is_bind (bwrap, i, "--ro-bind", "/usr", "/run/host/usr");
+  i = assert_next_is_symlink (bwrap, i, "usr/bin", "/run/host/bin");
+  i = assert_next_is_symlink (bwrap, i, "usr/lib", "/run/host/lib");
+  i = assert_next_is_bind (bwrap, i, "--ro-bind", "/etc/ld.so.cache",
+                           "/run/host/etc/ld.so.cache");
+
+  g_assert_cmpuint (i, ==, bwrap->argv->len - 1);
+  g_assert_cmpstr (bwrap->argv->pdata[i++], ==, NULL);
+  g_assert_cmpuint (i, ==, bwrap->argv->len);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -1279,6 +1319,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/exports/host/debian-usrmerge", test_exports_debian_merged);
   g_test_add_func ("/exports/host/fedora", test_exports_fedora);
   g_test_add_func ("/exports/ignored", test_exports_ignored);
+  g_test_add_func ("/exports/unusual", test_exports_unusual);
 
   res = g_test_run ();
 
