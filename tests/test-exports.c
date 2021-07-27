@@ -1298,6 +1298,7 @@ test_exports_unusual (void)
     { "broken-autofs", FAKE_DIR },
     { "home", FAKE_SYMLINK, "var/home" },
     { "lib", FAKE_SYMLINK, "usr/lib" },
+    { "recursion", FAKE_SYMLINK, "recursion" },
     { "tmp", FAKE_SYMLINK, "TMP" },
     { "usr/bin", FAKE_DIR },
     { "usr/lib", FAKE_DIR },
@@ -1319,6 +1320,9 @@ test_exports_unusual (void)
   flatpak_exports_add_path_expose (exports,
                                    FLATPAK_FILESYSTEM_MODE_READ_ONLY,
                                    "/home/me");
+  flatpak_exports_add_path_expose (exports,
+                                   FLATPAK_FILESYSTEM_MODE_READ_ONLY,
+                                   "/recursion");
   flatpak_exports_add_path_expose (exports,
                                    FLATPAK_FILESYSTEM_MODE_READ_ONLY,
                                    "/tmp");
