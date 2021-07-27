@@ -106,6 +106,7 @@ struct _FlatpakExports
   FlatpakFilesystemMode host_etc;
   FlatpakFilesystemMode host_os;
   int                   host_fd;
+  FlatpakExportsTestFlags test_flags;
 };
 
 /*
@@ -120,6 +121,13 @@ flatpak_exports_take_host_fd (FlatpakExports *exports,
 
   if (fd >= 0)
     exports->host_fd = fd;
+}
+
+void
+flatpak_exports_set_test_flags (FlatpakExports *exports,
+                                FlatpakExportsTestFlags flags)
+{
+  exports->test_flags = flags;
 }
 
 static gboolean
@@ -752,6 +760,12 @@ check_if_autofs_works (FlatpakExports *exports,
   if (!WIFEXITED (wstatus) || WEXITSTATUS (wstatus) != 0)
     return FALSE;
 
+  if (G_UNLIKELY (exports->test_flags & FLATPAK_EXPORTS_TEST_FLAGS_AUTOFS))
+    {
+      if (strcmp (path, "/broken-autofs") == 0)
+        return FALSE;
+    }
+
   return TRUE;
 }
 
@@ -802,7 +816,9 @@ _exports_path_expose (FlatpakExports *exports,
   if (fstatfs (o_path_fd, &stfs) != 0)
     return FALSE;
 
-  if (stfs.f_type == AUTOFS_SUPER_MAGIC)
+  if (stfs.f_type == AUTOFS_SUPER_MAGIC ||
+      (G_UNLIKELY (exports->test_flags & FLATPAK_EXPORTS_TEST_FLAGS_AUTOFS) &&
+       S_ISDIR (st.st_mode)))
     {
       if (!check_if_autofs_works (exports, path))
         {
