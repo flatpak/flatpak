@@ -927,11 +927,10 @@ create_fake_files (const FakeFile *files)
     }
 }
 
-static void
-test_host_exports (const FakeFile *files,
-                   FlatpakBwrap *bwrap,
-                   FlatpakFilesystemMode etc_mode,
-                   FlatpakFilesystemMode os_mode)
+static FlatpakExports *
+test_host_exports_setup (const FakeFile *files,
+                         FlatpakFilesystemMode etc_mode,
+                         FlatpakFilesystemMode os_mode)
 {
   g_autoptr(FlatpakExports) exports = flatpak_exports_new ();
   g_autoptr(GError) error = NULL;
@@ -958,6 +957,16 @@ test_host_exports (const FakeFile *files,
   if (os_mode > FLATPAK_FILESYSTEM_MODE_NONE)
     flatpak_exports_add_host_os_expose (exports, os_mode);
 
+  return g_steal_pointer (&exports);
+}
+
+static void
+test_host_exports_finish (FlatpakExports *exports,
+                          FlatpakBwrap *bwrap)
+{
+  g_autofree gchar *host = g_build_filename (isolated_test_dir, "host", NULL);
+  g_autoptr(GError) error = NULL;
+
   flatpak_bwrap_add_arg (bwrap, "bwrap");
   flatpak_exports_append_bwrap_args (exports, bwrap);
   flatpak_bwrap_finish (bwrap);
@@ -970,6 +979,18 @@ test_host_exports (const FakeFile *files,
       g_assert_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND);
       g_clear_error (&error);
     }
+}
+
+static void
+test_host_exports (const FakeFile *files,
+                   FlatpakBwrap *bwrap,
+                   FlatpakFilesystemMode etc_mode,
+                   FlatpakFilesystemMode os_mode)
+{
+  g_autoptr(FlatpakExports) exports = NULL;
+
+  exports = test_host_exports_setup (files, etc_mode, os_mode);
+  test_host_exports_finish (exports, bwrap);
 }
 
 /*
@@ -1273,6 +1294,7 @@ test_exports_unusual (void)
     { "etc/ld.so.conf", FAKE_FILE },
     { "etc/ld.so.conf.d", FAKE_DIR },
     { "bin", FAKE_SYMLINK, "usr/bin" },
+    { "broken-autofs", FAKE_DIR },
     { "lib", FAKE_SYMLINK, "usr/lib" },
     { "usr/bin", FAKE_DIR },
     { "usr/lib", FAKE_DIR },
@@ -1280,10 +1302,17 @@ test_exports_unusual (void)
     { NULL }
   };
   g_autoptr(FlatpakBwrap) bwrap = flatpak_bwrap_new (NULL);
+  g_autoptr(FlatpakExports) exports = NULL;
   gsize i;
 
-  test_host_exports (files, bwrap, FLATPAK_FILESYSTEM_MODE_NONE,
-                     FLATPAK_FILESYSTEM_MODE_READ_ONLY);
+  exports = test_host_exports_setup (files,
+                                     FLATPAK_FILESYSTEM_MODE_NONE,
+                                     FLATPAK_FILESYSTEM_MODE_READ_ONLY);
+  flatpak_exports_set_test_flags (exports, FLATPAK_EXPORTS_TEST_FLAGS_AUTOFS);
+  flatpak_exports_add_path_expose (exports,
+                                   FLATPAK_FILESYSTEM_MODE_READ_ONLY,
+                                   "/broken-autofs");
+  test_host_exports_finish (exports, bwrap);
 
   i = 0;
   g_assert_cmpuint (i, <, bwrap->argv->len);
