@@ -135,7 +135,11 @@ flatpak_exports_stat_in_host (FlatpakExports *exports,
     {
       /* If abs_path is "/usr", then stat "usr" relative to host_fd.
        * As a special case, if abs_path is "/", stat host_fd itself,
-       * due to the use of AT_EMPTY_PATH. */
+       * due to the use of AT_EMPTY_PATH.
+       *
+       * This won't work if ${host_fd}/${abs_path} contains symlinks
+       * that are absolute or otherwise escape from the mock root,
+       * so be careful not to do that in unit tests. */
       return glnx_fstatat (exports->host_fd, &abs_path[1], buf,
                            AT_EMPTY_PATH | flags,
                            error);
@@ -151,11 +155,68 @@ flatpak_exports_readlink_in_host (FlatpakExports *exports,
 {
   g_return_val_if_fail (abs_path[0] == '/', FALSE);
 
+  /* Similar to flatpak_exports_stat_in_host, this assumes the mock root
+   * doesn't contain symlinks that escape from the mock root. */
   if (exports->host_fd >= 0)
     return glnx_readlinkat_malloc (exports->host_fd, &abs_path[1],
                                    NULL, error);
 
   return glnx_readlinkat_malloc (AT_FDCWD, abs_path, NULL, error);
+}
+
+/* path must be absolute, but this is not checked because assertions
+ * are not async-signal-safe. */
+static int
+flatpak_exports_open_in_host_async_signal_safe (FlatpakExports *exports,
+                                                const char *abs_path,
+                                                int flags)
+{
+  flags |= O_CLOEXEC;
+
+  if (exports->host_fd >= 0)
+    {
+      /* Similar to flatpak_exports_stat_in_host, this assumes the mock root
+       * doesn't contain symlinks that escape from the mock root. */
+      return openat (exports->host_fd, &abs_path[1],
+                     flags);
+    }
+
+  return openat (AT_FDCWD, abs_path, flags);
+}
+
+static int
+flatpak_exports_open_in_host (FlatpakExports *exports,
+                              const char *abs_path,
+                              int flags)
+{
+  g_return_val_if_fail (abs_path[0] == '/', -1);
+  return flatpak_exports_open_in_host_async_signal_safe (exports, abs_path, flags);
+}
+
+static char *
+flatpak_exports_resolve_link_in_host (FlatpakExports *exports,
+                                      const char *abs_path,
+                                      GError **error)
+{
+  g_return_val_if_fail (abs_path[0] == '/', FALSE);
+
+  if (exports->host_fd >= 0)
+    {
+      g_autofree char *fd_path = g_strdup_printf ("/proc/self/fd/%d/",
+                                                  exports->host_fd);
+      g_autofree char *real_path = g_strdup_printf ("%s%s", fd_path, &abs_path[1]);
+      g_autofree char *resolved = flatpak_resolve_link (real_path, error);
+
+      if (resolved == NULL)
+        return NULL;
+
+      if (!g_str_has_prefix (resolved, fd_path))
+        return glnx_null_throw (error, "Symbolic link escapes from mock root");
+
+      return g_strdup (resolved + strlen (fd_path) - 1);
+    }
+
+  return flatpak_resolve_link (abs_path, error);
 }
 
 static void
@@ -267,22 +328,24 @@ compare_eps (const ExportedPath *a,
 /* This differs from g_file_test (path, G_FILE_TEST_IS_DIR) which
    returns true if the path is a symlink to a dir */
 static gboolean
-path_is_dir (const char *path)
+path_is_dir (FlatpakExports *exports,
+             const char *path)
 {
   struct stat s;
 
-  if (lstat (path, &s) != 0)
+  if (!flatpak_exports_stat_in_host (exports, path, &s, AT_SYMLINK_NOFOLLOW, NULL))
     return FALSE;
 
   return S_ISDIR (s.st_mode);
 }
 
 static gboolean
-path_is_symlink (const char *path)
+path_is_symlink (FlatpakExports *exports,
+                 const char *path)
 {
   struct stat s;
 
-  if (lstat (path, &s) != 0)
+  if (!flatpak_exports_stat_in_host (exports, path, &s, AT_SYMLINK_NOFOLLOW, NULL))
     return FALSE;
 
   return S_ISLNK (s.st_mode);
@@ -335,7 +398,9 @@ flatpak_exports_append_bwrap_args (FlatpakExports *exports,
         {
           if (!path_parent_is_mapped (keys, n_keys, exports->hash, path))
             {
-              g_autofree char *resolved = flatpak_resolve_link (path, NULL);
+              g_autofree char *resolved = flatpak_exports_resolve_link_in_host (exports,
+                                                                                path,
+                                                                                 NULL);
               if (resolved)
                 {
                   g_autofree char *parent = g_path_get_dirname (path);
@@ -348,7 +413,7 @@ flatpak_exports_append_bwrap_args (FlatpakExports *exports,
         {
           /* Mount a tmpfs to hide the subdirectory, but only if there
              is a pre-existing dir we can mount the path on. */
-          if (path_is_dir (path))
+          if (path_is_dir (exports, path))
             {
               if (!path_parent_is_mapped (keys, n_keys, exports->hash, path))
                 /* If the parent is not mapped, it will be a tmpfs, no need to mount another one */
@@ -359,7 +424,7 @@ flatpak_exports_append_bwrap_args (FlatpakExports *exports,
         }
       else if (ep->mode == FAKE_MODE_DIR)
         {
-          if (path_is_dir (path))
+          if (path_is_dir (exports, path))
             flatpak_bwrap_add_args (bwrap, "--dir", path, NULL);
         }
       else
@@ -505,6 +570,7 @@ flatpak_exports_path_get_mode (FlatpakExports *exports,
 
   g_qsort_with_data (keys, n_keys, sizeof (char *), (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
 
+  /* Syntactic canonicalization only, no need to use host_fd */
   path = canonical = flatpak_canonicalize_filename (path);
 
   parts = g_strsplit (path + 1, "/", -1);
@@ -522,9 +588,13 @@ flatpak_exports_path_get_mode (FlatpakExports *exports,
 
       if (path_is_mapped (keys, n_keys, exports->hash, path_builder->str, &is_readonly))
         {
-          if (lstat (path_builder->str, &st) != 0)
+          g_autoptr(GError) stat_error = NULL;
+
+          if (!flatpak_exports_stat_in_host (exports, path_builder->str, &st, AT_SYMLINK_NOFOLLOW, &stat_error))
             {
-              if (errno == ENOENT && parts[i + 1] == NULL && !is_readonly)
+              if (g_error_matches (stat_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND) &&
+                  parts[i + 1] == NULL &&
+                  !is_readonly)
                 {
                   /* Last element was mapped but isn't there, this is
                    * OK (used for the save case) if we the parent is
@@ -539,7 +609,9 @@ flatpak_exports_path_get_mode (FlatpakExports *exports,
 
           if (S_ISLNK (st.st_mode))
             {
-              g_autofree char *resolved = flatpak_resolve_link (path_builder->str, NULL);
+              g_autofree char *resolved = flatpak_exports_resolve_link_in_host (exports,
+                                                                                path_builder->str,
+                                                                                NULL);
               g_autoptr(GString) path2_builder = NULL;
               int j;
 
@@ -614,7 +686,8 @@ do_export_path (FlatpakExports *exports,
  * have to mess with forks and stuff to be able to handle the timeout.
  */
 static gboolean
-check_if_autofs_works (const char *path)
+check_if_autofs_works (FlatpakExports *exports,
+                       const char *path)
 {
   int selfpipe[2];
   struct timeval timeout;
@@ -622,6 +695,8 @@ check_if_autofs_works (const char *path)
   fd_set rfds;
   int res;
   int wstatus;
+
+  g_return_val_if_fail (path[0] == '/', FALSE);
 
   if (pipe2 (selfpipe, O_CLOEXEC) == -1)
     return FALSE;
@@ -642,7 +717,10 @@ check_if_autofs_works (const char *path)
       /* Note: open, close and _exit are signal-async-safe, so it is ok to call in the child after fork */
 
       close (selfpipe[0]); /* Close unused read end */
-      int dir_fd = open (path, O_RDONLY | O_NONBLOCK | O_CLOEXEC | O_DIRECTORY);
+
+      int dir_fd = flatpak_exports_open_in_host_async_signal_safe (exports,
+                                                                   path,
+                                                                   O_RDONLY | O_NONBLOCK | O_DIRECTORY);
       _exit (dir_fd == -1 ? 1 : 0);
     }
 
@@ -706,7 +784,7 @@ _exports_path_expose (FlatpakExports *exports,
     }
 
   /* Check if it exists at all */
-  o_path_fd = open (path, O_PATH | O_NOFOLLOW | O_CLOEXEC);
+  o_path_fd = flatpak_exports_open_in_host (exports, path, O_PATH | O_NOFOLLOW);
   if (o_path_fd == -1)
     return FALSE;
 
@@ -726,13 +804,14 @@ _exports_path_expose (FlatpakExports *exports,
 
   if (stfs.f_type == AUTOFS_SUPER_MAGIC)
     {
-      if (!check_if_autofs_works (path))
+      if (!check_if_autofs_works (exports, path))
         {
           g_debug ("ignoring blocking autofs path %s", path);
           return FALSE;
         }
     }
 
+  /* Syntactic canonicalization only, no need to use host_fd */
   path = canonical = flatpak_canonicalize_filename (path);
 
   for (i = 0; dont_export_in[i] != NULL; i++)
@@ -766,9 +845,9 @@ _exports_path_expose (FlatpakExports *exports,
       if (slash)
         *slash = 0;
 
-      if (path_is_symlink (path) && !never_export_as_symlink (path))
+      if (path_is_symlink (exports, path) && !never_export_as_symlink (path))
         {
-          g_autofree char *resolved = flatpak_resolve_link (path, NULL);
+          g_autofree char *resolved = flatpak_exports_resolve_link_in_host (exports, path, NULL);
           g_autofree char *new_target = NULL;
 
           if (resolved)
