@@ -1312,6 +1312,9 @@ test_exports_unusual (void)
   flatpak_exports_add_path_expose (exports,
                                    FLATPAK_FILESYSTEM_MODE_READ_ONLY,
                                    "/broken-autofs");
+  flatpak_exports_add_path_expose (exports,
+                                   FLATPAK_FILESYSTEM_MODE_READ_ONLY,
+                                   "not-absolute");
   test_host_exports_finish (exports, bwrap);
 
   i = 0;
