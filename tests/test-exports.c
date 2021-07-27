@@ -1289,6 +1289,7 @@ test_exports_unusual (void)
 {
   static const FakeFile files[] =
   {
+    { "TMP", FAKE_DIR },
     { "etc", FAKE_DIR },
     { "etc/ld.so.cache", FAKE_FILE },
     { "etc/ld.so.conf", FAKE_FILE },
@@ -1296,6 +1297,7 @@ test_exports_unusual (void)
     { "bin", FAKE_SYMLINK, "usr/bin" },
     { "broken-autofs", FAKE_DIR },
     { "lib", FAKE_SYMLINK, "usr/lib" },
+    { "tmp", FAKE_SYMLINK, "TMP" },
     { "usr/bin", FAKE_DIR },
     { "usr/lib", FAKE_DIR },
     { "usr/share", FAKE_DIR },
@@ -1314,6 +1316,9 @@ test_exports_unusual (void)
                                    "/broken-autofs");
   flatpak_exports_add_path_expose (exports,
                                    FLATPAK_FILESYSTEM_MODE_READ_ONLY,
+                                   "/tmp");
+  flatpak_exports_add_path_expose (exports,
+                                   FLATPAK_FILESYSTEM_MODE_READ_ONLY,
                                    "not-absolute");
   test_host_exports_finish (exports, bwrap);
 
@@ -1321,6 +1326,7 @@ test_exports_unusual (void)
   g_assert_cmpuint (i, <, bwrap->argv->len);
   g_assert_cmpstr (bwrap->argv->pdata[i++], ==, "bwrap");
 
+  i = assert_next_is_bind (bwrap, i, "--ro-bind", "/tmp", "/tmp");
   i = assert_next_is_bind (bwrap, i, "--ro-bind", "/usr", "/run/host/usr");
   i = assert_next_is_symlink (bwrap, i, "usr/bin", "/run/host/bin");
   i = assert_next_is_symlink (bwrap, i, "usr/lib", "/run/host/lib");
