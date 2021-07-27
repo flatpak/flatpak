@@ -1290,6 +1290,7 @@ test_exports_unusual (void)
   static const FakeFile files[] =
   {
     { "TMP", FAKE_DIR },
+    { "dangling-link", FAKE_SYMLINK, "nonexistent" },
     { "etc", FAKE_DIR },
     { "etc/ld.so.cache", FAKE_FILE },
     { "etc/ld.so.conf", FAKE_FILE },
@@ -1319,7 +1320,13 @@ test_exports_unusual (void)
                                    "/broken-autofs");
   flatpak_exports_add_path_expose (exports,
                                    FLATPAK_FILESYSTEM_MODE_READ_ONLY,
+                                   "/dangling-link");
+  flatpak_exports_add_path_expose (exports,
+                                   FLATPAK_FILESYSTEM_MODE_READ_ONLY,
                                    "/home/me");
+  flatpak_exports_add_path_expose (exports,
+                                   FLATPAK_FILESYSTEM_MODE_READ_ONLY,
+                                   "/nonexistent");
   flatpak_exports_add_path_expose (exports,
                                    FLATPAK_FILESYSTEM_MODE_READ_ONLY,
                                    "/recursion");
