@@ -178,6 +178,7 @@ flatpak_exports_new (void)
 void
 flatpak_exports_free (FlatpakExports *exports)
 {
+  glnx_close_fd (&exports->host_fd);
   g_hash_table_destroy (exports->hash);
   g_free (exports);
 }
