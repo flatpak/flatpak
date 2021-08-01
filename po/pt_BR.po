@@ -1,16 +1,17 @@
 # Brazilian Portuguese translation for flatpak.
-# Copyright (C) 2020 THE flatpak'S COPYRIGHT HOLDER
+# Copyright (C) 2021 THE flatpak'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the flatpak package.
 # Fábio Nogueira <fnogueira@gnome.org>, 2017.
 # Rafael Fontenelle <rafaelff@gnome.org>, 2017-2020.
+# Bruno Lopes <brunolopesdsilv@gmail.com>, 2020-2021.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2021-06-17 17:42+0100\n"
-"PO-Revision-Date: 2020-11-27 12:53-0300\n"
-"Last-Translator: Gustavo Costa <sirguxx@gmail.com>\n"
+"POT-Creation-Date: 2021-06-17 03:26+0000\n"
+"PO-Revision-Date: 2021-08-01 17:32-0300\n"
+"Last-Translator: Bruno Lopes <brunolopesdsilv@gmail.com>\n"
 "Language-Team: Brazilian Portuguese <gnome-pt_br-list@gnome.org>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
@@ -1040,7 +1041,7 @@ msgstr "Suprime objetos não usados"
 
 #: app/flatpak-builtins-build-update-repo.c:91
 msgid "Prune but don't actually remove anything"
-msgstr ""
+msgstr "Suprime, mas não remove nada"
 
 #: app/flatpak-builtins-build-update-repo.c:92
 msgid "Only traverse DEPTH parents for each commit (default: -1=infinite)"
@@ -1205,9 +1206,9 @@ msgstr ""
 "conjunto de ID de coleção.\n"
 
 #: app/flatpak-builtins-create-usb.c:186
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: Omitting related ref ‘%s’ because it's extra-data.\n"
-msgstr "Aviso: Omitindo a ref “%s” relacionada porque não está instalada.\n"
+msgstr "Aviso: Omitindo a ref “%s” relacionada porque é extra-data.\n"
 
 #: app/flatpak-builtins-create-usb.c:261 app/flatpak-builtins-create-usb.c:635
 #, c-format
@@ -1219,9 +1220,9 @@ msgstr ""
 "distribuição P2P de “%s”."
 
 #: app/flatpak-builtins-create-usb.c:271
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: Omitting ref ‘%s’ (runtime of ‘%s’) because it's extra-data.\n"
-msgstr "Aviso: Omitindo a ref “%s” relacionada porque não está instalada.\n"
+msgstr "Aviso: Omitindo a ref “%s” (runtime de “%s”) porque é extra-data.\n"
 
 #: app/flatpak-builtins-create-usb.c:482
 msgid "MOUNT-PATH [REF…] - Copy apps or runtimes onto removable media"
@@ -1255,7 +1256,7 @@ msgstr ""
 #: app/flatpak-builtins-create-usb.c:679
 #, c-format
 msgid "Installed ref ‘%s’ is extra-data, and cannot be distributed offline"
-msgstr ""
+msgstr "A ref “%s” instalada é extra-data e não pode ser distribuída offline"
 
 #: app/flatpak-builtins-create-usb.c:719
 #, c-format
@@ -2944,7 +2945,7 @@ msgstr "Subconjuntos"
 
 #: app/flatpak-builtins-repo.c:390
 msgid "Digest"
-msgstr ""
+msgstr "Digest"
 
 #: app/flatpak-builtins-repo.c:391
 msgid "History length"
@@ -3056,7 +3057,7 @@ msgstr "Torna os processos visíveis no espaço de nome pai"
 
 #: app/flatpak-builtins-run.c:88
 msgid "Share process ID namespace with parent"
-msgstr ""
+msgstr "Compartilha espaço de nome de ID de processo com pai"
 
 #: app/flatpak-builtins-run.c:89
 msgid "Write the instance ID to the given file descriptor"
@@ -3064,11 +3065,11 @@ msgstr "Escreve o ID de instância para o descritor de arquivo dado"
 
 #: app/flatpak-builtins-run.c:90
 msgid "Use PATH instead of the app's /app"
-msgstr ""
+msgstr "Usa PATH em vez do /app do aplicativo"
 
 #: app/flatpak-builtins-run.c:91
 msgid "Use PATH instead of the runtime's /usr"
-msgstr ""
+msgstr "Usa PATH em vez de /usr do runtime"
 
 #: app/flatpak-builtins-run.c:114
 msgid "APP [ARGUMENT…] - Run an app"
@@ -3680,13 +3681,12 @@ msgstr "Coloca aplicativos ou runtimes em mídia removível"
 
 #. translators: please keep the leading newline and space
 #: app/flatpak-main.c:94
-#, fuzzy
 msgid ""
 "\n"
 " Find applications and runtimes"
 msgstr ""
 "\n"
-" Localizando aplicativos e runtimes"
+" Localiza aplicativos e runtimes"
 
 #: app/flatpak-main.c:95
 msgid "Search for remote apps/runtimes"
@@ -3694,13 +3694,12 @@ msgstr "Pesquisa por aplicativos/runtimes de remoto"
 
 #. translators: please keep the leading newline and space
 #: app/flatpak-main.c:98
-#, fuzzy
 msgid ""
 "\n"
 " Manage running applications"
 msgstr ""
 "\n"
-" Execução de aplicativos"
+" Gerencia execução de aplicativos"
 
 #: app/flatpak-main.c:99
 msgid "Run an application"
@@ -3892,11 +3891,11 @@ msgstr "Exibe caminhos para instalações do sistema e sai"
 
 #: app/flatpak-main.c:173
 msgid "Print the updated environment needed to run flatpaks"
-msgstr ""
+msgstr "Exibe o ambiente atualizado necessário para executar flatpaks"
 
 #: app/flatpak-main.c:174
 msgid "Only include the system installation with --print-updated-env"
-msgstr ""
+msgstr "Inclui apenas a instalação do sistema com --print-updated-env"
 
 #: app/flatpak-main.c:179
 msgid "Work on the user installation"
@@ -4071,7 +4070,7 @@ msgstr "Formato de env inválido %s"
 #: common/flatpak-context.c:1218
 #, c-format
 msgid "Environment variable name must not contain '=': %s"
-msgstr ""
+msgstr "O nome de variável de ambiente não pode conter “=”: %s"
 
 #: common/flatpak-context.c:1331 common/flatpak-context.c:1339
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
@@ -4167,21 +4166,19 @@ msgstr "VAR=VALOR"
 
 #: common/flatpak-context.c:1423
 msgid "Read environment variables in env -0 format from FD"
-msgstr ""
+msgstr "Lê as variáveis de ambiente no formato env -0 do FD"
 
 #: common/flatpak-context.c:1423
 msgid "FD"
-msgstr ""
+msgstr "FD"
 
 #: common/flatpak-context.c:1424
-#, fuzzy
 msgid "Remove variable from environment"
-msgstr "Remove item para armazenamento de permissão"
+msgstr "Remove a variável do ambiente"
 
 #: common/flatpak-context.c:1424
-#, fuzzy
 msgid "VAR"
-msgstr "VALOR"
+msgstr "VAR"
 
 #: common/flatpak-context.c:1425
 msgid "Allow app to own name on the session bus"
@@ -4466,9 +4463,9 @@ msgid "D-Bus service file '%s' has wrong name"
 msgstr "O arquivo de serviço D-Bus “%s” tem um nome errado"
 
 #: common/flatpak-dir.c:7172
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid Exec argument %s"
-msgstr "Argumento de require-flatpak inválido %s"
+msgstr "Exec com argumento inválido %s"
 
 #: common/flatpak-dir.c:7637
 msgid "While getting detached metadata: "
@@ -4753,34 +4750,34 @@ msgstr "Conforme requisitado, %s foi obtida, mas não instalada"
 
 #: common/flatpak-instance.c:508 common/flatpak-instance.c:667
 #: common/flatpak-instance.c:708
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to create directory %s"
-msgstr "Não foi possível criar um pipe de sincronização"
+msgstr "Não foi possível criar um diretório %s"
 
 #: common/flatpak-instance.c:529
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to lock %s"
-msgstr "Não foi possível procurar o ID de chave %s: %d"
+msgstr "Não foi possível travar %s"
 
 #: common/flatpak-instance.c:581
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to open directory %s"
-msgstr "Não foi possível conectar ao barramento de sistema"
+msgstr "Não foi possível abrir o diretório %s"
 
 #: common/flatpak-instance.c:607
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to create temporary directory in %s"
-msgstr "Falha ao criar arquivo temporário"
+msgstr "Não foi possível criar um diretório temporário em %s"
 
 #: common/flatpak-instance.c:619
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to create file %s"
-msgstr "Não foi possível criar um pipe de sincronização"
+msgstr "Não foi possível criar o arquivo %s"
 
 #: common/flatpak-instance.c:626
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to update symbolic link %s/%s"
-msgstr "Não foi possível atualizar %s: %s\n"
+msgstr "Não foi possível atualizar o link simbólico %s/%s"
 
 #: common/flatpak-oci-registry.c:991
 msgid "Only Bearer authentication supported"
@@ -5096,6 +5093,8 @@ msgid ""
 "\"flatpak run\" is not intended to be run as `sudo flatpak run`, use `sudo -"
 "i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell"
 msgstr ""
+"“flatpak run” não se destina a ser executado como `sudo flatpak run`, use "
+"`sudo -i` ou `su -l` e invoque “flatpak run” de dentro do novo shell"
 
 #: common/flatpak-run.c:4033
 #, c-format
@@ -5626,27 +5625,21 @@ msgstr ""
 #~ msgid "\"flatpak run\" is not intended to be ran with sudo"
 #~ msgstr "“flatpak run” não se destina a ser executado com sudo"
 
-#, c-format
 #~ msgid "Invalid deployed ref %s: "
 #~ msgstr "Ref implantado inválido %s: "
 
-#, c-format
 #~ msgid "Deployed ref %s kind does not match commit (%s)"
 #~ msgstr "O tipo do ref implementado %s não coincide com o commit (%s)"
 
-#, c-format
 #~ msgid "Deployed ref %s name does not match commit (%s)"
 #~ msgstr "O nome do ref implementado %s não coincide com o commit (%s)"
 
-#, c-format
 #~ msgid "Deployed ref %s arch does not match commit (%s)"
 #~ msgstr "A arquitetura do ref implementado %s não coincide com o commit (%s)"
 
-#, c-format
 #~ msgid "Failed to determine parts from ref: %s"
 #~ msgstr "Falha ao determinar partes do ref: %s"
 
-#, c-format
 #~ msgid "Invalid arch %s"
 #~ msgstr "Arquitetura inválida %s"
 
