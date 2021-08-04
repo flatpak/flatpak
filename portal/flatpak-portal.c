@@ -370,7 +370,7 @@ check_child_pid_status (void *user_data)
      signal to avoid an awkward out-of-order SpawnExited -> SpawnStarted. */
   if (pid_data == NULL)
     {
-      g_warning ("%u already exited, skipping SpawnStarted", pid);
+      g_warning (_("%u already exited, skipping SpawnStarted"), pid);
       return G_SOURCE_REMOVE;
     }
 
@@ -414,7 +414,7 @@ check_child_pid_status (void *user_data)
       g_autoptr(GError) error = NULL;
       relative_child_pid = get_child_pid_relative_to_parent_sandbox (child_pid, &error);
       if (relative_child_pid == 0)
-        g_warning ("Failed to find relative PID for %d: %s", child_pid, error->message);
+        g_warning (_("Failed to find relative PID for %d: %s"), child_pid, error->message);
     }
 
   g_debug ("Emitting SpawnStarted(%u, %d)", pid, relative_child_pid);
@@ -451,7 +451,7 @@ instance_id_read_finish (GObject      *source,
     {
       /* 0 means EOF, so the process could never have been started. */
       if (bytes_read == -1)
-        g_warning ("Failed to read instance id: %s", error->message);
+        g_warning (_("Failed to read instance id: %s"), error->message);
 
       return;
     }
@@ -493,7 +493,7 @@ child_setup_func (gpointer user_data)
   sigemptyset (&set);
   if (pthread_sigmask (SIG_SETMASK, &set, NULL) == -1)
     {
-      g_warning ("Failed to unblock signals when starting child");
+      g_warning (_("Failed to unblock signals when starting child"));
       return;
     }
 
@@ -1056,13 +1056,13 @@ handle_spawn (PortalFlatpak         *object,
 
               if (var_val[0] == '\0' || var_val[0] == '=')
                 {
-                  g_warning ("Environment variable in extra-args has empty name");
+                  g_warning (_("Environment variable in extra-args has empty name"));
                   continue;
                 }
 
               if (strchr (var_val, '=') == NULL)
                 {
-                  g_warning ("Environment variable in extra-args has no value");
+                  g_warning (_("Environment variable in extra-args has no value"));
                   continue;
                 }
 
@@ -1937,7 +1937,7 @@ check_for_updates (PortalFlatpakUpdateMonitor *monitor)
                                           g_variant_new ("(a{sv})", &builder),
                                           &error))
         {
-          g_warning ("Failed to emit UpdateAvailable: %s", error->message);
+          g_warning (_("Failed to emit UpdateAvailable: %s"), error->message);
           g_clear_error (&error);
         }
     }
@@ -2198,7 +2198,7 @@ set_update_permission (const char *app_id,
     permissions[0] = "no";
   else
     {
-      g_warning ("Wrong permission format, ignoring");
+      g_warning (_("Wrong permission format, ignoring"));
       return;
     }
   permissions[1] = NULL;
@@ -2257,7 +2257,7 @@ request_update_permissions_sync (PortalFlatpakUpdateMonitor *monitor,
       access_impl = find_portal_implementation ("org.freedesktop.impl.portal.Access");
       if (access_impl == NULL)
         {
-          g_warning ("No Access portal implementation found");
+          g_warning (_("No Access portal implementation found"));
           g_set_error (error, G_DBUS_ERROR, G_DBUS_ERROR_NOT_SUPPORTED, _("No portal support found"));
           return FALSE;
         }
@@ -2294,7 +2294,7 @@ request_update_permissions_sync (PortalFlatpakUpdateMonitor *monitor,
       if (ret == NULL)
         {
           g_dbus_error_strip_remote_error (*error);
-          g_warning ("Failed to show access dialog: %s", (*error)->message);
+          g_warning (_("Failed to show access dialog: %s"), (*error)->message);
           return FALSE;
         }
 
@@ -2357,7 +2357,7 @@ emit_progress (PortalFlatpakUpdateMonitor *monitor,
                                       g_variant_new ("(a{sv})", &builder),
                                       &error))
     {
-      g_warning ("Failed to emit ::progress: %s", error->message);
+      g_warning (_("Failed to emit ::progress: %s"), error->message);
     }
 }
 
@@ -2400,7 +2400,7 @@ send_variant (GVariant *v, GOutputStream *out)
   if (!g_output_stream_write_all (out, &size32, 4, NULL, NULL, &error) ||
       !g_output_stream_write_all (out, data, size, NULL, NULL, &error))
     {
-      g_warning ("sending to parent failed: %s", error->message);
+      g_warning (_("sending to parent failed: %s"), error->message);
       exit (1); // This will exit the child process and cause the parent to report an error
     }
 }
@@ -2919,7 +2919,7 @@ on_bus_acquired (GDBusConnection *connection,
                                          FLATPAK_PORTAL_PATH,
                                          &error))
     {
-      g_warning ("error: %s", error->message);
+      g_warning (_("error: %s"), error->message);
       g_error_free (error);
     }
 }
@@ -3020,7 +3020,7 @@ main (int    argc,
     {
       g_printerr ("%s: %s", g_get_application_name (), error->message);
       g_printerr ("\n");
-      g_printerr ("Try \"%s --help\" for more information.",
+      g_printerr (_("Try \"%s --help\" for more information."),
                   g_get_prgname ());
       g_printerr ("\n");
       g_option_context_free (context);
@@ -3044,7 +3044,7 @@ main (int    argc,
   session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, &error);
   if (session_bus == NULL)
     {
-      g_printerr ("Can't find bus: %s\n", error->message);
+      g_printerr (_("Can't find bus: %s\n"), error->message);
       return 1;
     }
 
@@ -3062,7 +3062,7 @@ main (int    argc,
                                       NULL,
                                       &local_error);
       if (monitor == NULL)
-        g_warning ("Failed to set watch on %s: %s", exe_path, error->message);
+        g_warning (_("Failed to set watch on %s: %s"), exe_path, error->message);
       else
         g_signal_connect (monitor, "changed",
                           G_CALLBACK (binary_file_changed_cb), NULL);

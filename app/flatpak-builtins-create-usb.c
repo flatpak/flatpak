@@ -459,7 +459,7 @@ ostree_create_usb (GOptionContext *context,
   /* Report success to the user. */
   g_autofree char *src_repo_path = g_file_get_path (ostree_repo_get_path (src_repo));
 
-  g_print ("Copied %u/%u refs successfully from ‘%s’ to ‘%s’ repository in ‘%s’.\n", num_refs, num_refs,
+  g_print (_("Copied %u/%u refs successfully from ‘%s’ to ‘%s’ repository in ‘%s’.\n"), num_refs, num_refs,
            src_repo_path, dest_repo_path, mount_root_path);
 
   return TRUE;

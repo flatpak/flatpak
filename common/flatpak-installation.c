@@ -257,7 +257,7 @@ flatpak_get_system_installations (GCancellable *cancellable,
         {
           /* Warn about the problem and continue without listing this installation. */
           g_autofree char *dir_name = flatpak_dir_get_name (install_dir);
-          g_warning ("Unable to create FlatpakInstallation for %s: %s",
+          g_warning (_("Unable to create FlatpakInstallation for %s: %s"),
                      dir_name, local_error->message);
         }
     }
@@ -911,7 +911,7 @@ flatpak_installation_list_installed_refs (FlatpakInstallation *self,
       if (ref != NULL)
         g_ptr_array_add (refs, ref);
       else
-        g_warning ("Unexpected failure getting ref for %s: %s", flatpak_decomposed_get_ref (decomposed), local_error->message);
+        g_warning (_("Unexpected failure getting ref for %s: %s"), flatpak_decomposed_get_ref (decomposed), local_error->message);
     }
 
   decomposed_runtime = flatpak_dir_list_refs (dir,FLATPAK_KINDS_RUNTIME,
@@ -927,7 +927,7 @@ flatpak_installation_list_installed_refs (FlatpakInstallation *self,
       if (ref != NULL)
         g_ptr_array_add (refs, ref);
       else
-        g_warning ("Unexpected failure getting ref for %s: %s", flatpak_decomposed_get_ref (decomposed), local_error->message);
+        g_warning (_("Unexpected failure getting ref for %s: %s"), flatpak_decomposed_get_ref (decomposed), local_error->message);
     }
 
   return g_steal_pointer (&refs);
@@ -969,7 +969,7 @@ flatpak_installation_list_installed_refs_by_kind (FlatpakInstallation *self,
       if (ref != NULL)
         g_ptr_array_add (refs, ref);
       else
-        g_warning ("Unexpected failure getting ref for %s: %s", flatpak_decomposed_get_ref (decomposed), local_error->message);
+        g_warning (_("Unexpected failure getting ref for %s: %s"), flatpak_decomposed_get_ref (decomposed), local_error->message);
     }
 
   return g_steal_pointer (&refs);
@@ -3116,7 +3116,7 @@ flatpak_installation_list_unused_refs_with_options (FlatpakInstallation *self,
       if (ref != NULL)
         g_ptr_array_add (refs, ref);
       else
-        g_warning ("Unexpected failure getting ref for %s: %s", flatpak_decomposed_get_ref (decomposed), local_error->message);
+        g_warning (_("Unexpected failure getting ref for %s: %s"), flatpak_decomposed_get_ref (decomposed), local_error->message);
     }
 
   return g_steal_pointer (&refs);
@@ -3177,7 +3177,7 @@ flatpak_installation_list_pinned_refs (FlatpakInstallation *self,
           if (ref != NULL)
             g_ptr_array_add (refs, ref);
           else
-            g_warning ("Unexpected failure getting ref for %s: %s", flatpak_decomposed_get_ref (decomposed), local_error->message);
+            g_warning (_("Unexpected failure getting ref for %s: %s"), flatpak_decomposed_get_ref (decomposed), local_error->message);
         }
     }
 

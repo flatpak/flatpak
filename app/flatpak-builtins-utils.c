@@ -1224,7 +1224,7 @@ skip_escape_sequence (const char *p)
     p += strlen (FLATPAK_ANSI_CLEAR);
   else if (g_str_has_prefix (p, "\x1b"))
     {
-      g_warning ("Unknown Escape sequence");
+      g_warning (_("Unknown Escape sequence"));
       p++; /* avoid looping forever */
     }
   return p;

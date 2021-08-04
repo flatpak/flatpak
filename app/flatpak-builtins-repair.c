@@ -310,13 +310,13 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
 
   repo = flatpak_dir_get_repo (dir);
 
-  g_print ("Working on the %s installation at %s\n",
+  g_print (_("Working on the %s installation at %s\n"),
            flatpak_dir_get_name_cached (dir),
            flatpak_file_get_path_cached (flatpak_dir_get_path (dir)));
 
   if (!opt_dry_run && !flatpak_dir_is_user (dir) && geteuid () != 0)
     {
-      g_print ("Privileges are required to make changes; assuming --dry-run\n");
+      g_print (_("Privileges are required to make changes; assuming --dry-run\n"));
       opt_dry_run = TRUE;
     }
 
@@ -489,7 +489,7 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
 
   if (opt_reinstall_all)
     {
-      g_print ("Reinstalling appstream\n");
+      g_print (_("Reinstalling appstream\n"));
 
       GLNX_HASH_TABLE_FOREACH_KV (all_refs, const char *, refspec, const char *, checksum)
       {

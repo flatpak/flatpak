@@ -425,7 +425,7 @@ expect_symlink (const char *host_path,
    * translating the warning */
   if (symlink (target, host_path) < 0 && errno != EEXIST)
     {
-      g_warning ("Unable to create symlink at %s: %s",
+      g_warning (_("Unable to create symlink at %s: %s"),
                  host_path, g_strerror (errno));
     }
   else
@@ -437,10 +437,10 @@ expect_symlink (const char *host_path,
                                                      &local_error);
 
       if (got == NULL)
-        g_warning ("%s is not a symlink to \"%s\" as expected: %s",
+        g_warning (_("%s is not a symlink to \"%s\" as expected: %s"),
                    host_path, target, local_error->message);
       else if (strcmp (got, target) != 0)
-        g_warning ("%s is a symlink to \"%s\", not \"%s\" as expected",
+        g_warning (_("%s is a symlink to \"%s\", not \"%s\" as expected"),
                    host_path, got, target);
     }
 }

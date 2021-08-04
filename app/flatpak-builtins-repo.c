@@ -356,7 +356,7 @@ print_branches (OstreeRepo *repo,
           checksum_bytes = var_subsummary_peek_checksum (subsummary, &checksum_bytes_len);
           if (G_UNLIKELY (checksum_bytes_len != OSTREE_SHA256_DIGEST_LEN))
             {
-              g_printerr ("Invalid checksum for digested summary\n");
+              g_printerr (_("Invalid checksum for digested summary\n"));
               continue;
             }
           digest = ostree_checksum_from_bytes (checksum_bytes);
@@ -364,7 +364,7 @@ print_branches (OstreeRepo *repo,
           subsummary_v = flatpak_repo_load_digested_summary (repo, digest, &error);
           if (subsummary_v == NULL)
             {
-              g_printerr ("Failed to load subsummary %s (digest %s)\n", name, digest);
+              g_printerr (_("Failed to load subsummary %s (digest %s)\n"), name, digest);
               continue;
             }
 
@@ -413,7 +413,7 @@ print_subsets (OstreeRepo *repo,
           checksum_bytes = var_subsummary_peek_checksum (subsummary, &checksum_bytes_len);
           if (G_UNLIKELY (checksum_bytes_len != OSTREE_SHA256_DIGEST_LEN))
             {
-              g_printerr ("Invalid checksum for digested summary\n");
+              g_printerr (_("Invalid checksum for digested summary\n"));
               continue;
             }
           digest = ostree_checksum_from_bytes (checksum_bytes);
@@ -475,7 +475,7 @@ print_metadata (OstreeRepo *repo,
 
                   subsummary_v = flatpak_repo_load_digested_summary (repo, digest, &error);
                   if (subsummary_v == NULL)
-                    g_printerr ("Failed to load subsummary %s (digest %s)\n", name, digest);
+                    g_printerr (_("Failed to load subsummary %s (digest %s)\n"), name, digest);
                   break;
                 }
             }
@@ -572,10 +572,10 @@ dump_deltas_for_commit (GPtrArray  *deltas,
         {
           if (!header_printed)
             {
-              g_print ("Static Deltas:\n");
+              g_print (_("Static Deltas:\n"));
               header_printed = TRUE;
             }
-          g_print ("  from scratch\n");
+          g_print (_("  from scratch\n"));
         }
       else if (strchr (delta, '-'))
         {
@@ -585,10 +585,10 @@ dump_deltas_for_commit (GPtrArray  *deltas,
             {
               if (!header_printed)
                 {
-                  g_print ("Static Deltas:\n");
+                  g_print (_("Static Deltas:\n"));
                   header_printed = TRUE;
                 }
-              g_print ("  from %s\n", parts[0]);
+              g_print (_("  from %s\n"), parts[0]);
             }
         }
     }
@@ -614,8 +614,8 @@ dump_commit (const char *commit,
 
   timestamp = GUINT64_FROM_BE (timestamp);
   str = format_timestamp (timestamp);
-  g_print ("Commit:  %s\n", commit);
-  g_print ("Date:  %s\n", str);
+  g_print (_("Commit:  %s\n"), commit);
+  g_print (_("Date:  %s\n"), str);
 
   if (subject[0])
     {
@@ -624,7 +624,7 @@ dump_commit (const char *commit,
     }
   else
     {
-      g_print ("(no subject)\n");
+      g_print (_("(no subject)\n"));
     }
 
   if (body[0])
@@ -656,7 +656,7 @@ log_commit (OstreeRepo *repo,
     {
       if (is_recurse && g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
         {
-          g_print ("<< History beyond this commit not fetched >>\n");
+          g_print (_("<< History beyond this commit not fetched >>\n"));
           g_clear_error (&local_error);
           ret = TRUE;
         }

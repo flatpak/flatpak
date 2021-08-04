@@ -901,7 +901,7 @@ flatpak_remote_state_load_data (FlatpakRemoteState *self,
       commit_metadata = g_variant_get_child_value (commit_data, 0);
       g_variant_lookup (commit_metadata, "xa.metadata", "&s", &xa_metadata);
       if (xa_metadata == NULL)
-        return flatpak_fail (error, "No xa.metadata in sideload commit %s ref %s", checksum, ref);
+        return flatpak_fail (error, _("No xa.metadata in sideload commit %s ref %s"), checksum, ref);
 
       if (g_variant_lookup (commit_metadata, "xa.download-size", "t", &download_size))
         download_size = GUINT64_FROM_BE (download_size);
@@ -1571,14 +1571,14 @@ append_locations_from_config_file (GPtrArray    *locations,
       if (!g_str_has_prefix (groups[i], "Installation \""))
         {
           if (g_str_has_prefix (groups[i], "Installation "))
-            g_warning ("Installation without quotes (%s). Ignoring", groups[i]);
+            g_warning (_("Installation without quotes (%s). Ignoring"), groups[i]);
           continue;
         }
 
       id = g_strdup (&groups[i][14]);
       if (!g_str_has_suffix (id, "\""))
         {
-          g_warning ("While reading '%s': Installation without closing quote (%s). Ignoring", file_path, groups[i]);
+          g_warning (_("While reading '%s': Installation without closing quote (%s). Ignoring"), file_path, groups[i]);
           continue;
         }
 
@@ -1588,13 +1588,13 @@ append_locations_from_config_file (GPtrArray    *locations,
 
       if (!is_good_installation_id (id))
         {
-          g_warning ("While reading '%s': Bad installation ID '%s'. Ignoring", file_path, id);
+          g_warning (_("While reading '%s': Bad installation ID '%s'. Ignoring"), file_path, id);
           continue;
         }
 
       if (has_system_location (locations, id))
         {
-          g_warning ("While reading '%s': Duplicate installation ID '%s'. Ignoring", file_path, id);
+          g_warning (_("While reading '%s': Duplicate installation ID '%s'. Ignoring"), file_path, id);
           continue;
         }
 
@@ -1856,7 +1856,7 @@ flatpak_ensure_system_user_cache_dir_location (GError **error)
 
   if (g_mkdtemp_full (path, 0755) == NULL)
     {
-      flatpak_fail (error, "Can't create temporary directory");
+      flatpak_fail (error, _("Can't create temporary directory"));
       return NULL;
     }
 
@@ -2019,7 +2019,7 @@ flatpak_dir_revokefs_fuse_unmount (OstreeRepo **repo,
       g_autoptr(GError) tmp_error = NULL;
 
       if (!flatpak_rm_rf (mnt_dir_file, NULL, &tmp_error))
-        g_warning ("Unable to remove mountpoint directory %s: %s", mnt_dir, tmp_error->message);
+        g_warning (_("Unable to remove mountpoint directory %s: %s"), mnt_dir, tmp_error->message);
 
       return TRUE;
     }
@@ -3980,7 +3980,7 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
       /* Create .changed file early to avoid polling non-existing file in monitor */
       if (!flatpak_dir_mark_changed (self, &my_error))
         {
-          g_warning ("Error marking directory as changed: %s", my_error->message);
+          g_warning (_("Error marking directory as changed: %s"), my_error->message);
           g_clear_error (&my_error);
         }
     }
@@ -4613,7 +4613,7 @@ flatpak_dir_deploy_appstream (FlatpakDir   *self,
     {
       old_checkout_dir = g_file_get_child (arch_dir, old_dir);
       if (!flatpak_rm_rf (old_checkout_dir, cancellable, &tmp_error))
-        g_warning ("Unable to remove old appstream checkout: %s", tmp_error->message);
+        g_warning (_("Unable to remove old appstream checkout: %s"), tmp_error->message);
     }
 
   if (!g_file_replace_contents (timestamp_file, "", 0, NULL, FALSE,
@@ -6689,7 +6689,7 @@ flatpak_dir_run_triggers (FlatpakDir   *self,
                              NULL, NULL,
                              NULL, &trigger_error))
             {
-              g_warning ("Error running trigger %s: %s", name, trigger_error->message);
+              g_warning (_("Error running trigger %s: %s"), name, trigger_error->message);
               g_clear_error (&trigger_error);
             }
         }
@@ -6897,7 +6897,7 @@ rewrite_mime_xml (xmlDoc *doc)
 
               if (strcmp ((char *) sub_node->name, "magic") == 0)
                 {
-                  g_warning ("Removing magic mime rule from exports");
+                  g_warning (_("Removing magic mime rule from exports"));
                   xmlUnlinkNode (sub_node);
                   xmlFreeNode (sub_node);
                 }
@@ -7286,7 +7286,7 @@ rewrite_export_dir (const char         *app,
 
           if (allowed_extensions[i] == NULL)
             {
-              g_warning ("Invalid extension for %s in app %s, removing.", dent->d_name, app);
+              g_warning (_("Invalid extension for %s in app %s, removing."), dent->d_name, app);
               if (unlinkat (source_iter.fd, dent->d_name, 0) != 0 && errno != ENOENT)
                 {
                   glnx_set_error_from_errno (error);
@@ -7299,7 +7299,7 @@ rewrite_export_dir (const char         *app,
 
           if (!flatpak_name_matches_one_wildcard_prefix (name_without_extension, (const char * const *) allowed_prefixes, require_exact_match))
             {
-              g_warning ("Non-prefixed filename %s in app %s, removing.", dent->d_name, app);
+              g_warning (_("Non-prefixed filename %s in app %s, removing."), dent->d_name, app);
               if (unlinkat (source_iter.fd, dent->d_name, 0) != 0 && errno != ENOENT)
                 {
                   glnx_set_error_from_errno (error);
@@ -7344,7 +7344,7 @@ rewrite_export_dir (const char         *app,
         }
       else
         {
-          g_warning ("Not exporting file %s of unsupported type.", dent->d_name);
+          g_warning (_("Not exporting file %s of unsupported type."), dent->d_name);
           if (unlinkat (source_iter.fd, dent->d_name, 0) != 0 && errno != ENOENT)
             {
               glnx_set_error_from_errno (error);
@@ -7750,7 +7750,7 @@ child_setup (gpointer user_data)
       /* We also seek all fds to the start, because this lets
          us use the same fd_array multiple times */
       if (lseek (fd, 0, SEEK_SET) < 0)
-        g_printerr ("lseek error in child setup");
+        g_printerr (_("lseek error in child setup"));
 
       fcntl (fd, F_SETFD, 0);
     }
@@ -8965,7 +8965,7 @@ flatpak_dir_setup_revokefs_fuse_mount (FlatpakDir    *self,
       if (g_error_matches (local_error, G_DBUS_ERROR, G_DBUS_ERROR_NOT_SUPPORTED))
         g_debug ("revokefs-fuse not supported on your installation: %s", local_error->message);
       else
-        g_warning ("Failed to get revokefs-fuse socket from system-helper: %s", local_error->message);
+        g_warning (_("Failed to get revokefs-fuse socket from system-helper: %s"), local_error->message);
 
       goto out;
     }
@@ -8978,7 +8978,7 @@ flatpak_dir_setup_revokefs_fuse_mount (FlatpakDir    *self,
       mnt_dir_tmp = flatpak_dir_revokefs_fuse_create_mountpoint (ref, &local_error);
       if (mnt_dir_tmp == NULL)
         {
-          g_warning ("Failed to create a mountpoint for revokefs-fuse: %s", local_error->message);
+          g_warning (_("Failed to create a mountpoint for revokefs-fuse: %s"), local_error->message);
           close (socket);
           goto out;
         }
@@ -8993,7 +8993,7 @@ flatpak_dir_setup_revokefs_fuse_mount (FlatpakDir    *self,
       if (revokefs_fuse == NULL ||
           !g_subprocess_wait_check (revokefs_fuse, NULL, &local_error))
         {
-          g_warning ("Error spawning revokefs-fuse: %s", local_error->message);
+          g_warning (_("Error spawning revokefs-fuse: %s"), local_error->message);
           close (socket);
           goto out;
         }
@@ -9028,7 +9028,7 @@ flatpak_dir_unmount_and_cancel_pull (FlatpakDir    *self,
 
   if (mnt_dir &&
       !flatpak_dir_revokefs_fuse_unmount (repo, lockfile, mnt_dir, &error))
-    g_warning ("Could not unmount revokefs-fuse filesystem at %s: %s", mnt_dir, error->message);
+    g_warning (_("Could not unmount revokefs-fuse filesystem at %s: %s"), mnt_dir, error->message);
 
   g_clear_error (&error);
 
@@ -9037,7 +9037,7 @@ flatpak_dir_unmount_and_cancel_pull (FlatpakDir    *self,
                                                    arg_flags,
                                                    installation ? installation : "",
                                                    src_dir, cancellable, &error))
-    g_warning ("Error cancelling ongoing pull at %s: %s", src_dir, error->message);
+    g_warning (_("Error cancelling ongoing pull at %s: %s"), src_dir, error->message);
 }
 
 gboolean
@@ -9179,7 +9179,7 @@ flatpak_dir_install (FlatpakDir          *self,
               child_repo = flatpak_dir_create_child_repo (self, mnt_dir_file, &child_repo_lock, opt_commit, &local_error);
               if (child_repo == NULL)
                 {
-                  g_warning ("Cannot create repo on revokefs mountpoint %s: %s", mnt_dir, local_error->message);
+                  g_warning (_("Cannot create repo on revokefs mountpoint %s: %s"), mnt_dir, local_error->message);
                   flatpak_dir_unmount_and_cancel_pull (self,
                                                        FLATPAK_HELPER_CANCEL_PULL_FLAGS_NONE,
                                                        cancellable,
@@ -9242,7 +9242,7 @@ flatpak_dir_install (FlatpakDir          *self,
                                                                FLATPAK_HELPER_CANCEL_PULL_FLAGS_PRESERVE_PULL,
                                                                installation ? installation : "",
                                                                src_dir, cancellable, &local_error))
-                g_warning ("Error cancelling ongoing pull at %s: %s", src_dir, local_error->message);
+                g_warning (_("Error cancelling ongoing pull at %s: %s"), src_dir, local_error->message);
               return FALSE;
             }
         }
@@ -9854,7 +9854,7 @@ flatpak_dir_update (FlatpakDir                           *self,
               child_repo = flatpak_dir_create_child_repo (self, mnt_dir_file, &child_repo_lock, commit, &local_error);
               if (child_repo == NULL)
                 {
-                  g_warning ("Cannot create repo on revokefs mountpoint %s: %s", mnt_dir, local_error->message);
+                  g_warning (_("Cannot create repo on revokefs mountpoint %s: %s"), mnt_dir, local_error->message);
                   flatpak_dir_unmount_and_cancel_pull (self,
                                                        FLATPAK_HELPER_CANCEL_PULL_FLAGS_NONE,
                                                        cancellable,
@@ -9909,7 +9909,7 @@ flatpak_dir_update (FlatpakDir                           *self,
           if (is_revokefs_pull &&
               !flatpak_dir_revokefs_fuse_unmount (&child_repo, &child_repo_lock, mnt_dir, &local_error))
             {
-              g_warning ("Could not unmount revokefs-fuse filesystem at %s: %s", mnt_dir, local_error->message);
+              g_warning (_("Could not unmount revokefs-fuse filesystem at %s: %s"), mnt_dir, local_error->message);
               flatpak_dir_unmount_and_cancel_pull (self,
                                                    FLATPAK_HELPER_CANCEL_PULL_FLAGS_PRESERVE_PULL,
                                                    cancellable,
@@ -10440,7 +10440,7 @@ flatpak_dir_undeploy (FlatpakDir        *self,
                                 G_FILE_CREATE_REPLACE_DESTINATION, NULL, NULL, &child_error))
     {
       g_autofree gchar *path = g_file_get_path (change_file);
-      g_warning ("Unable to clear %s: %s", path, child_error->message);
+      g_warning (_("Unable to clear %s: %s"), path, child_error->message);
       g_clear_error (&child_error);
     }
 
@@ -10449,7 +10449,7 @@ flatpak_dir_undeploy (FlatpakDir        *self,
       g_autoptr(GError) tmp_error = NULL;
 
       if (!flatpak_rm_rf (removed_subdir, cancellable, &tmp_error))
-        g_warning ("Unable to remove old checkout: %s", tmp_error->message);
+        g_warning (_("Unable to remove old checkout: %s"), tmp_error->message);
     }
 
   return TRUE;
@@ -10603,7 +10603,7 @@ flatpak_dir_cleanup_removed (FlatpakDir   *self,
         {
           g_autoptr(GError) tmp_error = NULL;
           if (!flatpak_rm_rf (child, cancellable, &tmp_error))
-            g_warning ("Unable to remove old checkout: %s", tmp_error->message);
+            g_warning (_("Unable to remove old checkout: %s"), tmp_error->message);
         }
 
       g_clear_object (&child_info);
@@ -11807,12 +11807,12 @@ flatpak_dir_remote_fetch_indexed_summary (FlatpakDir   *self,
               g_autoptr(GBytes) applied = flatpak_summary_apply_diff (old_summary, delta, &delta_error);
 
               if (applied == NULL)
-                g_warning ("Failed to apply delta, falling back: %s", delta_error->message);
+                g_warning (_("Failed to apply delta, falling back: %s"), delta_error->message);
               else
                 {
                   sha256 = g_compute_checksum_for_bytes (G_CHECKSUM_SHA256, applied);
                   if (strcmp (sha256, checksum) != 0)
-                    g_warning ("Appliying delta gave wrong checksum, falling backn");
+                    g_warning (_("Appliying delta gave wrong checksum, falling backn"));
                   else
                     summary = g_steal_pointer (&applied);
                 }

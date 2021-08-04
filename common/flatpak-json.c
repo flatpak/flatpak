@@ -21,6 +21,8 @@
 #include "config.h"
 #include "string.h"
 
+#include <glib/gi18n-lib.h>
+
 #include "flatpak-json-private.h"
 #include "flatpak-utils-private.h"
 #include "libglnx.h"
@@ -169,7 +171,7 @@ demarshal (JsonNode            *parent_node,
                       break;
                   }
                 if (struct_props[i].name == NULL)
-                  return flatpak_fail (error, "Unknown property named %s", member_name);
+                  return flatpak_fail (error, _("Unknown property named %s"), member_name);
               }
           }
 

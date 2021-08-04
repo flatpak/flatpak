@@ -1214,7 +1214,7 @@ flatpak_remote_commit (FlatpakRemote *self,
     return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No url specified"));
 
   if (priv->type != FLATPAK_REMOTE_TYPE_STATIC)
-    return flatpak_fail (error, "Dynamic remote cannot be committed");
+    return flatpak_fail (error, _("Dynamic remote cannot be committed"));
 
   repo = flatpak_dir_get_repo (dir);
   if (repo == NULL)

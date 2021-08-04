@@ -260,7 +260,7 @@ list_config (GOptionContext *context, int argc, char **argv, FlatpakDir *dir, GC
       if (default_value)
         {
           g_autofree char *printed = keys[i].print (default_value);
-          g_print (" (default: %s)", printed);
+          g_print (_(" (default: %s)"), printed);
         }
       g_print ("\n");
     }
@@ -287,7 +287,7 @@ get_config (GOptionContext *context, int argc, char **argv, FlatpakDir *dir, GCa
   if (value)
     g_print ("%s\n", value);
   else
-    g_print ("*unset*\n");
+    g_print (_("*unset*\n"));
 
   return TRUE;
 }

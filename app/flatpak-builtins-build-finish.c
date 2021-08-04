@@ -259,7 +259,7 @@ collect_exports (GFile          *base,
 
       if (!flatpak_get_allowed_exports (path, app_id, arg_context,
                                         &allowed_extensions, &allowed_prefixes, &require_exact_match))
-        return flatpak_fail (error, "Unexpectedly not allowed to export %s", path);
+        return flatpak_fail (error, _("Unexpectedly not allowed to export %s"), path);
 
       if (g_file_query_exists (src, cancellable))
         {

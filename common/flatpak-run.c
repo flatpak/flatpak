@@ -155,7 +155,7 @@ write_xauth (char *number, FILE *output)
 
   if (uname (&unames))
     {
-      g_warning ("uname failed");
+      g_warning (_("uname failed"));
       return;
     }
 
@@ -190,7 +190,7 @@ write_xauth (char *number, FILE *output)
             }
 
           if (!XauWriteAuth (output, &local_xa))
-            g_warning ("xauth write error");
+            g_warning (_("xauth write error"));
         }
 
       XauDisposeAuth (xa);
@@ -1485,7 +1485,7 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
                 }
             }
           else
-            g_warning ("Unexpected /dev/shm symlink %s", link);
+            g_warning (_("Unexpected /dev/shm symlink %s"), link);
         }
     }
   else
@@ -2129,7 +2129,7 @@ add_font_path_args (FlatpakBwrap *bwrap)
                    "</fontconfig>\n");
 
   if (!flatpak_bwrap_add_args_data (bwrap, "font-dirs.xml", xml_snippet->str, xml_snippet->len, "/run/host/font-dirs.xml", NULL))
-    g_warning ("Unable to add fontconfig data snippet");
+    g_warning (_("Unable to add fontconfig data snippet"));
 }
 
 static void
@@ -2272,7 +2272,7 @@ get_dconf_data (const char  *app_id,
       if (flatpak_dconf_path_is_similar (migrate_path, prefix))
         add_dconf_dir_to_keyfile (values_data, client, migrate_path, DCONF_READ_USER_VALUE);
       else
-        g_warning ("Ignoring D-Conf migrate-path setting %s", migrate_path);
+        g_warning (_("Ignoring D-Conf migrate-path setting %s"), migrate_path);
     }
 
   g_debug ("Add defaults in dir %s", prefix);
@@ -2303,7 +2303,7 @@ get_dconf_data (const char  *app_id,
             }
           else
             {
-              g_warning ("Ignoring settings path '%s': neither dir nor key", paths[i]);
+              g_warning (_("Ignoring settings path '%s': neither dir nor key"), paths[i]);
             }
         }
     }
@@ -2389,13 +2389,13 @@ flatpak_run_add_dconf_args (FlatpakBwrap *bwrap,
 
           if (g_mkdir_with_parents (dir, 0700) == -1)
             {
-              g_warning ("failed creating dirs for %s", filename);
+              g_warning (_("failed creating dirs for %s"), filename);
               return FALSE;
             }
 
           if (!g_file_set_contents (filename, values, values_size, error))
             {
-              g_warning ("failed writing %s", filename);
+              g_warning (_("failed writing %s"), filename);
               return FALSE;
             }
         }
@@ -4320,7 +4320,7 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
       int userns_fd, userns2_fd, pidns_fd;
 
       if (parent_pid == 0)
-        return flatpak_fail (error, "No parent pid specified");
+        return flatpak_fail (error, _("No parent pid specified"));
 
       userns_path = g_strdup_printf ("/proc/%d/root/run/.userns", parent_pid);
 

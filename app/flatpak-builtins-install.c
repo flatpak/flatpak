@@ -420,7 +420,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
                                                            cancellable, &local_error);
                       if (refs == NULL)
                         {
-                          g_warning ("An error was encountered searching remote ‘%s’ for ‘%s’: %s", this_remote, argv[1], local_error->message);
+                          g_warning (_("An error was encountered searching remote ‘%s’ for ‘%s’: %s"), this_remote, argv[1], local_error->message);
                           continue;
                         }
                     }

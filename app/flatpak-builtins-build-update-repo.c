@@ -323,7 +323,7 @@ generate_all_deltas (OstreeRepo   *repo,
   g_autoptr(GMainContextPopDefault) context = NULL;
   g_autoptr(GPtrArray) ignore_patterns = g_ptr_array_new_with_free_func ((GDestroyNotify)g_pattern_spec_free);
 
-  g_print ("Generating static deltas\n");
+  g_print (_("Generating static deltas\n"));
 
   parambuilder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
   /* Fall back for 1 meg files */
@@ -407,7 +407,7 @@ generate_all_deltas (OstreeRepo   *repo,
       if (!ostree_repo_load_variant (repo, OSTREE_OBJECT_TYPE_COMMIT, commit,
                                      &variant, NULL))
         {
-          g_warning ("Couldn't load commit %s", commit);
+          g_warning (_("Couldn't load commit %s"), commit);
           continue;
         }
 
@@ -429,7 +429,7 @@ generate_all_deltas (OstreeRepo   *repo,
           !ostree_repo_load_variant (repo, OSTREE_OBJECT_TYPE_COMMIT, parent_commit,
                                      &parent_variant, NULL))
         {
-          g_warning ("Couldn't load parent commit %s", parent_commit);
+          g_warning (_("Couldn't load parent commit %s"), parent_commit);
           continue;
         }
 
@@ -620,10 +620,10 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
       for (i = 0; i < unwanted_deltas->len; i++)
         {
           const char *delta = g_ptr_array_index (unwanted_deltas, i);
-          g_print ("Deleting unwanted delta: %s\n", delta);
+          g_print (_("Deleting unwanted delta: %s\n"), delta);
           g_autoptr(GError) my_error = NULL;
           if (!_ostree_repo_static_delta_delete (repo, delta, cancellable, &my_error))
-            g_printerr ("Unable to delete delta %s: %s\n", delta, my_error->message);
+            g_printerr (_("Unable to delete delta %s: %s\n"), delta, my_error->message);
         }
     }
 
@@ -647,9 +647,9 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
       g_autofree char *formatted_freed_size = NULL;
 
       if (opt_prune_dry_run)
-        g_print ("Pruning old commits (dry-run)\n");
+        g_print (_("Pruning old commits (dry-run)\n"));
       else
-        g_print ("Pruning old commits\n");
+        g_print (_("Pruning old commits\n"));
       if (!flatpak_repo_prune (repo, opt_prune_depth, opt_prune_dry_run,
                               &n_objects_total, &n_objects_pruned, &objsize_total,
                               cancellable, error))

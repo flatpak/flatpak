@@ -180,7 +180,7 @@ rewrite_delta (OstreeRepo *src_repo,
   src_parts = g_variant_get_child_value (src_superblock, 6);
 
   if (g_variant_n_children (src_recurse) != 0)
-    return flatpak_fail (error, "Recursive deltas not supported, ignoring");
+    return flatpak_fail (error, _("Recursive deltas not supported, ignoring"));
 
   g_variant_builder_init (&superblock_builder, G_VARIANT_TYPE (OSTREE_STATIC_DELTA_SUPERBLOCK_FORMAT));
 

@@ -1164,7 +1164,7 @@ flatpak_find_unmaintained_extension_dir_if_exists (const char   *name,
       system_dirs = flatpak_dir_get_system_list (cancellable, &local_error);
       if (system_dirs == NULL)
         {
-          g_warning ("Could not get the system installations: %s", local_error->message);
+          g_warning (_("Could not get the system installations: %s"), local_error->message);
           return NULL;
         }
 
@@ -1406,7 +1406,7 @@ flatpak_switch_symlink_and_remove (const char *symlink_path,
       /* An old target was removed, try again */
     }
 
-  return flatpak_fail (error, "flatpak_switch_symlink_and_remove looped too many times");
+  return flatpak_fail (error, _("flatpak_switch_symlink_and_remove looped too many times"));
 }
 
 gboolean
@@ -2779,7 +2779,7 @@ _flatpak_repo_collect_sizes (OstreeRepo   *repo,
                 base_input = g_filter_input_stream_get_base_stream (G_FILTER_INPUT_STREAM (base_input));
 
               if (!G_IS_UNIX_INPUT_STREAM (base_input))
-                return flatpak_fail (error, "Unable to find size of commit %s, not an unix stream", checksum);
+                return flatpak_fail (error, _("Unable to find size of commit %s, not an unix stream"), checksum);
 
               fd = g_unix_input_stream_get_fd (G_UNIX_INPUT_STREAM (base_input));
 
@@ -3895,7 +3895,7 @@ flatpak_summary_apply_diff (GBytes *old,
   if (diff_size < 8 ||
       memcmp (diffdata, FLATPAK_SUMMARY_DIFF_HEADER, 4) != 0)
     {
-      flatpak_fail (error, "Invalid summary diff");
+      flatpak_fail (error, _("Invalid summary diff"));
       return NULL;
     }
 
@@ -3908,7 +3908,7 @@ flatpak_summary_apply_diff (GBytes *old,
   if (data_offset > diff_size ||
       (data_offset - 4 - 4) / 4 != n_ops)
     {
-      flatpak_fail (error, "Invalid summary diff");
+      flatpak_fail (error, _("Invalid summary diff"));
       return NULL;
     }
 
@@ -3926,7 +3926,7 @@ flatpak_summary_apply_diff (GBytes *old,
         case DIFF_OP_KIND_RESUSE_OLD:
           if (size > old_size)
             {
-              flatpak_fail (error, "Invalid summary diff");
+              flatpak_fail (error, _("Invalid summary diff"));
               return NULL;
             }
           g_byte_array_append (res, old_data, size);
@@ -3936,7 +3936,7 @@ flatpak_summary_apply_diff (GBytes *old,
         case DIFF_OP_KIND_SKIP_OLD:
           if (size > old_size)
             {
-              flatpak_fail (error, "Invalid summary diff");
+              flatpak_fail (error, _("Invalid summary diff"));
               return NULL;
             }
           old_data += size;
@@ -3945,7 +3945,7 @@ flatpak_summary_apply_diff (GBytes *old,
         case DIFF_OP_KIND_DATA:
           if (size > data_size)
             {
-              flatpak_fail (error, "Invalid summary diff");
+              flatpak_fail (error, _("Invalid summary diff"));
               return NULL;
             }
           g_byte_array_append (res, data, size);
@@ -3953,7 +3953,7 @@ flatpak_summary_apply_diff (GBytes *old,
           data_size -= size;
           break;
         default:
-          flatpak_fail (error, "Invalid summary diff");
+          flatpak_fail (error, _("Invalid summary diff"));
           return NULL;
         }
     }
@@ -5084,7 +5084,7 @@ validate_component (FlatpakXml *component,
 
   if (!g_str_has_prefix (id_text, id))
     {
-      g_warning ("Invalid id %s", id_text);
+      g_warning (_("Invalid id %s"), id_text);
       return FALSE;
     }
 
@@ -5783,7 +5783,7 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
 
       if (!ostree_repo_load_variant (repo, OSTREE_OBJECT_TYPE_COMMIT, commit, &commit_v, NULL))
         {
-          g_warning ("Couldn't load commit %s (ref %s)", commit, flatpak_decomposed_get_ref (ref));
+          g_warning (_("Couldn't load commit %s (ref %s)"), commit, flatpak_decomposed_get_ref (ref));
           continue;
         }
 

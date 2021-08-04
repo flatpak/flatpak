@@ -437,7 +437,7 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   /* Do the rest of the work as a keyfile, as we need things like full escaping, etc.
    * We should probably do everything this way actually...   */
   if (!g_key_file_load_from_data (keyfile, metadata_contents->str, metadata_contents->len, 0, NULL))
-    return flatpak_fail (error, "Internal error parsing generated keyfile");
+    return flatpak_fail (error, _("Internal error parsing generated keyfile"));
 
   for (i = 0; opt_extensions != NULL && opt_extensions[i] != NULL; i++)
     {

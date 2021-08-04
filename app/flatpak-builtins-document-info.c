@@ -109,11 +109,11 @@ flatpak_builtin_document_info (int argc, char **argv,
 
   iter = g_variant_iter_new (apps);
 
-  g_print ("id: %s\n", doc_id);
-  g_print ("path: %s\n", doc_path);
-  g_print ("origin: %s\n", origin);
+  g_print (_("id: %s\n"), doc_id);
+  g_print (_("path: %s\n"), doc_path);
+  g_print (_("origin: %s\n"), origin);
   if (g_variant_iter_n_children (iter) > 0)
-    g_print ("permissions:\n");
+    g_print (_("permissions:\n"));
   while (g_variant_iter_next (iter, "{&s^a&s}", &app_id, &perms))
     {
       int i;

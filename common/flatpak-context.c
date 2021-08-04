@@ -748,7 +748,7 @@ parse_filesystem_flags (const char            *filesystem,
       else if (strcmp (suffix, "create") == 0)
         mode = FLATPAK_FILESYSTEM_MODE_CREATE;
       else if (*suffix != 0)
-        g_warning ("Unexpected filesystem suffix %s, ignoring", suffix);
+        g_warning (_("Unexpected filesystem suffix %s, ignoring"), suffix);
     }
 
   if (mode_out)
@@ -2378,7 +2378,7 @@ flatpak_context_export (FlatpakContext *context,
 
           if (!get_xdg_user_dir_from_string (filesystem, &config_key, &rest, &path))
             {
-              g_warning ("Unsupported xdg dir %s", filesystem);
+              g_warning (_("Unsupported xdg dir %s"), filesystem);
               continue;
             }
 
@@ -2430,7 +2430,7 @@ flatpak_context_export (FlatpakContext *context,
         }
       else
         {
-          g_warning ("Unexpected filesystem arg %s", filesystem);
+          g_warning (_("Unexpected filesystem arg %s"), filesystem);
         }
     }
 

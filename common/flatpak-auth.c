@@ -106,7 +106,7 @@ flatpak_auth_create_request_path (const char *peer,
     {
       if (!g_ascii_isalnum (token[i]) && token[i] != '_')
         {
-          flatpak_fail (error, "Invalid token %s", token);
+          flatpak_fail (error, _("Invalid token %s"), token);
           return NULL;
         }
     }
@@ -175,7 +175,7 @@ flatpak_auth_request_ref_tokens (FlatpakAuthenticator *authenticator,
   if (strcmp (g_dbus_proxy_get_object_path (G_DBUS_PROXY (request)), handle) !=0)
     {
       /* This shouldn't happen, as it would be a broken authenticator, but lets validate it */
-      flatpak_fail (error, "Authenticator returned wrong handle");
+      flatpak_fail (error, _("Authenticator returned wrong handle"));
       return FALSE;
     }
 

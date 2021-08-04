@@ -21,6 +21,8 @@
 #include "flatpak-utils-http-private.h"
 #include "flatpak-oci-registry-private.h"
 
+#include <glib/gi18n-lib.h>
+
 #include <gio/gunixoutputstream.h>
 #include <libsoup/soup.h>
 #include "libglnx/libglnx.h"
@@ -338,7 +340,7 @@ stream_closed (GObject *source, GAsyncResult *res, gpointer user_data)
   g_autoptr(GError) error = NULL;
 
   if (!g_input_stream_close_finish (stream, res, &error))
-    g_warning ("Error closing http stream: %s", error->message);
+    g_warning (_("Error closing http stream: %s"), error->message);
 
   if (data->out_tmpfile)
     {
@@ -543,7 +545,7 @@ flatpak_create_soup_session (const char *user_agent)
     {
       g_autoptr(SoupURI) proxy_uri = soup_uri_new (http_proxy);
       if (!proxy_uri)
-        g_warning ("Invalid proxy URI '%s'", http_proxy);
+        g_warning (_("Invalid proxy URI '%s'"), http_proxy);
       else
         g_object_set (soup_session, SOUP_SESSION_PROXY_URI, proxy_uri, NULL);
     }

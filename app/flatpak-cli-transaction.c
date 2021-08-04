@@ -171,22 +171,22 @@ install_authenticator (FlatpakTransaction            *old_transaction,
   transaction2 = flatpak_cli_transaction_new (dir, old_cli->disable_interaction, TRUE, FALSE, &local_error);
   if (transaction2 == NULL)
     {
-      g_printerr ("Unable to install authenticator: %s\n", local_error->message);
+      g_printerr (_("Unable to install authenticator: %s\n"), local_error->message);
       return;
     }
 
-  g_print ("Installing required authenticator for remote %s\n", remote);
+  g_print (_("Installing required authenticator for remote %s\n"), remote);
   if (!flatpak_transaction_add_install (transaction2, remote, ref, NULL, &local_error))
     {
       if (!g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED))
-        g_printerr ("Unable to install authenticator: %s\n", local_error->message);
+        g_printerr (_("Unable to install authenticator: %s\n"), local_error->message);
       return;
     }
 
   if (!flatpak_transaction_run (transaction2, NULL, &local_error))
     {
       if (!g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_ABORTED))
-        g_printerr ("Unable to install authenticator: %s\n", local_error->message);
+        g_printerr (_("Unable to install authenticator: %s\n"), local_error->message);
       return;
     }
 
@@ -585,7 +585,7 @@ webflow_start (FlatpakTransaction *transaction,
       if (!g_spawn_async (NULL, (char **)args, NULL, G_SPAWN_SEARCH_PATH,
                           NULL, NULL, NULL, &local_error))
         {
-          g_printerr ("Failed to start browser %s: %s\n", browser, local_error->message);
+          g_printerr (_("Failed to start browser %s: %s\n"), browser, local_error->message);
           return FALSE;
         }
     }
@@ -593,12 +593,12 @@ webflow_start (FlatpakTransaction *transaction,
     {
       if (!g_app_info_launch_default_for_uri (url, NULL, &local_error))
         {
-          g_printerr ("Failed to show url: %s\n", local_error->message);
+          g_printerr (_("Failed to show url: %s\n"), local_error->message);
           return FALSE;
         }
     }
 
-  g_print ("Waiting for browser...\n");
+  g_print (_("Waiting for browser...\n"));
 
   return TRUE;
 }
@@ -608,7 +608,7 @@ webflow_done (FlatpakTransaction *transaction,
               GVariant           *options,
               guint               id)
 {
-  g_print ("Browser done\n");
+  g_print (_("Browser done\n"));
 }
 
 static gboolean

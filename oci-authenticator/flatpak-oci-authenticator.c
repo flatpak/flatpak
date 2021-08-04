@@ -663,7 +663,7 @@ on_bus_acquired (GDBusConnection *connection,
                                          FLATPAK_AUTHENTICATOR_OBJECT_PATH,
                                          &error))
     {
-      g_warning ("error: %s", error->message);
+      g_warning (_("error: %s"), error->message);
       g_error_free (error);
     }
 }
@@ -757,7 +757,7 @@ main (int    argc,
     {
       g_printerr ("%s: %s", g_get_application_name (), error->message);
       g_printerr ("\n");
-      g_printerr ("Try \"%s --help\" for more information.",
+      g_printerr (_("Try \"%s --help\" for more information."),
                   g_get_prgname ());
       g_printerr ("\n");
       g_option_context_free (context);
@@ -774,7 +774,7 @@ main (int    argc,
   session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, &error);
   if (session_bus == NULL)
     {
-      g_printerr ("Can't find bus: %s\n", error->message);
+      g_printerr (_("Can't find bus: %s\n"), error->message);
       return 1;
     }
 

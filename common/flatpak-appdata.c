@@ -23,6 +23,7 @@
 #include "flatpak-appdata-private.h"
 #include "flatpak-utils-private.h"
 #include <gio/gio.h>
+#include <glib/gi18n-lib.h>
 #include <stdio.h>
 
 typedef struct
@@ -184,7 +185,7 @@ start_element (GMarkupParseContext *context,
                 ts = g_date_time_to_unix (dt);
             }
           else
-            g_warning ("Ignoring release element without timestamp or date");
+            g_warning (_("Ignoring release element without timestamp or date"));
 
           if (ts > data->timestamp)
             {
@@ -220,12 +221,12 @@ start_element (GMarkupParseContext *context,
             }
           else
             {
-              g_warning ("Ignoring content rating missing type attribute");
+              g_warning (_("Ignoring content rating missing type attribute"));
             }
         }
       else
         {
-          g_warning ("Ignoring duplicate content rating");
+          g_warning (_("Ignoring duplicate content rating"));
         }
     }
   else if (data->in_content_rating && g_str_equal (element_name, "content_attribute"))
@@ -256,7 +257,7 @@ start_element (GMarkupParseContext *context,
         }
       else
         {
-          g_warning ("Ignoring content attribute missing id attribute");
+          g_warning (_("Ignoring content attribute missing id attribute"));
         }
     }
 }
@@ -358,7 +359,7 @@ flatpak_parse_appdata (const char  *appdata_xml,
 
   if (!g_markup_parse_context_parse (context, appdata_xml, -1, &error))
     {
-      g_warning ("Failed to parse appdata: %s", error->message);
+      g_warning (_("Failed to parse appdata: %s"), error->message);
       return FALSE;
     }
 
@@ -383,6 +384,6 @@ flatpak_parse_appdata (const char  *appdata_xml,
         }
     }
 
-  g_warning ("No matching appdata for %s", app_id);
+  g_warning (_("No matching appdata for %s"), app_id);
   return FALSE;
 }

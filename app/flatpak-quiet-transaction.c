@@ -179,21 +179,21 @@ install_authenticator (FlatpakTransaction            *old_transaction,
   transaction2 = flatpak_quiet_transaction_new (dir, &local_error);
   if (transaction2 == NULL)
     {
-      g_printerr ("Unable to install authenticator: %s\n", local_error->message);
+      g_printerr (_("Unable to install authenticator: %s\n"), local_error->message);
       return;
     }
 
   if (!flatpak_transaction_add_install (transaction2, remote, ref, NULL, &local_error))
     {
       if (!g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED))
-        g_printerr ("Unable to install authenticator: %s\n", local_error->message);
+        g_printerr (_("Unable to install authenticator: %s\n"), local_error->message);
       return;
     }
 
   if (!flatpak_transaction_run (transaction2, NULL, &local_error))
     {
       if (!g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_ABORTED))
-        g_printerr ("Unable to install authenticator: %s\n", local_error->message);
+        g_printerr (_("Unable to install authenticator: %s\n"), local_error->message);
       return;
     }
 

@@ -432,11 +432,11 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
 
               mode = flatpak_exports_path_get_mode (exports, opt_file_access);
               if (mode == 0)
-                g_print ("hidden\n");
+                g_print (_("hidden\n"));
               else if (mode == FLATPAK_FILESYSTEM_MODE_READ_ONLY)
-                g_print ("read-only\n");
+                g_print (_("read-only\n"));
               else
-                g_print ("read-write\n");
+                g_print (_("read-write\n"));
             }
         }
     }

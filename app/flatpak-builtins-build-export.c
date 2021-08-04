@@ -123,7 +123,7 @@ metadata_get_arch (GFile *file, char **out_arch, GError **error)
 
   parts = g_strsplit (runtime, "/", 0);
   if (g_strv_length (parts) != 3)
-    return flatpak_fail (error, "Failed to determine arch from metadata runtime key: %s", runtime);
+    return flatpak_fail (error, _("Failed to determine arch from metadata runtime key: %s"), runtime);
 
   *out_arch = g_strdup (parts[1]);
 
@@ -400,7 +400,7 @@ validate_icon_file (GFile *file, GError **error)
   if (!g_spawn_check_exit_status (status, NULL))
     {
       g_debug ("Icon validation: %s", err);
-      return flatpak_fail (error, "%s is not a valid icon: %s", name, err);
+      return flatpak_fail (error, _("%s is not a valid icon: %s"), name, err);
     }
 
   return TRUE;
@@ -901,7 +901,7 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
 
   if (!(opt_runtime || is_runtime) && !g_file_query_exists (export, cancellable))
     {
-      flatpak_fail (error, "Build directory %s not finalized, use flatpak build-finish", directory);
+      flatpak_fail (error, _("Build directory %s not finalized, use flatpak build-finish"), directory);
       goto out;
     }
 
@@ -951,7 +951,7 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
       if (opt_collection_id != NULL &&
           g_strcmp0 (repo_collection_id, opt_collection_id) != 0)
         {
-          flatpak_fail (error, "Specified collection ID ‘%s’ doesn’t match collection ID in repository configuration ‘%s’.",
+          flatpak_fail (error, _("Specified collection ID ‘%s’ doesn’t match collection ID in repository configuration ‘%s’."),
                         opt_collection_id, ostree_repo_get_collection_id (repo));
           goto out;
         }

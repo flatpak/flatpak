@@ -167,7 +167,7 @@ flatpak_builtin_document_export (int argc, char **argv,
           g_variant_get (v, "u", &portal_version);
 
           if (portal_version < 4)
-            return flatpak_fail (error, "Exporting directories needs version 4 of the document portal (have version %d)", portal_version);
+            return flatpak_fail (error, _("Exporting directories needs version 4 of the document portal (have version %d)"), portal_version);
         }
     }
 

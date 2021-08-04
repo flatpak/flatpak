@@ -1469,7 +1469,7 @@ initable_init (GInitable    *initable,
   g_autoptr(FlatpakDir) dir = NULL;
 
   if (priv->installation == NULL)
-    return flatpak_fail (error, "No installation specified");
+    return flatpak_fail (error, _("No installation specified"));
 
   dir = flatpak_installation_clone_dir (priv->installation, cancellable, error);
   if (dir == NULL)
@@ -3687,7 +3687,7 @@ request_tokens_for_remote (FlatpakTransaction *self,
 
   tokens = g_variant_lookup_value (results, "tokens", G_VARIANT_TYPE ("a{sas}"));
   if (tokens == NULL)
-    return flatpak_fail (error, "Authenticator didn't send requested tokens");
+    return flatpak_fail (error, _("Authenticator didn't send requested tokens"));
 
   for (l = ops; l != NULL; l = l->next)
     {
@@ -3708,7 +3708,7 @@ request_tokens_for_remote (FlatpakTransaction *self,
         }
 
       if (token == NULL)
-        return flatpak_fail (error, "Authenticator didn't send tokens for ref");
+        return flatpak_fail (error, _("Authenticator didn't send tokens for ref"));
 
       /* Allow sending empty tokens to mean no token needed */
 
@@ -3839,7 +3839,7 @@ sort_ops (FlatpakTransaction *self)
 
   if (remaining != NULL)
     {
-      g_warning ("ops remaining after sort, maybe there is a dependency loop?");
+      g_warning (_("ops remaining after sort, maybe there is a dependency loop?"));
       sorted = g_list_concat (remaining, sorted);
     }
 
@@ -4092,7 +4092,7 @@ handle_runtime_repo_deps_from_keyfile (FlatpakTransaction *self,
                                    FLATPAK_REF_RUNTIME_REPO_KEY, NULL);
   if (dep_url == NULL)
     {
-      g_warning ("Flatpakref file does not contain a %s", FLATPAK_REF_RUNTIME_REPO_KEY);
+      g_warning (_("Flatpakref file does not contain a %s"), FLATPAK_REF_RUNTIME_REPO_KEY);
       return TRUE;
     }
 

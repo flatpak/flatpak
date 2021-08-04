@@ -31,6 +31,8 @@
 #include <termios.h>
 #include <unistd.h>
 
+#include <glib/gi18n.h>
+
 #include "flatpak-polkit-agent-text-listener.h"
 
 #include "flatpak-utils-private.h"
@@ -295,7 +297,7 @@ identity_to_human_readable_string (PolkitIdentity *identity)
                         &ppw);
       if (res != 0)
         {
-          g_warning ("Error calling getpwuid_r: %s", strerror (res));
+          g_warning (_("Error calling getpwuid_r: %s"), strerror (res));
         }
       else
         {

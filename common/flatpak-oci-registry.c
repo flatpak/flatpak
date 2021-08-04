@@ -2527,14 +2527,14 @@ read_gpg_buffer (gpgme_data_t buffer, GError **error)
   ret = gpgme_data_seek (buffer, 0, SEEK_SET);
   if (ret)
     {
-      flatpak_fail (error, "Can't seek in gpg plain text");
+      flatpak_fail (error, _("Can't seek in gpg plain text"));
       return NULL;
     }
   while ((ret = gpgme_data_read (buffer, buf, sizeof (buf) - 1)) > 0)
     g_string_append_len (res, buf, ret);
   if (ret < 0)
     {
-      flatpak_fail (error, "Can't read in gpg plain text");
+      flatpak_fail (error, _("Can't read in gpg plain text"));
       return NULL;
     }
 
@@ -2830,7 +2830,7 @@ load_oci_index (GFile        *index,
     return NULL;
 
   if (!g_input_stream_close (G_INPUT_STREAM (in), cancellable, &local_error))
-    g_warning ("Error closing http stream: %s", local_error->message);
+    g_warning (_("Error closing http stream: %s"), local_error->message);
 
   return (FlatpakOciIndexResponse *) g_steal_pointer (&json);
 }
@@ -3135,7 +3135,7 @@ add_image_to_appstream (SoupSession               *soup_session,
   xml_root = flatpak_xml_parse (in, FALSE, cancellable, &error);
   if (xml_root == NULL)
     {
-      g_print ("%s: Failed to parse appdata annotation: %s\n",
+      g_print (_("%s: Failed to parse appdata annotation: %s\n"),
                repository->name,
                error->message);
       return;
@@ -3182,7 +3182,7 @@ add_image_to_appstream (SoupSession               *soup_session,
                                icon_sizes[i].subdir, id, icon_data,
                                cancellable, &error))
             {
-              g_print ("%s: Failed to add %s icon: %s\n",
+              g_print (_("%s: Failed to add %s icon: %s\n"),
                        repository->name,
                        icon_sizes[i].subdir,
                        error->message);
