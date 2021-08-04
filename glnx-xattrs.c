@@ -181,7 +181,7 @@ get_xattrs_impl (const char      *path,
         {
           if (errno == ERANGE)
             {
-              g_free (xattr_names);
+              g_free (g_steal_pointer (&xattr_names));
               goto again;
             }
           glnx_set_prefix_error_from_errno (error, "%s", "llistxattr");
