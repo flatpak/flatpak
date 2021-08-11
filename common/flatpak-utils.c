@@ -615,6 +615,22 @@ flatpak_get_have_intel_gpu (void)
   return have_intel;
 }
 
+static char *
+remap_theme_name (const char *theme_name)
+{
+  char *new_name = g_strdup (theme_name);
+
+  /* '.' is used for extension points, so org.gtk.Gtk3theme.org.foo.bar does not work
+   * as expected. Just remap . to _ */
+  for (char *p = new_name; *p; p++)
+    {
+      if (*p == '.')
+        *p = '_';
+    }
+
+  return new_name;
+}
+
 static const char *
 flatpak_get_gtk_theme (void)
 {
@@ -641,8 +657,10 @@ flatpak_get_gtk_theme (void)
                * TODO: Check XSettings Net/ThemeName for other desktops.
                * We don't care about any other method (like settings.ini) because they
                *   aren't passed through the sandbox anyway. */
+              g_autofree char *theme_name;
               g_autoptr(GSettings) settings = g_settings_new ("org.gnome.desktop.interface");
-              g_once_init_leave (&gtk_theme, g_settings_get_string (settings, "gtk-theme"));
+              theme_name = g_settings_get_string (settings, "gtk-theme");
+              g_once_init_leave (&gtk_theme, remap_theme_name (theme_name));
             }
         }
     }

@@ -885,7 +885,8 @@
                                 <para>
                                     Is true if the name of the current GTK theme
                                     (via org.gnome.desktop.interface GSetting) matches the extension point
-                                    basename. Added 0.10.1.
+                                    basename. As of 1.11.3 this also maps <literal>.</literal> to
+                                    <literal>_</literal> in the theme name. Added 0.10.1.
                                 </para>
                             </varlistentry>
                             <varlistentry>
