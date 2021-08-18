@@ -1525,6 +1525,10 @@ static const ExportData default_exports[] = {
   {"XDG_DATA_DIRS", "/app/share:/usr/share"},
   {"SHELL", "/bin/sh"},
   {"TMPDIR", NULL}, /* Unset TMPDIR as it may not exist in the sandbox */
+  /* We always use /run/user/UID, even if the user's XDG_RUNTIME_DIR
+   * outside the sandbox is somewhere else. Don't allow a different
+   * setting from outside the sandbox to overwrite this. */
+  {"XDG_RUNTIME_DIR", NULL},
 
   /* Some env vars are common enough and will affect the sandbox badly
      if set on the host. We clear these always. */
