@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..18"
+echo "1..19"
 
 # Use stable rather than master as the branch so we can test that the run
 # command automatically finds the branch correctly
@@ -73,6 +73,13 @@ run org.test.Hello > hello_out
 assert_file_has_content hello_out '^Hello world, from a sandbox$'
 
 ok "hello"
+
+mkdir xrd
+XDG_RUNTIME_DIR="$(pwd)/xrd" run_sh org.test.Platform 'echo $XDG_RUNTIME_DIR' > value-in-sandbox
+head value-in-sandbox >&2
+assert_file_has_content value-in-sandbox "^/run/user/$(id -u)\$"
+
+ok "XDG_RUNTIME_DIR not inherited"
 
 run_sh org.test.Platform cat /.flatpak-info >runtime-fpi
 assert_file_has_content runtime-fpi "[Runtime]"
