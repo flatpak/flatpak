@@ -41,7 +41,7 @@ Most configure arguments are documented in `./configure --help`. However,
 there are some options that are a bit more complicated.
 
 Flatpak relies on a project called [Bubblewrap](https://github.com/containers/bubblewrap) for the
-low-level sandboxing.  By default, an in-tree copy of this is built
+low-level sandboxing. By default, an in-tree copy of this is built
 (distributed in the tarball or using git submodules in the git
 tree). This will build a helper called flatpak-bwrap. If your system
 has a recent enough version of Bubblewrap already, you can use
@@ -49,7 +49,7 @@ has a recent enough version of Bubblewrap already, you can use
 
 Bubblewrap can run in two modes, either using unprivileged user
 namespaces or setuid mode. This requires that the kernel supports this,
-which some distributions disable. For instance, Debian and Arch 
+which some distributions disable. For instance, Debian and Arch
 ([linux](https://www.archlinux.org/packages/?name=linux) kernel v4.14.5
 or later), support user namespaces with the `kernel.unprivileged_userns_clone`
 sysctl enabled.
