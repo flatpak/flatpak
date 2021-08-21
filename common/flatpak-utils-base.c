@@ -100,6 +100,12 @@ flatpak_resolve_link (const char *path,
   return g_build_filename (dirname, link, NULL);
 }
 
+/*
+ * Syntactically canonicalize a filename, similar to
+ * g_canonicalize_filename() in newer GLib.
+ *
+ * This function does not do I/O.
+ */
 char *
 flatpak_canonicalize_filename (const char *path)
 {
