@@ -552,8 +552,7 @@ flatpak_resolve_matching_installed_refs (gboolean    assume_yes,
 }
 
 gboolean
-flatpak_resolve_matching_remotes (gboolean        assume_yes,
-                                  GPtrArray      *remote_dir_pairs,
+flatpak_resolve_matching_remotes (GPtrArray      *remote_dir_pairs,
                                   const char     *opt_search_ref,
                                   RemoteDirPair **out_pair,
                                   GError        **error)
@@ -563,7 +562,11 @@ flatpak_resolve_matching_remotes (gboolean        assume_yes,
 
   g_assert (remote_dir_pairs->len > 0);
 
-  if (assume_yes && remote_dir_pairs->len == 1)
+  /* Here we use the only matching remote even if --assumeyes wasn't specified
+   * because the user will still be asked to confirm the operation in the next
+   * step after the dependencies are resolved.
+   */
+  if (remote_dir_pairs->len == 1)
     chosen = 1;
 
   if (chosen == 0)

@@ -438,7 +438,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
           if (remote_dir_pairs->len == 0)
             return flatpak_fail (error, _("No remote refs found similar to ‘%s’"), argv[1]);
 
-          if (!flatpak_resolve_matching_remotes (opt_yes, remote_dir_pairs, argv[1], &chosen_pair, error))
+          if (!flatpak_resolve_matching_remotes (remote_dir_pairs, argv[1], &chosen_pair, error))
             return FALSE;
 
           remote = g_strdup (chosen_pair->remote_name);
