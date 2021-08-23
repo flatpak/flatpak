@@ -11812,7 +11812,7 @@ flatpak_dir_remote_fetch_indexed_summary (FlatpakDir   *self,
                 {
                   sha256 = g_compute_checksum_for_bytes (G_CHECKSUM_SHA256, applied);
                   if (strcmp (sha256, checksum) != 0)
-                    g_warning (_("Appliying delta gave wrong checksum, falling backn"));
+                    g_warning (_("Applying delta gave wrong checksum, falling back"));
                   else
                     summary = g_steal_pointer (&applied);
                 }
