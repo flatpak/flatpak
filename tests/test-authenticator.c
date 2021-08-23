@@ -112,7 +112,7 @@ finish_request_ref_tokens (TokenRequestData *data)
   g_variant_builder_init (&results, G_VARIANT_TYPE ("a{sv}"));
   g_variant_builder_add (&results, "{sv}", "tokens", g_variant_builder_end (&tokens));
 
-  g_debug ("emiting response");
+  g_debug ("emitting response");
   flatpak_authenticator_request_emit_response (data->request,
                                                FLATPAK_AUTH_RESPONSE_OK,
                                                g_variant_builder_end (&results));
@@ -130,9 +130,9 @@ http_incoming (GSocketService    *service,
   g_assert_true (data->request != NULL);
 
   /* For the test, just assume any connection is a valid use of the web flow */
-  g_debug ("handling incomming http request");
+  g_debug ("handling incoming http request");
 
-  g_debug ("emiting webflow done");
+  g_debug ("emitting webflow done");
   flatpak_authenticator_request_emit_webflow_done (data->request, options);
 
   finish_request_ref_tokens (data);

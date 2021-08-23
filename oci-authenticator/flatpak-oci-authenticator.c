@@ -612,7 +612,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *f_authenticator,
   g_variant_builder_init (&results, G_VARIANT_TYPE ("a{sv}"));
   g_variant_builder_add (&results, "{sv}", "tokens", g_variant_builder_end (&tokens));
 
-  g_debug ("emiting OK response");
+  g_debug ("emitting OK response");
   flatpak_authenticator_request_emit_response (request,
                                                FLATPAK_AUTH_RESPONSE_OK,
                                                g_variant_builder_end (&results));

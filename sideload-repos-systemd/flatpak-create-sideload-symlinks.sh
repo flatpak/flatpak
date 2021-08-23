@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # This script is intended to be run by flatpak-sideload-usb-repo.service
 
