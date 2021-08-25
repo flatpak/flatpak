@@ -32,6 +32,7 @@ stamp-*
 gtk-doc.make
 flatpak
 flatpak-*.tar.xz
+/flatpak-1.*/
 flatpak-session-helper
 flatpak-portal
 flatpak-validate-icon
