@@ -105,6 +105,10 @@ export XDG_RUNTIME_DIR=${TEST_DATA_DIR}/runtime
 export XDG_DESKTOP_PORTAL_DIR=${test_builddir}/share/xdg-desktop-portal/portals
 export XDG_CURRENT_DESKTOP=test
 
+# On Debian derivatives, /usr/sbin and /sbin aren't in ordinary users'
+# PATHs, but ldconfig and capsh are kept in /sbin
+PATH="$PATH:/usr/sbin:/sbin"
+
 export USERDIR=${TEST_DATA_DIR}/home/share/flatpak
 export SYSTEMDIR=${TEST_DATA_DIR}/system
 export ARCH=`flatpak --default-arch`
