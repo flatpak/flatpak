@@ -74,11 +74,14 @@ assert_file_has_content hello_out '^Hello world, from a sandbox$'
 
 ok "hello"
 
-XDG_RUNTIME_DIR="$(pwd)/xrd" run_sh org.test.Platform 'echo $XDG_RUNTIME_DIR' > value-in-sandbox
+# XDG_RUNTIME_DIR is set to <temp directory>/runtime by libtest.sh,
+# so we always have the necessary setup to reproduce #4372
+assert_not_streq "$XDG_RUNTIME_DIR" "/run/user/$(id -u)"
+run_sh org.test.Platform 'echo $XDG_RUNTIME_DIR' > value-in-sandbox
 head value-in-sandbox >&2
 assert_file_has_content value-in-sandbox "^/run/user/$(id -u)\$"
 
-ok "XDG_RUNTIME_DIR not inherited"
+ok "XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR not inherited"
 
 run_sh org.test.Platform cat /.flatpak-info >runtime-fpi
 assert_file_has_content runtime-fpi "[Runtime]"
