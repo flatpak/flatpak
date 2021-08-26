@@ -136,6 +136,7 @@ po/*.gmo
 po/*.sed
 po/*.header
 po/*.sin
+/subprojects/Makefile-*.am.inc
 system-helper/org.freedesktop.Flatpak.policy
 system-helper/org.freedesktop.Flatpak.rules
 flatpak-bwrap

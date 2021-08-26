@@ -98,7 +98,7 @@ libglnx_cflags := \
 	$(HIDDEN_VISIBILITY_CFLAGS) \
 	$(NULL)
 libglnx_libs := $(BASE_LIBS)
-include subprojects/libglnx/Makefile-libglnx.am.inc
+include subprojects/Makefile-libglnx.am.inc
 
 include common/Makefile.am.inc
 include data/Makefile.am.inc
@@ -132,7 +132,7 @@ flatpak_bwrap_SOURCES = $(bwrap_SOURCES)
 flatpak_bwrap_CFLAGS = $(AM_CFLAGS) $(bwrap_CFLAGS)
 flatpak_bwrap_LDADD = $(AM_LDADD) $(bwrap_LDADD) $(CAP_LIB)
 bwrapdir = $(libexecdir)
-include subprojects/bubblewrap/Makefile-bwrap.am.inc
+include subprojects/Makefile-bwrap.am.inc
 
 endif # !WITH_SYSTEM_BWRAP
 
