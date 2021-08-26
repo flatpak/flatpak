@@ -1,3 +1,20 @@
+Changes in 1.10.3
+~~~~~~~~~~~~~~~~~
+Released: (not yet)
+
+This is a maintenance update with various bug fixes backported from 1.11.x.
+
+* Don't inherit an unusual $XDG_RUNTIME_DIR setting into the sandbox, fixing
+  a regression introduced when CVE-2021-21261 was fixed in 1.8.5 and 1.10.0
+* Fix various memory and file descriptor leaks, in particular with
+  flatpak-spawn --env=...
+* Fix fd confusion in flatpak-spawn --env=... --forward-fd=..., resolving a
+  regression introduced in 1.8.5 and 1.10.0
+* Fix deploys of local remotes in system-helper, possibly involving newer
+  GLib versions
+* Fix test failures on non-x86_64 systems
+* create-usb: Skip copying extra-data flatpaks
+
 Changes in 1.10.2
 ~~~~~~~~~~~~~~~~~
 Released: 2021-03-10
