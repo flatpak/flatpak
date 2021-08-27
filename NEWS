@@ -14,6 +14,8 @@ This is a maintenance update with various bug fixes backported from 1.11.x.
   GLib versions
 * Fix test failures on non-x86_64 systems
 * create-usb: Skip copying extra-data flatpaks
+* Improve test coverage on Debian derivatives by ensuring /sbin is in
+  tests' PATH
 
 Changes in 1.10.2
 ~~~~~~~~~~~~~~~~~
