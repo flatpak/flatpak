@@ -32,6 +32,7 @@ stamp-*
 gtk-doc.make
 flatpak
 flatpak-*.tar.xz
+/flatpak-1.*/
 flatpak-session-helper
 flatpak-portal
 flatpak-validate-icon
@@ -135,6 +136,7 @@ po/*.gmo
 po/*.sed
 po/*.header
 po/*.sin
+/subprojects/Makefile-*.am.inc
 system-helper/org.freedesktop.Flatpak.policy
 system-helper/org.freedesktop.Flatpak.rules
 flatpak-bwrap

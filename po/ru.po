@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2021-06-17 17:42+0100\n"
+"POT-Creation-Date: 2021-08-25 11:51+0100\n"
 "PO-Revision-Date: 2021-07-19 16:53+0300\n"
 "Last-Translator: Filippe LeMarchand <gasinvein@gmail.com>\n"
 "Language-Team: Russian <gnome-cyr@gnome.org>\n"
@@ -261,7 +261,7 @@ msgstr "Не найдена точка расширения, подходяща�
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Отсутствует '=' в параметре связанного монтирования '%s'"
 
-#: app/flatpak-builtins-build.c:606 common/flatpak-run.c:4442
+#: app/flatpak-builtins-build.c:606 common/flatpak-run.c:4446
 msgid "Unable to start app"
 msgstr "Невозможно запустить приложение"
 
@@ -3258,7 +3258,7 @@ msgstr "Удалённый репозиторий ‘%s’ найден в не�
 
 #: app/flatpak-builtins-utils.c:342 app/flatpak-builtins-utils.c:433
 #: app/flatpak-builtins-utils.c:525 app/flatpak-builtins-utils.c:527
-#: app/flatpak-builtins-utils.c:591
+#: app/flatpak-builtins-utils.c:594
 msgid "Which do you want to use (0 to abort)?"
 msgstr "Какой вы хотите использовать (0 - отмена)?"
 
@@ -3321,7 +3321,7 @@ msgid "Similar installed refs found for ‘%s’:"
 msgstr "Похожие установочные ссылки, найденные для '%s':"
 
 #. default to yes on Enter
-#: app/flatpak-builtins-utils.c:576
+#: app/flatpak-builtins-utils.c:579
 #, c-format
 msgid ""
 "Found similar ref(s) for ‘%s’ in remote ‘%s’ (%s).\n"
@@ -3330,74 +3330,74 @@ msgstr ""
 "Найдена одна или более ссылок, похожих на '%s', в репозитории '%s' (%s).\n"
 "Использовать этот репозиторий?"
 
-#: app/flatpak-builtins-utils.c:580 app/flatpak-builtins-utils.c:593
+#: app/flatpak-builtins-utils.c:583 app/flatpak-builtins-utils.c:596
 #, c-format
 msgid "No remote chosen to resolve matches for ‘%s’"
 msgstr "Не выбран репозиторий для получения результатов '%s'"
 
-#: app/flatpak-builtins-utils.c:590
+#: app/flatpak-builtins-utils.c:593
 #, c-format
 msgid "Remotes found with refs similar to ‘%s’:"
 msgstr "Репозитории со ссылками, похожими на '%s':"
 
-#: app/flatpak-builtins-utils.c:690 app/flatpak-builtins-utils.c:693
+#: app/flatpak-builtins-utils.c:693 app/flatpak-builtins-utils.c:696
 #, c-format
 msgid "Updating appstream data for user remote %s"
 msgstr ""
 "Обновление ветки appstream для пользовательского удалённого репозитория %s"
 
-#: app/flatpak-builtins-utils.c:700 app/flatpak-builtins-utils.c:703
+#: app/flatpak-builtins-utils.c:703 app/flatpak-builtins-utils.c:706
 #, c-format
 msgid "Updating appstream data for remote %s"
 msgstr "Обновление ветки appstream для удалённого репозитория %s"
 
-#: app/flatpak-builtins-utils.c:711 app/flatpak-builtins-utils.c:713
+#: app/flatpak-builtins-utils.c:714 app/flatpak-builtins-utils.c:716
 msgid "Error updating"
 msgstr "Ошибка обновления"
 
-#: app/flatpak-builtins-utils.c:749
+#: app/flatpak-builtins-utils.c:752
 #, c-format
 msgid "Remote \"%s\" not found"
 msgstr "Репозиторий '%s' не найден"
 
-#: app/flatpak-builtins-utils.c:790
+#: app/flatpak-builtins-utils.c:793
 #, c-format
 msgid "Ambiguous suffix: '%s'."
 msgstr "Неоднозначный суффикс: '%s'."
 
 #. Translators: don't translate the values
-#: app/flatpak-builtins-utils.c:792 app/flatpak-builtins-utils.c:807
+#: app/flatpak-builtins-utils.c:795 app/flatpak-builtins-utils.c:810
 msgid "Possible values are :s[tart], :m[iddle], :e[nd] or :f[ull]"
 msgstr "Возможные значения: :s[tart], :m[iddle], :e[nd] или :f[ull]"
 
-#: app/flatpak-builtins-utils.c:805
+#: app/flatpak-builtins-utils.c:808
 #, c-format
 msgid "Invalid suffix: '%s'."
 msgstr "Неверный суффикс '%s'."
 
-#: app/flatpak-builtins-utils.c:840
+#: app/flatpak-builtins-utils.c:843
 #, c-format
 msgid "Ambiguous column: %s"
 msgstr "Неоднозначный столбец: %s"
 
-#: app/flatpak-builtins-utils.c:853
+#: app/flatpak-builtins-utils.c:856
 #, c-format
 msgid "Unknown column: %s"
 msgstr "Неизвестный столбец '%s'"
 
-#: app/flatpak-builtins-utils.c:911
+#: app/flatpak-builtins-utils.c:914
 msgid "Available columns:\n"
 msgstr "Доступные столбцы:\n"
 
-#: app/flatpak-builtins-utils.c:921
+#: app/flatpak-builtins-utils.c:924
 msgid "Show all columns"
 msgstr "Показать все столбцы"
 
-#: app/flatpak-builtins-utils.c:922
+#: app/flatpak-builtins-utils.c:925
 msgid "Show available columns"
 msgstr "Показать доступные столбцы"
 
-#: app/flatpak-builtins-utils.c:925
+#: app/flatpak-builtins-utils.c:928
 msgid "Append :s[tart], :m[iddle], :e[nd] or :f[ull] to change ellipsization"
 msgstr "Добавьте :s[tart], :m[iddle], :e[nd], :f[ull] для изменения эллепсии"
 
@@ -5047,72 +5047,72 @@ msgstr "Невозможно создать канал синхронизаци�
 msgid "Failed to sync with dbus proxy"
 msgstr "Ошибка при синхронизации с прокси dbus"
 
-#: common/flatpak-run.c:1955
+#: common/flatpak-run.c:1959
 msgid "No systemd user session available, cgroups not available"
 msgstr "Отсутствует пользовательская сессия systemd, cgroups недоступны"
 
-#: common/flatpak-run.c:2448
+#: common/flatpak-run.c:2452
 msgid "Unable to allocate instance id"
 msgstr "Невозможно выделить идентификатор экземпляра"
 
-#: common/flatpak-run.c:2584 common/flatpak-run.c:2594
+#: common/flatpak-run.c:2588 common/flatpak-run.c:2598
 #, c-format
 msgid "Failed to open flatpak-info file: %s"
 msgstr "Не удалось открыть файл flatpak-info: %s"
 
-#: common/flatpak-run.c:2622
+#: common/flatpak-run.c:2626
 #, c-format
 msgid "Failed to open bwrapinfo.json file: %s"
 msgstr "Не удалось открыть файл bwrapinfo.json: %s"
 
-#: common/flatpak-run.c:2647
+#: common/flatpak-run.c:2651
 #, c-format
 msgid "Failed to write to instance id fd: %s"
 msgstr "Не удалось записать файловый дескриптор с ID экземпляра: %s"
 
-#: common/flatpak-run.c:2968
+#: common/flatpak-run.c:2972
 msgid "Initialize seccomp failed"
 msgstr "Не удалось инициализировать seccomp"
 
-#: common/flatpak-run.c:3007
+#: common/flatpak-run.c:3011
 msgid "Failed to add architecture to seccomp filter"
 msgstr "Не удалось добавить архитектуру в фильтр seccomp"
 
-#: common/flatpak-run.c:3015
+#: common/flatpak-run.c:3019
 msgid "Failed to add multiarch architecture to seccomp filter"
 msgstr "Не удалось добавить многоархивную архитектуру к фильтру seccomp"
 
 #. unknown syscall
-#: common/flatpak-run.c:3034 common/flatpak-run.c:3048
+#: common/flatpak-run.c:3038 common/flatpak-run.c:3052
 #, c-format
 msgid "Failed to block syscall %d"
 msgstr "Не удалось заблокировать системный вызов %d"
 
-#: common/flatpak-run.c:3079
+#: common/flatpak-run.c:3083
 msgid "Failed to export bpf"
 msgstr "Не удалось экспортировать bpf"
 
-#: common/flatpak-run.c:3329
+#: common/flatpak-run.c:3333
 #, c-format
 msgid "Failed to open ‘%s’"
 msgstr "Не удалось открыть '%s'"
 
-#: common/flatpak-run.c:3615
+#: common/flatpak-run.c:3619
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "ошибка ldconfig, статус ошибки %d"
 
-#: common/flatpak-run.c:3622
+#: common/flatpak-run.c:3626
 msgid "Can't open generated ld.so.cache"
 msgstr "Невозможно открыть сгенерированный файл ld.so.cache"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-run.c:3733
+#: common/flatpak-run.c:3737
 #, c-format
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr "Запуск %s не разрешен политикой, установленной вашим администратором"
 
-#: common/flatpak-run.c:3775
+#: common/flatpak-run.c:3779
 msgid ""
 "\"flatpak run\" is not intended to be run as `sudo flatpak run`, use `sudo -"
 "i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell"
@@ -5121,19 +5121,19 @@ msgstr ""
 "вместо этого используйте `sudo -i` или `su -l` и запускайте \"flatpak run\" "
 "из новой командной оболочки"
 
-#: common/flatpak-run.c:4033
+#: common/flatpak-run.c:4037
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "Не удалось перенести с %s: %s"
 
-#: common/flatpak-run.c:4048
+#: common/flatpak-run.c:4052
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr ""
 "Не удалось переместить старую папку с данными приложения %s в папку с новым "
 "именем %s: %s"
 
-#: common/flatpak-run.c:4057
+#: common/flatpak-run.c:4061
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "Не удалось создать символическую ссылку при переносе %s: %s"

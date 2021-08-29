@@ -2,9 +2,12 @@ html/
 xml/
 *.stamp
 *.bak
+/dbus-*.xml
+/flatpak.actions
 flatpak-decl-list.txt
 flatpak-decl.txt
 flatpak-overrides.txt
+flatpak-scan.c
 flatpak-undeclared.txt
 flatpak-undocumented.txt
 flatpak-unused.txt

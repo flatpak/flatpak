@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2021-07-05 03:26+0000\n"
+"POT-Creation-Date: 2021-08-25 11:51+0100\n"
 "PO-Revision-Date: 2021-07-05 12:32+0300\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <kde-i18n-uk@kde.org>\n"
@@ -15,7 +15,8 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=4; plural=n==1 ? 3 : n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
+"Plural-Forms: nplurals=4; plural=n==1 ? 3 : n%10==1 && n%100!=11 ? 0 : n"
+"%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
 "X-Generator: Lokalize 20.12.0\n"
 
 #: app/flatpak-builtins-build-bundle.c:57
@@ -258,7 +259,7 @@ msgstr "Немає точки розширення, яка відповідає 
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Пропущено «=» у параметрі монтування прив’язки «%s»"
 
-#: app/flatpak-builtins-build.c:606 common/flatpak-run.c:4442
+#: app/flatpak-builtins-build.c:606 common/flatpak-run.c:4446
 msgid "Unable to start app"
 msgstr "Не вдалося запустити програму"
 
@@ -1050,8 +1051,7 @@ msgstr "Вилучити невикористані об’єкти"
 
 #: app/flatpak-builtins-build-update-repo.c:91
 msgid "Prune but don't actually remove anything"
-msgstr ""
-"Очистити, але нічого насправді не вилучати"
+msgstr "Очистити, але нічого насправді не вилучати"
 
 #: app/flatpak-builtins-build-update-repo.c:92
 msgid "Only traverse DEPTH parents for each commit (default: -1=infinite)"
@@ -3273,7 +3273,7 @@ msgstr "Віддалене сховище «%s» знайдено у декіл�
 
 #: app/flatpak-builtins-utils.c:342 app/flatpak-builtins-utils.c:433
 #: app/flatpak-builtins-utils.c:525 app/flatpak-builtins-utils.c:527
-#: app/flatpak-builtins-utils.c:591
+#: app/flatpak-builtins-utils.c:594
 msgid "Which do you want to use (0 to abort)?"
 msgstr "Яким скористатися (0 — перервати)?"
 
@@ -3336,7 +3336,7 @@ msgid "Similar installed refs found for ‘%s’:"
 msgstr "Подібні встановлені посилання, які знайдено для «%s»:"
 
 #. default to yes on Enter
-#: app/flatpak-builtins-utils.c:576
+#: app/flatpak-builtins-utils.c:579
 #, c-format
 msgid ""
 "Found similar ref(s) for ‘%s’ in remote ‘%s’ (%s).\n"
@@ -3345,73 +3345,73 @@ msgstr ""
 "Знайдено подібні до «%s» посилання у віддаленому сховищі «%s» (%s).\n"
 "Використовувати це віддалене сховище?"
 
-#: app/flatpak-builtins-utils.c:580 app/flatpak-builtins-utils.c:593
+#: app/flatpak-builtins-utils.c:583 app/flatpak-builtins-utils.c:596
 #, c-format
 msgid "No remote chosen to resolve matches for ‘%s’"
 msgstr "Не вибрано віддаленого сховища для визначення відповідників «%s»"
 
-#: app/flatpak-builtins-utils.c:590
+#: app/flatpak-builtins-utils.c:593
 #, c-format
 msgid "Remotes found with refs similar to ‘%s’:"
 msgstr "Знайдено віддалені сховища із посиланнями, подібними до «%s»:"
 
-#: app/flatpak-builtins-utils.c:690 app/flatpak-builtins-utils.c:693
+#: app/flatpak-builtins-utils.c:693 app/flatpak-builtins-utils.c:696
 #, c-format
 msgid "Updating appstream data for user remote %s"
 msgstr "Оновлюємо дані appstream для віддаленого сховища користувача %s"
 
-#: app/flatpak-builtins-utils.c:700 app/flatpak-builtins-utils.c:703
+#: app/flatpak-builtins-utils.c:703 app/flatpak-builtins-utils.c:706
 #, c-format
 msgid "Updating appstream data for remote %s"
 msgstr "Оновлюємо дані appstream для віддаленого сховища %s"
 
-#: app/flatpak-builtins-utils.c:711 app/flatpak-builtins-utils.c:713
+#: app/flatpak-builtins-utils.c:714 app/flatpak-builtins-utils.c:716
 msgid "Error updating"
 msgstr "Помилка під час спроби оновлення"
 
-#: app/flatpak-builtins-utils.c:749
+#: app/flatpak-builtins-utils.c:752
 #, c-format
 msgid "Remote \"%s\" not found"
 msgstr "Не знайдено віддаленого сховища «%s»"
 
-#: app/flatpak-builtins-utils.c:790
+#: app/flatpak-builtins-utils.c:793
 #, c-format
 msgid "Ambiguous suffix: '%s'."
 msgstr "Неоднозначний суфікс: «%s»."
 
 #. Translators: don't translate the values
-#: app/flatpak-builtins-utils.c:792 app/flatpak-builtins-utils.c:807
+#: app/flatpak-builtins-utils.c:795 app/flatpak-builtins-utils.c:810
 msgid "Possible values are :s[tart], :m[iddle], :e[nd] or :f[ull]"
 msgstr "Можливі значення — :s[початок], :m[середина], :e[кінець] або :f[усе]"
 
-#: app/flatpak-builtins-utils.c:805
+#: app/flatpak-builtins-utils.c:808
 #, c-format
 msgid "Invalid suffix: '%s'."
 msgstr "Некоректний суфікс: «%s»."
 
-#: app/flatpak-builtins-utils.c:840
+#: app/flatpak-builtins-utils.c:843
 #, c-format
 msgid "Ambiguous column: %s"
 msgstr "Неоднозначний стовпчик: %s"
 
-#: app/flatpak-builtins-utils.c:853
+#: app/flatpak-builtins-utils.c:856
 #, c-format
 msgid "Unknown column: %s"
 msgstr "Невідомий стовпчик: %s"
 
-#: app/flatpak-builtins-utils.c:911
+#: app/flatpak-builtins-utils.c:914
 msgid "Available columns:\n"
 msgstr "Доступні стовпчики:\n"
 
-#: app/flatpak-builtins-utils.c:921
+#: app/flatpak-builtins-utils.c:924
 msgid "Show all columns"
 msgstr "Показати усі стовпчики"
 
-#: app/flatpak-builtins-utils.c:922
+#: app/flatpak-builtins-utils.c:925
 msgid "Show available columns"
 msgstr "Показати доступні стовпчики"
 
-#: app/flatpak-builtins-utils.c:925
+#: app/flatpak-builtins-utils.c:928
 msgid "Append :s[tart], :m[iddle], :e[nd] or :f[ull] to change ellipsization"
 msgstr ""
 "Допишіть :s[початок], :m[середина], :e[кінець] або :f[усе], щоб змінити "
@@ -5071,90 +5071,92 @@ msgstr "Не вдалося створити канал синхронізаці
 msgid "Failed to sync with dbus proxy"
 msgstr "Не вдалося виконати синхронізацію із проміжним D-Bus"
 
-#: common/flatpak-run.c:1955
+#: common/flatpak-run.c:1959
 msgid "No systemd user session available, cgroups not available"
 msgstr "Немає доступного сеансу користувача systemd, cgroups є недоступними"
 
-#: common/flatpak-run.c:2448
+#: common/flatpak-run.c:2452
 msgid "Unable to allocate instance id"
 msgstr "Не вдалося розмістити у пам'яті ідентифікатор екземпляра"
 
-#: common/flatpak-run.c:2584 common/flatpak-run.c:2594
+#: common/flatpak-run.c:2588 common/flatpak-run.c:2598
 #, c-format
 msgid "Failed to open flatpak-info file: %s"
 msgstr "Не вдалося відкрити файл flatpak-info: %s"
 
-#: common/flatpak-run.c:2622
+#: common/flatpak-run.c:2626
 #, c-format
 msgid "Failed to open bwrapinfo.json file: %s"
 msgstr "Не вдалося відкрити файл bwrapinfo.json: %s"
 
-#: common/flatpak-run.c:2647
+#: common/flatpak-run.c:2651
 #, c-format
 msgid "Failed to write to instance id fd: %s"
 msgstr "Не вдалося записати дескриптор файла до ідентифікатора екземпляра: %s"
 
-#: common/flatpak-run.c:2968
+#: common/flatpak-run.c:2972
 msgid "Initialize seccomp failed"
 msgstr "Не вдалося ініціалізувати seccomp"
 
-#: common/flatpak-run.c:3007
+#: common/flatpak-run.c:3011
 msgid "Failed to add architecture to seccomp filter"
 msgstr "Не вдалося додати архітектуру до фільтра seccomp"
 
-#: common/flatpak-run.c:3015
+#: common/flatpak-run.c:3019
 msgid "Failed to add multiarch architecture to seccomp filter"
 msgstr "Не вдалося додати архітектуру multiarch до фільтра seccomp"
 
 #. unknown syscall
-#: common/flatpak-run.c:3034 common/flatpak-run.c:3048
+#: common/flatpak-run.c:3038 common/flatpak-run.c:3052
 #, c-format
 msgid "Failed to block syscall %d"
 msgstr "Не вдалося заблокувати системний виклик %d"
 
-#: common/flatpak-run.c:3079
+#: common/flatpak-run.c:3083
 msgid "Failed to export bpf"
 msgstr "Не вдалося експортувати bpf"
 
-#: common/flatpak-run.c:3329
+#: common/flatpak-run.c:3333
 #, c-format
 msgid "Failed to open ‘%s’"
 msgstr "Не вдалося відкрити «%s»"
 
-#: common/flatpak-run.c:3615
+#: common/flatpak-run.c:3619
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "Помилка ldconfig, стан виходу %d"
 
-#: common/flatpak-run.c:3622
+#: common/flatpak-run.c:3626
 msgid "Can't open generated ld.so.cache"
 msgstr "Не вдалося відкрити створений ld.so.cache"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-run.c:3733
+#: common/flatpak-run.c:3737
 #, c-format
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr ""
 "Запуск %s заборонено правилами, які встановлено адміністратором вашої системи"
 
-#: common/flatpak-run.c:3775
+#: common/flatpak-run.c:3779
 msgid ""
 "\"flatpak run\" is not intended to be run as `sudo flatpak run`, use `sudo -"
 "i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell"
 msgstr ""
-"«flatpak run» не призначено для запуску як «sudo flatpak run», скористайтеся замість цього «sudo -i» або «su -l» і викличте «flatpak run» з нової командної оболонки"
+"«flatpak run» не призначено для запуску як «sudo flatpak run», скористайтеся "
+"замість цього «sudo -i» або «su -l» і викличте «flatpak run» з нової "
+"командної оболонки"
 
-#: common/flatpak-run.c:4033
+#: common/flatpak-run.c:4037
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "Не вдалося перенести з %s: %s"
 
-#: common/flatpak-run.c:4048
+#: common/flatpak-run.c:4052
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr "Не вдалося перенести каталог даних старої програми %s до нового %s: %s"
 
-#: common/flatpak-run.c:4057
+#: common/flatpak-run.c:4061
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "Не вдалося створити символічне посилання під час перенесення %s: %s"

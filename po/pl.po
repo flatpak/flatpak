@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2021-06-17 17:42+0100\n"
+"POT-Creation-Date: 2021-08-25 11:51+0100\n"
 "PO-Revision-Date: 2021-01-17 13:33+0100\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
@@ -263,7 +263,7 @@ msgstr "Brak punktu rozszerzeń pasującego do %s w %s"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Brak „=” w opcji montowania dowiązania „%s”"
 
-#: app/flatpak-builtins-build.c:606 common/flatpak-run.c:4442
+#: app/flatpak-builtins-build.c:606 common/flatpak-run.c:4446
 msgid "Unable to start app"
 msgstr "Nie można uruchomić programu"
 
@@ -3281,7 +3281,7 @@ msgstr "Odnaleziono repozytorium „%s” w wielu instalacjach:"
 
 #: app/flatpak-builtins-utils.c:342 app/flatpak-builtins-utils.c:433
 #: app/flatpak-builtins-utils.c:525 app/flatpak-builtins-utils.c:527
-#: app/flatpak-builtins-utils.c:591
+#: app/flatpak-builtins-utils.c:594
 msgid "Which do you want to use (0 to abort)?"
 msgstr "Którego użyć (0 przerwie)?"
 
@@ -3343,7 +3343,7 @@ msgid "Similar installed refs found for ‘%s’:"
 msgstr "Odnaleziono podobne zainstalowane odniesienie do „%s”:"
 
 #. default to yes on Enter
-#: app/flatpak-builtins-utils.c:576
+#: app/flatpak-builtins-utils.c:579
 #, c-format
 msgid ""
 "Found similar ref(s) for ‘%s’ in remote ‘%s’ (%s).\n"
@@ -3352,75 +3352,75 @@ msgstr ""
 "Odnaleziono podobne odniesienia do „%s” w repozytorium „%s” (%s).\n"
 "Użyć tego repozytorium?"
 
-#: app/flatpak-builtins-utils.c:580 app/flatpak-builtins-utils.c:593
+#: app/flatpak-builtins-utils.c:583 app/flatpak-builtins-utils.c:596
 #, c-format
 msgid "No remote chosen to resolve matches for ‘%s’"
 msgstr "Nie wybrano repozytorium do rozwiązania wyników dla „%s”"
 
-#: app/flatpak-builtins-utils.c:590
+#: app/flatpak-builtins-utils.c:593
 #, c-format
 msgid "Remotes found with refs similar to ‘%s’:"
 msgstr "Odnaleziono repozytoria z odniesieniami podobnymi do „%s”:"
 
-#: app/flatpak-builtins-utils.c:690 app/flatpak-builtins-utils.c:693
+#: app/flatpak-builtins-utils.c:693 app/flatpak-builtins-utils.c:696
 #, c-format
 msgid "Updating appstream data for user remote %s"
 msgstr "Aktualizowanie danych AppStream dla repozytorium użytkownika %s"
 
-#: app/flatpak-builtins-utils.c:700 app/flatpak-builtins-utils.c:703
+#: app/flatpak-builtins-utils.c:703 app/flatpak-builtins-utils.c:706
 #, c-format
 msgid "Updating appstream data for remote %s"
 msgstr "Aktualizowanie danych AppStream dla repozytorium %s"
 
-#: app/flatpak-builtins-utils.c:711 app/flatpak-builtins-utils.c:713
+#: app/flatpak-builtins-utils.c:714 app/flatpak-builtins-utils.c:716
 msgid "Error updating"
 msgstr "Błąd podczas aktualizowania"
 
-#: app/flatpak-builtins-utils.c:749
+#: app/flatpak-builtins-utils.c:752
 #, c-format
 msgid "Remote \"%s\" not found"
 msgstr "Nie odnaleziono repozytorium „%s”"
 
-#: app/flatpak-builtins-utils.c:790
+#: app/flatpak-builtins-utils.c:793
 #, c-format
 msgid "Ambiguous suffix: '%s'."
 msgstr "Niejednoznaczny przyrostek: „%s”."
 
 #. Translators: don't translate the values
-#: app/flatpak-builtins-utils.c:792 app/flatpak-builtins-utils.c:807
+#: app/flatpak-builtins-utils.c:795 app/flatpak-builtins-utils.c:810
 msgid "Possible values are :s[tart], :m[iddle], :e[nd] or :f[ull]"
 msgstr ""
 "Możliwe wartości to :s[tart] (początek), :m[iddle] (środek), :e[nd] (koniec) "
 "lub :f[ull] (pełne)"
 
-#: app/flatpak-builtins-utils.c:805
+#: app/flatpak-builtins-utils.c:808
 #, c-format
 msgid "Invalid suffix: '%s'."
 msgstr "Nieprawidłowy przyrostek: „%s”."
 
-#: app/flatpak-builtins-utils.c:840
+#: app/flatpak-builtins-utils.c:843
 #, c-format
 msgid "Ambiguous column: %s"
 msgstr "Niejednoznaczna kolumna: %s"
 
-#: app/flatpak-builtins-utils.c:853
+#: app/flatpak-builtins-utils.c:856
 #, c-format
 msgid "Unknown column: %s"
 msgstr "Nieznana kolumna: %s"
 
-#: app/flatpak-builtins-utils.c:911
+#: app/flatpak-builtins-utils.c:914
 msgid "Available columns:\n"
 msgstr "Dostępne kolumny:\n"
 
-#: app/flatpak-builtins-utils.c:921
+#: app/flatpak-builtins-utils.c:924
 msgid "Show all columns"
 msgstr "Wyświetla wszystkie kolumny"
 
-#: app/flatpak-builtins-utils.c:922
+#: app/flatpak-builtins-utils.c:925
 msgid "Show available columns"
 msgstr "Wyświetla dostępne kolumny"
 
-#: app/flatpak-builtins-utils.c:925
+#: app/flatpak-builtins-utils.c:928
 msgid "Append :s[tart], :m[iddle], :e[nd] or :f[ull] to change ellipsization"
 msgstr ""
 "Dołączenie :s[tart], :m[iddle], :e[nd] lub :f[ull] zmieni sposób skracania"
@@ -5088,93 +5088,93 @@ msgstr "Utworzenie potoku synchronizacji się nie powiodło"
 msgid "Failed to sync with dbus proxy"
 msgstr "Synchronizacja z pośrednikiem D-Bus się nie powiodła"
 
-#: common/flatpak-run.c:1955
+#: common/flatpak-run.c:1959
 msgid "No systemd user session available, cgroups not available"
 msgstr "Brak dostępnej sesji użytkownika systemd, cgroups nie są dostępne"
 
-#: common/flatpak-run.c:2448
+#: common/flatpak-run.c:2452
 msgid "Unable to allocate instance id"
 msgstr "Nie można przydzielić identyfikatora wystąpienia"
 
-#: common/flatpak-run.c:2584 common/flatpak-run.c:2594
+#: common/flatpak-run.c:2588 common/flatpak-run.c:2598
 #, c-format
 msgid "Failed to open flatpak-info file: %s"
 msgstr "Otwarcie pliku „flatpak-info” się nie powiodło: %s"
 
-#: common/flatpak-run.c:2622
+#: common/flatpak-run.c:2626
 #, c-format
 msgid "Failed to open bwrapinfo.json file: %s"
 msgstr "Otwarcie pliku „bwrapinfo.json” się nie powiodło: %s"
 
-#: common/flatpak-run.c:2647
+#: common/flatpak-run.c:2651
 #, c-format
 msgid "Failed to write to instance id fd: %s"
 msgstr "Zapisanie do FD identyfikatora wystąpienia się nie powiodło: %s"
 
-#: common/flatpak-run.c:2968
+#: common/flatpak-run.c:2972
 msgid "Initialize seccomp failed"
 msgstr "Inicjacja seccomp się nie powiodła"
 
-#: common/flatpak-run.c:3007
+#: common/flatpak-run.c:3011
 msgid "Failed to add architecture to seccomp filter"
 msgstr "Dodanie architektury do filtru seccomp się nie powiodło"
 
-#: common/flatpak-run.c:3015
+#: common/flatpak-run.c:3019
 msgid "Failed to add multiarch architecture to seccomp filter"
 msgstr ""
 "Dodanie wieloarchitekturowej architektury do filtru seccomp się nie powiodło"
 
 #. unknown syscall
-#: common/flatpak-run.c:3034 common/flatpak-run.c:3048
+#: common/flatpak-run.c:3038 common/flatpak-run.c:3052
 #, c-format
 msgid "Failed to block syscall %d"
 msgstr "Zablokowanie wywołania systemowego %d się nie powiodło"
 
-#: common/flatpak-run.c:3079
+#: common/flatpak-run.c:3083
 msgid "Failed to export bpf"
 msgstr "Wyeksportowanie bpf się nie powiodło"
 
-#: common/flatpak-run.c:3329
+#: common/flatpak-run.c:3333
 #, c-format
 msgid "Failed to open ‘%s’"
 msgstr "Otwarcie „%s” się nie powiodło"
 
-#: common/flatpak-run.c:3615
+#: common/flatpak-run.c:3619
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "ldconfig się nie powiodło, stan wyjścia %d"
 
-#: common/flatpak-run.c:3622
+#: common/flatpak-run.c:3626
 msgid "Can't open generated ld.so.cache"
 msgstr "Nie można otworzyć utworzonego ld.so.cache"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-run.c:3733
+#: common/flatpak-run.c:3737
 #, c-format
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr ""
 "Uruchomienie programu %s jest zabronione przez zasady ustawione przez "
 "administratora"
 
-#: common/flatpak-run.c:3775
+#: common/flatpak-run.c:3779
 msgid ""
 "\"flatpak run\" is not intended to be run as `sudo flatpak run`, use `sudo -"
 "i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell"
 msgstr ""
 
-#: common/flatpak-run.c:4033
+#: common/flatpak-run.c:4037
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "Migracja z %s się nie powiodła: %s"
 
-#: common/flatpak-run.c:4048
+#: common/flatpak-run.c:4052
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr ""
 "Migracja poprzedniego katalogu danych programu %s do nowej nazwy %s się nie "
 "powiodła: %s"
 
-#: common/flatpak-run.c:4057
+#: common/flatpak-run.c:4061
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr ""
