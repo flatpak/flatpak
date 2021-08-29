@@ -1,0 +1,92 @@
+name: Bug Report
+description: Report a bug in Flatpak
+title: "[Bug]: "
+labels: "bug"
+body:
+- type: checkboxes
+  attributes:
+    label: Checklist
+    description: Please make sure you have read the following.
+    options:
+      - label: I agree to follow the [Code of Conduct](https://github.com/flatpak/flatpak/blob/master/CODE_OF_CONDUCT.md) that this project adheres to.
+        required: true
+      - label: I have searched the [issue tracker](https://www.github.com/flatpak/flatpak/issues) for a bug that matches the one I want to file, without success.
+        required: true
+- type: input
+  attributes:
+    label: Flatpak version
+    description: What version of Flatpak are you using? If unsure, run `flatpak --version` in the terminal.
+    placeholder: 1.10.2
+  validations:
+    required: true
+- type: dropdown
+  attributes:
+    label: What Linux distribution are you using?
+    options:
+      - Alpine Linux
+      - Arch Linux
+      - Artix Linux
+      - CentOS
+      - ChromeOS
+      - Clear Linux
+      - Debian
+      - Endless OS
+      - Fedora Linux
+      - Fedora Silverblue
+      - Gentoo Linux
+      - openSUSE
+      - Linux Mint
+      - Manjaro Linux
+      - MicroOS
+      - NixOS
+      - Pop!_OS
+      - Raspberry Pi OS
+      - Solus
+      - Ubuntu
+      - Void Linux
+      - Other (specify below)
+  validations:
+    required: true
+- type: input
+  attributes:
+    label: Linux distribution version
+    description: What Linux distribution version are you using? If unsure, run `uname -a` in the terminal.
+    placeholder: "e.g. 34, 20.04"
+- type: dropdown
+  attributes:
+    label: What architecture are you using?
+    options:
+      - i386
+      - x86_64
+      - aarch64
+      - arm
+      - armeb
+  validations:
+    required: true
+- type: textarea
+  attributes:
+    label: How to reproduce
+    description: A clear description of how to reproduce the problem.
+    placeholder: |
+      1. Go to `...`
+      2. Click on `...`
+      3. Scroll down to `...`
+      4. See error
+  validations:
+    required: false
+- type: textarea
+  attributes:
+    label: Expected Behavior
+    description: A clear and concise description of what you expected to happen.
+  validations:
+    required: true
+- type: textarea
+  attributes:
+    label: Actual Behavior
+    description: A clear description of what actually happens.
+  validations:
+    required: true
+- type: textarea
+  attributes:
+    label: Additional Information
+    description: If your problem needs further explanation, or if the issue you're seeing cannot be reproduced in a gist, please add more information here.

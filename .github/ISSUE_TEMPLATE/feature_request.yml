@@ -1,0 +1,20 @@
+name: Feature request
+description: Request a feature
+title: "[Feature request]: "
+labels: "enhancement"
+body:
+- type: checkboxes
+  attributes:
+    label: Checklist
+    description: Please make sure you have read the following.
+    options:
+      - label: I agree to follow the [Code of Conduct](https://github.com/flatpak/flatpak/blob/master/CODE_OF_CONDUCT.md) that this project adheres to.
+        required: true
+      - label: I have searched the [issue tracker](https://www.github.com/flatpak/flatpak/issues) for a feature request that matches the one I want to file, without success.
+        required: true
+- type: textarea
+  attributes:
+    label: Suggestion
+    description: A clear and concise description of what you would like to see in the upcoming releases. Afterwards, describe the specific use case(s) that would be helped by this enhancement.
+  validations:
+    required: true
