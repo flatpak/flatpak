@@ -2579,6 +2579,10 @@ setup_seccomp (FlatpakBwrap   *bwrap,
    *  https://git.gnome.org/browse/linux-user-chroot
    *    in src/setup-seccomp.c
    *
+   * Other useful resources:
+   * https://github.com/systemd/systemd/blob/HEAD/src/shared/seccomp-util.c
+   * https://github.com/moby/moby/blob/HEAD/profiles/seccomp/default.json
+   *
    **** END NOTE ON CODE SHARING
    */
   struct
