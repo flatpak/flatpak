@@ -2897,61 +2897,63 @@ setup_seccomp (FlatpakBwrap   *bwrap,
   struct
   {
     int                  scall;
+    int                  errnum;
     struct scmp_arg_cmp *arg;
   } syscall_blocklist[] = {
     /* Block dmesg */
-    {SCMP_SYS (syslog)},
+    {SCMP_SYS (syslog), EPERM},
     /* Useless old syscall */
-    {SCMP_SYS (uselib)},
+    {SCMP_SYS (uselib), EPERM},
     /* Don't allow disabling accounting */
-    {SCMP_SYS (acct)},
+    {SCMP_SYS (acct), EPERM},
     /* 16-bit code is unnecessary in the sandbox, and modify_ldt is a
        historic source of interesting information leaks. */
-    {SCMP_SYS (modify_ldt)},
+    {SCMP_SYS (modify_ldt), EPERM},
     /* Don't allow reading current quota use */
-    {SCMP_SYS (quotactl)},
+    {SCMP_SYS (quotactl), EPERM},
 
     /* Don't allow access to the kernel keyring */
-    {SCMP_SYS (add_key)},
-    {SCMP_SYS (keyctl)},
-    {SCMP_SYS (request_key)},
+    {SCMP_SYS (add_key), EPERM},
+    {SCMP_SYS (keyctl), EPERM},
+    {SCMP_SYS (request_key), EPERM},
 
     /* Scary VM/NUMA ops */
-    {SCMP_SYS (move_pages)},
-    {SCMP_SYS (mbind)},
-    {SCMP_SYS (get_mempolicy)},
-    {SCMP_SYS (set_mempolicy)},
-    {SCMP_SYS (migrate_pages)},
+    {SCMP_SYS (move_pages), EPERM},
+    {SCMP_SYS (mbind), EPERM},
+    {SCMP_SYS (get_mempolicy), EPERM},
+    {SCMP_SYS (set_mempolicy), EPERM},
+    {SCMP_SYS (migrate_pages), EPERM},
 
     /* Don't allow subnamespace setups: */
-    {SCMP_SYS (unshare)},
-    {SCMP_SYS (mount)},
-    {SCMP_SYS (pivot_root)},
+    {SCMP_SYS (unshare), EPERM},
+    {SCMP_SYS (mount), EPERM},
+    {SCMP_SYS (pivot_root), EPERM},
 #if defined(__s390__) || defined(__s390x__) || defined(__CRIS__)
     /* Architectures with CONFIG_CLONE_BACKWARDS2: the child stack
      * and flags arguments are reversed so the flags come second */
-    {SCMP_SYS (clone), &SCMP_A1 (SCMP_CMP_MASKED_EQ, CLONE_NEWUSER, CLONE_NEWUSER)},
+    {SCMP_SYS (clone), EPERM, &SCMP_A1 (SCMP_CMP_MASKED_EQ, CLONE_NEWUSER, CLONE_NEWUSER)},
 #else
     /* Normally the flags come first */
-    {SCMP_SYS (clone), &SCMP_A0 (SCMP_CMP_MASKED_EQ, CLONE_NEWUSER, CLONE_NEWUSER)},
+    {SCMP_SYS (clone), EPERM, &SCMP_A0 (SCMP_CMP_MASKED_EQ, CLONE_NEWUSER, CLONE_NEWUSER)},
 #endif
 
     /* Don't allow faking input to the controlling tty (CVE-2017-5226) */
-    {SCMP_SYS (ioctl), &SCMP_A1 (SCMP_CMP_MASKED_EQ, 0xFFFFFFFFu, (int) TIOCSTI)},
+    {SCMP_SYS (ioctl), EPERM, &SCMP_A1 (SCMP_CMP_MASKED_EQ, 0xFFFFFFFFu, (int) TIOCSTI)},
   };
 
   struct
   {
     int                  scall;
+    int                  errnum;
     struct scmp_arg_cmp *arg;
   } syscall_nondevel_blocklist[] = {
     /* Profiling operations; we expect these to be done by tools from outside
      * the sandbox.  In particular perf has been the source of many CVEs.
      */
-    {SCMP_SYS (perf_event_open)},
+    {SCMP_SYS (perf_event_open), EPERM},
     /* Don't allow you to switch to bsd emulation or whatnot */
-    {SCMP_SYS (personality), &SCMP_A0 (SCMP_CMP_NE, allowed_personality)},
-    {SCMP_SYS (ptrace)}
+    {SCMP_SYS (personality), EPERM, &SCMP_A0 (SCMP_CMP_NE, allowed_personality)},
+    {SCMP_SYS (ptrace), EPERM}
   };
   /* Blocklist all but unix, inet, inet6 and netlink */
   struct
@@ -3035,10 +3037,14 @@ setup_seccomp (FlatpakBwrap   *bwrap,
   for (i = 0; i < G_N_ELEMENTS (syscall_blocklist); i++)
     {
       int scall = syscall_blocklist[i].scall;
+      int errnum = syscall_blocklist[i].errnum;
+
+      g_return_val_if_fail (errnum == EPERM || errnum == ENOSYS, FALSE);
+
       if (syscall_blocklist[i].arg)
-        r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO (EPERM), scall, 1, *syscall_blocklist[i].arg);
+        r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO (errnum), scall, 1, *syscall_blocklist[i].arg);
       else
-        r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO (EPERM), scall, 0);
+        r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO (errnum), scall, 0);
       if (r < 0 && r == -EFAULT /* unknown syscall */)
         return flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Failed to block syscall %d"), scall);
     }
@@ -3048,10 +3054,14 @@ setup_seccomp (FlatpakBwrap   *bwrap,
       for (i = 0; i < G_N_ELEMENTS (syscall_nondevel_blocklist); i++)
         {
           int scall = syscall_nondevel_blocklist[i].scall;
+          int errnum = syscall_nondevel_blocklist[i].errnum;
+
+          g_return_val_if_fail (errnum == EPERM || errnum == ENOSYS, FALSE);
+
           if (syscall_nondevel_blocklist[i].arg)
-            r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO (EPERM), scall, 1, *syscall_nondevel_blocklist[i].arg);
+            r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO (errnum), scall, 1, *syscall_nondevel_blocklist[i].arg);
           else
-            r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO (EPERM), scall, 0);
+            r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO (errnum), scall, 0);
 
           if (r < 0 && r == -EFAULT /* unknown syscall */)
             return flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Failed to block syscall %d"), scall);
