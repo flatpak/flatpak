@@ -2836,6 +2836,12 @@ setup_seccomp (FlatpakBwrap   *bwrap,
 
     /* Don't allow faking input to the controlling tty (CVE-2017-5226) */
     {SCMP_SYS (ioctl), EPERM, &SCMP_A1 (SCMP_CMP_MASKED_EQ, 0xFFFFFFFFu, (int) TIOCSTI)},
+
+    /* seccomp can't look into clone3()'s struct clone_args to check whether
+     * the flags are OK, so we have no choice but to block clone3().
+     * Return ENOSYS so user-space will fall back to clone().
+     * (GHSA-67h7-w3jq-vh4q; see also https://github.com/moby/moby/commit/9f6b562d) */
+    {SCMP_SYS (clone3), ENOSYS},
   };
 
   struct
