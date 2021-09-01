@@ -41,6 +41,8 @@
 #include <libmalcontent/malcontent.h>
 #endif
 
+#include "flatpak-syscalls-private.h"
+
 #ifdef ENABLE_SECCOMP
 #include <seccomp.h>
 #endif
