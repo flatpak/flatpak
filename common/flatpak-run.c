@@ -2932,6 +2932,7 @@ setup_seccomp (FlatpakBwrap   *bwrap,
 
     /* Don't allow subnamespace setups: */
     {SCMP_SYS (unshare), EPERM},
+    {SCMP_SYS (setns), EPERM},
     {SCMP_SYS (mount), EPERM},
     {SCMP_SYS (pivot_root), EPERM},
 #if defined(__s390__) || defined(__s390x__) || defined(__CRIS__)
