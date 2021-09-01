@@ -2392,6 +2392,7 @@ setup_seccomp (FlatpakBwrap   *bwrap,
     {SCMP_SYS (umount), EPERM},
     {SCMP_SYS (umount2), EPERM},
     {SCMP_SYS (pivot_root), EPERM},
+    {SCMP_SYS (chroot), EPERM},
 #if defined(__s390__) || defined(__s390x__) || defined(__CRIS__)
     /* Architectures with CONFIG_CLONE_BACKWARDS2: the child stack
      * and flags arguments are reversed so the flags come second */
