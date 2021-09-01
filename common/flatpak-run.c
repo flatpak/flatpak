@@ -2677,6 +2677,18 @@ setup_seccomp (FlatpakBwrap   *bwrap,
      * Return ENOSYS so user-space will fall back to clone().
      * (GHSA-67h7-w3jq-vh4q; see also https://github.com/moby/moby/commit/9f6b562d) */
     {SCMP_SYS (clone3), ENOSYS},
+
+    /* New mount manipulation APIs can also change our VFS. There's no
+     * legitimate reason to do these in the sandbox, so block all of them
+     * rather than thinking about which ones might be dangerous.
+     * (GHSA-67h7-w3jq-vh4q) */
+    {SCMP_SYS (open_tree), ENOSYS},
+    {SCMP_SYS (move_mount), ENOSYS},
+    {SCMP_SYS (fsopen), ENOSYS},
+    {SCMP_SYS (fsconfig), ENOSYS},
+    {SCMP_SYS (fsmount), ENOSYS},
+    {SCMP_SYS (fspick), ENOSYS},
+    {SCMP_SYS (mount_setattr), ENOSYS},
   };
 
   struct
