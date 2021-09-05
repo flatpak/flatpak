@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2021-06-17 17:42+0100\n"
+"POT-Creation-Date: 2021-08-25 11:51+0100\n"
 "PO-Revision-Date: 2017-01-23 18:19+0100\n"
 "Last-Translator: Dušan Kazik <prescott66@gmail.com>\n"
 "Language-Team: Slovak <gnome-sk-list@gnome.org>\n"
@@ -256,7 +256,7 @@ msgstr ""
 msgid "Missing '=' in bind mount option '%s'"
 msgstr ""
 
-#: app/flatpak-builtins-build.c:606 common/flatpak-run.c:4442
+#: app/flatpak-builtins-build.c:606 common/flatpak-run.c:4446
 msgid "Unable to start app"
 msgstr "Nie je možné spustiť aplikáciu"
 
@@ -3333,7 +3333,7 @@ msgstr ""
 
 #: app/flatpak-builtins-utils.c:342 app/flatpak-builtins-utils.c:433
 #: app/flatpak-builtins-utils.c:525 app/flatpak-builtins-utils.c:527
-#: app/flatpak-builtins-utils.c:591
+#: app/flatpak-builtins-utils.c:594
 msgid "Which do you want to use (0 to abort)?"
 msgstr ""
 
@@ -3389,86 +3389,86 @@ msgid "Similar installed refs found for ‘%s’:"
 msgstr ""
 
 #. default to yes on Enter
-#: app/flatpak-builtins-utils.c:576
+#: app/flatpak-builtins-utils.c:579
 #, c-format
 msgid ""
 "Found similar ref(s) for ‘%s’ in remote ‘%s’ (%s).\n"
 "Use this remote?"
 msgstr ""
 
-#: app/flatpak-builtins-utils.c:580 app/flatpak-builtins-utils.c:593
+#: app/flatpak-builtins-utils.c:583 app/flatpak-builtins-utils.c:596
 #, c-format
 msgid "No remote chosen to resolve matches for ‘%s’"
 msgstr ""
 
-#: app/flatpak-builtins-utils.c:590
+#: app/flatpak-builtins-utils.c:593
 #, c-format
 msgid "Remotes found with refs similar to ‘%s’:"
 msgstr ""
 
-#: app/flatpak-builtins-utils.c:690 app/flatpak-builtins-utils.c:693
+#: app/flatpak-builtins-utils.c:693 app/flatpak-builtins-utils.c:696
 #, fuzzy, c-format
 msgid "Updating appstream data for user remote %s"
 msgstr ""
 "Chyba počas aktualizácie metaúdajov navyše pre „%s“: %s\n"
 "\n"
 
-#: app/flatpak-builtins-utils.c:700 app/flatpak-builtins-utils.c:703
+#: app/flatpak-builtins-utils.c:703 app/flatpak-builtins-utils.c:706
 #, fuzzy, c-format
 msgid "Updating appstream data for remote %s"
 msgstr ""
 "Chyba počas aktualizácie metaúdajov navyše pre „%s“: %s\n"
 "\n"
 
-#: app/flatpak-builtins-utils.c:711 app/flatpak-builtins-utils.c:713
+#: app/flatpak-builtins-utils.c:714 app/flatpak-builtins-utils.c:716
 #, fuzzy
 msgid "Error updating"
 msgstr "Aktualizovanie zhrnutia\n"
 
-#: app/flatpak-builtins-utils.c:749
+#: app/flatpak-builtins-utils.c:752
 #, c-format
 msgid "Remote \"%s\" not found"
 msgstr ""
 
-#: app/flatpak-builtins-utils.c:790
+#: app/flatpak-builtins-utils.c:793
 #, c-format
 msgid "Ambiguous suffix: '%s'."
 msgstr ""
 
 #. Translators: don't translate the values
-#: app/flatpak-builtins-utils.c:792 app/flatpak-builtins-utils.c:807
+#: app/flatpak-builtins-utils.c:795 app/flatpak-builtins-utils.c:810
 msgid "Possible values are :s[tart], :m[iddle], :e[nd] or :f[ull]"
 msgstr ""
 
-#: app/flatpak-builtins-utils.c:805
+#: app/flatpak-builtins-utils.c:808
 #, fuzzy, c-format
 msgid "Invalid suffix: '%s'."
 msgstr "Neplatný identifikátor pid %s"
 
-#: app/flatpak-builtins-utils.c:840
+#: app/flatpak-builtins-utils.c:843
 #, c-format
 msgid "Ambiguous column: %s"
 msgstr ""
 
-#: app/flatpak-builtins-utils.c:853
+#: app/flatpak-builtins-utils.c:856
 #, fuzzy, c-format
 msgid "Unknown column: %s"
 msgstr "Neznámy príkaz „%s“"
 
-#: app/flatpak-builtins-utils.c:911
+#: app/flatpak-builtins-utils.c:914
 msgid "Available columns:\n"
 msgstr ""
 
-#: app/flatpak-builtins-utils.c:921
+#: app/flatpak-builtins-utils.c:924
 #, fuzzy
 msgid "Show all columns"
 msgstr "Zobrazí voľby pomocníka"
 
-#: app/flatpak-builtins-utils.c:922
+#: app/flatpak-builtins-utils.c:925
 msgid "Show available columns"
 msgstr ""
 
-#: app/flatpak-builtins-utils.c:925
+#: app/flatpak-builtins-utils.c:928
 msgid "Append :s[tart], :m[iddle], :e[nd] or :f[ull] to change ellipsization"
 msgstr ""
 
@@ -5136,90 +5136,90 @@ msgstr ""
 msgid "Failed to sync with dbus proxy"
 msgstr ""
 
-#: common/flatpak-run.c:1955
+#: common/flatpak-run.c:1959
 msgid "No systemd user session available, cgroups not available"
 msgstr ""
 
-#: common/flatpak-run.c:2448
+#: common/flatpak-run.c:2452
 msgid "Unable to allocate instance id"
 msgstr ""
 
-#: common/flatpak-run.c:2584 common/flatpak-run.c:2594
+#: common/flatpak-run.c:2588 common/flatpak-run.c:2598
 #, fuzzy, c-format
 msgid "Failed to open flatpak-info file: %s"
 msgstr "Zlyhalo otvorenie dočasného súboru flatpak-info"
 
-#: common/flatpak-run.c:2622
+#: common/flatpak-run.c:2626
 #, fuzzy, c-format
 msgid "Failed to open bwrapinfo.json file: %s"
 msgstr "Zlyhalo otvorenie dočasného súboru flatpak-info"
 
-#: common/flatpak-run.c:2647
+#: common/flatpak-run.c:2651
 #, fuzzy, c-format
 msgid "Failed to write to instance id fd: %s"
 msgstr "Zlyhalo vytvorenie dočasného súboru"
 
-#: common/flatpak-run.c:2968
+#: common/flatpak-run.c:2972
 msgid "Initialize seccomp failed"
 msgstr ""
 
-#: common/flatpak-run.c:3007
+#: common/flatpak-run.c:3011
 #, fuzzy
 msgid "Failed to add architecture to seccomp filter"
 msgstr "Zlyhal zápis dočasného súboru"
 
-#: common/flatpak-run.c:3015
+#: common/flatpak-run.c:3019
 msgid "Failed to add multiarch architecture to seccomp filter"
 msgstr ""
 
 #. unknown syscall
-#: common/flatpak-run.c:3034 common/flatpak-run.c:3048
+#: common/flatpak-run.c:3038 common/flatpak-run.c:3052
 #, fuzzy, c-format
 msgid "Failed to block syscall %d"
 msgstr "Zlyhalo čítanie začlenenia %s: "
 
-#: common/flatpak-run.c:3079
+#: common/flatpak-run.c:3083
 #, fuzzy
 msgid "Failed to export bpf"
 msgstr "Zlyhalo čítanie z exportovaného súboru"
 
-#: common/flatpak-run.c:3329
+#: common/flatpak-run.c:3333
 #, fuzzy, c-format
 msgid "Failed to open ‘%s’"
 msgstr "Zlyhalo otvorenie dočasného súboru flatpak-info"
 
-#: common/flatpak-run.c:3615
+#: common/flatpak-run.c:3619
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr ""
 
-#: common/flatpak-run.c:3622
+#: common/flatpak-run.c:3626
 msgid "Can't open generated ld.so.cache"
 msgstr ""
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-run.c:3733
+#: common/flatpak-run.c:3737
 #, c-format
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr ""
 
-#: common/flatpak-run.c:3775
+#: common/flatpak-run.c:3779
 msgid ""
 "\"flatpak run\" is not intended to be run as `sudo flatpak run`, use `sudo -"
 "i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell"
 msgstr ""
 
-#: common/flatpak-run.c:4033
+#: common/flatpak-run.c:4037
 #, fuzzy, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "Zlyhalo čítanie začlenenia %s: "
 
-#: common/flatpak-run.c:4048
+#: common/flatpak-run.c:4052
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr ""
 
-#: common/flatpak-run.c:4057
+#: common/flatpak-run.c:4061
 #, fuzzy, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "Zlyhalo čítanie začlenenia %s: "

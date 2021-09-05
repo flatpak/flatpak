@@ -90,8 +90,7 @@ gboolean flatpak_resolve_matching_installed_refs (gboolean    assume_yes,
                                                   GPtrArray  *out_pairs,
                                                   GError    **error);
 
-gboolean flatpak_resolve_matching_remotes (gboolean        assume_yes,
-                                           GPtrArray      *remote_dir_pairs,
+gboolean flatpak_resolve_matching_remotes (GPtrArray      *remote_dir_pairs,
                                            const char     *opt_search_ref,
                                            RemoteDirPair **out_pair,
                                            GError        **error);

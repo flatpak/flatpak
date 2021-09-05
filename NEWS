@@ -1,3 +1,33 @@
+Changes in 1.11.3
+~~~~~~~~~~~~~~~~~
+Released: 2021-08-25
+
+Dependencies:
+
+* For Linux distributions that compile Flatpak to use a separate
+    bubblewrap (bwrap) executable, updating to version 0.5.0 is recommended,
+    but not required. The minimal version is still 0.4.0.
+
+Bug fixes:
+
+* Don't inherit an unusual $XDG_RUNTIME_DIR setting into the sandbox, fixing
+  a regression introduced when CVE-2021-21261 was fixed in 1.8.5 and 1.10.0
+* Update the included copy of bubblewrap (flatpak-bwrap) to 0.5.0
+    - Better diagnostics when a --bind or other bind-mount fails
+    - Create non-directories with safer permissions
+    - Allow mounting an non-directory over an existing non-directory
+    - Silence kernel messages for our bind-mounts
+    - Improve ability to bind-mount directories on case-insensitive filesystems
+* Don't ask user which remote to download from if there is only one option
+* Improve robustness of autogen.sh
+
+Internal changes:
+
+* Improve test coverage
+* Spelling fixes
+
+Translation updates: Brazilian Portuguese, Russian, Spanish, Ukrainian
+
 Changes in 1.11.2
 ~~~~~~~~~~~~~~~~~
 Released: 2021-06-17
