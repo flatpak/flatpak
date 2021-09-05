@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2021-08-25 11:51+0100\n"
-"PO-Revision-Date: 2021-08-21 21:17+0200\n"
+"PO-Revision-Date: 2021-09-05 14:48+0200\n"
 "Last-Translator: Rodrigo Lledó Milanca <rodhos92@gmail.com>\n"
 "Language-Team: Spanish - Spain <gnome-es-list@gnome.org>\n"
 "Language: es\n"
@@ -3065,6 +3065,8 @@ msgstr "No usar proxy en las llamadas al bus de accesibilidad"
 #: app/flatpak-builtins-run.c:77
 msgid "Proxy accessibility bus calls (default except when sandboxed)"
 msgstr ""
+"Llamadas del bus de accesibilidad del proxy (predeterminado, excepto cuando "
+"está en un espacio aislado)"
 
 #: app/flatpak-builtins-run.c:78
 msgid "Don't proxy session bus calls"
@@ -3073,6 +3075,8 @@ msgstr "No usar proxy en las llamadas al bus de sesión"
 #: app/flatpak-builtins-run.c:79
 msgid "Proxy session bus calls (default except when sandboxed)"
 msgstr ""
+"Llamadas del bus de sesión del proxy (predeterminado, excepto cuando está en "
+"un espacio aislado)"
 
 #: app/flatpak-builtins-run.c:80
 msgid "Don't start portals"
@@ -3092,31 +3096,31 @@ msgstr "Usar el commit en tiempo de ejecución especificado"
 
 #: app/flatpak-builtins-run.c:84
 msgid "Run completely sandboxed"
-msgstr ""
+msgstr "Ejecutar completamente aislado"
 
 #: app/flatpak-builtins-run.c:86
 msgid "Use PID as parent pid for sharing namespaces"
-msgstr ""
+msgstr "Usar PID como pid principal para compartir espacios de nombre"
 
 #: app/flatpak-builtins-run.c:87
 msgid "Make processes visible in parent namespace"
-msgstr ""
+msgstr "Hacer visibles los procesos en el espacio de nombres principal"
 
 #: app/flatpak-builtins-run.c:88
 msgid "Share process ID namespace with parent"
-msgstr ""
+msgstr "Compartir el espacio de nombres del ID de proceso con el principal"
 
 #: app/flatpak-builtins-run.c:89
 msgid "Write the instance ID to the given file descriptor"
-msgstr ""
+msgstr "Escribir el ID de la instancia en el descriptor de archivo dado"
 
 #: app/flatpak-builtins-run.c:90
 msgid "Use PATH instead of the app's /app"
-msgstr ""
+msgstr "Usar RUTA en lugar de /app de la aplicación"
 
 #: app/flatpak-builtins-run.c:91
 msgid "Use PATH instead of the runtime's /usr"
-msgstr ""
+msgstr "Usar RUTA en lugar de /usr del ejecutable"
 
 #: app/flatpak-builtins-run.c:114
 msgid "APP [ARGUMENT…] - Run an app"
@@ -3141,7 +3145,7 @@ msgstr "Mostrar los remotos"
 
 #: app/flatpak-builtins-search.c:271
 msgid "TEXT - Search remote apps/runtimes for text"
-msgstr ""
+msgstr "TEXTO - Buscar aplicaciones o ejecutables para el texto"
 
 #: app/flatpak-builtins-search.c:282
 msgid "TEXT must be specified"
@@ -3177,12 +3181,12 @@ msgstr "Desinstalar no usadas"
 
 #: app/flatpak-builtins-uninstall.c:62
 msgid "Delete app data"
-msgstr ""
+msgstr "Eliminar los datos de la aplicación"
 
 #: app/flatpak-builtins-uninstall.c:129
 #, c-format
 msgid "Delete data for %s?"
-msgstr ""
+msgstr "¿Eliminar los datos de %s?"
 
 #: app/flatpak-builtins-uninstall.c:155
 msgid "[REF…] - Uninstall an application"
@@ -3194,11 +3198,11 @@ msgstr "Se debe especificar al menos una REF, --unused, --all o --delete-data"
 
 #: app/flatpak-builtins-uninstall.c:167
 msgid "Must not specify REFs when using --all"
-msgstr ""
+msgstr "No se deben especificar REFs al usar --all"
 
 #: app/flatpak-builtins-uninstall.c:170
 msgid "Must not specify REFs when using --unused"
-msgstr ""
+msgstr "No se deben especificar REFs al usar --unused"
 
 #: app/flatpak-builtins-uninstall.c:233
 #, c-format
@@ -3207,6 +3211,9 @@ msgid ""
 "These runtimes in installation '%s' are pinned and won't be removed; see "
 "flatpak-pin(1):\n"
 msgstr ""
+"\n"
+"Estos ejecutables en la instalación «%s» están fijados y no se eliminarán. "
+"Consulte flatpak-pin(1):\n"
 
 #: app/flatpak-builtins-uninstall.c:267
 msgid "Nothing unused to uninstall\n"
@@ -3276,7 +3283,7 @@ msgstr "Nada que hacer.\n"
 #: app/flatpak-builtins-utils.c:341
 #, c-format
 msgid "Remote ‘%s’ found in multiple installations:"
-msgstr ""
+msgstr "Se encontró el remoto «%s» en varias instalaciones:"
 
 #: app/flatpak-builtins-utils.c:342 app/flatpak-builtins-utils.c:433
 #: app/flatpak-builtins-utils.c:525 app/flatpak-builtins-utils.c:527
@@ -3288,6 +3295,7 @@ msgstr "¿Cuál quiere usar (0 para abortar)?"
 #, c-format
 msgid "No remote chosen to resolve ‘%s’ which exists in multiple installations"
 msgstr ""
+"No se eligió un remoto para resolver «%s» que existe en varias instalaciones"
 
 #: app/flatpak-builtins-utils.c:353
 #, c-format
@@ -3295,6 +3303,8 @@ msgid ""
 "Remote \"%s\" not found\n"
 "Hint: Use flatpak remote-add to add a remote"
 msgstr ""
+"No se encontró el remoto «%s»\n"
+"Pista: Use flatpak remote-add para añadir un remoto"
 
 #: app/flatpak-builtins-utils.c:359
 #, c-format
@@ -3308,32 +3318,34 @@ msgid ""
 "Found ref ‘%s’ in remote ‘%s’ (%s).\n"
 "Use this ref?"
 msgstr ""
+"Se encontró la ref. «%s» en el remoto «%s» (%s).\n"
+"¿Usar esta ref.?"
 
 #: app/flatpak-builtins-utils.c:425 app/flatpak-builtins-utils.c:435
 #: app/flatpak-builtins-utils.c:509 app/flatpak-builtins-utils.c:530
 #, c-format
 msgid "No ref chosen to resolve matches for ‘%s’"
-msgstr ""
+msgstr "No se eligió una ref. para resolver las coincidencias de «%s»"
 
 #: app/flatpak-builtins-utils.c:431
 #, c-format
 msgid "Similar refs found for ‘%s’ in remote ‘%s’ (%s):"
-msgstr ""
+msgstr "Se encontraron refs. similares de «%s» en el remoto «%s» (%s):"
 
 #. default to yes on Enter
 #: app/flatpak-builtins-utils.c:505
 #, c-format
 msgid "Found installed ref ‘%s’ (%s). Is this correct?"
-msgstr ""
+msgstr "Se encontró la ref «%s» instalada (%s). ¿Es correcto?"
 
 #: app/flatpak-builtins-utils.c:521
 msgid "All of the above"
-msgstr ""
+msgstr "Todo lo anterior"
 
 #: app/flatpak-builtins-utils.c:522
 #, c-format
 msgid "Similar installed refs found for ‘%s’:"
-msgstr ""
+msgstr "Se encontraron refs similares instaladas para «%s»:"
 
 #. default to yes on Enter
 #: app/flatpak-builtins-utils.c:579
@@ -3342,16 +3354,19 @@ msgid ""
 "Found similar ref(s) for ‘%s’ in remote ‘%s’ (%s).\n"
 "Use this remote?"
 msgstr ""
+"Se encontraron ref(s) similares instaladas para «%s» en el remoto "
+"«%s» (%s).\n"
+"¿Usar este remoto?"
 
 #: app/flatpak-builtins-utils.c:583 app/flatpak-builtins-utils.c:596
 #, c-format
 msgid "No remote chosen to resolve matches for ‘%s’"
-msgstr ""
+msgstr "No se eligió un remoto para resolver las coincidencias de «%s»"
 
 #: app/flatpak-builtins-utils.c:593
 #, c-format
 msgid "Remotes found with refs similar to ‘%s’:"
-msgstr ""
+msgstr "Se encontraron remotos con refs similares a «%s»:"
 
 #: app/flatpak-builtins-utils.c:693 app/flatpak-builtins-utils.c:696
 #, c-format
@@ -3370,17 +3385,17 @@ msgstr "Error al actualizar"
 #: app/flatpak-builtins-utils.c:752
 #, c-format
 msgid "Remote \"%s\" not found"
-msgstr ""
+msgstr "El remoto «%s» no se encontró"
 
 #: app/flatpak-builtins-utils.c:793
 #, c-format
 msgid "Ambiguous suffix: '%s'."
-msgstr ""
+msgstr "Sufijo ambiguo: «%s»."
 
 #. Translators: don't translate the values
 #: app/flatpak-builtins-utils.c:795 app/flatpak-builtins-utils.c:810
 msgid "Possible values are :s[tart], :m[iddle], :e[nd] or :f[ull]"
-msgstr ""
+msgstr "Los valores posibles son :s[tart], :m[iddle], :e[nd] o :f[ull]"
 
 #: app/flatpak-builtins-utils.c:808
 #, c-format
@@ -3390,7 +3405,7 @@ msgstr "Sufijo no válido: «%s»."
 #: app/flatpak-builtins-utils.c:843
 #, c-format
 msgid "Ambiguous column: %s"
-msgstr ""
+msgstr "Columna ambigua: %s"
 
 #: app/flatpak-builtins-utils.c:856
 #, c-format
@@ -3399,7 +3414,7 @@ msgstr "Columna desconocida: %s"
 
 #: app/flatpak-builtins-utils.c:914
 msgid "Available columns:\n"
-msgstr ""
+msgstr "Columnas disponibles:\n"
 
 #: app/flatpak-builtins-utils.c:924
 msgid "Show all columns"
@@ -3412,6 +3427,7 @@ msgstr "Mostrar columnas disponibles"
 #: app/flatpak-builtins-utils.c:928
 msgid "Append :s[tart], :m[iddle], :e[nd] or :f[ull] to change ellipsization"
 msgstr ""
+"Adjuntar :s[tart], :m[iddle], :e[nd] o :f[ull] para cambiar la elipsización"
 
 #: app/flatpak-cli-transaction.c:91 app/flatpak-cli-transaction.c:97
 #, fuzzy, c-format
@@ -3510,7 +3526,7 @@ msgstr "Desinstalando %d/%d…"
 #: app/flatpak-cli-transaction.c:502 app/flatpak-quiet-transaction.c:131
 #, c-format
 msgid "Info: %s was skipped"
-msgstr ""
+msgstr "Info: se saltó %s"
 
 #: app/flatpak-cli-transaction.c:520 app/flatpak-quiet-transaction.c:136
 #: common/flatpak-dir.c:9685
@@ -3535,11 +3551,11 @@ msgstr "%s necesita una versión de flatpak superior (%s)"
 
 #: app/flatpak-cli-transaction.c:528 app/flatpak-quiet-transaction.c:144
 msgid "Not enough disk space to complete this operation"
-msgstr ""
+msgstr "No hay espacio de disco suficiente para completar esta operación"
 
 #: app/flatpak-cli-transaction.c:532
 msgid "(internal error, please report)"
-msgstr ""
+msgstr "(error interno, envíe un informe)"
 
 #: app/flatpak-cli-transaction.c:537
 #, fuzzy, c-format
@@ -3561,12 +3577,12 @@ msgstr "La autentificación es obligatoria para actualizar un programa"
 
 #: app/flatpak-cli-transaction.c:576
 msgid "Open browser?"
-msgstr ""
+msgstr "¿Abrir el navegador?"
 
 #: app/flatpak-cli-transaction.c:632
 #, c-format
 msgid "Login required remote %s (realm %s)\n"
-msgstr ""
+msgstr "El inicio de sesión requiere el remoto %s (ámbito %s)\n"
 
 #: app/flatpak-cli-transaction.c:637
 msgid "Password"
@@ -3575,22 +3591,22 @@ msgstr "Contraseña"
 #: app/flatpak-cli-transaction.c:718
 #, c-format
 msgid "Info: (pinned) %s//%s is end-of-life, in favor of %s\n"
-msgstr ""
+msgstr "Info: (el fijado) %s//%s terminó su vida útil, en favor de %s\n"
 
 #: app/flatpak-cli-transaction.c:720
 #, c-format
 msgid "Info: %s//%s is end-of-life, in favor of %s\n"
-msgstr ""
+msgstr "Info: %s//%s terminó su vida útil, en favor de %s\n"
 
 #: app/flatpak-cli-transaction.c:724
 #, c-format
 msgid "Info: (pinned) %s//%s is end-of-life, with reason:\n"
-msgstr ""
+msgstr "Info: (el fijado) %s//%s terminó su vida útil, con motivo:\n"
 
 #: app/flatpak-cli-transaction.c:726
 #, c-format
 msgid "Info: %s//%s is end-of-life, with reason:\n"
-msgstr ""
+msgstr "Info: %s//%s terminó su vida útil, con motivo:\n"
 
 #: app/flatpak-cli-transaction.c:735
 #, fuzzy
@@ -3600,7 +3616,7 @@ msgstr "Firmar una aplicación o «runtime»"
 #: app/flatpak-cli-transaction.c:752
 #, c-format
 msgid "Replace it with %s?"
-msgstr ""
+msgstr "¿Reemplazarlo con %s?"
 
 #: app/flatpak-cli-transaction.c:755 app/flatpak-quiet-transaction.c:223
 #, fuzzy
@@ -3653,7 +3669,7 @@ msgstr "¿Proceder con estos cambios en la instalación de %s?"
 
 #: app/flatpak-cli-transaction.c:1403
 msgid "Changes complete."
-msgstr ""
+msgstr "Cambios completados."
 
 #: app/flatpak-cli-transaction.c:1405
 msgid "Uninstall complete."
@@ -3671,7 +3687,7 @@ msgstr "Actualizaciones completadas."
 #. a different one.
 #: app/flatpak-cli-transaction.c:1442
 msgid "There were one or more errors"
-msgstr ""
+msgstr "Hubo uno o más errores"
 
 #. translators: please keep the leading space
 #: app/flatpak-main.c:76
@@ -3692,11 +3708,11 @@ msgstr "Desinstalar una aplicación o tiempo de ejecución instalado"
 
 #: app/flatpak-main.c:84
 msgid "Mask out updates and automatic installation"
-msgstr ""
+msgstr "Ocultar las actualizaciones y la instalación automática"
 
 #: app/flatpak-main.c:85
 msgid "Pin a runtime to prevent automatic removal"
-msgstr ""
+msgstr "Fijar un ejecutable para evitar la eliminación automática"
 
 #: app/flatpak-main.c:86
 msgid "List installed apps and/or runtimes"
@@ -3721,7 +3737,7 @@ msgstr "Reparar la instalación de flatpak"
 
 #: app/flatpak-main.c:91
 msgid "Put applications or runtimes onto removable media"
-msgstr ""
+msgstr "Colocar aplicaciones o ejecutables en medios extraíbles"
 
 #. translators: please keep the leading newline and space
 #: app/flatpak-main.c:94
@@ -3734,7 +3750,7 @@ msgstr ""
 
 #: app/flatpak-main.c:95
 msgid "Search for remote apps/runtimes"
-msgstr ""
+msgstr "Buscar aplicaciones o ejecutables remotos"
 
 #. translators: please keep the leading newline and space
 #: app/flatpak-main.c:98
@@ -3944,11 +3960,11 @@ msgstr "Imprimir la información de la versión y salir"
 
 #: app/flatpak-main.c:173
 msgid "Print the updated environment needed to run flatpaks"
-msgstr ""
+msgstr "Mostrar el entorno actualizado necesario para ejecutar flatpaks"
 
 #: app/flatpak-main.c:174
 msgid "Only include the system installation with --print-updated-env"
-msgstr ""
+msgstr "Incluir solo la instalación del sistema con --print-updated-env"
 
 #: app/flatpak-main.c:179
 #, fuzzy
@@ -3978,6 +3994,10 @@ msgid ""
 "XDG_DATA_DIRS environment variable, so applications installed by Flatpak may "
 "not appear on your desktop until the session is restarted."
 msgstr ""
+"Tenga en cuenta que las carpetas %s no se encuentran en la ruta de búsqueda "
+"establecida por la variable de entorno XDG_DATA_DIRS, por lo que es posible "
+"que las aplicaciones instaladas por Flatpak no aparezcan en su escritorio "
+"hasta que se reinicie la sesión."
 
 #: app/flatpak-main.c:311
 #, c-format
@@ -3986,16 +4006,22 @@ msgid ""
 "XDG_DATA_DIRS environment variable, so applications installed by Flatpak may "
 "not appear on your desktop until the session is restarted."
 msgstr ""
+"Tenga en cuenta que la carpeta %s no se encuentra en la ruta de búsqueda "
+"establecida por la variable de entorno XDG_DATA_DIRS, por lo que es posible "
+"que las aplicaciones instaladas por Flatpak no aparezcan en su escritorio "
+"hasta que se reinicie la sesión."
 
 #: app/flatpak-main.c:440
 msgid ""
 "Multiple installations specified for a command that works on one installation"
 msgstr ""
+"Varias instalaciones especificadas para un comando que funcionan en una "
+"instalación"
 
 #: app/flatpak-main.c:489 app/flatpak-main.c:671
 #, c-format
 msgid "See '%s --help'"
-msgstr ""
+msgstr "Consulte «%s --help»"
 
 #: app/flatpak-main.c:680
 #, fuzzy, c-format
@@ -4005,7 +4031,7 @@ msgstr "«%s» no es un nombre de aplicación valido: %s"
 #: app/flatpak-main.c:683
 #, c-format
 msgid "'%s' is not a flatpak command"
-msgstr ""
+msgstr "«%s» no es un comando de flatpak"
 
 #: app/flatpak-main.c:798
 msgid "No command specified"
@@ -4038,12 +4064,12 @@ msgstr "Error: Fallo al %s %s: %s\n"
 #: app/flatpak-quiet-transaction.c:215
 #, c-format
 msgid "Info: %s is end-of-life, in favor of %s\n"
-msgstr ""
+msgstr "Info: %s terminó su vida útil, en favor de %s\n"
 
 #: app/flatpak-quiet-transaction.c:217
 #, c-format
 msgid "Info: %s is end-of-life, with reason: %s\n"
-msgstr ""
+msgstr "Info: %s terminó su vida útil, con motivo: %s\n"
 
 #: app/flatpak-quiet-transaction.c:228
 #, fuzzy, c-format
@@ -4088,12 +4114,14 @@ msgstr "Tipo de característica desconocido %s, los tipos válidos son: %s"
 #: common/flatpak-context.c:779
 #, c-format
 msgid "Filesystem location \"%s\" contains \"..\""
-msgstr ""
+msgstr "La ubicación de archivos del sistema «%s» contiene «..»"
 
 #: common/flatpak-context.c:817
 msgid ""
 "--filesystem=/ is not available, use --filesystem=host for a similar result"
 msgstr ""
+"--filesystem=/ no está disponible, use --filesystem=host para obtener un "
+"resultado similar"
 
 #: common/flatpak-context.c:851
 #, fuzzy, c-format
@@ -4112,7 +4140,7 @@ msgstr "Formato de entorno no válido %s"
 #: common/flatpak-context.c:1218
 #, c-format
 msgid "Environment variable name must not contain '=': %s"
-msgstr ""
+msgstr "El nombre de la variable de entorno no debe contener «=»: %s"
 
 #: common/flatpak-context.c:1331 common/flatpak-context.c:1339
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
@@ -4209,7 +4237,7 @@ msgstr ""
 
 #: common/flatpak-context.c:1423
 msgid "FD"
-msgstr ""
+msgstr "FD"
 
 #: common/flatpak-context.c:1424
 #, fuzzy
@@ -4330,7 +4358,7 @@ msgstr "No se puede encontrar %s en el repositorio remoto %s"
 #: common/flatpak-dir.c:1018 common/flatpak-dir.c:5671
 #: common/flatpak-utils.c:6829 common/flatpak-utils.c:6834
 msgid "Image is not a manifest"
-msgstr ""
+msgstr "La imagen no es un manifiesto"
 
 #: common/flatpak-dir.c:1039 common/flatpak-dir.c:1112
 #, c-format
@@ -4390,7 +4418,7 @@ msgstr "Mientras se abría el repositorio %s: "
 #: common/flatpak-dir.c:4165
 #, c-format
 msgid "The config key %s is not set"
-msgstr ""
+msgstr "La clave de configuración %s no está establecida"
 
 #: common/flatpak-dir.c:4298
 #, fuzzy, c-format
@@ -4469,6 +4497,7 @@ msgstr "Mientras se está cargando %s desde el repositorio remoto %s: "
 #: common/flatpak-dir.c:6015 common/flatpak-utils.c:6724
 msgid "GPG signatures found, but none are in trusted keyring"
 msgstr ""
+"Se encontraron firmas GPG, pero ninguna está en un llavero de confianza"
 
 #: common/flatpak-dir.c:6032
 #, c-format
