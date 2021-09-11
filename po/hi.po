@@ -15,7 +15,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n==0 || n==1);\n"
 "X-Generator: Poedit 2.2.4\n"
-"Last-Translator: \n"
+"Last-Translator: Dmitry <dmitrydmitry761@gmail.com>\n"
 "Language: hi\n"
 
 #: app/flatpak-builtins-build-bundle.c:57
