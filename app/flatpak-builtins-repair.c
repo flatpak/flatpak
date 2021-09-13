@@ -355,6 +355,8 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
     g_autoptr(FlatpakDecomposed) ref = NULL;
     g_autofree char *origin = NULL;
 
+    i++;
+
     if (!ostree_parse_refspec (refspec, &remote, &ref_name, error))
       return FALSE;
 
@@ -388,7 +390,7 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
     if (flatpak_fancy_output ())
       g_print ("\033[A\r\033[K");
 
-    g_print (_("[%d/%d] Verifying %s…\n"), ++i, g_hash_table_size (all_refs), refspec);
+    g_print (_("[%d/%d] Verifying %s…\n"), i, g_hash_table_size (all_refs), refspec);
 
     status = fsck_commit (repo, checksum, object_status_cache);
     if (status != FSCK_STATUS_OK)
