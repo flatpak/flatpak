@@ -7694,6 +7694,20 @@ flatpak_subpaths_merge (char **subpaths1,
   return res;
 }
 
+const char * const *
+flatpak_get_locale_categories (void)
+{
+  /* See locale(7) for these categories */
+  static const char * const categories[] = {
+    "LANG", "LC_ALL", "LC_MESSAGES", "LC_ADDRESS", "LC_COLLATE", "LC_CTYPE",
+    "LC_IDENTIFICATION", "LC_MONETARY", "LC_MEASUREMENT", "LC_NAME", "LC_NUMERIC",
+    "LC_PAPER", "LC_TELEPHONE", "LC_TIME",
+    NULL
+  };
+
+  return categories;
+}
+
 char *
 flatpak_get_lang_from_locale (const char *locale)
 {
@@ -7729,18 +7743,291 @@ flatpak_g_ptr_array_contains_string (GPtrArray *array, const char *str)
   return FALSE;
 }
 
+#if !GLIB_CHECK_VERSION (2, 58, 0)
+/* All this code is backported directly from glib 2.66 */
+
+typedef struct _GLanguageNamesCache GLanguageNamesCache;
+
+struct _GLanguageNamesCache {
+  gchar *languages;
+  gchar **language_names;
+};
+
+static void
+language_names_cache_free (gpointer data)
+{
+  GLanguageNamesCache *cache = data;
+  g_free (cache->languages);
+  g_strfreev (cache->language_names);
+  g_free (cache);
+}
+
+/* read an alias file for the locales */
+static void
+read_aliases (const gchar *file,
+              GHashTable  *alias_table)
+{
+  FILE *fp;
+  char buf[256];
+
+  fp = fopen (file,"r");
+  if (!fp)
+    return;
+  while (fgets (buf, 256, fp))
+    {
+      char *p, *q;
+
+      g_strstrip (buf);
+
+      /* Line is a comment */
+      if ((buf[0] == '#') || (buf[0] == '\0'))
+        continue;
+
+      /* Reads first column */
+      for (p = buf, q = NULL; *p; p++) {
+        if ((*p == '\t') || (*p == ' ') || (*p == ':')) {
+          *p = '\0';
+          q = p+1;
+          while ((*q == '\t') || (*q == ' ')) {
+            q++;
+          }
+          break;
+        }
+      }
+      /* The line only had one column */
+      if (!q || *q == '\0')
+        continue;
+
+      /* Read second column */
+      for (p = q; *p; p++) {
+        if ((*p == '\t') || (*p == ' ')) {
+          *p = '\0';
+          break;
+        }
+      }
+
+      /* Add to alias table if necessary */
+      if (!g_hash_table_lookup (alias_table, buf)) {
+        g_hash_table_insert (alias_table, g_strdup (buf), g_strdup (q));
+      }
+    }
+  fclose (fp);
+}
+
+static char *
+unalias_lang (char *lang)
+{
+  static GHashTable *alias_table = NULL;
+  char *p;
+  int i;
+
+  if (g_once_init_enter (&alias_table))
+    {
+      GHashTable *table = g_hash_table_new (g_str_hash, g_str_equal);
+      read_aliases ("/usr/share/locale/locale.alias", table);
+      g_once_init_leave (&alias_table, table);
+    }
+
+  i = 0;
+  while ((p = g_hash_table_lookup (alias_table, lang)) && (strcmp (p, lang) != 0))
+    {
+      lang = p;
+      if (i++ == 30)
+        {
+          static gboolean said_before = FALSE;
+          if (!said_before)
+            g_warning ("Too many alias levels for a locale, "
+                       "may indicate a loop");
+          said_before = TRUE;
+          return lang;
+        }
+    }
+  return lang;
+}
+
+/* Mask for components of locale spec. The ordering here is from
+ * least significant to most significant
+ */
+enum
+{
+  COMPONENT_CODESET =   1 << 0,
+  COMPONENT_TERRITORY = 1 << 1,
+  COMPONENT_MODIFIER =  1 << 2
+};
+
+/* Break an X/Open style locale specification into components
+ */
+static guint
+explode_locale (const gchar *locale,
+                gchar      **language,
+                gchar      **territory,
+                gchar      **codeset,
+                gchar      **modifier)
+{
+  const gchar *uscore_pos;
+  const gchar *at_pos;
+  const gchar *dot_pos;
+
+  guint mask = 0;
+
+  uscore_pos = strchr (locale, '_');
+  dot_pos = strchr (uscore_pos ? uscore_pos : locale, '.');
+  at_pos = strchr (dot_pos ? dot_pos : (uscore_pos ? uscore_pos : locale), '@');
+
+  if (at_pos)
+    {
+      mask |= COMPONENT_MODIFIER;
+      *modifier = g_strdup (at_pos);
+    }
+  else
+    at_pos = locale + strlen (locale);
+
+  if (dot_pos)
+    {
+      mask |= COMPONENT_CODESET;
+      *codeset = g_strndup (dot_pos, at_pos - dot_pos);
+    }
+  else
+    dot_pos = at_pos;
+
+  if (uscore_pos)
+    {
+      mask |= COMPONENT_TERRITORY;
+      *territory = g_strndup (uscore_pos, dot_pos - uscore_pos);
+    }
+  else
+    uscore_pos = dot_pos;
+
+  *language = g_strndup (locale, uscore_pos - locale);
+
+  return mask;
+}
+
+/*
+ * Compute all interesting variants for a given locale name -
+ * by stripping off different components of the value.
+ *
+ * For simplicity, we assume that the locale is in
+ * X/Open format: language[_territory][.codeset][@modifier]
+ *
+ * TODO: Extend this to handle the CEN format (see the GNUlibc docs)
+ *       as well. We could just copy the code from glibc wholesale
+ *       but it is big, ugly, and complicated, so I'm reluctant
+ *       to do so when this should handle 99% of the time...
+ */
+static void
+append_locale_variants (GPtrArray *array,
+                        const gchar *locale)
+{
+  gchar *language = NULL;
+  gchar *territory = NULL;
+  gchar *codeset = NULL;
+  gchar *modifier = NULL;
+
+  guint mask;
+  guint i, j;
+
+  g_return_if_fail (locale != NULL);
+
+  mask = explode_locale (locale, &language, &territory, &codeset, &modifier);
+
+  /* Iterate through all possible combinations, from least attractive
+   * to most attractive.
+   */
+  for (j = 0; j <= mask; ++j)
+    {
+      i = mask - j;
+
+      if ((i & ~mask) == 0)
+        {
+          gchar *val = g_strconcat (language,
+                                    (i & COMPONENT_TERRITORY) ? territory : "",
+                                    (i & COMPONENT_CODESET) ? codeset : "",
+                                    (i & COMPONENT_MODIFIER) ? modifier : "",
+                                    NULL);
+          g_ptr_array_add (array, val);
+        }
+    }
+
+  g_free (language);
+  if (mask & COMPONENT_CODESET)
+    g_free (codeset);
+  if (mask & COMPONENT_TERRITORY)
+    g_free (territory);
+  if (mask & COMPONENT_MODIFIER)
+    g_free (modifier);
+}
+
+static const gchar * const *
+g_get_language_names_with_category (const gchar *category_name)
+{
+  static GPrivate cache_private = G_PRIVATE_INIT ((void (*)(gpointer)) g_hash_table_unref);
+  GHashTable *cache = g_private_get (&cache_private);
+  const gchar *languages;
+  GLanguageNamesCache *name_cache;
+
+  g_return_val_if_fail (category_name != NULL, NULL);
+
+  if (!cache)
+    {
+      cache = g_hash_table_new_full (g_str_hash, g_str_equal,
+                                     g_free, language_names_cache_free);
+      g_private_set (&cache_private, cache);
+    }
+
+  /* Backporting note: we don't bother checking all the other LC_* variants as
+     fallbacks, because Flatpak will be reading all the categories individually
+     anyway. */
+  languages = g_getenv (category_name);
+  if (!languages)
+    languages = "C";
+
+  name_cache = (GLanguageNamesCache *) g_hash_table_lookup (cache, category_name);
+  if (!(name_cache && name_cache->languages &&
+        strcmp (name_cache->languages, languages) == 0))
+    {
+      GPtrArray *array;
+      gchar **alist, **a;
+
+      g_hash_table_remove (cache, category_name);
+
+      array = g_ptr_array_sized_new (8);
+
+      alist = g_strsplit (languages, ":", 0);
+      for (a = alist; *a; a++)
+        append_locale_variants (array, unalias_lang (*a));
+      g_strfreev (alist);
+      g_ptr_array_add (array, g_strdup ("C"));
+      g_ptr_array_add (array, NULL);
+
+      name_cache = g_new0 (GLanguageNamesCache, 1);
+      name_cache->languages = g_strdup (languages);
+      name_cache->language_names = (gchar **) g_ptr_array_free (array, FALSE);
+      g_hash_table_insert (cache, g_strdup (category_name), name_cache);
+    }
+
+  return (const gchar * const *) name_cache->language_names;
+}
+
+#endif
+
 char **
 flatpak_get_current_locale_langs (void)
 {
-  const gchar * const *locales = g_get_language_names ();
+  const char * const *categories = flatpak_get_locale_categories ();
   GPtrArray *langs = g_ptr_array_new ();
   int i;
 
-  for (i = 0; locales[i] != NULL; i++)
+  for (; categories != NULL && *categories != NULL; categories++)
     {
-      g_autofree char *lang = flatpak_get_lang_from_locale (locales[i]);
-      if (lang != NULL && !flatpak_g_ptr_array_contains_string (langs, lang))
-        g_ptr_array_add (langs, g_steal_pointer (&lang));
+      const gchar * const *locales = g_get_language_names_with_category (*categories);
+
+      for (i = 0; locales[i] != NULL; i++)
+        {
+          g_autofree char *lang = flatpak_get_lang_from_locale (locales[i]);
+          if (lang != NULL && !flatpak_g_ptr_array_contains_string (langs, lang))
+            g_ptr_array_add (langs, g_steal_pointer (&lang));
+        }
     }
 
   g_ptr_array_sort (langs, flatpak_strcmp0_ptr);

@@ -15397,18 +15397,14 @@ get_locale_langs_from_localed_dbus (GDBusProxy *proxy, GPtrArray *langs)
       const gchar *locale = NULL;
       g_autofree char *lang = NULL;
 
-      /* See locale(7) for these categories */
-      const char * const categories[] = { "LANG=", "LC_ALL=", "LC_MESSAGES=", "LC_ADDRESS=",
-                                          "LC_COLLATE=", "LC_CTYPE=", "LC_IDENTIFICATION=",
-                                          "LC_MONETARY=", "LC_MEASUREMENT=", "LC_NAME=",
-                                          "LC_NUMERIC=", "LC_PAPER=", "LC_TELEPHONE=",
-                                          "LC_TIME=", NULL };
+      const char * const *categories = flatpak_get_locale_categories ();
 
       for (j = 0; categories[j]; j++)
         {
-          if (g_str_has_prefix (strv[i], categories[j]))
+          g_autofree char *prefix = g_strdup_printf ("%s=", categories[j]);
+          if (g_str_has_prefix (strv[i], prefix))
             {
-              locale = strv[i] + strlen (categories[j]);
+              locale = strv[i] + strlen (prefix);
               break;
             }
         }
