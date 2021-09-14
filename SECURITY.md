@@ -22,7 +22,7 @@ please check
 ## Reporting a Vulnerability
 
 If you think you've identified a security issue in Flatpak, please DO NOT
-report the issue publicly via the Github issue tracker, mailing list, or IRC.
+report the issue publicly via the GitHub issue tracker, mailing list, or IRC.
 Instead, send an email with as many details as possible to
 [flatpak-security@lists.freedesktop.org](mailto:flatpak-security@lists.freedesktop.org).
 This is a private mailing list for the Flatpak maintainers.
