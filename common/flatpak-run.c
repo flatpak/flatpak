@@ -2741,6 +2741,7 @@ add_monitor_path_args (gboolean      use_session_helper,
                                 "--symlink", "/run/host/monitor/resolv.conf", "/etc/resolv.conf",
                                 "--symlink", "/run/host/monitor/host.conf", "/etc/host.conf",
                                 "--symlink", "/run/host/monitor/hosts", "/etc/hosts",
+                                "--symlink", "/run/host/monitor/gai.conf", "/etc/gai.conf",
                                 NULL);
 
       if (g_variant_lookup (session_data, "pkcs11-socket", "s", &pkcs11_socket_path))
@@ -2775,6 +2776,10 @@ add_monitor_path_args (gboolean      use_session_helper,
       if (g_file_test ("/etc/hosts", G_FILE_TEST_EXISTS))
         flatpak_bwrap_add_args (bwrap,
                                 "--ro-bind", "/etc/hosts", "/etc/hosts",
+                                NULL);
+      if (g_file_test ("/etc/gai.conf", G_FILE_TEST_EXISTS))
+        flatpak_bwrap_add_args (bwrap,
+                                "--ro-bind", "/etc/gai.conf", "/etc/gai.conf",
                                 NULL);
     }
 }
@@ -3248,6 +3253,7 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
               strcmp (dent->d_name, "resolv.conf") == 0 ||
               strcmp (dent->d_name, "host.conf") == 0 ||
               strcmp (dent->d_name, "hosts") == 0 ||
+              strcmp (dent->d_name, "gai.conf") == 0 ||
               strcmp (dent->d_name, "localtime") == 0 ||
               strcmp (dent->d_name, "timezone") == 0 ||
               strcmp (dent->d_name, "pkcs11") == 0)
