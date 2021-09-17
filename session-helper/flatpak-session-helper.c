@@ -778,7 +778,11 @@ main (int    argc,
     { "version", 0, 0, G_OPTION_ARG_NONE, &show_version, "Show program version.", NULL},
     { NULL }
   };
-  g_autoptr(MonitorData) m_resolv_conf = NULL, m_host_conf = NULL, m_hosts = NULL, m_localtime = NULL;
+  g_autoptr(MonitorData) m_resolv_conf = NULL,
+                         m_host_conf = NULL,
+                         m_hosts = NULL,
+                         m_gai_conf = NULL,
+                         m_localtime = NULL;
   struct sigaction action;
 
   atexit (do_atexit);
@@ -857,6 +861,7 @@ main (int    argc,
   m_resolv_conf = setup_file_monitor ("/etc/resolv.conf");
   m_host_conf   = setup_file_monitor ("/etc/host.conf");
   m_hosts       = setup_file_monitor ("/etc/hosts");
+  m_gai_conf    = setup_file_monitor ("/etc/gai.conf");
   m_localtime   = setup_file_monitor ("/etc/localtime");
 
   flags = G_BUS_NAME_OWNER_FLAGS_ALLOW_REPLACEMENT;
