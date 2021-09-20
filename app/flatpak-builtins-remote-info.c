@@ -185,20 +185,16 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
       int len;
       int rows, cols;
       int width;
-      g_autoptr(AsStore) store = as_store_new ();
-      AsApp *app = NULL;
+      g_autoptr(AsMetadata) mdata = as_metadata_new ();
+      AsComponent *app = NULL;
       const char *version = NULL;
       const char *license = NULL;
       g_autofree char *id = flatpak_decomposed_dup_id (ref);
 
       flatpak_get_window_size (&rows, &cols);
 
-#if AS_CHECK_VERSION (0, 6, 1)
-      as_store_set_add_flags (store, as_store_get_add_flags (store) | AS_STORE_ADD_FLAG_USE_UNIQUE_ID);
-#endif
-
-      flatpak_dir_load_appstream_store (preferred_dir, remote, id, store, NULL, NULL);
-      app = as_store_find_app (store, flatpak_decomposed_get_ref (ref));
+      flatpak_dir_load_appstream_store (preferred_dir, remote, id, mdata, NULL, NULL);
+      app = as_store_find_app (mdata, flatpak_decomposed_get_ref (ref));
       if (app)
         {
           const char *name = as_app_get_localized_name (app);
@@ -207,7 +203,7 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
           print_wrapped (MIN (cols, 80), "\n%s - %s\n", name, comment);
 
           version = as_app_get_version (app);
-          license = as_app_get_project_license (app);
+          license = as_component_get_project_license (app);
         }
 
       if (commit_v)

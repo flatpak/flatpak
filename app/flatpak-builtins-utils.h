@@ -22,7 +22,7 @@
 #define __FLATPAK_BUILTINS_UTILS_H__
 
 #include <glib.h>
-#include <appstream-glib.h>
+#include <appstream.h>
 #include "libglnx/libglnx.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-dir-private.h"
@@ -154,16 +154,16 @@ void print_aligned_take (int         len,
                          const char *title,
                          char       *value);
 
-AsApp *as_store_find_app (AsStore    *store,
-                          const char *ref);
-const char *as_app_get_localized_name (AsApp *app);
-const char *as_app_get_localized_comment (AsApp *app);
-const char *as_app_get_version (AsApp *app);
+AsComponent *as_store_find_app (AsMetadata *mdata,
+                                const char *ref);
+const char *as_app_get_localized_name (AsComponent *component);
+const char *as_app_get_localized_comment (AsComponent *component);
+const char *as_app_get_version (AsComponent *component);
 
 gboolean    flatpak_dir_load_appstream_store (FlatpakDir   *self,
                                               const gchar  *remote_name,
                                               const gchar  *arch,
-                                              AsStore      *store,
+                                              AsMetadata   *mdata,
                                               GCancellable *cancellable,
                                               GError      **error);
 
