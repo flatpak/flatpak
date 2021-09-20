@@ -88,6 +88,8 @@ gboolean           flatpak_decomposed_equal                 (FlatpakDecomposed  
                                                              FlatpakDecomposed  *ref_b);
 gboolean           flatpak_decomposed_equal_except_branch   (FlatpakDecomposed  *ref_a,
                                                              FlatpakDecomposed  *ref_b);
+gboolean           flatpak_decomposed_equal_except_arch     (FlatpakDecomposed  *ref_a,
+                                                             FlatpakDecomposed  *ref_b);
 gint               flatpak_decomposed_strcmp                (FlatpakDecomposed  *ref_a,
                                                              FlatpakDecomposed  *ref_b);
 gint               flatpak_decomposed_strcmp_p              (FlatpakDecomposed **ref_a,

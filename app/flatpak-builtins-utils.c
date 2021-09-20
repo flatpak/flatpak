@@ -1042,49 +1042,32 @@ ellipsize_string_full (const char *text, int len, FlatpakEllipsizeMode mode)
 }
 
 const char *
-as_app_get_localized_name (AsApp *app)
+as_app_get_localized_name (AsComponent *app)
 {
-  const char * const * languages = g_get_language_names ();
-  gsize i;
-
-  for (i = 0; languages[i]; ++i)
-    {
-      const char *name = as_app_get_name (app, languages[i]);
-      if (name != NULL)
-        return name;
-    }
-
-  return NULL;
+  /* Automatically returns for the current locale */
+  return as_component_get_name (app);
 }
 
 const char *
-as_app_get_localized_comment (AsApp *app)
+as_app_get_localized_comment (AsComponent *app)
 {
-  const char * const * languages = g_get_language_names ();
-  gsize i;
-
-  for (i = 0; languages[i]; ++i)
-    {
-      const char *comment = as_app_get_comment (app, languages[i]);
-      if (comment != NULL)
-        return comment;
-    }
-  return NULL;
+  /* Automatically returns for the current locale */
+  return as_component_get_summary (app);
 }
 
 const char *
-as_app_get_version (AsApp *app)
+as_app_get_version (AsComponent *app)
 {
-  AsRelease *release = as_app_get_release_default (app);
+  GPtrArray *releases = as_component_get_releases (app);
 
-  if (release)
-    return as_release_get_version (release);
+  if (releases != NULL && releases->len > 0)
+    return as_release_get_version (AS_RELEASE (g_ptr_array_index (releases, 0)));
 
   return NULL;
 }
 
-AsApp *
-as_store_find_app (AsStore    *store,
+AsComponent *
+as_store_find_app (AsMetadata *mdata,
                    const char *ref)
 {
   g_autoptr(FlatpakRef) rref = flatpak_ref_parse (ref, NULL);
@@ -1095,17 +1078,18 @@ as_store_find_app (AsStore    *store,
   for (j = 0; j < 2; j++)
     {
       const char *id = j == 0 ? appid : desktopid;
-      g_autoptr(GPtrArray) apps = as_store_get_apps_by_id (store, id);
-      int i;
+      GPtrArray *components = as_metadata_get_components (mdata);
 
-      for (i = 0; i < apps->len; i++)
+      for (gsize i = 0; i < components->len; i++)
         {
-          AsApp *app = g_ptr_array_index (apps, i);
-          AsBundle *bundle = as_app_get_bundle_default (app);
+          AsComponent *app = g_ptr_array_index (components, i);
+          AsBundle *bundle;
+
+          if (g_strcmp0 (as_component_get_id (app), id) != 0)
+            continue;
+
+          bundle = as_component_get_bundle (app, AS_BUNDLE_KIND_FLATPAK);
           if (bundle &&
-#if AS_CHECK_VERSION (0, 5, 15)
-              as_bundle_get_kind (bundle) == AS_BUNDLE_KIND_FLATPAK &&
-#endif
               g_str_equal (as_bundle_get_id (bundle), ref))
             return app;
         }
@@ -1125,7 +1109,7 @@ as_store_find_app (AsStore    *store,
  * @error: return location for a #GError
  *
  * Load the cached AppStream data for the given @remote_name into @store, which
- * must have already been constructed using as_store_new(). If no cache
+ * must have already been constructed using as_metadata_new(). If no cache
  * exists, %FALSE is returned with no error set. If there is an error loading or
  * parsing the cache, an error is returned.
  *
@@ -1136,7 +1120,7 @@ gboolean
 flatpak_dir_load_appstream_store (FlatpakDir   *self,
                                   const gchar  *remote_name,
                                   const gchar  *arch,
-                                  AsStore      *store,
+                                  AsMetadata   *mdata,
                                   GCancellable *cancellable,
                                   GError      **error)
 {
@@ -1159,8 +1143,8 @@ flatpak_dir_load_appstream_store (FlatpakDir   *self,
                                        NULL);
 
   appstream_file = g_file_new_for_path (appstream_path);
-  as_store_from_file (store, appstream_file, NULL, cancellable, &local_error);
-  success = (local_error == NULL);
+  as_metadata_set_format_style (mdata, AS_FORMAT_STYLE_COLLECTION);
+  success = as_metadata_parse_file (mdata, appstream_file, AS_FORMAT_KIND_XML, &local_error);
 
   /* We want to ignore ENOENT error as it is harmless and valid
    * FIXME: appstream-glib doesn't have granular file-not-found error

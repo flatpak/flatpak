@@ -64,7 +64,7 @@ testcommon_CFLAGS = \
 	$(OSTREE_CFLAGS) \
 	$(SOUP_CFLAGS) \
 	$(JSON_CFLAGS) \
-	$(APPSTREAM_GLIB_CFLAGS) \
+	$(APPSTREAM_CFLAGS) \
 	-DFLATPAK_COMPILATION \
 	-DLIBEXECDIR=\"$(libexecdir)\" \
 	-I$(srcdir)/app \
@@ -76,7 +76,7 @@ testcommon_LDADD = \
 	$(OSTREE_LIBS) \
 	$(SOUP_LIBS) \
 	$(JSON_LIBS) \
-	$(APPSTREAM_GLIB_LIBS) \
+	$(APPSTREAM_LIBS) \
 	libflatpak-app.la \
 	libflatpak-common.la \
 	libflatpak-common-base.la \
