@@ -1042,20 +1042,6 @@ ellipsize_string_full (const char *text, int len, FlatpakEllipsizeMode mode)
 }
 
 const char *
-as_app_get_localized_name (AsComponent *app)
-{
-  /* Automatically returns for the current locale */
-  return as_component_get_name (app);
-}
-
-const char *
-as_app_get_localized_comment (AsComponent *app)
-{
-  /* Automatically returns for the current locale */
-  return as_component_get_summary (app);
-}
-
-const char *
 as_app_get_version (AsComponent *app)
 {
   GPtrArray *releases = as_component_get_releases (app);

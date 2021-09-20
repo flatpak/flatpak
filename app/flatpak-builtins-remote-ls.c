@@ -297,7 +297,7 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
                   g_autofree char *readable_id = NULL;
 
                   if (app)
-                    name = as_app_get_localized_name (app);
+                    name = as_component_get_name (app);
 
                   if (name == NULL)
                     readable_id = flatpak_decomposed_dup_readable_id (ref);
@@ -308,7 +308,7 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
                 {
                   const char *comment = NULL;
                   if (app)
-                      comment = as_app_get_localized_comment (app);
+                      comment = as_component_get_summary (app);
 
                   flatpak_table_printer_add_column (printer, comment);
                 }
