@@ -171,8 +171,8 @@ print_app (Column *columns, MatchResult *res, FlatpakTablePrinter *printer)
 {
   const char *version = as_app_get_version (res->app);
   const char *id = as_component_get_id (res->app);
-  const char *name = as_app_get_localized_name (res->app);
-  const char *comment = as_app_get_localized_comment (res->app);
+  const char *name = as_component_get_name (res->app);
+  const char *comment = as_component_get_summary (res->app);
   guint i;
 
   for (i = 0; columns[i].name; i++)

@@ -156,8 +156,6 @@ void print_aligned_take (int         len,
 
 AsComponent *as_store_find_app (AsMetadata *mdata,
                                 const char *ref);
-const char *as_app_get_localized_name (AsComponent *component);
-const char *as_app_get_localized_comment (AsComponent *component);
 const char *as_app_get_version (AsComponent *component);
 
 gboolean    flatpak_dir_load_appstream_store (FlatpakDir   *self,

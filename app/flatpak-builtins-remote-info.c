@@ -197,8 +197,8 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
       app = as_store_find_app (mdata, flatpak_decomposed_get_ref (ref));
       if (app)
         {
-          const char *name = as_app_get_localized_name (app);
-          const char *comment = as_app_get_localized_comment (app);
+          const char *name = as_component_get_name (app);
+          const char *comment = as_component_get_summary (app);
 
           print_wrapped (MIN (cols, 80), "\n%s - %s\n", name, comment);
 
