@@ -540,7 +540,6 @@ flatpak_create_soup_session (const char *user_agent)
                                                 SOUP_SESSION_TIMEOUT, 60,
                                                 SOUP_SESSION_IDLE_TIMEOUT, 60,
                                                 NULL);
-  soup_session_remove_feature_by_type (soup_session, SOUP_TYPE_CONTENT_DECODER);
   http_proxy = g_getenv ("http_proxy");
   if (http_proxy)
     {
@@ -955,10 +954,13 @@ flatpak_cache_http_uri_once (SoupSession           *soup_session,
 
   if (flags & FLATPAK_HTTP_FLAGS_STORE_COMPRESSED)
     {
+      soup_session_remove_feature_by_type (soup_session, SOUP_TYPE_CONTENT_DECODER);
       soup_message_headers_replace (m->request_headers, "Accept-Encoding",
                                     "gzip");
       data.store_compressed = TRUE;
     }
+  else if (!soup_session_has_feature (soup_session, SOUP_TYPE_CONTENT_DECODER))
+    soup_session_add_feature_by_type (soup_session, SOUP_TYPE_CONTENT_DECODER);
 
   soup_request_send_async (SOUP_REQUEST (request),
                            cancellable,
