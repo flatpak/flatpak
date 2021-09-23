@@ -110,29 +110,3 @@ jobs:
         CFLAGS: -Werror=unused-variable
     - name: Build flatpak
       run: make -j $(getconf _NPROCESSORS_ONLN)
-
-  xenial:
-    name: Build with old glib
-    runs-on: ubuntu-16.04
-    steps:
-    - name: Install Dependencies
-      run: |
-        sudo add-apt-repository ppa:alexlarsson/flatpak
-        sudo add-apt-repository 'deb https://download.mono-project.com/repo/ubuntu stable-xenial main' # Needed for updates to work
-        sudo apt-get update
-        sudo apt-get install -y libglib2.0 attr automake gettext autopoint bison  dbus gtk-doc-tools \
-        libfuse-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
-        libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
-        libseccomp-dev libsoup2.4-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
-        libgirepository1.0-dev libappstream-glib-dev libdconf-dev clang
-    - name: Check out flatpak
-      uses: actions/checkout@v1
-      with:
-        submodules: true
-    - name: configure
-      run: ./autogen.sh
-      env:
-        CC: clang
-        CFLAGS: -Werror=unused-variable
-    - name: Build flatpak
-      run: make -j $(getconf _NPROCESSORS_ONLN)
