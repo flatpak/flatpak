@@ -7972,9 +7972,15 @@ flatpak_dir_check_parental_controls (FlatpakDir    *self,
   MctGetAppFilterFlags manager_flags;
 
   /* Assume that root is allowed to install any ref and shouldn't have any
-   * parental controls restrictions applied to them */
-  if (getuid () == 0)
-    return TRUE;
+   * parental controls restrictions applied to them. Note that this branch
+   * must not be taken if this code is running within the system-helper, as that
+   * runs as root but on behalf of another process. If running within the
+   * system-helper, self->source_pid is non-zero. */
+  if (self->source_pid == 0 && getuid () == 0)
+    {
+      g_debug ("Skipping parental controls check for %s due to running as root", ref);
+      return TRUE;
+    }
 
   /* The ostree-metadata and appstream/ branches should not have any parental
    * controls restrictions. Similarly, for the moment, there is no point in
