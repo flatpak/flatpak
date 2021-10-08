@@ -1909,13 +1909,13 @@ setup_seccomp (FlatpakBwrap   *bwrap,
     /* seccomp can't look into clone3()'s struct clone_args to check whether
      * the flags are OK, so we have no choice but to block clone3().
      * Return ENOSYS so user-space will fall back to clone().
-     * (GHSA-67h7-w3jq-vh4q; see also https://github.com/moby/moby/commit/9f6b562d) */
+     * (CVE-2021-41133; see also https://github.com/moby/moby/commit/9f6b562d) */
     {SCMP_SYS (clone3), ENOSYS},
 
     /* New mount manipulation APIs can also change our VFS. There's no
      * legitimate reason to do these in the sandbox, so block all of them
      * rather than thinking about which ones might be dangerous.
-     * (GHSA-67h7-w3jq-vh4q) */
+     * (CVE-2021-41133) */
     {SCMP_SYS (open_tree), ENOSYS},
     {SCMP_SYS (move_mount), ENOSYS},
     {SCMP_SYS (fsopen), ENOSYS},
