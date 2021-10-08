@@ -2533,6 +2533,38 @@ static const uint32_t seccomp_x86_64_extra_arches[] = { SCMP_ARCH_X86, 0, };
 static const uint32_t seccomp_aarch64_extra_arches[] = { SCMP_ARCH_ARM, 0 };
 #endif
 
+/*
+ * @negative_errno: Result code as returned by libseccomp functions
+ *
+ * Translate a libseccomp error code into an error message. libseccomp
+ * mostly returns negative `errno` values such as `-ENOMEM`, but some
+ * standard `errno` values are used for non-standard purposes where their
+ * `strerror()` would be misleading.
+ *
+ * Returns: a string version of @negative_errno if possible
+ */
+static const char *
+flatpak_seccomp_strerror (int negative_errno)
+{
+  g_return_val_if_fail (negative_errno < 0, "Non-negative error value from libseccomp?");
+  g_return_val_if_fail (negative_errno > INT_MIN, "Out of range error value from libseccomp?");
+
+  switch (negative_errno)
+    {
+      case -EDOM:
+        return "Architecture specific failure";
+
+      case -EFAULT:
+        return "Internal libseccomp failure (unknown syscall?)";
+
+      case -ECANCELED:
+        return "System failure beyond the control of libseccomp";
+    }
+
+  /* e.g. -ENOMEM: the result of strerror() is good enough */
+  return g_strerror (-negative_errno);
+}
+
 static inline void
 cleanup_seccomp (void *p)
 {
@@ -2730,7 +2762,7 @@ setup_seccomp (FlatpakBwrap   *bwrap,
              couldn't continue running. */
           r = seccomp_arch_add (seccomp, arch_id);
           if (r < 0 && r != -EEXIST)
-            return flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Failed to add architecture to seccomp filter"));
+            return flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Failed to add architecture to seccomp filter: %s"), flatpak_seccomp_strerror (r));
 
           if (multiarch && extra_arches != NULL)
             {
@@ -2739,7 +2771,7 @@ setup_seccomp (FlatpakBwrap   *bwrap,
                 {
                   r = seccomp_arch_add (seccomp, extra_arches[i]);
                   if (r < 0 && r != -EEXIST)
-                    return flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Failed to add multiarch architecture to seccomp filter"));
+                    return flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Failed to add multiarch architecture to seccomp filter: %s"), flatpak_seccomp_strerror (r));
                 }
             }
         }
@@ -2771,7 +2803,7 @@ setup_seccomp (FlatpakBwrap   *bwrap,
         flatpak_debug2 ("Unable to block syscall %d: syscall not known to libseccomp?",
                         scall);
       else if (r < 0)
-        return flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Failed to block syscall %d"), scall);
+        return flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Failed to block syscall %d: %s"), scall, flatpak_seccomp_strerror (r));
     }
 
   if (!devel)
@@ -2793,7 +2825,7 @@ setup_seccomp (FlatpakBwrap   *bwrap,
             flatpak_debug2 ("Unable to block syscall %d: syscall not known to libseccomp?",
                             scall);
           else if (r < 0)
-            return flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Failed to block syscall %d"), scall);
+            return flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Failed to block syscall %d: %s"), scall, flatpak_seccomp_strerror (r));
         }
     }
 
@@ -2823,8 +2855,10 @@ setup_seccomp (FlatpakBwrap   *bwrap,
   if (!glnx_open_anonymous_tmpfile_full (O_RDWR | O_CLOEXEC, "/tmp", &seccomp_tmpf, error))
     return FALSE;
 
-  if (seccomp_export_bpf (seccomp, seccomp_tmpf.fd) != 0)
-    return flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Failed to export bpf"));
+  r = seccomp_export_bpf (seccomp, seccomp_tmpf.fd);
+
+  if (r != 0)
+    return flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Failed to export bpf: %s"), flatpak_seccomp_strerror (r));
 
   lseek (seccomp_tmpf.fd, 0, SEEK_SET);
 
