@@ -1820,7 +1820,7 @@ setup_seccomp (FlatpakBwrap   *bwrap,
   gboolean multiarch = (run_flags & FLATPAK_RUN_FLAG_MULTIARCH) != 0;
   gboolean devel = (run_flags & FLATPAK_RUN_FLAG_DEVEL) != 0;
 
-  __attribute__((cleanup (cleanup_seccomp))) scmp_filter_ctx seccomp = NULL;
+  __attribute__((cleanup (cleanup_seccomp))) scmp_filter_ctx blocklist_ctx = NULL;
 
   /**** BEGIN NOTE ON CODE SHARING
    *
@@ -1956,10 +1956,10 @@ setup_seccomp (FlatpakBwrap   *bwrap,
   };
   int last_allowed_family;
   int i, r;
-  g_auto(GLnxTmpfile) seccomp_tmpf  = { 0, };
+  g_auto(GLnxTmpfile) blocklist_tmpf  = { 0, };
 
-  seccomp = seccomp_init (SCMP_ACT_ALLOW);
-  if (!seccomp)
+  blocklist_ctx = seccomp_init (SCMP_ACT_ALLOW);
+  if (!blocklist_ctx)
     return flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Initialize seccomp failed"));
 
   if (arch != NULL)
@@ -1997,7 +1997,7 @@ setup_seccomp (FlatpakBwrap   *bwrap,
              allow the target arch, but we can't really disallow the
              native arch at this point, because then bubblewrap
              couldn't continue running. */
-          r = seccomp_arch_add (seccomp, arch_id);
+          r = seccomp_arch_add (blocklist_ctx, arch_id);
           if (r < 0 && r != -EEXIST)
             return flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Failed to add architecture to seccomp filter: %s"), flatpak_seccomp_strerror (r));
 
@@ -2005,7 +2005,7 @@ setup_seccomp (FlatpakBwrap   *bwrap,
             {
               for (i = 0; extra_arches[i] != 0; i++)
                 {
-                  r = seccomp_arch_add (seccomp, extra_arches[i]);
+                  r = seccomp_arch_add (blocklist_ctx, extra_arches[i]);
                   if (r < 0 && r != -EEXIST)
                     return flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Failed to add multiarch architecture to seccomp filter: %s"), flatpak_seccomp_strerror (r));
                 }
@@ -2026,9 +2026,9 @@ setup_seccomp (FlatpakBwrap   *bwrap,
       g_return_val_if_fail (errnum == EPERM || errnum == ENOSYS, FALSE);
 
       if (syscall_blocklist[i].arg)
-        r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO (errnum), scall, 1, *syscall_blocklist[i].arg);
+        r = seccomp_rule_add (blocklist_ctx, SCMP_ACT_ERRNO (errnum), scall, 1, *syscall_blocklist[i].arg);
       else
-        r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO (errnum), scall, 0);
+        r = seccomp_rule_add (blocklist_ctx, SCMP_ACT_ERRNO (errnum), scall, 0);
 
       /* EFAULT means "internal libseccomp error", but in practice we get
        * this for syscall numbers added via flatpak-syscalls-private.h
@@ -2069,9 +2069,9 @@ setup_seccomp (FlatpakBwrap   *bwrap,
           g_return_val_if_fail (errnum == EPERM || errnum == ENOSYS, FALSE);
 
           if (syscall_nondevel_blocklist[i].arg)
-            r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO (errnum), scall, 1, *syscall_nondevel_blocklist[i].arg);
+            r = seccomp_rule_add (blocklist_ctx, SCMP_ACT_ERRNO (errnum), scall, 1, *syscall_nondevel_blocklist[i].arg);
           else
-            r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO (errnum), scall, 0);
+            r = seccomp_rule_add (blocklist_ctx, SCMP_ACT_ERRNO (errnum), scall, 0);
 
           /* See above for the meaning of EFAULT. */
           if (r == -EFAULT)
@@ -2098,25 +2098,25 @@ setup_seccomp (FlatpakBwrap   *bwrap,
       for (disallowed = last_allowed_family + 1; disallowed < family; disallowed++)
         {
           /* Blocklist the in-between valid families */
-          seccomp_rule_add_exact (seccomp, SCMP_ACT_ERRNO (EAFNOSUPPORT), SCMP_SYS (socket), 1, SCMP_A0 (SCMP_CMP_EQ, disallowed));
+          seccomp_rule_add_exact (blocklist_ctx, SCMP_ACT_ERRNO (EAFNOSUPPORT), SCMP_SYS (socket), 1, SCMP_A0 (SCMP_CMP_EQ, disallowed));
         }
       last_allowed_family = family;
     }
   /* Blocklist the rest */
-  seccomp_rule_add_exact (seccomp, SCMP_ACT_ERRNO (EAFNOSUPPORT), SCMP_SYS (socket), 1, SCMP_A0 (SCMP_CMP_GE, last_allowed_family + 1));
+  seccomp_rule_add_exact (blocklist_ctx, SCMP_ACT_ERRNO (EAFNOSUPPORT), SCMP_SYS (socket), 1, SCMP_A0 (SCMP_CMP_GE, last_allowed_family + 1));
 
-  if (!glnx_open_anonymous_tmpfile_full (O_RDWR | O_CLOEXEC, "/tmp", &seccomp_tmpf, error))
+  if (!glnx_open_anonymous_tmpfile_full (O_RDWR | O_CLOEXEC, "/tmp", &blocklist_tmpf, error))
     return FALSE;
 
-  r = seccomp_export_bpf (seccomp, seccomp_tmpf.fd);
+  r = seccomp_export_bpf (blocklist_ctx, blocklist_tmpf.fd);
 
   if (r != 0)
     return flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Failed to export bpf: %s"), flatpak_seccomp_strerror (r));
 
-  lseek (seccomp_tmpf.fd, 0, SEEK_SET);
+  lseek (blocklist_tmpf.fd, 0, SEEK_SET);
 
   flatpak_bwrap_add_args_data_fd (bwrap,
-                                  "--seccomp", g_steal_fd (&seccomp_tmpf.fd), NULL);
+                                  "--seccomp", g_steal_fd (&blocklist_tmpf.fd), NULL);
 
   return TRUE;
 }
