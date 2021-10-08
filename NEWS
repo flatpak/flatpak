@@ -8,7 +8,7 @@ used by the steam flatpak.
 
 In addition, this release fixes a security vulnerability in the portal
 support. Some recently added syscalls were not blocked by the seccomp rules
-which allowed the application to create sub-sandboxes which can confuste
+which allowed the application to create sub-sandboxes which can confuse
 the sandboxing verification mechanisms of the portal. This has been
 fixed by extending the seccomp rules.
 For details, see:
