@@ -1,3 +1,19 @@
+Changes in 1.10.4
+~~~~~~~~~~~~~~~~~
+Released: 2021-10-08
+
+This release fixes a security vulnerability in the portal
+support. Some recently added syscalls were not blocked by the seccomp rules
+which allowed the application to create sub-sandboxes which can confuste
+the sandboxing verification mechanisms of the portal. This has been
+fixed by extending the seccomp rules.
+For details, see:
+  https://github.com/flatpak/flatpak/security/advisories/GHSA-67h7-w3jq-vh4q
+
+Other changes in this version:
+* OCI now use the pax tar format which handles large files better than gnutar
+* Fix the parental control checks for root
+
 Changes in 1.10.3
 ~~~~~~~~~~~~~~~~~
 Released: 2021-08-31
