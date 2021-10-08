@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2021-10-08 13:09+0200\n"
+"POT-Creation-Date: 2021-10-08 19:00+0200\n"
 "PO-Revision-Date: 2021-09-05 14:48+0200\n"
 "Last-Translator: Rodrigo Lledó Milanca <rodhos92@gmail.com>\n"
 "Language-Team: Spanish - Spain <gnome-es-list@gnome.org>\n"
@@ -262,7 +262,7 @@ msgstr "No hay un punto de extensión que coincida con %s en %s"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Falta un «=» en las opciones del punto de montaje «%s»"
 
-#: app/flatpak-builtins-build.c:606 common/flatpak-run.c:4490
+#: app/flatpak-builtins-build.c:606 common/flatpak-run.c:4503
 msgid "Unable to start app"
 msgstr "No se pudo iniciar la aplicación"
 
@@ -5143,55 +5143,54 @@ msgstr "Fallo al escribir un archivo temporal"
 msgid "Failed to add multiarch architecture to seccomp filter"
 msgstr ""
 
-#. unknown syscall
-#: common/flatpak-run.c:3077 common/flatpak-run.c:3095
+#: common/flatpak-run.c:3086 common/flatpak-run.c:3108
 #, fuzzy, c-format
 msgid "Failed to block syscall %d"
 msgstr "Error: Fallo al %s %s: %s\n"
 
-#: common/flatpak-run.c:3126
+#: common/flatpak-run.c:3139
 #, fuzzy
 msgid "Failed to export bpf"
 msgstr "Fallo al leer desde un archivo exportado"
 
-#: common/flatpak-run.c:3377
+#: common/flatpak-run.c:3390
 #, fuzzy, c-format
 msgid "Failed to open ‘%s’"
 msgstr "Fallo al abrir un archivo temporal de flatpak-info: %s"
 
-#: common/flatpak-run.c:3663
+#: common/flatpak-run.c:3676
 #, fuzzy, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "Ha fallado el script apply_extra, código de error %d"
 
-#: common/flatpak-run.c:3670
+#: common/flatpak-run.c:3683
 #, fuzzy
 msgid "Can't open generated ld.so.cache"
 msgstr "No se puede abrir el espacio de nombres %s: %s"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-run.c:3781
+#: common/flatpak-run.c:3794
 #, c-format
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr ""
 
-#: common/flatpak-run.c:3823
+#: common/flatpak-run.c:3836
 msgid ""
 "\"flatpak run\" is not intended to be run as `sudo flatpak run`, use `sudo -"
 "i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell"
 msgstr ""
 
-#: common/flatpak-run.c:4081
+#: common/flatpak-run.c:4094
 #, fuzzy, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "Error al leer el«commit» %s: "
 
-#: common/flatpak-run.c:4096
+#: common/flatpak-run.c:4109
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr ""
 
-#: common/flatpak-run.c:4105
+#: common/flatpak-run.c:4118
 #, fuzzy, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "Error al leer el«commit» %s: "
