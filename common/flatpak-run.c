@@ -2761,7 +2761,16 @@ setup_seccomp (FlatpakBwrap   *bwrap,
         r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO (errnum), scall, 1, *syscall_blocklist[i].arg);
       else
         r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO (errnum), scall, 0);
-      if (r < 0 && r == -EFAULT /* unknown syscall */)
+
+      /* EFAULT means "internal libseccomp error", but in practice we get
+       * this for syscall numbers added via flatpak-syscalls-private.h
+       * when trying to filter them on a non-native architecture, because
+       * libseccomp cannot map the syscall number to a name and back to a
+       * number for the non-native architecture. */
+      if (r == -EFAULT)
+        flatpak_debug2 ("Unable to block syscall %d: syscall not known to libseccomp?",
+                        scall);
+      else if (r < 0)
         return flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Failed to block syscall %d"), scall);
     }
 
@@ -2779,7 +2788,11 @@ setup_seccomp (FlatpakBwrap   *bwrap,
           else
             r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO (errnum), scall, 0);
 
-          if (r < 0 && r == -EFAULT /* unknown syscall */)
+          /* See above for the meaning of EFAULT. */
+          if (errno == EFAULT)
+            flatpak_debug2 ("Unable to block syscall %d: syscall not known to libseccomp?",
+                            scall);
+          else if (r < 0)
             return flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Failed to block syscall %d"), scall);
         }
     }
