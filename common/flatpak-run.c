@@ -42,8 +42,6 @@
 #include <libmalcontent/malcontent.h>
 #endif
 
-#include "flatpak-syscalls-private.h"
-
 #ifdef ENABLE_SECCOMP
 #include <seccomp.h>
 #endif
@@ -3075,6 +3073,27 @@ static const char * const known_syscall_names[] =
 #include "known-syscall-names.h"
 };
 
+static const char * const disallowed_syscall_names[] =
+{
+  /* seccomp can't look into clone3()'s struct clone_args to check whether
+   * the flags are OK, so we have no choice but to block clone3().
+   * Return ENOSYS so user-space will fall back to clone().
+   * (CVE-2021-41133; see also https://github.com/moby/moby/commit/9f6b562d) */
+  "clone3",
+
+  /* New mount manipulation APIs can also change our VFS. There's no
+   * legitimate reason to do these in the sandbox, so block all of them
+   * rather than thinking about which ones might be dangerous.
+   * (CVE-2021-41133) */
+  "open_tree",
+  "move_mount",
+  "fsopen",
+  "fsconfig",
+  "fsmount",
+  "fspick",
+  "mount_setattr",
+};
+
 static gboolean
 setup_seccomp (FlatpakBwrap   *bwrap,
                const char     *arch,
@@ -3159,6 +3178,7 @@ setup_seccomp (FlatpakBwrap   *bwrap,
     {SCMP_SYS (umount2), EPERM},
     {SCMP_SYS (pivot_root), EPERM},
     {SCMP_SYS (chroot), EPERM},
+
 #if defined(__s390__) || defined(__s390x__) || defined(__CRIS__)
     /* Architectures with CONFIG_CLONE_BACKWARDS2: the child stack
      * and flags arguments are reversed so the flags come second */
@@ -3170,24 +3190,6 @@ setup_seccomp (FlatpakBwrap   *bwrap,
 
     /* Don't allow faking input to the controlling tty (CVE-2017-5226) */
     {SCMP_SYS (ioctl), EPERM, &SCMP_A1 (SCMP_CMP_MASKED_EQ, 0xFFFFFFFFu, (int) TIOCSTI)},
-
-    /* seccomp can't look into clone3()'s struct clone_args to check whether
-     * the flags are OK, so we have no choice but to block clone3().
-     * Return ENOSYS so user-space will fall back to clone().
-     * (CVE-2021-41133; see also https://github.com/moby/moby/commit/9f6b562d) */
-    {SCMP_SYS (clone3), ENOSYS},
-
-    /* New mount manipulation APIs can also change our VFS. There's no
-     * legitimate reason to do these in the sandbox, so block all of them
-     * rather than thinking about which ones might be dangerous.
-     * (CVE-2021-41133) */
-    {SCMP_SYS (open_tree), ENOSYS},
-    {SCMP_SYS (move_mount), ENOSYS},
-    {SCMP_SYS (fsopen), ENOSYS},
-    {SCMP_SYS (fsconfig), ENOSYS},
-    {SCMP_SYS (fsmount), ENOSYS},
-    {SCMP_SYS (fspick), ENOSYS},
-    {SCMP_SYS (mount_setattr), ENOSYS},
   };
 
   struct
@@ -3308,6 +3310,20 @@ setup_seccomp (FlatpakBwrap   *bwrap,
     {
       const char *name = known_syscall_names[i];
       int scall;
+      gsize j;
+
+      for (j = 0; j < G_N_ELEMENTS (disallowed_syscall_names); j++)
+        {
+          const char *disallowed = disallowed_syscall_names[j];
+
+          if (strcmp (disallowed, name) == 0)
+            break;
+        }
+
+      /* Don't add syscalls to the allowlist if they are not one that
+       * we intend to allow */
+      if (j < G_N_ELEMENTS (disallowed_syscall_names))
+        continue;
 
       scall = seccomp_syscall_resolve_name (name);
 
@@ -3348,10 +3364,9 @@ setup_seccomp (FlatpakBwrap   *bwrap,
         r = seccomp_rule_add (blocklist_ctx, SCMP_ACT_ERRNO (errnum), scall, 0);
 
       /* EFAULT means "internal libseccomp error", but in practice we get
-       * this for syscall numbers added via flatpak-syscalls-private.h
-       * when trying to filter them on a non-native architecture, because
-       * libseccomp cannot map the syscall number to a name and back to a
-       * number for the non-native architecture. */
+       * this for syscall numbers that are not known to libseccomp.
+       * It's OK to "fail open" here, because the allowlist will make
+       * these syscalls fail with ENOSYS. */
       if (r == -EFAULT)
         flatpak_debug2 ("Unable to block syscall %d: syscall not known to libseccomp?",
                         scall);
