@@ -261,6 +261,16 @@ libflatpak_la_LIBADD = \
 	$(JSON_LIBS)    \
 	$(NULL)
 
+BUILT_SOURCES += common/known-syscall-names.h
+common/known-syscall-names.h: common/known-syscalls.txt Makefile
+	@mkdir -p $(builddir)/common
+	$(AM_V_GEN) sed \
+		-e 's|#.*||' \
+		-e 's| ||'g \
+		-e 's|..*|"&",|' \
+		< $(srcdir)/common/known-syscalls.txt \
+		> common/known-syscall-names.h
+
 test_libflatpak_SOURCES = \
 	common/test-lib.c      \
 	$(NULL)
