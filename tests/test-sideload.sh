@@ -112,10 +112,8 @@ httpd_clear_log
 if ${FLATPAK} ${U} install -y test-repo org.test.Hello &> install-error-log; then
     assert_not_reached "Disabled online install broken"
 fi
-assert_file_has_content install-error-log "Server returned status 404: Not Found"
+assert_file_has_content install-error-log "Server returned .*404.*"
 assert_file_has_content httpd-log "GET .*commit .*404"
-
-assert_file_has_content install-error-log "Server returned status 404: Not Found"
 
 ln -s $SIDELOAD_REPO $SIDELOAD_REPO_LINK
 
