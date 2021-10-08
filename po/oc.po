@@ -3,14 +3,14 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2021-10-08 13:09+0200\n"
-"PO-Revision-Date: 2020-10-10 22:27+0200\n"
+"PO-Revision-Date: 2021-10-08 20:48+0200\n"
 "Last-Translator: Quentin PAGÈS\n"
 "Language-Team: \n"
 "Language: oc\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.4.1\n"
+"X-Generator: Poedit 3.0\n"
 "X-Poedit-Basepath: .\n"
 
 #: app/flatpak-builtins-build-bundle.c:57
@@ -46,7 +46,6 @@ msgstr ""
 #: app/flatpak-builtins-remote-modify.c:69
 #: app/flatpak-builtins-remote-modify.c:84
 #: app/flatpak-builtins-remote-modify.c:85
-#, fuzzy
 msgid "URL"
 msgstr "URL"
 
@@ -337,7 +336,6 @@ msgstr ""
 
 #: app/flatpak-builtins-build-commit-from.c:71
 #: app/flatpak-builtins-build-export.c:74
-#, fuzzy
 msgid "VAL"
 msgstr "VAL"
 
@@ -427,7 +425,6 @@ msgstr ""
 #: app/flatpak-builtins-build-export.c:68
 #: app/flatpak-builtins-build-export.c:69
 #: app/flatpak-builtins-build-update-repo.c:89
-#, fuzzy
 msgid "PATTERN"
 msgstr "MOTIU"
 
@@ -612,7 +609,6 @@ msgid "Set extension priority (only for extensions)"
 msgstr ""
 
 #: app/flatpak-builtins-build-finish.c:57
-#, fuzzy
 msgid "VALUE"
 msgstr "VALOR"
 
@@ -780,7 +776,6 @@ msgid "Specify version for --base"
 msgstr ""
 
 #: app/flatpak-builtins-build-init.c:56 app/flatpak-builtins-run.c:72
-#, fuzzy
 msgid "VERSION"
 msgstr "VERSION"
 
@@ -1566,7 +1561,6 @@ msgstr ""
 
 #: app/flatpak-builtins-history.c:70 app/flatpak-builtins-list.c:60
 #: app/flatpak-builtins-remote-ls.c:68 app/flatpak-builtins-search.c:45
-#, fuzzy
 msgid "Version"
 msgstr "Version"
 
@@ -1686,7 +1680,7 @@ msgstr ""
 #: app/flatpak-builtins-remote-info.c:245
 #: app/flatpak-builtins-remote-info.c:280
 msgid "ID:"
-msgstr "Identificant :"
+msgstr "Identificant :"
 
 #: app/flatpak-builtins-info.c:218 app/flatpak-builtins-info.c:260
 #: app/flatpak-builtins-remote-info.c:246
@@ -1704,12 +1698,11 @@ msgstr ""
 #: app/flatpak-builtins-remote-info.c:248
 #: app/flatpak-builtins-remote-info.c:283
 msgid "Branch:"
-msgstr "Branca :"
+msgstr "Branca :"
 
 #: app/flatpak-builtins-info.c:222 app/flatpak-builtins-info.c:264
 #: app/flatpak-builtins-remote-info.c:250
 #: app/flatpak-builtins-remote-info.c:285
-#, fuzzy
 msgid "Version:"
 msgstr "Version :"
 
@@ -1717,7 +1710,7 @@ msgstr "Version :"
 #: app/flatpak-builtins-remote-info.c:252
 #: app/flatpak-builtins-remote-info.c:287
 msgid "License:"
-msgstr "Licéncia :"
+msgstr "Licéncia :"
 
 #: app/flatpak-builtins-info.c:226 app/flatpak-builtins-info.c:269
 #: app/flatpak-builtins-remote-info.c:254
@@ -1752,13 +1745,13 @@ msgstr ""
 #: app/flatpak-builtins-remote-info.c:265
 #: app/flatpak-builtins-remote-info.c:328
 msgid "Date:"
-msgstr "Data :"
+msgstr "Data :"
 
 #: app/flatpak-builtins-info.c:237 app/flatpak-builtins-info.c:311
 #: app/flatpak-builtins-remote-info.c:267
 #: app/flatpak-builtins-remote-info.c:326
 msgid "Subject:"
-msgstr "Subjècte :"
+msgstr "Subjècte :"
 
 #: app/flatpak-builtins-info.c:240 app/flatpak-builtins-info.c:295
 msgid "Active commit:"
@@ -1773,7 +1766,7 @@ msgstr ""
 #: app/flatpak-builtins-remote-info.c:268
 #: app/flatpak-builtins-remote-info.c:307
 msgid "Commit:"
-msgstr "Commit :"
+msgstr "Commit :"
 
 #: app/flatpak-builtins-info.c:246 app/flatpak-builtins-info.c:308
 #: app/flatpak-builtins-remote-info.c:270
@@ -1804,7 +1797,7 @@ msgstr ""
 #: app/flatpak-builtins-info.c:255 app/flatpak-builtins-info.c:450
 #: app/flatpak-builtins-info.c:497
 msgid "Extension:"
-msgstr "Extension :"
+msgstr "Extension :"
 
 #: app/flatpak-builtins-info.c:267 app/flatpak-builtins-info.c:452
 #: app/flatpak-builtins-info.c:499
@@ -1908,7 +1901,7 @@ msgstr ""
 
 #: app/flatpak-builtins-install.c:324
 msgid "Looking for matches…\n"
-msgstr ""
+msgstr "Recèrca de correspondéncias…\n"
 
 #: app/flatpak-builtins-install.c:439
 #, c-format
@@ -1919,7 +1912,7 @@ msgstr ""
 #: common/flatpak-ref-utils.c:690 common/flatpak-ref-utils.c:1586
 #, c-format
 msgid "Invalid branch %s: %s"
-msgstr ""
+msgstr "Branca invalida %s: %s"
 
 #: app/flatpak-builtins-install.c:531
 #, c-format
@@ -1985,7 +1978,7 @@ msgstr "Nom"
 #: app/flatpak-builtins-list.c:57 app/flatpak-builtins-remote-list.c:49
 #: app/flatpak-builtins-remote-ls.c:65 app/flatpak-builtins-search.c:42
 msgid "Show the name"
-msgstr ""
+msgstr "Afichar lo nom"
 
 #: app/flatpak-builtins-list.c:58 app/flatpak-builtins-remote-list.c:58
 #: app/flatpak-builtins-remote-ls.c:66 app/flatpak-builtins-search.c:43
@@ -1995,23 +1988,22 @@ msgstr "Descripcion"
 #: app/flatpak-builtins-list.c:58 app/flatpak-builtins-remote-ls.c:66
 #: app/flatpak-builtins-search.c:43
 msgid "Show the description"
-msgstr ""
+msgstr "Afichar la descripcion"
 
 #: app/flatpak-builtins-list.c:59 app/flatpak-builtins-remote-ls.c:67
 #: app/flatpak-builtins-search.c:44
-#, fuzzy
 msgid "Application ID"
-msgstr "Identificador de l'aplicacion"
+msgstr "ID de l'aplicacion"
 
 #: app/flatpak-builtins-list.c:59 app/flatpak-builtins-ps.c:50
 #: app/flatpak-builtins-remote-ls.c:67 app/flatpak-builtins-search.c:44
 msgid "Show the application ID"
-msgstr ""
+msgstr "Afichar l’ID de l’aplicacion"
 
 #: app/flatpak-builtins-list.c:60 app/flatpak-builtins-remote-ls.c:68
 #: app/flatpak-builtins-search.c:45
 msgid "Show the version"
-msgstr ""
+msgstr "Afichar la version"
 
 #: app/flatpak-builtins-list.c:63 app/flatpak-builtins-ps.c:54
 #: app/flatpak-builtins-remote-ls.c:74
@@ -2028,11 +2020,11 @@ msgstr ""
 
 #: app/flatpak-builtins-list.c:65
 msgid "Show the installation"
-msgstr ""
+msgstr "Afichar l’installacion"
 
 #: app/flatpak-builtins-list.c:67
 msgid "Active commit"
-msgstr ""
+msgstr "Commit actiu"
 
 #: app/flatpak-builtins-list.c:67 app/flatpak-builtins-remote-ls.c:73
 msgid "Show the active commit"
@@ -2040,7 +2032,7 @@ msgstr ""
 
 #: app/flatpak-builtins-list.c:68
 msgid "Latest commit"
-msgstr ""
+msgstr "Darrièr commit"
 
 #: app/flatpak-builtins-list.c:68
 msgid "Show the latest commit"
@@ -2057,12 +2049,12 @@ msgstr ""
 #: app/flatpak-builtins-list.c:70 app/flatpak-builtins-remote-list.c:56
 #: app/flatpak-builtins-remote-ls.c:77 app/flatpak-builtins-repo.c:337
 msgid "Options"
-msgstr ""
+msgstr "Opcions"
 
 #: app/flatpak-builtins-list.c:70 app/flatpak-builtins-remote-list.c:56
 #: app/flatpak-builtins-remote-ls.c:77
 msgid "Show options"
-msgstr ""
+msgstr "Afichar las opcions"
 
 #: app/flatpak-builtins-list.c:401
 msgid " - List installed apps and/or runtimes"
@@ -2211,7 +2203,6 @@ msgid "Show the instance ID"
 msgstr ""
 
 #: app/flatpak-builtins-ps.c:48 app/flatpak-builtins-run.c:86
-#, fuzzy
 msgid "PID"
 msgstr "PID"
 
@@ -3175,7 +3166,7 @@ msgstr ""
 #: app/flatpak-builtins-utils.c:525 app/flatpak-builtins-utils.c:527
 #: app/flatpak-builtins-utils.c:594
 msgid "Which do you want to use (0 to abort)?"
-msgstr ""
+msgstr "Quin volètz utilizar (0 per abandonar) ?"
 
 #: app/flatpak-builtins-utils.c:344
 #, c-format
@@ -3418,7 +3409,7 @@ msgstr ""
 
 #: app/flatpak-cli-transaction.c:528 app/flatpak-quiet-transaction.c:144
 msgid "Not enough disk space to complete this operation"
-msgstr "Memòria insufisenta per acabar l'operacion."
+msgstr "Memòria insufisenta per acabar l'operacion"
 
 #: app/flatpak-cli-transaction.c:532
 msgid "(internal error, please report)"
@@ -3444,7 +3435,7 @@ msgstr ""
 
 #: app/flatpak-cli-transaction.c:576
 msgid "Open browser?"
-msgstr "Dobrir lo navegador ?"
+msgstr "Dobrir lo navegador ?"
 
 #: app/flatpak-cli-transaction.c:632
 #, c-format
@@ -3482,7 +3473,7 @@ msgstr ""
 #: app/flatpak-cli-transaction.c:752
 #, c-format
 msgid "Replace it with %s?"
-msgstr "Lo remplaçar per « %s »"
+msgstr "Lo remplaçar per « %s » ?"
 
 #: app/flatpak-cli-transaction.c:755 app/flatpak-quiet-transaction.c:223
 msgid "Updating to rebased version\n"
@@ -3517,12 +3508,12 @@ msgstr ""
 #.
 #: app/flatpak-cli-transaction.c:1155 app/flatpak-cli-transaction.c:1199
 msgid "partial"
-msgstr ""
+msgstr "parcial"
 
 #: app/flatpak-cli-transaction.c:1231
 msgid "Proceed with these changes to the user installation?"
 msgstr ""
-"Contunhar amb aquelas modificacions de l’installacion de l’utilizaire ?"
+"Contunhar amb aquelas modificacions de l’installacion de l’utilizaire ?"
 
 #: app/flatpak-cli-transaction.c:1233
 msgid "Proceed with these changes to the system installation?"
@@ -3606,11 +3597,10 @@ msgstr ""
 
 #. translators: please keep the leading newline and space
 #: app/flatpak-main.c:94
-#, fuzzy
 msgid ""
 "\n"
 " Find applications and runtimes"
-msgstr "Aplicacion"
+msgstr ""
 
 #: app/flatpak-main.c:95
 msgid "Search for remote apps/runtimes"
@@ -3679,7 +3669,7 @@ msgstr ""
 
 #: app/flatpak-main.c:116
 msgid "List permissions"
-msgstr ""
+msgstr "Listar las autorizacions"
 
 #: app/flatpak-main.c:117
 msgid "Remove item from permission store"
@@ -3687,15 +3677,15 @@ msgstr ""
 
 #: app/flatpak-main.c:119
 msgid "Set permissions"
-msgstr ""
+msgstr "Definir las autorizacions"
 
 #: app/flatpak-main.c:120
 msgid "Show app permissions"
-msgstr ""
+msgstr "Afichar las autorizacions de l’aplicacion"
 
 #: app/flatpak-main.c:121
 msgid "Reset app permissions"
-msgstr ""
+msgstr "Reïnicializar las autorizacions de l’aplicacion"
 
 #. translators: please keep the leading newline and space
 #: app/flatpak-main.c:124
@@ -3734,6 +3724,8 @@ msgid ""
 "\n"
 " Build applications"
 msgstr ""
+"\n"
+"Construire las aplicacions"
 
 #: app/flatpak-main.c:135
 msgid "Initialize a directory for building"
@@ -3851,17 +3843,17 @@ msgstr ""
 #: app/flatpak-main.c:489 app/flatpak-main.c:671
 #, c-format
 msgid "See '%s --help'"
-msgstr ""
+msgstr "Consultar « %s --help »"
 
 #: app/flatpak-main.c:680
 #, c-format
 msgid "'%s' is not a flatpak command. Did you mean '%s%s'?"
-msgstr ""
+msgstr "« %s » es pas una comanda flatpak. Voliatz dire « %s%s » ?"
 
 #: app/flatpak-main.c:683
 #, c-format
 msgid "'%s' is not a flatpak command"
-msgstr ""
+msgstr "« %s » es pas una comanda flatpak"
 
 #: app/flatpak-main.c:798
 msgid "No command specified"
@@ -3869,22 +3861,22 @@ msgstr "Cap de comanda es pas estada precisada"
 
 #: app/flatpak-main.c:958
 msgid "error:"
-msgstr ""
+msgstr "error :"
 
 #: app/flatpak-quiet-transaction.c:77
 #, c-format
 msgid "Installing %s\n"
-msgstr ""
+msgstr "Installacion de %s\n"
 
 #: app/flatpak-quiet-transaction.c:81
 #, c-format
 msgid "Updating %s\n"
-msgstr ""
+msgstr "Actualizacion de %s\n"
 
 #: app/flatpak-quiet-transaction.c:85
 #, c-format
 msgid "Uninstalling %s\n"
-msgstr ""
+msgstr "Desinstallacion de %s\n"
 
 #: app/flatpak-quiet-transaction.c:148
 #, c-format
@@ -4069,9 +4061,8 @@ msgid "Remove variable from environment"
 msgstr ""
 
 #: common/flatpak-context.c:1424
-#, fuzzy
 msgid "VAR"
-msgstr "VAL"
+msgstr "VAR"
 
 #: common/flatpak-context.c:1425
 msgid "Allow app to own name on the session bus"
@@ -4538,7 +4529,7 @@ msgstr ""
 #: common/flatpak-dir.c:12539
 #, c-format
 msgid "Nothing matches %s"
-msgstr ""
+msgstr "Cap de correspondéncia per %s"
 
 #: common/flatpak-dir.c:12647
 #, c-format
@@ -4834,9 +4825,9 @@ msgid "Invalid name %s: %s"
 msgstr ""
 
 #: common/flatpak-ref-utils.c:835
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid arch: %s: %s"
-msgstr "Invalid group: %d"
+msgstr "Branca invalida : %s %s"
 
 #: common/flatpak-ref-utils.c:854
 #, fuzzy, c-format
@@ -4858,9 +4849,8 @@ msgid " platform"
 msgstr ""
 
 #: common/flatpak-ref-utils.c:1293
-#, fuzzy
 msgid " application base"
-msgstr "Aplicacion"
+msgstr " aplicacion de basa"
 
 #: common/flatpak-ref-utils.c:1296
 msgid " debug symbols"
@@ -4871,9 +4861,8 @@ msgid " sourcecode"
 msgstr ""
 
 #: common/flatpak-ref-utils.c:1300
-#, fuzzy
 msgid " translations"
-msgstr "Installacion"
+msgstr " traduccions"
 
 #: common/flatpak-ref-utils.c:1302
 msgid " docs"
@@ -5023,7 +5012,7 @@ msgstr ""
 #: common/flatpak-transaction.c:2498
 #, c-format
 msgid "%s is already installed"
-msgstr ""
+msgstr "%s es ja installat"
 
 #: common/flatpak-transaction.c:2501
 #, c-format
@@ -5088,7 +5077,7 @@ msgstr ""
 
 #: common/flatpak-transaction.c:4725 common/flatpak-transaction.c:4738
 msgid "Aborted by user"
-msgstr ""
+msgstr "Abandonat per l’utilizaire"
 
 #: common/flatpak-transaction.c:4763
 #, c-format
@@ -5130,7 +5119,7 @@ msgstr ""
 #: common/flatpak-utils.c:919
 #, c-format
 msgid "on line %d"
-msgstr ""
+msgstr "a la linha %d"
 
 #: common/flatpak-utils.c:941
 #, c-format
@@ -5149,11 +5138,11 @@ msgstr ""
 
 #: common/flatpak-utils.c:2289
 msgid "Invalid gpg key"
-msgstr ""
+msgstr "Clau gpg invalida"
 
 #: common/flatpak-utils.c:2678
 msgid "No extra data sources"
-msgstr ""
+msgstr "Cap de fonts de donadas suplementàrias"
 
 #: common/flatpak-utils.c:5335
 #, c-format
@@ -5241,7 +5230,7 @@ msgstr ""
 
 #: oci-authenticator/flatpak-oci-authenticator.c:488
 msgid "Invalid token"
-msgstr ""
+msgstr "Geton invalid"
 
 #: portal/flatpak-portal.c:2261
 msgid "No portal support found"
@@ -5496,44 +5485,37 @@ msgid ""
 "parental controls policy"
 msgstr ""
 
-#, fuzzy, c-format
+#, fuzzy
 #~ msgid "Related ref '%s' is only partially installed"
 #~ msgstr "Requested extension %s is only partially installed"
 
-#, fuzzy, c-format
+#, fuzzy
 #~ msgid "Ref '%s' is only partially installed"
 #~ msgstr "Requested extension %s is only partially installed"
 
-#, c-format
 #~ msgid "Unable to load metadata from remote %s: %s"
 #~ msgstr "Unable to load metadata from remote %s: %s"
 
-#, c-format
 #~ msgid "No such ref (%s, %s) in remote %s"
 #~ msgstr "No such ref (%s, %s) in remote %s"
 
-#, c-format
 #~ msgid "No such ref (%s, %s) in remote %s or elsewhere"
 #~ msgstr "No such ref (%s, %s) in remote %s or elsewhere"
 
-#, c-format
 #~ msgid "No remotes found which provide these refs: [%s]"
 #~ msgstr "No remotes found which provide these refs: [%s]"
 
-#, c-format
 #~ msgid "No remotes found which provide the ref (%s, %s)"
 #~ msgstr "No remotes found which provide the ref (%s, %s)"
 
 #~ msgid "No summary found"
 #~ msgstr "No summary found"
 
-#, c-format
 #~ msgid ""
 #~ "GPG verification enabled, but no summary signatures found for remote '%s'"
 #~ msgstr ""
 #~ "GPG verification enabled, but no summary signatures found for remote '%s'"
 
-#, c-format
 #~ msgid ""
 #~ "GPG signatures found for remote '%s', but none are in trusted keyring"
 #~ msgstr ""
@@ -5550,7 +5532,6 @@ msgstr ""
 #~ "Expected commit metadata to have collection ID binding information, found "
 #~ "none"
 
-#, c-format
 #~ msgid ""
 #~ "Commit has collection ID ‘%s’ in collection binding metadata, while the "
 #~ "remote it came from has collection ID ‘%s’"
@@ -5564,7 +5545,6 @@ msgstr ""
 #~ msgid "No metadata branch for OCI"
 #~ msgstr "No metadata branch for OCI"
 
-#, c-format
 #~ msgid "Warning: Can't find %s metadata for dependencies: %s"
 #~ msgstr "Warning: Can't find %s metadata for dependencies: %s"
 
