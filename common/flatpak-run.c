@@ -3101,7 +3101,7 @@ setup_seccomp (FlatpakBwrap   *bwrap,
             r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO (errnum), scall, 0);
 
           /* See above for the meaning of EFAULT. */
-          if (errno == EFAULT)
+          if (r == -EFAULT)
             flatpak_debug2 ("Unable to block syscall %d: syscall not known to libseccomp?",
                             scall);
           else if (r < 0)
