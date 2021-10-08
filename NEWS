@@ -1,3 +1,10 @@
+Changes in 1.10.5
+~~~~~~~~~~~~~~~~~
+Released: 2021-10-08
+
+The security fix in the 1.12.1 release failed when used with some
+older versions of libseccomp (that don't know about the new syscalls).
+
 Changes in 1.10.4
 ~~~~~~~~~~~~~~~~~
 Released: 2021-10-08
