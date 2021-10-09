@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2021-10-08 19:00+0200\n"
-"PO-Revision-Date: 2021-01-17 13:33+0100\n"
+"PO-Revision-Date: 2021-10-09 15:25+0200\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
 "Language: pl\n"
@@ -1058,11 +1058,11 @@ msgstr "Bez tworzenia delt pasujących odniesień"
 
 #: app/flatpak-builtins-build-update-repo.c:90
 msgid "Prune unused objects"
-msgstr "Usuwa nieużywane obiekty"
+msgstr "Czyści nieużywane obiekty"
 
 #: app/flatpak-builtins-build-update-repo.c:91
 msgid "Prune but don't actually remove anything"
-msgstr ""
+msgstr "Czyści, ale nic nie usuwa"
 
 #: app/flatpak-builtins-build-update-repo.c:92
 msgid "Only traverse DEPTH parents for each commit (default: -1=infinite)"
@@ -1231,11 +1231,11 @@ msgstr ""
 "repozytorium „%s” nie ma ustawionego identyfikatora kolekcji.\n"
 
 #: app/flatpak-builtins-create-usb.c:186
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: Omitting related ref ‘%s’ because it's extra-data.\n"
 msgstr ""
-"Ostrzeżenie: pomijanie powiązanego odniesienia „%s”, ponieważ nie jest "
-"zainstalowane.\n"
+"Ostrzeżenie: pomijanie powiązanego odniesienia „%s”, ponieważ jest "
+"dodatkowymi danymi.\n"
 
 #: app/flatpak-builtins-create-usb.c:261 app/flatpak-builtins-create-usb.c:635
 #, c-format
@@ -1247,11 +1247,11 @@ msgstr ""
 "wymagany do rozpowszechniania „%s” typu P2P."
 
 #: app/flatpak-builtins-create-usb.c:271
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: Omitting ref ‘%s’ (runtime of ‘%s’) because it's extra-data.\n"
 msgstr ""
-"Ostrzeżenie: pomijanie powiązanego odniesienia „%s”, ponieważ nie jest "
-"zainstalowane.\n"
+"Ostrzeżenie: pomijanie odniesienia „%s” (środowisko wykonawcze „%s”), "
+"ponieważ jest dodatkowymi danymi.\n"
 
 #: app/flatpak-builtins-create-usb.c:482
 msgid "MOUNT-PATH [REF…] - Copy apps or runtimes onto removable media"
@@ -1289,6 +1289,8 @@ msgstr ""
 #, c-format
 msgid "Installed ref ‘%s’ is extra-data, and cannot be distributed offline"
 msgstr ""
+"Zainstalowane odniesienie „%s” jest dodatkowymi danymi i nie może być "
+"rozprowadzane w trybie offline"
 
 #: app/flatpak-builtins-create-usb.c:719
 #, c-format
@@ -3110,11 +3112,11 @@ msgstr "Zapisuje identyfikator wystąpienia do podanego deskryptora pliku"
 
 #: app/flatpak-builtins-run.c:90
 msgid "Use PATH instead of the app's /app"
-msgstr ""
+msgstr "Używa ŚCIEŻKI zamiast /app programu"
 
 #: app/flatpak-builtins-run.c:91
 msgid "Use PATH instead of the runtime's /usr"
-msgstr ""
+msgstr "Używa ŚCIEŻKI zamiast /usr środowiska wykonawczego"
 
 #: app/flatpak-builtins-run.c:114
 msgid "APP [ARGUMENT…] - Run an app"
@@ -3735,13 +3737,12 @@ msgstr "Umieszcza programy lub środowiska wykonawcze na nośnikach wymiennych"
 
 #. translators: please keep the leading newline and space
 #: app/flatpak-main.c:94
-#, fuzzy
 msgid ""
 "\n"
 " Find applications and runtimes"
 msgstr ""
 "\n"
-" Wyszukiwanie programów i środowisk wykonawczych"
+" Wyszukuje programy i środowiska wykonawcze"
 
 #: app/flatpak-main.c:95
 msgid "Search for remote apps/runtimes"
@@ -3749,13 +3750,12 @@ msgstr "Wyszukuje programy/środowiska wykonawcze repozytorium"
 
 #. translators: please keep the leading newline and space
 #: app/flatpak-main.c:98
-#, fuzzy
 msgid ""
 "\n"
 " Manage running applications"
 msgstr ""
 "\n"
-" Uruchamianie programów"
+" Zarządza uruchamianiem programów"
 
 #: app/flatpak-main.c:99
 msgid "Run an application"
@@ -4524,9 +4524,9 @@ msgid "D-Bus service file '%s' has wrong name"
 msgstr "Plik usługi D-Bus „%s” ma błędną nazwę"
 
 #: common/flatpak-dir.c:7177
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid Exec argument %s"
-msgstr "Nieprawidłowy parametr require-flatpak %s"
+msgstr "Nieprawidłowy parametr Exec %s"
 
 #: common/flatpak-dir.c:7642
 msgid "While getting detached metadata: "
@@ -4816,34 +4816,34 @@ msgstr "Jak zażądano, %s zostało tylko pobrane, ale nie zainstalowane"
 
 #: common/flatpak-instance.c:508 common/flatpak-instance.c:667
 #: common/flatpak-instance.c:708
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to create directory %s"
-msgstr "Utworzenie potoku synchronizacji się nie powiodło"
+msgstr "Nie można utworzyć katalogu %s"
 
 #: common/flatpak-instance.c:529
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to lock %s"
-msgstr "Nie można wyszukać identyfikatora klucza %s: %d)"
+msgstr "Nie można zablokować %s"
 
 #: common/flatpak-instance.c:581
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to open directory %s"
-msgstr "Nie można połączyć się z magistralą systemu"
+msgstr "Nie można otworzyć katalogu %s"
 
 #: common/flatpak-instance.c:607
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to create temporary directory in %s"
-msgstr "Nie można utworzyć katalogu wdrażania"
+msgstr "Nie można utworzyć tymczasowego katalogu w %s"
 
 #: common/flatpak-instance.c:619
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to create file %s"
-msgstr "Utworzenie potoku synchronizacji się nie powiodło"
+msgstr "Nie można utworzyć pliku %s"
 
 #: common/flatpak-instance.c:626
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to update symbolic link %s/%s"
-msgstr "Nie można zaktualizować %s: %s\n"
+msgstr "Nie można zaktualizować dowiązania symbolicznego %s/%s"
 
 #: common/flatpak-oci-registry.c:991
 msgid "Only Bearer authentication supported"
@@ -5160,6 +5160,9 @@ msgid ""
 "\"flatpak run\" is not intended to be run as `sudo flatpak run`, use `sudo -"
 "i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell"
 msgstr ""
+"„flatpak run” nie powinno być wykonywane jako „sudo flatpak run”, należy "
+"użyć „sudo -i” lub „su -l” zamiast tego i wywołać „flatpak run” z nowej "
+"powłoki"
 
 #: common/flatpak-run.c:4094
 #, c-format
@@ -5696,6 +5699,3 @@ msgid ""
 msgstr ""
 "Wymagane jest uwierzytelnienie, aby zainstalować oprogramowanie ograniczane "
 "przez zasady kontroli rodzicielskiej"
-
-#~ msgid "\"flatpak run\" is not intended to be ran with sudo"
-#~ msgstr "Polecenie „flatpak run” nie powinno być wykonywane za pomocą sudo"
