@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2021-10-08 19:25+0200\n"
-"PO-Revision-Date: 2021-01-17 13:33+0100\n"
+"PO-Revision-Date: 2021-10-09 15:15+0200\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
 "Language: pl\n"
@@ -1227,11 +1227,11 @@ msgstr ""
 "repozytorium „%s” nie ma ustawionego identyfikatora kolekcji.\n"
 
 #: app/flatpak-builtins-create-usb.c:186
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: Omitting related ref ‘%s’ because it's extra-data.\n"
 msgstr ""
-"Ostrzeżenie: pomijanie powiązanego odniesienia „%s”, ponieważ nie jest "
-"zainstalowane.\n"
+"Ostrzeżenie: pomijanie powiązanego odniesienia „%s”, ponieważ jest "
+"dodatkowymi danymi.\n"
 
 #: app/flatpak-builtins-create-usb.c:261 app/flatpak-builtins-create-usb.c:635
 #, c-format
@@ -1243,11 +1243,11 @@ msgstr ""
 "wymagany do rozpowszechniania „%s” typu P2P."
 
 #: app/flatpak-builtins-create-usb.c:271
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: Omitting ref ‘%s’ (runtime of ‘%s’) because it's extra-data.\n"
 msgstr ""
-"Ostrzeżenie: pomijanie powiązanego odniesienia „%s”, ponieważ nie jest "
-"zainstalowane.\n"
+"Ostrzeżenie: pomijanie odniesienia „%s” (środowisko wykonawcze „%s”), "
+"ponieważ jest dodatkowymi danymi.\n"
 
 #: app/flatpak-builtins-create-usb.c:482
 msgid "MOUNT-PATH [REF…] - Copy apps or runtimes onto removable media"
@@ -1285,6 +1285,8 @@ msgstr ""
 #, c-format
 msgid "Installed ref ‘%s’ is extra-data, and cannot be distributed offline"
 msgstr ""
+"Zainstalowane odniesienie „%s” jest dodatkowymi danymi i nie może być "
+"rozprowadzane w trybie offline"
 
 #: app/flatpak-builtins-create-usb.c:719
 #, c-format
@@ -4509,9 +4511,9 @@ msgid "D-Bus service file '%s' has wrong name"
 msgstr "Plik usługi D-Bus „%s” ma błędną nazwę"
 
 #: common/flatpak-dir.c:7145
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid Exec argument %s"
-msgstr "Nieprawidłowy parametr require-flatpak %s"
+msgstr "Nieprawidłowy parametr Exec %s"
 
 #: common/flatpak-dir.c:7616
 msgid "While getting detached metadata: "
