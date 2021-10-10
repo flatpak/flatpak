@@ -1,4 +1,5 @@
 /*
+ * Copyright © 1995-1998 Free Software Foundation, Inc.
  * Copyright © 2014-2019 Red Hat, Inc
  *
  * This program is free software; you can redistribute it and/or
@@ -7958,6 +7959,57 @@ append_locale_variants (GPtrArray *array,
     g_free (modifier);
 }
 
+/* The following is (partly) taken from the gettext package.
+   Copyright (C) 1995, 1996, 1997, 1998 Free Software Foundation, Inc.  */
+
+static const gchar *
+guess_category_value (const gchar *category_name)
+{
+  const gchar *retval;
+
+  /* The highest priority value is the 'LANGUAGE' environment
+     variable.  This is a GNU extension.  */
+  retval = g_getenv ("LANGUAGE");
+  if ((retval != NULL) && (retval[0] != '\0'))
+    return retval;
+
+  /* 'LANGUAGE' is not set.  So we have to proceed with the POSIX
+     methods of looking to 'LC_ALL', 'LC_xxx', and 'LANG'.  On some
+     systems this can be done by the 'setlocale' function itself.  */
+
+  /* Setting of LC_ALL overwrites all other.  */
+  retval = g_getenv ("LC_ALL");
+  if ((retval != NULL) && (retval[0] != '\0'))
+    return retval;
+
+  /* Next comes the name of the desired category.  */
+  retval = g_getenv (category_name);
+  if ((retval != NULL) && (retval[0] != '\0'))
+    return retval;
+
+  /* Last possibility is the LANG environment variable.  */
+  retval = g_getenv ("LANG");
+  if ((retval != NULL) && (retval[0] != '\0'))
+    return retval;
+
+#ifdef G_PLATFORM_WIN32
+  /* g_win32_getlocale() first checks for LC_ALL, LC_MESSAGES and
+   * LANG, which we already did above. Oh well. The main point of
+   * calling g_win32_getlocale() is to get the thread's locale as used
+   * by Windows and the Microsoft C runtime (in the "English_United
+   * States" format) translated into the Unixish format.
+   */
+  {
+    char *locale = g_win32_getlocale ();
+    retval = g_intern_string (locale);
+    g_free (locale);
+    return retval;
+  }
+#endif
+
+  return NULL;
+}
+
 static const gchar * const *
 g_get_language_names_with_category (const gchar *category_name)
 {
@@ -7975,10 +8027,7 @@ g_get_language_names_with_category (const gchar *category_name)
       g_private_set (&cache_private, cache);
     }
 
-  /* Backporting note: we don't bother checking all the other LC_* variants as
-     fallbacks, because Flatpak will be reading all the categories individually
-     anyway. */
-  languages = g_getenv (category_name);
+  languages = guess_category_value (category_name);
   if (!languages)
     languages = "C";
 
