@@ -1,3 +1,11 @@
+Changes in 1.10.6
+~~~~~~~~~~~~~~~~~
+Released: (not released yet)
+
+ * Fix error handling for the syscalls that are blocked when not using --devel
+ * Improve diagnostic messages when seccomp rules cannot be applied
+ * Update Polish translation
+
 Changes in 1.10.5
 ~~~~~~~~~~~~~~~~~
 Released: 2021-10-08
