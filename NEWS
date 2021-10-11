@@ -2,8 +2,12 @@ Changes in 1.10.5
 ~~~~~~~~~~~~~~~~~
 Released: 2021-10-08
 
-The security fix in the 1.12.1 release failed when used with some
+The security fix in the 1.12.0 and 1.10.4 releases failed when used with some
 older versions of libseccomp (that don't know about the new syscalls).
+
+More specifically, installing modules that use extra-data would fail, and so
+would running applications with the --allow=multiarch feature, such as Steam.
+This release fixes those regressions.
 
 Changes in 1.10.4
 ~~~~~~~~~~~~~~~~~
