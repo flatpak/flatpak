@@ -100,6 +100,7 @@ export HOME=${TEST_DATA_DIR}/home
 export XDG_CACHE_HOME=${TEST_DATA_DIR}/home/cache
 export XDG_CONFIG_HOME=${TEST_DATA_DIR}/home/config
 export XDG_DATA_HOME=${TEST_DATA_DIR}/home/share
+export XDG_STATE_HOME=${TEST_DATA_DIR}/home/state
 export XDG_RUNTIME_DIR=${TEST_DATA_DIR}/runtime
 
 export XDG_DESKTOP_PORTAL_DIR=${test_builddir}/share/xdg-desktop-portal/portals

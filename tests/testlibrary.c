@@ -2648,6 +2648,7 @@ global_setup (void)
   g_autofree char *cachedir = NULL;
   g_autofree char *configdir = NULL;
   g_autofree char *datadir = NULL;
+  g_autofree char *statedir = NULL;
   g_autofree char *homedir = NULL;
   g_autofree char *services_dir = NULL;
 
@@ -2675,6 +2676,11 @@ global_setup (void)
   g_mkdir_with_parents (datadir, S_IRWXU | S_IRWXG | S_IRWXO);
   g_setenv ("XDG_DATA_HOME", datadir, TRUE);
   g_test_message ("setting XDG_DATA_HOME=%s", datadir);
+
+  statedir = g_strconcat (testdir, "/home/state", NULL);
+  g_mkdir_with_parents (statedir, S_IRWXU | S_IRWXG | S_IRWXO);
+  g_setenv ("XDG_STATE_HOME", statedir, TRUE);
+  g_test_message ("setting XDG_STATE_HOME=%s", statedir);
 
   flatpak_runtimedir = g_strconcat (testdir, "/runtime", NULL);
   g_mkdir_with_parents (flatpak_runtimedir, S_IRWXU | S_IRWXG | S_IRWXO);
