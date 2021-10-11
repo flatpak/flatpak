@@ -1,3 +1,29 @@
+Changes in 1.8.6
+~~~~~~~~~~~~~~~~
+Released: (not released yet)
+
+This security update fixes a potential attack where a flatpak application
+could use custom formated .desktop files to gain access to files on the
+host system. (CVE-2021-21261)
+For details, see:
+  https://github.com/flatpak/flatpak/security/advisories/GHSA-4ppf-fxf6-vxg2
+
+This security update also fixes a security vulnerability in the portal
+support. Some recently added syscalls were not blocked by the seccomp rules
+which allowed the application to create sub-sandboxes which can confuse
+the sandboxing verification mechanisms of the portal. This has been
+fixed by extending the seccomp rules. (CVE-2021-41133)
+For details, see:
+  https://github.com/flatpak/flatpak/security/advisories/GHSA-67h7-w3jq-vh4q
+
+Other changes:
+ * Memory leak fixes backported from 1.10.2 and 1.11.2
+ * File descriptor leak fixes backported from 1.10.2 and 1.11.2
+ * Add --enable-asan configure option backported from 1.10.1
+ * The .profile snippets now disable GVfs when calling flatpak to
+   avoid spawning a gvfs daemon when logging in via ssh
+ * Update Polish translation
+
 Changes in 1.8.5
 ~~~~~~~~~~~~~~~~
 Released: 2020-01-14
