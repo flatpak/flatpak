@@ -15,7 +15,7 @@ Released: 2021-10-08
 
 This is the first stable release in the 1.12.x series. The major changes
 in this series is the support for better control of sub-sandboxes, as
-used by the steam flatpak.
+used by the Steam Flatpak app to run Windows games under Proton.
 
 In addition, this release fixes a security vulnerability in the portal
 support. Some recently added syscalls were not blocked by the seccomp rules
