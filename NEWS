@@ -17,11 +17,16 @@ For details, see:
   https://github.com/flatpak/flatpak/security/advisories/GHSA-67h7-w3jq-vh4q
 
 Other changes:
+ * Don't inherit an unusual $XDG_RUNTIME_DIR setting into the sandbox, fixing
+   a regression introduced when CVE-2021-21261 was fixed in 1.8.5 and 1.10.0
+ * Fix fd confusion in flatpak-spawn --env=... --forward-fd=..., resolving a
+   regression introduced in 1.8.5
  * Memory leak fixes backported from 1.10.2 and 1.11.2
- * File descriptor leak fixes backported from 1.10.2 and 1.11.2
+ * File descriptor leak fixes backported from 1.10.2, 1.10.3 and 1.11.2
  * Add --enable-asan configure option backported from 1.10.1
  * The .profile snippets now disable GVfs when calling flatpak to
    avoid spawning a gvfs daemon when logging in via ssh
+ * Fix test failures on non-x86_64 systems
  * Update Polish translation
 
 Changes in 1.8.5
