@@ -1,6 +1,6 @@
 Changes in 1.12.2
 ~~~~~~~~~~~~~~~~~
-Released: (not released yet)
+Released: 2021-10-12
 
  * Install translations referenced by LANG, LANGUAGE or LC_ALL
  * Fix error handling for the syscalls that are blocked when not using --devel
