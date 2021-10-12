@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2021-10-08 19:00+0200\n"
+"POT-Creation-Date: 2021-10-12 10:56+0100\n"
 "PO-Revision-Date: 2021-09-16 09:03+0700\n"
 "Last-Translator: Kukuh Syafaat <kukuhsyafaat@gnome.org>\n"
 "Language-Team: Indonesian <gnome-l10n-id@googlegroups.com>\n"
@@ -255,7 +255,7 @@ msgstr "Tidak ada titik ekstensi %s yang cocok pada %s"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Kehilangan '=' pada opsi kait bind '%s'"
 
-#: app/flatpak-builtins-build.c:606 common/flatpak-run.c:4503
+#: app/flatpak-builtins-build.c:606 common/flatpak-run.c:4537
 msgid "Unable to start app"
 msgstr "Tidak dapat memulai aplikasi"
 
@@ -3477,7 +3477,7 @@ msgstr "%s sudah dipasang"
 #: common/flatpak-dir.c:2867 common/flatpak-dir.c:3565
 #: common/flatpak-dir.c:15038 common/flatpak-dir.c:15314
 #: common/flatpak-transaction.c:2461 common/flatpak-transaction.c:2509
-#: common/flatpak-utils.c:1123 common/flatpak-utils.c:1216
+#: common/flatpak-utils.c:1124 common/flatpak-utils.c:1217
 #, c-format
 msgid "%s not installed"
 msgstr "%s tidak terpasang"
@@ -4273,7 +4273,7 @@ msgid "Couldn't find ref %s in remote %s"
 msgstr "Tidak dapat menemukan ref %s di remote %s"
 
 #: common/flatpak-dir.c:1018 common/flatpak-dir.c:5671
-#: common/flatpak-utils.c:6829 common/flatpak-utils.c:6834
+#: common/flatpak-utils.c:6830 common/flatpak-utils.c:6835
 msgid "Image is not a manifest"
 msgstr "Citra bukan merupakan manifes"
 
@@ -4411,7 +4411,7 @@ msgstr "%s komit %s sudah terpasang"
 msgid "While pulling %s from remote %s: "
 msgstr "Saat menarik %s dari remote %s: "
 
-#: common/flatpak-dir.c:6015 common/flatpak-utils.c:6724
+#: common/flatpak-dir.c:6015 common/flatpak-utils.c:6725
 msgid "GPG signatures found, but none are in trusted keyring"
 msgstr ""
 "Tanda tangan GPG ditemukan, tetapi tidak ada dalam ring kunci terpercaya"
@@ -4669,7 +4669,7 @@ msgstr "Tidak dapat menemukan pemasangan %s"
 msgid "Invalid file format, no %s group"
 msgstr "Format berkas tidak valid, tidak ada grup %s"
 
-#: common/flatpak-dir.c:13737 common/flatpak-utils.c:2251
+#: common/flatpak-dir.c:13737 common/flatpak-utils.c:2252
 #, c-format
 msgid "Invalid version %s, only 1 supported"
 msgstr "Versi %s tidak valid, hanya 1 yang didukung"
@@ -4684,7 +4684,7 @@ msgstr "Format berkas tidak valid, tidak ada %s yang ditentukan"
 msgid "Invalid file format, gpg key invalid"
 msgstr "Format berkas tidak valid, kunci gpg tidak valid"
 
-#: common/flatpak-dir.c:13789 common/flatpak-utils.c:2314
+#: common/flatpak-dir.c:13789 common/flatpak-utils.c:2315
 msgid "Collection ID requires GPG key to be provided"
 msgstr "ID Koleksi membutuhkan kunci GPG yang akan disediakan"
 
@@ -5034,50 +5034,53 @@ msgstr "Gagal membuka berkas bwrapinfo.json: %s"
 msgid "Failed to write to instance id fd: %s"
 msgstr "Gagal menulis ke id instance fd: %s"
 
-#: common/flatpak-run.c:3007
+#: common/flatpak-run.c:3039
 msgid "Initialize seccomp failed"
 msgstr "Inisialisasi seccomp gagal"
 
-#: common/flatpak-run.c:3046
-msgid "Failed to add architecture to seccomp filter"
+#: common/flatpak-run.c:3078
+#, fuzzy, c-format
+msgid "Failed to add architecture to seccomp filter: %s"
 msgstr "Gagal menambahkan arsitektur ke penyaring seccomp"
 
-#: common/flatpak-run.c:3054
-msgid "Failed to add multiarch architecture to seccomp filter"
+#: common/flatpak-run.c:3086
+#, fuzzy, c-format
+msgid "Failed to add multiarch architecture to seccomp filter: %s"
 msgstr "Gagal menambahkan arsitektur multiarch ke penyaring seccomp"
 
-#: common/flatpak-run.c:3086 common/flatpak-run.c:3108
-#, c-format
-msgid "Failed to block syscall %d"
+#: common/flatpak-run.c:3118 common/flatpak-run.c:3140
+#, fuzzy, c-format
+msgid "Failed to block syscall %d: %s"
 msgstr "Gagal memblokir syscall %d"
 
-#: common/flatpak-run.c:3139
-msgid "Failed to export bpf"
+#: common/flatpak-run.c:3173
+#, fuzzy, c-format
+msgid "Failed to export bpf: %s"
 msgstr "Gagal mengekspor bpf"
 
-#: common/flatpak-run.c:3390
+#: common/flatpak-run.c:3424
 #, c-format
 msgid "Failed to open ‘%s’"
 msgstr "Gagal membuka ‘%s’"
 
-#: common/flatpak-run.c:3676
+#: common/flatpak-run.c:3710
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "ldconfig gagal, status keluar %d"
 
-#: common/flatpak-run.c:3683
+#: common/flatpak-run.c:3717
 msgid "Can't open generated ld.so.cache"
 msgstr "Tidak dapat membuka ld.so.cache yang dihasilkan"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-run.c:3794
+#: common/flatpak-run.c:3828
 #, c-format
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr ""
 "Menjalankan %s tidak diizinkan oleh kebijakan yang ditetapkan oleh "
 "administrator Anda"
 
-#: common/flatpak-run.c:3836
+#: common/flatpak-run.c:3870
 msgid ""
 "\"flatpak run\" is not intended to be run as `sudo flatpak run`, use `sudo -"
 "i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell"
@@ -5086,17 +5089,17 @@ msgstr ""
 "run`, gunakan `sudo -i` atau `su -l` sebagai gantinya dan panggil \"flatpak "
 "run\" dari dalam shell baru"
 
-#: common/flatpak-run.c:4094
+#: common/flatpak-run.c:4128
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "Gagal bermigrasi dari %s: %s"
 
-#: common/flatpak-run.c:4109
+#: common/flatpak-run.c:4143
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr "Gagal memigrasi direktori data aplikasi lama %s ke nama baru %s: %s"
 
-#: common/flatpak-run.c:4118
+#: common/flatpak-run.c:4152
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "Gagal membuat symlink saat memigrasi %s: %s"
@@ -5210,133 +5213,133 @@ msgstr "Melewatkan %s karena galat sebelumnya"
 msgid "Aborted due to failure (%s)"
 msgstr "Dibatalkan karena gagal (%s)"
 
-#: common/flatpak-utils.c:792
+#: common/flatpak-utils.c:793
 msgid "Glob can't match apps"
 msgstr "Glob tidak dapat mencocokkan aplikasi"
 
-#: common/flatpak-utils.c:817
+#: common/flatpak-utils.c:818
 msgid "Empty glob"
 msgstr "Glob kosong"
 
-#: common/flatpak-utils.c:836
+#: common/flatpak-utils.c:837
 msgid "Too many segments in glob"
 msgstr "Terlalu banyak segmen pada glob"
 
-#: common/flatpak-utils.c:857
+#: common/flatpak-utils.c:858
 #, c-format
 msgid "Invalid glob character '%c'"
 msgstr "Karakter glob tidak valid '%c'"
 
-#: common/flatpak-utils.c:911
+#: common/flatpak-utils.c:912
 #, c-format
 msgid "Missing glob on line %d"
 msgstr "Glob yang hilang pada baris %d"
 
-#: common/flatpak-utils.c:915
+#: common/flatpak-utils.c:916
 #, c-format
 msgid "Trailing text on line %d"
 msgstr "Perataan teks pada baris %d"
 
-#: common/flatpak-utils.c:919
+#: common/flatpak-utils.c:920
 #, c-format
 msgid "on line %d"
 msgstr "pada baris %d"
 
-#: common/flatpak-utils.c:941
+#: common/flatpak-utils.c:942
 #, c-format
 msgid "Unexpected word '%s' on line %d"
 msgstr "Kata '%s' tak diharapkan pada baris %d"
 
-#: common/flatpak-utils.c:2232
+#: common/flatpak-utils.c:2233
 #, c-format
 msgid "Invalid %s: Missing group ‘%s’"
 msgstr "%s tidak valid: Grup ‘%s’ tidak ada"
 
-#: common/flatpak-utils.c:2241
+#: common/flatpak-utils.c:2242
 #, c-format
 msgid "Invalid %s: Missing key ‘%s’"
 msgstr "%s tidak valid: Kunci ‘%s’ tidak ada"
 
-#: common/flatpak-utils.c:2289
+#: common/flatpak-utils.c:2290
 msgid "Invalid gpg key"
 msgstr "Kunci gpg tidak valid"
 
-#: common/flatpak-utils.c:2678
+#: common/flatpak-utils.c:2679
 msgid "No extra data sources"
 msgstr "Tidak ada sumber data tambahan"
 
-#: common/flatpak-utils.c:5335
+#: common/flatpak-utils.c:5336
 #, c-format
 msgid "Error copying 64x64 icon for component %s: %s\n"
 msgstr "Galat menyalin ikon 64x64 untuk komponen %s: %s\n"
 
-#: common/flatpak-utils.c:5341
+#: common/flatpak-utils.c:5342
 #, c-format
 msgid "Error copying 128x128 icon for component %s: %s\n"
 msgstr "Galat menyalin ikon 128x128 untuk komponen %s: %s\n"
 
-#: common/flatpak-utils.c:5588
+#: common/flatpak-utils.c:5589
 #, c-format
 msgid "%s is end-of-life, ignoring for appstream"
 msgstr "%s adalah akhir-masa-pakai, mengabaikan untuk appstream"
 
-#: common/flatpak-utils.c:5623
+#: common/flatpak-utils.c:5624
 #, c-format
 msgid "No appstream data for %s: %s\n"
 msgstr "Tidak ada data appstream untuk %s: %s\n"
 
-#: common/flatpak-utils.c:6586
+#: common/flatpak-utils.c:6587
 msgid "Invalid bundle, no ref in metadata"
 msgstr "Bundel tidak valid, tidak ada ref dalam metadata"
 
-#: common/flatpak-utils.c:6684
+#: common/flatpak-utils.c:6685
 #, c-format
 msgid "Collection ‘%s’ of bundle doesn’t match collection ‘%s’ of remote"
 msgstr "Koleksi ‘%s’ dari bundel tidak cocok dengan koleksi ‘%s’ dari remote"
 
-#: common/flatpak-utils.c:6763
+#: common/flatpak-utils.c:6764
 msgid "Metadata in header and app are inconsistent"
 msgstr "Metadata pada header dan aplikasi tidak konsisten"
 
-#: common/flatpak-utils.c:6848 common/flatpak-utils.c:7007
+#: common/flatpak-utils.c:6849 common/flatpak-utils.c:7008
 msgid "Invalid OCI image config"
 msgstr "Konfigurasi citra OCI tidak valid"
 
-#: common/flatpak-utils.c:6910 common/flatpak-utils.c:7156
+#: common/flatpak-utils.c:6911 common/flatpak-utils.c:7157
 #, c-format
 msgid "Wrong layer checksum, expected %s, was %s"
 msgstr "Pemeriksaan layer yang salah, yang diharapkan %s, ternyata %s"
 
-#: common/flatpak-utils.c:6990
+#: common/flatpak-utils.c:6991
 #, c-format
 msgid "No ref specified for OCI image %s"
 msgstr "Tidak ada ref yang ditentukan untuk citra OCI %s"
 
-#: common/flatpak-utils.c:6996
+#: common/flatpak-utils.c:6997
 #, c-format
 msgid "Wrong ref (%s) specified for OCI image %s, expected %s"
 msgstr "Ref (%s) yang salah ditentukan untuk citra OCI %s, yang diharapkan %s"
 
-#: common/flatpak-utils.c:8102
+#: common/flatpak-utils.c:8151
 #, c-format
 msgid "Invalid require-flatpak argument %s"
 msgstr "Argumen require-flatpak %s tidak valid"
 
-#: common/flatpak-utils.c:8112 common/flatpak-utils.c:8131
+#: common/flatpak-utils.c:8161 common/flatpak-utils.c:8180
 #, c-format
 msgid "%s needs a later flatpak version (%s)"
 msgstr "%s membutuhkan versi flatpak kelak (%s)"
 
-#: common/flatpak-utils.c:8175
+#: common/flatpak-utils.c:8224
 msgid "Empty string is not a number"
 msgstr "String kosong bukan angka"
 
-#: common/flatpak-utils.c:8201
+#: common/flatpak-utils.c:8250
 #, c-format
 msgid "“%s” is not an unsigned number"
 msgstr "\"%s\" bukan bilangan tak bertanda"
 
-#: common/flatpak-utils.c:8211
+#: common/flatpak-utils.c:8260
 #, c-format
 msgid "Number “%s” is out of bounds [%s, %s]"
 msgstr "Nomor \"%s\" berada di luar batas [%s, %s]"

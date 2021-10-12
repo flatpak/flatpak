@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2021-10-08 19:00+0200\n"
+"POT-Creation-Date: 2021-10-12 10:56+0100\n"
 "PO-Revision-Date: 2021-07-19 16:53+0300\n"
 "Last-Translator: Filippe LeMarchand <gasinvein@gmail.com>\n"
 "Language-Team: Russian <gnome-cyr@gnome.org>\n"
@@ -261,7 +261,7 @@ msgstr "Не найдена точка расширения, подходяща�
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Отсутствует '=' в параметре связанного монтирования '%s'"
 
-#: app/flatpak-builtins-build.c:606 common/flatpak-run.c:4503
+#: app/flatpak-builtins-build.c:606 common/flatpak-run.c:4537
 msgid "Unable to start app"
 msgstr "Невозможно запустить приложение"
 
@@ -3509,7 +3509,7 @@ msgstr "%s уже установлен"
 #: common/flatpak-dir.c:2867 common/flatpak-dir.c:3565
 #: common/flatpak-dir.c:15038 common/flatpak-dir.c:15314
 #: common/flatpak-transaction.c:2461 common/flatpak-transaction.c:2509
-#: common/flatpak-utils.c:1123 common/flatpak-utils.c:1216
+#: common/flatpak-utils.c:1124 common/flatpak-utils.c:1217
 #, c-format
 msgid "%s not installed"
 msgstr "%s не установлен"
@@ -4308,7 +4308,7 @@ msgid "Couldn't find ref %s in remote %s"
 msgstr "Не удалось найти ссылку %s в удаленном репозитории %s"
 
 #: common/flatpak-dir.c:1018 common/flatpak-dir.c:5671
-#: common/flatpak-utils.c:6829 common/flatpak-utils.c:6834
+#: common/flatpak-utils.c:6830 common/flatpak-utils.c:6835
 msgid "Image is not a manifest"
 msgstr "Изображение не является манифестом"
 
@@ -4446,7 +4446,7 @@ msgstr "%s коммит %s уже установлен"
 msgid "While pulling %s from remote %s: "
 msgstr "Во время получения %s из удалённого репозитория %s: "
 
-#: common/flatpak-dir.c:6015 common/flatpak-utils.c:6724
+#: common/flatpak-dir.c:6015 common/flatpak-utils.c:6725
 msgid "GPG signatures found, but none are in trusted keyring"
 msgstr ""
 "Найдены подписи GPG, но ни одна из них не находится в доверенном брелке"
@@ -4703,7 +4703,7 @@ msgstr "Не возможно найти %s в установленных"
 msgid "Invalid file format, no %s group"
 msgstr "Неверный формат файла, отсутствие %s группы"
 
-#: common/flatpak-dir.c:13737 common/flatpak-utils.c:2251
+#: common/flatpak-dir.c:13737 common/flatpak-utils.c:2252
 #, c-format
 msgid "Invalid version %s, only 1 supported"
 msgstr "Неверная версия %s, поддерживается только 1"
@@ -4718,7 +4718,7 @@ msgstr "Неверный формат файла, %s не указан"
 msgid "Invalid file format, gpg key invalid"
 msgstr "Неверный формат файла, неверный ключ gpg"
 
-#: common/flatpak-dir.c:13789 common/flatpak-utils.c:2314
+#: common/flatpak-dir.c:13789 common/flatpak-utils.c:2315
 msgid "Collection ID requires GPG key to be provided"
 msgstr "ID коллекции требует предоставления ключа GPG"
 
@@ -5070,48 +5070,51 @@ msgstr "Не удалось открыть файл bwrapinfo.json: %s"
 msgid "Failed to write to instance id fd: %s"
 msgstr "Не удалось записать файловый дескриптор с ID экземпляра: %s"
 
-#: common/flatpak-run.c:3007
+#: common/flatpak-run.c:3039
 msgid "Initialize seccomp failed"
 msgstr "Не удалось инициализировать seccomp"
 
-#: common/flatpak-run.c:3046
-msgid "Failed to add architecture to seccomp filter"
+#: common/flatpak-run.c:3078
+#, fuzzy, c-format
+msgid "Failed to add architecture to seccomp filter: %s"
 msgstr "Не удалось добавить архитектуру в фильтр seccomp"
 
-#: common/flatpak-run.c:3054
-msgid "Failed to add multiarch architecture to seccomp filter"
+#: common/flatpak-run.c:3086
+#, fuzzy, c-format
+msgid "Failed to add multiarch architecture to seccomp filter: %s"
 msgstr "Не удалось добавить многоархивную архитектуру к фильтру seccomp"
 
-#: common/flatpak-run.c:3086 common/flatpak-run.c:3108
-#, c-format
-msgid "Failed to block syscall %d"
+#: common/flatpak-run.c:3118 common/flatpak-run.c:3140
+#, fuzzy, c-format
+msgid "Failed to block syscall %d: %s"
 msgstr "Не удалось заблокировать системный вызов %d"
 
-#: common/flatpak-run.c:3139
-msgid "Failed to export bpf"
+#: common/flatpak-run.c:3173
+#, fuzzy, c-format
+msgid "Failed to export bpf: %s"
 msgstr "Не удалось экспортировать bpf"
 
-#: common/flatpak-run.c:3390
+#: common/flatpak-run.c:3424
 #, c-format
 msgid "Failed to open ‘%s’"
 msgstr "Не удалось открыть '%s'"
 
-#: common/flatpak-run.c:3676
+#: common/flatpak-run.c:3710
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "ошибка ldconfig, статус ошибки %d"
 
-#: common/flatpak-run.c:3683
+#: common/flatpak-run.c:3717
 msgid "Can't open generated ld.so.cache"
 msgstr "Невозможно открыть сгенерированный файл ld.so.cache"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-run.c:3794
+#: common/flatpak-run.c:3828
 #, c-format
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr "Запуск %s не разрешен политикой, установленной вашим администратором"
 
-#: common/flatpak-run.c:3836
+#: common/flatpak-run.c:3870
 msgid ""
 "\"flatpak run\" is not intended to be run as `sudo flatpak run`, use `sudo -"
 "i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell"
@@ -5120,19 +5123,19 @@ msgstr ""
 "вместо этого используйте `sudo -i` или `su -l` и запускайте \"flatpak run\" "
 "из новой командной оболочки"
 
-#: common/flatpak-run.c:4094
+#: common/flatpak-run.c:4128
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "Не удалось перенести с %s: %s"
 
-#: common/flatpak-run.c:4109
+#: common/flatpak-run.c:4143
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr ""
 "Не удалось переместить старую папку с данными приложения %s в папку с новым "
 "именем %s: %s"
 
-#: common/flatpak-run.c:4118
+#: common/flatpak-run.c:4152
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "Не удалось создать символическую ссылку при переносе %s: %s"
@@ -5246,136 +5249,136 @@ msgstr "Пропуск %s из-за предыдущей ошибки"
 msgid "Aborted due to failure (%s)"
 msgstr "Прервано из-за ошибки (%s)"
 
-#: common/flatpak-utils.c:792
+#: common/flatpak-utils.c:793
 msgid "Glob can't match apps"
 msgstr "Glob не может соответствовать приложениям"
 
-#: common/flatpak-utils.c:817
+#: common/flatpak-utils.c:818
 msgid "Empty glob"
 msgstr "Пустой glob"
 
-#: common/flatpak-utils.c:836
+#: common/flatpak-utils.c:837
 msgid "Too many segments in glob"
 msgstr "Слишком много частей в glob'е"
 
-#: common/flatpak-utils.c:857
+#: common/flatpak-utils.c:858
 #, c-format
 msgid "Invalid glob character '%c'"
 msgstr "Недопустимый знак '%c' в glob'е"
 
-#: common/flatpak-utils.c:911
+#: common/flatpak-utils.c:912
 #, c-format
 msgid "Missing glob on line %d"
 msgstr "Пропущен glob на строке %d"
 
-#: common/flatpak-utils.c:915
+#: common/flatpak-utils.c:916
 #, c-format
 msgid "Trailing text on line %d"
 msgstr "Завершающий текст в строке %d"
 
-#: common/flatpak-utils.c:919
+#: common/flatpak-utils.c:920
 #, c-format
 msgid "on line %d"
 msgstr "на строке %d"
 
-#: common/flatpak-utils.c:941
+#: common/flatpak-utils.c:942
 #, c-format
 msgid "Unexpected word '%s' on line %d"
 msgstr "Неожиданное слово '%s' на строке %d"
 
-#: common/flatpak-utils.c:2232
+#: common/flatpak-utils.c:2233
 #, c-format
 msgid "Invalid %s: Missing group ‘%s’"
 msgstr "Некорректный %s: Пропущена группа '%s'"
 
-#: common/flatpak-utils.c:2241
+#: common/flatpak-utils.c:2242
 #, c-format
 msgid "Invalid %s: Missing key ‘%s’"
 msgstr "Некорректный %s: Пропущен ключ '%s'"
 
-#: common/flatpak-utils.c:2289
+#: common/flatpak-utils.c:2290
 msgid "Invalid gpg key"
 msgstr "Некорректный ключ gpg"
 
-#: common/flatpak-utils.c:2678
+#: common/flatpak-utils.c:2679
 msgid "No extra data sources"
 msgstr "Нет источников дополнительных данных"
 
-#: common/flatpak-utils.c:5335
+#: common/flatpak-utils.c:5336
 #, c-format
 msgid "Error copying 64x64 icon for component %s: %s\n"
 msgstr "Ошибка копирования иконки 64x64 для компонента %s: %s\n"
 
-#: common/flatpak-utils.c:5341
+#: common/flatpak-utils.c:5342
 #, c-format
 msgid "Error copying 128x128 icon for component %s: %s\n"
 msgstr "Ошибка копирования иконки 128x128 для компонента %s: %s\n"
 
-#: common/flatpak-utils.c:5588
+#: common/flatpak-utils.c:5589
 #, c-format
 msgid "%s is end-of-life, ignoring for appstream"
 msgstr "срок поддержки %s закончился, игнорируется для appstream"
 
-#: common/flatpak-utils.c:5623
+#: common/flatpak-utils.c:5624
 #, c-format
 msgid "No appstream data for %s: %s\n"
 msgstr ""
 "Нет appstream данных для %s: %s\n"
 "\n"
 
-#: common/flatpak-utils.c:6586
+#: common/flatpak-utils.c:6587
 msgid "Invalid bundle, no ref in metadata"
 msgstr "Некорректный пакет, отсутствует ссылка на метаданные"
 
-#: common/flatpak-utils.c:6684
+#: common/flatpak-utils.c:6685
 #, c-format
 msgid "Collection ‘%s’ of bundle doesn’t match collection ‘%s’ of remote"
 msgstr ""
 "Коллекция '%s' пакета не соответствует коллекции '%s' удаленного репозитория"
 
-#: common/flatpak-utils.c:6763
+#: common/flatpak-utils.c:6764
 msgid "Metadata in header and app are inconsistent"
 msgstr "Метаданные в заголовке и приложении несовместимы"
 
-#: common/flatpak-utils.c:6848 common/flatpak-utils.c:7007
+#: common/flatpak-utils.c:6849 common/flatpak-utils.c:7008
 msgid "Invalid OCI image config"
 msgstr "Некорректная конфигурация образа OCI"
 
-#: common/flatpak-utils.c:6910 common/flatpak-utils.c:7156
+#: common/flatpak-utils.c:6911 common/flatpak-utils.c:7157
 #, c-format
 msgid "Wrong layer checksum, expected %s, was %s"
 msgstr "Неправильный слой контрольных сумм, ожидалось %s, было %s"
 
-#: common/flatpak-utils.c:6990
+#: common/flatpak-utils.c:6991
 #, c-format
 msgid "No ref specified for OCI image %s"
 msgstr "Ссылка для изображения OCI %s не указана"
 
-#: common/flatpak-utils.c:6996
+#: common/flatpak-utils.c:6997
 #, c-format
 msgid "Wrong ref (%s) specified for OCI image %s, expected %s"
 msgstr "Неправильная ссылка (%s) указана для OCI изображения %s, ожидалось %s"
 
-#: common/flatpak-utils.c:8102
+#: common/flatpak-utils.c:8151
 #, c-format
 msgid "Invalid require-flatpak argument %s"
 msgstr "Неверный аргумент require-flatpak %s"
 
-#: common/flatpak-utils.c:8112 common/flatpak-utils.c:8131
+#: common/flatpak-utils.c:8161 common/flatpak-utils.c:8180
 #, c-format
 msgid "%s needs a later flatpak version (%s)"
 msgstr "%s требует более новую версию flatpak (%s)"
 
-#: common/flatpak-utils.c:8175
+#: common/flatpak-utils.c:8224
 msgid "Empty string is not a number"
 msgstr "Пустая строка не является числом"
 
-#: common/flatpak-utils.c:8201
+#: common/flatpak-utils.c:8250
 #, c-format
 msgid "“%s” is not an unsigned number"
 msgstr "“%s” не является положительным числом"
 
-#: common/flatpak-utils.c:8211
+#: common/flatpak-utils.c:8260
 #, c-format
 msgid "Number “%s” is out of bounds [%s, %s]"
 msgstr "Число '%s' выходит за пределы допустимых значений [%s, %s]"

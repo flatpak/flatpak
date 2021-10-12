@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2021-10-08 19:00+0200\n"
+"POT-Creation-Date: 2021-10-12 10:56+0100\n"
 "PO-Revision-Date: 2020-05-17 17:53+0000\n"
 "Last-Translator: Yi-Jyun Pan <pan93412@gmail.com>\n"
 "Language-Team: Chinese (Traditional) <zh-l10n@lists.linux.org.tw>\n"
@@ -256,7 +256,7 @@ msgstr "%2$s 中沒有符合 %1$s 的擴充點"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "綁定用掛載選項「%s」中遺失「=」"
 
-#: app/flatpak-builtins-build.c:606 common/flatpak-run.c:4503
+#: app/flatpak-builtins-build.c:606 common/flatpak-run.c:4537
 msgid "Unable to start app"
 msgstr "無法啟動程式"
 
@@ -3426,7 +3426,7 @@ msgstr "已經安裝 %s"
 #: common/flatpak-dir.c:2867 common/flatpak-dir.c:3565
 #: common/flatpak-dir.c:15038 common/flatpak-dir.c:15314
 #: common/flatpak-transaction.c:2461 common/flatpak-transaction.c:2509
-#: common/flatpak-utils.c:1123 common/flatpak-utils.c:1216
+#: common/flatpak-utils.c:1124 common/flatpak-utils.c:1217
 #, c-format
 msgid "%s not installed"
 msgstr "%s 未安裝"
@@ -4221,7 +4221,7 @@ msgid "Couldn't find ref %s in remote %s"
 msgstr "在 %2$s 遠端中找不到 %1$s 參照的最近檢核碼"
 
 #: common/flatpak-dir.c:1018 common/flatpak-dir.c:5671
-#: common/flatpak-utils.c:6829 common/flatpak-utils.c:6834
+#: common/flatpak-utils.c:6830 common/flatpak-utils.c:6835
 msgid "Image is not a manifest"
 msgstr "影像並非 manifest"
 
@@ -4356,7 +4356,7 @@ msgstr "已經安裝 %s 的 %s 提交"
 msgid "While pulling %s from remote %s: "
 msgstr "當從 %2$s 遠端拉入 %1$s 時："
 
-#: common/flatpak-dir.c:6015 common/flatpak-utils.c:6724
+#: common/flatpak-dir.c:6015 common/flatpak-utils.c:6725
 msgid "GPG signatures found, but none are in trusted keyring"
 msgstr "找到 GPG 簽章，但不在受信任的鑰匙圈中"
 
@@ -4613,7 +4613,7 @@ msgstr "找不到 %s 安裝"
 msgid "Invalid file format, no %s group"
 msgstr "無效的檔案格式，沒有 %s 群組"
 
-#: common/flatpak-dir.c:13737 common/flatpak-utils.c:2251
+#: common/flatpak-dir.c:13737 common/flatpak-utils.c:2252
 #, c-format
 msgid "Invalid version %s, only 1 supported"
 msgstr "%s 版本無效，僅支援 1 版"
@@ -4628,7 +4628,7 @@ msgstr "無效的檔案格式，未指定 %s"
 msgid "Invalid file format, gpg key invalid"
 msgstr "無效的檔案格式，GPG 金鑰無效"
 
-#: common/flatpak-dir.c:13789 common/flatpak-utils.c:2314
+#: common/flatpak-dir.c:13789 common/flatpak-utils.c:2315
 msgid "Collection ID requires GPG key to be provided"
 msgstr "收藏 ID 必須提供 GPG 金鑰"
 
@@ -4986,64 +4986,67 @@ msgstr "bwrapinfo.json 檔開啟失敗：%s"
 msgid "Failed to write to instance id fd: %s"
 msgstr "無法寫入摘要快取： "
 
-#: common/flatpak-run.c:3007
+#: common/flatpak-run.c:3039
 msgid "Initialize seccomp failed"
 msgstr "seccomp 初始化失敗"
 
-#: common/flatpak-run.c:3046
-msgid "Failed to add architecture to seccomp filter"
+#: common/flatpak-run.c:3078
+#, fuzzy, c-format
+msgid "Failed to add architecture to seccomp filter: %s"
 msgstr "架構新增至 seccomp 過濾器失敗"
 
-#: common/flatpak-run.c:3054
-msgid "Failed to add multiarch architecture to seccomp filter"
+#: common/flatpak-run.c:3086
+#, fuzzy, c-format
+msgid "Failed to add multiarch architecture to seccomp filter: %s"
 msgstr "multiarch 架構新增至 seccomp 過濾器失敗"
 
-#: common/flatpak-run.c:3086 common/flatpak-run.c:3108
-#, c-format
-msgid "Failed to block syscall %d"
+#: common/flatpak-run.c:3118 common/flatpak-run.c:3140
+#, fuzzy, c-format
+msgid "Failed to block syscall %d: %s"
 msgstr "封鎖系統呼叫 %d 失敗"
 
-#: common/flatpak-run.c:3139
-msgid "Failed to export bpf"
+#: common/flatpak-run.c:3173
+#, fuzzy, c-format
+msgid "Failed to export bpf: %s"
 msgstr "匯出 bpf 失敗"
 
-#: common/flatpak-run.c:3390
+#: common/flatpak-run.c:3424
 #, c-format
 msgid "Failed to open ‘%s’"
 msgstr "無法開啟「%s」"
 
-#: common/flatpak-run.c:3676
+#: common/flatpak-run.c:3710
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "ldconfig 失敗，離開狀態為 %d"
 
-#: common/flatpak-run.c:3683
+#: common/flatpak-run.c:3717
 msgid "Can't open generated ld.so.cache"
 msgstr "無法開啟生成的 ld.so.cache"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-run.c:3794
+#: common/flatpak-run.c:3828
 #, c-format
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr "因管理員設定的方針，不允許執行 %s"
 
-#: common/flatpak-run.c:3836
+#: common/flatpak-run.c:3870
 msgid ""
 "\"flatpak run\" is not intended to be run as `sudo flatpak run`, use `sudo -"
 "i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell"
 msgstr ""
 
-#: common/flatpak-run.c:4094
+#: common/flatpak-run.c:4128
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "無法從 %s 轉移：%s"
 
-#: common/flatpak-run.c:4109
+#: common/flatpak-run.c:4143
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr "無法轉移舊的 App 資料目錄 %s 至新名稱 %s：%s"
 
-#: common/flatpak-run.c:4118
+#: common/flatpak-run.c:4152
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "無法在轉移 %s 時建立符號連結：%s"
@@ -5154,133 +5157,133 @@ msgstr "因為先前的錯誤而略過 %s"
 msgid "Aborted due to failure (%s)"
 msgstr "因為失敗而中止"
 
-#: common/flatpak-utils.c:792
+#: common/flatpak-utils.c:793
 msgid "Glob can't match apps"
 msgstr ""
 
-#: common/flatpak-utils.c:817
+#: common/flatpak-utils.c:818
 msgid "Empty glob"
 msgstr "glob 空白"
 
-#: common/flatpak-utils.c:836
+#: common/flatpak-utils.c:837
 msgid "Too many segments in glob"
 msgstr "glob 中的區段過多"
 
-#: common/flatpak-utils.c:857
+#: common/flatpak-utils.c:858
 #, c-format
 msgid "Invalid glob character '%c'"
 msgstr "「%c」glob 字元無效"
 
-#: common/flatpak-utils.c:911
+#: common/flatpak-utils.c:912
 #, c-format
 msgid "Missing glob on line %d"
 msgstr "第 %d 列沒有 glob"
 
-#: common/flatpak-utils.c:915
+#: common/flatpak-utils.c:916
 #, c-format
 msgid "Trailing text on line %d"
 msgstr "第 %d 列末尾有文字"
 
-#: common/flatpak-utils.c:919
+#: common/flatpak-utils.c:920
 #, c-format
 msgid "on line %d"
 msgstr "在第 %d 列"
 
-#: common/flatpak-utils.c:941
+#: common/flatpak-utils.c:942
 #, c-format
 msgid "Unexpected word '%s' on line %d"
 msgstr "第 %2$d 列有非預期的「%1$s」單字"
 
-#: common/flatpak-utils.c:2232
+#: common/flatpak-utils.c:2233
 #, c-format
 msgid "Invalid %s: Missing group ‘%s’"
 msgstr "%s 無效：缺少「%s」群組"
 
-#: common/flatpak-utils.c:2241
+#: common/flatpak-utils.c:2242
 #, c-format
 msgid "Invalid %s: Missing key ‘%s’"
 msgstr "%s 無效：缺少「%s」鍵"
 
-#: common/flatpak-utils.c:2289
+#: common/flatpak-utils.c:2290
 msgid "Invalid gpg key"
 msgstr "無效的 GPG 金鑰"
 
-#: common/flatpak-utils.c:2678
+#: common/flatpak-utils.c:2679
 msgid "No extra data sources"
 msgstr "沒有額外的資料來源"
 
-#: common/flatpak-utils.c:5335
+#: common/flatpak-utils.c:5336
 #, c-format
 msgid "Error copying 64x64 icon for component %s: %s\n"
 msgstr "複製 %s 元件的 64x64 圖示時發生錯誤：%s\n"
 
-#: common/flatpak-utils.c:5341
+#: common/flatpak-utils.c:5342
 #, c-format
 msgid "Error copying 128x128 icon for component %s: %s\n"
 msgstr "複製 %s 元件的 128x128 圖示時發生錯誤：%s\n"
 
-#: common/flatpak-utils.c:5588
+#: common/flatpak-utils.c:5589
 #, fuzzy, c-format
 msgid "%s is end-of-life, ignoring for appstream"
 msgstr "%s 已經 end-of-life，故忽略\n"
 
-#: common/flatpak-utils.c:5623
+#: common/flatpak-utils.c:5624
 #, c-format
 msgid "No appstream data for %s: %s\n"
 msgstr "%s 沒有 appstream 資料：%s\n"
 
-#: common/flatpak-utils.c:6586
+#: common/flatpak-utils.c:6587
 msgid "Invalid bundle, no ref in metadata"
 msgstr "無效的套組，中介資料內沒有參照"
 
-#: common/flatpak-utils.c:6684
+#: common/flatpak-utils.c:6685
 #, c-format
 msgid "Collection ‘%s’ of bundle doesn’t match collection ‘%s’ of remote"
 msgstr "套組的「%s」收藏與遠端站點的「%s」收藏不符"
 
-#: common/flatpak-utils.c:6763
+#: common/flatpak-utils.c:6764
 msgid "Metadata in header and app are inconsistent"
 msgstr "檔案標頭的中介資料與程式不一致"
 
-#: common/flatpak-utils.c:6848 common/flatpak-utils.c:7007
+#: common/flatpak-utils.c:6849 common/flatpak-utils.c:7008
 msgid "Invalid OCI image config"
 msgstr ""
 
-#: common/flatpak-utils.c:6910 common/flatpak-utils.c:7156
+#: common/flatpak-utils.c:6911 common/flatpak-utils.c:7157
 #, c-format
 msgid "Wrong layer checksum, expected %s, was %s"
 msgstr "錯誤的層次檢核碼，預期為 %s，實際為 %s"
 
-#: common/flatpak-utils.c:6990
+#: common/flatpak-utils.c:6991
 #, c-format
 msgid "No ref specified for OCI image %s"
 msgstr "%s OCI 映像檔未指定參照"
 
-#: common/flatpak-utils.c:6996
+#: common/flatpak-utils.c:6997
 #, c-format
 msgid "Wrong ref (%s) specified for OCI image %s, expected %s"
 msgstr "錯誤的參照 (%s) 指定給了 %s OCI 映像檔，預期為 %s"
 
-#: common/flatpak-utils.c:8102
+#: common/flatpak-utils.c:8151
 #, c-format
 msgid "Invalid require-flatpak argument %s"
 msgstr "無效的 require-flatpak 引數 %s"
 
-#: common/flatpak-utils.c:8112 common/flatpak-utils.c:8131
+#: common/flatpak-utils.c:8161 common/flatpak-utils.c:8180
 #, c-format
 msgid "%s needs a later flatpak version (%s)"
 msgstr "%s 需要較新的 flatpak 版本 (%s)"
 
-#: common/flatpak-utils.c:8175
+#: common/flatpak-utils.c:8224
 msgid "Empty string is not a number"
 msgstr "空字串不是數字"
 
-#: common/flatpak-utils.c:8201
+#: common/flatpak-utils.c:8250
 #, c-format
 msgid "“%s” is not an unsigned number"
 msgstr "「%s」不是無號數"
 
-#: common/flatpak-utils.c:8211
+#: common/flatpak-utils.c:8260
 #, c-format
 msgid "Number “%s” is out of bounds [%s, %s]"
 msgstr "數字「%s」超出邊界 [%s, %s]"
