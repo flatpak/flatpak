@@ -2543,7 +2543,6 @@ flatpak_installation_fetch_remote_ref_sync_full (FlatpakInstallation *self,
   if (dir == NULL)
     return NULL;
 
-
   ref = flatpak_decomposed_new_from_parts (flatpak_kinds_from_kind (kind), name, arch, branch, error);
   if (ref == NULL)
     return NULL;
@@ -2565,7 +2564,8 @@ flatpak_installation_fetch_remote_ref_sync_full (FlatpakInstallation *self,
     return flatpak_remote_ref_new (ref, checksum, remote_name, state->collection_id, state);
 
   g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_REF_NOT_FOUND,
-               "Reference %s doesn't exist in remote", flatpak_decomposed_get_ref (ref));
+               "Reference %s doesn't exist in remote %s",
+               flatpak_decomposed_get_ref (ref), remote_name);
   return NULL;
 }
 
