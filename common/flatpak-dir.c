@@ -1229,7 +1229,8 @@ flatpak_remote_state_lookup_sparse_cache (FlatpakRemoteState *self,
   summary_v = get_summary_for_ref (self, ref);
   if (summary_v == NULL)
     return flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
-                             _("No entry for %s in remote summary flatpak sparse cache "), ref);
+                               _("No entry for %s in remote %s summary flatpak sparse cache"),
+                               ref, self->remote_name);
 
   summary = var_summary_from_gvariant (summary_v);
   meta = var_summary_get_metadata (summary);
@@ -1264,7 +1265,8 @@ flatpak_remote_state_lookup_sparse_cache (FlatpakRemoteState *self,
     }
 
   return flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
-                             _("No entry for %s in remote summary flatpak sparse cache "), ref);
+                             _("No entry for %s in remote %s summary flatpak sparse cache"),
+                             ref, self->remote_name);
 }
 
 static DirExtraData *
