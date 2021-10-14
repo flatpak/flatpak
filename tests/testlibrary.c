@@ -2485,29 +2485,27 @@ add_remote_user (const char *remote_repo_name,
 }
 
 static void
-_remove_remote (const char *remote_repo_name,
+_remove_remote (const char *remote_name,
                 gboolean    system)
 {
   char *argv[] = { "flatpak", "remote-delete", NULL, "name", NULL };
-  g_autofree char *remote_name = NULL;
 
-  remote_name = g_strdup_printf ("%s-repo", remote_repo_name);
   argv[2] = system ? "--system" : "--user";
-  argv[3] = remote_name;
+  argv[3] = (char *)remote_name;
 
   run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
 }
 
 static void
-remove_remote_system (const char *remote_repo_name)
+remove_remote_system (const char *remote_name)
 {
-  _remove_remote (remote_repo_name, TRUE);
+  _remove_remote (remote_name, TRUE);
 }
 
 static void
-remove_remote_user (const char *remote_repo_name)
+remove_remote_user (const char *remote_name)
 {
-  _remove_remote (remote_repo_name, FALSE);
+  _remove_remote (remote_name, FALSE);
 }
 
 static void
@@ -3334,6 +3332,7 @@ add_new_remote2 (FlatpakTransaction             *transaction,
   g_assert_cmpstr (suggested_name, ==, "my-little-repo");
   return TRUE;
 }
+
 /* test installing a flatpakref with a transaction */
 static void
 test_transaction_install_flatpakref (void)
@@ -3424,17 +3423,15 @@ test_transaction_install_flatpakref (void)
 
 static gboolean
 _is_remote_in_installation (FlatpakInstallation *installation,
-                            const char          *remote_repo_name)
+                            const char          *remote_name)
 {
   g_autoptr(GError) error = NULL;
   g_autoptr(GPtrArray) remotes = NULL;
-  g_autofree char *remote_name = NULL;
 
   remotes = flatpak_installation_list_remotes (installation, NULL, &error);
   g_assert_no_error (error);
   g_assert_nonnull (remotes);
 
-  remote_name = g_strdup_printf ("%s-repo", remote_repo_name);
   for (guint i = 0; i < remotes->len; ++i)
     {
       FlatpakRemote *remote = g_ptr_array_index (remotes, i);
@@ -3447,16 +3444,16 @@ _is_remote_in_installation (FlatpakInstallation *installation,
 
 static void
 assert_remote_in_installation (FlatpakInstallation *installation,
-                               const char          *remote_repo_name)
+                               const char          *remote_name)
 {
-  g_assert_true (_is_remote_in_installation (installation, remote_repo_name));
+  g_assert_true (_is_remote_in_installation (installation, remote_name));
 }
 
 static void
 assert_remote_not_in_installation (FlatpakInstallation *installation,
-                                   const char          *remote_repo_name)
+                                   const char          *remote_name)
 {
-  g_assert_true (!_is_remote_in_installation (installation, remote_repo_name));
+  g_assert_true (!_is_remote_in_installation (installation, remote_name));
 }
 
 static gboolean
@@ -3498,8 +3495,8 @@ test_transaction_flatpakref_remote_creation (void)
 
   empty_installation (user_inst);
 
-  assert_remote_not_in_installation (user_inst, "test-without-runtime");
-  assert_remote_not_in_installation (user_inst, "test-runtime-only");
+  assert_remote_not_in_installation (user_inst, "test-without-runtime-repo");
+  assert_remote_not_in_installation (user_inst, "test-runtime-only-repo");
 
   transaction = flatpak_transaction_new_for_installation (user_inst, NULL, &error);
   g_assert_no_error (error);
@@ -3526,14 +3523,14 @@ test_transaction_flatpakref_remote_creation (void)
   g_assert_no_error (error);
   g_assert_true (res);
 
-  assert_remote_in_installation (user_inst, "test-without-runtime");
-  assert_remote_in_installation (user_inst, "test-runtime-only");
+  assert_remote_in_installation (user_inst, "test-without-runtime-repo");
+  assert_remote_in_installation (user_inst, "test-runtime-only-repo");
 
   empty_installation (user_inst);
-  remove_remote_user ("test-without-runtime");
-  remove_remote_user ("test-runtime-only");
-  remove_remote_system ("test-without-runtime");
-  remove_remote_system ("test-runtime-only");
+  remove_remote_user ("test-without-runtime-repo");
+  remove_remote_user ("test-runtime-only-repo");
+  remove_remote_system ("test-without-runtime-repo");
+  remove_remote_system ("test-runtime-only-repo");
 }
 
 static gboolean
@@ -3752,7 +3749,7 @@ test_transaction_app_runtime_same_remote (void)
 
   /* Reset things */
   empty_installation (inst);
-  remove_remote_user ("aaatest-runtime-only");
+  remove_remote_user ("aaatest-runtime-only-repo");
 }
 
 typedef struct
