@@ -984,7 +984,7 @@ test_list_refs_in_remotes (void)
       const char *collection_id = flatpak_ref_get_collection_id (ref);
 
       /* There is no collection ref defined for the remote, so collection id is NULL */
-      g_assert (collection_id == NULL);
+      g_assert_null (collection_id);
 
       g_hash_table_add (ref_specs, (char *)ref_spec);
     }
