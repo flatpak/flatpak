@@ -3380,7 +3380,7 @@ test_transaction_install_flatpakref (void)
                    "Branch=master\n"
                    /* Uses a different url for the repo, so we can ensure it gets added */
                    "Url=http://127.0.0.1:", httpd_port, "/copy-of-test\n"
-                   "IsRuntime=False\n"
+                   "IsRuntime=false\n"
                    "SuggestRemoteName=my-little-repo\n"
                    "RuntimeRepo=http://127.0.0.1:", httpd_port, "/test/test-repo.flatpakrepo\n",
                    NULL);
@@ -3510,7 +3510,7 @@ test_transaction_flatpakref_remote_creation (void)
                    "Name=org.test.Hello\n"
                    "Branch=master\n"
                    "Url=http://127.0.0.1:", httpd_port, "/test-without-runtime\n"
-                   "IsRuntime=False\n"
+                   "IsRuntime=false\n"
                    "SuggestRemoteName=test-without-runtime-repo\n"
                    "RuntimeRepo=http://127.0.0.1:", httpd_port, "/test-runtime-only/test-runtime-only-repo.flatpakrepo\n",
                    NULL);
@@ -4197,7 +4197,7 @@ test_install_flatpakref (void)
                    "Name=org.test.Hello\n"
                    "Branch=master\n"
                    "Url=http://127.0.0.1:", httpd_port, "/test\n"
-                   "IsRuntime=False\n"
+                   "IsRuntime=false\n"
                    "SuggestRemoteName=test-repo\n"
                    "RuntimeRepo=http://127.0.0.1:", httpd_port, "/test/test-repo.flatpakrepo\n",
                    NULL);
@@ -4447,7 +4447,7 @@ test_transaction_no_runtime (void)
                    "Name=org.test.Hello\n"
                    "Branch=master\n"
                    "Url=http://127.0.0.1:", httpd_port, "/test-without-runtime\n"
-                   "IsRuntime=False\n"
+                   "IsRuntime=false\n"
                    "SuggestRemoteName=my-little-repo\n"
                    "RuntimeRepo=http://127.0.0.1:", httpd_port, "/test/test-repo.flatpakrepo\n",
                    NULL);
