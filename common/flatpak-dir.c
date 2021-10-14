@@ -14351,9 +14351,10 @@ flatpak_dir_list_remote_refs (FlatpakDir         *self,
       GHashTableIter hash_iter;
       gpointer key;
       g_autofree char *refspec_prefix = g_strconcat (state->remote_name, ":.", NULL);
+      g_autofree char *remote_main_ref = NULL;
 
       /* For noenumerate remotes, only return data for already locally
-       * available refs */
+       * available refs or the ref set as xa.main-ref on the remote */
 
       if (!ostree_repo_list_refs (self->repo, refspec_prefix, &local_refs,
                                   cancellable, error))
@@ -14364,6 +14365,14 @@ flatpak_dir_list_remote_refs (FlatpakDir         *self,
         {
           const char *refspec = key;
           g_autoptr(FlatpakDecomposed) d = flatpak_decomposed_new_from_refspec (refspec, NULL);
+          if (d)
+            g_hash_table_insert (decomposed_local_refs, g_steal_pointer (&d), NULL);
+        }
+
+      remote_main_ref = flatpak_dir_get_remote_main_ref (self, state->remote_name);
+      if (remote_main_ref != NULL && *remote_main_ref != '\0')
+        {
+          g_autoptr(FlatpakDecomposed) d = flatpak_decomposed_new_from_col_ref (remote_main_ref, state->collection_id, NULL);
           if (d)
             g_hash_table_insert (decomposed_local_refs, g_steal_pointer (&d), NULL);
         }
