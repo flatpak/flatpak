@@ -3760,6 +3760,115 @@ test_transaction_app_runtime_same_remote (void)
   remove_remote_user ("aaatest-runtime-only-repo");
 }
 
+static gboolean
+ready_set_nodeps_on_remote (FlatpakTransaction *transaction)
+{
+  g_autoptr(FlatpakInstallation) installation = NULL;
+  g_autoptr(FlatpakRemote) remote = NULL;
+  g_autoptr(GError) error = NULL;
+  gboolean res;
+
+  installation = flatpak_transaction_get_installation (transaction);
+
+  /* Set the nodeps option on the runtime remote */
+  remote = flatpak_installation_get_remote_by_name (installation, "test-runtime-only-repo", NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (remote);
+  g_assert_false (flatpak_remote_get_nodeps (remote));
+
+  flatpak_remote_set_nodeps (remote, TRUE);
+  res = flatpak_installation_modify_remote (installation, remote, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  /* Abort since this transaction is already resolved; we need a new one */
+  return FALSE;
+}
+
+/* Test that setting xa.nodeps=true on the remote providing the runtime causes
+ * app installation to fail */
+static void
+test_remote_nodeps_option (void)
+{
+  g_autoptr(FlatpakInstallation) user_inst = NULL;
+  g_autoptr(FlatpakRemote) remote = NULL;
+  g_autoptr(FlatpakTransaction) transaction = NULL;
+  g_autoptr(GError) error = NULL;
+  g_autofree char *s = NULL;
+  g_autoptr(GBytes) data = NULL;
+  gboolean res;
+
+  user_inst = flatpak_installation_new_user (NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (user_inst);
+
+  empty_installation (user_inst);
+
+  assert_remote_not_in_installation (user_inst, "hello-origin");
+  assert_remote_not_in_installation (user_inst, "test-runtime-only-repo");
+
+  /* Set the nodeps option on the test-repo remote */
+  remote = flatpak_installation_get_remote_by_name (user_inst, "test-repo", NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (remote);
+  g_assert_false (flatpak_remote_get_nodeps (remote));
+  flatpak_remote_set_nodeps (remote, TRUE);
+  res = flatpak_installation_modify_remote (user_inst, remote, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  transaction = flatpak_transaction_new_for_installation (user_inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (transaction);
+
+  s = g_strconcat ("[Flatpak Ref]\n"
+                   "Title=Test App\n"
+                   "Name=org.test.Hello\n"
+                   "Branch=master\n"
+                   "Url=http://127.0.0.1:", httpd_port, "/test-without-runtime\n"
+                   "IsRuntime=False\n"
+                   "RuntimeRepo=http://127.0.0.1:", httpd_port, "/test-runtime-only/test-runtime-only-repo.flatpakrepo\n",
+                   NULL);
+
+  data = g_bytes_new (s, strlen (s));
+  res = flatpak_transaction_add_install_flatpakref (transaction, data, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  g_signal_connect (transaction, "add-new-remote", G_CALLBACK (add_new_remote3), NULL);
+  g_signal_connect (transaction, "ready", G_CALLBACK (ready_set_nodeps_on_remote), NULL);
+
+  res = flatpak_transaction_run (transaction, NULL, &error);
+  g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ABORTED);
+  g_assert_false (res);
+  g_clear_error (&error);
+
+  /* Make a new transaction so the runtime resolution happens again */
+  g_clear_object (&transaction);
+  transaction = flatpak_transaction_new_for_installation (user_inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (transaction);
+  res = flatpak_transaction_add_install_flatpakref (transaction, data, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+  g_signal_connect (transaction, "add-new-remote", G_CALLBACK (add_new_remote3), NULL);
+
+  res = flatpak_transaction_run (transaction, NULL, &error);
+  g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_RUNTIME_NOT_FOUND);
+  g_assert_false (res);
+  g_clear_error (&error);
+
+  /* Set nodeps back to false */
+  flatpak_remote_set_nodeps (remote, FALSE);
+  res = flatpak_installation_modify_remote (user_inst, remote, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  empty_installation (user_inst);
+  remove_remote_user ("hello-origin");
+  remove_remote_user ("test-runtime-only-repo");
+}
+
 typedef struct
 {
   GMainLoop *loop;
@@ -4678,6 +4787,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/library/transaction-deps", test_transaction_deps);
   g_test_add_func ("/library/transaction-install-local", test_transaction_install_local);
   g_test_add_func ("/library/transaction-app-runtime-same-remote", test_transaction_app_runtime_same_remote);
+  g_test_add_func ("/library/remote-nodeps-option", test_remote_nodeps_option);
   g_test_add_func ("/library/instance", test_instance);
   g_test_add_func ("/library/update-subpaths", test_update_subpaths);
   g_test_add_func ("/library/overrides", test_overrides);
