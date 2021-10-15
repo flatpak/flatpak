@@ -1129,6 +1129,63 @@ test_list_remote_refs (void)
     }
 }
 
+/* Test the xa.noenumerate option on a remote, which should mask non-installed refs */
+static void
+test_list_remote_refs_noenumerate (void)
+{
+  g_autoptr(FlatpakInstallation) inst = NULL;
+  g_autoptr(GError) error = NULL;
+  g_autoptr(GPtrArray) refs = NULL;
+  g_autoptr(FlatpakRemote) remote = NULL;
+  g_autoptr(FlatpakInstalledRef) runtime_ref = NULL;
+  gboolean res;
+
+  inst = flatpak_installation_new_user (NULL, &error);
+  g_assert_no_error (error);
+
+  empty_installation (inst);
+
+  refs = flatpak_installation_list_remote_refs_sync (inst, repo_name, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (refs);
+  g_assert_cmpint (refs->len, ==, 4);
+
+  /* Install a runtime */
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+  runtime_ref = flatpak_installation_install (inst,
+                                              repo_name,
+                                              FLATPAK_REF_KIND_RUNTIME,
+                                              "org.test.Platform",
+                                              NULL, "master", NULL, NULL, NULL,
+                                              &error);
+  G_GNUC_END_IGNORE_DEPRECATIONS
+  g_assert_no_error (error);
+  g_assert_true (FLATPAK_IS_INSTALLED_REF (runtime_ref));
+
+  /* Set xa.noenumerate=true */
+  remote = flatpak_installation_get_remote_by_name (inst, repo_name, NULL, &error);
+  g_assert_no_error (error);
+  flatpak_remote_set_noenumerate (remote, TRUE);
+  res = flatpak_installation_modify_remote (inst, remote, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  /* Only the platform should be visible */
+  g_clear_pointer (&refs, g_ptr_array_unref);
+  refs = flatpak_installation_list_remote_refs_sync (inst, repo_name, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (refs);
+  g_assert_cmpint (refs->len, ==, 1);
+
+  empty_installation (inst);
+
+  /* Set xa.noenumerate=false */
+  flatpak_remote_set_noenumerate (remote, FALSE);
+  res = flatpak_installation_modify_remote (inst, remote, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+}
+
 static void
 test_update_installed_ref_if_missing_runtime (void)
 {
@@ -4662,6 +4719,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/library/remote-new", test_remote_new);
   g_test_add_func ("/library/remote-new-from-file", test_remote_new_from_file);
   g_test_add_func ("/library/list-remote-refs", test_list_remote_refs);
+  g_test_add_func ("/library/list-remote-refs-noenumerate", test_list_remote_refs_noenumerate);
   g_test_add_func ("/library/list-remote-related-refs", test_list_remote_related_refs);
   g_test_add_func ("/library/list-remote-related-refs-for-installed", test_list_remote_related_refs_for_installed);
   g_test_add_func ("/library/list-refs", test_list_refs);
