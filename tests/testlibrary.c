@@ -3631,6 +3631,18 @@ ready_check_origin_remote (FlatpakTransaction *transaction)
   g_assert_no_error (error);
   g_assert_nonnull (remote_ref);
 
+  /* An extension with the main ref as a prefix should also be visible */
+  g_clear_object (&remote_ref);
+  remote_ref = flatpak_installation_fetch_remote_ref_sync (installation,
+                                                           "hello-origin",
+                                                           FLATPAK_REF_KIND_RUNTIME,
+                                                           "org.test.Hello.Plugin.fun",
+                                                           flatpak_get_default_arch (),
+                                                           "v1",
+                                                           NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (remote_ref);
+
   return TRUE;
 }
 

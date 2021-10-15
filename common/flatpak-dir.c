@@ -14316,17 +14316,6 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
   return TRUE;
 }
 
-static gboolean
-remove_unless_decomposed_in_hash (gpointer key,
-                                  gpointer value,
-                                  gpointer user_data)
-{
-  GHashTable *table = user_data;
-  const FlatpakDecomposed *d = key;
-
-  return !g_hash_table_contains (table, d);
-}
-
 gboolean
 flatpak_dir_list_remote_refs (FlatpakDir         *self,
                               FlatpakRemoteState *state,
@@ -14348,13 +14337,15 @@ flatpak_dir_list_remote_refs (FlatpakDir         *self,
       g_autoptr(GHashTable) decomposed_local_refs =
         g_hash_table_new_full ((GHashFunc)flatpak_decomposed_hash, (GEqualFunc)flatpak_decomposed_equal, (GDestroyNotify)flatpak_decomposed_unref, NULL);
       g_autoptr(GHashTable) local_refs = NULL;
+      g_autoptr(FlatpakDecomposed) decomposed_main_ref = NULL;
       GHashTableIter hash_iter;
       gpointer key;
       g_autofree char *refspec_prefix = g_strconcat (state->remote_name, ":.", NULL);
       g_autofree char *remote_main_ref = NULL;
 
       /* For noenumerate remotes, only return data for already locally
-       * available refs or the ref set as xa.main-ref on the remote */
+       * available refs, or the ref set as xa.main-ref on the remote, or
+       * extensions of that main ref */
 
       if (!ostree_repo_list_refs (self->repo, refspec_prefix, &local_refs,
                                   cancellable, error))
@@ -14377,16 +14368,31 @@ flatpak_dir_list_remote_refs (FlatpakDir         *self,
 
       remote_main_ref = flatpak_dir_get_remote_main_ref (self, state->remote_name);
       if (remote_main_ref != NULL && *remote_main_ref != '\0')
-        {
-          g_autoptr(FlatpakDecomposed) d = flatpak_decomposed_new_from_col_ref (remote_main_ref, state->collection_id, NULL);
-          if (d)
-            g_hash_table_insert (decomposed_local_refs, g_steal_pointer (&d), NULL);
-        }
+        decomposed_main_ref = flatpak_decomposed_new_from_col_ref (remote_main_ref, state->collection_id, NULL);
 
-      /* Then we remove all remote refs not in the local refs set */
-      g_hash_table_foreach_remove (*refs,
-                                   remove_unless_decomposed_in_hash,
-                                   decomposed_local_refs);
+      /* Then we remove all remote refs not in the local refs set, not the main
+       * ref, and not an extension of the main ref */
+      GLNX_HASH_TABLE_FOREACH_IT (*refs, it, FlatpakDecomposed *, d, void *, v)
+        {
+          if (g_hash_table_contains (decomposed_local_refs, d))
+            continue;
+
+          if (decomposed_main_ref != NULL)
+            {
+              g_autofree char *main_ref_id = NULL;
+              g_autofree char *main_ref_prefix = NULL;
+
+              if (flatpak_decomposed_equal (decomposed_main_ref, d))
+                continue;
+
+              main_ref_id = flatpak_decomposed_dup_id (decomposed_main_ref);
+              main_ref_prefix = g_strconcat (main_ref_id, ".", NULL);
+              if (flatpak_decomposed_id_has_prefix (d, main_ref_prefix))
+                continue;
+            }
+
+          g_hash_table_iter_remove (&it);
+      }
     }
 
   return TRUE;
