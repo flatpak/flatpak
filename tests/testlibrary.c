@@ -3448,19 +3448,21 @@ _is_remote_in_installation (FlatpakInstallation *installation,
   return FALSE;
 }
 
-static void
-assert_remote_in_installation (FlatpakInstallation *installation,
-                               const char          *remote_name)
-{
-  g_assert_true (_is_remote_in_installation (installation, remote_name));
-}
+#define assert_remote_in_installation(inst, remote)        \
+  G_STMT_START {                                           \
+    if (!_is_remote_in_installation (inst, remote))        \
+      g_assertion_message (G_LOG_DOMAIN,                   \
+                           __FILE__, __LINE__, G_STRFUNC,  \
+                           "remote " remote " not found"); \
+  } G_STMT_END
 
-static void
-assert_remote_not_in_installation (FlatpakInstallation *installation,
-                                   const char          *remote_name)
-{
-  g_assert_true (!_is_remote_in_installation (installation, remote_name));
-}
+#define assert_remote_not_in_installation(inst, remote)    \
+  G_STMT_START {                                           \
+    if (_is_remote_in_installation (inst, remote))         \
+      g_assertion_message (G_LOG_DOMAIN,                   \
+                           __FILE__, __LINE__, G_STRFUNC,  \
+                           "remote " remote " was found"); \
+  } G_STMT_END
 
 static gboolean
 add_new_remote3 (FlatpakTransaction             *transaction,
