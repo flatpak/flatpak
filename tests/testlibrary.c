@@ -809,6 +809,30 @@ test_remote_new (void)
 }
 
 static void
+_remove_remote (const char *remote_name,
+                gboolean    system)
+{
+  char *argv[] = { "flatpak", "remote-delete", NULL, "name", NULL };
+
+  argv[2] = system ? "--system" : "--user";
+  argv[3] = (char *)remote_name;
+
+  run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
+}
+
+static void
+remove_remote_system (const char *remote_name)
+{
+  _remove_remote (remote_name, TRUE);
+}
+
+static void
+remove_remote_user (const char *remote_name)
+{
+  _remove_remote (remote_name, FALSE);
+}
+
+static void
 test_remote_new_from_file (void)
 {
   g_autoptr(FlatpakInstallation) inst = NULL;
@@ -905,6 +929,8 @@ test_remote_new_from_file (void)
   g_assert_cmpstr (flatpak_remote_get_filter (remote), ==, NULL);
 
   g_clear_object (&remote);
+
+  remove_remote_user ("file-remote");
 }
 
 static void
@@ -1012,6 +1038,8 @@ test_list_refs_in_remotes (void)
       else
         g_assert_null (g_hash_table_lookup (ref_specs, ref_spec));
     }
+
+  remove_remote_user ("multi-refs-repo");
 }
 
 static void
@@ -2485,30 +2513,6 @@ add_remote_user (const char *remote_repo_name,
 }
 
 static void
-_remove_remote (const char *remote_name,
-                gboolean    system)
-{
-  char *argv[] = { "flatpak", "remote-delete", NULL, "name", NULL };
-
-  argv[2] = system ? "--system" : "--user";
-  argv[3] = (char *)remote_name;
-
-  run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
-}
-
-static void
-remove_remote_system (const char *remote_name)
-{
-  _remove_remote (remote_name, TRUE);
-}
-
-static void
-remove_remote_user (const char *remote_name)
-{
-  _remove_remote (remote_name, FALSE);
-}
-
-static void
 add_flatpakrepo (const char *flatpakrepo_repo_name)
 {
   g_autofree char *data = NULL;
@@ -3419,6 +3423,8 @@ test_transaction_install_flatpakref (void)
   res = flatpak_transaction_run (transaction, NULL, &error);
   g_assert_no_error (error);
   g_assert_true (res);
+
+  remove_remote_user ("my-little-repo");
 }
 
 static gboolean
@@ -4626,6 +4632,10 @@ test_installation_unused_refs_across_installations (void)
   g_assert_nonnull (refs);
   g_assert_no_error (error);
   g_assert_cmpint (refs->len, ==, 0);
+
+  empty_installation (user_inst);
+  empty_installation (system_inst);
+  remove_remote_system ("test-runtime-only-repo");
 }
 
 int
