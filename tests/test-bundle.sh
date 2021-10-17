@@ -67,7 +67,7 @@ assert_has_dir $FL_DIR/app/org.test.Hello/$ARCH/master/active/files
 assert_has_dir $FL_DIR/app/org.test.Hello/$ARCH/master/active/export
 assert_has_file $FL_DIR/exports/share/applications/org.test.Hello.desktop
 # Ensure Exec key is rewritten
-assert_file_has_content $FL_DIR/exports/share/applications/org.test.Hello.desktop "^Exec=.*/flatpak run --branch=master --arch=$ARCH --command=hello\.sh org\.test\.Hello$"
+assert_file_has_content $FL_DIR/exports/share/applications/org.test.Hello.desktop "^Exec=.*flatpak run --branch=master --arch=$ARCH --command=hello\.sh org\.test\.Hello$"
 assert_has_file $FL_DIR/exports/share/icons/hicolor/64x64/apps/org.test.Hello.png
 assert_has_file $FL_DIR/exports/share/icons/HighContrast/64x64/apps/org.test.Hello.png
 
