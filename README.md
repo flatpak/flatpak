@@ -88,20 +88,24 @@ at least if the two versions are close enough.
 
 The Flatpak project consists of multiple pieces, and it can be
 a bit challenging to find your way around at first. Here is a
-quick intro to the major components of the flatpak repo:
-* `common`: contains the library, libflatpak. It also contains various pieces of code that are shared between the library, the client and the services. Non-public code can be recognized by having a `-private.h` header file.
+quick intro to each of the important subdirectories:
 * `app`: the commandline client. Each command has a `flatpak-builtins-` source file
-* `data`: D-Bus interface definition files
-* `session-helper`: The flatpak-session-helper service, which provides various helpers for the sandbox setup at runtime
-* `system-helper`: The flatpak-system-helper service, which runs as root on the system bus and allows non-root users to modify system installations
-* `portal`: The Flatpak portal service, which lets sandboxed apps request the creation of new sandboxes
+* `common`: contains the library, libflatpak. It also contains various pieces of code that are shared between the library, the client and the services. Non-public code can be recognized by having a `-private.h` header file.
+* `completion`: commandline auto completion support 
+* `data`: D-Bus interface definition files and GVariant schemas
 * `doc`: The sources for the documentation, both man pages and library documentation
-* `tests`: The testsuite
-* `bubblewrap`: Flatpak's unprivileged sandboxing tool which is developed separately and exists here as a submodule
-* `libglnx`: a small utility library for projects that use GLib on Linux, as a submodule
-* `dbus-proxy`: a filtering proxy for D-Bus connections, as a submodule
 * `icon-validator`: A small utility that is used to validate icons
-* `revokefs`: A fuse filesystem that is used to transfer files to the system-helper without copying
+* `oci-authenticator`: service used for authenticating the user for installing from oci remotes (e.g. for paid apps)
+* `po`: translations
+* `portal`: The Flatpak portal service, which lets sandboxed apps request the creation of new sandboxes
+* `revokefs`: A FUSE filesystem that is used to transfer files downloaded by the user to the system-helper without copying
+* `session-helper`: The flatpak-session-helper service, which provides various helpers for the sandbox setup at runtime
+* `tests`: The testsuite
+* `subprojects/bubblewrap`: Flatpak's unprivileged sandboxing tool which is developed separately and exists here as a submodule
+* `subprojects/libglnx`: a small utility library for projects that use GLib on Linux, as a submodule
+* `subprojects/dbus-proxy`: a filtering proxy for D-Bus connections, as a submodule
+* `subprojects/variant-schema-compiler`: a tool for generating code to efficiently access data encoded using GVariant, as a submodule
+* `system-helper`: The flatpak-system-helper service, which runs as root on the system bus and allows non-root users to modify system installations
 
 # Related Projects
 
