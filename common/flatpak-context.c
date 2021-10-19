@@ -852,6 +852,31 @@ flatpak_context_parse_filesystem (const char             *filesystem_and_mode,
   return FALSE;
 }
 
+/* Note: This only works with valid keys, i.e. they passed flatpak_context_parse_filesystem */
+static gboolean
+flatpak_filesystem_key_in_home (const char *filesystem)
+{
+  /* "home" is definitely in home */
+  if (strcmp (filesystem, "home") == 0)
+    return TRUE;
+
+  /* All the other special fs:es are non-home.
+   * Note: This considers absolute paths that are in the homedir as non-home.
+   */
+  if (g_strv_contains (flatpak_context_special_filesystems, filesystem) ||
+      g_str_has_prefix (filesystem, "/"))
+    return FALSE;
+
+  /* Files in xdg-run are not in home */
+  if (g_str_has_prefix (filesystem, "xdg-run"))
+    return FALSE;
+
+  /* All remaining keys (~/, xdg-data, etc) are considered in home,
+   * Note: technically $XDG_HOME_DATA could point outside the homedir, but we ignore that.
+   */
+  return TRUE;
+}
+
 static void
 flatpak_context_take_filesystem (FlatpakContext        *context,
                                  char                  *fs,
@@ -866,6 +891,8 @@ flatpak_context_merge (FlatpakContext *context,
 {
   GHashTableIter iter;
   gpointer key, value;
+  gboolean no_home = FALSE;
+  gboolean no_host = FALSE;
 
   context->shares &= ~other->shares_valid;
   context->shares |= other->shares;
@@ -888,6 +915,41 @@ flatpak_context_merge (FlatpakContext *context,
   while (g_hash_table_iter_next (&iter, &key, &value))
     g_hash_table_insert (context->persistent, g_strdup (key), value);
 
+  /* We first handle all negative home and host as they override other
+     keys than themselves from the parent */
+  if (g_hash_table_lookup_extended (other->filesystems,
+                                    "host",
+                                    NULL, &value))
+    {
+      FlatpakFilesystemMode host_mode = GPOINTER_TO_INT (value);
+      if (host_mode == FLATPAK_FILESYSTEM_MODE_NONE)
+        no_host = TRUE;
+    }
+
+  if (g_hash_table_lookup_extended (other->filesystems,
+                                    "home",
+                                    NULL, &value))
+    {
+      FlatpakFilesystemMode home_mode = GPOINTER_TO_INT (value);
+      if (home_mode == FLATPAK_FILESYSTEM_MODE_NONE)
+        no_home = TRUE;
+    }
+
+  if (no_host)
+    {
+      g_hash_table_remove_all (context->filesystems);
+    }
+  else if (no_home)
+    {
+      g_hash_table_iter_init (&iter, context->filesystems);
+      while (g_hash_table_iter_next (&iter, &key, &value))
+        {
+          if (flatpak_filesystem_key_in_home ((const char *)key))
+            g_hash_table_iter_remove (&iter);
+        }
+    }
+
+  /* Then set the new ones, which includes propagating the nohost and nohome ones. */
   g_hash_table_iter_init (&iter, other->filesystems);
   while (g_hash_table_iter_next (&iter, &key, &value))
     g_hash_table_insert (context->filesystems, g_strdup (key), value);
