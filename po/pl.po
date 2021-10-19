@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2021-10-12 10:56+0100\n"
-"PO-Revision-Date: 2021-10-09 15:25+0200\n"
+"PO-Revision-Date: 2021-10-17 13:02+0200\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
 "Language: pl\n"
@@ -5116,25 +5116,26 @@ msgid "Initialize seccomp failed"
 msgstr "Inicjacja seccomp się nie powiodła"
 
 #: common/flatpak-run.c:3078
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to add architecture to seccomp filter: %s"
-msgstr "Dodanie architektury do filtru seccomp się nie powiodło"
+msgstr "Dodanie architektury do filtru seccomp się nie powiodło: %s"
 
 #: common/flatpak-run.c:3086
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to add multiarch architecture to seccomp filter: %s"
 msgstr ""
-"Dodanie wieloarchitekturowej architektury do filtru seccomp się nie powiodło"
+"Dodanie wieloarchitekturowej architektury do filtru seccomp się nie "
+"powiodło: %s"
 
 #: common/flatpak-run.c:3118 common/flatpak-run.c:3140
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to block syscall %d: %s"
-msgstr "Zablokowanie wywołania systemowego %d się nie powiodło"
+msgstr "Zablokowanie wywołania systemowego %d się nie powiodło: %s"
 
 #: common/flatpak-run.c:3173
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to export bpf: %s"
-msgstr "Wyeksportowanie bpf się nie powiodło"
+msgstr "Wyeksportowanie bpf się nie powiodło: %s"
 
 #: common/flatpak-run.c:3424
 #, c-format
