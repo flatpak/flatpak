@@ -67,7 +67,7 @@ static GOptionEntry options[] = {
 };
 
 static gboolean
-ensure_extensions (FlatpakDeploy *src_deploy, const char *default_branch,
+ensure_extensions (FlatpakDeploy *src_deploy, const char *default_arch, const char *default_branch,
                    char *src_extensions[], GFile *top_dir, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GKeyFile) metakey = flatpak_deploy_get_metadata (src_deploy);
@@ -75,7 +75,7 @@ ensure_extensions (FlatpakDeploy *src_deploy, const char *default_branch,
   int i;
 
   /* We leak this on failure, as we have no autoptr for deep lists.. */
-  extensions = flatpak_list_extensions (metakey, opt_arch, default_branch);
+  extensions = flatpak_list_extensions (metakey, default_arch, default_branch);
 
   for (i = 0; src_extensions[i] != NULL; i++)
     {
@@ -182,6 +182,7 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   const char *runtime_pref;
   const char *default_branch = NULL;
   g_autofree char *sdk_branch = NULL;
+  g_autofree char *sdk_arch = NULL;
   g_autofree char *base_ref = NULL;
   g_autoptr(FlatpakDecomposed) runtime_ref = NULL;
   g_autofree char *extension_runtime_pref = NULL;
@@ -317,9 +318,10 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
     }
 
   sdk_branch = flatpak_decomposed_dup_branch (sdk_ref);
+  sdk_arch = flatpak_decomposed_dup_arch (sdk_ref);
 
   if (opt_sdk_extensions &&
-      !ensure_extensions (sdk_deploy, sdk_branch,
+      !ensure_extensions (sdk_deploy, sdk_arch, sdk_branch,
                           opt_sdk_extensions, usr_dir, cancellable, error))
     return FALSE;
 
@@ -360,7 +362,8 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
 
 
       if (opt_base_extensions &&
-          !ensure_extensions (base_deploy, base_branch, opt_base_extensions, files_dir, cancellable, error))
+          !ensure_extensions (base_deploy, opt_arch, base_branch,
+                              opt_base_extensions, files_dir, cancellable, error))
         return FALSE;
     }
 
