@@ -2751,15 +2751,18 @@ flatpak_installation_list_remote_related_refs_sync (FlatpakInstallation *self,
 /**
  * flatpak_installation_list_installed_related_refs_sync:
  * @self: a #FlatpakInstallation
- * @remote_name: the name of the remote
+ * @remote_name: the name of the remote providing @ref
  * @ref: the ref
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * Lists all the locally installed refs from @remote_name that are
- * related to @ref. These are things that are interesting to install,
- * update, or uninstall together with @ref. For instance, locale data
- * or debug information.
+ * Lists all the locally installed refs that are related to @ref. These are
+ * things that are interesting to install, update, or uninstall together with
+ * @ref. For instance, locale data or debug information.
+ *
+ * Note that while the related refs are usually installed from the same remote
+ * as @ref (@remote_name), it is possible they were installed from another
+ * remote.
  *
  * This function is similar to flatpak_installation_list_remote_related_refs_sync,
  * but instead of looking at what is available on the remote, it only looks
