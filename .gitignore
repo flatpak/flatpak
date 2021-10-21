@@ -134,6 +134,7 @@ Flatpak-1.0.*
 /tests/hold-lock
 /tests/list-unused
 /tests/mock-flatpak
+/tests/try-syscall
 *.test
 /tests/*.sh.log
 /tests/*.sh.test
