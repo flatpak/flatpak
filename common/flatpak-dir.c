@@ -14705,6 +14705,7 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
 void
 flatpak_related_free (FlatpakRelated *self)
 {
+  g_free (self->remote);
   flatpak_decomposed_unref (self->ref);
   g_free (self->commit);
   g_strfreev (self->subpaths);
@@ -14714,6 +14715,7 @@ flatpak_related_free (FlatpakRelated *self)
 static void
 add_related (FlatpakDir        *self,
              GPtrArray         *related,
+             const char        *remote,
              const char        *extension,
              FlatpakDecomposed *extension_ref,
              const char        *checksum,
@@ -14743,7 +14745,12 @@ add_related (FlatpakDir        *self,
   branch = flatpak_decomposed_dup_branch (extension_ref);
 
   if (deploy_data)
-    old_subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
+    {
+      old_subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
+      /* If the extension is installed already, its origin overrides the remote
+       * that would otherwise be used */
+      remote = flatpak_deploy_data_get_origin (deploy_data);
+    }
 
   /* Only respect no-autodownload/download-if for uninstalled refs, we
      always want to update if you manually installed something */
@@ -14789,6 +14796,7 @@ add_related (FlatpakDir        *self,
   subpaths = flatpak_subpaths_merge ((char **) old_subpaths, extra_subpaths);
 
   rel = g_new0 (FlatpakRelated, 1);
+  rel->remote = g_strdup (remote);
   rel->ref = flatpak_decomposed_ref (extension_ref);
   rel->commit = g_strdup (checksum);
   rel->subpaths = g_steal_pointer (&subpaths);
@@ -15002,7 +15010,7 @@ flatpak_dir_find_remote_related_for_metadata (FlatpakDir         *self,
               if (flatpak_remote_state_lookup_ref (state, flatpak_decomposed_get_ref (extension_ref), &checksum, NULL, NULL, NULL, NULL))
                 {
                   if (flatpak_filters_allow_ref (NULL, masked, flatpak_decomposed_get_ref (extension_ref)))
-                    add_related (self, related, extension, extension_ref, checksum,
+                    add_related (self, related, state->remote_name, extension, extension_ref, checksum,
                                  no_autodownload, download_if, autoprune_unless, autodelete, locale_subset);
                 }
               else if (subdirectories)
@@ -15016,7 +15024,7 @@ flatpak_dir_find_remote_related_for_metadata (FlatpakDir         *self,
                       if (flatpak_remote_state_lookup_ref (state, flatpak_decomposed_get_ref (subref_ref),
                                                            &subref_checksum, NULL, NULL, NULL, NULL) &&
                           flatpak_filters_allow_ref (NULL, masked,  flatpak_decomposed_get_ref (subref_ref)))
-                        add_related (self, related, extension, subref_ref, subref_checksum,
+                        add_related (self, related, state->remote_name, extension, subref_ref, subref_checksum,
                                      no_autodownload, download_if, autoprune_unless, autodelete, locale_subset);
                     }
                 }
@@ -15255,7 +15263,7 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir        *self,
                                             NULL,
                                             NULL))
                 {
-                  add_related (self, related, extension, extension_ref,
+                  add_related (self, related, remote_name, extension, extension_ref,
                                checksum, no_autodownload, download_if, autoprune_unless, autodelete, locale_subset);
                 }
               else if ((deploy_data = flatpak_dir_get_deploy_data (self, extension_ref,
@@ -15268,8 +15276,10 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir        *self,
                    * --force
                    */
                   checksum = g_strdup (flatpak_deploy_data_get_commit (deploy_data));
-                  add_related (self, related, extension, extension_ref,
-                               checksum, no_autodownload, download_if, autoprune_unless, autodelete, locale_subset);
+                  add_related (self, related,
+                               flatpak_deploy_data_get_origin (deploy_data),
+                               extension, extension_ref, checksum,
+                               no_autodownload, download_if, autoprune_unless, autodelete, locale_subset);
                 }
               else if (subdirectories)
                 {
@@ -15289,7 +15299,7 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir        *self,
                                                     NULL,
                                                     NULL))
                         {
-                          add_related (self, related, extension, match, match_checksum,
+                          add_related (self, related, remote_name, extension, match, match_checksum,
                                        no_autodownload, download_if, autoprune_unless, autodelete, locale_subset);
                         }
                       else if ((match_deploy_data = flatpak_dir_get_deploy_data (self, match,
@@ -15301,7 +15311,9 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir        *self,
                            * not have a ref in the repo
                            */
                           match_checksum = g_strdup (flatpak_deploy_data_get_commit (match_deploy_data));
-                          add_related (self, related, extension, match, match_checksum,
+                          add_related (self, related,
+                                       flatpak_deploy_data_get_origin (match_deploy_data),
+                                       extension, match, match_checksum,
                                        no_autodownload, download_if, autoprune_unless, autodelete, locale_subset);
                         }
                     }

@@ -100,6 +100,7 @@ GType flatpak_deploy_get_type (void);
 typedef struct
 {
   FlatpakDecomposed *ref;
+  char              *remote;
   char              *commit;
   char             **subpaths;
   gboolean           download;
