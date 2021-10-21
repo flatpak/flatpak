@@ -2062,7 +2062,8 @@ op_get_related (FlatpakTransaction           *self,
 
   if (transaction_is_local_only (self, op->kind))
     related = flatpak_dir_find_local_related_for_metadata (priv->dir, op->ref,
-                                                           op->remote, op->resolved_metakey,
+                                                           NULL, /* remote could differ from op->remote */
+                                                           op->resolved_metakey,
                                                            NULL, &related_error);
   else
     related = flatpak_dir_find_remote_related_for_metadata (priv->dir, state, op->ref,
@@ -2105,7 +2106,7 @@ add_related (FlatpakTransaction          *self,
           if (!rel->delete)
             continue;
 
-          related_op = flatpak_transaction_add_op (self, op->remote, rel->ref,
+          related_op = flatpak_transaction_add_op (self, rel->remote, rel->ref,
                                                    NULL, NULL, NULL, NULL,
                                                    FLATPAK_TRANSACTION_OPERATION_UNINSTALL,
                                                    error);
@@ -2128,7 +2129,7 @@ add_related (FlatpakTransaction          *self,
           if (!rel->download)
             continue;
 
-          related_op = flatpak_transaction_add_op (self, op->remote, rel->ref,
+          related_op = flatpak_transaction_add_op (self, rel->remote, rel->ref,
                                                    (const char **) rel->subpaths,
                                                    NULL, NULL, NULL,
                                                    FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE,
@@ -2625,8 +2626,10 @@ flatpak_transaction_add_rebase (FlatpakTransaction *self,
                                 const char        **previous_ids,
                                 GError            **error)
 {
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   const char *all_paths[] = { NULL };
   g_autoptr(FlatpakDecomposed) decomposed = NULL;
+  g_autofree char *installed_origin = NULL;
 
   g_return_val_if_fail (ref != NULL, FALSE);
   g_return_val_if_fail (remote != NULL, FALSE);
@@ -2640,6 +2643,9 @@ flatpak_transaction_add_rebase (FlatpakTransaction *self,
   /* If we install with no special args pull all subpaths */
   if (subpaths == NULL)
     subpaths = all_paths;
+
+  if (dir_ref_is_installed (priv->dir, decomposed, &installed_origin, NULL))
+    remote = installed_origin;
 
   return flatpak_transaction_add_ref (self, remote, decomposed, subpaths, previous_ids, NULL, FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE, NULL, NULL, error);
 }
@@ -4458,10 +4464,9 @@ flatpak_transaction_normalize_ops (FlatpakTransaction *self)
 
           if (dir_ref_is_installed (priv->dir, op->ref, NULL, &deploy_data))
             {
-              /* Don't use the remote from related ref on update, always use
-                 the current remote. */
-              g_free (op->remote);
-              op->remote = g_strdup (flatpak_deploy_data_get_origin (deploy_data));
+              /* The remote should have already been set to the installed ref
+               * origin so that the resolved commit definitely exists there */
+              g_assert (g_strcmp0 (op->remote, flatpak_deploy_data_get_origin (deploy_data)) == 0);
 
               op->kind = FLATPAK_TRANSACTION_OPERATION_UPDATE;
             }
