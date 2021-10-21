@@ -99,6 +99,10 @@ tests_test_authenticator_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) \
 tests_test_authenticator_LDADD = $(AM_LDADD) $(BASE_LIBS) libflatpak-common.la libflatpak-common-base.la libglnx.la
 tests_test_authenticator_SOURCES = tests/test-authenticator.c
 
+tests_try_syscall_CFLAGS = $(AM_CFLAGS)
+tests_try_syscall_LDADD = $(AM_LDADD)
+tests_try_syscall_SOURCES = tests/try-syscall.c
+
 tests_list_unused_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFLAGS) $(JSON_CFLAGS) $(APPSTREAM_GLIB_CFLAGS) \
 	-DFLATPAK_COMPILATION \
 	-DLOCALEDIR=\"$(localedir)\"
@@ -263,7 +267,15 @@ test_programs = \
 	testcommon \
 	testlibrary \
 	$(NULL)
-test_extra_programs = tests/httpcache tests/test-update-portal tests/test-portal-impl tests/test-authenticator tests/list-unused
+
+test_extra_programs = \
+	tests/httpcache \
+	tests/list-unused \
+	tests/test-authenticator \
+	tests/test-portal-impl \
+	tests/test-update-portal \
+	tests/try-syscall \
+	$(NULL)
 
 @VALGRIND_CHECK_RULES@
 VALGRIND_SUPPRESSIONS_FILES=tests/flatpak.supp tests/glib.supp

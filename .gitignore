@@ -117,6 +117,7 @@ Flatpak-1.0.*
 /tests/test-authenticator
 /tests/test-update-portal
 /tests/test-portal-impl
+/tests/try-syscall
 *.test
 /tests/*.sh.log
 /tests/*.sh.test
