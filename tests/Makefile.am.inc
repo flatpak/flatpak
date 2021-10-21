@@ -280,6 +280,7 @@ TEST_MATRIX_SOURCE = \
 	tests/test-summaries.sh{user+system} \
 	tests/test-subset.sh{user+system} \
 	tests/test-prune.sh \
+	tests/test-seccomp.sh \
 	$(NULL)
 
 update-test-matrix:
