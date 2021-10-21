@@ -87,6 +87,7 @@ assert_streq "$XDG_CACHE_HOME" "${TEST_DATA_DIR}/home/cache"
 run_sh org.test.Hello 'echo "$XDG_CACHE_HOME"' > value-in-sandbox
 head value-in-sandbox >&2
 assert_file_has_content value-in-sandbox "^${TEST_DATA_DIR}/home/\\.var/app/org\\.test\\.Hello/cache\$"
+test -d "${TEST_DATA_DIR}/home/.var/app/org.test.Hello/cache"
 run_sh org.test.Hello 'echo "$HOST_XDG_CACHE_HOME"' > host-value-in-sandbox
 head host-value-in-sandbox >&2
 assert_file_has_content host-value-in-sandbox "^${TEST_DATA_DIR}/home/cache\$"
@@ -95,6 +96,7 @@ assert_streq "$XDG_CONFIG_HOME" "${TEST_DATA_DIR}/home/config"
 run_sh org.test.Hello 'echo "$XDG_CONFIG_HOME"' > value-in-sandbox
 head value-in-sandbox >&2
 assert_file_has_content value-in-sandbox "^${TEST_DATA_DIR}/home/\\.var/app/org\\.test\\.Hello/config\$"
+test -d "${TEST_DATA_DIR}/home/.var/app/org.test.Hello/config"
 run_sh org.test.Hello 'echo "$HOST_XDG_CONFIG_HOME"' > host-value-in-sandbox
 head host-value-in-sandbox >&2
 assert_file_has_content host-value-in-sandbox "^${TEST_DATA_DIR}/home/config\$"
@@ -103,6 +105,7 @@ assert_streq "$XDG_DATA_HOME" "${TEST_DATA_DIR}/home/share"
 run_sh org.test.Hello 'echo "$XDG_DATA_HOME"' > value-in-sandbox
 head value-in-sandbox >&2
 assert_file_has_content value-in-sandbox "^${TEST_DATA_DIR}/home/\\.var/app/org\\.test\\.Hello/data\$"
+test -d "${TEST_DATA_DIR}/home/.var/app/org.test.Hello/data"
 run_sh org.test.Hello 'echo "$HOST_XDG_DATA_HOME"' > host-value-in-sandbox
 head host-value-in-sandbox >&2
 assert_file_has_content host-value-in-sandbox "^${TEST_DATA_DIR}/home/share\$"
@@ -111,6 +114,7 @@ assert_streq "$XDG_STATE_HOME" "${TEST_DATA_DIR}/home/state"
 run_sh org.test.Hello 'echo "$XDG_STATE_HOME"' > value-in-sandbox
 head value-in-sandbox >&2
 assert_file_has_content value-in-sandbox "^${TEST_DATA_DIR}/home/\\.var/app/org\\.test\\.Hello/\\.local/state\$"
+test -d "${TEST_DATA_DIR}/home/.var/app/org.test.Hello/.local/state"
 run_sh org.test.Hello 'echo "$HOST_XDG_STATE_HOME"' > host-value-in-sandbox
 head host-value-in-sandbox >&2
 assert_file_has_content host-value-in-sandbox "^${TEST_DATA_DIR}/home/state\$"
