@@ -279,7 +279,7 @@ TEST_MATRIX_SOURCE = \
 	$(NULL)
 
 update-test-matrix:
-	$(srcdir)/tests/expand-test-matrix.sh "$(TEST_MATRIX_SOURCE)" > tests/Makefile-test-matrix.am.inc
+	$(srcdir)/tests/expand-test-matrix.sh "$(TEST_MATRIX_SOURCE)" > $(srcdir)/tests/Makefile-test-matrix.am.inc
 
 tests/test-%.wrap:
 	@true
