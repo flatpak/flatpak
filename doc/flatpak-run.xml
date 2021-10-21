@@ -98,7 +98,7 @@
             <member>XDG_DATA_HOME</member>
             <member>XDG_CONFIG_HOME</member>
             <member>XDG_CACHE_HOME</member>
-            <member>XDG_STATE_HOME</member>
+            <member>XDG_STATE_HOME (since Flatpak 1.13)</member>
         </simplelist>
         <para>
             The host values of these variables are made available inside the sandbox via these
@@ -108,7 +108,7 @@
             <member>HOST_XDG_DATA_HOME</member>
             <member>HOST_XDG_CONFIG_HOME</member>
             <member>HOST_XDG_CACHE_HOME</member>
-            <member>HOST_XDG_STATE_HOME</member>
+            <member>HOST_XDG_STATE_HOME (since Flatpak 1.13)</member>
         </simplelist>
         <para>
             Flatpak sets the environment variable <envar>FLATPAK_ID</envar> to the application
