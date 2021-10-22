@@ -32,7 +32,7 @@
  * @Title: FlatpakRelatedRef
  * @Short_description: Related application reference
  *
- * A FlatpakRelatedRef provides information about an ref that is related
+ * A FlatpakRelatedRef provides information about a ref that is related
  * to another ref. For instance, the local extension ref of an app.
  *
  * Since: 0.6.7
