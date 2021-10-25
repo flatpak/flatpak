@@ -3570,8 +3570,10 @@ test_transaction_flatpakref_remote_creation (void)
   g_autoptr(FlatpakInstallation) user_inst = NULL;
   g_autoptr(FlatpakInstallation) system_inst = NULL;
   g_autoptr(FlatpakTransaction) transaction = NULL;
+  g_autoptr(FlatpakRemote) remote = NULL;
   g_autoptr(GError) error = NULL;
   g_autofree char *s = NULL;
+  g_autofree char *remote_title = NULL;
   g_autoptr(GBytes) data = NULL;
   gboolean res;
 
@@ -3620,6 +3622,13 @@ test_transaction_flatpakref_remote_creation (void)
 
   assert_remote_in_installation (user_inst, "test-without-runtime-repo");
   assert_remote_in_installation (user_inst, "test-runtime-only-repo");
+
+  /* The remote should not use the title of the app as its title */
+  remote = flatpak_installation_get_remote_by_name (user_inst, "test-without-runtime-repo", NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (remote);
+  remote_title = flatpak_remote_get_title (remote);
+  g_assert_null (remote_title);
 
   empty_installation (user_inst);
   remove_remote_user ("test-without-runtime-repo");

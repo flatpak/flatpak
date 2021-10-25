@@ -13712,14 +13712,12 @@ parse_ref_file (GKeyFile *keyfile,
                 char    **name_out,
                 char    **branch_out,
                 char    **url_out,
-                char    **title_out,
                 GBytes  **gpg_data_out,
                 gboolean *is_runtime_out,
                 char    **collection_id_out,
                 GError  **error)
 {
   g_autofree char *url = NULL;
-  g_autofree char *title = NULL;
   g_autofree char *name = NULL;
   g_autofree char *branch = NULL;
   g_autofree char *version = NULL;
@@ -13731,7 +13729,6 @@ parse_ref_file (GKeyFile *keyfile,
   *name_out = NULL;
   *branch_out = NULL;
   *url_out = NULL;
-  *title_out = NULL;
   *gpg_data_out = NULL;
   *is_runtime_out = FALSE;
 
@@ -13757,9 +13754,6 @@ parse_ref_file (GKeyFile *keyfile,
                                   FLATPAK_REF_BRANCH_KEY, NULL);
   if (branch == NULL)
     branch = g_strdup ("master");
-
-  title = g_key_file_get_string (keyfile, FLATPAK_REF_GROUP,
-                                 FLATPAK_REF_TITLE_KEY, NULL);
 
   is_runtime = g_key_file_get_boolean (keyfile, FLATPAK_REF_GROUP,
                                        FLATPAK_REF_IS_RUNTIME_KEY, NULL);
@@ -13798,7 +13792,6 @@ parse_ref_file (GKeyFile *keyfile,
   *name_out = g_steal_pointer (&name);
   *branch_out = g_steal_pointer (&branch);
   *url_out = g_steal_pointer (&url);
-  *title_out = g_steal_pointer (&title);
   *gpg_data_out = g_steal_pointer (&gpg_data);
   *is_runtime_out = is_runtime;
   *collection_id_out = g_steal_pointer (&collection_id);
@@ -13819,14 +13812,13 @@ flatpak_dir_create_remote_for_ref_file (FlatpakDir         *self,
   g_autofree char *name = NULL;
   g_autofree char *branch = NULL;
   g_autofree char *url = NULL;
-  g_autofree char *title = NULL;
   g_autofree char *remote = NULL;
   gboolean is_runtime = FALSE;
   g_autofree char *collection_id = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
   g_autoptr(FlatpakDecomposed) ref = NULL;
 
-  if (!parse_ref_file (keyfile, &name, &branch, &url, &title, &gpg_data, &is_runtime, &collection_id, error))
+  if (!parse_ref_file (keyfile, &name, &branch, &url, &gpg_data, &is_runtime, &collection_id, error))
     return FALSE;
 
   ref = flatpak_decomposed_new_from_parts (is_runtime ? FLATPAK_KINDS_RUNTIME : FLATPAK_KINDS_APP,
@@ -13849,7 +13841,8 @@ flatpak_dir_create_remote_for_ref_file (FlatpakDir         *self,
 
   if (remote == NULL)
     {
-      remote = flatpak_dir_create_origin_remote (self, url, name, title, flatpak_decomposed_get_ref (ref),
+      /* title is NULL because the title from the ref file is the title of the app not the remote */
+      remote = flatpak_dir_create_origin_remote (self, url, name, NULL, flatpak_decomposed_get_ref (ref),
                                                  gpg_data, collection_id, NULL, NULL, error);
       if (remote == NULL)
         return FALSE;

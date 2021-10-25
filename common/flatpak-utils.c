@@ -2264,8 +2264,10 @@ flatpak_parse_repofile (const char   *remote_name,
   if (subset != NULL)
     g_key_file_set_string (config, group, "xa.subset", subset);
 
-  title = g_key_file_get_locale_string (keyfile, source_group,
-                                        FLATPAK_REPO_TITLE_KEY, NULL, NULL);
+  /* Don't use the title from flatpakref files; that's the title of the app */
+  if (!from_ref)
+    title = g_key_file_get_locale_string (keyfile, FLATPAK_REPO_GROUP,
+                                          FLATPAK_REPO_TITLE_KEY, NULL, NULL);
   if (title != NULL)
     g_key_file_set_string (config, group, "xa.title", title);
 
