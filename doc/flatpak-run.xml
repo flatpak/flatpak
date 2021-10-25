@@ -101,6 +101,12 @@
             <member>XDG_STATE_HOME (since Flatpak 1.13)</member>
         </simplelist>
         <para>
+            Apps can use the <option>--persist=.local/state</option> and
+            <option>--unset-env=XDG_STATE_HOME</option> options to get a
+            Flatpak 1.13-compatible <filename>~/.local/state</filename>
+            on older versions of Flatpak.
+        </para>
+        <para>
             The host values of these variables are made available inside the sandbox via these
             HOST_-prefixed variables:
         </para>
