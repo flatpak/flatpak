@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..41"
+echo "1..42"
 
 #Regular repo
 setup_repo
@@ -185,7 +185,7 @@ cat << EOF > repos/flatpakref/flatpakref-repo.flatpakrepo
 [Flatpak Repo]
 Version=1
 Url=http://127.0.0.1:$(cat httpd-port)/flatpakref/
-Title=The Title
+Title=The Remote Title
 GPGKey=${FL_GPG_BASE64}
 EOF
 
@@ -198,6 +198,7 @@ cat << EOF > org.test.Hello.flatpakref
 Name=org.test.Hello
 Branch=master
 Url=http://127.0.0.1:$(cat httpd-port)/flatpakref
+SuggestRemoteName=allthegoodstuff
 GPGKey=${FL_GPG_BASE64}
 RuntimeRepo=http://127.0.0.1:$(cat httpd-port)/flatpakref/flatpakref-repo.flatpakrepo
 EOF
@@ -215,6 +216,10 @@ if [ $NUM_REMOTES_AFTER -ne $((NUM_REMOTES_BEFORE + 1)) ]; then
 fi
 
 ok "install flatpakref normalizes remote URL trailing slash"
+
+assert_remote_has_config allthegoodstuff xa.title "The Remote Title"
+
+ok "install flatpakref uses RuntimeRepo metadata for remote"
 
 ${FLATPAK} ${U} uninstall -y org.test.Platform org.test.Hello
 

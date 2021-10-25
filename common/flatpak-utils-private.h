@@ -913,6 +913,9 @@ int flatpak_envp_cmp (const void *p1,
 
 gboolean flatpak_str_is_integer (const char *s);
 
+gboolean flatpak_uri_equal (const char *uri1,
+                            const char *uri2);
+
 #define FLATPAK_MESSAGE_ID "c7b39b1e006b464599465e105b361485"
 
 #endif /* __FLATPAK_UTILS_H__ */
