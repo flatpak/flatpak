@@ -1833,6 +1833,9 @@ flatpak_run_apply_env_appid (FlatpakBwrap *bwrap,
   app_dir_data = g_file_get_child (app_dir, "data");
   app_dir_config = g_file_get_child (app_dir, "config");
   app_dir_cache = g_file_get_child (app_dir, "cache");
+  /* Yes, this is inconsistent with data, config and cache. However, using
+   * this path lets apps provide backwards-compatibility with older Flatpak
+   * versions by using `--persist=.local/state --unset-env=XDG_STATE_DIR`. */
   app_dir_state = g_file_get_child (app_dir, ".local/state");
   flatpak_bwrap_set_env (bwrap, "XDG_DATA_HOME", flatpak_file_get_path_cached (app_dir_data), TRUE);
   flatpak_bwrap_set_env (bwrap, "XDG_CONFIG_HOME", flatpak_file_get_path_cached (app_dir_config), TRUE);
