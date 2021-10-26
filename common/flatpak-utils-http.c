@@ -503,7 +503,10 @@ load_uri_callback (GObject      *source_object,
       if (!glnx_open_tmpfile_linkable_at (data->out_tmpfile_parent_dfd, ".",
                                           O_WRONLY, data->out_tmpfile,
                                           &data->error))
-        return;
+        {
+          g_main_context_wakeup (data->context);
+          return;
+        }
 
       g_assert (data->out == NULL);
 
