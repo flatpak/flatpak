@@ -9,6 +9,12 @@ polkit.addRule(function(action, subject) {
             return polkit.Result.YES;
     }
 
+    if (action.id == "org.freedesktop.Flatpak.configure" &&
+        action.lookup("key") == "pinned" &&
+        subject.active == true && subject.local == true &&
+        subject.isInGroup("@privileged_group@"))
+      return polkit.Result.YES;
+
     return polkit.Result.NOT_HANDLED;
 });
 
