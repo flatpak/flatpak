@@ -216,7 +216,7 @@ typedef enum {
   FLATPAK_HELPER_DEPLOY_FLAGS_NO_INTERACTION = 1 << 4,
   FLATPAK_HELPER_DEPLOY_FLAGS_APP_HINT = 1 << 5,
   FLATPAK_HELPER_DEPLOY_FLAGS_INSTALL_HINT = 1 << 6,
-  FLATPAK_HELPER_DEPLOY_FLAGS,
+  FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE_PINNED = 1 << 7,
 } FlatpakHelperDeployFlags;
 
 #define FLATPAK_HELPER_DEPLOY_FLAGS_ALL (FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE | \
@@ -225,7 +225,8 @@ typedef enum {
                                          FLATPAK_HELPER_DEPLOY_FLAGS_REINSTALL | \
                                          FLATPAK_HELPER_DEPLOY_FLAGS_NO_INTERACTION | \
                                          FLATPAK_HELPER_DEPLOY_FLAGS_APP_HINT | \
-                                         FLATPAK_HELPER_DEPLOY_FLAGS_INSTALL_HINT)
+                                         FLATPAK_HELPER_DEPLOY_FLAGS_INSTALL_HINT | \
+                                         FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE_PINNED)
 
 typedef enum {
   FLATPAK_HELPER_UNINSTALL_FLAGS_NONE = 0,
@@ -715,6 +716,7 @@ gboolean              flatpak_dir_deploy_install                            (Fla
                                                                              const char                   **subpaths,
                                                                              const char                   **previous_ids,
                                                                              gboolean                       reinstall,
+                                                                             gboolean                       pin_on_deploy,
                                                                              GCancellable                  *cancellable,
                                                                              GError                       **error);
 gboolean              flatpak_dir_install                                   (FlatpakDir                    *self,
@@ -723,6 +725,7 @@ gboolean              flatpak_dir_install                                   (Fla
                                                                              gboolean                       no_static_deltas,
                                                                              gboolean                       reinstall,
                                                                              gboolean                       app_hint,
+                                                                             gboolean                       pin_on_deploy,
                                                                              FlatpakRemoteState            *state,
                                                                              FlatpakDecomposed             *ref,
                                                                              const char                    *opt_commit,
