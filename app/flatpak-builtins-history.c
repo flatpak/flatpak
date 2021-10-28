@@ -160,7 +160,19 @@ print_history (GPtrArray    *dirs,
     while ((reverse && sd_journal_previous (j) > 0) ||
            (!reverse && sd_journal_next (j) > 0))
       {
+        g_autofree char *ref_str = NULL;
+
         /* determine whether to skip this entry */
+
+        ref_str = get_field (j, "REF", error);
+        if (*error)
+          return FALSE;
+
+        /* Appstream pulls are probably not interesting, and they are confusing
+         * since by default we include the Application column which shows up blank.
+         */
+        if (ref_str && ref_str[0] && g_str_has_prefix (ref_str, "appstream"))
+          continue;
 
         if (dirs)
           {
@@ -217,12 +229,7 @@ print_history (GPtrArray    *dirs,
                      strcmp (columns[k].name, "arch") == 0 ||
                      strcmp (columns[k].name, "branch") == 0)
               {
-                g_autofree char *ref_str = NULL;
                 g_autofree char *value = NULL;
-
-                ref_str = get_field (j, "REF", error);
-                if (*error)
-                  return FALSE;
 
                 if (ref_str && ref_str[0] &&
                     !flatpak_is_app_runtime_or_appstream_ref (ref_str) &&
@@ -231,11 +238,6 @@ print_history (GPtrArray    *dirs,
 
                 if (strcmp (columns[k].name, "ref") == 0)
                   value = g_strdup (ref_str);
-                else if (strcmp (columns[k].name, "arch") == 0)
-                  {
-                    if (ref_str != NULL)
-                      value = flatpak_get_arch_for_ref (ref_str);
-                  }
                 else if (ref_str && ref_str[0] &&
                          (g_str_has_prefix (ref_str, "app/") ||
                           g_str_has_prefix (ref_str, "runtime/")))
@@ -248,6 +250,8 @@ print_history (GPtrArray    *dirs,
                       {
                         if (strcmp (columns[k].name, "application") == 0)
                           value = flatpak_decomposed_dup_id (ref);
+                        else if (strcmp (columns[k].name, "arch") == 0)
+                          value = flatpak_decomposed_dup_arch (ref);
                         else
                           value = flatpak_decomposed_dup_branch (ref);
                       }
