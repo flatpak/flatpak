@@ -161,6 +161,7 @@ print_history (GPtrArray    *dirs,
            (!reverse && sd_journal_next (j) > 0))
       {
         g_autofree char *ref_str = NULL;
+        g_autofree char *remote = NULL;
 
         /* determine whether to skip this entry */
 
@@ -174,13 +175,18 @@ print_history (GPtrArray    *dirs,
         if (ref_str && ref_str[0] && g_str_has_prefix (ref_str, "appstream"))
           continue;
 
+        remote = get_field (j, "REMOTE", error);
+        if (*error)
+          return FALSE;
+
+        /* Exclude pull to temp repo */
+        if (remote && remote[0] == '/')
+          continue;
+
         if (dirs)
           {
             gboolean include = FALSE;
             g_autofree char *installation = get_field (j, "INSTALLATION", NULL);
-
-            if (installation && installation[0] == '/')
-              include = TRUE; /* pull to a temp repo */
 
             for (i = 0; i < dirs->len && !include; i++)
               {
@@ -268,9 +274,6 @@ print_history (GPtrArray    *dirs,
               }
             else if (strcmp (columns[k].name, "remote") == 0)
               {
-                g_autofree char *remote = get_field (j, "REMOTE", error);
-                if (*error)
-                  return FALSE;
                 flatpak_table_printer_add_column (printer, remote);
               }
             else if (strcmp (columns[k].name, "commit") == 0)
