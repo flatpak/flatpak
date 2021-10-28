@@ -266,6 +266,7 @@ TEST_MATRIX_SOURCE = \
 	tests/test-run.sh{{user+system+system-norevokefs},{nodeltas+deltas}} \
 	tests/test-info.sh{user+system} \
 	tests/test-repo.sh{{user+system+system-norevokefs}+{{user+system},oldsummary}} \
+	tests/test-history.sh \
 	tests/test-sideload.sh{user+system} \
 	tests/test-default-remotes.sh \
 	tests/test-extensions.sh \

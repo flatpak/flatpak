@@ -35,6 +35,7 @@ TEST_MATRIX_DIST= \
 	tests/test-config.sh \
 	tests/test-build-update-repo.sh \
 	tests/test-http-utils.sh \
+	tests/test-history.sh \
 	tests/test-default-remotes.sh \
 	tests/test-extensions.sh \
 	tests/test-oci.sh \
