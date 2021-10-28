@@ -395,7 +395,7 @@ generate_all_deltas (OstreeRepo   *repo,
       else
         {
           /* Ignore unknown ref types */
-          ignore_ref = FALSE;
+          ignore_ref = TRUE;
         }
 
       if (ignore_ref)
