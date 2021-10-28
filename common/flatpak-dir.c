@@ -15814,7 +15814,7 @@ flatpak_dir_delete_mirror_refs (FlatpakDir    *self,
        * remotes, but that would not cover the case of if a remote was
        * deleted.
        */
-      if (is_flatpak_ref (c_r->ref_name) ||
+      if (flatpak_is_app_runtime_or_appstream_ref (c_r->ref_name) ||
           g_strcmp0 (c_r->ref_name, OSTREE_REPO_METADATA_REF) == 0)
         {
           if (dry_run)
