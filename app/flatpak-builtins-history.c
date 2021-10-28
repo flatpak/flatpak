@@ -217,35 +217,43 @@ print_history (GPtrArray    *dirs,
                      strcmp (columns[k].name, "arch") == 0 ||
                      strcmp (columns[k].name, "branch") == 0)
               {
-                g_autoptr(FlatpakDecomposed) ref = NULL;
-                g_autofree char *ref_str = get_field (j, "REF", error);
+                g_autofree char *ref_str = NULL;
+                g_autofree char *value = NULL;
+
+                ref_str = get_field (j, "REF", error);
                 if (*error)
                   return FALSE;
 
-                if (ref_str && ref_str[0])
-                  {
-                    ref = flatpak_decomposed_new_from_ref (ref_str, error);
-                    if (ref == NULL)
-                      return FALSE;
-                  }
+                if (ref_str && ref_str[0] &&
+                    !is_flatpak_ref (ref_str) &&
+                    g_strcmp0 (ref_str, OSTREE_REPO_METADATA_REF) != 0)
+                  g_warning ("Unknown ref in history: %s", ref_str);
 
                 if (strcmp (columns[k].name, "ref") == 0)
-                  flatpak_table_printer_add_column (printer, ref_str);
-                else
+                  value = g_strdup (ref_str);
+                else if (strcmp (columns[k].name, "arch") == 0)
                   {
-                    g_autofree char *value = NULL;
-                    if (ref)
+                    if (ref_str != NULL)
+                      value = flatpak_get_arch_for_ref (ref_str);
+                  }
+                else if (ref_str && ref_str[0] &&
+                         (g_str_has_prefix (ref_str, "app/") ||
+                          g_str_has_prefix (ref_str, "runtime/")))
+                  {
+                    g_autoptr(FlatpakDecomposed) ref = NULL;
+                    ref = flatpak_decomposed_new_from_ref (ref_str, NULL);
+                    if (ref == NULL)
+                      g_warning ("Invalid ref in history: %s", ref_str);
+                    else
                       {
                         if (strcmp (columns[k].name, "application") == 0)
                           value = flatpak_decomposed_dup_id (ref);
-                        else if (strcmp (columns[k].name, "arch") == 0)
-                          value = flatpak_decomposed_dup_arch (ref);
                         else
                           value = flatpak_decomposed_dup_branch (ref);
                       }
-
-                    flatpak_table_printer_add_column (printer, value);
                   }
+
+                  flatpak_table_printer_add_column (printer, value);
               }
             else if (strcmp (columns[k].name, "installation") == 0)
               {
