@@ -3169,7 +3169,7 @@ flatpak_repo_save_digested_summary_delta (OstreeRepo   *repo,
 }
 
 
-static gboolean
+gboolean
 is_flatpak_ref (const char *ref)
 {
   return
