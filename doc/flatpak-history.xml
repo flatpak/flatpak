@@ -48,7 +48,8 @@
         </para>
         <para>
             The information for the history command is taken from the systemd journal,
-            and can also be accessed using e.g. the journalctl command.
+            and can also be accessed using e.g.
+            <command>journalctl MESSAGE_ID=c7b39b1e006b464599465e105b361485</command>
         </para>
 
     </refsect1>
