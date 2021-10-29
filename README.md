@@ -22,16 +22,42 @@ Flatpak welcomes contributions from anyone! Here are some ways you can help:
 * Improve the [Flatpak support](https://github.com/flatpak/flatpak/wiki/Distribution) in your favorite Linux distribution
 
 # Hacking
-Flatpak uses a traditional autoconf-style build mechanism. To build just do
+Flatpak uses a traditional autoconf-style build mechanism. The exact steps
+required depend on your distribution. Below are some steps that should work on
+Debian and Fedora, based on the configure options used to build those
+distributions' packages, These options will install into `/usr`, which will
+overwrite your distribution-provided system copy of Flatpak. **You should only
+do this if you understand the risks of it to the stability of your system, and
+you probably want to do it in a VM or on a development machine that's expected
+to break sometimes!**
+
+## On Debian
 ```
- ./autogen.sh
- ./configure [args]
- make
- make install
+git clone https://github.com/flatpak/flatpak
+cd flatpak
+sudo apt build-dep flatpak
+NOCONFIGURE=1 ./autogen.sh
+./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var --libdir=\${prefix}/lib/x86_64-linux-gnu --runstatedir=/run --disable-auto-sideloading --disable-selinux-module --enable-gdm-env-file --enable-installed-tests --with-dbus-config-dir=/usr/share/dbus-1/system.d --with-privileged-group=sudo --with-run-media-dir=/media --with-system-bubblewrap=bwrap --with-system-dbus-proxy=xdg-dbus-proxy --with-systemdsystemunitdir=/lib/systemd/system --with-system-helper-user=_flatpak --enable-docbook-docs --enable-documentation --disable-gtk-doc
+make -j$(nproc)
+make check -j$(nproc)
+sudo make install
 ```
 
-To automatically install dependencies on apt-based distributions you can try
-running `apt build-dep flatpak` and on dnf ones try `dnf builddep flatpak`.
+## On Fedora
+
+```
+git clone https://github.com/flatpak/flatpak
+cd flatpak
+sudo dnf builddep flatpak
+sudo dnf install gettext-devel socat
+NOCONFIGURE=1 ./autogen.sh
+./configure --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib64 --localstatedir=/var --enable-docbook-docs --enable-installed-tests --enable-selinux-module --with-system-bubblewrap --with-system-dbus-proxy
+make -j$(nproc)
+make check -j$(nproc)
+sudo make install
+```
+
+## More info
 Dependencies you will need include: autoconf, automake, libtool, bison,
 gettext, gtk-doc, gobject-introspection, libcap, libarchive, libxml2, libsoup,
 gpgme, polkit, libXau, ostree, json-glib, appstream, libseccomp (or their devel
