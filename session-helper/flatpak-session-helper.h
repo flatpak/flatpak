@@ -29,6 +29,7 @@
 typedef enum {
   FLATPAK_HOST_COMMAND_FLAGS_CLEAR_ENV = 1 << 0,
   FLATPAK_HOST_COMMAND_FLAGS_WATCH_BUS = 1 << 1,
+  FLATPAK_HOST_COMMAND_FLAGS_NONE = 0
 } FlatpakHostCommandFlags;
 
 #endif
