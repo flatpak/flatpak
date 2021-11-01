@@ -32,11 +32,6 @@
 #include "flatpak-session-helper.h"
 #include "flatpak-utils-base-private.h"
 
-typedef enum {
-  FLATPAK_HOST_COMMAND_FLAGS_CLEAR_ENV = 1 << 0,
-  FLATPAK_HOST_COMMAND_FLAGS_WATCH_BUS = 1 << 1,
-} FlatpakHostCommandFlags;
-
 static char *monitor_dir;
 static char *p11_kit_server_socket_path;
 static int p11_kit_server_pid = 0;
