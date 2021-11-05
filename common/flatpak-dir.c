@@ -11922,7 +11922,7 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
       if (!flatpak_dir_lookup_remote_filter (self, remote_or_uri, FALSE, NULL, &state->allow_refs, &state->deny_refs, error))
         return NULL;
       if (!ostree_repo_remote_get_url (self->repo, remote_or_uri, &url, error))
-        return FALSE;
+        return NULL;
 
       state->default_token_type = flatpak_dir_get_remote_default_token_type (self, remote_or_uri);
     }
