@@ -194,30 +194,42 @@ as_app_equal (AsApp *app1, AsApp *app2)
 }
 #endif
 
-/* This returns the app ID with the ".desktop" suffix stripped. In most cases
- * that is what as_app_get_id_filename() does, but if the ID actually ends in
- * .desktop it is stripped anyway and e.g.  "org.telegram" is returned instead
- * of "org.telegram.desktop" (which is a bug in appstream-glib). See
- * https://github.com/hughsie/appstream-glib/issues/420 and
- * https://github.com/flatpak/flatpak/issues/4535
- */
-static const char *
+static char *
 _app_get_id_no_suffix (AsApp *app)
 {
-  const gchar *id_with_suffix = NULL;
-  const gchar *id_stripped = NULL;
-  id_with_suffix = as_app_get_id_no_prefix (app);
+  const char *id_stripped = NULL;
+  GPtrArray *bundles = NULL;
+
+  /* First try using the <bundle> ID which is unambiguously the flatpak ref */
+  bundles = as_app_get_bundles (app);
+  for (guint i = 0; i < bundles->len; i++)
+    {
+      g_autoptr(FlatpakDecomposed) decomposed = NULL;
+      AsBundle *bundle = g_ptr_array_index (bundles, i);
+      if (as_bundle_get_kind (bundle) != AS_BUNDLE_KIND_FLATPAK)
+        continue;
+
+      decomposed = flatpak_decomposed_new_from_ref (as_bundle_get_id (bundle), NULL);
+      if (decomposed != NULL)
+        return flatpak_decomposed_dup_id (decomposed);
+    }
+
+  /* Fall back to using the <id> field, which is required by appstream spec,
+   * but make sure the .desktop suffix isn't stripped overzealously
+   * https://github.com/hughsie/appstream-glib/issues/420
+   */
   id_stripped = as_app_get_id_filename (app);
   if (flatpak_is_valid_name (id_stripped, -1, NULL))
-    return id_stripped;
+    return g_strdup (id_stripped);
   else
     {
       g_autofree char *id_with_desktop = g_strconcat (id_stripped, ".desktop", NULL);
+      const char *id_with_suffix = as_app_get_id_no_prefix (app);
       if (flatpak_is_valid_name (id_with_desktop, -1, NULL) &&
           g_strcmp0 (id_with_suffix, id_with_desktop) == 0)
-        return id_with_suffix;
+        return g_strdup (id_with_suffix);
       else
-        return id_stripped;
+        return g_strdup (id_stripped);
     }
 }
 
@@ -237,7 +249,7 @@ static void
 print_app (Column *columns, MatchResult *res, FlatpakTablePrinter *printer)
 {
   const char *version = as_app_get_version (res->app);
-  const char *id = _app_get_id_no_suffix (res->app);
+  g_autofree char *id = _app_get_id_no_suffix (res->app);
   const char *name = as_app_get_localized_name (res->app);
   const char *comment = as_app_get_localized_comment (res->app);
   guint i;
@@ -334,7 +346,7 @@ flatpak_builtin_search (int argc, char **argv, GCancellable *cancellable, GError
           guint score = as_app_search_matches (app, search_text);
           if (score == 0)
             {
-              const char *app_id = _app_get_id_no_suffix (app);
+              g_autofree char *app_id = _app_get_id_no_suffix (app);
               if (strcasestr (app_id, search_text) != NULL)
                 score = 50;
               else
