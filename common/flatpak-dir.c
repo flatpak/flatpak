@@ -12310,7 +12310,11 @@ flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
         {
           summary = var_summary_from_gvariant (subsummary);
           ref_map = var_summary_get_ref_map (summary);
-          populate_hash_table_from_refs_map (ret_all_refs, NULL, ref_map, state->collection_id, state);
+
+          /* NOTE: collection id is NULL here not state->collection_id, see the
+           * note on flatpak_decomposed_get_collection_id()
+           */
+          populate_hash_table_from_refs_map (ret_all_refs, NULL, ref_map, NULL /* collection id */, state);
         }
     }
   else if (state->summary != NULL)
@@ -14396,7 +14400,7 @@ flatpak_dir_list_remote_refs (FlatpakDir         *self,
           if (!ostree_parse_refspec (refspec, NULL, &ref, error))
             return FALSE;
 
-          d = flatpak_decomposed_new_from_col_ref (ref, state->collection_id, NULL);
+          d = flatpak_decomposed_new_from_ref (ref, NULL);
           if (d)
             g_hash_table_insert (decomposed_local_refs, g_steal_pointer (&d), NULL);
         }
