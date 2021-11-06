@@ -1253,6 +1253,8 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
    * Returns: %TRUE if the operation on this end-of-lifed ref should
    * be skipped (e.g. because the rebased ref has been added to the
    * transaction), %FALSE if it should remain.
+   *
+   * Since: 1.3.2
    */
   signals[END_OF_LIFED_WITH_REBASE] =
     g_signal_new ("end-of-lifed-with-rebase",
@@ -1298,6 +1300,8 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
    * to see which will require authentication.
    *
    * Returns: %TRUE to carry on with the transaction, %FALSE to abort
+   *
+   * Since: 1.9.1
    */
   signals[READY_PRE_AUTH] =
     g_signal_new ("ready-pre-auth",
@@ -1347,7 +1351,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
    * The default handler does nothing, and if the authenticator is not installed when
    * the signal handler fails the transaction will error out.
    *
-   * Since: 1.7.4
+   * Since: 1.8.0
    */
   signals[INSTALL_AUTHENTICATOR] =
     g_signal_new ("install-authenticator",
