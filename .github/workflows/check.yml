@@ -14,8 +14,8 @@ on:
   pull_request:
     paths-ignore:
     - README.md
+    - CONTRIBUTING.md
     - NEWS
-    - INSTALL
     - COPYING
     - CODE_OF_CONDUCT.md
     - uncrustify.cfg
