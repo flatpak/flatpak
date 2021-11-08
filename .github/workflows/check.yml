@@ -35,6 +35,13 @@ jobs:
     name: Build with gcc and test
     runs-on: ubuntu-18.04
     steps:
+    - name: Check out flatpak
+      uses: actions/checkout@v1
+      with:
+        submodules: true
+      uses: mstachniuk/ci-skip@v1
+      with:
+        fail-fast: true
     - name: Install Dependencies
       run: |
         sudo add-apt-repository ppa:alexlarsson/flatpak
@@ -48,10 +55,6 @@ jobs:
         libgirepository1.0-dev libappstream-glib-dev libdconf-dev clang socat meson libdbus-1-dev e2fslibs-dev
         # One of the tests wants this
         sudo mkdir /tmp/flatpak-com.example.App-OwnedByRoot
-    - name: Check out flatpak
-      uses: actions/checkout@v1
-      with:
-        submodules: true
     - name: Build malcontent dependency
       run: |
         git clone --branch 0.4.0 --depth 1 --no-tags https://gitlab.freedesktop.org/pwithnall/malcontent.git ./malcontent
@@ -104,6 +107,13 @@ jobs:
         # Learn more:
         # https://docs.github.com/en/free-pro-team@latest/github/finding-security-vulnerabilities-and-errors-in-your-code/configuring-code-scanning#changing-the-languages-that-are-analyzed
     steps:
+    - name: Check out flatpak
+      uses: actions/checkout@v1
+      with:
+        submodules: true
+      uses: mstachniuk/ci-skip@v1
+      with:
+        fail-fast: true
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v1
@@ -124,10 +134,6 @@ jobs:
         libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
         libseccomp-dev libsoup2.4-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
         libgirepository1.0-dev libappstream-glib-dev libdconf-dev clang e2fslibs-dev
-    - name: Check out flatpak
-      uses: actions/checkout@v1
-      with:
-        submodules: true
     - name: configure
       run: ./autogen.sh  --enable-gtk-doc --enable-gtk-doc-html
       env:
@@ -143,6 +149,13 @@ jobs:
     needs: check # Don't run expensive test if main check fails
     runs-on: ubuntu-20.04 # Might as well test with a different one too
     steps:
+    - name: Check out flatpak
+      uses: actions/checkout@v1
+      with:
+        submodules: true
+      uses: mstachniuk/ci-skip@v1
+      with:
+        fail-fast: true
     - name: Install Dependencies
       run: |
         sudo apt-get update
@@ -153,10 +166,6 @@ jobs:
         libseccomp-dev libsoup2.4-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
         libgirepository1.0-dev libappstream-glib-dev libdconf-dev clang socat meson libdbus-1-dev \
         valgrind e2fslibs-dev
-    - name: Check out flatpak
-      uses: actions/checkout@v1
-      with:
-        submodules: true
     - name: Build ostree dependency
       run: |
         git clone --branch v2020.8 --depth 1 --no-tags https://github.com/ostreedev/ostree.git ./ostree
