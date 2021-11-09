@@ -43,7 +43,7 @@ static Column all_columns[] = {
   { "description", N_("Description"), N_("Show the description"),        1, FLATPAK_ELLIPSIZE_MODE_END, 1, 1 },
   { "application", N_("Application ID"), N_("Show the application ID"),     1, FLATPAK_ELLIPSIZE_MODE_START, 1, 1 },
   { "version",     N_("Version"),     N_("Show the version"),            1, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
-#if AS_CHECK_VERSION(0,14,0)
+#ifdef HAVE_APPSTREAM_0_14_0
   { "branch",      N_("Branch"),      N_("Show the application branch"), 1, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
 #endif
   { "remotes",     N_("Remotes"),     N_("Show the remotes"),            1, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
@@ -185,7 +185,7 @@ print_app (Column *columns, MatchResult *res, FlatpakTablePrinter *printer)
         flatpak_table_printer_add_column (printer, id);
       else if (strcmp (columns[i].name, "version") == 0)
         flatpak_table_printer_add_column (printer, version);
-#if AS_CHECK_VERSION(0,14,0)
+#ifdef HAVE_APPSTREAM_0_14_0
       else if (strcmp (columns[i].name, "branch") == 0)
         flatpak_table_printer_add_column (printer, as_component_get_branch (res->app));
 #endif
