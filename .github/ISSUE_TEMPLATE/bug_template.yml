@@ -12,6 +12,8 @@ body:
         required: true
       - label: I have searched the [issue tracker](https://www.github.com/flatpak/flatpak/issues) for a bug that matches the one I want to file, without success.
         required: true
+      - label: If this is an issue with a particular app, I have tried filing it in the appropriate issue tracker for the app (e.g. under https://github.com/flathub/) and determined that it is an issue with Flatpak itself.
+        required: true
 - type: input
   attributes:
     label: Flatpak version
