@@ -97,7 +97,7 @@
                 </varlistentry>
                 <varlistentry>
                     <term><option>Description</option> (string)</term>
-                    <listitem><para>A longer description of the remote, for display e.g. in an app store..</para></listitem>
+                    <listitem><para>A longer description of the remote, for display e.g. in an app store.</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>Icon</option> (string)</term>

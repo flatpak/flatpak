@@ -1229,7 +1229,8 @@ flatpak_remote_state_lookup_sparse_cache (FlatpakRemoteState *self,
   summary_v = get_summary_for_ref (self, ref);
   if (summary_v == NULL)
     return flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
-                             _("No entry for %s in remote summary flatpak sparse cache "), ref);
+                               _("No entry for %s in remote %s summary flatpak sparse cache"),
+                               ref, self->remote_name);
 
   summary = var_summary_from_gvariant (summary_v);
   meta = var_summary_get_metadata (summary);
@@ -1264,7 +1265,8 @@ flatpak_remote_state_lookup_sparse_cache (FlatpakRemoteState *self,
     }
 
   return flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
-                             _("No entry for %s in remote summary flatpak sparse cache "), ref);
+                             _("No entry for %s in remote %s summary flatpak sparse cache"),
+                             ref, self->remote_name);
 }
 
 static DirExtraData *
@@ -7972,9 +7974,15 @@ flatpak_dir_check_parental_controls (FlatpakDir    *self,
   MctGetAppFilterFlags manager_flags;
 
   /* Assume that root is allowed to install any ref and shouldn't have any
-   * parental controls restrictions applied to them */
-  if (getuid () == 0)
-    return TRUE;
+   * parental controls restrictions applied to them. Note that this branch
+   * must not be taken if this code is running within the system-helper, as that
+   * runs as root but on behalf of another process. If running within the
+   * system-helper, self->source_pid is non-zero. */
+  if (self->source_pid == 0 && getuid () == 0)
+    {
+      g_debug ("Skipping parental controls check for %s due to running as root", ref);
+      return TRUE;
+    }
 
   /* The ostree-metadata and appstream/ branches should not have any parental
    * controls restrictions. Similarly, for the moment, there is no point in
@@ -11914,7 +11922,7 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
       if (!flatpak_dir_lookup_remote_filter (self, remote_or_uri, FALSE, NULL, &state->allow_refs, &state->deny_refs, error))
         return NULL;
       if (!ostree_repo_remote_get_url (self->repo, remote_or_uri, &url, error))
-        return FALSE;
+        return NULL;
 
       state->default_token_type = flatpak_dir_get_remote_default_token_type (self, remote_or_uri);
     }
@@ -12275,7 +12283,7 @@ flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
         {
           summary = var_summary_from_gvariant (subsummary);
           ref_map = var_summary_get_ref_map (summary);
-          populate_hash_table_from_refs_map (ret_all_refs, NULL, ref_map, NULL, state);
+          populate_hash_table_from_refs_map (ret_all_refs, NULL, ref_map, state->collection_id, state);
         }
     }
   else if (state->summary != NULL)
@@ -14308,17 +14316,6 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
   return TRUE;
 }
 
-static gboolean
-remove_unless_decomposed_in_hash (gpointer key,
-                                  gpointer value,
-                                  gpointer user_data)
-{
-  GHashTable *table = user_data;
-  const FlatpakDecomposed *d = key;
-
-  return !g_hash_table_contains (table, d);
-}
-
 gboolean
 flatpak_dir_list_remote_refs (FlatpakDir         *self,
                               FlatpakRemoteState *state,
@@ -14340,12 +14337,15 @@ flatpak_dir_list_remote_refs (FlatpakDir         *self,
       g_autoptr(GHashTable) decomposed_local_refs =
         g_hash_table_new_full ((GHashFunc)flatpak_decomposed_hash, (GEqualFunc)flatpak_decomposed_equal, (GDestroyNotify)flatpak_decomposed_unref, NULL);
       g_autoptr(GHashTable) local_refs = NULL;
+      g_autoptr(FlatpakDecomposed) decomposed_main_ref = NULL;
       GHashTableIter hash_iter;
       gpointer key;
       g_autofree char *refspec_prefix = g_strconcat (state->remote_name, ":.", NULL);
+      g_autofree char *remote_main_ref = NULL;
 
       /* For noenumerate remotes, only return data for already locally
-       * available refs */
+       * available refs, or the ref set as xa.main-ref on the remote, or
+       * extensions of that main ref */
 
       if (!ostree_repo_list_refs (self->repo, refspec_prefix, &local_refs,
                                   cancellable, error))
@@ -14355,15 +14355,44 @@ flatpak_dir_list_remote_refs (FlatpakDir         *self,
       while (g_hash_table_iter_next (&hash_iter, &key, NULL))
         {
           const char *refspec = key;
-          g_autoptr(FlatpakDecomposed) d = flatpak_decomposed_new_from_refspec (refspec, NULL);
+          g_autofree char *ref = NULL;
+          g_autoptr(FlatpakDecomposed) d = NULL;
+
+          if (!ostree_parse_refspec (refspec, NULL, &ref, error))
+            return FALSE;
+
+          d = flatpak_decomposed_new_from_col_ref (ref, state->collection_id, NULL);
           if (d)
             g_hash_table_insert (decomposed_local_refs, g_steal_pointer (&d), NULL);
         }
 
-      /* Then we remove all remote refs not in the local refs set */
-      g_hash_table_foreach_remove (*refs,
-                                   remove_unless_decomposed_in_hash,
-                                   decomposed_local_refs);
+      remote_main_ref = flatpak_dir_get_remote_main_ref (self, state->remote_name);
+      if (remote_main_ref != NULL && *remote_main_ref != '\0')
+        decomposed_main_ref = flatpak_decomposed_new_from_col_ref (remote_main_ref, state->collection_id, NULL);
+
+      /* Then we remove all remote refs not in the local refs set, not the main
+       * ref, and not an extension of the main ref */
+      GLNX_HASH_TABLE_FOREACH_IT (*refs, it, FlatpakDecomposed *, d, void *, v)
+        {
+          if (g_hash_table_contains (decomposed_local_refs, d))
+            continue;
+
+          if (decomposed_main_ref != NULL)
+            {
+              g_autofree char *main_ref_id = NULL;
+              g_autofree char *main_ref_prefix = NULL;
+
+              if (flatpak_decomposed_equal (decomposed_main_ref, d))
+                continue;
+
+              main_ref_id = flatpak_decomposed_dup_id (decomposed_main_ref);
+              main_ref_prefix = g_strconcat (main_ref_id, ".", NULL);
+              if (flatpak_decomposed_id_has_prefix (d, main_ref_prefix))
+                continue;
+            }
+
+          g_hash_table_iter_remove (&it);
+      }
     }
 
   return TRUE;
@@ -15397,18 +15426,14 @@ get_locale_langs_from_localed_dbus (GDBusProxy *proxy, GPtrArray *langs)
       const gchar *locale = NULL;
       g_autofree char *lang = NULL;
 
-      /* See locale(7) for these categories */
-      const char * const categories[] = { "LANG=", "LC_ALL=", "LC_MESSAGES=", "LC_ADDRESS=",
-                                          "LC_COLLATE=", "LC_CTYPE=", "LC_IDENTIFICATION=",
-                                          "LC_MONETARY=", "LC_MEASUREMENT=", "LC_NAME=",
-                                          "LC_NUMERIC=", "LC_PAPER=", "LC_TELEPHONE=",
-                                          "LC_TIME=", NULL };
+      const char * const *categories = flatpak_get_locale_categories ();
 
       for (j = 0; categories[j]; j++)
         {
-          if (g_str_has_prefix (strv[i], categories[j]))
+          g_autofree char *prefix = g_strdup_printf ("%s=", categories[j]);
+          if (g_str_has_prefix (strv[i], prefix))
             {
-              locale = strv[i] + strlen (categories[j]);
+              locale = strv[i] + strlen (prefix);
               break;
             }
         }

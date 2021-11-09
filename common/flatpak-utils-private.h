@@ -138,6 +138,7 @@ char **flatpak_strv_merge (char   **strv1,
 char **flatpak_subpaths_merge (char **subpaths1,
                                char **subpaths2);
 
+const char * const *flatpak_get_locale_categories (void);
 char *flatpak_get_lang_from_locale (const char *locale);
 char **flatpak_get_current_locale_langs (void);
 

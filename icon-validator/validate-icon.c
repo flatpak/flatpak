@@ -157,7 +157,7 @@ rerun_in_sandbox (const char *arg_width,
             "--unshare-net",
             "--unshare-pid",
             "--ro-bind", "/usr", "/usr",
-            "--ro-bind", "/etc/ld.so.cache", "/etc/ld.so.cache",
+            "--ro-bind-try", "/etc/ld.so.cache", "/etc/ld.so.cache",
             "--ro-bind", validate_icon, validate_icon,
             NULL);
 

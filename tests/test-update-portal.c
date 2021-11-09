@@ -77,7 +77,9 @@ static void
 write_status (int res, int status_pipe)
 {
   char c = res;
-  write (status_pipe, &c, 1);
+  const ssize_t write_ret = write (status_pipe, &c, 1);
+  if (write_ret < 0)
+    g_printerr ("write_status() failed with %zd\n", write_ret);
 }
 
 typedef int (*TestCallback) (PortalFlatpak *portal, int status_pipe);

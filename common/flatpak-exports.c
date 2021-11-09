@@ -657,10 +657,10 @@ flatpak_exports_path_is_visible (FlatpakExports *exports,
 static gboolean
 never_export_as_symlink (const char *path)
 {
-  /* Don't export /tmp as a symlink even if it is on the host, because
-     that will fail with the pre-existing directory we created for /tmp,
+  /* Don't export {/var,}/tmp as a symlink even if it is on the host, because
+     that will fail with the pre-existing directory we created for it,
      and anyway, it being a symlink is not useful in the sandbox */
-  if (strcmp (path, "/tmp") == 0)
+  if (strcmp (path, "/tmp") == 0 || strcmp (path, "/var/tmp") == 0)
     return TRUE;
 
   return FALSE;

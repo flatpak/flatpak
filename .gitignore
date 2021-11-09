@@ -65,6 +65,7 @@ document-portal/xdp-resources.[ch]
 test-suite*.log
 common/flatpak-version-macros.h
 flatpak.pc
+flatpak.pp.bz2
 common/flatpak-enum-types.c
 common/flatpak-enum-types.h
 test-libflatpak
@@ -104,6 +105,18 @@ Flatpak-1.0.*
 /testcommon
 /testcommon.log
 /testcommon.trs
+/test-context
+/test-context.log
+/test-context.trs
+/test-exports
+/test-exports.log
+/test-exports.trs
+/test-instance
+/test-instance.log
+/test-instance.trs
+/test-portal
+/test-portal.log
+/test-portal.trs
 /tests/test-keyring/.gpg-v21-migrated
 /tests/test-keyring/private-keys-v1.d/
 /tests/test-keyring/trustdb.gpg
@@ -118,6 +131,10 @@ Flatpak-1.0.*
 /tests/test-authenticator
 /tests/test-update-portal
 /tests/test-portal-impl
+/tests/hold-lock
+/tests/list-unused
+/tests/mock-flatpak
+/tests/try-syscall
 *.test
 /tests/*.sh.log
 /tests/*.sh.test

@@ -1,3 +1,51 @@
+Changes in 1.12.2
+~~~~~~~~~~~~~~~~~
+Released: 2021-10-12
+
+ * Install translations referenced by LANG, LANGUAGE or LC_ALL
+ * Fix error handling for the syscalls that are blocked when not using --devel
+ * Improve diagnostic messages when seccomp rules cannot be applied
+ * Update Polish translation
+
+Changes in 1.12.1
+~~~~~~~~~~~~~~~~~
+Released: 2021-10-08
+
+The security fix in the 1.12.0 release failed when used with some
+older versions of libseccomp (that don't know about the new syscalls).
+
+More specifically, installing modules that use extra-data would fail, and so
+would running applications with the --allow=multiarch feature, such as Steam.
+This release fixes those regressions.
+
+Changes in 1.12.0
+~~~~~~~~~~~~~~~~~
+Released: 2021-10-08
+
+This is the first stable release in the 1.12.x series. The major changes
+in this series is the support for better control of sub-sandboxes, as
+used by the Steam Flatpak app to run Windows games under Proton.
+
+In addition, this release fixes a security vulnerability in the portal
+support. Some recently added syscalls were not blocked by the seccomp rules
+which allowed the application to create sub-sandboxes which can confuse
+the sandboxing verification mechanisms of the portal. This has been
+fixed by extending the seccomp rules. (CVE-2021-41133)
+For details, see:
+  https://github.com/flatpak/flatpak/security/advisories/GHSA-67h7-w3jq-vh4q
+
+Other changes in this version:
+ * Some test fixes
+ * Update translations
+ * Support for specifying the flatpak binary to use during exports
+ * Install translations for all languages in the locale, not just the ones in
+   LC_MESSAGES.
+ * Fix progress reporting in flatpak fsck
+ * Handle cases where /var/tmp is a symlink
+ * Expose /etc/gai.conf to the sandbox
+ * Fix the parental control checks for root
+ * Handle missing /etc/ld.so.cache (musl)
+
 Changes in 1.11.3
 ~~~~~~~~~~~~~~~~~
 Released: 2021-08-25

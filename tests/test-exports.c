@@ -1305,6 +1305,8 @@ test_exports_unusual (void)
     { "usr/lib", FAKE_DIR },
     { "usr/share", FAKE_DIR },
     { "var/home/me", FAKE_DIR },
+    { "var/volatile/tmp", FAKE_DIR },
+    { "var/tmp", FAKE_SYMLINK, "volatile/tmp" },
     { NULL }
   };
   g_autoptr(FlatpakBwrap) bwrap = flatpak_bwrap_new (NULL);
@@ -1334,6 +1336,9 @@ test_exports_unusual (void)
                                    FLATPAK_FILESYSTEM_MODE_READ_ONLY,
                                    "/tmp");
   flatpak_exports_add_path_expose (exports,
+                                   FLATPAK_FILESYSTEM_MODE_READ_WRITE,
+                                   "/var/tmp");
+  flatpak_exports_add_path_expose (exports,
                                    FLATPAK_FILESYSTEM_MODE_READ_ONLY,
                                    "not-absolute");
   test_host_exports_finish (exports, bwrap);
@@ -1346,6 +1351,8 @@ test_exports_unusual (void)
   i = assert_next_is_bind (bwrap, i, "--ro-bind", "/tmp", "/tmp");
   i = assert_next_is_bind (bwrap, i, "--ro-bind", "/var/home/me",
                            "/var/home/me");
+  i = assert_next_is_bind (bwrap, i, "--bind", "/var/tmp",
+                           "/var/tmp");
   i = assert_next_is_bind (bwrap, i, "--ro-bind", "/usr", "/run/host/usr");
   i = assert_next_is_symlink (bwrap, i, "usr/bin", "/run/host/bin");
   i = assert_next_is_symlink (bwrap, i, "usr/lib", "/run/host/lib");
