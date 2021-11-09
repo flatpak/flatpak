@@ -120,7 +120,8 @@ msgstr "फ्लैटपैक बंडल के बजाय oci छवि 
 msgid ""
 "LOCATION FILENAME NAME [BRANCH] - Create a single file bundle from a local "
 "repository"
-msgstr "स्थान का नाम नाम [शाखा] - स्थानीय रिपॉजिटरी से एकल फ़ाइल बिंदी बनाएँ"
+msgstr ""
+"स्थान का नाम नाम [शाखा] - स्थानीय रिपॉजिटरी से एकल फ़ाइल बिंदी बनाएँ"
 
 #: app/flatpak-builtins-build-bundle.c:627
 msgid "LOCATION, FILENAME and NAME must be specified"
@@ -380,7 +381,8 @@ msgstr ""
 #: app/flatpak-builtins-build-commit-from.c:295
 msgid ""
 "If --src-ref is specified, exactly one destination ref must be specified"
-msgstr "यदि --src-ref निर्दिष्ट है, तो ठीक एक गंतव्य रेफरी निर्दिष्ट होना चाहिए"
+msgstr ""
+"यदि --src-ref निर्दिष्ट है, तो ठीक एक गंतव्य रेफरी निर्दिष्ट होना चाहिए"
 
 #: app/flatpak-builtins-build-commit-from.c:298
 msgid "Either --src-repo or --src-ref must be specified"
@@ -787,7 +789,7 @@ msgstr "एपीपी"
 
 #: app/flatpak-builtins-build-init.c:56
 msgid "Specify version for --base"
-msgstr "--Base के लिए संस्करण निर्दिष्ट करें"
+msgstr "--base के लिए संस्करण निर्दिष्ट करें"
 
 #: app/flatpak-builtins-build-init.c:56 app/flatpak-builtins-run.c:70
 msgid "VERSION"
@@ -863,8 +865,7 @@ msgstr "रनटाइम निर्दिष्ट किया जाना
 #: app/flatpak-builtins-build-init.c:229
 #, c-format
 msgid "'%s' is not a valid build type name, use app, runtime or extension"
-msgstr ""
-"'%s' एक मान्य बिल्ड प्रकार का नाम नहीं है, एप्लिकेशन, रनटाइम या एक्सटेंशन का उपयोग करें"
+msgstr "'%s' एक मान्य बिल्ड प्रकार का नाम नहीं है, एप्लिकेशन, रनटाइम या एक्सटेंशन का उपयोग करें"
 
 #: app/flatpak-builtins-build-init.c:235 app/flatpak-builtins-override.c:79
 #, c-format
@@ -1194,7 +1195,8 @@ msgstr "चेतावनी: संबंधित रेफरी '%s' को
 msgid ""
 "Remote ‘%s’ does not have a collection ID set, which is required for P2P "
 "distribution of ‘%s’."
-msgstr "रिमोट ‘%s’ का संग्रह ID सेट नहीं है, जो कि P2P वितरण के लिए आवश्यक है ‘%s’."
+msgstr ""
+"रिमोट ‘%s’ का संग्रह ID सेट नहीं है, जो कि P2P वितरण के लिए आवश्यक है ‘%s’."
 
 #: app/flatpak-builtins-create-usb.c:271
 #, c-format
@@ -1203,8 +1205,7 @@ msgstr "चेतावनी: रेफरी '%s' ('%s' का रनटाइ
 
 #: app/flatpak-builtins-create-usb.c:482
 msgid "MOUNT-PATH [REF…] - Copy apps or runtimes onto removable media"
-msgstr ""
-"माउंट-पैच [रेफ…] - हटाने योग्य मीडिया पर एप्लिकेशन या रनटाइम्स की प्रतिलिपि बनाएँ"
+msgstr "माउंट-पैच [रेफ…] - हटाने योग्य मीडिया पर एप्लिकेशन या रनटाइम्स की प्रतिलिपि बनाएँ"
 
 #: app/flatpak-builtins-create-usb.c:491
 msgid "MOUNT-PATH and REF must be specified"
@@ -1242,8 +1243,7 @@ msgstr "चेतावनी: दूरस्थ के लिए रेपो 
 #: app/flatpak-builtins-create-usb.c:749
 #, c-format
 msgid "Warning: Couldn't update appstream data for remote ‘%s’ arch ‘%s’: %s\n"
-msgstr ""
-"चेतावनी: रिमोट के लिए अपस्ट्रीम डेटा को अपडेट नहीं किया जा सका ‘%s’ आर्च ‘%s’: %s\n"
+msgstr "चेतावनी: रिमोट के लिए अपस्ट्रीम डेटा को अपडेट नहीं किया जा सका ‘%s’ आर्च ‘%s’: %s\n"
 
 #. Print a warning if both appstream and appstream2 are missing
 #: app/flatpak-builtins-create-usb.c:782
@@ -1609,7 +1609,7 @@ msgstr " - इतिहास दिखाएं"
 
 #: app/flatpak-builtins-history.c:474
 msgid "Failed to parse the --since option"
-msgstr "--जबसे विकल्प पार्स करने में विफल"
+msgstr "--since options पार्स करने में विफल"
 
 #: app/flatpak-builtins-history.c:485
 msgid "Failed to parse the --until option"
