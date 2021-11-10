@@ -145,12 +145,8 @@ as_app_equal (AsComponent *app1, AsComponent *app2)
   if (app1 == app2)
     return TRUE;
 
-  AsBundle *app1_bundle = as_component_get_bundle (app1, AS_BUNDLE_KIND_FLATPAK);
-  AsBundle *app2_bundle = as_component_get_bundle (app2, AS_BUNDLE_KIND_FLATPAK);
-  const char *app1_ref = as_bundle_get_id (app1_bundle);
-  const char *app2_ref = as_bundle_get_id (app2_bundle);
-  g_autoptr(FlatpakDecomposed) app1_decomposed = flatpak_decomposed_new_from_ref (app1_ref, NULL);
-  g_autoptr(FlatpakDecomposed) app2_decomposed = flatpak_decomposed_new_from_ref (app2_ref, NULL);
+  FlatpakDecomposed *app1_decomposed = g_object_get_data (G_OBJECT (app1), "decomposed");
+  FlatpakDecomposed *app2_decomposed = g_object_get_data (G_OBJECT (app2), "decomposed");
 
   /* Ignore arch when comparing since it's not shown in the search output and
    * we don't want duplicate results for the same app with different arches.
@@ -172,9 +168,7 @@ compare_apps (MatchResult *a, AsComponent *b)
 static char *
 component_get_flatpak_id (AsComponent *app)
 {
-  AsBundle *app_bundle = as_component_get_bundle (app, AS_BUNDLE_KIND_FLATPAK);
-  const char *app_ref = as_bundle_get_id (app_bundle);
-  g_autoptr(FlatpakDecomposed) app_decomposed = flatpak_decomposed_new_from_ref (app_ref, NULL);
+  FlatpakDecomposed *app_decomposed = g_object_get_data (G_OBJECT (app), "decomposed");
   return flatpak_decomposed_dup_id (app_decomposed);
 }
 
@@ -184,9 +178,7 @@ component_get_flatpak_id (AsComponent *app)
 static const char *
 component_get_branch (AsComponent *app)
 {
-  AsBundle *app_bundle = as_component_get_bundle (app, AS_BUNDLE_KIND_FLATPAK);
-  const char *app_ref = as_bundle_get_id (app_bundle);
-  g_autoptr(FlatpakDecomposed) app_decomposed = flatpak_decomposed_new_from_ref (app_ref, NULL);
+  FlatpakDecomposed *app_decomposed = g_object_get_data (G_OBJECT (app), "decomposed");
   return flatpak_decomposed_get_branch (app_decomposed);
 }
 
@@ -297,6 +289,9 @@ flatpak_builtin_search (int argc, char **argv, GCancellable *cancellable, GError
                        as_component_get_id (app), remote_name);
               continue;
             }
+
+          g_object_set_data_full (G_OBJECT (app), "decomposed", g_steal_pointer (&decomposed),
+                                  (GDestroyNotify) flatpak_decomposed_unref);
 
           guint score = as_component_search_matches (app, search_text);
           if (score == 0)
