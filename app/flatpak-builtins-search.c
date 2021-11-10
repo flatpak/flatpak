@@ -166,11 +166,25 @@ compare_apps (MatchResult *a, AsComponent *b)
   return !as_app_equal (a->app, b);
 }
 
+/* as_component_get_id() returns the appstream component ID which doesn't
+ * necessarily match the flatpak app ID (e.g. sometimes there's a .desktop
+ * suffix on the appstream ID) so this gets the flatpak app ID via the bundle
+ * element
+ */
+static char *
+component_get_flatpak_id (AsComponent *app)
+{
+  AsBundle *app_bundle = as_component_get_bundle (app, AS_BUNDLE_KIND_FLATPAK);
+  const char *app_ref = as_bundle_get_id (app_bundle);
+  g_autoptr(FlatpakDecomposed) app_decomposed = flatpak_decomposed_new_from_ref (app_ref, NULL);
+  return flatpak_decomposed_dup_id (app_decomposed);
+}
+
 static void
 print_app (Column *columns, MatchResult *res, FlatpakTablePrinter *printer)
 {
   const char *version = as_app_get_version (res->app);
-  const char *id = as_component_get_id (res->app);
+  g_autofree char *id = component_get_flatpak_id (res->app);
   const char *name = as_component_get_name (res->app);
   const char *comment = as_component_get_summary (res->app);
   guint i;
@@ -264,7 +278,6 @@ flatpak_builtin_search (int argc, char **argv, GCancellable *cancellable, GError
       for (i = 0; i < apps->len; ++i)
         {
           AsComponent *app = g_ptr_array_index (apps, i);
-          const char *app_id = as_component_get_id (app);
           const char *remote_name = g_object_get_data (G_OBJECT (mdata), "remote-name");
           g_autoptr(FlatpakDecomposed) decomposed = NULL;
 
@@ -273,13 +286,14 @@ flatpak_builtin_search (int argc, char **argv, GCancellable *cancellable, GError
               (decomposed = flatpak_decomposed_new_from_ref (as_bundle_get_id (bundle), NULL)) == NULL)
             {
               g_debug ("Ignoring app %s from remote %s as it lacks a flatpak bundle",
-                       app_id, remote_name);
+                       as_component_get_id (app), remote_name);
               continue;
             }
 
           guint score = as_component_search_matches (app, search_text);
           if (score == 0)
             {
+              g_autofree char *app_id = component_get_flatpak_id (app);
               if (strcasestr (app_id, search_text) != NULL)
                 score = 50;
               else
