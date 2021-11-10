@@ -1137,11 +1137,9 @@ flatpak_dir_load_appstream_store (FlatpakDir   *self,
   success = (local_error == NULL);
 #endif
 
-  /* We want to ignore ENOENT error as it is harmless and valid
-   * FIXME: appstream-glib doesn't have granular file-not-found error
-   * See: https://github.com/hughsie/appstream-glib/pull/268 */
+  /* We want to ignore ENOENT error as it is harmless and valid */
   if (local_error != NULL &&
-      g_str_has_suffix (local_error->message, "No such file or directory"))
+      g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
     g_clear_error (&local_error);
   else if (local_error != NULL)
     g_propagate_error (error, g_steal_pointer (&local_error));
