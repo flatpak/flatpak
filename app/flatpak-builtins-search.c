@@ -43,9 +43,7 @@ static Column all_columns[] = {
   { "description", N_("Description"), N_("Show the description"),        1, FLATPAK_ELLIPSIZE_MODE_END, 1, 1 },
   { "application", N_("Application ID"), N_("Show the application ID"),     1, FLATPAK_ELLIPSIZE_MODE_START, 1, 1 },
   { "version",     N_("Version"),     N_("Show the version"),            1, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
-#ifdef HAVE_APPSTREAM_0_14_0
   { "branch",      N_("Branch"),      N_("Show the application branch"), 1, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
-#endif
   { "remotes",     N_("Remotes"),     N_("Show the remotes"),            1, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
   { NULL }
 };
@@ -180,6 +178,18 @@ component_get_flatpak_id (AsComponent *app)
   return flatpak_decomposed_dup_id (app_decomposed);
 }
 
+/* as_component_get_branch() seems to return NULL in practice, so use the
+ * bundle id to get the branch
+ */
+static const char *
+component_get_branch (AsComponent *app)
+{
+  AsBundle *app_bundle = as_component_get_bundle (app, AS_BUNDLE_KIND_FLATPAK);
+  const char *app_ref = as_bundle_get_id (app_bundle);
+  g_autoptr(FlatpakDecomposed) app_decomposed = flatpak_decomposed_new_from_ref (app_ref, NULL);
+  return flatpak_decomposed_get_branch (app_decomposed);
+}
+
 static void
 print_app (Column *columns, MatchResult *res, FlatpakTablePrinter *printer)
 {
@@ -199,10 +209,8 @@ print_app (Column *columns, MatchResult *res, FlatpakTablePrinter *printer)
         flatpak_table_printer_add_column (printer, id);
       else if (strcmp (columns[i].name, "version") == 0)
         flatpak_table_printer_add_column (printer, version);
-#ifdef HAVE_APPSTREAM_0_14_0
       else if (strcmp (columns[i].name, "branch") == 0)
-        flatpak_table_printer_add_column (printer, as_component_get_branch (res->app));
-#endif
+        flatpak_table_printer_add_column (printer, component_get_branch (res->app));
       else if (strcmp (columns[i].name, "remotes") == 0)
         {
           int j;
