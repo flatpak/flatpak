@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..42"
+echo "1..43"
 
 #Regular repo
 setup_repo
@@ -104,6 +104,12 @@ assert_has_file $FL_DIR/appstream/test-repo/$ARCH/active/appstream.xml
 assert_has_file $FL_DIR/appstream/test-repo/$ARCH/active/appstream.xml.gz
 
 ok "update appstream"
+
+# Test that 'flatpak search' works
+${FLATPAK} search Hello > search-results
+assert_file_has_content search-results "Print a greeting"
+
+ok "search"
 
 if [ x${USE_COLLECTIONS_IN_CLIENT-} != xyes ] ; then
     install_repo test-no-gpg
