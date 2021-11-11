@@ -575,6 +575,11 @@ flatpak_run_get_pulseaudio_server (void)
   return NULL;
 }
 
+/*
+ * Parse a PulseAudio server string, as documented on
+ * https://www.freedesktop.org/wiki/Software/PulseAudio/Documentation/User/ServerStrings/.
+ * Returns the first supported server address, or NULL if none are supported.
+ */
 static char *
 flatpak_run_parse_pulse_server (const char *value)
 {
