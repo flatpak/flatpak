@@ -396,7 +396,7 @@ msgstr "उपयोग का अमान्य तर्क प्रार�
 #: app/flatpak-builtins-build-commit-from.c:323
 #, c-format
 msgid "Invalid name %s in --end-of-life-rebase"
-msgstr "अमान्य नाम %s अमान्य नाम - of-of-life-rebase"
+msgstr "अमान्य नाम %s in --end-of-life-rebase"
 
 #: app/flatpak-builtins-build-commit-from.c:332
 #: app/flatpak-builtins-build-export.c:1081
@@ -685,7 +685,7 @@ msgstr "कोई निष्पादन योग्य नहीं मि�
 #: app/flatpak-builtins-build-finish.c:501
 #, c-format
 msgid "Invalid --require-version argument: %s"
-msgstr "अमान्य --require-संस्करण तर्क: %s"
+msgstr "अमान्य --require-version तर्क: %s"
 
 #: app/flatpak-builtins-build-finish.c:533
 #, c-format
@@ -698,7 +698,7 @@ msgid ""
 "Too few elements in --metadata argument %s, format should be "
 "GROUP=KEY[=VALUE]]"
 msgstr ""
-"में बहुत कम तत्व --metadata बहस %s, प्रारूप GROUP = KEY [= VALUE] होना चाहिए]"
+"में बहुत कम तत्व --metadata बहस %s, प्रारूप GROUP=KEY[=VALUE] होना चाहिए]"
 
 #: app/flatpak-builtins-build-finish.c:587
 #: app/flatpak-builtins-build-init.c:449
@@ -853,7 +853,8 @@ msgstr "विस्तार का अनुरोध किया %s स्�
 #: app/flatpak-builtins-build-init.c:201
 msgid ""
 "DIRECTORY APPNAME SDK RUNTIME [BRANCH] - Initialize a directory for building"
-msgstr "डायरेक्टरी ऐपनाम एसडीके रनटाइम [ब्रांच] - इमारत के लिए एक निर्देशिका शुरू करें"
+msgstr ""
+"डायरेक्टरी ऐपनाम एसडीके रनटाइम [ब्रांच] - इमारत के लिए एक निर्देशिका शुरू करें"
 
 #: app/flatpak-builtins-build-init.c:208
 msgid "RUNTIME must be specified"
@@ -1135,7 +1136,7 @@ msgstr "[कुंजी [VALUE]] - कॉन्फ़िगरेशन प्�
 
 #: app/flatpak-builtins-config.c:358
 msgid "Can only use one of --list, --get, --set or --unset"
-msgstr "में से केवल एक का उपयोग किया जा सकता है --list, --get, --set or --unset"
+msgstr "में से केवल एक का उपयोग किया जा सकता है --list, --get, --set या --unset"
 
 #: app/flatpak-builtins-config.c:372
 msgid "Must specify one of --list, --get, --set or --unset"
@@ -1224,8 +1225,8 @@ msgid ""
 "Warning: Ref ‘%s’ is partially installed. Use --allow-partial to suppress "
 "this message.\n"
 msgstr ""
-"चेतावनी: Ref ‘%s’ आंशिक रूप से स्थापित है। प्रयोग करें --अनुमति देते हैं-आंशिक इस संदेश को "
-"दबाने के लिए।\n"
+"चेतावनी: संदर्भ '%s' आंशिक रूप से संस्थापित है। इस संदेश को दबाने के लिए --allow-partial "
+"का प्रयोग करें।\n"
 
 #: app/flatpak-builtins-create-usb.c:679
 #, c-format
@@ -1240,7 +1241,7 @@ msgstr "चेतावनी: दूरस्थ के लिए रेपो 
 #: app/flatpak-builtins-create-usb.c:749
 #, c-format
 msgid "Warning: Couldn't update appstream data for remote ‘%s’ arch ‘%s’: %s\n"
-msgstr "चेतावनी: रिमोट के लिए अपस्ट्रीम डेटा को अपडेट नहीं किया जा सका ‘%s’ आर्च ‘%s’: %s\n"
+msgstr "चेतावनी: रिमोट के लिए अपस्ट्रीम डेटा को अपडेट नहीं किया जा सका ‘%s’ वास्तुकला ‘%s’: %s\n"
 
 #. Print a warning if both appstream and appstream2 are missing
 #: app/flatpak-builtins-create-usb.c:782
@@ -1254,7 +1255,7 @@ msgstr ""
 #: app/flatpak-builtins-create-usb.c:788
 #, c-format
 msgid "Couldn't find appstream2 data for remote ‘%s’ arch ‘%s’: %s\n"
-msgstr "रिमोट के लिए appstream2 डेटा नहीं मिल सका ‘%s’ आर्च ‘%s’: %s\n"
+msgstr "रिमोट के लिए appstream2 डेटा नहीं मिल सका ‘%s’ वास्तुकला ‘%s’: %s\n"
 
 #: app/flatpak-builtins-document-export.c:62
 msgid "Create a unique document reference"
@@ -1611,7 +1612,7 @@ msgstr "--since options पार्स करने में विफल"
 
 #: app/flatpak-builtins-history.c:485
 msgid "Failed to parse the --until option"
-msgstr "पार्स करने में विफल रहा --विकल्प तक"
+msgstr "--until विकल्प को पार्स करने में विफल"
 
 #: app/flatpak-builtins-info.c:56
 msgid "Show user installations"
@@ -3092,7 +3093,7 @@ msgstr "--All का उपयोग करते समय REFs निर्द
 
 #: app/flatpak-builtins-uninstall.c:170
 msgid "Must not specify REFs when using --unused"
-msgstr "का उपयोग करते समय REF निर्दिष्ट नहीं करते --अप्रयुक्त"
+msgstr "--unused का उपयोग करते समय आरईएफ निर्दिष्ट नहीं करना चाहिए"
 
 #: app/flatpak-builtins-uninstall.c:233
 #, c-format
@@ -3281,7 +3282,7 @@ msgstr "प्रत्यय अस्पष्ट है: '%s'."
 #. Translators: don't translate the values
 #: app/flatpak-builtins-utils.c:794 app/flatpak-builtins-utils.c:809
 msgid "Possible values are :s[tart], :m[iddle], :e[nd] or :f[ull]"
-msgstr "संभावित मान हैं: s [tart], m [निष्क्रिय],: e [nd] या: f [ull]"
+msgstr "संभावित मान हैं: s[tart], m[iddle],: e[nd] या: f[ull]"
 
 #: app/flatpak-builtins-utils.c:807
 #, c-format
@@ -3594,7 +3595,7 @@ msgstr "स्वचालित विलोपन को रोकने क�
 
 #: app/flatpak-main.c:86
 msgid "List installed apps and/or runtimes"
-msgstr "स्थापित अनुप्रयोगों और / या runtimes की सूची"
+msgstr "इंस्टॉल किए गए एप्लिकेशन और / या रनटाइम की सूची"
 
 #: app/flatpak-main.c:87
 msgid "Show info for installed app or runtime"
@@ -3614,7 +3615,7 @@ msgstr "flatpak स्थापना की मरम्मत"
 
 #: app/flatpak-main.c:91
 msgid "Put applications or runtimes onto removable media"
-msgstr "प्लेस अनुप्रयोगों या हटाने योग्य मीडिया पर runtimes"
+msgstr "एप्लिकेशन या रनटाइम को हटाने योग्य मीडिया पर रखें"
 
 #. translators: please keep the leading newline and space
 #: app/flatpak-main.c:94
@@ -3627,7 +3628,7 @@ msgstr ""
 
 #: app/flatpak-main.c:95
 msgid "Search for remote apps/runtimes"
-msgstr "दूरस्थ क्षुधा / runtimes के लिए खोज"
+msgstr "दूरस्थ अनुप्रयोग / रनटाइम ढूँढना"
 
 #. translators: please keep the leading newline and space
 #: app/flatpak-main.c:98
@@ -3828,7 +3829,7 @@ msgstr "सिस्टम स्थापना और निकास के �
 
 #: app/flatpak-main.c:173
 msgid "Print the updated environment needed to run flatpaks"
-msgstr "[Flatpaks] चलाने के लिए आवश्यक अद्यतन वातावरण का प्रिंट आउट लें"
+msgstr "flatpaks चलाने के लिए आवश्यक अद्यतन परिवेश को प्रिंट करें"
 
 #: app/flatpak-main.c:174
 msgid "Only include the system installation with --print-updated-env"
@@ -3980,7 +3981,7 @@ msgstr "फाइलसिस्टम स्थान \"%s\" शामिल \"
 msgid ""
 "--filesystem=/ is not available, use --filesystem=host for a similar result"
 msgstr ""
-"--filesystem = / उपलब्ध नहीं है, समान परिणाम के लिए --filesystem = होस्ट का उपयोग "
+"--filesystem=/ उपलब्ध नहीं है, समान परिणाम के लिए --filesystem = होस्ट का उपयोग "
 "करें"
 
 #: common/flatpak-context.c:850
@@ -4004,7 +4005,7 @@ msgstr "पर्यावरण पर नाम में नहीं हो�
 
 #: common/flatpak-context.c:1305 common/flatpak-context.c:1313
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
-msgstr "--add- नीति तर्क SUBSYSTEM.KEY = VALUE के रूप में होना चाहिए"
+msgstr "--add-policy तर्क SUBSYSTEM.KEY=VALUE के रूप में होना चाहिए"
 
 #: common/flatpak-context.c:1320
 msgid "--add-policy values can't start with \"!\""
