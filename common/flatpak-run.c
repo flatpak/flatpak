@@ -591,6 +591,10 @@ flatpak_run_parse_pulse_server (const char *value)
       const char *server = servers[i];
       if (g_str_has_prefix (server, "{"))
         {
+          /*
+           * TODO: compare the value within {} to the local hostname and D-Bus machine ID,
+           * and skip if it matches neither.
+           */
           const char * closing = strstr (server, "}");
           if (closing == NULL)
             continue;
@@ -601,6 +605,8 @@ flatpak_run_parse_pulse_server (const char *value)
         return g_strdup (server + 5);
       if (server[0] == '/')
         return g_strdup (server);
+
+      /* TODO: Support TCP connections? */
     }
 
   return NULL;
