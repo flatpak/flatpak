@@ -591,8 +591,11 @@ flatpak_run_parse_pulse_server (const char *value)
             continue;
           server = closing + 1;
         }
+
       if (g_str_has_prefix (server, "unix:"))
         return g_strdup (server + 5);
+      if (server[0] == '/')
+        return g_strdup (server);
     }
 
   return NULL;
