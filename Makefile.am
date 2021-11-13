@@ -162,6 +162,10 @@ profiledir = $(PROFILE_DIR)
 profile_DATA = profile/flatpak.sh
 EXTRA_DIST += $(profile_DATA)
 
+fishconfdir = $(sysconfdir)/fish/conf.d
+fishconf_DATA = profile/flatpak.fish
+EXTRA_DIST += $(fishconf_DATA)
+
 envdir = $(datadir)/gdm/env.d
 env_DATA =
 if INSTALL_GDM_ENV_FILE
