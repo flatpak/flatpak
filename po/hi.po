@@ -231,7 +231,7 @@ msgstr "सत्र बस कॉल लॉग करें"
 
 #: app/flatpak-builtins-build.c:205
 msgid "DIRECTORY [COMMAND [ARGUMENT…]] - Build in directory"
-msgstr "निर्देशिका [कमांड [तर्क ...]] - निर्देशिका में बनाएँ"
+msgstr "निर्देशिका [कमांड [तर्क...]] - निर्देशिका में बनाएँ"
 
 #: app/flatpak-builtins-build.c:228 app/flatpak-builtins-build-finish.c:646
 msgid "DIRECTORY must be specified"
@@ -390,13 +390,13 @@ msgstr "या तो --src-repo या --src-ref निर्दिष्ट �
 
 #: app/flatpak-builtins-build-commit-from.c:314
 msgid "Invalid argument format of use  --end-of-life-rebase=OLDID=NEWID"
-msgstr "उपयोग का अमान्य तर्क प्रारूप --end-of-life-rebase = OLDID = NEWID"
+msgstr "उपयोग का अमान्य तर्क प्रारूप --end-of-life-rebase=OLDID=NEWID"
 
 #: app/flatpak-builtins-build-commit-from.c:320
 #: app/flatpak-builtins-build-commit-from.c:323
 #, c-format
 msgid "Invalid name %s in --end-of-life-rebase"
-msgstr "अमान्य नाम %s in --end-of-life-rebase"
+msgstr "अमान्य नाम %s में --end-of-life-rebase"
 
 #: app/flatpak-builtins-build-commit-from.c:332
 #: app/flatpak-builtins-build-export.c:1081
@@ -419,7 +419,7 @@ msgstr "के लिए निर्यात करने के लिए व
 
 #: app/flatpak-builtins-build-export.c:62
 msgid "Commit runtime (/usr), not /app"
-msgstr "प्रतिबद्ध रनटाइम (/ usr), नहीं /app"
+msgstr "प्रतिबद्ध रनटाइम (/usr), नहीं /app"
 
 #: app/flatpak-builtins-build-export.c:65
 msgid "Use alternative directory for the files"
@@ -603,7 +603,7 @@ msgstr "विस्तार बिंदु जानकारी जोड़
 
 #: app/flatpak-builtins-build-finish.c:55 app/flatpak-builtins-build-init.c:63
 msgid "NAME=VARIABLE[=VALUE]"
-msgstr "नाम = चर [= मान]"
+msgstr "नाम=चर[=मूल्य]"
 
 #: app/flatpak-builtins-build-finish.c:56
 msgid "Remove extension point info"
@@ -640,7 +640,7 @@ msgstr "ऐप के लिए उपयोग किए जाने वाल
 #: app/flatpak-builtins-list.c:51 app/flatpak-builtins-remote-ls.c:56
 #: app/flatpak-builtins-run.c:69
 msgid "RUNTIME"
-msgstr "भागो समय"
+msgstr "क्रम पर्यावरण"
 
 #: app/flatpak-builtins-build-finish.c:60
 msgid "Set generic metadata option"
@@ -648,7 +648,7 @@ msgstr "सामान्य मेटाडेटा विकल्प से
 
 #: app/flatpak-builtins-build-finish.c:60
 msgid "GROUP=KEY[=VALUE]"
-msgstr "ग्रुप = कुंजी [= मूल्य]"
+msgstr "ग्रुप=कुंजी[=मूल्य]"
 
 #: app/flatpak-builtins-build-finish.c:61
 msgid "Don't inherit permissions from runtime"
@@ -690,7 +690,7 @@ msgstr "अमान्य --require-version तर्क: %s"
 #: app/flatpak-builtins-build-finish.c:533
 #, c-format
 msgid "Too few elements in --extra-data argument %s"
-msgstr "अतिरिक्त डेटा तर्क में बहुत कम तत्व %s"
+msgstr "--extra-data तर्क %s . में बहुत कम तत्व %s"
 
 #: app/flatpak-builtins-build-finish.c:565
 #, c-format
@@ -706,7 +706,7 @@ msgstr ""
 msgid ""
 "Too few elements in --extension argument %s, format should be "
 "NAME=VAR[=VALUE]"
-msgstr "में बहुत कम तत्व --extension बहस %s, प्रारूप NAME = VAR [= VALUE] होना चाहिए"
+msgstr "में बहुत कम तत्व --extension बहस %s, प्रारूप NAME=VAR[=VALUE] होना चाहिए"
 
 #: app/flatpak-builtins-build-finish.c:593
 #: app/flatpak-builtins-build-init.c:452
@@ -770,11 +770,11 @@ msgstr "स्थान और फ़ाइल नाम निर्दिष�
 #: app/flatpak-builtins-build-init.c:53 app/flatpak-builtins-info.c:55
 #: app/flatpak-builtins-run.c:64
 msgid "Arch to use"
-msgstr "आर्क का उपयोग करने के लिए"
+msgstr "उपयोग करने के लिए वास्तुकला"
 
 #: app/flatpak-builtins-build-init.c:54
 msgid "Initialize var from named runtime"
-msgstr "आरंभ में var रनटाइम नाम से"
+msgstr "नामित रनटाइम से var प्रारंभ करें"
 
 #: app/flatpak-builtins-build-init.c:55
 msgid "Initialize apps from named app"
@@ -810,7 +810,7 @@ msgstr "विस्तार टैग"
 
 #: app/flatpak-builtins-build-init.c:59
 msgid "Initialize /usr with a writable copy of the sdk"
-msgstr "Sdk की एक लेखन योग्य प्रतिलिपि के साथ प्रारंभ / usr करें"
+msgstr "Sdk की एक लेखन योग्य प्रतिलिपि के साथ प्रारंभ /usr करें"
 
 #: app/flatpak-builtins-build-init.c:60
 msgid "Specify the build type (app, runtime, extension)"
@@ -830,7 +830,7 @@ msgstr "टैग"
 
 #: app/flatpak-builtins-build-init.c:62
 msgid "Include this sdk extension in /usr"
-msgstr "इस sdk / usr में एक्सटेंशन शामिल करें"
+msgstr "इस sdk /usr में एक्सटेंशन शामिल करें"
 
 #: app/flatpak-builtins-build-init.c:64
 msgid "Where to store sdk (defaults to 'usr')"
@@ -838,7 +838,7 @@ msgstr "जहाँ sdk को स्टोर करना है ('usr' क�
 
 #: app/flatpak-builtins-build-init.c:65
 msgid "Re-initialize the sdk/var"
-msgstr "Sdk / var को पुनः आरंभ करें"
+msgstr "sdk/var को पुनः आरंभ करें"
 
 #: app/flatpak-builtins-build-init.c:114
 #, c-format
@@ -987,7 +987,7 @@ msgstr "ऑथेंटिकेटर ऑप्शन"
 #: app/flatpak-builtins-build-update-repo.c:79
 #: app/flatpak-builtins-remote-add.c:85 app/flatpak-builtins-remote-modify.c:93
 msgid "KEY=VALUE"
-msgstr "कुंजी = मूल्य"
+msgstr "कुंजी=मूल्य"
 
 #: app/flatpak-builtins-build-update-repo.c:80
 msgid "Import new default GPG public key from FILE"
@@ -1094,7 +1094,7 @@ msgstr "कुंजी के लिए कोई कॉन्फ़िगर�
 #: app/flatpak-builtins-config.c:149
 #, c-format
 msgid "'%s' does not look like a language/locale code"
-msgstr "'%s' भाषा / लोकेल कोड की तरह नहीं दिखता है"
+msgstr "'%s' भाषा/लोकेल कोड की तरह नहीं दिखता है"
 
 #: app/flatpak-builtins-config.c:172
 #, c-format
@@ -1132,7 +1132,7 @@ msgstr "के लिए बहुत सारे तर्क --unset"
 
 #: app/flatpak-builtins-config.c:347
 msgid "[KEY [VALUE]] - Manage configuration"
-msgstr "[कुंजी [VALUE]] - कॉन्फ़िगरेशन प्रबंधित करें"
+msgstr "[KEY [VALUE]] - कॉन्फ़िगरेशन प्रबंधित करें"
 
 #: app/flatpak-builtins-config.c:358
 msgid "Can only use one of --list, --get, --set or --unset"
@@ -1911,7 +1911,7 @@ msgstr "फ़ाइलनाम या uri निर्दिष्ट कि�
 
 #: app/flatpak-builtins-install.c:287
 msgid "[LOCATION/REMOTE] [REF…] - Install applications or runtimes"
-msgstr "[स्थान / रिमोट] [आरईएफ…] - एप्लिकेशन या रनटाइम इंस्टॉल करें"
+msgstr "[स्थान/रिमोट] [आरईएफ…] - एप्लिकेशन या रनटाइम इंस्टॉल करें"
 
 #: app/flatpak-builtins-install.c:313
 msgid "At least one REF must be specified"
@@ -1919,7 +1919,7 @@ msgstr "कम से कम एक आरईएफ निर्दिष्ट 
 
 #: app/flatpak-builtins-install.c:324
 msgid "Looking for matches…\n"
-msgstr "मैचों की तलाश ...\n"
+msgstr "मैचों की तलाश...\n"
 
 #: app/flatpak-builtins-install.c:439
 #, c-format
@@ -2076,7 +2076,7 @@ msgstr "विकल्प दिखाएं"
 
 #: app/flatpak-builtins-list.c:403
 msgid " - List installed apps and/or runtimes"
-msgstr " - इंस्टॉल किए गए ऐप्स और / या रनटाइम की सूची दें"
+msgstr " - इंस्टॉल किए गए ऐप्स और/या रनटाइम की सूची दें"
 
 #: app/flatpak-builtins-make-current.c:38
 msgid "Arch to make current for"
@@ -2184,7 +2184,7 @@ msgstr "डेटा"
 
 #: app/flatpak-builtins-permission-set.c:111
 msgid "TABLE ID APP_ID [PERMISSION...] - Set permissions"
-msgstr "TABLE ID APP_ID [PERMISSION ...] - परमिशन सेट करें"
+msgstr "TABLE ID APP_ID [PERMISSION...] - परमिशन सेट करें"
 
 #: app/flatpak-builtins-permission-set.c:132
 #, c-format
@@ -2201,7 +2201,7 @@ msgstr "पिंस मिलान निकालें"
 
 #: app/flatpak-builtins-pin.c:57
 msgid "[PATTERN…] - disable automatic removal of runtimes matching patterns"
-msgstr "[पैटर्न ...] - runtimes मिलान पैटर्न के स्वचालित हटाने को अक्षम करें"
+msgstr "[पैटर्न...] - runtimes मिलान पैटर्न के स्वचालित हटाने को अक्षम करें"
 
 #: app/flatpak-builtins-pin.c:74
 msgid "No pinned patterns\n"
@@ -2476,7 +2476,7 @@ msgstr "इतिहास:"
 
 #: app/flatpak-builtins-remote-info.c:357
 msgid " Commit:"
-msgstr " निर्धारण:"
+msgstr " कमिट:"
 
 #: app/flatpak-builtins-remote-info.c:358
 msgid " Subject:"
@@ -2573,7 +2573,7 @@ msgstr " - दूरस्थ रिपोजिटरी की सूची"
 
 #: app/flatpak-builtins-remote-ls.c:50
 msgid "Show arches and branches"
-msgstr "मेहराब और शाखाएँ दिखाएं"
+msgstr "वास्तुकला और शाखा दिखाएं"
 
 #: app/flatpak-builtins-remote-ls.c:51
 msgid "Show only runtimes"
@@ -3015,7 +3015,7 @@ msgstr "निर्दिष्ट फ़ाइल विवरणक के �
 
 #: app/flatpak-builtins-run.c:110
 msgid "APP [ARGUMENT…] - Run an app"
-msgstr "एपीपी [तर्क ...] - एक ऐप चलाएं"
+msgstr "एपीपी [तर्क...] - एक ऐप चलाएं"
 
 #: app/flatpak-builtins-run.c:254
 #, c-format
@@ -3048,7 +3048,7 @@ msgstr "कोई मेल नहीं मिले"
 
 #: app/flatpak-builtins-uninstall.c:54
 msgid "Arch to uninstall"
-msgstr "स्थापना रद्द करने के लिए पुरालेख"
+msgstr "स्थापना रद्द करने के लिए वास्तुकला"
 
 #: app/flatpak-builtins-uninstall.c:55
 msgid "Keep ref in local repository"
@@ -3081,7 +3081,7 @@ msgstr "के लिए डेटा हटाएं %s?"
 
 #: app/flatpak-builtins-uninstall.c:155
 msgid "[REF…] - Uninstall an application"
-msgstr "[रेफरी ...] - आवेदन निकालें।"
+msgstr "[रेफरी...] - आवेदन निकालें।"
 
 #: app/flatpak-builtins-uninstall.c:164
 msgid "Must specify at least one REF, --unused, --all or --delete-data"
@@ -3103,8 +3103,8 @@ msgid ""
 "flatpak-pin(1):\n"
 msgstr ""
 "\n"
-"स्थापना में ये runtimes '%s' पिन किया जाता है और हटाया नहीं जाएगा; सपाट-पिन देखें "
-"(1):\n"
+"संस्थापन '%s' में ये रनटाइम पिन किए गए हैं और इन्हें हटाया नहीं जाएगा; देखें "
+"flatpak-pin(1):\n"
 
 #: app/flatpak-builtins-uninstall.c:267
 msgid "Nothing unused to uninstall\n"
@@ -3122,11 +3122,11 @@ msgstr "चेतावनी: %s स्थापित नहीं किय�
 
 #: app/flatpak-builtins-update.c:56
 msgid "Arch to update for"
-msgstr "के लिए अद्यतन करने के लिए संग्रह"
+msgstr "उन्नयन के लिए वास्तुकला"
 
 #: app/flatpak-builtins-update.c:57
 msgid "Commit to deploy"
-msgstr "विस्तार करें"
+msgstr "तैनात करने के लिए प्रतिबद्ध"
 
 #: app/flatpak-builtins-update.c:58
 msgid "Remove old files even if running"
@@ -3150,7 +3150,7 @@ msgstr "केवल इस उपपथ को अपडेट करें"
 
 #: app/flatpak-builtins-update.c:90
 msgid "[REF…] - Update applications or runtimes"
-msgstr "[रेफरी ...] - एप्लिकेशन या रनटाइम्स अपडेट करें"
+msgstr "[रेफरी...] - एप्लिकेशन या रनटाइम्स अपडेट करें"
 
 #: app/flatpak-builtins-update.c:121
 msgid "With --commit, only one REF may be specified"
@@ -3158,7 +3158,7 @@ msgstr "--Commit के साथ, केवल एक REF निर्दिष
 
 #: app/flatpak-builtins-update.c:162
 msgid "Looking for updates…\n"
-msgstr "अद्यतनों की तलाश ...\n"
+msgstr "अद्यतनों की तलाश...\n"
 
 #: app/flatpak-builtins-update.c:215
 #, c-format
@@ -3379,7 +3379,7 @@ msgstr "स्थापना रद्द करें"
 
 #: app/flatpak-cli-transaction.c:427
 msgid "Installing…"
-msgstr "स्थापित कर रहा है ..."
+msgstr "स्थापित कर रहा है..."
 
 #: app/flatpak-cli-transaction.c:429
 #, c-format
@@ -3505,7 +3505,7 @@ msgstr "अद्यतन संस्करण में अपग्रेड
 #: app/flatpak-cli-transaction.c:780
 #, c-format
 msgid "Failed to rebase %s to %s: "
-msgstr "रीबेस करने में विफल %s to %s: "
+msgstr "रीबेस करने में विफल %s को %s: "
 
 #: app/flatpak-cli-transaction.c:980
 #, c-format
@@ -3524,7 +3524,7 @@ msgstr "चेतावनी: "
 #. translators: This is short for operation, the title of a one-char column
 #: app/flatpak-cli-transaction.c:1137
 msgid "Op"
-msgstr "Op"
+msgstr "पर"
 
 #. Avoid resizing the download column too much,
 #. * by making the title as long as typical content
@@ -3990,8 +3990,8 @@ msgid ""
 "Unknown filesystem location %s, valid locations are: host, host-os, host-"
 "etc, home, xdg-*[/…], ~/dir, /dir"
 msgstr ""
-"अज्ञात फ़ाइल सिस्टम स्थान %s, मान्य स्थान हैं: होस्ट, होस्ट-ओएस, होस्ट-आदि, घर, xdg - * "
-"[/…], ~ / dir, / dir"
+"अज्ञात फ़ाइल सिस्टम स्थान %s, मान्य स्थान हैं: होस्ट, होस्ट-ओएस, होस्ट-आदि, "
+"घर, xdg-*[/…], ~ / dir, / dir"
 
 #: common/flatpak-context.c:1114
 #, c-format
@@ -4359,7 +4359,7 @@ msgstr "के लिए प्रतिबद्ध ‘%s’ [REF] के ल�
 #: common/flatpak-dir.c:6005
 #, c-format
 msgid "Commit for ‘%s’ is not in expected bound refs: %s"
-msgstr "के लिए प्रतिबद्ध है ‘%s’ में बंधे की उम्मीद नहीं है refs: %s"
+msgstr "के लिए प्रतिबद्ध है ‘%s’ में बंधे की उम्मीद नहीं है कड़ियाँ: %s"
 
 #: common/flatpak-dir.c:6180
 msgid "Only applications can be made current"
