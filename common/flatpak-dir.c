@@ -9261,7 +9261,7 @@ flatpak_dir_install (FlatpakDir          *self,
           if (is_revokefs_pull &&
               !flatpak_dir_revokefs_fuse_unmount (&child_repo, &child_repo_lock, mnt_dir, &local_error))
             {
-              g_propagate_prefixed_error (error, g_steal_pointer (&local_error), 
+              g_propagate_prefixed_error (error, g_steal_pointer (&local_error),
                       _("Could not unmount revokefs-fuse filesystem at %s: "), mnt_dir);
 
               if (src_dir &&
@@ -15112,78 +15112,54 @@ flatpak_dir_find_remote_related (FlatpakDir         *self,
 static GHashTable *
 local_match_prefix (FlatpakDir        *self,
                     FlatpakDecomposed *extension_ref,
-                    const char        *remote)
+                    const char        *remote,
+                    GHashTable        *decomposed_to_search)
 {
-  GHashTable *matches = g_hash_table_new_full ((GHashFunc)flatpak_decomposed_hash, (GEqualFunc)flatpak_decomposed_equal, (GDestroyNotify)flatpak_decomposed_unref, NULL);
-  FlatpakKinds kind;
+  GHashTable *matches = g_hash_table_new_full ((GHashFunc)flatpak_decomposed_hash,
+                                               (GEqualFunc)flatpak_decomposed_equal,
+                                               (GDestroyNotify)flatpak_decomposed_unref,
+                                               NULL);
   g_autofree char *id = NULL;
   g_autofree char *arch = NULL;
   g_autofree char *branch = NULL;
   g_autofree char *id_prefix = NULL;
-  g_autoptr(GHashTable) refs = NULL;
-  g_autofree char *list_prefix = NULL;
-  const char *kind_str;
 
-  kind = flatpak_decomposed_get_kinds (extension_ref);
   id = flatpak_decomposed_dup_id (extension_ref);
   arch = flatpak_decomposed_dup_arch (extension_ref);
   branch = flatpak_decomposed_dup_branch (extension_ref);
 
   id_prefix = g_strconcat (id, ".", NULL);
 
-  kind_str = flatpak_decomposed_get_kind_str (extension_ref);
-
-  if (remote)
-    list_prefix = g_strdup_printf ("%s:%s", remote, kind_str);
-
-  if (ostree_repo_list_refs (self->repo, list_prefix, &refs, NULL, NULL))
+  if (decomposed_to_search)
     {
       GHashTableIter hash_iter;
       gpointer key;
 
-      g_hash_table_iter_init (&hash_iter, refs);
+      g_hash_table_iter_init (&hash_iter, decomposed_to_search);
       while (g_hash_table_iter_next (&hash_iter, &key, NULL))
         {
-          const char *partial_ref_and_origin = key;
-          g_autofree char *partial_ref_store = NULL;
-          const char *partial_ref;
-          g_autoptr(FlatpakDecomposed) matched = NULL;
+          FlatpakDecomposed *to_test = key;
 
-          ostree_parse_refspec (partial_ref_and_origin, NULL, &partial_ref_store, NULL);
-          if (remote == NULL)
-            {
-              /* If we're not filtering via list_prefix we need to filter by part[0] manually */
-              char *slash = strchr (partial_ref_store, '/');
-              if (slash == NULL)
-                continue;
-              *slash = 0;
-              if (strcmp (partial_ref_store, kind_str) != 0)
-                continue;
-              partial_ref = slash + 1;
-            }
-          else
-            partial_ref = partial_ref_store;
-
-          matched = flatpak_decomposed_new_from_pref (kind, partial_ref, NULL);
-          if (matched == NULL)
+          if (flatpak_decomposed_get_kind (extension_ref) != flatpak_decomposed_get_kind (to_test))
             continue;
 
           /* Must match type, arch, branch */
-          if (!flatpak_decomposed_is_arch (matched, arch) ||
-              !flatpak_decomposed_is_branch (matched, branch))
+          if (!flatpak_decomposed_is_arch (to_test, arch) ||
+              !flatpak_decomposed_is_branch (to_test, branch))
             continue;
 
           /* But only prefix of id */
-          if (!flatpak_decomposed_id_has_prefix (matched, id_prefix))
+          if (!flatpak_decomposed_id_has_prefix (to_test, id_prefix))
             continue;
 
-          g_hash_table_add (matches, g_steal_pointer (&matched));
+          g_hash_table_add (matches, flatpak_decomposed_ref (to_test));
         }
     }
 
   /* Also check deploys. In case remote-delete --force is run, we can end up
    * with a deploy without a corresponding ref in the repo. */
-  flatpak_dir_collect_deployed_refs (self, kind_str, id_prefix, arch, branch, matches, NULL, NULL);
+  flatpak_dir_collect_deployed_refs (self, flatpak_decomposed_get_kind_str (extension_ref),
+                                     id_prefix, arch, branch, matches, NULL, NULL);
 
   return matches;
 }
@@ -15199,6 +15175,7 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir        *self,
 {
   int i;
   g_autoptr(GPtrArray) related = g_ptr_array_new_with_free_func ((GDestroyNotify) flatpak_related_free);
+  g_autoptr(GHashTable) all_decomposed_for_remote = NULL;
   g_auto(GStrv) groups = NULL;
   g_autofree char *ref_arch = flatpak_decomposed_dup_arch (ref);
   g_autofree char *ref_branch = flatpak_decomposed_dup_branch (ref);
@@ -15292,7 +15269,40 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir        *self,
                 }
               else if (subdirectories)
                 {
-                  g_autoptr(GHashTable) matches = local_match_prefix (self, extension_ref, remote_name);
+                  g_autoptr(GHashTable) matches = NULL;
+
+                  if (!all_decomposed_for_remote)
+                    {
+                      g_autoptr(GHashTable) refs = NULL;
+                      g_autofree char *list_prefix = NULL;
+                      if (remote_name != NULL)
+                        list_prefix = g_strdup_printf ("%s:", remote_name);
+
+                      if (ostree_repo_list_refs (self->repo, list_prefix, &refs, NULL, NULL))
+                        {
+                          GHashTableIter iter;
+                          gpointer key;
+
+                          all_decomposed_for_remote = g_hash_table_new_full (
+                            (GHashFunc)flatpak_decomposed_hash,
+                            (GEqualFunc)flatpak_decomposed_equal,
+                            (GDestroyNotify)flatpak_decomposed_unref,
+                            NULL);
+
+                          g_hash_table_iter_init (&iter, refs);
+                          while (g_hash_table_iter_next (&iter, &key, NULL))
+                            {
+                              const char *refspec = key;
+                              g_autoptr(FlatpakDecomposed) decomposed = NULL;
+
+                              decomposed = flatpak_decomposed_new_from_refspec (refspec, NULL);
+                              if (decomposed != NULL)
+                                g_hash_table_add (all_decomposed_for_remote, g_steal_pointer (&decomposed));
+                            }
+                        }
+                    }
+
+                  matches = local_match_prefix (self, extension_ref, remote_name, all_decomposed_for_remote);
                   GLNX_HASH_TABLE_FOREACH (matches, FlatpakDecomposed *, match)
                     {
                       g_autofree char *match_checksum = NULL;
@@ -15560,7 +15570,7 @@ sort_strv (char **strv)
 }
 
 static char **
-flatpak_dir_get_config_strv (FlatpakDir *self, char *key) 
+flatpak_dir_get_config_strv (FlatpakDir *self, char *key)
 {
   GKeyFile *config = flatpak_dir_get_repo_config (self);
   g_auto(GStrv) lang = NULL;
