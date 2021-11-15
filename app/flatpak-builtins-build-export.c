@@ -1098,6 +1098,21 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
         goto out;
     }
 
+#ifdef FLATPAK_DISABLE_GPG
+  if (opt_gpg_key_ids)
+    {
+      g_warning (_("--gpg-sign specified, but GPG support disabled at build time."));
+      g_strfreev (opt_gpg_key_ids);
+      opt_gpg_key_ids = NULL;
+    }
+  if (opt_gpg_homedir)
+    {
+      g_warning (_("--gpg-homedir specified, but GPG support disabled at build time."));
+      g_free (opt_gpg_homedir);
+      opt_gpg_homedir = NULL;
+    }
+#endif
+
   if (opt_gpg_key_ids)
     {
       char **iter;

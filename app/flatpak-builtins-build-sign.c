@@ -50,6 +50,7 @@ gboolean
 flatpak_builtin_build_sign (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
+#ifndef FLATPAK_DISABLE_GPG
   g_autoptr(GFile) repofile = NULL;
   g_autoptr(OstreeRepo) repo = NULL;
   g_autoptr(GError) my_error = NULL;
@@ -61,6 +62,7 @@ flatpak_builtin_build_sign (int argc, char **argv, GCancellable *cancellable, GE
   char **iter;
   g_autoptr(GPtrArray) refs = g_ptr_array_new_with_free_func (g_free);
   const char *collection_id;
+#endif
 
   context = g_option_context_new (_("LOCATION [ID [BRANCH]] - Sign an application or runtime"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -74,6 +76,7 @@ flatpak_builtin_build_sign (int argc, char **argv, GCancellable *cancellable, GE
   if (argc > 4)
     return usage_error (context, _("Too many arguments"), error);
 
+#ifndef FLATPAK_DISABLE_GPG
   location = argv[1];
   if (argc >= 3)
     id = argv[2];
@@ -161,6 +164,9 @@ flatpak_builtin_build_sign (int argc, char **argv, GCancellable *cancellable, GE
     }
 
   return TRUE;
+#else
+  return flatpak_fail (error, _("GPG support disabled at build time"));
+#endif
 }
 
 gboolean

@@ -82,6 +82,7 @@ static GOptionEntry options[] = {
   { NULL }
 };
 
+#ifndef FLATPAK_DISABLE_GPG
 static GBytes *
 read_gpg_data (GCancellable *cancellable,
                GError      **error)
@@ -123,6 +124,7 @@ read_gpg_data (GCancellable *cancellable,
 
   return flatpak_read_stream (source_stream, FALSE, error);
 }
+#endif
 
 static gboolean
 install_bundle (FlatpakDir *dir,
@@ -151,10 +153,14 @@ install_bundle (FlatpakDir *dir,
 
   if (opt_gpg_file != NULL)
     {
+#ifndef FLATPAK_DISABLE_GPG
       /* Override gpg_data from file */
       gpg_data = read_gpg_data (cancellable, error);
       if (gpg_data == NULL)
         return FALSE;
+#else
+      g_warning (_("--gpg-file specified, but GPG support disabled at build time."));
+#endif
     }
 
   if (opt_noninteractive)

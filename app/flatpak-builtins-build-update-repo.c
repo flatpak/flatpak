@@ -593,6 +593,7 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
       !flatpak_repo_set_deploy_collection_id (repo, TRUE, error))
     return FALSE;
 
+#ifndef FLATPAK_DISABLE_GPG
   if (opt_gpg_import)
     {
       g_autoptr(GBytes) gpg_data = flatpak_load_gpg_keys (opt_gpg_import, cancellable, error);
@@ -602,6 +603,23 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
       if (!flatpak_repo_set_gpg_keys (repo, gpg_data, error))
         return FALSE;
     }
+#else
+  if (opt_gpg_import)
+    g_warning (_("--gpg-import specified, but GPG support disabled at build time."));
+
+  if (opt_gpg_key_ids)
+    {
+      g_warning (_("--gpg-sign specified, but GPG support disabled at build time."));
+      g_strfreev (opt_gpg_key_ids);
+      opt_gpg_key_ids = NULL;
+    }
+  if (opt_gpg_homedir)
+    {
+      g_warning (_("--gpg-homedir specified, but GPG support disabled at build time."));
+      g_free (opt_gpg_homedir);
+      opt_gpg_homedir = NULL;
+    }
+#endif
 
   if (!opt_no_update_appstream)
     {

@@ -98,6 +98,7 @@ get_config_from_opts (GKeyFile *config,
 {
   g_autofree char *group = g_strdup_printf ("remote \"%s\"", remote_name);
 
+#ifndef FLATPAK_DISABLE_GPG
   if (opt_no_gpg_verify)
     {
       g_key_file_set_boolean (config, group, "gpg-verify", FALSE);
@@ -109,6 +110,10 @@ get_config_from_opts (GKeyFile *config,
       g_key_file_set_boolean (config, group, "gpg-verify", TRUE);
       g_key_file_set_boolean (config, group, "gpg-verify-summary", TRUE);
     }
+#else
+  g_key_file_set_boolean (config, group, "gpg-verify", FALSE);
+  g_key_file_set_boolean (config, group, "gpg-verify-summary", FALSE);
+#endif
 
   if (opt_url)
     {
@@ -189,10 +194,14 @@ get_config_from_opts (GKeyFile *config,
 
   if (opt_gpg_import != NULL)
     {
+#ifndef FLATPAK_DISABLE_GPG
       g_clear_pointer (gpg_data, g_bytes_unref); /* Free if set from flatpakrepo file */
       *gpg_data = flatpak_load_gpg_keys (opt_gpg_import, NULL, error);
       if (*gpg_data == NULL)
         return FALSE;
+#else
+     g_warning (_("--gpg-import specified, but GPG support disabled at build time."));
+#endif
     }
 
   if (opt_authenticator_name)
@@ -319,9 +328,11 @@ flatpak_builtin_remote_add (int argc, char **argv,
       !ostree_validate_collection_id (opt_collection_id, &local_error))
     return flatpak_fail (error, _("‘%s’ is not a valid collection ID: %s"), opt_collection_id, local_error->message);
 
+#ifndef FLATPAK_DISABLE_GPG
   if (opt_collection_id != NULL &&
       (opt_no_gpg_verify || opt_gpg_import == NULL || opt_gpg_import[0] == NULL))
     return flatpak_fail (error, _("GPG verification is required if collections are enabled"));
+#endif
 
   remote_name = argv[1];
   location = argv[2];
@@ -335,7 +346,9 @@ flatpak_builtin_remote_add (int argc, char **argv,
     }
   else
     {
+#ifndef FLATPAK_DISABLE_GPG
       gboolean is_oci;
+#endif
 
       config = g_key_file_new ();
       file = g_file_new_for_commandline_arg (location);
@@ -345,10 +358,12 @@ flatpak_builtin_remote_add (int argc, char **argv,
         remote_url = g_strdup (location);
       opt_url = remote_url;
 
+#ifndef FLATPAK_DISABLE_GPG
       /* Default to gpg verify, except for OCI registries */
       is_oci = opt_url && g_str_has_prefix (opt_url, "oci+");
       if (!opt_no_gpg_verify && !is_oci)
         opt_do_gpg_verify = TRUE;
+#endif
     }
 
   if (!get_config_from_opts (config, remote_name, &gpg_data, error))
@@ -386,6 +401,7 @@ flatpak_builtin_remote_add (int argc, char **argv,
       return flatpak_fail (error, _("Remote %s already exists"), remote_name);
     }
 
+#ifndef FLATPAK_DISABLE_GPG
   if (opt_gpg_import != NULL)
     {
       g_clear_pointer (&gpg_data, g_bytes_unref);
@@ -393,6 +409,7 @@ flatpak_builtin_remote_add (int argc, char **argv,
       if (gpg_data == NULL)
         return FALSE;
     }
+#endif
 
   if (opt_authenticator_name && !g_dbus_is_name (opt_authenticator_name))
     return flatpak_fail (error, _("Invalid authenticator name %s"), opt_authenticator_name);

@@ -21,6 +21,12 @@ else
 AM_TESTS_ENVIRONMENT += FLATPAK_BWRAP=$$(cd $(top_builddir) && pwd)/flatpak-bwrap
 endif
 
+if USE_GPGME
+AM_TESTS_ENVIRONMENT += FLATPAK_USE_GPG=yes
+else
+AM_TESTS_ENVIRONMENT += FLATPAK_USE_GPG=no
+endif
+
 noinst_LTLIBRARIES += libtestlib.la
 libtestlib_la_CFLAGS = \
 	$(AM_CFLAGS) \

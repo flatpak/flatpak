@@ -332,6 +332,21 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
         return flatpak_fail (error, _("Could not parse '%s'"), opt_timestamp);
     }
 
+#ifdef FLATPAK_DISABLE_GPG
+  if (opt_gpg_key_ids)
+    {
+      g_warning (_("--gpg-sign specified, but GPG support disabled at build time."));
+      g_strfreev (opt_gpg_key_ids);
+      opt_gpg_key_ids = NULL;
+    }
+  if (opt_gpg_homedir)
+    {
+      g_warning (_("--gpg-homedir specified, but GPG support disabled at build time."));
+      g_free (opt_gpg_homedir);
+      opt_gpg_homedir = NULL;
+    }
+#endif
+
   dst_repofile = g_file_new_for_commandline_arg (dst_repo_arg);
   if (!g_file_query_exists (dst_repofile, cancellable))
     return flatpak_fail (error, _("'%s' is not a valid repository"), dst_repo_arg);
