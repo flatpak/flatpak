@@ -194,33 +194,6 @@ as_app_equal (AsApp *app1, AsApp *app2)
 }
 #endif
 
-/* This returns the app ID with the ".desktop" suffix stripped. In most cases
- * that is what as_app_get_id_filename() does, but if the ID actually ends in
- * .desktop it is stripped anyway and e.g.  "org.telegram" is returned instead
- * of "org.telegram.desktop" (which is a bug in appstream-glib). See
- * https://github.com/hughsie/appstream-glib/issues/420 and
- * https://github.com/flatpak/flatpak/issues/4535
- */
-static const char *
-_app_get_id_no_suffix (AsApp *app)
-{
-  const gchar *id_with_suffix = NULL;
-  const gchar *id_stripped = NULL;
-  id_with_suffix = as_app_get_id_no_prefix (app);
-  id_stripped = as_app_get_id_filename (app);
-  if (flatpak_is_valid_name (id_stripped, -1, NULL))
-    return id_stripped;
-  else
-    {
-      g_autofree char *id_with_desktop = g_strconcat (id_stripped, ".desktop", NULL);
-      if (flatpak_is_valid_name (id_with_desktop, -1, NULL) &&
-          g_strcmp0 (id_with_suffix, id_with_desktop) == 0)
-        return id_with_suffix;
-      else
-        return id_stripped;
-    }
-}
-
 static int
 compare_apps (MatchResult *a, AsApp *b)
 {
@@ -237,7 +210,7 @@ static void
 print_app (Column *columns, MatchResult *res, FlatpakTablePrinter *printer)
 {
   const char *version = as_app_get_version (res->app);
-  const char *id = _app_get_id_no_suffix (res->app);
+  const char *id = as_app_get_id_filename (res->app);
   const char *name = as_app_get_localized_name (res->app);
   const char *comment = as_app_get_localized_comment (res->app);
   guint i;
@@ -334,7 +307,7 @@ flatpak_builtin_search (int argc, char **argv, GCancellable *cancellable, GError
           guint score = as_app_search_matches (app, search_text);
           if (score == 0)
             {
-              const char *app_id = _app_get_id_no_suffix (app);
+              const char *app_id = as_app_get_id_filename (app);
               if (strcasestr (app_id, search_text) != NULL)
                 score = 50;
               else
