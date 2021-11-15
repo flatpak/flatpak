@@ -183,7 +183,7 @@ jobs:
     - name: Run tests
       run: make -C _build check
       env:
-        FLATPAK_TESTS_VALGRIND: true
+        FLATPAK_TESTS_VALGRIND_LEAKS: true
     - name: Collect overall test logs on failure
       if: failure()
       run: mv _build/test-suite.log test-logs/ || true
