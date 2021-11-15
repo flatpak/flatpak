@@ -8563,6 +8563,7 @@ flatpak_dir_deploy_install (FlatpakDir        *self,
                             const char       **subpaths,
                             const char       **previous_ids,
                             gboolean           reinstall,
+                            gboolean           pin_on_deploy,
                             GCancellable      *cancellable,
                             GError           **error)
 {
@@ -8658,6 +8659,14 @@ flatpak_dir_deploy_install (FlatpakDir        *self,
   flatpak_dir_cleanup_removed (self, cancellable, NULL);
 
   if (!flatpak_dir_mark_changed (self, error))
+    goto out;
+
+  /* Pin runtimes that are installed explicitly rather than pulled as
+   * dependencies so they are not automatically removed. */
+  if (pin_on_deploy &&
+      !flatpak_dir_config_append_pattern (self, "pinned",
+                                          flatpak_decomposed_get_ref (ref),
+                                          TRUE, NULL, error))
     goto out;
 
   ret = TRUE;
@@ -9064,6 +9073,7 @@ flatpak_dir_install (FlatpakDir          *self,
                      gboolean             no_static_deltas,
                      gboolean             reinstall,
                      gboolean             app_hint,
+                     gboolean             pin_on_deploy,
                      FlatpakRemoteState  *state,
                      FlatpakDecomposed   *ref,
                      const char          *opt_commit,
@@ -9273,6 +9283,9 @@ flatpak_dir_install (FlatpakDir          *self,
       if (app_hint)
         helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_APP_HINT;
 
+      if (pin_on_deploy)
+        helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE_PINNED;
+
       helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_INSTALL_HINT;
 
       if (!flatpak_dir_system_helper_call_deploy (self,
@@ -9302,7 +9315,8 @@ flatpak_dir_install (FlatpakDir          *self,
   if (!no_deploy)
     {
       if (!flatpak_dir_deploy_install (self, ref, state->remote_name, opt_subpaths,
-                                       opt_previous_ids, reinstall, cancellable, error))
+                                       opt_previous_ids, reinstall, pin_on_deploy,
+                                       cancellable, error))
         return FALSE;
     }
 
@@ -9579,7 +9593,7 @@ flatpak_dir_install_bundle (FlatpakDir         *self,
     }
   else
     {
-      if (!flatpak_dir_deploy_install (self, ref, remote, NULL, NULL, FALSE, cancellable, error))
+      if (!flatpak_dir_deploy_install (self, ref, remote, NULL, NULL, FALSE, FALSE, cancellable, error))
         return FALSE;
     }
 
