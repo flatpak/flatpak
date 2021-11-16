@@ -6,6 +6,7 @@ includedir=@includedir@
 datadir=@datadir@
 
 interfaces_dir=${datadir}/dbus-1/interfaces/
+soupapiversion=@SOUPAPIVERSION@
 
 Name: flatpak
 Description: Application sandboxing framework

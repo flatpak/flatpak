@@ -738,12 +738,15 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakRepoTransaction, flatpak_repo_transaction_
 
 #define AUTOLOCK(name) G_GNUC_UNUSED __attribute__((cleanup (flatpak_auto_unlock_helper))) GMutex * G_PASTE (auto_unlock, __LINE__) = flatpak_auto_lock_helper (&G_LOCK_NAME (name))
 
+#if !SOUP_CHECK_VERSION (3, 0, 0)
 #if !defined(SOUP_AUTOCLEANUPS_H) && !defined(__SOUP_AUTOCLEANUPS_H__)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (SoupSession, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (SoupMessage, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (SoupRequest, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (SoupRequestHTTP, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (SoupURI, soup_uri_free)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (SoupLogger, g_object_unref)
+#endif
 #endif
 
 #if !JSON_CHECK_VERSION (1, 1, 2)

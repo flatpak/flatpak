@@ -70,7 +70,7 @@ jobs:
       run: |
         mkdir _build
         pushd _build
-        ../configure  --enable-internal-checks --enable-asan --disable-introspection
+        ../configure  --enable-internal-checks --enable-asan --disable-introspection --with-soup2
         popd
       env:
         CFLAGS: -O2 -Wp,-D_FORTIFY_SOURCE=2
@@ -130,7 +130,7 @@ jobs:
       with:
         submodules: true
     - name: configure
-      run: ./autogen.sh
+      run: ./autogen.sh --with-soup2
       env:
         CC: clang
         CFLAGS: -Werror=unused-variable
@@ -167,7 +167,7 @@ jobs:
       run: |
         mkdir _build
         pushd _build
-        ../configure --enable-gtk-doc --enable-gtk-doc-html --enable-introspection
+        ../configure --enable-gtk-doc --enable-gtk-doc-html --enable-introspection --with-soup2
         popd
       env:
         CFLAGS: -O2
