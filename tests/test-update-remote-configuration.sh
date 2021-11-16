@@ -84,7 +84,7 @@ assert_file_has_content ${FL_DIR}/repo/config '^collection-id=org\.test\.Collect
 sed -i "s/deploy-collection-id=true//" repos/test/config
 assert_not_file_has_content repos/test/config '^deploy-collection-id=true$'
 
-flatpak remote-modify --collection-id= test-repo
+${FLATPAK} remote-modify --collection-id= test-repo
 assert_not_file_has_content ${FL_DIR}/repo/config '^collection-id=org\.test\.Collection$'
 
 UPDATE_REPO_ARGS="--collection-id=org.test.Collection --deploy-sideload-collection-id" update_repo

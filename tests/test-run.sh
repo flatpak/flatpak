@@ -453,10 +453,10 @@ assert_has_file $FL_DIR/app/org.test.OldVersion/$ARCH/stable/active/files/update
 ok "version checks"
 
 rm -rf app
-flatpak build-init app org.test.Writable org.test.Platform org.test.Platform stable
+${FLATPAK} build-init app org.test.Writable org.test.Platform org.test.Platform stable
 mkdir -p app/files/a-dir
 chmod a+rwx app/files/a-dir
-flatpak build-finish --command=hello.sh app
+${FLATPAK} build-finish --command=hello.sh app
 # Note: not --canonical-permissions
 ${FLATPAK} build-export -vv  --no-update-summary --disable-sandbox --files=files repos/test app stable
 ostree --repo=repos/test commit  --keep-metadata=xa.metadata --owner-uid=0 --owner-gid=0  --no-xattrs  ${FL_GPGARGS} --branch=app/org.test.Writable/$ARCH/stable app
@@ -472,11 +472,11 @@ fi
 ok "no world writable dir"
 
 rm -rf app
-flatpak build-init app org.test.Setuid org.test.Platform org.test.Platform stable
+${FLATPAK} build-init app org.test.Setuid org.test.Platform org.test.Platform stable
 mkdir -p app/files/
 touch app/files/exe
 chmod u+s app/files/exe
-flatpak build-finish --command=hello.sh app
+${FLATPAK} build-finish --command=hello.sh app
 # Note: not --canonical-permissions
 ${FLATPAK} build-export -vv  --no-update-summary --disable-sandbox --files=files repos/test app stable
 ostree -v --repo=repos/test commit --keep-metadata=xa.metadata --owner-uid=0 --owner-gid=0 --no-xattrs  ${FL_GPGARGS} --branch=app/org.test.Setuid/$ARCH/stable app
@@ -490,10 +490,10 @@ assert_file_has_content err2.txt [Ii]nvalid
 ok "no setuid"
 
 rm -rf app
-flatpak build-init app org.test.App org.test.Platform org.test.Platform stable
+${FLATPAK} build-init app org.test.App org.test.Platform org.test.Platform stable
 mkdir -p app/files/
 touch app/files/exe
-flatpak build-finish --command=hello.sh --sdk=org.test.Sdk app
+${FLATPAK} build-finish --command=hello.sh --sdk=org.test.Sdk app
 ${FLATPAK} build-export  --no-update-summary ${FL_GPGARGS} repos/test app stable
 update_repo
 

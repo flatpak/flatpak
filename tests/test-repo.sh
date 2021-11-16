@@ -51,12 +51,12 @@ elif [ x${USE_COLLECTIONS_IN_SERVER-} == xyes ] ; then
     # Set a collection ID and GPG on the server, but not in the client configuration
     setup_repo_no_add test-no-gpg org.test.Collection.NoGpg
     port=$(cat httpd-port)
-    flatpak remote-add ${U} --no-gpg-verify test-no-gpg-repo "http://127.0.0.1:${port}/test-no-gpg"
+    ${FLATPAK} remote-add ${U} --no-gpg-verify test-no-gpg-repo "http://127.0.0.1:${port}/test-no-gpg"
 else
     GPGPUBKEY="" GPGARGS="" setup_repo test-no-gpg
 fi
 
-flatpak remote-add ${U} --no-gpg-verify local-test-no-gpg-repo `pwd`/repos/test-no-gpg
+${FLATPAK} remote-add ${U} --no-gpg-verify local-test-no-gpg-repo `pwd`/repos/test-no-gpg
 
 #alternative gpg key repo
 GPGPUBKEY="${FL_GPG_HOMEDIR2}/pubring.gpg" GPGARGS="${FL_GPGARGS2}" setup_repo test-gpg2 org.test.Collection.Gpg2
@@ -65,13 +65,13 @@ GPGPUBKEY="${FL_GPG_HOMEDIR2}/pubring.gpg" GPGARGS="${FL_GPGARGS2}" setup_repo t
 # Don’t use --collection-id= here, or the collections code will grab the appropriate
 # GPG key from one of the previously-configured remotes with the same collection ID.
 port=$(cat httpd-port)
-if flatpak remote-add ${U} test-missing-gpg-repo "http://127.0.0.1:${port}/test"; then
+if ${FLATPAK} remote-add ${U} test-missing-gpg-repo "http://127.0.0.1:${port}/test"; then
     assert_not_reached "Should fail metadata-update due to missing gpg key"
 fi
 
 #remote with wrong GPG key
 port=$(cat httpd-port)
-if flatpak remote-add ${U} --gpg-import=${FL_GPG_HOMEDIR2}/pubring.gpg test-wrong-gpg-repo "http://127.0.0.1:${port}/test"; then
+if ${FLATPAK} remote-add ${U} --gpg-import=${FL_GPG_HOMEDIR2}/pubring.gpg test-wrong-gpg-repo "http://127.0.0.1:${port}/test"; then
     assert_not_reached "Should fail metadata-update due to wrong gpg key"
 fi
 
@@ -79,7 +79,7 @@ fi
 rm -rf repos/test/refs/heads/appstream2
 ${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} --no-update-appstream ${FL_GPGARGS} repos/test
 
-flatpak ${U} --appstream update test-repo
+${FLATPAK} ${U} --appstream update test-repo
 
 assert_has_file $FL_DIR/repo/refs/remotes/test-repo/appstream/$ARCH
 assert_not_has_file $FL_DIR/repo/refs/remotes/test-repo/appstream2/$ARCH
@@ -94,7 +94,7 @@ ok "update compat appstream"
 # Then regenerate new appstream branch and verify that we update to it
 update_repo
 
-flatpak ${U} --appstream update test-repo
+${FLATPAK} ${U} --appstream update test-repo
 
 assert_has_file $FL_DIR/repo/refs/remotes/test-repo/appstream2/$ARCH
 
@@ -391,12 +391,12 @@ ostree init --repo=repos/test-rebase --mode=archive-z2 ${rebase_collection_args}
 ${FLATPAK} build-commit-from --no-update-summary --src-repo=repos/test ${FL_GPGARGS} repos/test-rebase app/org.test.Hello/$ARCH/master runtime/org.test.Hello.Locale/$ARCH/master
 update_repo test-rebase ${REBASE_COLLECTION_ID}
 
-flatpak remote-add ${U} --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg test-rebase "http://127.0.0.1:${port}/test-rebase"
+${FLATPAK} remote-add ${U} --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg test-rebase "http://127.0.0.1:${port}/test-rebase"
 
 ${FLATPAK} ${U} install -y test-rebase org.test.Hello
 
 assert_not_has_dir $HOME/.var/app/org.test.Hello
-${CMD_PREFIX} flatpak run --command=bash org.test.Hello -c 'echo foo > $XDG_DATA_HOME/a-file'
+${FLATPAK} run --command=bash org.test.Hello -c 'echo foo > $XDG_DATA_HOME/a-file'
 assert_has_dir $HOME/.var/app/org.test.Hello
 assert_has_file $HOME/.var/app/org.test.Hello/data/a-file
 
@@ -410,7 +410,7 @@ ${FLATPAK} ${U} update -y org.test.Hello
 assert_has_dir $FL_DIR/app/org.test.NewHello/$ARCH/master/active/files
 assert_not_has_file $FL_DIR/app/org.test.NewHello/$ARCH/master/active/files
 
-${CMD_PREFIX} flatpak run --command=bash org.test.NewHello -c 'echo foo > $XDG_DATA_HOME/another-file'
+${FLATPAK} run --command=bash org.test.NewHello -c 'echo foo > $XDG_DATA_HOME/another-file'
 
 # Ensure we migrated the app data
 assert_has_dir $HOME/.var/app/org.test.NewHello
