@@ -124,7 +124,7 @@ add_new_remote (FlatpakTransaction            *transaction,
 
   if (self->disable_interaction)
     {
-      g_print (_("Configuring %s as new remote '%s'"), url, remote_name);
+      g_print (_("Configuring %s as new remote '%s'\n"), url, remote_name);
       return TRUE;
     }
 
@@ -397,7 +397,7 @@ progress_changed_cb (FlatpakTransactionProgress *progress,
         g_print ("\r%s", str->str); /* redraw failed, just update the progress */
     }
   else
-    g_print ("\n%s", str->str);
+    g_print ("%s\n", str->str);
 }
 
 static void
@@ -455,7 +455,7 @@ new_operation (FlatpakTransaction          *transaction,
       redraw (self);
     }
   else
-    g_print ("\n%-*s", self->table_width, text);
+    g_print ("%s\n", text);
 
   g_free (self->progress_msg);
   self->progress_msg = g_steal_pointer (&text);
@@ -509,7 +509,7 @@ operation_error (FlatpakTransaction            *transaction,
           redraw (self);
         }
       else
-        g_print ("\n%-*s\n", self->table_width, msg); /* override progress, and go to next line */
+        g_print ("%s\n", msg);
 
       return TRUE;
     }
@@ -548,7 +548,7 @@ operation_error (FlatpakTransaction            *transaction,
       redraw (self);
     }
   else
-    g_printerr ("\n%-*s\n", self->table_width, text);
+    g_printerr ("%s\n", text);
 
   if (!non_fatal && self->stop_on_first_error)
     return FALSE;
@@ -1066,7 +1066,7 @@ message_handler (const gchar   *log_domain,
       redraw (self);
     }
   else
-    g_print ("\n%-*s\n", self->table_width, text);
+    g_print ("%s\n", text);
 }
 
 static gboolean
@@ -1428,7 +1428,7 @@ flatpak_cli_transaction_run (FlatpakTransaction *transaction,
           redraw (self);
         }
       else
-        g_print ("\n%-*s", self->table_width, text);
+        g_print ("%s", text);
 
       g_print ("\n");
     }
