@@ -97,20 +97,6 @@ refs_data_free (RefsData *refs_data)
   g_free (refs_data);
 }
 
-static char *
-strip_last_element (const char *id)
-{
-  gsize id_len = strlen (id);
-  while (id_len > 0 &&
-         id[id_len - 1] != '.')
-    id_len--;
-
-  if (id_len > 0)
-    id_len--; /* Remove the dot too */
-
-  return g_strndup (id, id_len);
-}
-
 static gboolean
 print_table_for_refs (gboolean      print_apps,
                       GPtrArray   * refs_array,
@@ -148,7 +134,7 @@ print_table_for_refs (gboolean      print_apps,
       RefsData *refs_data = NULL;
       FlatpakDir *dir = NULL;
       GPtrArray *dir_refs = NULL;
-      g_autoptr(GHashTable) pref_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+      g_autoptr(GHashTable) ref_hash = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, NULL);
       int j;
 
       refs_data = (RefsData *) g_ptr_array_index (refs_array, i);
@@ -158,8 +144,7 @@ print_table_for_refs (gboolean      print_apps,
       for (j = 0; j < dir_refs->len; j++)
         {
           FlatpakDecomposed *ref = g_ptr_array_index (dir_refs, j);
-          char *partial_ref = flatpak_make_valid_id_prefix (flatpak_decomposed_get_pref (ref));
-          g_hash_table_insert (pref_hash, partial_ref, ref);
+          g_hash_table_add (ref_hash, (char *)flatpak_decomposed_get_ref (ref));
         }
 
       for (j = 0; j < dir_refs->len; j++)
@@ -213,11 +198,18 @@ print_table_for_refs (gboolean      print_apps,
               flatpak_decomposed_is_runtime (ref) &&
               flatpak_decomposed_id_is_subref (ref))
             {
-              g_autofree char *parent_id = strip_last_element (ref_id);
-              g_autofree char *prefix_partial_ref = g_strconcat (parent_id, "/", ref_arch, "/", ref_branch, NULL);
+              g_autoptr(FlatpakDecomposed) extensionof_decomposed = NULL;
+              const char *extension_of = flatpak_deploy_data_get_extension_of (deploy_data);
+              if (extension_of != NULL)
+                extensionof_decomposed = flatpak_decomposed_new_from_ref (extension_of, NULL);
+              if (extensionof_decomposed != NULL)
+                {
+                  if (!opt_app && flatpak_decomposed_is_app (extensionof_decomposed))
+                    continue;
 
-              if (g_hash_table_lookup (pref_hash, prefix_partial_ref))
-                continue;
+                  if (g_hash_table_lookup (ref_hash, extension_of))
+                    continue;
+                }
             }
 
           repo = flatpak_deploy_data_get_origin (deploy_data);
