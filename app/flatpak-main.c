@@ -817,10 +817,11 @@ flatpak_run (int      argc,
     check_environment ();
 
   /* Don't talk to dbus in enter, as it must be thread-free to setns, also
-     skip run/build for performance reasons (no need to connect to dbus). */
+     skip run/build/history for performance reasons (no need to connect to dbus). */
   if (g_strcmp0 (command->name, "enter") != 0 &&
       g_strcmp0 (command->name, "run") != 0 &&
-      g_strcmp0 (command->name, "build") != 0)
+      g_strcmp0 (command->name, "build") != 0 &&
+      g_strcmp0 (command->name, "history") != 0)
     polkit_agent = install_polkit_agent ();
 
   /* g_vfs_get_default can spawn threads */
