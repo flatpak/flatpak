@@ -18,7 +18,7 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 
-# redirect stdout to stderr, otherwise the log will have command output out of
+# redirect stderr to stdout, otherwise the log will have command output out of
 # order with xtrace output
 exec 2>&1
 
