@@ -876,7 +876,7 @@ complete (int    argc,
       FlatpakCommand *c = commands;
       while (c->name)
         {
-          if (c->fn != NULL)
+          if (c->fn != NULL && !c->deprecated)
             flatpak_complete_word (completion, "%s ", c->name);
           c++;
         }
