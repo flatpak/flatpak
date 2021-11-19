@@ -87,6 +87,9 @@ TESTS_ENVIRONMENT = \
 TESTS = $(GTKDOC_CHECK)
 endif
 
+libflatpak-docs.html: libflatpak-docs.xml docs
+	$(AM_V_GEN) $(XMLTO) $(XMLTO_FLAGS) --skip-validation xhtml-nochunks -m $(srcdir)/../xmlto-config.xsl $<
+
 sgml.stamp: $(dbus_stamp_files)
 # gdbus-codegen hardcodes DocBook version
 	$(AM_V_GEN)$(SED) -i \
