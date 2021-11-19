@@ -162,7 +162,7 @@ profiledir = $(PROFILE_DIR)
 profile_DATA = profile/flatpak.sh
 EXTRA_DIST += $(profile_DATA)
 
-fishconfdir = $(sysconfdir)/fish/conf.d
+fishconfdir = $(datadir)/fish/vendor_conf.d
 fishconf_DATA = profile/flatpak.fish
 EXTRA_DIST += $(fishconf_DATA)
 
