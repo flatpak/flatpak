@@ -44,10 +44,10 @@
             <arg choice="plain">DIRECTORY</arg> is the name of the directory.
         </para>
         <para>
-            The result of this command is that desktop files, icons and
-            D-Bus service files from the <filename>files</filename> subdirectory
-            are copied to a new <filename>export</filename> subdirectory. In the
-            <filename>metadata</filename> file, the command key is set in the
+            The result of this command is that desktop files, icons, D-Bus service
+            files, and AppStream metainfo files from the <filename>files</filename>
+            subdirectory are copied to a new <filename>export</filename> subdirectory.
+            In the <filename>metadata</filename> file, the command key is set in the
             [Application] group, and the supported keys in the [Environment]
             group are set according to the options.
         </para>

@@ -113,8 +113,8 @@ mkdir -p ${DIR}/files/share/icons/HighContrast/64x64/apps
 cp $(dirname $0)/org.test.Hello.png ${DIR}/files/share/icons/HighContrast/64x64/apps/${APP_ID}.png
 
 
-mkdir -p ${DIR}/files/share/appdata
-cat <<EOF > ${DIR}/files/share/appdata/${APP_ID}.xml
+mkdir -p ${DIR}/files/share/metainfo
+cat <<EOF > ${DIR}/files/share/metainfo/${APP_ID}.metainfo.xml
 <?xml version="1.0" encoding="UTF-8"?>
 <components version="0.8">
   <component type="desktop">
@@ -132,9 +132,27 @@ cat <<EOF > ${DIR}/files/share/appdata/${APP_ID}.xml
   </component>
 </components>
 EOF
+
+# Also check that the legacy path works
+mkdir -p ${DIR}/files/share/appdata
+cat <<EOF > ${DIR}/files/share/appdata/${APP_ID}.cmd.appdata.xml
+<?xml version="1.0" encoding="UTF-8"?>
+<components version="0.8">
+  <component type="console-application">
+    <id>$APP_ID.cmd</id>
+    <name>Command line client for Hello world test app</name>
+    <summary>Adds cool functionality</summary>
+    <provides>
+      <binary>hello</binary>
+    </provides>
+  </component>
+</components>
+EOF
+
 mkdir -p ${DIR}/files/share/app-info/xmls
 mkdir -p ${DIR}/files/share/app-info/icons/flatpak/64x64
-gzip -c ${DIR}/files/share/appdata/${APP_ID}.xml > ${DIR}/files/share/app-info/xmls/${APP_ID}.xml.gz
+gzip -c ${DIR}/files/share/metainfo/${APP_ID}.metainfo.xml > ${DIR}/files/share/app-info/xmls/${APP_ID}.xml.gz
+gzip -c ${DIR}/files/share/appdata/${APP_ID}.cmd.appdata.xml > ${DIR}/files/share/app-info/xmls/${APP_ID}.cmd.xml.gz
 cp $(dirname $0)/org.test.Hello.png ${DIR}/files/share/app-info/icons/flatpak/64x64/${APP_ID}.png
 
 if [ x$COLLECTION_ID != x ]; then
