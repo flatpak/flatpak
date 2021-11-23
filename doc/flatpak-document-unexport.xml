@@ -54,6 +54,16 @@
 
         <variablelist>
             <varlistentry>
+                <term><option>--doc-id</option></term>
+
+                <listitem><para>
+                    Interpret <arg choice="plain">FILE</arg> as a document ID
+                    rather than a file path. This is useful for example when
+                    the file has been deleted.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-h</option></term>
                 <term><option>--help</option></term>
 
