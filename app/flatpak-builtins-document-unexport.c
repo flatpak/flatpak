@@ -37,10 +37,10 @@
 #include "flatpak-utils-private.h"
 #include "flatpak-run-private.h"
 
-static gboolean opt_docid;
+static gboolean opt_doc_id;
 
 static GOptionEntry options[] = {
-  { "docid", 0, 0, G_OPTION_ARG_NONE, &opt_docid, N_("Specify the document ID"), NULL },
+  { "doc-id", 0, 0, G_OPTION_ARG_NONE, &opt_doc_id, N_("Specify the document ID"), NULL },
   { NULL }
 };
 
@@ -82,7 +82,7 @@ flatpak_builtin_document_unexport (int argc, char **argv,
   if (documents == NULL)
     return FALSE;
 
-  if (opt_docid)
+  if (opt_doc_id)
     doc_id = g_strdup (file);
   else if (!xdp_dbus_documents_call_lookup_sync (documents, file, &doc_id, NULL, error))
     return FALSE;
@@ -99,10 +99,43 @@ flatpak_builtin_document_unexport (int argc, char **argv,
   return TRUE;
 }
 
+static gboolean
+_complete_document_ids (FlatpakCompletion  *completion,
+                        GError            **error)
+{
+  g_autoptr(GDBusConnection) session_bus = NULL;
+  XdpDbusDocuments *documents;
+  g_autoptr(GVariant) apps = NULL;
+  g_autoptr(GVariantIter) iter = NULL;
+  const char *id;
+  const char *origin;
+
+  session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, error);
+  if (session_bus == NULL)
+    return FALSE;
+
+  documents = xdp_dbus_documents_proxy_new_sync (session_bus, 0,
+                                                 "org.freedesktop.portal.Documents",
+                                                 "/org/freedesktop/portal/documents",
+                                                 NULL, error);
+  if (documents == NULL)
+    return FALSE;
+
+  if (!xdp_dbus_documents_call_list_sync (documents, "", &apps, NULL, error))
+    return FALSE;
+
+  iter = g_variant_iter_new (apps);
+  while (g_variant_iter_next (iter, "{&s^&ay}", &id, &origin))
+    flatpak_complete_word (completion, "%s ", id);
+
+  return TRUE;
+}
+
 gboolean
 flatpak_complete_document_unexport (FlatpakCompletion *completion)
 {
   g_autoptr(GOptionContext) context = NULL;
+  g_autoptr(GError) error = NULL;
 
   context = g_option_context_new ("");
 
@@ -117,7 +150,11 @@ flatpak_complete_document_unexport (FlatpakCompletion *completion)
       flatpak_complete_options (completion, global_entries);
       flatpak_complete_options (completion, options);
 
-      flatpak_complete_file (completion, "__FLATPAK_FILE");
+      if (!opt_doc_id)
+        flatpak_complete_file (completion, "__FLATPAK_FILE");
+      else if (!_complete_document_ids (completion, &error))
+        flatpak_completion_debug ("complete document ids error: %s", error->message);
+
       break;
     }
 
