@@ -5198,7 +5198,7 @@ msgstr "Skipping %s due to previous error"
 #: common/flatpak-transaction.c:4815
 #, fuzzy, c-format
 msgid "Aborted due to failure (%s)"
-msgstr "Aborted due to failure"
+msgstr "Aborted due to failure (%s)"
 
 #: common/flatpak-utils.c:792
 msgid "Glob can't match apps"
