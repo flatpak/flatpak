@@ -107,5 +107,4 @@ quick intro to the major components of the flatpak repo:
 
 Here are some notable projects in the Flatpak ecosystem:
 * [Flatseal](https://github.com/tchx84/flatseal): An app for managing permissions of Flatpak apps without using the CLI
-* [Souk](https://gitlab.gnome.org/haecker-felix/souk): A Flatpak-only app store
 * [Flat-manager](https://github.com/flatpak/flat-manager): A tool for managing Flatpak repositories
