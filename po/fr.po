@@ -5,11 +5,11 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: flatpak 1.11.3\n"
+"Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2021-11-08 20:15-0600\n"
-"PO-Revision-Date: 2021-11-09 08:11-0500\n"
-"Last-Translator: FULL NAME <theevilskeleton@riseup.net>\n"
+"PO-Revision-Date: 2021-11-30 21:01-0500\n"
+"Last-Translator: Hari Rana / TheEvilSkeleton <theevilskeleton@riseup.net>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -159,7 +159,7 @@ msgstr "`%s` n'est pas un dépôt valide"
 #: app/flatpak-builtins-build-bundle.c:649
 #, c-format
 msgid "'%s' is not a valid repository: "
-msgstr "`%s` n'est pas un dépôt valide:"
+msgstr "`%s` n'est pas un dépôt valide: "
 
 #: app/flatpak-builtins-build-bundle.c:660 app/flatpak-builtins-build-sign.c:87
 #: common/flatpak-dir.c:12372
@@ -183,11 +183,11 @@ msgstr "'%s' n'est pas un nomdufichier valide"
 
 #: app/flatpak-builtins-build.c:49
 msgid "Use Platform runtime rather than Sdk"
-msgstr ""
+msgstr "Utiliser le runtime de la plateforme plutôt que le Sdk"
 
 #: app/flatpak-builtins-build.c:50
 msgid "Make destination readonly"
-msgstr ""
+msgstr "Rendre la cible en read-only"
 
 #: app/flatpak-builtins-build.c:51
 msgid "Add bind mount"
@@ -195,7 +195,7 @@ msgstr ""
 
 #: app/flatpak-builtins-build.c:51
 msgid "DEST=SRC"
-msgstr ""
+msgstr "DEST=SRC"
 
 #: app/flatpak-builtins-build.c:52
 msgid "Start build in this directory"
@@ -5375,7 +5375,7 @@ msgstr ""
 #. in the wheel group to uninstall without authenticating.
 #: system-helper/org.freedesktop.Flatpak.policy.in:161
 msgid "Uninstall app"
-msgstr ""
+msgstr "Désinstaller l'appli"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:162
 msgid "Authentication is required to uninstall $(ref)"
@@ -5425,7 +5425,7 @@ msgstr ""
 #. updates.
 #: system-helper/org.freedesktop.Flatpak.policy.in:228
 msgid "Update metadata"
-msgstr ""
+msgstr "Mettre à jour la métadonnée"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:229
 msgid "Authentication is required to update metadata"
