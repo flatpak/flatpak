@@ -2064,7 +2064,7 @@ add_font_path_args (FlatpakBwrap *bwrap)
 
   g_string_append (xml_snippet,
                    "<?xml version=\"1.0\"?>\n"
-                   "<!DOCTYPE fontconfig SYSTEM \"fonts.dtd\">\n"
+                   "<!DOCTYPE fontconfig SYSTEM \"urn:fontconfig:fonts.dtd\">\n"
                    "<fontconfig>\n");
 
   if (g_file_test (SYSTEM_FONTS_DIR, G_FILE_TEST_EXISTS))
