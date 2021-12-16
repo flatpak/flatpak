@@ -7851,6 +7851,7 @@ apply_extra_data (FlatpakDir   *self,
 
   minimal_envp = flatpak_run_get_minimal_env (FALSE, FALSE);
   bwrap = flatpak_bwrap_new (minimal_envp);
+  flatpak_bwrap_set_env (bwrap, "FLATPAK_ID", id, TRUE);
   flatpak_bwrap_add_args (bwrap, flatpak_get_bwrap (), NULL);
 
   if (runtime_files)
