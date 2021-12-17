@@ -1740,7 +1740,7 @@ def handleNameableType(toks):
         add_named_type(typename_prefix + name, type)
     return type
 
-nameableType = (Optional((Suppress("'") + ident).leaveWhitespace()) + (arrayType ^ maybeType ^ dictType ^ structType)).setParseAction(handleNameableType)
+nameableType = (Optional(Combine(Suppress("'") + ident)) + (arrayType ^ maybeType ^ dictType ^ structType)).setParseAction(handleNameableType)
 
 typeSpec <<= basicType  ^ variantType ^ namedType ^ nameableType
 
