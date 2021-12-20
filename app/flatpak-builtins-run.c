@@ -45,6 +45,7 @@ static gboolean opt_devel;
 static gboolean opt_log_session_bus;
 static gboolean opt_log_system_bus;
 static gboolean opt_log_a11y_bus;
+static gboolean opt_no_a11y_filtering;
 static int opt_a11y_bus = -1;
 static int opt_session_bus = -1;
 static gboolean opt_no_documents_portal;
@@ -75,6 +76,7 @@ static GOptionEntry options[] = {
   { "log-a11y-bus", 0, 0, G_OPTION_ARG_NONE, &opt_log_a11y_bus, N_("Log accessibility bus calls"), NULL },
   { "no-a11y-bus", 0, G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &opt_a11y_bus, N_("Don't proxy accessibility bus calls"), NULL },
   { "a11y-bus", 0, 0, G_OPTION_ARG_NONE, &opt_a11y_bus, N_("Proxy accessibility bus calls (default except when sandboxed)"), NULL },
+  { "no-a11y-filtering", 0, 0, G_OPTION_FLAG_REVERSE, &opt_no_a11y_filtering, N_("Do not filter calls on the a11y bus"), NULL },
   { "no-session-bus", 0, G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &opt_session_bus, N_("Don't proxy session bus calls"), NULL },
   { "session-bus", 0, 0, G_OPTION_ARG_NONE, &opt_session_bus, N_("Proxy session bus calls (default except when sandboxed)"), NULL },
   { "no-documents-portal", 0, 0, G_OPTION_ARG_NONE, &opt_no_documents_portal, N_("Don't start portals"), NULL },
@@ -302,6 +304,8 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
     flags |= FLATPAK_RUN_FLAG_PARENT_SHARE_PIDS;
   if (!opt_a11y_bus)
     flags |= FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY;
+  if (opt_no_a11y_filtering)
+    flags |= FLATPAK_RUN_FLAG_NO_A11Y_FILTERING;
   if (!opt_session_bus)
     flags |= FLATPAK_RUN_FLAG_NO_SESSION_BUS_PROXY;
 
