@@ -2212,7 +2212,7 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
     return FALSE;
 
   if (external_metadata)
-    op->external_metadata = g_bytes_new (external_metadata, strlen (external_metadata) + 1);
+    op->external_metadata = g_bytes_new (external_metadata, strlen (external_metadata));
 
   return TRUE;
 }
@@ -2580,7 +2580,7 @@ load_deployed_metadata (FlatpakTransaction *self, const char *ref, char **out_co
       return NULL;
     }
 
-  return g_bytes_new_take (g_steal_pointer (&metadata_contents), metadata_contents_length + 1);
+  return g_bytes_new_take (g_steal_pointer (&metadata_contents), metadata_contents_length);
 }
 
 static void
@@ -2678,7 +2678,7 @@ resolve_op_from_commit (FlatpakTransaction *self,
   if (xa_metadata == NULL)
     g_message ("Warning: No xa.metadata in local commit %s ref %s", checksum, op->ref);
   else
-    metadata_bytes = g_bytes_new (xa_metadata, strlen (xa_metadata) + 1);
+    metadata_bytes = g_bytes_new (xa_metadata, strlen (xa_metadata));
 
   if (g_variant_lookup (commit_metadata, "xa.download-size", "t", &download_size))
     op->download_size = GUINT64_FROM_BE (download_size);
@@ -2717,7 +2717,7 @@ try_resolve_op_from_metadata (FlatpakTransaction *self,
                                           &download_size, &installed_size, &metadata, NULL))
       return FALSE;
 
-  metadata_bytes = g_bytes_new (metadata, strlen (metadata) + 1);
+  metadata_bytes = g_bytes_new (metadata, strlen (metadata));
 
   if (flatpak_remote_state_lookup_ref (state, op->ref, NULL, NULL, &info, NULL, NULL))
     op->summary_metadata = var_metadata_dup_to_gvariant (var_ref_info_get_metadata (info));

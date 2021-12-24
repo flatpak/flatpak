@@ -5501,6 +5501,7 @@ flatpak_pull_from_bundle (OstreeRepo   *repo,
                           GCancellable *cancellable,
                           GError      **error)
 {
+  gsize metadata_size = 0;
   g_autofree char *metadata_contents = NULL;
   g_autofree char *to_checksum = NULL;
   g_autoptr(GFile) root = NULL;
@@ -5516,6 +5517,8 @@ flatpak_pull_from_bundle (OstreeRepo   *repo,
   metadata = flatpak_bundle_load (file, &to_checksum, NULL, NULL, NULL, &metadata_contents, NULL, NULL, &collection_id, error);
   if (metadata == NULL)
     return FALSE;
+
+  metadata_size = strlen (metadata_contents);
 
   if (!ostree_repo_get_remote_option (repo, remote, "collection-id", NULL,
                                       &remote_collection_id, NULL))
@@ -5586,12 +5589,10 @@ flatpak_pull_from_bundle (OstreeRepo   *repo,
                                   cancellable, error) < 0)
         return FALSE;
 
-      /* Null terminate */
-      g_output_stream_write (G_OUTPUT_STREAM (data_stream), "\0", 1, NULL, NULL);
-
       metadata_valid =
         metadata_contents != NULL &&
-        strcmp (metadata_contents, g_memory_output_stream_get_data (data_stream)) == 0;
+        metadata_size == g_memory_output_stream_get_data_size (data_stream) &&
+        memcmp (metadata_contents, g_memory_output_stream_get_data (data_stream), metadata_size) == 0;
     }
   else
     {
