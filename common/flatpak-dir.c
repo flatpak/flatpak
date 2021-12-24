@@ -1003,19 +1003,29 @@ static gboolean
 validate_commit_metadata (GVariant   *commit_data,
                           const char *ref,
                           const char *required_metadata,
+                          gsize       required_metadata_size,
                           gboolean   require_xa_metadata,
                           GError   **error)
 {
   g_autoptr(GVariant) commit_metadata = NULL;
+  g_autoptr(GVariant) xa_metadata_v = NULL;
   const char *xa_metadata = NULL;
+  gsize xa_metadata_size = 0;
 
   commit_metadata = g_variant_get_child_value (commit_data, 0);
 
   if (commit_metadata != NULL)
-    g_variant_lookup (commit_metadata, "xa.metadata", "&s", &xa_metadata);
+    {
+      xa_metadata_v = g_variant_lookup_value (commit_metadata,
+                                              "xa.metadata",
+                                              G_VARIANT_TYPE_STRING);
+      if (xa_metadata_v)
+        xa_metadata = g_variant_get_string (xa_metadata_v, &xa_metadata_size);
+    }
 
   if ((xa_metadata == NULL && require_xa_metadata) ||
-      (xa_metadata != NULL && g_strcmp0 (required_metadata, xa_metadata) != 0))
+      (xa_metadata != NULL && (xa_metadata_size != required_metadata_size ||
+                               memcmp (xa_metadata, required_metadata, xa_metadata_size) != 0)))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED,
                    _("Commit metadata for %s not matching expected metadata"), ref);
@@ -3199,7 +3209,7 @@ resolve_p2p_update_from_commit (FlatpakDirResolve *resolve,
   if (xa_metadata == NULL)
     g_message ("Warning: No xa.metadata in commit %s ref %s", resolve->resolved_commit, resolve->ref);
   else
-    resolve->resolved_metadata = g_bytes_new (xa_metadata, strlen (xa_metadata) + 1);
+    resolve->resolved_metadata = g_bytes_new (xa_metadata, strlen (xa_metadata));
 
   if (g_variant_lookup (commit_metadata, "xa.download-size", "t", &download_size))
     resolve->download_size = GUINT64_FROM_BE (download_size);
@@ -4812,8 +4822,13 @@ flatpak_dir_pull (FlatpakDir                           *self,
     {
       g_autoptr(GVariant) commit_data = NULL;
       if (!ostree_repo_load_commit (repo, rev, &commit_data, NULL, error) ||
-          !validate_commit_metadata (commit_data, ref, (const char *)g_bytes_get_data (require_metadata, NULL), TRUE, error))
-        return FALSE;
+          !validate_commit_metadata (commit_data,
+                                     ref,
+                                     (const char *)g_bytes_get_data (require_metadata, NULL),
+                                     g_bytes_get_size (require_metadata),
+                                     TRUE,
+                                     error))
+        goto out;
     }
 
   if (!flatpak_dir_pull_extra_data (self, repo,
@@ -6959,6 +6974,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
   g_autofree char *metadata_contents = NULL;
   g_auto(GStrv) ref_parts = NULL;
   gboolean is_app;
+  gsize metadata_size = 0;
   gboolean is_oci;
 
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
@@ -7202,11 +7218,12 @@ flatpak_dir_deploy (FlatpakDir          *self,
   keyfile = g_key_file_new ();
   metadata_file = g_file_resolve_relative_path (checkoutdir, "metadata");
   if (g_file_load_contents (metadata_file, NULL,
-                            &metadata_contents, NULL, NULL, NULL))
+                            &metadata_contents,
+                            &metadata_size, NULL, NULL))
     {
       if (!g_key_file_load_from_data (keyfile,
                                       metadata_contents,
-                                      -1,
+                                      metadata_size,
                                       0, error))
         return FALSE;
 
@@ -7221,7 +7238,8 @@ flatpak_dir_deploy (FlatpakDir          *self,
    * since this was lacking in fedora builds.
    */
   is_oci = flatpak_dir_get_remote_oci (self, origin);
-  if (!validate_commit_metadata (commit_data, ref, metadata_contents, !is_oci, error))
+  if (!validate_commit_metadata (commit_data, ref,
+                                 metadata_contents, metadata_size, !is_oci, error))
     return FALSE;
 
   dotref = g_file_resolve_relative_path (checkoutdir, "files/.ref");
