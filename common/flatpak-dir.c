@@ -8436,7 +8436,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
 
           if (g_file_query_exists (etc_resolve_conf, cancellable) &&
               !g_file_delete (etc_resolve_conf, cancellable, error))
-            return TRUE;
+            return FALSE;
 
           if (!g_file_make_symbolic_link (etc_resolve_conf,
                                           "/run/host/monitor/resolv.conf",
