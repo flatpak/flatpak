@@ -147,6 +147,7 @@ TEST_MATRIX_SOURCE = \
 	tests/test-run.sh{{user+system},{nodeltas+deltas}} \
 	tests/test-info.sh{user+system} \
 	tests/test-repo.sh{user+system+collections+collections-server-only} \
+	tests/test-metadata-validation.sh \
 	tests/test-extensions.sh \
 	tests/test-bundle.sh{user+system} \
 	tests/test-oci.sh \
