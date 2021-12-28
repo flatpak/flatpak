@@ -282,6 +282,7 @@ TEST_MATRIX_SOURCE = \
 	tests/test-subset.sh{user+system} \
 	tests/test-prune.sh \
 	tests/test-seccomp.sh \
+	tests/test-repair.sh \
 	$(NULL)
 
 update-test-matrix:
