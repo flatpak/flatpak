@@ -37,6 +37,7 @@ TEST_MATRIX_DIST= \
 	tests/test-http-utils.sh \
 	tests/test-history.sh \
 	tests/test-default-remotes.sh \
+	tests/test-metadata-validation.sh \
 	tests/test-extensions.sh \
 	tests/test-oci.sh \
 	tests/test-override.sh \

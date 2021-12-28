@@ -269,6 +269,7 @@ TEST_MATRIX_SOURCE = \
 	tests/test-history.sh \
 	tests/test-sideload.sh{user+system} \
 	tests/test-default-remotes.sh \
+	tests/test-metadata-validation.sh \
 	tests/test-extensions.sh \
 	tests/test-bundle.sh{user+system+system-norevokefs} \
 	tests/test-oci.sh \
