@@ -8403,7 +8403,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
 
   if (flatpak_decomposed_is_runtime (ref))
     {
-      /* Ensure that various files exists as regular files in /usr/etc, as we
+      /* Ensure that various files exist as regular files in /usr/etc, as we
          want to bind-mount over them */
       files_etc = g_file_resolve_relative_path (checkoutdir, "files/etc");
       if (g_file_query_exists (files_etc, cancellable))
