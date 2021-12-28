@@ -8392,7 +8392,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
   dotref = g_file_resolve_relative_path (checkoutdir, "files/.ref");
   if (!g_file_replace_contents (dotref, "", 0, NULL, FALSE,
                                 G_FILE_CREATE_REPLACE_DESTINATION, NULL, cancellable, error))
-    return TRUE;
+    return FALSE;
 
   export = g_file_get_child (checkoutdir, "export");
 
