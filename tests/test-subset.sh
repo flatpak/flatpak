@@ -33,8 +33,8 @@ assert_file_has_content repo-info.txt "Subsummaries: .*subset1-$ARCH.*"
 assert_file_has_content repo-info.txt "Subsummaries: .*subset2-$ARCH.*"
 
 $FLATPAK repo --branches repos/test > repo-all.txt
-assert_file_has_content repo-all.txt "app/org.test.Hello/$ARCH/master"
-assert_file_has_content repo-all.txt "runtime/org.test.Platform/$ARCH/master"
+assert_file_has_content repo-all.txt "app/org\.test\.Hello/$ARCH/master"
+assert_file_has_content repo-all.txt "runtime/org\.test\.Platform/$ARCH/master"
 
 EXPORT_ARGS="--subset=subset1 " GPGARGS="${FL_GPGARGS}" $(dirname $0)/make-test-app.sh repos/test org.test.SubsetOne master ""
 EXPORT_ARGS="--subset=subset2 " GPGARGS="${FL_GPGARGS}" $(dirname $0)/make-test-app.sh repos/test org.test.SubsetTwo master ""
@@ -46,36 +46,36 @@ assert_file_has_content repo-info.txt "Subsummaries: .*subset1-$ARCH.*"
 assert_file_has_content repo-info.txt "Subsummaries: .*subset2-$ARCH.*"
 
 $FLATPAK repo --branches repos/test > repo-all.txt
-assert_file_has_content repo-all.txt "app/org.test.Hello/$ARCH/master"
-assert_file_has_content repo-all.txt "app/org.test.SubsetOne/$ARCH/master"
-assert_file_has_content repo-all.txt "app/org.test.SubsetTwo/$ARCH/master"
-assert_file_has_content repo-all.txt "app/org.test.NoSubset/$ARCH/master"
-assert_file_has_content repo-all.txt "runtime/org.test.Platform/$ARCH/master"
+assert_file_has_content repo-all.txt "app/org\.test\.Hello/$ARCH/master"
+assert_file_has_content repo-all.txt "app/org\.test\.SubsetOne/$ARCH/master"
+assert_file_has_content repo-all.txt "app/org\.test\.SubsetTwo/$ARCH/master"
+assert_file_has_content repo-all.txt "app/org\.test\.NoSubset/$ARCH/master"
+assert_file_has_content repo-all.txt "runtime/org\.test\.Platform/$ARCH/master"
 
 $FLATPAK repo --branches repos/test --subset=subset1 > repo-subset1.txt
-assert_file_has_content repo-subset1.txt "app/org.test.Hello/$ARCH/master"
-assert_file_has_content repo-subset1.txt "app/org.test.SubsetOne/$ARCH/master"
-assert_not_file_has_content repo-subset1.txt "app/org.test.SubsetTwo/$ARCH/master"
-assert_not_file_has_content repo-subset1.txt "app/org.test.NoSubset/$ARCH/master"
-assert_file_has_content repo-subset1.txt "runtime/org.test.Platform/$ARCH/master"
+assert_file_has_content repo-subset1.txt "app/org\.test\.Hello/$ARCH/master"
+assert_file_has_content repo-subset1.txt "app/org\.test\.SubsetOne/$ARCH/master"
+assert_not_file_has_content repo-subset1.txt "app/org\.test\.SubsetTwo/$ARCH/master"
+assert_not_file_has_content repo-subset1.txt "app/org\.test\.NoSubset/$ARCH/master"
+assert_file_has_content repo-subset1.txt "runtime/org\.test\.Platform/$ARCH/master"
 
 $FLATPAK repo --branches repos/test --subset=subset2 > repo-subset2.txt
-assert_file_has_content repo-subset2.txt "app/org.test.Hello/$ARCH/master"
-assert_not_file_has_content repo-subset2.txt "app/org.test.SubsetOne/$ARCH/master"
-assert_file_has_content repo-subset2.txt "app/org.test.SubsetTwo/$ARCH/master"
-assert_not_file_has_content repo-subset2.txt "app/org.test.NoSubset/$ARCH/master"
-assert_file_has_content repo-subset2.txt "runtime/org.test.Platform/$ARCH/master"
+assert_file_has_content repo-subset2.txt "app/org\.test\.Hello/$ARCH/master"
+assert_not_file_has_content repo-subset2.txt "app/org\.test\.SubsetOne/$ARCH/master"
+assert_file_has_content repo-subset2.txt "app/org\.test\.SubsetTwo/$ARCH/master"
+assert_not_file_has_content repo-subset2.txt "app/org\.test\.NoSubset/$ARCH/master"
+assert_file_has_content repo-subset2.txt "runtime/org\.test\.Platform/$ARCH/master"
 
 ok "repo has right refs in right subset"
 
 ${FLATPAK} ${U} remote-modify --subset=subset1 test-repo
 
-${FLATPAK} ${U} remote-ls test-repo > remote-subset1.txt
-assert_file_has_content remote-subset1.txt "org.test.Hello"
-assert_file_has_content remote-subset1.txt "org.test.SubsetOne"
-assert_not_file_has_content remote-subset1.txt "org.test.SubsetTwo"
-assert_not_file_has_content remote-subset1.txt "org.test.NoSubset"
-assert_file_has_content remote-subset1.txt "org.test.Platform"
+${FLATPAK} ${U} remote-ls --columns=ref test-repo > remote-subset1.txt
+assert_file_has_content remote-subset1.txt "org\.test\.Hello/"
+assert_file_has_content remote-subset1.txt "org\.test\.SubsetOne/"
+assert_not_file_has_content remote-subset1.txt "org\.test\.SubsetTwo/"
+assert_not_file_has_content remote-subset1.txt "org\.test\.NoSubset/"
+assert_file_has_content remote-subset1.txt "org\.test\.Platform/"
 
 ${FLATPAK} ${U} install -y org.test.Hello &> /dev/null
 ${FLATPAK} ${U} install -y org.test.SubsetOne &> /dev/null
@@ -95,12 +95,12 @@ ok "remote subset handling works"
 
 ${FLATPAK} ${U} remote-modify --subset=subset2 test-repo
 
-${FLATPAK} ${U} remote-ls test-repo > remote-subset2.txt
-assert_file_has_content remote-subset2.txt "org.test.Hello"
-assert_not_file_has_content remote-subset2.txt "org.test.SubsetOne"
-assert_file_has_content remote-subset2.txt "org.test.SubsetTwo"
-assert_not_file_has_content remote-subset1.txt "org.test.NoSubset"
-assert_file_has_content remote-subset2.txt "org.test.Platform"
+${FLATPAK} ${U} remote-ls --columns=ref test-repo > remote-subset2.txt
+assert_file_has_content remote-subset2.txt "org\.test\.Hello/"
+assert_not_file_has_content remote-subset2.txt "org\.test\.SubsetOne/"
+assert_file_has_content remote-subset2.txt "org\.test\.SubsetTwo/"
+assert_not_file_has_content remote-subset1.txt "org\.test\.NoSubset/"
+assert_file_has_content remote-subset2.txt "org\.test\.Platform/"
 
 ${FLATPAK} ${U} install -y org.test.SubsetTwo &> /dev/null
 
