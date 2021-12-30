@@ -9076,3 +9076,20 @@ flatpak_uri_equal (const char *uri1,
 
   return g_strcmp0 (uri1_norm, uri2_norm) == 0;
 }
+
+gboolean
+running_under_sudo (void)
+{
+  const char *sudo_command_env = g_getenv ("SUDO_COMMAND");
+  g_auto(GStrv) split_command = NULL;
+
+  if (!sudo_command_env)
+    return FALSE;
+
+  /* SUDO_COMMAND could be a value like `/usr/bin/flatpak run foo` */
+  split_command = g_strsplit (sudo_command_env, " ", 2);
+  if (g_str_has_suffix (split_command[0], "flatpak"))
+    return TRUE;
+
+  return FALSE;
+}

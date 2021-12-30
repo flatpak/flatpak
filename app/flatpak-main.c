@@ -369,6 +369,16 @@ flatpak_option_context_parse (GOptionContext     *context,
         flatpak_disable_fancy_output ();
     }
 
+  /* sudo flatpak --user ... would operate on the root user's installation,
+   * which is almost certainly not what the user intended so just consider it
+   * an error.
+   */
+  if (opt_user && running_under_sudo ())
+    return flatpak_fail_error (error, FLATPAK_ERROR,
+                               _("Refusing to operate under sudo with --user. "
+                                 "Omit sudo to operate on the user installation, "
+                                 "or use a root shell to operate on the root user's installation."));
+
   if (!(flags & FLATPAK_BUILTIN_FLAG_NO_DIR))
     {
       dirs = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
