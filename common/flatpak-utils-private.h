@@ -916,6 +916,8 @@ gboolean flatpak_str_is_integer (const char *s);
 gboolean flatpak_uri_equal (const char *uri1,
                             const char *uri2);
 
+gboolean running_under_sudo (void);
+
 #define FLATPAK_MESSAGE_ID "c7b39b1e006b464599465e105b361485"
 
 #endif /* __FLATPAK_UTILS_H__ */
