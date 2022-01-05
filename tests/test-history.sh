@@ -13,8 +13,8 @@ skip_revokefs_without_fuse
 
 echo "1..1"
 
-sleep 1
 HISTORY_START_TIME=$(date +"%Y-%m-%d %H:%M:%S")
+sleep 1
 
 mkdir -p ${TEST_DATA_DIR}/system-history-installation
 mkdir -p ${FLATPAK_CONFIG_DIR}/installations.d
