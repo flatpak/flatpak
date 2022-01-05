@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2021-12-16 03:25+0000\n"
-"PO-Revision-Date: 2022-01-01 13:33+0800\n"
+"POT-Creation-Date: 2022-01-05 03:26+0000\n"
+"PO-Revision-Date: 2022-01-05 14:26+0800\n"
 "Last-Translator: lumingzh <lumingzh@qq.com>\n"
 "Language-Team: Chinese - China <i18n-zh@googlegroups.com>\n"
 "Language: zh_CN\n"
@@ -133,7 +133,7 @@ msgstr "必须指定位置、文件名和名称"
 #: app/flatpak-builtins-document-info.c:75
 #: app/flatpak-builtins-document-list.c:181
 #: app/flatpak-builtins-document-unexport.c:67
-#: app/flatpak-builtins-history.c:465 app/flatpak-builtins-info.c:130
+#: app/flatpak-builtins-history.c:480 app/flatpak-builtins-info.c:130
 #: app/flatpak-builtins-install.c:143 app/flatpak-builtins-install.c:210
 #: app/flatpak-builtins-list.c:404 app/flatpak-builtins-make-current.c:72
 #: app/flatpak-builtins-override.c:73
@@ -254,7 +254,7 @@ msgstr "在 %2$s 中没有匹配 %1$s 的扩展点"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "在绑定挂载选项“%s”中缺少“=”"
 
-#: app/flatpak-builtins-build.c:606 common/flatpak-run.c:4563
+#: app/flatpak-builtins-build.c:606 common/flatpak-run.c:4548
 msgid "Unable to start app"
 msgstr "无法启动应用"
 
@@ -1590,15 +1590,15 @@ msgstr "打开日志失败：%s"
 msgid "Failed to add match to journal: %s"
 msgstr "无法将匹配项添加到日志：%s"
 
-#: app/flatpak-builtins-history.c:454
+#: app/flatpak-builtins-history.c:469
 msgid " - Show history"
 msgstr " - 显示历史"
 
-#: app/flatpak-builtins-history.c:473
+#: app/flatpak-builtins-history.c:488
 msgid "Failed to parse the --since option"
 msgstr "解析 --since 选项失败"
 
-#: app/flatpak-builtins-history.c:484
+#: app/flatpak-builtins-history.c:499
 msgid "Failed to parse the --until option"
 msgstr "解析 --until 选项失败"
 
@@ -3872,31 +3872,39 @@ msgstr ""
 "请注意 %s 目录不在由 XDG_DATA_DIRS 环境变量设置的搜索路径中，因此通过 "
 "Flatpak 安装的应用在会话重启前可能不会出现在您的桌面。"
 
-#: app/flatpak-main.c:440
+#: app/flatpak-main.c:378
+msgid ""
+"Refusing to operate under sudo with --user. Omit sudo to operate on the user "
+"installation, or use a root shell to operate on the root user's installation."
+msgstr ""
+"拒绝在 sudo 下带 --user 操作。在用户级安装时删去 sudo，或者在根用户级安装时使"
+"用根 shell 操作。"
+
+#: app/flatpak-main.c:450
 msgid ""
 "Multiple installations specified for a command that works on one installation"
 msgstr "为在用于一个安装的命令指定了多个安装"
 
-#: app/flatpak-main.c:489 app/flatpak-main.c:671
+#: app/flatpak-main.c:499 app/flatpak-main.c:681
 #, c-format
 msgid "See '%s --help'"
 msgstr "参见“%s --help”"
 
-#: app/flatpak-main.c:680
+#: app/flatpak-main.c:690
 #, c-format
 msgid "'%s' is not a flatpak command. Did you mean '%s%s'?"
 msgstr "“%s”不是 flatpak 命令。您的意思是“%s%s”吗？"
 
-#: app/flatpak-main.c:683
+#: app/flatpak-main.c:693
 #, c-format
 msgid "'%s' is not a flatpak command"
 msgstr "“%s”不是 flatpak 命令"
 
-#: app/flatpak-main.c:798
+#: app/flatpak-main.c:808
 msgid "No command specified"
 msgstr "未指定命令"
 
-#: app/flatpak-main.c:958
+#: app/flatpak-main.c:969
 msgid "error:"
 msgstr "错误："
 
@@ -4651,7 +4659,7 @@ msgstr "远程仓库名称中有无效字符“/”：%s"
 msgid "No configuration for remote %s specified"
 msgstr "没有为远程仓库 %s 指定配置"
 
-#: common/flatpak-dir.c:15853
+#: common/flatpak-dir.c:15850
 #, c-format
 msgid "Skipping deletion of mirror ref (%s, %s)…\n"
 msgstr "正在跳过删除镜像引用（%s，%s）…\n"
@@ -5015,25 +5023,29 @@ msgstr "无法打开生成的 ld.so.cache"
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr "您的管理员设置的策略不允许运行 %s"
 
-#: common/flatpak-run.c:3896
+#: common/flatpak-run.c:3956
+#| msgid ""
+#| "\"flatpak run\" is not intended to be run as `sudo flatpak run`, use "
+#| "`sudo -i` or `su -l` instead and invoke \"flatpak run\" from inside the "
+#| "new shell"
 msgid ""
-"\"flatpak run\" is not intended to be run as `sudo flatpak run`, use `sudo -"
-"i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell"
+"\"flatpak run\" is not intended to be run as `sudo flatpak run`. Use `sudo -"
+"i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell."
 msgstr ""
-"“flatpak run”不是设计为以“sudo flatpak run”运行的，使用“sudo -i”或者“su -l”代"
-"替且从新的 shell 内部调用“flatpak run”"
+"“flatpak run”不是设计为以“sudo flatpak run”运行的。使用“sudo -i”或者“su -l”代"
+"替且从新的 shell 内部调用“flatpak run”。"
 
-#: common/flatpak-run.c:4154
+#: common/flatpak-run.c:4139
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "从 %s 迁移失败：%s"
 
-#: common/flatpak-run.c:4169
+#: common/flatpak-run.c:4154
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr "将旧应用数据目录 %s 迁移至新名称 %s 失败：%s"
 
-#: common/flatpak-run.c:4178
+#: common/flatpak-run.c:4163
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "迁移 %s 时创建符号链接失败：%s"
