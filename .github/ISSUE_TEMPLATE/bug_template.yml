@@ -14,6 +14,8 @@ body:
         required: true
       - label: If this is an issue with a particular app, I have tried filing it in the appropriate issue tracker for the app (e.g. under https://github.com/flathub/) and determined that it is an issue with Flatpak itself.
         required: true
+      - label: This issue is not a report of a security vulnerability (see [here](https://github.com/flatpak/flatpak/blob/master/SECURITY.md) if you need to report a security issue).
+        required: true
 - type: input
   attributes:
     label: Flatpak version
