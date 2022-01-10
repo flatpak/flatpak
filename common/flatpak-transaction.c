@@ -1991,11 +1991,12 @@ load_deployed_metadata (FlatpakTransaction *self, const char *ref)
   return g_bytes_new_take (g_steal_pointer (&metadata_contents), metadata_contents_length);
 }
 
-static void
+static gboolean
 mark_op_resolved (FlatpakTransactionOperation *op,
                   const char                  *commit,
                   GBytes                      *metadata,
-                  GBytes                      *old_metadata)
+                  GBytes                      *old_metadata,
+                  GError                     **error)
 {
   g_debug ("marking op %s:%s resolved to %s", kind_to_str (op->kind), op->ref, commit ? commit : "-");
 
@@ -2009,13 +2010,12 @@ mark_op_resolved (FlatpakTransactionOperation *op,
   if (metadata)
     {
       g_autoptr(GKeyFile) metakey = g_key_file_new ();
-      if (g_key_file_load_from_bytes (metakey, metadata, G_KEY_FILE_NONE, NULL))
-        {
-          op->resolved_metadata = g_bytes_ref (metadata);
-          op->resolved_metakey = g_steal_pointer (&metakey);
-        }
-      else
-        g_message ("Warning: Failed to parse metadata for %s\n", op->ref);
+      if (!g_key_file_load_from_bytes (metakey, metadata, G_KEY_FILE_NONE, NULL))
+        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                   "Metadata for %s is invalid", op->ref);
+
+      op->resolved_metadata = g_bytes_ref (metadata);
+      op->resolved_metakey = g_steal_pointer (&metakey);
     }
   if (old_metadata)
     {
@@ -2026,28 +2026,37 @@ mark_op_resolved (FlatpakTransactionOperation *op,
           op->resolved_old_metakey = g_steal_pointer (&metakey);
         }
       else
-        g_message ("Warning: Failed to parse old metadata for %s\n", op->ref);
+        {
+          /* This shouldn't happen, but a NULL old metadata is safe (all permisssions are considered new) */
+          g_message ("Warning: Failed to parse old metadata for %s\n", op->ref);
+        }
     }
+
+  return TRUE;
 }
 
-static void
+static gboolean
 resolve_op_end (FlatpakTransaction *self,
                 FlatpakTransactionOperation *op,
                 const char *checksum,
-                GBytes *metadata_bytes)
+                GBytes *metadata_bytes,
+                GError **error)
 {
   g_autoptr(GBytes) old_metadata_bytes = NULL;
 
   old_metadata_bytes = load_deployed_metadata (self, op->ref);
-  mark_op_resolved (op, checksum, metadata_bytes, old_metadata_bytes);
+  if (!mark_op_resolved (op, checksum, metadata_bytes, old_metadata_bytes, error))
+    return FALSE;
+  return TRUE;
  }
 
 
-static void
+static gboolean
 resolve_op_from_commit (FlatpakTransaction *self,
                         FlatpakTransactionOperation *op,
                         const char *checksum,
-                        GVariant *commit_data)
+                        GVariant *commit_data,
+                        GError **error)
 {
   g_autoptr(GBytes) metadata_bytes = NULL;
   g_autoptr(GVariant) commit_metadata = NULL;
@@ -2058,23 +2067,26 @@ resolve_op_from_commit (FlatpakTransaction *self,
   commit_metadata = g_variant_get_child_value (commit_data, 0);
   g_variant_lookup (commit_metadata, "xa.metadata", "&s", &xa_metadata);
   if (xa_metadata == NULL)
-    g_message ("Warning: No xa.metadata in local commit %s ref %s", checksum, op->ref);
-  else
-    metadata_bytes = g_bytes_new (xa_metadata, strlen (xa_metadata));
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                               "No xa.metadata in local commit %s ref %s",
+                               checksum, op->ref);
+
+  metadata_bytes = g_bytes_new (xa_metadata, strlen (xa_metadata));
 
   if (g_variant_lookup (commit_metadata, "xa.download-size", "t", &download_size))
     op->download_size = GUINT64_FROM_BE (download_size);
   if (g_variant_lookup (commit_metadata, "xa.installed-size", "t", &installed_size))
     op->installed_size = GUINT64_FROM_BE (installed_size);
 
-  resolve_op_end (self, op, checksum, metadata_bytes);
+  return resolve_op_end (self, op, checksum, metadata_bytes, error);
 }
 
-static void
+static gboolean
 resolve_op_from_metadata (FlatpakTransaction *self,
                           FlatpakTransactionOperation *op,
                           const char *checksum,
-                          FlatpakRemoteState *state)
+                          FlatpakRemoteState *state,
+                          GError **error)
 {
   g_autoptr(GBytes) metadata_bytes = NULL;
   guint64 download_size = 0;
@@ -2093,7 +2105,7 @@ resolve_op_from_metadata (FlatpakTransaction *self,
   op->installed_size = installed_size;
   op->download_size = download_size;
 
-  resolve_op_end (self, op, checksum, metadata_bytes);
+  return resolve_op_end (self, op, checksum, metadata_bytes, error);
 }
 
 static gboolean
@@ -2138,7 +2150,8 @@ resolve_p2p_ops (FlatpakTransaction *self,
       op->download_size = resolve->download_size;
       op->installed_size = resolve->installed_size;
 
-      resolve_op_end (self, op, resolve->resolved_commit, resolve->resolved_metadata);
+      if (!resolve_op_end (self, op, resolve->resolved_commit, resolve->resolved_metadata, error))
+        return FALSE;
     }
 
   return TRUE;
@@ -2174,14 +2187,16 @@ resolve_ops (FlatpakTransaction *self,
           /* We resolve to the deployed metadata, becasue we need it to uninstall related ops */
 
           metadata_bytes = load_deployed_metadata (self, op->ref);
-          mark_op_resolved (op, NULL, metadata_bytes, NULL);
+          if (!mark_op_resolved (op, NULL, metadata_bytes, NULL, error))
+            return FALSE;
           continue;
         }
 
       if (op->kind == FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE)
         {
           g_assert (op->commit != NULL);
-          mark_op_resolved (op, op->commit, op->external_metadata, NULL);
+          if (!mark_op_resolved (op, op->commit, op->external_metadata, NULL, error))
+            return FALSE;
           continue;
         }
 
@@ -2211,7 +2226,8 @@ resolve_ops (FlatpakTransaction *self,
           if (commit_data == NULL)
             return FALSE;
 
-          resolve_op_from_commit (self, op, checksum, commit_data);
+          if (!resolve_op_from_commit (self, op, checksum, commit_data, error))
+            return FALSE;
         }
       else if (state->collection_id == NULL) /* In the non-p2p case we have all the info available in the summary, so use it */
         {
@@ -2239,7 +2255,8 @@ resolve_ops (FlatpakTransaction *self,
 
           /* TODO: This only gets the metadata for the latest only, we need to handle the case
              where the user specified a commit, or p2p doesn't have the latest commit available */
-          resolve_op_from_metadata (self, op, checksum, state);
+          if (!resolve_op_from_metadata (self, op, checksum, state, error))
+            return FALSE;
         }
       else
         {
