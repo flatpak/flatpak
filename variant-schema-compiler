@@ -134,6 +134,26 @@ typedef struct {{
 } )
 
     C("""
+/* Make sure generated code works with older glib versions without g_memdup2 */
+static inline gpointer
+_{prefix_}memdup2(gconstpointer mem, gsize byte_size)
+{{
+#if GLIB_CHECK_VERSION(2, 68, 0)
+    return g_memdup2(mem, byte_size);
+#else
+    gpointer new_mem;
+
+    if (mem && byte_size != 0) {{
+        new_mem = g_malloc(byte_size);
+        memcpy(new_mem, mem, byte_size);
+    }} else {{
+        new_mem = NULL;
+    }}
+
+    return new_mem;
+#endif
+}}
+
 #define {PREFIX_}REF_READ_FRAME_OFFSET(_v, _index) {prefix_}ref_read_unaligned_le ((guchar*)((_v).base) + (_v).size - (offset_size * ((_index) + 1)), offset_size)
 #define {PREFIX_}REF_ALIGN(_offset, _align_to) ((_offset + _align_to - 1) & ~(gsize)(_align_to - 1))
 
@@ -376,7 +396,7 @@ static inline {Prefix}VariantRef
 static inline GVariant *
 {prefix_}variant_dup_to_gvariant ({Prefix}VariantRef v)
 {{
-  return g_variant_new_from_data (G_VARIANT_TYPE_VARIANT, g_memdup (v.base, v.size), v.size, TRUE, g_free, NULL);
+  return g_variant_new_from_data (G_VARIANT_TYPE_VARIANT, _{prefix_}memdup2 (v.base, v.size), v.size, TRUE, g_free, NULL);
 }}
 
 static inline GVariant *
@@ -384,7 +404,7 @@ static inline GVariant *
                               GDestroyNotify      notify,
                               gpointer            user_data)
 {{
-  return g_variant_new_from_data (G_VARIANT_TYPE_VARIANT, g_memdup (v.base, v.size), v.size, TRUE, notify, user_data);
+  return g_variant_new_from_data (G_VARIANT_TYPE_VARIANT, _{prefix_}memdup2 (v.base, v.size), v.size, TRUE, notify, user_data);
 }}
 
 static inline GVariant *
@@ -414,7 +434,7 @@ static inline GVariant *
 {{
   const GVariantType  *type;
   {Prefix}Ref child = {prefix_}variant_get_child (v, &type);
-  return g_variant_new_from_data (type, g_memdup (child.base, child.size), child.size, TRUE, g_free, NULL);
+  return g_variant_new_from_data (type, _{prefix_}memdup2 (child.base, child.size), child.size, TRUE, g_free, NULL);
 }}
 
 static inline GVariant *
@@ -638,7 +658,7 @@ static inline {TypeNameRef}
 static inline GVariant *
 {type_name_}dup_to_gvariant ({TypeNameRef} v)
 {{
-  return g_variant_new_from_data ({TYPE_NAME_}TYPEFORMAT, g_memdup (v.base, v.size), v.size, TRUE, g_free, NULL);
+  return g_variant_new_from_data ({TYPE_NAME_}TYPEFORMAT, _{prefix_}memdup2 (v.base, v.size), v.size, TRUE, g_free, NULL);
 }}
 
 static inline GVariant *
