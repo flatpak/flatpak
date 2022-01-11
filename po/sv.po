@@ -1,17 +1,17 @@
 # Swedish translation for flatpak.
-# Copyright © 2016-2021 flatpak's COPYRIGHT HOLDER
+# Copyright © 2016-2022 flatpak's COPYRIGHT HOLDER
 # This file is distributed under the same license as the flatpak package.
 # Sebastian Rasmussen <sebras@gmail.com>, 2016.
 # Josef Andersson <l10nl18nsweja@gmail.com>, 2017, 2018.
 # Luna Jernberg <droidbittin@gmail.com>, 2020.
-# Anders Jonsson <anders.jonsson@norsjovallen.se>, 2021.
+# Anders Jonsson <anders.jonsson@norsjovallen.se>, 2021, 2022.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2021-11-22 03:26+0000\n"
-"PO-Revision-Date: 2021-11-22 15:58+0100\n"
+"POT-Creation-Date: 2022-01-11 14:46+0000\n"
+"PO-Revision-Date: 2022-01-12 00:55+0100\n"
 "Last-Translator: Anders Jonsson <anders.jonsson@norsjovallen.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
 "Language: sv\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.0\n"
+"X-Generator: Poedit 3.0.1\n"
 
 #: app/flatpak-builtins-build-bundle.c:57
 msgid "Export runtime instead of app"
@@ -135,8 +135,8 @@ msgstr "PLATS, FILNAMN och NAMN måste anges"
 #: app/flatpak-builtins-document-export.c:112
 #: app/flatpak-builtins-document-info.c:75
 #: app/flatpak-builtins-document-list.c:181
-#: app/flatpak-builtins-document-unexport.c:67
-#: app/flatpak-builtins-history.c:465 app/flatpak-builtins-info.c:130
+#: app/flatpak-builtins-document-unexport.c:70
+#: app/flatpak-builtins-history.c:480 app/flatpak-builtins-info.c:130
 #: app/flatpak-builtins-install.c:143 app/flatpak-builtins-install.c:210
 #: app/flatpak-builtins-list.c:404 app/flatpak-builtins-make-current.c:72
 #: app/flatpak-builtins-override.c:73
@@ -235,7 +235,7 @@ msgstr "Logga systembussanrop"
 msgid "DIRECTORY [COMMAND [ARGUMENT…]] - Build in directory"
 msgstr "KATALOG [KOMMANDO [ARGUMENT…]] - Bygg i katalog"
 
-#: app/flatpak-builtins-build.c:230 app/flatpak-builtins-build-finish.c:647
+#: app/flatpak-builtins-build.c:230 app/flatpak-builtins-build-finish.c:653
 msgid "DIRECTORY must be specified"
 msgstr "KATALOG måste anges"
 
@@ -259,7 +259,7 @@ msgstr "Ingen tilläggspunkt matchar %s i %s"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Saknar ”=” i bindningsmonteringsargument ”%s”"
 
-#: app/flatpak-builtins-build.c:606 common/flatpak-run.c:4563
+#: app/flatpak-builtins-build.c:606 common/flatpak-run.c:4548
 msgid "Unable to start app"
 msgstr "Kunde inte starta program"
 
@@ -545,7 +545,7 @@ msgid "‘%s’ is not a valid collection ID: %s"
 msgstr "”%s” är inte ett giltigt samlings-ID: %s"
 
 #: app/flatpak-builtins-build-export.c:893
-#: app/flatpak-builtins-build-finish.c:675
+#: app/flatpak-builtins-build-finish.c:681
 msgid "No name specified in the metadata"
 msgstr "Inget namn angivet i metadata"
 
@@ -676,31 +676,31 @@ msgstr "Exporterar inte %s, exportfilnamnet tillåts inte\n"
 msgid "Exporting %s\n"
 msgstr "Exporterar %s\n"
 
-#: app/flatpak-builtins-build-finish.c:431
+#: app/flatpak-builtins-build-finish.c:437
 msgid "More than one executable found\n"
 msgstr "Fler än en körbar fil funnen\n"
 
-#: app/flatpak-builtins-build-finish.c:442
+#: app/flatpak-builtins-build-finish.c:448
 #, c-format
 msgid "Using %s as command\n"
 msgstr "Använder %s som ett kommando\n"
 
-#: app/flatpak-builtins-build-finish.c:447
+#: app/flatpak-builtins-build-finish.c:453
 msgid "No executable found\n"
 msgstr "Ingen körbar fil funnen\n"
 
-#: app/flatpak-builtins-build-finish.c:502
+#: app/flatpak-builtins-build-finish.c:508
 #, c-format
 msgid "Invalid --require-version argument: %s"
 msgstr "Ogiltigt argument för --require-version: %s"
 
-#: app/flatpak-builtins-build-finish.c:534
+#: app/flatpak-builtins-build-finish.c:540
 #, c-format
 msgid "Too few elements in --extra-data argument %s"
 msgstr "För få element i --extra-data-argumentet %s"
 
 # TODO: parentheses not matching?
-#: app/flatpak-builtins-build-finish.c:566
+#: app/flatpak-builtins-build-finish.c:572
 #, c-format
 msgid ""
 "Too few elements in --metadata argument %s, format should be "
@@ -708,7 +708,7 @@ msgid ""
 msgstr ""
 "För få element i --metadata-argumentet %s, formatet är GRUPP=NYCKEL[=VÄRDE]]"
 
-#: app/flatpak-builtins-build-finish.c:588
+#: app/flatpak-builtins-build-finish.c:594
 #: app/flatpak-builtins-build-init.c:452
 #, c-format
 msgid ""
@@ -717,27 +717,27 @@ msgid ""
 msgstr ""
 "För få element i --extension-argumentet %s, formatet är NAMN=VAR[=VÄRDE]"
 
-#: app/flatpak-builtins-build-finish.c:594
+#: app/flatpak-builtins-build-finish.c:600
 #: app/flatpak-builtins-build-init.c:455
 #, c-format
 msgid "Invalid extension name %s"
 msgstr "Ogiltigt tilläggsnamn %s"
 
-#: app/flatpak-builtins-build-finish.c:637
+#: app/flatpak-builtins-build-finish.c:643
 msgid "DIRECTORY - Finalize a build directory"
 msgstr "KATALOG - Slutför en byggkatalog"
 
-#: app/flatpak-builtins-build-finish.c:659
+#: app/flatpak-builtins-build-finish.c:665
 #, c-format
 msgid "Build directory %s not initialized"
 msgstr "Byggkatalog %s är inte initierad"
 
-#: app/flatpak-builtins-build-finish.c:680
+#: app/flatpak-builtins-build-finish.c:686
 #, c-format
 msgid "Build directory %s already finalized"
 msgstr "Byggkatalog %s redan slutförd"
 
-#: app/flatpak-builtins-build-finish.c:693
+#: app/flatpak-builtins-build-finish.c:699
 msgid "Please review the exported files and the metadata\n"
 msgstr "Granska de exporterade filerna och metadata\n"
 
@@ -1348,7 +1348,7 @@ msgstr "FIL - Exportera en fil till program"
 
 #: app/flatpak-builtins-document-export.c:109
 #: app/flatpak-builtins-document-info.c:72
-#: app/flatpak-builtins-document-unexport.c:64
+#: app/flatpak-builtins-document-unexport.c:67
 msgid "FILE must be specified"
 msgstr "FIL måste anges"
 
@@ -1357,7 +1357,7 @@ msgid "FILE - Get information about an exported file"
 msgstr "FIL - Hämta information om en exporterad fil"
 
 #: app/flatpak-builtins-document-info.c:100
-#: app/flatpak-builtins-document-unexport.c:87
+#: app/flatpak-builtins-document-unexport.c:92
 msgid "Not exported\n"
 msgstr "Inte exporterad\n"
 
@@ -1416,7 +1416,11 @@ msgstr "Visa rättigheter för program"
 msgid "[APPID] - List exported files"
 msgstr "[PROGID] - Lista exporterade filer"
 
-#: app/flatpak-builtins-document-unexport.c:55
+#: app/flatpak-builtins-document-unexport.c:43
+msgid "Specify the document ID"
+msgstr "Ange dokument-ID:t"
+
+#: app/flatpak-builtins-document-unexport.c:58
 msgid "FILE - Unexport a file to apps"
 msgstr "FIL - Sluta exportera en fil till program"
 
@@ -1640,15 +1644,15 @@ msgstr "Misslyckades med att öppna journal: %s"
 msgid "Failed to add match to journal: %s"
 msgstr "Misslyckades med att lägga till matchning till journal: %s"
 
-#: app/flatpak-builtins-history.c:454
+#: app/flatpak-builtins-history.c:469
 msgid " - Show history"
 msgstr " - Visa historik"
 
-#: app/flatpak-builtins-history.c:473
+#: app/flatpak-builtins-history.c:488
 msgid "Failed to parse the --since option"
 msgstr "Misslyckades med att tolka flaggan --since"
 
-#: app/flatpak-builtins-history.c:484
+#: app/flatpak-builtins-history.c:499
 msgid "Failed to parse the --until option"
 msgstr "Misslyckades med att tolka flaggan --until"
 
@@ -2749,90 +2753,110 @@ msgstr "%s, tar bort objekt\n"
 msgid "Can't load object %s: %s\n"
 msgstr "Det går inte att läsa in objekt %s: %s\n"
 
-#: app/flatpak-builtins-repair.c:265
+#: app/flatpak-builtins-repair.c:228
+#, c-format
+msgid "Commit invalid %s: %s\n"
+msgstr "Ogiltig incheckning %s: %s\n"
+
+#: app/flatpak-builtins-repair.c:231
+#, c-format
+msgid "Deleting invalid commit %s: %s\n"
+msgstr "Tar bort ogiltig incheckning %s: %s\n"
+
+#: app/flatpak-builtins-repair.c:261
+#, c-format
+msgid "Commit should be marked partial: %s\n"
+msgstr "Incheckningen bör markeras som partiell: %s\n"
+
+#: app/flatpak-builtins-repair.c:264
+#, c-format
+msgid "Marking commit as partial: %s\n"
+msgstr "Markerar incheckning som partiell: %s\n"
+
+#: app/flatpak-builtins-repair.c:293
 #, c-format
 msgid "Problems loading data for %s: %s\n"
 msgstr "Problem vid inläsning av data för %s: %s\n"
 
-#: app/flatpak-builtins-repair.c:278
+#: app/flatpak-builtins-repair.c:306
 #, c-format
 msgid "Error reinstalling %s: %s\n"
 msgstr "Fel vid ominstallation av %s: %s\n"
 
-#: app/flatpak-builtins-repair.c:299
+#: app/flatpak-builtins-repair.c:327
 msgid "- Repair a flatpak installation"
 msgstr "- Reparera en flatpak-installation"
 
-#: app/flatpak-builtins-repair.c:375
+#: app/flatpak-builtins-repair.c:403
 #, c-format
 msgid "Removing non-deployed ref %s…\n"
 msgstr "Tar bort ej distribuerad ref %s…\n"
 
-#: app/flatpak-builtins-repair.c:379
+#: app/flatpak-builtins-repair.c:407
 #, c-format
 msgid "Skipping non-deployed ref %s…\n"
 msgstr "Hoppar över ej distribuerad ref %s…\n"
 
-#: app/flatpak-builtins-repair.c:393
+#: app/flatpak-builtins-repair.c:421
 #, c-format
 msgid "[%d/%d] Verifying %s…\n"
 msgstr "[%d/%d] Verifierar %s…\n"
 
-#: app/flatpak-builtins-repair.c:399
+#: app/flatpak-builtins-repair.c:427
 msgid "Dry run: "
 msgstr "Torrkörning: "
 
-#: app/flatpak-builtins-repair.c:404
+#: app/flatpak-builtins-repair.c:432
 #, c-format
 msgid "Deleting ref %s due to missing objects\n"
 msgstr "Tar bort ref %s på grund av saknade objekt\n"
 
-#: app/flatpak-builtins-repair.c:408
+#: app/flatpak-builtins-repair.c:436
 #, c-format
 msgid "Deleting ref %s due to invalid objects\n"
 msgstr "Tar bort ref %s på grund av ogiltiga objekt\n"
 
-#: app/flatpak-builtins-repair.c:412
+#: app/flatpak-builtins-repair.c:440
 #, c-format
 msgid "Deleting ref %s due to %d\n"
 msgstr "Tar bort ref %s på grund av %d\n"
 
-#: app/flatpak-builtins-repair.c:426
+#: app/flatpak-builtins-repair.c:454
 msgid "Checking remotes...\n"
 msgstr "Kontrollerar fjärrförråd…\n"
 
-#: app/flatpak-builtins-repair.c:444
+#: app/flatpak-builtins-repair.c:472
 #, c-format
 msgid "Remote %s for ref %s is missing\n"
 msgstr "Fjärrförråd %s för ref %s saknas\n"
 
-#: app/flatpak-builtins-repair.c:446
+#: app/flatpak-builtins-repair.c:474
 #, c-format
 msgid "Remote %s for ref %s is disabled\n"
 msgstr "Fjärrförråd %s för ref %s är inaktiverat\n"
 
-#: app/flatpak-builtins-repair.c:452
+#: app/flatpak-builtins-repair.c:480
 msgid "Pruning objects\n"
 msgstr "Rensa objekt\n"
 
-#: app/flatpak-builtins-repair.c:460
+#: app/flatpak-builtins-repair.c:488
 msgid "Erasing .removed\n"
 msgstr "Tar bort .removed\n"
 
-#: app/flatpak-builtins-repair.c:485
+#: app/flatpak-builtins-repair.c:513
 msgid "Reinstalling refs\n"
 msgstr "Ominstallerar referenser\n"
 
-#: app/flatpak-builtins-repair.c:487
+#: app/flatpak-builtins-repair.c:515
 msgid "Reinstalling removed refs\n"
 msgstr "Ominstallerar borttagna referenser\n"
 
-#: app/flatpak-builtins-repair.c:512
+#: app/flatpak-builtins-repair.c:540
 #, c-format
 msgid "While removing appstream for %s: "
 msgstr "Under borttagning av appstream för %s: "
 
-#: app/flatpak-builtins-repair.c:519
+#: app/flatpak-builtins-repair.c:547
 #, c-format
 msgid "While deploying appstream for %s: "
 msgstr "Under distribuering av appstream för %s: "
@@ -3484,9 +3508,9 @@ msgstr "%s redan installerad"
 #: app/flatpak-cli-transaction.c:522 app/flatpak-cli-transaction.c:524
 #: app/flatpak-quiet-transaction.c:138 app/flatpak-quiet-transaction.c:140
 #: common/flatpak-dir.c:2869 common/flatpak-dir.c:3567
-#: common/flatpak-dir.c:15082 common/flatpak-dir.c:15362
+#: common/flatpak-dir.c:15082 common/flatpak-dir.c:15372
 #: common/flatpak-transaction.c:2469 common/flatpak-transaction.c:2517
-#: common/flatpak-utils.c:1128 common/flatpak-utils.c:1221
+#: common/flatpak-utils.c:1129 common/flatpak-utils.c:1222
 #, c-format
 msgid "%s not installed"
 msgstr "%s inte installerad"
@@ -3945,33 +3969,42 @@ msgstr ""
 "XDG_DATA_DIRS, så program som installerats av Flatpak kanske inte dyker upp "
 "på ditt skrivbord förrän sessionen har startats om."
 
-#: app/flatpak-main.c:440
+#: app/flatpak-main.c:378
+msgid ""
+"Refusing to operate under sudo with --user. Omit sudo to operate on the user "
+"installation, or use a root shell to operate on the root user's installation."
+msgstr ""
+"Vägrar att köras under sudo med --user. Skippa sudo för att köra på "
+"användarinstallationen, eller använd ett root-skal för att köra på root-"
+"användarens installation."
+
+#: app/flatpak-main.c:450
 msgid ""
 "Multiple installations specified for a command that works on one installation"
 msgstr ""
 "Flera installationer angavs för ett kommando som är avsett för en "
 "installation"
 
-#: app/flatpak-main.c:489 app/flatpak-main.c:671
+#: app/flatpak-main.c:499 app/flatpak-main.c:681
 #, c-format
 msgid "See '%s --help'"
 msgstr "Se ”%s --help”"
 
-#: app/flatpak-main.c:680
+#: app/flatpak-main.c:690
 #, c-format
 msgid "'%s' is not a flatpak command. Did you mean '%s%s'?"
 msgstr "”%s” är inte ett flatpak-kommando. Menade du ”%s%s”?"
 
-#: app/flatpak-main.c:683
+#: app/flatpak-main.c:693
 #, c-format
 msgid "'%s' is not a flatpak command"
 msgstr "”%s” är inte ett flatpak-kommando"
 
-#: app/flatpak-main.c:798
+#: app/flatpak-main.c:808
 msgid "No command specified"
 msgstr "Inget kommando angivet"
 
-#: app/flatpak-main.c:958
+#: app/flatpak-main.c:969
 msgid "error:"
 msgstr "fel:"
 
@@ -4300,7 +4333,7 @@ msgid "Couldn't find ref %s in remote %s"
 msgstr "Det gick inte att hitta ref %s i fjärrförrådet %s"
 
 #: common/flatpak-dir.c:1018 common/flatpak-dir.c:5673
-#: common/flatpak-utils.c:6836 common/flatpak-utils.c:6841
+#: common/flatpak-utils.c:6837 common/flatpak-utils.c:6842
 msgid "Image is not a manifest"
 msgstr "Avbilden är inte ett manifest"
 
@@ -4439,7 +4472,7 @@ msgstr "%s incheckning %s redan installerad"
 msgid "While pulling %s from remote %s: "
 msgstr "Medan %s hämtas från fjärrförrådet %s: "
 
-#: common/flatpak-dir.c:6017 common/flatpak-utils.c:6731
+#: common/flatpak-dir.c:6017 common/flatpak-utils.c:6732
 msgid "GPG signatures found, but none are in trusted keyring"
 msgstr "GPG-signaturer hittades, men ingen är i den betrodda nyckelringen"
 
@@ -4702,7 +4735,7 @@ msgstr "Det gick inte att hitta installationen %s"
 msgid "Invalid file format, no %s group"
 msgstr "Ogiltigt filformat, ingen %s-grupp"
 
-#: common/flatpak-dir.c:13784 common/flatpak-utils.c:2256
+#: common/flatpak-dir.c:13784 common/flatpak-utils.c:2257
 #, c-format
 msgid "Invalid version %s, only 1 supported"
 msgstr "Ogiltig version %s, endast 1 stöds"
@@ -4717,7 +4750,7 @@ msgstr "Ogiltigt filformat, ingen %s angiven"
 msgid "Invalid file format, gpg key invalid"
 msgstr "Ogiltigt filformat, gpg-nyckel ogiltig"
 
-#: common/flatpak-dir.c:13833 common/flatpak-utils.c:2321
+#: common/flatpak-dir.c:13833 common/flatpak-utils.c:2322
 msgid "Collection ID requires GPG key to be provided"
 msgstr "Samlings-ID kräver att GPG-nyckel tillhandahålls"
 
@@ -4748,7 +4781,7 @@ msgstr "Ogiltigt tecken ”/” i namn på fjärrförråd: %s"
 msgid "No configuration for remote %s specified"
 msgstr "Ingen konfiguration angavs för fjärrförrådet %s"
 
-#: common/flatpak-dir.c:15853
+#: common/flatpak-dir.c:15860
 #, c-format
 msgid "Skipping deletion of mirror ref (%s, %s)…\n"
 msgstr "Hoppar över borttagning av spegelref (%s, %s)…\n"
@@ -5115,27 +5148,27 @@ msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr ""
 "Körning av %s tillåts inte av policyn som har satts av din administratör"
 
-#: common/flatpak-run.c:3896
+#: common/flatpak-run.c:3956
 msgid ""
-"\"flatpak run\" is not intended to be run as `sudo flatpak run`, use `sudo -"
-"i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell"
+"\"flatpak run\" is not intended to be run as `sudo flatpak run`. Use `sudo -"
+"i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell."
 msgstr ""
 "”flatpak run” är inte avsett att köras som ”sudo flatpak run”, använd ”sudo -"
-"i” eller ”su -l” istället och anropa ”flatpak run” inifrån det nya skalet"
+"i” eller ”su -l” istället och anropa ”flatpak run” inifrån det nya skalet."
 
-#: common/flatpak-run.c:4154
+#: common/flatpak-run.c:4139
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "Misslyckades att migrera från %s: %s"
 
-#: common/flatpak-run.c:4169
+#: common/flatpak-run.c:4154
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr ""
 "Misslyckades med att migrera gammal programdatakatalog %s till nytt namn %s: "
 "%s"
 
-#: common/flatpak-run.c:4178
+#: common/flatpak-run.c:4163
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "Misslyckades med att skapa symbolisk länk vid migrering av %s: %s"
@@ -5249,133 +5282,133 @@ msgstr "Hoppar över %s på grund av tidigare fel"
 msgid "Aborted due to failure (%s)"
 msgstr "Avbröts på grund av fel (%s)"
 
-#: common/flatpak-utils.c:797
+#: common/flatpak-utils.c:798
 msgid "Glob can't match apps"
 msgstr "Matchningen kan inte matcha program"
 
-#: common/flatpak-utils.c:822
+#: common/flatpak-utils.c:823
 msgid "Empty glob"
 msgstr "Tom matchning"
 
-#: common/flatpak-utils.c:841
+#: common/flatpak-utils.c:842
 msgid "Too many segments in glob"
 msgstr "För många segment i matchning"
 
-#: common/flatpak-utils.c:862
+#: common/flatpak-utils.c:863
 #, c-format
 msgid "Invalid glob character '%c'"
 msgstr "Ogiltigt matchningstecken ”%c”"
 
-#: common/flatpak-utils.c:916
+#: common/flatpak-utils.c:917
 #, c-format
 msgid "Missing glob on line %d"
 msgstr "Saknar matchning på rad %d"
 
-#: common/flatpak-utils.c:920
+#: common/flatpak-utils.c:921
 #, c-format
 msgid "Trailing text on line %d"
 msgstr "Eftersläpande text på rad %d"
 
-#: common/flatpak-utils.c:924
+#: common/flatpak-utils.c:925
 #, c-format
 msgid "on line %d"
 msgstr "på rad %d"
 
-#: common/flatpak-utils.c:946
+#: common/flatpak-utils.c:947
 #, c-format
 msgid "Unexpected word '%s' on line %d"
 msgstr "Oväntat ord ”%s” på rad %d"
 
-#: common/flatpak-utils.c:2237
+#: common/flatpak-utils.c:2238
 #, c-format
 msgid "Invalid %s: Missing group ‘%s’"
 msgstr "Ogiltig %s: Saknar grupp ”%s”"
 
-#: common/flatpak-utils.c:2246
+#: common/flatpak-utils.c:2247
 #, c-format
 msgid "Invalid %s: Missing key ‘%s’"
 msgstr "Ogiltig %s: Saknar nyckel ”%s”"
 
-#: common/flatpak-utils.c:2296
+#: common/flatpak-utils.c:2297
 msgid "Invalid gpg key"
 msgstr "Ogiltig gpg-nyckel"
 
-#: common/flatpak-utils.c:2685
+#: common/flatpak-utils.c:2686
 msgid "No extra data sources"
 msgstr "Inga extra data-källor"
 
-#: common/flatpak-utils.c:5342
+#: common/flatpak-utils.c:5343
 #, c-format
 msgid "Error copying 64x64 icon for component %s: %s\n"
 msgstr "Fel vid kopiering av 64x64-ikon för komponent %s: %s\n"
 
-#: common/flatpak-utils.c:5348
+#: common/flatpak-utils.c:5349
 #, c-format
 msgid "Error copying 128x128 icon for component %s: %s\n"
 msgstr "Fel vid kopiering av 128x128-ikon för komponent %s: %s\n"
 
-#: common/flatpak-utils.c:5595
+#: common/flatpak-utils.c:5596
 #, c-format
 msgid "%s is end-of-life, ignoring for appstream"
 msgstr "%s har nått slutet på sin livstid, ignorerar för appstream"
 
-#: common/flatpak-utils.c:5630
+#: common/flatpak-utils.c:5631
 #, c-format
 msgid "No appstream data for %s: %s\n"
 msgstr "Inga appstream-data för %s: %s\n"
 
-#: common/flatpak-utils.c:6593
+#: common/flatpak-utils.c:6594
 msgid "Invalid bundle, no ref in metadata"
 msgstr "Ogiltig bunt, ingen ref i metadata"
 
-#: common/flatpak-utils.c:6691
+#: common/flatpak-utils.c:6692
 #, c-format
 msgid "Collection ‘%s’ of bundle doesn’t match collection ‘%s’ of remote"
 msgstr "Samlingen ”%s” för bunt matchar inte samlingen ”%s” för fjärrförråd"
 
-#: common/flatpak-utils.c:6770
+#: common/flatpak-utils.c:6771
 msgid "Metadata in header and app are inconsistent"
 msgstr "Metadata i huvud och program är inkonsekventa"
 
-#: common/flatpak-utils.c:6855 common/flatpak-utils.c:7014
+#: common/flatpak-utils.c:6856 common/flatpak-utils.c:7015
 msgid "Invalid OCI image config"
 msgstr "Ogiltig OCI-avbildskonfiguration"
 
-#: common/flatpak-utils.c:6917 common/flatpak-utils.c:7163
+#: common/flatpak-utils.c:6918 common/flatpak-utils.c:7164
 #, c-format
 msgid "Wrong layer checksum, expected %s, was %s"
 msgstr "Fel kontrollsumma för lager, förväntade %s, var %s"
 
-#: common/flatpak-utils.c:6997
+#: common/flatpak-utils.c:6998
 #, c-format
 msgid "No ref specified for OCI image %s"
 msgstr "Ingen ref angiven för OCI-avbild %s"
 
-#: common/flatpak-utils.c:7003
+#: common/flatpak-utils.c:7004
 #, c-format
 msgid "Wrong ref (%s) specified for OCI image %s, expected %s"
 msgstr "Fel ref (%s) angiven för OCI-avbild %s, förväntade %s"
 
-#: common/flatpak-utils.c:8157
+#: common/flatpak-utils.c:8158
 #, c-format
 msgid "Invalid require-flatpak argument %s"
 msgstr "Ogiltigt argument %s för require-flatpak"
 
-#: common/flatpak-utils.c:8167 common/flatpak-utils.c:8186
+#: common/flatpak-utils.c:8168 common/flatpak-utils.c:8187
 #, c-format
 msgid "%s needs a later flatpak version (%s)"
 msgstr "%s behöver en senare flatpak-version (%s)"
 
-#: common/flatpak-utils.c:8230
+#: common/flatpak-utils.c:8231
 msgid "Empty string is not a number"
 msgstr "Tom sträng är inte ett tal"
 
-#: common/flatpak-utils.c:8256
+#: common/flatpak-utils.c:8257
 #, c-format
 msgid "“%s” is not an unsigned number"
 msgstr "”%s” är inte ett teckenlöst tal"
 
-#: common/flatpak-utils.c:8266
+#: common/flatpak-utils.c:8267
 #, c-format
 msgid "Number “%s” is out of bounds [%s, %s]"
 msgstr "Talet ”%s” är utanför gränserna [%s, %s]"
