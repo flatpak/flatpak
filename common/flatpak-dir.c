@@ -1004,7 +1004,6 @@ validate_commit_metadata (GVariant   *commit_data,
                           const char *ref,
                           const char *required_metadata,
                           gsize       required_metadata_size,
-                          gboolean   require_xa_metadata,
                           GError   **error)
 {
   g_autoptr(GVariant) commit_metadata = NULL;
@@ -1023,9 +1022,9 @@ validate_commit_metadata (GVariant   *commit_data,
         xa_metadata = g_variant_get_string (xa_metadata_v, &xa_metadata_size);
     }
 
-  if ((xa_metadata == NULL && require_xa_metadata) ||
-      (xa_metadata != NULL && (xa_metadata_size != required_metadata_size ||
-                               memcmp (xa_metadata, required_metadata, xa_metadata_size) != 0)))
+  if (xa_metadata == NULL ||
+      xa_metadata_size != required_metadata_size ||
+      memcmp (xa_metadata, required_metadata, xa_metadata_size) != 0)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED,
                    _("Commit metadata for %s not matching expected metadata"), ref);
@@ -4826,7 +4825,6 @@ flatpak_dir_pull (FlatpakDir                           *self,
                                      ref,
                                      (const char *)g_bytes_get_data (require_metadata, NULL),
                                      g_bytes_get_size (require_metadata),
-                                     TRUE,
                                      error))
         goto out;
     }
@@ -6975,7 +6973,6 @@ flatpak_dir_deploy (FlatpakDir          *self,
   g_auto(GStrv) ref_parts = NULL;
   gboolean is_app;
   gsize metadata_size = 0;
-  gboolean is_oci;
 
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     return FALSE;
@@ -7234,12 +7231,9 @@ flatpak_dir_deploy (FlatpakDir          *self,
   /* Check the metadata in the commit to make sure it matches the actual
    * deployed metadata, in case we relied on the one in the commit for
    * a decision
-   * Note: For historical reason we don't enforce commits to contain xa.metadata
-   * since this was lacking in fedora builds.
    */
-  is_oci = flatpak_dir_get_remote_oci (self, origin);
   if (!validate_commit_metadata (commit_data, ref,
-                                 metadata_contents, metadata_size, !is_oci, error))
+                                 metadata_contents, metadata_size, error))
     return FALSE;
 
   dotref = g_file_resolve_relative_path (checkoutdir, "files/.ref");
