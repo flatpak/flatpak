@@ -1,5 +1,56 @@
 Changes in 1.12.2
 ~~~~~~~~~~~~~~~~~
+Released: 2022-01-12
+
+This is a security update that fixes two issues that were found in flatpak:
+
+https://github.com/flatpak/flatpak/security/advisories/GHSA-qpjc-vq3c-572j
+(also known as CVE-2021-43860)
+
+This issue is about the possibility for a malicious repository to send
+invalid application metadata in a way that hides some of the app
+permissions displayed during installation.
+
+https://github.com/flatpak/flatpak/security/advisories/GHSA-8ch7-5j3h-g4fx
+
+This issue is a problem with how flatpak-builder uses flatpak, that
+can cause `flatpak-builder --mirror-screenshots-url` commands to be
+allowed to create directories outside of the build directory.
+
+The fix for this is done in flatpak by making the --nofilesystem=host
+and --nofilesystem=home more powerful. They previously only removed
+access to the particular location, i.e. `--nofilesystem=host` negated
+`--filesystem=host`, but not `--filesytem=/some/dir`. This is a minor
+change in behavior, as it may change the behavior of an override
+with these specific options, however it is likely that the new
+behavior was the expected one.
+
+Other changes:
+
+ * Extra-data downloading now properly handles compressed content-encodings
+   which fixes checksum verification (see #4415)
+   Note: In some corner case server setups this may require the extra-data
+   checksum to be changed
+ * Avoid unnecessary policy-kit dialog due to auto-pinning when installing runtimes
+ * Better handling of updates of extensions that exist in multiple repositories
+ * Fixed (initial) installation apps with renamed ids
+ * Support more pulseaudio configuration, including the one used in WSL2
+ * Fixed regression in updates from no-enumerate remotes
+ * We now verify checksums of summary caches, to better handle local file
+   corruption
+ * Improved cli output for non-terminal targets
+ * Flatpak run --session-bus now works
+ * Fix build with PyParsing >= 3.0.4
+ * Fixed "Since" annotations on FlatpakTransaction signals
+ * bash auto completion now doesn't complete on command name aliases
+ * Minor improvements to the search command
+ * Minor improvements to the list command
+ * Minor improvements to the repair command
+ * Add more tests
+ * Updated translations and docs
+
+Changes in 1.12.2
+~~~~~~~~~~~~~~~~~
 Released: 2021-10-12
 
  * Install translations referenced by LANG, LANGUAGE or LC_ALL
