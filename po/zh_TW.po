@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2021-10-08 19:25+0200\n"
+"POT-Creation-Date: 2022-01-12 15:24+0100\n"
 "PO-Revision-Date: 2020-05-17 17:53+0000\n"
 "Last-Translator: Yi-Jyun Pan <pan93412@gmail.com>\n"
 "Language-Team: Chinese (Traditional) <zh-l10n@lists.linux.org.tw>\n"
@@ -161,14 +161,14 @@ msgid "'%s' is not a valid repository: "
 msgstr "「%s」不是有效的軟體庫："
 
 #: app/flatpak-builtins-build-bundle.c:660 app/flatpak-builtins-build-sign.c:87
-#: common/flatpak-dir.c:12346
+#: common/flatpak-dir.c:12365
 #, c-format
 msgid "'%s' is not a valid name: %s"
 msgstr "「%s」不是有效的名稱：%s"
 
 #: app/flatpak-builtins-build-bundle.c:663
 #: app/flatpak-builtins-build-export.c:854 app/flatpak-builtins-build-sign.c:90
-#: common/flatpak-dir.c:12352
+#: common/flatpak-dir.c:12371
 #, c-format
 msgid "'%s' is not a valid branch name: %s"
 msgstr "「%s」不是有效的分支名稱：%s"
@@ -256,7 +256,7 @@ msgstr "%2$s 中沒有符合 %1$s 的擴充點"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "綁定用掛載選項「%s」中遺失「=」"
 
-#: app/flatpak-builtins-build.c:595 common/flatpak-run.c:4209
+#: app/flatpak-builtins-build.c:595 common/flatpak-run.c:4243
 msgid "Unable to start app"
 msgstr "無法啟動程式"
 
@@ -2366,7 +2366,7 @@ msgstr ""
 msgid "Can't load uri %s: %s\n"
 msgstr "無法載入 URI %s：%s\n"
 
-#: app/flatpak-builtins-remote-add.c:269 common/flatpak-dir.c:3829
+#: app/flatpak-builtins-remote-add.c:269 common/flatpak-dir.c:3839
 #, c-format
 msgid "Can't load file %s: %s\n"
 msgstr "無法載入 %s 檔案：%s\n"
@@ -2448,8 +2448,8 @@ msgid "REMOTE and REF must be specified"
 msgstr "必須指定 REMOTE 與 REF"
 
 #: app/flatpak-builtins-remote-info.c:159 common/flatpak-dir.c:1149
-#: common/flatpak-dir.c:4627 common/flatpak-dir.c:5545
-#: common/flatpak-dir.c:5614 common/flatpak-dir.c:5738
+#: common/flatpak-dir.c:4637 common/flatpak-dir.c:5555
+#: common/flatpak-dir.c:5624 common/flatpak-dir.c:5748
 #, c-format
 msgid "Couldn't find latest checksum for ref %s in remote %s"
 msgstr "在 %2$s 遠端中找不到 %1$s 參照的最近檢核碼"
@@ -3102,7 +3102,7 @@ msgstr ""
 msgid "Nothing unused to uninstall\n"
 msgstr "沒有可解除安裝的未使用項目\n"
 
-#: app/flatpak-builtins-uninstall.c:326 common/flatpak-dir.c:12826
+#: app/flatpak-builtins-uninstall.c:326 common/flatpak-dir.c:12845
 #, c-format
 msgid "%s/%s/%s not installed"
 msgstr "%s/%s/%s 未安裝"
@@ -3403,15 +3403,15 @@ msgid "Info: %s was skipped"
 msgstr "資訊：%s 被跳過"
 
 #: app/flatpak-cli-transaction.c:520 app/flatpak-quiet-transaction.c:136
-#: common/flatpak-dir.c:9657
+#: common/flatpak-dir.c:9676
 #, c-format
 msgid "%s already installed"
 msgstr "已經安裝 %s"
 
 #: app/flatpak-cli-transaction.c:522 app/flatpak-cli-transaction.c:524
 #: app/flatpak-quiet-transaction.c:138 app/flatpak-quiet-transaction.c:140
-#: common/flatpak-dir.c:2837 common/flatpak-dir.c:3530
-#: common/flatpak-dir.c:15181 common/flatpak-transaction.c:2453
+#: common/flatpak-dir.c:2846 common/flatpak-dir.c:3540
+#: common/flatpak-dir.c:15200 common/flatpak-transaction.c:2453
 #: common/flatpak-transaction.c:2501 common/flatpak-utils.c:1126
 #: common/flatpak-utils.c:1219
 #, c-format
@@ -3985,174 +3985,174 @@ msgstr ""
 "未知的檔案系統位置 %s，有效的位置為：host、host-os、host-etc、home、xdg-*[/"
 "…]、~/dir、/dir"
 
-#: common/flatpak-context.c:1114
+#: common/flatpak-context.c:1176
 #, c-format
 msgid "Invalid env format %s"
 msgstr "無效的 env 格式 %s"
 
-#: common/flatpak-context.c:1192
+#: common/flatpak-context.c:1254
 #, c-format
 msgid "Environment variable name must not contain '=': %s"
 msgstr ""
 
-#: common/flatpak-context.c:1305 common/flatpak-context.c:1313
+#: common/flatpak-context.c:1367 common/flatpak-context.c:1375
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr "--add-policy 引數必須是 SUBSYSTEM.KEY=VALUE 的形式"
 
-#: common/flatpak-context.c:1320
+#: common/flatpak-context.c:1382
 msgid "--add-policy values can't start with \"!\""
 msgstr "--add-policy 的值不能以「!」開始"
 
-#: common/flatpak-context.c:1345 common/flatpak-context.c:1353
+#: common/flatpak-context.c:1407 common/flatpak-context.c:1415
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr "--remove-policy 的引數必須是 SUBSYSTEM.KEY=VALUE 的形式"
 
-#: common/flatpak-context.c:1360
+#: common/flatpak-context.c:1422
 msgid "--remove-policy values can't start with \"!\""
 msgstr "--remove-policy 的值不能以「!」開始"
 
-#: common/flatpak-context.c:1386
+#: common/flatpak-context.c:1448
 msgid "Share with host"
 msgstr "與主機分享"
 
-#: common/flatpak-context.c:1386 common/flatpak-context.c:1387
+#: common/flatpak-context.c:1448 common/flatpak-context.c:1449
 msgid "SHARE"
 msgstr "SHARE"
 
-#: common/flatpak-context.c:1387
+#: common/flatpak-context.c:1449
 msgid "Unshare with host"
 msgstr "不與主機分享"
 
-#: common/flatpak-context.c:1388
+#: common/flatpak-context.c:1450
 msgid "Expose socket to app"
 msgstr "將接口開放給程式"
 
-#: common/flatpak-context.c:1388 common/flatpak-context.c:1389
+#: common/flatpak-context.c:1450 common/flatpak-context.c:1451
 msgid "SOCKET"
 msgstr "SOCKET"
 
-#: common/flatpak-context.c:1389
+#: common/flatpak-context.c:1451
 msgid "Don't expose socket to app"
 msgstr "不要將接口開放給程式"
 
-#: common/flatpak-context.c:1390
+#: common/flatpak-context.c:1452
 msgid "Expose device to app"
 msgstr "將裝置開放給程式"
 
-#: common/flatpak-context.c:1390 common/flatpak-context.c:1391
+#: common/flatpak-context.c:1452 common/flatpak-context.c:1453
 msgid "DEVICE"
 msgstr "DEVICE"
 
-#: common/flatpak-context.c:1391
+#: common/flatpak-context.c:1453
 msgid "Don't expose device to app"
 msgstr "不要將裝置開放給程式"
 
-#: common/flatpak-context.c:1392
+#: common/flatpak-context.c:1454
 msgid "Allow feature"
 msgstr "允許功能"
 
-#: common/flatpak-context.c:1392 common/flatpak-context.c:1393
+#: common/flatpak-context.c:1454 common/flatpak-context.c:1455
 msgid "FEATURE"
 msgstr "FEATURE"
 
-#: common/flatpak-context.c:1393
+#: common/flatpak-context.c:1455
 msgid "Don't allow feature"
 msgstr "不允許功能"
 
-#: common/flatpak-context.c:1394
+#: common/flatpak-context.c:1456
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr "將檔案系統開放給程式（:ro 表示唯讀）"
 
-#: common/flatpak-context.c:1394
+#: common/flatpak-context.c:1456
 msgid "FILESYSTEM[:ro]"
 msgstr "FILESYSTEM[:ro]"
 
-#: common/flatpak-context.c:1395
+#: common/flatpak-context.c:1457
 msgid "Don't expose filesystem to app"
 msgstr "不要將檔案系統開放給程式"
 
-#: common/flatpak-context.c:1395
+#: common/flatpak-context.c:1457
 msgid "FILESYSTEM"
 msgstr "FILESYSTEM"
 
-#: common/flatpak-context.c:1396
+#: common/flatpak-context.c:1458
 msgid "Set environment variable"
 msgstr "設定環境變數"
 
-#: common/flatpak-context.c:1396
+#: common/flatpak-context.c:1458
 msgid "VAR=VALUE"
 msgstr "VAR=VALUE"
 
-#: common/flatpak-context.c:1397
+#: common/flatpak-context.c:1459
 msgid "Read environment variables in env -0 format from FD"
 msgstr ""
 
-#: common/flatpak-context.c:1397
+#: common/flatpak-context.c:1459
 msgid "FD"
 msgstr ""
 
-#: common/flatpak-context.c:1398
+#: common/flatpak-context.c:1460
 #, fuzzy
 msgid "Remove variable from environment"
 msgstr "從權限儲存中移除項目"
 
-#: common/flatpak-context.c:1398
+#: common/flatpak-context.c:1460
 #, fuzzy
 msgid "VAR"
 msgstr "VAL"
 
-#: common/flatpak-context.c:1399
+#: common/flatpak-context.c:1461
 msgid "Allow app to own name on the session bus"
 msgstr "允許程式在工作階段匯流排上擁有自己的名稱"
 
-#: common/flatpak-context.c:1399 common/flatpak-context.c:1400
-#: common/flatpak-context.c:1401 common/flatpak-context.c:1402
-#: common/flatpak-context.c:1403 common/flatpak-context.c:1404
+#: common/flatpak-context.c:1461 common/flatpak-context.c:1462
+#: common/flatpak-context.c:1463 common/flatpak-context.c:1464
+#: common/flatpak-context.c:1465 common/flatpak-context.c:1466
 msgid "DBUS_NAME"
 msgstr "DBUS_NAME"
 
-#: common/flatpak-context.c:1400
+#: common/flatpak-context.c:1462
 msgid "Allow app to talk to name on the session bus"
 msgstr "允許程式與工作階段匯流排上的名稱溝通"
 
-#: common/flatpak-context.c:1401
+#: common/flatpak-context.c:1463
 msgid "Don't allow app to talk to name on the session bus"
 msgstr "不允許程式與工作階段匯流排上的名稱溝通"
 
-#: common/flatpak-context.c:1402
+#: common/flatpak-context.c:1464
 msgid "Allow app to own name on the system bus"
 msgstr "允許程式在系統匯流排上擁有自己的名稱"
 
-#: common/flatpak-context.c:1403
+#: common/flatpak-context.c:1465
 msgid "Allow app to talk to name on the system bus"
 msgstr "允許程式與系統匯流排上的名稱溝通"
 
-#: common/flatpak-context.c:1404
+#: common/flatpak-context.c:1466
 msgid "Don't allow app to talk to name on the system bus"
 msgstr "不允許程式與系統匯流排上的名稱溝通"
 
-#: common/flatpak-context.c:1405
+#: common/flatpak-context.c:1467
 msgid "Add generic policy option"
 msgstr "新增通用方針選項"
 
-#: common/flatpak-context.c:1405 common/flatpak-context.c:1406
+#: common/flatpak-context.c:1467 common/flatpak-context.c:1468
 msgid "SUBSYSTEM.KEY=VALUE"
 msgstr "SUBSYSTEM.KEY=VALUE"
 
-#: common/flatpak-context.c:1406
+#: common/flatpak-context.c:1468
 msgid "Remove generic policy option"
 msgstr "移除通用方針選項"
 
-#: common/flatpak-context.c:1407
+#: common/flatpak-context.c:1469
 msgid "Persist home directory subpath"
 msgstr "留存家目錄的子路徑"
 
-#: common/flatpak-context.c:1407
+#: common/flatpak-context.c:1469
 msgid "FILENAME"
 msgstr "FILENAME"
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-context.c:1409
+#: common/flatpak-context.c:1471
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "不需要有執行中的工作階段（不會建立 cgroups）"
 
@@ -4205,8 +4205,8 @@ msgstr "遠端 OCI 索引沒有註冊 URI"
 msgid "Couldn't find ref %s in remote %s"
 msgstr "在 %2$s 遠端中找不到 %1$s 參照的最近檢核碼"
 
-#: common/flatpak-dir.c:988 common/flatpak-dir.c:5637
-#: common/flatpak-utils.c:6825 common/flatpak-utils.c:6830
+#: common/flatpak-dir.c:988 common/flatpak-dir.c:5647
+#: common/flatpak-utils.c:6826 common/flatpak-utils.c:6831
 msgid "Image is not a manifest"
 msgstr "影像並非 manifest"
 
@@ -4225,331 +4225,331 @@ msgstr "提交的參照綁定中介資料中沒有要求的「%s」參照"
 msgid "No entry for %s in remote summary flatpak sparse cache "
 msgstr "在遠端的摘要 flatpak 簡要快取中沒有 %s 條目 "
 
-#: common/flatpak-dir.c:1780
+#: common/flatpak-dir.c:1789
 #, c-format
 msgid "Commit metadata for %s not matching expected metadata"
 msgstr ""
 
-#: common/flatpak-dir.c:2044
+#: common/flatpak-dir.c:2053
 msgid "Unable to connect to system bus"
 msgstr "無法連接系統匯流排"
 
-#: common/flatpak-dir.c:2639
+#: common/flatpak-dir.c:2648
 msgid "User installation"
 msgstr "使用者安裝"
 
-#: common/flatpak-dir.c:2646
+#: common/flatpak-dir.c:2655
 #, c-format
 msgid "System (%s) installation"
 msgstr "系統 (%s) 安裝"
 
-#: common/flatpak-dir.c:2691
+#: common/flatpak-dir.c:2700
 #, c-format
 msgid "No overrides found for %s"
 msgstr "找不到 %s 的凌駕值"
 
-#: common/flatpak-dir.c:2840
+#: common/flatpak-dir.c:2849
 #, c-format
 msgid "%s (commit %s) not installed"
 msgstr "%s（%s 提交）未安裝"
 
-#: common/flatpak-dir.c:3836
+#: common/flatpak-dir.c:3846
 #, c-format
 msgid "Error parsing system flatpakrepo file for %s: %s"
 msgstr "解析 %s 的系統 flatpakrepo 檔案時發生錯誤：%s"
 
-#: common/flatpak-dir.c:3959
+#: common/flatpak-dir.c:3969
 #, c-format
 msgid "While opening repository %s: "
 msgstr "當開啟 %s 軟體庫時："
 
-#: common/flatpak-dir.c:4130
+#: common/flatpak-dir.c:4140
 #, c-format
 msgid "The config key %s is not set"
 msgstr "未設定 %s 設定鍵"
 
-#: common/flatpak-dir.c:4263
+#: common/flatpak-dir.c:4273
 #, fuzzy, c-format
 msgid "No current %s pattern matching %s"
 msgstr "目前沒有符合 %s 的遮罩"
 
-#: common/flatpak-dir.c:4416
+#: common/flatpak-dir.c:4426
 msgid "No appstream commit to deploy"
 msgstr "沒有要布署的 appstream 提交"
 
-#: common/flatpak-dir.c:4447 common/flatpak-dir.c:8175
+#: common/flatpak-dir.c:4457 common/flatpak-dir.c:8189
 msgid "Can't create deploy directory"
 msgstr "無法建立布署目錄"
 
-#: common/flatpak-dir.c:4923 common/flatpak-dir.c:5959
-#: common/flatpak-dir.c:9106 common/flatpak-dir.c:9799
+#: common/flatpak-dir.c:4933 common/flatpak-dir.c:5973
+#: common/flatpak-dir.c:9118 common/flatpak-dir.c:9818
 msgid "Can't pull from untrusted non-gpg verified remote"
 msgstr "無法從未受信任的無 GPG 驗證過的遠端拉入"
 
-#: common/flatpak-dir.c:5332 common/flatpak-dir.c:5369
+#: common/flatpak-dir.c:5342 common/flatpak-dir.c:5379
 msgid "Extra data not supported for non-gpg-verified local system installs"
 msgstr "不支援無 GPG 驗證過的本機系統安裝的額外資料"
 
-#: common/flatpak-dir.c:5398
+#: common/flatpak-dir.c:5408
 #, c-format
 msgid "Invalid checksum for extra data uri %s"
 msgstr "額外資料 URI %s 的檢核碼無效"
 
-#: common/flatpak-dir.c:5403
+#: common/flatpak-dir.c:5413
 #, c-format
 msgid "Empty name for extra data uri %s"
 msgstr "額外資料 URI %s 的名稱空白"
 
-#: common/flatpak-dir.c:5410
+#: common/flatpak-dir.c:5420
 #, c-format
 msgid "Unsupported extra data uri %s"
 msgstr "不支援的額外資料 URI %s"
 
-#: common/flatpak-dir.c:5424
+#: common/flatpak-dir.c:5434
 #, c-format
 msgid "Failed to load local extra-data %s: %s"
 msgstr "本機額外資料 %s 載入失敗：%s"
 
-#: common/flatpak-dir.c:5427
+#: common/flatpak-dir.c:5437
 #, c-format
 msgid "Wrong size for extra-data %s"
 msgstr "額外資料 %s 的大小錯誤"
 
-#: common/flatpak-dir.c:5442
+#: common/flatpak-dir.c:5452
 #, c-format
 msgid "While downloading %s: "
 msgstr "當下載 %s 時："
 
-#: common/flatpak-dir.c:5449
+#: common/flatpak-dir.c:5459
 #, c-format
 msgid "Wrong size for extra data %s"
 msgstr "額外資料 %s 的大小錯誤"
 
-#: common/flatpak-dir.c:5458
+#: common/flatpak-dir.c:5468
 #, c-format
 msgid "Invalid checksum for extra data %s"
 msgstr "額外資料 %s 的檢核碼無效"
 
-#: common/flatpak-dir.c:5553 common/flatpak-dir.c:8166
-#: common/flatpak-dir.c:9677
+#: common/flatpak-dir.c:5563 common/flatpak-dir.c:8180
+#: common/flatpak-dir.c:9696
 #, c-format
 msgid "%s commit %s already installed"
 msgstr "已經安裝 %s 的 %s 提交"
 
-#: common/flatpak-dir.c:5793 common/flatpak-dir.c:6042
+#: common/flatpak-dir.c:5803 common/flatpak-dir.c:6056
 #, c-format
 msgid "While pulling %s from remote %s: "
 msgstr "當從 %2$s 遠端拉入 %1$s 時："
 
-#: common/flatpak-dir.c:5983 common/flatpak-utils.c:6720
+#: common/flatpak-dir.c:5997 common/flatpak-utils.c:6723
 msgid "GPG signatures found, but none are in trusted keyring"
 msgstr "找到 GPG 簽章，但不在受信任的鑰匙圈中"
 
-#: common/flatpak-dir.c:6000
+#: common/flatpak-dir.c:6014
 #, c-format
 msgid "Commit for ‘%s’ has no ref binding"
 msgstr "「%s」的提交沒有參照綁定"
 
-#: common/flatpak-dir.c:6005
+#: common/flatpak-dir.c:6019
 #, c-format
 msgid "Commit for ‘%s’ is not in expected bound refs: %s"
 msgstr "「%s」的提交不在期望的邊界參照中：%s"
 
-#: common/flatpak-dir.c:6180
+#: common/flatpak-dir.c:6194
 #, fuzzy
 msgid "Only applications can be made current"
 msgstr ""
 "\n"
 "正在尋找應用程式與執行時期環境"
 
-#: common/flatpak-dir.c:6701
+#: common/flatpak-dir.c:6715
 msgid "Not enough memory"
 msgstr "記憶體不足"
 
-#: common/flatpak-dir.c:6720
+#: common/flatpak-dir.c:6734
 msgid "Failed to read from exported file"
 msgstr "從已匯出的檔案讀取失敗"
 
-#: common/flatpak-dir.c:6912
+#: common/flatpak-dir.c:6926
 msgid "Error reading mimetype xml file"
 msgstr "讀取 mimetype XML 檔案時發生錯誤"
 
-#: common/flatpak-dir.c:6917
+#: common/flatpak-dir.c:6931
 msgid "Invalid mimetype xml file"
 msgstr "無效的 mimetype XML 檔案"
 
-#: common/flatpak-dir.c:7007
+#: common/flatpak-dir.c:7021
 #, c-format
 msgid "D-Bus service file '%s' has wrong name"
 msgstr "D-Bus 服務檔案「%s」的名稱錯誤"
 
-#: common/flatpak-dir.c:7145
+#: common/flatpak-dir.c:7159
 #, fuzzy, c-format
 msgid "Invalid Exec argument %s"
 msgstr "無效的 require-flatpak 引數 %s"
 
-#: common/flatpak-dir.c:7616
+#: common/flatpak-dir.c:7630
 msgid "While getting detached metadata: "
 msgstr "當取得分離的中介資料時："
 
-#: common/flatpak-dir.c:7621 common/flatpak-dir.c:7626
-#: common/flatpak-dir.c:7630
+#: common/flatpak-dir.c:7635 common/flatpak-dir.c:7640
+#: common/flatpak-dir.c:7644
 msgid "Extra data missing in detached metadata"
 msgstr "分離的中介資料遺失額外資料"
 
-#: common/flatpak-dir.c:7634
+#: common/flatpak-dir.c:7648
 msgid "While creating extradir: "
 msgstr "當建立額外目錄時："
 
-#: common/flatpak-dir.c:7655 common/flatpak-dir.c:7688
+#: common/flatpak-dir.c:7669 common/flatpak-dir.c:7702
 msgid "Invalid checksum for extra data"
 msgstr "額外資料的檢核碼無效"
 
-#: common/flatpak-dir.c:7684
+#: common/flatpak-dir.c:7698
 msgid "Wrong size for extra data"
 msgstr "額外資料的大小錯誤"
 
-#: common/flatpak-dir.c:7697
+#: common/flatpak-dir.c:7711
 #, c-format
 msgid "While writing extra data file '%s': "
 msgstr "當寫入「%s」額外資料檔案時："
 
-#: common/flatpak-dir.c:7705
+#: common/flatpak-dir.c:7719
 #, c-format
 msgid "Extra data %s missing in detached metadata"
 msgstr "分離的中介資料遺失額外資料 %s"
 
-#: common/flatpak-dir.c:7896
+#: common/flatpak-dir.c:7910
 #, c-format
 msgid "apply_extra script failed, exit status %d"
 msgstr "apply_extra 指令稿執行失敗，結束狀態為 %d"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-dir.c:8055
+#: common/flatpak-dir.c:8069
 #, c-format
 msgid "Installing %s is not allowed by the policy set by your administrator"
 msgstr "因管理員設定的方針，不允許安裝 %s"
 
-#: common/flatpak-dir.c:8142
+#: common/flatpak-dir.c:8156
 #, c-format
 msgid "While trying to resolve ref %s: "
 msgstr "當嘗試解決 %s 參照時："
 
-#: common/flatpak-dir.c:8154
+#: common/flatpak-dir.c:8168
 #, c-format
 msgid "%s is not available"
 msgstr "%s 無法使用"
 
-#: common/flatpak-dir.c:8183
+#: common/flatpak-dir.c:8197
 #, c-format
 msgid "Failed to read commit %s: "
 msgstr "%s 提交讀取失敗："
 
-#: common/flatpak-dir.c:8203
+#: common/flatpak-dir.c:8217
 #, c-format
 msgid "While trying to checkout %s into %s: "
 msgstr "當嘗試將 %s 檢出至 %s 時："
 
-#: common/flatpak-dir.c:8222
+#: common/flatpak-dir.c:8236
 msgid "While trying to checkout metadata subpath: "
 msgstr "當嘗試檢出中介資料子路徑時："
 
-#: common/flatpak-dir.c:8253
+#: common/flatpak-dir.c:8267
 #, c-format
 msgid "While trying to checkout subpath ‘%s’: "
 msgstr "當嘗試檢出子路徑「%s」時："
 
-#: common/flatpak-dir.c:8263
+#: common/flatpak-dir.c:8277
 msgid "While trying to remove existing extra dir: "
 msgstr "當嘗試移除既有的額外目錄時："
 
-#: common/flatpak-dir.c:8274
+#: common/flatpak-dir.c:8288
 msgid "While trying to apply extra data: "
 msgstr "當嘗試套用額外資料時："
 
-#: common/flatpak-dir.c:8301
+#: common/flatpak-dir.c:8315
 #, c-format
 msgid "Invalid commit ref %s: "
 msgstr "無效的 %s 參照提交："
 
-#: common/flatpak-dir.c:8309 common/flatpak-dir.c:8321
+#: common/flatpak-dir.c:8323 common/flatpak-dir.c:8335
 #, c-format
 msgid "Deployed ref %s does not match commit (%s)"
 msgstr "已布署的 %s 參照與提交不符（%s）"
 
-#: common/flatpak-dir.c:8315
+#: common/flatpak-dir.c:8329
 #, c-format
 msgid "Deployed ref %s branch does not match commit (%s)"
 msgstr "已布署的 %s 參照分支與提交不符（%s）"
 
-#: common/flatpak-dir.c:8571 common/flatpak-installation.c:1908
+#: common/flatpak-dir.c:8583 common/flatpak-installation.c:1908
 #, c-format
 msgid "%s branch %s already installed"
 msgstr "已經安裝 %s 的 %s 分支"
 
-#: common/flatpak-dir.c:9210
+#: common/flatpak-dir.c:9222
 #, c-format
 msgid "Could not unmount revokefs-fuse filesystem at %s: "
 msgstr ""
 
-#: common/flatpak-dir.c:9473
+#: common/flatpak-dir.c:9492
 #, c-format
 msgid "This version of %s is already installed"
 msgstr "已經安裝此版本的 %s"
 
-#: common/flatpak-dir.c:9480
+#: common/flatpak-dir.c:9499
 msgid "Can't change remote during bundle install"
 msgstr "無法在套組安裝時變更遠端"
 
-#: common/flatpak-dir.c:9752
+#: common/flatpak-dir.c:9771
 msgid "Can't update to a specific commit without root permissions"
 msgstr "沒有 root 權利時無法更新至特定提交"
 
-#: common/flatpak-dir.c:10018
+#: common/flatpak-dir.c:10037
 #, c-format
 msgid "Can't remove %s, it is needed for: %s"
 msgstr "無法移除 %s，它為此項目所需要：%s"
 
-#: common/flatpak-dir.c:10074 common/flatpak-installation.c:2064
+#: common/flatpak-dir.c:10093 common/flatpak-installation.c:2064
 #, c-format
 msgid "%s branch %s is not installed"
 msgstr "%s 的 %s 分支尚未安裝"
 
-#: common/flatpak-dir.c:10327
+#: common/flatpak-dir.c:10346
 #, c-format
 msgid "%s commit %s not installed"
 msgstr "未安裝 %s (提交 %s)"
 
-#: common/flatpak-dir.c:10663
+#: common/flatpak-dir.c:10682
 #, c-format
 msgid "Pruning repo failed: %s"
 msgstr "修除軟體庫失敗：%s"
 
-#: common/flatpak-dir.c:10831 common/flatpak-dir.c:10837
+#: common/flatpak-dir.c:10850 common/flatpak-dir.c:10856
 #, c-format
 msgid "Failed to load filter '%s'"
 msgstr "無法載入過濾器「%s」"
 
-#: common/flatpak-dir.c:10843
+#: common/flatpak-dir.c:10862
 #, c-format
 msgid "Failed to parse filter '%s'"
 msgstr "無法解析「%s」過濾器"
 
-#: common/flatpak-dir.c:11128
+#: common/flatpak-dir.c:11147
 msgid "Failed to write summary cache: "
 msgstr "無法寫入摘要快取： "
 
-#: common/flatpak-dir.c:11147
+#: common/flatpak-dir.c:11166
 #, c-format
 msgid "No oci summary cached for remote '%s'"
 msgstr "未快取「%s」遠端的 oci 摘要"
 
-#: common/flatpak-dir.c:11369
+#: common/flatpak-dir.c:11388
 #, fuzzy, c-format
 msgid "No cached summary for remote '%s'"
 msgstr "未快取「%s」遠端的 oci 摘要"
 
-#: common/flatpak-dir.c:11444
+#: common/flatpak-dir.c:11463
 #, c-format
 msgid ""
 "Remote listing for %s not available; server has no summary file. Check the "
@@ -4558,91 +4558,91 @@ msgstr ""
 "%s 的遠端列表無法使用；伺服器沒有摘要檔案。請檢查傳給 remote-add 的 URL 是否"
 "有效。"
 
-#: common/flatpak-dir.c:11814
+#: common/flatpak-dir.c:11833
 #, fuzzy, c-format
 msgid "Invalid checksum for indexed summary %s for remote '%s'"
 msgstr "額外資料 %s 的檢核碼無效"
 
-#: common/flatpak-dir.c:12460
+#: common/flatpak-dir.c:12479
 #, c-format
 msgid "Multiple branches available for %s, you must specify one of: "
 msgstr "%s 有多個分支可用，您必須指定其中一個："
 
-#: common/flatpak-dir.c:12482
+#: common/flatpak-dir.c:12501
 #, c-format
 msgid "Nothing matches %s"
 msgstr "沒有項目符合 %s"
 
-#: common/flatpak-dir.c:12576
+#: common/flatpak-dir.c:12595
 #, c-format
 msgid "Can't find ref %s%s%s%s%s"
 msgstr "找不到參照 %s%s%s%s%s"
 
-#: common/flatpak-dir.c:12616
+#: common/flatpak-dir.c:12635
 #, c-format
 msgid "Error searching remote %s: %s"
 msgstr "搜尋 %s 遠端時發生錯誤：%s"
 
-#: common/flatpak-dir.c:12708
+#: common/flatpak-dir.c:12727
 #, c-format
 msgid "Error searching local repository: %s"
 msgstr "搜尋本機軟體庫時發生錯誤：%s"
 
-#: common/flatpak-dir.c:13029
+#: common/flatpak-dir.c:13048
 #, c-format
 msgid "Could not find installation %s"
 msgstr "找不到 %s 安裝"
 
-#: common/flatpak-dir.c:13634
+#: common/flatpak-dir.c:13653
 #, c-format
 msgid "Invalid file format, no %s group"
 msgstr "無效的檔案格式，沒有 %s 群組"
 
-#: common/flatpak-dir.c:13639 common/flatpak-utils.c:2251
+#: common/flatpak-dir.c:13658 common/flatpak-utils.c:2251
 #, c-format
 msgid "Invalid version %s, only 1 supported"
 msgstr "%s 版本無效，僅支援 1 版"
 
-#: common/flatpak-dir.c:13644 common/flatpak-dir.c:13649
+#: common/flatpak-dir.c:13663 common/flatpak-dir.c:13668
 #, c-format
 msgid "Invalid file format, no %s specified"
 msgstr "無效的檔案格式，未指定 %s"
 
 #. Check some minimal size so we don't get crap
-#: common/flatpak-dir.c:13672
+#: common/flatpak-dir.c:13691
 msgid "Invalid file format, gpg key invalid"
 msgstr "無效的檔案格式，GPG 金鑰無效"
 
-#: common/flatpak-dir.c:13691 common/flatpak-utils.c:2310
+#: common/flatpak-dir.c:13710 common/flatpak-utils.c:2310
 msgid "Collection ID requires GPG key to be provided"
 msgstr "收藏 ID 必須提供 GPG 金鑰"
 
-#: common/flatpak-dir.c:13736
+#: common/flatpak-dir.c:13755
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "已經安裝 %s 執行時期環境，%s 分支"
 
-#: common/flatpak-dir.c:13737
+#: common/flatpak-dir.c:13756
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "已經安裝 %s 程式，%s 分支"
 
-#: common/flatpak-dir.c:13998
+#: common/flatpak-dir.c:14017
 #, c-format
 msgid "Can't remove remote '%s' with installed ref %s (at least)"
 msgstr "無法移除「%s」遠端的已安裝 %s 參照（至少）"
 
-#: common/flatpak-dir.c:14097
+#: common/flatpak-dir.c:14116
 #, c-format
 msgid "Invalid character '/' in remote name: %s"
 msgstr "在遠端的名稱中有無效字元「/」：%s"
 
-#: common/flatpak-dir.c:14103
+#: common/flatpak-dir.c:14122
 #, c-format
 msgid "No configuration for remote %s specified"
 msgstr "沒有設定 %s 遠端的組態"
 
-#: common/flatpak-dir.c:15680
+#: common/flatpak-dir.c:15699
 #, c-format
 msgid "Skipping deletion of mirror ref (%s, %s)…\n"
 msgstr "正在略過鏡像參照 (%s, %s)…\n"
@@ -4940,62 +4940,65 @@ msgstr "bwrapinfo.json 檔開啟失敗：%s"
 msgid "Failed to write to instance id fd: %s"
 msgstr "無法寫入摘要快取： "
 
-#: common/flatpak-run.c:2898
+#: common/flatpak-run.c:2930
 msgid "Initialize seccomp failed"
 msgstr "seccomp 初始化失敗"
 
-#: common/flatpak-run.c:2937
-msgid "Failed to add architecture to seccomp filter"
+#: common/flatpak-run.c:2969
+#, fuzzy, c-format
+msgid "Failed to add architecture to seccomp filter: %s"
 msgstr "架構新增至 seccomp 過濾器失敗"
 
-#: common/flatpak-run.c:2945
-msgid "Failed to add multiarch architecture to seccomp filter"
+#: common/flatpak-run.c:2977
+#, fuzzy, c-format
+msgid "Failed to add multiarch architecture to seccomp filter: %s"
 msgstr "multiarch 架構新增至 seccomp 過濾器失敗"
 
-#: common/flatpak-run.c:2977 common/flatpak-run.c:2999
-#, c-format
-msgid "Failed to block syscall %d"
+#: common/flatpak-run.c:3009 common/flatpak-run.c:3031
+#, fuzzy, c-format
+msgid "Failed to block syscall %d: %s"
 msgstr "封鎖系統呼叫 %d 失敗"
 
-#: common/flatpak-run.c:3030
-msgid "Failed to export bpf"
+#: common/flatpak-run.c:3064
+#, fuzzy, c-format
+msgid "Failed to export bpf: %s"
 msgstr "匯出 bpf 失敗"
 
-#: common/flatpak-run.c:3267
+#: common/flatpak-run.c:3301
 #, c-format
 msgid "Failed to open ‘%s’"
 msgstr "無法開啟「%s」"
 
-#: common/flatpak-run.c:3552
+#: common/flatpak-run.c:3586
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "ldconfig 失敗，離開狀態為 %d"
 
-#: common/flatpak-run.c:3559
+#: common/flatpak-run.c:3593
 msgid "Can't open generated ld.so.cache"
 msgstr "無法開啟生成的 ld.so.cache"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-run.c:3671
+#: common/flatpak-run.c:3705
 #, c-format
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr "因管理員設定的方針，不允許執行 %s"
 
-#: common/flatpak-run.c:3713
+#: common/flatpak-run.c:3747
 msgid "\"flatpak run\" is not intended to be ran with sudo"
 msgstr "「flatpak run」不應使用 sudo 執行"
 
-#: common/flatpak-run.c:3936
+#: common/flatpak-run.c:3970
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "無法從 %s 轉移：%s"
 
-#: common/flatpak-run.c:3951
+#: common/flatpak-run.c:3985
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr "無法轉移舊的 App 資料目錄 %s 至新名稱 %s：%s"
 
-#: common/flatpak-run.c:3960
+#: common/flatpak-run.c:3994
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "無法在轉移 %s 時建立符號連結：%s"
@@ -5045,63 +5048,63 @@ msgstr "無效的 .flatpakref：%s"
 msgid "Error updating remote metadata for '%s': %s"
 msgstr "更新「%s」的遠端中介資料時發生錯誤：%s"
 
-#: common/flatpak-transaction.c:3236
+#: common/flatpak-transaction.c:3254
 #, c-format
 msgid ""
 "Warning: Treating remote fetch error as non-fatal since %s is already "
 "installed: %s"
 msgstr "警告：由於已經安裝 %s，因此將遠端擷取錯誤視為非重大錯誤：%s"
 
-#: common/flatpak-transaction.c:3552
+#: common/flatpak-transaction.c:3578
 #, fuzzy, c-format
 msgid "No authenticator installed for remote '%s'"
 msgstr "未設定用於「%s」遠端的身分核對器"
 
-#: common/flatpak-transaction.c:3656 common/flatpak-transaction.c:3663
+#: common/flatpak-transaction.c:3682 common/flatpak-transaction.c:3689
 #, fuzzy, c-format
 msgid "Failed to get tokens for ref: %s"
 msgstr "從參照判定部分失敗：%s"
 
-#: common/flatpak-transaction.c:3658 common/flatpak-transaction.c:3665
+#: common/flatpak-transaction.c:3684 common/flatpak-transaction.c:3691
 #, fuzzy
 msgid "Failed to get tokens for ref"
 msgstr "從參照判定部分失敗：%s"
 
-#: common/flatpak-transaction.c:3989
+#: common/flatpak-transaction.c:4015
 #, c-format
 msgid "Flatpakrepo URL %s not file, HTTP or HTTPS"
 msgstr "Flatpakrepo URL %s 不是檔案、HTTP 或 HTTPS"
 
-#: common/flatpak-transaction.c:3995
+#: common/flatpak-transaction.c:4021
 #, c-format
 msgid "Can't load dependent file %s: "
 msgstr "無法載入依賴檔案 %s： "
 
-#: common/flatpak-transaction.c:4003
+#: common/flatpak-transaction.c:4029
 #, c-format
 msgid "Invalid .flatpakrepo: %s"
 msgstr "無效的 .flatpakrepo：%s"
 
-#: common/flatpak-transaction.c:4599
+#: common/flatpak-transaction.c:4625
 msgid "Transaction already executed"
 msgstr "處理事項已經執行"
 
-#: common/flatpak-transaction.c:4614
+#: common/flatpak-transaction.c:4640
 msgid ""
 "Refusing to operate on a user installation as root! This can lead to "
 "incorrect file ownership and permission errors."
 msgstr "拒絕以 root 在使用者安裝操作！這可能會導致檔案所有權不正確及權限錯誤。"
 
-#: common/flatpak-transaction.c:4706 common/flatpak-transaction.c:4719
+#: common/flatpak-transaction.c:4732 common/flatpak-transaction.c:4745
 msgid "Aborted by user"
 msgstr "由使用者中止"
 
-#: common/flatpak-transaction.c:4744
+#: common/flatpak-transaction.c:4770
 #, c-format
 msgid "Skipping %s due to previous error"
 msgstr "因為先前的錯誤而略過 %s"
 
-#: common/flatpak-transaction.c:4796
+#: common/flatpak-transaction.c:4822
 #, fuzzy, c-format
 msgid "Aborted due to failure (%s)"
 msgstr "因為失敗而中止"
@@ -5185,54 +5188,54 @@ msgstr "%s 沒有 appstream 資料：%s\n"
 msgid "Invalid bundle, no ref in metadata"
 msgstr "無效的套組，中介資料內沒有參照"
 
-#: common/flatpak-utils.c:6680
+#: common/flatpak-utils.c:6683
 #, c-format
 msgid "Collection ‘%s’ of bundle doesn’t match collection ‘%s’ of remote"
 msgstr "套組的「%s」收藏與遠端站點的「%s」收藏不符"
 
-#: common/flatpak-utils.c:6759
+#: common/flatpak-utils.c:6760
 msgid "Metadata in header and app are inconsistent"
 msgstr "檔案標頭的中介資料與程式不一致"
 
-#: common/flatpak-utils.c:6844 common/flatpak-utils.c:7003
+#: common/flatpak-utils.c:6845 common/flatpak-utils.c:7004
 msgid "Invalid OCI image config"
 msgstr ""
 
-#: common/flatpak-utils.c:6906 common/flatpak-utils.c:7152
+#: common/flatpak-utils.c:6907 common/flatpak-utils.c:7153
 #, c-format
 msgid "Wrong layer checksum, expected %s, was %s"
 msgstr "錯誤的層次檢核碼，預期為 %s，實際為 %s"
 
-#: common/flatpak-utils.c:6986
+#: common/flatpak-utils.c:6987
 #, c-format
 msgid "No ref specified for OCI image %s"
 msgstr "%s OCI 映像檔未指定參照"
 
-#: common/flatpak-utils.c:6992
+#: common/flatpak-utils.c:6993
 #, c-format
 msgid "Wrong ref (%s) specified for OCI image %s, expected %s"
 msgstr "錯誤的參照 (%s) 指定給了 %s OCI 映像檔，預期為 %s"
 
-#: common/flatpak-utils.c:7820
+#: common/flatpak-utils.c:7821
 #, c-format
 msgid "Invalid require-flatpak argument %s"
 msgstr "無效的 require-flatpak 引數 %s"
 
-#: common/flatpak-utils.c:7830 common/flatpak-utils.c:7849
+#: common/flatpak-utils.c:7831 common/flatpak-utils.c:7850
 #, c-format
 msgid "%s needs a later flatpak version (%s)"
 msgstr "%s 需要較新的 flatpak 版本 (%s)"
 
-#: common/flatpak-utils.c:7893
+#: common/flatpak-utils.c:7894
 msgid "Empty string is not a number"
 msgstr "空字串不是數字"
 
-#: common/flatpak-utils.c:7919
+#: common/flatpak-utils.c:7920
 #, c-format
 msgid "“%s” is not an unsigned number"
 msgstr "「%s」不是無號數"
 
-#: common/flatpak-utils.c:7929
+#: common/flatpak-utils.c:7930
 #, c-format
 msgid "Number “%s” is out of bounds [%s, %s]"
 msgstr "數字「%s」超出邊界 [%s, %s]"
