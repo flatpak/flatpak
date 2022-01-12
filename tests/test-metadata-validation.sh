@@ -18,6 +18,8 @@ create_app () {
     local OPTIONS="$1"
     local DIR=`mktemp -d`
 
+    sleep 1
+
     mkdir ${DIR}/files
     echo $COUNTER > ${DIR}/files/counter
     let COUNTER=COUNTER+1
