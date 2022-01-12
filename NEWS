@@ -1,6 +1,31 @@
 Changes in 1.10.6
 ~~~~~~~~~~~~~~~~~
-Released: (not released yet)
+Released: 2022-01-12
+
+This is a security update that fixes two issues that were found in flatpak:
+
+https://github.com/flatpak/flatpak/security/advisories/GHSA-qpjc-vq3c-572j
+(also known as CVE-2021-43860)
+
+This issue is about the possibility for a malicious repository to send
+invalid application metadata in a way that hides some of the app
+permissions displayed during installation.
+
+https://github.com/flatpak/flatpak/security/advisories/GHSA-8ch7-5j3h-g4fx
+
+This issue is a problem with how flatpak-builder uses flatpak, that
+can cause `flatpak-builder --mirror-screenshots-url` commands to be
+allowed to create directories outside of the build directory.
+
+The fix for this is done in flatpak by making the --nofilesystem=host
+and --nofilesystem=home more powerful. They previously only removed
+access to the particular location, i.e. `--nofilesystem=host` negated
+`--filesystem=host`, but not `--filesytem=/some/dir`. This is a minor
+change in behavior, as it may change the behavior of an override
+with these specific options, however it is likely that the new
+behavior was the expected one.
+
+Other changes:
 
  * Fix error handling for the syscalls that are blocked when not using --devel
  * Improve diagnostic messages when seccomp rules cannot be applied
