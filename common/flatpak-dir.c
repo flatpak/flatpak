@@ -9369,6 +9369,13 @@ flatpak_dir_ensure_bundle_remote (FlatpakDir         *self,
   if (metadata == NULL)
     return NULL;
 
+  /* If we rely on metadata (to e.g. print permissions), check it exists before creating the remote */
+  if (out_metadata && fp_metadata == NULL)
+    {
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, "No metadata in bundler header");
+      return NULL;
+    }
+
   gpg_data = extra_gpg_data ? extra_gpg_data : included_gpg_data;
 
   deploy_data = flatpak_dir_get_deploy_data (self, ref, FLATPAK_DEPLOY_VERSION_ANY, cancellable, NULL);
