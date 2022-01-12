@@ -198,6 +198,7 @@ static char *
 _app_get_id_no_suffix (AsApp *app)
 {
   const char *id_stripped = NULL;
+#if AS_CHECK_VERSION (0, 5, 15)
   GPtrArray *bundles = NULL;
 
   /* First try using the <bundle> ID which is unambiguously the flatpak ref */
@@ -213,6 +214,7 @@ _app_get_id_no_suffix (AsApp *app)
       if (decomposed != NULL)
         return flatpak_decomposed_dup_id (decomposed);
     }
+#endif
 
   /* Fall back to using the <id> field, which is required by appstream spec,
    * but make sure the .desktop suffix isn't stripped overzealously
