@@ -7723,11 +7723,16 @@ flatpak_dir_install (FlatpakDir          *self,
                      const char          *ref,
                      const char          *opt_commit,
                      const char         **opt_subpaths,
+                     const char         **opt_previous_ids,
                      OstreeAsyncProgress *progress,
                      GCancellable        *cancellable,
                      GError             **error)
 {
   FlatpakPullFlags flatpak_flags;
+
+  /* This is not actually used for anything, so must be NULL in
+   * this branch. */
+  g_return_val_if_fail (opt_previous_ids == NULL, FALSE);
 
   flatpak_flags = FLATPAK_PULL_FLAGS_DOWNLOAD_EXTRA_DATA;
   if (no_static_deltas)
@@ -8295,6 +8300,7 @@ flatpak_dir_update (FlatpakDir                           *self,
                     const char                           *commit,
                     const OstreeRepoFinderResult * const *results,
                     const char                          **opt_subpaths,
+                    const char                          **opt_previous_ids,
                     OstreeAsyncProgress                  *progress,
                     GCancellable                         *cancellable,
                     GError                              **error)
@@ -8305,6 +8311,10 @@ flatpak_dir_update (FlatpakDir                           *self,
   FlatpakPullFlags flatpak_flags;
   g_autofree const char **old_subpaths = NULL;
   gboolean is_oci;
+
+  /* This is not actually used for anything, so must be NULL in
+   * this branch. */
+  g_return_val_if_fail (opt_previous_ids == NULL, FALSE);
 
   /* This and @results are calculated in check_for_update. @results will be
    * %NULL if we don’t support collections. */

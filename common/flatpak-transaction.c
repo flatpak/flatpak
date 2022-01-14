@@ -2899,6 +2899,7 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
                                        priv->max_op >= APP_UPDATE,
                                        state, op->ref, op->resolved_commit,
                                        (const char **) op->subpaths,
+                                       NULL,  /* no previous IDs */
                                        progress->ostree_progress,
                                        cancellable, &local_error);
 
@@ -2941,6 +2942,7 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
                                           state, op->ref, op->resolved_commit,
                                           NULL,
                                           (const char **) op->subpaths,
+                                          NULL,  /* no previous IDs */
                                           progress->ostree_progress,
                                           cancellable, &local_error);
               flatpak_transaction_progress_done (progress);
