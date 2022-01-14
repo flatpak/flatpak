@@ -679,8 +679,9 @@ get_xdg_user_dir_from_string (const char  *filesystem,
 }
 
 static char *
-unparse_filesystem_flags (const char           *path,
-                          FlatpakFilesystemMode mode)
+unparse_filesystem_flags (const char                   *path,
+                          FlatpakFilesystemMode         mode,
+                          FlatpakContextFilesystemFlags flags)
 {
   g_autoptr(GString) s = g_string_new ("");
   const char *p;
@@ -710,6 +711,8 @@ unparse_filesystem_flags (const char           *path,
 
     case FLATPAK_FILESYSTEM_MODE_NONE:
       g_string_insert_c (s, 0, '!');
+      if ((flags & FLATPAK_CONTEXT_FILESYSTEM_FLAGS_ALL) != 0)
+        g_string_append (s, ":all");
       break;
 
     default:
@@ -721,12 +724,15 @@ unparse_filesystem_flags (const char           *path,
 }
 
 static char *
-parse_filesystem_flags (const char            *filesystem,
-                        FlatpakFilesystemMode *mode_out)
+parse_filesystem_flags (const char                    *filesystem,
+                        gboolean                       negated,
+                        FlatpakFilesystemMode         *mode_out,
+                        FlatpakContextFilesystemFlags *flags_out)
 {
   g_autoptr(GString) s = g_string_new ("");
   const char *p, *suffix;
   FlatpakFilesystemMode mode;
+  FlatpakContextFilesystemFlags flags;
 
   p = filesystem;
   while (*p != 0 && *p != ':')
@@ -741,35 +747,62 @@ parse_filesystem_flags (const char            *filesystem,
         g_string_append_c (s, *p++);
     }
 
-  mode = FLATPAK_FILESYSTEM_MODE_READ_WRITE;
+  flags = 0;
 
-  if (*p == ':')
+  if (negated)
     {
-      suffix = p + 1;
+      mode = FLATPAK_FILESYSTEM_MODE_NONE;
 
-      if (strcmp (suffix, "ro") == 0)
-        mode = FLATPAK_FILESYSTEM_MODE_READ_ONLY;
-      else if (strcmp (suffix, "rw") == 0)
-        mode = FLATPAK_FILESYSTEM_MODE_READ_WRITE;
-      else if (strcmp (suffix, "create") == 0)
-        mode = FLATPAK_FILESYSTEM_MODE_CREATE;
-      else if (*suffix != 0)
-        g_warning ("Unexpected filesystem suffix %s, ignoring", suffix);
+      if (*p == ':')
+        {
+          suffix = p + 1;
+
+          /* We only support :all on host and home (for now at least) */
+          if (strcmp (suffix, "all") == 0 &&
+              (strcmp (s->str, "host") == 0 ||
+               strcmp (s->str, "home") == 0))
+            flags |= FLATPAK_CONTEXT_FILESYSTEM_FLAGS_ALL;
+
+          /* We ignore other flags, to allow extending the flags later, and because
+             earlier flatpak versions handled (and ignored) "ro", "rw" and "create". */
+        }
+    }
+  else
+    {
+      mode = FLATPAK_FILESYSTEM_MODE_READ_WRITE;
+
+      if (*p == ':')
+        {
+          suffix = p + 1;
+
+          if (strcmp (suffix, "ro") == 0)
+            mode = FLATPAK_FILESYSTEM_MODE_READ_ONLY;
+          else if (strcmp (suffix, "rw") == 0)
+            mode = FLATPAK_FILESYSTEM_MODE_READ_WRITE;
+          else if (strcmp (suffix, "create") == 0)
+            mode = FLATPAK_FILESYSTEM_MODE_CREATE;
+          else if (*suffix != 0)
+            g_warning ("Unexpected filesystem suffix %s, ignoring", suffix);
+        }
     }
 
   if (mode_out)
     *mode_out = mode;
+  if (flags_out)
+    *flags_out = flags;
 
   return g_string_free (g_steal_pointer (&s), FALSE);
 }
 
 gboolean
-flatpak_context_parse_filesystem (const char             *filesystem_and_mode,
-                                  char                  **filesystem_out,
-                                  FlatpakFilesystemMode  *mode_out,
-                                  GError                **error)
+flatpak_context_parse_filesystem (const char                    *filesystem_and_mode,
+                                  gboolean                       negated,
+                                  char                         **filesystem_out,
+                                  FlatpakFilesystemMode         *mode_out,
+                                  FlatpakContextFilesystemFlags *flags_out,
+                                  GError                       **error)
 {
-  g_autofree char *filesystem = parse_filesystem_flags (filesystem_and_mode, mode_out);
+  g_autofree char *filesystem = parse_filesystem_flags (filesystem_and_mode, negated, mode_out, flags_out);
   char *slash;
 
   slash = strchr (filesystem, '/');
@@ -906,7 +939,9 @@ flatpak_context_lookup_filesystem_mode (FlatpakContext *context,
   FlatpakContextFilesystem *data;
 
   if (flatpak_context_lookup_filesystem (context, fs, &data))
-    return data->mode;
+    {
+      return data->mode;
+    }
 
   return FLATPAK_FILESYSTEM_MODE_NONE;
 }
@@ -927,8 +962,8 @@ flatpak_context_merge (FlatpakContext *context,
 {
   GHashTableIter iter;
   gpointer key, value;
-  gboolean no_home = FALSE;
-  gboolean no_host = FALSE;
+  gboolean no_home_all = FALSE;
+  gboolean no_host_all = FALSE;
   FlatpakContextFilesystem *host, *home;
 
   context->shares &= ~other->shares_valid;
@@ -956,21 +991,23 @@ flatpak_context_merge (FlatpakContext *context,
      keys than themselves from the parent */
   if (flatpak_context_lookup_filesystem (other, "host", &host))
     {
-      if (host->mode == FLATPAK_FILESYSTEM_MODE_NONE)
-        no_host = TRUE;
+      if (host->mode == FLATPAK_FILESYSTEM_MODE_NONE &&
+          (host->flags & FLATPAK_CONTEXT_FILESYSTEM_FLAGS_ALL) != 0)
+        no_host_all = TRUE;
     }
 
   if (flatpak_context_lookup_filesystem (other, "home", &home))
     {
-      if (home->mode == FLATPAK_FILESYSTEM_MODE_NONE)
-        no_home = TRUE;
+      if (home->mode == FLATPAK_FILESYSTEM_MODE_NONE &&
+          (home->flags & FLATPAK_CONTEXT_FILESYSTEM_FLAGS_ALL) != 0)
+        no_home_all = TRUE;
     }
 
-  if (no_host)
+  if (no_host_all)
     {
       g_hash_table_remove_all (context->filesystems);
     }
-  else if (no_home)
+  else if (no_home_all)
     {
       g_hash_table_iter_init (&iter, context->filesystems);
       while (g_hash_table_iter_next (&iter, &key, &value))
@@ -1167,11 +1204,12 @@ option_filesystem_cb (const gchar *option_name,
   FlatpakContext *context = data;
   g_autofree char *fs = NULL;
   FlatpakFilesystemMode mode;
+  FlatpakContextFilesystemFlags flags;
 
-  if (!flatpak_context_parse_filesystem (value, &fs, &mode, error))
+  if (!flatpak_context_parse_filesystem (value, FALSE, &fs, &mode, &flags, error))
     return FALSE;
 
-  flatpak_context_take_filesystem (context, g_steal_pointer (&fs), mode, 0);
+  flatpak_context_take_filesystem (context, g_steal_pointer (&fs), mode, flags);
   return TRUE;
 }
 
@@ -1184,12 +1222,13 @@ option_nofilesystem_cb (const gchar *option_name,
   FlatpakContext *context = data;
   g_autofree char *fs = NULL;
   FlatpakFilesystemMode mode;
+  FlatpakContextFilesystemFlags flags;
 
-  if (!flatpak_context_parse_filesystem (value, &fs, &mode, error))
+  if (!flatpak_context_parse_filesystem (value, TRUE, &fs, &mode, &flags, error))
     return FALSE;
 
   flatpak_context_take_filesystem (context, g_steal_pointer (&fs),
-                                   FLATPAK_FILESYSTEM_MODE_NONE, 0);
+                                   mode, flags);
   return TRUE;
 }
 
@@ -1689,17 +1728,12 @@ flatpak_context_load_metadata (FlatpakContext *context,
           const char *fs = parse_negated (filesystems[i], &remove);
           g_autofree char *filesystem = NULL;
           FlatpakFilesystemMode mode;
+          FlatpakContextFilesystemFlags flags;
 
-          if (!flatpak_context_parse_filesystem (fs, &filesystem, &mode, NULL))
+          if (!flatpak_context_parse_filesystem (fs, remove, &filesystem, &mode, &flags, NULL))
             g_debug ("Unknown filesystem type %s", filesystems[i]);
           else
-            {
-              if (remove)
-                flatpak_context_take_filesystem (context, g_steal_pointer (&filesystem),
-                                                 FLATPAK_FILESYSTEM_MODE_NONE, 0);
-              else
-                flatpak_context_take_filesystem (context, g_steal_pointer (&filesystem), mode, 0);
-            }
+            flatpak_context_take_filesystem (context, g_steal_pointer (&filesystem), mode, flags);
         }
     }
 
@@ -1949,7 +1983,10 @@ flatpak_context_save_metadata (FlatpakContext *context,
         {
           FlatpakContextFilesystem *fsdata =  (FlatpakContextFilesystem *)value;
 
-          g_ptr_array_add (array, unparse_filesystem_flags (key, fsdata->mode));
+          if (flatten && fsdata->mode == FLATPAK_FILESYSTEM_MODE_NONE)
+            continue;
+
+          g_ptr_array_add (array, unparse_filesystem_flags (key, fsdata->mode, fsdata->flags));
         }
 
       g_key_file_set_string_list (metakey,
@@ -2175,6 +2212,12 @@ adds_filesystem_access (GHashTable *old, GHashTable *new)
         before but would work with an explicit access to that
         particular file. */
 
+     /* NOTE:
+        This function is mainly about application permissions, rather
+        than layered permisions like overrides, so we don't have to
+        care about the details of negated permissions like !home vs
+        !home:all as they are all the same for the lowest layer. */
+
       return TRUE;
     }
 
@@ -2289,11 +2332,17 @@ flatpak_context_to_args (FlatpakContext *context,
 
       if (mode != FLATPAK_FILESYSTEM_MODE_NONE)
         {
-          g_autofree char *fs = unparse_filesystem_flags (key, mode);
+          g_autofree char *fs = unparse_filesystem_flags (key, mode, 0);
           g_ptr_array_add (args, g_strdup_printf ("--filesystem=%s", fs));
         }
       else
-        g_ptr_array_add (args, g_strdup_printf ("--nofilesystem=%s", (char *) key));
+        {
+          const char *flags = "";
+          if ((data->flags & FLATPAK_CONTEXT_FILESYSTEM_FLAGS_ALL) != 0)
+            flags = ":all";
+
+          g_ptr_array_add (args, g_strdup_printf ("--nofilesystem=%s%s", (char *) key, flags));
+        }
     }
 }
 

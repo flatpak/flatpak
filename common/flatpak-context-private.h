@@ -85,6 +85,7 @@ extern const char *flatpak_context_shares[];
 
 typedef enum {
   FLATPAK_CONTEXT_FILESYSTEM_FLAGS     = 0,
+  FLATPAK_CONTEXT_FILESYSTEM_FLAGS_ALL =  1 << 0,
 } FlatpakContextFilesystemFlags;
 
 typedef struct _FlatpakContextFilesystem {
@@ -94,10 +95,12 @@ typedef struct _FlatpakContextFilesystem {
 
 FlatpakContextFilesystem *flatpak_context_filesystem_dup (FlatpakContextFilesystem *data);
 
-gboolean       flatpak_context_parse_filesystem (const char             *filesystem_and_mode,
-                                                 char                  **filesystem_out,
-                                                 FlatpakFilesystemMode  *mode_out,
-                                                 GError                **error);
+gboolean       flatpak_context_parse_filesystem (const char                    *filesystem_and_mode,
+                                                 gboolean                       negated,
+                                                 char                         **filesystem_out,
+                                                 FlatpakFilesystemMode         *mode_out,
+                                                 FlatpakContextFilesystemFlags *flags_out,
+                                                 GError                       **error);
 
 FlatpakContext *flatpak_context_new (void);
 void           flatpak_context_free (FlatpakContext *context);
