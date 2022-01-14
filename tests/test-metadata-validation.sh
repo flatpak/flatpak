@@ -99,7 +99,10 @@ create_app "no-xametadata no-cache-in-summary"
 if ${FLATPAK} ${U} install -y test-repo org.test.Malicious 2>install-error-log; then
     assert_not_reached "Should not be able to install app with missing metadata"
 fi
-assert_file_has_content install-error-log "No xa.metadata in local commit"
+sed -e 's/^/## /' < install-error-log >&2
+# TODO: In versions >= 1.10.x this was "No xa.metadata in local commit".
+# Is it OK that this is not the case here?
+assert_file_has_content install-error-log "not matching expected metadata"
 
 assert_not_has_dir $FL_DIR/app/org.test.Malicious/current/active
 
@@ -125,7 +128,12 @@ create_app "invalid no-cache-in-summary"
 if ${FLATPAK} ${U} install -y test-repo org.test.Malicious 2>install-error-log; then
     assert_not_reached "Should not be able to install app with invalid metadata"
 fi
-assert_file_has_content install-error-log "Metadata for .* is invalid"
+# In versions that didn't support sideloaded repositories (1.7.0 or older),
+# missing metadata in the cache was tolerated, but then we'd load the
+# invalid metadata and find that it was invalid.
+sed -e 's/^/## /' < install-error-log >&2
+assert_file_has_content install-error-log "Can't find .* metadata for dependencies"
+assert_file_has_content install-error-log "not a key-value pair, group or comment"
 
 assert_not_has_dir $FL_DIR/app/org.test.Malicious/current/active
 
