@@ -83,6 +83,17 @@ extern const char *flatpak_context_devices[];
 extern const char *flatpak_context_features[];
 extern const char *flatpak_context_shares[];
 
+typedef enum {
+  FLATPAK_CONTEXT_FILESYSTEM_FLAGS     = 0,
+} FlatpakContextFilesystemFlags;
+
+typedef struct _FlatpakContextFilesystem {
+  FlatpakFilesystemMode mode;
+  FlatpakContextFilesystemFlags flags;
+} FlatpakContextFilesystem;
+
+FlatpakContextFilesystem *flatpak_context_filesystem_dup (FlatpakContextFilesystem *data);
+
 gboolean       flatpak_context_parse_filesystem (const char             *filesystem_and_mode,
                                                  char                  **filesystem_out,
                                                  FlatpakFilesystemMode  *mode_out,
