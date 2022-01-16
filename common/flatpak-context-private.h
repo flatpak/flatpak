@@ -83,6 +83,7 @@ extern const char *flatpak_context_features[];
 extern const char *flatpak_context_shares[];
 
 gboolean       flatpak_context_parse_filesystem (const char             *filesystem_and_mode,
+                                                 gboolean                negated,
                                                  char                  **filesystem_out,
                                                  FlatpakFilesystemMode  *mode_out,
                                                  GError                **error);
