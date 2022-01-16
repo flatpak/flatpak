@@ -210,7 +210,7 @@ AM_DISTCHECK_CONFIGURE_FLAGS =		\
 
 coverage:
 	$(AM_V_GEN) $(MAKE) $(AM_MAKEFLAGS) lcov-clean
-	$(AM_V_GEN) $(MAKE) check
+	$(AM_V_GEN) FLATPAK_TEST_COVERAGE=1 $(MAKE) check
 	$(AM_V_GEN) $(MAKE) $(AM_MAKEFLAGS) genlcov
 
 lcov-clean:

@@ -30,6 +30,7 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/vfs.h>
+#include <sys/wait.h>
 #include <sys/personality.h>
 #include <grp.h>
 #include <unistd.h>
@@ -4489,7 +4490,8 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
   commandline = flatpak_quote_argv ((const char **) bwrap->argv->pdata, -1);
   g_debug ("Running '%s'", commandline);
 
-  if ((flags & FLATPAK_RUN_FLAG_BACKGROUND) != 0)
+  if ((flags & (FLATPAK_RUN_FLAG_BACKGROUND)) != 0 ||
+      g_getenv ("FLATPAK_TEST_COVERAGE") != NULL)
     {
       GPid child_pid;
       char pid_str[64];
@@ -4497,7 +4499,8 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
       GSpawnFlags spawn_flags;
 
       spawn_flags = G_SPAWN_SEARCH_PATH;
-      if (flags & FLATPAK_RUN_FLAG_DO_NOT_REAP)
+      if (flags & FLATPAK_RUN_FLAG_DO_NOT_REAP ||
+          (flags & FLATPAK_RUN_FLAG_BACKGROUND) == 0)
         spawn_flags |= G_SPAWN_DO_NOT_REAP_CHILD;
 
       /* We use LEAVE_DESCRIPTORS_OPEN to work around dead-lock, see flatpak_close_fds_workaround */
@@ -4521,6 +4524,22 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
       g_snprintf (pid_str, sizeof (pid_str), "%d", child_pid);
       pid_path = g_build_filename (instance_id_host_dir, "pid", NULL);
       g_file_set_contents (pid_path, pid_str, -1, NULL);
+
+      if ((flags & (FLATPAK_RUN_FLAG_BACKGROUND)) == 0)
+        {
+          int wait_status;
+
+          if (waitpid (child_pid, &wait_status, 0) != child_pid)
+            return glnx_throw_errno_prefix (error, "Failed to wait for child process");
+
+          if (WIFEXITED (wait_status))
+            exit (WEXITSTATUS (wait_status));
+
+          if (WIFSIGNALED (wait_status))
+            exit (128 + WTERMSIG (wait_status));
+
+          return glnx_throw (error, "Unknown wait status from waitpid(): %d", wait_status);
+        }
     }
   else
     {
