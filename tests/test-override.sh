@@ -181,6 +181,13 @@ assert_semicolon_list_contains "$filesystems" "xdg-config:ro"
 assert_not_semicolon_list_contains "$filesystems" "!xdg-config"
 assert_not_semicolon_list_contains "$filesystems" "!xdg-config:ro"
 
+# --nofilesystem=...:rw => warning
+# Warnings need to be made temporarily non-fatal here.
+e=0
+G_DEBUG= ${FLATPAK} override --user --nofilesystem=/foo:rw org.test.Hello 2>log || e=$?
+assert_file_has_content log "Filesystem suffix \"rw\" is not applicable for --nofilesystem"
+assert_streq "$e" 0
+
 # --filesystem=...:bar => warning
 # Warnings need to be made temporarily non-fatal here.
 e=0
