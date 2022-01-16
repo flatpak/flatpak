@@ -15,7 +15,7 @@ reset_overrides () {
     assert_file_empty info
 }
 
-echo "1..15"
+echo "1..17"
 
 setup_repo
 install_repo
@@ -272,4 +272,83 @@ if ! skip_one_without_bwrap "persist"; then
   assert_file_has_content $HOME/.var/app/org.test.Hello/example/bye goodbye
 
   echo "ok persist"
+fi
+
+reset_overrides
+
+if ! skip_one_without_bwrap "runtime override --nofilesystem=home"; then
+  mkdir -p "$HOME/dir"
+  mkdir -p "$TEST_DATA_DIR/dir1"
+  mkdir -p "$TEST_DATA_DIR/dir2"
+  echo "hello" > "$HOME/example"
+  echo "hello" > "$HOME/dir/example"
+  echo "hello" > "$TEST_DATA_DIR/dir1/example"
+  echo "hello" > "$TEST_DATA_DIR/dir2/example"
+
+  ${FLATPAK} override --user --filesystem=home org.test.Hello
+  ${FLATPAK} override --user --filesystem='~/dir' org.test.Hello
+  ${FLATPAK} override --user --filesystem="$TEST_DATA_DIR/dir1" org.test.Hello
+
+  ${FLATPAK} run --env=TEST_DATA_DIR="$TEST_DATA_DIR" \
+    --command=sh --nofilesystem=home org.test.Hello -c '
+    echo overwritten > "$HOME/dir/example" || true
+    echo overwritten > "$HOME/example" || true
+    echo overwritten > "$TEST_DATA_DIR/dir1/example" || true
+    echo overwritten > "$TEST_DATA_DIR/dir2/example" || true
+  '
+  # --nofilesystem=home does not cancel a more narrowly-scoped permission
+  # such as --filesystem=~/dir
+  assert_file_has_content "$HOME/dir/example" overwritten
+  # --nofilesystem=home cancels the --filesystem=home at a lower precedence,
+  # so $HOME/example was not shared
+  assert_file_has_content "$HOME/example" hello
+  # --nofilesystem=home does not affect access to files outside $HOME
+  assert_file_has_content "$TEST_DATA_DIR/dir1/example" overwritten
+  assert_file_has_content "$TEST_DATA_DIR/dir2/example" hello
+
+  rm -fr "$HOME/dir"
+  rm -fr "$HOME/example"
+  rm -fr "$TEST_DATA_DIR/dir1"
+  rm -fr "$TEST_DATA_DIR/dir2"
+
+  ok "runtime override --nofilesystem=home"
+fi
+
+reset_overrides
+
+if ! skip_one_without_bwrap "runtime override --nofilesystem=host"; then
+  mkdir -p "$HOME/dir"
+  mkdir -p "$TEST_DATA_DIR/dir1"
+  mkdir -p "$TEST_DATA_DIR/dir2"
+  echo "hello" > "$HOME/example"
+  echo "hello" > "$HOME/dir/example"
+  echo "hello" > "$TEST_DATA_DIR/dir1/example"
+  echo "hello" > "$TEST_DATA_DIR/dir2/example"
+
+  ${FLATPAK} override --user --filesystem=host org.test.Hello
+  ${FLATPAK} override --user --filesystem='~/dir' org.test.Hello
+  ${FLATPAK} override --user --filesystem="$TEST_DATA_DIR/dir1" org.test.Hello
+
+  ${FLATPAK} run --env=TEST_DATA_DIR="$TEST_DATA_DIR" \
+    --command=sh --nofilesystem=host org.test.Hello -c '
+    echo overwritten > "$HOME/dir/example" || true
+    echo overwritten > "$HOME/example" || true
+    echo overwritten > "$TEST_DATA_DIR/dir1/example" || true
+    echo overwritten > "$TEST_DATA_DIR/dir2/example" || true
+  '
+  # --nofilesystem=host does not cancel a more narrowly-scoped permission
+  # such as --filesystem=~/dir
+  assert_file_has_content "$HOME/dir/example" overwritten
+  assert_file_has_content "$TEST_DATA_DIR/dir1/example" overwritten
+  # --nofilesystem=host cancels the --filesystem=host at a lower precedence,
+  # so $HOME/example was not shared
+  assert_file_has_content "$HOME/example" hello
+  assert_file_has_content "$TEST_DATA_DIR/dir2/example" hello
+
+  rm -fr "$HOME/dir"
+  rm -fr "$HOME/example"
+  rm -fr "$TEST_DATA_DIR/dir1"
+  rm -fr "$TEST_DATA_DIR/dir2"
+
+  ok "runtime override --nofilesystem=host"
 fi
