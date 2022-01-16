@@ -223,13 +223,31 @@
                 <term><option>--nofilesystem=FILESYSTEM</option></term>
 
                 <listitem><para>
-                    Remove access to the specified subset of the filesystem from
-                    the application. This overrides to the Context section from the
+                    Undo the effect of a previous
+                    <option>--filesystem=</option><arg choice="plain">FILESYSTEM</arg>
+                    in the app's manifest or a lower-precedence layer of
+                    overrides, and/or remove a previous
+                    <option>--filesystem=</option><arg choice="plain">FILESYSTEM</arg>
+                    from this layer of overrides.
+                    This overrides the Context section of the
                     application metadata.
-                    <arg choice="plain">FILESYSTEM</arg> can be one of: home, host, host-os, host-etc, xdg-desktop, xdg-documents, xdg-download,
-                    xdg-music, xdg-pictures, xdg-public-share, xdg-templates, xdg-videos,
-                    an absolute path, or a homedir-relative path like ~/dir.
+                    <arg choice="plain">FILESYSTEM</arg> can take the same
+                    values as for <option>--filesystem</option>, but the
+                    <arg choice="plain">:ro</arg> and
+                    <arg choice="plain">:create</arg> suffixes are not
+                    used here.
                     This option can be used multiple times.
+                </para><para>
+                    This option does not prevent access to a more
+                    narrowly-scoped <option>--filesystem</option>.
+                    For example, if an application has the equivalent of
+                    <option>--filesystem=xdg-config/MyApp</option> in
+                    its manifest or as a system-wide override, and
+                    <literal>flatpak override --user --nofilesystem=home</literal>
+                    as a per-user override, then it will be prevented from
+                    accessing most of the home directory, but it will still
+                    be allowed to access
+                    <filename>$XDG_CONFIG_HOME/MyApp</filename>.
                 </para></listitem>
             </varlistentry>
 
