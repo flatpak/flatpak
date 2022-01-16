@@ -15,7 +15,7 @@ reset_overrides () {
     assert_file_empty info
 }
 
-echo "1..17"
+echo "1..18"
 
 setup_repo
 install_repo
@@ -178,6 +178,51 @@ assert_not_semicolon_list_contains "$filesystems" "!xdg-desktop/foo:create"
 assert_semicolon_list_contains "$filesystems" "xdg-config:ro"
 assert_not_semicolon_list_contains "$filesystems" "!xdg-config"
 assert_not_semicolon_list_contains "$filesystems" "!xdg-config:ro"
+
+${FLATPAK} override --user --nofilesystem=host:reset org.test.Hello
+${FLATPAK} override --user --show org.test.Hello > override
+filesystems="$(sed -ne 's/^filesystems=//p' override)"
+assert_not_semicolon_list_contains "$filesystems" "host"
+assert_not_semicolon_list_contains "$filesystems" "host:reset"
+assert_semicolon_list_contains "$filesystems" "!host"
+assert_semicolon_list_contains "$filesystems" "!host:reset"
+assert_not_semicolon_list_contains "$filesystems" "host-reset"
+assert_not_semicolon_list_contains "$filesystems" "!host-reset"
+
+# !host-reset is the same as !host:reset, and serializes as !host:reset
+${FLATPAK} override --user --nofilesystem=host-reset org.test.Hello
+${FLATPAK} override --user --show org.test.Hello > override
+filesystems="$(sed -ne 's/^filesystems=//p' override)"
+assert_not_semicolon_list_contains "$filesystems" "host"
+assert_not_semicolon_list_contains "$filesystems" "host:reset"
+assert_semicolon_list_contains "$filesystems" "!host"
+assert_semicolon_list_contains "$filesystems" "!host:reset"
+assert_not_semicolon_list_contains "$filesystems" "host-reset"
+assert_not_semicolon_list_contains "$filesystems" "!host-reset"
+
+# --filesystem=...:reset => error
+e=0
+${FLATPAK} override --user --filesystem=host:reset org.test.Hello 2>log || e=$?
+assert_file_has_content log "Filesystem suffix \"reset\" only applies to --nofilesystem"
+assert_not_streq "$e" 0
+
+# --filesystem=host-reset => error
+e=0
+${FLATPAK} override --user --filesystem=host-reset org.test.Hello 2>log || e=$?
+assert_file_has_content log "Filesystem token \"host-reset\" is only applicable for --nofilesystem"
+assert_not_streq "$e" 0
+
+# --filesystem=host-reset:suffix => error
+e=0
+${FLATPAK} override --user --nofilesystem=host-reset:suffix org.test.Hello 2>log || e=$?
+assert_file_has_content log "Filesystem token \"host-reset\" cannot be used with a suffix"
+assert_not_streq "$e" 0
+
+# --nofilesystem=/foo:reset => error
+e=0
+${FLATPAK} override --user --nofilesystem=/foo:reset org.test.Hello 2>log || e=$?
+assert_file_has_content log "Filesystem suffix \"reset\" can only be applied to --nofilesystem=host"
+assert_not_streq "$e" 0
 
 # --nofilesystem=...:rw => warning
 # Warnings need to be made temporarily non-fatal here.
@@ -380,4 +425,41 @@ if ! skip_one_without_bwrap "runtime override --nofilesystem=host"; then
   rm -fr "$TEST_DATA_DIR/dir2"
 
   ok "runtime override --nofilesystem=host"
+fi
+
+reset_overrides
+
+if ! skip_one_without_bwrap "runtime override --nofilesystem=host:reset"; then
+  mkdir -p "$HOME/dir"
+  mkdir -p "$TEST_DATA_DIR/dir1"
+  mkdir -p "$TEST_DATA_DIR/dir2"
+  echo "hello" > "$HOME/example"
+  echo "hello" > "$HOME/dir/example"
+  echo "hello" > "$TEST_DATA_DIR/dir1/example"
+  echo "hello" > "$TEST_DATA_DIR/dir2/example"
+
+  ${FLATPAK} override --user --filesystem=host org.test.Hello
+  ${FLATPAK} override --user --filesystem='~/dir' org.test.Hello
+  ${FLATPAK} override --user --filesystem="$TEST_DATA_DIR/dir1" org.test.Hello
+
+  ${FLATPAK} run --env=TEST_DATA_DIR="$TEST_DATA_DIR" \
+    --command=sh --nofilesystem=host:reset org.test.Hello -c '
+    echo overwritten > "$HOME/dir/example" || true
+    echo overwritten > "$HOME/example" || true
+    echo overwritten > "$TEST_DATA_DIR/dir1/example" || true
+    echo overwritten > "$TEST_DATA_DIR/dir2/example" || true
+  '
+  # --nofilesystem=host:reset cancels all --filesystem permissions from
+  # lower-precedence layers
+  assert_file_has_content "$HOME/dir/example" hello
+  assert_file_has_content "$TEST_DATA_DIR/dir1/example" hello
+  assert_file_has_content "$HOME/example" hello
+  assert_file_has_content "$TEST_DATA_DIR/dir2/example" hello
+
+  rm -fr "$HOME/dir"
+  rm -fr "$HOME/example"
+  rm -fr "$TEST_DATA_DIR/dir1"
+  rm -fr "$TEST_DATA_DIR/dir2"
+
+  ok "runtime override --nofilesystem=host:reset"
 fi
