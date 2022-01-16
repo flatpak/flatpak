@@ -536,8 +536,8 @@ test_filesystems (void)
       gboolean ret;
 
       g_test_message ("%s", fs->input);
-      ret = flatpak_context_parse_filesystem (fs->input, &normalized, &mode,
-                                              &error);
+      ret = flatpak_context_parse_filesystem (fs->input, FALSE,
+                                              &normalized, &mode, &error);
       g_assert_no_error (error);
       g_assert_true (ret);
 
@@ -558,8 +558,8 @@ test_filesystems (void)
       gboolean ret;
 
       g_test_message ("%s", not->input);
-      ret = flatpak_context_parse_filesystem (not->input, &normalized, &mode,
-                                              &error);
+      ret = flatpak_context_parse_filesystem (not->input, FALSE,
+                                              &normalized, &mode, &error);
       g_test_message ("-> %s", error ? error->message : "(no error)");
       g_assert_error (error, G_OPTION_ERROR, not->code);
       g_assert_false (ret);

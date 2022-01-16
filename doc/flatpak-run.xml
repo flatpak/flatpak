@@ -371,6 +371,14 @@
                     accessing most of the home directory, but it will still
                     be allowed to access
                     <filename>$XDG_CONFIG_HOME/MyApp</filename>.
+                </para><para>
+                    As a special case,
+                    <option>--nofilesystem=host:reset</option>
+                    will ignore all <option>--filesystem</option>
+                    permissions inherited from the app manifest or
+                    <citerefentry><refentrytitle>flatpak-override</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+                    in addition to having the behaviour of
+                    <option>--nofilesystem=host</option>.
                 </para></listitem>
             </varlistentry>
 
