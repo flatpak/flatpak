@@ -381,15 +381,7 @@
                     xdg-music, xdg-pictures, xdg-public-share, xdg-templates, xdg-videos,
                     an absolute path, or a homedir-relative path like ~/dir.
                     This option can be used multiple times.
-                </para><para>
-                    In general, "--nofilesystem=PATH" will remove access to a specific path if exactly that path
-                    was previously granted. However, as a special case, "--nofilesystem=home" will remove access to all
-                    previously granted locations inside the homedir as well, such as "home/some-dir", or "xdg-download",
-                    and "--nofilesystem=host" will remove access to all previously granted locations.
-                    Note: absolute paths that happen to be inside the current users home directory are not considered for
-                    this special case.
                 </para></listitem>
-
             </varlistentry>
 
             <varlistentry>
