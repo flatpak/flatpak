@@ -181,6 +181,20 @@ assert_semicolon_list_contains "$filesystems" "xdg-config:ro"
 assert_not_semicolon_list_contains "$filesystems" "!xdg-config"
 assert_not_semicolon_list_contains "$filesystems" "!xdg-config:ro"
 
+# --filesystem=...:bar => warning
+# Warnings need to be made temporarily non-fatal here.
+e=0
+G_DEBUG= ${FLATPAK} override --user --filesystem=/foo:bar org.test.Hello 2>log || e=$?
+assert_file_has_content log "Unexpected filesystem suffix bar, ignoring"
+assert_streq "$e" 0
+
+# --nofilesystem=...:bar => warning
+# Warnings need to be made temporarily non-fatal here.
+e=0
+G_DEBUG= ${FLATPAK} override --user --nofilesystem=/foo:bar org.test.Hello 2>log || e=$?
+assert_file_has_content log "Unexpected filesystem suffix bar, ignoring"
+assert_streq "$e" 0
+
 ok "override --filesystem"
 
 reset_overrides
