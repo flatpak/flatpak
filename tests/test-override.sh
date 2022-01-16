@@ -165,11 +165,19 @@ ${FLATPAK} override --user --nofilesystem=xdg-documents org.test.Hello
 ${FLATPAK} override --user --show org.test.Hello > override
 
 assert_file_has_content override "^\[Context\]$"
-assert_file_has_content override "^filesystems=.*/media;.*$"
-assert_file_has_content override "^filesystems=.*home;.*$"
-assert_file_has_content override "^filesystems=.*xdg-documents;.*$"
-assert_file_has_content override "^filesystems=.*xdg-desktop/foo:create;.*$"
-assert_file_has_content override "^filesystems=.*xdg-config:ro;.*$"
+filesystems="$(sed -ne 's/^filesystems=//p' override)"
+assert_semicolon_list_contains "$filesystems" "/media"
+assert_not_semicolon_list_contains "$filesystems" "!/media"
+assert_semicolon_list_contains "$filesystems" "home"
+assert_not_semicolon_list_contains "$filesystems" "!home"
+assert_not_semicolon_list_contains "$filesystems" "xdg-documents"
+assert_semicolon_list_contains "$filesystems" "!xdg-documents"
+assert_semicolon_list_contains "$filesystems" "xdg-desktop/foo:create"
+assert_not_semicolon_list_contains "$filesystems" "!xdg-desktop/foo"
+assert_not_semicolon_list_contains "$filesystems" "!xdg-desktop/foo:create"
+assert_semicolon_list_contains "$filesystems" "xdg-config:ro"
+assert_not_semicolon_list_contains "$filesystems" "!xdg-config"
+assert_not_semicolon_list_contains "$filesystems" "!xdg-config:ro"
 
 echo "ok override --filesystem"
 

@@ -382,3 +382,27 @@ cleanup () {
     fi
 }
 trap cleanup EXIT
+
+assert_semicolon_list_contains () {
+    list="$1"
+    member="$2"
+
+    case ";$list;" in
+        (*";$member;"*)
+            ;;
+        (*)
+            assert_not_reached "\"$list\" should contain \"$member\""
+            ;;
+    esac
+}
+
+assert_not_semicolon_list_contains () {
+    local list="$1"
+    local member="$2"
+
+    case ";$list;" in
+        (*";$member;"*)
+            assert_not_reached "\"$list\" should not contain \"$member\""
+            ;;
+    esac
+}
