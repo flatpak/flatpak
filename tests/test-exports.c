@@ -475,6 +475,13 @@ static const NotFilesystem not_filesystems[] =
 {
   { "homework", G_OPTION_ERROR_FAILED },
   { "xdg-run", G_OPTION_ERROR_FAILED },
+  { "host:reset", G_OPTION_ERROR_FAILED },
+  { "host-reset", G_OPTION_ERROR_FAILED },
+  { "host-reset:rw", G_OPTION_ERROR_FAILED },
+  { "host-reset:reset", G_OPTION_ERROR_FAILED },
+  { "!host-reset:reset", G_OPTION_ERROR_FAILED },
+  { "/foo:reset", G_OPTION_ERROR_FAILED },
+  { "!/foo:reset", G_OPTION_ERROR_FAILED },
 };
 
 typedef struct
@@ -520,6 +527,9 @@ static const Filesystem filesystems[] =
   { "xdg-config", FLATPAK_FILESYSTEM_MODE_READ_WRITE },
   { "xdg-config/Stuff", FLATPAK_FILESYSTEM_MODE_READ_WRITE },
   { "xdg-run/dbus", FLATPAK_FILESYSTEM_MODE_READ_WRITE },
+  { "!home", FLATPAK_FILESYSTEM_MODE_NONE, "home" },
+  { "!host:reset", FLATPAK_FILESYSTEM_MODE_NONE, "host-reset" },
+  { "!host-reset", FLATPAK_FILESYSTEM_MODE_NONE, "host-reset" },
 };
 
 static void
@@ -530,19 +540,32 @@ test_filesystems (void)
   for (i = 0; i < G_N_ELEMENTS (filesystems); i++)
     {
       const Filesystem *fs = &filesystems[i];
+      const char *input = fs->input;
+      gboolean negated = FALSE;
       g_autoptr(GError) error = NULL;
       g_autofree char *normalized;
       FlatpakFilesystemMode mode;
       gboolean ret;
 
       g_test_message ("%s", fs->input);
-      ret = flatpak_context_parse_filesystem (fs->input, FALSE,
+
+      if (input[0] == '!')
+        {
+          g_test_message ("-> input is negated");
+          negated = TRUE;
+          input++;
+        }
+
+      ret = flatpak_context_parse_filesystem (input, negated,
                                               &normalized, &mode, &error);
       g_assert_no_error (error);
       g_assert_true (ret);
 
+      g_test_message ("-> mode: %u", mode);
+      g_test_message ("-> normalized filesystem: %s", normalized);
+
       if (fs->fs == NULL)
-        g_assert_cmpstr (normalized, ==, fs->input);
+        g_assert_cmpstr (normalized, ==, input);
       else
         g_assert_cmpstr (normalized, ==, fs->fs);
 
@@ -552,13 +575,22 @@ test_filesystems (void)
   for (i = 0; i < G_N_ELEMENTS (not_filesystems); i++)
     {
       const NotFilesystem *not = &not_filesystems[i];
+      const char *input = not->input;
+      gboolean negated = FALSE;
       g_autoptr(GError) error = NULL;
       char *normalized = NULL;
       FlatpakFilesystemMode mode;
       gboolean ret;
 
       g_test_message ("%s", not->input);
-      ret = flatpak_context_parse_filesystem (not->input, FALSE,
+
+      if (input[0] == '!')
+        {
+          negated = TRUE;
+          input++;
+        }
+
+      ret = flatpak_context_parse_filesystem (input, negated,
                                               &normalized, &mode, &error);
       g_test_message ("-> %s", error ? error->message : "(no error)");
       g_assert_error (error, G_OPTION_ERROR, not->code);
