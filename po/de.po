@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2022-01-12 12:46+0100\n"
+"POT-Creation-Date: 2022-01-18 17:34+0000\n"
 "PO-Revision-Date: 2020-11-20 14:24+0100\n"
 "Last-Translator: Tim Sabsch <tim@sabsch.com>\n"
 "Language-Team: German <gnome-de@gnome.org>\n"
@@ -3212,15 +3212,15 @@ msgstr "Keine entfernte Quelle %s"
 msgid "Show the remotes"
 msgstr "Deaktivierte entfernte Quellen anzeigen"
 
-#: app/flatpak-builtins-search.c:310
+#: app/flatpak-builtins-search.c:312
 msgid "TEXT - Search remote apps/runtimes for text"
 msgstr ""
 
-#: app/flatpak-builtins-search.c:321
+#: app/flatpak-builtins-search.c:323
 msgid "TEXT must be specified"
 msgstr "TEXT muss angegeben werden"
 
-#: app/flatpak-builtins-search.c:380
+#: app/flatpak-builtins-search.c:382
 #, fuzzy
 msgid "No matches found"
 msgstr "Kein Treffer für %s"
@@ -4167,47 +4167,47 @@ msgstr "Fehler: %s %s ist fehlgeschlagen: %s\n"
 msgid "No authenticator configured for remote `%s`"
 msgstr "Legitimierung wird benötigt, um Software zu aktualisieren"
 
-#: common/flatpak-context.c:191
+#: common/flatpak-context.c:192
 #, c-format
 msgid "Unknown share type %s, valid types are: %s"
 msgstr "Unbekannter Freigabetyp %s, zulässige Typen sind: %s"
 
-#: common/flatpak-context.c:226
+#: common/flatpak-context.c:227
 #, c-format
 msgid "Unknown policy type %s, valid types are: %s"
 msgstr "Unbekannter Regeltyp %s, zulässige Typen sind: %s"
 
-#: common/flatpak-context.c:264
+#: common/flatpak-context.c:265
 #, fuzzy, c-format
 msgid "Invalid dbus name %s"
 msgstr "Ungültiger Dbus-Name %s\n"
 
-#: common/flatpak-context.c:277
+#: common/flatpak-context.c:278
 #, c-format
 msgid "Unknown socket type %s, valid types are: %s"
 msgstr "Unbekannter Socket-Typ %s, zulässige Typen sind: %s"
 
-#: common/flatpak-context.c:306
+#: common/flatpak-context.c:307
 #, c-format
 msgid "Unknown device type %s, valid types are: %s"
 msgstr "Unbekannter Gerätetyp %s, zulässige Typen sind: %s"
 
-#: common/flatpak-context.c:334
+#: common/flatpak-context.c:335
 #, c-format
 msgid "Unknown feature type %s, valid types are: %s"
 msgstr "Unbekannter Funktionstyp %s, zulässige Typen sind: %s"
 
-#: common/flatpak-context.c:779
+#: common/flatpak-context.c:871
 #, c-format
 msgid "Filesystem location \"%s\" contains \"..\""
 msgstr ""
 
-#: common/flatpak-context.c:817
+#: common/flatpak-context.c:909
 msgid ""
 "--filesystem=/ is not available, use --filesystem=host for a similar result"
 msgstr ""
 
-#: common/flatpak-context.c:851
+#: common/flatpak-context.c:943
 #, fuzzy, c-format
 msgid ""
 "Unknown filesystem location %s, valid locations are: host, host-os, host-"
@@ -4216,180 +4216,180 @@ msgstr ""
 "Unbekannter Dateisystem-Ort %s, zulässige Orte sind: host, home, xdg-"
 "*[/...], ~/Ordner, /Ordner"
 
-#: common/flatpak-context.c:1177
+#: common/flatpak-context.c:1223
 #, c-format
 msgid "Invalid env format %s"
 msgstr "Ungültiges Umgebungsformat: %s"
 
-#: common/flatpak-context.c:1280
+#: common/flatpak-context.c:1326
 #, c-format
 msgid "Environment variable name must not contain '=': %s"
 msgstr ""
 
-#: common/flatpak-context.c:1393 common/flatpak-context.c:1401
+#: common/flatpak-context.c:1439 common/flatpak-context.c:1447
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 
-#: common/flatpak-context.c:1408
+#: common/flatpak-context.c:1454
 msgid "--add-policy values can't start with \"!\""
 msgstr ""
 
-#: common/flatpak-context.c:1433 common/flatpak-context.c:1441
+#: common/flatpak-context.c:1479 common/flatpak-context.c:1487
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 
-#: common/flatpak-context.c:1448
+#: common/flatpak-context.c:1494
 msgid "--remove-policy values can't start with \"!\""
 msgstr ""
 
-#: common/flatpak-context.c:1474
+#: common/flatpak-context.c:1520
 msgid "Share with host"
 msgstr "Mit Rechner teilen"
 
-#: common/flatpak-context.c:1474 common/flatpak-context.c:1475
+#: common/flatpak-context.c:1520 common/flatpak-context.c:1521
 msgid "SHARE"
 msgstr "FREIGABE"
 
-#: common/flatpak-context.c:1475
+#: common/flatpak-context.c:1521
 msgid "Unshare with host"
 msgstr "Freigabe für Rechner aufheben"
 
-#: common/flatpak-context.c:1476
+#: common/flatpak-context.c:1522
 msgid "Expose socket to app"
 msgstr "Socket für die Anwendung sichtbar machen"
 
-#: common/flatpak-context.c:1476 common/flatpak-context.c:1477
+#: common/flatpak-context.c:1522 common/flatpak-context.c:1523
 msgid "SOCKET"
 msgstr "SOCKET"
 
-#: common/flatpak-context.c:1477
+#: common/flatpak-context.c:1523
 msgid "Don't expose socket to app"
 msgstr "Socket vor der Anwendung verbergen"
 
-#: common/flatpak-context.c:1478
+#: common/flatpak-context.c:1524
 msgid "Expose device to app"
 msgstr "Gerät für die Anwendung sichtbar machen"
 
-#: common/flatpak-context.c:1478 common/flatpak-context.c:1479
+#: common/flatpak-context.c:1524 common/flatpak-context.c:1525
 msgid "DEVICE"
 msgstr "GERÄT"
 
-#: common/flatpak-context.c:1479
+#: common/flatpak-context.c:1525
 msgid "Don't expose device to app"
 msgstr "Gerät vor der Anwendung verbergen"
 
-#: common/flatpak-context.c:1480
+#: common/flatpak-context.c:1526
 msgid "Allow feature"
 msgstr "Funktion erlauben"
 
-#: common/flatpak-context.c:1480 common/flatpak-context.c:1481
+#: common/flatpak-context.c:1526 common/flatpak-context.c:1527
 msgid "FEATURE"
 msgstr "FUNKTION"
 
-#: common/flatpak-context.c:1481
+#: common/flatpak-context.c:1527
 msgid "Don't allow feature"
 msgstr "Funktion nicht erlauben"
 
-#: common/flatpak-context.c:1482
+#: common/flatpak-context.c:1528
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr ""
 "Das Dateisystem für die Anwendung sichtbar machen (:ro für schreibgeschützt)"
 
-#: common/flatpak-context.c:1482
+#: common/flatpak-context.c:1528
 msgid "FILESYSTEM[:ro]"
 msgstr "DATEISYSTEM[:ro]"
 
-#: common/flatpak-context.c:1483
+#: common/flatpak-context.c:1529
 msgid "Don't expose filesystem to app"
 msgstr "Das Dateisystem vor der Anwendung verbergen"
 
-#: common/flatpak-context.c:1483
+#: common/flatpak-context.c:1529
 msgid "FILESYSTEM"
 msgstr "DATEISYSTEM"
 
-#: common/flatpak-context.c:1484
+#: common/flatpak-context.c:1530
 msgid "Set environment variable"
 msgstr "Umgebungsvariable festlegen"
 
-#: common/flatpak-context.c:1484
+#: common/flatpak-context.c:1530
 msgid "VAR=VALUE"
 msgstr "VAR=WERT"
 
-#: common/flatpak-context.c:1485
+#: common/flatpak-context.c:1531
 msgid "Read environment variables in env -0 format from FD"
 msgstr ""
 
-#: common/flatpak-context.c:1485
+#: common/flatpak-context.c:1531
 msgid "FD"
 msgstr ""
 
-#: common/flatpak-context.c:1486
+#: common/flatpak-context.c:1532
 #, fuzzy
 msgid "Remove variable from environment"
 msgstr "Schreib-Berechtigungen der Anwendung widerrufen"
 
-#: common/flatpak-context.c:1486
+#: common/flatpak-context.c:1532
 #, fuzzy
 msgid "VAR"
 msgstr "WERT"
 
-#: common/flatpak-context.c:1487
+#: common/flatpak-context.c:1533
 msgid "Allow app to own name on the session bus"
 msgstr ""
 "Der Anwendung erlauben, einen Namen auf dem Sitzungsbus zu beanspruchen"
 
-#: common/flatpak-context.c:1487 common/flatpak-context.c:1488
-#: common/flatpak-context.c:1489 common/flatpak-context.c:1490
-#: common/flatpak-context.c:1491 common/flatpak-context.c:1492
+#: common/flatpak-context.c:1533 common/flatpak-context.c:1534
+#: common/flatpak-context.c:1535 common/flatpak-context.c:1536
+#: common/flatpak-context.c:1537 common/flatpak-context.c:1538
 msgid "DBUS_NAME"
 msgstr "DBUS_NAME"
 
-#: common/flatpak-context.c:1488
+#: common/flatpak-context.c:1534
 msgid "Allow app to talk to name on the session bus"
 msgstr "Der Anwendung erlauben, mit Namen auf dem Sitzungsbus zu kommunizieren"
 
-#: common/flatpak-context.c:1489
+#: common/flatpak-context.c:1535
 #, fuzzy
 msgid "Don't allow app to talk to name on the session bus"
 msgstr "Der Anwendung erlauben, mit Namen auf dem Sitzungsbus zu kommunizieren"
 
-#: common/flatpak-context.c:1490
+#: common/flatpak-context.c:1536
 msgid "Allow app to own name on the system bus"
 msgstr ""
 "Der Anwendung erlauben, einen Namen auf dem Sitzungsbus zu beanspruchen"
 
-#: common/flatpak-context.c:1491
+#: common/flatpak-context.c:1537
 msgid "Allow app to talk to name on the system bus"
 msgstr "Der Anwendung erlauben, mit Namen auf dem Systembus zu kommunizieren"
 
-#: common/flatpak-context.c:1492
+#: common/flatpak-context.c:1538
 #, fuzzy
 msgid "Don't allow app to talk to name on the system bus"
 msgstr "Der Anwendung erlauben, mit Namen auf dem Systembus zu kommunizieren"
 
-#: common/flatpak-context.c:1493
+#: common/flatpak-context.c:1539
 msgid "Add generic policy option"
 msgstr "Allgemeine Richtlinien-Einstellungen hinzufügen"
 
-#: common/flatpak-context.c:1493 common/flatpak-context.c:1494
+#: common/flatpak-context.c:1539 common/flatpak-context.c:1540
 msgid "SUBSYSTEM.KEY=VALUE"
 msgstr "SUBSYSTEM.SCHLÜSSEL=WERT"
 
-#: common/flatpak-context.c:1494
+#: common/flatpak-context.c:1540
 msgid "Remove generic policy option"
 msgstr "Allgemeine Richtlinien-Einstellungen entfernen"
 
-#: common/flatpak-context.c:1495
+#: common/flatpak-context.c:1541
 #, fuzzy
 msgid "Persist home directory subpath"
 msgstr "Basisordner beständig machen"
 
-#: common/flatpak-context.c:1495
+#: common/flatpak-context.c:1541
 msgid "FILENAME"
 msgstr "DATEINAME"
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-context.c:1497
+#: common/flatpak-context.c:1543
 msgid "Don't require a running session (no cgroups creation)"
 msgstr ""
 "Laufende Sitzung als nicht erforderlich festlegen (keine Erstellung von "
