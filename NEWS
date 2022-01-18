@@ -12,6 +12,7 @@ invalid application metadata in a way that hides some of the app
 permissions displayed during installation.
 
 https://github.com/flatpak/flatpak/security/advisories/GHSA-8ch7-5j3h-g4fx
+(also known as CVE-2022-21682)
 
 This issue is a problem with how flatpak-builder uses flatpak, that
 can cause `flatpak-builder --mirror-screenshots-url` commands to be
