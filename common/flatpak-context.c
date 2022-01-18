@@ -78,6 +78,13 @@ const char *flatpak_context_features[] = {
   NULL
 };
 
+const char *flatpak_context_special_filesystems[] = {
+  "home",
+  "host",
+  "host-reset",
+  NULL
+};
+
 FlatpakContext *
 flatpak_context_new (void)
 {
@@ -86,6 +93,7 @@ flatpak_context_new (void)
   context = g_slice_new0 (FlatpakContext);
   context->env_vars = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
   context->persistent = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  /* filename or special filesystem name => FlatpakFilesystemMode */
   context->filesystems = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   context->session_bus_policy = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   context->system_bus_policy = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
@@ -690,6 +698,16 @@ unparse_filesystem_flags (const char           *path,
     case FLATPAK_FILESYSTEM_MODE_READ_WRITE:
       break;
 
+    case FLATPAK_FILESYSTEM_MODE_NONE:
+      g_string_insert_c (s, 0, '!');
+
+      if (g_str_has_suffix (s->str, "-reset"))
+        {
+          g_string_truncate (s, s->len - 6);
+          g_string_append (s, ":reset");
+        }
+      break;
+
     default:
       g_warning ("Unexpected filesystem mode %d", mode);
       break;
@@ -700,11 +718,14 @@ unparse_filesystem_flags (const char           *path,
 
 static char *
 parse_filesystem_flags (const char            *filesystem,
-                        FlatpakFilesystemMode *mode_out)
+                        gboolean               negated,
+                        FlatpakFilesystemMode *mode_out,
+                        GError               **error)
 {
   g_autoptr(GString) s = g_string_new ("");
   const char *p, *suffix;
   FlatpakFilesystemMode mode;
+  gboolean reset = FALSE;
 
   p = filesystem;
   while (*p != 0 && *p != ':')
@@ -719,7 +740,31 @@ parse_filesystem_flags (const char            *filesystem,
         g_string_append_c (s, *p++);
     }
 
-  mode = FLATPAK_FILESYSTEM_MODE_READ_WRITE;
+  if (negated)
+    mode = FLATPAK_FILESYSTEM_MODE_NONE;
+  else
+    mode = FLATPAK_FILESYSTEM_MODE_READ_WRITE;
+
+  if (g_str_equal (s->str, "host-reset"))
+    {
+      reset = TRUE;
+
+      if (!negated)
+        {
+          g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
+                       "Filesystem token \"%s\" is only applicable for --nofilesystem",
+                       s->str);
+          return NULL;
+        }
+
+      if (*p != '\0')
+        {
+          g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
+                       "Filesystem token \"%s\" cannot be used with a suffix",
+                       s->str);
+          return NULL;
+        }
+    }
 
   if (*p == ':')
     {
@@ -731,9 +776,62 @@ parse_filesystem_flags (const char            *filesystem,
         mode = FLATPAK_FILESYSTEM_MODE_READ_WRITE;
       else if (strcmp (suffix, "create") == 0)
         mode = FLATPAK_FILESYSTEM_MODE_CREATE;
+      else if (strcmp (suffix, "reset") == 0)
+        reset = TRUE;
       else if (*suffix != 0)
         g_warning ("Unexpected filesystem suffix %s, ignoring", suffix);
+
+      if (negated && mode != FLATPAK_FILESYSTEM_MODE_NONE)
+        {
+          g_warning ("Filesystem suffix \"%s\" is not applicable for --nofilesystem",
+                     suffix);
+          mode = FLATPAK_FILESYSTEM_MODE_NONE;
+        }
+
+      if (reset)
+        {
+          if (!negated)
+            {
+              g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
+                           "Filesystem suffix \"%s\" only applies to --nofilesystem",
+                           suffix);
+              return NULL;
+            }
+
+          if (!g_str_equal (s->str, "host"))
+            {
+              g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
+                           "Filesystem suffix \"%s\" can only be applied to "
+                           "--nofilesystem=host",
+                           suffix);
+              return NULL;
+            }
+
+          /* We internally handle host:reset (etc) as host-reset, only exposing it as a flag in the public
+             part to allow it to be ignored (with a warning) for old flatpak versions */
+          g_string_append (s, "-reset");
+        }
     }
+
+  /* Postcondition check: the code above should make some results
+   * impossible */
+  if (negated)
+    {
+      g_assert (mode == FLATPAK_FILESYSTEM_MODE_NONE);
+    }
+  else
+    {
+      g_assert (mode > FLATPAK_FILESYSTEM_MODE_NONE);
+      /* This flag is only applicable to --nofilesystem */
+      g_assert (!reset);
+    }
+
+  /* Postcondition check: filesystem token is host-reset iff reset flag
+   * was found */
+  if (reset)
+    g_assert (g_str_equal (s->str, "host-reset"));
+  else
+    g_assert (!g_str_equal (s->str, "host-reset"));
 
   if (mode_out)
     *mode_out = mode;
@@ -741,22 +839,29 @@ parse_filesystem_flags (const char            *filesystem,
   return g_string_free (g_steal_pointer (&s), FALSE);
 }
 
-static gboolean
-flatpak_context_verify_filesystem (const char *filesystem_and_mode,
-                                   GError    **error)
+gboolean
+flatpak_context_parse_filesystem (const char             *filesystem_and_mode,
+                                  gboolean                negated,
+                                  char                  **filesystem_out,
+                                  FlatpakFilesystemMode  *mode_out,
+                                  GError                **error)
 {
-  g_autofree char *filesystem = parse_filesystem_flags (filesystem_and_mode, NULL);
+  g_autofree char *filesystem = NULL;
 
-  if (strcmp (filesystem, "host") == 0)
-    return TRUE;
-  if (strcmp (filesystem, "home") == 0)
-    return TRUE;
-  if (get_xdg_user_dir_from_string (filesystem, NULL, NULL, NULL))
-    return TRUE;
-  if (g_str_has_prefix (filesystem, "~/"))
-    return TRUE;
-  if (g_str_has_prefix (filesystem, "/"))
-    return TRUE;
+  filesystem = parse_filesystem_flags (filesystem_and_mode, negated, mode_out, error);
+  if (filesystem == NULL)
+    return FALSE;
+
+  if (g_strv_contains (flatpak_context_special_filesystems, filesystem) ||
+      get_xdg_user_dir_from_string (filesystem, NULL, NULL, NULL) ||
+      g_str_has_prefix (filesystem, "~/") ||
+      g_str_has_prefix (filesystem, "/"))
+    {
+      if (filesystem_out != NULL)
+        *filesystem_out = g_steal_pointer (&filesystem);
+
+      return TRUE;
+    }
 
   g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
                _("Unknown filesystem location %s, valid locations are: host, home, xdg-*[/…], ~/dir, /dir"), filesystem);
@@ -764,22 +869,19 @@ flatpak_context_verify_filesystem (const char *filesystem_and_mode,
 }
 
 static void
-flatpak_context_add_filesystem (FlatpakContext *context,
-                                const char     *what)
+flatpak_context_take_filesystem (FlatpakContext        *context,
+                                 char                  *fs,
+                                 FlatpakFilesystemMode  mode)
 {
-  FlatpakFilesystemMode mode;
-  char *fs = parse_filesystem_flags (what, &mode);
+  /* Special case: --nofilesystem=host-reset implies --nofilesystem=host.
+   * --filesystem=host-reset (or host:reset) is not allowed. */
+  if (g_str_equal (fs, "host-reset"))
+    {
+      g_return_if_fail (mode == FLATPAK_FILESYSTEM_MODE_NONE);
+      g_hash_table_insert (context->filesystems, g_strdup ("host"), GINT_TO_POINTER (mode));
+    }
 
   g_hash_table_insert (context->filesystems, fs, GINT_TO_POINTER (mode));
-}
-
-static void
-flatpak_context_remove_filesystem (FlatpakContext *context,
-                                   const char     *what)
-{
-  g_hash_table_insert (context->filesystems,
-                       parse_filesystem_flags (what, NULL),
-                       NULL);
 }
 
 void
@@ -810,6 +912,14 @@ flatpak_context_merge (FlatpakContext *context,
   while (g_hash_table_iter_next (&iter, &key, &value))
     g_hash_table_insert (context->persistent, g_strdup (key), value);
 
+  /* We first handle host:reset, as it overrides all other keys from the parent */
+  if (g_hash_table_lookup_extended (other->filesystems, "host-reset", NULL, &value))
+    {
+      g_warn_if_fail (GPOINTER_TO_INT (value) == FLATPAK_FILESYSTEM_MODE_NONE);
+      g_hash_table_remove_all (context->filesystems);
+    }
+
+  /* Then set the new ones, which includes propagating host:reset. */
   g_hash_table_iter_init (&iter, other->filesystems);
   while (g_hash_table_iter_next (&iter, &key, &value))
     g_hash_table_insert (context->filesystems, g_strdup (key), value);
@@ -995,11 +1105,13 @@ option_filesystem_cb (const gchar *option_name,
                       GError     **error)
 {
   FlatpakContext *context = data;
+  g_autofree char *fs = NULL;
+  FlatpakFilesystemMode mode;
 
-  if (!flatpak_context_verify_filesystem (value, error))
+  if (!flatpak_context_parse_filesystem (value, FALSE, &fs, &mode, error))
     return FALSE;
 
-  flatpak_context_add_filesystem (context, value);
+  flatpak_context_take_filesystem (context, g_steal_pointer (&fs), mode);
   return TRUE;
 }
 
@@ -1010,11 +1122,14 @@ option_nofilesystem_cb (const gchar *option_name,
                         GError     **error)
 {
   FlatpakContext *context = data;
+  g_autofree char *fs = NULL;
+  FlatpakFilesystemMode mode;
 
-  if (!flatpak_context_verify_filesystem (value, error))
+  if (!flatpak_context_parse_filesystem (value, TRUE, &fs, &mode, error))
     return FALSE;
 
-  flatpak_context_remove_filesystem (context, value);
+  flatpak_context_take_filesystem (context, g_steal_pointer (&fs),
+                                   FLATPAK_FILESYSTEM_MODE_NONE);
   return TRUE;
 }
 
@@ -1437,14 +1552,16 @@ flatpak_context_load_metadata (FlatpakContext *context,
       for (i = 0; filesystems[i] != NULL; i++)
         {
           const char *fs = parse_negated (filesystems[i], &remove);
-          if (!flatpak_context_verify_filesystem (fs, NULL))
+          g_autofree char *filesystem = NULL;
+          FlatpakFilesystemMode mode;
+
+          if (!flatpak_context_parse_filesystem (fs, remove,
+                                                 &filesystem, &mode, NULL))
             g_debug ("Unknown filesystem type %s", filesystems[i]);
           else
             {
-              if (remove)
-                flatpak_context_remove_filesystem (context, fs);
-              else
-                flatpak_context_add_filesystem (context, fs);
+              g_assert (mode == FLATPAK_FILESYSTEM_MODE_NONE || !remove);
+              flatpak_context_take_filesystem (context, g_steal_pointer (&filesystem), mode);
             }
         }
     }
@@ -1665,15 +1782,25 @@ flatpak_context_save_metadata (FlatpakContext *context,
     {
       g_autoptr(GPtrArray) array = g_ptr_array_new_with_free_func (g_free);
 
+      /* Serialize host-reset first, because order can matter in
+       * corner cases. */
+      if (g_hash_table_lookup_extended (context->filesystems, "host-reset",
+                                        NULL, &value))
+        {
+          g_warn_if_fail (GPOINTER_TO_INT (value) == FLATPAK_FILESYSTEM_MODE_NONE);
+          g_ptr_array_add (array, g_strdup ("!host:reset"));
+        }
+
       g_hash_table_iter_init (&iter, context->filesystems);
       while (g_hash_table_iter_next (&iter, &key, &value))
         {
           FlatpakFilesystemMode mode = GPOINTER_TO_INT (value);
 
-          if (mode != 0)
-            g_ptr_array_add (array, unparse_filesystem_flags (key, mode));
-          else
-            g_ptr_array_add (array, g_strconcat ("!", key, NULL));
+          /* We already did this */
+          if (g_str_equal (key, "host-reset"))
+            continue;
+
+          g_ptr_array_add (array, unparse_filesystem_flags (key, mode));
         }
 
       g_key_file_set_string_list (metakey,
@@ -1777,7 +1904,7 @@ flatpak_context_save_metadata (FlatpakContext *context,
 void
 flatpak_context_allow_host_fs (FlatpakContext *context)
 {
-  flatpak_context_add_filesystem (context, "host");
+  flatpak_context_take_filesystem (context, g_strdup ("host"), FLATPAK_FILESYSTEM_MODE_READ_WRITE);
 }
 
 gboolean
@@ -1837,18 +1964,36 @@ flatpak_context_to_args (FlatpakContext *context,
       g_ptr_array_add (args, g_strdup_printf ("--system-%s-name=%s", flatpak_policy_to_string (policy), name));
     }
 
+  /* Serialize host-reset first, because order can matter in
+   * corner cases. */
+  if (g_hash_table_lookup_extended (context->filesystems, "host-reset",
+                                    NULL, &value))
+    {
+      g_warn_if_fail (GPOINTER_TO_INT (value) == FLATPAK_FILESYSTEM_MODE_NONE);
+      g_ptr_array_add (args, g_strdup ("--nofilesystem=host:reset"));
+    }
+
   g_hash_table_iter_init (&iter, context->filesystems);
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
+      g_autofree char *fs = NULL;
       FlatpakFilesystemMode mode = GPOINTER_TO_INT (value);
 
-      if (mode != 0)
+      /* We already did this */
+      if (g_str_equal (key, "host-reset"))
+        continue;
+
+      fs = unparse_filesystem_flags (key, mode);
+
+      if (mode != FLATPAK_FILESYSTEM_MODE_NONE)
         {
-          g_autofree char *fs = unparse_filesystem_flags (key, mode);
           g_ptr_array_add (args, g_strdup_printf ("--filesystem=%s", fs));
         }
       else
-        g_ptr_array_add (args, g_strdup_printf ("--nofilesystem=%s", (char *) key));
+        {
+          g_assert (fs[0] == '!');
+          g_ptr_array_add (args, g_strdup_printf ("--nofilesystem=%s", &fs[1]));
+        }
     }
 }
 
@@ -1954,7 +2099,7 @@ flatpak_context_export (FlatpakContext *context,
   gpointer key, value;
 
   fs_mode = (FlatpakFilesystemMode) g_hash_table_lookup (context->filesystems, "host");
-  if (fs_mode != 0)
+  if (fs_mode != FLATPAK_FILESYSTEM_MODE_NONE)
     {
       DIR *dir;
       struct dirent *dirent;
@@ -1983,7 +2128,7 @@ flatpak_context_export (FlatpakContext *context,
     }
 
   home_mode = (FlatpakFilesystemMode) g_hash_table_lookup (context->filesystems, "home");
-  if (home_mode != 0)
+  if (home_mode != FLATPAK_FILESYSTEM_MODE_NONE)
     {
       g_debug ("Allowing homedir access");
       home_access = TRUE;
@@ -1997,8 +2142,7 @@ flatpak_context_export (FlatpakContext *context,
       const char *filesystem = key;
       FlatpakFilesystemMode mode = GPOINTER_TO_INT (value);
 
-      if (strcmp (filesystem, "host") == 0 ||
-          strcmp (filesystem, "home") == 0)
+      if (g_strv_contains (flatpak_context_special_filesystems, filesystem))
         continue;
 
       if (g_str_has_prefix (filesystem, "xdg-"))
