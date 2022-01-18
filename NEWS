@@ -1,6 +1,6 @@
 Changes in 1.12.4
 ~~~~~~~~~~~~~~~~~
-Released: not yet
+Released: 2021-01-18
 
 This is a regression fix update, reverting non-backwards-compatible
 behaviour changes in the solution previously chosen for CVE-2022-21682.
