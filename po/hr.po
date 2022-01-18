@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2022-01-12 15:24+0100\n"
+"POT-Creation-Date: 2022-01-18 17:42+0000\n"
 "PO-Revision-Date: 2020-09-03 14:05+0200\n"
 "Last-Translator: Milo Ivir <mail@milotype.de>\n"
 "Language-Team: Croatian <hr@li.org>\n"
@@ -4021,48 +4021,48 @@ msgstr "Neuspjelo premještanje %s na %s: %s\n"
 msgid "No authenticator configured for remote `%s`"
 msgstr "Nijedan autentifikator nije konfiguriran za udaljeni repozitorij „%s”"
 
-#: common/flatpak-context.c:190
+#: common/flatpak-context.c:191
 #, c-format
 msgid "Unknown share type %s, valid types are: %s"
 msgstr "Nepoznata vrsta dijeljenja %s, ispravne vrijednosti su: %s"
 
-#: common/flatpak-context.c:225
+#: common/flatpak-context.c:226
 #, c-format
 msgid "Unknown policy type %s, valid types are: %s"
 msgstr "Nepoznata vrsta pravila %s, ispravne vrijednosti su: %s"
 
-#: common/flatpak-context.c:263
+#: common/flatpak-context.c:264
 #, c-format
 msgid "Invalid dbus name %s"
 msgstr "Neispravno dbus ime %s"
 
-#: common/flatpak-context.c:276
+#: common/flatpak-context.c:277
 #, c-format
 msgid "Unknown socket type %s, valid types are: %s"
 msgstr "Nepoznata vrsta utičnice %s, ispravne vrijednosti su: %s"
 
-#: common/flatpak-context.c:305
+#: common/flatpak-context.c:306
 #, c-format
 msgid "Unknown device type %s, valid types are: %s"
 msgstr "Nepoznata vrsta uređaja %s, ispravne vrijednosti su: %s"
 
-#: common/flatpak-context.c:333
+#: common/flatpak-context.c:334
 #, c-format
 msgid "Unknown feature type %s, valid types are: %s"
 msgstr "Nepoznata vrsta funkcije %s, ispravne vrijednosti su: %s"
 
-#: common/flatpak-context.c:778
+#: common/flatpak-context.c:870
 #, c-format
 msgid "Filesystem location \"%s\" contains \"..\""
 msgstr "Nepoznata lokacija „%s” datotečnog sustava sadrži „..”"
 
-#: common/flatpak-context.c:816
+#: common/flatpak-context.c:908
 msgid ""
 "--filesystem=/ is not available, use --filesystem=host for a similar result"
 msgstr ""
 "--filesystem=/ nije dostupno, koristi --filesystem=host za sličan rezultat"
 
-#: common/flatpak-context.c:850
+#: common/flatpak-context.c:942
 #, c-format
 msgid ""
 "Unknown filesystem location %s, valid locations are: host, host-os, host-"
@@ -4071,175 +4071,175 @@ msgstr ""
 "Nepoznata lokacija %s datotečnog sustava, ispravne lokacije su: host, host-"
 "os, host-etc, home, xdg-*[/…], ~/dir, /dir"
 
-#: common/flatpak-context.c:1176
+#: common/flatpak-context.c:1222
 #, c-format
 msgid "Invalid env format %s"
 msgstr "Neispravan format okruženja %s"
 
-#: common/flatpak-context.c:1254
+#: common/flatpak-context.c:1300
 #, c-format
 msgid "Environment variable name must not contain '=': %s"
 msgstr ""
 
-#: common/flatpak-context.c:1367 common/flatpak-context.c:1375
+#: common/flatpak-context.c:1413 common/flatpak-context.c:1421
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr "--add-policy argumenti moraju biti u obliku PODSUSTAV.KLJUČ=VRIJEDNOST"
 
-#: common/flatpak-context.c:1382
+#: common/flatpak-context.c:1428
 msgid "--add-policy values can't start with \"!\""
 msgstr "--add-policy vrijednosti ne smiju započeti s uskličnikom (!)"
 
-#: common/flatpak-context.c:1407 common/flatpak-context.c:1415
+#: common/flatpak-context.c:1453 common/flatpak-context.c:1461
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 "--remove-policy argumenti moraju biti u obliku PODSUSTAV.KLJUČ=VRIJEDNOST"
 
-#: common/flatpak-context.c:1422
+#: common/flatpak-context.c:1468
 msgid "--remove-policy values can't start with \"!\""
 msgstr "--remove-policy vrijednosti ne smiju započeti s uskličnikom (!)"
 
-#: common/flatpak-context.c:1448
+#: common/flatpak-context.c:1494
 msgid "Share with host"
 msgstr "Dijeli s računalom"
 
-#: common/flatpak-context.c:1448 common/flatpak-context.c:1449
+#: common/flatpak-context.c:1494 common/flatpak-context.c:1495
 msgid "SHARE"
 msgstr "DIJELI"
 
-#: common/flatpak-context.c:1449
+#: common/flatpak-context.c:1495
 msgid "Unshare with host"
 msgstr "Prekini dijeliti s računalom"
 
-#: common/flatpak-context.c:1450
+#: common/flatpak-context.c:1496
 msgid "Expose socket to app"
 msgstr "Omogući programu vidjeti utičnicu"
 
-#: common/flatpak-context.c:1450 common/flatpak-context.c:1451
+#: common/flatpak-context.c:1496 common/flatpak-context.c:1497
 msgid "SOCKET"
 msgstr "UTIČNICA"
 
-#: common/flatpak-context.c:1451
+#: common/flatpak-context.c:1497
 msgid "Don't expose socket to app"
 msgstr "Onemogući programu vidjeti utičnicu"
 
-#: common/flatpak-context.c:1452
+#: common/flatpak-context.c:1498
 msgid "Expose device to app"
 msgstr "Omogući programu vidjeti uređaj"
 
-#: common/flatpak-context.c:1452 common/flatpak-context.c:1453
+#: common/flatpak-context.c:1498 common/flatpak-context.c:1499
 msgid "DEVICE"
 msgstr "UREĐAJ"
 
-#: common/flatpak-context.c:1453
+#: common/flatpak-context.c:1499
 msgid "Don't expose device to app"
 msgstr "Onemogući programu vidjeti uređaj"
 
-#: common/flatpak-context.c:1454
+#: common/flatpak-context.c:1500
 msgid "Allow feature"
 msgstr "Dozvoli funkciju"
 
-#: common/flatpak-context.c:1454 common/flatpak-context.c:1455
+#: common/flatpak-context.c:1500 common/flatpak-context.c:1501
 msgid "FEATURE"
 msgstr "FUNKCIJA"
 
-#: common/flatpak-context.c:1455
+#: common/flatpak-context.c:1501
 msgid "Don't allow feature"
 msgstr "Nemoj dozvoliti funkciju"
 
-#: common/flatpak-context.c:1456
+#: common/flatpak-context.c:1502
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr "Omogući programu vidjeti datotečni sustav (:ro za samo-za-čitanje)"
 
-#: common/flatpak-context.c:1456
+#: common/flatpak-context.c:1502
 msgid "FILESYSTEM[:ro]"
 msgstr "DATOTEČNI-SUSTAV[:ro]"
 
-#: common/flatpak-context.c:1457
+#: common/flatpak-context.c:1503
 msgid "Don't expose filesystem to app"
 msgstr "Onemogući programu vidjeti datotečni sustav"
 
-#: common/flatpak-context.c:1457
+#: common/flatpak-context.c:1503
 msgid "FILESYSTEM"
 msgstr "DATOTEČNI-SUSTAV"
 
-#: common/flatpak-context.c:1458
+#: common/flatpak-context.c:1504
 msgid "Set environment variable"
 msgstr "Postavi varijablu okruženja"
 
-#: common/flatpak-context.c:1458
+#: common/flatpak-context.c:1504
 msgid "VAR=VALUE"
 msgstr "VARIJABLA=VRIJEDNOST"
 
-#: common/flatpak-context.c:1459
+#: common/flatpak-context.c:1505
 msgid "Read environment variables in env -0 format from FD"
 msgstr ""
 
-#: common/flatpak-context.c:1459
+#: common/flatpak-context.c:1505
 msgid "FD"
 msgstr ""
 
-#: common/flatpak-context.c:1460
+#: common/flatpak-context.c:1506
 #, fuzzy
 msgid "Remove variable from environment"
 msgstr "Ukloni stavku iz spremišta dozvola"
 
-#: common/flatpak-context.c:1460
+#: common/flatpak-context.c:1506
 #, fuzzy
 msgid "VAR"
 msgstr "VRIJEDNOST"
 
-#: common/flatpak-context.c:1461
+#: common/flatpak-context.c:1507
 msgid "Allow app to own name on the session bus"
 msgstr "Dozvoli programu posjedovati ime na busu sesije"
 
-#: common/flatpak-context.c:1461 common/flatpak-context.c:1462
-#: common/flatpak-context.c:1463 common/flatpak-context.c:1464
-#: common/flatpak-context.c:1465 common/flatpak-context.c:1466
+#: common/flatpak-context.c:1507 common/flatpak-context.c:1508
+#: common/flatpak-context.c:1509 common/flatpak-context.c:1510
+#: common/flatpak-context.c:1511 common/flatpak-context.c:1512
 msgid "DBUS_NAME"
 msgstr "DBUS_IME"
 
-#: common/flatpak-context.c:1462
+#: common/flatpak-context.c:1508
 msgid "Allow app to talk to name on the session bus"
 msgstr "Dozvoli programu komunicirati s imenom na busu sesije"
 
-#: common/flatpak-context.c:1463
+#: common/flatpak-context.c:1509
 msgid "Don't allow app to talk to name on the session bus"
 msgstr "Nemoj dozvoliti programu komunicirati s imenom na busu sesije"
 
-#: common/flatpak-context.c:1464
+#: common/flatpak-context.c:1510
 msgid "Allow app to own name on the system bus"
 msgstr "Dozvoli programu posjedovati ime na busu sustava"
 
-#: common/flatpak-context.c:1465
+#: common/flatpak-context.c:1511
 msgid "Allow app to talk to name on the system bus"
 msgstr "Dozvoli programu komunicirati s imenom na busu sustava"
 
-#: common/flatpak-context.c:1466
+#: common/flatpak-context.c:1512
 msgid "Don't allow app to talk to name on the system bus"
 msgstr "Nemoj dozvoliti programu komunicirati s imenom na busu sustava"
 
-#: common/flatpak-context.c:1467
+#: common/flatpak-context.c:1513
 msgid "Add generic policy option"
 msgstr "Dodaj opću opciju pravila"
 
-#: common/flatpak-context.c:1467 common/flatpak-context.c:1468
+#: common/flatpak-context.c:1513 common/flatpak-context.c:1514
 msgid "SUBSYSTEM.KEY=VALUE"
 msgstr "PODSUSTAV.KLJUČ=VRIJEDNOST"
 
-#: common/flatpak-context.c:1468
+#: common/flatpak-context.c:1514
 msgid "Remove generic policy option"
 msgstr "Ukloni opću opciju pravila"
 
-#: common/flatpak-context.c:1469
+#: common/flatpak-context.c:1515
 msgid "Persist home directory subpath"
 msgstr "Neka podstaza osnovnog direktorija postane trajna"
 
-#: common/flatpak-context.c:1469
+#: common/flatpak-context.c:1515
 msgid "FILENAME"
 msgstr "IME-DATOTEKE"
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-context.c:1471
+#: common/flatpak-context.c:1517
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "Ne zahtijevaj pokrenutu sesiju (cgroups se ne izrađuje)"
 

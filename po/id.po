@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2022-01-12 15:24+0100\n"
+"POT-Creation-Date: 2022-01-18 17:42+0000\n"
 "PO-Revision-Date: 2020-11-26 17:08+0700\n"
 "Last-Translator: Kukuh Syafaat <kukuhsyafaat@gnome.org>\n"
 "Language-Team: Indonesian <gnome-l10n-id@googlegroups.com>\n"
@@ -3982,49 +3982,49 @@ msgstr "Gagal rebase %s to %s: %s\n"
 msgid "No authenticator configured for remote `%s`"
 msgstr "Tidak ada autentikator yang dikonfigurasikan untuk remote `%s`"
 
-#: common/flatpak-context.c:190
+#: common/flatpak-context.c:191
 #, c-format
 msgid "Unknown share type %s, valid types are: %s"
 msgstr "Tipe berbagi %s tidak diketahui, tipe yang valid adalah: %s"
 
-#: common/flatpak-context.c:225
+#: common/flatpak-context.c:226
 #, c-format
 msgid "Unknown policy type %s, valid types are: %s"
 msgstr "Tipe kebijakan %s tidak diketahui, tipe yang valid adalah: %s"
 
-#: common/flatpak-context.c:263
+#: common/flatpak-context.c:264
 #, c-format
 msgid "Invalid dbus name %s"
 msgstr "Nama dbus %s tidak valid"
 
-#: common/flatpak-context.c:276
+#: common/flatpak-context.c:277
 #, c-format
 msgid "Unknown socket type %s, valid types are: %s"
 msgstr "Tipe soket %s tidak diketahui, tipe yang valid adalah: %s"
 
-#: common/flatpak-context.c:305
+#: common/flatpak-context.c:306
 #, c-format
 msgid "Unknown device type %s, valid types are: %s"
 msgstr "Tipe perangkat %s tidak diketahui, tipe yang valid adalah: %s"
 
-#: common/flatpak-context.c:333
+#: common/flatpak-context.c:334
 #, c-format
 msgid "Unknown feature type %s, valid types are: %s"
 msgstr "Tipe fitur %s tidak diketahui, tipe yang valid adalah: %s"
 
-#: common/flatpak-context.c:778
+#: common/flatpak-context.c:870
 #, c-format
 msgid "Filesystem location \"%s\" contains \"..\""
 msgstr "Lokasi sistem berkas \"%s\" berisi \"..\""
 
-#: common/flatpak-context.c:816
+#: common/flatpak-context.c:908
 msgid ""
 "--filesystem=/ is not available, use --filesystem=host for a similar result"
 msgstr ""
 "--filesystem=/ tidak tersedia, gunakan --filesystem=host untuk hasil yang "
 "sama"
 
-#: common/flatpak-context.c:850
+#: common/flatpak-context.c:942
 #, c-format
 msgid ""
 "Unknown filesystem location %s, valid locations are: host, host-os, host-"
@@ -4033,174 +4033,174 @@ msgstr ""
 "Lokasi sistem berkas yang tidak diketahui %s, lokasi yang valid adalah: "
 "host, host-os, host-etc, home, xdg-*[/…], ~/dir, /dir"
 
-#: common/flatpak-context.c:1176
+#: common/flatpak-context.c:1222
 #, c-format
 msgid "Invalid env format %s"
 msgstr "Format env tidak valid %s"
 
-#: common/flatpak-context.c:1254
+#: common/flatpak-context.c:1300
 #, c-format
 msgid "Environment variable name must not contain '=': %s"
 msgstr ""
 
-#: common/flatpak-context.c:1367 common/flatpak-context.c:1375
+#: common/flatpak-context.c:1413 common/flatpak-context.c:1421
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr "Argumen --add-policy harus dalam bentuk SUBSISTEM.KUNCI=NILAI"
 
-#: common/flatpak-context.c:1382
+#: common/flatpak-context.c:1428
 msgid "--add-policy values can't start with \"!\""
 msgstr "Nilai --add-policy tidak dapat dimulai dengan \"!\""
 
-#: common/flatpak-context.c:1407 common/flatpak-context.c:1415
+#: common/flatpak-context.c:1453 common/flatpak-context.c:1461
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr "Argumen --remove-policy harus dalam bentuk SUBSISTEM.KUNCI=NILAI"
 
-#: common/flatpak-context.c:1422
+#: common/flatpak-context.c:1468
 msgid "--remove-policy values can't start with \"!\""
 msgstr "Nilai --remove-policy tidak dapat dimulai dengan \"!\""
 
-#: common/flatpak-context.c:1448
+#: common/flatpak-context.c:1494
 msgid "Share with host"
 msgstr "Berbagi dengan host"
 
-#: common/flatpak-context.c:1448 common/flatpak-context.c:1449
+#: common/flatpak-context.c:1494 common/flatpak-context.c:1495
 msgid "SHARE"
 msgstr "BERBAGI"
 
-#: common/flatpak-context.c:1449
+#: common/flatpak-context.c:1495
 msgid "Unshare with host"
 msgstr "Tidak berbagi dengan host"
 
-#: common/flatpak-context.c:1450
+#: common/flatpak-context.c:1496
 msgid "Expose socket to app"
 msgstr "Ekspos soket ke aplikasi"
 
-#: common/flatpak-context.c:1450 common/flatpak-context.c:1451
+#: common/flatpak-context.c:1496 common/flatpak-context.c:1497
 msgid "SOCKET"
 msgstr "SOKET"
 
-#: common/flatpak-context.c:1451
+#: common/flatpak-context.c:1497
 msgid "Don't expose socket to app"
 msgstr "Jangan ekspos soket ke aplikasi"
 
-#: common/flatpak-context.c:1452
+#: common/flatpak-context.c:1498
 msgid "Expose device to app"
 msgstr "Ekspos perangkat ke aplikasi"
 
-#: common/flatpak-context.c:1452 common/flatpak-context.c:1453
+#: common/flatpak-context.c:1498 common/flatpak-context.c:1499
 msgid "DEVICE"
 msgstr "PERANGKAT"
 
-#: common/flatpak-context.c:1453
+#: common/flatpak-context.c:1499
 msgid "Don't expose device to app"
 msgstr "Jangan ekspos perangkat ke aplikasi"
 
-#: common/flatpak-context.c:1454
+#: common/flatpak-context.c:1500
 msgid "Allow feature"
 msgstr "Izinkan fitur"
 
-#: common/flatpak-context.c:1454 common/flatpak-context.c:1455
+#: common/flatpak-context.c:1500 common/flatpak-context.c:1501
 msgid "FEATURE"
 msgstr "FITUR"
 
-#: common/flatpak-context.c:1455
+#: common/flatpak-context.c:1501
 msgid "Don't allow feature"
 msgstr "Jangan izinkan fitur"
 
-#: common/flatpak-context.c:1456
+#: common/flatpak-context.c:1502
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr "Ekspos sistem berkas ke aplikasi (:ro untuk hanya baca)"
 
-#: common/flatpak-context.c:1456
+#: common/flatpak-context.c:1502
 msgid "FILESYSTEM[:ro]"
 msgstr "SISTEMBERKAS[:ro]"
 
-#: common/flatpak-context.c:1457
+#: common/flatpak-context.c:1503
 msgid "Don't expose filesystem to app"
 msgstr "Jangan ekspos sistem berkas ke aplikasi"
 
-#: common/flatpak-context.c:1457
+#: common/flatpak-context.c:1503
 msgid "FILESYSTEM"
 msgstr "SISTEMBERKAS"
 
-#: common/flatpak-context.c:1458
+#: common/flatpak-context.c:1504
 msgid "Set environment variable"
 msgstr "Atur variabel lingkungan"
 
-#: common/flatpak-context.c:1458
+#: common/flatpak-context.c:1504
 msgid "VAR=VALUE"
 msgstr "VAR=NILAI"
 
-#: common/flatpak-context.c:1459
+#: common/flatpak-context.c:1505
 msgid "Read environment variables in env -0 format from FD"
 msgstr ""
 
-#: common/flatpak-context.c:1459
+#: common/flatpak-context.c:1505
 msgid "FD"
 msgstr ""
 
-#: common/flatpak-context.c:1460
+#: common/flatpak-context.c:1506
 #, fuzzy
 msgid "Remove variable from environment"
 msgstr "Hapus butir dari menyimpan perizinan"
 
-#: common/flatpak-context.c:1460
+#: common/flatpak-context.c:1506
 #, fuzzy
 msgid "VAR"
 msgstr "VAL"
 
-#: common/flatpak-context.c:1461
+#: common/flatpak-context.c:1507
 msgid "Allow app to own name on the session bus"
 msgstr "Izinkan aplikasi memiliki nama di bus sesi"
 
-#: common/flatpak-context.c:1461 common/flatpak-context.c:1462
-#: common/flatpak-context.c:1463 common/flatpak-context.c:1464
-#: common/flatpak-context.c:1465 common/flatpak-context.c:1466
+#: common/flatpak-context.c:1507 common/flatpak-context.c:1508
+#: common/flatpak-context.c:1509 common/flatpak-context.c:1510
+#: common/flatpak-context.c:1511 common/flatpak-context.c:1512
 msgid "DBUS_NAME"
 msgstr "NAMA_DBUS"
 
-#: common/flatpak-context.c:1462
+#: common/flatpak-context.c:1508
 msgid "Allow app to talk to name on the session bus"
 msgstr "Izinkan aplikasi berbicara dengan nama di bus sesi"
 
-#: common/flatpak-context.c:1463
+#: common/flatpak-context.c:1509
 msgid "Don't allow app to talk to name on the session bus"
 msgstr "Jangan izinkan aplikasi berbicara dengan nama di bus sesi"
 
-#: common/flatpak-context.c:1464
+#: common/flatpak-context.c:1510
 msgid "Allow app to own name on the system bus"
 msgstr "Izinkan aplikasi memiliki nama di bus sistem"
 
-#: common/flatpak-context.c:1465
+#: common/flatpak-context.c:1511
 msgid "Allow app to talk to name on the system bus"
 msgstr "Izinkan aplikasi berbicara dengan nama di bus sistem"
 
-#: common/flatpak-context.c:1466
+#: common/flatpak-context.c:1512
 msgid "Don't allow app to talk to name on the system bus"
 msgstr "Jangan izinkan aplikasi berbicara dengan nama di bus sistem"
 
-#: common/flatpak-context.c:1467
+#: common/flatpak-context.c:1513
 msgid "Add generic policy option"
 msgstr "Tambahkan opsi kebijakan umum"
 
-#: common/flatpak-context.c:1467 common/flatpak-context.c:1468
+#: common/flatpak-context.c:1513 common/flatpak-context.c:1514
 msgid "SUBSYSTEM.KEY=VALUE"
 msgstr "SUBSISTEM.KUNCI=NILAI"
 
-#: common/flatpak-context.c:1468
+#: common/flatpak-context.c:1514
 msgid "Remove generic policy option"
 msgstr "Hapus opsi kebijakan umum"
 
-#: common/flatpak-context.c:1469
+#: common/flatpak-context.c:1515
 msgid "Persist home directory subpath"
 msgstr "Subpath direktori home persist"
 
-#: common/flatpak-context.c:1469
+#: common/flatpak-context.c:1515
 msgid "FILENAME"
 msgstr "NAMABERKAS"
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-context.c:1471
+#: common/flatpak-context.c:1517
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "Tidak memerlukan sesi berjalan (tidak ada pembuatan cgroups)"
 

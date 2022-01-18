@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2022-01-12 15:24+0100\n"
+"POT-Creation-Date: 2022-01-18 17:42+0000\n"
 "PO-Revision-Date: 2021-10-09 15:15+0200\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
@@ -4051,49 +4051,49 @@ msgstr "Zmiana %s na %s się nie powiodła: %s\n"
 msgid "No authenticator configured for remote `%s`"
 msgstr "Nie skonfigurowano programu uwierzytelniającego dla repozytorium „%s”"
 
-#: common/flatpak-context.c:190
+#: common/flatpak-context.c:191
 #, c-format
 msgid "Unknown share type %s, valid types are: %s"
 msgstr "Nieznany typ udziału %s, prawidłowe typy: %s"
 
-#: common/flatpak-context.c:225
+#: common/flatpak-context.c:226
 #, c-format
 msgid "Unknown policy type %s, valid types are: %s"
 msgstr "Nieznany typ polityki %s, prawidłowe typy: %s"
 
-#: common/flatpak-context.c:263
+#: common/flatpak-context.c:264
 #, c-format
 msgid "Invalid dbus name %s"
 msgstr "Nieprawidłowa nazwa D-Bus %s"
 
-#: common/flatpak-context.c:276
+#: common/flatpak-context.c:277
 #, c-format
 msgid "Unknown socket type %s, valid types are: %s"
 msgstr "Nieznany typ gniazda %s, prawidłowe typy: %s"
 
-#: common/flatpak-context.c:305
+#: common/flatpak-context.c:306
 #, c-format
 msgid "Unknown device type %s, valid types are: %s"
 msgstr "Nieznany typ urządzenia %s, prawidłowe typy: %s"
 
-#: common/flatpak-context.c:333
+#: common/flatpak-context.c:334
 #, c-format
 msgid "Unknown feature type %s, valid types are: %s"
 msgstr "Nieznany typ funkcji %s, prawidłowe typy: %s"
 
-#: common/flatpak-context.c:778
+#: common/flatpak-context.c:870
 #, c-format
 msgid "Filesystem location \"%s\" contains \"..\""
 msgstr "Położenie w systemie plików „%s” zawiera „..”"
 
-#: common/flatpak-context.c:816
+#: common/flatpak-context.c:908
 msgid ""
 "--filesystem=/ is not available, use --filesystem=host for a similar result"
 msgstr ""
 "--filesystem=/ jest niedostępne, należy użyć --filesystem=host, aby osiągnąć "
 "podobny efekt"
 
-#: common/flatpak-context.c:850
+#: common/flatpak-context.c:942
 #, c-format
 msgid ""
 "Unknown filesystem location %s, valid locations are: host, host-os, host-"
@@ -4102,172 +4102,172 @@ msgstr ""
 "Nieznane położenie systemu plików %s, prawidłowe położenia: host, host-os, "
 "host-etc, home, xdg-*[/…], ~/dir, /dir"
 
-#: common/flatpak-context.c:1176
+#: common/flatpak-context.c:1222
 #, c-format
 msgid "Invalid env format %s"
 msgstr "Nieznany format środowiska %s"
 
-#: common/flatpak-context.c:1254
+#: common/flatpak-context.c:1300
 #, c-format
 msgid "Environment variable name must not contain '=': %s"
 msgstr "Nazwa zmiennej środowiskowej nie może zawierać „=”: %s"
 
-#: common/flatpak-context.c:1367 common/flatpak-context.c:1375
+#: common/flatpak-context.c:1413 common/flatpak-context.c:1421
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr "Parametry --add-policy muszą być w formacie PODSYSTEM.KLUCZ=WARTOŚĆ"
 
-#: common/flatpak-context.c:1382
+#: common/flatpak-context.c:1428
 msgid "--add-policy values can't start with \"!\""
 msgstr "Wartości --add-policy nie mogą zaczynać się od znaku „!”"
 
-#: common/flatpak-context.c:1407 common/flatpak-context.c:1415
+#: common/flatpak-context.c:1453 common/flatpak-context.c:1461
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr "Parametry --remove-policy muszą być w formacie PODSYSTEM.KLUCZ=WARTOŚĆ"
 
-#: common/flatpak-context.c:1422
+#: common/flatpak-context.c:1468
 msgid "--remove-policy values can't start with \"!\""
 msgstr "Wartości --remove-policy nie mogą zaczynać się od znaku „!”"
 
-#: common/flatpak-context.c:1448
+#: common/flatpak-context.c:1494
 msgid "Share with host"
 msgstr "Udostępnia temu komputerowi"
 
-#: common/flatpak-context.c:1448 common/flatpak-context.c:1449
+#: common/flatpak-context.c:1494 common/flatpak-context.c:1495
 msgid "SHARE"
 msgstr "UDZIAŁ"
 
-#: common/flatpak-context.c:1449
+#: common/flatpak-context.c:1495
 msgid "Unshare with host"
 msgstr "Przestaje udostępniać temu komputerowi"
 
-#: common/flatpak-context.c:1450
+#: common/flatpak-context.c:1496
 msgid "Expose socket to app"
 msgstr "Udostępnia gniazdo programowi"
 
-#: common/flatpak-context.c:1450 common/flatpak-context.c:1451
+#: common/flatpak-context.c:1496 common/flatpak-context.c:1497
 msgid "SOCKET"
 msgstr "GNIAZDO"
 
-#: common/flatpak-context.c:1451
+#: common/flatpak-context.c:1497
 msgid "Don't expose socket to app"
 msgstr "Nie udostępnia gniazda programowi"
 
-#: common/flatpak-context.c:1452
+#: common/flatpak-context.c:1498
 msgid "Expose device to app"
 msgstr "Udostępnia urządzenie programowi"
 
-#: common/flatpak-context.c:1452 common/flatpak-context.c:1453
+#: common/flatpak-context.c:1498 common/flatpak-context.c:1499
 msgid "DEVICE"
 msgstr "URZĄDZENIE"
 
-#: common/flatpak-context.c:1453
+#: common/flatpak-context.c:1499
 msgid "Don't expose device to app"
 msgstr "Nie udostępnia urządzenia programowi"
 
-#: common/flatpak-context.c:1454
+#: common/flatpak-context.c:1500
 msgid "Allow feature"
 msgstr "Zezwala na funkcję"
 
-#: common/flatpak-context.c:1454 common/flatpak-context.c:1455
+#: common/flatpak-context.c:1500 common/flatpak-context.c:1501
 msgid "FEATURE"
 msgstr "FUNKCJA"
 
-#: common/flatpak-context.c:1455
+#: common/flatpak-context.c:1501
 msgid "Don't allow feature"
 msgstr "Bez zezwolenia na funkcję"
 
-#: common/flatpak-context.c:1456
+#: common/flatpak-context.c:1502
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr "Udostępnia system plików programowi (:ro dla tylko do odczytu)"
 
-#: common/flatpak-context.c:1456
+#: common/flatpak-context.c:1502
 msgid "FILESYSTEM[:ro]"
 msgstr "SYSTEM-PLIKÓW[:ro]"
 
-#: common/flatpak-context.c:1457
+#: common/flatpak-context.c:1503
 msgid "Don't expose filesystem to app"
 msgstr "Nie udostępnia systemu plików programowi"
 
-#: common/flatpak-context.c:1457
+#: common/flatpak-context.c:1503
 msgid "FILESYSTEM"
 msgstr "SYSTEM-PLIKÓW"
 
-#: common/flatpak-context.c:1458
+#: common/flatpak-context.c:1504
 msgid "Set environment variable"
 msgstr "Ustawia zmienną środowiskową"
 
-#: common/flatpak-context.c:1458
+#: common/flatpak-context.c:1504
 msgid "VAR=VALUE"
 msgstr "ZMIENNA=WARTOŚĆ"
 
-#: common/flatpak-context.c:1459
+#: common/flatpak-context.c:1505
 msgid "Read environment variables in env -0 format from FD"
 msgstr "Odczytuje zmienne środowiskowe w formacie env -0 z FD"
 
-#: common/flatpak-context.c:1459
+#: common/flatpak-context.c:1505
 msgid "FD"
 msgstr "FD"
 
-#: common/flatpak-context.c:1460
+#: common/flatpak-context.c:1506
 msgid "Remove variable from environment"
 msgstr "Usuwa zmienną ze środowiska"
 
-#: common/flatpak-context.c:1460
+#: common/flatpak-context.c:1506
 msgid "VAR"
 msgstr "ZMIENNA"
 
-#: common/flatpak-context.c:1461
+#: common/flatpak-context.c:1507
 msgid "Allow app to own name on the session bus"
 msgstr "Zezwala programowi na posiadanie nazwy na magistrali sesji"
 
-#: common/flatpak-context.c:1461 common/flatpak-context.c:1462
-#: common/flatpak-context.c:1463 common/flatpak-context.c:1464
-#: common/flatpak-context.c:1465 common/flatpak-context.c:1466
+#: common/flatpak-context.c:1507 common/flatpak-context.c:1508
+#: common/flatpak-context.c:1509 common/flatpak-context.c:1510
+#: common/flatpak-context.c:1511 common/flatpak-context.c:1512
 msgid "DBUS_NAME"
 msgstr "NAZWA_D-BUS"
 
-#: common/flatpak-context.c:1462
+#: common/flatpak-context.c:1508
 msgid "Allow app to talk to name on the session bus"
 msgstr "Umożliwia programowi rozmawianie z nazwą na magistrali sesji"
 
-#: common/flatpak-context.c:1463
+#: common/flatpak-context.c:1509
 msgid "Don't allow app to talk to name on the session bus"
 msgstr "Bez zezwolenia programowi na rozmawianie z nazwą na magistrali sesji"
 
-#: common/flatpak-context.c:1464
+#: common/flatpak-context.c:1510
 msgid "Allow app to own name on the system bus"
 msgstr "Zezwala programowi na posiadanie nazwy na magistrali systemu"
 
-#: common/flatpak-context.c:1465
+#: common/flatpak-context.c:1511
 msgid "Allow app to talk to name on the system bus"
 msgstr "Umożliwia programowi rozmawianie z nazwą na magistrali systemu"
 
-#: common/flatpak-context.c:1466
+#: common/flatpak-context.c:1512
 msgid "Don't allow app to talk to name on the system bus"
 msgstr "Bez zezwolenia programowi na rozmawianie z nazwą na magistrali systemu"
 
-#: common/flatpak-context.c:1467
+#: common/flatpak-context.c:1513
 msgid "Add generic policy option"
 msgstr "Dodaje ogólną opcję polityki"
 
-#: common/flatpak-context.c:1467 common/flatpak-context.c:1468
+#: common/flatpak-context.c:1513 common/flatpak-context.c:1514
 msgid "SUBSYSTEM.KEY=VALUE"
 msgstr "PODSYSTEM.KLUCZ=WARTOŚĆ"
 
-#: common/flatpak-context.c:1468
+#: common/flatpak-context.c:1514
 msgid "Remove generic policy option"
 msgstr "Usuwa ogólną opcję polityki"
 
-#: common/flatpak-context.c:1469
+#: common/flatpak-context.c:1515
 msgid "Persist home directory subpath"
 msgstr "Trwała podścieżka katalogu domowego"
 
-#: common/flatpak-context.c:1469
+#: common/flatpak-context.c:1515
 msgid "FILENAME"
 msgstr "NAZWA-PLIKU"
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-context.c:1471
+#: common/flatpak-context.c:1517
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "Bez wymagania działającej sesji (bez tworzenia cgroups)"
 

@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2022-01-12 15:24+0100\n"
+"POT-Creation-Date: 2022-01-18 17:42+0000\n"
 "PO-Revision-Date: 2020-05-17 17:53+0000\n"
 "Last-Translator: Yi-Jyun Pan <pan93412@gmail.com>\n"
 "Language-Team: Chinese (Traditional) <zh-l10n@lists.linux.org.tw>\n"
@@ -3936,47 +3936,47 @@ msgstr "無法重定 %s 的基底 (rebase) 至 %s：%s\n"
 msgid "No authenticator configured for remote `%s`"
 msgstr "未設定用於「%s」遠端的身分核對器"
 
-#: common/flatpak-context.c:190
+#: common/flatpak-context.c:191
 #, c-format
 msgid "Unknown share type %s, valid types are: %s"
 msgstr "未知的分享類型 %s，有效的類型為：%s"
 
-#: common/flatpak-context.c:225
+#: common/flatpak-context.c:226
 #, c-format
 msgid "Unknown policy type %s, valid types are: %s"
 msgstr "未知的方針類型 %s，有效的類型為：%s"
 
-#: common/flatpak-context.c:263
+#: common/flatpak-context.c:264
 #, c-format
 msgid "Invalid dbus name %s"
 msgstr "無效的 dbus 名稱 %s"
 
-#: common/flatpak-context.c:276
+#: common/flatpak-context.c:277
 #, c-format
 msgid "Unknown socket type %s, valid types are: %s"
 msgstr "未知的接口類型 %s，有效的類型為：%s"
 
-#: common/flatpak-context.c:305
+#: common/flatpak-context.c:306
 #, c-format
 msgid "Unknown device type %s, valid types are: %s"
 msgstr "未知的裝置類型 %s，有效的類型為：%s"
 
-#: common/flatpak-context.c:333
+#: common/flatpak-context.c:334
 #, c-format
 msgid "Unknown feature type %s, valid types are: %s"
 msgstr "未知的功能類型 %s，有效的類型為：%s"
 
-#: common/flatpak-context.c:778
+#: common/flatpak-context.c:870
 #, c-format
 msgid "Filesystem location \"%s\" contains \"..\""
 msgstr ""
 
-#: common/flatpak-context.c:816
+#: common/flatpak-context.c:908
 msgid ""
 "--filesystem=/ is not available, use --filesystem=host for a similar result"
 msgstr ""
 
-#: common/flatpak-context.c:850
+#: common/flatpak-context.c:942
 #, c-format
 msgid ""
 "Unknown filesystem location %s, valid locations are: host, host-os, host-"
@@ -3985,174 +3985,174 @@ msgstr ""
 "未知的檔案系統位置 %s，有效的位置為：host、host-os、host-etc、home、xdg-*[/"
 "…]、~/dir、/dir"
 
-#: common/flatpak-context.c:1176
+#: common/flatpak-context.c:1222
 #, c-format
 msgid "Invalid env format %s"
 msgstr "無效的 env 格式 %s"
 
-#: common/flatpak-context.c:1254
+#: common/flatpak-context.c:1300
 #, c-format
 msgid "Environment variable name must not contain '=': %s"
 msgstr ""
 
-#: common/flatpak-context.c:1367 common/flatpak-context.c:1375
+#: common/flatpak-context.c:1413 common/flatpak-context.c:1421
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr "--add-policy 引數必須是 SUBSYSTEM.KEY=VALUE 的形式"
 
-#: common/flatpak-context.c:1382
+#: common/flatpak-context.c:1428
 msgid "--add-policy values can't start with \"!\""
 msgstr "--add-policy 的值不能以「!」開始"
 
-#: common/flatpak-context.c:1407 common/flatpak-context.c:1415
+#: common/flatpak-context.c:1453 common/flatpak-context.c:1461
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr "--remove-policy 的引數必須是 SUBSYSTEM.KEY=VALUE 的形式"
 
-#: common/flatpak-context.c:1422
+#: common/flatpak-context.c:1468
 msgid "--remove-policy values can't start with \"!\""
 msgstr "--remove-policy 的值不能以「!」開始"
 
-#: common/flatpak-context.c:1448
+#: common/flatpak-context.c:1494
 msgid "Share with host"
 msgstr "與主機分享"
 
-#: common/flatpak-context.c:1448 common/flatpak-context.c:1449
+#: common/flatpak-context.c:1494 common/flatpak-context.c:1495
 msgid "SHARE"
 msgstr "SHARE"
 
-#: common/flatpak-context.c:1449
+#: common/flatpak-context.c:1495
 msgid "Unshare with host"
 msgstr "不與主機分享"
 
-#: common/flatpak-context.c:1450
+#: common/flatpak-context.c:1496
 msgid "Expose socket to app"
 msgstr "將接口開放給程式"
 
-#: common/flatpak-context.c:1450 common/flatpak-context.c:1451
+#: common/flatpak-context.c:1496 common/flatpak-context.c:1497
 msgid "SOCKET"
 msgstr "SOCKET"
 
-#: common/flatpak-context.c:1451
+#: common/flatpak-context.c:1497
 msgid "Don't expose socket to app"
 msgstr "不要將接口開放給程式"
 
-#: common/flatpak-context.c:1452
+#: common/flatpak-context.c:1498
 msgid "Expose device to app"
 msgstr "將裝置開放給程式"
 
-#: common/flatpak-context.c:1452 common/flatpak-context.c:1453
+#: common/flatpak-context.c:1498 common/flatpak-context.c:1499
 msgid "DEVICE"
 msgstr "DEVICE"
 
-#: common/flatpak-context.c:1453
+#: common/flatpak-context.c:1499
 msgid "Don't expose device to app"
 msgstr "不要將裝置開放給程式"
 
-#: common/flatpak-context.c:1454
+#: common/flatpak-context.c:1500
 msgid "Allow feature"
 msgstr "允許功能"
 
-#: common/flatpak-context.c:1454 common/flatpak-context.c:1455
+#: common/flatpak-context.c:1500 common/flatpak-context.c:1501
 msgid "FEATURE"
 msgstr "FEATURE"
 
-#: common/flatpak-context.c:1455
+#: common/flatpak-context.c:1501
 msgid "Don't allow feature"
 msgstr "不允許功能"
 
-#: common/flatpak-context.c:1456
+#: common/flatpak-context.c:1502
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr "將檔案系統開放給程式（:ro 表示唯讀）"
 
-#: common/flatpak-context.c:1456
+#: common/flatpak-context.c:1502
 msgid "FILESYSTEM[:ro]"
 msgstr "FILESYSTEM[:ro]"
 
-#: common/flatpak-context.c:1457
+#: common/flatpak-context.c:1503
 msgid "Don't expose filesystem to app"
 msgstr "不要將檔案系統開放給程式"
 
-#: common/flatpak-context.c:1457
+#: common/flatpak-context.c:1503
 msgid "FILESYSTEM"
 msgstr "FILESYSTEM"
 
-#: common/flatpak-context.c:1458
+#: common/flatpak-context.c:1504
 msgid "Set environment variable"
 msgstr "設定環境變數"
 
-#: common/flatpak-context.c:1458
+#: common/flatpak-context.c:1504
 msgid "VAR=VALUE"
 msgstr "VAR=VALUE"
 
-#: common/flatpak-context.c:1459
+#: common/flatpak-context.c:1505
 msgid "Read environment variables in env -0 format from FD"
 msgstr ""
 
-#: common/flatpak-context.c:1459
+#: common/flatpak-context.c:1505
 msgid "FD"
 msgstr ""
 
-#: common/flatpak-context.c:1460
+#: common/flatpak-context.c:1506
 #, fuzzy
 msgid "Remove variable from environment"
 msgstr "從權限儲存中移除項目"
 
-#: common/flatpak-context.c:1460
+#: common/flatpak-context.c:1506
 #, fuzzy
 msgid "VAR"
 msgstr "VAL"
 
-#: common/flatpak-context.c:1461
+#: common/flatpak-context.c:1507
 msgid "Allow app to own name on the session bus"
 msgstr "允許程式在工作階段匯流排上擁有自己的名稱"
 
-#: common/flatpak-context.c:1461 common/flatpak-context.c:1462
-#: common/flatpak-context.c:1463 common/flatpak-context.c:1464
-#: common/flatpak-context.c:1465 common/flatpak-context.c:1466
+#: common/flatpak-context.c:1507 common/flatpak-context.c:1508
+#: common/flatpak-context.c:1509 common/flatpak-context.c:1510
+#: common/flatpak-context.c:1511 common/flatpak-context.c:1512
 msgid "DBUS_NAME"
 msgstr "DBUS_NAME"
 
-#: common/flatpak-context.c:1462
+#: common/flatpak-context.c:1508
 msgid "Allow app to talk to name on the session bus"
 msgstr "允許程式與工作階段匯流排上的名稱溝通"
 
-#: common/flatpak-context.c:1463
+#: common/flatpak-context.c:1509
 msgid "Don't allow app to talk to name on the session bus"
 msgstr "不允許程式與工作階段匯流排上的名稱溝通"
 
-#: common/flatpak-context.c:1464
+#: common/flatpak-context.c:1510
 msgid "Allow app to own name on the system bus"
 msgstr "允許程式在系統匯流排上擁有自己的名稱"
 
-#: common/flatpak-context.c:1465
+#: common/flatpak-context.c:1511
 msgid "Allow app to talk to name on the system bus"
 msgstr "允許程式與系統匯流排上的名稱溝通"
 
-#: common/flatpak-context.c:1466
+#: common/flatpak-context.c:1512
 msgid "Don't allow app to talk to name on the system bus"
 msgstr "不允許程式與系統匯流排上的名稱溝通"
 
-#: common/flatpak-context.c:1467
+#: common/flatpak-context.c:1513
 msgid "Add generic policy option"
 msgstr "新增通用方針選項"
 
-#: common/flatpak-context.c:1467 common/flatpak-context.c:1468
+#: common/flatpak-context.c:1513 common/flatpak-context.c:1514
 msgid "SUBSYSTEM.KEY=VALUE"
 msgstr "SUBSYSTEM.KEY=VALUE"
 
-#: common/flatpak-context.c:1468
+#: common/flatpak-context.c:1514
 msgid "Remove generic policy option"
 msgstr "移除通用方針選項"
 
-#: common/flatpak-context.c:1469
+#: common/flatpak-context.c:1515
 msgid "Persist home directory subpath"
 msgstr "留存家目錄的子路徑"
 
-#: common/flatpak-context.c:1469
+#: common/flatpak-context.c:1515
 msgid "FILENAME"
 msgstr "FILENAME"
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-context.c:1471
+#: common/flatpak-context.c:1517
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "不需要有執行中的工作階段（不會建立 cgroups）"
 
