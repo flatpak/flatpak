@@ -1,3 +1,40 @@
+Changes in 1.10.7
+~~~~~~~~~~~~~~~~~
+Released: not yet
+
+This is a regression fix update, reverting non-backwards-compatible
+behaviour changes in the solution previously chosen for CVE-2022-21682.
+
+Flatpak 1.12.3 and 1.10.6 changed the behaviour of `--nofilesystem=host`
+and `--nofilesystem=home` in a way that was not backwards-compatible in
+all cases. For example, some Flatpak users previously used a global
+`flatpak override --nofilesystem=home` or
+`flatpak override --nofilesystem=host`, but expected that individual apps
+would still be able to have finer-grained filesystem access granted by the
+app manifest, such as Zoom's `--filesystem=~/Documents/Zoom:create`. With
+the changes in 1.12.3, this no longer had the intended result, because
+`--nofilesystem=home` was special-cased to disallow inheriting the
+finer-grained `--filesystem`.
+
+Flatpak 1.12.4 and 1.10.7 return to the previous behaviour of
+`--nofilesystem=host` and `--nofilesystem=home`. Instead, CVE-2022-21682
+will be resolved by a new 1.2.2 release of flatpak-builder, which will
+use a new option `--nofilesystem=host:reset` introduced in Flatpak 1.12.4
+and 1.10.7. In addition to behaving like `--nofilesystem=host`, the new
+option prevents filesystem permissions from being inherited from the
+app manifest.
+
+Other changes:
+
+ * Clarify documentation of `--nofilesystem`
+ * Improve unit test coverage around `--filesystem` and `--nofilesystem`
+ * Restore compatibility with older appstream-glib versions, fixing a
+   regression in 1.12.3
+ * Update variant-schema-compiler subproject to fix builds with newer
+   versions of pyparsing (the content of the generated code is not affected)
+ * Make the unit test for CVE-2021-43860 robust against versions of Python's
+   http.server module that only read timestamps with a 1 second granularity
+
 Changes in 1.10.6
 ~~~~~~~~~~~~~~~~~
 Released: 2022-01-12
