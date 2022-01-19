@@ -616,6 +616,53 @@ flatpak_get_have_intel_gpu (void)
   return have_intel;
 }
 
+static GHashTable *
+load_kernel_module_list (void)
+{
+  GHashTable *modules = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  g_autofree char *modules_data = NULL;
+  g_autoptr(GError) error = NULL;
+  char *start, *end;
+  
+  if (!g_file_get_contents ("/proc/modules", &modules_data, NULL, &error))
+    {
+      g_debug ("Failed to read /proc/modules: %s", error->message);
+      return modules;
+    }
+
+  /* /proc/modules is a table of modules.
+   * Columns are split by spaces and rows by newlines.
+   * The first column is the name. */
+  start = modules_data;
+  while (TRUE)
+    {
+      end = strchr (start, ' ');
+      if (end == NULL)
+        break;
+
+      g_hash_table_add (modules, g_strndup (start, (end - start)));
+
+      start = strchr (end, '\n');
+      if (start == NULL)
+        break;
+
+      start++;
+    }
+
+  return modules;
+}
+
+static gboolean
+flatpak_get_have_kernel_module (const char *module_name)
+{
+  static GHashTable *kernel_modules = NULL;
+
+  if (g_once_init_enter (&kernel_modules))
+    g_once_init_leave (&kernel_modules, load_kernel_module_list ());
+
+  return g_hash_table_contains (kernel_modules, module_name);
+}
+
 static const char *
 flatpak_get_gtk_theme (void)
 {
@@ -5989,6 +6036,13 @@ flatpak_extension_matches_reason (const char *extension_id,
         {
           /* Used for Intel VAAPI driver extension */
           if (flatpak_get_have_intel_gpu ())
+            return TRUE;
+        }
+      else if (g_str_has_prefix (reason, "have-kernel-module-"))
+        {
+          const char *module_name = reason + strlen ("have-kernel-module-");
+
+          if (flatpak_get_have_kernel_module (module_name))
             return TRUE;
         }
       else if (g_str_has_prefix (reason, "on-xdg-desktop-"))

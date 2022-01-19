@@ -893,6 +893,14 @@
                                 <para>Is true if the i915 kernel module is loaded. Added 0.10.1.</para>
                             </varlistentry>
                             <varlistentry>
+                                <term><option>have-kernel-module-*</option></term>
+                                <para>
+                                    Is true if the suffix (case-sensitive) is found in <literal>/proc/modules</literal>.
+                                    For example <literal>have-kernel-module-nvidia</literal>.
+                                    Added 1.13.2.
+                                </para>
+                            </varlistentry>
+                            <varlistentry>
                                 <term><option>on-xdg-desktop-*</option></term>
                                 <para>
                                     Is true if the suffix (case-insensitively) is in the
