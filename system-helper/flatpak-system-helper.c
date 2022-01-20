@@ -308,7 +308,7 @@ flatpak_invocation_return_error (GDBusMethodInvocation *invocation,
                                  const char            *fmt,
                                  ...)
 {
-  if (error->domain == FLATPAK_ERROR)
+  if (error && error->domain == FLATPAK_ERROR)
     g_dbus_method_invocation_return_gerror (invocation, error);
   else
     {
@@ -317,9 +317,15 @@ flatpak_invocation_return_error (GDBusMethodInvocation *invocation,
       va_start (args, fmt);
       g_vasprintf (&prefix, fmt, args);
       va_end (args);
-      g_dbus_method_invocation_return_error (invocation,
-                                             G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                             "%s: %s", prefix, error->message);
+      if (error) {
+        g_dbus_method_invocation_return_error (invocation,
+                                               G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                               "%s: %s", prefix, error->message);
+      } else {
+        g_dbus_method_invocation_return_error (invocation,
+                                               G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                               "%s", prefix);
+      }
     }
 }
 
