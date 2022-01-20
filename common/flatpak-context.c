@@ -1963,13 +1963,17 @@ flatpak_context_save_metadata (FlatpakContext *context,
                                         NULL, &value))
         {
           g_warn_if_fail (GPOINTER_TO_INT (value) == FLATPAK_FILESYSTEM_MODE_NONE);
-          g_ptr_array_add (array, g_strdup ("!host:reset"));
+          if (!flatten)
+            g_ptr_array_add (array, g_strdup ("!host:reset"));
         }
 
       g_hash_table_iter_init (&iter, context->filesystems);
       while (g_hash_table_iter_next (&iter, &key, &value))
         {
           FlatpakFilesystemMode mode = GPOINTER_TO_INT (value);
+
+          if (flatten && mode == FLATPAK_FILESYSTEM_MODE_NONE)
+            continue;
 
           /* We already did this */
           if (g_str_equal (key, "host-reset"))
