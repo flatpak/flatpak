@@ -7,8 +7,7 @@ test -n "$srcdir" || srcdir=.
 olddir=$(pwd)
 cd "$srcdir"
 
-AUTORECONF=$(which autoreconf)
-if test -z "$AUTORECONF"; then
+if ! command -v autoreconf >/dev/null; then
     echo "*** No autoreconf found, please install it ***"
     exit 1
 fi
@@ -25,8 +24,7 @@ fi
 sed -e 's,$(libglnx_srcpath),subprojects/libglnx,g' < subprojects/libglnx/Makefile-libglnx.am > subprojects/Makefile-libglnx.am.inc
 sed -e 's,$(bwrap_srcpath),subprojects/bubblewrap,g' < subprojects/bubblewrap/Makefile-bwrap.am > subprojects/Makefile-bwrap.am.inc
 
-GTKDOCIZE=$(which gtkdocize 2>/dev/null)
-if test -z "$GTKDOCIZE"; then
+if ! command -v gtkdocize >/dev/null; then
     echo "*** You don't have gtk-doc installed, and thus won't be able to generate the documentation. ***"
     rm -f gtk-doc.make
     cat > gtk-doc.make <<EOF
