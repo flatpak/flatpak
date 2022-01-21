@@ -1,6 +1,6 @@
 #!/bin/sh
 
-if test \( -x "$(which gtk-update-icon-cache 2>/dev/null)" \) -a \( -d "$1/exports/share/icons/hicolor" \); then
+if command -v gtk-update-icon-cache >/dev/null && test -d "$1/exports/share/icons/hicolor"; then
     cp /usr/share/icons/hicolor/index.theme "$1/exports/share/icons/hicolor/"
     for dir in "$1"/exports/share/icons/*; do
         if test -f "$dir/index.theme"; then
