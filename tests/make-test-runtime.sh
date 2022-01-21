@@ -38,7 +38,7 @@ ln -s ../lib ${DIR}/usr/lib32
 if test -f /sbin/ldconfig.real; then
     cp /sbin/ldconfig.real ${DIR}/usr/bin/ldconfig
 else
-    cp `which ldconfig` ${DIR}/usr/bin
+    cp "$(type -P ldconfig)" "${DIR}/usr/bin"
 fi
 LIBS=`mktemp`
 BINS=`mktemp`
@@ -64,8 +64,8 @@ add_bin() {
 }
 
 for i in $@ bash ls cat echo readlink socat; do
-    I=`which $i`
-    add_bin $I
+    I=$(type -P "$i")
+    add_bin "$I"
 done
 for i in `cat $BINS`; do
     #echo Adding binary $i 1>&2
