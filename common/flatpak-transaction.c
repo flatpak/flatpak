@@ -1743,6 +1743,24 @@ flatpak_transaction_set_reinstall (FlatpakTransaction *self,
 }
 
 /**
+ * flatpak_transaction_get_no_interaction:
+ * @self: a #FlatpakTransaction
+ *
+ * Gets whether the transaction is interactive. See
+ * flatpak_transaction_set_no_interaction().
+ *
+ * Returns: %TRUE if the transaction is not interactive, %FALSE otherwise
+ * Since: 1.13.0
+ */
+gboolean
+flatpak_transaction_get_no_interaction (FlatpakTransaction *self)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+
+  return flatpak_dir_get_no_interaction (priv->dir);
+}
+
+/**
  * flatpak_transaction_set_no_interaction:
  * @self: a #FlatpakTransaction
  * @no_interaction: Whether to disallow interactive authorization for operations
