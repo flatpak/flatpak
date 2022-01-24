@@ -21,6 +21,8 @@ Other changes:
    a regression introduced when CVE-2021-21261 was fixed in 1.8.5 and 1.10.0
  * Fix fd confusion in flatpak-spawn --env=... --forward-fd=..., resolving a
    regression introduced in 1.8.5
+ * Fix deploys of local remotes in system-helper, possibly involving newer
+   GLib versions
  * Memory leak fixes backported from 1.10.2 and 1.11.2
  * File descriptor leak fixes backported from 1.10.2, 1.10.3 and 1.11.2
  * Add --enable-asan configure option backported from 1.10.1
