@@ -1,6 +1,6 @@
 Changes in 1.8.6
 ~~~~~~~~~~~~~~~~
-Released: (not released yet)
+Released: 2022-01-24
 
 This security update fixes a potential attack where a flatpak application
 could use custom formated .desktop files to gain access to files on the
