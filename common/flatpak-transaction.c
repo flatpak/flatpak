@@ -215,6 +215,7 @@ enum {
 enum {
   PROP_0,
   PROP_INSTALLATION,
+  PROP_NO_INTERACTION,
 };
 
 struct _FlatpakTransactionProgress
@@ -1030,6 +1031,10 @@ flatpak_transaction_set_property (GObject      *object,
       priv->installation = g_value_dup_object (value);
       break;
 
+    case PROP_NO_INTERACTION:
+      flatpak_transaction_set_no_interaction (self, g_value_get_boolean (value));
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -1065,6 +1070,10 @@ flatpak_transaction_get_property (GObject    *object,
     {
     case PROP_INSTALLATION:
       g_value_set_object (value, priv->installation);
+      break;
+
+    case PROP_NO_INTERACTION:
+      g_value_set_boolean (value, flatpak_transaction_get_no_interaction (self));
       break;
 
     default:
@@ -1132,6 +1141,23 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
                                                         "The installation instance",
                                                         FLATPAK_TYPE_INSTALLATION,
                                                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
+
+  /**
+   * FlatpakTransaction:no-interaction:
+   *
+   * %TRUE if the transaction is not interactive, %FALSE otherwise.
+   *
+   * See flatpak_transaction_set_no_interaction().
+   *
+   * Since: 1.13.0
+   */
+  g_object_class_install_property (object_class,
+                                   PROP_NO_INTERACTION,
+                                   g_param_spec_boolean ("no-interaction",
+                                                         "No Interaction",
+                                                         "The installation instance",
+                                                         FALSE,
+                                                         G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY));
 
   /**
    * FlatpakTransaction::new-operation:
@@ -1779,7 +1805,11 @@ flatpak_transaction_set_no_interaction (FlatpakTransaction *self,
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
 
+  if (no_interaction == flatpak_transaction_get_no_interaction (self))
+    return;
+
   flatpak_dir_set_no_interaction (priv->dir, no_interaction);
+  g_object_notify (G_OBJECT (self), "no-interaction");
 }
 
 /**
