@@ -212,11 +212,10 @@ enum {
   LAST_SIGNAL
 };
 
-enum {
-  PROP_0,
-  PROP_INSTALLATION,
+typedef enum {
+  PROP_INSTALLATION = 1,
   PROP_NO_INTERACTION,
-};
+} FlatpakTransactionProperty;
 
 struct _FlatpakTransactionProgress
 {
@@ -1024,7 +1023,7 @@ flatpak_transaction_set_property (GObject      *object,
   FlatpakTransaction *self = FLATPAK_TRANSACTION (object);
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
 
-  switch (prop_id)
+  switch ((FlatpakTransactionProperty) prop_id)
     {
     case PROP_INSTALLATION:
       g_clear_object (&priv->installation);
@@ -1066,7 +1065,7 @@ flatpak_transaction_get_property (GObject    *object,
   FlatpakTransaction *self = FLATPAK_TRANSACTION (object);
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
 
-  switch (prop_id)
+  switch ((FlatpakTransactionProperty) prop_id)
     {
     case PROP_INSTALLATION:
       g_value_set_object (value, priv->installation);
