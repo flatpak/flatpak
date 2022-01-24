@@ -829,7 +829,7 @@ glnx_regfile_copy_bytes (int fdf, int fdt, off_t max_bytes)
                   have_cfr = 0;
                   try_cfr = false;
                 }
-              else if (G_IN_SET (errno, EXDEV, EOPNOTSUPP))
+              else if (G_IN_SET (errno, EXDEV, EINVAL, EOPNOTSUPP))
                 /* We won't try cfr again for this run, but let's be
                  * conservative and not mark it as available/unavailable until
                  * we know for sure.
