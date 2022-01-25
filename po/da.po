@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2021-01-14 09:40+0100\n"
+"POT-Creation-Date: 2022-01-25 09:47+0100\n"
 "PO-Revision-Date: 2020-01-09 22:26+0200\n"
 "Last-Translator: scootergrisen\n"
 "Language-Team: Danish\n"
@@ -158,14 +158,14 @@ msgid "'%s' is not a valid repository: "
 msgstr "'%s' er ikke et gyldigt depot: "
 
 #: app/flatpak-builtins-build-bundle.c:657 app/flatpak-builtins-build-sign.c:87
-#: common/flatpak-dir.c:11177 common/flatpak-utils.c:1533
+#: common/flatpak-dir.c:11185 common/flatpak-utils.c:1533
 #, c-format
 msgid "'%s' is not a valid name: %s"
 msgstr "'%s' er ikke et gyldigt navn: %s"
 
 #: app/flatpak-builtins-build-bundle.c:660
 #: app/flatpak-builtins-build-export.c:823 app/flatpak-builtins-build-sign.c:90
-#: common/flatpak-dir.c:11183 common/flatpak-utils.c:1539
+#: common/flatpak-dir.c:11191 common/flatpak-utils.c:1539
 #, c-format
 msgid "'%s' is not a valid branch name: %s"
 msgstr "'%s' er ikke et gyldigt grennavn: %s"
@@ -253,7 +253,7 @@ msgstr "Intet udvidelsespunkt matcher %s i %s"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Manglende '=' i bindingsmonteringstilvalget '%s'"
 
-#: app/flatpak-builtins-build.c:591 common/flatpak-run.c:3978
+#: app/flatpak-builtins-build.c:593 common/flatpak-run.c:4067
 msgid "Unable to start app"
 msgstr "Kan ikke starte program"
 
@@ -3006,7 +3006,7 @@ msgstr "REFERENCEr skal ikke angives når --unused bruges"
 msgid "Nothing unused to uninstall\n"
 msgstr "Der er ikke noget ubrugt at afinstallere\n"
 
-#: app/flatpak-builtins-uninstall.c:313 common/flatpak-dir.c:11687
+#: app/flatpak-builtins-uninstall.c:313 common/flatpak-dir.c:11695
 #, c-format
 msgid "%s/%s/%s not installed"
 msgstr "%s/%s/%s er ikke installeret"
@@ -3310,7 +3310,7 @@ msgid "Info: %s was skipped"
 msgstr "Info: %s blev sprunget over"
 
 #: app/flatpak-cli-transaction.c:510 app/flatpak-quiet-transaction.c:136
-#: common/flatpak-dir.c:9239
+#: common/flatpak-dir.c:9247
 #, c-format
 msgid "%s already installed"
 msgstr "%s er allerede installeret"
@@ -3318,7 +3318,7 @@ msgstr "%s er allerede installeret"
 #: app/flatpak-cli-transaction.c:512 app/flatpak-cli-transaction.c:514
 #: app/flatpak-quiet-transaction.c:138 app/flatpak-quiet-transaction.c:140
 #: common/flatpak-dir.c:2634 common/flatpak-dir.c:3268
-#: common/flatpak-dir.c:13938 common/flatpak-transaction.c:2154
+#: common/flatpak-dir.c:13947 common/flatpak-transaction.c:2154
 #: common/flatpak-transaction.c:2193 common/flatpak-utils.c:1726
 #: common/flatpak-utils.c:1819
 #, c-format
@@ -4039,7 +4039,7 @@ msgid "Couldn't find ref %s in remote %s"
 msgstr "Kunne ikke finde seneste checksum for referencen %s i eksternen %s"
 
 #: common/flatpak-dir.c:821 common/flatpak-dir.c:5287
-#: common/flatpak-utils.c:5670 common/flatpak-utils.c:5675
+#: common/flatpak-utils.c:5671 common/flatpak-utils.c:5676
 msgid "Image is not a manifest"
 msgstr "Aftrykket er ikke et manifest"
 
@@ -4111,12 +4111,12 @@ msgstr "Konfigurationsnøglen %s er ikke indstillet"
 msgid "No appstream commit to deploy"
 msgstr "Ingen appstream-indsendelse som skal udsendes"
 
-#: common/flatpak-dir.c:4089 common/flatpak-dir.c:7732
+#: common/flatpak-dir.c:4089 common/flatpak-dir.c:7740
 msgid "Can't create deploy directory"
 msgstr "Kan ikke oprette udsendelsesmappe"
 
 #: common/flatpak-dir.c:4584 common/flatpak-dir.c:5609
-#: common/flatpak-dir.c:8687 common/flatpak-dir.c:9387
+#: common/flatpak-dir.c:8695 common/flatpak-dir.c:9395
 msgid "Can't pull from untrusted non-gpg verified remote"
 msgstr "Kan ikke pull fra ubetroet ekstern som ikke er gpg-verificeret"
 
@@ -4166,8 +4166,8 @@ msgstr "Forkert størrelse for ekstra-dataen %s"
 msgid "Invalid checksum for extra data %s"
 msgstr "Ugyldig checksum for ekstra-dataen %s"
 
-#: common/flatpak-dir.c:5203 common/flatpak-dir.c:7723
-#: common/flatpak-dir.c:9259
+#: common/flatpak-dir.c:5203 common/flatpak-dir.c:7731
+#: common/flatpak-dir.c:9267
 #, c-format
 msgid "%s commit %s already installed"
 msgstr "%s indsendelsen %s er allerede installeret"
@@ -4177,7 +4177,7 @@ msgstr "%s indsendelsen %s er allerede installeret"
 msgid "While pulling %s from remote %s: "
 msgstr "Ved pulling af %s fra eksternen %s: "
 
-#: common/flatpak-dir.c:5633 common/flatpak-utils.c:5565
+#: common/flatpak-dir.c:5633 common/flatpak-utils.c:5566
 msgid "GPG signatures found, but none are in trusted keyring"
 msgstr "Fandt GPG-underskrifter, men ingen af dem i betroet nøglering"
 
@@ -4214,190 +4214,195 @@ msgstr "Ugyldig mimetype-xml-fil"
 msgid "D-Bus service file '%s' has wrong name"
 msgstr "D-Bus-tjenestefilen '%s' har forkert navn"
 
-#: common/flatpak-dir.c:7190
+#: common/flatpak-dir.c:6725
+#, fuzzy, c-format
+msgid "Invalid Exec argument %s"
+msgstr "Ugyldigt require-flatpak-argument %s"
+
+#: common/flatpak-dir.c:7196
 msgid "While getting detached metadata: "
 msgstr "Ved hentning af løsrevet metadata: "
 
-#: common/flatpak-dir.c:7195 common/flatpak-dir.c:7200
-#: common/flatpak-dir.c:7204
+#: common/flatpak-dir.c:7201 common/flatpak-dir.c:7206
+#: common/flatpak-dir.c:7210
 msgid "Extra data missing in detached metadata"
 msgstr "Ekstra-data mangler i løsrevet metadata"
 
-#: common/flatpak-dir.c:7208
+#: common/flatpak-dir.c:7214
 msgid "While creating extradir: "
 msgstr "Ved oprettelse af ekstra-mappe: "
 
-#: common/flatpak-dir.c:7229 common/flatpak-dir.c:7262
+#: common/flatpak-dir.c:7235 common/flatpak-dir.c:7268
 msgid "Invalid checksum for extra data"
 msgstr "Ugyldig checksum for ekstra-data"
 
-#: common/flatpak-dir.c:7258
+#: common/flatpak-dir.c:7264
 msgid "Wrong size for extra data"
 msgstr "Forkert størrelse for ekstra-data"
 
-#: common/flatpak-dir.c:7271
+#: common/flatpak-dir.c:7277
 #, c-format
 msgid "While writing extra data file '%s': "
 msgstr "Ved skrivning af ekstra-data-filen '%s': "
 
-#: common/flatpak-dir.c:7279
+#: common/flatpak-dir.c:7285
 #, c-format
 msgid "Extra data %s missing in detached metadata"
 msgstr "Ekstra-data %s mangler i løsrevet metadata"
 
-#: common/flatpak-dir.c:7465
+#: common/flatpak-dir.c:7473
 #, c-format
 msgid "apply_extra script failed, exit status %d"
 msgstr "apply_extra-script mislykkedes, afslutningsstatus %d"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-dir.c:7606
+#: common/flatpak-dir.c:7614
 #, c-format
 msgid "Installing %s is not allowed by the policy set by your administrator"
 msgstr ""
 "Installation af %s er ikke tilladt af politikken som er indstillet af din "
 "administrator"
 
-#: common/flatpak-dir.c:7696
+#: common/flatpak-dir.c:7704
 #, c-format
 msgid "While trying to resolve ref %s: "
 msgstr "Ved forsøg på løsning af referencen %s: "
 
-#: common/flatpak-dir.c:7711
+#: common/flatpak-dir.c:7719
 #, c-format
 msgid "%s is not available"
 msgstr "%s er ikke tilgængelig"
 
-#: common/flatpak-dir.c:7740
+#: common/flatpak-dir.c:7748
 #, c-format
 msgid "Failed to read commit %s: "
 msgstr "Kunne ikke læse indsendelsen %s: "
 
-#: common/flatpak-dir.c:7760
+#: common/flatpak-dir.c:7768
 #, c-format
 msgid "While trying to checkout %s into %s: "
 msgstr "Ved forsøg på checkout af %s i %s: "
 
-#: common/flatpak-dir.c:7785
+#: common/flatpak-dir.c:7793
 msgid "While trying to checkout metadata subpath: "
 msgstr "Ved forsøg på checkout af metadata-understi: "
 
-#: common/flatpak-dir.c:7816
+#: common/flatpak-dir.c:7824
 #, c-format
 msgid "While trying to checkout subpath ‘%s’: "
 msgstr "Ved forsøg på checkout af understien ‘%s’: "
 
-#: common/flatpak-dir.c:7826
+#: common/flatpak-dir.c:7834
 msgid "While trying to remove existing extra dir: "
 msgstr "Ved forsøg på fjernelse af eksisterende ekstra-mappe: "
 
-#: common/flatpak-dir.c:7837
+#: common/flatpak-dir.c:7845
 msgid "While trying to apply extra data: "
 msgstr "Ved forsøg på anvendelse af ekstra-data: "
 
-#: common/flatpak-dir.c:7864
+#: common/flatpak-dir.c:7872
 #, c-format
 msgid "Invalid deployed ref %s: "
 msgstr "Ugyldig udsendt reference %s: "
 
-#: common/flatpak-dir.c:7871
+#: common/flatpak-dir.c:7879
 #, c-format
 msgid "Invalid commit ref %s: "
 msgstr "Ugyldig indsend-reference %s: "
 
-#: common/flatpak-dir.c:7879
+#: common/flatpak-dir.c:7887
 #, c-format
 msgid "Deployed ref %s kind does not match commit (%s)"
 msgstr "Typen af udsendt reference %s matcher ikke indsendelse (%s)"
 
-#: common/flatpak-dir.c:7887
+#: common/flatpak-dir.c:7895
 #, c-format
 msgid "Deployed ref %s name does not match commit (%s)"
 msgstr "Udsendt reference %s navn matcher ikke indsendelse (%s)"
 
-#: common/flatpak-dir.c:7895
+#: common/flatpak-dir.c:7903
 #, c-format
 msgid "Deployed ref %s arch does not match commit (%s)"
 msgstr "Udsendt reference %s arkitektur matcher ikke indsendelse (%s)"
 
-#: common/flatpak-dir.c:7901
+#: common/flatpak-dir.c:7909
 #, c-format
 msgid "Deployed ref %s branch does not match commit (%s)"
 msgstr "Udsendt reference %s gren matcher ikke indsendelse (%s)"
 
-#: common/flatpak-dir.c:7907
+#: common/flatpak-dir.c:7915
 #, c-format
 msgid "Deployed ref %s does not match commit (%s)"
 msgstr "Udsendt reference %s matcher ikke indsendelse (%s)"
 
-#: common/flatpak-dir.c:8155 common/flatpak-installation.c:1869
+#: common/flatpak-dir.c:8163 common/flatpak-installation.c:1869
 #, c-format
 msgid "%s branch %s already installed"
 msgstr "%s grenen %s er allerede installeret"
 
-#: common/flatpak-dir.c:8791
+#: common/flatpak-dir.c:8799
 #, c-format
 msgid "Could not unmount revokefs-fuse filesystem at %s: "
 msgstr ""
 
-#: common/flatpak-dir.c:9056
+#: common/flatpak-dir.c:9064
 #, c-format
 msgid "This version of %s is already installed"
 msgstr "Versionen af %s er allerede installeret"
 
-#: common/flatpak-dir.c:9063
+#: common/flatpak-dir.c:9071
 msgid "Can't change remote during bundle install"
 msgstr "Kan ikke skifte ekstern under bundle-installation"
 
-#: common/flatpak-dir.c:9332
+#: common/flatpak-dir.c:9340
 msgid "Can't update to a specific commit without root permissions"
 msgstr "Kan ikke opdatere en bestemt indsendelse uden root-tilladelser"
 
-#: common/flatpak-dir.c:9615
+#: common/flatpak-dir.c:9623
 #, c-format
 msgid "Can't remove %s, it is needed for: %s"
 msgstr "Kan ikke fjerne %s, da den behøves af: %s"
 
-#: common/flatpak-dir.c:9670 common/flatpak-installation.c:2025
+#: common/flatpak-dir.c:9678 common/flatpak-installation.c:2025
 #, c-format
 msgid "%s branch %s is not installed"
 msgstr "%s grenen %s er ikke installeret"
 
-#: common/flatpak-dir.c:9913
+#: common/flatpak-dir.c:9921
 #, c-format
 msgid "%s commit %s not installed"
 msgstr "%s indsendelsen %s er ikke installeret"
 
-#: common/flatpak-dir.c:10248
+#: common/flatpak-dir.c:10256
 #, c-format
 msgid "Pruning repo failed: %s"
 msgstr "Beskæring af depot mislykkedes: %s"
 
-#: common/flatpak-dir.c:10417 common/flatpak-dir.c:10423
+#: common/flatpak-dir.c:10425 common/flatpak-dir.c:10431
 #, c-format
 msgid "Failed to load filter '%s'"
 msgstr "Kunne ikke indlæse filteret '%s'"
 
-#: common/flatpak-dir.c:10429
+#: common/flatpak-dir.c:10437
 #, c-format
 msgid "Failed to parse filter '%s'"
 msgstr "Kunne ikke fortolke filteret '%s'"
 
-#: common/flatpak-dir.c:10714
+#: common/flatpak-dir.c:10722
 msgid "Failed to write summary cache: "
 msgstr "Kunne ikke skrive opsummeringsmellemlager: "
 
-#: common/flatpak-dir.c:10733
+#: common/flatpak-dir.c:10741
 #, c-format
 msgid "No oci summary cached for remote '%s'"
 msgstr "Ingen oci-opsummering mellemlageret for eksternen '%s'"
 
-#: common/flatpak-dir.c:10808
+#: common/flatpak-dir.c:10816
 #, c-format
 msgid "No summary cached for remote '%s'"
 msgstr "Ingen opsummering mellemlageret for eksternen '%s'"
 
-#: common/flatpak-dir.c:10826
+#: common/flatpak-dir.c:10834
 #, c-format
 msgid ""
 "Remote listing for %s not available; server has no summary file. Check the "
@@ -4406,88 +4411,88 @@ msgstr ""
 "Fjernoplistning for %s er ikke tilgængelig; serveren har ikke nogen "
 "opsummeringsfil. Tjek at URL'en som blev givet til remote-add er gyldig."
 
-#: common/flatpak-dir.c:11320
+#: common/flatpak-dir.c:11328
 #, c-format
 msgid "Multiple branches available for %s, you must specify one of: "
 msgstr "Flere grene tilgængelige for %s, du skal angive en af: "
 
-#: common/flatpak-dir.c:11341
+#: common/flatpak-dir.c:11349
 #, c-format
 msgid "Nothing matches %s"
 msgstr "Intet matcher %s"
 
-#: common/flatpak-dir.c:11457
+#: common/flatpak-dir.c:11465
 #, c-format
 msgid "Can't find ref %s%s%s%s%s"
 msgstr "Kan ikke finde referencen %s%s%s%s%s"
 
-#: common/flatpak-dir.c:11506
+#: common/flatpak-dir.c:11514
 #, c-format
 msgid "Error searching remote %s: %s"
 msgstr "Fejl ved søgning efter eksternen %s: %s"
 
-#: common/flatpak-dir.c:11561
+#: common/flatpak-dir.c:11569
 #, c-format
 msgid "Error searching local repository: %s"
 msgstr "Fejl ved søgning i lokalt depot: %s"
 
-#: common/flatpak-dir.c:11896
+#: common/flatpak-dir.c:11904
 #, c-format
 msgid "Could not find installation %s"
 msgstr "Kunne ikke finde installationen %s"
 
-#: common/flatpak-dir.c:12483
+#: common/flatpak-dir.c:12491
 #, c-format
 msgid "Invalid file format, no %s group"
 msgstr "Ugyldigt filformat, ingen %s gruppe"
 
-#: common/flatpak-dir.c:12488 common/flatpak-utils.c:2823
+#: common/flatpak-dir.c:12496 common/flatpak-utils.c:2823
 #, c-format
 msgid "Invalid version %s, only 1 supported"
 msgstr "Ugyldig version %s, understøtter kun 1"
 
-#: common/flatpak-dir.c:12493 common/flatpak-dir.c:12498
+#: common/flatpak-dir.c:12501 common/flatpak-dir.c:12506
 #, c-format
 msgid "Invalid file format, no %s specified"
 msgstr "Ugyldigt filformat, ingen %s angivet"
 
 #. Check some minimal size so we don't get crap
-#: common/flatpak-dir.c:12521
+#: common/flatpak-dir.c:12529
 msgid "Invalid file format, gpg key invalid"
 msgstr "Ugyldigt filformat, gpg-nøglen er ugyldig"
 
-#: common/flatpak-dir.c:12539 common/flatpak-utils.c:2876
+#: common/flatpak-dir.c:12548 common/flatpak-utils.c:2877
 msgid "Collection ID requires GPG key to be provided"
 msgstr "Samlings-id'et kræver levering af GPG-nøgle"
 
-#: common/flatpak-dir.c:12583
+#: common/flatpak-dir.c:12592
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "Runtimen %s, grenen %s er allerede installeret"
 
-#: common/flatpak-dir.c:12584
+#: common/flatpak-dir.c:12593
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "Programmet %s, grenen %s er allerede installeret"
 
-#: common/flatpak-dir.c:12872
+#: common/flatpak-dir.c:12881
 #, c-format
 msgid "Can't remove remote '%s' with installed ref %s (at least)"
 msgstr ""
 "Kan ikke fjerne eksternen '%s' med installerede reference %s (som det "
 "mindste)"
 
-#: common/flatpak-dir.c:12972
+#: common/flatpak-dir.c:12981
 #, c-format
 msgid "Invalid character '/' in remote name: %s"
 msgstr "Ugyldigt tegn '/' i fjernnavn: %s"
 
-#: common/flatpak-dir.c:12978
+#: common/flatpak-dir.c:12987
 #, c-format
 msgid "No configuration for remote %s specified"
 msgstr "Der er ikke angivet nogen konfiguration for eksternen %s"
 
-#: common/flatpak-dir.c:14432
+#: common/flatpak-dir.c:14441
 #, c-format
 msgid "Skipping deletion of mirror ref (%s, %s)…\n"
 msgstr "Springer over sletning af spejlreference (%s, %s) …\n"
@@ -4600,111 +4605,113 @@ msgstr "Ingen url angivet"
 msgid "GPG verification must be enabled when a collection ID is set"
 msgstr "GPG-verifikation skal være aktiveret når et samlings-id indstilles"
 
-#: common/flatpak-run.c:865
+#: common/flatpak-run.c:867
 msgid "Failed to open app info file"
 msgstr "Kunne ikke åbne programinfo-fil"
 
-#: common/flatpak-run.c:959
+#: common/flatpak-run.c:961
 msgid "Unable to create sync pipe"
 msgstr "Kan ikke oprette synkroniseringsledning"
 
-#: common/flatpak-run.c:998
+#: common/flatpak-run.c:1000
 msgid "Failed to sync with dbus proxy"
 msgstr "Kunne ikke synkronisere med dbus-proxy"
 
-#: common/flatpak-run.c:1037
+#: common/flatpak-run.c:1039
 #, c-format
 msgid "Failed to determine parts from ref: %s"
 msgstr "Kunne ikke fastslå dele fra reference: %s"
 
-#: common/flatpak-run.c:1659
+#: common/flatpak-run.c:1665
 msgid "No systemd user session available, cgroups not available"
 msgstr "Ingen systemd-brugersession tilgængelig, cgroups er ikke tilgængelig"
 
-#: common/flatpak-run.c:2208
+#: common/flatpak-run.c:2214
 msgid "Unable to allocate instance id"
 msgstr "Kan ikke allokere instans-id"
 
-#: common/flatpak-run.c:2328 common/flatpak-run.c:2338
+#: common/flatpak-run.c:2334 common/flatpak-run.c:2344
 #, c-format
 msgid "Failed to open flatpak-info file: %s"
 msgstr "Kunne ikke åbne flatpak-info-filen: %s"
 
-#: common/flatpak-run.c:2358
+#: common/flatpak-run.c:2364
 #, c-format
 msgid "Failed to open bwrapinfo.json file: %s"
 msgstr "Kunne ikke åbne bwrapinfo.json-filen: %s"
 
-#: common/flatpak-run.c:2383
+#: common/flatpak-run.c:2389
 #, fuzzy, c-format
 msgid "Failed to write to instance id fd: %s"
 msgstr "Kunne ikke skrive opsummeringsmellemlager: "
 
-#: common/flatpak-run.c:2703
+#: common/flatpak-run.c:2769
 msgid "Initialize seccomp failed"
 msgstr "Initiering af seccomp mislykkedes"
 
-#: common/flatpak-run.c:2742
-msgid "Failed to add architecture to seccomp filter"
+#: common/flatpak-run.c:2808
+#, fuzzy, c-format
+msgid "Failed to add architecture to seccomp filter: %s"
 msgstr "Kunne ikke tilføje arkitektur til seccomp-filter"
 
-#: common/flatpak-run.c:2751
-msgid "Failed to add multiarch architecture to seccomp filter"
+#: common/flatpak-run.c:2817
+#, fuzzy, c-format
+msgid "Failed to add multiarch architecture to seccomp filter: %s"
 msgstr "Kunne ikke tilføje multiarch-arkitektur til seccomp-filter"
 
-#. unknown syscall
-#: common/flatpak-run.c:2770 common/flatpak-run.c:2784
-#, c-format
-msgid "Failed to block syscall %d"
+#: common/flatpak-run.c:2849 common/flatpak-run.c:2871
+#, fuzzy, c-format
+msgid "Failed to block syscall %d: %s"
 msgstr "Kunne ikke blokere syskaldet %d"
 
-#: common/flatpak-run.c:2815
-msgid "Failed to export bpf"
+#: common/flatpak-run.c:2904
+#, fuzzy, c-format
+msgid "Failed to export bpf: %s"
 msgstr "Kunne ikke eksportere bpf"
 
-#: common/flatpak-run.c:3050
+#: common/flatpak-run.c:3139
 #, c-format
 msgid "Failed to open ‘%s’"
 msgstr "Kunne ikke åbne ‘%s’"
 
-#: common/flatpak-run.c:3334
+#: common/flatpak-run.c:3423
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "ldconfig mislykkedes, afslutningsstatus %d"
 
-#: common/flatpak-run.c:3341
+#: common/flatpak-run.c:3430
 msgid "Can't open generated ld.so.cache"
 msgstr "Kan ikke åbne genererede ld.so.cache"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-run.c:3450
+#: common/flatpak-run.c:3539
 #, c-format
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr ""
 "Kørsel af %s er ikke tilladt af politikken som er indstillet af din "
 "administrator"
 
-#: common/flatpak-run.c:3492
+#: common/flatpak-run.c:3581
 msgid "\"flatpak run\" is not intended to be ran with sudo"
 msgstr ""
 
-#: common/flatpak-run.c:3600
+#: common/flatpak-run.c:3689
 #, c-format
 msgid "Wrong number of components in runtime %s"
 msgstr "Forkert antal komponenter i runtimen %s"
 
-#: common/flatpak-run.c:3708
+#: common/flatpak-run.c:3797
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "Kunne ikke migrere fra %s: %s"
 
-#: common/flatpak-run.c:3723
+#: common/flatpak-run.c:3812
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr ""
 "Kunne ikke migrere den gamle programdatamappe %s til det nye navn %s: %s"
 
-#: common/flatpak-run.c:3732
+#: common/flatpak-run.c:3821
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "Kunne ikke oprette symlink under migrering af %s: %s"
@@ -4939,86 +4946,86 @@ msgstr "Ugyldig %s: Mangler gruppen ‘%s’"
 msgid "Invalid %s: Missing key ‘%s’"
 msgstr "Ugyldig %s: Mangler nøglen ‘%s’"
 
-#: common/flatpak-utils.c:2855
+#: common/flatpak-utils.c:2856
 msgid "Invalid gpg key"
 msgstr "Ugyldig gpg-nøgle"
 
-#: common/flatpak-utils.c:3206
+#: common/flatpak-utils.c:3207
 msgid "No extra data sources"
 msgstr "Ingen ekstra-data-kilder"
 
-#: common/flatpak-utils.c:4337
+#: common/flatpak-utils.c:4338
 #, c-format
 msgid "Error copying 64x64 icon for component %s: %s\n"
 msgstr "Fejl ved kopiering af 64x64-ikon for komponenten %s: %s\n"
 
-#: common/flatpak-utils.c:4343
+#: common/flatpak-utils.c:4344
 #, c-format
 msgid "Error copying 128x128 icon for component %s: %s\n"
 msgstr "Fejl ved kopiering af 128x128-ikon for komponenten %s: %s\n"
 
-#: common/flatpak-utils.c:4604
+#: common/flatpak-utils.c:4605
 #, c-format
 msgid "%s is end-of-life, ignoring\n"
 msgstr "%s er end-of-life, ignorerer\n"
 
-#: common/flatpak-utils.c:4613
+#: common/flatpak-utils.c:4614
 #, c-format
 msgid "No appstream data for %s: %s\n"
 msgstr "Ingen appstream-data for %s: %s\n"
 
-#: common/flatpak-utils.c:5434
+#: common/flatpak-utils.c:5435
 msgid "Invalid bundle, no ref in metadata"
 msgstr "Ugyldig bundle, ingen reference i metadata"
 
-#: common/flatpak-utils.c:5525
+#: common/flatpak-utils.c:5526
 #, c-format
 msgid "Collection ‘%s’ of bundle doesn’t match collection ‘%s’ of remote"
 msgstr "Samlingen ‘%s’ af bundle matcher ikke samlingen ‘%s’ af ekstern"
 
-#: common/flatpak-utils.c:5604
+#: common/flatpak-utils.c:5605
 msgid "Metadata in header and app are inconsistent"
 msgstr "Metadata i header og program er uoverensstemmende"
 
-#: common/flatpak-utils.c:5689 common/flatpak-utils.c:5848
+#: common/flatpak-utils.c:5690 common/flatpak-utils.c:5849
 msgid "Invalid OCI image config"
 msgstr ""
 
-#: common/flatpak-utils.c:5751 common/flatpak-utils.c:5997
+#: common/flatpak-utils.c:5752 common/flatpak-utils.c:5998
 #, c-format
 msgid "Wrong layer checksum, expected %s, was %s"
 msgstr "Forkert lag-checksum, ventede %s, var %s"
 
-#: common/flatpak-utils.c:5831
+#: common/flatpak-utils.c:5832
 #, c-format
 msgid "No ref specified for OCI image %s"
 msgstr "Ingen reference angivet for OCI-aftrykket %s"
 
-#: common/flatpak-utils.c:5837
+#: common/flatpak-utils.c:5838
 #, c-format
 msgid "Wrong ref (%s) specified for OCI image %s, expected %s"
 msgstr "Forkert reference (%s) angivet for OCI-aftrykket %s, ventede %s"
 
-#: common/flatpak-utils.c:6665
+#: common/flatpak-utils.c:6666
 #, c-format
 msgid "Invalid require-flatpak argument %s"
 msgstr "Ugyldigt require-flatpak-argument %s"
 
-#: common/flatpak-utils.c:6675 common/flatpak-utils.c:6694
+#: common/flatpak-utils.c:6676 common/flatpak-utils.c:6695
 #, c-format
 msgid "%s needs a later flatpak version (%s)"
 msgstr "%s har brug for en nyere flatpak-version (%s)"
 
-#: common/flatpak-utils.c:6738
+#: common/flatpak-utils.c:6739
 msgid "Empty string is not a number"
 msgstr "Tom streng er ikke et tal"
 
-#: common/flatpak-utils.c:6764
+#: common/flatpak-utils.c:6765
 #, c-format
 msgid "“%s” is not an unsigned number"
 msgstr "“%s” er ikke et tal uden fortegn"
 
-#: common/flatpak-utils.c:6774
+#: common/flatpak-utils.c:6775
 #, c-format
 msgid "Number “%s” is out of bounds [%s, %s]"
 msgstr "Tallet “%s” er uden for afgrænsningerne [%s, %s]"
@@ -5036,41 +5043,41 @@ msgstr ""
 msgid "Invalid token"
 msgstr "Ugyldig gpg-nøgle"
 
-#: portal/flatpak-portal.c:2061
+#: portal/flatpak-portal.c:2073
 msgid "No portal support found"
 msgstr "Fandt ingen understøttelse af portal"
 
-#: portal/flatpak-portal.c:2067
+#: portal/flatpak-portal.c:2079
 msgid "Deny"
 msgstr "Nægt"
 
-#: portal/flatpak-portal.c:2069
+#: portal/flatpak-portal.c:2081
 msgid "Update"
 msgstr "Opdater"
 
-#: portal/flatpak-portal.c:2074
+#: portal/flatpak-portal.c:2086
 #, c-format
 msgid "Update %s?"
 msgstr "Opdater %s?"
 
-#: portal/flatpak-portal.c:2086
+#: portal/flatpak-portal.c:2098
 msgid "The application wants to update itself."
 msgstr "Programmet vil opdatere sig selv."
 
-#: portal/flatpak-portal.c:2087
+#: portal/flatpak-portal.c:2099
 msgid "Update access can be changed any time from the privacy settings."
 msgstr ""
 "Opdateringsadgang kan ændres når som helst fra privatlivsindstillingerne."
 
-#: portal/flatpak-portal.c:2112
+#: portal/flatpak-portal.c:2124
 msgid "Application update not allowed"
 msgstr "Programopdatering ikke tilladt"
 
-#: portal/flatpak-portal.c:2269
+#: portal/flatpak-portal.c:2281
 msgid "Self update not supported, new version requires new permissions"
 msgstr "Selvopdatering understøttes ikke – ny version kræver nye tilladelser"
 
-#: portal/flatpak-portal.c:2451 portal/flatpak-portal.c:2468
+#: portal/flatpak-portal.c:2463 portal/flatpak-portal.c:2480
 msgid "Update ended unexpectedly"
 msgstr "Opdatering sluttede uventet"
 
