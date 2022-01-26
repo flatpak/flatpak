@@ -177,7 +177,7 @@ write_xauth (char *number, FILE *output)
           local_xa = *xa;
           if (local_xa.number)
             {
-              local_xa.number = "99";
+              local_xa.number = (char *) "99";
               local_xa.number_length = 2;
             }
 
