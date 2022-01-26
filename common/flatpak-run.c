@@ -101,6 +101,9 @@ extract_unix_path_from_dbus_address (const char *address)
   return g_strndup (path, path_end - path);
 }
 
+/* This is part of the X11 protocol, so we can safely hard-code it here */
+#define FamilyInternet6 (6)
+
 #ifdef ENABLE_XAUTH
 static gboolean
 auth_streq (const char *str,
@@ -201,15 +204,25 @@ write_xauth (const char *number,
 
   fclose (f);
 }
-#endif /* ENABLE_XAUTH */
+#else /* !ENABLE_XAUTH */
+
+/* When not doing Xauth, any distinct values will do, but use the same
+ * ones Xauth does so that we can refer to them in our unit test. */
+#define FamilyLocal (256)
+#define FamilyWild (65535)
+
+#endif /* !ENABLE_XAUTH */
 
 /*
+ * @family: (out) (not optional):
  * @x11_socket: (out) (not optional):
  * @display_nr_out: (out) (not optional):
  */
 gboolean
 flatpak_run_parse_x11_display (const char  *display,
+                               int         *family,
                                char       **x11_socket,
+                               char       **remote_host,
                                char       **display_nr_out,
                                GError     **error)
 {
@@ -217,7 +230,8 @@ flatpak_run_parse_x11_display (const char  *display,
   const char *display_nr;
   const char *display_nr_end;
 
-  colon = strchr (display, ':');
+  /* Use the last ':', not the first, to cope with [::1]:0 */
+  colon = strrchr (display, ':');
 
   if (colon == NULL)
     return glnx_throw (error, "No colon found in DISPLAY=%s", display);
@@ -231,14 +245,22 @@ flatpak_run_parse_x11_display (const char  *display,
   while (g_ascii_isdigit (*display_nr_end))
     display_nr_end++;
 
+  *display_nr_out = g_strndup (display_nr, display_nr_end - display_nr);
+
   if (display == colon || g_str_has_prefix (display, "unix:"))
     {
-      *display_nr_out = g_strndup (display_nr, display_nr_end - display_nr);
+      *family = FamilyLocal;
       *x11_socket = g_strdup_printf ("/tmp/.X11-unix/X%s", *display_nr_out);
+    }
+  else if (display[0] == '[' && display[colon - display - 1] == ']')
+    {
+      *family = FamilyInternet6;
+      *remote_host = g_strndup (display + 1, colon - display - 2);
     }
   else
     {
-      return glnx_throw (error, "Non-local X11 address DISPLAY=%s", display);
+      *family = FamilyWild;
+      *remote_host = g_strndup (display, colon - display);
     }
 
   return TRUE;
@@ -289,9 +311,12 @@ flatpak_run_add_x11_args (FlatpakBwrap *bwrap,
 
   if (display != NULL)
     {
+      g_autofree char *remote_host = NULL;
       g_autofree char *original_display_nr = NULL;
+      int family = -1;
 
-      if (!flatpak_run_parse_x11_display (display, &x11_socket, &original_display_nr,
+      if (!flatpak_run_parse_x11_display (display, &family, &x11_socket,
+                                          &remote_host, &original_display_nr,
                                           &local_error))
         {
           g_warning ("%s", local_error->message);
@@ -300,6 +325,14 @@ flatpak_run_add_x11_args (FlatpakBwrap *bwrap,
         }
 
       g_assert (original_display_nr != NULL);
+
+      if (family != FamilyLocal)
+        {
+          g_warning ("Non-local X11 address DISPLAY=%s", display);
+          flatpak_bwrap_unset_env (bwrap, "DISPLAY");
+          return;
+        }
+
       g_assert (x11_socket != NULL);
 
       flatpak_bwrap_add_args (bwrap,
