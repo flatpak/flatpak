@@ -1779,6 +1779,7 @@ static const DisplayTest x11_display_tests[] =
   { ":0", FamilyLocal, "/tmp/.X11-unix/X0", NULL, "0" },
   { ":0.0", FamilyLocal, "/tmp/.X11-unix/X0", NULL, "0" },
   { ":42.0", FamilyLocal, "/tmp/.X11-unix/X42", NULL, "42" },
+  { "unix:42", FamilyLocal, "/tmp/.X11-unix/X42", NULL, "42" },
   { "othermachine:23", FamilyWild, NULL, "othermachine", "23" },
   { "bees.example.com:23", FamilyWild, NULL, "bees.example.com", "23" },
   { "[::1]:0", FamilyInternet6, NULL, "::1", "0" },
