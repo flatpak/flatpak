@@ -103,17 +103,17 @@ extract_unix_path_from_dbus_address (const char *address)
 
 #ifdef ENABLE_XAUTH
 static gboolean
-auth_streq (char *str,
-            char *au_str,
-            int   au_len)
+auth_streq (const char *str,
+            const char *au_str,
+            int         au_len)
 {
   return au_len == strlen (str) && memcmp (str, au_str, au_len) == 0;
 }
 
 static gboolean
-xauth_entry_should_propagate (Xauth *xa,
-                              char  *hostname,
-                              char  *number)
+xauth_entry_should_propagate (const Xauth *xa,
+                              const char  *hostname,
+                              const char  *number)
 {
   /* ensure entry isn't for remote access */
   if (xa->family != FamilyLocal && xa->family != FamilyWild)
@@ -148,7 +148,8 @@ xauth_entry_should_propagate (Xauth *xa,
 }
 
 static void
-write_xauth (char *number, FILE *output)
+write_xauth (const char *number,
+             FILE       *output)
 {
   Xauth *xa, local_xa;
   char *filename;
