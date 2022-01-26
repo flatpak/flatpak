@@ -105,7 +105,7 @@ extract_unix_path_from_dbus_address (const char *address)
 static gboolean
 auth_streq (const char *str,
             const char *au_str,
-            int         au_len)
+            size_t      au_len)
 {
   return au_len == strlen (str) && memcmp (str, au_str, au_len) == 0;
 }
