@@ -1799,6 +1799,7 @@ test_parse_x11_display (void)
   for (i = 0; i < G_N_ELEMENTS (x11_display_tests); i++)
     {
       const DisplayTest *test = &x11_display_tests[i];
+      int family = -1;
       g_autofree char *x11_socket = NULL;
       g_autofree char *remote_host = NULL;
       g_autofree char *display_number = NULL;
@@ -1808,12 +1809,13 @@ test_parse_x11_display (void)
       g_test_message ("%s", test->display);
 
       ok = flatpak_run_parse_x11_display (test->display,
+                                          &family,
                                           &x11_socket,
+                                          &remote_host,
                                           &display_number,
                                           &error);
 
-      /* TODO: should be able to parse non-local addresses, too */
-      if (test->family != FamilyLocal)
+      if (test->family == 0)
         {
           g_assert_nonnull (error);
           g_assert_false (ok);
@@ -1826,6 +1828,7 @@ test_parse_x11_display (void)
         {
           g_assert_no_error (error);
           g_assert_true (ok);
+          g_assert_cmpint (family, ==, test->family);
           g_assert_cmpstr (x11_socket, ==, test->x11_socket);
           g_assert_cmpstr (remote_host, ==, test->remote_host);
           g_assert_cmpstr (display_number, ==, test->display_number);
