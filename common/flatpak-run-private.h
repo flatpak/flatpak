@@ -200,4 +200,9 @@ gboolean flatpak_run_app (FlatpakDecomposed  *app_ref,
 
 extern const char * const *flatpak_abs_usrmerged_dirs;
 
+gboolean flatpak_run_parse_x11_display (const char  *display,
+                                        char       **x11_socket,
+                                        char       **original_display_nr,
+                                        GError     **error);
+
 #endif /* __FLATPAK_RUN_H__ */

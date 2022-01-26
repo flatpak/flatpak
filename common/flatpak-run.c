@@ -204,12 +204,54 @@ write_xauth (const char *number,
 }
 #endif /* ENABLE_XAUTH */
 
+/*
+ * @x11_socket: (out) (not optional):
+ * @display_nr_out: (out) (not optional):
+ */
+gboolean
+flatpak_run_parse_x11_display (const char  *display,
+                               char       **x11_socket,
+                               char       **display_nr_out,
+                               GError     **error)
+{
+  const char *colon;
+  const char *display_nr;
+  const char *display_nr_end;
+
+  colon = strchr (display, ':');
+
+  if (colon == NULL)
+    return glnx_throw (error, "No colon found in DISPLAY=%s", display);
+
+  if (!g_ascii_isdigit (colon[1]))
+    return glnx_throw (error, "Colon not followed by a digit in DISPLAY=%s", display);
+
+  display_nr = &colon[1];
+  display_nr_end = display_nr;
+
+  while (g_ascii_isdigit (*display_nr_end))
+    display_nr_end++;
+
+  if (display == colon)
+    {
+      *display_nr_out = g_strndup (display_nr, display_nr_end - display_nr);
+      *x11_socket = g_strdup_printf ("/tmp/.X11-unix/X%s", *display_nr_out);
+    }
+  else
+    {
+      return glnx_throw (error, "Non-local X11 address DISPLAY=%s", display);
+    }
+
+  return TRUE;
+}
+
 static void
 flatpak_run_add_x11_args (FlatpakBwrap *bwrap,
                           gboolean      allowed)
 {
   g_autofree char *x11_socket = NULL;
   const char *display;
+  g_autoptr(GError) local_error = NULL;
 
   /* Always cover /tmp/.X11-unix, that way we never see the host one in case
    * we have access to the host /tmp. If you request X access we'll put the right
@@ -245,17 +287,21 @@ flatpak_run_add_x11_args (FlatpakBwrap *bwrap,
   g_debug ("Allowing x11 access");
 
   display = g_getenv ("DISPLAY");
-  if (display && display[0] == ':' && g_ascii_isdigit (display[1]))
+
+  if (display != NULL)
     {
-      const char *display_nr = &display[1];
-      const char *display_nr_end = display_nr;
-      g_autofree char *d = NULL;
+      g_autofree char *original_display_nr = NULL;
 
-      while (g_ascii_isdigit (*display_nr_end))
-        display_nr_end++;
+      if (!flatpak_run_parse_x11_display (display, &x11_socket, &original_display_nr,
+                                          &local_error))
+        {
+          g_warning ("%s", local_error->message);
+          flatpak_bwrap_unset_env (bwrap, "DISPLAY");
+          return;
+        }
 
-      d = g_strndup (display_nr, display_nr_end - display_nr);
-      x11_socket = g_strdup_printf ("/tmp/.X11-unix/X%s", d);
+      g_assert (original_display_nr != NULL);
+      g_assert (x11_socket != NULL);
 
       flatpak_bwrap_add_args (bwrap,
                               "--ro-bind", x11_socket, "/tmp/.X11-unix/X99",
@@ -276,7 +322,7 @@ flatpak_run_add_x11_args (FlatpakBwrap *bwrap,
                 {
                   static const char dest[] = "/run/flatpak/Xauthority";
 
-                  write_xauth (d, output);
+                  write_xauth (original_display_nr, output);
                   flatpak_bwrap_add_args_data_fd (bwrap, "--ro-bind-data", tmp_fd, dest);
 
                   flatpak_bwrap_set_env (bwrap, "XAUTHORITY", dest, TRUE);
