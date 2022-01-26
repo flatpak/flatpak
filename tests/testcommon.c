@@ -9,6 +9,7 @@
 #include "flatpak-utils-private.h"
 #include "flatpak-appdata-private.h"
 #include "flatpak-builtins-utils.h"
+#include "flatpak-run-private.h"
 #include "flatpak-table-printer.h"
 #include "parse-datetime.h"
 
@@ -1758,6 +1759,80 @@ test_str_is_integer (void)
   g_assert_false (flatpak_str_is_integer ("a1234"));
 }
 
+/* These are part of the X11 protocol, so we can safely hard-code them here */
+#define FamilyInternet6 6
+#define FamilyLocal 256
+#define FamilyWild 65535
+
+typedef struct
+{
+  const char *display;
+  int family;
+  const char *x11_socket;
+  const char *remote_host;
+  const char *display_number;
+} DisplayTest;
+
+static const DisplayTest x11_display_tests[] =
+{
+  /* Valid test-cases */
+  { ":0", FamilyLocal, "/tmp/.X11-unix/X0", NULL, "0" },
+  { ":0.0", FamilyLocal, "/tmp/.X11-unix/X0", NULL, "0" },
+  { ":42.0", FamilyLocal, "/tmp/.X11-unix/X42", NULL, "42" },
+  { "othermachine:23", FamilyWild, NULL, "othermachine", "23" },
+  { "bees.example.com:23", FamilyWild, NULL, "bees.example.com", "23" },
+  { "[::1]:0", FamilyInternet6, NULL, "::1", "0" },
+
+  /* Invalid test-cases */
+  { "", 0 },
+  { "nope", 0 },
+  { ":!", 0 },
+  { "othermachine::" },
+};
+
+static void
+test_parse_x11_display (void)
+{
+  gsize i;
+
+  for (i = 0; i < G_N_ELEMENTS (x11_display_tests); i++)
+    {
+      const DisplayTest *test = &x11_display_tests[i];
+      g_autofree char *x11_socket = NULL;
+      g_autofree char *remote_host = NULL;
+      g_autofree char *display_number = NULL;
+      gboolean ok;
+      g_autoptr(GError) error = NULL;
+
+      g_test_message ("%s", test->display);
+
+      ok = flatpak_run_parse_x11_display (test->display,
+                                          &x11_socket,
+                                          &display_number,
+                                          &error);
+
+      /* TODO: should be able to parse non-local addresses, too */
+      if (test->family != FamilyLocal)
+        {
+          g_assert_nonnull (error);
+          g_assert_false (ok);
+          g_assert_null (x11_socket);
+          g_assert_null (remote_host);
+          g_assert_null (display_number);
+          g_test_message ("-> could not parse: %s", error->message);
+        }
+      else
+        {
+          g_assert_no_error (error);
+          g_assert_true (ok);
+          g_assert_cmpstr (x11_socket, ==, test->x11_socket);
+          g_assert_cmpstr (remote_host, ==, test->remote_host);
+          g_assert_cmpstr (display_number, ==, test->display_number);
+          g_test_message ("-> successfully parsed");
+        }
+    }
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -1790,6 +1865,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/common/needs-quoting", test_needs_quoting);
   g_test_add_func ("/common/quote-argv", test_quote_argv);
   g_test_add_func ("/common/str-is-integer", test_str_is_integer);
+  g_test_add_func ("/common/parse-x11-display", test_parse_x11_display);
 
   g_test_add_func ("/app/looks-like-branch", test_looks_like_branch);
   g_test_add_func ("/app/columns", test_columns);
