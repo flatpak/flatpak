@@ -231,7 +231,7 @@ flatpak_run_parse_x11_display (const char  *display,
   while (g_ascii_isdigit (*display_nr_end))
     display_nr_end++;
 
-  if (display == colon)
+  if (display == colon || g_str_has_prefix (display, "unix:"))
     {
       *display_nr_out = g_strndup (display_nr, display_nr_end - display_nr);
       *x11_socket = g_strdup_printf ("/tmp/.X11-unix/X%s", *display_nr_out);
