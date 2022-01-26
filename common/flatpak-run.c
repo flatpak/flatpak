@@ -153,6 +153,7 @@ xauth_entry_should_propagate (const Xauth *xa,
 
 static void
 write_xauth (const char *number,
+             const char *replace_number,
              FILE       *output)
 {
   Xauth *xa, local_xa;
@@ -179,10 +180,10 @@ write_xauth (const char *number,
       if (xauth_entry_should_propagate (xa, unames.nodename, number))
         {
           local_xa = *xa;
-          if (local_xa.number)
+          if (local_xa.number != NULL && replace_number != NULL)
             {
-              local_xa.number = (char *) "99";
-              local_xa.number_length = 2;
+              local_xa.number = (char *) replace_number;
+              local_xa.number_length = strlen (replace_number);
             }
 
           if (local_xa.family == FamilyLocal &&
@@ -268,8 +269,9 @@ flatpak_run_parse_x11_display (const char  *display,
 }
 
 static void
-flatpak_run_add_x11_args (FlatpakBwrap *bwrap,
-                          gboolean      allowed)
+flatpak_run_add_x11_args (FlatpakBwrap         *bwrap,
+                          gboolean              allowed,
+                          FlatpakContextShares  shares)
 {
   g_autofree char *x11_socket = NULL;
   const char *display;
@@ -314,6 +316,7 @@ flatpak_run_add_x11_args (FlatpakBwrap *bwrap,
     {
       g_autofree char *remote_host = NULL;
       g_autofree char *original_display_nr = NULL;
+      const char *replace_display_nr = NULL;
       int family = -1;
 
       if (!flatpak_run_parse_x11_display (display, &family, &x11_socket,
@@ -336,10 +339,35 @@ flatpak_run_add_x11_args (FlatpakBwrap *bwrap,
 
       g_assert (x11_socket != NULL);
 
-      flatpak_bwrap_add_args (bwrap,
-                              "--ro-bind", x11_socket, "/tmp/.X11-unix/X99",
-                              NULL);
-      flatpak_bwrap_set_env (bwrap, "DISPLAY", ":99.0", TRUE);
+      if (g_file_test (x11_socket, G_FILE_TEST_EXISTS))
+        {
+          flatpak_bwrap_add_args (bwrap,
+                                  "--ro-bind", x11_socket, "/tmp/.X11-unix/X99",
+                                  NULL);
+          flatpak_bwrap_set_env (bwrap, "DISPLAY", ":99.0", TRUE);
+          replace_display_nr = "99";
+        }
+      else if ((shares & FLATPAK_CONTEXT_SHARED_NETWORK) == 0)
+        {
+          /* If DISPLAY is for example :42 but /tmp/.X11-unix/X42
+           * doesn't exist, then the only way this is going to work
+           * is if the app can connect to abstract socket
+           * @/tmp/.X11-unix/X42 or to TCP port localhost:6042,
+           * either of which requires a shared network namespace. */
+          g_warning ("X11 socket %s does not exist in filesystem.",
+                     x11_socket);
+          g_warning ("X11 access will require --share=network permission.");
+        }
+      else if (x11_socket != NULL)
+        {
+          g_warning ("X11 socket %s does not exist in filesystem, "
+                     "trying to use abstract socket instead.",
+                     x11_socket);
+        }
+      else
+        {
+          flatpak_debug2 ("Assuming --share=network gives access to remote X11");
+        }
 
 #ifdef ENABLE_XAUTH
       g_auto(GLnxTmpfile) xauth_tmpf  = { 0, };
@@ -355,7 +383,7 @@ flatpak_run_add_x11_args (FlatpakBwrap *bwrap,
                 {
                   static const char dest[] = "/run/flatpak/Xauthority";
 
-                  write_xauth (original_display_nr, output);
+                  write_xauth (original_display_nr, replace_display_nr, output);
                   flatpak_bwrap_add_args_data_fd (bwrap, "--ro-bind-data", tmp_fd, dest);
 
                   flatpak_bwrap_set_env (bwrap, "XAUTHORITY", dest, TRUE);
@@ -1705,7 +1733,7 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
   else
     allow_x11 = (context->sockets & FLATPAK_CONTEXT_SOCKET_X11) != 0;
 
-  flatpak_run_add_x11_args (bwrap, allow_x11);
+  flatpak_run_add_x11_args (bwrap, allow_x11, context->shares);
 
   if (context->sockets & FLATPAK_CONTEXT_SOCKET_SSH_AUTH)
     {
