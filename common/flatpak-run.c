@@ -699,10 +699,12 @@ flatpak_run_get_pulseaudio_server (void)
 /*
  * Parse a PulseAudio server string, as documented on
  * https://www.freedesktop.org/wiki/Software/PulseAudio/Documentation/User/ServerStrings/.
- * Returns the first supported server address, or NULL if none are supported.
+ * Returns the first supported server address, or NULL if none are supported,
+ * or NULL with @remote set if @value points to a remote server.
  */
 static char *
-flatpak_run_parse_pulse_server (const char *value)
+flatpak_run_parse_pulse_server (const char *value,
+                                gboolean   *remote)
 {
   g_auto(GStrv) servers = g_strsplit (value, " ", 0);
   gsize i;
@@ -727,7 +729,11 @@ flatpak_run_parse_pulse_server (const char *value)
       if (server[0] == '/')
         return g_strdup (server);
 
-      /* TODO: Support TCP connections? */
+      if (g_str_has_prefix (server, "tcp:"))
+        {
+          *remote = TRUE;
+          return NULL;
+        }
     }
 
   return NULL;
@@ -842,16 +848,19 @@ flatpak_run_get_pulse_runtime_dir (void)
 }
 
 static void
-flatpak_run_add_pulseaudio_args (FlatpakBwrap *bwrap)
+flatpak_run_add_pulseaudio_args (FlatpakBwrap         *bwrap,
+                                 FlatpakContextShares  shares)
 {
   g_autofree char *pulseaudio_server = flatpak_run_get_pulseaudio_server ();
   g_autofree char *pulseaudio_socket = NULL;
   g_autofree char *pulse_runtime_dir = flatpak_run_get_pulse_runtime_dir ();
+  gboolean remote = FALSE;
 
   if (pulseaudio_server)
-    pulseaudio_socket = flatpak_run_parse_pulse_server (pulseaudio_server);
+    pulseaudio_socket = flatpak_run_parse_pulse_server (pulseaudio_server,
+                                                        &remote);
 
-  if (!pulseaudio_socket)
+  if (pulseaudio_socket == NULL && !remote)
     {
       pulseaudio_socket = g_build_filename (pulse_runtime_dir, "native", NULL);
 
@@ -859,7 +868,7 @@ flatpak_run_add_pulseaudio_args (FlatpakBwrap *bwrap)
         g_clear_pointer (&pulseaudio_socket, g_free);
     }
 
-  if (!pulseaudio_socket)
+  if (pulseaudio_socket == NULL && !remote)
     {
       pulseaudio_socket = realpath ("/var/run/pulse/native", NULL);
 
@@ -869,7 +878,18 @@ flatpak_run_add_pulseaudio_args (FlatpakBwrap *bwrap)
 
   flatpak_bwrap_unset_env (bwrap, "PULSE_SERVER");
 
-  if (pulseaudio_socket && g_file_test (pulseaudio_socket, G_FILE_TEST_EXISTS))
+  if (remote)
+    {
+      if ((shares & FLATPAK_CONTEXT_SHARED_NETWORK) == 0)
+        {
+          g_warning ("Remote PulseAudio server configured.");
+          g_warning ("PulseAudio access will require --share=network permission.");
+        }
+
+      g_debug ("Using remote PulseAudio server \"%s\"", pulseaudio_server);
+      flatpak_bwrap_set_env (bwrap, "PULSE_SERVER", pulseaudio_server, TRUE);
+    }
+  else if (pulseaudio_socket && g_file_test (pulseaudio_socket, G_FILE_TEST_EXISTS))
     {
       static const char sandbox_socket_path[] = "/run/flatpak/pulse/native";
       static const char pulse_server[] = "unix:/run/flatpak/pulse/native";
@@ -897,7 +917,7 @@ flatpak_run_add_pulseaudio_args (FlatpakBwrap *bwrap)
    * since we don't want to add more permissions for something we plan to replace with
    * portals/pipewire going forward we reinterpret pulseaudio to also mean ALSA.
    */
-  if (g_file_test ("/dev/snd", G_FILE_TEST_IS_DIR))
+  if (!remote && g_file_test ("/dev/snd", G_FILE_TEST_IS_DIR))
     flatpak_bwrap_add_args (bwrap, "--dev-bind", "/dev/snd", "/dev/snd", NULL);
 }
 
@@ -1755,7 +1775,7 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
   if (context->sockets & FLATPAK_CONTEXT_SOCKET_PULSEAUDIO)
     {
       g_debug ("Allowing pulseaudio access");
-      flatpak_run_add_pulseaudio_args (bwrap);
+      flatpak_run_add_pulseaudio_args (bwrap, context->shares);
     }
 
   if (context->sockets & FLATPAK_CONTEXT_SOCKET_PCSC)
