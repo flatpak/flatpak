@@ -115,15 +115,24 @@ auth_streq (const char *str,
 
 static gboolean
 xauth_entry_should_propagate (const Xauth *xa,
-                              const char  *hostname,
+                              int          family,
+                              const char  *remote_hostname,
+                              const char  *local_hostname,
                               const char  *number)
 {
-  /* ensure entry isn't for remote access */
-  if (xa->family != FamilyLocal && xa->family != FamilyWild)
+  /* ensure entry isn't for a different type of access */
+  if (family != FamilyWild && xa->family != family && xa->family != FamilyWild)
+    return FALSE;
+
+  /* ensure entry isn't for remote access, except that if remote_hostname
+   * is specified, then remote access to that hostname is OK */
+  if (xa->family != FamilyWild && xa->family != FamilyLocal &&
+      (remote_hostname == NULL ||
+       !auth_streq (remote_hostname, xa->address, xa->address_length)))
     return FALSE;
 
   /* ensure entry is for this machine */
-  if (xa->family == FamilyLocal && !auth_streq (hostname, xa->address, xa->address_length))
+  if (xa->family == FamilyLocal && !auth_streq (local_hostname, xa->address, xa->address_length))
     {
       /* OpenSUSE inherits the hostname value from DHCP without updating
        * its X11 authentication cookie. The old hostname value can still
@@ -151,7 +160,9 @@ xauth_entry_should_propagate (const Xauth *xa,
 }
 
 static void
-write_xauth (const char *number,
+write_xauth (int family,
+             const char *remote_host,
+             const char *number,
              const char *replace_number,
              FILE       *output)
 {
@@ -176,7 +187,8 @@ write_xauth (const char *number,
       xa = XauReadAuth (f);
       if (xa == NULL)
         break;
-      if (xauth_entry_should_propagate (xa, unames.nodename, number))
+      if (xauth_entry_should_propagate (xa, family, remote_host,
+                                        unames.nodename, number))
         {
           local_xa = *xa;
           if (local_xa.number != NULL && replace_number != NULL)
@@ -329,16 +341,8 @@ flatpak_run_add_x11_args (FlatpakBwrap         *bwrap,
 
       g_assert (original_display_nr != NULL);
 
-      if (family != FamilyLocal)
-        {
-          g_warning ("Non-local X11 address DISPLAY=%s", display);
-          flatpak_bwrap_unset_env (bwrap, "DISPLAY");
-          return;
-        }
-
-      g_assert (x11_socket != NULL);
-
-      if (g_file_test (x11_socket, G_FILE_TEST_EXISTS))
+      if (x11_socket != NULL
+          && g_file_test (x11_socket, G_FILE_TEST_EXISTS))
         {
           flatpak_bwrap_add_args (bwrap,
                                   "--ro-bind", x11_socket, "/tmp/.X11-unix/X99",
@@ -352,9 +356,16 @@ flatpak_run_add_x11_args (FlatpakBwrap         *bwrap,
            * doesn't exist, then the only way this is going to work
            * is if the app can connect to abstract socket
            * @/tmp/.X11-unix/X42 or to TCP port localhost:6042,
-           * either of which requires a shared network namespace. */
-          g_warning ("X11 socket %s does not exist in filesystem.",
-                     x11_socket);
+           * either of which requires a shared network namespace.
+           *
+           * Alternatively, if DISPLAY is othermachine:23, then we
+           * definitely need access to TCP port othermachine:6023. */
+          if (x11_socket != NULL)
+            g_warning ("X11 socket %s does not exist in filesystem.",
+                       x11_socket);
+          else
+            g_warning ("Remote X11 display detected.");
+
           g_warning ("X11 access will require --share=network permission.");
         }
       else if (x11_socket != NULL)
@@ -382,7 +393,8 @@ flatpak_run_add_x11_args (FlatpakBwrap         *bwrap,
                 {
                   static const char dest[] = "/run/flatpak/Xauthority";
 
-                  write_xauth (original_display_nr, replace_display_nr, output);
+                  write_xauth (family, remote_host, original_display_nr,
+                               replace_display_nr, output);
                   flatpak_bwrap_add_args_data_fd (bwrap, "--ro-bind-data", tmp_fd, dest);
 
                   flatpak_bwrap_set_env (bwrap, "XAUTHORITY", dest, TRUE);
