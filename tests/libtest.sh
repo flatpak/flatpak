@@ -34,6 +34,11 @@ assert_not_reached () {
     echo $@ 1>&2; exit 1
 }
 
+ok () {
+    echo "ok $@"
+    echo "============================================================"
+}
+
 test_tmpdir=$(pwd)
 
 # Sanity check that we're in a tmpdir that has
@@ -307,6 +312,10 @@ update_repo () {
         collection_args=--collection-id=${COLLECTION_ID}
     else
         collection_args=
+    fi
+
+    if test -f repos/${REPONAME}/summary; then
+        sleep 1 # ensure we get a new timestamp on the summary files
     fi
 
     ${FLATPAK} build-update-repo ${collection_args} ${GPGARGS:-${FL_GPGARGS}} ${UPDATE_REPO_ARGS-} repos/${REPONAME}

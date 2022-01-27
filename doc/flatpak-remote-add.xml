@@ -221,12 +221,12 @@
                   By default all refs are allowed, but if a ref
                   matches a deny rule it is disallowed unless it
                   specifically matches an allow rule. This means you
-                  can use this to implement both whitelisting and blacklisting.
+                  can use this to implement both allowlisting and blocklisting.
                 </para>
                 <para>
                   Here is an example filter file:
 <programlisting>
-# This is a whitelist style filter as it denies all first
+# This is an allowlist style filter as it denies all first
 deny *
 allow runtime/org.freedesktop.*
 allow org.some.app/arm

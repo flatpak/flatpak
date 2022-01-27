@@ -29,28 +29,28 @@ echo "1..5"
 ${FLATPAK} config --list > list_out
 assert_file_has_content list_out "^languages:"
 
-echo "ok config list"
+ok "config list"
 
 ${FLATPAK} config --set languages "de;fr"
 ${FLATPAK} config --get languages > get_out
 assert_file_has_content get_out "^de;fr"
 
-echo "ok config set"
+ok "config set"
 
 ${FLATPAK} config --set languages "*"
 ${FLATPAK} config --get languages > get_out
 assert_file_has_content get_out "*"
 
-echo "ok config languages *"
+ok "config languages *"
 
 ${FLATPAK} config --set languages "all"
 ${FLATPAK} config --get languages > get_out
 assert_file_has_content get_out "all"
 
-echo "ok config languages *"
+ok "config languages *"
 
 ${FLATPAK} config --unset languages
 ${FLATPAK} config --get languages > get_out
 assert_file_has_content get_out "^[*]unset[*]"
 
-echo "ok config unset"
+ok "config unset"
