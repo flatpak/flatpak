@@ -235,6 +235,54 @@ test_filecopy (void)
   g_assert (S_ISREG (stbuf.st_mode));
 }
 
+static void
+test_filecopy_procfs (void)
+{
+  const char * const pseudo_files[] =
+  {
+    /* A file in /proc that stat()s as empty (at least on Linux 5.15) */
+    "/proc/version",
+    /* A file in /sys that stat()s as empty (at least on Linux 5.15) */
+    "/sys/fs/cgroup/cgroup.controllers",
+    /* A file in /sys that stat()s as non-empty (at least on Linux 5.15) */
+    "/sys/fs/ext4/features/meta_bg_resize",
+  };
+  gsize i;
+
+  for (i = 0; i < G_N_ELEMENTS (pseudo_files); i++)
+    {
+      _GLNX_TEST_DECLARE_ERROR(local_error, error);
+      g_autofree char *contents = NULL;
+      g_autofree char *contents_of_copy = NULL;
+      gsize len;
+      gsize len_copy;
+
+      if (!g_file_get_contents (pseudo_files[i], &contents, &len, error))
+        {
+          g_test_message ("Not testing %s: %s",
+                          pseudo_files[i], local_error->message);
+          g_clear_error (&local_error);
+          continue;
+        }
+
+      if (!glnx_file_copy_at (AT_FDCWD, pseudo_files[i], NULL,
+                              AT_FDCWD, "copy",
+                              GLNX_FILE_COPY_OVERWRITE | GLNX_FILE_COPY_NOCHOWN,
+                              NULL, error))
+        return;
+
+      g_assert_no_error (local_error);
+
+      if (!g_file_get_contents ("copy", &contents_of_copy, &len_copy, error))
+        return;
+
+      g_assert_no_error (local_error);
+
+      g_assert_cmpstr (contents, ==, contents_of_copy);
+      g_assert_cmpuint (len, ==, len_copy);
+    }
+}
+
 int main (int argc, char **argv)
 {
   _GLNX_TEST_SCOPED_TEMP_DIR;
@@ -245,6 +293,7 @@ int main (int argc, char **argv)
   g_test_add_func ("/tmpfile", test_tmpfile);
   g_test_add_func ("/stdio-file", test_stdio_file);
   g_test_add_func ("/filecopy", test_filecopy);
+  g_test_add_func ("/filecopy-procfs", test_filecopy_procfs);
   g_test_add_func ("/renameat2-noreplace", test_renameat2_noreplace);
   g_test_add_func ("/renameat2-exchange", test_renameat2_exchange);
   g_test_add_func ("/fstat", test_fstatat);
