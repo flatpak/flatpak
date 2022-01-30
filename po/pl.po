@@ -1,15 +1,15 @@
 # Polish translation for flatpak.
-# Copyright © 2016-2021 the flatpak authors.
+# Copyright © 2016-2022 the flatpak authors.
 # This file is distributed under the same license as the flatpak package.
-# Piotr Drąg <piotrdrag@gmail.com>, 2016-2021.
-# Aviary.pl <community-poland@mozilla.org>, 2016-2021.
+# Piotr Drąg <piotrdrag@gmail.com>, 2016-2022.
+# Aviary.pl <community-poland@mozilla.org>, 2016-2022.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2022-01-25 09:47+0100\n"
-"PO-Revision-Date: 2021-01-17 13:08+0100\n"
+"PO-Revision-Date: 2022-01-30 13:25+0100\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
 "Language: pl\n"
@@ -4290,9 +4290,9 @@ msgid "D-Bus service file '%s' has wrong name"
 msgstr "Plik usługi D-Bus „%s” ma błędną nazwę"
 
 #: common/flatpak-dir.c:6725
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid Exec argument %s"
-msgstr "Nieprawidłowy parametr require-flatpak %s"
+msgstr "Nieprawidłowy parametr Exec %s"
 
 #: common/flatpak-dir.c:7196
 msgid "While getting detached metadata: "
@@ -4725,25 +4725,26 @@ msgid "Initialize seccomp failed"
 msgstr "Inicjacja seccomp się nie powiodła"
 
 #: common/flatpak-run.c:2808
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to add architecture to seccomp filter: %s"
-msgstr "Dodanie architektury do filtru seccomp się nie powiodło"
+msgstr "Dodanie architektury do filtru seccomp się nie powiodło: %s"
 
 #: common/flatpak-run.c:2817
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to add multiarch architecture to seccomp filter: %s"
 msgstr ""
-"Dodanie wieloarchitekturowej architektury do filtru seccomp się nie powiodło"
+"Dodanie wieloarchitekturowej architektury do filtru seccomp się nie "
+"powiodło: %s"
 
 #: common/flatpak-run.c:2849 common/flatpak-run.c:2871
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to block syscall %d: %s"
-msgstr "Zablokowanie wywołania systemowego %d się nie powiodło"
+msgstr "Zablokowanie wywołania systemowego %d się nie powiodło: %s"
 
 #: common/flatpak-run.c:2904
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to export bpf: %s"
-msgstr "Wyeksportowanie bpf się nie powiodło"
+msgstr "Wyeksportowanie bpf się nie powiodło: %s"
 
 #: common/flatpak-run.c:3139
 #, c-format
