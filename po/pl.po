@@ -1,15 +1,15 @@
 # Polish translation for flatpak.
-# Copyright © 2016-2021 the flatpak authors.
+# Copyright © 2016-2022 the flatpak authors.
 # This file is distributed under the same license as the flatpak package.
-# Piotr Drąg <piotrdrag@gmail.com>, 2016-2021.
-# Aviary.pl <community-poland@mozilla.org>, 2016-2021.
+# Piotr Drąg <piotrdrag@gmail.com>, 2016-2022.
+# Aviary.pl <community-poland@mozilla.org>, 2016-2022.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2022-01-18 17:34+0000\n"
-"PO-Revision-Date: 2021-10-17 13:02+0200\n"
+"PO-Revision-Date: 2022-01-30 13:35+0100\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
 "Language: pl\n"
@@ -2793,24 +2793,24 @@ msgid "Can't load object %s: %s\n"
 msgstr "Nie można wczytać obiektu %s: %s\n"
 
 #: app/flatpak-builtins-repair.c:228
-#, fuzzy, c-format
+#, c-format
 msgid "Commit invalid %s: %s\n"
-msgstr "Nieprawidłowy obiekt: %s.%s\n"
+msgstr "Nieprawidłowe zatwierdzenie %s: %s\n"
 
 #: app/flatpak-builtins-repair.c:231
-#, fuzzy, c-format
+#, c-format
 msgid "Deleting invalid commit %s: %s\n"
-msgstr "Nieprawidłowe odniesienie zatwierdzenia %s: "
+msgstr "Usuwanie nieprawidłowego zatwierdzenia %s: %s\n"
 
 #: app/flatpak-builtins-repair.c:261
 #, c-format
 msgid "Commit should be marked partial: %s\n"
-msgstr ""
+msgstr "Zatwierdzenie powinno być oznaczone jako częściowe: %s\n"
 
 #: app/flatpak-builtins-repair.c:264
 #, c-format
 msgid "Marking commit as partial: %s\n"
-msgstr ""
+msgstr "Oznaczanie zatwierdzenia jako częściowego: %s\n"
 
 #: app/flatpak-builtins-repair.c:293
 #, c-format
@@ -3469,9 +3469,9 @@ msgid "Which do you want to install (0 to abort)?"
 msgstr "Które zainstalować (0 przerwie)?"
 
 #: app/flatpak-cli-transaction.c:127
-#, fuzzy, c-format
+#, c-format
 msgid "Configuring %s as new remote '%s'\n"
-msgstr "Konfigurowanie %s jako nowe repozytorium „%s”"
+msgstr "Konfigurowanie %s jako nowe repozytorium „%s”\n"
 
 #. default to yes on Enter
 #: app/flatpak-cli-transaction.c:134
@@ -3644,9 +3644,9 @@ msgid "Failed to rebase %s to %s: "
 msgstr "Zmiana %s na %s się nie powiodła: "
 
 #: app/flatpak-cli-transaction.c:793
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to uninstall %s for rebase to %s: "
-msgstr "Zmiana %s na %s się nie powiodła: "
+msgstr "Odinstalowanie %s dla zmiany na %s się nie powiodło: "
 
 #: app/flatpak-cli-transaction.c:994
 #, c-format
@@ -4085,9 +4085,9 @@ msgid "Failed to rebase %s to %s: %s\n"
 msgstr "Zmiana %s na %s się nie powiodła: %s\n"
 
 #: app/flatpak-quiet-transaction.c:240
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to uninstall %s for rebase to %s: %s\n"
-msgstr "Zmiana %s na %s się nie powiodła: %s\n"
+msgstr "Odinstalowanie %s dla zmiany na %s się nie powiodło: %s\n"
 
 #: common/flatpak-auth.c:58
 #, c-format
@@ -4722,11 +4722,10 @@ msgid "No cached summary for remote '%s'"
 msgstr "Brak podsumowania w pamięci podręcznej dla repozytorium „%s”"
 
 #: common/flatpak-dir.c:11468
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid checksum for indexed summary %s read from %s"
 msgstr ""
-"Nieprawidłowa suma kontrolna zindeksowanego podsumowania %s dla repozytorium "
-"„%s”"
+"Nieprawidłowa suma kontrolna zindeksowanego podsumowania %s odczytanego z %s"
 
 #: common/flatpak-dir.c:11541
 #, c-format
