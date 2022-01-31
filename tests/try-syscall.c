@@ -7,6 +7,9 @@
  *
  * In general, we pass a bad fd or pointer to each syscall that will
  * accept one, so that it will fail with EBADF or EFAULT without side-effects.
+ *
+ * This helper is used for regression tests in both bubblewrap and flatpak.
+ * Please keep both copies in sync.
  */
 
 #include <errno.h>
