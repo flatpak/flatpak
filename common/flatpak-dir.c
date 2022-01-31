@@ -10923,7 +10923,7 @@ remote_filter_load (GFile *path, GError **error)
     }
 
   filter = g_new0 (RemoteFilter, 1);
-  filter->checksum = g_compute_checksum_for_data (G_CHECKSUM_SHA1, (guchar *)data, data_size);
+  filter->checksum = g_compute_checksum_for_data (G_CHECKSUM_SHA256, (guchar *)data, data_size);
   filter->path = g_object_ref (path);
   filter->mtime = mtime;
   filter->last_mtime_check = g_get_monotonic_time ();
