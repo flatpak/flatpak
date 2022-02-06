@@ -1699,6 +1699,18 @@ static const ExportData default_exports[] = {
   {"PERLLIB", NULL},
   {"PERL5LIB", NULL},
   {"XCURSOR_PATH", NULL},
+  {"GST_PLUGIN_PATH_1_0", NULL},
+  {"GST_REGISTRY", NULL},
+  {"GST_REGISTRY_1_0", NULL},
+  {"GST_PLUGIN_PATH", NULL},
+  {"GST_PLUGIN_SYSTEM_PATH", NULL},
+  {"GST_PLUGIN_SCANNER", NULL},
+  {"GST_PLUGIN_SCANNER_1_0", NULL},
+  {"GST_PLUGIN_SYSTEM_PATH_1_0", NULL},
+  {"GST_PRESET_PATH", NULL},
+  {"GST_PTP_HELPER", NULL},
+  {"GST_PTP_HELPER_1_0", NULL},
+  {"GST_INSTALL_PLUGINS_HELPER", NULL},
 };
 
 static const ExportData no_ld_so_cache_exports[] = {
