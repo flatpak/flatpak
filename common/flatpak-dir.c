@@ -4023,12 +4023,24 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
         {
           if (!ostree_repo_create (repo, mode, cancellable, &my_error))
             {
+              const char *repo_path = flatpak_file_get_path_cached (repodir);
+
               flatpak_rm_rf (repodir, cancellable, NULL);
 
               if (allow_empty)
                 return TRUE;
 
-              g_propagate_error (error, g_steal_pointer (&my_error));
+              /* As of 2022, the error message from libostree is not the most helpful:
+               * Creating repo: mkdirat: Permission denied
+               * If the repository path is in the error message, assume this
+               * has been fixed. If not, add it. */
+              if (strstr (my_error->message, repo_path) != NULL)
+                g_propagate_error (error, g_steal_pointer (&my_error));
+              else
+                g_set_error (error, my_error->domain, my_error->code,
+                             "Unable to create repository at %s (%s)",
+                             repo_path, my_error->message);
+
               return FALSE;
             }
 
