@@ -39,10 +39,12 @@ G_BEGIN_DECLS
  * @FLATPAK_BUILTIN_FLAG_ONE_DIR: Allow a single --user/--system/--installation option
  *    and return a single dir. If no option is specified, default to --system
  * @FLATPAK_BUILTIN_FLAG_STANDARD_DIRS: Allow repeated use of --user/--system/--installation
- *    and return multiple dirs. If no option is specified return system(default)+user
+ *    and return multiple dirs. If no option is specified return system(default)+user.
+ *    Implies %FLATPAK_BUILTIN_FLAG_OPTIONAL_REPO.
  * @FLATPAK_BUILTIN_FLAG_ALL_DIRS: Allow repeated use of --user/--system/--installation
  *    and return multiple dirs. If no option is specified, return all installations,
- *    starting with system(default)+user
+ *    starting with system(default)+user.
+ *    Implies %FLATPAK_BUILTIN_FLAG_OPTIONAL_REPO.
  *
  * Flags affecting the behavior of flatpak_option_context_parse().
  *
