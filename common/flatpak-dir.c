@@ -3943,7 +3943,7 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
           if (!flatpak_dir_system_helper_call_ensure_repo (self,
                                                            FLATPAK_HELPER_ENSURE_REPO_FLAGS_NONE,
                                                            installation ? installation : "",
-                                                           NULL, &local_error))
+                                                           cancellable, &local_error))
             {
               if (allow_empty)
                 return TRUE;
@@ -4087,7 +4087,7 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
           if (!flatpak_dir_system_helper_call_ensure_repo (self,
                                                            FLATPAK_HELPER_ENSURE_REPO_FLAGS_NONE,
                                                            installation ? installation : "",
-                                                           NULL, &my_error))
+                                                           cancellable, &my_error))
             {
               if (allow_empty)
                 return TRUE;
