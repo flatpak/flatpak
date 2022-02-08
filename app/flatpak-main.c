@@ -470,7 +470,9 @@ flatpak_option_context_parse (GOptionContext     *context,
         {
           FlatpakDir *dir = g_ptr_array_index (dirs, i);
 
-          if (flags & FLATPAK_BUILTIN_FLAG_OPTIONAL_REPO)
+          if (flags & (FLATPAK_BUILTIN_FLAG_OPTIONAL_REPO |
+                       FLATPAK_BUILTIN_FLAG_ALL_DIRS |
+                       FLATPAK_BUILTIN_FLAG_STANDARD_DIRS))
             {
               if (!flatpak_dir_maybe_ensure_repo (dir, cancellable, error))
                 return FALSE;
