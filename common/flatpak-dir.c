@@ -4005,22 +4005,33 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
          that still user bare-user */
       OstreeRepoMode mode = OSTREE_REPO_MODE_BARE_USER_ONLY;
 
-      if (!ostree_repo_create (repo, mode, cancellable, &my_error))
+      if (flatpak_dir_use_system_helper (self, NULL))
         {
-          flatpak_rm_rf (repodir, cancellable, NULL);
+          if (!system_helper_maybe_ensure_repo (self, allow_empty, cancellable, error))
+            return FALSE;
 
-          if (allow_empty)
-            return TRUE;
-
-          g_propagate_error (error, g_steal_pointer (&my_error));
-          return FALSE;
+          if (!ensure_repo_opened (repo, cancellable, error))
+            return FALSE;
         }
-
-      /* Create .changed file early to avoid polling non-existing file in monitor */
-      if (!flatpak_dir_mark_changed (self, &my_error))
+      else
         {
-          g_warning ("Error marking directory as changed: %s", my_error->message);
-          g_clear_error (&my_error);
+          if (!ostree_repo_create (repo, mode, cancellable, &my_error))
+            {
+              flatpak_rm_rf (repodir, cancellable, NULL);
+
+              if (allow_empty)
+                return TRUE;
+
+              g_propagate_error (error, g_steal_pointer (&my_error));
+              return FALSE;
+            }
+
+          /* Create .changed file early to avoid polling non-existing file in monitor */
+          if (!flatpak_dir_mark_changed (self, &my_error))
+            {
+              g_warning ("Error marking directory as changed: %s", my_error->message);
+              g_clear_error (&my_error);
+            }
         }
     }
   else
