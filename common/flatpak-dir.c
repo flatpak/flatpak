@@ -3945,6 +3945,23 @@ system_helper_maybe_ensure_repo (FlatpakDir *self,
 }
 
 static gboolean
+ensure_repo_opened (OstreeRepo *repo,
+                    GCancellable *cancellable,
+                    GError **error)
+{
+  if (!ostree_repo_open (repo, cancellable, error))
+    {
+      g_autofree char *repopath = NULL;
+
+      repopath = g_file_get_path (ostree_repo_get_path (repo));
+      g_prefix_error (error, _("While opening repository %s: "), repopath);
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+static gboolean
 _flatpak_dir_ensure_repo (FlatpakDir   *self,
                           gboolean      allow_empty,
                           GCancellable *cancellable,
@@ -4010,14 +4027,8 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
     }
   else
     {
-      if (!ostree_repo_open (repo, cancellable, error))
-        {
-          g_autofree char *repopath = NULL;
-
-          repopath = g_file_get_path (repodir);
-          g_prefix_error (error, _("While opening repository %s: "), repopath);
-          return FALSE;
-        }
+      if (!ensure_repo_opened (repo, cancellable, error))
+        return FALSE;
     }
 
   /* In the system-helper case we're directly using the global repo, and we can't write any
