@@ -3919,6 +3919,30 @@ apply_new_flatpakrepo (const char *remote_name,
 }
 
 static gboolean
+system_helper_maybe_ensure_repo (FlatpakDir *self,
+                                 gboolean allow_empty,
+                                 GCancellable *cancellable,
+                                 GError **error)
+{
+  g_autoptr(GError) local_error = NULL;
+  const char *installation = flatpak_dir_get_id (self);
+
+  if (!flatpak_dir_system_helper_call_ensure_repo (self,
+                                                   FLATPAK_HELPER_ENSURE_REPO_FLAGS_NONE,
+                                                   installation ? installation : "",
+                                                   cancellable, &local_error))
+    {
+      if (allow_empty)
+        return TRUE;
+
+      g_propagate_error (error, g_steal_pointer (&local_error));
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+static gboolean
 _flatpak_dir_ensure_repo (FlatpakDir   *self,
                           gboolean      allow_empty,
                           GCancellable *cancellable,
@@ -3937,20 +3961,8 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
     {
       if (flatpak_dir_use_system_helper (self, NULL))
         {
-          g_autoptr(GError) local_error = NULL;
-          const char *installation = flatpak_dir_get_id (self);
-
-          if (!flatpak_dir_system_helper_call_ensure_repo (self,
-                                                           FLATPAK_HELPER_ENSURE_REPO_FLAGS_NONE,
-                                                           installation ? installation : "",
-                                                           cancellable, &local_error))
-            {
-              if (allow_empty)
-                return TRUE;
-
-              g_propagate_error (error, g_steal_pointer (&local_error));
-              return FALSE;
-            }
+          if (!system_helper_maybe_ensure_repo (self, allow_empty, cancellable, error))
+            return FALSE;
         }
       else
         {
@@ -4083,18 +4095,8 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
     {
       if (flatpak_dir_use_system_helper (self, NULL))
         {
-          const char *installation = flatpak_dir_get_id (self);
-          if (!flatpak_dir_system_helper_call_ensure_repo (self,
-                                                           FLATPAK_HELPER_ENSURE_REPO_FLAGS_NONE,
-                                                           installation ? installation : "",
-                                                           cancellable, &my_error))
-            {
-              if (allow_empty)
-                return TRUE;
-
-              g_propagate_error (error, g_steal_pointer (&my_error));
-              return FALSE;
-            }
+          if (!system_helper_maybe_ensure_repo (self, allow_empty, cancellable, error))
+            return FALSE;
 
           if (!ostree_repo_reload_config (repo, cancellable, error))
             return FALSE;
