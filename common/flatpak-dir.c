@@ -3920,6 +3920,7 @@ apply_new_flatpakrepo (const char *remote_name,
 
 static gboolean
 system_helper_maybe_ensure_repo (FlatpakDir *self,
+                                 FlatpakHelperEnsureRepoFlags flags,
                                  gboolean allow_empty,
                                  GCancellable *cancellable,
                                  GError **error)
@@ -3928,7 +3929,7 @@ system_helper_maybe_ensure_repo (FlatpakDir *self,
   const char *installation = flatpak_dir_get_id (self);
 
   if (!flatpak_dir_system_helper_call_ensure_repo (self,
-                                                   FLATPAK_HELPER_ENSURE_REPO_FLAGS_NONE,
+                                                   flags,
                                                    installation ? installation : "",
                                                    cancellable, &local_error))
     {
@@ -3970,15 +3971,20 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
   g_autoptr(GError) my_error = NULL;
   g_autoptr(GFile) cache_dir = NULL;
   g_autoptr(GHashTable) flatpakrepos = NULL;
+  FlatpakHelperEnsureRepoFlags ensure_flags = FLATPAK_HELPER_ENSURE_REPO_FLAGS_NONE;
 
   if (self->repo != NULL)
     return TRUE;
+
+  /* Don't trigger polkit prompts if we are just doing this opportunistically */
+  if (allow_empty)
+    ensure_flags |= FLATPAK_HELPER_ENSURE_REPO_FLAGS_NO_INTERACTION;
 
   if (!g_file_query_exists (self->basedir, cancellable))
     {
       if (flatpak_dir_use_system_helper (self, NULL))
         {
-          if (!system_helper_maybe_ensure_repo (self, allow_empty, cancellable, error))
+          if (!system_helper_maybe_ensure_repo (self, ensure_flags, allow_empty, cancellable, error))
             return FALSE;
         }
       else
@@ -4007,7 +4013,7 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
 
       if (flatpak_dir_use_system_helper (self, NULL))
         {
-          if (!system_helper_maybe_ensure_repo (self, allow_empty, cancellable, error))
+          if (!system_helper_maybe_ensure_repo (self, ensure_flags, allow_empty, cancellable, error))
             return FALSE;
 
           if (!ensure_repo_opened (repo, cancellable, error))
@@ -4117,7 +4123,7 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
     {
       if (flatpak_dir_use_system_helper (self, NULL))
         {
-          if (!system_helper_maybe_ensure_repo (self, allow_empty, cancellable, error))
+          if (!system_helper_maybe_ensure_repo (self, ensure_flags, allow_empty, cancellable, error))
             return FALSE;
 
           if (!ostree_repo_reload_config (repo, cancellable, error))
