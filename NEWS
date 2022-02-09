@@ -1,3 +1,50 @@
+Changes in 1.13.1
+~~~~~~~~~~~~~~~~~
+Not released yet
+
+New features:
+
+ * Create a directory for XDG_STATE_HOME and set the environment variable
+   - Apps requiring a state directory without a dependency on this updated
+     Flatpak version can get similar functionality by using:
+     --persist=.local/state --unset-env=XDG_STATE_HOME
+     which will use the same storage location
+ * Set HOST_XDG_STATE_HOME environment variable
+ * Add have-kernel-module-foo family of conditionals for extensions, a
+   generalization of have-intel-gpu (which is now mostly equivalent to
+   have-kernel-module-i915)
+ * Add `flatpak document-unexport --doc-id=...` (#1897)
+ * Export Appstream metadata for host system to use
+ * Add command-line completion for the Fish shell (#3109)
+ * Add FlatpakTransaction:no-interaction API
+
+Other changes:
+
+ * The default branch in the Github repository is now named 'main'
+ * Disable session bus access for `flatpak-spawn --sandbox` as intended
+ * Make `sudo flatpak run` fail with an error message, since it is not
+   usually intended
+ * Make `sudo flatpak --user ...` fail with an error message, since acting
+   on root's per-user installation is unlikely to be what was intended
+ * Fix regressions in `flatpak history` since 1.9.1
+   - Don't display the appstream branch used internally
+   - Don't display temporary repositories used internally
+   - Warn instead of failing if other non-app, non-runtime refs are found
+   - Don't set up an unnecessary polkit agent for `flatpak history`
+   - Add test coverage
+ * Don't propagate GStreamer-related environment variables into sandbox
+ * Don't mention "negative" permissions like !host in /.flatpak-info
+ * Improve performance when finding related refs
+ * Use SHA256 instead of SHA1 to avoid false-positives from static analysis
+   (in fact the use of SHA1 was not security-sensitive here)
+ * Fix some error code paths when deploying malformed apps
+ * Improve some error messages
+ * Use URN for fontconfig DTD, consistent with fontconfig itself
+ * Fix incorrect year in NEWS for 1.12.4 release
+ * Use `type -P` or `command -v` in preference to which(1)
+ * Improve measurement of test coverage
+ * Translation updates: de, fr, hi, hr, id, oc, pl, sv, uk, zh_CN
+
 Changes in 1.12.4
 ~~~~~~~~~~~~~~~~~
 Released: 2022-01-18
