@@ -1,3 +1,18 @@
+Changes in 1.10.8
+~~~~~~~~~~~~~~~~~
+Not released yet
+
+ * Fix regressions in `flatpak history` since 1.9.1
+   - Don't display the appstream branch used internally
+   - Don't display temporary repositories used internally
+   - Ignore transaction log entries with empty REF field
+   - Warn instead of failing if other non-app, non-runtime refs are found
+   - Don't set up an unnecessary polkit agent for `flatpak history`
+   - Add test coverage
+ * Fix a typo in an error message
+ * Fix incorrect year in NEWS for 1.10.7 release
+ * Translation update: pl
+
 Changes in 1.10.7
 ~~~~~~~~~~~~~~~~~
 Released: 2022-01-18
