@@ -3,7 +3,7 @@ name: Flatpak CI
 on:
   push:
     branches:
-    - master
+    - main
     - flatpak-1.0.x
     - flatpak-1.2.x
     - flatpak-1.4.x
@@ -21,7 +21,7 @@ on:
     - uncrustify.cfg
     - uncrustify.sh
     branches:
-    - master
+    - main
     - flatpak-1.0.x
     - flatpak-1.2.x
     - flatpak-1.4.x
