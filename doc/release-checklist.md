@@ -8,7 +8,7 @@ Flatpak release checklist
     * This will update `po/`; commit those changes too
 * Do any final smoke-testing, e.g. update a package, install and test it
 * `git evtag sign $VERSION`
-* `git push --atomic origin master $VERSION`
+* `git push --atomic origin main $VERSION`
 * https://github.com/flatpak/flatpak/releases/new
     * Fill in the new version's tag in the "Tag version" box
     * Title: `Release $VERSION`

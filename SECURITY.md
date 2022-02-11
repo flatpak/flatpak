@@ -9,7 +9,7 @@
 
 In stable branches and released packages, this table is likely to be outdated;
 please check
-[the latest version](https://github.com/flatpak/flatpak/blob/master/SECURITY.md).
+[the latest version](https://github.com/flatpak/flatpak/blob/main/SECURITY.md).
 
 | Version  | Supported          | Status
 | -------- | ------------------ | -------------------------------------------------------------- |
@@ -39,4 +39,4 @@ You can join the list [here](https://lists.freedesktop.org/mailman/listinfo/flat
 
 ## Acknowledgements
 
-This text was partially based on the [github.com/containers security policy](https://github.com/containers/common/blob/master/SECURITY.md).
+This text was partially based on the [github.com/containers security policy](https://github.com/containers/common/blob/main/SECURITY.md).
