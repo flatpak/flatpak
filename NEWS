@@ -17,9 +17,15 @@ New features:
  * Export Appstream metadata for host system to use
  * Add command-line completion for the Fish shell (#3109)
  * Add FlatpakTransaction:no-interaction API
+ * We now allow networked access to X11 and pulseaudio services
+   if that is configured, and the applications has network access.
 
 Other changes:
 
+ * Fixed a case where temrporary data was sometimes left in
+   /var/lib/flatpak/appstream, and we now detect such leftover data and
+   remove it.
+ * Updated bundled xdg-dbus-proxy to 0.1.3
  * The default branch in the Github repository is now named 'main'
  * Disable session bus access for `flatpak-spawn --sandbox` as intended
  * Make `sudo flatpak run` fail with an error message, since it is not
