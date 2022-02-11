@@ -11,7 +11,7 @@ AC_PREREQ([2.63])
 # in easier to understand terms:
 #
 # on the stable branch, interface age == micro
-# on the unstable (ie master), interface age = 0
+# on the unstable (ie main), interface age = 0
 
 m4_define([flatpak_major_version], [1])
 m4_define([flatpak_minor_version], [13])

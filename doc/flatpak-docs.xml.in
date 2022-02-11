@@ -10,7 +10,7 @@
     <title>Flatpak Command Reference</title>
     <important>
         <para>
-            The command reference is generated from the flatpak repo; see <ulink url="https://github.com/flatpak/flatpak/tree/master/doc"></ulink>
+            The command reference is generated from the flatpak repo; see <ulink url="https://github.com/flatpak/flatpak/tree/main/doc"></ulink>
         </para>
     </important>
     <partintro>

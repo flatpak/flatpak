@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/flatpak/flatpak/blob/master/flatpak.png?raw=true" alt="Flatpak icon"/>
+  <img src="https://github.com/flatpak/flatpak/blob/main/flatpak.png?raw=true" alt="Flatpak icon"/>
 </p>
 
 Flatpak is a system for building, distributing, and running sandboxed
