@@ -4362,6 +4362,73 @@ flatpak_dir_remove_appstream (FlatpakDir   *self,
   return TRUE;
 }
 
+#define SECS_PER_MINUTE (60)
+#define SECS_PER_HOUR   (60 * SECS_PER_MINUTE)
+#define SECS_PER_DAY    (24 * SECS_PER_HOUR)
+
+/* This looks for old temporary files created by previous versions of
+   flatpak_dir_deploy_appstream(). These are all either directories
+   starting with a dot, or symlinks starting with a dot. Such temp
+   files if found can be from a concurrent deploy, so we only remove
+   any such files older than a day to avoid races.
+*/
+static void
+remove_old_appstream_tmpdirs (GFile *dir)
+{
+  g_auto(GLnxDirFdIterator) dir_iter = { 0 };
+  time_t now = time (NULL);
+
+  if (!glnx_dirfd_iterator_init_at (AT_FDCWD, flatpak_file_get_path_cached (dir),
+                                    FALSE, &dir_iter, NULL))
+    return;
+
+  while (TRUE)
+    {
+      struct stat stbuf;
+      struct dirent *dent;
+      g_autoptr(GFile) tmp = NULL;
+
+      if (!glnx_dirfd_iterator_next_dent_ensure_dtype (&dir_iter, &dent, NULL, NULL))
+        break;
+
+      if (dent == NULL)
+        break;
+
+      /* We ignore non-dotfiles and .timestamps as they are not tempfiles */
+      if (dent->d_name[0] != '.' ||
+          strcmp (dent->d_name, ".timestamp") == 0)
+        continue;
+
+      /* Check for right types and names */
+      if (dent->d_type == DT_DIR)
+        {
+          if (strlen (dent->d_name) != 72 ||
+              dent->d_name[65] != '-')
+            continue;
+        }
+      else if (dent->d_type == DT_LNK)
+        {
+          if (!g_str_has_prefix (dent->d_name, ".active-"))
+            continue;
+        }
+      else
+        continue;
+
+      /* Check that the file is at least a day old to avoid races */
+      if (!glnx_fstatat (dir_iter.fd, dent->d_name, &stbuf, AT_SYMLINK_NOFOLLOW, NULL))
+        continue;
+
+      if (stbuf.st_mtime >= now ||
+          now - stbuf.st_mtime < SECS_PER_DAY)
+        continue;
+
+      tmp = g_file_get_child (dir, dent->d_name);
+
+      /* We ignore errors here, no need to worry anyone */
+      (void)flatpak_rm_rf (tmp, NULL, NULL);
+    }
+}
+
 gboolean
 flatpak_dir_deploy_appstream (FlatpakDir   *self,
                               const char   *remote,
@@ -4647,6 +4714,10 @@ flatpak_dir_deploy_appstream (FlatpakDir   *self,
       g_autofree char *appstream_dir_path = g_file_get_path (appstream_dir);
       utime (appstream_dir_path, NULL);
     }
+
+  /* There used to be an bug here where temporary files where not removed, which could use
+   * quite a lot of space over time, so we check for these and remove them. */
+  remove_old_appstream_tmpdirs (arch_dir);
 
   if (out_changed)
     *out_changed = TRUE;
