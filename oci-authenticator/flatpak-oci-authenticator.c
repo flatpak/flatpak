@@ -411,7 +411,7 @@ lookup_auth_from_config (const char *oci_registry_uri)
   const char *flatpak_global_path = "/etc/flatpak/oci-auth.json";
 
   /* These are what skopeo & co use as per:
-     https://github.com/containers/image/blob/master/pkg/docker/config/config.go#L34
+     https://github.com/containers/image/blob/HEAD/pkg/docker/config/config.go#L34
   */
   g_autofree char *user_container_path = g_build_filename (g_get_user_runtime_dir (), "containers/auth.json", NULL);
   g_autofree char *container_path = g_strdup_printf ("/run/containers/%d/auth.json", getuid ());
