@@ -2,16 +2,17 @@ Changes in 1.12.5
 ~~~~~~~~~~~~~~~~~
 Released: 2022-02-11
 
- * Fixed a case where temrporary data was sometimes left in
+ * Fixed a case where temporary data was sometimes left in
    /var/lib/flatpak/appstream, and we now detect such leftover data and
-   remove it.
- * Fix regressions in `flatpak history` since 1.9.1
+   remove it. (#4735)
+ * Fix regressions in `flatpak history` since 1.9.1 (#4121, #4332)
    - Don't display the appstream branch used internally
    - Don't display temporary repositories used internally
    - Warn instead of failing if other non-app, non-runtime refs are found
    - Don't set up an unnecessary polkit agent for `flatpak history`
    - Add test coverage
- * Don't propagate GStreamer-related environment variables into sandbox
+ * Don't propagate GStreamer-related environment variables into
+   sandbox (#4728)
  * Fix a typo in an error message
  * Fix incorrect year in NEWS for 1.12.4 release
  * Translation update: pl
