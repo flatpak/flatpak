@@ -5,51 +5,66 @@ Not released yet
 New features:
 
  * Create a directory for XDG_STATE_HOME and set the environment variable
+   (#4477)
    - Apps requiring a state directory without a dependency on this updated
      Flatpak version can get similar functionality by using:
      --persist=.local/state --unset-env=XDG_STATE_HOME
      which will use the same storage location
- * Set HOST_XDG_STATE_HOME environment variable
+ * Set HOST_XDG_STATE_HOME environment variable (#4477)
  * Add have-kernel-module-foo family of conditionals for extensions, a
    generalization of have-intel-gpu (which is now mostly equivalent to
-   have-kernel-module-i915)
+   have-kernel-module-i915) (#4647)
  * Add `flatpak document-unexport --doc-id=...` (#1897)
- * Export Appstream metadata for host system to use
+ * Export Appstream metadata for host system to use (#4350, #4599)
  * Add command-line completion for the Fish shell (#3109)
- * Add FlatpakTransaction:no-interaction API
- * We now allow networked access to X11 and pulseaudio services
-   if that is configured, and the applications has network access.
+ * Add FlatpakTransaction:no-interaction API (#4699)
+ * We now allow networked access to X11 and PulseAudio services
+   if that is configured, and the application has network access.
+   (#397, #3908, #4702)
 
 Other changes:
 
- * Fixed a case where temrporary data was sometimes left in
-   /var/lib/flatpak/appstream, and we now detect such leftover data and
-   remove it.
- * Updated bundled xdg-dbus-proxy to 0.1.3
+ * Updated bundled xdg-dbus-proxy to 0.1.3 (#4737)
  * The default branch in the Github repository is now named 'main'
+ * Most commands now work if /var/lib/flatpak exists but /var/lib/flatpak/repo
+   does not, and will automatically populate the repo directory if
+   possible (#4111)
  * Disable session bus access for `flatpak-spawn --sandbox` as intended
+   (#4630)
  * Make `sudo flatpak run` fail with an error message, since it is not
-   usually intended
+   usually intended (#2565)
  * Make `sudo flatpak --user ...` fail with an error message, since acting
    on root's per-user installation is unlikely to be what was intended
- * Fix regressions in `flatpak history` since 1.9.1
+   (#4638)
+ * Don't mention "negative" permissions like !host in /.flatpak-info (#4691)
+ * Improve performance when finding related refs
+ * Use SHA256 instead of SHA1 to avoid false-positives from static analysis
+   (in fact the use of SHA1 was not security-sensitive here) (#4716)
+ * Fix some error code paths when deploying malformed apps
+ * Improve some error messages
+ * Use URN for fontconfig DTD, consistent with fontconfig itself (#4617)
+ * Use `type -P` or `command -v` in preference to which(1) (#4696)
+ * Improve measurement of test coverage (#4681)
+ * Translation updates: de, fr, hi, hr, id, oc, pl, sv, uk, zh_CN
+
+Changes in 1.12.5
+~~~~~~~~~~~~~~~~~
+Released: 2022-02-11
+
+ * Fixed a case where temporary data was sometimes left in
+   /var/lib/flatpak/appstream, and we now detect such leftover data and
+   remove it. (#4735)
+ * Fix regressions in `flatpak history` since 1.9.1 (#4121, #4332)
    - Don't display the appstream branch used internally
    - Don't display temporary repositories used internally
    - Warn instead of failing if other non-app, non-runtime refs are found
    - Don't set up an unnecessary polkit agent for `flatpak history`
    - Add test coverage
- * Don't propagate GStreamer-related environment variables into sandbox
- * Don't mention "negative" permissions like !host in /.flatpak-info
- * Improve performance when finding related refs
- * Use SHA256 instead of SHA1 to avoid false-positives from static analysis
-   (in fact the use of SHA1 was not security-sensitive here)
- * Fix some error code paths when deploying malformed apps
- * Improve some error messages
- * Use URN for fontconfig DTD, consistent with fontconfig itself
+ * Don't propagate GStreamer-related environment variables into
+   sandbox (#4728)
+ * Fix a typo in an error message
  * Fix incorrect year in NEWS for 1.12.4 release
- * Use `type -P` or `command -v` in preference to which(1)
- * Improve measurement of test coverage
- * Translation updates: de, fr, hi, hr, id, oc, pl, sv, uk, zh_CN
+ * Translation update: pl
 
 Changes in 1.12.4
 ~~~~~~~~~~~~~~~~~
