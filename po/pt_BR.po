@@ -1,17 +1,18 @@
 # Brazilian Portuguese translation for flatpak.
-# Copyright (C) 2021 THE flatpak'S COPYRIGHT HOLDER
+# Copyright (C) 2022 THE flatpak'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the flatpak package.
 # Fábio Nogueira <fnogueira@gnome.org>, 2017.
 # Rafael Fontenelle <rafaelff@gnome.org>, 2017-2020.
 # Bruno Lopes <brunolopesdsilv@gmail.com>, 2020-2021.
+# Matheus Barbosa <mdpb.matheus@gmail.com>, 2022.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2022-02-11 16:21+0100\n"
+"POT-Creation-Date: 2022-02-14 15:25+0000\n"
 "PO-Revision-Date: 2021-08-01 17:32-0300\n"
-"Last-Translator: Bruno Lopes <brunolopesdsilv@gmail.com>\n"
+"Last-Translator: Matheus Barbosa <mdpb.matheus@gmail.com>\n"
 "Language-Team: Brazilian Portuguese <gnome-pt_br-list@gnome.org>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
@@ -2745,24 +2746,24 @@ msgid "Can't load object %s: %s\n"
 msgstr "Não foi possível carregar o objeto %s: %s\n"
 
 #: app/flatpak-builtins-repair.c:228
-#, fuzzy, c-format
+#, c-format
 msgid "Commit invalid %s: %s\n"
-msgstr "Objeto inválido: %s.%s\n"
+msgstr "Commit inválido %s: %s\n"
 
 #: app/flatpak-builtins-repair.c:231
-#, fuzzy, c-format
+#, c-format
 msgid "Deleting invalid commit %s: %s\n"
-msgstr "Ref de commit inválido %s: "
+msgstr "Excluindo commit inválido %s: %s\n"
 
 #: app/flatpak-builtins-repair.c:261
 #, c-format
 msgid "Commit should be marked partial: %s\n"
-msgstr ""
+msgstr "O commit deve ser marcado como parcial: %s\n"
 
 #: app/flatpak-builtins-repair.c:264
 #, c-format
 msgid "Marking commit as partial: %s\n"
-msgstr ""
+msgstr "Marcando o commit como parcial: %s\n"
 
 #: app/flatpak-builtins-repair.c:293
 #, c-format
@@ -3415,9 +3416,9 @@ msgid "Which do you want to install (0 to abort)?"
 msgstr "Qual você deseja instalar (0 para abortar)?"
 
 #: app/flatpak-cli-transaction.c:127
-#, fuzzy, c-format
+#, c-format
 msgid "Configuring %s as new remote '%s'\n"
-msgstr "Configurando %s como novo remoto “%s”"
+msgstr "Configurando %s como novo remoto “%s”\n"
 
 #. default to yes on Enter
 #: app/flatpak-cli-transaction.c:134
@@ -3590,9 +3591,9 @@ msgid "Failed to rebase %s to %s: "
 msgstr "Falha ao realizar rebase de %s para %s: "
 
 #: app/flatpak-cli-transaction.c:793
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to uninstall %s for rebase to %s: "
-msgstr "Falha ao realizar rebase de %s para %s: "
+msgstr "Falha ao desinstalar %s para realizar rebase de %s: "
 
 #: app/flatpak-cli-transaction.c:994
 #, c-format
@@ -4032,9 +4033,9 @@ msgid "Failed to rebase %s to %s: %s\n"
 msgstr "Falha ao realizar rebase de %s para %s: %s\n"
 
 #: app/flatpak-quiet-transaction.c:240
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to uninstall %s for rebase to %s: %s\n"
-msgstr "Falha ao realizar rebase de %s para %s: %s\n"
+msgstr "Falha ao desinstalar %s para realizar rebase de %s: %s\n"
 
 #: common/flatpak-auth.c:58
 #, c-format
@@ -4660,9 +4661,9 @@ msgid "No cached summary for remote '%s'"
 msgstr "Nenhum resumo em cache para “%s” remoto"
 
 #: common/flatpak-dir.c:11547
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid checksum for indexed summary %s read from %s"
-msgstr "Soma de verificação inválida para resumo indexado %s para “%s” remoto"
+msgstr "Soma de verificação inválida para resumo indexado %s lido de “%s”"
 
 #: common/flatpak-dir.c:11620
 #, c-format
@@ -5085,24 +5086,24 @@ msgid "Initialize seccomp failed"
 msgstr "Inicialização de seccomp falhou"
 
 #: common/flatpak-run.c:3104
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to add architecture to seccomp filter: %s"
-msgstr "Falha ao adicionar arquitetura ao filtro seccomp"
+msgstr "Falha ao adicionar arquitetura ao filtro seccomp: %s"
 
 #: common/flatpak-run.c:3112
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to add multiarch architecture to seccomp filter: %s"
-msgstr "Falha ao adicionar arquitetura multiarch ao filtro seccomp"
+msgstr "Falha ao adicionar arquitetura multiarch ao filtro seccomp: %s"
 
 #: common/flatpak-run.c:3144 common/flatpak-run.c:3166
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to block syscall %d: %s"
-msgstr "Falha ao bloquear a chamada de sistema %d"
+msgstr "Falha ao bloquear a chamada de sistema %d: %s"
 
 #: common/flatpak-run.c:3199
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to export bpf: %s"
-msgstr "Falha ao exportar bpf"
+msgstr "Falha ao exportar bpf: %s"
 
 #: common/flatpak-run.c:3450
 #, c-format
