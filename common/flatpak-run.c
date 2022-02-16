@@ -429,7 +429,10 @@ flatpak_run_add_wayland_args (FlatpakBwrap *bwrap)
   if (!wayland_display)
     wayland_display = "wayland-0";
 
-  wayland_socket = g_build_filename (user_runtime_dir, wayland_display, NULL);
+  if (wayland_display[0] == '/')
+    wayland_socket = g_strdup (wayland_display);
+  else
+    wayland_socket = g_build_filename (user_runtime_dir, wayland_display, NULL);
 
   if (!g_str_has_prefix (wayland_display, "wayland-") ||
       strchr (wayland_display, '/') != NULL)
