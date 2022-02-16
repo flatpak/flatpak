@@ -679,7 +679,7 @@ flatpak_get_gtk_theme (void)
       else
         {
           schema = g_settings_schema_source_lookup (source,
-                                                    "org.gnome.desktop.interface", FALSE);
+                                                    "org.gnome.desktop.interface", TRUE);
 
           if (schema == NULL)
             g_once_init_leave (&gtk_theme, g_strdup (""));
