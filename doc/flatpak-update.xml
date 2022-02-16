@@ -70,10 +70,10 @@
         </para>
         <para>
             If the configured remote for a ref being updated has a collection ID configured on it,
-            flatpak will search mounted filesystems such as USB drives as well as Avahi services
-            advertised on the local network for the needed refs, in order to support
-            offline updates. See <citerefentry><refentrytitle>ostree-find-remotes</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-            for more information.
+            Flatpak will search the <filename>sideload-repos</filename> directories configured
+            either with the <option>--sideload-repo</option> option, or on a per-installation or
+            system-wide basis (see
+            <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
         </para>
         <para>
             Note that updating a runtime is different from installing
@@ -81,6 +81,12 @@
             strict compatibility. If an application update does cause
             a problem, it is possible to go back to the previous
             version, with the <option>--commit</option> option.
+        </para>
+        <para>
+            In addition to updates, this command will offer to uninstall any unused end-of-life
+            runtimes. Runtimes that were explicitly installed (not as a dependency) or explicitly
+            pinned (see <citerefentry><refentrytitle>flatpak-pin</refentrytitle><manvolnum>1</manvolnum></citerefentry>)
+            are left installed even if unused and end-of-life.
         </para>
         <para>
             Unless overridden with the <option>--user</option>, <option>--system</option> or <option>--installation</option> option, this command updates
@@ -219,10 +225,11 @@
                 <term><option>--sideload-repo=PATH</option></term>
 
                 <listitem><para>
-                  Adds an extra local ostree repo as source for installation. This is equivalent
-                  to using the sideload-repos directories (see flatpak(1)), but can be done on a
-                  per-command basis. Any path added here is used in addition to ones in those
-                  directories.
+                    Adds an extra local ostree repo as a source for installation. This is equivalent
+                    to using the <filename>sideload-repos</filename> directories (see
+                    <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>),
+                    but can be done on a per-command basis. Any path added here is used in addition
+                    to ones in those directories.
                 </para></listitem>
             </varlistentry>
 
