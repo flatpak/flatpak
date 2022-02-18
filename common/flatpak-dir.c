@@ -5896,18 +5896,10 @@ flatpak_dir_pull (FlatpakDir                           *self,
     {
       rev = g_strdup (opt_rev);
     }
-  else
+  else if (!flatpak_remote_state_lookup_ref (state, ref, &rev, NULL, NULL, NULL, error))
     {
-      flatpak_remote_state_lookup_ref (state, ref, &rev, NULL, NULL, NULL, error);
-      if (rev == NULL && error != NULL && *error == NULL)
-        flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND, _("Couldn't find latest checksum for ref %s in remote %s"),
-                            ref, state->remote_name);
-
-      if (rev == NULL)
-        {
-          g_assert (error == NULL || *error != NULL);
-          return FALSE;
-        }
+      g_assert (error == NULL || *error != NULL);
+      return FALSE;
     }
 
   g_debug ("%s: Using commit %s for pull of ref %s from remote %s%s%s",
