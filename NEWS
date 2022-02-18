@@ -31,8 +31,6 @@ Other changes:
    possible (#4111)
  * Disable session bus access for `flatpak-spawn --sandbox` as intended
    (#4630)
- * Make `sudo flatpak run` fail with an error message, since it is not
-   usually intended (#2565)
  * Make `sudo flatpak --user ...` fail with an error message, since acting
    on root's per-user installation is unlikely to be what was intended
    (#4638)
