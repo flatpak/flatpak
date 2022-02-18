@@ -805,7 +805,9 @@ glnx_regfile_copy_bytes (int fdf, int fdt, off_t max_bytes)
        */
       if (fstat (fdf, &stbuf) < 0)
         return -1;
-      max_bytes = stbuf.st_size;
+
+      if (stbuf.st_size > 0)
+        max_bytes = stbuf.st_size;
     }
 
   while (TRUE)
@@ -816,7 +818,7 @@ glnx_regfile_copy_bytes (int fdf, int fdt, off_t max_bytes)
        * try_copy_file_range() from systemd upstream, which works better since
        * we use POSIX errno style.
        */
-      if (try_cfr)
+      if (try_cfr && max_bytes != (off_t) -1)
         {
           n = copy_file_range (fdf, NULL, fdt, NULL, max_bytes, 0u);
           if (n < 0)
@@ -855,7 +857,7 @@ glnx_regfile_copy_bytes (int fdf, int fdt, off_t max_bytes)
       /* Next try sendfile(); this version is also changed from systemd upstream
        * to match the same logic we have for copy_file_range().
        */
-      if (try_sendfile)
+      if (try_sendfile && max_bytes != (off_t) -1)
         {
           n = sendfile (fdt, fdf, NULL, max_bytes);
           if (n < 0)
