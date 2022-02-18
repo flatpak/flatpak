@@ -2,6 +2,8 @@
 # subdir-objects
 Makefile-libglnx.am.inc
 
+libglnx-config.h
+
 # Some standard bits
 .deps
 .libs

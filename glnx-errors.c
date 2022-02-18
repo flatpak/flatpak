@@ -18,7 +18,7 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include "config.h"
+#include "libglnx-config.h"
 
 #include <glnx-backport-autocleanups.h>
 #include <glnx-errors.h>

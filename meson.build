@@ -40,7 +40,7 @@ foreach check_function : check_functions
   conf.set10('HAVE_DECL_' + check_function.underscorify().to_upper(), have_it)
 endforeach
 config_h = configure_file(
-  output : 'config.h',
+  output : 'libglnx-config.h',
   configuration : conf,
 )
 

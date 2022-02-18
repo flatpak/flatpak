@@ -18,7 +18,7 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include "config.h"
+#include "libglnx-config.h"
 #include "libglnx.h"
 #include <glib.h>
 #include <stdlib.h>
