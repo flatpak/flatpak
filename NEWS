@@ -2,6 +2,13 @@ Changes in 1.13.1
 ~~~~~~~~~~~~~~~~~
 Not released yet
 
+Dependencies:
+
+ * libappstream 0.12.0 or later is now required
+ * appstream-glib is no longer required
+ * In distributions that compile Flatpak to use a separate bubblewrap (bwrap)
+   executable, version 0.5.0 is now required
+
 New features:
 
  * Create a directory for XDG_STATE_HOME and set the environment variable
@@ -21,6 +28,8 @@ New features:
  * We now allow networked access to X11 and PulseAudio services
    if that is configured, and the application has network access.
    (#397, #3908, #4702)
+ * `flatpak build-init` automatically sets the build directory to be
+   ignored by git (#4741)
 
 Other changes:
 
@@ -38,12 +47,16 @@ Other changes:
  * Improve performance when finding related refs
  * Use SHA256 instead of SHA1 to avoid false-positives from static analysis
    (in fact the use of SHA1 was not security-sensitive here) (#4716)
+ * Create sandbox's XDG_RUNTIME_DIR with 0700 permissions (#3397)
+ * Always create /.flatpak-info with 0600 permissions
+ * Absolute paths in WAYLAND_DISPLAY now work (#4752)
+ * Improve reliability of detecting the current GTK theme (#4754)
  * Fix some error code paths when deploying malformed apps
  * Improve some error messages
  * Use URN for fontconfig DTD, consistent with fontconfig itself (#4617)
  * Use `type -P` or `command -v` in preference to which(1) (#4696)
  * Improve measurement of test coverage (#4681)
- * Translation updates: de, fr, hi, hr, id, oc, pl, sv, uk, zh_CN
+ * Translation updates: de, fr, hi, hr, id, oc, pl, pt_BR, sv, uk, zh_CN
 
 Changes in 1.12.5
 ~~~~~~~~~~~~~~~~~
