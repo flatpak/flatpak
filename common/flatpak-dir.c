@@ -5813,6 +5813,7 @@ flatpak_dir_pull (FlatpakDir                           *self,
                   GError                              **error)
 {
   gboolean ret = FALSE;
+  gboolean have_commit = FALSE;
   g_autofree char *rev = NULL;
   g_autofree char *url = NULL;
   g_autoptr(GPtrArray) subdirs_arg = NULL;
@@ -5898,6 +5899,23 @@ flatpak_dir_pull (FlatpakDir                           *self,
                                      cancellable,
                                      error))
     goto out;
+
+  /* Work around a libostree bug where the pull may succeed but the pulled
+   * commit will be incomplete by preemptively marking the commit partial.
+   * Note this has to be done before ostree_repo_prepare_transaction() so we
+   * aren't checking the staging dir for the commit.
+   * https://github.com/flatpak/flatpak/issues/3479
+   * https://github.com/ostreedev/ostree/pull/2549
+   */
+  {
+    g_autoptr(GError) local_error = NULL;
+
+    if (!ostree_repo_has_object (repo, OSTREE_OBJECT_TYPE_COMMIT, rev, &have_commit, NULL, &local_error))
+      g_warning ("Encountered error checking for commit object %s: %s", rev, local_error->message);
+    else if (!have_commit &&
+             !ostree_repo_mark_commit_partial (repo, rev, TRUE, &local_error))
+      g_warning ("Encountered error marking commit partial: %s: %s", rev, local_error->message);
+  }
 
   if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
     goto out;
