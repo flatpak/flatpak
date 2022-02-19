@@ -5222,7 +5222,7 @@ repo_pull (OstreeRepo                           *self,
            FlatpakRemoteState                   *state,
            const char                          **dirs_to_pull,
            const char                           *ref_to_fetch,
-           const char                           *rev_to_fetch, /* (nullable) */
+           const char                           *rev_to_fetch,
            GFile                                *sideload_repo,
            const char                           *token,
            FlatpakPullFlags                      flatpak_flags,
