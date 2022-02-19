@@ -1,4 +1,5 @@
 # Copyright (C) 2015 Colin Walters <walters@verbum.org>
+# SPDX-License-Identifier: LGPL-2.0-or-later
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -18,6 +19,8 @@
 EXTRA_DIST += \
 	$(libglnx_srcpath)/README.md \
 	$(libglnx_srcpath)/COPYING \
+	$(libglnx_srcpath)/LICENSES/LGPL-2.0-or-later.txt \
+	$(libglnx_srcpath)/LICENSES/LGPL-2.1-or-later.txt \
 	$(libglnx_srcpath)/libglnx.m4 \
 	$(NULL)
 

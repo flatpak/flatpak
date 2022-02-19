@@ -1,3 +1,7 @@
+# Copyright 2016 Colin Walters
+# Copyright 2020 Endless OS Foundation LLC
+# SPDX-License-Identifier: LGPL-2.1-or-later
+
 AC_DEFUN([LIBGLNX_CONFIGURE],
 [
 AC_CHECK_DECLS([

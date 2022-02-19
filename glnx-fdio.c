@@ -1,6 +1,7 @@
 /* -*- mode: C; c-file-style: "gnu"; indent-tabs-mode: nil; -*-
  *
  * Copyright (C) 2014,2015 Colin Walters <walters@verbum.org>.
+ * SPDX-License-Identifier: LGPL-2.0-or-later
  *
  * Portions derived from systemd:
  *  Copyright 2010 Lennart Poettering

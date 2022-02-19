@@ -1,3 +1,6 @@
+# Copyright 2019 Endless OS Foundation LLC
+# Copyright 2019 Collabora Ltd.
+# SPDX-License-Identifier: LGPL-2.1-or-later
 
 test_names = [
   'errors',

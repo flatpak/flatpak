@@ -1,3 +1,6 @@
+# Copyright 2019 Endless OS Foundation LLC
+# SPDX-License-Identifier: LGPL-2.0-or-later
+
 image: registry.fedoraproject.org/fedora:30
 
 stages:
@@ -20,3 +23,12 @@ build:
     name: "libglnx-${CI_COMMIT_REF_NAME}-${CI_JOB_NAME}"
     paths:
       - "${CI_PROJECT_DIR}/_build/meson-logs"
+
+reuse:
+  stage: build
+  image:
+    name: fsfe/reuse:latest
+    entrypoint: [""]
+  before_script: []
+  script:
+    - reuse lint

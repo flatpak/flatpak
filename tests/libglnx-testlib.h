@@ -2,6 +2,7 @@
  *
  * Copyright (C) 2017 Red Hat, Inc.
  * Copyright 2019 Collabora Ltd.
+ * SPDX-License-Identifier: LGPL-2.0-or-later
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
