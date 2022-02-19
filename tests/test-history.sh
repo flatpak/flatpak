@@ -11,10 +11,20 @@ USE_SYSTEMDIR=yes
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..1"
-
 HISTORY_START_TIME=$(date +"%Y-%m-%d %H:%M:%S")
 sleep 1
+
+if ! logger "Checking whether Flatpak can use the journal..."; then
+    skip "Cannot write to Journal with logger"
+fi
+
+messages="$(journalctl --user --since="${HISTORY_START_TIME}" || true)"
+
+if [ -z "$messages" ]; then
+    skip "Cannot read back from Journal with journalctl"
+fi
+
+echo "1..1"
 
 mkdir -p ${TEST_DATA_DIR}/system-history-installation
 mkdir -p ${FLATPAK_CONFIG_DIR}/installations.d
