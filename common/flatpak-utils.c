@@ -721,6 +721,9 @@ flatpak_fancy_output (void)
   if (g_strcmp0 (g_getenv ("FLATPAK_FANCY_OUTPUT"), "0") == 0)
     return FALSE;
 
+  if (getenv ("G_MESSAGES_DEBUG"))
+    return FALSE;
+
   return isatty (STDOUT_FILENO);
 }
 
