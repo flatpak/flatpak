@@ -715,16 +715,28 @@ flatpak_enable_fancy_output (void)
 gboolean
 flatpak_fancy_output (void)
 {
+  static gsize fancy_output_once = 0;
+  enum {
+    PLAIN_OUTPUT = 1,
+    FANCY_OUTPUT = 2
+  };
+
   if (fancy_output != -1)
     return fancy_output;
 
-  if (g_strcmp0 (g_getenv ("FLATPAK_FANCY_OUTPUT"), "0") == 0)
-    return FALSE;
+  if (g_once_init_enter (&fancy_output_once))
+    {
+      if (g_strcmp0 (g_getenv ("FLATPAK_FANCY_OUTPUT"), "0") == 0)
+        g_once_init_leave (&fancy_output_once, PLAIN_OUTPUT);
+      else if (getenv ("G_MESSAGES_DEBUG"))
+        g_once_init_leave (&fancy_output_once, PLAIN_OUTPUT);
+      else if (!isatty (STDOUT_FILENO))
+        g_once_init_leave (&fancy_output_once, PLAIN_OUTPUT);
+      else
+        g_once_init_leave (&fancy_output_once, FANCY_OUTPUT);
+    }
 
-  if (getenv ("G_MESSAGES_DEBUG"))
-    return FALSE;
-
-  return isatty (STDOUT_FILENO);
+  return fancy_output_once == FANCY_OUTPUT;
 }
 
 const char *
