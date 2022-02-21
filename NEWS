@@ -1,3 +1,15 @@
+Changes in 1.12.6
+~~~~~~~~~~~~~~~~~
+Released: 2022-02-21
+
+ * Fix a bug that sometimes caused repo corruption in case downloads are
+   interrupted or canceled, necessitating a "flatpak repair" to recover
+   (#3479, #4258)
+ * More reliably detect the GTK theme (#4754)
+ * Fix history command unit test in some edge cases (#4764)
+ * Improve NEWS for 1.12.5
+ * Translation update: pt_BR
+
 Changes in 1.12.5
 ~~~~~~~~~~~~~~~~~
 Released: 2022-02-11
