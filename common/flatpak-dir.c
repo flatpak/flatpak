@@ -5286,6 +5286,9 @@ repo_pull (OstreeRepo                           *self,
   const char *refs_to_fetch[2];
   g_autofree char *sideload_url = NULL;
 
+  g_return_val_if_fail (ref_to_fetch != NULL, FALSE);
+  g_return_val_if_fail (rev_to_fetch != NULL, FALSE);
+
   /* The ostree fetcher asserts if error is NULL */
   if (error == NULL)
     error = &dummy_error;
