@@ -339,6 +339,9 @@ flatpak_complete_options (FlatpakCompletion *completion,
   GOptionEntry *e = entries;
   int i;
 
+  if (completion->cur == NULL || completion->cur[0] != '-')
+    return;
+
   while (e->long_name != NULL)
     {
       if (e->arg_description)
