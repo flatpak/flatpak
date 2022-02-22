@@ -29,3 +29,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md)
 Here are some notable projects in the Flatpak ecosystem:
 * [Flatseal](https://github.com/tchx84/flatseal): An app for managing permissions of Flatpak apps without using the CLI
 * [Flat-manager](https://github.com/flatpak/flat-manager): A tool for managing Flatpak repositories
+
+# Packaging Status
+
+[![Packaging status](https://repology.org/badge/vertical-allrepos/flatpak.svg?exclude_unsupported=1&exclude_sources=modules,site)](https://repology.org/project/flatpak/versions)
