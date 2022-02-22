@@ -268,7 +268,9 @@ test_filecopy_procfs (void)
 
       if (!glnx_file_copy_at (AT_FDCWD, pseudo_files[i], NULL,
                               AT_FDCWD, "copy",
-                              GLNX_FILE_COPY_OVERWRITE | GLNX_FILE_COPY_NOCHOWN,
+                              (GLNX_FILE_COPY_OVERWRITE |
+                               GLNX_FILE_COPY_NOCHOWN |
+                               GLNX_FILE_COPY_NOXATTRS),
                               NULL, error))
         return;
 
