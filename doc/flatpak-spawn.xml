@@ -43,13 +43,14 @@
         <para>
             Unlike other flatpak commands, <command>flatpak-spawn</command> is available
             to applications inside the sandbox. It runs <arg choice="plain">COMMAND</arg>
-            outside the sandbox, either in another sandbox, or on the host.
+            outside the sandbox: either in another sandbox, or on the host.
         </para>
 
         <para>
-            <command>flatpak-spawn</command> uses the Flatpak portal to create a copy
-            the sandbox it was called from, optionally using tighter permissions and
-            the latest version of the app and runtime.
+            When called without <option>--host</option>, <command>flatpak-spawn</command>
+            uses the Flatpak portal to create a copy of the sandbox it was called from,
+            optionally using tighter permissions and optionally the latest version of the
+            app and runtime (see <option>--latest-version</option>).
         </para>
 
     </refsect1>
@@ -98,7 +99,7 @@
                 <term><option>--watch-bus</option></term>
 
                 <listitem><para>
-                    Make the spawned command exit if we do
+                    Make the spawned command exit if the caller disappears from the session bus
                 </para></listitem>
             </varlistentry>
 
@@ -130,10 +131,11 @@
                 <term><option>--sandbox</option></term>
 
                 <listitem><para>
-                    Run fully sandboxed.
+                  Run fully sandboxed. See the documentation for the <option>--sandbox</option>
+                  option in <citerefentry><refentrytitle>flatpak-run</refentrytitle><manvolnum>1</manvolnum></citerefentry>
                 </para><para>
-                    See the <option>--sandbox-expose</option> and
-                    <option>--sandbox-expose-ro</option> options for selective file access.
+                  See the <option>--sandbox-expose</option> and
+                  <option>--sandbox-expose-ro</option> options for selective file access.
                 </para></listitem>
             </varlistentry>
 
@@ -172,7 +174,7 @@
 
                 <listitem><para>
                   Run the command unsandboxed on the host. This requires access to
-                  the org.freedesktop.Flatpak D-Bus interface
+                  the org.freedesktop.Flatpak D-Bus interface.
                 </para></listitem>
             </varlistentry>
 
