@@ -188,6 +188,8 @@ struct _FlatpakTransactionPrivate
   gboolean                     force_uninstall;
   gboolean                     can_run;
   gboolean                     include_unused_uninstall_ops;
+  gboolean                     auto_install_sdk;
+  gboolean                     auto_install_debug;
   char                        *default_arch;
   guint                        max_op;
 
@@ -1889,6 +1891,84 @@ flatpak_transaction_get_include_unused_uninstall_ops (FlatpakTransaction *self)
   return priv->include_unused_uninstall_ops;
 }
 
+/**
+ * flatpak_transaction_set_auto_install_sdk:
+ * @self: a #FlatpakTransaction
+ * @auto_install_sdk: whether to auto install SDKs for apps
+ *
+ * When this is set to %TRUE, Flatpak will automatically install the SDK for
+ * each app currently being installed or updated. Does nothing if an uninstall
+ * is taking place.
+ *
+ * Since: 1.13.3
+ */
+void
+flatpak_transaction_set_auto_install_sdk (FlatpakTransaction *self,
+                                          gboolean            auto_install_sdk)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+
+  priv->auto_install_sdk = auto_install_sdk;
+}
+
+/**
+ * flatpak_transaction_get_auto_install_sdk:
+ * @self: a #FlatpakTransaction
+ *
+ * Gets the value set by
+ * flatpak_transaction_set_auto_install_sdk().
+ *
+ * Returns: %TRUE if auto_install_sdk is set, %FALSE otherwise
+ *
+ * Since: 1.13.3
+ */
+gboolean
+flatpak_transaction_get_auto_install_sdk (FlatpakTransaction *self)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+
+  return priv->auto_install_sdk;
+}
+
+/**
+ * flatpak_transaction_set_auto_install_debug:
+ * @self: a #FlatpakTransaction
+ * @auto_install_debug: whether to auto install debug info for apps
+ *
+ * When this is set to %TRUE, Flatpak will automatically install the debug info
+ * for each app currently being installed or updated, as well as its
+ * dependencies. Does nothing if an uninstall is taking place.
+ *
+ * Since: 1.13.3
+ */
+void
+flatpak_transaction_set_auto_install_debug (FlatpakTransaction *self,
+                                            gboolean            auto_install_debug)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+
+  priv->auto_install_debug = auto_install_debug;
+}
+
+/**
+ * flatpak_transaction_get_auto_install_debug:
+ * @self: a #FlatpakTransaction
+ *
+ * Gets the value set by
+ * flatpak_transaction_set_auto_install_debug().
+ *
+ * Returns: %TRUE if auto_install_debug is set, %FALSE otherwise
+ *
+ * Since: 1.13.3
+ */
+gboolean
+flatpak_transaction_get_auto_install_debug (FlatpakTransaction *self)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+
+  return priv->auto_install_debug;
+}
+
 static FlatpakTransactionOperation *
 flatpak_transaction_get_last_op_for_ref (FlatpakTransaction *self,
                                          FlatpakDecomposed *ref)
@@ -2178,8 +2258,16 @@ add_related (FlatpakTransaction          *self,
         {
           FlatpakRelated *rel = g_ptr_array_index (related, i);
           FlatpakTransactionOperation *related_op;
+          gboolean download = rel->download;
 
-          if (!rel->download)
+          if (!download)
+            {
+              g_autofree char *id = flatpak_decomposed_dup_id (rel->ref);
+              if (priv->auto_install_debug && g_str_has_suffix (id, ".Debug"))
+                download = TRUE;
+            }
+
+          if (!download)
             continue;
 
           related_op = flatpak_transaction_add_op (self, rel->remote, rel->ref,
@@ -2382,6 +2470,67 @@ op_get_runtime_ref (FlatpakTransactionOperation *op)
   return decomposed;
 }
 
+static FlatpakDecomposed *
+op_get_sdk_ref (FlatpakTransactionOperation *op)
+{
+  g_autofree char *sdk_pref = NULL;
+  FlatpakDecomposed *decomposed;
+
+  if (!op->resolved_metakey || !flatpak_decomposed_is_app (op->ref))
+    return NULL;
+
+  sdk_pref = g_key_file_get_string (op->resolved_metakey, "Application", "sdk", NULL);
+  if (sdk_pref == NULL)
+    return NULL;
+
+  decomposed = flatpak_decomposed_new_from_pref (FLATPAK_KINDS_RUNTIME, sdk_pref, NULL);
+  if (decomposed == NULL)
+    g_debug ("Invalid runtime ref %s in metadata", sdk_pref);
+
+  return decomposed;
+}
+
+static gboolean
+add_new_dep_op (FlatpakTransaction           *self,
+                FlatpakTransactionOperation  *op,
+                FlatpakDecomposed            *dep_ref,
+                FlatpakTransactionOperation **dep_op,
+                GError                      **error)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  g_autofree char *dep_remote = NULL;
+
+  if (!ref_is_installed (self, dep_ref))
+    {
+      g_debug ("Installing dependency %s of %s", flatpak_decomposed_get_pref (dep_ref),
+               flatpak_decomposed_get_pref (op->ref));
+      dep_remote = find_runtime_remote (self, op->ref, op->remote, dep_ref, op->kind, NULL, error);
+      if (dep_remote == NULL)
+        return FALSE;
+
+      *dep_op = flatpak_transaction_add_op (self, dep_remote, dep_ref, NULL, NULL, NULL, NULL,
+                                            FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE, FALSE, error);
+      if (*dep_op == NULL)
+        return FALSE;
+    }
+  else
+    {
+      /* Update if in same dir */
+      if (dir_ref_is_installed (priv->dir, dep_ref, &dep_remote, NULL))
+        {
+          g_debug ("Updating dependency %s of %s", flatpak_decomposed_get_pref (dep_ref),
+                   flatpak_decomposed_get_pref (op->ref));
+          *dep_op = flatpak_transaction_add_op (self, dep_remote, dep_ref, NULL, NULL, NULL, NULL,
+                                                FLATPAK_TRANSACTION_OPERATION_UPDATE, FALSE, error);
+          if (*dep_op == NULL)
+            return FALSE;
+          (*dep_op)->non_fatal = TRUE;
+        }
+    }
+
+  return TRUE;
+}
+
 static gboolean
 add_deps (FlatpakTransaction          *self,
           FlatpakTransactionOperation *op,
@@ -2389,7 +2538,6 @@ add_deps (FlatpakTransaction          *self,
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   g_autoptr(FlatpakDecomposed) runtime_ref = NULL;
-  g_autofree char *runtime_remote = NULL;
   FlatpakTransactionOperation *runtime_op = NULL;
 
   if (!op->resolved_metakey)
@@ -2416,30 +2564,8 @@ add_deps (FlatpakTransaction          *self,
 
   if (runtime_op == NULL)
     {
-      if (!ref_is_installed (self, runtime_ref))
-        {
-          runtime_remote = find_runtime_remote (self, op->ref, op->remote, runtime_ref, op->kind, NULL, error);
-          if (runtime_remote == NULL)
-            return FALSE;
-
-          runtime_op = flatpak_transaction_add_op (self, runtime_remote, runtime_ref, NULL, NULL, NULL, NULL,
-                                                   FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE, FALSE, error);
-          if (runtime_op == NULL)
-            return FALSE;
-        }
-      else
-        {
-          /* Update if in same dir */
-          if (dir_ref_is_installed (priv->dir, runtime_ref, &runtime_remote, NULL))
-            {
-              g_debug ("Updating dependent runtime %s", flatpak_decomposed_get_pref (runtime_ref));
-              runtime_op = flatpak_transaction_add_op (self, runtime_remote, runtime_ref, NULL, NULL, NULL, NULL,
-                                                       FLATPAK_TRANSACTION_OPERATION_UPDATE, FALSE, error);
-              if (runtime_op == NULL)
-                return FALSE;
-              runtime_op->non_fatal = TRUE;
-            }
-        }
+      if (!add_new_dep_op (self, op, runtime_ref, &runtime_op, error))
+        return FALSE;
     }
 
   /* Install/Update the runtime before the app */
@@ -2453,6 +2579,28 @@ add_deps (FlatpakTransaction          *self,
       op->fail_if_op_fails = runtime_op;
       flatpak_transaction_operation_add_related_to_op (runtime_op, op);
       run_operation_before (runtime_op, op, 2);
+    }
+
+  if (priv->auto_install_sdk)
+    {
+      g_autoptr(FlatpakDecomposed) sdk_ref = NULL;
+
+      sdk_ref = op_get_sdk_ref (op);
+      if (sdk_ref != NULL)
+        {
+          FlatpakTransactionOperation *sdk_op = flatpak_transaction_get_last_op_for_ref (self, sdk_ref);
+          if (sdk_op == NULL)
+            {
+              if (!add_new_dep_op (self, op, sdk_ref, &sdk_op, error))
+                return FALSE;
+            }
+
+          if (sdk_op->kind != FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
+            {
+              flatpak_transaction_operation_add_related_to_op (sdk_op, op);
+              run_operation_before (sdk_op, op, 2);
+            }
+        }
     }
 
   return TRUE;

@@ -256,6 +256,16 @@ void                flatpak_transaction_set_include_unused_uninstall_ops (Flatpa
 FLATPAK_EXTERN
 gboolean            flatpak_transaction_get_include_unused_uninstall_ops (FlatpakTransaction *self);
 FLATPAK_EXTERN
+void                flatpak_transaction_set_auto_install_sdk (FlatpakTransaction *self,
+                                                              gboolean            auto_install_sdk);
+FLATPAK_EXTERN
+gboolean            flatpak_transaction_get_auto_install_sdk (FlatpakTransaction *self);
+FLATPAK_EXTERN
+void                flatpak_transaction_set_auto_install_debug (FlatpakTransaction *self,
+                                                                gboolean            auto_install_debug);
+FLATPAK_EXTERN
+gboolean            flatpak_transaction_get_auto_install_debug (FlatpakTransaction *self);
+FLATPAK_EXTERN
 void                flatpak_transaction_add_dependency_source (FlatpakTransaction  *self,
                                                                FlatpakInstallation *installation);
 FLATPAK_EXTERN
