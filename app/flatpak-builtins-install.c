@@ -51,6 +51,8 @@ static gboolean opt_no_deps;
 static gboolean opt_no_static_deltas;
 static gboolean opt_runtime;
 static gboolean opt_app;
+static gboolean opt_include_sdk;
+static gboolean opt_include_debug;
 static gboolean opt_bundle;
 static gboolean opt_from;
 static gboolean opt_yes;
@@ -69,6 +71,8 @@ static GOptionEntry options[] = {
   { "no-static-deltas", 0, 0, G_OPTION_ARG_NONE, &opt_no_static_deltas, N_("Don't use static deltas"), NULL },
   { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, N_("Look for runtime with the specified name"), NULL },
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, N_("Look for app with the specified name"), NULL },
+  { "include-sdk", 0, 0, G_OPTION_ARG_NONE, &opt_include_sdk, N_("Additionally install the SDK used to build the given refs") },
+  { "include-debug", 0, 0, G_OPTION_ARG_NONE, &opt_include_debug, N_("Additionally install the debug info for the given refs and their dependencies") },
   { "bundle", 0, 0, G_OPTION_ARG_NONE, &opt_bundle, N_("Assume LOCATION is a .flatpak single-file bundle"), NULL },
   { "from", 0, 0, G_OPTION_ARG_NONE, &opt_from, N_("Assume LOCATION is a .flatpakref application description"), NULL },
   { "gpg-file", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_file, N_("Check bundle signatures with GPG key from FILE (- for stdin)"), N_("FILE") },
@@ -171,6 +175,8 @@ install_bundle (FlatpakDir *dir,
   flatpak_transaction_set_disable_related (transaction, opt_no_related);
   flatpak_transaction_set_disable_auto_pin (transaction, opt_no_auto_pin);
   flatpak_transaction_set_reinstall (transaction, opt_reinstall);
+  flatpak_transaction_set_auto_install_sdk (transaction, opt_include_sdk);
+  flatpak_transaction_set_auto_install_debug (transaction, opt_include_debug);
 
   for (int i = 0; opt_sideload_repos != NULL && opt_sideload_repos[i] != NULL; i++)
     flatpak_transaction_add_sideload_repo (transaction, opt_sideload_repos[i]);
@@ -249,6 +255,8 @@ install_from (FlatpakDir *dir,
   flatpak_transaction_set_disable_auto_pin (transaction, opt_no_auto_pin);
   flatpak_transaction_set_reinstall (transaction, opt_reinstall);
   flatpak_transaction_set_default_arch (transaction, opt_arch);
+  flatpak_transaction_set_auto_install_sdk (transaction, opt_include_sdk);
+  flatpak_transaction_set_auto_install_debug (transaction, opt_include_debug);
 
   for (int i = 0; opt_sideload_repos != NULL && opt_sideload_repos[i] != NULL; i++)
     flatpak_transaction_add_sideload_repo (transaction, opt_sideload_repos[i]);
@@ -317,6 +325,9 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
 
   if (opt_noninteractive)
     opt_yes = TRUE; /* Implied */
+
+  if (opt_include_sdk || opt_include_debug)
+    opt_or_update = TRUE;
 
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
@@ -487,6 +498,8 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   flatpak_transaction_set_disable_related (transaction, opt_no_related);
   flatpak_transaction_set_disable_auto_pin (transaction, opt_no_auto_pin);
   flatpak_transaction_set_reinstall (transaction, opt_reinstall);
+  flatpak_transaction_set_auto_install_sdk (transaction, opt_include_sdk);
+  flatpak_transaction_set_auto_install_debug (transaction, opt_include_debug);
 
   for (i = 0; opt_sideload_repos != NULL && opt_sideload_repos[i] != NULL; i++)
     flatpak_transaction_add_sideload_repo (transaction, opt_sideload_repos[i]);

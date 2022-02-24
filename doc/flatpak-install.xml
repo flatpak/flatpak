@@ -271,6 +271,25 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--include-sdk</option></term>
+
+                <listitem><para>
+                  For each app being installed, also installs the SDK that was used to build it.
+                  Implies <option>--or-update</option>; incompatible with <option>--no-deps</option>.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--include-debug</option></term>
+
+                <listitem><para>
+                  For each ref being installed, as well as all dependencies, also installs its
+                  debug info. Implies <option>--or-update</option>; incompatible with
+                  <option>--no-deps</option>.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-y</option></term>
                 <term><option>--assumeyes</option></term>
                 <listitem><para>
