@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2021-10-08 13:09+0200\n"
+"POT-Creation-Date: 2022-02-27 12:34-0800\n"
 "PO-Revision-Date: 2020-07-02 15:35+0200\n"
 "Last-Translator: Florentina Mușat <florentina [dot] musat [dot] 28 [at] "
 "gmail [dot] com>\n"
@@ -132,20 +132,20 @@ msgstr "LOCAȚIA, NUMEFIȘIER și NUME trebuie specificate"
 #: app/flatpak-builtins-build-bundle.c:630
 #: app/flatpak-builtins-build-export.c:833
 #: app/flatpak-builtins-build-import-bundle.c:190
-#: app/flatpak-builtins-build-init.c:211 app/flatpak-builtins-build-sign.c:75
+#: app/flatpak-builtins-build-init.c:217 app/flatpak-builtins-build-sign.c:75
 #: app/flatpak-builtins-document-export.c:112
 #: app/flatpak-builtins-document-info.c:75
 #: app/flatpak-builtins-document-list.c:181
-#: app/flatpak-builtins-document-unexport.c:67
-#: app/flatpak-builtins-history.c:465 app/flatpak-builtins-info.c:130
+#: app/flatpak-builtins-document-unexport.c:70
+#: app/flatpak-builtins-history.c:480 app/flatpak-builtins-info.c:130
 #: app/flatpak-builtins-install.c:143 app/flatpak-builtins-install.c:210
-#: app/flatpak-builtins-list.c:412 app/flatpak-builtins-make-current.c:72
+#: app/flatpak-builtins-list.c:404 app/flatpak-builtins-make-current.c:72
 #: app/flatpak-builtins-override.c:73
 #: app/flatpak-builtins-permission-list.c:157
 #: app/flatpak-builtins-permission-remove.c:132
 #: app/flatpak-builtins-remote-add.c:316
 #: app/flatpak-builtins-remote-delete.c:68
-#: app/flatpak-builtins-remote-list.c:239 app/flatpak-builtins-remote-ls.c:412
+#: app/flatpak-builtins-remote-list.c:239 app/flatpak-builtins-remote-ls.c:407
 msgid "Too many arguments"
 msgstr "Prea multe argumente"
 
@@ -163,21 +163,21 @@ msgid "'%s' is not a valid repository: "
 msgstr "„%s” nu este un depozit valid: "
 
 #: app/flatpak-builtins-build-bundle.c:660 app/flatpak-builtins-build-sign.c:87
-#: common/flatpak-dir.c:12378
+#: common/flatpak-dir.c:12581
 #, c-format
 msgid "'%s' is not a valid name: %s"
 msgstr "„%s” nu este un nume valid: %s"
 
 #: app/flatpak-builtins-build-bundle.c:663
 #: app/flatpak-builtins-build-export.c:854 app/flatpak-builtins-build-sign.c:90
-#: common/flatpak-dir.c:12384
+#: common/flatpak-dir.c:12587
 #, c-format
 msgid "'%s' is not a valid branch name: %s"
 msgstr "„%s” nu este un nume de ramură valid: %s"
 
 #: app/flatpak-builtins-build-bundle.c:677
 #: app/flatpak-builtins-build-import-bundle.c:203
-#: app/flatpak-builtins-build-init.c:275
+#: app/flatpak-builtins-build-init.c:281
 #, c-format
 msgid "'%s' is not a valid filename"
 msgstr "„%s” nu este un nume de fișier valid"
@@ -236,7 +236,7 @@ msgstr "Înregistrează apelurile magistralei sistemului"
 msgid "DIRECTORY [COMMAND [ARGUMENT…]] - Build in directory"
 msgstr "DIRECTOR [COMANDĂ [ARGUMENT…]] - Generează în director"
 
-#: app/flatpak-builtins-build.c:230 app/flatpak-builtins-build-finish.c:646
+#: app/flatpak-builtins-build.c:230 app/flatpak-builtins-build-finish.c:653
 msgid "DIRECTORY must be specified"
 msgstr "DIRECTOR trebuie specificat"
 
@@ -260,7 +260,7 @@ msgstr "Nu există un punct de extensie care potrivește %s în %s"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Lipsește „=” în opțiunea de montare de legătură „%s”"
 
-#: app/flatpak-builtins-build.c:606 common/flatpak-run.c:4490
+#: app/flatpak-builtins-build.c:606 common/flatpak-run.c:4724
 msgid "Unable to start app"
 msgstr "Nu se poate porni aplicația"
 
@@ -458,7 +458,7 @@ msgstr ""
 "Marchează generarea ca sfârșit-de-fișier, pentru a fi înlocuit cu ID-ul dat"
 
 #: app/flatpak-builtins-build-export.c:73
-#: app/flatpak-builtins-document-list.c:47 app/flatpak-cli-transaction.c:1124
+#: app/flatpak-builtins-document-list.c:47 app/flatpak-cli-transaction.c:1138
 msgid "ID"
 msgstr "ID"
 
@@ -551,7 +551,7 @@ msgid "‘%s’ is not a valid collection ID: %s"
 msgstr "„%s” nu este un ID de colecție valid: %s"
 
 #: app/flatpak-builtins-build-export.c:893
-#: app/flatpak-builtins-build-finish.c:674
+#: app/flatpak-builtins-build-finish.c:681
 msgid "No name specified in the metadata"
 msgstr "Nu există niciun nume specificat în datele meta"
 
@@ -681,30 +681,30 @@ msgstr "Nu se exportă %s, nume de fișier de exportare nepermis\n"
 msgid "Exporting %s\n"
 msgstr "Se exportă %s\n"
 
-#: app/flatpak-builtins-build-finish.c:430
+#: app/flatpak-builtins-build-finish.c:437
 msgid "More than one executable found\n"
 msgstr "Mai mult de un executabil găsit\n"
 
-#: app/flatpak-builtins-build-finish.c:441
+#: app/flatpak-builtins-build-finish.c:448
 #, c-format
 msgid "Using %s as command\n"
 msgstr "Se utilizează %s ca și comandă\n"
 
-#: app/flatpak-builtins-build-finish.c:446
+#: app/flatpak-builtins-build-finish.c:453
 msgid "No executable found\n"
 msgstr "Nu s-a găsit niciun executabil\n"
 
-#: app/flatpak-builtins-build-finish.c:501
+#: app/flatpak-builtins-build-finish.c:508
 #, c-format
 msgid "Invalid --require-version argument: %s"
 msgstr "Argument --require-version nevalid: %s"
 
-#: app/flatpak-builtins-build-finish.c:533
+#: app/flatpak-builtins-build-finish.c:540
 #, c-format
 msgid "Too few elements in --extra-data argument %s"
 msgstr "Prea puține elemente în argumentul --extra-data %s"
 
-#: app/flatpak-builtins-build-finish.c:565
+#: app/flatpak-builtins-build-finish.c:572
 #, c-format
 msgid ""
 "Too few elements in --metadata argument %s, format should be "
@@ -713,8 +713,8 @@ msgstr ""
 "Prea puține elemente în argumentul --metadata %s, formatul ar trebui să fie "
 "GRUP=CHEIE[=VALOARE]]"
 
-#: app/flatpak-builtins-build-finish.c:587
-#: app/flatpak-builtins-build-init.c:449
+#: app/flatpak-builtins-build-finish.c:594
+#: app/flatpak-builtins-build-init.c:458
 #, c-format
 msgid ""
 "Too few elements in --extension argument %s, format should be "
@@ -723,27 +723,27 @@ msgstr ""
 "Prea puține elemente în argumentul --extension %s, formatul ar trebui să fie "
 "NUME=VAR[=VALOARE]"
 
-#: app/flatpak-builtins-build-finish.c:593
-#: app/flatpak-builtins-build-init.c:452
+#: app/flatpak-builtins-build-finish.c:600
+#: app/flatpak-builtins-build-init.c:461
 #, fuzzy, c-format
 msgid "Invalid extension name %s"
 msgstr "Nume de autentificator %s nevalid"
 
-#: app/flatpak-builtins-build-finish.c:636
+#: app/flatpak-builtins-build-finish.c:643
 msgid "DIRECTORY - Finalize a build directory"
 msgstr "DIRECTOR - Finalizează un director de generare"
 
-#: app/flatpak-builtins-build-finish.c:658
+#: app/flatpak-builtins-build-finish.c:665
 #, c-format
 msgid "Build directory %s not initialized"
 msgstr "Directorul de generare %s nu este inițializat"
 
-#: app/flatpak-builtins-build-finish.c:679
+#: app/flatpak-builtins-build-finish.c:686
 #, c-format
 msgid "Build directory %s already finalized"
 msgstr "Directorul de generare %s este deja finalizat"
 
-#: app/flatpak-builtins-build-finish.c:692
+#: app/flatpak-builtins-build-finish.c:699
 msgid "Please review the exported files and the metadata\n"
 msgstr "Revizuiți fișierele exportate și datele meta\n"
 
@@ -855,40 +855,40 @@ msgstr "Unde să se stocheze sdk-ul (implicit la „usr”)"
 msgid "Re-initialize the sdk/var"
 msgstr "Reinițializează sdk/var"
 
-#: app/flatpak-builtins-build-init.c:114
+#: app/flatpak-builtins-build-init.c:118
 #, c-format
 msgid "Requested extension %s is only partially installed"
 msgstr "Extensia cerută %s este doar parțial instalată"
 
-#: app/flatpak-builtins-build-init.c:143
+#: app/flatpak-builtins-build-init.c:147
 #, c-format
 msgid "Requested extension %s not installed"
 msgstr "Extensia cerută %s nu este instalată"
 
-#: app/flatpak-builtins-build-init.c:201
+#: app/flatpak-builtins-build-init.c:207
 msgid ""
 "DIRECTORY APPNAME SDK RUNTIME [BRANCH] - Initialize a directory for building"
 msgstr ""
 "DIRECTOR NUMEAPLICAȚIE SDK EXECUTARE [RAMURĂ] - Inițializează un director "
 "pentru generare"
 
-#: app/flatpak-builtins-build-init.c:208
+#: app/flatpak-builtins-build-init.c:214
 msgid "RUNTIME must be specified"
 msgstr "EXECUTARE trebuie specificat"
 
-#: app/flatpak-builtins-build-init.c:229
+#: app/flatpak-builtins-build-init.c:235
 #, c-format
 msgid "'%s' is not a valid build type name, use app, runtime or extension"
 msgstr ""
 "„%s” nu este un nume de tip de executare valid, utilizați aplicație, "
 "executare sau extensie"
 
-#: app/flatpak-builtins-build-init.c:235 app/flatpak-builtins-override.c:79
+#: app/flatpak-builtins-build-init.c:241 app/flatpak-builtins-override.c:79
 #, c-format
 msgid "'%s' is not a valid application name: %s"
 msgstr "„%s nu este un nume de aplicație valid: %s"
 
-#: app/flatpak-builtins-build-init.c:288
+#: app/flatpak-builtins-build-init.c:295
 #, c-format
 msgid "Build directory %s already initialized"
 msgstr "Directorul de generare %s este deja inițializat"
@@ -1360,7 +1360,7 @@ msgstr "FIȘIER - Exportă un fișier la aplicații"
 
 #: app/flatpak-builtins-document-export.c:109
 #: app/flatpak-builtins-document-info.c:72
-#: app/flatpak-builtins-document-unexport.c:64
+#: app/flatpak-builtins-document-unexport.c:67
 msgid "FILE must be specified"
 msgstr "FIȘIERUL trebuie specificat"
 
@@ -1369,7 +1369,7 @@ msgid "FILE - Get information about an exported file"
 msgstr "FIȘIER - Obțineți informații despre un fișier exportat"
 
 #: app/flatpak-builtins-document-info.c:100
-#: app/flatpak-builtins-document-unexport.c:87
+#: app/flatpak-builtins-document-unexport.c:92
 msgid "Not exported\n"
 msgstr "Nu este exportat\n"
 
@@ -1428,7 +1428,12 @@ msgstr "Arată permisiunile pentru aplicații"
 msgid "[APPID] - List exported files"
 msgstr "[IDAPLICAȚIE] - Listează fișierele exportate"
 
-#: app/flatpak-builtins-document-unexport.c:55
+#: app/flatpak-builtins-document-unexport.c:43
+#, fuzzy
+msgid "Specify the document ID"
+msgstr "Arată ID-ul documentului"
+
+#: app/flatpak-builtins-document-unexport.c:58
 msgid "FILE - Unexport a file to apps"
 msgstr "FILE - Nu mai exportă un fișier la aplicații"
 
@@ -1556,7 +1561,7 @@ msgstr "Arată ID-urile de aplicație/executare"
 
 #: app/flatpak-builtins-history.c:61 app/flatpak-builtins-list.c:62
 #: app/flatpak-builtins-ps.c:51 app/flatpak-builtins-remote-ls.c:70
-#: app/flatpak-cli-transaction.c:1132
+#: app/flatpak-cli-transaction.c:1146
 msgid "Arch"
 msgstr "Arhitectură"
 
@@ -1567,7 +1572,7 @@ msgstr "Arată arhitectura"
 
 #: app/flatpak-builtins-history.c:62 app/flatpak-builtins-list.c:61
 #: app/flatpak-builtins-ps.c:52 app/flatpak-builtins-remote-ls.c:69
-#: app/flatpak-builtins-search.c:47 app/flatpak-cli-transaction.c:1135
+#: app/flatpak-builtins-search.c:46 app/flatpak-cli-transaction.c:1149
 msgid "Branch"
 msgstr "Ramifică"
 
@@ -1584,7 +1589,7 @@ msgstr "Loc de instalare"
 msgid "Show the affected installation"
 msgstr "Arată instalarea afectată"
 
-#: app/flatpak-builtins-history.c:64 app/flatpak-cli-transaction.c:1149
+#: app/flatpak-builtins-history.c:64 app/flatpak-cli-transaction.c:1163
 msgid "Remote"
 msgstr "Locație la distanță"
 
@@ -1653,15 +1658,15 @@ msgstr "Nu s-a putut deschide jurnalul: %s"
 msgid "Failed to add match to journal: %s"
 msgstr "Nu s-a putut adăuga potrivirea la jurnal: %s"
 
-#: app/flatpak-builtins-history.c:454
+#: app/flatpak-builtins-history.c:469
 msgid " - Show history"
 msgstr " - Arată istoricul"
 
-#: app/flatpak-builtins-history.c:473
+#: app/flatpak-builtins-history.c:488
 msgid "Failed to parse the --since option"
 msgstr "Nu s-a putut parsa opțiunea --since"
 
-#: app/flatpak-builtins-history.c:484
+#: app/flatpak-builtins-history.c:499
 msgid "Failed to parse the --until option"
 msgstr "Nu s-a putut parsa opțiunea --until"
 
@@ -1743,50 +1748,50 @@ msgstr "NUMELE trebuie specificat"
 msgid "ref not present in origin"
 msgstr "ref-ul nu este prezent în origine"
 
-#: app/flatpak-builtins-info.c:211 app/flatpak-builtins-remote-info.c:226
+#: app/flatpak-builtins-info.c:211 app/flatpak-builtins-remote-info.c:216
 msgid "Warning: Commit has no flatpak metadata\n"
 msgstr "Avertisment: Comitul nu are date meta flatpak\n"
 
 #: app/flatpak-builtins-info.c:217 app/flatpak-builtins-info.c:259
 #: app/flatpak-builtins-info.c:451 app/flatpak-builtins-info.c:498
-#: app/flatpak-builtins-remote-info.c:245
-#: app/flatpak-builtins-remote-info.c:280
+#: app/flatpak-builtins-remote-info.c:235
+#: app/flatpak-builtins-remote-info.c:270
 msgid "ID:"
 msgstr "ID:"
 
 #: app/flatpak-builtins-info.c:218 app/flatpak-builtins-info.c:260
-#: app/flatpak-builtins-remote-info.c:246
-#: app/flatpak-builtins-remote-info.c:281
+#: app/flatpak-builtins-remote-info.c:236
+#: app/flatpak-builtins-remote-info.c:271
 msgid "Ref:"
 msgstr "Ref:"
 
 #: app/flatpak-builtins-info.c:219 app/flatpak-builtins-info.c:261
-#: app/flatpak-builtins-remote-info.c:247
-#: app/flatpak-builtins-remote-info.c:282
+#: app/flatpak-builtins-remote-info.c:237
+#: app/flatpak-builtins-remote-info.c:272
 msgid "Arch:"
 msgstr "Arhitectură:"
 
 #: app/flatpak-builtins-info.c:220 app/flatpak-builtins-info.c:262
-#: app/flatpak-builtins-remote-info.c:248
-#: app/flatpak-builtins-remote-info.c:283
+#: app/flatpak-builtins-remote-info.c:238
+#: app/flatpak-builtins-remote-info.c:273
 msgid "Branch:"
 msgstr "Ramura:"
 
 #: app/flatpak-builtins-info.c:222 app/flatpak-builtins-info.c:264
-#: app/flatpak-builtins-remote-info.c:250
-#: app/flatpak-builtins-remote-info.c:285
+#: app/flatpak-builtins-remote-info.c:240
+#: app/flatpak-builtins-remote-info.c:275
 msgid "Version:"
 msgstr "Versiune:"
 
 #: app/flatpak-builtins-info.c:224 app/flatpak-builtins-info.c:266
-#: app/flatpak-builtins-remote-info.c:252
-#: app/flatpak-builtins-remote-info.c:287
+#: app/flatpak-builtins-remote-info.c:242
+#: app/flatpak-builtins-remote-info.c:277
 msgid "License:"
 msgstr "Licență:"
 
 #: app/flatpak-builtins-info.c:226 app/flatpak-builtins-info.c:269
-#: app/flatpak-builtins-remote-info.c:254
-#: app/flatpak-builtins-remote-info.c:289
+#: app/flatpak-builtins-remote-info.c:244
+#: app/flatpak-builtins-remote-info.c:279
 msgid "Collection:"
 msgstr "Colecție:"
 
@@ -1796,32 +1801,32 @@ msgstr "Instalare:"
 
 #: app/flatpak-builtins-info.c:228 app/flatpak-builtins-info.c:271
 #: app/flatpak-builtins-info.c:454 app/flatpak-builtins-info.c:501
-#: app/flatpak-builtins-remote-info.c:258
-#: app/flatpak-builtins-remote-info.c:293
+#: app/flatpak-builtins-remote-info.c:248
+#: app/flatpak-builtins-remote-info.c:283
 msgid "Installed:"
 msgstr "Instalat:"
 
 #: app/flatpak-builtins-info.c:231 app/flatpak-builtins-info.c:279
-#: app/flatpak-builtins-remote-info.c:261
-#: app/flatpak-builtins-remote-info.c:297
+#: app/flatpak-builtins-remote-info.c:251
+#: app/flatpak-builtins-remote-info.c:287
 msgid "Runtime:"
 msgstr "Executare:"
 
 #: app/flatpak-builtins-info.c:232 app/flatpak-builtins-info.c:288
-#: app/flatpak-builtins-remote-info.c:262
-#: app/flatpak-builtins-remote-info.c:302
+#: app/flatpak-builtins-remote-info.c:252
+#: app/flatpak-builtins-remote-info.c:292
 msgid "Sdk:"
 msgstr "Sdk:"
 
 #: app/flatpak-builtins-info.c:235 app/flatpak-builtins-info.c:313
-#: app/flatpak-builtins-remote-info.c:265
-#: app/flatpak-builtins-remote-info.c:328
+#: app/flatpak-builtins-remote-info.c:255
+#: app/flatpak-builtins-remote-info.c:318
 msgid "Date:"
 msgstr "Data:"
 
 #: app/flatpak-builtins-info.c:237 app/flatpak-builtins-info.c:311
-#: app/flatpak-builtins-remote-info.c:267
-#: app/flatpak-builtins-remote-info.c:326
+#: app/flatpak-builtins-remote-info.c:257
+#: app/flatpak-builtins-remote-info.c:316
 msgid "Subject:"
 msgstr "Subiect:"
 
@@ -1835,14 +1840,14 @@ msgstr "Ultimul comit:"
 
 #: app/flatpak-builtins-info.c:244 app/flatpak-builtins-info.c:303
 #: app/flatpak-builtins-info.c:453 app/flatpak-builtins-info.c:500
-#: app/flatpak-builtins-remote-info.c:268
-#: app/flatpak-builtins-remote-info.c:307
+#: app/flatpak-builtins-remote-info.c:258
+#: app/flatpak-builtins-remote-info.c:297
 msgid "Commit:"
 msgstr "Comit:"
 
 #: app/flatpak-builtins-info.c:246 app/flatpak-builtins-info.c:308
-#: app/flatpak-builtins-remote-info.c:270
-#: app/flatpak-builtins-remote-info.c:312
+#: app/flatpak-builtins-remote-info.c:260
+#: app/flatpak-builtins-remote-info.c:302
 msgid "Parent:"
 msgstr "Superior:"
 
@@ -1851,14 +1856,14 @@ msgid "Alt-id:"
 msgstr "ID-alternativ:"
 
 #: app/flatpak-builtins-info.c:250 app/flatpak-builtins-info.c:325
-#: app/flatpak-builtins-remote-info.c:272
-#: app/flatpak-builtins-remote-info.c:317
+#: app/flatpak-builtins-remote-info.c:262
+#: app/flatpak-builtins-remote-info.c:307
 msgid "End-of-life:"
 msgstr "Sfârșit-de-viață:"
 
 #: app/flatpak-builtins-info.c:252 app/flatpak-builtins-info.c:330
-#: app/flatpak-builtins-remote-info.c:274
-#: app/flatpak-builtins-remote-info.c:322
+#: app/flatpak-builtins-remote-info.c:264
+#: app/flatpak-builtins-remote-info.c:312
 msgid "End-of-life-rebase:"
 msgstr "Sfârșit-de-viață-rebase:"
 
@@ -1982,7 +1987,7 @@ msgid "No remote refs found similar to ‘%s’"
 msgstr "Nu s-au găsit ref-uri similare cu „%s”"
 
 #: app/flatpak-builtins-install.c:504 app/flatpak-builtins-uninstall.c:293
-#: common/flatpak-ref-utils.c:690 common/flatpak-ref-utils.c:1586
+#: common/flatpak-ref-utils.c:690 common/flatpak-ref-utils.c:1596
 #, c-format
 msgid "Invalid branch %s: %s"
 msgstr "Ramură nevalidă %s: %s"
@@ -2130,7 +2135,7 @@ msgstr "Opțiuni"
 msgid "Show options"
 msgstr "Arată opțiunile"
 
-#: app/flatpak-builtins-list.c:401
+#: app/flatpak-builtins-list.c:393
 msgid " - List installed apps and/or runtimes"
 msgstr " - Listează aplicațiile instalate și/sau executările"
 
@@ -2300,7 +2305,7 @@ msgstr "PID-inferior"
 msgid "Show the PID of the sandbox process"
 msgstr "Arată PID-ul procesului de sandbox"
 
-#: app/flatpak-builtins-ps.c:52 app/flatpak-builtins-search.c:47
+#: app/flatpak-builtins-ps.c:52 app/flatpak-builtins-search.c:46
 msgid "Show the application branch"
 msgstr "Arată ramura aplicației"
 
@@ -2444,7 +2449,7 @@ msgstr "Nu urmări redirectarea stabilită în fișierul rezumat"
 msgid "Can't load uri %s: %s\n"
 msgstr "Nu se poate încărca uri-ul %s: %s\n"
 
-#: app/flatpak-builtins-remote-add.c:269 common/flatpak-dir.c:3864
+#: app/flatpak-builtins-remote-add.c:269 common/flatpak-dir.c:3876
 #, c-format
 msgid "Can't load file %s: %s\n"
 msgstr "Nu se poate încărca fișierul %s: %s\n"
@@ -2529,38 +2534,29 @@ msgstr ""
 msgid "REMOTE and REF must be specified"
 msgstr "DE LA DISTANȚĂ și REF trebuie specificate"
 
-#: app/flatpak-builtins-remote-info.c:159 common/flatpak-dir.c:1179
-#: common/flatpak-dir.c:4662 common/flatpak-dir.c:5580
-#: common/flatpak-dir.c:5648 common/flatpak-dir.c:5770
-#, c-format
-msgid "Couldn't find latest checksum for ref %s in remote %s"
-msgstr ""
-"Nu s-a putut găsi suma de control cea mai recentă pentru ref-ul %s în "
-"depozitul de la distanță %s"
-
-#: app/flatpak-builtins-remote-info.c:256
-#: app/flatpak-builtins-remote-info.c:291
+#: app/flatpak-builtins-remote-info.c:246
+#: app/flatpak-builtins-remote-info.c:281
 msgid "Download:"
 msgstr "Descărcare:"
 
-#: app/flatpak-builtins-remote-info.c:276
-#: app/flatpak-builtins-remote-info.c:334
+#: app/flatpak-builtins-remote-info.c:266
+#: app/flatpak-builtins-remote-info.c:324
 msgid "History:"
 msgstr "Istoric:"
 
-#: app/flatpak-builtins-remote-info.c:357
+#: app/flatpak-builtins-remote-info.c:347
 msgid " Commit:"
 msgstr " Comit:"
 
-#: app/flatpak-builtins-remote-info.c:358
+#: app/flatpak-builtins-remote-info.c:348
 msgid " Subject:"
 msgstr " Subiect:"
 
-#: app/flatpak-builtins-remote-info.c:359
+#: app/flatpak-builtins-remote-info.c:349
 msgid " Date:"
 msgstr " Dată:"
 
-#: app/flatpak-builtins-remote-info.c:392
+#: app/flatpak-builtins-remote-info.c:382
 #, c-format
 msgid "Warning: Commit %s has no flatpak metadata\n"
 msgstr "Avertisment: Comitul %s nu are date meta flatpak\n"
@@ -2678,7 +2674,7 @@ msgstr "Dimensiunea descărcării"
 msgid "Show the download size"
 msgstr "Arată dimensiunea descărcării"
 
-#: app/flatpak-builtins-remote-ls.c:396
+#: app/flatpak-builtins-remote-ls.c:391
 msgid " [REMOTE or URI] - Show available runtimes and applications"
 msgstr ""
 " [DE LA DISTANȚĂ sau URI] - Arată executările și aplicațiile disponibile"
@@ -2777,90 +2773,110 @@ msgstr "%s, se șterge obiectul\n"
 msgid "Can't load object %s: %s\n"
 msgstr "Nu se poate încărca obiectul %s: %s\n"
 
-#: app/flatpak-builtins-repair.c:265
+#: app/flatpak-builtins-repair.c:228
+#, fuzzy, c-format
+msgid "Commit invalid %s: %s\n"
+msgstr "Obiect nevalid: %s.%s\n"
+
+#: app/flatpak-builtins-repair.c:231
+#, fuzzy, c-format
+msgid "Deleting invalid commit %s: %s\n"
+msgstr "Ref de comit %s nevalid: "
+
+#: app/flatpak-builtins-repair.c:261
+#, c-format
+msgid "Commit should be marked partial: %s\n"
+msgstr ""
+
+#: app/flatpak-builtins-repair.c:264
+#, c-format
+msgid "Marking commit as partial: %s\n"
+msgstr ""
+
+#: app/flatpak-builtins-repair.c:293
 #, c-format
 msgid "Problems loading data for %s: %s\n"
 msgstr "Probleme la încărcarea datelor pentru %s: %s\n"
 
-#: app/flatpak-builtins-repair.c:278
+#: app/flatpak-builtins-repair.c:306
 #, c-format
 msgid "Error reinstalling %s: %s\n"
 msgstr "Eroare la reinstalarea %s: %s\n"
 
-#: app/flatpak-builtins-repair.c:299
+#: app/flatpak-builtins-repair.c:327
 msgid "- Repair a flatpak installation"
 msgstr "- Repară o instalare flatpak"
 
-#: app/flatpak-builtins-repair.c:375
+#: app/flatpak-builtins-repair.c:403
 #, c-format
 msgid "Removing non-deployed ref %s…\n"
 msgstr "Se elimină ref-ul nedesfășurat %s…\n"
 
-#: app/flatpak-builtins-repair.c:379
+#: app/flatpak-builtins-repair.c:407
 #, c-format
 msgid "Skipping non-deployed ref %s…\n"
 msgstr "Se omite ref-ul nedesfășurat %s…\n"
 
-#: app/flatpak-builtins-repair.c:393
+#: app/flatpak-builtins-repair.c:421
 #, fuzzy, c-format
 msgid "[%d/%d] Verifying %s…\n"
 msgstr "Se verifică %s…\n"
 
-#: app/flatpak-builtins-repair.c:399
+#: app/flatpak-builtins-repair.c:427
 msgid "Dry run: "
 msgstr ""
 
-#: app/flatpak-builtins-repair.c:404
+#: app/flatpak-builtins-repair.c:432
 #, c-format
 msgid "Deleting ref %s due to missing objects\n"
 msgstr "Se șterge ref-ul %s din cauza obiectelor care lipsesc\n"
 
-#: app/flatpak-builtins-repair.c:408
+#: app/flatpak-builtins-repair.c:436
 #, c-format
 msgid "Deleting ref %s due to invalid objects\n"
 msgstr "Se șterge ref-ul %s din cauza obiectelor nevalide\n"
 
-#: app/flatpak-builtins-repair.c:412
+#: app/flatpak-builtins-repair.c:440
 #, c-format
 msgid "Deleting ref %s due to %d\n"
 msgstr "Se șterge ref-ul %s din cauza la %d\n"
 
-#: app/flatpak-builtins-repair.c:426
+#: app/flatpak-builtins-repair.c:454
 msgid "Checking remotes...\n"
 msgstr ""
 
-#: app/flatpak-builtins-repair.c:444
+#: app/flatpak-builtins-repair.c:472
 #, c-format
 msgid "Remote %s for ref %s is missing\n"
 msgstr "Depozitul de la distanță %s pentru ref-ul %s lipsește\n"
 
-#: app/flatpak-builtins-repair.c:446
+#: app/flatpak-builtins-repair.c:474
 #, c-format
 msgid "Remote %s for ref %s is disabled\n"
 msgstr "Depozitul de la distanță %s pentru ref-ul %s este dezactivat\n"
 
-#: app/flatpak-builtins-repair.c:452
+#: app/flatpak-builtins-repair.c:480
 msgid "Pruning objects\n"
 msgstr "Se elimină obiectele\n"
 
-#: app/flatpak-builtins-repair.c:460
+#: app/flatpak-builtins-repair.c:488
 msgid "Erasing .removed\n"
 msgstr "Se șterge .removed\n"
 
-#: app/flatpak-builtins-repair.c:485
+#: app/flatpak-builtins-repair.c:513
 msgid "Reinstalling refs\n"
 msgstr "Se reinstalarează ref-urile\n"
 
-#: app/flatpak-builtins-repair.c:487
+#: app/flatpak-builtins-repair.c:515
 msgid "Reinstalling removed refs\n"
 msgstr "Se reinstalează ref-urile eliminate\n"
 
-#: app/flatpak-builtins-repair.c:512
+#: app/flatpak-builtins-repair.c:540
 #, c-format
 msgid "While removing appstream for %s: "
 msgstr "În timpul eliminării appstream pentru %s: "
 
-#: app/flatpak-builtins-repair.c:519
+#: app/flatpak-builtins-repair.c:547
 #, c-format
 msgid "While deploying appstream for %s: "
 msgstr "În timpul desfășurării appstream pentru %s: "
@@ -2968,7 +2984,7 @@ msgstr "ramuri %zd\n"
 msgid "Installed"
 msgstr "Instalat"
 
-#: app/flatpak-builtins-repo.c:335 app/flatpak-cli-transaction.c:1158
+#: app/flatpak-builtins-repo.c:335 app/flatpak-cli-transaction.c:1172
 msgid "Download"
 msgstr "Descarcă"
 
@@ -3119,23 +3135,23 @@ msgstr "executarea/%s/%s/%s nu este instalată"
 msgid "Arch to search for"
 msgstr "Arhitectura după care se caută"
 
-#: app/flatpak-builtins-search.c:49
+#: app/flatpak-builtins-search.c:47
 msgid "Remotes"
 msgstr "Locații la distanță"
 
-#: app/flatpak-builtins-search.c:49
+#: app/flatpak-builtins-search.c:47
 msgid "Show the remotes"
 msgstr "Arată depozitele de la distanță"
 
-#: app/flatpak-builtins-search.c:271
+#: app/flatpak-builtins-search.c:245
 msgid "TEXT - Search remote apps/runtimes for text"
 msgstr "TEXT - Caută aplicații/executări de la distanță pentru text"
 
-#: app/flatpak-builtins-search.c:282
+#: app/flatpak-builtins-search.c:256
 msgid "TEXT must be specified"
 msgstr "TEXTUL trebuie specificat"
 
-#: app/flatpak-builtins-search.c:341
+#: app/flatpak-builtins-search.c:329
 msgid "No matches found"
 msgstr "Nu s-au găsit potriviri"
 
@@ -3201,7 +3217,7 @@ msgstr ""
 msgid "Nothing unused to uninstall\n"
 msgstr "Nimic neutilizat de dezinstalat\n"
 
-#: app/flatpak-builtins-uninstall.c:326 common/flatpak-dir.c:12924
+#: app/flatpak-builtins-uninstall.c:326 common/flatpak-dir.c:13127
 #, c-format
 msgid "%s/%s/%s not installed"
 msgstr "%s/%s/%s nu este instalat"
@@ -3436,8 +3452,8 @@ msgid "Which do you want to install (0 to abort)?"
 msgstr "Pe care doriți să o instalați (0 pentru a renunța)?"
 
 #: app/flatpak-cli-transaction.c:127
-#, c-format
-msgid "Configuring %s as new remote '%s'"
+#, fuzzy, c-format
+msgid "Configuring %s as new remote '%s'\n"
 msgstr "Se configurează %s ca depozitul de la distanță nou „%s”"
 
 #. default to yes on Enter
@@ -3513,17 +3529,17 @@ msgid "Info: %s was skipped"
 msgstr "Informații: %s a fost omis"
 
 #: app/flatpak-cli-transaction.c:520 app/flatpak-quiet-transaction.c:136
-#: common/flatpak-dir.c:9699
+#: common/flatpak-dir.c:9869
 #, c-format
 msgid "%s already installed"
 msgstr "%s este deja instalat"
 
 #: app/flatpak-cli-transaction.c:522 app/flatpak-cli-transaction.c:524
 #: app/flatpak-quiet-transaction.c:138 app/flatpak-quiet-transaction.c:140
-#: common/flatpak-dir.c:2867 common/flatpak-dir.c:3565
-#: common/flatpak-dir.c:15038 common/flatpak-dir.c:15314
-#: common/flatpak-transaction.c:2461 common/flatpak-transaction.c:2509
-#: common/flatpak-utils.c:1123 common/flatpak-utils.c:1216
+#: common/flatpak-dir.c:2878 common/flatpak-dir.c:3577
+#: common/flatpak-dir.c:15235 common/flatpak-dir.c:15525
+#: common/flatpak-transaction.c:2516 common/flatpak-transaction.c:2564
+#: common/flatpak-utils.c:1191 common/flatpak-utils.c:1284
 #, c-format
 msgid "%s not installed"
 msgstr "%s nu este instalat"
@@ -3610,69 +3626,74 @@ msgstr "Îl înlocuiți cu %s?"
 msgid "Updating to rebased version\n"
 msgstr "Se actualizează versiunea rebased\n"
 
-#: app/flatpak-cli-transaction.c:780
+#: app/flatpak-cli-transaction.c:779
 #, c-format
 msgid "Failed to rebase %s to %s: "
 msgstr "Nu s-a putut face rebase %s la %s: "
 
-#: app/flatpak-cli-transaction.c:980
+#: app/flatpak-cli-transaction.c:793
+#, fuzzy, c-format
+msgid "Failed to uninstall %s for rebase to %s: "
+msgstr "Nu s-a putut face rebase %s la %s: "
+
+#: app/flatpak-cli-transaction.c:994
 #, c-format
 msgid "New %s permissions:"
 msgstr "Permisiuni %s noi:"
 
-#: app/flatpak-cli-transaction.c:982
+#: app/flatpak-cli-transaction.c:996
 #, c-format
 msgid "%s permissions:"
 msgstr "Permisiuni %s:"
 
-#: app/flatpak-cli-transaction.c:1044
+#: app/flatpak-cli-transaction.c:1058
 msgid "Warning: "
 msgstr "Avertisment: "
 
 #. translators: This is short for operation, the title of a one-char column
-#: app/flatpak-cli-transaction.c:1139
+#: app/flatpak-cli-transaction.c:1153
 msgid "Op"
 msgstr "Op"
 
 #. Avoid resizing the download column too much,
 #. * by making the title as long as typical content
 #.
-#: app/flatpak-cli-transaction.c:1155 app/flatpak-cli-transaction.c:1199
+#: app/flatpak-cli-transaction.c:1169 app/flatpak-cli-transaction.c:1213
 msgid "partial"
 msgstr "parțial"
 
-#: app/flatpak-cli-transaction.c:1231
+#: app/flatpak-cli-transaction.c:1245
 msgid "Proceed with these changes to the user installation?"
 msgstr "Procedați cu aceste modificări la instalarea utilizatorului?"
 
-#: app/flatpak-cli-transaction.c:1233
+#: app/flatpak-cli-transaction.c:1247
 msgid "Proceed with these changes to the system installation?"
 msgstr "Procedați cu aceste modificări la instalarea sistemului?"
 
-#: app/flatpak-cli-transaction.c:1235
+#: app/flatpak-cli-transaction.c:1249
 #, c-format
 msgid "Proceed with these changes to the %s?"
 msgstr "Procedați cu aceste modificări la %s?"
 
-#: app/flatpak-cli-transaction.c:1403
+#: app/flatpak-cli-transaction.c:1417
 msgid "Changes complete."
 msgstr "Modificări complete."
 
-#: app/flatpak-cli-transaction.c:1405
+#: app/flatpak-cli-transaction.c:1419
 msgid "Uninstall complete."
 msgstr "Dezinstalare completă."
 
-#: app/flatpak-cli-transaction.c:1407
+#: app/flatpak-cli-transaction.c:1421
 msgid "Installation complete."
 msgstr "Instalare completă."
 
-#: app/flatpak-cli-transaction.c:1409
+#: app/flatpak-cli-transaction.c:1423
 msgid "Updates complete."
 msgstr "Actualizări complete."
 
 #. For updates/!stop_on_first_error we already printed all errors so we make up
 #. a different one.
-#: app/flatpak-cli-transaction.c:1442
+#: app/flatpak-cli-transaction.c:1456
 msgid "There were one or more errors"
 msgstr "Au fost una sau mai multe erori"
 
@@ -3983,33 +4004,39 @@ msgstr ""
 "variabila de mediu XDG_DATA_DIRS, deci aplicațiile instalate de Flapak pot "
 "să nu apară pe desktop până ce sesiunea este repornită."
 
-#: app/flatpak-main.c:440
+#: app/flatpak-main.c:378
+msgid ""
+"Refusing to operate under sudo with --user. Omit sudo to operate on the user "
+"installation, or use a root shell to operate on the root user's installation."
+msgstr ""
+
+#: app/flatpak-main.c:450
 msgid ""
 "Multiple installations specified for a command that works on one installation"
 msgstr ""
 "Instalări multiple specificate pentru o comandă care funcționează pe o "
 "instalare"
 
-#: app/flatpak-main.c:489 app/flatpak-main.c:671
+#: app/flatpak-main.c:501 app/flatpak-main.c:683
 #, c-format
 msgid "See '%s --help'"
 msgstr "Consultați „%s --help”"
 
-#: app/flatpak-main.c:680
+#: app/flatpak-main.c:692
 #, c-format
 msgid "'%s' is not a flatpak command. Did you mean '%s%s'?"
 msgstr "„%s” nu este o comandă flatpak. Ați vrut să spuneți „%s%s”?"
 
-#: app/flatpak-main.c:683
+#: app/flatpak-main.c:695
 #, c-format
 msgid "'%s' is not a flatpak command"
 msgstr "„%s” nu este o comandă flatpak"
 
-#: app/flatpak-main.c:798
+#: app/flatpak-main.c:810
 msgid "No command specified"
 msgstr "Nu s-a specificat nicio comandă"
 
-#: app/flatpak-main.c:958
+#: app/flatpak-main.c:971
 msgid "error:"
 msgstr "error:"
 
@@ -4043,9 +4070,14 @@ msgstr "Informații: %s este sfârșit-de-viață, în favoarea a %s\n"
 msgid "Info: %s is end-of-life, with reason: %s\n"
 msgstr "Informații: %s este sfârșit-de-viață, cu motivul: %s\n"
 
-#: app/flatpak-quiet-transaction.c:228
+#: app/flatpak-quiet-transaction.c:227
 #, c-format
 msgid "Failed to rebase %s to %s: %s\n"
+msgstr "Nu s-a putut face rebase %s la %s: %s\n"
+
+#: app/flatpak-quiet-transaction.c:240
+#, fuzzy, c-format
+msgid "Failed to uninstall %s for rebase to %s: %s\n"
 msgstr "Nu s-a putut face rebase %s la %s: %s\n"
 
 #: common/flatpak-auth.c:58
@@ -4054,47 +4086,47 @@ msgid "No authenticator configured for remote `%s`"
 msgstr ""
 "Nu s-a configurat niciun autentificator pentru depozitul de la distanță „%s”"
 
-#: common/flatpak-context.c:191
+#: common/flatpak-context.c:192
 #, c-format
 msgid "Unknown share type %s, valid types are: %s"
 msgstr "Tip de partajare necunoscut %s, tipurile valide sunt: %s"
 
-#: common/flatpak-context.c:226
+#: common/flatpak-context.c:227
 #, c-format
 msgid "Unknown policy type %s, valid types are: %s"
 msgstr "Tip de politică necunoscută %s, tipurile valide sunt: %s"
 
-#: common/flatpak-context.c:264
+#: common/flatpak-context.c:265
 #, c-format
 msgid "Invalid dbus name %s"
 msgstr "Nume dbus nevalid %s"
 
-#: common/flatpak-context.c:277
+#: common/flatpak-context.c:278
 #, c-format
 msgid "Unknown socket type %s, valid types are: %s"
 msgstr "Tip de soclu necunoscut %s, tipurile valide sunt: %s"
 
-#: common/flatpak-context.c:306
+#: common/flatpak-context.c:307
 #, c-format
 msgid "Unknown device type %s, valid types are: %s"
 msgstr "Tip de dispozitiv necunoscut %s, tipurile valide sunt: %s"
 
-#: common/flatpak-context.c:334
+#: common/flatpak-context.c:335
 #, c-format
 msgid "Unknown feature type %s, valid types are: %s"
 msgstr "Tip de funcționalitate necunoscut %s, tipurile valide sunt: %s"
 
-#: common/flatpak-context.c:779
+#: common/flatpak-context.c:871
 #, c-format
 msgid "Filesystem location \"%s\" contains \"..\""
 msgstr ""
 
-#: common/flatpak-context.c:817
+#: common/flatpak-context.c:909
 msgid ""
 "--filesystem=/ is not available, use --filesystem=host for a similar result"
 msgstr ""
 
-#: common/flatpak-context.c:851
+#: common/flatpak-context.c:943
 #, c-format
 msgid ""
 "Unknown filesystem location %s, valid locations are: host, host-os, host-"
@@ -4103,176 +4135,176 @@ msgstr ""
 "Locație de sistem de fișiere necunoscută %s locațiile valide sunt: host-os, "
 "host-etc, home, xdg-*[/…], ~/dir, /dir"
 
-#: common/flatpak-context.c:1115
+#: common/flatpak-context.c:1223
 #, c-format
 msgid "Invalid env format %s"
 msgstr "Format env nevalid %s"
 
-#: common/flatpak-context.c:1218
+#: common/flatpak-context.c:1326
 #, c-format
 msgid "Environment variable name must not contain '=': %s"
 msgstr ""
 
-#: common/flatpak-context.c:1331 common/flatpak-context.c:1339
+#: common/flatpak-context.c:1439 common/flatpak-context.c:1447
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 "Argumentele --add-policy trebuie să fie sub forma CHEIE.SUBSISTEM=VALOARE"
 
-#: common/flatpak-context.c:1346
+#: common/flatpak-context.c:1454
 msgid "--add-policy values can't start with \"!\""
 msgstr "Valorile --add-policy nu pot începe cu „!”"
 
-#: common/flatpak-context.c:1371 common/flatpak-context.c:1379
+#: common/flatpak-context.c:1479 common/flatpak-context.c:1487
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 "Argumentele --remove-policy trebuie să fie sub forma CHEIE.SUBSISTEM=VALOARE"
 
-#: common/flatpak-context.c:1386
+#: common/flatpak-context.c:1494
 msgid "--remove-policy values can't start with \"!\""
 msgstr "Valorile --remove-policy nu pot începe cu „!”"
 
-#: common/flatpak-context.c:1412
+#: common/flatpak-context.c:1520
 msgid "Share with host"
 msgstr "Partajează cu gazda"
 
-#: common/flatpak-context.c:1412 common/flatpak-context.c:1413
+#: common/flatpak-context.c:1520 common/flatpak-context.c:1521
 msgid "SHARE"
 msgstr "PARTAJEAZĂ"
 
-#: common/flatpak-context.c:1413
+#: common/flatpak-context.c:1521
 msgid "Unshare with host"
 msgstr "Anulați partajarea cu gazda"
 
-#: common/flatpak-context.c:1414
+#: common/flatpak-context.c:1522
 msgid "Expose socket to app"
 msgstr "Expune soclul la aplicație"
 
-#: common/flatpak-context.c:1414 common/flatpak-context.c:1415
+#: common/flatpak-context.c:1522 common/flatpak-context.c:1523
 msgid "SOCKET"
 msgstr "SOCLU"
 
-#: common/flatpak-context.c:1415
+#: common/flatpak-context.c:1523
 msgid "Don't expose socket to app"
 msgstr "Nu expune soclul la aplicație"
 
-#: common/flatpak-context.c:1416
+#: common/flatpak-context.c:1524
 msgid "Expose device to app"
 msgstr "Expune dispozitivul la aplicație"
 
-#: common/flatpak-context.c:1416 common/flatpak-context.c:1417
+#: common/flatpak-context.c:1524 common/flatpak-context.c:1525
 msgid "DEVICE"
 msgstr "DISPOZITIV"
 
-#: common/flatpak-context.c:1417
+#: common/flatpak-context.c:1525
 msgid "Don't expose device to app"
 msgstr "Nu expune dispozitivul la aplicație"
 
-#: common/flatpak-context.c:1418
+#: common/flatpak-context.c:1526
 msgid "Allow feature"
 msgstr "Permite funcționalitatea"
 
-#: common/flatpak-context.c:1418 common/flatpak-context.c:1419
+#: common/flatpak-context.c:1526 common/flatpak-context.c:1527
 msgid "FEATURE"
 msgstr "FUNCȚIONALITATE"
 
-#: common/flatpak-context.c:1419
+#: common/flatpak-context.c:1527
 msgid "Don't allow feature"
 msgstr "Nu permite funcționalitatea"
 
-#: common/flatpak-context.c:1420
+#: common/flatpak-context.c:1528
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr "Expune sistemul de fișiere la aplicație (:ro pentru doar citire)"
 
-#: common/flatpak-context.c:1420
+#: common/flatpak-context.c:1528
 msgid "FILESYSTEM[:ro]"
 msgstr "SISTEMFIȘIERE[:ro]"
 
-#: common/flatpak-context.c:1421
+#: common/flatpak-context.c:1529
 msgid "Don't expose filesystem to app"
 msgstr "Nu expune sistemul de fișiere la aplicație"
 
-#: common/flatpak-context.c:1421
+#: common/flatpak-context.c:1529
 msgid "FILESYSTEM"
 msgstr "SISTEMFIȘIERE"
 
-#: common/flatpak-context.c:1422
+#: common/flatpak-context.c:1530
 msgid "Set environment variable"
 msgstr "Stabilește variabila de mediu"
 
-#: common/flatpak-context.c:1422
+#: common/flatpak-context.c:1530
 msgid "VAR=VALUE"
 msgstr "VAR=VALOARE"
 
-#: common/flatpak-context.c:1423
+#: common/flatpak-context.c:1531
 msgid "Read environment variables in env -0 format from FD"
 msgstr ""
 
-#: common/flatpak-context.c:1423
+#: common/flatpak-context.c:1531
 msgid "FD"
 msgstr ""
 
-#: common/flatpak-context.c:1424
+#: common/flatpak-context.c:1532
 #, fuzzy
 msgid "Remove variable from environment"
 msgstr "Elimină elementul de la stocarea permisiunilor"
 
-#: common/flatpak-context.c:1424
+#: common/flatpak-context.c:1532
 #, fuzzy
 msgid "VAR"
 msgstr "VAL"
 
-#: common/flatpak-context.c:1425
+#: common/flatpak-context.c:1533
 msgid "Allow app to own name on the session bus"
 msgstr "Permite aplicației să posede un nume la magistrala sesiunii"
 
-#: common/flatpak-context.c:1425 common/flatpak-context.c:1426
-#: common/flatpak-context.c:1427 common/flatpak-context.c:1428
-#: common/flatpak-context.c:1429 common/flatpak-context.c:1430
+#: common/flatpak-context.c:1533 common/flatpak-context.c:1534
+#: common/flatpak-context.c:1535 common/flatpak-context.c:1536
+#: common/flatpak-context.c:1537 common/flatpak-context.c:1538
 msgid "DBUS_NAME"
 msgstr "NUME_DBUS"
 
-#: common/flatpak-context.c:1426
+#: common/flatpak-context.c:1534
 msgid "Allow app to talk to name on the session bus"
 msgstr "Permite aplicației să vorbească numelui la magistrala sesiunii"
 
-#: common/flatpak-context.c:1427
+#: common/flatpak-context.c:1535
 msgid "Don't allow app to talk to name on the session bus"
 msgstr "Nu permite aplicației să vorbească numelui la magistrala sesiunii"
 
-#: common/flatpak-context.c:1428
+#: common/flatpak-context.c:1536
 msgid "Allow app to own name on the system bus"
 msgstr "Permite aplicației să posede un nume la magistrala sistemului"
 
-#: common/flatpak-context.c:1429
+#: common/flatpak-context.c:1537
 msgid "Allow app to talk to name on the system bus"
 msgstr "Permite aplicației să vorbească numelui la magistrala sistemului"
 
-#: common/flatpak-context.c:1430
+#: common/flatpak-context.c:1538
 msgid "Don't allow app to talk to name on the system bus"
 msgstr "Nu permite aplicației să vorbească numelui la magistrala sistemului"
 
-#: common/flatpak-context.c:1431
+#: common/flatpak-context.c:1539
 msgid "Add generic policy option"
 msgstr "Adaugă o opțiune de politică generică"
 
-#: common/flatpak-context.c:1431 common/flatpak-context.c:1432
+#: common/flatpak-context.c:1539 common/flatpak-context.c:1540
 msgid "SUBSYSTEM.KEY=VALUE"
 msgstr "CHEIE.SUBSISTEM=VALOARE"
 
-#: common/flatpak-context.c:1432
+#: common/flatpak-context.c:1540
 msgid "Remove generic policy option"
 msgstr "Elimină opțiunea de politică generică"
 
-#: common/flatpak-context.c:1433
+#: common/flatpak-context.c:1541
 msgid "Persist home directory subpath"
 msgstr "Persistă subcalea directorului personal"
 
-#: common/flatpak-context.c:1433
+#: common/flatpak-context.c:1541
 msgid "FILENAME"
 msgstr "NUME FIȘIER"
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-context.c:1435
+#: common/flatpak-context.c:1543
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "Nu necesită o sesiune care rulează (nicio creare de cgroups)"
 
@@ -4317,7 +4349,7 @@ msgstr ""
 msgid "Missing xa.data in summary for remote %s"
 msgstr "Niciun rezumat oci cache-uit pentru depozitul de la distanță „%s”"
 
-#: common/flatpak-dir.c:845 common/flatpak-dir.c:1261
+#: common/flatpak-dir.c:845 common/flatpak-dir.c:1262
 #, fuzzy, c-format
 msgid "Unsupported summary version %d for remote %s"
 msgstr "Niciun rezumat cache-uit pentru depozitul de la distanță „%s”"
@@ -4331,8 +4363,8 @@ msgstr "Indexul OCI de la distanță nu are niciun uri de registru"
 msgid "Couldn't find ref %s in remote %s"
 msgstr "Nu s-a putut găsi ref-ul %s în depozitul de la distanță %s"
 
-#: common/flatpak-dir.c:1018 common/flatpak-dir.c:5671
-#: common/flatpak-utils.c:6829 common/flatpak-utils.c:6834
+#: common/flatpak-dir.c:1018 common/flatpak-dir.c:5807
+#: common/flatpak-utils.c:6907 common/flatpak-utils.c:6912
 msgid "Image is not a manifest"
 msgstr "Imaginea nu este un manifest"
 
@@ -4348,347 +4380,360 @@ msgid "Configured collection ID ‘%s’ not in binding metadata"
 msgstr ""
 "Comitul nu are nicio ref „%s” cerută în datele meta de legare a ref-ului"
 
-#: common/flatpak-dir.c:1232 common/flatpak-dir.c:1267
+#: common/flatpak-dir.c:1179 common/flatpak-dir.c:4795
+#: common/flatpak-dir.c:5716 common/flatpak-dir.c:5784
 #, c-format
-msgid "No entry for %s in remote summary flatpak sparse cache "
+msgid "Couldn't find latest checksum for ref %s in remote %s"
+msgstr ""
+"Nu s-a putut găsi suma de control cea mai recentă pentru ref-ul %s în "
+"depozitul de la distanță %s"
+
+#: common/flatpak-dir.c:1232 common/flatpak-dir.c:1268
+#, fuzzy, c-format
+msgid "No entry for %s in remote %s summary flatpak sparse cache"
 msgstr ""
 "Nicio intrare pentru %s în cache-ul rar flatpak de rezumat de la distanță "
 
-#: common/flatpak-dir.c:1810
+#: common/flatpak-dir.c:1821
 #, c-format
 msgid "Commit metadata for %s not matching expected metadata"
 msgstr ""
 "Datele meta de comit pentru %s nu se potrivesc cu datele meta așteptate"
 
-#: common/flatpak-dir.c:2074
+#: common/flatpak-dir.c:2085
 msgid "Unable to connect to system bus"
 msgstr "Nu se poate conecta la magistrala sistemului"
 
-#: common/flatpak-dir.c:2669
+#: common/flatpak-dir.c:2680
 msgid "User installation"
 msgstr "Instalarea utilizatorului"
 
-#: common/flatpak-dir.c:2676
+#: common/flatpak-dir.c:2687
 #, c-format
 msgid "System (%s) installation"
 msgstr "Instalare (%s) de sistem"
 
-#: common/flatpak-dir.c:2721
+#: common/flatpak-dir.c:2732
 #, c-format
 msgid "No overrides found for %s"
 msgstr "Nicio suprascriere găsită pentru %s"
 
-#: common/flatpak-dir.c:2870
+#: common/flatpak-dir.c:2881
 #, c-format
 msgid "%s (commit %s) not installed"
 msgstr "%s (comitul %s) nu este instalat"
 
-#: common/flatpak-dir.c:3871
+#: common/flatpak-dir.c:3883
 #, c-format
 msgid "Error parsing system flatpakrepo file for %s: %s"
 msgstr "Eroare la parsarea depozitului flatpak de sistem pentru %s: %s"
 
-#: common/flatpak-dir.c:3994
+#: common/flatpak-dir.c:3958
 #, c-format
 msgid "While opening repository %s: "
 msgstr "În timpul deschiderii depozitului %s: "
 
-#: common/flatpak-dir.c:4165
+#: common/flatpak-dir.c:4219
 #, c-format
 msgid "The config key %s is not set"
 msgstr "Cheia de configurare %s nu este stabilită"
 
-#: common/flatpak-dir.c:4298
+#: common/flatpak-dir.c:4352
 #, fuzzy, c-format
 msgid "No current %s pattern matching %s"
 msgstr "Nu există o mască curentă care se potrivește cu %s"
 
-#: common/flatpak-dir.c:4451
+#: common/flatpak-dir.c:4573
 msgid "No appstream commit to deploy"
 msgstr "Niciun comit de appstream de implementat"
 
-#: common/flatpak-dir.c:4482 common/flatpak-dir.c:8212
-msgid "Can't create deploy directory"
-msgstr "Nu se poate crea directorul de implementare"
-
-#: common/flatpak-dir.c:4958 common/flatpak-dir.c:5991
-#: common/flatpak-dir.c:9148 common/flatpak-dir.c:9841
+#: common/flatpak-dir.c:5091 common/flatpak-dir.c:6141
+#: common/flatpak-dir.c:9307 common/flatpak-dir.c:10011
 msgid "Can't pull from untrusted non-gpg verified remote"
 msgstr ""
 "Nu se poate trage de la depozitul de la distanță verificat ne-gpg în care nu "
 "este încredere"
 
-#: common/flatpak-dir.c:5367 common/flatpak-dir.c:5404
+#: common/flatpak-dir.c:5503 common/flatpak-dir.c:5540
 msgid "Extra data not supported for non-gpg-verified local system installs"
 msgstr ""
 "Datele extra nu sunt suportate pentru instalări de sistem locale "
 "neverificate-gpg"
 
-#: common/flatpak-dir.c:5433
+#: common/flatpak-dir.c:5569
 #, c-format
 msgid "Invalid checksum for extra data uri %s"
 msgstr "Sumă de control nevalidă pentru uri-ul de date extra %s"
 
-#: common/flatpak-dir.c:5438
+#: common/flatpak-dir.c:5574
 #, c-format
 msgid "Empty name for extra data uri %s"
 msgstr "Nume gol pentru uri-ul de date extra %s"
 
-#: common/flatpak-dir.c:5445
+#: common/flatpak-dir.c:5581
 #, c-format
 msgid "Unsupported extra data uri %s"
 msgstr "Uri de date extra %s nesuportat"
 
-#: common/flatpak-dir.c:5459
+#: common/flatpak-dir.c:5595
 #, c-format
 msgid "Failed to load local extra-data %s: %s"
 msgstr "Nu s-au putut încărca datele extra locale %s: %s"
 
-#: common/flatpak-dir.c:5462
+#: common/flatpak-dir.c:5598
 #, c-format
 msgid "Wrong size for extra-data %s"
 msgstr "Dimensiune greșită pentru datele extra %s"
 
-#: common/flatpak-dir.c:5477
+#: common/flatpak-dir.c:5613
 #, c-format
 msgid "While downloading %s: "
 msgstr "În timpul descărcării %s: "
 
-#: common/flatpak-dir.c:5484
+#: common/flatpak-dir.c:5620
 #, c-format
 msgid "Wrong size for extra data %s"
 msgstr "Dimensiune greșită pentru datele extra %s"
 
-#: common/flatpak-dir.c:5493
+#: common/flatpak-dir.c:5629
 #, c-format
 msgid "Invalid checksum for extra data %s"
 msgstr "Sumă de control nevalidă pentru datele extra %s"
 
-#: common/flatpak-dir.c:5588 common/flatpak-dir.c:8203
-#: common/flatpak-dir.c:9719
+#: common/flatpak-dir.c:5724 common/flatpak-dir.c:8354
+#: common/flatpak-dir.c:9889
 #, c-format
 msgid "%s commit %s already installed"
 msgstr "%s comitul %s este deja instalat"
 
-#: common/flatpak-dir.c:5825 common/flatpak-dir.c:6074
+#: common/flatpak-dir.c:5971 common/flatpak-dir.c:6224
 #, c-format
 msgid "While pulling %s from remote %s: "
 msgstr "În timpul tragerii %s de la depozitul de la distanță %s: "
 
-#: common/flatpak-dir.c:6015 common/flatpak-utils.c:6724
+#: common/flatpak-dir.c:6165 common/flatpak-utils.c:6804
 msgid "GPG signatures found, but none are in trusted keyring"
 msgstr ""
 "S-au găsit semnăturile GPG, dar niciuna nu este într-un inel de chei de "
 "încredere"
 
-#: common/flatpak-dir.c:6032
+#: common/flatpak-dir.c:6182
 #, c-format
 msgid "Commit for ‘%s’ has no ref binding"
 msgstr "Comitul pentru „%s” nu are nicio legătură ref"
 
-#: common/flatpak-dir.c:6037
+#: common/flatpak-dir.c:6187
 #, c-format
 msgid "Commit for ‘%s’ is not in expected bound refs: %s"
 msgstr "Comitul pentru „%s” nu se află în ref-urile de legătură așteptate: %s"
 
-#: common/flatpak-dir.c:6212
+#: common/flatpak-dir.c:6362
 #, fuzzy
 msgid "Only applications can be made current"
 msgstr ""
 "\n"
 "Se caută aplicații și executări"
 
-#: common/flatpak-dir.c:6731
+#: common/flatpak-dir.c:6881
 msgid "Not enough memory"
 msgstr "Nu există memorie suficientă"
 
-#: common/flatpak-dir.c:6750
+#: common/flatpak-dir.c:6900
 msgid "Failed to read from exported file"
 msgstr "Nu s-a putut citi de la fișierul exportat"
 
-#: common/flatpak-dir.c:6940
+#: common/flatpak-dir.c:7090
 msgid "Error reading mimetype xml file"
 msgstr "Eroare la citirea fișierul xml de tip mime"
 
-#: common/flatpak-dir.c:6945
+#: common/flatpak-dir.c:7095
 msgid "Invalid mimetype xml file"
 msgstr "Fișier xml de tip mime nevalid"
 
-#: common/flatpak-dir.c:7034
+#: common/flatpak-dir.c:7184
 #, c-format
 msgid "D-Bus service file '%s' has wrong name"
 msgstr "Fișierul de serviciu D-Bus „%s” are numele greșit"
 
-#: common/flatpak-dir.c:7177
+#: common/flatpak-dir.c:7327
 #, fuzzy, c-format
 msgid "Invalid Exec argument %s"
 msgstr "Argument require-flatpak nevalid %s"
 
-#: common/flatpak-dir.c:7642
+#: common/flatpak-dir.c:7793
 msgid "While getting detached metadata: "
 msgstr "În timpul obținerii datelor meta detașate: "
 
-#: common/flatpak-dir.c:7647 common/flatpak-dir.c:7652
-#: common/flatpak-dir.c:7656
+#: common/flatpak-dir.c:7798 common/flatpak-dir.c:7803
+#: common/flatpak-dir.c:7807
 msgid "Extra data missing in detached metadata"
 msgstr "Datele extra care lipsesc în datele meta detașate"
 
-#: common/flatpak-dir.c:7660
+#: common/flatpak-dir.c:7811
 msgid "While creating extradir: "
 msgstr "În timpul creării directorului extra: "
 
-#: common/flatpak-dir.c:7681 common/flatpak-dir.c:7714
+#: common/flatpak-dir.c:7832 common/flatpak-dir.c:7865
 msgid "Invalid checksum for extra data"
 msgstr "Sumă de control nevalidă pentru datele extra"
 
-#: common/flatpak-dir.c:7710
+#: common/flatpak-dir.c:7861
 msgid "Wrong size for extra data"
 msgstr "Dimensiune greșită pentru datele extra"
 
-#: common/flatpak-dir.c:7723
+#: common/flatpak-dir.c:7874
 #, c-format
 msgid "While writing extra data file '%s': "
 msgstr "În timp ce se scrie fișierul de date extra „%s”: "
 
-#: common/flatpak-dir.c:7731
+#: common/flatpak-dir.c:7882
 #, c-format
 msgid "Extra data %s missing in detached metadata"
 msgstr "Datele extra %s lipsesc în datele extra detașate"
 
-#: common/flatpak-dir.c:7925
+#: common/flatpak-dir.c:8076
 #, c-format
 msgid "apply_extra script failed, exit status %d"
 msgstr "scriptul apply_extra a eșuat, starea de ieșire %d"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-dir.c:8091
+#: common/flatpak-dir.c:8242
 #, c-format
 msgid "Installing %s is not allowed by the policy set by your administrator"
 msgstr ""
 "Instalarea %s nu este permisă de setul de politici de către administrator"
 
-#: common/flatpak-dir.c:8179
+#: common/flatpak-dir.c:8330
 #, c-format
 msgid "While trying to resolve ref %s: "
 msgstr "În timpul încercării de rezolvare a ref-ului %s: "
 
-#: common/flatpak-dir.c:8191
+#: common/flatpak-dir.c:8342
 #, c-format
 msgid "%s is not available"
 msgstr "%s nu este disponibil"
 
-#: common/flatpak-dir.c:8220
+#: common/flatpak-dir.c:8363
+msgid "Can't create deploy directory"
+msgstr "Nu se poate crea directorul de implementare"
+
+#: common/flatpak-dir.c:8371
 #, c-format
 msgid "Failed to read commit %s: "
 msgstr "Nu s-a putut citi comitul %s: "
 
-#: common/flatpak-dir.c:8240
+#: common/flatpak-dir.c:8391
 #, c-format
 msgid "While trying to checkout %s into %s: "
 msgstr "În timpul încercării de a face checkout %s în %s: "
 
-#: common/flatpak-dir.c:8259
+#: common/flatpak-dir.c:8410
 msgid "While trying to checkout metadata subpath: "
 msgstr "În timpul încercării de a face checkout al subcăii de date meta: "
 
-#: common/flatpak-dir.c:8290
+#: common/flatpak-dir.c:8441
 #, c-format
 msgid "While trying to checkout subpath ‘%s’: "
 msgstr "În timpul încercării de a face checkout al subcăii „%s”: "
 
-#: common/flatpak-dir.c:8300
+#: common/flatpak-dir.c:8451
 msgid "While trying to remove existing extra dir: "
 msgstr "În timpul încercării de a elimina directorul extra existent: "
 
-#: common/flatpak-dir.c:8311
+#: common/flatpak-dir.c:8462
 msgid "While trying to apply extra data: "
 msgstr "În timpul încercării de aplicare a datelor extra: "
 
-#: common/flatpak-dir.c:8338
+#: common/flatpak-dir.c:8489
 #, c-format
 msgid "Invalid commit ref %s: "
 msgstr "Ref de comit %s nevalid: "
 
-#: common/flatpak-dir.c:8346 common/flatpak-dir.c:8358
+#: common/flatpak-dir.c:8497 common/flatpak-dir.c:8509
 #, c-format
 msgid "Deployed ref %s does not match commit (%s)"
 msgstr "Ref-ul implementat %s nu se potrivește cu comitul (%s)"
 
-#: common/flatpak-dir.c:8352
+#: common/flatpak-dir.c:8503
 #, c-format
 msgid "Deployed ref %s branch does not match commit (%s)"
 msgstr "Ramura ref-ului implementat %s nu se potrivește cu comitul (%s)"
 
-#: common/flatpak-dir.c:8610 common/flatpak-installation.c:1909
+#: common/flatpak-dir.c:8760 common/flatpak-installation.c:1909
 #, c-format
 msgid "%s branch %s already installed"
 msgstr "%s ramura %s este deja instalată"
 
-#: common/flatpak-dir.c:9252
+#: common/flatpak-dir.c:9411
 #, c-format
 msgid "Could not unmount revokefs-fuse filesystem at %s: "
 msgstr "Nu s-a putut demonta sistemul de fișiere revokefs-fuse la %s: "
 
-#: common/flatpak-dir.c:9515
+#: common/flatpak-dir.c:9685
 #, c-format
 msgid "This version of %s is already installed"
 msgstr "Această versiune a %s este deja instalată"
 
-#: common/flatpak-dir.c:9522
+#: common/flatpak-dir.c:9692
 msgid "Can't change remote during bundle install"
 msgstr ""
 "Nu se poate modifica depozitul de la distanță în timpul instalării unui "
 "pachet"
 
-#: common/flatpak-dir.c:9794
+#: common/flatpak-dir.c:9964
 msgid "Can't update to a specific commit without root permissions"
 msgstr "Nu se poate actualiza la un comit specific fără permisiuni root"
 
-#: common/flatpak-dir.c:10060
+#: common/flatpak-dir.c:10230
 #, c-format
 msgid "Can't remove %s, it is needed for: %s"
 msgstr "Nu se poate elimina %s, acesta este necesar pentru: %s"
 
-#: common/flatpak-dir.c:10116 common/flatpak-installation.c:2065
+#: common/flatpak-dir.c:10286 common/flatpak-installation.c:2065
 #, c-format
 msgid "%s branch %s is not installed"
 msgstr "%s ramura %s nu este instalată"
 
-#: common/flatpak-dir.c:10369
+#: common/flatpak-dir.c:10539
 #, c-format
 msgid "%s commit %s not installed"
 msgstr "%s comitul %s nu este instalat"
 
-#: common/flatpak-dir.c:10705
+#: common/flatpak-dir.c:10875
 #, c-format
 msgid "Pruning repo failed: %s"
 msgstr "Eliminarea depozitului a eșuat: %s"
 
-#: common/flatpak-dir.c:10873 common/flatpak-dir.c:10879
+#: common/flatpak-dir.c:11043 common/flatpak-dir.c:11049
 #, c-format
 msgid "Failed to load filter '%s'"
 msgstr "Nu s-a putut încărca filtrul „%s”"
 
-#: common/flatpak-dir.c:10885
+#: common/flatpak-dir.c:11055
 #, c-format
 msgid "Failed to parse filter '%s'"
 msgstr "Nu s-a putut parsa filtrul „%s”"
 
-#: common/flatpak-dir.c:11167
+#: common/flatpak-dir.c:11337
 msgid "Failed to write summary cache: "
 msgstr "Nu s-a putut scrie cache-ul rezumatului: "
 
-#: common/flatpak-dir.c:11186
+#: common/flatpak-dir.c:11356
 #, c-format
 msgid "No oci summary cached for remote '%s'"
 msgstr "Niciun rezumat oci cache-uit pentru depozitul de la distanță „%s”"
 
-#: common/flatpak-dir.c:11408
+#: common/flatpak-dir.c:11581
 #, fuzzy, c-format
 msgid "No cached summary for remote '%s'"
 msgstr "Niciun rezumat oci cache-uit pentru depozitul de la distanță „%s”"
 
-#: common/flatpak-dir.c:11483
+#: common/flatpak-dir.c:11605
+#, fuzzy, c-format
+msgid "Invalid checksum for indexed summary %s read from %s"
+msgstr "Sumă de control nevalidă pentru datele extra %s"
+
+#: common/flatpak-dir.c:11678
 #, c-format
 msgid ""
 "Remote listing for %s not available; server has no summary file. Check the "
@@ -4698,94 +4743,94 @@ msgstr ""
 "niciun fișier de rezumat. Verificați dacă a fost valid URL-ul trecut la "
 "remote-add."
 
-#: common/flatpak-dir.c:11854
+#: common/flatpak-dir.c:12053
 #, fuzzy, c-format
 msgid "Invalid checksum for indexed summary %s for remote '%s'"
 msgstr "Sumă de control nevalidă pentru datele extra %s"
 
-#: common/flatpak-dir.c:12473
+#: common/flatpak-dir.c:12676
 #, c-format
 msgid "Multiple branches available for %s, you must specify one of: "
 msgstr ""
 "Ramuri multiple disponibile pentru %s, trebuie să specificați una dintre: "
 
-#: common/flatpak-dir.c:12539
+#: common/flatpak-dir.c:12742
 #, c-format
 msgid "Nothing matches %s"
 msgstr "Nimic nu se potrivește cu %s"
 
-#: common/flatpak-dir.c:12647
+#: common/flatpak-dir.c:12850
 #, c-format
 msgid "Can't find ref %s%s%s%s%s"
 msgstr "Nu se poate găsi ref-ul %s%s%s%s%s"
 
-#: common/flatpak-dir.c:12690
+#: common/flatpak-dir.c:12893
 #, c-format
 msgid "Error searching remote %s: %s"
 msgstr "Eroare la căutarea depozitului de la distanță %s: %s"
 
-#: common/flatpak-dir.c:12787
+#: common/flatpak-dir.c:12990
 #, c-format
 msgid "Error searching local repository: %s"
 msgstr "Eroare la căutarea depozitului local: %s"
 
-#: common/flatpak-dir.c:13127
+#: common/flatpak-dir.c:13330
 #, c-format
 msgid "Could not find installation %s"
 msgstr "Nu se poate găsi instalarea %s"
 
-#: common/flatpak-dir.c:13732
+#: common/flatpak-dir.c:13932
 #, c-format
 msgid "Invalid file format, no %s group"
 msgstr "Format de fișier nevalid, niciun grup %s"
 
-#: common/flatpak-dir.c:13737 common/flatpak-utils.c:2251
+#: common/flatpak-dir.c:13937 common/flatpak-utils.c:2319
 #, c-format
 msgid "Invalid version %s, only 1 supported"
 msgstr "Versiune nevalidă %s, doar 1 suportat"
 
-#: common/flatpak-dir.c:13742 common/flatpak-dir.c:13747
+#: common/flatpak-dir.c:13942 common/flatpak-dir.c:13947
 #, c-format
 msgid "Invalid file format, no %s specified"
 msgstr "Format de fișier nevalid, niciun %s specificat"
 
 #. Check some minimal size so we don't get crap
-#: common/flatpak-dir.c:13770
+#: common/flatpak-dir.c:13967
 msgid "Invalid file format, gpg key invalid"
 msgstr "Format de fișier nevalid, cheie gpg nevalidă"
 
-#: common/flatpak-dir.c:13789 common/flatpak-utils.c:2314
+#: common/flatpak-dir.c:13986 common/flatpak-utils.c:2384
 msgid "Collection ID requires GPG key to be provided"
 msgstr "ID-ul colecției necesită furnizarea cheii GPG"
 
-#: common/flatpak-dir.c:13834
+#: common/flatpak-dir.c:14029
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "Executarea %s, ramura %s este deja instalată"
 
-#: common/flatpak-dir.c:13835
+#: common/flatpak-dir.c:14030
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "Aplicația %s, ramura %s este deja instalată"
 
-#: common/flatpak-dir.c:14096
+#: common/flatpak-dir.c:14264
 #, c-format
 msgid "Can't remove remote '%s' with installed ref %s (at least)"
 msgstr ""
 "Nu se poate elimina depozitul de la distanță „%s” cu ref-ul instalat %s (cel "
 "puțin)"
 
-#: common/flatpak-dir.c:14195
+#: common/flatpak-dir.c:14363
 #, c-format
 msgid "Invalid character '/' in remote name: %s"
 msgstr "Caracter nevalid „/” în numele depozitului de la distanță: %s"
 
-#: common/flatpak-dir.c:14201
+#: common/flatpak-dir.c:14369
 #, c-format
 msgid "No configuration for remote %s specified"
 msgstr "Nu s-a specificat nicio configurare pentru depozitul de la distanță %s"
 
-#: common/flatpak-dir.c:15805
+#: common/flatpak-dir.c:16013
 #, c-format
 msgid "Skipping deletion of mirror ref (%s, %s)…\n"
 msgstr "Se omite ștergerea oglinzii ref-ului (%s, %s)…\n"
@@ -5026,38 +5071,38 @@ msgstr "Ramură nevalidă %s: %s"
 msgid "Wrong number of components in partial ref %s"
 msgstr "Număr de componente greșit în executarea %s"
 
-#: common/flatpak-ref-utils.c:1289
+#: common/flatpak-ref-utils.c:1299
 #, fuzzy
 msgid " development platform"
 msgstr "Utilizează executarea de dezvoltare"
 
-#: common/flatpak-ref-utils.c:1291
+#: common/flatpak-ref-utils.c:1301
 msgid " platform"
 msgstr ""
 
-#: common/flatpak-ref-utils.c:1293
+#: common/flatpak-ref-utils.c:1303
 #, fuzzy
 msgid " application base"
 msgstr "Aplicație"
 
-#: common/flatpak-ref-utils.c:1296
+#: common/flatpak-ref-utils.c:1306
 msgid " debug symbols"
 msgstr ""
 
-#: common/flatpak-ref-utils.c:1298
+#: common/flatpak-ref-utils.c:1308
 msgid " sourcecode"
 msgstr ""
 
-#: common/flatpak-ref-utils.c:1300
+#: common/flatpak-ref-utils.c:1310
 #, fuzzy
 msgid " translations"
 msgstr "Loc de instalare"
 
-#: common/flatpak-ref-utils.c:1302
+#: common/flatpak-ref-utils.c:1312
 msgid " docs"
 msgstr ""
 
-#: common/flatpak-ref-utils.c:1569
+#: common/flatpak-ref-utils.c:1579
 #, c-format
 msgid "Invalid id %s: %s"
 msgstr "ID nevalid %s: %s"
@@ -5076,156 +5121,158 @@ msgid "GPG verification must be enabled when a collection ID is set"
 msgstr ""
 "Verificarea GPG trebuie să fie activată când un ID de colecție este stabilit"
 
-#: common/flatpak-run.c:1052
+#: common/flatpak-run.c:1210
 msgid "Failed to open app info file"
 msgstr "Nu s-a putut deschide fișierul de informații ale aplicației"
 
-#: common/flatpak-run.c:1144
+#: common/flatpak-run.c:1303
 msgid "Unable to create sync pipe"
 msgstr "Nu se poate crea linia de asamblare de sincronizare"
 
-#: common/flatpak-run.c:1183
+#: common/flatpak-run.c:1342
 msgid "Failed to sync with dbus proxy"
 msgstr "Nu s-a putut sincroniza cu proxy-ul dbus"
 
-#: common/flatpak-run.c:1961
+#: common/flatpak-run.c:2144
 msgid "No systemd user session available, cgroups not available"
 msgstr ""
 "Nu este disponibilă nicio sesiune de utilizator systemd, cgroups nu sunt "
 "disponibile"
 
-#: common/flatpak-run.c:2454
+#: common/flatpak-run.c:2637
 msgid "Unable to allocate instance id"
 msgstr "Nu se poate aloca id-ul de instanță"
 
-#: common/flatpak-run.c:2590 common/flatpak-run.c:2600
+#: common/flatpak-run.c:2773 common/flatpak-run.c:2783
 #, c-format
 msgid "Failed to open flatpak-info file: %s"
 msgstr "Nu s-a putut deschide fișierul de informații flatpak: %s"
 
-#: common/flatpak-run.c:2628
+#: common/flatpak-run.c:2812
 #, c-format
 msgid "Failed to open bwrapinfo.json file: %s"
 msgstr "Nu s-a putut deschide fișierul bwrapinfo.json: %s"
 
-#: common/flatpak-run.c:2653
+#: common/flatpak-run.c:2837
 #, c-format
 msgid "Failed to write to instance id fd: %s"
 msgstr "Nu s-a putut scrie id-ul instanței fd: %s"
 
-#: common/flatpak-run.c:3007
+#: common/flatpak-run.c:3223
 msgid "Initialize seccomp failed"
 msgstr "Inițializarea seccomp a eșuat"
 
-#: common/flatpak-run.c:3046
-msgid "Failed to add architecture to seccomp filter"
+#: common/flatpak-run.c:3262
+#, fuzzy, c-format
+msgid "Failed to add architecture to seccomp filter: %s"
 msgstr "Nu s-a putut adăuga arhitectura la filtrul seccomp"
 
-#: common/flatpak-run.c:3054
-msgid "Failed to add multiarch architecture to seccomp filter"
+#: common/flatpak-run.c:3270
+#, fuzzy, c-format
+msgid "Failed to add multiarch architecture to seccomp filter: %s"
 msgstr "Nu s-a putut adăuga arhitectura multi-arhitectură la filtrul seccomp"
 
-#. unknown syscall
-#: common/flatpak-run.c:3077 common/flatpak-run.c:3095
-#, c-format
-msgid "Failed to block syscall %d"
+#: common/flatpak-run.c:3302 common/flatpak-run.c:3324
+#, fuzzy, c-format
+msgid "Failed to block syscall %d: %s"
 msgstr "Nu s-a putut bloca syscall-ul %d"
 
-#: common/flatpak-run.c:3126
-msgid "Failed to export bpf"
+#: common/flatpak-run.c:3357
+#, fuzzy, c-format
+msgid "Failed to export bpf: %s"
 msgstr "Nu s-a putut exporta bpf"
 
-#: common/flatpak-run.c:3377
+#: common/flatpak-run.c:3608
 #, c-format
 msgid "Failed to open ‘%s’"
 msgstr "Nu s-a putut deschide „%s”"
 
-#: common/flatpak-run.c:3663
+#: common/flatpak-run.c:3894
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "idconfig a eșuat, stare de ieșire %d"
 
-#: common/flatpak-run.c:3670
+#: common/flatpak-run.c:3901
 msgid "Can't open generated ld.so.cache"
 msgstr "Nu s-a putut deschide ld.so.cache generat"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-run.c:3781
+#: common/flatpak-run.c:4012
 #, c-format
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr ""
 "Rularea %s nu este permisă de politica stabilită de către administrator"
 
-#: common/flatpak-run.c:3823
+#: common/flatpak-run.c:4114
 msgid ""
-"\"flatpak run\" is not intended to be run as `sudo flatpak run`, use `sudo -"
-"i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell"
+"\"flatpak run\" is not intended to be run as `sudo flatpak run`. Use `sudo -"
+"i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell."
 msgstr ""
 
-#: common/flatpak-run.c:4081
+#: common/flatpak-run.c:4297
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "Nu s-a putut migra de la %s: %s"
 
-#: common/flatpak-run.c:4096
+#: common/flatpak-run.c:4312
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr ""
 "Nu s-a putut migra directorul vechi de date %s al aplicației la numele nou "
 "%s: %s"
 
-#: common/flatpak-run.c:4105
+#: common/flatpak-run.c:4321
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "Nu s-a putut crea legătura simbolică în timpul migrării %s: %s"
 
-#: common/flatpak-transaction.c:2072
+#: common/flatpak-transaction.c:2126
 #, c-format
 msgid "Warning: Problem looking for related refs: %s"
 msgstr "Avertisment: A apărut o problemă la căutarea pentru ref-uri legate: %s"
 
-#: common/flatpak-transaction.c:2282
+#: common/flatpak-transaction.c:2336
 #, c-format
 msgid "The application %s requires the runtime %s which was not found"
 msgstr "Aplicația %s necesită executarea %s care nu a fost găsită"
 
-#: common/flatpak-transaction.c:2298
+#: common/flatpak-transaction.c:2352
 #, c-format
 msgid "The application %s requires the runtime %s which is not installed"
 msgstr "Aplicația %s necesită executarea %s care nu este instalată"
 
-#: common/flatpak-transaction.c:2396
+#: common/flatpak-transaction.c:2450
 #, c-format
 msgid "Can't uninstall %s which is needed by %s"
 msgstr "Nu se poate dezinstala %s care este necesar pentru %s"
 
-#: common/flatpak-transaction.c:2465
+#: common/flatpak-transaction.c:2520
 #, c-format
 msgid "Remote %s disabled, ignoring %s update"
 msgstr ""
 "Depozitul de la distanță %s a fost dezactivat, se ignoră actualizarea %s"
 
-#: common/flatpak-transaction.c:2498
+#: common/flatpak-transaction.c:2553
 #, c-format
 msgid "%s is already installed"
 msgstr "%s este deja instalat"
 
-#: common/flatpak-transaction.c:2501
+#: common/flatpak-transaction.c:2556
 #, c-format
 msgid "%s is already installed from remote %s"
 msgstr "%s este deja instalat pentru depozitul de la distanță %s"
 
-#: common/flatpak-transaction.c:2696
+#: common/flatpak-transaction.c:2746
 #, c-format
 msgid "Invalid .flatpakref: %s"
 msgstr ".flatpakref nevalid: %s"
 
-#: common/flatpak-transaction.c:2810
+#: common/flatpak-transaction.c:2860
 #, c-format
 msgid "Error updating remote metadata for '%s': %s"
 msgstr "Eroare la actualizarea datelor meta de la distanță pentru „%s”: %s"
 
-#: common/flatpak-transaction.c:3255
+#: common/flatpak-transaction.c:3323
 #, c-format
 msgid ""
 "Warning: Treating remote fetch error as non-fatal since %s is already "
@@ -5234,40 +5281,40 @@ msgstr ""
 "Avertisment: Tratarea erorii de preluare a depozitului de la distanță ca "
 "nefatală deoarece %s este deja instalat: %s"
 
-#: common/flatpak-transaction.c:3571
+#: common/flatpak-transaction.c:3647
 #, c-format
 msgid "No authenticator installed for remote '%s'"
 msgstr "Niciun autentificator instalat pentru depozitul de la distanță „%s”"
 
-#: common/flatpak-transaction.c:3675 common/flatpak-transaction.c:3682
+#: common/flatpak-transaction.c:3751 common/flatpak-transaction.c:3758
 #, c-format
 msgid "Failed to get tokens for ref: %s"
 msgstr "Nu s-au putut obține jetoanele pentru ref: %s"
 
-#: common/flatpak-transaction.c:3677 common/flatpak-transaction.c:3684
+#: common/flatpak-transaction.c:3753 common/flatpak-transaction.c:3760
 msgid "Failed to get tokens for ref"
 msgstr "Nu s-au putut obține jetoanele pentru ref"
 
-#: common/flatpak-transaction.c:4008
+#: common/flatpak-transaction.c:4085
 #, c-format
 msgid "Flatpakrepo URL %s not file, HTTP or HTTPS"
 msgstr "URL-ul Flatpakrepo %s nu este un fișier, HTTP, sau HTTPS"
 
-#: common/flatpak-transaction.c:4014
+#: common/flatpak-transaction.c:4091
 #, c-format
 msgid "Can't load dependent file %s: "
 msgstr "Nu se poate încărca fișierul dependent %s: "
 
-#: common/flatpak-transaction.c:4022
+#: common/flatpak-transaction.c:4099
 #, c-format
 msgid "Invalid .flatpakrepo: %s"
 msgstr ".flatpakrepo nevalid: %s"
 
-#: common/flatpak-transaction.c:4618
+#: common/flatpak-transaction.c:4746
 msgid "Transaction already executed"
 msgstr "Tranzacția este deja executată"
 
-#: common/flatpak-transaction.c:4633
+#: common/flatpak-transaction.c:4761
 msgid ""
 "Refusing to operate on a user installation as root! This can lead to "
 "incorrect file ownership and permission errors."
@@ -5275,149 +5322,149 @@ msgstr ""
 "Se refuză operarea pe o instalare a utilizatorului ca root! Aceasta poate "
 "duce la proprietate incorectă de fișiere și erori de permisiune."
 
-#: common/flatpak-transaction.c:4725 common/flatpak-transaction.c:4738
+#: common/flatpak-transaction.c:4853 common/flatpak-transaction.c:4866
 msgid "Aborted by user"
 msgstr "Anulat de utilizator"
 
-#: common/flatpak-transaction.c:4763
+#: common/flatpak-transaction.c:4891
 #, c-format
 msgid "Skipping %s due to previous error"
 msgstr "Se omite %s din cauza erorii anterioare"
 
-#: common/flatpak-transaction.c:4815
+#: common/flatpak-transaction.c:4945
 #, fuzzy, c-format
 msgid "Aborted due to failure (%s)"
 msgstr "Anulat din cauza eșecului"
 
-#: common/flatpak-utils.c:792
+#: common/flatpak-utils.c:860
 msgid "Glob can't match apps"
 msgstr ""
 
-#: common/flatpak-utils.c:817
+#: common/flatpak-utils.c:885
 msgid "Empty glob"
 msgstr "Glob gol"
 
-#: common/flatpak-utils.c:836
+#: common/flatpak-utils.c:904
 msgid "Too many segments in glob"
 msgstr "Prea multe segmente în glob"
 
-#: common/flatpak-utils.c:857
+#: common/flatpak-utils.c:925
 #, c-format
 msgid "Invalid glob character '%c'"
 msgstr "Caracter de glob nevalid „%c”"
 
-#: common/flatpak-utils.c:911
+#: common/flatpak-utils.c:979
 #, c-format
 msgid "Missing glob on line %d"
 msgstr "Glob care lipsește la linia %d"
 
-#: common/flatpak-utils.c:915
+#: common/flatpak-utils.c:983
 #, c-format
 msgid "Trailing text on line %d"
 msgstr "Text de urmărire la linia %d"
 
-#: common/flatpak-utils.c:919
+#: common/flatpak-utils.c:987
 #, c-format
 msgid "on line %d"
 msgstr "la linia %d"
 
-#: common/flatpak-utils.c:941
+#: common/flatpak-utils.c:1009
 #, c-format
 msgid "Unexpected word '%s' on line %d"
 msgstr "Cuvânt neașteptat „%s” pe linia %d"
 
-#: common/flatpak-utils.c:2232
+#: common/flatpak-utils.c:2300
 #, c-format
 msgid "Invalid %s: Missing group ‘%s’"
 msgstr "%s nevalid: Lipsește grupul „%s”"
 
-#: common/flatpak-utils.c:2241
+#: common/flatpak-utils.c:2309
 #, c-format
 msgid "Invalid %s: Missing key ‘%s’"
 msgstr "%s nevalid: Lipsește cheia „%s”"
 
-#: common/flatpak-utils.c:2289
+#: common/flatpak-utils.c:2359
 msgid "Invalid gpg key"
 msgstr "Cheie gpg nevalidă"
 
-#: common/flatpak-utils.c:2678
+#: common/flatpak-utils.c:2748
 msgid "No extra data sources"
 msgstr "Nu sunt surse de date extra"
 
-#: common/flatpak-utils.c:5335
+#: common/flatpak-utils.c:5405
 #, c-format
 msgid "Error copying 64x64 icon for component %s: %s\n"
 msgstr "Eroare la copierea iconiței 64x64 pentru componenta %s: %s\n"
 
-#: common/flatpak-utils.c:5341
+#: common/flatpak-utils.c:5411
 #, c-format
 msgid "Error copying 128x128 icon for component %s: %s\n"
 msgstr "Eroare la copierea iconiței 128x128 pentru componenta %s: %s\n"
 
-#: common/flatpak-utils.c:5588
+#: common/flatpak-utils.c:5658
 #, fuzzy, c-format
 msgid "%s is end-of-life, ignoring for appstream"
 msgstr "%s este sfârșit-de-fișier, se ignoră\n"
 
-#: common/flatpak-utils.c:5623
+#: common/flatpak-utils.c:5693
 #, c-format
 msgid "No appstream data for %s: %s\n"
 msgstr "Nu sunt date appstream pentru %s: %s\n"
 
-#: common/flatpak-utils.c:6586
+#: common/flatpak-utils.c:6663
 msgid "Invalid bundle, no ref in metadata"
 msgstr "Pachet nevalid, nu există ref în datele meta"
 
-#: common/flatpak-utils.c:6684
+#: common/flatpak-utils.c:6764
 #, c-format
 msgid "Collection ‘%s’ of bundle doesn’t match collection ‘%s’ of remote"
 msgstr ""
 "Colecția „%s” a pachetului nu se potrivește cu colecția „%s” a depozitului "
 "de la distanță"
 
-#: common/flatpak-utils.c:6763
+#: common/flatpak-utils.c:6841
 msgid "Metadata in header and app are inconsistent"
 msgstr "Datele meta din antet și aplicație nu sunt consistente"
 
-#: common/flatpak-utils.c:6848 common/flatpak-utils.c:7007
+#: common/flatpak-utils.c:6926 common/flatpak-utils.c:7085
 msgid "Invalid OCI image config"
 msgstr "Configurare de imagine OCI nevalidă"
 
-#: common/flatpak-utils.c:6910 common/flatpak-utils.c:7156
+#: common/flatpak-utils.c:6988 common/flatpak-utils.c:7234
 #, c-format
 msgid "Wrong layer checksum, expected %s, was %s"
 msgstr "Sumă de control a stratului greșită, s-a așteptat %s, a fost %s"
 
-#: common/flatpak-utils.c:6990
+#: common/flatpak-utils.c:7068
 #, c-format
 msgid "No ref specified for OCI image %s"
 msgstr "Nu s-a specificat niciun ref pentru imaginea OCI %s"
 
-#: common/flatpak-utils.c:6996
+#: common/flatpak-utils.c:7074
 #, c-format
 msgid "Wrong ref (%s) specified for OCI image %s, expected %s"
 msgstr "Ref greșit (%s) specificat pentru imaginea OCI %s, s-a așteptat %s"
 
-#: common/flatpak-utils.c:8102
+#: common/flatpak-utils.c:8228
 #, c-format
 msgid "Invalid require-flatpak argument %s"
 msgstr "Argument require-flatpak nevalid %s"
 
-#: common/flatpak-utils.c:8112 common/flatpak-utils.c:8131
+#: common/flatpak-utils.c:8238 common/flatpak-utils.c:8257
 #, c-format
 msgid "%s needs a later flatpak version (%s)"
 msgstr "%s are nevoie de o versiune ulterioară flatpak (%s)"
 
-#: common/flatpak-utils.c:8175
+#: common/flatpak-utils.c:8301
 msgid "Empty string is not a number"
 msgstr "Șirul gol nu este un număr"
 
-#: common/flatpak-utils.c:8201
+#: common/flatpak-utils.c:8327
 #, c-format
 msgid "“%s” is not an unsigned number"
 msgstr "„%s” nu este un număr pozitiv"
 
-#: common/flatpak-utils.c:8211
+#: common/flatpak-utils.c:8337
 #, c-format
 msgid "Number “%s” is out of bounds [%s, %s]"
 msgstr "Numărul „%s” se află în afara intervalului [%s, %s]"
