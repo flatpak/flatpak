@@ -73,6 +73,7 @@ httpcache
 revokefs-fuse
 revokefs-demo
 Flatpak-1.0.*
+libglnx-config.h
 /app/parse-datetime.c
 /doc/reference/gtkdoc-check.log
 /doc/reference/gtkdoc-check.test
