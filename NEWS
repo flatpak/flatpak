@@ -1,6 +1,6 @@
 Changes in 1.13.1
 ~~~~~~~~~~~~~~~~~
-Not released yet
+Released: 2022-03-01
 
 Dependencies:
 
@@ -34,7 +34,12 @@ New features:
 Other changes:
 
  * Updated bundled xdg-dbus-proxy to 0.1.3 (#4737)
+ * Updated bundled bubblewrap to 0.6.1 (#4779)
  * The default branch in the Github repository is now named 'main'
+ * Don't offer options in CLI tab completion unless the user typed a '-'
+   (#4753)
+ * Disable fancy output (e.g. progress bars that get redrawn) when
+   G_MESSAGES_DEBUG is set in the environment (#4767)
  * Most commands now work if /var/lib/flatpak exists but /var/lib/flatpak/repo
    does not, and will automatically populate the repo directory if
    possible (#4111)
@@ -57,6 +62,18 @@ Other changes:
  * Use `type -P` or `command -v` in preference to which(1) (#4696)
  * Improve measurement of test coverage (#4681)
  * Translation updates: de, fr, hi, hr, id, oc, pl, pt_BR, sv, uk, zh_CN
+
+Changes in 1.12.6
+~~~~~~~~~~~~~~~~~
+Released: 2022-02-21
+
+ * Fix a bug that sometimes caused repo corruption in case downloads are
+   interrupted or canceled, necessitating a "flatpak repair" to recover
+   (#3479, #4258)
+ * More reliably detect the GTK theme (#4754)
+ * Fix history command unit test in some edge cases (#4764)
+ * Improve NEWS for 1.12.5
+ * Translation update: pt_BR
 
 Changes in 1.12.5
 ~~~~~~~~~~~~~~~~~
