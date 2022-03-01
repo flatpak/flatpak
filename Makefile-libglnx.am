@@ -25,6 +25,7 @@ EXTRA_DIST += \
 	$(NULL)
 
 BUILT_SOURCES += $(top_builddir)/libglnx-config.h
+CLEANFILES += $(top_builddir)/libglnx-config.h
 $(top_builddir)/libglnx-config.h: Makefile.am
 	echo '#include "config.h"' > $@
 
