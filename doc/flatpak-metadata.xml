@@ -897,7 +897,7 @@
                                 <para>
                                     Is true if the suffix (case-sensitive) is found in <literal>/proc/modules</literal>.
                                     For example <literal>have-kernel-module-nvidia</literal>.
-                                    Added 1.13.2.
+                                    Added 1.13.1.
                                 </para>
                             </varlistentry>
                             <varlistentry>
