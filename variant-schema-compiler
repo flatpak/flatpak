@@ -405,7 +405,7 @@ static inline GVariant *
                               GDestroyNotify      notify,
                               gpointer            user_data)
 {{
-  return g_variant_new_from_data (G_VARIANT_TYPE_VARIANT, _{prefix_}memdup2 (v.base, v.size), v.size, TRUE, notify, user_data);
+  return g_variant_new_from_data (G_VARIANT_TYPE_VARIANT, v.base, v.size, TRUE, notify, user_data);
 }}
 
 static inline GVariant *
