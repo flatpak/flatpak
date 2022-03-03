@@ -396,7 +396,8 @@ static inline {Prefix}VariantRef
 static inline GVariant *
 {prefix_}variant_dup_to_gvariant ({Prefix}VariantRef v)
 {{
-  return g_variant_new_from_data (G_VARIANT_TYPE_VARIANT, _{prefix_}memdup2 (v.base, v.size), v.size, TRUE, g_free, NULL);
+  guint8 *duped = _{prefix_}memdup2 (v.base, v.size);
+  return g_variant_new_from_data (G_VARIANT_TYPE_VARIANT, duped, v.size, TRUE, g_free, duped);
 }}
 
 static inline GVariant *
@@ -434,7 +435,8 @@ static inline GVariant *
 {{
   const GVariantType  *type;
   {Prefix}Ref child = {prefix_}variant_get_child (v, &type);
-  return g_variant_new_from_data (type, _{prefix_}memdup2 (child.base, child.size), child.size, TRUE, g_free, NULL);
+  guint8 *duped = _{prefix_}memdup2 (child.base, child.size);
+  return g_variant_new_from_data (type, duped, child.size, TRUE, g_free, duped);
 }}
 
 static inline GVariant *
@@ -658,7 +660,8 @@ static inline {TypeNameRef}
 static inline GVariant *
 {type_name_}dup_to_gvariant ({TypeNameRef} v)
 {{
-  return g_variant_new_from_data ({TYPE_NAME_}TYPEFORMAT, _{prefix_}memdup2 (v.base, v.size), v.size, TRUE, g_free, NULL);
+  guint8 *duped = _{prefix_}memdup2 (v.base, v.size);
+  return g_variant_new_from_data ({TYPE_NAME_}TYPEFORMAT, duped, v.size, TRUE, g_free, duped);
 }}
 
 static inline GVariant *
