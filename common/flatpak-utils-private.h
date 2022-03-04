@@ -133,6 +133,7 @@ gboolean flatpak_extension_matches_reason (const char *extension_id,
 
 const char * flatpak_get_bwrap (void);
 
+char **flatpak_strv_sort_by_length (const char * const *strv);
 char **flatpak_strv_merge (char   **strv1,
                            char   **strv2);
 char **flatpak_subpaths_merge (char **subpaths1,
@@ -356,6 +357,13 @@ g_hash_table_steal_extended (GHashTable    *hash_table,
   else
       return FALSE;
 }
+#endif
+
+#if !GLIB_CHECK_VERSION (2, 68, 0)
+guint g_string_replace (GString     *string,
+                        const gchar *find,
+                        const gchar *replace,
+                        guint        limit);
 #endif
 
 gboolean flatpak_g_ptr_array_contains_string (GPtrArray  *array,

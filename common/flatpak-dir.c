@@ -8909,6 +8909,195 @@ flatpak_dir_deploy_update (FlatpakDir        *self,
   return TRUE;
 }
 
+static void
+rewrite_one_dynamic_launcher (const char *portal_desktop_dir,
+                              const char *portal_icon_dir,
+                              const char *desktop_name,
+                              const char *old_app_id,
+                              const char *new_app_id)
+{
+  g_autoptr(GKeyFile) old_key_file = NULL;
+  g_autoptr(GKeyFile) new_key_file = NULL;
+  g_autoptr(GFile) link_file = NULL;
+  g_autoptr(GFile) new_link_file = NULL;
+  g_autoptr(GString) data_string = NULL;
+  g_autoptr(GError) local_error = NULL;
+  g_autofree char *old_data = NULL;
+  g_autofree char *desktop_path = NULL;
+  g_autofree char *new_desktop_path = NULL;
+  g_autofree char *icon_path = NULL;
+  g_autofree char *relative_path = NULL;
+  g_autofree char *new_desktop = NULL;
+  const gchar *desktop_suffix;
+
+  g_assert (g_str_has_suffix (desktop_name, ".desktop"));
+  g_assert (g_str_has_prefix (desktop_name, old_app_id));
+
+  desktop_path = g_build_filename (portal_desktop_dir,
+                                   desktop_name, NULL);
+  old_key_file = g_key_file_new ();
+  if (!g_key_file_load_from_file (old_key_file, desktop_path,
+                                  G_KEY_FILE_KEEP_COMMENTS | G_KEY_FILE_KEEP_TRANSLATIONS,
+                                  &local_error))
+    {
+      g_warning ("Error encountered loading key file %s: %s", desktop_path, local_error->message);
+      return;
+    }
+  if (!g_key_file_has_key (old_key_file, G_KEY_FILE_DESKTOP_GROUP, "X-Flatpak", NULL))
+    {
+      g_debug ("Ignoring non-Flatpak dynamic launcher: %s", desktop_path);
+      return;
+    }
+
+  /* Fix paths in desktop file with a find-and-replace. The portal handled
+   * quoting the app ID in the Exec line for us.
+   */
+  old_data = g_key_file_to_data (old_key_file, NULL, NULL);
+  data_string = g_string_new ((const char *)old_data);
+  g_string_replace (data_string, old_app_id, new_app_id, 0);
+  new_key_file = g_key_file_new ();
+  if (!g_key_file_load_from_data (new_key_file, data_string->str, -1,
+                                  G_KEY_FILE_KEEP_COMMENTS | G_KEY_FILE_KEEP_TRANSLATIONS,
+                                  &local_error))
+    {
+      g_warning ("Cannot load desktop file %s after rewrite: %s", desktop_path, local_error->message);
+      g_warning ("Key file contents:\n%s\n", (const char *)data_string->str);
+      return;
+    }
+
+  /* Write it out at the new path */
+  desktop_suffix = desktop_name + strlen (old_app_id);
+  new_desktop = g_strconcat (new_app_id, desktop_suffix, NULL);
+  new_desktop_path = g_build_filename (portal_desktop_dir, new_desktop, NULL);
+  if (!g_key_file_save_to_file (new_key_file, new_desktop_path, &local_error))
+    {
+      g_warning ("Couldn't rewrite desktop file from %s to %s: %s",
+                 desktop_path, new_desktop_path, local_error->message);
+      return;
+    }
+
+  /* Fix symlink */
+  link_file = g_file_new_build_filename (g_get_user_data_dir (), "applications", desktop_name, NULL);
+  relative_path = g_build_filename ("..", "xdg-desktop-portal", "applications", new_desktop, NULL);
+  g_file_delete (link_file, NULL, NULL);
+  new_link_file = g_file_new_build_filename (g_get_user_data_dir (), "applications", new_desktop, NULL);
+  if (!g_file_make_symbolic_link (new_link_file, relative_path, NULL, &local_error))
+    {
+      g_warning ("Unable to rename desktop file link %s -> %s: %s",
+                 desktop_name, new_desktop, local_error->message);
+      return;
+    }
+
+  /* Delete the old desktop file */
+  unlink (desktop_path);
+
+  /* And rename the icon */
+  icon_path = g_key_file_get_string (old_key_file, G_KEY_FILE_DESKTOP_GROUP, "Icon", NULL);
+  if (g_str_has_prefix (icon_path, portal_icon_dir))
+    {
+      g_autoptr(GFile) icon_file = NULL;
+      g_autofree char *icon_basename = NULL;
+      g_autofree char *new_icon = NULL;
+      gchar *icon_suffix;
+
+      icon_file = g_file_new_for_path (icon_path);
+      icon_basename = g_path_get_basename (icon_path);
+      if (g_str_has_prefix (icon_basename, old_app_id))
+        {
+          icon_suffix = icon_basename + strlen (old_app_id);
+          new_icon = g_strconcat (new_app_id, icon_suffix, NULL);
+          if (!g_file_set_display_name (icon_file, new_icon, NULL, &local_error))
+            {
+              g_warning ("Unable to rename icon file %s -> %s: %s", icon_basename, new_icon,
+                         local_error->message);
+              g_clear_error (&local_error);
+            }
+        }
+    }
+}
+
+static void
+rewrite_dynamic_launchers (FlatpakDecomposed   *ref,
+                           const char * const * previous_ids)
+
+{
+  g_autoptr(GFile) portal_desktop_dir = NULL;
+  g_autofree char *portal_icon_path = NULL;
+  g_autofree char *app_id = NULL;
+  g_autoptr(GFileEnumerator) dir_enum = NULL;
+  g_autoptr(GError) local_error = NULL;
+
+  if (!flatpak_decomposed_is_app (ref))
+    return;
+
+  app_id = flatpak_decomposed_dup_id (ref);
+
+  /* Rename any dynamic launchers written by xdg-desktop-portal. The
+   * portal has its own code for renaming launchers on session start but we
+   * need to do it here as well so the launchers are correct in both cases:
+   * (1) the app rename transaction is being executed by the same user that
+   * has the launchers, or (2) the app is installed system-wide and another
+   * user has launchers.
+   */
+  if (previous_ids != NULL)
+    {
+      portal_desktop_dir = g_file_new_build_filename (g_get_user_data_dir (),
+                                                      "xdg-desktop-portal",
+                                                      "applications", NULL);
+      portal_icon_path = g_build_filename (g_get_user_data_dir (),
+                                           "xdg-desktop-portal", "icons", NULL);
+      dir_enum = g_file_enumerate_children (portal_desktop_dir,
+                                            G_FILE_ATTRIBUTE_STANDARD_NAME,
+                                            G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                            NULL, &local_error);
+    }
+  if (dir_enum == NULL)
+    {
+      if (local_error && !g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        {
+          g_warning ("Failed to enumerate portal desktop dir %s: %s",
+                     flatpak_file_get_path_cached (portal_desktop_dir),
+                     local_error->message);
+        }
+      g_clear_error (&local_error);
+    }
+  else
+    {
+      g_autoptr(GFileInfo) child_info = NULL;
+      g_auto(GStrv) previous_ids_sorted = NULL;
+
+      /* Sort by decreasing length so we get the longest prefix below */
+      previous_ids_sorted = flatpak_strv_sort_by_length (previous_ids);
+
+      while ((child_info = g_file_enumerator_next_file (dir_enum, NULL, &local_error)) != NULL)
+        {
+          const char *desktop_name;
+          int i;
+
+          desktop_name = g_file_info_get_name (child_info);
+          if (!g_str_has_suffix (desktop_name, ".desktop"))
+            continue;
+
+          for (i = 0; previous_ids_sorted[i] != NULL; i++)
+            {
+              if (g_str_has_prefix (desktop_name, previous_ids_sorted[i]))
+                {
+                  rewrite_one_dynamic_launcher (flatpak_file_get_path_cached (portal_desktop_dir),
+                                                portal_icon_path, desktop_name,
+                                                previous_ids_sorted[i], app_id);
+                  break;
+                }
+            }
+        }
+      if (local_error)
+        {
+          g_warning ("Failed to enumerate portal desktop dir %s: %s",
+                     flatpak_file_get_path_cached (portal_desktop_dir),
+                     local_error->message);
+        }
+    }
+}
+
 static FlatpakOciRegistry *
 flatpak_dir_create_system_child_oci_registry (FlatpakDir   *self,
                                               GLnxLockFile *file_lock,
@@ -9447,6 +9636,13 @@ flatpak_dir_install (FlatpakDir          *self,
       if (child_repo_path && !is_revokefs_pull)
         (void) glnx_shutil_rm_rf_at (AT_FDCWD, child_repo_path, NULL, NULL);
 
+      /* In case the app is being renamed, rewrite any launchers made by
+       * xdg-desktop-portal. This has to be done as the user so can't be in the
+       * system helper.
+       */
+      if (opt_previous_ids)
+        rewrite_dynamic_launchers (ref, opt_previous_ids);
+
       return TRUE;
     }
 
@@ -9464,6 +9660,12 @@ flatpak_dir_install (FlatpakDir          *self,
                                        opt_previous_ids, reinstall, pin_on_deploy,
                                        cancellable, error))
         return FALSE;
+
+      /* In case the app is being renamed, rewrite any launchers made by
+       * xdg-desktop-portal.
+       */
+      if (opt_previous_ids)
+        rewrite_dynamic_launchers (ref, opt_previous_ids);
     }
 
   return TRUE;
@@ -10124,6 +10326,13 @@ flatpak_dir_update (FlatpakDir                           *self,
       if (child_repo_path && !is_revokefs_pull)
         (void) glnx_shutil_rm_rf_at (AT_FDCWD, child_repo_path, NULL, NULL);
 
+      /* In case the app is being renamed, rewrite any launchers made by
+       * xdg-desktop-portal. This has to be done as the user so can't be in the
+       * system helper.
+       */
+      if (opt_previous_ids)
+        rewrite_dynamic_launchers (ref, opt_previous_ids);
+
       return TRUE;
     }
 
@@ -10153,6 +10362,12 @@ flatpak_dir_update (FlatpakDir                           *self,
                                       subpaths, opt_previous_ids,
                                       cancellable, error))
         return FALSE;
+
+      /* In case the app is being renamed, rewrite any launchers made by
+       * xdg-desktop-portal.
+       */
+      if (opt_previous_ids)
+        rewrite_dynamic_launchers (ref, opt_previous_ids);
     }
 
   return TRUE;

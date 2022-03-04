@@ -7720,6 +7720,35 @@ flatpak_format_choices (const char **choices,
   g_print ("\n");
 }
 
+static gint
+string_length_compare_func (gconstpointer a,
+                            gconstpointer b)
+{
+  return strlen (*(char * const *) a) - strlen (*(char * const *) b);
+}
+
+/* Sort a string array by decreasing length */
+char **
+flatpak_strv_sort_by_length (const char * const *strv)
+{
+  GPtrArray *array;
+  int i;
+
+  if (strv == NULL)
+    return NULL;
+
+  /* Combine both */
+  array = g_ptr_array_new ();
+
+  for (i = 0; strv[i] != NULL; i++)
+    g_ptr_array_add (array, g_strdup (strv[i]));
+
+  g_ptr_array_sort (array, string_length_compare_func);
+
+  g_ptr_array_add (array, NULL);
+  return (char **) g_ptr_array_free (array, FALSE);
+}
+
 char **
 flatpak_strv_merge (char   **strv1,
                     char   **strv2)
@@ -9164,3 +9193,48 @@ running_under_sudo (void)
 
   return FALSE;
 }
+
+#if !GLIB_CHECK_VERSION (2, 68, 0)
+/* All this code is backported directly from glib */
+guint
+g_string_replace (GString     *string,
+                  const gchar *find,
+                  const gchar *replace,
+                  guint        limit)
+{
+  gsize f_len, r_len, pos;
+  gchar *cur, *next;
+  guint n = 0;
+
+  g_return_val_if_fail (string != NULL, 0);
+  g_return_val_if_fail (find != NULL, 0);
+  g_return_val_if_fail (replace != NULL, 0);
+
+  f_len = strlen (find);
+  r_len = strlen (replace);
+  cur = string->str;
+
+  while ((next = strstr (cur, find)) != NULL)
+    {
+      pos = next - string->str;
+      g_string_erase (string, pos, f_len);
+      g_string_insert (string, pos, replace);
+      cur = string->str + pos + r_len;
+      n++;
+      /* Only match the empty string once at any given position, to
+       * avoid infinite loops */
+      if (f_len == 0)
+        {
+          if (cur[0] == '\0')
+            break;
+          else
+            cur++;
+        }
+      if (n == limit)
+        break;
+    }
+
+  return n;
+}
+
+#endif /* GLIB_CHECK_VERSION (2, 68, 0) */
