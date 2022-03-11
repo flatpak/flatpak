@@ -18,6 +18,12 @@
  *       Matthias Clasen <mclasen@redhat.com>
  */
 
+/* The canonical copy of this file is in:
+ * - https://github.com/flatpak/flatpak at icon-validator/validate-icon.c
+ * Known copies of this file are in:
+ * - https://github.com/flatpak/xdg-desktop-portal at src/validate-icon.c
+ */
+
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <glib/gstdio.h>
 #include <errno.h>
