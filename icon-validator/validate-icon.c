@@ -23,6 +23,8 @@
 #include <errno.h>
 #include <unistd.h>
 
+#define ICON_VALIDATOR_GROUP "Icon Validator"
+
 static int
 validate_icon (const char *arg_width,
                const char *arg_height,
@@ -35,6 +37,8 @@ validate_icon (const char *arg_width,
   const char *allowed_formats[] = { "png", "jpeg", "svg", NULL };
   g_autoptr(GdkPixbuf) pixbuf = NULL;
   g_autoptr(GError) error = NULL;
+  g_autoptr(GKeyFile) key_file = NULL;
+  g_autofree char *key_file_data = NULL;
 
   format = gdk_pixbuf_get_file_info (filename, &width, &height);
   if (format == NULL)
@@ -84,6 +88,23 @@ validate_icon (const char *arg_width,
       g_printerr ("Failed to load image: %s\n", error->message);
       return 1;
     }
+
+  if (width != height)
+    {
+      g_printerr ("Expected a square icon but got: %dx%d\n", width, height);
+      return 1;
+    }
+
+  /* Print the format and size for consumption by (at least) the dynamic
+   * launcher portal. xdg-desktop-portal has a copy of this file. Use a
+   * GKeyFile so the output can be easily extended in the future in a backwards
+   * compatible way.
+   */
+  key_file = g_key_file_new ();
+  g_key_file_set_string (key_file, ICON_VALIDATOR_GROUP, "format", name);
+  g_key_file_set_integer (key_file, ICON_VALIDATOR_GROUP, "width", width);
+  key_file_data = g_key_file_to_data (key_file, NULL, NULL);
+  g_print (key_file_data);
 
   return 0;
 }
