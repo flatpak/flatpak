@@ -8400,7 +8400,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
       if (!g_file_make_directory_with_parents (files, cancellable, error))
         return FALSE;
 
-      options.subpath = "/metadata";
+      options.subpath = "metadata";
 
       if (!ostree_repo_checkout_at (self->repo, &options,
                                     AT_FDCWD, checkoutdirpath,
@@ -8413,7 +8413,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
 
       for (i = 0; subpaths[i] != NULL; i++)
         {
-          g_autofree char *subpath = g_build_filename ("/files", subpaths[i], NULL);
+          g_autofree char *subpath = g_build_filename ("files", subpaths[i], NULL);
           g_autofree char *dstpath = g_build_filename (checkoutdirpath, "/files", subpaths[i], NULL);
           g_autofree char *dstpath_parent = g_path_get_dirname (dstpath);
           g_autoptr(GFile) child = NULL;
