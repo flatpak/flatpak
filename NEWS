@@ -13,6 +13,7 @@ Released: not yet
    possible (#4111)
  * Consistently pass relative subpaths to libostree, working around a bug
    in libostree < 2021.6 when used with GLib >= 2.71 (#4805)
+ * Fix some memory leaks in GVariant data processing
 
 Changes in 1.12.6
 ~~~~~~~~~~~~~~~~~
