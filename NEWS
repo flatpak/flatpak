@@ -1,3 +1,14 @@
+Changes in 1.13.2
+~~~~~~~~~~~~~~~~~
+Released: not yet
+
+Bug fixes:
+
+ * Consistently pass relative subpaths to libostree, working around a bug
+   in libostree < 2021.6 when used with GLib >= 2.71 (#4805)
+ * Document have-kernel-module-* as having been added in 1.13.1
+ * Fix some memory leaks in GVariant data processing
+
 Changes in 1.13.1
 ~~~~~~~~~~~~~~~~~
 Released: 2022-03-01
