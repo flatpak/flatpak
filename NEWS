@@ -1,6 +1,6 @@
 Changes in 1.12.7
 ~~~~~~~~~~~~~~~~~
-Released: not yet
+Released: 2022-03-14
 
  * We now allow networked access to X11 and PulseAudio services
    if that is configured, and the application has network access.
