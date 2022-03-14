@@ -1,3 +1,19 @@
+Changes in 1.12.7
+~~~~~~~~~~~~~~~~~
+Released: not yet
+
+ * We now allow networked access to X11 and PulseAudio services
+   if that is configured, and the application has network access.
+   (#397, #3908, #4702)
+ * Absolute paths in WAYLAND_DISPLAY now work (#4752)
+ * Allow apps that were built with Flatpak 1.13.x to export
+   AppStream metadata in share/metainfo (#4350, #4599)
+ * Most commands now work if /var/lib/flatpak exists but /var/lib/flatpak/repo
+   does not, and will automatically populate the repo directory if
+   possible (#4111)
+ * Consistently pass relative subpaths to libostree, working around a bug
+   in libostree < 2021.6 when used with GLib >= 2.71 (#4805)
+
 Changes in 1.12.6
 ~~~~~~~~~~~~~~~~~
 Released: 2022-02-21
