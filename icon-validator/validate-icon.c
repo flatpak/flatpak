@@ -110,7 +110,7 @@ validate_icon (const char *arg_width,
   g_key_file_set_string (key_file, ICON_VALIDATOR_GROUP, "format", name);
   g_key_file_set_integer (key_file, ICON_VALIDATOR_GROUP, "width", width);
   key_file_data = g_key_file_to_data (key_file, NULL, NULL);
-  g_print (key_file_data);
+  g_print ("%s", key_file_data);
 
   return 0;
 }
