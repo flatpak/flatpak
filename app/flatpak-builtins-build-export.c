@@ -489,6 +489,12 @@ check_refs:
   if (!g_key_file_load_from_file (key_file, path, G_KEY_FILE_NONE, error))
     return FALSE;
 
+  /* Validate Exec command: The key should be present and – if set to a
+   * non-empty value – should point to an existing binary.
+   *
+   * Empty values are allowed, they will result in the default command being
+   * run by Flatpak when starting the application.
+   */
   command = g_key_file_get_string (key_file,
                                    G_KEY_FILE_DESKTOP_GROUP,
                                    G_KEY_FILE_DESKTOP_KEY_EXEC,
@@ -498,10 +504,9 @@ check_refs:
       g_print (_("WARNING: Can't find Exec key in %s: %s\n"), path, local_error->message);
       g_clear_error (&local_error);
     }
-  else
+  else if (strlen(command) > 0)
     {
       argv = g_strsplit (command, " ", 0);
-
       bin_file = convert_app_absolute_path (argv[0], files);
       if (!g_file_query_exists (bin_file, NULL))
         g_print (_("WARNING: Binary not found for Exec line in %s: %s\n"), path, command);
