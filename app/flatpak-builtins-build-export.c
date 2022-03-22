@@ -498,12 +498,14 @@ check_refs:
       g_print (_("WARNING: Can't find Exec key in %s: %s\n"), path, local_error->message);
       g_clear_error (&local_error);
     }
+  else
+    {
+      argv = g_strsplit (command, " ", 0);
 
-  argv = g_strsplit (command, " ", 0);
-
-  bin_file = convert_app_absolute_path (argv[0], files);
-  if (!g_file_query_exists (bin_file, NULL))
-    g_print (_("WARNING: Binary not found for Exec line in %s: %s\n"), path, command);
+      bin_file = convert_app_absolute_path (argv[0], files);
+      if (!g_file_query_exists (bin_file, NULL))
+        g_print (_("WARNING: Binary not found for Exec line in %s: %s\n"), path, command);
+    }
 
   *icon = g_key_file_get_string (key_file,
                                  G_KEY_FILE_DESKTOP_GROUP,
