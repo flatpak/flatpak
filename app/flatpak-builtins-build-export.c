@@ -491,8 +491,14 @@ check_refs:
   if (!g_key_file_load_from_file (key_file, path, G_KEY_FILE_NONE, error))
     return FALSE;
 
-  /* Validate Exec command: The key should be present and – if set to a
-   * non-empty value – should point to an existing binary.
+  *activatable = g_key_file_get_boolean (key_file,
+                                         G_KEY_FILE_DESKTOP_GROUP,
+                                         G_KEY_FILE_DESKTOP_KEY_DBUS_ACTIVATABLE,
+                                         NULL);
+
+  /* Validate Exec command: Unless we have DBusActivatable=true the key should
+   * be present and – if set to a non-empty value – should point to an existing
+   * binary.
    *
    * Empty values are allowed, they will result in the default command being
    * run by Flatpak when starting the application.
@@ -501,12 +507,12 @@ check_refs:
                                    G_KEY_FILE_DESKTOP_GROUP,
                                    G_KEY_FILE_DESKTOP_KEY_EXEC,
                                    &local_error);
-  if (!command)
+  if (!command && *activatable == FALSE)
     {
       g_print (_("WARNING: Can't find Exec key in %s: %s\n"), path, local_error->message);
       g_clear_error (&local_error);
     }
-  else if (strlen(command) > 0)
+  else if (command && strlen(command) > 0)
     {
       argv = g_strsplit (command, " ", 0);
       bin_file = convert_app_absolute_path (argv[0], files);
@@ -520,11 +526,6 @@ check_refs:
                                  NULL);
   if (*icon && !g_str_has_prefix (*icon, app_id))
     g_print (_("WARNING: Icon not matching app id in %s: %s\n"), path, *icon);
-
-  *activatable = g_key_file_get_boolean (key_file,
-                                         G_KEY_FILE_DESKTOP_GROUP,
-                                         G_KEY_FILE_DESKTOP_KEY_DBUS_ACTIVATABLE,
-                                         NULL);
 
   return TRUE;
 }
