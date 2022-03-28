@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2022-03-14 15:32+0000\n"
-"PO-Revision-Date: 2022-03-28 20:26+0700\n"
+"PO-Revision-Date: 2022-03-28 20:30+0700\n"
 "Last-Translator: Kukuh Syafaat <kukuhsyafaat@gnome.org>\n"
 "Language-Team: Indonesian <gnome-l10n-id@googlegroups.com>\n"
 "Language: id\n"
@@ -2801,7 +2801,7 @@ msgstr "Menghapus ref %s karena objek yang hilang\n"
 #: app/flatpak-builtins-repair.c:436
 #, c-format
 msgid "Deleting ref %s due to invalid objects\n"
-msgstr "Menghapus ref %s karena obyek tidak sah\n"
+msgstr "Menghapus ref %s karena objek tidak sah\n"
 
 #: app/flatpak-builtins-repair.c:440
 #, c-format
