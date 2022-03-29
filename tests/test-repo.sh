@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..44"
+echo "1..45"
 
 #Regular repo
 setup_repo
@@ -208,7 +208,7 @@ GPGKey=${FL_GPG_BASE64}
 EOF
 
 if [ x${USE_COLLECTIONS_IN_CLIENT-} == xyes ]; then
-    echo "DeployCollectionID=org.test.Collection.Flatpakref" >> repos/flatpakref/flatpakref-repo.flatpakrepo
+    echo "DeploySideloadCollectionID=org.test.Collection.Flatpakref" >> repos/flatpakref/flatpakref-repo.flatpakrepo
 fi
 
 cat << EOF > org.test.Hello.flatpakref
@@ -220,6 +220,10 @@ SuggestRemoteName=allthegoodstuff
 GPGKey=${FL_GPG_BASE64}
 RuntimeRepo=http://127.0.0.1:$(cat httpd-port)/flatpakref/flatpakref-repo.flatpakrepo
 EOF
+
+if [ x${USE_COLLECTIONS_IN_CLIENT-} == xyes ]; then
+    echo "DeploySideloadCollectionID=org.test.Collection.Flatpakref" >> org.test.Hello.flatpakref
+fi
 
 ${FLATPAK} ${U} uninstall -y org.test.Platform org.test.Hello >&2
 
@@ -238,6 +242,14 @@ ok "install flatpakref normalizes remote URL trailing slash"
 assert_remote_has_config allthegoodstuff xa.title "The Remote Title"
 
 ok "install flatpakref uses RuntimeRepo metadata for remote"
+
+if [ x${USE_COLLECTIONS_IN_CLIENT-} == xyes ]; then
+    assert_remote_has_config allthegoodstuff collection-id "org.test.Collection.Flatpakref"
+else
+    assert_remote_has_no_config allthegoodstuff collection-id
+fi
+
+ok "install flatpakref sets collection-id on remote if available"
 
 ${FLATPAK} ${U} uninstall -y org.test.Platform org.test.Hello >&2
 

@@ -14241,18 +14241,27 @@ parse_ref_file (GKeyFile *keyfile,
       gpg_data = g_bytes_new_take (g_steal_pointer (&decoded), decoded_len);
     }
 
-  collection_id = g_key_file_get_string (keyfile, FLATPAK_REF_GROUP,
-                                         FLATPAK_REF_DEPLOY_COLLECTION_ID_KEY, NULL);
+  /* We have a hierarchy of keys for setting the collection ID, which all have
+   * the same effect. The only difference is which versions of Flatpak support
+   * them, and therefore what P2P implementation is enabled by them:
+   * DeploySideloadCollectionID: supported by Flatpak >= 1.12.8 (1.7.1
+   *   introduced sideload support but this key was added late)
+   * DeployCollectionID: supported by Flatpak >= 1.0.6
+   * CollectionID: supported by Flatpak >= 0.9.8
+   */
+  collection_id = flatpak_keyfile_get_string_non_empty (keyfile, FLATPAK_REF_GROUP,
+                                                        FLATPAK_REF_DEPLOY_SIDELOAD_COLLECTION_ID_KEY);
 
-  if (collection_id != NULL && *collection_id == '\0')
-    g_clear_pointer (&collection_id, g_free);
   if (collection_id == NULL)
     {
-      collection_id = g_key_file_get_string (keyfile, FLATPAK_REF_GROUP,
-                                             FLATPAK_REF_COLLECTION_ID_KEY, NULL);
+      collection_id = flatpak_keyfile_get_string_non_empty (keyfile, FLATPAK_REF_GROUP,
+                                                            FLATPAK_REF_DEPLOY_COLLECTION_ID_KEY);
     }
-  if (collection_id != NULL && *collection_id == '\0')
-    g_clear_pointer (&collection_id, g_free);
+  if (collection_id == NULL)
+    {
+      collection_id = flatpak_keyfile_get_string_non_empty (keyfile, FLATPAK_REF_GROUP,
+                                                            FLATPAK_REF_COLLECTION_ID_KEY);
+    }
 
   if (collection_id != NULL && gpg_data == NULL)
     return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Collection ID requires GPG key to be provided"));
