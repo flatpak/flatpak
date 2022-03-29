@@ -108,18 +108,23 @@
                     <listitem><para>The url of a webpage describing the application or runtime.</para></listitem>
                 </varlistentry>
                 <varlistentry>
-                    <term><option>DeployCollectionID</option> (string)</term>
+                    <term><option>DeploySideloadCollectionID</option> (string)</term>
                     <listitem><para>
                         The collection ID of the remote, if it has one. This uniquely
                         identifies the collection of apps in the remote, to allow peer to peer
-                        redistribution. It is recommended to use this key over CollectionID because
-                        only newer clients pay attention to it (and older clients don't handle
+                        redistribution (see <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
+                        It is recommended to use this key over DeployCollectionID or CollectionID because
+                        only newer clients (Flatpak 1.12.8 or later) pay attention to it (and older clients don't handle
                         collection IDs properly).
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>DeployCollectionID</option> (string)</term>
+                    <listitem><para>This is deprecated but still supported for backwards compatibility. Use DeploySideloadCollectionID instead.</para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>CollectionID</option> (string)</term>
-                    <listitem><para>This is deprecated but still supported for backwards compatibility. Use DeployCollectionID instead.</para></listitem>
+                    <listitem><para>This is deprecated but still supported for backwards compatibility. Use DeploySideloadCollectionID instead.</para></listitem>
                 </varlistentry>
 
                 <varlistentry>

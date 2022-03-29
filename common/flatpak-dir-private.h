@@ -70,6 +70,7 @@ GType flatpak_deploy_get_type (void);
 #define FLATPAK_REF_BRANCH_KEY "Branch"
 #define FLATPAK_REF_COLLECTION_ID_KEY "CollectionID"
 #define FLATPAK_REF_DEPLOY_COLLECTION_ID_KEY "DeployCollectionID"
+#define FLATPAK_REF_DEPLOY_SIDELOAD_COLLECTION_ID_KEY "DeploySideloadCollectionID"
 
 #define FLATPAK_REPO_GROUP "Flatpak Repo"
 #define FLATPAK_REPO_VERSION_KEY "Version"
@@ -89,6 +90,7 @@ GType flatpak_deploy_get_type (void);
 
 #define FLATPAK_REPO_COLLECTION_ID_KEY "CollectionID"
 #define FLATPAK_REPO_DEPLOY_COLLECTION_ID_KEY "DeployCollectionID"
+#define FLATPAK_REPO_DEPLOY_SIDELOAD_COLLECTION_ID_KEY "DeploySideloadCollectionID"
 
 #define FLATPAK_CLI_UPDATE_INTERVAL_MS 300
 
