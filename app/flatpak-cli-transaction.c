@@ -762,7 +762,7 @@ end_of_lifed_with_rebase (FlatpakTransaction *transaction,
     }
   else
     {
-        g_debug ("%s is end-of-life, using action from parent ren", name);
+      g_debug ("%s is end-of-life, using action from parent ref", name);
     }
 
   /* Cache for later comparison and reuse */
