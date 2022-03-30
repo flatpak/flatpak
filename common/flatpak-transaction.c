@@ -3267,6 +3267,19 @@ resolve_op_from_commit (FlatpakTransaction *self,
   g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE, "s", &op->eol);
   g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE_REBASE, "s", &op->eol_rebase);
 
+  if (op->eol_rebase)
+    {
+      g_autoptr(FlatpakDecomposed) eolr_decomposed = NULL;
+      eolr_decomposed = flatpak_decomposed_new_from_ref (op->eol_rebase, error);
+      if (!eolr_decomposed)
+        return FALSE;
+      if (flatpak_decomposed_get_kind (op->ref) != flatpak_decomposed_get_kind (eolr_decomposed))
+        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                   "end-of-life-rebase on commit %s has the wrong type (%s -> %s)",
+                                   checksum, flatpak_decomposed_get_ref (op->ref),
+                                   flatpak_decomposed_get_ref (eolr_decomposed));
+    }
+
   return resolve_op_end (self, op, checksum, sideload_path, metadata_bytes, error);
 }
 
@@ -3317,6 +3330,19 @@ try_resolve_op_from_metadata (FlatpakTransaction *self,
       op->eol = g_strdup (var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE, NULL));
       op->eol_rebase = g_strdup (var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, NULL));
       op->token_type = GINT32_FROM_LE (var_metadata_lookup_int32 (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_TOKEN_TYPE, op->token_type));
+
+      if (op->eol_rebase)
+        {
+          g_autoptr(FlatpakDecomposed) eolr_decomposed = NULL;
+          eolr_decomposed = flatpak_decomposed_new_from_ref (op->eol_rebase, error);
+          if (!eolr_decomposed)
+            return FALSE;
+          if (flatpak_decomposed_get_kind (op->ref) != flatpak_decomposed_get_kind (eolr_decomposed))
+            return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                       "end-of-life-rebase on commit %s has the wrong type (%s -> %s)",
+                                       checksum, flatpak_decomposed_get_ref (op->ref),
+                                       flatpak_decomposed_get_ref (eolr_decomposed));
+        }
     }
 
   return resolve_op_end (self, op, checksum, sideload_path, metadata_bytes, error);
