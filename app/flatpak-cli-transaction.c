@@ -650,6 +650,83 @@ typedef enum {
   EOL_REBASE,        /* Choose to rebase */
 } EolAction;
 
+static void
+print_eol_info_message (FlatpakDir        *dir,
+                        FlatpakDecomposed *ref,
+                        const char        *ref_name,
+                        const char        *rebased_to_ref,
+                        const char        *reason)
+{
+  gboolean is_pinned = flatpak_dir_ref_is_pinned (dir, flatpak_decomposed_get_ref (ref));
+  g_autofree char *ref_branch = flatpak_decomposed_dup_branch (ref);
+  g_autofree char *ref_str = NULL;
+  g_autofree char *eolr_str = NULL;
+  const char *on = "";
+  const char *off = "";
+  const char *pinned = "";
+  const char *app_or_runtime = "";
+
+  if (flatpak_fancy_output ())
+    {
+      on = FLATPAK_ANSI_BOLD_ON;
+      off = FLATPAK_ANSI_BOLD_OFF;
+    }
+
+  if (rebased_to_ref)
+    {
+      g_autoptr(FlatpakDecomposed) eolr_decomposed = NULL;
+      g_autofree char *eolr_name = NULL;
+      const char *eolr_branch;
+
+      eolr_decomposed = flatpak_decomposed_new_from_ref (rebased_to_ref, NULL);
+
+      /* These are guarantees from FlatpakTransaction */
+      g_assert (eolr_decomposed != NULL);
+      g_assert (flatpak_decomposed_get_kind (ref) == flatpak_decomposed_get_kind (eolr_decomposed));
+
+      eolr_name = flatpak_decomposed_dup_id (eolr_decomposed);
+      eolr_branch = flatpak_decomposed_get_branch (eolr_decomposed);
+
+      if (g_str_equal (ref_branch, eolr_branch))
+        {
+          ref_str = g_strdup_printf ("%s%s%s", on, ref_name, off);
+          eolr_str = g_strdup_printf ("%s%s%s", on, eolr_name, off);
+        }
+      else
+        {
+          ref_str = g_strdup_printf (_("%s%s%s branch %s%s%s"),
+                                     on, ref_name, off, on, ref_branch, off);
+          eolr_str = g_strdup_printf (_("%s%s%s branch %s%s%s"),
+                                      on, eolr_name, off, on, eolr_branch, off);
+        }
+    }
+  else
+    {
+      ref_str = g_strdup_printf (_("%s%s%s branch %s%s%s"),
+                                 on, ref_name, off, on, ref_branch, off);
+    }
+
+  if (is_pinned)
+    pinned = _("(pinned) ");
+
+  if (flatpak_decomposed_is_runtime (ref))
+    app_or_runtime = _("runtime");
+  else
+    app_or_runtime = _("app");
+
+  if (rebased_to_ref)
+    {
+      g_print (_("\nInfo: %s%s %s is end-of-life, in favor of %s\n"),
+               pinned, app_or_runtime, ref_str, eolr_str);
+    }
+  else if (reason)
+    {
+      g_print (_("\nInfo: %s%s %s is end-of-life, with reason:\n"),
+               pinned, app_or_runtime, ref_str);
+      g_print ("   %s\n", reason);
+    }
+}
+
 static gboolean
 end_of_lifed_with_rebase (FlatpakTransaction *transaction,
                           const char         *remote,
@@ -709,25 +786,11 @@ end_of_lifed_with_rebase (FlatpakTransaction *transaction,
 
   if (action == EOL_UNDECIDED)
     {
-      gboolean is_pinned = flatpak_dir_ref_is_pinned (dir, flatpak_decomposed_get_ref (ref));
-      g_autofree char *branch = flatpak_decomposed_dup_branch (ref);
       action = EOL_IGNORE;
 
-      if (rebased_to_ref)
-        if (is_pinned)
-          g_print (_("Info: (pinned) %s//%s is end-of-life, in favor of %s\n"), name, branch, rebased_to_ref);
-        else
-          g_print (_("Info: %s//%s is end-of-life, in favor of %s\n"), name, branch, rebased_to_ref);
-      else if (reason)
-        {
-          if (is_pinned)
-            g_print (_("Info: (pinned) %s//%s is end-of-life, with reason:\n"), name, branch);
-          else
-            g_print (_("Info: %s//%s is end-of-life, with reason:\n"), name, branch);
-          g_print ("   %s\n", reason);
-        }
+      print_eol_info_message (dir, ref, name, rebased_to_ref, reason);
 
-      if (flatpak_decomposed_is_runtime (ref))
+      if (flatpak_decomposed_is_runtime (ref) && !rebased_to_ref)
         {
           g_autoptr(GPtrArray) apps = flatpak_dir_list_app_refs_with_runtime (dir, ref, NULL, NULL);
           if (apps && apps->len > 0)
@@ -748,8 +811,9 @@ end_of_lifed_with_rebase (FlatpakTransaction *transaction,
 
       if (rebased_to_ref && remote)
         {
+          /* The context for this prompt is in print_eol_info_message() */
           if (self->disable_interaction ||
-              flatpak_yes_no_prompt (TRUE, _("Replace it with %s?"), rebased_to_ref))
+              flatpak_yes_no_prompt (TRUE, _("Replace?")))
             {
               if (self->disable_interaction)
                 g_print (_("Updating to rebased version\n"));
