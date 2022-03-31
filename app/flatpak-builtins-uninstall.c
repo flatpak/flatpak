@@ -202,7 +202,7 @@ confirm_runtime_extension_removal (gboolean           yes_opt,
   ref_name = flatpak_decomposed_dup_id (ref);
   ref_branch = flatpak_decomposed_get_branch (ref);
 
-  g_print (_("Applications using the runtime %s%s%s branch %s%s%s:\n"),
+  g_print (_("Info: applications using the extension %s%s%s branch %s%s%s:\n"),
            on, ref_name, off, on, ref_branch, off);
   g_print ("   ");
   for (guint i = 0; i < apps->len; i++)

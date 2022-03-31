@@ -775,13 +775,17 @@ check_current_transaction_for_dependent_apps (GPtrArray          *apps,
 static GPtrArray *
 find_reverse_dep_apps (FlatpakTransaction *transaction,
                        FlatpakDir         *dir,
-                       FlatpakDecomposed  *ref)
+                       FlatpakDecomposed  *ref,
+                       gboolean           *out_is_extension)
 {
   FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
   g_autoptr(GPtrArray) apps = NULL;
   g_autoptr(GError) local_error = NULL;
 
-  if (flatpak_dir_is_runtime_extension (dir, ref))
+  g_assert (out_is_extension);
+
+  *out_is_extension = flatpak_dir_is_runtime_extension (dir, ref);
+  if (*out_is_extension)
     {
       /* Find apps which are using the ref as an extension directly or as an
        * extension of their runtime.
@@ -886,11 +890,16 @@ end_of_lifed_with_rebase (FlatpakTransaction *transaction,
 
       if (flatpak_decomposed_is_runtime (ref) && !rebased_to_ref)
         {
-          g_autoptr(GPtrArray) apps = find_reverse_dep_apps (transaction, dir, ref);
+          gboolean is_extension;
+          g_autoptr(GPtrArray) apps = find_reverse_dep_apps (transaction, dir, ref, &is_extension);
 
           if (apps && apps->len > 0)
             {
-              g_print (_("Applications using this runtime:\n"));
+              if (is_extension)
+                g_print (_("Info: applications using this extension:\n"));
+              else
+                g_print (_("Info: applications using this runtime:\n"));
+
               g_print ("   ");
               for (guint i = 0; i < apps->len; i++)
                 {
