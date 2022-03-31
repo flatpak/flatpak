@@ -169,6 +169,9 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
   if (argc >= 2 && opt_unused)
     return usage_error (context, _("Must not specify REFs when using --unused"), error);
 
+  if (opt_noninteractive)
+    opt_yes = TRUE; /* Implied */
+
   prefs = &argv[1];
   n_prefs = argc - 1;
 
