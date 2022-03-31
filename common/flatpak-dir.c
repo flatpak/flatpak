@@ -15802,11 +15802,14 @@ flatpak_dir_find_local_related (FlatpakDir        *self,
       if (deploy_data == NULL)
         return NULL;
 
-      metadata = g_file_get_child (deploy_dir, "metadata");
-      if (!g_file_load_contents (metadata, cancellable, &metadata_contents, NULL, NULL, NULL))
+      if (flatpak_deploy_data_get_extension_of (deploy_data) == NULL)
         {
-          g_debug ("No metadata in local deploy");
-          /* No metadata => no related, but no error */
+          metadata = g_file_get_child (deploy_dir, "metadata");
+          if (!g_file_load_contents (metadata, cancellable, &metadata_contents, NULL, NULL, NULL))
+            {
+              g_debug ("No metadata in local deploy");
+              /* No metadata => no related, but no error */
+            }
         }
     }
   else
