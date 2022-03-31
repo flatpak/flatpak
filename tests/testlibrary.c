@@ -3568,6 +3568,27 @@ add_new_remote3 (FlatpakTransaction             *transaction,
   return TRUE;
 }
 
+static gboolean
+ready_check_get_op (FlatpakTransaction *transaction)
+{
+  g_autoptr(GError) error = NULL;
+  g_autofree char *app = NULL;
+  g_autoptr(FlatpakTransactionOperation) op = NULL;
+
+  app = g_strdup_printf ("app/org.test.Hello/%s/master",
+                         flatpak_get_default_arch ());
+
+  op = flatpak_transaction_get_operation_for_ref (transaction, NULL, app, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (op);
+
+  g_assert_cmpint (flatpak_transaction_operation_get_operation_type (op), ==, FLATPAK_TRANSACTION_OPERATION_INSTALL);
+  g_assert_cmpstr (flatpak_transaction_operation_get_ref (op), ==, app);
+  g_assert_cmpstr (flatpak_transaction_operation_get_remote (op), ==, "test-without-runtime-repo");
+
+  return TRUE;
+}
+
 /* Test that installing a flatpakref causes both the origin remote and the
  * runtime remote to be created, even if they already exist in another
  * installation */
@@ -3622,6 +3643,7 @@ test_transaction_flatpakref_remote_creation (void)
   g_assert_true (res);
 
   g_signal_connect (transaction, "add-new-remote", G_CALLBACK (add_new_remote3), NULL);
+  g_signal_connect (transaction, "ready", G_CALLBACK (ready_check_get_op), NULL);
 
   res = flatpak_transaction_run (transaction, NULL, &error);
   g_assert_no_error (error);

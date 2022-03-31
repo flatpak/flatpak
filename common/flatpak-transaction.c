@@ -4142,6 +4142,71 @@ flatpak_transaction_get_current_operation (FlatpakTransaction *self)
 }
 
 /**
+ * flatpak_transaction_get_operation_for_ref:
+ * @self: a #FlatpakTransaction
+ * @remote: (nullable): a remote name
+ * @ref: a ref
+ * @error: return location for an error
+ *
+ * Gets the operation for @ref, if any match. If @remote is non-%NULL, only an
+ * operation for that remote will be returned. If remote is %NULL and the
+ * transaction has more than one operation for @ref from different remotes, an
+ * error will be returned.
+ *
+ * Returns: (transfer full): the #FlatpakTransactionOperation for @ref, or
+ *   %NULL with @error set
+ * Since: 1.13.3
+ */
+FlatpakTransactionOperation *
+flatpak_transaction_get_operation_for_ref (FlatpakTransaction *self,
+                                           const char         *remote,
+                                           const char         *ref,
+                                           GError            **error)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  g_autoptr(FlatpakDecomposed) decomposed_ref = NULL;
+  g_autoptr(FlatpakTransactionOperation) matching_op = NULL;
+  GList *l;
+
+  g_return_val_if_fail (ref != NULL, NULL);
+
+  decomposed_ref = flatpak_decomposed_new_from_ref (ref, error);
+  if (decomposed_ref == NULL)
+    return NULL;
+
+  for (l = priv->ops; l != NULL; l = l->next)
+    {
+      FlatpakTransactionOperation *op = l->data;
+
+      if (remote != NULL && g_strcmp0 (remote, op->remote) != 0)
+        continue;
+
+      if (flatpak_decomposed_equal (op->ref, decomposed_ref))
+        {
+          if (matching_op == NULL)
+            matching_op = g_object_ref (op);
+          else
+            {
+              flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                  _("Ref %s from %s matches more than one transaction operation"),
+                                  ref, remote ? remote : _("any remote"));
+              return NULL;
+            }
+        }
+    }
+
+  if (matching_op == NULL)
+    {
+      flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
+                          _("No transaction operation found for ref %s from %s"),
+                          ref, remote ? remote : _("any remote"));
+      return NULL;
+    }
+
+  return g_steal_pointer (&matching_op);
+}
+
+/**
  * flatpak_transaction_get_installation:
  * @self: a #FlatpakTransactionOperation
  *
