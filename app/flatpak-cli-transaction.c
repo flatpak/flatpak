@@ -1015,6 +1015,14 @@ print_permissions (FlatpakCliTransaction *self,
   int i, j;
   int rows, cols;
   int table_rows, table_cols;
+  const char *on = "";
+  const char *off = "";
+
+  if (flatpak_fancy_output ())
+    {
+      on = FLATPAK_ANSI_BOLD_ON;
+      off = FLATPAK_ANSI_BOLD_OFF;
+    }
 
   if (metadata == NULL)
     return;
@@ -1055,9 +1063,9 @@ print_permissions (FlatpakCliTransaction *self,
   g_print ("\n");
 
   if (old_metadata)
-    g_print (_("New %s permissions:"), flatpak_ref_get_name (rref));
+    g_print (_("New %s%s%s permissions:"), on, flatpak_ref_get_name (rref), off);
   else
-    g_print (_("%s permissions:"), flatpak_ref_get_name (rref));
+    g_print (_("%s%s%s permissions:"), on, flatpak_ref_get_name (rref), off);
 
   g_print ("\n");
 
