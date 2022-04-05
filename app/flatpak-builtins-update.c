@@ -269,7 +269,10 @@ flatpak_builtin_update (int           argc,
     }
 
   if (!has_updates)
-    g_print (_("Nothing to do.\n"));
+    {
+      g_print ("\n");
+      g_print (_("Nothing to do.\n"));
+    }
 
   if (n_prefs == 0)
     {
