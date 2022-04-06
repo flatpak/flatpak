@@ -32,8 +32,8 @@
 #include "flatpak-instance-private.h"
 #include "flatpak-run-private.h"
 
-#include "libglnx/libglnx.h"
-#include "libglnx/tests/libglnx-testlib.h"
+#include "libglnx.h"
+#include "tests/libglnx-testlib.h"
 
 #include "testlib.h"
 

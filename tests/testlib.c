@@ -21,7 +21,7 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 
-#include "libglnx/libglnx.h"
+#include "libglnx.h"
 
 char *
 assert_mkdtemp (char *tmpl)

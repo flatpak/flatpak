@@ -11,7 +11,7 @@
 
 #include <glib/gstdio.h>
 
-#include "libglnx/libglnx.h"
+#include "libglnx.h"
 
 #define FUSE_USE_VERSION 26
 #include <fuse_lowlevel.h>

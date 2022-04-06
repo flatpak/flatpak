@@ -21,7 +21,7 @@
 #ifndef __FLATPAK_OCI_REGISTRY_H__
 #define __FLATPAK_OCI_REGISTRY_H__
 
-#include "libglnx/libglnx.h"
+#include "libglnx.h"
 
 #include <glib.h>
 #include <gio/gio.h>

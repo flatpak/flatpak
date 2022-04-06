@@ -21,7 +21,7 @@
 #ifndef __FLATPAK_CONTEXT_H__
 #define __FLATPAK_CONTEXT_H__
 
-#include "libglnx/libglnx.h"
+#include "libglnx.h"
 #include "dbus-proxy/flatpak-proxy.h"
 #include <flatpak-common-types-private.h>
 #include "flatpak-exports-private.h"

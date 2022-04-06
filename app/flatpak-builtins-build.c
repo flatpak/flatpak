@@ -28,7 +28,7 @@
 
 #include <glib/gi18n.h>
 
-#include "libglnx/libglnx.h"
+#include "libglnx.h"
 
 #include "flatpak-builtins.h"
 #include "flatpak-utils-private.h"

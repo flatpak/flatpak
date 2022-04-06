@@ -29,7 +29,7 @@
 
 #include <glib/gi18n.h>
 
-#include "libglnx/libglnx.h"
+#include "libglnx.h"
 
 #ifdef HAVE_LIBSYSTEMD
 #include <systemd/sd-journal.h>

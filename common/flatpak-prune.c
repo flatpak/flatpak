@@ -35,7 +35,7 @@
 #include "flatpak-error.h"
 #include "flatpak-prune-private.h"
 #include "flatpak-variant-impl-private.h"
-#include "libglnx/libglnx.h"
+#include "libglnx.h"
 #include "valgrind-private.h"
 
 /* This is a custom implementation of ostree-prune that caches the

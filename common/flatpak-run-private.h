@@ -21,7 +21,7 @@
 #ifndef __FLATPAK_RUN_H__
 #define __FLATPAK_RUN_H__
 
-#include "libglnx/libglnx.h"
+#include "libglnx.h"
 #include "flatpak-common-types-private.h"
 #include "flatpak-context-private.h"
 #include "flatpak-bwrap-private.h"

@@ -51,7 +51,7 @@
 #include "flatpak-utils-base-private.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-variant-impl-private.h"
-#include "libglnx/libglnx.h"
+#include "libglnx.h"
 #include "valgrind-private.h"
 
 /* This is also here so the common code can report these errors to the lib */

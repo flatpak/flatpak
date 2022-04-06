@@ -28,7 +28,7 @@
 
 #include <glib/gi18n.h>
 #include <gio/gio.h>
-#include "libglnx/libglnx.h"
+#include "libglnx.h"
 
 #ifdef USE_SYSTEM_HELPER
 #include <polkit/polkit.h>

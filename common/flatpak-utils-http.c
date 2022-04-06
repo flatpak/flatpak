@@ -23,7 +23,7 @@
 
 #include <gio/gunixoutputstream.h>
 #include <libsoup/soup.h>
-#include "libglnx/libglnx.h"
+#include "libglnx.h"
 
 #include <sys/types.h>
 #include <sys/xattr.h>

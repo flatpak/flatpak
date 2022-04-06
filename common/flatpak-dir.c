@@ -55,7 +55,7 @@
 #include "flatpak-utils-base-private.h"
 #include "flatpak-variant-private.h"
 #include "flatpak-variant-impl-private.h"
-#include "libglnx/libglnx.h"
+#include "libglnx.h"
 #include "system-helper/flatpak-system-helper.h"
 
 #ifdef HAVE_LIBMALCONTENT

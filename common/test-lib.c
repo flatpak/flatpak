@@ -1,6 +1,6 @@
 #include "config.h"
 
-#include "libglnx/libglnx.h"
+#include "libglnx.h"
 
 #include <flatpak.h>
 #include <gio/gunixoutputstream.h>
