@@ -23,7 +23,7 @@
 
 #include <glib.h>
 #include <appstream.h>
-#include "libglnx/libglnx.h"
+#include "libglnx.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-dir-private.h"
 #include "flatpak-permission-dbus-generated.h"

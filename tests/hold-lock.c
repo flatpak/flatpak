@@ -30,7 +30,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include "libglnx/libglnx.h"
+#include "libglnx.h"
 
 static GArray *global_locks = NULL;
 static gboolean opt_wait = FALSE;

@@ -7,7 +7,7 @@
 #include <glib.h>
 #include <ostree.h>
 
-#include "libglnx/libglnx.h"
+#include "libglnx.h"
 #include "flatpak.h"
 
 #include "can-use-fuse.h"

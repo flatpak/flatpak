@@ -28,7 +28,7 @@
 #include "flatpak-progress-private.h"
 #include "flatpak-variant-private.h"
 #include "flatpak-ref-utils-private.h"
-#include "libglnx/libglnx.h"
+#include "libglnx.h"
 
 /* Version history:
  * The version field was added in flatpak 1.2, anything before is 0.

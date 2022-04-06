@@ -21,7 +21,7 @@
 #include "config.h"
 
 #include <gio/gio.h>
-#include "libglnx/libglnx.h"
+#include "libglnx.h"
 #include "flatpak-portal-app-info.h"
 #include "flatpak-portal-error.h"
 
