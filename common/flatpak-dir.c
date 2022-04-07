@@ -400,7 +400,7 @@ _validate_summary_for_collection_id (GVariant    *summary_v,
   return TRUE;
 }
 
-void
+static void
 flatpak_remote_state_add_sideload_repo (FlatpakRemoteState *self,
                                         GFile *dir)
 {
@@ -440,6 +440,92 @@ flatpak_remote_state_add_sideload_repo (FlatpakRemoteState *self,
           g_debug ("Using sideloaded repo %s for remote %s", flatpak_file_get_path_cached (dir), self->remote_name);
         }
     }
+}
+
+static void add_sideload_subdirs (GPtrArray *res,
+                                  GFile     *parent,
+                                  gboolean   recurse);
+
+static void
+add_sideload_create_usb_subdirs (GPtrArray *res,
+                                 GFile     *parent)
+{
+  g_autoptr(GFile) ostree_repo_subpath = NULL;
+  g_autoptr(GFile) dot_ostree_repo_subpath = NULL;
+  g_autoptr(GFile) dot_ostree_repo_d_subpath = NULL;
+  g_autoptr(OstreeRepo) ostree_repo_subpath_repo = NULL;
+  g_autoptr(OstreeRepo) dot_ostree_repo_subpath_repo = NULL;
+
+  /* This path is not used by "flatpak create-usb" but it's a standard location
+   * recognized by libostree; see the man page ostree create-usb(1)
+   */
+  ostree_repo_subpath = g_file_resolve_relative_path (parent, "ostree/repo");
+  ostree_repo_subpath_repo = ostree_repo_new (ostree_repo_subpath);
+  if (ostree_repo_open (ostree_repo_subpath_repo, NULL, NULL))
+    g_ptr_array_add (res, g_object_ref (ostree_repo_subpath));
+
+  /* These paths are used by "flatpak create-usb" */
+  dot_ostree_repo_subpath = g_file_resolve_relative_path (parent, ".ostree/repo");
+  dot_ostree_repo_subpath_repo = ostree_repo_new (dot_ostree_repo_subpath);
+  if (ostree_repo_open (dot_ostree_repo_subpath_repo, NULL, NULL))
+    g_ptr_array_add (res, g_object_ref (dot_ostree_repo_subpath));
+
+  dot_ostree_repo_d_subpath = g_file_resolve_relative_path (parent, ".ostree/repos.d");
+  add_sideload_subdirs (res, dot_ostree_repo_d_subpath, FALSE);
+}
+
+static void
+add_sideload_subdirs (GPtrArray *res,
+                      GFile     *parent,
+                      gboolean   recurse)
+{
+  g_autoptr(GFileEnumerator) dir_enum = NULL;
+
+  dir_enum = g_file_enumerate_children (parent,
+                                        G_FILE_ATTRIBUTE_STANDARD_NAME ","
+                                        G_FILE_ATTRIBUTE_STANDARD_TYPE,
+                                        G_FILE_QUERY_INFO_NONE,
+                                        NULL, NULL);
+  if (dir_enum == NULL)
+    return;
+
+  while (TRUE)
+    {
+      GFileInfo *info;
+      GFile *path;
+
+      if (!g_file_enumerator_iterate (dir_enum, &info, &path, NULL, NULL) ||
+          info == NULL)
+        break;
+
+      /* Here we support either a plain repo or, if @recurse is TRUE, the root
+       * directory of a USB created with "flatpak create-usb"
+       */
+      if (g_file_info_get_file_type (info) == G_FILE_TYPE_DIRECTORY)
+        {
+          g_autoptr(OstreeRepo) repo = ostree_repo_new (path);
+
+          if (ostree_repo_open (repo, NULL, NULL))
+            g_ptr_array_add (res, g_object_ref (path));
+          else if (recurse)
+            add_sideload_create_usb_subdirs (res, path);
+        }
+    }
+}
+
+void
+flatpak_remote_state_add_sideload_dir (FlatpakRemoteState *self,
+                                       GFile              *dir)
+{
+  g_autoptr(GPtrArray) sideload_paths = g_ptr_array_new_with_free_func (g_object_unref);
+
+  /* The directory could be a repo */
+  flatpak_remote_state_add_sideload_repo (self, dir);
+
+  /* Or it could be a directory with repos in well-known subdirectories */
+  add_sideload_create_usb_subdirs (sideload_paths, dir);
+  for (int i = 0; i < sideload_paths->len; i++)
+    flatpak_remote_state_add_sideload_repo (self, g_ptr_array_index (sideload_paths, i));
 }
 
 gboolean
@@ -13613,64 +13699,6 @@ flatpak_dir_list_remote_config_keys (FlatpakDir *self,
   return NULL;
 }
 
-static void
-add_subdirs (GPtrArray *res,
-             GFile     *parent,
-             gboolean   recurse)
-{
-  g_autoptr(GFileEnumerator) dir_enum = NULL;
-
-  dir_enum = g_file_enumerate_children (parent,
-                                        G_FILE_ATTRIBUTE_STANDARD_NAME ","
-                                        G_FILE_ATTRIBUTE_STANDARD_TYPE,
-                                        G_FILE_QUERY_INFO_NONE,
-                                        NULL, NULL);
-  if (dir_enum == NULL)
-    return;
-
-  while (TRUE)
-    {
-      GFileInfo *info;
-      GFile *path;
-
-      if (!g_file_enumerator_iterate (dir_enum, &info, &path, NULL, NULL) ||
-          info == NULL)
-        break;
-
-      /* Here we support either a plain repo or, if @recurse is TRUE, the root
-       * directory of a USB created with "flatpak create-usb"
-       */
-      if (g_file_info_get_file_type (info) == G_FILE_TYPE_DIRECTORY)
-        {
-          g_autoptr(OstreeRepo) repo = ostree_repo_new (path);
-
-          if (ostree_repo_open (repo, NULL, NULL))
-            g_ptr_array_add (res, g_object_ref (path));
-          else if (recurse)
-            {
-              g_autoptr(GFile) ostree_repo_subpath = NULL;
-              g_autoptr(GFile) dot_ostree_repo_subpath = NULL;
-              g_autoptr(GFile) dot_ostree_repo_d_subpath = NULL;
-              g_autoptr(OstreeRepo) ostree_repo_subpath_repo = NULL;
-              g_autoptr(OstreeRepo) dot_ostree_repo_subpath_repo = NULL;
-
-              ostree_repo_subpath = g_file_resolve_relative_path (path, "ostree/repo");
-              ostree_repo_subpath_repo = ostree_repo_new (ostree_repo_subpath);
-              if (ostree_repo_open (ostree_repo_subpath_repo, NULL, NULL))
-                g_ptr_array_add (res, g_object_ref (ostree_repo_subpath));
-
-              dot_ostree_repo_subpath = g_file_resolve_relative_path (path, ".ostree/repo");
-              dot_ostree_repo_subpath_repo = ostree_repo_new (dot_ostree_repo_subpath);
-              if (ostree_repo_open (dot_ostree_repo_subpath_repo, NULL, NULL))
-                g_ptr_array_add (res, g_object_ref (dot_ostree_repo_subpath));
-
-              dot_ostree_repo_d_subpath = g_file_resolve_relative_path (path, ".ostree/repos.d");
-              add_subdirs (res, dot_ostree_repo_d_subpath, FALSE);
-            }
-        }
-    }
-}
-
 GPtrArray *
 flatpak_dir_get_sideload_repo_paths (FlatpakDir *self)
 {
@@ -13678,8 +13706,8 @@ flatpak_dir_get_sideload_repo_paths (FlatpakDir *self)
   g_autoptr(GFile) runtime_sideload_repos_dir = flatpak_dir_get_runtime_sideload_repos_dir (self);
   g_autoptr(GPtrArray) res = g_ptr_array_new_with_free_func (g_object_unref);
 
-  add_subdirs (res, sideload_repos_dir, TRUE);
-  add_subdirs (res, runtime_sideload_repos_dir, TRUE);
+  add_sideload_subdirs (res, sideload_repos_dir, TRUE);
+  add_sideload_subdirs (res, runtime_sideload_repos_dir, TRUE);
 
   return g_steal_pointer (&res);
 }

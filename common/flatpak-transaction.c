@@ -1981,7 +1981,7 @@ flatpak_transaction_ensure_remote_state (FlatpakTransaction             *self,
         {
           const char *path = g_ptr_array_index (priv->extra_sideload_repos, i);
           g_autoptr(GFile) f = g_file_new_for_path (path);
-          flatpak_remote_state_add_sideload_repo (state, f);
+          flatpak_remote_state_add_sideload_dir (state, f);
         }
     }
 

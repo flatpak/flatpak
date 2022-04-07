@@ -1358,7 +1358,7 @@ get_remote_state (FlatpakDir   *dir,
   for (int i = 0; opt_sideload_repos != NULL && opt_sideload_repos[i] != NULL; i++)
      {
       g_autoptr(GFile) f = g_file_new_for_path (opt_sideload_repos[i]);
-      flatpak_remote_state_add_sideload_repo (state, f);
+      flatpak_remote_state_add_sideload_dir (state, f);
      }
 
   return state;
