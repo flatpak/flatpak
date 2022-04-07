@@ -198,8 +198,8 @@ GVariant *flatpak_remote_state_load_ref_commit (FlatpakRemoteState *self,
                                                 char              **out_commit,
                                                 GCancellable       *cancellable,
                                                 GError            **error);
-void flatpak_remote_state_add_sideload_repo (FlatpakRemoteState *self,
-                                             GFile               *path);
+void flatpak_remote_state_add_sideload_dir (FlatpakRemoteState *self,
+                                            GFile              *path);
 
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakDir, g_object_unref)
