@@ -58,7 +58,6 @@
 #include "libglnx.h"
 
 #include "flatpak-run-private.h"
-#include "flatpak-proxy.h"
 #include "flatpak-utils-base-private.h"
 #include "flatpak-dir-private.h"
 #include "flatpak-instance-private.h"

@@ -42,7 +42,6 @@
 
 #include "flatpak-exports-private.h"
 #include "flatpak-run-private.h"
-#include "flatpak-proxy.h"
 #include "flatpak-utils-base-private.h"
 #include "flatpak-dir-private.h"
 #include "flatpak-systemd-dbus-generated.h"

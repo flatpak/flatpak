@@ -50,7 +50,6 @@ AM_CPPFLAGS =							\
 	-DSYSTEM_HELPER_USER=\"$(SYSTEM_HELPER_USER)\"          \
 	-DSYSTEM_FONT_CACHE_DIRS=\"$(SYSTEM_FONT_CACHE_DIRS)\"		\
 	-DG_LOG_DOMAIN=\"flatpak\"				\
-	-I$(srcdir)/subprojects					\
 	-I$(srcdir)/subprojects/libglnx				\
 	-I$(srcdir)/common					\
 	-I$(builddir)/common					\
