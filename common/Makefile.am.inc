@@ -185,7 +185,6 @@ endif
 libflatpak_common_la_CFLAGS = \
 	-DFLATPAK_COMPILATION \
 	-DLIBEXECDIR=\"$(libexecdir)\" \
-	-I$(srcdir)/subprojects/dbus-proxy \
 	$(AM_CFLAGS) \
 	$(ARCHIVE_CFLAGS) \
 	$(ZSTD_CFLAGS) \

@@ -22,9 +22,15 @@
 #define __FLATPAK_CONTEXT_H__
 
 #include "libglnx.h"
-#include "dbus-proxy/flatpak-proxy.h"
 #include <flatpak-common-types-private.h>
 #include "flatpak-exports-private.h"
+
+typedef enum {
+  FLATPAK_POLICY_NONE,
+  FLATPAK_POLICY_SEE,
+  FLATPAK_POLICY_TALK,
+  FLATPAK_POLICY_OWN
+} FlatpakPolicy;
 
 typedef struct FlatpakContext FlatpakContext;
 
