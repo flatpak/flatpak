@@ -3652,7 +3652,7 @@ add_rest_args (FlatpakBwrap   *bwrap,
                int             n_args,
                GError        **error)
 {
-  g_autoptr(XdpDbusDocuments) documents = NULL;
+  g_autoptr(AutoXdpDbusDocuments) documents = NULL;
   gboolean forwarding = FALSE;
   gboolean forwarding_uri = FALSE;
   gboolean can_forward = TRUE;

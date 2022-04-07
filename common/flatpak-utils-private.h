@@ -766,8 +766,8 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (GUnixFDList, g_object_unref)
  */
 typedef FlatpakSessionHelper AutoFlatpakSessionHelper;
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (AutoFlatpakSessionHelper, g_object_unref)
-
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (XdpDbusDocuments, g_object_unref)
+typedef XdpDbusDocuments AutoXdpDbusDocuments;
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (AutoXdpDbusDocuments, g_object_unref)
 
 typedef struct FlatpakXml FlatpakXml;
 
