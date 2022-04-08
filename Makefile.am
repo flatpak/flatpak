@@ -59,7 +59,7 @@ AM_CPPFLAGS =							\
 
 ASAN_FLAGS=
 if ENABLE_ASAN
-ASAN_FLAGS = -fsanitize=undefined -fsanitize-undefined-trap-on-error -fsanitize=address
+ASAN_FLAGS += -fsanitize=undefined -fsanitize-undefined-trap-on-error -fsanitize=address
 endif
 
 AM_CFLAGS = $(WARN_CFLAGS) $(ASAN_FLAGS)
