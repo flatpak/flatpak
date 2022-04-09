@@ -376,10 +376,16 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
               FlatpakDir *this_dir = g_ptr_array_index (dirs, i);
               g_auto(GStrv) remotes = NULL;
               guint j = 0;
+              FindMatchingRefsFlags matching_refs_flags;
 
               remotes = flatpak_dir_list_remotes (this_dir, cancellable, error);
               if (remotes == NULL)
                 return FALSE;
+
+              if (strchr (argv[1], '/') != NULL)
+                matching_refs_flags = FIND_MATCHING_REFS_FLAGS_NONE;
+              else
+                matching_refs_flags = FIND_MATCHING_REFS_FLAGS_FUZZY;
 
               for (j = 0; remotes[j] != NULL; j++)
                 {
@@ -404,7 +410,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
                   if (opt_no_pull)
                     refs = flatpak_dir_find_local_refs (this_dir, this_remote, id, branch, this_default_branch, arch,
                                                         flatpak_get_default_arch (),
-                                                        matched_kinds, FIND_MATCHING_REFS_FLAGS_FUZZY,
+                                                        matched_kinds, matching_refs_flags,
                                                         cancellable, &local_error);
                   else
                     {
@@ -416,7 +422,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
 
                       refs = flatpak_dir_find_remote_refs (this_dir, state, id, branch, this_default_branch, arch,
                                                            flatpak_get_default_arch (),
-                                                           matched_kinds, FIND_MATCHING_REFS_FLAGS_FUZZY,
+                                                           matched_kinds, matching_refs_flags,
                                                            cancellable, &local_error);
                       if (refs == NULL)
                         {
@@ -436,7 +442,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
             }
 
           if (remote_dir_pairs->len == 0)
-            return flatpak_fail (error, _("No remote refs found similar to ‘%s’"), argv[1]);
+            return flatpak_fail (error, _("No remote refs found for ‘%s’"), argv[1]);
 
           if (!flatpak_resolve_matching_remotes (remote_dir_pairs, argv[1], &chosen_pair, error))
             return FALSE;
@@ -495,18 +501,33 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
       g_autofree char *ref = NULL;
       g_autoptr(GPtrArray) refs = NULL;
       g_autoptr(GError) local_error = NULL;
+      FindMatchingRefsFlags matching_refs_flags;
 
-      flatpak_split_partial_ref_arg_novalidate (pref, kinds, opt_arch, target_branch,
-                                                &matched_kinds, &id, &arch, &branch);
+      if (strchr (pref, '/') != NULL)
+        matching_refs_flags = FIND_MATCHING_REFS_FLAGS_NONE;
+      else
+        matching_refs_flags = FIND_MATCHING_REFS_FLAGS_FUZZY;
 
-      /* We used _novalidate so that the id can be partial, but we can still validate the branch */
-      if (branch != NULL && !flatpak_is_valid_branch (branch, -1, &local_error))
-        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("Invalid branch %s: %s"), branch, local_error->message);
+      if (matching_refs_flags & FIND_MATCHING_REFS_FLAGS_FUZZY)
+        {
+          flatpak_split_partial_ref_arg_novalidate (pref, kinds, opt_arch, target_branch,
+                                                    &matched_kinds, &id, &arch, &branch);
+
+          /* We used _novalidate so that the id can be partial, but we can still validate the branch */
+          if (branch != NULL && !flatpak_is_valid_branch (branch, -1, &local_error))
+            return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF,
+                                       _("Invalid branch %s: %s"), branch, local_error->message);
+        }
+      else if (!flatpak_split_partial_ref_arg (pref, kinds, opt_arch, target_branch,
+                                               &matched_kinds, &id, &arch, &branch, error))
+        {
+          return FALSE;
+        }
 
       if (opt_no_pull)
         refs = flatpak_dir_find_local_refs (dir, remote, id, branch, default_branch, arch,
                                             flatpak_get_default_arch (),
-                                            matched_kinds, FIND_MATCHING_REFS_FLAGS_FUZZY,
+                                            matched_kinds, matching_refs_flags,
                                             cancellable, error);
       else
         {
@@ -519,7 +540,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
 
           refs = flatpak_dir_find_remote_refs (dir, state, id, branch, default_branch, arch,
                                                flatpak_get_default_arch (),
-                                               matched_kinds, FIND_MATCHING_REFS_FLAGS_FUZZY,
+                                               matched_kinds, matching_refs_flags,
                                                cancellable, error);
           if (refs == NULL)
             return FALSE;
