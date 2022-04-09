@@ -282,15 +282,30 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
           UninstallDir *udir = NULL;
           gboolean found_exact_name_match = FALSE;
           g_autoptr(GPtrArray) chosen_pairs = NULL;
+          FindMatchingRefsFlags matching_refs_flags;
 
           pref = prefs[j];
 
-          flatpak_split_partial_ref_arg_novalidate (pref, kinds, opt_arch, default_branch,
-                                                    &matched_kinds, &match_id, &match_arch, &match_branch);
+          if (strchr (pref, '/') != NULL)
+            matching_refs_flags = FIND_MATCHING_REFS_FLAGS_NONE;
+          else
+            matching_refs_flags = FIND_MATCHING_REFS_FLAGS_FUZZY;
 
-          /* We used _novalidate so that the id can be partial, but we can still validate the branch */
-          if (match_branch != NULL && !flatpak_is_valid_branch (match_branch, -1, &local_error))
-            return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("Invalid branch %s: %s"), match_branch, local_error->message);
+          if (matching_refs_flags & FIND_MATCHING_REFS_FLAGS_FUZZY)
+            {
+              flatpak_split_partial_ref_arg_novalidate (pref, kinds, opt_arch, default_branch,
+                                                        &matched_kinds, &match_id, &match_arch, &match_branch);
+
+              /* We used _novalidate so that the id can be partial, but we can still validate the branch */
+              if (match_branch != NULL && !flatpak_is_valid_branch (match_branch, -1, &local_error))
+                return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF,
+                                           _("Invalid branch %s: %s"), match_branch, local_error->message);
+            }
+          else if (!flatpak_split_partial_ref_arg (pref, kinds, opt_arch, default_branch,
+                                                   &matched_kinds, &match_id, &match_arch, &match_branch, error))
+            {
+              return FALSE;
+            }
 
           ref_dir_pairs = g_ptr_array_new_with_free_func ((GDestroyNotify) ref_dir_pair_free);
           for (k = 0; k < dirs->len; k++)
@@ -299,7 +314,7 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
               g_autoptr(GPtrArray)  refs = NULL;
 
               refs = flatpak_dir_find_installed_refs (dir, match_id, match_branch, match_arch, kinds,
-                                                      FIND_MATCHING_REFS_FLAGS_FUZZY, error);
+                                                      matching_refs_flags, error);
               if (refs == NULL)
                 return FALSE;
               else if (refs->len == 0)

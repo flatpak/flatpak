@@ -51,7 +51,8 @@
             against what is installed, and if there are multiple matches you will be prompted
             to choose between them. You will also be prompted if <arg choice="plain">REF</arg>
             doesn't match any installed ref exactly but is similar (e.g. "gedit" is similar to
-            "org.gnome.gedit").
+            "org.gnome.gedit"), but this fuzzy matching behavior is disabled if
+            <arg choice="plain">REF</arg> contains any slashes.
         </para>
         <para>
             By default this looks for both installed apps and runtimes with the given

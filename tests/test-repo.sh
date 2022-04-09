@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..43"
+echo "1..44"
 
 #Regular repo
 setup_repo
@@ -147,6 +147,12 @@ ${FLATPAK} ${U} list --columns=ref > list-log
 assert_file_has_content list-log "org\.test\.Hello/"
 
 ok "typo correction works for install"
+
+if ${FLATPAK} ${U} install -y test-repo org.test.Hllo// >install-log; then
+    assert_not_reached "Should not be able to install with an incorrect ref that contains slashes"
+fi
+
+ok "no typo correction if ref contains slashes"
 
 ${FLATPAK} ${U} uninstall -y org.test.Hello
 
