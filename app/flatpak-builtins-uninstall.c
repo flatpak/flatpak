@@ -152,7 +152,7 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
   FlatpakKinds kinds;
   g_autoptr(GHashTable) uninstall_dirs = NULL;
 
-  context = g_option_context_new (_("[REF…] - Uninstall an application"));
+  context = g_option_context_new (_("[REF…] - Uninstall applications or runtimes"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv,
