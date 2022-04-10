@@ -853,6 +853,18 @@ gboolean flatpak_yes_no_prompt (gboolean    default_yes,
                                 const char *prompt,
                                 ...) G_GNUC_PRINTF (2, 3);
 
+typedef enum {
+  FLATPAK_TERNARY_PROMPT_RESPONSE_NONE = 0,
+  FLATPAK_TERNARY_PROMPT_RESPONSE_YES = 1 << 0,
+  FLATPAK_TERNARY_PROMPT_RESPONSE_NO = 1 << 1,
+  FLATPAK_TERNARY_PROMPT_RESPONSE_ONCE = 1 << 2,
+} FlatpakTernaryPromptResponse;
+
+FlatpakTernaryPromptResponse flatpak_yes_no_once_prompt (gboolean assume_yes,
+                                                         gboolean include_no,
+                                                         const char *prompt,
+                                                         ...) G_GNUC_PRINTF (3, 4);
+
 long flatpak_number_prompt (gboolean    default_yes,
                             int         min,
                             int         max,

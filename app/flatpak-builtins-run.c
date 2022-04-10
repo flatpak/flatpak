@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Red Hat, Inc
+ * Copyright © 2014-2022 Red Hat, Inc and others
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,6 +16,7 @@
  *
  * Authors:
  *       Alexander Larsson <alexl@redhat.com>
+ *       Matthew Leeds <mwleeds@protonmail.com>
  */
 
 #include "config.h"
@@ -61,6 +62,7 @@ static gboolean opt_parent_share_pids;
 static int opt_instance_id_fd = -1;
 static char *opt_app_path;
 static char *opt_usr_path;
+static gboolean opt_yes;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to use"), N_("ARCH") },
@@ -89,6 +91,7 @@ static GOptionEntry options[] = {
   { "instance-id-fd", 0, 0, G_OPTION_ARG_INT, &opt_instance_id_fd, N_("Write the instance ID to the given file descriptor"), NULL },
   { "app-path", 0, 0, G_OPTION_ARG_FILENAME, &opt_app_path, N_("Use PATH instead of the app's /app"), N_("PATH") },
   { "usr-path", 0, 0, G_OPTION_ARG_FILENAME, &opt_usr_path, N_("Use PATH instead of the runtime's /usr"), N_("PATH") },
+  { "assumeyes", 'y', 0, G_OPTION_ARG_NONE, &opt_yes, N_("Automatically answer yes for all questions"), NULL },
   { NULL }
 };
 
@@ -110,6 +113,16 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   g_autoptr(GError) local_error = NULL;
   g_autoptr(GPtrArray) dirs = NULL;
   FlatpakRunFlags flags = 0;
+  FindMatchingRefsFlags matching_refs_flags;
+  gboolean id_is_alias;
+  const char *on = "";
+  const char *off = "";
+
+  if (flatpak_fancy_output ())
+    {
+      on = FLATPAK_ANSI_BOLD_ON;
+      off = FLATPAK_ANSI_BOLD_OFF;
+    }
 
   context = g_option_context_new (_("APP [ARGUMENT…] - Run an app"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -157,30 +170,85 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
   pref = argv[rest_argv_start];
 
-  if (!flatpak_split_partial_ref_arg (pref, FLATPAK_KINDS_APP | FLATPAK_KINDS_RUNTIME,
-                                      opt_arch, opt_branch,
-                                      &kinds, &id, &arch, &branch, error))
-    return FALSE;
+  /* If pref doesn't look like an app ID, check if it's an alias (which cannot
+   * contain a period).
+   */
+  id_is_alias = flatpak_is_valid_alias (pref, NULL);
+  if (id_is_alias && (opt_arch || opt_branch))
+    return usage_error (context, _("The --branch and --arch options must be omitted when an alias is used"), error);
 
-  if (branch == NULL || arch == NULL)
+  /* Look for an existing alias */
+  if (id_is_alias)
     {
-      g_autoptr(FlatpakDecomposed) current_ref = flatpak_find_current_ref (id, NULL, NULL);
-      if (current_ref)
+      for (i = 0; i < dirs->len; i++)
         {
-          if (branch == NULL)
-            branch = flatpak_decomposed_dup_branch (current_ref);
-          if (arch == NULL)
-            arch = flatpak_decomposed_dup_arch (current_ref);
+          FlatpakDir *dir = g_ptr_array_index (dirs, i);
+          app_ref = flatpak_dir_get_alias_target (dir, pref, NULL);
+          if (app_ref != NULL)
+            {
+              kinds = FLATPAK_KINDS_APP;
+              id = g_strdup (pref);
+              /* just for -Wmaybe-uninitialized */
+              matching_refs_flags = FIND_MATCHING_REFS_FLAGS_FUZZY;
+              arch = flatpak_decomposed_dup_arch (app_ref);
+              branch = flatpak_decomposed_dup_branch (app_ref);
+              break;
+            }
+        }
+    }
+
+  if (app_ref == NULL)
+    {
+      if (!flatpak_allow_fuzzy_matching (pref) || !id_is_alias)
+        matching_refs_flags = FIND_MATCHING_REFS_FLAGS_NONE;
+      else
+        matching_refs_flags = FIND_MATCHING_REFS_FLAGS_FUZZY;
+
+      if (matching_refs_flags & FIND_MATCHING_REFS_FLAGS_FUZZY)
+        {
+          flatpak_split_partial_ref_arg_novalidate (pref, FLATPAK_KINDS_APP | FLATPAK_KINDS_RUNTIME,
+                                                    opt_arch, opt_branch,
+                                                    &kinds, &id, &arch, &branch);
+
+          /* We used _novalidate so that the id can be partial, but we can still validate the branch */
+          if (branch != NULL && !flatpak_is_valid_branch (branch, -1, &local_error))
+            return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF,
+                                       _("Invalid branch %s: %s"), branch, local_error->message);
+        }
+      else if (!flatpak_split_partial_ref_arg (pref, FLATPAK_KINDS_APP | FLATPAK_KINDS_RUNTIME,
+                                               opt_arch, opt_branch,
+                                               &kinds, &id, &arch, &branch, error))
+        {
+          return FALSE;
+        }
+
+      if (branch == NULL || arch == NULL)
+        {
+          g_autoptr(FlatpakDecomposed) current_ref = flatpak_find_current_ref (id, NULL, NULL);
+          if (current_ref)
+            {
+              if (branch == NULL)
+                branch = flatpak_decomposed_dup_branch (current_ref);
+              if (arch == NULL)
+                arch = flatpak_decomposed_dup_arch (current_ref);
+            }
         }
     }
 
   if ((kinds & FLATPAK_KINDS_APP) != 0)
     {
-      app_ref = flatpak_decomposed_new_from_parts (FLATPAK_KINDS_APP, id, arch, branch, &local_error);
+      if (app_ref == NULL)
+        app_ref = flatpak_decomposed_new_from_parts (FLATPAK_KINDS_APP, id, arch, branch, &local_error);
+
+      if (app_ref == NULL &&
+          (matching_refs_flags & FIND_MATCHING_REFS_FLAGS_FUZZY) != 0 &&
+          g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_INVALID_REF))
+        g_clear_error (&local_error);
+
       if (app_ref != NULL)
         app_deploy = flatpak_find_deploy_for_ref_in (dirs, flatpak_decomposed_get_ref (app_ref), opt_commit, cancellable, &local_error);
 
-      if (app_deploy == NULL &&
+      if (local_error != NULL &&
           (!g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED) ||
            (kinds & FLATPAK_KINDS_RUNTIME) == 0))
         {
@@ -194,28 +262,25 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
   if (app_deploy == NULL)
     {
-      g_autoptr(FlatpakDeploy) runtime_deploy = NULL;
+      g_autoptr(FlatpakDeploy) deploy = NULL;
       g_autoptr(GError) local_error2 = NULL;
       g_autoptr(GPtrArray) ref_dir_pairs = NULL;
       RefDirPair *chosen_pair = NULL;
-      const char *runtime_arch = arch;
-
-      /* If arch is not specified, only run the default arch to avoid asking for prompts for non-primary arches,
-         still asks for prompts if there are multiple branches though */
-      if (runtime_arch == NULL)
-        runtime_arch = flatpak_get_arch ();
 
       /* Whereas for apps we want to default to using the "current" one (see
        * flatpak-make-current(1)) runtimes don't have a concept of currentness.
-       * So prompt if there's ambiguity about which branch to use */
+       * So prompt if there's ambiguity about which branch to use. Also prompt
+       * if the ref given was a partial app id, e.g. "devhelp" instead of
+       * "org.gnome.Devhelp" (see flatpak-alias(1)).
+       */
       ref_dir_pairs = g_ptr_array_new_with_free_func ((GDestroyNotify) ref_dir_pair_free);
       for (i = 0; i < dirs->len; i++)
         {
           FlatpakDir *dir = g_ptr_array_index (dirs, i);
           g_autoptr(GPtrArray) refs = NULL;
 
-          refs = flatpak_dir_find_installed_refs (dir, id, branch, runtime_arch, FLATPAK_KINDS_RUNTIME,
-                                                  FIND_MATCHING_REFS_FLAGS_NONE, error);
+          refs = flatpak_dir_find_installed_refs (dir, id, branch, arch, kinds,
+                                                  matching_refs_flags, error);
           if (refs == NULL)
             return FALSE;
           else if (refs->len == 0)
@@ -223,7 +288,35 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
           for (int j = 0; j < refs->len; j++)
             {
+              g_autoptr(FlatpakDecomposed) current_ref = NULL;
               FlatpakDecomposed *ref = g_ptr_array_index (refs, j);
+              g_autofree char *ref_id = flatpak_decomposed_dup_id (ref);
+
+              /* Exclude app refs for non-current branches */
+              if (flatpak_decomposed_is_app (ref) && (branch == NULL || arch == NULL) &&
+                  (current_ref = flatpak_dir_current_ref (dir, ref_id, NULL)) != NULL)
+                {
+                  const char *current_branch;
+                  g_autofree char *current_arch = NULL;
+
+                  current_branch = flatpak_decomposed_get_branch (current_ref);
+                  current_arch = flatpak_decomposed_dup_arch (current_ref);
+
+                  if (branch == NULL &&
+                      !flatpak_decomposed_is_branch (ref, current_branch))
+                    continue;
+                  if (arch == NULL &&
+                      !flatpak_decomposed_is_arch (ref, current_arch))
+                    continue;
+                }
+
+              /* Avoid prompting for non-primary arches */
+              if (flatpak_decomposed_is_runtime (ref) && arch == NULL)
+                {
+                  if (!flatpak_decomposed_is_arch (ref, flatpak_get_arch ()))
+                    continue;
+                }
+
               RefDirPair *pair = ref_dir_pair_new (ref, dir);
               g_ptr_array_add (ref_dir_pairs, pair);
             }
@@ -233,42 +326,106 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
         {
           g_autoptr(GPtrArray) chosen_pairs = NULL;
           g_autoptr(GPtrArray) chosen_dir_array = NULL;
+          FlatpakTernaryPromptResponse response = FLATPAK_TERNARY_PROMPT_RESPONSE_NONE;
 
           chosen_pairs = g_ptr_array_new ();
 
-          if (!flatpak_resolve_matching_installed_refs (TRUE, TRUE, ref_dir_pairs, id, chosen_pairs, error))
-            return FALSE;
+          /* Aliases are only for apps not runtimes */
+          if (id_is_alias)
+            {
+              gboolean found_app = FALSE;
+              for (i = 0; i < ref_dir_pairs->len; i++)
+                {
+                  RefDirPair *pair = g_ptr_array_index (ref_dir_pairs, i);
+                  if (flatpak_decomposed_is_app (pair->ref))
+                    found_app = TRUE;
+                }
+              if (!found_app)
+                id_is_alias = FALSE;
+            }
+
+          if (ref_dir_pairs->len > 1 || !id_is_alias)
+            {
+              if (!flatpak_resolve_matching_installed_refs (opt_yes, TRUE, ref_dir_pairs, id, chosen_pairs, error))
+                return FALSE;
+            }
+          else if (id_is_alias)
+            {
+              g_assert (ref_dir_pairs->len == 1);
+              RefDirPair *pair = g_ptr_array_index (ref_dir_pairs, 0);
+              g_autofree char *ref_id = flatpak_decomposed_dup_id (pair->ref);
+              const char *dir_name = flatpak_dir_get_name_cached (pair->dir);
+
+              /* Note: here we print the app ID not the full ref since aliases only apply to the current branch */
+              response = flatpak_yes_no_once_prompt (opt_yes, TRUE, /* include 'no' option */
+                         _("Run app %s%s%s (%s) and save an alias %s%s%s to skip future prompts?"),
+                         on, ref_id, off, dir_name, on, id, off);
+              if (response == FLATPAK_TERNARY_PROMPT_RESPONSE_NO || response == FLATPAK_TERNARY_PROMPT_RESPONSE_NONE)
+                return flatpak_fail (error, _("No ref chosen to resolve matches for %s%s%s"), on, id, off);
+
+              g_ptr_array_add (chosen_pairs, pair);
+            }
 
           g_assert (chosen_pairs->len == 1);
           chosen_pair = g_ptr_array_index (chosen_pairs, 0);
+
+          if (id_is_alias && response == FLATPAK_TERNARY_PROMPT_RESPONSE_NONE &&
+              flatpak_decomposed_is_app (chosen_pair->ref))
+            {
+              g_autofree char *ref_id = flatpak_decomposed_dup_id (chosen_pair->ref);
+              const char *dir_name = flatpak_dir_get_name_cached (chosen_pair->dir);
+
+              /* Note: here we print the app ID not the full ref since aliases only apply to the current branch */
+              response = flatpak_yes_no_once_prompt (opt_yes, FALSE, /* exclude 'no' option */
+                         _("Save an alias %s%s%s for app %s%s%s (%s) to skip future prompts or use only once?"),
+                         on, id, off, on, ref_id, off, dir_name);
+              if (response == FLATPAK_TERNARY_PROMPT_RESPONSE_NO || response == FLATPAK_TERNARY_PROMPT_RESPONSE_NONE)
+                return flatpak_fail (error, _("No ref chosen to resolve matches for %s%s%s"), on, id, off);
+            }
+
+          if (response == FLATPAK_TERNARY_PROMPT_RESPONSE_YES)
+            {
+              g_assert (id_is_alias);
+              if (!flatpak_dir_make_alias (chosen_pair->dir, chosen_pair->ref, id, error))
+                return FALSE;
+            }
 
           /* For runtimes we don't need to pass a FlatpakDeploy object to
            * flatpak_run_app(), but get it anyway because we don't want to run
            * something that's not deployed */
           chosen_dir_array = g_ptr_array_new ();
           g_ptr_array_add (chosen_dir_array, chosen_pair->dir);
-          runtime_deploy = flatpak_find_deploy_for_ref_in (chosen_dir_array, flatpak_decomposed_get_ref (chosen_pair->ref),
-                                                           opt_commit ? opt_commit : opt_runtime_commit,
-                                                           cancellable, &local_error2);
+
+          if (flatpak_decomposed_is_runtime (chosen_pair->ref) && opt_commit == NULL)
+            opt_commit = opt_runtime_commit;
+
+          deploy = flatpak_find_deploy_for_ref_in (chosen_dir_array, flatpak_decomposed_get_ref (chosen_pair->ref),
+                                                   opt_commit, cancellable, &local_error2);
+          if (flatpak_decomposed_is_app (chosen_pair->ref))
+            {
+              app_deploy = g_steal_pointer (&deploy);
+              g_clear_pointer (&app_ref, flatpak_decomposed_unref);
+              app_ref = flatpak_decomposed_ref (chosen_pair->ref);
+            }
+          else
+            runtime_ref = flatpak_decomposed_ref (chosen_pair->ref);
         }
 
-      if (runtime_deploy == NULL)
+      if (deploy == NULL && app_deploy == NULL)
         {
-          /* Report old app-kind error, as its more likely right */
+          /* Report old app-kind error, as it's more likely right */
           if (local_error != NULL)
             g_propagate_error (error, g_steal_pointer (&local_error));
           else if (local_error2 != NULL)
             g_propagate_error (error, g_steal_pointer (&local_error2));
           else
             flatpak_fail_error (error, FLATPAK_ERROR_NOT_INSTALLED,
-                                _("runtime/%s/%s/%s not installed"),
+                                _("%s/%s/%s not installed"),
                                 id ?: "*unspecified*",
                                 arch ?: "*unspecified*",
                                 branch ?: "*unspecified*");
           return FALSE;
         }
-
-      runtime_ref = flatpak_decomposed_ref (chosen_pair->ref);
 
       /* Clear app-kind error */
       g_clear_error (&local_error);
@@ -352,7 +509,7 @@ flatpak_complete_run (FlatpakCompletion *completion)
   switch (completion->argc)
     {
     case 0:
-    case 1: /* NAME */
+    case 1: /* NAME or ALIAS */
       flatpak_complete_options (completion, global_entries);
       flatpak_complete_options (completion, user_entries);
       flatpak_complete_options (completion, options);
@@ -368,6 +525,11 @@ flatpak_complete_run (FlatpakCompletion *completion)
           flatpak_completion_debug ("find local refs error: %s", error->message);
 
         flatpak_complete_ref_id (completion, refs);
+
+        g_autoptr(GHashTable) aliases = NULL; /* alias → app-id */
+        aliases = flatpak_dir_get_aliases (user_dir);
+        GLNX_HASH_TABLE_FOREACH (aliases, const char *, alias)
+          flatpak_complete_word (completion, "%s", alias);
       }
 
       system_dirs = flatpak_dir_get_system_list (NULL, &error);
@@ -388,6 +550,11 @@ flatpak_complete_run (FlatpakCompletion *completion)
             flatpak_completion_debug ("find local refs error: %s", error->message);
 
           flatpak_complete_ref_id (completion, refs);
+
+          g_autoptr(GHashTable) aliases = NULL; /* alias → app-id */
+          aliases = flatpak_dir_get_aliases (dir);
+          GLNX_HASH_TABLE_FOREACH (aliases, const char *, alias)
+            flatpak_complete_word (completion, "%s", alias);
         }
 
       break;

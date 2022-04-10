@@ -4536,19 +4536,83 @@ flatpak_dir_get_aliases (FlatpakDir *self)
   return g_steal_pointer (&aliases);
 }
 
+FlatpakDecomposed *
+flatpak_dir_get_alias_target (FlatpakDir  *self,
+                              const char  *alias,
+                              GError     **error)
+{
+  g_autoptr(GFile) aliases_dir = NULL;
+  g_autoptr(GFile) alias_file = NULL;
+  g_autoptr(GFileInfo) info = NULL;
+  g_autoptr(GError) local_error = NULL;
+  const char *target;
+  g_autoptr(GFile) target_file = NULL;
+  g_autofree char *target_basename = NULL;
+  g_autoptr(FlatpakDecomposed) current = NULL;
+
+  if (!flatpak_is_valid_alias (alias, error))
+    return NULL;
+
+  if (!flatpak_dir_maybe_ensure_repo (self, NULL, error))
+    return NULL;
+
+  aliases_dir = flatpak_dir_get_aliases_dir (self);
+  alias_file = g_file_get_child (aliases_dir, alias);
+
+  info = g_file_query_info (alias_file,
+                            G_FILE_ATTRIBUTE_STANDARD_SYMLINK_TARGET,
+                            G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                            NULL,
+                            &local_error);
+  if (info == NULL)
+    {
+      if (g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        flatpak_fail_error (error, FLATPAK_ERROR_ALIAS_NOT_FOUND,
+                            _("Error reading alias '%s' in '%s': it does not exist"),
+                            alias, flatpak_file_get_path_cached (aliases_dir));
+      else
+        g_propagate_error (error, g_steal_pointer (&local_error));
+
+      return NULL;
+    }
+
+  target = g_file_info_get_symlink_target (info);
+  if (target == NULL)
+    {
+      flatpak_fail_error (error, FLATPAK_ERROR_ALIAS_NOT_FOUND,
+                          _("Error reading alias '%s': could not determine symlink target"),
+                          alias);
+      return NULL;
+    }
+
+  target_file = g_file_new_for_path (target);
+  target_basename = g_file_get_basename (target_file);
+  if (target_basename == NULL || !flatpak_is_valid_name (target_basename, -1, NULL))
+    {
+      flatpak_fail_error (error, FLATPAK_ERROR_ALIAS_NOT_FOUND,
+                          _("Error reading alias '%s': symlink does not point to app ID"),
+                          alias);
+      return NULL;
+    }
+
+  current = flatpak_dir_current_ref (self, target_basename, NULL);
+  if (current == NULL)
+    {
+      flatpak_fail_error (error, FLATPAK_ERROR_NOT_INSTALLED,
+                          _("Error reading alias '%s': app ID doesn't have current ref"),
+                          alias);
+      return NULL;
+    }
+  return g_steal_pointer (&current);
+}
+
 gboolean
 flatpak_dir_remove_alias (FlatpakDir         *self,
                           const char         *alias,
                           GError            **error)
 {
-  g_autoptr(GFile) exports = NULL;
-  g_autoptr(GFile) bindir = NULL;
-  g_autoptr(GFile) runner = NULL;
   g_autoptr(GFile) aliases = NULL;
   g_autoptr(GFile) alias_file = NULL;
-  g_autofree char *runner_relpath = NULL;
-  g_autofree char *symlink_target = NULL;
-  g_autofree char *app_id = NULL;
   g_autoptr(GError) local_error = NULL;
 
   if (!flatpak_is_valid_alias (alias, error))

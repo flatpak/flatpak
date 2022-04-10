@@ -56,6 +56,15 @@
             <option>--arch</option>.
         </para>
         <para>
+            If <arg choice="plain">REF</arg> does not exactly match an installed app or runtime
+            but it's similar (e.g. "firefox" is similar to "org.mozilla.firefox") you will be
+            prompted to confirm, and either use the shorter name only once or set up a persistent
+            alias to avoid confirmation prompts in the future (see
+            <citerefentry><refentrytitle>flatpak-alias</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
+            This fuzzy matching behavior is disabled when <arg choice="plain">REF</arg> contains
+            any slashes or periods.
+        </para>
+        <para>
             By default, Flatpak will look for the application or runtime in the per-user
             installation first, then in all system installations. This can be overridden
             with the <option>--user</option>, <option>--system</option> and
@@ -203,6 +212,14 @@
 
                 <listitem><para>
                     Print OSTree debug information during command processing.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-y</option></term>
+                <term><option>--assumeyes</option></term>
+                <listitem><para>
+                    Automatically answer yes to all questions (or "once" when that's an option). This is useful for automation.
                 </para></listitem>
             </varlistentry>
 
@@ -735,6 +752,9 @@ key=v1;v2;
 
         <para>
             <command>$ flatpak run org.gnome.gedit</command>
+        </para>
+        <para>
+            <command>$ flatpak run gedit</command>
         </para>
         <para>
             <command>$ flatpak run --devel --command=bash org.gnome.Builder</command>

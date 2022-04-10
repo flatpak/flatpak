@@ -607,6 +607,9 @@ gboolean              flatpak_dir_config_remove_pattern                     (Fla
                                                                              const char                    *pattern,
                                                                              GError                       **error);
 GHashTable *          flatpak_dir_get_aliases                               (FlatpakDir                    *self);
+FlatpakDecomposed *   flatpak_dir_get_alias_target                          (FlatpakDir                    *self,
+                                                                             const char                    *alias,
+                                                                             GError                       **error);
 gboolean              flatpak_dir_make_alias                                (FlatpakDir                    *self,
                                                                              FlatpakDecomposed             *current_ref,
                                                                              const char                    *alias,
