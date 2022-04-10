@@ -365,7 +365,7 @@ AC_SUBST([SUDO_BIN])
 
 AC_ARG_ENABLE(asan,
               [AS_HELP_STRING([--enable-asan],
-                              [Use build with address sanitazion])],
+                              [Use build with address sanitization])],
               [],
               [enable_asan=no])
 AM_CONDITIONAL([ENABLE_ASAN], [test "x$enable_asan" = xyes])
