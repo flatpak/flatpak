@@ -42,20 +42,27 @@
 
         <para>
             If <arg choice="plain">REF</arg> names an installed application,
-            flatpak runs the application in a sandboxed environment. Extra
-            arguments are passed on to the application.
+            Flatpak runs the application in a sandboxed environment. Extra
+            arguments are passed on to the application. The current branch and arch of
+            the application is used unless otherwise specified with <option>--branch</option>
+            or <option>--arch</option>. See
+            <citerefentry><refentrytitle>flatpak-make-current</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
         </para>
         <para>
             If <arg choice="plain">REF</arg> names a runtime, a shell is opened in the
-            runtime. This is useful for development and testing.
+            runtime. This is useful for development and testing. If there is ambiguity about
+            which branch to use, you will be prompted to choose. Use <option>--branch</option>
+            to avoid this. The primary arch is used unless otherwise specified with
+            <option>--arch</option>.
         </para>
         <para>
-            By default, flatpak will look for the application or runtime in all per-user
-            and system installations. This can be overridden with the <option>--user</option>,
-            <option>--system</option> and <option>--installation</option> options.
+            By default, Flatpak will look for the application or runtime in the per-user
+            installation first, then in all system installations. This can be overridden
+            with the <option>--user</option>, <option>--system</option> and
+            <option>--installation</option> options.
         </para>
         <para>
-            flatpak creates a sandboxed environment for the application to run in
+            Flatpak creates a sandboxed environment for the application to run in
             by mounting the right runtime at <filename>/usr</filename> and a writable
             directory at <filename>/var</filename>, whose content is preserved between
             application runs. The application itself is mounted at <filename>/app</filename>.
