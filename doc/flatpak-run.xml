@@ -90,6 +90,7 @@
             <member>LD_LIBRARY_PATH</member>
             <member>XDG_CONFIG_DIRS</member>
             <member>XDG_DATA_DIRS</member>
+            <member>XDG_RUNTIME_DIR</member>
             <member>SHELL</member>
             <member>TMPDIR</member>
             <member>PYTHONPATH</member>
@@ -97,6 +98,10 @@
             <member>PERL5LIB</member>
             <member>XCURSOR_PATH</member>
         </simplelist>
+        <para>
+            Also several environment variables with the prefix "GST_" that are used by gstreamer
+            are unset (since Flatpak 1.12.5).
+        </para>
         <para>
             Flatpak also overrides the XDG environment variables to point sandboxed applications
             at their writable filesystem locations below <filename>~/.var/app/$APPID/</filename>:
