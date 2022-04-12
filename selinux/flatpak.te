@@ -12,6 +12,8 @@ type flatpak_helper_t;
 type flatpak_helper_exec_t;
 init_daemon_domain(flatpak_helper_t, flatpak_helper_exec_t)
 
+auth_read_passwd(flatpak_helper_t)
+
 optional_policy(`
     dbus_stub()
     dbus_system_domain(flatpak_helper_t, flatpak_helper_exec_t)
