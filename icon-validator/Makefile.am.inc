@@ -1,3 +1,5 @@
+EXTRA_DIST += icon-validator/meson.build
+
 libexec_PROGRAMS += \
         flatpak-validate-icon \
         $(NULL)

@@ -87,6 +87,7 @@ EXTRA_DIST = \
 	$(xml_files) 		\
 	docbook.css		\
 	flatpak-docs.xml.in	\
+	meson.build		\
 	xmlto-config.xsl	\
 	$(NULL)
 

@@ -17,4 +17,4 @@ dist_tmpfiles_DATA = sideload-repos-systemd/tmpfiles.d/flatpak-sideload-repos.co
 endif
 
 EXTRA_DIST += sideload-repos-systemd/flatpak-sideload-usb-repo.path.in sideload-repos-systemd/flatpak-sideload-usb-repo.service.in
-
+EXTRA_DIST += sideload-repos-systemd/meson.build

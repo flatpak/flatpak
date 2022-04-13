@@ -1,3 +1,5 @@
+EXTRA_DIST += portal/meson.build
+
 libexec_PROGRAMS += \
 	flatpak-portal \
 	$(NULL)
