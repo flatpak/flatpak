@@ -28,7 +28,7 @@ echo "1..2"
 setup_repo_no_add oci
 
 mkdir -p oci
-${FLATPAK} build-bundle --oci $FL_GPGARGS repos/oci oci/image org.test.Hello
+${FLATPAK} build-bundle --oci $FL_GPGARGS repos/oci oci/image org.test.Hello >&2
 
 assert_has_file oci/image/oci-layout
 assert_has_dir oci/image/blobs/sha256
@@ -37,7 +37,7 @@ assert_has_file oci/image/index.json
 for i in oci/image/blobs/sha256/*; do
      echo $(basename $i) $i >> sums
 done
-sha256sum -c sums
+sha256sum -c sums >&2
 
 digest=$(grep sha256: oci/image/index.json | sed s'@.*sha256:\([a-fA-F0-9]\+\).*@\1@')
 manifest=oci/image/blobs/sha256/$digest
@@ -45,7 +45,7 @@ manifest=oci/image/blobs/sha256/$digest
 assert_has_file $manifest
 
 DIGEST=$(grep -C2 application/vnd.oci.image.config.v1+json $manifest | grep digest  | sed s/.*\"sha256:\\\(.*\\\)\".*/\\1/)
-echo DIGEST: $DIGEST
+echo DIGEST: $DIGEST >&2
 image=oci/image/blobs/sha256/$DIGEST
 
 assert_has_file $image
@@ -55,11 +55,11 @@ assert_file_has_content $image org.flatpak.ref.*app/"org.test.Hello/$ARCH/master
 
 ok "export oci"
 
-ostree --repo=repo2 init --mode=archive-z2
+ostree --repo=repo2 init --mode=archive-z2 >&2
 
-$FLATPAK build-import-bundle --oci repo2 oci/image
+$FLATPAK build-import-bundle --oci repo2 oci/image >&2
 
-ostree checkout -U --repo=repo2 app/org.test.Hello/$ARCH/master checked-out
+ostree checkout -U --repo=repo2 app/org.test.Hello/$ARCH/master checked-out >&2
 
 assert_has_dir checked-out/files
 assert_has_file checked-out/files/bin/hello.sh

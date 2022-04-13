@@ -32,7 +32,7 @@ REPO_NAME=$(basename $REPO_DIR)
 
 COLLECTION_ID_PREFIX=org.test.Collection
 
-ostree --repo=${REPO_DIR} init --mode=archive --collection-id=${COLLECTION_ID_PREFIX}1
+ostree --repo=${REPO_DIR} init --mode=archive --collection-id=${COLLECTION_ID_PREFIX}1 >&2
 
 for i in {1..3}; do
     APP_REPO=test${i}
@@ -43,8 +43,8 @@ for i in {1..3}; do
     $(dirname $0)/make-test-app.sh repos/${APP_REPO} ${APP_ID} master ${COLLECTION_ID}
     ref=$(ostree --repo=${APP_REPO_DIR} refs | grep ${APP_ID})
 
-    ostree --repo=${REPO_DIR} remote add --no-gpg-verify --collection-id=${COLLECTION_ID} ${APP_REPO} file://${APP_REPO_DIR}
-    ostree --repo=${REPO_DIR} pull ${APP_REPO} ${ref}
+    ostree --repo=${REPO_DIR} remote add --no-gpg-verify --collection-id=${COLLECTION_ID} ${APP_REPO} file://${APP_REPO_DIR} >&2
+    ostree --repo=${REPO_DIR} pull ${APP_REPO} ${ref} >&2
 done
 
-ostree --repo=${REPO_DIR} summary --update
+ostree --repo=${REPO_DIR} summary --update >&2

@@ -29,23 +29,23 @@ mkdir bundles
 
 setup_repo
 
-${FLATPAK} build-bundle repos/test --repo-url=file://`pwd`/repos/test --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/hello.flatpak org.test.Hello
+${FLATPAK} build-bundle repos/test --repo-url=file://`pwd`/repos/test --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/hello.flatpak org.test.Hello >&2
 assert_has_file bundles/hello.flatpak
 
-${FLATPAK} build-bundle repos/test --runtime --repo-url=file://`pwd`/repos/test --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/platform.flatpak org.test.Platform
+${FLATPAK} build-bundle repos/test --runtime --repo-url=file://`pwd`/repos/test --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/platform.flatpak org.test.Platform >&2
 assert_has_file bundles/platform.flatpak
 
 ok "create bundles server-side"
 
 rm bundles/hello.flatpak
-${FLATPAK} ${U} install -y test-repo org.test.Hello
-${FLATPAK} build-bundle $FL_DIR/repo --repo-url=file://`pwd`/repos/test --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/hello.flatpak org.test.Hello
+${FLATPAK} ${U} install -y test-repo org.test.Hello >&2
+${FLATPAK} build-bundle $FL_DIR/repo --repo-url=file://`pwd`/repos/test --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/hello.flatpak org.test.Hello >&2
 assert_has_file bundles/hello.flatpak
 
 ok "create bundles client-side"
 
-${FLATPAK} uninstall ${U} -y org.test.Hello
-${FLATPAK} install ${U} -y --bundle bundles/hello.flatpak
+${FLATPAK} uninstall ${U} -y org.test.Hello >&2
+${FLATPAK} install ${U} -y --bundle bundles/hello.flatpak >&2
 
 # This should have installed the runtime dependency too
 assert_has_file $FL_DIR/repo/refs/remotes/test-repo/runtime/org.test.Platform/$ARCH/master
@@ -92,11 +92,11 @@ assert_has_file $FL_DIR/repo/hello-origin.trustedkeys.gpg
 
 ok "install app bundle"
 
-${FLATPAK} uninstall -y --force-remove ${U} org.test.Platform
+${FLATPAK} uninstall -y --force-remove ${U} org.test.Platform >&2
 
 assert_not_has_file $FL_DIR/repo/refs/remotes/platform-origin/runtime/org.test.Platform/$ARCH/master
 
-${FLATPAK} install -y ${U} --bundle bundles/platform.flatpak
+${FLATPAK} install -y ${U} --bundle bundles/platform.flatpak >&2
 
 assert_has_file $FL_DIR/repo/refs/remotes/platform-origin/runtime/org.test.Platform/$ARCH/master
 RUNTIME_COMMIT=`cat $FL_DIR/repo/refs/remotes/platform-origin/runtime/org.test.Platform/$ARCH/master`
@@ -125,7 +125,7 @@ assert_has_file $FL_DIR/repo/platform-origin.trustedkeys.gpg
 
 ok "install runtime bundle"
 
-run org.test.Hello > hello_out
+run org.test.Hello &> hello_out
 assert_file_has_content hello_out '^Hello world, from a sandbox$'
 
 ok "run"
@@ -135,7 +135,7 @@ OLD_COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Hello`
 
 # TODO: For weird reasons this breaks in the system case. Needs debugging
 if [ x${USE_SYSTEMDIR-} != xyes ] ; then
-    ${FLATPAK} ${U} update -y -v org.test.Hello master
+    ${FLATPAK} ${U} update -y -v org.test.Hello master >&2
     ALSO_OLD_COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Hello`
     assert_streq "$OLD_COMMIT" "$ALSO_OLD_COMMIT"
 fi
@@ -144,29 +144,29 @@ ok "null update"
 
 make_updated_app
 
-${FLATPAK} ${U} update -y org.test.Hello
+${FLATPAK} ${U} update -y org.test.Hello >&2
 
 NEW_COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Hello`
 
 assert_not_streq "$OLD_COMMIT" "$NEW_COMMIT"
 
-run org.test.Hello > hello_out
+run org.test.Hello &> hello_out
 assert_file_has_content hello_out '^Hello world, from a sandboxUPDATED$'
 
 ok "update"
 
 make_updated_app test org.test.Collection.test master UPDATED2
 
-${FLATPAK} build-bundle repos/test --repo-url=file://`pwd`/repos/test --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/hello2.flatpak org.test.Hello
+${FLATPAK} build-bundle repos/test --repo-url=file://`pwd`/repos/test --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/hello2.flatpak org.test.Hello >&2
 assert_has_file bundles/hello2.flatpak
 
-${FLATPAK} install ${U} -y --bundle bundles/hello2.flatpak
+${FLATPAK} install ${U} -y --bundle bundles/hello2.flatpak >&2
 
 NEW2_COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Hello`
 
 assert_not_streq "$NEW_COMMIT" "$NEW2_COMMIT"
 
-run org.test.Hello > hello_out
+run org.test.Hello &> hello_out
 assert_file_has_content hello_out '^Hello world, from a sandboxUPDATED2$'
 
 ok "update as bundle"

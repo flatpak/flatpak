@@ -34,14 +34,14 @@ setup_repo
 install_repo
 
 DIR=$(mktemp -d)
-${FLATPAK} build-init ${DIR} org.test.App org.test.Platform org.test.Platform
+${FLATPAK} build-init ${DIR} org.test.App org.test.Platform org.test.Platform >&2
 mkdir -p ${DIR}/files/a
 echo "a" > ${DIR}/files/a/data
-${FLATPAK} build-finish ${DIR} --socket=x11 --share=network --command=true
-${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} --update-appstream repos/test ${DIR} master
+${FLATPAK} build-finish ${DIR} --socket=x11 --share=network --command=true >&2
+${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} --update-appstream repos/test ${DIR} master >&2
 update_repo
 
-${FLATPAK} ${U} install -y test-repo org.test.App master
+${FLATPAK} ${U} install -y test-repo org.test.App master >&2
 
 assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=true$'
 assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=false$'
@@ -53,10 +53,10 @@ assert_not_file_has_content ${FL_DIR}/repo/config '^collection-id='
 # but don’t mark the collection ID as to be deployed yet. Ensure it doesn’t
 # appear in the client’s configuration.
 echo -e "[core]\ncollection-id=org.test.Collection" >> repos/test/config
-${FLATPAK} build-export --no-update-summary  ${FL_GPGARGS} --update-appstream repos/test --collection-id org.test.Collection ${DIR} master
+${FLATPAK} build-export --no-update-summary  ${FL_GPGARGS} --update-appstream repos/test --collection-id org.test.Collection ${DIR} master >&2
 UPDATE_REPO_ARGS="--collection-id=org.test.Collection" update_repo
 
-${FLATPAK} ${U} update -y org.test.App master
+${FLATPAK} ${U} update -y org.test.App master >&2
 
 assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=true$'
 assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=false$'
@@ -72,7 +72,7 @@ ok "1 update repo config without deploying collection ID"
 UPDATE_REPO_ARGS="--collection-id=org.test.Collection --deploy-collection-id" update_repo
 assert_file_has_content repos/test/config '^deploy-collection-id=true$'
 
-${FLATPAK} ${U} update -y org.test.App master
+${FLATPAK} ${U} update -y org.test.App master >&2
 
 assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=true$'
 assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=false$'
@@ -84,13 +84,13 @@ assert_file_has_content ${FL_DIR}/repo/config '^collection-id=org\.test\.Collect
 sed -i "s/deploy-collection-id=true//" repos/test/config
 assert_not_file_has_content repos/test/config '^deploy-collection-id=true$'
 
-${FLATPAK} remote-modify --collection-id= test-repo
+${FLATPAK} remote-modify --collection-id= test-repo >&2
 assert_not_file_has_content ${FL_DIR}/repo/config '^collection-id=org\.test\.Collection$'
 
 UPDATE_REPO_ARGS="--collection-id=org.test.Collection --deploy-sideload-collection-id" update_repo
 assert_file_has_content repos/test/config '^deploy-sideload-collection-id=true$'
 
-${FLATPAK} ${U} update -y org.test.App master
+${FLATPAK} ${U} update -y org.test.App master >&2
 
 assert_file_has_content ${FL_DIR}/repo/config '^collection-id=org\.test\.Collection$'
 
@@ -104,8 +104,8 @@ ok "2 update repo config to deploy collection ID"
 #for ref in app/org.test.App/$(flatpak --default-arch)/master app/org.test.Hello/$(flatpak --default-arch)/master appstream/$(flatpak --default-arch) ostree-metadata runtime/org.test.Platform/$(flatpak --default-arch)/master; do
 #  ostree --repo=repos/test refs --collections --create=org.test.Collection:$ref $ref
 #done
-ostree --repo=repos/test summary --update --add-metadata="ostree.deploy-collection-id='net.malicious.NewCollection'"
-${FLATPAK} ${U} update org.test.App master
+ostree --repo=repos/test summary --update --add-metadata="ostree.deploy-collection-id='net.malicious.NewCollection'" >&2
+${FLATPAK} ${U} update org.test.App master >&2
 
 assert_file_has_content ${FL_DIR}/repo/config '^collection-id=org\.test\.Collection$'
 assert_not_file_has_content ${FL_DIR}/repo/config '^collection-id=net\.malicious\.NewCollection$'

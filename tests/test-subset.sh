@@ -39,7 +39,7 @@ assert_file_has_content repo-all.txt "runtime/org\.test\.Platform/$ARCH/master"
 EXPORT_ARGS="--subset=subset1 " GPGARGS="${FL_GPGARGS}" $(dirname $0)/make-test-app.sh repos/test org.test.SubsetOne master ""
 EXPORT_ARGS="--subset=subset2 " GPGARGS="${FL_GPGARGS}" $(dirname $0)/make-test-app.sh repos/test org.test.SubsetTwo master ""
 EXPORT_ARGS="" GPGARGS="${FL_GPGARGS}" $(dirname $0)/make-test-app.sh repos/test org.test.NoSubset master ""
-${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} ${FL_GPGARGS} repos/test
+${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} ${FL_GPGARGS} repos/test >&2
 
 $FLATPAK repo repos/test > repo-info.txt
 assert_file_has_content repo-info.txt "Subsummaries: .*subset1-$ARCH.*"
@@ -68,7 +68,7 @@ assert_file_has_content repo-subset2.txt "runtime/org\.test\.Platform/$ARCH/mast
 
 ok "repo has right refs in right subset"
 
-${FLATPAK} ${U} remote-modify --subset=subset1 test-repo
+${FLATPAK} ${U} remote-modify --subset=subset1 test-repo >&2
 
 ${FLATPAK} ${U} remote-ls --columns=ref test-repo > remote-subset1.txt
 assert_file_has_content remote-subset1.txt "org\.test\.Hello/"
@@ -84,7 +84,7 @@ if ${FLATPAK} ${U} install -y org.test.SubsetTwo &> /dev/null; then
     assert_not_reached "Subset2 should not be visible"
 fi
 
-${FLATPAK} ${U} update --appstream
+${FLATPAK} ${U} update --appstream >&2
 assert_has_file $FL_DIR/appstream/test-repo/$ARCH/active/appstream.xml
 assert_file_has_content $FL_DIR/appstream/test-repo/$ARCH/active/appstream.xml org.test.Hello.desktop
 assert_file_has_content $FL_DIR/appstream/test-repo/$ARCH/active/appstream.xml org.test.SubsetOne.desktop
@@ -93,7 +93,7 @@ assert_not_file_has_content $FL_DIR/appstream/test-repo/$ARCH/active/appstream.x
 
 ok "remote subset handling works"
 
-${FLATPAK} ${U} remote-modify --subset=subset2 test-repo
+${FLATPAK} ${U} remote-modify --subset=subset2 test-repo >&2
 
 ${FLATPAK} ${U} remote-ls --columns=ref test-repo > remote-subset2.txt
 assert_file_has_content remote-subset2.txt "org\.test\.Hello/"
@@ -104,7 +104,7 @@ assert_file_has_content remote-subset2.txt "org\.test\.Platform/"
 
 ${FLATPAK} ${U} install -y org.test.SubsetTwo &> /dev/null
 
-${FLATPAK} ${U} update --appstream
+${FLATPAK} ${U} update --appstream >&2
 assert_has_file $FL_DIR/appstream/test-repo/$ARCH/active/appstream.xml
 assert_file_has_content $FL_DIR/appstream/test-repo/$ARCH/active/appstream.xml org.test.Hello.desktop
 assert_not_file_has_content $FL_DIR/appstream/test-repo/$ARCH/active/appstream.xml org.test.SubsetOne.desktop

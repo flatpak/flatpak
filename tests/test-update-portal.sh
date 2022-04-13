@@ -36,9 +36,9 @@ make_updated_app
 NEW_COMMIT=$(cat repos/test/refs/heads/app/org.test.Hello/$ARCH/master)
 
 for i in {15..1}; do
-    if grep -q -e "update_available .* remote=${NEW_COMMIT}" update-monitor.out; then
+    if grep -q -e "update_available .* remote=${NEW_COMMIT}" update-monitor.out >&2; then
         assert_file_has_content update-monitor.out "running=${OLD_COMMIT} local=${OLD_COMMIT} remote=${NEW_COMMIT}"
-        echo found update ${NEW_COMMIT}
+        echo found update ${NEW_COMMIT} >&2
         break
     fi
     if [ $i == 1 ]; then
@@ -52,9 +52,9 @@ make_updated_app test "" master UPDATE2
 NEWER_COMMIT=$(cat repos/test/refs/heads/app/org.test.Hello/$ARCH/master)
 
 for i in {15..1}; do
-    if grep -q -e "update_available .* remote=${NEWER_COMMIT}"  update-monitor.out; then
+    if grep -q -e "update_available .* remote=${NEWER_COMMIT}"  update-monitor.out >&2; then
         assert_file_has_content update-monitor.out "running=${OLD_COMMIT} local=${OLD_COMMIT} remote=${NEWER_COMMIT}"
-        echo found update ${NEWER_COMMIT}
+        echo found update ${NEWER_COMMIT} >&2
         break
     fi
     if [ $i == 1 ]; then
@@ -68,11 +68,11 @@ kill -9 $MONITOR_PID
 
 ok "monitor updates"
 
-run_with_sandboxed_bus ${test_builddir}/test-update-portal update monitor.pid
+run_with_sandboxed_bus ${test_builddir}/test-update-portal update monitor.pid >&2
 
 ok "update self"
 
-run_with_sandboxed_bus ${test_builddir}/test-update-portal update-null monitor.pid
+run_with_sandboxed_bus ${test_builddir}/test-update-portal update-null monitor.pid >&2
 
 ok "null-update self"
 
@@ -82,7 +82,7 @@ make_updated_app test "" master UPDATE3
 cp -r repos/test/objects repos/test/orig-objects
 find repos/test/objects -name "*.filez" | xargs  -I FILENAME mv FILENAME FILENAME.broken
 
-run_with_sandboxed_bus ${test_builddir}/test-update-portal update-fail monitor.pid
+run_with_sandboxed_bus ${test_builddir}/test-update-portal update-fail monitor.pid >&2
 
 # Unbreak it again
 rm -rf repos/test/objects
@@ -90,7 +90,7 @@ mv repos/test/orig-objects repos/test/objects
 
 ok "update fail"
 
-${FLATPAK} ${U} mask "org.test.Hello*"
+${FLATPAK} ${U} mask "org.test.Hello*" >&2
 
 NEW_COMMIT=$(cat repos/test/refs/heads/app/org.test.Hello/$ARCH/master)
 
@@ -104,25 +104,25 @@ assert_not_file_has_content update-monitor.out "remote=${NEW_COMMIT}"
 kill -9 $MONITOR_PID
 
 # Should be a "null" update due to mask
-run_with_sandboxed_bus ${test_builddir}/test-update-portal update-null monitor.pid
+run_with_sandboxed_bus ${test_builddir}/test-update-portal update-null monitor.pid >&2
 
-${FLATPAK} ${U} mask --remove "org.test.Hello*"
+${FLATPAK} ${U} mask --remove "org.test.Hello*" >&2
 
 ok "update vs masked"
 
 BUILD_FINISH_ARGS="--filesystem=host" make_updated_app test "" master UPDATE41
-run_with_sandboxed_bus ${test_builddir}/test-update-portal update-notsupp monitor.pid
+run_with_sandboxed_bus ${test_builddir}/test-update-portal update-notsupp monitor.pid >&2
 
 BUILD_FINISH_ARGS="--share=network" make_updated_app test "" master UPDATE42
-run_with_sandboxed_bus ${test_builddir}/test-update-portal update-notsupp monitor.pid
+run_with_sandboxed_bus ${test_builddir}/test-update-portal update-notsupp monitor.pid >&2
 
 BUILD_FINISH_ARGS="--socket=x11" make_updated_app test "" master UPDATE43
-run_with_sandboxed_bus ${test_builddir}/test-update-portal update-notsupp monitor.pid
+run_with_sandboxed_bus ${test_builddir}/test-update-portal update-notsupp monitor.pid >&2
 
 BUILD_FINISH_ARGS="--own-name=org.some.Name" make_updated_app test "" master UPDATE44
-run_with_sandboxed_bus ${test_builddir}/test-update-portal update-notsupp monitor.pid
+run_with_sandboxed_bus ${test_builddir}/test-update-portal update-notsupp monitor.pid >&2
 
 make_updated_app test "" master UPDATE45
-run_with_sandboxed_bus ${test_builddir}/test-update-portal update monitor.pid
+run_with_sandboxed_bus ${test_builddir}/test-update-portal update monitor.pid >&2
 
 ok "update with changed permissions"

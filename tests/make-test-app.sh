@@ -167,9 +167,9 @@ ln -s -t ${DIR}/files/share/locale ../../share/runtime/locale/de/share/de
 mkdir -p ${DIR}/files/share/runtime/locale/fr
 ln -s -t ${DIR}/files/share/locale ../../share/runtime/locale/fr/share/fr
 
-flatpak build-finish ${BUILD_FINISH_ARGS-} --command=hello.sh ${DIR}
+flatpak build-finish ${BUILD_FINISH_ARGS-} --command=hello.sh ${DIR} >&2
 mkdir -p repos
-flatpak build-export --no-update-summary --disable-sandbox ${collection_args} ${GPGARGS-} ${EXPORT_ARGS-} ${REPO} ${DIR} ${BRANCH}
+flatpak build-export --no-update-summary --disable-sandbox ${collection_args} ${GPGARGS-} ${EXPORT_ARGS-} ${REPO} ${DIR} ${BRANCH} >&2
 rm -rf ${DIR}
 
 # build a locale extension
@@ -198,9 +198,9 @@ EOF
 mkdir -p ${DIR}/files/fr/share/fr/LC_MESSAGES
 msgfmt --output-file ${DIR}/files/fr/share/fr/LC_MESSAGES/helloworld.mo fr.po
 
-flatpak build-finish ${DIR}
+flatpak build-finish ${DIR} >&2
 mkdir -p repos
-flatpak build-export --no-update-summary --runtime ${collection_args} ${GPGARGS-} ${EXPORT_ARGS-} ${REPO} ${DIR} ${BRANCH}
+flatpak build-export --no-update-summary --runtime ${collection_args} ${GPGARGS-} ${EXPORT_ARGS-} ${REPO} ${DIR} ${BRANCH} >&2
 rm -rf ${DIR}
 
 # build a plugin extension
@@ -218,13 +218,13 @@ EOF
 
 mkdir -p ${DIR}/files/plug-ins/fun
 
-flatpak build-finish ${DIR}
+flatpak build-finish ${DIR} >&2
 mkdir -p repos
 
 if [ "$EXTRA" = "EXTENSIONS" ]; then
-  flatpak build-export --no-update-summary --runtime ${collection_args} ${GPGARGS-} ${EXPORT_ARGS-} ${REPO} ${DIR} v2
+  flatpak build-export --no-update-summary --runtime ${collection_args} ${GPGARGS-} ${EXPORT_ARGS-} ${REPO} ${DIR} v2 >&2
 else
-  flatpak build-export --no-update-summary --runtime ${collection_args} ${GPGARGS-} ${EXPORT_ARGS-} ${REPO} ${DIR} v1
+  flatpak build-export --no-update-summary --runtime ${collection_args} ${GPGARGS-} ${EXPORT_ARGS-} ${REPO} ${DIR} v1 >&2
 fi
 
 rm -rf ${DIR}
