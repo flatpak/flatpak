@@ -45,9 +45,9 @@ EOF
     if [[ $OPTIONS =~ "no-xametadata" ]]; then
         XA_METADATA="--add-metadata-string=xa.nometadata=1"
     fi
-    ostree commit --repo=repos/test --branch=app/org.test.Malicious/${ARCH}/master ${FL_GPGARGS} "$XA_METADATA" ${DIR}/
+    ostree commit --repo=repos/test --branch=app/org.test.Malicious/${ARCH}/master ${FL_GPGARGS} "$XA_METADATA" ${DIR}/ >&2
     if [[ $OPTIONS =~ "no-cache-in-summary" ]]; then
-        ostree --repo=repos/test ${FL_GPGARGS} summary -u
+        ostree --repo=repos/test ${FL_GPGARGS} summary -u >&2
         # force use of legacy summary format
         rm -rf repos/test/summary.idx repos/test/summaries
     else
@@ -57,13 +57,13 @@ EOF
 }
 
 cleanup_repo () {
-    ostree refs --repo=repos/test --delete app/org.test.Malicious/${ARCH}/master
+    ostree refs --repo=repos/test --delete app/org.test.Malicious/${ARCH}/master >&2
     update_repo
 }
 
 create_app "hidden"
 
-if ${FLATPAK} ${U} install -y test-repo org.test.Malicious 2>install-error-log; then
+if ${FLATPAK} ${U} install -y test-repo org.test.Malicious &>install-error-log; then
     assert_not_reached "Should not be able to install app with hidden permissions"
 fi
 
@@ -79,7 +79,7 @@ create_app no-xametadata
 
 # The install will fail because the metadata in the summary doesn't match the metadata on the commit
 # The missing xa.metadata in the commit got turned into "" in the xa.cache
-if ${FLATPAK} ${U} install -y test-repo org.test.Malicious 2>install-error-log; then
+if ${FLATPAK} ${U} install -y test-repo org.test.Malicious &>install-error-log; then
     assert_not_reached "Should not be able to install app with missing xa.metadata"
 fi
 
@@ -94,7 +94,7 @@ ok "app with no xa.metadata can't be installed"
 create_app "no-xametadata no-cache-in-summary"
 
 # The install will fail because there's no metadata in the summary or on the commit
-if ${FLATPAK} ${U} install -y test-repo org.test.Malicious 2>install-error-log; then
+if ${FLATPAK} ${U} install -y test-repo org.test.Malicious &>install-error-log; then
     assert_not_reached "Should not be able to install app with missing metadata"
 fi
 assert_file_has_content install-error-log "No xa.metadata in local commit"
@@ -107,7 +107,7 @@ ok "app with no xa.metadata and no metadata in summary can't be installed"
 
 create_app "invalid"
 
-if ${FLATPAK} ${U} install -y test-repo org.test.Malicious 2>install-error-log; then
+if ${FLATPAK} ${U} install -y test-repo org.test.Malicious &>install-error-log; then
     assert_not_reached "Should not be able to install app with invalid metadata"
 fi
 assert_file_has_content install-error-log "Metadata for .* is invalid"
@@ -120,7 +120,7 @@ ok "app with invalid metadata (in summary) can't be installed"
 
 create_app "invalid no-cache-in-summary"
 
-if ${FLATPAK} ${U} install -y test-repo org.test.Malicious 2>install-error-log; then
+if ${FLATPAK} ${U} install -y test-repo org.test.Malicious &>install-error-log; then
     assert_not_reached "Should not be able to install app with invalid metadata"
 fi
 assert_file_has_content install-error-log "Metadata for .* is invalid"
@@ -133,7 +133,7 @@ ok "app with invalid metadata (in commit) can't be installed"
 
 create_app "mismatch no-cache-in-summary"
 
-if ${FLATPAK} ${U} install -y test-repo org.test.Malicious 2>install-error-log; then
+if ${FLATPAK} ${U} install -y test-repo org.test.Malicious &>install-error-log; then
     assert_not_reached "Should not be able to install app with non-matching metadata"
 fi
 assert_file_has_content install-error-log "Commit metadata for .* not matching expected metadata"
@@ -146,7 +146,7 @@ ok "app with mismatched metadata (in commit) can't be installed"
 
 create_app "mismatch"
 
-if ${FLATPAK} ${U} install -y test-repo org.test.Malicious 2>install-error-log; then
+if ${FLATPAK} ${U} install -y test-repo org.test.Malicious &>install-error-log; then
     assert_not_reached "Should not be able to install app with non-matching metadata"
 fi
 assert_file_has_content install-error-log "Commit metadata for .* not matching expected metadata"

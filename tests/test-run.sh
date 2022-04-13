@@ -71,7 +71,7 @@ $FLATPAK info ${U} org.test.Hello | grep $ID > /dev/null
 
 ok "install"
 
-run org.test.Hello > hello_out
+run org.test.Hello &> hello_out
 assert_file_has_content hello_out '^Hello world, from a sandbox$'
 
 ok "hello"
@@ -131,19 +131,19 @@ ok "run a runtime"
 
 if [ -f /etc/os-release ]; then
     run_sh org.test.Platform cat /run/host/os-release >os-release
-    (cd /etc; md5sum os-release) | md5sum -c
+    (cd /etc; md5sum os-release) | md5sum -c >&2
 
     ARGS="--filesystem=host-etc" run_sh org.test.Platform cat /run/host/os-release >os-release
-    (cd /etc; md5sum os-release) | md5sum -c
+    (cd /etc; md5sum os-release) | md5sum -c >&2
 
     if run_sh org.test.Platform "echo test >> /run/host/os-release"; then exit 1; fi
     if run_sh org.test.Platform "echo test >> /run/host/os-release"; then exit 1; fi
 elif [ -f /usr/lib/os-release ]; then
     run_sh org.test.Platform cat /run/host/os-release >os-release
-    (cd /usr/lib; md5sum os-release) | md5sum -c
+    (cd /usr/lib; md5sum os-release) | md5sum -c >&2
 
     ARGS="--filesystem=host-os" run_sh org.test.Platform cat /run/host/os-release >os-release
-    (cd /usr/lib; md5sum os-release) | md5sum -c
+    (cd /usr/lib; md5sum os-release) | md5sum -c >&2
 
     if run_sh org.test.Platform "echo test >> /run/host/os-release"; then exit 1; fi
     if run_sh org.test.Platform "echo test >> /run/host/os-release"; then exit 1; fi
@@ -153,23 +153,23 @@ ok "host os-release"
 
 run_sh org.test.Platform 'cat /run/host/container-manager' > container-manager
 echo flatpak > expected
-diff -u expected container-manager
+diff -u expected container-manager >&2
 run_sh org.test.Platform 'echo "${container}"' > container-manager
-diff -u expected container-manager
+diff -u expected container-manager >&2
 
 ok "host container-manager"
 
-if run org.test.Nonexistent 2> run-error-log; then
+if run org.test.Nonexistent 2> run-error-log >&2; then
     assert_not_reached "Unexpectedly able to run non-existent runtime"
 fi
 assert_file_has_content run-error-log "error: app/org\.test\.Nonexistent/$ARCH/master not installed"
 
-if ${FLATPAK} run --commit=abc runtime/org.test.Platform 2> run-error-log; then
+if ${FLATPAK} run --commit=abc runtime/org.test.Platform 2> run-error-log >&2; then
     assert_not_reached "Unexpectedly able to run non-existent commit"
 fi
 assert_file_has_content run-error-log "error: runtime/org\.test\.Platform/$ARCH/stable (commit abc) not installed"
 
-if run runtime/org.test.Nonexistent 2> run-error-log; then
+if run runtime/org.test.Nonexistent 2> run-error-log >&2; then
     assert_not_reached "Unexpectedly able to run non-existent runtime"
 fi
 assert_file_has_content run-error-log "error: runtime/org\.test\.Nonexistent/\*unspecified\*/\*unspecified\* not installed"
@@ -253,7 +253,7 @@ test_overrides () {
         assert_not_reached "Unexpectedly allowed to access file"
     fi
 
-    $FLATPAK override ${U} --filesystem=host org.test.Hello
+    $FLATPAK override ${U} --filesystem=host org.test.Hello >&2
 
     case "$dir" in
         (/home/*|/opt/*)
@@ -270,7 +270,7 @@ test_overrides () {
         assert_not_reached "Unexpectedly allowed to access --nofilesystem=host file"
     fi
 
-    $FLATPAK override ${U} --nofilesystem=host org.test.Hello
+    $FLATPAK override ${U} --nofilesystem=host org.test.Hello >&2
 
     if run_sh org.test.Hello cat "${dir}/package_version.txt" &> /dev/null; then
         assert_not_reached "Unexpectedly allowed to access file"
@@ -292,7 +292,7 @@ OLD_COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Hello`
 
 # TODO: For weird reasons this breaks in the system case. Needs debugging
 if [ x${USE_SYSTEMDIR-} != xyes ] ; then
-    ${FLATPAK} ${U} update -y -v org.test.Hello stable
+    ${FLATPAK} ${U} update -y -v org.test.Hello stable >&2
     ALSO_OLD_COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Hello`
     assert_streq "$OLD_COMMIT" "$ALSO_OLD_COMMIT"
 fi
@@ -301,21 +301,21 @@ ok "null update"
 
 make_updated_app "" "" stable
 
-${FLATPAK} ${U} update -y org.test.Hello
+${FLATPAK} ${U} update -y org.test.Hello >&2
 
 NEW_COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Hello`
 
 assert_not_streq "$OLD_COMMIT" "$NEW_COMMIT"
 
-run org.test.Hello > hello_out
+run org.test.Hello &> hello_out
 assert_file_has_content hello_out '^Hello world, from a sandboxUPDATED$'
 
 ok "update"
 
-ostree --repo=repos/test reset app/org.test.Hello/$ARCH/stable "$OLD_COMMIT"
+ostree --repo=repos/test reset app/org.test.Hello/$ARCH/stable "$OLD_COMMIT" >&2
 update_repo
 
-if ${FLATPAK} ${U} update -y org.test.Hello; then
+if ${FLATPAK} ${U} update -y org.test.Hello >&2; then
     assert_not_reached "Should not be able to update to older commit"
 fi
 
@@ -338,7 +338,7 @@ assert_streq "$OLD_COMMIT" "$NEW_COMMIT"
 assert_file_has_content install_stderr 'org.test.Hello/.* is already installed'
 
 # But --or-update should do the update
-${FLATPAK} ${U} install -y --or-update test-repo org.test.Hello
+${FLATPAK} ${U} install -y --or-update test-repo org.test.Hello >&2
 
 NEW_COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Hello`
 
@@ -347,7 +347,7 @@ assert_not_streq "$OLD_COMMIT" "$NEW_COMMIT"
 ok "install --or-update"
 
 DIR=`mktemp -d`
-${FLATPAK} build-init ${DIR} org.test.Split org.test.Platform org.test.Platform stable
+${FLATPAK} build-init ${DIR} org.test.Split org.test.Platform org.test.Platform stable >&2
 
 mkdir -p ${DIR}/files/a
 echo "a" > ${DIR}/files/a/data
@@ -359,11 +359,11 @@ mkdir -p ${DIR}/files/d
 echo "d" > ${DIR}/files/d/data
 echo "nope" > ${DIR}/files/nope
 
-${FLATPAK} build-finish --command=hello.sh ${DIR}
-${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} repos/test ${DIR} stable
+${FLATPAK} build-finish --command=hello.sh ${DIR} >&2
+${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} repos/test ${DIR} stable >&2
 update_repo
 
-${FLATPAK} ${U} install -y test-repo org.test.Split --subpath=/a --subpath=/b --subpath=/nosuchdir stable
+${FLATPAK} ${U} install -y test-repo org.test.Split --subpath=/a --subpath=/b --subpath=/nosuchdir stable >&2
 
 COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Split`
 if [ x${USE_SYSTEMDIR-} != xyes ] ; then
@@ -386,10 +386,10 @@ mkdir -p ${DIR}/files/f
 echo "f" > ${DIR}/files/f/data
 rm -rf  ${DIR}/files/b
 
-${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} repos/test ${DIR} stable
+${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} repos/test ${DIR} stable >&2
 update_repo
 
-${FLATPAK} ${U} update -y --subpath=/a --subpath=/b --subpath=/e --subpath=/nosuchdir org.test.Split
+${FLATPAK} ${U} update -y --subpath=/a --subpath=/b --subpath=/e --subpath=/nosuchdir org.test.Split >&2
 
 COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Split`
 if [ x${USE_SYSTEMDIR-} != xyes ] ; then
@@ -406,11 +406,11 @@ assert_has_file $FL_DIR/app/org.test.Split/$ARCH/stable/active/files/e/data
 assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/stable/active/files/f
 assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/stable/active/files/nope
 
-${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} repos/test ${DIR} stable
+${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} repos/test ${DIR} stable >&2
 update_repo
 
 # Test reusing the old subpath list
-${FLATPAK} ${U} update -y org.test.Split
+${FLATPAK} ${U} update -y org.test.Split >&2
 
 COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Split`
 if [ x${USE_SYSTEMDIR-} != xyes ] ; then
@@ -432,54 +432,54 @@ ok "subpaths"
 VERSION=`cat "$test_builddir/package_version.txt"`
 
 DIR=`mktemp -d`
-${FLATPAK} build-init ${DIR} org.test.CurrentVersion org.test.Platform org.test.Platform stable
-${FLATPAK} build-finish --require-version=${VERSION} --command=hello.sh ${DIR}
-${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} repos/test ${DIR} stable
+${FLATPAK} build-init ${DIR} org.test.CurrentVersion org.test.Platform org.test.Platform stable >&2
+${FLATPAK} build-finish --require-version=${VERSION} --command=hello.sh ${DIR} >&2
+${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} repos/test ${DIR} stable >&2
 DIR=`mktemp -d`
-${FLATPAK} build-init ${DIR} org.test.OldVersion org.test.Platform org.test.Platform stable
-${FLATPAK} build-finish --require-version=0.6.10 --command=hello.sh ${DIR}
-${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} repos/test ${DIR} stable
+${FLATPAK} build-init ${DIR} org.test.OldVersion org.test.Platform org.test.Platform stable >&2
+${FLATPAK} build-finish --require-version=0.6.10 --command=hello.sh ${DIR} >&2
+${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} repos/test ${DIR} stable >&2
 DIR=`mktemp -d`
-${FLATPAK} build-init ${DIR} org.test.NewVersion org.test.Platform org.test.Platform stable
-${FLATPAK} build-finish --require-version=1${VERSION} --command=hello.sh ${DIR}
-${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} repos/test ${DIR} stable
+${FLATPAK} build-init ${DIR} org.test.NewVersion org.test.Platform org.test.Platform stable >&2
+${FLATPAK} build-finish --require-version=1${VERSION} --command=hello.sh ${DIR} >&2
+${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} repos/test ${DIR} stable >&2
 
 update_repo
 
-${FLATPAK} ${U} install -y test-repo org.test.OldVersion stable
-${FLATPAK} ${U} install -y test-repo org.test.CurrentVersion stable
-(! ${FLATPAK} ${U} install -y test-repo org.test.NewVersion stable)
+${FLATPAK} ${U} install -y test-repo org.test.OldVersion stable >&2
+${FLATPAK} ${U} install -y test-repo org.test.CurrentVersion stable >&2
+(! ${FLATPAK} ${U} install -y test-repo org.test.NewVersion stable) >&2
 
 DIR=`mktemp -d`
-${FLATPAK} build-init ${DIR} org.test.OldVersion org.test.Platform org.test.Platform stable
-${FLATPAK} build-finish --require-version=99.0.0 --command=hello.sh ${DIR}
-${FLATPAK} build-export  --no-update-summary ${FL_GPGARGS} repos/test ${DIR} stable
+${FLATPAK} build-init ${DIR} org.test.OldVersion org.test.Platform org.test.Platform stable >&2
+${FLATPAK} build-finish --require-version=99.0.0 --command=hello.sh ${DIR} >&2
+${FLATPAK} build-export  --no-update-summary ${FL_GPGARGS} repos/test ${DIR} stable >&2
 update_repo
 
-(! ${FLATPAK} ${U} update -y org.test.OldVersion)
+(! ${FLATPAK} ${U} update -y org.test.OldVersion) >&2
 
 DIR=`mktemp -d`
-${FLATPAK} build-init ${DIR} org.test.OldVersion org.test.Platform org.test.Platform stable
-${FLATPAK} build-finish --require-version=0.1.1 --command=hello.sh ${DIR}
-${FLATPAK} build-export  --no-update-summary ${FL_GPGARGS} repos/test ${DIR} stable
+${FLATPAK} build-init ${DIR} org.test.OldVersion org.test.Platform org.test.Platform stable >&2
+${FLATPAK} build-finish --require-version=0.1.1 --command=hello.sh ${DIR} >&2
+${FLATPAK} build-export  --no-update-summary ${FL_GPGARGS} repos/test ${DIR} stable >&2
 update_repo
 
-${FLATPAK} ${U} update -y org.test.OldVersion
+${FLATPAK} ${U} update -y org.test.OldVersion >&2
 
 # Make sure a multi-ref update succeeds even if some update requires a newer version
 # Note that updates are in alphabetical order, so CurrentVersion will be pulled first
 # and should not block a successful install of OldVersion later
 
 DIR=`mktemp -d`
-${FLATPAK} build-init ${DIR} org.test.CurrentVersion org.test.Platform org.test.Platform stable
+${FLATPAK} build-init ${DIR} org.test.CurrentVersion org.test.Platform org.test.Platform stable >&2
 touch ${DIR}/files/updated
-${FLATPAK} build-finish --require-version=99.0.0 --command=hello.sh ${DIR}
-${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} repos/test ${DIR} stable
+${FLATPAK} build-finish --require-version=99.0.0 --command=hello.sh ${DIR} >&2
+${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} repos/test ${DIR} stable >&2
 DIR=`mktemp -d`
-${FLATPAK} build-init ${DIR} org.test.OldVersion org.test.Platform org.test.Platform stable
+${FLATPAK} build-init ${DIR} org.test.OldVersion org.test.Platform org.test.Platform stable >&2
 touch ${DIR}/files/updated
-${FLATPAK} build-finish --require-version=${VERSION} --command=hello.sh ${DIR}
-${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} repos/test ${DIR} stable
+${FLATPAK} build-finish --require-version=${VERSION} --command=hello.sh ${DIR} >&2
+${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} repos/test ${DIR} stable >&2
 update_repo
 
 if ${FLATPAK} ${U} update -y &> err_version.txt; then
@@ -493,33 +493,33 @@ assert_has_file $FL_DIR/app/org.test.OldVersion/$ARCH/stable/active/files/update
 ok "version checks"
 
 rm -rf app
-${FLATPAK} build-init app org.test.Writable org.test.Platform org.test.Platform stable
+${FLATPAK} build-init app org.test.Writable org.test.Platform org.test.Platform stable >&2
 mkdir -p app/files/a-dir
 chmod a+rwx app/files/a-dir
-${FLATPAK} build-finish --command=hello.sh app
+${FLATPAK} build-finish --command=hello.sh app >&2
 # Note: not --canonical-permissions
-${FLATPAK} build-export -vv  --no-update-summary --disable-sandbox --files=files repos/test app stable
-ostree --repo=repos/test commit  --keep-metadata=xa.metadata --owner-uid=0 --owner-gid=0  --no-xattrs  ${FL_GPGARGS} --branch=app/org.test.Writable/$ARCH/stable app
+${FLATPAK} build-export -vv  --no-update-summary --disable-sandbox --files=files repos/test app stable >&2
+ostree --repo=repos/test commit  --keep-metadata=xa.metadata --owner-uid=0 --owner-gid=0  --no-xattrs  ${FL_GPGARGS} --branch=app/org.test.Writable/$ARCH/stable app >&2
 update_repo
 
 # In the system-helper case this fails to install due to the permission canonicalization happening in the
 # child-repo making objects get the wrong checksum, whereas in the user case we successfully import it, but
 # it will have canonicalized permissions.
-if ${FLATPAK} ${U} install -y test-repo org.test.Writable; then
+if ${FLATPAK} ${U} install -y test-repo org.test.Writable >&2; then
     assert_file_has_mode $FL_DIR/app/org.test.Writable/$ARCH/stable/active/files/a-dir 775
 fi
 
 ok "no world writable dir"
 
 rm -rf app
-${FLATPAK} build-init app org.test.Setuid org.test.Platform org.test.Platform stable
+${FLATPAK} build-init app org.test.Setuid org.test.Platform org.test.Platform stable >&2
 mkdir -p app/files/
 touch app/files/exe
 chmod u+s app/files/exe
-${FLATPAK} build-finish --command=hello.sh app
+${FLATPAK} build-finish --command=hello.sh app >&2
 # Note: not --canonical-permissions
-${FLATPAK} build-export -vv  --no-update-summary --disable-sandbox --files=files repos/test app stable
-ostree -v --repo=repos/test commit --keep-metadata=xa.metadata --owner-uid=0 --owner-gid=0 --no-xattrs  ${FL_GPGARGS} --branch=app/org.test.Setuid/$ARCH/stable app
+${FLATPAK} build-export -vv  --no-update-summary --disable-sandbox --files=files repos/test app stable >&2
+ostree -v --repo=repos/test commit --keep-metadata=xa.metadata --owner-uid=0 --owner-gid=0 --no-xattrs  ${FL_GPGARGS} --branch=app/org.test.Setuid/$ARCH/stable app >&2
 update_repo
 
 if ${FLATPAK} ${U} install -y test-repo org.test.Setuid &> err2.txt; then
@@ -530,14 +530,14 @@ assert_file_has_content err2.txt [Ii]nvalid
 ok "no setuid"
 
 rm -rf app
-${FLATPAK} build-init app org.test.App org.test.Platform org.test.Platform stable
+${FLATPAK} build-init app org.test.App org.test.Platform org.test.Platform stable >&2
 mkdir -p app/files/
 touch app/files/exe
-${FLATPAK} build-finish --command=hello.sh --sdk=org.test.Sdk app
-${FLATPAK} build-export  --no-update-summary ${FL_GPGARGS} repos/test app stable
+${FLATPAK} build-finish --command=hello.sh --sdk=org.test.Sdk app >&2
+${FLATPAK} build-export  --no-update-summary ${FL_GPGARGS} repos/test app stable >&2
 update_repo
 
-${FLATPAK} ${U} install -y test-repo org.test.App
+${FLATPAK} ${U} install -y test-repo org.test.App >&2
 ${FLATPAK} ${U} info -m org.test.App > out
 
 assert_file_has_content out "^sdk=org\.test\.Sdk/$(flatpak --default-arch)/stable$"

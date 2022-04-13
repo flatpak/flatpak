@@ -40,11 +40,11 @@ EOF
     touch ${DIR}/usr/exists
     touch ${DIR}/usr/extension-$ID:$VERSION
 
-    ${FLATPAK} build-export --no-update-summary --runtime ${GPGARGS-} repos/test ${DIR} ${VERSION}
+    ${FLATPAK} build-export --no-update-summary --runtime ${GPGARGS-} repos/test ${DIR} ${VERSION} >&2
     update_repo
     rm -rf ${DIR}
 
-    ${FLATPAK} --user install -y test-repo $ID $VERSION
+    ${FLATPAK} --user install -y test-repo $ID $VERSION >&2
 }
 
 add_extensions () {
@@ -100,14 +100,14 @@ $(dirname $0)/make-test-runtime.sh repos/test org.test.Platform master "" "" bas
 $(dirname $0)/make-test-app.sh repos/test "" master "" > /dev/null
 
 # Modify platform metadata
-ostree checkout -U --repo=repos/test runtime/org.test.Platform/${ARCH}/master platform
+ostree checkout -U --repo=repos/test runtime/org.test.Platform/${ARCH}/master platform >&2
 add_extensions platform
-${FLATPAK} build-export --no-update-summary --disable-sandbox repos/test platform --files=files master
+${FLATPAK} build-export --no-update-summary --disable-sandbox repos/test platform --files=files master >&2
 update_repo
 
-${FLATPAK} remote-add --user --no-gpg-verify test-repo repos/test
-${FLATPAK} --user install -y test-repo org.test.Platform master
-${FLATPAK} --user install -y test-repo org.test.Hello master
+${FLATPAK} remote-add --user --no-gpg-verify test-repo repos/test >&2
+${FLATPAK} --user install -y test-repo org.test.Platform master >&2
+${FLATPAK} --user install -y test-repo org.test.Hello master >&2
 
 make_extension org.test.Extension1 master
 make_extension org.test.Extension1 not-master
@@ -130,7 +130,7 @@ assert_has_extension_file () {
 assert_not_has_extension_file () {
     local prefix=$1
     local file=$2 
-    if run_sh org.test.Hello "test -f $prefix/foo/$file" ; then
+    if run_sh org.test.Hello "test -f $prefix/foo/$file" >&2; then
         echo 1>&2 "File '$file' exists";
         exit 1
     fi
@@ -147,19 +147,19 @@ assert_has_extension_file /usr dir/foo/exists
 assert_has_extension_file /usr dir/foo/extension-org.test.Dir.foo:master
 assert_has_extension_file /usr dir/bar/extension-org.test.Dir.bar:master
 assert_not_has_extension_file /usr dir2/foo/exists
-run_sh org.test.Hello "ls -lR /usr/foo/multiversion"
+run_sh org.test.Hello "ls -lR /usr/foo/multiversion" >&2
 assert_has_extension_file /usr multiversion/master/extension-org.test.Multiversion.master:master
 assert_has_extension_file /usr multiversion/notmaster/extension-org.test.Multiversion.notmaster:not-master
 
 ok "runtime extensions"
 
 # Modify app metadata
-ostree checkout -U --repo=repos/test app/org.test.Hello/${ARCH}/master hello
+ostree checkout -U --repo=repos/test app/org.test.Hello/${ARCH}/master hello >&2
 add_extensions hello
-${FLATPAK} build-export --no-update-summary --disable-sandbox repos/test hello master
+${FLATPAK} build-export --no-update-summary --disable-sandbox repos/test hello master >&2
 update_repo
 
-${FLATPAK} --user update -y org.test.Hello master
+${FLATPAK} --user update -y org.test.Hello master >&2
 
 assert_has_extension_file /app ext1/exists
 assert_has_extension_file /app ext1/extension-org.test.Extension1:master

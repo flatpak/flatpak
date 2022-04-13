@@ -25,7 +25,7 @@ echo "1..5"
 
 create_commit() {
     # Wrap this to avoid set -x showing the commands
-    {
+    { { local BASH_XTRACEFD=3; } 2> /dev/null
         local REPO=${1}
         local APP=${2}
         local DEPTH=${3}
@@ -53,19 +53,19 @@ create_commit() {
         mkdir $F/shared-dir
         echo "$APP.shared2" > $F/shared-dir/shared2
 
-        echo commiting $APP depth $DEPTH
-        ostree --repo=$REPO --branch=$APP --fsync=false --canonical-permissions --no-xattrs commit $F
+        echo commiting $APP depth $DEPTH >&2
+        ostree --repo=$REPO --branch=$APP --fsync=false --canonical-permissions --no-xattrs commit $F >&2
         rm -rf $F
 
     if [ ${DEPTH} != "1" ]; then
         create_commit $REPO $APP $((${DEPTH} - 1 ))
     fi
-    } 2> /dev/null
+    } 3> /dev/null
 }
 
 count_objects() {
     # Wrap this to avoid set -x showing the ls commands
-    {
+    { { local BASH_XTRACEFD=3; } 2> /dev/null
         NUM_FILE=$(ls -d $1/objects/*/*.filez | wc -l)
         NUM_DIRTREE=$(ls -d $1/objects/*/*.dirtree | wc -l)
         NUM_COMMIT=$(ls -d $1/objects/*/*.commit | wc -l)
@@ -75,12 +75,12 @@ count_objects() {
             NUM_COMMITMETA2=$(ls -d $1/objects/*/*.commitmeta2 | wc -l)
         fi
         NUM_OBJECT=$(ls -d $1/objects/*/* | wc -l)
-        echo OBJCOUNT $1: $NUM_FILE files + $NUM_DIRTREE dirtree + $NUM_COMMIT commit + $NUM_DIRMETA dirmeta + $NUM_COMMITMETA2 commitmeta2 == $NUM_OBJECT objects
-    } 2> /dev/null
+        echo OBJCOUNT $1: $NUM_FILE files + $NUM_DIRTREE dirtree + $NUM_COMMIT commit + $NUM_DIRMETA dirmeta + $NUM_COMMITMETA2 commitmeta2 == $NUM_OBJECT objects >&2
+    } 3> /dev/null
 }
 
 
-ostree --repo=orig-repo --mode=archive init
+ostree --repo=orig-repo --mode=archive init >&2
 
 create_commit orig-repo app1 3 #   8f 7d 3c 2m == 20
 create_commit orig-repo app2 4 #+ 10f 9d 4c 0m == 23
@@ -101,7 +101,7 @@ cp -ra orig-repo repo # Work on a copy
 
 # Prune with full depth should change nothing
 $FLATPAK build-update-repo --no-update-summary --no-update-appstream --prune --prune-depth=-1 repo > prune.log
-cat prune.log
+cat prune.log >&2
 
 assert_file_has_content prune.log "Total objects: 61"
 
@@ -119,7 +119,7 @@ cp -ra repo incremental-repo # Make a copy of the orig repo with the commitmeta2
 
 # Prune with full depth should change nothing
 $FLATPAK build-update-repo --no-update-summary --no-update-appstream --prune --prune-depth=-1 repo > prune.log
-cat prune.log
+cat prune.log >&2
 
 assert_file_has_content prune.log "Total objects: 61"
 
@@ -141,7 +141,7 @@ cp -ra orig-repo repo # Work on a copy
 # depth = 2 will only remove one commit from app2
 
 $FLATPAK build-update-repo --no-update-summary --no-update-appstream --prune --prune-depth=2 repo > prune.log
-cat prune.log
+cat prune.log >&2
 
 assert_file_has_content prune.log "Total objects: 61"
 assert_file_has_content prune.log "Deleted 5 objects,"
@@ -160,7 +160,7 @@ cp -ra incremental-repo repo # Work on a copy w/ commitmeta2s
 # depth = 2 will only remove one commit from app2
 
 $FLATPAK build-update-repo --no-update-summary --no-update-appstream --prune --prune-depth=2 repo > prune.log
-cat prune.log
+cat prune.log >&2
 
 assert_file_has_content prune.log "Total objects: 61"
 assert_file_has_content prune.log "Deleted 5 objects,"
@@ -179,7 +179,7 @@ rm -rf repo
 cp -ra orig-repo repo # Work on a copy
 
 $FLATPAK build-update-repo --no-update-summary --no-update-appstream --prune --prune-depth=1 repo > prune.log
-cat prune.log
+cat prune.log >&2
 
 assert_file_has_content prune.log "Total objects: 61"
 assert_file_has_content prune.log "Deleted 20 objects,"
@@ -196,7 +196,7 @@ rm -rf repo
 cp -ra incremental-repo repo # Work on a copy w/ commitmeta2s
 
 $FLATPAK build-update-repo --no-update-summary --no-update-appstream --prune --prune-depth=1 repo > prune.log
-cat prune.log
+cat prune.log >&2
 
 assert_file_has_content prune.log "Total objects: 61"
 assert_file_has_content prune.log "Deleted 20 objects,"
@@ -219,7 +219,7 @@ cp -ra orig-repo repo # Work on a copy
 rm repo/refs/heads/app3 # Removes 3 commits
 
 $FLATPAK build-update-repo --no-update-summary --no-update-appstream --prune --prune-depth=-1 repo > prune.log
-cat prune.log
+cat prune.log >&2
 assert_file_has_content prune.log "Total objects: 61"
 assert_file_has_content prune.log "Deleted 18 objects,"
 
@@ -237,7 +237,7 @@ cp -ra incremental-repo repo # Work on a copy w/ commitmeta2s
 rm repo/refs/heads/app3 # Removes 3 commits
 
 $FLATPAK build-update-repo --no-update-summary --no-update-appstream --prune --prune-depth=-1 repo > prune.log
-cat prune.log
+cat prune.log >&2
 assert_file_has_content prune.log "Total objects: 61"
 assert_file_has_content prune.log "Deleted 18 objects,"
 
@@ -259,7 +259,7 @@ cp -ra orig-repo repo # Work on a copy
 rm repo/refs/heads/app3 # Removes 3 commits
 
 $FLATPAK build-update-repo --no-update-summary --no-update-appstream --prune --prune-depth=2 repo > prune.log
-cat prune.log
+cat prune.log >&2
 assert_file_has_content prune.log "Total objects: 61"
 assert_file_has_content prune.log "Deleted 23 objects,"
 
@@ -277,7 +277,7 @@ cp -ra incremental-repo repo # Work on a copy w/ commitmeta2s
 rm repo/refs/heads/app3 # Removes 3 commits
 
 $FLATPAK build-update-repo --no-update-summary --no-update-appstream --prune --prune-depth=2 repo > prune.log
-cat prune.log
+cat prune.log >&2
 assert_file_has_content prune.log "Total objects: 61"
 assert_file_has_content prune.log "Deleted 23 objects,"
 
@@ -294,8 +294,8 @@ ok "unreachable and depth prune"
 # Compare last result with ostree prune:
 cp -ra orig-repo ostree-repo
 rm ostree-repo/refs/heads/app3 # Removes 3 commits
-ostree prune --refs-only --depth=2 --repo=ostree-repo
+ostree prune --refs-only --depth=2 --repo=ostree-repo >&2
 rm -rf repo/objects/*/*.commitmeta2
-diff -r repo ostree-repo
+diff -r repo ostree-repo >&2
 
 ok "Compare with ostree prune"
