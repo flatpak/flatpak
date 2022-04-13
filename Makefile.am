@@ -200,6 +200,24 @@ EXTRA_DIST += README.md
 
 EXTRA_DIST += flatpak.png
 
+EXTRA_DIST += \
+	completion/meson.build \
+	env.d/meson.build \
+	meson.build \
+	meson_options.txt \
+	po/meson.build \
+	profile/meson.build \
+	scripts/meson.build \
+	subprojects/bubblewrap/meson.build \
+	subprojects/bubblewrap/meson_options.txt \
+	subprojects/dbus-proxy/meson.build \
+	subprojects/dbus-proxy/meson_options.txt \
+	subprojects/libglnx/meson.build \
+	subprojects/libglnx/meson_options.txt \
+	subprojects/libglnx/tests/meson.build \
+	triggers/meson.build \
+	$(NULL)
+
 AM_DISTCHECK_CONFIGURE_FLAGS =		\
 	--enable-documentation		\
 	--disable-maintainer-mode	\

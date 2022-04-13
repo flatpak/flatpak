@@ -6,6 +6,7 @@ introspection_DATA = \
 	$(NULL)
 
 EXTRA_DIST += \
+	data/meson.build \
 	data/org.freedesktop.portal.Documents.xml \
 	data/org.freedesktop.impl.portal.PermissionStore.xml \
 	data/org.freedesktop.systemd1.xml \

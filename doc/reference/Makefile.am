@@ -78,6 +78,7 @@ include $(top_srcdir)/gtk-doc.make
 
 CLEANFILES += $(xml_files)
 
+EXTRA_DIST += meson.build
 EXTRA_DIST += version.xml.in
 
 if ENABLE_GTK_DOC_CHECK

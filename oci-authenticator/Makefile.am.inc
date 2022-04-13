@@ -1,3 +1,5 @@
+EXTRA_DIST += oci-authenticator/meson.build
+
 libexec_PROGRAMS += \
 	flatpak-oci-authenticator \
 	$(NULL)

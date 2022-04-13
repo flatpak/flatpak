@@ -2,6 +2,7 @@ bin_PROGRAMS += \
 	flatpak \
 	$(NULL)
 
+EXTRA_DIST += app/meson.build
 EXTRA_DIST += app/parse-datetime.y
 
 flatpak_dbus_built_sources = app/flatpak-permission-dbus-generated.c app/flatpak-permission-dbus-generated.h
