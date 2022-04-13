@@ -18,9 +18,13 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 
-# redirect stderr to stdout, otherwise the log will have command output out of
-# order with xtrace output
-exec 2>&1
+# Under Autotools, redirect stderr to stdout, otherwise the log will have
+# command output out of order with xtrace output.
+# Under Meson, we need stdout to be in strict TAP format, so we'll
+# consistently send everything except TAP to stderr instead.
+if [ -z "${FLATPAK_TESTS_STRICT_TAP-}" ]; then
+    exec 2>&1
+fi
 
 if [ -n "${G_TEST_SRCDIR:-}" ]; then
     test_srcdir="${G_TEST_SRCDIR}"
@@ -46,11 +50,10 @@ assert_not_reached () {
 }
 
 ok () {
-    # Wrap this to avoid set -x showing the echo commands
-    {
+    { { local BASH_XTRACEFD=3; } 2> /dev/null
         echo "ok $@";
-        echo "================ $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]} - $@ ================";
-    } 2> /dev/null
+        echo "================ $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]} - $@ ================" >&2;
+    } 3> /dev/null
 }
 
 test_tmpdir=$(pwd)
@@ -317,10 +320,10 @@ make_runtime () {
             collection_args=
         fi
         mkdir -p repos
-        ostree --repo=repos/${REPONAME} init --mode=archive-z2 ${collection_args}
+        ostree --repo=repos/${REPONAME} init --mode=archive-z2 ${collection_args} >&2
     fi
 
-    flatpak build-commit-from --disable-fsync --no-update-summary --src-repo=${RUNTIME_REPO} --force ${GPGARGS} ${EXPORT_ARGS-}  repos/${REPONAME}  ${RUNTIME_REF}
+    flatpak build-commit-from --disable-fsync --no-update-summary --src-repo=${RUNTIME_REPO} --force ${GPGARGS} ${EXPORT_ARGS-}  repos/${REPONAME}  ${RUNTIME_REF} >&2
 }
 
 httpd () {
@@ -329,7 +332,7 @@ httpd () {
 
     rm -f httpd-pipe
     mkfifo httpd-pipe
-    PYTHONUNBUFFERED=1 $(dirname $0)/$COMMAND "$DIR" 3> httpd-pipe 2>&1 | tee --append httpd-log &
+    PYTHONUNBUFFERED=1 $(dirname $0)/$COMMAND "$DIR" 3> httpd-pipe 2>&1 | tee --append httpd-log >&2 &
     read < httpd-pipe
 }
 
@@ -372,7 +375,7 @@ setup_repo () {
         collection_args=
     fi
 
-    flatpak remote-add ${U} ${collection_args} ${import_args} ${REPONAME}-repo "http://127.0.0.1:${port}/$REPONAME"
+    flatpak remote-add ${U} ${collection_args} ${import_args} ${REPONAME}-repo "http://127.0.0.1:${port}/$REPONAME" >&2
 }
 
 setup_empty_repo () {
@@ -386,7 +389,7 @@ setup_empty_repo () {
     fi
 
     mkdir -p repos
-    ostree --repo=repos/${REPONAME} init --mode=archive-z2
+    ostree --repo=repos/${REPONAME} init --mode=archive-z2 >&2
     update_repo $REPONAME "${COLLECTION_ID}"
     if [ $REPONAME == "test" ]; then
         httpd
@@ -404,7 +407,7 @@ setup_empty_repo () {
         collection_args=
     fi
 
-    flatpak remote-add ${U} ${collection_args} ${import_args} ${REPONAME}-repo "http://127.0.0.1:${port}/$REPONAME"
+    flatpak remote-add ${U} ${collection_args} ${import_args} ${REPONAME}-repo "http://127.0.0.1:${port}/$REPONAME" >&2
 }
 
 update_repo () {
@@ -417,7 +420,7 @@ update_repo () {
         collection_args=
     fi
 
-    ${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} ${collection_args} ${GPGARGS:-${FL_GPGARGS}} ${UPDATE_REPO_ARGS-} repos/${REPONAME}
+    ${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} ${collection_args} ${GPGARGS:-${FL_GPGARGS}} ${UPDATE_REPO_ARGS-} repos/${REPONAME} >&2
     if [ x${SUMMARY_FORMAT-} == xold ] ; then
         assert_not_has_file repos/${REPONAME}/summary.idx
     else
@@ -471,14 +474,14 @@ setup_sdk_repo () {
 install_repo () {
     REPONAME=${1:-test}
     BRANCH=${2:-master}
-    ${FLATPAK} ${U} install -y ${REPONAME}-repo org.test.Platform ${BRANCH}
-    ${FLATPAK} ${U} install -y ${REPONAME}-repo org.test.Hello ${BRANCH}
+    ${FLATPAK} ${U} install -y ${REPONAME}-repo org.test.Platform ${BRANCH} >&2
+    ${FLATPAK} ${U} install -y ${REPONAME}-repo org.test.Hello ${BRANCH} >&2
 }
 
 install_sdk_repo () {
     REPONAME=${1:-test}
     BRANCH=${2:-master}
-    ${FLATPAK} ${U} install -y ${REPONAME}-repo org.test.Sdk ${BRANCH}
+    ${FLATPAK} ${U} install -y ${REPONAME}-repo org.test.Sdk ${BRANCH} >&2
 }
 
 run () {
@@ -596,11 +599,11 @@ commit_to_path () {
 
 cleanup () {
     /bin/kill -9 $DBUS_SESSION_BUS_PID
-    gpg-connect-agent --homedir "${FL_GPG_HOMEDIR}" killagent /bye || true
-    fusermount -u $XDG_RUNTIME_DIR/doc || :
+    gpg-connect-agent --homedir "${FL_GPG_HOMEDIR}" killagent /bye >&2 || true
+    fusermount -u $XDG_RUNTIME_DIR/doc >&2 || :
     kill $(jobs -p) &> /dev/null || true
     if test -n "${TEST_SKIP_CLEANUP:-}"; then
-        echo "Skipping cleanup of ${TEST_DATA_DIR}"
+        echo "# Skipping cleanup of ${TEST_DATA_DIR}"
     else
         rm -rf $TEST_DATA_DIR
     fi
