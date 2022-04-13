@@ -5,19 +5,15 @@ selinux_module_DATA = $(NULL)
 selinux_develdir = ${datadir}/selinux/devel/include/contrib
 selinux_devel_DATA = $(NULL)
 
-flatpak.pp.bz2: selinux/flatpak.te selinux/flatpak.fc
-	$(eval TMP := $(shell mktemp -d selinux-build-XXXXXX))
-	cp $^ $(TMP)/
-	cd $(TMP) && make -f /usr/share/selinux/devel/Makefile flatpak.pp
-	bzip2 -9 $(TMP)/flatpak.pp
-	cp $(TMP)/flatpak.pp.bz2 .
-	rm -rf $(TMP)
+flatpak.pp.bz2: selinux/flatpak.te selinux/flatpak.fc selinux/build-selinux.sh
+	$(srcdir)/selinux/build-selinux.sh . $^
 
 selinux_module_DATA += flatpak.pp.bz2
 selinux_devel_DATA += selinux/flatpak.if
 endif
 
 EXTRA_DIST += \
+	selinux/build-selinux.sh \
 	selinux/flatpak.te \
 	selinux/flatpak.fc \
 	selinux/flatpak.if \
