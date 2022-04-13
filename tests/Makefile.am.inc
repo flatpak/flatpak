@@ -255,38 +255,8 @@ dist_installed_test_keyring2_DATA = \
 	$(NULL)
 endif
 
-# Run make update-test-matrix after changing this
-TEST_MATRIX_SOURCE = \
-	tests/test-basic.sh \
-	tests/test-completion.sh \
-	tests/test-config.sh \
-	tests/test-build-update-repo.sh \
-	tests/test-http-utils.sh \
-	tests/test-run.sh{{user+system+system-norevokefs},{nodeltas+deltas}} \
-	tests/test-info.sh{user+system} \
-	tests/test-repo.sh{{user+system+system-norevokefs}+{{user+system},oldsummary}} \
-	tests/test-history.sh \
-	tests/test-sideload.sh{user+system} \
-	tests/test-default-remotes.sh \
-	tests/test-metadata-validation.sh \
-	tests/test-extensions.sh \
-	tests/test-bundle.sh{user+system+system-norevokefs} \
-	tests/test-oci.sh \
-	tests/test-oci-registry.sh{user+system} \
-	tests/test-update-remote-configuration.sh{newsummary+oldsummary} \
-	tests/test-override.sh \
-	tests/test-update-portal.sh{user+system} \
-	tests/test-auth.sh \
-	tests/test-unused.sh \
-	tests/test-summaries.sh{user+system} \
-	tests/test-subset.sh{user+system} \
-	tests/test-prune.sh \
-	tests/test-seccomp.sh \
-	tests/test-repair.sh \
-	$(NULL)
-
 update-test-matrix:
-	$(srcdir)/tests/expand-test-matrix.sh "$(TEST_MATRIX_SOURCE)" > $(srcdir)/tests/Makefile-test-matrix.am.inc
+	$(srcdir)/tests/update-test-matrix
 
 tests/test-%.wrap:
 	@true
@@ -335,6 +305,7 @@ EXTRA_DIST += \
 	tests/flatpak.supp \
 	tests/glib.supp \
 	tests/test-wrapper.sh \
+	tests/update-test-matrix \
 	$(NULL)
 DISTCLEANFILES += \
 	tests/services/org.freedesktop.Flatpak.service \

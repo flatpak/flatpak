@@ -1,0 +1,39 @@
+#!/bin/bash
+# Copyright 2018 Red Hat, Inc.
+# Copyright 2021-2022 Collabora Ltd.
+# SPDX-License-Identifier: LGPL-2.1-or-later
+
+set -eu
+
+tests_srcdir="$(dirname "$(realpath "$0")")"
+
+TEST_MATRIX_SOURCE=(
+	'tests/test-basic.sh' \
+	'tests/test-completion.sh' \
+	'tests/test-config.sh' \
+	'tests/test-build-update-repo.sh' \
+	'tests/test-http-utils.sh' \
+	'tests/test-run.sh{{user+system+system-norevokefs},{nodeltas+deltas}}' \
+	'tests/test-info.sh{user+system}' \
+	'tests/test-repo.sh{{user+system+system-norevokefs}+{{user+system},oldsummary}}' \
+	'tests/test-history.sh' \
+	'tests/test-sideload.sh{user+system}' \
+	'tests/test-default-remotes.sh' \
+	'tests/test-metadata-validation.sh' \
+	'tests/test-extensions.sh' \
+	'tests/test-bundle.sh{user+system+system-norevokefs}' \
+	'tests/test-oci.sh' \
+	'tests/test-oci-registry.sh{user+system}' \
+	'tests/test-update-remote-configuration.sh{newsummary+oldsummary}' \
+	'tests/test-override.sh' \
+	'tests/test-update-portal.sh{user+system}' \
+	'tests/test-auth.sh' \
+	'tests/test-unused.sh' \
+	'tests/test-summaries.sh{user+system}' \
+	'tests/test-subset.sh{user+system}' \
+	'tests/test-prune.sh' \
+	'tests/test-seccomp.sh' \
+	'tests/test-repair.sh' \
+)
+
+"${tests_srcdir}/expand-test-matrix.sh" --automake "${TEST_MATRIX_SOURCE[*]}" > "${tests_srcdir}/Makefile-test-matrix.am.inc"
