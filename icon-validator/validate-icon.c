@@ -128,7 +128,7 @@ add_args (GPtrArray *argv_array, ...)
   va_end (args);
 }
 
-const char *
+static const char *
 flatpak_get_bwrap (void)
 {
   const char *e = g_getenv ("FLATPAK_BWRAP");
