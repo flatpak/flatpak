@@ -55,6 +55,7 @@ testlibrary_LDADD = \
 testlibrary_SOURCES = \
 	tests/can-use-fuse.c \
 	tests/can-use-fuse.h \
+	tests/testlib.c \
 	tests/testlibrary.c \
 	$(NULL)
 

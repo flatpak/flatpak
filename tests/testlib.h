@@ -20,6 +20,7 @@
 
 #include <glib.h>
 #include <gio/gio.h>
+#include <libglnx.h>
 
 #ifndef g_assert_no_errno
 #define g_assert_no_errno(expr) \
@@ -41,5 +42,13 @@ typedef struct
 
 void tests_dbus_daemon_setup (TestsDBusDaemon *self);
 void tests_dbus_daemon_teardown (TestsDBusDaemon *self);
+
+typedef struct _TestsStdoutToStderr TestsStdoutToStderr;
+TestsStdoutToStderr *tests_stdout_to_stderr_begin (void);
+void tests_stdout_to_stderr_end (TestsStdoutToStderr *original);
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (TestsStdoutToStderr, tests_stdout_to_stderr_end);
+
+#define TESTS_SCOPED_STDOUT_TO_STDERR \
+  G_GNUC_UNUSED g_autoptr(TestsStdoutToStderr) _tests_stdout_to_stderr = tests_stdout_to_stderr_begin ()
 
 #endif

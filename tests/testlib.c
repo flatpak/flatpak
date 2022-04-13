@@ -246,3 +246,41 @@ tests_dbus_daemon_teardown (TestsDBusDaemon *self)
   g_clear_pointer (&self->dbus_address, g_free);
   g_clear_pointer (&self->temp_dir, g_free);
 }
+
+struct _TestsStdoutToStderr
+{
+  int fd;
+};
+
+TestsStdoutToStderr *
+tests_stdout_to_stderr_begin (void)
+{
+  TestsStdoutToStderr *original = g_new0 (TestsStdoutToStderr, 1);
+
+  original->fd = fcntl (STDOUT_FILENO, F_DUPFD_CLOEXEC);
+
+  if (original->fd < 0)
+    g_error ("fcntl F_DUPFD_CLOEXEC: %s", g_strerror (errno));
+
+  if (dup2 (STDERR_FILENO, STDOUT_FILENO) < 0)
+    g_error ("dup2: %s", g_strerror (errno));
+
+  /* STDOUT_FILENO is intentionally not close-on-exec */
+
+  return original;
+}
+
+void
+tests_stdout_to_stderr_end (TestsStdoutToStderr *original)
+{
+  g_return_if_fail (original != NULL);
+  g_return_if_fail (original->fd >= 0);
+
+  if (dup2 (original->fd, STDOUT_FILENO) < 0)
+    g_error ("dup2: %s", g_strerror (errno));
+
+  /* STDOUT_FILENO is intentionally not close-on-exec */
+
+  g_close (original->fd, NULL);
+  g_free (original);
+}
