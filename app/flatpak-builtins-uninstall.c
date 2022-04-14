@@ -361,6 +361,13 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
         }
     }
 
+  if (n_prefs > 0 && g_hash_table_size (uninstall_dirs) == 0)
+    {
+      g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
+                   _("None of the specified refs are installed"));
+      return FALSE;
+    }
+
   GLNX_HASH_TABLE_FOREACH_V (uninstall_dirs, UninstallDir *, udir)
   {
     g_autoptr(FlatpakTransaction) transaction = NULL;
