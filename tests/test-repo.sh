@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..45"
+echo "1..44"
 
 #Regular repo
 setup_repo
@@ -628,30 +628,6 @@ assert_file_has_content list-log "org\.test\.Hello/"
 assert_file_has_content list-log "org\.test\.Platform/"
 
 ok "install with --no-deploy and then --no-pull"
-
-${FLATPAK} ${U} uninstall -y org.test.Hello org.test.Platform
-
-${FLATPAK} ${U} install -y --no-deploy --app test-repo hello
-
-${FLATPAK} ${U} list --columns=ref > list-log
-assert_not_file_has_content list-log "org\.test\.Hello/"
-assert_not_file_has_content list-log "org\.test\.Platform/"
-
-# Disable the remote to make sure we don't do i/o
-port=$(cat httpd-port)
-${FLATPAK} ${U} remote-modify --url="http://127.0.0.1:${port}/disable-test" test-repo
-
-# Note: The partial ref is only auto-corrected without user interaction because we're using -y
-${FLATPAK} ${U} install -y --no-pull --app test-repo hello
-
-# re-enable remote
-${FLATPAK} ${U} remote-modify --url="http://127.0.0.1:${port}/test" test-repo
-
-${FLATPAK} ${U} list --columns=ref > list-log
-assert_file_has_content list-log "org\.test\.Hello/"
-assert_file_has_content list-log "org\.test\.Platform/"
-
-ok "install with --no-deploy and then --no-pull works with typo correction"
 
 ${FLATPAK} uninstall -y --all
 
