@@ -7411,6 +7411,24 @@ flatpak_allocate_tmpdir (int           tmpdir_dfd,
   return TRUE;
 }
 
+gboolean
+flatpak_allow_fuzzy_matching (const char *term)
+{
+  if (strchr (term, '/') != NULL || strchr (term, '.') != NULL)
+    return FALSE;
+
+  /* This env var is used by the unit tests and only skips the tty test not the
+   * check above.
+   */
+  if (g_strcmp0 (g_getenv ("FLATPAK_FORCE_ALLOW_FUZZY_MATCHING"), "1") == 0)
+    return TRUE;
+
+  if (!isatty (STDIN_FILENO) || !isatty (STDOUT_FILENO))
+    return FALSE;
+
+  return TRUE;
+}
+
 char *
 flatpak_prompt (gboolean allow_empty,
                 const char *prompt, ...)

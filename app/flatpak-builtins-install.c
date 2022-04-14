@@ -382,7 +382,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
               if (remotes == NULL)
                 return FALSE;
 
-              if (strchr (argv[1], '/') != NULL || strchr (argv[1], '.') != NULL)
+              if (!flatpak_allow_fuzzy_matching (argv[1]))
                 matching_refs_flags = FIND_MATCHING_REFS_FLAGS_NONE;
               else
                 matching_refs_flags = FIND_MATCHING_REFS_FLAGS_FUZZY;
@@ -503,7 +503,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
       g_autoptr(GError) local_error = NULL;
       FindMatchingRefsFlags matching_refs_flags;
 
-      if (strchr (pref, '/') != NULL || strchr (pref, '.') != NULL)
+      if (!flatpak_allow_fuzzy_matching (pref))
         matching_refs_flags = FIND_MATCHING_REFS_FLAGS_NONE;
       else
         matching_refs_flags = FIND_MATCHING_REFS_FLAGS_FUZZY;
