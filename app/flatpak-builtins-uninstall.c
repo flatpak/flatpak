@@ -322,11 +322,16 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
             {
               if (n_prefs == 1)
                 {
-                  g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
-                               _("%s/%s/%s not installed"),
-                               match_id ? match_id : "*unspecified*",
-                               match_arch ? match_arch : "*unspecified*",
-                               match_branch ? match_branch : "*unspecified*");
+                  g_autoptr(GString) err_str = g_string_new ("");
+                  g_string_append_printf (err_str, _("No installed refs found for ‘%s’"), match_id);
+
+                  if (match_arch)
+                    g_string_append_printf (err_str, _(" with arch ‘%s’"), match_arch);
+                  if (match_branch)
+                    g_string_append_printf (err_str, _(" with branch ‘%s’"), match_branch);
+
+                  g_set_error_literal (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
+                                       err_str->str);
                   return FALSE;
                 }
 
