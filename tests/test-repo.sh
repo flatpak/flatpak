@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..44"
+echo "1..45"
 
 #Regular repo
 setup_repo
@@ -140,7 +140,7 @@ ok "re-install"
 ${FLATPAK} ${U} uninstall -y org.test.Hello
 
 # Note: This typo is only auto-corrected without user interaction because we're using -y
-${FLATPAK} ${U} install -y test-repo org.test.Hllo >install-log
+${FLATPAK} ${U} install --app -y test-repo hello >install-log
 assert_file_has_content install-log "org\.test\.Hello"
 
 ${FLATPAK} ${U} list --columns=ref > list-log
@@ -148,11 +148,17 @@ assert_file_has_content list-log "org\.test\.Hello/"
 
 ok "typo correction works for install"
 
-if ${FLATPAK} ${U} install -y test-repo org.test.Hllo// >install-log; then
+if ${FLATPAK} ${U} install -y test-repo Hllo// >install-log; then
     assert_not_reached "Should not be able to install with an incorrect ref that contains slashes"
 fi
 
 ok "no typo correction if ref contains slashes"
+
+if ${FLATPAK} ${U} install -y test-repo org.test.Hllo >install-log; then
+    assert_not_reached "Should not be able to install with an incorrect ref that contains periods"
+fi
+
+ok "no typo correction if ref contains periods"
 
 ${FLATPAK} ${U} uninstall -y org.test.Hello
 

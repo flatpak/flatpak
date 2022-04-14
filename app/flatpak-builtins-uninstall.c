@@ -286,7 +286,7 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
 
           pref = prefs[j];
 
-          if (strchr (pref, '/') != NULL)
+          if (strchr (pref, '/') != NULL || strchr (pref, '.') != NULL)
             matching_refs_flags = FIND_MATCHING_REFS_FLAGS_NONE;
           else
             matching_refs_flags = FIND_MATCHING_REFS_FLAGS_FUZZY;

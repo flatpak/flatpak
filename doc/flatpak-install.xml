@@ -64,7 +64,7 @@
           <arg choice="plain">REF</arg> doesn't match anything in the remote exactly but is
           similar to one or more refs in the remote (e.g. "devhelp" is similar to
           "org.gnome.Devhelp"), but this fuzzy matching behavior is disabled if
-          <arg choice="plain">REF</arg> contains any slashes.
+          <arg choice="plain">REF</arg> contains any slashes or periods.
         </para>
         <para>
           By default this looks for both apps and runtimes with the given
