@@ -841,6 +841,7 @@ gboolean flatpak_allocate_tmpdir (int           tmpdir_dfd,
                                   GCancellable *cancellable,
                                   GError      **error);
 
+gboolean flatpak_allow_fuzzy_matching (const char *term);
 
 char * flatpak_prompt (gboolean allow_empty,
                        const char *prompt,
