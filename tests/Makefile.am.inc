@@ -329,7 +329,13 @@ test_extra_programs = \
 
 @VALGRIND_CHECK_RULES@
 VALGRIND_SUPPRESSIONS_FILES=tests/flatpak.supp tests/glib.supp
-EXTRA_DIST += tests/flatpak.supp tests/glib.supp tests/Makefile-test-matrix.am.inc tests/expand-test-matrix.sh tests/test-wrapper.sh
+EXTRA_DIST += \
+	tests/Makefile-test-matrix.am.inc \
+	tests/expand-test-matrix.sh \
+	tests/flatpak.supp \
+	tests/glib.supp \
+	tests/test-wrapper.sh \
+	$(NULL)
 DISTCLEANFILES += \
 	tests/services/org.freedesktop.Flatpak.service \
 	tests/services/org.freedesktop.Flatpak.SystemHelper.service \
