@@ -21,24 +21,26 @@ libglnx_testlib_dep = declare_dependency(
   link_with : libglnx_testlib,
 )
 
-test_names = [
-  'errors',
-  'fdio',
-  'macros',
-  'shutil',
-  'xattrs',
-]
+if get_option('tests')
+  test_names = [
+    'errors',
+    'fdio',
+    'macros',
+    'shutil',
+    'xattrs',
+  ]
 
-foreach test_name : test_names
-  exe = executable(test_name,
-    [
-      'test-libglnx-' + test_name + '.c',
-    ],
-    dependencies: [
-      libglnx_dep,
-      libglnx_deps,
-      libglnx_testlib_dep,
-    ],
-  )
-  test(test_name, exe)
-endforeach
+  foreach test_name : test_names
+    exe = executable(test_name,
+      [
+        'test-libglnx-' + test_name + '.c',
+      ],
+      dependencies: [
+        libglnx_dep,
+        libglnx_deps,
+        libglnx_testlib_dep,
+      ],
+    )
+    test(test_name, exe)
+  endforeach
+endif
