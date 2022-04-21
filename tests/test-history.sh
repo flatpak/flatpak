@@ -50,8 +50,12 @@ ${FLATPAK} --installation=history-installation uninstall -y org.test.Platform or
 ${FLATPAK} --installation=history-installation remote-delete test-repo
 
 # need --since and --columns here to make the test idempotent
-${FLATPAK} --installation=history-installation history --since="${HISTORY_START_TIME}" \
-    --columns=change,application,branch,installation,remote > history-log 2>&1
+if ! ${FLATPAK} --installation=history-installation history --since="${HISTORY_START_TIME}" \
+    --columns=change,application,branch,installation,remote > history-log 2>&1; then
+    cat history-log >&2
+    echo "Bail out! 'flatpak history' failed"
+    exit 1
+fi
 
 diff history-log - << EOF
 add remote			system (history-installation)	test-repo
