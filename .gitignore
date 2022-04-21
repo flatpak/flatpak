@@ -48,14 +48,12 @@ flatpak-portal-dbus.[ch]
 flatpak-dbus-proxy
 permission-store-dbus.[ch]
 flatpak-system-helper
-xdg-desktop-portal
 oci-authenticator/*.service
 portal/*.service
 session-helper/*.service
 system-helper/*.service
 sideload-repos-systemd/flatpak-sideload-usb-repo.service
 sideload-repos-systemd/flatpak-sideload-usb-repo.path
-tests/services
 flatpak.conf
 flatpak.env
 flatpak.sh
@@ -135,6 +133,8 @@ libglnx-config.h
 /tests/hold-lock
 /tests/list-unused
 /tests/mock-flatpak
+/tests/services/*.service
+/tests/share/xdg-desktop-portal/portals/*.portal
 /tests/try-syscall
 *.test
 /tests/*.sh.log
