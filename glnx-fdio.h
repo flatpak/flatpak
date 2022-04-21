@@ -209,6 +209,7 @@ int glnx_renameat2_noreplace (int olddirfd, const char *oldpath,
 int glnx_renameat2_exchange (int olddirfd, const char *oldpath,
                              int newdirfd, const char *newpath);
 
+#ifdef _GNU_SOURCE
 /**
  * glnx_try_fallocate:
  * @fd: File descriptor
@@ -240,6 +241,7 @@ glnx_try_fallocate (int      fd,
 
   return TRUE;
 }
+#endif
 
 /**
  * glnx_fstat:
