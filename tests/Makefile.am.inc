@@ -261,15 +261,14 @@ update-test-matrix:
 tests/test-%.wrap:
 	@true
 
-tests/runtime-repo: tests/make-test-runtime.sh flatpak
-	rm -rf tests/runtime-repo
-	PATH=$(abs_top_builddir):$${PATH} $(top_srcdir)/tests/make-test-runtime.sh tests/runtime-repo org.test.Platform master "" ""
-	PATH=$(abs_top_builddir):$${PATH} $(top_srcdir)/tests/make-test-runtime.sh tests/runtime-repo org.test.Platform stable "" ""
+tests/runtime-repo.stamp: tests/make-runtime-repos tests/make-test-runtime.sh flatpak
+	$< $(abs_top_builddir) $(top_srcdir)/tests/make-test-runtime.sh tests/runtime-repo tests/runtime-repo.stamp
 
-check_DATA += tests/runtime-repo
+check_DATA += tests/runtime-repo.stamp
 
 distclean-local:
 	rm -rf tests/runtime-repo
+	rm -rf tests/runtime-repo.stamp
 
 include tests/Makefile-test-matrix.am.inc
 
@@ -304,6 +303,7 @@ EXTRA_DIST += \
 	tests/expand-test-matrix.sh \
 	tests/flatpak.supp \
 	tests/glib.supp \
+	tests/make-runtime-repos \
 	tests/test-wrapper.sh \
 	tests/update-test-matrix \
 	$(NULL)
