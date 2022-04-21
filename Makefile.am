@@ -236,3 +236,14 @@ lcov-clean:
 genlcov:
 	$(AM_V_GEN) $(LCOV) --directory $(top_builddir) --capture --output-file coverage.info
 	$(AM_V_GEN) $(GENHTML) --prefix $(top_builddir) --output-directory coverage coverage.info
+
+distcheck-hook: distcheck-hook-meson
+distcheck-hook-meson:
+	set -e; if command -v meson > /dev/null; then \
+		cd $(distdir); \
+		pwd; \
+		meson _build/meson; \
+		meson compile -C _build/meson -v; \
+		meson test -C _build/meson -v; \
+		rm -fr _build/meson; \
+	fi
