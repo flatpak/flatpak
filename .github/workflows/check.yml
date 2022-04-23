@@ -65,10 +65,12 @@ jobs:
     - name: autogen.sh
       run: NOCONFIGURE=1 ./autogen.sh
     - name: configure
+      # We don't do gtk-doc or GObject-Introspection here, because they can
+      # clash with AddressSanitizer. Instead, the clang build enables those.
       run: |
         mkdir _build
         pushd _build
-        ../configure  --enable-internal-checks --enable-asan
+        ../configure  --enable-internal-checks --enable-asan --disable-introspection
         popd
       env:
         CFLAGS: -O2 -Wp,-D_FORTIFY_SOURCE=2
@@ -172,7 +174,7 @@ jobs:
       run: |
         mkdir _build
         pushd _build
-        ../configure --enable-gtk-doc --enable-gtk-doc-html
+        ../configure --enable-gtk-doc --enable-gtk-doc-html --enable-introspection
         popd
       env:
         CFLAGS: -O2
