@@ -128,7 +128,7 @@ jobs:
       with:
         submodules: true
     - name: configure
-      run: ./autogen.sh  --enable-gtk-doc --enable-gtk-doc-html
+      run: ./autogen.sh
       env:
         CC: clang
         CFLAGS: -Werror=unused-variable
@@ -172,7 +172,7 @@ jobs:
       run: |
         mkdir _build
         pushd _build
-        ../configure
+        ../configure --enable-gtk-doc --enable-gtk-doc-html
         popd
       env:
         CFLAGS: -O2
