@@ -65,7 +65,6 @@ jobs:
     - name: autogen.sh
       run: NOCONFIGURE=1 ./autogen.sh
     - name: configure
-      # TODO: Enable gtk-doc builds
       run: |
         mkdir _build
         pushd _build
@@ -170,7 +169,6 @@ jobs:
     - name: autogen.sh
       run: NOCONFIGURE=1 ./autogen.sh
     - name: configure
-      # TODO: Enable gtk-doc builds
       run: |
         mkdir _build
         pushd _build
