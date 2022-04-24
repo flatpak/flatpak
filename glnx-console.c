@@ -143,7 +143,7 @@ glnx_console_lines (void)
 }
 
 static void
-on_sigwinch (int signum)
+on_sigwinch (G_GNUC_UNUSED int signum)
 {
   cached_columns = 0;
   cached_lines = 0;
