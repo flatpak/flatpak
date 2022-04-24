@@ -1130,7 +1130,7 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
                                       &tmpf, error))
     return FALSE;
 
-  if (len == -1)
+  if (len == (gsize) -1)
     len = strlen ((char*)buf);
 
   if (!glnx_try_fallocate (tmpf.fd, 0, len, error))
