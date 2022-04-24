@@ -182,7 +182,7 @@ xattr_thread (gpointer data)
   g_autoptr(GError) local_error = NULL;
   GError **error = &local_error;
   struct XattrWorker *worker = data;
-  guint64 end_time = g_get_monotonic_time () + XATTR_THREAD_RUN_TIME_USECS;
+  gint64 end_time = g_get_monotonic_time () + XATTR_THREAD_RUN_TIME_USECS;
   guint n_read = 0;
 
   while (g_get_monotonic_time () < end_time)
