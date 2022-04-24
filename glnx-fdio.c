@@ -660,7 +660,7 @@ glnx_file_get_contents_utf8_at (int                   dfd,
 char *
 glnx_readlinkat_malloc (int            dfd,
                         const char    *subpath,
-                        GCancellable  *cancellable,
+                        G_GNUC_UNUSED GCancellable *cancellable,
                         GError       **error)
 {
   dfd = glnx_dirfd_canonicalize (dfd);
@@ -1106,7 +1106,7 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
                                           uid_t                 uid,
                                           gid_t                 gid,
                                           GLnxFileReplaceFlags  flags,
-                                          GCancellable         *cancellable,
+                                          G_GNUC_UNUSED GCancellable *cancellable,
                                           GError              **error)
 {
   char *dnbuf = strdupa (subpath);
