@@ -229,7 +229,7 @@ open_tmpfile_core (int dfd, const char *subpath,
   const guint count_max = 100;
   { g_autofree char *tmp = g_strconcat (subpath, "/tmp.XXXXXX", NULL);
 
-    for (int count = 0; count < count_max; count++)
+    for (guint count = 0; count < count_max; count++)
       {
         glnx_gen_temp_name (tmp);
 
