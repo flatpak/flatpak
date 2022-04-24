@@ -8,7 +8,7 @@ project(
   default_options: [
     'warning_level=2',
   ],
-  meson_version : '>=0.50.0',
+  meson_version : '>=0.51.0',
 )
 
 flatpak_major_version = 1
@@ -213,51 +213,11 @@ base_deps = [glib_dep, gio_dep, gio_unix_dep]
 
 if meson.version().version_compare('>=0.60.0')
   gpgme_dep = dependency('gpgme-pthread', 'gpgme', version : '>=1.1.8')
-elif meson.version().version_compare('>=0.51.0')
+else
   gpgme_dep = dependency('gpgme-pthread', version : '>=1.1.8', required : false)
   if not gpgme_dep.found()
     gpgme_dep = dependency('gpgme', version : '>=1.1.8')
   endif
-else
-  # Meson < 0.51.0 couldn't detect older versions of libgpgme that didn't
-  # have a .pc file, so detect it the hard way
-  gpgme_config = find_program('gpgme-config')
-  result = run_command(
-    gpgme_config, '--version',
-    capture : true,
-    check : true,
-  )
-  if result.stdout().version_compare('<1.1.8')
-    error('gpgme >= 1.1.8 is required')
-  endif
-  ldflags = []
-  libs = []
-  cflags = run_command(
-    gpgme_config, '--cflags',
-    capture : true,
-    check : true,
-  ).stdout().split()
-  foreach word : run_command(
-    gpgme_config, '--libs',
-    capture : true,
-    check : true,
-  ).stdout().split()
-    if word.startswith('-l')
-      # No string.substring() in these Meson versions either
-      word = run_command(
-        'sh', '-c', 'echo ${1#-l}', 'sh', word,
-        check : true,
-      ).stdout().strip()
-      libs += cc.find_library(word)
-    else
-      ldflags += word
-    endif
-  endforeach
-  gpgme_dep = declare_dependency(
-    compile_args : cflags,
-    dependencies : libs,
-    link_args : ldflags,
-  )
 endif
 
 if get_option('selinux_module').disabled()
