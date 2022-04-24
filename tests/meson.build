@@ -45,17 +45,6 @@ tap_test = find_program(
   files(project_source_root / 'buildutil/tap-test'),
 )
 
-# TODO: When we depend on Meson 0.50.0, we can use
-# install : get_option('installed_tests')
-# install_dir : installed_testdir
-# instead of
-# install_dir : maybe_installed_testdir
-if get_option('installed_tests')
-  maybe_installed_testdir = installed_testdir
-else
-  maybe_installed_testdir = false
-endif
-
 if can_run_host_binaries
   runtime_repo = custom_target(
     'runtime-repo',
@@ -159,27 +148,15 @@ foreach testcase : c_tests
   endif
 
   if can_run_host_binaries
-    if meson.version().version_compare('>=0.50.0')
-      test(
-        name,
-        tap_test,
-        args : [exe],
-        depends : runtime_repo,
-        env : tests_environment,
-        protocol : 'tap',
-        timeout : options.get('timeout', 30),
-      )
-    else
-      # Fall back to using exit status rather than TAP
-      test(
-        name,
-        tap_test,
-        args : [exe],
-        depends : runtime_repo,
-        env : tests_environment,
-        timeout : options.get('timeout', 30),
-      )
-    endif
+    test(
+      name,
+      tap_test,
+      args : [exe],
+      depends : runtime_repo,
+      env : tests_environment,
+      protocol : 'tap',
+      timeout : options.get('timeout', 30),
+    )
   endif
 endforeach
 
@@ -299,7 +276,8 @@ configure_file(
   configuration : {
     'PACKAGE_VERSION' : meson.project_version(),
   },
-  install_dir : maybe_installed_testdir,
+  install : get_option('installed_tests'),
+  install_dir : installed_testdir,
 )
 
 if get_option('installed_tests')
@@ -388,28 +366,15 @@ foreach testcase : wrapped_tests
   endif
 
   if can_run_host_binaries
-    if meson.version().version_compare('>=0.50.0')
-      test(
-        name,
-        tap_test,
-        args : [meson.current_source_dir() / name],
-        depends : runtime_repo,
-        env : tests_environment,
-        is_parallel : is_parallel,
-        protocol : 'tap',
-        timeout : timeout,
-      )
-    else
-      # Fall back to using exit status rather than TAP
-      test(
-        name,
-        tap_test,
-        args : [meson.current_source_dir() / name],
-        depends : runtime_repo,
-        env : tests_environment,
-        is_parallel : is_parallel,
-        timeout : timeout,
-      )
-    endif
+    test(
+      name,
+      tap_test,
+      args : [meson.current_source_dir() / name],
+      depends : runtime_repo,
+      env : tests_environment,
+      is_parallel : is_parallel,
+      protocol : 'tap',
+      timeout : timeout,
+    )
   endif
 endforeach
