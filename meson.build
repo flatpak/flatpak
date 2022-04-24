@@ -8,7 +8,7 @@ project(
   default_options: [
     'warning_level=2',
   ],
-  meson_version : '>=0.51.0',
+  meson_version : '>=0.53.0',
 )
 
 flatpak_major_version = 1
@@ -37,6 +37,7 @@ required_bwrap = '0.5.0'
 required_dbus_proxy = '0.1.0'
 required_libostree = '2020.8'
 
+fs = import('fs')
 gnome = import('gnome')
 i18n = import('i18n')
 pkgconfig = import('pkgconfig')
@@ -56,10 +57,6 @@ if meson.version().version_compare('>=0.55.0')
   can_run_host_binaries = meson.can_run_host_binaries()
 else
   can_run_host_binaries = meson.has_exe_wrapper() or not meson.is_cross_build()
-endif
-
-if meson.version().version_compare('>=0.53')
-  fs = import('fs')
 endif
 
 cc = meson.get_compiler('c')
@@ -223,14 +220,7 @@ endif
 if get_option('selinux_module').disabled()
   build_selinux_module = false
 else
-  if meson.version().version_compare('>=0.53')
-    build_selinux_module = fs.is_file('/usr/share/selinux/devel/Makefile')
-  else
-    build_selinux_module = run_command(
-      'test', '-f', '/usr/share/selinux/devel/Makefile',
-      check : false,
-    ).returncode() == 0
-  endif
+  build_selinux_module = fs.is_file('/usr/share/selinux/devel/Makefile')
 
   if get_option('selinux_module').enabled() and not build_selinux_module
     error('selinux-policy-devel needed to build selinux module')
@@ -437,27 +427,25 @@ configure_file(
   configuration : cdata,
 )
 
-if meson.version().version_compare('>=0.53.0')
-  # TODO: When we depend on Meson >= 0.57.0, we can print dependencies
-  # as themselves rather than as booleans if we want to.
-  summary(
-    {
-      'Build system helper' : build_system_helper,
-      'Build selinux module' : build_selinux_module,
-      'Build bubblewrap' : (get_option('system_bubblewrap') == ''),
-      'Build dbus-proxy' : (get_option('system_dbus_proxy') == ''),
-      'Use sandboxed triggers' : get_option('sandboxed_triggers'),
-      'Use seccomp' : libseccomp_dep.found(),
-      'Privileged group' : get_option('privileged_group'),
-      'Use dconf' : dconf_dep.found(),
-      'Use libsystemd' : libsystemd_dep.found(),
-      'Use libmalcontent' : malcontent_dep.found(),
-      'Use libzstd' : libzstd_dep.found(),
-      'Use auto sideloading' : get_option('auto_sideloading'),
-    },
-    bool_yn : true,
-  )
-endif
+# TODO: When we depend on Meson >= 0.57.0, we can print dependencies
+# as themselves rather than as booleans if we want to.
+summary(
+  {
+    'Build system helper' : build_system_helper,
+    'Build selinux module' : build_selinux_module,
+    'Build bubblewrap' : (get_option('system_bubblewrap') == ''),
+    'Build dbus-proxy' : (get_option('system_dbus_proxy') == ''),
+    'Use sandboxed triggers' : get_option('sandboxed_triggers'),
+    'Use seccomp' : libseccomp_dep.found(),
+    'Privileged group' : get_option('privileged_group'),
+    'Use dconf' : dconf_dep.found(),
+    'Use libsystemd' : libsystemd_dep.found(),
+    'Use libmalcontent' : malcontent_dep.found(),
+    'Use libzstd' : libzstd_dep.found(),
+    'Use auto sideloading' : get_option('auto_sideloading'),
+  },
+  bool_yn : true,
+)
 
 if get_option('system_bubblewrap') == ''
   subproject(
