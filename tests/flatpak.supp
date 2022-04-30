@@ -254,3 +254,14 @@
    fun:g_file_new_for_path
    fun:flatpak_get_user_base_dir_location
 }
+
+# https://github.com/ostreedev/ostree/issues/2592
+{
+   ostree_issue_2592
+   Memcheck:Cond
+   ...
+   fun:_ostree_repo_auto_transaction_unref
+   fun:glib_autoptr_clear_OstreeRepoAutoTransaction
+   fun:glib_autoptr_cleanup_OstreeRepoAutoTransaction
+   fun:ostree_repo_prepare_transaction
+}
