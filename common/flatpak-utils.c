@@ -4349,11 +4349,8 @@ generate_summary (OstreeRepo   *repo,
       for (int i = 0; summary_arches[i] != NULL; i++)
         {
           const char *arch = summary_arches[i];
-          const char *compat_arch = flatpak_get_compat_arch (arch);
 
           g_hash_table_add (summary_arches_ht, (char *)arch);
-          if (compat_arch)
-            g_hash_table_add (summary_arches_ht, (char *)compat_arch);
         }
     }
 
