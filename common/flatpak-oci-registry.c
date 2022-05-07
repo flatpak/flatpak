@@ -2457,7 +2457,7 @@ flatpak_oci_sign_data (GBytes       *data,
       else if (err != GPG_ERR_NO_ERROR)
         {
           flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED,
-                              _("Unable to lookup key ID %s: %d)"),
+                              _("Unable to lookup key ID %s: %d"),
                               key_ids[i], err);
           return NULL;
         }
