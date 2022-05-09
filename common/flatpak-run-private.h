@@ -207,4 +207,7 @@ gboolean flatpak_run_parse_x11_display (const char  *display,
                                         char       **original_display_nr,
                                         GError     **error);
 
+char * flatpak_run_parse_pulse_server (const char *value,
+                                       gboolean   *remote);
+
 #endif /* __FLATPAK_RUN_H__ */
