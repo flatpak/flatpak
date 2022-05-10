@@ -83,9 +83,11 @@ libglnx_sources = [
 libglnx = static_library('glnx',
   libglnx_sources,
   dependencies : libglnx_deps,
+  gnu_symbol_visibility : 'hidden',
   include_directories : libglnx_inc,
   install : false)
 libglnx_dep = declare_dependency(
+  dependencies : libglnx_deps,
   include_directories : libglnx_inc,
   link_with : libglnx)
 

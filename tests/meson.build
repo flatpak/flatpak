@@ -2,25 +2,45 @@
 # Copyright 2019 Collabora Ltd.
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
-test_names = [
-  'errors',
-  'fdio',
-  'macros',
-  'shutil',
-  'xattrs',
-]
+libglnx_testlib = static_library(
+  'glnx-testlib',
+  'libglnx-testlib.c',
+  'libglnx-testlib.h',
+  dependencies : [
+    libglnx_dep,
+    libglnx_deps,
+  ],
+  install : false,
+)
+libglnx_testlib_dep = declare_dependency(
+  dependencies : [
+    libglnx_dep,
+    libglnx_deps,
+  ],
+  include_directories : include_directories('.'),
+  link_with : libglnx_testlib,
+)
 
-foreach test_name : test_names
-  exe = executable(test_name,
-    [
-      'libglnx-testlib.c',
-      'libglnx-testlib.h',
-      'test-libglnx-' + test_name + '.c',
-    ],
-    dependencies: [
-      libglnx_dep,
-      libglnx_deps,
-    ],
-  )
-  test(test_name, exe)
-endforeach
+if get_option('tests')
+  test_names = [
+    'errors',
+    'fdio',
+    'macros',
+    'shutil',
+    'xattrs',
+  ]
+
+  foreach test_name : test_names
+    exe = executable(test_name,
+      [
+        'test-libglnx-' + test_name + '.c',
+      ],
+      dependencies: [
+        libglnx_dep,
+        libglnx_deps,
+        libglnx_testlib_dep,
+      ],
+    )
+    test(test_name, exe)
+  endforeach
+endif
