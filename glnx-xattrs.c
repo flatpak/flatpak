@@ -141,7 +141,7 @@ static gboolean
 get_xattrs_impl (const char      *path,
                  int              fd,
                  GVariant       **out_xattrs,
-                 GCancellable    *cancellable,
+                 G_GNUC_UNUSED GCancellable *cancellable,
                  GError         **error)
 {
   gboolean ret = FALSE;
@@ -269,7 +269,7 @@ glnx_dfd_name_get_all_xattrs (int            dfd,
 static gboolean
 set_all_xattrs_for_path (const char    *path,
                          GVariant      *xattrs,
-                         GCancellable  *cancellable,
+                         G_GNUC_UNUSED GCancellable *cancellable,
                          GError       **error)
 {
   const guint n = g_variant_n_children (xattrs);
@@ -337,7 +337,7 @@ glnx_dfd_name_set_all_xattrs (int            dfd,
 gboolean
 glnx_fd_set_all_xattrs (int            fd,
                         GVariant      *xattrs,
-                        GCancellable  *cancellable,
+                        G_GNUC_UNUSED GCancellable *cancellable,
                         GError       **error)
 {
   const guint n = g_variant_n_children (xattrs);

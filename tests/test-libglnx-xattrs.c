@@ -122,7 +122,7 @@ do_write_run (GLnxDirFdIterator *dfd_iter, GError **error)
           if (!glnx_fd_get_all_xattrs (fd, &current_xattrs, NULL, error))
             return FALSE;
 
-          for (int i = 0; i < g_variant_n_children (current_xattrs); i++)
+          for (size_t i = 0; i < g_variant_n_children (current_xattrs); i++)
             {
               const char *name, *value;
               g_variant_get_child (current_xattrs, i, "(^&ay^&ay)", &name, &value);
@@ -182,7 +182,7 @@ xattr_thread (gpointer data)
   g_autoptr(GError) local_error = NULL;
   GError **error = &local_error;
   struct XattrWorker *worker = data;
-  guint64 end_time = g_get_monotonic_time () + XATTR_THREAD_RUN_TIME_USECS;
+  gint64 end_time = g_get_monotonic_time () + XATTR_THREAD_RUN_TIME_USECS;
   guint n_read = 0;
 
   while (g_get_monotonic_time () < end_time)

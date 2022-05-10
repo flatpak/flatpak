@@ -229,7 +229,7 @@ open_tmpfile_core (int dfd, const char *subpath,
   const guint count_max = 100;
   { g_autofree char *tmp = g_strconcat (subpath, "/tmp.XXXXXX", NULL);
 
-    for (int count = 0; count < count_max; count++)
+    for (guint count = 0; count < count_max; count++)
       {
         glnx_gen_temp_name (tmp);
 
@@ -660,7 +660,7 @@ glnx_file_get_contents_utf8_at (int                   dfd,
 char *
 glnx_readlinkat_malloc (int            dfd,
                         const char    *subpath,
-                        GCancellable  *cancellable,
+                        G_GNUC_UNUSED GCancellable *cancellable,
                         GError       **error)
 {
   dfd = glnx_dirfd_canonicalize (dfd);
@@ -1106,7 +1106,7 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
                                           uid_t                 uid,
                                           gid_t                 gid,
                                           GLnxFileReplaceFlags  flags,
-                                          GCancellable         *cancellable,
+                                          G_GNUC_UNUSED GCancellable *cancellable,
                                           GError              **error)
 {
   char *dnbuf = strdupa (subpath);
@@ -1130,7 +1130,7 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
                                       &tmpf, error))
     return FALSE;
 
-  if (len == -1)
+  if (len == (gsize) -1)
     len = strlen ((char*)buf);
 
   if (!glnx_try_fallocate (tmpf.fd, 0, len, error))

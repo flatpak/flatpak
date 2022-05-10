@@ -7,6 +7,7 @@ project(
   'c',
   default_options : [
     'c_std=gnu99',
+    'warning_level=3',
   ],
 )
 
