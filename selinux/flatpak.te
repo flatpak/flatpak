@@ -32,6 +32,10 @@ optional_policy(`
    policykit_dbus_chat(flatpak_helper_t)
 ')
 
+optional_policy(`
+   systemd_userdbd_stream_connect(flatpak_helper_t)
+')
+
 optional_policy(`                   
     unconfined_domain(flatpak_helper_t)
 ')
