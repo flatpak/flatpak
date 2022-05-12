@@ -956,6 +956,19 @@ flatpak_run_add_pulseaudio_args (FlatpakBwrap         *bwrap,
 }
 
 static void
+flatpak_run_add_gssproxy_args (FlatpakBwrap *bwrap)
+{
+  /* We only expose the gssproxy user service. The gssproxy system service is
+   * not intended to be exposed to sandboxed environments.
+   */
+  g_autofree char *gssproxy_host_dir = g_build_filename (g_get_user_runtime_dir (), "gssproxy", NULL);
+  const char *gssproxy_sandboxed_dir = "/run/flatpak/gssproxy/";
+
+  if (g_file_test (gssproxy_host_dir, G_FILE_TEST_EXISTS))
+    flatpak_bwrap_add_args (bwrap, "--ro-bind", gssproxy_host_dir, gssproxy_sandboxed_dir, NULL);
+}
+
+static void
 flatpak_run_add_resolved_args (FlatpakBwrap *bwrap)
 {
   const char *resolved_socket = "/run/systemd/resolve/io.systemd.Resolve";
@@ -4611,7 +4624,10 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
     }
 
   if ((app_context->shares & FLATPAK_CONTEXT_SHARED_NETWORK) != 0)
-    flatpak_run_add_resolved_args (bwrap);
+    {
+      flatpak_run_add_gssproxy_args (bwrap);
+      flatpak_run_add_resolved_args (bwrap);
+    }
 
   flatpak_run_add_journal_args (bwrap);
   add_font_path_args (bwrap);
