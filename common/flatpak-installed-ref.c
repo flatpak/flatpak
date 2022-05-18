@@ -526,6 +526,8 @@ flatpak_installed_ref_load_appdata (FlatpakInstalledRef *self,
   gsize length;
   g_autofree char *path = NULL;
   g_autofree char *appdata_name = NULL;
+  g_autofree char *appinfo_path = NULL;
+  g_autofree char *swcatalog_path = NULL;
 
   if (priv->deploy_dir == NULL)
     {
@@ -535,7 +537,15 @@ flatpak_installed_ref_load_appdata (FlatpakInstalledRef *self,
     }
 
   appdata_name = g_strconcat (flatpak_ref_get_name (FLATPAK_REF (self)), ".xml.gz", NULL);
-  path = g_build_filename (priv->deploy_dir, "files/share/app-info/xmls", appdata_name, NULL);
+  appinfo_path = g_build_filename (priv->deploy_dir, "files/share/app-info/xmls", appdata_name, NULL);
+  swcatalog_path = g_build_filename (priv->deploy_dir, "files/share/swcatalog/xml/flatpak.xml.gz", NULL);
+
+  if (g_file_test (appinfo_path, G_FILE_TEST_EXISTS))
+    path = g_steal_pointer (&appinfo_path);
+  else if (g_file_test (swcatalog_path, G_FILE_TEST_EXISTS))
+    path = g_steal_pointer (&swcatalog_path);
+  else
+    return NULL;
 
   if (!g_file_get_contents (path, &data, &length, error))
     return NULL;
