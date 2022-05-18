@@ -5341,13 +5341,18 @@ extract_appstream (OstreeRepo        *repo,
         return FALSE;
     }
 
-  app_info_dir = g_file_resolve_relative_path (root, "files/share/app-info");
+  appstream_file = g_file_resolve_relative_path (root, "files/share/swcatalog/xml/flatpak.xml.gz");
+  if (g_file_test (g_file_get_path (appstream_file), G_FILE_TEST_EXISTS))
+    app_info_dir = g_file_resolve_relative_path (root, "files/share/swcatalog");
+  else
+    {
+      app_info_dir = g_file_resolve_relative_path (root, "files/share/app-info");
+      xmls_dir = g_file_resolve_relative_path (app_info_dir, "xmls");
+      appstream_basename = g_strconcat (id, ".xml.gz", NULL);
+      appstream_file = g_file_get_child (xmls_dir, appstream_basename);
+    }
 
-  xmls_dir = g_file_resolve_relative_path (app_info_dir, "xmls");
   icons_dir = g_file_resolve_relative_path (app_info_dir, "icons/flatpak");
-
-  appstream_basename = g_strconcat (id, ".xml.gz", NULL);
-  appstream_file = g_file_get_child (xmls_dir, appstream_basename);
 
   in = (GInputStream *) g_file_read (appstream_file, cancellable, error);
   if (!in)

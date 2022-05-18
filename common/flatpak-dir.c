@@ -3364,8 +3364,12 @@ read_appdata_xml_from_deploy_dir (GFile *deploy_dir, const char *id)
   g_autoptr(GFileInputStream) appdata_in = NULL;
   gsize size;
 
-  appdata_name = g_strconcat (id, ".xml.gz", NULL);
-  appdata_file  = flatpak_build_file (deploy_dir, "files/share/app-info/xmls", appdata_name, NULL);
+  appdata_file = flatpak_build_file (deploy_dir, "files/share/swcatalog/xml/flatpak.xml.gz",  NULL);
+  if (!g_file_test (g_file_get_path (appdata_file), G_FILE_TEST_EXISTS))
+    {
+      appdata_name = g_strconcat (id, ".xml.gz", NULL);
+      appdata_file = flatpak_build_file (deploy_dir, "files/share/app-info/xmls", appdata_name, NULL);
+    }
 
   appdata_in = g_file_read (appdata_file, NULL, NULL);
   if (appdata_in)
