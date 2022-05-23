@@ -1887,7 +1887,8 @@ static const ExportData default_exports[] = {
   {"XDG_RUNTIME_DIR", NULL},
 
   /* Some env vars are common enough and will affect the sandbox badly
-     if set on the host. We clear these always. */
+     if set on the host. We clear these always. If updating this list,
+     also update the list in flatpak-run.xml. */
   {"PYTHONPATH", NULL},
   {"PERLLIB", NULL},
   {"PERL5LIB", NULL},
@@ -1904,6 +1905,7 @@ static const ExportData default_exports[] = {
   {"GST_PTP_HELPER", NULL},
   {"GST_PTP_HELPER_1_0", NULL},
   {"GST_INSTALL_PLUGINS_HELPER", NULL},
+  {"KRB5CCNAME", NULL},
 };
 
 static const ExportData no_ld_so_cache_exports[] = {
