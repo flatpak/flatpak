@@ -730,7 +730,8 @@ flatpak_instance_allocate_id (char **host_dir_out,
   g_return_val_if_fail (lock_fd_out != NULL, NULL);
   g_return_val_if_fail (*lock_fd_out == -1, NULL);
 
-  g_mkdir_with_parents (base_dir, 0755);
+  if (g_mkdir_with_parents (base_dir, 0755) != 0)
+    return NULL;
 
   flatpak_instance_iterate_all_and_gc (NULL);
 
