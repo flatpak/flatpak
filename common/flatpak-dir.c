@@ -6438,6 +6438,7 @@ flatpak_dir_make_current_ref (FlatpakDir        *self,
                               GCancellable      *cancellable,
                               GError           **error)
 {
+  g_autoptr(GError) local_error = NULL;
   g_autoptr(GFile) base = NULL;
   g_autoptr(GFile) dir = NULL;
   g_autoptr(GFile) current_link = NULL;
@@ -6454,7 +6455,12 @@ flatpak_dir_make_current_ref (FlatpakDir        *self,
 
   current_link = g_file_get_child (dir, "current");
 
-  g_file_delete (current_link, cancellable, NULL);
+  if (!g_file_delete (current_link, cancellable, &local_error) &&
+      !g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+    {
+      g_propagate_error (error, g_steal_pointer (&local_error));
+      return FALSE;
+    }
 
   rest = flatpak_decomposed_peek_arch (ref, NULL);
   if (!g_file_make_symbolic_link (current_link, rest, cancellable, error))
@@ -9065,7 +9071,13 @@ rewrite_one_dynamic_launcher (const char *portal_desktop_dir,
   /* Fix symlink */
   link_file = g_file_new_build_filename (g_get_user_data_dir (), "applications", desktop_name, NULL);
   relative_path = g_build_filename ("..", "xdg-desktop-portal", "applications", new_desktop, NULL);
-  g_file_delete (link_file, NULL, NULL);
+  if (!g_file_delete (link_file, NULL, &local_error) &&
+      !g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+    {
+      g_debug ("Unable to delete desktop file link %s: %s", desktop_name, local_error->message);
+      g_clear_error (&local_error);
+    }
+
   new_link_file = g_file_new_build_filename (g_get_user_data_dir (), "applications", new_desktop, NULL);
   if (!g_file_make_symbolic_link (new_link_file, relative_path, NULL, &local_error))
     {
@@ -11898,9 +11910,26 @@ flatpak_dir_remote_load_cached_summary (FlatpakDir   *self,
       sha256 = g_compute_checksum_for_bytes (G_CHECKSUM_SHA256, mfile_bytes);
       if (strcmp (sha256, checksum) != 0)
         {
-          g_file_delete (main_cache_file, NULL, NULL);
+          g_autoptr(GError) local_error = NULL;
+
+          if (!g_file_delete (main_cache_file, NULL, &local_error) &&
+              !g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+            {
+              g_autofree char *path = g_file_get_path (main_cache_file);
+              g_debug ("Unable to delete file %s: %s", path, local_error->message);
+              g_clear_error (&local_error);
+            }
+
           if (sig_ext)
-            g_file_delete (sig_cache_file, NULL, NULL);
+            {
+              if (!g_file_delete (sig_cache_file, NULL, &local_error) &&
+                  !g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+                {
+                  g_autofree char *path = g_file_get_path (sig_cache_file);
+                  g_debug ("Unable to delete file %s: %s", path, local_error->message);
+                  g_clear_error (&local_error);
+                }
+            }
 
           return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
                                      _("Invalid checksum for indexed summary %s read from %s"),
