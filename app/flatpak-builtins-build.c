@@ -189,7 +189,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   FlatpakRunFlags run_flags;
   const char *group = NULL;
   const char *runtime_key = NULL;
-  const char *dest = NULL;
+  g_autofree char *dest = NULL;
   gboolean is_app = FALSE;
   gboolean is_extension = FALSE;
   gboolean is_app_extension = FALSE;
@@ -487,7 +487,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   /* We add the actual bind below so that we're not shadowed by other extensions or their tmpfs */
 
   if (extension_point)
-    dest = extension_point;
+    dest = g_strdup (extension_point);
   else if (is_app)
     dest = g_strdup ("/app");
   else
