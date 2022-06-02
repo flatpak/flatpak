@@ -2538,7 +2538,10 @@ flatpak_context_export (FlatpakContext *context,
           subpath = g_build_filename (path, rest, NULL);
 
           if (mode == FLATPAK_FILESYSTEM_MODE_CREATE && do_create)
-            g_mkdir_with_parents (subpath, 0755);
+            {
+              if (g_mkdir_with_parents (subpath, 0755) != 0)
+                g_debug ("Unable to create directory %s", subpath);
+            }
 
           if (g_file_test (subpath, G_FILE_TEST_EXISTS))
             {
@@ -2556,7 +2559,10 @@ flatpak_context_export (FlatpakContext *context,
           path = g_build_filename (g_get_home_dir (), filesystem + 2, NULL);
 
           if (mode == FLATPAK_FILESYSTEM_MODE_CREATE && do_create)
-            g_mkdir_with_parents (path, 0755);
+            {
+              if (g_mkdir_with_parents (path, 0755) != 0)
+                g_debug ("Unable to create directory %s", path);
+            }
 
           if (g_file_test (path, G_FILE_TEST_EXISTS))
             flatpak_exports_add_path_expose_or_hide (exports, mode, path);
@@ -2564,7 +2570,10 @@ flatpak_context_export (FlatpakContext *context,
       else if (g_str_has_prefix (filesystem, "/"))
         {
           if (mode == FLATPAK_FILESYSTEM_MODE_CREATE && do_create)
-            g_mkdir_with_parents (filesystem, 0755);
+            {
+              if (g_mkdir_with_parents (filesystem, 0755) != 0)
+                g_debug ("Unable to create directory %s", filesystem);
+            }
 
           if (g_file_test (filesystem, G_FILE_TEST_EXISTS))
             flatpak_exports_add_path_expose_or_hide (exports, mode, filesystem);
@@ -2693,7 +2702,8 @@ flatpak_context_append_bwrap_filesystem (FlatpakContext  *context,
           g_autofree char *src = g_build_filename (g_get_home_dir (), ".var/app", app_id, persist, NULL);
           g_autofree char *dest = g_build_filename (g_get_home_dir (), persist, NULL);
 
-          g_mkdir_with_parents (src, 0755);
+          if (g_mkdir_with_parents (src, 0755) != 0)
+            g_debug ("Unable to create directory %s", src);
 
           flatpak_bwrap_add_bind_arg (bwrap, "--bind", src, dest);
         }
