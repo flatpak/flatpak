@@ -68,6 +68,9 @@ flatpak_bwrap_new (char **env)
   else
     bwrap->envp = g_get_environ ();
 
+  bwrap->sync_fds[0] = -1;
+  bwrap->sync_fds[1] = -1;
+
   return bwrap;
 }
 
@@ -525,4 +528,20 @@ flatpak_bwrap_child_setup_cb (gpointer user_data)
   GArray *fd_array = user_data;
 
   flatpak_bwrap_child_setup (fd_array, TRUE);
+}
+
+/* Add a --sync-fd argument for bwrap(1). Returns the write end of the pipe on
+ * success, or -1 on error. */
+int
+flatpak_bwrap_add_sync_fd (FlatpakBwrap *bwrap)
+{
+  /* --sync-fd is only allowed once */
+  if (bwrap->sync_fds[1] >= 0)
+    return bwrap->sync_fds[1];
+
+  if (pipe2 (bwrap->sync_fds, O_CLOEXEC) < 0)
+    return -1;
+
+  flatpak_bwrap_add_args_data_fd (bwrap, "--sync-fd", bwrap->sync_fds[0], NULL);
+  return bwrap->sync_fds[1];
 }

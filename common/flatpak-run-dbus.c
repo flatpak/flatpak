@@ -117,8 +117,8 @@ flatpak_run_maybe_start_dbus_proxy (FlatpakBwrap *app_bwrap,
   const char *proxy;
   g_autofree char *commandline = NULL;
   g_autoptr(FlatpakBwrap) proxy_bwrap = NULL;
-  int sync_fds[2] = {-1, -1};
   int proxy_start_index;
+  int sync_fd;
 
   if (flatpak_bwrap_is_empty (proxy_arg_bwrap))
     {
@@ -139,19 +139,16 @@ flatpak_run_maybe_start_dbus_proxy (FlatpakBwrap *app_bwrap,
 
   proxy_start_index = proxy_bwrap->argv->len;
 
-  if (pipe2 (sync_fds, O_CLOEXEC) < 0)
+  sync_fd = flatpak_bwrap_add_sync_fd (app_bwrap);
+  if (sync_fd < 0)
     {
       g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (errno),
                            _("Unable to create sync pipe"));
       return FALSE;
     }
 
-  /* read end goes to app */
-  flatpak_bwrap_add_args_data_fd (app_bwrap, "--sync-fd", sync_fds[0], NULL);
-
-  /* write end goes to proxy */
-  flatpak_bwrap_add_fd (proxy_bwrap, sync_fds[1]);
-  flatpak_bwrap_add_arg_printf (proxy_bwrap, "--fd=%d", sync_fds[1]);
+  flatpak_bwrap_add_fd (proxy_bwrap, sync_fd);
+  flatpak_bwrap_add_arg_printf (proxy_bwrap, "--fd=%d", sync_fd);
 
   /* Note: This steals the fds from proxy_arg_bwrap */
   flatpak_bwrap_append_bwrap (proxy_bwrap, proxy_arg_bwrap);
@@ -178,7 +175,7 @@ flatpak_run_maybe_start_dbus_proxy (FlatpakBwrap *app_bwrap,
   g_clear_pointer (&proxy_bwrap, flatpak_bwrap_free);
 
   /* Sync with proxy, i.e. wait until its listening on the sockets */
-  if (read (sync_fds[0], &x, 1) != 1)
+  if (read (app_bwrap->sync_fds[0], &x, 1) != 1)
     {
       g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (errno),
                            _("Failed to sync with dbus proxy"));
