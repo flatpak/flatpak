@@ -537,15 +537,12 @@ handle_deploy (FlatpakSystemHelper   *object,
       const char *verified_digest;
       g_autofree char *upstream_url = NULL;
 
-      ostree_repo_remote_get_url (flatpak_dir_get_repo (system),
-                                  arg_origin,
-                                  &upstream_url,
-                                  NULL);
-
-      if (upstream_url == NULL)
+      if (!ostree_repo_remote_get_url (flatpak_dir_get_repo (system),
+                                       arg_origin,
+                                       &upstream_url,
+                                       &error))
         {
-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Remote %s is disabled", arg_origin);
+          flatpak_invocation_return_error (invocation, error, "Remote %s is disabled", arg_origin);
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
