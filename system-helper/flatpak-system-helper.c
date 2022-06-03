@@ -500,7 +500,7 @@ handle_deploy (FlatpakSystemHelper   *object,
                                        &upstream_url,
                                        &error))
         {
-          flatpak_invocation_return_error (invocation, error, "Remote %s is disabled", arg_origin);
+          flatpak_invocation_return_error (invocation, error, "Unable to get the URL for remote %s", arg_origin);
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
@@ -600,7 +600,7 @@ handle_deploy (FlatpakSystemHelper   *object,
                                        &url,
                                        &error))
         {
-          flatpak_invocation_return_error (invocation, error, "Error getting remote url");
+          flatpak_invocation_return_error (invocation, error, "Unable to get the URL for remote %s", arg_origin);
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
@@ -835,7 +835,7 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
                                        &url,
                                        &error))
         {
-          flatpak_invocation_return_error (invocation, error, "Error getting remote url");
+          flatpak_invocation_return_error (invocation, error, "Unable to get the URL for remote %s", arg_origin);
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
