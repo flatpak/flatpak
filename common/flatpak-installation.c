@@ -3113,9 +3113,13 @@ flatpak_installation_list_unused_refs_with_options (FlatpakInstallation *self,
       g_autoptr(GError) local_error = NULL;
       FlatpakInstalledRef *ref = NULL;
       g_autoptr(FlatpakDecomposed) decomposed = flatpak_decomposed_new_from_ref (*iter, &local_error);
-      if (decomposed)
-        ref = get_ref (dir, decomposed, cancellable, &local_error);
+      if (decomposed == NULL)
+        {
+          g_warning ("Unexpected failure parsing ref %s: %s", *iter, local_error->message);
+          continue;
+        }
 
+      ref = get_ref (dir, decomposed, cancellable, &local_error);
       if (ref != NULL)
         g_ptr_array_add (refs, ref);
       else
