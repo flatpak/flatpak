@@ -1885,7 +1885,7 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
 
       /* For metadata updates, redirect to the metadata-update action which
        * should basically always be allowed */
-      if (ref_str != NULL && g_strcmp0 (ref_str, OSTREE_REPO_METADATA_REF) == 0)
+      if (g_strcmp0 (ref_str, OSTREE_REPO_METADATA_REF) == 0)
         {
           action = "org.freedesktop.Flatpak.metadata-update";
         }
