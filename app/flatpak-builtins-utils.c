@@ -1401,6 +1401,9 @@ ensure_remote_state_arch_for_ref (FlatpakDir         *dir,
                                   GError            **error)
 {
   g_autofree char *ref_arch = flatpak_get_arch_for_ref (ref);
+  if (ref_arch == NULL)
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, "Unable to get arch for %s", ref);
+
   return ensure_remote_state_arch (dir, state, ref_arch, cached, only_sideloaded,cancellable, error);
 }
 
