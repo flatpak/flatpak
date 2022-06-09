@@ -2,6 +2,12 @@ Changes in 1.13.3
 ~~~~~~~~~~~~~~~~~
 Released: not yet
 
+Dependencies:
+
+ * Support curl 7.29 or later as an additional, and the default, HTTP backend
+   alongwith libsoup 2.x (#4943)
+ * Clarify that glib 2.46 or later is now required (#4944)
+
 New features:
 
  * Implement support for renaming dynamic launchers (#4703)
@@ -15,11 +21,17 @@ Bug fixes:
  * Improve --sideload-repo option to take create-usb dirs (#4843)
  * Update the documentation for the 'run' and 'uninstall' commands (#4851)
  * Update the SELinux module to explicitly permit the system helper have read
-   access to /etc/passwd, read and lock access to /var/lib/flatpak, and watch
-   files inside $libexecdir (#4852, #4855)
+   access to /etc/passwd and systemd-userdbd, read and lock access to
+   /var/lib/flatpak, and watch files inside $libexecdir (#4852, #4855, #4892)
  * Fix the error messages and the exit code of the 'uninstall' command when
    non-existent refs are specified (#4857)
  * Remove a stray parenthesis from an error message (#4878)
+ * Be more careful with errors when creating directories and deleting files,
+   and address some memory errors (#4930)
+ * Speed up the tests by not installing the polkit agent (#4942)
+ * Fix support for --noninteractive in the 'uninstall' command, miscellaneous
+   optimizations, and cosmetic improvements to the content, formatting and
+   layout of the user-visible texts (#4947)
 
 Other changes:
 
@@ -27,9 +39,9 @@ Other changes:
    the dynamic launcher portal (#4803, #4808)
  * Remove a pointless test (#4856)
  * Improve various details of the GitHub workflows (#4870)
- * Prepare for the addition of a Meson build (#4871, #4888)
+ * Prepare for the addition of a Meson build (#4871, #4888, #4889, #4890)
  * Only add the specified 'summary-arches' to the compat summary (#4880)
- * Translation updates: id, sv, uk
+ * Translation updates: id, pt, sv, tr, uk
 
 Changes in 1.13.2
 ~~~~~~~~~~~~~~~~~
