@@ -601,6 +601,11 @@ install_polkit_agent (void)
   PolkitAgentListener *listener = NULL;
   g_autoptr(GError) local_error = NULL;
   g_autoptr(GDBusConnection) bus = NULL;
+  const char *on_session;
+
+  on_session = g_getenv ("FLATPAK_SYSTEM_HELPER_ON_SESSION");
+  if (on_session != NULL)
+    return NULL;
 
   bus = g_bus_get_sync (G_BUS_TYPE_SYSTEM, NULL, &local_error);
 
