@@ -471,11 +471,7 @@ load_uri_callback (GObject      *source_object,
           break;
 
         case SOUP_STATUS_IO_ERROR:
-#if !GLIB_CHECK_VERSION(2, 44, 0)
-          code = G_IO_ERROR_BROKEN_PIPE;
-#else
           code = G_IO_ERROR_CONNECTION_CLOSED;
-#endif
           break;
 
         default:
@@ -576,11 +572,7 @@ flatpak_http_should_retry_request (const GError *error,
       g_error_matches (error, G_IO_ERROR, G_IO_ERROR_HOST_NOT_FOUND) ||
       g_error_matches (error, G_IO_ERROR, G_IO_ERROR_HOST_UNREACHABLE) ||
       g_error_matches (error, G_IO_ERROR, G_IO_ERROR_PARTIAL_INPUT) ||
-#if !GLIB_CHECK_VERSION(2, 44, 0)
-      g_error_matches (error, G_IO_ERROR, G_IO_ERROR_BROKEN_PIPE) ||
-#else
       g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CONNECTION_CLOSED) ||
-#endif
       g_error_matches (error, G_RESOLVER_ERROR, G_RESOLVER_ERROR_NOT_FOUND) ||
       g_error_matches (error, G_RESOLVER_ERROR, G_RESOLVER_ERROR_TEMPORARY_FAILURE))
     {

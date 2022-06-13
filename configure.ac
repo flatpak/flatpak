@@ -29,7 +29,7 @@ AC_INIT([Flatpak],
         [flatpak],
         [http://flatpak.org/])
 
-GLIB_REQS=2.44
+GLIB_REQS=2.46
 SYSTEM_BWRAP_REQS=0.5.0
 SYSTEM_DBUS_PROXY_REQS=0.1.0
 OSTREE_REQS=2020.8
