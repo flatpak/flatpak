@@ -1335,3 +1335,170 @@ flatpak_g_uri_get_flags (GUri *uri)
 }
 
 #endif /* GLIB_CHECK_VERSION (2, 66, 0) */
+
+
+static void
+append_form_encoded (GString *str, const char *in)
+{
+  const unsigned char *s = (const unsigned char *)in;
+
+  while (*s)
+    {
+      if (*s == ' ')
+        {
+          g_string_append_c (str, '+');
+          s++;
+        }
+      else if (!g_ascii_isalnum (*s) && (*s != '-') && (*s != '_')
+               && (*s != '.'))
+        g_string_append_printf (str, "%%%02X", (int)*s++);
+      else
+        g_string_append_c (str, *s++);
+    }
+}
+
+void
+flatpak_uri_encode_query_arg (GString *str,
+                              const char *key,
+                              const char *value)
+{
+  if (str->len)
+    g_string_append_c (str, '&');
+  append_form_encoded (str, key);
+
+  g_string_append_c (str, '=');
+  append_form_encoded (str, value);
+}
+
+
+/* This is a simplified copy of soup_header_parse_param_list() to avoid a soup dependency */
+
+static const char *
+skip_lws (const char *s)
+{
+  while (g_ascii_isspace (*s))
+    s++;
+  return s;
+}
+
+static const char *
+unskip_lws (const char *s, const char *start)
+{
+  while (s > start && g_ascii_isspace (*(s - 1)))
+    s--;
+  return s;
+}
+
+static const char *
+skip_delims (const char *s, char delim)
+{
+  /* The grammar allows for multiple delimiters */
+  while (g_ascii_isspace (*s) || *s == delim)
+    s++;
+  return s;
+}
+
+static const char *
+skip_item (const char *s, char delim)
+{
+  gboolean quoted = FALSE;
+  const char *start = s;
+
+  /* A list item ends at the last non-whitespace character
+   * before a delimiter which is not inside a quoted-string. Or
+   * at the end of the string.
+   */
+
+  while (*s)
+    {
+      if (*s == '"')
+        quoted = !quoted;
+      else if (quoted)
+        {
+          if (*s == '\\' && *(s + 1))
+            s++;
+        }
+      else
+        {
+          if (*s == delim)
+            break;
+        }
+      s++;
+    }
+
+  return unskip_lws (s, start);
+}
+
+static GSList *
+parse_list (const char *header, char delim)
+{
+  GSList *list = NULL;
+  const char *end;
+
+  header = skip_delims (header, delim);
+  while (*header)
+    {
+      end = skip_item (header, delim);
+      list = g_slist_prepend (list, g_strndup (header, end - header));
+      header = skip_delims (end, delim);
+    }
+
+  return g_slist_reverse (list);
+}
+
+static void
+decode_quoted_string (char *quoted_string)
+{
+  char *src, *dst;
+
+  src = quoted_string + 1;
+  dst = quoted_string;
+  while (*src && *src != '"')
+    {
+      if (*src == '\\' && *(src + 1))
+        src++;
+      *dst++ = *src++;
+    }
+  *dst = '\0';
+}
+
+GHashTable *
+flatpak_parse_http_header_param_list (const char *header)
+{
+  GHashTable *params;
+  GSList *list, *iter;
+  char *eq, *name_end, *value;
+
+  params = g_hash_table_new_full (g_str_hash,
+                                  g_str_equal,
+                                  g_free, g_free);
+
+  list = parse_list (header, ',');
+  for (iter = list; iter; iter = iter->next)
+    {
+      g_autofree char *item = iter->data;
+
+      eq = strchr (item, '=');
+      if (eq)
+        {
+          name_end = (char *)unskip_lws (eq, item);
+          if (name_end == item)
+            continue;
+
+          *name_end = '\0';
+
+          value = (char *)skip_lws (eq + 1);
+          if (*value == '"')
+            decode_quoted_string (value);
+        }
+      else
+        value = NULL;
+
+      g_autofree char *key =  g_ascii_strdown (item, -1);
+      if (!g_hash_table_contains (params, key))
+        g_hash_table_replace (params, g_steal_pointer (&key), g_strdup (value));
+    }
+
+  g_slist_free (list);
+  return params;
+}

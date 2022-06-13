@@ -27,6 +27,12 @@
 
 /* This file is mainly a backport of GUri for older versions of glib, and some helpers around it */
 
+void flatpak_uri_encode_query_arg (GString *query,
+                                   const char *key,
+                                   const char *value);
+GHashTable * flatpak_parse_http_header_param_list (const char *header);
+
+
 /* Same as SOUP_HTTP_URI_FLAGS, means all possible flags for http uris */
 #define FLATPAK_HTTP_URI_FLAGS (G_URI_FLAGS_HAS_PASSWORD | G_URI_FLAGS_ENCODED_PATH | G_URI_FLAGS_ENCODED_QUERY | G_URI_FLAGS_ENCODED_FRAGMENT | G_URI_FLAGS_SCHEME_NORMALIZE)
 
