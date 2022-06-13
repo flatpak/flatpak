@@ -30,6 +30,7 @@
 #include "flatpak-progress-private.h"
 #include "flatpak-transaction-private.h"
 #include "flatpak-utils-private.h"
+#include "flatpak-uri-private.h"
 #include "flatpak-variant-impl-private.h"
 
 /**
@@ -4355,7 +4356,7 @@ handle_runtime_repo_deps (FlatpakTransaction *self,
   g_autofree char *runtime_url = NULL;
   g_autofree char *new_remote = NULL;
   g_autofree char *basename = NULL;
-  g_autoptr(SoupURI) uri = NULL;
+  g_autoptr(GUri) uri = NULL;
   g_auto(GStrv) remotes = NULL;
   g_autoptr(GKeyFile) config = NULL;
   g_autoptr(GBytes) gpg_key = NULL;
@@ -4369,8 +4370,8 @@ handle_runtime_repo_deps (FlatpakTransaction *self,
 
   g_assert (dep_keyfile != NULL);
 
-  uri = soup_uri_new (dep_url);
-  basename = g_path_get_basename (soup_uri_get_path (uri));
+  uri = g_uri_parse (dep_url, FLATPAK_HTTP_URI_FLAGS | G_URI_FLAGS_PARSE_RELAXED, NULL);
+  basename = g_path_get_basename (g_uri_get_path (uri));
   /* Strip suffix */
   t = strchr (basename, '.');
   if (t != NULL)

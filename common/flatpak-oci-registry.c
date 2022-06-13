@@ -31,6 +31,7 @@
 #include "flatpak-oci-registry-private.h"
 #include "flatpak-utils-base-private.h"
 #include "flatpak-utils-private.h"
+#include "flatpak-uri-private.h"
 #include "flatpak-dir-private.h"
 #include "flatpak-zstd-decompressor-private.h"
 
@@ -68,7 +69,7 @@ struct FlatpakOciRegistry
 
   /* Remote repos */
   SoupSession *soup_session;
-  SoupURI     *base_uri;
+  GUri        *base_uri;
 };
 
 typedef struct
@@ -88,6 +89,20 @@ G_DEFINE_TYPE_WITH_CODE (FlatpakOciRegistry, flatpak_oci_registry, G_TYPE_OBJECT
                          G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE,
                                                 flatpak_oci_registry_initable_iface_init))
 
+static gchar *
+parse_relative_uri (GUri *base_uri,
+                    const char *subpath,
+                    GError **error)
+{
+  g_autoptr(GUri) uri = NULL;
+
+  uri = g_uri_parse_relative (base_uri, subpath, FLATPAK_HTTP_URI_FLAGS | G_URI_FLAGS_PARSE_RELAXED, error);
+  if (uri == NULL)
+    return NULL;
+
+  return g_uri_to_string_partial (uri, G_URI_HIDE_PASSWORD);
+}
+
 static void
 flatpak_oci_registry_finalize (GObject *object)
 {
@@ -97,7 +112,7 @@ flatpak_oci_registry_finalize (GObject *object)
     close (self->dfd);
 
   g_clear_object (&self->soup_session);
-  g_clear_pointer (&self->base_uri, soup_uri_free);
+  g_clear_pointer (&self->base_uri, g_uri_unref);
   g_free (self->uri);
   g_free (self->token);
 
@@ -312,7 +327,7 @@ local_load_file (int           dfd,
 
 /* We just support the first http uri for now */
 static char *
-choose_alt_uri (SoupURI      *base_uri,
+choose_alt_uri (GUri        *base_uri,
                 const char **alt_uris)
 {
   int i;
@@ -332,7 +347,7 @@ choose_alt_uri (SoupURI      *base_uri,
 
 static GBytes *
 remote_load_file (SoupSession  *soup_session,
-                  SoupURI      *base,
+                  GUri         *base,
                   const char   *subpath,
                   const char  **alt_uris,
                   const char   *token,
@@ -340,22 +355,15 @@ remote_load_file (SoupSession  *soup_session,
                   GCancellable *cancellable,
                   GError      **error)
 {
-  g_autoptr(SoupURI) uri = NULL;
   g_autoptr(GBytes) bytes = NULL;
   g_autofree char *uri_s = NULL;
 
   uri_s = choose_alt_uri (base, alt_uris);
   if (uri_s == NULL)
     {
-      uri = soup_uri_new_with_base (base, subpath);
-      if (uri == NULL)
-        {
-          g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
-                       "Invalid relative url %s", subpath);
-          return NULL;
-        }
-
-      uri_s = soup_uri_to_string (uri, FALSE);
+      uri_s = parse_relative_uri (base, subpath, error);
+      if (uri_s == NULL)
+        return NULL;
     }
 
   bytes = flatpak_load_uri (soup_session,
@@ -532,7 +540,7 @@ flatpak_oci_registry_ensure_remote (FlatpakOciRegistry *self,
                                     GCancellable       *cancellable,
                                     GError            **error)
 {
-  g_autoptr(SoupURI) baseuri = NULL;
+  g_autoptr(GUri) baseuri = NULL;
 
   if (for_write)
     {
@@ -542,7 +550,7 @@ flatpak_oci_registry_ensure_remote (FlatpakOciRegistry *self,
     }
 
   self->soup_session = flatpak_create_soup_session (PACKAGE_STRING);
-  baseuri = soup_uri_new (self->uri);
+  baseuri = g_uri_parse (self->uri, FLATPAK_HTTP_URI_FLAGS | G_URI_FLAGS_PARSE_RELAXED, NULL);
   if (baseuri == NULL)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
@@ -783,7 +791,6 @@ flatpak_oci_registry_download_blob (FlatpakOciRegistry    *self,
     }
   else
     {
-      g_autoptr(SoupURI) uri = NULL;
       g_autofree char *uri_s = NULL;
       g_autofree char *checksum = NULL;
       g_autofree char *tmpfile_name = g_strdup_printf ("oci-layer-XXXXXX");
@@ -794,15 +801,9 @@ flatpak_oci_registry_download_blob (FlatpakOciRegistry    *self,
       uri_s = choose_alt_uri (self->base_uri, alt_uris);
       if (uri_s == NULL)
         {
-          uri = soup_uri_new_with_base (self->base_uri, subpath);
-          if (uri == NULL)
-            {
-              g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
-                           "Invalid relative url %s", subpath);
-              return -1;
-            }
-
-          uri_s = soup_uri_to_string (uri, FALSE);
+          uri_s = parse_relative_uri (self->base_uri, subpath, error);
+          if (uri_s == NULL)
+            return -1;
         }
 
 
@@ -902,20 +903,12 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
     }
   else
     {
-      g_autoptr(SoupURI) uri = NULL;
-      g_autofree char *uri_s = NULL;
-
-      uri = soup_uri_new_with_base (source_registry->base_uri, src_subpath);
-      if (uri == NULL)
-        {
-          g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
-                       "Invalid relative url %s", src_subpath);
-          return FALSE;
-        }
+      g_autofree char *uri_s = parse_relative_uri (source_registry->base_uri, src_subpath, error);
+      if (uri_s == NULL)
+        return FALSE;
 
       out_stream = g_unix_output_stream_new (tmpf.fd, FALSE);
 
-      uri_s = soup_uri_to_string (uri, FALSE);
       if (!flatpak_download_http_uri (source_registry->soup_session, uri_s,
                                       FLATPAK_HTTP_FLAGS_ACCEPT_OCI, out_stream,
                                       self->token,
@@ -993,9 +986,12 @@ get_token_for_www_auth (FlatpakOciRegistry *self,
   g_autoptr(GHashTable) args = NULL;
   const char *realm, *service, *scope, *token, *body_data;
   g_autofree char *default_scope = NULL;
-  g_autoptr(SoupURI) auth_uri = NULL;
+  g_autoptr(GUri) auth_uri = NULL;
+  g_autofree char *auth_uri_s = NULL;
   g_autoptr(GBytes) body = NULL;
   g_autoptr(JsonNode) json = NULL;
+  g_autofree gchar *encoded_form = NULL;
+  GUri *tmp_uri;
 
   if (g_ascii_strncasecmp (www_authenticate, "Bearer ", strlen ("Bearer ")) != 0)
     {
@@ -1012,7 +1008,7 @@ get_token_for_www_auth (FlatpakOciRegistry *self,
       return NULL;
     }
 
-  auth_uri = soup_uri_new (realm);
+  auth_uri = g_uri_parse (realm, FLATPAK_HTTP_URI_FLAGS | G_URI_FLAGS_PARSE_RELAXED, NULL);
   if (auth_uri == NULL)
     {
       flatpak_fail (error, _("Invalid realm in authentication request"));
@@ -1029,9 +1025,20 @@ get_token_for_www_auth (FlatpakOciRegistry *self,
     scope = default_scope = g_strdup_printf("repository:%s:pull", repository);
   g_hash_table_insert (args, "scope", (char *)scope);
 
-  soup_uri_set_query_from_form (auth_uri, args);
+  encoded_form = soup_form_encode_hash (args);
+  tmp_uri = g_uri_build (g_uri_get_flags (auth_uri),
+                         g_uri_get_scheme (auth_uri),
+                         g_uri_get_userinfo (auth_uri),
+                         g_uri_get_host (auth_uri),
+                         g_uri_get_port (auth_uri),
+                         g_uri_get_path (auth_uri),
+                         encoded_form,
+                         g_uri_get_fragment (auth_uri));
+  g_uri_unref (auth_uri);
+  auth_uri = tmp_uri;
+  auth_uri_s = g_uri_to_string_partial (auth_uri, G_URI_HIDE_PASSWORD);
 
-  auth_msg = soup_message_new_from_uri ("GET", auth_uri);
+  auth_msg = soup_message_new ("GET", auth_uri_s);
 
   if (auth)
     {
@@ -1111,7 +1118,7 @@ flatpak_oci_registry_get_token (FlatpakOciRegistry *self,
                                 GError            **error)
 {
   g_autofree char *subpath = NULL;
-  g_autoptr(SoupURI) uri = NULL;
+  g_autofree char *uri_s = NULL;
   g_autoptr(GInputStream) stream = NULL;
   g_autoptr(SoupMessage) msg = NULL;
   g_autofree char *www_authenticate = NULL;
@@ -1126,15 +1133,11 @@ flatpak_oci_registry_get_token (FlatpakOciRegistry *self,
   if (self->dfd != -1)
     return g_strdup (""); // No tokens for local repos
 
-  uri = soup_uri_new_with_base (self->base_uri, subpath);
-  if (uri == NULL)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
-                   "Invalid relative url %s", subpath);
-      return NULL;
-    }
+  uri_s = parse_relative_uri (self->base_uri, subpath, error);
+  if (uri_s == NULL)
+    return NULL;
 
-  msg = soup_message_new_from_uri ("HEAD", uri);
+  msg = soup_message_new ("HEAD", uri_s);
 
   soup_message_headers_replace (msg->request_headers, "Accept",
                                 FLATPAK_OCI_MEDIA_TYPE_IMAGE_MANIFEST ", " FLATPAK_DOCKER_MEDIA_TYPE_IMAGE_MANIFEST2);
@@ -2066,14 +2069,15 @@ flatpak_oci_registry_find_delta_manifest (FlatpakOciRegistry    *registry,
 
   if (delta_manifest_url != NULL)
     {
-      g_autoptr(SoupURI) soup_uri = soup_uri_new_with_base (registry->base_uri, delta_manifest_url);
-      g_autofree char *uri_s = soup_uri_to_string (soup_uri, FALSE);
+      g_autoptr(GBytes) bytes = NULL;
+      g_autofree char *uri_s = parse_relative_uri (registry->base_uri, delta_manifest_url, NULL);
 
-      g_autoptr(GBytes) bytes = flatpak_load_uri (registry->soup_session,
-                                                  uri_s, FLATPAK_HTTP_FLAGS_ACCEPT_OCI,
-                                                  registry->token,
-                                                  NULL, NULL, NULL,
-                                                  cancellable, NULL);
+      if (uri_s != NULL)
+        bytes = flatpak_load_uri (registry->soup_session,
+                                  uri_s, FLATPAK_HTTP_FLAGS_ACCEPT_OCI,
+                                  registry->token,
+                                  NULL, NULL, NULL,
+                                  cancellable, NULL);
       if (bytes != NULL)
         {
           g_autoptr(FlatpakOciVersioned) versioned =
@@ -2741,14 +2745,16 @@ flatpak_oci_index_ensure_cached (SoupSession  *soup_session,
                                  GError      **error)
 {
   g_autofree char *index_path = g_file_get_path (index);
-  g_autoptr(SoupURI) base_uri = NULL;
-  g_autoptr(SoupURI) query_uri = NULL;
+  g_autoptr(GUri) base_uri = NULL;
+  g_autoptr(GUri) query_uri = NULL;
   g_autofree char *query_uri_s = NULL;
+  g_autofree char *query_form_s = NULL;
   g_autoptr(GString) path = NULL;
   g_autofree char *tag = NULL;
   const char *oci_arch = NULL;
   gboolean success = FALSE;
   g_autoptr(GError) local_error = NULL;
+  GUri *tmp_uri;
 
   if (!g_str_has_prefix (uri, "oci+http:") && !g_str_has_prefix (uri, "oci+https:"))
     {
@@ -2757,7 +2763,7 @@ flatpak_oci_index_ensure_cached (SoupSession  *soup_session,
       return FALSE;
     }
 
-  base_uri = soup_uri_new (uri + 4);
+  base_uri = g_uri_parse (uri + 4, FLATPAK_HTTP_URI_FLAGS | G_URI_FLAGS_PARSE_RELAXED, NULL);
   if (base_uri == NULL)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
@@ -2765,7 +2771,7 @@ flatpak_oci_index_ensure_cached (SoupSession  *soup_session,
       return FALSE;
     }
 
-  path = g_string_new (soup_uri_get_path (base_uri));
+  path = g_string_new (g_uri_get_path (base_uri));
 
   /* Append /index/static or /static to the path.
    */
@@ -2777,31 +2783,57 @@ flatpak_oci_index_ensure_cached (SoupSession  *soup_session,
 
   g_string_append (path, "static");
 
-  soup_uri_set_path (base_uri, path->str);
+  /* Replace path */
+  tmp_uri = g_uri_build (g_uri_get_flags (base_uri),
+                         g_uri_get_scheme (base_uri),
+                         g_uri_get_userinfo (base_uri),
+                         g_uri_get_host (base_uri),
+                         g_uri_get_port (base_uri),
+                         path->str,
+                         g_uri_get_query (base_uri),
+                         g_uri_get_fragment (base_uri));
+  g_uri_unref (base_uri);
+  base_uri = tmp_uri;
 
   /* The fragment of the URI defines a tag to look for; if absent
    * or empty, we use 'latest'
    */
-  tag = g_strdup (soup_uri_get_fragment (base_uri));
+  tag = g_strdup (g_uri_get_fragment (base_uri));
   if (tag == NULL || tag[0] == '\0')
     {
       g_clear_pointer (&tag, g_free);
       tag = g_strdup ("latest");
     }
 
-  soup_uri_set_fragment (base_uri, NULL);
-
-  query_uri = soup_uri_copy (base_uri);
+  /* Remove fragment */
+  tmp_uri = g_uri_build (g_uri_get_flags (base_uri),
+                         g_uri_get_scheme (base_uri),
+                         g_uri_get_userinfo (base_uri),
+                         g_uri_get_host (base_uri),
+                         g_uri_get_port (base_uri),
+                         g_uri_get_path (base_uri),
+                         g_uri_get_query (base_uri),
+                         NULL);
+  g_uri_unref (base_uri);
+  base_uri = tmp_uri;
 
   oci_arch = flatpak_arch_to_oci_arch (flatpak_get_arch ());
 
-  soup_uri_set_query_from_fields (query_uri,
-                                  "label:org.flatpak.ref:exists", "1",
-                                  "architecture", oci_arch,
-                                  "os", "linux",
-                                  "tag", tag,
-                                  NULL);
-  query_uri_s = soup_uri_to_string (query_uri, FALSE);
+  query_form_s = soup_form_encode ("label:org.flatpak.ref:exists", "1",
+                                   "architecture", oci_arch,
+                                   "os", "linux",
+                                   "tag", tag,
+                                   NULL);
+  query_uri = g_uri_build (g_uri_get_flags (base_uri),
+                           g_uri_get_scheme (base_uri),
+                           g_uri_get_userinfo (base_uri),
+                           g_uri_get_host (base_uri),
+                           g_uri_get_port (base_uri),
+                           g_uri_get_path (base_uri),
+                           query_form_s,
+                           g_uri_get_fragment (base_uri));
+
+  query_uri_s = g_uri_to_string_partial (query_uri, G_URI_HIDE_PASSWORD);
 
   success = flatpak_cache_http_uri (soup_session,
                                     query_uri_s,
@@ -2814,7 +2846,7 @@ flatpak_oci_index_ensure_cached (SoupSession  *soup_session,
       g_error_matches (local_error, FLATPAK_HTTP_ERROR, FLATPAK_HTTP_ERROR_NOT_CHANGED))
     {
       if (index_uri_out)
-        *index_uri_out = soup_uri_to_string (base_uri, FALSE);
+        *index_uri_out = g_uri_to_string_partial (base_uri, G_URI_HIDE_PASSWORD);
     }
   else
     {
@@ -2879,7 +2911,6 @@ flatpak_oci_index_make_summary (GFile        *index,
                                 GError      **error)
 {
   g_autoptr(FlatpakOciIndexResponse) response = NULL;
-  g_autoptr(SoupURI) registry_uri = NULL;
   g_autofree char *registry_uri_s = NULL;
   int i;
   g_autoptr(GArray) images = g_array_new (FALSE, TRUE, sizeof (ImageInfo));
@@ -2889,15 +2920,16 @@ flatpak_oci_index_make_summary (GFile        *index,
   g_autoptr(GVariantBuilder) summary_builder = NULL;
   g_autoptr(GVariant) summary = NULL;
   g_autoptr(GVariantBuilder) ref_data_builder = NULL;
-  g_autoptr(SoupURI) soup_uri = NULL;
+  g_autoptr(GUri) uri = NULL;
 
   response = load_oci_index (index, cancellable, error);
   if (!response)
     return NULL;
 
-  soup_uri = soup_uri_new (index_uri);
-  registry_uri = soup_uri_new_with_base (soup_uri, response->registry);
-  registry_uri_s = soup_uri_to_string (registry_uri, FALSE);
+  uri = g_uri_parse (index_uri, FLATPAK_HTTP_URI_FLAGS | G_URI_FLAGS_PARSE_RELAXED, NULL);
+  registry_uri_s = parse_relative_uri (uri, response->registry, error);
+  if (registry_uri_s == NULL)
+    return NULL;
 
   for (i = 0; response->results != NULL && response->results[i] != NULL; i++)
     {
@@ -3083,10 +3115,13 @@ add_icon_image (SoupSession  *soup_session,
     }
   else
     {
-      g_autoptr(SoupURI) base_uri = soup_uri_new (index_uri);
-      g_autoptr(SoupURI) icon_uri = soup_uri_new_with_base (base_uri, icon_data);
-      g_autofree char *icon_uri_s = soup_uri_to_string (icon_uri, FALSE);
+      g_autoptr(GUri) base_uri = g_uri_parse (index_uri, FLATPAK_HTTP_URI_FLAGS | G_URI_FLAGS_PARSE_RELAXED, NULL);
+      g_autofree char *icon_uri_s = NULL;
       g_autoptr(GError) local_error = NULL;
+
+      icon_uri_s = parse_relative_uri (base_uri, icon_data, error);
+      if (icon_uri_s == NULL)
+        return FALSE;
 
       if (!flatpak_cache_http_uri (soup_session, icon_uri_s,
                                    0 /* flags */,
