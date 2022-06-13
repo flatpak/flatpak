@@ -165,7 +165,7 @@ static gboolean flatpak_dir_lookup_remote_filter (FlatpakDir *self,
                                                   GRegex    **deny_regex,
                                                   GError **error);
 
-static void ensure_soup_session (FlatpakDir *self);
+static void ensure_http_session (FlatpakDir *self);
 
 static void flatpak_dir_log (FlatpakDir *self,
                              const char *file,
@@ -241,7 +241,7 @@ struct FlatpakDir
   GRegex          *masked;
   GRegex          *pinned;
 
-  SoupSession     *soup_session;
+  FlatpakHttpSession *http_session;
 };
 
 G_LOCK_DEFINE_STATIC (config_cache);
@@ -1160,14 +1160,14 @@ flatpak_remote_state_fetch_commit_object (FlatpakRemoteState *self,
   if (!ostree_repo_remote_get_url (dir->repo, self->remote_name, &base_url, error))
     return NULL;
 
-  ensure_soup_session (dir);
+  ensure_http_session (dir);
 
   part1 = g_strndup (checksum, 2);
   part2 = g_strdup_printf ("%s.commit", checksum + 2);
 
   object_url = g_build_filename (base_url, "objects", part1, part2, NULL);
 
-  bytes = flatpak_load_uri (dir->soup_session, object_url, 0, token,
+  bytes = flatpak_load_uri (dir->http_session, object_url, 0, token,
                             NULL, NULL, NULL,
                             cancellable, error);
   if (bytes == NULL)
@@ -2586,7 +2586,7 @@ flatpak_dir_finalize (GObject *object)
   if (self->system_helper_bus != (gpointer) 1)
     g_clear_object (&self->system_helper_bus);
 
-  g_clear_object (&self->soup_session);
+  g_clear_pointer (&self->http_session, flatpak_http_session_free);
   g_clear_pointer (&self->summary_cache, g_hash_table_unref);
   g_clear_pointer (&self->remote_filters, g_hash_table_unref);
   g_clear_pointer (&self->masked, g_regex_unref);
@@ -4937,7 +4937,7 @@ flatpak_dir_update_oci_index (FlatpakDir   *self,
   if (index_cache == NULL)
     return NULL;
 
-  ensure_soup_session (self);
+  ensure_http_session (self);
 
   if (!ostree_repo_remote_get_url (self->repo,
                                    remote,
@@ -4945,7 +4945,7 @@ flatpak_dir_update_oci_index (FlatpakDir   *self,
                                    error))
     return NULL;
 
-  if (!flatpak_oci_index_ensure_cached (self->soup_session, oci_uri,
+  if (!flatpak_oci_index_ensure_cached (self->http_session, oci_uri,
                                         index_cache, index_uri_out,
                                         cancellable, &local_error))
     {
@@ -5043,9 +5043,9 @@ flatpak_dir_update_appstream_oci (FlatpakDir          *self,
                        FALSE, &icons_dfd, error))
     return FALSE;
 
-  ensure_soup_session (self);
+  ensure_http_session (self);
 
-  appstream = flatpak_oci_index_make_appstream (self->soup_session,
+  appstream = flatpak_oci_index_make_appstream (self->http_session,
                                                 index_cache,
                                                 index_uri,
                                                 arch,
@@ -5476,15 +5476,15 @@ repo_pull (OstreeRepo                           *self,
 }
 
 static void
-ensure_soup_session (FlatpakDir *self)
+ensure_http_session (FlatpakDir *self)
 {
-  if (g_once_init_enter (&self->soup_session))
+  if (g_once_init_enter (&self->http_session))
     {
-      SoupSession *soup_session;
+      FlatpakHttpSession *http_session;
 
-      soup_session = flatpak_create_soup_session (PACKAGE_STRING);
+      http_session = flatpak_create_http_session (PACKAGE_STRING);
 
-      g_once_init_leave (&self->soup_session, soup_session);
+      g_once_init_leave (&self->http_session, http_session);
     }
 }
 
@@ -5687,8 +5687,8 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
         }
       else
         {
-          ensure_soup_session (self);
-          bytes = flatpak_load_uri (self->soup_session, extra_data_uri, 0, NULL,
+          ensure_http_session (self);
+          bytes = flatpak_load_uri (self->http_session, extra_data_uri, 0, NULL,
                                     extra_data_progress_report, progress, NULL,
                                     cancellable, error);
         }
@@ -12070,7 +12070,7 @@ remote_verify_signature (OstreeRepo *repo,
 }
 
 static GBytes *
-load_uri_with_fallback (SoupSession           *soup_session,
+load_uri_with_fallback (FlatpakHttpSession    *http_session,
                         const char            *uri,
                         const char            *uri2,
                         FlatpakHTTPFlags       flags,
@@ -12081,7 +12081,7 @@ load_uri_with_fallback (SoupSession           *soup_session,
   g_autoptr(GError) local_error = NULL;
   GBytes *res;
 
-  res = flatpak_load_uri (soup_session, uri, flags, token,
+  res = flatpak_load_uri (http_session, uri, flags, token,
                           NULL, NULL, NULL,
                           cancellable, &local_error);
   if (res)
@@ -12093,7 +12093,7 @@ load_uri_with_fallback (SoupSession           *soup_session,
       return NULL;
     }
 
-  return flatpak_load_uri (soup_session, uri2, flags, token,
+  return flatpak_load_uri (http_session, uri2, flags, token,
                            NULL, NULL, NULL,
                            cancellable, error);
 }
@@ -12117,7 +12117,7 @@ flatpak_dir_remote_fetch_summary_index (FlatpakDir   *self,
   g_autoptr(GBytes) index_sig = NULL;
   gboolean gpg_verify_summary;
 
-  ensure_soup_session (self);
+  ensure_http_session (self);
 
   if (!ostree_repo_remote_get_url (self->repo, name_or_uri, &url, error))
     return FALSE;
@@ -12169,7 +12169,7 @@ flatpak_dir_remote_fetch_summary_index (FlatpakDir   *self,
 
       g_debug ("Fetching summary index file for remote ‘%s’", name_or_uri);
 
-      dl_index = flatpak_load_uri (self->soup_session, index_url, 0, NULL,
+      dl_index = flatpak_load_uri (self->http_session, index_url, 0, NULL,
                                    NULL, NULL, NULL,
                                    cancellable, error);
       if (dl_index == NULL)
@@ -12198,7 +12198,7 @@ flatpak_dir_remote_fetch_summary_index (FlatpakDir   *self,
           g_autoptr(GError) dl_sig_error = NULL;
           g_autoptr (GBytes) dl_index_sig = NULL;
 
-          dl_index_sig = load_uri_with_fallback (self->soup_session, index_sig_url, index_sig_url2, 0, NULL,
+          dl_index_sig = load_uri_with_fallback (self->http_session, index_sig_url, index_sig_url2, 0, NULL,
                                                  cancellable, &dl_sig_error);
           if (dl_index_sig == NULL)
             {
@@ -12267,7 +12267,7 @@ flatpak_dir_remote_fetch_indexed_summary (FlatpakDir   *self,
   g_autofree char *checksum = NULL;
   g_autofree char *cache_name = NULL;
 
-  ensure_soup_session (self);
+  ensure_http_session (self);
 
   if (!ostree_repo_remote_get_url (self->repo, name_or_uri, &url, error))
     return FALSE;
@@ -12340,7 +12340,7 @@ flatpak_dir_remote_fetch_indexed_summary (FlatpakDir   *self,
 
           g_debug ("Fetching indexed summary delta %s for remote ‘%s’", delta_filename, name_or_uri);
 
-          g_autoptr(GBytes) delta = flatpak_load_uri (self->soup_session, delta_url, 0, NULL,
+          g_autoptr(GBytes) delta = flatpak_load_uri (self->http_session, delta_url, 0, NULL,
                                                       NULL, NULL, NULL,
                                                       cancellable, &delta_error);
           if (delta == NULL)
@@ -12367,7 +12367,7 @@ flatpak_dir_remote_fetch_indexed_summary (FlatpakDir   *self,
           g_autofree char *filename = g_strconcat (checksum, ".gz", NULL);
           g_debug ("Fetching indexed summary file %s for remote ‘%s’", filename, name_or_uri);
           g_autofree char *subsummary_url = g_build_filename (url, "summaries", filename, NULL);
-          summary_z = flatpak_load_uri (self->soup_session, subsummary_url, 0, NULL,
+          summary_z = flatpak_load_uri (self->http_session, subsummary_url, 0, NULL,
                                         NULL, NULL, NULL,
                                         cancellable, error);
           if (summary_z == NULL)

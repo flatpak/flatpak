@@ -552,6 +552,20 @@ flatpak_create_soup_session (const char *user_agent)
   return soup_session;
 }
 
+FlatpakHttpSession *
+flatpak_create_http_session (const char *user_agent)
+{
+  return (FlatpakHttpSession *)flatpak_create_soup_session (user_agent);
+}
+
+void
+flatpak_http_session_free (FlatpakHttpSession* http_session)
+{
+  SoupSession *soup_session = (SoupSession *)http_session;
+
+  g_object_unref (soup_session);
+}
+
 /* Check whether a particular operation should be retried. This is entirely
  * based on how it failed (if at all) last time, and whether the operation has
  * some retries left. The retry count is set when the operation is first
@@ -585,7 +599,7 @@ flatpak_http_should_retry_request (const GError *error,
 }
 
 static GBytes *
-flatpak_load_http_uri_once (SoupSession           *soup_session,
+flatpak_load_http_uri_once (FlatpakHttpSession    *http_session,
                             const char            *uri,
                             FlatpakHTTPFlags       flags,
                             const char            *token,
@@ -595,6 +609,7 @@ flatpak_load_http_uri_once (SoupSession           *soup_session,
                             GCancellable          *cancellable,
                             GError               **error)
 {
+  SoupSession *soup_session = (SoupSession *)http_session;
   GBytes *bytes = NULL;
   g_autoptr(GMainContext) context = NULL;
   g_autoptr(SoupRequestHTTP) request = NULL;
@@ -652,7 +667,7 @@ flatpak_load_http_uri_once (SoupSession           *soup_session,
 }
 
 GBytes *
-flatpak_load_uri (SoupSession           *soup_session,
+flatpak_load_uri (FlatpakHttpSession    *http_session,
                   const char            *uri,
                   FlatpakHTTPFlags       flags,
                   const char            *token,
@@ -693,7 +708,7 @@ flatpak_load_uri (SoupSession           *soup_session,
             progress (0, user_data); /* Reset the progress */
         }
 
-      bytes = flatpak_load_http_uri_once (soup_session, uri, flags,
+      bytes = flatpak_load_http_uri_once (http_session, uri, flags,
                                           token, progress, user_data, out_content_type,
                                           cancellable, &local_error);
 
@@ -708,7 +723,7 @@ flatpak_load_uri (SoupSession           *soup_session,
 }
 
 static gboolean
-flatpak_download_http_uri_once (SoupSession           *soup_session,
+flatpak_download_http_uri_once (FlatpakHttpSession    *http_session,
                                 const char            *uri,
                                 FlatpakHTTPFlags       flags,
                                 GOutputStream         *out,
@@ -719,6 +734,7 @@ flatpak_download_http_uri_once (SoupSession           *soup_session,
                                 GCancellable          *cancellable,
                                 GError               **error)
 {
+  SoupSession *soup_session = (SoupSession *)http_session;
   g_autoptr(SoupRequestHTTP) request = NULL;
   g_autoptr(GMainContext) context = NULL;
   LoadUriData data = { NULL };
@@ -773,7 +789,7 @@ flatpak_download_http_uri_once (SoupSession           *soup_session,
 }
 
 gboolean
-flatpak_download_http_uri (SoupSession           *soup_session,
+flatpak_download_http_uri (FlatpakHttpSession    *http_session,
                            const char            *uri,
                            FlatpakHTTPFlags       flags,
                            GOutputStream         *out,
@@ -801,7 +817,7 @@ flatpak_download_http_uri (SoupSession           *soup_session,
             progress (0, user_data); /* Reset the progress */
         }
 
-      if (flatpak_download_http_uri_once (soup_session, uri, flags,
+      if (flatpak_download_http_uri_once (http_session, uri, flags,
                                           out, token,
                                           progress, user_data,
                                           &bytes_written,
@@ -856,7 +872,7 @@ sync_and_rename_tmpfile (GLnxTmpfile *tmpfile,
 }
 
 static gboolean
-flatpak_cache_http_uri_once (SoupSession           *soup_session,
+flatpak_cache_http_uri_once (FlatpakHttpSession    *http_session,
                              const char            *uri,
                              FlatpakHTTPFlags       flags,
                              int                    dest_dfd,
@@ -866,6 +882,7 @@ flatpak_cache_http_uri_once (SoupSession           *soup_session,
                              GCancellable          *cancellable,
                              GError               **error)
 {
+  SoupSession *soup_session = (SoupSession *)http_session;
   g_autoptr(SoupRequestHTTP) request = NULL;
   g_autoptr(GMainContext) context = NULL;
   g_autoptr(CacheHttpData) cache_data = NULL;
@@ -1023,7 +1040,7 @@ flatpak_cache_http_uri_once (SoupSession           *soup_session,
 }
 
 gboolean
-flatpak_cache_http_uri (SoupSession           *soup_session,
+flatpak_cache_http_uri (FlatpakHttpSession    *http_session,
                         const char            *uri,
                         FlatpakHTTPFlags       flags,
                         int                    dest_dfd,
@@ -1049,7 +1066,7 @@ flatpak_cache_http_uri (SoupSession           *soup_session,
             progress (0, user_data); /* Reset the progress */
         }
 
-      if (flatpak_cache_http_uri_once (soup_session, uri, flags,
+      if (flatpak_cache_http_uri_once (http_session, uri, flags,
                                        dest_dfd, dest_subpath,
                                        progress, user_data,
                                        cancellable, &local_error))

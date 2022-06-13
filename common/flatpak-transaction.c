@@ -22,7 +22,6 @@
 
 #include <stdio.h>
 #include <glib/gi18n-lib.h>
-#include <libsoup/soup.h>
 
 #include "flatpak-auth-private.h"
 #include "flatpak-error.h"
@@ -4223,7 +4222,7 @@ load_flatpakrepo_file (FlatpakTransaction *self,
   g_autoptr(GBytes) dep_data = NULL;
   g_autoptr(GKeyFile) dep_keyfile = g_key_file_new ();
   g_autoptr(GError) local_error = NULL;
-  g_autoptr(SoupSession) soup_session = NULL;
+  g_autoptr(FlatpakHttpSession) http_session = NULL;
 
   if (priv->disable_deps)
     return TRUE;
@@ -4233,8 +4232,8 @@ load_flatpakrepo_file (FlatpakTransaction *self,
       !g_str_has_prefix (dep_url, "file:"))
     return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Flatpakrepo URL %s not file, HTTP or HTTPS"), dep_url);
 
-  soup_session = flatpak_create_soup_session (PACKAGE_STRING);
-  dep_data = flatpak_load_uri (soup_session, dep_url, 0, NULL, NULL, NULL, NULL, cancellable, error);
+  http_session = flatpak_create_http_session (PACKAGE_STRING);
+  dep_data = flatpak_load_uri (http_session, dep_url, 0, NULL, NULL, NULL, NULL, cancellable, error);
   if (dep_data == NULL)
     {
       g_prefix_error (error, _("Can't load dependent file %s: "), dep_url);
