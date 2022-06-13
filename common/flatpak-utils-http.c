@@ -55,12 +55,15 @@ typedef struct
 
   guint64                downloaded_bytes;
   char                   buffer[16 * 1024];
+  FlatpakHTTPFlags       flags;
   FlatpakLoadUriProgress progress;
   GCancellable          *cancellable;
   gpointer               user_data;
   guint64                last_progress_time;
   CacheHttpData         *cache_data;
+  int                   *status_out;
   char                 **content_type_out;
+  char                 **www_authenticate_out;
 } LoadUriData;
 
 #define CACHE_HTTP_XATTR "user.flatpak.http"
@@ -430,6 +433,7 @@ load_uri_callback (GObject      *source_object,
     {
       int code;
       GQuark domain = G_IO_ERROR;
+      gboolean http_error = TRUE;
 
       switch (msg->status_code)
         {
@@ -457,33 +461,41 @@ load_uri_callback (GObject      *source_object,
           break;
 
         case SOUP_STATUS_CANCELLED:
+          http_error = FALSE;
           code = G_IO_ERROR_CANCELLED;
           break;
 
         case SOUP_STATUS_CANT_RESOLVE:
         case SOUP_STATUS_CANT_CONNECT:
+          http_error = FALSE;
           code = G_IO_ERROR_HOST_NOT_FOUND;
           break;
 
         case SOUP_STATUS_INTERNAL_SERVER_ERROR:
           /* The server did return something, but it was useless to us, so that’s basically equivalent to not returning */
+          http_error = FALSE;
           code = G_IO_ERROR_HOST_UNREACHABLE;
           break;
 
         case SOUP_STATUS_IO_ERROR:
+          http_error = FALSE;
           code = G_IO_ERROR_CONNECTION_CLOSED;
           break;
 
         default:
+          http_error = FALSE;
           code = G_IO_ERROR_FAILED;
         }
 
-      data->error = g_error_new (domain, code,
-                                 "Server returned status %u: %s",
-                                 msg->status_code,
-                                 soup_status_get_phrase (msg->status_code));
-      g_main_context_wakeup (data->context);
-      return;
+      if (!http_error || (data->flags & FLATPAK_HTTP_FLAGS_NOCHECK_STATUS) == 0)
+        {
+          data->error = g_error_new (domain, code,
+                                     "Server returned status %u: %s",
+                                     msg->status_code,
+                                     soup_status_get_phrase (msg->status_code));
+          g_main_context_wakeup (data->context);
+          return;
+        }
     }
 
   if (data->cache_data)
@@ -491,6 +503,12 @@ load_uri_callback (GObject      *source_object,
 
   if (data->content_type_out)
     *data->content_type_out = g_strdup (soup_message_headers_get_content_type (msg->response_headers, NULL));
+
+  if (data->www_authenticate_out)
+    *data->www_authenticate_out = g_strdup (soup_message_headers_get_one (msg->response_headers, "WWW-Authenticate"));
+
+  if (data->status_out)
+    *data->status_out = msg->status_code;
 
   if (data->out_tmpfile)
     {
@@ -602,10 +620,13 @@ static GBytes *
 flatpak_load_http_uri_once (FlatpakHttpSession    *http_session,
                             const char            *uri,
                             FlatpakHTTPFlags       flags,
+                            const char            *auth,
                             const char            *token,
                             FlatpakLoadUriProgress progress,
                             gpointer               user_data,
+                            int                   *out_status,
                             char                 **out_content_type,
+                            char                 **out_www_authenticate,
                             GCancellable          *cancellable,
                             GError               **error)
 {
@@ -626,10 +647,13 @@ flatpak_load_http_uri_once (FlatpakHttpSession    *http_session,
   data.progress = progress;
   data.cancellable = cancellable;
   data.user_data = user_data;
+  data.flags = flags;
   data.last_progress_time = g_get_monotonic_time ();
+  data.www_authenticate_out = out_www_authenticate;
   data.content_type_out = out_content_type;
+  data.status_out = out_status;
 
-  request = soup_session_request_http (soup_session, "GET",
+  request = soup_session_request_http (soup_session, (data.flags & FLATPAK_HTTP_FLAGS_HEAD) != 0 ? "HEAD" : "GET",
                                        uri, error);
   if (request == NULL)
     return NULL;
@@ -640,6 +664,11 @@ flatpak_load_http_uri_once (FlatpakHttpSession    *http_session,
     soup_message_headers_replace (m->request_headers, "Accept",
                                   FLATPAK_OCI_MEDIA_TYPE_IMAGE_MANIFEST ", " FLATPAK_DOCKER_MEDIA_TYPE_IMAGE_MANIFEST2 ", " FLATPAK_OCI_MEDIA_TYPE_IMAGE_INDEX);
 
+  if (auth)
+    {
+      g_autofree char *basic_auth = g_strdup_printf ("Basic %s", auth);
+      soup_message_headers_replace (m->request_headers, "Authorization", basic_auth);
+    }
 
   if (token)
     {
@@ -667,15 +696,18 @@ flatpak_load_http_uri_once (FlatpakHttpSession    *http_session,
 }
 
 GBytes *
-flatpak_load_uri (FlatpakHttpSession    *http_session,
-                  const char            *uri,
-                  FlatpakHTTPFlags       flags,
-                  const char            *token,
-                  FlatpakLoadUriProgress progress,
-                  gpointer               user_data,
-                  char                 **out_content_type,
-                  GCancellable          *cancellable,
-                  GError               **error)
+flatpak_load_uri_full (FlatpakHttpSession    *http_session,
+                       const char            *uri,
+                       FlatpakHTTPFlags       flags,
+                       const char            *auth,
+                       const char            *token,
+                       FlatpakLoadUriProgress progress,
+                       gpointer               user_data,
+                       int                   *out_status,
+                       char                 **out_content_type,
+                       char                 **out_www_authenticate,
+                       GCancellable          *cancellable,
+                       GError               **error)
 {
   g_autoptr(GError) local_error = NULL;
   guint n_retries_remaining = DEFAULT_N_NETWORK_RETRIES;
@@ -708,8 +740,9 @@ flatpak_load_uri (FlatpakHttpSession    *http_session,
             progress (0, user_data); /* Reset the progress */
         }
 
-      bytes = flatpak_load_http_uri_once (http_session, uri, flags,
-                                          token, progress, user_data, out_content_type,
+      bytes = flatpak_load_http_uri_once (http_session, uri, flags, auth, token,
+                                          progress, user_data,
+                                          out_status, out_content_type, out_www_authenticate,
                                           cancellable, &local_error);
 
       if (local_error == NULL)
@@ -721,6 +754,23 @@ flatpak_load_uri (FlatpakHttpSession    *http_session,
   g_propagate_error (error, g_steal_pointer (&local_error));
   return NULL;
 }
+
+GBytes *
+flatpak_load_uri (FlatpakHttpSession    *http_session,
+                  const char            *uri,
+                  FlatpakHTTPFlags       flags,
+                  const char            *token,
+                  FlatpakLoadUriProgress progress,
+                  gpointer               user_data,
+                  char                 **out_content_type,
+                  GCancellable          *cancellable,
+                  GError               **error)
+{
+  return flatpak_load_uri_full (http_session, uri, flags, NULL, token,
+                                progress, user_data, NULL, out_content_type, NULL,
+                                cancellable, error);
+}
+
 
 static gboolean
 flatpak_download_http_uri_once (FlatpakHttpSession    *http_session,
@@ -750,6 +800,7 @@ flatpak_download_http_uri_once (FlatpakHttpSession    *http_session,
   data.cancellable = cancellable;
   data.user_data = user_data;
   data.last_progress_time = g_get_monotonic_time ();
+  data.flags = flags;
 
   request = soup_session_request_http (soup_session, "GET",
                                        uri, error);
@@ -938,6 +989,7 @@ flatpak_cache_http_uri_once (FlatpakHttpSession    *http_session,
   data.progress = progress;
   data.cancellable = cancellable;
   data.user_data = user_data;
+  data.flags = flags;
   data.last_progress_time = g_get_monotonic_time ();
 
   request = soup_session_request_http (soup_session, "GET",
