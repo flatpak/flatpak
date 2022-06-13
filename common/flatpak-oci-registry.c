@@ -68,6 +68,7 @@ struct FlatpakOciRegistry
   int dfd;
 
   /* Remote repos */
+  FlatpakHttpSession *http_session;
   SoupSession *soup_session;
   GUri        *base_uri;
 };
@@ -112,6 +113,7 @@ flatpak_oci_registry_finalize (GObject *object)
     close (self->dfd);
 
   g_clear_object (&self->soup_session);
+  g_clear_pointer (&self->http_session, flatpak_http_session_free);
   g_clear_pointer (&self->base_uri, g_uri_unref);
   g_free (self->uri);
   g_free (self->token);
@@ -346,7 +348,7 @@ choose_alt_uri (GUri        *base_uri,
 }
 
 static GBytes *
-remote_load_file (SoupSession  *soup_session,
+remote_load_file (FlatpakHttpSession  *http_session,
                   GUri         *base,
                   const char   *subpath,
                   const char  **alt_uris,
@@ -366,7 +368,7 @@ remote_load_file (SoupSession  *soup_session,
         return NULL;
     }
 
-  bytes = flatpak_load_uri (soup_session,
+  bytes = flatpak_load_uri (http_session,
                             uri_s, FLATPAK_HTTP_FLAGS_ACCEPT_OCI,
                             token,
                             NULL, NULL, out_content_type,
@@ -388,7 +390,7 @@ flatpak_oci_registry_load_file (FlatpakOciRegistry *self,
   if (self->dfd != -1)
     return local_load_file (self->dfd, subpath, cancellable, error);
   else
-    return remote_load_file (self->soup_session, self->base_uri, subpath, alt_uris, self->token, out_content_type, cancellable, error);
+    return remote_load_file (self->http_session, self->base_uri, subpath, alt_uris, self->token, out_content_type, cancellable, error);
 }
 
 static JsonNode *
@@ -549,6 +551,7 @@ flatpak_oci_registry_ensure_remote (FlatpakOciRegistry *self,
       return FALSE;
     }
 
+  self->http_session = flatpak_create_http_session (PACKAGE_STRING);
   self->soup_session = flatpak_create_soup_session (PACKAGE_STRING);
   baseuri = g_uri_parse (self->uri, FLATPAK_HTTP_URI_FLAGS | G_URI_FLAGS_PARSE_RELAXED, NULL);
   if (baseuri == NULL)
@@ -817,7 +820,7 @@ flatpak_oci_registry_download_blob (FlatpakOciRegistry    *self,
       if (fd == -1)
         return -1;
 
-      if (!flatpak_download_http_uri (self->soup_session, uri_s,
+      if (!flatpak_download_http_uri (self->http_session, uri_s,
                                       FLATPAK_HTTP_FLAGS_ACCEPT_OCI,
                                       out_stream,
                                       self->token,
@@ -909,7 +912,7 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
 
       out_stream = g_unix_output_stream_new (tmpf.fd, FALSE);
 
-      if (!flatpak_download_http_uri (source_registry->soup_session, uri_s,
+      if (!flatpak_download_http_uri (source_registry->http_session, uri_s,
                                       FLATPAK_HTTP_FLAGS_ACCEPT_OCI, out_stream,
                                       self->token,
                                       progress_cb, user_data,
@@ -2073,7 +2076,7 @@ flatpak_oci_registry_find_delta_manifest (FlatpakOciRegistry    *registry,
       g_autofree char *uri_s = parse_relative_uri (registry->base_uri, delta_manifest_url, NULL);
 
       if (uri_s != NULL)
-        bytes = flatpak_load_uri (registry->soup_session,
+        bytes = flatpak_load_uri (registry->http_session,
                                   uri_s, FLATPAK_HTTP_FLAGS_ACCEPT_OCI,
                                   registry->token,
                                   NULL, NULL, NULL,
@@ -2737,12 +2740,12 @@ compare_image_by_ref (ImageInfo *a,
 }
 
 gboolean
-flatpak_oci_index_ensure_cached (SoupSession  *soup_session,
-                                 const char   *uri,
-                                 GFile        *index,
-                                 char        **index_uri_out,
-                                 GCancellable *cancellable,
-                                 GError      **error)
+flatpak_oci_index_ensure_cached (FlatpakHttpSession *http_session,
+                                 const char         *uri,
+                                 GFile              *index,
+                                 char              **index_uri_out,
+                                 GCancellable       *cancellable,
+                                 GError            **error)
 {
   g_autofree char *index_path = g_file_get_path (index);
   g_autoptr(GUri) base_uri = NULL;
@@ -2835,7 +2838,7 @@ flatpak_oci_index_ensure_cached (SoupSession  *soup_session,
 
   query_uri_s = g_uri_to_string_partial (query_uri, G_URI_HIDE_PASSWORD);
 
-  success = flatpak_cache_http_uri (soup_session,
+  success = flatpak_cache_http_uri (http_session,
                                     query_uri_s,
                                     FLATPAK_HTTP_FLAGS_STORE_COMPRESSED,
                                     AT_FDCWD, index_path,
@@ -3071,15 +3074,15 @@ flatpak_oci_index_make_summary (GFile        *index,
 }
 
 static gboolean
-add_icon_image (SoupSession  *soup_session,
-                const char   *index_uri,
-                int           icons_dfd,
-                GHashTable   *used_icons,
-                const char   *subdir,
-                const char   *id,
-                const char   *icon_data,
-                GCancellable *cancellable,
-                GError      **error)
+add_icon_image (FlatpakHttpSession  *http_session,
+                const char          *index_uri,
+                int                  icons_dfd,
+                GHashTable          *used_icons,
+                const char          *subdir,
+                const char          *id,
+                const char          *icon_data,
+                GCancellable        *cancellable,
+                GError             **error)
 {
   g_autofree char *icon_name = g_strconcat (id, ".png", NULL);
   g_autofree char *icon_path = g_build_filename (subdir, icon_name, NULL);
@@ -3123,7 +3126,7 @@ add_icon_image (SoupSession  *soup_session,
       if (icon_uri_s == NULL)
         return FALSE;
 
-      if (!flatpak_cache_http_uri (soup_session, icon_uri_s,
+      if (!flatpak_cache_http_uri (http_session, icon_uri_s,
                                    0 /* flags */,
                                    icons_dfd, icon_path,
                                    NULL, NULL,
@@ -3141,7 +3144,7 @@ add_icon_image (SoupSession  *soup_session,
 }
 
 static void
-add_image_to_appstream (SoupSession               *soup_session,
+add_image_to_appstream (FlatpakHttpSession        *http_session,
                         const char                *index_uri,
                         FlatpakXml                *appstream_root,
                         int                        icons_dfd,
@@ -3232,7 +3235,7 @@ add_image_to_appstream (SoupSession               *soup_session,
       const char *icon_data = get_image_metadata (image, icon_sizes[i].label);
       if (icon_data)
         {
-          if (!add_icon_image (soup_session,
+          if (!add_icon_image (http_session,
                                index_uri,
                                icons_dfd,
                                used_icons,
@@ -3317,13 +3320,13 @@ clean_unused_icons (int           icons_dfd,
 }
 
 GBytes *
-flatpak_oci_index_make_appstream (SoupSession  *soup_session,
-                                  GFile        *index,
-                                  const char   *index_uri,
-                                  const char   *arch,
-                                  int           icons_dfd,
-                                  GCancellable *cancellable,
-                                  GError      **error)
+flatpak_oci_index_make_appstream (FlatpakHttpSession *http_session,
+                                  GFile              *index,
+                                  const char         *index_uri,
+                                  const char         *arch,
+                                  int                 icons_dfd,
+                                  GCancellable       *cancellable,
+                                  GError            **error)
 {
   g_autoptr(FlatpakOciIndexResponse) response = NULL;
   g_autoptr(FlatpakXml) appstream_root = NULL;
@@ -3351,7 +3354,7 @@ flatpak_oci_index_make_appstream (SoupSession  *soup_session,
         {
           FlatpakOciIndexImage *image = r->images[j];
           if (g_strcmp0 (image->architecture, oci_arch) == 0)
-            add_image_to_appstream (soup_session,
+            add_image_to_appstream (http_session,
                                     index_uri,
                                     appstream_root, icons_dfd, used_icons,
                                     r, image,
@@ -3367,7 +3370,7 @@ flatpak_oci_index_make_appstream (SoupSession  *soup_session,
             {
               FlatpakOciIndexImage *image = list->images[k];
               if (g_strcmp0 (image->architecture, oci_arch) == 0)
-                add_image_to_appstream (soup_session,
+                add_image_to_appstream (http_session,
                                         index_uri,
                                         appstream_root, icons_dfd, used_icons,
                                         r, image,

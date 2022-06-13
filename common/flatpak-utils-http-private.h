@@ -22,7 +22,6 @@
 #define __FLATPAK_UTILS_HTTP_H__
 
 #include <string.h>
-
 #include <libsoup/soup.h>
 
 typedef enum {
@@ -34,8 +33,14 @@ typedef enum {
 
 GQuark flatpak_http_error_quark (void);
 
-
 SoupSession * flatpak_create_soup_session (const char *user_agent);
+
+typedef struct FlatpakHttpSession FlatpakHttpSession;
+
+FlatpakHttpSession* flatpak_create_http_session (const char *user_agent);
+void flatpak_http_session_free (FlatpakHttpSession* http_session);
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(FlatpakHttpSession, flatpak_http_session_free)
 
 typedef enum {
   FLATPAK_HTTP_FLAGS_NONE = 0,
@@ -46,7 +51,7 @@ typedef enum {
 typedef void (*FlatpakLoadUriProgress) (guint64  downloaded_bytes,
                                         gpointer user_data);
 
-GBytes * flatpak_load_uri (SoupSession           *soup_session,
+GBytes * flatpak_load_uri (FlatpakHttpSession    *http_session,
                            const char            *uri,
                            FlatpakHTTPFlags       flags,
                            const char            *token,
@@ -55,7 +60,7 @@ GBytes * flatpak_load_uri (SoupSession           *soup_session,
                            char                 **out_content_type,
                            GCancellable          *cancellable,
                            GError               **error);
-gboolean flatpak_download_http_uri (SoupSession           *soup_session,
+gboolean flatpak_download_http_uri (FlatpakHttpSession    *http_session,
                                     const char            *uri,
                                     FlatpakHTTPFlags       flags,
                                     GOutputStream         *out,
@@ -64,7 +69,7 @@ gboolean flatpak_download_http_uri (SoupSession           *soup_session,
                                     gpointer               user_data,
                                     GCancellable          *cancellable,
                                     GError               **error);
-gboolean flatpak_cache_http_uri (SoupSession           *soup_session,
+gboolean flatpak_cache_http_uri (FlatpakHttpSession    *http_session,
                                  const char            *uri,
                                  FlatpakHTTPFlags       flags,
                                  int                    dest_dfd,
