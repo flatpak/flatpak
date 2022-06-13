@@ -967,6 +967,17 @@ object_get_string_member_with_default (JsonNode *json,
   return json_node_get_string (node);
 }
 
+static const char *
+object_find_error_string (JsonNode *json)
+{
+  const char *error_detail = NULL;
+  error_detail = object_get_string_member_with_default (json, "details", NULL);
+  if (error_detail == NULL)
+    error_detail = object_get_string_member_with_default (json, "message", NULL);
+  if (error_detail == NULL)
+    error_detail = object_get_string_member_with_default (json, "error", NULL);
+  return error_detail;
+}
 
 static char *
 get_token_for_www_auth (FlatpakOciRegistry *self,
@@ -1044,12 +1055,23 @@ get_token_for_www_auth (FlatpakOciRegistry *self,
       json = json_from_string (body_data, NULL);
       if (json)
         {
-          error_detail = object_get_string_member_with_default (json, "details", NULL);
-          if (error_detail == NULL)
-            error_detail = object_get_string_member_with_default (json, "message", NULL);
-          if (error_detail == NULL)
-            error_detail = object_get_string_member_with_default (json, "error", NULL);
+          error_detail = object_find_error_string (json);
+          if (error_detail == NULL && JSON_NODE_HOLDS_OBJECT(json))
+            {
+              JsonNode *errors = json_object_get_member (json_node_get_object (json), "errors");
+              if (errors && JSON_NODE_HOLDS_ARRAY (errors))
+                {
+                  JsonArray *array = json_node_get_array (errors);
+                  for (int i = 0; i < json_array_get_length (array); i++)
+                    {
+                      error_detail = object_find_error_string (json_array_get_element (array, i));
+                      if (error_detail != 0)
+                        break;
+                    }
+                }
+            }
         }
+
       if (error_detail == NULL)
         g_debug ("Unhandled error body format: %s", body_data);
 
