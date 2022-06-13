@@ -45,12 +45,26 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(FlatpakHttpSession, flatpak_http_session_free)
 typedef enum {
   FLATPAK_HTTP_FLAGS_NONE = 0,
   FLATPAK_HTTP_FLAGS_ACCEPT_OCI = 1 << 0,
-  FLATPAK_HTTP_FLAGS_STORE_COMPRESSED = 2 << 0,
+  FLATPAK_HTTP_FLAGS_STORE_COMPRESSED = 1 << 1,
+  FLATPAK_HTTP_FLAGS_NOCHECK_STATUS = 1 << 2,
+  FLATPAK_HTTP_FLAGS_HEAD = 1 << 3,
 } FlatpakHTTPFlags;
 
 typedef void (*FlatpakLoadUriProgress) (guint64  downloaded_bytes,
                                         gpointer user_data);
 
+GBytes * flatpak_load_uri_full (FlatpakHttpSession    *http_session,
+                                const char            *uri,
+                                FlatpakHTTPFlags       flags,
+                                const char            *auth,
+                                const char            *token,
+                                FlatpakLoadUriProgress progress,
+                                gpointer               user_data,
+                                int                   *out_status,
+                                char                 **out_content_type,
+                                char                 **out_www_authenticate,
+                                GCancellable          *cancellable,
+                                GError               **error);
 GBytes * flatpak_load_uri (FlatpakHttpSession    *http_session,
                            const char            *uri,
                            FlatpakHTTPFlags       flags,
