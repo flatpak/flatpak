@@ -27,7 +27,6 @@
 #include "libglnx.h"
 
 #include <gpgme.h>
-#include <libsoup/soup.h>
 #include "flatpak-oci-registry-private.h"
 #include "flatpak-utils-base-private.h"
 #include "flatpak-utils-private.h"
@@ -69,7 +68,6 @@ struct FlatpakOciRegistry
 
   /* Remote repos */
   FlatpakHttpSession *http_session;
-  SoupSession *soup_session;
   GUri        *base_uri;
 };
 
@@ -112,7 +110,6 @@ flatpak_oci_registry_finalize (GObject *object)
   if (self->dfd != -1)
     close (self->dfd);
 
-  g_clear_object (&self->soup_session);
   g_clear_pointer (&self->http_session, flatpak_http_session_free);
   g_clear_pointer (&self->base_uri, g_uri_unref);
   g_free (self->uri);
@@ -552,7 +549,6 @@ flatpak_oci_registry_ensure_remote (FlatpakOciRegistry *self,
     }
 
   self->http_session = flatpak_create_http_session (PACKAGE_STRING);
-  self->soup_session = flatpak_create_soup_session (PACKAGE_STRING);
   baseuri = g_uri_parse (self->uri, FLATPAK_HTTP_URI_FLAGS | G_URI_FLAGS_PARSE_RELAXED, NULL);
   if (baseuri == NULL)
     {
@@ -983,8 +979,6 @@ get_token_for_www_auth (FlatpakOciRegistry *self,
                         GCancellable  *cancellable,
                         GError        **error)
 {
-  g_autoptr(GInputStream) auth_stream = NULL;
-  g_autoptr(SoupMessage) auth_msg = NULL;
   g_autoptr(GHashTable) params = NULL;
   g_autoptr(GString) args = NULL;
   const char *realm, *service, *scope, *token, *body_data;
@@ -994,6 +988,7 @@ get_token_for_www_auth (FlatpakOciRegistry *self,
   g_autoptr(GBytes) body = NULL;
   g_autoptr(JsonNode) json = NULL;
   GUri *tmp_uri;
+  int http_status;
 
   if (g_ascii_strncasecmp (www_authenticate, "Bearer ", strlen ("Bearer ")) != 0)
     {
@@ -1041,25 +1036,19 @@ get_token_for_www_auth (FlatpakOciRegistry *self,
   auth_uri = tmp_uri;
   auth_uri_s = g_uri_to_string_partial (auth_uri, G_URI_HIDE_PASSWORD);
 
-  auth_msg = soup_message_new ("GET", auth_uri_s);
-
-  if (auth)
-    {
-      g_autofree char *basic_auth = g_strdup_printf ("Basic %s", auth);
-      soup_message_headers_replace (auth_msg->request_headers, "Authorization", basic_auth);
-    }
-
-  auth_stream = soup_session_send (self->soup_session, auth_msg, NULL, error);
-  if (auth_stream == NULL)
-    return NULL;
-
-  body = flatpak_read_stream (auth_stream, TRUE, error);
+  body = flatpak_load_uri_full (self->http_session,
+                                auth_uri_s,
+                                FLATPAK_HTTP_FLAGS_NOCHECK_STATUS,
+                                auth, NULL,
+                                NULL, NULL,
+                                &http_status, NULL, NULL,
+                                cancellable, error);
   if (body == NULL)
     return NULL;
 
   body_data = (char *)g_bytes_get_data (body, NULL);
 
-  if (!SOUP_STATUS_IS_SUCCESSFUL (auth_msg->status_code))
+  if (http_status < 200 || http_status >= 300)
     {
       const char *error_detail = NULL;
       json = json_from_string (body_data, NULL);
@@ -1085,7 +1074,7 @@ get_token_for_www_auth (FlatpakOciRegistry *self,
       if (error_detail == NULL)
         g_debug ("Unhandled error body format: %s", body_data);
 
-      if (auth_msg->status_code == SOUP_STATUS_UNAUTHORIZED)
+      if (http_status == 401 /* UNAUTHORIZED */)
         {
           if (error_detail)
             flatpak_fail_error (error, FLATPAK_ERROR_NOT_AUTHORIZED, _("Authorization failed: %s"), error_detail);
@@ -1094,7 +1083,7 @@ get_token_for_www_auth (FlatpakOciRegistry *self,
           return NULL;
         }
 
-      flatpak_fail (error, _("Unexpected response status %d when requesting token: %s"), auth_msg->status_code, (char *)g_bytes_get_data (body, NULL));
+      flatpak_fail (error, _("Unexpected response status %d when requesting token: %s"), http_status, (char *)g_bytes_get_data (body, NULL));
       return NULL;
     }
 
@@ -1122,10 +1111,10 @@ flatpak_oci_registry_get_token (FlatpakOciRegistry *self,
 {
   g_autofree char *subpath = NULL;
   g_autofree char *uri_s = NULL;
-  g_autoptr(GInputStream) stream = NULL;
-  g_autoptr(SoupMessage) msg = NULL;
   g_autofree char *www_authenticate = NULL;
   g_autofree char *token = NULL;
+  g_autoptr(GBytes) body = NULL;
+  int http_status;
 
   g_assert (self->valid);
 
@@ -1140,30 +1129,28 @@ flatpak_oci_registry_get_token (FlatpakOciRegistry *self,
   if (uri_s == NULL)
     return NULL;
 
-  msg = soup_message_new ("HEAD", uri_s);
-
-  soup_message_headers_replace (msg->request_headers, "Accept",
-                                FLATPAK_OCI_MEDIA_TYPE_IMAGE_MANIFEST ", " FLATPAK_DOCKER_MEDIA_TYPE_IMAGE_MANIFEST2);
-
-  stream = soup_session_send (self->soup_session, msg, NULL, error);
-  if (stream == NULL)
+  body = flatpak_load_uri_full (self->http_session, uri_s,
+                                FLATPAK_HTTP_FLAGS_ACCEPT_OCI | FLATPAK_HTTP_FLAGS_HEAD | FLATPAK_HTTP_FLAGS_NOCHECK_STATUS,
+                                NULL, NULL,
+                                NULL, NULL,
+                                &http_status, NULL, &www_authenticate,
+                                cancellable, error);
+  if (body == NULL)
     return NULL;
 
-  if (SOUP_STATUS_IS_SUCCESSFUL (msg->status_code))
+  if (http_status >= 200 && http_status < 300)
+    return g_strdup ("");
+
+  if (http_status != 401 /* UNAUTHORIZED */)
     {
-      return g_strdup ("");
-    }
-  else if (msg->status_code != SOUP_STATUS_UNAUTHORIZED)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Unexpected response status %d from repo", msg->status_code);
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Unexpected response status %d from repo", http_status);
       return NULL;
     }
 
   /* Need www-authenticated header */
-  www_authenticate = g_strdup (soup_message_headers_get_one (msg->response_headers, "WWW-Authenticate"));
   if (www_authenticate == NULL)
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Now WWW-Authenticate header from repo");
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "No WWW-Authenticate header from repo");
       return NULL;
     }
 
