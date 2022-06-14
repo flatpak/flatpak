@@ -1002,7 +1002,7 @@ get_token_for_www_auth (FlatpakOciRegistry *self,
       return NULL;
     }
 
-  params = soup_header_parse_param_list (www_authenticate + strlen ("Bearer "));
+  params = flatpak_parse_http_header_param_list (www_authenticate + strlen ("Bearer "));
 
   realm = g_hash_table_lookup (params, "realm");
   if (realm == NULL)
