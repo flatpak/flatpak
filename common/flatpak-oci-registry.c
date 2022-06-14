@@ -986,14 +986,13 @@ get_token_for_www_auth (FlatpakOciRegistry *self,
   g_autoptr(GInputStream) auth_stream = NULL;
   g_autoptr(SoupMessage) auth_msg = NULL;
   g_autoptr(GHashTable) params = NULL;
-  g_autoptr(GHashTable) args = NULL;
+  g_autoptr(GString) args = NULL;
   const char *realm, *service, *scope, *token, *body_data;
   g_autofree char *default_scope = NULL;
   g_autoptr(GUri) auth_uri = NULL;
   g_autofree char *auth_uri_s = NULL;
   g_autoptr(GBytes) body = NULL;
   g_autoptr(JsonNode) json = NULL;
-  g_autofree gchar *encoded_form = NULL;
   GUri *tmp_uri;
 
   if (g_ascii_strncasecmp (www_authenticate, "Bearer ", strlen ("Bearer ")) != 0)
@@ -1018,24 +1017,25 @@ get_token_for_www_auth (FlatpakOciRegistry *self,
       return NULL;
     }
 
-  args = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, NULL);
+  args = g_string_new (NULL);
+
   service = g_hash_table_lookup (params, "service");
   if (service)
-    g_hash_table_insert (args, "service", (char *)service);
+    flatpak_uri_encode_query_arg (args, "service", (char *)service);
 
   scope = g_hash_table_lookup (params, "scope");
   if (scope == NULL)
     scope = default_scope = g_strdup_printf("repository:%s:pull", repository);
-  g_hash_table_insert (args, "scope", (char *)scope);
 
-  encoded_form = soup_form_encode_hash (args);
-  tmp_uri = g_uri_build (g_uri_get_flags (auth_uri),
+  flatpak_uri_encode_query_arg (args, "scope", (char *)scope);
+
+  tmp_uri = g_uri_build (g_uri_get_flags (auth_uri) | G_URI_FLAGS_ENCODED_QUERY,
                          g_uri_get_scheme (auth_uri),
                          g_uri_get_userinfo (auth_uri),
                          g_uri_get_host (auth_uri),
                          g_uri_get_port (auth_uri),
                          g_uri_get_path (auth_uri),
-                         encoded_form,
+                         args->str,
                          g_uri_get_fragment (auth_uri));
   g_uri_unref (auth_uri);
   auth_uri = tmp_uri;
@@ -2751,7 +2751,7 @@ flatpak_oci_index_ensure_cached (FlatpakHttpSession *http_session,
   g_autoptr(GUri) base_uri = NULL;
   g_autoptr(GUri) query_uri = NULL;
   g_autofree char *query_uri_s = NULL;
-  g_autofree char *query_form_s = NULL;
+  g_autoptr(GString) query = NULL;
   g_autoptr(GString) path = NULL;
   g_autofree char *tag = NULL;
   const char *oci_arch = NULL;
@@ -2822,18 +2822,20 @@ flatpak_oci_index_ensure_cached (FlatpakHttpSession *http_session,
 
   oci_arch = flatpak_arch_to_oci_arch (flatpak_get_arch ());
 
-  query_form_s = soup_form_encode ("label:org.flatpak.ref:exists", "1",
-                                   "architecture", oci_arch,
-                                   "os", "linux",
-                                   "tag", tag,
-                                   NULL);
-  query_uri = g_uri_build (g_uri_get_flags (base_uri),
+
+  query = g_string_new (NULL);
+  flatpak_uri_encode_query_arg (query, "label:org.flatpak.ref:exists", "1");
+  flatpak_uri_encode_query_arg (query, "architecture", oci_arch);
+  flatpak_uri_encode_query_arg (query, "os", "linux");
+  flatpak_uri_encode_query_arg (query, "tag", tag);
+
+  query_uri = g_uri_build (g_uri_get_flags (base_uri) | G_URI_FLAGS_ENCODED_QUERY,
                            g_uri_get_scheme (base_uri),
                            g_uri_get_userinfo (base_uri),
                            g_uri_get_host (base_uri),
                            g_uri_get_port (base_uri),
                            g_uri_get_path (base_uri),
-                           query_form_s,
+                           query->str,
                            g_uri_get_fragment (base_uri));
 
   query_uri_s = g_uri_to_string_partial (query_uri, G_URI_HIDE_PASSWORD);
