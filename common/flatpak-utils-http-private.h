@@ -22,7 +22,6 @@
 #define __FLATPAK_UTILS_HTTP_H__
 
 #include <string.h>
-#include <libsoup/soup.h>
 
 typedef enum {
   FLATPAK_HTTP_ERROR_NOT_CHANGED = 0,
@@ -32,8 +31,6 @@ typedef enum {
 #define FLATPAK_HTTP_ERROR flatpak_http_error_quark ()
 
 GQuark flatpak_http_error_quark (void);
-
-SoupSession * flatpak_create_soup_session (const char *user_agent);
 
 typedef struct FlatpakHttpSession FlatpakHttpSession;
 

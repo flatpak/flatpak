@@ -44,7 +44,6 @@ libflatpak_app_la_LIBADD = \
 	$(AM_LDADD) \
 	$(BASE_LIBS) \
 	$(OSTREE_LIBS) \
-	$(SOUP_LIBS) \
 	$(JSON_LIBS) \
 	$(APPSTREAM_LIBS) \
 	$(SYSTEMD_LIBS) \
@@ -55,7 +54,6 @@ libflatpak_app_la_CFLAGS = \
 	$(AM_CFLAGS) \
 	$(BASE_CFLAGS) \
 	$(OSTREE_CFLAGS) \
-	$(SOUP_CFLAGS) \
 	$(JSON_CFLAGS) \
 	$(APPSTREAM_CFLAGS) \
 	 $(SYSTEMD_CFLAGS) \
@@ -136,7 +134,6 @@ flatpak_LDADD = \
 	$(AM_LDADD) \
 	$(BASE_LIBS) \
 	$(OSTREE_LIBS) \
-	$(SOUP_LIBS) \
 	$(JSON_LIBS) \
 	$(APPSTREAM_LIBS) \
 	$(SYSTEMD_LIBS) \
@@ -151,7 +148,6 @@ flatpak_CFLAGS = \
 	$(AM_CFLAGS) \
 	$(BASE_CFLAGS) \
 	$(OSTREE_CFLAGS) \
-	$(SOUP_CFLAGS) \
 	$(JSON_CFLAGS) \
 	$(APPSTREAM_CFLAGS) \
 	$(SYSTEMD_CFLAGS) \

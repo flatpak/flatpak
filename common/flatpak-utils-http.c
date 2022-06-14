@@ -18,6 +18,7 @@
  *       Alexander Larsson <alexl@redhat.com>
  */
 
+#include <gio/gio.h>
 #include "flatpak-utils-http-private.h"
 #include "flatpak-oci-registry-private.h"
 
@@ -27,6 +28,15 @@
 
 #include <sys/types.h>
 #include <sys/xattr.h>
+
+#if !defined(SOUP_AUTOCLEANUPS_H) && !defined(__SOUP_AUTOCLEANUPS_H__)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (SoupSession, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (SoupMessage, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (SoupRequest, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (SoupRequestHTTP, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (SoupURI, soup_uri_free)
+#endif
+
 
 /* copied from libostree */
 #define DEFAULT_N_NETWORK_RETRIES 5
@@ -542,7 +552,7 @@ load_uri_callback (GObject      *source_object,
                              load_uri_read_cb, data);
 }
 
-SoupSession *
+static SoupSession *
 flatpak_create_soup_session (const char *user_agent)
 {
   SoupSession *soup_session;
