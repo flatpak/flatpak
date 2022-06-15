@@ -86,6 +86,7 @@ elif test -n "${FLATPAK_TESTS_VALGRIND_LEAKS:-}"; then
 else
     CMD_PREFIX=""
 fi
+unset OSTREE_DEBUG_HTTP
 
 export MALLOC_CHECK_=3
 export MALLOC_PERTURB_=$(($RANDOM % 255 + 1))
