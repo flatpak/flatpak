@@ -199,6 +199,7 @@ libflatpak_common_la_CFLAGS = \
 	$(MALCONTENT_CFLAGS) \
 	$(OSTREE_CFLAGS) \
 	$(POLKIT_CFLAGS) \
+	$(CURL_CFLAGS) \
 	$(SOUP_CFLAGS) \
 	$(SYSTEMD_CFLAGS) \
 	$(XAUTH_CFLAGS) \
@@ -216,6 +217,7 @@ libflatpak_common_la_LIBADD = \
 	$(MALCONTENT_LIBS) \
 	$(OSTREE_LIBS) \
 	$(POLKIT_LIBS) \
+	$(CURL_LIBS) \
 	$(SOUP_LIBS) \
 	$(SYSTEMD_LIBS) \
 	$(XAUTH_LIBS) \
@@ -235,6 +237,7 @@ libflatpak_la_CFLAGS = \
 	$(AM_CFLAGS) \
 	$(BASE_CFLAGS) \
 	$(OSTREE_CFLAGS) \
+	$(CURL_CFLAGS) \
 	$(SOUP_CFLAGS) \
 	$(JSON_CFLAGS) \
 	$(NULL)
@@ -253,6 +256,7 @@ libflatpak_la_LIBADD = \
 	libglnx.la \
 	$(BASE_LIBS)	\
 	$(OSTREE_LIBS)	\
+	$(CURL_LIBS)	\
 	$(SOUP_LIBS)	\
 	$(JSON_LIBS)    \
 	$(NULL)

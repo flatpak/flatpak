@@ -32,6 +32,23 @@
 #include <sys/types.h>
 #include <sys/xattr.h>
 
+#if defined(HAVE_CURL)
+
+#include <curl/curl.h>
+
+/* These macros came from 7.43.0, but we want to check
+ * for versions a bit earlier than that (to work on CentOS 7),
+ * so define them here if we're using an older version.
+ */
+#ifndef CURL_VERSION_BITS
+#define CURL_VERSION_BITS(x,y,z) ((x)<<16|(y)<<8|z)
+#endif
+#ifndef CURL_AT_LEAST_VERSION
+#define CURL_AT_LEAST_VERSION(x,y,z) (LIBCURL_VERSION_NUM >= CURL_VERSION_BITS(x, y, z))
+#endif
+
+#elif defined(HAVE_SOUP)
+
 #include <libsoup/soup.h>
 
 #if !defined(SOUP_AUTOCLEANUPS_H) && !defined(__SOUP_AUTOCLEANUPS_H__)
@@ -41,6 +58,13 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (SoupRequest, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (SoupRequestHTTP, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (SoupURI, soup_uri_free)
 #endif
+
+#else
+
+# error "No HTTP backend enabled"
+
+#endif
+
 
 #define FLATPAK_HTTP_TIMEOUT_SECS 60
 
@@ -86,6 +110,7 @@ typedef struct
   char                  *hdr_last_modified;
   char                  *hdr_cache_control;
   char                  *hdr_expires;
+  char                  *hdr_content_encoding;
 
   /* Data destination */
 
@@ -112,6 +137,7 @@ clear_load_uri_data_headers (LoadUriData *data)
   g_clear_pointer (&data->hdr_last_modified, g_free);
   g_clear_pointer (&data->hdr_cache_control, g_free);
   g_clear_pointer (&data->hdr_expires, g_free);
+  g_clear_pointer (&data->hdr_content_encoding, g_free);
 }
 
 /* Reset between requests retries */
@@ -127,7 +153,10 @@ reset_load_uri_data (LoadUriData *data)
   clear_load_uri_data_headers (data);
 
   if (data->out_tmpfile)
-    glnx_tmpfile_clear (data->out_tmpfile);
+    {
+      glnx_tmpfile_clear (data->out_tmpfile);
+      g_clear_pointer (&data->out, g_object_unref);
+    }
 
   /* Reset the progress */
   if (data->progress)
@@ -201,6 +230,323 @@ check_http_status (guint status_code,
                status_code);
   return FALSE;
 }
+
+#if defined(HAVE_CURL)
+
+/************************************************************************
+ *                        Curl implementation                           *
+ ************************************************************************/
+
+typedef struct curl_slist auto_curl_slist;
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (auto_curl_slist, curl_slist_free_all)
+
+struct FlatpakHttpSession {
+  CURL *curl;
+};
+
+static void
+check_header(char **value_out,
+             const char *header,
+             char *buffer,
+             size_t realsize)
+{
+  size_t hlen = strlen (header);
+
+  if (realsize < hlen + 1)
+    return;
+
+  if (!g_ascii_strncasecmp(buffer, header, hlen) == 0 ||
+      buffer[hlen] != ':')
+    return;
+
+  buffer += hlen + 1;
+  realsize -= hlen + 1;
+
+  while (realsize > 0 && g_ascii_isspace (*buffer))
+    {
+      buffer++;
+      realsize--;
+    }
+
+  while (realsize > 0 && g_ascii_isspace (buffer[realsize-1]))
+    realsize--;
+
+  g_free (*value_out); /* Use the last header */
+  *value_out = g_strndup (buffer, realsize);
+}
+
+static size_t
+_header_cb (char *buffer,
+            size_t size,
+            size_t nitems,
+            void *userdata)
+{
+  size_t realsize = size * nitems;
+  LoadUriData *data = (LoadUriData *)userdata;
+
+  check_header(&data->hdr_content_type, "content-type", buffer, realsize);
+  check_header(&data->hdr_www_authenticate, "WWW-Authenticate", buffer, realsize);
+
+  check_header(&data->hdr_etag, "ETag", buffer, realsize);
+  check_header(&data->hdr_last_modified, "Last-Modified", buffer, realsize);
+  check_header(&data->hdr_cache_control, "Cache-Control", buffer, realsize);
+  check_header(&data->hdr_expires, "Expires", buffer, realsize);
+  check_header(&data->hdr_content_encoding, "Content-Encoding", buffer, realsize);
+
+  return realsize;
+}
+
+static size_t
+_write_cb (void *content_data,
+           size_t size,
+           size_t nmemb,
+           void *userp)
+{
+  size_t realsize = size * nmemb;
+  LoadUriData *data = (LoadUriData *)userp;
+  gsize n_written = 0;
+
+  /* If first write to tmpfile, initiate if needed */
+  if (data->content == NULL && data->out == NULL &&
+      data->out_tmpfile != NULL)
+    {
+      g_autoptr(GOutputStream) out = NULL;
+      g_autoptr(GError) tmp_error = NULL;
+
+      if (!glnx_open_tmpfile_linkable_at (data->out_tmpfile_parent_dfd, ".",
+                                          O_WRONLY, data->out_tmpfile,
+                                          &tmp_error))
+        {
+          g_warning ("Failed to open http tmpfile: %s\n", tmp_error->message);
+          return 0; /* This short read will make curl report an error */
+        }
+
+      out = g_unix_output_stream_new (data->out_tmpfile->fd, FALSE);
+      if (data->store_compressed &&
+          g_strcmp0 (data->hdr_content_encoding, "gzip") != 0)
+        {
+          g_autoptr(GZlibCompressor) compressor = g_zlib_compressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP, -1);
+          data->out = g_converter_output_stream_new (out, G_CONVERTER (compressor));
+        }
+      else
+        {
+          data->out = g_steal_pointer (&out);
+        }
+    }
+
+  if (data->content)
+    {
+      g_string_append_len (data->content, content_data, realsize);
+      n_written = realsize;
+    }
+  else if (data->out)
+    {
+      /* We ignore the error here, but reporting a short read will make curl report the error */
+      g_output_stream_write_all (data->out, content_data, realsize,
+                                 &n_written, NULL, NULL);
+    }
+
+  data->downloaded_bytes += realsize;
+
+  if (g_get_monotonic_time () - data->last_progress_time > 1 * G_USEC_PER_SEC)
+    {
+      if (data->progress)
+        data->progress (data->downloaded_bytes, data->user_data);
+      data->last_progress_time = g_get_monotonic_time ();
+    }
+
+  return realsize;
+}
+
+FlatpakHttpSession *
+flatpak_create_http_session (const char *user_agent)
+{
+  FlatpakHttpSession *session = g_new0 (FlatpakHttpSession, 1);
+  CURLcode rc;
+  CURL *curl;
+
+  session->curl = curl = curl_easy_init();
+  g_assert (session->curl != NULL);
+
+  curl_easy_setopt (curl, CURLOPT_USERAGENT, user_agent);
+  rc = curl_easy_setopt (curl, CURLOPT_PROTOCOLS, (long)(CURLPROTO_HTTP | CURLPROTO_HTTPS));
+  g_assert_cmpint (rc, ==, CURLM_OK);
+
+  curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+
+  /* Note: curl automatically respects the http_proxy env var */
+
+  if (g_getenv ("OSTREE_DEBUG_HTTP"))
+    curl_easy_setopt (curl, CURLOPT_VERBOSE, 1L);
+
+  /* Picked the current version in F25 as of 20170127, since
+   * there are numerous HTTP/2 fixes since the original version in
+   * libcurl 7.43.0.
+   */
+#if CURL_AT_LEAST_VERSION(7, 51, 0)
+  rc = curl_easy_setopt (curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_0);
+  g_assert_cmpint (rc, ==, CURLM_OK);
+#endif
+  /* https://github.com/curl/curl/blob/curl-7_53_0/docs/examples/http2-download.c */
+#if (CURLPIPE_MULTIPLEX > 0)
+  /* wait for pipe connection to confirm */
+  rc = curl_easy_setopt (curl, CURLOPT_PIPEWAIT, 1L);
+  g_assert_cmpint (rc, ==, CURLM_OK);
+#endif
+
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, _write_cb);
+  curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, _header_cb);
+
+  curl_easy_setopt (curl, CURLOPT_CONNECTTIMEOUT, (long)FLATPAK_HTTP_TIMEOUT_SECS);
+
+  return session;
+}
+
+void
+flatpak_http_session_free (FlatpakHttpSession* session)
+{
+  curl_easy_cleanup (session->curl);
+  g_free (session);
+}
+
+static void
+set_error_from_curl (GError **error,
+                     const char *uri,
+                     CURLcode res)
+{
+  GQuark domain = G_IO_ERROR;
+  int code;
+
+  switch (res)
+    {
+    case CURLE_COULDNT_CONNECT:
+    case CURLE_COULDNT_RESOLVE_HOST:
+    case CURLE_COULDNT_RESOLVE_PROXY:
+      code = G_IO_ERROR_HOST_NOT_FOUND;
+      break;
+    case CURLE_OPERATION_TIMEDOUT:
+      code = G_IO_ERROR_TIMED_OUT;
+      break;
+    default:
+      code =  G_IO_ERROR_FAILED;
+    }
+
+  g_set_error (error, domain, code,
+               "While fetching %s: [%u] %s", uri, res,
+               curl_easy_strerror (res));
+}
+
+static gboolean
+flatpak_download_http_uri_once (FlatpakHttpSession    *session,
+                                LoadUriData           *data,
+                                const char            *uri,
+                                GError               **error)
+{
+  CURLcode res;
+  g_autofree char *auth_header = NULL;
+  g_autofree char *cache_header = NULL;
+  g_autoptr(auto_curl_slist) header_list = NULL;
+  long response;
+  CURL *curl = session->curl;
+
+  g_debug ("Loading %s using curl", uri);
+
+  curl_easy_setopt (curl, CURLOPT_URL, uri);
+  curl_easy_setopt (curl, CURLOPT_WRITEDATA, (void *)data);
+  curl_easy_setopt (curl, CURLOPT_HEADERDATA, (void *)data);
+
+  if (data->flags & FLATPAK_HTTP_FLAGS_HEAD)
+    curl_easy_setopt (curl, CURLOPT_NOBODY, 1L);
+  else
+    curl_easy_setopt (curl, CURLOPT_HTTPGET, 1L);
+
+  if (data->flags & FLATPAK_HTTP_FLAGS_ACCEPT_OCI)
+    header_list = curl_slist_append (header_list,
+                                     "Accept: " FLATPAK_OCI_MEDIA_TYPE_IMAGE_MANIFEST ", " FLATPAK_DOCKER_MEDIA_TYPE_IMAGE_MANIFEST2 ", " FLATPAK_OCI_MEDIA_TYPE_IMAGE_INDEX);
+
+  if (data->auth)
+    auth_header = g_strdup_printf ("Authorization: Basic %s", data->auth);
+  else if (data->token)
+    auth_header = g_strdup_printf ("Authorization: Bearer %s", data->token);
+  if (auth_header)
+    header_list = curl_slist_append (header_list, auth_header);
+
+  if (data->cache_data)
+    {
+      CacheHttpData *cache_data = data->cache_data;
+
+      if (cache_data->etag && cache_data->etag[0])
+        cache_header = g_strdup_printf ("If-None-Match: %s", cache_data->etag);
+      else if (cache_data->last_modified != 0)
+        {
+          g_autoptr(GDateTime) date = g_date_time_new_from_unix_utc (cache_data->last_modified);
+          g_autofree char *date_str = flatpak_format_http_date (date);
+          cache_header = g_strdup_printf ("If-Modified-Since: %s", date_str);
+        }
+      if (cache_header)
+        header_list = curl_slist_append (header_list, cache_header);
+    }
+
+  curl_easy_setopt (curl, CURLOPT_HTTPHEADER, header_list);
+
+  if (data->flags & FLATPAK_HTTP_FLAGS_STORE_COMPRESSED)
+    {
+      curl_easy_setopt(curl, CURLOPT_ACCEPT_ENCODING, "gzip");
+      curl_easy_setopt(curl, CURLOPT_HTTP_CONTENT_DECODING, 0L);
+      data->store_compressed = TRUE;
+    }
+  else
+    {
+      /* enable all supported built-in compressions */
+      curl_easy_setopt(curl, CURLOPT_ACCEPT_ENCODING, "");
+      curl_easy_setopt(curl, CURLOPT_HTTP_CONTENT_DECODING, 1L);
+      data->store_compressed = FALSE;
+    }
+
+  res = curl_easy_perform (session->curl);
+
+  curl_easy_setopt (session->curl, CURLOPT_HTTPHEADER, NULL); /* Don't point to freed list */
+
+  if (res != CURLE_OK)
+    {
+      set_error_from_curl (error, uri, res);
+
+      /* Make sure we clear the tmpfile stream we possible created during the request */
+      if (data->out_tmpfile && data->out)
+        g_clear_pointer (&data->out, g_object_unref);
+
+      return FALSE;
+    }
+
+  if (data->out_tmpfile && data->out)
+    {
+      /* Flush the writes */
+      if (!g_output_stream_close (data->out, data->cancellable, error))
+        return FALSE;
+
+      g_clear_pointer (&data->out, g_object_unref);
+    }
+
+  if (data->progress)
+    data->progress (data->downloaded_bytes, data->user_data);
+
+  curl_easy_getinfo (session->curl, CURLINFO_RESPONSE_CODE, &response);
+
+  data->status = response;
+
+  if ((data->flags & FLATPAK_HTTP_FLAGS_NOCHECK_STATUS) == 0 &&
+      !check_http_status (data->status, error))
+    return FALSE;
+
+  g_debug ("Received %" G_GUINT64_FORMAT " bytes", data->downloaded_bytes);
+
+  return TRUE;
+}
+
+#endif  /* HAVE_CURL */
+
+#if defined(HAVE_SOUP)
 
 /************************************************************************
  *                        Soup implementation                           *
@@ -520,7 +866,7 @@ flatpak_download_http_uri_once (FlatpakHttpSession    *http_session,
   return TRUE;
 }
 
-
+#endif /* HAVE_SOUP */
 
 /* Check whether a particular operation should be retried. This is entirely
  * based on how it failed (if at all) last time, and whether the operation has
