@@ -52,11 +52,11 @@ assert_cached() {
 }
 
 assert_304() {
-    assert_result "Server returned status 304:" $@
+    assert_result "Server returned status 304" $@
 }
 
 assert_ok() {
-    assert_result "Server returned status 200:" $@
+    assert_result "Server returned status 200" $@
 }
 
 
