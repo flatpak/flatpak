@@ -1502,3 +1502,227 @@ flatpak_parse_http_header_param_list (const char *header)
   g_slist_free (list);
   return params;
 }
+
+/* Do not internationalize */
+static const char *const months[] = {
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+};
+
+/* Do not internationalize */
+static const char *const days[] = {
+  "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
+};
+
+char *
+flatpak_format_http_date (GDateTime *date)
+{
+  g_autoptr(GDateTime) utcdate = g_date_time_to_utc (date);
+  g_autofree char *date_format = NULL;
+
+  /* "Sun, 06 Nov 1994 08:49:37 GMT" */
+
+  date_format = g_strdup_printf ("%s, %%d %s %%Y %%T GMT",
+                                 days[g_date_time_get_day_of_week (utcdate) - 1],
+                                 months[g_date_time_get_month (utcdate) - 1]);
+
+  return g_date_time_format (utcdate, (const char*)date_format);
+}
+
+
+static inline gboolean
+parse_day (int *day, const char **date_string)
+{
+  char *end;
+
+  *day = strtoul (*date_string, &end, 10);
+  if (end == (char *)*date_string)
+    return FALSE;
+
+  while (*end == ' ' || *end == '-')
+    end++;
+  *date_string = end;
+  return TRUE;
+}
+
+static inline gboolean
+parse_month (int *month, const char **date_string)
+{
+  int i;
+
+  for (i = 0; i < G_N_ELEMENTS (months); i++)
+    {
+      if (!g_ascii_strncasecmp (*date_string, months[i], 3))
+        {
+          *month = i + 1;
+          *date_string += 3;
+          while (**date_string == ' ' || **date_string == '-')
+            (*date_string)++;
+          return TRUE;
+        }
+    }
+
+  return FALSE;
+}
+
+static inline gboolean
+parse_year (int *year, const char **date_string)
+{
+  char *end;
+
+  *year = strtoul (*date_string, &end, 10);
+  if (end == (char *)*date_string)
+    return FALSE;
+
+  if (end == (char *)*date_string + 2) {
+    if (*year < 70)
+      *year += 2000;
+    else
+      *year += 1900;
+  } else if (end == (char *)*date_string + 3)
+    *year += 1900;
+
+  while (*end == ' ' || *end == '-')
+    end++;
+  *date_string = end;
+
+  return TRUE;
+}
+
+static inline gboolean
+parse_time (int *hour, int *minute, int *second, const char **date_string)
+{
+  char *p, *end;
+
+  *hour = strtoul (*date_string, &end, 10);
+  if (end == (char *)*date_string || *end++ != ':')
+    return FALSE;
+  p = end;
+  *minute = strtoul (p, &end, 10);
+  if (end == p || *end++ != ':')
+    return FALSE;
+  p = end;
+  *second = strtoul (p, &end, 10);
+  if (end == p)
+    return FALSE;
+  p = end;
+
+  while (*p == ' ')
+    p++;
+  *date_string = p;
+
+  return TRUE;
+}
+
+static inline gboolean
+parse_timezone (GTimeZone **timezone_out, const char **date_string)
+{
+  gint32 offset_minutes;
+  gboolean utc;
+
+  if (!**date_string)
+    {
+      utc = FALSE;
+      offset_minutes = 0;
+    }
+  else if (**date_string == '+' || **date_string == '-')
+    {
+      gulong val;
+      int sign = (**date_string == '+') ? 1 : -1;
+      val = strtoul (*date_string + 1, (char **)date_string, 10);
+      if (**date_string == ':')
+        val = 60 * val + strtoul (*date_string + 1, (char **)date_string, 10);
+      else
+        val =  60 * (val / 100) + (val % 100);
+      offset_minutes = sign * val;
+      utc = (sign == -1) && !val;
+    }
+  else if (**date_string == 'Z')
+    {
+      offset_minutes = 0;
+      utc = TRUE;
+      (*date_string)++;
+    }
+  else if (!strcmp (*date_string, "GMT") ||
+           !strcmp (*date_string, "UTC"))
+    {
+      offset_minutes = 0;
+      utc = TRUE;
+      (*date_string) += 3;
+    }
+  else if (strchr ("ECMP", **date_string) &&
+           ((*date_string)[1] == 'D' || (*date_string)[1] == 'S') &&
+           (*date_string)[2] == 'T') {
+    offset_minutes = -60 * (5 * strcspn ("ECMP", *date_string));
+    if ((*date_string)[1] == 'D')
+      offset_minutes += 60;
+    utc = FALSE;
+  }
+  else
+    return FALSE;
+
+  if (utc)
+    *timezone_out = g_time_zone_new_utc ();
+  else
+    *timezone_out = g_time_zone_new_offset (offset_minutes * 60);
+
+  return TRUE;
+}
+
+GDateTime *
+flatpak_parse_http_time (const char *date_string)
+{
+  int month, day, year, hour, minute, second;
+  g_autoptr(GTimeZone) tz = NULL;
+
+  g_return_val_if_fail (date_string != NULL, NULL);
+
+  while (g_ascii_isspace (*date_string))
+    date_string++;
+
+  /* If it starts with a word, it must be a weekday, which we skip */
+  if (g_ascii_isalpha (*date_string))
+    {
+      while (g_ascii_isalpha (*date_string))
+        date_string++;
+      if (*date_string == ',')
+        date_string++;
+      while (g_ascii_isspace (*date_string))
+        date_string++;
+    }
+
+  /* If there's now another word, this must be an asctime-date */
+  if (g_ascii_isalpha (*date_string))
+    {
+      /* (Sun) Nov  6 08:49:37 1994 */
+      if (!parse_month (&month, &date_string) ||
+          !parse_day (&day, &date_string) ||
+          !parse_time (&hour, &minute, &second, &date_string) ||
+          !parse_year (&year, &date_string))
+        return NULL;
+
+      /* There shouldn't be a timezone, but check anyway */
+      parse_timezone (&tz, &date_string);
+    }
+  else
+    {
+      /* Non-asctime date, so some variation of
+       * (Sun,) 06 Nov 1994 08:49:37 GMT
+       */
+      if (!parse_day (&day, &date_string) ||
+          !parse_month (&month, &date_string) ||
+          !parse_year (&year, &date_string) ||
+          !parse_time (&hour, &minute, &second, &date_string))
+        return NULL;
+
+      /* This time there *should* be a timezone, but we
+       * survive if there isn't.
+       */
+      parse_timezone (&tz, &date_string);
+    }
+
+  if (!tz)
+    tz = g_time_zone_new_utc ();
+
+  return g_date_time_new (tz, year, month, day, hour, minute, second);
+}
