@@ -192,7 +192,7 @@ port=$(cat httpd-port)
 if ${FLATPAK} ${U} install -y http://127.0.0.1:${port}/nonexistent.flatpakref &> install-error-log; then
     assert_not_reached "Should not be able to install a nonexistent flatpakref"
 fi
-assert_file_has_content install-error-log "Server returned status 404: Not Found"
+assert_file_has_content install-error-log "Server returned status 404"
 
 ok "install fails gracefully for 404 URLs"
 
