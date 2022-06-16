@@ -33,6 +33,61 @@ on:
 jobs:
   check:
     name: Build with gcc and test
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libglib2.0 attr automake gettext autopoint bison  dbus gtk-doc-tools \
+        libfuse-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
+        libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
+        libseccomp-dev libsoup2.4-dev libcurl4-openssl-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
+        libgirepository1.0-dev libappstream-dev libdconf-dev clang socat meson libdbus-1-dev e2fslibs-dev bubblewrap xdg-dbus-proxy
+        # One of the tests wants this
+        sudo mkdir /tmp/flatpak-com.example.App-OwnedByRoot
+    - name: Check out flatpak
+      uses: actions/checkout@v1
+      with:
+        submodules: true
+    - name: Create logs dir
+      run: mkdir test-logs
+    - name: autogen.sh
+      run: NOCONFIGURE=1 ./autogen.sh
+    - name: configure
+      # We don't do gtk-doc or GObject-Introspection here, because they can
+      # clash with AddressSanitizer. Instead, the clang build enables those.
+      run: |
+        mkdir _build
+        pushd _build
+        ../configure  --enable-internal-checks --enable-asan --disable-introspection --with-curl --with-system-bubblewrap --with-system-dbus-proxy
+        popd
+      env:
+        CFLAGS: -O2 -Wp,-D_FORTIFY_SOURCE=2
+    - name: Build flatpak
+      run: make -C _build -j $(getconf _NPROCESSORS_ONLN)
+    - name: Run tests
+      run: make -C _build check -j $(getconf _NPROCESSORS_ONLN)
+      env:
+        ASAN_OPTIONS: detect_leaks=0 # Right now we're not fully clean, but this gets us use-after-free etc
+    - name: Collect overall test logs on failure
+      if: failure()
+      run: mv _build/test-suite.log test-logs/ || true
+    - name: Collect individual test logs on cancel
+      if: failure() || cancelled()
+      run: mv _build/tests/*.log test-logs/ || true
+    - name: Upload test logs
+      uses: actions/upload-artifact@v1
+      if: failure() || cancelled()
+      with:
+        name: test logs
+        path: test-logs
+
+  # This is similar to the above, but runs on an older OS with some different configuration:
+  # * Soup instead of curl
+  # * Use built in bubblewrap instead of external
+  # * Use built in xdg-dbus-proxy instead of external
+  check-alt2:
+    name: Build with gcc and test (older)
     runs-on: ubuntu-18.04
     steps:
     - name: Install Dependencies
@@ -70,15 +125,14 @@ jobs:
       run: |
         mkdir _build
         pushd _build
-        ../configure  --enable-internal-checks --enable-asan --disable-introspection
+        ../configure  --enable-internal-checks --enable-asan --disable-introspection --without-curl
         popd
       env:
         CFLAGS: -O2 -Wp,-D_FORTIFY_SOURCE=2
     - name: Build flatpak
       run: make -C _build -j $(getconf _NPROCESSORS_ONLN)
     - name: Run tests
-      # TODO: Build with -j (currently ends up with hangs in the tests)
-      run: make -C _build check
+      run: make -C _build check -j $(getconf _NPROCESSORS_ONLN)
       env:
         ASAN_OPTIONS: detect_leaks=0 # Right now we're not fully clean, but this gets us use-after-free etc
     - name: Collect overall test logs on failure
