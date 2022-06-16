@@ -1,6 +1,6 @@
 Changes in 1.13.3
 ~~~~~~~~~~~~~~~~~
-Released: not yet
+Released: 2022-06-16
 
 Dependencies:
 
@@ -10,37 +10,39 @@ Dependencies:
 
 New features:
 
- * Implement support for renaming dynamic launchers (#4703)
- * Add --include-sdk/debug to install SDK/debuginfo along with a ref (#4777)
+ * Implement support for rewriting dynamic launchers when an app is renamed
+   (#4703)
+ * Add --include-sdk/debug options to install command to install SDK/debuginfo
+   along with a ref (#4777)
+ * Improve --sideload-repo option to take create-usb dirs (#4843)
+ * Add a new library API flatpak_transaction_get_operation_for_ref() (#4947)
 
 Bug fixes:
 
- * Disable fuzzy ref matching when ID has a period or a slash, or when the
-   standard input or output is not a TTY (#4829, #4848)
- * Improve the use of libglnx and xdg-dbus-proxy headers (#4842)
- * Improve --sideload-repo option to take create-usb dirs (#4843)
- * Update the documentation for the 'run' and 'uninstall' commands (#4851)
  * Update the SELinux module to explicitly permit the system helper have read
    access to /etc/passwd and systemd-userdbd, read and lock access to
    /var/lib/flatpak, and watch files inside $libexecdir (#4852, #4855, #4892)
  * Fix the error messages and the exit code of the 'uninstall' command when
    non-existent refs are specified (#4857)
- * Remove a stray parenthesis from an error message (#4878)
  * Be more careful with errors when creating directories and deleting files,
    and address some memory errors (#4930)
- * Speed up the tests by not installing the polkit agent (#4942)
- * Fix support for --noninteractive in the 'uninstall' command, miscellaneous
-   optimizations, and cosmetic improvements to the content, formatting and
-   layout of the user-visible texts (#4947)
+ * Fix support for --noninteractive in the 'uninstall' command (#4947)
 
 Other changes:
 
+ * Cosmetic improvements to end-of-life messages and other aspects of the CLI
+   output (#4947)
+ * Speed up the tests by not installing the polkit agent (#4942)
+ * Disable fuzzy ref matching when ID has a period or a slash, or when the
+   standard input or output is not a TTY (#4829, #4848)
  * Update the icon-validator to print the format and size for consumption by
    the dynamic launcher portal (#4803, #4808)
  * Remove a pointless test (#4856)
  * Improve various details of the GitHub workflows (#4870)
- * Prepare for the addition of a Meson build (#4871, #4888, #4889, #4890)
- * Only add the specified 'summary-arches' to the compat summary (#4880)
+ * Prepare for the addition of a Meson build (#4842, #4871, #4888, #4889, #4890)
+ * Only add the specified 'summary-arches' to the compat summary. This is
+   important since we're nearing the 10MB size limit for Flathub's legacy
+   summary files. (#4880)
  * Translation updates: id, pt, sv, tr, uk
 
 Changes in 1.13.2
