@@ -42,13 +42,23 @@ jobs:
         libfuse-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
         libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
         libseccomp-dev libsoup2.4-dev libcurl4-openssl-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
-        libgirepository1.0-dev libappstream-dev libdconf-dev clang socat meson libdbus-1-dev e2fslibs-dev bubblewrap xdg-dbus-proxy
+        libgirepository1.0-dev libappstream-dev libdconf-dev clang socat meson libdbus-1-dev e2fslibs-dev bubblewrap xdg-dbus-proxy \
+        python3-pip meson ninja-build libyaml-dev libstemmer-dev gperf itstool
         # One of the tests wants this
         sudo mkdir /tmp/flatpak-com.example.App-OwnedByRoot
     - name: Check out flatpak
       uses: actions/checkout@v1
       with:
         submodules: true
+    - name: Build appstream dependency # (We need at least 0.15.3 for the g_once fix)
+      run: |
+        sudo pip3 install 'meson~=0.62'
+        git clone --branch v0.15.4 --depth 1 --no-tags https://github.com/ximion/appstream.git ./appstream
+        pushd ./appstream
+        meson setup --prefix=/usr _build
+        ninja -C _build
+        sudo ninja -C _build install
+        popd
     - name: Create logs dir
       run: mkdir test-logs
     - name: autogen.sh
