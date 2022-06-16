@@ -177,14 +177,18 @@ load_cache_http_data (int           dfd,
   return g_steal_pointer (&data);
 }
 
+#if !SOUP_CHECK_VERSION (3, 0, 0)
+#define soup_message_get_response_headers(_msg) ((_msg)->response_headers)
+#endif
+
 static void
 set_cache_http_data_from_headers (CacheHttpData *data,
                                   SoupMessage   *msg)
 {
-  const char *etag = soup_message_headers_get_one (msg->response_headers, "ETag");
-  const char *last_modified = soup_message_headers_get_one (msg->response_headers, "Last-Modified");
-  const char *cache_control = soup_message_headers_get_list (msg->response_headers, "Cache-Control");
-  const char *expires = soup_message_headers_get_list (msg->response_headers, "Expires");
+  const char *etag = soup_message_headers_get_one (soup_message_get_response_headers (msg), "ETag");
+  const char *last_modified = soup_message_headers_get_one (soup_message_get_response_headers (msg), "Last-Modified");
+  const char *cache_control = soup_message_headers_get_list (soup_message_get_response_headers (msg), "Cache-Control");
+  const char *expires = soup_message_headers_get_list (soup_message_get_response_headers (msg), "Expires");
   gboolean expires_computed = FALSE;
 
   /* The original HTTP 1/1 specification only required sending the ETag header in a 304
@@ -203,12 +207,18 @@ set_cache_http_data_from_headers (CacheHttpData *data,
     }
   else if (last_modified && *last_modified)
     {
+#if SOUP_CHECK_VERSION (3, 0, 0)
+      g_autoptr(GDateTime) datetime = soup_date_time_new_from_http_string (last_modified);
+      if (datetime)
+        data->last_modified = g_date_time_to_unix (datetime);
+#else
       SoupDate *date = soup_date_new_from_string (last_modified);
       if (date)
         {
           data->last_modified = soup_date_to_time_t (date);
           soup_date_free (date);
         }
+#endif
     }
 
   if (cache_control && *cache_control)
@@ -244,6 +254,14 @@ set_cache_http_data_from_headers (CacheHttpData *data,
 
   if (!expires_computed && expires && *expires)
     {
+#if SOUP_CHECK_VERSION (3, 0, 0)
+      g_autoptr(GDateTime) datetime = soup_date_time_new_from_http_string (expires);
+      if (datetime)
+        {
+          data->expires = g_date_time_to_unix (datetime);
+          expires_computed = TRUE;
+        }
+#else
       SoupDate *date = soup_date_new_from_string (expires);
       if (date)
         {
@@ -251,6 +269,7 @@ set_cache_http_data_from_headers (CacheHttpData *data,
           soup_date_free (date);
           expires_computed = TRUE;
         }
+#endif
     }
 
   if (!expires_computed)
@@ -409,29 +428,23 @@ load_uri_read_cb (GObject *source, GAsyncResult *res, gpointer user_data)
 }
 
 static void
-load_uri_callback (GObject      *source_object,
-                   GAsyncResult *res,
-                   gpointer      user_data)
+flatpak_process_load_uri (SoupMessage  *msg,
+                          GInputStream *in,
+                          LoadUriData  *data)
 {
-  SoupRequestHTTP *request = SOUP_REQUEST_HTTP (source_object);
-  g_autoptr(GInputStream) in = NULL;
-  LoadUriData *data = user_data;
+  guint status_code;
 
-  in = soup_request_send_finish (SOUP_REQUEST (request), res, &data->error);
-  if (in == NULL)
-    {
-      /* data->error has been set */
-      g_main_context_wakeup (data->context);
-      return;
-    }
-
-  g_autoptr(SoupMessage) msg = soup_request_http_get_message ((SoupRequestHTTP *) request);
-  if (!SOUP_STATUS_IS_SUCCESSFUL (msg->status_code))
+#if SOUP_CHECK_VERSION (3, 0, 0)
+  status_code = soup_message_get_status (msg);
+#else
+  status_code = msg->status_code;
+#endif
+  if (!SOUP_STATUS_IS_SUCCESSFUL (status_code))
     {
       int code;
       GQuark domain = G_IO_ERROR;
 
-      switch (msg->status_code)
+      switch (status_code)
         {
         case 304:
           if (data->cache_data)
@@ -456,6 +469,7 @@ load_uri_callback (GObject      *source_object,
           code = G_IO_ERROR_TIMED_OUT;
           break;
 
+#if !SOUP_CHECK_VERSION (3, 0, 0)
         case SOUP_STATUS_CANCELLED:
           code = G_IO_ERROR_CANCELLED;
           break;
@@ -464,15 +478,18 @@ load_uri_callback (GObject      *source_object,
         case SOUP_STATUS_CANT_CONNECT:
           code = G_IO_ERROR_HOST_NOT_FOUND;
           break;
+#endif
 
         case SOUP_STATUS_INTERNAL_SERVER_ERROR:
           /* The server did return something, but it was useless to us, so that’s basically equivalent to not returning */
           code = G_IO_ERROR_HOST_UNREACHABLE;
           break;
 
+#if !SOUP_CHECK_VERSION (3, 0, 0)
         case SOUP_STATUS_IO_ERROR:
           code = G_IO_ERROR_CONNECTION_CLOSED;
           break;
+#endif
 
         default:
           code = G_IO_ERROR_FAILED;
@@ -480,8 +497,8 @@ load_uri_callback (GObject      *source_object,
 
       data->error = g_error_new (domain, code,
                                  "Server returned status %u: %s",
-                                 msg->status_code,
-                                 soup_status_get_phrase (msg->status_code));
+                                 status_code,
+                                 soup_status_get_phrase (status_code));
       g_main_context_wakeup (data->context);
       return;
     }
@@ -490,7 +507,7 @@ load_uri_callback (GObject      *source_object,
     set_cache_http_data_from_headers (data->cache_data, msg);
 
   if (data->content_type_out)
-    *data->content_type_out = g_strdup (soup_message_headers_get_content_type (msg->response_headers, NULL));
+    *data->content_type_out = g_strdup (soup_message_headers_get_content_type (soup_message_get_response_headers (msg), NULL));
 
   if (data->out_tmpfile)
     {
@@ -508,7 +525,8 @@ load_uri_callback (GObject      *source_object,
 
       out = g_unix_output_stream_new (data->out_tmpfile->fd, FALSE);
       if (data->store_compressed &&
-          g_strcmp0 (soup_message_headers_get_one (msg->response_headers, "Content-Encoding"), "gzip") != 0)
+          g_strcmp0 (soup_message_headers_get_one (soup_message_get_response_headers (msg),
+                                                   "Content-Encoding"), "gzip") != 0)
         {
           g_autoptr(GZlibCompressor) compressor = g_zlib_compressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP, -1);
           data->out = g_converter_output_stream_new (out, G_CONVERTER (compressor));
@@ -524,30 +542,77 @@ load_uri_callback (GObject      *source_object,
                              load_uri_read_cb, data);
 }
 
+#if !SOUP_CHECK_VERSION (3, 0, 0)
+static void
+load_uri_callback (GObject      *source_object,
+                   GAsyncResult *res,
+                   gpointer      user_data)
+{
+  SoupRequestHTTP *request = SOUP_REQUEST_HTTP (source_object);
+  g_autoptr(SoupMessage) msg = NULL;
+  g_autoptr(GInputStream) in = NULL;
+  LoadUriData *data = user_data;
+
+  in = soup_request_send_finish (SOUP_REQUEST (request), res, &data->error);
+  if (in == NULL)
+    {
+      /* data->error has been set */
+      g_main_context_wakeup (data->context);
+      return;
+    }
+
+  msg = soup_request_http_get_message (request);
+
+  flatpak_process_load_uri (msg, in, data);
+}
+#endif
+
 SoupSession *
 flatpak_create_soup_session (const char *user_agent)
 {
   SoupSession *soup_session;
   const char *http_proxy;
 
-  soup_session = soup_session_new_with_options (SOUP_SESSION_USER_AGENT, user_agent,
+  soup_session = soup_session_new_with_options ("user-agent", user_agent,
+                                                "timeout", 60,
+                                                "idle-timeout", 60,
+#if !SOUP_CHECK_VERSION (3, 0, 0)
                                                 SOUP_SESSION_SSL_USE_SYSTEM_CA_FILE, TRUE,
                                                 SOUP_SESSION_USE_THREAD_CONTEXT, TRUE,
-                                                SOUP_SESSION_TIMEOUT, 60,
-                                                SOUP_SESSION_IDLE_TIMEOUT, 60,
+#endif
                                                 NULL);
   http_proxy = g_getenv ("http_proxy");
   if (http_proxy)
     {
+#if SOUP_CHECK_VERSION (3, 0, 0)
+      g_autoptr(GUri) proxy_uri = g_uri_parse (http_proxy, SOUP_HTTP_URI_FLAGS | G_URI_FLAGS_PARSE_RELAXED, NULL);
+#else
       g_autoptr(SoupURI) proxy_uri = soup_uri_new (http_proxy);
+#endif
       if (!proxy_uri)
         g_warning ("Invalid proxy URI '%s'", http_proxy);
       else
-        g_object_set (soup_session, SOUP_SESSION_PROXY_URI, proxy_uri, NULL);
+        {
+#if SOUP_CHECK_VERSION (3, 0, 0)
+          g_autoptr(GProxyResolver) proxy_resolver = g_simple_proxy_resolver_new (http_proxy, NULL);
+          g_object_set (soup_session, "proxy-resolver", proxy_resolver, NULL);
+#else
+          g_object_set (soup_session, SOUP_SESSION_PROXY_URI, proxy_uri, NULL);
+#endif
+        }
     }
 
   if (g_getenv ("OSTREE_DEBUG_HTTP"))
-    soup_session_add_feature (soup_session, (SoupSessionFeature *) soup_logger_new (SOUP_LOGGER_LOG_BODY, 500));
+    {
+      g_autoptr(SoupLogger) logger = NULL;
+#if SOUP_CHECK_VERSION (3, 0, 0)
+      logger = soup_logger_new (SOUP_LOGGER_LOG_BODY);
+      soup_logger_set_max_body_size (logger, 500);
+#else
+      logger = soup_logger_new (SOUP_LOGGER_LOG_BODY, 500);
+#endif
+      soup_session_add_feature (soup_session, (SoupSessionFeature *) logger);
+    }
 
   return soup_session;
 }
@@ -584,6 +649,18 @@ flatpak_http_should_retry_request (const GError *error,
   return FALSE;
 }
 
+static void
+flatpak_replace_request_header (SoupMessage *msg,
+                                const gchar *name,
+                                const gchar *value)
+{
+#if SOUP_CHECK_VERSION (3, 0, 0)
+  soup_message_headers_replace (soup_message_get_request_headers (msg), name, value);
+#else
+  soup_message_headers_replace (msg->request_headers, name, value);
+#endif
+}
+
 static GBytes *
 flatpak_load_http_uri_once (SoupSession           *soup_session,
                             const char            *uri,
@@ -597,10 +674,15 @@ flatpak_load_http_uri_once (SoupSession           *soup_session,
 {
   GBytes *bytes = NULL;
   g_autoptr(GMainContext) context = NULL;
+#if SOUP_CHECK_VERSION (3, 0, 0)
+  g_autoptr(SoupMessage) m = NULL;
+  g_autoptr(GInputStream) in = NULL;
+#else
   g_autoptr(SoupRequestHTTP) request = NULL;
+  SoupMessage *m;
+#endif
   g_autoptr(GString) content = g_string_new ("");
   LoadUriData data = { NULL };
-  SoupMessage *m;
 
   g_debug ("Loading %s using libsoup", uri);
 
@@ -614,27 +696,44 @@ flatpak_load_http_uri_once (SoupSession           *soup_session,
   data.last_progress_time = g_get_monotonic_time ();
   data.content_type_out = out_content_type;
 
+#if SOUP_CHECK_VERSION (3, 0, 0)
+  m = soup_message_new ("GET", uri);
+  if (m == NULL)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT, "Invalid URI '%s'", uri);
+      return NULL;
+    }
+#else
   request = soup_session_request_http (soup_session, "GET",
                                        uri, error);
   if (request == NULL)
     return NULL;
 
   m = soup_request_http_get_message (request);
+#endif
 
   if (flags & FLATPAK_HTTP_FLAGS_ACCEPT_OCI)
-    soup_message_headers_replace (m->request_headers, "Accept",
-                                  FLATPAK_OCI_MEDIA_TYPE_IMAGE_MANIFEST ", " FLATPAK_DOCKER_MEDIA_TYPE_IMAGE_MANIFEST2 ", " FLATPAK_OCI_MEDIA_TYPE_IMAGE_INDEX);
+    flatpak_replace_request_header (m, "Accept",
+                                    FLATPAK_OCI_MEDIA_TYPE_IMAGE_MANIFEST ", " FLATPAK_DOCKER_MEDIA_TYPE_IMAGE_MANIFEST2 ", " FLATPAK_OCI_MEDIA_TYPE_IMAGE_INDEX);
 
 
   if (token)
     {
       g_autofree char *bearer_token = g_strdup_printf ("Bearer %s", token);
-      soup_message_headers_replace (m->request_headers, "Authorization", bearer_token);
+      flatpak_replace_request_header (m, "Authorization", bearer_token);
     }
 
+#if SOUP_CHECK_VERSION (3, 0, 0)
+  /* libsoup3 uses the thread default main context from the time the SoupSession had been created,
+     thus cannot use the async variant here. */
+  in = soup_session_send (soup_session, m, cancellable, &data.error);
+  if (in != NULL)
+    flatpak_process_load_uri (m, in, &data);
+#else
   soup_request_send_async (SOUP_REQUEST (request),
                            cancellable,
                            load_uri_callback, &data);
+#endif
 
   while (data.error == NULL && !data.done)
     g_main_context_iteration (data.context, TRUE);
@@ -719,10 +818,15 @@ flatpak_download_http_uri_once (SoupSession           *soup_session,
                                 GCancellable          *cancellable,
                                 GError               **error)
 {
+#if SOUP_CHECK_VERSION (3, 0, 0)
+  g_autoptr(SoupMessage) m = NULL;
+  g_autoptr(GInputStream) in = NULL;
+#else
   g_autoptr(SoupRequestHTTP) request = NULL;
+  SoupMessage *m;
+#endif
   g_autoptr(GMainContext) context = NULL;
   LoadUriData data = { NULL };
-  SoupMessage *m;
 
   g_debug ("Loading %s using libsoup", uri);
 
@@ -735,25 +839,43 @@ flatpak_download_http_uri_once (SoupSession           *soup_session,
   data.user_data = user_data;
   data.last_progress_time = g_get_monotonic_time ();
 
+#if SOUP_CHECK_VERSION (3, 0, 0)
+  m = soup_message_new ("GET", uri);
+  if (m == NULL)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT, "Invalid URI '%s'", uri);
+      return FALSE;
+    }
+#else
   request = soup_session_request_http (soup_session, "GET",
                                        uri, error);
   if (request == NULL)
     return FALSE;
 
   m = soup_request_http_get_message (request);
+#endif
+
   if (flags & FLATPAK_HTTP_FLAGS_ACCEPT_OCI)
-    soup_message_headers_replace (m->request_headers, "Accept",
-                                  FLATPAK_OCI_MEDIA_TYPE_IMAGE_MANIFEST ", " FLATPAK_DOCKER_MEDIA_TYPE_IMAGE_MANIFEST2);
+    flatpak_replace_request_header (m, "Accept",
+                                    FLATPAK_OCI_MEDIA_TYPE_IMAGE_MANIFEST ", " FLATPAK_DOCKER_MEDIA_TYPE_IMAGE_MANIFEST2);
 
   if (token)
     {
       g_autofree char *bearer_token = g_strdup_printf ("Bearer %s", token);
-      soup_message_headers_replace (m->request_headers, "Authorization", bearer_token);
+      flatpak_replace_request_header (m, "Authorization", bearer_token);
     }
 
+#if SOUP_CHECK_VERSION (3, 0, 0)
+  /* libsoup3 uses the thread default main context from the time the SoupSession had been created,
+     thus cannot use the async variant here. */
+  in = soup_session_send (soup_session, m, cancellable, &data.error);
+  if (in != NULL)
+    flatpak_process_load_uri (m, in, &data);
+#else
   soup_request_send_async (SOUP_REQUEST (request),
                            cancellable,
                            load_uri_callback, &data);
+#endif
 
   while (data.error == NULL && !data.done)
     g_main_context_iteration (data.context, TRUE);
@@ -866,7 +988,13 @@ flatpak_cache_http_uri_once (SoupSession           *soup_session,
                              GCancellable          *cancellable,
                              GError               **error)
 {
+#if SOUP_CHECK_VERSION (3, 0, 0)
+  g_autoptr(SoupMessage) m = NULL;
+  g_autoptr(GInputStream) in = NULL;
+#else
   g_autoptr(SoupRequestHTTP) request = NULL;
+  SoupMessage *m;
+#endif
   g_autoptr(GMainContext) context = NULL;
   g_autoptr(CacheHttpData) cache_data = NULL;
   g_autofree char *parent_path = g_path_get_dirname (dest_subpath);
@@ -877,7 +1005,6 @@ flatpak_cache_http_uri_once (SoupSession           *soup_session,
   g_auto(GLnxTmpfile) out_tmpfile = { 0 };
   g_auto(GLnxTmpfile) cache_tmpfile = { 0 };
   g_autoptr(GBytes) cache_bytes = NULL;
-  SoupMessage *m;
 
   if (!glnx_opendirat (dest_dfd, parent_path, TRUE, &dfd, error))
     return FALSE;
@@ -923,40 +1050,63 @@ flatpak_cache_http_uri_once (SoupSession           *soup_session,
   data.user_data = user_data;
   data.last_progress_time = g_get_monotonic_time ();
 
+#if SOUP_CHECK_VERSION (3, 0, 0)
+  m = soup_message_new ("GET", uri);
+  if (m == NULL)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT, "Invalid URI '%s'", uri);
+      return FALSE;
+    }
+#else
   request = soup_session_request_http (soup_session, "GET",
                                        uri, error);
   if (request == NULL)
     return FALSE;
 
   m = soup_request_http_get_message (request);
+#endif
 
   if (cache_data->etag && cache_data->etag[0])
-    soup_message_headers_replace (m->request_headers, "If-None-Match", cache_data->etag);
+    flatpak_replace_request_header (m, "If-None-Match", cache_data->etag);
   else if (cache_data->last_modified != 0)
     {
+      g_autofree char *date_str = NULL;
+#if SOUP_CHECK_VERSION (3, 0, 0)
+      g_autoptr(GDateTime) datetime = g_date_time_new_from_unix_utc (cache_data->last_modified);
+      date_str = soup_date_time_to_string (datetime, SOUP_DATE_HTTP);
+#else
       SoupDate *date = soup_date_new_from_time_t (cache_data->last_modified);
-      g_autofree char *date_str = soup_date_to_string (date, SOUP_DATE_HTTP);
-      soup_message_headers_replace (m->request_headers, "If-Modified-Since", date_str);
+      date_str = soup_date_to_string (date, SOUP_DATE_HTTP);
       soup_date_free (date);
+#endif
+      flatpak_replace_request_header (m, "If-Modified-Since", date_str);
     }
 
   if (flags & FLATPAK_HTTP_FLAGS_ACCEPT_OCI)
-    soup_message_headers_replace (m->request_headers, "Accept",
-                                  FLATPAK_OCI_MEDIA_TYPE_IMAGE_MANIFEST ", " FLATPAK_DOCKER_MEDIA_TYPE_IMAGE_MANIFEST2);
+    flatpak_replace_request_header (m, "Accept",
+                                    FLATPAK_OCI_MEDIA_TYPE_IMAGE_MANIFEST ", " FLATPAK_DOCKER_MEDIA_TYPE_IMAGE_MANIFEST2);
 
   if (flags & FLATPAK_HTTP_FLAGS_STORE_COMPRESSED)
     {
       soup_session_remove_feature_by_type (soup_session, SOUP_TYPE_CONTENT_DECODER);
-      soup_message_headers_replace (m->request_headers, "Accept-Encoding",
-                                    "gzip");
+      flatpak_replace_request_header (m, "Accept-Encoding",
+                                      "gzip");
       data.store_compressed = TRUE;
     }
   else if (!soup_session_has_feature (soup_session, SOUP_TYPE_CONTENT_DECODER))
     soup_session_add_feature_by_type (soup_session, SOUP_TYPE_CONTENT_DECODER);
 
+#if SOUP_CHECK_VERSION (3, 0, 0)
+  /* libsoup3 uses the thread default main context from the time the SoupSession had been created,
+     thus cannot use the async variant here. */
+  in = soup_session_send (soup_session, m, cancellable, &data.error);
+  if (in != NULL)
+    flatpak_process_load_uri (m, in, &data);
+#else
   soup_request_send_async (SOUP_REQUEST (request),
                            cancellable,
                            load_uri_callback, &data);
+#endif
 
   while (data.error == NULL && !data.done)
     g_main_context_iteration (data.context, TRUE);

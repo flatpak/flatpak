@@ -220,9 +220,21 @@ AC_SUBST([GDBUS_CODEGEN], [`$PKG_CONFIG --variable gdbus_codegen gio-2.0`])
 
 POLKIT_GOBJECT_REQUIRED=0.98
 
+AC_ARG_WITH([soup2],
+            [AS_HELP_STRING([--with-soup2], [Build with libsoup 2 [default=no]])],
+            [with_soup2="$withval"],
+            [with_soup2="no"])
+
+if test "x$with_soup2" = "xyes"; then
+   SOUPAPIVERSION='2.4'
+else
+   SOUPAPIVERSION='3.0'
+fi
+AC_SUBST(SOUPAPIVERSION)
+
 PKG_CHECK_MODULES(ARCHIVE, [libarchive >= 2.8.0])
 PKG_CHECK_MODULES(BASE, [glib-2.0 >= $GLIB_REQS gio-2.0 gio-unix-2.0])
-PKG_CHECK_MODULES(SOUP, [libsoup-2.4])
+PKG_CHECK_MODULES(SOUP, [libsoup-$SOUPAPIVERSION])
 PKG_CHECK_MODULES(XML, [libxml-2.0 >= 2.4])
 PKG_CHECK_MODULES(ZSTD, [libzstd >= 0.8.1], [have_zstd=yes], [have_zstd=no])
 if test $have_zstd = yes; then
@@ -612,4 +624,5 @@ echo "          Use libsystemd:         $have_libsystemd"
 echo "          Use libmalcontent:      $have_libmalcontent"
 echo "          Use libzstd:            $have_zstd"
 echo "          Use auto sideloading:   $enable_auto_sideloading"
+echo "          libsoup API version:    $SOUPAPIVERSION"
 echo ""
