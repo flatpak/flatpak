@@ -120,6 +120,11 @@ flatpak_remote_finalize (GObject *object)
   g_free (priv->local_title);
   g_free (priv->local_default_branch);
   g_free (priv->local_main_ref);
+  g_free (priv->local_filter);
+  g_free (priv->local_comment);
+  g_free (priv->local_description);
+  g_free (priv->local_homepage);
+  g_free (priv->local_icon);
 
   G_OBJECT_CLASS (flatpak_remote_parent_class)->finalize (object);
 }
