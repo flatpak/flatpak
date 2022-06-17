@@ -1130,12 +1130,7 @@ flatpak_dir_load_appstream_store (FlatpakDir   *self,
 
   appstream_file = g_file_new_for_path (appstream_path);
   as_metadata_set_format_style (mdata, AS_FORMAT_STYLE_COLLECTION);
-#ifdef HAVE_APPSTREAM_0_14_0
   success = as_metadata_parse_file (mdata, appstream_file, AS_FORMAT_KIND_XML, &local_error);
-#else
-  as_metadata_parse_file (mdata, appstream_file, AS_FORMAT_KIND_XML, &local_error);
-  success = (local_error == NULL);
-#endif
 
   /* We want to ignore ENOENT error as it is harmless and valid */
   if (local_error != NULL &&

@@ -347,10 +347,7 @@ PKG_CHECK_MODULES(OSTREE, [ostree-1 >= $OSTREE_REQS])
 
 PKG_CHECK_MODULES(JSON, [json-glib-1.0])
 
-PKG_CHECK_MODULES(APPSTREAM, [appstream >= 0.12.0])
-PKG_CHECK_MODULES(APPSTREAM_0_14_0, appstream >= 0.14.0,
-                  [AC_DEFINE([HAVE_APPSTREAM_0_14_0], [1], [Define if appstream >= 0.14.0 is available])],
-                  [true])
+PKG_CHECK_MODULES(APPSTREAM, [appstream >= 0.15.3])
 
 PKG_CHECK_MODULES(GDK_PIXBUF, [gdk-pixbuf-2.0])
 
