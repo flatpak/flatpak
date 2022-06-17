@@ -58,6 +58,7 @@ common/flatpak-ref-utils.c
 common/flatpak-remote.c
 common/flatpak-run.c
 common/flatpak-transaction.c
+common/flatpak-uri.c
 common/flatpak-utils.c
 oci-authenticator/flatpak-oci-authenticator.c
 portal/flatpak-portal.c
