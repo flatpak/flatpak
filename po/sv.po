@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2022-06-16 11:38-0700\n"
-"PO-Revision-Date: 2022-05-09 21:57+0200\n"
+"POT-Creation-Date: 2022-06-17 15:25+0000\n"
+"PO-Revision-Date: 2022-06-19 22:06+0200\n"
 "Last-Translator: Anders Jonsson <anders.jonsson@norsjovallen.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
 "Language: sv\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.0.1\n"
+"X-Generator: Poedit 3.1\n"
 
 #: app/flatpak-builtins-build-bundle.c:57
 msgid "Export runtime instead of app"
@@ -3581,35 +3581,39 @@ msgstr "Lösenord"
 #: app/flatpak-cli-transaction.c:705
 #, c-format
 msgid "%s%s%s branch %s%s%s"
-msgstr ""
+msgstr "%s%s%s gren %s%s%s"
 
 #: app/flatpak-cli-transaction.c:710
 msgid "(pinned) "
-msgstr ""
+msgstr "(nålat) "
 
 #: app/flatpak-cli-transaction.c:713
-#, fuzzy
 msgid "runtime"
-msgstr "Exekveringsmiljö"
+msgstr "exekveringsmiljö"
 
 #: app/flatpak-cli-transaction.c:715
-#, fuzzy
 msgid "app"
-msgstr "Program"
+msgstr "program"
 
+# Order flipped to make the gender less noticable when wrong.
 #: app/flatpak-cli-transaction.c:719
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Info: %s%s %s is end-of-life, in favor of %s\n"
-msgstr "Info: %s//%s har nått slutet på sin livstid, till förmån för %s\n"
+msgstr ""
+"\n"
+"Info: %2$s %3$s %1$shar nått slutet på sin livstid, till förmån för %4$s\n"
 
+# Order flipped to make the gender less noticable when wrong.
 #: app/flatpak-cli-transaction.c:724
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Info: %s%s %s is end-of-life, with reason:\n"
-msgstr "Info: %s//%s har nått slutet på sin livstid, med anledning:\n"
+msgstr ""
+"\n"
+"Info: %2$s %3$s %1$shar nått slutet på sin livstid, med anledning:\n"
 
 #: app/flatpak-cli-transaction.c:798
 msgid "Applications using this runtime:\n"
@@ -3617,7 +3621,7 @@ msgstr "Program som använder denna exekveringsmiljö:\n"
 
 #: app/flatpak-cli-transaction.c:816
 msgid "Replace?"
-msgstr ""
+msgstr "Ersätt?"
 
 #: app/flatpak-cli-transaction.c:819 app/flatpak-quiet-transaction.c:223
 msgid "Updating to rebased version\n"
@@ -3634,14 +3638,14 @@ msgid "Failed to uninstall %s for rebase to %s: "
 msgstr "Misslyckades med att avinstallera %s för ombasering till %s: "
 
 #: app/flatpak-cli-transaction.c:1066
-#, fuzzy, c-format
+#, c-format
 msgid "New %s%s%s permissions:"
-msgstr "Nya rättigheter för %s:"
+msgstr "Nya rättigheter för %s%s%s:"
 
 #: app/flatpak-cli-transaction.c:1068
-#, fuzzy, c-format
+#, c-format
 msgid "%s%s%s permissions:"
-msgstr "Rättigheter för %s:"
+msgstr "Rättigheter för %s%s%s:"
 
 #: app/flatpak-cli-transaction.c:1130
 msgid "Warning: "
@@ -5285,17 +5289,16 @@ msgstr "Misslyckades med att erhålla token för ref"
 #: common/flatpak-transaction.c:4191
 #, c-format
 msgid "Ref %s from %s matches more than one transaction operation"
-msgstr ""
+msgstr "Ref %s från %s matchar mer än en transaktionsåtgärd"
 
 #: common/flatpak-transaction.c:4192 common/flatpak-transaction.c:4202
-#, fuzzy
 msgid "any remote"
-msgstr "Fjärrförråd"
+msgstr "alla fjärrförråd"
 
 #: common/flatpak-transaction.c:4201
 #, c-format
 msgid "No transaction operation found for ref %s from %s"
-msgstr ""
+msgstr "Ingen transaktionsåtgärd hittades för ref %s från %s"
 
 #: common/flatpak-transaction.c:4324
 #, c-format
@@ -5337,6 +5340,48 @@ msgstr "Hoppar över %s på grund av tidigare fel"
 #, c-format
 msgid "Aborted due to failure (%s)"
 msgstr "Avbröts på grund av fel (%s)"
+
+#: common/flatpak-uri.c:118
+#, no-c-format
+msgid "Invalid %-encoding in URI"
+msgstr "Ogiltig %-kodning i URI"
+
+#: common/flatpak-uri.c:135
+msgid "Illegal character in URI"
+msgstr "Otillåtet tecken i URI"
+
+#: common/flatpak-uri.c:169
+msgid "Non-UTF-8 characters in URI"
+msgstr "Tecken som inte är UTF-8 i URI"
+
+#: common/flatpak-uri.c:275
+#, c-format
+msgid "Invalid IPv6 address ‘%.*s’ in URI"
+msgstr "Ogiltig IPv6-adress ”%.*s” i URI"
+
+#: common/flatpak-uri.c:330
+#, c-format
+msgid "Illegal encoded IP address ‘%.*s’ in URI"
+msgstr "Otillåtet kodad IP-adress ”%.*s” i URI"
+
+#: common/flatpak-uri.c:342
+#, c-format
+msgid "Illegal internationalized hostname ‘%.*s’ in URI"
+msgstr "Otillåtet internationaliserat värdnamn ”%.*s” i URI"
+
+#: common/flatpak-uri.c:374 common/flatpak-uri.c:386
+#, c-format
+msgid "Could not parse port ‘%.*s’ in URI"
+msgstr "Kunde inte tolka port ”%.*s” i URI"
+
+#: common/flatpak-uri.c:393
+#, c-format
+msgid "Port ‘%.*s’ in URI is out of range"
+msgstr "Port ”%.*s” i URI är utanför intervallet"
+
+#: common/flatpak-uri.c:910
+msgid "URI is not absolute, and no base URI was provided"
+msgstr "URI är inte absolut, och ingen bas-URI angavs"
 
 #: common/flatpak-utils.c:860
 msgid "Glob can't match apps"
