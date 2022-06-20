@@ -1318,15 +1318,17 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
    * FlatpakTransaction::ready-pre-auth:
    * @object: A #FlatpakTransaction
    *
-   * The ::ready-pre-auth signal is emitted when all the refs involved in the transaction
-   * have been resolved to commits, but we might not necessarily have asked for authenticaion
-   * for all their required operations. This is very similar to the ::ready signal, and you can
-   * chose which one (or both) to use depending on how you want to handle authentication in your user
+   * The ::ready-pre-auth signal is emitted when all the refs involved in the
+   * transaction have been resolved to commits, but we might not necessarily
+   * have asked for authentication for all their required operations. This is
+   * very similar to the ::ready signal, and you can choose which one (or both)
+   * to use depending on how you want to handle authentication in your user
    * interface.
    *
-   * At this point flatpak_transaction_get_operations() will return all the operations
-   * that will be executed as part of the transaction. You can call flatpak_transaction_operation_get_requires_authentication()
-   * to see which will require authentication.
+   * At this point flatpak_transaction_get_operations() will return all the
+   * operations that will be executed as part of the transaction. You can call
+   * flatpak_transaction_operation_get_requires_authentication() to see which
+   * will require authentication.
    *
    * Returns: %TRUE to carry on with the transaction, %FALSE to abort
    *
