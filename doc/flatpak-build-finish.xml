@@ -134,7 +134,7 @@
                     Expose a well-known socket to the application. This updates
                     the [Context] group in the metadata.
                     SOCKET must be one of: x11, wayland, fallback-x11, pulseaudio, system-bus, session-bus,
-                    ssh-auth, pcsc, cups.
+                    ssh-auth, pcsc, cups, gpg-agent.
                     This option can be used multiple times.
                 </para><para>
                     The fallback-x11 option makes the X11 socket available only if
@@ -151,7 +151,7 @@
                     Don't expose a well known socket to the application. This updates
                     the [Context] group in the metadata.
                     SOCKET must be one of: x11, wayland, fallback-x11, pulseaudio, system-bus, session-bus,
-                    ssh-auth, pcsc, cups.
+                    ssh-auth, pcsc, cups, gpg-agent.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
