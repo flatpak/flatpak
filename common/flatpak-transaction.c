@@ -704,12 +704,13 @@ flatpak_transaction_operation_get_decomposed (FlatpakTransactionOperation *self)
  * flatpak_transaction_operation_get_related_to_ops:
  * @self: a #FlatpakTransactionOperation
  *
- * Gets the operations which caused this operation to be added to the
- * transaction. In the case of a runtime, it's the apps whose runtime it is (and
- * this could be multiple apps, if they all require the same runtime). In
- * the case of a related ref such as an extension, it's the main app or
- * runtime. In the case of a main app or something added to the transaction by
- * flatpak_transaction_add_ref(), %NULL or an empty array will be returned.
+ * Gets the operation(s) which caused this operation to be added to the
+ * transaction. In the case of a runtime, it's the app(s) whose runtime it is,
+ * and/or a runtime extension in the special case of an extra-data extension
+ * that doesn't define the "NoRuntime" key. In the case of a related ref such
+ * as an extension, it's the main app or runtime. In the case of a main app or
+ * something added to the transaction by e.g. flatpak_transaction_add_install()
+ * and which is not otherwise needed, %NULL or an empty array will be returned.
  *
  * Note that an op will be returned even if it’s marked as to be skipped when
  * the transaction is run. Check that using
