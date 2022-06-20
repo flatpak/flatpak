@@ -12,7 +12,7 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2022-06-16 11:38-0700\n"
-"PO-Revision-Date: 2022-05-14 12:12+0300\n"
+"PO-Revision-Date: 2022-06-20 23:22+0300\n"
 "Last-Translator: Sabri Ünal <libreajans@gmail.com>\n"
 "Language-Team: Türkçe <gnome-turk@gnome.org>\n"
 "Language: tr\n"
@@ -20,7 +20,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 3.0.1\n"
+"X-Generator: Poedit 3.1\n"
 
 #: app/flatpak-builtins-build-bundle.c:57
 msgid "Export runtime instead of app"
@@ -3582,35 +3582,37 @@ msgstr "Parola"
 #: app/flatpak-cli-transaction.c:705
 #, c-format
 msgid "%s%s%s branch %s%s%s"
-msgstr ""
+msgstr "%s%s%s dal %s%s%s"
 
 #: app/flatpak-cli-transaction.c:710
 msgid "(pinned) "
-msgstr ""
+msgstr "(iğnelenmiş) "
 
 #: app/flatpak-cli-transaction.c:713
-#, fuzzy
 msgid "runtime"
-msgstr "Çalışma ortamı"
+msgstr "çalışma ortamı"
 
 #: app/flatpak-cli-transaction.c:715
-#, fuzzy
 msgid "app"
-msgstr "Uygulama"
+msgstr "uygulama"
 
 #: app/flatpak-cli-transaction.c:719
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Info: %s%s %s is end-of-life, in favor of %s\n"
-msgstr "Bilgi: %s//%s ömrünün sonuna geldi, %s yararına\n"
+msgstr ""
+"\n"
+"Bilgi: %s%s %s ömrünün sonuna geldi, %s yararına\n"
 
 #: app/flatpak-cli-transaction.c:724
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Info: %s%s %s is end-of-life, with reason:\n"
-msgstr "Bilgi: %s//%s ömrünün sonuna geldi, şu sebeple:\n"
+msgstr ""
+"\n"
+"Bilgi: %s%s %s ömrünün sonuna geldi, şu sebeple:\n"
 
 #: app/flatpak-cli-transaction.c:798
 msgid "Applications using this runtime:\n"
@@ -3618,7 +3620,7 @@ msgstr "Çalışma ortamını kullanan uygulamalar:\n"
 
 #: app/flatpak-cli-transaction.c:816
 msgid "Replace?"
-msgstr ""
+msgstr "Değiştirilsin mi?"
 
 #: app/flatpak-cli-transaction.c:819 app/flatpak-quiet-transaction.c:223
 msgid "Updating to rebased version\n"
@@ -3636,14 +3638,14 @@ msgid "Failed to uninstall %s for rebase to %s: "
 msgstr "%s, %s referansına yeniden temellendirmek için kaldırılamadı: "
 
 #: app/flatpak-cli-transaction.c:1066
-#, fuzzy, c-format
+#, c-format
 msgid "New %s%s%s permissions:"
-msgstr "Yeni %s izinler:"
+msgstr "Yeni %s%s%s izinler:"
 
 #: app/flatpak-cli-transaction.c:1068
-#, fuzzy, c-format
+#, c-format
 msgid "%s%s%s permissions:"
-msgstr "%s izinleri:"
+msgstr "%s%s%s izinler:"
 
 #: app/flatpak-cli-transaction.c:1130
 msgid "Warning: "
@@ -4247,7 +4249,7 @@ msgstr "FD'den ortam değişkenlerini env -0 biçiminde oku"
 # file descriptor kelimesinin kısaltması
 #: common/flatpak-context.c:1530
 msgid "FD"
-msgstr ""
+msgstr "DT"
 
 #: common/flatpak-context.c:1531
 msgid "Remove variable from environment"
@@ -5284,17 +5286,16 @@ msgstr "Referans için jetonlar alınamadı"
 #: common/flatpak-transaction.c:4191
 #, c-format
 msgid "Ref %s from %s matches more than one transaction operation"
-msgstr ""
+msgstr "%s referansı, %s uzağından birden fazla aktarım işlemiyle eşleşiyor"
 
 #: common/flatpak-transaction.c:4192 common/flatpak-transaction.c:4202
-#, fuzzy
 msgid "any remote"
-msgstr "Uzak"
+msgstr "herhangi uzak"
 
 #: common/flatpak-transaction.c:4201
 #, c-format
 msgid "No transaction operation found for ref %s from %s"
-msgstr ""
+msgstr "%s referansı için %s uzağında aktarım işlemi bulunamadı"
 
 #: common/flatpak-transaction.c:4324
 #, c-format
