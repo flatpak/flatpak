@@ -40,6 +40,8 @@ struct _FlatpakCliTransaction
   GError              *first_operation_error;
 
   GHashTable          *eol_actions;
+  GHashTable          *runtime_app_map;
+  GHashTable          *extension_app_map;
 
   int                  rows;
   int                  cols;
@@ -727,6 +729,47 @@ print_eol_info_message (FlatpakDir        *dir,
     }
 }
 
+static GPtrArray *
+find_reverse_dep_apps (FlatpakTransaction *transaction,
+                       FlatpakDir         *dir,
+                       FlatpakDecomposed  *ref)
+{
+  FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
+  g_autoptr(GPtrArray) apps = NULL;
+  g_autoptr(GError) local_error = NULL;
+
+  if (flatpak_dir_is_runtime_extension (dir, ref))
+    {
+      /* Find apps which are using the ref as an extension directly or as an
+       * extension of their runtime.
+       */
+      apps = flatpak_dir_list_app_refs_with_runtime_extension (dir,
+                                                               &self->runtime_app_map,
+                                                               &self->extension_app_map,
+                                                               ref, NULL, &local_error);
+      if (apps == NULL)
+        {
+          g_debug ("Unable to list apps using extension %s: %s\n",
+                   flatpak_decomposed_get_ref (ref), local_error->message);
+          return NULL;
+        }
+    }
+  else
+    {
+      /* Find any apps using the runtime directly */
+      apps = flatpak_dir_list_app_refs_with_runtime (dir, &self->runtime_app_map, ref,
+                                                     NULL, &local_error);
+      if (apps == NULL)
+        {
+          g_debug ("Unable to find apps using runtime %s: %s\n",
+                   flatpak_decomposed_get_ref (ref), local_error->message);
+          return NULL;
+        }
+    }
+
+  return g_steal_pointer (&apps);
+}
+
 static gboolean
 end_of_lifed_with_rebase (FlatpakTransaction *transaction,
                           const char         *remote,
@@ -792,12 +835,13 @@ end_of_lifed_with_rebase (FlatpakTransaction *transaction,
 
       if (flatpak_decomposed_is_runtime (ref) && !rebased_to_ref)
         {
-          g_autoptr(GPtrArray) apps = flatpak_dir_list_app_refs_with_runtime (dir, ref, NULL, NULL);
+          g_autoptr(GPtrArray) apps = find_reverse_dep_apps (transaction, dir, ref);
+
           if (apps && apps->len > 0)
             {
               g_print (_("Applications using this runtime:\n"));
               g_print ("   ");
-              for (int i = 0; i < apps->len; i++)
+              for (guint i = 0; i < apps->len; i++)
                 {
                   FlatpakDecomposed *app_ref = g_ptr_array_index (apps, i);
                   g_autofree char *id = flatpak_decomposed_dup_id (app_ref);
@@ -1151,6 +1195,10 @@ transaction_ready_pre_auth (FlatpakTransaction *transaction)
   FlatpakTablePrinter *printer;
   const char *op_shorthand[] = { "i", "u", "i", "r" };
 
+  /* These caches may no longer be valid once the transaction runs */
+  g_clear_pointer (&self->runtime_app_map, g_hash_table_unref);
+  g_clear_pointer (&self->extension_app_map, g_hash_table_unref);
+
   if (ops == NULL)
     return TRUE;
 
@@ -1394,6 +1442,12 @@ flatpak_cli_transaction_finalize (GObject *object)
   g_free (self->progress_msg);
 
   g_hash_table_unref (self->eol_actions);
+
+  if (self->runtime_app_map)
+    g_hash_table_unref (self->runtime_app_map);
+
+  if (self->extension_app_map)
+    g_hash_table_unref (self->extension_app_map);
 
   if (self->printer)
     flatpak_table_printer_free (self->printer);

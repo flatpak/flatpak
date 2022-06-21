@@ -9210,6 +9210,23 @@ running_under_sudo (void)
   return FALSE;
 }
 
+#if !GLIB_CHECK_VERSION (2, 62, 0)
+void
+g_ptr_array_extend (GPtrArray  *array_to_extend,
+                    GPtrArray  *array,
+                    GCopyFunc   func,
+                    gpointer    user_data)
+{
+  for (gsize i = 0; i < array->len; i++)
+    {
+      if (func)
+        g_ptr_array_add (array_to_extend, func (g_ptr_array_index (array, i), user_data));
+      else
+        g_ptr_array_add (array_to_extend, g_ptr_array_index (array, i));
+    }
+}
+#endif
+
 #if !GLIB_CHECK_VERSION (2, 68, 0)
 /* All this code is backported directly from glib */
 guint
