@@ -6686,32 +6686,185 @@ flatpak_dir_list_refs (FlatpakDir   *self,
   return g_steal_pointer (&refs);
 }
 
-GPtrArray *
-flatpak_dir_list_app_refs_with_runtime (FlatpakDir        *self,
-                                        FlatpakDecomposed *runtime_ref,
-                                        GCancellable      *cancellable,
-                                        GError           **error)
+gboolean
+flatpak_dir_is_runtime_extension (FlatpakDir        *self,
+                                  FlatpakDecomposed *ref)
 {
-  g_autoptr(GPtrArray) app_refs = NULL;
-  const char *runtime_pref = flatpak_decomposed_get_pref (runtime_ref);
-  g_autoptr(GPtrArray) apps = g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_decomposed_unref);
+  g_autoptr(GBytes) ext_deploy_data = NULL;
 
-  app_refs = flatpak_dir_list_refs (self, FLATPAK_KINDS_APP, NULL, NULL);
-  for (int i = 0; app_refs != NULL && i < app_refs->len; i++)
+  if (!flatpak_decomposed_is_runtime (ref))
+    return FALSE;
+
+  /* deploy v4 guarantees extension-of info */
+  ext_deploy_data = flatpak_dir_get_deploy_data (self, ref, 4, NULL, NULL);
+  if (ext_deploy_data && flatpak_deploy_data_get_extension_of (ext_deploy_data) != NULL)
+    return TRUE;
+
+  return FALSE;
+}
+
+static GHashTable *
+flatpak_dir_get_runtime_app_map (FlatpakDir        *self,
+                                 GCancellable      *cancellable,
+                                 GError           **error)
+{
+  g_autoptr(GHashTable) runtime_app_map = g_hash_table_new_full ((GHashFunc)flatpak_decomposed_hash,
+                                                                 (GEqualFunc)flatpak_decomposed_equal,
+                                                                 (GDestroyNotify)flatpak_decomposed_unref,
+                                                                 (GDestroyNotify)g_ptr_array_unref);
+  g_autoptr(GPtrArray) app_refs = NULL;
+
+  app_refs = flatpak_dir_list_refs (self, FLATPAK_KINDS_APP, cancellable, error);
+  if (app_refs == NULL)
+    return NULL;
+
+  for (guint i = 0; i < app_refs->len; i++)
     {
       FlatpakDecomposed *app_ref = g_ptr_array_index (app_refs, i);
       /* deploy v4 guarantees runtime info */
       g_autoptr(GBytes) app_deploy_data = flatpak_dir_get_deploy_data (self, app_ref, 4, NULL, NULL);
+      g_autoptr(FlatpakDecomposed) runtime_decomposed = NULL;
+      g_autoptr(GPtrArray) runtime_apps = NULL;
+      const char *runtime_pref;
 
-      if (app_deploy_data)
+      if (app_deploy_data == NULL)
+        continue;
+
+      runtime_pref = flatpak_deploy_data_get_runtime (app_deploy_data);
+      runtime_decomposed = flatpak_decomposed_new_from_pref (FLATPAK_KINDS_RUNTIME, runtime_pref, error);
+      if (runtime_decomposed == NULL)
+        return NULL;
+
+      runtime_apps = g_hash_table_lookup (runtime_app_map, runtime_decomposed);
+      if (runtime_apps == NULL)
         {
-          const char *app_runtime = flatpak_deploy_data_get_runtime (app_deploy_data);
-          if (g_strcmp0 (app_runtime, runtime_pref) == 0)
-            g_ptr_array_add (apps, flatpak_decomposed_ref (app_ref));
+          runtime_apps = g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_decomposed_unref);
+          g_hash_table_insert (runtime_app_map, flatpak_decomposed_ref (runtime_decomposed), g_ptr_array_ref (runtime_apps));
+        }
+      else
+        g_ptr_array_ref (runtime_apps);
+
+      g_ptr_array_add (runtime_apps, flatpak_decomposed_ref (app_ref));
+    }
+
+  return g_steal_pointer (&runtime_app_map);
+}
+
+GPtrArray *
+flatpak_dir_list_app_refs_with_runtime (FlatpakDir         *self,
+                                        GHashTable        **runtime_app_map,
+                                        FlatpakDecomposed  *runtime_ref,
+                                        GCancellable       *cancellable,
+                                        GError            **error)
+{
+  GPtrArray *apps;
+
+  g_assert (runtime_app_map != NULL);
+
+  if (*runtime_app_map == NULL)
+    *runtime_app_map = flatpak_dir_get_runtime_app_map (self, cancellable, error);
+
+  if (*runtime_app_map == NULL)
+    return NULL;
+
+  apps = g_hash_table_lookup (*runtime_app_map, runtime_ref);
+  if (apps == NULL) /* unused runtime */
+    return g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_decomposed_unref);
+
+  return g_ptr_array_ref (apps);
+}
+
+static GHashTable *
+flatpak_dir_get_extension_app_map (FlatpakDir    *self,
+                                   GHashTable    *runtime_app_map,
+                                   GCancellable  *cancellable,
+                                   GError       **error)
+{
+  g_autoptr(GHashTable) extension_app_map = g_hash_table_new_full ((GHashFunc)flatpak_decomposed_hash,
+                                                                   (GEqualFunc)flatpak_decomposed_equal,
+                                                                   (GDestroyNotify)flatpak_decomposed_unref,
+                                                                   (GDestroyNotify)g_ptr_array_unref);
+  g_autoptr(GPtrArray) all_refs = NULL;
+
+  g_assert (runtime_app_map != NULL);
+
+  all_refs = flatpak_dir_list_refs (self, FLATPAK_KINDS_RUNTIME | FLATPAK_KINDS_APP, NULL, NULL);
+  for (guint i = 0; all_refs != NULL && i < all_refs->len; i++)
+    {
+      FlatpakDecomposed *ref = g_ptr_array_index (all_refs, i);
+      g_autoptr(GPtrArray) related = NULL;
+      GPtrArray *runtime_apps = NULL;
+
+      if (flatpak_decomposed_id_is_subref (ref))
+        continue;
+
+      if (flatpak_decomposed_is_runtime (ref))
+        {
+          runtime_apps = g_hash_table_lookup (runtime_app_map, ref);
+          if (runtime_apps == NULL)
+            continue;
+        }
+
+      related = flatpak_dir_find_local_related (self, ref, NULL, TRUE, cancellable, error);
+      if (related == NULL)
+        return NULL;
+
+      for (guint j = 0; j < related->len; j++)
+        {
+          FlatpakRelated *rel = g_ptr_array_index (related, j);
+          g_autoptr(GPtrArray) extension_apps = g_hash_table_lookup (extension_app_map, rel->ref);
+          if (extension_apps == NULL)
+            {
+              extension_apps = g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_decomposed_unref);
+              g_hash_table_insert (extension_app_map, flatpak_decomposed_ref (rel->ref), g_ptr_array_ref (extension_apps));
+            }
+          else
+            g_ptr_array_ref (extension_apps);
+
+          if (flatpak_decomposed_is_runtime (ref))
+            {
+              g_assert (runtime_apps);
+              for (guint k = 0; runtime_apps && k < runtime_apps->len; k++)
+                g_ptr_array_add (extension_apps, flatpak_decomposed_ref (g_ptr_array_index (runtime_apps, k)));
+            }
+          else
+            g_ptr_array_add (extension_apps, flatpak_decomposed_ref (ref));
         }
     }
 
-  return g_steal_pointer (&apps);
+  return g_steal_pointer (&extension_app_map);
+}
+
+GPtrArray *
+flatpak_dir_list_app_refs_with_runtime_extension (FlatpakDir        *self,
+                                                  GHashTable        **runtime_app_map,
+                                                  GHashTable        **extension_app_map,
+                                                  FlatpakDecomposed  *runtime_ext_ref,
+                                                  GCancellable       *cancellable,
+                                                  GError            **error)
+{
+  GPtrArray *apps;
+
+  g_assert (runtime_app_map != NULL);
+  g_assert (extension_app_map != NULL);
+
+  if (*runtime_app_map == NULL)
+    *runtime_app_map = flatpak_dir_get_runtime_app_map (self, cancellable, error);
+
+  if (*runtime_app_map == NULL)
+    return NULL;
+
+  if (*extension_app_map == NULL)
+    *extension_app_map = flatpak_dir_get_extension_app_map (self, *runtime_app_map, cancellable, error);
+
+  if (*extension_app_map == NULL)
+    return NULL;
+
+  apps = g_hash_table_lookup (*extension_app_map, runtime_ext_ref);
+  if (apps == NULL) /* unused extension */
+    return g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_decomposed_unref);
+
+  return g_ptr_array_ref (apps);
 }
 
 GVariant *
@@ -10520,10 +10673,11 @@ flatpak_dir_uninstall (FlatpakDir                 *self,
 
   if (flatpak_decomposed_is_runtime (ref) && !force_remove)
     {
+      g_autoptr(GHashTable) runtime_app_map = NULL;
       g_autoptr(GPtrArray) blocking = NULL;
 
       /* Look for apps that need this runtime */
-      blocking = flatpak_dir_list_app_refs_with_runtime (self, ref, cancellable, error);
+      blocking = flatpak_dir_list_app_refs_with_runtime (self, &runtime_app_map, ref, cancellable, error);
       if (blocking == NULL)
         return FALSE;
 

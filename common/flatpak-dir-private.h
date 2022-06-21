@@ -646,8 +646,17 @@ GPtrArray *           flatpak_dir_list_refs                                 (Fla
                                                                              FlatpakKinds                   kinds,
                                                                              GCancellable                  *cancellable,
                                                                              GError                       **error);
+gboolean              flatpak_dir_is_runtime_extension                      (FlatpakDir                    *self,
+                                                                             FlatpakDecomposed             *ref);
 GPtrArray *           flatpak_dir_list_app_refs_with_runtime                (FlatpakDir                    *self,
+                                                                             GHashTable                   **runtime_app_map,
                                                                              FlatpakDecomposed             *runtime_ref,
+                                                                             GCancellable                  *cancellable,
+                                                                             GError                       **error);
+GPtrArray *           flatpak_dir_list_app_refs_with_runtime_extension      (FlatpakDir                    *self,
+                                                                             GHashTable                   **runtime_app_map,
+                                                                             GHashTable                   **extension_app_map,
+                                                                             FlatpakDecomposed             *runtime_ext_ref,
                                                                              GCancellable                  *cancellable,
                                                                              GError                       **error);
 GVariant *            flatpak_dir_read_latest_commit                        (FlatpakDir                    *self,
