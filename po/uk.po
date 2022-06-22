@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2022-06-17 03:25+0000\n"
-"PO-Revision-Date: 2022-06-17 17:03+0300\n"
+"POT-Creation-Date: 2022-06-22 03:25+0000\n"
+"PO-Revision-Date: 2022-06-22 09:22+0300\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <kde-i18n-uk@kde.org>\n"
 "Language: uk\n"
@@ -1937,8 +1937,8 @@ msgstr ""
 msgid ""
 "Additionally install the debug info for the given refs and their dependencies"
 msgstr ""
-"Додатково встановити діагностичні дані для вказаних посилань та їхніх"
-" залежностей"
+"Додатково встановити діагностичні дані для вказаних посилань та їхніх "
+"залежностей"
 
 #: app/flatpak-builtins-install.c:76
 msgid "Assume LOCATION is a .flatpak single-file bundle"
@@ -5138,16 +5138,16 @@ msgstr " документація"
 msgid "Invalid id %s: %s"
 msgstr "Некоректний ідентифікатор %s: %s"
 
-#: common/flatpak-remote.c:1210
+#: common/flatpak-remote.c:1215
 #, c-format
 msgid "Bad remote name: %s"
 msgstr "Помилкова назва віддаленого сховища: %s"
 
-#: common/flatpak-remote.c:1214
+#: common/flatpak-remote.c:1219
 msgid "No url specified"
 msgstr "Не вказано адреси"
 
-#: common/flatpak-remote.c:1260
+#: common/flatpak-remote.c:1265
 msgid "GPG verification must be enabled when a collection ID is set"
 msgstr ""
 "Якщо встановлено ідентифікатор збірки, має бути увімкнено перевірку за GPG"
@@ -5380,6 +5380,50 @@ msgstr "Пропускаємо %s через попередню помилку"
 #, c-format
 msgid "Aborted due to failure (%s)"
 msgstr "Перервано через критичну помилку (%s)"
+
+#: common/flatpak-uri.c:118
+#, no-c-format
+#| msgid "Invalid extension name %s"
+msgid "Invalid %-encoding in URI"
+msgstr "Некоректне %-eкодування в адресі"
+
+#: common/flatpak-uri.c:135
+msgid "Illegal character in URI"
+msgstr "Некоректний символ в адресі"
+
+#: common/flatpak-uri.c:169
+msgid "Non-UTF-8 characters in URI"
+msgstr "Символи поза UTF-8 в адресі"
+
+#: common/flatpak-uri.c:275
+#, c-format
+msgid "Invalid IPv6 address ‘%.*s’ in URI"
+msgstr "Некоректна IPv6-адреса «%.*s» в адресі"
+
+#: common/flatpak-uri.c:330
+#, c-format
+msgid "Illegal encoded IP address ‘%.*s’ in URI"
+msgstr "Помилкове кодування IP-адреси «%.*s» в адресі"
+
+#: common/flatpak-uri.c:342
+#, c-format
+msgid "Illegal internationalized hostname ‘%.*s’ in URI"
+msgstr "Назва вузла із некоректними символами «%.*s» у адресі"
+
+#: common/flatpak-uri.c:374 common/flatpak-uri.c:386
+#, c-format
+#| msgid "Could not parse '%s'"
+msgid "Could not parse port ‘%.*s’ in URI"
+msgstr "Не вдалося обробити запис порту «%.*s» в адресі"
+
+#: common/flatpak-uri.c:393
+#, c-format
+msgid "Port ‘%.*s’ in URI is out of range"
+msgstr "Порт «%.*s» в адресі не належить до припустимого діапазону"
+
+#: common/flatpak-uri.c:910
+msgid "URI is not absolute, and no base URI was provided"
+msgstr "Адреса не є абсолютною, і не вказано базової адреси"
 
 #: common/flatpak-utils.c:860
 msgid "Glob can't match apps"
