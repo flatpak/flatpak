@@ -154,9 +154,9 @@ flatpak_delete_data (gboolean    yes_opt,
 }
 
 static gboolean
-confirm_runtime_extension_removal (gboolean           yes_opt,
-                                   UninstallDir      *udir,
-                                   FlatpakDecomposed *ref)
+confirm_runtime_removal (gboolean           yes_opt,
+                         UninstallDir      *udir,
+                         FlatpakDecomposed *ref)
 {
   g_autoptr(GPtrArray) apps = NULL;
   g_autoptr(GError) local_error = NULL;
@@ -164,6 +164,7 @@ confirm_runtime_extension_removal (gboolean           yes_opt,
   const char *ref_branch;
   const char *on = "";
   const char *off = "";
+  gboolean is_extension;
 
   if (flatpak_fancy_output ())
     {
@@ -171,13 +172,26 @@ confirm_runtime_extension_removal (gboolean           yes_opt,
       off = FLATPAK_ANSI_BOLD_OFF;
     }
 
-  apps = flatpak_dir_list_app_refs_with_runtime_extension (udir->dir,
-                                                           &udir->runtime_app_map,
-                                                           &udir->extension_app_map,
-                                                           ref, NULL, &local_error);
-  if (apps == NULL)
-    g_debug ("Unable to list apps using extension %s: %s\n",
-             flatpak_decomposed_get_ref (ref), local_error->message);
+  is_extension = flatpak_dir_is_runtime_extension (udir->dir, ref);
+  if (is_extension)
+    {
+      apps = flatpak_dir_list_app_refs_with_runtime_extension (udir->dir,
+                                                               &udir->runtime_app_map,
+                                                               &udir->extension_app_map,
+                                                               ref, NULL, &local_error);
+      if (apps == NULL)
+        g_debug ("Unable to list apps using extension %s: %s\n",
+                 flatpak_decomposed_get_ref (ref), local_error->message);
+    }
+  else
+    {
+      apps = flatpak_dir_list_app_refs_with_runtime (udir->dir,
+                                                     &udir->runtime_app_map,
+                                                     ref, NULL, &local_error);
+      if (apps == NULL)
+        g_debug ("Unable to list apps using runtime %s: %s\n",
+                 flatpak_decomposed_get_ref (ref), local_error->message);
+    }
 
   if (apps == NULL || apps->len == 0)
     return TRUE;
@@ -202,8 +216,13 @@ confirm_runtime_extension_removal (gboolean           yes_opt,
   ref_name = flatpak_decomposed_dup_id (ref);
   ref_branch = flatpak_decomposed_get_branch (ref);
 
-  g_print (_("Info: applications using the extension %s%s%s branch %s%s%s:\n"),
-           on, ref_name, off, on, ref_branch, off);
+  if (is_extension)
+    g_print (_("Info: applications using the extension %s%s%s branch %s%s%s:\n"),
+             on, ref_name, off, on, ref_branch, off);
+  else
+    g_print (_("Info: applications using the runtime %s%s%s branch %s%s%s:\n"),
+             on, ref_name, off, on, ref_branch, off);
+
   g_print ("   ");
   for (guint i = 0; i < apps->len; i++)
     {
@@ -495,13 +514,14 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
       {
         FlatpakDecomposed *ref = g_ptr_array_index (udir->refs, i - 1);
 
-        /* In case it's a required runtime, the transaction will fail later on.
-         * In case it's an optional runtime extension of an installed app,
-         * prompt the user for confirmation
+         /* In case it's a runtime for an installed app or an optional runtime
+          * extension of an installed app, prompt the user for confirmation (in
+          * the former case the transaction will error out if executed).  This
+          * is limited to checking within the same installation; it won't
+          * prompt for a user app depending on a system runtime.
          */
         if (!opt_force_remove &&
-            flatpak_dir_is_runtime_extension (udir->dir, ref) &&
-            !confirm_runtime_extension_removal (opt_yes, udir, ref))
+            !confirm_runtime_removal (opt_yes, udir, ref))
           {
             uninstall_dir_remove_ref (udir, ref);
             continue;
