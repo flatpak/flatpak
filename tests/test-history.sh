@@ -10,6 +10,7 @@ USE_SYSTEMDIR=yes
 
 skip_without_bwrap
 skip_revokefs_without_fuse
+skip_without_libsystemd
 
 HISTORY_START_TIME=$(date +"%Y-%m-%d %H:%M:%S")
 sleep 1
