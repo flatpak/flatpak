@@ -578,6 +578,13 @@ skip_without_ostree_version () {
     fi
 }
 
+skip_without_libsystemd () {
+  ${FLATPAK} history > history-log 2>&1 || true
+  if  grep -q 'history not available without libsystemd' history-log; then
+      skip "no libsystemd available"
+  fi
+}
+
 sed s#@testdir@#${test_builddir}# ${test_srcdir}/session.conf.in > session.conf
 dbus-daemon --fork --config-file=session.conf --print-address=3 --print-pid=4 \
     3> dbus-session-bus-address 4> dbus-session-bus-pid
