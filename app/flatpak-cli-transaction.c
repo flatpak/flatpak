@@ -506,8 +506,6 @@ operation_error (FlatpakTransaction            *transaction,
     msg = g_strdup_printf (_("%s%s%s already installed"), on, flatpak_ref_get_name (rref), off);
   else if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED))
     msg = g_strdup_printf (_("%s%s%s not installed"), on, flatpak_ref_get_name (rref), off);
-  else if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED))
-    msg = g_strdup_printf (_("%s%s%s not installed"), on, flatpak_ref_get_name (rref), off);
   else if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_NEED_NEW_FLATPAK))
     msg = g_strdup_printf (_("%s%s%s needs a later flatpak version"), on, flatpak_ref_get_name (rref), off);
   else if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_OUT_OF_SPACE))
