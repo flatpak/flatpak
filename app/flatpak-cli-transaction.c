@@ -661,12 +661,8 @@ print_eol_info_message (FlatpakDir        *dir,
 {
   gboolean is_pinned = flatpak_dir_ref_is_pinned (dir, flatpak_decomposed_get_ref (ref));
   g_autofree char *ref_branch = flatpak_decomposed_dup_branch (ref);
-  g_autofree char *ref_str = NULL;
-  g_autofree char *eolr_str = NULL;
   const char *on = "";
   const char *off = "";
-  const char *pinned = "";
-  const char *app_or_runtime = "";
 
   if (flatpak_fancy_output ())
     {
@@ -674,6 +670,9 @@ print_eol_info_message (FlatpakDir        *dir,
       off = FLATPAK_ANSI_BOLD_OFF;
     }
 
+  /* Here we go to great lengths not to split the sentences. See
+   * https://wiki.gnome.org/TranslationProject/DevGuidelines/Never%20split%20sentences
+   */
   if (rebased_to_ref)
     {
       g_autoptr(FlatpakDecomposed) eolr_decomposed = NULL;
@@ -689,42 +688,39 @@ print_eol_info_message (FlatpakDir        *dir,
       eolr_name = flatpak_decomposed_dup_id (eolr_decomposed);
       eolr_branch = flatpak_decomposed_get_branch (eolr_decomposed);
 
-      if (g_str_equal (ref_branch, eolr_branch))
+      if (is_pinned)
         {
-          ref_str = g_strdup_printf ("%s%s%s", on, ref_name, off);
-          eolr_str = g_strdup_printf ("%s%s%s", on, eolr_name, off);
+          /* Only runtimes can be pinned */
+          g_print (_("\nInfo: (pinned) runtime %s%s%s branch %s%s%s is end-of-life, in favor of %s%s%s branch %s%s%s\n"),
+                   on, ref_name, off, on, ref_branch, off, on, eolr_name, off, on, eolr_branch, off);
         }
       else
         {
-          ref_str = g_strdup_printf (_("%s%s%s branch %s%s%s"),
-                                     on, ref_name, off, on, ref_branch, off);
-          eolr_str = g_strdup_printf (_("%s%s%s branch %s%s%s"),
-                                      on, eolr_name, off, on, eolr_branch, off);
+          if (flatpak_decomposed_is_runtime (ref))
+            g_print (_("\nInfo: runtime %s%s%s branch %s%s%s is end-of-life, in favor of %s%s%s branch %s%s%s\n"),
+                     on, ref_name, off, on, ref_branch, off, on, eolr_name, off, on, eolr_branch, off);
+          else
+            g_print (_("\nInfo: app %s%s%s branch %s%s%s is end-of-life, in favor of %s%s%s branch %s%s%s\n"),
+                     on, ref_name, off, on, ref_branch, off, on, eolr_name, off, on, eolr_branch, off);
         }
-    }
-  else
-    {
-      ref_str = g_strdup_printf (_("%s%s%s branch %s%s%s"),
-                                 on, ref_name, off, on, ref_branch, off);
-    }
-
-  if (is_pinned)
-    pinned = _("(pinned) ");
-
-  if (flatpak_decomposed_is_runtime (ref))
-    app_or_runtime = _("runtime");
-  else
-    app_or_runtime = _("app");
-
-  if (rebased_to_ref)
-    {
-      g_print (_("\nInfo: %s%s %s is end-of-life, in favor of %s\n"),
-               pinned, app_or_runtime, ref_str, eolr_str);
     }
   else if (reason)
     {
-      g_print (_("\nInfo: %s%s %s is end-of-life, with reason:\n"),
-               pinned, app_or_runtime, ref_str);
+      if (is_pinned)
+        {
+          /* Only runtimes can be pinned */
+          g_print (_("\nInfo: (pinned) runtime %s%s%s branch %s%s%s is end-of-life, with reason:\n"),
+                   on, ref_name, off, on, ref_branch, off);
+        }
+      else
+        {
+          if (flatpak_decomposed_is_runtime (ref))
+            g_print (_("\nInfo: runtime %s%s%s branch %s%s%s is end-of-life, with reason:\n"),
+                     on, ref_name, off, on, ref_branch, off);
+          else
+            g_print (_("\nInfo: app %s%s%s branch %s%s%s is end-of-life, with reason:\n"),
+                     on, ref_name, off, on, ref_branch, off);
+        }
       g_print ("   %s\n", reason);
     }
 }
