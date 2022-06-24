@@ -75,6 +75,8 @@ jobs:
         CFLAGS: -O2 -Wp,-D_FORTIFY_SOURCE=2
     - name: Build flatpak
       run: make -C _build -j $(getconf _NPROCESSORS_ONLN)
+    - name: Distcheck
+      run: make -C _build distcheck -j $(getconf _NPROCESSORS_ONLN)
     - name: Run tests
       run: make -C _build check -j $(getconf _NPROCESSORS_ONLN)
       env:
@@ -237,8 +239,6 @@ jobs:
         CFLAGS: -O2
     - name: Build flatpak
       run: make -C _build -j $(getconf _NPROCESSORS_ONLN)
-    - name: Distcheck
-      run: make -C _build distcheck
     - name: Run tests under valgrind
       run: make -C _build check -j $(getconf _NPROCESSORS_ONLN)
       env:
