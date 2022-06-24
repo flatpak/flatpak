@@ -193,28 +193,6 @@ install_authenticator (FlatpakTransaction            *old_transaction,
   return;
 }
 
-static char *
-op_type_to_string (FlatpakTransactionOperationType operation_type)
-{
-  switch (operation_type)
-    {
-    case FLATPAK_TRANSACTION_OPERATION_INSTALL:
-      return _("install");
-
-    case FLATPAK_TRANSACTION_OPERATION_UPDATE:
-      return _("update");
-
-    case FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE:
-      return _("install bundle");
-
-    case FLATPAK_TRANSACTION_OPERATION_UNINSTALL:
-      return _("uninstall");
-
-    default:
-      return "Unknown type"; /* Should not happen */
-    }
-}
-
 static gboolean
 redraw (FlatpakCliTransaction *self)
 {
@@ -495,6 +473,14 @@ operation_error (FlatpakTransaction            *transaction,
   g_autofree char *msg = NULL;
   gboolean non_fatal = (detail & FLATPAK_TRANSACTION_ERROR_DETAILS_NON_FATAL) != 0;
   g_autofree char *text = NULL;
+  const char *on = "";
+  const char *off = "";
+
+  if (flatpak_fancy_output ())
+    {
+      on = FLATPAK_ANSI_BOLD_ON;
+      off = FLATPAK_ANSI_BOLD_OFF;
+    }
 
   if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_SKIPPED))
     {
@@ -517,13 +503,13 @@ operation_error (FlatpakTransaction            *transaction,
   set_op_progress (self, op, "✗");
 
   if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED))
-    msg = g_strdup_printf (_("%s already installed"), flatpak_ref_get_name (rref));
+    msg = g_strdup_printf (_("%s%s%s already installed"), on, flatpak_ref_get_name (rref), off);
   else if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED))
-    msg = g_strdup_printf (_("%s not installed"), flatpak_ref_get_name (rref));
+    msg = g_strdup_printf (_("%s%s%s not installed"), on, flatpak_ref_get_name (rref), off);
   else if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED))
-    msg = g_strdup_printf (_("%s not installed"), flatpak_ref_get_name (rref));
+    msg = g_strdup_printf (_("%s%s%s not installed"), on, flatpak_ref_get_name (rref), off);
   else if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_NEED_NEW_FLATPAK))
-    msg = g_strdup_printf (_("%s needs a later flatpak version"), flatpak_ref_get_name (rref));
+    msg = g_strdup_printf (_("%s%s%s needs a later flatpak version"), on, flatpak_ref_get_name (rref), off);
   else if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_OUT_OF_SPACE))
     msg = g_strdup (_("Not enough disk space to complete this operation"));
   else if (error)
@@ -532,12 +518,49 @@ operation_error (FlatpakTransaction            *transaction,
     msg = g_strdup (_("(internal error, please report)"));
 
   if (!non_fatal && self->first_operation_error == NULL)
-    g_propagate_prefixed_error (&self->first_operation_error,
-                                g_error_copy (error),
-                                _("Failed to %s %s: "),
-                                op_type_to_string (op_type), flatpak_ref_get_name (rref));
+    {
+      /* Here we go to great lengths not to split the sentences. See
+       * https://wiki.gnome.org/TranslationProject/DevGuidelines/Never%20split%20sentences
+       */
+      switch (op_type)
+        {
+          case FLATPAK_TRANSACTION_OPERATION_INSTALL:
+            g_propagate_prefixed_error (&self->first_operation_error,
+                                        g_error_copy (error),
+                                        _("Failed to install %s%s%s: "),
+                                        on, flatpak_ref_get_name (rref), off);
+            break;
 
-  text = g_strconcat (non_fatal ? _("Warning:") : _("Error:"), " ", msg, NULL);
+          case FLATPAK_TRANSACTION_OPERATION_UPDATE:
+            g_propagate_prefixed_error (&self->first_operation_error,
+                                        g_error_copy (error),
+                                        _("Failed to update %s%s%s: "),
+                                        on, flatpak_ref_get_name (rref), off);
+            break;
+
+          case FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE:
+            g_propagate_prefixed_error (&self->first_operation_error,
+                                        g_error_copy (error),
+                                        _("Failed to install bundle %s%s%s: "),
+                                        on, flatpak_ref_get_name (rref), off);
+            break;
+
+          case FLATPAK_TRANSACTION_OPERATION_UNINSTALL:
+            g_propagate_prefixed_error (&self->first_operation_error,
+                                        g_error_copy (error),
+                                        _("Failed to uninstall %s%s%s: "),
+                                        on, flatpak_ref_get_name (rref), off);
+            break;
+
+          default:
+            g_assert_not_reached ();
+        }
+    }
+
+  if (non_fatal)
+    text = g_strconcat (_("Warning: "), msg, NULL);
+  else
+    text = g_strconcat (_("Error: "), msg, NULL);
 
   if (flatpak_fancy_output ())
     {
