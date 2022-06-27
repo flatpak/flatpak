@@ -126,6 +126,7 @@ libglnx-config.h
 /tests/platform*.flatpak
 /tests/repo
 /tests/runtime-repo
+/tests/runtime-repo.stamp
 /tests/package_version.txt
 /tests/test-authenticator
 /tests/test-update-portal
