@@ -967,6 +967,61 @@ append_tags (GPtrArray *tags_array,
 }
 
 static void
+append_extra_data (GPtrArray  *extra_data_array,
+                   GKeyFile   *metadata,
+                   GKeyFile   *old_metadata)
+{
+  gsize i, size = 0;
+  g_auto(GStrv) extra_data = NULL;
+  g_auto(GStrv) old_extra_data = NULL;
+  g_autoptr(GStrvBuilder) extra_data_builder = g_strv_builder_new ();
+  g_autoptr(GStrvBuilder) old_extra_data_builder = g_strv_builder_new ();
+  g_autoptr(GRegex) uri_regex = g_regex_new ("^\\w+:\\/\\/[^\\/]+", G_REGEX_RAW|G_REGEX_OPTIMIZE, G_REGEX_MATCH_ANCHORED, NULL);
+  g_autoptr(GMatchInfo) uri_regex_match = NULL;
+  g_autoptr(GMatchInfo) old_uri_regex_match = NULL;
+
+  g_auto(GStrv) extra_data_uris = g_key_file_get_string_list (metadata, "Extra Data", "uri", &size,
+                                                              NULL);
+  g_auto(GStrv) extra_data_sizes = g_key_file_get_string_list (metadata, "Extra Data", "size", NULL,
+                                                               NULL);
+  for (i = 0; i < size; i++)
+    {
+      g_regex_match (uri_regex, extra_data_uris[i], 0, &uri_regex_match);
+      extra_data_uris[i] = g_strdup (g_match_info_fetch(uri_regex_match, 0));
+
+      extra_data_sizes[i] = g_format_size (g_ascii_strtoll (extra_data_sizes[i], NULL, 10));
+
+      g_strv_builder_add (extra_data_builder, g_strconcat (extra_data_uris[i], " (", extra_data_sizes[i], ")", NULL));
+    }
+  extra_data = g_strv_builder_end (extra_data_builder);
+
+  if (old_metadata)
+    {
+      g_auto(GStrv) old_extra_data_uris = g_key_file_get_string_list (old_metadata, "Extra Data", "uri",
+                                                                      &size, NULL);
+      g_auto(GStrv) old_extra_data_sizes = g_key_file_get_string_list (old_metadata, "Extra Data", "size",
+                                                                       NULL, NULL);
+      for (i = 0; i < size; i++)
+        {
+          g_regex_match (uri_regex, old_extra_data_uris[i], 0, &old_uri_regex_match);
+          old_extra_data_uris[i] = g_strdup (g_match_info_fetch (old_uri_regex_match, 0));
+        
+          old_extra_data_sizes[i] = g_format_size (g_ascii_strtoll (old_extra_data_sizes[i], NULL, 10));
+          
+          g_strv_builder_add (old_extra_data_builder, g_strconcat (old_extra_data_uris[i], " (", old_extra_data_sizes, ")", NULL));
+        }
+      old_extra_data = g_strv_builder_end (old_extra_data_builder);
+    }
+  
+  for (i = 0; i < size; i++)
+    {
+      const char *extra_data_singleton = extra_data[i];
+      if (!old_extra_data || !g_strv_contains ((const char * const *) old_extra_data, extra_data_singleton))
+        g_ptr_array_add (extra_data_array, g_strdup (extra_data_singleton));
+    }
+}
+
+static void
 print_perm_line (int        idx,
                  GPtrArray *items,
                  int        cols)
@@ -1009,6 +1064,7 @@ print_permissions (FlatpakCliTransaction *self,
   g_autoptr(GPtrArray) system_bus_talk = g_ptr_array_new_with_free_func (g_free);
   g_autoptr(GPtrArray) system_bus_own = g_ptr_array_new_with_free_func (g_free);
   g_autoptr(GPtrArray) tags = g_ptr_array_new_with_free_func (g_free);
+  g_autoptr(GPtrArray) extra_data = g_ptr_array_new_with_free_func (g_free);
   g_autoptr(FlatpakTablePrinter) printer = NULL;
   int max_permission_width;
   int n_permission_cols;
@@ -1041,6 +1097,7 @@ print_permissions (FlatpakCliTransaction *self,
   append_bus (system_bus_talk, system_bus_own,
               metadata, old_metadata, FLATPAK_METADATA_GROUP_SYSTEM_BUS_POLICY);
   append_tags (tags, metadata, old_metadata);
+  append_extra_data(extra_data, metadata, old_metadata);
 
   j = 1;
   if (files->len > 0)
@@ -1055,6 +1112,8 @@ print_permissions (FlatpakCliTransaction *self,
     g_ptr_array_add (permissions, g_strdup_printf ("system bus ownership [%d]", j++));
   if (tags->len > 0)
     g_ptr_array_add (permissions, g_strdup_printf ("tags [%d]", j++));
+  if (extra_data->len > 0)
+    g_ptr_array_add (permissions, g_strdup_printf ("extra data [%d]", j++));
 
   /* Early exit if no (or no new) permissions */
   if (permissions->len == 0)
@@ -1116,6 +1175,8 @@ print_permissions (FlatpakCliTransaction *self,
     print_perm_line (j++, system_bus_own, cols);
   if (tags->len > 0)
     print_perm_line (j++, tags, cols);
+  if (extra_data->len > 0)
+    print_perm_line (j++, extra_data, cols);
 }
 
 static void
