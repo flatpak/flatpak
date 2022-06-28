@@ -972,10 +972,8 @@ append_extra_data (GPtrArray  *extra_data_array,
                    GKeyFile   *old_metadata)
 {
   gsize i, size = 0;
-  g_autoptr(GPtrArray) extra_data_ptrarray = g_ptr_array_new_with_free_func (g_free);
-  g_autoptr(GPtrArray) old_extra_data_ptrarray = g_ptr_array_new_with_free_func (g_free);
-  g_autofree gpointer *extra_data = NULL;
-  g_autofree gpointer *old_extra_data = NULL;
+  g_autoptr(GPtrArray) extra_data = g_ptr_array_new_with_free_func (g_free);
+  g_autoptr(GPtrArray) old_extra_data = g_ptr_array_new_with_free_func (g_free);
   g_autoptr(GRegex) uri_regex = g_regex_new ("^\\w+:\\/\\/[^\\/]+", G_REGEX_RAW|G_REGEX_OPTIMIZE, G_REGEX_MATCH_ANCHORED, NULL);
   g_autoptr(GMatchInfo) uri_regex_match = NULL;
   g_autoptr(GMatchInfo) old_uri_regex_match = NULL;
@@ -991,10 +989,9 @@ append_extra_data (GPtrArray  *extra_data_array,
 
       extra_data_sizes[i] = g_format_size (g_ascii_strtoll (extra_data_sizes[i], NULL, 10));
 
-      g_ptr_array_add (extra_data_ptrarray, g_strconcat (extra_data_uris[i], " (", extra_data_sizes[i], ")", NULL));
+      g_ptr_array_add (extra_data, g_strconcat (extra_data_uris[i], " (", extra_data_sizes[i], ")", NULL));
     }
-  g_ptr_array_add (extra_data_ptrarray, NULL);
-  extra_data = g_ptr_array_steal (extra_data_ptrarray, NULL);
+  g_ptr_array_add (extra_data, NULL);
 
   if (old_metadata)
     {
@@ -1009,16 +1006,15 @@ append_extra_data (GPtrArray  *extra_data_array,
         
           old_extra_data_sizes[i] = g_format_size (g_ascii_strtoll (old_extra_data_sizes[i], NULL, 10));
           
-          g_ptr_array_add (old_extra_data_ptrarray, g_strconcat (old_extra_data_uris[i], " (", old_extra_data_sizes, ")", NULL));
+          g_ptr_array_add (old_extra_data, g_strconcat (old_extra_data_uris[i], " (", old_extra_data_sizes, ")", NULL));
         }
-      g_ptr_array_add (old_extra_data_ptrarray, NULL);
-      old_extra_data = g_ptr_array_steal (old_extra_data_ptrarray, NULL);
     }
+  g_ptr_array_add (old_extra_data, NULL);
 
   for (i = 0; i < size; i++)
     {
-      const char *extra_data_singleton = extra_data[i];
-      if (!old_extra_data || !g_strv_contains ((const char * const *) old_extra_data, extra_data_singleton))
+      const char *extra_data_singleton = extra_data->pdata[i];
+      if (!old_extra_data || !g_strv_contains ((const char * const *) old_extra_data->pdata, extra_data_singleton))
         g_ptr_array_add (extra_data_array, g_strdup (extra_data_singleton));
     }
 }
