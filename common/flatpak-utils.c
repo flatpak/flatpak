@@ -800,6 +800,10 @@ flatpak_get_allowed_exports (const char     *source_path,
     {
       g_ptr_array_add (allowed_extensions, g_strdup (".xml"));
     }
+  else if (strcmp (source_path, "share/man/man1") == 0)
+    {
+      g_ptr_array_add (allowed_extensions, g_strdup (".1.gz"));
+    }
   else
     return FALSE;
 

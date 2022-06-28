@@ -237,6 +237,7 @@ collect_exports (GFile          *base,
     "share/gnome-shell/search-providers", /* Search providers */
     "share/appdata",                      /* Copy appdata/metainfo files (legacy path) */
     "share/metainfo",                     /* Copy appdata/metainfo files */
+    "share/man/man1",                     /* Manpages */
     NULL,
   };
 
