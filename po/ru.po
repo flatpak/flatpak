@@ -355,7 +355,7 @@ msgstr "ЗНАЧ"
 
 #: app/flatpak-builtins-build-commit-from.c:72
 msgid "Override the timestamp of the commit (NOW for current time)"
-msgstr "Переназначить отметку времени коммита (СЕЙЧАС для текущего времени)"
+msgstr "Переназначить отметку времени коммита (NOW для текущего времени)"
 
 #: app/flatpak-builtins-build-commit-from.c:72
 #: app/flatpak-builtins-build-export.c:75
@@ -426,7 +426,7 @@ msgstr "Имя архитектуры для экспорта (должна бы
 
 #: app/flatpak-builtins-build-export.c:62
 msgid "Commit runtime (/usr), not /app"
-msgstr "Коммит среды выполнения (/usr), не /app"
+msgstr "Зафиксировать среду выполнения (/usr), не /app"
 
 #: app/flatpak-builtins-build-export.c:65
 msgid "Use alternative directory for the files"
@@ -1916,13 +1916,13 @@ msgstr "Не использовать статические дельты"
 
 #: app/flatpak-builtins-install.c:74
 msgid "Additionally install the SDK used to build the given refs"
-msgstr "Дополнительно установите SDK, используемый для создания данных ссылок"
+msgstr "Дополнительно установить SDK, используемый для создания данных ссылок"
 
 #: app/flatpak-builtins-install.c:75
 msgid ""
 "Additionally install the debug info for the given refs and their dependencies"
 msgstr ""
-"Дополнительно установите отладочную информацию для заданных ссылок и их "
+"Дополнительно установить отладочную информацию для заданных ссылок и их "
 "зависимостей"
 
 #: app/flatpak-builtins-install.c:76
@@ -2152,7 +2152,7 @@ msgstr "Архитектура, которая станет текущей дл�
 
 #: app/flatpak-builtins-make-current.c:58
 msgid "APP BRANCH - Make branch of application current"
-msgstr "ВЕТВЬ ПРИЛОЖЕНИЯ - Сделать ветвь приложения текущей"
+msgstr "ПРИЛОЖЕНИЕ ВЕТВЬ - Сделать ветвь приложения текущей"
 
 #: app/flatpak-builtins-make-current.c:69 app/flatpak-builtins-run.c:156
 msgid "APP must be specified"
@@ -3127,7 +3127,7 @@ msgstr "ПРИЛОЖЕНИЕ [АРГУМЕНТ…] - Запустить прил
 #: app/flatpak-builtins-run.c:264
 #, c-format
 msgid "runtime/%s/%s/%s not installed"
-msgstr "среда выполнения/%s/%s/%s не установлена"
+msgstr "runtime/%s/%s/%s не установлено"
 
 #: app/flatpak-builtins-search.c:36
 msgid "Arch to search for"
