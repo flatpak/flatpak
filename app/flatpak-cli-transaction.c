@@ -472,7 +472,6 @@ operation_error (FlatpakTransaction            *transaction,
   FlatpakTransactionOperationType op_type = flatpak_transaction_operation_get_operation_type (op);
   const char *ref = flatpak_transaction_operation_get_ref (op);
   g_autoptr(FlatpakRef) rref = flatpak_ref_parse (ref, NULL);
-  g_autofree char *msg = NULL;
   gboolean non_fatal = (detail & FLATPAK_TRANSACTION_ERROR_DETAILS_NON_FATAL) != 0;
   g_autofree char *text = NULL;
   const char *on = "";
@@ -487,35 +486,69 @@ operation_error (FlatpakTransaction            *transaction,
   if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_SKIPPED))
     {
       set_op_progress (self, op, "⍻");
-      msg = g_strdup_printf (_("Info: %s was skipped"), flatpak_ref_get_name (rref));
+      text = g_strdup_printf (_("Info: %s was skipped"), flatpak_ref_get_name (rref));
       if (flatpak_fancy_output ())
         {
-          flatpak_table_printer_set_cell (self->printer, self->progress_row, 0, msg);
+          flatpak_table_printer_set_cell (self->printer, self->progress_row, 0, text);
           self->progress_row++;
           flatpak_table_printer_add_span (self->printer, "");
           flatpak_table_printer_finish_row (self->printer);
           redraw (self);
         }
       else
-        g_print ("%s\n", msg);
+        g_print ("%s\n", text);
 
       return TRUE;
     }
 
   set_op_progress (self, op, "✗");
 
+  /* Here we go to great lengths not to split the sentences. See
+   * https://wiki.gnome.org/TranslationProject/DevGuidelines/Never%20split%20sentences
+   */
   if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED))
-    msg = g_strdup_printf (_("%s%s%s already installed"), on, flatpak_ref_get_name (rref), off);
+    {
+      if (non_fatal)
+        text = g_strdup_printf (_("Warning: %s%s%s already installed"),
+                                on, flatpak_ref_get_name (rref), off);
+      else
+        text = g_strdup_printf (_("Error: %s%s%s already installed"),
+                                on, flatpak_ref_get_name (rref), off);
+    }
   else if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED))
-    msg = g_strdup_printf (_("%s%s%s not installed"), on, flatpak_ref_get_name (rref), off);
+    {
+      if (non_fatal)
+        text = g_strdup_printf (_("Warning: %s%s%s not installed"),
+                                on, flatpak_ref_get_name (rref), off);
+      else
+        text = g_strdup_printf (_("Error: %s%s%s not installed"),
+                                on, flatpak_ref_get_name (rref), off);
+    }
   else if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_NEED_NEW_FLATPAK))
-    msg = g_strdup_printf (_("%s%s%s needs a later flatpak version"), on, flatpak_ref_get_name (rref), off);
+    {
+      if (non_fatal)
+        text = g_strdup_printf (_("Warning: %s%s%s needs a later flatpak version"),
+                                on, flatpak_ref_get_name (rref), off);
+      else
+        text = g_strdup_printf (_("Error: %s%s%s needs a later flatpak version"),
+                                on, flatpak_ref_get_name (rref), off);
+    }
   else if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_OUT_OF_SPACE))
-    msg = g_strdup (_("Not enough disk space to complete this operation"));
+    {
+      if (non_fatal)
+        text = g_strdup (_("Warning: Not enough disk space to complete this operation"));
+      else
+        text = g_strdup (_("Error: Not enough disk space to complete this operation"));
+    }
   else if (error)
-    msg = g_strdup (error->message);
+    {
+      if (non_fatal)
+        text = g_strdup_printf (_("Warning: %s"), error->message);
+      else
+        text = g_strdup_printf (_("Error: %s"), error->message);
+    }
   else
-    msg = g_strdup (_("(internal error, please report)"));
+    text = g_strdup ("(internal error, please report)");
 
   if (!non_fatal && self->first_operation_error == NULL)
     {
@@ -556,11 +589,6 @@ operation_error (FlatpakTransaction            *transaction,
             g_assert_not_reached ();
         }
     }
-
-  if (non_fatal)
-    text = g_strconcat (_("Warning: "), msg, NULL);
-  else
-    text = g_strconcat (_("Error: "), msg, NULL);
 
   if (flatpak_fancy_output ())
     {
