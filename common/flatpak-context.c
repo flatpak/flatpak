@@ -700,6 +700,7 @@ unparse_filesystem_flags (const char           *path,
       break;
 
     case FLATPAK_FILESYSTEM_MODE_READ_WRITE:
+      g_string_append (s, ":rw");
       break;
 
     case FLATPAK_FILESYSTEM_MODE_NONE:
@@ -1181,6 +1182,9 @@ option_filesystem_cb (const gchar *option_name,
   FlatpakContext *context = data;
   g_autofree char *fs = NULL;
   FlatpakFilesystemMode mode;
+
+  if (strstr(value, ":create") == NULL && strstr(value, ":rw") == NULL && strstr(value, ":ro") == NULL)
+      g_warning ("It is recommended to explicitly use :rw for read-write access");
 
   if (!flatpak_context_parse_filesystem (value, FALSE, &fs, &mode, error))
     return FALSE;
