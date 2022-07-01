@@ -49,7 +49,6 @@ flatpak_builtin_mask (int argc, char **argv, GCancellable *cancellable, GError *
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GPtrArray) dirs = NULL;
   FlatpakDir *dir;
-  g_autoptr(GPtrArray) patterns = NULL;
   int i;
 
   context = g_option_context_new (_("[PATTERN…] - disable updates and automatic installation matching patterns"));
@@ -62,10 +61,12 @@ flatpak_builtin_mask (int argc, char **argv, GCancellable *cancellable, GError *
 
   dir = g_ptr_array_index (dirs, 0);
 
-  patterns = flatpak_dir_get_config_patterns (dir, "masked");
-
   if (argc == 1)
     {
+      g_autoptr(GPtrArray) patterns = NULL;
+
+      patterns = flatpak_dir_get_config_patterns (dir, "masked");
+
       if (patterns->len == 0)
         {
           if (flatpak_fancy_output ())
