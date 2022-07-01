@@ -51,7 +51,6 @@ flatpak_builtin_pin (int argc, char **argv, GCancellable *cancellable, GError **
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GPtrArray) dirs = NULL;
   FlatpakDir *dir;
-  g_autoptr(GPtrArray) patterns = NULL;
   int i;
 
   context = g_option_context_new (_("[PATTERN…] - disable automatic removal of runtimes matching patterns"));
@@ -64,10 +63,12 @@ flatpak_builtin_pin (int argc, char **argv, GCancellable *cancellable, GError **
 
   dir = g_ptr_array_index (dirs, 0);
 
-  patterns = flatpak_dir_get_config_patterns (dir, "pinned");
-
   if (argc == 1)
     {
+      g_autoptr(GPtrArray) patterns = NULL;
+
+      patterns = flatpak_dir_get_config_patterns (dir, "pinned");
+
       if (patterns->len == 0)
         {
           if (flatpak_fancy_output ())
