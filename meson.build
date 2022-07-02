@@ -57,6 +57,7 @@ libglnx_inc = include_directories('.')
 libglnx_sources = [
   'glnx-backport-autocleanups.h',
   'glnx-backport-autoptr.h',
+  'glnx-backport-testutils.h',
   'glnx-backports.c',
   'glnx-backports.h',
   'glnx-console.c',

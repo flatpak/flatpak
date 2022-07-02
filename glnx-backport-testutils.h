@@ -1,12 +1,13 @@
 /* -*- mode: C; c-file-style: "gnu"; indent-tabs-mode: nil; -*-
  *
- * Copyright (C) 2012,2013,2015 Colin Walters <walters@verbum.org>.
- * SPDX-License-Identifier: LGPL-2.0-or-later
+ * Copyright 1995-1997 Peter Mattis, Spencer Kimball and Josh MacDonald
+ * Copyright 2015 Colin Walters <walters@verbum.org>
+ * SPDX-License-Identifier: LGPL-2.1-or-later
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * version 2.1 of the License, or (at your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -23,20 +24,20 @@
 
 #include <gio/gio.h>
 
+#include "glnx-backports.h"
+
 G_BEGIN_DECLS
 
-#include <glnx-macros.h>
-#include <glnx-missing.h>
-#include <glnx-local-alloc.h>
-#include <glnx-backport-autocleanups.h>
-#include <glnx-backport-testutils.h>
-#include <glnx-backports.h>
-#include <glnx-lockfile.h>
-#include <glnx-errors.h>
-#include <glnx-dirfd.h>
-#include <glnx-shutil.h>
-#include <glnx-xattrs.h>
-#include <glnx-console.h>
-#include <glnx-fdio.h>
+#ifndef g_assert_nonnull
+#define g_assert_nonnull(x) g_assert (x != NULL)
+#endif
+
+#ifndef g_assert_null
+#define g_assert_null(x) g_assert (x == NULL)
+#endif
+
+#if !GLIB_CHECK_VERSION (2, 38, 0)
+#define g_test_skip(s) g_test_message ("SKIP: %s", s)
+#endif
 
 G_END_DECLS
