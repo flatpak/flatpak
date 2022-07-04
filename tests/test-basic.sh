@@ -71,7 +71,7 @@ for cmd in install update uninstall list info config repair create-usb \
            remote-modify remote-delete remote-ls remote-info build-init \
            build build-finish build-export build-bundle build-import-bundle \
            build-sign build-update-repo build-commit-from repo kill history \
-           mask;
+           mask alias;
 do
   ${FLATPAK} $cmd --help > help_out
   head -2 help_out > help_out2

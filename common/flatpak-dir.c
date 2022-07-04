@@ -79,6 +79,7 @@
 #define SYSCONF_REMOTES_FILE_EXT ".flatpakrepo"
 
 #define SIDELOAD_REPOS_DIR_NAME "sideload-repos"
+#define ALIASES_DIR_NAME "aliases"
 
 #ifdef USE_SYSTEM_HELPER
 /* This uses a weird Auto prefix to avoid conflicts with later added polkit types.
@@ -2357,6 +2358,30 @@ flatpak_dir_system_helper_call_configure (FlatpakDir   *self,
 }
 
 static gboolean
+flatpak_dir_system_helper_call_configure_aliases (FlatpakDir   *self,
+                                                  guint         arg_flags,
+                                                  const gchar  *arg_ref,
+                                                  const gchar  *arg_alias,
+                                                  const gchar  *arg_installation,
+                                                  GCancellable *cancellable,
+                                                  GError      **error)
+{
+  if (flatpak_dir_get_no_interaction (self))
+    arg_flags |= FLATPAK_HELPER_CONFIGURE_FLAGS_NO_INTERACTION;
+
+  g_autoptr(GVariant) ret =
+    flatpak_dir_system_helper_call (self, "ConfigureAliases",
+                                    g_variant_new ("(usss)",
+                                                   arg_flags,
+                                                   arg_ref,
+                                                   arg_alias,
+                                                   arg_installation),
+                                    G_VARIANT_TYPE ("()"), NULL,
+                                    cancellable, error);
+  return ret != NULL;
+}
+
+static gboolean
 flatpak_dir_system_helper_call_update_remote (FlatpakDir   *self,
                                               guint         arg_flags,
                                               const gchar  *arg_remote,
@@ -3084,6 +3109,12 @@ flatpak_dir_get_runtime_sideload_repos_dir (FlatpakDir *self)
 {
   g_autoptr(GFile) base = g_file_new_for_path (get_run_dir_location ());
   return g_file_get_child (base, SIDELOAD_REPOS_DIR_NAME);
+}
+
+GFile *
+flatpak_dir_get_aliases_dir (FlatpakDir *self)
+{
+  return g_file_get_child (self->basedir, ALIASES_DIR_NAME);
 }
 
 OstreeRepo *
@@ -4443,6 +4474,194 @@ flatpak_dir_config_remove_pattern (FlatpakDir *self,
   merged_patterns = g_strjoinv (";", (char **)patterns->pdata);
 
   return flatpak_dir_set_config (self, key, merged_patterns, error);
+}
+
+GHashTable *
+flatpak_dir_get_aliases (FlatpakDir *self)
+{
+  g_autoptr(GHashTable) aliases = NULL; /* alias → app-id */
+  g_autoptr(GFileEnumerator) dir_enum = NULL;
+  g_autoptr(GFile) parent = NULL;
+
+  aliases = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+
+  if (!flatpak_dir_maybe_ensure_repo (self, NULL, NULL))
+    return g_steal_pointer (&aliases);
+
+  parent = flatpak_dir_get_aliases_dir (self);
+  dir_enum = g_file_enumerate_children (parent,
+                                        G_FILE_ATTRIBUTE_STANDARD_NAME ","
+                                        G_FILE_ATTRIBUTE_STANDARD_TYPE ","
+                                        G_FILE_ATTRIBUTE_STANDARD_SYMLINK_TARGET,
+                                        G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                        NULL, NULL);
+  if (dir_enum == NULL)
+    return g_steal_pointer (&aliases);
+
+  while (TRUE)
+    {
+      GFileInfo *info;
+      GFile *path;
+      g_autofree char *path_basename = NULL;
+      const char *target;
+      g_autoptr(GFile) target_file = NULL;
+      g_autofree char *target_basename = NULL;
+
+      if (!g_file_enumerator_iterate (dir_enum, &info, &path, NULL, NULL) ||
+          info == NULL)
+        break;
+
+      /* We expect symlinks to files in $FLATPAK_DIR/exports/bin/ */
+      if (g_file_info_get_file_type (info) != G_FILE_TYPE_SYMBOLIC_LINK)
+        continue;
+
+      path_basename = g_file_get_basename (path);
+      if (path_basename == NULL)
+        continue;
+
+      target = g_file_info_get_symlink_target (info);
+      if (target == NULL)
+        continue;
+
+      target_file = g_file_new_for_path (target);
+      target_basename = g_file_get_basename (target_file);
+      if (target_basename == NULL || !flatpak_is_valid_name (target_basename, -1, NULL))
+        continue;
+
+      g_hash_table_insert (aliases,
+                           g_steal_pointer (&path_basename),
+                           g_steal_pointer (&target_basename));
+    }
+
+  return g_steal_pointer (&aliases);
+}
+
+gboolean
+flatpak_dir_remove_alias (FlatpakDir         *self,
+                          const char         *alias,
+                          GError            **error)
+{
+  g_autoptr(GFile) exports = NULL;
+  g_autoptr(GFile) bindir = NULL;
+  g_autoptr(GFile) runner = NULL;
+  g_autoptr(GFile) aliases = NULL;
+  g_autoptr(GFile) alias_file = NULL;
+  g_autofree char *runner_relpath = NULL;
+  g_autofree char *symlink_target = NULL;
+  g_autofree char *app_id = NULL;
+  g_autoptr(GError) local_error = NULL;
+
+  if (!flatpak_is_valid_alias (alias, error))
+    return FALSE;
+
+  if (flatpak_dir_use_system_helper (self, NULL))
+    {
+      FlatpakHelperConfigureAliasesFlags flags = FLATPAK_HELPER_CONFIGURE_ALIASES_FLAGS_REMOVE;
+      const char *installation = flatpak_dir_get_id (self);
+
+      if (!flatpak_dir_system_helper_call_configure_aliases (self,
+                                                             flags,
+                                                             "", alias,
+                                                             installation ? installation : "",
+                                                             NULL, error))
+        return FALSE;
+
+      return TRUE;
+    }
+
+  aliases = flatpak_dir_get_aliases_dir (self);
+  alias_file = g_file_get_child (aliases, alias);
+
+  /* The caller is responsible for handling FLATPAK_ERROR_ALIAS_NOT_FOUND as needed */
+  if (!g_file_delete (alias_file, NULL, &local_error))
+    {
+      if (g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        flatpak_fail_error (error, FLATPAK_ERROR_ALIAS_NOT_FOUND,
+                            _("Error removing alias '%s': it does not exist"),
+                            alias);
+      else
+        g_propagate_error (error, g_steal_pointer (&local_error));
+
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+gboolean
+flatpak_dir_make_alias (FlatpakDir         *self,
+                        FlatpakDecomposed  *current_ref,
+                        const char         *alias,
+                        GError            **error)
+{
+  g_autoptr(GFile) exports = NULL;
+  g_autoptr(GFile) bindir = NULL;
+  g_autoptr(GFile) runner = NULL;
+  g_autoptr(GFile) aliases = NULL;
+  g_autoptr(GFile) alias_file = NULL;
+  g_autofree char *runner_relpath = NULL;
+  g_autofree char *symlink_target = NULL;
+  g_autofree char *app_id = NULL;
+  g_autoptr(GError) local_error = NULL;
+
+  /* If the alias is valid and the app is installed, we create a symlink to the
+   * wrapper script created by flatpak_dir_deploy(). This will be used by the
+   * flatpak run command.
+   */
+
+  if (!flatpak_is_valid_alias (alias, error))
+    return FALSE;
+
+  if (flatpak_dir_use_system_helper (self, NULL))
+    {
+      FlatpakHelperConfigureAliasesFlags flags = 0;
+      const char *installation = flatpak_dir_get_id (self);
+      const char *current_ref_str;
+
+      current_ref_str = flatpak_decomposed_get_ref (current_ref);
+      if (!flatpak_dir_system_helper_call_configure_aliases (self,
+                                                             flags,
+                                                             current_ref_str, alias,
+                                                             installation ? installation : "",
+                                                             NULL, error))
+        return FALSE;
+
+      return TRUE;
+    }
+
+  app_id = flatpak_decomposed_dup_id (current_ref);
+  exports = flatpak_dir_get_exports_dir (self);
+  bindir = g_file_get_child (exports, "bin");
+  runner = g_file_get_child (bindir, app_id);
+
+  if (!g_file_query_exists (runner, NULL))
+    return flatpak_fail_error (error, FLATPAK_ERROR_NOT_INSTALLED,
+                               _("No wrapper script found for %s"), app_id);
+
+  aliases = flatpak_dir_get_aliases_dir (self);
+  alias_file = g_file_get_child (aliases, alias);
+
+  if (g_mkdir_with_parents (flatpak_file_get_path_cached (aliases), 0755) != 0)
+    {
+      glnx_set_error_from_errno (error);
+      return FALSE;
+    }
+
+  runner_relpath = g_file_get_relative_path (self->basedir, runner);
+  symlink_target = g_build_filename ("..", runner_relpath, NULL);
+  if (!g_file_make_symbolic_link (alias_file, symlink_target, NULL, &local_error))
+    {
+      if (g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_EXISTS))
+        flatpak_fail_error (error, FLATPAK_ERROR_ALIAS_ALREADY_EXISTS,
+                            _("Error making alias '%s': %s"),
+                            alias, local_error->message);
+      else
+        g_propagate_error (error, g_steal_pointer (&local_error));
+
+      return FALSE;
+    }
+
+  return TRUE;
 }
 
 gboolean

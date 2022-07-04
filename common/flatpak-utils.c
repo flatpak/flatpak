@@ -81,6 +81,8 @@ static const GDBusErrorEntry flatpak_error_entries[] = {
   {FLATPAK_ERROR_PERMISSION_DENIED,     "org.freedesktop.Flatpak.Error.PermissionDenied"}, /* Since: 1.5.1 */
   {FLATPAK_ERROR_AUTHENTICATION_FAILED, "org.freedesktop.Flatpak.Error.AuthenticationFailed"}, /* Since: 1.7.3 */
   {FLATPAK_ERROR_NOT_AUTHORIZED,        "org.freedesktop.Flatpak.Error.NotAuthorized"}, /* Since: 1.7.3 */
+  {FLATPAK_ERROR_ALIAS_NOT_FOUND,       "org.freedesktop.Flatpak.Error.AliasNotFound"}, /* Since: 1.13.4 */
+  {FLATPAK_ERROR_ALIAS_ALREADY_EXISTS,  "org.freedesktop.Flatpak.Error.AliasAlreadyExists"}, /* Since: 1.13.4 */
 };
 
 typedef struct archive FlatpakAutoArchiveRead;

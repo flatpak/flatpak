@@ -34,6 +34,7 @@ install_repo
 
 ${FLATPAK} complete "flatpak a" 9 "a" | sort > complete_out
 (diff -u complete_out - || exit 1) <<EOF
+alias 
 EOF
 
 ok "complete a commands"
@@ -167,7 +168,7 @@ ok "complete NO_DIR commands"
 for cmd in history info list run update mask \
            config install make-current override remote-add repair \
            create-usb remote-delete remote-info remote-list remote-ls \
-           remote-modify search uninstall update; do
+           remote-modify search uninstall update alias; do
   len=$(awk '{ print length($0) }' <<< "flatpak $cmd --")
   ${FLATPAK} complete "flatpak $cmd --" $len "--"  > complete_out
   assert_file_has_content complete_out "^--system "

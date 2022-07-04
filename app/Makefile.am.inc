@@ -110,6 +110,7 @@ flatpak_SOURCES = \
 	app/flatpak-builtins-create-usb.c \
 	app/flatpak-builtins-kill.c \
 	app/flatpak-builtins-history.c \
+	app/flatpak-builtins-alias.c \
 	app/flatpak-complete.c \
 	app/flatpak-complete.h \
 	app/flatpak-cli-transaction.c \

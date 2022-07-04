@@ -258,6 +258,15 @@ typedef enum {
                                             FLATPAK_HELPER_CONFIGURE_FLAGS_NO_INTERACTION)
 
 typedef enum {
+  FLATPAK_HELPER_CONFIGURE_ALIASES_FLAGS_NONE = 0,
+  FLATPAK_HELPER_CONFIGURE_ALIASES_FLAGS_NO_INTERACTION = 1 << 0,
+  FLATPAK_HELPER_CONFIGURE_ALIASES_FLAGS_REMOVE = 1 << 0,
+} FlatpakHelperConfigureAliasesFlags;
+
+#define FLATPAK_HELPER_CONFIGURE_ALIASES_FLAGS_ALL (FLATPAK_HELPER_CONFIGURE_ALIASES_FLAGS_NO_INTERACTION | \
+                                                    FLATPAK_HELPER_CONFIGURE_ALIASES_FLAGS_REMOVE)
+
+typedef enum {
   FLATPAK_HELPER_UPDATE_REMOTE_FLAGS_NONE = 0,
   FLATPAK_HELPER_UPDATE_REMOTE_FLAGS_NO_INTERACTION = 1 << 0,
   FLATPAK_HELPER_UPDATE_REMOTE_FLAGS_SUMMARY_IS_INDEX = 1 << 1,
@@ -495,6 +504,7 @@ GFile *               flatpak_dir_get_exports_dir                           (Fla
 GFile *               flatpak_dir_get_removed_dir                           (FlatpakDir                    *self);
 GFile *               flatpak_dir_get_sideload_repos_dir                    (FlatpakDir                    *self);
 GFile *               flatpak_dir_get_runtime_sideload_repos_dir            (FlatpakDir                    *self);
+GFile *               flatpak_dir_get_aliases_dir                           (FlatpakDir                    *self);
 GFile *               flatpak_dir_get_if_deployed                           (FlatpakDir                    *self,
                                                                              FlatpakDecomposed             *ref,
                                                                              const char                    *checksum,
@@ -595,6 +605,14 @@ gboolean              flatpak_dir_config_append_pattern                     (Fla
 gboolean              flatpak_dir_config_remove_pattern                     (FlatpakDir                    *self,
                                                                              const char                    *key,
                                                                              const char                    *pattern,
+                                                                             GError                       **error);
+GHashTable *          flatpak_dir_get_aliases                               (FlatpakDir                    *self);
+gboolean              flatpak_dir_make_alias                                (FlatpakDir                    *self,
+                                                                             FlatpakDecomposed             *current_ref,
+                                                                             const char                    *alias,
+                                                                             GError                       **error);
+gboolean              flatpak_dir_remove_alias                              (FlatpakDir                    *self,
+                                                                             const char                    *alias,
                                                                              GError                       **error);
 gboolean              flatpak_dir_mark_changed                              (FlatpakDir                    *self,
                                                                              GError                       **error);

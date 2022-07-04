@@ -1687,3 +1687,66 @@ flatpak_build_app_ref (const char *app,
   return g_build_filename ("app", app, arch, branch, NULL);
 }
 
+/**
+ * flatpak_is_valid_alias:
+ * @string: The string to check
+ * @error: Return location for an error
+ *
+ * Checks if @string is a valid alias for use with the "flatpak alias" and
+ * "flatpak run" commands.
+ *
+ * Per flatpak-alias(1), valid characters are "[A-Z][a-z][0-9]_-" and "-" is
+ * not valid as the first character (to avoid confusion with CLI options).
+ *
+ * Aliases must not exceed 255 characters in length.
+ *
+ * Returns: %TRUE if valid, %FALSE otherwise.
+ */
+gboolean
+flatpak_is_valid_alias (const char *string,
+                        GError    **error)
+{
+  const gchar *s;
+  gssize len;
+
+  g_return_val_if_fail (string != NULL, FALSE);
+
+  len = strlen (string);
+  if (G_UNLIKELY (len == 0))
+    {
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME,
+                          _("Alias can't be empty"));
+      return FALSE;
+    }
+
+  if (G_UNLIKELY (len > 255))
+    {
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME,
+                          _("Alias can't be longer than 255 characters"));
+      return FALSE;
+    }
+
+  s = string;
+  if (G_UNLIKELY (!is_valid_name_character (*s, FALSE)))
+    {
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME,
+                          _("Alias can't start with %c"), *s);
+      return FALSE;
+    }
+  s += 1;
+  while (*s != '\0')
+    {
+      /* Disallowing '.' means that aliases are never valid app IDs which seems
+       * desirable
+       */
+      if (G_UNLIKELY (!is_valid_name_character (*s, TRUE)))
+        {
+          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME,
+                              _("Alias can't contain %c"), *s);
+          return FALSE;
+        }
+      s += 1;
+    }
+
+  return TRUE;
+}

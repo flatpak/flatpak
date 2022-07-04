@@ -269,6 +269,13 @@
       <arg type='s' name='installation' direction='in'/>
     </method>
 
+    <method name="ConfigureAliases">
+      <arg type='u' name='flags' direction='in'/>
+      <arg type='s' name='ref' direction='in'/>
+      <arg type='s' name='alias' direction='in'/>
+      <arg type='s' name='installation' direction='in'/>
+    </method>
+
     <method name="UpdateRemote">
       <arg type='u' name='flags' direction='in'/>
       <arg type='s' name='remote' direction='in'/>

@@ -34,6 +34,7 @@ TEST_MATRIX_SOURCE=(
 	'tests/test-prune.sh' \
 	'tests/test-seccomp.sh' \
 	'tests/test-repair.sh' \
+	'tests/test-alias.sh{user+system}' \
 )
 
 "${tests_srcdir}/expand-test-matrix.sh" --automake "${TEST_MATRIX_SOURCE[*]}" > "${tests_srcdir}/Makefile-test-matrix.am.inc"
