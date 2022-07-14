@@ -15,6 +15,7 @@ init_daemon_domain(flatpak_helper_t, flatpak_helper_exec_t)
 auth_read_passwd(flatpak_helper_t)
 files_list_var_lib(flatpak_helper_t)
 files_read_var_lib_files(flatpak_helper_t)
+files_read_var_lib_symlinks(flatpak_helper_t)
 
 ifdef(`corecmd_watch_bin_dirs',`
     corecmd_watch_bin_dirs(flatpak_helper_t)
