@@ -641,7 +641,7 @@ msgstr "设置常规元数据选项"
 
 #: app/flatpak-builtins-build-finish.c:60
 msgid "GROUP=KEY[=VALUE]"
-msgstr "GROUP=KEY[=VALUE]"
+msgstr "组=密钥[=值]"
 
 #: app/flatpak-builtins-build-finish.c:61
 msgid "Don't inherit permissions from runtime"
@@ -1859,7 +1859,7 @@ msgstr ""
 #: app/flatpak-builtins-install.c:75
 msgid ""
 "Additionally install the debug info for the given refs and their dependencies"
-msgstr ""
+msgstr "另外 为给定的引用及其依赖安装调试信息包"
 
 #: app/flatpak-builtins-install.c:76
 msgid "Assume LOCATION is a .flatpak single-file bundle"
@@ -2815,12 +2815,12 @@ msgstr "索引的摘要：%s\n"
 #: app/flatpak-builtins-repo.c:111 app/flatpak-builtins-repo.c:137
 #: app/flatpak-builtins-repo.c:170
 msgid "true"
-msgstr "true"
+msgstr "正确的"
 
 #: app/flatpak-builtins-repo.c:111 app/flatpak-builtins-repo.c:137
 #: app/flatpak-builtins-repo.c:170
 msgid "false"
-msgstr "false"
+msgstr "失败的"
 
 #: app/flatpak-builtins-repo.c:119
 msgid "Subsummaries: "
@@ -3142,12 +3142,12 @@ msgstr "找到与“%s”相似的已安装引用："
 #: app/flatpak-builtins-uninstall.c:347
 #, c-format
 msgid " with arch ‘%s’"
-msgstr ""
+msgstr "‘%s’ 架构"
 
 #: app/flatpak-builtins-uninstall.c:349
 #, c-format
 msgid " with branch ‘%s’"
-msgstr ""
+msgstr "‘%s’ 分支"
 
 #: app/flatpak-builtins-uninstall.c:356
 #, c-format
@@ -3156,7 +3156,7 @@ msgstr "警告：%s 未安装\n"
 
 #: app/flatpak-builtins-uninstall.c:390
 msgid "None of the specified refs are installed"
-msgstr ""
+msgstr "指定的引用都没有安装"
 
 #: app/flatpak-builtins-update.c:56
 msgid "Arch to update for"
@@ -3511,7 +3511,7 @@ msgstr "密码"
 #: app/flatpak-cli-transaction.c:705
 #, c-format
 msgid "%s%s%s branch %s%s%s"
-msgstr ""
+msgstr "%s%s%s 分支 %s%s%s"
 
 #: app/flatpak-cli-transaction.c:710
 msgid "(pinned) "
