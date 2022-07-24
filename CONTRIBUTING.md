@@ -33,6 +33,14 @@ make check -j$(nproc)
 sudo make install
 ```
 
+## How to run a specified set of tests
+
+Sometimes you don't want to run the whole test suite but just one you're
+working on. This can be accomplished with a command like:
+```
+make check TESTS='tests/test-alias@system.wrap tests/test-alias@user.wrap'
+```
+
 ## More info
 Dependencies you will need include: autoconf, automake, libtool, bison,
 gettext, gtk-doc, gobject-introspection, libcap, libarchive, libxml2, libsoup,
