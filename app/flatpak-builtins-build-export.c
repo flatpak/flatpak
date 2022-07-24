@@ -391,7 +391,9 @@ validate_icon_file (GFile *file, GError **error)
 
   g_ptr_array_add (args, NULL);
 
-  if (!g_spawn_sync (NULL, (char **) args->pdata, NULL, 0, NULL, NULL, NULL, &err, &status, error))
+  if (!g_spawn_sync (NULL, (char **) args->pdata, NULL,
+                     G_SPAWN_STDOUT_TO_DEV_NULL,
+                     NULL, NULL, NULL, &err, &status, error))
     {
       g_debug ("Icon validation: %s", (*error)->message);
       return FALSE;
