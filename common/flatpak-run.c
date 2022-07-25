@@ -609,6 +609,46 @@ flatpak_run_add_cups_args (FlatpakBwrap *bwrap)
                           NULL);
 }
 
+static void
+flatpak_run_add_gpg_args (FlatpakBwrap *bwrap)
+{
+  const char * agent_socket;
+  g_autofree char * agent_dirs = NULL;
+  g_autofree char * sandbox_agent_socket = NULL;
+  g_autoptr(GError) gpgconf_error = NULL;
+  g_autoptr(GSubprocess) process = NULL;
+  g_autoptr(GInputStream) base_stream = NULL;
+  g_autoptr(GDataInputStream) data_stream = NULL;
+
+  process = g_subprocess_new (G_SUBPROCESS_FLAGS_STDOUT_PIPE,
+                    &gpgconf_error,
+                    "gpgconf", "--list-dir", "agent-extra-socket", NULL);
+
+  if (gpgconf_error)
+    {
+      g_debug ("GPG-Agent directories: %s", gpgconf_error->message);
+      return;
+    }
+
+  base_stream = g_subprocess_get_stdout_pipe (process);
+  data_stream = g_data_input_stream_new (base_stream);
+
+  agent_socket = g_data_input_stream_read_line (data_stream,
+                                                NULL, NULL,
+                                                &gpgconf_error);
+  if (!agent_socket || gpgconf_error)
+    {
+      g_debug ("GPG-Agent directories: %s", gpgconf_error->message);
+      return;
+    }
+
+  sandbox_agent_socket = g_strdup_printf ("/run/user/%d/gnupg/S.gpg-agent", getuid ());
+
+  flatpak_bwrap_add_args (bwrap,
+                          "--ro-bind", agent_socket, sandbox_agent_socket,
+                          NULL);
+}
+
 /* Try to find a default server from a pulseaudio confguration file */
 static char *
 flatpak_run_get_pulseaudio_server_user_config (const char *path)
@@ -1773,6 +1813,11 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
   if (context->sockets & FLATPAK_CONTEXT_SOCKET_SSH_AUTH)
     {
       flatpak_run_add_ssh_args (bwrap);
+    }
+
+  if(context->sockets & FLATPAK_CONTEXT_SOCKET_GPG_AGENT)
+    {
+      flatpak_run_add_gpg_args (bwrap);
     }
 
   if (context->sockets & FLATPAK_CONTEXT_SOCKET_PULSEAUDIO)

@@ -61,6 +61,7 @@ const char *flatpak_context_sockets[] = {
   "ssh-auth",
   "pcsc",
   "cups",
+  "gpg-agent",
   NULL
 };
 
