@@ -306,6 +306,14 @@ flatpak_resolve_duplicate_remotes (GPtrArray    *dirs,
   g_autoptr(GPtrArray) dirs_with_remote = NULL;
   int chosen = 0;
   int i;
+  const char *bold_on = "";
+  const char *bold_off = "";
+
+  if (flatpak_fancy_output ())
+    {
+      bold_on = FLATPAK_ANSI_BOLD_ON;
+      bold_off = FLATPAK_ANSI_BOLD_OFF;
+    }
 
   dirs_with_remote = g_ptr_array_new ();
   for (i = 0; i < dirs->len; i++)
@@ -338,10 +346,11 @@ flatpak_resolve_duplicate_remotes (GPtrArray    *dirs,
           names[i] = flatpak_dir_get_name (dir);
         }
       flatpak_format_choices ((const char **) names,
-                              _("Remote ‘%s’ found in multiple installations:"), remote_name);
+                              _("Remote ‘%s%s%s’ found in multiple installations:"), bold_on, remote_name, bold_off);
       chosen = flatpak_number_prompt (TRUE, 0, dirs_with_remote->len, _("Which do you want to use (0 to abort)?"));
       if (chosen == 0)
-        return flatpak_fail (error, _("No remote chosen to resolve ‘%s’ which exists in multiple installations"), remote_name);
+        return flatpak_fail (error, _("No remote chosen to resolve ‘%s%s%s’ which exists in multiple installations"),
+                             bold_on, remote_name, bold_off);
     }
 
   if (out_dir)
@@ -350,14 +359,14 @@ flatpak_resolve_duplicate_remotes (GPtrArray    *dirs,
         {
           if (dirs->len > 1 || dirs->len == 0)
             return flatpak_fail_error (error, FLATPAK_ERROR_REMOTE_NOT_FOUND,
-                                       _("Remote \"%s\" not found\nHint: Use flatpak remote-add to add a remote"),
-                                       remote_name);
+                                       _("Remote ‘%s%s%s’ not found\nHint: Use flatpak remote-add to add a remote"),
+                                       bold_on, remote_name, bold_off);
           else
             {
               FlatpakDir *dir = g_ptr_array_index (dirs, 0);
               return flatpak_fail_error (error, FLATPAK_ERROR_REMOTE_NOT_FOUND,
-                                         _("Remote \"%s\" not found in the %s installation"),
-                                         remote_name, flatpak_dir_get_name_cached (dir));
+                                         _("Remote ‘%s%s%s’ not found in the %s installation"),
+                                         bold_on, remote_name, bold_off, flatpak_dir_get_name_cached (dir));
             }
         }
       else
@@ -391,6 +400,14 @@ flatpak_resolve_matching_refs (const char *remote_name,
                                GError    **error)
 {
   guint chosen = 0;
+  const char *bold_on = "";
+  const char *bold_off = "";
+
+  if (flatpak_fancy_output ())
+    {
+      bold_on = FLATPAK_ANSI_BOLD_ON;
+      bold_off = FLATPAK_ANSI_BOLD_OFF;
+    }
 
   g_assert (refs->len > 0);
 
@@ -418,21 +435,24 @@ flatpak_resolve_matching_refs (const char *remote_name,
         {
           FlatpakDecomposed *ref = g_ptr_array_index (refs, 0);
           if (flatpak_yes_no_prompt (TRUE, /* default to yes on Enter */
-                                     _("Found ref ‘%s’ in remote ‘%s’ (%s).\nUse this ref?"),
-                                     flatpak_decomposed_get_ref (ref), remote_name, dir_name))
+                                     _("Found ref ‘%s%s%s’ in remote ‘%s%s%s’ (%s).\nUse this ref?"),
+                                     bold_on, flatpak_decomposed_get_ref (ref), bold_off,
+                                     bold_on, remote_name, bold_off, dir_name))
             chosen = 1;
           else
-            return flatpak_fail (error, _("No ref chosen to resolve matches for ‘%s’"), opt_search_ref);
+            return flatpak_fail (error, _("No ref chosen to resolve matches for ‘%s%s%s’"),
+                                 bold_on, opt_search_ref, bold_off);
         }
       else
         {
           g_auto(GStrv) refs_str = decomposed_refs_to_strv (refs);
           flatpak_format_choices ((const char **) refs_str,
-                                  _("Similar refs found for ‘%s’ in remote ‘%s’ (%s):"),
-                                  opt_search_ref, remote_name, dir_name);
+                                  _("Similar refs found for ‘%s%s%s’ in remote ‘%s%s%s’ (%s):"),
+                                  bold_on, opt_search_ref, bold_off, bold_on, remote_name, bold_off, dir_name);
           chosen = flatpak_number_prompt (TRUE, 0, refs->len, _("Which do you want to use (0 to abort)?"));
           if (chosen == 0)
-            return flatpak_fail (error, _("No ref chosen to resolve matches for ‘%s’"), opt_search_ref);
+            return flatpak_fail (error, _("No ref chosen to resolve matches for ‘%s%s%s’"),
+                                 bold_on, opt_search_ref, bold_off);
         }
     }
 
@@ -471,6 +491,14 @@ flatpak_resolve_matching_installed_refs (gboolean    assume_yes,
   guint chosen = 0;
   g_autofree int *choices = NULL;
   guint i, k;
+  const char *bold_on = "";
+  const char *bold_off = "";
+
+  if (flatpak_fancy_output ())
+    {
+      bold_on = FLATPAK_ANSI_BOLD_ON;
+      bold_off = FLATPAK_ANSI_BOLD_OFF;
+    }
 
   g_assert (ref_dir_pairs->len > 0);
 
@@ -502,11 +530,12 @@ flatpak_resolve_matching_installed_refs (gboolean    assume_yes,
           RefDirPair *pair = g_ptr_array_index (ref_dir_pairs, 0);
           const char *dir_name = flatpak_dir_get_name_cached (pair->dir);
           if (flatpak_yes_no_prompt (TRUE, /* default to yes on Enter */
-                                     _("Found installed ref ‘%s’ (%s). Is this correct?"),
-                                     flatpak_decomposed_get_ref (pair->ref), dir_name))
+                                     _("Found installed ref ‘%s%s%s’ (%s). Is this correct?"),
+                                     bold_on, flatpak_decomposed_get_ref (pair->ref), bold_off, dir_name))
             chosen = 1;
           else
-            return flatpak_fail (error, _("No ref chosen to resolve matches for ‘%s’"), opt_search_ref);
+            return flatpak_fail (error, _("No ref chosen to resolve matches for ‘%s%s%s’"),
+                                 bold_on, opt_search_ref, bold_off);
         }
       else
         {
@@ -515,11 +544,13 @@ flatpak_resolve_matching_installed_refs (gboolean    assume_yes,
           for (i = 0; i < ref_dir_pairs->len; i++)
             {
               RefDirPair *pair = g_ptr_array_index (ref_dir_pairs, i);
-              names[i] = g_strdup_printf ("%s (%s)", flatpak_decomposed_get_ref (pair->ref), flatpak_dir_get_name_cached (pair->dir));
+              names[i] = g_strdup_printf ("%s (%s)", flatpak_decomposed_get_ref (pair->ref),
+                                          flatpak_dir_get_name_cached (pair->dir));
             }
           if (!only_one)
             names[i] = g_strdup_printf (_("All of the above"));
-          flatpak_format_choices ((const char **) names, _("Similar installed refs found for ‘%s’:"), opt_search_ref);
+          flatpak_format_choices ((const char **) names, _("Similar installed refs found for ‘%s%s%s’:"),
+                                  bold_on, opt_search_ref, bold_off);
 
           if (only_one)
             chosen = flatpak_number_prompt (TRUE, 0, len, _("Which do you want to use (0 to abort)?"));
@@ -527,7 +558,8 @@ flatpak_resolve_matching_installed_refs (gboolean    assume_yes,
             choices = flatpak_numbers_prompt (TRUE, 0, len, _("Which do you want to use (0 to abort)?"));
 
           if ((only_one && chosen == 0) || (!only_one && choices[0] == 0))
-            return flatpak_fail (error, _("No ref chosen to resolve matches for ‘%s’"), opt_search_ref);
+            return flatpak_fail (error, _("No ref chosen to resolve matches for ‘%s%s%s’"),
+                                 bold_on, opt_search_ref, bold_off);
         }
     }
 
@@ -559,6 +591,14 @@ flatpak_resolve_matching_remotes (GPtrArray      *remote_dir_pairs,
 {
   guint chosen = 0; /* 1 indexed */
   guint i;
+  const char *bold_on = "";
+  const char *bold_off = "";
+
+  if (flatpak_fancy_output ())
+    {
+      bold_on = FLATPAK_ANSI_BOLD_ON;
+      bold_off = FLATPAK_ANSI_BOLD_OFF;
+    }
 
   g_assert (remote_dir_pairs->len > 0);
 
@@ -576,11 +616,13 @@ flatpak_resolve_matching_remotes (GPtrArray      *remote_dir_pairs,
           RemoteDirPair *pair = g_ptr_array_index (remote_dir_pairs, 0);
           const char *dir_name = flatpak_dir_get_name_cached (pair->dir);
           if (flatpak_yes_no_prompt (TRUE, /* default to yes on Enter */
-                                     _("Found similar ref(s) for ‘%s’ in remote ‘%s’ (%s).\nUse this remote?"),
-                                     opt_search_ref, pair->remote_name, dir_name))
+                                     _("Found similar ref(s) for ‘%s%s%s’ in remote ‘%s%s%s’ (%s).\nUse this remote?"),
+                                     bold_on, opt_search_ref, bold_off,
+                                     bold_on, pair->remote_name, bold_off, dir_name))
             chosen = 1;
           else
-            return flatpak_fail (error, _("No remote chosen to resolve matches for ‘%s’"), opt_search_ref);
+            return flatpak_fail (error, _("No remote chosen to resolve matches for ‘%s%s%s’"),
+                                 bold_on, opt_search_ref, bold_off);
         }
       else
         {
@@ -590,10 +632,12 @@ flatpak_resolve_matching_remotes (GPtrArray      *remote_dir_pairs,
               RemoteDirPair *pair = g_ptr_array_index (remote_dir_pairs, i);
               names[i] = g_strdup_printf ("‘%s’ (%s)", pair->remote_name, flatpak_dir_get_name_cached (pair->dir));
             }
-          flatpak_format_choices ((const char **) names, _("Remotes found with refs similar to ‘%s’:"), opt_search_ref);
+          flatpak_format_choices ((const char **) names, _("Remotes found with refs similar to ‘%s%s%s’:"),
+                                  bold_on, opt_search_ref, bold_off);
           chosen = flatpak_number_prompt (TRUE, 0, remote_dir_pairs->len, _("Which do you want to use (0 to abort)?"));
           if (chosen == 0)
-            return flatpak_fail (error, _("No remote chosen to resolve matches for ‘%s’"), opt_search_ref);
+            return flatpak_fail (error, _("No remote chosen to resolve matches for ‘%s%s%s’"),
+                                 bold_on, opt_search_ref, bold_off);
         }
     }
 
