@@ -1194,16 +1194,16 @@ flatpak_dir_load_appstream_store (FlatpakDir   *self,
 void
 print_aligned (int len, const char *title, const char *value)
 {
-  const char *on = "";
-  const char *off = "";
+  const char *bold_on = "";
+  const char *bold_off = "";
 
   if (flatpak_fancy_output ())
     {
-      on = FLATPAK_ANSI_BOLD_ON;
-      off = FLATPAK_ANSI_BOLD_OFF;
+      bold_on = FLATPAK_ANSI_BOLD_ON;
+      bold_off = FLATPAK_ANSI_BOLD_OFF;
     }
 
-  g_print ("%s%*s%s%s %s\n", on, len - (int) cell_width (title), "", title, off, value);
+  g_print ("%s%*s%s%s %s\n", bold_on, len - (int) cell_width (title), "", title, bold_off, value);
 }
 
 void
