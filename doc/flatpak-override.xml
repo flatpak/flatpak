@@ -78,6 +78,7 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>-u</option></term>
                 <term><option>--user</option></term>
 
                 <listitem><para>
