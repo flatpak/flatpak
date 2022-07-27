@@ -22,11 +22,22 @@ libglnx_testlib_dep = declare_dependency(
 )
 
 if get_option('tests')
+  executable(
+    'testing-helper',
+    'testing-helper.c',
+    dependencies : [
+      libglnx_dep,
+      libglnx_deps,
+    ],
+    install : false,
+  )
+
   test_names = [
     'errors',
     'fdio',
     'macros',
     'shutil',
+    'testing',
     'xattrs',
   ]
 
