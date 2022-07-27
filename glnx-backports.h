@@ -48,6 +48,10 @@ G_BEGIN_DECLS
   } G_STMT_END
 #endif
 
+#if !GLIB_CHECK_VERSION(2, 40, 0)
+#define g_info(...) g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, __VA_ARGS__)
+#endif
+
 #if !GLIB_CHECK_VERSION(2, 44, 0)
 
 #define g_strv_contains glnx_strv_contains
