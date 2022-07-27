@@ -67,8 +67,7 @@ _glnx_test_auto_temp_dir_leave (_GLnxTestAutoTempDir *dir)
   glnx_tmpdir_delete (&dir->temp_dir, NULL, &error);
   g_assert_no_error (error);
 
-  g_close (dir->old_cwd_fd, &error);
-  g_assert_no_error (error);
+  glnx_close_fd (&dir->old_cwd_fd);
 
   g_free (dir->old_cwd);
   g_free (dir);
