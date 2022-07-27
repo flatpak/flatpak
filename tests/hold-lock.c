@@ -1,4 +1,4 @@
-/*
+/* vi:set et sw=2 sts=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e-s:
  * Copyright © 2019-2021 Collabora Ltd.
  *
  * SPDX-License-Identifier: LGPL-2.1-or-later

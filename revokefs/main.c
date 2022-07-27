@@ -1,4 +1,4 @@
-/*
+/* vi:set et sw=2 sts=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e-s:
  * Copyright (C) 2015,2016 Colin Walters <walters@verbum.org>
  * Copyright (C) 2018 Alexander Larsson <alexl@redhat.com>
  *
