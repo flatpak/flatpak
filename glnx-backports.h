@@ -68,6 +68,14 @@ gboolean              glnx_set_object  (GObject **object_ptr,
 #define G_SPAWN_DEFAULT ((GSpawnFlags) 0)
 #endif
 
+#if !GLIB_CHECK_VERSION(2, 42, 0)
+#define G_OPTION_FLAG_NONE ((GOptionFlags) 0)
+#endif
+
+#if !GLIB_CHECK_VERSION(2, 70, 0)
+#define G_OPTION_ENTRY_NULL { NULL, 0, 0, 0, NULL, NULL, NULL }
+#endif
+
 #ifndef g_assert_nonnull
 #define g_assert_nonnull(x) g_assert (x != NULL)
 #endif
