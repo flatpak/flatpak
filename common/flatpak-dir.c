@@ -16170,6 +16170,45 @@ get_accounts_dbus_proxy (void)
                                         NULL);
 }
 
+static gboolean
+get_all_langs_from_accounts_dbus (GDBusProxy *proxy, GPtrArray *langs)
+{
+  g_auto(GStrv) all_langs = NULL;
+  int i;
+  g_autoptr(GVariant) ret = NULL;
+  g_autoptr(GError) error = NULL;
+
+  ret = g_dbus_proxy_call_sync (G_DBUS_PROXY (proxy),
+                                "GetUsersLanguages",
+                                g_variant_new ("()"),
+                                G_DBUS_CALL_FLAGS_NONE,
+                                -1,
+                                NULL,
+                                &error);
+  if (!ret)
+    {
+      g_debug ("Failed to get languages for all users: %s", error->message);
+      return FALSE;
+    }
+
+  g_variant_get (ret,
+                 "(^as)",
+                 &all_langs);
+
+  if (all_langs != NULL)
+    {
+      for (i = 0; all_langs[i] != NULL; i++)
+        {
+          g_autofree char *lang = NULL;
+            lang = flatpak_get_lang_from_locale (all_langs[i]);
+            if (lang != NULL && !flatpak_g_ptr_array_contains_string (langs, lang))
+              g_ptr_array_add (langs, g_steal_pointer (&lang));
+        }
+    }
+
+  return TRUE;
+}
+
 static void
 get_locale_langs_from_accounts_dbus (GDBusProxy *proxy, GPtrArray *langs)
 {
@@ -16268,20 +16307,24 @@ get_system_locales (FlatpakDir *self)
       g_autoptr(GDBusProxy) localed_proxy = NULL;
       g_autoptr(GDBusProxy) accounts_proxy = NULL;
 
-      /* Get the system default locales */
-      localed_proxy = get_localed_dbus_proxy ();
-      if (localed_proxy != NULL)
-        get_locale_langs_from_localed_dbus (localed_proxy, langs);
-
-      /* Now add the user account locales from AccountsService. If accounts_proxy is
-       * not NULL, it means that AccountsService exists */
       accounts_proxy = get_accounts_dbus_proxy ();
-      if (accounts_proxy != NULL)
-        get_locale_langs_from_accounts_dbus (accounts_proxy, langs);
+      if (!get_all_langs_from_accounts_dbus (accounts_proxy, langs))
+        {
 
-      g_ptr_array_add (langs, NULL);
+          /* Get the system default locales */
+          localed_proxy = get_localed_dbus_proxy ();
+          if (localed_proxy != NULL)
+            get_locale_langs_from_localed_dbus (localed_proxy, langs);
 
-      g_once_init_leave (&cached, langs);
+          /* Now add the user account locales from AccountsService. If accounts_proxy is
+           * not NULL, it means that AccountsService exists */
+          if (accounts_proxy != NULL)
+            get_locale_langs_from_accounts_dbus (accounts_proxy, langs);
+
+          g_ptr_array_add (langs, NULL);
+
+          g_once_init_leave (&cached, langs);
+        }
     }
 
   return (const GPtrArray *)cached;
