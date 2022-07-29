@@ -794,10 +794,21 @@ glnx_regfile_copy_bytes (int fdf, int fdt, off_t max_bytes)
 
   /* If we've requested to copy the whole range, try a full-file clone first.
    */
-  if (max_bytes == (off_t) -1)
+  if (max_bytes == (off_t) -1 &&
+      lseek (fdf, 0, SEEK_CUR) == 0 &&
+      lseek (fdt, 0, SEEK_CUR) == 0)
     {
       if (ioctl (fdt, FICLONE, fdf) == 0)
-        return 0;
+        {
+          /* All the other methods advance the fds. Do it here too for consistency. */
+          if (lseek (fdf, 0, SEEK_END) < 0)
+            return -1;
+          if (lseek (fdt, 0, SEEK_END) < 0)
+            return -1;
+
+          return 0;
+        }
+
       /* Fall through */
       struct stat stbuf;
 
