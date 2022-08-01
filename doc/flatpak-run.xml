@@ -574,9 +574,9 @@ key=v1;v2;
                 <listitem><para>
                   Allow filtered access to the session dbus connection. This is the default, except when run with --sandbox.
                   </para><para>
-                  Isandbox mode, even if you allow access to the session bus the sandbox cannot talk to or own
+                  In sandbox mode, even if you allow access to the session bus the sandbox cannot talk to or own
                   the application ids (org.the.App.*) on the bus (unless explicitly added), only names in the
-                  .Sandbox subset (org.the.App.Sandbox.*).
+                  .Sandboxed subset (org.the.App.Sandboxed.* and org.mpris.MediaPlayer2.org.the.App.Sandboxed.*).
                 </para></listitem>
             </varlistentry>
 
