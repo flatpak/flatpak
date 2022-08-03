@@ -67,6 +67,7 @@ gboolean flatpak_run_in_transient_unit (const char *app_id,
 #define FLATPAK_METADATA_KEY_RUNTIME_EXTENSIONS "runtime-extensions"
 #define FLATPAK_METADATA_KEY_SESSION_BUS_PROXY "session-bus-proxy"
 #define FLATPAK_METADATA_KEY_SYSTEM_BUS_PROXY "system-bus-proxy"
+#define FLATPAK_METADATA_KEY_A11Y_BUS_PROXY "a11y-bus-proxy"
 #define FLATPAK_METADATA_KEY_EXTRA_ARGS "extra-args"
 #define FLATPAK_METADATA_KEY_SANDBOX "sandbox"
 #define FLATPAK_METADATA_KEY_BUILD "build"
