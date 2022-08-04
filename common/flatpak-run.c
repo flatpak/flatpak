@@ -1123,12 +1123,17 @@ flatpak_run_add_a11y_dbus_args (FlatpakBwrap   *app_bwrap,
 {
   static const char sandbox_socket_path[] = "/run/flatpak/at-spi-bus";
   static const char sandbox_dbus_address[] = "unix:path=/run/flatpak/at-spi-bus";
+  gboolean unrestricted;
   g_autoptr(GDBusConnection) session_bus = NULL;
   g_autofree char *a11y_address = NULL;
   g_autoptr(GError) local_error = NULL;
   g_autoptr(GDBusMessage) reply = NULL;
   g_autoptr(GDBusMessage) msg = NULL;
   g_autofree char *proxy_socket = NULL;
+
+  unrestricted = (context->sockets & FLATPAK_CONTEXT_SOCKET_A11Y_BUS) != 0;
+  if (unrestricted)
+    g_debug ("Allowing a11y-dbus access");
 
   if ((flags & FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY) != 0)
     return FALSE;
@@ -1167,17 +1172,20 @@ flatpak_run_add_a11y_dbus_args (FlatpakBwrap   *app_bwrap,
   if (proxy_socket == NULL)
     return FALSE;
 
-  flatpak_bwrap_add_args (proxy_arg_bwrap,
-                          a11y_address,
-                          proxy_socket, "--filter", "--sloppy-names",
-                          "--call=org.a11y.atspi.Registry=org.a11y.atspi.Socket.Embed@/org/a11y/atspi/accessible/root",
-                          "--call=org.a11y.atspi.Registry=org.a11y.atspi.Socket.Unembed@/org/a11y/atspi/accessible/root",
-                          "--call=org.a11y.atspi.Registry=org.a11y.atspi.Registry.GetRegisteredEvents@/org/a11y/atspi/registry",
-                          "--call=org.a11y.atspi.Registry=org.a11y.atspi.DeviceEventController.GetKeystrokeListeners@/org/a11y/atspi/registry/deviceeventcontroller",
-                          "--call=org.a11y.atspi.Registry=org.a11y.atspi.DeviceEventController.GetDeviceEventListeners@/org/a11y/atspi/registry/deviceeventcontroller",
-                          "--call=org.a11y.atspi.Registry=org.a11y.atspi.DeviceEventController.NotifyListenersSync@/org/a11y/atspi/registry/deviceeventcontroller",
-                          "--call=org.a11y.atspi.Registry=org.a11y.atspi.DeviceEventController.NotifyListenersAsync@/org/a11y/atspi/registry/deviceeventcontroller",
-                          NULL);
+  flatpak_bwrap_add_args (proxy_arg_bwrap, a11y_address, proxy_socket, NULL);
+
+  if (!unrestricted)
+    {
+      flatpak_bwrap_add_args (proxy_arg_bwrap, "--filter", "--sloppy-names",
+                              "--call=org.a11y.atspi.Registry=org.a11y.atspi.Socket.Embed@/org/a11y/atspi/accessible/root",
+                              "--call=org.a11y.atspi.Registry=org.a11y.atspi.Socket.Unembed@/org/a11y/atspi/accessible/root",
+                              "--call=org.a11y.atspi.Registry=org.a11y.atspi.Registry.GetRegisteredEvents@/org/a11y/atspi/registry",
+                              "--call=org.a11y.atspi.Registry=org.a11y.atspi.DeviceEventController.GetKeystrokeListeners@/org/a11y/atspi/registry/deviceeventcontroller",
+                              "--call=org.a11y.atspi.Registry=org.a11y.atspi.DeviceEventController.GetDeviceEventListeners@/org/a11y/atspi/registry/deviceeventcontroller",
+                              "--call=org.a11y.atspi.Registry=org.a11y.atspi.DeviceEventController.NotifyListenersSync@/org/a11y/atspi/registry/deviceeventcontroller",
+                              "--call=org.a11y.atspi.Registry=org.a11y.atspi.DeviceEventController.NotifyListenersAsync@/org/a11y/atspi/registry/deviceeventcontroller",
+                              NULL);
+    }
 
   if ((flags & FLATPAK_RUN_FLAG_LOG_A11Y_BUS) != 0)
     flatpak_bwrap_add_args (proxy_arg_bwrap, "--log", NULL);
@@ -2724,6 +2732,10 @@ flatpak_run_add_app_info_args (FlatpakBwrap       *bwrap,
   if ((final_app_context->sockets & FLATPAK_CONTEXT_SOCKET_SYSTEM_BUS) == 0)
     g_key_file_set_boolean (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
                             FLATPAK_METADATA_KEY_SYSTEM_BUS_PROXY, TRUE);
+
+  if ((final_app_context->sockets & FLATPAK_CONTEXT_SOCKET_A11Y_BUS) == 0)
+    g_key_file_set_boolean (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
+                            FLATPAK_METADATA_KEY_A11Y_BUS_PROXY, TRUE);
 
   if (sandbox)
     g_key_file_set_boolean (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
