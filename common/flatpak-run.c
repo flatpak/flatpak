@@ -163,7 +163,6 @@ static void
 write_xauth (int family,
              const char *remote_host,
              const char *number,
-             const char *replace_number,
              FILE       *output)
 {
   Xauth *xa, local_xa;
@@ -191,11 +190,6 @@ write_xauth (int family,
                                         unames.nodename, number))
         {
           local_xa = *xa;
-          if (local_xa.number != NULL && replace_number != NULL)
-            {
-              local_xa.number = (char *) replace_number;
-              local_xa.number_length = strlen (replace_number);
-            }
 
           if (local_xa.family == FamilyLocal &&
               !auth_streq (unames.nodename, local_xa.address, local_xa.address_length))
@@ -326,12 +320,11 @@ flatpak_run_add_x11_args (FlatpakBwrap         *bwrap,
   if (display != NULL)
     {
       g_autofree char *remote_host = NULL;
-      g_autofree char *original_display_nr = NULL;
-      const char *replace_display_nr = NULL;
+      g_autofree char *display_nr = NULL;
       int family = -1;
 
       if (!flatpak_run_parse_x11_display (display, &family, &x11_socket,
-                                          &remote_host, &original_display_nr,
+                                          &remote_host, &display_nr,
                                           &local_error))
         {
           g_warning ("%s", local_error->message);
@@ -339,16 +332,16 @@ flatpak_run_add_x11_args (FlatpakBwrap         *bwrap,
           return;
         }
 
-      g_assert (original_display_nr != NULL);
+      g_assert (display_nr != NULL);
 
       if (x11_socket != NULL
           && g_file_test (x11_socket, G_FILE_TEST_EXISTS))
         {
+          g_assert (g_str_has_prefix (x11_socket, "/tmp/.X11-unix/X"));
           flatpak_bwrap_add_args (bwrap,
-                                  "--ro-bind", x11_socket, "/tmp/.X11-unix/X99",
+                                  "--ro-bind", x11_socket, x11_socket,
                                   NULL);
-          flatpak_bwrap_set_env (bwrap, "DISPLAY", ":99.0", TRUE);
-          replace_display_nr = "99";
+          flatpak_bwrap_set_env (bwrap, "DISPLAY", display, TRUE);
         }
       else if ((shares & FLATPAK_CONTEXT_SHARED_NETWORK) == 0)
         {
@@ -393,8 +386,7 @@ flatpak_run_add_x11_args (FlatpakBwrap         *bwrap,
                 {
                   static const char dest[] = "/run/flatpak/Xauthority";
 
-                  write_xauth (family, remote_host, original_display_nr,
-                               replace_display_nr, output);
+                  write_xauth (family, remote_host, display_nr, output);
                   flatpak_bwrap_add_args_data_fd (bwrap, "--ro-bind-data", tmp_fd, dest);
 
                   flatpak_bwrap_set_env (bwrap, "XAUTHORITY", dest, TRUE);
