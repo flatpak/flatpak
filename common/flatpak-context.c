@@ -725,10 +725,12 @@ static char *
 parse_filesystem_flags (const char            *filesystem,
                         gboolean               negated,
                         FlatpakFilesystemMode *mode_out,
+                        gboolean              *explicit_suffix_out,
                         GError               **error)
 {
   g_autoptr(GString) s = g_string_new ("");
-  const char *p, *suffix;
+  const char *p;
+  const char *suffix = NULL;
   FlatpakFilesystemMode mode;
   gboolean reset = FALSE;
 
@@ -841,6 +843,9 @@ parse_filesystem_flags (const char            *filesystem,
   if (mode_out)
     *mode_out = mode;
 
+  if (explicit_suffix_out)
+      *explicit_suffix_out = (suffix != NULL);
+
   return g_string_free (g_steal_pointer (&s), FALSE);
 }
 
@@ -854,7 +859,7 @@ flatpak_context_parse_filesystem (const char             *filesystem_and_mode,
   g_autofree char *filesystem = NULL;
   char *slash;
 
-  filesystem = parse_filesystem_flags (filesystem_and_mode, negated, mode_out, error);
+  filesystem = parse_filesystem_flags (filesystem_and_mode, negated, mode_out, FALSE, error);
   if (filesystem == NULL)
     return FALSE;
 
@@ -1182,8 +1187,12 @@ option_filesystem_cb (const gchar *option_name,
   FlatpakContext *context = data;
   g_autofree char *fs = NULL;
   FlatpakFilesystemMode mode;
+  gboolean explicit_suffix = FALSE;
 
-  if (strstr(value, ":create") == NULL && strstr(value, ":rw") == NULL && strstr(value, ":ro") == NULL)
+  if (!parse_filesystem_flags(value, FALSE, &mode, &explicit_suffix, error))
+      return FALSE;
+
+  if (!explicit_suffix)
       g_warning ("It is recommended to explicitly use :rw for read-write access");
 
   if (!flatpak_context_parse_filesystem (value, FALSE, &fs, &mode, error))
