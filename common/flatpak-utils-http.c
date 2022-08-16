@@ -243,6 +243,7 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (auto_curl_slist, curl_slist_free_all)
 
 struct FlatpakHttpSession {
   CURL *curl;
+  GMutex lock;
 };
 
 static void
@@ -369,6 +370,8 @@ flatpak_create_http_session (const char *user_agent)
   session->curl = curl = curl_easy_init();
   g_assert (session->curl != NULL);
 
+  g_mutex_init (&session->lock);
+
   curl_easy_setopt (curl, CURLOPT_USERAGENT, user_agent);
   rc = curl_easy_setopt (curl, CURLOPT_PROTOCOLS, (long)(CURLPROTO_HTTP | CURLPROTO_HTTPS));
   g_assert_cmpint (rc, ==, CURLM_OK);
@@ -406,7 +409,10 @@ flatpak_create_http_session (const char *user_agent)
 void
 flatpak_http_session_free (FlatpakHttpSession* session)
 {
+  g_mutex_lock (&session->lock);
   curl_easy_cleanup (session->curl);
+  g_mutex_unlock (&session->lock);
+  g_mutex_clear (&session->lock);
   g_free (session);
 }
 
@@ -447,6 +453,7 @@ flatpak_download_http_uri_once (FlatpakHttpSession    *session,
   g_autofree char *auth_header = NULL;
   g_autofree char *cache_header = NULL;
   g_autoptr(auto_curl_slist) header_list = NULL;
+  g_autoptr(GMutexLocker) curl_lock = g_mutex_locker_new (&session->lock);
   long response;
   CURL *curl = session->curl;
 
@@ -540,6 +547,9 @@ flatpak_download_http_uri_once (FlatpakHttpSession    *session,
     return FALSE;
 
   g_debug ("Received %" G_GUINT64_FORMAT " bytes", data->downloaded_bytes);
+
+  /* This is not really needed, but the auto-pointer confuses some compilers in the CI */
+  g_clear_pointer (&curl_lock, g_mutex_locker_free);
 
   return TRUE;
 }
