@@ -199,6 +199,21 @@
     </defaults>
   </action>
 
+  <action id="org.freedesktop.Flatpak.configure-aliases">
+    <!-- SECURITY:
+        - Normal users need admin authentication to configure aliases in the
+          system-wide Flatpak installation.
+     -->
+    <description>Configure</description>
+    <message>Authentication is required to configure software installation</message>
+    <icon_name>package-x-generic</icon_name>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+  </action>
+
   <action id="org.freedesktop.Flatpak.appstream-update">
     <!-- SECURITY:
           - Normal users do not require admin authentication to update

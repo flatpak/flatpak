@@ -1177,6 +1177,95 @@ handle_configure (FlatpakSystemHelper   *object,
   return G_DBUS_METHOD_INVOCATION_HANDLED;
 }
 
+/* Note: While this currently only supports creating aliases for apps, the
+ * argument being a full ref rather than an app ID means we can change it to
+ * support runtimes in the future if needed.
+ */
+static gboolean
+handle_configure_aliases (FlatpakSystemHelper   *object,
+                          GDBusMethodInvocation *invocation,
+                          guint                  arg_flags,
+                          const gchar           *arg_ref,
+                          const gchar           *arg_alias,
+                          const gchar           *arg_installation)
+{
+  g_autoptr(FlatpakDir) system = NULL;
+  g_autoptr(GError) error = NULL;
+  g_autoptr(FlatpakDecomposed) ref = NULL;
+  g_autoptr(GFile) deploy = NULL;
+  gboolean remove_alias = (arg_flags & FLATPAK_HELPER_CONFIGURE_ALIASES_FLAGS_REMOVE) != 0;
+
+  g_debug ("ConfigureAliases %u %s %s %s", arg_flags, arg_ref, arg_alias, arg_installation);
+
+  system = dir_get_system (arg_installation, get_sender_pid (invocation), (arg_flags & FLATPAK_HELPER_CONFIGURE_ALIASES_FLAGS_NO_INTERACTION) != 0, &error);
+  if (system == NULL)
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  if ((arg_flags & ~FLATPAK_HELPER_CONFIGURE_ALIASES_FLAGS_ALL) != 0)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                                             "Unsupported flags enabled: 0x%x", (arg_flags & ~FLATPAK_HELPER_CONFIGURE_FLAGS_ALL));
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  if (!remove_alias)
+    {
+      ref = flatpak_decomposed_new_from_ref (arg_ref, &error);
+      if (ref == NULL)
+        {
+          g_dbus_method_invocation_return_gerror (invocation, error);
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
+        }
+
+      if (!flatpak_decomposed_is_app (ref))
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                                                 "Invalid ref %s: must be an app", arg_ref);
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
+        }
+
+      deploy = flatpak_dir_get_if_deployed (system, ref, NULL, NULL);
+      if (deploy == NULL)
+        {
+          flatpak_invocation_return_error (invocation, error, "App %s not installed", arg_ref);
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
+        }
+    }
+
+  if (!flatpak_dir_ensure_repo (system, NULL, &error))
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  if (!remove_alias)
+    {
+      if (!flatpak_dir_make_alias (system, ref, arg_alias, &error))
+        {
+          flatpak_invocation_return_error (invocation, error, "Error making alias");
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
+        }
+    }
+  else
+    {
+      /* Here we consider it an error if the alias does not exist */
+      if (!flatpak_dir_remove_alias (system, arg_alias, &error))
+        {
+          flatpak_invocation_return_error (invocation, error, "Error removing alias");
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
+        }
+
+      g_clear_error (&error);
+    }
+
+  flatpak_system_helper_complete_configure_aliases (object, invocation);
+
+  return G_DBUS_METHOD_INVOCATION_HANDLED;
+}
+
 static gboolean
 handle_update_remote (FlatpakSystemHelper   *object,
                       GDBusMethodInvocation *invocation,
@@ -2121,6 +2210,15 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
 
       polkit_details_insert (details, "key", key);
     }
+  else if (g_strcmp0 (method_name, "ConfigureAliases") == 0)
+    {
+      guint32 flags;
+
+      g_variant_get_child (parameters, 0, "u", &flags);
+
+      action = "org.freedesktop.Flatpak.configure-aliases";
+      no_interaction = (flags & FLATPAK_HELPER_CONFIGURE_FLAGS_NO_INTERACTION) != 0;
+    }
   else if (g_strcmp0 (method_name, "UpdateRemote") == 0)
     {
       const char *remote;
@@ -2223,6 +2321,7 @@ on_bus_acquired (GDBusConnection *connection,
   g_signal_connect (helper, "handle-install-bundle", G_CALLBACK (handle_install_bundle), NULL);
   g_signal_connect (helper, "handle-configure-remote", G_CALLBACK (handle_configure_remote), NULL);
   g_signal_connect (helper, "handle-configure", G_CALLBACK (handle_configure), NULL);
+  g_signal_connect (helper, "handle-configure-aliases", G_CALLBACK (handle_configure_aliases), NULL);
   g_signal_connect (helper, "handle-update-remote", G_CALLBACK (handle_update_remote), NULL);
   g_signal_connect (helper, "handle-remove-local-ref", G_CALLBACK (handle_remove_local_ref), NULL);
   g_signal_connect (helper, "handle-prune-local-repo", G_CALLBACK (handle_prune_local_repo), NULL);

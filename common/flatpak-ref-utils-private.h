@@ -169,5 +169,7 @@ char * flatpak_build_app_ref (const char *app,
                               const char *branch,
                               const char *arch);
 
+gboolean flatpak_is_valid_alias (const char *string,
+                                 GError    **error);
 
 #endif /* __FLATPAK_REF_UTILS_H__ */

@@ -81,6 +81,8 @@ static const GDBusErrorEntry flatpak_error_entries[] = {
   {FLATPAK_ERROR_PERMISSION_DENIED,     "org.freedesktop.Flatpak.Error.PermissionDenied"}, /* Since: 1.5.1 */
   {FLATPAK_ERROR_AUTHENTICATION_FAILED, "org.freedesktop.Flatpak.Error.AuthenticationFailed"}, /* Since: 1.7.3 */
   {FLATPAK_ERROR_NOT_AUTHORIZED,        "org.freedesktop.Flatpak.Error.NotAuthorized"}, /* Since: 1.7.3 */
+  {FLATPAK_ERROR_ALIAS_NOT_FOUND,       "org.freedesktop.Flatpak.Error.AliasNotFound"}, /* Since: 1.13.4 */
+  {FLATPAK_ERROR_ALIAS_ALREADY_EXISTS,  "org.freedesktop.Flatpak.Error.AliasAlreadyExists"}, /* Since: 1.13.4 */
 };
 
 typedef struct archive FlatpakAutoArchiveRead;
@@ -7558,6 +7560,63 @@ flatpak_yes_no_prompt (gboolean default_yes, const char *prompt, ...)
           g_ascii_strcasecmp (buf, "no") == 0)
         return FALSE;
     }
+}
+
+FlatpakTernaryPromptResponse
+flatpak_yes_no_once_prompt (gboolean assume_yes,
+                            gboolean include_no,
+                            const char *prompt, ...)
+{
+  char buf[512];
+  va_list var_args;
+  g_autofree char *s = NULL;
+
+  /* For --assumeyes we return once since yes is more security sensitive,
+   * may cause a polkit prompt, and ought to require user interaction.
+   */
+  if (assume_yes)
+    return FLATPAK_TERNARY_PROMPT_RESPONSE_ONCE;
+
+  va_start (var_args, prompt);
+  s = g_strdup_vprintf (prompt, var_args);
+  va_end (var_args);
+
+  /* Below we return FLATPAK_TERNARY_PROMPT_RESPONSE_NO on the error code paths
+   * which is consistent with flatpak_yes_no_prompt()
+   */
+  while (TRUE)
+    {
+      if (include_no)
+        g_print ("%s %s: ", s, "[y/n/once]");
+      else
+        g_print ("%s %s: ", s, "[y/once]");
+
+      if (!isatty (STDIN_FILENO) || !isatty (STDOUT_FILENO))
+        {
+          g_print ("n\n");
+          return FLATPAK_TERNARY_PROMPT_RESPONSE_NO;
+        }
+
+      if (fgets (buf, sizeof (buf), stdin) == NULL)
+        return FLATPAK_TERNARY_PROMPT_RESPONSE_NO;
+
+      g_strstrip (buf);
+
+      if (g_ascii_strcasecmp (buf, "y") == 0 ||
+          g_ascii_strcasecmp (buf, "yes") == 0)
+        return FLATPAK_TERNARY_PROMPT_RESPONSE_YES;
+
+      if (include_no &&
+          (g_ascii_strcasecmp (buf, "n") == 0 ||
+           g_ascii_strcasecmp (buf, "no") == 0))
+        return FLATPAK_TERNARY_PROMPT_RESPONSE_NO;
+
+      if (g_ascii_strcasecmp (buf, "o") == 0 ||
+          g_ascii_strcasecmp (buf, "once") == 0)
+        return FLATPAK_TERNARY_PROMPT_RESPONSE_ONCE;
+    }
+
+  return FLATPAK_TERNARY_PROMPT_RESPONSE_NO;
 }
 
 static gboolean

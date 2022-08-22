@@ -287,6 +287,13 @@
                     Copy apps and/or runtimes onto removable media.
                 </para></listitem>
             </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-alias</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Manage short aliases for running applications.
+                </para></listitem>
+            </varlistentry>
         </variablelist>
 
 

@@ -52,7 +52,7 @@ G_BEGIN_DECLS
  * @FLATPAK_ERROR_EXPORT_FAILED: Exporting data failed. (Since: 1.0.3)
  * @FLATPAK_ERROR_REMOTE_USED: Remote can't be uninstalled. (Since: 1.0.3)
  * @FLATPAK_ERROR_RUNTIME_USED: Runtime can't be uninstalled. (Since: 1.0.3)
- * @FLATPAK_ERROR_INVALID_NAME: Application, runtime or remote name is invalid. (Since: 1.0.3)
+ * @FLATPAK_ERROR_INVALID_NAME: Application, runtime, remote, or alias name is invalid. (Since: 1.0.3)
  * @FLATPAK_ERROR_OUT_OF_SPACE: More disk space needed. (Since: 1.2.0)
  * @FLATPAK_ERROR_WRONG_USER: An operation is being attempted by the wrong user (such as
  *                            root operating on a user installation). (Since: 1.2.0)
@@ -66,6 +66,8 @@ G_BEGIN_DECLS
  * @FLATPAK_ERROR_NOT_AUTHORIZED: An operation tried to access a ref, or information about it that it
  *                                was not authorized. For example, when succesfully authenticating with a
  *                                server but the user doesn't have permissions for a private ref. (Since: 1.7.3)
+ * @FLATPAK_ERROR_ALIAS_NOT_FOUND: The specified alias was not found. (Since: 1.13.4)
+ * @FLATPAK_ERROR_ALIAS_ALREADY_EXISTS: The specified alias was already exists. (Since: 1.13.4)
  *
  * Error codes for library functions.
  */
@@ -95,6 +97,8 @@ typedef enum {
   FLATPAK_ERROR_PERMISSION_DENIED,
   FLATPAK_ERROR_AUTHENTICATION_FAILED,
   FLATPAK_ERROR_NOT_AUTHORIZED,
+  FLATPAK_ERROR_ALIAS_NOT_FOUND,
+  FLATPAK_ERROR_ALIAS_ALREADY_EXISTS,
 } FlatpakError;
 
 /**

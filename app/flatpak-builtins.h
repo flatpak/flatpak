@@ -124,6 +124,7 @@ BUILTINPROTO (repair)
 BUILTINPROTO (create_usb)
 BUILTINPROTO (kill)
 BUILTINPROTO (history)
+BUILTINPROTO (alias)
 
 #undef BUILTINPROTO
 

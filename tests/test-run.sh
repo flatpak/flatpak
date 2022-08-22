@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..20"
+echo "1..21"
 
 # Use stable rather than master as the branch so we can test that the run
 # command automatically finds the branch correctly
@@ -75,6 +75,25 @@ run org.test.Hello &> hello_out
 assert_file_has_content hello_out '^Hello world, from a sandbox$'
 
 ok "hello"
+
+# Note: this fuzzy matching wouldn't normally work without user interaction but
+# we have FLATPAK_FORCE_ALLOW_FUZZY_MATCHING=1 in the env and specify -y
+run -y hello &> hello_out
+assert_file_has_content hello_out '^Hello world, from a sandbox$'
+
+# It should NOT work without -y if no alias exists
+if run hello 2> run-error-log >&2; then
+    assert_not_reached "Unexpectedly able to run non-existent alias without -y"
+fi
+assert_file_has_content run-error-log "error: No ref chosen to resolve matches for hello"
+
+# It should work without -y if an alias exists
+${FLATPAK} ${U} alias hello org.test.Hello
+run hello &> hello_out
+assert_file_has_content hello_out '^Hello world, from a sandbox$'
+${FLATPAK} ${U} alias --remove hello
+
+ok "hello w/ fuzzy matching"
 
 # XDG_RUNTIME_DIR is set to <temp directory>/runtime by libtest.sh,
 # so we always have the necessary setup to reproduce #4372
@@ -172,7 +191,7 @@ assert_file_has_content run-error-log "error: runtime/org\.test\.Platform/$ARCH/
 if run runtime/org.test.Nonexistent 2> run-error-log >&2; then
     assert_not_reached "Unexpectedly able to run non-existent runtime"
 fi
-assert_file_has_content run-error-log "error: runtime/org\.test\.Nonexistent/\*unspecified\*/\*unspecified\* not installed"
+assert_file_has_content run-error-log "error: org\.test\.Nonexistent/\*unspecified\*/\*unspecified\* not installed"
 
 ok "error handling for invalid refs"
 

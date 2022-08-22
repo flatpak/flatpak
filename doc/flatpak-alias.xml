@@ -1,0 +1,176 @@
+<?xml version='1.0'?> <!--*-nxml-*-->
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+    "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+
+<refentry id="flatpak-alias">
+
+    <refentryinfo>
+        <title>flatpak alias</title>
+        <productname>flatpak</productname>
+
+        <authorgroup>
+            <author>
+                <contrib>Developer</contrib>
+                <firstname>Matthew</firstname>
+                <surname>Leeds</surname>
+                <email>mwleeds@protonmail.com</email>
+            </author>
+        </authorgroup>
+    </refentryinfo>
+
+    <refmeta>
+        <refentrytitle>flatpak alias</refentrytitle>
+        <manvolnum>1</manvolnum>
+    </refmeta>
+
+    <refnamediv>
+        <refname>flatpak-alias</refname>
+        <refpurpose>Manage short aliases for running applications</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+            <cmdsynopsis>
+                <command>flatpak alias</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="plain">ALIAS</arg>
+                <arg choice="plain">APP</arg>
+            </cmdsynopsis>
+            <cmdsynopsis>
+                <command>flatpak alias</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="opt">--remove</arg>
+                <arg choice="plain">ALIAS</arg>
+            </cmdsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+        <title>Description</title>
+
+        <para>
+          Normally to run a Flatpak app from the command line you specify the full
+          App ID (and optionally the arch and branch) to the
+          <command>flatpak run</command> command. This can be tedious, so the
+          <command>alias</command> command allows you to set up aliases that can
+          be passed to <command>flatpak run</command> instead. Once set up, no
+          additional confirmation prompts are needed each time the alias is used.
+        </para>
+        <para>
+          The <arg choice="plain">APP</arg> argument is the application ID of an
+          installed application. Only the current branch will be used; see
+          <citerefentry><refentrytitle>flatpak-make-current</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+          As with the <command>flatpak run</command> command, if an app is installed
+          both system-wide and per-user, the per-user one will be used unless
+          otherwise specified with <option>--system</option> or <option>--installation</option>.
+        </para>
+        <para>
+          The <arg choice="plain">ALIAS</arg> argument is a string which can only
+          contain the ASCII characters "[A-Z][a-z][0-9]_-" and cannot start with a "-".
+        </para>
+        <para>
+          To list the current set of aliases, run this command without any arguments.
+        </para>
+        <para>
+          Aliases are created as files in an <filename>aliases</filename>
+          subdirectory of the relevant installation directory. However, it is not
+          recommended to add this directory to your <envar>PATH</envar> since
+          Flatpaks cannot handle file arguments like OS packages. For example, a
+          command such as <command>media-player ~/some-file.ogg</command> would not
+          work if the relevant Flatpak doesn't have home directory access. To
+          provide access to particular files specified on the command line, use the
+          <option>--file-forwarding</option> option documented in
+          <citerefentry><refentrytitle>flatpak-run</refentrytitle><manvolnum>2</manvolnum></citerefentry>.
+        </para>
+    </refsect1>
+
+    <refsect1>
+        <title>Options</title>
+
+        <para>The following options are understood:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term><option>-h</option></term>
+                <term><option>--help</option></term>
+
+                <listitem><para>
+                    Show help options and exit.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--remove</option></term>
+
+                <listitem><para>
+                    Instead of adding the specified alias, remove it. In this case
+                    there's no need to specify the <arg choice="plain">APP</arg>.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--user</option></term>
+
+                <listitem><para>
+                    Operate on the per-user installation.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--system</option></term>
+
+                <listitem><para>
+                    Operate on the default system-wide installation.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--installation=NAME</option></term>
+
+                <listitem><para>
+                    Operate on the system-wide installation
+                    specified by <arg choice="plain">NAME</arg> among those defined in
+                    <filename>/etc/flatpak/installations.d/</filename>. Using
+                    <option>--installation=default</option> is equivalent to using
+                    <option>--system</option>.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-v</option></term>
+                <term><option>--verbose</option></term>
+
+                <listitem><para>
+                    Print debug information during command processing.
+                </para></listitem>
+            </varlistentry>
+        </variablelist>
+    </refsect1>
+
+    <refsect1>
+        <title>Examples</title>
+
+        <para>
+            <command>$ flatpak alias</command>
+        </para>
+        <para>
+            <command>$ flatpak alias app-bin org.example.App</command>
+        </para>
+        <para>
+            <command>$ flatpak alias --system org.example.App app-bin</command>
+        </para>
+        <para>
+            <command>$ flatpak alias --remove app-bin</command>
+        </para>
+
+    </refsect1>
+
+    <refsect1>
+        <title>See also</title>
+
+        <para>
+            <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-run</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+        </para>
+
+    </refsect1>
+
+</refentry>
