@@ -1008,12 +1008,11 @@ msgstr "КЛЮЧ=ЗНАЧЕНИЕ"
 
 #: app/flatpak-builtins-build-update-repo.c:82
 msgid "Import new default GPG public key from FILE"
-msgstr ""
-"Импортировать новый используемый по умолчанию публичный ключ GPG из ФАЙЛА"
+msgstr "Импорт нового публичного ключа GPG по умолчанию из ФАЙЛА"
 
 #: app/flatpak-builtins-build-update-repo.c:83
 msgid "GPG Key ID to sign the summary with"
-msgstr "ID Ключа GPG для подписи сводной информации"
+msgstr "ID ключа GPG для подписи сводной информации"
 
 #: app/flatpak-builtins-build-update-repo.c:85
 msgid "Generate delta files"
@@ -1437,7 +1436,7 @@ msgstr "ФАЙЛ - Убрать файл из экспортрованных"
 #: app/flatpak-builtins-enter.c:88
 msgid "INSTANCE COMMAND [ARGUMENT…] - Run a command inside a running sandbox"
 msgstr ""
-"ЭКЗЕМПЛЯР [КОМАНДА [АРГУМЕНТ...]] - Выполнить команду внутри запущенной "
+"ЭКЗЕМПЛЯР [КОМАНДА [АРГУМЕНТ…]] - Выполнить команду внутри запущенной "
 "песочницы"
 
 #: app/flatpak-builtins-enter.c:111
@@ -2051,7 +2050,7 @@ msgstr "Показать указанную архитектуру"
 
 #: app/flatpak-builtins-list.c:50 app/flatpak-builtins-remote-ls.c:55
 msgid "List all refs (including locale/debug)"
-msgstr "Перечислить все ссылки (включая локализации и отладочные)"
+msgstr "Перечислить все ссылки (включая локали и отладочные)"
 
 #: app/flatpak-builtins-list.c:51 app/flatpak-builtins-remote-ls.c:56
 msgid "List all applications using RUNTIME"
@@ -2099,7 +2098,7 @@ msgstr "Среда исполнения"
 
 #: app/flatpak-builtins-list.c:63
 msgid "Show the used runtime"
-msgstr "Показать используемую среду исполнения"
+msgstr "Показать используемую среду выполнения"
 
 #: app/flatpak-builtins-list.c:64 app/flatpak-builtins-remote-ls.c:71
 msgid "Show the origin remote"
@@ -2145,7 +2144,7 @@ msgstr "Показать параметры"
 
 #: app/flatpak-builtins-list.c:393
 msgid " - List installed apps and/or runtimes"
-msgstr " - Показать список установленных приложений и/или сред исполнения"
+msgstr " - Показать список установленных приложений и/или сред выполнения"
 
 #: app/flatpak-builtins-make-current.c:38
 msgid "Arch to make current for"
@@ -2675,7 +2674,7 @@ msgstr "Показать размер загрузки"
 #: app/flatpak-builtins-remote-ls.c:391
 msgid " [REMOTE or URI] - Show available runtimes and applications"
 msgstr ""
-" [УДАЛЁННЫЙ_РЕПО или URI] - Показать доступные среды исполнения и приложения"
+" [УДАЛЁННЫЙ_РЕПО или URI] - Показать доступные среды выполнения и приложения"
 
 #: app/flatpak-builtins-remote-modify.c:66
 msgid "Enable GPG verification"
@@ -3041,15 +3040,15 @@ msgstr "Ветвь для использования"
 
 #: app/flatpak-builtins-run.c:70
 msgid "Use development runtime"
-msgstr "Использовать среду исполнения для разработчиков"
+msgstr "Использовать среду выполнения для разработчиков"
 
 #: app/flatpak-builtins-run.c:71
 msgid "Runtime to use"
-msgstr "Используемая среда исполнения"
+msgstr "Используемая среда выполнения"
 
 #: app/flatpak-builtins-run.c:72
 msgid "Runtime version to use"
-msgstr "Версия среды исполнения"
+msgstr "Версия среды выполнения"
 
 #: app/flatpak-builtins-run.c:75
 msgid "Log accessibility bus calls"
@@ -3089,7 +3088,7 @@ msgstr "Запустить указанный коммит"
 
 #: app/flatpak-builtins-run.c:83
 msgid "Use specified runtime commit"
-msgstr "Использовать указанный коммит среды исполнения"
+msgstr "Использовать указанный коммит среды выполнения"
 
 #: app/flatpak-builtins-run.c:84
 msgid "Run completely sandboxed"
@@ -3119,7 +3118,7 @@ msgstr "Использовать ПУТЬ вместо /app приложения
 
 #: app/flatpak-builtins-run.c:91
 msgid "Use PATH instead of the runtime's /usr"
-msgstr "Использовать ПУТЬ вместо /usr среды исполнения"
+msgstr "Использовать ПУТЬ вместо /usr среды выполнения"
 
 #: app/flatpak-builtins-run.c:114
 msgid "APP [ARGUMENT…] - Run an app"
@@ -3339,7 +3338,7 @@ msgstr ""
 #: app/flatpak-builtins-utils.c:359
 #, c-format
 msgid "Remote \"%s\" not found in the %s installation"
-msgstr "Удаленный репозиторий '%s' не найден в месте %s"
+msgstr "Удаленный репозиторий '%s' не найден в установке %s"
 
 #. default to yes on Enter
 #: app/flatpak-builtins-utils.c:421
@@ -3384,7 +3383,7 @@ msgid ""
 "Found similar ref(s) for ‘%s’ in remote ‘%s’ (%s).\n"
 "Use this remote?"
 msgstr ""
-"Найдена одна или более ссылок, похожих на '%s', в репозитории '%s' (%s).\n"
+"Найдена ссылка(и), похожая на '%s', в репозитории '%s' (%s).\n"
 "Использовать этот репозиторий?"
 
 #: app/flatpak-builtins-utils.c:583 app/flatpak-builtins-utils.c:596
@@ -3472,7 +3471,7 @@ msgstr "Хотите установить её?"
 #, c-format
 msgid "Required runtime for %s (%s) found in remotes:"
 msgstr ""
-"Требуемая среда исполнения для %s (%s) найдена в следующих репозиториях:"
+"Требуемая среда выполнения для %s (%s) найдена в этих репозиториях:"
 
 #: app/flatpak-cli-transaction.c:109
 msgid "Which do you want to install (0 to abort)?"
@@ -3503,7 +3502,7 @@ msgid ""
 "  %s\n"
 "Configure this as new remote '%s'"
 msgstr ""
-"Приложение %s зависит от сред исполнения из:\n"
+"Приложение %s зависит от сред выполнения из:\n"
 "  %s\n"
 "Добавить его как новый удалённый репозиторий '%s'"
 
@@ -3523,7 +3522,7 @@ msgstr "Обновление…"
 #: app/flatpak-cli-transaction.c:416
 #, c-format
 msgid "Updating %d/%d…"
-msgstr "Обновление: %d/%d…"
+msgstr "Обновление %d/%d…"
 
 #: app/flatpak-cli-transaction.c:421
 msgid "Uninstalling…"
@@ -4198,7 +4197,7 @@ msgstr "%s требует более новую версию flatpak"
 
 #: app/flatpak-quiet-transaction.c:172
 msgid "Not enough disk space to complete this operation"
-msgstr "Недостаточно места на диске для завершения этой операции"
+msgstr "Для завершения этой операции недостаточно места на диске"
 
 #: app/flatpak-quiet-transaction.c:239
 #, c-format
@@ -4960,7 +4959,7 @@ msgstr "Не указана конфигурация для удаленного
 #: common/flatpak-dir.c:16452
 #, c-format
 msgid "Skipping deletion of mirror ref (%s, %s)…\n"
-msgstr "Пропуск удаления зеркальной ссылки (%s,%s)…\n"
+msgstr "Пропуск удаления зеркальной ссылки (%s, %s)…\n"
 
 #: common/flatpak-installation.c:831
 #, c-format
@@ -5053,7 +5052,7 @@ msgstr "Неверный формат файлы дельты"
 #: common/flatpak-oci-registry.c:2469
 #, c-format
 msgid "No gpg key found with ID %s (homedir: %s)"
-msgstr "Ключ gpg с идентификатором %s не найден (homedir: %s)"
+msgstr "Ключ gpg с ID %s не найден (homedir: %s)"
 
 #: common/flatpak-oci-registry.c:2476
 #, c-format
@@ -5158,7 +5157,7 @@ msgstr "Неправильное имя удаленного репозитор�
 #: common/flatpak-ref-utils.c:638
 #, c-format
 msgid "%s is not application or runtime"
-msgstr "%s не является именем приложения или среды запуска"
+msgstr "%s не является приложением или средой выполнения"
 
 #: common/flatpak-ref-utils.c:647 common/flatpak-ref-utils.c:664
 #: common/flatpak-ref-utils.c:680
@@ -5203,11 +5202,11 @@ msgstr " среда разработки"
 
 #: common/flatpak-ref-utils.c:1297
 msgid " platform"
-msgstr " среда исполнения"
+msgstr " среда выполнения"
 
 #: common/flatpak-ref-utils.c:1299
 msgid " application base"
-msgstr " базовое приложение"
+msgstr " база приложение"
 
 #: common/flatpak-ref-utils.c:1302
 msgid " debug symbols"
@@ -5310,7 +5309,7 @@ msgstr "Не удалось открыть '%s'"
 #: common/flatpak-run.c:3930
 #, c-format
 msgid "ldconfig failed, exit status %d"
-msgstr "ошибка ldconfig, статус ошибки %d"
+msgstr "Ошибка ldconfig, статус ошибки %d"
 
 #: common/flatpak-run.c:3937
 msgid "Can't open generated ld.so.cache"
@@ -5487,7 +5486,7 @@ msgstr "Не UTF-8 символы в URI"
 #: common/flatpak-uri.c:275
 #, c-format
 msgid "Invalid IPv6 address ‘%.*s’ in URI"
-msgstr "Недопустимый IPv6 адрес ‘%.*s’ в URI"
+msgstr "Недопустимый адрес IPv6 ‘%.*s’ в URI"
 
 #: common/flatpak-uri.c:330
 #, c-format
@@ -5511,7 +5510,7 @@ msgstr "Порт '%.*s' в URI находится вне диапазона"
 
 #: common/flatpak-uri.c:910
 msgid "URI is not absolute, and no base URI was provided"
-msgstr "URI не абсолютный, и базовый URI не указан"
+msgstr "URI не абсолютный, а базовый URI не указан"
 
 #: common/flatpak-utils.c:862
 msgid "Glob can't match apps"
@@ -5523,12 +5522,12 @@ msgstr "Пустой glob"
 
 #: common/flatpak-utils.c:906
 msgid "Too many segments in glob"
-msgstr "Слишком много частей в glob'е"
+msgstr "Слишком много частей в glob"
 
 #: common/flatpak-utils.c:927
 #, c-format
 msgid "Invalid glob character '%c'"
-msgstr "Недопустимый знак '%c' в glob'е"
+msgstr "Недопустимый знак '%c' в glob"
 
 #: common/flatpak-utils.c:981
 #, c-format
@@ -5611,7 +5610,7 @@ msgstr "Некорректная конфигурация образа OCI"
 #: common/flatpak-utils.c:7010 common/flatpak-utils.c:7256
 #, c-format
 msgid "Wrong layer checksum, expected %s, was %s"
-msgstr "Неправильный слой контрольных сумм, ожидалось %s, было %s"
+msgstr "Неверная контрольная сумма слоя, ожидалось %s, было %s"
 
 #: common/flatpak-utils.c:7090
 #, c-format
@@ -5722,7 +5721,7 @@ msgstr "Требуется авторизация для установки пр
 #. in the wheel group to install without authenticating.
 #: system-helper/org.freedesktop.Flatpak.policy.in:41
 msgid "Install signed runtime"
-msgstr "Установить подписанную исполняемую среду"
+msgstr "Установить подписанную среду выполнения"
 
 #. SECURITY:
 #. - Normal users do not require admin authentication to update an
@@ -5791,7 +5790,7 @@ msgstr "Требуется авторизация для установки пр
 #. in the wheel group to uninstall without authenticating.
 #: system-helper/org.freedesktop.Flatpak.policy.in:144
 msgid "Uninstall runtime"
-msgstr "Удалить среду исполнения"
+msgstr "Удалить среду выполнения"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:145
 msgid "Authentication is required to uninstall software"
@@ -5804,7 +5803,7 @@ msgstr "Требуется авторизация для удаления про
 #. in the wheel group to uninstall without authenticating.
 #: system-helper/org.freedesktop.Flatpak.policy.in:161
 msgid "Uninstall app"
-msgstr "Удалить программу"
+msgstr "Удалить приложение"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:162
 msgid "Authentication is required to uninstall $(ref)"
