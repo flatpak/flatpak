@@ -274,6 +274,7 @@ AS_IF([test x$with_curl != xno ], [
 ])
 AM_CONDITIONAL(USE_CURL, test x$with_curl != xno)
 AM_CONDITIONAL(USE_SOUP, test x$with_curl == xno)
+AC_SUBST(http_backend)
 
 LIBGPGME_DEPENDENCY="1.1.8"
 PKG_CHECK_MODULES(DEP_GPGME, gpgme-pthread >= $LIBGPGME_DEPENDENCY, have_gpgme=yes, [
