@@ -7,6 +7,9 @@ datadir=@datadir@
 
 interfaces_dir=${datadir}/dbus-1/interfaces/
 
+# This will either be 'soup' for libsoup-2.x or 'curl' for libcurl.
+httpbackend=@http_backend@
+
 Name: flatpak
 Description: Application sandboxing framework
 Version: @VERSION@
