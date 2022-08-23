@@ -856,7 +856,7 @@ msgstr "Переинициализировать sdk/окружение"
 #: app/flatpak-builtins-build-init.c:118
 #, fuzzy, c-format
 msgid "Requested extension %s/%s/%s is only partially installed"
-msgstr "Требуемое расширение %s/%s%s установлено только частично"
+msgstr "Требуемое расширение %s/%s/%s установлено только частично"
 
 #: app/flatpak-builtins-build-init.c:147
 #, fuzzy, c-format
