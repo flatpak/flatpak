@@ -1,3 +1,57 @@
+Changes in 1.14.0
+~~~~~~~~~~~~~~~~~
+Released: 2022-08-22
+
+Known issues:
+* There may be an issue where non-primary architecture builds don't show up
+  (https://github.com/flatpak/flatpak/issues/5045)
+* There is a new security advisory on Flatpak but all supported versions are
+  not affected due to using new enough versions of libostree
+  (https://github.com/flatpak/flatpak/security/advisories/GHSA-45jq-5658-v38x)
+
+Dependencies:
+
+* Conditional on a build time option, revokefs will now use version 3 of the
+  FUSE API rather than version 2 (#4326)
+* Libappstream should be updated to at least 0.15.3 to avoid critical warning
+  messages when using the "flatpak search" command
+  (https://github.com/ximion/appstream/issues/384)
+
+New features:
+
+* A new key "DeploySideloadCollectionID" is now supported in flatpakref and
+  flatpakrepo files, to allow setting a collection ID at the time a remote is
+  added from one of those files, rather than when metadata is pulled from the
+  remote, and without affecting versions of Flatpak with the older pre-sideload
+  P2P implementation (#4826)
+* Allow sub-sandboxes to own MPRIS names on the session bus (#5023)
+* Commands that accept "--user" will now also take "-u" as an alias for that
+  (#5014)
+* The CLI now properly informs the user of which apps are (indirectly) using
+  end-of-life runtime extensions in end-of-life info messages (#4835)
+* The CLI now takes into account operations in the pending transaction when
+  printing end-of-life messages (#4835)
+* The uninstall command now asks for confirmation before removing in-use
+  runtimes or runtime extensions (#4835)
+* A "--socket=gpg-agent" option is now recognized by "flatpak run" and related
+  commands (#4958)
+
+Bug fixes:
+
+* Fix a memory corruption issue caused by use of libcurl in an unsafe way
+  (#5046)
+* Update selinux policy to cover symbolic links in /var/lib/flatpak (#4992)
+* Fix a crash in case a .desktop file processed by the build-export command has
+  no Exec= key, and some related fixes for handling such .desktop files (#4817)
+* Preserve the X11 display number rather than redirecting it to :99 (#5034)
+
+Other changes:
+
+* Various improvements to the unit tests, CI infra, and documentation
+* Some changes were made to ensure translators can work on full sentences
+  rather than fragments in several places
+* Translation updates: de, ru, sv, tr, uk, zh_CN
+
 Changes in 1.13.3
 ~~~~~~~~~~~~~~~~~
 Released: 2022-06-16
