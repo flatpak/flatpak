@@ -861,7 +861,7 @@ msgstr "Требуемое расширение %s/%s/%s установлено 
 #: app/flatpak-builtins-build-init.c:147
 #, fuzzy, c-format
 msgid "Requested extension %s/%s/%s not installed"
-msgstr "Требуемое расширение %s/%s%s не установлено"
+msgstr "Требуемое расширение %s/%s/%s не установлено"
 
 #: app/flatpak-builtins-build-init.c:207
 msgid ""
