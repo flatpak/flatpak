@@ -3557,7 +3557,7 @@ msgstr "Предупреждение: %s%s%s не установлено\n"
 #: app/flatpak-cli-transaction.c:524
 #, fuzzy, c-format
 msgid "Error: %s%s%s not installed"
-msgstr "Ошибка: %s/%s/%s не установлено"
+msgstr "Ошибка: %s%s%s не установлено"
 
 #: app/flatpak-cli-transaction.c:530
 #, fuzzy, c-format
