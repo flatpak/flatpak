@@ -1,9 +1,10 @@
 # Russian translation for flatpak.
-# Copyright (C) 2016 flatpak's COPYRIGHT HOLDER
+# Copyright (C) 2022 flatpak's COPYRIGHT HOLDER
 # This file is distributed under the same license as the flatpak package.
 #
 # Roman Kharin <romiq.kh@gmail.com>, 2017.
 # Артемий Судаков <finziyr@yandex.ru>, 2020.
+# ViktorOn <https://github.com/ViktorOn>, 2022.
 #
 msgid ""
 msgstr ""
@@ -63,7 +64,7 @@ msgstr "URL файла flatpakrepo среды исполнения"
 
 #: app/flatpak-builtins-build-bundle.c:61
 msgid "Add GPG key from FILE (- for stdin)"
-msgstr "Добавить ключ GPG из ФАЙЛА (- из стандартного потока ввода)"
+msgstr "Добавить ключ GPG из ФАЙЛА (- для стандартного ввода)"
 
 #: app/flatpak-builtins-build-bundle.c:61 app/flatpak-builtins-build.c:54
 #: app/flatpak-builtins-build-export.c:66
@@ -76,7 +77,7 @@ msgstr "ФАЙЛ"
 
 #: app/flatpak-builtins-build-bundle.c:62
 msgid "GPG Key ID to sign the OCI image with"
-msgstr "ID Ключа GPG для подписи образа OCI"
+msgstr "ID ключа GPG для подписи образа OCI"
 
 #: app/flatpak-builtins-build-bundle.c:62
 #: app/flatpak-builtins-build-commit-from.c:67
@@ -234,7 +235,7 @@ msgstr "Журналировать вызовы системной шины"
 
 #: app/flatpak-builtins-build.c:207
 msgid "DIRECTORY [COMMAND [ARGUMENT…]] - Build in directory"
-msgstr "КАТАЛОГ [КОМАНДА [параметры...]] - Сборка в каталоге"
+msgstr "КАТАЛОГ [КОМАНДА [АРГУМЕНТ...]] - Сборка в каталоге"
 
 #: app/flatpak-builtins-build.c:230 app/flatpak-builtins-build-finish.c:653
 msgid "DIRECTORY must be specified"
@@ -372,7 +373,7 @@ msgstr "Не создавать индекс сводки"
 #: app/flatpak-builtins-build-commit-from.c:277
 msgid "DST-REPO [DST-REF…] - Make a new commit from existing commits"
 msgstr ""
-"НАЗН-РЕПО [НАЗН-ССЫЛКА]... - Сделать новый коммит на основе существующеих "
+"НАЗН-РЕПО [НАЗН-ССЫЛКА...] - Сделать новый коммит на основе существующих "
 "коммитов"
 
 #: app/flatpak-builtins-build-commit-from.c:284
@@ -511,7 +512,7 @@ msgstr ""
 #: app/flatpak-builtins-build-export.c:718
 #, c-format
 msgid "Invalid uri type %s, only http/https supported"
-msgstr "Некорректный тип uri %s, поддерживается только http/https"
+msgstr "Некорректный тип URI %s, поддерживается только http/https"
 
 #: app/flatpak-builtins-build-export.c:736
 #, c-format
@@ -846,7 +847,7 @@ msgstr "Включить указанное расширение sdk в ката
 
 #: app/flatpak-builtins-build-init.c:64
 msgid "Where to store sdk (defaults to 'usr')"
-msgstr "Путь к sdk (по умолчанию 'usr')"
+msgstr "Путь к sdk (по умолчанию в 'usr')"
 
 #: app/flatpak-builtins-build-init.c:65
 msgid "Re-initialize the sdk/var"
@@ -855,12 +856,12 @@ msgstr "Переинициализировать sdk/окружение"
 #: app/flatpak-builtins-build-init.c:118
 #, fuzzy, c-format
 msgid "Requested extension %s/%s/%s is only partially installed"
-msgstr "Требуемое расширение %s установлено частично"
+msgstr "Требуемое расширение %s/%s%s установлено только частично"
 
 #: app/flatpak-builtins-build-init.c:147
 #, fuzzy, c-format
 msgid "Requested extension %s/%s/%s not installed"
-msgstr "Требуемое расширение %s не установлено"
+msgstr "Требуемое расширение %s/%s%s не установлено"
 
 #: app/flatpak-builtins-build-init.c:207
 msgid ""
@@ -1119,7 +1120,7 @@ msgstr "Удалить конфигурацию КЛЮЧА"
 #: app/flatpak-builtins-config.c:149
 #, c-format
 msgid "'%s' does not look like a language/locale code"
-msgstr "'%s' не выглядит как код локали/языка"
+msgstr "'%s' не выглядит как код языка/локали"
 
 #: app/flatpak-builtins-config.c:172
 #, c-format
@@ -1436,7 +1437,7 @@ msgstr "ФАЙЛ - Убрать файл из экспортрованных"
 #: app/flatpak-builtins-enter.c:88
 msgid "INSTANCE COMMAND [ARGUMENT…] - Run a command inside a running sandbox"
 msgstr ""
-"ЭКЗЕМПЛЯР [КОМАНДА [АРГУМЕНТЫ...]] - Выполнить команду внутри запущенной "
+"ЭКЗЕМПЛЯР [КОМАНДА [АРГУМЕНТ...]] - Выполнить команду внутри запущенной "
 "песочницы"
 
 #: app/flatpak-builtins-enter.c:111
@@ -2417,7 +2418,7 @@ msgstr "Ветвь по-умолчанию для этого удалённог�
 
 #: app/flatpak-builtins-remote-add.c:81 app/flatpak-builtins-remote-modify.c:88
 msgid "Import GPG key from FILE (- for stdin)"
-msgstr "Импортировать ключ GPG из ФАЙЛА (- для стандартного потока ввода)"
+msgstr "Импортировать ключ GPG из ФАЙЛА (- для стандартного ввода)"
 
 #: app/flatpak-builtins-remote-add.c:82 app/flatpak-builtins-remote-modify.c:90
 msgid "Set path to local filter FILE"
@@ -3171,7 +3172,7 @@ msgstr "Удалять файлы даже если запущено"
 
 #: app/flatpak-builtins-uninstall.c:60
 msgid "Uninstall all"
-msgstr "Удалить всё"
+msgstr "Удалить все"
 
 #: app/flatpak-builtins-uninstall.c:61
 msgid "Uninstall unused"
@@ -3189,17 +3190,17 @@ msgstr "Удалить данные для %s?"
 #: app/flatpak-builtins-uninstall.c:220
 #, c-format
 msgid "Info: applications using the extension %s%s%s branch %s%s%s:\n"
-msgstr ""
+msgstr "Информация: приложения, использующие расширение %s%s%s ветвь %s%s%s:\n"
 
 #: app/flatpak-builtins-uninstall.c:223
 #, fuzzy, c-format
 msgid "Info: applications using the runtime %s%s%s branch %s%s%s:\n"
-msgstr "Приложения, использующие эту среду исполнения:\n"
+msgstr "Информация: приложения, использующие среду исполнения %s%s%s ветвь %s%s%s:\n"
 
 #: app/flatpak-builtins-uninstall.c:238
 #, fuzzy
 msgid "Really remove?"
-msgstr "любой удаленный репозиторий"
+msgstr "Точно удалить?"
 
 #: app/flatpak-builtins-uninstall.c:255
 msgid "[REF…] - Uninstall applications or runtimes"
@@ -3310,7 +3311,7 @@ msgstr "Нечего выполнять.\n"
 #: app/flatpak-builtins-utils.c:341
 #, c-format
 msgid "Remote ‘%s’ found in multiple installations:"
-msgstr "Удалённый репозиторий ‘%s’ найден в нескольких установках:"
+msgstr "Удалённый репозиторий '%s' найден в нескольких установках:"
 
 #: app/flatpak-builtins-utils.c:342 app/flatpak-builtins-utils.c:433
 #: app/flatpak-builtins-utils.c:525 app/flatpak-builtins-utils.c:527
@@ -3551,22 +3552,22 @@ msgstr "%s уже установлен"
 #: app/flatpak-cli-transaction.c:521
 #, fuzzy, c-format
 msgid "Warning: %s%s%s not installed"
-msgstr "Предупреждение: %s не установлено\n"
+msgstr "Предупреждение: %s%s%s не установлено\n"
 
 #: app/flatpak-cli-transaction.c:524
 #, fuzzy, c-format
 msgid "Error: %s%s%s not installed"
-msgstr "%s/%s/%s не установлено"
+msgstr "Ошибка: %s/%s/%s не установлено"
 
 #: app/flatpak-cli-transaction.c:530
 #, fuzzy, c-format
 msgid "Warning: %s%s%s needs a later flatpak version"
-msgstr "%s требует более новую версию flatpak"
+msgstr "Предупреждение: %s%s%s требует более новую версию flatpak"
 
 #: app/flatpak-cli-transaction.c:533
 #, fuzzy, c-format
 msgid "Error: %s%s%s needs a later flatpak version"
-msgstr "%s требует более новую версию flatpak"
+msgstr "Ошибка: %s%s%s требует более новую версию flatpak"
 
 #: app/flatpak-cli-transaction.c:539
 #, fuzzy
@@ -3581,37 +3582,37 @@ msgstr "Недостаточно места на диске для заверш�
 #: app/flatpak-cli-transaction.c:546
 #, fuzzy, c-format
 msgid "Warning: %s"
-msgstr "Предупреждение: "
+msgstr "Предупреждение: %s"
 
 #: app/flatpak-cli-transaction.c:548
 #, fuzzy, c-format
 msgid "Error: %s"
-msgstr "Ошибка:"
+msgstr "Ошибка: %s"
 
 #: app/flatpak-cli-transaction.c:563
 #, fuzzy, c-format
 msgid "Failed to install %s%s%s: "
-msgstr "Не удалось удалить %s для перебазирования в %s: "
+msgstr "Не удалось установить %s%s%s: "
 
 #: app/flatpak-cli-transaction.c:570
 #, fuzzy, c-format
 msgid "Failed to update %s%s%s: "
-msgstr "Не удалось %s %s: "
+msgstr "Не удалось обновить %s%s%s: "
 
 #: app/flatpak-cli-transaction.c:577
 #, fuzzy, c-format
 msgid "Failed to install bundle %s%s%s: "
-msgstr "Не удалось удалить %s для перебазирования в %s: "
+msgstr "Не удалось установить пакет %s%s%s: "
 
 #: app/flatpak-cli-transaction.c:584
 #, fuzzy, c-format
 msgid "Failed to uninstall %s%s%s: "
-msgstr "Не удалось удалить %s для перебазирования в %s: "
+msgstr "Не удалось удалить %s%s%s: "
 
 #: app/flatpak-cli-transaction.c:626
 #, c-format
 msgid "Authentication required for remote '%s'\n"
-msgstr "Требуется авторизация для обновления удаленной информации о '%s'\n"
+msgstr "Требуется авторизация для удаленного репозитория '%s'\n"
 
 #: app/flatpak-cli-transaction.c:627
 msgid "Open browser?"
@@ -3634,8 +3635,8 @@ msgid ""
 "Info: (pinned) runtime %s%s%s branch %s%s%s is end-of-life, in favor of "
 "%s%s%s branch %s%s%s\n"
 msgstr ""
-"Информация: конец срока поддержки для закреплённого %s//%s наступил в пользу "
-"%s\n"
+"Информация: конец срока поддержки среды выполнения %s%s%s ветви %s%s%s в пользу "
+"%s%s%s ветви %s%s%s\n"
 
 #: app/flatpak-cli-transaction.c:749
 #, fuzzy, c-format
@@ -3645,7 +3646,8 @@ msgid ""
 "%s%s%s\n"
 msgstr ""
 "\n"
-"Информация: %s%s %s прекращает свое существование, в пользу %s\n"
+"Информация: среда выполнения %s%s%s ветви %s%s% прекращает свое существование в пользу %s%s%s ветви "
+"%s%s%s\n"
 
 #: app/flatpak-cli-transaction.c:752
 #, fuzzy, c-format
@@ -3655,7 +3657,8 @@ msgid ""
 "%s%s%s\n"
 msgstr ""
 "\n"
-"Информация: %s%s %s прекращает свое существование, в пользу %s\n"
+"Информация: %s%s%s прекращает свое существование, в пользу %s%s%s ветви "
+"%s%s%s\n"
 
 #. Only runtimes can be pinned
 #: app/flatpak-cli-transaction.c:761
@@ -3682,7 +3685,7 @@ msgid ""
 "Info: app %s%s%s branch %s%s%s is end-of-life, with reason:\n"
 msgstr ""
 "\n"
-"Информация: %s%s %s прекращает свое существование, по причине:\n"
+"Информация: приложение %s%s%s ветви %s%s%s прекращает свое существование, по причине:\n"
 
 #: app/flatpak-cli-transaction.c:944
 #, fuzzy
@@ -4876,7 +4879,7 @@ msgstr "Для %s доступно несколько ветвей, необхо
 #: common/flatpak-dir.c:13227
 #, c-format
 msgid "Nothing matches %s"
-msgstr "Совпадений не обнаружено %s"
+msgstr "Совпадений %s не обнаружено"
 
 #: common/flatpak-dir.c:13335
 #, c-format
