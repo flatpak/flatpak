@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2022-08-22 21:06-0700\n"
-"PO-Revision-Date: 2022-01-30 13:35+0100\n"
+"PO-Revision-Date: 2022-08-27 13:42+0200\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
 "Language: pl\n"
@@ -868,14 +868,14 @@ msgid "Re-initialize the sdk/var"
 msgstr "Ponownie inicjuje środowisko programistyczne/zmienną"
 
 #: app/flatpak-builtins-build-init.c:118
-#, fuzzy, c-format
+#, c-format
 msgid "Requested extension %s/%s/%s is only partially installed"
-msgstr "Żądane rozszerzenie %s jest tylko częściowo zainstalowane"
+msgstr "Żądane rozszerzenie %s/%s/%s jest tylko częściowo zainstalowane"
 
 #: app/flatpak-builtins-build-init.c:147
-#, fuzzy, c-format
+#, c-format
 msgid "Requested extension %s/%s/%s not installed"
-msgstr "Nie zainstalowano żądanego rozszerzenia %s"
+msgstr "Nie zainstalowano żądanego rozszerzenia %s/%s/%s"
 
 #: app/flatpak-builtins-build-init.c:207
 msgid ""
@@ -1449,9 +1449,8 @@ msgid "[APPID] - List exported files"
 msgstr "[IDENTYFIKATOR-PROGRAMU] — wyświetla listę wyeksportowanych plików"
 
 #: app/flatpak-builtins-document-unexport.c:43
-#, fuzzy
 msgid "Specify the document ID"
-msgstr "Wyświetla identyfikator dokumentu"
+msgstr "Podaje identyfikator dokumentu"
 
 #: app/flatpak-builtins-document-unexport.c:58
 msgid "FILE - Unexport a file to apps"
@@ -1940,11 +1939,15 @@ msgstr "Bez używania statycznych delt"
 #: app/flatpak-builtins-install.c:74
 msgid "Additionally install the SDK used to build the given refs"
 msgstr ""
+"Dodatkowo instaluje środowisko programistyczne użyte do zbudowania podanych "
+"odniesień"
 
 #: app/flatpak-builtins-install.c:75
 msgid ""
 "Additionally install the debug info for the given refs and their dependencies"
 msgstr ""
+"Dodatkowo instaluje informacje debugowania dla podanych odniesień i ich "
+"zależności"
 
 #: app/flatpak-builtins-install.c:76
 msgid "Assume LOCATION is a .flatpak single-file bundle"
@@ -2014,9 +2017,9 @@ msgid "Looking for matches…\n"
 msgstr "Wyszukiwanie wyników…\n"
 
 #: app/flatpak-builtins-install.c:456
-#, fuzzy, c-format
+#, c-format
 msgid "No remote refs found for ‘%s’"
-msgstr "Nie odnaleziono zdalnych odniesień podobnych do „%s”"
+msgstr "Nie odnaleziono zdalnych odniesień dla „%s”"
 
 #: app/flatpak-builtins-install.c:532 app/flatpak-builtins-uninstall.c:405
 #: common/flatpak-ref-utils.c:686 common/flatpak-ref-utils.c:1592
@@ -2191,7 +2194,7 @@ msgstr "Należy podać GAŁĄŹ"
 #: app/flatpak-builtins-make-current.c:97
 #, c-format
 msgid "App %s branch %s is not installed"
-msgstr "Nie zainstalowano programu %s gałęzi %s"
+msgstr "Nie zainstalowano programu %s, gałęzi %s"
 
 #: app/flatpak-builtins-mask.c:42
 msgid "Remove matching masks"
@@ -3213,22 +3216,22 @@ msgstr "Usunąć dane programu %s?"
 #: app/flatpak-builtins-uninstall.c:220
 #, c-format
 msgid "Info: applications using the extension %s%s%s branch %s%s%s:\n"
-msgstr ""
+msgstr "Informacja: programy używające rozszerzenia %s%s%s, gałęzi %s%s%s:\n"
 
 #: app/flatpak-builtins-uninstall.c:223
-#, fuzzy, c-format
+#, c-format
 msgid "Info: applications using the runtime %s%s%s branch %s%s%s:\n"
-msgstr "Programy używające tego środowiska wykonawczego:\n"
+msgstr ""
+"Informacja: programy używające środowiska wykonawczego %s%s%s, gałęzi "
+"%s%s%s:\n"
 
 #: app/flatpak-builtins-uninstall.c:238
-#, fuzzy
 msgid "Really remove?"
-msgstr "Repozytorium"
+msgstr "Na pewno usunąć?"
 
 #: app/flatpak-builtins-uninstall.c:255
-#, fuzzy
 msgid "[REF…] - Uninstall applications or runtimes"
-msgstr "[ODNIESIENIE…] — aktualizuje programy lub środowiska wykonawcze"
+msgstr "[ODNIESIENIE…] — odinstalowuje programy lub środowiska wykonawcze"
 
 #: app/flatpak-builtins-uninstall.c:264
 msgid "Must specify at least one REF, --unused, --all or --delete-data"
@@ -3259,19 +3262,19 @@ msgid "Nothing unused to uninstall\n"
 msgstr "Nie ma nic nieużywanego do odinstalowania\n"
 
 #: app/flatpak-builtins-uninstall.c:444
-#, fuzzy, c-format
+#, c-format
 msgid "No installed refs found for ‘%s’"
-msgstr "Odnaleziono podobne zainstalowane odniesienie do „%s”:"
+msgstr "Nie odnaleziono zainstalowanych odniesień dla „%s”"
 
 #: app/flatpak-builtins-uninstall.c:447
 #, c-format
 msgid " with arch ‘%s’"
-msgstr ""
+msgstr " o architekturze „%s”"
 
 #: app/flatpak-builtins-uninstall.c:449
 #, c-format
 msgid " with branch ‘%s’"
-msgstr ""
+msgstr " o gałęzi „%s”"
 
 #: app/flatpak-builtins-uninstall.c:456
 #, c-format
@@ -3280,7 +3283,7 @@ msgstr "Ostrzeżenie: %s nie jest zainstalowane\n"
 
 #: app/flatpak-builtins-uninstall.c:490
 msgid "None of the specified refs are installed"
-msgstr ""
+msgstr "Żadne z podanych odniesień nie są zainstalowane"
 
 #: app/flatpak-builtins-update.c:56
 msgid "Arch to update for"
@@ -3565,74 +3568,72 @@ msgid "Info: %s was skipped"
 msgstr "Informacja: %s zostało pominięte"
 
 #: app/flatpak-cli-transaction.c:512
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: %s%s%s already installed"
-msgstr "Już zainstalowano %s"
+msgstr "Ostrzeżenie: już zainstalowano %s%s%s"
 
 #: app/flatpak-cli-transaction.c:515
-#, fuzzy, c-format
+#, c-format
 msgid "Error: %s%s%s already installed"
-msgstr "Już zainstalowano %s"
+msgstr "Błąd: już zainstalowano %s%s%s"
 
 #: app/flatpak-cli-transaction.c:521
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: %s%s%s not installed"
-msgstr "Ostrzeżenie: %s nie jest zainstalowane\n"
+msgstr "Ostrzeżenie: nie zainstalowano %s%s%s"
 
 #: app/flatpak-cli-transaction.c:524
-#, fuzzy, c-format
+#, c-format
 msgid "Error: %s%s%s not installed"
-msgstr "Nie zainstalowano %s/%s/%s"
+msgstr "Błąd: nie zainstalowano %s%s%s"
 
 #: app/flatpak-cli-transaction.c:530
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: %s%s%s needs a later flatpak version"
-msgstr "%s wymaga nowszej wersji Flatpak"
+msgstr "Ostrzeżenie: %s%s%s wymaga nowszej wersji Flatpak"
 
 #: app/flatpak-cli-transaction.c:533
-#, fuzzy, c-format
+#, c-format
 msgid "Error: %s%s%s needs a later flatpak version"
-msgstr "%s wymaga nowszej wersji Flatpak"
+msgstr "Błąd: %s%s%s wymaga nowszej wersji Flatpak"
 
 #: app/flatpak-cli-transaction.c:539
-#, fuzzy
 msgid "Warning: Not enough disk space to complete this operation"
-msgstr "Za mało miejsca na dysku, aby ukończyć to działanie"
+msgstr "Ostrzeżenie: za mało miejsca na dysku, aby ukończyć to działanie"
 
 #: app/flatpak-cli-transaction.c:541
-#, fuzzy
 msgid "Error: Not enough disk space to complete this operation"
-msgstr "Za mało miejsca na dysku, aby ukończyć to działanie"
+msgstr "Błąd: za mało miejsca na dysku, aby ukończyć to działanie"
 
 #: app/flatpak-cli-transaction.c:546
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: %s"
-msgstr "Ostrzeżenie: "
+msgstr "Ostrzeżenie: %s"
 
 #: app/flatpak-cli-transaction.c:548
-#, fuzzy, c-format
+#, c-format
 msgid "Error: %s"
-msgstr "Błąd:"
+msgstr "Błąd: %s"
 
 #: app/flatpak-cli-transaction.c:563
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to install %s%s%s: "
-msgstr "Odinstalowanie %s dla zmiany na %s się nie powiodło: "
+msgstr "Zainstalowanie %s%s%s się nie powiodło: "
 
 #: app/flatpak-cli-transaction.c:570
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to update %s%s%s: "
-msgstr "%s %s się nie powiodła: "
+msgstr "Zaktualizowanie %s%s%s się nie powiodło: "
 
 #: app/flatpak-cli-transaction.c:577
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to install bundle %s%s%s: "
-msgstr "Odinstalowanie %s dla zmiany na %s się nie powiodło: "
+msgstr "Zainstalowanie pakietu %s%s%s się nie powiodło: "
 
 #: app/flatpak-cli-transaction.c:584
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to uninstall %s%s%s: "
-msgstr "Odinstalowanie %s dla zmiany na %s się nie powiodło: "
+msgstr "Odinstalowanie %s%s%s się nie powiodło: "
 
 #: app/flatpak-cli-transaction.c:626
 #, c-format
@@ -3654,64 +3655,79 @@ msgstr "Hasło"
 
 #. Only runtimes can be pinned
 #: app/flatpak-cli-transaction.c:743
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Info: (pinned) runtime %s%s%s branch %s%s%s is end-of-life, in favor of "
 "%s%s%s branch %s%s%s\n"
-msgstr "Informacja: (przypięte) %s//%s jest niewspierane, w zamian jest %s\n"
+msgstr ""
+"\n"
+"Informacja: (przypięte) środowisko wykonawcze %s%s%s, gałąź %s%s%s jest "
+"niewspierane, w zamian jest %s%s%s, gałąź %s%s%s\n"
 
 #: app/flatpak-cli-transaction.c:749
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Info: runtime %s%s%s branch %s%s%s is end-of-life, in favor of %s%s%s branch "
 "%s%s%s\n"
-msgstr "Informacja: %s//%s jest niewspierane, w zamian jest %s\n"
+msgstr ""
+"\n"
+"Informacja: środowisko wykonawcze %s%s%s, gałąź %s%s%s jest niewspierane, "
+"w zamian jest %s%s%s, gałąź %s%s%s\n"
 
 #: app/flatpak-cli-transaction.c:752
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Info: app %s%s%s branch %s%s%s is end-of-life, in favor of %s%s%s branch "
 "%s%s%s\n"
-msgstr "Informacja: %s//%s jest niewspierane, w zamian jest %s\n"
+msgstr ""
+"\n"
+"Informacja: program %s%s%s, gałąź %s%s%s jest niewspierany, w zamian jest "
+"%s%s%s, gałąź %s%s%s\n"
 
 #. Only runtimes can be pinned
 #: app/flatpak-cli-transaction.c:761
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Info: (pinned) runtime %s%s%s branch %s%s%s is end-of-life, with reason:\n"
-msgstr "Informacja: (przypięte) %s//%s jest niewspierane z powodu:\n"
+msgstr ""
+"\n"
+"Informacja: (przypięte) środowisko wykonawcze %s%s%s, gałąź %s%s%s jest "
+"niewspierane z powodu:\n"
 
 #: app/flatpak-cli-transaction.c:767
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Info: runtime %s%s%s branch %s%s%s is end-of-life, with reason:\n"
-msgstr "Informacja: %s//%s jest niewspierane z powodu:\n"
+msgstr ""
+"\n"
+"Informacja: środowisko wykonawcze %s%s%s, gałąź %s%s%s jest niewspierane "
+"z powodu:\n"
 
 #: app/flatpak-cli-transaction.c:770
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Info: app %s%s%s branch %s%s%s is end-of-life, with reason:\n"
-msgstr "Informacja: %s//%s jest niewspierane z powodu:\n"
+msgstr ""
+"\n"
+"Informacja: program %s%s%s, gałąź %s%s%s jest niewspierany z powodu:\n"
 
 #: app/flatpak-cli-transaction.c:944
-#, fuzzy
 msgid "Info: applications using this extension:\n"
-msgstr "Programy używające tego środowiska wykonawczego:\n"
+msgstr "Informacja: programy używające tego rozszerzenia:\n"
 
 #: app/flatpak-cli-transaction.c:946
-#, fuzzy
 msgid "Info: applications using this runtime:\n"
-msgstr "Programy używające tego środowiska wykonawczego:\n"
+msgstr "Informacja: programy używające tego środowiska wykonawczego:\n"
 
 #: app/flatpak-cli-transaction.c:965
 msgid "Replace?"
-msgstr ""
+msgstr "Zastąpić?"
 
 #: app/flatpak-cli-transaction.c:968 app/flatpak-quiet-transaction.c:247
 msgid "Updating to rebased version\n"
@@ -3728,14 +3744,14 @@ msgid "Failed to uninstall %s for rebase to %s: "
 msgstr "Odinstalowanie %s dla zmiany na %s się nie powiodło: "
 
 #: app/flatpak-cli-transaction.c:1215
-#, fuzzy, c-format
+#, c-format
 msgid "New %s%s%s permissions:"
-msgstr "Nowe uprawnienia %s:"
+msgstr "Nowe uprawnienia %s%s%s:"
 
 #: app/flatpak-cli-transaction.c:1217
-#, fuzzy, c-format
+#, c-format
 msgid "%s%s%s permissions:"
-msgstr "Uprawnienia %s:"
+msgstr "Uprawnienia %s%s%s:"
 
 #: app/flatpak-cli-transaction.c:1279
 msgid "Warning: "
@@ -4104,6 +4120,9 @@ msgid ""
 "Refusing to operate under sudo with --user. Omit sudo to operate on the user "
 "installation, or use a root shell to operate on the root user's installation."
 msgstr ""
+"Odmowa działania pod sudo z opcją --user. Należy ominąć sudo, aby działać "
+"w instalacji użytkownika, albo użyć powłoki roota, aby działać w instalacji "
+"użytkownika root."
 
 #: app/flatpak-main.c:450
 msgid ""
@@ -4150,44 +4169,44 @@ msgid "Uninstalling %s\n"
 msgstr "Odinstalowywanie %s\n"
 
 #: app/flatpak-quiet-transaction.c:107
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: Failed to install %s: %s\n"
-msgstr "%s %s %s się nie powiodła: %s\n"
+msgstr "Ostrzeżenie: zainstalowanie %s się nie powiodło: %s\n"
 
 #: app/flatpak-quiet-transaction.c:110
-#, fuzzy, c-format
+#, c-format
 msgid "Error: Failed to install %s: %s\n"
-msgstr "Błąd podczas ponownej instalacji %s: %s\n"
+msgstr "Błąd: zainstalowanie %s się nie powiodło: %s\n"
 
 #: app/flatpak-quiet-transaction.c:116
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: Failed to update %s: %s\n"
-msgstr "Nie można zaktualizować %s: %s\n"
+msgstr "Ostrzeżenie: zaktualizowanie %s się nie powiodło: %s\n"
 
 #: app/flatpak-quiet-transaction.c:119
-#, fuzzy, c-format
+#, c-format
 msgid "Error: Failed to update %s: %s\n"
-msgstr "Nie można zaktualizować %s: %s\n"
+msgstr "Błąd: zaktualizowanie %s się nie powiodło: %s\n"
 
 #: app/flatpak-quiet-transaction.c:125
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: Failed to install bundle %s: %s\n"
-msgstr "Odinstalowanie %s dla zmiany na %s się nie powiodło: %s\n"
+msgstr "Ostrzeżenie: zainstalowanie pakietu %s się nie powiodło: %s\n"
 
 #: app/flatpak-quiet-transaction.c:128
-#, fuzzy, c-format
+#, c-format
 msgid "Error: Failed to install bundle %s: %s\n"
-msgstr "Błąd podczas ponownej instalacji %s: %s\n"
+msgstr "Błąd: zainstalowanie pakietu %s się nie powiodło: %s\n"
 
 #: app/flatpak-quiet-transaction.c:134
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: Failed to uninstall %s: %s\n"
-msgstr "%s %s %s się nie powiodła: %s\n"
+msgstr "Ostrzeżenie: odinstalowanie %s się nie powiodło: %s\n"
 
 #: app/flatpak-quiet-transaction.c:137
-#, fuzzy, c-format
+#, c-format
 msgid "Error: Failed to uninstall %s: %s\n"
-msgstr "Błąd podczas ponownej instalacji %s: %s\n"
+msgstr "Błąd: odinstalowanie %s się nie powiodło: %s\n"
 
 #: app/flatpak-quiet-transaction.c:166 common/flatpak-dir.c:10323
 #, c-format
@@ -4538,11 +4557,11 @@ msgstr ""
 "w repozytorium %s"
 
 #: common/flatpak-dir.c:1319 common/flatpak-dir.c:1355
-#, fuzzy, c-format
+#, c-format
 msgid "No entry for %s in remote %s summary flatpak sparse cache"
 msgstr ""
 "Brak wpisu dla %s w rozsianej pamięci podręcznej Flatpak podsumowania "
-"repozytorium "
+"repozytorium %s"
 
 #: common/flatpak-dir.c:1908
 #, c-format
@@ -4653,7 +4672,7 @@ msgstr "Nieprawidłowa suma kontrolna dodatkowych danych %s"
 #: common/flatpak-dir.c:10343
 #, c-format
 msgid "%s commit %s already installed"
-msgstr "Już zainstalowano %s zatwierdzenie %s"
+msgstr "Już zainstalowano %s, zatwierdzenie %s"
 
 #: common/flatpak-dir.c:6058 common/flatpak-dir.c:6311
 #, c-format
@@ -4808,7 +4827,7 @@ msgstr "Gałąź wdrożonego odniesienia %s nie pasuje do zatwierdzenia (%s)"
 #: common/flatpak-dir.c:9006 common/flatpak-installation.c:1909
 #, c-format
 msgid "%s branch %s already installed"
-msgstr "Już zainstalowano %s gałąź %s"
+msgstr "Już zainstalowano %s, gałąź %s"
 
 #: common/flatpak-dir.c:9852
 #, c-format
@@ -4836,12 +4855,12 @@ msgstr "Nie można usunąć %s, jest wymagane dla: %s"
 #: common/flatpak-dir.c:10754 common/flatpak-installation.c:2065
 #, c-format
 msgid "%s branch %s is not installed"
-msgstr "Nie zainstalowano %s gałęzi %s"
+msgstr "Nie zainstalowano %s, gałęzi %s"
 
 #: common/flatpak-dir.c:11007
 #, c-format
 msgid "%s commit %s not installed"
-msgstr "Nie zainstalowano %s zatwierdzenie %s"
+msgstr "Nie zainstalowano %s, zatwierdzenie %s"
 
 #: common/flatpak-dir.c:11343
 #, c-format
@@ -5079,9 +5098,9 @@ msgid "No gpg key found with ID %s (homedir: %s)"
 msgstr "Nie odnaleziono klucza GPG z identyfikatorem %s (katalog domowy: %s)"
 
 #: common/flatpak-oci-registry.c:2476
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to lookup key ID %s: %d"
-msgstr "Nie można wyszukać identyfikatora klucza %s: %d)"
+msgstr "Nie można wyszukać identyfikatora klucza %s: %d"
 
 #: common/flatpak-oci-registry.c:2484
 #, c-format
@@ -5352,14 +5371,13 @@ msgstr ""
 "administratora"
 
 #: common/flatpak-run.c:4150
-#, fuzzy
 msgid ""
 "\"flatpak run\" is not intended to be run as `sudo flatpak run`. Use `sudo -"
 "i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell."
 msgstr ""
-"„flatpak run” nie powinno być wykonywane jako „sudo flatpak run”, należy "
+"„flatpak run” nie powinno być wykonywane jako „sudo flatpak run”. Należy "
 "użyć „sudo -i” lub „su -l” zamiast tego i wywołać „flatpak run” z nowej "
-"powłoki"
+"powłoki."
 
 #: common/flatpak-run.c:4333
 #, c-format
@@ -5451,17 +5469,16 @@ msgstr "Uzyskanie tokenów dla odniesienia się nie powiodło"
 #: common/flatpak-transaction.c:4194
 #, c-format
 msgid "Ref %s from %s matches more than one transaction operation"
-msgstr ""
+msgstr "Odniesienie %s z %s pasuje do więcej niż jednej transakcji"
 
 #: common/flatpak-transaction.c:4195 common/flatpak-transaction.c:4205
-#, fuzzy
 msgid "any remote"
-msgstr "Repozytorium"
+msgstr "dowolnego repozytorium"
 
 #: common/flatpak-transaction.c:4204
 #, c-format
 msgid "No transaction operation found for ref %s from %s"
-msgstr ""
+msgstr "Nie odnaleziono transakcji dla odniesienia %s z %s"
 
 #: common/flatpak-transaction.c:4327
 #, c-format
@@ -5506,46 +5523,46 @@ msgid "Aborted due to failure (%s)"
 msgstr "Przerwano z powodu niepowodzenia (%s)"
 
 #: common/flatpak-uri.c:118
-#, fuzzy, no-c-format
+#, no-c-format
 msgid "Invalid %-encoding in URI"
-msgstr "Nieprawidłowa nazwa rozszerzenia %s"
+msgstr "Nieprawidłowe „%-encoding” w adresie URI"
 
 #: common/flatpak-uri.c:135
 msgid "Illegal character in URI"
-msgstr ""
+msgstr "Niedozwolony znak w adresie URI"
 
 #: common/flatpak-uri.c:169
 msgid "Non-UTF-8 characters in URI"
-msgstr ""
+msgstr "Znaki niebędące UTF-8 w adresie URI"
 
 #: common/flatpak-uri.c:275
 #, c-format
 msgid "Invalid IPv6 address ‘%.*s’ in URI"
-msgstr ""
+msgstr "Nieprawidłowy adres IPv6 „%.*s” w adresie URI"
 
 #: common/flatpak-uri.c:330
 #, c-format
 msgid "Illegal encoded IP address ‘%.*s’ in URI"
-msgstr ""
+msgstr "Niedozwolony zakodowany adres IP „%.*s” w adresie URI"
 
 #: common/flatpak-uri.c:342
 #, c-format
 msgid "Illegal internationalized hostname ‘%.*s’ in URI"
-msgstr ""
+msgstr "Niedozwolona umiędzynarodowiona nazwa komputera „%.*s” w adresie URI"
 
 #: common/flatpak-uri.c:374 common/flatpak-uri.c:386
-#, fuzzy, c-format
+#, c-format
 msgid "Could not parse port ‘%.*s’ in URI"
-msgstr "Nie można przetworzyć „%s”"
+msgstr "Nie można przetworzyć portu „%.*s” w adresie URI"
 
 #: common/flatpak-uri.c:393
 #, c-format
 msgid "Port ‘%.*s’ in URI is out of range"
-msgstr ""
+msgstr "Port „%.*s” w adresie URI jest poza zakresem"
 
 #: common/flatpak-uri.c:910
 msgid "URI is not absolute, and no base URI was provided"
-msgstr ""
+msgstr "Adres URI nie jest bezwzględny i nie podano podstawy adresu URI"
 
 #: common/flatpak-utils.c:862
 msgid "Glob can't match apps"
@@ -5953,36 +5970,3 @@ msgid ""
 msgstr ""
 "Wymagane jest uwierzytelnienie, aby zainstalować oprogramowanie ograniczane "
 "przez zasady kontroli rodzicielskiej"
-
-#~ msgid "install"
-#~ msgstr "instalacja"
-
-#~ msgid "update"
-#~ msgstr "aktualizacja"
-
-#~ msgid "install bundle"
-#~ msgstr "instalacja pakietu"
-
-#~ msgid "uninstall"
-#~ msgstr "dezinstalacja"
-
-#~ msgid "(internal error, please report)"
-#~ msgstr "(wewnętrzny błąd, prosimy go zgłosić)"
-
-#~ msgid "Warning:"
-#~ msgstr "Ostrzeżenie:"
-
-#, fuzzy
-#~ msgid "runtime"
-#~ msgstr "Środowisko wykonawcze"
-
-#, fuzzy
-#~ msgid "app"
-#~ msgstr "Program"
-
-#~ msgid "[REF…] - Uninstall an application"
-#~ msgstr "[ODNIESIENIE…] — odinstalowuje program"
-
-#, c-format
-#~ msgid "Replace it with %s?"
-#~ msgstr "Zastąpić programem „%s”?"
