@@ -1614,6 +1614,41 @@ parse_time (int *hour, int *minute, int *second, const char **date_string)
   return TRUE;
 }
 
+static inline GTimeZone *
+time_zone_new_offset (gint32 offset)
+{
+#if GLIB_CHECK_VERSION (2, 58, 0)
+  return g_time_zone_new_offset (offset);
+#else
+  g_autofree char *id = NULL;
+  gint hours, minutes;
+  gint seconds = offset;
+  GTimeZone *tz;
+  char sign = '+';
+
+  if (seconds == 0)
+    return g_time_zone_new_utc ();
+
+  if (seconds < 0)
+    {
+      seconds = -seconds;
+      sign = '-';
+    }
+
+  hours = seconds / 3600;
+  seconds = seconds % 3600;
+  minutes = seconds / 60;
+  seconds = seconds % 60;
+
+  id = g_strdup_printf ("%c%02d:%02d:%02d", sign, hours, minutes, seconds);
+  tz = g_time_zone_new (id);
+  /* If this assertion fails, we'll log a critical but still return tz,
+   * which is documented to be UTC if the time zone could not be parsed */
+  g_return_val_if_fail (g_time_zone_get_offset (tz, 0) == offset, tz);
+  return tz;
+#endif
+}
+
 static inline gboolean
 parse_timezone (GTimeZone **timezone_out, const char **date_string)
 {
@@ -1664,7 +1699,7 @@ parse_timezone (GTimeZone **timezone_out, const char **date_string)
   if (utc)
     *timezone_out = g_time_zone_new_utc ();
   else
-    *timezone_out = g_time_zone_new_offset (offset_minutes * 60);
+    *timezone_out = time_zone_new_offset (offset_minutes * 60);
 
   return TRUE;
 }
