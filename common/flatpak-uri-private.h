@@ -35,7 +35,12 @@ GDateTime * flatpak_parse_http_time              (const char *date_string);
 char *      flatpak_format_http_date             (GDateTime  *date);
 
 /* Same as SOUP_HTTP_URI_FLAGS, means all possible flags for http uris */
+#if GLIB_CHECK_VERSION (2, 68, 0) || !GLIB_CHECK_VERSION (2, 66, 0)
 #define FLATPAK_HTTP_URI_FLAGS (G_URI_FLAGS_HAS_PASSWORD | G_URI_FLAGS_ENCODED_PATH | G_URI_FLAGS_ENCODED_QUERY | G_URI_FLAGS_ENCODED_FRAGMENT | G_URI_FLAGS_SCHEME_NORMALIZE)
+#else
+/* GLib 2.66 didn't support scheme-based normalization */
+#define FLATPAK_HTTP_URI_FLAGS (G_URI_FLAGS_HAS_PASSWORD | G_URI_FLAGS_ENCODED_PATH | G_URI_FLAGS_ENCODED_QUERY | G_URI_FLAGS_ENCODED_FRAGMENT)
+#endif
 
 #if !GLIB_CHECK_VERSION (2, 66, 0)
 
