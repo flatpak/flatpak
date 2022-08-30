@@ -30,6 +30,9 @@ on:
     - flatpak-1.10.x
     - flatpak-1.12.x
 
+permissions:
+  contents: read
+
 jobs:
   check:
     name: Build with gcc and test
@@ -159,6 +162,8 @@ jobs:
         path: test-logs
 
   clang:
+    permissions:
+      security-events: write # for codeql
     name: Build with clang and analyze
     runs-on: ubuntu-18.04
     strategy:
