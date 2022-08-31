@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2022-08-22 21:06-0700\n"
-"PO-Revision-Date: 2022-06-29 15:02+0300\n"
+"PO-Revision-Date: 2022-08-31 20:50+0300\n"
 "Last-Translator: Aleksandr Melman <Alexmelman88@gmail.com>\n"
 "Language-Team: Russian <gnome-cyr@gnome.org>\n"
 "Language: ru\n"
@@ -19,11 +19,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Generator: Poedit 3.0.1\n"
+"X-Generator: Poedit 3.1\n"
 
 #: app/flatpak-builtins-build-bundle.c:57
 msgid "Export runtime instead of app"
-msgstr "Экспортировать среду исполнения вместо приложения"
+msgstr "Экспортировать среду выполнения вместо приложения"
 
 #: app/flatpak-builtins-build-bundle.c:58
 msgid "Arch to bundle for"
@@ -59,7 +59,7 @@ msgstr "URL"
 
 #: app/flatpak-builtins-build-bundle.c:60
 msgid "Url for runtime flatpakrepo file"
-msgstr "URL файла flatpakrepo среды исполнения"
+msgstr "URL файла flatpakrepo среды выполнения"
 
 #: app/flatpak-builtins-build-bundle.c:61
 msgid "Add GPG key from FILE (- for stdin)"
@@ -185,7 +185,7 @@ msgstr "'%s' не является корректным именем файла"
 
 #: app/flatpak-builtins-build.c:49
 msgid "Use Platform runtime rather than Sdk"
-msgstr "Использовать обычную среду исполнения вместо отладочной"
+msgstr "Использовать обычную среду выполнения вместо отладочной"
 
 #: app/flatpak-builtins-build.c:50
 msgid "Make destination readonly"
@@ -649,7 +649,7 @@ msgstr "Заменить среду выполнения, используему
 #: app/flatpak-builtins-list.c:51 app/flatpak-builtins-remote-ls.c:56
 #: app/flatpak-builtins-run.c:71
 msgid "RUNTIME"
-msgstr "СРЕДА_ИСПОЛНЕНИЯ"
+msgstr "СРЕДА_ВЫПОЛНЕНИЯ"
 
 #: app/flatpak-builtins-build-finish.c:60
 msgid "Set generic metadata option"
@@ -786,7 +786,7 @@ msgstr "Используемая архитектура"
 
 #: app/flatpak-builtins-build-init.c:54
 msgid "Initialize var from named runtime"
-msgstr "Инициализировать переменую из названной среды исполнения"
+msgstr "Инициализировать переменую из названной среды выполнения"
 
 #: app/flatpak-builtins-build-init.c:55
 msgid "Initialize apps from named app"
@@ -853,25 +853,25 @@ msgid "Re-initialize the sdk/var"
 msgstr "Переинициализировать sdk/окружение"
 
 #: app/flatpak-builtins-build-init.c:118
-#, fuzzy, c-format
+#, c-format
 msgid "Requested extension %s/%s/%s is only partially installed"
-msgstr "Требуемое расширение %s установлено частично"
+msgstr "Требуемое расширение %s/%s/%s установлено только частично"
 
 #: app/flatpak-builtins-build-init.c:147
-#, fuzzy, c-format
+#, c-format
 msgid "Requested extension %s/%s/%s not installed"
-msgstr "Требуемое расширение %s не установлено"
+msgstr "Требуемое расширение %s/%s/%s не установлено"
 
 #: app/flatpak-builtins-build-init.c:207
 msgid ""
 "DIRECTORY APPNAME SDK RUNTIME [BRANCH] - Initialize a directory for building"
 msgstr ""
-"КАТАЛОГ ИМЯ_ПРИЛОЖЕНИЯ SDK СРЕДА_ИСП [ВЕТВЬ] - Инициализировать каталог для "
-"сборки"
+"КАТАЛОГ ИМЯ_ПРИЛОЖЕНИЯ SDK СРЕДА_ВЫПОЛНЕНИЯ [ВЕТВЬ] - Инициализировать "
+"каталог для сборки"
 
 #: app/flatpak-builtins-build-init.c:214
 msgid "RUNTIME must be specified"
-msgstr "Должна быть указана СРЕДА_ИСП"
+msgstr "Должна быть указана СРЕДА_ВЫПОЛНЕНИЯ"
 
 #: app/flatpak-builtins-build-init.c:235
 #, c-format
@@ -899,7 +899,7 @@ msgstr "Архитектура для установки"
 #: app/flatpak-builtins-install.c:72 app/flatpak-builtins-remote-info.c:55
 #: app/flatpak-builtins-uninstall.c:58 app/flatpak-builtins-update.c:64
 msgid "Look for runtime with the specified name"
-msgstr "Искать среду исполнения с указанным именем"
+msgstr "Искать среду выполнения с указанным именем"
 
 #: app/flatpak-builtins-build-sign.c:65
 msgid "LOCATION [ID [BRANCH]] - Sign an application or runtime"
@@ -1228,13 +1228,13 @@ msgstr ""
 #, c-format
 msgid "Warning: Omitting ref ‘%s’ (runtime of ‘%s’) because it's extra-data.\n"
 msgstr ""
-"Предупреждение: Пропуск ссылки '%s' (среда исполнения для ‘%s’), потому что "
+"Предупреждение: Пропуск ссылки '%s' (среда выполнения для ‘%s’), потому что "
 "это extra-data.\n"
 
 #: app/flatpak-builtins-create-usb.c:482
 msgid "MOUNT-PATH [REF…] - Copy apps or runtimes onto removable media"
 msgstr ""
-"ПУТЬ-МОНТ [ССЫЛКА…] - Скопировать приложения или среды исполнения на съёмный "
+"ПУТЬ-МОНТ [ССЫЛКА…] - Скопировать приложения или среды выполнения на съёмный "
 "носитель"
 
 #: app/flatpak-builtins-create-usb.c:491
@@ -1553,7 +1553,7 @@ msgstr "Показать ссылки"
 
 #: app/flatpak-builtins-history.c:60
 msgid "Show the application/runtime ID"
-msgstr "Показать ID приложения/среды исполнения"
+msgstr "Показать ID приложения/среды выполнения"
 
 #: app/flatpak-builtins-history.c:61 app/flatpak-builtins-list.c:62
 #: app/flatpak-builtins-ps.c:51 app/flatpak-builtins-remote-ls.c:70
@@ -1700,7 +1700,7 @@ msgstr "Показать метаданные"
 
 #: app/flatpak-builtins-info.c:64 app/flatpak-builtins-remote-info.c:62
 msgid "Show runtime"
-msgstr "Показать среды исполнения"
+msgstr "Показать среду выполнения"
 
 #: app/flatpak-builtins-info.c:65 app/flatpak-builtins-remote-info.c:63
 msgid "Show sdk"
@@ -1733,7 +1733,7 @@ msgstr "Показать расположение"
 msgid "NAME [BRANCH] - Get info about an installed app or runtime"
 msgstr ""
 "ИМЯ [ВЕТВЬ] - Получить информацию об установленном приложении или среде "
-"исполнения"
+"выполнения"
 
 #: app/flatpak-builtins-info.c:123 app/flatpak-builtins-remote-add.c:310
 #: app/flatpak-builtins-remote-delete.c:63
@@ -1806,7 +1806,7 @@ msgstr "Установлено:"
 #: app/flatpak-builtins-remote-info.c:251
 #: app/flatpak-builtins-remote-info.c:287
 msgid "Runtime:"
-msgstr "Среда исполнения:"
+msgstr "Среда выполнения:"
 
 #: app/flatpak-builtins-info.c:232 app/flatpak-builtins-info.c:288
 #: app/flatpak-builtins-remote-info.c:252
@@ -1904,7 +1904,7 @@ msgstr "Не устанавливать связанные ссылки"
 
 #: app/flatpak-builtins-install.c:69 app/flatpak-builtins-update.c:62
 msgid "Don't verify/install runtime dependencies"
-msgstr "Не проверять и не устанавливать зависимости среды исполнения"
+msgstr "Не проверять и не устанавливать зависимости среды выполнения"
 
 #: app/flatpak-builtins-install.c:70
 msgid "Don't automatically pin explicit installs"
@@ -1979,7 +1979,7 @@ msgstr "Должно быть указано имя файла или адрес
 #: app/flatpak-builtins-install.c:295
 msgid "[LOCATION/REMOTE] [REF…] - Install applications or runtimes"
 msgstr ""
-"[ПУТЬ/УДАЛЁННЫЙ_РЕПО] [ССЫЛКА…] - Установить приложения или среды исполнения"
+"[ПУТЬ/УДАЛЁННЫЙ_РЕПО] [ССЫЛКА…] - Установить приложения или среды выполнения"
 
 #: app/flatpak-builtins-install.c:321
 msgid "At least one REF must be specified"
@@ -2038,7 +2038,7 @@ msgstr "Показать дополнительную информацию"
 
 #: app/flatpak-builtins-list.c:47
 msgid "List installed runtimes"
-msgstr "Показать установленные среды исполнения"
+msgstr "Показать установленные среды выполнения"
 
 #: app/flatpak-builtins-list.c:48
 msgid "List installed applications"
@@ -2054,7 +2054,7 @@ msgstr "Перечислить все ссылки (включая локали�
 
 #: app/flatpak-builtins-list.c:51 app/flatpak-builtins-remote-ls.c:56
 msgid "List all applications using RUNTIME"
-msgstr "Показать приложения, использующие СРЕДУ_ИСПОЛНЕНИЯ"
+msgstr "Показать приложения, использующие СРЕДУ_ВЫПОЛНЕНИЯ"
 
 #: app/flatpak-builtins-list.c:57 app/flatpak-builtins-remote-list.c:49
 #: app/flatpak-builtins-remote-ls.c:65 app/flatpak-builtins-search.c:42
@@ -2094,11 +2094,11 @@ msgstr "Показать версию"
 #: app/flatpak-builtins-list.c:63 app/flatpak-builtins-ps.c:54
 #: app/flatpak-builtins-remote-ls.c:74
 msgid "Runtime"
-msgstr "Среда исполнения"
+msgstr "Среда выполнения"
 
 #: app/flatpak-builtins-list.c:63
 msgid "Show the used runtime"
-msgstr "Показать используемую среду исполнения"
+msgstr "Показать используемую среду выполнения"
 
 #: app/flatpak-builtins-list.c:64 app/flatpak-builtins-remote-ls.c:71
 msgid "Show the origin remote"
@@ -2144,7 +2144,7 @@ msgstr "Показать параметры"
 
 #: app/flatpak-builtins-list.c:393
 msgid " - List installed apps and/or runtimes"
-msgstr " - Показать список установленных приложений и/или сред исполнения"
+msgstr " - Показать список установленных приложений и/или сред выполнения"
 
 #: app/flatpak-builtins-make-current.c:38
 msgid "Arch to make current for"
@@ -2272,7 +2272,7 @@ msgstr "Удалить соответствующие закрепления"
 #: app/flatpak-builtins-pin.c:56
 msgid "[PATTERN…] - disable automatic removal of runtimes matching patterns"
 msgstr ""
-"[ШАБЛОН…] - отключить автоудаление сред исполнения, подходящих под шаблонны"
+"[ШАБЛОН…] - отключить автоудаление сред выполнения, подходящих под шаблонны"
 
 #: app/flatpak-builtins-pin.c:75
 msgid "No pinned patterns\n"
@@ -2316,7 +2316,7 @@ msgstr "Показать коммит приложения"
 
 #: app/flatpak-builtins-ps.c:54
 msgid "Show the runtime ID"
-msgstr "Показать ID среды исполнения"
+msgstr "Показать ID среды выполнения"
 
 #: app/flatpak-builtins-ps.c:55
 msgid "R.-Branch"
@@ -2324,7 +2324,7 @@ msgstr "Ветвь среды"
 
 #: app/flatpak-builtins-ps.c:55
 msgid "Show the runtime branch"
-msgstr "Показать ветвь среды исполнения"
+msgstr "Показать ветвь среды выполнения"
 
 #: app/flatpak-builtins-ps.c:56
 msgid "R.-Commit"
@@ -2332,7 +2332,7 @@ msgstr "Коммит среды"
 
 #: app/flatpak-builtins-ps.c:56
 msgid "Show the runtime commit"
-msgstr "Показать коммит среды исполнения"
+msgstr "Показать коммит среды выполнения"
 
 #: app/flatpak-builtins-ps.c:57
 msgid "Active"
@@ -2526,7 +2526,7 @@ msgid ""
 " REMOTE REF - Show information about an application or runtime in a remote"
 msgstr ""
 " УДАЛЁННЫЙ_РЕПО ССЫЛКА - Показать информацию о приложении или среде "
-"исполнения в удалённом репозитории"
+"выполнения в удалённом репозитории"
 
 #: app/flatpak-builtins-remote-info.c:124
 msgid "REMOTE and REF must be specified"
@@ -2645,7 +2645,7 @@ msgstr "Показать архитектуры и ветви"
 
 #: app/flatpak-builtins-remote-ls.c:51
 msgid "Show only runtimes"
-msgstr "Показать только среды исполнения"
+msgstr "Показать только среды выполнения"
 
 #: app/flatpak-builtins-remote-ls.c:52
 msgid "Show only apps"
@@ -2661,7 +2661,7 @@ msgstr "Показать только указанные архитектуры 
 
 #: app/flatpak-builtins-remote-ls.c:74
 msgid "Show the runtime"
-msgstr "Показать среду исполнения"
+msgstr "Показать среду выполнения"
 
 #: app/flatpak-builtins-remote-ls.c:76
 msgid "Download size"
@@ -2674,7 +2674,7 @@ msgstr "Показать размер загрузки"
 #: app/flatpak-builtins-remote-ls.c:391
 msgid " [REMOTE or URI] - Show available runtimes and applications"
 msgstr ""
-" [УДАЛЁННЫЙ_РЕПО или URI] - Показать доступные среды исполнения и приложения"
+" [УДАЛЁННЫЙ_РЕПО или URI] - Показать доступные среды выполнения и приложения"
 
 #: app/flatpak-builtins-remote-modify.c:66
 msgid "Enable GPG verification"
@@ -3040,15 +3040,15 @@ msgstr "Ветвь для использования"
 
 #: app/flatpak-builtins-run.c:70
 msgid "Use development runtime"
-msgstr "Использовать среду исполнения для разработчиков"
+msgstr "Использовать среду выполнения для разработчиков"
 
 #: app/flatpak-builtins-run.c:71
 msgid "Runtime to use"
-msgstr "Используемая среда исполнения"
+msgstr "Используемая среда выполнения"
 
 #: app/flatpak-builtins-run.c:72
 msgid "Runtime version to use"
-msgstr "Версия среды исполнения"
+msgstr "Версия среды выполнения"
 
 #: app/flatpak-builtins-run.c:75
 msgid "Log accessibility bus calls"
@@ -3088,7 +3088,7 @@ msgstr "Запустить указанный коммит"
 
 #: app/flatpak-builtins-run.c:83
 msgid "Use specified runtime commit"
-msgstr "Использовать указанный коммит среды исполнения"
+msgstr "Использовать указанный коммит среды выполнения"
 
 #: app/flatpak-builtins-run.c:84
 msgid "Run completely sandboxed"
@@ -3118,7 +3118,7 @@ msgstr "Использовать ПУТЬ вместо /app приложения
 
 #: app/flatpak-builtins-run.c:91
 msgid "Use PATH instead of the runtime's /usr"
-msgstr "Использовать ПУТЬ вместо /usr среды исполнения"
+msgstr "Использовать ПУТЬ вместо /usr среды выполнения"
 
 #: app/flatpak-builtins-run.c:114
 msgid "APP [ARGUMENT…] - Run an app"
@@ -3143,7 +3143,7 @@ msgstr "Показать удалённые репозитории"
 
 #: app/flatpak-builtins-search.c:245
 msgid "TEXT - Search remote apps/runtimes for text"
-msgstr "ТЕКСТ - Искать удалённые приложения/среды по тексту"
+msgstr "ТЕКСТ - Искать удалённые приложения/среды выполнения по тексту"
 
 #: app/flatpak-builtins-search.c:256
 msgid "TEXT must be specified"
@@ -3189,21 +3189,22 @@ msgstr "Удалить данные для %s?"
 #: app/flatpak-builtins-uninstall.c:220
 #, c-format
 msgid "Info: applications using the extension %s%s%s branch %s%s%s:\n"
-msgstr ""
+msgstr "Информация: приложения, использующие расширение %s%s%s ветви %s%s%s:\n"
 
 #: app/flatpak-builtins-uninstall.c:223
-#, fuzzy, c-format
+#, c-format
 msgid "Info: applications using the runtime %s%s%s branch %s%s%s:\n"
-msgstr "Приложения, использующие эту среду исполнения:\n"
+msgstr ""
+"Информация: приложения, использующие среду выполнения %s%s%s ветви %s%s%s:\n"
+"\n"
 
 #: app/flatpak-builtins-uninstall.c:238
-#, fuzzy
 msgid "Really remove?"
-msgstr "любой удаленный репозиторий"
+msgstr "Действительно удалить?"
 
 #: app/flatpak-builtins-uninstall.c:255
 msgid "[REF…] - Uninstall applications or runtimes"
-msgstr "[ССЫЛКА…] - Удалить приложения или среды исполнения"
+msgstr "[ССЫЛКА…] - Удалить приложения или среды выполнения"
 
 #: app/flatpak-builtins-uninstall.c:264
 msgid "Must specify at least one REF, --unused, --all or --delete-data"
@@ -3227,7 +3228,7 @@ msgid ""
 "flatpak-pin(1):\n"
 msgstr ""
 "\n"
-"Эти среды исполнения в установке '%s' закреплены и не будут удалены; см. "
+"Эти среды выполнения в установке '%s' закреплены и не будут удалены; см. "
 "flatpak-pin(1):\n"
 
 #: app/flatpak-builtins-uninstall.c:370
@@ -3288,7 +3289,7 @@ msgstr "Обновлять только указанный подкаталог"
 
 #: app/flatpak-builtins-update.c:90
 msgid "[REF…] - Update applications or runtimes"
-msgstr "[ССЫЛКА…] - Обновить приложения или среды исполнения"
+msgstr "[ССЫЛКА…] - Обновить приложения или среды выполнения"
 
 #: app/flatpak-builtins-update.c:121
 msgid "With --commit, only one REF may be specified"
@@ -3461,7 +3462,7 @@ msgstr "Добавьте :s[tart], :m[iddle], :e[nd], :f[ull] для измен�
 #, c-format
 msgid "Required runtime for %s (%s) found in remote %s\n"
 msgstr ""
-"Требуемая среда исполнения для %s (%s) найдена в удалённом репозитории %s\n"
+"Требуемая среда выполнения для %s (%s) найдена в удалённом репозитории %s\n"
 
 #: app/flatpak-cli-transaction.c:101
 msgid "Do you want to install it?"
@@ -3471,7 +3472,7 @@ msgstr "Хотите установить её?"
 #, c-format
 msgid "Required runtime for %s (%s) found in remotes:"
 msgstr ""
-"Требуемая среда исполнения для %s (%s) найдена в следующих репозиториях:"
+"Требуемая среда выполнения для %s (%s) найдена в следующих репозиториях:"
 
 #: app/flatpak-cli-transaction.c:109
 msgid "Which do you want to install (0 to abort)?"
@@ -3502,7 +3503,7 @@ msgid ""
 "  %s\n"
 "Configure this as new remote '%s'"
 msgstr ""
-"Приложение %s зависит от сред исполнения из:\n"
+"Приложение %s зависит от сред выполнения из:\n"
 "  %s\n"
 "Добавить его как новый удалённый репозиторий '%s'"
 
@@ -3539,74 +3540,73 @@ msgid "Info: %s was skipped"
 msgstr "Информация: %s был пропущен"
 
 #: app/flatpak-cli-transaction.c:512
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: %s%s%s already installed"
-msgstr "%s уже установлен"
+msgstr "Предупреждение: %s%s%s уже установлено"
 
 #: app/flatpak-cli-transaction.c:515
-#, fuzzy, c-format
+#, c-format
 msgid "Error: %s%s%s already installed"
-msgstr "%s уже установлен"
+msgstr "Ошибка: %s%s%s уже установлено"
 
 #: app/flatpak-cli-transaction.c:521
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: %s%s%s not installed"
-msgstr "Предупреждение: %s не установлено\n"
+msgstr "Предупреждение: %s%s%s не установлено"
 
 #: app/flatpak-cli-transaction.c:524
-#, fuzzy, c-format
+#, c-format
 msgid "Error: %s%s%s not installed"
-msgstr "%s/%s/%s не установлено"
+msgstr "Ошибка: %s%s%s не установлено"
 
 #: app/flatpak-cli-transaction.c:530
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: %s%s%s needs a later flatpak version"
-msgstr "%s требует более новую версию flatpak"
+msgstr "Предупреждение: %s%s%s требует более позднюю версию flatpak"
 
 #: app/flatpak-cli-transaction.c:533
-#, fuzzy, c-format
+#, c-format
 msgid "Error: %s%s%s needs a later flatpak version"
-msgstr "%s требует более новую версию flatpak"
+msgstr "Ошибка: %s%s%s требует более позднюю версию flatpak"
 
 #: app/flatpak-cli-transaction.c:539
-#, fuzzy
 msgid "Warning: Not enough disk space to complete this operation"
-msgstr "Недостаточно места на диске для завершения этой операции"
+msgstr ""
+"Предупреждение: Недостаточно места на диске для завершения этой операции"
 
 #: app/flatpak-cli-transaction.c:541
-#, fuzzy
 msgid "Error: Not enough disk space to complete this operation"
-msgstr "Недостаточно места на диске для завершения этой операции"
+msgstr "Ошибка: Недостаточно места на диске для завершения этой операции"
 
 #: app/flatpak-cli-transaction.c:546
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: %s"
-msgstr "Предупреждение: "
+msgstr "Предупреждение: %s"
 
 #: app/flatpak-cli-transaction.c:548
-#, fuzzy, c-format
+#, c-format
 msgid "Error: %s"
-msgstr "Ошибка:"
+msgstr "Ошибка: %s"
 
 #: app/flatpak-cli-transaction.c:563
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to install %s%s%s: "
-msgstr "Не удалось удалить %s для перебазирования в %s: "
+msgstr "Не удалось установить %s%s%s: "
 
 #: app/flatpak-cli-transaction.c:570
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to update %s%s%s: "
-msgstr "Не удалось %s %s: "
+msgstr "Не удалось обновить %s%s%s: "
 
 #: app/flatpak-cli-transaction.c:577
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to install bundle %s%s%s: "
-msgstr "Не удалось удалить %s для перебазирования в %s: "
+msgstr "Не удалось установить пакет %s%s%s: "
 
 #: app/flatpak-cli-transaction.c:584
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to uninstall %s%s%s: "
-msgstr "Не удалось удалить %s для перебазирования в %s: "
+msgstr "Не удалось удалить %s%s%s: "
 
 #: app/flatpak-cli-transaction.c:626
 #, c-format
@@ -3628,71 +3628,76 @@ msgstr "Пароль"
 
 #. Only runtimes can be pinned
 #: app/flatpak-cli-transaction.c:743
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Info: (pinned) runtime %s%s%s branch %s%s%s is end-of-life, in favor of "
 "%s%s%s branch %s%s%s\n"
 msgstr ""
-"Информация: конец срока поддержки для закреплённого %s//%s наступил в пользу "
-"%s\n"
+"\n"
+"Информация: (закреплено) среда выполнения %s%s%s ветви %s%s%s прекращает "
+"свое существование, в пользу %s%s%s ветви %s%s%s\n"
 
 #: app/flatpak-cli-transaction.c:749
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Info: runtime %s%s%s branch %s%s%s is end-of-life, in favor of %s%s%s branch "
 "%s%s%s\n"
 msgstr ""
 "\n"
-"Информация: %s%s %s прекращает свое существование, в пользу %s\n"
+"Информация: среда выполнения %s%s%s ветви %s%s%s прекращает свое "
+"существование, в пользу %s%s%s ветви %s%s%s\n"
 
 #: app/flatpak-cli-transaction.c:752
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Info: app %s%s%s branch %s%s%s is end-of-life, in favor of %s%s%s branch "
 "%s%s%s\n"
 msgstr ""
 "\n"
-"Информация: %s%s %s прекращает свое существование, в пользу %s\n"
+"Информация: приложение %s%s%s ветви %s%s%s прекращает свое существование, в "
+"пользу %s%s%s ветви %s%s%s\n"
 
 #. Only runtimes can be pinned
 #: app/flatpak-cli-transaction.c:761
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Info: (pinned) runtime %s%s%s branch %s%s%s is end-of-life, with reason:\n"
 msgstr ""
-"Информация: конец срока поддержки закреплённого %s//%s наступил по причине:\n"
+"\n"
+"Информация: (закреплено) среда выполнения %s%s%s ветви %s%s%s прекращает "
+"свое существование, по причине:\n"
 
 #: app/flatpak-cli-transaction.c:767
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Info: runtime %s%s%s branch %s%s%s is end-of-life, with reason:\n"
 msgstr ""
 "\n"
-"Информация: %s%s %s прекращает свое существование, по причине:\n"
+"Информация: среда выполнения %s%s%s ветви %s%s%s прекращает свое "
+"существование, по причине:\n"
 
 #: app/flatpak-cli-transaction.c:770
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Info: app %s%s%s branch %s%s%s is end-of-life, with reason:\n"
 msgstr ""
 "\n"
-"Информация: %s%s %s прекращает свое существование, по причине:\n"
+"Информация: приложение %s%s%s ветви %s%s%s прекращает свое существование, по "
+"причине:\n"
 
 #: app/flatpak-cli-transaction.c:944
-#, fuzzy
 msgid "Info: applications using this extension:\n"
-msgstr "Приложения, использующие эту среду исполнения:\n"
+msgstr "Информация: приложения, использующие это расширение:\n"
 
 #: app/flatpak-cli-transaction.c:946
-#, fuzzy
 msgid "Info: applications using this runtime:\n"
-msgstr "Приложения, использующие эту среду исполнения:\n"
+msgstr "Информация: приложения, использующие эту среду выполнения:\n"
 
 #: app/flatpak-cli-transaction.c:965
 msgid "Replace?"
@@ -3776,19 +3781,19 @@ msgstr "Произошла одна или более ошибок"
 #. translators: please keep the leading space
 #: app/flatpak-main.c:76
 msgid " Manage installed applications and runtimes"
-msgstr " Управление установленными приложениями и средами исполнения"
+msgstr " Управление установленными приложениями и средами выполнения"
 
 #: app/flatpak-main.c:77
 msgid "Install an application or runtime"
-msgstr "Установить приложение или среду исполнения"
+msgstr "Установить приложение или среду выполнения"
 
 #: app/flatpak-main.c:78
 msgid "Update an installed application or runtime"
-msgstr "Обновить установленное приложение или среду исполнения"
+msgstr "Обновить установленное приложение или среду выполнения"
 
 #: app/flatpak-main.c:81
 msgid "Uninstall an installed application or runtime"
-msgstr "Удалить установленное приложение или среду исполнения"
+msgstr "Удалить установленное приложение или среду выполнения"
 
 #: app/flatpak-main.c:84
 msgid "Mask out updates and automatic installation"
@@ -3796,15 +3801,15 @@ msgstr "Маскировать обновления и автоматическ�
 
 #: app/flatpak-main.c:85
 msgid "Pin a runtime to prevent automatic removal"
-msgstr "Закрепить среду исполнения для предотвращения автоудаления"
+msgstr "Закрепить среду выполнения для предотвращения автоудаления"
 
 #: app/flatpak-main.c:86
 msgid "List installed apps and/or runtimes"
-msgstr "Показать список установленных приложений и/или сред исполнения"
+msgstr "Показать список установленных приложений и/или сред выполнения"
 
 #: app/flatpak-main.c:87
 msgid "Show info for installed app or runtime"
-msgstr "Показать информацию об установленных приложениях или средах исполнения"
+msgstr "Показать информацию об установленных приложениях или средах выполнения"
 
 #: app/flatpak-main.c:88
 msgid "Show history"
@@ -3953,7 +3958,7 @@ msgstr "Список содержимого удалённого репозит�
 
 #: app/flatpak-main.c:131
 msgid "Show information about a remote app or runtime"
-msgstr "Показать информацию об установленных приложениях или средах исполнения"
+msgstr "Показать информацию об установленных приложениях или средах выполнения"
 
 #. translators: please keep the leading newline and space
 #: app/flatpak-main.c:134
@@ -3990,7 +3995,7 @@ msgstr "Импортировать файл с пакетом"
 
 #: app/flatpak-main.c:141
 msgid "Sign an application or runtime"
-msgstr "Подписать приложение или среду исполнения"
+msgstr "Подписать приложение или среду выполнения"
 
 #: app/flatpak-main.c:142
 msgid "Update the summary file in a repository"
@@ -4135,44 +4140,44 @@ msgid "Uninstalling %s\n"
 msgstr "Удаление %s\n"
 
 #: app/flatpak-quiet-transaction.c:107
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: Failed to install %s: %s\n"
-msgstr "%s не удалось %s %s: %s\n"
+msgstr "Предупреждение: Не удалось установить %s: %s\n"
 
 #: app/flatpak-quiet-transaction.c:110
-#, fuzzy, c-format
+#, c-format
 msgid "Error: Failed to install %s: %s\n"
-msgstr "Ошибка при переустановке %s: %s\n"
+msgstr "Ошибка: Не удалось установить %s: %s\n"
 
 #: app/flatpak-quiet-transaction.c:116
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: Failed to update %s: %s\n"
-msgstr "Не удалось обновить %s: %s\n"
+msgstr "Предупреждение: Не удалось обновить %s: %s\n"
 
 #: app/flatpak-quiet-transaction.c:119
-#, fuzzy, c-format
+#, c-format
 msgid "Error: Failed to update %s: %s\n"
-msgstr "Не удалось обновить %s: %s\n"
+msgstr "Ошибка: Не удалось обновить %s: %s\n"
 
 #: app/flatpak-quiet-transaction.c:125
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: Failed to install bundle %s: %s\n"
-msgstr "Не удалось удалить %s для перебазирования в %s: %s\n"
+msgstr "Предупреждение: Не удалось установить пакет %s: %s\n"
 
 #: app/flatpak-quiet-transaction.c:128
-#, fuzzy, c-format
+#, c-format
 msgid "Error: Failed to install bundle %s: %s\n"
-msgstr "Ошибка при переустановке %s: %s\n"
+msgstr "Ошибка: Не удалось установить пакет %s: %s\n"
 
 #: app/flatpak-quiet-transaction.c:134
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: Failed to uninstall %s: %s\n"
-msgstr "%s не удалось %s %s: %s\n"
+msgstr "Предупреждение: Не удалось удалить %s: %s\n"
 
 #: app/flatpak-quiet-transaction.c:137
-#, fuzzy, c-format
+#, c-format
 msgid "Error: Failed to uninstall %s: %s\n"
-msgstr "Ошибка при переустановке %s: %s\n"
+msgstr "Ошибка: Не удалось удалить %s: %s\n"
 
 #: app/flatpak-quiet-transaction.c:166 common/flatpak-dir.c:10323
 #, c-format
@@ -4930,7 +4935,7 @@ msgstr "ID коллекции требует предоставления клю
 #: common/flatpak-dir.c:14465
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
-msgstr "Среда исполнения %s, ветвь %s уже установлена"
+msgstr "Среда выполнения %s, ветвь %s уже установлена"
 
 #: common/flatpak-dir.c:14466
 #, c-format
@@ -5155,7 +5160,7 @@ msgstr "Неправильное имя удаленного репозитор�
 #: common/flatpak-ref-utils.c:638
 #, c-format
 msgid "%s is not application or runtime"
-msgstr "%s не является именем приложения или среды запуска"
+msgstr "%s не является приложением или средой выполнения"
 
 #: common/flatpak-ref-utils.c:647 common/flatpak-ref-utils.c:664
 #: common/flatpak-ref-utils.c:680
@@ -5719,7 +5724,7 @@ msgstr "Требуется авторизация для установки пр
 #. in the wheel group to install without authenticating.
 #: system-helper/org.freedesktop.Flatpak.policy.in:41
 msgid "Install signed runtime"
-msgstr "Установить подписанную исполняемую среду"
+msgstr "Установить подписанную среду выполнения"
 
 #. SECURITY:
 #. - Normal users do not require admin authentication to update an
@@ -5788,7 +5793,7 @@ msgstr "Требуется авторизация для установки пр
 #. in the wheel group to uninstall without authenticating.
 #: system-helper/org.freedesktop.Flatpak.policy.in:144
 msgid "Uninstall runtime"
-msgstr "Удалить среду исполнения"
+msgstr "Удалить среду выполнения"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:145
 msgid "Authentication is required to uninstall software"
