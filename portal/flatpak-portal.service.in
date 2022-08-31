@@ -1,5 +1,6 @@
 [Unit]
 Description=flatpak portal
+PartOf=graphical-session.target
 
 [Service]
 BusName=org.freedesktop.portal.Flatpak
