@@ -3164,9 +3164,6 @@ setup_seccomp (FlatpakBwrap   *bwrap,
     {SCMP_SYS (uselib), EPERM},
     /* Don't allow disabling accounting */
     {SCMP_SYS (acct), EPERM},
-    /* 16-bit code is unnecessary in the sandbox, and modify_ldt is a
-       historic source of interesting information leaks. */
-    {SCMP_SYS (modify_ldt), EPERM},
     /* Don't allow reading current quota use */
     {SCMP_SYS (quotactl), EPERM},
 
