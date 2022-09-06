@@ -1,5 +1,6 @@
 [Unit]
 Description=flatpak session helper
+PartOf=graphical-session.target
 
 [Service]
 BusName=org.freedesktop.Flatpak
