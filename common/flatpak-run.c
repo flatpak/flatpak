@@ -3164,9 +3164,6 @@ setup_seccomp (FlatpakBwrap   *bwrap,
     {SCMP_SYS (uselib), EPERM},
     /* Don't allow disabling accounting */
     {SCMP_SYS (acct), EPERM},
-    /* 16-bit code is unnecessary in the sandbox, and modify_ldt is a
-       historic source of interesting information leaks. */
-    {SCMP_SYS (modify_ldt), EPERM},
     /* Don't allow reading current quota use */
     {SCMP_SYS (quotactl), EPERM},
 
@@ -3331,6 +3328,23 @@ setup_seccomp (FlatpakBwrap   *bwrap,
        * when trying to filter them on a non-native architecture, because
        * libseccomp cannot map the syscall number to a name and back to a
        * number for the non-native architecture. */
+      if (r == -EFAULT)
+        flatpak_debug2 ("Unable to block syscall %d: syscall not known to libseccomp?",
+                        scall);
+      else if (r < 0)
+        return flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Failed to block syscall %d: %s"), scall, flatpak_seccomp_strerror (r));
+    }
+
+  if (!multiarch)
+    {
+      /* modify_ldt is a historic source of interesting information leaks,
+       * so it's disabled as a hardening measure.
+       * However, it is required to run old 16-bit applications
+       * as well as some Wine patches, so it's allowed in multiarch. */
+      int scall = SCMP_SYS (modify_ldt);
+      r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO (EPERM), scall, 0);
+
+      /* See above for the meaning of EFAULT. */
       if (r == -EFAULT)
         flatpak_debug2 ("Unable to block syscall %d: syscall not known to libseccomp?",
                         scall);
