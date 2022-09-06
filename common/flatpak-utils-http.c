@@ -388,8 +388,10 @@ flatpak_create_http_session (const char *user_agent)
    * libcurl 7.43.0.
    */
 #if CURL_AT_LEAST_VERSION(7, 51, 0)
-  rc = curl_easy_setopt (curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_0);
-  g_assert_cmpint (rc, ==, CURLM_OK);
+  if ((curl_version_info (CURLVERSION_NOW))->features & CURL_VERSION_HTTP2) {
+    rc = curl_easy_setopt (curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_0);
+    g_assert_cmpint (rc, ==, CURLM_OK);
+  }
 #endif
   /* https://github.com/curl/curl/blob/curl-7_53_0/docs/examples/http2-download.c */
 #if (CURLPIPE_MULTIPLEX > 0)
