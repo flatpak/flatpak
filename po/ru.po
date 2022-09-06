@@ -3634,6 +3634,7 @@ msgid ""
 "Info: (pinned) runtime %s%s%s branch %s%s%s is end-of-life, in favor of "
 "%s%s%s branch %s%s%s\n"
 msgstr ""
+"\n"
 "Информация: конец срока поддержки среды выполнения %s%s%s ветви %s%s%s в пользу "
 "%s%s%s ветви %s%s%s\n"
 
