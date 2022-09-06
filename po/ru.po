@@ -3690,7 +3690,7 @@ msgstr ""
 #: app/flatpak-cli-transaction.c:944
 #, fuzzy
 msgid "Info: applications using this extension:\n"
-msgstr "Приложения, использующие эту среду исполнения:\n"
+msgstr "Информация: приложения, использующие это расширение:\n"
 
 #: app/flatpak-cli-transaction.c:946
 #, 
