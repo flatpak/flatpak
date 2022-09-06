@@ -3611,7 +3611,7 @@ msgstr "Не удалось удалить %s%s%s: "
 #: app/flatpak-cli-transaction.c:626
 #, c-format
 msgid "Authentication required for remote '%s'\n"
-msgstr "Требуется авторизация для удаленного репозитория '%s'\n"
+msgstr "Требуется авторизация для удалённого репозитория '%s'\n"
 
 #: app/flatpak-cli-transaction.c:627
 msgid "Open browser?"
@@ -4033,7 +4033,7 @@ msgstr "Вывести версию драйверов gl и выйти"
 
 #: app/flatpak-main.c:172
 msgid "Print paths for system installations and exit"
-msgstr "Вывести пути об установке системы и выйти"
+msgstr "Вывести пути для установки системы и выйти"
 
 #: app/flatpak-main.c:173
 msgid "Print the updated environment needed to run flatpaks"
@@ -4933,7 +4933,7 @@ msgstr "ID коллекции требует предоставления клю
 #: common/flatpak-dir.c:14465
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
-msgstr "Среда исполнения %s, ветвь %s уже установлена"
+msgstr "Среда выполнения %s, ветвь %s уже установлена"
 
 #: common/flatpak-dir.c:14466
 #, c-format
@@ -4944,7 +4944,7 @@ msgstr "Приложение %s, ветвь %s уже установлена"
 #, c-format
 msgid "Can't remove remote '%s' with installed ref %s (at least)"
 msgstr ""
-"Не удалось удалить удаленный репозиторий '%s' с установленной ссылкой %s "
+"Не удалось удалить удалённый репозиторий '%s' с установленной ссылкой %s "
 "(как минимум)"
 
 #: common/flatpak-dir.c:14799
@@ -5020,11 +5020,11 @@ msgstr "Поддерживается аутентификация только �
 
 #: common/flatpak-oci-registry.c:1004
 msgid "Only realm in authentication request"
-msgstr "В запросе аутентификации только область"
+msgstr "В запросе аутентификации только realm"
 
 #: common/flatpak-oci-registry.c:1011
 msgid "Invalid realm in authentication request"
-msgstr "Некорректная область в запросе аутентификации"
+msgstr "Некорректный realm в запросе аутентификации"
 
 #: common/flatpak-oci-registry.c:1080
 #, c-format
@@ -5207,7 +5207,7 @@ msgstr " среда выполнения"
 
 #: common/flatpak-ref-utils.c:1299
 msgid " application base"
-msgstr " база приложение"
+msgstr " база приложений"
 
 #: common/flatpak-ref-utils.c:1302
 msgid " debug symbols"
@@ -5371,7 +5371,7 @@ msgstr "Невозможно удалить %s который нуждается
 #: common/flatpak-transaction.c:2671
 #, c-format
 msgid "Remote %s disabled, ignoring %s update"
-msgstr "Удалённый репозиторий %s отключен, обновление %s пропущено"
+msgstr "Удалённый репозиторий %s отключён, обновление %s пропущено"
 
 #: common/flatpak-transaction.c:2704
 #, c-format
@@ -5423,7 +5423,7 @@ msgstr "Ссылка %s из %s соответствует более чем о�
 
 #: common/flatpak-transaction.c:4195 common/flatpak-transaction.c:4205
 msgid "any remote"
-msgstr "любой удаленный репозиторий"
+msgstr "любой удалённый репозиторий"
 
 #: common/flatpak-transaction.c:4204
 #, c-format
@@ -5492,7 +5492,7 @@ msgstr "Недопустимый адрес IPv6 ‘%.*s’ в URI"
 #: common/flatpak-uri.c:330
 #, c-format
 msgid "Illegal encoded IP address ‘%.*s’ in URI"
-msgstr "Недопустимый закодированный IP адрес ‘%.*s’ в URI"
+msgstr "Недопустимый закодированный адрес IP ‘%.*s’ в URI"
 
 #: common/flatpak-uri.c:342
 #, c-format
