@@ -33,7 +33,7 @@
 #include "flatpak-builtins-utils.h"
 #include "flatpak-utils-private.h"
 
-static gboolean opt_no_gpg_verify;
+static gboolean opt_no_sign_verify;
 static gboolean opt_do_gpg_verify;
 static gboolean opt_do_enumerate;
 static gboolean opt_no_enumerate;
@@ -74,7 +74,8 @@ static GOptionEntry modify_options[] = {
 };
 
 static GOptionEntry common_options[] = {
-  { "no-gpg-verify", 0, 0, G_OPTION_ARG_NONE, &opt_no_gpg_verify, N_("Disable GPG verification"), NULL },
+  { "no-sign-verify", 0, 0, G_OPTION_ARG_NONE, &opt_no_sign_verify, N_("Disable signature verification"), NULL },
+  { "no-gpg-verify", 0, 0, G_OPTION_ARG_NONE, &opt_no_sign_verify, N_("Deprecated alternative to --no-sign-verify"), NULL },
   { "no-enumerate", 0, 0, G_OPTION_ARG_NONE, &opt_no_enumerate, N_("Mark the remote as don't enumerate"), NULL },
   { "no-use-for-deps", 0, 0, G_OPTION_ARG_NONE, &opt_no_deps, N_("Mark the remote as don't use for deps"), NULL },
   { "prio", 0, 0, G_OPTION_ARG_INT, &opt_prio, N_("Set priority (default 1, higher is more prioritized)"), N_("PRIORITY") },
@@ -111,7 +112,7 @@ get_config_from_opts (FlatpakDir *dir, const char *remote_name, gboolean *change
   else
     config = ostree_repo_copy_config (repo);
 
-  if (opt_no_gpg_verify)
+  if (opt_no_sign_verify)
     {
       g_key_file_set_boolean (config, group, "gpg-verify", FALSE);
       g_key_file_set_boolean (config, group, "gpg-verify-summary", FALSE);

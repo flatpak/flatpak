@@ -51,12 +51,12 @@ elif [ x${USE_COLLECTIONS_IN_SERVER-} == xyes ] ; then
     # Set a collection ID and GPG on the server, but not in the client configuration
     setup_repo_no_add test-no-gpg org.test.Collection.NoGpg
     port=$(cat httpd-port)
-    ${FLATPAK} remote-add ${U} --no-gpg-verify test-no-gpg-repo "http://127.0.0.1:${port}/test-no-gpg" >&2
+    ${FLATPAK} remote-add ${U} --no-sign-verify test-no-gpg-repo "http://127.0.0.1:${port}/test-no-gpg" >&2
 else
     GPGPUBKEY="" GPGARGS="" setup_repo test-no-gpg
 fi
 
-${FLATPAK} remote-add ${U} --no-gpg-verify local-test-no-gpg-repo `pwd`/repos/test-no-gpg >&2
+${FLATPAK} remote-add ${U} --no-sign-verify local-test-no-gpg-repo `pwd`/repos/test-no-gpg >&2
 
 #alternative gpg key repo
 GPGPUBKEY="${FL_GPG_HOMEDIR2}/pubring.gpg" GPGARGS="${FL_GPGARGS2}" setup_repo test-gpg2 org.test.Collection.Gpg2

@@ -266,7 +266,7 @@
             <command>$ flatpak remotes --user --show-details</command>
         </para>
 <programlisting>
-testrepo	Test Repository	 http://209.132.179.91/repo/ no-gpg-verify
+testrepo	Test Repository	 http://209.132.179.91/repo/ no-sign-verify
 </programlisting>
     </refsect1>
 

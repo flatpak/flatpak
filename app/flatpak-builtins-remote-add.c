@@ -33,7 +33,7 @@
 #include "flatpak-builtins-utils.h"
 #include "flatpak-utils-private.h"
 
-static gboolean opt_no_gpg_verify;
+static gboolean opt_no_sign_verify;
 static gboolean opt_do_gpg_verify;
 static gboolean opt_do_enumerate;
 static gboolean opt_no_enumerate;
@@ -66,7 +66,8 @@ static GOptionEntry add_options[] = {
 };
 
 static GOptionEntry common_options[] = {
-  { "no-gpg-verify", 0, 0, G_OPTION_ARG_NONE, &opt_no_gpg_verify, N_("Disable GPG verification"), NULL },
+  { "no-sign-verify", 0, 0, G_OPTION_ARG_NONE, &opt_no_sign_verify, N_("Disable signature verification"), NULL },
+  { "no-gpg-verify", 0, 0, G_OPTION_ARG_NONE, &opt_no_sign_verify, N_("Deprecated alternative to --no-sign-verify"), NULL },
   { "no-enumerate", 0, 0, G_OPTION_ARG_NONE, &opt_no_enumerate, N_("Mark the remote as don't enumerate"), NULL },
   { "no-use-for-deps", 0, 0, G_OPTION_ARG_NONE, &opt_no_deps, N_("Mark the remote as don't use for deps"), NULL },
   { "prio", 0, 0, G_OPTION_ARG_INT, &opt_prio, N_("Set priority (default 1, higher is more prioritized)"), N_("PRIORITY") },
@@ -98,7 +99,7 @@ get_config_from_opts (GKeyFile *config,
 {
   g_autofree char *group = g_strdup_printf ("remote \"%s\"", remote_name);
 
-  if (opt_no_gpg_verify)
+  if (opt_no_sign_verify)
     {
       g_key_file_set_boolean (config, group, "gpg-verify", FALSE);
       g_key_file_set_boolean (config, group, "gpg-verify-summary", FALSE);
@@ -320,7 +321,7 @@ flatpak_builtin_remote_add (int argc, char **argv,
     return flatpak_fail (error, _("‘%s’ is not a valid collection ID: %s"), opt_collection_id, local_error->message);
 
   if (opt_collection_id != NULL &&
-      (opt_no_gpg_verify || opt_gpg_import == NULL || opt_gpg_import[0] == NULL))
+      (opt_no_sign_verify || opt_gpg_import == NULL || opt_gpg_import[0] == NULL))
     return flatpak_fail (error, _("GPG verification is required if collections are enabled"));
 
   remote_name = argv[1];
@@ -347,7 +348,7 @@ flatpak_builtin_remote_add (int argc, char **argv,
 
       /* Default to gpg verify, except for OCI registries */
       is_oci = opt_url && g_str_has_prefix (opt_url, "oci+");
-      if (!opt_no_gpg_verify && !is_oci)
+      if (!opt_no_sign_verify && !is_oci)
         opt_do_gpg_verify = TRUE;
     }
 

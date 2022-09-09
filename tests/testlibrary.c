@@ -983,7 +983,7 @@ test_list_refs_in_remotes (void)
 
   repo_url = g_strdup_printf ("file://%s", repo_dir);
 
-  const char *argv[] = { "flatpak", "remote-add", "--user", "--no-gpg-verify",
+  const char *argv[] = { "flatpak", "remote-add", "--user", "--no-sign-verify",
                          repo_name2, repo_url, NULL };
 
   /* Add the repo we created above, which holds one collection ID per ref */

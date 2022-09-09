@@ -202,7 +202,7 @@ list_remotes (GPtrArray *dirs, Column *columns, GCancellable *cancellable, GErro
                       return FALSE; /* shouldn't happen unless repo config is modified out-of-band */
 
                   if (!gpg_verify)
-                    flatpak_table_printer_append_with_comma (printer, "no-gpg-verify");
+                    flatpak_table_printer_append_with_comma (printer, "no-sign-verify");
 
                   if (filter != NULL && *filter != 0)
                     flatpak_table_printer_append_with_comma (printer, "filtered");

@@ -96,10 +96,18 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--no-sign-verify</option></term>
+
+                <listitem><para>
+                    Disable signature verification for the added remote.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--no-gpg-verify</option></term>
 
                 <listitem><para>
-                    Disable GPG verification for the added remote.
+                    Deprecated alternative to --no-sign-verify.
                 </para></listitem>
             </varlistentry>
 
@@ -107,7 +115,7 @@
                 <term><option>--gpg-verify</option></term>
 
                 <listitem><para>
-                    Enable GPG verification for the added remote.
+                    Enable GPG signature verification for the added remote.
                 </para></listitem>
             </varlistentry>
 
@@ -350,7 +358,7 @@
         <title>Examples</title>
 
         <para>
-            <command>$ flatpak --user remote-modify --no-gpg-verify test-repo</command>
+            <command>$ flatpak --user remote-modify --no-sign-verify test-repo</command>
         </para>
     </refsect1>
 

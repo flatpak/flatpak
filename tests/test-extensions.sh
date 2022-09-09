@@ -105,7 +105,7 @@ add_extensions platform
 ${FLATPAK} build-export --no-update-summary --disable-sandbox repos/test platform --files=files master >&2
 update_repo
 
-${FLATPAK} remote-add --user --no-gpg-verify test-repo repos/test >&2
+${FLATPAK} remote-add --user --no-sign-verify test-repo repos/test >&2
 ${FLATPAK} --user install -y test-repo org.test.Platform master >&2
 ${FLATPAK} --user install -y test-repo org.test.Hello master >&2
 
@@ -123,13 +123,13 @@ make_extension org.test.Multiversion.notmaster not-master
 
 assert_has_extension_file () {
     local prefix=$1
-    local file=$2 
+    local file=$2
     run_sh org.test.Hello "test -f $prefix/foo/$file" || (echo 1>&2 "Couldn't find '$file'"; exit 1)
 }
 
 assert_not_has_extension_file () {
     local prefix=$1
-    local file=$2 
+    local file=$2
     if run_sh org.test.Hello "test -f $prefix/foo/$file" >&2; then
         echo 1>&2 "File '$file' exists";
         exit 1
