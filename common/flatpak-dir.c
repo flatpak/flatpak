@@ -13043,6 +13043,18 @@ flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
   return TRUE;
 }
 
+static gint
+sort_matched_refs (gconstpointer a,
+                   gconstpointer b)
+{
+  FlatpakDecomposed *ref_a = *((FlatpakDecomposed **) a);
+
+  if (flatpak_decomposed_is_app (ref_a))
+    return -1;
+
+  return 1;
+}
+
 static GPtrArray *
 find_matching_refs (GHashTable           *refs,
                     const char           *opt_name,
@@ -13132,6 +13144,9 @@ find_matching_refs (GHashTable           *refs,
             g_ptr_array_remove_index (matched_refs, i - 1);
         }
     }
+
+  /* Sort apps before runtimes */
+  g_ptr_array_sort (matched_refs, sort_matched_refs);
 
   return g_steal_pointer (&matched_refs);
 }
