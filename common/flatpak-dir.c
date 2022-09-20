@@ -72,6 +72,7 @@
 
 #define SUMMARY_CACHE_TIMEOUT_SEC (60 * 5)
 #define FILTER_MTIME_CHECK_TIMEOUT_MSEC 500
+#define MAX_METADATA_SIZE (50 << 20)
 
 #define SYSCONF_INSTALLATIONS_DIR "installations.d"
 #define SYSCONF_INSTALLATIONS_FILE_EXT ".conf"
@@ -5093,6 +5094,11 @@ get_common_pull_options (GVariantBuilder     *builder,
   g_variant_builder_add (builder, "{s@v}", "flags",
                          g_variant_new_variant (g_variant_new_int32 (flags)));
 
+  /* Flatpak summary files include additional per-ref metadata that makes them
+   * much larger than standard ostree summary files.
+   */
+  g_variant_builder_add (builder, "{s@v}", "max-metadata-size",
+                         g_variant_new_variant (g_variant_new_uint64 (MAX_METADATA_SIZE)));
 
   g_variant_builder_init (&hdr_builder, G_VARIANT_TYPE ("a(ss)"));
   g_variant_builder_add (&hdr_builder, "(ss)", "Flatpak-Ref", ref_to_fetch);
