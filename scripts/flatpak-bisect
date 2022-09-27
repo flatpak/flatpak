@@ -205,7 +205,7 @@ class Bisector():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('name', nargs=1, help='Application/Runtime to bisect')
-    parser.add_argument('-b', '--branch', default='master', help='The branch to bisect')
+    parser.add_argument('-b', '--branch', default='stable', help='The branch to bisect')
     parser.add_argument('-r', '--runtime',  action="store_true", help='Bisecting a runtime not an app')
 
     subparsers = parser.add_subparsers(dest='subparser_name')
