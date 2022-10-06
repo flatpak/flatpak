@@ -49,8 +49,11 @@ do_atexit (void)
 static void
 handle_sigterm (int signum)
 {
+  struct sigaction action = { 0 };
   do_atexit ();
-  _exit (1);
+  action.sa_handler = SIG_DFL;
+  sigaction (signum, &action, NULL);
+  raise (signum);
 }
 
 typedef struct
