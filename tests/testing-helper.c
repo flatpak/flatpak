@@ -49,6 +49,18 @@ test_messages (void)
 }
 
 static void
+test_assertion_failure_true (void)
+{
+  g_assert_true (null != NULL);
+}
+
+static void
+test_assertion_failure_false (void)
+{
+  g_assert_false (null == NULL);
+}
+
+static void
 test_assertion_failure_nonnull (void)
 {
   g_assert_nonnull (null);
@@ -303,6 +315,8 @@ main (int   argc,
     {
       /* Use -p to select a specific one of these */
 #define T(x) g_test_add_func ("/assertion-failure/" #x, test_assertion_failure_ ## x)
+      T (true);
+      T (false);
       T (nonnull);
       T (null);
       T (mem_null_nonnull);
