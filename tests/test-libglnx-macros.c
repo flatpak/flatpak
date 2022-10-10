@@ -27,6 +27,13 @@
 #include <string.h>
 
 static void
+test_info (void)
+{
+  g_info ("hello, world");
+  g_info ("answer=%d", 42);
+}
+
+static void
 test_inset (void)
 {
   g_assert (G_IN_SET (7, 7));
@@ -104,6 +111,7 @@ test_hash_table_foreach (void)
 int main (int argc, char **argv)
 {
   g_test_init (&argc, &argv, NULL);
+  g_test_add_func ("/info", test_info);
   g_test_add_func ("/inset", test_inset);
   g_test_add_func ("/hash_table_foreach", test_hash_table_foreach);
   return g_test_run();
