@@ -34,6 +34,14 @@
 
 G_BEGIN_DECLS
 
+#ifndef g_assert_true       /* added in 2.38 */
+#define g_assert_true(x) g_assert ((x))
+#endif
+
+#ifndef g_assert_false      /* added in 2.38 */
+#define g_assert_false(x) g_assert (!(x))
+#endif
+
 #ifndef g_assert_nonnull    /* added in 2.40 */
 #define g_assert_nonnull(x) g_assert (x != NULL)
 #endif

@@ -47,6 +47,8 @@ test_assertions (void)
   const char * const strv2[] = {"one", "two", NULL};
   GStatBuf statbuf;
 
+  g_assert_true (null == NULL);
+  g_assert_false (null != NULL);
   g_assert_null (null);
   g_assert_nonnull (nonnull);
   g_assert_cmpmem (null, 0, null, 0);
@@ -64,6 +66,8 @@ test_assertion_failures (void)
 {
   static const char * const assertion_failures[] =
   {
+    "true",
+    "false",
     "nonnull",
     "null",
     "mem_null_nonnull",
