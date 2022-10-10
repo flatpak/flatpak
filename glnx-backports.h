@@ -1,6 +1,7 @@
 /* -*- mode: C; c-file-style: "gnu"; indent-tabs-mode: nil; -*-
  *
  * Copyright (C) 2015 Colin Walters <walters@verbum.org>
+ * Copyright 2017 Emmanuele Bassi
  * SPDX-License-Identifier: LGPL-2.0-or-later
  * 
  * GLIB - Library of useful routines for C programming
@@ -88,16 +89,9 @@ gboolean              glnx_set_object  (GObject **object_ptr,
 #define G_OPTION_ENTRY_NULL { NULL, 0, 0, 0, NULL, NULL, NULL }
 #endif
 
-#ifndef g_assert_nonnull
-#define g_assert_nonnull(x) g_assert (x != NULL)
-#endif
-
-#ifndef g_assert_null
-#define g_assert_null(x) g_assert (x == NULL)
-#endif
-
-#if !GLIB_CHECK_VERSION (2, 38, 0)
-#define g_test_skip(s) g_test_message ("SKIP: %s", s)
+#ifndef G_APPROX_VALUE  /* added in 2.58 */
+#define G_APPROX_VALUE(a, b, epsilon) \
+  (((a) > (b) ? (a) - (b) : (b) - (a)) < (epsilon))
 #endif
 
 G_END_DECLS
