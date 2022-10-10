@@ -85,7 +85,7 @@ gboolean              glnx_set_object  (GObject **object_ptr,
 #define G_DBUS_METHOD_INVOCATION_UNHANDLED FALSE
 #endif
 
-#if !GLIB_CHECK_VERSION(2, 70, 0)
+#ifndef G_OPTION_ENTRY_NULL   /* added in 2.70 */
 #define G_OPTION_ENTRY_NULL { NULL, 0, 0, 0, NULL, NULL, NULL }
 #endif
 
