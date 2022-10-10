@@ -94,4 +94,17 @@ gboolean              glnx_set_object  (GObject **object_ptr,
   (((a) > (b) ? (a) - (b) : (b) - (a)) < (epsilon))
 #endif
 
+#if !GLIB_CHECK_VERSION(2, 74, 0)
+#define G_APPLICATION_DEFAULT_FLAGS ((GApplicationFlags) 0)
+#define G_CONNECT_DEFAULT ((GConnectFlags) 0)
+#define G_IO_FLAG_NONE ((GIOFlags) 0)
+#define G_MARKUP_DEFAULT_FLAGS ((GMarkupParseFlags) 0)
+#define G_REGEX_DEFAULT ((GRegexCompileFlags) 0)
+#define G_REGEX_MATCH_DEFAULT ((GRegexMatchFlags) 0)
+#define G_TEST_SUBPROCESS_DEFAULT ((GTestSubprocessFlags) 0)
+#define G_TEST_TRAP_DEFAULT ((GTestTrapFlags) 0)
+#define G_TLS_CERTIFICATE_NO_FLAGS ((GTlsCertificateFlags) 0)
+#define G_TYPE_FLAG_NONE ((GTypeFlags) 0)
+#endif
+
 G_END_DECLS
