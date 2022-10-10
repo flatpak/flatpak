@@ -64,6 +64,26 @@ gboolean              glnx_set_object  (GObject **object_ptr,
 
 #endif /* !GLIB_CHECK_VERSION(2, 44, 0) */
 
+#if !GLIB_CHECK_VERSION(2, 38, 0)
+#define G_SPAWN_DEFAULT ((GSpawnFlags) 0)
+#endif
+
+#if !GLIB_CHECK_VERSION(2, 42, 0)
+#define G_OPTION_FLAG_NONE ((GOptionFlags) 0)
+#endif
+
+#ifndef G_DBUS_METHOD_INVOCATION_HANDLED    /* added in 2.68 */
+#define G_DBUS_METHOD_INVOCATION_HANDLED TRUE
+#endif
+
+#ifndef G_DBUS_METHOD_INVOCATION_UNHANDLED  /* added in 2.68 */
+#define G_DBUS_METHOD_INVOCATION_UNHANDLED FALSE
+#endif
+
+#if !GLIB_CHECK_VERSION(2, 70, 0)
+#define G_OPTION_ENTRY_NULL { NULL, 0, 0, 0, NULL, NULL, NULL }
+#endif
+
 #ifndef g_assert_nonnull
 #define g_assert_nonnull(x) g_assert (x != NULL)
 #endif
