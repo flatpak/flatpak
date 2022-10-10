@@ -14,6 +14,11 @@ project(
 add_project_arguments('-D_GNU_SOURCE', language: 'c')
 add_project_arguments('-Wno-unused-local-typedefs', language: 'c')
 
+# We are intentionally using non-ISO features in this (sub)project,
+# even if a parent project wants to use pedantic warnings
+add_project_arguments('-Wno-pedantic', language: 'c')
+add_project_arguments('-Wno-variadic-macros', language: 'c')
+
 cc = meson.get_compiler('c')
 
 
