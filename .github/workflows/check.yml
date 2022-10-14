@@ -44,7 +44,7 @@ jobs:
         sudo apt-get install -y libglib2.0-dev attr automake gettext autopoint bison  dbus gtk-doc-tools \
         libfuse3-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
         libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
-        libseccomp-dev libsoup2.4-dev libcurl4-openssl-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
+        libseccomp-dev libsoup2.4-dev libcurl4-openssl-dev libxml2-utils libgpgme11-dev gobject-introspection \
         libgirepository1.0-dev libappstream-dev libdconf-dev clang socat meson libdbus-1-dev e2fslibs-dev bubblewrap xdg-dbus-proxy \
         python3-pip meson ninja-build libyaml-dev libstemmer-dev gperf itstool libmalcontent-0-dev
         # One of the tests wants this
@@ -72,12 +72,14 @@ jobs:
       run: |
         mkdir _build
         pushd _build
-        ../configure  --enable-internal-checks --enable-asan --disable-introspection --with-curl --with-system-bubblewrap --with-system-dbus-proxy
+        ../configure  --enable-internal-checks --enable-asan --disable-introspection --with-curl --with-system-bubblewrap --with-system-dbus-proxy --with-systemd=no
         popd
       env:
         CFLAGS: -O2 -Wp,-D_FORTIFY_SOURCE=2
     - name: Build flatpak
       run: make -C _build -j $(getconf _NPROCESSORS_ONLN)
+    - name: Distcheck
+      run: make -C _build distcheck -j $(getconf _NPROCESSORS_ONLN)
     - name: Run tests
       run: make -C _build check -j $(getconf _NPROCESSORS_ONLN)
       env:
@@ -242,10 +244,8 @@ jobs:
         CFLAGS: -O2
     - name: Build flatpak
       run: make -C _build -j $(getconf _NPROCESSORS_ONLN)
-    - name: Distcheck
-      run: make -C _build distcheck
     - name: Run tests under valgrind
-      run: make -C _build check
+      run: make -C _build check -j $(getconf _NPROCESSORS_ONLN)
       env:
         FLATPAK_TESTS_VALGRIND: true
     - name: Collect overall test logs on failure
