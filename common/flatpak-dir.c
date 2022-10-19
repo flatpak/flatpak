@@ -8529,6 +8529,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
   g_autoptr(GFile) checkoutdir = NULL;
   g_autoptr(GFile) bindir = NULL;
   g_autofree char *checkoutdirpath = NULL;
+  const char *checkoutdir_basename;
   g_autoptr(GFile) real_checkoutdir = NULL;
   g_autoptr(GFile) dotref = NULL;
   g_autoptr(GFile) files_etc = NULL;
@@ -8627,11 +8628,12 @@ flatpak_dir_deploy (FlatpakDir          *self,
   options.enable_fsync = FALSE; /* We checkout to a temp dir and sync before moving it in place */
   options.bareuseronly_dirs = TRUE; /* https://github.com/ostreedev/ostree/pull/927 */
   checkoutdirpath = g_file_get_path (checkoutdir);
+  checkoutdir_basename = tmp_dir_handle.path;  /* so checkoutdirpath = deploy_base_dfd / checkoutdir_basename */
 
   if (subpaths == NULL || *subpaths == NULL)
     {
       if (!ostree_repo_checkout_at (self->repo, &options,
-                                    AT_FDCWD, checkoutdirpath,
+                                    deploy_base_dfd, checkoutdir_basename,
                                     checksum,
                                     cancellable, error))
         {
@@ -8650,7 +8652,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
       options.subpath = "metadata";
 
       if (!ostree_repo_checkout_at (self->repo, &options,
-                                    AT_FDCWD, checkoutdirpath,
+                                    deploy_base_dfd, checkoutdir_basename,
                                     checksum,
                                     cancellable, error))
         {
@@ -8663,6 +8665,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
           g_autofree char *subpath = g_build_filename ("files", subpaths[i], NULL);
           g_autofree char *dstpath = g_build_filename (checkoutdirpath, "/files", subpaths[i], NULL);
           g_autofree char *dstpath_parent = g_path_get_dirname (dstpath);
+          g_autofree char *dstpath_relative_to_deploy_base = g_build_filename (checkoutdir_basename, "/files", subpaths[i], NULL);
           g_autoptr(GFile) child = NULL;
 
           child = g_file_resolve_relative_path (root, subpath);
@@ -8681,7 +8684,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
 
           options.subpath = subpath;
           if (!ostree_repo_checkout_at (self->repo, &options,
-                                        AT_FDCWD, dstpath,
+                                        deploy_base_dfd, dstpath_relative_to_deploy_base,
                                         checksum,
                                         cancellable, error))
             {
@@ -8897,7 +8900,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
   if (!flatpak_bytes_save (deploy_data_file, deploy_data, cancellable, error))
     return FALSE;
 
-  if (!glnx_opendirat (AT_FDCWD, checkoutdirpath, TRUE, &checkoutdir_dfd, error))
+  if (!glnx_opendirat (deploy_base_dfd, checkoutdir_basename, TRUE, &checkoutdir_dfd, error))
     return FALSE;
 
   if (syncfs (checkoutdir_dfd) != 0)
