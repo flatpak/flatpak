@@ -8525,6 +8525,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
   g_autofree char *ref_id = NULL;
   g_autoptr(GFile) root = NULL;
   g_autoptr(GFile) deploy_base = NULL;
+  glnx_autofd int deploy_base_dfd = -1;
   g_autoptr(GFile) checkoutdir = NULL;
   g_autoptr(GFile) bindir = NULL;
   g_autofree char *checkoutdirpath = NULL;
@@ -8541,8 +8542,6 @@ flatpak_dir_deploy (FlatpakDir          *self,
   OstreeRepoCheckoutAtOptions options = { 0, };
   const char *checksum;
   glnx_autofd int checkoutdir_dfd = -1;
-  g_autoptr(GFile) tmp_dir_template = NULL;
-  g_autofree char *tmp_dir_path = NULL;
   const char *xa_ref = NULL;
   g_autofree char *checkout_basename = NULL;
   gboolean created_extra_data = FALSE;
@@ -8552,6 +8551,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
   g_autofree char *metadata_contents = NULL;
   gsize metadata_size = 0;
   const char *flatpak;
+  g_auto(GLnxTmpDir) tmp_dir_handle = { 0, };
 
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     return FALSE;
@@ -8565,6 +8565,9 @@ flatpak_dir_deploy (FlatpakDir          *self,
     return FALSE;
 
   deploy_base = flatpak_dir_get_deploy_dir (self, ref);
+
+  if (!glnx_opendirat (AT_FDCWD, flatpak_file_get_path_cached (deploy_base), TRUE, &deploy_base_dfd, error))
+    return FALSE;
 
   if (checksum_or_latest == NULL)
     {
@@ -8600,17 +8603,15 @@ flatpak_dir_deploy (FlatpakDir          *self,
                                _("%s commit %s already installed"), flatpak_decomposed_get_ref (ref), checksum);
 
   g_autofree char *template = g_strdup_printf (".%s-XXXXXX", checkout_basename);
-  tmp_dir_template = g_file_get_child (deploy_base, template);
-  tmp_dir_path = g_file_get_path (tmp_dir_template);
 
-  if (g_mkdtemp_full (tmp_dir_path, 0755) == NULL)
+  if (!glnx_mkdtempat (deploy_base_dfd, template, 0755, &tmp_dir_handle, NULL))
     {
       g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
                            _("Can't create deploy directory"));
       return FALSE;
     }
 
-  checkoutdir = g_file_new_for_path (tmp_dir_path);
+  checkoutdir = g_file_get_child (deploy_base, tmp_dir_handle.path);
 
   if (!ostree_repo_read_commit (self->repo, checksum, &root, NULL, cancellable, error))
     {
@@ -8908,6 +8909,8 @@ flatpak_dir_deploy (FlatpakDir          *self,
   if (!g_file_move (checkoutdir, real_checkoutdir, G_FILE_COPY_NO_FALLBACK_FOR_MOVE,
                     cancellable, NULL, NULL, error))
     return FALSE;
+
+  glnx_tmpdir_unset (&tmp_dir_handle);
 
   if (!flatpak_dir_set_active (self, ref, checkout_basename, cancellable, error))
     return FALSE;
