@@ -1,3 +1,47 @@
+Changes in 1.15.0
+~~~~~~~~~~~~~~~~~
+
+Build system:
+
+* Flatpak can now be compiled using Meson instead of Autotools.
+  This requires Meson 0.53.0 or later, and Python 3.5 or later.
+  The Autotools build system is likely to be removed during either the
+  1.15.x or 1.17.x cycle. (#4845)
+
+New features:
+
+* Allow the `modify_ldt` system call as part of `--allow=multiarch`.
+  This increases attack surface, but is required when running 16-bit
+  executables in some versions of Wine. (#4297)
+* Share gssproxy socket, which acts like a portal for Kerberos authentication.
+  This lets apps use Kerberos authentication without needing a sandbox hole.
+  (#4914)
+* Add a httpbackend variable to flatpak.pc, allowing dependent projects
+  like GNOME Software to detect whether they are compatible with libflatpak
+  (#5054)
+
+Bug fixes:
+
+* Terminate the flatpak-session-helper and flatpak-portal services when the
+  session ends, so that applications will not inherit outdated Wayland
+  and X11 socket addresses (#5068)
+* When using `fish` shell, don't overwrite a previously-set XDG_DATA_DIRS
+  (#5123)
+* Don't try to enable HTTP 2 if linked to a libcurl version that doesn't
+  support it (#5074)
+* Stop systemd reporting the session-helper as failed when terminated by
+  a signal (#5129)
+* Fix a warning when listing a document with no permissions (#5055)
+* Fix compilation with GLib 2.66.x (as used in Debian 11) (#5062)
+* Fix compilation with GLib 2.58.x (as used in Debian 10) (#5066)
+* Make generated files more reproducible (#5085)
+* Translation updates: cs, id, pl, pt_BR (#5052, #5056, #5059, #5126)
+
+Internal changes:
+
+* Update project logo in README (#5119)
+* Update libglnx subproject (#5140)
+
 Changes in 1.14.0
 ~~~~~~~~~~~~~~~~~
 Released: 2022-08-22
