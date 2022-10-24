@@ -33,6 +33,7 @@ if get_option('tests')
   )
 
   test_names = [
+    'backports',
     'errors',
     'fdio',
     'macros',
