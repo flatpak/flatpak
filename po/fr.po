@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2022-08-22 21:06-0700\n"
+"POT-Creation-Date: 2022-10-24 19:19+0100\n"
 "PO-Revision-Date: 2021-11-30 21:01-0500\n"
 "Last-Translator: Hari Rana / TheEvilSkeleton <theevilskeleton@riseup.net>\n"
 "Language-Team: \n"
@@ -134,7 +134,7 @@ msgstr "LOCALISATION, NOMDUFICHIER et NOM doivent êtres spécifiés"
 #: app/flatpak-builtins-build-init.c:217 app/flatpak-builtins-build-sign.c:75
 #: app/flatpak-builtins-document-export.c:112
 #: app/flatpak-builtins-document-info.c:75
-#: app/flatpak-builtins-document-list.c:181
+#: app/flatpak-builtins-document-list.c:182
 #: app/flatpak-builtins-document-unexport.c:70
 #: app/flatpak-builtins-history.c:480 app/flatpak-builtins-info.c:130
 #: app/flatpak-builtins-install.c:147 app/flatpak-builtins-install.c:216
@@ -257,7 +257,7 @@ msgstr ""
 msgid "Missing '=' in bind mount option '%s'"
 msgstr ""
 
-#: app/flatpak-builtins-build.c:606 common/flatpak-run.c:4760
+#: app/flatpak-builtins-build.c:606 common/flatpak-run.c:4792
 msgid "Unable to start app"
 msgstr ""
 
@@ -1368,7 +1368,7 @@ msgstr ""
 msgid "Show permissions for applications"
 msgstr ""
 
-#: app/flatpak-builtins-document-list.c:170
+#: app/flatpak-builtins-document-list.c:171
 msgid "[APPID] - List exported files"
 msgstr ""
 
@@ -5073,102 +5073,103 @@ msgstr ""
 msgid "GPG verification must be enabled when a collection ID is set"
 msgstr ""
 
-#: common/flatpak-run.c:1241
+#: common/flatpak-run.c:1254
 msgid "Failed to open app info file"
 msgstr ""
 
-#: common/flatpak-run.c:1334
+#: common/flatpak-run.c:1347
 msgid "Unable to create sync pipe"
 msgstr ""
 
-#: common/flatpak-run.c:1373
+#: common/flatpak-run.c:1386
 msgid "Failed to sync with dbus proxy"
 msgstr ""
 
-#: common/flatpak-run.c:2180
+#: common/flatpak-run.c:2195
 msgid "No systemd user session available, cgroups not available"
 msgstr ""
 
-#: common/flatpak-run.c:2673
+#: common/flatpak-run.c:2688
 msgid "Unable to allocate instance id"
 msgstr ""
 
-#: common/flatpak-run.c:2809 common/flatpak-run.c:2819
+#: common/flatpak-run.c:2824 common/flatpak-run.c:2834
 #, c-format
 msgid "Failed to open flatpak-info file: %s"
 msgstr ""
 
-#: common/flatpak-run.c:2848
+#: common/flatpak-run.c:2863
 #, c-format
 msgid "Failed to open bwrapinfo.json file: %s"
 msgstr ""
 
-#: common/flatpak-run.c:2873
+#: common/flatpak-run.c:2888
 #, c-format
 msgid "Failed to write to instance id fd: %s"
 msgstr ""
 
-#: common/flatpak-run.c:3259
+#: common/flatpak-run.c:3271
 msgid "Initialize seccomp failed"
 msgstr ""
 
-#: common/flatpak-run.c:3298
+#: common/flatpak-run.c:3310
 #, c-format
 msgid "Failed to add architecture to seccomp filter: %s"
 msgstr ""
 
-#: common/flatpak-run.c:3306
+#: common/flatpak-run.c:3318
 #, c-format
 msgid "Failed to add multiarch architecture to seccomp filter: %s"
 msgstr ""
 
-#: common/flatpak-run.c:3338 common/flatpak-run.c:3360
+#: common/flatpak-run.c:3350 common/flatpak-run.c:3367
+#: common/flatpak-run.c:3389
 #, c-format
 msgid "Failed to block syscall %d: %s"
 msgstr ""
 
-#: common/flatpak-run.c:3393
+#: common/flatpak-run.c:3422
 #, c-format
 msgid "Failed to export bpf: %s"
 msgstr ""
 
-#: common/flatpak-run.c:3644
+#: common/flatpak-run.c:3673
 #, c-format
 msgid "Failed to open ‘%s’"
 msgstr ""
 
-#: common/flatpak-run.c:3930
+#: common/flatpak-run.c:3959
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr ""
 
-#: common/flatpak-run.c:3937
+#: common/flatpak-run.c:3966
 msgid "Can't open generated ld.so.cache"
 msgstr ""
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-run.c:4048
+#: common/flatpak-run.c:4077
 #, c-format
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr ""
 
-#: common/flatpak-run.c:4150
+#: common/flatpak-run.c:4179
 msgid ""
 "\"flatpak run\" is not intended to be run as `sudo flatpak run`. Use `sudo -"
 "i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell."
 msgstr ""
 
-#: common/flatpak-run.c:4333
+#: common/flatpak-run.c:4362
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr ""
 
-#: common/flatpak-run.c:4348
+#: common/flatpak-run.c:4377
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr ""
 
-#: common/flatpak-run.c:4357
+#: common/flatpak-run.c:4386
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr ""
