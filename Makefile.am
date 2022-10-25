@@ -90,6 +90,7 @@ INTERNAL_GPGME_LIBS = $(DEP_GPGME_LIBS) $(GPGME_PTHREAD_LIBS)
 lib_LTLIBRARIES =
 noinst_LTLIBRARIES += libglnx.la
 libglnx_srcpath := $(srcdir)/subprojects/libglnx
+# This intentionally does not include AM_CFLAGS, libglnx always uses those
 libglnx_cflags := \
 	$(BASE_CFLAGS) \
 	"-I$(libglnx_srcpath)" \
