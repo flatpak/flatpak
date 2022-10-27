@@ -921,6 +921,17 @@ gboolean flatpak_repo_resolve_rev (OstreeRepo    *repo,
                                    GCancellable  *cancellable,
                                    GError       **error);
 
+typedef enum {
+  FLATPAK_VERIFY_KEY_REF_INLINE,
+  FLATPAK_VERIFY_KEY_REF_FILE,
+} FlatpakVerifyKeyRef;
+
+gboolean flatpak_verify_parse_keyspec (const char          *spec,
+                                       char               **type,
+                                       FlatpakVerifyKeyRef *ref,
+                                       char               **data,
+                                       GError             **error);
+
 char *flatpak_verify_add_config_options (GKeyFile   *config,
                                          const char *group,
                                          const char *keyspec,
