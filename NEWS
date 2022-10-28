@@ -1,3 +1,13 @@
+Changes in 1.15.1
+~~~~~~~~~~~~~~~~~
+Released: not yet
+
+Bug fixes:
+
+* Fix a compiler warning on 32-bit architectures (#5148)
+* When building with Autotools, be more consistent about applying compiler
+  warning flags (#5149)
+
 Changes in 1.15.0
 ~~~~~~~~~~~~~~~~~
 Released: 2022-10-24
