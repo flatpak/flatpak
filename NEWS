@@ -1,3 +1,35 @@
+Changes in 1.14.1
+~~~~~~~~~~~~~~~~~
+Released: not yet
+
+New features:
+
+* Add a httpbackend variable to flatpak.pc, allowing dependent projects
+  like GNOME Software to detect whether they are compatible with libflatpak
+  (#5054)
+
+Bug fixes:
+
+* Terminate the flatpak-session-helper and flatpak-portal services when the
+  session ends, so that applications will not inherit outdated Wayland
+  and X11 socket addresses (#5068)
+* When using `fish` shell, don't overwrite a previously-set XDG_DATA_DIRS
+  (#5123)
+* Don't try to enable HTTP 2 if linked to a libcurl version that doesn't
+  support it (#5074)
+* Stop systemd reporting the session-helper as failed when terminated by
+  a signal (#5129)
+* Fix a warning when listing a document with no permissions (#5055)
+* Fix compilation with GLib 2.66.x (as used in Debian 11) (#5062)
+* Fix compilation with GLib 2.58.x (as used in Debian 10) (#5066)
+* Fix a compiler warning on 32-bit architectures (#5148)
+* Make generated files more reproducible (#5085)
+* Translation updates: cs, id, pl, pt_BR (#5052, #5056, #5059, #5126)
+
+Internal changes:
+
+* Update project logo in README (#5119)
+
 Changes in 1.14.0
 ~~~~~~~~~~~~~~~~~
 Released: 2022-08-22
