@@ -3662,7 +3662,7 @@ _ostree_repo_static_delta_superblock_digest (OstreeRepo    *repo,
   g_checksum_get_digest (checksum, digest, &len);
 
   return g_variant_new_from_data (G_VARIANT_TYPE ("ay"),
-                                  g_memdup (digest, len), len,
+                                  g_memdup2 (digest, len), len,
                                   FALSE, g_free, FALSE);
 }
 

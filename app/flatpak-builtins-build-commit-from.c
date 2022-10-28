@@ -129,7 +129,7 @@ static GVariant *
 new_bytearray (const guchar *data,
                gsize         len)
 {
-  gpointer data_copy = g_memdup (data, len);
+  gpointer data_copy = g_memdup2 (data, len);
   GVariant *ret = g_variant_new_from_data (G_VARIANT_TYPE ("ay"), data_copy,
                                            len, FALSE, g_free, data_copy);
 

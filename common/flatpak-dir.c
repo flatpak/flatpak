@@ -13002,7 +13002,7 @@ populate_hash_table_from_refs_map (GHashTable         *ret_all_refs,
                 continue; /* New timestamp is older, skip this commit */
             }
 
-          new_timestamp = g_memdup (&timestamp, sizeof (guint64));
+          new_timestamp = g_memdup2 (&timestamp, sizeof (guint64));
         }
 
       g_hash_table_replace (ret_all_refs, g_steal_pointer (&decomposed), ostree_checksum_from_bytes (csum_bytes));
