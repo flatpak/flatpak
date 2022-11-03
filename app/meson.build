@@ -37,6 +37,7 @@ libflatpak_app = static_library(
   dependencies : base_deps + [
     appstream_dep,
     json_glib_dep,
+    libflatpak_common_base_dep,
     libglnx_dep,
     libostree_dep,
     libsystemd_dep,
