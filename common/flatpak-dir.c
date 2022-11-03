@@ -4554,6 +4554,7 @@ remove_old_appstream_tmpdirs (GFile *dir)
       tmp = g_file_get_child (dir, dent->d_name);
 
       /* We ignore errors here, no need to worry anyone */
+      g_debug ("Deleting stale appstream deploy tmpdir %s", flatpak_file_get_path_cached (tmp));
       (void)flatpak_rm_rf (tmp, NULL, NULL);
     }
 }
