@@ -4559,6 +4559,66 @@ remove_old_appstream_tmpdirs (GFile *dir)
     }
 }
 
+/* Like the function above, this looks for old temporary directories created by
+ * previous versions of flatpak_dir_deploy().
+ * These are all directories starting with a dot. Such directories can be from a
+ * concurrent deploy, so we only remove directories older than a day to avoid
+ * races.
+*/
+static void
+remove_old_deploy_tmpdirs (GFile *dir)
+{
+  g_auto(GLnxDirFdIterator) dir_iter = { 0 };
+  time_t now = time (NULL);
+
+  if (!glnx_dirfd_iterator_init_at (AT_FDCWD, flatpak_file_get_path_cached (dir),
+                                    FALSE, &dir_iter, NULL))
+    return;
+
+  while (TRUE)
+    {
+      struct stat stbuf;
+      struct dirent *dent;
+      g_autoptr(GFile) tmp = NULL;
+
+      if (!glnx_dirfd_iterator_next_dent_ensure_dtype (&dir_iter, &dent, NULL, NULL))
+        break;
+
+      if (dent == NULL)
+        break;
+
+      /* We ignore non-dotfiles and .timestamps as they are not tempfiles */
+      if (dent->d_name[0] != '.' ||
+          strcmp (dent->d_name, ".timestamp") == 0)
+        continue;
+
+      /* Check for right types and names. The format we’re looking for is:
+       * .[0-9a-f]{64}-[0-9A-Z]{6} */
+      if (dent->d_type == DT_DIR)
+        {
+          if (strlen (dent->d_name) != 72 ||
+              dent->d_name[65] != '-')
+            continue;
+        }
+      else
+        continue;
+
+      /* Check that the file is at least a day old to avoid races */
+      if (!glnx_fstatat (dir_iter.fd, dent->d_name, &stbuf, AT_SYMLINK_NOFOLLOW, NULL))
+        continue;
+
+      if (stbuf.st_mtime >= now ||
+          now - stbuf.st_mtime < SECS_PER_DAY)
+        continue;
+
+      tmp = g_file_get_child (dir, dent->d_name);
+
+      /* We ignore errors here, no need to worry anyone */
+      g_debug ("Deleting stale deploy tmpdir %s", flatpak_file_get_path_cached (tmp));
+      (void)flatpak_rm_rf (tmp, NULL, NULL);
+    }
+}
+
 gboolean
 flatpak_dir_deploy_appstream (FlatpakDir   *self,
                               const char   *remote,
@@ -8570,6 +8630,12 @@ flatpak_dir_deploy (FlatpakDir          *self,
 
   if (!glnx_opendirat (AT_FDCWD, flatpak_file_get_path_cached (deploy_base), TRUE, &deploy_base_dfd, error))
     return FALSE;
+
+  /* There used to be a bug here where temporary files beneath @deploy_base were not removed,
+   * which could use quite a lot of space over time, so we check for these and remove them.
+   * We only do so for the current app to avoid every deploy operation iterating over
+   * every app directory and all their immediate descendents. That would be a bit much I/O. */
+  remove_old_deploy_tmpdirs (deploy_base);
 
   if (checksum_or_latest == NULL)
     {
