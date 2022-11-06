@@ -1867,7 +1867,11 @@ static const ExportData default_exports[] = {
   {"XDG_CONFIG_DIRS", "/app/etc/xdg:/etc/xdg"},
   {"XDG_DATA_DIRS", "/app/share:/usr/share"},
   {"SHELL", "/bin/sh"},
-  {"TMPDIR", NULL}, /* Unset TMPDIR as it may not exist in the sandbox */
+  /* Unset temporary file paths as they may not exist in the sandbox */
+  {"TEMP", NULL},
+  {"TEMPDIR", NULL},
+  {"TMP", NULL},
+  {"TMPDIR", NULL},
   /* We always use /run/user/UID, even if the user's XDG_RUNTIME_DIR
    * outside the sandbox is somewhere else. Don't allow a different
    * setting from outside the sandbox to overwrite this. */
