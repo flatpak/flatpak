@@ -129,7 +129,7 @@ glnx_make_lock_file(int dfd, const char *p, int operation, GLnxLockFile *out_loc
         out_lock->initialized = TRUE;
         out_lock->dfd = dfd;
         out_lock->path = g_steal_pointer (&t);
-        out_lock->fd = glnx_steal_fd (&fd);
+        out_lock->fd = g_steal_fd (&fd);
         out_lock->operation = operation;
         return TRUE;
 }

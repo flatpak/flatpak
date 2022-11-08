@@ -218,7 +218,7 @@ open_tmpfile_core (int dfd, const char *subpath,
           return glnx_throw_errno_prefix (error, "fchmod");
         out_tmpf->initialized = TRUE;
         out_tmpf->src_dfd = dfd; /* Copied; caller must keep open */
-        out_tmpf->fd = glnx_steal_fd (&fd);
+        out_tmpf->fd = g_steal_fd (&fd);
         out_tmpf->path = NULL;
         return TRUE;
       }
@@ -245,7 +245,7 @@ open_tmpfile_core (int dfd, const char *subpath,
           {
             out_tmpf->initialized = TRUE;
             out_tmpf->src_dfd = dfd;  /* Copied; caller must keep open */
-            out_tmpf->fd = glnx_steal_fd (&fd);
+            out_tmpf->fd = g_steal_fd (&fd);
             out_tmpf->path = g_steal_pointer (&tmp);
             return TRUE;
           }
@@ -463,7 +463,7 @@ glnx_tmpfile_reopen_rdonly (GLnxTmpfile *tmpf,
     }
 
   glnx_close_fd (&tmpf->fd);
-  tmpf->fd = glnx_steal_fd (&rdonly_fd);
+  tmpf->fd = g_steal_fd (&rdonly_fd);
   return TRUE;
 }
 

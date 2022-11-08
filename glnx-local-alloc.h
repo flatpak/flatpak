@@ -24,6 +24,8 @@
 #include <gio/gio.h>
 #include <errno.h>
 
+#include "glnx-backports.h"
+
 G_BEGIN_DECLS
 
 /**
@@ -43,19 +45,14 @@ glnx_local_obj_unref (void *v)
 }
 #define glnx_unref_object __attribute__ ((cleanup(glnx_local_obj_unref)))
 
-static inline int
-glnx_steal_fd (int *fdp)
-{
-  int fd = *fdp;
-  *fdp = -1;
-  return fd;
-}
+/* Backwards-compat with older libglnx */
+#define glnx_steal_fd g_steal_fd
 
 /**
  * glnx_close_fd:
  * @fdp: Pointer to fd
  *
- * Effectively `close (glnx_steal_fd (&fd))`.  Also
+ * Effectively `close (g_steal_fd (&fd))`.  Also
  * asserts that `close()` did not raise `EBADF` - encountering
  * that error is usually a critical bug in the program.
  */
@@ -66,7 +63,7 @@ glnx_close_fd (int *fdp)
 
   g_assert (fdp);
 
-  int fd = glnx_steal_fd (fdp);
+  int fd = g_steal_fd (fdp);
   if (fd >= 0)
     {
       errsv = errno;
