@@ -100,6 +100,7 @@ jobs:
         path: test-logs
 
   # This is similar to the above, but runs on an older OS with some different configuration:
+  # * Autotools instead of Meson
   # * Soup instead of curl
   # * Use built in bubblewrap instead of external
   # * Use built in xdg-dbus-proxy instead of external
