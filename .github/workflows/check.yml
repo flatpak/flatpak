@@ -78,6 +78,7 @@ jobs:
           -Dinternal_checks=true \
           -Dsystem_bubblewrap=bwrap \
           -Dsystem_dbus_proxy=xdg-dbus-proxy \
+          --werror \
           ${NULL+}
       env:
         CFLAGS: -O2 -Wp,-D_FORTIFY_SOURCE=2
@@ -137,7 +138,7 @@ jobs:
         ../configure  --enable-internal-checks --enable-asan --disable-introspection --without-curl
         popd
       env:
-        CFLAGS: -O2 -Wp,-D_FORTIFY_SOURCE=2
+        CFLAGS: -O2 -Wp,-D_FORTIFY_SOURCE=2 -Werror
     - name: Build flatpak
       run: make -C _build -j $(getconf _NPROCESSORS_ONLN)
     # We build with Ubuntu 18.04's GLib to prove that we can, but there's a
@@ -206,7 +207,7 @@ jobs:
       run: ./autogen.sh
       env:
         CC: clang
-        CFLAGS: -Werror=unused-variable
+        CFLAGS: -Werror -Werror=unused-variable
     - name: Build flatpak
       run: make -j $(getconf _NPROCESSORS_ONLN)
     - name: Perform CodeQL Analysis
@@ -243,7 +244,7 @@ jobs:
         ../configure --enable-gtk-doc --enable-gtk-doc-html --enable-introspection
         popd
       env:
-        CFLAGS: -O2
+        CFLAGS: -Werror -O2
     - name: Build flatpak
       run: make -C _build -j $(getconf _NPROCESSORS_ONLN)
     - name: Distcheck
