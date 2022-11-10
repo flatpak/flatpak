@@ -208,14 +208,7 @@ build_gtk_doc = gtkdoc_dep.found()
 
 base_deps = [glib_dep, gio_dep, gio_unix_dep]
 
-if meson.version().version_compare('>=0.60.0')
-  gpgme_dep = dependency('gpgme-pthread', 'gpgme', version : '>=1.1.8')
-else
-  gpgme_dep = dependency('gpgme-pthread', version : '>=1.1.8', required : false)
-  if not gpgme_dep.found()
-    gpgme_dep = dependency('gpgme', version : '>=1.1.8')
-  endif
-endif
+gpgme_dep = dependency('gpgme', version : '>=1.8.0')
 
 if get_option('selinux_module').disabled()
   build_selinux_module = false
