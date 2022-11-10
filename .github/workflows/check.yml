@@ -70,7 +70,7 @@ jobs:
       # We don't do gtk-doc or GObject-Introspection here, because they can
       # clash with AddressSanitizer. Instead, the clang build enables those.
       run: |
-        meson _build \
+        meson setup _build \
           -Db_sanitize=address,undefined \
           -Dgir=disabled \
           -Dgtkdoc=disabled \
