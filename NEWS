@@ -23,6 +23,14 @@ Bug fixes:
 * Fix compilation with GLib 2.66.x (as used in Debian 11) (#5062)
 * Fix compilation with GLib 2.58.x (as used in Debian 10) (#5066)
 * Fix a compiler warning on 32-bit architectures (#5148)
+* If an app update is blocked by parental controls policies, clean up the
+  temporary deploy directory (#5146)
+* Fix Autotools build with versions of gpgme that no longer provide
+  gpgme-config(1) (#5173)
+* When building with Autotools, be more consistent about applying compiler
+  warning flags (#5149)
+* Unset $TEMP, $TEMPDIR and $TMP for apps, the same as $TMPDIR (#5168)
+* Treat /efi the same as /boot/efi (#5155)
 * Make generated files more reproducible (#5085)
 * Translation updates: cs, id, pl, pt_BR (#5052, #5056, #5059, #5126)
 
