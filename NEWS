@@ -2,11 +2,27 @@ Changes in 1.15.1
 ~~~~~~~~~~~~~~~~~
 Released: not yet
 
+Dependencies:
+
+* When building with Meson, gpgme 1.8.0 is now required.
+  Older versions can still be used by building with Autotools.
+
+Features:
+
+* If an old temporary deploy directory was leaked by versions before #5146,
+  clean it up the next time the same app is updated (#5164)
+
 Bug fixes:
 
+* If an app update is blocked by parental controls policies, clean up the
+  temporary deploy directory (#5146)
+* Fix Autotools build with versions of gpgme that no longer provide
+  gpgme-config(1) (#5173)
+* Fix a possible parallel build failure with Meson (#5165)
 * Fix a compiler warning on 32-bit architectures (#5148)
 * When building with Autotools, be more consistent about applying compiler
   warning flags (#5149)
+* Treat /efi the same as /boot/efi (#5155)
 
 Changes in 1.15.0
 ~~~~~~~~~~~~~~~~~
