@@ -92,6 +92,9 @@
             <member>XDG_DATA_DIRS</member>
             <member>XDG_RUNTIME_DIR</member>
             <member>SHELL</member>
+            <member>TEMP</member>
+            <member>TEMPDIR</member>
+            <member>TMP</member>
             <member>TMPDIR</member>
             <member>PYTHONPATH</member>
             <member>PERLLIB</member>
