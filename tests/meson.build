@@ -329,7 +329,7 @@ foreach testcase : wrapped_tests
 
   timeout = {
     'test-bundle.sh' : 60,
-    'test-oci-registry.sh' : 60,
+    'test-oci-registry.sh' : 120,
     'test-repo.sh' : 300,
     'test-run.sh' : 90,
     'test-summaries.sh' : 60,
