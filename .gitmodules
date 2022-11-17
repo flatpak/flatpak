@@ -12,4 +12,4 @@
 	branch = main
 [submodule "variant-schema-compiler"]
 	path = subprojects/variant-schema-compiler
-	url = https://gitlab.gnome.org/alexl/variant-schema-compiler.git
+	url = https://github.com/smcv/variant-schema-compiler.git
