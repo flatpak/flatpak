@@ -1,6 +1,6 @@
 [submodule "libglnx"]
 	path = subprojects/libglnx
-	url = https://github.com/GNOME/libglnx.git
+	url = https://gitlab.gnome.org/GNOME/libglnx.git
 [submodule "bubblewrap"]
 	path = subprojects/bubblewrap
 	url = https://github.com/containers/bubblewrap.git
