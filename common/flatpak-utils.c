@@ -625,7 +625,7 @@ load_kernel_module_list (void)
   g_autofree char *modules_data = NULL;
   g_autoptr(GError) error = NULL;
   char *start, *end;
-  
+
   if (!g_file_get_contents ("/proc/modules", &modules_data, NULL, &error))
     {
       g_debug ("Failed to read /proc/modules: %s", error->message);
@@ -4807,6 +4807,16 @@ flatpak_repo_gc_digested_summaries (OstreeRepo *repo,
   return TRUE;
 }
 
+/* Convert a GBytes into a GVariant of type ay (byte array) */
+static GVariant *
+ot_gvariant_new_ay_bytes (GBytes *bytes)
+{
+  gsize size;
+  gconstpointer data = g_bytes_get_data (bytes, &size);
+  g_bytes_ref (bytes);
+  return g_variant_new_from_data (G_VARIANT_TYPE ("ay"), data, size,
+                                  TRUE, (GDestroyNotify)g_bytes_unref, bytes);
+}
 
 /* Update the metadata in the summary file for @repo, and then re-sign the file.
  * If the repo has a collection ID set, additionally store the metadata on a
@@ -4826,6 +4836,8 @@ flatpak_repo_update (OstreeRepo   *repo,
                      FlatpakRepoUpdateFlags flags,
                      const char  **gpg_key_ids,
                      const char   *gpg_homedir,
+                     const char  **key_ids,
+                     const char   *sign_name,
                      GCancellable *cancellable,
                      GError      **error)
 {
@@ -4956,18 +4968,70 @@ flatpak_repo_update (OstreeRepo   *repo,
   if (!ostree_repo_static_delta_reindex (repo, 0, NULL, cancellable, error))
     return FALSE;
 
-  if (summary_index && gpg_key_ids)
+  if (summary_index)
     {
       g_autoptr(GBytes) index_bytes = g_variant_get_data_as_bytes (summary_index);
+      g_autoptr(GBytes) sig_bytes = NULL;
+      g_autoptr(GVariant) sig_variant = NULL;
+      g_autoptr(GVariant) signatures = NULL;
+      g_autoptr(GVariant) res = NULL;
+      GVariantDict dict;
+      gboolean has_sig = FALSE;
 
-      if (!ostree_repo_gpg_sign_data (repo, index_bytes,
-                                      NULL,
-                                      gpg_key_ids,
-                                      gpg_homedir,
-                                      &index_sig,
-                                      cancellable,
-                                      error))
+      if (gpg_key_ids && !ostree_repo_gpg_sign_data (repo, index_bytes,
+                                                     NULL,
+                                                     gpg_key_ids,
+                                                     gpg_homedir,
+                                                     &sig_bytes,
+                                                     cancellable,
+                                                     error))
         return FALSE;
+
+      if (sig_bytes)
+        {
+          signatures = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_SIG_GVARIANT_FORMAT, sig_bytes, FALSE));
+          has_sig = TRUE;
+        }
+      g_variant_dict_init (&dict, signatures);
+
+      if (key_ids)
+        {
+          g_autoptr (OstreeSign) ot_sign = NULL;
+          g_autoptr (GVariantBuilder) sig_builder = NULL;
+          const char **iter;
+
+          /* Initialize crypto system */
+          sign_name = sign_name ?: OSTREE_SIGN_NAME_ED25519;
+
+          ot_sign = ostree_sign_get_by_name (sign_name, error);
+          if (ot_sign == NULL)
+            return FALSE;
+
+          sig_builder = g_variant_builder_new (G_VARIANT_TYPE (ostree_sign_metadata_format (ot_sign)));
+
+          for (iter = key_ids; iter && *iter; iter++)
+            {
+              g_autoptr (GBytes) signature = NULL;
+
+              if (!ostree_sign_set_sk (ot_sign, g_variant_new_string (*iter), error))
+                continue;
+
+              if (!ostree_sign_data (ot_sign, index_bytes, &signature, cancellable, error))
+                continue;
+
+              g_variant_builder_add (sig_builder, "@ay", ot_gvariant_new_ay_bytes (signature));
+              has_sig = TRUE;
+            }
+
+            g_variant_dict_insert_value (&dict, ostree_sign_metadata_key (ot_sign), g_variant_builder_end (sig_builder));
+        }
+
+        if (has_sig)
+          {
+            sig_variant = g_variant_ref_sink (g_variant_dict_end (&dict));
+            res = g_variant_get_normal_form (sig_variant);
+            index_sig = g_variant_get_data_as_bytes (res);
+          }
     }
 
   if (summary_index)
@@ -5008,6 +5072,33 @@ flatpak_repo_update (OstreeRepo   *repo,
               (void) utimensat (repo_dfd, "summary.sig", ts, AT_SYMLINK_NOFOLLOW);
             }
         }
+    }
+
+  if (key_ids)
+    {
+      g_autoptr (OstreeSign) sign = NULL;
+      g_autoptr (GVariant) keys = NULL;
+      g_autoptr (GVariantBuilder) builder = NULL;
+      const char **iter;
+
+      /* Initialize crypto system */
+      sign_name = sign_name ?: OSTREE_SIGN_NAME_ED25519;
+
+      sign = ostree_sign_get_by_name (sign_name, error);
+      if (sign == NULL)
+        return FALSE;
+
+      builder = g_variant_builder_new (G_VARIANT_TYPE ("av"));
+      for (iter = key_ids; iter && *iter; iter++)
+        g_variant_builder_add_value (builder, g_variant_new_variant (g_variant_new_string (*iter)));
+
+      keys = g_variant_builder_end (builder);
+      if (!keys || !ostree_sign_summary (sign,
+                                         repo,
+                                         keys,
+                                         cancellable,
+                                         error))
+        return FALSE;
     }
 
   if (!disable_index &&
@@ -5591,6 +5682,8 @@ static gboolean
 _flatpak_repo_generate_appstream (OstreeRepo   *repo,
                                   const char  **gpg_key_ids,
                                   const char   *gpg_homedir,
+                                  const char  **key_ids,
+                                  const char   *sign_name,
                                   FlatpakDecomposed **all_refs_keys,
                                   guint         n_keys,
                                   GHashTable   *all_commits,
@@ -5819,6 +5912,36 @@ _flatpak_repo_generate_appstream (OstreeRepo   *repo,
                 }
             }
 
+          if (key_ids)
+            {
+              const char **iter;
+              g_autoptr (OstreeSign) sign = NULL;
+
+              /* Initialize crypto system */
+              sign_name = sign_name ?: OSTREE_SIGN_NAME_ED25519;
+
+              sign = ostree_sign_get_by_name (sign_name, error);
+              if (sign == NULL)
+                return FALSE;
+
+              for (iter = key_ids; iter && *iter; iter++)
+                {
+                  const char *keyid = *iter;
+                  g_autoptr (GVariant) secret_key = NULL;
+
+                  secret_key = g_variant_new_string (keyid);
+                  if (!ostree_sign_set_sk (sign, secret_key, error))
+                    return FALSE;
+
+                  if (!ostree_sign_commit (sign,
+                                           repo,
+                                           commit_checksum,
+                                           cancellable,
+                                           error))
+                    return FALSE;
+                }
+            }
+
           g_debug ("Creating appstream branch %s", branch);
           if (collection_id != NULL)
             {
@@ -5840,6 +5963,8 @@ gboolean
 flatpak_repo_generate_appstream (OstreeRepo   *repo,
                                  const char  **gpg_key_ids,
                                  const char   *gpg_homedir,
+                                 const char  **key_ids,
+                                 const char   *sign_name,
                                  guint64       timestamp,
                                  GCancellable *cancellable,
                                  GError      **error)
@@ -5932,6 +6057,8 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
           if (!_flatpak_repo_generate_appstream (repo,
                                                  gpg_key_ids,
                                                  gpg_homedir,
+                                                 key_ids,
+                                                 sign_name,
                                                  all_refs_keys,
                                                  n_keys,
                                                  all_commits,

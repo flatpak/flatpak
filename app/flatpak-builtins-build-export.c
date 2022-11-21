@@ -1140,7 +1140,7 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
     goto out;
 
   if (opt_update_appstream &&
-      !flatpak_repo_generate_appstream (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir,
+      !flatpak_repo_generate_appstream (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, NULL, NULL,
                                         (opt_timestamp != NULL) ? ts.tv_sec : 0, cancellable, error))
     return FALSE;
 
@@ -1155,6 +1155,8 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
       if (!flatpak_repo_update (repo, flags,
                                 (const char **) opt_gpg_key_ids,
                                 opt_gpg_homedir,
+                                NULL,
+                                NULL,
                                 cancellable,
                                 error))
         goto out;
