@@ -92,11 +92,15 @@
             <member>XDG_DATA_DIRS</member>
             <member>XDG_RUNTIME_DIR</member>
             <member>SHELL</member>
+            <member>TEMP</member>
+            <member>TEMPDIR</member>
+            <member>TMP</member>
             <member>TMPDIR</member>
             <member>PYTHONPATH</member>
             <member>PERLLIB</member>
             <member>PERL5LIB</member>
             <member>XCURSOR_PATH</member>
+            <member>KRB5CCNAME</member>
         </simplelist>
         <para>
             Also several environment variables with the prefix "GST_" that are used by gstreamer

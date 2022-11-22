@@ -36,6 +36,7 @@ common/flatpak-enum-types.c: $(flatpakinclude_HEADERS) common/flatpak-enum-types
 	    common/flatpak-enum-types.c.tmp && mv common/flatpak-enum-types.c.tmp common/flatpak-enum-types.c
 
 EXTRA_DIST += common/flatpak-enum-types.c.template common/flatpak-enum-types.h.template
+EXTRA_DIST += common/meson.build
 
 common/flatpak-dbus-generated.c: data/org.freedesktop.Flatpak.xml data/org.freedesktop.Flatpak.Authenticator.xml Makefile
 	mkdir -p $(builddir)/common

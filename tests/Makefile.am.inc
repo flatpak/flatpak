@@ -302,7 +302,16 @@ EXTRA_DIST += \
 	tests/expand-test-matrix.sh \
 	tests/flatpak.supp \
 	tests/glib.supp \
+	tests/installed-services/meson.build \
 	tests/make-runtime-repos \
+	tests/meson.build \
+	tests/package_version.txt.in \
+	tests/services/meson.build \
+	tests/share/xdg-desktop-portal/portals/meson.build \
+	tests/tap.test.in \
+	tests/test-keyring/meson.build \
+	tests/test-keyring2/meson.build \
+	tests/test-matrix/meson.build \
 	tests/test-wrapper.sh \
 	tests/update-test-matrix \
 	$(NULL)

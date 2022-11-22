@@ -22,11 +22,6 @@
 #include <gio/gio.h>
 #include <libglnx.h>
 
-#ifndef g_assert_no_errno
-#define g_assert_no_errno(expr) \
-  g_assert_cmpstr ((expr) >= 0 ? NULL : g_strerror (errno), ==, NULL)
-#endif
-
 char *assert_mkdtemp (char *tmpl);
 
 extern char *isolated_test_dir;

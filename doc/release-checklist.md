@@ -2,7 +2,8 @@ Flatpak release checklist
 =========================
 
 * Update NEWS
-* Update version number in `configure.ac` and release date in `NEWS`
+* Update version number in `configure.ac` **and** `meson.build`
+* Update release date in `NEWS`
 * Commit the changes
 * `make distcheck`
     * This will update `po/`; commit those changes too

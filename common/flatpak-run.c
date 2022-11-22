@@ -956,6 +956,19 @@ flatpak_run_add_pulseaudio_args (FlatpakBwrap         *bwrap,
 }
 
 static void
+flatpak_run_add_gssproxy_args (FlatpakBwrap *bwrap)
+{
+  /* We only expose the gssproxy user service. The gssproxy system service is
+   * not intended to be exposed to sandboxed environments.
+   */
+  g_autofree char *gssproxy_host_dir = g_build_filename (g_get_user_runtime_dir (), "gssproxy", NULL);
+  const char *gssproxy_sandboxed_dir = "/run/flatpak/gssproxy/";
+
+  if (g_file_test (gssproxy_host_dir, G_FILE_TEST_EXISTS))
+    flatpak_bwrap_add_args (bwrap, "--ro-bind", gssproxy_host_dir, gssproxy_sandboxed_dir, NULL);
+}
+
+static void
 flatpak_run_add_resolved_args (FlatpakBwrap *bwrap)
 {
   const char *resolved_socket = "/run/systemd/resolve/io.systemd.Resolve";
@@ -1867,14 +1880,19 @@ static const ExportData default_exports[] = {
   {"XDG_CONFIG_DIRS", "/app/etc/xdg:/etc/xdg"},
   {"XDG_DATA_DIRS", "/app/share:/usr/share"},
   {"SHELL", "/bin/sh"},
-  {"TMPDIR", NULL}, /* Unset TMPDIR as it may not exist in the sandbox */
+  /* Unset temporary file paths as they may not exist in the sandbox */
+  {"TEMP", NULL},
+  {"TEMPDIR", NULL},
+  {"TMP", NULL},
+  {"TMPDIR", NULL},
   /* We always use /run/user/UID, even if the user's XDG_RUNTIME_DIR
    * outside the sandbox is somewhere else. Don't allow a different
    * setting from outside the sandbox to overwrite this. */
   {"XDG_RUNTIME_DIR", NULL},
 
   /* Some env vars are common enough and will affect the sandbox badly
-     if set on the host. We clear these always. */
+     if set on the host. We clear these always. If updating this list,
+     also update the list in flatpak-run.xml. */
   {"PYTHONPATH", NULL},
   {"PERLLIB", NULL},
   {"PERL5LIB", NULL},
@@ -1891,6 +1909,7 @@ static const ExportData default_exports[] = {
   {"GST_PTP_HELPER", NULL},
   {"GST_PTP_HELPER_1_0", NULL},
   {"GST_INSTALL_PLUGINS_HELPER", NULL},
+  {"KRB5CCNAME", NULL},
 };
 
 static const ExportData no_ld_so_cache_exports[] = {
@@ -4611,7 +4630,10 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
     }
 
   if ((app_context->shares & FLATPAK_CONTEXT_SHARED_NETWORK) != 0)
-    flatpak_run_add_resolved_args (bwrap);
+    {
+      flatpak_run_add_gssproxy_args (bwrap);
+      flatpak_run_add_resolved_args (bwrap);
+    }
 
   flatpak_run_add_journal_args (bwrap);
   add_font_path_args (bwrap);

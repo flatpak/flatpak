@@ -1,0 +1,4 @@
+[Test]
+Type=session
+Exec=env G_TEST_SRCDIR=@installed_testdir@ G_TEST_BUILDDIR=@installed_testdir@ @wrapper@ @installed_testdir@/@basename@ --tap
+Output=TAP

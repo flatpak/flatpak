@@ -17,6 +17,7 @@ EXTRA_DIST += \
 	selinux/flatpak.te \
 	selinux/flatpak.fc \
 	selinux/flatpak.if \
+	selinux/meson.build \
 	$(NULL)
 
 DISTCLEANFILES += flatpak.pp.bz2

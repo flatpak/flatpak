@@ -4554,6 +4554,67 @@ remove_old_appstream_tmpdirs (GFile *dir)
       tmp = g_file_get_child (dir, dent->d_name);
 
       /* We ignore errors here, no need to worry anyone */
+      g_debug ("Deleting stale appstream deploy tmpdir %s", flatpak_file_get_path_cached (tmp));
+      (void)flatpak_rm_rf (tmp, NULL, NULL);
+    }
+}
+
+/* Like the function above, this looks for old temporary directories created by
+ * previous versions of flatpak_dir_deploy().
+ * These are all directories starting with a dot. Such directories can be from a
+ * concurrent deploy, so we only remove directories older than a day to avoid
+ * races.
+*/
+static void
+remove_old_deploy_tmpdirs (GFile *dir)
+{
+  g_auto(GLnxDirFdIterator) dir_iter = { 0 };
+  time_t now = time (NULL);
+
+  if (!glnx_dirfd_iterator_init_at (AT_FDCWD, flatpak_file_get_path_cached (dir),
+                                    FALSE, &dir_iter, NULL))
+    return;
+
+  while (TRUE)
+    {
+      struct stat stbuf;
+      struct dirent *dent;
+      g_autoptr(GFile) tmp = NULL;
+
+      if (!glnx_dirfd_iterator_next_dent_ensure_dtype (&dir_iter, &dent, NULL, NULL))
+        break;
+
+      if (dent == NULL)
+        break;
+
+      /* We ignore non-dotfiles and .timestamps as they are not tempfiles */
+      if (dent->d_name[0] != '.' ||
+          strcmp (dent->d_name, ".timestamp") == 0)
+        continue;
+
+      /* Check for right types and names. The format we’re looking for is:
+       * .[0-9a-f]{64}-[0-9A-Z]{6} */
+      if (dent->d_type == DT_DIR)
+        {
+          if (strlen (dent->d_name) != 72 ||
+              dent->d_name[65] != '-')
+            continue;
+        }
+      else
+        continue;
+
+      /* Check that the file is at least a day old to avoid races */
+      if (!glnx_fstatat (dir_iter.fd, dent->d_name, &stbuf, AT_SYMLINK_NOFOLLOW, NULL))
+        continue;
+
+      if (stbuf.st_mtime >= now ||
+          now - stbuf.st_mtime < SECS_PER_DAY)
+        continue;
+
+      tmp = g_file_get_child (dir, dent->d_name);
+
+      /* We ignore errors here, no need to worry anyone */
+      g_debug ("Deleting stale deploy tmpdir %s", flatpak_file_get_path_cached (tmp));
       (void)flatpak_rm_rf (tmp, NULL, NULL);
     }
 }
@@ -8525,9 +8586,11 @@ flatpak_dir_deploy (FlatpakDir          *self,
   g_autofree char *ref_id = NULL;
   g_autoptr(GFile) root = NULL;
   g_autoptr(GFile) deploy_base = NULL;
+  glnx_autofd int deploy_base_dfd = -1;
   g_autoptr(GFile) checkoutdir = NULL;
   g_autoptr(GFile) bindir = NULL;
   g_autofree char *checkoutdirpath = NULL;
+  const char *checkoutdir_basename;
   g_autoptr(GFile) real_checkoutdir = NULL;
   g_autoptr(GFile) dotref = NULL;
   g_autoptr(GFile) files_etc = NULL;
@@ -8541,8 +8604,6 @@ flatpak_dir_deploy (FlatpakDir          *self,
   OstreeRepoCheckoutAtOptions options = { 0, };
   const char *checksum;
   glnx_autofd int checkoutdir_dfd = -1;
-  g_autoptr(GFile) tmp_dir_template = NULL;
-  g_autofree char *tmp_dir_path = NULL;
   const char *xa_ref = NULL;
   g_autofree char *checkout_basename = NULL;
   gboolean created_extra_data = FALSE;
@@ -8552,6 +8613,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
   g_autofree char *metadata_contents = NULL;
   gsize metadata_size = 0;
   const char *flatpak;
+  g_auto(GLnxTmpDir) tmp_dir_handle = { 0, };
 
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     return FALSE;
@@ -8565,6 +8627,15 @@ flatpak_dir_deploy (FlatpakDir          *self,
     return FALSE;
 
   deploy_base = flatpak_dir_get_deploy_dir (self, ref);
+
+  if (!glnx_opendirat (AT_FDCWD, flatpak_file_get_path_cached (deploy_base), TRUE, &deploy_base_dfd, error))
+    return FALSE;
+
+  /* There used to be a bug here where temporary files beneath @deploy_base were not removed,
+   * which could use quite a lot of space over time, so we check for these and remove them.
+   * We only do so for the current app to avoid every deploy operation iterating over
+   * every app directory and all their immediate descendents. That would be a bit much I/O. */
+  remove_old_deploy_tmpdirs (deploy_base);
 
   if (checksum_or_latest == NULL)
     {
@@ -8600,17 +8671,15 @@ flatpak_dir_deploy (FlatpakDir          *self,
                                _("%s commit %s already installed"), flatpak_decomposed_get_ref (ref), checksum);
 
   g_autofree char *template = g_strdup_printf (".%s-XXXXXX", checkout_basename);
-  tmp_dir_template = g_file_get_child (deploy_base, template);
-  tmp_dir_path = g_file_get_path (tmp_dir_template);
 
-  if (g_mkdtemp_full (tmp_dir_path, 0755) == NULL)
+  if (!glnx_mkdtempat (deploy_base_dfd, template, 0755, &tmp_dir_handle, NULL))
     {
       g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
                            _("Can't create deploy directory"));
       return FALSE;
     }
 
-  checkoutdir = g_file_new_for_path (tmp_dir_path);
+  checkoutdir = g_file_get_child (deploy_base, tmp_dir_handle.path);
 
   if (!ostree_repo_read_commit (self->repo, checksum, &root, NULL, cancellable, error))
     {
@@ -8626,11 +8695,12 @@ flatpak_dir_deploy (FlatpakDir          *self,
   options.enable_fsync = FALSE; /* We checkout to a temp dir and sync before moving it in place */
   options.bareuseronly_dirs = TRUE; /* https://github.com/ostreedev/ostree/pull/927 */
   checkoutdirpath = g_file_get_path (checkoutdir);
+  checkoutdir_basename = tmp_dir_handle.path;  /* so checkoutdirpath = deploy_base_dfd / checkoutdir_basename */
 
   if (subpaths == NULL || *subpaths == NULL)
     {
       if (!ostree_repo_checkout_at (self->repo, &options,
-                                    AT_FDCWD, checkoutdirpath,
+                                    deploy_base_dfd, checkoutdir_basename,
                                     checksum,
                                     cancellable, error))
         {
@@ -8649,7 +8719,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
       options.subpath = "metadata";
 
       if (!ostree_repo_checkout_at (self->repo, &options,
-                                    AT_FDCWD, checkoutdirpath,
+                                    deploy_base_dfd, checkoutdir_basename,
                                     checksum,
                                     cancellable, error))
         {
@@ -8662,6 +8732,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
           g_autofree char *subpath = g_build_filename ("files", subpaths[i], NULL);
           g_autofree char *dstpath = g_build_filename (checkoutdirpath, "/files", subpaths[i], NULL);
           g_autofree char *dstpath_parent = g_path_get_dirname (dstpath);
+          g_autofree char *dstpath_relative_to_deploy_base = g_build_filename (checkoutdir_basename, "/files", subpaths[i], NULL);
           g_autoptr(GFile) child = NULL;
 
           child = g_file_resolve_relative_path (root, subpath);
@@ -8680,7 +8751,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
 
           options.subpath = subpath;
           if (!ostree_repo_checkout_at (self->repo, &options,
-                                        AT_FDCWD, dstpath,
+                                        deploy_base_dfd, dstpath_relative_to_deploy_base,
                                         checksum,
                                         cancellable, error))
             {
@@ -8896,7 +8967,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
   if (!flatpak_bytes_save (deploy_data_file, deploy_data, cancellable, error))
     return FALSE;
 
-  if (!glnx_opendirat (AT_FDCWD, checkoutdirpath, TRUE, &checkoutdir_dfd, error))
+  if (!glnx_opendirat (deploy_base_dfd, checkoutdir_basename, TRUE, &checkoutdir_dfd, error))
     return FALSE;
 
   if (syncfs (checkoutdir_dfd) != 0)
@@ -8908,6 +8979,8 @@ flatpak_dir_deploy (FlatpakDir          *self,
   if (!g_file_move (checkoutdir, real_checkoutdir, G_FILE_COPY_NO_FALLBACK_FOR_MOVE,
                     cancellable, NULL, NULL, error))
     return FALSE;
+
+  glnx_tmpdir_unset (&tmp_dir_handle);
 
   if (!flatpak_dir_set_active (self, ref, checkout_basename, cancellable, error))
     return FALSE;
