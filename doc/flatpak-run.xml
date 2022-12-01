@@ -101,6 +101,7 @@
             <member>PERL5LIB</member>
             <member>XCURSOR_PATH</member>
             <member>KRB5CCNAME</member>
+            <member>XKB_CONFIG_ROOT</member>
         </simplelist>
         <para>
             Also several environment variables with the prefix "GST_" that are used by gstreamer
