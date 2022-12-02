@@ -446,10 +446,13 @@ flatpak_run_add_wayland_args (FlatpakBwrap *bwrap)
       flatpak_bwrap_add_args (bwrap,
                               "--ro-bind", wayland_socket, sandbox_wayland_socket,
                               NULL);
-      flatpak_bwrap_add_args (bwrap,
-                              "--ro-bind", wayland_socket_lock,
-                              sandbox_wayland_socket_lock,
-                              NULL);
+
+      if (g_file_test (wayland_socket_lock, G_FILE_TEST_EXISTS))
+        flatpak_bwrap_add_args (bwrap,
+                                "--ro-bind", wayland_socket_lock,
+                                sandbox_wayland_socket_lock,
+                                NULL);
+
       flatpak_bwrap_add_runtime_dir_member (bwrap, wayland_display);
     }
   return res;
