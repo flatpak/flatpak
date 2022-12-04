@@ -13,5 +13,9 @@ if type -q flatpak
         set installations $installations (flatpak --installations)
     end
 
-    set XDG_DATA_DIRS {$installations}/exports/share $XDG_DATA_DIRS
+    for dir in {$installations[-1..1]}/exports/share
+        if not contains $dir $XDG_DATA_DIRS
+            set -p XDG_DATA_DIRS $dir
+        end
+    end
 end
