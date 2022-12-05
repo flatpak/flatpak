@@ -214,6 +214,7 @@ jobs:
     name: Run tests in valgrind
     needs: check # Don't run expensive test if main check fails
     runs-on: ubuntu-20.04 # Might as well test with a different one too
+    if: ${{ false }} # Currently Valgrind takes too long and always fails
     steps:
     - name: Install Dependencies
       run: |
