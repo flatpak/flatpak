@@ -1911,6 +1911,7 @@ static const ExportData default_exports[] = {
   {"GST_INSTALL_PLUGINS_HELPER", NULL},
   {"KRB5CCNAME", NULL},
   {"XKB_CONFIG_ROOT", NULL},
+  {"GIO_EXTRA_MODULES", NULL},
 };
 
 static const ExportData no_ld_so_cache_exports[] = {
