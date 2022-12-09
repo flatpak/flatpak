@@ -316,6 +316,7 @@ FLATPAK_EXTERN
 gboolean            flatpak_transaction_add_install_bundle (FlatpakTransaction *self,
                                                             GFile              *file,
                                                             GBytes             *gpg_data,
+                                                            GVariant           *sign_data,
                                                             GError            **error);
 FLATPAK_EXTERN
 gboolean            flatpak_transaction_add_install_flatpakref (FlatpakTransaction *self,

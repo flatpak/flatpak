@@ -43,7 +43,7 @@ for i in {1..3}; do
     $(dirname $0)/make-test-app.sh repos/${APP_REPO} ${APP_ID} master ${COLLECTION_ID}
     ref=$(ostree --repo=${APP_REPO_DIR} refs | grep ${APP_ID})
 
-    ostree --repo=${REPO_DIR} remote add --no-gpg-verify --collection-id=${COLLECTION_ID} ${APP_REPO} file://${APP_REPO_DIR} >&2
+    ostree --repo=${REPO_DIR} remote add --no-sign-verify --collection-id=${COLLECTION_ID} ${APP_REPO} file://${APP_REPO_DIR} >&2
     ostree --repo=${REPO_DIR} pull ${APP_REPO} ${ref} >&2
 done
 

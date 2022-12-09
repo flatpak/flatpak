@@ -48,8 +48,9 @@ typedef struct
   FlatpakRefClass parent_class;
 } FlatpakBundleRefClass;
 
-FLATPAK_EXTERN FlatpakBundleRef *flatpak_bundle_ref_new (GFile   *file,
-                                                         GError **error);
+FLATPAK_EXTERN FlatpakBundleRef *flatpak_bundle_ref_new (GFile    *file,
+                                                         GVariant *sign_data,
+                                                         GError  **error);
 FLATPAK_EXTERN GFile           *flatpak_bundle_ref_get_file (FlatpakBundleRef *self);
 FLATPAK_EXTERN GBytes          *flatpak_bundle_ref_get_metadata (FlatpakBundleRef *self);
 FLATPAK_EXTERN GBytes          *flatpak_bundle_ref_get_appstream (FlatpakBundleRef *self);

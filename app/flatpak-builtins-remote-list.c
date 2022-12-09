@@ -27,12 +27,14 @@
 
 #include <glib/gi18n.h>
 
+#include "flatpak-dir-private.h"
 #include "libglnx.h"
 
 #include "flatpak-builtins.h"
 #include "flatpak-builtins-utils.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-table-printer.h"
+#include "ostree-repo.h"
 
 static gboolean opt_show_details;
 static gboolean opt_show_disabled;
@@ -178,6 +180,7 @@ list_remotes (GPtrArray *dirs, Column *columns, GCancellable *cancellable, GErro
               else if (strcmp (columns[k].name, "options") == 0)
                 {
                   gboolean gpg_verify = TRUE;
+                  gboolean sign_verify = TRUE;
                   g_autofree char *filter = flatpak_dir_get_remote_filter (dir, remote_name);
 
                   flatpak_table_printer_add_column (printer, ""); /* Options */
@@ -200,9 +203,25 @@ list_remotes (GPtrArray *dirs, Column *columns, GCancellable *cancellable, GErro
                   if (!ostree_repo_remote_get_gpg_verify (flatpak_dir_get_repo (dir), remote_name,
                                                           &gpg_verify, error))
                       return FALSE; /* shouldn't happen unless repo config is modified out-of-band */
+                  if (!flatpak_dir_get_sign_verify (dir, remote_name, &sign_verify, error))
+                    return FALSE;
 
-                  if (!gpg_verify)
-                    flatpak_table_printer_append_with_comma (printer, "no-gpg-verify");
+                  if (!gpg_verify && !sign_verify)
+                    flatpak_table_printer_append_with_comma (printer, "no-sign-verify");
+                  else if (sign_verify)
+                    {
+                      OstreeRepo *repo = flatpak_dir_get_repo (dir);
+                      g_auto(GStrv) sign_names = NULL;
+                      char **iter;
+
+                      if (ostree_repo_get_remote_list_option (repo, remote_name, "sign-verify", &sign_names, NULL))
+                        {
+                        for (iter = sign_names; iter && *iter; iter++)
+                          flatpak_table_printer_append_with_comma_printf (printer, "sign=%s", *iter);
+                        }
+                      else
+                        flatpak_table_printer_append_with_comma (printer, "sign=ed25519");
+                    }
 
                   if (filter != NULL && *filter != 0)
                     flatpak_table_printer_append_with_comma (printer, "filtered");

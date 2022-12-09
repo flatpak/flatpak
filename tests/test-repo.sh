@@ -24,7 +24,11 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..45"
+if [ x${FL_SIGN_ENABLED} == xyes ]; then
+    echo "1..48"
+else
+    echo "1..45"
+fi
 
 #Regular repo
 setup_repo
@@ -51,12 +55,12 @@ elif [ x${USE_COLLECTIONS_IN_SERVER-} == xyes ] ; then
     # Set a collection ID and GPG on the server, but not in the client configuration
     setup_repo_no_add test-no-gpg org.test.Collection.NoGpg
     port=$(cat httpd-port)
-    ${FLATPAK} remote-add ${U} --no-gpg-verify test-no-gpg-repo "http://127.0.0.1:${port}/test-no-gpg" >&2
+    ${FLATPAK} remote-add ${U} --no-sign-verify test-no-gpg-repo "http://127.0.0.1:${port}/test-no-gpg" >&2
 else
     GPGPUBKEY="" GPGARGS="" setup_repo test-no-gpg
 fi
 
-${FLATPAK} remote-add ${U} --no-gpg-verify local-test-no-gpg-repo `pwd`/repos/test-no-gpg >&2
+${FLATPAK} remote-add ${U} --no-sign-verify local-test-no-gpg-repo `pwd`/repos/test-no-gpg >&2
 
 #alternative gpg key repo
 GPGPUBKEY="${FL_GPG_HOMEDIR2}/pubring.gpg" GPGARGS="${FL_GPGARGS2}" setup_repo test-gpg2 org.test.Collection.Gpg2
@@ -75,9 +79,37 @@ if ${FLATPAK} remote-add ${U} --gpg-import=${FL_GPG_HOMEDIR2}/pubring.gpg test-w
     assert_not_reached "Should fail metadata-update due to wrong gpg key"
 fi
 
+if [ x${FL_SIGN_ENABLED} == xyes ]; then
+    # Non-ED25519 signed repo
+    SIGNARGS="" SIGNPUBKEY="" setup_repo test-no-ed25519 org.test.Collection.NoEd25519
+
+    # Alternative ED25519 key repo
+    SIGNARGS="--sign=${FL_SIGN_PRIVKEY2}" SIGNPUBKEY="${FL_SIGN_PUBKEY2}" setup_repo test-alt-ed25519 org.test.Collection.AltEd25519
+
+    # Remote with wrong ED25519 key
+    port=$(cat httpd-port)
+    if ${FLATPAK} remote-add ${U} --sign-verify=ed25519=inline:${FL_SIGN_PUBKEY} test-wrong-ed25519-repo "http://127.0.0.1:${port}/test-alt-ed25519"; then
+        assert_not_reached "Should fail metadata-update due to wrong ed25519 key"
+    fi
+
+    # Remote with non-existent ED25519 key file
+    port=$(cat httpd-port)
+    if ${FLATPAK} remote-add ${U} --sign-verify=ed25519=file:/file/does/not/exist test-wrong-ed25519-file-repo "http://127.0.0.1:${port}/test"; then
+        assert_not_reached "Should fail metadata-update due to non-existent ed25519 key file"
+    fi
+
+    # Remote with wrong ED25519 key file
+    port=$(cat httpd-port)
+    if ${FLATPAK} remote-add ${U} --sign-verify=ed25519=file:${FL_SIGN_KEYFILE2} test-wrong-ed25519-file-repo "http://127.0.0.1:${port}/test"; then
+        assert_not_reached "Should fail metadata-update due to wrong ed25519 key file"
+    fi
+
+    ${FLATPAK} remote-add ${U} --sign-verify=ed25519=file:${FL_SIGN_KEYFILE} test-ed25519-file-repo "http://127.0.0.1:${port}/test"
+fi
+
 # Remove new appstream branch so we can test deploying the old one
 rm -rf repos/test/refs/heads/appstream2
-${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} --no-update-appstream ${FL_GPGARGS} repos/test >&2
+${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} --no-update-appstream ${FL_GPGARGS} ${FL_SIGNARGS} repos/test >&2
 
 ${FLATPAK} ${U} --appstream update test-repo >&2
 
@@ -129,6 +161,20 @@ ok "local without gpg key"
 install_repo test-gpg2
 ok "with alternative gpg key"
 
+if [ x${FL_SIGN_ENABLED} == xyes ]; then
+    ${FLATPAK} ${U} uninstall -y org.test.Platform org.test.Hello >&2
+    install_repo test-ed25519-file
+    ok "with ed25519 key read from file"
+
+    ${FLATPAK} ${U} uninstall -y org.test.Platform org.test.Hello >&2
+    install_repo test-no-ed25519
+    ok "without ed25519 key"
+
+    ${FLATPAK} ${U} uninstall -y org.test.Platform org.test.Hello >&2
+    install_repo test-alt-ed25519
+    ok "with alternative ed25519 key"
+fi
+
 if ${FLATPAK} ${U} install -y test-repo org.test.Platform &> install-error-log; then
     assert_not_reached "Should not be able to install again from different remote without reinstall"
 fi
@@ -167,6 +213,13 @@ ${FLATPAK} ${U} remote-modify --disable test-missing-gpg-repo >&2
 ${FLATPAK} ${U} remote-modify --disable test-wrong-gpg-repo >&2
 ${FLATPAK} ${U} remote-modify --disable test-gpg2-repo >&2
 ${FLATPAK} ${U} remote-modify --disable local-test-no-gpg-repo >&2
+if [ x${FL_SIGN_ENABLED} == xyes ]; then
+    ${FLATPAK} ${U} remote-modify --disable test-ed25519-file-repo >&2
+    ${FLATPAK} ${U} remote-modify --disable test-no-ed25519-repo >&2
+    ${FLATPAK} ${U} remote-modify --disable test-alt-ed25519-repo >&2
+    ${FLATPAK} ${U} remote-modify --disable test-wrong-ed25519-repo >&2
+    ${FLATPAK} ${U} remote-modify --disable test-wrong-ed25519-file-repo >&2
+fi
 if [ x${USE_COLLECTIONS_IN_CLIENT-} != xyes ] ; then
     ${FLATPAK} ${U} remote-modify --disable test-no-gpg-repo >&2
 fi
@@ -182,6 +235,13 @@ ${FLATPAK} ${U} remote-modify --enable test-missing-gpg-repo >&2
 ${FLATPAK} ${U} remote-modify --enable test-wrong-gpg-repo >&2
 ${FLATPAK} ${U} remote-modify --enable test-gpg2-repo >&2
 ${FLATPAK} ${U} remote-modify --enable local-test-no-gpg-repo >&2
+if [ x${FL_SIGN_ENABLED} == xyes ]; then
+    ${FLATPAK} ${U} remote-modify --enable test-ed25519-file-repo >&2
+    ${FLATPAK} ${U} remote-modify --enable test-no-ed25519-repo >&2
+    ${FLATPAK} ${U} remote-modify --enable test-alt-ed25519-repo >&2
+    ${FLATPAK} ${U} remote-modify --enable test-wrong-ed25519-repo >&2
+    ${FLATPAK} ${U} remote-modify --enable test-wrong-ed25519-file-repo >&2
+fi
 if [ x${USE_COLLECTIONS_IN_CLIENT-} != xyes ] ; then
     ${FLATPAK} ${U} remote-modify --enable test-no-gpg-repo >&2
 fi
@@ -205,6 +265,7 @@ Version=1
 Url=http://127.0.0.1:$(cat httpd-port)/flatpakref/
 Title=The Remote Title
 GPGKey=${FL_GPG_BASE64}
+SignatureKey=${FL_SIGN_PUBKEY}
 EOF
 
 if [ x${USE_COLLECTIONS_IN_CLIENT-} == xyes ]; then
@@ -218,6 +279,7 @@ Branch=master
 Url=http://127.0.0.1:$(cat httpd-port)/flatpakref
 SuggestRemoteName=allthegoodstuff
 GPGKey=${FL_GPG_BASE64}
+SignatureKey=${FL_SIGN_PUBKEY}
 RuntimeRepo=http://127.0.0.1:$(cat httpd-port)/flatpakref/flatpakref-repo.flatpakrepo
 EOF
 
@@ -286,7 +348,7 @@ make_required_version_app () {
         CID=""
     fi
 
-    REQUIRED_VERSION="${VERSION}" GPGARGS="${FL_GPGARGS}" $(dirname $0)/make-test-app.sh repos/test ${APP_ID} master "${CID}" > /dev/null
+    REQUIRED_VERSION="${VERSION}" GPGARGS="${FL_GPGARGS}" SIGNARGS="${FL_SIGNARGS}" $(dirname $0)/make-test-app.sh repos/test ${APP_ID} master "${CID}" > /dev/null
 }
 
 CURRENT_VERSION=`cat "$test_builddir/package_version.txt"`
@@ -423,7 +485,7 @@ else
 fi
 
 ostree init --repo=repos/test-rebase --mode=archive-z2 ${rebase_collection_args} >&2
-${FLATPAK} build-commit-from --no-update-summary --src-repo=repos/test ${FL_GPGARGS} repos/test-rebase app/org.test.Hello/$ARCH/master runtime/org.test.Hello.Locale/$ARCH/master >&2
+${FLATPAK} build-commit-from --no-update-summary --src-repo=repos/test ${FL_GPGARGS} ${FL_SIGNARGS} repos/test-rebase app/org.test.Hello/$ARCH/master runtime/org.test.Hello.Locale/$ARCH/master >&2
 update_repo test-rebase ${REBASE_COLLECTION_ID}
 
 ${FLATPAK} remote-add ${U} --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg test-rebase "http://127.0.0.1:${port}/test-rebase" >&2
@@ -435,8 +497,8 @@ ${FLATPAK} run --command=bash org.test.Hello -c 'echo foo > $XDG_DATA_HOME/a-fil
 assert_has_dir $HOME/.var/app/org.test.Hello
 assert_has_file $HOME/.var/app/org.test.Hello/data/a-file
 
-${FLATPAK} build-commit-from --no-update-summary --end-of-life-rebase=org.test.Hello=org.test.NewHello --src-repo=repos/test ${FL_GPGARGS} repos/test-rebase app/org.test.Hello/$ARCH/master runtime/org.test.Hello.Locale/$ARCH/master >&2
-GPGARGS="${FL_GPGARGS}" $(dirname $0)/make-test-app.sh repos/test-rebase org.test.NewHello master "${REBASE_COLLECTION_ID}" "NEW" > /dev/null
+${FLATPAK} build-commit-from --no-update-summary --end-of-life-rebase=org.test.Hello=org.test.NewHello --src-repo=repos/test ${FL_GPGARGS} ${FL_SIGNARGS} repos/test-rebase app/org.test.Hello/$ARCH/master runtime/org.test.Hello.Locale/$ARCH/master >&2
+GPGARGS="${FL_GPGARGS}" SIGNARGS="${FL_SIGNARGS}" $(dirname $0)/make-test-app.sh repos/test-rebase org.test.NewHello master "${REBASE_COLLECTION_ID}" "NEW" > /dev/null
 update_repo test-rebase
 
 ${FLATPAK} ${U} update -y org.test.Hello >&2

@@ -45,6 +45,8 @@ static char **opt_gpg_key_ids;
 static char **opt_exclude;
 static char **opt_include;
 static char *opt_gpg_homedir;
+static char **opt_sign_keys;
+static char *opt_sign_name;
 static char *opt_files;
 static char *opt_metadata;
 static char *opt_timestamp = NULL;
@@ -68,6 +70,8 @@ static GOptionEntry options[] = {
   { "exclude", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_exclude, N_("Files to exclude"), N_("PATTERN") },
   { "include", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_include, N_("Excluded files to include"), N_("PATTERN") },
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, N_("GPG Homedir to use when looking for keyrings"), N_("HOMEDIR") },
+  { "sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_sign_keys, N_("Key ID to sign the bundle with"), N_("KEY-ID")},
+  { "sign-type", 0, 0, G_OPTION_ARG_STRING, &opt_sign_name, N_("Signature type to use for --sign (defaults to 'ed25519')"), N_("NAME")},
   { "subset", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_subsets, "Add to a named subset", "SUBSET" },
   { "end-of-life", 0, 0, G_OPTION_ARG_STRING, &opt_endoflife, N_("Mark build as end-of-life"), N_("REASON") },
   { "end-of-life-rebase", 0, 0, G_OPTION_ARG_STRING, &opt_endoflife_rebase, N_("Mark build as end-of-life, to be replaced with the given ID"), N_("ID") },
@@ -1126,6 +1130,35 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
         }
     }
 
+  if (opt_sign_keys)
+    {
+      char **iter;
+      g_autoptr (OstreeSign) sign = NULL;
+
+      opt_sign_name = opt_sign_name ?: OSTREE_SIGN_NAME_ED25519;
+
+      sign = ostree_sign_get_by_name (opt_sign_name, error);
+      if (sign == NULL)
+        goto out;
+
+      for (iter = opt_sign_keys; iter && *iter; iter++)
+        {
+          const char *keyid = *iter;
+          g_autoptr (GVariant) secret_key = NULL;
+
+          secret_key = g_variant_new_string (keyid);
+          if (!ostree_sign_set_sk (sign, secret_key, error))
+            goto out;
+
+          if (!ostree_sign_commit (sign,
+                                   repo,
+                                   commit_checksum,
+                                   cancellable,
+                                   error))
+            goto out;
+        }
+    }
+
   if (collection_id != NULL)
     {
       OstreeCollectionRef ref = { (char *) collection_id, full_branch };
@@ -1141,6 +1174,7 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
 
   if (opt_update_appstream &&
       !flatpak_repo_generate_appstream (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir,
+                                        (const char **) opt_sign_keys, opt_sign_name,
                                         (opt_timestamp != NULL) ? ts.tv_sec : 0, cancellable, error))
     return FALSE;
 
@@ -1155,6 +1189,8 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
       if (!flatpak_repo_update (repo, flags,
                                 (const char **) opt_gpg_key_ids,
                                 opt_gpg_homedir,
+                                (const char **) opt_sign_keys,
+                                opt_sign_name,
                                 cancellable,
                                 error))
         goto out;

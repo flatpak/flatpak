@@ -1560,6 +1560,49 @@ test_dconf_paths (void)
 }
 
 static void
+test_verify_add (void)
+{
+  struct {
+    const char *input_keyspec;
+    const char *expected_config_key;
+    const char *expected_config_value;
+  } tests[] = {
+    { "dummy=inline:123", "verification-dummy-key", "123" },
+    { "dummy=file:/dev/null", "verification-dummy-file", "/dev/null" },
+    { "dummy=file:thisfileismissing", NULL, NULL },
+    { "dummy=inline:", NULL, NULL },
+    { "dummy=file:", NULL, NULL },
+    { "nonexistent-key-type=inline:123", NULL, NULL },
+    { "foo", NULL, NULL },
+    { "foo=bar", NULL, NULL },
+    { "foo=bar:baz", NULL, NULL },
+  };
+  int i;
+
+  for (i = 0; i < G_N_ELEMENTS (tests); i++)
+    {
+      g_autoptr(GKeyFile) key_file = g_key_file_new ();
+      g_autofree char *sign_type = NULL;
+
+      sign_type = flatpak_verify_add_config_options (key_file, "test",
+                                                     tests[i].input_keyspec, NULL);
+
+      if (tests[i].expected_config_key != NULL)
+        {
+          g_autofree char *config_value = NULL;
+
+          g_assert_cmpstr (sign_type, ==, "dummy");
+
+          config_value = g_key_file_get_string (key_file, "test",
+                                                tests[i].expected_config_key, NULL);
+          g_assert_cmpstr (config_value, ==, tests[i].expected_config_value);
+        }
+      else
+        g_assert_true (sign_type == NULL);
+    }
+}
+
+static void
 test_envp_cmp (void)
 {
   static const char * const unsorted[] =
@@ -1865,6 +1908,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/common/dconf-app-id", test_dconf_app_id);
   g_test_add_func ("/common/dconf-paths", test_dconf_paths);
   g_test_add_func ("/common/decompose-ref", test_decompose);
+  g_test_add_func ("/common/verify-add-config-options", test_verify_add);
   g_test_add_func ("/common/envp-cmp", test_envp_cmp);
   g_test_add_func ("/common/needs-quoting", test_needs_quoting);
   g_test_add_func ("/common/quote-argv", test_quote_argv);

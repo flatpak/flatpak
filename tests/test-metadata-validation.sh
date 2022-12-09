@@ -45,9 +45,9 @@ EOF
     if [[ $OPTIONS =~ "no-xametadata" ]]; then
         XA_METADATA="--add-metadata-string=xa.nometadata=1"
     fi
-    ostree commit --repo=repos/test --branch=app/org.test.Malicious/${ARCH}/master ${FL_GPGARGS} "$XA_METADATA" ${DIR}/ >&2
+    ostree commit --repo=repos/test --branch=app/org.test.Malicious/${ARCH}/master ${FL_GPGARGS} ${FL_SIGNARGS} "$XA_METADATA" ${DIR}/ >&2
     if [[ $OPTIONS =~ "no-cache-in-summary" ]]; then
-        ostree --repo=repos/test ${FL_GPGARGS} summary -u >&2
+        ostree --repo=repos/test ${FL_GPGARGS} ${FL_SIGNARGS} summary -u >&2
         # force use of legacy summary format
         rm -rf repos/test/summary.idx repos/test/summaries
     else

@@ -1743,6 +1743,7 @@ flatpak_installation_load_app_overrides (FlatpakInstallation *self,
 FlatpakInstalledRef *
 flatpak_installation_install_bundle (FlatpakInstallation    *self,
                                      GFile                  *file,
+                                     GVariant               *sign_data,
                                      FlatpakProgressCallback progress,
                                      gpointer                progress_data,
                                      GCancellable           *cancellable,
@@ -1759,7 +1760,7 @@ flatpak_installation_install_bundle (FlatpakInstallation    *self,
   if (dir == NULL)
     return NULL;
 
-  remote = flatpak_dir_ensure_bundle_remote (dir, file, NULL, &ref, NULL, NULL, &created_remote, cancellable, error);
+  remote = flatpak_dir_ensure_bundle_remote (dir, file, NULL, sign_data, &ref, NULL, NULL, &created_remote, cancellable, error);
   if (remote == NULL)
     return NULL;
 
@@ -1772,8 +1773,8 @@ flatpak_installation_install_bundle (FlatpakInstallation    *self,
   if (!flatpak_dir_ensure_repo (dir_clone, cancellable, error))
     return NULL;
 
-  if (!flatpak_dir_install_bundle (dir_clone, file, remote, NULL,
-                                   cancellable, error))
+  if (!flatpak_dir_install_bundle (dir_clone, file, sign_data, remote,
+                                   NULL, cancellable, error))
     return NULL;
 
   if (flatpak_decomposed_is_app (ref))

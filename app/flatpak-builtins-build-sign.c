@@ -36,12 +36,16 @@ static char *opt_arch;
 static gboolean opt_runtime;
 static char **opt_gpg_key_ids;
 static char *opt_gpg_homedir;
+static char **opt_sign_keys;
+static char *opt_sign_name;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to install for"), N_("ARCH") },
   { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, N_("Look for runtime with the specified name"), NULL },
   { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_key_ids, N_("GPG Key ID to sign the commit with"), N_("KEY-ID") },
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, N_("GPG Homedir to use when looking for keyrings"), N_("HOMEDIR") },
+  { "sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_sign_keys, N_("Key ID to sign the bundle with"), N_("KEY-ID")},
+  { "sign-type", 0, 0, G_OPTION_ARG_STRING, &opt_sign_name, N_("Signature type to use for --sign (defaults to 'ed25519')"), N_("NAME")},
   { NULL }
 };
 
@@ -52,6 +56,7 @@ flatpak_builtin_build_sign (int argc, char **argv, GCancellable *cancellable, GE
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GFile) repofile = NULL;
   g_autoptr(OstreeRepo) repo = NULL;
+  g_autoptr(OstreeSign) sign = NULL;
   g_autoptr(GError) my_error = NULL;
   const char *location;
   const char *branch;
@@ -89,8 +94,17 @@ flatpak_builtin_build_sign (int argc, char **argv, GCancellable *cancellable, GE
   if (!flatpak_is_valid_branch (branch, -1, &my_error))
     return flatpak_fail (error, _("'%s' is not a valid branch name: %s"), branch, my_error->message);
 
-  if (opt_gpg_key_ids == NULL)
-    return flatpak_fail (error, _("No gpg key ids specified"));
+  if (opt_gpg_key_ids == NULL && opt_sign_keys == NULL)
+    return flatpak_fail (error, _("No keys specified"));
+
+  if (opt_sign_keys)
+    {
+      opt_sign_name = opt_sign_name ?: OSTREE_SIGN_NAME_ED25519;
+
+      sign = ostree_sign_get_by_name (opt_sign_name, error);
+      if (sign == NULL)
+        return FALSE;
+    }
 
   repofile = g_file_new_for_commandline_arg (location);
   repo = ostree_repo_new (repofile);
@@ -157,6 +171,23 @@ flatpak_builtin_build_sign (int argc, char **argv, GCancellable *cancellable, GE
                   return FALSE;
                 }
             }
+        }
+
+      for (iter = opt_sign_keys; iter && *iter; iter++)
+        {
+          const char *key = *iter;
+          g_autoptr (GVariant) secret_key = NULL;
+
+          secret_key = g_variant_new_string (key);
+          if (!ostree_sign_set_sk (sign, secret_key, error))
+            return FALSE;
+
+          if (!ostree_sign_commit (sign,
+                                   repo,
+                                   commit_checksum,
+                                   cancellable,
+                                   error))
+            return FALSE;
         }
     }
 

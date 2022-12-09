@@ -27,6 +27,10 @@ USE_COLLECTIONS_IN_CLIENT=yes
 skip_without_bwrap
 skip_revokefs_without_fuse
 
+if [ x${FL_SIGN_ENABLED} != xyes ]; then
+    skip "Verification disabled, can't create sideloaded repo"
+fi
+
 echo "1..9"
 
 #Regular repo

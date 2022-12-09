@@ -360,7 +360,7 @@ echo "d" > ${DIR}/files/d/data
 echo "nope" > ${DIR}/files/nope
 
 ${FLATPAK} build-finish --command=hello.sh ${DIR} >&2
-${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} repos/test ${DIR} stable >&2
+${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} ${FL_SIGNARGS} repos/test ${DIR} stable >&2
 update_repo
 
 ${FLATPAK} ${U} install -y test-repo org.test.Split --subpath=/a --subpath=/b --subpath=/nosuchdir stable >&2
@@ -386,7 +386,7 @@ mkdir -p ${DIR}/files/f
 echo "f" > ${DIR}/files/f/data
 rm -rf  ${DIR}/files/b
 
-${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} repos/test ${DIR} stable >&2
+${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} ${FL_SIGNARGS} repos/test ${DIR} stable >&2
 update_repo
 
 ${FLATPAK} ${U} update -y --subpath=/a --subpath=/b --subpath=/e --subpath=/nosuchdir org.test.Split >&2
@@ -406,7 +406,7 @@ assert_has_file $FL_DIR/app/org.test.Split/$ARCH/stable/active/files/e/data
 assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/stable/active/files/f
 assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/stable/active/files/nope
 
-${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} repos/test ${DIR} stable >&2
+${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} ${FL_SIGNARGS} repos/test ${DIR} stable >&2
 update_repo
 
 # Test reusing the old subpath list
@@ -434,15 +434,15 @@ VERSION=`cat "$test_builddir/package_version.txt"`
 DIR=`mktemp -d`
 ${FLATPAK} build-init ${DIR} org.test.CurrentVersion org.test.Platform org.test.Platform stable >&2
 ${FLATPAK} build-finish --require-version=${VERSION} --command=hello.sh ${DIR} >&2
-${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} repos/test ${DIR} stable >&2
+${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} ${FL_SIGNARGS} repos/test ${DIR} stable >&2
 DIR=`mktemp -d`
 ${FLATPAK} build-init ${DIR} org.test.OldVersion org.test.Platform org.test.Platform stable >&2
 ${FLATPAK} build-finish --require-version=0.6.10 --command=hello.sh ${DIR} >&2
-${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} repos/test ${DIR} stable >&2
+${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} ${FL_SIGNARGS} repos/test ${DIR} stable >&2
 DIR=`mktemp -d`
 ${FLATPAK} build-init ${DIR} org.test.NewVersion org.test.Platform org.test.Platform stable >&2
 ${FLATPAK} build-finish --require-version=1${VERSION} --command=hello.sh ${DIR} >&2
-${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} repos/test ${DIR} stable >&2
+${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} ${FL_SIGNARGS} repos/test ${DIR} stable >&2
 
 update_repo
 
@@ -453,7 +453,7 @@ ${FLATPAK} ${U} install -y test-repo org.test.CurrentVersion stable >&2
 DIR=`mktemp -d`
 ${FLATPAK} build-init ${DIR} org.test.OldVersion org.test.Platform org.test.Platform stable >&2
 ${FLATPAK} build-finish --require-version=99.0.0 --command=hello.sh ${DIR} >&2
-${FLATPAK} build-export  --no-update-summary ${FL_GPGARGS} repos/test ${DIR} stable >&2
+${FLATPAK} build-export  --no-update-summary ${FL_GPGARGS} ${FL_SIGNARGS} repos/test ${DIR} stable >&2
 update_repo
 
 (! ${FLATPAK} ${U} update -y org.test.OldVersion) >&2
@@ -461,7 +461,7 @@ update_repo
 DIR=`mktemp -d`
 ${FLATPAK} build-init ${DIR} org.test.OldVersion org.test.Platform org.test.Platform stable >&2
 ${FLATPAK} build-finish --require-version=0.1.1 --command=hello.sh ${DIR} >&2
-${FLATPAK} build-export  --no-update-summary ${FL_GPGARGS} repos/test ${DIR} stable >&2
+${FLATPAK} build-export  --no-update-summary ${FL_GPGARGS} ${FL_SIGNARGS} repos/test ${DIR} stable >&2
 update_repo
 
 ${FLATPAK} ${U} update -y org.test.OldVersion >&2
@@ -474,12 +474,12 @@ DIR=`mktemp -d`
 ${FLATPAK} build-init ${DIR} org.test.CurrentVersion org.test.Platform org.test.Platform stable >&2
 touch ${DIR}/files/updated
 ${FLATPAK} build-finish --require-version=99.0.0 --command=hello.sh ${DIR} >&2
-${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} repos/test ${DIR} stable >&2
+${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} ${FL_SIGNARGS} repos/test ${DIR} stable >&2
 DIR=`mktemp -d`
 ${FLATPAK} build-init ${DIR} org.test.OldVersion org.test.Platform org.test.Platform stable >&2
 touch ${DIR}/files/updated
 ${FLATPAK} build-finish --require-version=${VERSION} --command=hello.sh ${DIR} >&2
-${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} repos/test ${DIR} stable >&2
+${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} ${FL_SIGNARGS} repos/test ${DIR} stable >&2
 update_repo
 
 if ${FLATPAK} ${U} update -y &> err_version.txt; then
@@ -499,7 +499,7 @@ chmod a+rwx app/files/a-dir
 ${FLATPAK} build-finish --command=hello.sh app >&2
 # Note: not --canonical-permissions
 ${FLATPAK} build-export -vv  --no-update-summary --disable-sandbox --files=files repos/test app stable >&2
-ostree --repo=repos/test commit  --keep-metadata=xa.metadata --owner-uid=0 --owner-gid=0  --no-xattrs  ${FL_GPGARGS} --branch=app/org.test.Writable/$ARCH/stable app >&2
+ostree --repo=repos/test commit  --keep-metadata=xa.metadata --owner-uid=0 --owner-gid=0  --no-xattrs  ${FL_GPGARGS} ${FL_SIGNARGS} --branch=app/org.test.Writable/$ARCH/stable app >&2
 update_repo
 
 # In the system-helper case this fails to install due to the permission canonicalization happening in the
@@ -519,7 +519,7 @@ chmod u+s app/files/exe
 ${FLATPAK} build-finish --command=hello.sh app >&2
 # Note: not --canonical-permissions
 ${FLATPAK} build-export -vv  --no-update-summary --disable-sandbox --files=files repos/test app stable >&2
-ostree -v --repo=repos/test commit --keep-metadata=xa.metadata --owner-uid=0 --owner-gid=0 --no-xattrs  ${FL_GPGARGS} --branch=app/org.test.Setuid/$ARCH/stable app >&2
+ostree -v --repo=repos/test commit --keep-metadata=xa.metadata --owner-uid=0 --owner-gid=0 --no-xattrs  ${FL_GPGARGS} ${FL_SIGNARGS} --branch=app/org.test.Setuid/$ARCH/stable app >&2
 update_repo
 
 if ${FLATPAK} ${U} install -y test-repo org.test.Setuid &> err2.txt; then
@@ -534,7 +534,7 @@ ${FLATPAK} build-init app org.test.App org.test.Platform org.test.Platform stabl
 mkdir -p app/files/
 touch app/files/exe
 ${FLATPAK} build-finish --command=hello.sh --sdk=org.test.Sdk app >&2
-${FLATPAK} build-export  --no-update-summary ${FL_GPGARGS} repos/test app stable >&2
+${FLATPAK} build-export  --no-update-summary ${FL_GPGARGS} ${FL_SIGNARGS} repos/test app stable >&2
 update_repo
 
 ${FLATPAK} ${U} install -y test-repo org.test.App >&2

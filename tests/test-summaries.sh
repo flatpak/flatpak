@@ -71,7 +71,7 @@ EOF
     cp $(dirname $0)/org.test.Hello.png ${DIR}/files/share/app-info/icons/flatpak/64x64/${APP_ID}.png
 
     $FLATPAK build-finish --command=hello.sh ${DIR} &> /dev/null
-    $FLATPAK build-export --no-update-summary ${GPGARGS} --arch=$APPARCH --disable-sandbox  ${REPO} ${DIR} &> /dev/null
+    $FLATPAK build-export --no-update-summary ${GPGARGS} ${FL_SIGNARGS} --arch=$APPARCH --disable-sandbox  ${REPO} ${DIR} &> /dev/null
     rm -rf ${DIR}
 }
 
@@ -152,7 +152,7 @@ ARCHES=${!arches[@]}
 for A in $ARCHES; do
     # Create runtimes for all arches (based on $ARCH version)
     if [ $A != $ARCH ]; then
-        $FLATPAK build-commit-from  ${GPGARGS} --src-ref=runtime/org.test.Platform/$ARCH/master repos/test runtime/org.test.Platform/$A/master >&2
+        $FLATPAK build-commit-from  ${GPGARGS} ${FL_SIGNARGS} --src-ref=runtime/org.test.Platform/$ARCH/master repos/test runtime/org.test.Platform/$A/master >&2
     fi
 
     # Create a bunch of apps (for all arches)
@@ -197,7 +197,7 @@ assert_has_file $FL_CACHE_DIR/summaries/test-repo-${OTHER_ARCH}-${ACTIVE_SUBSET_
 assert_file_has_content httpd-log summaries/${ACTIVE_SUBSET_OTHER}.gz
 
 # Modify the ARCH subset
-$FLATPAK build-commit-from ${GPGARGS} --src-ref=app/org.app.App1/$ARCH/master repos/test app/org.app.App1.NEW/$ARCH/master >&2
+$FLATPAK build-commit-from ${GPGARGS} ${FL_SIGNARGS} --src-ref=app/org.app.App1/$ARCH/master repos/test app/org.app.App1.NEW/$ARCH/master >&2
 
 OLD_ACTIVE_SUBSET=$ACTIVE_SUBSET
 OLD_ACTIVE_SUBSET_OTHER=$ACTIVE_SUBSET_OTHER
@@ -219,8 +219,8 @@ assert_not_file_has_content httpd-log summaries/${ACTIVE_SUBSET}.gz
 assert_file_has_content httpd-log summaries/${OLD_ACTIVE_SUBSET}-${ACTIVE_SUBSET}.delta
 
 # Modify the ARCH *and* OTHER_ARCH subset
-$FLATPAK build-commit-from ${GPGARGS} --src-ref=app/org.app.App1/$ARCH/master repos/test app/org.app.App1.NEW2/$ARCH/master >&2
-$FLATPAK build-commit-from ${GPGARGS} --src-ref=app/org.app.App1/$OTHER_ARCH/master repos/test app/org.app.App1.NEW2/$OTHER_ARCH/master >&2
+$FLATPAK build-commit-from ${GPGARGS} ${FL_SIGNARGS} --src-ref=app/org.app.App1/$ARCH/master repos/test app/org.app.App1.NEW2/$ARCH/master >&2
+$FLATPAK build-commit-from ${GPGARGS} ${FL_SIGNARGS} --src-ref=app/org.app.App1/$OTHER_ARCH/master repos/test app/org.app.App1.NEW2/$OTHER_ARCH/master >&2
 
 OLD_OLD_ACTIVE_SUBSET=$OLD_ACTIVE_SUBSET
 OLD_OLD_ACTIVE_SUBSET_OTHER=$OLD_ACTIVE_SUBSET_OTHER

@@ -25,6 +25,11 @@ skip_without_bwrap
 
 echo "1..14"
 
+OPT_SIGN_VERIFY=
+if [ x${FL_SIGN_ENABLED} == xyes ]; then
+    OPT_SIGN_VERIFY="--sign-verify=ed25519=inline:${FL_SIGN_PUBKEY}"
+fi
+
 # Start the fake registry server
 
 httpd oci-registry-server.py .
@@ -35,10 +40,10 @@ setup_repo_no_add oci
 
 # Add OCI bundles to it
 
-${FLATPAK} build-bundle --runtime --oci $FL_GPGARGS repos/oci oci/platform-image org.test.Platform >&2
+${FLATPAK} build-bundle --runtime --oci $FL_GPGARGS $FL_SIGNARGS repos/oci oci/platform-image org.test.Platform >&2
 $client add platform latest $(pwd)/oci/platform-image
 
-${FLATPAK} build-bundle --oci $FL_GPGARGS repos/oci oci/app-image org.test.Hello >&2
+${FLATPAK} build-bundle --oci $FL_GPGARGS $FL_SIGNARGS repos/oci oci/app-image org.test.Hello >&2
 $client add hello latest $(pwd)/oci/app-image
 
 # Add an OCI remote
@@ -101,7 +106,7 @@ ok "install"
 
 make_updated_app oci
 
-${FLATPAK} build-bundle --oci $FL_GPGARGS repos/oci oci/app-image org.test.Hello >&2
+${FLATPAK} build-bundle --oci $FL_GPGARGS $FL_SIGNARGS repos/oci oci/app-image org.test.Hello >&2
 
 $client add hello latest $(pwd)/oci/app-image
 
@@ -214,9 +219,9 @@ ok "prune origin remote"
 
 # Install from a (non-OCI) bundle, check that the repo-url is respected
 
-${FLATPAK} build-bundle --runtime --repo-url "oci+http://127.0.0.1:${port}" $FL_GPGARGS repos/oci org.test.Platform.flatpak org.test.Platform >&2
+${FLATPAK} build-bundle --runtime --repo-url "oci+http://127.0.0.1:${port}" $FL_GPGARGS $FL_SIGNARGS repos/oci org.test.Platform.flatpak org.test.Platform >&2
 
-${FLATPAK} ${U} install -y --bundle org.test.Platform.flatpak >&2
+${FLATPAK} ${U} install -y --bundle ${OPT_SIGN_VERIFY} org.test.Platform.flatpak >&2
 
 ${FLATPAK} remotes -d > remotes-list
 assert_file_has_content remotes-list "^platform-origin.*[ 	]oci+http://127\.0\.0\.1:${port}"
@@ -227,9 +232,9 @@ ok "install via bundle"
 
 # Install an app from a bundle
 
-${FLATPAK} build-bundle --repo-url "oci+http://127.0.0.1:${port}" $FL_GPGARGS repos/oci org.test.Hello.flatpak org.test.Hello >&2
+${FLATPAK} build-bundle --repo-url "oci+http://127.0.0.1:${port}" $FL_GPGARGS $FL_SIGNARGS repos/oci org.test.Hello.flatpak org.test.Hello >&2
 
-${FLATPAK} ${U} install -y --bundle org.test.Hello.flatpak >&2
+${FLATPAK} ${U} install -y --bundle ${OPT_SIGN_VERIFY} org.test.Hello.flatpak >&2
 
 ${FLATPAK} remotes -d > remotes-list
 assert_file_has_content remotes-list "^hello-origin.*[ 	]oci+http://127\.0\.0\.1:${port}"
@@ -241,9 +246,9 @@ ok "app install via bundle"
 # Install an updated app bundle with a different origin
 
 make_updated_app oci
-${FLATPAK} build-bundle --repo-url "http://127.0.0.1:${port}" $FL_GPGARGS repos/oci org.test.Hello.flatpak org.test.Hello >&2
+${FLATPAK} build-bundle --repo-url "http://127.0.0.1:${port}" $FL_GPGARGS $FL_SIGNARGS repos/oci org.test.Hello.flatpak org.test.Hello >&2
 
-${FLATPAK} ${U} install -y --bundle org.test.Hello.flatpak >&2
+${FLATPAK} ${U} install -y --bundle ${OPT_SIGN_VERIFY} org.test.Hello.flatpak >&2
 
 ${FLATPAK} remotes -d > remotes-list
 assert_file_has_content remotes-list "^hello-origin.*[ 	]http://127\.0\.0\.1:${port}"

@@ -36,10 +36,10 @@ $FLATPAK repo --branches repos/test > repo-all.txt
 assert_file_has_content repo-all.txt "app/org\.test\.Hello/$ARCH/master"
 assert_file_has_content repo-all.txt "runtime/org\.test\.Platform/$ARCH/master"
 
-EXPORT_ARGS="--subset=subset1 " GPGARGS="${FL_GPGARGS}" $(dirname $0)/make-test-app.sh repos/test org.test.SubsetOne master ""
-EXPORT_ARGS="--subset=subset2 " GPGARGS="${FL_GPGARGS}" $(dirname $0)/make-test-app.sh repos/test org.test.SubsetTwo master ""
-EXPORT_ARGS="" GPGARGS="${FL_GPGARGS}" $(dirname $0)/make-test-app.sh repos/test org.test.NoSubset master ""
-${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} ${FL_GPGARGS} repos/test >&2
+EXPORT_ARGS="--subset=subset1 " GPGARGS="${FL_GPGARGS}" SIGNARGS="${FL_SIGNARGS}" $(dirname $0)/make-test-app.sh repos/test org.test.SubsetOne master ""
+EXPORT_ARGS="--subset=subset2 " GPGARGS="${FL_GPGARGS}" SIGNARGS="${FL_SIGNARGS}" $(dirname $0)/make-test-app.sh repos/test org.test.SubsetTwo master ""
+EXPORT_ARGS="" GPGARGS="${FL_GPGARGS}" SIGNARGS="${FL_SIGNARGS}" $(dirname $0)/make-test-app.sh repos/test org.test.NoSubset master ""
+${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} ${FL_GPGARGS} ${FL_SIGNARGS} repos/test >&2
 
 $FLATPAK repo repos/test > repo-info.txt
 assert_file_has_content repo-info.txt "Subsummaries: .*subset1-$ARCH.*"

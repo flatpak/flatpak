@@ -492,6 +492,8 @@ gboolean flatpak_repo_update (OstreeRepo            *repo,
                               FlatpakRepoUpdateFlags flags,
                               const char           **gpg_key_ids,
                               const char            *gpg_homedir,
+                              const char           **key_ids,
+                              const char            *sign_name,
                               GCancellable          *cancellable,
                               GError               **error);
 gboolean flatpak_repo_collect_sizes (OstreeRepo   *repo,
@@ -537,6 +539,7 @@ gboolean flatpak_mtree_create_dir (OstreeRepo         *repo,
 GVariant *flatpak_bundle_load (GFile              *file,
                                char              **commit,
                                FlatpakDecomposed **ref,
+                               GVariant           *sign_keys,
                                char              **origin,
                                char              **runtime_repo,
                                char              **app_metadata,
@@ -550,6 +553,8 @@ gboolean flatpak_pull_from_bundle (OstreeRepo   *repo,
                                    const char   *remote,
                                    const char   *ref,
                                    gboolean      require_gpg_signature,
+                                   gboolean      require_signature,
+                                   GVariant     *sign_keys,
                                    GCancellable *cancellable,
                                    GError      **error);
 
@@ -818,6 +823,8 @@ gboolean flatpak_appstream_xml_root_to_data (FlatpakXml *appstream_root,
 gboolean   flatpak_repo_generate_appstream (OstreeRepo   *repo,
                                             const char  **gpg_key_ids,
                                             const char   *gpg_homedir,
+                                            const char  **key_ids,
+                                            const char   *sign_name,
                                             guint64       timestamp,
                                             GCancellable *cancellable,
                                             GError      **error);
@@ -913,6 +920,25 @@ gboolean flatpak_repo_resolve_rev (OstreeRepo    *repo,
                                    char         **out_rev,
                                    GCancellable  *cancellable,
                                    GError       **error);
+
+typedef enum {
+  FLATPAK_VERIFY_KEY_REF_INLINE,
+  FLATPAK_VERIFY_KEY_REF_FILE,
+} FlatpakVerifyKeyRef;
+
+gboolean flatpak_verify_parse_keyspec (const char          *spec,
+                                       char               **type,
+                                       FlatpakVerifyKeyRef *ref,
+                                       char               **data,
+                                       GError             **error);
+
+char *flatpak_verify_add_config_options (GKeyFile   *config,
+                                         const char *group,
+                                         const char *keyspec,
+                                         GError    **error);
+
+GVariant *flatpak_verify_parse_keys (char   **verify_keys,
+                                     GError **error);
 
 static inline void
 null_safe_g_ptr_array_unref (gpointer data)

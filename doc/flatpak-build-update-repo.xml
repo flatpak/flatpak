@@ -192,6 +192,22 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--sign=KEY</option></term>
+
+                <listitem><para>
+                    Use the given signing key, in the format determined by <option>--sign-type</option>.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--sign-type=TYPE</option></term>
+
+                <listitem><para>
+                    Signature type to use for <option>--sign</option> (default is 'ed25519').
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--generate-static-deltas</option></term>
 
                 <listitem><para>

@@ -38,7 +38,7 @@ ${FLATPAK} build-init ${DIR} org.test.App org.test.Platform org.test.Platform >&
 mkdir -p ${DIR}/files/a
 echo "a" > ${DIR}/files/a/data
 ${FLATPAK} build-finish ${DIR} --socket=x11 --share=network --command=true >&2
-${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} --update-appstream repos/test ${DIR} master >&2
+${FLATPAK} build-export --no-update-summary ${FL_GPGARGS} ${FL_SIGNARGS} --update-appstream repos/test ${DIR} master >&2
 update_repo
 
 ${FLATPAK} ${U} install -y test-repo org.test.App master >&2
@@ -47,13 +47,26 @@ assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=true$'
 assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=false$'
 assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify=true$'
 assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify=false$'
+
+if [ x${FL_SIGN_ENABLED} == xyes ]; then
+    assert_file_has_content ${FL_DIR}/repo/config '^sign-verify-summary=true$'
+    assert_not_file_has_content ${FL_DIR}/repo/config '^sign-verify-summary=false$'
+    assert_file_has_content ${FL_DIR}/repo/config '^sign-verify=ed25519$'
+    assert_not_file_has_content ${FL_DIR}/repo/config '^sign-verify=false$'
+else
+    assert_file_has_content ${FL_DIR}/repo/config '^sign-verify-summary=false$'
+    assert_not_file_has_content ${FL_DIR}/repo/config '^sign-verify-summary=true$'
+    assert_file_has_content ${FL_DIR}/repo/config '^sign-verify=false$'
+    assert_not_file_has_content ${FL_DIR}/repo/config '^sign-verify=ed25519$'
+fi
+
 assert_not_file_has_content ${FL_DIR}/repo/config '^collection-id='
 
 # Change its configuration to include a collection ID, update the repository,
 # but don’t mark the collection ID as to be deployed yet. Ensure it doesn’t
 # appear in the client’s configuration.
 echo -e "[core]\ncollection-id=org.test.Collection" >> repos/test/config
-${FLATPAK} build-export --no-update-summary  ${FL_GPGARGS} --update-appstream repos/test --collection-id org.test.Collection ${DIR} master >&2
+${FLATPAK} build-export --no-update-summary  ${FL_GPGARGS} ${FL_SIGNARGS} --update-appstream repos/test --collection-id org.test.Collection ${DIR} master >&2
 UPDATE_REPO_ARGS="--collection-id=org.test.Collection" update_repo
 
 ${FLATPAK} ${U} update -y org.test.App master >&2
@@ -62,7 +75,19 @@ assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=true$'
 assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=false$'
 assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify=true$'
 assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify=false$'
-assert_not_file_has_content ${FL_DIR}/repo/config '^collection-id='
+
+if [ x${FL_SIGN_ENABLED} == xyes ]; then
+    assert_file_has_content ${FL_DIR}/repo/config '^sign-verify-summary=true$'
+    assert_not_file_has_content ${FL_DIR}/repo/config '^sign-verify-summary=false$'
+    assert_file_has_content ${FL_DIR}/repo/config '^sign-verify=ed25519$'
+    assert_not_file_has_content ${FL_DIR}/repo/config '^sign-verify=false$'
+else
+    assert_file_has_content ${FL_DIR}/repo/config '^sign-verify-summary=false$'
+    assert_not_file_has_content ${FL_DIR}/repo/config '^sign-verify-summary=true$'
+    assert_file_has_content ${FL_DIR}/repo/config '^sign-verify=false$'
+    assert_not_file_has_content ${FL_DIR}/repo/config '^sign-verify=ed25519$'
+fi
+
 assert_not_file_has_content ${FL_DIR}/repo/config '^collection-id='
 
 ok "1 update repo config without deploying collection ID"
@@ -78,6 +103,19 @@ assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=true$'
 assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=false$'
 assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify=true$'
 assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify=false$'
+
+if [ x${FL_SIGN_ENABLED} == xyes ]; then
+    assert_file_has_content ${FL_DIR}/repo/config '^sign-verify-summary=true$'
+    assert_not_file_has_content ${FL_DIR}/repo/config '^sign-verify-summary=false$'
+    assert_file_has_content ${FL_DIR}/repo/config '^sign-verify=ed25519$'
+    assert_not_file_has_content ${FL_DIR}/repo/config '^sign-verify=false$'
+else
+    assert_file_has_content ${FL_DIR}/repo/config '^sign-verify-summary=false$'
+    assert_not_file_has_content ${FL_DIR}/repo/config '^sign-verify-summary=true$'
+    assert_file_has_content ${FL_DIR}/repo/config '^sign-verify=false$'
+    assert_not_file_has_content ${FL_DIR}/repo/config '^sign-verify=ed25519$'
+fi
+
 assert_file_has_content ${FL_DIR}/repo/config '^collection-id=org\.test\.Collection$'
 
 # Try the deploy for sideload only method
