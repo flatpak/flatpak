@@ -12,7 +12,7 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2022-11-17 18:15+0000\n"
-"PO-Revision-Date: 2022-06-20 23:22+0300\n"
+"PO-Revision-Date: 2022-12-19 23:59+0300\n"
 "Last-Translator: Sabri Ünal <libreajans@gmail.com>\n"
 "Language-Team: Türkçe <gnome-turk@gnome.org>\n"
 "Language: tr\n"
@@ -20,7 +20,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 3.1\n"
+"X-Generator: Poedit 3.1.1\n"
 
 #: app/flatpak-builtins-build-bundle.c:57
 msgid "Export runtime instead of app"
@@ -849,14 +849,14 @@ msgid "Re-initialize the sdk/var"
 msgstr "Sdk/var'ı yeniden ilklendir"
 
 #: app/flatpak-builtins-build-init.c:118
-#, fuzzy, c-format
+#, c-format
 msgid "Requested extension %s/%s/%s is only partially installed"
-msgstr "Talep edilen uzantı %s sadece kısmi olarak kurulmuş"
+msgstr "Talep edilen uzantı %s/%s/%s sadece kısmi olarak kurulmuş"
 
 #: app/flatpak-builtins-build-init.c:147
-#, fuzzy, c-format
+#, c-format
 msgid "Requested extension %s/%s/%s not installed"
-msgstr "Talep edilen uzantı %s kurulu değil"
+msgstr "Talep edilen uzantı %s/%s/%s kurulu değil"
 
 #: app/flatpak-builtins-build-init.c:207
 msgid ""
@@ -1261,7 +1261,7 @@ msgstr "Kurulu referans ‘%s’ ek veri, ve çevrim dışı olarak dağıtılam
 #: app/flatpak-builtins-create-usb.c:719
 #, c-format
 msgid "Warning: Couldn't update repo metadata for remote ‘%s’: %s\n"
-msgstr "Uyarı: Depo üstverisi ‘%s’ uzağı için güncellenemedi: %s\n"
+msgstr "Uyarı: Depo üst verisi ‘%s’ uzağı için güncellenemedi: %s\n"
 
 #: app/flatpak-builtins-create-usb.c:749
 #, c-format
@@ -3168,17 +3168,16 @@ msgstr "%s verileri silinsin mi?"
 #: app/flatpak-builtins-uninstall.c:220
 #, c-format
 msgid "Info: applications using the extension %s%s%s branch %s%s%s:\n"
-msgstr ""
+msgstr "Bilgi: %s%s%s eklentisinin %s%s%s dalını kullanan uygulamalar:\n"
 
 #: app/flatpak-builtins-uninstall.c:223
-#, fuzzy, c-format
+#, c-format
 msgid "Info: applications using the runtime %s%s%s branch %s%s%s:\n"
-msgstr "Çalışma ortamını kullanan uygulamalar:\n"
+msgstr "%s%s%s çalışma ortamının %s%s%s dalını kullanan uygulamalar:\n"
 
 #: app/flatpak-builtins-uninstall.c:238
-#, fuzzy
 msgid "Really remove?"
-msgstr "herhangi uzak"
+msgstr "Gerçekten kaldırılsın mı?"
 
 #: app/flatpak-builtins-uninstall.c:255
 msgid "[REF…] - Uninstall applications or runtimes"
@@ -3518,77 +3517,74 @@ msgid "Info: %s was skipped"
 msgstr "Bilgi: %s atlandı"
 
 #: app/flatpak-cli-transaction.c:512
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: %s%s%s already installed"
-msgstr "%s zaten kurulu"
+msgstr "Uyarı: %s%s%s zaten kurulu"
 
 #: app/flatpak-cli-transaction.c:515
-#, fuzzy, c-format
+#, c-format
 msgid "Error: %s%s%s already installed"
-msgstr "%s zaten kurulu"
+msgstr "Hata: %s%s%s zaten kurulu"
 
 #: app/flatpak-cli-transaction.c:521
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: %s%s%s not installed"
-msgstr "Uyarı: %s kurulu değil\n"
+msgstr "Uyarı: %s%s%s kurulu değil"
 
 #: app/flatpak-cli-transaction.c:524
-#, fuzzy, c-format
+#, c-format
 msgid "Error: %s%s%s not installed"
-msgstr "%s/%s/%s kurulu değil"
+msgstr "Hata: %s%s%s kurulu değil"
 
 #: app/flatpak-cli-transaction.c:530
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: %s%s%s needs a later flatpak version"
-msgstr "%s daha üst bir flatpak sürümünü gerektiriyor"
+msgstr "Uyarı: %s%s%s daha üst bir flatpak sürümünü gerektiriyor"
 
 #: app/flatpak-cli-transaction.c:533
-#, fuzzy, c-format
+#, c-format
 msgid "Error: %s%s%s needs a later flatpak version"
-msgstr "%s daha üst bir flatpak sürümünü gerektiriyor"
+msgstr "Hata: %s%s%s daha üst bir flatpak sürümünü gerektiriyor"
 
 #: app/flatpak-cli-transaction.c:539
-#, fuzzy
 msgid "Warning: Not enough disk space to complete this operation"
-msgstr "Bu işlemi tamamlamak için yeterli disk alanı yok"
+msgstr "Uyarı: Bu işlemi tamamlamak için yeterli disk alanı yok"
 
 #: app/flatpak-cli-transaction.c:541
-#, fuzzy
 msgid "Error: Not enough disk space to complete this operation"
-msgstr "Bu işlemi tamamlamak için yeterli disk alanı yok"
+msgstr "Hata: Bu işlemi tamamlamak için yeterli disk alanı yok"
 
 #: app/flatpak-cli-transaction.c:546
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: %s"
-msgstr "Uyarı: "
+msgstr "Uyarı: %s"
 
 #: app/flatpak-cli-transaction.c:548
-#, fuzzy, c-format
+#, c-format
 msgid "Error: %s"
-msgstr "Hata:"
+msgstr "Hata: %s"
 
 # flatpak_ref_get_name, rebased_to_ref, error->message
 #: app/flatpak-cli-transaction.c:563
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to install %s%s%s: "
-msgstr "%s, %s referansına yeniden temellendirmek için kaldırılamadı: "
+msgstr "%s%s%s kurulamadı: "
 
 #: app/flatpak-cli-transaction.c:570
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to update %s%s%s: "
-msgstr "%s başarısız oldu %s: "
+msgstr "%s%s%s güncellenemedi: "
 
 # flatpak_ref_get_name, rebased_to_ref, error->message
 #: app/flatpak-cli-transaction.c:577
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to install bundle %s%s%s: "
-msgstr "%s, %s referansına yeniden temellendirmek için kaldırılamadı: "
+msgstr "%s%s%s paketi kurulamadı: "
 
-# flatpak_ref_get_name, rebased_to_ref, error->message
 #: app/flatpak-cli-transaction.c:584
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to uninstall %s%s%s: "
-msgstr "%s, %s referansına yeniden temellendirmek için kaldırılamadı: "
+msgstr "%s%s%s kaldırılamadı: "
 
 #: app/flatpak-cli-transaction.c:626
 #, c-format
@@ -3610,68 +3606,74 @@ msgstr "Parola"
 
 #. Only runtimes can be pinned
 #: app/flatpak-cli-transaction.c:743
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Info: (pinned) runtime %s%s%s branch %s%s%s is end-of-life, in favor of "
 "%s%s%s branch %s%s%s\n"
-msgstr "Bilgi: (sabitlenmiş) %s//%s ömrünün sonuna geldi, %s yararına\n"
+msgstr ""
+"\n"
+"Bilgi: (Sabitlenmiş) çalışma ortamı %s%s%s, dal %s%s%s, ömrünün sonuna "
+"geldi, %s%s%s dal %s%s%s yararına\n"
 
 #: app/flatpak-cli-transaction.c:749
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Info: runtime %s%s%s branch %s%s%s is end-of-life, in favor of %s%s%s branch "
 "%s%s%s\n"
 msgstr ""
 "\n"
-"Bilgi: %s%s %s ömrünün sonuna geldi, %s yararına\n"
+"Bilgi: Çalışma ortamı %s%s%s, dal %s%s%s, ömrünün sonuna geldi, %s%s%s dal "
+"%s%s%s yararına\n"
 
 #: app/flatpak-cli-transaction.c:752
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Info: app %s%s%s branch %s%s%s is end-of-life, in favor of %s%s%s branch "
 "%s%s%s\n"
 msgstr ""
 "\n"
-"Bilgi: %s%s %s ömrünün sonuna geldi, %s yararına\n"
+"Bilgi: Uygulama %s%s%s, dal %s%s%s, ömrünün sonuna geldi, %s%s%s dal %s%s%s "
+"yararına\n"
 
 #. Only runtimes can be pinned
 #: app/flatpak-cli-transaction.c:761
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Info: (pinned) runtime %s%s%s branch %s%s%s is end-of-life, with reason:\n"
-msgstr "Bilgi: (sabitlenmiş) %s//%s ömrünün sonuna geldi, şu sebeple:\n"
+msgstr ""
+"\n"
+"Bilgi: (Sabitlenmiş) çalışma ortamı %s%s%s, dal %s%s%s, ömrünün sonuna "
+"geldi, şu sebeple:\n"
 
 #: app/flatpak-cli-transaction.c:767
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Info: runtime %s%s%s branch %s%s%s is end-of-life, with reason:\n"
 msgstr ""
 "\n"
-"Bilgi: %s%s %s ömrünün sonuna geldi, şu sebeple:\n"
+"Bilgi: Çalışma ortamı %s%s%s, dal %s%s%s, ömrünün sonuna geldi, şu sebeple:\n"
 
 #: app/flatpak-cli-transaction.c:770
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Info: app %s%s%s branch %s%s%s is end-of-life, with reason:\n"
 msgstr ""
 "\n"
-"Bilgi: %s%s %s ömrünün sonuna geldi, şu sebeple:\n"
+"Bilgi: Uygulama %s%s%s, dal %s%s%s, ömrünün sonuna geldi, şu sebeple:\n"
 
 #: app/flatpak-cli-transaction.c:944
-#, fuzzy
 msgid "Info: applications using this extension:\n"
-msgstr "Çalışma ortamını kullanan uygulamalar:\n"
+msgstr "Bilgi: Eklentiyi kullanan uygulamalar:\n"
 
 #: app/flatpak-cli-transaction.c:946
-#, fuzzy
 msgid "Info: applications using this runtime:\n"
-msgstr "Çalışma ortamını kullanan uygulamalar:\n"
+msgstr "Bilgi: Çalışma ortamını kullanan uygulamalar:\n"
 
 #: app/flatpak-cli-transaction.c:965
 msgid "Replace?"
@@ -4111,54 +4113,45 @@ msgstr "Güncelleniyor %s\n"
 msgid "Uninstalling %s\n"
 msgstr "Kaldırılıyor %s\n"
 
-# ilk s Warning veya Error kelimelerinin çevirilerini basıyor.
-# İkincisi bölünmüş cümle ve işlem türünü basıyor.
-# Üçüncü referans bilgisini basıyor.
-# En son hata mesajı basılıyor.
 #: app/flatpak-quiet-transaction.c:107
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: Failed to install %s: %s\n"
-msgstr "%s %s başarısız oldu (referans %s): %s\n"
+msgstr "Uyarı: %s kurulamadı: %s\n"
 
 #: app/flatpak-quiet-transaction.c:110
-#, fuzzy, c-format
+#, c-format
 msgid "Error: Failed to install %s: %s\n"
-msgstr "%s yeniden kurulurken hata: %s\n"
+msgstr "Hata: %s kurulamadı: %s\n"
 
 #: app/flatpak-quiet-transaction.c:116
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: Failed to update %s: %s\n"
-msgstr "%s güncellenemedi: %s\n"
+msgstr "Uyarı: %s güncellenemedi: %s\n"
 
 #: app/flatpak-quiet-transaction.c:119
-#, fuzzy, c-format
+#, c-format
 msgid "Error: Failed to update %s: %s\n"
-msgstr "%s güncellenemedi: %s\n"
+msgstr "Hata: %s güncellenemedi: %s\n"
 
-# flatpak_ref_get_name, rebased_to_ref, error->message
 #: app/flatpak-quiet-transaction.c:125
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: Failed to install bundle %s: %s\n"
-msgstr "%s, %s referansına yeniden temellendirmek için kaldırılamadı: %s\n"
+msgstr "Uyarı: %s paketi kaldırılamadı: %s\n"
 
 #: app/flatpak-quiet-transaction.c:128
-#, fuzzy, c-format
+#, c-format
 msgid "Error: Failed to install bundle %s: %s\n"
-msgstr "%s yeniden kurulurken hata: %s\n"
+msgstr "Hata: %s paketi kurulamadı: %s\n"
 
-# ilk s Warning veya Error kelimelerinin çevirilerini basıyor.
-# İkincisi bölünmüş cümle ve işlem türünü basıyor.
-# Üçüncü referans bilgisini basıyor.
-# En son hata mesajı basılıyor.
 #: app/flatpak-quiet-transaction.c:134
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: Failed to uninstall %s: %s\n"
-msgstr "%s %s başarısız oldu (referans %s): %s\n"
+msgstr "Uyarı: %s kaldırılamadı: %s\n"
 
 #: app/flatpak-quiet-transaction.c:137
-#, fuzzy, c-format
+#, c-format
 msgid "Error: Failed to uninstall %s: %s\n"
-msgstr "%s yeniden kurulurken hata: %s\n"
+msgstr "Hata: %s kaldırılamadı: %s\n"
 
 #: app/flatpak-quiet-transaction.c:166 common/flatpak-dir.c:10396
 #, c-format
@@ -4849,7 +4842,7 @@ msgid ""
 "URL passed to remote-add was valid."
 msgstr ""
 "Uzak listeleme %s için kullanılabilir değil; sunucunun özet dosyası yok. "
-"remote-add için kullanılan URL'yi doğruluğunu denetleyin."
+"remote-add için kullanılan URL'nin doğruluğunu denetleyin."
 
 #: common/flatpak-dir.c:12611
 #, c-format
@@ -5458,46 +5451,46 @@ msgid "Aborted due to failure (%s)"
 msgstr "Başarısızlık nedeniyle durduruldu (%s)"
 
 #: common/flatpak-uri.c:118
-#, fuzzy, no-c-format
+#, no-c-format
 msgid "Invalid %-encoding in URI"
-msgstr "Geçersiz uzantı adı %s"
+msgstr "URI'de geçersiz %-kodlaması"
 
 #: common/flatpak-uri.c:135
 msgid "Illegal character in URI"
-msgstr ""
+msgstr "URI'de geçersiz karakter"
 
 #: common/flatpak-uri.c:169
 msgid "Non-UTF-8 characters in URI"
-msgstr ""
+msgstr "URI'de UTF-8 olmayan karakter"
 
 #: common/flatpak-uri.c:275
 #, c-format
 msgid "Invalid IPv6 address ‘%.*s’ in URI"
-msgstr ""
+msgstr "URI’de geçersiz IPv6 adresi ‘%.*s’"
 
 #: common/flatpak-uri.c:330
 #, c-format
 msgid "Illegal encoded IP address ‘%.*s’ in URI"
-msgstr ""
+msgstr "URI’de kural dışı kodlanmış IP adresi ‘%.*s’"
 
 #: common/flatpak-uri.c:342
 #, c-format
 msgid "Illegal internationalized hostname ‘%.*s’ in URI"
-msgstr ""
+msgstr "URI’de kural dışı uluslararasılaştırılmış ana makine adı ‘%.*s’"
 
 #: common/flatpak-uri.c:374 common/flatpak-uri.c:386
-#, fuzzy, c-format
+#, c-format
 msgid "Could not parse port ‘%.*s’ in URI"
-msgstr "'%s' ayrıştırılamadı"
+msgstr "URI’deki ‘%.*s’ bağlantı noktası ayrıştırılamadı"
 
 #: common/flatpak-uri.c:393
 #, c-format
 msgid "Port ‘%.*s’ in URI is out of range"
-msgstr ""
+msgstr "URI’deki ‘%.*s’ bağlantı noktası kapsam dışında"
 
 #: common/flatpak-uri.c:910
 msgid "URI is not absolute, and no base URI was provided"
-msgstr ""
+msgstr "URI mutlak değil ve temel URI sağlanmamış"
 
 #: common/flatpak-utils.c:862
 msgid "Glob can't match apps"
