@@ -1266,6 +1266,8 @@ static const struct
 }
 reserved_filesystems[] =
 {
+  { "/", "/.flatpak-info" },
+  { "/.flatpak-info", "/.flatpak-info" },
   { "/app", "/app" },
   { "/app/foo", "/app" },
   { "/bin", "/bin" },
@@ -1280,6 +1282,9 @@ reserved_filesystems[] =
   { "/proc", "/proc" },
   { "/proc/1", "/proc" },
   { "/proc/sys/net", "/proc" },
+  { "/run", "/run/flatpak" },
+  { "/run/flatpak/foo/bar", "/run/flatpak" },
+  { "/run/host/foo", "/run/host" },
   { "/sbin", "/sbin" },
   { "/sbin/ldconfig", "/sbin" },
   { "/usr", "/usr" },
