@@ -52,7 +52,12 @@
    flatpak_abs_usrmerged_dirs get the same treatment without having to be listed
    here. */
 const char *dont_export_in[] = {
-  "/usr", "/etc", "/app", "/dev", "/proc", NULL
+  "/app",
+  "/dev",
+  "/etc",
+  "/proc",
+  "/usr",
+  NULL
 };
 
 static char *

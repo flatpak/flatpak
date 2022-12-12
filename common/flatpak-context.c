@@ -2435,8 +2435,26 @@ flatpak_context_make_sandboxed (FlatpakContext *context)
 }
 
 const char *dont_mount_in_root[] = {
-  ".", "..", "lib", "lib32", "lib64", "bin", "sbin", "usr", "boot", "efi",
-  "root", "tmp", "etc", "app", "run", "proc", "sys", "dev", "var", NULL
+  ".",
+  "..",
+  "app",
+  "bin",
+  "boot",
+  "dev",
+  "efi",
+  "etc",
+  "lib",
+  "lib32",
+  "lib64",
+  "proc",
+  "root",
+  "run",
+  "sbin",
+  "sys",
+  "tmp",
+  "usr",
+  "var",
+  NULL
 };
 
 static void
