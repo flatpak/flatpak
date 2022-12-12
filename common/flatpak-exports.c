@@ -52,6 +52,7 @@
    flatpak_abs_usrmerged_dirs get the same treatment without having to be listed
    here. */
 const char *dont_export_in[] = {
+  "/.flatpak-info",
   "/app",
   "/dev",
   "/etc",
