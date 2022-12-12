@@ -43,16 +43,20 @@ void flatpak_exports_add_host_etc_expose (FlatpakExports       *exports,
                                           FlatpakFilesystemMode mode);
 void flatpak_exports_add_host_os_expose (FlatpakExports       *exports,
                                          FlatpakFilesystemMode mode);
-void flatpak_exports_add_path_expose (FlatpakExports       *exports,
-                                      FlatpakFilesystemMode mode,
-                                      const char           *path);
-void flatpak_exports_add_path_tmpfs (FlatpakExports *exports,
-                                     const char     *path);
-void flatpak_exports_add_path_expose_or_hide (FlatpakExports       *exports,
-                                              FlatpakFilesystemMode mode,
-                                              const char           *path);
-void flatpak_exports_add_path_dir (FlatpakExports *exports,
-                                   const char     *path);
+gboolean flatpak_exports_add_path_expose (FlatpakExports         *exports,
+                                          FlatpakFilesystemMode   mode,
+                                          const char             *path,
+                                          GError                **error);
+gboolean flatpak_exports_add_path_tmpfs (FlatpakExports  *exports,
+                                         const char      *path,
+                                         GError         **error);
+gboolean flatpak_exports_add_path_expose_or_hide (FlatpakExports         *exports,
+                                                  FlatpakFilesystemMode   mode,
+                                                  const char             *path,
+                                                  GError                **error);
+gboolean flatpak_exports_add_path_dir (FlatpakExports  *exports,
+                                       const char      *path,
+                                       GError         **error);
 
 gboolean flatpak_exports_path_is_visible (FlatpakExports *exports,
                                           const char     *path);

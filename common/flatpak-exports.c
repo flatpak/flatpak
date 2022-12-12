@@ -1050,55 +1050,46 @@ _exports_path_expose (FlatpakExports *exports,
   return TRUE;
 }
 
-void
-flatpak_exports_add_path_expose (FlatpakExports       *exports,
-                                 FlatpakFilesystemMode mode,
-                                 const char           *path)
+gboolean
+flatpak_exports_add_path_expose (FlatpakExports         *exports,
+                                 FlatpakFilesystemMode   mode,
+                                 const char             *path,
+                                 GError                **error)
 {
-  g_autoptr(GError) local_error = NULL;
-
-  g_return_if_fail (mode > FLATPAK_FILESYSTEM_MODE_NONE);
-  g_return_if_fail (mode <= FLATPAK_FILESYSTEM_MODE_LAST);
-
-  if (!_exports_path_expose (exports, mode, path, 0, &local_error))
-    g_debug ("Unable to %s: \"%s\": %s",
-             export_mode_to_verb (mode), path, local_error->message);
+  g_return_val_if_fail (mode > FLATPAK_FILESYSTEM_MODE_NONE, FALSE);
+  g_return_val_if_fail (mode <= FLATPAK_FILESYSTEM_MODE_LAST, FALSE);
+  return _exports_path_expose (exports, mode, path, 0, error);
 }
 
-void
-flatpak_exports_add_path_tmpfs (FlatpakExports *exports,
-                                const char     *path)
+gboolean
+flatpak_exports_add_path_tmpfs (FlatpakExports  *exports,
+                                const char      *path,
+                                GError         **error)
 {
-  g_autoptr(GError) local_error = NULL;
-
-  if (!_exports_path_expose (exports, FAKE_MODE_TMPFS, path, 0, &local_error))
-    g_debug ("Unable to %s: \"%s\": %s",
-             export_mode_to_verb (FAKE_MODE_TMPFS), path, local_error->message);
+  return _exports_path_expose (exports, FAKE_MODE_TMPFS, path, 0, error);
 }
 
-void
-flatpak_exports_add_path_expose_or_hide (FlatpakExports       *exports,
-                                         FlatpakFilesystemMode mode,
-                                         const char           *path)
+gboolean
+flatpak_exports_add_path_expose_or_hide (FlatpakExports        *exports,
+                                         FlatpakFilesystemMode  mode,
+                                         const char            *path,
+                                         GError               **error)
 {
-  g_return_if_fail (mode >= FLATPAK_FILESYSTEM_MODE_NONE);
-  g_return_if_fail (mode <= FLATPAK_FILESYSTEM_MODE_LAST);
+  g_return_val_if_fail (mode >= FLATPAK_FILESYSTEM_MODE_NONE, FALSE);
+  g_return_val_if_fail (mode <= FLATPAK_FILESYSTEM_MODE_LAST, FALSE);
 
   if (mode == FLATPAK_FILESYSTEM_MODE_NONE)
-    flatpak_exports_add_path_tmpfs (exports, path);
+    return flatpak_exports_add_path_tmpfs (exports, path, error);
   else
-    flatpak_exports_add_path_expose (exports, mode, path);
+    return flatpak_exports_add_path_expose (exports, mode, path, error);
 }
 
-void
-flatpak_exports_add_path_dir (FlatpakExports *exports,
-                              const char     *path)
+gboolean
+flatpak_exports_add_path_dir (FlatpakExports  *exports,
+                              const char      *path,
+                              GError         **error)
 {
-  g_autoptr(GError) local_error = NULL;
-
-  if (!_exports_path_expose (exports, FAKE_MODE_DIR, path, 0, &local_error))
-    g_debug ("Unable to %s: \"%s\": %s",
-             export_mode_to_verb (FAKE_MODE_DIR), path, local_error->message);
+  return _exports_path_expose (exports, FAKE_MODE_DIR, path, 0, error);
 }
 
 void
