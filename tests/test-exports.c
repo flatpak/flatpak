@@ -1360,6 +1360,7 @@ test_exports_unusual (void)
     { "home", FAKE_SYMLINK, "var/home" },
     { "lib", FAKE_SYMLINK, "usr/lib" },
     { "recursion", FAKE_SYMLINK, "recursion" },
+    { "symlink-to-root", FAKE_SYMLINK, "." },
     { "tmp", FAKE_SYMLINK, "TMP" },
     { "usr/bin", FAKE_DIR },
     { "usr/lib", FAKE_DIR },
@@ -1414,6 +1415,14 @@ test_exports_unusual (void)
                                         "/recursion", &error);
   g_assert_error (error, G_IO_ERROR, G_IO_ERROR_TOO_MANY_LINKS);
   g_test_message ("attempting to export /recursion: %s", error->message);
+  g_assert_false (ok);
+  g_clear_error (&error);
+
+  ok = flatpak_exports_add_path_expose (exports,
+                                        FLATPAK_FILESYSTEM_MODE_READ_ONLY,
+                                        "/symlink-to-root", &error);
+  g_assert_error (error, G_IO_ERROR, G_IO_ERROR_NOT_MOUNTABLE_FILE);
+  g_test_message ("attempting to export /symlink-to-root: %s", error->message);
   g_assert_false (ok);
   g_clear_error (&error);
 
