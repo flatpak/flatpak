@@ -2458,6 +2458,27 @@ const char *dont_mount_in_root[] = {
 };
 
 static void
+log_cannot_export_error (FlatpakFilesystemMode  mode,
+                         const char            *path,
+                         const GError          *error)
+{
+  switch (mode)
+    {
+      case FLATPAK_FILESYSTEM_MODE_NONE:
+        g_debug ("Not replacing \"%s\" with tmpfs: %s",
+                 path, error->message);
+        break;
+
+      case FLATPAK_FILESYSTEM_MODE_CREATE:
+      case FLATPAK_FILESYSTEM_MODE_READ_ONLY:
+      case FLATPAK_FILESYSTEM_MODE_READ_WRITE:
+        g_debug ("Not sharing \"%s\" with sandbox: %s",
+                 path, error->message);
+        break;
+    }
+}
+
+static void
 flatpak_context_export (FlatpakContext *context,
                         FlatpakExports *exports,
                         GFile          *app_id_dir,
@@ -2471,6 +2492,7 @@ flatpak_context_export (FlatpakContext *context,
   FlatpakFilesystemMode fs_mode, os_mode, etc_mode, home_mode;
   GHashTableIter iter;
   gpointer key, value;
+  g_autoptr(GError) local_error = NULL;
 
   if (xdg_dirs_conf_out != NULL)
     xdg_dirs_conf = g_string_new ("");
@@ -2496,11 +2518,21 @@ flatpak_context_export (FlatpakContext *context,
                 continue;
 
               path = g_build_filename ("/", dirent->d_name, NULL);
-              flatpak_exports_add_path_expose (exports, fs_mode, path);
+
+              if (!flatpak_exports_add_path_expose (exports, fs_mode, path, &local_error))
+                {
+                  log_cannot_export_error (fs_mode, path, local_error);
+                  g_clear_error (&local_error);
+                }
             }
           closedir (dir);
         }
-      flatpak_exports_add_path_expose (exports, fs_mode, "/run/media");
+
+      if (!flatpak_exports_add_path_expose (exports, fs_mode, "/run/media", &local_error))
+        {
+          log_cannot_export_error (fs_mode, "/run/media", local_error);
+          g_clear_error (&local_error);
+        }
     }
 
   os_mode = MAX (GPOINTER_TO_INT (g_hash_table_lookup (context->filesystems, "host-os")),
@@ -2521,7 +2553,12 @@ flatpak_context_export (FlatpakContext *context,
       g_debug ("Allowing homedir access");
       home_access = TRUE;
 
-      flatpak_exports_add_path_expose (exports, MAX (home_mode, fs_mode), g_get_home_dir ());
+      if (!flatpak_exports_add_path_expose (exports, MAX (home_mode, fs_mode), g_get_home_dir (), &local_error))
+        {
+          log_cannot_export_error (MAX (home_mode, fs_mode), g_get_home_dir (),
+                                   local_error);
+          g_clear_error (&local_error);
+        }
     }
 
   g_hash_table_iter_init (&iter, context->filesystems);
@@ -2571,7 +2608,11 @@ flatpak_context_export (FlatpakContext *context,
                 g_string_append_printf (xdg_dirs_conf, "%s=\"%s\"\n",
                                         config_key, path);
 
-              flatpak_exports_add_path_expose_or_hide (exports, mode, subpath);
+              if (!flatpak_exports_add_path_expose_or_hide (exports, mode, subpath, &local_error))
+                {
+                  log_cannot_export_error (mode, subpath, local_error);
+                  g_clear_error (&local_error);
+                }
             }
         }
       else if (g_str_has_prefix (filesystem, "~/"))
@@ -2586,8 +2627,11 @@ flatpak_context_export (FlatpakContext *context,
                 g_debug ("Unable to create directory %s", path);
             }
 
-          if (g_file_test (path, G_FILE_TEST_EXISTS))
-            flatpak_exports_add_path_expose_or_hide (exports, mode, path);
+          if (!flatpak_exports_add_path_expose_or_hide (exports, mode, path, &local_error))
+            {
+              log_cannot_export_error (mode, path, local_error);
+              g_clear_error (&local_error);
+            }
         }
       else if (g_str_has_prefix (filesystem, "/"))
         {
@@ -2597,8 +2641,11 @@ flatpak_context_export (FlatpakContext *context,
                 g_debug ("Unable to create directory %s", filesystem);
             }
 
-          if (g_file_test (filesystem, G_FILE_TEST_EXISTS))
-            flatpak_exports_add_path_expose_or_hide (exports, mode, filesystem);
+          if (!flatpak_exports_add_path_expose_or_hide (exports, mode, filesystem, &local_error))
+            {
+              log_cannot_export_error (mode, filesystem, local_error);
+              g_clear_error (&local_error);
+            }
         }
       else
         {
@@ -2611,18 +2658,42 @@ flatpak_context_export (FlatpakContext *context,
       g_autoptr(GFile) apps_dir = g_file_get_parent (app_id_dir);
       int i;
       /* Hide the .var/app dir by default (unless explicitly made visible) */
-      flatpak_exports_add_path_tmpfs (exports, flatpak_file_get_path_cached (apps_dir));
+      if (!flatpak_exports_add_path_tmpfs (exports,
+                                           flatpak_file_get_path_cached (apps_dir),
+                                           &local_error))
+        {
+          log_cannot_export_error (FLATPAK_FILESYSTEM_MODE_NONE,
+                                   flatpak_file_get_path_cached (apps_dir),
+                                   local_error);
+          g_clear_error (&local_error);
+        }
+
       /* But let the app write to the per-app dir in it */
-      flatpak_exports_add_path_expose (exports, FLATPAK_FILESYSTEM_MODE_READ_WRITE,
-                                       flatpak_file_get_path_cached (app_id_dir));
+      if (!flatpak_exports_add_path_expose (exports, FLATPAK_FILESYSTEM_MODE_READ_WRITE,
+                                            flatpak_file_get_path_cached (app_id_dir),
+                                            &local_error))
+        {
+          log_cannot_export_error (FLATPAK_FILESYSTEM_MODE_READ_WRITE,
+                                   flatpak_file_get_path_cached (apps_dir),
+                                   local_error);
+          g_clear_error (&local_error);
+        }
 
       if (extra_app_id_dirs != NULL)
         {
           for (i = 0; i < extra_app_id_dirs->len; i++)
             {
               GFile *extra_app_id_dir = g_ptr_array_index (extra_app_id_dirs, i);
-              flatpak_exports_add_path_expose (exports, FLATPAK_FILESYSTEM_MODE_READ_WRITE,
-                                               flatpak_file_get_path_cached (extra_app_id_dir));
+              if (!flatpak_exports_add_path_expose (exports,
+                                                    FLATPAK_FILESYSTEM_MODE_READ_WRITE,
+                                                    flatpak_file_get_path_cached (extra_app_id_dir),
+                                                    &local_error))
+                {
+                  log_cannot_export_error (FLATPAK_FILESYSTEM_MODE_READ_WRITE,
+                                           flatpak_file_get_path_cached (extra_app_id_dir),
+                                           local_error);
+                  g_clear_error (&local_error);
+                }
             }
         }
     }
@@ -2686,13 +2757,27 @@ flatpak_context_get_exports_full (FlatpakContext *context,
   if (include_default_dirs)
     {
       g_autoptr(GFile) user_flatpak_dir = NULL;
+      g_autoptr(GError) local_error = NULL;
 
       /* Hide the flatpak dir by default (unless explicitly made visible) */
       user_flatpak_dir = flatpak_get_user_base_dir_location ();
-      flatpak_exports_add_path_tmpfs (exports, flatpak_file_get_path_cached (user_flatpak_dir));
+      if (!flatpak_exports_add_path_tmpfs (exports,
+                                           flatpak_file_get_path_cached (user_flatpak_dir),
+                                           &local_error))
+        {
+          log_cannot_export_error (FLATPAK_FILESYSTEM_MODE_NONE,
+                                   flatpak_file_get_path_cached (user_flatpak_dir),
+                                   local_error);
+          g_clear_error (&local_error);
+        }
 
       /* Ensure we always have a homedir */
-      flatpak_exports_add_path_dir (exports, g_get_home_dir ());
+      if (!flatpak_exports_add_path_dir (exports, g_get_home_dir (), &local_error))
+        {
+          g_debug ("Unable to provide a temporary home directory in the sandbox: %s",
+                   local_error->message);
+          g_clear_error (&local_error);
+        }
     }
 
   return g_steal_pointer (&exports);
