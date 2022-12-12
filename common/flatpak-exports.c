@@ -972,6 +972,19 @@ _exports_path_expose (FlatpakExports *exports,
                        dont_export_in[i]);
           return FALSE;
         }
+
+      /* Also don't expose directories that are a parent of a directory
+       * that is "owned" by the sandboxing framework. For example, because
+       * Flatpak controls /run/host and /run/flatpak, we cannot allow
+       * --filesystem=/run, which would prevent us from creating the
+       * contents of /run/host and /run/flatpak. */
+      if (flatpak_has_path_prefix (dont_export_in[i], path))
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_MOUNTABLE_FILE,
+                       _("Path \"%s\" is reserved by Flatpak"),
+                       dont_export_in[i]);
+          return FALSE;
+        }
     }
 
   for (i = 0; flatpak_abs_usrmerged_dirs[i] != NULL; i++)
