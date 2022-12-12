@@ -56,6 +56,8 @@ const char *dont_export_in[] = {
   "/dev",
   "/etc",
   "/proc",
+  "/run/flatpak",
+  "/run/host",
   "/usr",
   NULL
 };
