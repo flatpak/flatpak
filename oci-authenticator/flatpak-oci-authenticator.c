@@ -765,7 +765,7 @@ main (int    argc,
     }
 
   if (opt_verbose)
-    g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_INFO, message_handler, NULL);
+    g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, message_handler, NULL);
 
   g_info ("Started flatpak-authenticator");
 

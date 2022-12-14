@@ -120,18 +120,6 @@ flatpak_fail_error (GError **error, FlatpakError code, const char *fmt, ...)
   return FALSE;
 }
 
-void
-flatpak_debug2 (const char *format, ...)
-{
-  va_list var_args;
-
-  va_start (var_args, format);
-  g_logv (G_LOG_DOMAIN "2",
-          G_LOG_LEVEL_DEBUG,
-          format, var_args);
-  va_end (var_args);
-}
-
 gboolean
 flatpak_write_update_checksum (GOutputStream *out,
                                gconstpointer  data,
