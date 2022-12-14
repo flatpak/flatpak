@@ -17,5 +17,5 @@ custom_target(
 
 install_data(
   'flatpak.if',
-  install_dir : get_option('datadir') / 'selinux' / 'include' / 'contrib',
+  install_dir : get_option('datadir') / 'selinux' / 'devel' / 'include' / 'contrib',
 )
