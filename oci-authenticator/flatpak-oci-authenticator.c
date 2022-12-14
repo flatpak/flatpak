@@ -40,7 +40,7 @@ static FlatpakHttpSession *http_session = NULL;
 static void
 skeleton_died_cb (gpointer data)
 {
-  g_debug ("skeleton finalized, exiting");
+  g_info ("skeleton finalized, exiting");
   g_main_loop_quit (main_loop);
 }
 
@@ -49,7 +49,7 @@ unref_skeleton_in_timeout_cb (gpointer user_data)
 {
   static gboolean unreffed = FALSE;
 
-  g_debug ("unreffing authenticator main ref");
+  g_info ("unreffing authenticator main ref");
   if (!unreffed)
     {
       g_object_unref (authenticator);
@@ -79,7 +79,7 @@ idle_timeout_cb (gpointer user_data)
 {
   if (name_owner_id)
     {
-      g_debug ("Idle - unowning name");
+      g_info ("Idle - unowning name");
       unref_skeleton_in_timeout ();
     }
   return G_SOURCE_REMOVE;
@@ -130,7 +130,7 @@ handle_request_ref_tokens_close (FlatpakAuthenticatorRequest *object,
 {
   BasicAuthData *auth = user_data;
 
-  g_debug ("handlling Request.Close");
+  g_info ("handlling Request.Close");
 
   flatpak_authenticator_request_complete_close (object, invocation);
 
@@ -181,7 +181,7 @@ peer_died (const char *name)
         {
           for (GList *l = active; l != NULL; l = l->next)
             {
-              g_debug ("Cancelling auth operation for dying peer %s", name);
+              g_info ("Cancelling auth operation for dying peer %s", name);
               cancel_basic_auth (l->data);
             }
           g_list_free (active);
@@ -202,7 +202,7 @@ handle_request_ref_tokens_basic_auth_reply (FlatpakAuthenticatorRequest *object,
 {
   BasicAuthData *auth = user_data;
 
-  g_debug ("handlling Request.BasicAuthReply %s %s", arg_user, arg_password);
+  g_info ("handlling Request.BasicAuthReply %s %s", arg_user, arg_password);
 
   flatpak_authenticator_request_complete_basic_auth_reply (object, invocation);
 
@@ -465,7 +465,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *f_authenticator,
   GVariantBuilder results;
   g_autofree char *sender = g_strdup (g_dbus_method_invocation_get_sender (invocation));
 
-  g_debug ("handling Authenticator.RequestRefTokens");
+  g_info ("handling Authenticator.RequestRefTokens");
 
   g_variant_lookup (arg_authenticator_options, "auth", "&s", &auth);
   have_auth = auth != NULL;
@@ -509,7 +509,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *f_authenticator,
   /* Look up credentials in config files */
   if (!have_auth)
     {
-      g_debug ("Looking for %s in auth info", oci_registry_uri);
+      g_info ("Looking for %s in auth info", oci_registry_uri);
       auth = lookup_auth_from_config (oci_registry_uri);
       have_auth = auth != NULL;
     }
@@ -520,7 +520,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *f_authenticator,
     {
       g_autoptr(GVariant) ref_data = g_variant_get_child_value (arg_refs, 0);
 
-      g_debug ("Trying anonymous authentication");
+      g_info ("Trying anonymous authentication");
 
       first_token = get_token_for_ref (registry, ref_data, NULL, &anon_error);
       if (first_token != NULL)
@@ -529,7 +529,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *f_authenticator,
         {
           if (g_error_matches (anon_error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_AUTHORIZED))
             {
-              g_debug ("Anonymous authentication failed: %s", anon_error->message);
+              g_info ("Anonymous authentication failed: %s", anon_error->message);
 
               /* Continue trying with authentication below */
             }
@@ -551,7 +551,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *f_authenticator,
     {
       g_autoptr(GVariant) ref_data = g_variant_get_child_value (arg_refs, 0);
 
-      g_debug ("Trying user/password based authentication");
+      g_info ("Trying user/password based authentication");
 
       while (auth == NULL)
         {
@@ -576,7 +576,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *f_authenticator,
                 return error_request (request, sender, error);
               else
                 {
-                  g_debug ("Auth failed getting token: %s", error->message);
+                  g_info ("Auth failed getting token: %s", error->message);
                   /* Keep error for reporting below, or clear on next iteration start */
                 }
             }
@@ -612,7 +612,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *f_authenticator,
   g_variant_builder_init (&results, G_VARIANT_TYPE ("a{sv}"));
   g_variant_builder_add (&results, "{sv}", "tokens", g_variant_builder_end (&tokens));
 
-  g_debug ("emitting OK response");
+  g_info ("emitting OK response");
   flatpak_authenticator_request_emit_response (request,
                                                FLATPAK_AUTH_RESPONSE_OK,
                                                g_variant_builder_end (&results));
@@ -639,7 +639,7 @@ on_bus_acquired (GDBusConnection *connection,
 {
   GError *error = NULL;
 
-  g_debug ("Bus acquired, creating skeleton");
+  g_info ("Bus acquired, creating skeleton");
 
   g_dbus_connection_set_exit_on_close (connection, FALSE);
 
@@ -673,7 +673,7 @@ on_name_acquired (GDBusConnection *connection,
                   const gchar     *name,
                   gpointer         user_data)
 {
-  g_debug ("Name acquired");
+  g_info ("Name acquired");
 }
 
 static void
@@ -681,7 +681,7 @@ on_name_lost (GDBusConnection *connection,
               const gchar     *name,
               gpointer         user_data)
 {
-  g_debug ("Name lost");
+  g_info ("Name lost");
 }
 
 
@@ -767,7 +767,7 @@ main (int    argc,
   if (opt_verbose)
     g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_INFO, message_handler, NULL);
 
-  g_debug ("Started flatpak-authenticator");
+  g_info ("Started flatpak-authenticator");
 
   http_session = flatpak_create_http_session (PACKAGE_STRING);
 

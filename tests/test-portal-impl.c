@@ -100,7 +100,7 @@ on_bus_acquired (GDBusConnection *connection,
   GError *error = NULL;
   guint registration_id;
 
-  g_debug ("Bus acquired, creating skeleton");
+  g_info ("Bus acquired, creating skeleton");
   registration_id = g_dbus_connection_register_object (connection,
                                                        "/org/freedesktop/portal/desktop",
                                                        (GDBusInterfaceInfo *) &access_interface_info,
@@ -114,7 +114,7 @@ on_name_acquired (GDBusConnection *connection,
                   const gchar     *name,
                   gpointer         user_data)
 {
-  g_debug ("Name acquired");
+  g_info ("Name acquired");
 }
 
 static void
@@ -122,7 +122,7 @@ on_name_lost (GDBusConnection *connection,
               const gchar     *name,
               gpointer         user_data)
 {
-  g_debug ("Name lost");
+  g_info ("Name lost");
 }
 
 int

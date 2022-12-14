@@ -32,7 +32,7 @@ main (int argc,
 {
   int i;
 
-  g_debug ("This is a mock implementation of `flatpak run` for the portal");
+  g_info ("This is a mock implementation of `flatpak run` for the portal");
 
   for (i = 0; i < argc; i++)
     g_print ("argv[%d] = %s\n", i, argv[i]);

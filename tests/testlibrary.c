@@ -2382,7 +2382,7 @@ make_bundle (void)
   argv[2] = arg2;
   argv[4] = file;
 
-  g_debug ("Making dir %s", path);
+  g_info ("Making dir %s", path);
   g_mkdir_with_parents (path, S_IRWXU | S_IRWXG | S_IRWXO);
 
   run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
