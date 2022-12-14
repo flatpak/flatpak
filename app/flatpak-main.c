@@ -358,12 +358,12 @@ flatpak_option_context_parse (GOptionContext     *context,
   else
     {
       if (opt_verbose > 0)
-        g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG, message_handler, NULL);
+        g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_INFO, message_handler, NULL);
       if (opt_verbose > 1)
-        g_log_set_handler (G_LOG_DOMAIN "2", G_LOG_LEVEL_DEBUG, message_handler, NULL);
+        g_log_set_handler (G_LOG_DOMAIN "2", G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_INFO, message_handler, NULL);
 
       if (opt_ostree_verbose)
-        g_log_set_handler ("OSTree", G_LOG_LEVEL_DEBUG, message_handler, NULL);
+        g_log_set_handler ("OSTree", G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_INFO, message_handler, NULL);
 
       if (opt_verbose > 0 || opt_ostree_verbose)
         flatpak_disable_fancy_output ();
