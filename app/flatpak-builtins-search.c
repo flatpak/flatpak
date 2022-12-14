@@ -285,8 +285,8 @@ flatpak_builtin_search (int argc, char **argv, GCancellable *cancellable, GError
           if (bundle == NULL || as_bundle_get_id (bundle) == NULL ||
               (decomposed = flatpak_decomposed_new_from_ref (as_bundle_get_id (bundle), NULL)) == NULL)
             {
-              g_debug ("Ignoring app %s from remote %s as it lacks a flatpak bundle",
-                       as_component_get_id (app), remote_name);
+              g_info ("Ignoring app %s from remote %s as it lacks a flatpak bundle",
+                      as_component_get_id (app), remote_name);
               continue;
             }
 

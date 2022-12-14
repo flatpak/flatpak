@@ -841,8 +841,8 @@ find_reverse_dep_apps (FlatpakTransaction *transaction,
                                                                ref, NULL, &local_error);
       if (apps == NULL)
         {
-          g_debug ("Unable to list apps using extension %s: %s\n",
-                   flatpak_decomposed_get_ref (ref), local_error->message);
+          g_info ("Unable to list apps using extension %s: %s\n",
+                  flatpak_decomposed_get_ref (ref), local_error->message);
           return NULL;
         }
     }
@@ -853,8 +853,8 @@ find_reverse_dep_apps (FlatpakTransaction *transaction,
                                                      NULL, &local_error);
       if (apps == NULL)
         {
-          g_debug ("Unable to find apps using runtime %s: %s\n",
-                   flatpak_decomposed_get_ref (ref), local_error->message);
+          g_info ("Unable to find apps using runtime %s: %s\n",
+                  flatpak_decomposed_get_ref (ref), local_error->message);
           return NULL;
         }
     }
@@ -975,7 +975,7 @@ end_of_lifed_with_rebase (FlatpakTransaction *transaction,
     }
   else
     {
-      g_debug ("%s is end-of-life, using action from parent ref", name);
+      g_info ("%s is end-of-life, using action from parent ref", name);
     }
 
   /* Cache for later comparison and reuse */

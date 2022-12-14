@@ -111,7 +111,7 @@ add_related (GHashTable        *all_refs,
   g_autofree char *branch = NULL;
   GList *extensions, *l;
 
-  g_debug ("Finding related refs for ‘%s’", flatpak_decomposed_get_ref (ref));
+  g_info ("Finding related refs for ‘%s’", flatpak_decomposed_get_ref (ref));
 
   arch = flatpak_decomposed_dup_arch (ref);
   branch = flatpak_decomposed_dup_branch (ref);
@@ -228,7 +228,7 @@ add_runtime (GHashTable        *all_refs,
   CommitAndSubpaths *c_s;
   g_autoptr(GVariant) extra_data_sources = NULL;
 
-  g_debug ("Finding the runtime for ‘%s’", flatpak_decomposed_get_ref (ref));
+  g_info ("Finding the runtime for ‘%s’", flatpak_decomposed_get_ref (ref));
 
   deploy_data = flatpak_dir_get_deploy_data (dir, ref, FLATPAK_DEPLOY_VERSION_ANY, cancellable, error);
   if (deploy_data == NULL)
@@ -316,7 +316,7 @@ ostree_create_usb (GOptionContext *context,
    * more performant than bare-user */
   OstreeRepoMode mode = OSTREE_REPO_MODE_ARCHIVE;
 
-  g_debug ("%s: Creating repository in mode %u", G_STRFUNC, mode);
+  g_info ("%s: Creating repository in mode %u", G_STRFUNC, mode);
   g_autoptr(OstreeRepo) dest_repo = ostree_repo_create_at (mount_root_dfd, dest_repo_path,
                                                            mode, NULL, cancellable, error);
 
@@ -785,7 +785,7 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
             else
               {
                 /* Appstream2 is only for efficiency, so just print a debug message */
-                g_debug (_("Couldn't find appstream2 data for remote ‘%s’ arch ‘%s’: %s\n"),
+                g_info (_("Couldn't find appstream2 data for remote ‘%s’ arch ‘%s’: %s\n"),
                          remote_name, current_arch, appstream2_error->message);
               }
           }
@@ -814,7 +814,7 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
 
       g_string_append_printf (all_refs_str, "(%s, %s) ", collection_ref->collection_id, collection_ref->ref_name);
     }
-    g_debug ("Copying the following refs: %s", all_refs_str->str);
+    g_info ("Copying the following refs: %s", all_refs_str->str);
 
     if (!ostree_create_usb (context, src_repo, mount_root_path, mount_root_stbuf,
                             mount_root_dfd, all_refs, cancellable, error))
