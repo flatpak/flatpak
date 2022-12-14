@@ -101,7 +101,7 @@ child_watch_died (GPid     pid,
   PidData *pid_data = user_data;
   g_autoptr(GVariant) signal_variant = NULL;
 
-  g_debug ("Client Pid %d died", pid_data->pid);
+  g_info ("Client Pid %d died", pid_data->pid);
 
   signal_variant = g_variant_ref_sink (g_variant_new ("(uu)", pid, status));
   g_dbus_connection_emit_signal (session_bus,
@@ -188,8 +188,8 @@ child_setup_func (gpointer user_data)
           if (fd_map[i].from == data->tty)
             {
               if (ioctl (fd_map[i].final, TIOCSCTTY, 0) == -1)
-                g_debug ("ioctl(%d, TIOCSCTTY, 0) failed: %s",
-                         fd_map[i].final, strerror (errno));
+                g_info ("ioctl(%d, TIOCSCTTY, 0) failed: %s",
+                        fd_map[i].final, strerror (errno));
               break;
             }
         }
@@ -239,7 +239,7 @@ handle_host_command (FlatpakDevelopment    *object,
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
-  g_debug ("Running host command %s", arg_argv[0]);
+  g_info ("Running host command %s", arg_argv[0]);
 
   n_fds = 0;
   fds = NULL;
@@ -354,7 +354,7 @@ handle_host_command (FlatpakDevelopment    *object,
                                                   pid_data,
                                                   NULL);
 
-  g_debug ("Client Pid is %d", pid_data->pid);
+  g_info ("Client Pid is %d", pid_data->pid);
 
   g_hash_table_replace (client_pid_data_hash, GUINT_TO_POINTER (pid_data->pid),
                         pid_data);
@@ -384,7 +384,7 @@ handle_host_command_signal (FlatpakDevelopment    *object,
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
-  g_debug ("Sending signal %d to client pid %d", arg_signal, arg_pid);
+  g_info ("Sending signal %d to client pid %d", arg_signal, arg_pid);
 
   if (to_process_group)
     killpg (pid_data->pid, arg_signal);
@@ -566,8 +566,8 @@ update_real_monitor (MonitorData *data)
 
   if (real == NULL)
     {
-      g_debug ("unable to get real path to monitor host file %s: %s", data->source,
-               g_strerror (errno));
+      g_info ("unable to get real path to monitor host file %s: %s", data->source,
+              g_strerror (errno));
       return;
     }
 
@@ -606,7 +606,7 @@ update_real_monitor (MonitorData *data)
   data->monitor_real = g_file_monitor_file (r, G_FILE_MONITOR_NONE, NULL, &err);
   if (!data->monitor_real)
     {
-      g_debug ("failed to monitor host file %s (real path of %s): %s",
+      g_info ("failed to monitor host file %s (real path of %s): %s",
                real, data->source, err->message);
       return;
     }
@@ -665,7 +665,7 @@ setup_file_monitor (const char *source)
     }
   else
     {
-      g_debug ("failed to monitor host file %s: %s", source, err->message);
+      g_info ("failed to monitor host file %s: %s", source, err->message);
     }
 
   file_monitor_do (data);
@@ -709,7 +709,7 @@ start_p11_kit_server (const char *flatpak_dir)
     NULL
   };
 
-  g_debug ("starting p11-kit server");
+  g_info ("starting p11-kit server");
 
   if (!g_spawn_sync (NULL,
                      p11_argv, NULL, G_SPAWN_SEARCH_PATH | G_SPAWN_STDERR_TO_DEV_NULL,
@@ -750,11 +750,11 @@ start_p11_kit_server (const char *flatpak_dir)
 
   if (p11_kit_server_pid != 0)
     {
-      g_debug ("Using p11-kit socket path %s, pid %d", socket_path, p11_kit_server_pid);
+      g_info ("Using p11-kit socket path %s, pid %d", socket_path, p11_kit_server_pid);
       p11_kit_server_socket_path = g_steal_pointer (&socket_path);
     }
   else
-    g_debug ("Not using p11-kit due to older version");
+    g_info ("Not using p11-kit due to older version");
 }
 
 int
@@ -847,7 +847,7 @@ main (int    argc,
   if (g_find_program_in_path ("p11-kit"))
     start_p11_kit_server (flatpak_dir);
   else
-    g_debug ("p11-kit not found");
+    g_info ("p11-kit not found");
 
   monitor_dir = g_build_filename (flatpak_dir, "monitor", NULL);
   if (g_mkdir_with_parents (monitor_dir, 0755) != 0)

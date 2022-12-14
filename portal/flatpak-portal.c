@@ -133,7 +133,7 @@ static gboolean           handle_update            (PortalFlatpakUpdateMonitor *
 static void
 skeleton_died_cb (gpointer data)
 {
-  g_debug ("skeleton finalized, exiting");
+  g_info ("skeleton finalized, exiting");
   g_main_loop_quit (main_loop);
 }
 
@@ -142,7 +142,7 @@ unref_skeleton_in_timeout_cb (gpointer user_data)
 {
   static gboolean unreffed = FALSE;
 
-  g_debug ("unreffing portal main ref");
+  g_info ("unreffing portal main ref");
   if (!unreffed)
     {
       g_object_unref (portal);
@@ -176,7 +176,7 @@ idle_timeout_cb (gpointer user_data)
       g_hash_table_size (client_pid_data_hash) == 0 &&
       !has_update_monitors ())
     {
-      g_debug ("Idle - unowning name");
+      g_info ("Idle - unowning name");
       unref_skeleton_in_timeout ();
     }
 
@@ -225,7 +225,7 @@ child_watch_died (GPid     pid,
   PidData *pid_data = user_data;
   g_autoptr(GVariant) signal_variant = NULL;
 
-  g_debug ("Client Pid %d died", pid_data->pid);
+  g_info ("Client Pid %d died", pid_data->pid);
 
   signal_variant = g_variant_ref_sink (g_variant_new ("(uu)", pid, status));
   g_dbus_connection_emit_signal (session_bus,
@@ -386,7 +386,7 @@ check_child_pid_status (void *user_data)
       else
         timeout = timeouts[MIN (data->attempt, G_N_ELEMENTS (timeouts) - 1)];
 
-      g_debug ("Failed to read child PID, trying again in %d ms", timeout);
+      g_info ("Failed to read child PID, trying again in %d ms", timeout);
 
       /* The timer source only needs to be re-added if the timeout has changed,
           which won't happen while staying on the 100 or 1000ms timeouts.
@@ -417,7 +417,7 @@ check_child_pid_status (void *user_data)
         g_warning ("Failed to find relative PID for %d: %s", child_pid, error->message);
     }
 
-  g_debug ("Emitting SpawnStarted(%u, %d)", pid, relative_child_pid);
+  g_info ("Emitting SpawnStarted(%u, %d)", pid, relative_child_pid);
 
   signal_variant = g_variant_ref_sink (g_variant_new ("(uu)", pid, relative_child_pid));
   g_dbus_connection_emit_signal (session_bus,
@@ -541,8 +541,8 @@ child_setup_func (gpointer user_data)
           if (fd_map[i].from == data->tty)
             {
               if (ioctl (fd_map[i].final, TIOCSCTTY, 0) == -1)
-                g_debug ("ioctl(%d, TIOCSCTTY, 0) failed: %s",
-                         fd_map[i].final, strerror (errno));
+                g_info ("ioctl(%d, TIOCSCTTY, 0) failed: %s",
+                        fd_map[i].final, strerror (errno));
               break;
             }
         }
@@ -811,13 +811,13 @@ handle_spawn (PortalFlatpak         *object,
                                   FLATPAK_METADATA_KEY_NAME, NULL);
   g_assert (app_id != NULL);
 
-  g_debug ("spawn() called from app: '%s'", app_id);
+  g_info ("spawn() called from app: '%s'", app_id);
 
   if (*app_id == 0 && g_getenv ("FLATPAK_PORTAL_MOCK_FLATPAK") != NULL)
     {
       /* Pretend we had been called from an app for test purposes */
       testing = TRUE;
-      g_debug ("In unit tests, behaving as though app ID was com.example.App");
+      g_info ("In unit tests, behaving as though app ID was com.example.App");
       g_clear_pointer (&app_id, g_free);
       app_id = g_strdup ("com.example.App");
     }
@@ -922,7 +922,7 @@ handle_spawn (PortalFlatpak         *object,
     {
       const char *expose = sandbox_expose[i];
 
-      g_debug ("exposing %s", expose);
+      g_info ("exposing %s", expose);
       if (!is_valid_expose (expose, &error))
         {
           g_dbus_method_invocation_return_gerror (invocation, error);
@@ -933,7 +933,7 @@ handle_spawn (PortalFlatpak         *object,
   for (i = 0; sandbox_expose_ro != NULL && sandbox_expose_ro[i] != NULL; i++)
     {
       const char *expose = sandbox_expose_ro[i];
-      g_debug ("exposing %s", expose);
+      g_info ("exposing %s", expose);
       if (!is_valid_expose (expose, &error))
         {
           g_dbus_method_invocation_return_gerror (invocation, error);
@@ -941,7 +941,7 @@ handle_spawn (PortalFlatpak         *object,
         }
     }
 
-  g_debug ("Running spawn command %s", arg_argv[0]);
+  g_info ("Running spawn command %s", arg_argv[0]);
 
   n_fds = 0;
   if (fds != NULL)
@@ -1257,7 +1257,7 @@ handle_spawn (PortalFlatpak         *object,
   for (i = 0; sandbox_expose_ro != NULL && sandbox_expose_ro[i] != NULL; i++)
     {
       const char *expose = sandbox_expose_ro[i];
-      g_debug ("exposing %s", expose);
+      g_info ("exposing %s", expose);
     }
 
   if (sandbox_expose_fd != NULL)
@@ -1281,8 +1281,8 @@ handle_spawn (PortalFlatpak         *object,
                 }
               else
                 {
-                  g_debug ("unable to get path for sandbox-exposed fd %d, ignoring: %s",
-                           handle_fd, error->message);
+                  g_info ("unable to get path for sandbox-exposed fd %d, ignoring: %s",
+                          handle_fd, error->message);
                   g_clear_error (&error);
                 }
             }
@@ -1318,8 +1318,8 @@ handle_spawn (PortalFlatpak         *object,
                 }
               else
                 {
-                  g_debug ("unable to get path for sandbox-exposed fd %d, ignoring: %s",
-                           handle_fd, error->message);
+                  g_info ("unable to get path for sandbox-exposed fd %d, ignoring: %s",
+                          handle_fd, error->message);
                   g_clear_error (&error);
                 }
             }
@@ -1369,7 +1369,7 @@ handle_spawn (PortalFlatpak         *object,
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
-      g_debug ("Using %s as /app instead of app", path);
+      g_info ("Using %s as /app instead of app", path);
       g_ptr_array_add (flatpak_argv, g_strdup_printf ("--app-path=%s", path));
     }
   else if (empty_app)
@@ -1402,7 +1402,7 @@ handle_spawn (PortalFlatpak         *object,
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
-      g_debug ("Using %s as /usr instead of runtime", path);
+      g_info ("Using %s as /usr instead of runtime", path);
       g_ptr_array_add (flatpak_argv, g_strdup_printf ("--usr-path=%s", path));
     }
 
@@ -1439,7 +1439,7 @@ handle_spawn (PortalFlatpak         *object,
           g_string_append (cmd, flatpak_argv->pdata[i]);
         }
 
-      g_debug ("Starting: %s\n", cmd->str);
+      g_info ("Starting: %s\n", cmd->str);
     }
 
   /* We make a second pass over the fds to find if any "to" fd index
@@ -1510,7 +1510,7 @@ handle_spawn (PortalFlatpak         *object,
                                                   pid_data,
                                                   NULL);
 
-  g_debug ("Client Pid is %d", pid_data->pid);
+  g_info ("Client Pid is %d", pid_data->pid);
 
   g_hash_table_replace (client_pid_data_hash, GUINT_TO_POINTER (pid_data->pid),
                         pid_data);
@@ -1528,7 +1528,7 @@ handle_spawn_signal (PortalFlatpak         *object,
 {
   PidData *pid_data = NULL;
 
-  g_debug ("spawn_signal(%d %d)", arg_pid, arg_signal);
+  g_info ("spawn_signal(%d %d)", arg_pid, arg_signal);
 
   pid_data = g_hash_table_lookup (client_pid_data_hash, GUINT_TO_POINTER (arg_pid));
   if (pid_data == NULL ||
@@ -1540,7 +1540,7 @@ handle_spawn_signal (PortalFlatpak         *object,
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
-  g_debug ("Sending signal %d to client pid %d", arg_signal, arg_pid);
+  g_info ("Sending signal %d to client pid %d", arg_signal, arg_pid);
 
   if (arg_to_process_group)
     killpg (pid_data->pid, arg_signal);
@@ -1739,7 +1739,7 @@ create_update_monitor (GDBusMethodInvocation *invocation,
   g_object_set_data_full (G_OBJECT (monitor), "update-monitor-data", m, update_monitor_data_free);
   g_object_set_data_full (G_OBJECT (monitor), "required-sender", g_strdup (m->sender), g_free);
 
-  g_debug ("created UpdateMonitor for %s/%s at %s", m->name, m->branch, obj_path);
+  g_info ("created UpdateMonitor for %s/%s at %s", m->name, m->branch, obj_path);
 
   return monitor;
 }
@@ -1846,12 +1846,12 @@ check_for_updates (PortalFlatpakUpdateMonitor *monitor)
 
   installation_path = update_monitor_get_installation_path (monitor);
 
-  g_debug ("Checking for updates for %s/%s/%s in %s", m->name, m->arch, m->branch, flatpak_file_get_path_cached (installation_path));
+  g_info ("Checking for updates for %s/%s/%s in %s", m->name, m->arch, m->branch, flatpak_file_get_path_cached (installation_path));
 
   installation = lookup_installation_for_path (installation_path, &error);
   if (installation == NULL)
     {
-      g_debug ("Unable to find installation for path %s: %s", flatpak_file_get_path_cached (installation_path), error->message);
+      g_info ("Unable to find installation for path %s: %s", flatpak_file_get_path_cached (installation_path), error->message);
       return;
     }
 
@@ -1861,7 +1861,7 @@ check_for_updates (PortalFlatpakUpdateMonitor *monitor)
                                                           m->cancellable, &error);
   if (installed_ref == NULL)
     {
-      g_debug ("getting installed ref failed: %s", error->message);
+      g_info ("getting installed ref failed: %s", error->message);
       return; /* Never report updates for uninstalled refs */
     }
 
@@ -1886,7 +1886,7 @@ check_for_updates (PortalFlatpakUpdateMonitor *monitor)
       /* Probably some network issue.
        * Fall back to the local_commit to at least be able to pick up already installed updates.
        */
-      g_debug ("getting remote ref failed: %s", error->message);
+      g_info ("getting remote ref failed: %s", error->message);
       g_clear_error (&error);
       remote_commit = local_commit;
     }
@@ -1898,7 +1898,7 @@ check_for_updates (PortalFlatpakUpdateMonitor *monitor)
           /* This can happen if we're offline and there is an update from an usb drive.
            * Not much we can do in terms of reporting it, but at least handle the case
            */
-          g_debug ("Unknown remote commit, setting to local_commit");
+          g_info ("Unknown remote commit, setting to local_commit");
           remote_commit = local_commit;
         }
     }
@@ -1915,7 +1915,7 @@ check_for_updates (PortalFlatpakUpdateMonitor *monitor)
       g_free (m->reported_remote_commit);
       m->reported_remote_commit = g_strdup (remote_commit);
 
-      g_debug ("Found update for %s/%s/%s, local: %s, remote: %s", m->name, m->arch, m->branch, local_commit, remote_commit);
+      g_info ("Found update for %s/%s/%s, local: %s, remote: %s", m->name, m->arch, m->branch, local_commit, remote_commit);
       g_variant_builder_init (&builder, G_VARIANT_TYPE_VARDICT);
       g_variant_builder_add (&builder, "{sv}", "running-commit", g_variant_new_string (m->commit));
       g_variant_builder_add (&builder, "{sv}", "local-commit", g_variant_new_string (local_commit));
@@ -2005,12 +2005,12 @@ check_all_for_updates_cb (void *data)
   if (!opt_poll_when_metered &&
       g_network_monitor_get_network_metered (network_monitor))
     {
-      g_debug ("Skipping update check on metered network");
+      g_info ("Skipping update check on metered network");
 
       return G_SOURCE_CONTINUE;
     }
 
-  g_debug ("Checking all update monitors");
+  g_info ("Checking all update monitors");
 
   G_LOCK (update_monitors);
   update_monitors_timeout = 0;
@@ -2041,7 +2041,7 @@ handle_create_update_monitor (PortalFlatpak *object,
     token = g_strdup_printf ("%d", g_random_int_range (0, 1000));
 
   sender = g_dbus_method_invocation_get_sender (invocation);
-  g_debug ("handle CreateUpdateMonitor from %s", sender);
+  g_info ("handle CreateUpdateMonitor from %s", sender);
 
   sender_escaped = g_strdup (sender + 1);
   for (i = 0; sender_escaped[i]; i++)
@@ -2089,7 +2089,7 @@ handle_close (PortalFlatpakUpdateMonitor *monitor,
 {
   update_monitor_close (monitor);
 
-  g_debug ("handle UpdateMonitor.Close");
+  g_info ("handle UpdateMonitor.Close");
 
   portal_flatpak_update_monitor_complete_close (monitor, invocation);
 
@@ -2116,7 +2116,7 @@ close_update_monitors_in_thread_func (GTask *task,
       PortalFlatpakUpdateMonitor *monitor = l->data;
       UpdateMonitorData *m = update_monitor_get_data (monitor);
 
-      g_debug ("closing monitor %s", m->obj_path);
+      g_info ("closing monitor %s", m->obj_path);
       update_monitor_close (monitor);
     }
 }
@@ -2131,7 +2131,7 @@ close_update_monitors_for_sender (const char *sender)
       g_autoptr(GTask) task = g_task_new (NULL, NULL, NULL, NULL);
       g_task_set_task_data (task, list, deep_free_object_list);
 
-      g_debug ("%s dropped off the bus, closing monitors", sender);
+      g_info ("%s dropped off the bus, closing monitors", sender);
       g_task_run_in_thread (task, close_update_monitors_in_thread_func);
     }
 }
@@ -2146,7 +2146,7 @@ get_update_permission (const char *app_id)
 
   if (permission_store == NULL)
     {
-      g_debug ("No portals installed, assume no permissions");
+      g_info ("No portals installed, assume no permissions");
       return NO;
     }
 
@@ -2159,7 +2159,7 @@ get_update_permission (const char *app_id)
                                                    &error))
     {
       g_dbus_error_strip_remote_error (error);
-      g_debug ("No updates permissions found: %s", error->message);
+      g_info ("No updates permissions found: %s", error->message);
       g_clear_error (&error);
     }
 
@@ -2178,7 +2178,7 @@ get_update_permission (const char *app_id)
         }
     }
 
-  g_debug ("Updates permissions for %s: %d", app_id, ret);
+  g_info ("Updates permissions for %s: %d", app_id, ret);
 
   return ret;
 }
@@ -2330,7 +2330,7 @@ emit_progress (PortalFlatpakUpdateMonitor *monitor,
   GVariantBuilder builder;
   g_autoptr(GError) error = NULL;
 
-  g_debug ("%d/%d ops, progress %d, status: %d", op, n_ops, progress, status);
+  g_info ("%d/%d ops, progress %d, status: %d", op, n_ops, progress, status);
 
   g_variant_builder_init (&builder, G_VARIANT_TYPE_VARDICT);
   if (n_ops > 0)
@@ -2696,7 +2696,7 @@ handle_update_responses (PortalFlatpakUpdateMonitor *monitor,
       v = read_variant (in, m->cancellable, error);
       if (v == NULL)
         {
-          g_debug ("Reading message from child update process failed %s", (*error)->message);
+          g_info ("Reading message from child update process failed %s", (*error)->message);
           return FALSE;
         }
 
@@ -2778,7 +2778,7 @@ handle_update (PortalFlatpakUpdateMonitor *monitor,
   g_autoptr(GTask) task = NULL;
   gboolean already_installing = FALSE;
 
-  g_debug ("handle UpdateMonitor.Update");
+  g_info ("handle UpdateMonitor.Update");
 
   g_mutex_lock (&m->lock);
   if (m->installing)
@@ -2842,7 +2842,7 @@ name_owner_changed (GDBusConnection *connection,
       for (l = list; l; l = l->next)
         {
           pid_data = l->data;
-          g_debug ("%s dropped off the bus, killing %d", pid_data->client, pid_data->pid);
+          g_info ("%s dropped off the bus, killing %d", pid_data->client, pid_data->pid);
           killpg (pid_data->pid, SIGINT);
         }
 
@@ -2876,7 +2876,7 @@ on_bus_acquired (GDBusConnection *connection,
 {
   GError *error = NULL;
 
-  g_debug ("Bus acquired, creating skeleton");
+  g_info ("Bus acquired, creating skeleton");
 
   g_dbus_connection_set_exit_on_close (connection, FALSE);
 
@@ -2929,7 +2929,7 @@ on_name_acquired (GDBusConnection *connection,
                   const gchar     *name,
                   gpointer         user_data)
 {
-  g_debug ("Name acquired");
+  g_info ("Name acquired");
 }
 
 static void
@@ -2937,7 +2937,7 @@ on_name_lost (GDBusConnection *connection,
               const gchar     *name,
               gpointer         user_data)
 {
-  g_debug ("Name lost");
+  g_info ("Name lost");
   unref_skeleton_in_timeout ();
 }
 
@@ -2952,7 +2952,7 @@ binary_file_changed_cb (GFileMonitor     *file_monitor,
 
   if (!got_it)
     {
-      g_debug ("binary file changed");
+      g_info ("binary file changed");
       unref_skeleton_in_timeout ();
     }
 
