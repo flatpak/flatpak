@@ -2462,18 +2462,34 @@ log_cannot_export_error (FlatpakFilesystemMode  mode,
                          const char            *path,
                          const GError          *error)
 {
+  GLogLevelFlags level = G_LOG_LEVEL_MESSAGE;
+
+  /* By default we don't show a log message if the reason we are not sharing
+   * something with the sandbox is simply "it doesn't exist" (or something
+   * very close): otherwise it would be very noisy to launch apps that
+   * opportunistically share things they might benefit from, like Steam
+   * having access to $XDG_RUNTIME_DIR/app/com.discordapp.Discord if it
+   * happens to exist. */
+  if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+    level = G_LOG_LEVEL_INFO;
+  /* Some callers specifically suppress warnings for particular errors
+   * by setting this code. */
+  else if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_FAILED_HANDLED))
+    level = G_LOG_LEVEL_INFO;
+
   switch (mode)
     {
       case FLATPAK_FILESYSTEM_MODE_NONE:
-        g_debug ("Not replacing \"%s\" with tmpfs: %s",
-                 path, error->message);
+        g_log (G_LOG_DOMAIN, level, _("Not replacing \"%s\" with tmpfs: %s"),
+               path, error->message);
         break;
 
       case FLATPAK_FILESYSTEM_MODE_CREATE:
       case FLATPAK_FILESYSTEM_MODE_READ_ONLY:
       case FLATPAK_FILESYSTEM_MODE_READ_WRITE:
-        g_debug ("Not sharing \"%s\" with sandbox: %s",
-                 path, error->message);
+        g_log (G_LOG_DOMAIN, level,
+               _("Not sharing \"%s\" with sandbox: %s"),
+               path, error->message);
         break;
     }
 }
@@ -2521,6 +2537,15 @@ flatpak_context_export (FlatpakContext *context,
 
               if (!flatpak_exports_add_path_expose (exports, fs_mode, path, &local_error))
                 {
+                  /* Failure to share something like /lib32 because it's
+                   * actually a symlink to /usr/lib32 is less of a problem
+                   * here than it would be for an explicit
+                   * --filesystem=/lib32, so the warning that would normally
+                   * be produced in that situation is downgraded to a
+                   * debug message. */
+                  if (g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_MOUNTABLE_FILE))
+                    local_error->code = G_IO_ERROR_FAILED_HANDLED;
+
                   log_cannot_export_error (fs_mode, path, local_error);
                   g_clear_error (&local_error);
                 }
