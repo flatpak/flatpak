@@ -11,6 +11,7 @@ custom_target(
     '@OUTPUT0@',
     '@INPUT@',
   ],
+  install : true,
   install_dir : get_option('datadir') / 'selinux' / 'packages',
 )
 
