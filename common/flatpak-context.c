@@ -1613,7 +1613,7 @@ flatpak_context_load_metadata (FlatpakContext *context,
 
           share = flatpak_context_share_from_string (parse_negated (shares[i], &remove), NULL);
           if (share == 0)
-            g_debug ("Unknown share type %s", shares[i]);
+            g_info ("Unknown share type %s", shares[i]);
           else
             {
               if (remove)
@@ -1635,7 +1635,7 @@ flatpak_context_load_metadata (FlatpakContext *context,
         {
           FlatpakContextSockets socket = flatpak_context_socket_from_string (parse_negated (sockets[i], &remove), NULL);
           if (socket == 0)
-            g_debug ("Unknown socket type %s", sockets[i]);
+            g_info ("Unknown socket type %s", sockets[i]);
           else
             {
               if (remove)
@@ -1658,7 +1658,7 @@ flatpak_context_load_metadata (FlatpakContext *context,
         {
           FlatpakContextDevices device = flatpak_context_device_from_string (parse_negated (devices[i], &remove), NULL);
           if (device == 0)
-            g_debug ("Unknown device type %s", devices[i]);
+            g_info ("Unknown device type %s", devices[i]);
           else
             {
               if (remove)
@@ -1681,7 +1681,7 @@ flatpak_context_load_metadata (FlatpakContext *context,
         {
           FlatpakContextFeatures feature = flatpak_context_feature_from_string (parse_negated (features[i], &remove), NULL);
           if (feature == 0)
-            g_debug ("Unknown feature type %s", features[i]);
+            g_info ("Unknown feature type %s", features[i]);
           else
             {
               if (remove)
@@ -1707,7 +1707,7 @@ flatpak_context_load_metadata (FlatpakContext *context,
 
           if (!flatpak_context_parse_filesystem (fs, remove,
                                                  &filesystem, &mode, NULL))
-            g_debug ("Unknown filesystem type %s", filesystems[i]);
+            g_info ("Unknown filesystem type %s", filesystems[i]);
           else
             {
               g_assert (mode == FLATPAK_FILESYSTEM_MODE_NONE || !remove);
@@ -2463,7 +2463,7 @@ flatpak_context_export (FlatpakContext *context,
       DIR *dir;
       struct dirent *dirent;
 
-      g_debug ("Allowing host-fs access");
+      g_info ("Allowing host-fs access");
       home_access = TRUE;
 
       /* Bind mount most dirs in / into the new root */
@@ -2500,7 +2500,7 @@ flatpak_context_export (FlatpakContext *context,
   home_mode = GPOINTER_TO_INT (g_hash_table_lookup (context->filesystems, "home"));
   if (home_mode != FLATPAK_FILESYSTEM_MODE_NONE)
     {
-      g_debug ("Allowing homedir access");
+      g_info ("Allowing homedir access");
       home_access = TRUE;
 
       flatpak_exports_add_path_expose (exports, MAX (home_mode, fs_mode), g_get_home_dir ());
@@ -2535,7 +2535,7 @@ flatpak_context_export (FlatpakContext *context,
               /* xdg-user-dirs sets disabled dirs to $HOME, and its in general not a good
                  idea to set full access to $HOME other than explicitly, so we ignore
                  these */
-              g_debug ("Xdg dir %s is $HOME (i.e. disabled), ignoring", filesystem);
+              g_info ("Xdg dir %s is $HOME (i.e. disabled), ignoring", filesystem);
               continue;
             }
 
@@ -2544,7 +2544,7 @@ flatpak_context_export (FlatpakContext *context,
           if (mode == FLATPAK_FILESYSTEM_MODE_CREATE && do_create)
             {
               if (g_mkdir_with_parents (subpath, 0755) != 0)
-                g_debug ("Unable to create directory %s", subpath);
+                g_info ("Unable to create directory %s", subpath);
             }
 
           if (g_file_test (subpath, G_FILE_TEST_EXISTS))
@@ -2565,7 +2565,7 @@ flatpak_context_export (FlatpakContext *context,
           if (mode == FLATPAK_FILESYSTEM_MODE_CREATE && do_create)
             {
               if (g_mkdir_with_parents (path, 0755) != 0)
-                g_debug ("Unable to create directory %s", path);
+                g_info ("Unable to create directory %s", path);
             }
 
           if (g_file_test (path, G_FILE_TEST_EXISTS))
@@ -2576,7 +2576,7 @@ flatpak_context_export (FlatpakContext *context,
           if (mode == FLATPAK_FILESYSTEM_MODE_CREATE && do_create)
             {
               if (g_mkdir_with_parents (filesystem, 0755) != 0)
-                g_debug ("Unable to create directory %s", filesystem);
+                g_info ("Unable to create directory %s", filesystem);
             }
 
           if (g_file_test (filesystem, G_FILE_TEST_EXISTS))
@@ -2707,7 +2707,7 @@ flatpak_context_append_bwrap_filesystem (FlatpakContext  *context,
           g_autofree char *dest = g_build_filename (g_get_home_dir (), persist, NULL);
 
           if (g_mkdir_with_parents (src, 0755) != 0)
-            g_debug ("Unable to create directory %s", src);
+            g_info ("Unable to create directory %s", src);
 
           flatpak_bwrap_add_bind_arg (bwrap, "--bind", src, dest);
         }

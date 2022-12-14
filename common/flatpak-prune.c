@@ -767,14 +767,14 @@ flatpak_repo_prune (OstreeRepo    *repo,
       return FALSE;
 
     timer = g_timer_new ();
-    g_debug ("Finding reachable objects, unlocked (depth=%d)", depth);
+    g_info ("Finding reachable objects, unlocked (depth=%d)", depth);
     g_timer_start (timer);
 
     if (!traverse_reachable_refs_unlocked (repo, depth, reachable, cancellable, error))
       return FALSE;
 
     g_timer_stop (timer);
-    g_debug ("Elapsed time: %.1f sec",  g_timer_elapsed (timer, NULL));
+    g_info ("Elapsed time: %.1f sec",  g_timer_elapsed (timer, NULL));
   }
 
   {
@@ -785,7 +785,7 @@ flatpak_repo_prune (OstreeRepo    *repo,
       return FALSE;
 
     timer = g_timer_new ();
-    g_debug ("Finding reachable objects, locked (depth=%d)", depth);
+    g_info ("Finding reachable objects, locked (depth=%d)", depth);
     g_timer_start (timer);
 
     if (!traverse_reachable_refs_unlocked (repo, depth, reachable, cancellable, error))
@@ -796,29 +796,29 @@ flatpak_repo_prune (OstreeRepo    *repo,
     data.dont_prune = dry_run;
 
     g_timer_stop (timer);
-    g_debug ("Elapsed time: %.1f sec",  g_timer_elapsed (timer, NULL));
+    g_info ("Elapsed time: %.1f sec",  g_timer_elapsed (timer, NULL));
 
-    g_debug ("Pruning unreachable objects");
+    g_info ("Pruning unreachable objects");
     g_timer_start (timer);
 
     if (!prune_unreachable_loose_objects (repo, &data, cancellable, error))
       return FALSE;
 
     g_timer_stop (timer);
-    g_debug ("Elapsed time: %.1f sec",  g_timer_elapsed (timer, NULL));
+    g_info ("Elapsed time: %.1f sec",  g_timer_elapsed (timer, NULL));
   }
 
   /* Prune static deltas outside lock to avoid conflict with its exclusive lock */
   if (!dry_run)
     {
-      g_debug ("Pruning static deltas");
+      g_info ("Pruning static deltas");
       g_timer_start (timer);
 
       if (!ostree_repo_prune_static_deltas (repo, NULL, cancellable, error))
         return FALSE;
 
       g_timer_stop (timer);
-      g_debug ("Elapsed time: %.1f sec",  g_timer_elapsed (timer, NULL));
+      g_info ("Elapsed time: %.1f sec",  g_timer_elapsed (timer, NULL));
     }
 
   *out_objects_total = data.n_reachable + data.n_unreachable;

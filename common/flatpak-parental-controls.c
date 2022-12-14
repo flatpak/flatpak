@@ -129,10 +129,10 @@ flatpak_oars_check_rating (GHashTable   *content_rating,
           (rating_value != MCT_APP_FILTER_OARS_VALUE_UNKNOWN &&
            filter_value == MCT_APP_FILTER_OARS_VALUE_UNKNOWN))
         {
-          g_debug ("%s: Comparing rating ‘%s’: app has ‘%s’ but policy has ‘%s’ unknown: OARS check failed",
-                   G_STRFUNC, oars_sections[i],
-                   app_filter_oars_value_to_string (rating_value),
-                   app_filter_oars_value_to_string (filter_value));
+          g_info ("%s: Comparing rating ‘%s’: app has ‘%s’ but policy has ‘%s’ unknown: OARS check failed",
+                  G_STRFUNC, oars_sections[i],
+                  app_filter_oars_value_to_string (rating_value),
+                  app_filter_oars_value_to_string (filter_value));
           return FALSE;
         }
     }

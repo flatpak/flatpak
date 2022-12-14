@@ -1072,7 +1072,7 @@ get_token_for_www_auth (FlatpakOciRegistry *self,
         }
 
       if (error_detail == NULL)
-        g_debug ("Unhandled error body format: %s", body_data);
+        g_info ("Unhandled error body format: %s", body_data);
 
       if (http_status == 401 /* UNAUTHORIZED */)
         {
@@ -2985,7 +2985,7 @@ flatpak_oci_index_make_summary (GFile        *index,
 
       if (!g_str_has_prefix (image->digest, "sha256:"))
         {
-          g_debug ("Ignoring digest type %s", image->digest);
+          g_info ("Ignoring digest type %s", image->digest);
           continue;
         }
 

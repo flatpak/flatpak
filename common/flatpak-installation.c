@@ -320,11 +320,11 @@ flatpak_installation_new_system_with_id (const char   *id,
                                                    &local_error);
   if (installation == NULL)
     {
-      g_debug ("Error creating Flatpak installation: %s", local_error->message);
+      g_info ("Error creating Flatpak installation: %s", local_error->message);
       g_propagate_error (error, g_steal_pointer (&local_error));
     }
 
-  g_debug ("Found Flatpak installation for '%s'", id);
+  g_info ("Found Flatpak installation for '%s'", id);
   return g_steal_pointer (&installation);
 }
 
@@ -1013,7 +1013,7 @@ transaction_ready (FlatpakTransaction  *transaction,
       if (type == FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
         {
           const char *ref = flatpak_transaction_operation_get_ref (op);
-          g_debug ("Update transaction wants to uninstall %s", ref);
+          g_info ("Update transaction wants to uninstall %s", ref);
           continue;
         }
 
@@ -1105,7 +1105,7 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
 
       if (g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_REMOTE_NOT_FOUND))
         {
-          g_debug ("%s: Unable to update %s: %s", G_STRFUNC, ref, local_error->message);
+          g_info ("%s: Unable to update %s: %s", G_STRFUNC, ref, local_error->message);
           g_clear_error (&local_error);
         }
       else
@@ -1159,7 +1159,7 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
           if (!g_hash_table_contains (installed_refs_for_update_set, op_ref))
             {
               g_hash_table_add (installed_refs_for_update_set, (char *)op_ref);
-              g_debug ("%s: Installed ref %s needs update", G_STRFUNC, op_ref);
+              g_info ("%s: Installed ref %s needs update", G_STRFUNC, op_ref);
               g_ptr_array_add (installed_refs_for_update,
                                g_object_ref (installed_ref));
             }
@@ -1177,7 +1177,7 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
                   if (installed_ref != NULL)
                     {
                       g_hash_table_add (installed_refs_for_update_set, (char *)related_op_ref);
-                      g_debug ("%s: Installed ref %s needs update", G_STRFUNC, related_op_ref);
+                      g_info ("%s: Installed ref %s needs update", G_STRFUNC, related_op_ref);
                       g_ptr_array_add (installed_refs_for_update,
                                        g_object_ref (installed_ref));
                     }
@@ -1200,7 +1200,7 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
           if (!g_hash_table_contains (installed_refs_for_update_set, rebased_ref))
             {
               g_hash_table_add (installed_refs_for_update_set, (char *)rebased_ref);
-              g_debug ("%s: Installed ref %s needs update", G_STRFUNC, rebased_ref);
+              g_info ("%s: Installed ref %s needs update", G_STRFUNC, rebased_ref);
               g_ptr_array_add (installed_refs_for_update,
                                g_object_ref (installed_ref));
             }
