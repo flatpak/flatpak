@@ -2580,8 +2580,12 @@ flatpak_context_export (FlatpakContext *context,
 
       if (!flatpak_exports_add_path_expose (exports, MAX (home_mode, fs_mode), g_get_home_dir (), &local_error))
         {
-          log_cannot_export_error (MAX (home_mode, fs_mode), g_get_home_dir (),
-                                   local_error);
+          /* Even if the error is one that we would normally silence, like
+           * the path not existing, it seems reasonable to make more of a fuss
+           * about the home directory not existing or otherwise being unusable,
+           * so this is intentionally not using cannot_export() */
+          g_warning (_("Not allowing home directory access: %s"),
+                     local_error->message);
           g_clear_error (&local_error);
         }
     }
@@ -2799,8 +2803,8 @@ flatpak_context_get_exports_full (FlatpakContext *context,
       /* Ensure we always have a homedir */
       if (!flatpak_exports_add_path_dir (exports, g_get_home_dir (), &local_error))
         {
-          g_debug ("Unable to provide a temporary home directory in the sandbox: %s",
-                   local_error->message);
+          g_warning (_("Unable to provide a temporary home directory in the sandbox: %s"),
+                     local_error->message);
           g_clear_error (&local_error);
         }
     }
