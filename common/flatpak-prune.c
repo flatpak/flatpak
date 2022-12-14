@@ -517,7 +517,7 @@ traverse_reachable_refs_unlocked (OstreeRepo                  *repo,
       if (object_name_bag_contains (reachable, &commit_name))
         continue;
 
-      flatpak_debug2 ("Finding objects to keep for commit %s", checksum);
+      g_debug ("Finding objects to keep for commit %s", checksum);
 
       if (!load_extra_commitmeta (repo, checksum, &extra_commitmeta, cancellable, error))
         return FALSE;
@@ -608,8 +608,8 @@ prune_loose_object (OtPruneData          *data,
 {
   guint64 storage_size = 0;
 
-  flatpak_debug2 ("Pruning unneeded object %s.%s", checksum,
-                  ostree_object_type_to_string (objtype));
+  g_debug ("Pruning unneeded object %s.%s", checksum,
+           ostree_object_type_to_string (objtype));
 
   if (!ostree_repo_query_object_storage_size (data->repo, objtype, checksum,
                                               &storage_size, cancellable, error))
