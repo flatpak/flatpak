@@ -322,7 +322,7 @@ message_handler (const gchar   *log_domain,
                  gpointer       user_data)
 {
   /* Make this look like normal console output */
-  if (log_level & G_LOG_LEVEL_DEBUG)
+  if (log_level & (G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_INFO))
     g_printerr ("F: %s\n", message);
   else
     g_printerr ("%s: %s\n", g_get_prgname (), message);
@@ -372,7 +372,7 @@ main (int    argc,
     }
 
   if (opt_verbose)
-    g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG, message_handler, NULL);
+    g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_INFO, message_handler, NULL);
 
   g_debug ("Started test-authenticator");
 
