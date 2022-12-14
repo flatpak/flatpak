@@ -369,7 +369,7 @@ flatpak_run_add_x11_args (FlatpakBwrap         *bwrap,
         }
       else
         {
-          flatpak_debug2 ("Assuming --share=network gives access to remote X11");
+          g_debug ("Assuming --share=network gives access to remote X11");
         }
 
 #ifdef ENABLE_XAUTH
@@ -3350,8 +3350,8 @@ setup_seccomp (FlatpakBwrap   *bwrap,
        * libseccomp cannot map the syscall number to a name and back to a
        * number for the non-native architecture. */
       if (r == -EFAULT)
-        flatpak_debug2 ("Unable to block syscall %d: syscall not known to libseccomp?",
-                        scall);
+        g_debug ("Unable to block syscall %d: syscall not known to libseccomp?",
+                 scall);
       else if (r < 0)
         return flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Failed to block syscall %d: %s"), scall, flatpak_seccomp_strerror (r));
     }
@@ -3367,8 +3367,8 @@ setup_seccomp (FlatpakBwrap   *bwrap,
 
       /* See above for the meaning of EFAULT. */
       if (r == -EFAULT)
-        flatpak_debug2 ("Unable to block syscall %d: syscall not known to libseccomp?",
-                        scall);
+        g_debug ("Unable to block syscall %d: syscall not known to libseccomp?",
+                 scall);
       else if (r < 0)
         return flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Failed to block syscall %d: %s"), scall, flatpak_seccomp_strerror (r));
     }
@@ -3389,8 +3389,8 @@ setup_seccomp (FlatpakBwrap   *bwrap,
 
           /* See above for the meaning of EFAULT. */
           if (r == -EFAULT)
-            flatpak_debug2 ("Unable to block syscall %d: syscall not known to libseccomp?",
-                            scall);
+            g_debug ("Unable to block syscall %d: syscall not known to libseccomp?",
+                     scall);
           else if (r < 0)
             return flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Failed to block syscall %d: %s"), scall, flatpak_seccomp_strerror (r));
         }

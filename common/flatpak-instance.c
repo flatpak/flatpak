@@ -1107,7 +1107,7 @@ flatpak_instance_iterate_all_and_gc (GPtrArray *out_instances)
               g_info ("Cleaning up unused container id %s", dent->d_name);
 
               if (!flatpak_instance_gc_per_app_dirs (dent->d_name, &local_error))
-                flatpak_debug2 ("Not cleaning up per-app dir: %s", local_error->message);
+                g_debug ("Not cleaning up per-app dir: %s", local_error->message);
 
               glnx_shutil_rm_rf_at (iter.fd, dent->d_name, NULL, NULL);
               continue;
