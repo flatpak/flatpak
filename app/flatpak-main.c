@@ -611,7 +611,7 @@ install_polkit_agent (void)
 
   if (bus == NULL)
     {
-      g_debug ("Unable to connect to system bus: %s", local_error->message);
+      g_info ("Unable to connect to system bus: %s", local_error->message);
       return NULL;
     }
 
@@ -619,7 +619,7 @@ install_polkit_agent (void)
   listener = flatpak_polkit_agent_text_listener_new (NULL, &local_error);
   if (listener == NULL)
     {
-      g_debug ("Failed to create polkit agent listener: %s", local_error->message);
+      g_info ("Failed to create polkit agent listener: %s", local_error->message);
     }
   else
     {
@@ -643,7 +643,7 @@ install_polkit_agent (void)
                                                            &local_error);
       if (agent == NULL)
         {
-          g_debug ("Failed to register polkit agent listener: %s", local_error->message);
+          g_info ("Failed to register polkit agent listener: %s", local_error->message);
         }
       g_object_unref (listener);
     }

@@ -108,7 +108,7 @@ get_compositor_apps (void)
   if (ret)
     g_variant_get (ret, "(@a{sv})", &list);
   else
-    g_debug ("Failed to get information about running apps from background portal backends");
+    g_info ("Failed to get information about running apps from background portal backends");
 
   return list;
 }

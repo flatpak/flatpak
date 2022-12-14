@@ -400,7 +400,7 @@ generate_all_deltas (OstreeRepo   *repo,
 
       if (ignore_ref)
         {
-          g_debug ("Ignoring deltas for ref %s", ref);
+          g_info ("Ignoring deltas for ref %s", ref);
           continue;
         }
 

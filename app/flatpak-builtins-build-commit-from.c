@@ -719,7 +719,7 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
           {
             g_autoptr(GError) local_error = NULL;
             if (!rewrite_delta (src_repo, resolved_ref, dst_repo, commit_checksum, dst_commitv, from[j], &local_error))
-              g_debug ("Failed to copy delta: %s", local_error->message);
+              g_info ("Failed to copy delta: %s", local_error->message);
           }
       }
     }
@@ -738,7 +738,7 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
       if (opt_no_summary_index)
         flags |= FLATPAK_REPO_UPDATE_FLAG_DISABLE_INDEX;
 
-      g_debug ("Updating summary");
+      g_info ("Updating summary");
       if (!flatpak_repo_update (dst_repo, flags,
                                 (const char **) opt_gpg_key_ids,
                                 opt_gpg_homedir,

@@ -62,7 +62,7 @@ kill_instance (const char *id,
         }
     }
 
-  g_debug ("Killed %d instances", killed);
+  g_info ("Killed %d instances", killed);
 
   if (killed == 0)
     return flatpak_fail (error, _("%s is not running"), id);

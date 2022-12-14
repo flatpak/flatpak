@@ -677,11 +677,11 @@ update_appstream (GPtrArray    *dirs,
               ts_file_age = get_appstream_timestamp (dir, remotes[i], arch);
               if (ts_file_age < ttl)
                 {
-                  g_debug ("%s:%s appstream age %" G_GUINT64_FORMAT " is less than ttl %" G_GUINT64_FORMAT, remotes[i], arch, ts_file_age, ttl);
+                  g_info ("%s:%s appstream age %" G_GUINT64_FORMAT " is less than ttl %" G_GUINT64_FORMAT, remotes[i], arch, ts_file_age, ttl);
                   continue;
                 }
               else
-                g_debug ("%s:%s appstream age %" G_GUINT64_FORMAT " is greater than ttl %" G_GUINT64_FORMAT, remotes[i], arch, ts_file_age, ttl);
+                g_info ("%s:%s appstream age %" G_GUINT64_FORMAT " is greater than ttl %" G_GUINT64_FORMAT, remotes[i], arch, ts_file_age, ttl);
 
               if (flatpak_dir_get_remote_disabled (dir, remotes[i]) ||
                   flatpak_dir_get_remote_noenumerate (dir, remotes[i]))
@@ -690,7 +690,7 @@ update_appstream (GPtrArray    *dirs,
               if (flatpak_dir_is_user (dir))
                 {
                   if (quiet)
-                    g_debug (_("Updating appstream data for user remote %s"), remotes[i]);
+                    g_info (_("Updating appstream data for user remote %s"), remotes[i]);
                   else
                     {
                       g_print (_("Updating appstream data for user remote %s"), remotes[i]);
@@ -700,7 +700,7 @@ update_appstream (GPtrArray    *dirs,
               else
                 {
                   if (quiet)
-                    g_debug (_("Updating appstream data for remote %s"), remotes[i]);
+                    g_info (_("Updating appstream data for remote %s"), remotes[i]);
                   else
                     {
                       g_print (_("Updating appstream data for remote %s"), remotes[i]);
@@ -711,7 +711,7 @@ update_appstream (GPtrArray    *dirs,
                                                  NULL, cancellable, &local_error))
                 {
                   if (quiet)
-                    g_debug ("%s: %s", _("Error updating"), local_error->message);
+                    g_info ("%s: %s", _("Error updating"), local_error->message);
                   else
                     g_printerr ("%s: %s\n", _("Error updating"), local_error->message);
                 }
@@ -735,11 +735,11 @@ update_appstream (GPtrArray    *dirs,
               ts_file_age = get_appstream_timestamp (dir, remote, arch);
               if (ts_file_age < ttl)
                 {
-                  g_debug ("%s:%s appstream age %" G_GUINT64_FORMAT " is less than ttl %" G_GUINT64_FORMAT, remote, arch, ts_file_age, ttl);
+                  g_info ("%s:%s appstream age %" G_GUINT64_FORMAT " is less than ttl %" G_GUINT64_FORMAT, remote, arch, ts_file_age, ttl);
                   continue;
                 }
               else
-                g_debug ("%s:%s appstream age %" G_GUINT64_FORMAT " is greater than ttl %" G_GUINT64_FORMAT, remote, arch, ts_file_age, ttl);
+                g_info ("%s:%s appstream age %" G_GUINT64_FORMAT " is greater than ttl %" G_GUINT64_FORMAT, remote, arch, ts_file_age, ttl);
 
               if (!flatpak_dir_update_appstream (dir, remote, arch, &changed,
                                                  NULL, cancellable, error))
