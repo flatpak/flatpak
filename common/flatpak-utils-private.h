@@ -102,8 +102,7 @@ gboolean flatpak_fail_error (GError     **error,
                              const char  *fmt,
                              ...) G_GNUC_PRINTF (3, 4);
 
-void flatpak_debug2 (const char *format,
-                     ...) G_GNUC_PRINTF (1, 2);
+#define flatpak_debug2(...) g_log (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG, __VA_ARGS__)
 
 gint flatpak_strcmp0_ptr (gconstpointer a,
                           gconstpointer b);
