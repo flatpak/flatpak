@@ -322,7 +322,7 @@ get_instance_info (const char *dir)
   key_file = g_key_file_new ();
   if (!g_key_file_load_from_file (key_file, file, G_KEY_FILE_NONE, &error))
     {
-      g_debug ("Failed to load instance info file '%s': %s", file, error->message);
+      g_info ("Failed to load instance info file '%s': %s", file, error->message);
       return NULL;
     }
 
@@ -344,21 +344,21 @@ get_child_pid (const char *dir)
 
   if (!g_file_get_contents (file, &contents, &length, &error))
     {
-      g_debug ("Failed to load bwrapinfo.json file '%s': %s", file, error->message);
+      g_info ("Failed to load bwrapinfo.json file '%s': %s", file, error->message);
       return 0;
     }
 
   parser = json_parser_new ();
   if (!json_parser_load_from_data (parser, contents, length, &error))
     {
-      g_debug ("Failed to parse bwrapinfo.json file '%s': %s", file, error->message);
+      g_info ("Failed to parse bwrapinfo.json file '%s': %s", file, error->message);
       return 0;
     }
 
   node = json_parser_get_root (parser);
   if (!node)
     {
-      g_debug ("Failed to parse bwrapinfo.json file '%s': %s", file, "empty");
+      g_info ("Failed to parse bwrapinfo.json file '%s': %s", file, "empty");
       return 0;
     }
 
@@ -378,7 +378,7 @@ get_pid (const char *dir)
 
   if (!g_file_get_contents (file, &contents, NULL, &error))
     {
-      g_debug ("Failed to load pid file '%s': %s", file, error->message);
+      g_info ("Failed to load pid file '%s': %s", file, error->message);
       return 0;
     }
 
@@ -767,7 +767,7 @@ flatpak_instance_allocate_id (char **host_dir_out,
           if (lock_fd != -1 && fcntl (lock_fd, F_SETLK, &l) == 0)
             {
               *lock_fd_out = glnx_steal_fd (&lock_fd);
-              g_debug ("Allocated instance id %s", instance_id);
+              g_info ("Allocated instance id %s", instance_id);
               *host_dir_out = g_steal_pointer (&instance_dir);
               return g_steal_pointer (&instance_id);
             }
@@ -990,7 +990,7 @@ flatpak_instance_gc_per_app_dirs (const char *instance_id,
   if (statbuf.st_mtime + 3 >= time (NULL))
     return glnx_throw (error, "lock file too recent, avoiding race condition");
 
-  g_debug ("Cleaning up per-app-ID state for %s", app_id);
+  g_info ("Cleaning up per-app-ID state for %s", app_id);
 
   /* /dev/shm is offloaded onto the host's /dev/shm to get consistent
    * free space behaviour and make sure it's actually in RAM. It could
@@ -1018,13 +1018,13 @@ flatpak_instance_gc_per_app_dirs (const char *instance_id,
           g_assert (g_str_has_prefix (path, "/dev/shm/"));
 
           if (unlinkat (per_app_dir_fd, "dev-shm", 0) != 0)
-            g_debug ("Unable to clean up %s/%s: %s",
-                     per_app_dir, "dev-shm", g_strerror (errno));
+            g_info ("Unable to clean up %s/%s: %s",
+                    per_app_dir, "dev-shm", g_strerror (errno));
 
           if (!glnx_shutil_rm_rf_at (AT_FDCWD, path, NULL, &local_error))
             {
-              g_debug ("Unable to clean up %s: %s",
-                       path, local_error->message);
+              g_info ("Unable to clean up %s: %s",
+                      path, local_error->message);
               g_clear_error (&local_error);
             }
         }
@@ -1035,9 +1035,9 @@ flatpak_instance_gc_per_app_dirs (const char *instance_id,
         }
       else
         {
-          g_debug ("%s/%s no longer points to the expected directory and "
-                   "was removed: %s",
-                   per_app_dir, "dev-shm", local_error->message);
+          g_info ("%s/%s no longer points to the expected directory and "
+                  "was removed: %s",
+                  per_app_dir, "dev-shm", local_error->message);
           g_clear_error (&local_error);
         }
     }
@@ -1049,8 +1049,8 @@ flatpak_instance_gc_per_app_dirs (const char *instance_id,
    * and not a symlink. If it's a symlink, we'll just unlink it. */
   if (!glnx_shutil_rm_rf_at (per_app_dir_fd, "tmp", NULL, &local_error))
     {
-      g_debug ("Unable to clean up %s/tmp: %s", per_app_dir,
-               local_error->message);
+      g_info ("Unable to clean up %s/tmp: %s", per_app_dir,
+              local_error->message);
       g_clear_error (&local_error);
     }
 
@@ -1104,7 +1104,7 @@ flatpak_instance_iterate_all_and_gc (GPtrArray *out_instances)
               g_autoptr(GError) local_error = NULL;
 
               /* The instance is not used, remove it */
-              g_debug ("Cleaning up unused container id %s", dent->d_name);
+              g_info ("Cleaning up unused container id %s", dent->d_name);
 
               if (!flatpak_instance_gc_per_app_dirs (dent->d_name, &local_error))
                 flatpak_debug2 ("Not cleaning up per-app dir: %s", local_error->message);

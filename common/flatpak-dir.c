@@ -431,14 +431,14 @@ flatpak_remote_state_add_sideload_repo (FlatpakRemoteState *self,
           /* We expect to hit this code path when the repo is providing things
            * from other remotes
            */
-          g_debug ("Sideload repo at path %s not valid for remote %s: %s",
-                   flatpak_file_get_path_cached (dir), self->remote_name, local_error->message);
+          g_info ("Sideload repo at path %s not valid for remote %s: %s",
+                  flatpak_file_get_path_cached (dir), self->remote_name, local_error->message);
           flatpak_sideload_state_free (ss);
         }
       else
         {
           g_ptr_array_add (self->sideload_repos, ss);
-          g_debug ("Using sideloaded repo %s for remote %s", flatpak_file_get_path_cached (dir), self->remote_name);
+          g_info ("Using sideloaded repo %s for remote %s", flatpak_file_get_path_cached (dir), self->remote_name);
         }
     }
 }
@@ -809,7 +809,7 @@ flatpak_remote_state_match_subrefs (FlatpakRemoteState *self,
 
   if (self->summary == NULL && self->index == NULL)
     {
-      g_debug ("flatpak_remote_state_match_subrefs with no summary");
+      g_info ("flatpak_remote_state_match_subrefs with no summary");
       return g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_decomposed_unref);
     }
 
@@ -1644,7 +1644,7 @@ append_locations_from_config_file (GPtrArray    *locations,
 
   if (!g_key_file_load_from_file (keyfile, file_path, G_KEY_FILE_NONE, &my_error))
     {
-      g_debug ("Could not get list of system installations from '%s': %s", file_path, my_error->message);
+      g_info ("Could not get list of system installations from '%s': %s", file_path, my_error->message);
       g_propagate_error (error, g_steal_pointer (&my_error));
       goto out;
     }
@@ -1690,7 +1690,7 @@ append_locations_from_config_file (GPtrArray    *locations,
       path = g_key_file_get_string (keyfile, groups[i], "Path", &my_error);
       if (path == NULL)
         {
-          g_debug ("While reading '%s': Unable to get path for installation '%s': %s", file_path, id, my_error->message);
+          g_info ("While reading '%s': Unable to get path for installation '%s': %s", file_path, id, my_error->message);
           g_propagate_error (error, g_steal_pointer (&my_error));
           goto out;
         }
@@ -1758,7 +1758,7 @@ system_locations_from_configuration (GCancellable *cancellable,
 
   if (!g_file_test (config_dir, G_FILE_TEST_IS_DIR))
     {
-      g_debug ("No installations directory in %s. Skipping", config_dir);
+      g_info ("No installations directory in %s. Skipping", config_dir);
       goto out;
     }
 
@@ -1769,8 +1769,8 @@ system_locations_from_configuration (GCancellable *cancellable,
                                         cancellable, &my_error);
   if (my_error != NULL)
     {
-      g_debug ("Unexpected error retrieving extra installations in %s: %s",
-               config_dir, my_error->message);
+      g_info ("Unexpected error retrieving extra installations in %s: %s",
+              config_dir, my_error->message);
       g_propagate_error (error, g_steal_pointer (&my_error));
       goto out;
     }
@@ -1785,8 +1785,8 @@ system_locations_from_configuration (GCancellable *cancellable,
       if (!g_file_enumerator_iterate (dir_enum, &file_info, &path,
                                       cancellable, &my_error))
         {
-          g_debug ("Unexpected error reading file in %s: %s",
-                   config_dir, my_error->message);
+          g_info ("Unexpected error reading file in %s: %s",
+                  config_dir, my_error->message);
           g_propagate_error (error, g_steal_pointer (&my_error));
           goto out;
         }
@@ -2173,7 +2173,7 @@ flatpak_dir_system_helper_call (FlatpakDir         *self,
       return NULL;
     }
 
-  g_debug ("Calling system helper: %s", method_name);
+  g_info ("Calling system helper: %s", method_name);
   res = g_dbus_connection_call_with_unix_fd_list_sync (self->system_helper_bus,
                                                        FLATPAK_SYSTEM_HELPER_BUS_NAME,
                                                        FLATPAK_SYSTEM_HELPER_PATH,
@@ -2478,7 +2478,7 @@ flatpak_dir_system_helper_call_cancel_pull (FlatpakDir    *self,
   if (flatpak_dir_get_no_interaction (self))
     arg_flags |= FLATPAK_HELPER_CANCEL_PULL_FLAGS_NO_INTERACTION;
 
-  g_debug ("Calling system helper: CancelPull");
+  g_info ("Calling system helper: CancelPull");
 
   g_autoptr(GVariant) ret =
     flatpak_dir_system_helper_call (self, "CancelPull",
@@ -2508,7 +2508,7 @@ flatpak_dir_system_helper_call_get_revokefs_fd (FlatpakDir   *self,
   if (flatpak_dir_get_no_interaction (self))
     arg_flags |= FLATPAK_HELPER_GET_REVOKEFS_FD_FLAGS_NO_INTERACTION;
 
-  g_debug ("Calling system helper: GetRevokefsFd");
+  g_info ("Calling system helper: GetRevokefsFd");
 
   g_autoptr(GVariant) ret =
     flatpak_dir_system_helper_call (self, "GetRevokefsFd",
@@ -3786,7 +3786,7 @@ flatpak_dir_migrate_config (FlatpakDir   *self,
           if (config == NULL)
             config = ostree_repo_copy_config (flatpak_dir_get_repo (self));
 
-          g_debug ("Migrating remote '%s' to gpg-verify-summary", remote);
+          g_info ("Migrating remote '%s' to gpg-verify-summary", remote);
           g_key_file_set_boolean (config, group, "gpg-verify-summary", TRUE);
         }
     }
@@ -3802,7 +3802,7 @@ flatpak_dir_migrate_config (FlatpakDir   *self,
                                                            FLATPAK_HELPER_ENSURE_REPO_FLAGS_NONE,
                                                            installation ? installation : "",
                                                            NULL, &local_error))
-            g_debug ("Failed to migrate system config: %s", local_error->message);
+            g_info ("Failed to migrate system config: %s", local_error->message);
         }
       else
         {
@@ -3912,8 +3912,8 @@ _flatpak_dir_find_new_flatpakrepos (FlatpakDir *self, OstreeRepo *repo)
       if (!g_file_enumerator_iterate (dir_enum, &file_info, &path,
                                       NULL, &my_error))
         {
-          g_debug ("Unexpected error reading file in %s: %s",
-                   config_dir, my_error->message);
+          g_info ("Unexpected error reading file in %s: %s",
+                  config_dir, my_error->message);
           break;
         }
 
@@ -4001,7 +4001,7 @@ apply_new_flatpakrepo (const char *remote_name,
                                           NULL, &imported, NULL, error))
         return FALSE;
 
-      g_debug ("Imported %u GPG key%s to remote \"%s\"", imported, (imported == 1) ? "" : "s", remote_name);
+      g_info ("Imported %u GPG key%s to remote \"%s\"", imported, (imported == 1) ? "" : "s", remote_name);
     }
 
   return TRUE;
@@ -4554,7 +4554,7 @@ remove_old_appstream_tmpdirs (GFile *dir)
       tmp = g_file_get_child (dir, dent->d_name);
 
       /* We ignore errors here, no need to worry anyone */
-      g_debug ("Deleting stale appstream deploy tmpdir %s", flatpak_file_get_path_cached (tmp));
+      g_info ("Deleting stale appstream deploy tmpdir %s", flatpak_file_get_path_cached (tmp));
       (void)flatpak_rm_rf (tmp, NULL, NULL);
     }
 }
@@ -4614,7 +4614,7 @@ remove_old_deploy_tmpdirs (GFile *dir)
       tmp = g_file_get_child (dir, dent->d_name);
 
       /* We ignore errors here, no need to worry anyone */
-      g_debug ("Deleting stale deploy tmpdir %s", flatpak_file_get_path_cached (tmp));
+      g_info ("Deleting stale deploy tmpdir %s", flatpak_file_get_path_cached (tmp));
       (void)flatpak_rm_rf (tmp, NULL, NULL);
     }
 }
@@ -5463,7 +5463,7 @@ repo_pull (OstreeRepo                           *self,
 
       sideload_url = g_file_get_uri (sideload_repo);
 
-      g_debug ("Sideloading %s from %s in pull", ref_to_fetch, sideload_url);
+      g_info ("Sideloading %s from %s in pull", ref_to_fetch, sideload_url);
 
       g_assert (state->collection_id != NULL);
 
@@ -5734,7 +5734,7 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
       extra_local_file = flatpak_build_file (base_dir, "extra-data", extra_data_sha256, extra_data_name, NULL);
       if (g_file_query_exists (extra_local_file, cancellable))
         {
-          g_debug ("Loading extra-data from local file %s", flatpak_file_get_path_cached (extra_local_file));
+          g_info ("Loading extra-data from local file %s", flatpak_file_get_path_cached (extra_local_file));
           gsize extra_local_size;
           g_autofree char *extra_local_contents = NULL;
           g_autoptr(GError) my_error = NULL;
@@ -5885,7 +5885,7 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
 
   flatpak_progress_start_oci_pull (progress);
 
-  g_debug ("Mirroring OCI image %s", oci_digest);
+  g_info ("Mirroring OCI image %s", oci_digest);
 
   res = flatpak_mirror_image_from_oci (dst_registry, registry, oci_repository, oci_digest, state->remote_name, ref, delta_url, self->repo, oci_pull_progress_cb,
                                        progress, cancellable, error);
@@ -5966,7 +5966,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
 
   flatpak_progress_start_oci_pull (progress);
 
-  g_debug ("Pulling OCI image %s", oci_digest);
+  g_info ("Pulling OCI image %s", oci_digest);
 
   checksum = flatpak_pull_from_oci (repo, registry, oci_repository, oci_digest, delta_url, FLATPAK_OCI_MANIFEST (versioned), image_config,
                                     state->remote_name, ref, flatpak_flags, oci_pull_progress_cb, progress, cancellable, error);
@@ -5974,7 +5974,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   if (checksum == NULL)
     return FALSE;
 
-  g_debug ("Imported OCI image as checksum %s", checksum);
+  g_info ("Imported OCI image as checksum %s", checksum);
 
   if (repo == self->repo)
     name = flatpak_dir_get_name (self);
@@ -6054,11 +6054,11 @@ flatpak_dir_pull (FlatpakDir                           *self,
       return FALSE;
     }
 
-  g_debug ("%s: Using commit %s for pull of ref %s from remote %s%s%s",
-           G_STRFUNC, rev, ref, state->remote_name,
-           sideload_repo ? "sideloaded from " : "",
-           sideload_repo ? flatpak_file_get_path_cached (sideload_repo) : ""
-           );
+  g_info ("%s: Using commit %s for pull of ref %s from remote %s%s%s",
+          G_STRFUNC, rev, ref, state->remote_name,
+          sideload_repo ? "sideloaded from " : "",
+          sideload_repo ? flatpak_file_get_path_cached (sideload_repo) : ""
+          );
 
   if (repo == NULL)
     repo = self->repo;
@@ -7082,7 +7082,7 @@ flatpak_dir_run_triggers (FlatpakDir   *self,
   if (triggerspath == NULL)
     triggerspath = FLATPAK_TRIGGERDIR;
 
-  g_debug ("running triggers from %s", triggerspath);
+  g_info ("running triggers from %s", triggerspath);
 
   triggersdir = g_file_new_for_path (triggerspath);
 
@@ -7112,7 +7112,7 @@ flatpak_dir_run_triggers (FlatpakDir   *self,
           g_autoptr(FlatpakBwrap) bwrap = NULL;
           g_autofree char *commandline = NULL;
 
-          g_debug ("running trigger %s", name);
+          g_info ("running trigger %s", name);
 
           bwrap = flatpak_bwrap_new (NULL);
 
@@ -7135,7 +7135,7 @@ flatpak_dir_run_triggers (FlatpakDir   *self,
           flatpak_bwrap_finish (bwrap);
 
           commandline = flatpak_quote_argv ((const char **) bwrap->argv->pdata, -1);
-          g_debug ("Running '%s'", commandline);
+          g_info ("Running '%s'", commandline);
 
           /* We use LEAVE_DESCRIPTORS_OPEN to work around dead-lock, see flatpak_close_fds_workaround */
           if (!g_spawn_sync ("/",
@@ -8092,7 +8092,7 @@ extract_extra_data (FlatpakDir   *self,
   if (n_extra_data_sources == 0)
     return TRUE;
 
-  g_debug ("extracting extra data to %s", flatpak_file_get_path_cached (extradir));
+  g_info ("extracting extra data to %s", flatpak_file_get_path_cached (extradir));
 
   if (!ostree_repo_read_commit_detached_metadata (self->repo, checksum, &detached_metadata,
                                                   cancellable, error))
@@ -8348,7 +8348,7 @@ apply_extra_data (FlatpakDir   *self,
 
   flatpak_bwrap_finish (bwrap);
 
-  g_debug ("Running /app/bin/apply_extra ");
+  g_info ("Running /app/bin/apply_extra ");
 
   /* We run the sandbox without caps, but it can still create files owned by itself with
    * arbitrary permissions, including setuid myself. This is extra risky in the case where
@@ -8436,7 +8436,7 @@ flatpak_dir_check_parental_controls (FlatpakDir    *self,
    * system-helper, self->source_pid is non-zero. */
   if (self->source_pid == 0 && getuid () == 0)
     {
-      g_debug ("Skipping parental controls check for %s due to running as root", ref);
+      g_info ("Skipping parental controls check for %s due to running as root", ref);
       return TRUE;
     }
 
@@ -8446,7 +8446,7 @@ flatpak_dir_check_parental_controls (FlatpakDir    *self,
   if (!g_str_has_prefix (ref, "app/"))
     return TRUE;
 
-  g_debug ("Getting parental controls details for %s from %s",
+  g_info ("Getting parental controls details for %s from %s",
            ref, flatpak_deploy_data_get_origin (deploy_data));
 
   if (on_session != NULL)
@@ -8454,8 +8454,8 @@ flatpak_dir_check_parental_controls (FlatpakDir    *self,
       /* FIXME: Instead of skipping the parental controls check in the test
        * environment, make a mock service for it.
        * https://github.com/flatpak/flatpak/issues/2993 */
-      g_debug ("Skipping parental controls check for %s since the "
-               "system bus is unavailable in the test environment", ref);
+      g_info ("Skipping parental controls check for %s since the "
+              "system bus is unavailable in the test environment", ref);
       return TRUE;
     }
 
@@ -8489,15 +8489,15 @@ flatpak_dir_check_parental_controls (FlatpakDir    *self,
                                            cancellable, &local_error);
   if (g_error_matches (local_error, MCT_APP_FILTER_ERROR, MCT_APP_FILTER_ERROR_DISABLED))
     {
-      g_debug ("Skipping parental controls check for %s since parental "
-               "controls are disabled globally", ref);
+      g_info ("Skipping parental controls check for %s since parental "
+              "controls are disabled globally", ref);
       return TRUE;
     }
   else if (g_error_matches (local_error, G_DBUS_ERROR, G_DBUS_ERROR_SERVICE_UNKNOWN) ||
            g_error_matches (local_error, G_DBUS_ERROR, G_DBUS_ERROR_NAME_HAS_NO_OWNER))
     {
-      g_debug ("Skipping parental controls check for %s since a required "
-               "service was not found", ref);
+      g_info ("Skipping parental controls check for %s since a required "
+              "service was not found", ref);
       return TRUE;
     }
   else if (local_error != NULL)
@@ -8518,7 +8518,7 @@ flatpak_dir_check_parental_controls (FlatpakDir    *self,
 
   if (repo_installation_allowed && app_is_appropriate)
     {
-      g_debug ("Parental controls policy satisfied for %s", ref);
+      g_info ("Parental controls policy satisfied for %s", ref);
       return TRUE;
     }
 
@@ -8549,7 +8549,7 @@ flatpak_dir_check_parental_controls (FlatpakDir    *self,
                                _("Installing %s is not allowed by the policy set by your administrator"),
                                ref);
 
-  g_debug ("Parental controls policy overridden by polkit for %s", ref);
+  g_info ("Parental controls policy overridden by polkit for %s", ref);
 #endif  /* USE_SYSTEM_HELPER */
 #endif  /* HAVE_LIBMALCONTENT */
 
@@ -8639,7 +8639,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
 
   if (checksum_or_latest == NULL)
     {
-      g_debug ("No checksum specified, getting tip of %s from origin %s", flatpak_decomposed_get_ref (ref), origin);
+      g_info ("No checksum specified, getting tip of %s from origin %s", flatpak_decomposed_get_ref (ref), origin);
 
       resolved_ref = flatpak_dir_read_latest (self, origin, flatpak_decomposed_get_ref (ref), NULL, cancellable, error);
       if (resolved_ref == NULL)
@@ -8649,12 +8649,12 @@ flatpak_dir_deploy (FlatpakDir          *self,
         }
 
       checksum = resolved_ref;
-      g_debug ("tip resolved to: %s", checksum);
+      g_info ("tip resolved to: %s", checksum);
     }
   else
     {
       checksum = checksum_or_latest;
-      g_debug ("Looking for checksum %s in local repo", checksum);
+      g_info ("Looking for checksum %s in local repo", checksum);
       if (!ostree_repo_read_commit (self->repo, checksum, NULL, NULL, cancellable, NULL))
         return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("%s is not available"), flatpak_decomposed_get_ref (ref));
     }
@@ -8739,7 +8739,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
 
           if (!g_file_query_exists (child, cancellable))
             {
-              g_debug ("subpath %s not in tree", subpaths[i]);
+              g_info ("subpath %s not in tree", subpaths[i]);
               continue;
             }
 
@@ -9065,7 +9065,7 @@ flatpak_dir_deploy_install (FlatpakDir        *self,
           if (strcmp (old_origin, origin) != 0)
             remove_ref_from_remote = g_strdup (old_origin);
 
-          g_debug ("Removing old deployment for reinstall");
+          g_info ("Removing old deployment for reinstall");
           if (!flatpak_dir_undeploy (self, ref, old_active,
                                      TRUE, FALSE,
                                      cancellable, error))
@@ -9264,7 +9264,7 @@ rewrite_one_dynamic_launcher (const char *portal_desktop_dir,
     }
   if (!g_key_file_has_key (old_key_file, G_KEY_FILE_DESKTOP_GROUP, "X-Flatpak", NULL))
     {
-      g_debug ("Ignoring non-Flatpak dynamic launcher: %s", desktop_path);
+      g_info ("Ignoring non-Flatpak dynamic launcher: %s", desktop_path);
       return;
     }
 
@@ -9301,7 +9301,7 @@ rewrite_one_dynamic_launcher (const char *portal_desktop_dir,
   if (!g_file_delete (link_file, NULL, &local_error) &&
       !g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
     {
-      g_debug ("Unable to delete desktop file link %s: %s", desktop_name, local_error->message);
+      g_info ("Unable to delete desktop file link %s: %s", desktop_name, local_error->message);
       g_clear_error (&local_error);
     }
 
@@ -9649,7 +9649,7 @@ flatpak_dir_setup_revokefs_fuse_mount (FlatpakDir    *self,
                                                        &local_error))
     {
       if (g_error_matches (local_error, G_DBUS_ERROR, G_DBUS_ERROR_NOT_SUPPORTED))
-        g_debug ("revokefs-fuse not supported on your installation: %s", local_error->message);
+        g_info ("revokefs-fuse not supported on your installation: %s", local_error->message);
       else
         g_warning ("Failed to get revokefs-fuse socket from system-helper: %s", local_error->message);
 
@@ -10774,7 +10774,7 @@ flatpak_dir_uninstall (FlatpakDir                 *self,
 
   old_active = g_strdup (flatpak_deploy_data_get_commit (deploy_data));
 
-  g_debug ("dropping active ref");
+  g_info ("dropping active ref");
   if (!flatpak_dir_set_active (self, ref, NULL, cancellable, error))
     return FALSE;
 
@@ -10784,7 +10784,7 @@ flatpak_dir_uninstall (FlatpakDir                 *self,
       if (current_ref != NULL &&
           flatpak_decomposed_equal (ref, current_ref))
         {
-          g_debug ("dropping current ref");
+          g_info ("dropping current ref");
           if (!flatpak_dir_drop_current_ref (self, name, cancellable, error))
             return FALSE;
         }
@@ -11201,7 +11201,7 @@ flatpak_dir_undeploy_all (FlatpakDir        *self,
 
   for (i = 0; deployed[i] != NULL; i++)
     {
-      g_debug ("undeploying %s", deployed[i]);
+      g_info ("undeploying %s", deployed[i]);
       if (!flatpak_dir_undeploy (self, ref, deployed[i], FALSE, force_remove, cancellable, error))
         return FALSE;
     }
@@ -11210,12 +11210,12 @@ flatpak_dir_undeploy_all (FlatpakDir        *self,
   was_deployed = g_file_query_exists (deploy_base, cancellable);
   if (was_deployed)
     {
-      g_debug ("removing deploy base");
+      g_info ("removing deploy base");
       if (!flatpak_rm_rf (deploy_base, cancellable, error))
         return FALSE;
     }
 
-  g_debug ("cleaning up empty directories");
+  g_info ("cleaning up empty directories");
   arch_dir = g_file_get_parent (deploy_base);
   if (g_file_query_exists (arch_dir, cancellable) &&
       !g_file_delete (arch_dir, cancellable, &temp_error))
@@ -11385,7 +11385,7 @@ flatpak_dir_prune (FlatpakDir   *self,
          the shared lock operation is released and we will do a prune then */
       if (g_error_matches (lock_error, G_IO_ERROR, G_IO_ERROR_WOULD_BLOCK))
         {
-          g_debug ("Skipping prune due to in progress operation");
+          g_info ("Skipping prune due to in progress operation");
           return TRUE;
         }
 
@@ -11393,7 +11393,7 @@ flatpak_dir_prune (FlatpakDir   *self,
       return FALSE;
     }
 
-  g_debug ("Pruning repo");
+  g_info ("Pruning repo");
   if (!ostree_repo_prune (self->repo,
                           OSTREE_REPO_PRUNE_FLAGS_REFS_ONLY,
                           0,
@@ -11404,7 +11404,7 @@ flatpak_dir_prune (FlatpakDir   *self,
     goto out;
 
   formatted_freed_size = g_format_size_full (pruned_object_size_total, 0);
-  g_debug ("Pruned %d/%d objects, size %s", objects_total, objects_pruned, formatted_freed_size);
+  g_info ("Pruned %d/%d objects, size %s", objects_total, objects_pruned, formatted_freed_size);
 
   ret = TRUE;
 
@@ -11444,7 +11444,7 @@ flatpak_dir_update_summary (FlatpakDir   *self,
       g_autoptr(GError) local_error = NULL;
       g_autoptr(GFile) summary_file = NULL;
 
-      g_debug ("Deleting summary");
+      g_info ("Deleting summary");
 
       summary_file = g_file_get_child (ostree_repo_get_path (self->repo), "summary");
 
@@ -11460,7 +11460,7 @@ flatpak_dir_update_summary (FlatpakDir   *self,
     {
       g_auto(GLnxLockFile) lock = { 0, };
 
-      g_debug ("Updating summary");
+      g_info ("Updating summary");
 
       /* Keep a shared repo lock to avoid prunes removing objects we're relying on
        * while generating the summary. */
@@ -11762,7 +11762,7 @@ flatpak_dir_lookup_cached_summary (FlatpakDir *self,
       if ((now - summary->time) / G_USEC_PER_SEC < SUMMARY_CACHE_TIMEOUT_SEC &&
           strcmp (url, summary->url) == 0)
         {
-          /* g_debug ("Using cached summary for remote %s", name); */
+          /* g_info ("Using cached summary for remote %s", name); */
           *bytes_out = g_bytes_ref (summary->bytes);
           if (bytes_sig_out)
             {
@@ -12036,7 +12036,7 @@ flatpak_dir_remote_clear_cached_summary (FlatpakDir   *self,
                                          GCancellable *cancellable,
                                          GError      **error)
 {
-  g_debug ("Clearing cached summaries for remote %s", remote);
+  g_info ("Clearing cached summaries for remote %s", remote);
   if (!_flatpak_dir_remote_clear_cached_summary (self, remote, NULL, cancellable, error))
     return FALSE;
   if (!_flatpak_dir_remote_clear_cached_summary (self, remote, ".sig", cancellable, error))
@@ -12144,7 +12144,7 @@ flatpak_dir_remote_load_cached_summary (FlatpakDir   *self,
               !g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
             {
               g_autofree char *path = g_file_get_path (main_cache_file);
-              g_debug ("Unable to delete file %s: %s", path, local_error->message);
+              g_info ("Unable to delete file %s: %s", path, local_error->message);
               g_clear_error (&local_error);
             }
 
@@ -12154,7 +12154,7 @@ flatpak_dir_remote_load_cached_summary (FlatpakDir   *self,
                   !g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
                 {
                   g_autofree char *path = g_file_get_path (sig_cache_file);
-                  g_debug ("Unable to delete file %s: %s", path, local_error->message);
+                  g_info ("Unable to delete file %s: %s", path, local_error->message);
                   g_clear_error (&local_error);
                 }
             }
@@ -12219,11 +12219,11 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
           if (!flatpak_dir_remote_load_cached_summary (self, name_or_uri, NULL, NULL, ".sig",
                                                        &summary, &summary_sig, cancellable, error))
             return FALSE;
-          g_debug ("Loaded summary from cache for remote ‘%s’", name_or_uri);
+          g_info ("Loaded summary from cache for remote ‘%s’", name_or_uri);
         }
       else
         {
-          g_debug ("Fetching summary file for remote ‘%s’", name_or_uri);
+          g_info ("Fetching summary file for remote ‘%s’", name_or_uri);
           if (!ostree_repo_remote_fetch_summary (self->repo, name_or_uri,
                                                  &summary, &summary_sig,
                                                  cancellable,
@@ -12383,7 +12383,7 @@ flatpak_dir_remote_fetch_summary_index (FlatpakDir   *self,
           g_propagate_error (error, g_steal_pointer (&cache_error));
           return FALSE;
         }
-      g_debug ("Loaded summary index from cache for remote ‘%s’", name_or_uri);
+      g_info ("Loaded summary index from cache for remote ‘%s’", name_or_uri);
 
       index = g_steal_pointer (&cached_index);
       if (gpg_verify_summary)
@@ -12395,7 +12395,7 @@ flatpak_dir_remote_fetch_summary_index (FlatpakDir   *self,
       g_autoptr(GBytes) dl_index = NULL;
       gboolean used_download = FALSE;
 
-      g_debug ("Fetching summary index file for remote ‘%s’", name_or_uri);
+      g_info ("Fetching summary index file for remote ‘%s’", name_or_uri);
 
       dl_index = flatpak_load_uri (self->http_session, index_url, 0, NULL,
                                    NULL, NULL, NULL,
@@ -12566,13 +12566,13 @@ flatpak_dir_remote_fetch_indexed_summary (FlatpakDir   *self,
           g_autofree char *delta_filename = g_strconcat (old_checksum, "-", checksum, ".delta", NULL);
           g_autofree char *delta_url = g_build_filename (url, "summaries", delta_filename, NULL);
 
-          g_debug ("Fetching indexed summary delta %s for remote ‘%s’", delta_filename, name_or_uri);
+          g_info ("Fetching indexed summary delta %s for remote ‘%s’", delta_filename, name_or_uri);
 
           g_autoptr(GBytes) delta = flatpak_load_uri (self->http_session, delta_url, 0, NULL,
                                                       NULL, NULL, NULL,
                                                       cancellable, &delta_error);
           if (delta == NULL)
-            g_debug ("Failed to load delta, falling back: %s", delta_error->message);
+            g_info ("Failed to load delta, falling back: %s", delta_error->message);
           else
             {
               g_autoptr(GBytes) applied = flatpak_summary_apply_diff (old_summary, delta, &delta_error);
@@ -12593,7 +12593,7 @@ flatpak_dir_remote_fetch_indexed_summary (FlatpakDir   *self,
       if (summary == NULL)
         {
           g_autofree char *filename = g_strconcat (checksum, ".gz", NULL);
-          g_debug ("Fetching indexed summary file %s for remote ‘%s’", filename, name_or_uri);
+          g_info ("Fetching indexed summary file %s for remote ‘%s’", filename, name_or_uri);
           g_autofree char *subsummary_url = g_build_filename (url, "summaries", filename, NULL);
           summary_z = flatpak_load_uri (self->http_session, subsummary_url, 0, NULL,
                                         NULL, NULL, NULL,
@@ -12625,7 +12625,7 @@ flatpak_dir_remote_fetch_indexed_summary (FlatpakDir   *self,
         }
     }
   else
-    g_debug ("Loaded indexed summary file %s from cache for remote ‘%s’", checksum, name_or_uri);
+    g_info ("Loaded indexed summary file %s from cache for remote ‘%s’", checksum, name_or_uri);
 
   /* Cache in memory */
   if (!is_local && !only_cached)
@@ -12761,7 +12761,7 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
               got_summary = TRUE;
               if (optional && !g_cancellable_is_cancelled (cancellable))
                 {
-                  g_debug ("Failed to download optional summary index: %s", local_error->message);
+                  g_info ("Failed to download optional summary index: %s", local_error->message);
                   state->summary_fetch_error = g_steal_pointer (&local_error);
                 }
               else
@@ -12787,7 +12787,7 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
         {
           if (optional && !g_cancellable_is_cancelled (cancellable))
             {
-              g_debug ("Failed to download optional summary: %s", local_error->message);
+              g_info ("Failed to download optional summary: %s", local_error->message);
               state->summary_fetch_error = g_steal_pointer (&local_error);
             }
           else
@@ -12852,7 +12852,7 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
           var_subsummary_peek_checksum (subsummary, &checksum_bytes_len);
           if (G_UNLIKELY (checksum_bytes_len != OSTREE_SHA256_DIGEST_LEN))
             {
-              g_debug ("Invalid checksum for digested summary, not using cache");
+              g_info ("Invalid checksum for digested summary, not using cache");
               continue;
             }
 
@@ -14944,8 +14944,8 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
         return FALSE;
 
       /* XXX If we ever add internationalization, use ngettext() here. */
-      g_debug ("Imported %u GPG key%s to remote \"%s\"",
-               imported, (imported == 1) ? "" : "s", remote_name);
+      g_info ("Imported %u GPG key%s to remote \"%s\"",
+              imported, (imported == 1) ? "" : "s", remote_name);
     }
 
   filter_path = g_key_file_get_value (new_config, group, "xa.filter", NULL);
@@ -14966,11 +14966,11 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
 
           if (!g_file_replace_contents (filter_copy, backup_data_copy, strlen (backup_data_copy),
                                         NULL, FALSE, G_FILE_CREATE_REPLACE_DESTINATION, NULL, cancellable, &local_error))
-            g_debug ("Failed to save backup copy of filter file %s: %s\n", filter_path, local_error->message);
+            g_info ("Failed to save backup copy of filter file %s: %s\n", filter_path, local_error->message);
         }
       else
         {
-          g_debug ("Failed to read filter %s file while making a backup copy: %s\n", filter_path, local_error->message);
+          g_info ("Failed to read filter %s file while making a backup copy: %s\n", filter_path, local_error->message);
         }
     }
 
@@ -15293,14 +15293,14 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
 
       if (!gpg_verify_summary || !gpg_verify)
         {
-          g_debug ("Ignoring automatic updates for system-helper remotes without gpg signatures");
+          g_info ("Ignoring automatic updates for system-helper remotes without gpg signatures");
           return TRUE;
         }
 
       if ((state->summary != NULL && state->summary_sig_bytes == NULL) ||
           (state->index != NULL && state->index_sig_bytes == NULL))
         {
-          g_debug ("Can't update remote configuration as user, no GPG signature");
+          g_info ("Can't update remote configuration as user, no GPG signature");
           return TRUE;
         }
 
@@ -15437,9 +15437,9 @@ add_related (FlatpakDir        *self,
     flatpak_find_unmaintained_extension_dir_if_exists (id, arch, branch, NULL);
   if (unmaintained_path != NULL && deploy_data == NULL)
     {
-      g_debug ("Skipping related extension ‘%s’ because it is already "
-               "installed as an unmaintained extension in ‘%s’.",
-               id, flatpak_file_get_path_cached (unmaintained_path));
+      g_info ("Skipping related extension ‘%s’ because it is already "
+              "installed as an unmaintained extension in ‘%s’.",
+              id, flatpak_file_get_path_cached (unmaintained_path));
       download = FALSE;
     }
 
@@ -15752,7 +15752,7 @@ flatpak_dir_find_remote_related (FlatpakDir         *self,
       metadata_file = g_file_get_child (deploy_dir, "metadata");
       if (!g_file_load_contents (metadata_file, cancellable, &metadata, NULL, NULL, NULL))
         {
-          g_debug ("No metadata in local deploy");
+          g_info ("No metadata in local deploy");
           /* No metadata => no related, but no error */
         }
     }
@@ -16044,7 +16044,7 @@ flatpak_dir_find_local_related (FlatpakDir        *self,
           metadata = g_file_get_child (deploy_dir, "metadata");
           if (!g_file_load_contents (metadata, cancellable, &metadata_contents, NULL, NULL, NULL))
             {
-              g_debug ("No metadata in local deploy");
+              g_info ("No metadata in local deploy");
               /* No metadata => no related, but no error */
             }
         }
@@ -16058,7 +16058,7 @@ flatpak_dir_find_local_related (FlatpakDir        *self,
           g_autoptr(GVariant) commit_metadata = g_variant_get_child_value (commit_data, 0);
           g_variant_lookup (commit_metadata, "xa.metadata", "s", &metadata_contents);
           if (metadata_contents == NULL)
-            g_debug ("No xa.metadata in local commit %s ref %s", checksum, flatpak_decomposed_get_ref (ref));
+            g_info ("No xa.metadata in local commit %s ref %s", checksum, flatpak_decomposed_get_ref (ref));
         }
     }
 
@@ -16084,7 +16084,7 @@ flatpak_dir_get_remote_auto_install_authenticator_ref (FlatpakDir         *self,
       g_autoptr(GError) local_error = NULL;
       ref = flatpak_decomposed_new_from_parts (FLATPAK_KINDS_APP, authenticator_name, flatpak_get_arch (), "autoinstall", &local_error);
       if (ref == NULL)
-        g_debug ("Invalid authenticator ref: %s\n", local_error->message);
+        g_info ("Invalid authenticator ref: %s\n", local_error->message);
     }
 
   return g_steal_pointer (&ref);
@@ -16508,8 +16508,8 @@ flatpak_dir_delete_mirror_refs (FlatpakDir    *self,
     {
       if (g_strv_contains ((const char * const *)ignore_collections->pdata, c_r->collection_id))
         {
-          g_debug ("Ignoring collection-ref (%s, %s) since its remote is disabled or it matches the repo collection ID",
-                   c_r->collection_id, c_r->ref_name);
+          g_info ("Ignoring collection-ref (%s, %s) since its remote is disabled or it matches the repo collection ID",
+                  c_r->collection_id, c_r->ref_name);
           continue;
         }
 

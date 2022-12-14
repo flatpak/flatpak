@@ -881,13 +881,13 @@ _exports_path_expose (FlatpakExports *exports,
 
   if (level > 40) /* 40 is the current kernel ELOOP check */
     {
-      g_debug ("Expose too deep, bail");
+      g_info ("Expose too deep, bail");
       return FALSE;
     }
 
   if (!g_path_is_absolute (path))
     {
-      g_debug ("Not exposing relative path %s", path);
+      g_info ("Not exposing relative path %s", path);
       return FALSE;
     }
 
@@ -896,14 +896,14 @@ _exports_path_expose (FlatpakExports *exports,
 
   if (o_path_fd == -1)
     {
-      g_debug ("Unable to open path %s to %s: %s",
-               path, export_mode_to_verb (mode), g_strerror (errno));
+      g_info ("Unable to open path %s to %s: %s",
+              path, export_mode_to_verb (mode), g_strerror (errno));
       return FALSE;
     }
 
   if (fstat (o_path_fd, &st) != 0)
     {
-      g_debug ("Unable to get file type of %s: %s", path, g_strerror (errno));
+      g_info ("Unable to get file type of %s: %s", path, g_strerror (errno));
       return FALSE;
     }
 
@@ -913,15 +913,15 @@ _exports_path_expose (FlatpakExports *exports,
         S_ISLNK (st.st_mode) ||
         S_ISSOCK (st.st_mode)))
     {
-      g_debug ("%s has unsupported file type 0o%o", path, st.st_mode & S_IFMT);
+      g_info ("%s has unsupported file type 0o%o", path, st.st_mode & S_IFMT);
       return FALSE;
     }
 
   /* O_PATH + fstatfs is the magic that we need to statfs without automounting the target */
   if (fstatfs (o_path_fd, &stfs) != 0)
     {
-      g_debug ("Unable to get filesystem information for %s: %s",
-               path, g_strerror (errno));
+      g_info ("Unable to get filesystem information for %s: %s",
+              path, g_strerror (errno));
       return FALSE;
     }
 
@@ -931,7 +931,7 @@ _exports_path_expose (FlatpakExports *exports,
     {
       if (!check_if_autofs_works (exports, path))
         {
-          g_debug ("ignoring blocking autofs path %s", path);
+          g_info ("ignoring blocking autofs path %s", path);
           return FALSE;
         }
     }
@@ -946,7 +946,7 @@ _exports_path_expose (FlatpakExports *exports,
          create the parents for them anyway */
       if (flatpak_has_path_prefix (path, dont_export_in[i]))
         {
-          g_debug ("skipping export for path %s in unsupported prefix", path);
+          g_info ("skipping export for path %s in unsupported prefix", path);
           return FALSE;
         }
     }
@@ -956,7 +956,7 @@ _exports_path_expose (FlatpakExports *exports,
       /* Same as /usr, but for the directories that get merged into /usr */
       if (flatpak_has_path_prefix (path, flatpak_abs_usrmerged_dirs[i]))
         {
-          g_debug ("skipping export for path %s in a /usr-merged directory", path);
+          g_info ("skipping export for path %s in a /usr-merged directory", path);
           return FALSE;
         }
     }
