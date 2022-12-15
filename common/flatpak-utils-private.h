@@ -129,6 +129,7 @@ gboolean flatpak_extension_matches_reason (const char *extension_id,
                                            gboolean    default_value);
 
 const char * flatpak_get_bwrap (void);
+gboolean flatpak_bwrap_is_unprivileged (void);
 
 char **flatpak_strv_sort_by_length (const char * const *strv);
 char **flatpak_strv_merge (char   **strv1,

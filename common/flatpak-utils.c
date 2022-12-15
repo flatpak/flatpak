@@ -740,6 +740,19 @@ flatpak_get_bwrap (void)
 }
 
 gboolean
+flatpak_bwrap_is_unprivileged (void)
+{
+  const char *path = g_find_program_in_path (flatpak_get_bwrap ());
+  struct stat st;
+
+  /* Various features are supported only if bwrap exists and is not setuid */
+  return
+    path != NULL &&
+    stat (path, &st) == 0 &&
+    (st.st_mode & S_ISUID) == 0;
+}
+
+gboolean
 flatpak_get_allowed_exports (const char     *source_path,
                              const char     *app_id,
                              FlatpakContext *context,
