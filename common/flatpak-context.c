@@ -79,6 +79,7 @@ const char *flatpak_context_features[] = {
   "bluetooth",
   "canbus",
   "per-app-dev-shm",
+  "all-syscalls",
   NULL
 };
 
@@ -2764,6 +2765,9 @@ flatpak_context_get_run_flags (FlatpakContext *context)
 
   if (flatpak_context_allows_features (context, FLATPAK_CONTEXT_FEATURE_CANBUS))
     flags |= FLATPAK_RUN_FLAG_CANBUS;
+
+  if (flatpak_context_allows_features (context, FLATPAK_CONTEXT_FEATURE_ALL_SYSCALLS))
+    flags |= FLATPAK_RUN_FLAG_ALL_SYSCALLS;
 
   return flags;
 }

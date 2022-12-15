@@ -3494,6 +3494,7 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
   gulong pers;
   gid_t gid = getgid ();
   g_autoptr(GFile) etc = NULL;
+  gboolean allow_all_syscalls = (flags & FLATPAK_RUN_FLAG_ALL_SYSCALLS) != 0;
   gboolean parent_expose_pids = (flags & FLATPAK_RUN_FLAG_PARENT_EXPOSE_PIDS) != 0;
   gboolean parent_share_pids = (flags & FLATPAK_RUN_FLAG_PARENT_SHARE_PIDS) != 0;
   gboolean bwrap_unprivileged = flatpak_bwrap_is_unprivileged ();
@@ -3685,7 +3686,23 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
   personality (pers);
 
 #ifdef ENABLE_SECCOMP
-  if (!setup_seccomp (bwrap, arch, pers, flags, error))
+  if (allow_all_syscalls && !bwrap_unprivileged)
+    {
+      g_warning ("--allow=all-syscalls is not compatible with a "
+                 "setuid-root %s executable", flatpak_get_bwrap ());
+      g_warning ("<https://github.com/flatpak/flatpak/wiki/User-namespace-requirements>");
+      allow_all_syscalls = FALSE;
+    }
+
+  if (allow_all_syscalls)
+    {
+      if (isatty (STDIN_FILENO))
+        g_message ("Note: --allow=all-syscalls does not work well with interactive shells due to how it prevents CVE-2017-5226.");
+
+      flatpak_bwrap_add_args (bwrap, "--new-session", NULL);
+    }
+
+  if (!allow_all_syscalls && !setup_seccomp (bwrap, arch, pers, flags, error))
     return FALSE;
 #endif
 

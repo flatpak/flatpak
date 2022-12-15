@@ -185,7 +185,7 @@
                     Allow access to a specific feature. This updates
                     the [Context] group in the metadata.
                     FEATURE must be one of: devel, multiarch, bluetooth, canbus,
-                    per-app-dev-shm.
+                    per-app-dev-shm, all-syscalls.
                     This option can be used multiple times.
                  </para><para>
                     The <code>devel</code> feature allows the application to
@@ -213,6 +213,21 @@
                     application, any unrestricted subsandboxes that it creates,
                     and any other instances of the application that are
                     launched while it is running.
+                </para>
+                <para>
+                    The <code>all-syscalls</code> feature disables seccomp
+                    filtering of system calls completely, which is a security
+                    risk but can be useful for performance-sensitive software.
+                    This feature has no effect if Flatpak is using a
+                    setuid-root version of the bubblewrap executable
+                    <citerefentry><refentrytitle>bwrap</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+                    Allowing this feature has the effect of making several
+                    other features available, including
+                    <code>bluetooth</code>,
+                    <code>canbus</code>,
+                    <code>devel</code> and
+                    <code>multiarch</code>,
+                    even if they would otherwise have been disallowed.
                 </para></listitem>
             </varlistentry>
 
@@ -223,8 +238,13 @@
                     Disallow access to a specific feature. This updates
                     the [Context] group in the metadata.
                     FEATURE must be one of: devel, multiarch, bluetooth, canbus,
-                    per-app-dev-shm.
+                    per-app-dev-shm, all-syscalls.
                     This option can be used multiple times.
+                </para><para>
+                    If the <code>all-syscalls</code> feature is allowed,
+                    then several other features will be available even if
+                    the <option>--disallow</option> option was used for
+                    individual features.
                 </para></listitem>
             </varlistentry>
 
