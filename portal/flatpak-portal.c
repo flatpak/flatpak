@@ -2856,19 +2856,6 @@ name_owner_changed (GDBusConnection *connection,
 #define DBUS_INTERFACE_DBUS DBUS_NAME_DBUS
 #define DBUS_PATH_DBUS "/org/freedesktop/DBus"
 
-static gboolean
-supports_expose_pids (void)
-{
-  const char *path = g_find_program_in_path (flatpak_get_bwrap ());
-  struct stat st;
-
-  /* This is supported only if bwrap exists and is not setuid */
-  return
-    path != NULL &&
-    stat (path, &st) == 0 &&
-    (st.st_mode & S_ISUID) == 0;
-}
-
 static void
 on_bus_acquired (GDBusConnection *connection,
                  const gchar     *name,
@@ -3070,7 +3057,7 @@ main (int    argc,
 
   flatpak_connection_track_name_owners (session_bus);
 
-  if (supports_expose_pids ())
+  if (flatpak_bwrap_is_unprivileged ())
     supports |= FLATPAK_SPAWN_SUPPORT_FLAGS_EXPOSE_PIDS;
 
   flags = G_BUS_NAME_OWNER_FLAGS_ALLOW_REPLACEMENT;
