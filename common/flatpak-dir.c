@@ -8246,6 +8246,7 @@ apply_extra_data (FlatpakDir   *self,
   int exit_status;
   const char *group = FLATPAK_METADATA_GROUP_APPLICATION;
   g_autoptr(GError) local_error = NULL;
+  FlatpakRunFlags run_flags;
 
   apply_extra_file = g_file_resolve_relative_path (checkoutdir, "files/bin/apply_extra");
   if (!g_file_query_exists (apply_extra_file, cancellable))
@@ -8322,20 +8323,22 @@ apply_extra_data (FlatpakDir   *self,
                           "--cap-drop", "ALL",
                           NULL);
 
+  /* Might need multiarch in apply_extra (see e.g. #3742).
+   * Should be pretty safe in this limited context */
+  run_flags = (FLATPAK_RUN_FLAG_MULTIARCH |
+               FLATPAK_RUN_FLAG_NO_SESSION_HELPER |
+               FLATPAK_RUN_FLAG_NO_PROC |
+               FLATPAK_RUN_FLAG_NO_SESSION_BUS_PROXY |
+               FLATPAK_RUN_FLAG_NO_SYSTEM_BUS_PROXY |
+               FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY);
+
   if (!flatpak_run_setup_base_argv (bwrap, runtime_files, NULL, runtime_arch,
-                                    /* Might need multiarch in apply_extra (see e.g. #3742). Should be pretty safe in this limited context */
-                                    FLATPAK_RUN_FLAG_MULTIARCH |
-                                    FLATPAK_RUN_FLAG_NO_SESSION_HELPER | FLATPAK_RUN_FLAG_NO_PROC,
-                                    error))
+                                    run_flags, error))
     return FALSE;
 
   app_context = flatpak_context_new ();
 
-  if (!flatpak_run_add_environment_args (bwrap, NULL,
-                                         FLATPAK_RUN_FLAG_NO_SESSION_BUS_PROXY |
-                                         FLATPAK_RUN_FLAG_NO_SYSTEM_BUS_PROXY |
-                                         FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY,
-                                         id,
+  if (!flatpak_run_add_environment_args (bwrap, NULL, run_flags, id,
                                          app_context, NULL, NULL, -1,
                                          NULL, cancellable, error))
     return FALSE;
