@@ -16572,12 +16572,14 @@ maybe_get_metakey (FlatpakDir        *dir,
                    FlatpakDecomposed *ref,
                    GHashTable        *metadata_injection,
                    GKeyFile         **out_metakey,
-                   gboolean          *out_ref_is_shadowed)
+                   gboolean          *out_ref_is_shadowed,
+                   char             **out_dir_name)
 {
   if (shadowing_dir &&
       dir_get_metadata (shadowing_dir, ref, out_metakey))
     {
       *out_ref_is_shadowed = TRUE;
+      *out_dir_name = g_strdup_printf (" (%s)", flatpak_dir_get_name_cached (shadowing_dir));
       return TRUE;
     }
 
@@ -16588,6 +16590,7 @@ maybe_get_metakey (FlatpakDir        *dir,
         {
           *out_ref_is_shadowed = FALSE;
           *out_metakey = g_key_file_ref (injected_metakey);
+          *out_dir_name = g_strdup ("");
           return TRUE;
         }
     }
@@ -16595,6 +16598,7 @@ maybe_get_metakey (FlatpakDir        *dir,
   if (dir_get_metadata (dir, ref, out_metakey))
     {
       *out_ref_is_shadowed = FALSE;
+      *out_dir_name = g_strdup_printf (" (%s)", flatpak_dir_get_name_cached (dir));
       return TRUE;
     }
 
@@ -16676,9 +16680,16 @@ find_used_refs (FlatpakDir         *self,
        * uses a system gl extension.
        *
        * However, for non-shadowed runtime refs, only pinned ones are roots */
-      if (root_ref_dir == shadowing_dir ||
-          flatpak_dir_ref_is_pinned (root_ref_dir, flatpak_decomposed_get_ref (root_runtime_ref)))
-        queue_ref_for_analysis (root_runtime_ref, arch, analyzed_refs, refs_to_analyze);
+      if (root_ref_dir == shadowing_dir)
+        {
+          queue_ref_for_analysis (root_runtime_ref, arch, analyzed_refs, refs_to_analyze);
+        }
+      else if (flatpak_dir_ref_is_pinned (root_ref_dir, flatpak_decomposed_get_ref (root_runtime_ref)))
+        {
+          g_debug ("%s: Treating %s as used since it's pinned",
+                   G_STRFUNC, flatpak_decomposed_get_ref (root_runtime_ref));
+          queue_ref_for_analysis (root_runtime_ref, arch, analyzed_refs, refs_to_analyze);
+        }
     }
 
   /* Any injected refs are considered used, because this is used by transaction
@@ -16690,7 +16701,11 @@ find_used_refs (FlatpakDir         *self,
         {
           g_autoptr(FlatpakDecomposed) injected = flatpak_decomposed_new_from_ref (injected_ref, NULL);
           if (injected)
-            queue_ref_for_analysis (injected, arch, analyzed_refs, refs_to_analyze);
+            {
+              g_debug ("%s: Treating %s as used during unused refs analysis",
+                       G_STRFUNC, flatpak_decomposed_get_ref (injected));
+              queue_ref_for_analysis (injected, arch, analyzed_refs, refs_to_analyze);
+            }
         }
     }
 
@@ -16701,9 +16716,10 @@ find_used_refs (FlatpakDir         *self,
       gboolean is_app;
       g_autoptr(GPtrArray) related = NULL;
       g_autofree char *sdk = NULL;
+      g_autofree char *dir_name = NULL;
 
       if (!maybe_get_metakey (self, shadowing_dir, ref_to_analyze, metadata_injection,
-                              &metakey, &ref_is_shadowed))
+                              &metakey, &ref_is_shadowed, &dir_name))
         continue; /* Something used something we could not find, that is fine and happens for instance with sdk dependencies */
 
       if (!ref_is_shadowed)
@@ -16716,7 +16732,11 @@ find_used_refs (FlatpakDir         *self,
            * unused, but we don't analyze them for any dependencies. Note that refs_to_exclude only
            * affects the base dir, so does not affect shadowed refs */
           if (refs_to_exclude != NULL && g_hash_table_contains (refs_to_exclude, ref_to_analyze))
-            continue;
+            {
+              g_debug ("%s: Treating %s as uninstalled during unused refs analysis",
+                       G_STRFUNC, flatpak_decomposed_get_ref (ref_to_analyze));
+              continue;
+            }
         }
 
       /************************************************
@@ -16733,17 +16753,28 @@ find_used_refs (FlatpakDir         *self,
             {
               g_autoptr(FlatpakDecomposed) runtime_ref = flatpak_decomposed_new_from_pref (FLATPAK_KINDS_RUNTIME, runtime, NULL);
               if (runtime_ref && !flatpak_decomposed_equal (runtime_ref, ref_to_analyze))
-                queue_ref_for_analysis (runtime_ref, arch, analyzed_refs, refs_to_analyze);
+                {
+                  g_debug ("%s: Considering runtime %s used by app %s%s",
+                           G_STRFUNC, flatpak_decomposed_get_ref (runtime_ref),
+                           flatpak_decomposed_get_ref (ref_to_analyze), dir_name);
+                  queue_ref_for_analysis (runtime_ref, arch, analyzed_refs, refs_to_analyze);
+                }
             }
         }
 
-      /* Both apps and runtims directly depends on its sdk, to avoid suddenly uninstalling something you use to develop the app */
+      /* Both apps and runtimes directly depends on its sdk, to avoid suddenly
+       * uninstalling something you use to develop the app */
       sdk = g_key_file_get_string (metakey, is_app ? "Application" : "Runtime", "sdk", NULL);
       if (sdk)
         {
           g_autoptr(FlatpakDecomposed) sdk_ref = flatpak_decomposed_new_from_pref (FLATPAK_KINDS_RUNTIME, sdk, NULL);
           if (sdk_ref && !flatpak_decomposed_equal (sdk_ref, ref_to_analyze))
-            queue_ref_for_analysis (sdk_ref, arch, analyzed_refs, refs_to_analyze);
+            {
+              g_debug ("%s: Considering sdk %s used by %s%s",
+                       G_STRFUNC, flatpak_decomposed_get_ref (sdk_ref),
+                       flatpak_decomposed_get_ref (ref_to_analyze), dir_name);
+              queue_ref_for_analysis (sdk_ref, arch, analyzed_refs, refs_to_analyze);
+            }
         }
 
       /* Extensions with extra data, that are not specially marked NoRuntime needs the runtime at install.
@@ -16757,7 +16788,12 @@ find_used_refs (FlatpakDir         *self,
             {
               g_autoptr(FlatpakDecomposed) d = flatpak_decomposed_new_from_ref (extension_runtime_ref, NULL);
               if (d)
-                queue_ref_for_analysis (d, arch, analyzed_refs, refs_to_analyze);
+                {
+                  g_debug ("%s: Considering runtime %s used by extra-data %s%s",
+                           G_STRFUNC, flatpak_decomposed_get_ref (d),
+                           flatpak_decomposed_get_ref (ref_to_analyze), dir_name);
+                  queue_ref_for_analysis (d, arch, analyzed_refs, refs_to_analyze);
+                }
             }
         }
 
@@ -16770,6 +16806,9 @@ find_used_refs (FlatpakDir         *self,
 
           if (!rel->auto_prune)
             {
+              g_debug ("%s: Considering related ref %s used by %s%s",
+                       G_STRFUNC, flatpak_decomposed_get_ref (rel->ref),
+                       flatpak_decomposed_get_ref (ref_to_analyze), dir_name);
               queue_ref_for_analysis (rel->ref, arch, analyzed_refs, refs_to_analyze);
             }
         }
@@ -16811,6 +16850,9 @@ flatpak_dir_list_unused_refs (FlatpakDir         *self,
 
   used_refs = g_hash_table_new_full ((GHashFunc)flatpak_decomposed_hash, (GEqualFunc)flatpak_decomposed_equal, (GDestroyNotify)flatpak_decomposed_unref, NULL);
 
+  g_info ("Checking installation ‘%s’ %s",
+          flatpak_dir_get_name_cached (self),
+          filter_by_eol ? "for EOL unused refs" : "for unused refs");
   if (!find_used_refs (self, NULL, arch, metadata_injection, excluded_refs_ht,
                        used_refs, cancellable, error))
     return NULL;
@@ -16826,6 +16868,8 @@ flatpak_dir_list_unused_refs (FlatpakDir         *self,
       g_autoptr(FlatpakDir) user_dir = flatpak_dir_get_user ();
       g_autoptr(GError) local_error = NULL;
 
+      g_info ("Checking installation ‘%s’ by checking for dependent refs in ‘%s’",
+              flatpak_dir_get_name_cached (self), flatpak_dir_get_name_cached (user_dir));
       if (!find_used_refs (self, user_dir, arch, metadata_injection, excluded_refs_ht,
                            used_refs, cancellable, &local_error))
         {
@@ -16878,9 +16922,18 @@ flatpak_dir_list_unused_refs (FlatpakDir         *self,
             }
 
           if (!is_eol)
-            continue;
+            {
+              g_debug ("%s: Ref %s (%s) not end-of-life, so excluding from EOL unused refs",
+                       G_STRFUNC, flatpak_decomposed_get_ref (ref),
+                       flatpak_dir_get_name_cached (self));
+              continue;
+            }
         }
 
+      g_info ("%s: Ref %s (%s) is %s",
+              G_STRFUNC, flatpak_decomposed_get_ref (ref),
+              flatpak_dir_get_name_cached (self),
+              filter_by_eol ? "EOL and unused" : "unused");
       g_ptr_array_add (refs, flatpak_decomposed_dup_ref (ref));
     }
 
