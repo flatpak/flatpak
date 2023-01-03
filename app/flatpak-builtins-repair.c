@@ -415,7 +415,7 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
 
        This does also mean that other areas of this code section that print errors will need to print a trailing
        newline as well, otherwise the output will overwrite any errors. */
-    if (flatpak_fancy_output ())
+    if (flatpak_fancy_output () && i != 1)
       g_print ("\033[A\r\033[K");
 
     g_print (_("[%d/%d] Verifying %s…\n"), i, g_hash_table_size (all_refs), refspec);
