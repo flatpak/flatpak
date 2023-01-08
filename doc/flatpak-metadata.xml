@@ -262,6 +262,7 @@
                                 <filename>/app</filename>,
                                 <filename>/bin</filename>,
                                 <filename>/boot</filename>,
+                                <filename>/efi</filename>,
                                 <filename>/etc</filename>,
                                 <filename>/lib</filename>,
                                 <filename>/lib32</filename>,

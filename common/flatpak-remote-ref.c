@@ -1,4 +1,4 @@
-/*
+/* vi:set et sw=2 sts=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e-s:
  * Copyright © 2015 Red Hat, Inc
  *
  * This program is free software; you can redistribute it and/or
@@ -341,7 +341,7 @@ flatpak_remote_ref_new (FlatpakDecomposed   *decomposed,
                                        &download_size, &installed_size, &metadata,
                                        NULL))
     {
-      g_debug ("Can't find metadata for ref %s", flatpak_decomposed_get_ref (decomposed));
+      g_info ("Can't find metadata for ref %s", flatpak_decomposed_get_ref (decomposed));
     }
 
   if (metadata)

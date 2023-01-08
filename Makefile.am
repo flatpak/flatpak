@@ -84,12 +84,13 @@ dist_triggers_SCRIPTS = \
 	$(NULL)
 
 # This canonicalizes the PKG_CHECK_MODULES or AM_PATH_GPGME results
-INTERNAL_GPGME_CFLAGS = $(DEP_GPGME_CFLAGS) $(GPGME_PTHREAD_CFLAGS)
-INTERNAL_GPGME_LIBS = $(DEP_GPGME_LIBS) $(GPGME_PTHREAD_LIBS)
+INTERNAL_GPGME_CFLAGS = $(DEP_GPGME_CFLAGS) $(DEP_GPGME_PTHREAD_CFLAGS) $(GPGME_PTHREAD_CFLAGS)
+INTERNAL_GPGME_LIBS = $(DEP_GPGME_LIBS) $(DEP_GPGME_PTHREAD_LIBS) $(GPGME_PTHREAD_LIBS)
 
 lib_LTLIBRARIES =
 noinst_LTLIBRARIES += libglnx.la
 libglnx_srcpath := $(srcdir)/subprojects/libglnx
+# This intentionally does not include AM_CFLAGS, libglnx always uses those
 libglnx_cflags := \
 	$(BASE_CFLAGS) \
 	"-I$(libglnx_srcpath)" \
@@ -200,6 +201,24 @@ EXTRA_DIST += README.md
 
 EXTRA_DIST += flatpak.png
 
+EXTRA_DIST += \
+	completion/meson.build \
+	env.d/meson.build \
+	meson.build \
+	meson_options.txt \
+	po/meson.build \
+	profile/meson.build \
+	scripts/meson.build \
+	subprojects/bubblewrap/meson.build \
+	subprojects/bubblewrap/meson_options.txt \
+	subprojects/dbus-proxy/meson.build \
+	subprojects/dbus-proxy/meson_options.txt \
+	subprojects/libglnx/meson.build \
+	subprojects/libglnx/meson_options.txt \
+	subprojects/libglnx/tests/meson.build \
+	triggers/meson.build \
+	$(NULL)
+
 AM_DISTCHECK_CONFIGURE_FLAGS =		\
 	--enable-documentation		\
 	--disable-maintainer-mode	\
@@ -218,3 +237,14 @@ lcov-clean:
 genlcov:
 	$(AM_V_GEN) $(LCOV) --directory $(top_builddir) --capture --output-file coverage.info
 	$(AM_V_GEN) $(GENHTML) --prefix $(top_builddir) --output-directory coverage coverage.info
+
+distcheck-hook: distcheck-hook-meson
+distcheck-hook-meson:
+	set -e; if command -v meson > /dev/null; then \
+		cd $(distdir); \
+		pwd; \
+		meson _build/meson; \
+		meson compile -C _build/meson -v; \
+		meson test -C _build/meson -v; \
+		rm -fr _build/meson; \
+	fi

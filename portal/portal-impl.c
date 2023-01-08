@@ -1,4 +1,4 @@
-/*
+/* vi:set et sw=2 sts=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e-s:
  * Copyright © 2016 Red Hat, Inc
  *
  * This program is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@ register_portal (const char *path, gboolean opt_verbose, GError **error)
   g_autoptr(PortalImplementation) impl = g_new0 (PortalImplementation, 1);
   int i;
 
-  g_debug ("loading %s", path);
+  g_info ("loading %s", path);
 
   if (!g_key_file_load_from_file (keyfile, path, G_KEY_FILE_NONE, error))
     return FALSE;
@@ -92,9 +92,9 @@ register_portal (const char *path, gboolean opt_verbose, GError **error)
   if (opt_verbose)
     {
       g_autofree char *uses = g_strjoinv (", ", impl->use_in);
-      g_debug ("portal implementation for %s", uses);
+      g_info ("portal implementation for %s", uses);
       for (i = 0; impl->interfaces[i]; i++)
-        g_debug ("portal implementation supports %s", impl->interfaces[i]);
+        g_info ("portal implementation supports %s", impl->interfaces[i]);
     }
 
   implementations = g_list_prepend (implementations, impl);
@@ -125,7 +125,7 @@ load_installed_portals (gboolean opt_verbose)
   if (portal_dir == NULL)
     portal_dir = DATADIR "/xdg-desktop-portal/portals";
 
-  g_debug ("load portals from %s", portal_dir);
+  g_info ("load portals from %s", portal_dir);
 
   dir = g_file_new_for_path (portal_dir);
   enumerator = g_file_enumerate_children (dir, "*", G_FILE_QUERY_INFO_NONE, NULL, NULL);
@@ -199,7 +199,7 @@ find_portal_implementation (const char *interface)
 
           if (g_strv_case_contains ((const char **)impl->use_in, desktops[i]))
             {
-              g_debug ("Using %s for %s in %s", impl->source, interface, desktops[i]);
+              g_info ("Using %s for %s in %s", impl->source, interface, desktops[i]);
               return impl;
             }
         }
@@ -213,7 +213,7 @@ find_portal_implementation (const char *interface)
       if (!g_strv_contains ((const char **)impl->interfaces, interface))
         continue;
 
-      g_debug ("Falling back to %s for %s", impl->source, interface);
+      g_info ("Falling back to %s for %s", impl->source, interface);
       return impl;
     }
 

@@ -36,6 +36,7 @@ common/flatpak-enum-types.c: $(flatpakinclude_HEADERS) common/flatpak-enum-types
 	    common/flatpak-enum-types.c.tmp && mv common/flatpak-enum-types.c.tmp common/flatpak-enum-types.c
 
 EXTRA_DIST += common/flatpak-enum-types.c.template common/flatpak-enum-types.h.template
+EXTRA_DIST += common/meson.build
 
 common/flatpak-dbus-generated.c: data/org.freedesktop.Flatpak.xml data/org.freedesktop.Flatpak.Authenticator.xml Makefile
 	mkdir -p $(builddir)/common
@@ -168,6 +169,8 @@ libflatpak_common_la_SOURCES = \
 	common/flatpak-utils-http.c \
 	common/flatpak-utils-private.h \
 	common/flatpak-utils.c \
+	common/flatpak-uri-private.h \
+	common/flatpak-uri.c \
 	common/flatpak-prune.c \
 	common/flatpak-prune-private.h \
 	common/flatpak-zstd-decompressor.c \
@@ -197,6 +200,7 @@ libflatpak_common_la_CFLAGS = \
 	$(MALCONTENT_CFLAGS) \
 	$(OSTREE_CFLAGS) \
 	$(POLKIT_CFLAGS) \
+	$(CURL_CFLAGS) \
 	$(SOUP_CFLAGS) \
 	$(SYSTEMD_CFLAGS) \
 	$(XAUTH_CFLAGS) \
@@ -214,6 +218,7 @@ libflatpak_common_la_LIBADD = \
 	$(MALCONTENT_LIBS) \
 	$(OSTREE_LIBS) \
 	$(POLKIT_LIBS) \
+	$(CURL_LIBS) \
 	$(SOUP_LIBS) \
 	$(SYSTEMD_LIBS) \
 	$(XAUTH_LIBS) \
@@ -233,6 +238,7 @@ libflatpak_la_CFLAGS = \
 	$(AM_CFLAGS) \
 	$(BASE_CFLAGS) \
 	$(OSTREE_CFLAGS) \
+	$(CURL_CFLAGS) \
 	$(SOUP_CFLAGS) \
 	$(JSON_CFLAGS) \
 	$(NULL)
@@ -251,6 +257,7 @@ libflatpak_la_LIBADD = \
 	libglnx.la \
 	$(BASE_LIBS)	\
 	$(OSTREE_LIBS)	\
+	$(CURL_LIBS)	\
 	$(SOUP_LIBS)	\
 	$(JSON_LIBS)    \
 	$(NULL)

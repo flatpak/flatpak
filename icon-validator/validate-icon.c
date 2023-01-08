@@ -1,4 +1,4 @@
-/*
+/* vi:set et sw=2 sts=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e-s:
  * Copyright © 2018 Red Hat, Inc
  *
  * This program is free software; you can redistribute it and/or
@@ -233,7 +233,7 @@ rerun_in_sandbox (const char *arg_width,
 
   {
     g_autofree char *cmdline = g_strjoinv (" ", (char **) args->pdata);
-    g_debug ("Icon validation: Spawning %s", cmdline);
+    g_info ("Icon validation: Spawning %s", cmdline);
   }
 
   execvpe (flatpak_get_bwrap (), (char **) args->pdata, NULL);

@@ -1,4 +1,4 @@
-/*
+/* vi:set et sw=2 sts=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e-s:
  * Copyright © 2018 Red Hat, Inc
  *
  * This program is free software; you can redistribute it and/or
@@ -62,7 +62,7 @@ kill_instance (const char *id,
         }
     }
 
-  g_debug ("Killed %d instances", killed);
+  g_info ("Killed %d instances", killed);
 
   if (killed == 0)
     return flatpak_fail (error, _("%s is not running"), id);

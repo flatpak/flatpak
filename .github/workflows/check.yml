@@ -11,6 +11,7 @@ on:
     - flatpak-1.8.x
     - flatpak-1.10.x
     - flatpak-1.12.x
+    - flatpak-1.14.x
   pull_request:
     paths-ignore:
     - README.md
@@ -29,22 +30,93 @@ on:
     - flatpak-1.8.x
     - flatpak-1.10.x
     - flatpak-1.12.x
+    - flatpak-1.14.x
+
+permissions:
+  contents: read
 
 jobs:
   check:
     name: Build with gcc and test
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libglib2.0-dev attr automake gettext autopoint bison  dbus gtk-doc-tools \
+        libfuse3-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
+        libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
+        libseccomp-dev libsoup2.4-dev libcurl4-openssl-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
+        libgirepository1.0-dev libappstream-dev libdconf-dev clang socat meson libdbus-1-dev e2fslibs-dev bubblewrap xdg-dbus-proxy \
+        python3-pip meson ninja-build libyaml-dev libstemmer-dev gperf itstool libmalcontent-0-dev
+        # One of the tests wants this
+        sudo mkdir /tmp/flatpak-com.example.App-OwnedByRoot
+    - name: Check out flatpak
+      uses: actions/checkout@v1
+      with:
+        submodules: true
+    - name: Build appstream dependency # (We need at least 0.15.3 for the g_once fix)
+      run: |
+        sudo pip3 install 'meson~=0.62'
+        git clone --branch v0.15.4 --depth 1 --no-tags https://github.com/ximion/appstream.git ./appstream
+        pushd ./appstream
+        meson setup --prefix=/usr _build
+        ninja -C _build
+        sudo ninja -C _build install
+        popd
+    - name: Create logs dir
+      run: mkdir test-logs
+    - name: configure
+      # We don't do gtk-doc or GObject-Introspection here, because they can
+      # clash with AddressSanitizer. Instead, the clang build enables those.
+      run: |
+        meson _build \
+          -Db_sanitize=address,undefined \
+          -Dgir=disabled \
+          -Dgtkdoc=disabled \
+          -Dhttp_backend=curl \
+          -Dinternal_checks=true \
+          -Dsystem_bubblewrap=bwrap \
+          -Dsystem_dbus_proxy=xdg-dbus-proxy \
+          ${NULL+}
+      env:
+        CFLAGS: -O2 -Wp,-D_FORTIFY_SOURCE=2
+    - name: Build flatpak
+      run: ninja -C _build
+      env:
+        ASAN_OPTIONS: detect_leaks=0 # Right now we're not fully clean, but this gets us use-after-free etc
+    - name: Run tests
+      run: meson test -C _build
+      env:
+        ASAN_OPTIONS: detect_leaks=0 # Right now we're not fully clean, but this gets us use-after-free etc
+    - name: Collect logs on failure
+      if: failure() || cancelled()
+      run: mv _build/meson-logs/* test-logs/ || true
+    - name: Upload test logs
+      uses: actions/upload-artifact@v1
+      if: failure() || cancelled()
+      with:
+        name: test logs
+        path: test-logs
+
+  # This is similar to the above, but runs on an older OS with some different configuration:
+  # * Soup instead of curl
+  # * Use built in bubblewrap instead of external
+  # * Use built in xdg-dbus-proxy instead of external
+  # * Disable malcontent build-dependency
+  check-alt2:
+    name: Build with gcc and test (older)
     runs-on: ubuntu-18.04
     steps:
     - name: Install Dependencies
       run: |
         sudo add-apt-repository ppa:flatpak/stable
-        sudo add-apt-repository ppa:alexlarsson/glib260
         sudo add-apt-repository 'deb https://download.mono-project.com/repo/ubuntu stable-bionic main' # Needed for updates to work
         sudo apt-get update
-        sudo apt-get install -y libglib2.0 attr automake gettext autopoint bison  dbus gtk-doc-tools \
+        sudo apt-get install -y libglib2.0-dev attr automake gettext autopoint bison  dbus gtk-doc-tools \
         libfuse-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
         libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
-        libseccomp-dev libsoup2.4-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
+        libseccomp-dev libsoup2.4-dev libcurl4-openssl-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
         libgirepository1.0-dev libappstream-dev libdconf-dev clang socat meson libdbus-1-dev e2fslibs-dev
         # One of the tests wants this
         sudo mkdir /tmp/flatpak-com.example.App-OwnedByRoot
@@ -52,14 +124,6 @@ jobs:
       uses: actions/checkout@v1
       with:
         submodules: true
-    - name: Build malcontent dependency
-      run: |
-        git clone --branch 0.4.0 --depth 1 --no-tags https://gitlab.freedesktop.org/pwithnall/malcontent.git ./malcontent
-        pushd ./malcontent
-        meson setup --prefix=/usr _build
-        ninja -C _build
-        sudo ninja -C _build install
-        popd
     - name: Create logs dir
       run: mkdir test-logs
     - name: autogen.sh
@@ -70,15 +134,23 @@ jobs:
       run: |
         mkdir _build
         pushd _build
-        ../configure  --enable-internal-checks --enable-asan --disable-introspection
+        ../configure  --enable-internal-checks --enable-asan --disable-introspection --without-curl
         popd
       env:
         CFLAGS: -O2 -Wp,-D_FORTIFY_SOURCE=2
     - name: Build flatpak
       run: make -C _build -j $(getconf _NPROCESSORS_ONLN)
+    # We build with Ubuntu 18.04's GLib to prove that we can, but there's a
+    # race condition that makes it fail tests, so upgrade to a version from
+    # a PPA before running the tests: see
+    # https://github.com/flatpak/flatpak/pull/3121,
+    # https://gitlab.gnome.org/GNOME/glib/-/issues/1014
+    - name: Upgrade GLib before running tests
+      run: |
+        sudo add-apt-repository ppa:alexlarsson/glib260
+        sudo apt-get install -y libglib2.0-dev
     - name: Run tests
-      # TODO: Build with -j (currently ends up with hangs in the tests)
-      run: make -C _build check
+      run: make -C _build check -j $(getconf _NPROCESSORS_ONLN)
       env:
         ASAN_OPTIONS: detect_leaks=0 # Right now we're not fully clean, but this gets us use-after-free etc
     - name: Collect overall test logs on failure
@@ -95,6 +167,8 @@ jobs:
         path: test-logs
 
   clang:
+    permissions:
+      security-events: write # for codeql
     name: Build with clang and analyze
     runs-on: ubuntu-18.04
     strategy:
@@ -107,7 +181,7 @@ jobs:
     steps:
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v1
+      uses: github/codeql-action/init@v2
       with:
         languages: ${{ matrix.language }}
         # If you wish to specify custom queries, you can do so here or in a config file.
@@ -117,13 +191,12 @@ jobs:
     - name: Install Dependencies
       run: |
         sudo add-apt-repository ppa:flatpak/stable
-        sudo add-apt-repository ppa:alexlarsson/glib260
         sudo add-apt-repository 'deb https://download.mono-project.com/repo/ubuntu stable-bionic main' # Needed for updates to work
         sudo apt-get update
-        sudo apt-get install -y libglib2.0 attr automake gettext autopoint bison  dbus gtk-doc-tools \
+        sudo apt-get install -y libglib2.0-dev attr automake gettext autopoint bison  dbus gtk-doc-tools \
         libfuse-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
         libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
-        libseccomp-dev libsoup2.4-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
+        libseccomp-dev libsoup2.4-dev libcurl4-openssl-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
         libgirepository1.0-dev libappstream-dev libdconf-dev clang e2fslibs-dev
     - name: Check out flatpak
       uses: actions/checkout@v1
@@ -137,22 +210,23 @@ jobs:
     - name: Build flatpak
       run: make -j $(getconf _NPROCESSORS_ONLN)
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v1
+      uses: github/codeql-action/analyze@v2
 
   valgrind:
     name: Run tests in valgrind
     needs: check # Don't run expensive test if main check fails
     runs-on: ubuntu-20.04 # Might as well test with a different one too
+    if: ${{ false }} # Currently Valgrind takes too long and always fails
     steps:
     - name: Install Dependencies
       run: |
         sudo add-apt-repository ppa:flatpak/stable
         sudo apt-get update
         sudo add-apt-repository 'deb https://download.mono-project.com/repo/ubuntu stable-focal main' # Needed for updates to work
-        sudo apt-get install -y libglib2.0 attr automake gettext autopoint bison  dbus gtk-doc-tools \
+        sudo apt-get install -y libglib2.0-dev attr automake gettext autopoint bison  dbus gtk-doc-tools \
         libfuse-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
         libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
-        libseccomp-dev libsoup2.4-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
+        libseccomp-dev libsoup2.4-dev libcurl4-openssl-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
         libgirepository1.0-dev libappstream-dev libdconf-dev clang socat meson libdbus-1-dev \
         valgrind e2fslibs-dev
     - name: Check out flatpak

@@ -86,6 +86,7 @@ elif test -n "${FLATPAK_TESTS_VALGRIND_LEAKS:-}"; then
 else
     CMD_PREFIX=""
 fi
+unset OSTREE_DEBUG_HTTP
 
 export MALLOC_CHECK_=3
 export MALLOC_PERTURB_=$(($RANDOM % 255 + 1))
@@ -575,6 +576,13 @@ skip_without_ostree_version () {
     else
         skip "OSTree version requirement $1.$2 not met"
     fi
+}
+
+skip_without_libsystemd () {
+  ${FLATPAK} history > history-log 2>&1 || true
+  if  grep -q 'history not available without libsystemd' history-log; then
+      skip "no libsystemd available"
+  fi
 }
 
 sed s#@testdir@#${test_builddir}# ${test_srcdir}/session.conf.in > session.conf

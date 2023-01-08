@@ -2,6 +2,7 @@ bin_PROGRAMS += \
 	flatpak \
 	$(NULL)
 
+EXTRA_DIST += app/meson.build
 EXTRA_DIST += app/parse-datetime.y
 
 flatpak_dbus_built_sources = app/flatpak-permission-dbus-generated.c app/flatpak-permission-dbus-generated.h
@@ -44,7 +45,6 @@ libflatpak_app_la_LIBADD = \
 	$(AM_LDADD) \
 	$(BASE_LIBS) \
 	$(OSTREE_LIBS) \
-	$(SOUP_LIBS) \
 	$(JSON_LIBS) \
 	$(APPSTREAM_LIBS) \
 	$(SYSTEMD_LIBS) \
@@ -55,7 +55,6 @@ libflatpak_app_la_CFLAGS = \
 	$(AM_CFLAGS) \
 	$(BASE_CFLAGS) \
 	$(OSTREE_CFLAGS) \
-	$(SOUP_CFLAGS) \
 	$(JSON_CFLAGS) \
 	$(APPSTREAM_CFLAGS) \
 	 $(SYSTEMD_CFLAGS) \
@@ -136,7 +135,6 @@ flatpak_LDADD = \
 	$(AM_LDADD) \
 	$(BASE_LIBS) \
 	$(OSTREE_LIBS) \
-	$(SOUP_LIBS) \
 	$(JSON_LIBS) \
 	$(APPSTREAM_LIBS) \
 	$(SYSTEMD_LIBS) \
@@ -151,7 +149,6 @@ flatpak_CFLAGS = \
 	$(AM_CFLAGS) \
 	$(BASE_CFLAGS) \
 	$(OSTREE_CFLAGS) \
-	$(SOUP_CFLAGS) \
 	$(JSON_CFLAGS) \
 	$(APPSTREAM_CFLAGS) \
 	$(SYSTEMD_CFLAGS) \

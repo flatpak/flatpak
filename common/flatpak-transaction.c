@@ -1,4 +1,4 @@
-/*
+/* vi:set et sw=2 sts=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e-s:
  * Copyright © 2016 Red Hat, Inc
  *
  * This program is free software; you can redistribute it and/or
@@ -22,7 +22,6 @@
 
 #include <stdio.h>
 #include <glib/gi18n-lib.h>
-#include <libsoup/soup.h>
 
 #include "flatpak-auth-private.h"
 #include "flatpak-error.h"
@@ -30,6 +29,7 @@
 #include "flatpak-progress-private.h"
 #include "flatpak-transaction-private.h"
 #include "flatpak-utils-private.h"
+#include "flatpak-uri-private.h"
 #include "flatpak-variant-impl-private.h"
 
 /**
@@ -704,12 +704,13 @@ flatpak_transaction_operation_get_decomposed (FlatpakTransactionOperation *self)
  * flatpak_transaction_operation_get_related_to_ops:
  * @self: a #FlatpakTransactionOperation
  *
- * Gets the operations which caused this operation to be added to the
- * transaction. In the case of a runtime, it's the apps whose runtime it is (and
- * this could be multiple apps, if they all require the same runtime). In
- * the case of a related ref such as an extension, it's the main app or
- * runtime. In the case of a main app or something added to the transaction by
- * flatpak_transaction_add_ref(), %NULL or an empty array will be returned.
+ * Gets the operation(s) which caused this operation to be added to the
+ * transaction. In the case of a runtime, it's the app(s) whose runtime it is,
+ * and/or a runtime extension in the special case of an extra-data extension
+ * that doesn't define the "NoRuntime" key. In the case of a related ref such
+ * as an extension, it's the main app or runtime. In the case of a main app or
+ * something added to the transaction by e.g. flatpak_transaction_add_install()
+ * and which is not otherwise needed, %NULL or an empty array will be returned.
  *
  * Note that an op will be returned even if it’s marked as to be skipped when
  * the transaction is run. Check that using
@@ -1317,15 +1318,17 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
    * FlatpakTransaction::ready-pre-auth:
    * @object: A #FlatpakTransaction
    *
-   * The ::ready-pre-auth signal is emitted when all the refs involved in the transaction
-   * have been resolved to commits, but we might not necessarily have asked for authenticaion
-   * for all their required operations. This is very similar to the ::ready signal, and you can
-   * chose which one (or both) to use depending on how you want to handle authentication in your user
+   * The ::ready-pre-auth signal is emitted when all the refs involved in the
+   * transaction have been resolved to commits, but we might not necessarily
+   * have asked for authentication for all their required operations. This is
+   * very similar to the ::ready signal, and you can choose which one (or both)
+   * to use depending on how you want to handle authentication in your user
    * interface.
    *
-   * At this point flatpak_transaction_get_operations() will return all the operations
-   * that will be executed as part of the transaction. You can call flatpak_transaction_operation_get_requires_authentication()
-   * to see which will require authentication.
+   * At this point flatpak_transaction_get_operations() will return all the
+   * operations that will be executed as part of the transaction. You can call
+   * flatpak_transaction_operation_get_requires_authentication() to see which
+   * will require authentication.
    *
    * Returns: %TRUE to carry on with the transaction, %FALSE to abort
    *
@@ -2118,11 +2121,11 @@ flatpak_transaction_add_op (FlatpakTransaction             *self,
   g_autofree char *subpaths_str = NULL;
 
   subpaths_str = subpaths_to_string (subpaths);
-  g_debug ("Transaction: %s %s:%s%s%s%s",
-           kind_to_str (kind), remote, flatpak_decomposed_get_ref (ref),
-           commit != NULL ? "@" : "",
-           commit != NULL ? commit : "",
-           subpaths_str);
+  g_info ("Transaction: %s %s:%s%s%s%s",
+          kind_to_str (kind), remote, flatpak_decomposed_get_ref (ref),
+          commit != NULL ? "@" : "",
+          commit != NULL ? commit : "",
+          subpaths_str);
 
   op = flatpak_transaction_get_last_op_for_ref (self, ref);
   /* If previous_ids is given, then this is a rebase operation. */
@@ -2189,7 +2192,7 @@ op_get_related (FlatpakTransaction           *self,
 
   if (op->resolved_metakey == NULL)
     {
-      g_debug ("no resolved metadata for related to %s", flatpak_decomposed_get_ref (op->ref));
+      g_info ("no resolved metadata for related to %s", flatpak_decomposed_get_ref (op->ref));
       return TRUE;
     }
 
@@ -2342,7 +2345,7 @@ search_for_dependency (FlatpakTransaction  *self,
       state = flatpak_transaction_ensure_remote_state (self, FLATPAK_TRANSACTION_OPERATION_INSTALL, remote, arch, &local_error);
       if (state == NULL)
         {
-          g_debug ("Can't get state for remote %s, ignoring: %s", remote, local_error->message);
+          g_info ("Can't get state for remote %s, ignoring: %s", remote, local_error->message);
           continue;
         }
 
@@ -2465,7 +2468,7 @@ op_get_runtime_ref (FlatpakTransactionOperation *op)
 
   decomposed = flatpak_decomposed_new_from_pref (FLATPAK_KINDS_RUNTIME, runtime_pref, NULL);
   if (decomposed == NULL)
-    g_debug ("Invalid runtime ref %s in metadata", runtime_pref);
+    g_info ("Invalid runtime ref %s in metadata", runtime_pref);
 
   return decomposed;
 }
@@ -2485,7 +2488,7 @@ op_get_sdk_ref (FlatpakTransactionOperation *op)
 
   decomposed = flatpak_decomposed_new_from_pref (FLATPAK_KINDS_RUNTIME, sdk_pref, NULL);
   if (decomposed == NULL)
-    g_debug ("Invalid runtime ref %s in metadata", sdk_pref);
+    g_info ("Invalid runtime ref %s in metadata", sdk_pref);
 
   return decomposed;
 }
@@ -2502,8 +2505,8 @@ add_new_dep_op (FlatpakTransaction           *self,
 
   if (!ref_is_installed (self, dep_ref))
     {
-      g_debug ("Installing dependency %s of %s", flatpak_decomposed_get_pref (dep_ref),
-               flatpak_decomposed_get_pref (op->ref));
+      g_info ("Installing dependency %s of %s", flatpak_decomposed_get_pref (dep_ref),
+              flatpak_decomposed_get_pref (op->ref));
       dep_remote = find_runtime_remote (self, op->ref, op->remote, dep_ref, op->kind, NULL, error);
       if (dep_remote == NULL)
         return FALSE;
@@ -2518,8 +2521,8 @@ add_new_dep_op (FlatpakTransaction           *self,
       /* Update if in same dir */
       if (dir_ref_is_installed (priv->dir, dep_ref, &dep_remote, NULL))
         {
-          g_debug ("Updating dependency %s of %s", flatpak_decomposed_get_pref (dep_ref),
-                   flatpak_decomposed_get_pref (op->ref));
+          g_info ("Updating dependency %s of %s", flatpak_decomposed_get_pref (dep_ref),
+                  flatpak_decomposed_get_pref (op->ref));
           *dep_op = flatpak_transaction_add_op (self, dep_remote, dep_ref, NULL, NULL, NULL, NULL,
                                                 FLATPAK_TRANSACTION_OPERATION_UPDATE, FALSE, error);
           if (*dep_op == NULL)
@@ -2665,7 +2668,7 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
 
       if (flatpak_dir_get_remote_disabled (priv->dir, origin))
         {
-          g_debug (_("Remote %s disabled, ignoring %s update"), origin, pref);
+          g_info (_("Remote %s disabled, ignoring %s update"), origin, pref);
           return TRUE;
         }
       remote = origin;
@@ -3003,13 +3006,13 @@ flatpak_transaction_update_metadata (FlatpakTransaction *self,
       g_autoptr(GError) my_error = NULL;
       g_autoptr(FlatpakRemoteState) state = flatpak_transaction_ensure_remote_state (self, FLATPAK_TRANSACTION_OPERATION_UPDATE, remote, NULL, NULL);
 
-      g_debug ("Looking for remote metadata updates for %s", remote);
+      g_info ("Looking for remote metadata updates for %s", remote);
       if (!flatpak_dir_update_remote_configuration (priv->dir, remote, state, &updated, cancellable, &my_error))
-        g_debug (_("Error updating remote metadata for '%s': %s"), remote, my_error->message);
+        g_info (_("Error updating remote metadata for '%s': %s"), remote, my_error->message);
 
       if (updated)
         {
-          g_debug ("Got updated metadata for %s", remote);
+          g_info ("Got updated metadata for %s", remote);
           some_updated = TRUE;
         }
     }
@@ -3067,13 +3070,13 @@ flatpak_transaction_add_auto_install (FlatpakTransaction *self,
               if (state != NULL &&
                   flatpak_remote_state_lookup_ref (state, flatpak_decomposed_get_ref (auto_install_ref), NULL, NULL, NULL, NULL, NULL))
                 {
-                  g_debug ("Auto adding install of %s from remote %s", flatpak_decomposed_get_ref (auto_install_ref), remote);
+                  g_info ("Auto adding install of %s from remote %s", flatpak_decomposed_get_ref (auto_install_ref), remote);
 
                   if (!flatpak_transaction_add_ref (self, remote, auto_install_ref, NULL, NULL, NULL,
                                                     FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE,
                                                     NULL, NULL, FALSE,
                                                     &local_error))
-                    g_debug ("Failed to add auto-install ref %s: %s", flatpak_decomposed_get_ref (auto_install_ref),
+                    g_info ("Failed to add auto-install ref %s: %s", flatpak_decomposed_get_ref (auto_install_ref),
                              local_error->message);
                 }
             }
@@ -3141,7 +3144,7 @@ load_deployed_metadata (FlatpakTransaction *self, FlatpakDecomposed *ref, char *
 
   if (!g_file_load_contents (metadata_file, NULL, &metadata_contents, &metadata_contents_length, NULL, NULL))
     {
-      g_debug ("No metadata in local deploy of %s", flatpak_decomposed_get_ref (ref));
+      g_info ("No metadata in local deploy of %s", flatpak_decomposed_get_ref (ref));
       return NULL;
     }
 
@@ -3173,7 +3176,7 @@ mark_op_resolved (FlatpakTransactionOperation *op,
                   GBytes                      *old_metadata,
                   GError                     **error)
 {
-  g_debug ("marking op %s:%s resolved to %s", kind_to_str (op->kind), flatpak_decomposed_get_ref (op->ref), commit ? commit : "-");
+  g_info ("marking op %s:%s resolved to %s", kind_to_str (op->kind), flatpak_decomposed_get_ref (op->ref), commit ? commit : "-");
 
   g_assert (op != NULL);
 
@@ -3267,6 +3270,19 @@ resolve_op_from_commit (FlatpakTransaction *self,
   g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE, "s", &op->eol);
   g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE_REBASE, "s", &op->eol_rebase);
 
+  if (op->eol_rebase)
+    {
+      g_autoptr(FlatpakDecomposed) eolr_decomposed = NULL;
+      eolr_decomposed = flatpak_decomposed_new_from_ref (op->eol_rebase, error);
+      if (!eolr_decomposed)
+        return FALSE;
+      if (flatpak_decomposed_get_kind (op->ref) != flatpak_decomposed_get_kind (eolr_decomposed))
+        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                   "end-of-life-rebase on commit %s has the wrong type (%s -> %s)",
+                                   checksum, flatpak_decomposed_get_ref (op->ref),
+                                   flatpak_decomposed_get_ref (eolr_decomposed));
+    }
+
   return resolve_op_end (self, op, checksum, sideload_path, metadata_bytes, error);
 }
 
@@ -3317,6 +3333,19 @@ try_resolve_op_from_metadata (FlatpakTransaction *self,
       op->eol = g_strdup (var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE, NULL));
       op->eol_rebase = g_strdup (var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, NULL));
       op->token_type = GINT32_FROM_LE (var_metadata_lookup_int32 (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_TOKEN_TYPE, op->token_type));
+
+      if (op->eol_rebase)
+        {
+          g_autoptr(FlatpakDecomposed) eolr_decomposed = NULL;
+          eolr_decomposed = flatpak_decomposed_new_from_ref (op->eol_rebase, error);
+          if (!eolr_decomposed)
+            return FALSE;
+          if (flatpak_decomposed_get_kind (op->ref) != flatpak_decomposed_get_kind (eolr_decomposed))
+            return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                       "end-of-life-rebase on commit %s has the wrong type (%s -> %s)",
+                                       checksum, flatpak_decomposed_get_ref (op->ref),
+                                       flatpak_decomposed_get_ref (eolr_decomposed));
+        }
     }
 
   return resolve_op_end (self, op, checksum, sideload_path, metadata_bytes, error);
@@ -3449,7 +3478,7 @@ resolve_ops (FlatpakTransaction *self,
                   if (latest_sideload_path != NULL && local_commit_data && latest_timestamp != 0 &&
                       ostree_commit_get_timestamp (local_commit_data) > latest_timestamp)
                     {
-                      g_debug ("Installed commit %s newer than sideloaded %s, ignoring", local_checksum, latest_checksum);
+                      g_info ("Installed commit %s newer than sideloaded %s, ignoring", local_checksum, latest_checksum);
                       checksum = g_steal_pointer (&local_checksum);
                     }
                   else
@@ -3507,7 +3536,7 @@ resolve_ops (FlatpakTransaction *self,
                   if (g_error_matches (local_error, FLATPAK_HTTP_ERROR, FLATPAK_HTTP_ERROR_UNAUTHORIZED) && !op->requested_token)
                     {
 
-                      g_debug ("Unauthorized access during resolve by commit of %s, retrying with token", flatpak_decomposed_get_ref (op->ref));
+                      g_info ("Unauthorized access during resolve by commit of %s, retrying with token", flatpak_decomposed_get_ref (op->ref));
                       priv->needs_resolve = TRUE;
                       priv->needs_tokens = TRUE;
 
@@ -3593,7 +3622,7 @@ request_tokens_webflow (FlatpakAuthenticatorRequest *object,
   g_assert (priv->active_request_id == 0);
   priv->active_request_id = ++priv->next_request_id;
 
-  g_debug ("Webflow start %s", arg_uri);
+  g_info ("Webflow start %s", arg_uri);
   g_signal_emit (transaction, signals[WEBFLOW_START], 0, data->remote, arg_uri, options, priv->active_request_id, &retval);
   if (!retval)
     {
@@ -3603,7 +3632,7 @@ request_tokens_webflow (FlatpakAuthenticatorRequest *object,
 
       /* We didn't handle the uri, cancel the auth op. */
       if (!flatpak_authenticator_request_call_close_sync (data->request, NULL, &local_error))
-        g_debug ("Failed to close auth request: %s", local_error->message);
+        g_info ("Failed to close auth request: %s", local_error->message);
     }
 }
 
@@ -3623,7 +3652,7 @@ request_tokens_webflow_done (FlatpakAuthenticatorRequest *object,
   id = priv->active_request_id;
   priv->active_request_id = 0;
 
-  g_debug ("Webflow done");
+  g_info ("Webflow done");
   g_signal_emit (transaction, signals[WEBFLOW_DONE], 0, options, id);
 }
 
@@ -3643,7 +3672,7 @@ request_tokens_basic_auth (FlatpakAuthenticatorRequest *object,
   g_assert (priv->active_request_id == 0);
   priv->active_request_id = ++priv->next_request_id;
 
-  g_debug ("BasicAuth start %s", arg_realm);
+  g_info ("BasicAuth start %s", arg_realm);
   g_signal_emit (transaction, signals[BASIC_AUTH_START], 0, data->remote, arg_realm, options, priv->active_request_id, &retval);
   if (!retval)
     {
@@ -3653,7 +3682,7 @@ request_tokens_basic_auth (FlatpakAuthenticatorRequest *object,
 
       /* We didn't handle the request, cancel the auth op. */
       if (!flatpak_authenticator_request_call_close_sync (data->request, NULL, &local_error))
-        g_debug ("Failed to close auth request: %s", local_error->message);
+        g_info ("Failed to close auth request: %s", local_error->message);
     }
 
 }
@@ -3690,7 +3719,7 @@ flatpak_transaction_abort_webflow (FlatpakTransaction *self,
       if (!data->done)
         {
           if (!flatpak_authenticator_request_call_close_sync (data->request, NULL, &local_error))
-            g_debug ("Failed to close auth request: %s", local_error->message);
+            g_info ("Failed to close auth request: %s", local_error->message);
         }
     }
 }
@@ -3734,7 +3763,7 @@ flatpak_transaction_complete_basic_auth (FlatpakTransaction *self,
       if (user == NULL)
         {
           if (!flatpak_authenticator_request_call_close_sync (data->request, NULL, &local_error))
-            g_debug ("Failed to abort basic auth request: %s", local_error->message);
+            g_info ("Failed to abort basic auth request: %s", local_error->message);
         }
       else
         {
@@ -3742,7 +3771,7 @@ flatpak_transaction_complete_basic_auth (FlatpakTransaction *self,
                                                                          user, password,
                                                                          options,
                                                                          NULL, &local_error))
-            g_debug ("Failed to reply to basic auth request: %s", local_error->message);
+            g_info ("Failed to reply to basic auth request: %s", local_error->message);
         }
     }
 }
@@ -3829,7 +3858,7 @@ request_tokens_for_remote (FlatpakTransaction *self,
         g_string_append (refs_as_str, ", ");
     }
 
-  g_debug ("Requesting tokens for remote %s: %s", remote, refs_as_str->str);
+  g_info ("Requesting tokens for remote %s: %s", remote, refs_as_str->str);
   refs = g_variant_ref_sink (g_variant_builder_end (&refs_builder));
 
   extra_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
@@ -3875,7 +3904,7 @@ request_tokens_for_remote (FlatpakTransaction *self,
 
   {
     g_autofree char *results_str = results != NULL ? g_variant_print (results, FALSE) : g_strdup ("NULL");
-    g_debug ("Response from request_tokens: %d - %s\n", data.response, results_str);
+    g_info ("Response from request_tokens: %d - %s\n", data.response, results_str);
   }
 
   if (data.response == FLATPAK_AUTH_RESPONSE_CANCELLED)
@@ -4116,6 +4145,71 @@ flatpak_transaction_get_current_operation (FlatpakTransaction *self)
 }
 
 /**
+ * flatpak_transaction_get_operation_for_ref:
+ * @self: a #FlatpakTransaction
+ * @remote: (nullable): a remote name
+ * @ref: a ref
+ * @error: return location for an error
+ *
+ * Gets the operation for @ref, if any match. If @remote is non-%NULL, only an
+ * operation for that remote will be returned. If remote is %NULL and the
+ * transaction has more than one operation for @ref from different remotes, an
+ * error will be returned.
+ *
+ * Returns: (transfer full): the #FlatpakTransactionOperation for @ref, or
+ *   %NULL with @error set
+ * Since: 1.13.3
+ */
+FlatpakTransactionOperation *
+flatpak_transaction_get_operation_for_ref (FlatpakTransaction *self,
+                                           const char         *remote,
+                                           const char         *ref,
+                                           GError            **error)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  g_autoptr(FlatpakDecomposed) decomposed_ref = NULL;
+  g_autoptr(FlatpakTransactionOperation) matching_op = NULL;
+  GList *l;
+
+  g_return_val_if_fail (ref != NULL, NULL);
+
+  decomposed_ref = flatpak_decomposed_new_from_ref (ref, error);
+  if (decomposed_ref == NULL)
+    return NULL;
+
+  for (l = priv->ops; l != NULL; l = l->next)
+    {
+      FlatpakTransactionOperation *op = l->data;
+
+      if (remote != NULL && g_strcmp0 (remote, op->remote) != 0)
+        continue;
+
+      if (flatpak_decomposed_equal (op->ref, decomposed_ref))
+        {
+          if (matching_op == NULL)
+            matching_op = g_object_ref (op);
+          else
+            {
+              flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                  _("Ref %s from %s matches more than one transaction operation"),
+                                  ref, remote ? remote : _("any remote"));
+              return NULL;
+            }
+        }
+    }
+
+  if (matching_op == NULL)
+    {
+      flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
+                          _("No transaction operation found for ref %s from %s"),
+                          ref, remote ? remote : _("any remote"));
+      return NULL;
+    }
+
+  return g_steal_pointer (&matching_op);
+}
+
+/**
  * flatpak_transaction_get_installation:
  * @self: a #FlatpakTransactionOperation
  *
@@ -4222,7 +4316,7 @@ load_flatpakrepo_file (FlatpakTransaction *self,
   g_autoptr(GBytes) dep_data = NULL;
   g_autoptr(GKeyFile) dep_keyfile = g_key_file_new ();
   g_autoptr(GError) local_error = NULL;
-  g_autoptr(SoupSession) soup_session = NULL;
+  g_autoptr(FlatpakHttpSession) http_session = NULL;
 
   if (priv->disable_deps)
     return TRUE;
@@ -4232,8 +4326,8 @@ load_flatpakrepo_file (FlatpakTransaction *self,
       !g_str_has_prefix (dep_url, "file:"))
     return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Flatpakrepo URL %s not file, HTTP or HTTPS"), dep_url);
 
-  soup_session = flatpak_create_soup_session (PACKAGE_STRING);
-  dep_data = flatpak_load_uri (soup_session, dep_url, 0, NULL, NULL, NULL, NULL, cancellable, error);
+  http_session = flatpak_create_http_session (PACKAGE_STRING);
+  dep_data = flatpak_load_uri (http_session, dep_url, 0, NULL, NULL, NULL, NULL, cancellable, error);
   if (dep_data == NULL)
     {
       g_prefix_error (error, _("Can't load dependent file %s: "), dep_url);
@@ -4264,7 +4358,7 @@ handle_runtime_repo_deps (FlatpakTransaction *self,
   g_autofree char *runtime_url = NULL;
   g_autofree char *new_remote = NULL;
   g_autofree char *basename = NULL;
-  g_autoptr(SoupURI) uri = NULL;
+  g_autoptr(GUri) uri = NULL;
   g_auto(GStrv) remotes = NULL;
   g_autoptr(GKeyFile) config = NULL;
   g_autoptr(GBytes) gpg_key = NULL;
@@ -4278,8 +4372,8 @@ handle_runtime_repo_deps (FlatpakTransaction *self,
 
   g_assert (dep_keyfile != NULL);
 
-  uri = soup_uri_new (dep_url);
-  basename = g_path_get_basename (soup_uri_get_path (uri));
+  uri = g_uri_parse (dep_url, FLATPAK_HTTP_URI_FLAGS | G_URI_FLAGS_PARSE_RELAXED, NULL);
+  basename = g_path_get_basename (g_uri_get_path (uri));
   /* Strip suffix */
   t = strchr (basename, '.');
   if (t != NULL)
@@ -4661,7 +4755,7 @@ _run_op_kind (FlatpakTransaction           *self,
             }
         }
       else
-        g_debug ("%s need no update", flatpak_decomposed_get_ref (op->ref));
+        g_info ("%s need no update", flatpak_decomposed_get_ref (op->ref));
     }
   else if (op->kind == FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE)
     {

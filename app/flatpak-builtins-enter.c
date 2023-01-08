@@ -1,4 +1,4 @@
-/*
+/* vi:set et sw=2 sts=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e-s:
  * Copyright © 2014 Red Hat, Inc
  *
  * This program is free software; you can redistribute it and/or
@@ -248,7 +248,6 @@ flatpak_builtin_enter (int           argc,
   for (e = environment; e < environment + environment_len; e = e + strlen (e) + 1)
     {
       if (*e != 0 &&
-          !g_str_has_prefix (e, "DISPLAY=") &&
           !g_str_has_prefix (e, "PULSE_SERVER=") &&
           !g_str_has_prefix (e, "PULSE_CLIENTCONFIG=") &&
           !g_str_has_prefix (e, "XDG_RUNTIME_DIR=") &&
@@ -263,9 +262,6 @@ flatpak_builtin_enter (int           argc,
 
   xdg_runtime_dir = g_strdup_printf ("/run/user/%d", uid);
   g_ptr_array_add (envp_array, g_strdup_printf ("XDG_RUNTIME_DIR=%s", xdg_runtime_dir));
-
-  if (g_file_test ("/tmp/.X11-unix/X99", G_FILE_TEST_EXISTS))
-    g_ptr_array_add (envp_array, g_strdup ("DISPLAY=:99.0"));
 
   pulse_path = g_strdup_printf ("/run/user/%d/pulse/native", uid);
   if (g_file_test (pulse_path, G_FILE_TEST_EXISTS))

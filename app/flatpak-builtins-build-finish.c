@@ -1,4 +1,4 @@
-/*
+/* vi:set et sw=2 sts=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e-s:
  * Copyright © 2014 Red Hat, Inc
  *
  * This program is free software; you can redistribute it and/or
@@ -175,7 +175,7 @@ export_dir (int           source_parent_fd,
       else
         {
           source_printable = g_build_filename (source_relpath, dent->d_name, NULL);
-          g_debug ("Not exporting non-regular file %s", source_printable);
+          g_info ("Not exporting non-regular file %s", source_printable);
         }
     }
 
@@ -265,7 +265,7 @@ collect_exports (GFile          *base,
 
       if (g_file_query_exists (src, cancellable))
         {
-          g_debug ("Exporting from %s", path);
+          g_info ("Exporting from %s", path);
           g_autoptr(GFile) dest = NULL;
           g_autoptr(GFile) dest_parent = NULL;
 
@@ -275,10 +275,10 @@ collect_exports (GFile          *base,
             dest = g_file_resolve_relative_path (export, path);
 
           dest_parent = g_file_get_parent (dest);
-          g_debug ("Ensuring export/%s parent exists", path);
+          g_info ("Ensuring export/%s parent exists", path);
           if (!flatpak_mkdir_p (dest_parent, cancellable, error))
             return FALSE;
-          g_debug ("Copying from files/%s", path);
+          g_info ("Copying from files/%s", path);
           if (!copy_exports (src,
                              dest,
                              path,
@@ -401,14 +401,14 @@ update_metadata (GFile *base, FlatpakContext *arg_context, gboolean is_runtime, 
     {
       if (g_key_file_has_key (keyfile, group, FLATPAK_METADATA_KEY_COMMAND, NULL))
         {
-          g_debug ("Command key is present");
+          g_info ("Command key is present");
 
           if (opt_command)
             g_key_file_set_string (keyfile, group, FLATPAK_METADATA_KEY_COMMAND, opt_command);
         }
       else if (opt_command)
         {
-          g_debug ("Using explicitly provided command %s", opt_command);
+          g_info ("Using explicitly provided command %s", opt_command);
 
           g_key_file_set_string (keyfile, group, FLATPAK_METADATA_KEY_COMMAND, opt_command);
         }
@@ -419,7 +419,7 @@ update_metadata (GFile *base, FlatpakContext *arg_context, gboolean is_runtime, 
           g_autoptr(GFileEnumerator) bin_enum = NULL;
           g_autoptr(GFileInfo) child_info = NULL;
 
-          g_debug ("Looking for executables");
+          g_info ("Looking for executables");
 
           bin_dir = g_file_resolve_relative_path (base, "files/bin");
           if (g_file_query_exists (bin_dir, cancellable))
@@ -687,12 +687,12 @@ flatpak_builtin_build_finish (int argc, char **argv, GCancellable *cancellable, 
 
   if (!is_runtime)
     {
-      g_debug ("Collecting exports");
+      g_info ("Collecting exports");
       if (!collect_exports (base, id, arg_context, cancellable, error))
         return FALSE;
     }
 
-  g_debug ("Updating metadata");
+  g_info ("Updating metadata");
   if (!update_metadata (base, arg_context, is_runtime, cancellable, error))
     return FALSE;
 

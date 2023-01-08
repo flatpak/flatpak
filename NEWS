@@ -1,3 +1,176 @@
+Changes in 1.15.1
+~~~~~~~~~~~~~~~~~
+Released: 2022-11-17
+
+Dependencies:
+
+* When building with Meson, gpgme 1.8.0 is now required.
+  Older versions can still be used by building with Autotools.
+
+Features:
+
+* If an old temporary deploy directory was leaked by versions before #5146,
+  clean it up the next time the same app is updated (#5164)
+
+Bug fixes:
+
+* If an app update is blocked by parental controls policies, clean up the
+  temporary deploy directory (#5146)
+* Fix Autotools build with versions of gpgme that no longer provide
+  gpgme-config(1) (#5173)
+* Fix a possible parallel build failure with Meson (#5165)
+* Fix a compiler warning on 32-bit architectures (#5148)
+* When building with Autotools, be more consistent about applying compiler
+  warning flags (#5149)
+* Unset $TEMP, $TEMPDIR and $TMP for apps, the same as $TMPDIR (#5168)
+* Treat /efi the same as /boot/efi (#5155)
+
+Changes in 1.15.0
+~~~~~~~~~~~~~~~~~
+Released: 2022-10-24
+
+Build system:
+
+* Flatpak can now be compiled using Meson instead of Autotools.
+  This requires Meson 0.53.0 or later, and Python 3.5 or later.
+  The Autotools build system is likely to be removed during either the
+  1.15.x or 1.17.x cycle. (#4845)
+
+New features:
+
+* Allow the `modify_ldt` system call as part of `--allow=multiarch`.
+  This increases attack surface, but is required when running 16-bit
+  executables in some versions of Wine. (#4297)
+* Share gssproxy socket, which acts like a portal for Kerberos authentication.
+  This lets apps use Kerberos authentication without needing a sandbox hole.
+  (#4914)
+* Add a httpbackend variable to flatpak.pc, allowing dependent projects
+  like GNOME Software to detect whether they are compatible with libflatpak
+  (#5054)
+
+Bug fixes:
+
+* Terminate the flatpak-session-helper and flatpak-portal services when the
+  session ends, so that applications will not inherit outdated Wayland
+  and X11 socket addresses (#5068)
+* When using `fish` shell, don't overwrite a previously-set XDG_DATA_DIRS
+  (#5123)
+* Don't try to enable HTTP 2 if linked to a libcurl version that doesn't
+  support it (#5074)
+* Stop systemd reporting the session-helper as failed when terminated by
+  a signal (#5129)
+* Fix a warning when listing a document with no permissions (#5055)
+* Fix compilation with GLib 2.66.x (as used in Debian 11) (#5062)
+* Fix compilation with GLib 2.58.x (as used in Debian 10) (#5066)
+* Make generated files more reproducible (#5085)
+* Translation updates: cs, id, pl, pt_BR (#5052, #5056, #5059, #5126)
+
+Internal changes:
+
+* Update project logo in README (#5119)
+* Update libglnx subproject (#5140)
+
+Changes in 1.14.0
+~~~~~~~~~~~~~~~~~
+Released: 2022-08-22
+
+Known issues:
+* There may be an issue where non-primary architecture builds don't show up
+  (https://github.com/flatpak/flatpak/issues/5045)
+* There is a new security advisory on Flatpak but all supported versions are
+  not affected due to using new enough versions of libostree
+  (https://github.com/flatpak/flatpak/security/advisories/GHSA-45jq-5658-v38x)
+
+Dependencies:
+
+* Conditional on a build time option, revokefs will now use version 3 of the
+  FUSE API rather than version 2 (#4326)
+* Libappstream should be updated to at least 0.15.3 to avoid critical warning
+  messages when using the "flatpak search" command
+  (https://github.com/ximion/appstream/issues/384)
+
+New features:
+
+* A new key "DeploySideloadCollectionID" is now supported in flatpakref and
+  flatpakrepo files, to allow setting a collection ID at the time a remote is
+  added from one of those files, rather than when metadata is pulled from the
+  remote, and without affecting versions of Flatpak with the older pre-sideload
+  P2P implementation (#4826)
+* Allow sub-sandboxes to own MPRIS names on the session bus (#5023)
+* Commands that accept "--user" will now also take "-u" as an alias for that
+  (#5014)
+* The CLI now properly informs the user of which apps are (indirectly) using
+  end-of-life runtime extensions in end-of-life info messages (#4835)
+* The CLI now takes into account operations in the pending transaction when
+  printing end-of-life messages (#4835)
+* The uninstall command now asks for confirmation before removing in-use
+  runtimes or runtime extensions (#4835)
+* A "--socket=gpg-agent" option is now recognized by "flatpak run" and related
+  commands (#4958)
+
+Bug fixes:
+
+* Fix a memory corruption issue caused by use of libcurl in an unsafe way
+  (#5046)
+* Update selinux policy to cover symbolic links in /var/lib/flatpak (#4992)
+* Fix a crash in case a .desktop file processed by the build-export command has
+  no Exec= key, and some related fixes for handling such .desktop files (#4817)
+* Preserve the X11 display number rather than redirecting it to :99 (#5034)
+
+Other changes:
+
+* Various improvements to the unit tests, CI infra, and documentation
+* Some changes were made to ensure translators can work on full sentences
+  rather than fragments in several places
+* Translation updates: de, ru, sv, tr, uk, zh_CN
+
+Changes in 1.13.3
+~~~~~~~~~~~~~~~~~
+Released: 2022-06-16
+
+Dependencies:
+
+ * Support curl 7.29 or later as an additional, and the default, HTTP backend
+   alongwith libsoup 2.x (#4943)
+ * Clarify that glib 2.46 or later is now required (#4944)
+
+New features:
+
+ * Implement support for rewriting dynamic launchers when an app is renamed
+   (#4703)
+ * Add --include-sdk/debug options to install command to install SDK/debuginfo
+   along with a ref (#4777)
+ * Improve --sideload-repo option to take create-usb dirs (#4843)
+ * Add a new library API flatpak_transaction_get_operation_for_ref() (#4947)
+
+Bug fixes:
+
+ * Update the SELinux module to explicitly permit the system helper have read
+   access to /etc/passwd and systemd-userdbd, read and lock access to
+   /var/lib/flatpak, and watch files inside $libexecdir (#4852, #4855, #4892)
+ * Fix the error messages and the exit code of the 'uninstall' command when
+   non-existent refs are specified (#4857)
+ * Be more careful with errors when creating directories and deleting files,
+   and address some memory errors (#4930)
+ * Fix support for --noninteractive in the 'uninstall' command (#4947)
+
+Other changes:
+
+ * Cosmetic improvements to end-of-life messages and other aspects of the CLI
+   output (#4947)
+ * Speed up the tests by not installing the polkit agent (#4942)
+ * Disable fuzzy ref matching when ID has a period or a slash, or when the
+   standard input or output is not a TTY (#4829, #4848)
+ * Update the icon-validator to print the format and size for consumption by
+   the dynamic launcher portal (#4803, #4808)
+ * Remove a pointless test (#4856)
+ * Improve various details of the GitHub workflows (#4870)
+ * Prepare for the addition of a Meson build (#4842, #4871, #4888, #4889, #4890)
+ * Only add the specified 'summary-arches' to the compat summary. This is
+   important since we're nearing the 10MB size limit for Flathub's legacy
+   summary files. (#4880)
+ * Translation updates: id, pt, sv, tr, uk
+
 Changes in 1.13.2
 ~~~~~~~~~~~~~~~~~
 Released: 2022-03-14

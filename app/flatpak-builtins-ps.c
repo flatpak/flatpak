@@ -1,4 +1,4 @@
-/*
+/* vi:set et sw=2 sts=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e-s:
  * Copyright © 2018 Red Hat, Inc
  *
  * This program is free software; you can redistribute it and/or
@@ -108,7 +108,7 @@ get_compositor_apps (void)
   if (ret)
     g_variant_get (ret, "(@a{sv})", &list);
   else
-    g_debug ("Failed to get information about running apps from background portal backends");
+    g_info ("Failed to get information about running apps from background portal backends");
 
   return list;
 }

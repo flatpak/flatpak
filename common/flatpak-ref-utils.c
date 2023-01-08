@@ -1,4 +1,4 @@
-/*
+/* vi:set et sw=2 sts=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e-s:
  * Copyright © 2014-2020 Red Hat, Inc
  *
  * This program is free software; you can redistribute it and/or
@@ -94,8 +94,6 @@ find_last_char (const char *str, gsize len, int c)
  * 2) DBus names require only two elements
  *
  * Returns: %TRUE if valid, %FALSE otherwise.
- *
- * Since: 2.26
  */
 gboolean
 flatpak_is_valid_name (const char *string,
@@ -362,8 +360,6 @@ is_valid_branch_character (gint c)
  * Branch names must contain at least one character.
  *
  * Returns: %TRUE if valid, %FALSE otherwise.
- *
- * Since: 2.26
  */
 gboolean
 flatpak_is_valid_branch (const char *string,

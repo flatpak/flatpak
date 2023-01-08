@@ -1,4 +1,4 @@
-/*
+/* vi:set et sw=2 sts=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e-s:
  * Copyright © 2014 Red Hat, Inc
  *
  * This program is free software; you can redistribute it and/or
@@ -208,7 +208,7 @@ commit_filter (OstreeRepo *repo,
   if (matches_patterns (commit_data->exclude, path) &&
       !matches_patterns (commit_data->include, path))
     {
-      g_debug ("Excluding %s", path);
+      g_info ("Excluding %s", path);
       return OSTREE_REPO_COMMIT_FILTER_SKIP;
     }
 
@@ -391,15 +391,17 @@ validate_icon_file (GFile *file, GError **error)
 
   g_ptr_array_add (args, NULL);
 
-  if (!g_spawn_sync (NULL, (char **) args->pdata, NULL, 0, NULL, NULL, NULL, &err, &status, error))
+  if (!g_spawn_sync (NULL, (char **) args->pdata, NULL,
+                     G_SPAWN_STDOUT_TO_DEV_NULL,
+                     NULL, NULL, NULL, &err, &status, error))
     {
-      g_debug ("Icon validation: %s", (*error)->message);
+      g_info ("Icon validation: %s", (*error)->message);
       return FALSE;
     }
 
   if (!g_spawn_check_exit_status (status, NULL))
     {
-      g_debug ("Icon validation: %s", err);
+      g_info ("Icon validation: %s", err);
       return flatpak_fail (error, "%s is not a valid icon: %s", name, err);
     }
 
@@ -489,21 +491,34 @@ check_refs:
   if (!g_key_file_load_from_file (key_file, path, G_KEY_FILE_NONE, error))
     return FALSE;
 
+  *activatable = g_key_file_get_boolean (key_file,
+                                         G_KEY_FILE_DESKTOP_GROUP,
+                                         G_KEY_FILE_DESKTOP_KEY_DBUS_ACTIVATABLE,
+                                         NULL);
+
+  /* Validate Exec command: Unless we have DBusActivatable=true the key should
+   * be present and – if set to a non-empty value – should point to an existing
+   * binary.
+   *
+   * Empty values are allowed, they will result in the default command being
+   * run by Flatpak when starting the application.
+   */
   command = g_key_file_get_string (key_file,
                                    G_KEY_FILE_DESKTOP_GROUP,
                                    G_KEY_FILE_DESKTOP_KEY_EXEC,
                                    &local_error);
-  if (!command)
+  if (!command && *activatable == FALSE)
     {
       g_print (_("WARNING: Can't find Exec key in %s: %s\n"), path, local_error->message);
       g_clear_error (&local_error);
     }
-
-  argv = g_strsplit (command, " ", 0);
-
-  bin_file = convert_app_absolute_path (argv[0], files);
-  if (!g_file_query_exists (bin_file, NULL))
-    g_print (_("WARNING: Binary not found for Exec line in %s: %s\n"), path, command);
+  else if (command && strlen(command) > 0)
+    {
+      argv = g_strsplit (command, " ", 0);
+      bin_file = convert_app_absolute_path (argv[0], files);
+      if (!g_file_query_exists (bin_file, NULL))
+        g_print (_("WARNING: Binary not found for Exec line in %s: %s\n"), path, command);
+    }
 
   *icon = g_key_file_get_string (key_file,
                                  G_KEY_FILE_DESKTOP_GROUP,
@@ -511,11 +526,6 @@ check_refs:
                                  NULL);
   if (*icon && !g_str_has_prefix (*icon, app_id))
     g_print (_("WARNING: Icon not matching app id in %s: %s\n"), path, *icon);
-
-  *activatable = g_key_file_get_boolean (key_file,
-                                         G_KEY_FILE_DESKTOP_GROUP,
-                                         G_KEY_FILE_DESKTOP_KEY_DBUS_ACTIVATABLE,
-                                         NULL);
 
   return TRUE;
 }
@@ -1141,7 +1151,7 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
       if (opt_no_summary_index)
         flags |= FLATPAK_REPO_UPDATE_FLAG_DISABLE_INDEX;
 
-      g_debug ("Updating summary");
+      g_info ("Updating summary");
       if (!flatpak_repo_update (repo, flags,
                                 (const char **) opt_gpg_key_ids,
                                 opt_gpg_homedir,

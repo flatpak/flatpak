@@ -1,4 +1,4 @@
-/*
+/* vi:set et sw=2 sts=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e-s:
  * Copyright © 2019 Red Hat, Inc
  *
  * This program is free software; you can redistribute it and/or
@@ -91,25 +91,55 @@ new_operation (FlatpakTransaction          *transaction,
     }
 }
 
-static char *
-op_type_to_string (FlatpakTransactionOperationType operation_type)
+static void
+print_op_error_msg (FlatpakTransactionOperationType  operation_type,
+                    FlatpakRef                      *rref,
+                    const char                      *msg,
+                    gboolean                         non_fatal)
 {
+  /* Here we go to great lengths not to split the sentences. See
+   * https://wiki.gnome.org/TranslationProject/DevGuidelines/Never%20split%20sentences
+   */
   switch (operation_type)
     {
     case FLATPAK_TRANSACTION_OPERATION_INSTALL:
-      return _("install");
+      if (non_fatal)
+        g_printerr (_("Warning: Failed to install %s: %s\n"),
+                    flatpak_ref_get_name (rref), msg);
+      else
+        g_printerr (_("Error: Failed to install %s: %s\n"),
+                    flatpak_ref_get_name (rref), msg);
+      break;
 
     case FLATPAK_TRANSACTION_OPERATION_UPDATE:
-      return _("update");
+      if (non_fatal)
+        g_printerr (_("Warning: Failed to update %s: %s\n"),
+                    flatpak_ref_get_name (rref), msg);
+      else
+        g_printerr (_("Error: Failed to update %s: %s\n"),
+                    flatpak_ref_get_name (rref), msg);
+      break;
 
     case FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE:
-      return _("install bundle");
+      if (non_fatal)
+        g_printerr (_("Warning: Failed to install bundle %s: %s\n"),
+                    flatpak_ref_get_name (rref), msg);
+      else
+        g_printerr (_("Error: Failed to install bundle %s: %s\n"),
+                    flatpak_ref_get_name (rref), msg);
+      break;
 
     case FLATPAK_TRANSACTION_OPERATION_UNINSTALL:
-      return _("uninstall");
+      if (non_fatal)
+        g_printerr (_("Warning: Failed to uninstall %s: %s\n"),
+                    flatpak_ref_get_name (rref), msg);
+      else
+        g_printerr (_("Error: Failed to uninstall %s: %s\n"),
+                    flatpak_ref_get_name (rref), msg);
+      break;
 
     default:
-      return "Unknown type"; /* Should not happen */
+      g_assert_not_reached ();
     }
 }
 
@@ -136,8 +166,6 @@ operation_error (FlatpakTransaction            *transaction,
     msg = g_strdup_printf (_("%s already installed"), flatpak_ref_get_name (rref));
   else if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED))
     msg = g_strdup_printf (_("%s not installed"), flatpak_ref_get_name (rref));
-  else if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED))
-    msg = g_strdup_printf (_("%s not installed"), flatpak_ref_get_name (rref));
   else if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_NEED_NEW_FLATPAK))
     msg = g_strdup_printf (_("%s needs a later flatpak version"), flatpak_ref_get_name (rref));
   else if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_OUT_OF_SPACE))
@@ -145,11 +173,7 @@ operation_error (FlatpakTransaction            *transaction,
   else
     msg = g_strdup (error->message);
 
-  g_printerr (_("%s Failed to %s %s: %s\n"),
-              non_fatal ? _("Warning:") : _("Error:"),
-              op_type_to_string (op_type),
-              flatpak_ref_get_name (rref),
-              msg);
+  print_op_error_msg (op_type, rref, msg, non_fatal);
 
   if (non_fatal)
     return TRUE; /* Continue */

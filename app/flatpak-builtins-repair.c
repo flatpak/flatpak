@@ -1,4 +1,4 @@
-/*
+/* vi:set et sw=2 sts=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e-s:
  * Copyright © 2018 Red Hat, Inc
  *
  * This program is free software; you can redistribute it and/or
@@ -357,11 +357,14 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
    *  + Verify the commits they point to and all object they reference:
    *  +  Remove any invalid objects
    *  +  Note any missing objects
-   *  + Any refs that had invalid object, or non-partial refs that had missing objects are removed
-   *  + prune (depth=0) all object not references by a ref, which gets rid of any possibly invalid non-scanned objects
+   *  + Any refs that had invalid object, or non-partial refs that had missing
+   *      objects are removed
+   *  + Prune (depth=0) all object not references by a ref, which gets rid of
+   *      any possibly invalid non-scanned objects
    *  * Remove leftover .removed contents
    *  + Enumerate all deployed refs:
-   *  +   if they are not in the repo (or is partial for a non-subdir deploy), re-install them (pull + deploy)
+   *      If they are not in the repo (or is partial for a non-subdir deploy),
+   *      re-install them (pull + deploy)
    */
 
   if (!flatpak_dir_delete_mirror_refs (dir, opt_dry_run, cancellable, error))
@@ -401,7 +404,8 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
         if (!opt_dry_run)
           {
             g_print (_("Removing non-deployed ref %s…\n"), refspec);
-            (void) ostree_repo_set_ref_immediate (repo, remote, ref_name, NULL, cancellable, NULL);
+            (void) ostree_repo_set_ref_immediate (repo, remote, ref_name, NULL,
+                                                  cancellable, NULL);
           }
         else
           g_print (_("Skipping non-deployed ref %s…\n"), refspec);
@@ -409,13 +413,17 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
         continue;
       }
 
-    /* When printing progress, we have to print a newline character at the end, otherwise errors printing in
-       sections of the code that we don't control won't have a leading newline. Therefore, the status line will
-       always print a trailing newline, and here we just go up a line back onto the previous progress line.
+    /* When printing progress, we have to print a newline character at the end,
+     * otherwise errors printing in sections of the code that we don't control
+     * won't have a leading newline.  Therefore, the status line will always
+     * print a trailing newline, and here we just go up a line back onto the
+     * previous progress line.
 
-       This does also mean that other areas of this code section that print errors will need to print a trailing
-       newline as well, otherwise the output will overwrite any errors. */
-    if (flatpak_fancy_output ())
+     * This does also mean that other areas of this code section that print
+     * errors will need to print a trailing newline as well, otherwise the
+     * output will overwrite any errors.
+     */
+    if (flatpak_fancy_output () && i != 1)
       g_print ("\033[A\r\033[K");
 
     g_print (_("[%d/%d] Verifying %s…\n"), i, g_hash_table_size (all_refs), refspec);
@@ -442,10 +450,12 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
           }
 
         if (!opt_dry_run)
-          (void) ostree_repo_set_ref_immediate (repo, remote, ref_name, NULL, cancellable, NULL);
+          (void) ostree_repo_set_ref_immediate (repo, remote, ref_name, NULL,
+                                                cancellable, NULL);
 
-        /* If using fancy output, print another trailing newline, so the next progress line won't overwrite
-           these errors. */
+        /* If using fancy output, print another trailing newline, so the next
+         * progress line won't overwrite these errors.
+         */
         if (flatpak_fancy_output () && i < g_hash_table_size (all_refs))
           g_print ("\n");
       }

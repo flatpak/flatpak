@@ -1,4 +1,4 @@
-/*
+/* vi:set et sw=2 sts=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e-s:
  * Copyright © 2014 Red Hat, Inc
  *
  * This program is free software; you can redistribute it and/or
@@ -176,7 +176,7 @@ static GOptionEntry empty_entries[] = {
 };
 
 GOptionEntry user_entries[] = {
-  { "user", 0, 0, G_OPTION_ARG_NONE, &opt_user, N_("Work on the user installation"), NULL },
+  { "user", 'u', 0, G_OPTION_ARG_NONE, &opt_user, N_("Work on the user installation"), NULL },
   { "system", 0, 0, G_OPTION_ARG_NONE, &opt_system, N_("Work on the system-wide installation (default)"), NULL },
   { "installation", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_installations, N_("Work on a non-default system-wide installation"), N_("NAME") },
   { NULL }
@@ -358,12 +358,12 @@ flatpak_option_context_parse (GOptionContext     *context,
   else
     {
       if (opt_verbose > 0)
-        g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG, message_handler, NULL);
+        g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, message_handler, NULL);
       if (opt_verbose > 1)
-        g_log_set_handler (G_LOG_DOMAIN "2", G_LOG_LEVEL_DEBUG, message_handler, NULL);
+        g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG, message_handler, NULL);
 
       if (opt_ostree_verbose)
-        g_log_set_handler ("OSTree", G_LOG_LEVEL_DEBUG, message_handler, NULL);
+        g_log_set_handler ("OSTree", G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_INFO, message_handler, NULL);
 
       if (opt_verbose > 0 || opt_ostree_verbose)
         flatpak_disable_fancy_output ();
@@ -601,12 +601,17 @@ install_polkit_agent (void)
   PolkitAgentListener *listener = NULL;
   g_autoptr(GError) local_error = NULL;
   g_autoptr(GDBusConnection) bus = NULL;
+  const char *on_session;
+
+  on_session = g_getenv ("FLATPAK_SYSTEM_HELPER_ON_SESSION");
+  if (on_session != NULL)
+    return NULL;
 
   bus = g_bus_get_sync (G_BUS_TYPE_SYSTEM, NULL, &local_error);
 
   if (bus == NULL)
     {
-      g_debug ("Unable to connect to system bus: %s", local_error->message);
+      g_info ("Unable to connect to system bus: %s", local_error->message);
       return NULL;
     }
 
@@ -614,7 +619,7 @@ install_polkit_agent (void)
   listener = flatpak_polkit_agent_text_listener_new (NULL, &local_error);
   if (listener == NULL)
     {
-      g_debug ("Failed to create polkit agent listener: %s", local_error->message);
+      g_info ("Failed to create polkit agent listener: %s", local_error->message);
     }
   else
     {
@@ -638,7 +643,7 @@ install_polkit_agent (void)
                                                            &local_error);
       if (agent == NULL)
         {
-          g_debug ("Failed to register polkit agent listener: %s", local_error->message);
+          g_info ("Failed to register polkit agent listener: %s", local_error->message);
         }
       g_object_unref (listener);
     }

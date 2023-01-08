@@ -48,3 +48,4 @@ DISTCLEANFILES += system-helper/org.freedesktop.Flatpak.policy system-helper/org
 endif
 
 EXTRA_DIST += system-helper/org.freedesktop.Flatpak.policy.in system-helper/org.freedesktop.Flatpak.SystemHelper.conf system-helper/org.freedesktop.Flatpak.rules.in system-helper/org.freedesktop.Flatpak.SystemHelper.service.in system-helper/flatpak-system-helper.service.in system-helper/flatpak.conf.in
+EXTRA_DIST += system-helper/meson.build

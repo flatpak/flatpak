@@ -1,4 +1,4 @@
-/*
+/* vi:set et sw=2 sts=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e-s:
  * Copyright (C) 2015,2016 Colin Walters <walters@verbum.org>
  * Copyright (C) 2018 Alexander Larsson <alexl@redhat.com>
  *
@@ -20,7 +20,9 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#define FUSE_USE_VERSION 26
+#ifndef FUSE_USE_VERSION
+#error config.h needs to define FUSE_USE_VERSION
+#endif
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -60,7 +62,11 @@ ENSURE_RELPATH (const char *path)
 }
 
 static int
+#if FUSE_USE_VERSION >= 31
+callback_getattr (const char *path, struct stat *st_data, struct fuse_file_info *finfo)
+#else
 callback_getattr (const char *path, struct stat *st_data)
+#endif
 {
   path = ENSURE_RELPATH (path);
   if (!*path)
@@ -94,8 +100,13 @@ callback_readlink (const char *path, char *buf, size_t size)
 }
 
 static int
+#if FUSE_USE_VERSION >= 31
+callback_readdir (const char *path, void *buf, fuse_fill_dir_t filler,
+                  off_t offset, struct fuse_file_info *fi, enum fuse_readdir_flags flags)
+#else
 callback_readdir (const char *path, void *buf, fuse_fill_dir_t filler,
                   off_t offset, struct fuse_file_info *fi)
+#endif
 {
   DIR *dp;
   struct dirent *de;
@@ -128,8 +139,14 @@ callback_readdir (const char *path, void *buf, fuse_fill_dir_t filler,
       memset (&st, 0, sizeof (st));
       st.st_ino = de->d_ino;
       st.st_mode = de->d_type << 12;
+
+#if FUSE_USE_VERSION >= 31
+      if (filler (buf, de->d_name, &st, 0, 0))
+        break;
+#else
       if (filler (buf, de->d_name, &st, 0))
         break;
+#endif
     }
 
   (void) closedir (dp);
@@ -185,12 +202,20 @@ callback_symlink (const char *from, const char *to)
 }
 
 static int
+#if FUSE_USE_VERSION >= 31
+callback_rename (const char *from, const char *to, unsigned int flags)
+#else
 callback_rename (const char *from, const char *to)
+#endif
 {
+#if FUSE_USE_VERSION < 31
+  unsigned int flags = 0;
+#endif
+
   from = ENSURE_RELPATH (from);
   to = ENSURE_RELPATH (to);
 
-  return request_rename (writer_socket, from, to);
+  return request_rename (writer_socket, from, to, flags);
 }
 
 static int
@@ -203,28 +228,44 @@ callback_link (const char *from, const char *to)
 }
 
 static int
+#if FUSE_USE_VERSION >= 31
+callback_chmod (const char *path, mode_t mode, struct fuse_file_info *finfo)
+#else
 callback_chmod (const char *path, mode_t mode)
+#endif
 {
   path = ENSURE_RELPATH (path);
   return request_chmod (writer_socket, path, mode);
 }
 
 static int
+#if FUSE_USE_VERSION >= 31
+callback_chown (const char *path, uid_t uid, gid_t gid, struct fuse_file_info *finfo)
+#else
 callback_chown (const char *path, uid_t uid, gid_t gid)
+#endif
 {
   path = ENSURE_RELPATH (path);
   return request_chown (writer_socket, path, uid, gid);
 }
 
 static int
+#if FUSE_USE_VERSION >= 31
+callback_truncate (const char *path, off_t size, struct fuse_file_info *finfo)
+#else
 callback_truncate (const char *path, off_t size)
+#endif
 {
   path = ENSURE_RELPATH (path);
   return request_truncate (writer_socket, path, size);
 }
 
 static int
+#if FUSE_USE_VERSION >= 31
+callback_utimens (const char *path, const struct timespec tv[2], struct fuse_file_info *finfo)
+#else
 callback_utimens (const char *path, const struct timespec tv[2])
+#endif
 {
   path = ENSURE_RELPATH (path);
 

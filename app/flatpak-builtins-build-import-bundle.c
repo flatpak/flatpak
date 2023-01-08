@@ -1,4 +1,4 @@
-/*
+/* vi:set et sw=2 sts=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e-s:
  * Copyright © 2015 Red Hat, Inc
  *
  * This program is free software; you can redistribute it and/or
@@ -248,7 +248,7 @@ flatpak_builtin_build_import (int argc, char **argv, GCancellable *cancellable, 
       if (opt_no_summary_index)
         flags |= FLATPAK_REPO_UPDATE_FLAG_DISABLE_INDEX;
 
-      g_debug ("Updating summary");
+      g_info ("Updating summary");
       if (!flatpak_repo_update (repo, flags,
                                 (const char **) opt_gpg_key_ids,
                                 opt_gpg_homedir,

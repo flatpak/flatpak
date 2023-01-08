@@ -1,4 +1,4 @@
-/*
+/* vi:set et sw=2 sts=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e-s:
  * Copyright © 2019 Endless Mobile, Inc
  *
  * This program is free software; you can redistribute it and/or
@@ -314,7 +314,7 @@ out:
   if (new_progress > 100)
     {
       if (!self->reported_overflow)
-        g_debug ("Unexpectedly got > 100%% progress, limiting");
+        g_info ("Unexpectedly got > 100%% progress, limiting");
       self->reported_overflow = TRUE;
       new_progress = 100;
     }

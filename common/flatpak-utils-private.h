@@ -102,9 +102,6 @@ gboolean flatpak_fail_error (GError     **error,
                              const char  *fmt,
                              ...) G_GNUC_PRINTF (3, 4);
 
-void flatpak_debug2 (const char *format,
-                     ...) G_GNUC_PRINTF (1, 2);
-
 gint flatpak_strcmp0_ptr (gconstpointer a,
                           gconstpointer b);
 
@@ -132,6 +129,7 @@ gboolean flatpak_extension_matches_reason (const char *extension_id,
                                            gboolean    default_value);
 
 const char * flatpak_get_bwrap (void);
+gboolean flatpak_bwrap_is_unprivileged (void);
 
 char **flatpak_strv_sort_by_length (const char * const *strv);
 char **flatpak_strv_merge (char   **strv1,
@@ -359,6 +357,13 @@ g_hash_table_steal_extended (GHashTable    *hash_table,
 }
 #endif
 
+#if !GLIB_CHECK_VERSION (2, 62, 0)
+void g_ptr_array_extend (GPtrArray        *array_to_extend,
+                         GPtrArray        *array,
+                         GCopyFunc         func,
+                         gpointer          user_data);
+#endif
+
 #if !GLIB_CHECK_VERSION (2, 68, 0)
 guint g_string_replace (GString     *string,
                         const gchar *find,
@@ -406,6 +411,10 @@ flatpak_auto_lock_helper (GMutex *mutex)
 gboolean flatpak_switch_symlink_and_remove (const char *symlink_path,
                                             const char *target,
                                             GError    **error);
+
+char *flatpak_keyfile_get_string_non_empty (GKeyFile *keyfile,
+                                            const char *group,
+                                            const char *key);
 
 GKeyFile * flatpak_parse_repofile (const char   *remote_name,
                                    gboolean      from_ref,
@@ -737,14 +746,6 @@ flatpak_repo_transaction_start (OstreeRepo   *repo,
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakRepoTransaction, flatpak_repo_transaction_cleanup)
 
 #define AUTOLOCK(name) G_GNUC_UNUSED __attribute__((cleanup (flatpak_auto_unlock_helper))) GMutex * G_PASTE (auto_unlock, __LINE__) = flatpak_auto_lock_helper (&G_LOCK_NAME (name))
-
-#if !defined(SOUP_AUTOCLEANUPS_H) && !defined(__SOUP_AUTOCLEANUPS_H__)
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (SoupSession, g_object_unref)
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (SoupMessage, g_object_unref)
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (SoupRequest, g_object_unref)
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (SoupRequestHTTP, g_object_unref)
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (SoupURI, soup_uri_free)
-#endif
 
 #if !JSON_CHECK_VERSION (1, 1, 2)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (JsonArray, json_array_unref)

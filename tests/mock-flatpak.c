@@ -1,4 +1,4 @@
-/*
+/* vi:set et sw=2 sts=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e-s:
  * Copyright © 2018-2021 Collabora Ltd.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@ main (int argc,
 {
   int i;
 
-  g_debug ("This is a mock implementation of `flatpak run` for the portal");
+  g_info ("This is a mock implementation of `flatpak run` for the portal");
 
   for (i = 0; i < argc; i++)
     g_print ("argv[%d] = %s\n", i, argv[i]);

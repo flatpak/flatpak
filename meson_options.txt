@@ -1,0 +1,228 @@
+# Copyright 2022 Collabora Ltd.
+# SPDX-License-Identifier: LGPL-2.1-or-later
+
+option(
+  'auto_sideloading',
+  type : 'boolean',
+  description : 'enable systemd units which make Flatpak sideload from inserted USB drives',
+  value : false,
+)
+option(
+  'dconf',
+  type : 'feature',
+  description : 'Use dconf?',
+  value : 'auto',
+)
+option(
+  'dbus_config_dir',
+  type : 'string',
+  description : 'directory for D-Bus system configuration [$sysconfdir/dbus-1/system.d]',
+  value : '',
+)
+option(
+  'dbus_service_dir',
+  type : 'string',
+  description : 'directory for D-Bus session service files [$datadir/dbus-1/services]',
+  value : '',
+)
+option(
+  'docbook_docs',
+  type : 'feature',
+  description : 'build documentation with xmlto',
+  value : 'auto',
+)
+option(
+  'docdir',
+  type : 'string',
+  description : 'documentation directory [$datadir/doc/flatpak]',
+  value : '',
+)
+option(
+  'gdm_env_file',
+  type : 'boolean',
+  description : 'install gdm env.d file (not needed if systemd generators work',
+  value : false,
+)
+option(
+  'gir',
+  type : 'feature',
+  description : 'build GObject-Introspection metadata',
+  value : 'auto',
+)
+option(
+  'gtkdoc',
+  type : 'feature',
+  description : 'build API reference documentation with gtk-doc',
+  value : 'auto',
+)
+option(
+  'http_backend',
+  type : 'combo',
+  description : 'library used to implement HTTP',
+  choices : ['curl', 'soup'],
+  value : 'curl',
+)
+option(
+  'installed_tests',
+  type : 'boolean',
+  description : 'install automated tests',
+  value : false,
+)
+option(
+  'internal_checks',
+  type : 'boolean',
+  description : 'enable internal checking',
+  value : false,
+)
+option(
+  'libzstd',
+  type : 'feature',
+  description : 'use libzstd?',
+  value : 'auto',
+)
+option(
+  'malcontent',
+  type : 'feature',
+  description : 'use libmalcontent for parental controls?',
+  value : 'auto',
+)
+option(
+  'man',
+  type : 'feature',
+  description : 'build man pages',
+  value : 'auto',
+)
+option(
+  'privileged_group',
+  type : 'string',
+  description : 'name of root-equivalent group',
+  value : 'wheel',
+)
+option(
+  'profile_dir',
+  type : 'string',
+  description : 'directory for profile.d files',
+  value : '',
+)
+option(
+  'run_media_dir',
+  type : 'string',
+  description : 'location of auto-mounted USB drives]',
+  value : '/run/media',
+)
+option(
+  'sandboxed_triggers',
+  type : 'boolean',
+  description : 'enable sandboxed triggers',
+  value : true,
+)
+option(
+  'seccomp',
+  type : 'feature',
+  description : 'enable seccomp',
+  value : 'enabled',
+)
+option(
+  'selinux_module',
+  type : 'feature',
+  description : 'enable selinux module for system-helper',
+  value : 'auto',
+)
+option(
+  'system_bubblewrap',
+  type : 'string',
+  description : 'system bwrap executable, or empty string to build subproject',
+  value : '',
+)
+option(
+  'system_dbus_proxy',
+  type : 'string',
+  description : 'system xdg-dbus-proxy executable, or empty string to build subproject',
+  value : '',
+)
+option(
+  'system_font_cache_dirs',
+  type : 'array',
+  description : 'directory where the system font cache is',
+  value : ['/var/cache/fontconfig', '/usr/lib/fontconfig/cache'],
+)
+option(
+  'system_fonts_dir',
+  type : 'string',
+  description : 'Directory where system fonts are',
+  value : '/usr/share/fonts',
+)
+option(
+  'system_helper',
+  type : 'feature',
+  description : 'enable system helper',
+  value : 'enabled',
+)
+option(
+  'system_helper_user',
+  type : 'string',
+  description : 'name of the system helper user',
+  value : 'flatpak',
+)
+option(
+  'system_install_dir',
+  type : 'string',
+  description : 'location of system installation [$localstatedir/lib/flatpak]',
+  value : '',
+)
+option(
+  'systemdsystemenvgendir',
+  type : 'string',
+  description : 'directory for systemd system environment generators',
+  value : 'lib/systemd/system-environment-generators',
+)
+option(
+  'systemd',
+  type : 'feature',
+  description : 'build with systemd support',
+  value : 'auto',
+)
+option(
+  'systemdsystemunitdir',
+  type : 'string',
+  description : 'directory for systemd system service files',
+  # deliberately lib and not based on get_option('libdir'):
+  # this should not be lib64 or lib/x86_64-linux-gnu
+  value : 'lib/systemd/system',
+)
+option(
+  'systemduserenvgendir',
+  type : 'string',
+  description : 'directory for systemd user environment generators',
+  value : 'lib/systemd/user-environment-generators',
+)
+option(
+  'systemduserunitdir',
+  type : 'string',
+  description : 'directory for systemd user service files',
+  value : 'lib/systemd/user',
+)
+option(
+  'sysusersdir',
+  type : 'string',
+  description : 'directory for systemd sysusers.d configuration files',
+  value : 'lib/sysusers.d'
+)
+option(
+  'tests',
+  type : 'boolean',
+  description : 'build tests',
+  value : true,
+)
+option(
+  'xauth',
+  type : 'feature',
+  description : 'enable Xauth use',
+  value : 'enabled',
+)
+option(
+  'xmlto_flags',
+  type : 'array',
+  description : 'options to pass to xmlto',
+  value : [],
+)

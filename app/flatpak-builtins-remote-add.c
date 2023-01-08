@@ -1,4 +1,4 @@
-/*
+/* vi:set et sw=2 sts=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e-s:
  * Copyright © 2014 Red Hat, Inc
  *
  * This program is free software; you can redistribute it and/or
@@ -244,10 +244,10 @@ load_options (const char *remote_name,
     {
       const char *options_data;
       gsize options_size;
-      g_autoptr(SoupSession) soup_session = NULL;
+      g_autoptr(FlatpakHttpSession) http_session = NULL;
 
-      soup_session = flatpak_create_soup_session (PACKAGE_STRING);
-      bytes = flatpak_load_uri (soup_session, filename, 0, NULL, NULL, NULL, NULL, NULL, &local_error);
+      http_session = flatpak_create_http_session (PACKAGE_STRING);
+      bytes = flatpak_load_uri (http_session, filename, 0, NULL, NULL, NULL, NULL, NULL, &local_error);
 
       if (bytes == NULL)
         {

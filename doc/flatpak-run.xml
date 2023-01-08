@@ -92,11 +92,17 @@
             <member>XDG_DATA_DIRS</member>
             <member>XDG_RUNTIME_DIR</member>
             <member>SHELL</member>
+            <member>TEMP</member>
+            <member>TEMPDIR</member>
+            <member>TMP</member>
             <member>TMPDIR</member>
             <member>PYTHONPATH</member>
             <member>PERLLIB</member>
             <member>PERL5LIB</member>
             <member>XCURSOR_PATH</member>
+            <member>KRB5CCNAME</member>
+            <member>XKB_CONFIG_ROOT</member>
+            <member>GIO_EXTRA_MODULES</member>
         </simplelist>
         <para>
             Also several environment variables with the prefix "GST_" that are used by gstreamer
@@ -162,6 +168,7 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>-u</option></term>
                 <term><option>--user</option></term>
 
                 <listitem><para>
@@ -298,7 +305,7 @@
                     Expose a well known socket to the application. This overrides to
                     the Context section from the application metadata.
                     <arg choice="plain">SOCKET</arg> must be one of: x11, wayland, fallback-x11, pulseaudio, system-bus, session-bus,
-                    ssh-auth, pcsc, cups.
+                    ssh-auth, pcsc, cups, gpg-agent.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
@@ -310,7 +317,7 @@
                     Don't expose a well known socket to the application. This overrides to
                     the Context section from the application metadata.
                     <arg choice="plain">SOCKET</arg> must be one of: x11, wayland, fallback-x11, pulseaudio, system-bus, session-bus,
-                    ssh-auth, pcsc, cups.
+                    ssh-auth, pcsc, cups, gpg-agent.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
@@ -574,9 +581,9 @@ key=v1;v2;
                 <listitem><para>
                   Allow filtered access to the session dbus connection. This is the default, except when run with --sandbox.
                   </para><para>
-                  Isandbox mode, even if you allow access to the session bus the sandbox cannot talk to or own
+                  In sandbox mode, even if you allow access to the session bus the sandbox cannot talk to or own
                   the application ids (org.the.App.*) on the bus (unless explicitly added), only names in the
-                  .Sandbox subset (org.the.App.Sandbox.*).
+                  .Sandboxed subset (org.the.App.Sandboxed.* and org.mpris.MediaPlayer2.org.the.App.Sandboxed.*).
                 </para></listitem>
             </varlistentry>
 

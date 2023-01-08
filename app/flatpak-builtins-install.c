@@ -1,4 +1,4 @@
-/*
+/* vi:set et sw=2 sts=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e-s:
  * Copyright © 2014 Red Hat, Inc
  *
  * This program is free software; you can redistribute it and/or
@@ -221,9 +221,9 @@ install_from (FlatpakDir *dir,
   if (g_str_has_prefix (filename, "http:") ||
       g_str_has_prefix (filename, "https:"))
     {
-      g_autoptr(SoupSession) soup_session = NULL;
-      soup_session = flatpak_create_soup_session (PACKAGE_STRING);
-      file_data = flatpak_load_uri (soup_session, filename, 0, NULL, NULL, NULL, NULL, cancellable, error);
+      g_autoptr(FlatpakHttpSession) http_session = NULL;
+      http_session = flatpak_create_http_session (PACKAGE_STRING);
+      file_data = flatpak_load_uri (http_session, filename, 0, NULL, NULL, NULL, NULL, cancellable, error);
       if (file_data == NULL)
         {
           g_prefix_error (error, "Can't load uri %s: ", filename);

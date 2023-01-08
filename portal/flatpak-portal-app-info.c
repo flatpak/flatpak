@@ -1,4 +1,4 @@
-/*
+/* vi:set et sw=2 sts=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e-s:
  * Copyright © 2018 Red Hat, Inc
  *
  * This program is free software; you can redistribute it and/or
@@ -86,7 +86,7 @@ parse_app_id_from_fileinfo (int pid)
       /* Not able to open the root dir shouldn't happen. Probably the app died and
        * we're failing due to /proc/$pid not existing. In that case fail instead
          of treating this as privileged. */
-      g_debug ("Unable to open %s", root_path);
+      g_info ("Unable to open %s", root_path);
       return NULL;
     }
 

@@ -1,4 +1,4 @@
-/*
+/* vi:set et sw=2 sts=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e-s:
  * Copyright © 2016 Red Hat, Inc
  *
  * This program is free software; you can redistribute it and/or
@@ -109,7 +109,7 @@ print_documents (const char   *app_id,
       g_autoptr(GVariantIter) iter2 = NULL;
       const char *app_id2 = NULL;
       const char **perms = NULL;
-      gboolean just_perms = FALSE;
+      gboolean have_perms = FALSE, just_perms = FALSE;
 
       if (need_perms)
         {
@@ -117,9 +117,10 @@ print_documents (const char   *app_id,
           if (!xdp_dbus_documents_call_info_sync (documents, id, &origin2, &apps2, NULL, error))
             return FALSE;
           iter2 = g_variant_iter_new (apps2);
+          have_perms = g_variant_iter_next (iter2, "{&s^a&s}", &app_id2, &perms);
         }
 
-      while ((iter2 && g_variant_iter_next (iter2, "{&s^a&s}", &app_id2, &perms)) || !just_perms)
+      do
         {
           for (i = 0; columns[i].name; i++)
             {
@@ -149,7 +150,7 @@ print_documents (const char   *app_id,
           flatpak_table_printer_finish_row (printer);
 
           just_perms = TRUE;
-        }
+        } while (have_perms && g_variant_iter_next (iter2, "{&s^a&s}", &app_id2, &perms));
     }
 
   flatpak_table_printer_print (printer);

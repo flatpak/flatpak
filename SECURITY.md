@@ -13,8 +13,10 @@ please check
 
 | Version  | Supported          | Status
 | -------- | ------------------ | -------------------------------------------------------------- |
-| 1.13.x   | :white_check_mark: | Development branch, releases may include non-security changes  |
-| 1.12.x   | :white_check_mark: | Stable branch, recommended for use in distributions            |
+| 1.15.x   | :hammer:           | Development branch, releases may include non-security changes  |
+| 1.14.x   | :white_check_mark: | Stable branch, recommended for use in distributions            |
+| 1.13.x   | :x:                | Old development branch, no longer supported                    |
+| 1.12.x   | :white_check_mark: | Old stable branch, still supported                             |
 | 1.11.x   | :x:                | Old development branch, no longer supported                    |
 | 1.10.x   | :white_check_mark: | Old stable branch, still supported                             |
 | <= 1.9.x | :x:                | Older branches, no longer supported                            |

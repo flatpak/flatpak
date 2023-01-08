@@ -63,7 +63,6 @@ testcommon_CFLAGS = \
 	$(AM_CFLAGS) \
 	$(BASE_CFLAGS) \
 	$(OSTREE_CFLAGS) \
-	$(SOUP_CFLAGS) \
 	$(JSON_CFLAGS) \
 	$(APPSTREAM_CFLAGS) \
 	-DFLATPAK_COMPILATION \
@@ -75,7 +74,6 @@ testcommon_LDADD = \
 	$(AM_LDADD) \
 	$(BASE_LIBS) \
 	$(OSTREE_LIBS) \
-	$(SOUP_LIBS) \
 	$(JSON_LIBS) \
 	$(APPSTREAM_LIBS) \
 	libflatpak-app.la \
@@ -115,10 +113,10 @@ tests_hold_lock_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS)
 tests_hold_lock_LDADD = $(AM_LDADD) $(BASE_LIBS) libglnx.la
 tests_hold_lock_SOURCES = tests/hold-lock.c
 
-tests_httpcache_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFLAGS) $(JSON_CFLAGS) \
+tests_httpcache_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(JSON_CFLAGS) \
 	-DFLATPAK_COMPILATION \
 	-DLOCALEDIR=\"$(localedir)\"
-tests_httpcache_LDADD = $(AM_LDADD) $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(JSON_LIBS) \
+tests_httpcache_LDADD = $(AM_LDADD) $(BASE_LIBS) $(OSTREE_LIBS) $(JSON_LIBS) \
 	libflatpak-common.la libflatpak-common-base.la libglnx.la
 
 tests_mock_flatpak_CFLAGS = $(testcommon_CFLAGS)
@@ -304,7 +302,16 @@ EXTRA_DIST += \
 	tests/expand-test-matrix.sh \
 	tests/flatpak.supp \
 	tests/glib.supp \
+	tests/installed-services/meson.build \
 	tests/make-runtime-repos \
+	tests/meson.build \
+	tests/package_version.txt.in \
+	tests/services/meson.build \
+	tests/share/xdg-desktop-portal/portals/meson.build \
+	tests/tap.test.in \
+	tests/test-keyring/meson.build \
+	tests/test-keyring2/meson.build \
+	tests/test-matrix/meson.build \
 	tests/test-wrapper.sh \
 	tests/update-test-matrix \
 	$(NULL)

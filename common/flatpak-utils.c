@@ -1,4 +1,4 @@
-/*
+/* vi:set et sw=2 sts=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e-s:
  * Copyright © 1995-1998 Free Software Foundation, Inc.
  * Copyright © 2014-2019 Red Hat, Inc
  *
@@ -79,6 +79,8 @@ static const GDBusErrorEntry flatpak_error_entries[] = {
   {FLATPAK_ERROR_NOT_CACHED,            "org.freedesktop.Flatpak.Error.NotCached"}, /* Since: 1.3.3 */
   {FLATPAK_ERROR_REF_NOT_FOUND,         "org.freedesktop.Flatpak.Error.RefNotFound"}, /* Since: 1.4.0 */
   {FLATPAK_ERROR_PERMISSION_DENIED,     "org.freedesktop.Flatpak.Error.PermissionDenied"}, /* Since: 1.5.1 */
+  {FLATPAK_ERROR_AUTHENTICATION_FAILED, "org.freedesktop.Flatpak.Error.AuthenticationFailed"}, /* Since: 1.7.3 */
+  {FLATPAK_ERROR_NOT_AUTHORIZED,        "org.freedesktop.Flatpak.Error.NotAuthorized"}, /* Since: 1.7.3 */
 };
 
 typedef struct archive FlatpakAutoArchiveRead;
@@ -116,18 +118,6 @@ flatpak_fail_error (GError **error, FlatpakError code, const char *fmt, ...)
   va_end (args);
   g_propagate_error (error, g_steal_pointer (&new));
   return FALSE;
-}
-
-void
-flatpak_debug2 (const char *format, ...)
-{
-  va_list var_args;
-
-  va_start (var_args, format);
-  g_logv (G_LOG_DOMAIN "2",
-          G_LOG_LEVEL_DEBUG,
-          format, var_args);
-  va_end (var_args);
 }
 
 gboolean
@@ -626,7 +616,7 @@ load_kernel_module_list (void)
   
   if (!g_file_get_contents ("/proc/modules", &modules_data, NULL, &error))
     {
-      g_debug ("Failed to read /proc/modules: %s", error->message);
+      g_info ("Failed to read /proc/modules: %s", error->message);
       return modules;
     }
 
@@ -747,6 +737,19 @@ flatpak_get_bwrap (void)
   if (e != NULL)
     return e;
   return HELPER;
+}
+
+gboolean
+flatpak_bwrap_is_unprivileged (void)
+{
+  const char *path = g_find_program_in_path (flatpak_get_bwrap ());
+  struct stat st;
+
+  /* Various features are supported only if bwrap exists and is not setuid */
+  return
+    path != NULL &&
+    stat (path, &st) == 0 &&
+    (st.st_mode & S_ISUID) == 0;
 }
 
 gboolean
@@ -2262,6 +2265,20 @@ flatpak_summary_lookup_ref (GVariant      *summary_v,
   return TRUE;
 }
 
+char *
+flatpak_keyfile_get_string_non_empty (GKeyFile   *keyfile,
+                                      const char *group,
+                                      const char *key)
+{
+  g_autofree char *value = NULL;
+
+  value = g_key_file_get_string (keyfile, group, key, NULL);
+  if (value != NULL && *value == '\0')
+    g_clear_pointer (&value, g_free);
+
+  return g_steal_pointer (&value);
+}
+
 GKeyFile *
 flatpak_parse_repofile (const char   *remote_name,
                         gboolean      from_ref,
@@ -2368,15 +2385,23 @@ flatpak_parse_repofile (const char   *remote_name,
       g_key_file_set_boolean (config, group, "gpg-verify", FALSE);
     }
 
-  collection_id = g_key_file_get_string (keyfile, source_group,
-                                         FLATPAK_REPO_DEPLOY_COLLECTION_ID_KEY, NULL);
-  if (collection_id != NULL && *collection_id == '\0')
-    g_clear_pointer (&collection_id, g_free);
+  /* We have a hierarchy of keys for setting the collection ID, which all have
+   * the same effect. The only difference is which versions of Flatpak support
+   * them, and therefore what P2P implementation is enabled by them:
+   * DeploySideloadCollectionID: supported by Flatpak >= 1.12.8 (1.7.1
+   *   introduced sideload support but this key was added late)
+   * DeployCollectionID: supported by Flatpak >= 1.0.6 (but fully supported in
+   *   >= 1.2.0)
+   * CollectionID: supported by Flatpak >= 0.9.8
+   */
+  collection_id = flatpak_keyfile_get_string_non_empty (keyfile, source_group,
+                                                        FLATPAK_REPO_DEPLOY_SIDELOAD_COLLECTION_ID_KEY);
   if (collection_id == NULL)
-    collection_id = g_key_file_get_string (keyfile, source_group,
-                                           FLATPAK_REPO_COLLECTION_ID_KEY, NULL);
-  if (collection_id != NULL && *collection_id == '\0')
-    g_clear_pointer (&collection_id, g_free);
+    collection_id = flatpak_keyfile_get_string_non_empty (keyfile, source_group,
+                                                          FLATPAK_REPO_DEPLOY_COLLECTION_ID_KEY);
+  if (collection_id == NULL)
+    collection_id = flatpak_keyfile_get_string_non_empty (keyfile, source_group,
+                                                          FLATPAK_REPO_COLLECTION_ID_KEY);
   if (collection_id != NULL)
     {
       if (gpg_key == NULL)
@@ -3175,7 +3200,7 @@ flatpak_repo_save_digested_summary (OstreeRepo   *repo,
   if (fstatat (repo_dfd, path, &stbuf, 0) == 0 &&
       stbuf.st_size != 0)
     {
-      g_debug ("Reusing digested summary at %s for %s", path, name);
+      g_info ("Reusing digested summary at %s for %s", path, name);
       return g_steal_pointer (&digest);
     }
 
@@ -3191,7 +3216,7 @@ flatpak_repo_save_digested_summary (OstreeRepo   *repo,
                                       cancellable, error))
     return NULL;
 
-  g_debug ("Wrote digested summary at %s for %s", path, name);
+  g_info ("Wrote digested summary at %s for %s", path, name);
   return g_steal_pointer (&digest);
 }
 
@@ -3220,7 +3245,7 @@ flatpak_repo_save_digested_summary_delta (OstreeRepo   *repo,
   if (fstatat (repo_dfd, path, &stbuf, 0) == 0 &&
       stbuf.st_size == g_bytes_get_size (delta))
     {
-      g_debug ("Reusing digested summary-diff for %s", filename);
+      g_info ("Reusing digested summary-diff for %s", filename);
       return TRUE;
     }
 
@@ -3231,7 +3256,7 @@ flatpak_repo_save_digested_summary_delta (OstreeRepo   *repo,
                                       cancellable, error))
     return FALSE;
 
-  g_debug ("Wrote digested summary delta at %s", path);
+  g_info ("Wrote digested summary delta at %s", path);
   return TRUE;
 }
 
@@ -3294,7 +3319,7 @@ populate_commit_data_cache (OstreeRepo *repo,
   if (cache_version < FLATPAK_XA_CACHE_VERSION)
     {
       /* Need to re-index to get all data */
-      g_debug ("Old summary cache version %d, not using cache", cache_version);
+      g_info ("Old summary cache version %d, not using cache", cache_version);
       return NULL;
     }
 
@@ -3316,7 +3341,7 @@ populate_commit_data_cache (OstreeRepo *repo,
       checksum_bytes = var_subsummary_peek_checksum (subsummary, &checksum_bytes_len);
       if (G_UNLIKELY (checksum_bytes_len != OSTREE_SHA256_DIGEST_LEN))
         {
-          g_debug ("Invalid checksum for digested summary, not using cache");
+          g_info ("Invalid checksum for digested summary, not using cache");
           return NULL;
         }
       digest = ostree_checksum_from_bytes (checksum_bytes);
@@ -3330,7 +3355,7 @@ populate_commit_data_cache (OstreeRepo *repo,
       summary_v = flatpak_repo_load_digested_summary (repo, digest, NULL);
       if (summary_v == NULL)
         {
-          g_debug ("Failed to load digested summary %s, not using cache", digest);
+          g_info ("Failed to load digested summary %s, not using cache", digest);
           return NULL;
         }
 
@@ -3362,7 +3387,7 @@ populate_commit_data_cache (OstreeRepo *repo,
           if (!var_metadata_lookup (commit_metadata, "xa.data", NULL, &xa_data_v) ||
               !var_variant_is_type (xa_data_v, G_VARIANT_TYPE ("(tts)")))
             {
-              g_debug ("Missing xa.data for ref %s, not using cache", ref);
+              g_info ("Missing xa.data for ref %s, not using cache", ref);
               return NULL;
             }
 
@@ -3638,7 +3663,7 @@ _ostree_repo_static_delta_superblock_digest (OstreeRepo    *repo,
   g_checksum_get_digest (checksum, digest, &len);
 
   return g_variant_new_from_data (G_VARIANT_TYPE ("ay"),
-                                  g_memdup (digest, len), len,
+                                  g_memdup2 (digest, len), len,
                                   FALSE, g_free, FALSE);
 }
 
@@ -4267,7 +4292,7 @@ add_summary_metadata (OstreeRepo   *repo,
     g_variant_builder_add (metadata_builder, "{sv}", "xa.deploy-collection-id",
                            g_variant_new_string (collection_id));
   else if (deploy_collection_id)
-    g_debug ("Ignoring deploy-collection-id=true because no collection ID is set.");
+    g_info ("Ignoring deploy-collection-id=true because no collection ID is set.");
 
   if (authenticator_name)
     g_variant_builder_add (metadata_builder, "{sv}", "xa.authenticator-name",
@@ -4729,7 +4754,7 @@ flatpak_repo_gc_digested_summaries (OstreeRepo *repo,
               /* Keep all the referenced summaries */
               if (g_hash_table_contains (digested_summary_cache, sha256))
                 {
-                  g_debug ("Keeping referenced summary %s", dent->d_name);
+                  g_info ("Keeping referenced summary %s", dent->d_name);
                   continue;
                 }
               /* Remove rest */
@@ -4745,7 +4770,7 @@ flatpak_repo_gc_digested_summaries (OstreeRepo *repo,
                   /* Only keep deltas going to a generated summary */
                   if (g_hash_table_contains (digested_summaries, to_sha256))
                     {
-                      g_debug ("Keeping delta to generated summary %s", dent->d_name);
+                      g_info ("Keeping delta to generated summary %s", dent->d_name);
                       continue;
                     }
                   /* Remove rest */
@@ -4769,7 +4794,7 @@ flatpak_repo_gc_digested_summaries (OstreeRepo *repo,
 
       if (remove)
         {
-          g_debug ("Removing old digested summary file %s", dent->d_name);
+          g_info ("Removing old digested summary file %s", dent->d_name);
           if (unlinkat (iter.fd, dent->d_name, 0) != 0)
             {
               glnx_set_error_from_errno (error);
@@ -4777,7 +4802,7 @@ flatpak_repo_gc_digested_summaries (OstreeRepo *repo,
             }
         }
       else
-        g_debug ("Keeping unexpected summary file %s", dent->d_name);
+        g_info ("Keeping unexpected summary file %s", dent->d_name);
     }
 
   return TRUE;
@@ -5292,7 +5317,7 @@ copy_icon (const char        *id,
 
   if (!ostree_repo_file_ensure_resolved (OSTREE_REPO_FILE(icon_file), NULL))
     {
-      g_debug ("No icon at size %s for %s", size, id);
+      g_info ("No icon at size %s for %s", size, id);
       return TRUE;
     }
 
@@ -5595,9 +5620,9 @@ _flatpak_repo_generate_appstream (OstreeRepo   *repo,
   const char *collection_id;
 
   if (subset != NULL && *subset != 0)
-    g_debug ("Generating appstream for %s, subset %s", arch, subset);
+    g_info ("Generating appstream for %s, subset %s", arch, subset);
   else
-    g_debug ("Generating appstream for %s", arch);
+    g_info ("Generating appstream for %s", arch);
 
   collection_id = ostree_repo_get_collection_id (repo);
 
@@ -5657,7 +5682,7 @@ _flatpak_repo_generate_appstream (OstreeRepo   *repo,
       if (var_metadata_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE, NULL, NULL) ||
           var_metadata_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE_REBASE, NULL, NULL))
         {
-          g_debug (_("%s is end-of-life, ignoring for appstream"), flatpak_decomposed_get_ref (ref));
+          g_info (_("%s is end-of-life, ignoring for appstream"), flatpak_decomposed_get_ref (ref));
           continue;
         }
 
@@ -5749,7 +5774,7 @@ _flatpak_repo_generate_appstream (OstreeRepo   *repo,
           if (g_file_equal (root, parent_root))
             {
               skip_commit = TRUE;
-              g_debug ("Not updating %s, no change", branch);
+              g_info ("Not updating %s, no change", branch);
             }
         }
 
@@ -5800,7 +5825,7 @@ _flatpak_repo_generate_appstream (OstreeRepo   *repo,
                 }
             }
 
-          g_debug ("Creating appstream branch %s", branch);
+          g_info ("Creating appstream branch %s", branch);
           if (collection_id != NULL)
             {
               const OstreeCollectionRef collection_ref = { (char *) collection_id, branch };
@@ -6755,7 +6780,8 @@ flatpak_pull_from_bundle (OstreeRepo   *repo,
   if (metadata == NULL)
     return FALSE;
 
-  metadata_size = strlen (metadata_contents);
+  if (metadata_contents != NULL)
+    metadata_size = strlen (metadata_contents);
 
   if (!ostree_repo_get_remote_option (repo, remote, "collection-id", NULL,
                                       &remote_collection_id, NULL))
@@ -6973,7 +6999,7 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
 
       if (delta_layer)
         {
-          g_debug ("Using OCI delta %s for layer %s", delta_layer->digest, layer->digest);
+          g_info ("Using OCI delta %s for layer %s", delta_layer->digest, layer->digest);
           g_autofree char *delta_digest = NULL;
           glnx_autofd int delta_fd = flatpak_oci_registry_download_blob (registry, oci_repository, FALSE,
                                                                          delta_layer->digest, (const char **)delta_layer->urls,
@@ -7162,7 +7188,7 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
 
       if (delta_layer)
         {
-          g_debug ("Using OCI delta %s for layer %s", delta_layer->digest, layer->digest);
+          g_info ("Using OCI delta %s for layer %s", delta_layer->digest, layer->digest);
           expected_digest = image_config->rootfs.diff_ids[i]; /* The delta recreates the uncompressed tar so use that digest */
         }
       else
@@ -8224,7 +8250,7 @@ flatpak_log_dir_access (FlatpakDir *dir)
       if (dir_path != NULL)
         dir_path_str = g_file_get_path (dir_path);
       dir_name = flatpak_dir_get_name (dir);
-      g_debug ("Opening %s flatpak installation at path %s", dir_name, dir_path_str);
+      g_info ("Opening %s flatpak installation at path %s", dir_name, dir_path_str);
     }
 }
 
@@ -9213,6 +9239,23 @@ running_under_sudo (void)
 
   return FALSE;
 }
+
+#if !GLIB_CHECK_VERSION (2, 62, 0)
+void
+g_ptr_array_extend (GPtrArray  *array_to_extend,
+                    GPtrArray  *array,
+                    GCopyFunc   func,
+                    gpointer    user_data)
+{
+  for (gsize i = 0; i < array->len; i++)
+    {
+      if (func)
+        g_ptr_array_add (array_to_extend, func (g_ptr_array_index (array, i), user_data));
+      else
+        g_ptr_array_add (array_to_extend, g_ptr_array_index (array, i));
+    }
+}
+#endif
 
 #if !GLIB_CHECK_VERSION (2, 68, 0)
 /* All this code is backported directly from glib */

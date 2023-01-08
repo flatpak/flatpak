@@ -1,4 +1,4 @@
-/*
+/* vi:set et sw=2 sts=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e-s:
  * Copyright © 2018-2021 Collabora Ltd.
  *
  * This program is free software; you can redistribute it and/or
@@ -226,7 +226,7 @@ count_successful_exit_cb (PortalFlatpak *proxy,
 {
   gsize *times_exited_p = user_data;
 
-  g_debug ("Process %u exited with wait status %u", pid, wait_status);
+  g_info ("Process %u exited with wait status %u", pid, wait_status);
   g_assert_true (WIFEXITED (wait_status));
   g_assert_cmpuint (WEXITSTATUS (wait_status), ==, 0);
   (*times_exited_p) += 1;

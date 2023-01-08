@@ -1,4 +1,4 @@
-/*
+/* vi:set et sw=2 sts=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e-s:
  * Copyright © 2017 Patrick Griffis
  *
  * This program is free software; you can redistribute it and/or
@@ -285,8 +285,8 @@ flatpak_builtin_search (int argc, char **argv, GCancellable *cancellable, GError
           if (bundle == NULL || as_bundle_get_id (bundle) == NULL ||
               (decomposed = flatpak_decomposed_new_from_ref (as_bundle_get_id (bundle), NULL)) == NULL)
             {
-              g_debug ("Ignoring app %s from remote %s as it lacks a flatpak bundle",
-                       as_component_get_id (app), remote_name);
+              g_info ("Ignoring app %s from remote %s as it lacks a flatpak bundle",
+                      as_component_get_id (app), remote_name);
               continue;
             }
 

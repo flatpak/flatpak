@@ -160,24 +160,24 @@ FlatpakOciSignature *flatpak_oci_verify_signature (OstreeRepo *repo,
                                                    GBytes     *signature,
                                                    GError    **error);
 
-gboolean flatpak_oci_index_ensure_cached (SoupSession  *soup_session,
-                                          const char   *uri,
-                                          GFile        *index,
-                                          char        **index_uri_out,
-                                          GCancellable *cancellable,
-                                          GError      **error);
+gboolean flatpak_oci_index_ensure_cached (FlatpakHttpSession  *http_session,
+                                          const char          *uri,
+                                          GFile               *index,
+                                          char               **index_uri_out,
+                                          GCancellable        *cancellable,
+                                          GError             **error);
 
 GVariant *flatpak_oci_index_make_summary (GFile        *index,
                                           const char   *index_uri,
                                           GCancellable *cancellable,
                                           GError      **error);
 
-GBytes *flatpak_oci_index_make_appstream (SoupSession  *soup_session,
-                                          GFile        *index,
-                                          const char   *index_uri,
-                                          const char   *arch,
-                                          int           icons_dfd,
-                                          GCancellable *cancellable,
-                                          GError      **error);
+GBytes *flatpak_oci_index_make_appstream (FlatpakHttpSession  *http_session,
+                                          GFile               *index,
+                                          const char          *index_uri,
+                                          const char          *arch,
+                                          int                  icons_dfd,
+                                          GCancellable        *cancellable,
+                                          GError             **error);
 
 #endif /* __FLATPAK_OCI_REGISTRY_H__ */

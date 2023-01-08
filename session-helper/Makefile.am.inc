@@ -1,3 +1,5 @@
+EXTRA_DIST += session-helper/meson.build
+
 libexec_PROGRAMS += \
 	flatpak-session-helper \
 	$(NULL)

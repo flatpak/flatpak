@@ -47,10 +47,12 @@
             By default the application gets access to the resources it
             requested when it is started. But the user can override it
             on a particular instance by specifying extra arguments to
-            flatpak run, or every time by using flatpak override.
+            <command>flatpak run</command>, or every time by using
+            <command>flatpak override</command>.
         </para>
         <para>
-            If the application id is not specified then the overrides affect all applications,
+            If the application ID <arg choice="plain">APP</arg> is not specified
+            then the overrides affect all applications,
             but the per-application overrides can override the global overrides.
         </para>
         <para>
@@ -76,6 +78,7 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>-u</option></term>
                 <term><option>--user</option></term>
 
                 <listitem><para>
@@ -131,7 +134,7 @@
                     Expose a well-known socket to the application. This overrides to
                     the Context section from the application metadata.
                     <arg choice="plain">SOCKET</arg> must be one of: x11, wayland, fallback-x11, pulseaudio, system-bus, session-bus,
-                    ssh-auth, pcsc, cups.
+                    ssh-auth, pcsc, cups, gpg-agent.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
@@ -143,7 +146,7 @@
                     Don't expose a well-known socket to the application. This overrides to
                     the Context section from the application metadata.
                     <arg choice="plain">SOCKET</arg> must be one of: x11, wayland, fallback-x11, pulseaudio, system-bus, session-bus,
-                    ssh-auth, pcsc, cups.
+                    ssh-auth, pcsc, cups, gpg-agent.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
