@@ -4110,6 +4110,8 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
         }
       else
         {
+          g_autoptr(GFile) changed_file = NULL;
+
           if (!ostree_repo_create (repo, mode, cancellable, &my_error))
             {
               const char *repo_path = flatpak_file_get_path_cached (repodir);
@@ -4133,8 +4135,11 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
               return FALSE;
             }
 
+          changed_file = flatpak_dir_get_changed_path (self);
+
           /* Create .changed file early to avoid polling non-existing file in monitor */
-          if (!flatpak_dir_mark_changed (self, &my_error))
+          if (!g_file_test (g_file_peek_path (changed_file), G_FILE_TEST_IS_REGULAR) &&
+              !flatpak_dir_mark_changed (self, &my_error))
             {
               g_warning ("Error marking directory as changed: %s", my_error->message);
               g_clear_error (&my_error);
