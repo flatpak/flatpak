@@ -3668,7 +3668,7 @@ msgid ""
 "Info: (pinned) runtime %s%s%s branch %s%s%s is end-of-life, with reason:\n"
 msgstr ""
 "\n"
-"Информация: (закреплено) среда выполнения %s%s%s ветка %s%s%s устарела по "
+"Информация: (закреплено) среда выполнения %s%s%s ветвь %s%s%s завершает жизнь по "
 "причине:\n"
 
 #: app/flatpak-cli-transaction.c:767
