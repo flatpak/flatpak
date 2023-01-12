@@ -5591,7 +5591,6 @@ msgstr "срок поддержки %s закончился, игнорируе�
 msgid "No appstream data for %s: %s\n"
 msgstr ""
 "Нет appstream данных для %s: %s\n"
-"\n"
 
 #: common/flatpak-utils.c:6684
 msgid "Invalid bundle, no ref in metadata"
