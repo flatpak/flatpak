@@ -3581,7 +3581,7 @@ msgstr "Ошибка: недостаточно места на диске для
 #: app/flatpak-cli-transaction.c:546
 #, c-format
 msgid "Warning: %s"
-msgstr "Предупреждение:  %s"
+msgstr "Предупреждение: %s"
 
 #: app/flatpak-cli-transaction.c:548
 #, c-format
@@ -3637,7 +3637,6 @@ msgstr ""
 "\n"
 "Информация: (закреплено) среда выполнения %s%s%s ветвь %s%s%s завершает жизнь, в "
 "пользу %s%s%s ветвь %s%s%s\n"
-"\n"
 
 #: app/flatpak-cli-transaction.c:749
 #, c-format
