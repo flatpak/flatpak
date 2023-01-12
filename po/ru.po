@@ -5,6 +5,7 @@
 # Roman Kharin <romiq.kh@gmail.com>, 2017.
 # Артемий Судаков <finziyr@yandex.ru>, 2020.
 # Дмитрий <dmitrydmitry761@gmail.com>, 2023.
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
