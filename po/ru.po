@@ -3190,13 +3190,13 @@ msgstr "Удалить данные для %s?"
 #: app/flatpak-builtins-uninstall.c:220
 #, c-format
 msgid "Info: applications using the extension %s%s%s branch %s%s%s:\n"
-msgstr "Информация: приложения, использующие ветку %s%s%s расширения %s%s%s:\n"
+msgstr "Информация: приложения, использующие расширение %s%s%s ветвь %s%s%s:\n"
 
 #: app/flatpak-builtins-uninstall.c:223
 #, c-format
 msgid "Info: applications using the runtime %s%s%s branch %s%s%s:\n"
 msgstr ""
-"Информация: приложения, использующие ветку %s%s%s среды выполнения %s%s%s:\n"
+"Информация: приложения, использующие среду выполнения %s%s%s ветвь %s%s%s:\n"
 
 #: app/flatpak-builtins-uninstall.c:238
 msgid "Really remove?"
@@ -3562,12 +3562,12 @@ msgstr "Ошибка: %s%s%s не установлено"
 #: app/flatpak-cli-transaction.c:530
 #, c-format
 msgid "Warning: %s%s%s needs a later flatpak version"
-msgstr "Предупреждение: %s%s%s требуется более поздняя версия flatpak"
+msgstr "Предупреждение: %s%s%s требуется более новая версия flatpak"
 
 #: app/flatpak-cli-transaction.c:533
 #, c-format
 msgid "Error: %s%s%s needs a later flatpak version"
-msgstr "Ошибка: %s%s%s требуется более поздняя версия flatpak"
+msgstr "Ошибка: %s%s%s требуется более новая версия flatpak"
 
 #: app/flatpak-cli-transaction.c:539
 msgid "Warning: Not enough disk space to complete this operation"
@@ -3635,8 +3635,8 @@ msgid ""
 "%s branch %s%s%s\n"
 msgstr ""
 "\n"
-"Информация: (закреплена) ветка %s%s%s среды выполнения %s%s%s устарела, в "
-"пользу %s%s%s ветки %s%s%s\n"
+"Информация: (закреплено) среда выполнения %s%s%s ветвь %s%s%s завершает жизнь, в "
+"пользу %s%s%s ветвь %s%s%s\n"
 "\n"
 
 #: app/flatpak-cli-transaction.c:749
@@ -3647,8 +3647,8 @@ msgid ""
 "%s%s%s\n"
 msgstr ""
 "\n"
-"Информация: ветка %s%s%s среды выполнения %s%s%s устарела, в пользу %s%s%s "
-"ветки %s%s%s\n"
+"Информация: среда выполнения %s%s%s ветвь %s%s%s завершает жизнь, в пользу "
+"%s%s%s ветвь %s%s%s\n"
 
 #: app/flatpak-cli-transaction.c:752
 #, c-format
@@ -3658,8 +3658,8 @@ msgid ""
 "%s\n"
 msgstr ""
 "\n"
-"Информация: ветка %s%s%s приложения %s%s%s устарела, в пользу %s%s%s ветки %s"
-"%s%s\n"
+"Информация: приложение %s%s%s ветвь %s%s%s завершает жизнь, в пользу %s
+"%s%s ветвь %s%s%s\n"
 
 #. Only runtimes can be pinned
 #: app/flatpak-cli-transaction.c:761
@@ -3669,7 +3669,7 @@ msgid ""
 "Info: (pinned) runtime %s%s%s branch %s%s%s is end-of-life, with reason:\n"
 msgstr ""
 "\n"
-"Информация: (закреплена) ветка %s%s%s среды выполнения %s%s%s устарела по "
+"Информация: (закреплено) среда выполнения %s%s%s ветка %s%s%s устарела по "
 "причине:\n"
 
 #: app/flatpak-cli-transaction.c:767
@@ -3679,7 +3679,7 @@ msgid ""
 "Info: runtime %s%s%s branch %s%s%s is end-of-life, with reason:\n"
 msgstr ""
 "\n"
-"Информация: ветка %s%s%s среды выполнения %s%s%s устарела по причине:\n"
+"Информация: среда выполнения %s%s%s ветвь %s%s%s завершает жизнь по причине:\n"
 
 #: app/flatpak-cli-transaction.c:770
 #, c-format
@@ -3688,15 +3688,15 @@ msgid ""
 "Info: app %s%s%s branch %s%s%s is end-of-life, with reason:\n"
 msgstr ""
 "\n"
-"Информация: ветка %s%s%s приложения %s%s%s устарела по причине:\n"
+"Информация: приложение %s%s%s ветвь %s%s%s завершает жизнь по причине:\n"
 
 #: app/flatpak-cli-transaction.c:944
 msgid "Info: applications using this extension:\n"
-msgstr "Информация: приложения, использующие эту среду исполнения:\n"
+msgstr "Информация: приложения, использующие эту среду выполнения:\n"
 
 #: app/flatpak-cli-transaction.c:946
 msgid "Info: applications using this runtime:\n"
-msgstr "Информация: Приложения, использующие эту среду исполнения:\n"
+msgstr "Информация: Приложения, использующие эту среду выполнения:\n"
 
 #: app/flatpak-cli-transaction.c:965
 msgid "Replace?"
@@ -3804,11 +3804,11 @@ msgstr "Закрепить среду исполнения для предотв
 
 #: app/flatpak-main.c:86
 msgid "List installed apps and/or runtimes"
-msgstr "Показать список установленных приложений и/или сред исполнения"
+msgstr "Показать список установленных приложений и/или сред выполнения"
 
 #: app/flatpak-main.c:87
 msgid "Show info for installed app or runtime"
-msgstr "Показать информацию об установленных приложениях или средах исполнения"
+msgstr "Показать информацию об установленных приложениях или средах выполнения"
 
 #: app/flatpak-main.c:88
 msgid "Show history"
