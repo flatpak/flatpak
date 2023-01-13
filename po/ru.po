@@ -3562,12 +3562,12 @@ msgstr "Ошибка: %s%s%s не установлено"
 #: app/flatpak-cli-transaction.c:530
 #, c-format
 msgid "Warning: %s%s%s needs a later flatpak version"
-msgstr "Предупреждение: %s%s%s требуется более новая версия flatpak"
+msgstr "Предупреждение: %s%s%s требует более новую версию flatpak"
 
 #: app/flatpak-cli-transaction.c:533
 #, c-format
 msgid "Error: %s%s%s needs a later flatpak version"
-msgstr "Ошибка: %s%s%s требуется более новая версия flatpak"
+msgstr "Ошибка: %s%s%s требует более новую версию flatpak"
 
 #: app/flatpak-cli-transaction.c:539
 msgid "Warning: Not enough disk space to complete this operation"
@@ -3635,7 +3635,7 @@ msgid ""
 "%s branch %s%s%s\n"
 msgstr ""
 "\n"
-"Информация: (закреплено) среда выполнения %s%s%s ветвь %s%s%s прекращает свое существование, в "
+"Информация: (закрепленная) среда выполнения %s%s%s ветвь %s%s%s прекращает свое существование, в "
 "пользу %s%s%s ветвь %s%s%s\n"
 
 #: app/flatpak-cli-transaction.c:749
@@ -3668,7 +3668,7 @@ msgid ""
 "Info: (pinned) runtime %s%s%s branch %s%s%s is end-of-life, with reason:\n"
 msgstr ""
 "\n"
-"Информация: (закреплено) среда выполнения %s%s%s ветвь %s%s%s прекращает свое существование по "
+"Информация: (закрепленная) среда выполнения %s%s%s ветвь %s%s%s прекращает свое существование по "
 "причине:\n"
 
 #: app/flatpak-cli-transaction.c:767
