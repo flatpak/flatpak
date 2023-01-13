@@ -3635,7 +3635,7 @@ msgid ""
 "%s branch %s%s%s\n"
 msgstr ""
 "\n"
-"Информация: (закрепленная) среда выполнения %s%s%s ветвь %s%s%s прекращает свое существование, в "
+"Информация: (закрепленная) среда выполнения %s%s%s ветвь %s%s%s конец срока поддержки, в "
 "пользу %s%s%s ветвь %s%s%s\n"
 
 #: app/flatpak-cli-transaction.c:749
@@ -3646,7 +3646,7 @@ msgid ""
 "%s%s%s\n"
 msgstr ""
 "\n"
-"Информация: среда выполнения %s%s%s ветвь %s%s%s прекращает свое существование, в пользу "
+"Информация: среда выполнения %s%s%s ветвь %s%s%s конец срока поддержки, в пользу "
 "%s%s%s ветвь %s%s%s\n"
 
 #: app/flatpak-cli-transaction.c:752
@@ -3657,7 +3657,7 @@ msgid ""
 "%s\n"
 msgstr ""
 "\n"
-"Информация: приложение %s%s%s ветвь %s%s%s прекращает свое существование, в пользу %s"
+"Информация: приложение %s%s%s ветвь %s%s%s конец срока поддержки, в пользу %s"
 "%s%s ветвь %s%s%s\n"
 
 #. Only runtimes can be pinned
@@ -3668,7 +3668,7 @@ msgid ""
 "Info: (pinned) runtime %s%s%s branch %s%s%s is end-of-life, with reason:\n"
 msgstr ""
 "\n"
-"Информация: (закрепленная) среда выполнения %s%s%s ветвь %s%s%s прекращает свое существование по "
+"Информация: (закрепленная) среда выполнения %s%s%s ветвь %s%s%s конец срока поддержки по "
 "причине:\n"
 
 #: app/flatpak-cli-transaction.c:767
@@ -3678,7 +3678,7 @@ msgid ""
 "Info: runtime %s%s%s branch %s%s%s is end-of-life, with reason:\n"
 msgstr ""
 "\n"
-"Информация: среда выполнения %s%s%s ветвь %s%s%s прекращает свое существование по причине:\n"
+"Информация: среда выполнения %s%s%s ветвь %s%s%s конец срока поддержки по причине:\n"
 
 #: app/flatpak-cli-transaction.c:770
 #, c-format
@@ -3687,7 +3687,7 @@ msgid ""
 "Info: app %s%s%s branch %s%s%s is end-of-life, with reason:\n"
 msgstr ""
 "\n"
-"Информация: приложение %s%s%s ветвь %s%s%s прекращает свое существование по причине:\n"
+"Информация: приложение %s%s%s ветвь %s%s%s конец срока поддержки по причине:\n"
 
 #: app/flatpak-cli-transaction.c:944
 msgid "Info: applications using this extension:\n"
