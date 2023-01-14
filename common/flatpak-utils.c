@@ -4980,6 +4980,10 @@ flatpak_repo_update (OstreeRepo   *repo,
                                                     g_variant_get_data (old_index),
                                                     g_variant_get_size (old_index));
 
+  /* Release the memory-mapped summary index file before replacing it,
+     to avoid failure on filesystems like cifs */
+  g_clear_pointer (&old_index, g_variant_unref);
+
   if (!flatpak_repo_save_summary_index (repo, summary_index, index_digest, index_sig, cancellable, error))
     return FALSE;
 
