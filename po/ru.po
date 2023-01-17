@@ -24,7 +24,7 @@ msgstr ""
 
 #: app/flatpak-builtins-build-bundle.c:57
 msgid "Export runtime instead of app"
-msgstr "Экспортировать среду исполнения вместо приложения"
+msgstr "Экспортировать среду выполнения вместо приложения"
 
 #: app/flatpak-builtins-build-bundle.c:58
 msgid "Arch to bundle for"
@@ -60,7 +60,7 @@ msgstr "URL"
 
 #: app/flatpak-builtins-build-bundle.c:60
 msgid "Url for runtime flatpakrepo file"
-msgstr "URL файла flatpakrepo среды исполнения"
+msgstr "URL файла flatpakrepo среды выполнения"
 
 #: app/flatpak-builtins-build-bundle.c:61
 msgid "Add GPG key from FILE (- for stdin)"
@@ -186,7 +186,7 @@ msgstr "'%s' не является корректным именем файла"
 
 #: app/flatpak-builtins-build.c:49
 msgid "Use Platform runtime rather than Sdk"
-msgstr "Использовать обычную среду исполнения вместо отладочной"
+msgstr "Использовать обычную среду выполнения вместо отладочной"
 
 #: app/flatpak-builtins-build.c:50
 msgid "Make destination readonly"
@@ -650,7 +650,7 @@ msgstr "Заменить среду выполнения, используему
 #: app/flatpak-builtins-list.c:51 app/flatpak-builtins-remote-ls.c:56
 #: app/flatpak-builtins-run.c:71
 msgid "RUNTIME"
-msgstr "СРЕДА_ИСПОЛНЕНИЯ"
+msgstr "СРЕДА_ВЫПОЛНЕНИЯ"
 
 #: app/flatpak-builtins-build-finish.c:60
 msgid "Set generic metadata option"
@@ -787,7 +787,7 @@ msgstr "Используемая архитектура"
 
 #: app/flatpak-builtins-build-init.c:54
 msgid "Initialize var from named runtime"
-msgstr "Инициализировать переменую из названной среды исполнения"
+msgstr "Инициализировать переменую из названной среды выполнения"
 
 #: app/flatpak-builtins-build-init.c:55
 msgid "Initialize apps from named app"
@@ -867,12 +867,12 @@ msgstr "Требуемое расширение %s/%s/%s не установле
 msgid ""
 "DIRECTORY APPNAME SDK RUNTIME [BRANCH] - Initialize a directory for building"
 msgstr ""
-"КАТАЛОГ ИМЯ_ПРИЛОЖЕНИЯ SDK СРЕДА_ИСП [ВЕТВЬ] - Инициализировать каталог для "
+"КАТАЛОГ ИМЯ_ПРИЛОЖЕНИЯ SDK СРЕДА_ВЫП [ВЕТВЬ] - Инициализировать каталог для "
 "сборки"
 
 #: app/flatpak-builtins-build-init.c:214
 msgid "RUNTIME must be specified"
-msgstr "Должна быть указана СРЕДА_ИСП"
+msgstr "Должна быть указана СРЕДА_ВЫП"
 
 #: app/flatpak-builtins-build-init.c:235
 #, c-format
@@ -900,7 +900,7 @@ msgstr "Архитектура для установки"
 #: app/flatpak-builtins-install.c:72 app/flatpak-builtins-remote-info.c:55
 #: app/flatpak-builtins-uninstall.c:58 app/flatpak-builtins-update.c:64
 msgid "Look for runtime with the specified name"
-msgstr "Искать среду исполнения с указанным именем"
+msgstr "Искать среду выполнения с указанным именем"
 
 #: app/flatpak-builtins-build-sign.c:65
 msgid "LOCATION [ID [BRANCH]] - Sign an application or runtime"
@@ -1229,13 +1229,13 @@ msgstr ""
 #, c-format
 msgid "Warning: Omitting ref ‘%s’ (runtime of ‘%s’) because it's extra-data.\n"
 msgstr ""
-"Предупреждение: Пропуск ссылки '%s' (среда исполнения для ‘%s’), потому что "
+"Предупреждение: Пропуск ссылки '%s' (среда выполнения для ‘%s’), потому что "
 "это extra-data.\n"
 
 #: app/flatpak-builtins-create-usb.c:482
 msgid "MOUNT-PATH [REF…] - Copy apps or runtimes onto removable media"
 msgstr ""
-"ПУТЬ-МОНТ [ССЫЛКА…] - Скопировать приложения или среды исполнения на съёмный "
+"ПУТЬ-МОНТ [ССЫЛКА…] - Скопировать приложения или среды выполнения на съёмный "
 "носитель"
 
 #: app/flatpak-builtins-create-usb.c:491
@@ -1554,7 +1554,7 @@ msgstr "Показать ссылки"
 
 #: app/flatpak-builtins-history.c:60
 msgid "Show the application/runtime ID"
-msgstr "Показать ID приложения/среды исполнения"
+msgstr "Показать ID приложения/среды выполнения"
 
 #: app/flatpak-builtins-history.c:61 app/flatpak-builtins-list.c:62
 #: app/flatpak-builtins-ps.c:51 app/flatpak-builtins-remote-ls.c:70
@@ -1701,7 +1701,7 @@ msgstr "Показать метаданные"
 
 #: app/flatpak-builtins-info.c:64 app/flatpak-builtins-remote-info.c:62
 msgid "Show runtime"
-msgstr "Показать среды исполнения"
+msgstr "Показать среды выполнения"
 
 #: app/flatpak-builtins-info.c:65 app/flatpak-builtins-remote-info.c:63
 msgid "Show sdk"
@@ -1734,7 +1734,7 @@ msgstr "Показать расположение"
 msgid "NAME [BRANCH] - Get info about an installed app or runtime"
 msgstr ""
 "ИМЯ [ВЕТВЬ] - Получить информацию об установленном приложении или среде "
-"исполнения"
+"выполнения"
 
 #: app/flatpak-builtins-info.c:123 app/flatpak-builtins-remote-add.c:310
 #: app/flatpak-builtins-remote-delete.c:63
@@ -1807,7 +1807,7 @@ msgstr "Установлено:"
 #: app/flatpak-builtins-remote-info.c:251
 #: app/flatpak-builtins-remote-info.c:287
 msgid "Runtime:"
-msgstr "Среда исполнения:"
+msgstr "Среда выполнения:"
 
 #: app/flatpak-builtins-info.c:232 app/flatpak-builtins-info.c:288
 #: app/flatpak-builtins-remote-info.c:252
@@ -1905,7 +1905,7 @@ msgstr "Не устанавливать связанные ссылки"
 
 #: app/flatpak-builtins-install.c:69 app/flatpak-builtins-update.c:62
 msgid "Don't verify/install runtime dependencies"
-msgstr "Не проверять и не устанавливать зависимости среды исполнения"
+msgstr "Не проверять и не устанавливать зависимости среды выполнения"
 
 #: app/flatpak-builtins-install.c:70
 msgid "Don't automatically pin explicit installs"
@@ -1980,7 +1980,7 @@ msgstr "Должно быть указано имя файла или адрес
 #: app/flatpak-builtins-install.c:295
 msgid "[LOCATION/REMOTE] [REF…] - Install applications or runtimes"
 msgstr ""
-"[ПУТЬ/УДАЛЁННЫЙ_РЕПО] [ССЫЛКА…] - Установить приложения или среды исполнения"
+"[ПУТЬ/УДАЛЁННЫЙ_РЕПО] [ССЫЛКА…] - Установить приложения или среды выполнения"
 
 #: app/flatpak-builtins-install.c:321
 msgid "At least one REF must be specified"
@@ -2039,7 +2039,7 @@ msgstr "Показать дополнительную информацию"
 
 #: app/flatpak-builtins-list.c:47
 msgid "List installed runtimes"
-msgstr "Показать установленные среды исполнения"
+msgstr "Показать установленные среды выполнения"
 
 #: app/flatpak-builtins-list.c:48
 msgid "List installed applications"
@@ -2055,7 +2055,7 @@ msgstr "Перечислить все ссылки (включая локали�
 
 #: app/flatpak-builtins-list.c:51 app/flatpak-builtins-remote-ls.c:56
 msgid "List all applications using RUNTIME"
-msgstr "Показать приложения, использующие СРЕДУ_ИСПОЛНЕНИЯ"
+msgstr "Показать приложения, использующие СРЕДУ_ВЫПОЛНЕНИЯ"
 
 #: app/flatpak-builtins-list.c:57 app/flatpak-builtins-remote-list.c:49
 #: app/flatpak-builtins-remote-ls.c:65 app/flatpak-builtins-search.c:42
@@ -2095,11 +2095,11 @@ msgstr "Показать версию"
 #: app/flatpak-builtins-list.c:63 app/flatpak-builtins-ps.c:54
 #: app/flatpak-builtins-remote-ls.c:74
 msgid "Runtime"
-msgstr "Среда исполнения"
+msgstr "Среда выполнения"
 
 #: app/flatpak-builtins-list.c:63
 msgid "Show the used runtime"
-msgstr "Показать используемую среду исполнения"
+msgstr "Показать используемую среду выполнения"
 
 #: app/flatpak-builtins-list.c:64 app/flatpak-builtins-remote-ls.c:71
 msgid "Show the origin remote"
@@ -2145,7 +2145,7 @@ msgstr "Показать параметры"
 
 #: app/flatpak-builtins-list.c:393
 msgid " - List installed apps and/or runtimes"
-msgstr " - Показать список установленных приложений и/или сред исполнения"
+msgstr " - Показать список установленных приложений и/или сред выполнения"
 
 #: app/flatpak-builtins-make-current.c:38
 msgid "Arch to make current for"
@@ -2273,7 +2273,7 @@ msgstr "Удалить соответствующие закрепления"
 #: app/flatpak-builtins-pin.c:56
 msgid "[PATTERN…] - disable automatic removal of runtimes matching patterns"
 msgstr ""
-"[ШАБЛОН…] - отключить автоудаление сред исполнения, подходящих под шаблонны"
+"[ШАБЛОН…] - отключить автоудаление сред выполнения, подходящих под шаблонны"
 
 #: app/flatpak-builtins-pin.c:75
 msgid "No pinned patterns\n"
@@ -2317,7 +2317,7 @@ msgstr "Показать коммит приложения"
 
 #: app/flatpak-builtins-ps.c:54
 msgid "Show the runtime ID"
-msgstr "Показать ID среды исполнения"
+msgstr "Показать ID среды выполнения"
 
 #: app/flatpak-builtins-ps.c:55
 msgid "R.-Branch"
@@ -2325,7 +2325,7 @@ msgstr "Ветвь среды"
 
 #: app/flatpak-builtins-ps.c:55
 msgid "Show the runtime branch"
-msgstr "Показать ветвь среды исполнения"
+msgstr "Показать ветвь среды выполнения"
 
 #: app/flatpak-builtins-ps.c:56
 msgid "R.-Commit"
@@ -2333,7 +2333,7 @@ msgstr "Коммит среды"
 
 #: app/flatpak-builtins-ps.c:56
 msgid "Show the runtime commit"
-msgstr "Показать коммит среды исполнения"
+msgstr "Показать коммит среды выполнения"
 
 #: app/flatpak-builtins-ps.c:57
 msgid "Active"
@@ -2527,7 +2527,7 @@ msgid ""
 " REMOTE REF - Show information about an application or runtime in a remote"
 msgstr ""
 " УДАЛЁННЫЙ_РЕПО ССЫЛКА - Показать информацию о приложении или среде "
-"исполнения в удалённом репозитории"
+"выполнения в удалённом репозитории"
 
 #: app/flatpak-builtins-remote-info.c:124
 msgid "REMOTE and REF must be specified"
@@ -2662,7 +2662,7 @@ msgstr "Показать только указанные архитектуры 
 
 #: app/flatpak-builtins-remote-ls.c:74
 msgid "Show the runtime"
-msgstr "Показать среду исполнения"
+msgstr "Показать среду выполнения"
 
 #: app/flatpak-builtins-remote-ls.c:76
 msgid "Download size"
@@ -2675,7 +2675,7 @@ msgstr "Показать размер загрузки"
 #: app/flatpak-builtins-remote-ls.c:391
 msgid " [REMOTE or URI] - Show available runtimes and applications"
 msgstr ""
-" [УДАЛЁННЫЙ_РЕПО или URI] - Показать доступные среды исполнения и приложения"
+" [УДАЛЁННЫЙ_РЕПО или URI] - Показать доступные среды выполнения и приложения"
 
 #: app/flatpak-builtins-remote-modify.c:66
 msgid "Enable GPG verification"
@@ -3041,15 +3041,15 @@ msgstr "Ветвь для использования"
 
 #: app/flatpak-builtins-run.c:70
 msgid "Use development runtime"
-msgstr "Использовать среду исполнения для разработчиков"
+msgstr "Использовать среду выполнения для разработчиков"
 
 #: app/flatpak-builtins-run.c:71
 msgid "Runtime to use"
-msgstr "Используемая среда исполнения"
+msgstr "Используемая среда выполнения"
 
 #: app/flatpak-builtins-run.c:72
 msgid "Runtime version to use"
-msgstr "Версия среды исполнения"
+msgstr "Версия среды выполнения"
 
 #: app/flatpak-builtins-run.c:75
 msgid "Log accessibility bus calls"
@@ -3089,7 +3089,7 @@ msgstr "Запустить указанный коммит"
 
 #: app/flatpak-builtins-run.c:83
 msgid "Use specified runtime commit"
-msgstr "Использовать указанный коммит среды исполнения"
+msgstr "Использовать указанный коммит среды выполнения"
 
 #: app/flatpak-builtins-run.c:84
 msgid "Run completely sandboxed"
@@ -3119,7 +3119,7 @@ msgstr "Использовать ПУТЬ вместо /app приложения
 
 #: app/flatpak-builtins-run.c:91
 msgid "Use PATH instead of the runtime's /usr"
-msgstr "Использовать ПУТЬ вместо /usr среды исполнения"
+msgstr "Использовать ПУТЬ вместо /usr среды выполнения"
 
 #: app/flatpak-builtins-run.c:114
 msgid "APP [ARGUMENT…] - Run an app"
@@ -3204,7 +3204,7 @@ msgstr "Действительно удалить?"
 
 #: app/flatpak-builtins-uninstall.c:255
 msgid "[REF…] - Uninstall applications or runtimes"
-msgstr "[ССЫЛКА…] - Удалить приложения или среды исполнения"
+msgstr "[ССЫЛКА…] - Удалить приложения или среды выполнения"
 
 #: app/flatpak-builtins-uninstall.c:264
 msgid "Must specify at least one REF, --unused, --all or --delete-data"
@@ -3228,7 +3228,7 @@ msgid ""
 "flatpak-pin(1):\n"
 msgstr ""
 "\n"
-"Эти среды исполнения в установке '%s' закреплены и не будут удалены; см. "
+"Эти среды выполнения в установке '%s' закреплены и не будут удалены; см. "
 "flatpak-pin(1):\n"
 
 #: app/flatpak-builtins-uninstall.c:370
@@ -3289,7 +3289,7 @@ msgstr "Обновлять только указанный подкаталог"
 
 #: app/flatpak-builtins-update.c:90
 msgid "[REF…] - Update applications or runtimes"
-msgstr "[ССЫЛКА…] - Обновить приложения или среды исполнения"
+msgstr "[ССЫЛКА…] - Обновить приложения или среды выполнения"
 
 #: app/flatpak-builtins-update.c:121
 msgid "With --commit, only one REF may be specified"
@@ -3462,7 +3462,7 @@ msgstr "Добавьте :s[tart], :m[iddle], :e[nd], :f[ull] для измен�
 #, c-format
 msgid "Required runtime for %s (%s) found in remote %s\n"
 msgstr ""
-"Требуемая среда исполнения для %s (%s) найдена в удалённом репозитории %s\n"
+"Требуемая среда выполнения для %s (%s) найдена в удалённом репозитории %s\n"
 
 #: app/flatpak-cli-transaction.c:101
 msgid "Do you want to install it?"
@@ -3472,7 +3472,7 @@ msgstr "Хотите установить её?"
 #, c-format
 msgid "Required runtime for %s (%s) found in remotes:"
 msgstr ""
-"Требуемая среда исполнения для %s (%s) найдена в следующих репозиториях:"
+"Требуемая среда выполнения для %s (%s) найдена в следующих репозиториях:"
 
 #: app/flatpak-cli-transaction.c:109
 msgid "Which do you want to install (0 to abort)?"
@@ -3503,7 +3503,7 @@ msgid ""
 "  %s\n"
 "Configure this as new remote '%s'"
 msgstr ""
-"Приложение %s зависит от сред исполнения из:\n"
+"Приложение %s зависит от сред выполнения из:\n"
 "  %s\n"
 "Добавить его как новый удалённый репозиторий '%s'"
 
@@ -3779,19 +3779,19 @@ msgstr "Произошла одна или более ошибок"
 #. translators: please keep the leading space
 #: app/flatpak-main.c:76
 msgid " Manage installed applications and runtimes"
-msgstr " Управление установленными приложениями и средами исполнения"
+msgstr " Управление установленными приложениями и средами выполнения"
 
 #: app/flatpak-main.c:77
 msgid "Install an application or runtime"
-msgstr "Установить приложение или среду исполнения"
+msgstr "Установить приложение или среду выполнения"
 
 #: app/flatpak-main.c:78
 msgid "Update an installed application or runtime"
-msgstr "Обновить установленное приложение или среду исполнения"
+msgstr "Обновить установленное приложение или среду выполнения"
 
 #: app/flatpak-main.c:81
 msgid "Uninstall an installed application or runtime"
-msgstr "Удалить установленное приложение или среду исполнения"
+msgstr "Удалить установленное приложение или среду выполнения"
 
 #: app/flatpak-main.c:84
 msgid "Mask out updates and automatic installation"
@@ -3956,7 +3956,7 @@ msgstr "Список содержимого удалённого репозит�
 
 #: app/flatpak-main.c:131
 msgid "Show information about a remote app or runtime"
-msgstr "Показать информацию об установленных приложениях или средах исполнения"
+msgstr "Показать информацию об установленных приложениях или средах выполнения"
 
 #. translators: please keep the leading newline and space
 #: app/flatpak-main.c:134
@@ -3993,7 +3993,7 @@ msgstr "Импортировать файл с пакетом"
 
 #: app/flatpak-main.c:141
 msgid "Sign an application or runtime"
-msgstr "Подписать приложение или среду исполнения"
+msgstr "Подписать приложение или среду выполнения"
 
 #: app/flatpak-main.c:142
 msgid "Update the summary file in a repository"
@@ -4142,7 +4142,6 @@ msgstr "Удаление %s\n"
 msgid "Warning: Failed to install %s: %s\n"
 msgstr ""
 "Предупреждение: не удалось установить %s: %s\n"
-"\n"
 
 #: app/flatpak-quiet-transaction.c:110
 #, c-format
@@ -4935,7 +4934,7 @@ msgstr "ID коллекции требует предоставления клю
 #: common/flatpak-dir.c:14538
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
-msgstr "Среда исполнения %s, ветвь %s уже установлена"
+msgstr "Среда выполнения %s, ветвь %s уже установлена"
 
 #: common/flatpak-dir.c:14539
 #, c-format
@@ -5205,7 +5204,7 @@ msgstr " среда разработки"
 
 #: common/flatpak-ref-utils.c:1297
 msgid " platform"
-msgstr " среда исполнения"
+msgstr " платформа"
 
 #: common/flatpak-ref-utils.c:1299
 msgid " application base"
@@ -5681,7 +5680,7 @@ msgstr "Обновить %s?"
 
 #: portal/flatpak-portal.c:2286
 msgid "The application wants to update itself."
-msgstr "Приложение хочет обновиться само по себе."
+msgstr "Приложение хочет обновить себя."
 
 #: portal/flatpak-portal.c:2287
 msgid "Update access can be changed any time from the privacy settings."
@@ -5724,7 +5723,7 @@ msgstr "Требуется авторизация для установки пр
 #. in the wheel group to install without authenticating.
 #: system-helper/org.freedesktop.Flatpak.policy.in:41
 msgid "Install signed runtime"
-msgstr "Установить подписанную исполняемую среду"
+msgstr "Установить подписанную среду выполнения"
 
 #. SECURITY:
 #. - Normal users do not require admin authentication to update an
@@ -5793,7 +5792,7 @@ msgstr "Требуется авторизация для установки пр
 #. in the wheel group to uninstall without authenticating.
 #: system-helper/org.freedesktop.Flatpak.policy.in:144
 msgid "Uninstall runtime"
-msgstr "Удалить среду исполнения"
+msgstr "Удалить среду выполнения"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:145
 msgid "Authentication is required to uninstall software"
