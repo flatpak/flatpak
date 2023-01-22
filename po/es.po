@@ -1826,7 +1826,7 @@ msgstr "Instalada:"
 #: app/flatpak-builtins-remote-info.c:251
 #: app/flatpak-builtins-remote-info.c:287
 msgid "Runtime:"
-msgstr "Runtime:"
+msgstr "Tiempo de ejecución:"
 
 #: app/flatpak-builtins-info.c:232 app/flatpak-builtins-info.c:288
 #: app/flatpak-builtins-remote-info.c:252
@@ -5064,7 +5064,7 @@ msgstr "Nombre dbus no válido: %s\n"
 
 #: common/flatpak-oci-registry.c:1082
 msgid "Authorization failed"
-msgstr ""
+msgstr "Autorización fallida"
 
 #: common/flatpak-oci-registry.c:1086
 #, c-format
@@ -5168,7 +5168,7 @@ msgstr ""
 
 #: common/flatpak-ref-utils.c:382
 msgid "Branch can't be empty"
-msgstr ""
+msgstr "La rama no puede estar vacía"
 
 #: common/flatpak-ref-utils.c:392
 #, c-format
@@ -5718,19 +5718,19 @@ msgstr "¿Actualizar %s?"
 
 #: portal/flatpak-portal.c:2286
 msgid "The application wants to update itself."
-msgstr ""
+msgstr "La aplicación necesita actualizarse."
 
 #: portal/flatpak-portal.c:2287
 msgid "Update access can be changed any time from the privacy settings."
-msgstr ""
+msgstr "El acceso a la actualización se puede cambiar desde la configuración de privacidad."
 
 #: portal/flatpak-portal.c:2312
 msgid "Application update not allowed"
-msgstr ""
+msgstr "No se permite actualizar la aplicación"
 
 #: portal/flatpak-portal.c:2469
 msgid "Self update not supported, new version requires new permissions"
-msgstr ""
+msgstr "No se permite la actualización automática, la versión nueva requiere nuevos permisos"
 
 #: portal/flatpak-portal.c:2651 portal/flatpak-portal.c:2668
 #, fuzzy
@@ -5961,7 +5961,7 @@ msgstr "La autentificación es obligatoria para actualizar un programa"
 #. all users’ parental controls policies to true.
 #: system-helper/org.freedesktop.Flatpak.policy.in:287
 msgid "Override parental controls"
-msgstr ""
+msgstr "Desactivar control parental"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:288
 #, fuzzy
