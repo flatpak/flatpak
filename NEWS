@@ -1,3 +1,40 @@
+Changes in 1.15.2
+~~~~~~~~~~~~~~~~~
+Released: not yet
+
+Bug fixes:
+
+* Never try to export a parent of reserved directories as a --filesystem,
+  for example /run, which would prevent the app from starting (#5205, #5207)
+* Never try to export a --filesystem below /run/flatpak or /run/host,
+  which could similarly prevent the app from starting
+* The above change also fixes apps not starting if a --filesystem is a
+  symlink to the root directory (#1357)
+* Show a warning when the --filesystem exists but cannot be shared with
+  the sandbox (#1357, #5035, #5205, #5207)
+* Display the intended messages for `flatpak repair` (#5204)
+* Exporting an app to an existing repository on a CIFS filesystem
+  now works as intended (#5257)
+* Unset $GIO_EXTRA_MODULES for apps, avoiding misbehaviour in some GLib
+  apps when set to a path on the host (#5206)
+* Unset $XKB_CONFIG_ROOT for apps, avoiding crashes in GTK and Qt apps
+  under Wayland when this variable is set to a path not available in the
+  sandbox (#5194)
+* When using the fish shell, avoid duplicate XDG_DATA_DIRS entries if the
+  profile script is sourced more than once (#5198)
+* Update included copy of bubblewrap to 0.7.0 for better error messages
+* Install SELinux files correctly when building with Meson
+* Translation updates: ru, tr (#5256, #5262)
+
+Internal changes:
+
+* Update included copy of libglnx
+* flatpak -v now uses the INFO log level, and flatpak -vv uses the
+  DEBUG log level in the flatpak log domain. Previously, the extra
+  messages that were logged by flatpak -vv were in a separate "flatpak2"
+  log domain. G_MESSAGES_DEBUG=flatpak previously had an effect similar to
+  flatpak -v, and is now more similar to flatpak -vv. (#5001)
+
 Changes in 1.15.1
 ~~~~~~~~~~~~~~~~~
 Released: 2022-11-17
