@@ -1,3 +1,26 @@
+Changes in 1.14.2
+~~~~~~~~~~~~~~~~~
+Released: not yet
+
+Bug fixes:
+
+* Display the intended messages for `flatpak repair` (#5204)
+* Exporting an app to an existing repository on a CIFS filesystem
+  now works as intended (#5257)
+* Unset $GIO_EXTRA_MODULES for apps, avoiding misbehaviour in some GLib
+  apps when set to a path on the host (#5206)
+* Unset $XKB_CONFIG_ROOT for apps, avoiding crashes in GTK and Qt apps
+  under Wayland when this variable is set to a path not available in the
+  sandbox (#5194)
+* Unset $KRB5CCNAME for apps
+* When using the fish shell, avoid duplicate XDG_DATA_DIRS entries if the
+  profile script is sourced more than once (#5198)
+
+Internal changes:
+
+* The INFO log level is now treated the same as the DEBUG log level
+  by `flatpak -v`, to make backports from 1.15.x simpler
+
 Changes in 1.14.1
 ~~~~~~~~~~~~~~~~~
 Released: 2022-11-18
