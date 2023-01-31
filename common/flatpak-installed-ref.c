@@ -541,9 +541,9 @@ flatpak_installed_ref_load_appdata (FlatpakInstalledRef *self,
   swcatalog_path = g_build_filename (priv->deploy_dir, "files/share/swcatalog/xml/flatpak.xml.gz", NULL);
 
   if (g_file_test (appinfo_path, G_FILE_TEST_EXISTS))
-    path = appinfo_path;
+    path = g_steal_pointer (&appinfo_path);
   else if (g_file_test (swcatalog_path, G_FILE_TEST_EXISTS))
-    path = swcatalog_path;
+    path = g_steal_pointer (&swcatalog_path);
   else
     return NULL;
 

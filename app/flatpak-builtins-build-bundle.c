@@ -128,8 +128,9 @@ get_bundle_appstream_data (GFile        *root,
   *result = NULL;
 
   appstream_file = g_file_resolve_relative_path (root, "files/share/swcatalog/xml/flatpak.xml.gz");
-  if (!g_file_test (g_file_get_path (appstream_file), G_FILE_TEST_EXISTS))
-    {
+  if (!g_file_test (g_file_peek_path (appstream_file), G_FILE_TEST_EXISTS))
+   {
+      g_clear_object (&appstream_file);
       xmls_dir = g_file_resolve_relative_path (root, "files/share/app-info/xmls");
       appstream_basename = g_strconcat (name, ".xml.gz", NULL);
       appstream_file = g_file_get_child (xmls_dir, appstream_basename);
