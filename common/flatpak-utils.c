@@ -5355,7 +5355,6 @@ extract_appstream (OstreeRepo        *repo,
 
   if (!ostree_repo_read_commit (repo, flatpak_decomposed_get_ref (ref), &root, NULL, NULL, error))
     return FALSE;
-
   keyfile = g_key_file_new ();
   metadata = g_file_get_child (root, "metadata");
   if (g_file_query_exists (metadata, cancellable))
@@ -5369,9 +5368,8 @@ extract_appstream (OstreeRepo        *repo,
       if (!g_key_file_load_from_data (keyfile, content, len, G_KEY_FILE_NONE, error))
         return FALSE;
     }
-
   appstream_file = g_file_resolve_relative_path (root, "files/share/swcatalog/xml/flatpak.xml.gz");
-  if (g_file_test (g_file_peek_path (appstream_file), G_FILE_TEST_EXISTS))
+  if (g_file_query_exists (appstream_file, cancellable))
     app_info_dir = g_file_resolve_relative_path (root, "files/share/swcatalog");
   else
     {
