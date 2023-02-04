@@ -3361,7 +3361,6 @@ static char *
 read_appdata_xml_from_deploy_dir (GFile *deploy_dir, const char *id)
 {
   g_autoptr(GFile) appdata_file = NULL;
-  g_autofree char *appdata_name = NULL;
   g_autoptr(GFileInputStream) appdata_in = NULL;
   gsize size;
 

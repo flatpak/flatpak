@@ -5344,11 +5344,9 @@ extract_appstream (OstreeRepo        *repo,
 {
   g_autoptr(GFile) root = NULL;
   g_autoptr(GFile) app_info_dir = NULL;
-  g_autoptr(GFile) xmls_dir = NULL;
   g_autoptr(GFile) icons_dir = NULL;
   g_autoptr(GFile) appstream_file = NULL;
   g_autoptr(GFile) metadata = NULL;
-  g_autofree char *appstream_basename = NULL;
   g_autoptr(GInputStream) in = NULL;
   g_autoptr(FlatpakXml) xml_root = NULL;
   g_autoptr(GKeyFile) keyfile = NULL;
