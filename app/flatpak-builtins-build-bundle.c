@@ -120,12 +120,16 @@ get_bundle_appstream_data (GFile        *root,
                            GCancellable *cancellable,
                            GError      **error)
 {
+  g_autoptr(GFile) xmls_dir = NULL;
+  g_autofree char *appstream_basename = NULL;
   g_autoptr(GFile) appstream_file = NULL;
   g_autoptr(GInputStream) xml_in = NULL;
 
   *result = NULL;
-  
-  flatpak_appstream_get_xml_path (root, &appstream_file, NULL, name, NULL);
+
+  xmls_dir = g_file_resolve_relative_path (root, "files/share/app-info/xmls");
+  appstream_basename = g_strconcat (name, ".xml.gz", NULL);
+  appstream_file = g_file_get_child (xmls_dir, appstream_basename);
 
   xml_in = (GInputStream *) g_file_read (appstream_file, cancellable, NULL);
   if (xml_in)
@@ -173,10 +177,6 @@ iterate_bundle_icons (GFile                     *root,
   g_autoptr(GFile) icons_dir =
     g_file_resolve_relative_path (root,
                                   "files/share/app-info/icons/flatpak");
-  if (!g_file_test (g_file_peek_path (icons_dir), G_FILE_TEST_IS_DIR)) {
-    icons_dir = g_file_resolve_relative_path (root,
-                                  "files/share/swcatalog/icons/flatpak");
-  }
   const char *icon_sizes[] = { "64x64", "128x128" };
   const char *icon_sizes_key[] = { "icon-64", "icon-128" };
   g_autofree char *icon_name = g_strconcat (name, ".png", NULL);

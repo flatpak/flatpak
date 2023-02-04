@@ -823,12 +823,6 @@ void flatpak_appstream_xml_filter (FlatpakXml *appstream,
                                    GRegex *allow_refs,
                                    GRegex *deny_refs);
 
-void flatpak_appstream_get_xml_path (GFile        *root,
-                                     GFile       **appstream_file_out,
-                                     GFile       **app_info_dir_out,
-                                     const char   *name,
-                                     GCancellable *cancellable);
-
 char * flatpak_filter_glob_to_regexp (const char *glob, gboolean runtime_only, GError **error);
 gboolean flatpak_parse_filters (const char *data,
                                 GRegex **allow_refs_out,

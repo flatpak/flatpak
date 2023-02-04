@@ -3361,10 +3361,12 @@ static char *
 read_appdata_xml_from_deploy_dir (GFile *deploy_dir, const char *id)
 {
   g_autoptr(GFile) appdata_file = NULL;
+  g_autofree char *appdata_name = NULL;
   g_autoptr(GFileInputStream) appdata_in = NULL;
   gsize size;
 
-  flatpak_appstream_get_xml_path (deploy_dir, &appdata_file, NULL, id, NULL);
+  appdata_name = g_strconcat (id, ".xml.gz", NULL);
+  appdata_file  = flatpak_build_file (deploy_dir, "files/share/app-info/xmls", appdata_name, NULL);
 
   appdata_in = g_file_read (appdata_file, NULL, NULL);
   if (appdata_in)
