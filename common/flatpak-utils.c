@@ -5368,17 +5368,8 @@ extract_appstream (OstreeRepo        *repo,
       if (!g_key_file_load_from_data (keyfile, content, len, G_KEY_FILE_NONE, error))
         return FALSE;
     }
-  appstream_file = g_file_resolve_relative_path (root, "files/share/swcatalog/xml/flatpak.xml.gz");
-  if (g_file_query_exists (appstream_file, cancellable))
-    app_info_dir = g_file_resolve_relative_path (root, "files/share/swcatalog");
-  else
-    {
-      g_clear_object (&appstream_file);
-      app_info_dir = g_file_resolve_relative_path (root, "files/share/app-info");
-      xmls_dir = g_file_resolve_relative_path (app_info_dir, "xmls");
-      appstream_basename = g_strconcat (id, ".xml.gz", NULL);
-      appstream_file = g_file_get_child (xmls_dir, appstream_basename);
-    }
+
+  flatpak_appstream_get_xml_path (root, &appstream_file, &app_info_dir, id, NULL);
 
   icons_dir = g_file_resolve_relative_path (app_info_dir, "icons/flatpak");
 
@@ -5957,6 +5948,36 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
     return FALSE;
 
   return TRUE;
+}
+
+void
+flatpak_appstream_get_xml_path (GFile        *root,
+                                GFile       **appstream_file_out,
+                                GFile       **app_info_dir_out,
+                                const char   *name,
+                                GCancellable *cancellable)
+{
+  g_autoptr(GFile) appstream_file = NULL;
+  g_autoptr(GFile) app_info_dir = NULL;
+
+  appstream_file = g_file_resolve_relative_path (root, "files/share/swcatalog/xml/flatpak.xml.gz");
+  if (g_file_query_exists (appstream_file, cancellable))
+    app_info_dir = g_file_resolve_relative_path (root, "files/share/swcatalog");
+  {
+    g_autoptr(GFile) xmls_dir = NULL;
+    g_autofree char *appstream_basename = NULL;
+
+    g_clear_object (&appstream_file);
+    app_info_dir = g_file_resolve_relative_path (root, "files/share/app-info");
+    xmls_dir = g_file_resolve_relative_path (app_info_dir, "xmls");
+    appstream_basename = g_strconcat (name, ".xml.gz", NULL);
+    appstream_file = g_file_get_child (xmls_dir, appstream_basename);
+  }
+
+  if (app_info_dir_out)
+    *app_info_dir_out = g_steal_pointer (&app_info_dir);
+  if (appstream_file_out)
+    *appstream_file_out = g_steal_pointer (&appstream_file);
 }
 
 void
