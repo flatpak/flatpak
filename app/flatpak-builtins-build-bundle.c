@@ -120,21 +120,12 @@ get_bundle_appstream_data (GFile        *root,
                            GCancellable *cancellable,
                            GError      **error)
 {
-  g_autoptr(GFile) xmls_dir = NULL;
-  g_autofree char *appstream_basename = NULL;
   g_autoptr(GFile) appstream_file = NULL;
   g_autoptr(GInputStream) xml_in = NULL;
 
   *result = NULL;
-
-  appstream_file = g_file_resolve_relative_path (root, "files/share/swcatalog/xml/flatpak.xml.gz");
-  if (!g_file_test (g_file_peek_path (appstream_file), G_FILE_TEST_EXISTS))
-   {
-      g_clear_object (&appstream_file);
-      xmls_dir = g_file_resolve_relative_path (root, "files/share/app-info/xmls");
-      appstream_basename = g_strconcat (name, ".xml.gz", NULL);
-      appstream_file = g_file_get_child (xmls_dir, appstream_basename);
-    }
+  
+  flatpak_appstream_get_xml_path (root, &appstream_file, NULL, name, NULL);
 
   xml_in = (GInputStream *) g_file_read (appstream_file, cancellable, NULL);
   if (xml_in)
