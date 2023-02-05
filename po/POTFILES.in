@@ -50,6 +50,7 @@ app/flatpak-quiet-transaction.c
 common/flatpak-auth.c
 common/flatpak-context.c
 common/flatpak-dir.c
+common/flatpak-exports.c
 common/flatpak-installation.c
 common/flatpak-instance.c
 common/flatpak-oci-registry.c
