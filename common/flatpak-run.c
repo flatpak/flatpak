@@ -608,7 +608,7 @@ flatpak_run_add_gpg_agent_args (FlatpakBwrap *bwrap)
   g_autofree char * sandbox_agent_socket = NULL;
   g_autoptr(GError) gpgconf_error = NULL;
   g_autoptr(GSubprocess) process = NULL;
-  g_autoptr(GInputStream) base_stream = NULL;
+  GInputStream *base_stream = NULL;
   g_autoptr(GDataInputStream) data_stream = NULL;
 
   process = g_subprocess_new (G_SUBPROCESS_FLAGS_STDOUT_PIPE,
