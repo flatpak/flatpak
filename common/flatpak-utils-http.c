@@ -373,7 +373,11 @@ flatpak_create_http_session (const char *user_agent)
   g_mutex_init (&session->lock);
 
   curl_easy_setopt (curl, CURLOPT_USERAGENT, user_agent);
+#if CURL_AT_LEAST_VERSION(7, 85, 0)
+  rc = curl_easy_setopt (curl, CURLOPT_PROTOCOLS_STR, "http,https");
+#else
   rc = curl_easy_setopt (curl, CURLOPT_PROTOCOLS, (long)(CURLPROTO_HTTP | CURLPROTO_HTTPS));
+#endif
   g_assert_cmpint (rc, ==, CURLM_OK);
 
   curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
