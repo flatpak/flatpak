@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2022-11-18 13:40+0000\n"
+"POT-Creation-Date: 2023-02-06 17:11+0000\n"
 "PO-Revision-Date: 2018-03-10 00:00+0100\n"
 "Last-Translator: Balázs Úr <urbalazs@gmail.com>\n"
 "Language-Team: Hungarian <openscope at googlegroups dot com>\n"
@@ -259,7 +259,7 @@ msgstr "Nincs %s illeszkedésű kiterjesztéspont ebben: %s"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Hiányzó „=” a(z) „%s” kötési csatolás kapcsolóban"
 
-#: app/flatpak-builtins-build.c:606 common/flatpak-run.c:4764
+#: app/flatpak-builtins-build.c:606 common/flatpak-run.c:4768
 msgid "Unable to start app"
 msgstr "Nem indítható el az alkalmazás"
 
@@ -4639,7 +4639,7 @@ msgstr ""
 "távoliból: %s\n"
 
 #: common/flatpak-dir.c:1105 common/flatpak-dir.c:5895
-#: common/flatpak-utils.c:6929 common/flatpak-utils.c:6934
+#: common/flatpak-utils.c:6933 common/flatpak-utils.c:6938
 msgid "Image is not a manifest"
 msgstr ""
 
@@ -4782,7 +4782,7 @@ msgstr "A(z) %s kommit %s már telepítve van"
 msgid "While pulling %s from remote %s: "
 msgstr "A(z) %s lekérése közben a(z) %s távoliról: "
 
-#: common/flatpak-dir.c:6253 common/flatpak-utils.c:6826
+#: common/flatpak-dir.c:6253 common/flatpak-utils.c:6830
 msgid "GPG signatures found, but none are in trusted keyring"
 msgstr ""
 
@@ -5406,93 +5406,93 @@ msgstr "Nem hozható létre szinkronizálási cső"
 msgid "Failed to sync with dbus proxy"
 msgstr "Nem sikerült szinkronizálni a dbus proxyval"
 
-#: common/flatpak-run.c:2184
+#: common/flatpak-run.c:2188
 msgid "No systemd user session available, cgroups not available"
 msgstr ""
 
-#: common/flatpak-run.c:2677
+#: common/flatpak-run.c:2681
 #, fuzzy
 msgid "Unable to allocate instance id"
 msgstr "Nem hozható létre szinkronizálási cső"
 
-#: common/flatpak-run.c:2813 common/flatpak-run.c:2823
+#: common/flatpak-run.c:2817 common/flatpak-run.c:2827
 #, fuzzy, c-format
 msgid "Failed to open flatpak-info file: %s"
 msgstr "Nem sikerült megnyitni a flatpak-információs átmeneti fájlt: %s"
 
-#: common/flatpak-run.c:2852
+#: common/flatpak-run.c:2856
 #, fuzzy, c-format
 msgid "Failed to open bwrapinfo.json file: %s"
 msgstr "Nem sikerült megnyitni a flatpak-információs átmeneti fájlt: %s"
 
-#: common/flatpak-run.c:2877
+#: common/flatpak-run.c:2881
 #, fuzzy, c-format
 msgid "Failed to write to instance id fd: %s"
 msgstr "Nem sikerült olvasni a(z) %s kommitot: "
 
-#: common/flatpak-run.c:3263
+#: common/flatpak-run.c:3267
 #, fuzzy
 msgid "Initialize seccomp failed"
 msgstr "Alkalmazások előkészítése egy elnevezett alkalmazásból"
 
-#: common/flatpak-run.c:3302
+#: common/flatpak-run.c:3306
 #, fuzzy, c-format
 msgid "Failed to add architecture to seccomp filter: %s"
 msgstr "Nem sikerült a(z) %s helyi további adat betöltése: %s"
 
-#: common/flatpak-run.c:3310
+#: common/flatpak-run.c:3314
 #, fuzzy, c-format
 msgid "Failed to add multiarch architecture to seccomp filter: %s"
 msgstr "Nem sikerült a(z) %s helyi további adat betöltése: %s"
 
-#: common/flatpak-run.c:3342 common/flatpak-run.c:3364
+#: common/flatpak-run.c:3346 common/flatpak-run.c:3368
 #, fuzzy, c-format
 msgid "Failed to block syscall %d: %s"
 msgstr "Hiba: %s %s sikertelen: %s\n"
 
-#: common/flatpak-run.c:3397
+#: common/flatpak-run.c:3401
 #, fuzzy, c-format
 msgid "Failed to export bpf: %s"
 msgstr "Nem sikerült olvasni az exportált fájlból"
 
-#: common/flatpak-run.c:3648
+#: common/flatpak-run.c:3652
 #, fuzzy, c-format
 msgid "Failed to open ‘%s’"
 msgstr "Nem sikerült megnyitni a flatpak-információs átmeneti fájlt: %s"
 
-#: common/flatpak-run.c:3934
+#: common/flatpak-run.c:3938
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "ldconfig meghiúsult, kilépési állapot: %d"
 
-#: common/flatpak-run.c:3941
+#: common/flatpak-run.c:3945
 #, fuzzy
 msgid "Can't open generated ld.so.cache"
 msgstr "Nem lehet megnyitni a(z) %s névteret: %s"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-run.c:4052
+#: common/flatpak-run.c:4056
 #, c-format
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr ""
 
-#: common/flatpak-run.c:4154
+#: common/flatpak-run.c:4158
 msgid ""
 "\"flatpak run\" is not intended to be run as `sudo flatpak run`. Use `sudo -"
 "i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell."
 msgstr ""
 
-#: common/flatpak-run.c:4337
+#: common/flatpak-run.c:4341
 #, fuzzy, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "Nem sikerült olvasni a(z) %s kommitot: "
 
-#: common/flatpak-run.c:4352
+#: common/flatpak-run.c:4356
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr ""
 
-#: common/flatpak-run.c:4361
+#: common/flatpak-run.c:4365
 #, fuzzy, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "Nem sikerült olvasni a(z) %s kommitot: "
@@ -5716,79 +5716,79 @@ msgstr "Érvénytelen gpg kulcs"
 msgid "No extra data sources"
 msgstr "Nincsenek további adatforrások"
 
-#: common/flatpak-utils.c:5426
+#: common/flatpak-utils.c:5430
 #, fuzzy, c-format
 msgid "Error copying 64x64 icon for component %s: %s\n"
 msgstr "Hiba a migráció során: %s\n"
 
-#: common/flatpak-utils.c:5432
+#: common/flatpak-utils.c:5436
 #, fuzzy, c-format
 msgid "Error copying 128x128 icon for component %s: %s\n"
 msgstr "Hiba a migráció során: %s\n"
 
-#: common/flatpak-utils.c:5679
+#: common/flatpak-utils.c:5683
 #, c-format
 msgid "%s is end-of-life, ignoring for appstream"
 msgstr ""
 
-#: common/flatpak-utils.c:5714
+#: common/flatpak-utils.c:5718
 #, fuzzy, c-format
 msgid "No appstream data for %s: %s\n"
 msgstr "Az appstream adatok frissítése a(z) %s távoli tárolóhoz\n"
 
-#: common/flatpak-utils.c:6684
+#: common/flatpak-utils.c:6688
 #, fuzzy
 msgid "Invalid bundle, no ref in metadata"
 msgstr "Érvénytelen ellenőrzőösszeg a további adatnál"
 
-#: common/flatpak-utils.c:6786
+#: common/flatpak-utils.c:6790
 #, c-format
 msgid "Collection ‘%s’ of bundle doesn’t match collection ‘%s’ of remote"
 msgstr ""
 
-#: common/flatpak-utils.c:6863
+#: common/flatpak-utils.c:6867
 msgid "Metadata in header and app are inconsistent"
 msgstr ""
 
-#: common/flatpak-utils.c:6948 common/flatpak-utils.c:7107
+#: common/flatpak-utils.c:6952 common/flatpak-utils.c:7111
 msgid "Invalid OCI image config"
 msgstr ""
 
-#: common/flatpak-utils.c:7010 common/flatpak-utils.c:7256
+#: common/flatpak-utils.c:7014 common/flatpak-utils.c:7260
 #, c-format
 msgid "Wrong layer checksum, expected %s, was %s"
 msgstr ""
 
-#: common/flatpak-utils.c:7090
+#: common/flatpak-utils.c:7094
 #, c-format
 msgid "No ref specified for OCI image %s"
 msgstr ""
 
-#: common/flatpak-utils.c:7096
+#: common/flatpak-utils.c:7100
 #, c-format
 msgid "Wrong ref (%s) specified for OCI image %s, expected %s"
 msgstr ""
 
-#: common/flatpak-utils.c:8297
+#: common/flatpak-utils.c:8301
 #, fuzzy, c-format
 msgid "Invalid require-flatpak argument %s"
 msgstr "Érvénytelen require-flatpak argumentum: %s\n"
 
-#: common/flatpak-utils.c:8307 common/flatpak-utils.c:8326
+#: common/flatpak-utils.c:8311 common/flatpak-utils.c:8330
 #, c-format
 msgid "%s needs a later flatpak version (%s)"
 msgstr "A(z) %s egy későbbi flatpak verziót (%s) igényel"
 
-#: common/flatpak-utils.c:8370
+#: common/flatpak-utils.c:8374
 msgid "Empty string is not a number"
 msgstr ""
 
-#: common/flatpak-utils.c:8396
+#: common/flatpak-utils.c:8400
 #, c-format
 msgid "“%s” is not an unsigned number"
 msgstr ""
 
-#: common/flatpak-utils.c:8406
+#: common/flatpak-utils.c:8410
 #, c-format
 msgid "Number “%s” is out of bounds [%s, %s]"
 msgstr ""
