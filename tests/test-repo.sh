@@ -439,6 +439,13 @@ ${FLATPAK} build-commit-from --no-update-summary --end-of-life-rebase=org.test.H
 GPGARGS="${FL_GPGARGS}" $(dirname $0)/make-test-app.sh repos/test-rebase org.test.NewHello master "${REBASE_COLLECTION_ID}" "NEW" > /dev/null
 update_repo test-rebase
 
+# First do a --no-deploy update and check the old version is still installed
+${FLATPAK} ${U} update -y --no-deploy org.test.Hello >&2
+
+assert_has_dir $HOME/.var/app/org.test.Hello
+assert_has_file $HOME/.var/app/org.test.Hello/data/a-file
+assert_not_has_dir $HOME/.var/app/org.test.NewHello
+
 ${FLATPAK} ${U} update -y org.test.Hello >&2
 
 # Make sure we got the new version installed
@@ -491,6 +498,12 @@ assert_has_dir $FL_DIR/runtime/org.test.Platform/$ARCH/master/active/files
 make_updated_runtime "" "" "mainline" ""
 make_updated_app "" "" "" "UPDATED99" "" "mainline"
 
+# First update with --no-deploy and check the old runtime is still installed
+${FLATPAK} ${U} update -y --no-deploy org.test.Hello >&2
+
+assert_has_dir $FL_DIR/runtime/org.test.Platform/$ARCH/master/active/files
+assert_not_has_dir $FL_DIR/runtime/org.test.Platform/$ARCH/mainline/active/files
+
 ${FLATPAK} ${U} update -y org.test.Hello >&2
 
 # The previous runtime should have been removed during the update
@@ -518,7 +531,11 @@ ${FLATPAK} ${U} update -y org.test.Platform >&2
 ${FLATPAK} ${U} info org.test.Platform > info-log
 assert_file_has_content info-log "End-of-life: Reason4"
 
-# Now that the runtime is EOL and unused it should be uninstalled by the update command
+# Now that the runtime is EOL and unused it should be uninstalled by the
+# update command. Check first that it's not uninstalled with --no-deploy.
+${FLATPAK} ${U} update -y --no-deploy >&2
+assert_has_dir $FL_DIR/runtime/org.test.Platform/$ARCH/master/active/files
+
 ${FLATPAK} ${U} update -y >&2
 assert_not_has_dir $FL_DIR/runtime/org.test.Platform/$ARCH/master/active/files
 
