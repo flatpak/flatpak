@@ -3269,6 +3269,28 @@ test_transaction_install_uninstall (void)
 
   g_clear_object (&transaction);
 
+  /* uninstall org.test.Hello with no_deploy set to TRUE. This should be a
+   * no-op.
+   */
+  transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (transaction);
+
+  flatpak_transaction_set_no_deploy (transaction, TRUE);
+  g_assert_true (flatpak_transaction_get_no_deploy (transaction));
+
+  res = flatpak_transaction_add_uninstall (transaction, app, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  g_assert_true (flatpak_transaction_is_empty (transaction));
+
+  list = flatpak_transaction_get_operations (transaction);
+  g_assert_cmpint (g_list_length (list), ==, 0);
+  g_list_free (list);
+
+  g_clear_object (&transaction);
+
   /* uninstall org.test.Hello, we expect org.test.Hello.Locale to be
    * removed with it, but org.test.Platform to stay
    */
