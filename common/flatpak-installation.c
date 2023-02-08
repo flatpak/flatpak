@@ -1714,7 +1714,7 @@ flatpak_installation_load_app_overrides (FlatpakInstallation *self,
   if (dir == NULL)
     return NULL;
 
-  metadata_contents = flatpak_dir_load_override (dir, app_id, &metadata_size, error);
+  metadata_contents = flatpak_dir_load_override (dir, app_id, &metadata_size, NULL, error);
   if (metadata_contents == NULL)
     return NULL;
 

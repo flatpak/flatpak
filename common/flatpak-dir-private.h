@@ -562,6 +562,7 @@ FlatpakDeploy *       flatpak_dir_load_deployed                             (Fla
 char *                flatpak_dir_load_override                             (FlatpakDir                    *dir,
                                                                              const char                    *app_id,
                                                                              gsize                         *length,
+                                                                             GFile                        **file_out,
                                                                              GError                       **error);
 OstreeRepo *          flatpak_dir_get_repo                                  (FlatpakDir                    *self);
 gboolean              flatpak_dir_ensure_path                               (FlatpakDir                    *self,
