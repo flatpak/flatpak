@@ -1,3 +1,11 @@
+Changes in 1.14.3
+~~~~~~~~~~~~~~~~~
+Released: not yet
+
+Bug fixes:
+
+* Fix a crash when --socket=gpg-agent is used (#5095)
+
 Changes in 1.14.2
 ~~~~~~~~~~~~~~~~~
 Released: 2023-02-06
