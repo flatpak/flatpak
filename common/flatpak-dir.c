@@ -2983,7 +2983,7 @@ flatpak_dir_load_deployed (FlatpakDir        *self,
 
   metakey = g_key_file_new ();
   if (!g_key_file_load_from_data (metakey, metadata_contents, metadata_size, 0, error))
-    return NULL;
+    return glnx_prefix_error_null (error, "%s", flatpak_file_get_path_cached (metadata));
 
   deploy = flatpak_deploy_new (deploy_dir, ref, metakey, self->repo);
 
@@ -3633,7 +3633,7 @@ upgrade_deploy_data (GBytes             *deploy_data,
                                  &metadata_contents, &metadata_size, NULL, error))
         return NULL;
       if (!g_key_file_load_from_data (keyfile, metadata_contents, metadata_size, 0, error))
-        return NULL;
+        return glnx_prefix_error_null (error, "%s", flatpak_file_get_path_cached (metadata_file));
       add_metadata_to_deploy_data (&metadata_dict, keyfile);
 
       /* Add fields from appdata to deploy, since appdata-content-rating wasn't
