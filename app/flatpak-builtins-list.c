@@ -182,9 +182,15 @@ print_table_for_refs (gboolean      print_apps,
               continue;
             }
 
-          deploy_data = flatpak_deploy_get_deploy_data (deploy, FLATPAK_DEPLOY_VERSION_CURRENT, cancellable, NULL);
+          deploy_data = flatpak_deploy_get_deploy_data (deploy, FLATPAK_DEPLOY_VERSION_CURRENT, cancellable, &local_error);
+
           if (deploy_data == NULL)
-            continue;
+            {
+              g_warning (_("Unable to inspect current version of %s: %s"),
+                         partial_ref, local_error->message);
+              g_clear_error (&local_error);
+              continue;
+            }
 
           runtime = flatpak_deploy_data_get_runtime (deploy_data);
 
