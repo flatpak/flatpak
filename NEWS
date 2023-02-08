@@ -5,6 +5,14 @@ Released: not yet
 Bug fixes:
 
 * Fix a crash when --socket=gpg-agent is used (#5095)
+* Never try to export a parent of reserved directories as a --filesystem,
+  for example /run, which would prevent the app from starting (#5205, #5207)
+* Never try to export a --filesystem below /run/flatpak or /run/host,
+  which could similarly prevent the app from starting
+* The above change also fixes apps not starting if a --filesystem is a
+  symlink to the root directory (#1357)
+* Show a warning when the --filesystem exists but cannot be shared with
+  the sandbox (#1357, #5035, #5205, #5207)
 
 Changes in 1.14.2
 ~~~~~~~~~~~~~~~~~
