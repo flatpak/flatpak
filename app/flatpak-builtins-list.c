@@ -154,6 +154,7 @@ print_table_for_refs (gboolean      print_apps,
           const char *repo = NULL;
           g_autoptr(FlatpakDeploy) deploy = NULL;
           g_autoptr(GBytes) deploy_data = NULL;
+          g_autoptr(GError) local_error = NULL;
           const char *active;
           const char *alt_id;
           const char *eol;
@@ -171,7 +172,16 @@ print_table_for_refs (gboolean      print_apps,
           if (arch != NULL && !flatpak_decomposed_is_arch (ref, arch))
             continue;
 
-          deploy = flatpak_dir_load_deployed (dir, ref, NULL, cancellable, NULL);
+          deploy = flatpak_dir_load_deployed (dir, ref, NULL, cancellable, &local_error);
+
+          if (deploy == NULL)
+            {
+              g_warning (_("Unable to load details of %s: %s"),
+                         partial_ref, local_error->message);
+              g_clear_error (&local_error);
+              continue;
+            }
+
           deploy_data = flatpak_deploy_get_deploy_data (deploy, FLATPAK_DEPLOY_VERSION_CURRENT, cancellable, NULL);
           if (deploy_data == NULL)
             continue;
