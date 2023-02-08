@@ -1,3 +1,18 @@
+Changes in 1.15.3
+~~~~~~~~~~~~~~~~~
+Released: not yet
+
+Bug fixes:
+
+* Fix a crash when --socket=gpg-agent is used (#5095)
+* Fix a deprecation warning when compiled with curl >= 7.85 (#5284)
+* Translation updates: es (#5266)
+
+Internal changes:
+
+* Better diagnostic messages for why runtimes are or are not considered
+  unused (#5237)
+
 Changes in 1.15.2
 ~~~~~~~~~~~~~~~~~
 Released: 2023-02-06
