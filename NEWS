@@ -4,7 +4,18 @@ Released: not yet
 
 Bug fixes:
 
+* When splitting an upgrade into two steps (download without installing, and
+  then upgrade without allowing further downloads) like GNOME Software does,
+  if an app is marked EOL and superseded by a replacement, don't remove the
+  superseded app in the first step, which would result in the replacement
+  incorrectly not being installed (#5172)
 * Fix a crash when --socket=gpg-agent is used (#5095)
+* Fix a crash when listing apps if one of them is broken or misconfigured
+  (#5293)
+* If an app has invalid syntax in its overrides or metadata, mention the
+  filename in the error message (#5293)
+* Unset $GDK_BACKEND for apps, ensuring GTK apps with --socket=fallback-x11
+  can work (#5303)
 * Fix a deprecation warning when compiled with curl >= 7.85 (#5284)
 * Translation updates: es (#5266)
 
