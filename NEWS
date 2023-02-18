@@ -4,6 +4,11 @@ Released: not yet
 
 Bug fixes:
 
+* When splitting an upgrade into two steps (download without installing, and
+  then upgrade without allowing further downloads) like GNOME Software does,
+  if an app is marked EOL and superseded by a replacement, don't remove the
+  superseded app in the first step, which would result in the replacement
+  incorrectly not being installed (#5172)
 * Fix a crash when --socket=gpg-agent is used (#5095)
 * Fix a crash when listing apps if one of them is broken or misconfigured
   (#5293)
