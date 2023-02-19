@@ -2242,6 +2242,13 @@ add_related (FlatpakTransaction          *self,
           if (!rel->delete)
             continue;
 
+          if (priv->no_deploy)
+            {
+              g_info ("Skipping uninstallation of %s for no deploy transaction",
+                      flatpak_decomposed_get_ref (rel->ref));
+              continue;
+            }
+
           related_op = flatpak_transaction_add_op (self, rel->remote, rel->ref,
                                                    NULL, NULL, NULL, NULL,
                                                    FLATPAK_TRANSACTION_OPERATION_UNINSTALL,
@@ -2710,6 +2717,13 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
     }
   else if (kind == FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
     {
+      /* Skip uninstall for no deploy transactions. */
+      if (priv->no_deploy)
+        {
+          g_info ("Skipping uninstallation of %s for no deploy transaction", pref);
+          return TRUE;
+        }
+
       if (!dir_ref_is_installed (priv->dir, ref, &origin, NULL))
         return flatpak_fail_error (error, FLATPAK_ERROR_NOT_INSTALLED,
                                    _("%s not installed"), pref);
@@ -2945,7 +2959,8 @@ flatpak_transaction_add_update (FlatpakTransaction *self,
  * @ref: the ref
  * @error: return location for a #GError
  *
- * Adds uninstalling the given ref to this transaction.
+ * Adds uninstalling the given ref to this transaction. If the transaction is
+ * set to not deploy updates, the request is ignored.
  *
  * Returns: %TRUE on success; %FALSE with @error set on failure.
  */
@@ -4957,6 +4972,13 @@ add_uninstall_unused_ops (FlatpakTransaction  *self,
       origin = flatpak_dir_get_origin (priv->dir, unused_ref, NULL, NULL);
       if (origin)
         {
+          if (priv->no_deploy)
+            {
+              g_info ("Skipping uninstallation of %s for no deploy transaction",
+                      unused_ref_str);
+              continue;
+            }
+
           /* These get added last and have no dependencies, so will run last */
           uninstall_op = flatpak_transaction_add_op (self, origin, unused_ref,
                                                      NULL, NULL, NULL, NULL,
