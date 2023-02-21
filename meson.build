@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 project(
-  'Flatpak',
+  'flatpak',
   'c',
   version : '1.15.2',
   default_options: [
@@ -307,7 +307,7 @@ cdata.set('PACKAGE_MICRO_VERSION', flatpak_micro_version)
 cdata.set('PACKAGE_EXTRA_VERSION', flatpak_extra_version)
 cdata.set_quoted(
   'PACKAGE_STRING',
-  '@0@ @1@'.format(meson.project_name(), meson.project_version()),
+  'Flatpak @0@'.format(meson.project_version()),
 )
 cdata.set_quoted('PACKAGE_VERSION', meson.project_version())
 cdata.set_quoted(
