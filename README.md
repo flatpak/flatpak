@@ -7,6 +7,10 @@ desktop applications on Linux.
 
 See https://flatpak.org/ for more information.
 
+Flatpak is available in the package repositories of most Linux distributions
+and can be installed from there. See https://flatpak.org/setup/ for quick
+setup instructions for many distributions.
+
 Community discussion happens in [#flatpak:matrix.org](https://matrix.to/#/#flatpak:matrix.org), on [the mailing list](https://lists.freedesktop.org/mailman/listinfo/flatpak), and on [the Flathub Discourse](https://discourse.flathub.org/).
 
 Read documentation for Flatpak [here](https://docs.flatpak.org/en/latest/index.html).
