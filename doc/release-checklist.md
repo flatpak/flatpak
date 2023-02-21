@@ -5,8 +5,9 @@ Flatpak release checklist
 * Update version number in `configure.ac` **and** `meson.build`
 * Update release date in `NEWS`
 * Commit the changes
-* `make distcheck`
+* `ninja -C ${builddir} flatpak-update-po`
     * This will update `po/`; commit those changes too
+* `meson dist -C ${builddir}`
 * Do any final smoke-testing, e.g. update a package, install and test it
 * `git evtag sign $VERSION`
 * `git push --atomic origin main $VERSION`
