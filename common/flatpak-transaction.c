@@ -1189,7 +1189,7 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
    * The ::operation-error signal gets emitted when an error occurs during the
    * execution of the transaction.
    *
-   * Returns: the %TRUE to contine transaction, %FALSE to stop
+   * Returns: the %TRUE to continue transaction, %FALSE to stop
    */
   signals[OPERATION_ERROR] =
     g_signal_new ("operation-error",
