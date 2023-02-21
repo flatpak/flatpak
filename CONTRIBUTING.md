@@ -1,53 +1,79 @@
-Flatpak uses a traditional autoconf-style build mechanism. The exact steps
-required depend on your distribution. Below are some steps that should work on
-Debian and Fedora, based on the configure options used to build those
-distributions' packages, These options will install into `/usr`, which will
-overwrite your distribution-provided system copy of Flatpak. **You should only
-do this if you understand the risks of it to the stability of your system, and
-you probably want to do it in a VM or on a development machine that's expected
-to break sometimes!**
+## Compiling Flatpak
 
-## On Debian
+If you need to build Flatpak from source, you can do so with Meson or
+with GNU Autotools. The recommended build system for this version of
+Flatpak is Meson, and the Autotools build system is likely to be removed
+from a future version of Flatpak.
+
+The exact steps required depend on your distribution. Below are some
+steps that should work on Debian and Fedora, based on the configure
+options used to build those distributions' packages, These options will
+install into `/usr`, which will overwrite your distribution-provided
+system copy of Flatpak.
+**You should only do this if you understand the risks of it to the
+stability of your system, and you probably want to do it in a VM or on
+a development machine that's expected to break sometimes!**
+
+### On Debian
+
 ```
 git clone https://github.com/flatpak/flatpak
 cd flatpak
 sudo apt build-dep flatpak
-NOCONFIGURE=1 ./autogen.sh
-./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var --libdir=\${prefix}/lib/x86_64-linux-gnu --runstatedir=/run --disable-auto-sideloading --disable-selinux-module --enable-gdm-env-file --enable-installed-tests --with-dbus-config-dir=/usr/share/dbus-1/system.d --with-privileged-group=sudo --with-run-media-dir=/media --with-system-bubblewrap=bwrap --with-system-dbus-proxy=xdg-dbus-proxy --with-systemdsystemunitdir=/lib/systemd/system --with-system-helper-user=_flatpak --enable-docbook-docs --enable-documentation --disable-gtk-doc
-make -j$(nproc)
-make check -j$(nproc)
-sudo make install
+git submodule update --init
+meson setup --prefix=/usr --sysconfdir=/etc --localstatedir=/var -Dselinux_module=disabled -Dinstalled_tests=true -Ddbus_config_dir=/usr/share/dbus-1/system.d -Dprivileged_group=sudo -Drun_media_dir=/media -Dsystem_bubblewrap=bwrap -Dsystem_dbus_proxy=xdg-dbus-proxy -Dsystemdsystemunitdir=/lib/systemd/system -Dsystemdsystemenvgendir=/lib/systemd/system-environment-generators -Dsystem_helper_user=_flatpak -Dgtkdoc=disabled _build
+meson compile -C _build
+meson test -C _build
+sudo meson install -C _build
 ```
 
-## On Fedora
+### On Fedora
 
 ```
 git clone https://github.com/flatpak/flatpak
 cd flatpak
 sudo dnf builddep flatpak
 sudo dnf install gettext-devel socat
-NOCONFIGURE=1 ./autogen.sh
-./configure --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib64 --localstatedir=/var --enable-docbook-docs --enable-installed-tests --enable-selinux-module --with-system-bubblewrap --with-system-dbus-proxy
-make -j$(nproc)
-make check -j$(nproc)
-sudo make install
+git submodule update --init
+meson setup --prefix=/usr --sysconfdir=/etc --localstatedir=/var -Dinstalled_tests=true -Dselinux_module=enabled -Dsystem_bubblewrap=bwrap -Dsystem_dbus_proxy=xdg-dbus-proxy _build
+meson compile -C _build
+meson test -C _build
+sudo meson install -C _build
 ```
+
+## Building with Autotools
+
+Older branches of Flatpak used GNU Autotools. See
+https://github.com/flatpak/flatpak/blob/flatpak-1.14.x/CONTRIBUTING.md
+for more details of that build system.
+
+The Autotools build system is likely to be removed from a future version
+of Flatpak, leaving Meson as the only build system supported.
+
+Newer releases of Flatpak do not include Autotools-generated files in
+the source archive. If it is necessary to build these releases with
+Autotools for some reason, the build system must be set up by running:
+
+    ./autogen.sh
+
+before proceeding as if for any other Autotools project.
 
 ## How to run a specified set of tests
 
 Sometimes you don't want to run the whole test suite but just one you're
 working on. This can be accomplished with a command like:
+
 ```
-make check TESTS='tests/test-alias@system.wrap tests/test-alias@user.wrap'
+meson test -C _build test-info@user.wrap test-info@system.wrap
 ```
 
 ## More info
-Dependencies you will need include: autoconf, automake, libtool, bison,
+Dependencies you will need include: meson, bison,
 gettext, gtk-doc, gobject-introspection, libcap, libarchive, libxml2, libsoup,
 gpgme, polkit, libXau, ostree, json-glib, appstream, libseccomp (or their devel
 packages).
 
-Most configure arguments are documented in `./configure --help`. However,
+Most configure arguments are documented in `meson_options.txt`. However,
 there are some options that are a bit more complicated.
 
 Flatpak relies on a project called
@@ -55,7 +81,7 @@ Flatpak relies on a project called
 sandboxing. By default, an in-tree copy of this is built (distributed in the
 tarball or using git submodules in the git tree). This will build a helper
 called flatpak-bwrap. If your system has a recent enough version of Bubblewrap
-already, you can use `--with-system-bubblewrap` to use that instead.
+already, you can use `-Dsystem_bubblewrap=bwrap` to use that instead.
 
 Bubblewrap can run in two modes, either using unprivileged user
 namespaces or setuid mode. This requires that the kernel supports this,
@@ -68,22 +94,13 @@ If unprivileged user namespaces are not available, then Bubblewrap must
 be built as setuid root. This is believed to be safe, as it is
 designed to do this. Any build of Bubblewrap supports both
 unprivileged and setuid mode, you just need to set the setuid bit for
-it to change mode.
-
-However, this does complicate the installation a bit. If you pass
-`--with-priv-mode=setuid` to configure (of Flatpak or Bubblewrap) then
-`make install` will try to set the setuid bit. However that means you
-have to run `make install` as root. Alternatively, you can pass
-`--enable-sudo` to configure and it will call `sudo` when setting the
-setuid bit. Alternatively you can enable setuid completely outside of
-the installation, which is common for example when packaging Bubblewrap
-in a .deb or .rpm.
+it to change mode. The Meson build does not do this automatically.
 
 There are some complications when building Flatpak to a different
 prefix than the system-installed version. First of all, the newly
 built Flatpak will look for system-installed flatpaks in
 `$PREFIX/var/lib/flatpak`, which will not match existing installations.
-You can use `--with-system-install-dir=/var/lib/flatpak` to make both
+You can use `-Dsystem_install_dir=/var/lib/flatpak` to make both
 installations use the same location.
 
 Secondly, Flatpak ships with a root-privileged PolicyKit helper for
