@@ -17,7 +17,7 @@ Bug fixes:
 * Unset $GDK_BACKEND for apps, ensuring GTK apps with --socket=fallback-x11
   can work (#5303)
 * Fix a deprecation warning when compiled with curl >= 7.85 (#5284)
-* Translation updates: es (#5266)
+* Translation updates: es, ru (#5266, #5312, #5313)
 
 Internal changes:
 
