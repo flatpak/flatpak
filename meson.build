@@ -4,7 +4,7 @@
 project(
   'flatpak',
   'c',
-  version : '1.15.2',
+  version : '1.15.3',
   default_options: [
     'warning_level=2',
   ],
@@ -13,7 +13,7 @@ project(
 
 flatpak_major_version = 1
 flatpak_minor_version = 15
-flatpak_micro_version = 2
+flatpak_micro_version = 3
 flatpak_extra_version = ''
 
 flatpak_interface_age = 0

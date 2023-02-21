@@ -1,6 +1,14 @@
 Changes in 1.15.3
 ~~~~~~~~~~~~~~~~~
-Released: not yet
+Released: 2023-02-21
+
+Build system:
+
+* Building this version of Flatpak with Meson is recommended. The source
+  release flatpak-1.15.3.tar.xz no longer contains Autotools-generated
+  files, although this version can still be built using Autotools after
+  running `./autogen.sh`. Future versions are likely to remove the
+  Autotools build system.
 
 Bug fixes:
 
