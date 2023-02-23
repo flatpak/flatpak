@@ -2113,8 +2113,7 @@ flatpak_transaction_add_op (FlatpakTransaction             *self,
                             const char                     *commit,
                             GFile                          *bundle,
                             FlatpakTransactionOperationType kind,
-                            gboolean                        pin_on_deploy,
-                            GError                        **error)
+                            gboolean                        pin_on_deploy)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   FlatpakTransactionOperation *op;
@@ -2252,10 +2251,7 @@ add_related (FlatpakTransaction          *self,
           related_op = flatpak_transaction_add_op (self, rel->remote, rel->ref,
                                                    NULL, NULL, NULL, NULL,
                                                    FLATPAK_TRANSACTION_OPERATION_UNINSTALL,
-                                                   FALSE, error);
-          if (related_op == NULL)
-            return FALSE;
-
+                                                   FALSE);
           related_op->non_fatal = TRUE;
           related_op->fail_if_op_fails = op;
           flatpak_transaction_operation_add_related_to_op (related_op, op);
@@ -2284,10 +2280,7 @@ add_related (FlatpakTransaction          *self,
                                                    (const char **) rel->subpaths,
                                                    NULL, NULL, NULL,
                                                    FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE,
-                                                   FALSE, error);
-          if (related_op == NULL)
-            return FALSE;
-
+                                                   FALSE);
           related_op->non_fatal = TRUE;
           related_op->fail_if_op_fails = op;
           flatpak_transaction_operation_add_related_to_op (related_op, op);
@@ -2519,9 +2512,7 @@ add_new_dep_op (FlatpakTransaction           *self,
         return FALSE;
 
       *dep_op = flatpak_transaction_add_op (self, dep_remote, dep_ref, NULL, NULL, NULL, NULL,
-                                            FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE, FALSE, error);
-      if (*dep_op == NULL)
-        return FALSE;
+                                            FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE, FALSE);
     }
   else
     {
@@ -2531,9 +2522,7 @@ add_new_dep_op (FlatpakTransaction           *self,
           g_info ("Updating dependency %s of %s", flatpak_decomposed_get_pref (dep_ref),
                   flatpak_decomposed_get_pref (op->ref));
           *dep_op = flatpak_transaction_add_op (self, dep_remote, dep_ref, NULL, NULL, NULL, NULL,
-                                                FLATPAK_TRANSACTION_OPERATION_UPDATE, FALSE, error);
-          if (*dep_op == NULL)
-            return FALSE;
+                                                FLATPAK_TRANSACTION_OPERATION_UPDATE, FALSE);
           (*dep_op)->non_fatal = TRUE;
         }
     }
@@ -2746,9 +2735,7 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
     }
 
   op = flatpak_transaction_add_op (self, remote, ref, subpaths, previous_ids,
-                                   commit, bundle, kind, pin_on_deploy, error);
-  if (op == NULL)
-    return FALSE;
+                                   commit, bundle, kind, pin_on_deploy);
 
   if (external_metadata)
     op->external_metadata = g_bytes_new (external_metadata, strlen (external_metadata));
@@ -4983,9 +4970,8 @@ add_uninstall_unused_ops (FlatpakTransaction  *self,
           uninstall_op = flatpak_transaction_add_op (self, origin, unused_ref,
                                                      NULL, NULL, NULL, NULL,
                                                      FLATPAK_TRANSACTION_OPERATION_UNINSTALL,
-                                                     FALSE, NULL);
-          if (uninstall_op)
-            run_operation_last (uninstall_op);
+                                                     FALSE);
+          run_operation_last (uninstall_op);
         }
     }
 
