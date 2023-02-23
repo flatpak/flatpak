@@ -30,6 +30,7 @@
 #include "flatpak-builtins-utils.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-run-private.h"
+#include "flatpak-variant-impl-private.h"
 
 
 void
@@ -68,6 +69,26 @@ ref_dir_pair_free (RefDirPair *pair)
   g_free (pair);
 }
 
+char *
+metadata_get_subsets_string (VarMetadataRef commit_metadata)
+{
+  VarVariantRef xa_subsets_v;
+
+  if (var_metadata_lookup (commit_metadata, "xa.subsets", NULL, &xa_subsets_v))
+    {
+      VarArrayofstringRef xa_subsets = var_arrayofstring_from_variant (xa_subsets_v);
+      gsize len = var_arrayofstring_get_length (xa_subsets);
+      g_autofree char **subset_strings = g_new (char *, len + 1);
+
+      for (gsize j = 0; j < len; j++)
+        subset_strings[j] = (char *) var_arrayofstring_get_at (xa_subsets, j);
+      subset_strings[len] = NULL;
+
+      return g_strjoinv (", ", subset_strings);
+    }
+
+  return NULL;
+}
 
 gboolean
 looks_like_branch (const char *branch)

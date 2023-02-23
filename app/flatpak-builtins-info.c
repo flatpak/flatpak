@@ -109,6 +109,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   g_autofree char *formatted_size = NULL;
   gboolean friendly = TRUE;
   g_autofree const char **subpaths = NULL;
+  g_autofree char *subsets = NULL;
   int len = 0;
   int rows, cols;
   int width;
@@ -211,6 +212,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
             g_printerr (_("Warning: Commit has no flatpak metadata\n"));
 
           collection_id = var_metadata_lookup_string (commit_metadata, "ostree.collection-binding", NULL);
+          subsets = metadata_get_subsets_string (commit_metadata);
         }
 
       len = 0;
@@ -224,6 +226,8 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
         len = MAX (len, g_utf8_strlen (_("License:"), -1));
       if (collection_id != NULL)
         len = MAX (len, g_utf8_strlen (_("Collection:"), -1));
+      if (subsets != NULL)
+        len = MAX (len, g_utf8_strlen (_("Subsets:"), -1));
       len = MAX (len, g_utf8_strlen (_("Installation:"), -1));
       len = MAX (len, g_utf8_strlen (_("Installed:"), -1));
       if (flatpak_decomposed_is_app (ref))
@@ -267,6 +271,8 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
       print_aligned (len, _("Origin:"), origin ? origin : "-");
       if (collection_id)
         print_aligned (len, _("Collection:"), collection_id);
+      if (subsets)
+        print_aligned (len, _("Subsets:"), subsets);
       print_aligned (len, _("Installation:"), flatpak_dir_get_name_cached (dir));
       print_aligned (len, _("Installed:"), formatted_size);
       if (flatpak_decomposed_is_app (ref))

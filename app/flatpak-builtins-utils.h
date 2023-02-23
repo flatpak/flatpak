@@ -106,7 +106,7 @@ gboolean update_appstream (GPtrArray    *dirs,
 char ** get_permission_tables (XdpDbusPermissionStore *store);
 gboolean reset_permissions_for_app (const char *app_id,
                                     GError    **error);
-
+char * metadata_get_subsets_string (VarMetadataRef commit_metadata);
 
 /* --columns handling */
 

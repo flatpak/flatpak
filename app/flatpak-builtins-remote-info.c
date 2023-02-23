@@ -100,6 +100,7 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
   const char *collection_id = NULL;
   const char *eol = NULL;
   const char *eol_rebase = NULL;
+  g_autofree char *subsets = NULL;
   g_autoptr(GKeyFile) metakey = NULL;
   guint64 installed_size = 0;
   guint64 download_size = 0;
@@ -222,6 +223,7 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
             }
 
           collection_id = var_metadata_lookup_string (commit_metadata, "ostree.collection-binding", NULL);
+          subsets = metadata_get_subsets_string (commit_metadata);
 
           installed_size = GUINT64_FROM_BE (var_metadata_lookup_uint64 (commit_metadata, "xa.installed-size", 0));
           download_size = GUINT64_FROM_BE (var_metadata_lookup_uint64 (commit_metadata, "xa.download-size", 0));
@@ -242,6 +244,8 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
         len = MAX (len, g_utf8_strlen (_("License:"), -1));
       if (collection_id != NULL)
         len = MAX (len, g_utf8_strlen (_("Collection:"), -1));
+      if (subsets != NULL)
+        len = MAX (len, g_utf8_strlen (_("Subsets:"), -1));
       if (formatted_download_size)
         len = MAX (len, g_utf8_strlen (_("Download:"), -1));
       if (formatted_installed_size)
@@ -277,6 +281,8 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
         print_aligned (len, _("License:"), license);
       if (collection_id != NULL)
         print_aligned (len, _("Collection:"), collection_id);
+      if (subsets != NULL)
+        print_aligned (len, _("Subsets:"), subsets);
       if (formatted_download_size)
         print_aligned (len, _("Download:"), formatted_download_size);
       if (formatted_installed_size)
