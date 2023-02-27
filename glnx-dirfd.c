@@ -129,7 +129,7 @@ glnx_dirfd_iterator_init_take_fd (int               *dfd,
   if (!d)
     return glnx_throw_errno_prefix (error, "fdopendir");
 
-  real_dfd_iter->fd = glnx_steal_fd (dfd);
+  real_dfd_iter->fd = g_steal_fd (dfd);
   real_dfd_iter->d = d;
   real_dfd_iter->initialized = TRUE;
 
@@ -349,7 +349,7 @@ glnx_mkdtempat (int dfd, const char *tmpl, int mode,
       /* Return the initialized directory struct */
       out_tmpdir->initialized = TRUE;
       out_tmpdir->src_dfd = dfd; /* referenced; see above docs */
-      out_tmpdir->fd = glnx_steal_fd (&ret_dfd);
+      out_tmpdir->fd = g_steal_fd (&ret_dfd);
       out_tmpdir->path = g_steal_pointer (&path);
       return TRUE;
     }
