@@ -171,18 +171,18 @@ iterate_bundle_icons (GFile                     *root,
                       GError                   **error)
 {
   g_autoptr(GFile) icons_dir =
-    g_file_resolve_relative_path (root,
+  g_file_resolve_relative_path (root,
                                   "files/share/app-info/icons/flatpak");
-  if ( g_file_query_file_type (icons_dir, 0, NULL) != G_FILE_TYPE_DIRECTORY) 
-  {
-    g_clear_object(&icons_dir);
-    icons_dir = g_file_resolve_relative_path (root,
-                                  "files/share/swcatalog/icons/flatpak");
-  }
   const char *icon_sizes[] = { "64x64", "128x128" };
   const char *icon_sizes_key[] = { "icon-64", "icon-128" };
   g_autofree char *icon_name = g_strconcat (name, ".png", NULL);
   gint i;
+  if ( g_file_query_file_type (icons_dir, 0, NULL) != G_FILE_TYPE_DIRECTORY) 
+    {
+      g_clear_object(&icons_dir);
+      icons_dir = g_file_resolve_relative_path (root,
+                                    "files/share/swcatalog/icons/flatpak");
+    }
 
   for (i = 0; i < G_N_ELEMENTS (icon_sizes); i++)
     {

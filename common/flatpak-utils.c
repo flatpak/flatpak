@@ -5960,18 +5960,20 @@ flatpak_appstream_get_xml_path (GFile        *root,
 
   appstream_file = g_file_resolve_relative_path (root, "files/share/swcatalog/xml/flatpak.xml.gz");
   if (g_file_query_exists (appstream_file, cancellable))
-  {
-    app_info_dir = g_file_resolve_relative_path (root, "files/share/swcatalog");
-  } else {
-    g_autoptr(GFile) xmls_dir = NULL;
-    g_autofree char *appstream_basename = NULL;
+    {
+      app_info_dir = g_file_resolve_relative_path (root, "files/share/swcatalog");
+    } 
+  else 
+    {
+      g_autoptr(GFile) xmls_dir = NULL;
+      g_autofree char *appstream_basename = NULL;
 
-    g_clear_object (&appstream_file);
-    app_info_dir = g_file_resolve_relative_path (root, "files/share/app-info");
-    xmls_dir = g_file_resolve_relative_path (app_info_dir, "xmls");
-    appstream_basename = g_strconcat (name, ".xml.gz", NULL);
-    appstream_file = g_file_get_child (xmls_dir, appstream_basename);
-  }
+      g_clear_object (&appstream_file);
+      app_info_dir = g_file_resolve_relative_path (root, "files/share/app-info");
+      xmls_dir = g_file_resolve_relative_path (app_info_dir, "xmls");
+      appstream_basename = g_strconcat (name, ".xml.gz", NULL);
+      appstream_file = g_file_get_child (xmls_dir, appstream_basename);
+    }
 
   if (app_info_dir_out)
     *app_info_dir_out = g_steal_pointer (&app_info_dir);
