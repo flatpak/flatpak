@@ -3,6 +3,7 @@
  * Copyright 1998 Manish Singh
  * Copyright 1998 Tim Janik
  * Copyright (C) 2015 Colin Walters <walters@verbum.org>
+ * Copyright (C) 2018 Endless OS Foundation, LLC
  * Copyright 2017 Emmanuele Bassi
  * SPDX-License-Identifier: LGPL-2.1-or-later
  * 
@@ -77,6 +78,12 @@ gboolean              glnx_set_object  (GObject **object_ptr,
 
 #if !GLIB_CHECK_VERSION(2, 42, 0)
 #define G_OPTION_FLAG_NONE ((GOptionFlags) 0)
+#endif
+
+#if !GLIB_CHECK_VERSION(2, 60, 0)
+#define g_strv_equal _glnx_strv_equal
+gboolean _glnx_strv_equal (const gchar * const *strv1,
+                           const gchar * const *strv2);
 #endif
 
 #ifndef G_DBUS_METHOD_INVOCATION_HANDLED    /* added in 2.68 */

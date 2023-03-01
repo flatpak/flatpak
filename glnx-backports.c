@@ -1,6 +1,7 @@
 /* -*- mode: C; c-file-style: "gnu"; indent-tabs-mode: nil; -*-
  *
  * Copyright (C) 2015 Colin Walters <walters@verbum.org>
+ * Copyright (C) 2018 Endless OS Foundation, LLC
  * SPDX-License-Identifier: LGPL-2.0-or-later
  *
  * This program is free software: you can redistribute it and/or modify
@@ -58,5 +59,26 @@ glnx_set_object (GObject **object_ptr,
     g_object_unref (old_object);
 
   return TRUE;
+}
+#endif
+
+#if !GLIB_CHECK_VERSION(2, 60, 0)
+gboolean
+_glnx_strv_equal (const gchar * const *strv1,
+                  const gchar * const *strv2)
+{
+  g_return_val_if_fail (strv1 != NULL, FALSE);
+  g_return_val_if_fail (strv2 != NULL, FALSE);
+
+  if (strv1 == strv2)
+    return TRUE;
+
+  for (; *strv1 != NULL && *strv2 != NULL; strv1++, strv2++)
+    {
+      if (!g_str_equal (*strv1, *strv2))
+        return FALSE;
+    }
+
+  return (*strv1 == NULL && *strv2 == NULL);
 }
 #endif
