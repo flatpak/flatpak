@@ -12565,6 +12565,8 @@ flatpak_dir_remote_fetch_indexed_summary (FlatpakDir   *self,
           if (flatpak_dir_remote_load_cached_summary (self, old_cache_name, old_checksum, ".sub", NULL,
                                                       &old_summary, NULL, cancellable, NULL))
             break;
+
+          g_clear_pointer (&old_checksum, g_free);
         }
 
       if (old_summary)
