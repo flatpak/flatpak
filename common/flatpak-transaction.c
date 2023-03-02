@@ -2605,6 +2605,7 @@ add_deps (FlatpakTransaction          *self,
   return TRUE;
 }
 
+/* @out_op may return %NULL even when this function returns %TRUE. It’s (transfer none). */
 static gboolean
 flatpak_transaction_add_ref (FlatpakTransaction             *self,
                              const char                     *remote,
@@ -2616,6 +2617,7 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
                              GFile                          *bundle,
                              const char                     *external_metadata,
                              gboolean                        pin_on_deploy,
+                             FlatpakTransactionOperation   **out_op,
                              GError                        **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
@@ -2625,6 +2627,9 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
   g_autofree char *origin_remote = NULL;
   g_autoptr(FlatpakRemoteState) state = NULL;
   FlatpakTransactionOperation *op;
+
+  if (out_op != NULL)
+    *out_op = NULL;
 
   if (remote_name_is_file (remote))
     {
@@ -2740,6 +2745,9 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
   if (external_metadata)
     op->external_metadata = g_bytes_new (external_metadata, strlen (external_metadata));
 
+  if (out_op != NULL)
+    *out_op = op;
+
   return TRUE;
 }
 
@@ -2787,7 +2795,7 @@ flatpak_transaction_add_install (FlatpakTransaction *self,
 
   if (!flatpak_transaction_add_ref (self, remote, decomposed, subpaths, NULL, NULL,
                                     FLATPAK_TRANSACTION_OPERATION_INSTALL,
-                                    NULL, NULL, pin_on_deploy, error))
+                                    NULL, NULL, pin_on_deploy, NULL, error))
     return FALSE;
 
   return TRUE;
@@ -2843,7 +2851,7 @@ flatpak_transaction_add_rebase (FlatpakTransaction *self,
   if (dir_ref_is_installed (priv->dir, decomposed, &installed_origin, NULL))
     remote = installed_origin;
 
-  return flatpak_transaction_add_ref (self, remote, decomposed, subpaths, previous_ids, NULL, FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE, NULL, NULL, FALSE, error);
+  return flatpak_transaction_add_ref (self, remote, decomposed, subpaths, previous_ids, NULL, FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE, NULL, NULL, FALSE, NULL, error);
 }
 
 /**
@@ -2937,7 +2945,7 @@ flatpak_transaction_add_update (FlatpakTransaction *self,
     return FALSE;
 
   /* Note: we implement the merge when subpaths == NULL in flatpak_transaction_add_ref() */
-  return flatpak_transaction_add_ref (self, NULL, decomposed, subpaths, NULL, commit, FLATPAK_TRANSACTION_OPERATION_UPDATE, NULL, NULL, FALSE, error);
+  return flatpak_transaction_add_ref (self, NULL, decomposed, subpaths, NULL, commit, FLATPAK_TRANSACTION_OPERATION_UPDATE, NULL, NULL, FALSE, NULL, error);
 }
 
 /**
@@ -2964,7 +2972,7 @@ flatpak_transaction_add_uninstall (FlatpakTransaction *self,
   if (decomposed == NULL)
     return FALSE;
 
-  return flatpak_transaction_add_ref (self, NULL, decomposed, NULL, NULL, NULL, FLATPAK_TRANSACTION_OPERATION_UNINSTALL, NULL, NULL, FALSE, error);
+  return flatpak_transaction_add_ref (self, NULL, decomposed, NULL, NULL, NULL, FLATPAK_TRANSACTION_OPERATION_UNINSTALL, NULL, NULL, FALSE, NULL, error);
 }
 
 static gboolean
@@ -3076,7 +3084,7 @@ flatpak_transaction_add_auto_install (FlatpakTransaction *self,
 
                   if (!flatpak_transaction_add_ref (self, remote, auto_install_ref, NULL, NULL, NULL,
                                                     FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE,
-                                                    NULL, NULL, FALSE,
+                                                    NULL, NULL, FALSE, NULL,
                                                     &local_error))
                     g_info ("Failed to add auto-install ref %s: %s", flatpak_decomposed_get_ref (auto_install_ref),
                              local_error->message);
@@ -4576,7 +4584,7 @@ flatpak_transaction_resolve_bundles (FlatpakTransaction *self,
 
       if (!flatpak_transaction_add_ref (self, remote, ref, NULL, NULL, commit,
                                         FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE,
-                                        data->file, metadata, FALSE, error))
+                                        data->file, metadata, FALSE, NULL, error))
         return FALSE;
     }
 
