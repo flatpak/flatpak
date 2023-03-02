@@ -988,28 +988,13 @@ end_of_lifed_with_rebase (FlatpakTransaction *transaction,
     {
       g_autoptr(GError) error = NULL;
 
-      if (!flatpak_transaction_add_rebase (transaction, remote, rebased_to_ref, NULL, previous_ids, &error))
+      if (!flatpak_transaction_add_rebase_and_uninstall (transaction, remote, rebased_to_ref, ref_str, NULL, previous_ids, &error))
         {
           g_propagate_prefixed_error (&self->first_operation_error,
                                       g_error_copy (error),
                                       _("Failed to rebase %s to %s: "),
                                       name, rebased_to_ref);
           return FALSE;
-        }
-
-      if (!flatpak_transaction_add_uninstall (transaction, ref_str, &error))
-        {
-          /* NOT_INSTALLED error is expected in case the op that triggered this was install not update */
-          if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED))
-            g_clear_error (&error);
-          else
-            {
-              g_propagate_prefixed_error (&self->first_operation_error,
-                                          g_error_copy (error),
-                                          _("Failed to uninstall %s for rebase to %s: "),
-                                          name, rebased_to_ref);
-              return FALSE;
-            }
         }
 
       return TRUE; /* skip install/update op of end-of-life ref */
