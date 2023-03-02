@@ -313,6 +313,14 @@ gboolean            flatpak_transaction_add_rebase (FlatpakTransaction *self,
                                                     const char        **previous_ids,
                                                     GError            **error);
 FLATPAK_EXTERN
+gboolean            flatpak_transaction_add_rebase_and_uninstall (FlatpakTransaction  *self,
+                                                                  const char          *remote,
+                                                                  const char          *new_ref,
+                                                                  const char          *old_ref,
+                                                                  const char         **subpaths,
+                                                                  const char         **previous_ids,
+                                                                  GError             **error);
+FLATPAK_EXTERN
 gboolean            flatpak_transaction_add_install_bundle (FlatpakTransaction *self,
                                                             GFile              *file,
                                                             GBytes             *gpg_data,
