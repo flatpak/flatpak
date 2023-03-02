@@ -987,9 +987,8 @@ end_of_lifed_with_rebase (FlatpakTransaction *transaction,
   if (rebased_to_ref == NULL || remote == NULL)
     return FALSE;
 
-  /* No need to call flatpak_transaction_add_uninstall() and
-   * flatpak_transaction_add_rebase() here since we only care about what needs
-   * an update
+  /* No need to call flatpak_transaction_add_rebase_and_uninstall() here since
+   * we only care about what needs an update
    */
   g_ptr_array_add (*eol_rebase_refs, g_strdup (ref));
   return TRUE;
