@@ -926,6 +926,17 @@ gboolean flatpak_str_is_integer (const char *s);
 gboolean flatpak_uri_equal (const char *uri1,
                             const char *uri2);
 
+typedef enum {
+  FLATPAK_ESCAPE_DEFAULT        = 0,
+  FLATPAK_ESCAPE_ALLOW_NEWLINES = 1 << 0,
+  FLATPAK_ESCAPE_DO_NOT_QUOTE   = 1 << 1,
+} FlatpakEscapeFlags;
+
+char * flatpak_escape_string (const char        *s,
+                              FlatpakEscapeFlags flags);
+void   flatpak_print_escaped_string (const char        *s,
+                                     FlatpakEscapeFlags flags);
+
 gboolean running_under_sudo (void);
 
 #define FLATPAK_MESSAGE_ID "c7b39b1e006b464599465e105b361485"
