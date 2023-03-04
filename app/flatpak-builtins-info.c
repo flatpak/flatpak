@@ -400,7 +400,9 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
           if (!g_file_load_contents (file, cancellable, &data, &data_size, NULL, error))
             return FALSE;
 
-          g_print ("%s", data);
+          flatpak_print_escaped_string (data,
+                                        FLATPAK_ESCAPE_ALLOW_NEWLINES
+                                        | FLATPAK_ESCAPE_DO_NOT_QUOTE);
         }
 
       if (opt_show_permissions || opt_file_access)
@@ -421,7 +423,9 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
               if (contents == NULL)
                 return FALSE;
 
-              g_print ("%s", contents);
+              flatpak_print_escaped_string (contents,
+                                            FLATPAK_ESCAPE_ALLOW_NEWLINES
+                                            | FLATPAK_ESCAPE_DO_NOT_QUOTE);
             }
 
           if (opt_file_access)

@@ -6,9 +6,9 @@ set -euo pipefail
 
 skip_revokefs_without_fuse
 
-echo "1..7"
+echo "1..8"
 
-setup_repo
+INCLUDE_SPECIAL_CHARACTER=1 setup_repo
 install_repo
 
 COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Hello`
@@ -19,9 +19,17 @@ assert_file_has_content info "^app/org\.test\.Hello/$(flatpak --default-arch)/ma
 
 ok "info -rcos"
 
+${FLATPAK} info --show-metadata  org.test.Hello > info
+
+# CVE-2023-28101
+assert_file_has_content info "name=org\.test\.Hello"
+assert_file_has_content info "^A=x\\\\x09y"
+
+ok "info --show-metadata"
+
 ${FLATPAK} info --show-permissions  org.test.Hello > info
 
-assert_file_empty info
+assert_file_has_content info "^A=x\\\\x09y"
 
 ok "info --show-permissions"
 

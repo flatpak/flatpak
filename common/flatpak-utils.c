@@ -9039,3 +9039,82 @@ flatpak_str_is_integer (const char *s)
 
   return TRUE;
 }
+
+static gboolean
+is_char_safe (gunichar c)
+{
+  return g_unichar_isgraph (c) || c == ' ';
+}
+
+static gboolean
+should_hex_escape (gunichar           c,
+                   FlatpakEscapeFlags flags)
+{
+  if ((flags & FLATPAK_ESCAPE_ALLOW_NEWLINES) && c == '\n')
+    return FALSE;
+
+  return !is_char_safe (c);
+}
+
+static void
+append_hex_escaped_character (GString *result,
+                              gunichar c)
+{
+  if (c <= 0xFF)
+    g_string_append_printf (result, "\\x%02X", c);
+  else if (c <= 0xFFFF)
+    g_string_append_printf (result, "\\u%04X", c);
+  else
+    g_string_append_printf (result, "\\U%08X", c);
+}
+
+char *
+flatpak_escape_string (const char        *s,
+                       FlatpakEscapeFlags flags)
+{
+  g_autoptr(GString) res = g_string_new ("");
+  gboolean did_escape = FALSE;
+
+  while (*s)
+    {
+      gunichar c = g_utf8_get_char_validated (s, -1);
+      if (c == (gunichar)-2 || c == (gunichar)-1)
+        {
+          /* Need to convert to unsigned first, to avoid negative chars becoming
+             huge gunichars. */
+          append_hex_escaped_character (res, (unsigned char)*s++);
+          did_escape = TRUE;
+          continue;
+        }
+      else if (should_hex_escape (c, flags))
+        {
+          append_hex_escaped_character (res, c);
+          did_escape = TRUE;
+        }
+      else if (c == '\\' || (!(flags & FLATPAK_ESCAPE_DO_NOT_QUOTE) && c == '\''))
+        {
+          g_string_append_printf (res, "\\%c", (char) c);
+          did_escape = TRUE;
+        }
+      else
+        g_string_append_unichar (res, c);
+
+      s = g_utf8_find_next_char (s, NULL);
+    }
+
+  if (did_escape && !(flags & FLATPAK_ESCAPE_DO_NOT_QUOTE))
+    {
+      g_string_prepend_c (res, '\'');
+      g_string_append_c (res, '\'');
+    }
+
+  return g_string_free (g_steal_pointer (&res), FALSE);
+}
+
+void
+flatpak_print_escaped_string (const char        *s,
+                              FlatpakEscapeFlags flags)
+{
+  g_autofree char *escaped = flatpak_escape_string (s, flags);
+  g_print ("%s", escaped);
+}
