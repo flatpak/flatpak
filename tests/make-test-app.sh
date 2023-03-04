@@ -40,6 +40,14 @@ required-flatpak=$REQUIRED_VERSION
 EOF
 fi
 
+if [ x${INCLUDE_SPECIAL_CHARACTER-} != x ]; then
+TAB=$'\t'
+cat >> ${DIR}/metadata <<EOF
+[Environment]
+A=x${TAB}y
+EOF
+fi
+
 cat >> ${DIR}/metadata <<EOF
 [Extension $APP_ID.Locale]
 directory=share/runtime/locale

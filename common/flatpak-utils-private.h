@@ -902,6 +902,17 @@ null_safe_g_ptr_array_unref (gpointer data)
   g_clear_pointer (&data, g_ptr_array_unref);
 }
 
+typedef enum {
+  FLATPAK_ESCAPE_DEFAULT        = 0,
+  FLATPAK_ESCAPE_ALLOW_NEWLINES = 1 << 0,
+  FLATPAK_ESCAPE_DO_NOT_QUOTE   = 1 << 1,
+} FlatpakEscapeFlags;
+
+char * flatpak_escape_string (const char        *s,
+                              FlatpakEscapeFlags flags);
+void   flatpak_print_escaped_string (const char        *s,
+                                     FlatpakEscapeFlags flags);
+
 #define FLATPAK_MESSAGE_ID "c7b39b1e006b464599465e105b361485"
 
 #endif /* __FLATPAK_UTILS_H__ */

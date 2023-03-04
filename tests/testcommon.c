@@ -1557,6 +1557,44 @@ test_dconf_paths (void)
     }
 }
 
+typedef struct {
+  const char        *in;
+  FlatpakEscapeFlags flags;
+  const char        *out;
+} EscapeData;
+
+static EscapeData escapes[] = {
+  {"abc def", FLATPAK_ESCAPE_DEFAULT, "abc def"},
+  {"やあ", FLATPAK_ESCAPE_DEFAULT, "やあ"},
+  {"\033[;1m", FLATPAK_ESCAPE_DEFAULT, "'\\x1B[;1m'"},
+  // non-printable U+061C
+  {"\u061C", FLATPAK_ESCAPE_DEFAULT, "'\\u061C'"},
+  // non-printable U+1343F
+  {"\xF0\x93\x90\xBF", FLATPAK_ESCAPE_DEFAULT, "'\\U0001343F'"},
+  // invalid utf-8
+  {"\xD8\1", FLATPAK_ESCAPE_DEFAULT, "'\\xD8\\x01'"},
+  {"\b \n abc ' \\", FLATPAK_ESCAPE_DEFAULT, "'\\x08 \\x0A abc \\' \\\\'"},
+  {"\b \n abc ' \\", FLATPAK_ESCAPE_DO_NOT_QUOTE, "\\x08 \\x0A abc ' \\\\"},
+  {"abc\tdef\n\033[;1m ghi\b", FLATPAK_ESCAPE_ALLOW_NEWLINES | FLATPAK_ESCAPE_DO_NOT_QUOTE,
+   "abc\\x09def\n\\x1B[;1m ghi\\x08"},
+};
+
+/* CVE-2023-28101 */
+static void
+test_string_escape (void)
+{
+  gsize idx;
+
+  for (idx = 0; idx < G_N_ELEMENTS (escapes); idx++)
+    {
+      EscapeData *data = &escapes[idx];
+      g_autofree char *ret = NULL;
+
+      ret = flatpak_escape_string (data->in, data->flags);
+      g_assert_cmpstr (ret, ==, data->out);
+    }
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -1585,6 +1623,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/common/dconf-app-id", test_dconf_app_id);
   g_test_add_func ("/common/dconf-paths", test_dconf_paths);
   g_test_add_func ("/common/decompose-ref", test_decompose);
+  g_test_add_func ("/common/string-escape", test_string_escape);
 
   g_test_add_func ("/app/looks-like-branch", test_looks_like_branch);
   g_test_add_func ("/app/columns", test_columns);

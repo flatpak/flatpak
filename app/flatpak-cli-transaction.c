@@ -894,12 +894,16 @@ print_perm_line (int        idx,
                  int        cols)
 {
   g_autoptr(GString) res = g_string_new (NULL);
+  g_autofree char *escaped_first_perm = NULL;
   int i;
 
-  g_string_append_printf (res, "    [%d] %s", idx, (char *) items->pdata[0]);
+  escaped_first_perm = flatpak_escape_string (items->pdata[0], FLATPAK_ESCAPE_DEFAULT);
+  g_string_append_printf (res, "    [%d] %s", idx, escaped_first_perm);
 
   for (i = 1; i < items->len; i++)
     {
+      g_autofree char *escaped = flatpak_escape_string (items->pdata[i],
+                                                        FLATPAK_ESCAPE_DEFAULT);
       char *p;
       int len;
 
@@ -908,10 +912,10 @@ print_perm_line (int        idx,
         p = res->str;
 
       len = (res->str + strlen (res->str)) - p;
-      if (len + strlen ((char *) items->pdata[i]) + 2 >= cols)
-        g_string_append_printf (res, ",\n        %s", (char *) items->pdata[i]);
+      if (len + strlen (escaped) + 2 >= cols)
+        g_string_append_printf (res, ",\n        %s", escaped);
       else
-        g_string_append_printf (res, ", %s", (char *) items->pdata[i]);
+        g_string_append_printf (res, ", %s", escaped);
     }
 
   g_print ("%s\n", res->str);
