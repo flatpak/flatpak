@@ -1,15 +1,15 @@
 # Polish translation for flatpak.
-# Copyright © 2016-2022 the flatpak authors.
+# Copyright © 2016-2023 the flatpak authors.
 # This file is distributed under the same license as the flatpak package.
-# Piotr Drąg <piotrdrag@gmail.com>, 2016-2022.
-# Aviary.pl <community-poland@mozilla.org>, 2016-2022.
+# Piotr Drąg <piotrdrag@gmail.com>, 2016-2023.
+# Aviary.pl <community-poland@mozilla.org>, 2016-2023.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2023-02-27 12:31+0000\n"
-"PO-Revision-Date: 2022-08-27 13:42+0200\n"
+"PO-Revision-Date: 2023-03-04 13:49+0100\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
 "Language: pl\n"
@@ -2171,14 +2171,14 @@ msgid "Show options"
 msgstr "Wyświetla opcje"
 
 #: app/flatpak-builtins-list.c:179
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to load details of %s: %s"
-msgstr "Nie można wczytać podsumowania z repozytorium %s: %s"
+msgstr "Nie można wczytać szczegółów %s: %s"
 
 #: app/flatpak-builtins-list.c:189
 #, c-format
 msgid "Unable to inspect current version of %s: %s"
-msgstr ""
+msgstr "Nie można zbadać obecnej wersji %s: %s"
 
 #: app/flatpak-builtins-list.c:409
 msgid " - List installed apps and/or runtimes"
@@ -4489,12 +4489,12 @@ msgstr "Bez wymagania działającej sesji (bez tworzenia cgroups)"
 #: common/flatpak-context.c:2483
 #, c-format
 msgid "Not replacing \"%s\" with tmpfs: %s"
-msgstr ""
+msgstr "„%s” nie zostanie zastąpione tmpfs: %s"
 
 #: common/flatpak-context.c:2491
 #, c-format
 msgid "Not sharing \"%s\" with sandbox: %s"
-msgstr ""
+msgstr "„%s” nie będzie udostępniane piaskownicy: %s"
 
 #. Even if the error is one that we would normally silence, like
 #. * the path not existing, it seems reasonable to make more of a fuss
@@ -4503,12 +4503,12 @@ msgstr ""
 #: common/flatpak-context.c:2587
 #, c-format
 msgid "Not allowing home directory access: %s"
-msgstr ""
+msgstr "Dostęp do katalogu domowego nie zostanie udzielony: %s"
 
 #: common/flatpak-context.c:2806
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to provide a temporary home directory in the sandbox: %s"
-msgstr "Nie można utworzyć tymczasowego katalogu w %s"
+msgstr "Nie można dostarczyć tymczasowego katalogu domowego w piaskownicy: %s"
 
 #: common/flatpak-dir.c:399
 #, c-format
@@ -5041,43 +5041,43 @@ msgstr "Pomijanie usuwania odniesienia serwera lustrzanego (%s, %s)…\n"
 
 #: common/flatpak-exports.c:906
 msgid "An absolute path is required"
-msgstr ""
+msgstr "Wymagana jest ścieżka bezwzględna"
 
 #: common/flatpak-exports.c:923
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to open path \"%s\": %s"
-msgstr "Nie można zaktualizować %s: %s\n"
+msgstr "Nie można otworzyć ścieżki „%s”: %s"
 
 #: common/flatpak-exports.c:930
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to get file type of \"%s\": %s"
-msgstr "Nie można utworzyć pliku %s"
+msgstr "Nie można uzyskać typu pliku „%s”: %s"
 
 #: common/flatpak-exports.c:939
 #, c-format
 msgid "File \"%s\" has unsupported type 0o%o"
-msgstr ""
+msgstr "Plik „%s” ma nieobsługiwany typ 0o%o"
 
 #: common/flatpak-exports.c:945
 #, c-format
 msgid "Unable to get filesystem information for \"%s\": %s"
-msgstr ""
+msgstr "Nie można uzyskać informacji o systemie plików dla „%s”: %s"
 
 #: common/flatpak-exports.c:955
 #, c-format
 msgid "Ignoring blocking autofs path \"%s\""
-msgstr ""
+msgstr "Ignorowanie blokującej ścieżki autofs „%s”"
 
 #: common/flatpak-exports.c:971 common/flatpak-exports.c:984
 #: common/flatpak-exports.c:997
 #, c-format
 msgid "Path \"%s\" is reserved by Flatpak"
-msgstr ""
+msgstr "Ścieżka „%s” jest zastrzeżona przez Flatpak"
 
 #: common/flatpak-exports.c:1051
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to resolve symbolic link \"%s\": %s"
-msgstr "Nie można zaktualizować dowiązania symbolicznego %s/%s"
+msgstr "Nie można rozwiązać dowiązania symbolicznego „%s”: %s"
 
 #: common/flatpak-installation.c:831
 #, c-format
