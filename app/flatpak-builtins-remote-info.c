@@ -431,7 +431,10 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
 
           if (opt_show_metadata)
             {
-              g_print ("%s", xa_metadata ? xa_metadata : "");
+              if (xa_metadata != NULL)
+                flatpak_print_escaped_string (xa_metadata,
+                                              FLATPAK_ESCAPE_ALLOW_NEWLINES
+                                              | FLATPAK_ESCAPE_DO_NOT_QUOTE);
               if (xa_metadata == NULL || !g_str_has_suffix (xa_metadata, "\n"))
                 g_print ("\n");
             }
