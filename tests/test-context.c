@@ -129,13 +129,14 @@ test_context_env_fd (void)
 }
 
 static void context_parse_args (FlatpakContext *context,
+                                GError        **error,
                                 ...) G_GNUC_NULL_TERMINATED;
 
 static void
 context_parse_args (FlatpakContext *context,
+                    GError        **error,
                     ...)
 {
-  g_autoptr(GError) local_error = NULL;
   g_autoptr(GOptionContext) oc = NULL;
   g_autoptr(GOptionGroup) group = NULL;
   g_autoptr(GPtrArray) args = g_ptr_array_new_with_free_func (g_free);
@@ -145,7 +146,7 @@ context_parse_args (FlatpakContext *context,
 
   g_ptr_array_add (args, g_strdup ("argv[0]"));
 
-  va_start (ap, context);
+  va_start (ap, error);
 
   while ((arg = va_arg (ap, const char *)) != NULL)
     g_ptr_array_add (args, g_strdup (arg));
@@ -158,8 +159,7 @@ context_parse_args (FlatpakContext *context,
   oc = g_option_context_new ("");
   group = flatpak_context_get_options (context);
   g_option_context_add_group (oc, group);
-  g_option_context_parse_strv (oc, &argv, &local_error);
-  g_assert_no_error (local_error);
+  g_option_context_parse_strv (oc, &argv, error);
 }
 
 static void
@@ -179,19 +179,26 @@ test_context_merge_fs (void)
       g_autoptr(FlatpakContext) lowest = flatpak_context_new ();
       g_autoptr(FlatpakContext) middle = flatpak_context_new ();
       g_autoptr(FlatpakContext) highest = flatpak_context_new ();
+      g_autoptr(GError) local_error = NULL;
       gpointer value;
 
       context_parse_args (lowest,
+                          &local_error,
                           "--filesystem=/one",
                           NULL);
+      g_assert_no_error (local_error);
       context_parse_args (middle,
+                          &local_error,
                           "--nofilesystem=host:reset",
                           "--filesystem=/two",
                           NULL);
+      g_assert_no_error (local_error);
       context_parse_args (highest,
+                          &local_error,
                           "--nofilesystem=host",
                           "--filesystem=/three",
                           NULL);
+      g_assert_no_error (local_error);
 
       g_assert_false (g_hash_table_lookup_extended (lowest->filesystems, "host", NULL, NULL));
       g_assert_false (g_hash_table_lookup_extended (lowest->filesystems, "host-reset", NULL, NULL));
@@ -273,20 +280,28 @@ test_context_merge_fs (void)
       gpointer value;
 
       context_parse_args (lowest,
+                          &local_error,
                           "--filesystem=/one",
                           NULL);
+      g_assert_no_error (local_error);
       context_parse_args (mid_low,
+                          &local_error,
                           "--nofilesystem=host:reset",
                           "--filesystem=/two",
                           NULL);
+      g_assert_no_error (local_error);
       context_parse_args (mid_high,
+                          &local_error,
                           "--filesystem=host",
                           "--filesystem=/three",
                           NULL);
+      g_assert_no_error (local_error);
       context_parse_args (highest,
+                          &local_error,
                           "--nofilesystem=host",
                           "--filesystem=/four",
                           NULL);
+      g_assert_no_error (local_error);
 
       g_assert_false (g_hash_table_lookup_extended (lowest->filesystems, "host", NULL, NULL));
       g_assert_false (g_hash_table_lookup_extended (lowest->filesystems, "host-reset", NULL, NULL));
@@ -427,6 +442,65 @@ test_context_merge_fs (void)
     }
 }
 
+const char *invalid_path_args[] = {
+  "--filesystem=/\033[J:ro",
+  "--filesystem=/\033[J",
+  "--persist=\033[J",
+};
+
+/* CVE-2023-28101 */
+static void
+test_validate_path_args (void)
+{
+  gsize idx;
+
+  for (idx = 0; idx < G_N_ELEMENTS (invalid_path_args); idx++)
+    {
+      g_autoptr(FlatpakContext) context = flatpak_context_new ();
+      g_autoptr(GError) local_error = NULL;
+      const char *path = invalid_path_args[idx];
+
+      context_parse_args (context, &local_error, path, NULL);
+      g_assert_error (local_error, G_IO_ERROR, G_IO_ERROR_INVALID_DATA);
+      g_assert (strstr (local_error->message, "Non-graphical character"));
+    }
+}
+
+typedef struct {
+  const char *key;
+  const char *value;
+} PathValidityData;
+
+PathValidityData invalid_path_meta[] = {
+  {FLATPAK_METADATA_KEY_FILESYSTEMS, "\033[J"},
+  {FLATPAK_METADATA_KEY_PERSISTENT, "\033[J"},
+};
+
+/* CVE-2023-28101 */
+static void
+test_validate_path_meta (void)
+{
+  gsize idx;
+
+  for (idx = 0; idx < G_N_ELEMENTS (invalid_path_meta); idx++)
+    {
+      g_autoptr(FlatpakContext) context = flatpak_context_new ();
+      g_autoptr(GKeyFile) metakey = g_key_file_new ();
+      g_autoptr(GError) local_error = NULL;
+      PathValidityData *data = &invalid_path_meta[idx];
+      gboolean ret = FALSE;
+
+      g_key_file_set_string_list (metakey, FLATPAK_METADATA_GROUP_CONTEXT,
+                                  data->key, &data->value, 1);
+
+      ret = flatpak_context_load_metadata (context, metakey, &local_error);
+      g_assert_false (ret);
+      g_assert_error (local_error, G_IO_ERROR, G_IO_ERROR_INVALID_DATA);
+      g_assert (strstr (local_error->message, "Non-graphical character"));
+    }
+
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -435,6 +509,8 @@ main (int argc, char *argv[])
   g_test_add_func ("/context/env", test_context_env);
   g_test_add_func ("/context/env-fd", test_context_env_fd);
   g_test_add_func ("/context/merge-fs", test_context_merge_fs);
+  g_test_add_func ("/context/validate-path-args", test_validate_path_args);
+  g_test_add_func ("/context/validate-path-meta", test_validate_path_meta);
 
   return g_test_run ();
 }

@@ -9068,6 +9068,14 @@ append_hex_escaped_character (GString *result,
     g_string_append_printf (result, "\\U%08X", c);
 }
 
+static char *
+escape_character (gunichar c)
+{
+  g_autoptr(GString) res = g_string_new ("");
+  append_hex_escaped_character (res, c);
+  return g_string_free (g_steal_pointer (&res), FALSE);
+}
+
 char *
 flatpak_escape_string (const char        *s,
                        FlatpakEscapeFlags flags)
@@ -9117,4 +9125,36 @@ flatpak_print_escaped_string (const char        *s,
 {
   g_autofree char *escaped = flatpak_escape_string (s, flags);
   g_print ("%s", escaped);
+}
+
+gboolean
+flatpak_validate_path_characters (const char *path,
+                                  GError    **error)
+{
+  while (*path)
+    {
+      gunichar c = g_utf8_get_char_validated (path, -1);
+      if (c == (gunichar)-1 || c == (gunichar)-2)
+        {
+          /* Need to convert to unsigned first, to avoid negative chars becoming
+             huge gunichars. */
+          g_autofree char *escaped_char = escape_character ((unsigned char)*path);
+          g_autofree char *escaped = flatpak_escape_string (path, FLATPAK_ESCAPE_DEFAULT);
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_DATA,
+                       "Non-UTF8 byte %s in path %s", escaped_char, escaped);
+          return FALSE;
+        }
+      else if (!is_char_safe (c))
+        {
+          g_autofree char *escaped_char = escape_character (c);
+          g_autofree char *escaped = flatpak_escape_string (path, FLATPAK_ESCAPE_DEFAULT);
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_DATA,
+                       "Non-graphical character %s in path %s", escaped_char, escaped);
+          return FALSE;
+        }
+
+      path = g_utf8_find_next_char (path, NULL);
+    }
+
+  return TRUE;
 }

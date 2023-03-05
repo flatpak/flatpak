@@ -1847,11 +1847,12 @@ static EscapeData escapes[] = {
   {"abc def", FLATPAK_ESCAPE_DEFAULT, "abc def"},
   {"やあ", FLATPAK_ESCAPE_DEFAULT, "やあ"},
   {"\033[;1m", FLATPAK_ESCAPE_DEFAULT, "'\\x1B[;1m'"},
-  // non-printable U+061C
+  /* U+061C ARABIC LETTER MARK, non-printable */
   {"\u061C", FLATPAK_ESCAPE_DEFAULT, "'\\u061C'"},
-  // non-printable U+1343F
+  /* U+1343F EGYPTIAN HIEROGLYPH END WALLED ENCLOSURE, non-printable and
+   * outside BMP */
   {"\xF0\x93\x90\xBF", FLATPAK_ESCAPE_DEFAULT, "'\\U0001343F'"},
-  // invalid utf-8
+  /* invalid utf-8 */
   {"\xD8\1", FLATPAK_ESCAPE_DEFAULT, "'\\xD8\\x01'"},
   {"\b \n abc ' \\", FLATPAK_ESCAPE_DEFAULT, "'\\x08 \\x0A abc \\' \\\\'"},
   {"\b \n abc ' \\", FLATPAK_ESCAPE_DO_NOT_QUOTE, "\\x08 \\x0A abc ' \\\\"},
@@ -1872,6 +1873,39 @@ test_string_escape (void)
 
       ret = flatpak_escape_string (data->in, data->flags);
       g_assert_cmpstr (ret, ==, data->out);
+    }
+}
+
+typedef struct {
+  const char *path;
+  gboolean ret;
+} PathValidityData;
+
+static PathValidityData paths[] = {
+  {"/a/b/../c.def", TRUE},
+  {"やあ", TRUE},
+  /* U+061C ARABIC LETTER MARK, non-printable */
+  {"\u061C", FALSE},
+  /* U+1343F EGYPTIAN HIEROGLYPH END WALLED ENCLOSURE, non-printable and
+   * outside BMP */
+  {"\xF0\x93\x90\xBF", FALSE},
+  /* invalid utf-8 */
+  {"\xD8\1", FALSE},
+};
+
+/* CVE-2023-28101 */
+static void
+test_validate_path_characters (void)
+{
+  gsize idx;
+
+  for (idx = 0; idx < G_N_ELEMENTS (paths); idx++)
+    {
+      PathValidityData *data = &paths[idx];
+      gboolean ret = FALSE;
+
+      ret = flatpak_validate_path_characters (data->path, NULL);
+      g_assert_cmpint (ret, ==, data->ret);
     }
 }
 
@@ -1909,6 +1943,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/common/str-is-integer", test_str_is_integer);
   g_test_add_func ("/common/parse-x11-display", test_parse_x11_display);
   g_test_add_func ("/common/string-escape", test_string_escape);
+  g_test_add_func ("/common/validate-path-characters", test_validate_path_characters);
 
   g_test_add_func ("/app/looks-like-branch", test_looks_like_branch);
   g_test_add_func ("/app/columns", test_columns);
