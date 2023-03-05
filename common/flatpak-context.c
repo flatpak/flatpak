@@ -488,11 +488,17 @@ flatpak_context_apply_generic_policy (FlatpakContext *context,
                        g_ptr_array_free (new, FALSE));
 }
 
-static void
+
+static gboolean
 flatpak_context_set_persistent (FlatpakContext *context,
-                                const char     *path)
+                                const char     *path,
+                                GError        **error)
 {
+  if (!flatpak_validate_path_characters (path, error))
+    return FALSE;
+
   g_hash_table_insert (context->persistent, g_strdup (path), GINT_TO_POINTER (1));
+  return TRUE;
 }
 
 static gboolean
@@ -853,6 +859,9 @@ flatpak_context_parse_filesystem (const char             *filesystem_and_mode,
 {
   g_autofree char *filesystem = NULL;
   char *slash;
+
+  if (!flatpak_validate_path_characters (filesystem_and_mode, error))
+    return FALSE;
 
   filesystem = parse_filesystem_flags (filesystem_and_mode, negated, mode_out, error);
   if (filesystem == NULL)
@@ -1510,8 +1519,7 @@ option_persist_cb (const gchar *option_name,
 {
   FlatpakContext *context = data;
 
-  flatpak_context_set_persistent (context, value);
-  return TRUE;
+  return flatpak_context_set_persistent (context, value, error);
 }
 
 static gboolean option_no_desktop_deprecated;
@@ -1703,11 +1711,24 @@ flatpak_context_load_metadata (FlatpakContext *context,
         {
           const char *fs = parse_negated (filesystems[i], &remove);
           g_autofree char *filesystem = NULL;
+          g_autoptr(GError) local_error = NULL;
           FlatpakFilesystemMode mode;
 
           if (!flatpak_context_parse_filesystem (fs, remove,
-                                                 &filesystem, &mode, NULL))
-            g_info ("Unknown filesystem type %s", filesystems[i]);
+                                                 &filesystem, &mode, &local_error))
+            {
+              if (g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_INVALID_DATA))
+                {
+                  /* Invalid characters, so just hard-fail. */
+                  g_propagate_error (error, g_steal_pointer (&local_error));
+                  return FALSE;
+                }
+              else
+                {
+                  g_info ("Unknown filesystem type %s", filesystems[i]);
+                  g_clear_error (&local_error);
+                }
+            }
           else
             {
               g_assert (mode == FLATPAK_FILESYSTEM_MODE_NONE || !remove);
@@ -1724,7 +1745,8 @@ flatpak_context_load_metadata (FlatpakContext *context,
         return FALSE;
 
       for (i = 0; persistent[i] != NULL; i++)
-        flatpak_context_set_persistent (context, persistent[i]);
+        if (!flatpak_context_set_persistent (context, persistent[i], error))
+          return FALSE;
     }
 
   if (g_key_file_has_group (metakey, FLATPAK_METADATA_GROUP_SESSION_BUS_POLICY))
