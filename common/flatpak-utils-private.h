@@ -939,6 +939,9 @@ char * flatpak_escape_string (const char        *s,
 void   flatpak_print_escaped_string (const char        *s,
                                      FlatpakEscapeFlags flags);
 
+gboolean flatpak_validate_path_characters (const char *path,
+                                           GError    **error);
+
 gboolean running_under_sudo (void);
 
 #define FLATPAK_MESSAGE_ID "c7b39b1e006b464599465e105b361485"
