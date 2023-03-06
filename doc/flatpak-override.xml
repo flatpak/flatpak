@@ -51,6 +51,9 @@
             <command>flatpak override</command>.
         </para>
         <para>
+            The application overrides are saved in text files residing in $XDG_DATA_HOME/flatpak/overrides in user mode. 
+        </para>
+        <para>
             If the application ID <arg choice="plain">APP</arg> is not specified
             then the overrides affect all applications,
             but the per-application overrides can override the global overrides.
