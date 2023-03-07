@@ -736,7 +736,7 @@ flatpak_run_get_pulseaudio_server (void)
  * Returns the first supported server address, or NULL if none are supported,
  * or NULL with @remote set if @value points to a remote server.
  */
-static char *
+char *
 flatpak_run_parse_pulse_server (const char *value,
                                 gboolean   *remote)
 {
@@ -763,11 +763,13 @@ flatpak_run_parse_pulse_server (const char *value,
       if (server[0] == '/')
         return g_strdup (server);
 
-      if (g_str_has_prefix (server, "tcp:"))
-        {
-          *remote = TRUE;
-          return NULL;
-        }
+      /*
+       * Handle:
+       *   - the "tcp:", "tcp4:", "tcp6:" prefixes
+       *   - a hostname or IP
+       */
+      *remote = TRUE;
+      return NULL;
     }
 
   return NULL;

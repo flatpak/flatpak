@@ -1837,6 +1837,54 @@ test_parse_x11_display (void)
     }
 }
 
+typedef struct
+{
+  const char *value;
+  gboolean remote_host;
+  const char *pulseaudio_socket;
+} PulseServerTest;
+
+/*
+ * The test cases are taken from:
+ *  https://www.freedesktop.org/wiki/Software/PulseAudio/Documentation/User/ServerStrings/
+ */
+static const PulseServerTest pulse_server_tests[] =
+{
+  { "{ecstasy}unix:/tmp/pulse-6f7zfg/native", FALSE, "/tmp/pulse-6f7zfg/native" },
+  { "unix:/run/user/1000/pulse/native", FALSE, "/run/user/1000/pulse/native" },
+  { "/run/user/1000/pulse/native", FALSE, "/run/user/1000/pulse/native" },
+  { "tcp:ecstasy.ring2.lan:4713", TRUE, NULL },
+  { "tcp4:ecstasy.ring2.lan:4713", TRUE, NULL },
+  { "tcp6:ecstasy.ring2.lan:4713", TRUE, NULL },
+  { "gurki", TRUE, NULL },
+  { "127.0.0.1", TRUE, NULL },
+  { "/run/user/1000/pulse/native gurki", FALSE, "/run/user/1000/pulse/native" },
+  { "gurki /run/user/1000/pulse/native", TRUE, "gurki" },
+};
+
+static void
+test_parse_pulse_server (void)
+{
+  gsize i;
+  for (i = 0; i < G_N_ELEMENTS (pulse_server_tests); i++)
+    {
+      const PulseServerTest *test = &pulse_server_tests[i];
+      g_autofree char *pulseaudio_socket = NULL;
+      gboolean remote_host = FALSE;
+      pulseaudio_socket = flatpak_run_parse_pulse_server(test->value, &remote_host);
+      if (test->remote_host)
+        {
+          g_assert_true(remote_host);
+          g_assert_null(pulseaudio_socket);
+        }
+      else
+        {
+          g_assert_false(remote_host);
+          g_assert_cmpstr(pulseaudio_socket, ==, test->pulseaudio_socket);
+        }
+    }
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -1870,6 +1918,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/common/quote-argv", test_quote_argv);
   g_test_add_func ("/common/str-is-integer", test_str_is_integer);
   g_test_add_func ("/common/parse-x11-display", test_parse_x11_display);
+  g_test_add_func ("/common/parse-pulse-server", test_parse_pulse_server);
 
   g_test_add_func ("/app/looks-like-branch", test_looks_like_branch);
   g_test_add_func ("/app/columns", test_columns);
