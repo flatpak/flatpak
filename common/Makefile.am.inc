@@ -161,7 +161,6 @@ libflatpak_common_la_SOURCES = \
 	common/flatpak-remote.c \
 	common/flatpak-run-private.h \
 	common/flatpak-run.c \
-	common/flatpak-syscalls-private.h \
 	common/flatpak-transaction-private.h \
 	common/flatpak-transaction.c \
 	common/flatpak-transaction.h \
@@ -261,6 +260,16 @@ libflatpak_la_LIBADD = \
 	$(SOUP_LIBS)	\
 	$(JSON_LIBS)    \
 	$(NULL)
+
+BUILT_SOURCES += common/known-syscall-names.h
+common/known-syscall-names.h: common/known-syscalls.txt Makefile
+	@mkdir -p $(builddir)/common
+	$(AM_V_GEN) sed \
+		-e 's|#.*||' \
+		-e 's| ||'g \
+		-e 's|..*|"&",|' \
+		< $(srcdir)/common/known-syscalls.txt \
+		> common/known-syscall-names.h
 
 test_libflatpak_SOURCES = \
 	common/test-lib.c      \
