@@ -2,7 +2,19 @@ Changes in 1.12.8
 ~~~~~~~~~~~~~~~~~
 Released: not yet
 
-Bug fixes:
+Security fixes:
+
+* Escape special characters when displaying permissions and metadata,
+  preventing malicious apps from manipulating the appearance of the
+  permissions list using crafted metadata (CVE-2023-28101).
+
+* If a Flatpak app is run on a Linux virtual console (tty1, tty2, etc.),
+  don't allow copy/paste via the TIOCLINUX ioctl (CVE-2023-28100).
+  Note that this is specific to virtual consoles: Flatpak is not
+  vulnerable to this if run from a graphical terminal emulator such as
+  xterm, gnome-terminal or Konsole.
+
+Other bug fixes:
 
 * Update the SELinux module to explicitly permit the system helper have read
   access to /etc/passwd and systemd-userdbd, read and lock access to
