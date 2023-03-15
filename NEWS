@@ -1,3 +1,21 @@
+Changes in 1.12.8
+~~~~~~~~~~~~~~~~~
+Released: not yet
+
+Bug fixes:
+
+* Update the SELinux module to explicitly permit the system helper have read
+  access to /etc/passwd and systemd-userdbd, read and lock access to
+  /var/lib/flatpak, and watch files inside $libexecdir
+  (#4852, #4855, #4892; Red Hat #2071217, #2071215, #2070741,
+  #2053634, #2070350)
+* If an app update is blocked by parental controls policies, clean up the
+  temporary deploy directory (#5146)
+* Fix Autotools build with versions of gpgme that no longer provide
+  gpgme-config(1) (#5173)
+* Remove some unreachable code (Coverity: CID 1514265)
+* Add missing handling for some D-Bus errors
+
 Changes in 1.12.7
 ~~~~~~~~~~~~~~~~~
 Released: 2022-03-14
