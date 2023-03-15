@@ -2,6 +2,10 @@ Changes in 1.10.8
 ~~~~~~~~~~~~~~~~~
 Not released yet
 
+ * If an app update is blocked by parental controls policies, clean up the
+   temporary deploy directory (#5146)
+ * Fix Autotools build with versions of gpgme that no longer provide
+   gpgme-config(1) (#5173)
  * Fix regressions in `flatpak history` since 1.9.1
    - Don't display the appstream branch used internally
    - Don't display temporary repositories used internally
