@@ -16,10 +16,16 @@ please check
 | 1.15.x   | :hammer:           | Development branch, releases may include non-security changes  |
 | 1.14.x   | :white_check_mark: | Stable branch, recommended for use in distributions            |
 | 1.13.x   | :x:                | Old development branch, no longer supported                    |
-| 1.12.x   | :white_check_mark: | Old stable branch, still supported                             |
+| 1.12.x   | :warning:          | Old stable branch, security fixes applied if feasible          |
 | 1.11.x   | :x:                | Old development branch, no longer supported                    |
-| 1.10.x   | :white_check_mark: | Old stable branch, still supported                             |
+| 1.10.x   | :warning:          | Old stable branch, security fixes applied if feasible          |
 | <= 1.9.x | :x:                | Older branches, no longer supported                            |
+
+The latest stable branch (currently 1.14.x) is the highest priority for
+security fixes.
+If a security vulnerability is reported under embargo, having new releases
+for older stable branches will not always be treated as a blocker for
+lifting the embargo.
 
 ## Reporting a Vulnerability
 
