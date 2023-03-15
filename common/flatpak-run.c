@@ -3150,6 +3150,10 @@ setup_seccomp (FlatpakBwrap   *bwrap,
 
     /* Don't allow faking input to the controlling tty (CVE-2017-5226) */
     {SCMP_SYS (ioctl), EPERM, &SCMP_A1 (SCMP_CMP_MASKED_EQ, 0xFFFFFFFFu, (int) TIOCSTI)},
+    /* In the unlikely event that the controlling tty is a Linux virtual
+     * console (/dev/tty2 or similar), copy/paste operations have an effect
+     * similar to TIOCSTI (CVE-2023-28100) */
+    {SCMP_SYS (ioctl), EPERM, &SCMP_A1 (SCMP_CMP_MASKED_EQ, 0xFFFFFFFFu, (int) TIOCLINUX)},
 
     /* seccomp can't look into clone3()'s struct clone_args to check whether
      * the flags are OK, so we have no choice but to block clone3().

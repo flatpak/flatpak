@@ -8,7 +8,7 @@ set -euo pipefail
 
 skip_without_bwrap
 
-echo "1..16"
+echo "1..18"
 
 setup_repo
 install_repo
@@ -79,6 +79,12 @@ for extra_argv in "" "--allow=multiarch"; do
     assert_streq "$e" "$EPERM"
     ok "ioctl TIOCSTI with high bits blocked (CVE-2019-10063)"
   fi
+
+  echo "# ioctl TIOCLINUX (CVE-2023-28100)"
+  e=0
+  try_syscall "ioctl TIOCLINUX" || e="$?"
+  assert_streq "$e" "$EPERM"
+  ok "ioctl TIOCLINUX blocked"
 
   echo "# listen (benign)"
   e=0
