@@ -755,6 +755,9 @@ print_eol_info_message (FlatpakDir        *dir,
     }
   else if (reason)
     {
+      g_autofree char *escaped_reason = flatpak_escape_string (reason,
+                                                               FLATPAK_ESCAPE_ALLOW_NEWLINES |
+                                                               FLATPAK_ESCAPE_DO_NOT_QUOTE);
       if (is_pinned)
         {
           /* Only runtimes can be pinned */
@@ -770,7 +773,7 @@ print_eol_info_message (FlatpakDir        *dir,
             g_print (_("\nInfo: app %s%s%s branch %s%s%s is end-of-life, with reason:\n"),
                      on, ref_name, off, on, ref_branch, off);
         }
-      g_print ("   %s\n", reason);
+      g_print ("   %s\n", escaped_reason);
     }
 }
 
