@@ -151,6 +151,15 @@ main (int argc, char **argv)
             }
         }
 #endif
+      else if (strcmp (arg, "ioctl TIOCLINUX") == 0)
+        {
+          /* If not blocked by seccomp, this will fail with EBADF */
+          if (ioctl (-1, TIOCLINUX, WRONG_POINTER) != 0)
+            {
+              errsv = errno;
+              perror (arg);
+            }
+        }
      else if (strcmp (arg, "listen") == 0)
         {
           /* If not blocked by seccomp, this will fail with EBADF */
