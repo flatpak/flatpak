@@ -439,13 +439,35 @@ ${FLATPAK} build-commit-from --no-update-summary --end-of-life-rebase=org.test.H
 GPGARGS="${FL_GPGARGS}" $(dirname $0)/make-test-app.sh repos/test-rebase org.test.NewHello master "${REBASE_COLLECTION_ID}" "NEW" > /dev/null
 update_repo test-rebase
 
-# First do a --no-deploy update and check the old version is still installed
+# Temporarily set the minimum free space to something astronomical to make the
+# install of the rebased app fail.
+orig_min_free_space=$(ostree --repo=$FL_DIR/repo config get core.min-free-space-size || :)
+ostree --repo=$FL_DIR/repo config set core.min-free-space-size 999TB
+
+if ${FLATPAK} ${U} update -y org.test.Hello >&2; then
+    assert_not_reached "flatpak update should fail with insufficient free space"
+fi
+
+# Check that the old app is still installed and the new app is not installed.
+# See https://github.com/flatpak/flatpak/pull/5332
+assert_has_dir $FL_DIR/app/org.test.Hello/$ARCH/master/active/files
+assert_not_has_dir $FL_DIR/app/org.test.NewHello/$ARCH/master/active/files
+
+# Restore the original minimum free space.
+if [ -n "$orig_min_free_space" ]; then
+    ostree --repo=$FL_DIR/repo config set core.min-free-space-size "$orig_min_free_space"
+else
+    ostree --repo=$FL_DIR/repo config unset core.min-free-space-size
+fi
+
+# Now do a --no-deploy update and check the old version is still installed
 ${FLATPAK} ${U} update -y --no-deploy org.test.Hello >&2
 
 assert_has_dir $HOME/.var/app/org.test.Hello
 assert_has_file $HOME/.var/app/org.test.Hello/data/a-file
 assert_not_has_dir $HOME/.var/app/org.test.NewHello
 
+# Finally actually do the update.
 ${FLATPAK} ${U} update -y org.test.Hello >&2
 
 # Make sure we got the new version installed
