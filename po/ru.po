@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2023-02-27 12:31+0000\n"
+"POT-Creation-Date: 2023-03-16 09:42+0000\n"
 "PO-Revision-Date: 2022-06-29 15:02+0300\n"
 "Last-Translator: Aleksandr Melman <Alexmelman88@gmail.com>\n"
 "Language-Team: Russian <gnome-cyr@gnome.org>\n"
@@ -261,7 +261,7 @@ msgstr "Не найдена точка расширения, подходяща�
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Отсутствует '=' в параметре связанного монтирования '%s'"
 
-#: app/flatpak-builtins-build.c:606 common/flatpak-run.c:4769
+#: app/flatpak-builtins-build.c:606 common/flatpak-run.c:4773
 msgid "Unable to start app"
 msgstr "Невозможно запустить приложение"
 
@@ -455,7 +455,7 @@ msgid "Mark build as end-of-life, to be replaced with the given ID"
 msgstr "Отметить сборку как заменённую указанным ID и более не поддерживаемую"
 
 #: app/flatpak-builtins-build-export.c:73
-#: app/flatpak-builtins-document-list.c:47 app/flatpak-cli-transaction.c:1363
+#: app/flatpak-builtins-document-list.c:47 app/flatpak-cli-transaction.c:1370
 msgid "ID"
 msgstr "ID"
 
@@ -1557,7 +1557,7 @@ msgstr "Показать ID приложения/среды исполнения
 
 #: app/flatpak-builtins-history.c:61 app/flatpak-builtins-list.c:62
 #: app/flatpak-builtins-ps.c:51 app/flatpak-builtins-remote-ls.c:70
-#: app/flatpak-cli-transaction.c:1371
+#: app/flatpak-cli-transaction.c:1378
 msgid "Arch"
 msgstr "Архитектура"
 
@@ -1568,7 +1568,7 @@ msgstr "Показать архитектуру"
 
 #: app/flatpak-builtins-history.c:62 app/flatpak-builtins-list.c:61
 #: app/flatpak-builtins-ps.c:52 app/flatpak-builtins-remote-ls.c:69
-#: app/flatpak-builtins-search.c:46 app/flatpak-cli-transaction.c:1374
+#: app/flatpak-builtins-search.c:46 app/flatpak-cli-transaction.c:1381
 msgid "Branch"
 msgstr "Ветвь"
 
@@ -1585,7 +1585,7 @@ msgstr "Тип установки"
 msgid "Show the affected installation"
 msgstr "Показать затронутую установку"
 
-#: app/flatpak-builtins-history.c:64 app/flatpak-cli-transaction.c:1388
+#: app/flatpak-builtins-history.c:64 app/flatpak-cli-transaction.c:1395
 msgid "Remote"
 msgstr "Удалённый репозиторий"
 
@@ -1749,7 +1749,7 @@ msgid "Warning: Commit has no flatpak metadata\n"
 msgstr "Предупреждение: коммиит не содержит метаданных Flatpak\n"
 
 #: app/flatpak-builtins-info.c:217 app/flatpak-builtins-info.c:259
-#: app/flatpak-builtins-info.c:451 app/flatpak-builtins-info.c:498
+#: app/flatpak-builtins-info.c:455 app/flatpak-builtins-info.c:502
 #: app/flatpak-builtins-remote-info.c:235
 #: app/flatpak-builtins-remote-info.c:270
 msgid "ID:"
@@ -1796,7 +1796,7 @@ msgid "Installation:"
 msgstr "Установка:"
 
 #: app/flatpak-builtins-info.c:228 app/flatpak-builtins-info.c:271
-#: app/flatpak-builtins-info.c:454 app/flatpak-builtins-info.c:501
+#: app/flatpak-builtins-info.c:458 app/flatpak-builtins-info.c:505
 #: app/flatpak-builtins-remote-info.c:248
 #: app/flatpak-builtins-remote-info.c:283
 msgid "Installed:"
@@ -1835,7 +1835,7 @@ msgid "Latest commit:"
 msgstr "Последний коммит:"
 
 #: app/flatpak-builtins-info.c:244 app/flatpak-builtins-info.c:303
-#: app/flatpak-builtins-info.c:453 app/flatpak-builtins-info.c:500
+#: app/flatpak-builtins-info.c:457 app/flatpak-builtins-info.c:504
 #: app/flatpak-builtins-remote-info.c:258
 #: app/flatpak-builtins-remote-info.c:297
 msgid "Commit:"
@@ -1867,25 +1867,25 @@ msgstr "Конец-поддержки-замена:"
 msgid "Subdirectories:"
 msgstr "Поддиректории:"
 
-#: app/flatpak-builtins-info.c:255 app/flatpak-builtins-info.c:450
-#: app/flatpak-builtins-info.c:497
+#: app/flatpak-builtins-info.c:255 app/flatpak-builtins-info.c:454
+#: app/flatpak-builtins-info.c:501
 msgid "Extension:"
 msgstr "Расширение:"
 
-#: app/flatpak-builtins-info.c:267 app/flatpak-builtins-info.c:452
-#: app/flatpak-builtins-info.c:499
+#: app/flatpak-builtins-info.c:267 app/flatpak-builtins-info.c:456
+#: app/flatpak-builtins-info.c:503
 msgid "Origin:"
 msgstr "Источник:"
 
-#: app/flatpak-builtins-info.c:455 app/flatpak-builtins-info.c:506
+#: app/flatpak-builtins-info.c:459 app/flatpak-builtins-info.c:510
 msgid "Subpaths:"
 msgstr "Подпути:"
 
-#: app/flatpak-builtins-info.c:472
+#: app/flatpak-builtins-info.c:476
 msgid "unmaintained"
 msgstr "не-сопровождается"
 
-#: app/flatpak-builtins-info.c:475
+#: app/flatpak-builtins-info.c:479
 msgid "unknown"
 msgstr "неизвестно"
 
@@ -2992,7 +2992,7 @@ msgstr "%zd итоговые ветви\n"
 msgid "Installed"
 msgstr "Установлено"
 
-#: app/flatpak-builtins-repo.c:335 app/flatpak-cli-transaction.c:1397
+#: app/flatpak-builtins-repo.c:335 app/flatpak-cli-transaction.c:1404
 msgid "Download"
 msgstr "Загрузка"
 
@@ -3668,7 +3668,7 @@ msgstr ""
 "Информация: %s%s %s прекращает свое существование, в пользу %s\n"
 
 #. Only runtimes can be pinned
-#: app/flatpak-cli-transaction.c:761
+#: app/flatpak-cli-transaction.c:764
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -3676,7 +3676,7 @@ msgid ""
 msgstr ""
 "Информация: конец срока поддержки закреплённого %s//%s наступил по причине:\n"
 
-#: app/flatpak-cli-transaction.c:767
+#: app/flatpak-cli-transaction.c:770
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -3685,7 +3685,7 @@ msgstr ""
 "\n"
 "Информация: %s%s %s прекращает свое существование, по причине:\n"
 
-#: app/flatpak-cli-transaction.c:770
+#: app/flatpak-cli-transaction.c:773
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -3694,92 +3694,92 @@ msgstr ""
 "\n"
 "Информация: %s%s %s прекращает свое существование, по причине:\n"
 
-#: app/flatpak-cli-transaction.c:944
+#: app/flatpak-cli-transaction.c:947
 #, fuzzy
 msgid "Info: applications using this extension:\n"
 msgstr "Приложения, использующие эту среду исполнения:\n"
 
-#: app/flatpak-cli-transaction.c:946
+#: app/flatpak-cli-transaction.c:949
 #, fuzzy
 msgid "Info: applications using this runtime:\n"
 msgstr "Приложения, использующие эту среду исполнения:\n"
 
-#: app/flatpak-cli-transaction.c:965
+#: app/flatpak-cli-transaction.c:968
 msgid "Replace?"
 msgstr "Заменить?"
 
-#: app/flatpak-cli-transaction.c:968 app/flatpak-quiet-transaction.c:247
+#: app/flatpak-cli-transaction.c:971 app/flatpak-quiet-transaction.c:247
 msgid "Updating to rebased version\n"
 msgstr "Обновление перебазированной версии\n"
 
-#: app/flatpak-cli-transaction.c:992
+#: app/flatpak-cli-transaction.c:995
 #, c-format
 msgid "Failed to rebase %s to %s: "
 msgstr "Ошибка: Не удалось перезбазировать %s в %s: "
 
-#: app/flatpak-cli-transaction.c:1006
+#: app/flatpak-cli-transaction.c:1009
 #, c-format
 msgid "Failed to uninstall %s for rebase to %s: "
 msgstr "Не удалось удалить %s для перебазирования в %s: "
 
-#: app/flatpak-cli-transaction.c:1215
+#: app/flatpak-cli-transaction.c:1222
 #, c-format
 msgid "New %s%s%s permissions:"
 msgstr "Новые разрешения %s%s%s:"
 
-#: app/flatpak-cli-transaction.c:1217
+#: app/flatpak-cli-transaction.c:1224
 #, c-format
 msgid "%s%s%s permissions:"
 msgstr "Разрешения %s%s%s:"
 
-#: app/flatpak-cli-transaction.c:1279
+#: app/flatpak-cli-transaction.c:1286
 msgid "Warning: "
 msgstr "Предупреждение: "
 
 #. translators: This is short for operation, the title of a one-char column
-#: app/flatpak-cli-transaction.c:1378
+#: app/flatpak-cli-transaction.c:1385
 msgid "Op"
 msgstr "Оп"
 
 #. Avoid resizing the download column too much,
 #. * by making the title as long as typical content
 #.
-#: app/flatpak-cli-transaction.c:1394 app/flatpak-cli-transaction.c:1438
+#: app/flatpak-cli-transaction.c:1401 app/flatpak-cli-transaction.c:1445
 msgid "partial"
 msgstr "частично"
 
-#: app/flatpak-cli-transaction.c:1470
+#: app/flatpak-cli-transaction.c:1477
 msgid "Proceed with these changes to the user installation?"
 msgstr "Перейти к пользовательской установке с этими изменениями?"
 
-#: app/flatpak-cli-transaction.c:1472
+#: app/flatpak-cli-transaction.c:1479
 msgid "Proceed with these changes to the system installation?"
 msgstr "Перейти к системой установке с этими изменениями?"
 
-#: app/flatpak-cli-transaction.c:1474
+#: app/flatpak-cli-transaction.c:1481
 #, c-format
 msgid "Proceed with these changes to the %s?"
 msgstr "Перейти к %s с этими изменениями?"
 
-#: app/flatpak-cli-transaction.c:1648
+#: app/flatpak-cli-transaction.c:1655
 msgid "Changes complete."
 msgstr "Изменения внесены."
 
-#: app/flatpak-cli-transaction.c:1650
+#: app/flatpak-cli-transaction.c:1657
 msgid "Uninstall complete."
 msgstr "Удаление завершено."
 
-#: app/flatpak-cli-transaction.c:1652
+#: app/flatpak-cli-transaction.c:1659
 msgid "Installation complete."
 msgstr "Установка завершена."
 
-#: app/flatpak-cli-transaction.c:1654
+#: app/flatpak-cli-transaction.c:1661
 msgid "Updates complete."
 msgstr "Обновление завершено."
 
 #. For updates/!stop_on_first_error we already printed all errors so we make up
 #. a different one.
-#: app/flatpak-cli-transaction.c:1687
+#: app/flatpak-cli-transaction.c:1694
 msgid "There were one or more errors"
 msgstr "Произошла одна или более ошибок"
 
@@ -4262,19 +4262,19 @@ msgstr "Неизвестный тип устройства %s, доступны�
 msgid "Unknown feature type %s, valid types are: %s"
 msgstr "Неизвестный тип функционала %s, доступные типы: %s"
 
-#: common/flatpak-context.c:871
+#: common/flatpak-context.c:880
 #, c-format
 msgid "Filesystem location \"%s\" contains \"..\""
 msgstr "Путь \"%s\" файловой системы содержит \"..\""
 
-#: common/flatpak-context.c:909
+#: common/flatpak-context.c:918
 msgid ""
 "--filesystem=/ is not available, use --filesystem=host for a similar result"
 msgstr ""
 "--filesystem=/ не поддерживается, используйте --filesystem=host для "
 "получения схожего результата"
 
-#: common/flatpak-context.c:943
+#: common/flatpak-context.c:952
 #, c-format
 msgid ""
 "Unknown filesystem location %s, valid locations are: host, host-os, host-"
@@ -4283,181 +4283,181 @@ msgstr ""
 "Неизвестный путь файловой системы %s, доступные типы: host, host-os, host-"
 "etc, home, xdg-*[/…], ~/dir, /dir"
 
-#: common/flatpak-context.c:1223
+#: common/flatpak-context.c:1232
 #, c-format
 msgid "Invalid env format %s"
 msgstr "Неверный формат переменной окружения %s"
 
-#: common/flatpak-context.c:1326
+#: common/flatpak-context.c:1335
 #, c-format
 msgid "Environment variable name must not contain '=': %s"
 msgstr "Имя переменной окружения не должно содежать'=': %s"
 
-#: common/flatpak-context.c:1439 common/flatpak-context.c:1447
+#: common/flatpak-context.c:1448 common/flatpak-context.c:1456
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr "Аргмуенты --add-policy должны быть в форме ПОДСИСТЕМА.КЛЮЧ=ЗНАЧЕНИЕ"
 
-#: common/flatpak-context.c:1454
+#: common/flatpak-context.c:1463
 msgid "--add-policy values can't start with \"!\""
 msgstr "Значения --add-policy не могут начинаться с '!'"
 
-#: common/flatpak-context.c:1479 common/flatpak-context.c:1487
+#: common/flatpak-context.c:1488 common/flatpak-context.c:1496
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr "Аргмуенты --remove-policy должны быть в форме ПОДСИСТЕМА.КЛЮЧ=ЗНАЧЕНИЕ"
 
-#: common/flatpak-context.c:1494
+#: common/flatpak-context.c:1503
 msgid "--remove-policy values can't start with \"!\""
 msgstr "Значения --remove-policy не могут начинаться с '!'"
 
-#: common/flatpak-context.c:1520
+#: common/flatpak-context.c:1528
 msgid "Share with host"
 msgstr "Добавить общий каталог с хостом"
 
-#: common/flatpak-context.c:1520 common/flatpak-context.c:1521
+#: common/flatpak-context.c:1528 common/flatpak-context.c:1529
 msgid "SHARE"
 msgstr "ОБЩ_КАТАЛОГ"
 
-#: common/flatpak-context.c:1521
+#: common/flatpak-context.c:1529
 msgid "Unshare with host"
 msgstr "Убрать общий каталог с хостом"
 
-#: common/flatpak-context.c:1522
+#: common/flatpak-context.c:1530
 msgid "Expose socket to app"
 msgstr "Пробросить сокет приложению"
 
-#: common/flatpak-context.c:1522 common/flatpak-context.c:1523
+#: common/flatpak-context.c:1530 common/flatpak-context.c:1531
 msgid "SOCKET"
 msgstr "СОКЕТ"
 
-#: common/flatpak-context.c:1523
+#: common/flatpak-context.c:1531
 msgid "Don't expose socket to app"
 msgstr "Убрать проброс сокета приложению"
 
-#: common/flatpak-context.c:1524
+#: common/flatpak-context.c:1532
 msgid "Expose device to app"
 msgstr "Пробросить устройство приложению"
 
-#: common/flatpak-context.c:1524 common/flatpak-context.c:1525
+#: common/flatpak-context.c:1532 common/flatpak-context.c:1533
 msgid "DEVICE"
 msgstr "УСТРОЙСТВО"
 
-#: common/flatpak-context.c:1525
+#: common/flatpak-context.c:1533
 msgid "Don't expose device to app"
 msgstr "Убрать проброс устройства приложению"
 
-#: common/flatpak-context.c:1526
+#: common/flatpak-context.c:1534
 msgid "Allow feature"
 msgstr "Разрешить использовать этот функционал"
 
-#: common/flatpak-context.c:1526 common/flatpak-context.c:1527
+#: common/flatpak-context.c:1534 common/flatpak-context.c:1535
 msgid "FEATURE"
 msgstr "ФУНКЦИОНАЛ"
 
-#: common/flatpak-context.c:1527
+#: common/flatpak-context.c:1535
 msgid "Don't allow feature"
 msgstr "Запретить использование этого функционала"
 
-#: common/flatpak-context.c:1528
+#: common/flatpak-context.c:1536
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr "Пробросить файловую систему приложению (:ro только для чтения)"
 
-#: common/flatpak-context.c:1528
+#: common/flatpak-context.c:1536
 msgid "FILESYSTEM[:ro]"
 msgstr "ФАЙЛ_СИСТЕМА[:ro]"
 
-#: common/flatpak-context.c:1529
+#: common/flatpak-context.c:1537
 msgid "Don't expose filesystem to app"
 msgstr "Не пробрасывать файловую систему для приложения"
 
-#: common/flatpak-context.c:1529
+#: common/flatpak-context.c:1537
 msgid "FILESYSTEM"
 msgstr "ФАЙЛ_СИСТЕМА"
 
-#: common/flatpak-context.c:1530
+#: common/flatpak-context.c:1538
 msgid "Set environment variable"
 msgstr "Установить переменную окружения"
 
-#: common/flatpak-context.c:1530
+#: common/flatpak-context.c:1538
 msgid "VAR=VALUE"
 msgstr "ПЕРЕМЕННАЯ=ЗНАЧЕНИЕ"
 
-#: common/flatpak-context.c:1531
+#: common/flatpak-context.c:1539
 msgid "Read environment variables in env -0 format from FD"
 msgstr "Читать переменные окружения в формате env -0 из ДЕСКРИПТОРа"
 
-#: common/flatpak-context.c:1531
+#: common/flatpak-context.c:1539
 msgid "FD"
 msgstr "ДЕСКРИПТОР"
 
-#: common/flatpak-context.c:1532
+#: common/flatpak-context.c:1540
 msgid "Remove variable from environment"
 msgstr "Удалить переменную из окружения"
 
-#: common/flatpak-context.c:1532
+#: common/flatpak-context.c:1540
 msgid "VAR"
 msgstr "ПЕРЕМЕННАЯ"
 
-#: common/flatpak-context.c:1533
+#: common/flatpak-context.c:1541
 msgid "Allow app to own name on the session bus"
 msgstr "Разрешить приложению владеть именем на сессионной шине"
 
-#: common/flatpak-context.c:1533 common/flatpak-context.c:1534
-#: common/flatpak-context.c:1535 common/flatpak-context.c:1536
-#: common/flatpak-context.c:1537 common/flatpak-context.c:1538
+#: common/flatpak-context.c:1541 common/flatpak-context.c:1542
+#: common/flatpak-context.c:1543 common/flatpak-context.c:1544
+#: common/flatpak-context.c:1545 common/flatpak-context.c:1546
 msgid "DBUS_NAME"
 msgstr "ИМЯ_DBUS"
 
-#: common/flatpak-context.c:1534
+#: common/flatpak-context.c:1542
 msgid "Allow app to talk to name on the session bus"
 msgstr "Разрешить приложению обмениваться с именем используя сессионную шину"
 
-#: common/flatpak-context.c:1535
+#: common/flatpak-context.c:1543
 msgid "Don't allow app to talk to name on the session bus"
 msgstr "Запрещать приложению обмениваться с именем используя сессионную шину"
 
-#: common/flatpak-context.c:1536
+#: common/flatpak-context.c:1544
 msgid "Allow app to own name on the system bus"
 msgstr "Разрешить приложению владеть именем используя системную шину"
 
-#: common/flatpak-context.c:1537
+#: common/flatpak-context.c:1545
 msgid "Allow app to talk to name on the system bus"
 msgstr "Разрешить приложению обмениваться с именем используя системную шину"
 
-#: common/flatpak-context.c:1538
+#: common/flatpak-context.c:1546
 msgid "Don't allow app to talk to name on the system bus"
 msgstr "Запретить приложению обмениваться с именем используя системную шину"
 
-#: common/flatpak-context.c:1539
+#: common/flatpak-context.c:1547
 msgid "Add generic policy option"
 msgstr "Добавить параметр обобщенной политики"
 
-#: common/flatpak-context.c:1539 common/flatpak-context.c:1540
+#: common/flatpak-context.c:1547 common/flatpak-context.c:1548
 msgid "SUBSYSTEM.KEY=VALUE"
 msgstr "ПОДСИСТЕМА.КЛЮЧ=ЗНАЧЕНИЕ"
 
-#: common/flatpak-context.c:1540
+#: common/flatpak-context.c:1548
 msgid "Remove generic policy option"
 msgstr "Удалить параметр обобщенной политики"
 
-#: common/flatpak-context.c:1541
+#: common/flatpak-context.c:1549
 msgid "Persist home directory subpath"
 msgstr "Постоянный путь к домашнему каталогу"
 
-#: common/flatpak-context.c:1541
+#: common/flatpak-context.c:1549
 msgid "FILENAME"
 msgstr "ИМЯ_ФАЙЛА"
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-context.c:1543
+#: common/flatpak-context.c:1551
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "Не требует запуска сеанса (создание cgroups не требуется)"
 
-#: common/flatpak-context.c:2483
+#: common/flatpak-context.c:2505
 #, c-format
 msgid "Not replacing \"%s\" with tmpfs: %s"
 msgstr ""
 
-#: common/flatpak-context.c:2491
+#: common/flatpak-context.c:2513
 #, c-format
 msgid "Not sharing \"%s\" with sandbox: %s"
 msgstr ""
@@ -4466,12 +4466,12 @@ msgstr ""
 #. * the path not existing, it seems reasonable to make more of a fuss
 #. * about the home directory not existing or otherwise being unusable,
 #. * so this is intentionally not using cannot_export()
-#: common/flatpak-context.c:2587
+#: common/flatpak-context.c:2609
 #, c-format
 msgid "Not allowing home directory access: %s"
 msgstr ""
 
-#: common/flatpak-context.c:2806
+#: common/flatpak-context.c:2828
 #, fuzzy, c-format
 msgid "Unable to provide a temporary home directory in the sandbox: %s"
 msgstr "Невозможно создать временный каталог в %s"
@@ -5349,51 +5349,51 @@ msgstr "Не удалось открыть файл bwrapinfo.json: %s"
 msgid "Failed to write to instance id fd: %s"
 msgstr "Не удалось записать файловый дескриптор с ID экземпляра: %s"
 
-#: common/flatpak-run.c:3268
+#: common/flatpak-run.c:3272
 msgid "Initialize seccomp failed"
 msgstr "Не удалось инициализировать seccomp"
 
-#: common/flatpak-run.c:3307
+#: common/flatpak-run.c:3311
 #, c-format
 msgid "Failed to add architecture to seccomp filter: %s"
 msgstr "Не удалось добавить архитектуру в фильтр seccomp: %s"
 
-#: common/flatpak-run.c:3315
+#: common/flatpak-run.c:3319
 #, c-format
 msgid "Failed to add multiarch architecture to seccomp filter: %s"
 msgstr "Не удалось добавить многоархивную архитектуру к фильтру seccomp: %s"
 
-#: common/flatpak-run.c:3347 common/flatpak-run.c:3369
+#: common/flatpak-run.c:3351 common/flatpak-run.c:3373
 #, c-format
 msgid "Failed to block syscall %d: %s"
 msgstr "Не удалось заблокировать системный вызов %d: %s"
 
-#: common/flatpak-run.c:3402
+#: common/flatpak-run.c:3406
 #, c-format
 msgid "Failed to export bpf: %s"
 msgstr "Не удалось экспортировать bpf: %s"
 
-#: common/flatpak-run.c:3653
+#: common/flatpak-run.c:3657
 #, c-format
 msgid "Failed to open ‘%s’"
 msgstr "Не удалось открыть '%s'"
 
-#: common/flatpak-run.c:3939
+#: common/flatpak-run.c:3943
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "ошибка ldconfig, статус ошибки %d"
 
-#: common/flatpak-run.c:3946
+#: common/flatpak-run.c:3950
 msgid "Can't open generated ld.so.cache"
 msgstr "Невозможно открыть сгенерированный файл ld.so.cache"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-run.c:4057
+#: common/flatpak-run.c:4061
 #, c-format
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr "Запуск %s не разрешен политикой, установленной вашим администратором"
 
-#: common/flatpak-run.c:4159
+#: common/flatpak-run.c:4163
 msgid ""
 "\"flatpak run\" is not intended to be run as `sudo flatpak run`. Use `sudo -"
 "i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell."
@@ -5402,19 +5402,19 @@ msgstr ""
 "этого используйте `sudo -i` или `su -l` и вызывайте \"flatpak run\" из новой "
 "оболочки."
 
-#: common/flatpak-run.c:4342
+#: common/flatpak-run.c:4346
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "Не удалось перенести с %s: %s"
 
-#: common/flatpak-run.c:4357
+#: common/flatpak-run.c:4361
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr ""
 "Не удалось переместить старую папку с данными приложения %s в папку с новым "
 "именем %s: %s"
 
-#: common/flatpak-run.c:4366
+#: common/flatpak-run.c:4370
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "Не удалось создать символическую ссылку при переносе %s: %s"

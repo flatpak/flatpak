@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2023-02-27 12:31+0000\n"
+"POT-Creation-Date: 2023-03-16 09:42+0000\n"
 "PO-Revision-Date: 2022-08-23 18:04+0200\n"
 "Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
@@ -256,7 +256,7 @@ msgstr ""
 msgid "Missing '=' in bind mount option '%s'"
 msgstr ""
 
-#: app/flatpak-builtins-build.c:606 common/flatpak-run.c:4769
+#: app/flatpak-builtins-build.c:606 common/flatpak-run.c:4773
 msgid "Unable to start app"
 msgstr "Nelze spustit aplikaci"
 
@@ -447,7 +447,7 @@ msgid "Mark build as end-of-life, to be replaced with the given ID"
 msgstr "Označit sestavení jako end-of-life, k nahrazení daným ID"
 
 #: app/flatpak-builtins-build-export.c:73
-#: app/flatpak-builtins-document-list.c:47 app/flatpak-cli-transaction.c:1363
+#: app/flatpak-builtins-document-list.c:47 app/flatpak-cli-transaction.c:1370
 msgid "ID"
 msgstr "ID"
 
@@ -1529,7 +1529,7 @@ msgstr "Zobrazit ID aplikace/prostředí"
 
 #: app/flatpak-builtins-history.c:61 app/flatpak-builtins-list.c:62
 #: app/flatpak-builtins-ps.c:51 app/flatpak-builtins-remote-ls.c:70
-#: app/flatpak-cli-transaction.c:1371
+#: app/flatpak-cli-transaction.c:1378
 msgid "Arch"
 msgstr "Architektura"
 
@@ -1540,7 +1540,7 @@ msgstr "Zobrazit architekturu"
 
 #: app/flatpak-builtins-history.c:62 app/flatpak-builtins-list.c:61
 #: app/flatpak-builtins-ps.c:52 app/flatpak-builtins-remote-ls.c:69
-#: app/flatpak-builtins-search.c:46 app/flatpak-cli-transaction.c:1374
+#: app/flatpak-builtins-search.c:46 app/flatpak-cli-transaction.c:1381
 msgid "Branch"
 msgstr "Větev"
 
@@ -1557,7 +1557,7 @@ msgstr "Instalace"
 msgid "Show the affected installation"
 msgstr "Zobrazit ovlivněnou instalaci"
 
-#: app/flatpak-builtins-history.c:64 app/flatpak-cli-transaction.c:1388
+#: app/flatpak-builtins-history.c:64 app/flatpak-cli-transaction.c:1395
 msgid "Remote"
 msgstr "Vzdálený repozitář"
 
@@ -1720,7 +1720,7 @@ msgid "Warning: Commit has no flatpak metadata\n"
 msgstr "Varování: Commit nemá žádná flatpak metadata\n"
 
 #: app/flatpak-builtins-info.c:217 app/flatpak-builtins-info.c:259
-#: app/flatpak-builtins-info.c:451 app/flatpak-builtins-info.c:498
+#: app/flatpak-builtins-info.c:455 app/flatpak-builtins-info.c:502
 #: app/flatpak-builtins-remote-info.c:235
 #: app/flatpak-builtins-remote-info.c:270
 msgid "ID:"
@@ -1767,7 +1767,7 @@ msgid "Installation:"
 msgstr "Instalace:"
 
 #: app/flatpak-builtins-info.c:228 app/flatpak-builtins-info.c:271
-#: app/flatpak-builtins-info.c:454 app/flatpak-builtins-info.c:501
+#: app/flatpak-builtins-info.c:458 app/flatpak-builtins-info.c:505
 #: app/flatpak-builtins-remote-info.c:248
 #: app/flatpak-builtins-remote-info.c:283
 msgid "Installed:"
@@ -1806,7 +1806,7 @@ msgid "Latest commit:"
 msgstr "Poslední commit:"
 
 #: app/flatpak-builtins-info.c:244 app/flatpak-builtins-info.c:303
-#: app/flatpak-builtins-info.c:453 app/flatpak-builtins-info.c:500
+#: app/flatpak-builtins-info.c:457 app/flatpak-builtins-info.c:504
 #: app/flatpak-builtins-remote-info.c:258
 #: app/flatpak-builtins-remote-info.c:297
 msgid "Commit:"
@@ -1838,25 +1838,25 @@ msgstr "End-of-life-rebase:"
 msgid "Subdirectories:"
 msgstr "Podadresáře:"
 
-#: app/flatpak-builtins-info.c:255 app/flatpak-builtins-info.c:450
-#: app/flatpak-builtins-info.c:497
+#: app/flatpak-builtins-info.c:255 app/flatpak-builtins-info.c:454
+#: app/flatpak-builtins-info.c:501
 msgid "Extension:"
 msgstr "Rozšíření:"
 
-#: app/flatpak-builtins-info.c:267 app/flatpak-builtins-info.c:452
-#: app/flatpak-builtins-info.c:499
+#: app/flatpak-builtins-info.c:267 app/flatpak-builtins-info.c:456
+#: app/flatpak-builtins-info.c:503
 msgid "Origin:"
 msgstr "Původ:"
 
-#: app/flatpak-builtins-info.c:455 app/flatpak-builtins-info.c:506
+#: app/flatpak-builtins-info.c:459 app/flatpak-builtins-info.c:510
 msgid "Subpaths:"
 msgstr "Podcesty:"
 
-#: app/flatpak-builtins-info.c:472
+#: app/flatpak-builtins-info.c:476
 msgid "unmaintained"
 msgstr "neudržováno"
 
-#: app/flatpak-builtins-info.c:475
+#: app/flatpak-builtins-info.c:479
 msgid "unknown"
 msgstr "neznámé"
 
@@ -2956,7 +2956,7 @@ msgstr "%zd větví shrnutí\n"
 msgid "Installed"
 msgstr "Instalováno"
 
-#: app/flatpak-builtins-repo.c:335 app/flatpak-cli-transaction.c:1397
+#: app/flatpak-builtins-repo.c:335 app/flatpak-cli-transaction.c:1404
 msgid "Download"
 msgstr "Stažení"
 
@@ -3626,7 +3626,7 @@ msgstr ""
 "větev %s%s%s\n"
 
 #. Only runtimes can be pinned
-#: app/flatpak-cli-transaction.c:761
+#: app/flatpak-cli-transaction.c:764
 #, c-format
 msgid ""
 "\n"
@@ -3636,7 +3636,7 @@ msgstr ""
 "Informace: (připnuto) prostředí %s%s%s větev %s%s%s je end-of-life, z "
 "důvodu:\n"
 
-#: app/flatpak-cli-transaction.c:767
+#: app/flatpak-cli-transaction.c:770
 #, c-format
 msgid ""
 "\n"
@@ -3645,7 +3645,7 @@ msgstr ""
 "\n"
 "Informace: prostředí %s%s%s větev %s%s%s je end-of-life, z důvodu:\n"
 
-#: app/flatpak-cli-transaction.c:770
+#: app/flatpak-cli-transaction.c:773
 #, c-format
 msgid ""
 "\n"
@@ -3654,90 +3654,90 @@ msgstr ""
 "\n"
 "Informace: aplikace %s%s%s větev %s%s%s je end-of-life, z důvodu:\n"
 
-#: app/flatpak-cli-transaction.c:944
+#: app/flatpak-cli-transaction.c:947
 msgid "Info: applications using this extension:\n"
 msgstr "Informace: aplikace používající toto rozšíření:\n"
 
-#: app/flatpak-cli-transaction.c:946
+#: app/flatpak-cli-transaction.c:949
 msgid "Info: applications using this runtime:\n"
 msgstr "Informace: aplikace používající toto prostředí:\n"
 
-#: app/flatpak-cli-transaction.c:965
+#: app/flatpak-cli-transaction.c:968
 msgid "Replace?"
 msgstr "Nahradit?"
 
-#: app/flatpak-cli-transaction.c:968 app/flatpak-quiet-transaction.c:247
+#: app/flatpak-cli-transaction.c:971 app/flatpak-quiet-transaction.c:247
 msgid "Updating to rebased version\n"
 msgstr "Aktualizace na rebased verzi\n"
 
-#: app/flatpak-cli-transaction.c:992
+#: app/flatpak-cli-transaction.c:995
 #, c-format
 msgid "Failed to rebase %s to %s: "
 msgstr "Selhalo rebase %s na %s: "
 
-#: app/flatpak-cli-transaction.c:1006
+#: app/flatpak-cli-transaction.c:1009
 #, c-format
 msgid "Failed to uninstall %s for rebase to %s: "
 msgstr "Selhala odinstalace %s pro rebase na %s: "
 
-#: app/flatpak-cli-transaction.c:1215
+#: app/flatpak-cli-transaction.c:1222
 #, c-format
 msgid "New %s%s%s permissions:"
 msgstr "Nových %s%s%s oprávnění:"
 
-#: app/flatpak-cli-transaction.c:1217
+#: app/flatpak-cli-transaction.c:1224
 #, c-format
 msgid "%s%s%s permissions:"
 msgstr "%s%s%s oprávnění:"
 
-#: app/flatpak-cli-transaction.c:1279
+#: app/flatpak-cli-transaction.c:1286
 msgid "Warning: "
 msgstr "Varování: "
 
 #. translators: This is short for operation, the title of a one-char column
-#: app/flatpak-cli-transaction.c:1378
+#: app/flatpak-cli-transaction.c:1385
 msgid "Op"
 msgstr "Op"
 
 #. Avoid resizing the download column too much,
 #. * by making the title as long as typical content
 #.
-#: app/flatpak-cli-transaction.c:1394 app/flatpak-cli-transaction.c:1438
+#: app/flatpak-cli-transaction.c:1401 app/flatpak-cli-transaction.c:1445
 msgid "partial"
 msgstr "částečný"
 
-#: app/flatpak-cli-transaction.c:1470
+#: app/flatpak-cli-transaction.c:1477
 msgid "Proceed with these changes to the user installation?"
 msgstr "Pokračovat s těmito změnami do uživatelské instalace?"
 
-#: app/flatpak-cli-transaction.c:1472
+#: app/flatpak-cli-transaction.c:1479
 msgid "Proceed with these changes to the system installation?"
 msgstr "Pokračovat s těmito změnami do systémové instalace?"
 
-#: app/flatpak-cli-transaction.c:1474
+#: app/flatpak-cli-transaction.c:1481
 #, c-format
 msgid "Proceed with these changes to the %s?"
 msgstr "Pokračovat s těmito změnami do %s?"
 
-#: app/flatpak-cli-transaction.c:1648
+#: app/flatpak-cli-transaction.c:1655
 msgid "Changes complete."
 msgstr "Změny dokončeny."
 
-#: app/flatpak-cli-transaction.c:1650
+#: app/flatpak-cli-transaction.c:1657
 msgid "Uninstall complete."
 msgstr "Odinstalace dokončena."
 
-#: app/flatpak-cli-transaction.c:1652
+#: app/flatpak-cli-transaction.c:1659
 msgid "Installation complete."
 msgstr "Instalace dokončena."
 
-#: app/flatpak-cli-transaction.c:1654
+#: app/flatpak-cli-transaction.c:1661
 msgid "Updates complete."
 msgstr "Aktualizace dokončeny."
 
 #. For updates/!stop_on_first_error we already printed all errors so we make up
 #. a different one.
-#: app/flatpak-cli-transaction.c:1687
+#: app/flatpak-cli-transaction.c:1694
 msgid "There were one or more errors"
 msgstr "Vyskytla se jedna či více chyb"
 
@@ -4210,18 +4210,18 @@ msgstr "Neznámý typ zařízení %s, platné typy jsou: %s"
 msgid "Unknown feature type %s, valid types are: %s"
 msgstr "Neznámý typ funkce %s, platné typy jsou: %s"
 
-#: common/flatpak-context.c:871
+#: common/flatpak-context.c:880
 #, c-format
 msgid "Filesystem location \"%s\" contains \"..\""
 msgstr "Umístění systému souborů „%s“ obsahuje „..“"
 
-#: common/flatpak-context.c:909
+#: common/flatpak-context.c:918
 msgid ""
 "--filesystem=/ is not available, use --filesystem=host for a similar result"
 msgstr ""
 "--filesystem=/ není dostupné, pro podobný výsledek použijte --filesystem=host"
 
-#: common/flatpak-context.c:943
+#: common/flatpak-context.c:952
 #, c-format
 msgid ""
 "Unknown filesystem location %s, valid locations are: host, host-os, host-"
@@ -4230,181 +4230,181 @@ msgstr ""
 "Neplatné umístění systému souborů %s, platná umístění jsou: host, host-os, "
 "host-etc, home, xdg-*[/…], ~/dir, /dir"
 
-#: common/flatpak-context.c:1223
+#: common/flatpak-context.c:1232
 #, c-format
 msgid "Invalid env format %s"
 msgstr "Neplatný formát env %s"
 
-#: common/flatpak-context.c:1326
+#: common/flatpak-context.c:1335
 #, c-format
 msgid "Environment variable name must not contain '=': %s"
 msgstr ""
 
-#: common/flatpak-context.c:1439 common/flatpak-context.c:1447
+#: common/flatpak-context.c:1448 common/flatpak-context.c:1456
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr "--add-policy argumenty musí být ve formě SUBSYSTÉM.KLÍČ=HODNOTA"
 
-#: common/flatpak-context.c:1454
+#: common/flatpak-context.c:1463
 msgid "--add-policy values can't start with \"!\""
 msgstr "--add-policy hodnoty nemohou začínat „!“"
 
-#: common/flatpak-context.c:1479 common/flatpak-context.c:1487
+#: common/flatpak-context.c:1488 common/flatpak-context.c:1496
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr "--remove-policy argumenty musí být ve formě SUBSYSTÉM.KLÍČ=HODNOTA"
 
-#: common/flatpak-context.c:1494
+#: common/flatpak-context.c:1503
 msgid "--remove-policy values can't start with \"!\""
 msgstr "--remove-policy hodnoty nemohou začínat „!“"
 
-#: common/flatpak-context.c:1520
+#: common/flatpak-context.c:1528
 msgid "Share with host"
 msgstr "Sdílet s hostitelem"
 
-#: common/flatpak-context.c:1520 common/flatpak-context.c:1521
+#: common/flatpak-context.c:1528 common/flatpak-context.c:1529
 msgid "SHARE"
 msgstr "SDÍLET"
 
-#: common/flatpak-context.c:1521
+#: common/flatpak-context.c:1529
 msgid "Unshare with host"
 msgstr "Zrušit sdílení s hostitelem"
 
-#: common/flatpak-context.c:1522
+#: common/flatpak-context.c:1530
 msgid "Expose socket to app"
 msgstr "Odhalit soket aplikaci"
 
-#: common/flatpak-context.c:1522 common/flatpak-context.c:1523
+#: common/flatpak-context.c:1530 common/flatpak-context.c:1531
 msgid "SOCKET"
 msgstr "SOKET"
 
-#: common/flatpak-context.c:1523
+#: common/flatpak-context.c:1531
 msgid "Don't expose socket to app"
 msgstr "Neodhalovat soket aplikaci"
 
-#: common/flatpak-context.c:1524
+#: common/flatpak-context.c:1532
 msgid "Expose device to app"
 msgstr "Odhalit zařízení aplikaci"
 
-#: common/flatpak-context.c:1524 common/flatpak-context.c:1525
+#: common/flatpak-context.c:1532 common/flatpak-context.c:1533
 msgid "DEVICE"
 msgstr "ZAŘÍZENÍ"
 
-#: common/flatpak-context.c:1525
+#: common/flatpak-context.c:1533
 msgid "Don't expose device to app"
 msgstr "Neodhalovat zařízení aplikaci"
 
-#: common/flatpak-context.c:1526
+#: common/flatpak-context.c:1534
 msgid "Allow feature"
 msgstr "Umožnit funkci"
 
-#: common/flatpak-context.c:1526 common/flatpak-context.c:1527
+#: common/flatpak-context.c:1534 common/flatpak-context.c:1535
 msgid "FEATURE"
 msgstr "FUNKCE"
 
-#: common/flatpak-context.c:1527
+#: common/flatpak-context.c:1535
 msgid "Don't allow feature"
 msgstr "Neumožnit funkci"
 
-#: common/flatpak-context.c:1528
+#: common/flatpak-context.c:1536
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr "Odhalit systém souborů aplikaci (:ro pro přístup pouze ke čtení)"
 
-#: common/flatpak-context.c:1528
+#: common/flatpak-context.c:1536
 msgid "FILESYSTEM[:ro]"
 msgstr "SYSTÉM_SOUBORŮ[:ro]"
 
-#: common/flatpak-context.c:1529
+#: common/flatpak-context.c:1537
 msgid "Don't expose filesystem to app"
 msgstr "Neodhalovat systém souborů aplikaci"
 
-#: common/flatpak-context.c:1529
+#: common/flatpak-context.c:1537
 msgid "FILESYSTEM"
 msgstr "SYSTÉM_SOUBORŮ"
 
-#: common/flatpak-context.c:1530
+#: common/flatpak-context.c:1538
 msgid "Set environment variable"
 msgstr "Nastavit proměnnou prostředí"
 
-#: common/flatpak-context.c:1530
+#: common/flatpak-context.c:1538
 msgid "VAR=VALUE"
 msgstr "PROMĚNNÁ=HODNOTA"
 
-#: common/flatpak-context.c:1531
+#: common/flatpak-context.c:1539
 msgid "Read environment variables in env -0 format from FD"
 msgstr "Číst proměnné prostředí ve formátu env -0 z FD"
 
-#: common/flatpak-context.c:1531
+#: common/flatpak-context.c:1539
 msgid "FD"
 msgstr "FD"
 
-#: common/flatpak-context.c:1532
+#: common/flatpak-context.c:1540
 msgid "Remove variable from environment"
 msgstr "Odstranit proměnnou z prostředí"
 
-#: common/flatpak-context.c:1532
+#: common/flatpak-context.c:1540
 msgid "VAR"
 msgstr "PROMĚNNÁ"
 
-#: common/flatpak-context.c:1533
+#: common/flatpak-context.c:1541
 msgid "Allow app to own name on the session bus"
 msgstr "Povolit aplikaci vlastnit název na sběrnici sezení"
 
-#: common/flatpak-context.c:1533 common/flatpak-context.c:1534
-#: common/flatpak-context.c:1535 common/flatpak-context.c:1536
-#: common/flatpak-context.c:1537 common/flatpak-context.c:1538
+#: common/flatpak-context.c:1541 common/flatpak-context.c:1542
+#: common/flatpak-context.c:1543 common/flatpak-context.c:1544
+#: common/flatpak-context.c:1545 common/flatpak-context.c:1546
 msgid "DBUS_NAME"
 msgstr "NÁZEV_DBUS"
 
-#: common/flatpak-context.c:1534
+#: common/flatpak-context.c:1542
 msgid "Allow app to talk to name on the session bus"
 msgstr "Povolit aplikaci komunikovat s názvem na sběrnici sezení"
 
-#: common/flatpak-context.c:1535
+#: common/flatpak-context.c:1543
 msgid "Don't allow app to talk to name on the session bus"
 msgstr "Nepovolit aplikaci komunikovat s názvem na sběrnici sezení"
 
-#: common/flatpak-context.c:1536
+#: common/flatpak-context.c:1544
 msgid "Allow app to own name on the system bus"
 msgstr "Povolit aplikaci vlastnit název na systémové sběrnici"
 
-#: common/flatpak-context.c:1537
+#: common/flatpak-context.c:1545
 msgid "Allow app to talk to name on the system bus"
 msgstr "Povolit aplikaci komunikovat s názvem na systémové sběrnici"
 
-#: common/flatpak-context.c:1538
+#: common/flatpak-context.c:1546
 msgid "Don't allow app to talk to name on the system bus"
 msgstr "Nepovolit aplikaci komunikovat s názvem na systémové sběrnici"
 
-#: common/flatpak-context.c:1539
+#: common/flatpak-context.c:1547
 msgid "Add generic policy option"
 msgstr "Přidat generickou volbu bezpečnostní politiky"
 
-#: common/flatpak-context.c:1539 common/flatpak-context.c:1540
+#: common/flatpak-context.c:1547 common/flatpak-context.c:1548
 msgid "SUBSYSTEM.KEY=VALUE"
 msgstr "SUBSYSTÉM.KLÍČ=HODNOTA"
 
-#: common/flatpak-context.c:1540
+#: common/flatpak-context.c:1548
 msgid "Remove generic policy option"
 msgstr "Odebrat generickou volbu bezpečnostní politiky"
 
-#: common/flatpak-context.c:1541
+#: common/flatpak-context.c:1549
 msgid "Persist home directory subpath"
 msgstr "Trvalá podcesta domovského adresáře"
 
-#: common/flatpak-context.c:1541
+#: common/flatpak-context.c:1549
 msgid "FILENAME"
 msgstr "NÁZEV_SOUBORU"
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-context.c:1543
+#: common/flatpak-context.c:1551
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "Nevyžadovat běžící sezení (bez vytvoření cgroups)"
 
-#: common/flatpak-context.c:2483
+#: common/flatpak-context.c:2505
 #, c-format
 msgid "Not replacing \"%s\" with tmpfs: %s"
 msgstr ""
 
-#: common/flatpak-context.c:2491
+#: common/flatpak-context.c:2513
 #, c-format
 msgid "Not sharing \"%s\" with sandbox: %s"
 msgstr ""
@@ -4413,12 +4413,12 @@ msgstr ""
 #. * the path not existing, it seems reasonable to make more of a fuss
 #. * about the home directory not existing or otherwise being unusable,
 #. * so this is intentionally not using cannot_export()
-#: common/flatpak-context.c:2587
+#: common/flatpak-context.c:2609
 #, c-format
 msgid "Not allowing home directory access: %s"
 msgstr ""
 
-#: common/flatpak-context.c:2806
+#: common/flatpak-context.c:2828
 #, fuzzy, c-format
 msgid "Unable to provide a temporary home directory in the sandbox: %s"
 msgstr "Selhalo vytvoření dočasného adresáře %s"
@@ -5286,69 +5286,69 @@ msgstr "Selhalo otevření souboru bwrapinfo.json: %s"
 msgid "Failed to write to instance id fd: %s"
 msgstr ""
 
-#: common/flatpak-run.c:3268
+#: common/flatpak-run.c:3272
 msgid "Initialize seccomp failed"
 msgstr "Selhala inicializace seccomp"
 
-#: common/flatpak-run.c:3307
+#: common/flatpak-run.c:3311
 #, c-format
 msgid "Failed to add architecture to seccomp filter: %s"
 msgstr "Selhalo přidání architektury do seccomp filtru: %s"
 
-#: common/flatpak-run.c:3315
+#: common/flatpak-run.c:3319
 #, c-format
 msgid "Failed to add multiarch architecture to seccomp filter: %s"
 msgstr "Selhalo přidání multiarch architektury do seccomp filtru: %s"
 
-#: common/flatpak-run.c:3347 common/flatpak-run.c:3369
+#: common/flatpak-run.c:3351 common/flatpak-run.c:3373
 #, c-format
 msgid "Failed to block syscall %d: %s"
 msgstr "Selhalo blokování systémového volání %d: %s"
 
-#: common/flatpak-run.c:3402
+#: common/flatpak-run.c:3406
 #, c-format
 msgid "Failed to export bpf: %s"
 msgstr "Selhalo exportování bpf: %s"
 
-#: common/flatpak-run.c:3653
+#: common/flatpak-run.c:3657
 #, c-format
 msgid "Failed to open ‘%s’"
 msgstr "Selhalo otevření „%s“"
 
-#: common/flatpak-run.c:3939
+#: common/flatpak-run.c:3943
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "ldconfig selhal, návratová hodnota %d"
 
-#: common/flatpak-run.c:3946
+#: common/flatpak-run.c:3950
 msgid "Can't open generated ld.so.cache"
 msgstr "Nelze otevřít vygenerovaný ld.so.cache"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-run.c:4057
+#: common/flatpak-run.c:4061
 #, c-format
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr ""
 "Spouštění aplikace %s není povoleno bezpečnostní politikou, kterou nastavil "
 "váš administrátor"
 
-#: common/flatpak-run.c:4159
+#: common/flatpak-run.c:4163
 msgid ""
 "\"flatpak run\" is not intended to be run as `sudo flatpak run`. Use `sudo -"
 "i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell."
 msgstr ""
 
-#: common/flatpak-run.c:4342
+#: common/flatpak-run.c:4346
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "Selhala migrace z %s: %s"
 
-#: common/flatpak-run.c:4357
+#: common/flatpak-run.c:4361
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr "Selhala migrace starého adresáře dat aplikace %s na nový název %s: %s"
 
-#: common/flatpak-run.c:4366
+#: common/flatpak-run.c:4370
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "Selhalo vytváření symlinku během migrace %s: %s"
