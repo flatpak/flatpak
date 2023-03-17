@@ -5056,6 +5056,7 @@ flatpak_mtree_create_symlink (OstreeRepo         *repo,
 
   g_file_info_set_name (file_info, filename);
   g_file_info_set_file_type (file_info, G_FILE_TYPE_SYMBOLIC_LINK);
+  g_file_info_set_size (file_info, 0);
   g_file_info_set_attribute_uint32 (file_info, "unix::uid", 0);
   g_file_info_set_attribute_uint32 (file_info, "unix::gid", 0);
   g_file_info_set_attribute_uint32 (file_info, "unix::mode", S_IFLNK | 0777);
