@@ -1477,9 +1477,8 @@ main (int argc, char *argv[])
   /* Do not call setlocale() here: some tests look at untranslated error
    * messages. */
 
-  isolated_test_dir_global_setup ();
-
   g_test_init (&argc, &argv, NULL);
+  isolated_test_dir_global_setup ();
 
   g_test_add_func ("/context/empty", test_empty_context);
   g_test_add_func ("/context/filesystems", test_filesystems);

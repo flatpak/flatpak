@@ -491,9 +491,8 @@ main (int argc, char *argv[])
 {
   int res;
 
-  isolated_test_dir_global_setup ();
-
   g_test_init (&argc, &argv, NULL);
+  isolated_test_dir_global_setup ();
 
   g_test_add_func ("/instance/gc", test_gc);
   g_test_add_func ("/instance/claim-per-app-temp-directory",
