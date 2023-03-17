@@ -50,38 +50,38 @@ isolated_test_dir_global_setup (void)
 
   isolated_test_dir = g_strdup ("/tmp/flatpak-test-XXXXXX");
   assert_mkdtemp (isolated_test_dir);
-  g_test_message ("isolated_test_dir: %s", isolated_test_dir);
+  g_printerr ("isolated_test_dir: %s\n", isolated_test_dir);
 
   homedir = g_strconcat (isolated_test_dir, "/home", NULL);
   g_assert_no_errno (g_mkdir_with_parents (homedir, S_IRWXU | S_IRWXG | S_IRWXO));
 
   g_setenv ("HOME", homedir, TRUE);
-  g_test_message ("setting HOME=%s", homedir);
+  g_printerr ("setting HOME=%s\n", homedir);
 
   cachedir = g_strconcat (isolated_test_dir, "/home/cache", NULL);
   g_assert_no_errno (g_mkdir_with_parents (cachedir, S_IRWXU | S_IRWXG | S_IRWXO));
   g_setenv ("XDG_CACHE_HOME", cachedir, TRUE);
-  g_test_message ("setting XDG_CACHE_HOME=%s", cachedir);
+  g_printerr ("setting XDG_CACHE_HOME=%s\n", cachedir);
 
   configdir = g_strconcat (isolated_test_dir, "/home/config", NULL);
   g_assert_no_errno (g_mkdir_with_parents (configdir, S_IRWXU | S_IRWXG | S_IRWXO));
   g_setenv ("XDG_CONFIG_HOME", configdir, TRUE);
-  g_test_message ("setting XDG_CONFIG_HOME=%s", configdir);
+  g_printerr ("setting XDG_CONFIG_HOME=%s\n", configdir);
 
   datadir = g_strconcat (isolated_test_dir, "/home/share", NULL);
   g_assert_no_errno (g_mkdir_with_parents (datadir, S_IRWXU | S_IRWXG | S_IRWXO));
   g_setenv ("XDG_DATA_HOME", datadir, TRUE);
-  g_test_message ("setting XDG_DATA_HOME=%s", datadir);
+  g_printerr ("setting XDG_DATA_HOME=%s\n", datadir);
 
   statedir = g_strconcat (isolated_test_dir, "/home/state", NULL);
   g_assert_no_errno (g_mkdir_with_parents (statedir, S_IRWXU | S_IRWXG | S_IRWXO));
   g_setenv ("XDG_STATE_HOME", statedir, TRUE);
-  g_test_message ("setting XDG_STATE_HOME=%s", statedir);
+  g_printerr ("setting XDG_STATE_HOME=%s\n", statedir);
 
   runtimedir = g_strconcat (isolated_test_dir, "/runtime", NULL);
   g_assert_no_errno (g_mkdir_with_parents (runtimedir, S_IRWXU));
   g_setenv ("XDG_RUNTIME_DIR", runtimedir, TRUE);
-  g_test_message ("setting XDG_RUNTIME_DIR=%s", runtimedir);
+  g_printerr ("setting XDG_RUNTIME_DIR=%s\n", runtimedir);
 
   g_reload_user_special_dirs_cache ();
 
