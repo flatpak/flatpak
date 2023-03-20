@@ -4402,7 +4402,7 @@ flatpak_dir_config_append_pattern (FlatpakDir *self,
                                    GError    **error)
 {
   g_autoptr(GPtrArray) patterns = flatpak_dir_get_config_patterns (self, key);
-  g_autofree char *regexp;
+  g_autofree char *regexp = NULL;
   gboolean already_present;
   g_autofree char *merged_patterns = NULL;
 
