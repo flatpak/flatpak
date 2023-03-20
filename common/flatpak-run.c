@@ -3498,6 +3498,39 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
   gulong pers;
   gid_t gid = getgid ();
   g_autoptr(GFile) etc = NULL;
+  gboolean allow_all_syscalls = (flags & FLATPAK_RUN_FLAG_ALL_SYSCALLS) != 0;
+  gboolean parent_expose_pids = (flags & FLATPAK_RUN_FLAG_PARENT_EXPOSE_PIDS) != 0;
+  gboolean parent_share_pids = (flags & FLATPAK_RUN_FLAG_PARENT_SHARE_PIDS) != 0;
+  gboolean bwrap_unprivileged = flatpak_bwrap_is_unprivileged ();
+
+  /* Disable recursive userns for all flatpak processes, as we need this
+   * to guarantee that the sandbox can't restructure the filesystem.
+   * Allowing to change e.g. /.flatpak-info would allow sandbox escape
+   * via portals.
+   *
+   * This is also done via seccomp, but here we do it using userns
+   * unsharing in combination with max_user_namespaces.
+   *
+   * If bwrap is setuid, then --disable-userns will not work, which
+   * makes the seccomp filter security-critical.
+   */
+  if (bwrap_unprivileged)
+    {
+      if (parent_expose_pids || parent_share_pids)
+        {
+          /* If we're joining an existing sandbox's user and process
+           * namespaces, then it should already have creation of
+           * nested user namespaces disabled. */
+          flatpak_bwrap_add_arg (bwrap, "--assert-userns-disabled");
+        }
+      else
+        {
+          /* This is a new sandbox, so we need to disable creation of
+           * nested user namespaces. */
+          flatpak_bwrap_add_arg (bwrap, "--unshare-user");
+          flatpak_bwrap_add_arg (bwrap, "--disable-userns");
+        }
+    }
 
   run_dir = g_strdup_printf ("/run/user/%d", getuid ());
 
@@ -3657,7 +3690,23 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
   personality (pers);
 
 #ifdef ENABLE_SECCOMP
-  if (!setup_seccomp (bwrap, arch, pers, flags, error))
+  if (allow_all_syscalls && !bwrap_unprivileged)
+    {
+      g_warning ("--allow=all-syscalls is not compatible with a "
+                 "setuid-root %s executable", flatpak_get_bwrap ());
+      g_warning ("<https://github.com/flatpak/flatpak/wiki/User-namespace-requirements>");
+      allow_all_syscalls = FALSE;
+    }
+
+  if (allow_all_syscalls)
+    {
+      if (isatty (STDIN_FILENO))
+        g_message ("Note: --allow=all-syscalls does not work well with interactive shells due to how it prevents CVE-2017-5226.");
+
+      flatpak_bwrap_add_args (bwrap, "--new-session", NULL);
+    }
+
+  if (!allow_all_syscalls && !setup_seccomp (bwrap, arch, pers, flags, error))
     return FALSE;
 #endif
 

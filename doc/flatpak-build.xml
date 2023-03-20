@@ -196,7 +196,7 @@
                     the [Context] group in the metadata.
                     <arg choice="plain">FEATURE</arg> must be one of:
                     devel, multiarch, bluetooth, canbus,
-                    per-app-dev-shm.
+                    per-app-dev-shm, all-syscalls.
                     This option can be used multiple times.
                     </para><para>
                     See <citerefentry><refentrytitle>flatpak-build-finish</refentrytitle><manvolnum>1</manvolnum></citerefentry>
@@ -212,7 +212,7 @@
                     the [Context] group in the metadata.
                     <arg choice="plain">FEATURE</arg> must be one of:
                     devel, multiarch, bluetooth, canbus,
-                    per-app-dev-shm.
+                    per-app-dev-shm, all-syscalls.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>

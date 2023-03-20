@@ -492,11 +492,32 @@
                               Available since 1.12.0.
                             </para></listitem></varlistentry>
 
+                            <varlistentry><term><option>all-syscalls</option></term>
+                            <listitem><para>
+                              Disable filtering of system calls completely,
+                              which is a security risk but can be useful for
+                              performance-sensitive software.
+                              This feature has no effect if Flatpak is using a
+                              setuid-root version of the bubblewrap executable
+                              <citerefentry><refentrytitle>bwrap</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+                              Allowing this feature has the effect of making
+                              several other features available, including
+                              <code>bluetooth</code>,
+                              <code>canbus</code>,
+                              <code>devel</code> and
+                              <code>multiarch</code>,
+                              even if they would otherwise have been disallowed.
+                              Available since 1.16.0.
+                            </para></listitem></varlistentry>
+
                         </variablelist>
                         A feature can be prefixed with <option>!</option> to
                         indicate the absence of that feature, for example
                         <option>!devel</option> if development and debugging
                         are not allowed.
+                        However, if the <code>all-syscalls</code> feature is
+                        allowed, then several other features will be available
+                        even if syntax like <option>!devel</option> was used.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>

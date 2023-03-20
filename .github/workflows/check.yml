@@ -76,7 +76,6 @@ jobs:
           -Dgtkdoc=disabled \
           -Dhttp_backend=curl \
           -Dinternal_checks=true \
-          -Dsystem_bubblewrap=bwrap \
           -Dsystem_dbus_proxy=xdg-dbus-proxy \
           ${NULL+}
       env:
