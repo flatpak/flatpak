@@ -207,7 +207,7 @@ test_installation_config (void)
   g_autofree char *path = NULL;
   g_autoptr(GFile) file = NULL;
   g_autoptr(GError) error = NULL;
-  g_autofree char *value;
+  g_autofree char *value = NULL;
   gboolean res;
   guint64 bytes;
 
