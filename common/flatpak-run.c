@@ -2400,6 +2400,8 @@ add_icon_path_args (FlatpakBwrap *bwrap)
                               "--ro-bind", flatpak_file_get_path_cached (user_icons), "/run/host/user-share/icons",
                               NULL);
     }
+  /* We want to set XCURSOR_PATH so that apps know where to look for cursors. Otherwise, they use a default cursor that doesn't fit in well. */
+  flatpak_bwrap_set_env (bwrap, "XCURSOR_PATH", "/run/host/user-share/icons:/run/host/share/icons", TRUE);
 }
 
 FlatpakContext *
