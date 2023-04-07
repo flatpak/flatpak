@@ -91,7 +91,7 @@ jobs:
       if: failure() || cancelled()
       run: mv _build/tests/*.log test-logs/ || true
     - name: Upload test logs
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v3
       if: failure() || cancelled()
       with:
         name: test logs
@@ -157,7 +157,7 @@ jobs:
       if: failure() || cancelled()
       run: mv _build/tests/*.log test-logs/ || true
     - name: Upload test logs
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v3
       if: failure() || cancelled()
       with:
         name: test logs
@@ -257,7 +257,7 @@ jobs:
       if: failure() || cancelled()
       run: mv _build/tests/*.log test-logs/ || true
     - name: Upload test logs
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v3
       if: failure() || cancelled()
       with:
         name: test logs
