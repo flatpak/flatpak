@@ -146,7 +146,6 @@ jobs:
     # https://gitlab.gnome.org/GNOME/glib/-/issues/1014
     - name: Upgrade GLib before running tests
       run: |
-        sudo add-apt-repository ppa:alexlarsson/glib260
         sudo apt-get install -y libglib2.0-dev
     - name: Run tests
       run: make -C _build check -j $(getconf _NPROCESSORS_ONLN)
