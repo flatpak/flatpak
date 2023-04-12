@@ -1838,14 +1838,10 @@ test_list_updates (void)
   FlatpakInstalledRef *update_ref = NULL;
   g_autoptr(FlatpakInstalledRef) updated_ref = NULL;
   g_autofree gchar *app = NULL;
-  g_autofree gchar *runtime = NULL;
   gboolean res;
 
   app = g_strdup_printf ("app/org.test.Hello/%s/master",
                          flatpak_get_default_arch ());
-
-  runtime = g_strdup_printf ("runtime/org.test.Platform/%s/master",
-                             flatpak_get_default_arch ());
 
   inst = flatpak_installation_new_user (NULL, &error);
   g_assert_no_error (error);
@@ -3937,7 +3933,7 @@ test_overrides (void)
 
   res = flatpak_installation_launch (inst, "org.test.Hello", NULL, "master", NULL, NULL, &error);
   g_assert_no_error (error);
-  g_assert_nonnull (ref);
+  g_assert_true (res);
 
   data = flatpak_installation_load_app_overrides (inst, "org.test.Hello", NULL, &error);
   g_assert_no_error (error);
