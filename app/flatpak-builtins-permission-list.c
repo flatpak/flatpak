@@ -133,7 +133,7 @@ flatpak_builtin_permission_list (int argc, char **argv,
   XdpDbusPermissionStore *store = NULL;
   const char *table;
   const char *id;
-  FlatpakTablePrinter *printer = NULL;
+  g_autoptr(FlatpakTablePrinter) printer = NULL;
 
   context = g_option_context_new (_("[TABLE] [ID] - List permissions"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -194,7 +194,6 @@ flatpak_builtin_permission_list (int argc, char **argv,
     }
 
   flatpak_table_printer_print (printer);
-  flatpak_table_printer_free (printer);
 
   return TRUE;
 }
