@@ -1266,6 +1266,8 @@ option_env_fd_cb (const gchar *option_name,
     {
       size_t len = strnlen (p, remaining);
       const char *equals;
+      g_autofree char *env_var = NULL;
+      g_autofree char *env_value = NULL;
 
       g_assert (len <= remaining);
 
@@ -1275,9 +1277,9 @@ option_env_fd_cb (const gchar *option_name,
         return glnx_throw (error,
                            "Environment variable must be given in the form VARIABLE=VALUE, not %.*s", (int) len, p);
 
-      flatpak_context_set_env_var (context,
-                                   g_strndup (p, equals - p),
-                                   g_strndup (equals + 1, len - (equals - p) - 1));
+      env_var = g_strndup (p, equals - p);
+      env_value = g_strndup (equals + 1, len - (equals - p) - 1);
+      flatpak_context_set_env_var (context, env_var, env_value);
       p += len;
       remaining -= len;
 
