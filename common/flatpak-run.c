@@ -1595,12 +1595,6 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
   gboolean home_access = FALSE;
   gboolean sandboxed = (flags & FLATPAK_RUN_FLAG_SANDBOX) != 0;
 
-  if ((context->shares & FLATPAK_CONTEXT_SHARED_IPC) == 0)
-    {
-      g_info ("Disallowing ipc access");
-      flatpak_bwrap_add_args (bwrap, "--unshare-ipc", NULL);
-    }
-
   if ((context->shares & FLATPAK_CONTEXT_SHARED_NETWORK) == 0)
     {
       g_info ("Disallowing network access");
@@ -1814,6 +1808,18 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
     allow_x11 = (context->sockets & FLATPAK_CONTEXT_SOCKET_X11) != 0;
 
   flatpak_run_add_x11_args (bwrap, allow_x11, context->shares);
+
+  /* X11 access effectively implies SysV SHM access as applications can
+   * simply use XShmGetImage and XShmPutImage to read and write to SysV
+   * SHM segments. Because of this there is no point to restricting SysV
+   * IPC if the application can access X11, and it's better to simply
+   * allow it in this case to prevent applications from accidentally
+   * trampling on another application's SysV SHM segment. */
+  if ((context->shares & FLATPAK_CONTEXT_SHARED_IPC) == 0 && !allow_x11)
+    {
+      g_info ("Disallowing ipc access");
+      flatpak_bwrap_add_args (bwrap, "--unshare-ipc", NULL);
+    }
 
   if (context->sockets & FLATPAK_CONTEXT_SOCKET_SSH_AUTH)
     {
