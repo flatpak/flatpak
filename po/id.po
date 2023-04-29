@@ -1,21 +1,21 @@
 # Indonesian translation for flatpak.
 # Copyright (C) 2017 flatpak's COPYRIGHT HOLDER
 # This file is distributed under the same license as the flatpak package.
-# Kukuh Syafaat <kukuhsyafaat@gnome.org>, 2017-2022.
+# Kukuh Syafaat <kukuhsyafaat@gnome.org>, 2017-2023.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2023-03-16 09:40+0000\n"
-"PO-Revision-Date: 2022-08-24 11:19+0700\n"
+"PO-Revision-Date: 2023-04-29 13:15+0700\n"
 "Last-Translator: Kukuh Syafaat <kukuhsyafaat@gnome.org>\n"
 "Language-Team: Indonesian <gnome-l10n-id@googlegroups.com>\n"
 "Language: id\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.1.1\n"
+"X-Generator: Poedit 3.2.2\n"
 
 #: app/flatpak-builtins-build-bundle.c:57
 msgid "Export runtime instead of app"
@@ -2142,14 +2142,14 @@ msgid "Show options"
 msgstr "Tampilkan opsi"
 
 #: app/flatpak-builtins-list.c:179
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to load details of %s: %s"
-msgstr "Tidak dapat memuat metadata dari remote %s: %s"
+msgstr "Tidak dapat memuat rincian %s: %s"
 
 #: app/flatpak-builtins-list.c:189
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to inspect current version of %s: %s"
-msgstr "Tidak dapat membuat berkas %s"
+msgstr "Tidak dapat memeriksa versi %s saat ini: %s"
 
 #: app/flatpak-builtins-list.c:409
 msgid " - List installed apps and/or runtimes"
@@ -3596,12 +3596,12 @@ msgstr "Galat: %s"
 #: app/flatpak-cli-transaction.c:563
 #, c-format
 msgid "Failed to install %s%s%s: "
-msgstr "Gagal memasang %s%s%s:"
+msgstr "Gagal memasang %s%s%s: "
 
 #: app/flatpak-cli-transaction.c:570
 #, c-format
 msgid "Failed to update %s%s%s: "
-msgstr "Gagal memutakhirkan %s%s%s:"
+msgstr "Gagal memutakhirkan %s%s%s: "
 
 #: app/flatpak-cli-transaction.c:577
 #, c-format
@@ -4464,12 +4464,12 @@ msgstr "Tidak memerlukan sesi berjalan (tidak ada pembuatan cgroups)"
 #: common/flatpak-context.c:2505
 #, c-format
 msgid "Not replacing \"%s\" with tmpfs: %s"
-msgstr ""
+msgstr "Tidak mengganti \"%s\" dengan tmpfs: %s"
 
 #: common/flatpak-context.c:2513
 #, c-format
 msgid "Not sharing \"%s\" with sandbox: %s"
-msgstr ""
+msgstr "Tidak berbagi \"%s\" dengan sandbox: %s"
 
 #. Even if the error is one that we would normally silence, like
 #. * the path not existing, it seems reasonable to make more of a fuss
@@ -4478,12 +4478,12 @@ msgstr ""
 #: common/flatpak-context.c:2609
 #, c-format
 msgid "Not allowing home directory access: %s"
-msgstr ""
+msgstr "Tidak mengizinkan akses direktori rumah: %s"
 
 #: common/flatpak-context.c:2828
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to provide a temporary home directory in the sandbox: %s"
-msgstr "Tidak dapat membuat direktori sementara dalam %s"
+msgstr "Tidak dapat menyediakan direktori rumah sementara di sandbox: %s"
 
 #: common/flatpak-dir.c:399
 #, c-format
@@ -5003,43 +5003,43 @@ msgstr "Melewati penghapusan mirror ref (%s, %s)…\n"
 #: common/flatpak-exports.c:906
 #, c-format
 msgid "An absolute path is required"
-msgstr ""
+msgstr "Diperlukan path absolut"
 
 #: common/flatpak-exports.c:923
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to open path \"%s\": %s"
-msgstr "Tidak dapat memutakhirkan %s: %s\n"
+msgstr "Tidak dapat membuka path \"%s\": %s"
 
 #: common/flatpak-exports.c:930
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to get file type of \"%s\": %s"
-msgstr "Tidak dapat membuat berkas %s"
+msgstr "Tidak dapat mendapatkan jenis berkas \"%s\": %s"
 
 #: common/flatpak-exports.c:939
 #, c-format
 msgid "File \"%s\" has unsupported type 0o%o"
-msgstr ""
+msgstr "Berkas \"%s\" memiliki tipe 0o yang tidak didukung%o"
 
 #: common/flatpak-exports.c:945
 #, c-format
 msgid "Unable to get filesystem information for \"%s\": %s"
-msgstr ""
+msgstr "Tidak dapat memperoleh informasi sistem berkas untuk \"%s\": %s"
 
 #: common/flatpak-exports.c:955
 #, c-format
 msgid "Ignoring blocking autofs path \"%s\""
-msgstr ""
+msgstr "Mengabaikan pemblokiran path autofs \"%s\""
 
 #: common/flatpak-exports.c:971 common/flatpak-exports.c:984
 #: common/flatpak-exports.c:997
 #, c-format
 msgid "Path \"%s\" is reserved by Flatpak"
-msgstr ""
+msgstr "Path \"%s\" disediakan oleh Flatpak"
 
 #: common/flatpak-exports.c:1051
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to resolve symbolic link \"%s\": %s"
-msgstr "Tidak dapat memutakhirkan tautan simbolik %s/%s"
+msgstr "Tidak dapat menyelesaikan tautan simbolis \"%s\": %s"
 
 #: common/flatpak-installation.c:831
 #, c-format
