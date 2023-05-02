@@ -8952,6 +8952,43 @@ flatpak_dir_deploy (FlatpakDir          *self,
       while (G_UNLIKELY (r == -1 && errno == EINTR));
       if (r == -1)
         return glnx_throw_errno_prefix (error, "fchmodat");
+
+      if (g_key_file_has_key (keyfile, FLATPAK_METADATA_GROUP_APPLICATION, FLATPAK_METADATA_KEY_EXPORT_COMMANDS, NULL))
+        {
+          g_auto(GStrv) commands = NULL;
+
+          commands = g_key_file_get_string_list (keyfile,
+                                                 FLATPAK_METADATA_GROUP_APPLICATION,
+                                                 FLATPAK_METADATA_KEY_EXPORT_COMMANDS,
+                                                 NULL,
+                                                 NULL);
+
+          for (unsigned int i = 0; commands && commands[i]; i++)
+            {
+              g_autofree char *filename = NULL;
+
+              g_set_object (&wrapper, NULL);
+              g_set_str (&escaped_app, NULL);
+              g_set_str (&bin_data, NULL);
+
+              filename = g_strconcat (ref_id, "-", commands[i], NULL);
+              wrapper = g_file_get_child (bindir, filename);
+              escaped_app = maybe_quote (commands[i]);
+
+              bin_data = g_strdup_printf ("#!/bin/sh\nexec %s run --branch=%s --arch=%s %s \"$@\"\n",
+                                          flatpak, escaped_branch, escaped_arch, escaped_app);
+
+              if (!g_file_replace_contents (wrapper, bin_data, strlen (bin_data), NULL, FALSE,
+                                            G_FILE_CREATE_REPLACE_DESTINATION, NULL, cancellable, error))
+                return FALSE;
+
+              do
+                r = fchmodat (AT_FDCWD, flatpak_file_get_path_cached (wrapper), 0755, 0);
+              while (G_UNLIKELY (r == -1 && errno == EINTR));
+              if (r == -1)
+                return glnx_throw_errno_prefix (error, "fchmodat");
+            }
+        }
     }
 
   deploy_data = flatpak_dir_new_deploy_data (self,

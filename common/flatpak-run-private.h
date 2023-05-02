@@ -41,6 +41,7 @@ gboolean flatpak_run_in_transient_unit (const char *app_id,
 #define FLATPAK_METADATA_KEY_RUNTIME "runtime"
 #define FLATPAK_METADATA_KEY_SDK "sdk"
 #define FLATPAK_METADATA_KEY_TAGS "tags"
+#define FLATPAK_METADATA_KEY_EXPORT_COMMANDS "export-commands"
 
 #define FLATPAK_METADATA_GROUP_CONTEXT "Context"
 #define FLATPAK_METADATA_KEY_SHARED "shared"
