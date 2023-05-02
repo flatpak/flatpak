@@ -8968,8 +8968,8 @@ flatpak_dir_deploy (FlatpakDir          *self,
               g_autofree char *filename = NULL;
 
               g_set_object (&wrapper, NULL);
-              g_set_str (&escaped_app, NULL);
-              g_set_str (&bin_data, NULL);
+              g_clear_pointer (&escaped_app, g_free);
+              g_clear_pointer (&bin_data, g_free);
 
               filename = g_strconcat (ref_id, "-", commands[i], NULL);
               wrapper = g_file_get_child (bindir, filename);
