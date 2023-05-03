@@ -8580,6 +8580,28 @@ flatpak_dir_update_deploy_ref (FlatpakDir *self,
   return TRUE;
 }
 
+static gboolean
+suitable_in_filename (const char  *str,
+                      GError     **error)
+{
+  char *p;
+
+  if (strlen (str) > 80)
+    {
+      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Too long");
+      return FALSE;
+    }
+
+  p = strpbrk (str, " \t\n/:");
+  if (p)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Contains a bad byte: %c", *p);
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
 gboolean
 flatpak_dir_deploy (FlatpakDir          *self,
                     const char          *origin,
@@ -8969,10 +8991,17 @@ flatpak_dir_deploy (FlatpakDir          *self,
               g_autofree char *escaped_cmd = NULL;
               GError *local_error = NULL;
 
+              if (!suitable_in_filename (commands[i], &local_error))
+                {
+                  g_warning ("Not exporting command '%s': %s", commands[i], local_error->message);
+                  g_error_free (local_error);
+                  continue;
+                }
+
               g_set_object (&wrapper, NULL);
               g_clear_pointer (&bin_data, g_free);
 
-              filename = g_strconcat (ref_id, "-", commands[i], NULL);
+              filename = g_strconcat (ref_id, "+", commands[i], NULL);
               wrapper = g_file_get_child (bindir, filename);
               escaped_cmd = maybe_quote (commands[i]);
 
