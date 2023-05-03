@@ -8966,17 +8966,18 @@ flatpak_dir_deploy (FlatpakDir          *self,
           for (unsigned int i = 0; commands && commands[i]; i++)
             {
               g_autofree char *filename = NULL;
+              g_autofree char *escaped_cmd = NULL;
+              GError *local_error = NULL;
 
               g_set_object (&wrapper, NULL);
-              g_clear_pointer (&escaped_app, g_free);
               g_clear_pointer (&bin_data, g_free);
 
               filename = g_strconcat (ref_id, "-", commands[i], NULL);
               wrapper = g_file_get_child (bindir, filename);
-              escaped_app = maybe_quote (commands[i]);
+              escaped_cmd = maybe_quote (commands[i]);
 
-              bin_data = g_strdup_printf ("#!/bin/sh\nexec %s run --branch=%s --arch=%s %s \"$@\"\n",
-                                          flatpak, escaped_branch, escaped_arch, escaped_app);
+              bin_data = g_strdup_printf ("#!/bin/sh\nexec %s run --branch=%s --arch=%s --command=%s %s \"$@\"\n",
+                                          flatpak, escaped_branch, escaped_arch, escaped_cmd, escaped_app);
 
               if (!g_file_replace_contents (wrapper, bin_data, strlen (bin_data), NULL, FALSE,
                                             G_FILE_CREATE_REPLACE_DESTINATION, NULL, cancellable, error))
