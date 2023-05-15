@@ -122,6 +122,7 @@ gboolean flatpak_fancy_output (void);
 const char * flatpak_get_arch (void);
 const char ** flatpak_get_arches (void);
 gboolean flatpak_is_linux32_arch (const char *arch);
+const char *flatpak_get_compat_arch_reverse (const char *compat_arch);
 
 const char ** flatpak_get_gl_drivers (void);
 gboolean flatpak_extension_matches_reason (const char *extension_id,
