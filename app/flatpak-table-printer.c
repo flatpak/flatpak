@@ -23,6 +23,7 @@
 #include <glib/gi18n.h>
 
 #include "flatpak-table-printer.h"
+#include "flatpak-tty-utils-private.h"
 #include "flatpak-utils-private.h"
 
 #include <string.h>

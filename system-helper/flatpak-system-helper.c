@@ -2370,8 +2370,6 @@ main (int    argc,
       return 0;
     }
 
-  flatpak_disable_fancy_output ();
-
   if (opt_verbose > 0)
     g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, message_handler, NULL);
   if (opt_verbose > 1)

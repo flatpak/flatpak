@@ -33,6 +33,7 @@
 
 #include "flatpak-polkit-agent-text-listener.h"
 
+#include "flatpak-tty-utils-private.h"
 #include "flatpak-utils-private.h"
 
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"

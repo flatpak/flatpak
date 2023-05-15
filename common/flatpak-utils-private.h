@@ -38,21 +38,6 @@
 
 #define AUTOFS_SUPER_MAGIC 0x0187
 
-#define FLATPAK_ANSI_ALT_SCREEN_ON "\x1b[?1049h"
-#define FLATPAK_ANSI_ALT_SCREEN_OFF "\x1b[?1049l"
-#define FLATPAK_ANSI_HIDE_CURSOR "\x1b[?25l"
-#define FLATPAK_ANSI_SHOW_CURSOR "\x1b[?25h"
-#define FLATPAK_ANSI_BOLD_ON "\x1b[1m"
-#define FLATPAK_ANSI_BOLD_OFF "\x1b[22m"
-#define FLATPAK_ANSI_FAINT_ON "\x1b[2m"
-#define FLATPAK_ANSI_FAINT_OFF "\x1b[22m"
-#define FLATPAK_ANSI_RED "\x1b[31m"
-#define FLATPAK_ANSI_GREEN "\x1b[32m"
-#define FLATPAK_ANSI_COLOR_RESET "\x1b[0m"
-
-#define FLATPAK_ANSI_ROW_N "\x1b[%d;1H"
-#define FLATPAK_ANSI_CLEAR "\x1b[0J"
-
 #define FLATPAK_XA_CACHE_VERSION 2
 /* version 1 added extra data download size */
 /* version 2 added ot.ts timestamps (to new format) */
@@ -69,17 +54,6 @@
 #define FLATPAK_SUMMARY_DIFF_HEADER "xadf"
 
 #define FLATPAK_SUMMARY_HISTORY_LENGTH_DEFAULT 16
-
-gboolean flatpak_set_tty_echo (gboolean echo);
-void flatpak_get_window_size (int *rows,
-                              int *cols);
-gboolean flatpak_get_cursor_pos (int *row,
-                                 int *col);
-void flatpak_hide_cursor (void);
-void flatpak_show_cursor (void);
-
-void flatpak_enable_raw_mode (void);
-void flatpak_disable_raw_mode (void);
 
 /* https://bugzilla.gnome.org/show_bug.cgi?id=766370 */
 #if !GLIB_CHECK_VERSION (2, 49, 3)
@@ -113,10 +87,6 @@ gboolean  flatpak_has_path_prefix (const char *str,
 
 const char * flatpak_path_match_prefix (const char *pattern,
                                         const char *path);
-
-void     flatpak_disable_fancy_output (void);
-void     flatpak_enable_fancy_output (void);
-gboolean flatpak_fancy_output (void);
 
 const char * flatpak_get_arch (void);
 const char ** flatpak_get_arches (void);
@@ -679,38 +649,6 @@ gboolean flatpak_allocate_tmpdir (int           tmpdir_dfd,
                                   GCancellable *cancellable,
                                   GError      **error);
 
-gboolean flatpak_allow_fuzzy_matching (const char *term);
-
-char * flatpak_prompt (gboolean allow_empty,
-                       const char *prompt,
-                       ...) G_GNUC_PRINTF (2, 3);
-
-char * flatpak_password_prompt (const char *prompt,
-                                ...) G_GNUC_PRINTF (1, 2);
-
-gboolean flatpak_yes_no_prompt (gboolean    default_yes,
-                                const char *prompt,
-                                ...) G_GNUC_PRINTF (2, 3);
-
-long flatpak_number_prompt (gboolean    default_yes,
-                            int         min,
-                            int         max,
-                            const char *prompt,
-                            ...) G_GNUC_PRINTF (4, 5);
-int *flatpak_numbers_prompt (gboolean    default_yes,
-                             int         min,
-                             int         max,
-                             const char *prompt,
-                             ...) G_GNUC_PRINTF (4, 5);
-int *flatpak_parse_numbers (const char *buf,
-                            int         min,
-                            int         max);
-
-void flatpak_format_choices (const char **choices,
-                             const char  *prompt,
-                             ...) G_GNUC_PRINTF (2, 3);
-
-
 static inline void
 flatpak_ostree_progress_finish (OstreeAsyncProgress *progress)
 {
@@ -771,8 +709,6 @@ typedef enum {
 
 char * flatpak_escape_string (const char        *s,
                               FlatpakEscapeFlags flags);
-void   flatpak_print_escaped_string (const char        *s,
-                                     FlatpakEscapeFlags flags);
 
 gboolean flatpak_validate_path_characters (const char *path,
                                            GError    **error);

@@ -25,6 +25,7 @@
 #include <gio/gio.h>
 
 #include "flatpak-complete.h"
+#include "flatpak-tty-utils-private.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-dir-private.h"
 
