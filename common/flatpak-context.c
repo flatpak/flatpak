@@ -19,6 +19,7 @@
  */
 
 #include "config.h"
+#include "flatpak-context-private.h"
 
 #include <string.h>
 #include <fcntl.h>
