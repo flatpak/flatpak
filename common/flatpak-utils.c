@@ -3261,16 +3261,6 @@ flatpak_repo_save_digested_summary_delta (OstreeRepo   *repo,
 }
 
 
-gboolean
-flatpak_is_app_runtime_or_appstream_ref (const char *ref)
-{
-  return
-    g_str_has_prefix (ref, "appstream/") ||
-    g_str_has_prefix (ref, "appstream2/") ||
-    g_str_has_prefix (ref, "app/") ||
-    g_str_has_prefix (ref, "runtime/");
-}
-
 typedef struct
 {
   guint64    installed_size;
