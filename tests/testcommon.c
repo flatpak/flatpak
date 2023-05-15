@@ -10,6 +10,7 @@
 #include "flatpak-appdata-private.h"
 #include "flatpak-builtins-utils.h"
 #include "flatpak-run-private.h"
+#include "flatpak-run-x11-private.h"
 #include "flatpak-table-printer.h"
 #include "parse-datetime.h"
 

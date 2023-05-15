@@ -161,6 +161,16 @@ libflatpak_common_la_SOURCES = \
 	common/flatpak-remote.c \
 	common/flatpak-run-private.h \
 	common/flatpak-run.c \
+	common/flatpak-run-cups-private.h \
+	common/flatpak-run-cups.c \
+	common/flatpak-run-dbus-private.h \
+	common/flatpak-run-dbus.c \
+	common/flatpak-run-pulseaudio-private.h \
+	common/flatpak-run-pulseaudio.c \
+	common/flatpak-run-sockets-private.h \
+	common/flatpak-run-sockets.c \
+	common/flatpak-run-x11-private.h \
+	common/flatpak-run-x11.c \
 	common/flatpak-syscalls-private.h \
 	common/flatpak-transaction-private.h \
 	common/flatpak-transaction.c \
