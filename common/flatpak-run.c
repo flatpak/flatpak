@@ -687,37 +687,6 @@ flatpak_run_apply_env_prompt (FlatpakBwrap *bwrap, const char *app_id)
 }
 
 void
-flatpak_run_apply_env_appid (FlatpakBwrap *bwrap,
-                             GFile        *app_dir)
-{
-  g_autoptr(GFile) app_dir_data = NULL;
-  g_autoptr(GFile) app_dir_config = NULL;
-  g_autoptr(GFile) app_dir_cache = NULL;
-  g_autoptr(GFile) app_dir_state = NULL;
-
-  app_dir_data = g_file_get_child (app_dir, "data");
-  app_dir_config = g_file_get_child (app_dir, "config");
-  app_dir_cache = g_file_get_child (app_dir, "cache");
-  /* Yes, this is inconsistent with data, config and cache. However, using
-   * this path lets apps provide backwards-compatibility with older Flatpak
-   * versions by using `--persist=.local/state --unset-env=XDG_STATE_DIR`. */
-  app_dir_state = g_file_get_child (app_dir, ".local/state");
-  flatpak_bwrap_set_env (bwrap, "XDG_DATA_HOME", flatpak_file_get_path_cached (app_dir_data), TRUE);
-  flatpak_bwrap_set_env (bwrap, "XDG_CONFIG_HOME", flatpak_file_get_path_cached (app_dir_config), TRUE);
-  flatpak_bwrap_set_env (bwrap, "XDG_CACHE_HOME", flatpak_file_get_path_cached (app_dir_cache), TRUE);
-  flatpak_bwrap_set_env (bwrap, "XDG_STATE_HOME", flatpak_file_get_path_cached (app_dir_state), TRUE);
-
-  if (g_getenv ("XDG_DATA_HOME"))
-    flatpak_bwrap_set_env (bwrap, "HOST_XDG_DATA_HOME", g_getenv ("XDG_DATA_HOME"), TRUE);
-  if (g_getenv ("XDG_CONFIG_HOME"))
-    flatpak_bwrap_set_env (bwrap, "HOST_XDG_CONFIG_HOME", g_getenv ("XDG_CONFIG_HOME"), TRUE);
-  if (g_getenv ("XDG_CACHE_HOME"))
-    flatpak_bwrap_set_env (bwrap, "HOST_XDG_CACHE_HOME", g_getenv ("XDG_CACHE_HOME"), TRUE);
-  if (g_getenv ("XDG_STATE_HOME"))
-    flatpak_bwrap_set_env (bwrap, "HOST_XDG_STATE_HOME", g_getenv ("XDG_STATE_HOME"), TRUE);
-}
-
-void
 flatpak_run_apply_env_vars (FlatpakBwrap *bwrap, FlatpakContext *context)
 {
   GHashTableIter iter;
@@ -734,15 +703,6 @@ flatpak_run_apply_env_vars (FlatpakBwrap *bwrap, FlatpakContext *context)
       else
         flatpak_bwrap_unset_env (bwrap, var);
     }
-}
-
-GFile *
-flatpak_get_data_dir (const char *app_id)
-{
-  g_autoptr(GFile) home = g_file_new_for_path (g_get_home_dir ());
-  g_autoptr(GFile) var_app = g_file_resolve_relative_path (home, ".var/app");
-
-  return g_file_get_child (var_app, app_id);
 }
 
 gboolean

@@ -38,11 +38,9 @@
 #include <gio/gio.h>
 #include "libglnx.h"
 
-#include "flatpak-run-private.h"
-#include "flatpak-utils-private.h"
-#include "flatpak-dir-private.h"
-#include "flatpak-systemd-dbus-generated.h"
 #include "flatpak-error.h"
+#include "flatpak-metadata-private.h"
+#include "flatpak-utils-private.h"
 
 /* Same order as enum */
 const char *flatpak_context_shares[] = {
@@ -2760,6 +2758,15 @@ flatpak_context_export (FlatpakContext *context,
     }
 }
 
+GFile *
+flatpak_get_data_dir (const char *app_id)
+{
+  g_autoptr(GFile) home = g_file_new_for_path (g_get_home_dir ());
+  g_autoptr(GFile) var_app = g_file_resolve_relative_path (home, ".var/app");
+
+  return g_file_get_child (var_app, app_id);
+}
+
 FlatpakExports *
 flatpak_context_get_exports (FlatpakContext *context,
                              const char     *app_id)
@@ -2835,6 +2842,37 @@ flatpak_context_get_exports_full (FlatpakContext *context,
   return g_steal_pointer (&exports);
 }
 
+static void
+flatpak_context_apply_env_appid (FlatpakBwrap *bwrap,
+                                 GFile        *app_dir)
+{
+  g_autoptr(GFile) app_dir_data = NULL;
+  g_autoptr(GFile) app_dir_config = NULL;
+  g_autoptr(GFile) app_dir_cache = NULL;
+  g_autoptr(GFile) app_dir_state = NULL;
+
+  app_dir_data = g_file_get_child (app_dir, "data");
+  app_dir_config = g_file_get_child (app_dir, "config");
+  app_dir_cache = g_file_get_child (app_dir, "cache");
+  /* Yes, this is inconsistent with data, config and cache. However, using
+   * this path lets apps provide backwards-compatibility with older Flatpak
+   * versions by using `--persist=.local/state --unset-env=XDG_STATE_DIR`. */
+  app_dir_state = g_file_get_child (app_dir, ".local/state");
+  flatpak_bwrap_set_env (bwrap, "XDG_DATA_HOME", flatpak_file_get_path_cached (app_dir_data), TRUE);
+  flatpak_bwrap_set_env (bwrap, "XDG_CONFIG_HOME", flatpak_file_get_path_cached (app_dir_config), TRUE);
+  flatpak_bwrap_set_env (bwrap, "XDG_CACHE_HOME", flatpak_file_get_path_cached (app_dir_cache), TRUE);
+  flatpak_bwrap_set_env (bwrap, "XDG_STATE_HOME", flatpak_file_get_path_cached (app_dir_state), TRUE);
+
+  if (g_getenv ("XDG_DATA_HOME"))
+    flatpak_bwrap_set_env (bwrap, "HOST_XDG_DATA_HOME", g_getenv ("XDG_DATA_HOME"), TRUE);
+  if (g_getenv ("XDG_CONFIG_HOME"))
+    flatpak_bwrap_set_env (bwrap, "HOST_XDG_CONFIG_HOME", g_getenv ("XDG_CONFIG_HOME"), TRUE);
+  if (g_getenv ("XDG_CACHE_HOME"))
+    flatpak_bwrap_set_env (bwrap, "HOST_XDG_CACHE_HOME", g_getenv ("XDG_CACHE_HOME"), TRUE);
+  if (g_getenv ("XDG_STATE_HOME"))
+    flatpak_bwrap_set_env (bwrap, "HOST_XDG_STATE_HOME", g_getenv ("XDG_STATE_HOME"), TRUE);
+}
+
 void
 flatpak_context_append_bwrap_filesystem (FlatpakContext  *context,
                                          FlatpakBwrap    *bwrap,
@@ -2848,7 +2886,7 @@ flatpak_context_append_bwrap_filesystem (FlatpakContext  *context,
   gpointer key, value;
 
   if (app_id_dir != NULL)
-    flatpak_run_apply_env_appid (bwrap, app_id_dir);
+    flatpak_context_apply_env_appid (bwrap, app_id_dir);
 
   if (!home_access)
     {

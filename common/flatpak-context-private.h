@@ -168,4 +168,7 @@ gboolean flatpak_context_parse_env_fd (FlatpakContext *context,
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakContext, flatpak_context_free)
 
+GFile *flatpak_get_user_base_dir_location (void);
+GFile *flatpak_get_data_dir (const char *app_id);
+
 #endif /* __FLATPAK_CONTEXT_H__ */
