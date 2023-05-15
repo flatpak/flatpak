@@ -25,6 +25,7 @@
 #include "flatpak-installation-private.h"
 #include "flatpak-run-private.h"
 #include "flatpak-table-printer.h"
+#include "flatpak-tty-utils-private.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-error.h"
 #include <glib/gi18n.h>

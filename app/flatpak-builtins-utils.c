@@ -28,6 +28,7 @@
 
 #include "flatpak-ref.h"
 #include "flatpak-builtins-utils.h"
+#include "flatpak-tty-utils-private.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-run-private.h"
 

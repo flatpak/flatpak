@@ -4,6 +4,7 @@
 sources = [
   'flatpak-builtins-utils.c',
   'flatpak-table-printer.c',
+  'flatpak-tty-utils.c',
 ]
 
 parse_datetime = custom_target(

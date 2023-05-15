@@ -12,6 +12,7 @@
 #include "flatpak-run-private.h"
 #include "flatpak-run-x11-private.h"
 #include "flatpak-table-printer.h"
+#include "flatpak-tty-utils-private.h"
 #include "parse-datetime.h"
 
 static void

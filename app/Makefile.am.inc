@@ -34,6 +34,8 @@ libflatpak_app_la_SOURCES = \
 	app/flatpak-builtins-utils.c \
 	app/flatpak-table-printer.c \
 	app/flatpak-table-printer.h \
+	app/flatpak-tty-utils.c \
+	app/flatpak-tty-utils-private.h \
 	app/parse-datetime.h \
 	$(NULL)
 
