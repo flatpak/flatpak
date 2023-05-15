@@ -1687,3 +1687,12 @@ flatpak_build_app_ref (const char *app,
   return g_build_filename ("app", app, arch, branch, NULL);
 }
 
+gboolean
+flatpak_is_app_runtime_or_appstream_ref (const char *ref)
+{
+  return
+    g_str_has_prefix (ref, "appstream/") ||
+    g_str_has_prefix (ref, "appstream2/") ||
+    g_str_has_prefix (ref, "app/") ||
+    g_str_has_prefix (ref, "runtime/");
+}
