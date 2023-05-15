@@ -22,7 +22,7 @@
 #include <glib.h>
 #include "flatpak.h"
 #include "flatpak-context-private.h"
-#include "flatpak-run-private.h"
+#include "flatpak-metadata-private.h"
 #include "flatpak-utils-private.h"
 
 #include "tests/testlib.h"

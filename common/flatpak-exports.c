@@ -41,8 +41,9 @@
 #include "libglnx.h"
 
 #include "flatpak-exports-private.h"
-#include "flatpak-run-private.h"
+#include "flatpak-metadata-private.h"
 #include "flatpak-utils-base-private.h"
+#include "flatpak-utils-private.h"
 #include "flatpak-dir-private.h"
 #include "flatpak-systemd-dbus-generated.h"
 #include "flatpak-error.h"

@@ -30,7 +30,7 @@
 
 #include "flatpak.h"
 #include "flatpak-instance-private.h"
-#include "flatpak-run-private.h"
+#include "flatpak-metadata-private.h"
 
 #include "libglnx.h"
 #include "tests/libglnx-testlib.h"
