@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Red Hat, Inc
+ * Copyright © 2014-2019 Red Hat, Inc
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,10 +25,11 @@
 
 #include <glib.h>
 #include <gio/gio.h>
-#include <archive.h>
 #include "flatpak-json-oci-private.h"
 #include "flatpak-utils-http-private.h"
 #include "flatpak-utils-private.h"
+
+struct archive;
 
 #define FLATPAK_TYPE_OCI_REGISTRY flatpak_oci_registry_get_type ()
 #define FLATPAK_OCI_REGISTRY(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), FLATPAK_TYPE_OCI_REGISTRY, FlatpakOciRegistry))
@@ -180,5 +181,39 @@ GBytes *flatpak_oci_index_make_appstream (FlatpakHttpSession  *http_session,
                                           int                  icons_dfd,
                                           GCancellable        *cancellable,
                                           GError             **error);
+
+typedef void (*FlatpakOciPullProgress) (guint64  total_size,
+                                        guint64  pulled_size,
+                                        guint32  n_layers,
+                                        guint32  pulled_layers,
+                                        gpointer data);
+
+char * flatpak_pull_from_oci (OstreeRepo            *repo,
+                              FlatpakOciRegistry    *registry,
+                              const char            *oci_repository,
+                              const char            *digest,
+                              const char            *delta_url,
+                              FlatpakOciManifest    *manifest,
+                              FlatpakOciImage       *image_config,
+                              const char            *remote,
+                              const char            *ref,
+                              FlatpakPullFlags       flags,
+                              FlatpakOciPullProgress progress_cb,
+                              gpointer               progress_data,
+                              GCancellable          *cancellable,
+                              GError               **error);
+
+gboolean flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
+                                        FlatpakOciRegistry    *registry,
+                                        const char            *oci_repository,
+                                        const char            *digest,
+                                        const char            *remote,
+                                        const char            *ref,
+                                        const char            *delta_url,
+                                        OstreeRepo            *repo,
+                                        FlatpakOciPullProgress progress_cb,
+                                        gpointer               progress_data,
+                                        GCancellable          *cancellable,
+                                        GError               **error);
 
 #endif /* __FLATPAK_OCI_REGISTRY_H__ */
