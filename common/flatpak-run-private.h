@@ -59,14 +59,11 @@ char **  flatpak_run_get_minimal_env (gboolean devel,
                                       gboolean use_ld_so_cache);
 void     flatpak_run_apply_env_default (FlatpakBwrap *bwrap,
                                         gboolean      use_ld_so_cache);
-void     flatpak_run_apply_env_appid (FlatpakBwrap *bwrap,
-                                      GFile        *app_dir);
 void      flatpak_run_apply_env_vars (FlatpakBwrap   *bwrap,
                                       FlatpakContext *context);
 FlatpakContext *flatpak_app_compute_permissions (GKeyFile *app_metadata,
                                                  GKeyFile *runtime_metadata,
                                                  GError  **error);
-GFile *flatpak_get_data_dir (const char *app_id);
 gboolean flatpak_ensure_data_dir (GFile        *app_id_dir,
                                   GCancellable *cancellable,
                                   GError      **error);

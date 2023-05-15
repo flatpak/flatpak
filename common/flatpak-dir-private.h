@@ -398,7 +398,6 @@ GQuark       flatpak_dir_error_quark (void);
 GPtrArray *flatpak_get_system_base_dir_locations        (GCancellable  *cancellable,
                                                          GError       **error);
 GFile *    flatpak_get_system_default_base_dir_location (void);
-GFile *    flatpak_get_user_base_dir_location           (void);
 
 GKeyFile *      flatpak_load_override_keyfile   (const char  *app_id,
                                                  gboolean     user,
