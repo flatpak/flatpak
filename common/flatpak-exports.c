@@ -44,8 +44,6 @@
 #include "flatpak-metadata-private.h"
 #include "flatpak-utils-base-private.h"
 #include "flatpak-utils-private.h"
-#include "flatpak-dir-private.h"
-#include "flatpak-systemd-dbus-generated.h"
 #include "flatpak-error.h"
 
 static const char * const abs_usrmerged_dirs[] =
