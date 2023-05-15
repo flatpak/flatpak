@@ -134,6 +134,8 @@ libflatpak_common_la_SOURCES = \
 	common/flatpak-error.c \
 	common/flatpak-exports-private.h \
 	common/flatpak-exports.c \
+	common/flatpak-glib-backports-private.h \
+	common/flatpak-glib-backports.c \
 	common/flatpak-installation-private.h \
 	common/flatpak-installation.c \
 	common/flatpak-installed-ref-private.h \
