@@ -142,6 +142,7 @@ libflatpak_common_la_SOURCES = \
 	common/flatpak-installed-ref.c \
 	common/flatpak-instance-private.h \
 	common/flatpak-instance.c \
+	common/flatpak-json-backports-private.h \
 	common/flatpak-json-oci-private.h \
 	common/flatpak-json-oci.c \
 	common/flatpak-json-private.h \

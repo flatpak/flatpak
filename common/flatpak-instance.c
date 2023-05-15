@@ -23,6 +23,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include "flatpak-json-backports-private.h"
 #include "flatpak-utils-base-private.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-run-private.h"
