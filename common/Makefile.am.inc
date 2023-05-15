@@ -147,6 +147,7 @@ libflatpak_common_la_SOURCES = \
 	common/flatpak-json-oci.c \
 	common/flatpak-json-private.h \
 	common/flatpak-json.c \
+	common/flatpak-metadata-private.h \
 	common/flatpak-oci-registry-private.h \
 	common/flatpak-oci-registry.c \
 	common/flatpak-portal-error.c \

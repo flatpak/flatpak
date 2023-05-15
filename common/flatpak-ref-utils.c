@@ -27,8 +27,9 @@
 
 #include <glib.h>
 #include "flatpak-ref-utils-private.h"
-#include "flatpak-run-private.h"
+
 #include "flatpak-error.h"
+#include "flatpak-metadata-private.h"
 #include "flatpak-utils-private.h"
 
 FlatpakKinds

@@ -26,8 +26,9 @@
 #include "flatpak-bwrap-private.h"
 #include "flatpak-context-private.h"
 #include "flatpak-exports-private.h"
-#include "flatpak-run-private.h"
+#include "flatpak-metadata-private.h"
 #include "flatpak-utils-base-private.h"
+#include "flatpak-utils-private.h"
 
 #include "tests/testlib.h"
 

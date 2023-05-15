@@ -24,9 +24,9 @@
 #include <unistd.h>
 
 #include "flatpak-json-backports-private.h"
+#include "flatpak-metadata-private.h"
 #include "flatpak-utils-base-private.h"
 #include "flatpak-utils-private.h"
-#include "flatpak-run-private.h"
 #include "flatpak-instance.h"
 #include "flatpak-instance-private.h"
 #include "flatpak-enum-types.h"
