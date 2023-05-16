@@ -32,7 +32,7 @@
  * oldest first. */
 
 #if !GLIB_CHECK_VERSION (2, 56, 0)
-/* All this code is backported directly from glib */
+/* All this code is backported directly from GLib 2.76.2 except where noted */
 
 static void
 g_date_time_get_week_number (GDateTime *datetime,
@@ -40,7 +40,7 @@ g_date_time_get_week_number (GDateTime *datetime,
                              gint      *day_of_week,
                              gint      *day_of_year)
 {
-  gint a, b, c, d, e, f, g, n, s, month, day, year;
+  gint a, b, c, d, e, f, g, n, s, month = -1, day = -1, year = -1;
 
   g_date_time_get_ymd (datetime, &year, &month, &day);
 
@@ -90,7 +90,8 @@ g_date_time_get_week_number (GDateTime *datetime,
 static gboolean
 get_iso8601_int (const gchar *text, gsize length, gint *value)
 {
-  gint i, v = 0;
+  gsize i;
+  guint v = 0;
 
   if (length < 1 || length > 4)
     return FALSE;
@@ -111,8 +112,8 @@ get_iso8601_int (const gchar *text, gsize length, gint *value)
 static gboolean
 get_iso8601_seconds (const gchar *text, gsize length, gdouble *value)
 {
-  gint i;
-  gdouble divisor = 1, v = 0;
+  gsize i;
+  guint64 divisor = 1, v = 0;
 
   if (length < 2)
     return FALSE;
@@ -127,6 +128,11 @@ get_iso8601_seconds (const gchar *text, gsize length, gdouble *value)
 
   if (length > 2 && !(text[i] == '.' || text[i] == ','))
     return FALSE;
+
+  /* Ignore leap seconds, see g_date_time_new_from_iso8601() */
+  if (v >= 60.0 && v <= 61.0)
+    v = 59.0;
+
   i++;
   if (i == length)
     return FALSE;
@@ -134,29 +140,32 @@ get_iso8601_seconds (const gchar *text, gsize length, gdouble *value)
   for (; i < length; i++)
     {
       const gchar c = text[i];
-      if (c < '0' || c > '9')
+      if (c < '0' || c > '9' ||
+          v > (G_MAXUINT64 - (c - '0')) / 10 ||
+          divisor > G_MAXUINT64 / 10)
         return FALSE;
       v = v * 10 + (c - '0');
       divisor *= 10;
     }
 
-  *value = v / divisor;
+  *value = (gdouble) v / divisor;
   return TRUE;
 }
 
 static GDateTime *
 g_date_time_new_ordinal (GTimeZone *tz, gint year, gint ordinal_day, gint hour, gint minute, gdouble seconds)
 {
-  GDateTime *dt, *dt2;
+  GDateTime *dt;
 
   if (ordinal_day < 1 || ordinal_day > (GREGORIAN_LEAP (year) ? 366 : 365))
     return NULL;
 
   dt = g_date_time_new (tz, year, 1, 1, hour, minute, seconds);
-  dt2 = g_date_time_add_days (dt, ordinal_day - 1);
-  g_date_time_unref (dt);
+  if (dt == NULL)
+    return NULL;
+  dt->days += ordinal_day - 1;
 
-  return dt2;
+  return dt;
 }
 
 static GDateTime *
@@ -173,6 +182,8 @@ g_date_time_new_week (GTimeZone *tz, gint year, gint week, gint week_day, gint h
     return NULL;
 
   dt = g_date_time_new (tz, year, 1, 4, 0, 0, 0);
+  if (dt == NULL)
+    return NULL;
   g_date_time_get_week_number (dt, NULL, &jan4_week_day, NULL);
   g_date_time_unref (dt);
 
@@ -260,7 +271,8 @@ parse_iso8601_date (const gchar *text, gsize length,
 static GTimeZone *
 parse_iso8601_timezone (const gchar *text, gsize length, gssize *tz_offset)
 {
-  gint i, tz_length, offset_sign = 1, offset_hours, offset_minutes;
+  gint i, tz_length, offset_hours, offset_minutes;
+  gint offset_sign = 1;
   GTimeZone *tz;
 
   /* UTC uses Z suffix  */
@@ -282,7 +294,7 @@ parse_iso8601_timezone (const gchar *text, gsize length, gssize *tz_offset)
   tz_length = length - i;
 
   /* +hh:mm or -hh:mm */
-  if (tz_length == 6 && text[i + 3] == ':')
+  if (tz_length == 6 && text[i+3] == ':')
     {
       if (!get_iso8601_int (text + i + 1, 2, &offset_hours) ||
           !get_iso8601_int (text + i + 4, 2, &offset_minutes))
@@ -306,11 +318,20 @@ parse_iso8601_timezone (const gchar *text, gsize length, gssize *tz_offset)
     return NULL;
 
   *tz_offset = i;
+  /* BACKPORT DIFFERENCE: GLib uses g_time_zone_new_identifier() but that
+   * was new in 2.68, so stick to the deprecated g_time_zone_new(), which
+   * returns UTC on error */
   tz = g_time_zone_new (text + i);
 
   /* Double-check that the GTimeZone matches our interpretation of the timezone.
-   * Failure would indicate a bug either here of in the GTimeZone code. */
-  g_assert (g_time_zone_get_offset (tz, 0) == offset_sign * (offset_hours * 3600 + offset_minutes * 60));
+   * This can fail because our interpretation is less strict than (for example)
+   * parse_time() in gtimezone.c, which restricts the range of the parsed
+   * integers. */
+  if (tz == NULL || g_time_zone_get_offset (tz, 0) != offset_sign * (offset_hours * 3600 + offset_minutes * 60))
+    {
+      g_clear_pointer (&tz, g_time_zone_unref);
+      return NULL;
+    }
 
   return tz;
 }
@@ -344,7 +365,6 @@ parse_iso8601_time (const gchar *text, gsize length,
     return FALSE;
 }
 
-
 GDateTime *
 flatpak_g_date_time_new_from_iso8601 (const gchar *text, GTimeZone *default_tz)
 {
@@ -375,9 +395,9 @@ flatpak_g_date_time_new_from_iso8601 (const gchar *text, GTimeZone *default_tz)
   datetime = parse_iso8601_date (text, date_length, hour, minute, seconds, tz ? tz : default_tz);
 
 out:
-  if (tz != NULL)
-    g_time_zone_unref (tz);
-  return datetime;
+    if (tz != NULL)
+      g_time_zone_unref (tz);
+    return datetime;
 }
 #endif
 
