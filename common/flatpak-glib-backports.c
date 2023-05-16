@@ -402,7 +402,7 @@ out:
 #endif
 
 #if !GLIB_CHECK_VERSION (2, 58, 0)
-/* All this code is backported directly from glib 2.66 */
+/* All this code is backported directly from GLib 2.76.2 except where noted */
 
 typedef struct _GLanguageNamesCache GLanguageNamesCache;
 
@@ -428,7 +428,7 @@ read_aliases (const gchar *file,
   FILE *fp;
   char buf[256];
 
-  fp = fopen (file,"r");
+  fp = fopen (file, "re");
   if (!fp)
     return;
   while (fgets (buf, 256, fp))
@@ -475,6 +475,7 @@ read_aliases (const gchar *file,
 static char *
 unalias_lang (char *lang)
 {
+#ifndef G_OS_WIN32
   static GHashTable *alias_table = NULL;
   char *p;
   int i;
@@ -500,6 +501,7 @@ unalias_lang (char *lang)
           return lang;
         }
     }
+#endif
   return lang;
 }
 
