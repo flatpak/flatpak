@@ -716,7 +716,7 @@ g_ptr_array_extend (GPtrArray  *array_to_extend,
 #endif
 
 #if !GLIB_CHECK_VERSION (2, 68, 0)
-/* All this code is backported directly from glib */
+/* All this code is backported directly from GLib 2.76.2 */
 guint
 g_string_replace (GString     *string,
                   const gchar *find,
