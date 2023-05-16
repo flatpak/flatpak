@@ -47,6 +47,17 @@
 #include "flatpak-systemd-dbus-generated.h"
 #include "flatpak-error.h"
 
+static const char * const abs_usrmerged_dirs[] =
+{
+  "/bin",
+  "/lib",
+  "/lib32",
+  "/lib64",
+  "/sbin",
+  NULL
+};
+const char * const *flatpak_abs_usrmerged_dirs = abs_usrmerged_dirs;
+
 /* We don't want to export paths pointing into these, because they are readonly
    (so we can't create mountpoints there) and don't match what's on the host anyway.
    flatpak_abs_usrmerged_dirs get the same treatment without having to be listed
