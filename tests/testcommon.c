@@ -492,42 +492,43 @@ typedef struct
   gint         max;
   gint         expected;
   gboolean     should_fail;
+  GNumberParserError code;
 } TestData;
 
 const TestData test_data[] = {
   /* typical cases for unsigned */
-  { "-1", 10, 0, 2, 0, TRUE  },
-  { "1", 10, 0, 2, 1, FALSE },
-  { "+1", 10, 0, 2, 0, TRUE  },
-  { "0", 10, 0, 2, 0, FALSE },
-  { "+0", 10, 0, 2, 0, TRUE  },
-  { "-0", 10, 0, 2, 0, TRUE  },
-  { "2", 10, 0, 2, 2, FALSE },
-  { "+2", 10, 0, 2, 0, TRUE  },
-  { "3", 10, 0, 2, 0, TRUE  },
-  { "+3", 10, 0, 2, 0, TRUE  },
+  { "-1", 10, 0, 2, 0, TRUE, G_NUMBER_PARSER_ERROR_INVALID },
+  { "1", 10, 0, 2, 1, FALSE, 0},
+  { "+1", 10, 0, 2, 0, TRUE, G_NUMBER_PARSER_ERROR_INVALID },
+  { "0", 10, 0, 2, 0, FALSE, 0},
+  { "+0", 10, 0, 2, 0, TRUE, G_NUMBER_PARSER_ERROR_INVALID },
+  { "-0", 10, 0, 2, 0, TRUE, G_NUMBER_PARSER_ERROR_INVALID },
+  { "2", 10, 0, 2, 2, FALSE, 0},
+  { "+2", 10, 0, 2, 0, TRUE, G_NUMBER_PARSER_ERROR_INVALID },
+  { "3", 10, 0, 2, 0, TRUE, G_NUMBER_PARSER_ERROR_OUT_OF_BOUNDS },
+  { "+3", 10, 0, 2, 0, TRUE, G_NUMBER_PARSER_ERROR_INVALID },
 
   /* min == max cases for unsigned */
-  { "2", 10, 2, 2, 2, FALSE  },
-  { "3", 10, 2, 2, 0, TRUE   },
-  { "1", 10, 2, 2, 0, TRUE   },
+  { "2", 10, 2, 2, 2, FALSE, 0 },
+  { "3", 10, 2, 2, 0, TRUE, G_NUMBER_PARSER_ERROR_OUT_OF_BOUNDS },
+  { "1", 10, 2, 2, 0, TRUE, G_NUMBER_PARSER_ERROR_OUT_OF_BOUNDS },
 
   /* invalid inputs */
-  { "",   10,  0,  2,  0, TRUE },
-  { "a",  10,  0,  2,  0, TRUE },
-  { "1a", 10,  0,  2,  0, TRUE },
+  { "",   10,  0,  2,  0, TRUE, G_NUMBER_PARSER_ERROR_INVALID },
+  { "a",  10,  0,  2,  0, TRUE, G_NUMBER_PARSER_ERROR_INVALID },
+  { "1a", 10,  0,  2,  0, TRUE, G_NUMBER_PARSER_ERROR_INVALID },
 
   /* leading/trailing whitespace */
-  { " 1", 10,  0,  2,  0, TRUE },
-  { "1 ", 10,  0,  2,  0, TRUE },
+  { " 1", 10,  0,  2,  0, TRUE, G_NUMBER_PARSER_ERROR_INVALID },
+  { "1 ", 10,  0,  2,  0, TRUE, G_NUMBER_PARSER_ERROR_INVALID },
 
   /* hexadecimal numbers */
-  { "a",    16,   0, 15, 10, FALSE },
-  { "0xa",  16,   0, 15,  0, TRUE  },
-  { "-0xa", 16,   0, 15,  0, TRUE  },
-  { "+0xa", 16,   0, 15,  0, TRUE  },
-  { "- 0xa", 16,   0, 15,  0, TRUE  },
-  { "+ 0xa", 16,   0, 15,  0, TRUE  },
+  { "a",    16,   0, 15, 10, FALSE, 0 },
+  { "0xa",  16,   0, 15,  0, TRUE, G_NUMBER_PARSER_ERROR_INVALID },
+  { "-0xa", 16,   0, 15,  0, TRUE, G_NUMBER_PARSER_ERROR_INVALID },
+  { "+0xa", 16,   0, 15,  0, TRUE, G_NUMBER_PARSER_ERROR_INVALID },
+  { "- 0xa", 16,   0, 15,  0, TRUE, G_NUMBER_PARSER_ERROR_INVALID },
+  { "+ 0xa", 16,   0, 15,  0, TRUE, G_NUMBER_PARSER_ERROR_INVALID },
 };
 
 static void
@@ -542,19 +543,19 @@ test_string_to_unsigned (void)
       gboolean result;
       gint value;
       guint64 value64 = 0;
-      result = flatpak_utils_ascii_string_to_unsigned (data->str,
-                                                       data->base,
-                                                       data->min,
-                                                       data->max,
-                                                       &value64,
-                                                       &error);
+      result = g_ascii_string_to_unsigned (data->str,
+                                           data->base,
+                                           data->min,
+                                           data->max,
+                                           &value64,
+                                           &error);
       value = value64;
       g_assert_cmpint (value, ==, value64);
 
       if (data->should_fail)
         {
           g_assert_false (result);
-          g_assert_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT);
+          g_assert_error (error, G_NUMBER_PARSER_ERROR, data->code);
           g_clear_error (&error);
         }
       else
@@ -562,6 +563,7 @@ test_string_to_unsigned (void)
           g_assert_true (result);
           g_assert_no_error (error);
           g_assert_cmpint (value, ==, data->expected);
+          g_assert_cmpint (data->code, ==, 0);
         }
     }
 }
