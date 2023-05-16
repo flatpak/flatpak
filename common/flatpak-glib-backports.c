@@ -31,6 +31,89 @@
 /* Please sort this file by the GLib version where it originated,
  * oldest first. */
 
+/* From GLib 2.54, currently used unconditionally */
+#if 1
+static gboolean
+str_has_sign (const gchar *str)
+{
+  return str[0] == '-' || str[0] == '+';
+}
+
+static gboolean
+str_has_hex_prefix (const gchar *str)
+{
+  return str[0] == '0' && g_ascii_tolower (str[1]) == 'x';
+}
+
+gboolean
+flatpak_utils_ascii_string_to_unsigned (const gchar *str,
+                                        guint        base,
+                                        guint64      min,
+                                        guint64      max,
+                                        guint64     *out_num,
+                                        GError     **error)
+{
+  guint64 number;
+  const gchar *end_ptr = NULL;
+  gint saved_errno = 0;
+
+  g_return_val_if_fail (str != NULL, FALSE);
+  g_return_val_if_fail (base >= 2 && base <= 36, FALSE);
+  g_return_val_if_fail (min <= max, FALSE);
+  g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+  if (str[0] == '\0')
+    {
+      g_set_error_literal (error,
+                           G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
+                           _("Empty string is not a number"));
+      return FALSE;
+    }
+
+  errno = 0;
+  number = g_ascii_strtoull (str, (gchar **) &end_ptr, base);
+  saved_errno = errno;
+
+  if (/* We do not allow leading whitespace, but g_ascii_strtoull
+       * accepts it and just skips it, so we need to check for it
+       * ourselves.
+       */
+    g_ascii_isspace (str[0]) ||
+    /* Unsigned number should have no sign.
+     */
+    str_has_sign (str) ||
+    /* We don't support hexadecimal numbers prefixed with 0x or
+     * 0X.
+     */
+    (base == 16 && str_has_hex_prefix (str)) ||
+    (saved_errno != 0 && saved_errno != ERANGE) ||
+    end_ptr == NULL ||
+    *end_ptr != '\0')
+    {
+      g_set_error (error,
+                   G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
+                   _("“%s” is not an unsigned number"), str);
+      return FALSE;
+    }
+  if (saved_errno == ERANGE || number < min || number > max)
+    {
+      gchar *min_str = g_strdup_printf ("%" G_GUINT64_FORMAT, min);
+      gchar *max_str = g_strdup_printf ("%" G_GUINT64_FORMAT, max);
+
+      g_set_error (error,
+                   G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
+                   _("Number “%s” is out of bounds [%s, %s]"),
+                   str, min_str, max_str);
+      g_free (min_str);
+      g_free (max_str);
+      return FALSE;
+    }
+  if (out_num != NULL)
+    *out_num = number;
+  return TRUE;
+}
+#endif
+
 #if !GLIB_CHECK_VERSION (2, 56, 0)
 /* All this code is backported directly from GLib 2.76.2 except where noted */
 
