@@ -89,6 +89,14 @@ g_ptr_array_find_with_equal_func (GPtrArray     *haystack,
 }
 #endif
 
+/* From GLib 2.54, currently used unconditionally */
+gboolean flatpak_utils_ascii_string_to_unsigned (const gchar *str,
+                                                 guint        base,
+                                                 guint64      min,
+                                                 guint64      max,
+                                                 guint64     *out_num,
+                                                 GError     **error);
+
 #if !GLIB_CHECK_VERSION (2, 56, 0)
 typedef void (* GClearHandleFunc) (guint handle_id);
 

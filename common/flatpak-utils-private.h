@@ -241,13 +241,6 @@ gboolean flatpak_remove_dangling_symlinks (GFile        *dir,
                                            GCancellable *cancellable,
                                            GError      **error);
 
-gboolean flatpak_utils_ascii_string_to_unsigned (const gchar *str,
-                                                 guint        base,
-                                                 guint64      min,
-                                                 guint64      max,
-                                                 guint64     *out_num,
-                                                 GError     **error);
-
 gboolean flatpak_g_ptr_array_contains_string (GPtrArray  *array,
                                               const char *str);
 
