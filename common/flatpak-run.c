@@ -66,17 +66,6 @@
 
 #define DEFAULT_SHELL "/bin/sh"
 
-const char * const abs_usrmerged_dirs[] =
-{
-  "/bin",
-  "/lib",
-  "/lib32",
-  "/lib64",
-  "/sbin",
-  NULL
-};
-const char * const *flatpak_abs_usrmerged_dirs = abs_usrmerged_dirs;
-
 static int
 flatpak_extension_compare_by_path (gconstpointer _a,
                                    gconstpointer _b)
