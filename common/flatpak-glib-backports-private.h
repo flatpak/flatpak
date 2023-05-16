@@ -43,7 +43,13 @@ g_key_file_save_to_file (GKeyFile    *key_file,
   gboolean success;
   gsize length;
 
+  g_return_val_if_fail (key_file != NULL, FALSE);
+  g_return_val_if_fail (filename != NULL, FALSE);
+  g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
   contents = g_key_file_to_data (key_file, &length, NULL);
+  g_assert (contents != NULL);
+
   success = g_file_set_contents (filename, contents, length, error);
   g_free (contents);
 
