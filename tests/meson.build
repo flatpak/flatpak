@@ -81,6 +81,11 @@ libtestlib_dep = declare_dependency(
 )
 
 c_tests = [
+  ['testapp', {
+    'extra_dependencies' : [
+      libflatpak_app_dep,
+    ],
+  }],
   ['testcommon', {}],
   ['testlibrary', {
     'dependencies' : [
@@ -121,7 +126,6 @@ foreach testcase : c_tests
       base_deps,
       appstream_dep,
       json_glib_dep,
-      libflatpak_app_dep,
       libflatpak_common_dep,
       libflatpak_common_base_dep,
       libglnx_dep,
