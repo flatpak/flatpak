@@ -117,6 +117,9 @@ g_date_time_new_from_iso8601 (const gchar *text, GTimeZone *default_tz)
 #endif
 
 #if !GLIB_CHECK_VERSION (2, 58, 0)
+/* This is a reimplementation rather than a backport, and is a little less
+ * efficient than the real g_hash_table_steal_extended(), since it can't
+ * see into GHashTable internals */
 static inline gboolean
 g_hash_table_steal_extended (GHashTable    *hash_table,
                              gconstpointer  lookup_key,

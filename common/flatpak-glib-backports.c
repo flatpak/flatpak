@@ -697,6 +697,8 @@ g_get_language_names_with_category (const gchar *category_name)
 #endif
 
 #if !GLIB_CHECK_VERSION (2, 62, 0)
+/* This is a reimplementation, not a backport: the version in GLib makes
+ * use of GPtrArray internals */
 void
 g_ptr_array_extend (GPtrArray  *array_to_extend,
                     GPtrArray  *array,
