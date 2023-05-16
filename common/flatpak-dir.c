@@ -4194,9 +4194,9 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
       /* Scrap previously written min-free-space-percent=0 and replace it with min-free-space-size */
       if (orig_min_free_space_size == NULL &&
           orig_min_free_space_percent != NULL &&
-          flatpak_utils_ascii_string_to_unsigned (orig_min_free_space_percent, 10,
-                                                  0, G_MAXUINT64,
-                                                  &min_free_space_percent_int, &my_error))
+          g_ascii_string_to_unsigned (orig_min_free_space_percent, 10,
+                                      0, G_MAXUINT64,
+                                      &min_free_space_percent_int, &my_error))
         {
           if (min_free_space_percent_int == 0)
             {

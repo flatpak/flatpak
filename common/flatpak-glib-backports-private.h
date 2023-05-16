@@ -87,15 +87,20 @@ g_ptr_array_find_with_equal_func (GPtrArray     *haystack,
 
   return FALSE;
 }
-#endif
 
-/* From GLib 2.54, currently used unconditionally */
-gboolean flatpak_utils_ascii_string_to_unsigned (const gchar *str,
-                                                 guint        base,
-                                                 guint64      min,
-                                                 guint64      max,
-                                                 guint64     *out_num,
-                                                 GError     **error);
+/* We're non-specific about the error behaviour, so this is good enough */
+#define G_NUMBER_PARSER_ERROR (G_IO_ERROR)
+#define G_NUMBER_PARSER_ERROR_INVALID (G_IO_ERROR_INVALID_ARGUMENT)
+#define G_NUMBER_PARSER_ERROR_OUT_OF_BOUNDS (G_IO_ERROR_INVALID_ARGUMENT)
+#define GNumberParserError (GIOErrorEnum)
+
+gboolean g_ascii_string_to_unsigned (const gchar *str,
+                                     guint        base,
+                                     guint64      min,
+                                     guint64      max,
+                                     guint64     *out_num,
+                                     GError     **error);
+#endif
 
 #if !GLIB_CHECK_VERSION (2, 56, 0)
 typedef void (* GClearHandleFunc) (guint handle_id);
