@@ -415,6 +415,20 @@ if build_system_helper
   cdata.set('USE_SYSTEM_HELPER', '1')
 endif
 
+foreach function : [
+  'close_range',
+]
+  macro = 'HAVE_' + function.underscorify().to_upper()
+  config.set(macro, cc.has_function(function) ? 1 : false)
+endforeach
+
+foreach header : [
+  'linux/close_range.h',
+]
+  macro = 'HAVE_' + header.underscorify().to_upper()
+  config.set(macro, cc.has_header(header) ? 1 : false)
+endforeach
+
 configure_file(
   output : 'config.h',
   configuration : cdata,

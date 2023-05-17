@@ -28,6 +28,10 @@
 #include <gio/gio.h>
 #include "libglnx.h"
 
+#ifdef HAVE_LINUX_CLOSE_RANGE_H
+#include <linux/close_range.h>
+#endif
+
 char *
 flatpak_get_timezone (void)
 {
@@ -122,8 +126,16 @@ flatpak_canonicalize_filename (const char *path)
 void
 flatpak_close_fds_workaround (int start_fd)
 {
-  int max_open_fds = sysconf (_SC_OPEN_MAX);
+  int max_open_fds;
   int fd;
+
+#if defined(HAVE_CLOSE_RANGE) && defined(CLOSE_RANGE_CLOEXEC)
+  /* available on Linux >= 5.11 */
+  if (close_range (start_fd, ~0U, CLOSE_RANGE_CLOEXEC) == 0)
+    return;
+#endif
+
+  max_open_fds = sysconf (_SC_OPEN_MAX);
 
   for (fd = start_fd; fd < max_open_fds; fd++)
     fcntl (fd, F_SETFD, FD_CLOEXEC);
