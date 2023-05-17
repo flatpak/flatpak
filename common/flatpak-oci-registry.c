@@ -32,6 +32,7 @@
 #include "flatpak-utils-private.h"
 #include "flatpak-uri-private.h"
 #include "flatpak-dir-private.h"
+#include "flatpak-xml-utils-private.h"
 #include "flatpak-zstd-decompressor-private.h"
 
 #define MAX_JSON_SIZE (1024 * 1024)

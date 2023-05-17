@@ -57,6 +57,7 @@
 #include "flatpak-utils-base-private.h"
 #include "flatpak-variant-private.h"
 #include "flatpak-variant-impl-private.h"
+#include "flatpak-xml-utils-private.h"
 #include "libglnx.h"
 #include "system-helper/flatpak-system-helper.h"
 
