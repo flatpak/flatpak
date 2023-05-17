@@ -27,6 +27,7 @@
 #include <gio/gio.h>
 #include <archive.h>
 #include "flatpak-json-oci-private.h"
+#include "flatpak-utils-http-private.h"
 #include "flatpak-utils-private.h"
 
 #define FLATPAK_TYPE_OCI_REGISTRY flatpak_oci_registry_get_type ()

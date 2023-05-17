@@ -32,7 +32,6 @@
 #include "flatpak-context-private.h"
 #include "flatpak-error.h"
 #include "flatpak-glib-backports-private.h"
-#include "flatpak-utils-http-private.h"
 #include "flatpak-variant-private.h"
 #include "flatpak-dir-private.h"
 #include <ostree.h>

@@ -36,6 +36,7 @@
 #include "flatpak-transaction-private.h"
 #include "flatpak-cli-transaction.h"
 #include "flatpak-quiet-transaction.h"
+#include "flatpak-utils-http-private.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-error.h"
 #include "flatpak-chain-input-stream-private.h"

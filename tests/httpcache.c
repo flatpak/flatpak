@@ -1,3 +1,5 @@
+#include "libglnx.h"
+#include "common/flatpak-utils-http-private.h"
 #include "common/flatpak-utils-private.h"
 
 int
