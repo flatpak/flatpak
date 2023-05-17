@@ -131,6 +131,8 @@ libflatpak_common_la_SOURCES = \
 	common/flatpak-context.c \
 	common/flatpak-dir-private.h \
 	common/flatpak-dir.c \
+	common/flatpak-dir-utils-private.h \
+	common/flatpak-dir-utils.c \
 	common/flatpak-error.c \
 	common/flatpak-exports-private.h \
 	common/flatpak-exports.c \
