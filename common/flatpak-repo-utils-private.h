@@ -22,6 +22,21 @@
 
 #include "libglnx.h"
 
+/**
+ * FLATPAK_SUMMARY_INDEX_GVARIANT_FORMAT:
+ *
+ * dict
+ *   s: subset name
+ *  ->
+ *   ay - checksum of subsummary
+ *   aay - previous subsummary checksums
+ *   a{sv} - per subset metadata
+ * a{sv} - metadata
+
+ */
+#define FLATPAK_SUMMARY_INDEX_GVARIANT_STRING "(a{s(ayaaya{sv})}a{sv})"
+#define FLATPAK_SUMMARY_INDEX_GVARIANT_FORMAT G_VARIANT_TYPE (FLATPAK_SUMMARY_INDEX_GVARIANT_STRING)
+
 #define FLATPAK_REF_GROUP "Flatpak Ref"
 #define FLATPAK_REF_VERSION_KEY "Version"
 #define FLATPAK_REF_URL_KEY "Url"

@@ -346,22 +346,6 @@ GQuark       flatpak_dir_error_quark (void);
 #define FLATPAK_DEPLOY_DATA_GVARIANT_STRING "(ssasta{sv})"
 #define FLATPAK_DEPLOY_DATA_GVARIANT_FORMAT G_VARIANT_TYPE (FLATPAK_DEPLOY_DATA_GVARIANT_STRING)
 
-/**
- * FLATPAK_SUMMARY_INDEX_GVARIANT_FORMAT:
- *
- * dict
- *   s: subset name
- *  ->
- *   ay - checksum of subsummary
- *   aay - previous subsummary checksums
- *   a{sv} - per subset metadata
- * a{sv} - metadata
-
- */
-#define FLATPAK_SUMMARY_INDEX_GVARIANT_STRING "(a{s(ayaaya{sv})}a{sv})"
-#define FLATPAK_SUMMARY_INDEX_GVARIANT_FORMAT G_VARIANT_TYPE (FLATPAK_SUMMARY_INDEX_GVARIANT_STRING)
-
-
 GPtrArray *flatpak_get_system_base_dir_locations        (GCancellable  *cancellable,
                                                          GError       **error);
 GFile *    flatpak_get_system_default_base_dir_location (void);

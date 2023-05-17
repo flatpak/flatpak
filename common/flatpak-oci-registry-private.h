@@ -25,6 +25,7 @@
 
 #include <glib.h>
 #include <gio/gio.h>
+#include "flatpak-dir-private.h"
 #include "flatpak-json-oci-private.h"
 #include "flatpak-utils-http-private.h"
 #include "flatpak-utils-private.h"

@@ -168,6 +168,7 @@ sources = [
   'flatpak-chain-input-stream.c',
   'flatpak-context.c',
   'flatpak-dir.c',
+  'flatpak-dir-utils.c',
   'flatpak-error.c',
   'flatpak-exports.c',
   'flatpak-glib-backports.c',
