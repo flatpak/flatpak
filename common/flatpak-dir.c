@@ -7722,8 +7722,8 @@ rewrite_export_dir (const char         *app,
   if (!glnx_dirfd_iterator_init_at (source_parent_fd, source_name, FALSE, &source_iter, error))
     goto out;
 
-  exports_allowed = flatpak_get_allowed_exports (source_path, app, context,
-                                                 &allowed_extensions, &allowed_prefixes, &require_exact_match);
+  exports_allowed = flatpak_context_get_allowed_exports (context, source_path, app,
+                                                         &allowed_extensions, &allowed_prefixes, &require_exact_match);
 
   visited_children = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 
