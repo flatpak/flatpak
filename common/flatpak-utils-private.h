@@ -28,8 +28,8 @@
 #include <gio/gunixfdlist.h>
 #include "flatpak-error.h"
 #include "flatpak-glib-backports-private.h"
+#include "flatpak-ref-utils-private.h"
 #include "flatpak-variant-private.h"
-#include "flatpak-dir-private.h"
 #include <ostree.h>
 
 #define AUTOFS_SUPER_MAGIC 0x0187
@@ -137,42 +137,6 @@ gboolean flatpak_summary_find_ref_map (VarSummaryRef  summary,
 gboolean flatpak_var_ref_map_lookup_ref (VarRefMapRef   ref_map,
                                          const char    *ref,
                                          VarRefInfoRef *out_info);
-
-FlatpakDecomposed *flatpak_find_current_ref (const char   *app_id,
-                                             GCancellable *cancellable,
-                                             GError      **error);
-GFile *flatpak_find_deploy_dir_for_ref (FlatpakDecomposed  *ref,
-                                        FlatpakDir        **dir_out,
-                                        GCancellable       *cancellable,
-                                        GError            **error);
-GFile * flatpak_find_files_dir_for_ref (FlatpakDecomposed *ref,
-                                        GCancellable      *cancellable,
-                                        GError           **error);
-GFile * flatpak_find_unmaintained_extension_dir_if_exists (const char   *name,
-                                                           const char   *arch,
-                                                           const char   *branch,
-                                                           GCancellable *cancellable);
-FlatpakDeploy * flatpak_find_deploy_for_ref_in (GPtrArray    *dirs,
-                                                const char   *ref,
-                                                const char   *commit,
-                                                GCancellable *cancellable,
-                                                GError      **error);
-FlatpakDeploy * flatpak_find_deploy_for_ref (const char   *ref,
-                                             const char   *commit,
-                                             FlatpakDir   *opt_user_dir,
-                                             GCancellable *cancellable,
-                                             GError      **error);
-char ** flatpak_list_deployed_refs (const char   *type,
-                                    const char   *name_prefix,
-                                    const char   *arch,
-                                    const char   *branch,
-                                    GCancellable *cancellable,
-                                    GError      **error);
-char ** flatpak_list_unmaintained_refs (const char   *name_prefix,
-                                        const char   *branch,
-                                        const char   *arch,
-                                        GCancellable *cancellable,
-                                        GError      **error);
 
 gboolean flatpak_remove_dangling_symlinks (GFile        *dir,
                                            GCancellable *cancellable,
@@ -358,31 +322,9 @@ gboolean flatpak_pull_from_bundle (OstreeRepo   *repo,
                                    GCancellable *cancellable,
                                    GError      **error);
 
-typedef struct
-{
-  char               *id;
-  char               *installed_id;
-  char               *commit;
-  FlatpakDecomposed *ref;
-  char              *directory;
-  char              *files_path;
-  char              *subdir_suffix;
-  char              *add_ld_path;
-  char             **merge_dirs;
-  int                priority;
-  gboolean           needs_tmpfs;
-  gboolean           is_unmaintained;
-} FlatpakExtension;
-
-void flatpak_extension_free (FlatpakExtension *extension);
-
 void flatpak_parse_extension_with_tag (const char *extension,
                                        char      **name,
                                        char      **tag);
-
-GList *flatpak_list_extensions (GKeyFile   *metakey,
-                                const char *arch,
-                                const char *branch);
 
 gboolean flatpak_argument_needs_quoting (const char *arg);
 char * flatpak_quote_argv (const char *argv[],
@@ -559,8 +501,6 @@ flatpak_ostree_progress_finish (OstreeAsyncProgress *progress)
 typedef OstreeAsyncProgress OstreeAsyncProgressFinish;
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (OstreeAsyncProgressFinish, flatpak_ostree_progress_finish);
 
-
-void flatpak_log_dir_access (FlatpakDir *dir);
 
 gboolean flatpak_check_required_version (const char *ref,
                                          GKeyFile   *metakey,

@@ -49,6 +49,7 @@ app/flatpak-main.c
 app/flatpak-quiet-transaction.c
 common/flatpak-auth.c
 common/flatpak-context.c
+common/flatpak-dir-utils.c
 common/flatpak-dir.c
 common/flatpak-exports.c
 common/flatpak-glib-backports.c
