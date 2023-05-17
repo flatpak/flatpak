@@ -218,7 +218,7 @@ flatpak_run_add_socket_args_environment (FlatpakBwrap *bwrap,
                                          FlatpakContextShares shares,
                                          FlatpakContextSockets sockets)
 {
-  gboolean has_wayland;
+  gboolean has_wayland = FALSE;
   gboolean allow_x11;
 
   if (sockets & FLATPAK_CONTEXT_SOCKET_WAYLAND)
