@@ -24,12 +24,10 @@
 #include <string.h>
 
 #include "libglnx.h"
-#include <flatpak-common-types-private.h>
 #include <gio/gio.h>
 #include <gio/gunixfdlist.h>
 #include "flatpak-dbus-generated.h"
 #include "flatpak-document-dbus-generated.h"
-#include "flatpak-context-private.h"
 #include "flatpak-error.h"
 #include "flatpak-glib-backports-private.h"
 #include "flatpak-variant-private.h"
@@ -141,13 +139,6 @@ gboolean flatpak_summary_find_ref_map (VarSummaryRef  summary,
 gboolean flatpak_var_ref_map_lookup_ref (VarRefMapRef   ref_map,
                                          const char    *ref,
                                          VarRefInfoRef *out_info);
-
-gboolean flatpak_get_allowed_exports (const char     *source_path,
-                                      const char     *app_id,
-                                      FlatpakContext *context,
-                                      char         ***allowed_extensions_out,
-                                      char         ***allowed_prefixes_out,
-                                      gboolean       *require_exact_match_out);
 
 FlatpakDecomposed *flatpak_find_current_ref (const char   *app_id,
                                              GCancellable *cancellable,

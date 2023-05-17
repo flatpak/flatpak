@@ -173,4 +173,11 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakContext, flatpak_context_free)
 GFile *flatpak_get_user_base_dir_location (void);
 GFile *flatpak_get_data_dir (const char *app_id);
 
+gboolean flatpak_context_get_allowed_exports (FlatpakContext *context,
+                                              const char     *source_path,
+                                              const char     *app_id,
+                                              char         ***allowed_extensions_out,
+                                              char         ***allowed_prefixes_out,
+                                              gboolean       *require_exact_match_out);
+
 #endif /* __FLATPAK_CONTEXT_H__ */
