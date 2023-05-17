@@ -29,6 +29,7 @@
 #include "flatpak-utils-private.h"
 #include "flatpak-dir-private.h"
 #include "flatpak-dir-utils-private.h"
+#include "flatpak-repo-utils-private.h"
 #include "flatpak-xml-utils-private.h"
 
 G_BEGIN_DECLS

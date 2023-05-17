@@ -34,6 +34,7 @@
 #include "flatpak-uri-private.h"
 #include "flatpak-variant-impl-private.h"
 #include "flatpak-dir-private.h"
+#include "flatpak-repo-utils-private.h"
 #include "flatpak-xml-utils-private.h"
 #include "flatpak-zstd-decompressor-private.h"
 

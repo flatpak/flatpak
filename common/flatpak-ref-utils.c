@@ -26,6 +26,8 @@
 #include <stdlib.h>
 
 #include <glib.h>
+#include <ostree.h>
+
 #include "flatpak-ref-utils-private.h"
 
 #include "flatpak-error.h"

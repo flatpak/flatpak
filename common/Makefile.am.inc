@@ -165,6 +165,8 @@ libflatpak_common_la_SOURCES = \
 	common/flatpak-remote-ref-private.h \
 	common/flatpak-remote-ref.c \
 	common/flatpak-remote.c \
+	common/flatpak-repo-utils-private.h \
+	common/flatpak-repo-utils.c \
 	common/flatpak-run-private.h \
 	common/flatpak-run.c \
 	common/flatpak-run-cups-private.h \
