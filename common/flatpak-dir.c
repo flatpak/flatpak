@@ -49,6 +49,7 @@
 
 #include "flatpak-appdata-private.h"
 #include "flatpak-dir-private.h"
+#include "flatpak-dir-utils-private.h"
 #include "flatpak-error.h"
 #include "flatpak-locale-utils-private.h"
 #include "flatpak-oci-registry-private.h"
@@ -8330,6 +8331,9 @@ apply_extra_data (FlatpakDir   *self,
     {
       /* We pass in self here so that we ensure that we find the runtime in case it only
          exists in this installation (which might be custom) */
+      /* TODO: This is a circular dependency between flatpak-dir (which
+       * deals with a single installation) and flatpak-dir-utils (which
+       * deals with all the installations on the system). */
       runtime_deploy = flatpak_find_deploy_for_ref (flatpak_decomposed_get_ref (runtime_ref), NULL, self, cancellable, error);
       if (runtime_deploy == NULL)
         return FALSE;
@@ -15470,6 +15474,9 @@ add_related (FlatpakDir        *self,
     auto_prune = TRUE;
 
   /* Don't download if there is an unmaintained extension already installed */
+  /* TODO: This is a circular dependency between flatpak-dir (which
+   * deals with a single installation) and flatpak-dir-utils (which
+   * deals with all the installations on the system). */
   unmaintained_path =
     flatpak_find_unmaintained_extension_dir_if_exists (id, arch, branch, NULL);
   if (unmaintained_path != NULL && deploy_data == NULL)
