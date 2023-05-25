@@ -704,8 +704,7 @@ start_p11_kit_server (const char *flatpak_dir)
      */
     "--sh",
     "-n", socket_path,
-    "--provider",  "p11-kit-trust.so",
-    "pkcs11:model=p11-kit-trust?write-protected=yes",
+    "pkcs11:?write-protected=yes",
     NULL
   };
 
