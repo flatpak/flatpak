@@ -21,6 +21,8 @@
 #ifndef __FLATPAK_INSTANCE_PRIVATE_H__
 #define __FLATPAK_INSTANCE_PRIVATE_H__
 
+#include <glib.h>
+
 #include "flatpak-instance.h"
 
 FlatpakInstance *flatpak_instance_new (const char *dir);
@@ -57,5 +59,8 @@ gboolean flatpak_instance_ensure_per_app_xdg_runtime_dir (const char *app_id,
                                                           int per_app_dir_lock_fd,
                                                           char **shared_dir_out,
                                                           GError **error);
+
+GStrv flatpak_instance_get_run_environ (FlatpakInstance *self, GError **error);
+
 
 #endif /* __FLATPAK_INSTANCE_PRIVATE_H__ */

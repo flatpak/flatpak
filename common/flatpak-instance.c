@@ -313,6 +313,27 @@ flatpak_instance_get_info (FlatpakInstance *self)
   return priv->info;
 }
 
+GStrv
+flatpak_instance_get_run_environ (FlatpakInstance *self, GError **error)
+{
+  FlatpakInstancePrivate *priv = flatpak_instance_get_instance_private (self);
+  g_autofree char *file = NULL;
+  g_autofree char *environ_data = NULL;
+  gsize environ_size;
+  g_auto(GStrv) env_vars = NULL;
+
+  file = g_build_filename (priv->private_dir, "run-environ", NULL);
+
+  if (!g_file_get_contents (file, &environ_data, &environ_size, error))
+    return NULL;
+
+  env_vars = flatpak_parse_env_block (environ_data, environ_size, error);
+  if (env_vars == NULL)
+    return NULL;
+
+  return g_steal_pointer (&env_vars);
+}
+
 static GKeyFile *
 get_instance_info (const char *dir)
 {
