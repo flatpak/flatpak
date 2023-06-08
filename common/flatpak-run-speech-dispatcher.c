@@ -63,6 +63,6 @@ flatpak_run_add_speech_dispatcher_args (FlatpakBwrap *bwrap)
   sandbox_speechd_socket = g_strdup_printf ("%s/speech-dispatcher/speechd.sock", g_get_user_runtime_dir ());
 
   flatpak_bwrap_add_args (bwrap,
-                          "--bind-try", host_speechd_socket, sandbox_speechd_socket,
+                          "--ro-bind-try", host_speechd_socket, sandbox_speechd_socket,
                           NULL);
 }
