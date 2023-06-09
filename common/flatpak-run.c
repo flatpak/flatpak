@@ -1258,6 +1258,43 @@ flatpak_run_add_dconf_args (FlatpakBwrap *bwrap,
   return TRUE;
 }
 
+static gboolean
+flatpak_run_save_environ (const char * const  *run_environ,
+                          const char          *dir,
+                          GCancellable        *cancellable,
+                          GError             **error)
+{
+  g_autoptr(GByteArray) buffer = g_byte_array_new ();
+  int i;
+  glnx_autofd int dir_fd = -1;
+
+  g_assert (run_environ != NULL);
+
+  for (i = 0; run_environ[i] != NULL; i++)
+    {
+      gsize size = strlen (run_environ[i]) + 1;
+
+      g_byte_array_append (buffer,
+                           (const guint8 *) run_environ[i],
+                           size);
+    }
+
+  if (!glnx_opendirat (AT_FDCWD, dir, TRUE,
+                       &dir_fd,
+                       error))
+    return FALSE;
+
+  if (!glnx_file_replace_contents_with_perms_at (dir_fd, "run-environ",
+                                                 buffer->data, buffer->len,
+                                                 (mode_t) 0400,
+                                                 (uid_t) -1, (gid_t) -1,
+                                                 0,
+                                                 cancellable, error))
+    return FALSE;
+
+  return TRUE;
+}
+
 gboolean
 flatpak_run_add_app_info_args (FlatpakBwrap       *bwrap,
                                GFile              *app_files,
@@ -2762,24 +2799,25 @@ open_namespace_fd_if_needed (const char *path,
 }
 
 gboolean
-flatpak_run_app (FlatpakDecomposed *app_ref,
-                 FlatpakDeploy     *app_deploy,
-                 const char        *custom_app_path,
-                 FlatpakContext    *extra_context,
-                 const char        *custom_runtime,
-                 const char        *custom_runtime_version,
-                 const char        *custom_runtime_commit,
-                 const char        *custom_usr_path,
-                 int                parent_pid,
-                 FlatpakRunFlags    flags,
-                 const char        *cwd,
-                 const char        *custom_command,
-                 char              *args[],
-                 int                n_args,
-                 int                instance_id_fd,
-                 char             **instance_dir_out,
-                 GCancellable      *cancellable,
-                 GError           **error)
+flatpak_run_app (FlatpakDecomposed   *app_ref,
+                 FlatpakDeploy       *app_deploy,
+                 const char          *custom_app_path,
+                 FlatpakContext      *extra_context,
+                 const char          *custom_runtime,
+                 const char          *custom_runtime_version,
+                 const char          *custom_runtime_commit,
+                 const char          *custom_usr_path,
+                 int                  parent_pid,
+                 FlatpakRunFlags      flags,
+                 const char          *cwd,
+                 const char          *custom_command,
+                 char                *args[],
+                 int                  n_args,
+                 int                  instance_id_fd,
+                 const char * const  *run_environ,
+                 char               **instance_dir_out,
+                 GCancellable        *cancellable,
+                 GError             **error)
 {
   g_autoptr(FlatpakDeploy) runtime_deploy = NULL;
   g_autoptr(GBytes) runtime_deploy_data = NULL;
@@ -2807,6 +2845,7 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
   g_autofree char *app_info_path = NULL;
   g_autofree char *app_ld_path = NULL;
   g_autofree char *instance_id_host_dir = NULL;
+  g_autofree char *instance_id_host_private_dir = NULL;
   g_autofree char *instance_id = NULL;
   g_autoptr(FlatpakContext) app_context = NULL;
   g_autoptr(FlatpakContext) overrides = NULL;
@@ -2830,6 +2869,8 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
   const char *app_target_path = "/app";
   const char *runtime_target_path = "/usr";
   struct stat s;
+
+  g_assert (run_environ != NULL);
 
   g_return_val_if_fail (app_ref != NULL, FALSE);
 
@@ -3243,8 +3284,14 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
                                       runtime_ref, app_id_dir, app_context, extra_context,
                                       sandboxed, FALSE, flags & FLATPAK_RUN_FLAG_DEVEL,
                                       &app_info_path, instance_id_fd,
-                                      &instance_id_host_dir, NULL,
+                                      &instance_id_host_dir, &instance_id_host_private_dir,
                                       &instance_id, error))
+    return FALSE;
+
+  if (!flatpak_run_save_environ (run_environ,
+                                 instance_id_host_private_dir,
+                                 cancellable,
+                                 error))
     return FALSE;
 
   if (!sandboxed)
