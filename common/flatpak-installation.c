@@ -673,11 +673,14 @@ flatpak_installation_launch_full (FlatpakInstallation *self,
                                   GCancellable        *cancellable,
                                   GError             **error)
 {
+  g_auto(GStrv) run_environ = NULL;
   g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(FlatpakDeploy) app_deploy = NULL;
   g_autoptr(FlatpakDecomposed) app_ref = NULL;
   g_autofree char *instance_dir = NULL;
   FlatpakRunFlags run_flags;
+
+  run_environ = g_get_environ ();
 
   dir = flatpak_installation_get_dir (self, error);
   if (dir == NULL)
@@ -708,6 +711,7 @@ flatpak_installation_launch_full (FlatpakInstallation *self,
                         NULL,
                         NULL,
                         NULL, 0, -1,
+                        (const char * const *) run_environ,
                         &instance_dir,
                         cancellable, error))
     return FALSE;

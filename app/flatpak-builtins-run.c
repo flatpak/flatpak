@@ -95,6 +95,7 @@ static GOptionEntry options[] = {
 gboolean
 flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
+  g_auto(GStrv) run_environ = NULL;
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(FlatpakDeploy) app_deploy = NULL;
   g_autoptr(FlatpakDecomposed) app_ref = NULL;
@@ -110,6 +111,8 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   g_autoptr(GError) local_error = NULL;
   g_autoptr(GPtrArray) dirs = NULL;
   FlatpakRunFlags flags = 0;
+
+  run_environ = g_get_environ ();
 
   context = g_option_context_new (_("APP [ARGUMENT…] - Run an app"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -321,6 +324,7 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
                         &argv[rest_argv_start + 1],
                         rest_argc - 1,
                         opt_instance_id_fd,
+                        (const char * const *) run_environ,
                         NULL,
                         cancellable,
                         error))
