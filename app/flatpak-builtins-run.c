@@ -58,6 +58,7 @@ static char *opt_runtime_commit;
 static int opt_parent_pid;
 static gboolean opt_parent_expose_pids;
 static gboolean opt_parent_share_pids;
+static gboolean opt_host_share_pids;
 static int opt_instance_id_fd = -1;
 static char *opt_app_path;
 static char *opt_usr_path;
@@ -86,6 +87,7 @@ static GOptionEntry options[] = {
   { "parent-pid", 0, 0, G_OPTION_ARG_INT, &opt_parent_pid, N_("Use PID as parent pid for sharing namespaces"), N_("PID") },
   { "parent-expose-pids", 0, 0, G_OPTION_ARG_NONE, &opt_parent_expose_pids, N_("Make processes visible in parent namespace"), NULL },
   { "parent-share-pids", 0, 0, G_OPTION_ARG_NONE, &opt_parent_share_pids, N_("Share process ID namespace with parent"), NULL },
+  { "host-share-pids", 0, 0, G_OPTION_ARG_NONE, &opt_host_share_pids, N_("Share process ID namespace with host"), NULL },
   { "instance-id-fd", 0, 0, G_OPTION_ARG_INT, &opt_instance_id_fd, N_("Write the instance ID to the given file descriptor"), NULL },
   { "app-path", 0, 0, G_OPTION_ARG_FILENAME, &opt_app_path, N_("Use PATH instead of the app's /app"), N_("PATH") },
   { "usr-path", 0, 0, G_OPTION_ARG_FILENAME, &opt_usr_path, N_("Use PATH instead of the runtime's /usr"), N_("PATH") },
@@ -301,6 +303,8 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
     flags |= FLATPAK_RUN_FLAG_PARENT_EXPOSE_PIDS;
   if (opt_parent_share_pids)
     flags |= FLATPAK_RUN_FLAG_PARENT_SHARE_PIDS;
+  if (opt_host_share_pids)
+    flags |= FLATPAK_RUN_FLAG_HOST_SHARE_PIDS;
   if (!opt_a11y_bus)
     flags |= FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY;
   if (!opt_session_bus)

@@ -44,6 +44,7 @@ static gboolean opt_log_system_bus;
 static gboolean opt_die_with_parent;
 static gboolean opt_with_appdir;
 static gboolean opt_readonly;
+static gboolean opt_host_share_pids;
 
 static GOptionEntry options[] = {
   { "runtime", 'r', 0, G_OPTION_ARG_NONE, &opt_runtime, N_("Use Platform runtime rather than Sdk"), NULL },
@@ -56,6 +57,7 @@ static GOptionEntry options[] = {
   { "with-appdir", 0, 0, G_OPTION_ARG_NONE, &opt_with_appdir, N_("Export application homedir directory to build"), NULL },
   { "log-session-bus", 0, 0, G_OPTION_ARG_NONE, &opt_log_session_bus, N_("Log session bus calls"), NULL },
   { "log-system-bus", 0, 0, G_OPTION_ARG_NONE, &opt_log_system_bus, N_("Log system bus calls"), NULL },
+  { "host-share-pids", 0, 0, G_OPTION_ARG_NONE, &opt_host_share_pids, N_("Share process ID namespace with host"), NULL },
   { NULL }
 };
 
@@ -453,6 +455,9 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
 
   if (opt_log_system_bus)
     run_flags |= FLATPAK_RUN_FLAG_LOG_SYSTEM_BUS;
+
+  if (opt_host_share_pids)
+    run_flags |= FLATPAK_RUN_FLAG_HOST_SHARE_PIDS;
 
   /* Never set up an a11y bus for builds */
   run_flags |= FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY;
