@@ -52,6 +52,7 @@ gboolean flatpak_run_add_environment_args (FlatpakBwrap       *bwrap,
                                            GFile              *app_id_dir,
                                            GPtrArray          *previous_app_id_dirs,
                                            int                 per_app_dir_lock_fd,
+                                           const char         *instance_id,
                                            FlatpakExports    **exports_out,
                                            GCancellable       *cancellable,
                                            GError            **error);
@@ -95,6 +96,7 @@ gboolean flatpak_run_add_app_info_args (FlatpakBwrap       *bwrap,
                                         char              **app_info_path_out,
                                         int                 instance_id_fd,
                                         char              **host_instance_id_host_dir_out,
+                                        char              **instance_id_out,
                                         GError            **error);
 
 gboolean flatpak_run_app (FlatpakDecomposed  *app_ref,

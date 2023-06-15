@@ -8352,7 +8352,7 @@ apply_extra_data (FlatpakDir   *self,
 
   if (!flatpak_run_add_environment_args (bwrap, NULL, run_flags, id,
                                          app_context, NULL, NULL, -1,
-                                         NULL, cancellable, error))
+                                         NULL, NULL, cancellable, error))
     return FALSE;
 
   flatpak_bwrap_populate_runtime_dir (bwrap, NULL);

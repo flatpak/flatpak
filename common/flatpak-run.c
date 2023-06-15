@@ -258,6 +258,7 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
                                   GFile           *app_id_dir,
                                   GPtrArray       *previous_app_id_dirs,
                                   int              per_app_dir_lock_fd,
+                                  const char      *instance_id,
                                   FlatpakExports **exports_out,
                                   GCancellable    *cancellable,
                                   GError         **error)
@@ -476,7 +477,7 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
   flatpak_context_append_bwrap_filesystem (context, bwrap, app_id, app_id_dir,
                                            exports, xdg_dirs_conf, home_access);
 
-  flatpak_run_add_socket_args_environment (bwrap, context->shares, context->sockets);
+  flatpak_run_add_socket_args_environment (bwrap, context->shares, context->sockets, app_id, instance_id);
   flatpak_run_add_session_dbus_args (bwrap, proxy_arg_bwrap, context, flags, app_id);
   flatpak_run_add_system_dbus_args (bwrap, proxy_arg_bwrap, context, flags);
   flatpak_run_add_a11y_dbus_args (bwrap, proxy_arg_bwrap, context, flags);
@@ -1269,6 +1270,7 @@ flatpak_run_add_app_info_args (FlatpakBwrap       *bwrap,
                                char              **app_info_path_out,
                                int                 instance_id_fd,
                                char              **instance_id_host_dir_out,
+                               char              **instance_id_out,
                                GError             **error)
 {
   g_autofree char *info_path = NULL;
@@ -1506,6 +1508,9 @@ flatpak_run_add_app_info_args (FlatpakBwrap       *bwrap,
 
   if (instance_id_host_dir_out != NULL)
     *instance_id_host_dir_out = g_steal_pointer (&instance_id_host_dir);
+
+  if (instance_id_out != NULL)
+    *instance_id_out = g_steal_pointer (&instance_id);
 
   return TRUE;
 }
@@ -2785,6 +2790,7 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
   g_autofree char *app_info_path = NULL;
   g_autofree char *app_ld_path = NULL;
   g_autofree char *instance_id_host_dir = NULL;
+  g_autofree char *instance_id = NULL;
   g_autoptr(FlatpakContext) app_context = NULL;
   g_autoptr(FlatpakContext) overrides = NULL;
   g_autoptr(FlatpakExports) exports = NULL;
@@ -3220,7 +3226,7 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
                                       runtime_ref, app_id_dir, app_context, extra_context,
                                       sandboxed, FALSE, flags & FLATPAK_RUN_FLAG_DEVEL,
                                       &app_info_path, instance_id_fd, &instance_id_host_dir,
-                                      error))
+                                      &instance_id, error))
     return FALSE;
 
   if (!sandboxed)
@@ -3250,7 +3256,7 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
 
   if (!flatpak_run_add_environment_args (bwrap, app_info_path, flags,
                                          app_id, app_context, app_id_dir, previous_app_id_dirs,
-                                         per_app_dir_lock_fd,
+                                         per_app_dir_lock_fd, instance_id,
                                          &exports, cancellable, error))
     return FALSE;
 

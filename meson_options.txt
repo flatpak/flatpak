@@ -221,6 +221,12 @@ option(
   value : 'enabled',
 )
 option(
+  'wayland_security_context',
+  type : 'feature',
+  description : 'enable wayland security-context protocol support',
+  value : 'auto',
+)
+option(
   'xmlto_flags',
   type : 'array',
   description : 'options to pass to xmlto',

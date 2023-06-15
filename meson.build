@@ -206,6 +206,11 @@ gir_dep = dependency('gobject-introspection-1.0', version : '>=1.40.0', required
 gtkdoc_dep = dependency('gtk-doc', required : get_option('gtkdoc'))
 build_gtk_doc = gtkdoc_dep.found()
 
+wayland_client = dependency('wayland-client', required : get_option('wayland_security_context'))
+wayland_scanner = dependency('wayland-scanner', required : get_option('wayland_security_context'))
+wayland_protocols = dependency('wayland-protocols', version : '>= 1.32', required : get_option('wayland_security_context'))
+build_wayland_security_context = wayland_client.found() and wayland_scanner.found() and wayland_protocols.found()
+
 base_deps = [glib_dep, gio_dep, gio_unix_dep]
 
 gpgme_dep = dependency('gpgme', version : '>=1.8.0')
@@ -395,6 +400,10 @@ if xau_dep.found()
   cdata.set('ENABLE_XAUTH', 1)
 endif
 
+if build_wayland_security_context
+  cdata.set('ENABLE_WAYLAND_SECURITY_CONTEXT', 1)
+endif
+
 if not get_option('sandboxed_triggers')
   cdata.set('DISABLE_SANDBOXED_TRIGGERS', 1)
 endif
@@ -432,6 +441,7 @@ summary(
     'Use libmalcontent' : malcontent_dep.found(),
     'Use libzstd' : libzstd_dep.found(),
     'Use auto sideloading' : get_option('auto_sideloading'),
+    'Wayland security context' : build_wayland_security_context,
   },
   bool_yn : true,
 )

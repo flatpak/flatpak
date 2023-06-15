@@ -342,6 +342,29 @@ if test "x$enable_xauth" = "xyes"; then
       [Define if using xauth])
 fi
 
+AC_ARG_WITH([wayland-security-context],
+            AC_HELP_STRING([--with-wayland-security-context],
+                           [Build with Wayland security context [default=auto]]),
+            [],
+            [with_wayland_security_context=auto])
+enable_wayland_security_context=no
+if test "x$with_wayland_security_context" != "xno"; then
+   PKG_CHECK_MODULES(WAYLAND_PROTOCOLS, [wayland-protocols >= 1.32],
+                     [have_wayland_protocols=yes], [have_wayland_protocols=no])
+   if test $have_wayland_protocols = yes; then
+      PKG_CHECK_MODULES(WAYLAND_CLIENT, [wayland-client])
+      PKG_CHECK_MODULES(WAYLAND_SCANNER, [wayland-scanner])
+      wayland_scanner=`$PKG_CONFIG --variable=wayland_scanner wayland-scanner`
+      AC_SUBST(WAYLAND_SCANNER, $wayland_scanner)
+      wayland_protocols_pkgdatadir=`$PKG_CONFIG --variable=pkgdatadir wayland-protocols`
+      AC_SUBST(WAYLAND_PROTOCOLS_DATADIR, $wayland_protocols_pkgdatadir)
+      AC_DEFINE([ENABLE_WAYLAND_SECURITY_CONTEXT], [1],
+         [Define if using Wayland security context])
+      enable_wayland_security_context=yes
+   fi
+fi
+AM_CONDITIONAL(ENABLE_WAYLAND_SECURITY_CONTEXT, test "x$enable_wayland_security_context" = "xyes")
+
 AC_ARG_ENABLE([gdm-env-file],
               [AC_HELP_STRING([--enable-gdm-env-file], [Install gdm env.d file (not needed if systemd generators work)])],
               install_gdm_env_file=$enableval, install_gdm_env_file=no)
@@ -626,18 +649,19 @@ echo ""
 echo "          Flatpak $FLATPAK_VERSION"
 echo "          =============="
 echo ""
-echo "          Build system helper:    $enable_system_helper"
-echo "          Build selinux module:   $enable_selinux_module"
-echo "          Build bubblewrap:       $build_bwrap"
-echo "          Build dbus-proxy:       $build_dbus_proxy"
-echo "          Use sandboxed triggers: $enable_sandboxed_triggers"
-echo "          Use seccomp:            $enable_seccomp"
-echo "          Privileged group:       $PRIVILEGED_GROUP"
-echo "          Privilege mode:         $with_priv_mode"
-echo "          Use dconf:              $have_dconf"
-echo "          Use libsystemd:         $have_libsystemd"
-echo "          Use libmalcontent:      $have_libmalcontent"
-echo "          Use libzstd:            $have_zstd"
-echo "          Use auto sideloading:   $enable_auto_sideloading"
-echo "          HTTP backend:           $http_backend"
+echo "          Build system helper:      $enable_system_helper"
+echo "          Build selinux module:     $enable_selinux_module"
+echo "          Build bubblewrap:         $build_bwrap"
+echo "          Build dbus-proxy:         $build_dbus_proxy"
+echo "          Use sandboxed triggers:   $enable_sandboxed_triggers"
+echo "          Use seccomp:              $enable_seccomp"
+echo "          Privileged group:         $PRIVILEGED_GROUP"
+echo "          Privilege mode:           $with_priv_mode"
+echo "          Use dconf:                $have_dconf"
+echo "          Use libsystemd:           $have_libsystemd"
+echo "          Use libmalcontent:        $have_libmalcontent"
+echo "          Use libzstd:              $have_zstd"
+echo "          Use auto sideloading:     $enable_auto_sideloading"
+echo "          HTTP backend:             $http_backend"
+echo "          Wayland security context: $enable_wayland_security_context"
 echo ""
