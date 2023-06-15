@@ -200,6 +200,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   g_autofree char *runtime_extensions = NULL;
   g_autofree char *runtime_ld_path = NULL;
   g_autofree char *instance_id_host_dir = NULL;
+  g_autofree char *instance_id = NULL;
   char pid_str[64];
   g_autofree char *pid_path = NULL;
   g_autoptr(GFile) app_id_dir = NULL;
@@ -549,12 +550,13 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
                                       FALSE, TRUE, TRUE,
                                       &app_info_path, -1,
                                       &instance_id_host_dir,
+                                      &instance_id,
                                       error))
     return FALSE;
 
   if (!flatpak_run_add_environment_args (bwrap, app_info_path, run_flags, id,
                                          app_context, app_id_dir, NULL, -1,
-                                         NULL, cancellable, error))
+                                         instance_id, NULL, cancellable, error))
     return FALSE;
 
   for (i = 0; opt_bind_mounts != NULL && opt_bind_mounts[i] != NULL; i++)

@@ -100,6 +100,13 @@ flatpak_variant = custom_target(
   command : variant_schema_compiler_command,
 )
 
+libflatpak_common_base_deps = base_deps + [libglnx_dep]
+
+libflatpak_common_base_sources = [
+  'flatpak-utils-base.c',
+  'flatpak-utils-base-private.h',
+] + flatpak_gdbus + flatpak_document_gdbus
+
 built_headers = [
   enums[1],
   flatpak_version_macros,
@@ -109,16 +116,37 @@ built_headers = [
   flatpak_variant[1],
 ]
 
+if build_wayland_security_context
+  wayland_scanner_prog = find_program(wayland_scanner.get_variable(pkgconfig: 'wayland_scanner'))
+  wayland_protocols_dir = wayland_protocols.get_variable(pkgconfig: 'pkgdatadir')
+  wl_security_context_xml = wayland_protocols_dir / 'staging/security-context/security-context-v1.xml'
+  wl_security_context = [
+    custom_target(
+      'security-context-v1-protocol.c',
+      input : wl_security_context_xml,
+      output : 'security-context-v1-protocol.c',
+      command : [wayland_scanner_prog, 'code', '@INPUT@', '@OUTPUT@'],
+    ),
+    custom_target(
+      'security-context-v1-protocol.h',
+      input : wl_security_context_xml,
+      output : 'security-context-v1-protocol.h',
+      command : [wayland_scanner_prog, 'client-header', '@INPUT@', '@OUTPUT@'],
+    ),
+  ]
+
+  libflatpak_common_base_deps += [wayland_client]
+  libflatpak_common_base_sources += [wl_security_context]
+  built_headers += [wl_security_context[1]]
+endif
+
 libflatpak_common_base = static_library(
   'flatpak-common-base',
-  dependencies : base_deps + [libglnx_dep],
+  dependencies : libflatpak_common_base_deps,
   gnu_symbol_visibility : 'hidden',
   include_directories : [common_include_directories],
   install : false,
-  sources : [
-    'flatpak-utils-base.c',
-    'flatpak-utils-base-private.h',
-  ] + flatpak_gdbus + flatpak_document_gdbus,
+  sources : libflatpak_common_base_sources,
 )
 libflatpak_common_base_dep = declare_dependency(
   dependencies : base_deps + [libglnx_dep],

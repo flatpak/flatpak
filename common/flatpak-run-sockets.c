@@ -170,9 +170,11 @@ flatpak_run_add_ssh_args (FlatpakBwrap *bwrap)
  * use of a proxy.
  */
 void
-flatpak_run_add_socket_args_environment (FlatpakBwrap *bwrap,
-                                         FlatpakContextShares shares,
-                                         FlatpakContextSockets sockets)
+flatpak_run_add_socket_args_environment (FlatpakBwrap         *bwrap,
+                                         FlatpakContextShares  shares,
+                                         FlatpakContextSockets sockets,
+                                         const char           *app_id,
+                                         const char           *instance_id)
 {
   gboolean has_wayland = FALSE;
   gboolean allow_x11;
@@ -180,7 +182,8 @@ flatpak_run_add_socket_args_environment (FlatpakBwrap *bwrap,
   if (sockets & FLATPAK_CONTEXT_SOCKET_WAYLAND)
     {
       g_info ("Allowing wayland access");
-      has_wayland = flatpak_run_add_wayland_args (bwrap);
+      g_assert (app_id && instance_id);
+      has_wayland = flatpak_run_add_wayland_args (bwrap, app_id, instance_id);
     }
 
   if ((sockets & FLATPAK_CONTEXT_SOCKET_FALLBACK_X11) != 0)

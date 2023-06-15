@@ -29,6 +29,8 @@
 G_BEGIN_DECLS
 
 gboolean
-flatpak_run_add_wayland_args (FlatpakBwrap *bwrap);
+flatpak_run_add_wayland_args (FlatpakBwrap *bwrap,
+                              const char   *app_id,
+                              const char   *instance_id);
 
 G_END_DECLS
