@@ -159,6 +159,7 @@ sources = [
   'flatpak-run-dbus.c',
   'flatpak-run-pulseaudio.c',
   'flatpak-run-sockets.c',
+  'flatpak-run-wayland.c',
   'flatpak-run-x11.c',
   'flatpak-transaction.c',
   'flatpak-utils-http.c',
