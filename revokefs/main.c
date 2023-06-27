@@ -297,6 +297,10 @@ do_open (const char *path, mode_t mode, struct fuse_file_info *finfo)
         return fd;
 
       finfo->fh = fd + REMOTE_FD_OFFSET;
+
+      /* Ensure all I/O requests bypass the page cache and are sent to
+       * the backend. */
+      finfo->direct_io = 1;
     }
 
   return 0;
