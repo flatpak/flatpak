@@ -48,7 +48,7 @@ main (int argc, char *argv[])
                       NULL, NULL,
                       &backend_pid, &error))
     {
-      g_printerr ("Failed to launch backend: %s", error->message);
+      g_printerr ("Failed to launch backend: %s\n", error->message);
       exit (EXIT_FAILURE);
     }
   close (sockets[0]); /* Close backend side now so it doesn't get into the fuse child */
@@ -69,7 +69,7 @@ main (int argc, char *argv[])
                       NULL, NULL,
                       &fuse_pid, &error))
     {
-      g_printerr ("Failed to launch backend: %s", error->message);
+      g_printerr ("Failed to FUSE process: %s\n", error->message);
       exit (EXIT_FAILURE);
     }
 
@@ -79,6 +79,6 @@ main (int argc, char *argv[])
       perror ("fgets");
     }
 
-  g_print ("Revoking write permissions");
+  g_print ("Revoking write permissions\n");
   shutdown (sockets[1], SHUT_RDWR);
 }

@@ -565,7 +565,7 @@ main (int argc, char *argv[])
   basefd = openat (AT_FDCWD, base_path, O_RDONLY | O_NONBLOCK | O_DIRECTORY | O_CLOEXEC | O_NOCTTY);
   if (basefd == -1)
     {
-      perror ("opening basepath: ");
+      perror ("opening basepath");
       exit (EXIT_FAILURE);
     }
 
