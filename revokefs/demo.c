@@ -17,8 +17,10 @@ int
 main (int argc, char *argv[])
 {
   int sockets[2];
+  int pipes[2];
   g_autofree char *socket_0 = NULL;
   g_autofree char *socket_1 = NULL;
+  g_autofree char *exit_with_opt = NULL;
   GError *error = NULL;
   char buf[20];
   GPid backend_pid, fuse_pid;
@@ -35,14 +37,22 @@ main (int argc, char *argv[])
       exit (EXIT_FAILURE);
     }
 
+  if (pipe (pipes) == -1)
+    {
+      perror ("Failed to create pipe");
+      exit (EXIT_FAILURE);
+    }
+
   socket_0 = g_strdup_printf ("--socket=%d", sockets[0]);
   socket_1 = g_strdup_printf ("--socket=%d", sockets[1]);
+  exit_with_opt = g_strdup_printf ("--exit-with-fd=%d", pipes[1]);
 
   char *backend_argv[] =
     {
      "./revokefs-fuse",
      "--backend",
      socket_0,
+     exit_with_opt,
      argv[1],
      NULL
     };
@@ -58,7 +68,11 @@ main (int argc, char *argv[])
       g_printerr ("Failed to launch backend: %s\n", error->message);
       exit (EXIT_FAILURE);
     }
-  close (sockets[0]); /* Close backend side now so it doesn't get into the fuse child */
+
+  /* Close backend side of the socket and pipe so they don't get into
+   * the fuse child. */
+  close (sockets[0]);
+  close (pipes[1]);
 
   char *fuse_argv[] =
     {
@@ -88,4 +102,5 @@ main (int argc, char *argv[])
 
   g_print ("Revoking write permissions\n");
   shutdown (sockets[1], SHUT_RDWR);
+  close (pipes[0]);
 }
