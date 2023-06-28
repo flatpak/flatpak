@@ -24,6 +24,8 @@ main (int argc, char *argv[])
   GError *error = NULL;
   char buf[20];
   GPid backend_pid, fuse_pid;
+  g_autofree char *umount_stderr = NULL;
+  int umount_status = 0;
 
   if (argc != 3)
     {
@@ -103,4 +105,30 @@ main (int argc, char *argv[])
   g_print ("Revoking write permissions\n");
   shutdown (sockets[1], SHUT_RDWR);
   close (pipes[0]);
+
+  /* Unmount the target */
+  char *umount_argv[] =
+    {
+     "fusermount",
+     "-u",
+     argv[2],
+     NULL
+    };
+
+  if (!g_spawn_sync (NULL,
+                     umount_argv,
+                     NULL,
+                     G_SPAWN_SEARCH_PATH | G_SPAWN_STDOUT_TO_DEV_NULL,
+                     NULL, NULL, NULL,
+                     &umount_stderr, &umount_status, &error))
+    {
+      g_printerr ("Spawning fusermount failed: %s\n", error->message);
+      exit (EXIT_FAILURE);
+    }
+  if (!g_spawn_check_exit_status (umount_status, &error))
+    {
+      g_printerr ("Failed to unmount target: %s", error->message);
+      g_printerr ("%s", umount_stderr);
+      exit (EXIT_FAILURE);
+    }
 }
