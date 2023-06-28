@@ -5,6 +5,14 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+/* Close the write end of the socket in the backend after forking. */
+static void
+backend_setup (gpointer data)
+{
+  int write_socket = GPOINTER_TO_INT (data);
+  close (write_socket);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -39,13 +47,12 @@ main (int argc, char *argv[])
      NULL
     };
 
-  /* Don't inherit fuse socket in backend */
-  fcntl (sockets[1], F_SETFD, FD_CLOEXEC);
   if (!g_spawn_async (NULL,
                       backend_argv,
                       NULL,
                       G_SPAWN_LEAVE_DESCRIPTORS_OPEN,
-                      NULL, NULL,
+                      backend_setup,
+                      GINT_TO_POINTER (sockets[1]),
                       &backend_pid, &error))
     {
       g_printerr ("Failed to launch backend: %s\n", error->message);
