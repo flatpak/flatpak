@@ -5,6 +5,13 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+static char *opt_fuse_options;
+
+static GOptionEntry options[] = {
+  { "fuse-options", 'o', 0, G_OPTION_ARG_STRING, &opt_fuse_options, "FUSE mount options", "opt,[opt...]" },
+  { NULL }
+};
+
 /* Close the write end of the socket in the backend after forking. */
 static void
 backend_setup (gpointer data)
@@ -16,6 +23,7 @@ backend_setup (gpointer data)
 int
 main (int argc, char *argv[])
 {
+  g_autoptr(GOptionContext) context = NULL;
   int sockets[2];
   int pipes[2];
   g_autofree char *socket_0 = NULL;
@@ -23,13 +31,23 @@ main (int argc, char *argv[])
   g_autofree char *exit_with_opt = NULL;
   GError *error = NULL;
   char buf[20];
+  g_autoptr(GPtrArray) fuse_argv = NULL;
   GPid backend_pid, fuse_pid;
   g_autofree char *umount_stderr = NULL;
   int umount_status = 0;
 
+  context = g_option_context_new ("basepath targetpath");
+  g_option_context_set_summary (context, "Demo for revokefs-fuse");
+  g_option_context_add_main_entries (context, options, NULL);
+  if (!g_option_context_parse (context, &argc, &argv, &error))
+    {
+      g_printerr ("Option parsing failed: %s\n", error->message);
+      exit (EXIT_FAILURE);
+    }
+
   if (argc != 3)
     {
-      g_printerr ("Usage: revokefs-demo basepath targetpath\n");
+      g_printerr ("Usage: %s basepath targetpath\n", g_get_prgname ());
       exit (EXIT_FAILURE);
     }
 
@@ -76,17 +94,20 @@ main (int argc, char *argv[])
   close (sockets[0]);
   close (pipes[1]);
 
-  char *fuse_argv[] =
+  fuse_argv = g_ptr_array_new ();
+  g_ptr_array_add (fuse_argv, "./revokefs-fuse");
+  g_ptr_array_add (fuse_argv, socket_1);
+  if (opt_fuse_options)
     {
-     "./revokefs-fuse",
-     socket_1,
-     argv[1],
-     argv[2],
-     NULL
-    };
+      g_ptr_array_add (fuse_argv, "-o");
+      g_ptr_array_add (fuse_argv, opt_fuse_options);
+    }
+  g_ptr_array_add (fuse_argv, argv[1]);
+  g_ptr_array_add (fuse_argv, argv[2]);
+  g_ptr_array_add (fuse_argv, NULL);
 
   if (!g_spawn_async (NULL,
-                      fuse_argv,
+                      (char **) fuse_argv->pdata,
                       NULL,
                       G_SPAWN_LEAVE_DESCRIPTORS_OPEN,
                       NULL, NULL,
