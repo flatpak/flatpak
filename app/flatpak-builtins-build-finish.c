@@ -46,6 +46,7 @@ static gboolean opt_no_inherit_permissions;
 static int opt_extension_prio = G_MININT;
 static char *opt_sdk;
 static char *opt_runtime;
+static char **opt_export_commands;
 
 static GOptionEntry options[] = {
   { "command", 0, 0, G_OPTION_ARG_STRING, &opt_command, N_("Command to set"), N_("COMMAND") },
@@ -59,6 +60,7 @@ static GOptionEntry options[] = {
   { "runtime", 0, 0, G_OPTION_ARG_STRING, &opt_runtime, N_("Change the runtime used for the app"),  N_("RUNTIME") },
   { "metadata", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_metadata, N_("Set generic metadata option"),  N_("GROUP=KEY[=VALUE]") },
   { "no-inherit-permissions", 0, 0, G_OPTION_ARG_NONE, &opt_no_inherit_permissions, N_("Don't inherit permissions from runtime"), NULL },
+  { "export-command", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_export_commands, N_("Command to export (can be repeated)"), N_("COMMAND") },
   { NULL }
 };
 
@@ -452,6 +454,24 @@ update_metadata (GFile *base, FlatpakContext *arg_context, gboolean is_runtime, 
             {
               g_print (_("No executable found\n"));
             }
+        }
+
+      if (g_key_file_has_key (keyfile, group, FLATPAK_METADATA_KEY_EXPORT_COMMANDS, NULL))
+        {
+          g_info ("Export-commands key is present");
+
+          if (opt_export_commands)
+            g_key_file_set_string_list (keyfile, group, FLATPAK_METADATA_KEY_EXPORT_COMMANDS,
+                                        (const char * const *)opt_export_commands, g_strv_length (opt_export_commands));
+        }
+      else if (opt_export_commands)
+        {
+          char *cmds = g_strjoinv (" ", opt_export_commands);
+          g_info ("Using explicitly provided export-commands %s", cmds);
+          g_free (cmds);
+
+          g_key_file_set_string_list (keyfile, group, FLATPAK_METADATA_KEY_EXPORT_COMMANDS,
+                                      (const char * const *)opt_export_commands, g_strv_length (opt_export_commands));
         }
 
       /* Inherit permissions from runtime by default */

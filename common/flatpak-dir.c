@@ -8580,6 +8580,28 @@ flatpak_dir_update_deploy_ref (FlatpakDir *self,
   return TRUE;
 }
 
+static gboolean
+suitable_in_filename (const char  *str,
+                      GError     **error)
+{
+  char *p;
+
+  if (strlen (str) > 80)
+    {
+      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Too long");
+      return FALSE;
+    }
+
+  p = strpbrk (str, " \t\n/:");
+  if (p)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Contains a bad byte: %c", *p);
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
 gboolean
 flatpak_dir_deploy (FlatpakDir          *self,
                     const char          *origin,
@@ -8952,6 +8974,51 @@ flatpak_dir_deploy (FlatpakDir          *self,
       while (G_UNLIKELY (r == -1 && errno == EINTR));
       if (r == -1)
         return glnx_throw_errno_prefix (error, "fchmodat");
+
+      if (g_key_file_has_key (keyfile, FLATPAK_METADATA_GROUP_APPLICATION, FLATPAK_METADATA_KEY_EXPORT_COMMANDS, NULL))
+        {
+          g_auto(GStrv) commands = NULL;
+
+          commands = g_key_file_get_string_list (keyfile,
+                                                 FLATPAK_METADATA_GROUP_APPLICATION,
+                                                 FLATPAK_METADATA_KEY_EXPORT_COMMANDS,
+                                                 NULL,
+                                                 NULL);
+
+          for (unsigned int i = 0; commands && commands[i]; i++)
+            {
+              g_autofree char *filename = NULL;
+              g_autofree char *escaped_cmd = NULL;
+              GError *local_error = NULL;
+
+              if (!suitable_in_filename (commands[i], &local_error))
+                {
+                  g_warning ("Not exporting command '%s': %s", commands[i], local_error->message);
+                  g_error_free (local_error);
+                  continue;
+                }
+
+              g_set_object (&wrapper, NULL);
+              g_clear_pointer (&bin_data, g_free);
+
+              filename = g_strconcat (ref_id, "+", commands[i], NULL);
+              wrapper = g_file_get_child (bindir, filename);
+              escaped_cmd = maybe_quote (commands[i]);
+
+              bin_data = g_strdup_printf ("#!/bin/sh\nexec %s run --branch=%s --arch=%s --command=%s %s \"$@\"\n",
+                                          flatpak, escaped_branch, escaped_arch, escaped_cmd, escaped_app);
+
+              if (!g_file_replace_contents (wrapper, bin_data, strlen (bin_data), NULL, FALSE,
+                                            G_FILE_CREATE_REPLACE_DESTINATION, NULL, cancellable, error))
+                return FALSE;
+
+              do
+                r = fchmodat (AT_FDCWD, flatpak_file_get_path_cached (wrapper), 0755, 0);
+              while (G_UNLIKELY (r == -1 && errno == EINTR));
+              if (r == -1)
+                return glnx_throw_errno_prefix (error, "fchmodat");
+            }
+        }
     }
 
   deploy_data = flatpak_dir_new_deploy_data (self,

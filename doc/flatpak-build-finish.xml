@@ -98,6 +98,29 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--export-command=COMMAND</option></term>
+
+                <listitem><para>
+                    Another command to export as a shell wrapper in the form APPID+COMMAND.
+                    This option can be used multiple times to export more than one command.
+                </para><para>
+                    Note that COMMAND should be a simple name that is suitable for use as
+                    part of a filename, so avoid characters that are problematic in filenames
+                    and excessively long names.
+                </para><para>
+                    This option is available since 1.15.5.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--require-version=MAJOR.MINOR.MICRO</option></term>
+
+                <listitem><para>
+                    Require this version or later of flatpak to install/update to this build.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--require-version=MAJOR.MINOR.MICRO</option></term>
 
                 <listitem><para>

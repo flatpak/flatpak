@@ -100,6 +100,15 @@
                     </listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>export-commands</option> (string list)</term>
+                    <listitem>
+                      <para>
+                        Commands to export as shell wrappers. Only relevant for applications.
+                        Available since 1.15.5.
+                      </para>
+                    </listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>required-flatpak</option> (string list)</term>
                     <listitem><para>
                         The required version of Flatpak to run this application
