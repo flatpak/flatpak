@@ -8328,14 +8328,21 @@ apply_extra_data (FlatpakDir   *self,
                           "--cap-drop", "ALL",
                           NULL);
 
-  /* Might need multiarch in apply_extra (see e.g. #3742).
-   * Should be pretty safe in this limited context */
-  run_flags = (FLATPAK_RUN_FLAG_MULTIARCH |
+  /* Run flags which equal flatpak run --sandbox */
+  run_flags = (FLATPAK_RUN_FLAG_SANDBOX |
                FLATPAK_RUN_FLAG_NO_SESSION_HELPER |
-               FLATPAK_RUN_FLAG_NO_PROC |
                FLATPAK_RUN_FLAG_NO_SESSION_BUS_PROXY |
                FLATPAK_RUN_FLAG_NO_SYSTEM_BUS_PROXY |
                FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY);
+
+  /* Might need multiarch in apply_extra (see e.g. #3742).
+   * Should be pretty safe in this limited context. */
+  run_flags |= FLATPAK_RUN_FLAG_MULTIARCH;
+
+  /* This sandbox is run as root and /proc/self/exe can sometimes be used to
+   * access outside files (see cd21428).
+   * Disable /proc entirely in this context. */
+  run_flags |= FLATPAK_RUN_FLAG_NO_PROC;
 
   if (!flatpak_run_setup_base_argv (bwrap, runtime_files, NULL, runtime_arch,
                                     run_flags, error))
