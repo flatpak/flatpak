@@ -363,10 +363,6 @@ if glib_dep.version().version_compare('>=2.60')
   cdata.set('GLIB_VERSION_MIN_REQUIRED', 'GLIB_VERSION_2_60')
 endif
 
-if appstream_dep.version().version_compare('>=0.14.0')
-  cdata.set('HAVE_APPSTREAM_0_14_0', 1)
-endif
-
 if dconf_dep.found()
   cdata.set('HAVE_DCONF', 1)
 endif
