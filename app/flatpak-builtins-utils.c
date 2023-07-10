@@ -1131,7 +1131,7 @@ flatpak_dir_load_appstream_store (FlatpakDir   *self,
 
   appstream_file = g_file_new_for_path (appstream_path);
   as_metadata_set_format_style (mdata, AS_FORMAT_STYLE_COLLECTION);
-#ifdef HAVE_APPSTREAM_0_14_0
+#if AS_CHECK_VERSION(0, 14, 0)
   success = as_metadata_parse_file (mdata, appstream_file, AS_FORMAT_KIND_XML, &local_error);
 #else
   as_metadata_parse_file (mdata, appstream_file, AS_FORMAT_KIND_XML, &local_error);
