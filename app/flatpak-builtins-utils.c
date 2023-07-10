@@ -1130,7 +1130,12 @@ flatpak_dir_load_appstream_store (FlatpakDir   *self,
                                        NULL);
 
   appstream_file = g_file_new_for_path (appstream_path);
+#if AS_CHECK_VERSION(0, 16, 0)
+  as_metadata_set_format_style (mdata, AS_FORMAT_STYLE_CATALOG);
+#else
+  /* Deprecated name for the same thing */
   as_metadata_set_format_style (mdata, AS_FORMAT_STYLE_COLLECTION);
+#endif
 #if AS_CHECK_VERSION(0, 14, 0)
   success = as_metadata_parse_file (mdata, appstream_file, AS_FORMAT_KIND_XML, &local_error);
 #else
