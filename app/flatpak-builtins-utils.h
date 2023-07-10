@@ -28,6 +28,12 @@
 #include "flatpak-dir-private.h"
 #include "flatpak-permission-dbus-generated.h"
 
+/* AS_CHECK_VERSION was introduced in 0.14.0; we still support 0.12.0, so
+ * behave as though versions without this macro are arbitrarily old */
+#ifndef AS_CHECK_VERSION
+#define AS_CHECK_VERSION(major, minor, micro) (0)
+#endif
+
 /* Appstream data expires after a day */
 #define FLATPAK_APPSTREAM_TTL 86400
 
