@@ -207,6 +207,12 @@ flatpak_run_add_extension_args (FlatpakBwrap      *bwrap,
             }
         }
 
+      if (ext->add_path)
+        {
+          g_autofree char *path = g_build_filename (full_directory, ext->add_path, NULL);
+         /* TODO: add the appropriate path to the PATH variable */
+        }
+
       for (i = 0; ext->merge_dirs != NULL && ext->merge_dirs[i] != NULL; i++)
         {
           g_autofree char *parent = g_path_get_dirname (directory);

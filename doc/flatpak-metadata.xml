@@ -853,7 +853,14 @@
                         to LD_LIBRARY_PATH. Available since 0.9.1, and
                         backported to the 0.8.x branch in 0.8.3.
                     </para></listitem>
-                </varlistentry>
+	        </varlistentry>
+		<varlistentry>
+		    <term><option>add-path</option> (string)</term>
+		    <listitem><para>
+			A path relative to the extension point directory that will be appended
+			to PATH. Available since 1.14.5.
+		    </para></listitem>
+		</varlistentry>
                 <varlistentry>
                     <term><option>merge-dirs</option> (string)</term>
                     <listitem><para>
