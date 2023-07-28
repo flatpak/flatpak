@@ -33,6 +33,9 @@
 #include "glnx-backport-testutils.h"
 #include "glnx-backports.h"
 
+#include <sys/prctl.h>
+#include <sys/resource.h>
+
 #if !GLIB_CHECK_VERSION (2, 68, 0)
 /* Backport of g_assertion_message_cmpstrv() */
 void
@@ -141,5 +144,19 @@ _glnx_test_incomplete_printf (const char *format,
 #else
   g_test_message ("TODO: %s", message);
 #endif
+}
+#endif
+
+#if !GLIB_CHECK_VERSION (2, 78, 0)
+void
+_glnx_test_disable_crash_reporting (void)
+{
+  struct rlimit limit = { 0, 0 };
+
+  (void) setrlimit (RLIMIT_CORE, &limit);
+
+  /* On Linux, RLIMIT_CORE = 0 is ignored if core dumps are
+   * configured to be written to a pipe, but PR_SET_DUMPABLE is not. */
+  (void) prctl (PR_SET_DUMPABLE, 0, 0, 0, 0);
 }
 #endif

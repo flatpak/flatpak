@@ -243,6 +243,7 @@ main (int   argc,
     }
 
   g_test_init (&argc, &argv, NULL);
+  g_test_disable_crash_reporting ();
 #if GLIB_CHECK_VERSION(2, 38, 0)
   g_test_set_nonfatal_assertions ();
 #endif
