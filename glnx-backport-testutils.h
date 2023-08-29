@@ -201,4 +201,9 @@ void _glnx_test_skip_printf (const char *format, ...) G_GNUC_PRINTF (1, 2);
 void _glnx_test_incomplete_printf (const char *format, ...) G_GNUC_PRINTF (1, 2);
 #endif
 
+#if !GLIB_CHECK_VERSION (2, 78, 0)
+#define g_test_disable_crash_reporting _glnx_test_disable_crash_reporting
+void _glnx_test_disable_crash_reporting (void);
+#endif
+
 G_END_DECLS
