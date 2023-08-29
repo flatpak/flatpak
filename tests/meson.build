@@ -22,7 +22,7 @@ libglnx_testlib_dep = declare_dependency(
 )
 
 if get_option('tests')
-  executable(
+  testing_helper = executable(
     'testing-helper',
     'testing-helper.c',
     dependencies : [
@@ -53,6 +53,6 @@ if get_option('tests')
         libglnx_testlib_dep,
       ],
     )
-    test(test_name, exe)
+    test(test_name, exe, depends: testing_helper)
   endforeach
 endif
