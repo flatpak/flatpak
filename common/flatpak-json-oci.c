@@ -24,6 +24,7 @@
 #include "flatpak-json-oci-private.h"
 #include "flatpak-utils-private.h"
 #include "libglnx.h"
+#include <ostree.h>
 
 const char *
 flatpak_arch_to_oci_arch (const char *flatpak_arch)

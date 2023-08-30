@@ -165,6 +165,7 @@ sources = [
   'flatpak-chain-input-stream.c',
   'flatpak-context.c',
   'flatpak-dir.c',
+  'flatpak-dir-utils.c',
   'flatpak-error.c',
   'flatpak-exports.c',
   'flatpak-glib-backports.c',
@@ -182,6 +183,7 @@ sources = [
   'flatpak-related-ref.c',
   'flatpak-remote-ref.c',
   'flatpak-remote.c',
+  'flatpak-repo-utils.c',
   'flatpak-run.c',
   'flatpak-run-cups.c',
   'flatpak-run-dbus.c',
@@ -193,6 +195,7 @@ sources = [
   'flatpak-utils-http.c',
   'flatpak-utils.c',
   'flatpak-uri.c',
+  'flatpak-xml-utils.c',
   'flatpak-zstd-decompressor.c',
 ]
 

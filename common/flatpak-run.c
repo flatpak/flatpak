@@ -53,11 +53,13 @@
 #include <gio/gio.h>
 #include "libglnx.h"
 
+#include "flatpak-dbus-generated.h"
 #include "flatpak-run-dbus-private.h"
 #include "flatpak-run-private.h"
 #include "flatpak-run-sockets-private.h"
 #include "flatpak-utils-base-private.h"
 #include "flatpak-dir-private.h"
+#include "flatpak-dir-utils-private.h"
 #include "flatpak-instance-private.h"
 #include "flatpak-systemd-dbus-generated.h"
 #include "flatpak-document-dbus-generated.h"
@@ -65,6 +67,12 @@
 #include "session-helper/flatpak-session-helper.h"
 
 #define DEFAULT_SHELL "/bin/sh"
+
+typedef FlatpakSessionHelper AutoFlatpakSessionHelper;
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (AutoFlatpakSessionHelper, g_object_unref)
+
+typedef XdpDbusDocuments AutoXdpDbusDocuments;
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (AutoXdpDbusDocuments, g_object_unref)
 
 static int
 flatpak_extension_compare_by_path (gconstpointer _a,

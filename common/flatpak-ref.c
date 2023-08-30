@@ -20,9 +20,11 @@
 
 #include "config.h"
 
-#include "flatpak-utils-private.h"
 #include "flatpak-ref.h"
+
 #include "flatpak-enum-types.h"
+#include "flatpak-ref-utils-private.h"
+#include "flatpak-utils-private.h"
 
 /**
  * SECTION:flatpak-ref

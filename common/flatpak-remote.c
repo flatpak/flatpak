@@ -25,6 +25,7 @@
 #include "flatpak-utils-private.h"
 #include "flatpak-remote-private.h"
 #include "flatpak-remote-ref-private.h"
+#include "flatpak-repo-utils-private.h"
 #include "flatpak-enum-types.h"
 
 #include <string.h>

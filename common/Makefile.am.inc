@@ -144,6 +144,8 @@ libflatpak_common_la_SOURCES = \
 	common/flatpak-context.c \
 	common/flatpak-dir-private.h \
 	common/flatpak-dir.c \
+	common/flatpak-dir-utils-private.h \
+	common/flatpak-dir-utils.c \
 	common/flatpak-error.c \
 	common/flatpak-exports-private.h \
 	common/flatpak-exports.c \
@@ -176,6 +178,8 @@ libflatpak_common_la_SOURCES = \
 	common/flatpak-remote-ref-private.h \
 	common/flatpak-remote-ref.c \
 	common/flatpak-remote.c \
+	common/flatpak-repo-utils-private.h \
+	common/flatpak-repo-utils.c \
 	common/flatpak-run-private.h \
 	common/flatpak-run.c \
 	common/flatpak-run-cups-private.h \
@@ -202,6 +206,8 @@ libflatpak_common_la_SOURCES = \
 	common/flatpak-uri.c \
 	common/flatpak-prune.c \
 	common/flatpak-prune-private.h \
+	common/flatpak-xml-utils-private.h \
+	common/flatpak-xml-utils.c \
 	common/flatpak-zstd-decompressor.c \
 	common/flatpak-zstd-decompressor-private.h \
 	common/valgrind-private.h \
