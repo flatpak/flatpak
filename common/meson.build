@@ -116,6 +116,9 @@ built_headers = [
   flatpak_variant[1],
 ]
 
+libflatpak_common_deps = []
+built_sources = []
+
 if build_wayland_security_context
   wayland_scanner_prog = find_program(wayland_scanner.get_variable(pkgconfig: 'wayland_scanner'))
   wayland_protocols_dir = wayland_protocols.get_variable(pkgconfig: 'pkgdatadir')
@@ -135,8 +138,8 @@ if build_wayland_security_context
     ),
   ]
 
-  libflatpak_common_base_deps += [wayland_client]
-  libflatpak_common_base_sources += [wl_security_context]
+  libflatpak_common_deps += [wayland_client]
+  built_sources += [wl_security_context]
   built_headers += [wl_security_context[1]]
 endif
 
@@ -210,6 +213,7 @@ libflatpak_common = static_library(
     libarchive_dep,
     libcurl_dep,
     libflatpak_common_base_dep,
+    libflatpak_common_deps,
     libglnx_dep,
     libostree_dep,
     libseccomp_dep,
@@ -224,7 +228,7 @@ libflatpak_common = static_library(
   gnu_symbol_visibility : 'hidden',
   include_directories : [common_include_directories],
   install : false,
-  sources : enums + public_headers + sources + systemd_gdbus + [
+  sources : enums + public_headers + sources + built_sources + systemd_gdbus + [
     flatpak_variant[0],
     flatpak_variant[1],
   ],
