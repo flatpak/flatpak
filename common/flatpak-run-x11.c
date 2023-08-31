@@ -307,7 +307,7 @@ flatpak_run_add_x11_args (FlatpakBwrap         *bwrap,
           if (output != NULL)
             {
               /* fd is now owned by output, steal it from the tmpfile */
-              int tmp_fd = dup (glnx_steal_fd (&xauth_tmpf.fd));
+              int tmp_fd = dup (g_steal_fd (&xauth_tmpf.fd));
               if (tmp_fd != -1)
                 {
                   static const char dest[] = "/run/flatpak/Xauthority";

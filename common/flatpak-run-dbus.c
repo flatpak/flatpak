@@ -99,7 +99,7 @@ add_bwrap_wrapper (FlatpakBwrap *bwrap,
   /* This is a file rather than a bind mount, because it will then
      not be unmounted from the namespace when the namespace dies. */
   flatpak_bwrap_add_args (bwrap, "--perms", "0600", NULL);
-  flatpak_bwrap_add_args_data_fd (bwrap, "--file", glnx_steal_fd (&app_info_fd), "/.flatpak-info");
+  flatpak_bwrap_add_args_data_fd (bwrap, "--file", g_steal_fd (&app_info_fd), "/.flatpak-info");
 
   if (!flatpak_bwrap_bundle_args (bwrap, 1, -1, FALSE, error))
     return FALSE;

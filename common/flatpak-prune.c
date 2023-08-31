@@ -201,7 +201,7 @@ get_repo_lock (OstreeRepo          *repo,
   if (!do_repo_lock (lock_fd, flags))
     return glnx_throw_errno_prefix (error, "Locking repo failed (%s)", (flags & LOCK_EX) != 0 ? "exclusive" : "shared");
 
-  *out_lock_fd = glnx_steal_fd (&lock_fd);
+  *out_lock_fd = g_steal_fd (&lock_fd);
   return TRUE;
 }
 

@@ -1304,7 +1304,7 @@ flatpak_run_add_app_info_args (FlatpakBwrap       *bwrap,
                           NULL);
   flatpak_bwrap_add_runtime_dir_member (bwrap, ".flatpak");
   /* Keep the .ref lock held until we've started bwrap to avoid races */
-  flatpak_bwrap_add_noinherit_fd (bwrap, glnx_steal_fd (&lock_fd));
+  flatpak_bwrap_add_noinherit_fd (bwrap, g_steal_fd (&lock_fd));
 
   info_path = g_build_filename (instance_id_host_dir, "info", NULL);
 
@@ -2036,7 +2036,7 @@ setup_seccomp (FlatpakBwrap   *bwrap,
   lseek (seccomp_tmpf.fd, 0, SEEK_SET);
 
   flatpak_bwrap_add_args_data_fd (bwrap,
-                                  "--seccomp", glnx_steal_fd (&seccomp_tmpf.fd), NULL);
+                                  "--seccomp", g_steal_fd (&seccomp_tmpf.fd), NULL);
 
   return TRUE;
 }
@@ -2530,7 +2530,7 @@ regenerate_ld_cache (GPtrArray    *base_argv_array,
   ld_so_cache = g_file_get_child (ld_so_dir, checksum);
   ld_so_fd = open (flatpak_file_get_path_cached (ld_so_cache), O_RDONLY);
   if (ld_so_fd >= 0)
-    return glnx_steal_fd (&ld_so_fd);
+    return g_steal_fd (&ld_so_fd);
 
   g_info ("Regenerating ld.so.cache %s", flatpak_file_get_path_cached (ld_so_cache));
 
@@ -2634,7 +2634,7 @@ regenerate_ld_cache (GPtrArray    *base_argv_array,
         return -1;
     }
 
-  return glnx_steal_fd (&ld_so_fd);
+  return g_steal_fd (&ld_so_fd);
 }
 
 /* Check that this user is actually allowed to run this app. When running
@@ -3347,7 +3347,7 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
     return FALSE;
 
   /* Hold onto the lock until we execute bwrap */
-  flatpak_bwrap_add_noinherit_fd (bwrap, glnx_steal_fd (&per_app_dir_lock_fd));
+  flatpak_bwrap_add_noinherit_fd (bwrap, g_steal_fd (&per_app_dir_lock_fd));
 
   flatpak_bwrap_finish (bwrap);
 

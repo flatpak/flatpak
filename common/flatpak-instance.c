@@ -530,7 +530,7 @@ flatpak_instance_ensure_per_app_dir (const char *app_id,
                                     _("Unable to lock %s"),
                                     lock_path);
 
-  *lock_fd_out = glnx_steal_fd (&lock_fd);
+  *lock_fd_out = g_steal_fd (&lock_fd);
   *lock_path_out = g_steal_pointer (&lock_path);
   return TRUE;
 }
@@ -767,7 +767,7 @@ flatpak_instance_allocate_id (char **host_dir_out,
              We work around that by only gc:ing "old" .ref files */
           if (lock_fd != -1 && fcntl (lock_fd, F_SETLK, &l) == 0)
             {
-              *lock_fd_out = glnx_steal_fd (&lock_fd);
+              *lock_fd_out = g_steal_fd (&lock_fd);
               g_info ("Allocated instance id %s", instance_id);
               *host_dir_out = g_steal_pointer (&instance_dir);
               return g_steal_pointer (&instance_id);

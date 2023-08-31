@@ -300,7 +300,7 @@ local_open_file (int           dfd,
       return -1;
     }
 
-  return glnx_steal_fd (&fd);
+  return g_steal_fd (&fd);
 }
 
 static GBytes *
@@ -528,7 +528,7 @@ flatpak_oci_registry_ensure_local (FlatpakOciRegistry *self,
     }
 
   if (self->dfd == -1 && local_dfd != -1)
-    self->dfd = glnx_steal_fd (&local_dfd);
+    self->dfd = g_steal_fd (&local_dfd);
 
   return TRUE;
 }
@@ -841,7 +841,7 @@ flatpak_oci_registry_download_blob (FlatpakOciRegistry    *self,
       lseek (fd, 0, SEEK_SET);
     }
 
-  return glnx_steal_fd (&fd);
+  return g_steal_fd (&fd);
 }
 
 gboolean
@@ -1994,7 +1994,7 @@ flatpak_oci_registry_apply_delta (FlatpakOciRegistry    *self,
   if (!flatpak_oci_registry_apply_delta_stream (self, delta_fd, content_dir, out, cancellable, error))
     return -1;
 
-  return glnx_steal_fd (&fd);
+  return g_steal_fd (&fd);
 }
 
 char *

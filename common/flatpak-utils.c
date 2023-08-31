@@ -1857,7 +1857,7 @@ flatpak_buffer_to_sealed_memfd_or_tmpfile (GLnxTmpfile *tmpf,
           fcntl (memfd, F_ADD_SEALS, F_SEAL_SHRINK | F_SEAL_GROW | F_SEAL_WRITE | F_SEAL_SEAL) < 0)
         return glnx_throw_errno_prefix (error, "fcntl(F_ADD_SEALS)");
       /* The other values can stay default */
-      tmpf->fd = glnx_steal_fd (&memfd);
+      tmpf->fd = g_steal_fd (&memfd);
       tmpf->initialized = TRUE;
     }
   return TRUE;
@@ -7074,7 +7074,7 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
         }
       else
         {
-          layer_fd = glnx_steal_fd (&blob_fd);
+          layer_fd = g_steal_fd (&blob_fd);
           expected_digest = layer->digest;
         }
 
@@ -7113,7 +7113,7 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
         }
       else
         {
-          layer_fd = glnx_steal_fd (&blob_fd);
+          layer_fd = g_steal_fd (&blob_fd);
         }
 
       a = archive_read_new ();
@@ -7268,7 +7268,7 @@ flatpak_allocate_tmpdir (int           tmpdir_dfd,
 
       /* We found an existing tmpdir which we managed to lock */
       tmpdir_name = g_strdup (dent->d_name);
-      tmpdir_fd = glnx_steal_fd (&existing_tmpdir_fd);
+      tmpdir_fd = g_steal_fd (&existing_tmpdir_fd);
       reusing_dir = TRUE;
     }
 
@@ -7312,7 +7312,7 @@ flatpak_allocate_tmpdir (int           tmpdir_dfd,
     *tmpdir_name_out = g_steal_pointer (&tmpdir_name);
 
   if (tmpdir_fd_out)
-    *tmpdir_fd_out = glnx_steal_fd (&tmpdir_fd);
+    *tmpdir_fd_out = g_steal_fd (&tmpdir_fd);
 
   if (reusing_dir_out)
     *reusing_dir_out = reusing_dir;
