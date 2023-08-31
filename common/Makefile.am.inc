@@ -83,7 +83,6 @@ common/security-context-v1-protocol.h: $(wl_security_context_xml)
 
 nodist_libflatpak_common_base_la_SOURCES = \
 	$(dbus_built_sources)		\
-	$(wayland_built_sources)	\
 	$(NULL)
 
 BUILT_SOURCES += $(nodist_libflatpak_common_base_la_SOURCES)
@@ -119,6 +118,7 @@ libflatpak_common_base_la_LIBADD = $(AM_LIBADD) $(BASE_LIBS)
 nodist_libflatpak_common_la_SOURCES = \
 	$(nodist_flatpakinclude_HEADERS)    \
 	$(systemd_dbus_built_sources)	\
+	$(wayland_built_sources)	\
 	$(xdp_dbus_built_sources) \
 	common/flatpak-enum-types.c \
 	common/flatpak-variant-private.h \
