@@ -353,7 +353,7 @@ if test "x$with_wayland_security_context" != "xno"; then
                      [have_wayland_protocols=yes], [have_wayland_protocols=no])
    if test $have_wayland_protocols = yes; then
       PKG_CHECK_MODULES(WAYLAND_CLIENT, [wayland-client])
-      PKG_CHECK_MODULES(WAYLAND_SCANNER, [wayland-scanner])
+      PKG_CHECK_MODULES(WAYLAND_SCANNER, [wayland-scanner >= 1.15])
       wayland_scanner=`$PKG_CONFIG --variable=wayland_scanner wayland-scanner`
       AC_SUBST(WAYLAND_SCANNER, $wayland_scanner)
       wayland_protocols_pkgdatadir=`$PKG_CONFIG --variable=pkgdatadir wayland-protocols`

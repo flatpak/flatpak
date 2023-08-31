@@ -76,7 +76,7 @@ endif
 wl_security_context_xml = $(WAYLAND_PROTOCOLS_DATADIR)/staging/security-context/security-context-v1.xml
 
 common/security-context-v1-protocol.c: $(wl_security_context_xml)
-	$(AM_V_GEN) $(WAYLAND_SCANNER) code $(wl_security_context_xml) $(builddir)/common/security-context-v1-protocol.c
+	$(AM_V_GEN) $(WAYLAND_SCANNER) private-code $(wl_security_context_xml) $(builddir)/common/security-context-v1-protocol.c
 
 common/security-context-v1-protocol.h: $(wl_security_context_xml)
 	$(AM_V_GEN) $(WAYLAND_SCANNER) client-header $(wl_security_context_xml) $(builddir)/common/security-context-v1-protocol.h
