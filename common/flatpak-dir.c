@@ -10299,26 +10299,15 @@ flatpak_dir_install_bundle (FlatpakDir         *self,
 }
 
 static gboolean
-_g_strv_equal0 (gchar **a, gchar **b)
+_g_strv_equal0 (const char * const *a, const char * const *b)
 {
-  gboolean ret = FALSE;
-  guint n;
-
   if (a == NULL && b == NULL)
-    {
-      ret = TRUE;
-      goto out;
-    }
+    return TRUE;
+
   if (a == NULL || b == NULL)
-    goto out;
-  if (g_strv_length (a) != g_strv_length (b))
-    goto out;
-  for (n = 0; a[n] != NULL; n++)
-    if (g_strcmp0 (a[n], b[n]) != 0)
-      goto out;
-  ret = TRUE;
-out:
-  return ret;
+    return FALSE;
+
+  return g_strv_equal (a, b);
 }
 
 gboolean
@@ -10381,7 +10370,7 @@ flatpak_dir_needs_update_for_commit_and_subpaths (FlatpakDir        *self,
   /* target commit is the same as current, but maybe something else that is different? */
 
   /* Same commit, but different subpaths => update */
-  if (!_g_strv_equal0 ((char **) subpaths, (char **) old_subpaths))
+  if (!_g_strv_equal0 (subpaths, old_subpaths))
     return TRUE;
 
   /* Same subpaths and commit, no need to update */
