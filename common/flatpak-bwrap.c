@@ -271,7 +271,7 @@ flatpak_bwrap_add_args_data (FlatpakBwrap *bwrap,
   if (!flatpak_buffer_to_sealed_memfd_or_tmpfile (&args_tmpf, name, content, content_size, error))
     return FALSE;
 
-  flatpak_bwrap_add_args_data_fd (bwrap, "--ro-bind-data", glnx_steal_fd (&args_tmpf.fd), path);
+  flatpak_bwrap_add_args_data_fd (bwrap, "--ro-bind-data", g_steal_fd (&args_tmpf.fd), path);
   return TRUE;
 }
 
@@ -373,7 +373,7 @@ flatpak_bwrap_bundle_args (FlatpakBwrap *bwrap,
   if (!flatpak_buffer_to_sealed_memfd_or_tmpfile (&args_tmpf, "bwrap-args", data, data_len, error))
     return FALSE;
 
-  fd = glnx_steal_fd (&args_tmpf.fd);
+  fd = g_steal_fd (&args_tmpf.fd);
 
   g_debug ("bwrap --args %d = ...", fd);
 

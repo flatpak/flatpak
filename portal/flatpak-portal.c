@@ -1125,7 +1125,7 @@ handle_spawn (PortalFlatpak         *object,
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
-      env_fd = glnx_steal_fd (&env_tmpf.fd);
+      env_fd = g_steal_fd (&env_tmpf.fd);
 
       /* Use a fd that hasn't been used yet. We might have to reshuffle
        * fd_map_entry.to, a bit later. */

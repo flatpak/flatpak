@@ -1008,7 +1008,7 @@ test_host_exports_setup (const FakeFile *files,
   glnx_openat_rdonly (AT_FDCWD, host, TRUE, &fd, &error);
   g_assert_no_error (error);
   g_assert_cmpint (fd, >=, 0);
-  flatpak_exports_take_host_fd (exports, glnx_steal_fd (&fd));
+  flatpak_exports_take_host_fd (exports, g_steal_fd (&fd));
 
   if (etc_mode > FLATPAK_FILESYSTEM_MODE_NONE)
     flatpak_exports_add_host_etc_expose (exports, etc_mode);
