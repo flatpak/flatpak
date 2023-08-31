@@ -128,7 +128,7 @@ if build_wayland_security_context
       'security-context-v1-protocol.c',
       input : wl_security_context_xml,
       output : 'security-context-v1-protocol.c',
-      command : [wayland_scanner_prog, 'code', '@INPUT@', '@OUTPUT@'],
+      command : [wayland_scanner_prog, 'private-code', '@INPUT@', '@OUTPUT@'],
     ),
     custom_target(
       'security-context-v1-protocol.h',

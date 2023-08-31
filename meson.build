@@ -207,7 +207,7 @@ gtkdoc_dep = dependency('gtk-doc', required : get_option('gtkdoc'))
 build_gtk_doc = gtkdoc_dep.found()
 
 wayland_client = dependency('wayland-client', required : get_option('wayland_security_context'))
-wayland_scanner = dependency('wayland-scanner', required : get_option('wayland_security_context'))
+wayland_scanner = dependency('wayland-scanner', version : '>= 1.15', required : get_option('wayland_security_context'))
 wayland_protocols = dependency('wayland-protocols', version : '>= 1.32', required : get_option('wayland_security_context'))
 build_wayland_security_context = wayland_client.found() and wayland_scanner.found() and wayland_protocols.found()
 
