@@ -708,6 +708,32 @@ flatpak_instance_ensure_per_app_xdg_runtime_dir (const char *app_id,
   return TRUE;
 }
 
+static int
+flatpak_instance_create_lock_file (const char *instance_dir)
+{
+  g_autofree char *lock_file = g_build_filename (instance_dir, ".ref", NULL);
+  glnx_autofd int lock_fd = -1;
+  struct flock l = {
+    .l_type = F_RDLCK,
+    .l_whence = SEEK_SET,
+    .l_start = 0,
+    .l_len = 0
+  };
+
+  /* Take a file lock inside the dir, hold that during setup
+   * and in bwrap. Anyone trying to clean up unused directories
+   * need to first verify that there is a .ref file and take a
+   * write lock on .ref to ensure it is not in use.
+   */
+  lock_fd = open (lock_file, O_RDWR | O_CREAT | O_CLOEXEC, 0644);
+  /* There is a tiny race here between the open creating the file and the lock succeeding.
+     We work around that by only gc:ing "old" .ref files */
+  if (lock_fd == -1 || fcntl (lock_fd, F_SETLK, &l) != 0)
+    return -1;
+
+  return g_steal_fd (&lock_fd);
+}
+
 /*
  * @host_dir_out: (not optional): used to return the directory on the host
  *  system representing this instance
@@ -735,39 +761,24 @@ flatpak_instance_allocate_id (char **host_dir_out,
     {
       g_autofree char *instance_id = NULL;
       g_autofree char *instance_dir = NULL;
+      glnx_autofd int lock_fd = -1;
 
       instance_id = g_strdup_printf ("%u", g_random_int ());
 
       instance_dir = g_build_filename (base_dir, instance_id, NULL);
 
       /* We use an atomic mkdir to ensure the instance id is unique */
-      if (mkdir (instance_dir, 0755) == 0)
-        {
-          g_autofree char *lock_file = g_build_filename (instance_dir, ".ref", NULL);
-          glnx_autofd int lock_fd = -1;
-          struct flock l = {
-            .l_type = F_RDLCK,
-            .l_whence = SEEK_SET,
-            .l_start = 0,
-            .l_len = 0
-          };
+      if (mkdir (instance_dir, 0755) != 0)
+        continue;
 
-          /* Then we take a file lock inside the dir, hold that during
-           * setup and in bwrap. Anyone trying to clean up unused
-           * directories need to first verify that there is a .ref
-           * file and take a write lock on .ref to ensure its not in
-           * use. */
-          lock_fd = open (lock_file, O_RDWR | O_CREAT | O_CLOEXEC, 0644);
-          /* There is a tiny race here between the open creating the file and the lock succeeding.
-             We work around that by only gc:ing "old" .ref files */
-          if (lock_fd != -1 && fcntl (lock_fd, F_SETLK, &l) == 0)
-            {
-              *lock_fd_out = g_steal_fd (&lock_fd);
-              g_info ("Allocated instance id %s", instance_id);
-              *host_dir_out = g_steal_pointer (&instance_dir);
-              return g_steal_pointer (&instance_id);
-            }
-        }
+      lock_fd = flatpak_instance_create_lock_file (instance_dir);
+      if (lock_fd == -1)
+        continue;
+
+      *lock_fd_out = g_steal_fd (&lock_fd);
+      g_info ("Allocated instance id %s", instance_id);
+      *host_dir_out = g_steal_pointer (&instance_dir);
+      return g_steal_pointer (&instance_id);
     }
 
   return NULL;
