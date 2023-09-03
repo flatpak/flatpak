@@ -61,6 +61,7 @@ struct _FlatpakInstancePrivate
 {
   char     *id;
   char     *dir;
+  char     *private_dir;
 
   GKeyFile *info;
   char     *app;
@@ -84,6 +85,7 @@ flatpak_instance_finalize (GObject *object)
 
   g_free (priv->id);
   g_free (priv->dir);
+  g_free (priv->private_dir);
   g_free (priv->app);
   g_free (priv->arch);
   g_free (priv->branch);
@@ -393,6 +395,7 @@ flatpak_instance_new (const char *dir)
   FlatpakInstancePrivate *priv = flatpak_instance_get_instance_private (self);
 
   priv->dir = g_strdup (dir);
+  priv->private_dir = g_strdup_printf ("%s-private", dir);
   priv->id = g_path_get_basename (dir);
 
   priv->pid = get_pid (priv->dir);
@@ -742,13 +745,16 @@ flatpak_instance_create_lock_file (const char *instance_dir)
  */
 char *
 flatpak_instance_allocate_id (char **host_dir_out,
-                              int *lock_fd_out)
+                              char **host_private_dir_out,
+                              int   *lock_fd_out)
 {
   g_autofree char *base_dir = flatpak_instance_get_instances_directory ();
   int count;
 
   g_return_val_if_fail (host_dir_out != NULL, NULL);
   g_return_val_if_fail (*host_dir_out == NULL, NULL);
+  g_return_val_if_fail (host_private_dir_out != NULL, NULL);
+  g_return_val_if_fail (*host_private_dir_out == NULL, NULL);
   g_return_val_if_fail (lock_fd_out != NULL, NULL);
   g_return_val_if_fail (*lock_fd_out == -1, NULL);
 
@@ -761,11 +767,13 @@ flatpak_instance_allocate_id (char **host_dir_out,
     {
       g_autofree char *instance_id = NULL;
       g_autofree char *instance_dir = NULL;
+      g_autofree char *instance_private_dir = NULL;
       glnx_autofd int lock_fd = -1;
 
       instance_id = g_strdup_printf ("%u", g_random_int ());
 
       instance_dir = g_build_filename (base_dir, instance_id, NULL);
+      instance_private_dir = g_strdup_printf ("%s-private", instance_dir);
 
       /* We use an atomic mkdir to ensure the instance id is unique */
       if (mkdir (instance_dir, 0755) != 0)
@@ -775,9 +783,17 @@ flatpak_instance_allocate_id (char **host_dir_out,
       if (lock_fd == -1)
         continue;
 
+      if (mkdir (instance_private_dir, 0700) != 0)
+        {
+          g_warning ("Could not create private instance directory '%s': %s",
+                     instance_private_dir, g_strerror (errno));
+          continue;
+        }
+
       *lock_fd_out = g_steal_fd (&lock_fd);
       g_info ("Allocated instance id %s", instance_id);
       *host_dir_out = g_steal_pointer (&instance_dir);
+      *host_private_dir_out = g_steal_pointer (&instance_private_dir);
       return g_steal_pointer (&instance_id);
     }
 
@@ -1088,7 +1104,8 @@ flatpak_instance_iterate_all_and_gc (GPtrArray *out_instances)
 
       if (dent->d_type == DT_DIR)
         {
-          g_autofree char *ref_file = g_strconcat (dent->d_name, "/.ref", NULL);
+          const char *instance_id = dent->d_name;
+          g_autofree char *ref_file = g_strconcat (instance_id, "/.ref", NULL);
           struct stat statbuf;
           struct flock l = {
             .l_type = F_WRLCK,
@@ -1106,14 +1123,16 @@ flatpak_instance_iterate_all_and_gc (GPtrArray *out_instances)
               l.l_type == F_UNLCK)
             {
               g_autoptr(GError) local_error = NULL;
+              g_autofree char *instance_id_private = g_strdup_printf ("%s-private", instance_id);
 
               /* The instance is not used, remove it */
-              g_info ("Cleaning up unused container id %s", dent->d_name);
+              g_info ("Cleaning up unused container id %s", instance_id);
 
-              if (!flatpak_instance_gc_per_app_dirs (dent->d_name, &local_error))
+              if (!flatpak_instance_gc_per_app_dirs (instance_id, &local_error))
                 g_debug ("Not cleaning up per-app dir: %s", local_error->message);
 
-              glnx_shutil_rm_rf_at (iter.fd, dent->d_name, NULL, NULL);
+              glnx_shutil_rm_rf_at (iter.fd, instance_id_private, NULL, NULL);
+              glnx_shutil_rm_rf_at (iter.fd, instance_id, NULL, NULL);
               continue;
             }
 

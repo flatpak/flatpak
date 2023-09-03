@@ -28,7 +28,8 @@ FlatpakInstance *flatpak_instance_new_for_id (const char *id);
 char *flatpak_instance_get_apps_directory (void);
 char *flatpak_instance_get_instances_directory (void);
 char *flatpak_instance_allocate_id (char **host_dir_out,
-                                    int *lock_fd_out);
+                                    char **host_private_dir_out,
+                                    int   *lock_fd_out);
 
 gboolean flatpak_instance_claim_per_app_temp_directory (const char *app_id,
                                                         int per_app_dir_lock_fd,
