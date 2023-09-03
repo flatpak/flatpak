@@ -96,6 +96,7 @@ gboolean flatpak_run_add_app_info_args (FlatpakBwrap       *bwrap,
                                         char              **app_info_path_out,
                                         int                 instance_id_fd,
                                         char              **host_instance_id_host_dir_out,
+                                        char              **host_instance_id_host_private_dir_out,
                                         char              **instance_id_out,
                                         GError            **error);
 

@@ -1280,6 +1280,7 @@ flatpak_run_add_app_info_args (FlatpakBwrap       *bwrap,
                                char              **app_info_path_out,
                                int                 instance_id_fd,
                                char              **instance_id_host_dir_out,
+                               char              **instance_id_host_private_dir_out,
                                char              **instance_id_out,
                                GError             **error)
 {
@@ -1292,13 +1293,16 @@ flatpak_run_add_app_info_args (FlatpakBwrap       *bwrap,
   g_autofree char *instance_id = NULL;
   glnx_autofd int lock_fd = -1;
   g_autofree char *instance_id_host_dir = NULL;
+  g_autofree char *instance_id_host_private_dir = NULL;
   g_autofree char *instance_id_sandbox_dir = NULL;
   g_autofree char *instance_id_lock_file = NULL;
   g_autofree char *arch = flatpak_decomposed_dup_arch (runtime_ref);
 
   g_return_val_if_fail (app_id != NULL, FALSE);
 
-  instance_id = flatpak_instance_allocate_id (&instance_id_host_dir, &lock_fd);
+  instance_id = flatpak_instance_allocate_id (&instance_id_host_dir,
+                                              &instance_id_host_private_dir,
+                                              &lock_fd);
   if (instance_id == NULL)
     return flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Unable to allocate instance id"));
 
@@ -1518,6 +1522,9 @@ flatpak_run_add_app_info_args (FlatpakBwrap       *bwrap,
 
   if (instance_id_host_dir_out != NULL)
     *instance_id_host_dir_out = g_steal_pointer (&instance_id_host_dir);
+
+  if (instance_id_host_private_dir_out != NULL)
+    *instance_id_host_private_dir_out = g_steal_pointer (&instance_id_host_private_dir);
 
   if (instance_id_out != NULL)
     *instance_id_out = g_steal_pointer (&instance_id);
@@ -3235,7 +3242,8 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
                                       app_id, flatpak_decomposed_get_branch (app_ref),
                                       runtime_ref, app_id_dir, app_context, extra_context,
                                       sandboxed, FALSE, flags & FLATPAK_RUN_FLAG_DEVEL,
-                                      &app_info_path, instance_id_fd, &instance_id_host_dir,
+                                      &app_info_path, instance_id_fd,
+                                      &instance_id_host_dir, NULL,
                                       &instance_id, error))
     return FALSE;
 
