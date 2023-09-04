@@ -52,7 +52,7 @@ jobs:
         # One of the tests wants this
         sudo mkdir /tmp/flatpak-com.example.App-OwnedByRoot
     - name: Check out flatpak
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: true
     - name: Build appstream dependency # (We need at least 0.15.3 for the g_once fix)
@@ -120,7 +120,7 @@ jobs:
         # One of the tests wants this
         sudo mkdir /tmp/flatpak-com.example.App-OwnedByRoot
     - name: Check out flatpak
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: true
     - name: Create logs dir
@@ -197,7 +197,7 @@ jobs:
         libseccomp-dev libsoup2.4-dev libcurl4-openssl-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
         libgirepository1.0-dev libappstream-dev libdconf-dev clang e2fslibs-dev
     - name: Check out flatpak
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: true
     - name: configure
@@ -228,7 +228,7 @@ jobs:
         libgirepository1.0-dev libappstream-dev libdconf-dev clang socat meson libdbus-1-dev \
         valgrind e2fslibs-dev
     - name: Check out flatpak
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: true
     - name: Create logs dir
