@@ -57,6 +57,7 @@ typedef enum {
   FLATPAK_CONTEXT_DEVICE_ALL         = 1 << 1,
   FLATPAK_CONTEXT_DEVICE_KVM         = 1 << 2,
   FLATPAK_CONTEXT_DEVICE_SHM         = 1 << 3,
+  FLATPAK_CONTEXT_DEVICE_INPUT       = 1 << 4,
 } FlatpakContextDevices;
 
 typedef enum {

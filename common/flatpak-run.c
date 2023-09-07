@@ -408,6 +408,14 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
             }
         }
 
+      if (context->devices & FLATPAK_CONTEXT_DEVICE_INPUT)
+        {
+          g_info ("Allowing input device access. Note: raw and virtual input currently require --device=all");
+
+          if (g_file_test ("/dev/input", G_FILE_TEST_IS_DIR))
+              flatpak_bwrap_add_args (bwrap, "--dev-bind", "/dev/input", "/dev/input", NULL);
+        }
+
       if (context->devices & FLATPAK_CONTEXT_DEVICE_KVM)
         {
           g_info ("Allowing kvm access");

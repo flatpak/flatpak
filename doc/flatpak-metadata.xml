@@ -175,6 +175,12 @@
                                 Available since 0.3.
                             </para></listitem></varlistentry>
 
+                            <varlistentry><term><option>input</option></term>
+                            <listitem><para>
+                                Input devices
+                                (<filename>/dev/input</filename>).
+                            </para></listitem></varlistentry>
+
                             <varlistentry><term><option>kvm</option></term>
                             <listitem><para>
                                 Virtualization
