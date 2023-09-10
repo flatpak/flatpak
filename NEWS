@@ -1,3 +1,74 @@
+Changes in 1.15.6
+~~~~~~~~~~~~~~~~~
+Released: not yet
+
+Dependencies:
+
+ * In distributions that compile Flatpak to use a separate bubblewrap (bwrap)
+   executable, version 0.8.0 is now required.
+
+ * Enabling the optional Wayland security context feature requires
+   libwayland-client, wayland-scanner >= 1.15 and wayland-protocols >= 1.32.
+
+ * Ubuntu 18.04 is no longer routinely tested. Support for dependency
+   versions included in Ubuntu 18.04 should be considered "at risk".
+
+Features:
+
+ * Add --device=input, for access to evdev devices in /dev/input (#5481)
+
+ * Update bundled copy of bubblewrap to version 0.8.0, and rely on its
+   features:
+     * Improve error message if seccomp is disabled in kernel config
+     * Security hardening: set user namespace limit to 0, to prevent creation
+       of nested user namespaces in a more robust way (#5084)
+
+ * Add new flatpak_transaction_add_rebase_and_uninstall() API,
+   allowing end-of-life apps to be replaced by their intended replacement
+   more reliably (#3991)
+
+ * Create a private Wayland socket with the "security context" extension
+   if available, allowing the compositor to identify connections from
+   sandboxed apps as belonging to the sandbox (#4920, #5507)
+
+ * Update libglnx to 2023-08-29
+     * Use features of newer GLib versions if available
+     * Turn off system-level crash reporting infrastructure during
+       some unit tests that involve intentional assertion failures
+
+ * New translations: ka, nl.
+
+Bug fixes:
+
+ * Avoid warnings processing symbolic links with GLib >= 2.77.0, and
+   with GLib 2.76.0 (GLib 2.76.1 or later silences these warnings)
+
+ * Bypass page cache for backend requests in revokefs, fixing installation
+   errors with libostree 2023.4 (#5452)
+
+ * Fix build failure with prereleases of libappstream 0.17.x (#5472)
+
+ * Fix installation with Meson if configured with -Dauto_sideloading=true
+   (#5495)
+
+ * Fix a memory leak (#5329)
+
+ * Fix compiler warnings (#5362, #5366)
+
+ * Translation updates: id, tr.
+
+Internal changes:
+
+ * Split up large source files into smaller modules, reducing internal
+   circular dependencies (#5410, #5411, #5415, #5419, #5416, #5414)
+
+ * Re-synchronize code backported from GLib with the version in GLib
+   (#5410)
+
+ * Make the flags used to apply "extra data" clearer (#5466)
+
+ * CI improvements (#5374, #5381)
+
 Changes in 1.15.4
 ~~~~~~~~~~~~~~~~~
 Released: 2023-03-16
