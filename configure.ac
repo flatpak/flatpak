@@ -21,7 +21,7 @@ m4_define([flatpak_interface_age], [0])
 m4_define([flatpak_binary_age],
           [m4_eval(10000 * flatpak_major_version + 100 * flatpak_minor_version + flatpak_micro_version)])
 m4_define([flatpak_version],
-          [flatpak_major_version.flatpak_minor_version.flatpak_micro_version()flatpak_extra_version])
+          [m4_esyscmd_s(git describe)])
 
 AC_INIT([Flatpak],
         [flatpak_version],
