@@ -407,7 +407,15 @@ flatpak_create_http_session (const char *user_agent)
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, _write_cb);
   curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, _header_cb);
 
+  /* Abort the connection if connecting to the server takes too long. This
+   * timeout has no effect after a connection is established. */
   curl_easy_setopt (curl, CURLOPT_CONNECTTIMEOUT, (long)FLATPAK_HTTP_TIMEOUT_SECS);
+
+  /* Abort the download if it’s slower than 10KB/sec for 60 seconds. An example
+   * compressed summary file is 1.5MB in size, so anything slower than this rate
+   * will mean it takes over 2.5 minutes to download just the summary file. */
+  curl_easy_setopt(curl, CURLOPT_LOW_SPEED_TIME, (long)FLATPAK_HTTP_TIMEOUT_SECS);
+  curl_easy_setopt(curl, CURLOPT_LOW_SPEED_LIMIT, 10000L);
 
   return session;
 }
