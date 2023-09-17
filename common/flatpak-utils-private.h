@@ -693,6 +693,10 @@ null_safe_g_ptr_array_unref (gpointer data)
   g_clear_pointer (&data, g_ptr_array_unref);
 }
 
+GStrv flatpak_parse_env_block (const char  *data,
+                               gsize        length,
+                               GError     **error);
+
 int flatpak_envp_cmp (const void *p1,
                       const void *p2);
 
