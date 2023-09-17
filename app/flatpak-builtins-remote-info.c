@@ -183,11 +183,11 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
       AsComponent *app = NULL;
       const char *version = NULL;
       const char *license = NULL;
-      g_autofree char *id = flatpak_decomposed_dup_id (ref);
+      g_autofree char *arch = flatpak_decomposed_dup_arch (ref);
 
       flatpak_get_window_size (&rows, &cols);
 
-      flatpak_dir_load_appstream_store (preferred_dir, remote, id, mdata, NULL, NULL);
+      flatpak_dir_load_appstream_store (preferred_dir, remote, arch, mdata, NULL, NULL);
       app = as_store_find_app (mdata, flatpak_decomposed_get_ref (ref));
       if (app)
         {
@@ -267,9 +267,9 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
 
       width = cols - (len + 1);
 
-      print_aligned (len, _("ID:"), id);
+      print_aligned_take (len, _("ID:"), flatpak_decomposed_dup_id (ref));
       print_aligned (len, _("Ref:"), flatpak_decomposed_get_ref (ref));
-      print_aligned_take (len, _("Arch:"), flatpak_decomposed_dup_arch (ref));
+      print_aligned (len, _("Arch:"), arch);
       print_aligned_take (len, _("Branch:"), flatpak_decomposed_dup_branch (ref));
       if (version != NULL)
         print_aligned (len, _("Version:"), version);
