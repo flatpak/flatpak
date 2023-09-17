@@ -7791,6 +7791,48 @@ flatpak_dconf_path_is_similar (const char *path1,
   return (path1[i1] == '\0');
 }
 
+GStrv
+flatpak_parse_env_block (const char  *data,
+                         gsize        length,
+                         GError     **error)
+{
+  g_autoptr(GPtrArray) env_vars = g_ptr_array_new_with_free_func (g_free);
+  const char *p = data;
+  gsize remaining = length;
+
+  /* env_block might not be \0-terminated */
+  while (remaining > 0)
+    {
+      size_t len = strnlen (p, remaining);
+      const char *equals;
+
+      g_assert (len <= remaining);
+
+      equals = memchr (p, '=', len);
+
+      if (equals == NULL || equals == p)
+        return glnx_null_throw (error,
+                                "Environment variable must be in the form VARIABLE=VALUE, not %.*s", (int) len, p);
+
+      g_ptr_array_add (env_vars,
+                       g_strndup (p, len));
+
+      p += len;
+      remaining -= len;
+
+      if (remaining > 0)
+        {
+          g_assert (*p == '\0');
+          p += 1;
+          remaining -= 1;
+        }
+    }
+
+  g_ptr_array_add (env_vars, NULL);
+
+  return (GStrv) g_ptr_array_free (g_steal_pointer (&env_vars), FALSE);
+}
+
 /**
  * flatpak_envp_cmp:
  * @p1: a `const char * const *`
