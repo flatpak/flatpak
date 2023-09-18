@@ -20,7 +20,7 @@ SPDX-License-Identifier: LGPL-2.1-or-later
   </description>
 
   <license rdf:resource="http://usefulinc.com/doap/licenses/lgpl" />
-  <mailing-list rdf:resource="mailto:desktop-devel-list@gnome.org" />
+  <support-forum rdf:resource="https://discourse.gnome.org/c/platform/5" />
 
   <programming-language>C</programming-language>
 
