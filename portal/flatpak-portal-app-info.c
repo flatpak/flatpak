@@ -80,13 +80,14 @@ parse_app_id_from_fileinfo (int pid)
   g_autoptr(GKeyFile) metadata = NULL;
 
   root_path = g_strdup_printf ("/proc/%u/root", pid);
-  root_fd = openat (AT_FDCWD, root_path, O_RDONLY | O_NONBLOCK | O_DIRECTORY | O_CLOEXEC | O_NOCTTY);
-  if (root_fd == -1)
+  if (!glnx_opendirat (AT_FDCWD, root_path, TRUE,
+                       &root_fd,
+                       &local_error))
     {
       /* Not able to open the root dir shouldn't happen. Probably the app died and
        * we're failing due to /proc/$pid not existing. In that case fail instead
          of treating this as privileged. */
-      g_info ("Unable to open %s", root_path);
+      g_info ("Unable to open process root directory: %s", local_error->message);
       return NULL;
     }
 
