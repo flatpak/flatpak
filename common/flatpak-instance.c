@@ -572,15 +572,10 @@ flatpak_instance_ensure_per_app_dev_shm (const char *app_id,
   per_app_parent = flatpak_instance_get_apps_directory ();
 
   per_app_dir = g_build_filename (per_app_parent, app_id, NULL);
-  per_app_dir_fd = openat (AT_FDCWD, per_app_dir,
-                           O_PATH | O_DIRECTORY | O_CLOEXEC);
-
-  /* This can't happen under normal circumstances: if we have the lock,
-   * then the directory it's in had better exist. */
-  if (per_app_dir_fd < 0)
-    return glnx_throw_errno_prefix (error,
-                                    _("Unable to open directory %s"),
-                                    per_app_dir);
+  if (!glnx_opendirat (AT_FDCWD, per_app_dir, TRUE,
+                       &per_app_dir_fd,
+                       error))
+    return FALSE;
 
   /* If there's an existing symlink to a suitable directory, we can
    * reuse it (carefully). This gives us the sharing we wanted between
@@ -884,13 +879,11 @@ flatpak_instance_claim_per_app_temp_directory (const char *app_id,
     return glnx_throw (error, "%s does not start with %s/flatpak-%s-",
                        reuse_path, parent, app_id);
 
-  /* Avoid symlink attacks via O_NOFOLLOW */
-  dfd = openat (AT_FDCWD, reuse_path,
-                O_PATH | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
-
-  if (dfd < 0)
-    return glnx_throw_errno_prefix (error, "opening %s O_DIRECTORY|O_NOFOLLOW",
-                                    reuse_path);
+  /* Avoid symlink attacks by not following symlinks */
+  if (!glnx_opendirat (AT_FDCWD, reuse_path, FALSE,
+                       &dfd,
+                       error))
+    return FALSE;
 
   if (fstat (dfd, &statbuf) < 0)
     return glnx_throw_errno_prefix (error, "fstat %s", reuse_path);
@@ -965,11 +958,10 @@ flatpak_instance_gc_per_app_dirs (const char *instance_id,
   /* Take an exclusive lock so we don't race with other instances */
 
   per_app_dir = g_build_filename (per_app_parent, app_id, NULL);
-  per_app_dir_fd = openat (AT_FDCWD, per_app_dir,
-                           O_PATH | O_DIRECTORY | O_CLOEXEC);
-
-  if (per_app_dir_fd < 0)
-    return glnx_throw_errno_prefix (error, "open %s", per_app_dir);
+  if (!glnx_opendirat (AT_FDCWD, per_app_dir, TRUE,
+                       &per_app_dir_fd,
+                       error))
+    return FALSE;
 
   per_app_dir_lock_fd = openat (per_app_dir_fd, ".ref",
                                 O_RDWR | O_CREAT | O_CLOEXEC, 0600);
