@@ -123,7 +123,7 @@ callback_readdir (const char *path, void *buf, fuse_fill_dir_t filler,
     }
   else
     {
-      dfd = openat (basefd, path, O_RDONLY | O_NONBLOCK | O_DIRECTORY | O_CLOEXEC | O_NOCTTY);
+      dfd = glnx_opendirat_with_errno (basefd, path, TRUE);
       if (dfd == -1)
         return -errno;
     }
@@ -562,7 +562,7 @@ main (int argc, char *argv[])
       exit (EXIT_FAILURE);
     }
 
-  basefd = openat (AT_FDCWD, base_path, O_RDONLY | O_NONBLOCK | O_DIRECTORY | O_CLOEXEC | O_NOCTTY);
+  basefd = glnx_opendirat_with_errno (AT_FDCWD, base_path, TRUE);
   if (basefd == -1)
     {
       perror ("opening basepath: ");
