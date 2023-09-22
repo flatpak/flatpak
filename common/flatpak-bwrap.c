@@ -275,6 +275,23 @@ flatpak_bwrap_add_args_data (FlatpakBwrap *bwrap,
   return TRUE;
 }
 
+gboolean
+flatpak_bwrap_add_args_file (FlatpakBwrap *bwrap,
+                             const char   *name,
+                             const char   *content,
+                             gssize        content_size,
+                             const char   *path,
+                             GError      **error)
+{
+  g_auto(GLnxTmpfile) args_tmpf  = { 0, };
+
+  if (!flatpak_buffer_to_sealed_memfd_or_tmpfile (&args_tmpf, name, content, content_size, error))
+    return FALSE;
+
+  flatpak_bwrap_add_args_data_fd (bwrap, "--file", g_steal_fd (&args_tmpf.fd), path);
+  return TRUE;
+}
+
 /* This resolves the target here rather than in bwrap, because it may
  * not resolve in bwrap setup due to absolute symlinks conflicting
  * with /newroot root. For example, dest could be inside

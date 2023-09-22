@@ -1527,6 +1527,7 @@ static void
 add_tzdata_args (FlatpakBwrap *bwrap,
                  GFile *runtime_files)
 {
+#if 0
   g_autofree char *raw_timezone = flatpak_get_timezone ();
   g_autofree char *timezone_content = g_strdup_printf ("%s\n", raw_timezone);
   g_autofree char *localtime_content = g_strconcat ("../usr/share/zoneinfo/", raw_timezone, NULL);
@@ -1562,6 +1563,7 @@ add_tzdata_args (FlatpakBwrap *bwrap,
   flatpak_bwrap_add_args_data (bwrap, "timezone",
                                timezone_content, -1, "/etc/timezone",
                                NULL);
+#endif
 }
 
 static void
@@ -1588,14 +1590,15 @@ add_monitor_path_args (gboolean      use_session_helper,
                                                         &session_data,
                                                         NULL, NULL))
     {
+      const char *overlay = "/run/etc-overlay:/etc";
+
+      flatpak_bwrap_add_args (bwrap, "--dir", "/run/etc-overlay", NULL);
+
       if (g_variant_lookup (session_data, "path", "s", &monitor_path))
-        flatpak_bwrap_add_args (bwrap,
-                                "--ro-bind", monitor_path, "/run/host/monitor",
-                                "--symlink", "/run/host/monitor/resolv.conf", "/etc/resolv.conf",
-                                "--symlink", "/run/host/monitor/host.conf", "/etc/host.conf",
-                                "--symlink", "/run/host/monitor/hosts", "/etc/hosts",
-                                "--symlink", "/run/host/monitor/gai.conf", "/etc/gai.conf",
-                                NULL);
+        {
+          flatpak_bwrap_add_args (bwrap, "--ro-bind", monitor_path, "/run/host/monitor", NULL);
+          overlay = "/run/etc-overlay:/run/host/monitor:/etc";
+        }
 
       if (g_variant_lookup (session_data, "pkcs11-socket", "s", &pkcs11_socket_path))
         {
@@ -1604,9 +1607,9 @@ add_monitor_path_args (gboolean      use_session_helper,
             "# This overrides the runtime p11-kit-trusted module with a client one talking to the trust module on the host\n"
             "module: p11-kit-client.so\n";
 
-          if (flatpak_bwrap_add_args_data (bwrap, "p11-kit-trust.module",
+          if (flatpak_bwrap_add_args_file (bwrap, "p11-kit-trust.module",
                                            trusted_module_contents, -1,
-                                           "/etc/pkcs11/modules/p11-kit-trust.module", NULL))
+                                           "/run/etc-overlay/pkcs11/modules/p11-kit-trust.module", NULL))
             {
               flatpak_bwrap_add_args (bwrap,
                                       "--ro-bind", pkcs11_socket_path, sandbox_pkcs11_socket_path,
@@ -1615,6 +1618,8 @@ add_monitor_path_args (gboolean      use_session_helper,
               flatpak_bwrap_add_runtime_dir_member (bwrap, "p11-kit");
             }
         }
+
+      flatpak_bwrap_add_args (bwrap, "--overlay", overlay, "/etc", NULL);
     }
   else
     {
@@ -2219,50 +2224,7 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
       (flags & FLATPAK_RUN_FLAG_WRITABLE_ETC) == 0 &&
       g_file_query_exists (etc, NULL))
     {
-      g_auto(GLnxDirFdIterator) dfd_iter = { 0, };
-      struct dirent *dent;
-      gboolean inited;
-
-      inited = glnx_dirfd_iterator_init_at (AT_FDCWD, flatpak_file_get_path_cached (etc), FALSE, &dfd_iter, NULL);
-
-      while (inited)
-        {
-          g_autofree char *src = NULL;
-          g_autofree char *dest = NULL;
-
-          if (!glnx_dirfd_iterator_next_dent_ensure_dtype (&dfd_iter, &dent, NULL, NULL) || dent == NULL)
-            break;
-
-          if (strcmp (dent->d_name, "passwd") == 0 ||
-              strcmp (dent->d_name, "group") == 0 ||
-              strcmp (dent->d_name, "machine-id") == 0 ||
-              strcmp (dent->d_name, "resolv.conf") == 0 ||
-              strcmp (dent->d_name, "host.conf") == 0 ||
-              strcmp (dent->d_name, "hosts") == 0 ||
-              strcmp (dent->d_name, "gai.conf") == 0 ||
-              strcmp (dent->d_name, "localtime") == 0 ||
-              strcmp (dent->d_name, "timezone") == 0 ||
-              strcmp (dent->d_name, "pkcs11") == 0)
-            continue;
-
-          src = g_build_filename (flatpak_file_get_path_cached (etc), dent->d_name, NULL);
-          dest = g_build_filename ("/etc", dent->d_name, NULL);
-          if (dent->d_type == DT_LNK)
-            {
-              g_autofree char *target = NULL;
-
-              target = glnx_readlinkat_malloc (dfd_iter.fd, dent->d_name,
-                                               NULL, error);
-              if (target == NULL)
-                return FALSE;
-
-              flatpak_bwrap_add_args (bwrap, "--symlink", target, dest, NULL);
-            }
-          else
-            {
-              flatpak_bwrap_add_args (bwrap, "--ro-bind", src, dest, NULL);
-            }
-        }
+      flatpak_bwrap_add_args (bwrap, "--ro-bind", flatpak_file_get_path_cached (etc), "/etc", NULL);
     }
 
   if (app_id_dir != NULL)
