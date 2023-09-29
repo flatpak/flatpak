@@ -39,6 +39,7 @@
 #include "flatpak-variant-impl-private.h"
 #include "flatpak-dir-private.h"
 #include "flatpak-xml-utils-private.h"
+#include "flatpak-zstd-compressor-private.h"
 #include "flatpak-zstd-decompressor-private.h"
 
 #define MAX_JSON_SIZE (1024 * 1024)
@@ -1529,12 +1530,13 @@ struct FlatpakOciLayerWriter
 {
   GObject             parent;
 
-  FlatpakOciRegistry *registry;
+  FlatpakOciRegistry       *registry;
+  FlatpakOciWriteLayerFlags flags;
 
   GChecksum          *uncompressed_checksum;
   GChecksum          *compressed_checksum;
   struct archive     *archive;
-  GZlibCompressor    *compressor;
+  GConverter         *compressor;
   guint64             uncompressed_size;
   guint64             compressed_size;
   GLnxTmpfile         tmpf;
@@ -1623,7 +1625,7 @@ flatpak_oci_layer_writer_compress (FlatpakOciLayerWriter *self,
 
   do
     {
-      res = g_converter_convert (G_CONVERTER (self->compressor),
+      res = g_converter_convert (self->compressor,
                                  buffer, length,
                                  compressed_buffer, sizeof (compressed_buffer),
                                  flags, &bytes_read, &bytes_written,
@@ -1691,9 +1693,10 @@ flatpak_oci_layer_writer_close_cb (struct archive *archive,
 }
 
 FlatpakOciLayerWriter *
-flatpak_oci_registry_write_layer (FlatpakOciRegistry *self,
-                                  GCancellable       *cancellable,
-                                  GError            **error)
+flatpak_oci_registry_write_layer (FlatpakOciRegistry         *self,
+                                  FlatpakOciWriteLayerFlags  flags,
+                                  GCancellable               *cancellable,
+                                  GError                    **error)
 {
   g_autoptr(FlatpakOciLayerWriter) oci_layer_writer = NULL;
   g_autoptr(FlatpakAutoArchiveWrite) a = NULL;
@@ -1710,6 +1713,7 @@ flatpak_oci_registry_write_layer (FlatpakOciRegistry *self,
 
   oci_layer_writer = g_object_new (FLATPAK_TYPE_OCI_LAYER_WRITER, NULL);
   oci_layer_writer->registry = g_object_ref (self);
+  oci_layer_writer->flags = flags;
 
   if (!glnx_open_tmpfile_linkable_at (self->dfd,
                                       "blobs/sha256",
@@ -1747,7 +1751,34 @@ flatpak_oci_registry_write_layer (FlatpakOciRegistry *self,
   /* Transfer ownership of the tmpfile */
   oci_layer_writer->tmpf = tmpf;
   tmpf.initialized = 0;
-  oci_layer_writer->compressor = g_zlib_compressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP, -1);
+
+  if ((flags & FLATPAK_OCI_WRITE_LAYER_FLAGS_ZSTD) != 0)
+    {
+      /*
+       * For the Fedora Flatpak Runtime:
+       *
+       *  gzip -6 (default) 83s  712 MiB
+       *  zlib-ng -6        38s  741 MiB (bsdtar internal)
+       *  zstd -3            9s  670 MiB
+       *  zstd -6           22s  627 MiB
+       *  zstd -9           34s  584 MiB
+       *
+       * So, even -9 is 240% faster, while producing a 18% smaller result.
+       */
+#ifdef HAVE_ZSTD
+      oci_layer_writer->compressor =
+        G_CONVERTER (flatpak_zstd_compressor_new (9));
+#else
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
+                   _("Flatpak was compiled without zstd support"));
+      return NULL;
+#endif
+    }
+  else
+    {
+      oci_layer_writer->compressor =
+        G_CONVERTER (g_zlib_compressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP, -1));
+    }
 
   return g_steal_pointer (&oci_layer_writer);
 }
@@ -1779,8 +1810,14 @@ flatpak_oci_layer_writer_close (FlatpakOciLayerWriter *self,
   if (res_out != NULL)
     {
       g_autofree char *digest = g_strdup_printf ("sha256:%s", g_checksum_get_string (self->compressed_checksum));
+      const char *media_type;
 
-      *res_out = flatpak_oci_descriptor_new (FLATPAK_OCI_MEDIA_TYPE_IMAGE_LAYER, digest, self->compressed_size);
+      if ((self->flags & FLATPAK_OCI_WRITE_LAYER_FLAGS_ZSTD) != 0)
+        media_type = FLATPAK_OCI_MEDIA_TYPE_IMAGE_LAYER_ZSTD;
+      else
+        media_type = FLATPAK_OCI_MEDIA_TYPE_IMAGE_LAYER_GZIP;
+
+      *res_out = flatpak_oci_descriptor_new (media_type, digest, self->compressed_size);
     }
 
   return TRUE;

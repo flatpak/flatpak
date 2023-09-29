@@ -50,6 +50,7 @@ static gboolean opt_runtime = FALSE;
 static char **opt_gpg_file;
 static gboolean opt_oci = FALSE;
 static gboolean opt_oci_use_labels = TRUE; // Unused now
+static char *opt_oci_layer_compress;
 static char **opt_gpg_key_ids;
 static char *opt_gpg_homedir;
 static char *opt_from_commit;
@@ -66,6 +67,7 @@ static GOptionEntry options[] = {
   { "oci", 0, 0, G_OPTION_ARG_NONE, &opt_oci, N_("Export oci image instead of flatpak bundle"), NULL },
   // This is not used anymore as it is the default, but accept it if old code uses it
   { "oci-use-labels", 0, G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_NONE, &opt_oci_use_labels, NULL, NULL },
+  { "oci-layer-compress", 0, 0, G_OPTION_ARG_STRING, &opt_oci_layer_compress, N_("How to compress OCI image layers (default: gzip)"), "gzip|zstd" },
   { NULL }
 };
 
@@ -454,9 +456,14 @@ generate_labels (FlatpakOciDescriptor *layer_desc,
 
 
 static gboolean
-build_oci (OstreeRepo *repo, const char *commit_checksum, GFile *dir,
-           const char *name, const char *ref_str,
-           GCancellable *cancellable, GError **error)
+build_oci (OstreeRepo                 *repo,
+           const char                 *commit_checksum,
+           GFile                      *dir,
+           const char                 *name,
+           const char                 *ref_str,
+           FlatpakOciWriteLayerFlags   write_layer_flags,
+           GCancellable               *cancellable,
+           GError                    **error)
 {
   g_autoptr(GFile) root = NULL;
   g_autoptr(GVariant) commit_data = NULL;
@@ -499,7 +506,7 @@ build_oci (OstreeRepo *repo, const char *commit_checksum, GFile *dir,
   if (registry == NULL)
     return FALSE;
 
-  layer_writer = flatpak_oci_registry_write_layer (registry, cancellable, error);
+  layer_writer = flatpak_oci_registry_write_layer (registry, write_layer_flags, cancellable, error);
   if (layer_writer == NULL)
     return FALSE;
 
@@ -679,7 +686,20 @@ flatpak_builtin_build_bundle (int argc, char **argv, GCancellable *cancellable, 
 
   if (opt_oci)
     {
-      if (!build_oci (repo, commit_checksum, file, name, full_branch, cancellable, error))
+      FlatpakOciWriteLayerFlags write_layer_flags =
+        FLATPAK_OCI_WRITE_LAYER_FLAGS_NONE;
+
+      if (opt_oci_layer_compress == NULL)
+        opt_oci_layer_compress = "gzip";
+
+      if (strcmp(opt_oci_layer_compress, "gzip") == 0)
+        write_layer_flags |= FLATPAK_OCI_WRITE_LAYER_FLAGS_NONE;
+      else if (strcmp(opt_oci_layer_compress, "zstd") == 0)
+        write_layer_flags |= FLATPAK_OCI_WRITE_LAYER_FLAGS_ZSTD;
+      else
+        return usage_error (context, _("--oci-layer-compress value must be gzip or zstd"), error);
+
+      if (!build_oci (repo, commit_checksum, file, name, full_branch, write_layer_flags, cancellable, error))
         return FALSE;
     }
   else

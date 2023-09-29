@@ -221,6 +221,7 @@ sources = [
   'flatpak-uri.c',
   'flatpak-usb.c',
   'flatpak-xml-utils.c',
+  'flatpak-zstd-compressor.c',
   'flatpak-zstd-decompressor.c',
 ]
 

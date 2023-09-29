@@ -147,6 +147,17 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--oci-layer-compress=gzip|zstd</option></term>
+
+                <listitem><para>
+                  Choose how to compress the layers in OCI images. gzip (the
+                  default) is universally supported, but zstd compresses faster
+                  and results in smaller images. As of 2023, zstd support is
+                  present in most major registries.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--verbose</option></term>
 

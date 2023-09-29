@@ -29,8 +29,8 @@ G_BEGIN_DECLS
 #define FLATPAK_OCI_MEDIA_TYPE_IMAGE_MANIFEST "application/vnd.oci.image.manifest.v1+json"
 #define FLATPAK_DOCKER_MEDIA_TYPE_IMAGE_MANIFEST2 "application/vnd.docker.distribution.manifest.v2+json"
 #define FLATPAK_OCI_MEDIA_TYPE_IMAGE_INDEX "application/vnd.oci.image.index.v1+json"
-#define FLATPAK_OCI_MEDIA_TYPE_IMAGE_LAYER "application/vnd.oci.image.layer.v1.tar+gzip"
-#define FLATPAK_OCI_MEDIA_TYPE_IMAGE_LAYER_NONDISTRIBUTABLE "application/vnd.oci.image.layer.nondistributable.v1.tar+gzip"
+#define FLATPAK_OCI_MEDIA_TYPE_IMAGE_LAYER_GZIP "application/vnd.oci.image.layer.v1.tar+gzip"
+#define FLATPAK_OCI_MEDIA_TYPE_IMAGE_LAYER_ZSTD "application/vnd.oci.image.layer.v1.tar+zstd"
 #define FLATPAK_OCI_MEDIA_TYPE_IMAGE_CONFIG "application/vnd.oci.image.config.v1+json"
 #define FLATPAK_DOCKER_MEDIA_TYPE_IMAGE_IMAGE_CONFIG "application/vnd.docker.container.image.v1+json"
 
