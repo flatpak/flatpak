@@ -23,7 +23,7 @@ set -euo pipefail
 
 skip_without_bwrap
 
-echo "1..16"
+echo "1..17"
 
 # Start the fake registry server
 
@@ -196,6 +196,21 @@ assert_not_has_file $icondir/64x64/org.test.Hello.png
 assert_not_has_file $icondir/64x64
 
 ok "appstream change"
+
+# Build and install an app with zstd-compressed layers
+
+make_updated_app oci "" "" "ZSTD"
+
+${FLATPAK} build-bundle --oci --oci-layer-compress=zstd $FL_GPGARGS repos/oci oci/app-image-zstd org.test.Hello >&2
+file "$(pwd)/oci/app-image-zstd/blobs"/**/* | grep -q Zstandard
+$client add hello latest "$(pwd)/oci/app-image-zstd"
+
+${FLATPAK} ${U} update -y -vv --ostree-verbose org.test.Hello >&2
+
+run org.test.Hello &> hello_out
+assert_file_has_content hello_out '^Hello world, from a sandboxZSTD$'
+
+ok "export and install zstd layers"
 
 # Change the remote to a non-OCI remote, check that we cleaned up
 
