@@ -125,9 +125,16 @@ FlatpakOciImage *      flatpak_oci_registry_load_image_config (FlatpakOciRegistr
                                                                gsize              *out_size,
                                                                GCancellable       *cancellable,
                                                                GError            **error);
-FlatpakOciLayerWriter *flatpak_oci_registry_write_layer (FlatpakOciRegistry *self,
-                                                         GCancellable       *cancellable,
-                                                         GError            **error);
+
+typedef enum {
+  FLATPAK_OCI_WRITE_LAYER_FLAGS_NONE = 0,
+  FLATPAK_OCI_WRITE_LAYER_FLAGS_ZSTD = 1 << 0,
+} FlatpakOciWriteLayerFlags;
+
+FlatpakOciLayerWriter *flatpak_oci_registry_write_layer (FlatpakOciRegistry        *self,
+                                                         FlatpakOciWriteLayerFlags  flags,
+                                                         GCancellable              *cancellable,
+                                                         GError                   **error);
 
 int                     flatpak_oci_registry_apply_delta (FlatpakOciRegistry    *self,
                                                           int                    delta_fd,

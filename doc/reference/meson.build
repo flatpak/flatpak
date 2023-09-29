@@ -66,6 +66,7 @@ libflatpak_doc = gnome.gtkdoc(
     'flatpak-auth-private.h',
     'flatpak-parental-controls-private.h',
     'flatpak-appdata-private.h',
+    'flatpak-zstd-compressor-private.h',
     'flatpak-zstd-decompressor-private.h',
   ],
   install : true,
