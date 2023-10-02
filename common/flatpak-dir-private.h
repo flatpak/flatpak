@@ -243,9 +243,11 @@ typedef enum {
 typedef enum {
   FLATPAK_HELPER_INSTALL_BUNDLE_FLAGS_NONE = 0,
   FLATPAK_HELPER_INSTALL_BUNDLE_FLAGS_NO_INTERACTION = 1 << 0,
+  FLATPAK_HELPER_INSTALL_BUNDLE_FLAGS_REINSTALL = 1 << 1,
 } FlatpakHelperInstallBundleFlags;
 
-#define FLATPAK_HELPER_INSTALL_BUNDLE_FLAGS_ALL (FLATPAK_HELPER_INSTALL_BUNDLE_FLAGS_NO_INTERACTION)
+#define FLATPAK_HELPER_INSTALL_BUNDLE_FLAGS_ALL (FLATPAK_HELPER_INSTALL_BUNDLE_FLAGS_NO_INTERACTION | \
+                                                 FLATPAK_HELPER_INSTALL_BUNDLE_FLAGS_REINSTALL)
 
 typedef enum {
   FLATPAK_HELPER_DEPLOY_APPSTREAM_FLAGS_NONE = 0,
@@ -731,6 +733,7 @@ char *                flatpak_dir_ensure_bundle_remote                      (Fla
                                                                              GCancellable                  *cancellable,
                                                                              GError                       **error);
 gboolean              flatpak_dir_install_bundle                            (FlatpakDir                    *self,
+                                                                             gboolean                       reinstall,
                                                                              GFile                         *file,
                                                                              const char                    *remote,
                                                                              FlatpakDecomposed            **out_ref,

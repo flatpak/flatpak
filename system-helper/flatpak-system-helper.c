@@ -973,6 +973,7 @@ handle_install_bundle (FlatpakSystemHelper   *object,
   g_autoptr(GFile) bundle_file = g_file_new_for_path (arg_bundle_path);
   g_autoptr(GError) error = NULL;
   g_autoptr(FlatpakDecomposed) ref = NULL;
+  gboolean reinstall;
 
   g_info ("InstallBundle %s %u %s %s", arg_bundle_path, arg_flags, arg_remote, arg_installation);
 
@@ -997,7 +998,8 @@ handle_install_bundle (FlatpakSystemHelper   *object,
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
-  if (!flatpak_dir_install_bundle (system, bundle_file, arg_remote, &ref, NULL, &error))
+  reinstall = !!(arg_flags & FLATPAK_HELPER_INSTALL_BUNDLE_FLAGS_NO_INTERACTION);
+  if (!flatpak_dir_install_bundle (system, reinstall, bundle_file, arg_remote, &ref, NULL, &error))
     {
       flatpak_invocation_return_error (invocation, error, "Error installing bundle");
       return G_DBUS_METHOD_INVOCATION_HANDLED;
