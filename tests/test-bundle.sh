@@ -48,6 +48,11 @@ ok "create bundles client-side"
 ${FLATPAK} uninstall ${U} -y org.test.Hello >&2
 ${FLATPAK} install ${U} -y --bundle bundles/hello.flatpak >&2
 
+# Installing again without reinstall option should fail...
+! ${FLATPAK} install ${U} -y --bundle bundles/hello.flatpak >&2
+# Now with reinstall option it should pass...
+${FLATPAK} install ${U} -y --bundle bundles/hello.flatpak --reinstall >&2
+
 # This should have installed the runtime dependency too
 assert_has_file $FL_DIR/repo/refs/remotes/test-repo/runtime/org.test.Platform/$ARCH/master
 
