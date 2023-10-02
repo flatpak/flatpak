@@ -731,6 +731,7 @@ char *                flatpak_dir_ensure_bundle_remote                      (Fla
                                                                              GCancellable                  *cancellable,
                                                                              GError                       **error);
 gboolean              flatpak_dir_install_bundle                            (FlatpakDir                    *self,
+                                                                             gboolean                       reinstall,
                                                                              GFile                         *file,
                                                                              const char                    *remote,
                                                                              FlatpakDecomposed            **out_ref,

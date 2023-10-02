@@ -5158,7 +5158,7 @@ _run_op_kind (FlatpakTransaction           *self,
                                                                    op->resolved_metakey, error))
         res = FALSE;
       else
-        res = flatpak_dir_install_bundle (priv->dir, op->bundle,
+        res = flatpak_dir_install_bundle (priv->dir, priv->reinstall, op->bundle,
                                           op->remote, NULL,
                                           cancellable, error);
       flatpak_transaction_progress_done (progress);

@@ -10658,6 +10658,7 @@ flatpak_dir_check_add_remotes_config_dir (FlatpakDir *self,
 
 gboolean
 flatpak_dir_install_bundle (FlatpakDir         *self,
+                            gboolean            reinstall,
                             GFile              *file,
                             const char         *remote,
                             FlatpakDecomposed **out_ref,
@@ -10716,17 +10717,30 @@ flatpak_dir_install_bundle (FlatpakDir         *self,
     {
       if (strcmp (flatpak_deploy_data_get_commit (deploy_data), to_checksum) == 0)
         {
-          g_autofree char *id = flatpak_decomposed_dup_id (ref);
-          g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
-                       _("This version of %s is already installed"), id);
-          return FALSE;
+          if (reinstall)
+            {
+              deploy_data = NULL;
+            }
+          else
+            {
+              g_autofree char *id = flatpak_decomposed_dup_id (ref);
+              g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
+                           _("This version of %s is already installed"), id);
+              return FALSE;
+            }
         }
-
-      if (strcmp (remote, flatpak_deploy_data_get_origin (deploy_data)) != 0)
+      else if (strcmp (remote, flatpak_deploy_data_get_origin (deploy_data)) != 0)
         {
-          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                       _("Can't change remote during bundle install"));
-          return FALSE;
+          if (reinstall)
+            {
+              deploy_data = NULL;
+            }
+          else
+            {
+              g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                           _("Can't change remote during bundle install"));
+              return FALSE;
+            }
         }
     }
 
@@ -10782,7 +10796,7 @@ flatpak_dir_install_bundle (FlatpakDir         *self,
     }
   else
     {
-      if (!flatpak_dir_deploy_install (self, ref, remote, NULL, NULL, FALSE, FALSE, FALSE, cancellable, error))
+      if (!flatpak_dir_deploy_install (self, ref, remote, NULL, NULL, reinstall, FALSE, FALSE, cancellable, error))
         return FALSE;
     }
 
