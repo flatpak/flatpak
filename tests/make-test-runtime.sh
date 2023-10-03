@@ -47,6 +47,12 @@ add_bin() {
     local f=$1
     shift
 
+    # Check if the program is installed
+    if ! command -v "${f}" &> /dev/null; then
+        echo "${f} not found"
+        exit 1
+    fi
+
     if grep -qFe "${f}" $BINS; then
         # Already handled
         return 0
