@@ -1900,6 +1900,8 @@ static const ExportData default_exports[] = {
   {"XKB_CONFIG_ROOT", NULL},
   {"GIO_EXTRA_MODULES", NULL},
   {"GDK_BACKEND", NULL},
+  {"VK_DRIVER_FILES", NULL},
+  {"VK_ICD_FILENAMES", NULL},
 };
 
 static const ExportData no_ld_so_cache_exports[] = {
