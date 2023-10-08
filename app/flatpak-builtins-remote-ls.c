@@ -231,7 +231,7 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
       if (need_appstream_data)
         {
           mdata = as_metadata_new ();
-          flatpak_dir_load_appstream_store (dir, remote, NULL, mdata, NULL, NULL);
+          flatpak_dir_load_appstream_data (dir, remote, NULL, mdata, NULL, NULL);
         }
 
       keys = (FlatpakDecomposed **) g_hash_table_get_keys_as_array (names, &n_keys);
@@ -244,7 +244,7 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
           guint64 installed_size;
           guint64 download_size;
           g_autofree char *runtime = NULL;
-          AsComponent *app = NULL;
+          AsComponent *cpt = NULL;
           gboolean has_sparse_cache;
           VarMetadataRef sparse_cache;
           g_autofree char *id = flatpak_decomposed_dup_id (ref);
@@ -278,7 +278,7 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
             }
 
           if (need_appstream_data)
-            app = as_store_find_app (mdata, ref_str);
+            cpt = metadata_find_component (mdata, ref_str);
 
           if (app_runtime && runtime)
             {
@@ -296,8 +296,8 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
                   const char *name = NULL;
                   g_autofree char *readable_id = NULL;
 
-                  if (app)
-                    name = as_component_get_name (app);
+                  if (cpt)
+                    name = as_component_get_name (cpt);
 
                   if (name == NULL)
                     readable_id = flatpak_decomposed_dup_readable_id (ref);
@@ -307,13 +307,13 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
               else if (strcmp (columns[j].name, "description") == 0)
                 {
                   const char *comment = NULL;
-                  if (app)
-                      comment = as_component_get_summary (app);
+                  if (cpt)
+                      comment = as_component_get_summary (cpt);
 
                   flatpak_table_printer_add_column (printer, comment);
                 }
               else if (strcmp (columns[j].name, "version") == 0)
-                flatpak_table_printer_add_column (printer, app ? as_app_get_version (app) : "");
+                flatpak_table_printer_add_column (printer, cpt ? component_get_version_latest (cpt) : "");
               else if (strcmp (columns[j].name, "ref") == 0)
                 flatpak_table_printer_add_column (printer, ref_str);
               else if (strcmp (columns[j].name, "application") == 0)

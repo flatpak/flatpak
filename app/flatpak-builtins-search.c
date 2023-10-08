@@ -76,7 +76,7 @@ get_remote_stores (GPtrArray *dirs, const char *arch, GCancellable *cancellable)
         {
           g_autoptr(AsMetadata) mdata = as_metadata_new ();
 
-          flatpak_dir_load_appstream_store (dir, remotes[j], arch, mdata, cancellable, &error);
+          flatpak_dir_load_appstream_data (dir, remotes[j], arch, mdata, cancellable, &error);
 
           if (error)
             {
@@ -185,7 +185,7 @@ component_get_branch (AsComponent *app)
 static void
 print_app (Column *columns, MatchResult *res, FlatpakTablePrinter *printer)
 {
-  const char *version = as_app_get_version (res->app);
+  const char *version = component_get_version_latest (res->app);
   g_autofree char *id = component_get_flatpak_id (res->app);
   const char *name = as_component_get_name (res->app);
   const char *comment = as_component_get_summary (res->app);
@@ -272,12 +272,21 @@ flatpak_builtin_search (int argc, char **argv, GCancellable *cancellable, GError
   for (j = 0; j < remote_stores->len; ++j)
     {
       AsMetadata *mdata = g_ptr_array_index (remote_stores, j);
+#if AS_CHECK_VERSION(1, 0, 0)
+      AsComponentBox *apps = as_metadata_get_components (mdata);
+#else
       GPtrArray *apps = as_metadata_get_components (mdata);
-      guint i;
+#endif
 
-      for (i = 0; i < apps->len; ++i)
+#if AS_CHECK_VERSION(1, 0, 0)
+      for (guint i = 0; i < as_component_box_len (apps); ++i)
+        {
+          AsComponent *app = as_component_box_index (apps, i);
+#else
+      for (guint i = 0; i < apps->len; ++i)
         {
           AsComponent *app = g_ptr_array_index (apps, i);
+#endif
           const char *remote_name = g_object_get_data (G_OBJECT (mdata), "remote-name");
           g_autoptr(FlatpakDecomposed) decomposed = NULL;
 

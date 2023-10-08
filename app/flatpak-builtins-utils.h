@@ -160,16 +160,16 @@ void print_aligned_take (int         len,
                          const char *title,
                          char       *value);
 
-AsComponent *as_store_find_app (AsMetadata *mdata,
-                                const char *ref);
-const char *as_app_get_version (AsComponent *component);
+AsComponent *metadata_find_component (AsMetadata *mdata,
+                                         const char *ref);
+const char *component_get_version_latest (AsComponent *component);
 
-gboolean    flatpak_dir_load_appstream_store (FlatpakDir   *self,
-                                              const gchar  *remote_name,
-                                              const gchar  *arch,
-                                              AsMetadata   *mdata,
-                                              GCancellable *cancellable,
-                                              GError      **error);
+gboolean    flatpak_dir_load_appstream_data (FlatpakDir   *self,
+                                             const gchar  *remote_name,
+                                             const gchar  *arch,
+                                             AsMetadata   *mdata,
+                                             GCancellable *cancellable,
+                                             GError      **error);
 
 int         cell_width (const char *text);
 const char *cell_advance (const char *text,

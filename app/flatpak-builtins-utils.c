@@ -1042,50 +1042,79 @@ ellipsize_string_full (const char *text, int len, FlatpakEllipsizeMode mode)
 }
 
 const char *
-as_app_get_version (AsComponent *app)
+component_get_version_latest (AsComponent *component)
 {
-  GPtrArray *releases = as_component_get_releases (app);
+#if AS_CHECK_VERSION(1, 0, 0)
+  AsReleaseList *releases = NULL;
+
+  /* load releases without network access, ignoring any errors */
+  as_component_load_releases (component, FALSE, NULL);
+
+  /* fetch default releases even if previous loading has failed */
+  releases = as_component_get_releases_plain (component);
+  if (releases != NULL && as_release_list_len (releases) > 0)
+    return as_release_get_version (as_release_list_index (releases, 0));
+#else
+  GPtrArray *releases = as_component_get_releases (component);
 
   if (releases != NULL && releases->len > 0)
     return as_release_get_version (AS_RELEASE (g_ptr_array_index (releases, 0)));
+#endif
 
   return NULL;
 }
 
 AsComponent *
-as_store_find_app (AsMetadata *mdata,
-                   const char *ref)
+metadata_find_component (AsMetadata *mdata,
+                         const char *ref)
 {
   g_autoptr(FlatpakRef) rref = flatpak_ref_parse (ref, NULL);
-  const char *appid = flatpak_ref_get_name (rref);
-  g_autofree char *desktopid = g_strconcat (appid, ".desktop", NULL);
-  int j;
+  const char *cid = flatpak_ref_get_name (rref);
+  g_autofree char *desktopid = g_strconcat (cid, ".desktop", NULL);
 
-  for (j = 0; j < 2; j++)
+  for (int j = 0; j < 2; j++)
     {
-      const char *id = j == 0 ? appid : desktopid;
+      const char *id = j == 0 ? cid : desktopid;
+#if AS_CHECK_VERSION(1, 0, 0)
+      AsComponentBox *cbox = as_metadata_get_components (mdata);
+
+      for (gsize i = 0; i < as_component_box_len (cbox); i++)
+        {
+          AsComponent *component = as_component_box_index (cbox, i);
+          AsBundle *bundle;
+
+          if (g_strcmp0 (as_component_get_id (component), id) != 0)
+            continue;
+
+          bundle = as_component_get_bundle (component, AS_BUNDLE_KIND_FLATPAK);
+          if (bundle &&
+              g_str_equal (as_bundle_get_id (bundle), ref))
+            return component;
+        }
+#else
       GPtrArray *components = as_metadata_get_components (mdata);
 
       for (gsize i = 0; i < components->len; i++)
         {
-          AsComponent *app = g_ptr_array_index (components, i);
+          AsComponent *component = g_ptr_array_index (components, i);
           AsBundle *bundle;
 
-          if (g_strcmp0 (as_component_get_id (app), id) != 0)
+          if (g_strcmp0 (as_component_get_id (component), id) != 0)
             continue;
 
-          bundle = as_component_get_bundle (app, AS_BUNDLE_KIND_FLATPAK);
+          bundle = as_component_get_bundle (component, AS_BUNDLE_KIND_FLATPAK);
           if (bundle &&
               g_str_equal (as_bundle_get_id (bundle), ref))
-            return app;
+            return component;
         }
+#endif
     }
 
   return NULL;
 }
 
 /**
- * flatpak_dir_load_appstream_store:
+ * flatpak_dir_load_appstream_data:
  * @self: a #FlatpakDir
  * @remote_name: name of the remote to load the AppStream data for
  * @arch: (nullable): name of the architecture to load the AppStream data for,
@@ -1103,12 +1132,12 @@ as_store_find_app (AsMetadata *mdata,
  *    otherwise
  */
 gboolean
-flatpak_dir_load_appstream_store (FlatpakDir   *self,
-                                  const gchar  *remote_name,
-                                  const gchar  *arch,
-                                  AsMetadata   *mdata,
-                                  GCancellable *cancellable,
-                                  GError      **error)
+flatpak_dir_load_appstream_data (FlatpakDir   *self,
+                                 const gchar  *remote_name,
+                                 const gchar  *arch,
+                                 AsMetadata   *mdata,
+                                 GCancellable *cancellable,
+                                 GError      **error)
 {
   const char *install_path = flatpak_file_get_path_cached (flatpak_dir_get_path (self));
   g_autoptr(GFile) appstream_file = NULL;
