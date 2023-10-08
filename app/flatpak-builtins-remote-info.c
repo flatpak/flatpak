@@ -180,24 +180,24 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
       int rows, cols;
       int width;
       g_autoptr(AsMetadata) mdata = as_metadata_new ();
-      AsComponent *app = NULL;
+      AsComponent *cpt = NULL;
       const char *version = NULL;
       const char *license = NULL;
       g_autofree char *arch = flatpak_decomposed_dup_arch (ref);
 
       flatpak_get_window_size (&rows, &cols);
 
-      flatpak_dir_load_appstream_store (preferred_dir, remote, arch, mdata, NULL, NULL);
-      app = as_store_find_app (mdata, flatpak_decomposed_get_ref (ref));
-      if (app)
+      flatpak_dir_load_appstream_data (preferred_dir, remote, arch, mdata, NULL, NULL);
+      cpt = metadata_find_component (mdata, flatpak_decomposed_get_ref (ref));
+      if (cpt)
         {
-          const char *name = as_component_get_name (app);
-          const char *comment = as_component_get_summary (app);
+          const char *name = as_component_get_name (cpt);
+          const char *comment = as_component_get_summary (cpt);
 
           print_wrapped (MIN (cols, 80), "\n%s - %s\n", name, comment);
 
-          version = as_app_get_version (app);
-          license = as_component_get_project_license (app);
+          version = component_get_version_latest (cpt);
+          license = as_component_get_project_license (cpt);
         }
 
       if (commit_v)
