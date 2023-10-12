@@ -137,7 +137,7 @@ flatpak_run_add_wayland_security_context_args (FlatpakBwrap *bwrap,
   security_context = wp_security_context_manager_v1_create_listener (security_context_manager,
                                                                      listen_fd,
                                                                      sync_fd);
-  wp_security_context_v1_set_sandbox_engine (security_context, "flatpak");
+  wp_security_context_v1_set_sandbox_engine (security_context, "org.flatpak");
   wp_security_context_v1_set_app_id (security_context, app_id);
   wp_security_context_v1_set_instance_id (security_context, instance_id);
   wp_security_context_v1_commit (security_context);
