@@ -104,6 +104,8 @@
             <member>XKB_CONFIG_ROOT</member>
             <member>GIO_EXTRA_MODULES</member>
             <member>GDK_BACKEND</member>
+            <member>VK_DRIVER_FILES</member>
+            <member>VK_ICD_FILENAMES</member>
         </simplelist>
         <para>
             Also several environment variables with the prefix "GST_" that are used by gstreamer
