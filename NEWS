@@ -23,13 +23,23 @@ Features:
      * Security hardening: set user namespace limit to 0, to prevent creation
        of nested user namespaces in a more robust way (#5084)
 
+ * For subsandboxes started by flatpak-portal, inherit environment
+   variables from the `flatpak run` that started the original instance
+   rather than from flatpak-portal, fixing behaviour of FLATPAK_GL_DRIVERS
+   and similar features (#5278)
+
+ * Stop http transfers if a download in progress becomes very slow (#5519)
+
+ * Make it easier to configure extra languages, by picking them up from
+   AccountsService if configured there (#5006)
+
  * Add new flatpak_transaction_add_rebase_and_uninstall() API,
    allowing end-of-life apps to be replaced by their intended replacement
    more reliably (#3991)
 
  * Create a private Wayland socket with the "security context" extension
    if available, allowing the compositor to identify connections from
-   sandboxed apps as belonging to the sandbox (#4920, #5507)
+   sandboxed apps as belonging to the sandbox (#4920, #5507, #5558)
 
  * Update libglnx to 2023-08-29
      * Use features of newer GLib versions if available
@@ -46,7 +56,15 @@ Bug fixes:
  * Bypass page cache for backend requests in revokefs, fixing installation
    errors with libostree 2023.4 (#5452)
 
+ * Show AppStream metadata in `flatpak remote-info` as intended
+   (#5523; regression in 1.9.1)
+
+ * Don't let Flatpak apps inherit VK_DRIVER_FILES or VK_ICD_FILENAMES
+   from the host system, which would be wrong for the sandbox (#5553)
+
  * Fix build failure with prereleases of libappstream 0.17.x (#5472)
+
+ * Forward-compatibility with libappstream 1.0 (#5563)
 
  * Fix installation with Meson if configured with -Dauto_sideloading=true
    (#5495)
@@ -55,7 +73,11 @@ Bug fixes:
 
  * Fix compiler warnings (#5362, #5366)
 
- * Translation updates: id, tr.
+ * Make the tests fail more comprehensibly if a required tool is missing
+   (#5020)
+
+ * Translation updates: id, tr, zh_CN
+   (#5332, #5565)
 
 Internal changes:
 
@@ -66,6 +88,8 @@ Internal changes:
    (#5410)
 
  * Make the flags used to apply "extra data" clearer (#5466)
+
+ * Use glnx_opendirat() where possible (#5527)
 
  * CI improvements (#5374, #5381)
 
