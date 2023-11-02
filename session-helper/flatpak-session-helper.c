@@ -32,6 +32,7 @@
 #include "flatpak-session-helper.h"
 #include "flatpak-utils-base-private.h"
 
+static GStrv original_environ = NULL;
 static char *monitor_dir;
 static char *p11_kit_server_socket_path;
 static int p11_kit_server_pid = 0;
@@ -310,7 +311,7 @@ handle_host_command (FlatpakDevelopment    *object,
       env = g_strdupv (empty);
     }
   else
-    env = g_get_environ ();
+    env = g_strdupv (original_environ);
 
   n_envs = g_variant_n_children (arg_envs);
   for (i = 0; i < n_envs; i++)
@@ -783,6 +784,10 @@ main (int    argc,
                          m_localtime = NULL;
   struct sigaction action;
 
+  /* Save the enviroment before changing anything, so that subprocesses
+   * can get the unchanged version */
+  original_environ = g_get_environ ();
+
   atexit (do_atexit);
 
   memset (&action, 0, sizeof (struct sigaction));
@@ -880,5 +885,6 @@ main (int    argc,
 
   g_bus_unown_name (owner_id);
 
+  g_strfreev (original_environ);
   return 0;
 }
