@@ -721,12 +721,14 @@
             </para>
             <para>
                 The default policy for the session bus only allows the
-                application to own its own application ID and
-                subnames. For instance if the app is called
-                "org.my.App", it can only own "org.my.App" and
-                "org.my.App.*". Its also only allowed to talk to the
-                bus itself (org.freedesktop.DBus) and the portal APIs
-                APIs (bus names of the form org.freedesktop.portal.*).
+                application to own its own application ID, its
+                subnames and its own application id as a subname of 
+                "org.mpris.MediaPlayer2". For instance if the app is called
+                "org.my.App", it can only own "org.my.App", "org.my.App.*"
+                and "org.mpris.MediaPlayer2.org.my.App".
+                It is only allowed to talk to names matching those patterns, plus
+                the bus itself (org.freedesktop.DBus)
+                and the portal APIs (bus names of the form org.freedesktop.portal.*).
             </para>
             <para>
                 Additionally the app is always allowed to reply to
