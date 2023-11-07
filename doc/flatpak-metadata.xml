@@ -63,7 +63,7 @@
             systemd unit files or application .desktop files.
         </para>
 
-        <refsect2>
+        <refsect2 id="application-runtime-metadata">
             <title>[Application] or [Runtime]</title>
 
             <para>
@@ -128,7 +128,7 @@
                 </varlistentry>
             </variablelist>
         </refsect2>
-        <refsect2>
+        <refsect2 id="context-metadata">
             <title>[Context]</title>
             <para>
                 This group determines various system resources that may be shared
@@ -510,7 +510,7 @@
                 </varlistentry>
             </variablelist>
         </refsect2>
-        <refsect2>
+        <refsect2 id="instance-metadata">
             <title>[Instance]</title>
             <para>
                 This group only appears in <filename>/.flatpak-info</filename>
@@ -707,7 +707,7 @@
                 </varlistentry>
             </variablelist>
         </refsect2>
-        <refsect2>
+        <refsect2 id="session-bus-policy-metadata">
             <title>[Session Bus Policy]</title>
             <para>
                 If the <option>sockets</option> key is not allowing full access
@@ -774,7 +774,7 @@
                 </varlistentry>
             </variablelist>
         </refsect2>
-        <refsect2>
+        <refsect2 id="system-bus-policy-metadata">
             <title>[System Bus Policy]</title>
             <para>
                 If the <option>sockets</option> key is not allowing full access
@@ -787,7 +787,7 @@
                 However, the app has no permissions by default.
             </para>
         </refsect2>
-        <refsect2>
+        <refsect2 id="environment-metadata">
             <title>[Environment]</title>
             <para>
                 The [Environment] group specifies environment variables to set
@@ -805,7 +805,7 @@
                 [Context] group.
               </para>
         </refsect2>
-        <refsect2>
+        <refsect2 id="extension-metadata">
             <title>[Extension NAME]</title>
             <para>
                 Runtimes and applications can define extension points, which allow
@@ -991,7 +991,7 @@
                 </varlistentry>
             </variablelist>
         </refsect2>
-        <refsect2>
+        <refsect2 id="extension-of-metadata">
             <title>[ExtensionOf]</title>
             <para>
                 This optional group may be present if the runtime is an extension.
@@ -1030,7 +1030,7 @@
                 </varlistentry>
             </variablelist>
         </refsect2>
-        <refsect2>
+        <refsect2 id="extra-data-metadata">
             <title>[Extra Data]</title>
             <para>
                 This optional group may be present if the runtime or application uses
@@ -1077,7 +1077,7 @@
                 </varlistentry>
             </variablelist>
         </refsect2>
-        <refsect2>
+        <refsect2 id="policy-metadata">
           <title>[Policy SUBSYSTEM]</title>
           <para>
             Subsystems can define their own policies to be placed in a group
