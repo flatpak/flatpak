@@ -7,3 +7,7 @@ install_data(
   'org.freedesktop.portal.Flatpak.xml',
   install_dir : get_option('datadir') / 'dbus-1' / 'interfaces',
 )
+install_data(
+  'tmpfiles.d/flatpak.conf',
+  install_dir : get_option('tmpfilesdir'),
+)

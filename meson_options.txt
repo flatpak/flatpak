@@ -209,6 +209,12 @@ option(
   value : 'lib/sysusers.d'
 )
 option(
+  'tmpfilesdir',
+  type : 'string',
+  description : 'directory for systemd tmpfiles.d configuration files',
+  value : 'lib/tmpfiles.d'
+)
+option(
   'tests',
   type : 'boolean',
   description : 'build tests',

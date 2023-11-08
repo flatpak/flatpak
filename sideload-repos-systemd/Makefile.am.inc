@@ -11,8 +11,7 @@ systemduserunit_DATA += sideload-repos-systemd/flatpak-sideload-usb-repo.path
 %.path: %.path.in config.log
 	$(AM_V_GEN) $(SED) -e "s|\@media_dir\@|$(RUN_MEDIA_DIR)|" $< > $@
 
-tmpfilesdir = $(prefix)/lib/tmpfiles.d
-dist_tmpfiles_DATA = sideload-repos-systemd/tmpfiles.d/flatpak-sideload-repos.conf
+dist_tmpfiles_DATA += sideload-repos-systemd/tmpfiles.d/flatpak-sideload-repos.conf
 
 endif
 

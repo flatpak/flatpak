@@ -5,6 +5,8 @@ introspection_DATA = \
 	data/org.freedesktop.portal.Flatpak.xml \
 	$(NULL)
 
+dist_tmpfiles_DATA += data/tmpfiles.d/flatpak.conf
+
 EXTRA_DIST += \
 	data/meson.build \
 	data/org.freedesktop.portal.Documents.xml \
