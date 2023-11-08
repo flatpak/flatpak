@@ -422,6 +422,13 @@ AC_ARG_WITH([sysusersdir],
     [with_sysusersdir='${prefix}/lib/sysusers.d'])
 AC_SUBST([sysusersdir], [$with_sysusersdir])
 
+AC_ARG_WITH([tmpfilesdir],
+            [AS_HELP_STRING([--with-tmpfilesdir=DIR],
+                            [Directory for systemd tmpfiles.d configuration files (default=PREFIX/lib/tmpfiles.d)])],
+    [],
+    [with_tmpfilesdir='${prefix}/lib/tmpfiles.d'])
+AC_SUBST([tmpfilesdir], [$with_tmpfilesdir])
+
 AC_ARG_WITH(system-helper-user,
            [AS_HELP_STRING([--with-system-helper-user=USERNAME],
                            [Name of the system helper user])],
