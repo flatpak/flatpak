@@ -16371,12 +16371,12 @@ get_system_locales (FlatpakDir *self)
   if (g_once_init_enter (&cached))
     {
       GPtrArray *langs = g_ptr_array_new_with_free_func (g_free);
-      g_autoptr(GDBusProxy) localed_proxy = NULL;
       g_autoptr(GDBusProxy) accounts_proxy = NULL;
 
       accounts_proxy = get_accounts_dbus_proxy ();
       if (!get_all_langs_from_accounts_dbus (accounts_proxy, langs))
         {
+          g_autoptr(GDBusProxy) localed_proxy = NULL;
 
           /* Get the system default locales */
           localed_proxy = get_localed_dbus_proxy ();
