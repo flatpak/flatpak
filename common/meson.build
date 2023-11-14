@@ -176,6 +176,7 @@ sources = [
   'flatpak-instance.c',
   'flatpak-json-oci.c',
   'flatpak-json.c',
+  'flatpak-locale-utils.c',
   'flatpak-oci-registry.c',
   'flatpak-portal-error.c',
   'flatpak-progress.c',

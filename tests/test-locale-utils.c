@@ -9,7 +9,7 @@
 #include "libglnx.h"
 #include "flatpak.h"
 
-#include "flatpak-utils-private.h"
+#include "flatpak-locale-utils-private.h"
 
 #include "tests/testlib.h"
 

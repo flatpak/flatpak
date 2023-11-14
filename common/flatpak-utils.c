@@ -7401,42 +7401,6 @@ flatpak_subpaths_merge (char **subpaths1,
   return res;
 }
 
-const char * const *
-flatpak_get_locale_categories (void)
-{
-  /* See locale(7) for these categories */
-  static const char * const categories[] = {
-    "LANG", "LC_ALL", "LC_MESSAGES", "LC_ADDRESS", "LC_COLLATE", "LC_CTYPE",
-    "LC_IDENTIFICATION", "LC_MONETARY", "LC_MEASUREMENT", "LC_NAME", "LC_NUMERIC",
-    "LC_PAPER", "LC_TELEPHONE", "LC_TIME",
-    NULL
-  };
-
-  return categories;
-}
-
-char *
-flatpak_get_lang_from_locale (const char *locale)
-{
-  g_autofree char *lang = g_strdup (locale);
-  char *c;
-
-  c = strchr (lang, '@');
-  if (c != NULL)
-    *c = 0;
-  c = strchr (lang, '_');
-  if (c != NULL)
-    *c = 0;
-  c = strchr (lang, '.');
-  if (c != NULL)
-    *c = 0;
-
-  if (strcmp (lang, "C") == 0)
-    return NULL;
-
-  return g_steal_pointer (&lang);
-}
-
 gboolean
 flatpak_g_ptr_array_contains_string (GPtrArray *array, const char *str)
 {
@@ -7448,31 +7412,6 @@ flatpak_g_ptr_array_contains_string (GPtrArray *array, const char *str)
         return TRUE;
     }
   return FALSE;
-}
-
-char **
-flatpak_get_current_locale_langs (void)
-{
-  const char * const *categories = flatpak_get_locale_categories ();
-  GPtrArray *langs = g_ptr_array_new ();
-  int i;
-
-  for (; categories != NULL && *categories != NULL; categories++)
-    {
-      const gchar * const *locales = g_get_language_names_with_category (*categories);
-
-      for (i = 0; locales[i] != NULL; i++)
-        {
-          g_autofree char *lang = flatpak_get_lang_from_locale (locales[i]);
-          if (lang != NULL && !flatpak_g_ptr_array_contains_string (langs, lang))
-            g_ptr_array_add (langs, g_steal_pointer (&lang));
-        }
-    }
-
-  g_ptr_array_sort (langs, flatpak_strcmp0_ptr);
-  g_ptr_array_add (langs, NULL);
-
-  return (char **) g_ptr_array_free (langs, FALSE);
 }
 
 void
