@@ -106,6 +106,89 @@ test_lang_from_locale (void)
     }
 }
 
+static void
+test_langs_from_accountsservice (void)
+{
+  g_autoptr(GDBusProxy) proxy = flatpak_locale_get_accounts_dbus_proxy ();
+  g_autoptr(GPtrArray) langs = g_ptr_array_new_with_free_func (g_free);
+  gsize i;
+
+  if (proxy == NULL)
+    {
+      g_test_skip ("Unable to communicate with accountsservice");
+      return;
+    }
+
+  if (flatpak_get_all_langs_from_accounts_dbus (proxy, langs))
+    {
+      g_test_message ("Languages from accountsservice (new method):");
+
+      for (i = 0; i < langs->len; i++)
+        {
+          g_assert_nonnull (g_ptr_array_index (langs, i));
+          g_test_message ("- %s", (char *) g_ptr_array_index (langs, i));
+        }
+
+      g_test_message ("(end)");
+    }
+  else
+    {
+      g_test_message ("accountsservice doesn't support GetUsersLanguages");
+    }
+
+  g_ptr_array_set_size (langs, 0);
+  flatpak_get_locale_langs_from_accounts_dbus (proxy, langs);
+
+  g_test_message ("Languages from accountsservice (old method):");
+
+  for (i = 0; i < langs->len; i++)
+    {
+      g_assert_nonnull (g_ptr_array_index (langs, i));
+      g_test_message ("- %s", (char *) g_ptr_array_index (langs, i));
+    }
+
+  g_test_message ("(end)");
+
+  g_ptr_array_set_size (langs, 0);
+  flatpak_get_locale_langs_from_accounts_dbus_for_user (proxy, langs, getuid ());
+
+  g_test_message ("Languages from accountsservice (for uid %u only):", getuid ());
+
+  for (i = 0; i < langs->len; i++)
+    {
+      g_assert_nonnull (g_ptr_array_index (langs, i));
+      g_test_message ("- %s", (char *) g_ptr_array_index (langs, i));
+    }
+
+  g_test_message ("(end)");
+}
+
+static void
+test_langs_from_localed (void)
+{
+  g_autoptr(GDBusProxy) proxy = flatpak_locale_get_localed_dbus_proxy ();
+  g_autoptr(GPtrArray) langs = g_ptr_array_new_with_free_func (g_free);
+  gsize i;
+
+  if (proxy == NULL)
+    {
+      g_test_skip ("Unable to communicate with localed");
+      return;
+    }
+
+  flatpak_get_locale_langs_from_localed_dbus (proxy, langs);
+
+  g_test_message ("Languages from localed:");
+
+  for (i = 0; i < langs->len; i++)
+    {
+      g_assert_nonnull (g_ptr_array_index (langs, i));
+      g_test_message ("- %s", (char *) g_ptr_array_index (langs, i));
+    }
+
+  g_test_message ("(end)");
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -117,6 +200,9 @@ main (int argc, char *argv[])
   g_test_add_func ("/locale/get-system-locales", test_get_system_locales);
   g_test_add_func ("/locale/get-user-locales", test_get_user_locales);
   g_test_add_func ("/locale/lang-from-locale", test_lang_from_locale);
+  g_test_add_func ("/locale/langs-from-accountsservice",
+                   test_langs_from_accountsservice);
+  g_test_add_func ("/locale/langs-from-localed", test_langs_from_localed);
 
   res = g_test_run ();
 
