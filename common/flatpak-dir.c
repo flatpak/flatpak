@@ -16374,7 +16374,9 @@ get_system_locales (FlatpakDir *self)
       g_autoptr(GDBusProxy) accounts_proxy = NULL;
 
       accounts_proxy = get_accounts_dbus_proxy ();
-      if (!get_all_langs_from_accounts_dbus (accounts_proxy, langs))
+
+      if (accounts_proxy == NULL
+          || !get_all_langs_from_accounts_dbus (accounts_proxy, langs))
         {
           g_autoptr(GDBusProxy) localed_proxy = NULL;
 
@@ -16408,7 +16410,10 @@ get_user_locales (FlatpakDir *self)
       g_autoptr(GDBusProxy) accounts_proxy = NULL;
 
       accounts_proxy = get_accounts_dbus_proxy ();
-      get_locale_langs_from_accounts_dbus_for_user (accounts_proxy, langs, getuid ());
+
+      if (accounts_proxy != NULL)
+        get_locale_langs_from_accounts_dbus_for_user (accounts_proxy, langs, getuid ());
+
       g_ptr_array_add (langs, NULL);
 
       g_once_init_leave (&cached, langs);
