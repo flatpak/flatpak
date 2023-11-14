@@ -46,6 +46,8 @@ Features:
      * Turn off system-level crash reporting infrastructure during
        some unit tests that involve intentional assertion failures
 
+ * Add anchors to link to sections of flatpak-metadata documentation (#5582)
+
  * New translations: ka, nl.
 
 Bug fixes:
@@ -75,6 +77,13 @@ Bug fixes:
 
  * Make the tests fail more comprehensibly if a required tool is missing
    (#5020)
+
+ * Clean up `/var/tmp/flatpak-cache-*` directories on boot (#1119)
+
+ * Don't force `GIO_USE_VFS=local` for programs launched via flatpak-spawn
+   (#5567)
+
+ * Clarify documentation for D-Bus name ownership (#5582)
 
  * Translation updates: id, tr, zh_CN
    (#5332, #5565)
