@@ -1056,4 +1056,17 @@ char **               flatpak_dir_list_unused_refs                          (Fla
 const GPtrArray *flatpak_get_system_locales (void);
 const GPtrArray *flatpak_get_user_locales (void);
 
+/* Only for regression tests, should not be used directly */
+GDBusProxy *flatpak_locale_get_localed_dbus_proxy (void);
+void flatpak_get_locale_langs_from_localed_dbus (GDBusProxy *proxy,
+                                                 GPtrArray  *langs);
+GDBusProxy *flatpak_locale_get_accounts_dbus_proxy (void);
+gboolean flatpak_get_all_langs_from_accounts_dbus (GDBusProxy *proxy,
+                                                   GPtrArray  *langs);
+void flatpak_get_locale_langs_from_accounts_dbus (GDBusProxy *proxy,
+                                                  GPtrArray  *langs);
+void flatpak_get_locale_langs_from_accounts_dbus_for_user (GDBusProxy *proxy,
+                                                           GPtrArray  *langs,
+                                                           guint uid);
+
 #endif /* __FLATPAK_DIR_H__ */

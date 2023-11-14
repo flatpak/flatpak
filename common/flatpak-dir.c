@@ -16097,8 +16097,8 @@ flatpak_dir_get_remote_auto_install_authenticator_ref (FlatpakDir         *self,
 }
 
 
-static GDBusProxy *
-get_localed_dbus_proxy (void)
+GDBusProxy *
+flatpak_locale_get_localed_dbus_proxy (void)
 {
   const char *localed_bus_name = "org.freedesktop.locale1";
   const char *localed_object_path = "/org/freedesktop/locale1";
@@ -16114,8 +16114,8 @@ get_localed_dbus_proxy (void)
                                         NULL);
 }
 
-static void
-get_locale_langs_from_localed_dbus (GDBusProxy *proxy, GPtrArray *langs)
+void
+flatpak_get_locale_langs_from_localed_dbus (GDBusProxy *proxy, GPtrArray *langs)
 {
   g_autoptr(GVariant) locale_variant = NULL;
   g_autofree const gchar **strv = NULL;
@@ -16153,8 +16153,8 @@ get_locale_langs_from_localed_dbus (GDBusProxy *proxy, GPtrArray *langs)
     }
 }
 
-static GDBusProxy *
-get_accounts_dbus_proxy (void)
+GDBusProxy *
+flatpak_locale_get_accounts_dbus_proxy (void)
 {
   const char *accounts_bus_name = "org.freedesktop.Accounts";
   const char *accounts_object_path = "/org/freedesktop/Accounts";
@@ -16170,8 +16170,8 @@ get_accounts_dbus_proxy (void)
                                         NULL);
 }
 
-static gboolean
-get_all_langs_from_accounts_dbus (GDBusProxy *proxy, GPtrArray *langs)
+gboolean
+flatpak_get_all_langs_from_accounts_dbus (GDBusProxy *proxy, GPtrArray *langs)
 {
   g_auto(GStrv) all_langs = NULL;
   int i;
@@ -16209,8 +16209,8 @@ get_all_langs_from_accounts_dbus (GDBusProxy *proxy, GPtrArray *langs)
   return TRUE;
 }
 
-static void
-get_locale_langs_from_accounts_dbus (GDBusProxy *proxy, GPtrArray *langs)
+void
+flatpak_get_locale_langs_from_accounts_dbus (GDBusProxy *proxy, GPtrArray *langs)
 {
   const char *accounts_bus_name = "org.freedesktop.Accounts";
   const char *accounts_interface_name = "org.freedesktop.Accounts.User";
@@ -16266,8 +16266,8 @@ get_locale_langs_from_accounts_dbus (GDBusProxy *proxy, GPtrArray *langs)
     }
 }
 
-static void
-get_locale_langs_from_accounts_dbus_for_user (GDBusProxy *proxy, GPtrArray *langs, guint uid)
+void
+flatpak_get_locale_langs_from_accounts_dbus_for_user (GDBusProxy *proxy, GPtrArray *langs, guint uid)
 {
   const char *accounts_bus_name = "org.freedesktop.Accounts";
   const char *accounts_interface_name = "org.freedesktop.Accounts.User";
@@ -16373,22 +16373,22 @@ flatpak_get_system_locales (void)
       GPtrArray *langs = g_ptr_array_new_with_free_func (g_free);
       g_autoptr(GDBusProxy) accounts_proxy = NULL;
 
-      accounts_proxy = get_accounts_dbus_proxy ();
+      accounts_proxy = flatpak_locale_get_accounts_dbus_proxy ();
 
       if (accounts_proxy == NULL
-          || !get_all_langs_from_accounts_dbus (accounts_proxy, langs))
+          || !flatpak_get_all_langs_from_accounts_dbus (accounts_proxy, langs))
         {
           g_autoptr(GDBusProxy) localed_proxy = NULL;
 
           /* Get the system default locales */
-          localed_proxy = get_localed_dbus_proxy ();
+          localed_proxy = flatpak_locale_get_localed_dbus_proxy ();
           if (localed_proxy != NULL)
-            get_locale_langs_from_localed_dbus (localed_proxy, langs);
+            flatpak_get_locale_langs_from_localed_dbus (localed_proxy, langs);
 
           /* Now add the user account locales from AccountsService. If accounts_proxy is
            * not NULL, it means that AccountsService exists */
           if (accounts_proxy != NULL)
-            get_locale_langs_from_accounts_dbus (accounts_proxy, langs);
+            flatpak_get_locale_langs_from_accounts_dbus (accounts_proxy, langs);
         }
 
       g_ptr_array_add (langs, NULL);
@@ -16409,10 +16409,10 @@ flatpak_get_user_locales (void)
       GPtrArray *langs = g_ptr_array_new_with_free_func (g_free);
       g_autoptr(GDBusProxy) accounts_proxy = NULL;
 
-      accounts_proxy = get_accounts_dbus_proxy ();
+      accounts_proxy = flatpak_locale_get_accounts_dbus_proxy ();
 
       if (accounts_proxy != NULL)
-        get_locale_langs_from_accounts_dbus_for_user (accounts_proxy, langs, getuid ());
+        flatpak_get_locale_langs_from_accounts_dbus_for_user (accounts_proxy, langs, getuid ());
 
       g_ptr_array_add (langs, NULL);
 
