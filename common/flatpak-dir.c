@@ -16363,8 +16363,8 @@ flatpak_dir_get_config_strv (FlatpakDir *self, char *key)
   return NULL;
 }
 
-static const GPtrArray *
-get_system_locales (FlatpakDir *self)
+const GPtrArray *
+flatpak_get_system_locales (void)
 {
   static GPtrArray *cached = NULL;
 
@@ -16399,8 +16399,8 @@ get_system_locales (FlatpakDir *self)
   return (const GPtrArray *)cached;
 }
 
-static const GPtrArray *
-get_user_locales (FlatpakDir *self)
+const GPtrArray *
+flatpak_get_user_locales (void)
 {
   static GPtrArray *cached = NULL;
 
@@ -16435,14 +16435,14 @@ flatpak_dir_get_default_locales (FlatpakDir *self)
       g_auto(GStrv) locale_langs = flatpak_get_current_locale_langs ();
       g_auto(GStrv) merged = NULL;
 
-      langs = get_user_locales (self);
+      langs = flatpak_get_user_locales ();
       merged = flatpak_strv_merge (extra_languages, (char **) langs->pdata);
 
       return sort_strv (flatpak_strv_merge (merged, locale_langs));
     }
 
   /* Then get the system default locales */
-  langs = get_system_locales (self);
+  langs = flatpak_get_system_locales ();
 
   return sort_strv (flatpak_strv_merge (extra_languages, (char **) langs->pdata));
 }
@@ -16468,14 +16468,14 @@ flatpak_dir_get_default_locale_languages (FlatpakDir *self)
       g_auto(GStrv) locale_langs = flatpak_get_current_locale_langs ();
       g_auto(GStrv) merged = NULL;
 
-      langs = get_user_locales (self);
+      langs = flatpak_get_user_locales ();
       merged = flatpak_strv_merge (extra_languages, (char **) langs->pdata);
 
       return sort_strv (flatpak_strv_merge (merged, locale_langs));
     }
 
   /* Then get the system default locales */
-  langs = get_system_locales (self);
+  langs = flatpak_get_system_locales ();
 
   return sort_strv (flatpak_strv_merge (extra_languages, (char **) langs->pdata));
 }

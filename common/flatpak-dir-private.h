@@ -1053,4 +1053,7 @@ char **               flatpak_dir_list_unused_refs                          (Fla
                                                                              GCancellable                  *cancellable,
                                                                              GError                       **error);
 
+const GPtrArray *flatpak_get_system_locales (void);
+const GPtrArray *flatpak_get_user_locales (void);
+
 #endif /* __FLATPAK_DIR_H__ */
