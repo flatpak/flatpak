@@ -633,19 +633,6 @@ test_subpaths_merge (void)
 }
 
 static void
-test_lang_from_locale (void)
-{
-  g_autofree char *lang = NULL;
-
-  lang = flatpak_get_lang_from_locale ("en_US.utf8");
-  g_assert_cmpstr (lang, ==, "en");
-  g_clear_pointer (&lang, g_free);
-
-  lang = flatpak_get_lang_from_locale ("sv_FI@euro");
-  g_assert_cmpstr (lang, ==, "sv");
-}
-
-static void
 test_parse_appdata (void)
 {
   const char appdata1[] =
@@ -1376,7 +1363,6 @@ main (int argc, char *argv[])
   g_test_add_func ("/common/string-to-unsigned", test_string_to_unsigned);
   g_test_add_func ("/common/levenshtein", test_levenshtein);
   g_test_add_func ("/common/subpaths-merge", test_subpaths_merge);
-  g_test_add_func ("/common/lang-from-locale", test_lang_from_locale);
   g_test_add_func ("/common/appdata", test_parse_appdata);
   g_test_add_func ("/common/name-matching", test_name_matching);
   g_test_add_func ("/common/filter_parser", test_filter_parser);

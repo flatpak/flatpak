@@ -108,6 +108,7 @@ c_tests = [
       libglnx_testlib_dep,
     ],
   }],
+  ['test-locale-utils', {}],
   ['test-portal', {
     'extra_sources' : [
       portal_gdbus[0],

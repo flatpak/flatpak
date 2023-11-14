@@ -120,6 +120,10 @@ test_instance_SOURCES = \
 	tests/test-instance.c \
 	$(NULL)
 
+test_locale_utils_CFLAGS = $(testcommon_CFLAGS)
+test_locale_utils_LDADD = $(testcommon_LDADD) libtestlib.la
+test_locale_utils_SOURCES = tests/test-locale-utils.c
+
 test_portal_CFLAGS = $(testcommon_CFLAGS)
 test_portal_LDADD = $(testcommon_LDADD) libtestlib.la
 test_portal_SOURCES = \
@@ -300,6 +304,7 @@ test_programs = \
 	test-context \
 	test-exports \
 	test-instance \
+	test-locale-utils \
 	test-portal \
 	testapp \
 	testcommon \
