@@ -1,3 +1,49 @@
+Changes in 1.14.5
+~~~~~~~~~~~~~~~~~
+Released: not yet
+
+Features:
+
+ * Stop http transfers if a download in progress becomes very slow (#5519)
+
+ * Add anchors to link to sections of flatpak-metadata documentation (#5582)
+
+Bug fixes:
+
+ * Avoid warnings processing symbolic links with GLib >= 2.77.0, and
+   with GLib 2.76.0 (GLib 2.76.1 or later silences these warnings)
+
+ * Bypass page cache for backend requests in revokefs, fixing installation
+   errors with libostree 2023.4 (#5452)
+
+ * Show AppStream metadata in `flatpak remote-info` as intended
+   (#5523; regression in 1.9.1)
+
+ * Don't let Flatpak apps inherit VK_DRIVER_FILES or VK_ICD_FILENAMES
+   from the host system, which would be wrong for the sandbox (#5553)
+
+ * Fix build failure with prereleases of libappstream 0.17.x (#5472)
+
+ * Forward-compatibility with libappstream 1.0 (#5563)
+
+ * Fix a memory leak (#5329)
+
+ * Fix compiler warnings (#5362, #5366)
+
+ * Make the tests fail more comprehensibly if a required tool is missing
+   (#5020)
+
+ * Clean up `/var/tmp/flatpak-cache-*` directories on boot (#1119)
+
+ * Don't force `GIO_USE_VFS=local` for programs launched via flatpak-spawn
+   (#5567)
+
+ * Clarify documentation for D-Bus name ownership (#5582)
+
+Internal changes:
+
+ * CI improvements (#5381)
+
 Changes in 1.14.4
 ~~~~~~~~~~~~~~~~~
 Released: 2023-03-16
