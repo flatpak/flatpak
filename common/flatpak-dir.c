@@ -16387,11 +16387,11 @@ get_system_locales (FlatpakDir *self)
            * not NULL, it means that AccountsService exists */
           if (accounts_proxy != NULL)
             get_locale_langs_from_accounts_dbus (accounts_proxy, langs);
-
-          g_ptr_array_add (langs, NULL);
-
-          g_once_init_leave (&cached, langs);
         }
+
+      g_ptr_array_add (langs, NULL);
+
+      g_once_init_leave (&cached, langs);
     }
 
   return (const GPtrArray *)cached;
