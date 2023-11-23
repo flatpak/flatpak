@@ -7,21 +7,22 @@
 # Christian Kirbach <christian.kirbach@gmail.com>, 2017, 2021.
 # Philipp Kiemle <philipp.kiemle@gmail.com>, 2021.
 # Ettore Atalan <atalanttore@gmail.com>, 2022.
+# Philipp Trulson <philipp@trulson.de>, 2023.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2023-11-14 18:55+0000\n"
-"PO-Revision-Date: 2022-08-14 23:52+0200\n"
-"Last-Translator: Ettore Atalan <atalanttore@gmail.com>\n"
+"PO-Revision-Date: 2023-11-23 23:33+0100\n"
+"Last-Translator: Philipp Trulson <philipp@trulson.de>\n"
 "Language-Team: German <gnome-de@gnome.org>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.1.1\n"
+"X-Generator: Poedit 3.4.1\n"
 
 #: app/flatpak-builtins-build-bundle.c:57
 msgid "Export runtime instead of app"
@@ -3527,7 +3528,7 @@ msgstr "Wird installiert …"
 #: app/flatpak-cli-transaction.c:410
 #, c-format
 msgid "Installing %d/%d…"
-msgstr "%d wird installiert/%d …"
+msgstr "Installiere %d/%d …"
 
 #: app/flatpak-cli-transaction.c:415
 msgid "Updating…"
@@ -3536,7 +3537,7 @@ msgstr "Wird aktualisiert …"
 #: app/flatpak-cli-transaction.c:417
 #, c-format
 msgid "Updating %d/%d…"
-msgstr "%d wird aktualisiert/%d …"
+msgstr "Aktualisiere %d/%d …"
 
 #: app/flatpak-cli-transaction.c:422
 msgid "Uninstalling…"
@@ -3545,7 +3546,7 @@ msgstr "Wird deinstalliert …"
 #: app/flatpak-cli-transaction.c:424
 #, c-format
 msgid "Uninstalling %d/%d…"
-msgstr "%d wird deinstalliert/%d …"
+msgstr "Deinstalliere %d/%d …"
 
 #: app/flatpak-cli-transaction.c:490 app/flatpak-quiet-transaction.c:161
 #, c-format
