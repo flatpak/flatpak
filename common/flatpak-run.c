@@ -534,6 +534,9 @@ static const ExportData default_exports[] = {
    * outside the sandbox is somewhere else. Don't allow a different
    * setting from outside the sandbox to overwrite this. */
   {"XDG_RUNTIME_DIR", NULL},
+  /* Ensure our container environment variable takes precedence over the one
+   * set by a container manager. */
+  {"container", NULL},
 
   /* Some env vars are common enough and will affect the sandbox badly
      if set on the host. We clear these always. If updating this list,
