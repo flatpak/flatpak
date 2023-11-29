@@ -2710,9 +2710,21 @@ check_parental_controls (FlatpakDecomposed *app_ref,
   g_autoptr(GDesktopAppInfo) app_info = NULL;
   gboolean allowed = FALSE;
 
-  system_bus = g_bus_get_sync (G_BUS_TYPE_SYSTEM, NULL, error);
+  system_bus = g_bus_get_sync (G_BUS_TYPE_SYSTEM, NULL, &local_error);
   if (system_bus == NULL)
-    return FALSE;
+    {
+      /* Since the checks below allow access when malcontent or
+       * accounts-service aren't available on the bus, this whole routine can
+       * be trivially bypassed by setting DBUS_SYSTEM_BUS_ADDRESS to a
+       * temporary dbus-daemon. Not being able to connect to the system bus is
+       * basically equivalent.
+       */
+      g_debug ("Skipping parental controls check for %s since D-Bus system "
+               "bus connection failed: %s",
+               flatpak_decomposed_get_ref (app_ref),
+               local_error ? local_error->message : "unknown reason");
+      return TRUE;
+    }
 
   manager = mct_manager_new (system_bus);
   app_filter = mct_manager_get_app_filter (manager, getuid (),
