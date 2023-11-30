@@ -7989,6 +7989,7 @@ flatpak_export_dir (GFile        *source,
     "share/gnome-shell/search-providers",  "../../..",
     "share/mime/packages",                 "../../..",
     "share/metainfo",                      "../..",
+    "share/xdg-desktop-portal/devices",    "../../..",
     "bin",                                 "..",
   };
   int i;
