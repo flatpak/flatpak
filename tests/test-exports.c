@@ -226,7 +226,7 @@ test_full_context (void)
                         FLATPAK_METADATA_GROUP_CONTEXT,
                         FLATPAK_METADATA_KEY_SOCKETS,
                         "x11;wayland;pulseaudio;session-bus;system-bus;"
-                        "fallback-x11;ssh-auth;pcsc;cups;");
+                        "fallback-x11;ssh-auth;pcsc;cups;inherit-wayland-socket;");
   g_key_file_set_value (keyfile,
                         FLATPAK_METADATA_GROUP_CONTEXT,
                         FLATPAK_METADATA_KEY_DEVICES,
@@ -281,6 +281,7 @@ test_full_context (void)
   g_assert_cmpuint (context->sockets, ==,
                     (FLATPAK_CONTEXT_SOCKET_X11 |
                      FLATPAK_CONTEXT_SOCKET_WAYLAND |
+                     FLATPAK_CONTEXT_SOCKET_INHERIT_WAYLAND_SOCKET |
                      FLATPAK_CONTEXT_SOCKET_PULSEAUDIO |
                      FLATPAK_CONTEXT_SOCKET_SESSION_BUS |
                      FLATPAK_CONTEXT_SOCKET_SYSTEM_BUS |
@@ -375,6 +376,7 @@ test_full_context (void)
   i = 0;
   g_assert_cmpstr (strv[i++], ==, "cups");
   g_assert_cmpstr (strv[i++], ==, "fallback-x11");
+  g_assert_cmpstr (strv[i++], ==, "inherit-wayland-socket");
   g_assert_cmpstr (strv[i++], ==, "pcsc");
   g_assert_cmpstr (strv[i++], ==, "pulseaudio");
   g_assert_cmpstr (strv[i++], ==, "session-bus");
