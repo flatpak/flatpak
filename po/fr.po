@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2023-03-16 09:42+0000\n"
+"POT-Creation-Date: 2023-12-08 12:15+0000\n"
 "PO-Revision-Date: 2021-11-30 21:01-0500\n"
 "Last-Translator: Hari Rana / TheEvilSkeleton <theevilskeleton@riseup.net>\n"
 "Language-Team: \n"
@@ -162,14 +162,14 @@ msgid "'%s' is not a valid repository: "
 msgstr "`%s` n'est pas un dépôt valide: "
 
 #: app/flatpak-builtins-build-bundle.c:660 app/flatpak-builtins-build-sign.c:87
-#: common/flatpak-dir.c:13075
+#: common/flatpak-dir.c:13077
 #, c-format
 msgid "'%s' is not a valid name: %s"
 msgstr "'%s' n'est pas un nom valide: %s"
 
 #: app/flatpak-builtins-build-bundle.c:663
 #: app/flatpak-builtins-build-export.c:864 app/flatpak-builtins-build-sign.c:90
-#: common/flatpak-dir.c:13081
+#: common/flatpak-dir.c:13083
 #, c-format
 msgid "'%s' is not a valid branch name: %s"
 msgstr "'%s' n'est pas un nom de branche valide: %s"
@@ -257,7 +257,7 @@ msgstr ""
 msgid "Missing '=' in bind mount option '%s'"
 msgstr ""
 
-#: app/flatpak-builtins-build.c:606 common/flatpak-run.c:4773
+#: app/flatpak-builtins-build.c:606 common/flatpak-run.c:4775
 msgid "Unable to start app"
 msgstr ""
 
@@ -2099,7 +2099,7 @@ msgstr ""
 msgid "APP BRANCH - Make branch of application current"
 msgstr ""
 
-#: app/flatpak-builtins-make-current.c:69 app/flatpak-builtins-run.c:156
+#: app/flatpak-builtins-make-current.c:69 app/flatpak-builtins-run.c:155
 msgid "APP must be specified"
 msgstr ""
 
@@ -3051,7 +3051,7 @@ msgstr ""
 msgid "APP [ARGUMENT…] - Run an app"
 msgstr ""
 
-#: app/flatpak-builtins-run.c:264
+#: app/flatpak-builtins-run.c:265
 #, c-format
 msgid "runtime/%s/%s/%s not installed"
 msgstr ""
@@ -3076,7 +3076,7 @@ msgstr ""
 msgid "TEXT must be specified"
 msgstr ""
 
-#: app/flatpak-builtins-search.c:329
+#: app/flatpak-builtins-search.c:338
 msgid "No matches found"
 msgstr ""
 
@@ -4043,8 +4043,8 @@ msgid "%s already installed"
 msgstr ""
 
 #: app/flatpak-quiet-transaction.c:168 common/flatpak-dir.c:2970
-#: common/flatpak-dir.c:3669 common/flatpak-dir.c:15680
-#: common/flatpak-dir.c:15970 common/flatpak-transaction.c:2674
+#: common/flatpak-dir.c:3669 common/flatpak-dir.c:15682
+#: common/flatpak-dir.c:15972 common/flatpak-transaction.c:2674
 #: common/flatpak-transaction.c:2729 common/flatpak-utils.c:1193
 #: common/flatpak-utils.c:1286
 #, c-format
@@ -4375,7 +4375,7 @@ msgid "Couldn't find ref %s in remote %s"
 msgstr ""
 
 #: common/flatpak-dir.c:1105 common/flatpak-dir.c:5900
-#: common/flatpak-utils.c:6933 common/flatpak-utils.c:6938
+#: common/flatpak-utils.c:6934 common/flatpak-utils.c:6939
 msgid "Image is not a manifest"
 msgstr ""
 
@@ -4512,7 +4512,7 @@ msgstr ""
 msgid "While pulling %s from remote %s: "
 msgstr ""
 
-#: common/flatpak-dir.c:6258 common/flatpak-utils.c:6830
+#: common/flatpak-dir.c:6258 common/flatpak-utils.c:6831
 msgid "GPG signatures found, but none are in trusted keyring"
 msgstr ""
 
@@ -4733,96 +4733,96 @@ msgid ""
 "URL passed to remote-add was valid."
 msgstr ""
 
-#: common/flatpak-dir.c:12547
+#: common/flatpak-dir.c:12549
 #, c-format
 msgid "Invalid checksum for indexed summary %s for remote '%s'"
 msgstr ""
 
-#: common/flatpak-dir.c:13170
+#: common/flatpak-dir.c:13172
 #, c-format
 msgid "Multiple branches available for %s, you must specify one of: "
 msgstr ""
 
-#: common/flatpak-dir.c:13236
+#: common/flatpak-dir.c:13238
 #, c-format
 msgid "Nothing matches %s"
 msgstr ""
 
-#: common/flatpak-dir.c:13344
+#: common/flatpak-dir.c:13346
 #, c-format
 msgid "Can't find ref %s%s%s%s%s"
 msgstr ""
 
-#: common/flatpak-dir.c:13387
+#: common/flatpak-dir.c:13389
 #, c-format
 msgid "Error searching remote %s: %s"
 msgstr ""
 
-#: common/flatpak-dir.c:13484
+#: common/flatpak-dir.c:13486
 #, c-format
 msgid "Error searching local repository: %s"
 msgstr ""
 
-#: common/flatpak-dir.c:13621
+#: common/flatpak-dir.c:13623
 #, c-format
 msgid "%s/%s/%s not installed"
 msgstr ""
 
-#: common/flatpak-dir.c:13824
+#: common/flatpak-dir.c:13826
 #, c-format
 msgid "Could not find installation %s"
 msgstr ""
 
-#: common/flatpak-dir.c:14368
+#: common/flatpak-dir.c:14370
 #, c-format
 msgid "Invalid file format, no %s group"
 msgstr ""
 
-#: common/flatpak-dir.c:14373 common/flatpak-utils.c:2335
+#: common/flatpak-dir.c:14375 common/flatpak-utils.c:2335
 #, c-format
 msgid "Invalid version %s, only 1 supported"
 msgstr ""
 
-#: common/flatpak-dir.c:14378 common/flatpak-dir.c:14383
+#: common/flatpak-dir.c:14380 common/flatpak-dir.c:14385
 #, c-format
 msgid "Invalid file format, no %s specified"
 msgstr ""
 
 #. Check some minimal size so we don't get crap
-#: common/flatpak-dir.c:14403
+#: common/flatpak-dir.c:14405
 msgid "Invalid file format, gpg key invalid"
 msgstr ""
 
-#: common/flatpak-dir.c:14431 common/flatpak-utils.c:2408
+#: common/flatpak-dir.c:14433 common/flatpak-utils.c:2408
 msgid "Collection ID requires GPG key to be provided"
 msgstr ""
 
-#: common/flatpak-dir.c:14474
+#: common/flatpak-dir.c:14476
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr ""
 
-#: common/flatpak-dir.c:14475
+#: common/flatpak-dir.c:14477
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr ""
 
-#: common/flatpak-dir.c:14709
+#: common/flatpak-dir.c:14711
 #, c-format
 msgid "Can't remove remote '%s' with installed ref %s (at least)"
 msgstr ""
 
-#: common/flatpak-dir.c:14808
+#: common/flatpak-dir.c:14810
 #, c-format
 msgid "Invalid character '/' in remote name: %s"
 msgstr ""
 
-#: common/flatpak-dir.c:14814
+#: common/flatpak-dir.c:14816
 #, c-format
 msgid "No configuration for remote %s specified"
 msgstr ""
 
-#: common/flatpak-dir.c:16461
+#: common/flatpak-dir.c:16463
 #, c-format
 msgid "Skipping deletion of mirror ref (%s, %s)…\n"
 msgstr ""
@@ -5159,90 +5159,90 @@ msgstr ""
 msgid "Failed to sync with dbus proxy"
 msgstr ""
 
-#: common/flatpak-run.c:2189
+#: common/flatpak-run.c:2191
 msgid "No systemd user session available, cgroups not available"
 msgstr ""
 
-#: common/flatpak-run.c:2682
+#: common/flatpak-run.c:2684
 msgid "Unable to allocate instance id"
 msgstr ""
 
-#: common/flatpak-run.c:2818 common/flatpak-run.c:2828
+#: common/flatpak-run.c:2820 common/flatpak-run.c:2830
 #, c-format
 msgid "Failed to open flatpak-info file: %s"
 msgstr ""
 
-#: common/flatpak-run.c:2857
+#: common/flatpak-run.c:2859
 #, c-format
 msgid "Failed to open bwrapinfo.json file: %s"
 msgstr ""
 
-#: common/flatpak-run.c:2882
+#: common/flatpak-run.c:2884
 #, c-format
 msgid "Failed to write to instance id fd: %s"
 msgstr ""
 
-#: common/flatpak-run.c:3272
+#: common/flatpak-run.c:3274
 msgid "Initialize seccomp failed"
 msgstr ""
 
-#: common/flatpak-run.c:3311
+#: common/flatpak-run.c:3313
 #, c-format
 msgid "Failed to add architecture to seccomp filter: %s"
 msgstr ""
 
-#: common/flatpak-run.c:3319
+#: common/flatpak-run.c:3321
 #, c-format
 msgid "Failed to add multiarch architecture to seccomp filter: %s"
 msgstr ""
 
-#: common/flatpak-run.c:3351 common/flatpak-run.c:3373
+#: common/flatpak-run.c:3353 common/flatpak-run.c:3375
 #, c-format
 msgid "Failed to block syscall %d: %s"
 msgstr ""
 
-#: common/flatpak-run.c:3406
+#: common/flatpak-run.c:3408
 #, c-format
 msgid "Failed to export bpf: %s"
 msgstr ""
 
-#: common/flatpak-run.c:3657
+#: common/flatpak-run.c:3659
 #, c-format
 msgid "Failed to open ‘%s’"
 msgstr ""
 
-#: common/flatpak-run.c:3943
+#: common/flatpak-run.c:3945
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr ""
 
-#: common/flatpak-run.c:3950
+#: common/flatpak-run.c:3952
 msgid "Can't open generated ld.so.cache"
 msgstr ""
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-run.c:4061
+#: common/flatpak-run.c:4063
 #, c-format
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr ""
 
-#: common/flatpak-run.c:4163
+#: common/flatpak-run.c:4165
 msgid ""
 "\"flatpak run\" is not intended to be run as `sudo flatpak run`. Use `sudo -"
 "i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell."
 msgstr ""
 
-#: common/flatpak-run.c:4346
+#: common/flatpak-run.c:4348
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr ""
 
-#: common/flatpak-run.c:4361
+#: common/flatpak-run.c:4363
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr ""
 
-#: common/flatpak-run.c:4370
+#: common/flatpak-run.c:4372
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr ""
@@ -5463,78 +5463,78 @@ msgstr ""
 msgid "No extra data sources"
 msgstr ""
 
-#: common/flatpak-utils.c:5430
+#: common/flatpak-utils.c:5431
 #, c-format
 msgid "Error copying 64x64 icon for component %s: %s\n"
 msgstr ""
 
-#: common/flatpak-utils.c:5436
+#: common/flatpak-utils.c:5437
 #, c-format
 msgid "Error copying 128x128 icon for component %s: %s\n"
 msgstr ""
 
-#: common/flatpak-utils.c:5683
+#: common/flatpak-utils.c:5684
 #, c-format
 msgid "%s is end-of-life, ignoring for appstream"
 msgstr ""
 
-#: common/flatpak-utils.c:5718
+#: common/flatpak-utils.c:5719
 #, c-format
 msgid "No appstream data for %s: %s\n"
 msgstr ""
 
-#: common/flatpak-utils.c:6688
+#: common/flatpak-utils.c:6689
 msgid "Invalid bundle, no ref in metadata"
 msgstr ""
 
-#: common/flatpak-utils.c:6790
+#: common/flatpak-utils.c:6791
 #, c-format
 msgid "Collection ‘%s’ of bundle doesn’t match collection ‘%s’ of remote"
 msgstr ""
 
-#: common/flatpak-utils.c:6867
+#: common/flatpak-utils.c:6868
 msgid "Metadata in header and app are inconsistent"
 msgstr ""
 
-#: common/flatpak-utils.c:6952 common/flatpak-utils.c:7111
+#: common/flatpak-utils.c:6953 common/flatpak-utils.c:7112
 msgid "Invalid OCI image config"
 msgstr ""
 
-#: common/flatpak-utils.c:7014 common/flatpak-utils.c:7260
+#: common/flatpak-utils.c:7015 common/flatpak-utils.c:7261
 #, c-format
 msgid "Wrong layer checksum, expected %s, was %s"
 msgstr ""
 
-#: common/flatpak-utils.c:7094
+#: common/flatpak-utils.c:7095
 #, c-format
 msgid "No ref specified for OCI image %s"
 msgstr ""
 
-#: common/flatpak-utils.c:7100
+#: common/flatpak-utils.c:7101
 #, c-format
 msgid "Wrong ref (%s) specified for OCI image %s, expected %s"
 msgstr ""
 
-#: common/flatpak-utils.c:8301
+#: common/flatpak-utils.c:8302
 #, c-format
 msgid "Invalid require-flatpak argument %s"
 msgstr ""
 
-#: common/flatpak-utils.c:8311 common/flatpak-utils.c:8330
+#: common/flatpak-utils.c:8312 common/flatpak-utils.c:8331
 #, c-format
 msgid "%s needs a later flatpak version (%s)"
 msgstr ""
 
-#: common/flatpak-utils.c:8374
+#: common/flatpak-utils.c:8375
 msgid "Empty string is not a number"
 msgstr ""
 
-#: common/flatpak-utils.c:8400
+#: common/flatpak-utils.c:8401
 #, c-format
 msgid "“%s” is not an unsigned number"
 msgstr ""
 
-#: common/flatpak-utils.c:8410
+#: common/flatpak-utils.c:8411
 #, c-format
 msgid "Number “%s” is out of bounds [%s, %s]"
 msgstr ""
@@ -5551,40 +5551,40 @@ msgstr ""
 msgid "Invalid token"
 msgstr ""
 
-#: portal/flatpak-portal.c:2261
+#: portal/flatpak-portal.c:2264
 msgid "No portal support found"
 msgstr ""
 
-#: portal/flatpak-portal.c:2267
+#: portal/flatpak-portal.c:2270
 msgid "Deny"
 msgstr ""
 
-#: portal/flatpak-portal.c:2269
+#: portal/flatpak-portal.c:2272
 msgid "Update"
 msgstr ""
 
-#: portal/flatpak-portal.c:2274
+#: portal/flatpak-portal.c:2277
 #, c-format
 msgid "Update %s?"
 msgstr ""
 
-#: portal/flatpak-portal.c:2286
+#: portal/flatpak-portal.c:2289
 msgid "The application wants to update itself."
 msgstr ""
 
-#: portal/flatpak-portal.c:2287
+#: portal/flatpak-portal.c:2290
 msgid "Update access can be changed any time from the privacy settings."
 msgstr ""
 
-#: portal/flatpak-portal.c:2312
+#: portal/flatpak-portal.c:2315
 msgid "Application update not allowed"
 msgstr ""
 
-#: portal/flatpak-portal.c:2469
+#: portal/flatpak-portal.c:2472
 msgid "Self update not supported, new version requires new permissions"
 msgstr ""
 
-#: portal/flatpak-portal.c:2651 portal/flatpak-portal.c:2668
+#: portal/flatpak-portal.c:2654 portal/flatpak-portal.c:2671
 msgid "Update ended unexpectedly"
 msgstr ""
 
