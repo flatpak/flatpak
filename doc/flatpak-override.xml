@@ -137,7 +137,7 @@
                     Expose a well-known socket to the application. This overrides to
                     the Context section from the application metadata.
                     <arg choice="plain">SOCKET</arg> must be one of: x11, wayland, fallback-x11, pulseaudio, system-bus, session-bus,
-                    ssh-auth, pcsc, cups, gpg-agent.
+                    ssh-auth, pcsc, cups, gpg-agent, inherit-wayland-socket.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
@@ -149,7 +149,7 @@
                     Don't expose a well-known socket to the application. This overrides to
                     the Context section from the application metadata.
                     <arg choice="plain">SOCKET</arg> must be one of: x11, wayland, fallback-x11, pulseaudio, system-bus, session-bus,
-                    ssh-auth, pcsc, cups, gpg-agent.
+                    ssh-auth, pcsc, cups, gpg-agent, inherit-wayland-socket.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>

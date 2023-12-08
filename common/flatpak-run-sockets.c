@@ -178,12 +178,15 @@ flatpak_run_add_socket_args_environment (FlatpakBwrap         *bwrap,
 {
   gboolean has_wayland = FALSE;
   gboolean allow_x11;
+  gboolean inherit_wayland_socket;
 
   if (sockets & FLATPAK_CONTEXT_SOCKET_WAYLAND)
     {
       g_info ("Allowing wayland access");
       g_assert (app_id && instance_id);
-      has_wayland = flatpak_run_add_wayland_args (bwrap, app_id, instance_id);
+      inherit_wayland_socket = (sockets & FLATPAK_CONTEXT_SOCKET_INHERIT_WAYLAND_SOCKET) != 0;
+      has_wayland = flatpak_run_add_wayland_args (bwrap, app_id, instance_id,
+                                                  inherit_wayland_socket);
     }
 
   if ((sockets & FLATPAK_CONTEXT_SOCKET_FALLBACK_X11) != 0)

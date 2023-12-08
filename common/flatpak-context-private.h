@@ -50,6 +50,7 @@ typedef enum {
   FLATPAK_CONTEXT_SOCKET_PCSC        = 1 << 7,
   FLATPAK_CONTEXT_SOCKET_CUPS        = 1 << 8,
   FLATPAK_CONTEXT_SOCKET_GPG_AGENT   = 1 << 9,
+  FLATPAK_CONTEXT_SOCKET_INHERIT_WAYLAND_SOCKET = 1 << 10,
 } FlatpakContextSockets;
 
 typedef enum {

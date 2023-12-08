@@ -61,6 +61,7 @@ const char *flatpak_context_sockets[] = {
   "pcsc",
   "cups",
   "gpg-agent",
+  "inherit-wayland-socket",
   NULL
 };
 
