@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..20"
+echo "1..21"
 
 # Use stable rather than master as the branch so we can test that the run
 # command automatically finds the branch correctly
@@ -75,6 +75,13 @@ run org.test.Hello &> hello_out
 assert_file_has_content hello_out '^Hello world, from a sandbox$'
 
 ok "hello"
+
+true > value-in-sandbox
+head value-in-sandbox >&2
+run_sh org.test.Hello 'echo fd passthrough >&5' 5>value-in-sandbox
+assert_file_has_content value-in-sandbox '^fd passthrough$'
+
+ok "redirected fds can pass through to the app"
 
 # XDG_RUNTIME_DIR is set to <temp directory>/runtime by libtest.sh,
 # so we always have the necessary setup to reproduce #4372
