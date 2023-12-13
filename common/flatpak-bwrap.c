@@ -530,6 +530,16 @@ flatpak_bwrap_child_setup_cb (gpointer user_data)
   flatpak_bwrap_child_setup (fd_array, TRUE);
 }
 
+/* Unset FD_CLOEXEC on the array of fds passed in @user_data,
+ * but do not set FD_CLOEXEC on all other fds */
+void
+flatpak_bwrap_child_setup_inherit_fds_cb (gpointer user_data)
+{
+  GArray *fd_array = user_data;
+
+  flatpak_bwrap_child_setup (fd_array, FALSE);
+}
+
 /* Add a --sync-fd argument for bwrap(1). Returns the write end of the pipe on
  * success, or -1 on error. */
 int

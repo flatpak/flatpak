@@ -90,6 +90,7 @@ void          flatpak_bwrap_populate_runtime_dir (FlatpakBwrap *bwrap,
                                                   const char *shared_xdg_runtime_dir);
 
 void          flatpak_bwrap_child_setup_cb (gpointer user_data);
+void          flatpak_bwrap_child_setup_inherit_fds_cb (gpointer user_data);
 void          flatpak_bwrap_child_setup (GArray *fd_array,
                                          gboolean close_fd_workaround);
 

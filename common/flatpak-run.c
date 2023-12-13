@@ -3441,11 +3441,17 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
       char pid_str[64];
       g_autofree char *pid_path = NULL;
       GSpawnFlags spawn_flags;
+      GSpawnChildSetupFunc child_setup;
 
       spawn_flags = G_SPAWN_SEARCH_PATH;
       if (flags & FLATPAK_RUN_FLAG_DO_NOT_REAP ||
           (flags & FLATPAK_RUN_FLAG_BACKGROUND) == 0)
         spawn_flags |= G_SPAWN_DO_NOT_REAP_CHILD;
+
+      if (flags & FLATPAK_RUN_FLAG_BACKGROUND)
+        child_setup = flatpak_bwrap_child_setup_cb;
+      else
+        child_setup = flatpak_bwrap_child_setup_inherit_fds_cb;
 
       /* We use LEAVE_DESCRIPTORS_OPEN to work around dead-lock, see flatpak_close_fds_workaround */
       spawn_flags |= G_SPAWN_LEAVE_DESCRIPTORS_OPEN;
@@ -3460,7 +3466,7 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
                           (char **) bwrap->argv->pdata,
                           bwrap->envp,
                           spawn_flags,
-                          flatpak_bwrap_child_setup_cb, bwrap->fds,
+                          child_setup, bwrap->fds,
                           &child_pid,
                           error))
         return FALSE;
