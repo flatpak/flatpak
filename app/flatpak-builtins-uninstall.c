@@ -69,6 +69,7 @@ typedef struct
 {
   FlatpakDir *dir;
   GHashTable *refs_hash;
+  GHashTable *unused_refs_hash;
   GHashTable *runtime_app_map;
   GHashTable *extension_app_map;
   GPtrArray  *refs;
@@ -82,6 +83,7 @@ uninstall_dir_new (FlatpakDir *dir)
   udir->dir = g_object_ref (dir);
   udir->refs = g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_decomposed_unref);
   udir->refs_hash = g_hash_table_new_full ((GHashFunc)flatpak_decomposed_hash, (GEqualFunc)flatpak_decomposed_equal, (GDestroyNotify)flatpak_decomposed_unref, NULL);
+  udir->unused_refs_hash = g_hash_table_new_full ((GHashFunc)flatpak_decomposed_hash, (GEqualFunc)flatpak_decomposed_equal, (GDestroyNotify)flatpak_decomposed_unref, NULL);
 
   return udir;
 }
@@ -91,6 +93,7 @@ uninstall_dir_free (UninstallDir *udir)
 {
   g_object_unref (udir->dir);
   g_hash_table_unref (udir->refs_hash);
+  g_hash_table_unref (udir->unused_refs_hash);
   g_clear_pointer (&udir->runtime_app_map, g_hash_table_unref);
   g_clear_pointer (&udir->extension_app_map, g_hash_table_unref);
   g_ptr_array_unref (udir->refs);
@@ -106,10 +109,26 @@ uninstall_dir_add_ref (UninstallDir *udir,
 }
 
 static void
+uninstall_dir_add_unused_ref (UninstallDir *udir,
+                              FlatpakDecomposed *ref)
+{
+  if (g_hash_table_insert (udir->unused_refs_hash, flatpak_decomposed_ref (ref), NULL))
+    g_ptr_array_add (udir->refs, flatpak_decomposed_ref (ref));
+}
+
+static gboolean
+uninstall_dir_ref_is_unused (UninstallDir *udir,
+                             FlatpakDecomposed *ref)
+{
+  return g_hash_table_contains (udir->unused_refs_hash, ref);
+}
+
+static void
 uninstall_dir_remove_ref (UninstallDir *udir,
                           FlatpakDecomposed *ref)
 {
   g_hash_table_remove (udir->refs_hash, ref);
+  g_hash_table_remove (udir->unused_refs_hash, ref);
   g_ptr_array_remove (udir->refs, ref);
 }
 
@@ -356,7 +375,7 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
 
               if (d)
                 {
-                  uninstall_dir_add_ref (udir, d);
+                  uninstall_dir_add_unused_ref (udir, d);
                   found_something_to_uninstall = TRUE;
                 }
             }
@@ -518,9 +537,11 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
           * extension of an installed app, prompt the user for confirmation (in
           * the former case the transaction will error out if executed).  This
           * is limited to checking within the same installation; it won't
-          * prompt for a user app depending on a system runtime.
+          * prompt for a user app depending on a system runtime. It also will
+          * not prompt for refs we already considered unused above.
          */
-        if (!opt_force_remove &&
+        if (!uninstall_dir_ref_is_unused (udir, ref) &&
+            !opt_force_remove &&
             !confirm_runtime_removal (opt_yes, udir, ref))
           {
             uninstall_dir_remove_ref (udir, ref);
