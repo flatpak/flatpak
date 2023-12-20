@@ -24,6 +24,7 @@
 #include <glib/gi18n-lib.h>
 
 #include "flatpak-auth-private.h"
+#include "flatpak-dir-private.h"
 #include "flatpak-error.h"
 #include "flatpak-installation-private.h"
 #include "flatpak-progress-private.h"
@@ -4999,7 +5000,7 @@ add_uninstall_unused_ops (FlatpakTransaction  *self,
                                                       NULL, /* metadata_injection */
                                                       NULL, /* eol_injection */
                                                       NULL, /* exclude_refs */
-                                                      TRUE, /* filter_by_eol */
+                                                      FLATPAK_DIR_FILTER_EOL | FLATPAK_DIR_FILTER_AUTOPRUNE,
                                                       cancellable, error);
       if (old_unused_refs == NULL)
         return FALSE;
@@ -5056,7 +5057,7 @@ add_uninstall_unused_ops (FlatpakTransaction  *self,
                                               metadata_injection,
                                               eol_injection,
                                               to_be_excluded_strv,
-                                              TRUE, /* filter_by_eol */
+                                              FLATPAK_DIR_FILTER_EOL | FLATPAK_DIR_FILTER_AUTOPRUNE,
                                               cancellable, error);
   if (unused_refs == NULL)
     return FALSE;

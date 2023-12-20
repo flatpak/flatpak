@@ -925,10 +925,10 @@
                     <term><option>autoprune-unless</option> (string)</term>
                     <listitem><para>
                         A condition that must be false for the extension to be considered unused when
-                        pruning. For example, <command>flatpak uninstall --unused</command> uses
-                        this information. The only currently recognized value is active-gl-driver,
-                        which is true if the name of the active GL driver matches the extension
-                        point basename. Available since 0.11.8.
+                        pruning. For example, <command>flatpak uninstall --unused</command> and
+                        <command>flatpak update</command> use this information. The only currently
+                        recognized value is active-gl-driver, which is true if the name of the active
+                        GL driver matches the extension point basename. Available since 0.11.8.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>

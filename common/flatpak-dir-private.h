@@ -361,6 +361,12 @@ typedef enum {
 } FlatpakDirStorageType;
 
 typedef enum {
+  FLATPAK_DIR_FILTER_NONE = 0,
+  FLATPAK_DIR_FILTER_EOL = 1 << 0,
+  FLATPAK_DIR_FILTER_AUTOPRUNE = 1 << 1,
+} FlatpakDirFilterFlags;
+
+typedef enum {
   FIND_MATCHING_REFS_FLAGS_NONE = 0,
   FIND_MATCHING_REFS_FLAGS_FUZZY = (1 << 0),
 } FindMatchingRefsFlags;
@@ -1049,7 +1055,7 @@ char **               flatpak_dir_list_unused_refs                          (Fla
                                                                              GHashTable                    *metadata_injection,
                                                                              GHashTable                    *eol_injection,
                                                                              const char * const            *refs_to_exclude,
-                                                                             gboolean                       filter_by_eol,
+                                                                             FlatpakDirFilterFlags          filter_flags,
                                                                              GCancellable                  *cancellable,
                                                                              GError                       **error);
 

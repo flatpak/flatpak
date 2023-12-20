@@ -3071,10 +3071,11 @@ flatpak_installation_list_unused_refs (FlatpakInstallation *self,
  *
  *   * exclude-refs (as): Act as if these refs are not installed even if they
  *       are when determining the set of unused refs
- *   * filter-by-eol (b): Only return refs as unused if they are End-Of-Life.
- *       Note that if this option is combined with other filters (of which there
- *       are none currently) non-EOL refs may also be returned.
- *
+ *   * filter-by-eol (b): Return refs as unused if they are End-Of-Life.
+ *       Note that if this option is combined with other filters then non-EOL refs may also be returned.
+ *   * filter-by-autoprune (b): Return refs as unused if they should be autopruned.
+ *       Note that if this option is combined with other filters then non-autoprune refs may also be returned.
+
  * Returns: (transfer container) (element-type FlatpakInstalledRef): a GPtrArray of
  *   #FlatpakInstalledRef instances
  *
@@ -3093,19 +3094,28 @@ flatpak_installation_list_unused_refs_with_options (FlatpakInstallation *self,
   g_auto(GStrv) refs_strv = NULL;
   g_autofree char **refs_to_exclude = NULL;
   gboolean filter_by_eol = FALSE;
+  gboolean filter_by_autoprune = FALSE;
+  FlatpakDirFilterFlags filter_flags = FLATPAK_DIR_FILTER_NONE;
 
   if (options)
     {
       (void) g_variant_lookup (options, "exclude-refs", "^a&s", &refs_to_exclude);
       (void) g_variant_lookup (options, "filter-by-eol", "b", &filter_by_eol);
+      (void) g_variant_lookup (options, "filter-by-autoprune", "b", &filter_by_autoprune);
     }
 
   dir = flatpak_installation_get_dir (self, error);
   if (dir == NULL)
     return NULL;
 
+  if (filter_by_eol)
+    filter_flags |= FLATPAK_DIR_FILTER_EOL;
+  if (filter_by_autoprune)
+    filter_flags |= FLATPAK_DIR_FILTER_AUTOPRUNE;
+
   refs_strv = flatpak_dir_list_unused_refs (dir, arch, metadata_injection, NULL,
-                                            (const char * const *)refs_to_exclude, filter_by_eol,
+                                            (const char * const *)refs_to_exclude,
+                                            filter_flags,
                                             cancellable, error);
   if (refs_strv == NULL)
     return NULL;
