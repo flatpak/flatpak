@@ -16491,6 +16491,7 @@ find_used_refs (FlatpakDir         *self,
                 GHashTable         *metadata_injection,
                 GHashTable         *refs_to_exclude,
                 GHashTable         *used_refs, /* This is filled in */
+                GHashTable         *autopruned_refs, /* This is filled in */
                 GCancellable       *cancellable,
                 GError            **error)
 {
@@ -16662,6 +16663,10 @@ find_used_refs (FlatpakDir         *self,
                        flatpak_decomposed_get_ref (ref_to_analyze), dir_name);
               queue_ref_for_analysis (rel->ref, arch, analyzed_refs, refs_to_analyze);
             }
+          else
+            {
+              g_hash_table_add (autopruned_refs, flatpak_decomposed_ref (rel->ref));
+            }
         }
     }
 
@@ -16672,19 +16677,22 @@ find_used_refs (FlatpakDir         *self,
  * flatpak_installation_list_unused_refs_with_options().
  * The returned pointer array is transfer full. */
 char **
-flatpak_dir_list_unused_refs (FlatpakDir         *self,
-                              const char         *arch,
-                              GHashTable         *metadata_injection,
-                              GHashTable         *eol_injection,
-                              const char * const *refs_to_exclude,
-                              gboolean            filter_by_eol,
-                              GCancellable       *cancellable,
-                              GError            **error)
+flatpak_dir_list_unused_refs (FlatpakDir            *self,
+                              const char            *arch,
+                              GHashTable            *metadata_injection,
+                              GHashTable            *eol_injection,
+                              const char * const    *refs_to_exclude,
+                              FlatpakDirFilterFlags  filter_flags,
+                              GCancellable          *cancellable,
+                              GError               **error)
 {
   g_autoptr(GHashTable) used_refs = NULL;
+  g_autoptr(GHashTable) autoprune_refs = NULL;
   g_autoptr(GHashTable) excluded_refs_ht = NULL;
   g_autoptr(GPtrArray) refs =  NULL;
   g_autoptr(GPtrArray) runtime_refs = NULL;
+  gboolean filter_by_eol = (filter_flags & FLATPAK_DIR_FILTER_EOL) != 0;
+  gboolean filter_by_autoprune = (filter_flags & FLATPAK_DIR_FILTER_AUTOPRUNE) != 0;
 
   /* Convert refs_to_exclude to hashtable for fast repeated lookups */
   if (refs_to_exclude)
@@ -16700,12 +16708,14 @@ flatpak_dir_list_unused_refs (FlatpakDir         *self,
     }
 
   used_refs = g_hash_table_new_full ((GHashFunc)flatpak_decomposed_hash, (GEqualFunc)flatpak_decomposed_equal, (GDestroyNotify)flatpak_decomposed_unref, NULL);
+  autoprune_refs = g_hash_table_new_full ((GHashFunc)flatpak_decomposed_hash, (GEqualFunc)flatpak_decomposed_equal, (GDestroyNotify)flatpak_decomposed_unref, NULL);
 
-  g_info ("Checking installation ‘%s’ %s",
+  g_info ("Checking installation ‘%s’ %s%s",
           flatpak_dir_get_name_cached (self),
-          filter_by_eol ? "for EOL unused refs" : "for unused refs");
+          filter_by_eol ? "for EOL unused refs" : "for unused refs",
+          filter_by_autoprune ? " and autoprunes" : "");
   if (!find_used_refs (self, NULL, arch, metadata_injection, excluded_refs_ht,
-                       used_refs, cancellable, error))
+                       used_refs, autoprune_refs, cancellable, error))
     return NULL;
 
   /* If @self is a system installation, also check the per-user installation
@@ -16722,7 +16732,7 @@ flatpak_dir_list_unused_refs (FlatpakDir         *self,
       g_info ("Checking installation ‘%s’ by checking for dependent refs in ‘%s’",
               flatpak_dir_get_name_cached (self), flatpak_dir_get_name_cached (user_dir));
       if (!find_used_refs (self, user_dir, arch, metadata_injection, excluded_refs_ht,
-                           used_refs, cancellable, &local_error))
+                           used_refs, autoprune_refs, cancellable, &local_error))
         {
           /* We may get permission denied if the process is sandboxed with
            * systemd's ProtectHome=
@@ -16752,9 +16762,10 @@ flatpak_dir_list_unused_refs (FlatpakDir         *self,
       if (arch != NULL && !flatpak_decomposed_is_arch (ref, arch))
         continue;
 
-      if (filter_by_eol)
+      if (filter_flags)
         {
           gboolean is_eol = FALSE;
+          gboolean is_autopruned = g_hash_table_contains (autoprune_refs, ref);
 
           if (eol_injection && g_hash_table_contains (eol_injection, flatpak_decomposed_get_ref (ref)))
             {
@@ -16772,11 +16783,12 @@ flatpak_dir_list_unused_refs (FlatpakDir         *self,
                  flatpak_deploy_data_get_eol_rebase (deploy_data));
             }
 
-          if (!is_eol)
+          if (!((is_autopruned && filter_by_autoprune) || (is_eol && filter_by_eol)))
             {
-              g_debug ("%s: Ref %s (%s) not end-of-life, so excluding from EOL unused refs",
+              g_debug ("%s: Ref %s (%s) not %s, so excluding from unused refs",
                        G_STRFUNC, flatpak_decomposed_get_ref (ref),
-                       flatpak_dir_get_name_cached (self));
+                       flatpak_dir_get_name_cached (self),
+                       (!is_eol && filter_by_eol) ? "end-of-life" : "autopruned");
               continue;
             }
         }

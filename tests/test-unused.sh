@@ -27,7 +27,7 @@ export USE_SYSTEMDIR=yes
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..2"
+echo "1..3"
 
 setup_empty_repo &> /dev/null > /dev/null
 
@@ -305,6 +305,11 @@ verify_unused() {
     assert_not_file_has_content unused.txt "\.APP"
 }
 
+verify_autopruned() {
+    assert_file_has_content autopruned.txt "\.NONACTIVEGL"
+    assert_not_file_has_content autopruned.txt "PINNED_.\.NONACTIVEGL"
+}
+
 # This is used for the autoprune check
 export FLATPAK_GL_DRIVERS=ACTIVEGL
 
@@ -342,6 +347,9 @@ make_extension USED_G.ACTIVEGL
 runtime_add_autoprune_extension USED_G USED_G.ACTIVEGL
 make_extension UNUSED_G.NONACTIVEGL
 runtime_add_autoprune_extension USED_G UNUSED_G.NONACTIVEGL
+make_extension PINNED_G.NONACTIVEGL
+runtime_add_autoprune_extension USED_G PINNED_G.NONACTIVEGL
+pin_extension PINNED_G.NONACTIVEGL
 
 # unused runtime with autopruned extension
 make_runtime UNUSED_H
@@ -388,6 +396,12 @@ ${test_builddir}/list-unused | sed s@^app/@@g | sed s@^runtime/@@g | sort > unus
 verify_unused
 
 ok "list unused regular"
+
+${test_builddir}/list-unused --filter-autoprune | sed s@^app/@@g | sed s@^runtime/@@g | sort > autopruned.txt
+
+verify_autopruned
+
+ok "list autopruned"
 
 mv unused.txt old-unused.txt
 

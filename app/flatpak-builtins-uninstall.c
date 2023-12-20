@@ -345,7 +345,7 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
 
           udir = uninstall_dir_ensure (uninstall_dirs, dir);
 
-          unused = flatpak_dir_list_unused_refs (dir, opt_arch, NULL, NULL, NULL, FALSE, cancellable, error);
+          unused = flatpak_dir_list_unused_refs (dir, opt_arch, NULL, NULL, NULL, FLATPAK_DIR_FILTER_NONE, cancellable, error);
           if (unused == NULL)
             return FALSE;
 
