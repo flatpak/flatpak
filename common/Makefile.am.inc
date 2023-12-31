@@ -319,6 +319,7 @@ sources = $(libflatpak_common_la_SOURCES) $(libflatpak_la_SOURCES)
 
 INTROSPECTION_GIRS =
 
+if !ENABLE_ASAN
 if HAVE_INTROSPECTION
 Flatpak-1.0.gir: libflatpak.la Makefile
 
@@ -350,3 +351,4 @@ nodist_typelib_DATA = $(INTROSPECTION_GIRS:.gir=.typelib)
 CLEANFILES += $(nodist_typelib_DATA)
 
 endif # HAVE_INTROSPECTION
+endif # !ENABLE_ASAN

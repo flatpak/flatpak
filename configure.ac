@@ -415,7 +415,7 @@ AC_SUBST([SUDO_BIN])
 
 AC_ARG_ENABLE(asan,
               [AS_HELP_STRING([--enable-asan],
-                              [Use build with address sanitazion])],
+                              [Use build with address sanitization])],
               [],
               [enable_asan=no])
 AM_CONDITIONAL([ENABLE_ASAN], [test "x$enable_asan" = xyes])
@@ -485,6 +485,10 @@ fi
 AM_CONDITIONAL(BUILD_DOCUMENTATION, test x$enable_documentation = xyes)
 
 GOBJECT_INTROSPECTION_CHECK([1.40.0])
+AS_IF([test "x$found_introspection" = "xyes" && test "x$enable_asan" = xyes], [
+   AC_MSG_WARN([Instrospection was found succesfully but will be deactivated since it can't be used when sanitizing flags are on.])
+   AC_MSG_WARN([use \"--enable-asan=no\" to ensure introspection can be enabled])
+])
 
 # gtkdocize greps for ^GTK_DOC_CHECK, so we need to put it on its own line
 m4_ifdef([GTK_DOC_CHECK], [
