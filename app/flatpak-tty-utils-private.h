@@ -83,3 +83,5 @@ void flatpak_format_choices (const char **choices,
 
 void   flatpak_print_escaped_string (const char        *s,
                                      FlatpakEscapeFlags flags);
+
+void   flatpak_print_appstream_release_description_markup (const char *s);
