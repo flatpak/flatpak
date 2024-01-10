@@ -437,7 +437,7 @@ glnx_lsetxattrat (int            dfd,
   char pathbuf[PATH_MAX];
   snprintf (pathbuf, sizeof (pathbuf), "/proc/self/fd/%d/%s", dfd, subpath);
 
-  if (TEMP_FAILURE_RETRY (lsetxattr (subpath, attribute, value, len, flags)) < 0)
+  if (TEMP_FAILURE_RETRY (lsetxattr (pathbuf, attribute, value, len, flags)) < 0)
     return glnx_throw_errno_prefix (error, "lsetxattr(%s)", attribute);
 
   return TRUE;
