@@ -203,7 +203,7 @@ appstream_dep = dependency('appstream', version : '>=0.12.0')
 gdk_pixbuf_dep = dependency('gdk-pixbuf-2.0')
 libseccomp_dep = dependency('libseccomp', required : get_option('seccomp'))
 gir_dep = dependency('gobject-introspection-1.0', version : '>=1.40.0', required : get_option('gir'))
-gtkdoc_dep = dependency('gtk-doc', required : get_option('gtkdoc'))
+gtkdoc_dep = dependency('gtk-doc', required : get_option('gtkdoc'), native : true)
 build_gtk_doc = gtkdoc_dep.found()
 
 wayland_client = dependency('wayland-client', required : get_option('wayland_security_context'))
