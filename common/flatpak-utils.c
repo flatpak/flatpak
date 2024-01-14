@@ -5066,6 +5066,10 @@ validate_component (FlatpakXml *component,
       return FALSE;
     }
 
+  /* Normalise <id> to be without .desktop suffix unless that is the actual ID */
+  g_free (id_text_node->text);
+  id_text_node->text = g_steal_pointer (&id_text);
+
   while ((bundle = flatpak_xml_find (component, "bundle", &prev)) != NULL)
     flatpak_xml_free (flatpak_xml_unlink (bundle, prev));
 
