@@ -1,5 +1,5 @@
 /* vi:set et sw=2 sts=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e-s:
- * Copyright © 2014-2019 Red Hat, Inc
+ * Copyright © 2024 Red Hat, Inc
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,7 +15,7 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *
  * Authors:
- *       Alexander Larsson <alexl@redhat.com>
+ *       Lukas Tyrychtr <ltyrycht@redhat.com>
  */
 
 #include "config.h"
