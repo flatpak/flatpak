@@ -227,12 +227,172 @@ create_proxy_socket (char *template)
   return g_steal_pointer (&proxy_socket);
 }
 
+static char *
+containers1_add_server (FlatpakBwrap  *app_bwrap,
+                        const char    *app_id,
+                        const char    *instance_id,
+                        GError       **error)
+{
+  g_autoptr(GDBusConnection) session_bus = NULL;
+  GVariantBuilder metadata;
+  GVariantBuilder named_args;
+  GVariant *parameters = NULL;
+  g_autoptr(GVariant) reply = NULL;
+  GVariant *results = NULL;
+  const char *container_path = NULL;
+  const char *container_dbus_address = NULL;
+  int sync_fd = -1;
+  g_autoptr(GUnixFDList) fd_list = NULL;
+  int sync_fd_index = -1;
+
+  session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, NULL);
+  if (session_bus == NULL)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Unable to get the session bus");
+      return NULL;
+    }
+
+  sync_fd = flatpak_bwrap_add_sync_fd (app_bwrap);
+  if (sync_fd < 0)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Unable to create sync pipe");
+      return NULL;
+    }
+
+  fd_list = g_unix_fd_list_new ();
+  sync_fd_index = g_unix_fd_list_append (fd_list, sync_fd, NULL);
+
+  g_variant_builder_init (&metadata, G_VARIANT_TYPE ("a{sv}"));
+  g_variant_builder_init (&named_args, G_VARIANT_TYPE ("a{sv}"));
+  g_variant_builder_add (&named_args, "{sv}",
+                         "StopOnDisconnect",
+                         g_variant_new_boolean (FALSE));
+  g_variant_builder_add (&named_args, "{sv}",
+                         "StopOnNotify",
+                         g_variant_new_handle (sync_fd_index));
+
+  parameters = g_variant_new ("(sssa{sv}a{sv})",
+                              "org.flatpak",
+                              app_id,
+                              instance_id,
+                              &metadata,
+                              &named_args);
+
+  reply = g_dbus_connection_call_with_unix_fd_list_sync (session_bus,
+                                                         "org.freedesktop.DBus",
+                                                         "/org/freedesktop/DBus",
+                                                         "org.freedesktop.DBus.Containers1",
+                                                         "AddServer",
+                                                         parameters,
+                                                         G_VARIANT_TYPE ("(oa{sv})"),
+                                                         G_DBUS_CALL_FLAGS_NONE,
+                                                         30000,
+                                                         fd_list,
+                                                         NULL,
+                                                         NULL,
+                                                         error);
+
+  if (!reply)
+    return NULL;
+
+  g_variant_get (reply, "(o@a{sv})", &container_path, &results);
+  if (!g_variant_lookup (results, "Address", "s", &container_dbus_address))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Missing container dbus address");
+      return NULL;
+    }
+
+  return g_strdup (container_dbus_address);
+}
+
+/*
+ * Access from the sandbox to the session bus is currently done via
+ * xdg-dbus-proxy but we are trying to move its functionality to the dbus broker
+ * instead. While the current dbus broker support for Containers1 allows for
+ * authenticating clients, it currently does not provide access control and we
+ * still rely on xdg-dbus-proxy for it.
+ * If the basic Containers1 interface is supported, flatpak creates a
+ * Containers1 socket and an app socket, mounts both for the proxy and mounts
+ * the app socket in the app sandbox. The proxy then listens on the app socket,
+ * filters according to the access control rules, and talks to the broker via
+ * the Containers1 socket.
+ *
+ * ┌───────────────────────────────────┐
+ * │dbus broker                        │
+ * ├─────────────────────┬────────▲────┘
+ * │Containers1 interface│        │
+ * └──▲────────────────┬─┘        │
+ *    │                │          │
+ * host session      Containers1  │
+ * dbus socket       dbus address │
+ *    │                │          │
+ * ┌──┴────────────────┼─┐        │
+ * │flatpak            │ │        │
+ * └──┬────────────────▼─┘        │
+ *    │                │          │
+ * app│dbus            │      Containers1
+ * socket              │      dbus│socket
+ *    │                │          │
+ *    │      ┌─────────┼──────────┴─────┐
+ *    │      │         │  xdg-dbus-proxy│
+ *    │      │         ▼                │
+ *    ├──────┼──► mounts       filters  │
+ *    │      │                          │
+ *    │      └────────────────────▲─────┘
+ *    │                           │
+ *    │                        app│dbus
+ *    │                        socket
+ *    │                           │
+ * ┌──┼───────────────────────────┼─────┐
+ * │  │                           │     │
+ * │  ▼           ┌───────────────┴───┐ │
+ * │  mount       │flatpak app        │ │
+ * │              └───────────────────┘ │
+ * │                                    │
+ * └────────────────────────────────────┘
+ *
+ * When the broker learns how to apply the access control rules and we can set
+ * the rules for the Containers1 socket, it becomes possible to remove the
+ * xdg-dbus-proxy entirely. The Containers1 socket will get mounted in the
+ * app sandbox and both authentication and access control will be provided
+ * by the dbus broker.
+ *
+ * ┌───────────────────────────────────┐
+ * │dbus broker                        │
+ * ├─────────────────────┬────────▲────┘
+ * │Containers1 interface│        │
+ * └──▲────────────────┬─┘        │
+ *    │                │          │
+ * host session      Containers1  │
+ * dbus socket       dbus address │
+ *    │                │          │
+ * ┌──┴────────────────┼─┐        │
+ * │flatpak            │ │        │
+ * └───────────────────▼─┘        │
+ *                     │          │
+ *                     │      Containers1
+ *                     │      dbus│socket
+ *                     │          │
+ *    ┌────────────────┘          │
+ *    │                           │
+ * ┌──┼───────────────────────────┼─────┐
+ * │  │                           │     │
+ * │  ▼           ┌───────────────┴───┐ │
+ * │  mount       │flatpak app        │ │
+ * │              └───────────────────┘ │
+ * │                                    │
+ * └────────────────────────────────────┘
+ */
 gboolean
 flatpak_run_add_session_dbus_args (FlatpakBwrap   *app_bwrap,
                                    FlatpakBwrap   *proxy_arg_bwrap,
                                    FlatpakContext *context,
                                    FlatpakRunFlags flags,
-                                   const char     *app_id)
+                                   const char     *app_id,
+                                   const char     *instance_id)
 {
   static const char sandbox_socket_path[] = "/run/flatpak/bus";
   static const char sandbox_dbus_address[] = "unix:path=/run/flatpak/bus";
@@ -277,11 +437,31 @@ flatpak_run_add_session_dbus_args (FlatpakBwrap   *app_bwrap,
   else if (!no_proxy && dbus_address != NULL)
     {
       g_autofree char *proxy_socket = create_proxy_socket ("session-bus-proxy-XXXXXX");
+      g_autofree char *proxy_dbus_address = NULL;
+      g_autoptr(GError) error = NULL;
 
       if (proxy_socket == NULL)
         return FALSE;
 
-      flatpak_bwrap_add_args (proxy_arg_bwrap, dbus_address, proxy_socket, NULL);
+      proxy_dbus_address = containers1_add_server (app_bwrap, app_id, instance_id, &error);
+
+      if (proxy_dbus_address == NULL)
+        {
+          if (g_error_matches (error, G_DBUS_ERROR, G_DBUS_ERROR_UNKNOWN_INTERFACE))
+            {
+              g_debug ("Containers1 not implemented on this system");
+            }
+          else
+            {
+              g_warning ("Unable to start Containers1 server, "
+                         "falling back to ordinary D-Bus connection: %s",
+                         error->message);
+            }
+
+          proxy_dbus_address = g_strdup (dbus_address);
+        }
+
+      flatpak_bwrap_add_args (proxy_arg_bwrap, proxy_dbus_address, proxy_socket, NULL);
 
       if (!unrestricted)
         {

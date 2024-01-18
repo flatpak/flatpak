@@ -486,7 +486,7 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
                                            exports, xdg_dirs_conf, home_access);
 
   flatpak_run_add_socket_args_environment (bwrap, context->shares, context->sockets, app_id, instance_id);
-  flatpak_run_add_session_dbus_args (bwrap, proxy_arg_bwrap, context, flags, app_id);
+  flatpak_run_add_session_dbus_args (bwrap, proxy_arg_bwrap, context, flags, app_id, instance_id);
   flatpak_run_add_system_dbus_args (bwrap, proxy_arg_bwrap, context, flags);
   flatpak_run_add_a11y_dbus_args (bwrap, proxy_arg_bwrap, context, flags);
 
