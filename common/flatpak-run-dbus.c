@@ -231,10 +231,10 @@ static char *
 containers1_add_server (FlatpakBwrap  *app_bwrap,
                         const char    *app_id,
                         const char    *instance_id,
+                        GVariant      *metadata,
                         GError       **error)
 {
   g_autoptr(GDBusConnection) session_bus = NULL;
-  GVariantBuilder metadata;
   GVariantBuilder named_args;
   GVariant *parameters = NULL;
   g_autoptr(GVariant) reply = NULL;
@@ -264,7 +264,6 @@ containers1_add_server (FlatpakBwrap  *app_bwrap,
   fd_list = g_unix_fd_list_new ();
   sync_fd_index = g_unix_fd_list_append (fd_list, sync_fd, NULL);
 
-  g_variant_builder_init (&metadata, G_VARIANT_TYPE ("a{sv}"));
   g_variant_builder_init (&named_args, G_VARIANT_TYPE ("a{sv}"));
   g_variant_builder_add (&named_args, "{sv}",
                          "StopOnDisconnect",
@@ -273,11 +272,11 @@ containers1_add_server (FlatpakBwrap  *app_bwrap,
                          "StopOnNotify",
                          g_variant_new_handle (sync_fd_index));
 
-  parameters = g_variant_new ("(sssa{sv}a{sv})",
+  parameters = g_variant_new ("(sss@a{sv}a{sv})",
                               "org.flatpak",
                               app_id,
                               instance_id,
-                              &metadata,
+                              metadata,
                               &named_args);
 
   reply = g_dbus_connection_call_with_unix_fd_list_sync (session_bus,
@@ -387,12 +386,13 @@ containers1_add_server (FlatpakBwrap  *app_bwrap,
  * └────────────────────────────────────┘
  */
 gboolean
-flatpak_run_add_session_dbus_args (FlatpakBwrap   *app_bwrap,
-                                   FlatpakBwrap   *proxy_arg_bwrap,
-                                   FlatpakContext *context,
-                                   FlatpakRunFlags flags,
-                                   const char     *app_id,
-                                   const char     *instance_id)
+flatpak_run_add_session_dbus_args (FlatpakBwrap    *app_bwrap,
+                                   FlatpakBwrap    *proxy_arg_bwrap,
+                                   FlatpakContext  *context,
+                                   FlatpakRunFlags  flags,
+                                   const char      *app_id,
+                                   const char      *instance_id,
+                                   GVariant        *metadata)
 {
   static const char sandbox_socket_path[] = "/run/flatpak/bus";
   static const char sandbox_dbus_address[] = "unix:path=/run/flatpak/bus";
@@ -443,7 +443,7 @@ flatpak_run_add_session_dbus_args (FlatpakBwrap   *app_bwrap,
       if (proxy_socket == NULL)
         return FALSE;
 
-      proxy_dbus_address = containers1_add_server (app_bwrap, app_id, instance_id, &error);
+      proxy_dbus_address = containers1_add_server (app_bwrap, app_id, instance_id, metadata, &error);
 
       if (proxy_dbus_address == NULL)
         {

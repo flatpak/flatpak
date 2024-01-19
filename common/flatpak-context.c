@@ -2121,6 +2121,27 @@ flatpak_context_save_metadata (FlatpakContext *context,
     }
 }
 
+GVariant *
+flatpak_context_create_containers1_metadata (FlatpakContext *context,
+                                             const char     *app_id,
+                                             const char     *instance_id)
+{
+  GVariantBuilder b;
+  g_autofree char *desktop_file = NULL;
+  gboolean network_access;
+
+  desktop_file = g_strdup_printf ("%s.desktop", app_id);
+  network_access = context->shares & FLATPAK_CONTEXT_SHARED_NETWORK;
+
+  g_variant_builder_init (&b, G_VARIANT_TYPE ("a{sv}"));
+  g_variant_builder_add (&b, "{sv}", "DesktopFile",
+                         g_variant_new_string (desktop_file));
+  g_variant_builder_add (&b, "{sv}", "NetworkAccess",
+                         g_variant_new_boolean (network_access));
+
+  return g_variant_ref_sink (g_variant_builder_end (&b));
+}
+
 void
 flatpak_context_allow_host_fs (FlatpakContext *context)
 {

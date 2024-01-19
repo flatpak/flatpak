@@ -266,9 +266,14 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
   g_autoptr(GError) my_error = NULL;
   g_autoptr(FlatpakExports) exports = NULL;
   g_autoptr(FlatpakBwrap) proxy_arg_bwrap = flatpak_bwrap_new (flatpak_bwrap_empty_env);
+  g_autoptr(GVariant) metadata = NULL;
   g_autofree char *xdg_dirs_conf = NULL;
   gboolean home_access = FALSE;
   gboolean sandboxed = (flags & FLATPAK_RUN_FLAG_SANDBOX) != 0;
+
+  metadata = flatpak_context_create_containers1_metadata (context,
+                                                          app_id,
+                                                          instance_id);
 
   if ((context->shares & FLATPAK_CONTEXT_SHARED_IPC) == 0)
     {
@@ -485,8 +490,8 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
   flatpak_context_append_bwrap_filesystem (context, bwrap, app_id, app_id_dir,
                                            exports, xdg_dirs_conf, home_access);
 
-  flatpak_run_add_socket_args_environment (bwrap, context->shares, context->sockets, app_id, instance_id);
-  flatpak_run_add_session_dbus_args (bwrap, proxy_arg_bwrap, context, flags, app_id, instance_id);
+  flatpak_run_add_socket_args_environment (bwrap, context->shares, context->sockets, app_id, instance_id, metadata);
+  flatpak_run_add_session_dbus_args (bwrap, proxy_arg_bwrap, context, flags, app_id, instance_id, metadata);
   flatpak_run_add_system_dbus_args (bwrap, proxy_arg_bwrap, context, flags);
   flatpak_run_add_a11y_dbus_args (bwrap, proxy_arg_bwrap, context, flags);
 
