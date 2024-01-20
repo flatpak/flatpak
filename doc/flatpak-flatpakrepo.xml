@@ -47,6 +47,12 @@
            The filename extension commonly used for flatpakrepo files is <filename>.flatpakrepo</filename>.
         </para>
 
+        <para>
+           flatpakrepo files can also be placed in <filename>/etc/flatpak/remotes.d/</filename>
+           to statically preconfigure system-wide remotes. Such files must use the
+           <filename>.flatpakrepo</filename> extension.
+        </para>
+
     </refsect1>
 
     <refsect1>
