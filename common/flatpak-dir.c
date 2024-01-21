@@ -11546,7 +11546,7 @@ flatpak_dir_get_unmaintained_extension_dir_if_exists (FlatpakDir   *self,
   extension_dir = flatpak_dir_get_unmaintained_extension_dir (self, name, arch, branch);
 
   extension_dir_info = g_file_query_info (extension_dir,
-                                          G_FILE_ATTRIBUTE_STANDARD_SYMLINK_TARGET,
+                                          G_FILE_ATTRIBUTE_STANDARD_SYMLINK_TARGET "," G_FILE_ATTRIBUTE_STANDARD_IS_SYMLINK,
                                           G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
                                           cancellable,
                                           NULL);
