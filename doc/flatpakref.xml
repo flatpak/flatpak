@@ -2,7 +2,7 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
     "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
 
-<refentry id="flatpak-flatpakref">
+<refentry id="flatpakref">
 
     <refentryinfo>
         <title>flatpakref</title>
@@ -24,7 +24,7 @@
     </refmeta>
 
     <refnamediv>
-        <refname>flatpak-flatpakref</refname>
+        <refname>flatpakref</refname>
         <refpurpose>Reference to a remote for an application or runtime</refpurpose>
     </refnamediv>
 
@@ -169,7 +169,7 @@ DeployCollectionID=org.gnome.Apps
         <para>
             <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>flatpak-install</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-            <citerefentry><refentrytitle>flatpak-flatpakrepo</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpakrepo</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
         </para>
 
     </refsect1>

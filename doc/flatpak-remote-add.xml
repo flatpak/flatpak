@@ -336,7 +336,7 @@ allow org.signal.Signal.*/*/stable
                 <citerefentry><refentrytitle>flatpak-remote-modify</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
                 <citerefentry><refentrytitle>flatpak-remote-delete</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
                 <citerefentry><refentrytitle>flatpak-remotes</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-                <citerefentry><refentrytitle>flatpak-flatpakrepo</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+                <citerefentry><refentrytitle>flatpakrepo</refentrytitle><manvolnum>5</manvolnum></citerefentry>
             </para>
     </refsect1>
 

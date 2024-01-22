@@ -67,8 +67,8 @@ man1 = \
 
 man5 = \
 	flatpak-metadata.5		\
-	flatpak-flatpakrepo.5		\
-	flatpak-flatpakref.5		\
+	flatpakrepo.5			\
+	flatpakref.5			\
 	flatpak-remote.5		\
 	flatpak-installation.5		\
 	$(NULL)
@@ -96,6 +96,10 @@ DISTCLEANFILES = \
 	$(man_MANS)		\
 	flatpak-docs.xml	\
 	$(NULL)
+
+install-data-hook:
+	ln -sf flatpakrepo.5 $(DESTDIR)$(mandir)/man5/flatpak-flatpakrepo.5
+	ln -sf flatpakref.5 $(DESTDIR)$(mandir)/man5/flatpak-flatpakref.5
 
 if DOCBOOK_DOCS_ENABLED
 

@@ -64,10 +64,15 @@ man1 = [
 
 man5 = [
   'flatpak-metadata',
-  'flatpak-flatpakrepo',
-  'flatpak-flatpakref',
+  'flatpakrepo',
+  'flatpakref',
   'flatpak-remote',
   'flatpak-installation',
+]
+
+man_compat_symlinks = [
+   ['flatpak-flatpakrepo', 'flatpakrepo', '5'],
+   ['flatpak-flatpakref', 'flatpakref', '5'],
 ]
 
 xml_files = []
@@ -97,6 +102,23 @@ foreach pair : [[man1, '1'], [man5, '5']]
       )
     endif
   endforeach
+endforeach
+
+foreach entry : man_compat_symlinks
+  name = entry[0]
+  target = entry[1]
+  section = entry[2]
+
+  if build_man_pages
+    #TODO: replace with install_symlink() when we can depend on meson 0.61
+    meson.add_install_script(
+      'sh', '-c', 'ln -sf @0@ $MESON_INSTALL_DESTDIR_PREFIX/@1@/@2@'.format(
+        target + '.' + section,
+        get_option('mandir') / ('man' + section),
+        name + '.' + section
+      )
+    )
+  endif
 endforeach
 
 if xmlto.found()

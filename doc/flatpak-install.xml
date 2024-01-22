@@ -357,7 +357,7 @@
             <citerefentry><refentrytitle>flatpak-update</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>flatpak-list</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>flatpak-build-bundle</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-            <citerefentry><refentrytitle>flatpak-flatpakref</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpakref</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>flatpak-make-current</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>ostree-find-remotes</refentrytitle><manvolnum>1</manvolnum></citerefentry>
         </para>

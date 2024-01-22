@@ -69,8 +69,8 @@
     </chapter>
     <chapter>
       <title>File Formats</title>
-      <xi:include href="@srcdir@/flatpak-flatpakrepo.xml"/>
-      <xi:include href="@srcdir@/flatpak-flatpakref.xml"/>
+      <xi:include href="@srcdir@/flatpakrepo.xml"/>
+      <xi:include href="@srcdir@/flatpakref.xml"/>
       <xi:include href="@srcdir@/flatpak-installation.xml"/>
       <xi:include href="@srcdir@/flatpak-metadata.xml"/>
       <xi:include href="@srcdir@/flatpak-remote.xml"/>
