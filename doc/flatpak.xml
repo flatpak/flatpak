@@ -60,7 +60,7 @@
 
        <para>
             System-wide remotes can be statically preconfigured by dropping
-            <citerefentry><refentrytitle>flatpak-flatpakrepo</refentrytitle><manvolnum>5</manvolnum></citerefentry> files into <filename>/etc/flatpak/remotes.d/</filename>.
+            <citerefentry><refentrytitle>flatpakrepo</refentrytitle><manvolnum>5</manvolnum></citerefentry> files into <filename>/etc/flatpak/remotes.d/</filename>.
        </para>
 
         <para>
@@ -559,14 +559,14 @@
 
         <variablelist>
             <varlistentry>
-                <term><citerefentry><refentrytitle>flatpak-flatpakref</refentrytitle><manvolnum>5</manvolnum></citerefentry></term>
+                <term><citerefentry><refentrytitle>flatpakref</refentrytitle><manvolnum>5</manvolnum></citerefentry></term>
 
                 <listitem><para>
                     Reference to a remote for an application or runtime
                 </para></listitem>
             </varlistentry>
             <varlistentry>
-                <term><citerefentry><refentrytitle>flatpak-flatpakrepo</refentrytitle><manvolnum>5</manvolnum></citerefentry></term>
+                <term><citerefentry><refentrytitle>flatpakrepo</refentrytitle><manvolnum>5</manvolnum></citerefentry></term>
 
                 <listitem><para>
                     Reference to a remote
