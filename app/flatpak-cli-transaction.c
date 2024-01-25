@@ -741,16 +741,16 @@ print_eol_info_message (FlatpakDir        *dir,
       if (is_pinned)
         {
           /* Only runtimes can be pinned */
-          g_print (_("\nInfo: (pinned) runtime %s%s%s branch %s%s%s is end-of-life, in favor of %s%s%s branch %s%s%s\n"),
+          g_printerr (_("\nInfo: (pinned) runtime %s%s%s branch %s%s%s is end-of-life, in favor of %s%s%s branch %s%s%s\n"),
                    on, ref_name, off, on, ref_branch, off, on, eolr_name, off, on, eolr_branch, off);
         }
       else
         {
           if (flatpak_decomposed_is_runtime (ref))
-            g_print (_("\nInfo: runtime %s%s%s branch %s%s%s is end-of-life, in favor of %s%s%s branch %s%s%s\n"),
+            g_printerr (_("\nInfo: runtime %s%s%s branch %s%s%s is end-of-life, in favor of %s%s%s branch %s%s%s\n"),
                      on, ref_name, off, on, ref_branch, off, on, eolr_name, off, on, eolr_branch, off);
           else
-            g_print (_("\nInfo: app %s%s%s branch %s%s%s is end-of-life, in favor of %s%s%s branch %s%s%s\n"),
+            g_printerr (_("\nInfo: app %s%s%s branch %s%s%s is end-of-life, in favor of %s%s%s branch %s%s%s\n"),
                      on, ref_name, off, on, ref_branch, off, on, eolr_name, off, on, eolr_branch, off);
         }
     }
@@ -762,19 +762,19 @@ print_eol_info_message (FlatpakDir        *dir,
       if (is_pinned)
         {
           /* Only runtimes can be pinned */
-          g_print (_("\nInfo: (pinned) runtime %s%s%s branch %s%s%s is end-of-life, with reason:\n"),
+          g_printerr (_("\nInfo: (pinned) runtime %s%s%s branch %s%s%s is end-of-life, with reason:\n"),
                    on, ref_name, off, on, ref_branch, off);
         }
       else
         {
           if (flatpak_decomposed_is_runtime (ref))
-            g_print (_("\nInfo: runtime %s%s%s branch %s%s%s is end-of-life, with reason:\n"),
+            g_printerr (_("\nInfo: runtime %s%s%s branch %s%s%s is end-of-life, with reason:\n"),
                      on, ref_name, off, on, ref_branch, off);
           else
-            g_print (_("\nInfo: app %s%s%s branch %s%s%s is end-of-life, with reason:\n"),
+            g_printerr (_("\nInfo: app %s%s%s branch %s%s%s is end-of-life, with reason:\n"),
                      on, ref_name, off, on, ref_branch, off);
         }
-      g_print ("   %s\n", escaped_reason);
+      g_printerr ("   %s\n", escaped_reason);
     }
 }
 
