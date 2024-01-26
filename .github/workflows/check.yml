@@ -70,7 +70,7 @@ jobs:
       # We don't do gtk-doc or GObject-Introspection here, because they can
       # clash with AddressSanitizer. Instead, the clang build enables those.
       run: |
-        meson _build \
+        meson setup _build \
           -Db_sanitize=address,undefined \
           -Dgir=disabled \
           -Dgtkdoc=disabled \
@@ -100,6 +100,7 @@ jobs:
         path: test-logs
 
   # This is similar to the above, but runs on an older OS with some different configuration:
+  # * Autotools instead of Meson
   # * Soup instead of curl
   # * Use built in bubblewrap instead of external
   # * Use built in xdg-dbus-proxy instead of external
@@ -210,8 +211,8 @@ jobs:
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2
 
-  valgrind:
-    name: Run tests in valgrind
+  distcheck:
+    name: make distcheck
     needs: check # Don't run expensive test if main check fails
     runs-on: ubuntu-22.04 # Might as well test with a different one too
     if: ${{ false }} # Currently Valgrind takes too long and always fails
@@ -245,11 +246,7 @@ jobs:
     - name: Build flatpak
       run: make -C _build -j $(getconf _NPROCESSORS_ONLN)
     - name: Distcheck
-      run: make -C _build distcheck
-    - name: Run tests under valgrind
-      run: make -C _build check
-      env:
-        FLATPAK_TESTS_VALGRIND: true
+      run: make -C _build -j $(getconf _NPROCESSORS_ONLN) distcheck
     - name: Collect overall test logs on failure
       if: failure()
       run: mv _build/test-suite.log test-logs/ || true
@@ -258,6 +255,51 @@ jobs:
       run: mv _build/tests/*.log test-logs/ || true
     - name: Upload test logs
       uses: actions/upload-artifact@v3
+      if: failure() || cancelled()
+      with:
+        name: test logs
+        path: test-logs
+
+  valgrind:
+    name: Run tests in valgrind
+    needs: check # Don't run expensive test if main check fails
+    runs-on: ubuntu-20.04 # Might as well test with a different one too
+    steps:
+    - name: Install Dependencies
+      run: |
+        sudo add-apt-repository ppa:flatpak/stable
+        sudo apt-get update
+        sudo add-apt-repository 'deb https://download.mono-project.com/repo/ubuntu stable-focal main' # Needed for updates to work
+        sudo apt-get install -y libglib2.0-dev attr automake gettext autopoint bison  dbus gtk-doc-tools \
+        libfuse-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
+        libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
+        libseccomp-dev libsoup2.4-dev libcurl4-openssl-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
+        libgirepository1.0-dev libappstream-dev libdconf-dev clang socat meson libdbus-1-dev \
+        valgrind e2fslibs-dev
+    - name: Check out flatpak
+      uses: actions/checkout@v1
+      with:
+        submodules: true
+    - name: Create logs dir
+      run: mkdir test-logs
+    - name: autogen.sh
+      run: ./autogen.sh
+      env:
+        CFLAGS: -Werror -O2
+    - name: Build flatpak
+      run: make -j $(getconf _NPROCESSORS_ONLN)
+    - name: Run tests under valgrind
+      run: make check
+      env:
+        FLATPAK_TESTS_VALGRIND: true
+    - name: Collect overall test logs on failure
+      if: failure()
+      run: mv test-suite.log test-logs/ || true
+    - name: Collect individual test logs on cancel
+      if: failure() || cancelled()
+      run: mv tests/*.log test-logs/ || true
+    - name: Upload test logs
+      uses: actions/upload-artifact@v1
       if: failure() || cancelled()
       with:
         name: test logs
