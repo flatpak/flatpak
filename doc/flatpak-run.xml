@@ -685,8 +685,8 @@ key=v1;v2;
                     If this option is specified, the remaining arguments are scanned, and all arguments
                     that are enclosed between a pair of '@@' arguments are interpreted as file paths,
                     exported in the document store, and passed to the command in the form of the
-                    resulting document path. Arguments between `@@u` and `@@` are considered URIs,
-                    and any `file:` URIs are exported. The exports are non-persistent and with read and write
+                    resulting document path. Arguments between "@@u" and "@@" are considered URIs,
+                    and any "file:" URIs are exported. The exports are non-persistent and with read and write
                     permissions for the application.
                 </para></listitem>
             </varlistentry>
