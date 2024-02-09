@@ -224,3 +224,15 @@ G_STATIC_ASSERT(__NR_close_range == systemd_NR_close_range);
 #    endif
 #  endif
 #endif
+
+#if !defined(HAVE_CLOSE_RANGE) && defined(__NR_close_range)
+static inline int
+inline_close_range (unsigned int low,
+                    unsigned int high,
+                    int flags)
+{
+  return syscall (__NR_close_range, low, high, flags);
+}
+#define close_range(low, high, flags) inline_close_range(low, high, flags)
+#define HAVE_CLOSE_RANGE
+#endif
