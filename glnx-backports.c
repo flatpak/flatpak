@@ -36,6 +36,7 @@
 #include "libglnx-config.h"
 
 #include "glnx-backports.h"
+#include "glnx-missing.h"
 
 #include <dirent.h>
 #include <errno.h>
