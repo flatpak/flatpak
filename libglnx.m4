@@ -4,6 +4,7 @@
 
 AC_DEFUN([LIBGLNX_CONFIGURE],
 [
+dnl This defines HAVE_DECL_FOO to 1 if found or 0 if not
 AC_CHECK_DECLS([
         renameat2,
         memfd_create,
@@ -19,6 +20,9 @@ AC_CHECK_DECLS([
 #include <linux/random.h>
 #include <sys/mman.h>
 ]])
+dnl This defines HAVE_FOO to 1 if found, or leaves it undefined if not:
+dnl not the same!
+AC_CHECK_FUNCS([close_range])
 
 AC_ARG_ENABLE(otmpfile,
               [AS_HELP_STRING([--disable-otmpfile],

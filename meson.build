@@ -49,16 +49,16 @@ foreach check_function : check_functions
   )
   conf.set10('HAVE_DECL_' + check_function.underscorify().to_upper(), have_it)
 endforeach
-config_h = configure_file(
-  output : 'libglnx-config.h',
-  configuration : conf,
-)
 
 check_functions = [
   'close_range',
 ]
 foreach check_function : check_functions
+  if cc.has_function(check_function)
+    conf.set('HAVE_' + check_function.underscorify().to_upper(), 1)
+  endif
 endforeach
+
 config_h = configure_file(
   output : 'libglnx-config.h',
   configuration : conf,

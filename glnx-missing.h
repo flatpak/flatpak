@@ -92,4 +92,12 @@
 #define MFD_CLOEXEC 0x0001U
 #endif
 
+#ifndef CLOSE_RANGE_UNSHARE
+#define CLOSE_RANGE_UNSHARE (1U << 1)
+#endif
+
+#ifndef CLOSE_RANGE_CLOEXEC
+#define CLOSE_RANGE_CLOEXEC (1U << 2)
+#endif
+
 #include "glnx-missing-syscall.h"
