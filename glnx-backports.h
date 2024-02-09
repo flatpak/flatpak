@@ -149,4 +149,11 @@ _glnx_steal_fd (int *fdp)
 #define G_TYPE_FLAG_NONE ((GTypeFlags) 0)
 #endif
 
+#if !GLIB_CHECK_VERSION(2, 80, 0)
+#define g_closefrom _glnx_closefrom
+int _glnx_closefrom (int lowfd);
+#define g_fdwalk_set_cloexec _glnx_fdwalk_set_cloexec
+int _glnx_fdwalk_set_cloexec (int lowfd);
+#endif
+
 G_END_DECLS

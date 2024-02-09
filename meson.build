@@ -54,6 +54,16 @@ config_h = configure_file(
   configuration : conf,
 )
 
+check_functions = [
+  'close_range',
+]
+foreach check_function : check_functions
+endforeach
+config_h = configure_file(
+  output : 'libglnx-config.h',
+  configuration : conf,
+)
+
 libglnx_deps = [
   dependency('gio-2.0'),
   dependency('gio-unix-2.0'),
