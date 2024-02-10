@@ -67,24 +67,24 @@ common_include_directories = include_directories(
 )
 
 # Keep this in sync with ostree, except remove -Wall (part of Meson
-# warning_level 2) and -Werror=declaration-after-statement
+# warning_level 2) and -Wdeclaration-after-statement
 add_project_arguments(
   cc.get_supported_arguments([
-    '-Werror=shadow',
-    '-Werror=empty-body',
-    '-Werror=strict-prototypes',
-    '-Werror=missing-prototypes',
-    '-Werror=implicit-function-declaration',
-    '-Werror=pointer-arith',
-    '-Werror=init-self',
-    '-Werror=missing-declarations',
-    '-Werror=return-type',
-    '-Werror=overflow',
-    '-Werror=int-conversion',
-    '-Werror=parenthesis',
-    '-Werror=incompatible-pointer-types',
-    '-Werror=misleading-indentation',
-    '-Werror=missing-include-dirs',
+    '-Wshadow',
+    '-Wempty-body',
+    '-Wstrict-prototypes',
+    '-Wmissing-prototypes',
+    '-Wimplicit-function-declaration',
+    '-Wpointer-arith',
+    '-Winit-self',
+    '-Wmissing-declarations',
+    '-Wreturn-type',
+    '-Woverflow',
+    '-Wint-conversion',
+    '-Wparenthesis',
+    '-Wincompatible-pointer-types',
+    '-Wmisleading-indentation',
+    '-Wmissing-include-dirs',
 
     # Meson warning_level=2 would do this, but we are not fully
     # signedness-safe yet
@@ -111,14 +111,14 @@ add_project_arguments(
 add_project_arguments('-fvisibility=hidden', language : 'c')
 
 if (
-  cc.has_argument('-Werror=format=2')
-  and cc.has_argument('-Werror=format-security')
-  and cc.has_argument('-Werror=format-nonliteral')
+  cc.has_argument('-Wformat=2')
+  and cc.has_argument('-Wformat-security')
+  and cc.has_argument('-Wformat-nonliteral')
 )
   add_project_arguments([
-    '-Werror=format=2',
-    '-Werror=format-security',
-    '-Werror=format-nonliteral',
+    '-Wformat=2',
+    '-Wformat-security',
+    '-Wformat-nonliteral',
   ], language : 'c')
 endif
 

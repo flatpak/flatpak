@@ -64,21 +64,22 @@ dnl This list is shared with https://github.com/ostreedev/ostree
 CC_CHECK_FLAGS_APPEND([WARN_CFLAGS], [CFLAGS], [\
 -pipe \
 -Wall \
--Werror=shadow \
--Werror=empty-body \
--Werror=strict-prototypes \
--Werror=missing-prototypes \
--Werror=implicit-function-declaration \
-"-Werror=format=2 -Werror=format-security -Werror=format-nonliteral" \
--Werror=pointer-arith -Werror=init-self \
--Werror=missing-declarations \
--Werror=return-type \
--Werror=overflow \
--Werror=int-conversion \
--Werror=parenthesis \
--Werror=incompatible-pointer-types \
--Werror=misleading-indentation \
--Werror=missing-include-dirs \
+-Wshadow \
+-Wempty-body \
+-Wstrict-prototypes \
+-Wmissing-prototypes \
+-Wimplicit-function-declaration \
+"-Wformat=2 -Wformat-security -Wformat-nonliteral" \
+-Wpointer-arith \
+-Winit-self \
+-Wmissing-declarations \
+-Wreturn-type \
+-Woverflow \
+-Wint-conversion \
+-Wparenthesis \
+-Wincompatible-pointer-types \
+-Wmisleading-indentation \
+-Wmissing-include-dirs \
 ])
 AC_SUBST(WARN_CFLAGS)
 
