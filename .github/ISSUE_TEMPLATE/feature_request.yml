@@ -1,7 +1,9 @@
 name: Feature request
 description: Request a feature
 title: "[Feature request]: "
-labels: "enhancement"
+labels:
+  - "enhancement"
+  - "needs triage"
 body:
 - type: checkboxes
   attributes:

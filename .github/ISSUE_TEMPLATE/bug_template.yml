@@ -1,7 +1,7 @@
 name: Bug Report
 description: Report a bug in Flatpak
 title: "[Bug]: "
-labels: "bug"
+labels: "needs triage"
 body:
 - type: checkboxes
   attributes:
