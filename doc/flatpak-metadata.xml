@@ -179,6 +179,7 @@
                             <listitem><para>
                                 Input devices
                                 (<filename>/dev/input</filename>).
+                                Available since 1.15.6.
                             </para></listitem></varlistentry>
 
                             <varlistentry><term><option>kvm</option></term>
