@@ -205,7 +205,7 @@ update_test (PortalFlatpak *portal, int status_pipe)
   g_autoptr(GError) error = NULL;
   PortalFlatpakUpdateMonitor *monitor;
   GVariantBuilder opt_builder;
-  GMainLoop *loop = g_main_loop_new (NULL, FALSE);
+  g_autoptr(GMainLoop) loop = g_main_loop_new (NULL, FALSE);
   UpdateData data = { loop };
 
   monitor = create_monitor (portal, NULL, NULL, &error);
@@ -241,7 +241,7 @@ update_null_test (PortalFlatpak *portal, int status_pipe)
   g_autoptr(GError) error = NULL;
   PortalFlatpakUpdateMonitor *monitor;
   GVariantBuilder opt_builder;
-  GMainLoop *loop = g_main_loop_new (NULL, FALSE);
+  g_autoptr(GMainLoop) loop = g_main_loop_new (NULL, FALSE);
   UpdateData data = { loop };
 
   monitor = create_monitor (portal, NULL, NULL, &error);
@@ -277,7 +277,7 @@ update_fail_test (PortalFlatpak *portal, int status_pipe)
   g_autoptr(GError) error = NULL;
   PortalFlatpakUpdateMonitor *monitor;
   GVariantBuilder opt_builder;
-  GMainLoop *loop = g_main_loop_new (NULL, FALSE);
+  g_autoptr(GMainLoop) loop = g_main_loop_new (NULL, FALSE);
   UpdateData data = { loop };
 
   monitor = create_monitor (portal, NULL, NULL, &error);
@@ -313,7 +313,7 @@ update_notsupp_test (PortalFlatpak *portal, int status_pipe)
   g_autoptr(GError) error = NULL;
   PortalFlatpakUpdateMonitor *monitor;
   GVariantBuilder opt_builder;
-  GMainLoop *loop = g_main_loop_new (NULL, FALSE);
+  g_autoptr(GMainLoop) loop = g_main_loop_new (NULL, FALSE);
   UpdateData data = { loop };
 
   monitor = create_monitor (portal, NULL, NULL, &error);

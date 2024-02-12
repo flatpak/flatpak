@@ -298,7 +298,7 @@ flatpak_get_locale_langs_from_accounts_dbus_for_user (GDBusProxy *proxy, GPtrArr
       value = g_dbus_proxy_get_cached_property (accounts_proxy, "Languages");
       if (value != NULL)
         {
-          const char **locales = g_variant_get_strv (value, NULL);
+          g_autofree const char **locales = g_variant_get_strv (value, NULL);
           guint i;
 
           for (i = 0; locales != NULL && locales[i] != NULL; i++)

@@ -626,7 +626,7 @@ file_monitor_do (MonitorData *data)
       /* We can't update the /etc/localtime symlink at runtime, nor can we make it a of the
        * correct form "../usr/share/zoneinfo/$timezone". So, instead we use the old debian
        * /etc/timezone file for telling the sandbox the timezone. */
-      char *dest = g_build_filename (monitor_dir, "timezone", NULL);
+      g_autofree char *dest = g_build_filename (monitor_dir, "timezone", NULL);
       g_autofree char *raw_timezone = flatpak_get_timezone ();
       g_autofree char *timezone_content = g_strdup_printf ("%s\n", raw_timezone);
 
@@ -769,6 +769,7 @@ main (int    argc,
   gboolean show_version;
   GOptionContext *context;
   GBusNameOwnerFlags flags;
+  g_autofree char *pk11_program = NULL;
   g_autofree char *flatpak_dir = NULL;
   g_autoptr(GError) error = NULL;
   const GOptionEntry options[] = {
@@ -849,7 +850,8 @@ main (int    argc,
       exit (1);
     }
 
-  if (g_find_program_in_path ("p11-kit"))
+  pk11_program = g_find_program_in_path ("p11-kit");
+  if (pk11_program)
     start_p11_kit_server (flatpak_dir);
   else
     g_info ("p11-kit not found");

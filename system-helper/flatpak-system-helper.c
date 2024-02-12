@@ -2314,7 +2314,7 @@ main (int    argc,
   gboolean replace;
   gboolean show_version;
   GBusNameOwnerFlags flags;
-  GOptionContext *context;
+  g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GError) error = NULL;
   const GOptionEntry options[] = {
     { "replace", 'r', 0, G_OPTION_ARG_NONE, &replace,  "Replace old daemon.", NULL },

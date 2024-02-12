@@ -3941,9 +3941,11 @@ request_tokens_for_remote (FlatpakTransaction *self,
       g_autoptr(GFile) deploy = NULL;
       deploy = flatpak_dir_get_if_deployed (priv->dir, auto_install_ref, NULL, cancellable);
       if (deploy == NULL)
-        g_signal_emit (self, signals[INSTALL_AUTHENTICATOR], 0,
-                       remote, flatpak_decomposed_get_ref (auto_install_ref));
-      deploy = flatpak_dir_get_if_deployed (priv->dir, auto_install_ref, NULL, cancellable);
+        {
+          g_signal_emit (self, signals[INSTALL_AUTHENTICATOR], 0,
+                         remote, flatpak_decomposed_get_ref (auto_install_ref));
+          deploy = flatpak_dir_get_if_deployed (priv->dir, auto_install_ref, NULL, cancellable);
+        }
       if (deploy == NULL)
         return flatpak_fail (error, _("No authenticator installed for remote '%s'"), remote);
     }
@@ -4024,7 +4026,7 @@ request_tokens_for_remote (FlatpakTransaction *self,
   g_assert (priv->active_request_id == 0); /* No outstanding requests */
   priv->active_request = NULL;
 
-  results = data.results; /* Make sure its freed as needed */
+  results = data.results; /* Make sure it's freed as needed */
 
   {
     g_autofree char *results_str = results != NULL ? g_variant_print (results, FALSE) : g_strdup ("NULL");
@@ -4082,6 +4084,7 @@ request_tokens_for_remote (FlatpakTransaction *self,
               token = token_for_refs;
               break;
             }
+          g_clear_pointer (&refs_strv, g_free);
         }
 
       if (token == NULL)
