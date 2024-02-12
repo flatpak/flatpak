@@ -11513,7 +11513,7 @@ flatpak_dir_get_if_deployed (FlatpakDir        *self,
     }
 
   if (g_file_query_file_type (deploy_dir, G_FILE_QUERY_INFO_NONE, cancellable) == G_FILE_TYPE_DIRECTORY)
-    return g_object_ref (deploy_dir);
+    return g_steal_pointer (&deploy_dir);
 
   /* Maybe it was removed but is still living? */
   if (checksum != NULL)
@@ -11527,7 +11527,7 @@ flatpak_dir_get_if_deployed (FlatpakDir        *self,
       removed_deploy_dir = g_file_get_child (removed_dir, dirname);
 
       if (g_file_query_file_type (removed_deploy_dir, G_FILE_QUERY_INFO_NONE, cancellable) == G_FILE_TYPE_DIRECTORY)
-        return g_object_ref (removed_deploy_dir);
+        return g_steal_pointer (&removed_deploy_dir);
     }
 
   return NULL;

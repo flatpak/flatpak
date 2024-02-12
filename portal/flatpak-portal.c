@@ -3013,7 +3013,7 @@ main (int    argc,
   ssize_t exe_path_len;
   gboolean replace;
   gboolean show_version;
-  GOptionContext *context;
+  g_autoptr(GOptionContext) context = NULL;
   GBusNameOwnerFlags flags;
   g_autoptr(GError) error = NULL;
   const GOptionEntry options[] = {

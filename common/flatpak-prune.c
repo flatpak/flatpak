@@ -775,6 +775,7 @@ flatpak_repo_prune (OstreeRepo    *repo,
 
     g_timer_stop (timer);
     g_info ("Elapsed time: %.1f sec",  g_timer_elapsed (timer, NULL));
+    g_clear_pointer (&timer, g_timer_destroy);
   }
 
   {

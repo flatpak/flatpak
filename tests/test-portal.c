@@ -466,6 +466,7 @@ teardown (Fixture *f,
   tests_dbus_daemon_teardown (&f->dbus_daemon);
   g_clear_object (&f->portal);
   g_free (f->portal_path);
+  g_free (f->mock_flatpak);
 }
 
 int

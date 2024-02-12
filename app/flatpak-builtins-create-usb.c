@@ -431,6 +431,7 @@ ostree_create_usb (GOptionContext *context,
               break;
             }
         }
+      glnx_dirfd_iterator_clear (&repos_iter);
 
       /* If we need a symlink, find a unique name for it and create it. */
       if (need_symlink)

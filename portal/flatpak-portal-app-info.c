@@ -199,7 +199,9 @@ name_owner_changed (GDBusConnection *connection,
                     GVariant        *parameters,
                     gpointer         user_data)
 {
-  const char *name, *from, *to;
+  g_autofree char *name = NULL;
+  g_autofree char *from = NULL;
+  g_autofree char *to = NULL;
 
   g_variant_get (parameters, "(sss)", &name, &from, &to);
 
