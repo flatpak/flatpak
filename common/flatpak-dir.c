@@ -3951,11 +3951,10 @@ _flatpak_dir_find_new_flatpakrepos (FlatpakDir *self, OstreeRepo *repo)
   while (TRUE)
     {
       GFileInfo *file_info;
-      GFile *path;
       const char *name;
       guint32 type;
 
-      if (!g_file_enumerator_iterate (dir_enum, &file_info, &path,
+      if (!g_file_enumerator_iterate (dir_enum, &file_info, NULL,
                                       NULL, &my_error))
         {
           g_info ("Unexpected error reading file in %s: %s",
