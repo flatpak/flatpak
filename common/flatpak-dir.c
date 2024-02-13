@@ -7143,7 +7143,8 @@ flatpak_dir_run_triggers (FlatpakDir   *self,
           commandline = flatpak_quote_argv ((const char **) bwrap->argv->pdata, -1);
           g_info ("Running '%s'", commandline);
 
-          /* We use LEAVE_DESCRIPTORS_OPEN to work around dead-lock, see flatpak_close_fds_workaround */
+          /* We use LEAVE_DESCRIPTORS_OPEN and close them in the child_setup
+           * to work around a deadlock in GLib < 2.60 */
           if (!g_spawn_sync ("/",
                              (char **) bwrap->argv->pdata,
                              NULL,

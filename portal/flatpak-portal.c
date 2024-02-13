@@ -482,7 +482,7 @@ child_setup_func (gpointer user_data)
   sigset_t set;
   gsize i;
 
-  flatpak_close_fds_workaround (3);
+  g_fdwalk_set_cloexec (3);
 
   if (data->instance_id_fd != -1)
     drop_cloexec (data->instance_id_fd);
@@ -1518,7 +1518,8 @@ handle_spawn (PortalFlatpak         *object,
   child_setup_data.fd_map = &g_array_index (fd_map, FdMapEntry, 0);
   child_setup_data.fd_map_len = fd_map->len;
 
-  /* We use LEAVE_DESCRIPTORS_OPEN to work around dead-lock, see flatpak_close_fds_workaround */
+  /* We use LEAVE_DESCRIPTORS_OPEN and close them in the child_setup
+   * to work around a deadlock in GLib < 2.60 */
   if (!g_spawn_async_with_pipes (NULL,
                                  (char **) flatpak_argv->pdata,
                                  env,
@@ -2612,7 +2613,7 @@ update_child_setup_func (gpointer user_data)
   int *socket = user_data;
 
   dup2 (*socket, 3);
-  flatpak_close_fds_workaround (4);
+  g_fdwalk_set_cloexec (4);
 }
 
 /* This is the meat of the update process, its run out of process (via
