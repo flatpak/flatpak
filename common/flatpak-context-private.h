@@ -109,6 +109,9 @@ gboolean       flatpak_context_load_metadata (FlatpakContext *context,
 void           flatpak_context_save_metadata (FlatpakContext *context,
                                               gboolean        flatten,
                                               GKeyFile       *metakey);
+GVariant      *flatpak_context_create_containers1_metadata (FlatpakContext *context,
+                                                            const char     *app_id,
+                                                            const char     *instance_id);
 void           flatpak_context_allow_host_fs (FlatpakContext *context);
 void           flatpak_context_set_session_bus_policy (FlatpakContext *context,
                                                        const char     *name,

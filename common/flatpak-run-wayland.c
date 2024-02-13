@@ -171,7 +171,8 @@ out:
 gboolean
 flatpak_run_add_wayland_args (FlatpakBwrap *bwrap,
                               const char   *app_id,
-                              const char   *instance_id)
+                              const char   *instance_id,
+                              GVariant     *metadata)
 {
   const char *wayland_display;
   g_autofree char *user_runtime_dir = flatpak_get_real_xdg_runtime_dir ();
