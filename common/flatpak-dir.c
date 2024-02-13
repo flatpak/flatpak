@@ -80,8 +80,9 @@
 
 #define SYSCONF_INSTALLATIONS_DIR "installations.d"
 #define SYSCONF_INSTALLATIONS_FILE_EXT ".conf"
-#define SYSCONF_REMOTES_DIR "remotes.d"
-#define SYSCONF_REMOTES_FILE_EXT ".flatpakrepo"
+
+#define FLATPAK_REMOTES_DIR "remotes.d"
+#define FLATPAK_REMOTES_FILE_EXT ".flatpakrepo"
 
 #define SIDELOAD_REPOS_DIR_NAME "sideload-repos"
 
@@ -3919,15 +3920,15 @@ _flatpak_dir_scan_new_flatpakrepos (const char          *dir_str,
                                     GHashTable         **flatpakrepos,
                                     const char * const  *remotes)
 {
-  g_autoptr(GFile) conf_dir = NULL;
+  g_autoptr(GFile) dir = NULL;
   g_autoptr(GFileEnumerator) dir_enum = NULL;
   g_autoptr(GError) my_error = NULL;
 
   g_return_if_fail (dir_str != NULL);
   g_return_if_fail (flatpakrepos != NULL);
 
-  conf_dir = g_file_new_for_path (dir_str);
-  dir_enum = g_file_enumerate_children (conf_dir,
+  dir = g_file_new_for_path (dir_str);
+  dir_enum = g_file_enumerate_children (dir,
                                         G_FILE_ATTRIBUTE_STANDARD_NAME "," G_FILE_ATTRIBUTE_STANDARD_TYPE,
                                         G_FILE_QUERY_INFO_NONE,
                                         NULL, &my_error);
@@ -3954,9 +3955,9 @@ _flatpak_dir_scan_new_flatpakrepos (const char          *dir_str,
       name = g_file_info_get_name (file_info);
       type = g_file_info_get_file_type (file_info);
 
-      if (type == G_FILE_TYPE_REGULAR && g_str_has_suffix (name, SYSCONF_REMOTES_FILE_EXT))
+      if (type == G_FILE_TYPE_REGULAR && g_str_has_suffix (name, FLATPAK_REMOTES_FILE_EXT))
         {
-          g_autofree char *remote_name = g_strndup (name, strlen (name) - strlen (SYSCONF_REMOTES_FILE_EXT));
+          g_autofree char *remote_name = g_strndup (name, strlen (name) - strlen (FLATPAK_REMOTES_FILE_EXT));
 
           if (remotes && g_strv_contains (remotes, remote_name))
             continue;
@@ -3973,7 +3974,7 @@ static GHashTable *
 _flatpak_dir_find_new_flatpakrepos (FlatpakDir *self, OstreeRepo *repo)
 {
   g_autoptr(GHashTable) flatpakrepos = NULL;
-  g_autofree char *conf_dir_str = NULL;
+  g_autofree char *dir_str = NULL;
   g_auto(GStrv) ostree_remotes = NULL;
   g_auto(GStrv) applied_remotes = NULL;
   g_autoptr(GPtrArray) remotes = NULL;
@@ -3996,11 +3997,12 @@ _flatpak_dir_find_new_flatpakrepos (FlatpakDir *self, OstreeRepo *repo)
     g_ptr_array_add (remotes, applied_remotes[i]);
   g_ptr_array_add (remotes, NULL);
 
-  conf_dir_str = g_strdup_printf ("%s/%s",
-                                get_config_dir_location (),
-                                SYSCONF_REMOTES_DIR);
+  dir_str = g_build_filename (get_config_dir_location (), FLATPAK_REMOTES_DIR, NULL);
+  _flatpak_dir_scan_new_flatpakrepos (dir_str,
+                                      &flatpakrepos,
+                                      (const char * const *) remotes->pdata);
 
-  _flatpak_dir_scan_new_flatpakrepos (conf_dir_str,
+  _flatpak_dir_scan_new_flatpakrepos (FLATPAK_BASEDIR "/" FLATPAK_REMOTES_DIR,
                                       &flatpakrepos,
                                       (const char * const *) remotes->pdata);
 
