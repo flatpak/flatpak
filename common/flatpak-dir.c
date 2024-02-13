@@ -3921,7 +3921,7 @@ _flatpak_dir_find_new_flatpakrepos (FlatpakDir *self, OstreeRepo *repo)
   g_autoptr(GFile) conf_dir = NULL;
   g_autoptr(GFileEnumerator) dir_enum = NULL;
   g_autoptr(GError) my_error = NULL;
-  g_autofree char *config_dir = NULL;
+  g_autofree char *conf_dir_str = NULL;
   g_auto(GStrv) remotes = NULL;
   g_auto(GStrv) applied_remotes = NULL;
 
@@ -3933,10 +3933,10 @@ _flatpak_dir_find_new_flatpakrepos (FlatpakDir *self, OstreeRepo *repo)
        strcmp (self->extra_data->id, SYSTEM_DIR_DEFAULT_ID) != 0))
     return NULL;
 
-  config_dir = g_strdup_printf ("%s/%s",
+  conf_dir_str = g_strdup_printf ("%s/%s",
                                 get_config_dir_location (),
                                 SYSCONF_REMOTES_DIR);
-  conf_dir = g_file_new_for_path (config_dir);
+  conf_dir = g_file_new_for_path (conf_dir_str);
   dir_enum = g_file_enumerate_children (conf_dir,
                                         G_FILE_ATTRIBUTE_STANDARD_NAME "," G_FILE_ATTRIBUTE_STANDARD_TYPE,
                                         G_FILE_QUERY_INFO_NONE,
@@ -3959,7 +3959,7 @@ _flatpak_dir_find_new_flatpakrepos (FlatpakDir *self, OstreeRepo *repo)
                                       NULL, &my_error))
         {
           g_info ("Unexpected error reading file in %s: %s",
-                  config_dir, my_error->message);
+                  conf_dir_str, my_error->message);
           break;
         }
 
