@@ -141,10 +141,10 @@ flatpak_LDADD = \
 	$(APPSTREAM_LIBS) \
 	$(SYSTEMD_LIBS) \
 	$(POLKIT_LIBS) \
-	libglnx.la \
 	libflatpak-app.la \
 	libflatpak-common.la \
 	libflatpak-common-base.la \
+	libglnx.la \
 	$(NULL)
 
 flatpak_CFLAGS = \
