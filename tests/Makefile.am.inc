@@ -49,8 +49,8 @@ testlibrary_LDADD = \
 	$(BASE_LIBS) \
 	$(FUSE_LIBS) \
 	$(OSTREE_LIBS) \
-	libglnx.la \
 	libflatpak.la \
+	libglnx.la \
 	$(NULL)
 testlibrary_SOURCES = \
 	tests/can-use-fuse.c \
