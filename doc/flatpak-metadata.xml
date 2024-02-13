@@ -152,7 +152,7 @@
                     <listitem><para>
                         List of well-known sockets to make available in the sandbox.
                         Possible sockets: x11, wayland, fallback-x11, pulseaudio, session-bus, system-bus,
-                        ssh-auth, pcsc, cups.
+                        ssh-auth, pcsc, cups, speech-dispatcher.
                         When making a socket available, flatpak also sets
                         well-known environment variables like DISPLAY or
                         DBUS_SYSTEM_BUS_ADDRESS to let the application

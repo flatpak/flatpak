@@ -188,6 +188,8 @@ libflatpak_common_la_SOURCES = \
 	common/flatpak-run-pulseaudio.c \
 	common/flatpak-run-sockets-private.h \
 	common/flatpak-run-sockets.c \
+	common/flatpak-run-speech-dispatcher-private.h \
+	common/flatpak-run-speech-dispatcher.c \
 	common/flatpak-run-wayland-private.h \
 	common/flatpak-run-wayland.c \
 	common/flatpak-run-x11-private.h \

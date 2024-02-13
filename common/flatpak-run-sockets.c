@@ -26,8 +26,9 @@
 
 #include "flatpak-run-cups-private.h"
 #include "flatpak-run-pulseaudio-private.h"
-#include "flatpak-run-wayland-private.h"
+#include "flatpak-run-speech-dispatcher-private.h"
 #include "flatpak-run-x11-private.h"
+#include "flatpak-run-wayland-private.h"
 #include "flatpak-utils-private.h"
 
 static void
@@ -217,6 +218,11 @@ flatpak_run_add_socket_args_environment (FlatpakBwrap         *bwrap,
   if (sockets & FLATPAK_CONTEXT_SOCKET_GPG_AGENT)
     {
       flatpak_run_add_gpg_agent_args (bwrap);
+    }
+
+  if (sockets & FLATPAK_CONTEXT_SOCKET_SPEECH_DISPATCHER)
+    {
+      flatpak_run_add_speech_dispatcher_args (bwrap);
     }
 }
 
