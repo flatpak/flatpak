@@ -499,8 +499,14 @@ flatpak_bwrap_child_setup (GArray *fd_array,
 {
   int i;
 
+  /* There is a dead-lock in glib versions before 2.60 when it closes
+   * the fds. See:  https://gitlab.gnome.org/GNOME/glib/merge_requests/490
+   * This was hitting the test-suite a lot, so we work around it by using
+   * the G_SPAWN_LEAVE_DESCRIPTORS_OPEN/G_SUBPROCESS_FLAGS_INHERIT_FDS flag
+   * and setting CLOEXEC ourselves.
+   */
   if (close_fd_workaround)
-    flatpak_close_fds_workaround (3);
+    g_fdwalk_set_cloexec (3);
 
   /* If no fd_array was specified, don't care. */
   if (fd_array == NULL)

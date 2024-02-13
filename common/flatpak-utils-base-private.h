@@ -36,6 +36,5 @@ char * flatpak_readlink (const char *path,
 char * flatpak_resolve_link (const char *path,
                              GError    **error);
 char * flatpak_canonicalize_filename (const char *path);
-void   flatpak_close_fds_workaround (int start_fd);
 
 #endif /* __FLATPAK_UTILS_BASE_H__ */

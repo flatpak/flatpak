@@ -2643,7 +2643,8 @@ regenerate_ld_cache (GPtrArray    *base_argv_array,
   g_array_append_vals (combined_fd_array, base_fd_array->data, base_fd_array->len);
   g_array_append_vals (combined_fd_array, bwrap->fds->data, bwrap->fds->len);
 
-  /* We use LEAVE_DESCRIPTORS_OPEN to work around dead-lock, see flatpak_close_fds_workaround */
+  /* We use LEAVE_DESCRIPTORS_OPEN and close them in the child_setup
+   * to work around a deadlock in GLib < 2.60 */
   if (!g_spawn_sync (NULL,
                      (char **) bwrap->argv->pdata,
                      bwrap->envp,
@@ -3453,7 +3454,9 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
       else
         child_setup = flatpak_bwrap_child_setup_inherit_fds_cb;
 
-      /* We use LEAVE_DESCRIPTORS_OPEN to work around dead-lock, see flatpak_close_fds_workaround */
+      /* Even in the case where we want them closed, we use
+       * LEAVE_DESCRIPTORS_OPEN and close them in the child_setup
+       * to work around a deadlock in GLib < 2.60 */
       spawn_flags |= G_SPAWN_LEAVE_DESCRIPTORS_OPEN;
 
       /* flatpak_bwrap_envp_to_args() moved the environment variables to

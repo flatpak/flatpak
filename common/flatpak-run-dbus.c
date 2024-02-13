@@ -161,7 +161,8 @@ flatpak_run_maybe_start_dbus_proxy (FlatpakBwrap *app_bwrap,
   commandline = flatpak_quote_argv ((const char **) proxy_bwrap->argv->pdata, -1);
   g_info ("Running '%s'", commandline);
 
-  /* We use LEAVE_DESCRIPTORS_OPEN to work around dead-lock, see flatpak_close_fds_workaround */
+  /* We use LEAVE_DESCRIPTORS_OPEN and close them in the child_setup
+   * to work around a deadlock in GLib < 2.60 */
   if (!g_spawn_async (NULL,
                       (char **) proxy_bwrap->argv->pdata,
                       NULL,
