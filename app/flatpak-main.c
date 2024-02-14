@@ -711,13 +711,13 @@ flatpak_run (int      argc,
               if (opt_version)
                 {
                   g_print ("%s\n", PACKAGE_STRING);
-                  exit (EXIT_SUCCESS);
+                  return EXIT_SUCCESS;
                 }
 
               if (opt_default_arch)
                 {
                   g_print ("%s\n", flatpak_get_arch ());
-                  exit (EXIT_SUCCESS);
+                  return EXIT_SUCCESS;
                 }
 
               if (opt_supported_arches)
@@ -726,7 +726,7 @@ flatpak_run (int      argc,
                   int i;
                   for (i = 0; arches[i] != NULL; i++)
                     g_print ("%s\n", arches[i]);
-                  exit (EXIT_SUCCESS);
+                  return EXIT_SUCCESS;
                 }
 
               if (opt_gl_drivers)
@@ -735,7 +735,7 @@ flatpak_run (int      argc,
                   int i;
                   for (i = 0; drivers[i] != NULL; i++)
                     g_print ("%s\n", drivers[i]);
-                  exit (EXIT_SUCCESS);
+                  return EXIT_SUCCESS;
                 }
 
               if (opt_list_installations)
@@ -751,7 +751,7 @@ flatpak_run (int      argc,
                           GFile *file = paths->pdata[i];
                           g_print ("%s\n", flatpak_file_get_path_cached (file));
                         }
-                      exit (EXIT_SUCCESS);
+                      return EXIT_SUCCESS;
                     }
                 }
 
@@ -777,7 +777,7 @@ flatpak_run (int      argc,
                   if (local_error != NULL)
                     {
                       g_printerr ("%s\n", local_error->message);
-                      exit (1);
+                      return 1;
                     }
 
                   for (gsize i = 0; i < system_installation_locations->len; i++)
@@ -805,7 +805,7 @@ flatpak_run (int      argc,
                   new_dirs_joined = g_strjoinv (":", (gchar **) new_dirs->pdata);
                   g_print ("XDG_DATA_DIRS=%s\n", new_dirs_joined);
 
-                  exit (EXIT_SUCCESS);
+                  return EXIT_SUCCESS;
                 }
             }
 
