@@ -1842,16 +1842,16 @@ GPtrArray *
 flatpak_get_system_base_dir_locations (GCancellable *cancellable,
                                        GError      **error)
 {
-  static gsize array = 0;
+  static gsize initialized = 0;
+  static GPtrArray *array = NULL;
 
-  if (g_once_init_enter (&array))
+  if (g_once_init_enter (&initialized))
     {
-      gsize setup_value = 0;
-      setup_value = (gsize) get_system_locations (cancellable, error);
-      g_once_init_leave (&array, setup_value);
+      array = get_system_locations (cancellable, error);
+      g_once_init_leave (&initialized, 1);
     }
 
-  return (GPtrArray *) array;
+  return array;
 }
 
 GFile *
