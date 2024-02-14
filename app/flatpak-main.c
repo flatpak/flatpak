@@ -679,7 +679,7 @@ flatpak_run (int      argc,
 
   if (!command->fn)
     {
-      GOptionContext *context;
+      g_autoptr(GOptionContext) context = NULL;
       g_autofree char *hint = NULL;
       g_autofree char *msg = NULL;
 
@@ -814,8 +814,6 @@ flatpak_run (int      argc,
           else
             msg = g_strdup (_("No command specified"));
         }
-
-      g_option_context_free (context);
 
       g_set_error (&error, G_IO_ERROR, G_IO_ERROR_FAILED, "%s\n\n%s", msg, hint);
 
