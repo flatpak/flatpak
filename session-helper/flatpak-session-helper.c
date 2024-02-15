@@ -767,7 +767,7 @@ main (int    argc,
   gboolean replace;
   gboolean verbose;
   gboolean show_version;
-  GOptionContext *context;
+  g_autoptr(GOptionContext) context = NULL;
   GBusNameOwnerFlags flags;
   g_autofree char *pk11_program = NULL;
   g_autofree char *flatpak_dir = NULL;
@@ -821,9 +821,10 @@ main (int    argc,
       g_printerr ("Try \"%s --help\" for more information.",
                   g_get_prgname ());
       g_printerr ("\n");
-      g_option_context_free (context);
       return 1;
     }
+
+  g_clear_pointer (&context, g_option_context_free);
 
   if (show_version)
     {
