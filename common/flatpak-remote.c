@@ -1175,7 +1175,7 @@ flatpak_remote_commit_filter (FlatpakRemote *self,
   if (priv->local_filter_set &&
       !flatpak_dir_compare_remote_filter (dir, priv->name, priv->local_filter))
     {
-      GKeyFile *config = ostree_repo_copy_config (flatpak_dir_get_repo (dir));
+      g_autoptr(GKeyFile) config = ostree_repo_copy_config (flatpak_dir_get_repo (dir));
 
       g_key_file_set_string (config, group, "xa.filter", priv->local_filter ? priv->local_filter : "");
 
