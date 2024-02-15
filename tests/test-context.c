@@ -158,7 +158,7 @@ context_parse_args (FlatpakContext *context,
 
   oc = g_option_context_new ("");
   group = flatpak_context_get_options (context);
-  g_option_context_add_group (oc, group);
+  g_option_context_add_group (oc, g_steal_pointer (&group));
   g_option_context_parse_strv (oc, &argv, error);
 }
 
