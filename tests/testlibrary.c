@@ -3429,6 +3429,8 @@ test_transaction_install_uninstall (void)
   g_assert_no_error (error);
   g_assert_true (res);
 
+  g_clear_object (&transaction);
+
   /* uninstall again, expect a not-installed error */
   transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
   g_assert_no_error (error);
@@ -3437,6 +3439,8 @@ test_transaction_install_uninstall (void)
   res = flatpak_transaction_add_uninstall (transaction, app, &error);
   g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED);
   g_assert_false (res);
+
+  g_clear_object (&transaction);
 }
 
 static int remote_added;
