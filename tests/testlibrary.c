@@ -1220,7 +1220,7 @@ test_update_installed_ref_if_missing_runtime (void)
   G_GNUC_END_IGNORE_DEPRECATIONS
   g_assert_no_error (error);
   g_assert_true (FLATPAK_IS_INSTALLED_REF (iref));
-  iref = NULL;
+  g_clear_object (&iref);
 
   /* Install the Locale extension */
   G_GNUC_BEGIN_IGNORE_DEPRECATIONS
@@ -1234,7 +1234,7 @@ test_update_installed_ref_if_missing_runtime (void)
   G_GNUC_END_IGNORE_DEPRECATIONS
   g_assert_no_error (error);
   g_assert_true (FLATPAK_IS_INSTALLED_REF (iref));
-  iref = NULL;
+  g_clear_object (&iref);
 
   updatable_refs = flatpak_installation_list_installed_refs_for_update (inst, NULL, &error);
   g_assert_cmpint (updatable_refs->len, ==, 1);
@@ -1259,6 +1259,7 @@ test_update_installed_ref_if_missing_runtime (void)
   iref = flatpak_installation_get_installed_ref (inst, FLATPAK_REF_KIND_RUNTIME, "org.test.Platform", NULL, NULL, NULL, &error);
   g_assert_nonnull (iref);
   g_assert_no_error (error);
+  g_clear_object (&iref);
 }
 
 static void
@@ -4486,12 +4487,14 @@ test_overrides (void)
   G_GNUC_END_IGNORE_DEPRECATIONS
   g_assert_no_error (error);
   g_assert_nonnull (ref);
+  g_clear_object (&ref);
 
   G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   ref = flatpak_installation_install (inst, repo_name, FLATPAK_REF_KIND_RUNTIME, "org.test.Platform", NULL, "master", NULL, NULL, NULL, &error);
   G_GNUC_END_IGNORE_DEPRECATIONS
   g_assert_no_error (error);
   g_assert_nonnull (ref);
+  g_clear_object (&ref);
 
   {
     TESTS_SCOPED_STDOUT_TO_STDERR;
