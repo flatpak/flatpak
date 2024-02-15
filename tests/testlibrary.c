@@ -1992,6 +1992,7 @@ mangle_deploy_file (FlatpakInstalledRef *ref)
   GVariantBuilder metadata_builder;
   g_autoptr(GError) error = NULL;
   const char * const previous_ids[] = { "net.example.Goodbye", NULL };
+  g_autofree const char **subpaths = NULL;
 
   dir = g_file_new_for_path (flatpak_installed_ref_get_deploy_dir (ref));
   data = flatpak_load_deploy_data (dir);
@@ -2002,9 +2003,10 @@ mangle_deploy_file (FlatpakInstalledRef *ref)
   g_variant_builder_add (&metadata_builder, "{s@v}", "previous-ids",
                          g_variant_new_variant (g_variant_new_strv (previous_ids, -1)));
 
+  subpaths = flatpak_deploy_data_get_subpaths (data);
   new_data = flatpak_dir_new_deploy_data (flatpak_deploy_data_get_origin (data),
                                           flatpak_deploy_data_get_commit (data),
-                                          (char **) flatpak_deploy_data_get_subpaths (data),
+                                          (char **) subpaths,
                                           flatpak_deploy_data_get_installed_size (data),
                                           g_variant_builder_end (&metadata_builder));
 
