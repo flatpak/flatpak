@@ -243,7 +243,7 @@ if test "x$with_systemd" != "xno"; then
 else
   have_libsystemd=no
 fi
-PKG_CHECK_MODULES([MALCONTENT], [malcontent-0 >= 0.4.0], [have_libmalcontent=yes], [have_libmalcontent=no])
+PKG_CHECK_MODULES([MALCONTENT], [malcontent-0 >= 0.5.0], [have_libmalcontent=yes], [have_libmalcontent=no])
 AS_IF([test "$have_libmalcontent" = "yes"],[
   AC_DEFINE([HAVE_LIBMALCONTENT], [1], [Define if libmalcontent is available])
 ])
