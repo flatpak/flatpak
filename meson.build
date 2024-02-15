@@ -183,7 +183,7 @@ libxml_dep = dependency('libxml-2.0', version : '>=2.4')
 libzstd_dep = dependency('libzstd', version : '>=0.8.1', required : get_option('libzstd'))
 dconf_dep = dependency('dconf', version : '>=0.26', required : get_option('dconf'))
 libsystemd_dep = dependency('libsystemd', required : get_option('systemd'))
-malcontent_dep = dependency('malcontent-0', required : get_option('malcontent'))
+malcontent_dep = dependency('malcontent-0', version : '>=0.5.0', required : get_option('malcontent'))
 polkit_agent_dep = dependency('polkit-agent-1', version : '>=0.98', required : get_option('system_helper'))
 build_system_helper = polkit_agent_dep.found()
 

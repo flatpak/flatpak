@@ -8444,7 +8444,7 @@ flatpak_dir_check_parental_controls (FlatpakDir    *self,
   gboolean authorized;
   gboolean repo_installation_allowed, app_is_appropriate;
   PolkitCheckAuthorizationFlags polkit_flags;
-  MctGetAppFilterFlags manager_flags;
+  MctManagerGetValueFlags manager_flags;
 
   /* Assume that root is allowed to install any ref and shouldn't have any
    * parental controls restrictions applied to them. Note that this branch
@@ -8498,13 +8498,13 @@ flatpak_dir_check_parental_controls (FlatpakDir    *self,
     }
 
   manager = mct_manager_new (dbus_connection);
-  manager_flags = MCT_GET_APP_FILTER_FLAGS_NONE;
+  manager_flags = MCT_MANAGER_GET_VALUE_FLAGS_NONE;
   if (!flatpak_dir_get_no_interaction (self))
-    manager_flags |= MCT_GET_APP_FILTER_FLAGS_INTERACTIVE;
+    manager_flags |= MCT_MANAGER_GET_VALUE_FLAGS_INTERACTIVE;
   app_filter = mct_manager_get_app_filter (manager, subject_uid,
                                            manager_flags,
                                            cancellable, &local_error);
-  if (g_error_matches (local_error, MCT_APP_FILTER_ERROR, MCT_APP_FILTER_ERROR_DISABLED))
+  if (g_error_matches (local_error, MCT_MANAGER_ERROR, MCT_MANAGER_ERROR_DISABLED))
     {
       g_info ("Skipping parental controls check for %s since parental "
               "controls are disabled globally", ref);
