@@ -144,6 +144,7 @@ ongoing_pull_free (OngoingPull *pull)
   close (pull->client_socket);
   close (pull->backend_exit_socket);
 
+  g_clear_object (&pull->cancellable);
   g_slice_free (OngoingPull, pull);
 }
 
