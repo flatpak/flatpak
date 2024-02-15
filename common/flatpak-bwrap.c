@@ -81,6 +81,7 @@ flatpak_bwrap_free (FlatpakBwrap *bwrap)
   g_array_unref (bwrap->noinherit_fds);
   g_array_unref (bwrap->fds);
   g_strfreev (bwrap->envp);
+  g_clear_pointer (&bwrap->runtime_dir_members, g_ptr_array_unref);
   g_free (bwrap);
 }
 
