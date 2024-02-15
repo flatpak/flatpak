@@ -4746,6 +4746,8 @@ test_list_installed_related_refs (void)
   g_assert_true (g_strv_length ((char **) flatpak_related_ref_get_subpaths (ref)) == 1);
   g_assert_cmpstr (flatpak_related_ref_get_subpaths (ref)[0], ==, "/de");
 
+  g_clear_pointer (&refs, g_ptr_array_unref);
+
   // Make the test with extra-languages, instead of languages
   clean_languages();
   configure_extra_languages();
