@@ -3300,7 +3300,7 @@ populate_commit_data_cache (OstreeRepo *repo,
                       strcmp (m_key, "xa.data") != 0)
                     {
                       VarVariantRef v = var_metadata_entry_get_value (m);
-                      GVariant *vv = var_variant_dup_to_gvariant (v);
+                      g_autoptr(GVariant) vv = g_variant_ref_sink (var_variant_dup_to_gvariant (v));
                       g_autoptr(GVariant) child = g_variant_get_child_value (vv, 0);
                       g_variant_builder_add (&sparse_builder, "{sv}", m_key, child);
                       has_sparse = TRUE;
