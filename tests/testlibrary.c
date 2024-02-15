@@ -1464,6 +1464,7 @@ test_list_remote_related_refs (void)
   g_assert_true (should_download);
   g_assert_true (should_delete);
   g_assert_false (should_autoprune);
+  g_clear_pointer (&subpaths, g_strfreev);
 
   ref = g_ptr_array_index (refs, 1);
   g_assert_cmpstr (flatpak_ref_get_name (FLATPAK_REF (ref)), ==, "org.test.Hello.Plugin.fun");
