@@ -4606,9 +4606,11 @@ test_bundle (void)
   icon = flatpak_bundle_ref_get_icon (ref, 64);
   g_assert_nonnull (icon);
   /* FIXME verify format */
+  g_clear_pointer (&icon, g_bytes_unref);
 
   icon = flatpak_bundle_ref_get_icon (ref, 128);
   g_assert_null (icon);
+  g_clear_pointer (&icon, g_bytes_unref);
 
   g_clear_object (&file2);
 
