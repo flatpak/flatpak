@@ -4256,7 +4256,7 @@ test_instance (void)
   g_autoptr(GError) error = NULL;
   gboolean res;
   g_autoptr(GPtrArray) instances = NULL;
-  FlatpakInstance *instance;
+  g_autoptr(FlatpakInstance) instance = NULL;
   GKeyFile *info;
   g_autofree char *value = NULL;
   int i;
