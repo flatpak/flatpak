@@ -3301,7 +3301,8 @@ populate_commit_data_cache (OstreeRepo *repo,
                     {
                       VarVariantRef v = var_metadata_entry_get_value (m);
                       GVariant *vv = var_variant_dup_to_gvariant (v);
-                      g_variant_builder_add (&sparse_builder, "{sv}", m_key, g_variant_get_child_value (vv, 0));
+                      g_autoptr(GVariant) child = g_variant_get_child_value (vv, 0);
+                      g_variant_builder_add (&sparse_builder, "{sv}", m_key, child);
                       has_sparse = TRUE;
                     }
                 }
