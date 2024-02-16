@@ -61,8 +61,8 @@ jobs:
         git clone --branch v0.15.4 --depth 1 --no-tags https://github.com/ximion/appstream.git ./appstream
         pushd ./appstream
         meson setup --prefix=/usr _build
-        ninja -C _build
-        sudo ninja -C _build install
+        meson compile -C _build
+        sudo meson install -C _build
         popd
     - name: Create logs dir
       run: mkdir test-logs
@@ -70,18 +70,18 @@ jobs:
       # We don't do gtk-doc or GObject-Introspection here, because they can
       # clash with AddressSanitizer. Instead, the clang build enables those.
       run: |
-        meson _build \
+        meson setup \
           -Db_sanitize=address,undefined \
           -Dgir=disabled \
           -Dgtkdoc=disabled \
           -Dhttp_backend=curl \
           -Dinternal_checks=true \
           -Dsystem_dbus_proxy=xdg-dbus-proxy \
-          ${NULL+}
+          _build
       env:
         CFLAGS: -O2 -Wp,-D_FORTIFY_SOURCE=2
     - name: Build flatpak
-      run: ninja -C _build
+      run: meson compile -C _build
       env:
         ASAN_OPTIONS: detect_leaks=0 # Right now we're not fully clean, but this gets us use-after-free etc
     - name: Run tests
