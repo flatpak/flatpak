@@ -36,5 +36,4 @@ TEST_MATRIX_SOURCE=(
 	'tests/test-repair.sh' \
 )
 
-"${tests_srcdir}/expand-test-matrix.sh" --automake "${TEST_MATRIX_SOURCE[*]}" > "${tests_srcdir}/Makefile-test-matrix.am.inc"
 "${tests_srcdir}/expand-test-matrix.sh" --meson "${TEST_MATRIX_SOURCE[*]}" > "${tests_srcdir}/test-matrix/meson.build"
