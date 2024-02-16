@@ -2110,8 +2110,7 @@ flatpak_dir_revokefs_fuse_unmount (OstreeRepo **repo,
 
   fusermount = g_subprocess_new (G_SUBPROCESS_FLAGS_NONE,
                                  error,
-                                 "fusermount", "-u", "-z", mnt_dir,
-                                 NULL);
+                                 FUSERMOUNT, "-u", "-z", mnt_dir, NULL);
   if (g_subprocess_wait_check (fusermount, NULL, error))
     {
       g_autoptr(GFile) mnt_dir_file = g_file_new_for_path (mnt_dir);
