@@ -43,7 +43,7 @@ jobs:
     - name: Install Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y libglib2.0-dev attr automake gettext autopoint bison  dbus gtk-doc-tools \
+        sudo apt-get install -y libglib2.0-dev attr gettext bison  dbus gtk-doc-tools \
         libfuse3-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
         libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
         libseccomp-dev libsoup2.4-dev libcurl4-openssl-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
@@ -112,7 +112,7 @@ jobs:
       run: |
         sudo add-apt-repository ppa:flatpak/stable
         sudo apt-get update
-        sudo apt-get install -y libglib2.0-dev attr automake gettext autopoint bison  dbus gtk-doc-tools \
+        sudo apt-get install -y libglib2.0-dev attr gettext bison dbus gtk-doc-tools \
         libfuse-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
         libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
         libseccomp-dev libsoup2.4-dev libcurl4-openssl-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
@@ -125,22 +125,24 @@ jobs:
         submodules: true
     - name: Create logs dir
       run: mkdir test-logs
-    - name: autogen.sh
-      run: NOCONFIGURE=1 ./autogen.sh
     - name: configure
       # We don't do gtk-doc or GObject-Introspection here, because they can
       # clash with AddressSanitizer. Instead, the clang build enables those.
       run: |
-        mkdir _build
-        pushd _build
-        ../configure  --enable-internal-checks --enable-asan --disable-introspection --without-curl
-        popd
+        meson setup \
+          -Db_sanitize=address,undefined \
+          -Dgir=disabled \
+          -Dgtkdoc=disabled \
+          -Dhttp_backend=soup \
+          -Dinternal_checks=true \
+          _build
       env:
         CFLAGS: -O2 -Wp,-D_FORTIFY_SOURCE=2
     - name: Build flatpak
-      run: make -C _build -j $(getconf _NPROCESSORS_ONLN)
+      # Can't use `meson compile` here because Ubuntu 20.04 is too old
+      run: ninja -C _build
     - name: Run tests
-      run: make -C _build check -j $(getconf _NPROCESSORS_ONLN)
+      run: meson test -C _build
       env:
         ASAN_OPTIONS: detect_leaks=0 # Right now we're not fully clean, but this gets us use-after-free etc
         LC_ALL: en_US.UTF-8
@@ -149,7 +151,7 @@ jobs:
       run: mv _build/test-suite.log test-logs/ || true
     - name: Collect individual test logs on cancel
       if: failure() || cancelled()
-      run: mv _build/tests/*.log test-logs/ || true
+      run: mv _build/meson-logs/* test-logs/ || true
     - name: Upload test logs
       uses: actions/upload-artifact@v3
       if: failure() || cancelled()
@@ -183,22 +185,27 @@ jobs:
       run: |
         sudo add-apt-repository ppa:flatpak/stable
         sudo apt-get update
-        sudo apt-get install -y libglib2.0-dev attr automake gettext autopoint bison  dbus gtk-doc-tools \
+        sudo apt-get install -y libglib2.0-dev attr gettext bison dbus gtk-doc-tools \
         libfuse-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
         libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
         libseccomp-dev libsoup2.4-dev libcurl4-openssl-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
-        libgirepository1.0-dev libappstream-dev libdconf-dev clang e2fslibs-dev
+        libgirepository1.0-dev libappstream-dev libdconf-dev clang e2fslibs-dev meson socat
     - name: Check out flatpak
       uses: actions/checkout@v4
       with:
         submodules: true
     - name: configure
-      run: ./autogen.sh
+      run: |
+        meson setup \
+          -Dgir=enabled \
+          -Dgtkdoc=enabled \
+          _build
       env:
         CC: clang
         CFLAGS: -Werror=unused-variable
     - name: Build flatpak
-      run: make -j $(getconf _NPROCESSORS_ONLN)
+      # Can't use `meson compile` here because Ubuntu 20.04 is too old
+      run: ninja -C _build
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2
 
@@ -212,39 +219,35 @@ jobs:
       run: |
         sudo add-apt-repository ppa:flatpak/stable
         sudo apt-get update
-        sudo apt-get install -y libglib2.0-dev attr automake gettext autopoint bison  dbus gtk-doc-tools \
+        sudo apt-get install -y libglib2.0-dev attr gettext bison dbus gtk-doc-tools \
         libfuse-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
         libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
         libseccomp-dev libsoup2.4-dev libcurl4-openssl-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
         libgirepository1.0-dev libappstream-dev libdconf-dev clang socat meson libdbus-1-dev \
-        valgrind e2fslibs-dev
+        valgrind e2fslibs-dev meson
     - name: Check out flatpak
       uses: actions/checkout@v4
       with:
         submodules: true
     - name: Create logs dir
       run: mkdir test-logs
-    - name: autogen.sh
-      run: NOCONFIGURE=1 ./autogen.sh
     - name: configure
       run: |
-        mkdir _build
-        pushd _build
-        ../configure --enable-gtk-doc --enable-gtk-doc-html --enable-introspection
-        popd
+        meson setup \
+          -Dgir=enabled \
+          -Dgtkdoc=enabled \
+          _build
       env:
         CFLAGS: -O2
     - name: Build flatpak
-      run: make -C _build -j $(getconf _NPROCESSORS_ONLN)
-    - name: Distcheck
-      run: make -C _build distcheck
+      run: meson compile -C _build
     - name: Run tests under valgrind
-      run: make -C _build check
+      run: meson test -C _build
       env:
         FLATPAK_TESTS_VALGRIND: true
     - name: Collect overall test logs on failure
       if: failure()
-      run: mv _build/test-suite.log test-logs/ || true
+      run: mv _build/meson-logs/* test-logs/ || true
     - name: Collect individual test logs on cancel
       if: failure() || cancelled()
       run: mv _build/tests/*.log test-logs/ || true
