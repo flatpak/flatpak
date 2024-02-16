@@ -53,7 +53,7 @@ check_fuse (void)
       return FALSE;
     }
 
-  fusermount = g_find_program_in_path ("fusermount");
+  fusermount = g_find_program_in_path (FUSERMOUNT);
 
   if (fusermount == NULL)
     {

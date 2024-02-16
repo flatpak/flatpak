@@ -21,6 +21,7 @@ tests_environment.set(
   'FLATPAK_VALIDATE_ICON',
   project_build_root / 'icon-validator' / 'flatpak-validate-icon',
 )
+tests_environment.set('FUSERMOUNT', fusermount)
 tests_environment.set('G_TEST_BUILDDIR', meson.current_build_dir())
 tests_environment.set('G_TEST_SRCDIR', meson.current_source_dir())
 tests_environment.prepend('GI_TYPELIB_PATH', project_build_root / 'common')

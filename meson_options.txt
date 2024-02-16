@@ -141,6 +141,12 @@ option(
   value : '',
 )
 option(
+  'system_fusermount',
+  type : 'string',
+  description : 'system fusermount executable, or empty string to auto-select based on fuse version',
+  value : '',
+)
+option(
   'system_font_cache_dirs',
   type : 'array',
   description : 'directory where the system font cache is',
