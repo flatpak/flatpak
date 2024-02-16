@@ -2,7 +2,7 @@ Flatpak release checklist
 =========================
 
 * Update NEWS
-* Update version number in `configure.ac` **and** `meson.build`
+* Update version number in `meson.build`
 * Update release date in `NEWS`
 * Commit the changes
 * `ninja -C ${builddir} flatpak-update-po`
