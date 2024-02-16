@@ -3958,9 +3958,7 @@ _flatpak_dir_find_new_flatpakrepos (FlatpakDir *self, OstreeRepo *repo)
   }
   g_ptr_array_add (remotes, NULL);
 
-  dir_str = g_strdup_printf ("%s/%s",
-                             get_config_dir_location (),
-                             FLATPAK_REMOTES_DIR);
+  dir_str = g_build_filename (get_config_dir_location (), FLATPAK_REMOTES_DIR, NULL);
   _flatpak_dir_scan_new_flatpakrepos (dir_str,
                                       &flatpakrepos,
                                       (const char * const *) remotes->pdata);
