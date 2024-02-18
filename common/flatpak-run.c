@@ -2160,6 +2160,16 @@ flatpak_run_setup_usr_links (FlatpakBwrap *bwrap,
     }
 }
 
+/* Directories in /sys to share with the sandbox if accessible. */
+static const char *const sysfs_dirs[] =
+{
+  "/sys/block",
+  "/sys/bus",
+  "/sys/class",
+  "/sys/dev",
+  "/sys/devices"
+};
+
 gboolean
 flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
                              GFile          *runtime_files,
@@ -2179,6 +2189,7 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
   gboolean parent_expose_pids = (flags & FLATPAK_RUN_FLAG_PARENT_EXPOSE_PIDS) != 0;
   gboolean parent_share_pids = (flags & FLATPAK_RUN_FLAG_PARENT_SHARE_PIDS) != 0;
   gboolean bwrap_unprivileged = flatpak_bwrap_is_unprivileged ();
+  gsize i;
 
   /* Disable recursive userns for all flatpak processes, as we need this
    * to guarantee that the sandbox can't restructure the filesystem.
@@ -2247,15 +2258,20 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
                           "--perms", "0700", "--dir", run_dir,
                           "--setenv", "XDG_RUNTIME_DIR", run_dir,
                           "--symlink", "../run", "/var/run",
-                          "--ro-bind", "/sys/block", "/sys/block",
-                          "--ro-bind", "/sys/bus", "/sys/bus",
-                          "--ro-bind", "/sys/class", "/sys/class",
-                          "--ro-bind", "/sys/dev", "/sys/dev",
-                          "--ro-bind", "/sys/devices", "/sys/devices",
                           "--ro-bind-try", "/proc/self/ns/user", "/run/.userns",
                           /* glib uses this like /etc/timezone */
                           "--symlink", "/etc/timezone", "/var/db/zoneinfo",
                           NULL);
+
+  for (i = 0; i < G_N_ELEMENTS (sysfs_dirs); i++)
+    {
+      const char *dir = sysfs_dirs[i];
+
+      if (access (dir, R_OK|X_OK) == 0)
+        flatpak_bwrap_add_args (bwrap, "--ro-bind", dir, dir, NULL);
+      else
+        g_info ("Not sharing %s with sandbox: %s", dir, g_strerror (errno));
+    }
 
   if (flags & FLATPAK_RUN_FLAG_DIE_WITH_PARENT)
     flatpak_bwrap_add_args (bwrap,
