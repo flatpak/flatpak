@@ -43,6 +43,7 @@ typedef struct
   gboolean   in_text;
   gboolean   in_component;
   gboolean   in_content_rating;
+  gboolean   in_developer;
   char      *lang;
   guint64    timestamp;
   const char *id;  /* interned */
@@ -119,7 +120,7 @@ start_element (GMarkupParseContext *context,
     {
       data->in_text = TRUE;
     }
-  else if (g_str_equal (element_name, "name") ||
+  else if ((!data->in_developer && g_str_equal (element_name, "name")) ||
            g_str_equal (element_name, "summary"))
     {
       const char *lang = NULL;
@@ -259,6 +260,10 @@ start_element (GMarkupParseContext *context,
           g_warning ("Ignoring content attribute missing id attribute");
         }
     }
+  else if (g_str_equal (element_name, "developer"))
+    {
+      data->in_developer = TRUE;
+    }
 }
 
 static void
@@ -294,7 +299,7 @@ end_element (GMarkupParseContext *context,
     {
       component->id = g_steal_pointer (&text);
     }
-  else if (g_str_equal (element_name, "name"))
+  else if (!data->in_developer && g_str_equal (element_name, "name"))
     {
       g_hash_table_insert (component->names, g_steal_pointer (&data->lang), g_steal_pointer (&text));
     }
@@ -315,6 +320,10 @@ end_element (GMarkupParseContext *context,
       /* https://www.freedesktop.org/software/appstream/docs/chap-Metadata.html#tag-content_rating */
       g_assert (component->content_rating != NULL);
       g_hash_table_insert (component->content_rating, (gpointer) data->id, (gpointer) g_intern_string (text));
+    }
+  else if (g_str_equal (element_name, "developer"))
+    {
+      data->in_developer = FALSE;
     }
 }
 
