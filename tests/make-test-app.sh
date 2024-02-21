@@ -130,6 +130,9 @@ cat <<EOF > ${DIR}/files/share/metainfo/${APP_ID}.metainfo.xml
     <name>Hello world test app: $APP_ID</name>
     <summary>Print a greeting</summary>
     <description><p>This is a test app.</p></description>
+    <developer>
+      <name>Developer name</name>
+    </developer>
     <categories>
       <category>Utility</category>
     </categories>
