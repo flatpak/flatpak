@@ -80,6 +80,10 @@ gboolean              glnx_set_object  (GObject **object_ptr,
 #define G_OPTION_FLAG_NONE ((GOptionFlags) 0)
 #endif
 
+#ifndef G_PID_FORMAT  /* added in 2.50 */
+#define G_PID_FORMAT "i"
+#endif
+
 #if !GLIB_CHECK_VERSION(2, 60, 0)
 #define g_strv_equal _glnx_strv_equal
 gboolean _glnx_strv_equal (const gchar * const *strv1,
