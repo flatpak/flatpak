@@ -234,6 +234,7 @@ collect_exports (GFile          *base,
     "share/mime/packages",                /* Copy MIME Type files */
     "share/icons",                        /* Icons */
     "share/dbus-1/services",              /* D-Bus service files */
+    "share/dbus-1/interfaces",            /* D-Bus interface files */
     "share/gnome-shell/search-providers", /* Search providers */
     "share/appdata",                      /* Copy appdata/metainfo files (legacy path) */
     "share/metainfo",                     /* Copy appdata/metainfo files */
