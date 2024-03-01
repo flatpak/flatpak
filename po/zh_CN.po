@@ -104,12 +104,12 @@ msgstr "主目录"
 
 #: app/flatpak-builtins-build-bundle.c:64
 msgid "OSTree commit to create a delta bundle from"
-msgstr "创建增量包使用的 OSTree 交付"
+msgstr "创建增量包使用的 OSTree 提交"
 
 #: app/flatpak-builtins-build-bundle.c:64 app/flatpak-builtins-remote-info.c:54
 #: app/flatpak-builtins-update.c:57
 msgid "COMMIT"
-msgstr "交付"
+msgstr "提交"
 
 #: app/flatpak-builtins-build-bundle.c:65
 msgid "Export oci image instead of flatpak bundle"
@@ -313,7 +313,7 @@ msgstr "不更新摘要"
 #: app/flatpak-builtins-build-import-bundle.c:47
 #: app/flatpak-builtins-build-sign.c:43
 msgid "GPG Key ID to sign the commit with"
-msgstr "签名交付使用的 GPG 密钥身份标识"
+msgstr "签署提交时使用的 GPG 密钥身份标识"
 
 #: app/flatpak-builtins-build-commit-from.c:69
 #: app/flatpak-builtins-build-export.c:72
@@ -338,7 +338,7 @@ msgstr "OLDID=NEWID"
 #: app/flatpak-builtins-build-commit-from.c:71
 #: app/flatpak-builtins-build-export.c:74
 msgid "Set type of token needed to install this commit"
-msgstr "设置安装该交付需要的令牌类型"
+msgstr "设置安装该提交需要的令牌类型"
 
 #: app/flatpak-builtins-build-commit-from.c:71
 #: app/flatpak-builtins-build-export.c:74
@@ -347,7 +347,7 @@ msgstr "值"
 
 #: app/flatpak-builtins-build-commit-from.c:72
 msgid "Override the timestamp of the commit (NOW for current time)"
-msgstr "覆盖交付的时间戳（NOW 为当前时间）"
+msgstr "覆盖提交的时间戳（NOW 为当前时间）"
 
 #: app/flatpak-builtins-build-commit-from.c:72
 #: app/flatpak-builtins-build-export.c:75
@@ -363,7 +363,7 @@ msgstr "不生成摘要索引"
 
 #: app/flatpak-builtins-build-commit-from.c:277
 msgid "DST-REPO [DST-REF…] - Make a new commit from existing commits"
-msgstr "DST-REPO [DST-REF…] - 从现有交付中创建新交付"
+msgstr "DST-REPO [DST-REF…] - 从现有提交中创建新提交"
 
 #: app/flatpak-builtins-build-commit-from.c:284
 msgid "DST-REPO must be specified"
@@ -401,7 +401,7 @@ msgstr "无法解析“%s”"
 
 #: app/flatpak-builtins-build-commit-from.c:497
 msgid "Can't commit from partial source commit"
-msgstr "无法从部分源交付中交付"
+msgstr "无法从部分源记录中提交"
 
 #: app/flatpak-builtins-build-commit-from.c:502
 #, c-format
@@ -414,7 +414,7 @@ msgstr "要导出的架构（必须与主机兼容）"
 
 #: app/flatpak-builtins-build-export.c:62
 msgid "Commit runtime (/usr), not /app"
-msgstr "交付运行时（/usr），不是 /app"
+msgstr "提交运行时（/usr），不是 /app"
 
 #: app/flatpak-builtins-build-export.c:65
 msgid "Use alternative directory for the files"
@@ -432,7 +432,7 @@ msgstr "要排除的文件"
 #: app/flatpak-builtins-build-export.c:69
 #: app/flatpak-builtins-build-update-repo.c:89
 msgid "PATTERN"
-msgstr "范例"
+msgstr "匹配模式"
 
 #: app/flatpak-builtins-build-export.c:69
 msgid "Excluded files to include"
@@ -449,7 +449,7 @@ msgstr "ID"
 
 #: app/flatpak-builtins-build-export.c:75
 msgid "Override the timestamp of the commit"
-msgstr "覆盖交付的时间戳"
+msgstr "覆盖提交的时间戳"
 
 #: app/flatpak-builtins-build-export.c:76
 #: app/flatpak-builtins-build-update-repo.c:74
@@ -542,7 +542,7 @@ msgstr "在元数据中未指定名称"
 #: app/flatpak-builtins-build-export.c:1165
 #, c-format
 msgid "Commit: %s\n"
-msgstr "交付：%s\n"
+msgstr "提交：%s\n"
 
 #: app/flatpak-builtins-build-export.c:1166
 #, c-format
@@ -1026,7 +1026,7 @@ msgstr "修剪但并不真正移除任何东西"
 
 #: app/flatpak-builtins-build-update-repo.c:92
 msgid "Only traverse DEPTH parents for each commit (default: -1=infinite)"
-msgstr "为每次交付仅遍历的上级深度（默认：-1=无限）"
+msgstr "为每次提交仅遍历的上级深度（默认：-1=infinite）"
 
 #: app/flatpak-builtins-build-update-repo.c:92
 msgid "DEPTH"
@@ -1164,7 +1164,7 @@ msgstr "目标"
 
 #: app/flatpak-builtins-create-usb.c:48
 msgid "Allow partial commits in the created repo"
-msgstr "允许在创建的仓库中部分交付"
+msgstr "允许在创建的仓库中部分提交"
 
 #: app/flatpak-builtins-create-usb.c:124 app/flatpak-builtins-create-usb.c:164
 #, c-format
@@ -1547,19 +1547,19 @@ msgstr "显示远程仓库"
 #: app/flatpak-builtins-history.c:65 app/flatpak-builtins-ps.c:53
 #: app/flatpak-builtins-remote-ls.c:73
 msgid "Commit"
-msgstr "交付"
+msgstr "提交"
 
 #: app/flatpak-builtins-history.c:65
 msgid "Show the current commit"
-msgstr "显示当前交付"
+msgstr "显示当前提交"
 
 #: app/flatpak-builtins-history.c:66
 msgid "Old Commit"
-msgstr "旧交付"
+msgstr "旧提交"
 
 #: app/flatpak-builtins-history.c:66
 msgid "Show the previous commit"
-msgstr "显示上一次交付"
+msgstr "显示上一次提交"
 
 #: app/flatpak-builtins-history.c:67
 msgid "Show the remote URL"
@@ -1637,7 +1637,7 @@ msgstr "显示引用"
 
 #: app/flatpak-builtins-info.c:60 app/flatpak-builtins-remote-info.c:59
 msgid "Show commit"
-msgstr "显示交付"
+msgstr "显示提交"
 
 #: app/flatpak-builtins-info.c:61
 msgid "Show origin"
@@ -1698,7 +1698,7 @@ msgstr "引用在来源中不存在"
 #: app/flatpak-builtins-info.c:211 app/flatpak-builtins-remote-info.c:216
 #, c-format
 msgid "Warning: Commit has no flatpak metadata\n"
-msgstr "警告：交付中没有 flatpak 元数据\n"
+msgstr "警告：提交中没有 flatpak 元数据\n"
 
 #: app/flatpak-builtins-info.c:217 app/flatpak-builtins-info.c:259
 #: app/flatpak-builtins-info.c:455 app/flatpak-builtins-info.c:502
@@ -1780,18 +1780,18 @@ msgstr "主题："
 
 #: app/flatpak-builtins-info.c:240 app/flatpak-builtins-info.c:295
 msgid "Active commit:"
-msgstr "激活交付："
+msgstr "激活提交："
 
 #: app/flatpak-builtins-info.c:241 app/flatpak-builtins-info.c:298
 msgid "Latest commit:"
-msgstr "最新交付："
+msgstr "最新提交："
 
 #: app/flatpak-builtins-info.c:244 app/flatpak-builtins-info.c:303
 #: app/flatpak-builtins-info.c:457 app/flatpak-builtins-info.c:504
 #: app/flatpak-builtins-remote-info.c:258
 #: app/flatpak-builtins-remote-info.c:297
 msgid "Commit:"
-msgstr "交付："
+msgstr "提交："
 
 #: app/flatpak-builtins-info.c:246 app/flatpak-builtins-info.c:308
 #: app/flatpak-builtins-remote-info.c:260
@@ -2059,19 +2059,19 @@ msgstr "显示安装"
 
 #: app/flatpak-builtins-list.c:67
 msgid "Active commit"
-msgstr "激活交付"
+msgstr "激活提交"
 
 #: app/flatpak-builtins-list.c:67 app/flatpak-builtins-remote-ls.c:73
 msgid "Show the active commit"
-msgstr "显示激活的交付"
+msgstr "显示激活的提交"
 
 #: app/flatpak-builtins-list.c:68
 msgid "Latest commit"
-msgstr "最新交付"
+msgstr "最新提交"
 
 #: app/flatpak-builtins-list.c:68
 msgid "Show the latest commit"
-msgstr "显示最新的交付"
+msgstr "显示最新的提交"
 
 #: app/flatpak-builtins-list.c:69 app/flatpak-builtins-remote-ls.c:75
 msgid "Installed size"
@@ -2133,17 +2133,17 @@ msgstr "移除匹配项屏蔽"
 #: app/flatpak-builtins-mask.c:54
 msgid ""
 "[PATTERN…] - disable updates and automatic installation matching patterns"
-msgstr "[范例…] - 禁用范例匹配项的更新和自动安装"
+msgstr "[匹配模式…] - 禁用更新和自动安装匹配模式"
 
 #: app/flatpak-builtins-mask.c:73
 #, c-format
 msgid "No masked patterns\n"
-msgstr "没有屏蔽的范例\n"
+msgstr "没有屏蔽的匹配模式\n"
 
 #: app/flatpak-builtins-mask.c:78
 #, c-format
 msgid "Masked patterns:\n"
-msgstr "屏蔽的范例：\n"
+msgstr "屏蔽的匹配模式：\n"
 
 #: app/flatpak-builtins-override.c:42
 msgid "Remove existing overrides"
@@ -2230,17 +2230,17 @@ msgstr "移除匹配的置顶"
 
 #: app/flatpak-builtins-pin.c:56
 msgid "[PATTERN…] - disable automatic removal of runtimes matching patterns"
-msgstr "[范例…] - 禁用对匹配范例的运行时的自动移除"
+msgstr "[匹配模式…] - 禁用对匹配匹配模式的运行时的自动移除"
 
 #: app/flatpak-builtins-pin.c:75
 #, c-format
 msgid "No pinned patterns\n"
-msgstr "没有置顶的范例\n"
+msgstr "没有置顶的匹配模式\n"
 
 #: app/flatpak-builtins-pin.c:80
 #, c-format
 msgid "Pinned patterns:\n"
-msgstr "置顶的范例：\n"
+msgstr "置顶的匹配模式：\n"
 
 #: app/flatpak-builtins-ps.c:47
 msgid "Instance"
@@ -2272,7 +2272,7 @@ msgstr "显示应用程序分支"
 
 #: app/flatpak-builtins-ps.c:53
 msgid "Show the application commit"
-msgstr "显示应用程序交付"
+msgstr "显示应用程序提交"
 
 #: app/flatpak-builtins-ps.c:54
 msgid "Show the runtime ID"
@@ -2288,11 +2288,11 @@ msgstr "显示运行时分支"
 
 #: app/flatpak-builtins-ps.c:56
 msgid "R.-Commit"
-msgstr "R.-交付"
+msgstr "R.-提交"
 
 #: app/flatpak-builtins-ps.c:56
 msgid "Show the runtime commit"
-msgstr "显示运行时交付"
+msgstr "显示运行时提交"
 
 #: app/flatpak-builtins-ps.c:57
 msgid "Active"
@@ -2460,7 +2460,7 @@ msgstr "无法移除具有已安装引用的远程仓库“%s”"
 
 #: app/flatpak-builtins-remote-info.c:54
 msgid "Commit to show info for"
-msgstr "要显示信息的交付"
+msgstr "提交显示信息于"
 
 #: app/flatpak-builtins-remote-info.c:57
 msgid "Display log"
@@ -2500,7 +2500,7 @@ msgstr "历史："
 
 #: app/flatpak-builtins-remote-info.c:347
 msgid " Commit:"
-msgstr " 交付："
+msgstr " 提交："
 
 #: app/flatpak-builtins-remote-info.c:348
 msgid " Subject:"
@@ -2513,7 +2513,7 @@ msgstr " 日期："
 #: app/flatpak-builtins-remote-info.c:382
 #, c-format
 msgid "Warning: Commit %s has no flatpak metadata\n"
-msgstr "警告：交付 %s 没有 flatpak 元数据\n"
+msgstr "警告：提交 %s 没有 flatpak 元数据\n"
 
 #: app/flatpak-builtins-remote-list.c:42
 msgid "Show remote details"
@@ -2970,7 +2970,7 @@ msgstr "显示分支的元数据"
 
 #: app/flatpak-builtins-repo.c:711
 msgid "Show commits for a branch"
-msgstr "显示分支的交付"
+msgstr "显示分支的提交"
 
 #: app/flatpak-builtins-repo.c:712
 msgid "Print information about the repo subsets"
@@ -3038,11 +3038,11 @@ msgstr "启用文件转发"
 
 #: app/flatpak-builtins-run.c:82
 msgid "Run specified commit"
-msgstr "运行指定的交付"
+msgstr "运行指定的提交"
 
 #: app/flatpak-builtins-run.c:83
 msgid "Use specified runtime commit"
-msgstr "使用指定的运行时交付"
+msgstr "使用指定的运行时提交"
 
 #: app/flatpak-builtins-run.c:84
 msgid "Run completely sandboxed"
@@ -3214,7 +3214,7 @@ msgstr "要更新的架构"
 
 #: app/flatpak-builtins-update.c:57
 msgid "Commit to deploy"
-msgstr "要部署的交付"
+msgstr "要部署的提交"
 
 #: app/flatpak-builtins-update.c:58
 msgid "Remove old files even if running"
@@ -3940,7 +3940,7 @@ msgstr "更新仓库中的摘要文件"
 
 #: app/flatpak-main.c:143
 msgid "Create new commit based on existing ref"
-msgstr "基于现有引用创建新的交付"
+msgstr "基于现有引用创建新的提交"
 
 #: app/flatpak-main.c:144
 msgid "Show information about a repo"
@@ -4456,7 +4456,7 @@ msgstr "镜像不是清单"
 #: common/flatpak-dir.c:1127 common/flatpak-dir.c:1200
 #, c-format
 msgid "Commit has no requested ref ‘%s’ in ref binding metadata"
-msgstr "交付在引用绑定元数据中没有请求的引用“%s”"
+msgstr "提交在引用绑定元数据中没有请求的引用“%s”"
 
 #: common/flatpak-dir.c:1231
 #, c-format
@@ -4477,7 +4477,7 @@ msgstr "在远程仓库 %2$s 摘要 flatpak 解析缓存中没有 %1$s 的条目
 #: common/flatpak-dir.c:1909
 #, c-format
 msgid "Commit metadata for %s not matching expected metadata"
-msgstr "用于 %s 的交付元数据与预期不匹配"
+msgstr "用于 %s 的提交元数据与预期不匹配"
 
 #: common/flatpak-dir.c:2173
 msgid "Unable to connect to system bus"
@@ -4500,7 +4500,7 @@ msgstr "找不到 %s 的覆盖"
 #: common/flatpak-dir.c:2974
 #, c-format
 msgid "%s (commit %s) not installed"
-msgstr "%s（交付 %s）未安装"
+msgstr "%s（提交 %s）未安装"
 
 #: common/flatpak-dir.c:3976
 #, c-format
@@ -4520,11 +4520,11 @@ msgstr "未设置配置密钥 %s"
 #: common/flatpak-dir.c:4445
 #, c-format
 msgid "No current %s pattern matching %s"
-msgstr "当前 %s 没有范例匹配 %s"
+msgstr "当前 %s 没有匹配模式 %s"
 
 #: common/flatpak-dir.c:4727
 msgid "No appstream commit to deploy"
-msgstr "没有 appstream 交付可部署"
+msgstr "没有 appstream 提交可部署"
 
 #: common/flatpak-dir.c:5245 common/flatpak-dir.c:6295
 #: common/flatpak-dir.c:9837 common/flatpak-dir.c:10543
@@ -4579,7 +4579,7 @@ msgstr "额外数据 %s 的校验和无效"
 #: common/flatpak-dir.c:10421
 #, c-format
 msgid "%s commit %s already installed"
-msgstr "%s 交付 %s 已安装"
+msgstr "%s 提交 %s 已安装"
 
 #: common/flatpak-dir.c:6125 common/flatpak-dir.c:6378
 #, c-format
@@ -4593,12 +4593,12 @@ msgstr "找到 GPG 签名，但都不在信任的密钥环中"
 #: common/flatpak-dir.c:6336
 #, c-format
 msgid "Commit for ‘%s’ has no ref binding"
-msgstr "“%s”的交付没有引用绑定"
+msgstr "“%s”的提交没有引用绑定"
 
 #: common/flatpak-dir.c:6341
 #, c-format
 msgid "Commit for ‘%s’ is not in expected bound refs: %s"
-msgstr "“%s”的交付不在预期的绑定引用中：%s"
+msgstr "“%s”的提交不在预期的绑定引用中：%s"
 
 #: common/flatpak-dir.c:6517
 msgid "Only applications can be made current"
@@ -4689,7 +4689,7 @@ msgstr "无法创建部署目录"
 #: common/flatpak-dir.c:8702
 #, c-format
 msgid "Failed to read commit %s: "
-msgstr "读取交付 %s 失败："
+msgstr "读取提交 %s 失败："
 
 #: common/flatpak-dir.c:8723
 #, c-format
@@ -4716,17 +4716,17 @@ msgstr "尝试应用额外数据时："
 #: common/flatpak-dir.c:8822
 #, c-format
 msgid "Invalid commit ref %s: "
-msgstr "无效的交付引用 %s："
+msgstr "无效的提交引用 %s："
 
 #: common/flatpak-dir.c:8830 common/flatpak-dir.c:8842
 #, c-format
 msgid "Deployed ref %s does not match commit (%s)"
-msgstr "已部署的引用 %s 不匹配交付（%s）"
+msgstr "已部署的引用 %s 不匹配提交（%s）"
 
 #: common/flatpak-dir.c:8836
 #, c-format
 msgid "Deployed ref %s branch does not match commit (%s)"
-msgstr "已部署的引用 %s 分支不匹配交付（%s）"
+msgstr "已部署的引用 %s 分支不匹配提交（%s）"
 
 #: common/flatpak-dir.c:9095 common/flatpak-installation.c:1912
 #, c-format
@@ -4750,7 +4750,7 @@ msgstr "捆绑包安装期间无法更改远程仓库"
 
 #: common/flatpak-dir.c:10496
 msgid "Can't update to a specific commit without root permissions"
-msgstr "没有 root 权限无法更新至指定交付"
+msgstr "没有 root 权限无法更新至指定提交"
 
 #: common/flatpak-dir.c:10776
 #, c-format
@@ -4765,7 +4765,7 @@ msgstr "%s 分支 %s 未安装"
 #: common/flatpak-dir.c:11085
 #, c-format
 msgid "%s commit %s not installed"
-msgstr "%s 交付 %s 未安装"
+msgstr "%s 提交 %s 未安装"
 
 #: common/flatpak-dir.c:11421
 #, c-format
@@ -5054,7 +5054,7 @@ msgstr "无法查找密钥标识 %s：%d"
 #: common/flatpak-oci-registry.c:2484
 #, c-format
 msgid "Error signing commit: %d"
-msgstr "签署交付时出错：%d"
+msgstr "签署提交时出错：%d"
 
 #: common/flatpak-progress.c:236
 #, c-format
@@ -5496,7 +5496,7 @@ msgstr "URI 中的端口“%.*s”超出范围"
 
 #: common/flatpak-uri.c:910
 msgid "URI is not absolute, and no base URI was provided"
-msgstr "URI 不是绝对的，且未提供基础 URI"
+msgstr "URI 不是绝对路径，且未提供基础 URI"
 
 #: common/flatpak-utils.c:754
 msgid "Glob can't match apps"
