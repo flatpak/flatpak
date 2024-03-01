@@ -1,5 +1,6 @@
 /* vi:set et sw=2 sts=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e-s:
  * Copyright © 2021 Collabora Ltd.
+ * Copyright © 2024 GNOME Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -13,6 +14,9 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Authors:
+ *       Hubert Figuière <hub@figuiere.net>
  */
 
 #include "config.h"
@@ -501,6 +505,45 @@ test_validate_path_meta (void)
 
 }
 
+static void
+test_devices (void)
+{
+  const char *devices[] = {
+    "fallback:unknown,all",
+    "fallback:input,all",
+    "dri",
+    "all",
+  };
+  const FlatpakContextDevices devices_mask[] = {
+    FLATPAK_CONTEXT_DEVICE_ALL | FLATPAK_CONTEXT_DEVICE_FALLBACK,
+    FLATPAK_CONTEXT_DEVICE_ALL | FLATPAK_CONTEXT_DEVICE_INPUT | FLATPAK_CONTEXT_DEVICE_FALLBACK,
+    FLATPAK_CONTEXT_DEVICE_DRI,
+    FLATPAK_CONTEXT_DEVICE_ALL,
+  };
+
+  guint length = 0;
+  FlatpakContextDevices device = 0;
+  g_autoptr(FlatpakContext) context = flatpak_context_new ();
+
+  for (int i = 0; i < 4; i++)
+    {
+      device = flatpak_context_device_from_string (devices[i], NULL);
+      g_assert_cmpuint (device, ==, devices_mask[i]);
+
+      if (IS_DEVICE_FALLBACK (device))
+        flatpak_context_add_fallback_devices (context, device);
+      else
+        flatpak_context_add_devices (context, device);
+    }
+
+  length = g_slist_length (context->fallback_devices);
+  g_assert_cmpuint (length, ==, 2);
+  g_assert_cmpuint (context->devices, ==, FLATPAK_CONTEXT_DEVICE_DRI | FLATPAK_CONTEXT_DEVICE_ALL);
+
+  device = flatpak_context_devices_with_fallback (context);
+  g_assert_cmpuint (device, ==, FLATPAK_CONTEXT_DEVICE_DRI | FLATPAK_CONTEXT_DEVICE_ALL | FLATPAK_CONTEXT_DEVICE_INPUT);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -511,6 +554,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/context/merge-fs", test_context_merge_fs);
   g_test_add_func ("/context/validate-path-args", test_validate_path_args);
   g_test_add_func ("/context/validate-path-meta", test_validate_path_meta);
+  g_test_add_func ("/context/devices", test_devices);
 
   return g_test_run ();
 }
