@@ -72,6 +72,7 @@ const char *flatpak_context_devices[] = {
   "kvm",
   "shm",
   "input",
+  "usb",
   NULL
 };
 

@@ -475,7 +475,7 @@ key=v1;v2;
                             A device class and subclass query. <arg choice="plain">DATA</arg>
                             must be in the form of <arg choice="plain">CLASS:SUBCLASS</arg> where
                             both <arg choice="plain">CLASS</arg> and <arg choice="plain">SUBCLASS</arg>
-                            must valid 2-digit hexadecimal class id numbers. Alternatively,
+                            must be a valid 2-digit hexadecimal class id number. Alternatively,
                             <arg choice="plain">SUBCLASS</arg> may be <literal>*</literal> to match
                             all subclasses.
                         </para></listitem>
@@ -486,7 +486,7 @@ key=v1;v2;
 
                         <listitem><para>
                             A device product id query. <arg choice="plain">DATA</arg>
-                            must be a valid 4-character hexadecimal product id number
+                            must be a valid 4-digit hexadecimal product id number
                             greater than zero, for example <option>0a1b</option>. It
                             requires a <option>vnd</option> filter in the query.
                         </para></listitem>
@@ -497,7 +497,7 @@ key=v1;v2;
 
                         <listitem><para>
                             A device vendor id query. <arg choice="plain">DATA</arg>
-                            must be a valid 4-character hexadecimal vendor id number
+                            must be a valid 4-digit hexadecimal vendor id number
                             greater than zero, for example <option>0fab</option>.
                         </para></listitem>
                     </varlistentry>
