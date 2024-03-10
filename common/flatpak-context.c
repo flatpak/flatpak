@@ -864,8 +864,8 @@ flatpak_context_add_usb_query (FlatpakContext  *context,
 }
 
 static void
-flatpak_context_add_no_usb_query (FlatpakContext  *context,
-                                  FlatpakUsbQuery *usb_query)
+flatpak_context_add_nousb_query (FlatpakContext  *context,
+				 FlatpakUsbQuery *usb_query)
 {
   g_autoptr(FlatpakUsbQuery) copy = NULL;
   g_autoptr(GString) string = NULL;
@@ -1437,7 +1437,7 @@ flatpak_context_merge (FlatpakContext *context,
 
   g_hash_table_iter_init (&iter, other->blocked_usb_devices);
   while (g_hash_table_iter_next (&iter, NULL, &value))
-    flatpak_context_add_no_usb_query (context, value);
+    flatpak_context_add_nousb_query (context, value);
 }
 
 static gboolean
@@ -1921,10 +1921,10 @@ option_usb_cb (const gchar  *option_name,
 }
 
 static gboolean
-option_no_usb_cb (const gchar  *option_name,
-                  const gchar  *value,
-                  gpointer      data,
-                  GError      **error)
+option_nousb_cb (const gchar  *option_name,
+		 const gchar  *value,
+		 gpointer      data,
+		 GError      **error)
 {
   g_autoptr(FlatpakUsbQuery) usb_query = NULL;
   FlatpakContext *context = data;
@@ -1932,7 +1932,7 @@ option_no_usb_cb (const gchar  *option_name,
   if (!flatpak_context_parse_usb (value, &usb_query, error))
     return FALSE;
 
-  flatpak_context_add_no_usb_query (context, usb_query);
+  flatpak_context_add_nousb_query (context, usb_query);
   return TRUE;
 }
 
@@ -1972,7 +1972,7 @@ static GOptionEntry context_options[] = {
   { "add-policy", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_add_generic_policy_cb, N_("Add generic policy option"), N_("SUBSYSTEM.KEY=VALUE") },
   { "remove-policy", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_remove_generic_policy_cb, N_("Remove generic policy option"), N_("SUBSYSTEM.KEY=VALUE") },
   { "usb", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_usb_cb, N_("Add USB device to allowlist"), N_("VENDOR_ID:PRODUCT_ID") },
-  { "no-usb", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_no_usb_cb, N_("Add USB device to blocklist"), N_("VENDOR_ID:PRODUCT_ID") },
+  { "nousb", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_nousb_cb, N_("Add USB device to blocklist"), N_("VENDOR_ID:PRODUCT_ID") },
   { "persist", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_persist_cb, N_("Persist home directory subpath"), N_("FILENAME") },
   /* This is not needed/used anymore, so hidden, but we accept it for backwards compat */
   { "no-desktop", 0, G_OPTION_FLAG_IN_MAIN |  G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_NONE, &option_no_desktop_deprecated, N_("Don't require a running session (no cgroups creation)"), NULL },
@@ -2326,7 +2326,7 @@ flatpak_context_load_metadata (FlatpakContext *context,
           if (!flatpak_context_parse_usb (values[i], &usb_query, error))
             return FALSE;
 
-          flatpak_context_add_no_usb_query (context, usb_query);
+          flatpak_context_add_nousb_query (context, usb_query);
         }
     }
 
@@ -2906,7 +2906,7 @@ flatpak_context_to_args (FlatpakContext *context,
 
   g_hash_table_iter_init (&iter, context->blocked_usb_devices);
   while (g_hash_table_iter_next (&iter, &value, NULL))
-    g_ptr_array_add (args, g_strdup_printf ("--no-usb=%s", (const char *) value));
+    g_ptr_array_add (args, g_strdup_printf ("--nousb=%s", (const char *) value));
 }
 
 void

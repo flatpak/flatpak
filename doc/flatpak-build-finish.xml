@@ -342,7 +342,7 @@ key=v1;v2;
             </varlistentry>
 
             <varlistentry>
-                <term><option>--no-usb=VENDOR_ID:PRODUCT_ID</option></term>
+                <term><option>--nousb=VENDOR_ID:PRODUCT_ID</option></term>
 
                 <listitem><para>
                     Adds a blocking USB device query to the application metadata. Blocked
