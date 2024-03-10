@@ -550,15 +550,13 @@
                         The absolute path on the host system of the app's
                         app files, as mounted at <filename>/app</filename>
                         inside the container. Available since 0.6.10.
-                    </para></listitem>
-                    <listitem><para>
+                    </para><para>
                         Since 1.12.0, if <command>flatpak run</command>
                         was run with the <option>--app-path</option> option,
                         this key gives the absolute path of whatever files
                         were mounted on <filename>/app</filename>, even if
                         that differs from the app's normal app files.
-                    </para></listitem>
-                    <listitem><para>
+                    </para><para>
                         If <command>flatpak run</command> was run with
                         <option>--app-path=</option> (resulting in an
                         empty directory being mounted on
@@ -574,8 +572,7 @@
                         the absolute path of the app's original files,
                         as mounted at <filename>/run/parent/app</filename>
                         inside the container. Available since 1.12.0.
-                    </para></listitem>
-                    <listitem><para>
+                    </para><para>
                         If this key is missing, the app files are given
                         by <option>app-path</option>.
                     </para></listitem>
@@ -628,8 +625,7 @@
                         The absolute path on the host system of the app's
                         runtime files, as mounted at <filename>/usr</filename>
                         inside the container. Available since 0.6.10.
-                    </para></listitem>
-                    <listitem><para>
+                    </para><para>
                         Since 1.12.0, if <command>flatpak run</command>
                         was run with the <option>--usr-path</option> option,
                         this key gives the absolute path of whatever files
@@ -645,8 +641,7 @@
                         the absolute path of the app's original runtime,
                         as mounted at <filename>/run/parent/usr</filename>
                         inside the container. Available since 1.12.0.
-                    </para></listitem>
-                    <listitem><para>
+                    </para><para>
                         If this key is missing, the runtime files are given
                         by <option>runtime-path</option>.
                     </para></listitem>
@@ -884,40 +879,40 @@
                         <variablelist>
                             <varlistentry>
                                 <term><option>active-gl-driver</option></term>
-                                <para>
+                                <listitem><para>
                                     Is true if the name of the active GL driver matches the
                                     extension point basename. Available since 0.9.1, and backported to
                                     the 0.8.x branch in 0.8.3.
-                                </para>
+                                </para></listitem>
                             </varlistentry>
                             <varlistentry>
                                 <term><option>active-gtk-theme</option></term>
-                                <para>
+                                <listitem><para>
                                     Is true if the name of the current GTK theme
                                     (via org.gnome.desktop.interface GSetting) matches the extension point
                                     basename. Added 0.10.1.
-                                </para>
+                                </para></listitem>
                             </varlistentry>
                             <varlistentry>
                                 <term><option>have-intel-gpu</option></term>
-                                <para>Is true if the i915 kernel module is loaded. Added 0.10.1.</para>
+                                <listitem><para>Is true if the i915 kernel module is loaded. Added 0.10.1.</para></listitem>
                             </varlistentry>
                             <varlistentry>
                                 <term><option>have-kernel-module-*</option></term>
-                                <para>
+                                <listitem><para>
                                     Is true if the suffix (case-sensitive) is found in <literal>/proc/modules</literal>.
                                     For example <literal>have-kernel-module-nvidia</literal>.
                                     Added 1.13.1.
-                                </para>
+                                </para></listitem>
                             </varlistentry>
                             <varlistentry>
                                 <term><option>on-xdg-desktop-*</option></term>
-                                <para>
+                                <listitem><para>
                                     Is true if the suffix (case-insensitively) is in the
                                     <literal>XDG_CURRENT_DESKTOP</literal> env var.
                                     For example <literal>on-xdg-desktop-GNOME-classic</literal>.
                                     Added 1.1.1.
-                                </para>
+                                </para></listitem>
                             </varlistentry>
                         </variablelist>
                     </listitem>

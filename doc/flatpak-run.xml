@@ -439,8 +439,7 @@
 [Policy subsystem]
 key=v1;v2;
 </programlisting>
-                </para></listitem>
-                <listitem><para>
+                </para><para>
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
@@ -728,8 +727,7 @@ key=v1;v2;
                     into <filename>/run/parent/usr</filename>, and will not
                     be included in the <envar>LD_LIBRARY_PATH</envar> inside
                     the sandbox.
-                </para></listitem>
-                <listitem><para>
+                </para><para>
                     This option will usually only be useful if it is
                     combined with <option>--app-path=</option> and
                     <option>--env=LD_LIBRARY_PATH=<replaceable>...</replaceable></option>.
