@@ -270,8 +270,7 @@
 [Policy subsystem]
 key=v1;v2;
 </programlisting>
-                </para></listitem>
-                <listitem><para>
+                </para><para>
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
