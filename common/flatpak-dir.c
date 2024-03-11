@@ -7057,6 +7057,28 @@ out:
   return ret;
 }
 
+static void
+maybe_reload_dbus_config (GCancellable *cancellable)
+{
+  g_autoptr(GDBusConnection) session_bus = NULL;
+
+  session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, cancellable, NULL);
+  if (!session_bus)
+    return;
+
+  g_dbus_connection_call_sync (session_bus,
+                               "org.freedesktop.DBus",
+                               "/org/freedesktop/DBus",
+                               "org.freedesktop.DBus",
+                               "ReloadConfig",
+                               NULL,
+                               NULL,
+                               G_DBUS_CALL_FLAGS_NONE,
+                               2000,
+                               cancellable,
+                               NULL);
+}
+
 gboolean
 flatpak_dir_run_triggers (FlatpakDir   *self,
                           GCancellable *cancellable,
@@ -7068,6 +7090,8 @@ flatpak_dir_run_triggers (FlatpakDir   *self,
   g_autoptr(GFile) triggersdir = NULL;
   GError *temp_error = NULL;
   const char *triggerspath;
+
+  maybe_reload_dbus_config (cancellable);
 
   if (flatpak_dir_use_system_helper (self, NULL))
     {
