@@ -717,7 +717,10 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
 void
 flatpak_table_printer_print (FlatpakTablePrinter *printer)
 {
-  flatpak_table_printer_print_full (printer, 0, 80, NULL, NULL);
+  int rows, cols;
+
+  flatpak_get_window_size (&rows, &cols);
+  flatpak_table_printer_print_full (printer, 0, cols, NULL, NULL);
   g_print ("\n");
 }
 
