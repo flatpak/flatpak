@@ -130,7 +130,6 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
   g_autofree char *match_branch = NULL;
   gboolean need_cache_data = FALSE;
   gboolean need_appstream_data = FALSE;
-  int rows, cols;
 
   printer = flatpak_table_printer_new ();
 
@@ -368,9 +367,7 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
 
   if (flatpak_table_printer_get_current_row (printer) > 0)
     {
-      flatpak_get_window_size (&rows, &cols);
-      flatpak_table_printer_print_full (printer, 0, cols, NULL, NULL);
-      g_print ("\n");
+      flatpak_table_printer_print (printer);
     }
 
   return TRUE;
