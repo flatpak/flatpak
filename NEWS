@@ -1,3 +1,12 @@
+Changes in 1.14.6
+~~~~~~~~~~~~~~~~~
+Released: not yet
+
+Bug fixes:
+
+ * Don't parse `<developer><name/></developer>` as the application name
+   (#5700)
+
 Changes in 1.14.5
 ~~~~~~~~~~~~~~~~~
 Released: 2023-12-08
