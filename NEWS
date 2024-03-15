@@ -1,3 +1,58 @@
+Changes in 1.15.8
+~~~~~~~~~~~~~~~~~
+Released: not yet
+
+Dependencies:
+
+ * The Meson build system is now required.
+   Compiling with Autotools is no longer possible.
+
+ * If libmalcontent (parental controls) is enabled, it must be version 0.5.0
+   or later.
+
+New features:
+
+ * Automatically remove obsolete driver versions and other autopruned refs
+   (#5632)
+
+ * `--socket=inherit-wayland-socket` (#5614)
+
+Bug fixes:
+
+ * Don't parse `<developer><name/></developer>` as the application name
+   (#5700)
+
+ * Don't refuse to start apps when there is no D-Bus system bus available
+   (#5076)
+
+ * Make `flatpak info -e` look for extensions in all installations (#5670)
+
+ * Fix warnings from newer GLib versions (#5660)
+
+ * Always set the `container` environment variable (#5610)
+
+ * Always let the app inherit redirected file descriptors (#5626)
+
+ * Don't use `WAYLAND_SOCKET` unless given `--socket=inherit-wayland-socket`
+   (#5614)
+
+ * Use `fusermount3` if compiled with FUSE 3, overridable with
+   `-Dsystem_fusermount` compile-time option (#5104)
+
+ * Improve async-signal safety (#5687)
+
+ * Fix various memory leaks (#5683, #5690, #5691)
+
+ * Detect the correct gtk-doc when cross-compiling (#5650)
+
+ * Detect the correct wayland-scanner when cross-compiling (#5596)
+
+ * Documentation improvements (#5659, #5677, #5682, #5664)
+
+ * Skip more tests when FUSE isn't available (#5611)
+
+ * Translation updates (#5602)
+
 Changes in 1.15.6
 ~~~~~~~~~~~~~~~~~
 Released: 2023-11-14
