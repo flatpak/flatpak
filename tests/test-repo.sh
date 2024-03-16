@@ -464,6 +464,14 @@ assert_has_symlink $HOME/.var/app/org.test.Hello
 assert_has_file $HOME/.var/app/org.test.Hello/data/a-file
 assert_has_file $HOME/.var/app/org.test.Hello/data/another-file
 
+# Simulate removal of app data dir
+rm -rf $HOME/.var/app/org.test.NewHello
+
+${FLATPAK} run org.test.NewHello >&2
+
+# Ensure the data dir is re-created instead of migrating the symlink
+assert_has_dir $HOME/.var/app/org.test.NewHello
+
 ${FLATPAK} ${U} uninstall -y org.test.NewHello org.test.Platform >&2
 
 ok "eol-rebase"
