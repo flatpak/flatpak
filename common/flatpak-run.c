@@ -3091,6 +3091,12 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
             {
               do_migrate = FALSE; /* Don't migrate older things, they are likely symlinks to this dir */
 
+              /* Don't migrate a symlink pointing to the new data dir. It was likely left over
+               * from a previous migration and would end up pointing to itself */
+              if (g_file_info_get_is_symlink (previous_app_id_dir_info) &&
+                  g_strcmp0 (g_file_info_get_symlink_target (previous_app_id_dir_info), app_id) == 0)
+                break;
+
               if (!flatpak_file_rename (previous_app_id_dir, real_app_id_dir, cancellable, &local_error))
                 {
                   g_warning (_("Failed to migrate old app data directory %s to new name %s: %s"),
