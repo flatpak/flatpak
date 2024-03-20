@@ -39,6 +39,9 @@ Bug fixes:
  * Use `fusermount3` if compiled with FUSE 3, overridable with
    `-Dsystem_fusermount` compile-time option (#5104)
 
+ * Avoid leaking a temporary variable from /etc/profile.d/flatpak.sh into
+   the shell environment (#5574)
+
  * Improve async-signal safety (#5687)
 
  * Fix various memory leaks (#5683, #5690, #5691)
