@@ -34,6 +34,7 @@
 
 #include <glib/gi18n-lib.h>
 
+#include <glib-unix.h>
 #include <gio/gio.h>
 #include "libglnx.h"
 
