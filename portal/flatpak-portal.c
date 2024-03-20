@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
+#include <glib-unix.h>
 #include <glib/gi18n-lib.h>
 #include <gio/gio.h>
 #include <gio/gunixfdlist.h>

@@ -34,6 +34,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include <glib-unix.h>
+
 #include "flatpak-dbus-generated.h"
 #include "flatpak-dir-private.h"
 #include "flatpak-error.h"
