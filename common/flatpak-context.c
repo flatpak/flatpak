@@ -1,5 +1,6 @@
 /* vi:set et sw=2 sts=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e-s:
  * Copyright © 2014-2018 Red Hat, Inc
+ * Copyright © 2024 GNOME Foundation Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,6 +17,8 @@
  *
  * Authors:
  *       Alexander Larsson <alexl@redhat.com>
+ *       Georges Basile Stavracas Neto <georges.stavracas@gmail.com>
+ *       Hubert Figuière <hub@figuiere.net>
  */
 
 #include "config.h"
@@ -754,6 +757,19 @@ flatpak_usb_query_new (void)
   return g_steal_pointer (&usb_query);
 }
 
+static FlatpakUsbQuery *
+flatpak_usb_query_copy (const FlatpakUsbQuery *query)
+{
+  FlatpakUsbQuery *copy = flatpak_usb_query_new ();
+
+  for (size_t i = 0; i < query->rules->len; i++)
+    {
+      FlatpakUsbRule *usb_rule = g_ptr_array_index (query->rules, i);
+      g_ptr_array_add (copy->rules, g_memdup2 (usb_rule, sizeof (FlatpakUsbRule)));
+    }
+  return copy;
+}
+
 gboolean
 flatpak_context_parse_usb (const char       *data,
                            FlatpakUsbQuery **out_usb_query,
@@ -839,55 +855,37 @@ flatpak_usb_query_print (FlatpakUsbQuery *usb_query,
 }
 
 static void
-flatpak_context_add_usb_query (FlatpakContext  *context,
-                               FlatpakUsbQuery *usb_query)
+flatpak_context_add_query_to (GHashTable *queries,
+                              FlatpakUsbQuery *usb_query)
 {
   g_autoptr(FlatpakUsbQuery) copy = NULL;
   g_autoptr(GString) string = NULL;
 
-  g_assert (context != NULL);
+  g_assert (queries != NULL);
   g_assert (usb_query != NULL && usb_query->rules != NULL);
 
-  copy = flatpak_usb_query_new ();
-
-  for (size_t i = 0; i < usb_query->rules->len; i++)
-    {
-      FlatpakUsbRule *usb_rule = g_ptr_array_index (usb_query->rules, i);
-      g_ptr_array_add (copy->rules, g_memdup2 (usb_rule, sizeof (FlatpakUsbRule)));
-    }
+  copy = flatpak_usb_query_copy (usb_query);
 
   string = g_string_new (NULL);
   flatpak_usb_query_print (usb_query, string);
 
-  g_hash_table_insert (context->allowed_usb_devices,
+  g_hash_table_insert (queries,
                        g_strdup (string->str),
                        g_steal_pointer (&copy));
+}
+
+static void
+flatpak_context_add_usb_query (FlatpakContext  *context,
+                               FlatpakUsbQuery *usb_query)
+{
+  flatpak_context_add_query_to (context->allowed_usb_devices, usb_query);
 }
 
 static void
 flatpak_context_add_nousb_query (FlatpakContext  *context,
 				 FlatpakUsbQuery *usb_query)
 {
-  g_autoptr(FlatpakUsbQuery) copy = NULL;
-  g_autoptr(GString) string = NULL;
-
-  g_assert (context != NULL);
-  g_assert (usb_query != NULL && usb_query->rules != NULL);
-
-  copy = flatpak_usb_query_new ();
-
-  for (size_t i = 0; i < usb_query->rules->len; i++)
-    {
-      FlatpakUsbRule *usb_rule = g_ptr_array_index (usb_query->rules, i);
-      g_ptr_array_add (copy->rules, g_memdup2 (usb_rule, sizeof (FlatpakUsbRule)));
-    }
-
-  string = g_string_new (NULL);
-  flatpak_usb_query_print (usb_query, string);
-
-  g_hash_table_insert (context->blocked_usb_devices,
-                       g_strdup (string->str),
-                       g_steal_pointer (&copy));
+  flatpak_context_add_query_to (context->blocked_usb_devices, usb_query);
 }
 
 static gboolean
