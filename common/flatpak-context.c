@@ -781,7 +781,7 @@ flatpak_context_parse_usb (const char       *data,
 
   split = g_strsplit (data, "+", 0);
 
-  if (!split)
+  if (!*split)
     {
       g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE, _("Empty USB query"));
       return FALSE;

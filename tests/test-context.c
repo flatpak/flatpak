@@ -772,6 +772,14 @@ test_usb_query_simple (void)
   g_assert_error (local_error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE);
   g_clear_pointer (&usb_query, flatpak_usb_query_free);
   g_clear_error (&local_error);
+
+  /* Invalid empty USB query */
+  ret = flatpak_context_parse_usb ("", &usb_query, &local_error);
+  g_assert_false (ret);
+  g_assert_null (usb_query);
+  g_assert_error (local_error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE);
+  g_clear_pointer (&usb_query, flatpak_usb_query_free);
+  g_clear_error (&local_error);
 }
 
 static void
