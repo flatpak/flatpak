@@ -565,7 +565,7 @@ main (int argc, char *argv[])
   basefd = glnx_opendirat_with_errno (AT_FDCWD, base_path, TRUE);
   if (basefd == -1)
     {
-      perror ("opening basepath: ");
+      perror ("opening basepath");
       exit (EXIT_FAILURE);
     }
 
