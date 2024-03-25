@@ -337,24 +337,20 @@ flatpak_get_system_locales (void)
     {
       GPtrArray *langs = g_ptr_array_new_with_free_func (g_free);
       g_autoptr(GDBusProxy) accounts_proxy = NULL;
+      g_autoptr(GDBusProxy) localed_proxy = NULL;
 
+      /* Get the system default locales */
+      localed_proxy = flatpak_locale_get_localed_dbus_proxy ();
+      if (localed_proxy != NULL)
+        flatpak_get_locale_langs_from_localed_dbus (localed_proxy, langs);
+
+      /* Add user account languages from AccountsService */
       accounts_proxy = flatpak_locale_get_accounts_dbus_proxy ();
-
-      if (accounts_proxy == NULL
-          || !flatpak_get_all_langs_from_accounts_dbus (accounts_proxy, langs))
-        {
-          g_autoptr(GDBusProxy) localed_proxy = NULL;
-
-          /* Get the system default locales */
-          localed_proxy = flatpak_locale_get_localed_dbus_proxy ();
-          if (localed_proxy != NULL)
-            flatpak_get_locale_langs_from_localed_dbus (localed_proxy, langs);
-
-          /* Now add the user account locales from AccountsService. If accounts_proxy is
-           * not NULL, it means that AccountsService exists */
-          if (accounts_proxy != NULL)
-            flatpak_get_locale_langs_from_accounts_dbus (accounts_proxy, langs);
-        }
+      if (accounts_proxy != NULL)
+        if (!flatpak_get_all_langs_from_accounts_dbus (accounts_proxy, langs))
+          /* If AccountsService is too old for GetUsersLanguages, fall back
+           * to retrieving languages for each user account */
+          flatpak_get_locale_langs_from_accounts_dbus (accounts_proxy, langs);
 
       g_ptr_array_add (langs, NULL);
 
