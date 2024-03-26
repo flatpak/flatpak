@@ -125,6 +125,8 @@ GStrv          flatpak_context_get_session_bus_policy_allowed_own_names (Flatpak
 void           flatpak_context_set_system_bus_policy (FlatpakContext *context,
                                                       const char     *name,
                                                       FlatpakPolicy   policy);
+char *         flatpak_context_devices_to_usb_list (GHashTable *devices,
+                                                    gboolean blocked);
 void           flatpak_context_to_args (FlatpakContext *context,
                                         GPtrArray      *args);
 FlatpakRunFlags flatpak_context_get_run_flags (FlatpakContext *context);
@@ -223,6 +225,11 @@ typedef struct
 gboolean flatpak_context_parse_usb_rule (const char      *data,
                                          FlatpakUsbRule **out_usb_rule,
                                          GError         **error);
+gboolean
+flatpak_context_parse_usb_list (const char     *buffer,
+				GHashTable     *allowed,
+				GHashTable     *blocked,
+				GError        **error);
 
 void flatpak_usb_rule_print (FlatpakUsbRule *usb_rule,
                              GString        *string);
