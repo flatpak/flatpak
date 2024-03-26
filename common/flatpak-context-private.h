@@ -137,6 +137,8 @@ void           flatpak_context_set_system_bus_policy (FlatpakContext *context,
 void           flatpak_context_set_a11y_bus_policy (FlatpakContext *context,
                                                     const char     *name,
                                                     FlatpakPolicy   policy);
+char *         flatpak_context_devices_to_usb_list (GHashTable *devices,
+                                                    gboolean hidden);
 void           flatpak_context_to_args (FlatpakContext *context,
                                         GPtrArray      *args);
 FlatpakRunFlags flatpak_context_get_run_flags (FlatpakContext *context);

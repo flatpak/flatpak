@@ -545,6 +545,32 @@ flatpak_context_add_nousb_query (FlatpakContext        *context,
 }
 
 static gboolean
+flatpak_context_add_usb_list (FlatpakContext *context,
+                              const char     *list,
+                              GError        **error)
+{
+  return flatpak_usb_parse_usb_list (list, context->enumerable_usb_devices,
+                                     context->hidden_usb_devices, error);
+}
+
+static gboolean
+flatpak_context_add_usb_list_from_file (FlatpakContext *context,
+                                        const char     *path,
+                                        GError        **error)
+{
+  g_autofree char *contents = NULL;
+
+  if (!flatpak_validate_path_characters (path, error))
+    return FALSE;
+
+  if (!g_file_get_contents (path, &contents, NULL, error))
+    return FALSE;
+
+  return flatpak_usb_parse_usb_list (contents, context->enumerable_usb_devices,
+                                     context->hidden_usb_devices, error);
+}
+
+static gboolean
 flatpak_context_set_persistent (FlatpakContext *context,
                                 const char     *path,
                                 GError        **error)
@@ -1610,8 +1636,26 @@ option_nousb_cb (const char  *option_name,
 }
 
 static gboolean
-option_persist_cb (const gchar *option_name,
-                   const gchar *value,
+option_usb_list_file_cb (const char  *option_name,
+                         const char  *value,
+                         gpointer     data,
+                         GError     **error)
+{
+  return flatpak_context_add_usb_list_from_file (data, value, error);
+}
+
+static gboolean
+option_usb_list_cb (const char  *option_name,
+                    const char  *value,
+                    gpointer     data,
+                    GError     **error)
+{
+  return flatpak_context_add_usb_list (data, value, error);
+}
+
+static gboolean
+option_persist_cb (const char *option_name,
+                   const char *value,
                    gpointer     data,
                    GError     **error)
 {
@@ -1647,6 +1691,8 @@ static GOptionEntry context_options[] = {
   { "remove-policy", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_remove_generic_policy_cb, N_("Remove generic policy option"), N_("SUBSYSTEM.KEY=VALUE") },
   { "usb", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_usb_cb, N_("Add USB device to enumerables"), N_("VENDOR_ID:PRODUCT_ID") },
   { "nousb", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_nousb_cb, N_("Add USB device to hidden list"), N_("VENDOR_ID:PRODUCT_ID") },
+  { "usb-list", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_usb_list_cb, N_("A list of USB device that are enumerable"), N_("LIST") },
+  { "usb-list-file", 0, G_OPTION_FLAG_IN_MAIN | G_OPTION_FLAG_FILENAME, G_OPTION_ARG_CALLBACK, &option_usb_list_file_cb, N_("File containing a list of USB device to make enumerable"), N_("FILENAME") },
   { "persist", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_persist_cb, N_("Persist home directory subpath"), N_("FILENAME") },
   /* This is not needed/used anymore, so hidden, but we accept it for backwards compat */
   { "no-desktop", 0, G_OPTION_FLAG_IN_MAIN |  G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_NONE, &option_no_desktop_deprecated, N_("Don't require a running session (no cgroups creation)"), NULL },
@@ -2510,12 +2556,33 @@ flatpak_context_allows_features (FlatpakContext        *context,
   return (context->features & features) == features;
 }
 
+char *
+flatpak_context_devices_to_usb_list (GHashTable *devices,
+                                     gboolean    hidden)
+{
+  GString *list = g_string_new (NULL);
+  GHashTableIter iter;
+  gpointer value;
+
+  g_hash_table_iter_init (&iter, devices);
+  while (g_hash_table_iter_next (&iter, &value, NULL))
+    {
+      if (hidden)
+        g_string_append_printf (list, "!%s;", (const char *) value);
+      else
+        g_string_append_printf (list, "%s;", (const char *) value);
+    }
+
+  return g_string_free (list, FALSE);
+}
+
 void
 flatpak_context_to_args (FlatpakContext *context,
                          GPtrArray      *args)
 {
   GHashTableIter iter;
   gpointer key, value;
+  char *usb_list = NULL;
 
   flatpak_context_shared_to_args (context->shares, context->shares_valid, args);
   flatpak_context_sockets_to_args (context->sockets, context->sockets_valid, args);
@@ -2585,13 +2652,13 @@ flatpak_context_to_args (FlatpakContext *context,
         }
     }
 
-  g_hash_table_iter_init (&iter, context->enumerable_usb_devices);
-  while (g_hash_table_iter_next (&iter, &value, NULL))
-    g_ptr_array_add (args, g_strdup_printf ("--usb=%s", (const char *) value));
+  usb_list = flatpak_context_devices_to_usb_list (context->enumerable_usb_devices, FALSE);
+  g_ptr_array_add (args, g_strdup_printf ("--usb-list=%s", usb_list));
+  g_free (usb_list);
 
-  g_hash_table_iter_init (&iter, context->hidden_usb_devices);
-  while (g_hash_table_iter_next (&iter, &value, NULL))
-    g_ptr_array_add (args, g_strdup_printf ("--nousb=%s", (const char *) value));
+  usb_list = flatpak_context_devices_to_usb_list (context->hidden_usb_devices, TRUE);
+  g_ptr_array_add (args, g_strdup_printf ("--usb-list=%s", usb_list));
+  g_free (usb_list);
 }
 
 void

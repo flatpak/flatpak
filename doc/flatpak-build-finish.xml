@@ -359,6 +359,33 @@ key=v1;v2;
             </varlistentry>
 
             <varlistentry>
+                <term><option>--usb-list-file=FILENAME</option></term>
+
+                <listitem><para>
+                    Adds USB device queries to the application metadata from the file
+                    <arg choice="plain">FILE_NAME</arg>. The line syntax is exactly
+                    equal to <option>--usb</option>. Additionally, if it starts
+                    with ! then the query is like for <option>--nousb</option>.
+                    Lines sthat starts with <literal>#</literal> are ignored,
+                    like a comment. Comments will not be persisted.
+                    Available since 1.15.11.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--usb-list=LIST</option></term>
+
+                <listitem><para>
+                    Adds USB device queries to the application metadata from
+                    <arg choice="plain">LIST</arg>. The syntax is exactly equal to
+                    <option>--usb</option> with queries separated by
+                    <literal>;</literal>. Additionally, if the query starts with
+                    <literal>!</literal> then the query is like for
+                    <option>--nousb</option>. Available since 1.15.11.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--env=VAR=VALUE</option></term>
 
                 <listitem><para>
