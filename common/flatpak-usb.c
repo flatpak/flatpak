@@ -21,6 +21,7 @@
 
 #include <glib.h>
 #include <glib/gi18n-lib.h>
+#include <gio/gio.h>
 #include "libglnx.h"
 
 #include "flatpak-usb-private.h"
@@ -293,6 +294,78 @@ flatpak_usb_parse_usb (const char       *data,
 
   if (out_usb_query)
     *out_usb_query = g_steal_pointer (&usb_query);
+
+  return TRUE;
+}
+
+gboolean
+flatpak_usb_parse_usb_list (const char     *buffer,
+                            GHashTable     *enumerable,
+                            GHashTable     *hidden,
+                            GError        **error)
+{
+  char *aux = NULL;
+  g_autoptr(FlatpakUsbQuery) usb_query = NULL;
+  g_autoptr(GInputStream) stream = NULL;
+  g_autoptr(GDataInputStream) buffered = NULL;
+  g_autoptr(GError) local_error = NULL;
+
+  stream = g_memory_input_stream_new_from_data (buffer, -1, NULL);
+  if (!stream)
+    return FALSE;
+
+  buffered = g_data_input_stream_new (G_INPUT_STREAM (stream));
+
+  while ((aux = g_data_input_stream_read_line (buffered, NULL, NULL, &local_error)))
+    {
+      g_autofree char *line = g_steal_pointer (&aux);
+      g_auto(GStrv) split = NULL;
+      gboolean blocking = FALSE;
+
+      if (line[0] == '#')
+        continue;
+
+      split = g_strsplit (line, ";", 0);
+      if (!split || !*split)
+        continue;
+
+      for (size_t i = 0; split[i] != NULL; i++)
+        {
+          const char *item = split[i];
+
+          blocking = item[0] == '!';
+          if (blocking)
+            item++;
+
+          if (flatpak_usb_parse_usb (item, &usb_query, NULL))
+            {
+              GString *string = g_string_new (NULL);
+              flatpak_usb_query_print (usb_query, string);
+
+              if (blocking)
+	        {
+                  g_hash_table_insert (hidden,
+                                       g_string_free (string, FALSE),
+                                       g_steal_pointer (&usb_query));
+                }
+              else
+                {
+                  g_hash_table_insert (enumerable,
+                                       g_string_free (string, FALSE),
+                                       g_steal_pointer (&usb_query));
+                }
+            }
+        }
+    }
+
+  g_input_stream_close (G_INPUT_STREAM (buffered), NULL, error);
+  g_input_stream_close (G_INPUT_STREAM (stream), NULL, error);
+
+  if (local_error)
+    {
+      g_propagate_error (error, g_steal_pointer (&local_error));
+      return FALSE;
+    }
 
   return TRUE;
 }

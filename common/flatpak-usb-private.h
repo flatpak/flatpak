@@ -91,4 +91,7 @@ gboolean flatpak_usb_parse_usb_rule (const char      *data,
 gboolean flatpak_usb_parse_usb (const char       *data,
                                 FlatpakUsbQuery **out_usb_query,
                                 GError          **error);
-
+gboolean flatpak_usb_parse_usb_list (const char  *buffer,
+                                     GHashTable  *enumerable,
+                                     GHashTable  *hidden,
+                                     GError     **error);
