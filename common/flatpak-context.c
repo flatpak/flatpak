@@ -889,6 +889,114 @@ flatpak_context_add_nousb_query (FlatpakContext  *context,
 }
 
 static gboolean
+flatpak_context_add_usb_list (FlatpakContext *context,
+                              const char     *list,
+                              GError        **error)
+{
+  if (!flatpak_context_parse_usb_list (list, context->allowed_usb_devices,
+                                       context->blocked_usb_devices, error))
+    return FALSE;
+
+  return TRUE;
+}
+
+static gboolean
+flatpak_context_add_usb_list_from_file (FlatpakContext *context,
+                                        const char     *path,
+                                        GError        **error)
+{
+  g_autofree char *contents = NULL;
+
+  if (!flatpak_validate_path_characters (path, error))
+    return FALSE;
+  if (!g_file_get_contents (path, &contents, NULL, error))
+    return FALSE;
+
+  if (!flatpak_context_parse_usb_list (contents, context->allowed_usb_devices,
+                                       context->blocked_usb_devices, error))
+    return FALSE;
+
+  return TRUE;
+}
+
+gboolean
+flatpak_context_parse_usb_list (const char     *buffer,
+                                GHashTable     *allowed,
+                                GHashTable     *blocked,
+                                GError        **error)
+{
+  char *line = NULL;
+  g_autoptr(FlatpakUsbQuery) usb_query = NULL;
+  g_autoptr(GInputStream) stream = NULL;
+  g_autoptr(GDataInputStream) buffered = NULL;
+
+  stream = g_memory_input_stream_new_from_data (buffer, -1, NULL);
+  if (!stream)
+    return FALSE;
+
+  buffered = g_data_input_stream_new (G_INPUT_STREAM (stream));
+  while ((line = g_data_input_stream_read_line (buffered, NULL, NULL, error)))
+    {
+      g_auto(GStrv) split = NULL;
+      GStrv current = NULL;
+      gboolean blocking = FALSE;
+
+      if (line[0] == '#')
+        {
+          g_free (line);
+          continue;
+        }
+
+      split = g_strsplit (line, ";", 0);
+      if (!split || !*split)
+        {
+          g_free (line);
+          continue;
+        }
+
+      current = split;
+      while (*current)
+        {
+          const char *item = *current;
+
+          blocking = item[0] == '!';
+          if (blocking)
+            item++;
+
+          if (flatpak_context_parse_usb (item, &usb_query, NULL))
+            {
+              GString *string = g_string_new (NULL);
+              flatpak_usb_query_print (usb_query, string);
+
+              if (blocking)
+	        {
+                  g_hash_table_insert (blocked,
+                                       g_string_free (string, FALSE),
+                                       g_steal_pointer (&usb_query));
+                }
+              else
+                {
+                  g_hash_table_insert (allowed,
+                                       g_string_free (string, FALSE),
+                                       g_steal_pointer (&usb_query));
+                }
+            }
+          current++;
+        }
+
+      g_free (line);
+    }
+
+  if (error && *error)
+    return FALSE;
+
+  g_input_stream_close (G_INPUT_STREAM (buffered), NULL, error);
+  g_input_stream_close (G_INPUT_STREAM (stream), NULL, error);
+
+  return TRUE;
+}
+
+static gboolean
 flatpak_context_set_persistent (FlatpakContext *context,
                                 const char     *path,
                                 GError        **error)
@@ -1936,6 +2044,33 @@ option_nousb_cb (const gchar  *option_name,
 }
 
 static gboolean
+option_usb_list_file_cb (const gchar  *option_name,
+                         const gchar  *value,
+                         gpointer      data,
+                         GError      **error)
+{
+  FlatpakContext *context = data;
+  if (!flatpak_context_add_usb_list_from_file (context, value, error))
+    return FALSE;
+
+  return TRUE;
+}
+
+static gboolean
+option_usb_list_cb (const gchar  *option_name,
+                    const gchar  *value,
+                    gpointer      data,
+                    GError      **error)
+{
+  FlatpakContext *context = data;
+  if (!flatpak_context_add_usb_list (context, value, error))
+    return FALSE;
+
+  return TRUE;
+}
+
+
+static gboolean
 option_persist_cb (const gchar *option_name,
                    const gchar *value,
                    gpointer     data,
@@ -1972,6 +2107,8 @@ static GOptionEntry context_options[] = {
   { "remove-policy", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_remove_generic_policy_cb, N_("Remove generic policy option"), N_("SUBSYSTEM.KEY=VALUE") },
   { "usb", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_usb_cb, N_("Add USB device to allowlist"), N_("VENDOR_ID:PRODUCT_ID") },
   { "nousb", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_nousb_cb, N_("Add USB device to blocklist"), N_("VENDOR_ID:PRODUCT_ID") },
+  { "usb-list", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_usb_list_cb, N_("A list of USB device permission"), N_("LIST") },
+  { "usb-list-file", 0, G_OPTION_FLAG_IN_MAIN | G_OPTION_FLAG_FILENAME, G_OPTION_ARG_CALLBACK, &option_usb_list_file_cb, N_("File containing a list of USB device permission"), N_("FILENAME") },
   { "persist", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_persist_cb, N_("Persist home directory subpath"), N_("FILENAME") },
   /* This is not needed/used anymore, so hidden, but we accept it for backwards compat */
   { "no-desktop", 0, G_OPTION_FLAG_IN_MAIN |  G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_NONE, &option_no_desktop_deprecated, N_("Don't require a running session (no cgroups creation)"), NULL },
@@ -2818,12 +2955,32 @@ flatpak_context_allows_features (FlatpakContext        *context,
   return (context->features & features) == features;
 }
 
+char *
+flatpak_context_devices_to_usb_list (GHashTable *devices, gboolean blocked)
+{
+  GString *list = g_string_new (NULL);
+  GHashTableIter iter;
+  gpointer value;
+
+  g_hash_table_iter_init (&iter, devices);
+  while (g_hash_table_iter_next (&iter, &value, NULL))
+    {
+      if (blocked)
+        g_string_append_printf (list, "!%s;", (const char *) value);
+      else
+        g_string_append_printf (list, "%s;", (const char *) value);
+    }
+
+  return g_string_free (list, FALSE);
+}
+
 void
 flatpak_context_to_args (FlatpakContext *context,
                          GPtrArray      *args)
 {
   GHashTableIter iter;
   gpointer key, value;
+  char *usb_list = NULL;
 
   flatpak_context_shared_to_args (context->shares, context->shares_valid, args);
   flatpak_context_sockets_to_args (context->sockets, context->sockets_valid, args);
@@ -2893,13 +3050,13 @@ flatpak_context_to_args (FlatpakContext *context,
         }
     }
 
-  g_hash_table_iter_init (&iter, context->allowed_usb_devices);
-  while (g_hash_table_iter_next (&iter, &value, NULL))
-    g_ptr_array_add (args, g_strdup_printf ("--usb=%s", (const char *) value));
+  usb_list = flatpak_context_devices_to_usb_list (context->allowed_usb_devices, FALSE);
+  g_ptr_array_add (args, g_strdup_printf ("--usb-list=%s", usb_list));
+  g_free (usb_list);
 
-  g_hash_table_iter_init (&iter, context->blocked_usb_devices);
-  while (g_hash_table_iter_next (&iter, &value, NULL))
-    g_ptr_array_add (args, g_strdup_printf ("--nousb=%s", (const char *) value));
+  usb_list = flatpak_context_devices_to_usb_list (context->blocked_usb_devices, TRUE);
+  g_ptr_array_add (args, g_strdup_printf ("--usb-list=%s", usb_list));
+  g_free (usb_list);
 }
 
 void
