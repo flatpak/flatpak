@@ -742,7 +742,7 @@ flatpak_remote_state_lookup_ref (FlatpakRemoteState *self,
   if (!flatpak_remote_state_allow_ref (self, ref))
     {
       return flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
-                                 _("No entry for %s in remote '%s' summary flatpak cache "),
+                                 _("No entry for %s in remote %s summary flatpak cache"),
                                  ref, self->remote_name);
     }
 
@@ -879,7 +879,7 @@ flatpak_remote_state_lookup_cache (FlatpakRemoteState *self,
   summary_v = get_summary_for_ref (self, ref);
   if (summary_v == NULL)
     return flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
-                               _("No entry for %s in remote '%s' summary flatpak cache "),
+                               _("No entry for %s in remote %s summary flatpak cache"),
                                ref, self->remote_name);
 
 
@@ -908,7 +908,7 @@ flatpak_remote_state_lookup_cache (FlatpakRemoteState *self,
 
       if (!var_cache_lookup (cache, ref, &pos, &cache_data))
         return flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
-                                   _("No entry for %s in remote '%s' summary flatpak cache "),
+                                   _("No entry for %s in remote %s summary flatpak cache"),
                                    ref, self->remote_name);
     }
   else if (summary_version == 1)
@@ -920,7 +920,7 @@ flatpak_remote_state_lookup_cache (FlatpakRemoteState *self,
 
       if (!flatpak_var_ref_map_lookup_ref (ref_map, ref, &info))
         return flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
-                                   _("No entry for %s in remote '%s' summary cache "),
+                                   _("No entry for %s in remote %s summary flatpak cache"),
                                    ref, self->remote_name);
 
       commit_metadata = var_ref_info_get_metadata (info);
