@@ -456,6 +456,8 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
               g_printerr (_("Warning: %s is not installed\n"), pref);
               continue;
             }
+          else if (ref_dir_pairs->len >= 2 && opt_noninteractive)
+            return flatpak_fail (error, _("Multiple refs match '%s', unable to proceed in non-interactive mode"), argv[1]);
 
           /* Don't show fuzzy matches if an exact match was found in any installation */
           if (found_exact_name_match)
