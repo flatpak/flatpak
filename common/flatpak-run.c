@@ -2227,15 +2227,35 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
                           "--perms", "0700", "--dir", run_dir,
                           "--setenv", "XDG_RUNTIME_DIR", run_dir,
                           "--symlink", "../run", "/var/run",
-                          "--ro-bind", "/sys/block", "/sys/block",
-                          "--ro-bind", "/sys/bus", "/sys/bus",
-                          "--ro-bind", "/sys/class", "/sys/class",
-                          "--ro-bind", "/sys/dev", "/sys/dev",
-                          "--ro-bind", "/sys/devices", "/sys/devices",
                           "--ro-bind-try", "/proc/self/ns/user", "/run/.userns",
                           /* glib uses this like /etc/timezone */
                           "--symlink", "/etc/timezone", "/var/db/zoneinfo",
                           NULL);
+
+  if (g_file_test ("/sys/block", G_FILE_TEST_EXISTS))
+    flatpak_bwrap_add_args (bwrap,
+                            "--ro-bind", "/sys/block", "/sys/block",
+                            NULL);
+
+  if (g_file_test ("/sys/bus", G_FILE_TEST_EXISTS))
+    flatpak_bwrap_add_args (bwrap,
+                            "--ro-bind", "/sys/bus", "/sys/bus",
+                            NULL);
+
+  if (g_file_test ("/sys/class", G_FILE_TEST_EXISTS))
+    flatpak_bwrap_add_args (bwrap,
+                            "--ro-bind", "/sys/class", "/sys/class",
+                            NULL);
+
+  if (g_file_test ("/sys/dev", G_FILE_TEST_EXISTS))
+    flatpak_bwrap_add_args (bwrap,
+                            "--ro-bind", "/sys/dev", "/sys/dev",
+                            NULL);
+
+  if (g_file_test ("/sys/devices", G_FILE_TEST_EXISTS))
+    flatpak_bwrap_add_args (bwrap,
+                            "--ro-bind", "/sys/devices", "/sys/devices",
+                            NULL);
 
   if (flags & FLATPAK_RUN_FLAG_DIE_WITH_PARENT)
     flatpak_bwrap_add_args (bwrap,
