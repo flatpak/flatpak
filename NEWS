@@ -17,6 +17,9 @@ New features:
 
  * `--socket=inherit-wayland-socket` (#5614)
 
+ * Automatically reload D-Bus session bus configuration after installing
+   or upgrading apps, to pick up any exported D-Bus services (#3342)
+
 Bug fixes:
 
  * Don't parse `<developer><name/></developer>` as the application name
@@ -27,11 +30,14 @@ Bug fixes:
 
  * Make `flatpak info -e` look for extensions in all installations (#5670)
 
- * Fix warnings from newer GLib versions (#5660)
+ * Fix warnings from newer GLib versions (#5660, #5737)
 
  * Always set the `container` environment variable (#5610)
 
  * Always let the app inherit redirected file descriptors (#5626)
+
+ * In `flatpak ps`, add xdg-desktop-portal-gnome to the list of backends
+   we'll use to learn which apps are running in the background (#5729)
 
  * Don't use `WAYLAND_SOCKET` unless given `--socket=inherit-wayland-socket`
    (#5614)
@@ -46,11 +52,14 @@ Bug fixes:
 
  * Fix various memory leaks (#5683, #5690, #5691)
 
+ * Avoid undefined behaviour of signed left-shift when storing object IDs
+   in a hash table (#5738)
+
  * Detect the correct gtk-doc when cross-compiling (#5650)
 
  * Detect the correct wayland-scanner when cross-compiling (#5596)
 
- * Documentation improvements (#5659, #5677, #5682, #5664)
+ * Documentation improvements (#5659, #5677, #5682, #5664, #5719)
 
  * Skip more tests when FUSE isn't available (#5611)
 
