@@ -568,6 +568,8 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
             g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND, _("Nothing matches %s in remote %s"), id, remote);
           return FALSE;
         }
+      else if (refs->len >= 2 && opt_noninteractive)
+        return flatpak_fail (error, _("Multiple refs match '%s', unable to proceed in non-interactive mode"), argv[1]);
 
       if (!flatpak_resolve_matching_refs (remote, dir, opt_yes, refs, id, &ref, error))
         return FALSE;
