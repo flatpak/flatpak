@@ -1090,6 +1090,33 @@
             <!-- TODO: More information would be nice -->
           </para>
         </refsect2>
+        <refsect2 id="usb-devices">
+          <title>[USB Devices]</title>
+          <para>
+            USB devices can be allowed or blocked by the USB portal as specified
+            by the keys in this group. The vendor and product ids are validated
+            by Flatpak, but aren't otherwise used or parsed.
+            Available since 1.15.7.
+          </para>
+          <variablelist>
+                <varlistentry>
+                    <term><option>allowed-devices</option> (string list)</term>
+                    <listitem><para>
+                        List of allowed USB devices. Each element of can be composed
+                        of "VENDOR_ID:PRODUCT_ID", or "VENDOR_ID:*". Available since
+                        1.15.7.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>blocked-devices</option> (string list)</term>
+                    <listitem><para>
+                        List of blocked USB devices. Each element of can be composed
+                        of "VENDOR_ID:PRODUCT_ID", or "VENDOR_ID:*". Blocked devices
+                        take precedence over allowed devices. Available since 1.15.7.
+                    </para></listitem>
+                </varlistentry>
+            </variablelist>
+        </refsect2>
     </refsect1>
 
     <refsect1>
@@ -1111,6 +1138,10 @@ ca.desrt.dconf=talk
 
 [Environment]
 DCONF_USER_CONFIG_DIR=.config/dconf
+
+[USB Devices]
+allowed-devices=0fd9:*;
+blocked-devices=0fd9:0063;
 
 [Extension org.gnome.Calculator.Locale]
 directory=share/runtime/locale

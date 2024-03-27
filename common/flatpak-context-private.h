@@ -25,6 +25,8 @@
 #include <flatpak-common-types-private.h>
 #include "flatpak-exports-private.h"
 
+#include <stdint.h>
+
 typedef enum {
   FLATPAK_POLICY_NONE,
   FLATPAK_POLICY_SEE,
@@ -59,6 +61,7 @@ typedef enum {
   FLATPAK_CONTEXT_DEVICE_KVM         = 1 << 2,
   FLATPAK_CONTEXT_DEVICE_SHM         = 1 << 3,
   FLATPAK_CONTEXT_DEVICE_INPUT       = 1 << 4,
+  FLATPAK_CONTEXT_DEVICE_USB         = 1 << 5,
 } FlatpakContextDevices;
 
 typedef enum {
@@ -85,6 +88,8 @@ struct FlatpakContext
   GHashTable            *session_bus_policy;
   GHashTable            *system_bus_policy;
   GHashTable            *generic_policy;
+  GHashTable            *allowed_usb_devices;
+  GHashTable            *blocked_usb_devices;
 };
 
 extern const char *flatpak_context_sockets[];
@@ -118,6 +123,8 @@ GStrv          flatpak_context_get_session_bus_policy_allowed_own_names (Flatpak
 void           flatpak_context_set_system_bus_policy (FlatpakContext *context,
                                                       const char     *name,
                                                       FlatpakPolicy   policy);
+char *         flatpak_context_devices_to_usb_list (GHashTable *devices,
+						    gboolean blocked);
 void           flatpak_context_to_args (FlatpakContext *context,
                                         GPtrArray      *args);
 FlatpakRunFlags flatpak_context_get_run_flags (FlatpakContext *context);
@@ -172,5 +179,70 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakContext, flatpak_context_free)
 
 GFile *flatpak_get_user_base_dir_location (void);
 GFile *flatpak_get_data_dir (const char *app_id);
+
+/* USB */
+
+typedef struct
+{
+  enum {
+    FLATPAK_USB_RULE_TYPE_ALL,
+    FLATPAK_USB_RULE_TYPE_CLASS,
+    FLATPAK_USB_RULE_TYPE_DEVICE,
+    FLATPAK_USB_RULE_TYPE_VENDOR,
+  } rule_type;
+
+  union {
+    struct {
+      enum {
+        FLATPAK_USB_RULE_CLASS_TYPE_CLASS_ONLY,
+        FLATPAK_USB_RULE_CLASS_TYPE_CLASS_SUBCLASS,
+      } type;
+      uint16_t class;
+      uint16_t subclass;
+    } device_class;
+
+    struct {
+      uint16_t id;
+    } product;
+
+    struct {
+      uint16_t id;
+    } vendor;
+
+  } d;
+
+} FlatpakUsbRule;
+
+gboolean flatpak_context_parse_usb_rule (const char      *data,
+                                         FlatpakUsbRule **out_usb_rule,
+                                         GError         **error);
+gboolean
+flatpak_context_parse_usb_list (const char     *buffer,
+				GHashTable     *allowed,
+				GHashTable     *blocked,
+				GError        **error);
+
+void flatpak_usb_rule_print (FlatpakUsbRule *usb_rule,
+                             GString        *string);
+
+void flatpak_usb_rule_free (FlatpakUsbRule *usb_rule);
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakUsbRule, flatpak_usb_rule_free)
+
+typedef struct
+{
+  GPtrArray *rules;
+} FlatpakUsbQuery;
+
+gboolean flatpak_context_parse_usb (const char       *data,
+                                    FlatpakUsbQuery **out_usb_query,
+                                    GError          **error);
+
+void flatpak_usb_query_print (FlatpakUsbQuery *usb_query,
+                              GString         *string);
+
+void flatpak_usb_query_free (FlatpakUsbQuery *usb_query);
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakUsbQuery, flatpak_usb_query_free)
 
 #endif /* __FLATPAK_CONTEXT_H__ */
