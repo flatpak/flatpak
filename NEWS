@@ -7,6 +7,10 @@ Dependencies:
  * The Meson build system is now required.
    Compiling with Autotools is no longer possible.
 
+ * In distributions that compile Flatpak to use a separate bubblewrap (bwrap)
+   executable, version 0.9.0 is recommended. Several of the bug fixes listed
+   below will not be active if an older version is used.
+
  * If libmalcontent (parental controls) is enabled, it must be version 0.5.0
    or later.
 
@@ -21,6 +25,17 @@ New features:
    or upgrading apps, to pick up any exported D-Bus services (#3342)
 
 Bug fixes:
+
+ * Update included copy of bubblewrap to version 0.9.0:
+
+     * `--symlink` is now idempotent, meaning it succeeds if the
+       symlink already exists and already has the desired target
+       (#2387, #3477, #5255)
+     * Report a better error message if `mount(2)` fails with `ENOSPC`
+     * Fix a double-close on error reading from `--args`, `--seccomp` or
+       `--add-seccomp-fd` argument
+     * Improve memory allocation behaviour
+     * Silence various compiler warnings
 
  * Don't parse `<developer><name/></developer>` as the application name
    (#5700)
