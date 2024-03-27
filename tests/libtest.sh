@@ -38,6 +38,10 @@ else
     test_builddir=$(dirname $0)
 fi
 
+if [ -e "$test_srcdir/installed-tests.sh" ]; then
+    . "$test_srcdir/installed-tests.sh"
+fi
+
 # All the asserts and ok functions below are wrapped such that they
 # don't output any set -x traces of their internals (but still echo
 # errors to stderr). This way the log output focuses on tracing what

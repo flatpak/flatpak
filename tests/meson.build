@@ -40,6 +40,17 @@ else
   tests_environment.set('FLATPAK_DBUSPROXY', get_option('system_dbus_proxy'))
 endif
 
+if get_option('installed_tests')
+  configure_file(
+    input : 'installed-tests.sh.in',
+    output : 'installed-tests.sh',
+    configuration : {
+      'FUSERMOUNT' : fusermount,
+    },
+    install_dir : installed_testdir,
+  )
+endif
+
 # Explicitly doing a find_program() for this avoids lots of output with
 # older Meson versions
 tap_test = find_program(
