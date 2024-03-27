@@ -22,6 +22,7 @@ set -euo pipefail
 . $(dirname $0)/libtest.sh
 
 skip_without_bwrap
+skip_revokefs_without_fuse
 
 echo "1..8"
 

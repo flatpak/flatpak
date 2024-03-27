@@ -6997,6 +6997,28 @@ out:
   return ret;
 }
 
+static void
+maybe_reload_dbus_config (GCancellable *cancellable)
+{
+  g_autoptr(GDBusConnection) session_bus = NULL;
+
+  session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, cancellable, NULL);
+  if (!session_bus)
+    return;
+
+  g_dbus_connection_call_sync (session_bus,
+                               "org.freedesktop.DBus",
+                               "/org/freedesktop/DBus",
+                               "org.freedesktop.DBus",
+                               "ReloadConfig",
+                               NULL,
+                               NULL,
+                               G_DBUS_CALL_FLAGS_NONE,
+                               2000,
+                               cancellable,
+                               NULL);
+}
+
 gboolean
 flatpak_dir_run_triggers (FlatpakDir   *self,
                           GCancellable *cancellable,
@@ -7008,6 +7030,8 @@ flatpak_dir_run_triggers (FlatpakDir   *self,
   g_autoptr(GFile) triggersdir = NULL;
   GError *temp_error = NULL;
   const char *triggerspath;
+
+  maybe_reload_dbus_config (cancellable);
 
   if (flatpak_dir_use_system_helper (self, NULL))
     {
@@ -11477,7 +11501,7 @@ flatpak_dir_get_unmaintained_extension_dir_if_exists (FlatpakDir   *self,
   extension_dir = flatpak_dir_get_unmaintained_extension_dir (self, name, arch, branch);
 
   extension_dir_info = g_file_query_info (extension_dir,
-                                          G_FILE_ATTRIBUTE_STANDARD_SYMLINK_TARGET,
+                                          G_FILE_ATTRIBUTE_STANDARD_SYMLINK_TARGET "," G_FILE_ATTRIBUTE_STANDARD_IS_SYMLINK,
                                           G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
                                           cancellable,
                                           NULL);

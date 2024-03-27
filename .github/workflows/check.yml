@@ -109,7 +109,6 @@ jobs:
     - name: Install Dependencies
       run: |
         sudo add-apt-repository ppa:flatpak/stable
-        sudo add-apt-repository 'deb https://download.mono-project.com/repo/ubuntu stable-bionic main' # Needed for updates to work
         sudo apt-get update
         sudo apt-get install -y libglib2.0-dev attr automake gettext autopoint bison  dbus gtk-doc-tools \
         libfuse-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
@@ -138,14 +137,6 @@ jobs:
         CFLAGS: -O2 -Wp,-D_FORTIFY_SOURCE=2
     - name: Build flatpak
       run: make -C _build -j $(getconf _NPROCESSORS_ONLN)
-    # We build with Ubuntu 18.04's GLib to prove that we can, but there's a
-    # race condition that makes it fail tests, so upgrade to a version from
-    # a PPA before running the tests: see
-    # https://github.com/flatpak/flatpak/pull/3121,
-    # https://gitlab.gnome.org/GNOME/glib/-/issues/1014
-    - name: Upgrade GLib before running tests
-      run: |
-        sudo apt-get install -y libglib2.0-dev
     - name: Run tests
       run: make -C _build check -j $(getconf _NPROCESSORS_ONLN)
       env:
@@ -188,7 +179,6 @@ jobs:
     - name: Install Dependencies
       run: |
         sudo add-apt-repository ppa:flatpak/stable
-        sudo add-apt-repository 'deb https://download.mono-project.com/repo/ubuntu stable-bionic main' # Needed for updates to work
         sudo apt-get update
         sudo apt-get install -y libglib2.0-dev attr automake gettext autopoint bison  dbus gtk-doc-tools \
         libfuse-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
@@ -219,7 +209,6 @@ jobs:
       run: |
         sudo add-apt-repository ppa:flatpak/stable
         sudo apt-get update
-        sudo add-apt-repository 'deb https://download.mono-project.com/repo/ubuntu stable-focal main' # Needed for updates to work
         sudo apt-get install -y libglib2.0-dev attr automake gettext autopoint bison  dbus gtk-doc-tools \
         libfuse-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
         libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \

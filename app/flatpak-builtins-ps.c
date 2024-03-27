@@ -72,6 +72,8 @@ get_compositor_apps (void)
   g_autoptr(GVariant) ret = NULL;
   GVariant *list = NULL;
   const char *backends[] = {
+    "org.freedesktop.impl.portal.desktop.gnome",
+    /* Background portal was removed in 1.15.0, retained for compatibility */
     "org.freedesktop.impl.portal.desktop.gtk",
     "org.freedesktop.impl.portal.desktop.kde",
     NULL

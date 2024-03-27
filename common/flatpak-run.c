@@ -1876,6 +1876,9 @@ static const ExportData default_exports[] = {
    * outside the sandbox is somewhere else. Don't allow a different
    * setting from outside the sandbox to overwrite this. */
   {"XDG_RUNTIME_DIR", NULL},
+  /* Ensure our container environment variable takes precedence over the one
+   * set by a container manager. */
+  {"container", NULL},
 
   /* Some env vars are common enough and will affect the sandbox badly
      if set on the host. We clear these always. If updating this list,
@@ -3995,9 +3998,21 @@ check_parental_controls (FlatpakDecomposed *app_ref,
   g_autoptr(GDesktopAppInfo) app_info = NULL;
   gboolean allowed = FALSE;
 
-  system_bus = g_bus_get_sync (G_BUS_TYPE_SYSTEM, NULL, error);
+  system_bus = g_bus_get_sync (G_BUS_TYPE_SYSTEM, NULL, &local_error);
   if (system_bus == NULL)
-    return FALSE;
+    {
+      /* Since the checks below allow access when malcontent or
+       * accounts-service aren't available on the bus, this whole routine can
+       * be trivially bypassed by setting DBUS_SYSTEM_BUS_ADDRESS to a
+       * temporary dbus-daemon. Not being able to connect to the system bus is
+       * basically equivalent.
+       */
+      g_debug ("Skipping parental controls check for %s since D-Bus system "
+               "bus connection failed: %s",
+               flatpak_decomposed_get_ref (app_ref),
+               local_error ? local_error->message : "unknown reason");
+      return TRUE;
+    }
 
   manager = mct_manager_new (system_bus);
   app_filter = mct_manager_get_app_filter (manager, getuid (),
@@ -4357,6 +4372,12 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
           if (do_migrate)
             {
               do_migrate = FALSE; /* Don't migrate older things, they are likely symlinks to this dir */
+
+              /* Don't migrate a symlink pointing to the new data dir. It was likely left over
+               * from a previous migration and would end up pointing to itself */
+              if (g_file_info_get_is_symlink (previous_app_id_dir_info) &&
+                  g_strcmp0 (g_file_info_get_symlink_target (previous_app_id_dir_info), app_id) == 0)
+                break;
 
               if (!flatpak_file_rename (previous_app_id_dir, real_app_id_dir, cancellable, &local_error))
                 {

@@ -148,7 +148,7 @@
                   Note that absolute paths or subdirectories are not allowed.
                   The files must be in the <filename>sandbox</filename> subdirectory of
                   the instance directory (i.e. <filename>~/.var/app/$APP_ID/sandbox</filename>).
-                <para></para>
+                </para><para>
                   This option is useful in combination with <option>--sandbox</option> (otherwise the
                   instance directory is accessible anyway).
                 </para></listitem>
@@ -163,7 +163,7 @@
                   Note that absolute paths or subdirectories are not allowed.
                   The files must be in the <filename>sandbox</filename> subdirectory of
                   the instance directory (i.e. <filename>~/.var/app/$APP_ID/sandbox</filename>).
-                <para></para>
+                </para><para>
                   This option is useful in combination with <option>--sandbox</option> (otherwise the
                   instance directory is accessible anyway).
                 </para></listitem>
