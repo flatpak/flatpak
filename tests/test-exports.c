@@ -1,5 +1,6 @@
 /* vi:set et sw=2 sts=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e-s:
  * Copyright © 2020 Collabora Ltd.
+ * Copyright © 2024 GNOME Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -13,6 +14,10 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Authors:
+ *       Simon McVittie <smcv@collabora.com>
+ *       Hubert Figuière <hub@figuiere.net>
  */
 
 #include "config.h"
@@ -183,6 +188,7 @@ test_empty_context (void)
   g_assert_cmpuint (context->sockets_valid, ==, 0);
   g_assert_cmpuint (context->devices, ==, 0);
   g_assert_cmpuint (context->devices_valid, ==, 0);
+  g_assert_null (context->fallback_devices);
   g_assert_cmpuint (context->features, ==, 0);
   g_assert_cmpuint (context->features_valid, ==, 0);
   g_assert_cmpuint (flatpak_context_get_run_flags (context), ==, 0);
@@ -230,7 +236,7 @@ test_full_context (void)
   g_key_file_set_value (keyfile,
                         FLATPAK_METADATA_GROUP_CONTEXT,
                         FLATPAK_METADATA_KEY_DEVICES,
-                        "dri;all;kvm;shm;");
+                        "dri;all;kvm;shm;fallback:input,all;");
   g_key_file_set_value (keyfile,
                         FLATPAK_METADATA_GROUP_CONTEXT,
                         FLATPAK_METADATA_KEY_FEATURES,
@@ -278,6 +284,7 @@ test_full_context (void)
                      FLATPAK_CONTEXT_DEVICE_KVM |
                      FLATPAK_CONTEXT_DEVICE_SHM));
   g_assert_cmpuint (context->devices_valid, ==, context->devices);
+  g_assert_nonnull (context->fallback_devices);
   g_assert_cmpuint (context->sockets, ==,
                     (FLATPAK_CONTEXT_SOCKET_X11 |
                      FLATPAK_CONTEXT_SOCKET_WAYLAND |
@@ -398,6 +405,7 @@ test_full_context (void)
   i = 0;
   g_assert_cmpstr (strv[i++], ==, "all");
   g_assert_cmpstr (strv[i++], ==, "dri");
+  g_assert_cmpstr (strv[i++], ==, "fallback:input,all");
   g_assert_cmpstr (strv[i++], ==, "kvm");
   g_assert_cmpstr (strv[i++], ==, "shm");
   g_assert_cmpstr (strv[i], ==, NULL);
