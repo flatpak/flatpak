@@ -56,13 +56,11 @@ typedef struct
 static void
 test_library_version (void)
 {
-  g_autofree char *version = NULL;
-
-  version = g_strdup_printf ("%d.%d.%d" G_STRINGIFY (PACKAGE_EXTRA_VERSION),
-                             FLATPAK_MAJOR_VERSION,
-                             FLATPAK_MINOR_VERSION,
-                             FLATPAK_MICRO_VERSION);
-  g_assert_cmpstr (version, ==, PACKAGE_VERSION);
+  assert_cmpstr_free_lhs (g_strdup_printf ("%d.%d.%d" G_STRINGIFY (PACKAGE_EXTRA_VERSION),
+                                           FLATPAK_MAJOR_VERSION,
+                                           FLATPAK_MINOR_VERSION,
+                                           FLATPAK_MICRO_VERSION),
+                          ==, PACKAGE_VERSION);
 }
 
 static void
@@ -99,8 +97,6 @@ test_user_installation (void)
   g_autoptr(FlatpakInstallation) inst = NULL;
   g_autoptr(GError) error = NULL;
   g_autoptr(GFile) dir = NULL;
-  g_autofree char *path = NULL;
-  g_autofree char *expected_path = NULL;
 
   inst = flatpak_installation_new_user (NULL, &error);
   g_assert_no_error (error);
@@ -109,9 +105,8 @@ test_user_installation (void)
   g_assert_true (flatpak_installation_get_is_user (inst));
 
   dir = flatpak_installation_get_path (inst);
-  path = g_file_get_path (dir);
-  expected_path = g_build_filename (g_get_user_data_dir (), "flatpak", NULL);
-  g_assert_cmpstr (path, ==, expected_path);
+  assert_cmpstr_free_both (g_file_get_path (dir), ==,
+                           g_build_filename (g_get_user_data_dir (), "flatpak", NULL));
 }
 
 static void
@@ -120,7 +115,6 @@ test_system_installation (void)
   g_autoptr(FlatpakInstallation) inst = NULL;
   g_autoptr(GError) error = NULL;
   g_autoptr(GFile) dir = NULL;
-  g_autofree char *path = NULL;
 
   inst = flatpak_installation_new_system (NULL, &error);
   g_assert_no_error (error);
@@ -129,8 +123,7 @@ test_system_installation (void)
   g_assert_false (flatpak_installation_get_is_user (inst));
 
   dir = flatpak_installation_get_path (inst);
-  path = g_file_get_path (dir);
-  g_assert_cmpstr (path, ==, flatpak_systemdir);
+  assert_cmpstr_free_lhs (g_file_get_path (dir), ==, flatpak_systemdir);
 }
 
 static void
@@ -207,7 +200,6 @@ test_installation_config (void)
   g_autofree char *path = NULL;
   g_autoptr(GFile) file = NULL;
   g_autoptr(GError) error = NULL;
-  g_autofree char *value = NULL;
   gboolean res;
   guint64 bytes;
 
@@ -217,8 +209,8 @@ test_installation_config (void)
   g_assert_no_error (error);
   g_assert_nonnull (inst);
 
-  value = flatpak_installation_get_config (inst, "test", NULL, &error);
-  g_assert_null (value);
+  assert_cmpstr_free_lhs (flatpak_installation_get_config (inst, "test", NULL, &error),
+                          ==, NULL);
   g_assert_error (error, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_KEY_NOT_FOUND);
   g_clear_error (&error);
 
@@ -226,10 +218,9 @@ test_installation_config (void)
   g_assert_true (res);
   g_assert_no_error (error);
 
-  value = flatpak_installation_get_config (inst, "test", NULL, &error);
-  g_assert_cmpstr (value, ==, "hello");
+  assert_cmpstr_free_lhs (flatpak_installation_get_config (inst, "test", NULL, &error),
+                          ==, "hello");
   g_assert_no_error (error);
-  g_clear_pointer (&value, g_free);
 
   g_clear_object (&inst);
 
@@ -237,10 +228,9 @@ test_installation_config (void)
   g_assert_no_error (error);
   g_assert_nonnull (inst);
 
-  value = flatpak_installation_get_config (inst, "test", NULL, &error);
-  g_assert_cmpstr (value, ==, "hello");
+  assert_cmpstr_free_lhs (flatpak_installation_get_config (inst, "test", NULL, &error),
+                          ==, "hello");
   g_assert_no_error (error);
-  g_clear_pointer (&value, g_free);
 
   res = flatpak_installation_get_min_free_space_bytes (inst, &bytes, &error);
   g_assert_true (res);
@@ -366,7 +356,6 @@ test_ref (void)
 {
   g_autoptr(FlatpakRef) ref = NULL;
   g_autoptr(GError) error = NULL;
-  g_autofree char *formatted = NULL;
   const char *valid;
   FlatpakRefKind kind;
   g_autofree char *name = NULL;
@@ -455,9 +444,7 @@ test_ref (void)
   g_assert_cmpstr (flatpak_ref_get_branch (ref), ==, "master");
   g_assert_null (flatpak_ref_get_collection_id (ref));
 
-  formatted = flatpak_ref_format_ref (ref);
-  g_assert_cmpstr (formatted, ==, valid);
-  g_clear_pointer (&formatted, g_free);
+  assert_cmpstr_free_lhs (flatpak_ref_format_ref (ref), ==, valid);
 
   g_clear_object (&ref);
 
@@ -481,9 +468,7 @@ test_ref (void)
   g_assert_null (commit);
   g_assert_null (collection_id);
 
-  formatted = flatpak_ref_format_ref (ref);
-  g_assert_cmpstr (formatted, ==, valid);
-  g_clear_pointer (&formatted, g_free);
+  assert_cmpstr_free_lhs (flatpak_ref_format_ref (ref), ==, valid);
 
   g_clear_object (&ref);
 
@@ -543,13 +528,11 @@ test_list_remotes (void)
     {
       FlatpakRemote *remote1 = g_ptr_array_index (remotes, i);
       FlatpakRemote *remote2 = g_ptr_array_index (remotes2, i);
-      g_autofree gchar *u1 = NULL;
-      g_autofree gchar *u2 = NULL;
 
       g_assert_cmpstr (flatpak_remote_get_name (remote1), ==,
                        flatpak_remote_get_name (remote2));
-      g_assert_cmpstr ((u1 = flatpak_remote_get_url (remote1)), ==,
-                       (u2 = flatpak_remote_get_url (remote2)));
+      assert_cmpstr_free_both (flatpak_remote_get_url (remote1), ==,
+                               flatpak_remote_get_url (remote2));
     }
 
   g_ptr_array_unref (remotes2);
@@ -571,7 +554,6 @@ test_remote_by_name (void)
   FlatpakRemoteType type;
   g_autoptr(GFile) file = NULL;
   g_autofree char *repo_url = NULL;
-  gchar *s;
 
   inst = flatpak_installation_new_user (NULL, &error);
   g_assert_no_error (error);
@@ -583,18 +565,15 @@ test_remote_by_name (void)
 
   g_assert_true (FLATPAK_IS_REMOTE (remote));
   g_assert_cmpstr (flatpak_remote_get_name (remote), ==, repo_name);
-  g_assert_cmpstr ((s = flatpak_remote_get_url (remote)), ==, repo_url);
-  g_free (s);
-  g_assert_cmpstr ((s = flatpak_remote_get_title (remote)), ==, NULL);
-  g_free (s);
+  assert_cmpstr_free_lhs (flatpak_remote_get_url (remote), ==, repo_url);
+  assert_cmpstr_free_lhs (flatpak_remote_get_title (remote), ==, NULL);
   g_assert_cmpint (flatpak_remote_get_remote_type (remote), ==, FLATPAK_REMOTE_TYPE_STATIC);
   g_assert_false (flatpak_remote_get_noenumerate (remote));
   g_assert_false (flatpak_remote_get_disabled (remote));
   g_assert_true (flatpak_remote_get_gpg_verify (remote));
   g_assert_cmpint (flatpak_remote_get_prio (remote), ==, 1);
 
-  g_assert_cmpstr ((s = flatpak_remote_get_collection_id (remote)), ==, repo_collection_id);
-  g_free (s);
+  assert_cmpstr_free_lhs (flatpak_remote_get_collection_id (remote), ==, repo_collection_id);
 
   g_object_get (remote,
                 "name", &name,
@@ -623,7 +602,6 @@ test_remote (void)
   g_autoptr(OstreeRepo) repo = NULL;
   gboolean gpg_verify_summary;
   gboolean res;
-  gchar *s;
 
   inst = flatpak_installation_new_user (NULL, &error);
   g_assert_no_error (error);
@@ -631,8 +609,7 @@ test_remote (void)
   remote = flatpak_installation_get_remote_by_name (inst, repo_name, NULL, &error);
   g_assert_no_error (error);
 
-  g_assert_cmpstr ((s = flatpak_remote_get_collection_id (remote)), ==, repo_collection_id);
-  g_free (s);
+  assert_cmpstr_free_lhs (flatpak_remote_get_collection_id (remote), ==, repo_collection_id);
 
   /* Flatpak doesn't provide access to gpg-verify-summary, so use ostree */
   res = flatpak_installation_modify_remote (inst, remote, NULL, &error);
@@ -665,13 +642,11 @@ test_remote (void)
   g_assert_true (gpg_verify_summary);
 
   flatpak_remote_set_collection_id (remote, repo_collection_id);
-  g_assert_cmpstr ((s = flatpak_remote_get_collection_id (remote)), ==, repo_collection_id);
-  g_free (s);
+  assert_cmpstr_free_lhs (flatpak_remote_get_collection_id (remote), ==, repo_collection_id);
 
   g_assert_cmpstr (flatpak_remote_get_title (remote), ==, NULL);
   flatpak_remote_set_title (remote, "Test Repo");
-  g_assert_cmpstr ((s = flatpak_remote_get_title (remote)), ==, "Test Repo");
-  g_free (s);
+  assert_cmpstr_free_lhs (flatpak_remote_get_title (remote), ==, "Test Repo");
 
   g_assert_cmpint (flatpak_remote_get_prio (remote), ==, 1);
   flatpak_remote_set_prio (remote, 15);
@@ -691,8 +666,7 @@ test_remote (void)
 
   g_assert_null (flatpak_remote_get_default_branch (remote));
   flatpak_remote_set_default_branch (remote, "master");
-  g_assert_cmpstr ((s = flatpak_remote_get_default_branch (remote)), ==, "master");
-  g_free (s);
+  assert_cmpstr_free_lhs (flatpak_remote_get_default_branch (remote), ==, "master");
 
   /* It should be an error to disable GPG while a collection ID is set. */
   g_assert_true (flatpak_remote_get_gpg_verify (remote));
@@ -717,14 +691,12 @@ test_remote (void)
   remote = flatpak_installation_get_remote_by_name (inst, repo_name, NULL, &error);
   g_assert_no_error (error);
 
-  g_assert_cmpstr ((s = flatpak_remote_get_title (remote)), ==, "Test Repo");
-  g_free (s);
+  assert_cmpstr_free_lhs (flatpak_remote_get_title (remote), ==, "Test Repo");
   g_assert_cmpint (flatpak_remote_get_prio (remote), ==, 15);
   g_assert_true (flatpak_remote_get_noenumerate (remote));
   g_assert_true (flatpak_remote_get_nodeps (remote));
   g_assert_false (flatpak_remote_get_gpg_verify (remote));
-  g_assert_cmpstr ((s = flatpak_remote_get_default_branch (remote)), ==, "master");
-  g_free (s);
+  assert_cmpstr_free_lhs (flatpak_remote_get_default_branch (remote), ==, "master");
 
   /* back to defaults */
   flatpak_remote_set_title (remote, NULL);
@@ -748,7 +720,6 @@ test_remote_new (void)
   g_autoptr(FlatpakRemote) remote = NULL;
   g_autoptr(GError) error = NULL;
   gboolean res;
-  gchar *s;
 
   inst = flatpak_installation_new_user (NULL, &error);
   g_assert_no_error (error);
@@ -788,8 +759,7 @@ test_remote_new (void)
   remote = flatpak_installation_get_remote_by_name (inst, "my-first-remote", NULL, &error);
   g_assert_no_error (error);
 
-  g_assert_cmpstr ((s = flatpak_remote_get_url (remote)), ==, "http://127.0.0.1/nowhere");
-  g_free (s);
+  assert_cmpstr_free_lhs (flatpak_remote_get_url (remote), ==, "http://127.0.0.1/nowhere");
 
   g_clear_object (&remote);
 
@@ -812,8 +782,7 @@ test_remote_new (void)
   g_assert_no_error (error);
 
   /* Should be the old value */
-  g_assert_cmpstr ((s = flatpak_remote_get_url (remote)), ==, "http://127.0.0.1/nowhere");
-  g_free (s);
+  assert_cmpstr_free_lhs (flatpak_remote_get_url (remote), ==, "http://127.0.0.1/nowhere");
 
   g_clear_object (&remote);
 
@@ -869,7 +838,6 @@ test_remote_new_from_file (void)
     "DefaultBranch=default-branch\n"
     "NoDeps=true\n";
   g_autoptr(GBytes) data = g_bytes_new_static (_data, strlen (_data));
-  gchar *s;
 
   inst = flatpak_installation_new_user (NULL, &error);
   g_assert_no_error (error);
@@ -892,20 +860,13 @@ test_remote_new_from_file (void)
   remote = flatpak_installation_get_remote_by_name (inst, "file-remote", NULL, &error);
   g_assert_no_error (error);
 
-  g_assert_cmpstr ((s = flatpak_remote_get_url (remote)), ==, "http://127.0.0.1/repo");
-  g_free (s);
-  g_assert_cmpstr ((s = flatpak_remote_get_title (remote)), ==, "The Title");
-  g_free (s);
-  g_assert_cmpstr ((s = flatpak_remote_get_comment (remote)), ==, "The Comment");
-  g_free (s);
-  g_assert_cmpstr ((s = flatpak_remote_get_description (remote)), ==, "The Description");
-  g_free (s);
-  g_assert_cmpstr ((s = flatpak_remote_get_homepage (remote)), ==, "https://the.homepage/");
-  g_free (s);
-  g_assert_cmpstr ((s = flatpak_remote_get_icon (remote)), ==, "https://the.icon/");
-  g_free (s);
-  g_assert_cmpstr ((s = flatpak_remote_get_default_branch (remote)), ==, "default-branch");
-  g_free (s);
+  assert_cmpstr_free_lhs (flatpak_remote_get_url (remote), ==, "http://127.0.0.1/repo");
+  assert_cmpstr_free_lhs (flatpak_remote_get_title (remote), ==, "The Title");
+  assert_cmpstr_free_lhs (flatpak_remote_get_comment (remote), ==, "The Comment");
+  assert_cmpstr_free_lhs (flatpak_remote_get_description (remote), ==, "The Description");
+  assert_cmpstr_free_lhs (flatpak_remote_get_homepage (remote), ==, "https://the.homepage/");
+  assert_cmpstr_free_lhs (flatpak_remote_get_icon (remote), ==, "https://the.icon/");
+  assert_cmpstr_free_lhs (flatpak_remote_get_default_branch (remote), ==, "default-branch");
   g_assert_cmpint (flatpak_remote_get_nodeps (remote), ==, TRUE);
 
   g_clear_object (&remote);
@@ -927,10 +888,8 @@ test_remote_new_from_file (void)
   remote = flatpak_installation_get_remote_by_name (inst, "file-remote", NULL, &error);
   g_assert_no_error (error);
 
-  g_assert_cmpstr ((s = flatpak_remote_get_url (remote)), ==, "http://127.0.0.1/other");
-  g_free (s);
-  g_assert_cmpstr ((s = flatpak_remote_get_filter (remote)), ==, "/some/path/to/filter");
-  g_free (s);
+  assert_cmpstr_free_lhs (flatpak_remote_get_url (remote), ==, "http://127.0.0.1/other");
+  assert_cmpstr_free_lhs (flatpak_remote_get_filter (remote), ==, "/some/path/to/filter");
 
   g_clear_object (&remote);
 
@@ -954,10 +913,8 @@ test_remote_new_from_file (void)
   remote = flatpak_installation_get_remote_by_name (inst, "file-remote", NULL, &error);
   g_assert_no_error (error);
 
-  g_assert_cmpstr ((s = flatpak_remote_get_url (remote)), ==, "http://127.0.0.1/other");
-  g_free (s);
-  g_assert_cmpstr ((s = flatpak_remote_get_filter (remote)), ==, NULL);
-  g_free (s);
+  assert_cmpstr_free_lhs (flatpak_remote_get_url (remote), ==, "http://127.0.0.1/other");
+  assert_cmpstr_free_lhs (flatpak_remote_get_filter (remote), ==, NULL);
 
   g_clear_object (&remote);
 
@@ -1654,8 +1611,6 @@ test_install_launch_uninstall (void)
   g_autoptr(FlatpakInstalledRef) runtime_ref = NULL;
   FlatpakInstalledRef *ref1 = NULL;
   GPtrArray *refs = NULL;
-  g_autofree char *s = NULL;
-  g_autofree char *s1 = NULL;
   int progress_count, changed_count;
   gboolean timeout_reached;
   guint timeout_id;
@@ -1723,10 +1678,8 @@ test_install_launch_uninstall (void)
   ref1 = g_ptr_array_index (refs, 0);
   g_assert_cmpstr (flatpak_ref_get_commit (FLATPAK_REF (ref1)), ==, flatpak_ref_get_commit (FLATPAK_REF (ref)));
 
-  s = flatpak_ref_format_ref (FLATPAK_REF (ref));
-  s1 = flatpak_ref_format_ref (FLATPAK_REF (ref1));
-  g_assert_cmpstr (s, ==, s1);
-
+  assert_cmpstr_free_both (flatpak_ref_format_ref (FLATPAK_REF (ref)), ==,
+                           flatpak_ref_format_ref (FLATPAK_REF (ref1)));
   g_ptr_array_unref (refs);
 
   runtime_ref = g_object_ref (ref);
@@ -3046,7 +2999,6 @@ new_op (FlatpakTransaction          *transaction,
         FlatpakTransactionOperation *op,
         FlatpakTransactionProgress  *progress)
 {
-  g_autofree char *status = NULL;
   g_autoptr(FlatpakTransactionOperation) current = NULL;
   g_auto(GStrv) refs = NULL;
 
@@ -3067,8 +3019,8 @@ new_op (FlatpakTransaction          *transaction,
   g_assert_cmpint (flatpak_transaction_operation_get_operation_type (op), ==, FLATPAK_TRANSACTION_OPERATION_INSTALL);
   g_assert_true (g_strv_contains ((const gchar * const *) refs, flatpak_transaction_operation_get_ref (op)));
 
-  status = flatpak_transaction_progress_get_status (progress);
-  g_assert_cmpstr (status, ==, "Initializing");
+  assert_cmpstr_free_lhs (flatpak_transaction_progress_get_status (progress),
+                          ==, "Initializing");
   g_assert_true (flatpak_transaction_progress_get_is_estimating (progress));
   g_assert_cmpint (flatpak_transaction_progress_get_progress (progress), ==, 0);
 }
@@ -3104,11 +3056,9 @@ op_done_no_change (FlatpakTransaction          *transaction,
                    const char                  *commit,
                    int                          result)
 {
-  g_autofree char *app = NULL;
-
-  app = g_strdup_printf ("app/org.test.Hello/%s/master",
-                         flatpak_get_default_arch ());
-  g_assert_cmpstr (flatpak_transaction_operation_get_ref (op), ==, app);
+  assert_cmpstr_free_rhs (flatpak_transaction_operation_get_ref (op), ==,
+                          g_strdup_printf ("app/org.test.Hello/%s/master",
+                                           flatpak_get_default_arch ()));
   g_assert_cmpint (flatpak_transaction_operation_get_operation_type (op), ==, FLATPAK_TRANSACTION_OPERATION_UPDATE);
   g_assert_cmpint (result, ==, FLATPAK_TRANSACTION_RESULT_NO_CHANGE);
 }
@@ -3119,11 +3069,9 @@ op_done_with_change (FlatpakTransaction          *transaction,
                      const char                  *commit,
                      int                          result)
 {
-  g_autofree char *app = NULL;
-
-  app = g_strdup_printf ("app/org.test.Hello/%s/master",
-                         flatpak_get_default_arch ());
-  g_assert_cmpstr (flatpak_transaction_operation_get_ref (op), ==, app);
+  assert_cmpstr_free_rhs (flatpak_transaction_operation_get_ref (op), ==,
+                          g_strdup_printf ("app/org.test.Hello/%s/master",
+                                           flatpak_get_default_arch ()));
   g_assert_cmpint (flatpak_transaction_operation_get_operation_type (op), ==, FLATPAK_TRANSACTION_OPERATION_UPDATE);
   g_assert_cmpint (result, ==, 0);
 }
@@ -3732,20 +3680,16 @@ ready_check_origin_remote (FlatpakTransaction *transaction)
   g_autoptr(FlatpakRemoteRef) remote_ref = NULL;
   g_autoptr(FlatpakRemote) remote = NULL;
   g_autoptr(GError) error = NULL;
-  g_autofree char *app = NULL;
-  gchar *s;
-
   installation = flatpak_transaction_get_installation (transaction);
-  app = g_strdup_printf ("app/org.test.Hello/%s/master",
-                         flatpak_get_default_arch ());
 
   /* The remote should return the ref set as xa.main-ref on it despite having xa.noenumerate set */
   remote = flatpak_installation_get_remote_by_name (installation, "hello-origin", NULL, &error);
   g_assert_no_error (error);
   g_assert_nonnull (remote);
   g_assert_true (flatpak_remote_get_noenumerate (remote));
-  g_assert_cmpstr ((s = flatpak_remote_get_main_ref (remote)), ==, app);
-  g_free (s);
+  assert_cmpstr_free_both (flatpak_remote_get_main_ref (remote), ==,
+                           g_strdup_printf ("app/org.test.Hello/%s/master",
+                                            flatpak_get_default_arch ()));
 
   remote_ref = flatpak_installation_fetch_remote_ref_sync (installation,
                                                            "hello-origin",
@@ -3833,17 +3777,15 @@ check_ready1_abort (FlatpakTransaction *transaction)
 {
   GList *ops;
   FlatpakTransactionOperation *op;
-  g_autofree char *app = NULL;
-
-  app = g_strdup_printf ("app/org.test.Hello/%s/master",
-                         flatpak_get_default_arch ());
 
   ops = flatpak_transaction_get_operations (transaction);
   g_assert_cmpint (g_list_length (ops), ==, 1);
   op = ops->data;
 
   g_assert_cmpint (flatpak_transaction_operation_get_operation_type (op), ==, FLATPAK_TRANSACTION_OPERATION_INSTALL);
-  g_assert_cmpstr (flatpak_transaction_operation_get_ref (op), ==, app);
+  assert_cmpstr_free_rhs (flatpak_transaction_operation_get_ref (op), ==,
+                          g_strdup_printf ("app/org.test.Hello/%s/master",
+                                           flatpak_get_default_arch ()));
 
   g_list_free_full (ops, g_object_unref);
 
@@ -3855,30 +3797,27 @@ check_ready3_abort (FlatpakTransaction *transaction)
 {
   GList *ops;
   FlatpakTransactionOperation *op;
-  g_autofree char *app = NULL;
-  g_autofree char *runtime = NULL;
-  g_autofree char *locale = NULL;
-
-  app = g_strdup_printf ("app/org.test.Hello/%s/master",
-                         flatpak_get_default_arch ());
-  runtime = g_strdup_printf ("runtime/org.test.Platform/%s/master",
-                             flatpak_get_default_arch ());
-  locale = g_strdup_printf ("runtime/org.test.Hello.Locale/%s/master",
-                            flatpak_get_default_arch ());
 
   ops = flatpak_transaction_get_operations (transaction);
   g_assert_cmpint (g_list_length (ops), ==, 3);
   op = ops->data;
   g_assert_cmpint (flatpak_transaction_operation_get_operation_type (op), ==, FLATPAK_TRANSACTION_OPERATION_INSTALL);
-  g_assert_cmpstr (flatpak_transaction_operation_get_ref (op), ==, locale);
+  assert_cmpstr_free_rhs (flatpak_transaction_operation_get_ref (op), ==,
+                          g_strdup_printf ("runtime/org.test.Hello.Locale/%s/master",
+                                           flatpak_get_default_arch ()));
 
   op = ops->next->data;
   g_assert_cmpint (flatpak_transaction_operation_get_operation_type (op), ==, FLATPAK_TRANSACTION_OPERATION_INSTALL);
-  g_assert_cmpstr (flatpak_transaction_operation_get_ref (op), ==, runtime);
+  assert_cmpstr_free_rhs (flatpak_transaction_operation_get_ref (op), ==,
+                          g_strdup_printf ("runtime/org.test.Platform/%s/master",
+                                           flatpak_get_default_arch ()));
+
 
   op = ops->next->next->data;
   g_assert_cmpint (flatpak_transaction_operation_get_operation_type (op), ==, FLATPAK_TRANSACTION_OPERATION_INSTALL);
-  g_assert_cmpstr (flatpak_transaction_operation_get_ref (op), ==, app);
+  assert_cmpstr_free_rhs (flatpak_transaction_operation_get_ref (op), ==,
+                          g_strdup_printf ("app/org.test.Hello/%s/master",
+                                           flatpak_get_default_arch ()));
 
   g_list_free_full (ops, g_object_unref);
 
@@ -4292,7 +4231,6 @@ test_instance (void)
   g_autoptr(GPtrArray) instances = NULL;
   g_autoptr(FlatpakInstance) instance = NULL;
   GKeyFile *info;
-  g_autofree char *value = NULL;
   int i;
   g_autofree char *app = NULL;
   g_autofree char *runtime = NULL;
@@ -4356,12 +4294,10 @@ test_instance (void)
   g_assert_nonnull (flatpak_instance_get_id (instance));
   info = flatpak_instance_get_info (instance);
   g_assert_nonnull (info);
-  value = g_key_file_get_string (info, "Application", "name", &error);
-  g_assert_cmpstr (value, ==, "org.test.Hello");
-  g_clear_pointer (&value, g_free);
-  value = g_key_file_get_string (info, "Instance", "instance-id", &error);
-  g_assert_cmpstr (value, ==, flatpak_instance_get_id (instance));
-  g_clear_pointer (&value, g_free);
+  assert_cmpstr_free_lhs (g_key_file_get_string (info, "Application", "name", &error),
+                          ==, "org.test.Hello");
+  assert_cmpstr_free_lhs (g_key_file_get_string (info, "Instance", "instance-id", &error),
+                          ==, flatpak_instance_get_id (instance));
 
   g_assert_cmpstr (flatpak_instance_get_app (instance), ==, "org.test.Hello");
   g_assert_cmpstr (flatpak_instance_get_arch (instance), ==,
@@ -4474,7 +4410,6 @@ test_overrides (void)
   g_autofree char *data = NULL;
   g_autoptr(GKeyFile) overrides = NULL;
   gboolean res;
-  g_autofree char *value = NULL;
   g_autoptr(FlatpakInstalledRef) ref = NULL;
   g_auto(GStrv) list = NULL;
   gsize len;
@@ -4546,13 +4481,11 @@ test_overrides (void)
   g_assert_no_error (error);
   g_assert_true (res);
 
-  value = g_key_file_get_string (overrides, "Context", "devices", &error);
-  g_assert_cmpstr (value, ==, "dri;!kvm;");
-  g_clear_pointer (&value, g_free);
+  assert_cmpstr_free_lhs (g_key_file_get_string (overrides, "Context", "devices", &error),
+                          ==, "dri;!kvm;");
 
-  value = g_key_file_get_string (overrides, "Context", "features", &error);
-  g_assert_cmpstr (value, ==, "bluetooth;!canbus;");
-  g_clear_pointer (&value, g_free);
+  assert_cmpstr_free_lhs (g_key_file_get_string (overrides, "Context", "features", &error),
+                          ==, "bluetooth;!canbus;");
 
   list = g_key_file_get_string_list (overrides, "Context", "filesystems", &len, &error);
   g_assert_cmpint (len, ==, 3);
@@ -4567,17 +4500,14 @@ test_overrides (void)
   g_assert_true (g_strv_contains ((const char * const *) list, "!pulseaudio"));
   g_clear_pointer (&list, g_strfreev);
 
-  value = g_key_file_get_string (overrides, "Session Bus Policy", "hello.bla.bla.*", &error);
-  g_assert_cmpstr (value, ==, "talk");
-  g_clear_pointer (&value, g_free);
+  assert_cmpstr_free_lhs (g_key_file_get_string (overrides, "Session Bus Policy", "hello.bla.bla.*", &error),
+                          ==, "talk");
 
-  value = g_key_file_get_string (overrides, "Session Bus Policy", "foo.bar.baz", &error);
-  g_assert_cmpstr (value, ==, "own");
-  g_clear_pointer (&value, g_free);
+  assert_cmpstr_free_lhs (g_key_file_get_string (overrides, "Session Bus Policy", "foo.bar.baz", &error),
+                          ==, "own");
 
-  value = g_key_file_get_string (overrides, "Environment", "FOO", &error);
-  g_assert_cmpstr (value, ==, "BAR");
-  g_clear_pointer (&value, g_free);
+  assert_cmpstr_free_lhs (g_key_file_get_string (overrides, "Environment", "FOO", &error),
+                          ==, "BAR");
 
   const char *argv2[] = { "flatpak", "override", "--user", "--reset", "org.test.Hello", NULL };
   run_test_subprocess ((char **) argv2, RUN_TEST_SUBPROCESS_DEFAULT);
