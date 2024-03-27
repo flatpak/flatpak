@@ -2332,6 +2332,31 @@ flatpak_context_load_metadata (FlatpakContext *context,
   return TRUE;
 }
 
+static void
+flatpak_context_save_usb_devices (GHashTable *devices, GKeyFile *keyfile, const char *key)
+{
+  GHashTableIter iter;
+  gpointer value;
+
+  if (g_hash_table_size (devices) > 0)
+    {
+      g_autoptr(GPtrArray) usb_devices = g_ptr_array_new ();
+
+      g_hash_table_iter_init (&iter, devices);
+      while (g_hash_table_iter_next (&iter, &value, NULL))
+        g_ptr_array_add (usb_devices, (char *) value);
+
+      if (usb_devices->len > 0)
+        {
+          g_key_file_set_string_list (keyfile,
+                                      FLATPAK_METADATA_GROUP_USB_DEVICES,
+                                      key,
+                                      (const char * const *) usb_devices->pdata,
+                                      usb_devices->len);
+        }
+    }
+}
+
 /*
  * Save the FLATPAK_METADATA_GROUP_CONTEXT,
  * FLATPAK_METADATA_GROUP_SESSION_BUS_POLICY,
@@ -2608,41 +2633,10 @@ flatpak_context_save_metadata (FlatpakContext *context,
     }
 
   g_key_file_remove_group (metakey, FLATPAK_METADATA_GROUP_USB_DEVICES, NULL);
-  if (g_hash_table_size (context->allowed_usb_devices) > 0)
-    {
-      g_autoptr(GPtrArray) usb_devices = g_ptr_array_new ();
-
-      g_hash_table_iter_init (&iter, context->allowed_usb_devices);
-      while (g_hash_table_iter_next (&iter, &value, NULL))
-        g_ptr_array_add (usb_devices, (char *) value);
-
-      if (usb_devices->len > 0)
-        {
-          g_key_file_set_string_list (metakey,
-                                      FLATPAK_METADATA_GROUP_USB_DEVICES,
-                                      FLATPAK_METADATA_KEY_USB_ALLOWED_DEVICES,
-                                      (const char * const *) usb_devices->pdata,
-                                      usb_devices->len);
-        }
-    }
-
-  if (g_hash_table_size (context->blocked_usb_devices) > 0)
-    {
-      g_autoptr(GPtrArray) usb_devices = g_ptr_array_new ();
-
-      g_hash_table_iter_init (&iter, context->blocked_usb_devices);
-      while (g_hash_table_iter_next (&iter, &value, NULL))
-        g_ptr_array_add (usb_devices, (char *) value);
-
-      if (usb_devices->len > 0)
-        {
-          g_key_file_set_string_list (metakey,
-                                      FLATPAK_METADATA_GROUP_USB_DEVICES,
-                                      FLATPAK_METADATA_KEY_USB_BLOCKED_DEVICES,
-                                      (const char * const *) usb_devices->pdata,
-                                      usb_devices->len);
-        }
-    }
+  flatpak_context_save_usb_devices (context->allowed_usb_devices, metakey,
+                                    FLATPAK_METADATA_KEY_USB_ALLOWED_DEVICES);
+  flatpak_context_save_usb_devices (context->blocked_usb_devices, metakey,
+                                    FLATPAK_METADATA_KEY_USB_BLOCKED_DEVICES);
 }
 
 void
