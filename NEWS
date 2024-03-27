@@ -50,6 +50,13 @@ Bug fixes:
  * Don't refuse to start apps when there is no D-Bus system bus available
    (#5076)
 
+ * Don't try to repeat migration of apps whose data was migrated to a new
+   name and then deleted (#5668)
+
+ * Improve handling of mixed locales on systems with systemd-localed (#5497)
+
+ * Improve display of ellipsized columns in wide terminals (#5722)
+
  * Make `flatpak info -e` look for extensions in all installations (#5670)
 
  * Fix warnings from newer GLib versions (#5660, #5737)
@@ -85,7 +92,7 @@ Bug fixes:
 
  * Skip more tests when FUSE isn't available (#5611)
 
- * Translation updates (#5602)
+ * Translation updates (#5602, #5707)
 
 Changes in 1.15.6
 ~~~~~~~~~~~~~~~~~
