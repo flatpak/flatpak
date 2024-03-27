@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 install_data(
+  'flatpak.csh',
   'flatpak.sh',
   install_dir : profile_dir,
 )
