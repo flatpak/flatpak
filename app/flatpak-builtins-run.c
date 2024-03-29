@@ -242,7 +242,7 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
           chosen_pairs = g_ptr_array_new ();
 
-          if (!flatpak_resolve_matching_installed_refs (TRUE, TRUE, ref_dir_pairs, id, chosen_pairs, error))
+          if (!flatpak_resolve_matching_installed_refs (TRUE, TRUE, ref_dir_pairs, id, FALSE, chosen_pairs, error))
             return FALSE;
 
           g_assert (chosen_pairs->len == 1);
