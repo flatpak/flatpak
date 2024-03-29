@@ -317,7 +317,7 @@ flatpak_builtin_remote_modify (int argc, char **argv, GCancellable *cancellable,
 
   remote_name = argv[1];
 
-  if (!flatpak_resolve_duplicate_remotes (dirs, remote_name, &preferred_dir, cancellable, error))
+  if (!flatpak_resolve_duplicate_remotes (dirs, remote_name, FALSE, &preferred_dir, cancellable, error))
     return FALSE;
 
   if (opt_update_metadata)
