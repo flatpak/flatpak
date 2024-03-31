@@ -253,7 +253,7 @@ libflatpak = library(
   gnu_symbol_visibility : 'hidden',
   include_directories : [common_include_directories],
   install : true,
-  link_args : ['-export-dynamic'],
+  link_args : ['-Wl,--export-dynamic'],
   link_whole : [
     libflatpak_common_base,
     libflatpak_common,
