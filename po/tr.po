@@ -12,15 +12,15 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2024-03-27 14:40+0000\n"
-"PO-Revision-Date: 2023-10-24 01:59+0300\n"
-"Last-Translator: Sabri Ünal <libreajans@gmail.com>\n"
+"PO-Revision-Date: 2024-04-01 16:09+0300\n"
+"Last-Translator: Sabri Ünal <yakushabb@gmail.com>\n"
 "Language-Team: Türkçe <gnome-turk@gnome.org>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 3.4\n"
+"X-Generator: Poedit 3.4.2\n"
 
 #: app/flatpak-builtins-build-bundle.c:57
 msgid "Export runtime instead of app"
@@ -3093,7 +3093,7 @@ msgstr ""
 
 #: app/flatpak-builtins-run.c:80
 msgid "Don't start portals"
-msgstr "Portalları başlatma"
+msgstr "Kapıları başlatma"
 
 #: app/flatpak-builtins-run.c:81
 msgid "Enable file forwarding"
@@ -3650,8 +3650,8 @@ msgstr "Parola"
 #, c-format
 msgid ""
 "\n"
-"Info: (pinned) runtime %s%s%s branch %s%s%s is end-of-life, in favor of "
-"%s%s%s branch %s%s%s\n"
+"Info: (pinned) runtime %s%s%s branch %s%s%s is end-of-life, in favor of %s%s"
+"%s branch %s%s%s\n"
 msgstr ""
 "\n"
 "Bilgi: (Sabitlenmiş) çalışma ortamı %s%s%s, dal %s%s%s, ömrünün sonuna "
@@ -3665,15 +3665,15 @@ msgid ""
 "%s%s%s\n"
 msgstr ""
 "\n"
-"Bilgi: Çalışma ortamı %s%s%s, dal %s%s%s, ömrünün sonuna geldi, %s%s%s dal "
-"%s%s%s yararına\n"
+"Bilgi: Çalışma ortamı %s%s%s, dal %s%s%s, ömrünün sonuna geldi, %s%s%s dal %s"
+"%s%s yararına\n"
 
 #: app/flatpak-cli-transaction.c:753
 #, c-format
 msgid ""
 "\n"
-"Info: app %s%s%s branch %s%s%s is end-of-life, in favor of %s%s%s branch "
-"%s%s%s\n"
+"Info: app %s%s%s branch %s%s%s is end-of-life, in favor of %s%s%s branch %s%s"
+"%s\n"
 msgstr ""
 "\n"
 "Bilgi: Uygulama %s%s%s, dal %s%s%s, ömrünün sonuna geldi, %s%s%s dal %s%s%s "
@@ -5734,7 +5734,7 @@ msgstr "Geçersiz jeton"
 #: portal/flatpak-portal.c:2308
 #, c-format
 msgid "No portal support found"
-msgstr "Portal desteği bulunamadı"
+msgstr "Kapı desteği bulunamadı"
 
 #: portal/flatpak-portal.c:2314
 msgid "Deny"
