@@ -518,10 +518,13 @@ typedef struct
 
 static const ExportData default_exports[] = {
   {"PATH", "/app/bin:/usr/bin"},
-  /* We always want to unset LD_LIBRARY_PATH to avoid inheriting weird
-   * dependencies from the host. But if not using ld.so.cache this is
-   * later set. */
+  /* We always want to unset LD variables to avoid inheriting weird
+   * dependencies from the host. But if not using ld.so.cache LD_LIBRARY_PATH
+   is later set. */
   {"LD_LIBRARY_PATH", NULL},
+  {"LD_PRELOAD", NULL},
+  {"LD_AUDIT", NULL},
+
   {"XDG_CONFIG_DIRS", "/app/etc/xdg:/etc/xdg"},
   {"XDG_DATA_DIRS", "/app/share:/usr/share"},
   {"SHELL", "/bin/sh"},
