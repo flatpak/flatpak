@@ -112,7 +112,6 @@ print_table_for_refs (gboolean      print_apps,
   g_autofree char *match_id = NULL;
   g_autofree char *match_arch = NULL;
   g_autofree char *match_branch = NULL;
-  int rows, cols;
 
   if (columns[0].name == NULL)
     return TRUE;
@@ -356,9 +355,7 @@ print_table_for_refs (gboolean      print_apps,
 
   if (flatpak_table_printer_get_current_row (printer) > 0)
     {
-      flatpak_get_window_size (&rows, &cols);
-      flatpak_table_printer_print_full (printer, 0, cols, NULL, NULL);
-      g_print ("\n");
+      flatpak_table_printer_print (printer);
     }
 
   return TRUE;
