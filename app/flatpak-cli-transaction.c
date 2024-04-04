@@ -1467,10 +1467,7 @@ transaction_ready_pre_auth (FlatpakTransaction *transaction)
         ret = flatpak_yes_no_prompt (TRUE, _("Proceed with these changes to the %s?"), name);
 
       if (!ret)
-        {
-          g_list_free_full (ops, g_object_unref);
-          return FALSE;
-        }
+        return FALSE;
     }
   else
     g_print ("\n\n");
