@@ -1,0 +1,10 @@
+{
+  "name": "Ubuntu",
+  "image": "mcr.microsoft.com/devcontainers/base:jammy",
+  "features": {
+    "ghcr.io/rocker-org/devcontainer-features/apt-packages:1": {
+      "packages": "policykit-1,libappstream-dev,bison,meson,attr,autopoint,bubblewrap,debhelper,desktop-file-utils,dh-autoreconf,dh-exec,dh-strip-nondeterminism,docbook,docbook-to-man,docbook-xml,docbook-xsl,dwz,fuse,gir1.2-appstreamglib-1.0,gir1.2-freedesktop,gir1.2-gcab-1.0,gir1.2-gdkpixbuf-2.0,gir1.2-json-1.0,gir1.2-ostree-1.0,gir1.2-polkit-1.0,gir1.2-soup-2.4,gobject-introspection,gtk-doc-tools,intltool-debian,libappstream-glib-dev,libappstream-glib8,libarchive-dev,libarchive-zip-perl,libassuan-dev,libattr1-dev,libavahi-glib1,libbrotli-dev,libcap-dev,libdconf-dev,libdebhelper-perl,libdw-dev,libelf-dev,libfile-stripnondeterminism-perl,libfuse-dev,libfuse2,libgcab-1.0-0,libgcab-dev,libgdk-pixbuf2.0-bin,libgdk-pixbuf2.0-dev,libgirepository1.0-dev,libglib2.0-doc,libgpgme-dev,libgpgme11,libjson-glib-dev,libosp5,libostree-1-1,libostree-dev,libostree-doc,libpolkit-agent-1-dev,libpolkit-gobject-1-dev,libpsl-dev,libseccomp-dev,libsoup2.4-dev,libsub-override-perl,libsystemd-dev,libxml2-utils,opensp,ostree,po-debconf,python3-lxml,python3-mako,python3-markdown,python3-markupsafe,python3-packaging,python3-pyparsing,sgml-base,sgml-data,socat,xdg-dbus-proxy,xml-core,xmlto,xsltproc"
+    }
+  },
+  "runArgs": ["--privileged"]
+}
