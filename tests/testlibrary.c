@@ -1068,7 +1068,8 @@ test_list_remote_refs (void)
           g_assert_cmpint (flatpak_ref_get_kind (ref), ==, FLATPAK_REF_KIND_APP);
         }
       else if (strcmp ("org.test.Hello.Locale", flatpak_ref_get_name (ref)) == 0 ||
-               strcmp ("org.test.Hello.Plugin.fun", flatpak_ref_get_name (ref)) == 0)
+               strcmp ("org.test.Hello.Plugin.fun", flatpak_ref_get_name (ref)) == 0 ||
+               strcmp ("org.test.Hello.Plugin.joy", flatpak_ref_get_name (ref)) == 0)
         {
           g_assert_cmpint (flatpak_ref_get_kind (ref), ==, FLATPAK_REF_KIND_RUNTIME);
         }
@@ -1138,7 +1139,7 @@ test_list_remote_refs_noenumerate (void)
   refs = flatpak_installation_list_remote_refs_sync (inst, repo_name, NULL, &error);
   g_assert_no_error (error);
   g_assert_nonnull (refs);
-  g_assert_cmpint (refs->len, ==, 4);
+  g_assert_cmpint (refs->len, ==, 5);
 
   /* Install a runtime */
   G_GNUC_BEGIN_IGNORE_DEPRECATIONS
