@@ -681,6 +681,19 @@ flatpak_get_allowed_exports (const char     *source_path,
        * and we can *only* match exactly these */
       require_exact_match = TRUE;
     }
+  else if (strcmp (source_path, "share/dbus-1/interfaces") == 0)
+    {
+      g_auto(GStrv) owned_dbus_names =  flatpak_context_get_session_bus_policy_allowed_own_names (context);
+
+      g_ptr_array_add (allowed_extensions, g_strdup (".xml"));
+
+      for (GStrv iter = owned_dbus_names; *iter != NULL; ++iter)
+        g_ptr_array_add (allowed_prefixes, g_strdup (*iter));
+
+      /* We need an exact match with no extra garbage, because the filename refers to busnames
+       * and we can *only* match exactly these */
+      require_exact_match = TRUE;
+    }
   else if (strcmp (source_path, "share/gnome-shell/search-providers") == 0)
     {
       g_ptr_array_add (allowed_extensions, g_strdup (".ini"));
