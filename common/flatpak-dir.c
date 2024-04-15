@@ -7071,6 +7071,7 @@ flatpak_dir_run_triggers (FlatpakDir   *self,
                                   "--proc", "/proc",
                                   "--dev", "/dev",
                                   "--bind", basedir, basedir,
+                                  "--",
                                   NULL);
 #endif
           flatpak_bwrap_add_args (bwrap,

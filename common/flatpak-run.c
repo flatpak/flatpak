@@ -1299,6 +1299,9 @@ add_bwrap_wrapper (FlatpakBwrap *bwrap,
   if (!flatpak_bwrap_bundle_args (bwrap, 1, -1, FALSE, error))
     return FALSE;
 
+  /* End of options: the next argument will be the executable name */
+  flatpak_bwrap_add_arg (bwrap, "--");
+
   return TRUE;
 }
 
@@ -4682,7 +4685,7 @@ flatpak_run_app (FlatpakDecomposed *app_ref,
   if (!flatpak_bwrap_bundle_args (bwrap, 1, -1, FALSE, error))
     return FALSE;
 
-  flatpak_bwrap_add_arg (bwrap, command);
+  flatpak_bwrap_add_args (bwrap, "--", command, NULL);
 
   if (!add_rest_args (bwrap, app_id,
                       exports, (flags & FLATPAK_RUN_FLAG_FILE_FORWARDING) != 0,
