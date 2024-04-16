@@ -26,6 +26,7 @@ man1 = [
   'flatpak-config',
   'flatpak-update',
   'flatpak-uninstall',
+  'flatpak-preinstall',
   'flatpak-mask',
   'flatpak-pin',
   'flatpak-list',

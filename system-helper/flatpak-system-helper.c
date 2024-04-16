@@ -403,6 +403,7 @@ handle_deploy (FlatpakSystemHelper   *object,
   gboolean local_pull;
   gboolean reinstall;
   gboolean update_pinned;
+  gboolean update_preinstalled;
   g_autofree char *url = NULL;
   g_autoptr(OngoingPull) ongoing_pull = NULL;
   g_autofree gchar *src_dir = NULL;
@@ -488,6 +489,7 @@ handle_deploy (FlatpakSystemHelper   *object,
   local_pull = (arg_flags & FLATPAK_HELPER_DEPLOY_FLAGS_LOCAL_PULL) != 0;
   reinstall = (arg_flags & FLATPAK_HELPER_DEPLOY_FLAGS_REINSTALL) != 0;
   update_pinned = (arg_flags & FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE_PINNED) != 0;
+  update_preinstalled = (arg_flags & FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE_PREINSTALLED) != 0;
 
   deploy_dir = flatpak_dir_get_if_deployed (system, ref, NULL, NULL);
 
@@ -704,7 +706,8 @@ handle_deploy (FlatpakSystemHelper   *object,
           if (!flatpak_dir_deploy_install (system, ref, arg_origin,
                                            (const char **) arg_subpaths,
                                            (const char **) arg_previous_ids,
-                                           reinstall, update_pinned, NULL, &error))
+                                           reinstall, update_pinned, update_preinstalled,
+                                           NULL, &error))
             {
               flatpak_invocation_return_error (invocation, error, "Error deploying");
               return G_DBUS_METHOD_INVOCATION_HANDLED;

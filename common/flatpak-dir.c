@@ -84,6 +84,15 @@
 #define FLATPAK_REMOTES_DIR "remotes.d"
 #define FLATPAK_REMOTES_FILE_EXT ".flatpakrepo"
 
+#define FLATPAK_PREINSTALL_DIR "preinstall.d"
+#define FLATPAK_PREINSTALL_FILE_EXT ".preinstall"
+
+#define FLATPAK_PREINSTALL_GROUP "Flatpak Preinstall"
+#define FLATPAK_PREINSTALL_IS_RUNTIME_KEY "IsRuntime"
+#define FLATPAK_PREINSTALL_NAME_KEY "Name"
+#define FLATPAK_PREINSTALL_BRANCH_KEY "Branch"
+#define FLATPAK_PREINSTALL_COLLECTION_ID_KEY "CollectionID"
+
 #define SIDELOAD_REPOS_DIR_NAME "sideload-repos"
 
 #ifdef USE_SYSTEM_HELPER
@@ -1876,6 +1885,151 @@ get_system_locations (GCancellable *cancellable,
   g_ptr_array_sort (locations, system_locations_compare_func);
 
   return g_steal_pointer (&locations);
+}
+
+char **
+flatpak_get_preinstall_config_file_paths (GCancellable *cancellable,
+                                          GError      **error)
+{
+  g_autoptr(GPtrArray) paths = NULL;
+  g_autoptr(GFile) conf_dir = NULL;
+  g_autoptr(GFileEnumerator) dir_enum = NULL;
+  g_autoptr(GError) my_error = NULL;
+  g_autofree char *config_dir = NULL;
+
+  paths = g_ptr_array_new_with_free_func (g_free);
+  config_dir = g_strdup_printf ("%s/%s",
+                                get_config_dir_location (),
+                                FLATPAK_PREINSTALL_DIR);
+
+  if (!g_file_test (config_dir, G_FILE_TEST_IS_DIR))
+    {
+      g_info ("Skipping missing preinstall config directory %s", config_dir);
+      goto out;
+    }
+
+  conf_dir = g_file_new_for_path (config_dir);
+  dir_enum = g_file_enumerate_children (conf_dir,
+                                        G_FILE_ATTRIBUTE_STANDARD_NAME "," G_FILE_ATTRIBUTE_STANDARD_TYPE,
+                                        G_FILE_QUERY_INFO_NONE,
+                                        cancellable, &my_error);
+  if (my_error != NULL)
+    {
+      g_info ("Unexpected error retrieving preinstalls from %s: %s",
+              config_dir, my_error->message);
+      g_propagate_error (error, g_steal_pointer (&my_error));
+      return NULL;
+    }
+
+  while (TRUE)
+    {
+      GFileInfo *file_info;
+      GFile *path;
+      const char *name;
+      guint32 type;
+
+      if (!g_file_enumerator_iterate (dir_enum, &file_info, &path,
+                                      cancellable, &my_error))
+        {
+          g_info ("Unexpected error reading file in %s: %s",
+                  config_dir, my_error->message);
+          g_propagate_error (error, g_steal_pointer (&my_error));
+          return NULL;
+        }
+
+      if (file_info == NULL)
+        break;
+
+      name = g_file_info_get_attribute_byte_string (file_info, "standard::name");
+      type = g_file_info_get_attribute_uint32 (file_info, "standard::type");
+
+      if (type == G_FILE_TYPE_REGULAR && g_str_has_suffix (name, FLATPAK_PREINSTALL_FILE_EXT))
+        {
+          g_autofree char *path_str = g_file_get_path (path);
+          g_ptr_array_add (paths, g_steal_pointer (&path_str));
+        }
+    }
+
+out:
+  g_ptr_array_add (paths, NULL);
+  return (char **) g_ptr_array_free (g_steal_pointer (&paths), FALSE);
+}
+
+static gboolean
+parse_preinstall_keyfile (GKeyFile *keyfile,
+                          char    **name_out,
+                          char    **branch_out,
+                          gboolean *is_runtime_out,
+                          char    **collection_id_out,
+                          GError  **error)
+{
+  g_autofree char *name = NULL;
+  g_autofree char *branch = NULL;
+  gboolean is_runtime = FALSE;
+  g_autofree char *collection_id = NULL;
+
+  *name_out = NULL;
+  *branch_out = NULL;
+  *is_runtime_out = FALSE;
+  *collection_id_out = NULL;
+
+  if (!g_key_file_has_group (keyfile, FLATPAK_PREINSTALL_GROUP))
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid file format, no %s group"), FLATPAK_PREINSTALL_GROUP);
+
+  name = g_key_file_get_string (keyfile, FLATPAK_PREINSTALL_GROUP,
+                                FLATPAK_PREINSTALL_NAME_KEY, NULL);
+  if (name == NULL)
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid file format, no %s specified"), FLATPAK_PREINSTALL_NAME_KEY);
+
+  branch = g_key_file_get_string (keyfile, FLATPAK_PREINSTALL_GROUP,
+                                  FLATPAK_PREINSTALL_BRANCH_KEY, NULL);
+  if (branch == NULL)
+    branch = g_strdup ("master");
+
+  is_runtime = g_key_file_get_boolean (keyfile, FLATPAK_PREINSTALL_GROUP,
+                                       FLATPAK_PREINSTALL_IS_RUNTIME_KEY, NULL);
+
+  collection_id = flatpak_keyfile_get_string_non_empty (keyfile, FLATPAK_PREINSTALL_GROUP,
+                                                        FLATPAK_PREINSTALL_COLLECTION_ID_KEY);
+
+  *name_out = g_steal_pointer (&name);
+  *branch_out = g_steal_pointer (&branch);
+  *is_runtime_out = is_runtime;
+  *collection_id_out = g_steal_pointer (&collection_id);
+
+  return TRUE;
+}
+
+gboolean
+flatpak_parse_preinstall_config_file (const char         *file_path,
+                                      const char         *default_arch,
+                                      FlatpakDecomposed **ref_out,
+                                      char              **collection_id_out,
+                                      GError            **error)
+{
+  g_autofree char *name = NULL;
+  g_autofree char *branch = NULL;
+  gboolean is_runtime = FALSE;
+  g_autofree char *collection_id = NULL;
+  g_autoptr(FlatpakDecomposed) ref = NULL;
+  g_autoptr(GKeyFile) keyfile = NULL;
+
+  keyfile = g_key_file_new ();
+
+  if (!g_key_file_load_from_file (keyfile, file_path, G_KEY_FILE_NONE, error))
+    return FALSE;
+
+  if (!parse_preinstall_keyfile (keyfile, &name, &branch, &is_runtime, &collection_id, error))
+    return FALSE;
+
+  ref = flatpak_decomposed_new_from_parts (is_runtime ? FLATPAK_KINDS_RUNTIME : FLATPAK_KINDS_APP,
+                                           name, default_arch, branch, error);
+  if (ref == NULL)
+    return FALSE;
+
+  *ref_out = g_steal_pointer (&ref);
+  *collection_id_out = g_steal_pointer (&collection_id);
+  return TRUE;
 }
 
 GPtrArray *
@@ -9145,6 +9299,7 @@ flatpak_dir_deploy_install (FlatpakDir        *self,
                             const char       **previous_ids,
                             gboolean           reinstall,
                             gboolean           pin_on_deploy,
+                            gboolean           update_preinstalled_on_deploy,
                             GCancellable      *cancellable,
                             GError           **error)
 {
@@ -9248,6 +9403,14 @@ flatpak_dir_deploy_install (FlatpakDir        *self,
       !flatpak_dir_config_append_pattern (self, "pinned",
                                           flatpak_decomposed_get_ref (ref),
                                           TRUE, NULL, error))
+    goto out;
+
+  /* Save preinstalled refs to keep the data on what is user installed and what
+   * is automatically installed. */
+  if (update_preinstalled_on_deploy &&
+      !flatpak_dir_config_append_pattern (self, "preinstalled",
+                                          flatpak_decomposed_get_ref (ref),
+                                          FALSE, NULL, error))
     goto out;
 
   ret = TRUE;
@@ -9850,6 +10013,7 @@ flatpak_dir_install (FlatpakDir          *self,
                      gboolean             reinstall,
                      gboolean             app_hint,
                      gboolean             pin_on_deploy,
+                     gboolean             update_preinstalled_on_deploy,
                      FlatpakRemoteState  *state,
                      FlatpakDecomposed   *ref,
                      const char          *opt_commit,
@@ -10062,6 +10226,9 @@ flatpak_dir_install (FlatpakDir          *self,
       if (pin_on_deploy)
         helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE_PINNED;
 
+      if (update_preinstalled_on_deploy)
+        helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE_PREINSTALLED;
+
       helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_INSTALL_HINT;
 
       if (!flatpak_dir_system_helper_call_deploy (self,
@@ -10099,6 +10266,7 @@ flatpak_dir_install (FlatpakDir          *self,
     {
       if (!flatpak_dir_deploy_install (self, ref, state->remote_name, opt_subpaths,
                                        opt_previous_ids, reinstall, pin_on_deploy,
+                                       update_preinstalled_on_deploy,
                                        cancellable, error))
         return FALSE;
 
@@ -10389,7 +10557,7 @@ flatpak_dir_install_bundle (FlatpakDir         *self,
     }
   else
     {
-      if (!flatpak_dir_deploy_install (self, ref, remote, NULL, NULL, FALSE, FALSE, cancellable, error))
+      if (!flatpak_dir_deploy_install (self, ref, remote, NULL, NULL, FALSE, FALSE, FALSE, cancellable, error))
         return FALSE;
     }
 
@@ -10819,6 +10987,7 @@ flatpak_dir_uninstall (FlatpakDir                 *self,
   g_autoptr(GBytes) deploy_data = NULL;
   gboolean keep_ref = flags & FLATPAK_HELPER_UNINSTALL_FLAGS_KEEP_REF;
   gboolean force_remove = flags & FLATPAK_HELPER_UNINSTALL_FLAGS_FORCE_REMOVE;
+  gboolean update_preinstalled = flags & FLATPAK_HELPER_UNINSTALL_FLAGS_UPDATE_PREINSTALLED;
 
   name = flatpak_decomposed_dup_id (ref);
 
@@ -10923,6 +11092,10 @@ flatpak_dir_uninstall (FlatpakDir                 *self,
   flatpak_dir_cleanup_removed (self, cancellable, NULL);
 
   if (!flatpak_dir_mark_changed (self, error))
+    return FALSE;
+
+  if (update_preinstalled &&
+      !flatpak_dir_config_remove_pattern (self, "preinstalled", flatpak_decomposed_get_ref (ref), error))
     return FALSE;
 
   if (!was_deployed)
