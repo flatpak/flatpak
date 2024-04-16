@@ -100,6 +100,7 @@ sources = [
   'flatpak-builtins-permission-set.c',
   'flatpak-builtins-permission-show.c',
   'flatpak-builtins-pin.c',
+  'flatpak-builtins-preinstall.c',
   'flatpak-builtins-ps.c',
   'flatpak-builtins-remote-add.c',
   'flatpak-builtins-remote-delete.c',

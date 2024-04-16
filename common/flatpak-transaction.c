@@ -114,6 +114,7 @@ struct _FlatpakTransactionOperation
   gboolean                        skip;
   gboolean                        update_only_deploy;
   gboolean                        pin_on_deploy;
+  gboolean                        update_preinstalled_on_deploy;
 
   gboolean                        resolved;
   char                           *resolved_commit;
@@ -666,7 +667,8 @@ flatpak_transaction_operation_new (const char                     *remote,
                                    const char                     *commit,
                                    GFile                          *bundle,
                                    FlatpakTransactionOperationType kind,
-                                   gboolean                        pin_on_deploy)
+                                   gboolean                        pin_on_deploy,
+                                   gboolean                        update_preinstalled_on_deploy)
 {
   FlatpakTransactionOperation *self;
 
@@ -681,6 +683,7 @@ flatpak_transaction_operation_new (const char                     *remote,
     self->bundle = g_object_ref (bundle);
   self->kind = kind;
   self->pin_on_deploy = pin_on_deploy;
+  self->update_preinstalled_on_deploy = update_preinstalled_on_deploy;
 
   return self;
 }
@@ -2132,7 +2135,8 @@ flatpak_transaction_add_op (FlatpakTransaction             *self,
                             const char                     *commit,
                             GFile                          *bundle,
                             FlatpakTransactionOperationType kind,
-                            gboolean                        pin_on_deploy)
+                            gboolean                        pin_on_deploy,
+                            gboolean                        update_preinstalled_on_deploy)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   FlatpakTransactionOperation *op;
@@ -2162,7 +2166,8 @@ flatpak_transaction_add_op (FlatpakTransaction             *self,
     }
 
   op = flatpak_transaction_operation_new (remote, ref, subpaths, previous_ids,
-                                          commit, bundle, kind, pin_on_deploy);
+                                          commit, bundle, kind, pin_on_deploy,
+                                          update_preinstalled_on_deploy);
   g_hash_table_insert (priv->last_op_for_ref, flatpak_decomposed_ref (ref), op);
 
   priv->ops = g_list_prepend (priv->ops, op);
@@ -2270,7 +2275,7 @@ add_related (FlatpakTransaction          *self,
           related_op = flatpak_transaction_add_op (self, rel->remote, rel->ref,
                                                    NULL, NULL, NULL, NULL,
                                                    FLATPAK_TRANSACTION_OPERATION_UNINSTALL,
-                                                   FALSE);
+                                                   FALSE, FALSE);
           related_op->non_fatal = TRUE;
           related_op->fail_if_op_fails = op;
           flatpak_transaction_operation_add_related_to_op (related_op, op);
@@ -2299,7 +2304,7 @@ add_related (FlatpakTransaction          *self,
                                                    (const char **) rel->subpaths,
                                                    NULL, NULL, NULL,
                                                    FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE,
-                                                   FALSE);
+                                                   FALSE, FALSE);
           related_op->non_fatal = TRUE;
           related_op->fail_if_op_fails = op;
           flatpak_transaction_operation_add_related_to_op (related_op, op);
@@ -2530,7 +2535,7 @@ add_new_dep_op (FlatpakTransaction           *self,
         return FALSE;
 
       *dep_op = flatpak_transaction_add_op (self, dep_remote, dep_ref, NULL, NULL, NULL, NULL,
-                                            FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE, FALSE);
+                                            FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE, FALSE, FALSE);
     }
   else
     {
@@ -2540,7 +2545,7 @@ add_new_dep_op (FlatpakTransaction           *self,
           g_info ("Updating dependency %s of %s", flatpak_decomposed_get_pref (dep_ref),
                   flatpak_decomposed_get_pref (op->ref));
           *dep_op = flatpak_transaction_add_op (self, dep_remote, dep_ref, NULL, NULL, NULL, NULL,
-                                                FLATPAK_TRANSACTION_OPERATION_UPDATE, FALSE);
+                                                FLATPAK_TRANSACTION_OPERATION_UPDATE, FALSE, FALSE);
           (*dep_op)->non_fatal = TRUE;
         }
     }
@@ -2636,6 +2641,7 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
                              FlatpakImageSource             *image_source,
                              const char                     *external_metadata,
                              gboolean                        pin_on_deploy,
+                             gboolean                        update_preinstalled_on_deploy,
                              FlatpakTransactionOperation   **out_op,
                              GError                        **error)
 {
@@ -2759,7 +2765,8 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
     }
 
   op = flatpak_transaction_add_op (self, remote, ref, subpaths, previous_ids,
-                                   commit, bundle, kind, pin_on_deploy);
+                                   commit, bundle, kind, pin_on_deploy,
+                                   update_preinstalled_on_deploy);
 
   if (image_source)
     op->image_source = g_object_ref (image_source);
@@ -2817,7 +2824,7 @@ flatpak_transaction_add_install (FlatpakTransaction *self,
 
   if (!flatpak_transaction_add_ref (self, remote, decomposed, subpaths, NULL, NULL,
                                     FLATPAK_TRANSACTION_OPERATION_INSTALL,
-                                    NULL, NULL, NULL, pin_on_deploy, NULL, error))
+                                    NULL, NULL, NULL, pin_on_deploy, FALSE, NULL, error))
     return FALSE;
 
   return TRUE;
@@ -2877,7 +2884,9 @@ flatpak_transaction_add_rebase (FlatpakTransaction *self,
   if (dir_ref_is_installed (priv->dir, decomposed, &installed_origin, NULL))
     remote = installed_origin;
 
-  return flatpak_transaction_add_ref (self, remote, decomposed, subpaths, previous_ids, NULL, FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE, NULL, NULL, NULL, FALSE, NULL, error);
+  return flatpak_transaction_add_ref (self, remote, decomposed, subpaths, previous_ids, NULL,
+                                      FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE,
+                                      NULL, NULL, NULL, FALSE, FALSE, NULL, error);
 }
 
 /**
@@ -2953,25 +2962,22 @@ flatpak_transaction_add_rebase_and_uninstall (FlatpakTransaction  *self,
   if (!flatpak_transaction_add_ref (self, remote, new_decomposed, subpaths,
                                     previous_ids, NULL,
                                     FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE,
-                                    NULL, NULL, NULL, FALSE, &rebase_op, error))
+                                    NULL, NULL, NULL, FALSE, FALSE, &rebase_op, error))
     return FALSE;
 
   if (!flatpak_transaction_add_ref (self, NULL, old_decomposed, NULL, NULL, NULL,
                                     FLATPAK_TRANSACTION_OPERATION_UNINSTALL,
-                                    NULL, NULL, NULL, FALSE, &uninstall_op, &local_error))
+                                    NULL, NULL, NULL, FALSE, FALSE, &uninstall_op, &local_error))
     {
       /* If the user is trying to install an eol-rebased app from scratch, the
        * @old_ref can’t be uninstalled because it’s not installed already.
        * Silently ignore that. */
-      if (g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED))
-        {
-          g_clear_error (&local_error);
-        }
-      else
+      if (!g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED))
         {
           g_propagate_error (error, g_steal_pointer (&local_error));
           return FALSE;
         }
+      g_clear_error (&local_error);
     }
 
   /* Link the ops together so that the install/update is done first, and if
@@ -3076,6 +3082,134 @@ flatpak_transaction_add_install_flatpakref (FlatpakTransaction *self,
 }
 
 /**
+ * flatpak_transaction_add_sync_preinstalled:
+ * @self: a #FlatpakTransaction
+ * @error: return location for a #GError
+ *
+ * Adds preinstall operations to this transaction. This can involve both
+ * installing and removing refs, based on /etc/preinstall.d contents and what
+ * the system had preinstalled before.
+ *
+ * Returns: %TRUE on success; %FALSE with @error set on failure.
+ */
+gboolean
+flatpak_transaction_add_sync_preinstalled (FlatpakTransaction *self,
+                                           GError            **error)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  g_autoptr(GPtrArray) install_refs = g_ptr_array_new_with_free_func (g_free);
+  g_autoptr(GPtrArray) preinstalled_refs = NULL;
+  g_auto(GStrv) remotes = NULL;
+  g_autoptr(GPtrArray) configs = NULL;
+
+  remotes = flatpak_dir_list_remotes (priv->dir, NULL, error);
+  if (remotes == NULL)
+    return FALSE;
+
+  configs = flatpak_get_preinstall_config (priv->default_arch, NULL, error);
+  if (configs == NULL)
+    return FALSE;
+
+  /* If the system has not had any apps pre-installed (i.e. the key in the
+   * config is missing) we mark all installed apps we would pre-install as
+   * pre-installed. This makes sure we will uninstall them when the config says
+   * that they no longer should be installed. */
+  if (!flatpak_dir_uninitialized_mark_preinstalled (priv->dir, configs, NULL))
+    g_message (_("Warning: Could not mark already installed apps as preinstalled"));
+
+  preinstalled_refs = flatpak_dir_get_config_patterns (priv->dir, "preinstalled");
+
+  /* Find preinstalls that should get installed */
+  for (int i = 0; i < configs->len; i++)
+    {
+      const FlatpakPreinstallConfig *config = g_ptr_array_index (configs, i);
+
+      /* Store for later */
+      g_ptr_array_add (install_refs, flatpak_decomposed_dup_ref (config->ref));
+
+      /* Skip over if it's listed as previously preinstalled - it's now under
+       * user's control and we no longer install it again, even if the user
+       * manually removes it. */
+      if (!priv->reinstall &&
+          flatpak_g_ptr_array_contains_string (preinstalled_refs,
+                                               flatpak_decomposed_get_ref (config->ref)))
+        {
+          g_info ("Preinstall ref %s is marked as already preinstalled; skipping",
+                  flatpak_decomposed_get_ref (config->ref));
+          continue;
+        }
+
+      for (int j = 0; remotes[j] != NULL; j++)
+        {
+          const char *remote = remotes[j];
+          g_autoptr(GError) local_error = NULL;
+          g_autofree char *remote_collection_id = NULL;
+
+          if (flatpak_dir_get_remote_disabled (priv->dir, remote))
+            continue;
+
+          remote_collection_id = flatpak_dir_get_remote_collection_id (priv->dir,
+                                                                       remote);
+
+          /* Choose the first match if the collection ID was not specified */
+          if (config->collection_id != NULL &&
+              g_strcmp0 (remote_collection_id, config->collection_id) != 0)
+            continue;
+
+          g_info ("Adding preinstall of %s from remote %s",
+                  flatpak_decomposed_get_ref (config->ref),
+                  remote);
+
+          if (!flatpak_transaction_add_ref (self, remote, config->ref, NULL, NULL, NULL,
+                                            FLATPAK_TRANSACTION_OPERATION_INSTALL,
+                                            NULL, NULL, NULL, FALSE, TRUE, NULL,
+                                            &local_error))
+            {
+              g_info ("Failed to add preinstall ref %s: %s",
+                      flatpak_decomposed_get_ref (config->ref),
+                      local_error->message);
+            }
+        }
+    }
+
+  /* Find previously preinstalled refs that are no longer in the preinstall
+   * list and should now get uninstalled */
+  for (int i = 0; i < preinstalled_refs->len; i++)
+    {
+      const char *ref = g_ptr_array_index (preinstalled_refs, i);
+
+      /* No longer in the preinstall.d list, so uninstall */
+      if (!flatpak_g_ptr_array_contains_string (install_refs, ref))
+        {
+          g_autoptr(GError) local_error = NULL;
+          g_autoptr(FlatpakDecomposed) decomposed = NULL;
+
+          decomposed = flatpak_decomposed_new_from_ref (ref, error);
+          if (decomposed == NULL)
+            return FALSE;
+
+          g_info ("Preinstalled ref %s is no longer listed as wanted in preinstall.d config; uninstalling",
+                  flatpak_decomposed_get_ref (decomposed));
+
+          if (!flatpak_transaction_add_ref (self, NULL, decomposed, NULL, NULL, NULL,
+                                            FLATPAK_TRANSACTION_OPERATION_UNINSTALL,
+                                            NULL, NULL, NULL, FALSE, TRUE, NULL,
+                                            &local_error))
+            {
+              if (!g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED))
+                {
+                  g_propagate_error (error, g_steal_pointer (&local_error));
+                  return FALSE;
+                }
+              g_clear_error (&local_error);
+            }
+        }
+    }
+
+  return TRUE;
+}
+
+/**
  * flatpak_transaction_add_update:
  * @self: a #FlatpakTransaction
  * @ref: the ref
@@ -3110,7 +3244,7 @@ flatpak_transaction_add_update (FlatpakTransaction *self,
     return FALSE;
 
   /* Note: we implement the merge when subpaths == NULL in flatpak_transaction_add_ref() */
-  return flatpak_transaction_add_ref (self, NULL, decomposed, subpaths, NULL, commit, FLATPAK_TRANSACTION_OPERATION_UPDATE, NULL, NULL, NULL, FALSE, NULL, error);
+  return flatpak_transaction_add_ref (self, NULL, decomposed, subpaths, NULL, commit, FLATPAK_TRANSACTION_OPERATION_UPDATE, NULL, NULL, NULL, FALSE, FALSE, NULL, error);
 }
 
 /**
@@ -3137,7 +3271,7 @@ flatpak_transaction_add_uninstall (FlatpakTransaction *self,
   if (decomposed == NULL)
     return FALSE;
 
-  return flatpak_transaction_add_ref (self, NULL, decomposed, NULL, NULL, NULL, FLATPAK_TRANSACTION_OPERATION_UNINSTALL, NULL, NULL, NULL, FALSE, NULL, error);
+  return flatpak_transaction_add_ref (self, NULL, decomposed, NULL, NULL, NULL, FLATPAK_TRANSACTION_OPERATION_UNINSTALL, NULL, NULL, NULL, FALSE, FALSE, NULL, error);
 }
 
 static gboolean
@@ -3249,7 +3383,7 @@ flatpak_transaction_add_auto_install (FlatpakTransaction *self,
 
                   if (!flatpak_transaction_add_ref (self, remote, auto_install_ref, NULL, NULL, NULL,
                                                     FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE,
-                                                    NULL, NULL, NULL, FALSE, NULL,
+                                                    NULL, NULL, NULL, FALSE, FALSE, NULL,
                                                     &local_error))
                     g_info ("Failed to add auto-install ref %s: %s", flatpak_decomposed_get_ref (auto_install_ref),
                              local_error->message);
@@ -4762,7 +4896,7 @@ flatpak_transaction_resolve_bundles (FlatpakTransaction *self,
 
       if (!flatpak_transaction_add_ref (self, remote, ref, NULL, NULL, commit,
                                         FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE,
-                                        data->file, NULL, metadata, FALSE, NULL, error))
+                                        data->file, NULL, metadata, FALSE, FALSE, NULL, error))
         return FALSE;
     }
 
@@ -4829,7 +4963,8 @@ flatpak_transaction_resolve_images (FlatpakTransaction *self,
 
       if (!flatpak_transaction_add_ref (self, remote, ref, NULL, NULL, NULL,
                                         FLATPAK_TRANSACTION_OPERATION_INSTALL,
-                                        NULL, image_source, metadata_label, FALSE, &op, error))
+                                        NULL, image_source, metadata_label, FALSE, FALSE,
+                                        &op, error))
         return FALSE;
     }
 
@@ -4901,6 +5036,7 @@ _run_op_kind (FlatpakTransaction           *self,
                                    priv->reinstall,
                                    priv->max_op >= APP_UPDATE,
                                    op->pin_on_deploy,
+                                   op->update_preinstalled_on_deploy,
                                    remote_state, op->ref,
                                    op->resolved_commit,
                                    (const char **) op->subpaths,
@@ -4940,7 +5076,7 @@ _run_op_kind (FlatpakTransaction           *self,
           if (flatpak_decomposed_is_app (op->ref))
             *out_needs_triggers = TRUE;
 
-          if (op->pin_on_deploy)
+          if (op->pin_on_deploy|| op->update_preinstalled_on_deploy)
             *out_needs_cache_drop = TRUE;
         }
     }
@@ -5044,6 +5180,9 @@ _run_op_kind (FlatpakTransaction           *self,
 
       if (priv->force_uninstall)
         flags |= FLATPAK_HELPER_UNINSTALL_FLAGS_FORCE_REMOVE;
+
+      if (op->update_preinstalled_on_deploy)
+        flags |= FLATPAK_HELPER_UNINSTALL_FLAGS_UPDATE_PREINSTALLED;
 
       emit_new_op (self, op, progress);
 
@@ -5225,7 +5364,7 @@ add_uninstall_unused_ops (FlatpakTransaction  *self,
           uninstall_op = flatpak_transaction_add_op (self, origin, unused_ref,
                                                      NULL, NULL, NULL, NULL,
                                                      FLATPAK_TRANSACTION_OPERATION_UNINSTALL,
-                                                     FALSE);
+                                                     FALSE, FALSE);
           run_operation_last (uninstall_op);
         }
     }
