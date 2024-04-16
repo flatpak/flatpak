@@ -52,6 +52,7 @@
       <xi:include href="@srcdir@/flatpak-permission-show.xml"/>
       <xi:include href="@srcdir@/flatpak-permission-reset.xml"/>
       <xi:include href="@srcdir@/flatpak-permission-set.xml"/>
+      <xi:include href="@srcdir@/flatpak-preinstall.xml"/>
       <xi:include href="@srcdir@/flatpak-ps.xml"/>
       <xi:include href="@srcdir@/flatpak-remote-add.xml"/>
       <xi:include href="@srcdir@/flatpak-remote-delete.xml"/>
