@@ -228,7 +228,7 @@ rerun_in_sandbox (const char *arg_width,
   if (g_getenv ("G_MESSAGES_PREFIXED"))
     add_args (args, "--setenv", "G_MESSAGES_PREFIXED", g_getenv ("G_MESSAGES_PREFIXED"), NULL);
 
-  add_args (args, validate_icon, arg_width, arg_height, filename, NULL);
+  add_args (args, "--", validate_icon, arg_width, arg_height, filename, NULL);
   g_ptr_array_add (args, NULL);
 
   {
