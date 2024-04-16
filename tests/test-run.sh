@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..19"
+echo "1..20"
 
 # Use stable rather than master as the branch so we can test that the run
 # command automatically finds the branch correctly
@@ -73,6 +73,15 @@ run org.test.Hello > hello_out
 assert_file_has_content hello_out '^Hello world, from a sandbox$'
 
 ok "hello"
+
+# This should try and fail to run e.g. /usr/bin/--tmpfs, which will
+# exit with status 127 because there is no such executable.
+# It should not pass "--tmpfs /blah hello.sh" as bwrap options.
+exit_status=0
+run --command=--tmpfs org.test.Hello /blah hello.sh >&2 || exit_status=$?
+assert_not_streq "$exit_status" 0
+
+ok "avoided CVE-2024-32462"
 
 # XDG_RUNTIME_DIR is set to <temp directory>/runtime by libtest.sh,
 # so we always have the necessary setup to reproduce #4372
