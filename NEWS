@@ -1,3 +1,13 @@
+Changes in 1.10.9
+~~~~~~~~~~~~~~~~~
+
+Security fixes:
+
+ * Don't allow an executable name to be misinterpreted as a command-line
+   option for bwrap(1). This prevents a sandbox escape where a malicious
+   or compromised app could ask xdg-desktop-portal to generate a .desktop
+   file with access to files outside the sandbox. (CVE-2024-32462)
+
 Changes in 1.10.8
 ~~~~~~~~~~~~~~~~~
 Released: 2023-03-16
