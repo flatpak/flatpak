@@ -77,7 +77,7 @@ assert_file_has_content hello_out '^Hello world, from a sandbox$'
 ok "hello"
 
 # This should try and fail to run e.g. /usr/bin/--tmpfs, which will
-# exit with status 127 because there is no such executable.
+# exit with a nonzero status because there is no such executable.
 # It should not pass "--tmpfs /blah hello.sh" as bwrap options.
 exit_status=0
 run --command=--tmpfs org.test.Hello /blah hello.sh >&2 || exit_status=$?
