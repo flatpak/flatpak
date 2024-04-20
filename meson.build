@@ -40,7 +40,7 @@ foreach check_function : check_functions
     #include <linux/random.h>
     #include <sys/mman.h>
 
-    int func (void) {
+    void func (void) {
       (void) ''' + check_function + ''';
     }
     ''',
