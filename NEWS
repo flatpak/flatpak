@@ -1,3 +1,19 @@
+Changes in 1.14.7
+~~~~~~~~~~~~~~~~~
+Released: not yet
+
+Bug fixes:
+
+ * Expand the list of environment variables that Flatpak apps do not
+   inherit from the host system (#5765, #5785)
+
+ * Fix a misleading comment in the test for CVE-2024-32462 (#5779)
+
+Internal changes:
+
+ * Work around infrastructure issues in third-party apt repositories
+   used by default in Github Workflows (#5786)
+
 Changes in 1.14.6
 ~~~~~~~~~~~~~~~~~
 Released: 2024-04-18
