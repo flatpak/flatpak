@@ -104,8 +104,11 @@
             <member>XKB_CONFIG_ROOT</member>
             <member>GIO_EXTRA_MODULES</member>
             <member>GDK_BACKEND</member>
+            <member>VK_ADD_DRIVER_FILES</member>
+            <member>VK_ADD_LAYER_PATH</member>
             <member>VK_DRIVER_FILES</member>
             <member>VK_ICD_FILENAMES</member>
+            <member>VK_LAYER_PATH</member>
             <member>__EGL_EXTERNAL_PLATFORM_CONFIG_DIRS</member>
             <member>__EGL_EXTERNAL_PLATFORM_CONFIG_FILENAMES</member>
             <member>__EGL_VENDOR_LIBRARY_DIRS</member>
