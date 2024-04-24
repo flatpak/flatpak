@@ -1,3 +1,16 @@
+Changes in 1.12.10
+~~~~~~~~~~~~~~~~~~
+Released: not yet
+
+Documentation updates:
+
+ * The default branch in the Github repository is now named 'main'
+
+ * In SECURITY.md, indicate that this branch is only partially
+   supported
+
+ * Fix a misleading comment in the test for CVE-2024-32462 (#5779)
+
 Changes in 1.12.9
 ~~~~~~~~~~~~~~~~~
 Released: 2024-04-18
