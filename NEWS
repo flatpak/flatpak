@@ -1,3 +1,11 @@
+Changes in 1.10.10
+~~~~~~~~~~~~~~~~~~
+Released: not yet
+
+Documentation updates:
+
+ * Fix a misleading comment in the test for CVE-2024-32462 (#5779)
+
 Changes in 1.10.9
 ~~~~~~~~~~~~~~~~~
 Released: 2024-04-18
