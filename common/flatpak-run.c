@@ -566,6 +566,10 @@ static const ExportData default_exports[] = {
   {"GDK_BACKEND", NULL},
   {"VK_DRIVER_FILES", NULL},
   {"VK_ICD_FILENAMES", NULL},
+  {"__EGL_EXTERNAL_PLATFORM_CONFIG_DIRS", NULL},
+  {"__EGL_EXTERNAL_PLATFORM_CONFIG_FILENAMES", NULL},
+  {"__EGL_VENDOR_LIBRARY_DIRS", NULL},
+  {"__EGL_VENDOR_LIBRARY_FILENAMES", NULL},
 };
 
 static const ExportData no_ld_so_cache_exports[] = {
