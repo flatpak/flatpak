@@ -2,17 +2,44 @@ Changes in 1.14.7
 ~~~~~~~~~~~~~~~~~
 Released: not yet
 
+New features:
+
+ * Automatically reload D-Bus session bus configuration after installing
+   or upgrading apps, to pick up any exported D-Bus services (#3342)
+
 Bug fixes:
 
  * Expand the list of environment variables that Flatpak apps do not
    inherit from the host system (#5765, #5785)
 
+ * Don't refuse to start apps when there is no D-Bus system bus available
+   (#5076)
+
+ * Don't try to repeat migration of apps whose data was migrated to a new
+   name and then deleted (#5668)
+
+ * Fix warnings from newer GLib versions (#5660)
+
+ * Always set the `container` environment variable (#5610)
+
+ * In `flatpak ps`, add xdg-desktop-portal-gnome to the list of backends
+   we'll use to learn which apps are running in the background (#5729)
+
+ * Avoid leaking a temporary variable from /etc/profile.d/flatpak.sh into
+   the shell environment (#5574)
+
+ * Avoid undefined behaviour of signed left-shift when storing object IDs
+   in a hash table (#5738)
+
+ * Fix Docbook validity in documentation (#5719)
+
+ * Skip more tests when FUSE isn't available (#5611)
+
  * Fix a misleading comment in the test for CVE-2024-32462 (#5779)
 
 Internal changes:
 
- * Work around infrastructure issues in third-party apt repositories
-   used by default in Github Workflows (#5786)
+ * Fix Github Workflows recipes
 
 Changes in 1.14.6
 ~~~~~~~~~~~~~~~~~
