@@ -88,6 +88,8 @@
         <simplelist>
             <member>PATH</member>
             <member>LD_LIBRARY_PATH</member>
+            <member>LD_PRELOAD</member>
+            <member>LD_AUDIT</member>
             <member>XDG_CONFIG_DIRS</member>
             <member>XDG_DATA_DIRS</member>
             <member>XDG_RUNTIME_DIR</member>
