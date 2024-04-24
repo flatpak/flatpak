@@ -1,6 +1,16 @@
-<p align="center">
-  <img src="https://github.com/flatpak/flatpak/blob/master/flatpak.png?raw=true" alt="Flatpak icon"/>
-</p>
+# Flatpak 0.10.x: end-of-life branch
+
+The Flatpak 0.10.x branch is no longer supported and does not receive
+security fixes.
+Please upgrade to a supported branch as documented in
+[SECURITY.md](https://github.com/flatpak/flatpak/blob/main/SECURITY.md).
+
+If maintainers of long-term-supported OS distributions are still
+distributing Flatpak 0.10.x, those vendors will need to either take
+responsibility for backporting security fixes, or upgrade their Flatpak
+packages.
+
+---
 
 Flatpak is a system for building, distributing and running sandboxed
 desktop applications on Linux.
