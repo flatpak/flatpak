@@ -167,7 +167,7 @@ jobs:
     permissions:
       security-events: write # for codeql
     name: Build with clang and analyze
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
