@@ -79,7 +79,7 @@ Bug fixes:
      * Improve memory allocation behaviour
      * Silence various compiler warnings
 
- * Update included copy of bubblewrap to version 0.1.5:
+ * Update included copy of xdg-dbus-proxy to version 0.1.5:
 
      * Fix handling of long object paths
 
