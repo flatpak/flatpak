@@ -1,3 +1,10 @@
+Changes in 1.14.8
+~~~~~~~~~~~~~~~~~
+Released: 2024-04-30
+
+No changes. This release rolling out to correct mismatching submodule versions
+in the release tarball.
+
 Changes in 1.14.7
 ~~~~~~~~~~~~~~~~~
 Released: 2024-04-29
