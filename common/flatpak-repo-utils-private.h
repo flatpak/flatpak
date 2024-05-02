@@ -189,3 +189,47 @@ gboolean flatpak_summary_find_ref_map (VarSummaryRef  summary,
 gboolean flatpak_var_ref_map_lookup_ref (VarRefMapRef   ref_map,
                                          const char    *ref,
                                          VarRefInfoRef *out_info);
+
+GKeyFile * flatpak_parse_repofile (const char   *remote_name,
+                                   gboolean      from_ref,
+                                   GKeyFile     *keyfile,
+                                   GBytes      **gpg_data_out,
+                                   GCancellable *cancellable,
+                                   GError      **error);
+
+gboolean flatpak_mtree_ensure_dir_metadata (OstreeRepo        *repo,
+                                            OstreeMutableTree *mtree,
+                                            GCancellable      *cancellable,
+                                            GError           **error);
+gboolean flatpak_mtree_create_symlink (OstreeRepo         *repo,
+                                       OstreeMutableTree  *parent,
+                                       const char         *name,
+                                       const char         *target,
+                                       GError            **error);
+gboolean flatpak_mtree_add_file_from_bytes (OstreeRepo *repo,
+                                            GBytes *bytes,
+                                            OstreeMutableTree *parent,
+                                            const char *filename,
+                                            GCancellable *cancellable,
+                                            GError      **error);
+gboolean flatpak_mtree_create_dir (OstreeRepo         *repo,
+                                   OstreeMutableTree  *parent,
+                                   const char         *name,
+                                   OstreeMutableTree **dir_out,
+                                   GError            **error);
+
+gboolean   flatpak_repo_generate_appstream (OstreeRepo   *repo,
+                                            const char  **gpg_key_ids,
+                                            const char   *gpg_homedir,
+                                            guint64       timestamp,
+                                            GCancellable *cancellable,
+                                            GError      **error);
+
+gboolean flatpak_repo_resolve_rev (OstreeRepo    *repo,
+                                   const char    *collection_id, /* nullable */
+                                   const char    *remote_name, /* nullable */
+                                   const char    *ref_name,
+                                   gboolean       allow_noent,
+                                   char         **out_rev,
+                                   GCancellable  *cancellable,
+                                   GError       **error);
