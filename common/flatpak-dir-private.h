@@ -58,46 +58,7 @@
 GType flatpak_dir_get_type (void);
 GType flatpak_deploy_get_type (void);
 
-#define FLATPAK_REF_GROUP "Flatpak Ref"
-#define FLATPAK_REF_VERSION_KEY "Version"
-#define FLATPAK_REF_URL_KEY "Url"
-#define FLATPAK_REF_RUNTIME_REPO_KEY "RuntimeRepo"
-#define FLATPAK_REF_SUGGEST_REMOTE_NAME_KEY "SuggestRemoteName"
-#define FLATPAK_REF_TITLE_KEY "Title"
-#define FLATPAK_REF_GPGKEY_KEY "GPGKey"
-#define FLATPAK_REF_IS_RUNTIME_KEY "IsRuntime"
-#define FLATPAK_REF_NAME_KEY "Name"
-#define FLATPAK_REF_BRANCH_KEY "Branch"
-#define FLATPAK_REF_COLLECTION_ID_KEY "CollectionID"
-#define FLATPAK_REF_DEPLOY_COLLECTION_ID_KEY "DeployCollectionID"
-#define FLATPAK_REF_DEPLOY_SIDELOAD_COLLECTION_ID_KEY "DeploySideloadCollectionID"
-
-#define FLATPAK_REPO_GROUP "Flatpak Repo"
-#define FLATPAK_REPO_VERSION_KEY "Version"
-#define FLATPAK_REPO_URL_KEY "Url"
-#define FLATPAK_REPO_SUBSET_KEY "Subset"
-#define FLATPAK_REPO_TITLE_KEY "Title"
-#define FLATPAK_REPO_DEFAULT_BRANCH_KEY "DefaultBranch"
-#define FLATPAK_REPO_GPGKEY_KEY "GPGKey"
-#define FLATPAK_REPO_NODEPS_KEY "NoDeps"
-#define FLATPAK_REPO_COMMENT_KEY "Comment"
-#define FLATPAK_REPO_DESCRIPTION_KEY "Description"
-#define FLATPAK_REPO_HOMEPAGE_KEY "Homepage"
-#define FLATPAK_REPO_ICON_KEY "Icon"
-#define FLATPAK_REPO_FILTER_KEY "Filter"
-#define FLATPAK_REPO_AUTHENTICATOR_NAME_KEY "AuthenticatorName"
-#define FLATPAK_REPO_AUTHENTICATOR_INSTALL_KEY "AuthenticatorInstall"
-
-#define FLATPAK_REPO_COLLECTION_ID_KEY "CollectionID"
-#define FLATPAK_REPO_DEPLOY_COLLECTION_ID_KEY "DeployCollectionID"
-#define FLATPAK_REPO_DEPLOY_SIDELOAD_COLLECTION_ID_KEY "DeploySideloadCollectionID"
-
 #define FLATPAK_CLI_UPDATE_INTERVAL_MS 300
-
-#define FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE "eol"
-#define FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE "eolr"
-#define FLATPAK_SPARSE_CACHE_KEY_TOKEN_TYPE "tokt"
-#define FLATPAK_SPARSE_CACHE_KEY_EXTRA_DATA_SIZE "eds"
 
 typedef struct
 {
