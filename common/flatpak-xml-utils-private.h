@@ -33,8 +33,6 @@ struct FlatpakXml
   FlatpakXml *next_sibling;
 };
 
-FlatpakXml *flatpak_xml_new (const gchar *element_name);
-FlatpakXml *flatpak_xml_new_text (const gchar *text);
 void       flatpak_xml_add (FlatpakXml *parent,
                             FlatpakXml *node);
 void       flatpak_xml_free (FlatpakXml *node);
@@ -42,8 +40,6 @@ FlatpakXml *flatpak_xml_parse (GInputStream * in,
                                gboolean compressed,
                                GCancellable *cancellable,
                                GError      **error);
-void       flatpak_xml_to_string (FlatpakXml *node,
-                                  GString    *res);
 FlatpakXml *flatpak_xml_unlink (FlatpakXml *node,
                                 FlatpakXml *prev_sibling);
 FlatpakXml *flatpak_xml_find (FlatpakXml  *node,
