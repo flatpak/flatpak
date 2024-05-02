@@ -2609,3 +2609,196 @@ flatpak_repo_resolve_rev (OstreeRepo    *repo,
 
   return TRUE;
 }
+
+/* This special cases the ref lookup which by doing a
+   bsearch since the array is sorted */
+gboolean
+flatpak_var_ref_map_lookup_ref (VarRefMapRef   ref_map,
+                                const char    *ref,
+                                VarRefInfoRef *out_info)
+{
+  gsize imax, imin;
+  gsize imid;
+  gsize n;
+
+  g_return_val_if_fail (out_info != NULL, FALSE);
+
+  n = var_ref_map_get_length (ref_map);
+  if (n == 0)
+    return FALSE;
+
+  imax = n - 1;
+  imin = 0;
+  while (imax >= imin)
+    {
+      VarRefMapEntryRef entry;
+      const char *cur;
+      int cmp;
+
+      imid = (imin + imax) / 2;
+
+      entry = var_ref_map_get_at (ref_map, imid);
+      cur = var_ref_map_entry_get_ref (entry);
+
+      cmp = strcmp (cur, ref);
+      if (cmp < 0)
+        {
+          imin = imid + 1;
+        }
+      else if (cmp > 0)
+        {
+          if (imid == 0)
+            break;
+          imax = imid - 1;
+        }
+      else
+        {
+          *out_info = var_ref_map_entry_get_info (entry);
+          return TRUE;
+        }
+    }
+
+  return FALSE;
+}
+
+/* Find the list of refs which belong to the given @collection_id in @summary.
+ * If @collection_id is %NULL, the main refs list from the summary will be
+ * returned. If @collection_id doesn’t match any collection IDs in the summary
+ * file, %FALSE will be returned. */
+gboolean
+flatpak_summary_find_ref_map (VarSummaryRef summary,
+                              const char *collection_id,
+                              VarRefMapRef *refs_out)
+{
+  VarMetadataRef metadata = var_summary_get_metadata (summary);
+  const char *summary_collection_id;
+
+  summary_collection_id = var_metadata_lookup_string (metadata, "ostree.summary.collection-id", NULL);
+
+  if (collection_id == NULL || g_strcmp0 (collection_id, summary_collection_id) == 0)
+    {
+      if (refs_out)
+        *refs_out = var_summary_get_ref_map (summary);
+      return TRUE;
+    }
+  else if (collection_id != NULL)
+    {
+      VarVariantRef collection_map_v;
+      if (var_metadata_lookup (metadata, "ostree.summary.collection-map", NULL, &collection_map_v))
+        {
+          VarCollectionMapRef collection_map = var_collection_map_from_variant (collection_map_v);
+          return var_collection_map_lookup (collection_map, collection_id, NULL, refs_out);
+        }
+    }
+
+  return FALSE;
+}
+
+/* This matches all refs from @collection_id that have ref, followed by '.'  as prefix */
+GPtrArray *
+flatpak_summary_match_subrefs (GVariant          *summary_v,
+                               const char        *collection_id,
+                               FlatpakDecomposed *ref)
+{
+  GPtrArray *res = g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_decomposed_unref);
+  gsize n, i;
+  g_autofree char *parts_prefix = NULL;
+  g_autofree char *ref_prefix = NULL;
+  g_autofree char *ref_suffix = NULL;
+  VarSummaryRef summary;
+  VarRefMapRef ref_map;
+
+  summary = var_summary_from_gvariant (summary_v);
+
+  /* Work out which refs list to use, based on the @collection_id. */
+  if (flatpak_summary_find_ref_map (summary, collection_id, &ref_map))
+    {
+      /* Match against the refs. */
+      g_autofree char *id = flatpak_decomposed_dup_id (ref);
+      g_autofree char *arch = flatpak_decomposed_dup_arch (ref);
+      g_autofree char *branch = flatpak_decomposed_dup_branch (ref);
+      parts_prefix = g_strconcat (id, ".", NULL);
+
+      ref_prefix = g_strconcat (flatpak_decomposed_get_kind_str (ref), "/", NULL);
+      ref_suffix = g_strconcat ("/", arch, "/", branch, NULL);
+
+      n = var_ref_map_get_length (ref_map);
+      for (i = 0; i < n; i++)
+        {
+          VarRefMapEntryRef entry = var_ref_map_get_at (ref_map, i);
+          const char *cur;
+          const char *id_start;
+          const char *id_suffix;
+          const char *id_end;
+
+          cur = var_ref_map_entry_get_ref (entry);
+
+          /* Must match type */
+          if (!g_str_has_prefix (cur, ref_prefix))
+            continue;
+
+          /* Must match arch & branch */
+          if (!g_str_has_suffix (cur, ref_suffix))
+            continue;
+
+          id_start = strchr (cur, '/');
+          if (id_start == NULL)
+            continue;
+          id_start += 1;
+
+          id_end = strchr (id_start, '/');
+          if (id_end == NULL)
+            continue;
+
+          /* But only prefix of id */
+          if (!g_str_has_prefix (id_start, parts_prefix))
+            continue;
+
+          /* And no dots (we want to install prefix.$ID, but not prefix.$ID.Sources) */
+          id_suffix = id_start + strlen (parts_prefix);
+          if (memchr (id_suffix, '.', id_end - id_suffix) != NULL)
+            continue;
+
+          FlatpakDecomposed *d = flatpak_decomposed_new_from_ref (cur, NULL);
+          if (d)
+            g_ptr_array_add (res, d);
+        }
+    }
+
+  return g_steal_pointer (&res);
+}
+
+gboolean
+flatpak_summary_lookup_ref (GVariant      *summary_v,
+                            const char    *collection_id,
+                            const char    *ref,
+                            char         **out_checksum,
+                            VarRefInfoRef *out_info)
+{
+  VarSummaryRef summary;
+  VarRefMapRef ref_map;
+  VarRefInfoRef info;
+  const guchar *checksum_bytes;
+  gsize checksum_bytes_len;
+
+  summary = var_summary_from_gvariant (summary_v);
+
+  /* Work out which refs list to use, based on the @collection_id. */
+  if (!flatpak_summary_find_ref_map (summary, collection_id, &ref_map))
+    return FALSE;
+
+  if (!flatpak_var_ref_map_lookup_ref (ref_map, ref, &info))
+    return FALSE;
+
+  checksum_bytes = var_ref_info_peek_checksum (info, &checksum_bytes_len);
+  if (G_UNLIKELY (checksum_bytes_len != OSTREE_SHA256_DIGEST_LEN))
+    return FALSE;
+
+  if (out_checksum)
+    *out_checksum = ostree_checksum_from_bytes (checksum_bytes);
+
+  if (out_info)
+    *out_info = info;
+
+  return TRUE;
+}
