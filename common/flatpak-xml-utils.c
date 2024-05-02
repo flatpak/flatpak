@@ -30,7 +30,7 @@ typedef struct
   FlatpakXml *current;
 } XmlData;
 
-FlatpakXml *
+static FlatpakXml *
 flatpak_xml_new (const gchar *element_name)
 {
   FlatpakXml *node = g_new0 (FlatpakXml, 1);
@@ -39,7 +39,7 @@ flatpak_xml_new (const gchar *element_name)
   return node;
 }
 
-FlatpakXml *
+static FlatpakXml *
 flatpak_xml_new_text (const gchar *text)
 {
   FlatpakXml *node = g_new0 (FlatpakXml, 1);
@@ -146,7 +146,7 @@ flatpak_xml_free (FlatpakXml *node)
 }
 
 
-void
+static void
 flatpak_xml_to_string (FlatpakXml *node, GString *res)
 {
   int i;
