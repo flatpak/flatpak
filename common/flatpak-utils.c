@@ -411,7 +411,7 @@ static struct
   { "aarch64", "arm" },
 };
 
-static const char *
+const char *
 flatpak_get_compat_arch (const char *kernel_arch)
 {
   int i;
