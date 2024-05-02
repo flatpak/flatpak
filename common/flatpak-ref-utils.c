@@ -28,6 +28,8 @@
 #include <glib.h>
 #include "flatpak-ref-utils-private.h"
 
+#include <ostree.h>
+
 #include "flatpak-error.h"
 #include "flatpak-metadata-private.h"
 #include "flatpak-utils-private.h"

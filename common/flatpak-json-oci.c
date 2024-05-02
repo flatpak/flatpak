@@ -22,6 +22,9 @@
 #include "string.h"
 
 #include "flatpak-json-oci-private.h"
+
+#include <ostree.h>
+
 #include "flatpak-utils-private.h"
 #include "libglnx.h"
 
