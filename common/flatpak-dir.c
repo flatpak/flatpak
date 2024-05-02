@@ -53,6 +53,7 @@
 #include "flatpak-locale-utils-private.h"
 #include "flatpak-oci-registry-private.h"
 #include "flatpak-ref.h"
+#include "flatpak-repo-utils-private.h"
 #include "flatpak-run-private.h"
 #include "flatpak-utils-base-private.h"
 #include "flatpak-variant-private.h"
