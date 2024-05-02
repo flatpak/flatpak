@@ -24,6 +24,9 @@
 
 #include <ostree.h>
 
+#include "flatpak-ref-utils-private.h"
+#include "flatpak-variant-private.h"
+
 /**
  * FLATPAK_SUMMARY_INDEX_GVARIANT_FORMAT:
  *
@@ -171,3 +174,18 @@ gboolean flatpak_repo_update (OstreeRepo            *repo,
                               const char            *gpg_homedir,
                               GCancellable          *cancellable,
                               GError               **error);
+
+GPtrArray *flatpak_summary_match_subrefs (GVariant   *summary,
+                                          const char *collection_id,
+                                          FlatpakDecomposed *ref);
+gboolean flatpak_summary_lookup_ref (GVariant      *summary,
+                                     const char    *collection_id,
+                                     const char    *ref,
+                                     char         **out_checksum,
+                                     VarRefInfoRef *out_info);
+gboolean flatpak_summary_find_ref_map (VarSummaryRef  summary,
+                                       const char    *collection_id,
+                                       VarRefMapRef  *refs_out);
+gboolean flatpak_var_ref_map_lookup_ref (VarRefMapRef   ref_map,
+                                         const char    *ref,
+                                         VarRefInfoRef *out_info);
