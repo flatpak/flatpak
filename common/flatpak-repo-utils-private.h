@@ -80,6 +80,11 @@
 
 #define FLATPAK_SUMMARY_HISTORY_LENGTH_DEFAULT 16
 
+#define FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE "eol"
+#define FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE "eolr"
+#define FLATPAK_SPARSE_CACHE_KEY_TOKEN_TYPE "tokt"
+#define FLATPAK_SPARSE_CACHE_KEY_EXTRA_DATA_SIZE "eds"
+
 gboolean flatpak_repo_set_title (OstreeRepo *repo,
                                  const char *title,
                                  GError    **error);
