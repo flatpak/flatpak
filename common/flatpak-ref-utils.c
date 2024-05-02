@@ -1699,3 +1699,37 @@ flatpak_is_app_runtime_or_appstream_ref (const char *ref)
     g_str_has_prefix (ref, "app/") ||
     g_str_has_prefix (ref, "runtime/");
 }
+
+char *
+flatpak_get_arch_for_ref (const char *ref)
+{
+  if (g_str_has_prefix (ref, "appstream/") ||
+      g_str_has_prefix (ref, "appstream2/"))
+    {
+      const char *rest = strchr (ref, '/') + 1; /* Guaranteed to exist per above check */
+      const char *dash = strrchr (rest, '-'); /*  Subset appstream refs are appstream2/$subset-$arch */
+      if (dash != NULL)
+        rest = dash + 1;
+      return g_strdup (rest);
+    }
+    else if (g_str_has_prefix (ref, "app/") ||
+      g_str_has_prefix (ref, "runtime/"))
+    {
+      const char *slash;
+      const char *arch;
+
+      slash = strchr (ref, '/') + 1; /* Guaranteed to exist per above check */
+      slash = strchr (slash, '/'); /* Skip id */
+      if (slash == NULL)
+        return NULL;
+      arch = slash + 1;
+
+      slash = strchr (arch, '/'); /* skip to end arch */
+      if (slash == NULL)
+        return NULL;
+
+      return g_strndup (arch, slash - arch);
+    }
+
+  return NULL;
+}
