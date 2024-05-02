@@ -3651,3 +3651,296 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
 
   return TRUE;
 }
+
+#define OSTREE_STATIC_DELTA_META_ENTRY_FORMAT "(uayttay)"
+#define OSTREE_STATIC_DELTA_FALLBACK_FORMAT "(yaytt)"
+#define OSTREE_STATIC_DELTA_SUPERBLOCK_FORMAT "(a{sv}tayay" OSTREE_COMMIT_GVARIANT_STRING "aya" OSTREE_STATIC_DELTA_META_ENTRY_FORMAT "a" OSTREE_STATIC_DELTA_FALLBACK_FORMAT ")"
+
+static inline guint64
+maybe_swap_endian_u64 (gboolean swap,
+                       guint64  v)
+{
+  if (!swap)
+    return v;
+  return GUINT64_SWAP_LE_BE (v);
+}
+
+static guint64
+flatpak_bundle_get_installed_size (GVariant *bundle, gboolean byte_swap)
+{
+  guint64 total_usize = 0;
+  g_autoptr(GVariant) meta_entries = NULL;
+  guint i, n_parts;
+
+  g_variant_get_child (bundle, 6, "@a" OSTREE_STATIC_DELTA_META_ENTRY_FORMAT, &meta_entries);
+  n_parts = g_variant_n_children (meta_entries);
+
+  for (i = 0; i < n_parts; i++)
+    {
+      guint32 version;
+      guint64 size, usize;
+      g_autoptr(GVariant) objects = NULL;
+
+      g_variant_get_child (meta_entries, i, "(u@aytt@ay)",
+                           &version, NULL, &size, &usize, &objects);
+
+      total_usize += maybe_swap_endian_u64 (byte_swap, usize);
+    }
+
+  return total_usize;
+}
+
+GVariant *
+flatpak_bundle_load (GFile              *file,
+                     char              **commit,
+                     FlatpakDecomposed **ref,
+                     char              **origin,
+                     char              **runtime_repo,
+                     char              **app_metadata,
+                     guint64            *installed_size,
+                     GBytes            **gpg_keys,
+                     char              **collection_id,
+                     GError             **error)
+{
+  g_autoptr(GVariant) delta = NULL;
+  g_autoptr(GVariant) metadata = NULL;
+  g_autoptr(GBytes) bytes = NULL;
+  g_autoptr(GBytes) copy = NULL;
+  g_autoptr(GVariant) to_csum_v = NULL;
+
+  guint8 endianness_char;
+  gboolean byte_swap = FALSE;
+
+  GMappedFile *mfile = g_mapped_file_new (flatpak_file_get_path_cached (file), FALSE, error);
+
+  if (mfile == NULL)
+    return NULL;
+
+  bytes = g_mapped_file_get_bytes (mfile);
+  g_mapped_file_unref (mfile);
+
+  delta = g_variant_new_from_bytes (G_VARIANT_TYPE (OSTREE_STATIC_DELTA_SUPERBLOCK_FORMAT), bytes, FALSE);
+  g_variant_ref_sink (delta);
+
+  to_csum_v = g_variant_get_child_value (delta, 3);
+  if (!ostree_validate_structureof_csum_v (to_csum_v, error))
+    return NULL;
+
+  metadata = g_variant_get_child_value (delta, 0);
+
+  if (g_variant_lookup (metadata, "ostree.endianness", "y", &endianness_char))
+    {
+      int file_byte_order = G_BYTE_ORDER;
+      switch (endianness_char)
+        {
+        case 'l':
+          file_byte_order = G_LITTLE_ENDIAN;
+          break;
+
+        case 'B':
+          file_byte_order = G_BIG_ENDIAN;
+          break;
+
+        default:
+          break;
+        }
+      byte_swap = (G_BYTE_ORDER != file_byte_order);
+    }
+
+  if (commit)
+    *commit = ostree_checksum_from_bytes_v (to_csum_v);
+
+  if (installed_size)
+    *installed_size = flatpak_bundle_get_installed_size (delta, byte_swap);
+
+  if (ref != NULL)
+    {
+      FlatpakDecomposed *the_ref = NULL;
+      g_autofree char *ref_str = NULL;
+
+      if (!g_variant_lookup (metadata, "ref", "s", &ref_str))
+        {
+          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid bundle, no ref in metadata"));
+          return NULL;
+        }
+
+      the_ref = flatpak_decomposed_new_from_ref (ref_str, error);
+      if (the_ref == NULL)
+        return NULL;
+
+      g_clear_pointer (ref, flatpak_decomposed_unref);
+      *ref = the_ref;
+    }
+
+  if (origin != NULL)
+    {
+      if (!g_variant_lookup (metadata, "origin", "s", origin))
+        *origin = NULL;
+    }
+
+  if (runtime_repo != NULL)
+    {
+      if (!g_variant_lookup (metadata, "runtime-repo", "s", runtime_repo))
+        *runtime_repo = NULL;
+    }
+
+  if (collection_id != NULL)
+    {
+      if (!g_variant_lookup (metadata, "collection-id", "s", collection_id))
+        {
+          *collection_id = NULL;
+        }
+      else if (**collection_id == '\0')
+        {
+          g_free (*collection_id);
+          *collection_id = NULL;
+        }
+    }
+
+  if (app_metadata != NULL)
+    {
+      if (!g_variant_lookup (metadata, "metadata", "s", app_metadata))
+        *app_metadata = NULL;
+    }
+
+  if (gpg_keys != NULL)
+    {
+      g_autoptr(GVariant) gpg_value = g_variant_lookup_value (metadata, "gpg-keys",
+                                                              G_VARIANT_TYPE ("ay"));
+      if (gpg_value)
+        {
+          gsize n_elements;
+          const char *data = g_variant_get_fixed_array (gpg_value, &n_elements, 1);
+          *gpg_keys = g_bytes_new (data, n_elements);
+        }
+      else
+        {
+          *gpg_keys = NULL;
+        }
+    }
+
+  /* Make a copy of the data so we can return it after freeing the file */
+  copy = g_bytes_new (g_variant_get_data (metadata),
+                      g_variant_get_size (metadata));
+  return g_variant_ref_sink (g_variant_new_from_bytes (g_variant_get_type (metadata),
+                                                       copy,
+                                                       FALSE));
+}
+
+gboolean
+flatpak_pull_from_bundle (OstreeRepo   *repo,
+                          GFile        *file,
+                          const char   *remote,
+                          const char   *ref,
+                          gboolean      require_gpg_signature,
+                          GCancellable *cancellable,
+                          GError      **error)
+{
+  gsize metadata_size = 0;
+  g_autofree char *metadata_contents = NULL;
+  g_autofree char *to_checksum = NULL;
+  g_autoptr(GFile) root = NULL;
+  g_autoptr(GFile) metadata_file = NULL;
+  g_autoptr(GInputStream) in = NULL;
+  g_autoptr(OstreeGpgVerifyResult) gpg_result = NULL;
+  g_autoptr(GError) my_error = NULL;
+  g_autoptr(GVariant) metadata = NULL;
+  gboolean metadata_valid;
+  g_autofree char *remote_collection_id = NULL;
+  g_autofree char *collection_id = NULL;
+
+  metadata = flatpak_bundle_load (file, &to_checksum, NULL, NULL, NULL, &metadata_contents, NULL, NULL, &collection_id, error);
+  if (metadata == NULL)
+    return FALSE;
+
+  if (metadata_contents != NULL)
+    metadata_size = strlen (metadata_contents);
+
+  if (!ostree_repo_get_remote_option (repo, remote, "collection-id", NULL,
+                                      &remote_collection_id, NULL))
+    remote_collection_id = NULL;
+
+  if (remote_collection_id != NULL && collection_id != NULL &&
+      strcmp (remote_collection_id, collection_id) != 0)
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Collection ‘%s’ of bundle doesn’t match collection ‘%s’ of remote"),
+                               collection_id, remote_collection_id);
+
+  if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
+    return FALSE;
+
+  /* Don’t need to set the collection ID here, since the remote binds this ref to the collection. */
+  ostree_repo_transaction_set_ref (repo, remote, ref, to_checksum);
+
+  if (!ostree_repo_static_delta_execute_offline (repo,
+                                                 file,
+                                                 FALSE,
+                                                 cancellable,
+                                                 error))
+    return FALSE;
+
+  gpg_result = ostree_repo_verify_commit_ext (repo, to_checksum,
+                                              NULL, NULL, cancellable, &my_error);
+  if (gpg_result == NULL)
+    {
+      /* no gpg signature, we ignore this *if* there is no gpg key
+       * specified in the bundle or by the user */
+      if (g_error_matches (my_error, OSTREE_GPG_ERROR, OSTREE_GPG_ERROR_NO_SIGNATURE) &&
+          !require_gpg_signature)
+        {
+          g_clear_error (&my_error);
+        }
+      else
+        {
+          g_propagate_error (error, g_steal_pointer (&my_error));
+          return FALSE;
+        }
+    }
+  else
+    {
+      /* If there is no valid gpg signature we fail, unless there is no gpg
+         key specified (on the command line or in the file) because then we
+         trust the source bundle. */
+      if (ostree_gpg_verify_result_count_valid (gpg_result) == 0  &&
+          require_gpg_signature)
+        return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("GPG signatures found, but none are in trusted keyring"));
+    }
+
+  if (!ostree_repo_read_commit (repo, to_checksum, &root, NULL, NULL, error))
+    return FALSE;
+
+  if (!ostree_repo_commit_transaction (repo, NULL, cancellable, error))
+    return FALSE;
+
+  /* We ensure that the actual installed metadata matches the one in the
+     header, because you may have made decisions on whether to install it or not
+     based on that data. */
+  metadata_file = g_file_resolve_relative_path (root, "metadata");
+  in = (GInputStream *) g_file_read (metadata_file, cancellable, NULL);
+  if (in != NULL)
+    {
+      g_autoptr(GMemoryOutputStream) data_stream = (GMemoryOutputStream *) g_memory_output_stream_new_resizable ();
+
+      if (g_output_stream_splice (G_OUTPUT_STREAM (data_stream), in,
+                                  G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE,
+                                  cancellable, error) < 0)
+        return FALSE;
+
+      metadata_valid =
+        metadata_contents != NULL &&
+        metadata_size == g_memory_output_stream_get_data_size (data_stream) &&
+        memcmp (metadata_contents, g_memory_output_stream_get_data (data_stream), metadata_size) == 0;
+    }
+  else
+    {
+      metadata_valid = (metadata_contents == NULL);
+    }
+
+  if (!metadata_valid)
+    {
+      /* Immediately remove this broken commit */
+      ostree_repo_set_ref_immediate (repo, remote, ref, NULL, cancellable, error);
+      return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Metadata in header and app are inconsistent"));
+    }
+
+  return TRUE;
+}

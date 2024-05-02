@@ -233,3 +233,62 @@ gboolean flatpak_repo_resolve_rev (OstreeRepo    *repo,
                                    char         **out_rev,
                                    GCancellable  *cancellable,
                                    GError       **error);
+
+gboolean flatpak_pull_from_bundle (OstreeRepo   *repo,
+                                   GFile        *file,
+                                   const char   *remote,
+                                   const char   *ref,
+                                   gboolean      require_gpg_signature,
+                                   GCancellable *cancellable,
+                                   GError      **error);
+
+GVariant *flatpak_bundle_load (GFile              *file,
+                               char              **commit,
+                               FlatpakDecomposed **ref,
+                               char              **origin,
+                               char              **runtime_repo,
+                               char              **app_metadata,
+                               guint64            *installed_size,
+                               GBytes            **gpg_keys,
+                               char              **collection_id,
+                               GError            **error);
+
+static inline void
+flatpak_ostree_progress_finish (OstreeAsyncProgress *progress)
+{
+  if (progress != NULL)
+    {
+      ostree_async_progress_finish (progress);
+      g_object_unref (progress);
+    }
+}
+
+typedef OstreeAsyncProgress OstreeAsyncProgressFinish;
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (OstreeAsyncProgressFinish, flatpak_ostree_progress_finish);
+
+typedef OstreeRepo FlatpakRepoTransaction;
+
+static inline void
+flatpak_repo_transaction_cleanup (void *p)
+{
+  OstreeRepo *repo = p;
+
+  if (repo)
+    {
+      g_autoptr(GError) error = NULL;
+      if (!ostree_repo_abort_transaction (repo, NULL, &error))
+        g_warning ("Error aborting ostree transaction: %s", error->message);
+      g_object_unref (repo);
+    }
+}
+
+static inline FlatpakRepoTransaction *
+flatpak_repo_transaction_start (OstreeRepo   *repo,
+                                GCancellable *cancellable,
+                                GError      **error)
+{
+  if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
+    return NULL;
+  return (FlatpakRepoTransaction *) g_object_ref (repo);
+}
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakRepoTransaction, flatpak_repo_transaction_cleanup)
