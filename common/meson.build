@@ -187,6 +187,7 @@ sources = [
   'flatpak-related-ref.c',
   'flatpak-remote-ref.c',
   'flatpak-remote.c',
+  'flatpak-repo-utils.c',
   'flatpak-run.c',
   'flatpak-run-cups.c',
   'flatpak-run-dbus.c',

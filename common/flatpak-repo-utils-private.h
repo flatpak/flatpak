@@ -22,6 +22,8 @@
 
 #include "libglnx.h"
 
+#include <ostree.h>
+
 /**
  * FLATPAK_SUMMARY_INDEX_GVARIANT_FORMAT:
  *
@@ -75,3 +77,53 @@
 #define FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE "eolr"
 #define FLATPAK_SPARSE_CACHE_KEY_TOKEN_TYPE "tokt"
 #define FLATPAK_SPARSE_CACHE_KEY_EXTRA_DATA_SIZE "eds"
+
+#define FLATPAK_SUMMARY_HISTORY_LENGTH_DEFAULT 16
+
+gboolean flatpak_repo_set_title (OstreeRepo *repo,
+                                 const char *title,
+                                 GError    **error);
+gboolean flatpak_repo_set_comment (OstreeRepo *repo,
+                                   const char *comment,
+                                   GError    **error);
+gboolean flatpak_repo_set_description (OstreeRepo *repo,
+                                       const char *description,
+                                       GError    **error);
+gboolean flatpak_repo_set_icon (OstreeRepo *repo,
+                                const char *icon,
+                                GError    **error);
+gboolean flatpak_repo_set_homepage (OstreeRepo *repo,
+                                    const char *homepage,
+                                    GError    **error);
+gboolean flatpak_repo_set_redirect_url (OstreeRepo *repo,
+                                        const char *redirect_url,
+                                        GError    **error);
+gboolean flatpak_repo_set_authenticator_name (OstreeRepo *repo,
+                                              const char *authenticator_name,
+                                              GError    **error);
+gboolean flatpak_repo_set_authenticator_install (OstreeRepo *repo,
+                                                 gboolean authenticator_install,
+                                                 GError    **error);
+gboolean flatpak_repo_set_authenticator_option (OstreeRepo *repo,
+                                                const char *key,
+                                                const char *value,
+                                                GError    **error);
+gboolean flatpak_repo_set_default_branch (OstreeRepo *repo,
+                                          const char *branch,
+                                          GError    **error);
+gboolean flatpak_repo_set_collection_id (OstreeRepo *repo,
+                                         const char *collection_id,
+                                         GError    **error);
+gboolean flatpak_repo_set_deploy_collection_id (OstreeRepo *repo,
+                                                gboolean    deploy_collection_id,
+                                                GError    **error);
+gboolean flatpak_repo_set_deploy_sideload_collection_id (OstreeRepo *repo,
+                                                         gboolean    deploy_collection_id,
+                                                         GError    **error);
+gboolean flatpak_repo_set_summary_history_length (OstreeRepo *repo,
+                                                  guint       length,
+                                                  GError    **error);
+guint    flatpak_repo_get_summary_history_length (OstreeRepo *repo);
+gboolean flatpak_repo_set_gpg_keys (OstreeRepo *repo,
+                                    GBytes     *bytes,
+                                    GError    **error);
