@@ -85,6 +85,7 @@ const char * flatpak_path_match_prefix (const char *pattern,
 const char * flatpak_get_arch (void);
 const char ** flatpak_get_arches (void);
 gboolean flatpak_is_linux32_arch (const char *arch);
+const char *flatpak_get_compat_arch (const char *kernel_arch);
 const char *flatpak_get_compat_arch_reverse (const char *compat_arch);
 
 const char ** flatpak_get_gl_drivers (void);
