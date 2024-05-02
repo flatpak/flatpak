@@ -114,13 +114,6 @@ gboolean flatpak_variant_save (GFile        *dest,
                                GVariant     *variant,
                                GCancellable *cancellable,
                                GError      **error);
-GVariant *flatpak_repo_load_summary (OstreeRepo *repo,
-                                     GError    **error);
-GVariant *flatpak_repo_load_summary_index (OstreeRepo *repo,
-                                           GError    **error);
-GVariant *flatpak_repo_load_digested_summary (OstreeRepo *repo,
-                                              const char *digest,
-                                              GError    **error);
 GPtrArray *flatpak_summary_match_subrefs (GVariant   *summary,
                                           const char *collection_id,
                                           FlatpakDecomposed *ref);
@@ -198,40 +191,6 @@ GBytes *flatpak_zlib_compress_bytes   (GBytes  *bytes,
 GBytes *flatpak_zlib_decompress_bytes (GBytes  *bytes,
                                        GError **error);
 
-GBytes *flatpak_summary_apply_diff (GBytes *old,
-                                    GBytes *diff,
-                                    GError **error);
-
-typedef enum {
-  FLATPAK_REPO_UPDATE_FLAG_NONE = 0,
-  FLATPAK_REPO_UPDATE_FLAG_DISABLE_INDEX = 1 << 0,
-} FlatpakRepoUpdateFlags;
-
-gboolean flatpak_repo_update (OstreeRepo            *repo,
-                              FlatpakRepoUpdateFlags flags,
-                              const char           **gpg_key_ids,
-                              const char            *gpg_homedir,
-                              GCancellable          *cancellable,
-                              GError               **error);
-gboolean flatpak_repo_collect_sizes (OstreeRepo   *repo,
-                                     GFile        *root,
-                                     guint64      *installed_size,
-                                     guint64      *download_size,
-                                     GCancellable *cancellable,
-                                     GError      **error);
-GVariant *flatpak_commit_get_extra_data_sources (GVariant *commitv,
-                                                 GError  **error);
-GVariant *flatpak_repo_get_extra_data_sources (OstreeRepo   *repo,
-                                               const char   *rev,
-                                               GCancellable *cancellable,
-                                               GError      **error);
-void flatpak_repo_parse_extra_data_sources (GVariant      *extra_data_sources,
-                                            int            index,
-                                            const char   **name,
-                                            guint64       *download_size,
-                                            guint64       *installed_size,
-                                            const guchar **sha256,
-                                            const char   **uri);
 gboolean flatpak_mtree_ensure_dir_metadata (OstreeRepo        *repo,
                                             OstreeMutableTree *mtree,
                                             GCancellable      *cancellable,
