@@ -29,6 +29,7 @@
 #include <archive.h>
 #include <gpgme.h>
 #include "flatpak-oci-registry-private.h"
+#include "flatpak-repo-utils-private.h"
 #include "flatpak-utils-base-private.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-uri-private.h"
