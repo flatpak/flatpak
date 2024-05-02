@@ -26,6 +26,7 @@
 #include "flatpak-context-private.h"
 #include "flatpak-bwrap-private.h"
 #include "flatpak-metadata-private.h"
+#include "flatpak-ref-utils-private.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-exports-private.h"
 
