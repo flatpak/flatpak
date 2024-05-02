@@ -165,39 +165,11 @@ char *flatpak_keyfile_get_string_non_empty (GKeyFile *keyfile,
                                             const char *group,
                                             const char *key);
 
-GKeyFile * flatpak_parse_repofile (const char   *remote_name,
-                                   gboolean      from_ref,
-                                   GKeyFile     *keyfile,
-                                   GBytes      **gpg_data_out,
-                                   GCancellable *cancellable,
-                                   GError      **error);
-
 GBytes *flatpak_zlib_compress_bytes   (GBytes  *bytes,
                                        int      level,
                                        GError **error);
 GBytes *flatpak_zlib_decompress_bytes (GBytes  *bytes,
                                        GError **error);
-
-gboolean flatpak_mtree_ensure_dir_metadata (OstreeRepo        *repo,
-                                            OstreeMutableTree *mtree,
-                                            GCancellable      *cancellable,
-                                            GError           **error);
-gboolean flatpak_mtree_create_symlink (OstreeRepo         *repo,
-                                       OstreeMutableTree  *parent,
-                                       const char         *name,
-                                       const char         *target,
-                                       GError            **error);
-gboolean flatpak_mtree_add_file_from_bytes (OstreeRepo *repo,
-                                            GBytes *bytes,
-                                            OstreeMutableTree *parent,
-                                            const char *filename,
-                                            GCancellable *cancellable,
-                                            GError      **error);
-gboolean flatpak_mtree_create_dir (OstreeRepo         *repo,
-                                   OstreeMutableTree  *parent,
-                                   const char         *name,
-                                   OstreeMutableTree **dir_out,
-                                   GError            **error);
 
 GVariant *flatpak_bundle_load (GFile              *file,
                                char              **commit,
@@ -358,13 +330,6 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakRepoTransaction, flatpak_repo_transaction_
 
 #define AUTOLOCK(name) G_GNUC_UNUSED __attribute__((cleanup (flatpak_auto_unlock_helper))) GMutex * G_PASTE (auto_unlock, __LINE__) = flatpak_auto_lock_helper (&G_LOCK_NAME (name))
 
-gboolean   flatpak_repo_generate_appstream (OstreeRepo   *repo,
-                                            const char  **gpg_key_ids,
-                                            const char   *gpg_homedir,
-                                            guint64       timestamp,
-                                            GCancellable *cancellable,
-                                            GError      **error);
-
 char * flatpak_filter_glob_to_regexp (const char *glob, gboolean runtime_only, GError **error);
 gboolean flatpak_parse_filters (const char *data,
                                 GRegex **allow_refs_out,
@@ -410,15 +375,6 @@ int flatpak_levenshtein_distance (const char *s,
 char *   flatpak_dconf_path_for_app_id (const char *app_id);
 gboolean flatpak_dconf_path_is_similar (const char *path1,
                                         const char *path2);
-
-gboolean flatpak_repo_resolve_rev (OstreeRepo    *repo,
-                                   const char    *collection_id, /* nullable */
-                                   const char    *remote_name, /* nullable */
-                                   const char    *ref_name,
-                                   gboolean       allow_noent,
-                                   char         **out_rev,
-                                   GCancellable  *cancellable,
-                                   GError       **error);
 
 static inline void
 null_safe_g_ptr_array_unref (gpointer data)
