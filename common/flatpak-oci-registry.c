@@ -1,5 +1,5 @@
 /* vi:set et sw=2 sts=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e-s:
- * Copyright © 2016 Red Hat, Inc
+ * Copyright © 2014-2019 Red Hat, Inc
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -26,11 +26,14 @@
 
 #include "libglnx.h"
 
+#include <archive.h>
 #include <gpgme.h>
 #include "flatpak-oci-registry-private.h"
 #include "flatpak-utils-base-private.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-uri-private.h"
+#include "flatpak-variant-private.h"
+#include "flatpak-variant-impl-private.h"
 #include "flatpak-dir-private.h"
 #include "flatpak-xml-utils-private.h"
 #include "flatpak-zstd-decompressor-private.h"
@@ -39,6 +42,9 @@
 
 typedef struct archive FlatpakAutoArchiveWrite;
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakAutoArchiveWrite, archive_write_free)
+
+typedef struct archive FlatpakAutoArchiveRead;
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakAutoArchiveRead, archive_read_free)
 
 static void flatpak_oci_registry_initable_iface_init (GInitableIface *iface);
 
@@ -3381,3 +3387,437 @@ flatpak_oci_index_make_appstream (FlatpakHttpSession *http_session,
 
   return g_steal_pointer (&bytes);
 }
+
+typedef struct
+{
+  FlatpakOciPullProgress progress_cb;
+  gpointer               progress_user_data;
+  guint64                total_size;
+  guint64                previous_layers_size;
+  guint32                n_layers;
+  guint32                pulled_layers;
+} FlatpakOciPullProgressData;
+
+static void
+oci_layer_progress (guint64  downloaded_bytes,
+                    gpointer user_data)
+{
+  FlatpakOciPullProgressData *progress_data = user_data;
+
+  if (progress_data->progress_cb)
+    progress_data->progress_cb (progress_data->total_size, progress_data->previous_layers_size + downloaded_bytes,
+                                progress_data->n_layers, progress_data->pulled_layers,
+                                progress_data->progress_user_data);
+}
+
+gboolean
+flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
+                               FlatpakOciRegistry    *registry,
+                               const char            *oci_repository,
+                               const char            *digest,
+                               const char            *remote,
+                               const char            *ref,
+                               const char            *delta_url,
+                               OstreeRepo            *repo,
+                               FlatpakOciPullProgress progress_cb,
+                               gpointer               progress_user_data,
+                               GCancellable          *cancellable,
+                               GError               **error)
+{
+  FlatpakOciPullProgressData progress_data = { progress_cb, progress_user_data };
+  g_autoptr(FlatpakOciVersioned) versioned = NULL;
+  FlatpakOciManifest *manifest = NULL;
+  g_autoptr(FlatpakOciDescriptor) manifest_desc = NULL;
+  g_autoptr(FlatpakOciManifest) delta_manifest = NULL;
+  g_autofree char *old_checksum = NULL;
+  g_autoptr(GVariant) old_commit = NULL;
+  g_autoptr(GFile) old_root = NULL;
+  OstreeRepoCommitState old_state = 0;
+  g_autofree char *old_diffid = NULL;
+  gsize versioned_size;
+  g_autoptr(FlatpakOciIndex) index = NULL;
+  g_autoptr(FlatpakOciImage) image_config = NULL;
+  int n_layers;
+  int i;
+
+  if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, oci_repository, TRUE, digest, NULL, NULL, NULL, cancellable, error))
+    return FALSE;
+
+  versioned = flatpak_oci_registry_load_versioned (dst_registry, NULL, digest, NULL, &versioned_size, cancellable, error);
+  if (versioned == NULL)
+    return FALSE;
+
+  if (!FLATPAK_IS_OCI_MANIFEST (versioned))
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Image is not a manifest"));
+
+  manifest = FLATPAK_OCI_MANIFEST (versioned);
+
+  if (manifest->config.digest == NULL)
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Image is not a manifest"));
+
+  if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, oci_repository, FALSE, manifest->config.digest, (const char **)manifest->config.urls, NULL, NULL, cancellable, error))
+    return FALSE;
+
+  image_config = flatpak_oci_registry_load_image_config (dst_registry, NULL,
+                                                         manifest->config.digest, NULL,
+                                                         NULL, cancellable, error);
+  if (image_config == NULL)
+    return FALSE;
+
+  /* For deltas we ensure that the diffid and regular layers exists and match up */
+  n_layers = flatpak_oci_manifest_get_n_layers (manifest);
+  if (n_layers == 0 || n_layers != flatpak_oci_image_get_n_layers (image_config))
+    return flatpak_fail (error, _("Invalid OCI image config"));
+
+  /* Look for delta manifest, and if it exists, the current (old) commit and its recorded diffid */
+  if (flatpak_repo_resolve_rev (repo, NULL, remote, ref, FALSE, &old_checksum, NULL, NULL) &&
+      ostree_repo_load_commit (repo, old_checksum, &old_commit, &old_state, NULL) &&
+      (old_state == OSTREE_REPO_COMMIT_STATE_NORMAL) &&
+      ostree_repo_read_commit (repo, old_checksum, &old_root, NULL, NULL, NULL))
+    {
+      delta_manifest = flatpak_oci_registry_find_delta_manifest (registry, oci_repository, digest, delta_url, cancellable);
+      if (delta_manifest)
+        {
+          VarMetadataRef commit_metadata = var_commit_get_metadata (var_commit_from_gvariant (old_commit));
+          const char *raw_old_diffid = var_metadata_lookup_string (commit_metadata, "xa.diff-id", NULL);
+          if (raw_old_diffid != NULL)
+            old_diffid = g_strconcat ("sha256:", raw_old_diffid, NULL);
+        }
+    }
+
+  for (i = 0; manifest->layers[i] != NULL; i++)
+    {
+      FlatpakOciDescriptor *layer = manifest->layers[i];
+      FlatpakOciDescriptor *delta_layer = NULL;
+
+      if (delta_manifest)
+        delta_layer = flatpak_oci_manifest_find_delta_for (delta_manifest, old_diffid, image_config->rootfs.diff_ids[i]);
+
+      if (delta_layer)
+        progress_data.total_size += delta_layer->size;
+      else
+        progress_data.total_size += layer->size;
+      progress_data.n_layers++;
+    }
+
+  if (progress_cb)
+    progress_cb (progress_data.total_size, 0,
+                 progress_data.n_layers, progress_data.pulled_layers,
+                 progress_user_data);
+
+  for (i = 0; manifest->layers[i] != NULL; i++)
+    {
+      FlatpakOciDescriptor *layer = manifest->layers[i];
+      FlatpakOciDescriptor *delta_layer = NULL;
+
+      if (delta_manifest)
+        delta_layer = flatpak_oci_manifest_find_delta_for (delta_manifest, old_diffid, image_config->rootfs.diff_ids[i]);
+
+      if (delta_layer)
+        {
+          g_info ("Using OCI delta %s for layer %s", delta_layer->digest, layer->digest);
+          g_autofree char *delta_digest = NULL;
+          glnx_autofd int delta_fd = flatpak_oci_registry_download_blob (registry, oci_repository, FALSE,
+                                                                         delta_layer->digest, (const char **)delta_layer->urls,
+                                                                         oci_layer_progress, &progress_data,
+                                                                         cancellable, error);
+          if (delta_fd == -1)
+            return FALSE;
+
+          delta_digest = flatpak_oci_registry_apply_delta_to_blob (dst_registry, delta_fd, old_root, cancellable, error);
+          if (delta_digest == NULL)
+            return FALSE;
+
+          if (g_strcmp0 (delta_digest, image_config->rootfs.diff_ids[i]) != 0)
+            return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Wrong layer checksum, expected %s, was %s"), image_config->rootfs.diff_ids[i], delta_digest);
+        }
+      else
+        {
+          if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, oci_repository, FALSE, layer->digest, (const char **)layer->urls,
+                                                 oci_layer_progress, &progress_data,
+                                                 cancellable, error))
+            return FALSE;
+        }
+
+      progress_data.pulled_layers++;
+      progress_data.previous_layers_size += delta_layer ? delta_layer->size : layer->size;
+    }
+
+  index = flatpak_oci_registry_load_index (dst_registry, NULL, NULL);
+  if (index == NULL)
+    index = flatpak_oci_index_new ();
+
+  manifest_desc = flatpak_oci_descriptor_new (versioned->mediatype, digest, versioned_size);
+
+  flatpak_oci_index_add_manifest (index, ref, manifest_desc);
+
+  if (!flatpak_oci_registry_save_index (dst_registry, index, cancellable, error))
+    return FALSE;
+
+  return TRUE;
+}
+
+char *
+flatpak_pull_from_oci (OstreeRepo            *repo,
+                       FlatpakOciRegistry    *registry,
+                       const char            *oci_repository,
+                       const char            *digest,
+                       const char            *delta_url,
+                       FlatpakOciManifest    *manifest,
+                       FlatpakOciImage       *image_config,
+                       const char            *remote,
+                       const char            *ref,
+                       FlatpakPullFlags       flags,
+                       FlatpakOciPullProgress progress_cb,
+                       gpointer               progress_user_data,
+                       GCancellable          *cancellable,
+                       GError               **error)
+{
+  gboolean force_disable_deltas = (flags & FLATPAK_PULL_FLAGS_NO_STATIC_DELTAS) != 0;
+  g_autoptr(OstreeMutableTree) archive_mtree = NULL;
+  g_autoptr(GFile) archive_root = NULL;
+  g_autoptr(FlatpakOciManifest) delta_manifest = NULL;
+  g_autofree char *old_checksum = NULL;
+  g_autoptr(GVariant) old_commit = NULL;
+  g_autoptr(GFile) old_root = NULL;
+  OstreeRepoCommitState old_state = 0;
+  g_autofree char *old_diffid = NULL;
+  g_autofree char *commit_checksum = NULL;
+  const char *parent = NULL;
+  g_autofree char *subject = NULL;
+  g_autofree char *body = NULL;
+  g_autofree char *manifest_ref = NULL;
+  g_autofree char *full_ref = NULL;
+  const char *diffid;
+  guint64 timestamp = 0;
+  FlatpakOciPullProgressData progress_data = { progress_cb, progress_user_data };
+  g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
+  g_autoptr(GVariant) metadata = NULL;
+  GHashTable *labels;
+  int n_layers;
+  int i;
+
+  g_assert (ref != NULL);
+  g_assert (g_str_has_prefix (digest, "sha256:"));
+
+  labels = flatpak_oci_image_get_labels (image_config);
+  if (labels)
+    flatpak_oci_parse_commit_labels (labels, &timestamp,
+                                     &subject, &body,
+                                     &manifest_ref, NULL, NULL,
+                                     metadata_builder);
+
+  if (manifest_ref == NULL)
+    {
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No ref specified for OCI image %s"), digest);
+      return NULL;
+    }
+
+  if (strcmp (manifest_ref, ref) != 0)
+    {
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Wrong ref (%s) specified for OCI image %s, expected %s"), manifest_ref, digest, ref);
+      return NULL;
+    }
+
+  g_variant_builder_add (metadata_builder, "{s@v}", "xa.alt-id",
+                         g_variant_new_variant (g_variant_new_string (digest + strlen ("sha256:"))));
+
+  /* For deltas we ensure that the diffid and regular layers exists and match up */
+  n_layers = flatpak_oci_manifest_get_n_layers (manifest);
+  if (n_layers == 0 || n_layers != flatpak_oci_image_get_n_layers (image_config))
+    {
+      flatpak_fail (error, _("Invalid OCI image config"));
+      return NULL;
+    }
+
+  /* Assuming everyting looks good, we record the uncompressed checksum (the diff-id) of the last layer,
+     because that is what we can read back easily from the deploy dir, and thus is easy to use for applying deltas */
+  diffid = image_config->rootfs.diff_ids[n_layers-1];
+  if (diffid != NULL && g_str_has_prefix (diffid, "sha256:"))
+    g_variant_builder_add (metadata_builder, "{s@v}", "xa.diff-id",
+                           g_variant_new_variant (g_variant_new_string (diffid + strlen ("sha256:"))));
+
+  /* Look for delta manifest, and if it exists, the current (old) commit and its recorded diffid */
+  if (!force_disable_deltas &&
+      !flatpak_oci_registry_is_local (registry) &&
+      flatpak_repo_resolve_rev (repo, NULL, remote, ref, FALSE, &old_checksum, NULL, NULL) &&
+      ostree_repo_load_commit (repo, old_checksum, &old_commit, &old_state, NULL) &&
+      (old_state == OSTREE_REPO_COMMIT_STATE_NORMAL) &&
+      ostree_repo_read_commit (repo, old_checksum, &old_root, NULL, NULL, NULL))
+    {
+      delta_manifest = flatpak_oci_registry_find_delta_manifest (registry, oci_repository, digest, delta_url, cancellable);
+      if (delta_manifest)
+        {
+          VarMetadataRef commit_metadata = var_commit_get_metadata (var_commit_from_gvariant (old_commit));
+          const char *raw_old_diffid = var_metadata_lookup_string (commit_metadata, "xa.diff-id", NULL);
+          if (raw_old_diffid != NULL)
+            old_diffid = g_strconcat ("sha256:", raw_old_diffid, NULL);
+        }
+    }
+
+  if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
+    return NULL;
+
+  /* There is no way to write a subset of the archive to a mtree, so instead
+     we write all of it and then build a new mtree with the subset */
+  archive_mtree = ostree_mutable_tree_new ();
+
+  for (i = 0; manifest->layers[i] != NULL; i++)
+    {
+      FlatpakOciDescriptor *layer = manifest->layers[i];
+      FlatpakOciDescriptor *delta_layer = NULL;
+
+      if (delta_manifest)
+        delta_layer = flatpak_oci_manifest_find_delta_for (delta_manifest, old_diffid, image_config->rootfs.diff_ids[i]);
+
+      if (delta_layer)
+        progress_data.total_size += delta_layer->size;
+      else
+        progress_data.total_size += layer->size;
+
+      progress_data.n_layers++;
+    }
+
+  if (progress_cb)
+    progress_cb (progress_data.total_size, 0,
+                 progress_data.n_layers, progress_data.pulled_layers,
+                 progress_user_data);
+
+  for (i = 0; manifest->layers[i] != NULL; i++)
+    {
+      FlatpakOciDescriptor *layer = manifest->layers[i];
+      FlatpakOciDescriptor *delta_layer = NULL;
+      OstreeRepoImportArchiveOptions opts = { 0, };
+      g_autoptr(FlatpakAutoArchiveRead) a = NULL;
+      glnx_autofd int layer_fd = -1;
+      glnx_autofd int blob_fd = -1;
+      g_autoptr(GChecksum) checksum = g_checksum_new (G_CHECKSUM_SHA256);
+      g_autoptr(GError) local_error = NULL;
+      const char *layer_checksum;
+      const char *expected_digest;
+
+      if (delta_manifest)
+        delta_layer = flatpak_oci_manifest_find_delta_for (delta_manifest, old_diffid, image_config->rootfs.diff_ids[i]);
+
+      opts.autocreate_parents = TRUE;
+      opts.ignore_unsupported_content = TRUE;
+
+      if (delta_layer)
+        {
+          g_info ("Using OCI delta %s for layer %s", delta_layer->digest, layer->digest);
+          expected_digest = image_config->rootfs.diff_ids[i]; /* The delta recreates the uncompressed tar so use that digest */
+        }
+      else
+        {
+          layer_fd = g_steal_fd (&blob_fd);
+          expected_digest = layer->digest;
+        }
+
+      blob_fd = flatpak_oci_registry_download_blob (registry, oci_repository, FALSE,
+                                                    delta_layer ? delta_layer->digest : layer->digest,
+                                                    (const char **)(delta_layer ? delta_layer->urls : layer->urls),
+                                                    oci_layer_progress, &progress_data,
+                                                    cancellable, &local_error);
+
+      if (blob_fd == -1 && delta_layer == NULL &&
+          flatpak_oci_registry_is_local (registry) &&
+          g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        {
+          /* Pulling regular layer from local repo and its not there, try the uncompressed version.
+           * This happens when we deploy via system helper using oci deltas */
+          expected_digest = image_config->rootfs.diff_ids[i];
+          blob_fd = flatpak_oci_registry_download_blob (registry, oci_repository, FALSE,
+                                                        image_config->rootfs.diff_ids[i], NULL,
+                                                        oci_layer_progress, &progress_data,
+                                                        cancellable, NULL); /* No error here, we report the first error if this failes */
+        }
+
+      if (blob_fd == -1)
+        {
+          g_propagate_error (error, g_steal_pointer (&local_error));
+          goto error;
+        }
+
+      g_clear_error (&local_error);
+
+      if (delta_layer)
+        {
+          layer_fd = flatpak_oci_registry_apply_delta (registry, blob_fd, old_root, cancellable, error);
+          if (layer_fd == -1)
+            goto error;
+        }
+      else
+        {
+          layer_fd = g_steal_fd (&blob_fd);
+        }
+
+      a = archive_read_new ();
+#ifdef HAVE_ARCHIVE_READ_SUPPORT_FILTER_ALL
+      archive_read_support_filter_all (a);
+#else
+      archive_read_support_compression_all (a);
+#endif
+      archive_read_support_format_all (a);
+
+      if (!flatpak_archive_read_open_fd_with_checksum (a, layer_fd, checksum, error))
+        goto error;
+
+      if (!ostree_repo_import_archive_to_mtree (repo, &opts, a, archive_mtree, NULL, cancellable, error))
+        goto error;
+
+      if (archive_read_close (a) != ARCHIVE_OK)
+        {
+          propagate_libarchive_error (error, a);
+          goto error;
+        }
+
+      layer_checksum = g_checksum_get_string (checksum);
+      if (!g_str_has_prefix (expected_digest, "sha256:") ||
+          strcmp (expected_digest + strlen ("sha256:"), layer_checksum) != 0)
+        {
+          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Wrong layer checksum, expected %s, was %s"), expected_digest, layer_checksum);
+          goto error;
+        }
+
+      progress_data.pulled_layers++;
+      progress_data.previous_layers_size += delta_layer ? delta_layer->size : layer->size;
+    }
+
+  if (!ostree_repo_write_mtree (repo, archive_mtree, &archive_root, cancellable, error))
+    goto error;
+
+  if (!ostree_repo_file_ensure_resolved ((OstreeRepoFile *) archive_root, error))
+    goto error;
+
+  metadata = g_variant_ref_sink (g_variant_builder_end (metadata_builder));
+  if (!ostree_repo_write_commit_with_time (repo,
+                                           parent,
+                                           subject,
+                                           body,
+                                           metadata,
+                                           OSTREE_REPO_FILE (archive_root),
+                                           timestamp,
+                                           &commit_checksum,
+                                           cancellable, error))
+    goto error;
+
+  if (remote)
+    full_ref = g_strdup_printf ("%s:%s", remote, ref);
+  else
+    full_ref = g_strdup (ref);
+
+  /* Don’t need to set the collection ID here, since the ref is bound to a
+   * collection via its remote. */
+  ostree_repo_transaction_set_ref (repo, NULL, full_ref, commit_checksum);
+
+  if (!ostree_repo_commit_transaction (repo, NULL, cancellable, error))
+    return NULL;
+
+  return g_steal_pointer (&commit_checksum);
+
+error:
+
+  ostree_repo_abort_transaction (repo, cancellable, NULL);
+  return NULL;
+}
+
