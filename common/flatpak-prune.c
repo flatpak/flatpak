@@ -34,6 +34,7 @@
 
 #include "flatpak-error.h"
 #include "flatpak-prune-private.h"
+#include "flatpak-variant-private.h"
 #include "flatpak-variant-impl-private.h"
 #include "libglnx.h"
 #include "valgrind-private.h"
