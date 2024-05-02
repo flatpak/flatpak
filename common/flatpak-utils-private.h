@@ -28,7 +28,6 @@
 #include <gio/gunixfdlist.h>
 #include "flatpak-error.h"
 #include "flatpak-glib-backports-private.h"
-#include "flatpak-variant-private.h"
 
 #define AUTOFS_SUPER_MAGIC 0x0187
 
