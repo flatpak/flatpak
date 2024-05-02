@@ -30,7 +30,6 @@
 #include "flatpak-glib-backports-private.h"
 #include "flatpak-ref-utils-private.h"
 #include "flatpak-variant-private.h"
-#include <ostree.h>
 
 #define AUTOFS_SUPER_MAGIC 0x0187
 
@@ -171,25 +170,6 @@ GBytes *flatpak_zlib_compress_bytes   (GBytes  *bytes,
 GBytes *flatpak_zlib_decompress_bytes (GBytes  *bytes,
                                        GError **error);
 
-GVariant *flatpak_bundle_load (GFile              *file,
-                               char              **commit,
-                               FlatpakDecomposed **ref,
-                               char              **origin,
-                               char              **runtime_repo,
-                               char              **app_metadata,
-                               guint64            *installed_size,
-                               GBytes            **gpg_keys,
-                               char              **collection_id,
-                               GError            **error);
-
-gboolean flatpak_pull_from_bundle (OstreeRepo   *repo,
-                                   GFile        *file,
-                                   const char   *remote,
-                                   const char   *ref,
-                                   gboolean      require_gpg_signature,
-                                   GCancellable *cancellable,
-                                   GError      **error);
-
 void flatpak_parse_extension_with_tag (const char *extension,
                                        char      **name,
                                        char      **tag);
@@ -301,33 +281,6 @@ flatpak_main_context_new_default (void)
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (GMainContextPopDefault, flatpak_main_context_pop_default_destroy)
 
-typedef OstreeRepo FlatpakRepoTransaction;
-
-static inline void
-flatpak_repo_transaction_cleanup (void *p)
-{
-  OstreeRepo *repo = p;
-
-  if (repo)
-    {
-      g_autoptr(GError) error = NULL;
-      if (!ostree_repo_abort_transaction (repo, NULL, &error))
-        g_warning ("Error aborting ostree transaction: %s", error->message);
-      g_object_unref (repo);
-    }
-}
-
-static inline FlatpakRepoTransaction *
-flatpak_repo_transaction_start (OstreeRepo   *repo,
-                                GCancellable *cancellable,
-                                GError      **error)
-{
-  if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
-    return NULL;
-  return (FlatpakRepoTransaction *) g_object_ref (repo);
-}
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakRepoTransaction, flatpak_repo_transaction_cleanup)
-
 #define AUTOLOCK(name) G_GNUC_UNUSED __attribute__((cleanup (flatpak_auto_unlock_helper))) GMutex * G_PASTE (auto_unlock, __LINE__) = flatpak_auto_lock_helper (&G_LOCK_NAME (name))
 
 char * flatpak_filter_glob_to_regexp (const char *glob, gboolean runtime_only, GError **error);
@@ -348,20 +301,6 @@ gboolean flatpak_allocate_tmpdir (int           tmpdir_dfd,
                                   gboolean     *reusing_dir_out,
                                   GCancellable *cancellable,
                                   GError      **error);
-
-static inline void
-flatpak_ostree_progress_finish (OstreeAsyncProgress *progress)
-{
-  if (progress != NULL)
-    {
-      ostree_async_progress_finish (progress);
-      g_object_unref (progress);
-    }
-}
-
-typedef OstreeAsyncProgress OstreeAsyncProgressFinish;
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (OstreeAsyncProgressFinish, flatpak_ostree_progress_finish);
-
 
 gboolean flatpak_check_required_version (const char *ref,
                                          GKeyFile   *metakey,
