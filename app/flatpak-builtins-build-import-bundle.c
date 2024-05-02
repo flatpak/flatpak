@@ -30,6 +30,7 @@
 #include "libglnx.h"
 
 #include "flatpak-builtins.h"
+#include "flatpak-repo-utils-private.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-oci-registry-private.h"
 
