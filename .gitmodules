@@ -1,9 +1,0 @@
-[submodule "bubblewrap"]
-	path = subprojects/bubblewrap
-	url = https://github.com/containers/bubblewrap.git
-	ignore = dirty
-	branch = main
-[submodule "dbus-proxy"]
-	path = subprojects/dbus-proxy
-	url = https://github.com/flatpak/xdg-dbus-proxy.git
-	branch = main
