@@ -1,0 +1,14 @@
+type Container {
+  a: int16;
+  b: int32;
+  c: string;
+  list: 'List [] 'Item {
+     a: int32;
+     b: uint16;
+  };
+  d: byte;
+  tuple : 'Tuple {
+    a: uint16;
+    b: byte;
+  };
+};

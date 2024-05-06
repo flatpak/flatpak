@@ -1,0 +1,53 @@
+type Metadata [string] variant;
+type SortedMetadata [sorted string] variant;
+
+type Var {
+  foo: int16;
+  bar: int32;
+  b: byte;
+  the_rest: {
+    gazonk: uint16;
+    b: byte;
+  };
+};
+
+type Test {
+  foo: []int32;
+  s: string;
+  sh: uint16;
+  sub: 'Sub {
+    str: string;
+    bar: int32;
+  };
+  subagain: Sub;
+  sub2: 'Sub2 {
+    bar: int32;
+  };
+  bar: int32;
+  v: variant;
+  arr: []Var;
+  d1: [int32]int32;
+  d1s: 'D1s [sorted int32]int32; /* Sorted, so we can test binary search fixed lookup */
+  meta: Metadata;
+  metas: SortedMetadata;
+  d2: 'D2 [int32]string;
+  optional: ? 'Optional {
+    op: objectpath;
+    s: signature;
+    b: boolean;
+    h: handle;
+    large: int64;
+    larger: uint64;
+    pi: double;
+  };
+};
+
+type LotsOfDicts {
+ foo: [byte]int16;
+ foo2: [int16]{a: int32;};
+};
+
+type Endian {
+  little: littleendian uint16;
+  big: bigendian int32;
+};
