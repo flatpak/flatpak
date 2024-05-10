@@ -260,17 +260,6 @@ flatpak_quiet_transaction_run (FlatpakTransaction *transaction,
 }
 
 static void
-flatpak_quiet_transaction_finalize (GObject *object)
-{
-  FlatpakQuietTransaction *self = FLATPAK_QUIET_TRANSACTION (object);
-  g_autoptr(FlatpakInstallation) installation = NULL;
-
-  installation = flatpak_transaction_get_installation (FLATPAK_TRANSACTION (self));
-
-  G_OBJECT_CLASS (flatpak_quiet_transaction_parent_class)->finalize (object);
-}
-
-static void
 flatpak_quiet_transaction_init (FlatpakQuietTransaction *transaction)
 {
 }
@@ -278,10 +267,8 @@ flatpak_quiet_transaction_init (FlatpakQuietTransaction *transaction)
 static void
 flatpak_quiet_transaction_class_init (FlatpakQuietTransactionClass *class)
 {
-  GObjectClass *object_class = G_OBJECT_CLASS (class);
   FlatpakTransactionClass *transaction_class = FLATPAK_TRANSACTION_CLASS (class);
 
-  object_class->finalize = flatpak_quiet_transaction_finalize;
   transaction_class->choose_remote_for_ref = choose_remote_for_ref;
   transaction_class->add_new_remote = add_new_remote;
   transaction_class->new_operation = new_operation;
