@@ -2300,9 +2300,13 @@ flatpak_parse_repofile (const char   *remote_name,
 
   collection_id = g_key_file_get_string (keyfile, source_group,
                                          FLATPAK_REPO_DEPLOY_COLLECTION_ID_KEY, NULL);
-  if (collection_id == NULL || *collection_id == '\0')
+  if (collection_id != NULL && *collection_id == '\0')
+    g_clear_pointer (&collection_id, g_free);
+  if (collection_id == NULL)
     collection_id = g_key_file_get_string (keyfile, source_group,
                                            FLATPAK_REPO_COLLECTION_ID_KEY, NULL);
+  if (collection_id != NULL && *collection_id == '\0')
+    g_clear_pointer (&collection_id, g_free);
   if (collection_id != NULL)
     {
       if (gpg_key == NULL)
@@ -5085,7 +5089,7 @@ validate_component (FlatpakXml *component,
     }
 
   while ((bundle = flatpak_xml_find (component, "bundle", &prev)) != NULL)
-    flatpak_xml_free (flatpak_xml_unlink (component, bundle));
+    flatpak_xml_free (flatpak_xml_unlink (bundle, prev));
 
   bundle = flatpak_xml_new ("bundle");
   bundle->attribute_names = g_new0 (char *, 2 * 4);

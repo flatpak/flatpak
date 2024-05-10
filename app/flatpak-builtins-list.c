@@ -423,6 +423,7 @@ flatpak_builtin_list (int argc, char **argv, GCancellable *cancellable, GError *
   if (dirs->len > 1)
     {
       int c = find_column (all_columns, "installation", NULL);
+      g_assert (c != -1);
       all_columns[c].def = 1;
     }
 

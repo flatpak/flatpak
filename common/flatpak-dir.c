@@ -3107,6 +3107,11 @@ flatpak_deploy_data_get_eol_rebase (GBytes *deploy_data)
   return flatpak_deploy_data_get_string (deploy_data, "eolr");
 }
 
+/*<private>
+ * flatpak_deploy_data_get_previous_ids:
+ *
+ * Returns: (array length=length zero-terminated=1) (transfer container): an array of constant strings
+ **/
 const char **
 flatpak_deploy_data_get_previous_ids (GBytes *deploy_data, gsize *length)
 {
@@ -6980,7 +6985,6 @@ export_desktop_file (const char         *app,
                      GCancellable       *cancellable,
                      GError            **error)
 {
-  gboolean ret = FALSE;
   glnx_autofd int desktop_fd = -1;
   g_autofree char *tmpfile_name = g_strdup_printf ("export-desktop-XXXXXX");
   g_autoptr(GOutputStream) out_stream = NULL;
@@ -6993,21 +6997,20 @@ export_desktop_file (const char         *app,
   gint old_argc;
   g_auto(GStrv) old_argv = NULL;
   g_auto(GStrv) groups = NULL;
-  GString *new_exec = NULL;
   g_autofree char *escaped_app = maybe_quote (app);
   g_autofree char *escaped_branch = maybe_quote (branch);
   g_autofree char *escaped_arch = maybe_quote (arch);
   int i;
 
   if (!flatpak_openat_noatime (parent_fd, name, &desktop_fd, cancellable, error))
-    goto out;
+    return FALSE;
 
   if (!read_fd (desktop_fd, stat_buf, &data, &data_len, error))
-    goto out;
+    return FALSE;
 
   keyfile = g_key_file_new ();
   if (!g_key_file_load_from_data (keyfile, data, data_len, G_KEY_FILE_KEEP_TRANSLATIONS, error))
-    goto out;
+    return FALSE;
 
   if (g_str_has_suffix (name, ".service"))
     {
@@ -7107,6 +7110,7 @@ export_desktop_file (const char         *app,
 
   for (i = 0; groups[i] != NULL; i++)
     {
+      g_autoptr(GString) new_exec = NULL;
       g_auto(GStrv) flatpak_run_opts = g_key_file_get_string_list (keyfile, groups[i], "X-Flatpak-RunOptions", NULL, NULL);
       g_autofree char *flatpak_run_args = format_flatpak_run_args_from_run_opts (flatpak_run_opts);
 
@@ -7158,7 +7162,7 @@ export_desktop_file (const char         *app,
                 {
                   flatpak_fail_error (error, FLATPAK_ERROR_EXPORT_FAILED,
                                      _("Invalid Exec argument %s"), arg);
-                  goto out;
+                  return FALSE;
                 }
               else
                 g_string_append_printf (new_exec, " %s", arg);
@@ -7175,27 +7179,21 @@ export_desktop_file (const char         *app,
 
   new_data = g_key_file_to_data (keyfile, &new_data_len, error);
   if (new_data == NULL)
-    goto out;
+    return FALSE;
 
   if (!flatpak_open_in_tmpdir_at (parent_fd, 0755, tmpfile_name, &out_stream, cancellable, error))
-    goto out;
+    return FALSE;
 
   if (!g_output_stream_write_all (out_stream, new_data, new_data_len, NULL, cancellable, error))
-    goto out;
+    return FALSE;
 
   if (!g_output_stream_close (out_stream, cancellable, error))
-    goto out;
+    return FALSE;
 
   if (target)
     *target = g_steal_pointer (&tmpfile_name);
 
-  ret = TRUE;
-out:
-
-  if (new_exec != NULL)
-    g_string_free (new_exec, TRUE);
-
-  return ret;
+  return TRUE;
 }
 
 static gboolean
@@ -8663,7 +8661,8 @@ flatpak_dir_deploy_update (FlatpakDir        *self,
   g_autofree char *old_active = NULL;
   const char *old_origin;
   g_autofree char *commit = NULL;
-  g_auto(GStrv) previous_ids = NULL;
+  g_autofree const char **previous_ids = NULL;
+  g_auto(GStrv) previous_ids_owned = NULL;
 
   if (!flatpak_dir_lock (self, &lock,
                          cancellable, error))
@@ -8680,19 +8679,21 @@ flatpak_dir_deploy_update (FlatpakDir        *self,
   old_origin = flatpak_deploy_data_get_origin (old_deploy_data);
   old_subpaths = flatpak_deploy_data_get_subpaths (old_deploy_data);
 
-  previous_ids = g_strdupv ((char **) flatpak_deploy_data_get_previous_ids (old_deploy_data, NULL));
+  previous_ids = flatpak_deploy_data_get_previous_ids (old_deploy_data, NULL);
   if (opt_previous_ids)
     {
-      g_auto(GStrv) old_previous_ids = previous_ids;
-      previous_ids = flatpak_strv_merge (old_previous_ids, (char **) opt_previous_ids);
+      previous_ids_owned = flatpak_strv_merge ((char **) previous_ids, (char **) opt_previous_ids);
+      g_clear_pointer (&previous_ids, g_free);
     }
+  else
+    previous_ids_owned = g_strdupv ((char **) previous_ids);
 
   if (!flatpak_dir_deploy (self,
                            old_origin,
                            ref,
                            checksum_or_latest,
                            opt_subpaths ? opt_subpaths : old_subpaths,
-                           (const char * const *) previous_ids,
+                           (const char * const *) previous_ids_owned,
                            cancellable, error))
     return FALSE;
 
@@ -11832,6 +11833,7 @@ flatpak_dir_remote_fetch_indexed_summary (FlatpakDir   *self,
           if (summary == NULL)
             return FALSE;
 
+          g_free (sha256);
           sha256 = g_compute_checksum_for_bytes (G_CHECKSUM_SHA256, summary);
           if (strcmp (sha256, checksum) != 0)
             return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid checksum for indexed summary %s for remote '%s'"), checksum, name_or_uri);
@@ -12489,12 +12491,11 @@ find_matching_ref (GHashTable  *refs,
             g_string_append (err, ", ");
 
           const char *branch = flatpak_decomposed_get_branch (ref);
-
-          g_string_append (err,
-                           g_strdup_printf ("%s/%s/%s",
-                                            name,
-                                            opt_arch ? opt_arch : "",
-                                            branch));
+          g_string_append_printf (err,
+                                  "%s/%s/%s",
+                                  name,
+                                  opt_arch ? opt_arch : "",
+                                  branch);
         }
 
       flatpak_fail (error, "%s", err->str);
