@@ -1952,6 +1952,8 @@ flatpak_ensure_system_user_cache_dir_location (GError **error)
       (st_buf.st_mode & 0777) == 0755)
     return g_file_new_for_path (path);
 
+  g_clear_pointer (&path, g_free);
+
   path = g_strdup ("/var/tmp/flatpak-cache-XXXXXX");
 
   if (g_mkdtemp_full (path, 0755) == NULL)
