@@ -28,6 +28,7 @@
 
 #include <string.h>
 
+#include <glib-unix.h>
 #include <gio/gio.h>
 
 G_BEGIN_DECLS
