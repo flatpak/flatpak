@@ -174,9 +174,9 @@ fi
 
 mkdir -p ${DIR}/files/share/locale
 mkdir -p ${DIR}/files/share/runtime/locale/de
-ln -s -t ${DIR}/files/share/locale ../../share/runtime/locale/de/share/de
+ln -s ../../share/runtime/locale/de/share/de ${DIR}/files/share/locale
 mkdir -p ${DIR}/files/share/runtime/locale/fr
-ln -s -t ${DIR}/files/share/locale ../../share/runtime/locale/fr/share/fr
+ln -s ../../share/runtime/locale/fr/share/fr ${DIR}/files/share/locale
 
 flatpak build-finish ${BUILD_FINISH_ARGS-} --command=hello.sh ${DIR} >&2
 mkdir -p repos
