@@ -800,14 +800,17 @@ flatpak_repo_prune (OstreeRepo    *repo,
     g_timer_stop (timer);
     g_info ("Elapsed time: %.1f sec",  g_timer_elapsed (timer, NULL));
 
-    g_info ("Pruning unreachable objects");
-    g_timer_start (timer);
+    if (!dry_run)
+      {
+        g_info ("Pruning unreachable objects");
+        g_timer_start (timer);
 
-    if (!prune_unreachable_loose_objects (repo, &data, cancellable, error))
-      return FALSE;
+        if (!prune_unreachable_loose_objects (repo, &data, cancellable, error))
+          return FALSE;
 
-    g_timer_stop (timer);
-    g_info ("Elapsed time: %.1f sec",  g_timer_elapsed (timer, NULL));
+        g_timer_stop (timer);
+        g_info ("Elapsed time: %.1f sec",  g_timer_elapsed (timer, NULL));
+      }
   }
 
   /* Prune static deltas outside lock to avoid conflict with its exclusive lock */
