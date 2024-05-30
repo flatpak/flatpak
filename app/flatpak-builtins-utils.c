@@ -559,7 +559,6 @@ flatpak_resolve_matching_remotes (GPtrArray      *remote_dir_pairs,
                                   GError        **error)
 {
   guint chosen = 0; /* 1 indexed */
-  guint i;
 
   g_assert (remote_dir_pairs->len > 0);
 
@@ -568,34 +567,21 @@ flatpak_resolve_matching_remotes (GPtrArray      *remote_dir_pairs,
    * step after the dependencies are resolved.
    */
   if (remote_dir_pairs->len == 1)
-    chosen = 1;
-
-  if (chosen == 0)
     {
-      if (remote_dir_pairs->len == 1)
+      chosen = 1;
+    }
+  else
+    {
+      g_auto(GStrv) names = g_new0 (char *, remote_dir_pairs->len + 1);
+      for (guint i = 0; i < remote_dir_pairs->len; i++)
         {
-          RemoteDirPair *pair = g_ptr_array_index (remote_dir_pairs, 0);
-          const char *dir_name = flatpak_dir_get_name_cached (pair->dir);
-          if (flatpak_yes_no_prompt (TRUE, /* default to yes on Enter */
-                                     _("Found similar ref(s) for ‘%s’ in remote ‘%s’ (%s).\nUse this remote?"),
-                                     opt_search_ref, pair->remote_name, dir_name))
-            chosen = 1;
-          else
-            return flatpak_fail (error, _("No remote chosen to resolve matches for ‘%s’"), opt_search_ref);
+          RemoteDirPair *pair = g_ptr_array_index (remote_dir_pairs, i);
+          names[i] = g_strdup_printf ("‘%s’ (%s)", pair->remote_name, flatpak_dir_get_name_cached (pair->dir));
         }
-      else
-        {
-          g_auto(GStrv) names = g_new0 (char *, remote_dir_pairs->len + 1);
-          for (i = 0; i < remote_dir_pairs->len; i++)
-            {
-              RemoteDirPair *pair = g_ptr_array_index (remote_dir_pairs, i);
-              names[i] = g_strdup_printf ("‘%s’ (%s)", pair->remote_name, flatpak_dir_get_name_cached (pair->dir));
-            }
-          flatpak_format_choices ((const char **) names, _("Remotes found with refs similar to ‘%s’:"), opt_search_ref);
-          chosen = flatpak_number_prompt (TRUE, 0, remote_dir_pairs->len, _("Which do you want to use (0 to abort)?"));
-          if (chosen == 0)
-            return flatpak_fail (error, _("No remote chosen to resolve matches for ‘%s’"), opt_search_ref);
-        }
+      flatpak_format_choices ((const char **) names, _("Remotes found with refs similar to ‘%s’:"), opt_search_ref);
+      chosen = flatpak_number_prompt (TRUE, 0, remote_dir_pairs->len, _("Which do you want to use (0 to abort)?"));
+      if (chosen == 0)
+        return flatpak_fail (error, _("No remote chosen to resolve matches for ‘%s’"), opt_search_ref);
     }
 
   if (out_pair)
