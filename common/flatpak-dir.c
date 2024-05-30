@@ -14468,6 +14468,7 @@ parse_ref_file (GKeyFile *keyfile,
   *url_out = NULL;
   *gpg_data_out = NULL;
   *is_runtime_out = FALSE;
+  *collection_id_out = NULL;
 
   if (!g_key_file_has_group (keyfile, FLATPAK_REF_GROUP))
     return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid file format, no %s group"), FLATPAK_REF_GROUP);
