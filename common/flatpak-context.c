@@ -2860,6 +2860,90 @@ flatpak_context_apply_env_appid (FlatpakBwrap *bwrap,
     flatpak_bwrap_set_env (bwrap, "HOST_XDG_STATE_HOME", g_getenv ("XDG_STATE_HOME"), TRUE);
 }
 
+/* This creates zero or more directories unders base_fd+basedir, each
+ * being guaranteed to either exist and be a directory (no symlinks)
+ * or be created as a directory. The last directory is opened
+ * and the fd is returned.
+ */
+static gboolean
+mkdir_p_open_nofollow_at (int          base_fd,
+                          const char  *basedir,
+                          int          mode,
+                          const char  *subdir,
+                          int         *out_fd,
+                          GError     **error)
+{
+  glnx_autofd int parent_fd = -1;
+
+  if (g_path_is_absolute (subdir))
+    {
+      const char *skipped_prefix = subdir;
+
+      while (*skipped_prefix == '/')
+        skipped_prefix++;
+
+      g_warning ("--persist=\"%s\" is deprecated, treating it as --persist=\"%s\"", subdir, skipped_prefix);
+      subdir = skipped_prefix;
+    }
+
+  g_autofree char *subdir_dirname = g_path_get_dirname (subdir);
+
+  if (strcmp (subdir_dirname, ".") == 0)
+    {
+      /* It is ok to open basedir with follow=true */
+      if (!glnx_opendirat (base_fd, basedir, TRUE, &parent_fd, error))
+        return FALSE;
+    }
+  else if (strcmp (subdir_dirname, "..") == 0)
+    {
+      return glnx_throw (error, "'..' not supported in --persist paths");
+    }
+  else
+    {
+      if (!mkdir_p_open_nofollow_at (base_fd, basedir, mode,
+                                     subdir_dirname, &parent_fd, error))
+        return FALSE;
+    }
+
+  g_autofree char *subdir_basename = g_path_get_basename (subdir);
+
+  if (strcmp (subdir_basename, ".") == 0)
+    {
+      *out_fd = glnx_steal_fd (&parent_fd);
+      return TRUE;
+    }
+  else if (strcmp (subdir_basename, "..") == 0)
+    {
+      return glnx_throw (error, "'..' not supported in --persist paths");
+    }
+
+  if (!glnx_shutil_mkdir_p_at (parent_fd, subdir_basename, mode, NULL, error))
+    return FALSE;
+
+  int fd = openat (parent_fd, subdir_basename, O_PATH | O_NONBLOCK | O_DIRECTORY | O_CLOEXEC | O_NOCTTY | O_NOFOLLOW);
+  if (fd == -1)
+    {
+      int saved_errno = errno;
+      struct stat stat_buf;
+
+      /* If it's a symbolic link, that could be a user trying to offload
+       * large data to another filesystem, but it could equally well be
+       * a malicious or compromised app trying to exploit GHSA-7hgv-f2j8-xw87.
+       * Produce a clearer error message in this case.
+       * Unfortunately the errno we get in this case is ENOTDIR, so we have
+       * to ask again to find out whether it's really a symlink. */
+      if (saved_errno == ENOTDIR &&
+          fstatat (parent_fd, subdir_basename, &stat_buf, AT_SYMLINK_NOFOLLOW) == 0 &&
+          S_ISLNK (stat_buf.st_mode))
+        return glnx_throw (error, "Symbolic link \"%s\" not allowed to avoid sandbox escape", subdir_basename);
+
+      return glnx_throw_errno_prefix (error, "openat(%s)", subdir_basename);
+    }
+
+  *out_fd = fd;
+  return TRUE;
+}
+
 void
 flatpak_context_append_bwrap_filesystem (FlatpakContext  *context,
                                          FlatpakBwrap    *bwrap,
@@ -2883,13 +2967,30 @@ flatpak_context_append_bwrap_filesystem (FlatpakContext  *context,
       while (g_hash_table_iter_next (&iter, &key, NULL))
         {
           const char *persist = key;
-          g_autofree char *src = g_build_filename (g_get_home_dir (), ".var/app", app_id, persist, NULL);
+          g_autofree char *appdir = g_build_filename (g_get_home_dir (), ".var/app", app_id, NULL);
           g_autofree char *dest = g_build_filename (g_get_home_dir (), persist, NULL);
+          g_autoptr(GError) local_error = NULL;
 
-          if (g_mkdir_with_parents (src, 0755) != 0)
-            g_info ("Unable to create directory %s", src);
+          if (g_mkdir_with_parents (appdir, 0755) != 0)
+            {
+              g_warning ("Unable to create directory %s", appdir);
+              continue;
+            }
 
-          flatpak_bwrap_add_bind_arg (bwrap, "--bind", src, dest);
+          /* Don't follow symlinks from the persist directory, as it is under user control */
+          glnx_autofd int src_fd = -1;
+          if (!mkdir_p_open_nofollow_at (AT_FDCWD, appdir, 0755,
+                                         persist, &src_fd,
+                                         &local_error))
+            {
+              g_warning ("Failed to create persist path %s: %s", persist, local_error->message);
+              continue;
+            }
+
+          g_autofree char *src_via_proc = g_strdup_printf ("/proc/self/fd/%d", src_fd);
+
+          flatpak_bwrap_add_fd (bwrap, g_steal_fd (&src_fd));
+          flatpak_bwrap_add_bind_arg (bwrap, "--bind", src_via_proc, dest);
         }
     }
 
