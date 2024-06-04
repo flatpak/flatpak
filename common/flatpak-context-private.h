@@ -1,5 +1,6 @@
 /*
  * Copyright © 2014-2018 Red Hat, Inc
+ * Copyright © 2024 GNOME Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,6 +17,7 @@
  *
  * Authors:
  *       Alexander Larsson <alexl@redhat.com>
+ *       Hubert Figuière <hub@figuiere.net>
  */
 
 #ifndef __FLATPAK_CONTEXT_H__
@@ -53,13 +55,20 @@ typedef enum {
   FLATPAK_CONTEXT_SOCKET_INHERIT_WAYLAND_SOCKET = 1 << 10,
 } FlatpakContextSockets;
 
+#define FALLBACK_PREFIX "fallback:"
+
+/* Keep the order in sync with flatpak_context_devices */
 typedef enum {
   FLATPAK_CONTEXT_DEVICE_DRI         = 1 << 0,
   FLATPAK_CONTEXT_DEVICE_ALL         = 1 << 1,
   FLATPAK_CONTEXT_DEVICE_KVM         = 1 << 2,
   FLATPAK_CONTEXT_DEVICE_SHM         = 1 << 3,
   FLATPAK_CONTEXT_DEVICE_INPUT       = 1 << 4,
+  FLATPAK_CONTEXT_DEVICE_FALLBACK    = 1 << 31,
 } FlatpakContextDevices;
+
+#define IS_DEVICE_FALLBACK(d) \
+  (((d) & FLATPAK_CONTEXT_DEVICE_FALLBACK) != 0)
 
 typedef enum {
   FLATPAK_CONTEXT_FEATURE_DEVEL        = 1 << 0,
@@ -77,6 +86,7 @@ struct FlatpakContext
   FlatpakContextSockets  sockets_valid;
   FlatpakContextDevices  devices;
   FlatpakContextDevices  devices_valid;
+  GSList                *fallback_devices;
   FlatpakContextFeatures features;
   FlatpakContextFeatures features_valid;
   GHashTable            *env_vars;
@@ -111,6 +121,16 @@ void           flatpak_context_save_metadata (FlatpakContext *context,
                                               gboolean        flatten,
                                               GKeyFile       *metakey);
 void           flatpak_context_allow_host_fs (FlatpakContext *context);
+FlatpakContextDevices flatpak_context_device_from_string (const char *string, GError **error);
+FlatpakContextDevices flatpak_context_devices_with_fallback (FlatpakContext  *context);
+void           flatpak_context_add_devices (FlatpakContext       *context,
+                                            FlatpakContextDevices devices);
+void           flatpak_context_remove_devices (FlatpakContext       *context,
+                                               FlatpakContextDevices devices);
+void           flatpak_context_add_fallback_devices (FlatpakContext       *context,
+                                                     FlatpakContextDevices devices);
+void           flatpak_context_remove_fallback_devices (FlatpakContext       *context,
+                                                        FlatpakContextDevices devices);
 void           flatpak_context_set_session_bus_policy (FlatpakContext *context,
                                                        const char     *name,
                                                        FlatpakPolicy   policy);

@@ -1,5 +1,6 @@
 /* vi:set et sw=2 sts=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e-s:
  * Copyright © 2014-2018 Red Hat, Inc
+ * Copyright © 2024 GNOME Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,6 +17,7 @@
  *
  * Authors:
  *       Alexander Larsson <alexl@redhat.com>
+ *       Hubert Figuière <hub@figuiere.net>
  */
 
 #include "config.h"
@@ -65,6 +67,7 @@ const char *flatpak_context_sockets[] = {
   NULL
 };
 
+/* Keep the order in sync with FlatpakContextDevices */
 const char *flatpak_context_devices[] = {
   "dri",
   "all",
@@ -113,6 +116,7 @@ flatpak_context_new (void)
 void
 flatpak_context_free (FlatpakContext *context)
 {
+  g_slist_free (context->fallback_devices);
   g_hash_table_destroy (context->env_vars);
   g_hash_table_destroy (context->persistent);
   g_hash_table_destroy (context->filesystems);
@@ -296,32 +300,217 @@ flatpak_context_sockets_to_args (FlatpakContextSockets sockets,
   return flatpak_context_bitmask_to_args (sockets, valid, flatpak_context_sockets, "--socket", "--nosocket", args);
 }
 
+typedef struct {
+  FlatpakContextDevices devices;
+  gboolean remove_all;
+  gboolean has_fallback;
+} FallbackDeviceState;
+
+static void
+walk_fallbacks (gpointer data, gpointer data2)
+{
+  FlatpakContextDevices fallback = GPOINTER_TO_UINT (data);
+  FallbackDeviceState *state = (FallbackDeviceState *)data2;
+
+  /* If the fallback is only `all` that mean the other device isn't known of
+   * this version of flatpak.
+   * Otherwise we remove `all` as we don't need it.
+   */
+  if (fallback & ~(FLATPAK_CONTEXT_DEVICE_FALLBACK | FLATPAK_CONTEXT_DEVICE_ALL))
+    fallback &= ~FLATPAK_CONTEXT_DEVICE_ALL;
+
+  state->devices |= fallback;
+}
+
+/*
+ * We will remove `all` if it is in any fallback, AND said fallback
+ * isn't necessary.
+ */
+FlatpakContextDevices
+flatpak_context_devices_with_fallback (FlatpakContext  *context)
+{
+  FallbackDeviceState state = { 0, FALSE, FALSE };
+
+  if (context->fallback_devices == NULL)
+    return context->devices;
+
+  g_slist_foreach (context->fallback_devices, walk_fallbacks, &state);
+
+  state.devices &= ~FLATPAK_CONTEXT_DEVICE_FALLBACK;
+
+  /* If the fallbacks don't have `all` then we'll remove it. */
+  if ((state.devices & FLATPAK_CONTEXT_DEVICE_ALL) == 0)
+    state.devices |= context->devices & ~FLATPAK_CONTEXT_DEVICE_ALL;
+  else
+    state.devices |= context->devices;
+
+  return state.devices;
+}
+
 static FlatpakContextDevices
+flatpak_context_fallback_devices_from_string (const char *string)
+{
+  FlatpakContextDevices fallback_devices = 0;
+
+  if (strncmp (FALLBACK_PREFIX, string, strlen (FALLBACK_PREFIX)) == 0)
+    string += strlen (FALLBACK_PREFIX);
+  else
+    return 0;
+
+  char *params = strchr (string, ',');
+  if (params)
+    {
+      g_auto(GStrv) parts = g_strsplit (string, ",", 0);
+      for (int i = 0; parts[i]; i++)
+        {
+          FlatpakContextDevices device = flatpak_context_bitmask_from_string (parts[i], flatpak_context_devices);
+          if (device != 0)
+            fallback_devices |= device;
+        }
+      if (fallback_devices != 0)
+        fallback_devices |= FLATPAK_CONTEXT_DEVICE_FALLBACK;
+    }
+
+  return fallback_devices;
+}
+
+FlatpakContextDevices
 flatpak_context_device_from_string (const char *string, GError **error)
 {
   FlatpakContextDevices devices = flatpak_context_bitmask_from_string (string, flatpak_context_devices);
 
   if (devices == 0)
     {
-      g_autofree char *values = g_strjoinv (", ", (char **) flatpak_context_devices);
-      g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
-                   _("Unknown device type %s, valid types are: %s"), string, values);
+      devices = flatpak_context_fallback_devices_from_string (string);
+      if (devices == 0)
+        {
+          g_autofree char *values = g_strjoinv (", ", (char **) flatpak_context_devices);
+          g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
+                       _("Unknown device type %s, valid types are: %s"), string, values);
+        }
     }
   return devices;
 }
 
-static char **
-flatpak_context_devices_to_string (FlatpakContextDevices devices, FlatpakContextDevices valid)
+/**
+ * flatpak_context_fallback_devices_to_string:
+ *
+ * This will build the argument for a fallback device @fallback would
+ * be passed to `--device`.
+ *
+ * Returns: (transfer full): the argument.
+ */
+static char *
+flatpak_context_fallback_devices_to_string (FlatpakContextDevices fallback)
 {
-  return flatpak_context_bitmask_to_string (devices, valid, flatpak_context_devices);
+  guint32 i;
+  GString *str = NULL;
+
+  for (i = 0; flatpak_context_devices[i] != NULL; i++)
+    {
+      guint32 bitmask = 1 << i;
+      if (fallback & bitmask)
+        {
+          if (str)
+            {
+              /*
+               * One of the assumption here is that the order of
+               * fallback is in bit order, with `all` always last.
+               */
+              str = g_string_prepend_c (str, ',');
+              str = g_string_prepend (str, flatpak_context_devices[i]);
+            }
+          else
+            str = g_string_new (flatpak_context_devices[i]);
+        }
+    }
+
+  if (str)
+    str = g_string_prepend (str, FALLBACK_PREFIX);
+
+  return str ? g_string_free (str, FALSE) : NULL;
+}
+
+static void
+_add_fallback_to_ptr_array(gpointer data, GPtrArray *array)
+{
+  FlatpakContextDevices device = GPOINTER_TO_INT (data);
+  g_ptr_array_add (array, flatpak_context_fallback_devices_to_string(device));
+}
+
+static char **
+flatpak_context_devices_to_string (FlatpakContextDevices devices,
+                                   FlatpakContextDevices valid,
+                                   GSList *fallback_devices)
+{
+  guint32 i;
+  GPtrArray *array;
+
+  array = g_ptr_array_new ();
+
+  for (i = 0; flatpak_context_devices[i] != NULL; i++)
+    {
+      guint32 bitmask = 1 << i;
+      if (valid & bitmask)
+        {
+          if (devices & bitmask)
+            g_ptr_array_add (array, g_strdup (flatpak_context_devices[i]));
+          else
+            g_ptr_array_add (array, g_strdup_printf ("!%s", flatpak_context_devices[i]));
+        }
+    }
+
+  g_slist_foreach (fallback_devices, (GFunc)_add_fallback_to_ptr_array, array);
+
+  g_ptr_array_add (array, NULL);
+  return (char **) g_ptr_array_free (array, FALSE);
+}
+
+static void
+_add_fallback_to_args_array (gpointer data, GPtrArray *args)
+{
+  FlatpakContextDevices device = GPOINTER_TO_INT (data);
+  g_autofree char *fallback_devices = flatpak_context_fallback_devices_to_string(device);
+  g_ptr_array_add (args, g_strdup_printf ("--device=%s", fallback_devices));
 }
 
 static void
 flatpak_context_devices_to_args (FlatpakContextDevices devices,
                                  FlatpakContextDevices valid,
+                                 GSList               *fallback_devices,
                                  GPtrArray            *args)
 {
-  return flatpak_context_bitmask_to_args (devices, valid, flatpak_context_devices, "--device", "--nodevice", args);
+  guint32 i;
+  gboolean add_all = (devices & FLATPAK_CONTEXT_DEVICE_ALL) != 0;
+
+  for (i = 0; flatpak_context_devices[i] != NULL; i++)
+    {
+      guint32 bitmask = 1 << i;
+
+      if (bitmask & FLATPAK_CONTEXT_DEVICE_ALL)
+        continue;
+
+      if (valid & bitmask)
+        {
+          if (devices & bitmask)
+            g_ptr_array_add (args, g_strdup_printf ("--device=%s", flatpak_context_devices[i]));
+          else
+            g_ptr_array_add (args, g_strdup_printf ("--nodevice=%s", flatpak_context_devices[i]));
+        }
+    }
+
+  g_slist_foreach (fallback_devices, (GFunc)_add_fallback_to_args_array, args);
+
+  if (valid & FLATPAK_CONTEXT_DEVICE_ALL)
+    {
+      if (devices & FLATPAK_CONTEXT_DEVICE_ALL)
+        {
+          if (add_all)
+            g_ptr_array_add (args, g_strdup ("--device=all"));
+        }
+      else
+        g_ptr_array_add (args, g_strdup ("--nodevice=all"));
+    }
 }
 
 static FlatpakContextFeatures
@@ -385,7 +574,7 @@ flatpak_context_remove_sockets (FlatpakContext       *context,
   context->sockets &= ~sockets;
 }
 
-static void
+void
 flatpak_context_add_devices (FlatpakContext       *context,
                              FlatpakContextDevices devices)
 {
@@ -393,12 +582,26 @@ flatpak_context_add_devices (FlatpakContext       *context,
   context->devices |= devices;
 }
 
-static void
+void
 flatpak_context_remove_devices (FlatpakContext       *context,
                                 FlatpakContextDevices devices)
 {
   context->devices_valid |= devices;
   context->devices &= ~devices;
+}
+
+void
+flatpak_context_add_fallback_devices (FlatpakContext       *context,
+				      FlatpakContextDevices devices)
+{
+  context->fallback_devices = g_slist_prepend (context->fallback_devices, GINT_TO_POINTER (devices));
+}
+
+void
+flatpak_context_remove_fallback_devices (FlatpakContext       *context,
+				      FlatpakContextDevices devices)
+{
+  context->fallback_devices = g_slist_remove (context->fallback_devices, GINT_TO_POINTER (devices));
 }
 
 static void
@@ -986,6 +1189,7 @@ flatpak_context_merge (FlatpakContext *context,
   context->devices &= ~other->devices_valid;
   context->devices |= other->devices;
   context->devices_valid |= other->devices_valid;
+  context->fallback_devices = g_slist_concat (context->fallback_devices, g_slist_copy (other->fallback_devices));
   context->features &= ~other->features_valid;
   context->features |= other->features;
   context->features_valid |= other->features_valid;
@@ -1124,7 +1328,10 @@ option_device_cb (const gchar *option_name,
   if (device == 0)
     return FALSE;
 
-  flatpak_context_add_devices (context, device);
+  if (IS_DEVICE_FALLBACK (device))
+    flatpak_context_add_fallback_devices (context, device);
+  else
+    flatpak_context_add_devices (context, device);
 
   return TRUE;
 }
@@ -1142,7 +1349,10 @@ option_nodevice_cb (const gchar *option_name,
   if (device == 0)
     return FALSE;
 
-  flatpak_context_remove_devices (context, device);
+  if (IS_DEVICE_FALLBACK (device))
+    flatpak_context_remove_fallback_devices (context, device);
+  else
+    flatpak_context_remove_devices (context, device);
 
   return TRUE;
 }
@@ -1653,13 +1863,12 @@ flatpak_context_load_metadata (FlatpakContext *context,
           FlatpakContextDevices device = flatpak_context_device_from_string (parse_negated (devices[i], &remove), NULL);
           if (device == 0)
             g_info ("Unknown device type %s", devices[i]);
+          else if (IS_DEVICE_FALLBACK (device))
+            flatpak_context_add_fallback_devices (context, device);
+          else if (remove)
+            flatpak_context_remove_devices (context, device);
           else
-            {
-              if (remove)
-                flatpak_context_remove_devices (context, device);
-              else
-                flatpak_context_add_devices (context, device);
-            }
+            flatpak_context_add_devices (context, device);
         }
     }
 
@@ -1871,6 +2080,7 @@ flatpak_context_save_metadata (FlatpakContext *context,
   FlatpakContextSockets sockets_valid = context->sockets_valid;
   FlatpakContextDevices devices_mask = context->devices;
   FlatpakContextDevices devices_valid = context->devices_valid;
+  GSList *fallback_devices = context->fallback_devices;
   FlatpakContextFeatures features_mask = context->features;
   FlatpakContextFeatures features_valid = context->features_valid;
   g_auto(GStrv) groups = NULL;
@@ -1898,7 +2108,7 @@ flatpak_context_save_metadata (FlatpakContext *context,
 
   shared = flatpak_context_shared_to_string (shares_mask, shares_valid);
   sockets = flatpak_context_sockets_to_string (sockets_mask, sockets_valid);
-  devices = flatpak_context_devices_to_string (devices_mask, devices_valid);
+  devices = flatpak_context_devices_to_string (devices_mask, devices_valid, fallback_devices);
   features = flatpak_context_features_to_string (features_mask, features_valid);
 
   if (shared[0] != NULL)
@@ -2283,7 +2493,7 @@ flatpak_context_to_args (FlatpakContext *context,
 
   flatpak_context_shared_to_args (context->shares, context->shares_valid, args);
   flatpak_context_sockets_to_args (context->sockets, context->sockets_valid, args);
-  flatpak_context_devices_to_args (context->devices, context->devices_valid, args);
+  flatpak_context_devices_to_args (context->devices, context->devices_valid, context->fallback_devices, args);
   flatpak_context_features_to_args (context->features, context->features_valid, args);
 
   g_hash_table_iter_init (&iter, context->env_vars);
@@ -2410,6 +2620,7 @@ flatpak_context_reset_permissions (FlatpakContext *context)
   context->shares = 0;
   context->sockets = 0;
   context->devices = 0;
+  g_slist_free ( g_steal_pointer (&context->fallback_devices));
   context->features = 0;
 
   g_hash_table_remove_all (context->persistent);

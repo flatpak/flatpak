@@ -17,7 +17,7 @@ reset_overrides () {
     assert_file_empty info
 }
 
-echo "1..18"
+echo "1..19"
 
 setup_repo
 install_repo
@@ -43,6 +43,20 @@ assert_file_has_content override "^\[Context\]$"
 assert_file_has_content override "^devices=dri;!kvm;$"
 
 ok "override --device"
+
+reset_overrides
+
+${FLATPAK} override --user --device=all org.test.Hello
+${FLATPAK} override --user --device=fallback:input,all org.test.Hello
+# This will get ignored until "usb" is supported.
+${FLATPAK} override --user --device=fallback:usb,all org.test.Hello
+${FLATPAK} override --user --nodevice=kvm org.test.Hello
+${FLATPAK} override --user --show org.test.Hello > override
+
+assert_file_has_content override "^\[Context\]$"
+assert_file_has_content override "^devices=all;!kvm;fallback:input,all;$"
+
+ok "override --device no-all"
 
 reset_overrides
 
