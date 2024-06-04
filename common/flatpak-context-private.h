@@ -17,6 +17,7 @@
  *
  * Authors:
  *       Alexander Larsson <alexl@redhat.com>
+ *       Georges Basile Stavracas Neto <georges.stavracas@gmail.com>
  *       Hubert Figuière <hub@figuiere.net>
  */
 
@@ -26,6 +27,7 @@
 #include "libglnx.h"
 #include <flatpak-common-types-private.h>
 #include "flatpak-exports-private.h"
+#include "flatpak-usb-private.h"
 
 typedef enum {
   FLATPAK_SESSION_BUS,
@@ -95,6 +97,8 @@ struct FlatpakContext
   GHashTable            *system_bus_policy;
   GHashTable            *a11y_bus_policy;
   GHashTable            *generic_policy;
+  GHashTable            *enumerable_usb_devices;
+  GHashTable            *hidden_usb_devices;
 };
 
 extern const char *flatpak_context_sockets[];
