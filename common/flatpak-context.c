@@ -17,6 +17,7 @@
  *
  * Authors:
  *       Alexander Larsson <alexl@redhat.com>
+ *       Georges Basile Stavracas Neto <georges.stavracas@gmail.com>
  *       Hubert Figuière <hub@figuiere.net>
  */
 
@@ -42,6 +43,7 @@
 
 #include "flatpak-error.h"
 #include "flatpak-metadata-private.h"
+#include "flatpak-usb-private.h"
 #include "flatpak-utils-private.h"
 
 /* Same order as enum */
@@ -110,6 +112,10 @@ flatpak_context_new (void)
   context->a11y_bus_policy = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   context->generic_policy = g_hash_table_new_full (g_str_hash, g_str_equal,
                                                    g_free, (GDestroyNotify) g_strfreev);
+  context->enumerable_usb_devices = g_hash_table_new_full (g_str_hash, g_str_equal,
+                                                           g_free, (GDestroyNotify) flatpak_usb_query_free);
+  context->hidden_usb_devices = g_hash_table_new_full (g_str_hash, g_str_equal,
+                                                       g_free, (GDestroyNotify) flatpak_usb_query_free);
 
   return context;
 }
@@ -124,6 +130,8 @@ flatpak_context_free (FlatpakContext *context)
   g_hash_table_destroy (context->system_bus_policy);
   g_hash_table_destroy (context->a11y_bus_policy);
   g_hash_table_destroy (context->generic_policy);
+  g_hash_table_destroy (context->enumerable_usb_devices);
+  g_hash_table_destroy (context->hidden_usb_devices);
   g_slice_free (FlatpakContext, context);
 }
 
@@ -502,6 +510,39 @@ flatpak_context_apply_generic_policy (FlatpakContext *context,
                        g_ptr_array_free (new, FALSE));
 }
 
+static void
+flatpak_context_add_query_to (GHashTable            *queries,
+                              const FlatpakUsbQuery *usb_query)
+{
+  g_autoptr(FlatpakUsbQuery) copy = NULL;
+  g_autoptr(GString) string = NULL;
+
+  g_assert (queries != NULL);
+  g_assert (usb_query != NULL && usb_query->rules != NULL);
+
+  copy = flatpak_usb_query_copy (usb_query);
+
+  string = g_string_new (NULL);
+  flatpak_usb_query_print (usb_query, string);
+
+  g_hash_table_insert (queries,
+                       g_strdup (string->str),
+                       g_steal_pointer (&copy));
+}
+
+static void
+flatpak_context_add_usb_query (FlatpakContext        *context,
+                               const FlatpakUsbQuery *usb_query)
+{
+  flatpak_context_add_query_to (context->enumerable_usb_devices, usb_query);
+}
+
+static void
+flatpak_context_add_nousb_query (FlatpakContext        *context,
+                                 const FlatpakUsbQuery *usb_query)
+{
+  flatpak_context_add_query_to (context->hidden_usb_devices, usb_query);
+}
 
 static gboolean
 flatpak_context_set_persistent (FlatpakContext *context,
@@ -1047,6 +1088,14 @@ flatpak_context_merge (FlatpakContext *context,
       for (i = 0; policy_values[i] != NULL; i++)
         flatpak_context_apply_generic_policy (context, (char *) key, policy_values[i]);
     }
+
+  g_hash_table_iter_init (&iter, other->enumerable_usb_devices);
+  while (g_hash_table_iter_next (&iter, NULL, &value))
+    flatpak_context_add_usb_query (context, value);
+
+  g_hash_table_iter_init (&iter, other->hidden_usb_devices);
+  while (g_hash_table_iter_next (&iter, NULL, &value))
+    flatpak_context_add_nousb_query (context, value);
 }
 
 static gboolean
@@ -1529,6 +1578,38 @@ option_remove_generic_policy_cb (const gchar *option_name,
 }
 
 static gboolean
+option_usb_cb (const char  *option_name,
+               const char  *value,
+               gpointer     data,
+               GError     **error)
+{
+  g_autoptr(FlatpakUsbQuery) usb_query = NULL;
+  FlatpakContext *context = data;
+
+  if (!flatpak_usb_parse_usb (value, &usb_query, error))
+    return FALSE;
+
+  flatpak_context_add_usb_query (context, usb_query);
+  return TRUE;
+}
+
+static gboolean
+option_nousb_cb (const char  *option_name,
+		 const char  *value,
+		 gpointer     data,
+		 GError     **error)
+{
+  g_autoptr(FlatpakUsbQuery) usb_query = NULL;
+  FlatpakContext *context = data;
+
+  if (!flatpak_usb_parse_usb (value, &usb_query, error))
+    return FALSE;
+
+  flatpak_context_add_nousb_query (context, usb_query);
+  return TRUE;
+}
+
+static gboolean
 option_persist_cb (const gchar *option_name,
                    const gchar *value,
                    gpointer     data,
@@ -1564,6 +1645,8 @@ static GOptionEntry context_options[] = {
   { "a11y-own-name", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_a11y_own_name_cb, N_("Allow app to own name on the a11y bus"), N_("DBUS_NAME") },
   { "add-policy", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_add_generic_policy_cb, N_("Add generic policy option"), N_("SUBSYSTEM.KEY=VALUE") },
   { "remove-policy", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_remove_generic_policy_cb, N_("Remove generic policy option"), N_("SUBSYSTEM.KEY=VALUE") },
+  { "usb", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_usb_cb, N_("Add USB device to enumerables"), N_("VENDOR_ID:PRODUCT_ID") },
+  { "nousb", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_nousb_cb, N_("Add USB device to hidden list"), N_("VENDOR_ID:PRODUCT_ID") },
   { "persist", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_persist_cb, N_("Persist home directory subpath"), N_("FILENAME") },
   /* This is not needed/used anymore, so hidden, but we accept it for backwards compat */
   { "no-desktop", 0, G_OPTION_FLAG_IN_MAIN |  G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_NONE, &option_no_desktop_deprecated, N_("Don't require a running session (no cgroups creation)"), NULL },
@@ -1875,7 +1958,78 @@ flatpak_context_load_metadata (FlatpakContext *context,
         }
     }
 
+  if (g_key_file_has_key (metakey, FLATPAK_METADATA_GROUP_USB_DEVICES, FLATPAK_METADATA_KEY_USB_ENUMERABLE_DEVICES, NULL))
+    {
+      g_auto(GStrv) values = NULL;
+      size_t count;
+
+      values = g_key_file_get_string_list (metakey, FLATPAK_METADATA_GROUP_USB_DEVICES,
+                                           FLATPAK_METADATA_KEY_USB_ENUMERABLE_DEVICES,
+                                           &count, error);
+
+      if (!values)
+        return FALSE;
+
+      for (i = 0; i < count; i++)
+        {
+          g_autoptr(FlatpakUsbQuery) usb_query = NULL;
+
+          if (!flatpak_usb_parse_usb (values[i], &usb_query, error))
+            return FALSE;
+
+          flatpak_context_add_usb_query (context, usb_query);
+        }
+    }
+
+  if (g_key_file_has_key (metakey, FLATPAK_METADATA_GROUP_USB_DEVICES, FLATPAK_METADATA_KEY_USB_HIDDEN_DEVICES, NULL))
+    {
+      g_auto(GStrv) values = NULL;
+      size_t count;
+
+      values = g_key_file_get_string_list (metakey, FLATPAK_METADATA_GROUP_USB_DEVICES,
+                                           FLATPAK_METADATA_KEY_USB_HIDDEN_DEVICES,
+                                           &count, error);
+
+      if (!values)
+        return FALSE;
+
+      for (i = 0; i < count; i++)
+        {
+          g_autoptr(FlatpakUsbQuery) usb_query = NULL;
+
+          if (!flatpak_usb_parse_usb (values[i], &usb_query, error))
+            return FALSE;
+
+          flatpak_context_add_nousb_query (context, usb_query);
+        }
+    }
+
   return TRUE;
+}
+
+static void
+flatpak_context_save_usb_devices (GHashTable *devices, GKeyFile *keyfile, const char *key)
+{
+  GHashTableIter iter;
+  gpointer value;
+
+  if (g_hash_table_size (devices) > 0)
+    {
+      g_autoptr(GPtrArray) usb_devices = g_ptr_array_new ();
+
+      g_hash_table_iter_init (&iter, devices);
+      while (g_hash_table_iter_next (&iter, &value, NULL))
+        g_ptr_array_add (usb_devices, (char *) value);
+
+      if (usb_devices->len > 0)
+        {
+          g_key_file_set_string_list (keyfile,
+                                      FLATPAK_METADATA_GROUP_USB_DEVICES,
+                                      key,
+                                      (const char * const *) usb_devices->pdata,
+                                      usb_devices->len);
+        }
+    }
 }
 
 /*
@@ -2166,6 +2320,12 @@ flatpak_context_save_metadata (FlatpakContext *context,
                                       new->len);
         }
     }
+
+  g_key_file_remove_group (metakey, FLATPAK_METADATA_GROUP_USB_DEVICES, NULL);
+  flatpak_context_save_usb_devices (context->enumerable_usb_devices, metakey,
+                                    FLATPAK_METADATA_KEY_USB_ENUMERABLE_DEVICES);
+  flatpak_context_save_usb_devices (context->hidden_usb_devices, metakey,
+                                    FLATPAK_METADATA_KEY_USB_HIDDEN_DEVICES);
 }
 
 void
@@ -2263,6 +2423,30 @@ adds_filesystem_access (GHashTable *old, GHashTable *new)
   return FALSE;
 }
 
+static gboolean
+adds_usb_device (FlatpakContext *old, FlatpakContext *new)
+{
+  GHashTableIter iter;
+  gpointer value;
+
+  /* Does it add new devices to the allowlist? */
+  g_hash_table_iter_init (&iter, new->enumerable_usb_devices);
+  while (g_hash_table_iter_next (&iter, &value, NULL))
+    {
+      if (!g_hash_table_contains (old->enumerable_usb_devices, value))
+        return TRUE;
+    }
+
+  /* Does it remove devices from the blocklist? */
+  g_hash_table_iter_init (&iter, old->hidden_usb_devices);
+  while (g_hash_table_iter_next (&iter, &value, NULL))
+    {
+      if (!g_hash_table_contains (new->hidden_usb_devices, value))
+        return TRUE;
+    }
+
+  return FALSE;
+}
 
 gboolean
 flatpak_context_adds_permissions (FlatpakContext *old,
@@ -2311,6 +2495,9 @@ flatpak_context_adds_permissions (FlatpakContext *old,
     return TRUE;
 
   if (adds_filesystem_access (old->filesystems, new->filesystems))
+    return TRUE;
+
+  if (adds_usb_device (old, new))
     return TRUE;
 
   return FALSE;
@@ -2397,6 +2584,14 @@ flatpak_context_to_args (FlatpakContext *context,
           g_ptr_array_add (args, g_strdup_printf ("--nofilesystem=%s", &fs[1]));
         }
     }
+
+  g_hash_table_iter_init (&iter, context->enumerable_usb_devices);
+  while (g_hash_table_iter_next (&iter, &value, NULL))
+    g_ptr_array_add (args, g_strdup_printf ("--usb=%s", (const char *) value));
+
+  g_hash_table_iter_init (&iter, context->hidden_usb_devices);
+  while (g_hash_table_iter_next (&iter, &value, NULL))
+    g_ptr_array_add (args, g_strdup_printf ("--nousb=%s", (const char *) value));
 }
 
 void
