@@ -17,6 +17,7 @@
  *
  * Authors:
  *       Alexander Larsson <alexl@redhat.com>
+ *       Georges Basile Stavracas Neto <georges.stavracas@gmail.com>
  *       Hubert Figuière <hub@figuiere.net>
  */
 
@@ -25,6 +26,7 @@
 
 #include <string.h>
 #include <fcntl.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/utsname.h>
@@ -109,6 +111,10 @@ flatpak_context_new (void)
   context->system_bus_policy = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   context->generic_policy = g_hash_table_new_full (g_str_hash, g_str_equal,
                                                    g_free, (GDestroyNotify) g_strfreev);
+  context->allowed_usb_devices = g_hash_table_new_full (g_str_hash, g_str_equal,
+                                                        g_free, (GDestroyNotify) flatpak_usb_query_free);
+  context->blocked_usb_devices = g_hash_table_new_full (g_str_hash, g_str_equal,
+                                                        g_free, (GDestroyNotify) flatpak_usb_query_free);
 
   return context;
 }
@@ -122,6 +128,8 @@ flatpak_context_free (FlatpakContext *context)
   g_hash_table_destroy (context->session_bus_policy);
   g_hash_table_destroy (context->system_bus_policy);
   g_hash_table_destroy (context->generic_policy);
+  g_hash_table_destroy (context->allowed_usb_devices);
+  g_hash_table_destroy (context->blocked_usb_devices);
   g_slice_free (FlatpakContext, context);
 }
 
@@ -492,6 +500,393 @@ flatpak_context_apply_generic_policy (FlatpakContext *context,
                        g_ptr_array_free (new, FALSE));
 }
 
+void
+flatpak_usb_rule_free (FlatpakUsbRule *usb_rule)
+{
+  if (!usb_rule)
+    return;
+
+  g_clear_pointer (&usb_rule, g_free);
+}
+
+void
+flatpak_usb_query_free (FlatpakUsbQuery *usb_query)
+{
+  if (!usb_query)
+    return;
+
+  g_clear_pointer (&usb_query->rules, g_ptr_array_unref);
+  g_clear_pointer (&usb_query, g_free);
+}
+
+static gboolean
+validate_hex_uint16 (const char *value,
+                     size_t      expected_length,
+                     uint16_t   *out_value)
+{
+  size_t len;
+  char *end;
+  long n;
+
+  g_assert (value != NULL);
+  g_assert (expected_length > 0 && expected_length <= 4);
+
+  len = strlen (value);
+  if (len != expected_length)
+    return FALSE;
+
+  n = strtol (value, &end, 16);
+
+  if (end - value != len)
+    return FALSE;
+
+  if (n <= 0 || n > UINT16_MAX)
+    return FALSE;
+
+  if (out_value)
+    *out_value = n;
+
+  return TRUE;
+}
+
+static gboolean
+parse_all_usb_rule (FlatpakUsbRule  *dest,
+                    GStrv            data,
+                    GError         **error)
+{
+  if (g_strv_length (data) != 1)
+    {
+      g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                   _("USB device query 'all' must not have data"));
+      return FALSE;
+    }
+
+  dest->rule_type = FLATPAK_USB_RULE_TYPE_ALL;
+  return TRUE;
+}
+
+static gboolean
+parse_cls_usb_rule (FlatpakUsbRule  *dest,
+                    GStrv            data,
+                    GError         **error)
+{
+  const char *subclass;
+  const char *class;
+
+  if (g_strv_length (data) < 3)
+    {
+      g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                   _("USB query rule 'cls' must be in the form CLASS:SUBCLASS or CLASS:*"));
+      return FALSE;
+    }
+
+  class = data[1];
+  subclass = data[2];
+
+  if (!validate_hex_uint16 (class, 2, &dest->d.device_class.class))
+    {
+      g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE, _("Invalid USB class"));
+      return FALSE;
+    }
+
+  if (g_strcmp0 (subclass, "*") == 0)
+    {
+      dest->d.device_class.type = FLATPAK_USB_RULE_CLASS_TYPE_CLASS_ONLY;
+    }
+  else if (validate_hex_uint16 (subclass, 2, &dest->d.device_class.subclass))
+    {
+      dest->d.device_class.type = FLATPAK_USB_RULE_CLASS_TYPE_CLASS_SUBCLASS;
+    }
+  else
+    {
+      g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE, _("Invalid USB subclass"));
+      return FALSE;
+    }
+
+  dest->rule_type = FLATPAK_USB_RULE_TYPE_CLASS;
+  return TRUE;
+}
+
+static gboolean
+parse_dev_usb_rule (FlatpakUsbRule  *dest,
+                    GStrv            data,
+                    GError         **error)
+{
+  if (g_strv_length (data) != 2)
+    {
+      g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                   _("USB query rule 'dev' must have a valid 4-digit hexadecimal product id"));
+      return FALSE;
+    }
+
+  if (!validate_hex_uint16 (data[1], 4, &dest->d.product.id))
+    {
+      g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                   _("USB query rule 'dev' must have a valid 4-digit hexadecimal product id"));
+      return FALSE;
+    }
+
+  dest->rule_type = FLATPAK_USB_RULE_TYPE_DEVICE;
+  return TRUE;
+}
+
+static gboolean
+parse_vnd_usb_rule (FlatpakUsbRule  *dest,
+                    GStrv            data,
+                    GError         **error)
+{
+  if (g_strv_length (data) != 2)
+    {
+      g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                   _("USB query rule 'vnd' must have a valid 4-digit hexadecimal vendor id"));
+      return FALSE;
+    }
+
+  if (!validate_hex_uint16 (data[1], 4, &dest->d.product.id))
+    {
+      g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                   _("USB query rule 'vnd' must have a valid 4-digit hexadecimal vendor id"));
+      return FALSE;
+    }
+
+  dest->rule_type = FLATPAK_USB_RULE_TYPE_VENDOR;
+  return TRUE;
+}
+
+static const struct {
+  const char *name;
+  gboolean (*parse) (FlatpakUsbRule  *dest,
+                     GStrv            data,
+                     GError         **error);
+} rule_parsers[] = {
+  { "all", parse_all_usb_rule },
+  { "cls", parse_cls_usb_rule },
+  { "dev", parse_dev_usb_rule },
+  { "vnd", parse_vnd_usb_rule },
+};
+
+gboolean
+flatpak_context_parse_usb_rule (const char      *data,
+                                FlatpakUsbRule **out_usb_rule,
+                                GError         **error)
+{
+  g_autoptr(FlatpakUsbRule) usb_rule = NULL;
+  g_auto(GStrv) split = NULL;
+  gboolean parsed = FALSE;
+
+  split = g_strsplit (data, ":", 0);
+
+  if (!split || g_strv_length (split) > 3)
+    {
+      g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                   _("USB device queries must be in the form TYPE:DATA"));
+      return FALSE;
+    }
+
+  usb_rule = g_new0 (FlatpakUsbRule, 1);
+
+  for (size_t i = 0; i < G_N_ELEMENTS (rule_parsers); i++)
+    {
+      if (g_strcmp0 (rule_parsers[i].name, split[0]) == 0)
+        {
+          if (!rule_parsers[i].parse (usb_rule, split, error))
+            return FALSE;
+
+          parsed = TRUE;
+          break;
+        }
+    }
+
+  if (!parsed)
+    {
+      g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                   _("Unknown USB query rule %s"), split[0]);
+      return FALSE;
+    }
+
+  if (out_usb_rule)
+    *out_usb_rule = g_steal_pointer (&usb_rule);
+
+  return TRUE;
+}
+
+void
+flatpak_usb_rule_print (FlatpakUsbRule *usb_rule,
+                        GString        *string)
+{
+  g_assert (usb_rule != NULL);
+  g_assert (string != NULL);
+
+  switch (usb_rule->rule_type)
+    {
+    case FLATPAK_USB_RULE_TYPE_ALL:
+      g_string_append (string, "all");
+      break;
+
+    case FLATPAK_USB_RULE_TYPE_CLASS:
+      g_string_append (string, "cls:");
+      if (usb_rule->d.device_class.type == FLATPAK_USB_RULE_CLASS_TYPE_CLASS_ONLY)
+        g_string_append_printf (string, "%02x:*", usb_rule->d.device_class.class);
+      else if (usb_rule->d.device_class.type == FLATPAK_USB_RULE_CLASS_TYPE_CLASS_SUBCLASS)
+        g_string_append_printf (string, "%02x:%02x", usb_rule->d.device_class.class, usb_rule->d.device_class.subclass);
+      else
+        g_assert_not_reached ();
+      break;
+
+    case FLATPAK_USB_RULE_TYPE_DEVICE:
+      g_string_append_printf (string, "dev:%04x", usb_rule->d.product.id);
+      break;
+
+    case FLATPAK_USB_RULE_TYPE_VENDOR:
+      g_string_append_printf (string, "vnd:%04x", usb_rule->d.vendor.id);
+      break;
+
+    default:
+      g_assert_not_reached ();
+    }
+}
+
+static FlatpakUsbQuery *
+flatpak_usb_query_new (void)
+{
+  g_autoptr(FlatpakUsbQuery) usb_query = NULL;
+
+  usb_query = g_new0 (FlatpakUsbQuery, 1);
+  usb_query->rules = g_ptr_array_new_with_free_func ((GDestroyNotify) flatpak_usb_rule_free);
+
+  return g_steal_pointer (&usb_query);
+}
+
+static FlatpakUsbQuery *
+flatpak_usb_query_copy (const FlatpakUsbQuery *query)
+{
+  FlatpakUsbQuery *copy = flatpak_usb_query_new ();
+
+  for (size_t i = 0; i < query->rules->len; i++)
+    {
+      FlatpakUsbRule *usb_rule = g_ptr_array_index (query->rules, i);
+      g_ptr_array_add (copy->rules, g_memdup2 (usb_rule, sizeof (FlatpakUsbRule)));
+    }
+  return copy;
+}
+
+gboolean
+flatpak_context_parse_usb (const char       *data,
+                           FlatpakUsbQuery **out_usb_query,
+                           GError          **error)
+{
+  g_autoptr(FlatpakUsbQuery) usb_query = NULL;
+  g_autoptr(GHashTable) rule_types = NULL;
+  g_auto(GStrv) split = NULL;
+
+  split = g_strsplit (data, "+", 0);
+
+  if (!*split)
+    {
+      g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE, _("Empty USB query"));
+      return FALSE;
+    }
+
+  usb_query = flatpak_usb_query_new ();
+
+  for (size_t i = 0; split[i] != NULL; i++)
+    {
+      g_autoptr(FlatpakUsbRule) usb_rule = NULL;
+      const char *rule = split[i];
+
+      if (!flatpak_context_parse_usb_rule (rule, &usb_rule, error))
+        return FALSE;
+
+      g_ptr_array_add (usb_query->rules, g_steal_pointer (&usb_rule));
+    }
+
+  g_assert (usb_query->rules->len > 0);
+
+  rule_types = g_hash_table_new (g_direct_hash, g_direct_equal);
+  for (size_t i = 0; i < usb_query->rules->len; i++)
+    {
+      FlatpakUsbRule *usb_rule = g_ptr_array_index (usb_query->rules, i);
+      if (!g_hash_table_add (rule_types, GINT_TO_POINTER (usb_rule->rule_type)))
+        {
+          g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                       _("Multiple USB query rules of the same type is not supported"));
+          return FALSE;
+        }
+    }
+
+  if (g_hash_table_contains (rule_types, GINT_TO_POINTER (FLATPAK_USB_RULE_TYPE_ALL)) &&
+      g_hash_table_size (rule_types) > 1)
+    {
+      g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                   _("'all' must not contain extra query rules"));
+      return FALSE;
+    }
+
+  if (g_hash_table_contains (rule_types, GINT_TO_POINTER (FLATPAK_USB_RULE_TYPE_DEVICE)) &&
+      !g_hash_table_contains (rule_types, GINT_TO_POINTER (FLATPAK_USB_RULE_TYPE_VENDOR)))
+    {
+      g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                   _("USB queries with 'dev' must also specify vendors"));
+      return FALSE;
+    }
+
+  if (out_usb_query)
+    *out_usb_query = g_steal_pointer (&usb_query);
+
+  return TRUE;
+}
+
+void
+flatpak_usb_query_print (FlatpakUsbQuery *usb_query,
+                         GString         *string)
+{
+  g_assert (usb_query != NULL && usb_query->rules != NULL);
+  g_assert (string != NULL);
+
+  for (size_t i = 0; i < usb_query->rules->len; i++)
+    {
+      FlatpakUsbRule *usb_rule = g_ptr_array_index (usb_query->rules, i);
+
+      if (i > 0)
+        g_string_append_c (string, '+');
+
+      flatpak_usb_rule_print (usb_rule, string);
+    }
+}
+
+static void
+flatpak_context_add_query_to (GHashTable *queries,
+                              FlatpakUsbQuery *usb_query)
+{
+  g_autoptr(FlatpakUsbQuery) copy = NULL;
+  g_autoptr(GString) string = NULL;
+
+  g_assert (queries != NULL);
+  g_assert (usb_query != NULL && usb_query->rules != NULL);
+
+  copy = flatpak_usb_query_copy (usb_query);
+
+  string = g_string_new (NULL);
+  flatpak_usb_query_print (usb_query, string);
+
+  g_hash_table_insert (queries,
+                       g_strdup (string->str),
+                       g_steal_pointer (&copy));
+}
+
+static void
+flatpak_context_add_usb_query (FlatpakContext  *context,
+                               FlatpakUsbQuery *usb_query)
+{
+  flatpak_context_add_query_to (context->allowed_usb_devices, usb_query);
+}
+
+static void
+flatpak_context_add_nousb_query (FlatpakContext  *context,
+				 FlatpakUsbQuery *usb_query)
+{
+  flatpak_context_add_query_to (context->blocked_usb_devices, usb_query);
+}
 
 static gboolean
 flatpak_context_set_persistent (FlatpakContext *context,
@@ -1034,6 +1429,14 @@ flatpak_context_merge (FlatpakContext *context,
       for (i = 0; policy_values[i] != NULL; i++)
         flatpak_context_apply_generic_policy (context, (char *) key, policy_values[i]);
     }
+
+  g_hash_table_iter_init (&iter, other->allowed_usb_devices);
+  while (g_hash_table_iter_next (&iter, NULL, &value))
+    flatpak_context_add_usb_query (context, value);
+
+  g_hash_table_iter_init (&iter, other->blocked_usb_devices);
+  while (g_hash_table_iter_next (&iter, NULL, &value))
+    flatpak_context_add_nousb_query (context, value);
 }
 
 static gboolean
@@ -1501,6 +1904,38 @@ option_remove_generic_policy_cb (const gchar *option_name,
 }
 
 static gboolean
+option_usb_cb (const gchar  *option_name,
+               const gchar  *value,
+               gpointer      data,
+               GError      **error)
+{
+  g_autoptr(FlatpakUsbQuery) usb_query = NULL;
+  FlatpakContext *context = data;
+
+  if (!flatpak_context_parse_usb (value, &usb_query, error))
+    return FALSE;
+
+  flatpak_context_add_usb_query (context, usb_query);
+  return TRUE;
+}
+
+static gboolean
+option_nousb_cb (const gchar  *option_name,
+		 const gchar  *value,
+		 gpointer      data,
+		 GError      **error)
+{
+  g_autoptr(FlatpakUsbQuery) usb_query = NULL;
+  FlatpakContext *context = data;
+
+  if (!flatpak_context_parse_usb (value, &usb_query, error))
+    return FALSE;
+
+  flatpak_context_add_nousb_query (context, usb_query);
+  return TRUE;
+}
+
+static gboolean
 option_persist_cb (const gchar *option_name,
                    const gchar *value,
                    gpointer     data,
@@ -1535,6 +1970,8 @@ static GOptionEntry context_options[] = {
   { "system-no-talk-name", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_system_no_talk_name_cb, N_("Don't allow app to talk to name on the system bus"), N_("DBUS_NAME") },
   { "add-policy", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_add_generic_policy_cb, N_("Add generic policy option"), N_("SUBSYSTEM.KEY=VALUE") },
   { "remove-policy", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_remove_generic_policy_cb, N_("Remove generic policy option"), N_("SUBSYSTEM.KEY=VALUE") },
+  { "usb", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_usb_cb, N_("Add USB device to allowlist"), N_("VENDOR_ID:PRODUCT_ID") },
+  { "nousb", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_nousb_cb, N_("Add USB device to blocklist"), N_("VENDOR_ID:PRODUCT_ID") },
   { "persist", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_persist_cb, N_("Persist home directory subpath"), N_("FILENAME") },
   /* This is not needed/used anymore, so hidden, but we accept it for backwards compat */
   { "no-desktop", 0, G_OPTION_FLAG_IN_MAIN |  G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_NONE, &option_no_desktop_deprecated, N_("Don't require a running session (no cgroups creation)"), NULL },
@@ -1846,7 +2283,78 @@ flatpak_context_load_metadata (FlatpakContext *context,
         }
     }
 
+  if (g_key_file_has_key (metakey, FLATPAK_METADATA_GROUP_USB_DEVICES, FLATPAK_METADATA_KEY_USB_ALLOWED_DEVICES, NULL))
+    {
+      g_auto(GStrv) values = NULL;
+      size_t count;
+
+      values = g_key_file_get_string_list (metakey, FLATPAK_METADATA_GROUP_USB_DEVICES,
+                                           FLATPAK_METADATA_KEY_USB_ALLOWED_DEVICES,
+                                           &count, error);
+
+      if (!values)
+        return FALSE;
+
+      for (i = 0; i < count; i++)
+        {
+          g_autoptr(FlatpakUsbQuery) usb_query = NULL;
+
+          if (!flatpak_context_parse_usb (values[i], &usb_query, error))
+            return FALSE;
+
+          flatpak_context_add_usb_query (context, usb_query);
+        }
+    }
+
+  if (g_key_file_has_key (metakey, FLATPAK_METADATA_GROUP_USB_DEVICES, FLATPAK_METADATA_KEY_USB_BLOCKED_DEVICES, NULL))
+    {
+      g_auto(GStrv) values = NULL;
+      size_t count;
+
+      values = g_key_file_get_string_list (metakey, FLATPAK_METADATA_GROUP_USB_DEVICES,
+                                           FLATPAK_METADATA_KEY_USB_BLOCKED_DEVICES,
+                                           &count, error);
+
+      if (!values)
+        return FALSE;
+
+      for (i = 0; i < count; i++)
+        {
+          g_autoptr(FlatpakUsbQuery) usb_query = NULL;
+
+          if (!flatpak_context_parse_usb (values[i], &usb_query, error))
+            return FALSE;
+
+          flatpak_context_add_nousb_query (context, usb_query);
+        }
+    }
+
   return TRUE;
+}
+
+static void
+flatpak_context_save_usb_devices (GHashTable *devices, GKeyFile *keyfile, const char *key)
+{
+  GHashTableIter iter;
+  gpointer value;
+
+  if (g_hash_table_size (devices) > 0)
+    {
+      g_autoptr(GPtrArray) usb_devices = g_ptr_array_new ();
+
+      g_hash_table_iter_init (&iter, devices);
+      while (g_hash_table_iter_next (&iter, &value, NULL))
+        g_ptr_array_add (usb_devices, (char *) value);
+
+      if (usb_devices->len > 0)
+        {
+          g_key_file_set_string_list (keyfile,
+                                      FLATPAK_METADATA_GROUP_USB_DEVICES,
+                                      key,
+                                      (const char * const *) usb_devices->pdata,
+                                      usb_devices->len);
+        }
+    }
 }
 
 /*
@@ -2123,6 +2631,12 @@ flatpak_context_save_metadata (FlatpakContext *context,
                                       new->len);
         }
     }
+
+  g_key_file_remove_group (metakey, FLATPAK_METADATA_GROUP_USB_DEVICES, NULL);
+  flatpak_context_save_usb_devices (context->allowed_usb_devices, metakey,
+                                    FLATPAK_METADATA_KEY_USB_ALLOWED_DEVICES);
+  flatpak_context_save_usb_devices (context->blocked_usb_devices, metakey,
+                                    FLATPAK_METADATA_KEY_USB_BLOCKED_DEVICES);
 }
 
 void
@@ -2220,6 +2734,30 @@ adds_filesystem_access (GHashTable *old, GHashTable *new)
   return FALSE;
 }
 
+static gboolean
+adds_usb_device (FlatpakContext *old, FlatpakContext *new)
+{
+  GHashTableIter iter;
+  gpointer value;
+
+  /* Does it add new devices to the allowlist? */
+  g_hash_table_iter_init (&iter, new->allowed_usb_devices);
+  while (g_hash_table_iter_next (&iter, &value, NULL))
+    {
+      if (!g_hash_table_contains (old->allowed_usb_devices, value))
+        return TRUE;
+    }
+
+  /* Does it remove devices from the blocklist? */
+  g_hash_table_iter_init (&iter, old->blocked_usb_devices);
+  while (g_hash_table_iter_next (&iter, &value, NULL))
+    {
+      if (!g_hash_table_contains (new->blocked_usb_devices, value))
+        return TRUE;
+    }
+
+  return FALSE;
+}
 
 gboolean
 flatpak_context_adds_permissions (FlatpakContext *old,
@@ -2265,6 +2803,9 @@ flatpak_context_adds_permissions (FlatpakContext *old,
     return TRUE;
 
   if (adds_filesystem_access (old->filesystems, new->filesystems))
+    return TRUE;
+
+  if (adds_usb_device (old, new))
     return TRUE;
 
   return FALSE;
@@ -2351,6 +2892,14 @@ flatpak_context_to_args (FlatpakContext *context,
           g_ptr_array_add (args, g_strdup_printf ("--nofilesystem=%s", &fs[1]));
         }
     }
+
+  g_hash_table_iter_init (&iter, context->allowed_usb_devices);
+  while (g_hash_table_iter_next (&iter, &value, NULL))
+    g_ptr_array_add (args, g_strdup_printf ("--usb=%s", (const char *) value));
+
+  g_hash_table_iter_init (&iter, context->blocked_usb_devices);
+  while (g_hash_table_iter_next (&iter, &value, NULL))
+    g_ptr_array_add (args, g_strdup_printf ("--nousb=%s", (const char *) value));
 }
 
 void
