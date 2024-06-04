@@ -65,14 +65,14 @@ assert_remote_has_no_config added-default xa.icon-is-set
 assert_remote_has_no_config added-default xa.noenumerate
 assert_remote_has_no_config added-default xa.filter
 
-echo "ok pre-existing installation"
+ok "pre-existing installation"
 
 rm -rf $FL_DIR
 
 ${FLATPAK}  --system remotes > remotes
 assert_file_has_content remotes "added-default"
 
-echo "ok non-existing installation"
+ok "non-existing installation"
 
 ${FLATPAK} --system remotes > remotes
 assert_file_has_content remotes "added-default"
@@ -83,7 +83,7 @@ ${FLATPAK}  --system remote-delete added-default
 ${FLATPAK} --system remotes > remotes
 assert_not_file_has_content remotes "added-default"
 
-echo "ok allow remove"
+ok "allow remove"
 
 rm -rf $FL_DIR
 rm -rf $FLATPAK_CONFIG_DIR/remotes.d/*
@@ -109,7 +109,7 @@ assert_remote_has_no_config added-default xa.comment
 assert_remote_has_no_config added-default xa.description
 assert_remote_has_no_config added-default xa.homepage
 
-echo "ok pre-existing remote"
+ok "pre-existing remote"
 
 rm -rf $FL_DIR
 rm -rf $FLATPAK_CONFIG_DIR/remotes.d/*
@@ -130,4 +130,4 @@ assert_file_has_content remotes "added-default"
 
 assert_remote_has_no_config added-default xa.filter
 
-echo "ok override default filter"
+ok "override default filter"

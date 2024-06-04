@@ -43,7 +43,7 @@ assert_file_has_content ${FL_DIR}/repo/config '^collection-id=org\.test\.Collect
 assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify=true$'
 assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify=false$'
 
-echo "ok 1 repo config with collections"
+ok "1 repo config with collections"
 
 # Test that building an app with a collection ID set produces the right
 # metadata in the resulting repository.
@@ -74,13 +74,13 @@ assert_file_has_content metadata "'xa\.cache': "
 assert_file_has_content metadata "'ostree\.collection-binding': <'org\.test\.Collection'>"
 assert_file_has_content metadata "'ostree\.ref-binding': <\['ostree-metadata'\]>"
 
-echo "ok 2 create app with collections"
+ok "2 create app with collections"
 
 # Try installing the app.
 ${FLATPAK} ${U} install -y test-repo org.test.App master
 ${FLATPAK} ${U} uninstall -y org.test.App
 
-echo "ok 3 install app with collections"
+ok "3 install app with collections"
 
 # Regenerate the summary so it doesn’t contain xa.cache and is unsigned; try installing again.
 ostree --repo=repos/test summary --update
@@ -92,7 +92,7 @@ assert_not_file_has_content summary '^xa\.cache: '
 ${FLATPAK} ${U} install -y test-repo org.test.App master
 ${FLATPAK} ${U} uninstall -y org.test.App
 
-echo "ok 4 install app with collections from unsigned summary"
+ok "4 install app with collections from unsigned summary"
 
 # Try installing it from a flatpakref file. Don’t uninstall afterwards because
 # we need it for the next test.
@@ -111,7 +111,7 @@ EOF
 ${FLATPAK} ${U} install -y --from ./org.test.App.flatpakref
 ${FLATPAK} ${U} uninstall -y org.test.App
 
-echo "ok 5 install app with collections from flatpakref"
+ok "5 install app with collections from flatpakref"
 
 # Update the repo metadata and check that it changes in the ostree-metadata branch
 # and the summary file.
@@ -126,11 +126,11 @@ assert_file_has_content metadata "'xa\.title': "
 assert_file_has_content metadata "'ostree\.collection-binding': <'org\.test\.Collection'>"
 assert_file_has_content metadata "'ostree\.ref-binding': <\['ostree-metadata'\]>"
 
-echo "ok 6 update repo metadata"
+ok "6 update repo metadata"
 
 # Try to install the app again, which should pull the updated repository
 # metadata as a side effect.
 ${FLATPAK} ${U} install -y test-repo org.test.App master
 assert_file_has_content ${FL_DIR}/repo/config '^xa\.title=New title$'
 
-echo "ok 7 pull updated repo metadata"
+ok "7 pull updated repo metadata"

@@ -38,7 +38,7 @@ ${FLATPAK} build-update-repo --collection-id=org.test.Collection repos/test
 
 assert_file_has_content repos/test/config '^collection-id=org\.test\.Collection$'
 
-echo "ok 1 update repo to add collection ID"
+ok "1 update repo to add collection ID"
 
 # Test that you’re not allowed to change the collection ID once it’s already set.
 if ${FLATPAK} build-update-repo --collection-id=org.test.Collection2 repos/test 2> build-update-repo-error-log; then
@@ -48,22 +48,22 @@ fi
 assert_file_has_content repos/test/config '^collection-id=org\.test\.Collection$'
 assert_not_file_has_content repos/test/config '^collection-id=org\.test\.Collection2$'
 
-echo "ok 2 collection ID cannot be changed"
+ok "2 collection ID cannot be changed"
 
 ${FLATPAK} build-update-repo --title="My little repo" repos/test
 
 assert_file_has_content repos/test/config '^title=My little repo$'
 
-echo "ok can update repo title"
+ok "can update repo title"
 
 ${FLATPAK} build-update-repo --redirect-url=http://no.where/ repos/test
 
 assert_file_has_content repos/test/config '^redirect-url=http://no\.where/$'
 
-echo "ok can update redirect url"
+ok "can update redirect url"
 
 ${FLATPAK} build-update-repo --default-branch=no-such-branch repos/test
 
 assert_file_has_content repos/test/config '^default-branch=no-such-branch$'
 
-echo "ok can update default branch"
+ok "can update default branch"

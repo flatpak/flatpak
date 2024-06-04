@@ -43,6 +43,8 @@ void          flatpak_bwrap_unset_env (FlatpakBwrap *bwrap,
                                        const char   *variable);
 void          flatpak_bwrap_add_arg (FlatpakBwrap *bwrap,
                                      const char   *arg);
+void          flatpak_bwrap_take_arg (FlatpakBwrap *bwrap,
+                                      char         *arg);
 void          flatpak_bwrap_add_noinherit_fd (FlatpakBwrap *bwrap,
                                               int           fd);
 void          flatpak_bwrap_add_fd (FlatpakBwrap *bwrap,
@@ -73,6 +75,7 @@ void          flatpak_bwrap_add_bind_arg (FlatpakBwrap *bwrap,
                                           const char   *type,
                                           const char   *src,
                                           const char   *dest);
+void          flatpak_bwrap_envp_to_args (FlatpakBwrap *bwrap);
 gboolean      flatpak_bwrap_bundle_args (FlatpakBwrap *bwrap,
                                          int           start,
                                          int           end,
