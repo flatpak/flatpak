@@ -462,6 +462,74 @@ key=v1;v2;
             </varlistentry>
 
             <varlistentry>
+                <term><option>--usb=TYPE[:DATA]</option></term>
+
+                <listitem><para>
+                    Adds a USB device query to the application metadata. This
+                    allows device enumeration and usage by the USB portal.
+                    <arg choice="plain">TYPE</arg> must be one of: all, cls, dev, vnd.
+                </para><variablelist>
+                    <varlistentry>
+                        <term><option>all</option></term>
+
+                        <listitem><para>
+                            Match all devices.
+                        </para></listitem>
+                    </varlistentry>
+
+                    <varlistentry>
+                        <term><option>cls</option></term>
+
+                        <listitem><para>
+                            A device class and subclass query. <arg choice="plain">DATA</arg>
+                            must be in the form of <arg choice="plain">CLASS:SUBCLASS</arg> where
+                            both <arg choice="plain">CLASS</arg> and <arg choice="plain">SUBCLASS</arg>
+                            must be a valid 2-digit hexadecimal class id number. Alternatively,
+                            <arg choice="plain">SUBCLASS</arg> may be <literal>*</literal> to match
+                            all subclasses.
+                        </para></listitem>
+                    </varlistentry>
+
+                    <varlistentry>
+                        <term><option>dev</option></term>
+
+                        <listitem><para>
+                            A device product id query. <arg choice="plain">DATA</arg>
+                            must be a valid 4-digit hexadecimal product id number
+                            greater than zero, for example <option>0a1b</option>. It
+                            requires a <option>vnd</option> filter in the query.
+                        </para></listitem>
+                    </varlistentry>
+
+                    <varlistentry>
+                        <term><option>vnd</option></term>
+
+                        <listitem><para>
+                            A device vendor id query. <arg choice="plain">DATA</arg>
+                            must be a valid 4-digit hexadecimal vendor id number
+                            greater than zero, for example <option>0fab</option>.
+                        </para></listitem>
+                    </varlistentry>
+
+                </variablelist><para>
+                    It is possible to compose multiple device queries together
+                    with the <literal>+</literal> sign, for example
+                    <option>--usb=vnd:0123+dev:4567</option>. The <arg choice="plain">dev</arg>
+                    filter requires a <arg choice="plain">vnd</arg>.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--nousb=VENDOR_ID:PRODUCT_ID</option></term>
+
+                <listitem><para>
+                    Adds a blocking USB device query to the application metadata. Blocked
+                    devices take precedence over allowed devices. The syntax is exactly
+                    equal to <option>--usb</option>
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--env=VAR=VALUE</option></term>
 
                 <listitem><para>
@@ -758,6 +826,9 @@ key=v1;v2;
         </para>
         <para>
             <command>$ flatpak run --command=bash org.gnome.Sdk</command>
+        </para>
+        <para>
+            <command>$ flatpak run org.gnome.Boxes --nousb=0fd9:*</command>
         </para>
 
     </refsect1>
