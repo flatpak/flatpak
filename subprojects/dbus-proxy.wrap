@@ -1,0 +1,5 @@
+[wrap-git]
+url = https://github.com/flatpak/xdg-dbus-proxy
+# 0.1.5
+revision = 7466c8137fc06f863fde8486521984e43a26cd10
+depth = 1

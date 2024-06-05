@@ -1,0 +1,9 @@
+# Copyright 2022 Collabora Ltd.
+# SPDX-License-Identifier: LGPL-2.0-or-later
+
+option(
+  'tests',
+  type : 'boolean',
+  description : 'build and run unit tests',
+  value : 'true',
+)

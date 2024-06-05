@@ -1,0 +1,41 @@
+# Copyright 2019 Endless OS Foundation LLC
+# SPDX-License-Identifier: LGPL-2.0-or-later
+
+image: registry.fedoraproject.org/fedora:30
+
+stages:
+  - build
+
+before_script:
+  - dnf install -y gcc git meson ninja-build "pkgconfig(gio-2.0)" "pkgconfig(gio-unix-2.0)" "pkgconfig(glib-2.0)" xz
+
+build:
+  stage: build
+  script:
+    - meson _build .
+    - ninja -C _build
+    - meson test -C _build
+    # Run it again! This previously did not work.
+    - meson test -C _build
+    # Ensure that we can build as a subproject
+    - rm -fr _build/meson-dist
+    - meson dist -C _build
+    - mkdir -p tests/use-as-subproject/subprojects/libglnx
+    - tar --strip-components=1 -C tests/use-as-subproject/subprojects/libglnx -xf _build/meson-dist/*.tar.xz
+    - meson tests/use-as-subproject/_build tests/use-as-subproject
+    - ninja -C tests/use-as-subproject/_build
+    - meson test -C tests/use-as-subproject/_build
+  artifacts:
+    when: on_failure
+    name: "libglnx-${CI_COMMIT_REF_NAME}-${CI_JOB_NAME}"
+    paths:
+      - "${CI_PROJECT_DIR}/_build/meson-logs"
+
+reuse:
+  stage: build
+  image:
+    name: fsfe/reuse:latest
+    entrypoint: [""]
+  before_script: []
+  script:
+    - reuse lint

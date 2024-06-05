@@ -1,0 +1,21 @@
+# Copyright 2015 Colin Walters
+# SPDX-License-Identifier: LGPL-2.1-or-later
+
+# A path ostree writes to work around automake bug with
+# subdir-objects
+Makefile-libglnx.am.inc
+
+libglnx-config.h
+
+# Some standard bits
+.deps
+.libs
+.dirstamp
+*.typelib
+*.la
+*.lo
+*.o
+*.pyc
+*.stamp
+*~
+

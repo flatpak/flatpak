@@ -1,0 +1,8 @@
+This is a simple example of a project that uses libglnx as a subproject.
+The intention is that if this project can successfully build and use libglnx
+as a subproject, then so could Flatpak.
+
+<!--
+Copyright 2022 Collabora Ltd.
+SPDX-License-Identifier: LGPL-2.0-or-later
+-->
