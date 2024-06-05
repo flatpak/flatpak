@@ -61,7 +61,7 @@
                 <listitem><para>
                    The languages that are included when installing Locale extensions.
                    The value is a semicolon-separated list of two-letter language codes,
-                   or one of the special values <literal>*</literal> or <literal>all</literal>. If this key is unset, flatpak
+                   or one of the special values <literal>*</literal> or <literal>*all*</literal>. If this key is unset, flatpak
                    defaults to including the <varname>extra-languages</varname> key and the current locale.
                 </para></listitem>
             </varlistentry>
