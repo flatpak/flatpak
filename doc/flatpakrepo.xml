@@ -48,9 +48,13 @@
         </para>
 
         <para>
-           flatpakrepo files can also be placed in <filename>/etc/flatpak/remotes.d/</filename>
-           to statically preconfigure system-wide remotes. Such files must use the
-           <filename>.flatpakrepo</filename> extension.
+          flatpakrepo files can also be placed in
+          <filename>/usr/share/flatpak/remotes.d/</filename> and
+          <filename>/etc/flatpak/remotes.d/</filename>
+          to statically preconfigure system-wide remotes. Such files must use the
+          <filename>.flatpakrepo</filename> extension. If a file with the
+          same name exists in both, the file under <filename>/etc</filename> will
+          take precedence.
         </para>
 
     </refsect1>
