@@ -97,7 +97,7 @@ assert_streq $NUM_COMMITMETA2 0
 
 #################### Try a no-op prune, should do nothing but create commitmeta2 objects
 
-cp -ra orig-repo repo # Work on a copy
+cp -a orig-repo repo # Work on a copy
 
 # Prune with full depth should change nothing
 $FLATPAK build-update-repo --no-update-summary --no-update-appstream --prune --prune-depth=-1 repo > prune.log
@@ -113,7 +113,7 @@ assert_streq $NUM_DIRMETA 2
 assert_streq $NUM_COMMITMETA2 $NUM_COMMIT
 assert_streq $NUM_OBJECT 71
 
-cp -ra repo incremental-repo # Make a copy of the orig repo with the commitmeta2 objects
+cp -a repo incremental-repo # Make a copy of the orig repo with the commitmeta2 objects
 
 # Try again with the commitmeta existing
 
@@ -136,7 +136,7 @@ ok "no-op prune"
 ############# Try various depth prunes, with and without .commitmeta2
 
 rm -rf repo
-cp -ra orig-repo repo # Work on a copy
+cp -a orig-repo repo # Work on a copy
 
 # depth = 2 will only remove one commit from app2
 
@@ -155,7 +155,7 @@ assert_streq $NUM_COMMITMETA2 $NUM_COMMIT
 assert_streq $NUM_OBJECT 65
 
 rm -rf repo
-cp -ra incremental-repo repo # Work on a copy w/ commitmeta2s
+cp -a incremental-repo repo # Work on a copy w/ commitmeta2s
 
 # depth = 2 will only remove one commit from app2
 
@@ -176,7 +176,7 @@ assert_streq $NUM_OBJECT 65
 # depth = 1 will only remove 4 commits
 
 rm -rf repo
-cp -ra orig-repo repo # Work on a copy
+cp -a orig-repo repo # Work on a copy
 
 $FLATPAK build-update-repo --no-update-summary --no-update-appstream --prune --prune-depth=1 repo > prune.log
 cat prune.log >&2
@@ -193,7 +193,7 @@ assert_streq $NUM_COMMITMETA2 $NUM_COMMIT
 assert_streq $NUM_OBJECT 47
 
 rm -rf repo
-cp -ra incremental-repo repo # Work on a copy w/ commitmeta2s
+cp -a incremental-repo repo # Work on a copy w/ commitmeta2s
 
 $FLATPAK build-update-repo --no-update-summary --no-update-appstream --prune --prune-depth=1 repo > prune.log
 cat prune.log >&2
@@ -214,7 +214,7 @@ ok "depth prune"
 ############# Try non-reachable prunes, with and without .commitmeta2
 
 rm -rf repo
-cp -ra orig-repo repo # Work on a copy
+cp -a orig-repo repo # Work on a copy
 
 rm repo/refs/heads/app3 # Removes 3 commits
 
@@ -232,7 +232,7 @@ assert_streq $NUM_COMMITMETA2 $NUM_COMMIT
 assert_streq $NUM_OBJECT 50
 
 rm -rf repo
-cp -ra incremental-repo repo # Work on a copy w/ commitmeta2s
+cp -a incremental-repo repo # Work on a copy w/ commitmeta2s
 
 rm repo/refs/heads/app3 # Removes 3 commits
 
@@ -254,7 +254,7 @@ ok "unreachable prune"
 # Combine depth and unreachable
 
 rm -rf repo
-cp -ra orig-repo repo # Work on a copy
+cp -a orig-repo repo # Work on a copy
 
 rm repo/refs/heads/app3 # Removes 3 commits
 
@@ -272,7 +272,7 @@ assert_streq $NUM_COMMITMETA2 $NUM_COMMIT
 assert_streq $NUM_OBJECT 44
 
 rm -rf repo
-cp -ra incremental-repo repo # Work on a copy w/ commitmeta2s
+cp -a incremental-repo repo # Work on a copy w/ commitmeta2s
 
 rm repo/refs/heads/app3 # Removes 3 commits
 
@@ -292,7 +292,7 @@ assert_streq $NUM_OBJECT 44
 ok "unreachable and depth prune"
 
 # Compare last result with ostree prune:
-cp -ra orig-repo ostree-repo
+cp -a orig-repo ostree-repo
 rm ostree-repo/refs/heads/app3 # Removes 3 commits
 ostree prune --refs-only --depth=2 --repo=ostree-repo >&2
 rm -rf repo/objects/*/*.commitmeta2

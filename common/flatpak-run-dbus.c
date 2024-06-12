@@ -104,6 +104,9 @@ add_bwrap_wrapper (FlatpakBwrap *bwrap,
   if (!flatpak_bwrap_bundle_args (bwrap, 1, -1, FALSE, error))
     return FALSE;
 
+  /* End of options: the next argument will be the executable name */
+  flatpak_bwrap_add_arg (bwrap, "--");
+
   return TRUE;
 }
 

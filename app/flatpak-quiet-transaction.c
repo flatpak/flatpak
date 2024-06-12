@@ -191,7 +191,7 @@ install_authenticator (FlatpakTransaction            *old_transaction,
   g_autoptr(FlatpakTransaction)  transaction2 = NULL;
   g_autoptr(GError) local_error = NULL;
   g_autoptr(FlatpakInstallation) installation = flatpak_transaction_get_installation (old_transaction);
-  FlatpakDir *dir = flatpak_installation_get_dir (installation, NULL);
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (installation, NULL);
 
   if (dir == NULL)
     {

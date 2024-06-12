@@ -1,3 +1,42 @@
+Changes in 1.15.9
+~~~~~~~~~~~~~~~~~
+Released: not yet
+
+Bug fixes:
+
+ * Expand the list of environment variables that Flatpak apps do not
+   inherit from the host system (#5765, #5785)
+
+ * Fix a misleading comment in the test for CVE-2024-32462 (#5779)
+
+Internal changes:
+
+ * Work around infrastructure issues in third-party apt repositories
+   used by default in Github Workflows (#5786)
+
+Changes in 1.15.8
+~~~~~~~~~~~~~~~~~
+Released: 2024-04-18
+
+Security fixes:
+
+ * Don't allow an executable name to be misinterpreted as a command-line
+   option for bwrap(1). This prevents a sandbox escape where a malicious
+   or compromised app could ask xdg-desktop-portal to generate a .desktop
+   file with access to files outside the sandbox. (CVE-2024-32462)
+
+Other bug fixes:
+
+ * Pass the -export-dynamic linker option as -Wl,-export-dynamic,
+   fixing build failures with clang 18 and lld 18 (#5760)
+
+ * Fix a double-free when installation is cancelled (#5763)
+
+ * Fix installed-tests failure with "FUSERMOUNT: unbound variable"
+   (#5751)
+
+ * Translation updates: pt_BR (#5762), tr (#5761)
+
 Changes in 1.15.7
 ~~~~~~~~~~~~~~~~~
 Released: 2024-03-27
@@ -40,7 +79,7 @@ Bug fixes:
      * Improve memory allocation behaviour
      * Silence various compiler warnings
 
- * Update included copy of bubblewrap to version 0.1.5:
+ * Update included copy of xdg-dbus-proxy to version 0.1.5:
 
      * Fix handling of long object paths
 

@@ -589,7 +589,8 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   if (!flatpak_bwrap_bundle_args (bwrap, 1, -1, FALSE, error))
     return FALSE;
 
-  flatpak_bwrap_add_args (bwrap, command, NULL);
+  flatpak_bwrap_add_args (bwrap, "--", command, NULL);
+
   flatpak_bwrap_append_argsv (bwrap,
                               &argv[rest_argv_start + 2],
                               rest_argc - 2);

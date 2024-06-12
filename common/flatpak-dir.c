@@ -57,6 +57,7 @@
 #include "flatpak-utils-base-private.h"
 #include "flatpak-variant-private.h"
 #include "flatpak-variant-impl-private.h"
+#include "flatpak-xml-utils-private.h"
 #include "libglnx.h"
 #include "system-helper/flatpak-system-helper.h"
 
@@ -741,7 +742,7 @@ flatpak_remote_state_lookup_ref (FlatpakRemoteState *self,
   if (!flatpak_remote_state_allow_ref (self, ref))
     {
       return flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
-                                 _("No entry for %s in remote '%s' summary flatpak cache "),
+                                 _("No entry for %s in remote %s summary flatpak cache"),
                                  ref, self->remote_name);
     }
 
@@ -878,7 +879,7 @@ flatpak_remote_state_lookup_cache (FlatpakRemoteState *self,
   summary_v = get_summary_for_ref (self, ref);
   if (summary_v == NULL)
     return flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
-                               _("No entry for %s in remote '%s' summary flatpak cache "),
+                               _("No entry for %s in remote %s summary flatpak cache"),
                                ref, self->remote_name);
 
 
@@ -907,7 +908,7 @@ flatpak_remote_state_lookup_cache (FlatpakRemoteState *self,
 
       if (!var_cache_lookup (cache, ref, &pos, &cache_data))
         return flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
-                                   _("No entry for %s in remote '%s' summary flatpak cache "),
+                                   _("No entry for %s in remote %s summary flatpak cache"),
                                    ref, self->remote_name);
     }
   else if (summary_version == 1)
@@ -919,7 +920,7 @@ flatpak_remote_state_lookup_cache (FlatpakRemoteState *self,
 
       if (!flatpak_var_ref_map_lookup_ref (ref_map, ref, &info))
         return flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
-                                   _("No entry for %s in remote '%s' summary cache "),
+                                   _("No entry for %s in remote %s summary flatpak cache"),
                                    ref, self->remote_name);
 
       commit_metadata = var_ref_info_get_metadata (info);
@@ -1950,6 +1951,8 @@ flatpak_ensure_system_user_cache_dir_location (GError **error)
       /* and not writeable by others, but readable */
       (st_buf.st_mode & 0777) == 0755)
     return g_file_new_for_path (path);
+
+  g_clear_pointer (&path, g_free);
 
   path = g_strdup ("/var/tmp/flatpak-cache-XXXXXX");
 
@@ -7155,6 +7158,7 @@ flatpak_dir_run_triggers (FlatpakDir   *self,
                                   "--proc", "/proc",
                                   "--dev", "/dev",
                                   "--bind", basedir, basedir,
+                                  "--",
                                   NULL);
 #endif
           flatpak_bwrap_add_args (bwrap,
@@ -7721,8 +7725,8 @@ rewrite_export_dir (const char         *app,
   if (!glnx_dirfd_iterator_init_at (source_parent_fd, source_name, FALSE, &source_iter, error))
     goto out;
 
-  exports_allowed = flatpak_get_allowed_exports (source_path, app, context,
-                                                 &allowed_extensions, &allowed_prefixes, &require_exact_match);
+  exports_allowed = flatpak_context_get_allowed_exports (context, source_path, app,
+                                                         &allowed_extensions, &allowed_prefixes, &require_exact_match);
 
   visited_children = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 
@@ -8384,7 +8388,7 @@ apply_extra_data (FlatpakDir   *self,
 
   flatpak_bwrap_envp_to_args (bwrap);
 
-  flatpak_bwrap_add_arg (bwrap, "/app/bin/apply_extra");
+  flatpak_bwrap_add_args (bwrap, "--", "/app/bin/apply_extra", NULL);
 
   flatpak_bwrap_finish (bwrap);
 

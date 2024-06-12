@@ -53,6 +53,7 @@
 #include <gio/gio.h>
 #include "libglnx.h"
 
+#include "flatpak-dbus-generated.h"
 #include "flatpak-run-dbus-private.h"
 #include "flatpak-run-private.h"
 #include "flatpak-run-sockets-private.h"
@@ -65,6 +66,12 @@
 #include "session-helper/flatpak-session-helper.h"
 
 #define DEFAULT_SHELL "/bin/sh"
+
+typedef FlatpakSessionHelper AutoFlatpakSessionHelper;
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (AutoFlatpakSessionHelper, g_object_unref)
+
+typedef XdpDbusDocuments AutoXdpDbusDocuments;
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (AutoXdpDbusDocuments, g_object_unref)
 
 static int
 flatpak_extension_compare_by_path (gconstpointer _a,
@@ -518,10 +525,13 @@ typedef struct
 
 static const ExportData default_exports[] = {
   {"PATH", "/app/bin:/usr/bin"},
-  /* We always want to unset LD_LIBRARY_PATH to avoid inheriting weird
-   * dependencies from the host. But if not using ld.so.cache this is
-   * later set. */
+  /* We always want to unset LD variables to avoid inheriting weird
+   * dependencies from the host. But if not using ld.so.cache LD_LIBRARY_PATH
+   is later set. */
   {"LD_LIBRARY_PATH", NULL},
+  {"LD_PRELOAD", NULL},
+  {"LD_AUDIT", NULL},
+
   {"XDG_CONFIG_DIRS", "/app/etc/xdg:/etc/xdg"},
   {"XDG_DATA_DIRS", "/app/share:/usr/share"},
   {"SHELL", "/bin/sh"},
@@ -561,8 +571,15 @@ static const ExportData default_exports[] = {
   {"XKB_CONFIG_ROOT", NULL},
   {"GIO_EXTRA_MODULES", NULL},
   {"GDK_BACKEND", NULL},
+  {"VK_ADD_DRIVER_FILES", NULL},
+  {"VK_ADD_LAYER_PATH", NULL},
   {"VK_DRIVER_FILES", NULL},
   {"VK_ICD_FILENAMES", NULL},
+  {"VK_LAYER_PATH", NULL},
+  {"__EGL_EXTERNAL_PLATFORM_CONFIG_DIRS", NULL},
+  {"__EGL_EXTERNAL_PLATFORM_CONFIG_FILENAMES", NULL},
+  {"__EGL_VENDOR_LIBRARY_DIRS", NULL},
+  {"__EGL_VENDOR_LIBRARY_FILENAMES", NULL},
 };
 
 static const ExportData no_ld_so_cache_exports[] = {
@@ -3425,7 +3442,7 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
   if (!flatpak_bwrap_bundle_args (bwrap, 1, -1, FALSE, error))
     return FALSE;
 
-  flatpak_bwrap_add_arg (bwrap, command);
+  flatpak_bwrap_add_args (bwrap, "--", command, NULL);
 
   if (!add_rest_args (bwrap, app_id,
                       exports, (flags & FLATPAK_RUN_FLAG_FILE_FORWARDING) != 0,

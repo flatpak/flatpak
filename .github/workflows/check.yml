@@ -42,6 +42,10 @@ jobs:
     steps:
     - name: Install Dependencies
       run: |
+        head -v -n-0 /etc/apt/sources.list || :
+        head -v -n-0 /etc/apt/sources.list.d/* || :
+        # Workaround for https://github.com/orgs/community/discussions/120966
+        sudo rm -f /etc/apt/sources.list.d/microsoft-prod.list
         sudo apt-get update
         sudo apt-get install -y libglib2.0-dev attr gettext bison  dbus gtk-doc-tools \
         libfuse3-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
@@ -163,7 +167,7 @@ jobs:
     permissions:
       security-events: write # for codeql
     name: Build with clang and analyze
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
@@ -174,7 +178,7 @@ jobs:
     steps:
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v2
+      uses: github/codeql-action/init@v3
       with:
         languages: ${{ matrix.language }}
         # If you wish to specify custom queries, you can do so here or in a config file.
@@ -207,7 +211,7 @@ jobs:
       # Can't use `meson compile` here because Ubuntu 20.04 is too old
       run: ninja -C _build
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
+      uses: github/codeql-action/analyze@v3
 
   valgrind:
     name: Run tests in valgrind

@@ -160,7 +160,7 @@ install_authenticator (FlatpakTransaction            *old_transaction,
   g_autoptr(FlatpakTransaction)  transaction2 = NULL;
   g_autoptr(GError) local_error = NULL;
   g_autoptr(FlatpakInstallation) installation = flatpak_transaction_get_installation (old_transaction);
-  FlatpakDir *dir = flatpak_installation_get_dir (installation, NULL);
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (installation, NULL);
 
   if (dir == NULL)
     {
@@ -889,7 +889,7 @@ end_of_lifed_with_rebase (FlatpakTransaction *transaction,
   EolAction old_action = EOL_UNDECIDED;
   gboolean can_rebase = rebased_to_ref != NULL && remote != NULL;
   g_autoptr(FlatpakInstallation) installation = flatpak_transaction_get_installation (transaction);
-  FlatpakDir *dir = flatpak_installation_get_dir (installation, NULL);
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (installation, NULL);
 
   if (ref == NULL)
     return FALSE; /* Shouldn't happen, the ref should be valid */

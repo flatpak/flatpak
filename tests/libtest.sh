@@ -38,6 +38,10 @@ else
     test_builddir=$(dirname $0)
 fi
 
+if [ -e "$test_srcdir/installed-tests.sh" ]; then
+    . "$test_srcdir/installed-tests.sh"
+fi
+
 # All the asserts and ok functions below are wrapped such that they
 # don't output any set -x traces of their internals (but still echo
 # errors to stderr). This way the log output focuses on tracing what
@@ -333,7 +337,7 @@ httpd () {
 
     rm -f httpd-pipe
     mkfifo httpd-pipe
-    PYTHONUNBUFFERED=1 $(dirname $0)/$COMMAND "$DIR" 3> httpd-pipe 2>&1 | tee --append httpd-log >&2 &
+    PYTHONUNBUFFERED=1 $(dirname $0)/$COMMAND "$DIR" 3> httpd-pipe 2>&1 | tee -a httpd-log >&2 &
     read < httpd-pipe
 }
 
