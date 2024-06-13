@@ -594,7 +594,7 @@ get_summary_for_ref (FlatpakRemoteState *self,
       if (arch != NULL)
         summary = g_hash_table_lookup (self->subsummaries, arch);
 
-      if (summary == NULL)
+      if (summary == NULL && arch != NULL)
         {
           const char *non_compat_arch = flatpak_get_compat_arch_reverse (arch);
 
