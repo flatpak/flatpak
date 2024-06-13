@@ -772,7 +772,7 @@ if [ x${USE_SYSTEMDIR-} == xyes ]; then
     if ${FLATPAK} --user remote-ls test-repo &> remote-ls-error-log; then
         assert_not_reached "flatpak --user remote-ls should not work for system remotes"
     fi
-    assert_file_has_content remote-ls-error-log "Remote \"test-repo\" not found"
+    assert_file_has_content remote-ls-error-log "error: Remote ‘test-repo’ not found in the user installation"
 else
     ${FLATPAK} --user remote-ls --columns=ref test-repo > repo-list
     assert_file_has_content repo-list "org\.test\.Hello/"
@@ -783,7 +783,7 @@ else
     if ${FLATPAK} --system remote-ls test-repo &> remote-ls-error-log; then
         assert_not_reached "flatpak --system remote-ls should not work for user remotes"
     fi
-    assert_file_has_content remote-ls-error-log "Remote \"test-repo\" not found"
+    assert_file_has_content remote-ls-error-log "error: Remote ‘test-repo’ not found in the system installation"
 fi
 
 ok "remote-ls"
@@ -817,7 +817,7 @@ if [ x${USE_SYSTEMDIR-} == xyes ]; then
     if ${FLATPAK} --user remote-modify --title=NewTitle test-repo &> remote-modify-error-log; then
         assert_not_reached "flatpak --user remote-modify should not work for system remotes"
     fi
-    assert_file_has_content remote-modify-error-log "Remote \"test-repo\" not found"
+    assert_file_has_content remote-modify-error-log "error: Remote ‘test-repo’ not found in the user installation"
 else
     ${FLATPAK} --user remote-modify --title=NewTitle test-repo >&2
     ${FLATPAK} remotes -d | grep ^test-repo > repo-info
@@ -832,7 +832,7 @@ else
     if ${FLATPAK} --system remote-modify --title=NewTitle test-repo &> remote-modify-error-log; then
         assert_not_reached "flatpak --system remote-modify should not work for user remotes"
     fi
-    assert_file_has_content remote-modify-error-log "Remote \"test-repo\" not found"
+    assert_file_has_content remote-modify-error-log "error: Remote ‘test-repo’ not found in the system installation"
 fi
 
 ok "remote-modify"
@@ -859,7 +859,7 @@ if [ x${USE_SYSTEMDIR-} == xyes ]; then
     if ${FLATPAK} --user remote-delete test-repo &> remote-delete-error-log; then
         assert_not_reached "flatpak --user remote-delete should not work for system remotes"
     fi
-    assert_file_has_content remote-delete-error-log "Remote \"test-repo\" not found"
+    assert_file_has_content remote-delete-error-log "error: Remote ‘test-repo’ not found in the user installation"
 else
     ${FLATPAK} --user remote-delete test-repo >&2
     ${FLATPAK} remotes > repo-info
@@ -874,7 +874,7 @@ else
     if ${FLATPAK} --system remote-delete test-repo &> remote-delete-error-log; then
         assert_not_reached "flatpak --system remote-delete should not work for user remotes"
     fi
-    assert_file_has_content remote-delete-error-log "Remote \"test-repo\" not found"
+    assert_file_has_content remote-delete-error-log "error: Remote ‘test-repo’ not found in the system installation"
 fi
 
 ok "remote-delete"
@@ -897,7 +897,7 @@ if [ x${USE_SYSTEMDIR-} == xyes ]; then
     if ${FLATPAK} --user remote-info test-repo org.test.Hello &> remote-info-error-log; then
         assert_not_reached "flatpak --user remote-info should not work for system remotes"
     fi
-    assert_file_has_content remote-info-error-log "Remote \"test-repo\" not found"
+    assert_file_has_content remote-info-error-log "error: Remote ‘test-repo’ not found in the user installation"
 else
     ${FLATPAK} --user remote-info test-repo org.test.Hello > remote-ref-info
     assert_file_has_content remote-ref-info "ID: org\.test\.Hello$"
@@ -908,7 +908,7 @@ else
     if ${FLATPAK} --system remote-info test-repo org.test.Hello &> remote-info-error-log; then
         assert_not_reached "flatpak --system remote-info should not work for user remotes"
     fi
-    assert_file_has_content remote-info-error-log "Remote \"test-repo\" not found"
+    assert_file_has_content remote-info-error-log "error: Remote ‘test-repo’ not found in the system installation"
 fi
 
 ok "remote-info"
