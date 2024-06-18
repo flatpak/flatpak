@@ -182,6 +182,14 @@
                                 Available since 1.15.6.
                             </para></listitem></varlistentry>
 
+                            <varlistentry><term><option>usb</option></term>
+                            <listitem><para>
+                                USB device bus
+                                (all device nodes below
+                                <filename>/dev/bus/usb</filename>).
+                                Available since 1.15.9.
+                            </para></listitem></varlistentry>
+
                             <varlistentry><term><option>kvm</option></term>
                             <listitem><para>
                                 Virtualization
