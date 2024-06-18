@@ -162,7 +162,7 @@
                 <listitem><para>
                     Expose a device to the application. This updates
                     the [Context] group in the metadata.
-                    DEVICE must be one of: dri, input, kvm, shm, all.
+                    DEVICE must be one of: dri, input, usb, kvm, shm, all.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
@@ -173,7 +173,7 @@
                 <listitem><para>
                     Don't expose a device to the application. This updates
                     the [Context] group in the metadata.
-                    DEVICE must be one of: dri, input, kvm, shm, all.
+                    DEVICE must be one of: dri, input, usb, kvm, shm, all.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
