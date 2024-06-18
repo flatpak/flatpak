@@ -60,6 +60,7 @@ list_table (XdpDbusPermissionStore *store,
             GError                **error)
 {
   const char *one_id[2];
+  g_auto(GStrv) store_ids = NULL;
   char **ids;
   int i;
 
@@ -71,8 +72,9 @@ list_table (XdpDbusPermissionStore *store,
     }
   else
     {
-      if (!xdp_dbus_permission_store_call_list_sync (store, table, &ids, NULL, error))
+      if (!xdp_dbus_permission_store_call_list_sync (store, table, &store_ids, NULL, error))
         return FALSE;
+      ids = store_ids;
     }
 
   for (i = 0; ids[i]; i++)
