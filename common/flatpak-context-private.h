@@ -90,8 +90,8 @@ struct FlatpakContext
   GHashTable            *session_bus_policy;
   GHashTable            *system_bus_policy;
   GHashTable            *generic_policy;
-  GHashTable            *allowed_usb_devices;
-  GHashTable            *blocked_usb_devices;
+  GHashTable            *enumerable_usb_devices;
+  GHashTable            *hidden_usb_devices;
 };
 
 extern const char *flatpak_context_sockets[];
@@ -126,7 +126,7 @@ void           flatpak_context_set_system_bus_policy (FlatpakContext *context,
                                                       const char     *name,
                                                       FlatpakPolicy   policy);
 char *         flatpak_context_devices_to_usb_list (GHashTable *devices,
-                                                    gboolean blocked);
+                                                    gboolean hidden);
 void           flatpak_context_to_args (FlatpakContext *context,
                                         GPtrArray      *args);
 FlatpakRunFlags flatpak_context_get_run_flags (FlatpakContext *context);
@@ -227,8 +227,8 @@ gboolean flatpak_context_parse_usb_rule (const char      *data,
                                          GError         **error);
 gboolean
 flatpak_context_parse_usb_list (const char     *buffer,
-				GHashTable     *allowed,
-				GHashTable     *blocked,
+				GHashTable     *enumerable,
+				GHashTable     *hidden,
 				GError        **error);
 
 void flatpak_usb_rule_print (FlatpakUsbRule *usb_rule,

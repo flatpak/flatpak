@@ -510,9 +510,9 @@ test_usb_list (void)
   g_autofree char *list = NULL;
   gboolean ret = FALSE;
   g_autoptr(GError) error = NULL;
-  g_autoptr(GHashTable) allowed = g_hash_table_new_full (g_str_hash, g_str_equal,
+  g_autoptr(GHashTable) enumerable = g_hash_table_new_full (g_str_hash, g_str_equal,
 							 g_free, (GDestroyNotify) flatpak_usb_query_free);
-  g_autoptr(GHashTable) blocked = g_hash_table_new_full (g_str_hash, g_str_equal,
+  g_autoptr(GHashTable) hidden = g_hash_table_new_full (g_str_hash, g_str_equal,
 							 g_free, (GDestroyNotify) flatpak_usb_query_free);
 
   gtest_srcdir = g_getenv("G_TEST_SRCDIR");
@@ -522,21 +522,21 @@ test_usb_list (void)
   ret = g_file_get_contents (test_file_path, &content, NULL, &error);
   g_assert (ret);
 
-  ret = flatpak_context_parse_usb_list (content, allowed, blocked, &error);
+  ret = flatpak_context_parse_usb_list (content, enumerable, hidden, &error);
 
   g_assert (ret);
   g_assert_no_error (error);
-  g_assert_cmpint (g_hash_table_size (blocked), ==, 4);
-  g_assert_cmpint (g_hash_table_size (allowed), ==, 2344);
+  g_assert_cmpint (g_hash_table_size (hidden), ==, 4);
+  g_assert_cmpint (g_hash_table_size (enumerable), ==, 2344);
 
-  list = flatpak_context_devices_to_usb_list (blocked, TRUE);
+  list = flatpak_context_devices_to_usb_list (hidden, TRUE);
   g_assert_cmpstr (list, ==, "!vnd:0502+dev:33c3;!vnd:4102+dev:1213;!vnd:0502+dev:365e;!vnd:0502+dev:387a;");
 
-  g_hash_table_remove_all (allowed);
-  g_hash_table_remove_all (blocked);
-  ret = flatpak_context_parse_usb_list (list, allowed, blocked, &error);
-  g_assert_cmpint (g_hash_table_size (blocked), ==, 4);
-  g_assert_cmpint (g_hash_table_size (allowed), ==, 0);
+  g_hash_table_remove_all (enumerable);
+  g_hash_table_remove_all (hidden);
+  ret = flatpak_context_parse_usb_list (list, enumerable, hidden, &error);
+  g_assert_cmpint (g_hash_table_size (hidden), ==, 4);
+  g_assert_cmpint (g_hash_table_size (enumerable), ==, 0);
 }
 
 static void
