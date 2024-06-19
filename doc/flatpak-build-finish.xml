@@ -345,8 +345,8 @@ key=v1;v2;
                 <term><option>--nousb=VENDOR_ID:PRODUCT_ID</option></term>
 
                 <listitem><para>
-                    Adds a blocked USB device query to the application metadata.
-                    Blocked devices take precedence over allowed devices and cannot
+                    Adds a hidden USB device query to the application metadata.
+                    Hidden devices take precedence over enumerable devices and cannot
                     be enumerated. The syntax is exactly equal to
                     <option>--usb</option>
                 </para></listitem>
