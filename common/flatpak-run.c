@@ -1597,6 +1597,7 @@ add_tzdata_args (FlatpakBwrap *bwrap,
   g_autofree char *timezone_content = g_strdup_printf ("%s\n", raw_timezone);
   g_autofree char *localtime_content = g_strconcat ("../usr/share/zoneinfo/", raw_timezone, NULL);
   g_autoptr(GFile) runtime_zoneinfo = NULL;
+  const gchar *tzdir;
 
   if (runtime_files)
     runtime_zoneinfo = g_file_resolve_relative_path (runtime_files, "share/zoneinfo");
@@ -1604,8 +1605,18 @@ add_tzdata_args (FlatpakBwrap *bwrap,
   /* Check for runtime /usr/share/zoneinfo */
   if (runtime_zoneinfo != NULL && g_file_query_exists (runtime_zoneinfo, NULL))
     {
+      /* Check for host TZDIR */
+      tzdir = getenv ("TZDIR");
+      if (tzdir != NULL && g_file_test (tzdir, G_FILE_TEST_IS_DIR))
+        {
+          /* Here we assume the host timezone file exist in the host data */
+          flatpak_bwrap_add_args (bwrap,
+                                  "--ro-bind", tzdir, "/usr/share/zoneinfo",
+                                  "--symlink", localtime_content, "/etc/localtime",
+                                  NULL);
+        }
       /* Check for host /usr/share/zoneinfo */
-      if (g_file_test ("/usr/share/zoneinfo", G_FILE_TEST_IS_DIR))
+      else if (g_file_test ("/usr/share/zoneinfo", G_FILE_TEST_IS_DIR))
         {
           /* Here we assume the host timezone file exist in the host data */
           flatpak_bwrap_add_args (bwrap,
