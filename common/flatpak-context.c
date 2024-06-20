@@ -291,6 +291,62 @@ flatpak_verify_dbus_name (const char *name, GError **error)
   return FALSE;
 }
 
+static void
+flatpak_context_conditionals_to_string_impl (GHashTable  *conditionals,
+                                             const char **names,
+                                             const char  *prefix,
+                                             GPtrArray   *array)
+{
+  gpointer key;
+  GPtrArray *conditions;
+  GHashTableIter iter;
+  int i;
+
+  g_hash_table_iter_init (&iter, conditionals);
+  while (g_hash_table_iter_next (&iter, &key, (gpointer *) &conditions))
+    {
+      guint32 conditional = GPOINTER_TO_INT (key);
+      g_autofree char *condition_str;
+
+      if (!conditions->pdata)
+        continue;
+
+      g_ptr_array_add (conditions, NULL);
+      condition_str = g_strjoinv (":", (char **)conditions->pdata);
+      g_ptr_array_remove_index (conditions, conditions->len - 1);
+
+      for (i = 0; names[i] != NULL; i++)
+        {
+          if (conditional != 1 << i)
+            continue;
+
+          g_ptr_array_add (array, g_strdup_printf ("%s%s:%s",
+                                                   prefix,
+                                                   names[i],
+                                                   condition_str));
+          break;
+        }
+    }
+}
+
+static void
+flatpak_context_conditionals_to_string (GHashTable  *conditionals,
+                                        const char **names,
+                                        GPtrArray   *array)
+{
+  flatpak_context_conditionals_to_string_impl (conditionals, names,
+                                               "if:", array);
+}
+
+static void
+flatpak_context_conditionals_to_args (GHashTable  *conditionals,
+                                      const char **names,
+                                      GPtrArray   *array)
+{
+  flatpak_context_conditionals_to_string_impl (conditionals, names,
+                                               "--device-if=", array);
+}
+
 static FlatpakContextSockets
 flatpak_context_socket_from_string (const char *string, GError **error)
 {
@@ -345,14 +401,19 @@ flatpak_context_device_from_string (const char *string, GError **error)
 }
 
 static char **
-flatpak_context_devices_to_string (FlatpakContextDevices devices,
-                                   FlatpakContextDevices valid)
+flatpak_context_devices_to_string (FlatpakContext        *context,
+                                   FlatpakContextDevices  devices,
+                                   FlatpakContextDevices  valid)
 {
   g_autoptr (GPtrArray) array = g_ptr_array_new_with_free_func (g_free);
 
   flatpak_context_bitmask_to_string (devices, valid,
                                      flatpak_context_devices,
                                      array);
+
+  flatpak_context_conditionals_to_string (context->conditional_devices,
+                                          flatpak_context_devices,
+                                          array);
 
   g_ptr_array_add (array, NULL);
   return (char **) g_ptr_array_free (g_steal_pointer (&array), FALSE);
@@ -366,6 +427,10 @@ flatpak_context_devices_to_args (FlatpakContext *context,
                                    flatpak_context_devices,
                                    "--device", "--nodevice",
                                    args);
+
+  flatpak_context_conditionals_to_args (context->conditional_devices,
+                                        flatpak_context_devices,
+                                        args);
 }
 
 static FlatpakContextFeatures
@@ -2366,7 +2431,7 @@ flatpak_context_save_metadata (FlatpakContext *context,
 
   shared = flatpak_context_shared_to_string (shares_mask, shares_valid);
   sockets = flatpak_context_sockets_to_string (sockets_mask, sockets_valid);
-  devices = flatpak_context_devices_to_string (devices_mask, devices_valid);
+  devices = flatpak_context_devices_to_string (context, devices_mask, devices_valid);
   features = flatpak_context_features_to_string (features_mask, features_valid);
 
   if (shared[0] != NULL)
