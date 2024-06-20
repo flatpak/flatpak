@@ -1902,6 +1902,23 @@ parse_negated (const char *option, gboolean *negated)
   return option;
 }
 
+static const char *
+parse_conditional (const char *option,
+                   gboolean   *conditional)
+{
+  if (option[0] == 'i' && option[1] == 'f' && option[2] == ':')
+    {
+      option += 3;
+      *conditional = TRUE;
+    }
+  else
+    {
+      *conditional = FALSE;
+    }
+
+  return option;
+}
+
 static void
 flatpak_context_load_share (FlatpakContext *context,
                             const char     *share_str)
@@ -1950,14 +1967,24 @@ flatpak_context_load_socket (FlatpakContext *context,
 
 static void
 flatpak_context_load_device (FlatpakContext *context,
-                             const char     *device_str)
+                             const char     *device_expr)
 {
   FlatpakContextDevices device;
+  const char *device_str;
+  gboolean conditional;
   gboolean remove;
 
-  device =
-    flatpak_context_device_from_string (parse_negated (device_str, &remove),
-                                        NULL);
+  device_str = parse_conditional (device_expr, &conditional);
+  if (conditional)
+    {
+      if (!flatpak_context_add_conditional_device (context, device_str, NULL))
+        g_info ("Bad conditional device %s", device_expr);
+
+      return;
+    }
+
+  device_str = parse_negated (device_expr, &remove);
+  device = flatpak_context_device_from_string (device_str, NULL);
 
   if (device == 0)
     {
