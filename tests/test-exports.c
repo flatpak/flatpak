@@ -177,12 +177,10 @@ test_empty_context (void)
   g_assert_cmpuint (g_hash_table_size (context->session_bus_policy), ==, 0);
   g_assert_cmpuint (g_hash_table_size (context->system_bus_policy), ==, 0);
   g_assert_cmpuint (g_hash_table_size (context->generic_policy), ==, 0);
+  g_assert_cmpuint (g_hash_table_size (context->socket_permissions), ==, 0);
+  g_assert_cmpuint (g_hash_table_size (context->device_permissions), ==, 0);
   g_assert_cmpuint (context->shares, ==, 0);
   g_assert_cmpuint (context->shares_valid, ==, 0);
-  g_assert_cmpuint (context->sockets, ==, 0);
-  g_assert_cmpuint (context->sockets_valid, ==, 0);
-  g_assert_cmpuint (context->devices, ==, 0);
-  g_assert_cmpuint (context->devices_valid, ==, 0);
   g_assert_cmpuint (context->features, ==, 0);
   g_assert_cmpuint (context->features_valid, ==, 0);
   g_assert_cmpuint (flatpak_context_get_run_flags (context), ==, 0);
@@ -230,7 +228,7 @@ test_full_context (void)
   g_key_file_set_value (keyfile,
                         FLATPAK_METADATA_GROUP_CONTEXT,
                         FLATPAK_METADATA_KEY_DEVICES,
-                        "dri;all;kvm;shm;");
+                        "dri;all;kvm;shm;if:all:true;if:all:!has-wayland;");
   g_key_file_set_value (keyfile,
                         FLATPAK_METADATA_GROUP_CONTEXT,
                         FLATPAK_METADATA_KEY_FEATURES,
@@ -272,13 +270,14 @@ test_full_context (void)
                     (FLATPAK_CONTEXT_SHARED_NETWORK |
                      FLATPAK_CONTEXT_SHARED_IPC));
   g_assert_cmpuint (context->shares_valid, ==, context->shares);
-  g_assert_cmpuint (context->devices, ==,
+  FlatpakContextDevices devices = flatpak_context_compute_allowed_devices (context, NULL);
+  g_assert_cmpuint (devices, ==,
                     (FLATPAK_CONTEXT_DEVICE_DRI |
                      FLATPAK_CONTEXT_DEVICE_ALL |
                      FLATPAK_CONTEXT_DEVICE_KVM |
                      FLATPAK_CONTEXT_DEVICE_SHM));
-  g_assert_cmpuint (context->devices_valid, ==, context->devices);
-  g_assert_cmpuint (context->sockets, ==,
+  FlatpakContextSockets sockets = flatpak_context_compute_allowed_sockets (context, NULL);
+  g_assert_cmpuint (sockets, ==,
                     (FLATPAK_CONTEXT_SOCKET_X11 |
                      FLATPAK_CONTEXT_SOCKET_WAYLAND |
                      FLATPAK_CONTEXT_SOCKET_INHERIT_WAYLAND_SOCKET |
@@ -289,7 +288,6 @@ test_full_context (void)
                      FLATPAK_CONTEXT_SOCKET_SSH_AUTH |
                      FLATPAK_CONTEXT_SOCKET_PCSC |
                      FLATPAK_CONTEXT_SOCKET_CUPS));
-  g_assert_cmpuint (context->sockets_valid, ==, context->sockets);
   g_assert_cmpuint (context->features, ==,
                     (FLATPAK_CONTEXT_FEATURE_DEVEL |
                      FLATPAK_CONTEXT_FEATURE_MULTIARCH |
@@ -394,6 +392,8 @@ test_full_context (void)
   i = 0;
   g_assert_cmpstr (strv[i++], ==, "all");
   g_assert_cmpstr (strv[i++], ==, "dri");
+  g_assert_cmpstr (strv[i++], ==, "if:all:!has-wayland");
+  g_assert_cmpstr (strv[i++], ==, "if:all:true");
   g_assert_cmpstr (strv[i++], ==, "kvm");
   g_assert_cmpstr (strv[i++], ==, "shm");
   g_assert_cmpstr (strv[i], ==, NULL);
