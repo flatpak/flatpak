@@ -97,6 +97,17 @@ const char *flatpak_context_special_filesystems[] = {
   NULL
 };
 
+const char *flatpak_context_conditions[] = {
+  "true",
+  "false",
+  "has-input-device",
+  NULL
+};
+
+FlatpakContextConditions flatpak_context_true_conditions =
+  FLATPAK_CONTEXT_CONDITION_TRUE |
+  FLATPAK_CONTEXT_CONDITION_HAS_INPUT_DEV;
+
 FlatpakContext *
 flatpak_context_new (void)
 {
@@ -3805,4 +3816,57 @@ flatpak_context_dump (FlatpakContext *context,
 
       g_debug ("\t#");
     }
+}
+
+static guint32
+flatpak_context_compute_allowed (guint32                           enabled,
+                                 GHashTable                       *conditionals,
+                                 FlatpakContextConditionEvaluator  evaluator)
+{
+  GHashTableIter iter;
+  gpointer key;
+  GPtrArray *conditions_strs;
+
+  g_hash_table_iter_init (&iter, conditionals);
+  while (g_hash_table_iter_next (&iter, &key, (gpointer *) &conditions_strs))
+    {
+      guint32 conditional_bitmask = GPOINTER_TO_INT (key);
+      FlatpakContextConditions conditions = 0;
+      int i;
+
+      for (i = 0; i < conditions_strs->len; i++)
+        {
+          FlatpakContextConditions new_conds =
+            flatpak_context_bitmask_from_string (conditions_strs->pdata[i],
+                                                 flatpak_context_conditions);
+
+          /* If new_conds is 0 it means this version of flatpak doesn't know
+           * about the condition and it cannot be satisfied. */
+          if (new_conds == 0)
+            conditions |= FLATPAK_CONTEXT_CONDITION_FALSE;
+
+          conditions |= new_conds;
+        }
+
+      if (conditions & FLATPAK_CONTEXT_CONDITION_FALSE)
+        break;
+
+      /* Conditions which are always true in this version of flatpak */
+      conditions = conditions & ~flatpak_context_true_conditions;
+
+      /* Remove the permission if all conditions are satisfied  */
+      if (conditions == 0 || (evaluator && evaluator (conditions)))
+        enabled &= ~conditional_bitmask;
+    }
+
+  return enabled;
+}
+
+FlatpakContextDevices
+flatpak_context_compute_allowed_devices (FlatpakContext                   *context,
+                                         FlatpakContextConditionEvaluator  evaluator)
+{
+  return flatpak_context_compute_allowed (context->devices,
+                                          context->conditional_devices,
+                                          evaluator);
 }
