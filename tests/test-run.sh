@@ -367,7 +367,8 @@ mkdir -p app/files/a-dir
 chmod a+rwx app/files/a-dir
 flatpak build-finish --command=hello.sh app
 # Note: not --canonical-permissions
-ostree --repo=repos/test commit --owner-uid=0 --owner-gid=0  --no-xattrs  ${FL_GPGARGS} --branch=app/org.test.Writable/$ARCH/master app
+${FLATPAK} build-export -vv --disable-sandbox --files=files repos/test app master
+ostree --repo=repos/test commit  --keep-metadata=xa.metadata --owner-uid=0 --owner-gid=0  --no-xattrs  ${FL_GPGARGS} --branch=app/org.test.Writable/$ARCH/master app
 update_repo
 
 ${FLATPAK} ${U} install -y test-repo org.test.Writable
@@ -383,7 +384,8 @@ touch app/files/exe
 chmod u+s app/files/exe
 flatpak build-finish --command=hello.sh app
 # Note: not --canonical-permissions
-ostree --repo=repos/test commit --owner-uid=0 --owner-gid=0 --no-xattrs  ${FL_GPGARGS} --branch=app/org.test.Setuid/$ARCH/master app
+${FLATPAK} build-export -vv --disable-sandbox --files=files repos/test app master
+ostree -v --repo=repos/test commit --keep-metadata=xa.metadata --owner-uid=0 --owner-gid=0 --no-xattrs  ${FL_GPGARGS} --branch=app/org.test.Setuid/$ARCH/master app
 update_repo
 
 if ${FLATPAK} ${U} install -y test-repo org.test.Setuid &> err2.txt; then

@@ -1746,7 +1746,7 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
 
   op = flatpak_transaction_add_op (self, remote, ref, subpaths, commit, bundle, kind);
   if (external_metadata)
-    op->external_metadata = g_bytes_new (external_metadata, strlen (external_metadata) + 1);
+    op->external_metadata = g_bytes_new (external_metadata, strlen (external_metadata));
 
   return TRUE;
 }
@@ -1988,14 +1988,15 @@ load_deployed_metadata (FlatpakTransaction *self, const char *ref)
       return NULL;
     }
 
-  return g_bytes_new_take (g_steal_pointer (&metadata_contents), metadata_contents_length + 1);
+  return g_bytes_new_take (g_steal_pointer (&metadata_contents), metadata_contents_length);
 }
 
-static void
+static gboolean
 mark_op_resolved (FlatpakTransactionOperation *op,
                   const char                  *commit,
                   GBytes                      *metadata,
-                  GBytes                      *old_metadata)
+                  GBytes                      *old_metadata,
+                  GError                     **error)
 {
   g_debug ("marking op %s:%s resolved to %s", kind_to_str (op->kind), op->ref, commit ? commit : "-");
 
@@ -2009,13 +2010,12 @@ mark_op_resolved (FlatpakTransactionOperation *op,
   if (metadata)
     {
       g_autoptr(GKeyFile) metakey = g_key_file_new ();
-      if (g_key_file_load_from_bytes (metakey, metadata, G_KEY_FILE_NONE, NULL))
-        {
-          op->resolved_metadata = g_bytes_ref (metadata);
-          op->resolved_metakey = g_steal_pointer (&metakey);
-        }
-      else
-        g_message ("Warning: Failed to parse metadata for %s\n", op->ref);
+      if (!g_key_file_load_from_bytes (metakey, metadata, G_KEY_FILE_NONE, NULL))
+        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                   "Metadata for %s is invalid", op->ref);
+
+      op->resolved_metadata = g_bytes_ref (metadata);
+      op->resolved_metakey = g_steal_pointer (&metakey);
     }
   if (old_metadata)
     {
@@ -2026,8 +2026,86 @@ mark_op_resolved (FlatpakTransactionOperation *op,
           op->resolved_old_metakey = g_steal_pointer (&metakey);
         }
       else
-        g_message ("Warning: Failed to parse old metadata for %s\n", op->ref);
+        {
+          /* This shouldn't happen, but a NULL old metadata is safe (all permisssions are considered new) */
+          g_message ("Warning: Failed to parse old metadata for %s\n", op->ref);
+        }
     }
+
+  return TRUE;
+}
+
+static gboolean
+resolve_op_end (FlatpakTransaction *self,
+                FlatpakTransactionOperation *op,
+                const char *checksum,
+                GBytes *metadata_bytes,
+                GError **error)
+{
+  g_autoptr(GBytes) old_metadata_bytes = NULL;
+
+  old_metadata_bytes = load_deployed_metadata (self, op->ref);
+  if (!mark_op_resolved (op, checksum, metadata_bytes, old_metadata_bytes, error))
+    return FALSE;
+  return TRUE;
+ }
+
+
+static gboolean
+resolve_op_from_commit (FlatpakTransaction *self,
+                        FlatpakTransactionOperation *op,
+                        const char *checksum,
+                        GVariant *commit_data,
+                        GError **error)
+{
+  g_autoptr(GBytes) metadata_bytes = NULL;
+  g_autoptr(GVariant) commit_metadata = NULL;
+  const char *xa_metadata = NULL;
+  guint64 download_size = 0;
+  guint64 installed_size = 0;
+
+  commit_metadata = g_variant_get_child_value (commit_data, 0);
+  g_variant_lookup (commit_metadata, "xa.metadata", "&s", &xa_metadata);
+  if (xa_metadata == NULL)
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                               "No xa.metadata in local commit %s ref %s",
+                               checksum, op->ref);
+
+  metadata_bytes = g_bytes_new (xa_metadata, strlen (xa_metadata));
+
+  if (g_variant_lookup (commit_metadata, "xa.download-size", "t", &download_size))
+    op->download_size = GUINT64_FROM_BE (download_size);
+  if (g_variant_lookup (commit_metadata, "xa.installed-size", "t", &installed_size))
+    op->installed_size = GUINT64_FROM_BE (installed_size);
+
+  return resolve_op_end (self, op, checksum, metadata_bytes, error);
+}
+
+static gboolean
+resolve_op_from_metadata (FlatpakTransaction *self,
+                          FlatpakTransactionOperation *op,
+                          const char *checksum,
+                          FlatpakRemoteState *state,
+                          GError **error)
+{
+  g_autoptr(GBytes) metadata_bytes = NULL;
+  guint64 download_size = 0;
+  guint64 installed_size = 0;
+  const char *metadata = NULL;
+  g_autoptr(GError) local_error = NULL;
+
+  if (!flatpak_remote_state_lookup_cache (state, op->ref, &download_size, &installed_size, &metadata, &local_error))
+    {
+      g_message (_("Warning: Can't find %s metadata for dependencies: %s"), op->ref, local_error->message);
+      g_clear_error (&local_error);
+    }
+  else
+    metadata_bytes = g_bytes_new (metadata, strlen (metadata));
+
+  op->installed_size = installed_size;
+  op->download_size = download_size;
+
+  return resolve_op_end (self, op, checksum, metadata_bytes, error);
 }
 
 static gboolean
@@ -2068,13 +2146,12 @@ resolve_p2p_ops (FlatpakTransaction *self,
     {
       FlatpakTransactionOperation *op = l->data;
       FlatpakDirResolve *resolve = g_ptr_array_index (resolves, i);
-      g_autoptr(GBytes) old_metadata_bytes = NULL;
 
       op->download_size = resolve->download_size;
       op->installed_size = resolve->installed_size;
 
-      old_metadata_bytes = load_deployed_metadata (self, op->ref);
-      mark_op_resolved (op, resolve->resolved_commit, resolve->resolved_metadata, old_metadata_bytes);
+      if (!resolve_op_end (self, op, resolve->resolved_commit, resolve->resolved_metadata, error))
+        return FALSE;
     }
 
   return TRUE;
@@ -2100,11 +2177,7 @@ resolve_ops (FlatpakTransaction *self,
       g_autoptr(FlatpakRemoteState) state = NULL;
       g_autofree char *checksum = NULL;
       g_autoptr(GVariant) commit_data = NULL;
-      g_autoptr(GVariant) commit_metadata = NULL;
       g_autoptr(GBytes) metadata_bytes = NULL;
-      g_autoptr(GBytes) old_metadata_bytes = NULL;
-      guint64 download_size = 0;
-      guint64 installed_size = 0;
 
       if (op->resolved)
         continue;
@@ -2114,14 +2187,16 @@ resolve_ops (FlatpakTransaction *self,
           /* We resolve to the deployed metadata, becasue we need it to uninstall related ops */
 
           metadata_bytes = load_deployed_metadata (self, op->ref);
-          mark_op_resolved (op, NULL, metadata_bytes, NULL);
+          if (!mark_op_resolved (op, NULL, metadata_bytes, NULL, error))
+            return FALSE;
           continue;
         }
 
       if (op->kind == FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE)
         {
           g_assert (op->commit != NULL);
-          mark_op_resolved (op, op->commit, op->external_metadata, NULL);
+          if (!mark_op_resolved (op, op->commit, op->external_metadata, NULL, error))
+            return FALSE;
           continue;
         }
 
@@ -2147,29 +2222,15 @@ resolve_ops (FlatpakTransaction *self,
       /* Should we use local state */
       if (transaction_is_local_only (self, op->kind))
         {
-          const char *xa_metadata = NULL;
           commit_data = flatpak_dir_read_latest_commit (priv->dir, op->remote, op->ref, &checksum, NULL, error);
           if (commit_data == NULL)
             return FALSE;
 
-          commit_metadata = g_variant_get_child_value (commit_data, 0);
-          g_variant_lookup (commit_metadata, "xa.metadata", "&s", &xa_metadata);
-          if (xa_metadata == NULL)
-            g_message ("Warning: No xa.metadata in local commit %s ref %s", checksum, op->ref);
-          else
-            metadata_bytes = g_bytes_new (xa_metadata, strlen (xa_metadata) + 1);
-
-          if (g_variant_lookup (commit_metadata, "xa.download-size", "t", &download_size))
-            op->download_size = GUINT64_FROM_BE (download_size);
-          if (g_variant_lookup (commit_metadata, "xa.installed-size", "t", &installed_size))
-            op->installed_size = GUINT64_FROM_BE (installed_size);
-
-          old_metadata_bytes = load_deployed_metadata (self, op->ref);
-          mark_op_resolved (op, checksum, metadata_bytes, old_metadata_bytes);
+          if (!resolve_op_from_commit (self, op, checksum, commit_data, error))
+            return FALSE;
         }
       else if (state->collection_id == NULL) /* In the non-p2p case we have all the info available in the summary, so use it */
         {
-          const char *metadata = NULL;
           g_autoptr(GError) local_error = NULL;
 
           if (op->commit != NULL)
@@ -2194,24 +2255,12 @@ resolve_ops (FlatpakTransaction *self,
 
           /* TODO: This only gets the metadata for the latest only, we need to handle the case
              where the user specified a commit, or p2p doesn't have the latest commit available */
-          if (!flatpak_remote_state_lookup_cache (state, op->ref, &download_size, &installed_size, &metadata, &local_error))
-            {
-              g_message (_("Warning: Can't find %s metadata for dependencies: %s"), op->ref, local_error->message);
-              g_clear_error (&local_error);
-            }
-          else
-            metadata_bytes = g_bytes_new (metadata, strlen (metadata) + 1);
-
-          op->installed_size = installed_size;
-          op->download_size = download_size;
-
-          old_metadata_bytes = load_deployed_metadata (self, op->ref);
-          mark_op_resolved (op, checksum, metadata_bytes, old_metadata_bytes);
+          if (!resolve_op_from_metadata (self, op, checksum, state, error))
+            return FALSE;
         }
       else
         {
           /* This is a (potential) p2p operation, so rather than do these individually we queue them up in an operation later */
-
           collection_id_ops = g_list_prepend (collection_id_ops, op);
         }
     }
@@ -2899,6 +2948,9 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
                                        priv->max_op >= APP_UPDATE,
                                        state, op->ref, op->resolved_commit,
                                        (const char **) op->subpaths,
+                                       NULL,  /* no previous IDs */
+                                       op->resolved_metadata,
+                                       NULL,  /* no token */
                                        progress->ostree_progress,
                                        cancellable, &local_error);
 
@@ -2941,6 +2993,9 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
                                           state, op->ref, op->resolved_commit,
                                           NULL,
                                           (const char **) op->subpaths,
+                                          NULL,  /* no previous IDs */
+                                          op->resolved_metadata,
+                                          NULL,  /* no token */
                                           progress->ostree_progress,
                                           cancellable, &local_error);
               flatpak_transaction_progress_done (progress);
