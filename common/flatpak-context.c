@@ -97,6 +97,17 @@ const char *flatpak_context_special_filesystems[] = {
   NULL
 };
 
+const char *flatpak_context_conditions[] = {
+  "true",
+  "false",
+  "has-input-device",
+  NULL
+};
+
+FlatpakContextConditions flatpak_context_true_conditions =
+  FLATPAK_CONTEXT_CONDITION_TRUE |
+  FLATPAK_CONTEXT_CONDITION_HAS_INPUT_DEV;
+
 FlatpakContext *
 flatpak_context_new (void)
 {
@@ -3810,4 +3821,62 @@ flatpak_context_dump (FlatpakContext *context,
 
       g_debug ("\t#");
     }
+}
+
+static guint32
+flatpak_context_compute_allowed (guint32                           enabled,
+                                 GHashTable                       *conditionals,
+                                 FlatpakContextConditionEvaluator  evaluator)
+{
+  GHashTableIter iter;
+  gpointer key;
+  GPtrArray *conditions_strs;
+
+  g_hash_table_iter_init (&iter, conditionals);
+  while (g_hash_table_iter_next (&iter, &key, (gpointer *) &conditions_strs))
+    {
+      guint32 conditional_bitmask = GPOINTER_TO_INT (key);
+      int i;
+
+      for (i = 0; i < conditions_strs->len; i++)
+        {
+          FlatpakContextConditions condition;
+          const char *condition_str;
+          gboolean negated;
+
+          condition_str = parse_negated (conditions_strs->pdata[i], &negated);
+
+          condition =
+            flatpak_context_bitmask_from_string (condition_str,
+                                                 flatpak_context_conditions);
+
+          /* If condition is 0 it means this version of flatpak doesn't know
+           * about the condition and it cannot be satisfied. */
+          if (condition == 0)
+            continue;
+
+          /* Conditions which are always true in this version of flatpak */
+          if (!!(condition & flatpak_context_true_conditions) == !negated)
+            break;
+
+          /* Conditions which need runtime evaluation */
+          if (evaluator && evaluator (condition) == !negated)
+            break;
+        }
+
+      /* No condition evaluated to TRUE, so disable the thing */
+      if (i == conditions_strs->len)
+        enabled &= ~conditional_bitmask;
+    }
+
+  return enabled;
+}
+
+FlatpakContextDevices
+flatpak_context_compute_allowed_devices (FlatpakContext                   *context,
+                                         FlatpakContextConditionEvaluator  evaluator)
+{
+  return flatpak_context_compute_allowed (context->devices,
+                                          context->conditional_devices,
+                                          evaluator);
 }
