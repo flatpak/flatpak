@@ -1093,6 +1093,43 @@ flatpak_context_take_filesystem (FlatpakContext        *context,
   g_hash_table_insert (context->filesystems, fs, GINT_TO_POINTER (mode));
 }
 
+static void
+flatpak_context_merge_conditionals (GHashTable *conditionals,
+                                    GHashTable *other_conditionals)
+{
+  GHashTableIter iter;
+  gpointer key, value;
+
+  g_hash_table_iter_init (&iter, other_conditionals);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+      g_autoptr (GPtrArray) array = NULL;
+      GPtrArray *other_array = value;
+      int i;
+
+      if (!other_array->pdata)
+        continue;
+
+      if (!g_hash_table_steal_extended (conditionals, key,
+                                        NULL, (gpointer *) &array))
+        array = g_ptr_array_new_with_free_func (g_free);
+
+      for (i = 0; i < other_array->len; i++)
+        {
+          const char *cond = other_array->pdata[i];
+
+          if (g_ptr_array_find_with_equal_func (array, cond, g_str_equal, NULL))
+            continue;
+
+          g_ptr_array_add (array, g_strdup (cond));
+        }
+
+      g_ptr_array_sort (array, flatpak_strcmp0_ptr);
+
+      g_hash_table_insert (conditionals, key, g_steal_pointer (&array));
+    }
+}
+
 void
 flatpak_context_merge (FlatpakContext *context,
                        FlatpakContext *other)
@@ -1162,6 +1199,9 @@ flatpak_context_merge (FlatpakContext *context,
   g_hash_table_iter_init (&iter, other->hidden_usb_devices);
   while (g_hash_table_iter_next (&iter, NULL, &value))
     flatpak_context_add_nousb_query (context, value);
+
+  flatpak_context_merge_conditionals (context->conditional_devices,
+                                      other->conditional_devices);
 }
 
 static gboolean
