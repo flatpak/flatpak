@@ -28,6 +28,18 @@
 #include <gio/gio.h>
 #include "libglnx.h"
 
+const char *
+flatpak_get_tzdir (void)
+{
+  const gchar *tzdir;
+
+  tzdir = getenv ("TZDIR");
+  if (tzdir)
+    return tzdir;
+
+  return "/usr/share/zoneinfo";
+}
+
 char *
 flatpak_get_timezone (void)
 {
