@@ -1,6 +1,4 @@
-#!/usr/bin/python
-
-from __future__ import print_function
+#!/usr/bin/python3
 
 import base64
 import hashlib
@@ -13,8 +11,8 @@ if sys.version_info[0] >= 3:
     from urllib.parse import parse_qs
     import http.server as http_server
 else:
-    from urlparse import parse_qs
-    import BaseHTTPServer as http_server
+    from urllib.parse import parse_qs
+    import http.server as http_server
 
 repositories = {}
 icons = {}
@@ -120,7 +118,7 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
             response = 404
 
         self.send_response(response)
-        for k, v in add_headers.items():
+        for k, v in list(add_headers.items()):
             self.send_header(k, v)
 
         if response == 200:

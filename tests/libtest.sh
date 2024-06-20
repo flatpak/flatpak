@@ -278,6 +278,10 @@ update_repo () {
         collection_args=
     fi
 
+    if test -f repos/${REPONAME}/summary; then
+        sleep 1 # ensure we get a new timestamp on the summary files
+    fi
+
     ${FLATPAK} build-update-repo ${collection_args} ${GPGARGS:-${FL_GPGARGS}} ${UPDATE_REPO_ARGS-} repos/${REPONAME}
 }
 
@@ -378,3 +382,27 @@ cleanup () {
     fi
 }
 trap cleanup EXIT
+
+assert_semicolon_list_contains () {
+    list="$1"
+    member="$2"
+
+    case ";$list;" in
+        (*";$member;"*)
+            ;;
+        (*)
+            assert_not_reached "\"$list\" should contain \"$member\""
+            ;;
+    esac
+}
+
+assert_not_semicolon_list_contains () {
+    local list="$1"
+    local member="$2"
+
+    case ";$list;" in
+        (*";$member;"*)
+            assert_not_reached "\"$list\" should not contain \"$member\""
+            ;;
+    esac
+}

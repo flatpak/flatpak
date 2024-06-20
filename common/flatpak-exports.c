@@ -80,7 +80,7 @@ make_relative (const char *base, const char *path)
 }
 
 #define FAKE_MODE_DIR -1 /* Ensure a dir, either on tmpfs or mapped parent */
-#define FAKE_MODE_TMPFS 0
+#define FAKE_MODE_TMPFS FLATPAK_FILESYSTEM_MODE_NONE
 #define FAKE_MODE_SYMLINK G_MAXINT
 
 typedef struct
@@ -278,7 +278,7 @@ flatpak_exports_append_bwrap_args (FlatpakExports *exports,
         }
     }
 
-  if (exports->host_fs != 0)
+  if (exports->host_fs != FLATPAK_FILESYSTEM_MODE_NONE)
     {
       if (g_file_test ("/usr", G_FILE_TEST_IS_DIR))
         flatpak_bwrap_add_args (bwrap,
@@ -291,7 +291,7 @@ flatpak_exports_append_bwrap_args (FlatpakExports *exports,
     }
 }
 
-/* Returns 0 if not visible */
+/* Returns FLATPAK_FILESYSTEM_MODE_NONE if not visible */
 FlatpakFilesystemMode
 flatpak_exports_path_get_mode (FlatpakExports *exports,
                                const char     *path)
@@ -337,7 +337,7 @@ flatpak_exports_path_get_mode (FlatpakExports *exports,
                   break;
                 }
 
-              return 0;
+              return FLATPAK_FILESYSTEM_MODE_NONE;
             }
 
           if (S_ISLNK (st.st_mode))
@@ -347,7 +347,7 @@ flatpak_exports_path_get_mode (FlatpakExports *exports,
               int j;
 
               if (resolved == NULL)
-                return 0;
+                return FLATPAK_FILESYSTEM_MODE_NONE;
 
               path2_builder = g_string_new (resolved);
 
@@ -361,7 +361,7 @@ flatpak_exports_path_get_mode (FlatpakExports *exports,
             }
         }
       else if (parts[i + 1] == NULL)
-        return 0; /* Last part was not mapped */
+        return FLATPAK_FILESYSTEM_MODE_NONE; /* Last part was not mapped */
     }
 
   if (is_readonly)
@@ -374,7 +374,7 @@ gboolean
 flatpak_exports_path_is_visible (FlatpakExports *exports,
                                  const char     *path)
 {
-  return flatpak_exports_path_get_mode (exports, path) > 0;
+  return flatpak_exports_path_get_mode (exports, path) > FLATPAK_FILESYSTEM_MODE_NONE;
 }
 
 static gboolean
@@ -605,7 +605,7 @@ flatpak_exports_add_path_expose_or_hide (FlatpakExports       *exports,
                                          FlatpakFilesystemMode mode,
                                          const char           *path)
 {
-  if (mode == 0)
+  if (mode == FLATPAK_FILESYSTEM_MODE_NONE)
     flatpak_exports_add_path_tmpfs (exports, path);
   else
     flatpak_exports_add_path_expose (exports, mode, path);

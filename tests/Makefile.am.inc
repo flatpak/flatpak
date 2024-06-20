@@ -58,6 +58,10 @@ testcommon_LDADD = \
 	$(NULL)
 testcommon_SOURCES = tests/testcommon.c
 
+test_exports_CFLAGS = $(testcommon_CFLAGS)
+test_exports_LDADD = $(testcommon_LDADD)
+test_exports_SOURCES = tests/test-exports.c
+
 tests_httpcache_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFLAGS) $(JSON_CFLAGS) $(APPSTREAM_GLIB_CFLAGS) \
 	-DFLATPAK_COMPILATION \
         -DLOCALEDIR=\"$(localedir)\"
@@ -177,7 +181,7 @@ test_scripts = ${TEST_MATRIX}
 dist_test_scripts = ${TEST_MATRIX_DIST}
 dist_installed_test_extra_scripts += ${TEST_MATRIX_EXTRA_DIST}
 
-test_programs = testlibrary testcommon
+test_programs = testlibrary testcommon test-exports
 test_extra_programs = tests/httpcache
 
 @VALGRIND_CHECK_RULES@
