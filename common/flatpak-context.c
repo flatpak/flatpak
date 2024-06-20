@@ -223,11 +223,13 @@ flatpak_context_shared_to_string (FlatpakContextShares shares,
 }
 
 static void
-flatpak_context_shared_to_args (FlatpakContextShares shares,
-                                FlatpakContextShares valid,
-                                GPtrArray           *args)
+flatpak_context_shared_to_args (FlatpakContext *context,
+                                GPtrArray      *args)
 {
-  return flatpak_context_bitmask_to_args (shares, valid, flatpak_context_shares, "--share", "--unshare", args);
+  flatpak_context_bitmask_to_args (context->shares, context->shares_valid,
+                                   flatpak_context_shares,
+                                   "--share", "--unshare",
+                                   args);
 }
 
 static FlatpakPolicy
@@ -317,11 +319,13 @@ flatpak_context_sockets_to_string (FlatpakContextSockets sockets,
 }
 
 static void
-flatpak_context_sockets_to_args (FlatpakContextSockets sockets,
-                                 FlatpakContextSockets valid,
-                                 GPtrArray            *args)
+flatpak_context_sockets_to_args (FlatpakContext *context,
+                                 GPtrArray      *args)
 {
-  return flatpak_context_bitmask_to_args (sockets, valid, flatpak_context_sockets, "--socket", "--nosocket", args);
+  flatpak_context_bitmask_to_args (context->sockets, context->sockets_valid,
+                                   flatpak_context_sockets,
+                                   "--socket", "--nosocket",
+                                   args);
 }
 
 static FlatpakContextDevices
@@ -353,11 +357,13 @@ flatpak_context_devices_to_string (FlatpakContextDevices devices,
 }
 
 static void
-flatpak_context_devices_to_args (FlatpakContextDevices devices,
-                                 FlatpakContextDevices valid,
-                                 GPtrArray            *args)
+flatpak_context_devices_to_args (FlatpakContext *context,
+                                 GPtrArray      *args)
 {
-  return flatpak_context_bitmask_to_args (devices, valid, flatpak_context_devices, "--device", "--nodevice", args);
+  flatpak_context_bitmask_to_args (context->devices, context->devices_valid,
+                                   flatpak_context_devices,
+                                   "--device", "--nodevice",
+                                   args);
 }
 
 static FlatpakContextFeatures
@@ -389,11 +395,13 @@ flatpak_context_features_to_string (FlatpakContextFeatures features, FlatpakCont
 }
 
 static void
-flatpak_context_features_to_args (FlatpakContextFeatures features,
-                                  FlatpakContextFeatures valid,
-                                  GPtrArray             *args)
+flatpak_context_features_to_args (FlatpakContext *context,
+                                  GPtrArray      *args)
 {
-  return flatpak_context_bitmask_to_args (features, valid, flatpak_context_features, "--allow", "--disallow", args);
+  flatpak_context_bitmask_to_args (context->features, context->features_valid,
+                                   flatpak_context_features,
+                                   "--allow", "--disallow",
+                                   args);
 }
 
 static void
@@ -2658,10 +2666,10 @@ flatpak_context_to_args (FlatpakContext *context,
   gpointer key, value;
   char *usb_list = NULL;
 
-  flatpak_context_shared_to_args (context->shares, context->shares_valid, args);
-  flatpak_context_sockets_to_args (context->sockets, context->sockets_valid, args);
-  flatpak_context_devices_to_args (context->devices, context->devices_valid, args);
-  flatpak_context_features_to_args (context->features, context->features_valid, args);
+  flatpak_context_shared_to_args (context, args);
+  flatpak_context_sockets_to_args (context, args);
+  flatpak_context_devices_to_args (context, args);
+  flatpak_context_features_to_args (context, args);
 
   g_hash_table_iter_init (&iter, context->env_vars);
   while (g_hash_table_iter_next (&iter, &key, &value))
