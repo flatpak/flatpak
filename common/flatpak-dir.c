@@ -8821,7 +8821,8 @@ apply_extra_data (FlatpakDir   *self,
   app_context = flatpak_context_new ();
 
   if (!flatpak_run_add_environment_args (bwrap, NULL, run_flags, id,
-                                         app_context, NULL, NULL, -1,
+                                         app_context, 0, 0,
+                                         NULL, NULL, -1,
                                          NULL, NULL, cancellable, error))
     return FALSE;
 
