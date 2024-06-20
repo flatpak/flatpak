@@ -1576,6 +1576,98 @@ parse_negated (const char *option, gboolean *negated)
   return option;
 }
 
+static void
+flatpak_context_load_share (FlatpakContext *context,
+                            const char     *share_str)
+{
+  FlatpakContextShares share;
+  gboolean remove;
+
+  share =
+    flatpak_context_share_from_string (parse_negated (share_str, &remove),
+                                       NULL);
+
+  if (share == 0)
+    {
+      g_info ("Unknown share type %s", share_str);
+      return;
+    }
+
+  if (remove)
+    flatpak_context_remove_shares (context, share);
+  else
+    flatpak_context_add_shares (context, share);
+}
+
+static void
+flatpak_context_load_socket (FlatpakContext *context,
+                             const char     *socket_str)
+{
+  FlatpakContextSockets socket;
+  gboolean remove;
+
+  socket =
+    flatpak_context_socket_from_string (parse_negated (socket_str, &remove),
+                                        NULL);
+
+  if (socket == 0)
+    {
+      g_info ("Unknown socket type %s", socket_str);
+      return;
+    }
+
+  if (remove)
+    flatpak_context_remove_sockets (context, socket);
+  else
+    flatpak_context_add_sockets (context, socket);
+}
+
+static void
+flatpak_context_load_device (FlatpakContext *context,
+                             const char     *device_str)
+{
+  FlatpakContextDevices device;
+  gboolean remove;
+
+  device =
+    flatpak_context_device_from_string (parse_negated (device_str, &remove),
+                                        NULL);
+
+  if (device == 0)
+    {
+      g_info ("Unknown device type %s", device_str);
+      return;
+    }
+
+  if (remove)
+    flatpak_context_remove_devices (context, device);
+  else
+    flatpak_context_add_devices (context, device);
+}
+
+static void
+flatpak_context_load_feature (FlatpakContext *context,
+                              const char     *feature_str)
+{
+  FlatpakContextFeatures feature;
+  gboolean remove;
+
+  feature =
+    flatpak_context_feature_from_string (parse_negated (feature_str, &remove),
+                                         NULL);
+
+  if (feature == 0)
+    {
+      g_info ("Unknown feature type %s", feature_str);
+      return;
+    }
+
+  if (remove)
+    flatpak_context_remove_features (context, feature);
+  else
+    flatpak_context_add_features (context, feature);
+}
+
 /*
  * Merge the FLATPAK_METADATA_GROUP_CONTEXT,
  * FLATPAK_METADATA_GROUP_SESSION_BUS_POLICY,
@@ -1602,20 +1694,7 @@ flatpak_context_load_metadata (FlatpakContext *context,
         return FALSE;
 
       for (i = 0; shares[i] != NULL; i++)
-        {
-          FlatpakContextShares share;
-
-          share = flatpak_context_share_from_string (parse_negated (shares[i], &remove), NULL);
-          if (share == 0)
-            g_info ("Unknown share type %s", shares[i]);
-          else
-            {
-              if (remove)
-                flatpak_context_remove_shares (context, share);
-              else
-                flatpak_context_add_shares (context, share);
-            }
-        }
+        flatpak_context_load_share (context, shares[i]);
     }
 
   if (g_key_file_has_key (metakey, FLATPAK_METADATA_GROUP_CONTEXT, FLATPAK_METADATA_KEY_SOCKETS, NULL))
@@ -1626,18 +1705,7 @@ flatpak_context_load_metadata (FlatpakContext *context,
         return FALSE;
 
       for (i = 0; sockets[i] != NULL; i++)
-        {
-          FlatpakContextSockets socket = flatpak_context_socket_from_string (parse_negated (sockets[i], &remove), NULL);
-          if (socket == 0)
-            g_info ("Unknown socket type %s", sockets[i]);
-          else
-            {
-              if (remove)
-                flatpak_context_remove_sockets (context, socket);
-              else
-                flatpak_context_add_sockets (context, socket);
-            }
-        }
+        flatpak_context_load_socket (context, sockets[i]);
     }
 
   if (g_key_file_has_key (metakey, FLATPAK_METADATA_GROUP_CONTEXT, FLATPAK_METADATA_KEY_DEVICES, NULL))
@@ -1647,20 +1715,8 @@ flatpak_context_load_metadata (FlatpakContext *context,
       if (devices == NULL)
         return FALSE;
 
-
       for (i = 0; devices[i] != NULL; i++)
-        {
-          FlatpakContextDevices device = flatpak_context_device_from_string (parse_negated (devices[i], &remove), NULL);
-          if (device == 0)
-            g_info ("Unknown device type %s", devices[i]);
-          else
-            {
-              if (remove)
-                flatpak_context_remove_devices (context, device);
-              else
-                flatpak_context_add_devices (context, device);
-            }
-        }
+        flatpak_context_load_device (context, devices[i]);
     }
 
   if (g_key_file_has_key (metakey, FLATPAK_METADATA_GROUP_CONTEXT, FLATPAK_METADATA_KEY_FEATURES, NULL))
@@ -1670,20 +1726,8 @@ flatpak_context_load_metadata (FlatpakContext *context,
       if (features == NULL)
         return FALSE;
 
-
       for (i = 0; features[i] != NULL; i++)
-        {
-          FlatpakContextFeatures feature = flatpak_context_feature_from_string (parse_negated (features[i], &remove), NULL);
-          if (feature == 0)
-            g_info ("Unknown feature type %s", features[i]);
-          else
-            {
-              if (remove)
-                flatpak_context_remove_features (context, feature);
-              else
-                flatpak_context_add_features (context, feature);
-            }
-        }
+        flatpak_context_load_feature (context, features[i]);
     }
 
   if (g_key_file_has_key (metakey, FLATPAK_METADATA_GROUP_CONTEXT, FLATPAK_METADATA_KEY_FILESYSTEMS, NULL))
