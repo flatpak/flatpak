@@ -136,17 +136,18 @@ flatpak_context_bitmask_from_string (const char *name, const char **names)
   return 0;
 }
 
-static char **
-flatpak_context_bitmask_to_string (guint32 enabled, guint32 valid, const char **names)
+static void
+flatpak_context_bitmask_to_string (guint32      enabled,
+                                   guint32      valid,
+                                   const char **names,
+                                   GPtrArray   *array)
 {
   guint32 i;
-  GPtrArray *array;
-
-  array = g_ptr_array_new ();
 
   for (i = 0; names[i] != NULL; i++)
     {
       guint32 bitmask = 1 << i;
+
       if (valid & bitmask)
         {
           if (enabled & bitmask)
@@ -155,9 +156,6 @@ flatpak_context_bitmask_to_string (guint32 enabled, guint32 valid, const char **
             g_ptr_array_add (array, g_strdup_printf ("!%s", names[i]));
         }
     }
-
-  g_ptr_array_add (array, NULL);
-  return (char **) g_ptr_array_free (array, FALSE);
 }
 
 static void
@@ -197,9 +195,17 @@ flatpak_context_share_from_string (const char *string, GError **error)
 }
 
 static char **
-flatpak_context_shared_to_string (FlatpakContextShares shares, FlatpakContextShares valid)
+flatpak_context_shared_to_string (FlatpakContextShares shares,
+                                  FlatpakContextShares valid)
 {
-  return flatpak_context_bitmask_to_string (shares, valid, flatpak_context_shares);
+  g_autoptr (GPtrArray) array = g_ptr_array_new_with_free_func (g_free);
+
+  flatpak_context_bitmask_to_string (shares, valid,
+                                     flatpak_context_shares,
+                                     array);
+
+  g_ptr_array_add (array, NULL);
+  return (char **) g_ptr_array_free (g_steal_pointer (&array), FALSE);
 }
 
 static void
@@ -283,9 +289,17 @@ flatpak_context_socket_from_string (const char *string, GError **error)
 }
 
 static char **
-flatpak_context_sockets_to_string (FlatpakContextSockets sockets, FlatpakContextSockets valid)
+flatpak_context_sockets_to_string (FlatpakContextSockets sockets,
+                                   FlatpakContextSockets valid)
 {
-  return flatpak_context_bitmask_to_string (sockets, valid, flatpak_context_sockets);
+  g_autoptr (GPtrArray) array = g_ptr_array_new_with_free_func (g_free);
+
+  flatpak_context_bitmask_to_string (sockets, valid,
+                                     flatpak_context_sockets,
+                                     array);
+
+  g_ptr_array_add (array, NULL);
+  return (char **) g_ptr_array_free (g_steal_pointer (&array), FALSE);
 }
 
 static void
@@ -311,9 +325,17 @@ flatpak_context_device_from_string (const char *string, GError **error)
 }
 
 static char **
-flatpak_context_devices_to_string (FlatpakContextDevices devices, FlatpakContextDevices valid)
+flatpak_context_devices_to_string (FlatpakContextDevices devices,
+                                   FlatpakContextDevices valid)
 {
-  return flatpak_context_bitmask_to_string (devices, valid, flatpak_context_devices);
+  g_autoptr (GPtrArray) array = g_ptr_array_new_with_free_func (g_free);
+
+  flatpak_context_bitmask_to_string (devices, valid,
+                                     flatpak_context_devices,
+                                     array);
+
+  g_ptr_array_add (array, NULL);
+  return (char **) g_ptr_array_free (g_steal_pointer (&array), FALSE);
 }
 
 static void
@@ -342,7 +364,14 @@ flatpak_context_feature_from_string (const char *string, GError **error)
 static char **
 flatpak_context_features_to_string (FlatpakContextFeatures features, FlatpakContextFeatures valid)
 {
-  return flatpak_context_bitmask_to_string (features, valid, flatpak_context_features);
+  g_autoptr (GPtrArray) array = g_ptr_array_new_with_free_func (g_free);
+
+  flatpak_context_bitmask_to_string (features, valid,
+                                     flatpak_context_features,
+                                     array);
+
+  g_ptr_array_add (array, NULL);
+  return (char **) g_ptr_array_free (g_steal_pointer (&array), FALSE);
 }
 
 static void
