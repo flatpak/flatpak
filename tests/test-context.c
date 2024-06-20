@@ -894,6 +894,60 @@ test_usb_query_device_and_vendor (void)
   g_clear_error (&local_error);
 }
 
+static void
+test_devices (void)
+{
+  FlatpakContextDevices devices;
+
+  /* single layer behavior */
+  g_autoptr(GKeyFile) keyfile = g_key_file_new ();
+  g_key_file_set_value (keyfile,
+                        FLATPAK_METADATA_GROUP_CONTEXT,
+                        FLATPAK_METADATA_KEY_DEVICES,
+                        "!dri;input;all;if:all:!true");
+  g_autoptr(FlatpakContext) context1 = flatpak_context_new ();
+  flatpak_context_load_metadata (context1, keyfile, NULL);
+
+  devices = flatpak_context_compute_allowed_devices (context1, NULL);
+  g_assert_cmpint (devices, ==, FLATPAK_CONTEXT_DEVICE_INPUT);
+
+  /* conditional in the next layer gives access to all */
+  g_autoptr(GKeyFile) keyfile2 = g_key_file_new ();
+  g_key_file_set_value (keyfile2,
+                        FLATPAK_METADATA_GROUP_CONTEXT,
+                        FLATPAK_METADATA_KEY_DEVICES,
+                        "if:all:true");
+  g_autoptr(FlatpakContext) context2 = flatpak_context_new ();
+  flatpak_context_load_metadata (context2, keyfile2, NULL);
+  flatpak_context_merge (context1, context2);
+  devices = flatpak_context_compute_allowed_devices (context1, NULL);
+  g_assert_cmpint (devices, ==, FLATPAK_CONTEXT_DEVICE_INPUT | FLATPAK_CONTEXT_DEVICE_ALL);
+
+  /* removing permission in the next layer should result in no permission */
+  g_autoptr(GKeyFile) keyfile3 = g_key_file_new ();
+  g_key_file_set_value (keyfile3,
+                        FLATPAK_METADATA_GROUP_CONTEXT,
+                        FLATPAK_METADATA_KEY_DEVICES,
+                        "!all");
+  g_autoptr(FlatpakContext) context3 = flatpak_context_new ();
+  flatpak_context_load_metadata (context3, keyfile3, NULL);
+  flatpak_context_merge (context1, context3);
+  devices = flatpak_context_compute_allowed_devices (context1, NULL);
+  g_assert_cmpint (devices, ==, FLATPAK_CONTEXT_DEVICE_INPUT);
+
+  /* the previous conditional gets reset by specifying all or !all */
+  g_autoptr(GKeyFile) keyfile4 = g_key_file_new ();
+  g_key_file_set_value (keyfile4,
+                        FLATPAK_METADATA_GROUP_CONTEXT,
+                        FLATPAK_METADATA_KEY_DEVICES,
+                        "all;if:all:false");
+  g_autoptr(FlatpakContext) context4 = flatpak_context_new ();
+  flatpak_context_load_metadata (context4, keyfile4, NULL);
+  flatpak_context_merge (context1, context4);
+  devices = flatpak_context_compute_allowed_devices (context1, NULL);
+  g_assert_cmpint (devices, ==, FLATPAK_CONTEXT_DEVICE_INPUT);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -904,6 +958,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/context/merge-fs", test_context_merge_fs);
   g_test_add_func ("/context/validate-path-args", test_validate_path_args);
   g_test_add_func ("/context/validate-path-meta", test_validate_path_meta);
+  g_test_add_func ("/context/devices", test_devices);
 
   g_test_add_func ("/context/usb-list", test_usb_list);
   g_test_add_func ("/context/usb-rules/all", test_usb_rules_all);

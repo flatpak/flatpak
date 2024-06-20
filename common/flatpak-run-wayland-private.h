@@ -35,4 +35,7 @@ flatpak_run_add_wayland_args (FlatpakBwrap *bwrap,
                               gboolean      allowed,
                               gboolean      inherit_wayland_socket);
 
+gboolean
+flatpak_run_has_wayland (void);
+
 G_END_DECLS
