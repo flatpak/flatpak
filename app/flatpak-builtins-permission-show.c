@@ -105,7 +105,7 @@ flatpak_builtin_permission_show (int argc, char **argv,
   g_autoptr(GDBusConnection) session_bus = NULL;
   XdpDbusPermissionStore *store = NULL;
   const char *app_id;
-  FlatpakTablePrinter *printer = NULL;
+  g_autoptr(FlatpakTablePrinter) printer = NULL;
   int i;
   g_auto(GStrv) tables = NULL;
 
@@ -150,7 +150,6 @@ flatpak_builtin_permission_show (int argc, char **argv,
     }
 
   flatpak_table_printer_print (printer);
-  flatpak_table_printer_free (printer);
 
   return TRUE;
 }

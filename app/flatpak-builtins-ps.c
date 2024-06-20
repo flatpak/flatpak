@@ -117,7 +117,7 @@ static gboolean
 enumerate_instances (Column *columns, GError **error)
 {
   g_autoptr(GPtrArray) instances = NULL;
-  FlatpakTablePrinter *printer;
+  g_autoptr(FlatpakTablePrinter) printer = NULL;
   int i, j;
   g_autoptr(GVariant) compositor_apps = NULL;
 
@@ -225,7 +225,6 @@ enumerate_instances (Column *columns, GError **error)
     }
 
   flatpak_table_printer_print (printer);
-  flatpak_table_printer_free (printer);
 
   return TRUE;
 }

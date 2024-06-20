@@ -327,7 +327,7 @@ print_branches (OstreeRepo *repo,
                 GVariant   *index,
                 GVariant   *summary)
 {
-  FlatpakTablePrinter *printer;
+  g_autoptr(FlatpakTablePrinter) printer = NULL;
 
   printer = flatpak_table_printer_new ();
   flatpak_table_printer_set_column_title (printer, 0, _("Ref"));
@@ -377,14 +377,13 @@ print_branches (OstreeRepo *repo,
   flatpak_table_printer_sort (printer, (GCompareFunc) strcmp);
 
   flatpak_table_printer_print (printer);
-  flatpak_table_printer_free (printer);
 }
 
 static void
 print_subsets (OstreeRepo *repo,
                GVariant   *index)
 {
-  FlatpakTablePrinter *printer;
+  g_autoptr(FlatpakTablePrinter) printer = NULL;
 
   printer = flatpak_table_printer_new ();
   flatpak_table_printer_set_column_title (printer, 0, _("Subset"));
@@ -427,7 +426,6 @@ print_subsets (OstreeRepo *repo,
     }
 
   flatpak_table_printer_print (printer);
-  flatpak_table_printer_free (printer);
 }
 
 
