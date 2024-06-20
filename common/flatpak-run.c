@@ -1604,12 +1604,14 @@ add_tzdata_args (FlatpakBwrap *bwrap,
   /* Check for runtime /usr/share/zoneinfo */
   if (runtime_zoneinfo != NULL && g_file_query_exists (runtime_zoneinfo, NULL))
     {
+      const char *tzdir = flatpak_get_tzdir ();
+
       /* Check for host /usr/share/zoneinfo */
-      if (g_file_test ("/usr/share/zoneinfo", G_FILE_TEST_IS_DIR))
+      if (g_file_test (tzdir, G_FILE_TEST_IS_DIR))
         {
           /* Here we assume the host timezone file exist in the host data */
           flatpak_bwrap_add_args (bwrap,
-                                  "--ro-bind", "/usr/share/zoneinfo", "/usr/share/zoneinfo",
+                                  "--ro-bind", tzdir, "/usr/share/zoneinfo",
                                   "--symlink", localtime_content, "/etc/localtime",
                                   NULL);
         }
