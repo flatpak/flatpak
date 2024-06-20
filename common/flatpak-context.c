@@ -1093,6 +1093,67 @@ flatpak_context_take_filesystem (FlatpakContext        *context,
   g_hash_table_insert (context->filesystems, fs, GINT_TO_POINTER (mode));
 }
 
+static gboolean
+flatpak_context_add_conditional (FlatpakContext  *context,
+                                 const char      *string,
+                                 const char     **names,
+                                 GHashTable      *conditionals,
+                                 GError         **error)
+{
+  guint32 bitmask;
+  g_auto(GStrv) tokens = NULL;
+  g_autoptr(GPtrArray) conditions = NULL;
+  int i;
+
+  tokens = g_strsplit (string, ":", -1);
+
+  if (!tokens || !tokens[0] || !tokens[1])
+    {
+      g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
+                 _("Invalid conditional syntax: %s"), string);
+      return FALSE;
+    }
+
+  bitmask = flatpak_context_bitmask_from_string (tokens[0], names);
+  if (bitmask == 0)
+    return FALSE;
+
+  if (!g_hash_table_steal_extended (conditionals,
+                                    GINT_TO_POINTER (bitmask),
+                                    NULL, (gpointer *) &conditions))
+    conditions = g_ptr_array_new_with_free_func (g_free);
+
+  for (i = 1; i < g_strv_length (tokens); i++)
+    {
+      if (!tokens[i] || tokens[i][0] == '\0')
+        continue;
+
+      if(g_ptr_array_find_with_equal_func (conditions, tokens[i], g_str_equal, NULL))
+        continue;
+
+      g_ptr_array_add (conditions, g_strdup (tokens[i]));
+    }
+
+  g_ptr_array_sort (conditions, flatpak_strcmp0_ptr);
+
+  g_hash_table_insert (conditionals,
+                       GINT_TO_POINTER (bitmask),
+                       g_steal_pointer (&conditions));
+
+  return TRUE;
+}
+
+static gboolean
+flatpak_context_add_conditional_device (FlatpakContext  *context,
+                                        const char      *string,
+                                        GError         **error)
+{
+  return flatpak_context_add_conditional (context, string,
+                                          flatpak_context_devices,
+                                          context->conditional_devices,
+                                          error);
+}
+
 static void
 flatpak_context_merge_conditionals (GHashTable *conditionals,
                                     GHashTable *other_conditionals)
@@ -1316,6 +1377,17 @@ option_nodevice_cb (const gchar *option_name,
   flatpak_context_remove_devices (context, device);
 
   return TRUE;
+}
+
+static gboolean
+option_nodevice_if_cb (const gchar  *option_name,
+                       const gchar  *value,
+                       gpointer      data,
+                       GError      **error)
+{
+  FlatpakContext *context = data;
+
+  return flatpak_context_add_conditional_device (context, value, error);
 }
 
 static gboolean
@@ -1753,6 +1825,7 @@ static GOptionEntry context_options[] = {
   { "nosocket", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_nosocket_cb, N_("Don't expose socket to app"), N_("SOCKET") },
   { "device", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_device_cb, N_("Expose device to app"), N_("DEVICE") },
   { "nodevice", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_nodevice_cb, N_("Don't expose device to app"), N_("DEVICE") },
+  { "nodevice-if", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_nodevice_if_cb, N_("Don't expose device to app if conditions are met"), N_("DEVICE") },
   { "allow", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_allow_cb, N_("Allow feature"), N_("FEATURE") },
   { "disallow", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_disallow_cb, N_("Don't allow feature"), N_("FEATURE") },
   { "filesystem", 0, G_OPTION_FLAG_IN_MAIN | G_OPTION_FLAG_FILENAME, G_OPTION_ARG_CALLBACK, &option_filesystem_cb, N_("Expose filesystem to app (:ro for read-only)"), N_("FILESYSTEM[:ro]") },
