@@ -1890,6 +1890,29 @@ parse_negated (const char *option, gboolean *negated)
   return option;
 }
 
+static const char *
+parse_negated_conditional (const char *option,
+                           gboolean   *negated,
+                           gboolean   *conditional)
+{
+  *conditional = FALSE;
+  *negated = FALSE;
+
+  if (option[0] == '!')
+    {
+      option++;
+      *negated = TRUE;
+
+      if (option[0] == 'i' && option[1] == 'f' && option[2] == ':')
+        {
+          option += 3;
+          *conditional = TRUE;
+        }
+    }
+
+  return option;
+}
+
 static void
 flatpak_context_load_share (FlatpakContext *context,
                             const char     *share_str)
@@ -1938,25 +1961,36 @@ flatpak_context_load_socket (FlatpakContext *context,
 
 static void
 flatpak_context_load_device (FlatpakContext *context,
-                             const char     *device_str)
+                             const char     *device_expr)
 {
-  FlatpakContextDevices device;
   gboolean remove;
+  gboolean conditional;
+  const char *device_str =
 
-  device =
-    flatpak_context_device_from_string (parse_negated (device_str, &remove),
-                                        NULL);
+  device_str =
+    parse_negated_conditional (device_expr, &remove, &conditional);
 
-  if (device == 0)
+  if (conditional)
     {
-      g_info ("Unknown device type %s", device_str);
-      return;
+      if (!flatpak_context_add_conditional_device (context, device_str, NULL))
+        g_info ("Bad conditional device %s", device_expr);
     }
-
-  if (remove)
-    flatpak_context_remove_devices (context, device);
   else
-    flatpak_context_add_devices (context, device);
+    {
+      FlatpakContextDevices device =
+        flatpak_context_device_from_string (device_str, NULL);
+
+      if (device == 0)
+        {
+          g_info ("Unknown device type %s", device_expr);
+          return;
+        }
+
+      if (remove)
+        flatpak_context_remove_devices (context, device);
+      else
+        flatpak_context_add_devices (context, device);
+    }
 }
 
 static void
