@@ -59,6 +59,7 @@
 #include "flatpak-run-dbus-private.h"
 #include "flatpak-run-private.h"
 #include "flatpak-run-sockets-private.h"
+#include "flatpak-run-wayland-private.h"
 #include "flatpak-utils-base-private.h"
 #include "flatpak-dir-private.h"
 #include "flatpak-dir-utils-private.h"
@@ -258,7 +259,13 @@ flatpak_run_add_extension_args (FlatpakBwrap      *bwrap,
 static gboolean
 flatpak_run_evaluate_conditions (FlatpakContextConditions condition)
 {
-  return FALSE;
+  switch (condition)
+    {
+    case FLATPAK_CONTEXT_CONDITION_HAS_WAYLAND:
+      return flatpak_run_has_wayland ();
+    default:
+      return FALSE;
+    }
 }
 
 /*
