@@ -96,6 +96,7 @@ const char *flatpak_context_conditions[] = {
   "true",
   "false",
   "has-input-device",
+  "has-wayland",
   NULL
 };
 
@@ -3450,6 +3451,15 @@ FlatpakContextSockets
 flatpak_context_compute_allowed_sockets (FlatpakContext                   *context,
                                          FlatpakContextConditionEvaluator  evaluator)
 {
+  /* The fallback-x11 socket permission was an ad-hoc fallback mechanism which
+   * we can take care of here so the caller can just ignore it. */
+  if (context->sockets & FLATPAK_CONTEXT_SOCKET_FALLBACK_X11)
+    {
+      context->sockets &= ~FLATPAK_CONTEXT_SOCKET_FALLBACK_X11;
+      if (!evaluator || evaluator (FLATPAK_CONTEXT_CONDITION_HAS_WAYLAND) == FALSE)
+        context->sockets |= FLATPAK_CONTEXT_SOCKET_X11;
+    }
+
   return flatpak_context_compute_allowed (context->sockets,
                                           context->conditional_sockets,
                                           evaluator);

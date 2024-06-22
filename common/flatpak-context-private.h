@@ -73,6 +73,7 @@ typedef enum {
   FLATPAK_CONTEXT_CONDITION_TRUE          = 1 << 0,
   FLATPAK_CONTEXT_CONDITION_FALSE         = 1 << 1,
   FLATPAK_CONTEXT_CONDITION_HAS_INPUT_DEV = 1 << 2,
+  FLATPAK_CONTEXT_CONDITION_HAS_WAYLAND   = 1 << 3,
 } FlatpakContextConditions;
 
 struct FlatpakContext
