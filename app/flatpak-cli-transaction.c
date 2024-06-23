@@ -1,5 +1,6 @@
 /* vi:set et sw=2 sts=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e-s:
  * Copyright © 2018 Red Hat, Inc
+ * Copyright © 2024 GNOME Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,6 +17,7 @@
  *
  * Authors:
  *       Alexander Larsson <alexl@redhat.com>
+ *       Hubert Figuière <hub@figuiere.net>
  */
 
 #include "config.h"
@@ -1083,6 +1085,56 @@ append_bus (GPtrArray  *talk,
 }
 
 static void
+append_usb (GPtrArray *usb_array,
+            GKeyFile  *metadata,
+            GKeyFile  *old_metadata)
+{
+  gsize size = 0;
+  g_auto(GStrv) hidden_devices = NULL;
+  g_auto(GStrv) old_hidden_devices = NULL;
+  g_auto(GStrv) old_enumerables = NULL;
+  g_auto(GStrv) enumerables = NULL;
+
+  enumerables = g_key_file_get_string_list (metadata,
+                                            FLATPAK_METADATA_GROUP_USB_DEVICES,
+                                            FLATPAK_METADATA_KEY_USB_ENUMERABLE_DEVICES,
+                                            &size, NULL);
+
+  if (old_metadata)
+    old_enumerables = g_key_file_get_string_list (old_metadata,
+                                                  FLATPAK_METADATA_GROUP_USB_DEVICES,
+                                                  FLATPAK_METADATA_KEY_USB_ENUMERABLE_DEVICES,
+                                                  NULL, NULL);
+
+  for (size_t i = 0; i < size; i++)
+    {
+      const char *enumerable = enumerables[i];
+      if (old_enumerables == NULL || !g_strv_contains ((const char * const *) old_enumerables, enumerable))
+        g_ptr_array_add (usb_array, g_strdup (enumerable));
+    }
+
+  size = 0;
+
+  hidden_devices = g_key_file_get_string_list (metadata,
+                                               FLATPAK_METADATA_GROUP_USB_DEVICES,
+                                               FLATPAK_METADATA_KEY_USB_HIDDEN_DEVICES,
+                                               &size, NULL);
+
+  if (old_metadata)
+    old_hidden_devices = g_key_file_get_string_list (old_metadata,
+                                                     FLATPAK_METADATA_GROUP_USB_DEVICES,
+                                                     FLATPAK_METADATA_KEY_USB_HIDDEN_DEVICES,
+                                                     NULL, NULL);
+
+  for (size_t i = 0; i < size; i++)
+    {
+      const char *hidden = hidden_devices[i];
+      if (old_hidden_devices == NULL || !g_strv_contains ((const char * const *) old_hidden_devices, hidden))
+        g_ptr_array_add (usb_array, g_strdup_printf ("!%s", hidden));
+    }
+}
+
+static void
 append_tags (GPtrArray *tags_array,
              GKeyFile  *metadata,
              GKeyFile  *old_metadata)
@@ -1146,6 +1198,7 @@ print_permissions (FlatpakCliTransaction *self,
   g_autoptr(FlatpakRef) rref = flatpak_ref_parse (ref, NULL);
   g_autoptr(GPtrArray) permissions = g_ptr_array_new_with_free_func (g_free);
   g_autoptr(GPtrArray) files = g_ptr_array_new_with_free_func (g_free);
+  g_autoptr(GPtrArray) usb = g_ptr_array_new_with_free_func (g_free);
   g_autoptr(GPtrArray) session_bus_talk = g_ptr_array_new_with_free_func (g_free);
   g_autoptr(GPtrArray) session_bus_own = g_ptr_array_new_with_free_func (g_free);
   g_autoptr(GPtrArray) system_bus_talk = g_ptr_array_new_with_free_func (g_free);
@@ -1178,6 +1231,7 @@ print_permissions (FlatpakCliTransaction *self,
   append_permissions (permissions, metadata, old_metadata, FLATPAK_METADATA_KEY_DEVICES);
   append_permissions (permissions, metadata, old_metadata, FLATPAK_METADATA_KEY_FEATURES);
   append_permissions (files, metadata, old_metadata, FLATPAK_METADATA_KEY_FILESYSTEMS);
+  append_usb (usb, metadata, old_metadata);
   append_bus (session_bus_talk, session_bus_own,
               metadata, old_metadata, FLATPAK_METADATA_GROUP_SESSION_BUS_POLICY);
   append_bus (system_bus_talk, system_bus_own,
@@ -1195,6 +1249,8 @@ print_permissions (FlatpakCliTransaction *self,
     g_ptr_array_add (permissions, g_strdup_printf ("system dbus access [%d]", j++));
   if (system_bus_own->len > 0)
     g_ptr_array_add (permissions, g_strdup_printf ("system bus ownership [%d]", j++));
+  if (usb->len > 0)
+    g_ptr_array_add (permissions, g_strdup_printf ("USB portal access [%d]", j++));
   if (tags->len > 0)
     g_ptr_array_add (permissions, g_strdup_printf ("tags [%d]", j++));
 
@@ -1256,6 +1312,8 @@ print_permissions (FlatpakCliTransaction *self,
     print_perm_line (j++, system_bus_talk, cols);
   if (system_bus_own->len > 0)
     print_perm_line (j++, system_bus_own, cols);
+  if (usb->len > 0)
+    print_perm_line (j++, usb, cols);
   if (tags->len > 0)
     print_perm_line (j++, tags, cols);
 }
