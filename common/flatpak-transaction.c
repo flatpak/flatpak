@@ -2449,27 +2449,52 @@ find_runtime_remote (FlatpakTransaction             *self,
 static FlatpakDecomposed *
 op_get_runtime_ref (FlatpakTransactionOperation *op)
 {
-  g_autofree char *runtime_pref = NULL;
-  FlatpakDecomposed *decomposed;
+  FlatpakDecomposed *decomposed = NULL;
+  g_autoptr (GError) my_error = NULL;
 
   if (!op->resolved_metakey)
     return NULL;
 
-  /* Generally only app needs runtimes dependencies, not dependencies because you don't run extensions directly.
-     However if the extension has extra data (and doesn't define NoRuntime) its also needed so we can run the
-     apply-extra script. */
+  /* Apps always need runtime dependencies */
   if (flatpak_decomposed_is_app (op->ref))
-    runtime_pref = g_key_file_get_string (op->resolved_metakey, "Application", "runtime", NULL);
-  else if (g_key_file_has_group (op->resolved_metakey, "Extra Data") &&
-           !g_key_file_get_boolean (op->resolved_metakey, "Extra Data", "NoRuntime", NULL))
-    runtime_pref = g_key_file_get_string (op->resolved_metakey, "ExtensionOf", "runtime", NULL);
+    {
+      g_autofree char *runtime_pref = g_key_file_get_string (
+          op->resolved_metakey, "Application", "runtime", NULL);
+      if (runtime_pref)
+        {
+          decomposed = flatpak_decomposed_new_from_pref (
+              FLATPAK_KINDS_RUNTIME, runtime_pref, &my_error);
+        }
+    }
 
-  if (runtime_pref == NULL)
-    return NULL;
+  if (g_key_file_has_group (op->resolved_metakey, "ExtensionOf"))
+    {
+      if (g_key_file_get_boolean (op->resolved_metakey, "ExtensionOf",
+                                  "RequireRef", NULL))
+        {
+          /* The extension requires its target to be installed */
+          g_autofree char *app_ref = g_key_file_get_string (
+              op->resolved_metakey, "ExtensionOf", "ref", NULL);
+          decomposed = flatpak_decomposed_new_from_ref (app_ref, &my_error);
+        }
+      else if (g_key_file_has_group (op->resolved_metakey, "Extra Data") &&
+               !g_key_file_get_boolean (op->resolved_metakey, "Extra Data",
+                                        "NoRuntime", NULL))
+        {
+          /* If the extension has extra data (and doesn't define NoRuntime) it
+           * needs a runtime so it can run the apply-extra script. */
+          g_autofree char *runtime_pref = g_key_file_get_string (
+              op->resolved_metakey, "ExtensionOf", "runtime", NULL);
+          if (runtime_pref)
+            {
+              decomposed = flatpak_decomposed_new_from_pref (
+                  FLATPAK_KINDS_RUNTIME, runtime_pref, &my_error);
+            }
+        }
+    }
 
-  decomposed = flatpak_decomposed_new_from_pref (FLATPAK_KINDS_RUNTIME, runtime_pref, NULL);
-  if (decomposed == NULL)
-    g_info ("Invalid runtime ref %s in metadata", runtime_pref);
+  if (my_error != NULL)
+    g_info ("Cannot get decomposed dependency: %s", my_error->message);
 
   return decomposed;
 }

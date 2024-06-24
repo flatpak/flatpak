@@ -239,3 +239,28 @@ else
 fi
 
 rm -rf ${DIR}
+
+
+# build a plugin extension that pulls in app as dependency
+
+DIR=`mktemp -d`
+
+# Init dir
+cat > ${DIR}/metadata <<EOF
+[Runtime]
+name=${APP_ID}.Plugin.joy
+
+[ExtensionOf]
+ref=app/$APP_ID/$ARCH/$BRANCH
+RequireRef=true
+EOF
+
+mkdir -p ${DIR}/files/plug-ins/joy
+
+flatpak build-finish ${DIR} >&2
+mkdir -p repos
+
+flatpak build-export --no-update-summary --runtime ${collection_args} ${GPGARGS-} ${EXPORT_ARGS-} ${REPO} ${DIR} ${BRANCH} >&2
+
+
+rm -rf ${DIR}
