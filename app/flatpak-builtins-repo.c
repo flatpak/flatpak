@@ -30,6 +30,7 @@
 #include "libglnx.h"
 
 #include "flatpak-builtins.h"
+#include "flatpak-repo-utils-private.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-table-printer.h"
 #include "flatpak-variant-impl-private.h"

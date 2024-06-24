@@ -28,6 +28,7 @@
 #include "flatpak-error.h"
 #include "flatpak-installation-private.h"
 #include "flatpak-progress-private.h"
+#include "flatpak-repo-utils-private.h"
 #include "flatpak-transaction-private.h"
 #include "flatpak-utils-http-private.h"
 #include "flatpak-utils-private.h"
