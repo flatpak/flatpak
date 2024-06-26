@@ -7064,22 +7064,23 @@ static void
 maybe_reload_dbus_config (GCancellable *cancellable)
 {
   g_autoptr(GDBusConnection) session_bus = NULL;
+  g_autoptr(GVariant) ret = NULL;
 
   session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, cancellable, NULL);
   if (!session_bus)
     return;
 
-  g_dbus_connection_call_sync (session_bus,
-                               "org.freedesktop.DBus",
-                               "/org/freedesktop/DBus",
-                               "org.freedesktop.DBus",
-                               "ReloadConfig",
-                               NULL,
-                               NULL,
-                               G_DBUS_CALL_FLAGS_NONE,
-                               2000,
-                               cancellable,
-                               NULL);
+  ret = g_dbus_connection_call_sync (session_bus,
+                                     "org.freedesktop.DBus",
+                                     "/org/freedesktop/DBus",
+                                     "org.freedesktop.DBus",
+                                     "ReloadConfig",
+                                     NULL,
+                                     NULL,
+                                     G_DBUS_CALL_FLAGS_NONE,
+                                     2000,
+                                     cancellable,
+                                     NULL);
 }
 
 gboolean
