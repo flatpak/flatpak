@@ -219,4 +219,7 @@ FlatpakContextSockets flatpak_context_compute_allowed_sockets (FlatpakContext   
 FlatpakContextDevices flatpak_context_compute_allowed_devices (FlatpakContext                   *context,
                                                                FlatpakContextConditionEvaluator  evaluator);
 
+void flatpak_context_load_device (FlatpakContext *context,
+                                  const char     *device_expr);
+
 #endif /* __FLATPAK_CONTEXT_H__ */
