@@ -2085,7 +2085,7 @@ flatpak_context_load_socket (FlatpakContext *context,
     }
 }
 
-static void
+void
 flatpak_context_load_device (FlatpakContext *context,
                              const char     *device_expr)
 {
