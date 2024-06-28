@@ -182,6 +182,14 @@
                                 Available since 1.15.6.
                             </para></listitem></varlistentry>
 
+                            <varlistentry><term><option>usb</option></term>
+                            <listitem><para>
+                                USB device bus
+                                (all device nodes below
+                                <filename>/dev/bus/usb</filename>).
+                                Available since 1.15.9.
+                            </para></listitem></varlistentry>
+
                             <varlistentry><term><option>kvm</option></term>
                             <listitem><para>
                                 Virtualization
@@ -1090,6 +1098,36 @@
             <!-- TODO: More information would be nice -->
           </para>
         </refsect2>
+        <refsect2 id="usb-devices">
+          <title>[USB Devices]</title>
+          <para>
+            USB devices can be enumerable or hidden by the USB portal as specified
+            by the keys in this group. The vendor and product ids are validated
+            by Flatpak, but aren't otherwise used or parsed.
+            This merely grant the permission to enumerate USB device for use by the
+            portal. This does give access to the devices.
+            Available since 1.15.7.
+          </para>
+          <variablelist>
+                <varlistentry>
+                    <term><option>enumerable-devices</option> (string list)</term>
+                    <listitem><para>
+                        List of enumerable USB devices. Each element of can be
+                        composed of "VENDOR_ID:PRODUCT_ID", or "VENDOR_ID:*".
+                        Available since 1.15.7.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>hidden-devices</option> (string list)</term>
+                    <listitem><para>
+                        List of hidden USB devices. Each element of can be composed
+                        of "VENDOR_ID:PRODUCT_ID", or "VENDOR_ID:*". Hidden devices
+                        take precedence over enumerable devices. Available since
+                        1.15.7.
+                    </para></listitem>
+                </varlistentry>
+            </variablelist>
+        </refsect2>
     </refsect1>
 
     <refsect1>
@@ -1111,6 +1149,10 @@ ca.desrt.dconf=talk
 
 [Environment]
 DCONF_USER_CONFIG_DIR=.config/dconf
+
+[USB Devices]
+enumerable-devices=0fd9:*;
+hidden-devices=0fd9:0063;
 
 [Extension org.gnome.Calculator.Locale]
 directory=share/runtime/locale
