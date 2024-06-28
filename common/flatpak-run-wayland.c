@@ -62,6 +62,26 @@ get_wayland_socket_fd (void)
   return (int) fd;
 }
 
+gboolean
+flatpak_run_has_wayland (void)
+{
+  g_autofree char *wayland_socket = NULL;
+  const char *wayland_socket_fd;
+  struct stat statbuf;
+
+  wayland_socket = get_wayland_socket_path ();
+  if (stat (wayland_socket, &statbuf) == 0 &&
+      (statbuf.st_mode & S_IFMT) == S_IFSOCK)
+    return TRUE;
+
+  wayland_socket_fd = g_getenv ("WAYLAND_SOCKET");
+  if (wayland_socket_fd &&
+      g_ascii_string_to_unsigned (wayland_socket_fd, 10, 0, INT_MAX, NULL, NULL))
+    return TRUE;
+
+  return FALSE;
+}
+
 #ifdef ENABLE_WAYLAND_SECURITY_CONTEXT
 
 static void registry_handle_global (void *data, struct wl_registry *registry,

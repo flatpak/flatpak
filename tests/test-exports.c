@@ -177,6 +177,8 @@ test_empty_context (void)
   g_assert_cmpuint (g_hash_table_size (context->session_bus_policy), ==, 0);
   g_assert_cmpuint (g_hash_table_size (context->system_bus_policy), ==, 0);
   g_assert_cmpuint (g_hash_table_size (context->generic_policy), ==, 0);
+  g_assert_cmpuint (g_hash_table_size (context->conditional_sockets), ==, 0);
+  g_assert_cmpuint (g_hash_table_size (context->conditional_devices), ==, 0);
   g_assert_cmpuint (context->shares, ==, 0);
   g_assert_cmpuint (context->shares_valid, ==, 0);
   g_assert_cmpuint (context->sockets, ==, 0);
@@ -230,7 +232,7 @@ test_full_context (void)
   g_key_file_set_value (keyfile,
                         FLATPAK_METADATA_GROUP_CONTEXT,
                         FLATPAK_METADATA_KEY_DEVICES,
-                        "dri;all;kvm;shm;");
+                        "dri;all;kvm;shm;!if:all:has-wayland:false;");
   g_key_file_set_value (keyfile,
                         FLATPAK_METADATA_GROUP_CONTEXT,
                         FLATPAK_METADATA_KEY_FEATURES,
@@ -312,6 +314,10 @@ test_full_context (void)
   g_assert_true (g_hash_table_contains (context->env_vars, "HYPOTHETICAL_PATH"));
   g_assert_cmpstr (g_hash_table_lookup (context->env_vars, "HYPOTHETICAL_PATH"),
                    ==, "/foo:/bar");
+  g_assert_cmpuint (g_hash_table_size (context->conditional_devices), ==, 1);
+  g_assert_true (g_hash_table_contains (context->conditional_devices,
+                                        GINT_TO_POINTER (FLATPAK_CONTEXT_DEVICE_ALL)));
+  g_assert_cmpuint (g_hash_table_size (context->conditional_sockets), ==, 0);
 
   exports = flatpak_context_get_exports (context, "com.example.App");
   g_assert_nonnull (exports);
@@ -396,6 +402,7 @@ test_full_context (void)
   g_qsort_with_data (strv, n, sizeof (char *),
                      (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
   i = 0;
+  g_assert_cmpstr (strv[i++], ==, "!if:all:false:has-wayland");
   g_assert_cmpstr (strv[i++], ==, "all");
   g_assert_cmpstr (strv[i++], ==, "dri");
   g_assert_cmpstr (strv[i++], ==, "kvm");
