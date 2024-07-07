@@ -540,15 +540,12 @@ handle_deploy (FlatpakSystemHelper   *object,
       const char *verified_digest;
       g_autofree char *upstream_url = NULL;
 
-      ostree_repo_remote_get_url (flatpak_dir_get_repo (system),
-                                  arg_origin,
-                                  &upstream_url,
-                                  NULL);
-
-      if (upstream_url == NULL)
+      if (!ostree_repo_remote_get_url (flatpak_dir_get_repo (system),
+                                       arg_origin,
+                                       &upstream_url,
+                                       &error))
         {
-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Remote %s is disabled", arg_origin);
+          flatpak_invocation_return_error (invocation, error, "Unable to get the URL for remote %s", arg_origin);
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
@@ -659,7 +656,7 @@ handle_deploy (FlatpakSystemHelper   *object,
                                        &url,
                                        &error))
         {
-          flatpak_invocation_return_error (invocation, error, "Error getting remote url");
+          flatpak_invocation_return_error (invocation, error, "Unable to get the URL for remote %s", arg_origin);
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
@@ -893,7 +890,7 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
                                        &url,
                                        &error))
         {
-          flatpak_invocation_return_error (invocation, error, "Error getting remote url");
+          flatpak_invocation_return_error (invocation, error, "Unable to get the URL for remote %s", arg_origin);
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
@@ -1941,7 +1938,7 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
 
       /* For metadata updates, redirect to the metadata-update action which
        * should basically always be allowed */
-      if (ref_str != NULL && g_strcmp0 (ref_str, OSTREE_REPO_METADATA_REF) == 0)
+      if (g_strcmp0 (ref_str, OSTREE_REPO_METADATA_REF) == 0)
         {
           action = "org.freedesktop.Flatpak.metadata-update";
         }

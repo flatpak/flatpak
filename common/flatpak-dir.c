@@ -10284,13 +10284,19 @@ flatpak_dir_install_bundle (FlatpakDir         *self,
       g_autofree char *group = g_strdup_printf ("remote \"%s\"", remote);
       g_autofree char *old_url = NULL;
       g_autoptr(GKeyFile) new_config = NULL;
+      g_autoptr(GError) local_error = NULL;
 
       /* The pull succeeded, and this is an update. So, we need to update the repo config
          if anything changed */
-      ostree_repo_remote_get_url (self->repo,
-                                  remote,
-                                  &old_url,
-                                  NULL);
+      if (!ostree_repo_remote_get_url (self->repo,
+                                       remote,
+                                       &old_url,
+                                       &local_error))
+        {
+          g_debug ("Unable to get the URL for remote %s: %s", remote, local_error->message);
+          g_clear_error (&local_error);
+        }
+
       if (origin != NULL &&
           (old_url == NULL || strcmp (old_url, origin) != 0))
         {
@@ -14226,15 +14232,25 @@ flatpak_dir_get_remote_disabled (FlatpakDir *self,
 {
   GKeyFile *config = flatpak_dir_get_repo_config (self);
   g_autofree char *group = get_group (remote_name);
-  g_autofree char *url = NULL;
 
   if (config &&
       g_key_file_get_boolean (config, group, "xa.disable", NULL))
     return TRUE;
 
-  if (self->repo &&
-      ostree_repo_remote_get_url (self->repo, remote_name, &url, NULL) && *url == 0)
-    return TRUE; /* Empty URL => disabled */
+  if (self->repo)
+    {
+      g_autoptr(GError) error = NULL;
+      g_autofree char *url = NULL;
+
+      if (!ostree_repo_remote_get_url (self->repo, remote_name, &url, &error))
+        {
+          g_debug ("Unable to get the URL for remote %s: %s", remote_name, error->message);
+          return FALSE;
+        }
+
+      if (*url == 0)
+        return TRUE; /* Empty URL => disabled */
+    }
 
   return FALSE;
 }
@@ -14755,6 +14771,7 @@ flatpak_dir_remove_remote (FlatpakDir   *self,
   GHashTableIter hash_iter;
   gpointer key;
   g_autofree char *url = NULL;
+  g_autoptr(GError) local_error = NULL;
 
   if (flatpak_dir_use_system_helper (self, NULL))
     {
@@ -14831,7 +14848,11 @@ flatpak_dir_remove_remote (FlatpakDir   *self,
                                      cancellable, error))
     return FALSE;
 
-  ostree_repo_remote_get_url (self->repo, remote_name, &url, NULL);
+  if (!ostree_repo_remote_get_url (self->repo, remote_name, &url, &local_error))
+    {
+      g_debug ("Unable to get the URL for remote %s: %s", remote_name, local_error->message);
+      g_clear_error (&local_error);
+    }
 
   if (!ostree_repo_remote_change (self->repo, NULL,
                                   OSTREE_REPO_REMOTE_CHANGE_DELETE,

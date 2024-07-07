@@ -3879,10 +3879,8 @@ flatpak_summary_generate_diff (GVariant *old_v,
 {
   VarSummaryRef new, old;
   VarRefMapRef new_refs, old_refs;
-  VarRefMapEntryRef new_entry, old_entry;
   gsize new_len, old_len;
   int new_i, old_i;
-  const char *old_ref, *new_ref;
   g_autoptr(GArray) ops = g_array_new (FALSE, TRUE, sizeof (DiffOp));
   g_autoptr(GArray) data_bytes = g_array_new (FALSE, TRUE, 1);
   g_autoptr(GBytes) diff_uncompressed = NULL;
@@ -3906,61 +3904,37 @@ flatpak_summary_generate_diff (GVariant *old_v,
   new_i = old_i = 0;
   while (new_i < new_len && old_i < old_len)
     {
-      if (new_i == new_len)
+      VarRefMapEntryRef new_entry = var_ref_map_get_at (new_refs, new_i);
+      const char *new_ref = var_ref_map_entry_get_ref (new_entry);
+
+      VarRefMapEntryRef old_entry = var_ref_map_get_at (old_refs, old_i);
+      const char *old_ref = var_ref_map_entry_get_ref (old_entry);
+
+      int cmp = strcmp (new_ref, old_ref);
+      if (cmp == 0)
         {
-          /* Just old left */
-          old_entry = var_ref_map_get_at (old_refs, old_i);
-          old_ref = var_ref_map_entry_get_ref (old_entry);
+          /* same ref */
+          diff_consume_block (&data,
+                              (const guchar *)old_entry.base - (const guchar *)old.base, old_entry.size,
+                              (const guchar *)new_entry.base - (const guchar *)new.base, new_entry.size);
           old_i++;
+          new_i++;
+        }
+      else if (cmp < 0)
+        {
+          /* new added */
           diff_consume_block (&data,
                               -1, 0,
                               (const guchar *)new_entry.base - (const guchar *)new.base, new_entry.size);
-        }
-      else if (old_i == old_len)
-        {
-          /* Just new left */
-          new_entry = var_ref_map_get_at (new_refs, new_i);
-          new_ref = var_ref_map_entry_get_ref (new_entry);
-          diff_consume_block (&data,
-                              (const guchar *)old_entry.base - (const guchar *)old.base, old_entry.size,
-                              -1, 0);
-
           new_i++;
         }
       else
         {
-          new_entry = var_ref_map_get_at (new_refs, new_i);
-          new_ref = var_ref_map_entry_get_ref (new_entry);
-
-          old_entry = var_ref_map_get_at (old_refs, old_i);
-          old_ref = var_ref_map_entry_get_ref (old_entry);
-
-          int cmp = strcmp (new_ref, old_ref);
-          if (cmp == 0)
-            {
-              /* same ref */
-              diff_consume_block (&data,
-                                  (const guchar *)old_entry.base - (const guchar *)old.base, old_entry.size,
-                                  (const guchar *)new_entry.base - (const guchar *)new.base, new_entry.size);
-              old_i++;
-              new_i++;
-            }
-          else if (cmp < 0)
-            {
-              /* new added */
-              diff_consume_block (&data,
-                                  -1, 0,
-                                  (const guchar *)new_entry.base - (const guchar *)new.base, new_entry.size);
-              new_i++;
-            }
-          else
-            {
-              /* old removed */
-              diff_consume_block (&data,
-                                  (const guchar *)old_entry.base - (const guchar *)old.base, old_entry.size,
-                                  -1, 0);
-              old_i++;
-            }
+          /* old removed */
+          diff_consume_block (&data,
+                              (const guchar *)old_entry.base - (const guchar *)old.base, old_entry.size,
+                              -1, 0);
+          old_i++;
         }
     }
 
