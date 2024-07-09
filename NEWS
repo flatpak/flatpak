@@ -2,14 +2,49 @@ Changes in 1.15.9
 ~~~~~~~~~~~~~~~~~
 Released: not yet
 
+Enhancements:
+
+ * If xdg-dbus-proxy is new enough (0.1.6 or later, not yet released),
+   allow two broadcast signals from AT-SPI by default, allowing bus
+   traffic to be reduced. If xdg-dbus-proxy is older, this change will
+   have no practical effect but is harmless. (#5828)
+
+ * Install csh profile snippet (#5753)
+
 Bug fixes:
 
  * Expand the list of environment variables that Flatpak apps do not
    inherit from the host system (#5765, #5785)
 
+ * Take time zone information from $TZDIR if set (#5850)
+
+ * Fix a memory leak since 1.15.7 when reloading D-Bus configuration (#5856)
+
+ * Fix a memory leak when running `flatpak permissions` (#5844)
+
+ * Fix memory leaks in `flatpak update` (#5816)
+
+ * Fix memory leaks when installing packages (#5811)
+
+ * Use more similar translatable strings for some error messages (#5748)
+
  * Fix a misleading comment in the test for CVE-2024-32462 (#5779)
 
+ * Fix a copy/paste error in the 1.15.7 release notes
+
+ * Make tests more compatible with non-GNU shell utilities (#5812)
+
+ * Translation updates: hi (#5838), zh_CN (#5843)
+
 Internal changes:
+
+ * Split library code into more, smaller translation units (#5409, 5801)
+
+ * Add some convenience macros in the test suite (#5693)
+
+ * Add configuration for Github Codespaces (#5767)
+
+ * Improve CI configuration (#5791)
 
  * Work around infrastructure issues in third-party apt repositories
    used by default in Github Workflows (#5786)
