@@ -1,0 +1,100 @@
+/* Commonly used, give a name */
+type Metadata [string] variant;
+type Checksum []byte;
+
+type Summary {
+    ref_map: [string] 'SummaryInfo {
+        size: uint64;
+        checksum: Checksum;
+        metadata: Metadata;
+    };
+    metadata: Metadata;
+};
+
+type Commit {
+    metadata: Metadata;
+    parent: Checksum;
+    related: [] 'Related {
+        ref: string;
+        commit: Checksum;
+    };
+    subject: string;
+    body: string;
+    timestamp: uint64;
+    root_contents: Checksum;
+    root_metadata: Checksum;
+};
+
+type TreeMeta {
+  files: [] 'TreeFile {
+    name: string;
+    checksum: Checksum;
+  };
+  dirs: [] 'TreeDir {
+    name: string;
+    tree_checksum: Checksum;
+    meta_checksum: Checksum;
+  };
+};
+
+type Xattr {
+  name: []byte;
+  value: []byte;
+};
+
+type DirMeta {
+  uid: bigendian uint32;
+  gid: bigendian uint32;
+  mode: bigendian uint32;
+  xattrs: [] Xattr;
+};
+
+type FileMeta {
+  uid: bigendian uint32;
+  gid: bigendian uint32;
+  mode: bigendian uint32;
+  xattrs: [] Xattr;
+};
+
+type DeltaFallback {
+  objtype: byte;
+  checksum: Checksum;
+  compressed_size: uint64; /* non-canonical endian */
+  uncompressed_size: uint64; /* non-canonical endian */
+};
+
+type DeltaMetaEntry {
+  version: uint32 ; /* non canonical endian */
+  checksum: Checksum;
+  size: uint64; /* non-canonical endian */
+  usize: uint64; /* non-canonical endian */
+  objects: [] 'DeltaObject {
+    objtype: byte;
+    object: Checksum;
+  };
+};
+
+type DeltaSuperblock {
+  metadata: Metadata;
+  timestamp: bigendian uint64;
+  from: Checksum;
+  to: Checksum;
+  commit: Commit;
+  apply_before: [] 'DeltaName {
+    from: Checksum;
+    to: Checksum;
+  };
+  parts: []DeltaMetaEntry;
+  fallbacks: []DeltaFallback;
+};
+
+type DeltaPayload {
+  modes: [] 'DeltaMode {
+      uid: uint32;
+      gid: uint32;
+      mode: uint32;
+  };
+  xattrs: [][]Xattr;
+  raw_data: []byte;
+  operations: []byte;
+};
