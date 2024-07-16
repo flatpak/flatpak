@@ -28,6 +28,9 @@ Bug fixes:
 
  * Use more similar translatable strings for some error messages (#5748)
 
+ * Document `flatpak config --set languages '*all*'` correctly:
+   it is really `*all*` (or equivalently `*`), not just `all` (#5836)
+
  * Fix a misleading comment in the test for CVE-2024-32462 (#5779)
 
  * Fix a copy/paste error in the 1.15.7 release notes
@@ -38,7 +41,8 @@ Bug fixes:
 
 Internal changes:
 
- * Split library code into more, smaller translation units (#5409, 5801)
+ * Split library code into more, smaller translation units, reducing
+   internal circular dependencies (#5409, #5801, #5803)
 
  * Add some convenience macros in the test suite (#5693)
 
