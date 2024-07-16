@@ -2,6 +2,16 @@ Changes in 1.15.9
 ~~~~~~~~~~~~~~~~~
 Released: not yet
 
+Dependencies:
+
+ * bubblewrap and xdg-dbus-proxy are now provided by Meson wrap files
+   instead of being directly vendored via `git submodule`.
+   If downloading external software during build is not allowed in your
+   environment, please install suitable versions of bubblewrap and
+   xdg-dbus-proxy separately, then configure Flatpak with options similar to
+   `-Dsystem_bubblewrap=bwrap -Dsystem_dbus_proxy=xdg-dbus-proxy`
+   (most major distributions package it like this already).
+
 Enhancements:
 
  * If xdg-dbus-proxy is new enough (0.1.6 or later, not yet released),
@@ -40,6 +50,13 @@ Bug fixes:
  * Translation updates: hi (#5838), zh_CN (#5843)
 
 Internal changes:
+
+ * libglnx and variant-schema-compiler are now managed as `git subtree`
+   instead of `git submodule`.
+   Maintainers and contributors, please see `subprojects/README.md` for
+   details of how to interact with these.
+   In particular this means that submodules no longer need to be set up
+   before working on a git clone. (#5800, #5845)
 
  * Split library code into more, smaller translation units, reducing
    internal circular dependencies (#5409, #5801, #5803)
