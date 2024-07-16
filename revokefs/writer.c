@@ -794,13 +794,13 @@ do_writer (int basefd_arg,
       res = poll(pollfds, exit_with_fd >= 0 ? 2 : 1, -1);
       if (res < 0)
         {
-          perror ("Got error polling sockets: ");
+          perror ("Got error polling sockets");
           exit (1);
         }
 
       if (exit_with_fd >= 0 && (pollfds[1].revents & (POLLERR|POLLHUP)) != 0)
         {
-          g_printerr ("Received EOF on exit-with-fd argument");
+          g_printerr ("Received EOF on exit-with-fd argument\n");
           exit (1);
         }
 
@@ -810,7 +810,7 @@ do_writer (int basefd_arg,
       size = TEMP_FAILURE_RETRY (read (fuse_socket, request_buffer, sizeof (request_buffer)));
       if (size == -1)
         {
-          perror ("Got error reading from fuse socket: ");
+          perror ("Got error reading from fuse socket");
           exit (1);
         }
 
@@ -822,7 +822,7 @@ do_writer (int basefd_arg,
 
       if (size < sizeof (RevokefsRequest))
         {
-          g_printerr ("Invalid request size %zd", size);
+          g_printerr ("Invalid request size %zd\n", size);
           exit (1);
         }
 
@@ -880,13 +880,13 @@ do_writer (int basefd_arg,
           response_data_size = handle_access (request, data_size, response);
           break;
         default:
-          g_printerr ("Invalid request op %d", (guint) request->op);
+          g_printerr ("Invalid request op %d\n", (guint) request->op);
           exit (1);
         }
 
       if (response_data_size < 0 || response_data_size > MAX_DATA_SIZE)
         {
-          g_printerr ("Invalid response size %zd", response_data_size);
+          g_printerr ("Invalid response size %zd\n", response_data_size);
           exit (1);
         }
 
@@ -895,13 +895,13 @@ do_writer (int basefd_arg,
       written_size = TEMP_FAILURE_RETRY (write (fuse_socket, response_buffer, response_size));
       if (written_size == -1)
         {
-          perror ("Got error writing to fuse socket: ");
+          perror ("Got error writing to fuse socket");
           exit (1);
         }
 
       if (written_size != response_size)
         {
-          g_printerr ("Got partial write to fuse socket");
+          g_printerr ("Got partial write to fuse socket\n");
           exit (1);
         }
     }
