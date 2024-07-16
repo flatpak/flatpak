@@ -475,13 +475,13 @@ operation_error (FlatpakTransaction            *transaction,
   g_autoptr(FlatpakRef) rref = flatpak_ref_parse (ref, NULL);
   gboolean non_fatal = (detail & FLATPAK_TRANSACTION_ERROR_DETAILS_NON_FATAL) != 0;
   g_autofree char *text = NULL;
-  const char *on = "";
-  const char *off = "";
+  const char *bold_on = "";
+  const char *bold_off = "";
 
   if (flatpak_fancy_output ())
     {
-      on = FLATPAK_ANSI_BOLD_ON;
-      off = FLATPAK_ANSI_BOLD_OFF;
+      bold_on = FLATPAK_ANSI_BOLD_ON;
+      bold_off = FLATPAK_ANSI_BOLD_OFF;
     }
 
   if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_SKIPPED))
@@ -511,28 +511,28 @@ operation_error (FlatpakTransaction            *transaction,
     {
       if (non_fatal)
         text = g_strdup_printf (_("Warning: %s%s%s already installed"),
-                                on, flatpak_ref_get_name (rref), off);
+                                bold_on, flatpak_ref_get_name (rref), bold_off);
       else
         text = g_strdup_printf (_("Error: %s%s%s already installed"),
-                                on, flatpak_ref_get_name (rref), off);
+                                bold_on, flatpak_ref_get_name (rref), bold_off);
     }
   else if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED))
     {
       if (non_fatal)
         text = g_strdup_printf (_("Warning: %s%s%s not installed"),
-                                on, flatpak_ref_get_name (rref), off);
+                                bold_on, flatpak_ref_get_name (rref), bold_off);
       else
         text = g_strdup_printf (_("Error: %s%s%s not installed"),
-                                on, flatpak_ref_get_name (rref), off);
+                                bold_on, flatpak_ref_get_name (rref), bold_off);
     }
   else if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_NEED_NEW_FLATPAK))
     {
       if (non_fatal)
         text = g_strdup_printf (_("Warning: %s%s%s needs a later flatpak version"),
-                                on, flatpak_ref_get_name (rref), off);
+                                bold_on, flatpak_ref_get_name (rref), bold_off);
       else
         text = g_strdup_printf (_("Error: %s%s%s needs a later flatpak version"),
-                                on, flatpak_ref_get_name (rref), off);
+                                bold_on, flatpak_ref_get_name (rref), bold_off);
     }
   else if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_OUT_OF_SPACE))
     {
@@ -562,28 +562,28 @@ operation_error (FlatpakTransaction            *transaction,
             g_propagate_prefixed_error (&self->first_operation_error,
                                         g_error_copy (error),
                                         _("Failed to install %s%s%s: "),
-                                        on, flatpak_ref_get_name (rref), off);
+                                        bold_on, flatpak_ref_get_name (rref), bold_off);
             break;
 
           case FLATPAK_TRANSACTION_OPERATION_UPDATE:
             g_propagate_prefixed_error (&self->first_operation_error,
                                         g_error_copy (error),
                                         _("Failed to update %s%s%s: "),
-                                        on, flatpak_ref_get_name (rref), off);
+                                        bold_on, flatpak_ref_get_name (rref), bold_off);
             break;
 
           case FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE:
             g_propagate_prefixed_error (&self->first_operation_error,
                                         g_error_copy (error),
                                         _("Failed to install bundle %s%s%s: "),
-                                        on, flatpak_ref_get_name (rref), off);
+                                        bold_on, flatpak_ref_get_name (rref), bold_off);
             break;
 
           case FLATPAK_TRANSACTION_OPERATION_UNINSTALL:
             g_propagate_prefixed_error (&self->first_operation_error,
                                         g_error_copy (error),
                                         _("Failed to uninstall %s%s%s: "),
-                                        on, flatpak_ref_get_name (rref), off);
+                                        bold_on, flatpak_ref_get_name (rref), bold_off);
             break;
 
           default:
@@ -711,13 +711,13 @@ print_eol_info_message (FlatpakDir        *dir,
 {
   gboolean is_pinned = flatpak_dir_ref_is_pinned (dir, flatpak_decomposed_get_ref (ref));
   g_autofree char *ref_branch = flatpak_decomposed_dup_branch (ref);
-  const char *on = "";
-  const char *off = "";
+  const char *bold_on = "";
+  const char *bold_off = "";
 
   if (flatpak_fancy_output ())
     {
-      on = FLATPAK_ANSI_BOLD_ON;
-      off = FLATPAK_ANSI_BOLD_OFF;
+      bold_on = FLATPAK_ANSI_BOLD_ON;
+      bold_off = FLATPAK_ANSI_BOLD_OFF;
     }
 
   /* Here we go to great lengths not to split the sentences. See
@@ -742,16 +742,19 @@ print_eol_info_message (FlatpakDir        *dir,
         {
           /* Only runtimes can be pinned */
           g_print (_("\nInfo: (pinned) runtime %s%s%s branch %s%s%s is end-of-life, in favor of %s%s%s branch %s%s%s\n"),
-                   on, ref_name, off, on, ref_branch, off, on, eolr_name, off, on, eolr_branch, off);
+                   bold_on, ref_name, bold_off, bold_on, ref_branch, bold_off,
+                   bold_on, eolr_name, bold_off, bold_on, eolr_branch, bold_off);
         }
       else
         {
           if (flatpak_decomposed_is_runtime (ref))
             g_print (_("\nInfo: runtime %s%s%s branch %s%s%s is end-of-life, in favor of %s%s%s branch %s%s%s\n"),
-                     on, ref_name, off, on, ref_branch, off, on, eolr_name, off, on, eolr_branch, off);
+                     bold_on, ref_name, bold_off, bold_on, ref_branch, bold_off,
+                     bold_on, eolr_name, bold_off, bold_on, eolr_branch, bold_off);
           else
             g_print (_("\nInfo: app %s%s%s branch %s%s%s is end-of-life, in favor of %s%s%s branch %s%s%s\n"),
-                     on, ref_name, off, on, ref_branch, off, on, eolr_name, off, on, eolr_branch, off);
+                     bold_on, ref_name, bold_off, bold_on, ref_branch, bold_off,
+                     bold_on, eolr_name, bold_off, bold_on, eolr_branch, bold_off);
         }
     }
   else if (reason)
@@ -763,16 +766,16 @@ print_eol_info_message (FlatpakDir        *dir,
         {
           /* Only runtimes can be pinned */
           g_print (_("\nInfo: (pinned) runtime %s%s%s branch %s%s%s is end-of-life, with reason:\n"),
-                   on, ref_name, off, on, ref_branch, off);
+                   bold_on, ref_name, bold_off, bold_on, ref_branch, bold_off);
         }
       else
         {
           if (flatpak_decomposed_is_runtime (ref))
             g_print (_("\nInfo: runtime %s%s%s branch %s%s%s is end-of-life, with reason:\n"),
-                     on, ref_name, off, on, ref_branch, off);
+                     bold_on, ref_name, bold_off, bold_on, ref_branch, bold_off);
           else
             g_print (_("\nInfo: app %s%s%s branch %s%s%s is end-of-life, with reason:\n"),
-                     on, ref_name, off, on, ref_branch, off);
+                     bold_on, ref_name, bold_off, bold_on, ref_branch, bold_off);
         }
       g_print ("   %s\n", escaped_reason);
     }
@@ -1157,13 +1160,13 @@ print_permissions (FlatpakCliTransaction *self,
   int i, j;
   int rows, cols;
   int table_rows, table_cols;
-  const char *on = "";
-  const char *off = "";
+  const char *bold_on = "";
+  const char *bold_off = "";
 
   if (flatpak_fancy_output ())
     {
-      on = FLATPAK_ANSI_BOLD_ON;
-      off = FLATPAK_ANSI_BOLD_OFF;
+      bold_on = FLATPAK_ANSI_BOLD_ON;
+      bold_off = FLATPAK_ANSI_BOLD_OFF;
     }
 
   if (metadata == NULL)
@@ -1205,9 +1208,9 @@ print_permissions (FlatpakCliTransaction *self,
   g_print ("\n");
 
   if (old_metadata)
-    g_print (_("New %s%s%s permissions:"), on, flatpak_ref_get_name (rref), off);
+    g_print (_("New %s%s%s permissions:"), bold_on, flatpak_ref_get_name (rref), bold_off);
   else
-    g_print (_("%s%s%s permissions:"), on, flatpak_ref_get_name (rref), off);
+    g_print (_("%s%s%s permissions:"), bold_on, flatpak_ref_get_name (rref), bold_off);
 
   g_print ("\n");
 

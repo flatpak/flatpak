@@ -162,14 +162,14 @@ confirm_runtime_removal (gboolean           yes_opt,
   g_autoptr(GError) local_error = NULL;
   g_autofree char *ref_name = NULL;
   const char *ref_branch;
-  const char *on = "";
-  const char *off = "";
+  const char *bold_on = "";
+  const char *bold_off = "";
   gboolean is_extension;
 
   if (flatpak_fancy_output ())
     {
-      on = FLATPAK_ANSI_BOLD_ON;
-      off = FLATPAK_ANSI_BOLD_OFF;
+      bold_on = FLATPAK_ANSI_BOLD_ON;
+      bold_off = FLATPAK_ANSI_BOLD_OFF;
     }
 
   is_extension = flatpak_dir_is_runtime_extension (udir->dir, ref);
@@ -218,10 +218,10 @@ confirm_runtime_removal (gboolean           yes_opt,
 
   if (is_extension)
     g_print (_("Info: applications using the extension %s%s%s branch %s%s%s:\n"),
-             on, ref_name, off, on, ref_branch, off);
+             bold_on, ref_name, bold_off, bold_on, ref_branch, bold_off);
   else
     g_print (_("Info: applications using the runtime %s%s%s branch %s%s%s:\n"),
-             on, ref_name, off, on, ref_branch, off);
+             bold_on, ref_name, bold_off, bold_on, ref_branch, bold_off);
 
   g_print ("   ");
   for (guint i = 0; i < apps->len; i++)
