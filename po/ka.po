@@ -1,14 +1,14 @@
 # Georgian translation for flatpak.
 # Copyright (C) 2023 flatpak authors.
 # This file is distributed under the same license as the flatpak package.
-# Ekaterine Papava <papava.e@gtu.ge>, 2023.
+# Ekaterine Papava <papava.e@gtu.ge>, 2023-2024.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: flatpak git\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2024-04-17 19:07+0100\n"
-"PO-Revision-Date: 2023-07-03 10:01+0200\n"
+"PO-Revision-Date: 2024-07-17 00:02+0200\n"
 "Last-Translator: Ekaterine Papava <papava.e@gtu.ge>\n"
 "Language-Team: Georgian <(nothing)>\n"
 "Language: ka\n"
@@ -2166,14 +2166,14 @@ msgid "Show options"
 msgstr "პარამეტრების ჩვენება"
 
 #: app/flatpak-builtins-list.c:178
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to load details of %s: %s"
-msgstr "დაშორებულიდან '%s' შეჯამების ჩატვირთვა შეუძლებელია: %s"
+msgstr "%s-ის დეტალების ჩატვირთვა შეუძლებელია: %s"
 
 #: app/flatpak-builtins-list.c:188
 #, c-format
 msgid "Unable to inspect current version of %s: %s"
-msgstr ""
+msgstr "%s-ის მიმდინარე ვერსიის ინსპექტირება შეუძლებელია: %s"
 
 #: app/flatpak-builtins-list.c:406
 msgid " - List installed apps and/or runtimes"
@@ -3230,17 +3230,19 @@ msgstr "წავშალო %s-ის მონაცემები?"
 #: app/flatpak-builtins-uninstall.c:220
 #, c-format
 msgid "Info: applications using the extension %s%s%s branch %s%s%s:\n"
-msgstr ""
+msgstr "ინფორმაცია: აპლიკაციები, რომლებიც იყენებენ %s%s%s ბრენჩს %s%s%s:\n"
 
 #: app/flatpak-builtins-uninstall.c:223
-#, fuzzy, c-format
+#, c-format
 msgid "Info: applications using the runtime %s%s%s branch %s%s%s:\n"
-msgstr "აპლიკაციები, რომლებიც ამ გაშვების გარემოს იყენებენ:\n"
+msgstr ""
+"ინფორმაცია: აპლიკაციები, რომლებიც იყენებენ გაშვების გარემოს %s%s%s ბრენჩს "
+"%s%s%s:\n"
+"\n"
 
 #: app/flatpak-builtins-uninstall.c:238
-#, fuzzy
 msgid "Really remove?"
-msgstr "ნებისმიერი დაშორებული"
+msgstr "მართლა წავშალო?"
 
 #: app/flatpak-builtins-uninstall.c:255
 msgid "[REF…] - Uninstall applications or runtimes"
@@ -3583,74 +3585,72 @@ msgid "Info: %s was skipped"
 msgstr "ინფორმაცია: %s გამოტოვებულია"
 
 #: app/flatpak-cli-transaction.c:513
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: %s%s%s already installed"
-msgstr "%s უკვე დაყენებულია"
+msgstr "გაფრთხილება: %s%s%s უკვე დაყენებულია"
 
 #: app/flatpak-cli-transaction.c:516
-#, fuzzy, c-format
+#, c-format
 msgid "Error: %s%s%s already installed"
-msgstr "%s უკვე დაყენებულია"
+msgstr "შეცდომა: %s%s%s უკვე დაყენებულია"
 
 #: app/flatpak-cli-transaction.c:522
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: %s%s%s not installed"
-msgstr "გაფრთხილება: %s დაყენებული არაა\n"
+msgstr "გაფრთხილება: %s%s%s დაყენებული არაა"
 
 #: app/flatpak-cli-transaction.c:525
-#, fuzzy, c-format
+#, c-format
 msgid "Error: %s%s%s not installed"
-msgstr "%s/%s/%s დაყენებული არაა"
+msgstr "შეცდომა: %s%s%s დაყენებული არაა"
 
 #: app/flatpak-cli-transaction.c:531
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: %s%s%s needs a later flatpak version"
-msgstr "%s-ს flatpak-ის უფრო ახალი ვერსია სჭირდება"
+msgstr "გაფრთხილება: %s%s%s-ს flatpak-ის უფრო ახალი ვერსია სჭირდება"
 
 #: app/flatpak-cli-transaction.c:534
-#, fuzzy, c-format
+#, c-format
 msgid "Error: %s%s%s needs a later flatpak version"
-msgstr "%s-ს flatpak-ის უფრო ახალი ვერსია სჭირდება"
+msgstr "შეცდომა: %s%s%s-ს flatpak-ის უფრო ახალი ვერსია სჭირდება"
 
 #: app/flatpak-cli-transaction.c:540
-#, fuzzy
 msgid "Warning: Not enough disk space to complete this operation"
-msgstr "ოპერაციის დასასრულებლად დისკზე საკმარისი ადგილი არაა"
+msgstr "გაფრთხილება: ოპერაციის დასასრულებლად დისკზე საკმარისი ადგილი არაა"
 
 #: app/flatpak-cli-transaction.c:542
-#, fuzzy
 msgid "Error: Not enough disk space to complete this operation"
-msgstr "ოპერაციის დასასრულებლად დისკზე საკმარისი ადგილი არაა"
+msgstr "შეცდომა: ოპერაციის დასასრულებლად დისკზე საკმარისი ადგილი არაა"
 
 #: app/flatpak-cli-transaction.c:547
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: %s"
-msgstr "გაფრთხილება: "
+msgstr "გაფრთხილება: %s"
 
 #: app/flatpak-cli-transaction.c:549
-#, fuzzy, c-format
+#, c-format
 msgid "Error: %s"
-msgstr "შეცდომა:"
+msgstr "შეცდომა:%s"
 
 #: app/flatpak-cli-transaction.c:564
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to install %s%s%s: "
-msgstr "%s-ის წაშლის შეცდომა %s-ის რებაზირებისთვის: "
+msgstr "%s%s%s-ის დაყენება ჩავარდა: "
 
 #: app/flatpak-cli-transaction.c:571
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to update %s%s%s: "
-msgstr "%s %s-ის შეცდომა: "
+msgstr "%s%s%s-ის განახლება ჩავარდა: "
 
 #: app/flatpak-cli-transaction.c:578
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to install bundle %s%s%s: "
-msgstr "%s-ის წაშლის შეცდომა %s-ის რებაზირებისთვის: "
+msgstr "ჩავარდა დაყენება პაკეტისთვის %s%s%s: "
 
 #: app/flatpak-cli-transaction.c:585
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to uninstall %s%s%s: "
-msgstr "%s-ის წაშლის შეცდომა %s-ის რებაზირებისთვის: "
+msgstr "%s%s%s-ის წაშლა ჩავარდა: "
 
 #: app/flatpak-cli-transaction.c:627
 #, c-format
@@ -3672,72 +3672,77 @@ msgstr "პაროლი"
 
 #. Only runtimes can be pinned
 #: app/flatpak-cli-transaction.c:744
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Info: (pinned) runtime %s%s%s branch %s%s%s is end-of-life, in favor of "
 "%s%s%s branch %s%s%s\n"
 msgstr ""
 "\n"
-"ინფორმაცია: %s%s %s მხარდაჭერა ამოწურულია. გამოიყენეთ %s\n"
+"ინფორმაცია: (მიმაგრებული) გაშვების გარემოს %s%s%s ბრენჩის %s%s%s მხარდაჭერა "
+"ამოწურულია. გამოიყენეთ %s%s%s ბრენჩი %s%s%s\n"
 
 #: app/flatpak-cli-transaction.c:750
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Info: runtime %s%s%s branch %s%s%s is end-of-life, in favor of %s%s%s branch "
 "%s%s%s\n"
 msgstr ""
 "\n"
-"ინფორმაცია: %s%s %s მხარდაჭერა ამოწურულია. გამოიყენეთ %s\n"
+"ინფორმაცია: გაშვების გარემოს %s%s%s ბრენჩის %s%s%s მხარდაჭერა ამოწურულია. "
+"გამოიყენეთ %s%s%s ბრენჩი %s%s%s\n"
 
 #: app/flatpak-cli-transaction.c:753
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Info: app %s%s%s branch %s%s%s is end-of-life, in favor of %s%s%s branch "
 "%s%s%s\n"
 msgstr ""
 "\n"
-"ინფორმაცია: %s%s %s მხარდაჭერა ამოწურულია. გამოიყენეთ %s\n"
+"ინფორმაცია: აპის %s%s%s ბრენჩის %s%s%s მხარდაჭერა ამოწურულია. გამოიყენეთ "
+"%s%s%s ბრენჩი %s%s%s\n"
 
 #. Only runtimes can be pinned
 #: app/flatpak-cli-transaction.c:765
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Info: (pinned) runtime %s%s%s branch %s%s%s is end-of-life, with reason:\n"
 msgstr ""
 "\n"
-"ინფორმაცია: %s%s %s მხარდაჭერა ამოწურულია მიზეზით:\n"
+"ინფორმაცია: (მიმაგრებული) გაშვების გარემოს %s%s%s ბრენჩის %s%s%s მხარდაჭერა "
+"ამოწურულია მიზეზით:\n"
 
 #: app/flatpak-cli-transaction.c:771
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Info: runtime %s%s%s branch %s%s%s is end-of-life, with reason:\n"
 msgstr ""
 "\n"
-"ინფორმაცია: %s%s %s მხარდაჭერა ამოწურულია მიზეზით:\n"
+"ინფორმაცია: გაშვების გარემოს %s%s%s ბრენჩის %s%s%s მხარდაჭერა ამოწურულია "
+"მიზეზით:\n"
 
 #: app/flatpak-cli-transaction.c:774
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Info: app %s%s%s branch %s%s%s is end-of-life, with reason:\n"
 msgstr ""
 "\n"
-"ინფორმაცია: %s%s %s მხარდაჭერა ამოწურულია მიზეზით:\n"
+"ინფორმაცია: აპის %s%s%s ბრენჩის %s%s%s მხარდაჭერა ამოწურულია მიზეზით:\n"
 
 #: app/flatpak-cli-transaction.c:948
-#, fuzzy, c-format
+#, c-format
 msgid "Info: applications using this extension:\n"
-msgstr "აპლიკაციები, რომლებიც ამ გაშვების გარემოს იყენებენ:\n"
+msgstr "ინფორმაცია: აპლიკაციები, რომლებიც ამ გაფართოებას იყენებენ:\n"
 
 #: app/flatpak-cli-transaction.c:950
-#, fuzzy, c-format
+#, c-format
 msgid "Info: applications using this runtime:\n"
-msgstr "აპლიკაციები, რომლებიც ამ გაშვების გარემოს იყენებენ:\n"
+msgstr "ინფორმაცია: აპლიკაციები, რომლებიც ამ გაშვების გარემოს იყენებენ:\n"
 
 #: app/flatpak-cli-transaction.c:969
 msgid "Replace?"
@@ -4178,44 +4183,52 @@ msgid "Uninstalling %s\n"
 msgstr "%s-ის წაშლა\n"
 
 #: app/flatpak-quiet-transaction.c:107
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: Failed to install %s: %s\n"
-msgstr "%s-ის შეცდომა %s %s: %s\n"
+msgstr ""
+"გაფრთხილება: %s-ის დაყენება ჩავარდა: %s\n"
+"\n"
 
 #: app/flatpak-quiet-transaction.c:110
-#, fuzzy, c-format
+#, c-format
 msgid "Error: Failed to install %s: %s\n"
-msgstr "%s-ის თავიდან დაყენების შეცდომა: %s\n"
+msgstr ""
+"შეცდომა: %s-ის დაყენება ჩავარდა: %s\n"
+"\n"
 
 #: app/flatpak-quiet-transaction.c:116
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: Failed to update %s: %s\n"
-msgstr "%s-ის განახლების შეცდომა: %s\n"
+msgstr "გაფრთხილება: %s-ის განახლების შეცდომა: %s\n"
 
 #: app/flatpak-quiet-transaction.c:119
-#, fuzzy, c-format
+#, c-format
 msgid "Error: Failed to update %s: %s\n"
-msgstr "%s-ის განახლების შეცდომა: %s\n"
+msgstr "შეცდომა: %s-ის განახლების შეცდომა: %s\n"
 
 #: app/flatpak-quiet-transaction.c:125
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: Failed to install bundle %s: %s\n"
-msgstr "%s-ის წაშლის შეცდომა %s-ზე რებაზირებისთვის: %s\n"
+msgstr "გაფრთხილება: პაკეტის %s დაყენება ჩავარდა: %s\n"
 
 #: app/flatpak-quiet-transaction.c:128
-#, fuzzy, c-format
+#, c-format
 msgid "Error: Failed to install bundle %s: %s\n"
-msgstr "%s-ის თავიდან დაყენების შეცდომა: %s\n"
+msgstr ""
+"შეცდომა: პაკეტის %s დაყენება ჩავარდა: %s\n"
+"\n"
 
 #: app/flatpak-quiet-transaction.c:134
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: Failed to uninstall %s: %s\n"
-msgstr "%s-ის შეცდომა %s %s: %s\n"
+msgstr "გაფრთხილება: %s-ის წაშლა ჩავარდა: %s\n"
 
 #: app/flatpak-quiet-transaction.c:137
-#, fuzzy, c-format
+#, c-format
 msgid "Error: Failed to uninstall %s: %s\n"
-msgstr "%s-ის თავიდან დაყენების შეცდომა: %s\n"
+msgstr ""
+"შეცდომა: %s-ის წაშლა ჩავარდა: %s\n"
+"\n"
 
 #: app/flatpak-quiet-transaction.c:166 common/flatpak-dir.c:10426
 #, c-format
@@ -4492,12 +4505,12 @@ msgstr "გაშვებული სესია მოთხოვნილ�
 #: common/flatpak-context.c:2491
 #, c-format
 msgid "Not replacing \"%s\" with tmpfs: %s"
-msgstr ""
+msgstr "\"%s\" tmpfs-ით არ ჩანაცვლდება: %s"
 
 #: common/flatpak-context.c:2499
 #, c-format
 msgid "Not sharing \"%s\" with sandbox: %s"
-msgstr ""
+msgstr "\"%s\" სენდბოქსთან არ გაზიარდება: %s"
 
 #. Even if the error is one that we would normally silence, like
 #. * the path not existing, it seems reasonable to make more of a fuss
@@ -4506,12 +4519,12 @@ msgstr ""
 #: common/flatpak-context.c:2595
 #, c-format
 msgid "Not allowing home directory access: %s"
-msgstr ""
+msgstr "საწყის საქაღალდესთან წვდომა მინიჭებული არ იქნება: %s"
 
 #: common/flatpak-context.c:2823
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to provide a temporary home directory in the sandbox: %s"
-msgstr "%s-ში დროებითი საქაღალდის შექმნის შეცდომა"
+msgstr "დროებითი საწყისი საქაღალდის მიწოდება შეუძლებელია სენდბოქსში: %s"
 
 #: common/flatpak-dir.c:400
 #, c-format
@@ -5030,43 +5043,43 @@ msgstr "ასლის მიმართვის (%s, %s) წაშლის 
 #: common/flatpak-exports.c:918
 #, c-format
 msgid "An absolute path is required"
-msgstr ""
+msgstr "აუცილებელია აბსოლუტური ბილიკი"
 
 #: common/flatpak-exports.c:935
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to open path \"%s\": %s"
-msgstr "%s-ის განახლების შეცდომა: %s\n"
+msgstr "ვერ გავხსენი ბილიკი \"%s\": %s"
 
 #: common/flatpak-exports.c:942
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to get file type of \"%s\": %s"
-msgstr "ფაილის შექმნის შეცდომა (%s)"
+msgstr "ვერ მივიღე \"%s\"-ის ფაილის ტიპი: %s"
 
 #: common/flatpak-exports.c:951
 #, c-format
 msgid "File \"%s\" has unsupported type 0o%o"
-msgstr ""
+msgstr "ფაილს \"%s\" აქვს მხარდაუჭერელი ტიპი 0o%o"
 
 #: common/flatpak-exports.c:957
 #, c-format
 msgid "Unable to get filesystem information for \"%s\": %s"
-msgstr ""
+msgstr "ვერ მივიღე ფაილური სისტემის ინფორმაცია \"%s\"-სთვის: %s"
 
 #: common/flatpak-exports.c:967
 #, c-format
 msgid "Ignoring blocking autofs path \"%s\""
-msgstr ""
+msgstr "გამოტოვებულია დამბლოკავი autofs-ის ბილიკი \"%s\""
 
 #: common/flatpak-exports.c:983 common/flatpak-exports.c:996
 #: common/flatpak-exports.c:1009
 #, c-format
 msgid "Path \"%s\" is reserved by Flatpak"
-msgstr ""
+msgstr "ბილიკი \"%s\" დაცულია Flatpak-ის მიერ"
 
 #: common/flatpak-exports.c:1063
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to resolve symbolic link \"%s\": %s"
-msgstr "სიმბმულის (%s/%s) განახლების შეცდომა"
+msgstr "სიმბმულის \"%s\" ამოხსნა შეუძლებელია: %s"
 
 #: common/flatpak-glib-backports.c:69
 msgid "Empty string is not a number"
@@ -6024,37 +6037,3 @@ msgstr ""
 "თქვენი მშობლების საკონტროლო პოლიტიკის მიერ შეზღუდული პროგრამის დასაყენებლად "
 "ავთენტიკაცია დაგჭირდებათ"
 
-#~ msgid "install"
-#~ msgstr "დაყენება"
-
-#~ msgid "update"
-#~ msgstr "განახლება"
-
-#~ msgid "install bundle"
-#~ msgstr "პაკეტის დაყენება"
-
-#~ msgid "uninstall"
-#~ msgstr "წაშლა"
-
-#~ msgid "(internal error, please report)"
-#~ msgstr "(შიდა შეცდომა. შეგვატყობინეთ, გეთაყვა)"
-
-#~ msgid "Warning:"
-#~ msgstr "გაფთხილება:"
-
-#, c-format
-#~ msgid "%s%s%s branch %s%s%s"
-#~ msgstr "%s%s%s ბრენჩი %s%s%s"
-
-#~ msgid "(pinned) "
-#~ msgstr "(მიჭიკარტებული) "
-
-#~ msgid "runtime"
-#~ msgstr "გაშვების გარემო"
-
-#~ msgid "app"
-#~ msgstr "აპი"
-
-#, c-format
-#~ msgid "Unable to open directory %s"
-#~ msgstr "%s საქაღალდის გახსნის შეცდომა"
