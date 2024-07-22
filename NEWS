@@ -50,7 +50,7 @@ Bug fixes:
 
  * Make tests more compatible with non-GNU shell utilities (#5812)
 
- * Translation updates: hi (#5838), zh_CN (#5843)
+ * Translation updates: ka (#5873), hi (#5838), pt_BR (#5877), zh_CN (#5843)
 
 Internal changes:
 
