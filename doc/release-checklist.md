@@ -16,7 +16,7 @@ Flatpak release checklist
     * Title: `Release $VERSION`
     * Copy the `NEWS` text into the description
     * Check "This is a pre-release" for 1.odd.x development releases
-    * Upload the tarball that you built with `make distcheck`
+    * Upload the tarball that you built with `meson dist`
     * Get the `sha256sum` of the tarball and append it to the description
     * `Publish release`
 * Send an announcement to the mailing list
