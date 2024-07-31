@@ -3922,7 +3922,6 @@ _flatpak_dir_scan_new_flatpakrepos (const char          *dir_str,
 {
   g_autoptr(GFile) dir = NULL;
   g_autoptr(GFileEnumerator) dir_enum = NULL;
-  g_autoptr(GError) my_error = NULL;
 
   g_return_if_fail (dir_str != NULL);
   g_return_if_fail (flatpakrepos != NULL);
@@ -3931,8 +3930,8 @@ _flatpak_dir_scan_new_flatpakrepos (const char          *dir_str,
   dir_enum = g_file_enumerate_children (dir,
                                         G_FILE_ATTRIBUTE_STANDARD_NAME "," G_FILE_ATTRIBUTE_STANDARD_TYPE,
                                         G_FILE_QUERY_INFO_NONE,
-                                        NULL, &my_error);
-  if (my_error != NULL)
+                                        NULL, NULL);
+  if (dir_enum == NULL)
     return;
 
   while (TRUE)
@@ -3940,12 +3939,13 @@ _flatpak_dir_scan_new_flatpakrepos (const char          *dir_str,
       GFileInfo *file_info;
       const char *name;
       guint32 type;
+      g_autoptr(GError) local_error = NULL;
 
       if (!g_file_enumerator_iterate (dir_enum, &file_info, NULL,
-                                      NULL, &my_error))
+                                      NULL, &local_error))
         {
           g_info ("Unexpected error reading file in %s: %s",
-                  dir_str, my_error->message);
+                  dir_str, local_error->message);
           break;
         }
 
