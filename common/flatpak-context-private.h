@@ -1,5 +1,6 @@
 /*
  * Copyright © 2014-2018 Red Hat, Inc
+ * Copyright © 2024 GNOME Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,6 +17,7 @@
  *
  * Authors:
  *       Alexander Larsson <alexl@redhat.com>
+ *       Hubert Figuière <hub@figuiere.net>
  */
 
 #ifndef __FLATPAK_CONTEXT_H__
@@ -65,6 +67,7 @@ typedef enum {
   FLATPAK_CONTEXT_DEVICE_KVM         = 1 << 2,
   FLATPAK_CONTEXT_DEVICE_SHM         = 1 << 3,
   FLATPAK_CONTEXT_DEVICE_INPUT       = 1 << 4,
+  FLATPAK_CONTEXT_DEVICE_USB         = 1 << 5,
 } FlatpakContextDevices;
 
 typedef enum {
