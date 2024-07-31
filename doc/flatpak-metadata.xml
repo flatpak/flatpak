@@ -164,7 +164,9 @@
                 <varlistentry>
                     <term><option>devices</option> (list)</term>
                     <listitem><para>
-                        List of devices to make available in the sandbox.
+                        List of devices to make available in the sandbox. This
+                        just expose the devices nodes, it doesn't grant any
+                        permission that the user doesn't already have.
                         Possible values:
                         <variablelist>
 
@@ -180,6 +182,14 @@
                                 Input devices
                                 (<filename>/dev/input</filename>).
                                 Available since 1.15.6.
+                            </para></listitem></varlistentry>
+
+                            <varlistentry><term><option>usb</option></term>
+                            <listitem><para>
+                                USB device bus
+                                (all device nodes below
+                                <filename>/dev/bus/usb</filename>).
+                                Available since 1.15.11.
                             </para></listitem></varlistentry>
 
                             <varlistentry><term><option>kvm</option></term>
