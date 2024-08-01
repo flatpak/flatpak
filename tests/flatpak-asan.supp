@@ -1,0 +1,10 @@
+# GOnce, deliberately leaking once per process
+leak:flatpak_get_user_base_dir_location
+leak:flatpak_get_system_default_base_dir_location
+# external (libostree)
+leak:static_delta_part_execute_thread
+leak:_ostree_static_delta_part_open
+# Bugs in our code
+# Take a look at them and try to figure out  what's going on!
+leak:flatpak_authenticator_request_proxy_new_for_bus_sync
+leak:flatpak_authenticator_proxy_new_for_bus_sync
