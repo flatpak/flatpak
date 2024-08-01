@@ -37,7 +37,7 @@ tests_environment_prepend = {
   'PATH' : project_build_root / 'app',
 }
 
-lsan_options = 'log_threads=1'
+lsan_options = 'log_threads=1:suppressions=' + meson.current_source_dir() / 'flatpak-asan.supp'
 
 if get_option('installed_tests')
   configure_file(
