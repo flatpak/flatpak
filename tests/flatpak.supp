@@ -254,6 +254,14 @@
    fun:g_file_new_for_path
    fun:flatpak_get_user_base_dir_location
 }
+# Deliberately leaking once per process
+{
+   flatpak_get_system_default_base_dir_location
+   Memcheck:Leak
+   ...
+   fun:g_file_new_for_path
+   fun:flatpak_get_system_default_base_dir_location
+}
 
 # https://github.com/ostreedev/ostree/issues/2592
 {

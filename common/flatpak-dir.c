@@ -1538,20 +1538,24 @@ flatpak_deploy_new (GFile             *dir,
 GFile *
 flatpak_get_system_default_base_dir_location (void)
 {
-  static gsize path = 0;
+  static gsize file = 0;
 
-  if (g_once_init_enter (&path))
+  if (g_once_init_enter (&file))
     {
       gsize setup_value = 0;
+      const char *path;
       const char *system_dir = g_getenv ("FLATPAK_SYSTEM_DIR");
-      if (system_dir != NULL)
-        setup_value = (gsize) system_dir;
+      if (system_dir != NULL && *system_dir != 0)
+        path = system_dir;
       else
-        setup_value = (gsize) FLATPAK_SYSTEMDIR;
-      g_once_init_leave (&path, setup_value);
+        path = FLATPAK_SYSTEMDIR;
+
+      setup_value = (gsize) g_file_new_for_path (path);
+
+      g_once_init_leave (&file, setup_value);
     }
 
-  return g_file_new_for_path ((char *) path);
+  return g_object_ref ((GFile *) file);
 }
 
 static FlatpakDirStorageType
