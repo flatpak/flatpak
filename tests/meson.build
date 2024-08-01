@@ -37,6 +37,8 @@ tests_environment_prepend = {
   'PATH' : project_build_root / 'app',
 }
 
+lsan_options = 'log_threads=1'
+
 if get_option('installed_tests')
   configure_file(
     input : 'installed-tests.sh.in',
@@ -165,6 +167,10 @@ foreach testcase : c_tests
   foreach k, v: tests_environment_prepend
     test_env.prepend(k, v)
   endforeach
+
+  lsan_log_path = ':log_path=' + meson.current_build_dir() / \
+                  'asan_' + name.underscorify() + '.log'
+  test_env.set('LSAN_OPTIONS', lsan_options + lsan_log_path)
 
   if can_run_host_binaries
     test(
@@ -388,6 +394,10 @@ foreach testcase : wrapped_tests
   foreach k, v: tests_environment_prepend
     test_env.prepend(k, v)
   endforeach
+
+  lsan_log_path = ':log_path=' + meson.current_build_dir() / \
+                  'asan_' + name.underscorify() + '.log'
+  test_env.set('LSAN_OPTIONS', lsan_options + lsan_log_path)
 
   if can_run_host_binaries
     test(
