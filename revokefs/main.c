@@ -546,27 +546,31 @@ main (int argc, char *argv[])
   struct fuse_args args = FUSE_ARGS_INIT (argc, argv);
   int res;
   struct revokefs_config conf = { -1, -1 };
+  int status = 0;
 
   res = fuse_opt_parse (&args, &conf, revokefs_opts, revokefs_opt_proc);
   if (res != 0)
     {
       fprintf (stderr, "Invalid arguments\n");
       fprintf (stderr, "see `%s -h' for usage\n", argv[0]);
-      exit (EXIT_FAILURE);
+      status = EXIT_FAILURE;
+      goto out;
     }
 
   if (base_path == NULL)
     {
       fprintf (stderr, "Missing basepath\n");
       fprintf (stderr, "see `%s -h' for usage\n", argv[0]);
-      exit (EXIT_FAILURE);
+      status = EXIT_FAILURE;
+      goto out;
     }
 
   basefd = glnx_opendirat_with_errno (AT_FDCWD, base_path, TRUE);
   if (basefd == -1)
     {
       perror ("opening basepath: ");
-      exit (EXIT_FAILURE);
+      status = EXIT_FAILURE;
+      goto out;
     }
 
   if (conf.backend)
@@ -574,11 +578,12 @@ main (int argc, char *argv[])
       if (conf.socket_fd == -1)
         {
           fprintf (stderr, "No --socket passed, required for --backend\n");
-          exit (EXIT_FAILURE);
+          status = EXIT_FAILURE;
+          goto out;
         }
 
       do_writer (basefd, conf.socket_fd, conf.exit_with_fd);
-      exit (0);
+      goto out;
     }
 
   if (conf.socket_fd != -1)
@@ -593,14 +598,16 @@ main (int argc, char *argv[])
       if (socketpair(AF_UNIX, SOCK_SEQPACKET, 0, sockets))
         {
           perror ("Failed to create socket pair");
-          exit (EXIT_FAILURE);
+          status = EXIT_FAILURE;
+          goto out;
         }
 
       pid = fork ();
       if (pid == -1)
         {
           perror ("Failed to fork writer");
-          exit (EXIT_FAILURE);
+          status = EXIT_FAILURE;
+          goto out;
         }
 
       if (pid == 0)
@@ -608,7 +615,7 @@ main (int argc, char *argv[])
           /* writer process */
           close (sockets[0]);
           do_writer (basefd, sockets[1], -1);
-          exit (0);
+          goto out;
         }
 
       /* Main process */
@@ -618,5 +625,7 @@ main (int argc, char *argv[])
 
   fuse_main (args.argc, args.argv, &callback_oper, NULL);
 
-  return 0;
+out:
+  fuse_opt_free_args (&args);
+  return status;
 }
