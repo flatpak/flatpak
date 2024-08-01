@@ -374,7 +374,7 @@ flatpak_repo_parse_extra_data_sources (GVariant      *extra_data_sources,
                                        const char   **uri)
 {
   g_autoptr(GVariant) sha256_v = NULL;
-  g_variant_get_child (extra_data_sources, index, "(^aytt@ay&s)",
+  g_variant_get_child (extra_data_sources, index, "(^&aytt@ay&s)",
                        name,
                        download_size,
                        installed_size,
