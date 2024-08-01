@@ -726,7 +726,7 @@ main (int    argc,
 {
   gboolean replace;
   gboolean opt_verbose;
-  GOptionContext *context;
+  g_autoptr(GOptionContext) context = NULL;
   GDBusConnection *session_bus;
   GBusNameOwnerFlags flags;
   g_autoptr(GError) error = NULL;
