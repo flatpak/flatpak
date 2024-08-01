@@ -2485,7 +2485,8 @@ static gboolean
 transaction_ready (FlatpakTransaction *transaction,
                    TransactionData *d)
 {
-  GList *ops = flatpak_transaction_get_operations (transaction);
+  g_autolist(FlatpakTransactionOperation) ops =
+    flatpak_transaction_get_operations (transaction);
   int status;
   GList *l;
 
