@@ -175,6 +175,9 @@ if test "x$BWRAP" != xfalse; then
    BWRAP_VERSION=`$BWRAP --version | sed 's,.*\ \([0-9]*\.[0-9]*\.[0-9]*\)$,\1,'`
    AX_COMPARE_VERSION([$SYSTEM_BWRAP_REQS],[gt],[$BWRAP_VERSION],
                       [AC_MSG_ERROR([You need at least version $SYSTEM_BWRAP_REQS of bubblewrap to use the system installed version])])
+   AS_IF([$BWRAP --help | grep '@<:@-@:>@-bind-fd' >/dev/null],
+         [:],
+         [AC_MSG_ERROR([$BWRAP does not list required option --bind-fd in its --help])])
    AM_CONDITIONAL([WITH_SYSTEM_BWRAP], [true])
 else
    AC_CHECK_LIB(cap, cap_from_text, CAP_LIB=-lcap)
