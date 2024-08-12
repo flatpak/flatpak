@@ -34,7 +34,7 @@ endif
 
 required_glib = '2.46'
 # Before increasing this, update subprojects/bubblewrap.wrap
-required_bwrap = '0.8.0'
+required_bwrap = '0.9.901'
 # Before increasing this, update subprojects/dbus-proxy.wrap
 required_dbus_proxy = '0.1.0'
 required_libostree = '2020.8'
