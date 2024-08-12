@@ -1,3 +1,22 @@
+Changes in 1.15.10
+~~~~~~~~~~~~~~~~~~
+Released: not yet
+
+Documentation:
+
+ * Mark the 1.12.x and 1.10.x branches as end-of-life (#5352)
+
+Bug fixes:
+
+ * Fix several memory leaks (#5883, #5884)
+
+Internal changes:
+
+ * Record a log file when running build-time tests with
+   AddressSanitizer (#5884)
+
+ * Add initial suppressions file for AddressSanitizer (#5884)
+
 Changes in 1.15.9
 ~~~~~~~~~~~~~~~~~
 Released: 2024-07-22
