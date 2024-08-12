@@ -2,11 +2,26 @@ Changes in 1.15.10
 ~~~~~~~~~~~~~~~~~~
 Released: not yet
 
+Dependencies:
+
+ * In distributions that compile Flatpak to use a separate bubblewrap (bwrap)
+   executable, version 0.10.0 is required.
+   This version adds a new feature which is required by the security fix
+   in this release.
+
+Security fixes:
+
+ * Don't follow symbolic links when mounting persistent directories
+   (--persist option). This prevents a sandbox escape where a malicious or
+   compromised app could edit the symlink to point to a directory that
+   the app should not have been allowed to read or write.
+   (CVE-2024-42472, GHSA-7hgv-f2j8-xw87)
+
 Documentation:
 
  * Mark the 1.12.x and 1.10.x branches as end-of-life (#5352)
 
-Bug fixes:
+Other bug fixes:
 
  * Fix several memory leaks (#5883, #5884)
 
