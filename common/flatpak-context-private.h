@@ -100,6 +100,8 @@ gboolean       flatpak_context_parse_filesystem (const char             *filesys
 
 FlatpakContext *flatpak_context_new (void);
 void           flatpak_context_free (FlatpakContext *context);
+void           flatpak_context_dump (FlatpakContext *context,
+                                     const char     *title);
 void           flatpak_context_merge (FlatpakContext *context,
                                       FlatpakContext *other);
 GOptionEntry  *flatpak_context_get_option_entries (void);
