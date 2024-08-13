@@ -342,8 +342,7 @@ test_full_context (void)
                                      &n, &error);
   g_assert_nonnull (strv);
   /* The order is undefined, so sort them first */
-  g_qsort_with_data (strv, n, sizeof (char *),
-                     (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
+  qsort (strv, n, sizeof (char *), flatpak_strcmp0_ptr);
   i = 0;
   g_assert_cmpstr (strv[i++], ==, "!/opt");
   g_assert_cmpstr (strv[i++], ==, "/home");
@@ -357,8 +356,7 @@ test_full_context (void)
                                      &n, &error);
   g_assert_no_error (error);
   g_assert_nonnull (strv);
-  g_qsort_with_data (strv, n, sizeof (char *),
-                     (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
+  qsort (strv, n, sizeof (char *), flatpak_strcmp0_ptr);
   i = 0;
   g_assert_cmpstr (strv[i++], ==, "ipc");
   g_assert_cmpstr (strv[i++], ==, "network");
@@ -371,8 +369,7 @@ test_full_context (void)
                                      &n, &error);
   g_assert_no_error (error);
   g_assert_nonnull (strv);
-  g_qsort_with_data (strv, n, sizeof (char *),
-                     (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
+  qsort (strv, n, sizeof (char *), flatpak_strcmp0_ptr);
   i = 0;
   g_assert_cmpstr (strv[i++], ==, "cups");
   g_assert_cmpstr (strv[i++], ==, "fallback-x11");
@@ -393,8 +390,7 @@ test_full_context (void)
                                      &n, &error);
   g_assert_no_error (error);
   g_assert_nonnull (strv);
-  g_qsort_with_data (strv, n, sizeof (char *),
-                     (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
+  qsort (strv, n, sizeof (char *), flatpak_strcmp0_ptr);
   i = 0;
   g_assert_cmpstr (strv[i++], ==, "all");
   g_assert_cmpstr (strv[i++], ==, "dri");
@@ -409,8 +405,7 @@ test_full_context (void)
                                      &n, &error);
   g_assert_no_error (error);
   g_assert_nonnull (strv);
-  g_qsort_with_data (strv, n, sizeof (char *),
-                     (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
+  qsort (strv, n, sizeof (char *), flatpak_strcmp0_ptr);
   i = 0;
   g_assert_cmpstr (strv[i++], ==, ".openarena");
   g_assert_cmpstr (strv[i], ==, NULL);
@@ -422,8 +417,7 @@ test_full_context (void)
                                      &n, &error);
   g_assert_no_error (error);
   g_assert_nonnull (strv);
-  g_qsort_with_data (strv, n, sizeof (char *),
-                     (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
+  qsort (strv, n, sizeof (char *), flatpak_strcmp0_ptr);
   i = 0;
   g_assert_cmpstr (strv[i++], ==, "LD_AUDIT");
   g_assert_cmpstr (strv[i++], ==, "LD_PRELOAD");
@@ -435,8 +429,7 @@ test_full_context (void)
                               &n, &error);
   g_assert_no_error (error);
   g_assert_nonnull (strv);
-  g_qsort_with_data (strv, n, sizeof (char *),
-                     (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
+  qsort (strv, n, sizeof (char *), flatpak_strcmp0_ptr);
   i = 0;
   g_assert_cmpstr (strv[i++], ==, "org.example.SessionService");
   g_assert_cmpstr (strv[i], ==, NULL);
@@ -453,8 +446,7 @@ test_full_context (void)
                               &n, &error);
   g_assert_no_error (error);
   g_assert_nonnull (strv);
-  g_qsort_with_data (strv, n, sizeof (char *),
-                     (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
+  qsort (strv, n, sizeof (char *), flatpak_strcmp0_ptr);
   i = 0;
   g_assert_cmpstr (strv[i++], ==, "net.example.SystemService");
   g_assert_cmpstr (strv[i], ==, NULL);
@@ -471,8 +463,7 @@ test_full_context (void)
                               &n, &error);
   g_assert_no_error (error);
   g_assert_nonnull (strv);
-  g_qsort_with_data (strv, n, sizeof (char *),
-                     (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
+  qsort (strv, n, sizeof (char *), flatpak_strcmp0_ptr);
   i = 0;
   g_assert_cmpstr (strv[i++], ==, "HYPOTHETICAL_PATH");
   g_assert_cmpstr (strv[i++], ==, "LD_AUDIT");
@@ -501,8 +492,7 @@ test_full_context (void)
                               &n, &error);
   g_assert_no_error (error);
   g_assert_nonnull (strv);
-  g_qsort_with_data (strv, n, sizeof (char *),
-                     (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
+  qsort (strv, n, sizeof (char *), flatpak_strcmp0_ptr);
   i = 0;
   g_assert_cmpstr (strv[i++], ==, "Colours");
   g_assert_cmpstr (strv[i], ==, NULL);
@@ -513,8 +503,7 @@ test_full_context (void)
                                      "Colours", &n, &error);
   g_assert_no_error (error);
   g_assert_nonnull (strv);
-  g_qsort_with_data (strv, n, sizeof (char *),
-                     (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
+  qsort (strv, n, sizeof (char *), flatpak_strcmp0_ptr);
   i = 0;
   g_assert_cmpstr (strv[i++], ==, "blue");
   g_assert_cmpstr (strv[i++], ==, "green");

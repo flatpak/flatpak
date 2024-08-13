@@ -235,7 +235,7 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
         }
 
       keys = (FlatpakDecomposed **) g_hash_table_get_keys_as_array (names, &n_keys);
-      g_qsort_with_data (keys, n_keys, sizeof (char *), (GCompareDataFunc) flatpak_decomposed_strcmp_p, NULL);
+      qsort (keys, n_keys, sizeof (char *), (GCompareFunc) flatpak_decomposed_strcmp_p);
 
       for (i = 0; i < n_keys; i++)
         {

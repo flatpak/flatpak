@@ -444,7 +444,7 @@ flatpak_exports_append_bwrap_args (FlatpakExports *exports,
   eps = g_hash_table_get_values (exports->hash);
   eps = g_list_sort (eps, (GCompareFunc) compare_eps);
 
-  g_qsort_with_data (keys, n_keys, sizeof (char *), (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
+  qsort (keys, n_keys, sizeof (char *), flatpak_strcmp0_ptr);
 
   g_debug ("Converting FlatpakExports to bwrap arguments...");
 
@@ -666,7 +666,7 @@ flatpak_exports_path_get_mode (FlatpakExports *exports,
   g_autoptr(GString) path_builder = g_string_new ("");
   struct stat st;
 
-  g_qsort_with_data (keys, n_keys, sizeof (char *), (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
+  qsort (keys, n_keys, sizeof (char *), flatpak_strcmp0_ptr);
 
   /* Syntactic canonicalization only, no need to use host_fd */
   path = canonical = flatpak_canonicalize_filename (path);

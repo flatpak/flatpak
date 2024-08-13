@@ -3617,7 +3617,8 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
   all_refs_keys = (FlatpakDecomposed **) g_hash_table_get_keys_as_array (all_refs, &n_keys);
 
   /* Sort refs so that appdata order is stable for e.g. deltas */
-  g_qsort_with_data (all_refs_keys, n_keys, sizeof (FlatpakDecomposed *), (GCompareDataFunc) flatpak_decomposed_strcmp_p, NULL);
+  qsort (all_refs_keys, n_keys, sizeof (FlatpakDecomposed *),
+         (GCompareFunc) flatpak_decomposed_strcmp_p);
 
   transaction = flatpak_repo_transaction_start (repo, cancellable, error);
   if (transaction == NULL)
