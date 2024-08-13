@@ -1046,12 +1046,15 @@ flatpak_app_compute_permissions (GKeyFile *app_metadata,
 
       /* Don't inherit any permissions from the runtime, only things like env vars. */
       flatpak_context_reset_permissions (app_context);
+
+      flatpak_context_dump (app_context, "Metadata from runtime");
     }
 
   if (app_metadata != NULL &&
       !flatpak_context_load_metadata (app_context, app_metadata, error))
     return NULL;
 
+  flatpak_context_dump (app_context, "Metadata from app manifest");
   return g_steal_pointer (&app_context);
 }
 
@@ -3038,10 +3041,16 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
     }
 
   if (sandboxed)
-    flatpak_context_make_sandboxed (app_context);
+    {
+      flatpak_context_make_sandboxed (app_context);
+      flatpak_context_dump (app_context, "After making sandboxed");
+    }
 
   if (extra_context)
-    flatpak_context_merge (app_context, extra_context);
+    {
+      flatpak_context_dump (extra_context, "Command-line overrides");
+      flatpak_context_merge (app_context, extra_context);
+    }
 
   original_runtime_files = flatpak_deploy_get_files (runtime_deploy);
 
