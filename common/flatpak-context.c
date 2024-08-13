@@ -3142,3 +3142,38 @@ flatpak_context_get_allowed_exports (FlatpakContext *context,
 
   return TRUE;
 }
+
+void
+flatpak_context_dump (FlatpakContext *context,
+                      const char     *title)
+{
+  if (flatpak_is_debugging ())
+    {
+      g_autoptr(GError) local_error = NULL;
+      g_autoptr(GKeyFile) metakey = NULL;
+      g_autofree char *data = NULL;
+      char *saveptr = NULL;
+      const char *line;
+
+      metakey = g_key_file_new ();
+      flatpak_context_save_metadata (context, FALSE, metakey);
+
+      data = g_key_file_to_data (metakey, NULL, &local_error);
+
+      if (data == NULL)
+        {
+          g_debug ("%s: (unable to serialize: %s)",
+                   title, local_error->message);
+          return;
+        }
+
+      g_debug ("%s:", title);
+
+      for (line = strtok_r (data, "\n", &saveptr);
+           line != NULL;
+           line = strtok_r (NULL, "\n", &saveptr))
+        g_debug ("\t%s", line);
+
+      g_debug ("\t#");
+    }
+}
