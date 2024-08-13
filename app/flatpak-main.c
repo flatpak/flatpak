@@ -367,6 +367,8 @@ flatpak_option_context_parse (GOptionContext     *context,
 
       if (opt_verbose > 0 || opt_ostree_verbose)
         flatpak_disable_fancy_output ();
+
+      flatpak_set_debugging (opt_verbose > 1);
     }
 
   /* sudo flatpak --user ... would operate on the root user's installation,

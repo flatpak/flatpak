@@ -345,6 +345,9 @@ gboolean flatpak_validate_path_characters (const char *path,
 
 gboolean running_under_sudo (void);
 
+void flatpak_set_debugging (gboolean debugging);
+gboolean flatpak_is_debugging (void);
+
 #define FLATPAK_MESSAGE_ID "c7b39b1e006b464599465e105b361485"
 
 #endif /* __FLATPAK_UTILS_H__ */
