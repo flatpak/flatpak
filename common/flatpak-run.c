@@ -3052,6 +3052,7 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
       flatpak_context_merge (app_context, extra_context);
     }
 
+  flatpak_context_dump (app_context, "Final context");
   original_runtime_files = flatpak_deploy_get_files (runtime_deploy);
 
   if (custom_usr_path != NULL)
