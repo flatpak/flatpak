@@ -14746,8 +14746,7 @@ flatpak_dir_list_remotes (FlatpakDir   *self,
   if (res == NULL)
     res = g_new0 (char *, 1); /* Return empty array, not error */
 
-  g_qsort_with_data (res, g_strv_length (res), sizeof (char *),
-                     cmp_remote, self);
+  qsort_r (res, g_strv_length (res), sizeof (char *), cmp_remote, self);
 
   return res;
 }
