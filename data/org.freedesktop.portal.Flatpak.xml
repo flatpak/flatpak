@@ -36,7 +36,7 @@
       bus name org.freedesktop.portal.Flatpak and the object path
       /org/freedesktop/portal/Flatpak.
 
-      This documentation describes version 6 of this interface.
+      This documentation describes version 7 of this interface.
   -->
   <interface name='org.freedesktop.portal.Flatpak'>
     <property name="version" type="u" access="read"/>
@@ -238,6 +238,19 @@
 
              </para><para>
              This was added in version 3 of this interface (available from flatpak 1.6.0 and later).
+             </para></listitem>
+           </varlistentry>
+           <varlistentry>
+             <term>sandbox-a11y-own-names as</term>
+             <listitem><para>
+               An array of D-Bus names to be owned on the accessibility bus. The
+               names must have the app id as prefix.
+             </para><para>
+               Only applies when `sandbox-flags` contains access to the accessibility
+               bus as well.
+             </para><para>
+               This was added in version 7 of this interface (available from
+               flatpak 1.16.0 and later).
              </para></listitem>
            </varlistentry>
            <varlistentry>
