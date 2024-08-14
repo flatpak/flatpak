@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2024-07-22 17:56+0100\n"
+"POT-Creation-Date: 2024-08-14 10:48+0100\n"
 "PO-Revision-Date: 2024-06-08 20:21+0530\n"
 "Last-Translator: Scrambled777 <weblate.scrambled777@simplelogin.com>\n"
 "Language-Team: Hindi <indlinux-hindi@lists.sourceforge.net>\n"
@@ -161,14 +161,14 @@ msgid "'%s' is not a valid repository: "
 msgstr "'%s' मान्य रिपोजिटरी नहीं है: "
 
 #: app/flatpak-builtins-build-bundle.c:661 app/flatpak-builtins-build-sign.c:88
-#: common/flatpak-dir.c:13180
+#: common/flatpak-dir.c:13184
 #, c-format
 msgid "'%s' is not a valid name: %s"
 msgstr "'%s' मान्य नाम नहीं है: %s"
 
 #: app/flatpak-builtins-build-bundle.c:664
 #: app/flatpak-builtins-build-export.c:865 app/flatpak-builtins-build-sign.c:91
-#: common/flatpak-dir.c:13186
+#: common/flatpak-dir.c:13190
 #, c-format
 msgid "'%s' is not a valid branch name: %s"
 msgstr "'%s' मान्य शाखा नाम नहीं है: %s"
@@ -2425,7 +2425,7 @@ msgstr "सारांश फाइल में रीडायरेक्ट
 msgid "Can't load uri %s: %s\n"
 msgstr "URI %s लोड नहीं कर सकता: %s\n"
 
-#: app/flatpak-builtins-remote-add.c:271 common/flatpak-dir.c:3973
+#: app/flatpak-builtins-remote-add.c:271 common/flatpak-dir.c:3977
 #, c-format
 msgid "Can't load file %s: %s\n"
 msgstr "फाइल %s लोड नहीं कर सकता: %s\n"
@@ -4134,15 +4134,15 @@ msgstr "चेतावनी: %s को अस्थापित करने �
 msgid "Error: Failed to uninstall %s: %s\n"
 msgstr "त्रुटि: %s को अस्थापित करने में विफल: %s\n"
 
-#: app/flatpak-quiet-transaction.c:166 common/flatpak-dir.c:10435
+#: app/flatpak-quiet-transaction.c:166 common/flatpak-dir.c:10439
 #, c-format
 msgid "%s already installed"
 msgstr "%s पहले से ही स्थापित है"
 
 #: app/flatpak-quiet-transaction.c:168 common/flatpak-dir-utils.c:166
-#: common/flatpak-dir-utils.c:259 common/flatpak-dir.c:2975
-#: common/flatpak-dir.c:3674 common/flatpak-dir.c:15789
-#: common/flatpak-dir.c:16079 common/flatpak-transaction.c:2670
+#: common/flatpak-dir-utils.c:259 common/flatpak-dir.c:2979
+#: common/flatpak-dir.c:3678 common/flatpak-dir.c:15793
+#: common/flatpak-dir.c:16083 common/flatpak-transaction.c:2670
 #: common/flatpak-transaction.c:2725
 #, c-format
 msgid "%s not installed"
@@ -4470,7 +4470,7 @@ msgstr "रिमोट OCI सूचकांक में कोई रजि�
 msgid "Couldn't find ref %s in remote %s"
 msgstr "रिमोट %2$s में संदर्भ %1$s नहीं मिल सका"
 
-#: common/flatpak-dir.c:1109 common/flatpak-dir.c:5965
+#: common/flatpak-dir.c:1109 common/flatpak-dir.c:5969
 #: common/flatpak-oci-registry.c:3452 common/flatpak-oci-registry.c:3457
 msgid "Image is not a manifest"
 msgstr "छवि मैनिफेस्ट नहीं है"
@@ -4485,8 +4485,8 @@ msgstr "संदर्भ बाइंडिंग मेटाडेटा म
 msgid "Configured collection ID ‘%s’ not in binding metadata"
 msgstr "विन्यस्त संग्रह ID ‘%s’  बाइंडिंग मेटाडेटा में नहीं है"
 
-#: common/flatpak-dir.c:1270 common/flatpak-dir.c:4953
-#: common/flatpak-dir.c:5874 common/flatpak-dir.c:5942
+#: common/flatpak-dir.c:1270 common/flatpak-dir.c:4957
+#: common/flatpak-dir.c:5878 common/flatpak-dir.c:5946
 #, c-format
 msgid "Couldn't find latest checksum for ref %s in remote %s"
 msgstr "रिमोट %2$s में संदर्भ %1$s के लिए नवीनतम चेकसम नहीं मिल सका"
@@ -4496,334 +4496,334 @@ msgstr "रिमोट %2$s में संदर्भ %1$s के लिए 
 msgid "No entry for %s in remote %s summary flatpak sparse cache"
 msgstr "रिमोट %2$s सारांश flatpak स्पार्स कैशे में %1$s के लिए कोई प्रविष्टि नहीं"
 
-#: common/flatpak-dir.c:1912
+#: common/flatpak-dir.c:1916
 #, c-format
 msgid "Commit metadata for %s not matching expected metadata"
 msgstr "%s के लिए कमिट मेटाडेटा अपेक्षित मेटाडेटा से मेल नहीं खा रहा है"
 
-#: common/flatpak-dir.c:2177
+#: common/flatpak-dir.c:2181
 msgid "Unable to connect to system bus"
 msgstr "सिस्टम बस से जुड़ने में असमर्थ"
 
-#: common/flatpak-dir.c:2772
+#: common/flatpak-dir.c:2776
 msgid "User installation"
 msgstr "उपयोक्ता स्थापना"
 
-#: common/flatpak-dir.c:2779
+#: common/flatpak-dir.c:2783
 #, c-format
 msgid "System (%s) installation"
 msgstr "सिस्टम (%s) स्थापना"
 
-#: common/flatpak-dir.c:2825
+#: common/flatpak-dir.c:2829
 #, c-format
 msgid "No overrides found for %s"
 msgstr "%s के लिए कोई अध्यारोहण नहीं मिला"
 
-#: common/flatpak-dir.c:2978
+#: common/flatpak-dir.c:2982
 #, c-format
 msgid "%s (commit %s) not installed"
 msgstr "%s (कमिट %s) स्थापित नहीं है"
 
-#: common/flatpak-dir.c:3980
+#: common/flatpak-dir.c:3984
 #, c-format
 msgid "Error parsing system flatpakrepo file for %s: %s"
 msgstr "%s के लिए सिस्टम flatpakrepo फाइल का विश्लेषण करने में त्रुटि: %s"
 
-#: common/flatpak-dir.c:4055
+#: common/flatpak-dir.c:4059
 #, c-format
 msgid "While opening repository %s: "
 msgstr "रिपॉजिटरी %s खोलते समय: "
 
-#: common/flatpak-dir.c:4316
+#: common/flatpak-dir.c:4320
 #, c-format
 msgid "The config key %s is not set"
 msgstr "विन्यास कुंजी %s निर्धारित नहीं है"
 
-#: common/flatpak-dir.c:4449
+#: common/flatpak-dir.c:4453
 #, c-format
 msgid "No current %s pattern matching %s"
 msgstr "%2$s से मेल खाता कोई वर्तमान %1$s प्रतिमान नहीं"
 
-#: common/flatpak-dir.c:4731
+#: common/flatpak-dir.c:4735
 msgid "No appstream commit to deploy"
 msgstr "परिनियोजन के लिए कोई ऐपस्ट्रीम कमिट नहीं है"
 
-#: common/flatpak-dir.c:5249 common/flatpak-dir.c:6299
-#: common/flatpak-dir.c:9871 common/flatpak-dir.c:10577
+#: common/flatpak-dir.c:5253 common/flatpak-dir.c:6303
+#: common/flatpak-dir.c:9875 common/flatpak-dir.c:10581
 msgid "Can't pull from untrusted non-gpg verified remote"
 msgstr "अविश्वसनीय गैर-जीपीजी सत्यापित रिमोट से नहीं खींच सकते"
 
-#: common/flatpak-dir.c:5661 common/flatpak-dir.c:5698
+#: common/flatpak-dir.c:5665 common/flatpak-dir.c:5702
 msgid "Extra data not supported for non-gpg-verified local system installs"
 msgstr "गैर-जीपीजी-सत्यापित स्थानीय सिस्टम स्थापना के लिए अतिरिक्त डेटा समर्थित नहीं है"
 
-#: common/flatpak-dir.c:5727
+#: common/flatpak-dir.c:5731
 #, c-format
 msgid "Invalid checksum for extra data uri %s"
 msgstr "अतिरिक्त डेटा URI %s के लिए अमान्य चेकसम"
 
-#: common/flatpak-dir.c:5732
+#: common/flatpak-dir.c:5736
 #, c-format
 msgid "Empty name for extra data uri %s"
 msgstr "अतिरिक्त डेटा URI %s के लिए खाली नाम"
 
-#: common/flatpak-dir.c:5739
+#: common/flatpak-dir.c:5743
 #, c-format
 msgid "Unsupported extra data uri %s"
 msgstr "असमर्थित अतिरिक्त डेटा URI %s"
 
-#: common/flatpak-dir.c:5753
+#: common/flatpak-dir.c:5757
 #, c-format
 msgid "Failed to load local extra-data %s: %s"
 msgstr "स्थानीय अतिरिक्त डेटा %s लोड करने में विफल: %s"
 
-#: common/flatpak-dir.c:5756
+#: common/flatpak-dir.c:5760
 #, c-format
 msgid "Wrong size for extra-data %s"
 msgstr "अतिरिक्त डेटा %s के लिए गलत आकार"
 
-#: common/flatpak-dir.c:5771
+#: common/flatpak-dir.c:5775
 #, c-format
 msgid "While downloading %s: "
 msgstr "%s डाउनलोड करते समय: "
 
-#: common/flatpak-dir.c:5778
+#: common/flatpak-dir.c:5782
 #, c-format
 msgid "Wrong size for extra data %s"
 msgstr "अतिरिक्त डेटा %s के लिए गलत आकार"
 
-#: common/flatpak-dir.c:5787
+#: common/flatpak-dir.c:5791
 #, c-format
 msgid "Invalid checksum for extra data %s"
 msgstr "अतिरिक्त डेटा %s के लिए अमान्य चेकसम"
 
-#: common/flatpak-dir.c:5882 common/flatpak-dir.c:8721
-#: common/flatpak-dir.c:10455
+#: common/flatpak-dir.c:5886 common/flatpak-dir.c:8725
+#: common/flatpak-dir.c:10459
 #, c-format
 msgid "%s commit %s already installed"
 msgstr "%1$s कमिट %2$s पहले से ही स्थापित है"
 
-#: common/flatpak-dir.c:6129 common/flatpak-dir.c:6382
+#: common/flatpak-dir.c:6133 common/flatpak-dir.c:6386
 #, c-format
 msgid "While pulling %s from remote %s: "
 msgstr "रिमोट %2$s से %1$s खींचते समय: "
 
-#: common/flatpak-dir.c:6323 common/flatpak-repo-utils.c:3905
+#: common/flatpak-dir.c:6327 common/flatpak-repo-utils.c:3905
 msgid "GPG signatures found, but none are in trusted keyring"
 msgstr "GPG हस्ताक्षर मिले, लेकिन विश्वसनीय कीरिंग में कोई भी नहीं है"
 
-#: common/flatpak-dir.c:6340
+#: common/flatpak-dir.c:6344
 #, c-format
 msgid "Commit for ‘%s’ has no ref binding"
 msgstr "‘%s’ के लिए प्रतिबद्धता में कोई संदर्भ बंधन नहीं है"
 
-#: common/flatpak-dir.c:6345
+#: common/flatpak-dir.c:6349
 #, c-format
 msgid "Commit for ‘%s’ is not in expected bound refs: %s"
 msgstr "‘%s’ के लिए कमिट अपेक्षित बाध्य संदर्भ में नहीं है: %s"
 
-#: common/flatpak-dir.c:6521
+#: common/flatpak-dir.c:6525
 msgid "Only applications can be made current"
 msgstr "केवल अनुप्रयोगों को वर्तमान बनाया जा सकता है"
 
-#: common/flatpak-dir.c:7225
+#: common/flatpak-dir.c:7229
 msgid "Not enough memory"
 msgstr "पर्याप्त मेमोरी नहीं"
 
-#: common/flatpak-dir.c:7244
+#: common/flatpak-dir.c:7248
 msgid "Failed to read from exported file"
 msgstr "निर्यात की गई फाइल से पढ़ने में विफल"
 
-#: common/flatpak-dir.c:7434
+#: common/flatpak-dir.c:7438
 msgid "Error reading mimetype xml file"
 msgstr "माइमटाइप xml फाइल पढ़ने में त्रुटि"
 
-#: common/flatpak-dir.c:7439
+#: common/flatpak-dir.c:7443
 msgid "Invalid mimetype xml file"
 msgstr "अमान्य माइमटाइप xml फाइल"
 
-#: common/flatpak-dir.c:7528
+#: common/flatpak-dir.c:7532
 #, c-format
 msgid "D-Bus service file '%s' has wrong name"
 msgstr "डी-बस सेवा फाइल '%s' का नाम गलत है"
 
-#: common/flatpak-dir.c:7671
+#: common/flatpak-dir.c:7675
 #, c-format
 msgid "Invalid Exec argument %s"
 msgstr "अमान्य निष्पादन तर्क %s"
 
-#: common/flatpak-dir.c:8137
+#: common/flatpak-dir.c:8141
 msgid "While getting detached metadata: "
 msgstr "पृथक मेटाडेटा प्राप्त करते समय: "
 
-#: common/flatpak-dir.c:8142 common/flatpak-dir.c:8147
-#: common/flatpak-dir.c:8151
+#: common/flatpak-dir.c:8146 common/flatpak-dir.c:8151
+#: common/flatpak-dir.c:8155
 msgid "Extra data missing in detached metadata"
 msgstr "पृथक मेटाडेटा में अतिरिक्त डेटा गायब है"
 
-#: common/flatpak-dir.c:8155
+#: common/flatpak-dir.c:8159
 msgid "While creating extradir: "
 msgstr "अतिरिक्त निर्देशिका बनाते समय: "
 
-#: common/flatpak-dir.c:8176 common/flatpak-dir.c:8209
+#: common/flatpak-dir.c:8180 common/flatpak-dir.c:8213
 msgid "Invalid checksum for extra data"
 msgstr "अतिरिक्त डेटा के लिए अमान्य चेकसम"
 
-#: common/flatpak-dir.c:8205
+#: common/flatpak-dir.c:8209
 msgid "Wrong size for extra data"
 msgstr "अतिरिक्त डेटा के लिए गलत आकार"
 
-#: common/flatpak-dir.c:8218
+#: common/flatpak-dir.c:8222
 #, c-format
 msgid "While writing extra data file '%s': "
 msgstr "अतिरिक्त डेटा फाइल '%s' लिखते समय: "
 
-#: common/flatpak-dir.c:8226
+#: common/flatpak-dir.c:8230
 #, c-format
 msgid "Extra data %s missing in detached metadata"
 msgstr "पृथक मेटाडेटा में अतिरिक्त डेटा %s गायब है"
 
-#: common/flatpak-dir.c:8433
+#: common/flatpak-dir.c:8437
 #, c-format
 msgid "apply_extra script failed, exit status %d"
 msgstr "apply_extra स्क्रिप्ट विफल, निकास स्थिति %d"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-dir.c:8599
+#: common/flatpak-dir.c:8603
 #, c-format
 msgid "Installing %s is not allowed by the policy set by your administrator"
 msgstr "आपके प्रशासक द्वारा निर्धारित नीति के अनुसार %s स्थापित करने की अनुमति नहीं है"
 
-#: common/flatpak-dir.c:8697
+#: common/flatpak-dir.c:8701
 #, c-format
 msgid "While trying to resolve ref %s: "
 msgstr "संदर्भ %s को हल करने का प्रयास करते समय: "
 
-#: common/flatpak-dir.c:8709
+#: common/flatpak-dir.c:8713
 #, c-format
 msgid "%s is not available"
 msgstr "%s उपलब्ध नहीं है"
 
-#: common/flatpak-dir.c:8728
+#: common/flatpak-dir.c:8732
 msgid "Can't create deploy directory"
 msgstr "परिनियोजन निर्देशिका नहीं बना सके"
 
-#: common/flatpak-dir.c:8736
+#: common/flatpak-dir.c:8740
 #, c-format
 msgid "Failed to read commit %s: "
 msgstr "कमिट %s को पढ़ने में विफल: "
 
-#: common/flatpak-dir.c:8757
+#: common/flatpak-dir.c:8761
 #, c-format
 msgid "While trying to checkout %s into %s: "
 msgstr "%1$s को %2$s में चेकआउट करने का प्रयास करते समय: "
 
-#: common/flatpak-dir.c:8776
+#: common/flatpak-dir.c:8780
 msgid "While trying to checkout metadata subpath: "
 msgstr "मेटाडेटा उपपथ को चेकआउट करने का प्रयास करते समय: "
 
-#: common/flatpak-dir.c:8808
+#: common/flatpak-dir.c:8812
 #, c-format
 msgid "While trying to checkout subpath ‘%s’: "
 msgstr "उपपथ ‘%s’ को चेकआउट करने का प्रयास करते समय: "
 
-#: common/flatpak-dir.c:8818
+#: common/flatpak-dir.c:8822
 msgid "While trying to remove existing extra dir: "
 msgstr "मौजूदा अतिरिक्त निर्देशिका को हटाने की कोशिश करते समय: "
 
-#: common/flatpak-dir.c:8829
+#: common/flatpak-dir.c:8833
 msgid "While trying to apply extra data: "
 msgstr "अतिरिक्त डेटा लागू करने का प्रयास करते समय: "
 
-#: common/flatpak-dir.c:8856
+#: common/flatpak-dir.c:8860
 #, c-format
 msgid "Invalid commit ref %s: "
 msgstr "अमान्य कमिट संदर्भ %s: "
 
-#: common/flatpak-dir.c:8864 common/flatpak-dir.c:8876
+#: common/flatpak-dir.c:8868 common/flatpak-dir.c:8880
 #, c-format
 msgid "Deployed ref %s does not match commit (%s)"
 msgstr "परिनियोजित संदर्भ %s कमिट (%s) से मेल नहीं खाता"
 
-#: common/flatpak-dir.c:8870
+#: common/flatpak-dir.c:8874
 #, c-format
 msgid "Deployed ref %s branch does not match commit (%s)"
 msgstr "परिनियोजित संदर्भ %s शाखा कमिट (%s) से मेल नहीं खाती"
 
-#: common/flatpak-dir.c:9129 common/flatpak-installation.c:1912
+#: common/flatpak-dir.c:9133 common/flatpak-installation.c:1912
 #, c-format
 msgid "%s branch %s already installed"
 msgstr "%1$s शाखा %2$s पहले से ही स्थापित है"
 
-#: common/flatpak-dir.c:9975
+#: common/flatpak-dir.c:9979
 #, c-format
 msgid "Could not unmount revokefs-fuse filesystem at %s: "
 msgstr "%s पर revokefs-fuse फाइलप्रणाली को अनमाउंट नहीं किया जा सका: "
 
-#: common/flatpak-dir.c:10262
+#: common/flatpak-dir.c:10266
 #, c-format
 msgid "This version of %s is already installed"
 msgstr "%s का यह संस्करण पहले से ही स्थापित है"
 
-#: common/flatpak-dir.c:10269
+#: common/flatpak-dir.c:10273
 #, c-format
 msgid "Can't change remote during bundle install"
 msgstr "बंडल स्थापना के दौरान रिमोट नहीं बदला जा सकता"
 
-#: common/flatpak-dir.c:10530
+#: common/flatpak-dir.c:10534
 msgid "Can't update to a specific commit without root permissions"
 msgstr "रूट अनुमतियों के बिना किसी विशिष्ट कमिट में अद्यतन नहीं किया जा सकता"
 
-#: common/flatpak-dir.c:10810
+#: common/flatpak-dir.c:10814
 #, c-format
 msgid "Can't remove %s, it is needed for: %s"
 msgstr "%s को हटाया नहीं जा सकता, इसकी आवश्यकता है: %s"
 
-#: common/flatpak-dir.c:10866 common/flatpak-installation.c:2068
+#: common/flatpak-dir.c:10870 common/flatpak-installation.c:2068
 #, c-format
 msgid "%s branch %s is not installed"
 msgstr "%1$s शाखा %2$s स्थापित नहीं है"
 
-#: common/flatpak-dir.c:11119
+#: common/flatpak-dir.c:11123
 #, c-format
 msgid "%s commit %s not installed"
 msgstr "%1$s कमिट %2$s स्थापित नहीं है"
 
-#: common/flatpak-dir.c:11455
+#: common/flatpak-dir.c:11459
 #, c-format
 msgid "Pruning repo failed: %s"
 msgstr "रेपो छंटाई विफल: %s"
 
-#: common/flatpak-dir.c:11623 common/flatpak-dir.c:11629
+#: common/flatpak-dir.c:11627 common/flatpak-dir.c:11633
 #, c-format
 msgid "Failed to load filter '%s'"
 msgstr "'%s' फिल्टर लोड करने में विफल"
 
-#: common/flatpak-dir.c:11635
+#: common/flatpak-dir.c:11639
 #, c-format
 msgid "Failed to parse filter '%s'"
 msgstr "'%s' फिल्टर का विश्लेषण करने में विफल"
 
-#: common/flatpak-dir.c:11917
+#: common/flatpak-dir.c:11921
 msgid "Failed to write summary cache: "
 msgstr "सारांश कैशे लिखने में विफल: "
 
-#: common/flatpak-dir.c:11936
+#: common/flatpak-dir.c:11940
 #, c-format
 msgid "No oci summary cached for remote '%s'"
 msgstr "रिमोट '%s' के लिए कोई oci सारांश कैशे नहीं किया गया"
 
-#: common/flatpak-dir.c:12161
+#: common/flatpak-dir.c:12165
 #, c-format
 msgid "No cached summary for remote '%s'"
 msgstr "रिमोट '%s' के लिए कोई कैश्ड सारांश नहीं"
 
-#: common/flatpak-dir.c:12202
+#: common/flatpak-dir.c:12206
 #, c-format
 msgid "Invalid checksum for indexed summary %s read from %s"
 msgstr "%2$s से पढ़े गए अनुक्रमित सारांश %1$s के लिए अमान्य चेकसम"
 
-#: common/flatpak-dir.c:12275
+#: common/flatpak-dir.c:12279
 #, c-format
 msgid ""
 "Remote listing for %s not available; server has no summary file. Check the "
@@ -4832,96 +4832,96 @@ msgstr ""
 "%s के लिए रिमोट सूची उपलब्ध नहीं है; सर्वर में कोई सारांश फाइल नहीं है। जांचें कि remote-"
 "add को दिया गया URL मान्य था।"
 
-#: common/flatpak-dir.c:12652
+#: common/flatpak-dir.c:12656
 #, c-format
 msgid "Invalid checksum for indexed summary %s for remote '%s'"
 msgstr "रिमोट '%2$s' के लिए अनुक्रमित सारांश %1$s के लिए अमान्य चेकसम"
 
-#: common/flatpak-dir.c:13275
+#: common/flatpak-dir.c:13279
 #, c-format
 msgid "Multiple branches available for %s, you must specify one of: "
 msgstr "%s के लिए एकाधिक शाखाएं उपलब्ध हैं, आपको इनमें से एक निर्दिष्ट करना होगा: "
 
-#: common/flatpak-dir.c:13341
+#: common/flatpak-dir.c:13345
 #, c-format
 msgid "Nothing matches %s"
 msgstr "%s से कुछ भी मेल नहीं खाता"
 
-#: common/flatpak-dir.c:13449
+#: common/flatpak-dir.c:13453
 #, c-format
 msgid "Can't find ref %s%s%s%s%s"
 msgstr "संदर्भ %s%s%s%s%s नहीं मिल सका"
 
-#: common/flatpak-dir.c:13492
+#: common/flatpak-dir.c:13496
 #, c-format
 msgid "Error searching remote %s: %s"
 msgstr "रिमोट %s को खोजने में त्रुटि: %s"
 
-#: common/flatpak-dir.c:13589
+#: common/flatpak-dir.c:13593
 #, c-format
 msgid "Error searching local repository: %s"
 msgstr "स्थानीय रिपोजिटरी खोजने में त्रुटिः %s"
 
-#: common/flatpak-dir.c:13726
+#: common/flatpak-dir.c:13730
 #, c-format
 msgid "%s/%s/%s not installed"
 msgstr "%s/%s/%s स्थापित नहीं है"
 
-#: common/flatpak-dir.c:13929
+#: common/flatpak-dir.c:13933
 #, c-format
 msgid "Could not find installation %s"
 msgstr "स्थापना %s नहीं मिल सकी"
 
-#: common/flatpak-dir.c:14474
+#: common/flatpak-dir.c:14478
 #, c-format
 msgid "Invalid file format, no %s group"
 msgstr "अमान्य फाइल प्रारूप, कोई %s समूह नहीं"
 
-#: common/flatpak-dir.c:14479 common/flatpak-repo-utils.c:2861
+#: common/flatpak-dir.c:14483 common/flatpak-repo-utils.c:2861
 #, c-format
 msgid "Invalid version %s, only 1 supported"
 msgstr "अमान्य संस्करण %s, केवल 1 समर्थित"
 
-#: common/flatpak-dir.c:14484 common/flatpak-dir.c:14489
+#: common/flatpak-dir.c:14488 common/flatpak-dir.c:14493
 #, c-format
 msgid "Invalid file format, no %s specified"
 msgstr "अमान्य फाइल प्रारूप, कोई %s निर्दिष्ट नहीं"
 
 #. Check some minimal size so we don't get crap
-#: common/flatpak-dir.c:14509
+#: common/flatpak-dir.c:14513
 msgid "Invalid file format, gpg key invalid"
 msgstr "अमान्य फाइल प्रारूप, gpg कुंजी अमान्य"
 
-#: common/flatpak-dir.c:14537 common/flatpak-repo-utils.c:2934
+#: common/flatpak-dir.c:14541 common/flatpak-repo-utils.c:2934
 msgid "Collection ID requires GPG key to be provided"
 msgstr "संग्रह ID के लिए GPG कुंजी प्रदान करना आवश्यक है"
 
-#: common/flatpak-dir.c:14580
+#: common/flatpak-dir.c:14584
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "रनटाइम %s, शाखा %s पहले से ही स्थापित है"
 
-#: common/flatpak-dir.c:14581
+#: common/flatpak-dir.c:14585
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "ऐप %s, शाखा %s पहले से ही स्थापित है"
 
-#: common/flatpak-dir.c:14815
+#: common/flatpak-dir.c:14819
 #, c-format
 msgid "Can't remove remote '%s' with installed ref %s (at least)"
 msgstr "स्थापित संदर्भ %2$s के साथ रिमोट '%1$s' को नहीं हटाया जा सकता (कम से कम)"
 
-#: common/flatpak-dir.c:14914
+#: common/flatpak-dir.c:14918
 #, c-format
 msgid "Invalid character '/' in remote name: %s"
 msgstr "रिमोट नाम में अमान्य वर्ण '/': %s"
 
-#: common/flatpak-dir.c:14920
+#: common/flatpak-dir.c:14924
 #, c-format
 msgid "No configuration for remote %s specified"
 msgstr "रिमोट %s के लिए कोई विन्यास निर्दिष्ट नहीं है"
 
-#: common/flatpak-dir.c:16417
+#: common/flatpak-dir.c:16421
 #, c-format
 msgid "Skipping deletion of mirror ref (%s, %s)…\n"
 msgstr "मिरर संदर्भ का विलोपन छोड़ा जा रहा है (%s, %s)…\n"
@@ -5685,12 +5685,12 @@ msgstr "अद्यतन पहुंच को गोपनीयता स�
 msgid "Application update not allowed"
 msgstr "अनुप्रयोग अद्यतन की अनुमति नहीं है"
 
-#: portal/flatpak-portal.c:2516
+#: portal/flatpak-portal.c:2517
 #, c-format
 msgid "Self update not supported, new version requires new permissions"
 msgstr "स्वयं अद्यतन समर्थित नहीं है, नए संस्करण के लिए नई अनुमतियों की आवश्यकता है"
 
-#: portal/flatpak-portal.c:2698 portal/flatpak-portal.c:2715
+#: portal/flatpak-portal.c:2699 portal/flatpak-portal.c:2716
 #, c-format
 msgid "Update ended unexpectedly"
 msgstr "अद्यतन अप्रत्याशित रूप से समाप्त हो गया"
