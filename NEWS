@@ -1,10 +1,29 @@
-Changes in 1.14.9
-~~~~~~~~~~~~~~~~~
-Released: not yet
+Changes in 1.14.10
+~~~~~~~~~~~~~~~~~~
+Released: 2024-08-14
+
+Dependencies:
+
+ * In distributions that compile Flatpak to use a separate bubblewrap (bwrap)
+   executable, either version 0.10.0, version 0.6.x ≥ 0.6.3, or a version
+   with a backport of the --bind-fd option is required.
+   These versions add a new feature which is required by the security fix
+   in this release.
+
+Security fixes:
+
+ * Don't follow symbolic links when mounting persistent directories
+   (--persist option). This prevents a sandbox escape where a malicious or
+   compromised app could edit the symlink to point to a directory that
+   the app should not have been allowed to read or write.
+   (CVE-2024-42472, GHSA-7hgv-f2j8-xw87)
 
 Documentation:
 
  * Mark the 1.12.x and 1.10.x branches as end-of-life (#5352)
+
+Version 1.14.9 was not released due to an incompatibility with older
+versions of GLib. Version 1.14.10 replaces it.
 
 Changes in 1.14.8
 ~~~~~~~~~~~~~~~~~
