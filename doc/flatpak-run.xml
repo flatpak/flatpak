@@ -567,6 +567,17 @@ key=v1;v2;
             </varlistentry>
 
             <varlistentry>
+                <term><option>--a11y-own-name=NAME</option></term>
+
+                <listitem><para>
+                    Allow the application to own the well known name <arg choice="plain">NAME</arg> on the a11y bus.
+                    If <arg choice="plain">NAME</arg> ends with .*, it allows the application to own all matching names.
+                    This overrides to the Context section from the application metadata.
+                    This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--persist=FILENAME</option></term>
 
                 <listitem><para>

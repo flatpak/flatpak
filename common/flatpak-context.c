@@ -104,6 +104,7 @@ flatpak_context_new (void)
   context->filesystems = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   context->session_bus_policy = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   context->system_bus_policy = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  context->a11y_bus_policy = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   context->generic_policy = g_hash_table_new_full (g_str_hash, g_str_equal,
                                                    g_free, (GDestroyNotify) g_strfreev);
 
@@ -118,6 +119,7 @@ flatpak_context_free (FlatpakContext *context)
   g_hash_table_destroy (context->filesystems);
   g_hash_table_destroy (context->session_bus_policy);
   g_hash_table_destroy (context->system_bus_policy);
+  g_hash_table_destroy (context->a11y_bus_policy);
   g_hash_table_destroy (context->generic_policy);
   g_slice_free (FlatpakContext, context);
 }
@@ -431,6 +433,14 @@ flatpak_context_set_session_bus_policy (FlatpakContext *context,
                                         FlatpakPolicy   policy)
 {
   g_hash_table_insert (context->session_bus_policy, g_strdup (name), GINT_TO_POINTER (policy));
+}
+
+void
+flatpak_context_set_a11y_bus_policy (FlatpakContext *context,
+                                     const char     *name,
+                                     FlatpakPolicy   policy)
+{
+  g_hash_table_insert (context->a11y_bus_policy, g_strdup (name), GINT_TO_POINTER (policy));
 }
 
 GStrv
@@ -1342,6 +1352,21 @@ option_own_name_cb (const gchar *option_name,
 }
 
 static gboolean
+option_a11y_own_name_cb (const gchar  *option_name,
+                         const gchar  *value,
+                         gpointer      data,
+                         GError      **error)
+{
+  FlatpakContext *context = data;
+
+  if (!flatpak_verify_dbus_name (value, error))
+    return FALSE;
+
+  flatpak_context_set_a11y_bus_policy (context, value, FLATPAK_POLICY_OWN);
+  return TRUE;
+}
+
+static gboolean
 option_talk_name_cb (const gchar *option_name,
                      const gchar *value,
                      gpointer     data,
@@ -1530,6 +1555,7 @@ static GOptionEntry context_options[] = {
   { "system-own-name", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_system_own_name_cb, N_("Allow app to own name on the system bus"), N_("DBUS_NAME") },
   { "system-talk-name", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_system_talk_name_cb, N_("Allow app to talk to name on the system bus"), N_("DBUS_NAME") },
   { "system-no-talk-name", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_system_no_talk_name_cb, N_("Don't allow app to talk to name on the system bus"), N_("DBUS_NAME") },
+  { "a11y-own-name", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_a11y_own_name_cb, N_("Allow app to own name on the a11y bus"), N_("DBUS_NAME") },
   { "add-policy", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_add_generic_policy_cb, N_("Add generic policy option"), N_("SUBSYSTEM.KEY=VALUE") },
   { "remove-policy", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_remove_generic_policy_cb, N_("Remove generic policy option"), N_("SUBSYSTEM.KEY=VALUE") },
   { "persist", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_persist_cb, N_("Persist home directory subpath"), N_("FILENAME") },
@@ -2384,6 +2410,10 @@ flatpak_context_add_bus_filters (FlatpakContext *context,
 
     case FLATPAK_SYSTEM_BUS:
       ht = context->system_bus_policy;
+      break;
+
+    case FLATPAK_A11Y_BUS:
+      ht = context->a11y_bus_policy;
       break;
 
     default:

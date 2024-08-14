@@ -375,10 +375,11 @@ flatpak_run_add_system_dbus_args (FlatpakBwrap   *app_bwrap,
 }
 
 gboolean
-flatpak_run_add_a11y_dbus_args (FlatpakBwrap   *app_bwrap,
-                                FlatpakBwrap   *proxy_arg_bwrap,
-                                FlatpakContext *context,
-                                FlatpakRunFlags flags)
+flatpak_run_add_a11y_dbus_args (FlatpakBwrap    *app_bwrap,
+                                FlatpakBwrap    *proxy_arg_bwrap,
+                                FlatpakContext  *context,
+                                FlatpakRunFlags  flags,
+                                const char      *app_id)
 {
   static const char sandbox_socket_path[] = "/run/flatpak/at-spi-bus";
   static const char sandbox_dbus_address[] = "unix:path=/run/flatpak/at-spi-bus";
@@ -439,6 +440,8 @@ flatpak_run_add_a11y_dbus_args (FlatpakBwrap   *app_bwrap,
                           "--call=org.a11y.atspi.Registry=org.a11y.atspi.DeviceEventController.NotifyListenersSync@/org/a11y/atspi/registry/deviceeventcontroller",
                           "--call=org.a11y.atspi.Registry=org.a11y.atspi.DeviceEventController.NotifyListenersAsync@/org/a11y/atspi/registry/deviceeventcontroller",
                           NULL);
+
+  flatpak_context_add_bus_filters (context, app_id, FLATPAK_A11Y_BUS, flags & FLATPAK_RUN_FLAG_SANDBOX, proxy_arg_bwrap);
 
   if ((flags & FLATPAK_RUN_FLAG_LOG_A11Y_BUS) != 0)
     flatpak_bwrap_add_args (proxy_arg_bwrap, "--log", NULL);
