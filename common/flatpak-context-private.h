@@ -28,6 +28,7 @@
 typedef enum {
   FLATPAK_SESSION_BUS,
   FLATPAK_SYSTEM_BUS,
+  FLATPAK_A11Y_BUS,
 } FlatpakBus;
 
 typedef enum {
@@ -89,6 +90,7 @@ struct FlatpakContext
   GHashTable            *filesystems;
   GHashTable            *session_bus_policy;
   GHashTable            *system_bus_policy;
+  GHashTable            *a11y_bus_policy;
   GHashTable            *generic_policy;
 };
 
@@ -125,6 +127,9 @@ GStrv          flatpak_context_get_session_bus_policy_allowed_own_names (Flatpak
 void           flatpak_context_set_system_bus_policy (FlatpakContext *context,
                                                       const char     *name,
                                                       FlatpakPolicy   policy);
+void           flatpak_context_set_a11y_bus_policy (FlatpakContext *context,
+                                                    const char     *name,
+                                                    FlatpakPolicy   policy);
 void           flatpak_context_to_args (FlatpakContext *context,
                                         GPtrArray      *args);
 FlatpakRunFlags flatpak_context_get_run_flags (FlatpakContext *context);
