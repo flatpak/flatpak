@@ -289,7 +289,7 @@ flatpak_run_add_session_dbus_args (FlatpakBwrap   *app_bwrap,
 
       if (!unrestricted)
         {
-          flatpak_context_add_bus_filters (context, app_id, TRUE, flags & FLATPAK_RUN_FLAG_SANDBOX, proxy_arg_bwrap);
+          flatpak_context_add_bus_filters (context, app_id, FLATPAK_SESSION_BUS, flags & FLATPAK_RUN_FLAG_SANDBOX, proxy_arg_bwrap);
 
           /* Allow calling any interface+method on all portals, but only receive broadcasts under /org/desktop/portal */
           flatpak_bwrap_add_arg (proxy_arg_bwrap,
@@ -359,7 +359,7 @@ flatpak_run_add_system_dbus_args (FlatpakBwrap   *app_bwrap,
       flatpak_bwrap_add_args (proxy_arg_bwrap, real_dbus_address, proxy_socket, NULL);
 
       if (!unrestricted)
-        flatpak_context_add_bus_filters (context, NULL, FALSE, flags & FLATPAK_RUN_FLAG_SANDBOX, proxy_arg_bwrap);
+        flatpak_context_add_bus_filters (context, NULL, FLATPAK_SYSTEM_BUS, flags & FLATPAK_RUN_FLAG_SANDBOX, proxy_arg_bwrap);
 
       if ((flags & FLATPAK_RUN_FLAG_LOG_SYSTEM_BUS) != 0)
         flatpak_bwrap_add_args (proxy_arg_bwrap, "--log", NULL);

@@ -26,6 +26,11 @@
 #include "flatpak-exports-private.h"
 
 typedef enum {
+  FLATPAK_SESSION_BUS,
+  FLATPAK_SYSTEM_BUS,
+} FlatpakBus;
+
+typedef enum {
   FLATPAK_POLICY_NONE,
   FLATPAK_POLICY_SEE,
   FLATPAK_POLICY_TALK,
@@ -125,7 +130,7 @@ void           flatpak_context_to_args (FlatpakContext *context,
 FlatpakRunFlags flatpak_context_get_run_flags (FlatpakContext *context);
 void           flatpak_context_add_bus_filters (FlatpakContext *context,
                                                 const char     *app_id,
-                                                gboolean        session_bus,
+                                                FlatpakBus      bus,
                                                 gboolean        sandboxed,
                                                 FlatpakBwrap   *bwrap);
 

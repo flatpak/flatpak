@@ -2353,7 +2353,7 @@ flatpak_context_to_args (FlatpakContext *context,
 void
 flatpak_context_add_bus_filters (FlatpakContext *context,
                                  const char     *app_id,
-                                 gboolean        session_bus,
+                                 FlatpakBus      bus,
                                  gboolean        sandboxed,
                                  FlatpakBwrap   *bwrap)
 {
@@ -2362,24 +2362,33 @@ flatpak_context_add_bus_filters (FlatpakContext *context,
   gpointer key, value;
 
   flatpak_bwrap_add_arg (bwrap, "--filter");
-  if (app_id && session_bus)
-    {
-      if (!sandboxed)
-        {
-          flatpak_bwrap_add_arg_printf (bwrap, "--own=%s.*", app_id);
-          flatpak_bwrap_add_arg_printf (bwrap, "--own=org.mpris.MediaPlayer2.%s.*", app_id);
-        }
-      else
-        {
-          flatpak_bwrap_add_arg_printf (bwrap, "--own=%s.Sandboxed.*", app_id);
-          flatpak_bwrap_add_arg_printf (bwrap, "--own=org.mpris.MediaPlayer2.%s.Sandboxed.*", app_id);
-        }
-    }
 
-  if (session_bus)
-    ht = context->session_bus_policy;
-  else
-    ht = context->system_bus_policy;
+  switch (bus)
+    {
+    case FLATPAK_SESSION_BUS:
+      if (app_id)
+        {
+          if (!sandboxed)
+            {
+              flatpak_bwrap_add_arg_printf (bwrap, "--own=%s.*", app_id);
+              flatpak_bwrap_add_arg_printf (bwrap, "--own=org.mpris.MediaPlayer2.%s.*", app_id);
+            }
+          else
+            {
+              flatpak_bwrap_add_arg_printf (bwrap, "--own=%s.Sandboxed.*", app_id);
+              flatpak_bwrap_add_arg_printf (bwrap, "--own=org.mpris.MediaPlayer2.%s.Sandboxed.*", app_id);
+            }
+        }
+      ht = context->session_bus_policy;
+      break;
+
+    case FLATPAK_SYSTEM_BUS:
+      ht = context->system_bus_policy;
+      break;
+
+    default:
+      g_assert_not_reached ();
+   }
 
   g_hash_table_iter_init (&iter, ht);
   while (g_hash_table_iter_next (&iter, &key, &value))
