@@ -709,17 +709,46 @@ start_p11_kit_server (const char *flatpak_dir)
     "pkcs11:model=p11-kit-trust?write-protected=yes",
     NULL
   };
+char *p11_opensc_argv[] = {
+    "p11-kit", "server",
+    /* We explicitly request --sh here, because we then fail on earlier versions that doesn't support
+     * this flag. This is good, because those earlier versions did not properly daemonize and caused
+     * the spawn_sync to hang forever, waiting for the pipe to close.
+     */
+    "--sh",
+    "-n", socket_path,
+    "--provider",  "p11-kit-trust.so",
+    "pkcs11:model=p11-kit-trust?write-protected=yes",
+    "--provider", "opensc-pkcs11.so",
+    "pkcs11:?library-manufacturer=OpenSC%20Project%26type=cert",
+    NULL
+  };
 
-  g_info ("starting p11-kit server");
-
-  if (!g_spawn_sync (NULL,
-                     p11_argv, NULL, G_SPAWN_SEARCH_PATH | G_SPAWN_STDERR_TO_DEV_NULL,
-                     NULL, NULL,
-                     &p11_kit_stdout, NULL,
-                     &exit_status, &local_error))
+  if (g_find_program_in_path("opensc-tool"))
     {
-      g_warning ("Unable to start p11-kit server: %s", local_error->message);
-      return;
+      g_info ("starting p11-kit server with opensc");
+      if (!g_spawn_sync (NULL,
+                        p11_opensc_argv, NULL, G_SPAWN_SEARCH_PATH | G_SPAWN_STDERR_TO_DEV_NULL,
+                        NULL, NULL,
+                        &p11_kit_stdout, NULL,
+                        &exit_status, &local_error))
+        {
+          g_warning ("Unable to start p11-kit server: %s", local_error->message);
+          return;
+        }
+    }
+  else
+    {
+      g_info ("starting p11-kit server");
+      if (!g_spawn_sync (NULL,
+                        p11_argv, NULL, G_SPAWN_SEARCH_PATH | G_SPAWN_STDERR_TO_DEV_NULL,
+                        NULL, NULL,
+                        &p11_kit_stdout, NULL,
+                        &exit_status, &local_error))
+        {
+          g_warning ("Unable to start p11-kit server: %s", local_error->message);
+          return;
+        }
     }
 
   if (!g_spawn_check_exit_status (exit_status, &local_error))
