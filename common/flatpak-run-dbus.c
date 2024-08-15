@@ -389,6 +389,7 @@ flatpak_run_add_a11y_dbus_args (FlatpakBwrap    *app_bwrap,
   g_autoptr(GDBusMessage) reply = NULL;
   g_autoptr(GDBusMessage) msg = NULL;
   g_autofree char *proxy_socket = NULL;
+  gboolean sandboxed;
 
   if ((flags & FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY) != 0)
     return FALSE;
@@ -441,7 +442,15 @@ flatpak_run_add_a11y_dbus_args (FlatpakBwrap    *app_bwrap,
                           "--call=org.a11y.atspi.Registry=org.a11y.atspi.DeviceEventController.NotifyListenersAsync@/org/a11y/atspi/registry/deviceeventcontroller",
                           NULL);
 
-  flatpak_context_add_bus_filters (context, app_id, FLATPAK_A11Y_BUS, flags & FLATPAK_RUN_FLAG_SANDBOX, proxy_arg_bwrap);
+  sandboxed = flags & FLATPAK_RUN_FLAG_SANDBOX;
+
+  flatpak_context_add_bus_filters (context, app_id, FLATPAK_A11Y_BUS, sandboxed, proxy_arg_bwrap);
+
+  /* Allow the main sandbox instance call org.a11y.atspi.Socket.Embedded() on
+   * well-known names of the subsandboxes' objects on the a11y bus.
+   */
+  if (!sandboxed)
+    flatpak_bwrap_add_arg_printf (proxy_arg_bwrap, "--call=%s.Sandboxed.*=org.a11y.atspi.Socket.Embedded", app_id);
 
   if ((flags & FLATPAK_RUN_FLAG_LOG_A11Y_BUS) != 0)
     flatpak_bwrap_add_args (proxy_arg_bwrap, "--log", NULL);
