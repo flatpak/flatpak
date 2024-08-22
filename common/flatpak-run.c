@@ -385,7 +385,7 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
         {
           g_info ("Allowing dri access");
           int i;
-          char *dri_devices[] = {
+          static const char * const dri_devices[] = {
             "/dev/dri",
             /* mali */
             "/dev/mali",
