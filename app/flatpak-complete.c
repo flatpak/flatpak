@@ -73,7 +73,8 @@ flatpak_complete_dir (FlatpakCompletion *completion)
 
 void
 flatpak_complete_word (FlatpakCompletion *completion,
-                       char *format, ...)
+                       const char *format,
+                       ...)
 {
   va_list args;
   const char *rest;
