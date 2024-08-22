@@ -212,7 +212,7 @@ extract_unix_path_from_dbus_address (const char *address)
 }
 
 static char *
-create_proxy_socket (char *template)
+create_proxy_socket (const char *template)
 {
   g_autofree char *user_runtime_dir = flatpak_get_real_xdg_runtime_dir ();
   g_autofree char *proxy_socket_dir = g_build_filename (user_runtime_dir, ".dbus-proxy", NULL);
