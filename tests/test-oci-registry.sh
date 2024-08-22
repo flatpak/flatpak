@@ -27,7 +27,7 @@ echo "1..14"
 
 # Start the fake registry server
 
-httpd oci-registry-server.py .
+httpd oci-registry-server.py --dir=.
 port=$(cat httpd-port)
 client="python3 $test_srcdir/oci-registry-client.py --url=http://127.0.0.1:$port"
 

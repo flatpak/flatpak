@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import argparse
 import base64
 import hashlib
 import json
@@ -246,7 +247,7 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
             return
 
 
-def run(dir):
+def run(args):
     RequestHandler.protocol_version = "HTTP/1.0"
     httpd = http_server.HTTPServer(("127.0.0.1", 0), RequestHandler)
     host, port = httpd.socket.getsockname()[:2]
@@ -257,14 +258,14 @@ def run(dir):
     except OSError:
         pass
     print("Serving HTTP on port %d" % port)
-    if dir:
-        os.chdir(dir)
+    if args.dir:
+        os.chdir(args.dir)
     httpd.serve_forever()
 
 
 if __name__ == "__main__":
-    dir = None
-    if len(sys.argv) >= 2 and len(sys.argv[1]) > 0:
-        dir = sys.argv[1]
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dir")
+    args = parser.parse_args()
 
-    run(dir)
+    run(args)
