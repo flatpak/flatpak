@@ -805,7 +805,7 @@ static void
 test_filter_parser (void)
 {
   struct {
-    char *filter;
+    const char *filter;
     guint expected_error;
   } filters[] = {
     {
@@ -860,7 +860,7 @@ test_filter (void)
   g_autoptr(GRegex) deny_refs = NULL;
   gboolean ret;
   int i;
-  char *filter =
+  const char *filter =
     " # This is a comment\n"
     "\tallow\t org.foo.*#comment\n"
     "  deny   org.*   # Comment\n"
@@ -872,7 +872,7 @@ test_filter (void)
     "allow runtime/com.gazonk\n"
     "allow runtime/com.gazonk.*\t#comment*a*"; /* Note: lack of last newline to test */
   struct {
-    char *ref;
+    const char *ref;
     gboolean expected_result;
   } filter_refs[] = {
      /* General denies (org/com)*/
