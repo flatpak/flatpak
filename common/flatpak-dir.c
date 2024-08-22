@@ -8925,7 +8925,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
       files_etc = g_file_resolve_relative_path (checkoutdir, "files/etc");
       if (g_file_query_exists (files_etc, cancellable))
         {
-          char *etcfiles[] = {"passwd", "group", "machine-id" };
+          static const char * const etcfiles[] = {"passwd", "group", "machine-id" };
           g_autoptr(GFile) etc_resolve_conf = g_file_get_child (files_etc, "resolv.conf");
           int i;
           for (i = 0; i < G_N_ELEMENTS (etcfiles); i++)
