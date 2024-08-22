@@ -304,7 +304,7 @@ static const char *
 flatpak_get_kernel_arch (void)
 {
   static struct utsname buf;
-  static char *arch = NULL;
+  static const char *arch = NULL;
   char *m;
 
   if (arch != NULL)
