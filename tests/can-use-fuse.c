@@ -33,8 +33,8 @@ check_fuse (void)
 {
   g_autofree gchar *fusermount = NULL;
   g_autofree gchar *path = NULL;
-  char *argv[] = { "flatpak-fuse-test", NULL };
-  struct fuse_args args = FUSE_ARGS_INIT (G_N_ELEMENTS (argv) - 1, argv);
+  static const char * const argv[] = { "flatpak-fuse-test", NULL };
+  struct fuse_args args = FUSE_ARGS_INIT (G_N_ELEMENTS (argv) - 1, (char **) argv);
   g_autoptr(GError) error = NULL;
 #if FUSE_USE_VERSION >= 31
   struct fuse *fuse = NULL;
