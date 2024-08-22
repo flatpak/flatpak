@@ -153,12 +153,12 @@ flatpak_run_add_extension_args (FlatpakBwrap      *bwrap,
         {
           g_autofree char *parent = g_path_get_dirname (directory);
 
-          if (g_hash_table_lookup (mounted_tmpfs, parent) == NULL)
+          if (!g_hash_table_contains (mounted_tmpfs, parent))
             {
               flatpak_bwrap_add_args (bwrap,
                                       "--tmpfs", parent,
                                       NULL);
-              g_hash_table_insert (mounted_tmpfs, g_steal_pointer (&parent), "mounted");
+              g_hash_table_add (mounted_tmpfs, g_steal_pointer (&parent));
             }
         }
 
@@ -229,13 +229,13 @@ flatpak_run_add_extension_args (FlatpakBwrap      *bwrap,
                 {
                   g_autofree char *symlink_path = g_build_filename (merge_dir, dent->d_name, NULL);
                   /* Only create the first, because extensions are listed in prio order */
-                  if (g_hash_table_lookup (created_symlink, symlink_path) == NULL)
+                  if (!g_hash_table_contains (created_symlink, symlink_path))
                     {
                       g_autofree char *symlink = g_build_filename (directory, ext->merge_dirs[i], dent->d_name, NULL);
                       flatpak_bwrap_add_args (bwrap,
                                               "--symlink", symlink, symlink_path,
                                               NULL);
-                      g_hash_table_insert (created_symlink, g_steal_pointer (&symlink_path), "created");
+                      g_hash_table_add (created_symlink, g_steal_pointer (&symlink_path));
                     }
                 }
             }
