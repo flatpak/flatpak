@@ -2,10 +2,31 @@ Changes in 1.15.11
 ~~~~~~~~~~~~~~~~~~
 Released: not yet
 
+Dependencies:
+
+ * In distributions that compile Flatpak to use a separate xdg-dbus-proxy
+   executable, version 0.1.6 is recommended (but not required).
+   The minimum xdg-dbus-proxy continues to be 0.1.0.
+
 Enhancements:
 
  * `flatpak run -vv $app_id` shows all applicable sandboxing parameters
    and their source, including overrides, as debug messages (#5895)
+
+Bug fixes:
+
+ * Update meson wrap file for xdg-dbus-proxy to version 0.1.6:
+
+     * compatibility with D-Bus implementations that pipeline the
+       authentication handshake, such as sd-bus and zbus
+
+     * compatibility with D-Bus implementations that use non-consecutive
+       serial numbers, such as godbus and zbus
+
+     * broadcast signals can be allowed without having to add TALK permission
+       (#5828)
+
+     * fix memory leaks
 
 Internal changes:
 
