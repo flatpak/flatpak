@@ -100,6 +100,21 @@ flatpak_variant = custom_target(
   command : variant_schema_compiler_command,
 )
 
+flatpak_known_syscall_names_h = custom_target(
+  'known-syscall-names-h',
+  input : ['known-syscalls.txt'],
+  output : ['known-syscall-names.h'],
+  capture : true,
+  build_by_default : true,
+  command : [
+    'sed',
+    '-e', 's|#.*||',
+    '-e', 's| ||g',
+    '-e', 's|..*|"&",|',
+    '@INPUT@',
+  ],
+)
+
 libflatpak_common_base_deps = base_deps + [libglnx_dep]
 
 libflatpak_common_base_sources = [
@@ -114,6 +129,7 @@ built_headers = [
   flatpak_document_gdbus[1],
   systemd_gdbus[1],
   flatpak_variant[1],
+  flatpak_known_syscall_names_h,
 ]
 
 libflatpak_common_deps = []
