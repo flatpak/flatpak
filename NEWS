@@ -1,3 +1,17 @@
+Changes in 1.15.11
+~~~~~~~~~~~~~~~~~~
+Released: not yet
+
+Enhancements:
+
+ * `flatpak run -vv $app_id` shows all applicable sandboxing parameters
+   and their source, including overrides, as debug messages (#5895)
+
+Internal changes:
+
+ * Better const-correctness (#5913)
+ * Fix a shellcheck warning in the tests (#5914)
+
 Changes in 1.15.10
 ~~~~~~~~~~~~~~~~~~
 Released: 2024-08-14
