@@ -24,6 +24,7 @@ bpf
 brk
 cachectl
 cacheflush
+cachestat
 capget
 capset
 chdir
@@ -81,6 +82,7 @@ fanotify_mark
 fchdir
 fchmod
 fchmodat
+fchmodat2
 fchown
 fchown32
 fchownat
@@ -108,7 +110,11 @@ fsync
 ftruncate
 ftruncate64
 futex
+futex_requeue
 futex_time64
+futex_wait
+futex_waitv
+futex_wake
 futimesat
 get_kernel_syms
 get_mempolicy
@@ -194,15 +200,21 @@ lgetxattr
 link
 linkat
 listen
+listmount
 listxattr
 llistxattr
+llseek
 lookup_dcookie
 lremovexattr
 lseek
 lsetxattr
+lsm_get_self_attr
+lsm_list_modules
+lsm_set_self_attr
 lstat
 lstat64
 madvise
+map_shadow_stack
 mbind
 membarrier
 memfd_create
@@ -234,6 +246,7 @@ mq_timedsend
 mq_timedsend_time64
 mq_unlink
 mremap
+mseal
 msgctl
 msgget
 msgrcv
@@ -397,6 +410,7 @@ preadv
 preadv2
 prlimit64
 process_madvise
+process_mrelease
 process_vm_readv
 process_vm_writev
 pselect6
@@ -428,6 +442,7 @@ renameat2
 request_key
 restart_syscall
 riscv_flush_icache
+riscv_hwprobe
 rmdir
 rseq
 rt_sigaction
@@ -474,6 +489,7 @@ sendmmsg
 sendmsg
 sendto
 set_mempolicy
+set_mempolicy_home_node
 set_robust_list
 set_thread_area
 set_tid_address
@@ -534,6 +550,7 @@ stat
 stat64
 statfs
 statfs64
+statmount
 statx
 stime
 subpage_prot
@@ -581,6 +598,7 @@ uname
 unlink
 unlinkat
 unshare
+uretprobe
 uselib
 userfaultfd
 ustat
