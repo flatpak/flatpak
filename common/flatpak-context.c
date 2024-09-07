@@ -586,12 +586,13 @@ static gboolean
 get_xdg_user_dir_from_string (const char  *filesystem,
                               const char **config_key,
                               const char **suffix,
-                              const char **dir)
+                              char **dir)
 {
   char *slash;
   const char *rest;
   g_autofree char *prefix = NULL;
   gsize len;
+  const char *dir_out = NULL;
 
   slash = strchr (filesystem, '/');
 
@@ -614,7 +615,7 @@ get_xdg_user_dir_from_string (const char  *filesystem,
       if (config_key)
         *config_key = "XDG_DESKTOP_DIR";
       if (dir)
-        *dir = g_get_user_special_dir (G_USER_DIRECTORY_DESKTOP);
+        *dir = g_strdup (g_get_user_special_dir (G_USER_DIRECTORY_DESKTOP));
       return TRUE;
     }
   if (strcmp (prefix, "xdg-documents") == 0)
@@ -622,7 +623,7 @@ get_xdg_user_dir_from_string (const char  *filesystem,
       if (config_key)
         *config_key = "XDG_DOCUMENTS_DIR";
       if (dir)
-        *dir = g_get_user_special_dir (G_USER_DIRECTORY_DOCUMENTS);
+        *dir = g_strdup (g_get_user_special_dir (G_USER_DIRECTORY_DOCUMENTS));
       return TRUE;
     }
   if (strcmp (prefix, "xdg-download") == 0)
@@ -630,7 +631,7 @@ get_xdg_user_dir_from_string (const char  *filesystem,
       if (config_key)
         *config_key = "XDG_DOWNLOAD_DIR";
       if (dir)
-        *dir = g_get_user_special_dir (G_USER_DIRECTORY_DOWNLOAD);
+        *dir = g_strdup (g_get_user_special_dir (G_USER_DIRECTORY_DOWNLOAD));
       return TRUE;
     }
   if (strcmp (prefix, "xdg-music") == 0)
@@ -638,7 +639,7 @@ get_xdg_user_dir_from_string (const char  *filesystem,
       if (config_key)
         *config_key = "XDG_MUSIC_DIR";
       if (dir)
-        *dir = g_get_user_special_dir (G_USER_DIRECTORY_MUSIC);
+        *dir = g_strdup (g_get_user_special_dir (G_USER_DIRECTORY_MUSIC));
       return TRUE;
     }
   if (strcmp (prefix, "xdg-pictures") == 0)
@@ -646,7 +647,7 @@ get_xdg_user_dir_from_string (const char  *filesystem,
       if (config_key)
         *config_key = "XDG_PICTURES_DIR";
       if (dir)
-        *dir = g_get_user_special_dir (G_USER_DIRECTORY_PICTURES);
+        *dir = g_strdup (g_get_user_special_dir (G_USER_DIRECTORY_PICTURES));
       return TRUE;
     }
   if (strcmp (prefix, "xdg-public-share") == 0)
@@ -654,7 +655,7 @@ get_xdg_user_dir_from_string (const char  *filesystem,
       if (config_key)
         *config_key = "XDG_PUBLICSHARE_DIR";
       if (dir)
-        *dir = g_get_user_special_dir (G_USER_DIRECTORY_PUBLIC_SHARE);
+        *dir = g_strdup (g_get_user_special_dir (G_USER_DIRECTORY_PUBLIC_SHARE));
       return TRUE;
     }
   if (strcmp (prefix, "xdg-templates") == 0)
@@ -662,7 +663,7 @@ get_xdg_user_dir_from_string (const char  *filesystem,
       if (config_key)
         *config_key = "XDG_TEMPLATES_DIR";
       if (dir)
-        *dir = g_get_user_special_dir (G_USER_DIRECTORY_TEMPLATES);
+        *dir = g_strdup (g_get_user_special_dir (G_USER_DIRECTORY_TEMPLATES));
       return TRUE;
     }
   if (strcmp (prefix, "xdg-videos") == 0)
@@ -670,13 +671,15 @@ get_xdg_user_dir_from_string (const char  *filesystem,
       if (config_key)
         *config_key = "XDG_VIDEOS_DIR";
       if (dir)
-        *dir = g_get_user_special_dir (G_USER_DIRECTORY_VIDEOS);
+        *dir = g_strdup (g_get_user_special_dir (G_USER_DIRECTORY_VIDEOS));
       return TRUE;
     }
-  if (get_xdg_dir_from_prefix (prefix, NULL, dir))
+  if (get_xdg_dir_from_prefix (prefix, NULL, &dir_out))
     {
       if (config_key)
         *config_key = NULL;
+      if (dir)
+        *dir = g_strdup (dir_out);
       return TRUE;
     }
   /* Don't support xdg-run without suffix, because that doesn't work */
@@ -2651,7 +2654,8 @@ flatpak_context_export (FlatpakContext *context,
 
       if (g_str_has_prefix (filesystem, "xdg-"))
         {
-          const char *path, *rest = NULL;
+          g_autofree char *path = NULL;
+          const char *rest = NULL;
           const char *config_key = NULL;
           g_autofree char *subpath = NULL;
 
