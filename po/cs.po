@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2024-08-14 14:48+0100\n"
-"PO-Revision-Date: 2022-08-23 18:04+0200\n"
+"PO-Revision-Date: 2024-09-13 12:26+0200\n"
 "Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
 "Language: cs\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Generator: Poedit 3.1.1\n"
+"X-Generator: Poedit 3.5\n"
 
 #: app/flatpak-builtins-build-bundle.c:57
 msgid "Export runtime instead of app"
@@ -1943,7 +1943,7 @@ msgstr "Vzdálené balíky nejsou podporovány"
 
 #: app/flatpak-builtins-install.c:213
 msgid "Filename or uri must be specified"
-msgstr "Název vzdáleného repozitáře musí být určen"
+msgstr "Název souboru nebo uri musí být určen"
 
 #: app/flatpak-builtins-install.c:295
 msgid "[LOCATION/REMOTE] [REF…] - Install applications or runtimes"
@@ -3974,11 +3974,11 @@ msgstr "Zobrazit informace o repozitáři"
 
 #: app/flatpak-main.c:161
 msgid "Show debug information, -vv for more detail"
-msgstr "Zobrazit ladící informace, -vv pro více detailů"
+msgstr "Zobrazit ladicí informace, -vv pro více detailů"
 
 #: app/flatpak-main.c:162
 msgid "Show OSTree debug information"
-msgstr "Zobrazit ladící informace OSTree"
+msgstr "Zobrazit ladicí informace OSTree"
 
 #: app/flatpak-main.c:168
 msgid "Print version information and exit"
@@ -5219,7 +5219,7 @@ msgstr " základ aplikace"
 
 #: common/flatpak-ref-utils.c:1302
 msgid " debug symbols"
-msgstr " ladící symboly"
+msgstr " ladicí symboly"
 
 #: common/flatpak-ref-utils.c:1304
 msgid " sourcecode"
@@ -6038,7 +6038,7 @@ msgstr ""
 #~ msgstr "0"
 
 #~ msgid "Print OSTree debug information during command processing"
-#~ msgstr "Vypsat ladící informace OSTree během zpracovávání příkazu"
+#~ msgstr "Vypsat ladicí informace OSTree během zpracovávání příkazu"
 
 #~ msgid "Architecture"
 #~ msgstr "Architektura"
