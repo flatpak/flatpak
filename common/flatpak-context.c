@@ -3181,6 +3181,10 @@ flatpak_context_get_allowed_exports (FlatpakContext *context,
     {
       g_ptr_array_add (allowed_extensions, g_strdup (".ini"));
     }
+  else if (strcmp (source_path, "share/krunner/dbusplugins") == 0)
+    {
+      g_ptr_array_add (allowed_extensions, g_strdup (".desktop"));
+    }
   else if (strcmp (source_path, "share/mime/packages") == 0)
     {
       g_ptr_array_add (allowed_extensions, g_strdup (".xml"));

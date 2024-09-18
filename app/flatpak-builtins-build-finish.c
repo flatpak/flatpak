@@ -236,6 +236,7 @@ collect_exports (GFile          *base,
     "share/icons",                        /* Icons */
     "share/dbus-1/services",              /* D-Bus service files */
     "share/gnome-shell/search-providers", /* Search providers */
+    "share/krunner/dbusplugins",          /* KDE krunner DBus plugins */
     "share/appdata",                      /* Copy appdata/metainfo files (legacy path) */
     "share/metainfo",                     /* Copy appdata/metainfo files */
     NULL,
