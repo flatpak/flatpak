@@ -7584,6 +7584,15 @@ export_desktop_file (const char         *app,
       /* Add a marker so consumers can easily find out that this launches a sandbox */
       g_key_file_set_string (keyfile, G_KEY_FILE_DESKTOP_GROUP, "X-Flatpak", app);
 
+      /* Disable krunner dbusplugins by default, so that flatpak applications cannot
+       * unintentionally grab sensible search data.
+       */
+      if (g_key_file_get_boolean (keyfile, G_KEY_FILE_DESKTOP_GROUP,
+                               "X-KDE-PluginInfo-EnabledByDefault", NULL))
+        {
+          g_key_file_set_string (keyfile, G_KEY_FILE_DESKTOP_GROUP, "X-KDE-PluginInfo-EnabledByDefault", "false");
+        }
+
       /* If the app has been renamed, add its old .desktop filename to
        * X-Flatpak-RenamedFrom in the new .desktop file, taking care not to
        * introduce duplicates.
@@ -8054,6 +8063,7 @@ flatpak_export_dir (GFile        *source,
     "share/icons",                         "../..",
     "share/dbus-1/services",               "../../..",
     "share/gnome-shell/search-providers",  "../../..",
+    "share/krunner/dbusplugins",           "../../..",
     "share/mime/packages",                 "../../..",
     "share/metainfo",                      "../..",
     "bin",                                 "..",
