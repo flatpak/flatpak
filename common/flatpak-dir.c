@@ -7590,7 +7590,7 @@ export_desktop_file (const char         *app,
       if (g_key_file_get_boolean (keyfile, G_KEY_FILE_DESKTOP_GROUP,
                                "X-KDE-PluginInfo-EnabledByDefault", NULL))
         {
-          g_key_file_set_string (keyfile, G_KEY_FILE_DESKTOP_GROUP, "X-KDE-PluginInfo-EnabledByDefault", "false");
+          g_key_file_set_boolean (keyfile, G_KEY_FILE_DESKTOP_GROUP, "X-KDE-PluginInfo-EnabledByDefault", FALSE);
         }
 
       /* If the app has been renamed, add its old .desktop filename to
