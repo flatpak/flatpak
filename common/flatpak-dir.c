@@ -7605,7 +7605,7 @@ export_desktop_file (const char         *app,
       g_key_file_set_string (keyfile, G_KEY_FILE_DESKTOP_GROUP, "X-Flatpak", app);
 
       /* Disable krunner dbusplugins by default, so that flatpak applications cannot
-       * unintentionally grab sensible search data.
+       * unintentionally grab sensitive search data.
        */
       if (g_key_file_get_boolean (keyfile, G_KEY_FILE_DESKTOP_GROUP,
                                "X-KDE-PluginInfo-EnabledByDefault", NULL))
