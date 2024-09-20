@@ -80,8 +80,9 @@
 
 #define SYSCONF_INSTALLATIONS_DIR "installations.d"
 #define SYSCONF_INSTALLATIONS_FILE_EXT ".conf"
-#define SYSCONF_REMOTES_DIR "remotes.d"
-#define SYSCONF_REMOTES_FILE_EXT ".flatpakrepo"
+
+#define FLATPAK_REMOTES_DIR "remotes.d"
+#define FLATPAK_REMOTES_FILE_EXT ".flatpakrepo"
 
 #define SIDELOAD_REPOS_DIR_NAME "sideload-repos"
 
@@ -3914,52 +3915,37 @@ copy_remote_config (GKeyFile *config,
     }
 }
 
-static GHashTable *
-_flatpak_dir_find_new_flatpakrepos (FlatpakDir *self, OstreeRepo *repo)
+static void
+_flatpak_dir_scan_new_flatpakrepos (const char          *dir_str,
+                                    GHashTable         **flatpakrepos,
+                                    const char * const  *remotes)
 {
-  g_autoptr(GHashTable) flatpakrepos = NULL;
-  g_autoptr(GFile) conf_dir = NULL;
+  g_autoptr(GFile) dir = NULL;
   g_autoptr(GFileEnumerator) dir_enum = NULL;
-  g_autoptr(GError) my_error = NULL;
-  g_autofree char *config_dir = NULL;
-  g_auto(GStrv) remotes = NULL;
-  g_auto(GStrv) applied_remotes = NULL;
 
-  g_assert (repo != NULL);
+  g_return_if_fail (dir_str != NULL);
+  g_return_if_fail (flatpakrepos != NULL);
 
-  /* Predefined remotes only applies for the default system installation */
-  if (self->user ||
-      (self->extra_data != NULL &&
-       strcmp (self->extra_data->id, SYSTEM_DIR_DEFAULT_ID) != 0))
-    return NULL;
-
-  config_dir = g_strdup_printf ("%s/%s",
-                                get_config_dir_location (),
-                                SYSCONF_REMOTES_DIR);
-  conf_dir = g_file_new_for_path (config_dir);
-  dir_enum = g_file_enumerate_children (conf_dir,
+  dir = g_file_new_for_path (dir_str);
+  dir_enum = g_file_enumerate_children (dir,
                                         G_FILE_ATTRIBUTE_STANDARD_NAME "," G_FILE_ATTRIBUTE_STANDARD_TYPE,
                                         G_FILE_QUERY_INFO_NONE,
-                                        NULL, &my_error);
-  if (my_error != NULL)
-    return NULL;
-
-  remotes = ostree_repo_remote_list (repo, NULL);
-  applied_remotes = g_key_file_get_string_list (ostree_repo_get_config (repo),
-                                                "core", "xa.applied-remotes", NULL, NULL);
+                                        NULL, NULL);
+  if (dir_enum == NULL)
+    return;
 
   while (TRUE)
     {
       GFileInfo *file_info;
-      GFile *path;
       const char *name;
       guint32 type;
+      g_autoptr(GError) local_error = NULL;
 
-      if (!g_file_enumerator_iterate (dir_enum, &file_info, &path,
-                                      NULL, &my_error))
+      if (!g_file_enumerator_iterate (dir_enum, &file_info, NULL,
+                                      NULL, &local_error))
         {
           g_info ("Unexpected error reading file in %s: %s",
-                  config_dir, my_error->message);
+                  dir_str, local_error->message);
           break;
         }
 
@@ -3969,22 +3955,56 @@ _flatpak_dir_find_new_flatpakrepos (FlatpakDir *self, OstreeRepo *repo)
       name = g_file_info_get_name (file_info);
       type = g_file_info_get_file_type (file_info);
 
-      if (type == G_FILE_TYPE_REGULAR && g_str_has_suffix (name, SYSCONF_REMOTES_FILE_EXT))
+      if (type == G_FILE_TYPE_REGULAR && g_str_has_suffix (name, FLATPAK_REMOTES_FILE_EXT))
         {
-          g_autofree char *remote_name = g_strndup (name, strlen (name) - strlen (SYSCONF_REMOTES_FILE_EXT));
+          g_autofree char *remote_name = g_strndup (name, strlen (name) - strlen (FLATPAK_REMOTES_FILE_EXT));
 
-          if (remotes && g_strv_contains ((const char * const *)remotes, remote_name))
+          if (remotes && g_strv_contains (remotes, remote_name))
             continue;
 
-          if (applied_remotes && g_strv_contains ((const char * const *)applied_remotes, remote_name))
-            continue;
+          if (*flatpakrepos == NULL)
+            *flatpakrepos = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_object_unref);
 
-          if (flatpakrepos == NULL)
-            flatpakrepos = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_object_unref);
-
-          g_hash_table_insert (flatpakrepos, g_steal_pointer (&remote_name), g_file_enumerator_get_child (dir_enum, file_info));
+          g_hash_table_insert (*flatpakrepos, g_steal_pointer (&remote_name), g_file_enumerator_get_child (dir_enum, file_info));
         }
     }
+}
+
+static GHashTable *
+_flatpak_dir_find_new_flatpakrepos (FlatpakDir *self, OstreeRepo *repo)
+{
+  g_autoptr(GHashTable) flatpakrepos = NULL;
+  g_autofree char *dir_str = NULL;
+  g_auto(GStrv) ostree_remotes = NULL;
+  g_auto(GStrv) applied_remotes = NULL;
+  g_autoptr(GPtrArray) remotes = NULL;
+
+  g_assert (repo != NULL);
+
+  /* Predefined remotes only applies for the default system installation */
+  if (self->user ||
+      (self->extra_data &&
+       g_strcmp0 (self->extra_data->id, SYSTEM_DIR_DEFAULT_ID) != 0))
+    return NULL;
+
+  ostree_remotes = ostree_repo_remote_list (repo, NULL);
+  applied_remotes = g_key_file_get_string_list (ostree_repo_get_config (repo),
+                                                "core", "xa.applied-remotes", NULL, NULL);
+  remotes = g_ptr_array_new ();
+  for (int i = 0; ostree_remotes && ostree_remotes[i]; i++)
+    g_ptr_array_add (remotes, ostree_remotes[i]);
+  for (int i = 0; applied_remotes && applied_remotes[i]; i++)
+    g_ptr_array_add (remotes, applied_remotes[i]);
+  g_ptr_array_add (remotes, NULL);
+
+  dir_str = g_build_filename (get_config_dir_location (), FLATPAK_REMOTES_DIR, NULL);
+  _flatpak_dir_scan_new_flatpakrepos (dir_str,
+                                      &flatpakrepos,
+                                      (const char * const *) remotes->pdata);
+
+  _flatpak_dir_scan_new_flatpakrepos (FLATPAK_BASEDIR "/" FLATPAK_REMOTES_DIR,
+                                      &flatpakrepos,
+                                      (const char * const *) remotes->pdata);
 
   return g_steal_pointer (&flatpakrepos);
 }
