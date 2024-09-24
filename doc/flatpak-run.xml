@@ -92,16 +92,30 @@
             <member>LD_AUDIT</member>
             <member>XDG_CONFIG_DIRS</member>
             <member>XDG_DATA_DIRS</member>
-            <member>XDG_RUNTIME_DIR</member>
             <member>SHELL</member>
             <member>TEMP</member>
             <member>TEMPDIR</member>
             <member>TMP</member>
             <member>TMPDIR</member>
+            <member>XDG_RUNTIME_DIR</member>
+            <member>container</member>
+            <member>TZDIR</member>
             <member>PYTHONPATH</member>
             <member>PERLLIB</member>
             <member>PERL5LIB</member>
             <member>XCURSOR_PATH</member>
+            <member>GST_PLUGIN_PATH_1_0</member>
+            <member>GST_REGISTRY</member>
+            <member>GST_REGISTRY_1_0</member>
+            <member>GST_PLUGIN_PATH</member>
+            <member>GST_PLUGIN_SYSTEM_PATH</member>
+            <member>GST_PLUGIN_SCANNER</member>
+            <member>GST_PLUGIN_SCANNER_1_0</member>
+            <member>GST_PLUGIN_SYSTEM_PATH_1_0</member>
+            <member>GST_PRESET_PATH</member>
+            <member>GST_PTP_HELPER</member>
+            <member>GST_PTP_HELPER_1_0</member>
+            <member>GST_INSTALL_PLUGINS_HELPER</member>
             <member>KRB5CCNAME</member>
             <member>XKB_CONFIG_ROOT</member>
             <member>GIO_EXTRA_MODULES</member>

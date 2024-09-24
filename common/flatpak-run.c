@@ -559,6 +559,9 @@ static const ExportData default_exports[] = {
   /* Ensure our container environment variable takes precedence over the one
    * set by a container manager. */
   {"container", NULL},
+  /* We always make the zoneinfo available at /usr/share/zoneinfo even if it
+   * is somewhere else outside of the sandbox. */
+  {"TZDIR", NULL},
 
   /* Some env vars are common enough and will affect the sandbox badly
      if set on the host. We clear these always. If updating this list,
