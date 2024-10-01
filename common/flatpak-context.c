@@ -1034,10 +1034,6 @@ flatpak_context_merge (FlatpakContext *context,
   while (g_hash_table_iter_next (&iter, &key, &value))
     g_hash_table_insert (context->system_bus_policy, g_strdup (key), value);
 
-  g_hash_table_iter_init (&iter, other->system_bus_policy);
-  while (g_hash_table_iter_next (&iter, &key, &value))
-    g_hash_table_insert (context->system_bus_policy, g_strdup (key), value);
-
   g_hash_table_iter_init (&iter, other->generic_policy);
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
