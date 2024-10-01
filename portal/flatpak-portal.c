@@ -783,7 +783,7 @@ handle_spawn (PortalFlatpak         *object,
   g_auto(GStrv) unset_env = NULL;
   g_auto(GStrv) sandbox_expose = NULL;
   g_auto(GStrv) sandbox_expose_ro = NULL;
-  g_auto(GStrv) sandboxed_a11y_own_names = NULL;
+  g_auto(GStrv) sandbox_a11y_own_names = NULL;
   g_autoptr(FlatpakInstance) instance = NULL;
   g_autoptr(GVariant) sandbox_expose_fd = NULL;
   g_autoptr(GVariant) sandbox_expose_fd_ro = NULL;
@@ -901,7 +901,7 @@ handle_spawn (PortalFlatpak         *object,
   g_variant_lookup (arg_options, "sandbox-expose", "^as", &sandbox_expose);
   g_variant_lookup (arg_options, "sandbox-expose-ro", "^as", &sandbox_expose_ro);
   g_variant_lookup (arg_options, "sandbox-flags", "u", &sandbox_flags);
-  g_variant_lookup (arg_options, "sandboxed-a11y-own-names", "^as", &sandboxed_a11y_own_names);
+  g_variant_lookup (arg_options, "sandbox-a11y-own-names", "^as", &sandbox_a11y_own_names);
   sandbox_expose_fd = g_variant_lookup_value (arg_options, "sandbox-expose-fd", G_VARIANT_TYPE ("ah"));
   sandbox_expose_fd_ro = g_variant_lookup_value (arg_options, "sandbox-expose-fd-ro", G_VARIANT_TYPE ("ah"));
   g_variant_lookup (arg_options, "unset-env", "^as", &unset_env);
@@ -949,7 +949,7 @@ handle_spawn (PortalFlatpak         *object,
     }
 
   app_id_prefix = g_strdup_printf ("%s.", app_id);
-  for (i = 0; sandboxed_a11y_own_names != NULL && sandboxed_a11y_own_names[i] != NULL; i++)
+  for (i = 0; sandbox_a11y_own_names != NULL && sandbox_a11y_own_names[i] != NULL; i++)
     {
       if (!(sandbox_flags & FLATPAK_SPAWN_SANDBOX_FLAGS_ALLOW_A11Y))
         {
@@ -959,7 +959,7 @@ handle_spawn (PortalFlatpak         *object,
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
-      if (!g_str_has_prefix (sandboxed_a11y_own_names[i], app_id_prefix))
+      if (!g_str_has_prefix (sandbox_a11y_own_names[i], app_id_prefix))
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
                                                  G_DBUS_ERROR_INVALID_ARGS,
@@ -1127,8 +1127,8 @@ handle_spawn (PortalFlatpak         *object,
         {
           g_ptr_array_add (flatpak_argv, g_strdup ("--a11y-bus"));
 
-          for (i = 0; sandboxed_a11y_own_names != NULL && sandboxed_a11y_own_names[i] != NULL; i++)
-            g_ptr_array_add (flatpak_argv, g_strdup_printf ("--a11y-own-name=%s", sandboxed_a11y_own_names[i]));
+          for (i = 0; sandbox_a11y_own_names != NULL && sandbox_a11y_own_names[i] != NULL; i++)
+            g_ptr_array_add (flatpak_argv, g_strdup_printf ("--a11y-own-name=%s", sandbox_a11y_own_names[i]));
         }
     }
   else
