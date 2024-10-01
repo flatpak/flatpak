@@ -16,8 +16,8 @@ Enhancements:
      * New sandboxing parameter `flatpak run --a11y-own-name`, which is
        like `--own-name` but for the accessibility bus
 
-     * flatpak-portal API v7: add new sandboxed-a11y-own-names option,
-       which accepts names matching `${FLATPAK_ID}.*`
+     * flatpak-portal API v7: add new sandbox-a11y-own-names option, which
+       accepts names matching `${FLATPAK_ID}.*`
 
      * Apps may call the `org.a11y.atspi.Socket.Embedded` method on names
        matching `${FLATPAK_ID}.Sandboxed.*` by default
