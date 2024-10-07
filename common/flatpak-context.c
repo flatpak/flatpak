@@ -1034,9 +1034,9 @@ flatpak_context_merge (FlatpakContext *context,
   while (g_hash_table_iter_next (&iter, &key, &value))
     g_hash_table_insert (context->system_bus_policy, g_strdup (key), value);
 
-  g_hash_table_iter_init (&iter, other->system_bus_policy);
+  g_hash_table_iter_init (&iter, other->a11y_bus_policy);
   while (g_hash_table_iter_next (&iter, &key, &value))
-    g_hash_table_insert (context->system_bus_policy, g_strdup (key), value);
+    g_hash_table_insert (context->a11y_bus_policy, g_strdup (key), value);
 
   g_hash_table_iter_init (&iter, other->generic_policy);
   while (g_hash_table_iter_next (&iter, &key, &value))
@@ -2080,6 +2080,20 @@ flatpak_context_save_metadata (FlatpakContext *context,
                              (char *) key, flatpak_policy_to_string (policy));
     }
 
+  g_key_file_remove_group (metakey, FLATPAK_METADATA_GROUP_A11Y_BUS_POLICY, NULL);
+  g_hash_table_iter_init (&iter, context->a11y_bus_policy);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+      FlatpakPolicy policy = GPOINTER_TO_INT (value);
+
+      if (flatten && (policy == 0))
+        continue;
+
+      g_key_file_set_string (metakey,
+                             FLATPAK_METADATA_GROUP_A11Y_BUS_POLICY,
+                             (char *) key, flatpak_policy_to_string (policy));
+    }
+
   /* Elements are borrowed from context->env_vars */
   unset_env = g_ptr_array_new ();
 
@@ -2290,6 +2304,9 @@ flatpak_context_adds_permissions (FlatpakContext *old,
   if (adds_bus_policy (old->system_bus_policy, new->system_bus_policy))
     return TRUE;
 
+  if (adds_bus_policy (old->a11y_bus_policy, new->a11y_bus_policy))
+    return TRUE;
+
   if (adds_generic_policy (old->generic_policy, new->generic_policy))
     return TRUE;
 
@@ -2461,6 +2478,7 @@ flatpak_context_reset_permissions (FlatpakContext *context)
   g_hash_table_remove_all (context->filesystems);
   g_hash_table_remove_all (context->session_bus_policy);
   g_hash_table_remove_all (context->system_bus_policy);
+  g_hash_table_remove_all (context->a11y_bus_policy);
   g_hash_table_remove_all (context->generic_policy);
 }
 
@@ -2484,6 +2502,7 @@ flatpak_context_make_sandboxed (FlatpakContext *context)
   g_hash_table_remove_all (context->filesystems);
   g_hash_table_remove_all (context->session_bus_policy);
   g_hash_table_remove_all (context->system_bus_policy);
+  g_hash_table_remove_all (context->a11y_bus_policy);
   g_hash_table_remove_all (context->generic_policy);
 }
 
