@@ -60,6 +60,7 @@ static char *opt_authenticator_name = NULL;
 static char **opt_authenticator_options = NULL;
 static gboolean opt_authenticator_install = -1;
 static char **opt_gpg_import;
+static char *opt_signature_lookaside = NULL;
 
 
 static GOptionEntry modify_options[] = {
@@ -86,6 +87,7 @@ static GOptionEntry common_options[] = {
   { "default-branch", 0, 0, G_OPTION_ARG_STRING, &opt_default_branch, N_("Default branch to use for this remote"), N_("BRANCH") },
   { "collection-id", 0, 0, G_OPTION_ARG_STRING, &opt_collection_id, N_("Collection ID"), N_("COLLECTION-ID") },
   { "gpg-import", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_import, N_("Import GPG key from FILE (- for stdin)"), N_("FILE") },
+  { "signature-lookaside", 0, 0, G_OPTION_ARG_STRING, &opt_signature_lookaside, N_("Load signatures from URL"), N_("URL") },
   { "no-filter", 0, 0, G_OPTION_ARG_NONE, &opt_no_filter, N_("Disable local filter"), NULL },
   { "filter", 0, 0, G_OPTION_ARG_FILENAME, &opt_filter, N_("Set path to local filter FILE"), N_("FILE") },
   { "disable", 0, 0, G_OPTION_ARG_NONE, &opt_disable, N_("Disable the remote"), NULL },
@@ -237,6 +239,12 @@ get_config_from_opts (FlatpakDir *dir, const char *remote_name, gboolean *change
     {
       g_autofree char *prio_as_string = g_strdup_printf ("%d", opt_prio);
       g_key_file_set_string (config, group, "xa.prio", prio_as_string);
+      *changed = TRUE;
+    }
+
+  if (opt_signature_lookaside)
+    {
+      g_key_file_set_string (config, group, "xa.signature-lookaside", opt_signature_lookaside);
       *changed = TRUE;
     }
 

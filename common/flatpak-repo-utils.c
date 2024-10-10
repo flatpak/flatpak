@@ -2816,6 +2816,7 @@ flatpak_parse_repofile (const char   *remote_name,
   g_autofree char *uri = NULL;
   g_autofree char *title = NULL;
   g_autofree char *gpg_key = NULL;
+  g_autofree char *signature_lookaside = NULL;
   g_autofree char *collection_id = NULL;
   g_autofree char *default_branch = NULL;
   g_autofree char *comment = NULL;
@@ -2909,6 +2910,11 @@ flatpak_parse_repofile (const char   *remote_name,
     {
       g_key_file_set_boolean (config, group, "gpg-verify", FALSE);
     }
+
+  signature_lookaside = g_key_file_get_string (keyfile, source_group,
+                                               FLATPAK_REPO_SIGNATURE_LOOKASIDE_KEY, NULL);
+  if (signature_lookaside != NULL)
+    g_key_file_set_string (config, group, "xa.signature-lookaside", signature_lookaside);
 
   /* We have a hierarchy of keys for setting the collection ID, which all have
    * the same effect. The only difference is which versions of Flatpak support
