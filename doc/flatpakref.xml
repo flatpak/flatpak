@@ -136,6 +136,10 @@
                     <listitem><para>The base64-encoded gpg key for the remote.</para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>SignatureLookaside</option> (string)</term>
+                    <listitem><para>URL to use to look up signatures (OCI remotes only)</para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>RuntimeRepo</option> (string)</term>
                     <listitem><para>The url for a .flatpakrepo file for the remote where the runtime can be found.
                     Note that if the runtime is available in the remote providing the app, that remote may be

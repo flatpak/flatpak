@@ -280,6 +280,15 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--signature-lookaside=URL</option></term>
+
+                <listitem><para>
+                    Specify an URL to be used to look up signatures for this
+                    remote (OCI remotes only).
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--authenticator-name=NAME</option></term>
 
                 <listitem><para>
