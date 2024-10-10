@@ -322,65 +322,6 @@ flatpak_oci_registry_new_for_archive (GFile        *archive,
   return oci_registry;
 }
 
-static int
-local_open_file (int           dfd,
-                 const char   *subpath,
-                 struct stat  *st_buf,
-                 GCancellable *cancellable,
-                 GError      **error)
-{
-  glnx_autofd int fd = -1;
-  struct stat tmp_st_buf;
-
-  do
-    fd = openat (dfd, subpath, O_RDONLY | O_NONBLOCK | O_CLOEXEC | O_NOCTTY);
-  while (G_UNLIKELY (fd == -1 && errno == EINTR));
-  if (fd == -1)
-    {
-      glnx_set_error_from_errno (error);
-      return -1;
-    }
-
-  if (st_buf == NULL)
-    st_buf = &tmp_st_buf;
-
-  if (fstat (fd, st_buf) != 0)
-    {
-      glnx_set_error_from_errno (error);
-      return -1;
-    }
-
-  if (!S_ISREG (st_buf->st_mode))
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
-                   "Non-regular file in OCI registry at %s", subpath);
-      return -1;
-    }
-
-  return g_steal_fd (&fd);
-}
-
-static GBytes *
-local_load_file (int           dfd,
-                 const char   *subpath,
-                 GCancellable *cancellable,
-                 GError      **error)
-{
-  glnx_autofd int fd = -1;
-  struct stat st_buf;
-  GBytes *bytes;
-
-  fd = local_open_file (dfd, subpath, &st_buf, cancellable, error);
-  if (fd == -1)
-    return NULL;
-
-  bytes = glnx_fd_readall_bytes (fd, cancellable, error);
-  if (bytes == NULL)
-    return NULL;
-
-  return bytes;
-}
-
 /* We just support the first http uri for now */
 static char *
 choose_alt_uri (GUri        *base_uri,
@@ -440,7 +381,7 @@ flatpak_oci_registry_load_file (FlatpakOciRegistry *self,
                                 GError            **error)
 {
   if (self->dfd != -1)
-    return local_load_file (self->dfd, subpath, cancellable, error);
+    return flatpak_load_file_at (self->dfd, subpath, cancellable, error);
   else
     return remote_load_file (self, subpath, alt_uris, out_content_type, cancellable, error);
 }
@@ -722,7 +663,7 @@ flatpak_oci_registry_ensure_local (FlatpakOciRegistry *self,
         return FALSE;
     }
 
-  oci_layout_bytes = local_load_file (dfd, "oci-layout", cancellable, &local_error);
+  oci_layout_bytes = flatpak_load_file_at (dfd, "oci-layout", cancellable, &local_error);
   if (oci_layout_bytes == NULL)
     {
       if (for_write && g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
@@ -749,7 +690,7 @@ flatpak_oci_registry_ensure_local (FlatpakOciRegistry *self,
 
   if (self->dfd != -1)
     {
-      token_bytes = local_load_file (self->dfd, ".token", cancellable, NULL);
+      token_bytes = flatpak_load_file_at (self->dfd, ".token", cancellable, NULL);
       if (token_bytes != NULL)
         self->token = g_strndup (g_bytes_get_data (token_bytes, NULL), g_bytes_get_size (token_bytes));
     }
@@ -1026,7 +967,7 @@ flatpak_oci_registry_download_blob (FlatpakOciRegistry    *self,
   if (self->dfd != -1)
     {
       /* Local case, trust checksum */
-      fd = local_open_file (self->dfd, subpath, NULL, cancellable, error);
+      fd = flatpak_open_file_at (self->dfd, subpath, NULL, cancellable, error);
       if (fd == -1)
         return -1;
     }
@@ -1051,7 +992,7 @@ flatpak_oci_registry_download_blob (FlatpakOciRegistry    *self,
                                       &out_stream, cancellable, error))
         return -1;
 
-      fd = local_open_file (self->tmp_dfd, tmpfile_name, NULL, cancellable, error);
+      fd = flatpak_open_file_at (self->tmp_dfd, tmpfile_name, NULL, cancellable, error);
       (void) unlinkat (self->tmp_dfd, tmpfile_name, 0);
 
       if (fd == -1)
@@ -1135,7 +1076,7 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
     {
       glnx_autofd int src_fd = -1;
 
-      src_fd = local_open_file (source_registry->dfd, src_subpath, NULL, cancellable, error);
+      src_fd = flatpak_open_file_at (source_registry->dfd, src_subpath, NULL, cancellable, error);
       if (src_fd == -1)
         return FALSE;
 
@@ -2255,7 +2196,7 @@ flatpak_oci_registry_apply_delta (FlatpakOciRegistry    *self,
 
   // This is the read-only version we return
   // Note: that we need to open this before we unlink it
-  fd = local_open_file (self->tmp_dfd, tmpfile_name, NULL, cancellable, error);
+  fd = flatpak_open_file_at (self->tmp_dfd, tmpfile_name, NULL, cancellable, error);
   (void) unlinkat (self->tmp_dfd, tmpfile_name, 0);
   if (fd == -1)
     return -1;
