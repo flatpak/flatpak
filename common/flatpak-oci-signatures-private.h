@@ -7,10 +7,7 @@
 #include <gio/gio.h>
 #include <ostree.h>
 
-GBytes *flatpak_oci_sign_data (GBytes       *data,
-                               const gchar **okey_ids,
-                               const char   *homedir,
-                               GError      **error);
+typedef struct _FlatpakOciSignatures FlatpakOciSignatures;
 
 FlatpakOciSignature *flatpak_oci_verify_signature (OstreeRepo *repo,
                                                    const char *remote_name,
