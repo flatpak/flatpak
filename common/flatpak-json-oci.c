@@ -956,7 +956,7 @@ flatpak_oci_signature_critical_destroy (FlatpakOciSignatureCritical *self)
 {
   g_free (self->type);
   g_free (self->image.digest);
-  g_free (self->identity.ref);
+  g_free (self->identity.reference);
 }
 
 static void
@@ -982,11 +982,11 @@ flatpak_oci_signature_class_init (FlatpakOciSignatureClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   FlatpakJsonClass *json_class = FLATPAK_JSON_CLASS (klass);
   static FlatpakJsonProp image_props[] = {
-    FLATPAK_JSON_MANDATORY_STRING_PROP (FlatpakOciSignatureCriticalImage, digest, "oci-image-manifest-digest"),
+    FLATPAK_JSON_MANDATORY_STRING_PROP (FlatpakOciSignatureCriticalImage, digest, "docker-manifest-digest"),
     FLATPAK_JSON_LAST_PROP
   };
   static FlatpakJsonProp identity_props[] = {
-    FLATPAK_JSON_MANDATORY_STRING_PROP (FlatpakOciSignatureCriticalIdentity, ref, "oci-image-ref"),
+    FLATPAK_JSON_MANDATORY_STRING_PROP (FlatpakOciSignatureCriticalIdentity, reference, "docker-reference"),
     FLATPAK_JSON_LAST_PROP
   };
   static FlatpakJsonProp critical_props[] = {
@@ -1013,23 +1013,6 @@ flatpak_oci_signature_class_init (FlatpakOciSignatureClass *klass)
 static void
 flatpak_oci_signature_init (FlatpakOciSignature *self)
 {
-}
-
-FlatpakOciSignature *
-flatpak_oci_signature_new (const char *digest, const char *ref)
-{
-  FlatpakOciSignature *signature;
-
-  signature = g_object_new (FLATPAK_TYPE_OCI_SIGNATURE, NULL);
-
-  /* Some default values */
-  signature->critical.type = g_strdup (FLATPAK_OCI_SIGNATURE_TYPE_FLATPAK);
-  signature->critical.image.digest = g_strdup (digest);
-  signature->critical.identity.ref = g_strdup (ref);
-  signature->optional.creator = g_strdup ("flatpak " PACKAGE_VERSION);
-  signature->optional.timestamp = time (NULL);
-
-  return signature;
 }
 
 G_DEFINE_TYPE (FlatpakOciIndexResponse, flatpak_oci_index_response, FLATPAK_TYPE_JSON);
