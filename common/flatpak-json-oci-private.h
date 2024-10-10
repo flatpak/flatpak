@@ -249,6 +249,10 @@ void flatpak_oci_add_labels_for_commit (GHashTable *labels,
                                         const char *commit,
                                         GVariant   *commit_data);
 
+/* FlatpakOciSignature is a "simple signature" as defined:
+ * https://github.com/containers/image/blob/main/docs/containers-signature.5.md
+ */
+
 #define FLATPAK_TYPE_OCI_SIGNATURE flatpak_oci_signature_get_type ()
 G_DECLARE_FINAL_TYPE (FlatpakOciSignature, flatpak_oci_signature, FLATPAK, OCI_SIGNATURE, FlatpakJson)
 
@@ -259,7 +263,7 @@ typedef struct
 
 typedef struct
 {
-  char *ref;
+  char *reference;
 } FlatpakOciSignatureCriticalIdentity;
 
 typedef struct
@@ -287,9 +291,6 @@ struct _FlatpakOciSignatureClass
 {
   FlatpakJsonClass parent_class;
 };
-
-FlatpakOciSignature *flatpak_oci_signature_new (const char *digest,
-                                                const char *ref);
 
 
 #define FLATPAK_TYPE_OCI_INDEX_RESPONSE flatpak_oci_index_response_get_type ()
