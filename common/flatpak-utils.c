@@ -1881,6 +1881,70 @@ flatpak_allocate_tmpdir (int           tmpdir_dfd,
   return TRUE;
 }
 
+/* Carefully opens a file from a base directory and subpath,
+ * making sure that its not a symlink.
+ */
+int
+flatpak_open_file_at (int           dfd,
+                      const char   *subpath,
+                      struct stat  *st_buf,
+                      GCancellable *cancellable,
+                      GError      **error)
+{
+  glnx_autofd int fd = -1;
+  struct stat tmp_st_buf;
+
+  do
+    fd = openat (dfd, subpath, O_RDONLY | O_NONBLOCK | O_CLOEXEC | O_NOCTTY);
+  while (G_UNLIKELY (fd == -1 && errno == EINTR));
+  if (fd == -1)
+    {
+      glnx_set_error_from_errno (error);
+      return -1;
+    }
+
+  if (st_buf == NULL)
+    st_buf = &tmp_st_buf;
+
+  if (fstat (fd, st_buf) != 0)
+    {
+      glnx_set_error_from_errno (error);
+      return -1;
+    }
+
+  if (!S_ISREG (st_buf->st_mode))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
+                   "Non-regular file not allowed at %s", subpath);
+      return -1;
+    }
+
+  return g_steal_fd (&fd);
+}
+
+/* Carefully gets the content of a file from a base directory and
+ * subpath, making sure that its not a symlink.
+ */
+GBytes *
+flatpak_load_file_at (int           dfd,
+                      const char   *subpath,
+                      GCancellable *cancellable,
+                      GError      **error)
+{
+  glnx_autofd int fd = -1;
+  GBytes *bytes;
+
+  fd = flatpak_open_file_at (dfd, subpath, NULL, cancellable, error);
+  if (fd == -1)
+    return NULL;
+
+  bytes = glnx_fd_readall_bytes (fd, cancellable, error);
+  if (bytes == NULL)
+    return NULL;
+
+  return bytes;
+}
+
 static gint
 string_length_compare_func (gconstpointer a,
                             gconstpointer b)
