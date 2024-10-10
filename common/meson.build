@@ -198,6 +198,7 @@ sources = [
   'flatpak-json.c',
   'flatpak-locale-utils.c',
   'flatpak-oci-registry.c',
+  'flatpak-oci-signatures.c',
   'flatpak-portal-error.c',
   'flatpak-progress.c',
   'flatpak-prune.c',
