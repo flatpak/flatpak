@@ -183,6 +183,7 @@ GBytes *flatpak_oci_index_make_appstream (FlatpakHttpSession  *http_session,
                                           GCancellable        *cancellable,
                                           GError             **error);
 
+
 typedef void (*FlatpakOciPullProgress) (guint64  total_size,
                                         guint64  pulled_size,
                                         guint32  n_layers,
@@ -190,12 +191,8 @@ typedef void (*FlatpakOciPullProgress) (guint64  total_size,
                                         gpointer data);
 
 char * flatpak_pull_from_oci (OstreeRepo            *repo,
-                              FlatpakOciRegistry    *registry,
-                              const char            *oci_repository,
-                              const char            *digest,
+                              FlatpakImageSource    *image_source,
                               const char            *delta_url,
-                              FlatpakOciManifest    *manifest,
-                              FlatpakOciImage       *image_config,
                               const char            *remote,
                               const char            *ref,
                               FlatpakPullFlags       flags,
@@ -205,9 +202,7 @@ char * flatpak_pull_from_oci (OstreeRepo            *repo,
                               GError               **error);
 
 gboolean flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
-                                        FlatpakOciRegistry    *registry,
-                                        const char            *oci_repository,
-                                        const char            *digest,
+                                        FlatpakImageSource    *image_source,
                                         const char            *remote,
                                         const char            *ref,
                                         const char            *delta_url,
