@@ -39,6 +39,7 @@
 #include "flatpak-dbus-generated.h"
 #include "flatpak-dir-private.h"
 #include "flatpak-error.h"
+#include "flatpak-image-source-private.h"
 #include "flatpak-oci-registry-private.h"
 #include "flatpak-progress-private.h"
 #include "flatpak-system-helper.h"
@@ -528,15 +529,11 @@ handle_deploy (FlatpakSystemHelper   *object,
   if (strlen (arg_repo_path) > 0 && is_oci)
     {
       g_autoptr(GFile) registry_file = g_file_new_for_path (arg_repo_path);
-      g_autofree char *registry_uri = g_file_get_uri (registry_file);
-      g_autoptr(FlatpakOciRegistry) registry = NULL;
-      g_autoptr(FlatpakOciIndex) index = NULL;
-      const FlatpakOciManifestDescriptor *desc;
-      g_autoptr(FlatpakOciVersioned) versioned = NULL;
-      g_autoptr(FlatpakOciImage) image_config = NULL;
+      g_autoptr(FlatpakImageSource) image_source = NULL;
       g_autoptr(FlatpakRemoteState) state = NULL;
       g_autoptr(GHashTable) remote_refs = NULL;
       g_autofree char *checksum = NULL;
+      const char *image_source_digest;
       const char *verified_digest;
       g_autofree char *upstream_url = NULL;
 
@@ -552,47 +549,11 @@ handle_deploy (FlatpakSystemHelper   *object,
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
-      registry = flatpak_oci_registry_new (registry_uri, FALSE, -1, NULL, &error);
-      if (registry == NULL)
+      image_source = flatpak_image_source_new_local (registry_file, arg_ref, NULL, &error);
+      if (image_source == NULL)
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
                                                  "Can't open child OCI registry: %s", error->message);
-          return G_DBUS_METHOD_INVOCATION_HANDLED;
-        }
-
-      index = flatpak_oci_registry_load_index (registry, NULL, &error);
-      if (index == NULL)
-        {
-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Can't open child OCI registry index: %s", error->message);
-          return G_DBUS_METHOD_INVOCATION_HANDLED;
-        }
-
-      desc = flatpak_oci_index_get_manifest (index, arg_ref);
-      if (desc == NULL)
-        {
-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Can't find ref %s in child OCI registry index", arg_ref);
-          return G_DBUS_METHOD_INVOCATION_HANDLED;
-        }
-
-      versioned = flatpak_oci_registry_load_versioned (registry, NULL, desc->parent.digest, (const char **)desc->parent.urls, NULL,
-                                                       NULL, &error);
-      if (versioned == NULL || !FLATPAK_IS_OCI_MANIFEST (versioned))
-        {
-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Can't open child manifest");
-          return G_DBUS_METHOD_INVOCATION_HANDLED;
-        }
-
-      image_config = flatpak_oci_registry_load_image_config (registry, NULL,
-                                                             FLATPAK_OCI_MANIFEST (versioned)->config.digest,
-                                                             (const char **)FLATPAK_OCI_MANIFEST (versioned)->config.urls,
-                                                             NULL, NULL, &error);
-      if (image_config == NULL)
-        {
-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Can't open child image config");
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
@@ -622,15 +583,17 @@ handle_deploy (FlatpakSystemHelper   *object,
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
-      if (!g_str_has_prefix (desc->parent.digest, "sha256:") ||
-          strcmp (desc->parent.digest + strlen ("sha256:"), verified_digest) != 0)
+      image_source_digest = flatpak_image_source_get_digest (image_source);
+
+      if (!g_str_has_prefix (image_source_digest, "sha256:") ||
+          strcmp (image_source_digest + strlen ("sha256:"), verified_digest) != 0)
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
                                                  "%s: manifest hash in downloaded content does not match ref %s", arg_origin, arg_ref);
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
-      checksum = flatpak_pull_from_oci (flatpak_dir_get_repo (system), registry, NULL, desc->parent.digest, NULL, FLATPAK_OCI_MANIFEST (versioned), image_config,
+      checksum = flatpak_pull_from_oci (flatpak_dir_get_repo (system), image_source, NULL,
                                         arg_origin, arg_ref, FLATPAK_PULL_FLAGS_NONE, NULL, NULL, NULL, &error);
       if (checksum == NULL)
         {
