@@ -28,6 +28,7 @@
 
 #include <archive.h>
 #include <gpgme.h>
+#include "flatpak-image-source-private.h"
 #include "flatpak-oci-registry-private.h"
 #include "flatpak-repo-utils-private.h"
 #include "flatpak-utils-base-private.h"
@@ -3454,9 +3455,7 @@ oci_layer_progress (guint64  downloaded_bytes,
 
 gboolean
 flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
-                               FlatpakOciRegistry    *registry,
-                               const char            *oci_repository,
-                               const char            *digest,
+                               FlatpakImageSource    *image_source,
                                const char            *remote,
                                const char            *ref,
                                const char            *delta_url,
@@ -3467,8 +3466,11 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
                                GError               **error)
 {
   FlatpakOciPullProgressData progress_data = { progress_cb, progress_user_data };
-  g_autoptr(FlatpakOciVersioned) versioned = NULL;
-  FlatpakOciManifest *manifest = NULL;
+  FlatpakOciRegistry *registry = flatpak_image_source_get_registry (image_source);
+  const char *oci_repository = flatpak_image_source_get_oci_repository (image_source);
+  const char *digest = flatpak_image_source_get_digest (image_source);
+  FlatpakOciManifest *manifest = flatpak_image_source_get_manifest (image_source);
+  FlatpakOciImage *image_config = flatpak_image_source_get_image_config (image_source);
   g_autoptr(FlatpakOciDescriptor) manifest_desc = NULL;
   g_autoptr(FlatpakOciManifest) delta_manifest = NULL;
   g_autofree char *old_checksum = NULL;
@@ -3476,34 +3478,14 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
   g_autoptr(GFile) old_root = NULL;
   OstreeRepoCommitState old_state = 0;
   g_autofree char *old_diffid = NULL;
-  gsize versioned_size;
   g_autoptr(FlatpakOciIndex) index = NULL;
-  g_autoptr(FlatpakOciImage) image_config = NULL;
   int n_layers;
   int i;
 
   if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, oci_repository, TRUE, digest, NULL, NULL, NULL, cancellable, error))
     return FALSE;
 
-  versioned = flatpak_oci_registry_load_versioned (dst_registry, NULL, digest, NULL, &versioned_size, cancellable, error);
-  if (versioned == NULL)
-    return FALSE;
-
-  if (!FLATPAK_IS_OCI_MANIFEST (versioned))
-    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Image is not a manifest"));
-
-  manifest = FLATPAK_OCI_MANIFEST (versioned);
-
-  if (manifest->config.digest == NULL)
-    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Image is not a manifest"));
-
   if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, oci_repository, FALSE, manifest->config.digest, (const char **)manifest->config.urls, NULL, NULL, cancellable, error))
-    return FALSE;
-
-  image_config = flatpak_oci_registry_load_image_config (dst_registry, NULL,
-                                                         manifest->config.digest, NULL,
-                                                         NULL, cancellable, error);
-  if (image_config == NULL)
     return FALSE;
 
   /* For deltas we ensure that the diffid and regular layers exists and match up */
@@ -3589,7 +3571,8 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
   if (index == NULL)
     index = flatpak_oci_index_new ();
 
-  manifest_desc = flatpak_oci_descriptor_new (versioned->mediatype, digest, versioned_size);
+  manifest_desc = flatpak_oci_descriptor_new (manifest->parent.mediatype, digest,
+                                              flatpak_image_source_get_manifest_size (image_source));
 
   flatpak_oci_index_add_manifest (index, ref, manifest_desc);
 
@@ -3601,12 +3584,8 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
 
 char *
 flatpak_pull_from_oci (OstreeRepo            *repo,
-                       FlatpakOciRegistry    *registry,
-                       const char            *oci_repository,
-                       const char            *digest,
+                       FlatpakImageSource    *image_source,
                        const char            *delta_url,
-                       FlatpakOciManifest    *manifest,
-                       FlatpakOciImage       *image_config,
                        const char            *remote,
                        const char            *ref,
                        FlatpakPullFlags       flags,
@@ -3615,6 +3594,11 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
                        GCancellable          *cancellable,
                        GError               **error)
 {
+  FlatpakOciRegistry *registry = flatpak_image_source_get_registry (image_source);
+  const char *oci_repository = flatpak_image_source_get_oci_repository (image_source);
+  const char *digest = flatpak_image_source_get_digest (image_source);
+  FlatpakOciManifest *manifest = flatpak_image_source_get_manifest (image_source);
+  FlatpakOciImage *image_config = flatpak_image_source_get_image_config (image_source);
   gboolean force_disable_deltas = (flags & FLATPAK_PULL_FLAGS_NO_STATIC_DELTAS) != 0;
   g_autoptr(OstreeMutableTree) archive_mtree = NULL;
   g_autoptr(GFile) archive_root = NULL;
