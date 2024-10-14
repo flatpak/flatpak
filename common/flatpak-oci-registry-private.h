@@ -183,6 +183,29 @@ GBytes *flatpak_oci_index_make_appstream (FlatpakHttpSession  *http_session,
                                           GCancellable        *cancellable,
                                           GError             **error);
 
+
+FlatpakOciImageSource *flatpak_oci_image_source_new_local (GFile        *file,
+                                                           const char   *reference,
+                                                           GCancellable *cancellable,
+                                                           GError      **error);
+FlatpakOciImageSource *flatpak_oci_image_source_new_remote (const char   *uri,
+                                                            const char   *oci_repository,
+                                                            const char   *digest,
+                                                            GCancellable *cancellable,
+                                                            GError      **error);
+
+void flatpak_oci_image_source_free (FlatpakOciImageSource *self);
+
+void flatpak_oci_image_source_set_token (FlatpakOciImageSource *self,
+                                         const char            *token);
+
+FlatpakOciRegistry *flatpak_oci_image_source_get_registry (FlatpakOciImageSource *self);
+const char *flatpak_oci_image_source_get_digest (FlatpakOciImageSource *self);
+
+GHashTable *flatpak_oci_image_source_get_labels (FlatpakOciImageSource *self);
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakOciImageSource, flatpak_oci_image_source_free);
+
 typedef void (*FlatpakOciPullProgress) (guint64  total_size,
                                         guint64  pulled_size,
                                         guint32  n_layers,
@@ -190,12 +213,8 @@ typedef void (*FlatpakOciPullProgress) (guint64  total_size,
                                         gpointer data);
 
 char * flatpak_pull_from_oci (OstreeRepo            *repo,
-                              FlatpakOciRegistry    *registry,
-                              const char            *oci_repository,
-                              const char            *digest,
+                              FlatpakOciImageSource *image_source,
                               const char            *delta_url,
-                              FlatpakOciManifest    *manifest,
-                              FlatpakOciImage       *image_config,
                               const char            *remote,
                               const char            *ref,
                               FlatpakPullFlags       flags,
@@ -205,9 +224,7 @@ char * flatpak_pull_from_oci (OstreeRepo            *repo,
                               GError               **error);
 
 gboolean flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
-                                        FlatpakOciRegistry    *registry,
-                                        const char            *oci_repository,
-                                        const char            *digest,
+                                        FlatpakOciImageSource *image_source,
                                         const char            *remote,
                                         const char            *ref,
                                         const char            *delta_url,

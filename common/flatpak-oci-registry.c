@@ -3389,6 +3389,150 @@ flatpak_oci_index_make_appstream (FlatpakHttpSession *http_session,
   return g_steal_pointer (&bytes);
 }
 
+struct FlatpakOciImageSource
+{
+  FlatpakOciRegistry *registry;
+  char *repository;
+  char *digest;
+
+  FlatpakOciManifest *manifest;
+  gsize manifest_size;
+  FlatpakOciImage *image_config;
+};
+
+static FlatpakOciImageSource *
+flatpak_oci_image_source_new (FlatpakOciRegistry *registry,
+                              const char         *repository,
+                              const char         *digest,
+                              GCancellable       *cancellable,
+                              GError            **error)
+{
+  g_autoptr(FlatpakOciImageSource) self = NULL;
+  g_autoptr(FlatpakOciVersioned) versioned = NULL;
+
+  self = g_new0 (FlatpakOciImageSource, 1);
+  self->registry = g_object_ref (registry);
+  self->repository = g_strdup (repository);
+  self->digest = g_strdup (digest);
+
+  versioned = flatpak_oci_registry_load_versioned (self->registry, self->repository,
+                                                   self->digest, NULL, &self->manifest_size,
+                                                   cancellable, error);
+  if (versioned == NULL)
+    return NULL;
+
+  if (!FLATPAK_IS_OCI_MANIFEST (versioned))
+    {
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Image is not a manifest"));
+      return NULL;
+    }
+
+  self->manifest = FLATPAK_OCI_MANIFEST (g_steal_pointer (&versioned));
+
+  self->image_config = flatpak_oci_registry_load_image_config (self->registry, self->repository,
+                                                                self->manifest->config.digest, NULL,
+                                                                NULL, cancellable, error);
+  if (self->image_config == NULL)
+    return NULL;
+
+  return g_steal_pointer (&self);
+}
+
+FlatpakOciImageSource *
+flatpak_oci_image_source_new_local (GFile        *file,
+                                    const char   *reference,
+                                    GCancellable *cancellable,
+                                    GError      **error)
+{
+  g_autofree char *dir_uri = NULL;
+  g_autofree char *target_ref = NULL;
+  g_autoptr(FlatpakOciImageSource) image_source = NULL;
+  g_autoptr(FlatpakOciRegistry) registry = NULL;
+  g_autoptr(FlatpakOciIndex) index = NULL;
+  const FlatpakOciManifestDescriptor *desc;
+
+  dir_uri = g_file_get_uri (file);
+  registry = flatpak_oci_registry_new (dir_uri, FALSE, -1, cancellable, error);
+  if (registry == NULL)
+    return NULL;
+
+  index = flatpak_oci_registry_load_index (registry, cancellable, error);
+  if (index == NULL)
+    return NULL;
+
+  if (reference)
+    {
+      desc = flatpak_oci_index_get_manifest (index, reference);
+      if (desc == NULL)
+        {
+          flatpak_fail (error, _("Ref '%s' not found in registry"), reference);
+          return NULL;
+        }
+    }
+  else
+    {
+      desc = flatpak_oci_index_get_only_manifest (index);
+      if (desc == NULL)
+        {
+          flatpak_fail (error, _("Multiple images in registry, specify a ref with --ref"));
+          return NULL;
+        }
+    }
+
+  return flatpak_oci_image_source_new (registry, NULL, desc->parent.digest, cancellable, error);
+}
+
+FlatpakOciImageSource *
+flatpak_oci_image_source_new_remote (const char   *uri,
+                                     const char   *oci_repository,
+                                     const char   *digest,
+                                     GCancellable *cancellable,
+                                     GError      **error)
+{
+  g_autoptr(FlatpakOciRegistry) registry = NULL;
+
+  registry = flatpak_oci_registry_new (uri, FALSE, -1, cancellable, error);
+  if (!registry)
+    return NULL;
+
+  return flatpak_oci_image_source_new (registry, oci_repository, digest, cancellable, error);
+}
+
+void
+flatpak_oci_image_source_free (FlatpakOciImageSource *self)
+{
+  g_clear_object (&self->registry);
+  g_free (self->repository);
+  g_free (self->digest);
+  g_clear_object (&self->manifest);
+  g_clear_object (&self->image_config);
+}
+
+void
+flatpak_oci_image_source_set_token (FlatpakOciImageSource *self,
+                                    const char            *token)
+{
+  flatpak_oci_registry_set_token (self->registry, token);
+}
+
+FlatpakOciRegistry *
+flatpak_oci_image_source_get_registry (FlatpakOciImageSource *self)
+{
+  return self->registry;
+}
+
+const char *
+flatpak_oci_image_source_get_digest (FlatpakOciImageSource *self)
+{
+  return self->digest;
+}
+
+GHashTable *
+flatpak_oci_image_source_get_labels (FlatpakOciImageSource *self)
+{
+  return flatpak_oci_image_get_labels (self->image_config);
+}
+
 typedef struct
 {
   FlatpakOciPullProgress progress_cb;
@@ -3413,9 +3557,7 @@ oci_layer_progress (guint64  downloaded_bytes,
 
 gboolean
 flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
-                               FlatpakOciRegistry    *registry,
-                               const char            *oci_repository,
-                               const char            *digest,
+                               FlatpakOciImageSource *image_source,
                                const char            *remote,
                                const char            *ref,
                                const char            *delta_url,
@@ -3426,8 +3568,11 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
                                GError               **error)
 {
   FlatpakOciPullProgressData progress_data = { progress_cb, progress_user_data };
-  g_autoptr(FlatpakOciVersioned) versioned = NULL;
-  FlatpakOciManifest *manifest = NULL;
+  FlatpakOciRegistry *registry = image_source->registry;
+  const char *oci_repository = image_source->repository;
+  const char *digest = image_source->digest;
+  FlatpakOciManifest *manifest = image_source->manifest;
+  FlatpakOciImage *image_config = image_source->image_config;
   g_autoptr(FlatpakOciDescriptor) manifest_desc = NULL;
   g_autoptr(FlatpakOciManifest) delta_manifest = NULL;
   g_autofree char *old_checksum = NULL;
@@ -3435,34 +3580,14 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
   g_autoptr(GFile) old_root = NULL;
   OstreeRepoCommitState old_state = 0;
   g_autofree char *old_diffid = NULL;
-  gsize versioned_size;
   g_autoptr(FlatpakOciIndex) index = NULL;
-  g_autoptr(FlatpakOciImage) image_config = NULL;
   int n_layers;
   int i;
 
   if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, oci_repository, TRUE, digest, NULL, NULL, NULL, cancellable, error))
     return FALSE;
 
-  versioned = flatpak_oci_registry_load_versioned (dst_registry, NULL, digest, NULL, &versioned_size, cancellable, error);
-  if (versioned == NULL)
-    return FALSE;
-
-  if (!FLATPAK_IS_OCI_MANIFEST (versioned))
-    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Image is not a manifest"));
-
-  manifest = FLATPAK_OCI_MANIFEST (versioned);
-
-  if (manifest->config.digest == NULL)
-    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Image is not a manifest"));
-
   if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, oci_repository, FALSE, manifest->config.digest, (const char **)manifest->config.urls, NULL, NULL, cancellable, error))
-    return FALSE;
-
-  image_config = flatpak_oci_registry_load_image_config (dst_registry, NULL,
-                                                         manifest->config.digest, NULL,
-                                                         NULL, cancellable, error);
-  if (image_config == NULL)
     return FALSE;
 
   /* For deltas we ensure that the diffid and regular layers exists and match up */
@@ -3548,7 +3673,7 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
   if (index == NULL)
     index = flatpak_oci_index_new ();
 
-  manifest_desc = flatpak_oci_descriptor_new (versioned->mediatype, digest, versioned_size);
+  manifest_desc = flatpak_oci_descriptor_new (manifest->parent.mediatype, digest, image_source->manifest_size);
 
   flatpak_oci_index_add_manifest (index, ref, manifest_desc);
 
@@ -3560,12 +3685,8 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
 
 char *
 flatpak_pull_from_oci (OstreeRepo            *repo,
-                       FlatpakOciRegistry    *registry,
-                       const char            *oci_repository,
-                       const char            *digest,
+                       FlatpakOciImageSource *image_source,
                        const char            *delta_url,
-                       FlatpakOciManifest    *manifest,
-                       FlatpakOciImage       *image_config,
                        const char            *remote,
                        const char            *ref,
                        FlatpakPullFlags       flags,
@@ -3574,6 +3695,11 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
                        GCancellable          *cancellable,
                        GError               **error)
 {
+  FlatpakOciRegistry *registry = image_source->registry;
+  const char *oci_repository = image_source->repository;
+  const char *digest = image_source->digest;
+  FlatpakOciManifest *manifest = image_source->manifest;
+  FlatpakOciImage *image_config = image_source->image_config;
   gboolean force_disable_deltas = (flags & FLATPAK_PULL_FLAGS_NO_STATIC_DELTAS) != 0;
   g_autoptr(OstreeMutableTree) archive_mtree = NULL;
   g_autoptr(GFile) archive_root = NULL;
