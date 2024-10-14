@@ -30,9 +30,10 @@
 #include "libglnx.h"
 
 #include "flatpak-builtins.h"
+#include "flatpak-image-source-private.h"
+#include "flatpak-oci-registry-private.h"
 #include "flatpak-repo-utils-private.h"
 #include "flatpak-utils-private.h"
-#include "flatpak-oci-registry-private.h"
 
 static char *opt_ref;
 static gboolean opt_oci = FALSE;
@@ -58,65 +59,17 @@ import_oci (OstreeRepo *repo, GFile *file,
             GCancellable *cancellable, GError **error)
 {
   g_autofree char *commit_checksum = NULL;
-  g_autofree char *dir_uri = NULL;
   g_autofree char *target_ref = NULL;
-  const char *oci_digest;
-  g_autoptr(FlatpakOciRegistry) registry = NULL;
-  g_autoptr(FlatpakOciVersioned) versioned = NULL;
-  g_autoptr(FlatpakOciImage) image_config = NULL;
-  FlatpakOciManifest *manifest = NULL;
-  g_autoptr(FlatpakOciIndex) index = NULL;
-  const FlatpakOciManifestDescriptor *desc;
+  g_autoptr(FlatpakImageSource) image_source = NULL;
   GHashTable *labels;
 
-  dir_uri = g_file_get_uri (file);
-  registry = flatpak_oci_registry_new (dir_uri, FALSE, -1, cancellable, error);
-  if (registry == NULL)
+  image_source = flatpak_image_source_new_local (file, opt_ref, cancellable, error);
+  if (image_source == NULL)
     return NULL;
 
-  index = flatpak_oci_registry_load_index (registry, cancellable, error);
-  if (index == NULL)
-    return NULL;
-
-  if (opt_ref)
-    {
-      desc = flatpak_oci_index_get_manifest (index, opt_ref);
-      if (desc == NULL)
-        {
-          flatpak_fail (error, _("Ref '%s' not found in registry"), opt_ref);
-          return NULL;
-        }
-    }
-  else
-    {
-      desc = flatpak_oci_index_get_only_manifest (index);
-      if (desc == NULL)
-        {
-          flatpak_fail (error, _("Multiple images in registry, specify a ref with --ref"));
-          return NULL;
-        }
-    }
-
-  oci_digest = desc->parent.digest;
-
-  versioned = flatpak_oci_registry_load_versioned (registry, NULL,
-                                                   oci_digest, NULL, NULL,
-                                                   cancellable, error);
-  if (versioned == NULL)
-    return NULL;
-
-  manifest = FLATPAK_OCI_MANIFEST (versioned);
-
-  image_config = flatpak_oci_registry_load_image_config (registry, NULL,
-                                                         manifest->config.digest, NULL,
-                                                         NULL, cancellable, error);
-  if (image_config == NULL)
-    return FALSE;
-
-  labels = flatpak_oci_image_get_labels (image_config);
-  if (labels)
-    flatpak_oci_parse_commit_labels (labels, NULL, NULL, NULL,
-                                     &target_ref, NULL, NULL, NULL);
+  labels = flatpak_image_source_get_labels (image_source);
+  flatpak_oci_parse_commit_labels (labels, NULL, NULL, NULL,
+                                   &target_ref, NULL, NULL, NULL);
   if (target_ref == NULL)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
@@ -124,7 +77,7 @@ import_oci (OstreeRepo *repo, GFile *file,
       return NULL;
     }
 
-  commit_checksum = flatpak_pull_from_oci (repo, registry, NULL, oci_digest, NULL, manifest, image_config,
+  commit_checksum = flatpak_pull_from_oci (repo, image_source, NULL,
                                            NULL, target_ref, FLATPAK_PULL_FLAGS_NONE, NULL, NULL, cancellable, error);
   if (commit_checksum == NULL)
     return NULL;
