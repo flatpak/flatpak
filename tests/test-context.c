@@ -501,6 +501,67 @@ test_validate_path_meta (void)
 
 }
 
+static void
+test_devices (void)
+{
+  const char *devices_str[] = {
+    "all",
+    "!dri",
+    "input",
+    "!if:all:has-input-device",
+  };
+  int i;
+  GPtrArray *conditionals;
+  FlatpakContextDevices devices;
+  g_autoptr(GKeyFile) metakey = NULL;
+  g_autoptr(GError) local_error = NULL;
+  g_autofree char *saved_devices = NULL;
+  g_autoptr(FlatpakContext) context = flatpak_context_new ();
+
+  for (i = 0; i < G_N_ELEMENTS (devices_str); i++)
+    flatpak_context_load_device (context, devices_str[i]);
+
+  g_assert_cmpint (context->devices_valid, ==,
+                   FLATPAK_CONTEXT_DEVICE_ALL |
+                   FLATPAK_CONTEXT_DEVICE_DRI |
+                   FLATPAK_CONTEXT_DEVICE_INPUT);
+  g_assert_cmpint (context->devices, ==,
+                   FLATPAK_CONTEXT_DEVICE_ALL |
+                   FLATPAK_CONTEXT_DEVICE_INPUT);
+
+  conditionals = g_hash_table_lookup (context->conditional_devices,
+                                      GINT_TO_POINTER (FLATPAK_CONTEXT_DEVICE_ALL));
+  g_assert_nonnull (conditionals);
+  g_assert_cmpuint (conditionals->len, ==, 1);
+  g_assert_cmpstr ((const char *)conditionals->pdata[0], ==, "has-input-device");
+
+  devices = flatpak_context_compute_allowed_devices (context, NULL);
+  g_assert_cmpint (devices, ==, FLATPAK_CONTEXT_DEVICE_INPUT);
+
+  flatpak_context_load_device (context, "!if:all:false");
+
+  conditionals = g_hash_table_lookup (context->conditional_devices,
+                                      GINT_TO_POINTER (FLATPAK_CONTEXT_DEVICE_ALL));
+  g_assert_nonnull (conditionals);
+  g_assert_cmpuint (conditionals->len, ==, 2);
+  g_assert_cmpstr ((const char *)conditionals->pdata[0], ==, "false");
+  g_assert_cmpstr ((const char *)conditionals->pdata[1], ==, "has-input-device");
+
+  devices = flatpak_context_compute_allowed_devices (context, NULL);
+  g_assert_cmpint (devices, ==,
+                   FLATPAK_CONTEXT_DEVICE_ALL |
+                   FLATPAK_CONTEXT_DEVICE_INPUT);
+
+  metakey = g_key_file_new ();
+  flatpak_context_save_metadata (context, FALSE, metakey);
+  saved_devices = g_key_file_get_value (metakey,
+					FLATPAK_METADATA_GROUP_CONTEXT,
+					FLATPAK_METADATA_KEY_DEVICES,
+					&local_error);
+  g_assert_cmpstr (saved_devices, ==,
+                   "!dri;all;input;!if:all:false:has-input-device;");
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -511,6 +572,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/context/merge-fs", test_context_merge_fs);
   g_test_add_func ("/context/validate-path-args", test_validate_path_args);
   g_test_add_func ("/context/validate-path-meta", test_validate_path_meta);
+  g_test_add_func ("/context/devices", test_devices);
 
   return g_test_run ();
 }
