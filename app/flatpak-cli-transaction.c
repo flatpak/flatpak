@@ -405,6 +405,7 @@ new_operation (FlatpakTransaction          *transaction,
   switch (op_type)
     {
     case FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE:
+    case FLATPAK_TRANSACTION_OPERATION_INSTALL_IMAGE:
     case FLATPAK_TRANSACTION_OPERATION_INSTALL:
       if (self->n_ops == 1)
         text = g_strdup (_("Installing…"));
@@ -578,6 +579,13 @@ operation_error (FlatpakTransaction            *transaction,
             g_propagate_prefixed_error (&self->first_operation_error,
                                         g_error_copy (error),
                                         _("Failed to install bundle %s%s%s: "),
+                                        on, flatpak_ref_get_name (rref), off);
+            break;
+
+          case FLATPAK_TRANSACTION_OPERATION_INSTALL_IMAGE:
+            g_propagate_prefixed_error (&self->first_operation_error,
+                                        g_error_copy (error),
+                                        _("Failed to install image %s%s%s: "),
                                         on, flatpak_ref_get_name (rref), off);
             break;
 
@@ -1349,7 +1357,7 @@ transaction_ready_pre_auth (FlatpakTransaction *transaction)
   GList *l;
   int i;
   FlatpakTablePrinter *printer;
-  const char *op_shorthand[] = { "i", "u", "i", "r" };
+  const char *op_shorthand[] = { "i", "u", "i", "r", "i" };
 
   /* These caches may no longer be valid once the transaction runs */
   g_clear_pointer (&self->runtime_app_map, g_hash_table_unref);
@@ -1373,6 +1381,7 @@ transaction_ready_pre_auth (FlatpakTransaction *transaction)
 
         case FLATPAK_TRANSACTION_OPERATION_INSTALL:
         case FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE:
+        case FLATPAK_TRANSACTION_OPERATION_INSTALL_IMAGE:
           self->installing = TRUE;
           break;
 
@@ -1392,6 +1401,7 @@ transaction_ready_pre_auth (FlatpakTransaction *transaction)
 
       if (type == FLATPAK_TRANSACTION_OPERATION_INSTALL ||
           type == FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE ||
+          type == FLATPAK_TRANSACTION_OPERATION_INSTALL_IMAGE ||
           type == FLATPAK_TRANSACTION_OPERATION_UPDATE)
         {
           const char *ref = flatpak_transaction_operation_get_ref (op);
@@ -1469,6 +1479,7 @@ transaction_ready_pre_auth (FlatpakTransaction *transaction)
 
       if (type == FLATPAK_TRANSACTION_OPERATION_INSTALL ||
           type == FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE ||
+          type == FLATPAK_TRANSACTION_OPERATION_INSTALL_IMAGE ||
           type == FLATPAK_TRANSACTION_OPERATION_UPDATE)
         {
           guint64 download_size;

@@ -194,6 +194,10 @@ FlatpakOciImageSource *flatpak_oci_image_source_new_remote (const char   *uri,
                                                             GCancellable *cancellable,
                                                             GError      **error);
 
+FlatpakOciImageSource *flatpak_oci_image_source_new_for_location (const char *location,
+                                                                  GCancellable *cancellable,
+                                                                  GError      **error);
+
 void flatpak_oci_image_source_free (FlatpakOciImageSource *self);
 
 void flatpak_oci_image_source_set_token (FlatpakOciImageSource *self,

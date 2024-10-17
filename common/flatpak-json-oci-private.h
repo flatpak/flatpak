@@ -166,8 +166,10 @@ gboolean                      flatpak_oci_index_remove_manifest (FlatpakOciIndex
 FlatpakOciManifestDescriptor *flatpak_oci_index_get_manifest (FlatpakOciIndex *self,
                                                               const char      *ref);
 FlatpakOciManifestDescriptor *flatpak_oci_index_get_only_manifest (FlatpakOciIndex *self);
-int                           flatpak_oci_index_get_n_manifests (FlatpakOciIndex *self);
+FlatpakOciManifestDescriptor *flatpak_oci_index_get_manifest_for_arch (FlatpakOciIndex *self,
+                                                                       const char      *oci_arch);
 
+int                           flatpak_oci_index_get_n_manifests (FlatpakOciIndex *self);
 /* Only useful for delta index */
 FlatpakOciDescriptor *flatpak_oci_index_find_delta_for (FlatpakOciIndex *delta_index,
                                                         const char      *for_digest);

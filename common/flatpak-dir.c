@@ -10366,6 +10366,66 @@ flatpak_dir_install_bundle (FlatpakDir         *self,
   return TRUE;
 }
 
+gboolean
+flatpak_dir_install_image (FlatpakDir            *self,
+                           const char            *remote,
+                           FlatpakOciImageSource *image_source,
+                           FlatpakDecomposed     *ref,
+                           GBytes                *metadata,
+                           FlatpakProgress       *progress,
+                           GCancellable          *cancellable,
+                           GError               **error)
+{
+  g_autoptr(GBytes) deploy_data = NULL;
+  g_autofree char *checksum = NULL;
+
+  if (flatpak_dir_use_system_helper (self, NULL))
+    {
+      return flatpak_fail_error (error, FLATPAK_ERROR_DOWNGRADE,
+                                 _("Installing OCI image system-wide requires root permissions"));
+    }
+
+  if (!flatpak_dir_ensure_repo (self, cancellable, error))
+    return FALSE;
+
+  deploy_data = flatpak_dir_get_deploy_data (self, ref, FLATPAK_DEPLOY_VERSION_ANY, cancellable, NULL);
+  if (deploy_data != NULL)
+    {
+      if (strcmp (remote, flatpak_deploy_data_get_origin (deploy_data)) != 0)
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                       _("Can't change remote during image install"));
+          return FALSE;
+        }
+    }
+
+  checksum = flatpak_pull_from_oci (self->repo, image_source, NULL,
+                                    remote, flatpak_decomposed_get_ref (ref),
+                                    FLATPAK_PULL_FLAGS_NONE,
+                                    oci_pull_progress_cb, progress,
+                                    cancellable, error);
+  if (checksum == NULL)
+    return FALSE;
+
+  /* When installing a bundle and re-using an origin remote, if the
+   * origin of the new bundle is non-NULL and different from that
+   * for the origin remote, we rewrite it. But OCI images don't have
+   * an "origin" stored in them, so there's nothing to do here. */
+
+  if (deploy_data)
+    {
+      if (!flatpak_dir_deploy_update (self, ref, NULL, NULL, NULL, cancellable, error))
+        return FALSE;
+    }
+  else
+    {
+      if (!flatpak_dir_deploy_install (self, ref, remote, NULL, NULL, FALSE, FALSE, cancellable, error))
+        return FALSE;
+    }
+
+  return TRUE;
+}
+
 static gboolean
 _g_strv_equal0 (const char * const *a, const char * const *b)
 {

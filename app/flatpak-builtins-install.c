@@ -56,6 +56,7 @@ static gboolean opt_include_sdk;
 static gboolean opt_include_debug;
 static gboolean opt_bundle;
 static gboolean opt_from;
+static gboolean opt_image;
 static gboolean opt_yes;
 static gboolean opt_reinstall;
 static gboolean opt_noninteractive;
@@ -76,6 +77,7 @@ static GOptionEntry options[] = {
   { "include-debug", 0, 0, G_OPTION_ARG_NONE, &opt_include_debug, N_("Additionally install the debug info for the given refs and their dependencies") },
   { "bundle", 0, 0, G_OPTION_ARG_NONE, &opt_bundle, N_("Assume LOCATION is a .flatpak single-file bundle"), NULL },
   { "from", 0, 0, G_OPTION_ARG_NONE, &opt_from, N_("Assume LOCATION is a .flatpakref application description"), NULL },
+  { "image", 0, 0, G_OPTION_ARG_NONE, &opt_image, N_("Assume LOCATION is a OCI image"), NULL },
   { "gpg-file", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_file, N_("Check bundle signatures with GPG key from FILE (- for stdin)"), N_("FILE") },
   { "subpath", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_subpaths, N_("Only install this subpath"), N_("PATH") },
   { "assumeyes", 'y', 0, G_OPTION_ARG_NONE, &opt_yes, N_("Automatically answer yes for all questions"), NULL },
@@ -276,6 +278,68 @@ install_from (FlatpakDir *dir,
   return TRUE;
 }
 
+static gboolean
+install_image (FlatpakDir *dir,
+               GOptionContext *context,
+               int argc, char **argv,
+               GCancellable *cancellable,
+               GError **error)
+{
+  g_autoptr(GFile) file = NULL;
+  const char *location;
+  g_autoptr(GBytes) gpg_data = NULL;
+  g_autoptr(FlatpakTransaction) transaction = NULL;
+
+  if (argc < 2)
+    return usage_error (context, _("Image location must be specified"), error);
+
+  if (argc > 2)
+    return usage_error (context, _("Too many arguments"), error);
+
+  location = argv[1];
+
+  if (opt_gpg_file != NULL)
+    {
+      /* Override gpg_data from file */
+      gpg_data = read_gpg_data (cancellable, error);
+      if (gpg_data == NULL)
+        return FALSE;
+    }
+
+  if (opt_noninteractive)
+    transaction = flatpak_quiet_transaction_new (dir, error);
+  else
+    transaction = flatpak_cli_transaction_new (dir, opt_yes, TRUE, opt_arch != NULL, error);
+  if (transaction == NULL)
+    return FALSE;
+
+  flatpak_transaction_set_no_pull (transaction, opt_no_pull);
+  flatpak_transaction_set_no_deploy (transaction, opt_no_deploy);
+  flatpak_transaction_set_disable_static_deltas (transaction, opt_no_static_deltas);
+  flatpak_transaction_set_disable_dependencies (transaction, opt_no_deps);
+  flatpak_transaction_set_disable_related (transaction, opt_no_related);
+  flatpak_transaction_set_disable_auto_pin (transaction, opt_no_auto_pin);
+  flatpak_transaction_set_reinstall (transaction, opt_reinstall);
+  flatpak_transaction_set_auto_install_sdk (transaction, opt_include_sdk);
+  flatpak_transaction_set_auto_install_debug (transaction, opt_include_debug);
+
+  for (int i = 0; opt_sideload_repos != NULL && opt_sideload_repos[i] != NULL; i++)
+    flatpak_transaction_add_sideload_repo (transaction, opt_sideload_repos[i]);
+
+  if (!flatpak_transaction_add_install_image (transaction, location, error))
+    return FALSE;
+
+  if (!flatpak_transaction_run (transaction, cancellable, error))
+    {
+      if (g_error_matches (*error, FLATPAK_ERROR, FLATPAK_ERROR_ABORTED))
+        g_clear_error (error); /* Don't report on stderr */
+
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
 gboolean
 flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
@@ -304,12 +368,20 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   /* Start with the default or specified dir, this is fine for opt_bundle or opt_from */
   dir = g_object_ref (g_ptr_array_index (dirs, 0));
 
-  if (!opt_bundle && !opt_from && argc >= 2)
+  if (!opt_bundle && !opt_from && !opt_image && argc >= 2)
     {
-      if (flatpak_file_arg_has_suffix (argv[1], ".flatpakref"))
-        opt_from = TRUE;
-      if (flatpak_file_arg_has_suffix (argv[1], ".flatpak"))
-        opt_bundle = TRUE;
+      if (g_str_has_prefix (argv[1], "oci:") ||
+          g_str_has_prefix (argv[1], "docker:"))
+        {
+          opt_image = TRUE;
+        }
+      else
+        {
+          if (flatpak_file_arg_has_suffix (argv[1], ".flatpakref"))
+            opt_from = TRUE;
+          if (flatpak_file_arg_has_suffix (argv[1], ".flatpak"))
+            opt_bundle = TRUE;
+        }
     }
 
   if (opt_bundle)
@@ -317,6 +389,9 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
 
   if (opt_from)
     return install_from (dir, context, argc, argv, cancellable, error);
+
+  if (opt_image)
+    return install_image (dir, context, argc, argv, cancellable, error);
 
   if (argc < 2)
     return usage_error (context, _("At least one REF must be specified"), error);

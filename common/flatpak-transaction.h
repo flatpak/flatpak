@@ -49,6 +49,7 @@ typedef enum {
   FLATPAK_TRANSACTION_OPERATION_UPDATE,
   FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE,
   FLATPAK_TRANSACTION_OPERATION_UNINSTALL,
+  FLATPAK_TRANSACTION_OPERATION_INSTALL_IMAGE,
   FLATPAK_TRANSACTION_OPERATION_LAST_TYPE
 } FlatpakTransactionOperationType;
 
@@ -325,6 +326,10 @@ gboolean            flatpak_transaction_add_install_bundle (FlatpakTransaction *
                                                             GFile              *file,
                                                             GBytes             *gpg_data,
                                                             GError            **error);
+FLATPAK_EXTERN
+gboolean            flatpak_transaction_add_install_image (FlatpakTransaction *self,
+                                                           const char         *image_location,
+                                                           GError            **error);
 FLATPAK_EXTERN
 gboolean            flatpak_transaction_add_install_flatpakref (FlatpakTransaction *self,
                                                                 GBytes             *flatpakref_data,
