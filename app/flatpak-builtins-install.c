@@ -285,7 +285,6 @@ install_image (FlatpakDir *dir,
                GCancellable *cancellable,
                GError **error)
 {
-  g_autoptr(GFile) file = NULL;
   const char *location;
   g_autoptr(GBytes) gpg_data = NULL;
   g_autoptr(FlatpakTransaction) transaction = NULL;
@@ -371,6 +370,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   if (!opt_bundle && !opt_from && !opt_image && argc >= 2)
     {
       if (g_str_has_prefix (argv[1], "oci:") ||
+          g_str_has_prefix (argv[1], "oci-archive:") ||
           g_str_has_prefix (argv[1], "docker:"))
         {
           opt_image = TRUE;

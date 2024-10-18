@@ -27,6 +27,7 @@
 #include "libglnx.h"
 
 #include <archive.h>
+#include <archive_entry.h>
 #include <gpgme.h>
 #include "flatpak-docker-reference-private.h"
 #include "flatpak-oci-registry-private.h"
@@ -69,11 +70,13 @@ struct FlatpakOciRegistry
   gboolean valid;
   gboolean is_docker;
   char    *uri;
+  GFile   *archive;
   int      tmp_dfd;
   char    *token;
 
   /* Local repos */
   int dfd;
+  gboolean unlink_repo;
 
   /* Remote repos */
   FlatpakHttpSession *http_session;
@@ -89,6 +92,7 @@ enum {
   PROP_0,
 
   PROP_URI,
+  PROP_ARCHIVE,
   PROP_FOR_WRITE,
   PROP_TMP_DFD,
 };
@@ -116,11 +120,23 @@ flatpak_oci_registry_finalize (GObject *object)
 {
   FlatpakOciRegistry *self = FLATPAK_OCI_REGISTRY (object);
 
+  if (self->unlink_repo)
+    {
+      g_autoptr(GFile) file = g_file_new_for_uri (self->uri);
+      GError *local_error = NULL;
+      if (!glnx_shutil_rm_rf_at (AT_FDCWD, flatpak_file_get_path_cached (file), NULL, &local_error))
+        {
+          g_warning ("Can't remove %s: %s", flatpak_file_get_path_cached (file), local_error->message);
+          g_clear_error (&local_error);
+        }
+    }
+
   if (self->dfd != -1)
     close (self->dfd);
 
   g_clear_pointer (&self->http_session, flatpak_http_session_free);
   g_clear_pointer (&self->base_uri, g_uri_unref);
+  g_clear_object (&self->archive);
   g_free (self->uri);
   g_free (self->token);
 
@@ -141,10 +157,17 @@ flatpak_oci_registry_set_property (GObject      *object,
     case PROP_URI:
       /* Ensure the base uri ends with a / so relative urls work */
       uri = g_value_get_string (value);
-      if (g_str_has_suffix (uri, "/"))
-        self->uri = g_strdup (uri);
-      else
-        self->uri = g_strconcat (uri, "/", NULL);
+      if (uri)
+        {
+        if (g_str_has_suffix (uri, "/"))
+          self->uri = g_strdup (uri);
+        else
+          self->uri = g_strconcat (uri, "/", NULL);
+        }
+      break;
+
+    case PROP_ARCHIVE:
+      self->archive = g_value_dup_object (value);
       break;
 
     case PROP_FOR_WRITE:
@@ -173,6 +196,10 @@ flatpak_oci_registry_get_property (GObject    *object,
     {
     case PROP_URI:
       g_value_set_string (value, self->uri);
+      break;
+
+    case PROP_ARCHIVE:
+      g_value_set_object (value, self->archive);
       break;
 
     case PROP_FOR_WRITE:
@@ -204,6 +231,13 @@ flatpak_oci_registry_class_init (FlatpakOciRegistryClass *klass)
                                                         "",
                                                         "",
                                                         NULL,
+                                                        G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
+  g_object_class_install_property (object_class,
+                                   PROP_ARCHIVE,
+                                   g_param_spec_object ("archive",
+                                                        "",
+                                                        "",
+                                                        G_TYPE_FILE,
                                                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
   g_object_class_install_property (object_class,
                                    PROP_TMP_DFD,
@@ -269,6 +303,21 @@ flatpak_oci_registry_new (const char   *uri,
                                  "uri", uri,
                                  "for-write", for_write,
                                  "tmp-dfd", tmp_dfd,
+                                 NULL);
+
+  return oci_registry;
+}
+
+FlatpakOciRegistry *
+flatpak_oci_registry_new_for_archive (GFile        *archive,
+                                      GCancellable *cancellable,
+                                      GError      **error)
+{
+  FlatpakOciRegistry *oci_registry;
+
+  oci_registry = g_initable_new (FLATPAK_TYPE_OCI_REGISTRY,
+                                 cancellable, error,
+                                 "archive", archive,
                                  NULL);
 
   return oci_registry;
@@ -456,13 +505,152 @@ verify_oci_version (GBytes *oci_layout_bytes, gboolean *not_json, GCancellable *
   return TRUE;
 }
 
+/*
+ * This is a small helper to handle cleanup for thetemporary directory
+ * we unpack an archive into. We can't use GLnxTmpDir for this because
+ * the dfd usage isn't compatible with the way we use archive_write_disk
+ */
+typedef struct
+{
+  gboolean unlink;
+  char *path;
+} TemporaryDirectory;
+
+static void
+temporary_directory_free (TemporaryDirectory *self)
+{
+  if (self->path && self->unlink)
+    glnx_shutil_rm_rf_at (AT_FDCWD, self->path, NULL, NULL);
+
+  g_free (self->path);
+  g_free (self);
+}
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (TemporaryDirectory, temporary_directory_free)
+
+static TemporaryDirectory *
+temporary_directory_new (GError **error)
+{
+  g_autoptr(TemporaryDirectory) self = g_new0 (TemporaryDirectory, 1);
+  self->path = g_dir_make_tmp ("oci-XXXXXX", error);
+  if (self->path == NULL)
+    return NULL;
+  self->unlink = TRUE;
+
+  return g_steal_pointer (&self);
+}
+
+/*
+ * Code to extract an archive such as a tarfile into a temporary directory
+ *
+ * Based on: https://github.com/libarchive/libarchive/wiki/Examples#A_Complete_Extractor
+ *
+ * We treat ARCHIVE_WARNING as fatal - while this might be too strict, it
+ * will avoid surprises.
+ */
+
+static gboolean
+propagate_libarchive_error (GError        **error,
+                            struct archive *a)
+{
+  g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+               "%s", archive_error_string (a));
+  return FALSE;
+}
+
+static gboolean
+copy_data (struct archive *ar,
+           struct archive *aw,
+           GError        **error)
+{
+  int r;
+  const void *buff;
+  size_t size;
+  gint64 offset;
+
+  while (TRUE)
+    {
+      r = archive_read_data_block(ar, &buff, &size, &offset);
+      if (r == ARCHIVE_EOF)
+        return TRUE;
+
+      if (r < ARCHIVE_OK)
+        return propagate_libarchive_error(error, ar);
+
+      r = archive_write_data_block(aw, buff, size, offset);
+      if (r < ARCHIVE_OK)
+        return propagate_libarchive_error(error, aw);
+    }
+}
+
+static gboolean
+unpack_archive (GFile      *archive,
+                char       *destination,
+                GError    **error)
+{
+  g_autoptr(FlatpakAutoArchiveRead) a = NULL;
+  g_autoptr(FlatpakAutoArchiveWrite) ext = NULL;
+  int flags;
+  int r;
+
+  flags = 0;
+  flags |= ARCHIVE_EXTRACT_SECURE_NODOTDOT;
+  flags |= ARCHIVE_EXTRACT_SECURE_SYMLINKS;
+
+  a = archive_read_new ();
+  archive_read_support_format_all (a);
+  archive_read_support_filter_all (a);
+
+  ext = archive_write_disk_new ();
+  archive_write_disk_set_options (ext, flags);
+  archive_write_disk_set_standard_lookup (ext);
+
+  if ((r = archive_read_open_filename (a, g_file_get_path(archive), 10240)))
+    return propagate_libarchive_error (error, a);
+
+  while (TRUE)
+    {
+      g_autofree char *target_path = NULL;
+      struct archive_entry *entry;
+
+      r = archive_read_next_header (a, &entry);
+      if (r == ARCHIVE_EOF)
+        break;
+
+      if (r != ARCHIVE_OK)
+        return propagate_libarchive_error (error, a);
+
+      target_path = g_build_filename (destination, archive_entry_pathname (entry), NULL);
+      archive_entry_set_pathname (entry, target_path);
+
+      r = archive_write_header (ext, entry);
+      if (r != ARCHIVE_OK)
+        return propagate_libarchive_error (error, a);
+
+      if (archive_entry_size (entry) > 0)
+        {
+          if (!copy_data(a, ext, error))
+            return FALSE;
+        }
+
+      r = archive_write_finish_entry(ext);
+      if (r != ARCHIVE_OK)
+        return propagate_libarchive_error (error, a);
+    }
+
+  archive_read_close (a);
+  archive_write_close (ext);
+
+  return TRUE;
+}
+
 static gboolean
 flatpak_oci_registry_ensure_local (FlatpakOciRegistry *self,
                                    gboolean            for_write,
                                    GCancellable       *cancellable,
                                    GError            **error)
 {
-  g_autoptr(GFile) dir = g_file_new_for_uri (self->uri);
+  g_autoptr(TemporaryDirectory) temporary_directory = NULL;
   glnx_autofd int local_dfd = -1;
   int dfd;
   g_autoptr(GError) local_error = NULL;
@@ -472,8 +660,25 @@ flatpak_oci_registry_ensure_local (FlatpakOciRegistry *self,
 
   if (self->dfd != -1)
     dfd = self->dfd;
+  else if (self->archive)
+    {
+      temporary_directory = temporary_directory_new (error);
+      if (!temporary_directory)
+        return FALSE;
+
+      if (!unpack_archive (self->archive, temporary_directory->path, error))
+        return FALSE;
+
+      if (!glnx_opendirat (AT_FDCWD, temporary_directory->path,
+                           TRUE, &local_dfd, error))
+        return FALSE;
+
+      dfd = local_dfd;
+    }
   else
     {
+      g_autoptr(GFile) dir = g_file_new_for_uri (self->uri);
+
       if (!glnx_opendirat (AT_FDCWD, flatpak_file_get_path_cached (dir),
                            TRUE, &local_dfd, &local_error))
         {
@@ -536,8 +741,18 @@ flatpak_oci_registry_ensure_local (FlatpakOciRegistry *self,
         self->token = g_strndup (g_bytes_get_data (token_bytes, NULL), g_bytes_get_size (token_bytes));
     }
 
-  if (self->dfd == -1 && local_dfd != -1)
-    self->dfd = g_steal_fd (&local_dfd);
+  if (self->dfd == -1)
+    {
+      self->dfd = g_steal_fd (&local_dfd);
+      if (temporary_directory)
+        {
+          g_clear_pointer (&self->uri, g_free);
+          self->uri = g_strdup_printf("file://%s/", temporary_directory->path);
+
+          temporary_directory->unlink = FALSE;
+          self->unlink_repo = TRUE;
+        }
+    }
 
   return TRUE;
 }
@@ -584,7 +799,7 @@ flatpak_oci_registry_initable_init (GInitable    *initable,
       !glnx_opendirat (AT_FDCWD, "/var/tmp", TRUE, &self->tmp_dfd, error))
     return FALSE;
 
-  if (g_str_has_prefix (self->uri, "file:/"))
+  if (self->archive || g_str_has_prefix (self->uri, "file:/"))
     res = flatpak_oci_registry_ensure_local (self, self->for_write, cancellable, error);
   else
     res = flatpak_oci_registry_ensure_remote (self, self->for_write, cancellable, error);
@@ -813,7 +1028,6 @@ flatpak_oci_registry_download_blob (FlatpakOciRegistry    *self,
           if (uri_s == NULL)
             return -1;
         }
-
 
       if (!flatpak_open_in_tmpdir_at (self->tmp_dfd, 0600, tmpfile_name,
                                       &out_stream, cancellable, error))
@@ -1311,15 +1525,6 @@ typedef struct
 } FlatpakOciLayerWriterClass;
 
 G_DEFINE_TYPE (FlatpakOciLayerWriter, flatpak_oci_layer_writer, G_TYPE_OBJECT)
-
-static gboolean
-propagate_libarchive_error (GError        **error,
-                            struct archive *a)
-{
-  g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-               "%s", archive_error_string (a));
-  return FALSE;
-}
 
 static void
 flatpak_oci_layer_writer_reset (FlatpakOciLayerWriter *self)
@@ -3399,6 +3604,8 @@ struct FlatpakOciImageSource
   FlatpakOciManifest *manifest;
   gsize manifest_size;
   FlatpakOciImage *image_config;
+
+  TemporaryDirectory *tmp_dir;
 };
 
 static FlatpakOciImageSource *
@@ -3439,21 +3646,14 @@ flatpak_oci_image_source_new (FlatpakOciRegistry *registry,
   return g_steal_pointer (&self);
 }
 
-FlatpakOciImageSource *
-flatpak_oci_image_source_new_local (GFile        *file,
-                                    const char   *reference,
-                                    GCancellable *cancellable,
-                                    GError      **error)
+static FlatpakOciImageSource *
+flatpak_oci_image_source_new_local_for_registry (FlatpakOciRegistry *registry,
+                                                 const char         *reference,
+                                                 GCancellable       *cancellable,
+                                                 GError            **error)
 {
-  g_autofree char *dir_uri = NULL;
-  g_autoptr(FlatpakOciRegistry) registry = NULL;
   g_autoptr(FlatpakOciIndex) index = NULL;
   const FlatpakOciManifestDescriptor *desc;
-
-  dir_uri = g_file_get_uri (file);
-  registry = flatpak_oci_registry_new (dir_uri, FALSE, -1, cancellable, error);
-  if (registry == NULL)
-    return NULL;
 
   index = flatpak_oci_registry_load_index (registry, cancellable, error);
   if (index == NULL)
@@ -3479,6 +3679,23 @@ flatpak_oci_image_source_new_local (GFile        *file,
     }
 
   return flatpak_oci_image_source_new (registry, NULL, desc->parent.digest, cancellable, error);
+}
+
+FlatpakOciImageSource *
+flatpak_oci_image_source_new_local (GFile        *file,
+                                    const char   *reference,
+                                    GCancellable *cancellable,
+                                    GError      **error)
+{
+  g_autofree char *dir_uri = NULL;
+  g_autoptr(FlatpakOciRegistry) registry = NULL;
+
+  dir_uri = g_file_get_uri (file);
+  registry = flatpak_oci_registry_new (dir_uri, FALSE, -1, cancellable, error);
+  if (registry == NULL)
+    return NULL;
+
+  return flatpak_oci_image_source_new_local_for_registry (registry, reference, cancellable, error);
 }
 
 FlatpakOciImageSource *
@@ -3541,6 +3758,20 @@ flatpak_oci_image_source_new_for_location (const char *location,
       get_path_and_reference (location, &path, &reference);
 
       return flatpak_oci_image_source_new_local (path, reference, cancellable, error);
+    }
+  else if (g_str_has_prefix (location, "oci-archive:"))
+    {
+      g_autoptr(FlatpakOciRegistry) registry = NULL;
+      g_autoptr(GFile) path = NULL;
+      g_autofree char *reference = NULL;
+
+      get_path_and_reference (location, &path, &reference);
+
+      registry = flatpak_oci_registry_new_for_archive (path, cancellable, error);
+      if (registry == NULL)
+        return NULL;
+
+      return flatpak_oci_image_source_new_local_for_registry (registry, reference, cancellable, error);
     }
   else if (g_str_has_prefix (location, "docker:"))
     {
@@ -3626,6 +3857,8 @@ flatpak_oci_image_source_free (FlatpakOciImageSource *self)
   g_free (self->digest);
   g_clear_object (&self->manifest);
   g_clear_object (&self->image_config);
+  g_clear_pointer (&self->tmp_dir, temporary_directory_free);
+  g_free (self);
 }
 
 void
