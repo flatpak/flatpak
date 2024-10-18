@@ -80,6 +80,12 @@
                       is a Flatpak extension that indicates that the remote is not an ostree
                       repository, but is rather an URL to an index of OCI images that are stored
                       within a container image registry.
+                    </para>
+                    <para>
+                      For OCI remotes, client and CA certificates are read from
+                      <filename>/etc/containers/certs.d</filename> and
+                      <filename>~/.config/containers/certs.d</filename> as documented in
+                      <citerefentry><refentrytitle>containers-certs.d</refentrytitle><manvolnum>5</manvolnum></citerefentry>.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
