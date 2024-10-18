@@ -714,6 +714,14 @@ gboolean              flatpak_dir_install_bundle                            (Fla
                                                                              FlatpakDecomposed            **out_ref,
                                                                              GCancellable                  *cancellable,
                                                                              GError                       **error);
+gboolean              flatpak_dir_install_image                             (FlatpakDir                    *self,
+                                                                             const char                    *remote,
+                                                                             FlatpakOciImageSource         *image_source,
+                                                                             FlatpakDecomposed             *ref,
+                                                                             GBytes                        *metadata,
+                                                                             FlatpakProgress               *progress,
+                                                                             GCancellable                  *cancellable,
+                                                                             GError                       **error);
 gboolean              flatpak_dir_needs_update_for_commit_and_subpaths      (FlatpakDir                    *self,
                                                                              const char                    *remote,
                                                                              FlatpakDecomposed             *ref,

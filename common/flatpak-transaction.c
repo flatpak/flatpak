@@ -27,6 +27,7 @@
 #include "flatpak-dir-private.h"
 #include "flatpak-error.h"
 #include "flatpak-installation-private.h"
+#include "flatpak-oci-registry-private.h"
 #include "flatpak-progress-private.h"
 #include "flatpak-repo-utils-private.h"
 #include "flatpak-transaction-private.h"
@@ -136,6 +137,9 @@ struct _FlatpakTransactionOperation
    * related-to-ops if this op is for a runtime which is needed by multiple apps
    * in the transaction: */
   GPtrArray                      *related_to_ops;  /* (element-type FlatpakTransactionOperation) (nullable) */
+
+  /* For FLATPAK_TRANSACTION_OPERATION_INSTALL_IMAGE */
+  FlatpakOciImageSource          *image_source;
 };
 
 typedef struct _FlatpakTransactionPrivate FlatpakTransactionPrivate;
@@ -146,6 +150,13 @@ struct _BundleData
 {
   GFile  *file;
   GBytes *gpg_data;
+};
+
+typedef struct _ImageData                ImageData;
+
+struct _ImageData
+{
+  char *image_location;
 };
 
 typedef struct {
@@ -172,6 +183,7 @@ struct _FlatpakTransactionPrivate
 
   GList                       *flatpakrefs; /* GKeyFiles */
   GList                       *bundles; /* BundleData */
+  GList                       *images; /* ImageData */
 
   guint                        next_request_id;
   guint                        active_request_id;
@@ -261,6 +273,23 @@ bundle_data_free (BundleData *data)
 {
   g_clear_object (&data->file);
   g_clear_object (&data->gpg_data);
+  g_free (data);
+}
+
+static ImageData *
+image_data_new (const char *image_location)
+{
+  ImageData *data = g_new0 (ImageData, 1);
+
+  data->image_location = g_strdup (image_location);
+
+  return data;
+}
+
+static void
+image_data_free (ImageData *data)
+{
+  g_clear_pointer (&data->image_location, g_free);
   g_free (data);
 }
 
@@ -625,6 +654,8 @@ flatpak_transaction_operation_finalize (GObject *object)
     g_ptr_array_unref (self->related_to_ops);
   if (self->summary_metadata)
     g_variant_unref (self->summary_metadata);
+  if (self->image_source)
+    flatpak_oci_image_source_free (self->image_source);
 
   G_OBJECT_CLASS (flatpak_transaction_operation_parent_class)->finalize (object);
 }
@@ -1006,6 +1037,7 @@ flatpak_transaction_finalize (GObject *object)
   g_free (priv->parent_window);
   g_list_free_full (priv->flatpakrefs, (GDestroyNotify) g_key_file_unref);
   g_list_free_full (priv->bundles, (GDestroyNotify) bundle_data_free);
+  g_list_free_full (priv->images, (GDestroyNotify) image_data_free);
   g_free (priv->default_arch);
   g_hash_table_unref (priv->last_op_for_ref);
   g_hash_table_unref (priv->remote_states);
@@ -2994,6 +3026,36 @@ flatpak_transaction_add_install_bundle (FlatpakTransaction *self,
 }
 
 /**
+ * flatpak_transaction_add_install_image:
+ * @self: a #FlatpakTransaction
+ * @image_location: (nullable): location string to install from.
+ * @error: return location for a #GError
+ *
+ * Install a Flatpak from a container image. The image is specified
+ *
+ * If the reference from the image was previously installed, then
+ * that remote will be used as the remote for the newly installed image. If the
+ * reference was not previously installed, then a remote will be created for the
+ * reference.
+ *
+ * @image_location is specified in containers-transports(5) form. Only a subset
+ * of transports are supported: oci:, oci-archive:, and docker:.
+ *
+ * Returns: %TRUE on success; %FALSE with @error set on failure.
+ */
+gboolean
+flatpak_transaction_add_install_image (FlatpakTransaction *self,
+                                       const char         *image_location,
+                                       GError            **error)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+
+  priv->images = g_list_append (priv->images, image_data_new (image_location));
+
+  return TRUE;
+}
+
+/**
  * flatpak_transaction_add_install_flatpakref:
  * @self: a #FlatpakTransaction
  * @flatpakref_data: data from a flatpakref file
@@ -3304,7 +3366,10 @@ mark_op_resolved (FlatpakTransactionOperation *op,
 
   g_assert (op != NULL);
 
-  g_assert (commit != NULL);
+  /* We don't know the commit for INSTALL_IMAGE until after we've
+   * downloaded the image and converted it OSTree format.
+   */
+  g_assert (commit != NULL || op->kind == FLATPAK_TRANSACTION_OPERATION_INSTALL_IMAGE);
 
   op->resolved = TRUE;
 
@@ -3539,6 +3604,13 @@ resolve_ops (FlatpakTransaction *self,
         {
           g_assert (op->commit != NULL);
           if (!mark_op_resolved (op, op->commit, NULL, op->external_metadata, NULL, error))
+            return FALSE;
+          continue;
+        }
+
+      if (op->kind == FLATPAK_TRANSACTION_OPERATION_INSTALL_IMAGE)
+        {
+          if (!mark_op_resolved (op, NULL, NULL, op->external_metadata, NULL, error))
             return FALSE;
           continue;
         }
@@ -4708,6 +4780,81 @@ flatpak_transaction_resolve_bundles (FlatpakTransaction *self,
   return TRUE;
 }
 
+static gboolean
+flatpak_transaction_resolve_images (FlatpakTransaction *self,
+                                    GCancellable       *cancellable,
+                                    GError            **error)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  GList *l;
+
+  for (l = priv->images; l != NULL; l = l->next)
+    {
+      ImageData *data = l->data;
+      g_autoptr(FlatpakOciImageSource) image_source;
+      g_autofree char *remote = NULL;
+      GHashTable *labels = NULL;
+      g_autoptr(FlatpakDecomposed) ref = NULL;
+      const gchar *ref_label;
+      const gchar *metadata_label;
+      FlatpakTransactionOperation *op;
+      g_autoptr(GBytes) deploy_data = NULL;
+
+      image_source = flatpak_oci_image_source_new_for_location (data->image_location,
+                                                                cancellable, error);
+      if (!image_source)
+        return FALSE;
+
+      labels = flatpak_oci_image_source_get_labels (image_source);
+      ref_label = g_hash_table_lookup (labels, "org.flatpak.ref");
+      if (ref_label == NULL)
+        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                   "Image does not have org.flatpak.ref label");
+
+      ref = flatpak_decomposed_new_from_ref (ref_label, error);
+      if (ref == NULL)
+        {
+          g_prefix_error (error, "Cannot parse org.flatpak.ref label: ");
+          return FALSE;
+        }
+
+      metadata_label = g_hash_table_lookup (labels, "org.flatpak.metadata");
+      if (metadata_label == NULL)
+        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                   "Image does not have org.flatpak.metadata label");
+
+      deploy_data = flatpak_dir_get_deploy_data (priv->dir, ref, FLATPAK_DEPLOY_VERSION_ANY, cancellable, NULL);
+      if (deploy_data != NULL)
+        remote = g_strdup (flatpak_deploy_data_get_origin (deploy_data));
+
+      if (remote == NULL)
+        {
+          gboolean created_remote;
+          g_autofree char *id = flatpak_decomposed_dup_id (ref);
+
+          remote = flatpak_dir_create_origin_remote (priv->dir, NULL /* url */, id,
+                                                     NULL /* title */, ref_label,
+                                                     NULL /* gpg_data */, NULL /* collection_id */,
+                                                     &created_remote,
+                                                     cancellable, error);
+          if (!remote)
+            return FALSE;
+
+          if (created_remote)
+            flatpak_installation_drop_caches (priv->installation, NULL, NULL);
+        }
+
+      if (!flatpak_transaction_add_ref (self, remote, ref, NULL, NULL, NULL,
+                                        FLATPAK_TRANSACTION_OPERATION_INSTALL_IMAGE,
+                                        NULL, metadata_label, FALSE, &op, error))
+        return FALSE;
+
+      op->image_source = g_steal_pointer (&image_source);
+    }
+
+  return TRUE;
+}
+
 /**
  * flatpak_transaction_run:
  * @transaction: a #FlatpakTransaction
@@ -4931,6 +5078,27 @@ _run_op_kind (FlatpakTransaction           *self,
             *out_needs_triggers = TRUE;
         }
     }
+  else if (op->kind == FLATPAK_TRANSACTION_OPERATION_INSTALL_IMAGE)
+    {
+      g_autoptr(FlatpakTransactionProgress) progress = flatpak_transaction_progress_new ();
+      emit_new_op (self, op, progress);
+      if (op->resolved_metakey && !flatpak_check_required_version (flatpak_decomposed_get_ref (op->ref),
+                                                                   op->resolved_metakey, error))
+        res = FALSE;
+      else
+        res = flatpak_dir_install_image (priv->dir, op->remote,
+                                         op->image_source,
+                                         op->ref, op->resolved_metadata,
+                                         progress->progress_obj, cancellable, error);
+      flatpak_transaction_progress_done (progress);
+
+      if (res)
+        {
+          emit_op_done (self, op, 0);
+          *out_needs_prune = TRUE;
+          *out_needs_triggers = TRUE;
+        }
+    }
   else
     g_assert_not_reached ();
 
@@ -5035,6 +5203,7 @@ add_uninstall_unused_ops (FlatpakTransaction  *self,
       g_assert (op_type == FLATPAK_TRANSACTION_OPERATION_UNINSTALL ||
                 op_type == FLATPAK_TRANSACTION_OPERATION_INSTALL ||
                 op_type == FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE ||
+                op_type == FLATPAK_TRANSACTION_OPERATION_INSTALL_IMAGE ||
                 op_type == FLATPAK_TRANSACTION_OPERATION_UPDATE);
 
       if (op_type == FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
@@ -5157,6 +5326,12 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
     }
 
   if (!flatpak_transaction_resolve_bundles (self, cancellable, error))
+    {
+      g_assert (error == NULL || *error != NULL);
+      return FALSE;
+    }
+
+  if (!flatpak_transaction_resolve_images (self, cancellable, error))
     {
       g_assert (error == NULL || *error != NULL);
       return FALSE;

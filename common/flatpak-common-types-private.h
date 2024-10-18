@@ -53,6 +53,7 @@ typedef enum {
 
 typedef struct FlatpakDir          FlatpakDir;
 typedef struct FlatpakDeploy       FlatpakDeploy;
+typedef struct FlatpakOciImageSource  FlatpakOciImageSource;
 typedef struct FlatpakOciRegistry  FlatpakOciRegistry;
 typedef struct _FlatpakOciManifest FlatpakOciManifest;
 typedef struct _FlatpakOciImage    FlatpakOciImage;

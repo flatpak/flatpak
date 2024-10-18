@@ -1028,14 +1028,16 @@ lookup_oci_registry_uri_from_summary (GVariant *summary,
   return g_steal_pointer (&registry_uri);
 }
 
-static FlatpakOciRegistry *
-flatpak_remote_state_new_oci_registry (FlatpakRemoteState *self,
+static FlatpakOciImageSource *
+flatpak_remote_state_new_image_source (FlatpakRemoteState *self,
+                                       const char   *oci_repository,
+                                       const char   *digest,
                                        const char   *token,
                                        GCancellable *cancellable,
                                        GError      **error)
 {
   g_autofree char *registry_uri = NULL;
-  g_autoptr(FlatpakOciRegistry) registry = NULL;
+  g_autoptr(FlatpakOciImageSource) image_source = NULL;
 
   if (!flatpak_remote_state_ensure_summary (self, error))
     return NULL;
@@ -1044,13 +1046,13 @@ flatpak_remote_state_new_oci_registry (FlatpakRemoteState *self,
   if (registry_uri == NULL)
     return NULL;
 
-  registry = flatpak_oci_registry_new (registry_uri, FALSE, -1, NULL, error);
-  if (registry == NULL)
+  image_source = flatpak_oci_image_source_new_remote (registry_uri, oci_repository, digest, NULL, error);
+  if (image_source == NULL)
     return NULL;
 
-  flatpak_oci_registry_set_token (registry, token);
+  flatpak_oci_image_source_set_token (image_source, token);
 
-  return g_steal_pointer (&registry);
+  return g_steal_pointer (&image_source);
 }
 
 static GVariant *
@@ -1062,9 +1064,7 @@ flatpak_remote_state_fetch_commit_object_oci (FlatpakRemoteState *self,
                                               GCancellable *cancellable,
                                               GError      **error)
 {
-  g_autoptr(FlatpakOciRegistry) registry = NULL;
-  g_autoptr(FlatpakOciVersioned) versioned = NULL;
-  g_autoptr(FlatpakOciImage) image_config = NULL;
+  g_autoptr(FlatpakOciImageSource) image_source = NULL;
   g_autofree char *oci_digest = NULL;
   g_autofree char *latest_rev = NULL;
   VarRefInfoRef latest_rev_info;
@@ -1078,10 +1078,6 @@ flatpak_remote_state_fetch_commit_object_oci (FlatpakRemoteState *self,
   guint64 timestamp = 0;
   g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
   g_autoptr(GVariant) metadata_v = NULL;
-
-  registry = flatpak_remote_state_new_oci_registry (self, token, cancellable, error);
-  if (registry == NULL)
-    return NULL;
 
   /* We extract the rev info from the latest, even if we don't use the latest digest, assuming refs don't move */
   if (!flatpak_remote_state_lookup_ref (self, ref, &latest_rev, NULL, &latest_rev_info, NULL, error))
@@ -1100,25 +1096,11 @@ flatpak_remote_state_fetch_commit_object_oci (FlatpakRemoteState *self,
 
   oci_digest = g_strconcat ("sha256:", checksum, NULL);
 
-  versioned = flatpak_oci_registry_load_versioned (registry, oci_repository, oci_digest,
-                                                   NULL, NULL, cancellable, error);
-  if (versioned == NULL)
+  image_source = flatpak_remote_state_new_image_source (self, oci_repository, oci_digest, token, cancellable, error);
+  if (image_source == NULL)
     return NULL;
 
-  if (!FLATPAK_IS_OCI_MANIFEST (versioned))
-    {
-      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Image is not a manifest"));
-      return NULL;
-    }
-
-  image_config = flatpak_oci_registry_load_image_config (registry, oci_repository,
-                                                         FLATPAK_OCI_MANIFEST (versioned)->config.digest,
-                                                         (const char **)FLATPAK_OCI_MANIFEST (versioned)->config.urls,
-                                                         NULL, cancellable, error);
-  if (image_config == NULL)
-    return NULL;
-
-  labels = flatpak_oci_image_get_labels (image_config);
+  labels = flatpak_oci_image_source_get_labels (image_source);
   if (labels)
     flatpak_oci_parse_commit_labels (labels, &timestamp,
                                      &subject, &body,
@@ -5912,7 +5894,7 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
                         GCancellable        *cancellable,
                         GError             **error)
 {
-  g_autoptr(FlatpakOciRegistry) registry = NULL;
+  g_autoptr(FlatpakOciImageSource) image_source = NULL;
   g_autofree char *oci_digest = NULL;
   g_autofree char *latest_rev = NULL;
   VarRefInfoRef latest_rev_info;
@@ -5945,15 +5927,15 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
 
   oci_digest = g_strconcat ("sha256:", rev, NULL);
 
-  registry = flatpak_remote_state_new_oci_registry (state, token, cancellable, error);
-  if (registry == NULL)
+  image_source = flatpak_remote_state_new_image_source (state, oci_repository, oci_digest, token, cancellable, error);
+  if (image_source == NULL)
     return FALSE;
 
   flatpak_progress_start_oci_pull (progress);
 
   g_info ("Mirroring OCI image %s", oci_digest);
 
-  res = flatpak_mirror_image_from_oci (dst_registry, registry, oci_repository, oci_digest, state->remote_name, ref, delta_url, self->repo, oci_pull_progress_cb,
+  res = flatpak_mirror_image_from_oci (dst_registry, image_source, state->remote_name, ref, delta_url, self->repo, oci_pull_progress_cb,
                                        progress, cancellable, error);
 
   if (!res)
@@ -5975,9 +5957,8 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
                       GCancellable        *cancellable,
                       GError             **error)
 {
-  g_autoptr(FlatpakOciRegistry) registry = NULL;
-  g_autoptr(FlatpakOciVersioned) versioned = NULL;
-  g_autoptr(FlatpakOciImage) image_config = NULL;
+  g_autoptr(FlatpakOciImageSource) image_source = NULL;
+  FlatpakOciRegistry *registry = NULL;
   const char *oci_repository = NULL;
   const char *delta_url = NULL;
   g_autofree char *oci_digest = NULL;
@@ -6008,23 +5989,8 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   if (latest_alt_commit != NULL && strcmp (oci_digest + strlen ("sha256:"), latest_alt_commit) == 0)
     return TRUE;
 
-  registry = flatpak_remote_state_new_oci_registry (state, token, cancellable, error);
-  if (registry == NULL)
-    return FALSE;
-
-  versioned = flatpak_oci_registry_load_versioned (registry, oci_repository, oci_digest,
-                                                   NULL, NULL, cancellable, error);
-  if (versioned == NULL)
-    return FALSE;
-
-  if (!FLATPAK_IS_OCI_MANIFEST (versioned))
-    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Image is not a manifest"));
-
-  image_config = flatpak_oci_registry_load_image_config (registry, oci_repository,
-                                                         FLATPAK_OCI_MANIFEST (versioned)->config.digest,
-                                                         (const char **)FLATPAK_OCI_MANIFEST (versioned)->config.urls,
-                                                         NULL, cancellable, error);
-  if (image_config == NULL)
+  image_source = flatpak_remote_state_new_image_source (state, oci_repository, oci_digest, token, cancellable, error);
+  if (image_source == NULL)
     return FALSE;
 
   if (repo == NULL)
@@ -6034,7 +6000,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
 
   g_info ("Pulling OCI image %s", oci_digest);
 
-  checksum = flatpak_pull_from_oci (repo, registry, oci_repository, oci_digest, delta_url, FLATPAK_OCI_MANIFEST (versioned), image_config,
+  checksum = flatpak_pull_from_oci (repo, image_source, delta_url,
                                     state->remote_name, ref, flatpak_flags, oci_pull_progress_cb, progress, cancellable, error);
 
   if (checksum == NULL)
@@ -6050,6 +6016,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
       name = g_file_get_path (file);
     }
 
+  registry = flatpak_oci_image_source_get_registry (image_source);
   (flatpak_dir_log) (self, __FILE__, __LINE__, __FUNCTION__, name,
                      "pull oci", flatpak_oci_registry_get_uri (registry), ref, NULL, NULL, NULL,
                      "Pulled %s from %s", ref, flatpak_oci_registry_get_uri (registry));
@@ -10395,6 +10362,66 @@ flatpak_dir_install_bundle (FlatpakDir         *self,
 
   if (out_ref)
     *out_ref = g_steal_pointer (&ref);
+
+  return TRUE;
+}
+
+gboolean
+flatpak_dir_install_image (FlatpakDir            *self,
+                           const char            *remote,
+                           FlatpakOciImageSource *image_source,
+                           FlatpakDecomposed     *ref,
+                           GBytes                *metadata,
+                           FlatpakProgress       *progress,
+                           GCancellable          *cancellable,
+                           GError               **error)
+{
+  g_autoptr(GBytes) deploy_data = NULL;
+  g_autofree char *checksum = NULL;
+
+  if (flatpak_dir_use_system_helper (self, NULL))
+    {
+      return flatpak_fail_error (error, FLATPAK_ERROR_DOWNGRADE,
+                                 _("Installing OCI image system-wide requires root permissions"));
+    }
+
+  if (!flatpak_dir_ensure_repo (self, cancellable, error))
+    return FALSE;
+
+  deploy_data = flatpak_dir_get_deploy_data (self, ref, FLATPAK_DEPLOY_VERSION_ANY, cancellable, NULL);
+  if (deploy_data != NULL)
+    {
+      if (strcmp (remote, flatpak_deploy_data_get_origin (deploy_data)) != 0)
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                       _("Can't change remote during image install"));
+          return FALSE;
+        }
+    }
+
+  checksum = flatpak_pull_from_oci (self->repo, image_source, NULL,
+                                    remote, flatpak_decomposed_get_ref (ref),
+                                    FLATPAK_PULL_FLAGS_NONE,
+                                    oci_pull_progress_cb, progress,
+                                    cancellable, error);
+  if (checksum == NULL)
+    return FALSE;
+
+  /* When installing a bundle and re-using an origin remote, if the
+   * origin of the new bundle is non-NULL and different from that
+   * for the origin remote, we rewrite it. But OCI images don't have
+   * an "origin" stored in them, so there's nothing to do here. */
+
+  if (deploy_data)
+    {
+      if (!flatpak_dir_deploy_update (self, ref, NULL, NULL, NULL, cancellable, error))
+        return FALSE;
+    }
+  else
+    {
+      if (!flatpak_dir_deploy_install (self, ref, remote, NULL, NULL, FALSE, FALSE, cancellable, error))
+        return FALSE;
+    }
 
   return TRUE;
 }
