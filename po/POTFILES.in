@@ -64,6 +64,7 @@ common/flatpak-run.c
 common/flatpak-run-dbus.c
 common/flatpak-transaction.c
 common/flatpak-uri.c
+common/flatpak-usb.c
 common/flatpak-utils.c
 oci-authenticator/flatpak-oci-authenticator.c
 portal/flatpak-portal.c
