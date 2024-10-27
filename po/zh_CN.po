@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2024-10-17 03:25+0000\n"
-"PO-Revision-Date: 2024-10-17 19:01+0800\n"
+"POT-Creation-Date: 2024-10-26 03:25+0000\n"
+"PO-Revision-Date: 2024-10-27 08:10+0800\n"
 "Last-Translator: lumingzh <lumingzh@qq.com>\n"
 "Language-Team: Chinese (China) <i18n-zh@googlegroups.com>\n"
 "Language: zh_CN\n"
@@ -3076,7 +3076,7 @@ msgstr "文字 - 搜索含指定文字的远程应用/运行时"
 msgid "TEXT must be specified"
 msgstr "必须指定文字"
 
-#: app/flatpak-builtins-search.c:335
+#: app/flatpak-builtins-search.c:336
 msgid "No matches found"
 msgstr "找不到匹配项"
 
@@ -5542,6 +5542,55 @@ msgstr "URI 中的端口“%.*s”超出范围"
 #: common/flatpak-uri.c:910
 msgid "URI is not absolute, and no base URI was provided"
 msgstr "URI 不是绝对路径，且未提供基础 URI"
+
+#: common/flatpak-usb.c:83
+msgid "USB device query 'all' must not have data"
+msgstr "USB 设备查询“all”不能具有数据"
+
+#: common/flatpak-usb.c:102
+msgid "USB query rule 'cls' must be in the form CLASS:SUBCLASS or CLASS:*"
+msgstr "USB 查询规则“cls”必须为 CLASS:SUBCLASS 或 CLASS:* 的形式"
+
+#: common/flatpak-usb.c:111
+msgid "Invalid USB class"
+msgstr "无效的 USB 类"
+
+#: common/flatpak-usb.c:125
+msgid "Invalid USB subclass"
+msgstr "无效的 USB 子类"
+
+#: common/flatpak-usb.c:141 common/flatpak-usb.c:148
+msgid "USB query rule 'dev' must have a valid 4-digit hexadecimal product id"
+msgstr "USB 查询规则“dev”必须具有有效的 4 位数 16 进制产品标识符"
+
+#: common/flatpak-usb.c:164 common/flatpak-usb.c:171
+msgid "USB query rule 'vnd' must have a valid 4-digit hexadecimal vendor id"
+msgstr "USB 查询规则“vnd”必须具有有效的 4 位数 16 进制厂商标识符"
+
+#: common/flatpak-usb.c:205
+msgid "USB device queries must be in the form TYPE:DATA"
+msgstr "USB 设备查询必须为 TYPE:DATA 的形式"
+
+#: common/flatpak-usb.c:225
+#, c-format
+msgid "Unknown USB query rule %s"
+msgstr "未知的 USB 查询规则 %s"
+
+#: common/flatpak-usb.c:248
+msgid "Empty USB query"
+msgstr "空的 USB 查询"
+
+#: common/flatpak-usb.c:274
+msgid "Multiple USB query rules of the same type is not supported"
+msgstr "不支持同一类型的多 USB 查询"
+
+#: common/flatpak-usb.c:283
+msgid "'all' must not contain extra query rules"
+msgstr "“all”不能包含额外查询规则"
+
+#: common/flatpak-usb.c:291
+msgid "USB queries with 'dev' must also specify vendors"
+msgstr "使用“dev”的 USB 查询必须同时指定厂商"
 
 #: common/flatpak-utils.c:668
 msgid "Glob can't match apps"
