@@ -3610,28 +3610,18 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
   g_autofree char *old_diffid = NULL;
   g_autofree char *commit_checksum = NULL;
   const char *parent = NULL;
-  g_autofree char *subject = NULL;
-  g_autofree char *body = NULL;
-  g_autofree char *manifest_ref = NULL;
+  const char *manifest_ref = NULL;
   g_autofree char *full_ref = NULL;
   const char *diffid;
-  guint64 timestamp = 0;
   FlatpakOciPullProgressData progress_data = { progress_cb, progress_user_data };
   g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
   g_autoptr(GVariant) metadata = NULL;
-  GHashTable *labels;
   int n_layers;
   int i;
 
-  g_assert (ref != NULL);
   g_assert (g_str_has_prefix (digest, "sha256:"));
 
-  labels = flatpak_oci_image_get_labels (image_config);
-  if (labels)
-    flatpak_oci_parse_commit_labels (labels, &timestamp,
-                                     &subject, &body,
-                                     &manifest_ref, NULL, NULL,
-                                     metadata_builder);
+  manifest_ref = flatpak_image_source_get_ref (image_source);
 
   if (manifest_ref == NULL)
     {
@@ -3639,11 +3629,17 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
       return NULL;
     }
 
-  if (strcmp (manifest_ref, ref) != 0)
+  if (ref == NULL)
+    {
+      ref = manifest_ref;
+    }
+  else if (g_strcmp0 (manifest_ref, ref) != 0)
     {
       flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Wrong ref (%s) specified for OCI image %s, expected %s"), manifest_ref, digest, ref);
       return NULL;
     }
+
+  flatpak_image_source_build_commit_metadata (image_source, metadata_builder);
 
   g_variant_builder_add (metadata_builder, "{s@v}", "xa.alt-id",
                          g_variant_new_variant (g_variant_new_string (digest + strlen ("sha256:"))));
@@ -3818,11 +3814,11 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
   metadata = g_variant_ref_sink (g_variant_builder_end (metadata_builder));
   if (!ostree_repo_write_commit_with_time (repo,
                                            parent,
-                                           subject,
-                                           body,
+                                           flatpak_image_source_get_commit_subject (image_source),
+                                           flatpak_image_source_get_commit_body (image_source),
                                            metadata,
                                            OSTREE_REPO_FILE (archive_root),
-                                           timestamp,
+                                           flatpak_image_source_get_commit_timestamp (image_source),
                                            &commit_checksum,
                                            cancellable, error))
     goto error;

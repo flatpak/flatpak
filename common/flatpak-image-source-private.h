@@ -52,6 +52,15 @@ FlatpakOciManifest *flatpak_image_source_get_manifest       (FlatpakImageSource 
 size_t              flatpak_image_source_get_manifest_size  (FlatpakImageSource *self);
 FlatpakOciImage    *flatpak_image_source_get_image_config   (FlatpakImageSource *self);
 
-GHashTable *flatpak_image_source_get_labels (FlatpakImageSource *self);
+const char *flatpak_image_source_get_ref              (FlatpakImageSource *self);
+const char *flatpak_image_source_get_metadata         (FlatpakImageSource *self);
+const char *flatpak_image_source_get_commit           (FlatpakImageSource *self);
+const char *flatpak_image_source_get_parent_commit    (FlatpakImageSource *self);
+guint64     flatpak_image_source_get_commit_timestamp (FlatpakImageSource *self);
+const char *flatpak_image_source_get_commit_subject   (FlatpakImageSource *self);
+const char *flatpak_image_source_get_commit_body      (FlatpakImageSource *self);
+
+void flatpak_image_source_build_commit_metadata (FlatpakImageSource *self,
+                                                 GVariantBuilder    *metadata_builder);
 
 #endif /* __FLATPAK_IMAGE_SOURCE_H__ */
