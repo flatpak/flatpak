@@ -74,7 +74,6 @@ flatpak_image_source_new (FlatpakOciRegistry *registry,
 {
   g_autoptr(FlatpakImageSource) self = NULL;
   g_autoptr(FlatpakOciVersioned) versioned = NULL;
-  GHashTable *labels;
 
   self = g_object_new (FLATPAK_TYPE_IMAGE_SOURCE, NULL);
   self->registry = g_object_ref (registry);
@@ -110,8 +109,7 @@ flatpak_image_source_new (FlatpakOciRegistry *registry,
   if (self->image_config == NULL)
     return NULL;
 
-  labels = flatpak_image_source_get_labels (self);
-  if (!g_hash_table_contains (labels, "org.flatpak.ref"))
+  if (flatpak_image_source_get_ref (self) == NULL)
     {
       flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No org.flatpak.ref found in image"));
       return NULL;
@@ -223,8 +221,94 @@ flatpak_image_source_get_image_config (FlatpakImageSource *self)
   return self->image_config;
 }
 
-GHashTable *
-flatpak_image_source_get_labels (FlatpakImageSource *self)
+const char *
+flatpak_image_source_get_ref (FlatpakImageSource *self)
 {
-  return flatpak_oci_image_get_labels (self->image_config);
+  GHashTable *labels = flatpak_oci_image_get_labels (self->image_config);
+
+  return g_hash_table_lookup (labels, "org.flatpak.ref");
+}
+
+const char *
+flatpak_image_source_get_metadata (FlatpakImageSource *self)
+{
+  GHashTable *labels = flatpak_oci_image_get_labels (self->image_config);
+
+  return g_hash_table_lookup (labels, "org.flatpak.metadata");
+}
+
+const char *
+flatpak_image_source_get_commit (FlatpakImageSource *self)
+{
+  GHashTable *labels = flatpak_oci_image_get_labels (self->image_config);
+
+  return g_hash_table_lookup (labels, "org.flatpak.commit");
+}
+
+const char *
+flatpak_image_source_get_parent_commit (FlatpakImageSource *self)
+{
+  GHashTable *labels = flatpak_oci_image_get_labels (self->image_config);
+
+  return g_hash_table_lookup (labels, "org.flatpak.parent-commit");
+}
+
+guint64
+flatpak_image_source_get_commit_timestamp (FlatpakImageSource *self)
+{
+  GHashTable *labels = flatpak_oci_image_get_labels (self->image_config);
+  const char *oci_timestamp = g_hash_table_lookup (labels, "org.flatpak.timestamp");
+
+  if (oci_timestamp != NULL)
+    return g_ascii_strtoull (oci_timestamp, NULL, 10);
+  else
+    return 0;
+}
+
+const char *
+flatpak_image_source_get_commit_subject (FlatpakImageSource *self)
+{
+  GHashTable *labels = flatpak_oci_image_get_labels (self->image_config);
+
+  return g_hash_table_lookup (labels, "org.flatpak.subject");
+}
+
+const char *
+flatpak_image_source_get_commit_body (FlatpakImageSource *self)
+{
+  GHashTable *labels = flatpak_oci_image_get_labels (self->image_config);
+
+  return g_hash_table_lookup (labels, "org.flatpak.body");
+}
+
+void
+flatpak_image_source_build_commit_metadata (FlatpakImageSource *self,
+                                            GVariantBuilder    *metadata_builder)
+{
+  GHashTable *labels = flatpak_oci_image_get_labels (self->image_config);
+  GHashTableIter iter;
+  const char *key;
+  const char *value;
+
+  g_hash_table_iter_init (&iter, labels);
+  while (g_hash_table_iter_next (&iter, (gpointer *)&key, (gpointer *)&value))
+    {
+      g_autoptr(GVariant) data = NULL;
+      uint8_t *bin;
+      size_t bin_len;
+
+      if (!g_str_has_prefix (key, "org.flatpak.commit-metadata."))
+        continue;
+
+      key += strlen ("org.flatpak.commit-metadata.");
+
+      bin = g_base64_decode (value, &bin_len);
+      data = g_variant_ref_sink (g_variant_new_from_data (G_VARIANT_TYPE ("v"),
+                                                          bin,
+                                                          bin_len,
+                                                          FALSE,
+                                                          g_free,
+                                                          bin));
+      g_variant_builder_add (metadata_builder, "{s@v}", key, data);
+    }
 }
