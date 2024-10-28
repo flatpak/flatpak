@@ -246,14 +246,6 @@ void flatpak_oci_add_labels_for_commit (GHashTable *labels,
                                         const char *ref,
                                         const char *commit,
                                         GVariant   *commit_data);
-void flatpak_oci_parse_commit_labels (GHashTable      *labels,
-                                      guint64         *out_timestamp,
-                                      char           **out_subject,
-                                      char           **out_body,
-                                      char           **out_ref,
-                                      char           **out_commit,
-                                      char           **out_parent_commit,
-                                      GVariantBuilder *metadata_builder);
 
 #define FLATPAK_TYPE_OCI_SIGNATURE flatpak_oci_signature_get_type ()
 G_DECLARE_FINAL_TYPE (FlatpakOciSignature, flatpak_oci_signature, FLATPAK, OCI_SIGNATURE, FlatpakJson)

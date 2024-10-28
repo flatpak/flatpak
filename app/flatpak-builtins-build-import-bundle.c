@@ -59,30 +59,22 @@ import_oci (OstreeRepo *repo, GFile *file,
             GCancellable *cancellable, GError **error)
 {
   g_autofree char *commit_checksum = NULL;
-  g_autofree char *target_ref = NULL;
   g_autoptr(FlatpakImageSource) image_source = NULL;
-  GHashTable *labels;
+  const char *ref;
 
   image_source = flatpak_image_source_new_local (file, opt_ref, cancellable, error);
   if (image_source == NULL)
     return NULL;
 
-  labels = flatpak_image_source_get_labels (image_source);
-  flatpak_oci_parse_commit_labels (labels, NULL, NULL, NULL,
-                                   &target_ref, NULL, NULL, NULL);
-  if (target_ref == NULL)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
-                   "The OCI image didn't specify a ref, use --ref to specify one");
-      return NULL;
-    }
+  ref = flatpak_image_source_get_ref (image_source);
 
   commit_checksum = flatpak_pull_from_oci (repo, image_source, NULL,
-                                           NULL, target_ref, FLATPAK_PULL_FLAGS_NONE, NULL, NULL, cancellable, error);
+                                           NULL, ref, FLATPAK_PULL_FLAGS_NONE,
+                                           NULL, NULL, cancellable, error);
   if (commit_checksum == NULL)
     return NULL;
 
-  g_print (_("Importing %s (%s)\n"), target_ref, commit_checksum);
+  g_print (_("Importing %s (%s)\n"), ref, commit_checksum);
 
   return g_strdup (commit_checksum);
 }
