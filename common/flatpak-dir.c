@@ -1092,12 +1092,7 @@ flatpak_remote_state_fetch_commit_object_oci (FlatpakRemoteState *self,
   VarRefInfoRef latest_rev_info;
   VarMetadataRef metadata;
   const char *oci_repository = NULL;
-  GHashTable *labels;
-  g_autofree char *subject = NULL;
-  g_autofree char *body = NULL;
-  g_autofree char *manifest_ref = NULL;
-  g_autofree char *parent = NULL;
-  guint64 timestamp = 0;
+  const char *parent = NULL;
   g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
   g_autoptr(GVariant) metadata_v = NULL;
 
@@ -1122,21 +1117,16 @@ flatpak_remote_state_fetch_commit_object_oci (FlatpakRemoteState *self,
   if (image_source == NULL)
     return NULL;
 
-  labels = flatpak_image_source_get_labels (image_source);
-  if (labels)
-    flatpak_oci_parse_commit_labels (labels, &timestamp,
-                                     &subject, &body,
-                                     &manifest_ref, NULL, &parent,
-                                     metadata_builder);
-
-
-  if (g_strcmp0 (manifest_ref, ref) != 0)
+  if (g_strcmp0 (flatpak_image_source_get_ref (image_source), ref) != 0)
     {
       flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Commit has no requested ref ‘%s’ in ref binding metadata"),  ref);
       return NULL;
     }
 
+  flatpak_image_source_build_commit_metadata (image_source, metadata_builder);
   metadata_v = g_variant_ref_sink (g_variant_builder_end (metadata_builder));
+
+  parent = flatpak_image_source_get_parent_commit (image_source);
 
   /* This isn't going to be exactly the same as the reconstructed one from the pull, because we don't have the contents, but its useful to get metadata */
   return
@@ -1144,8 +1134,9 @@ flatpak_remote_state_fetch_commit_object_oci (FlatpakRemoteState *self,
                                        metadata_v,
                                        parent ? ostree_checksum_to_bytes_v (parent) :  g_variant_new_from_data (G_VARIANT_TYPE ("ay"), NULL, 0, FALSE, NULL, NULL),
                                        g_variant_new_array (G_VARIANT_TYPE ("(say)"), NULL, 0),
-                                       subject, body,
-                                       GUINT64_TO_BE (timestamp),
+                                       flatpak_image_source_get_commit_subject (image_source),
+                                       flatpak_image_source_get_commit_body (image_source),
+                                       GUINT64_TO_BE (flatpak_image_source_get_commit_timestamp (image_source)),
                                        ostree_checksum_to_bytes_v ("0000000000000000000000000000000000000000000000000000000000000000"),
                                        ostree_checksum_to_bytes_v ("0000000000000000000000000000000000000000000000000000000000000000")));
 }
