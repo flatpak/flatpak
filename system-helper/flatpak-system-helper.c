@@ -593,7 +593,7 @@ handle_deploy (FlatpakSystemHelper   *object,
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
-      checksum = flatpak_pull_from_oci (flatpak_dir_get_repo (system), image_source, NULL,
+      checksum = flatpak_pull_from_oci (flatpak_dir_get_repo (system), image_source,
                                         arg_origin, arg_ref, FLATPAK_PULL_FLAGS_NONE, NULL, NULL, NULL, &error);
       if (checksum == NULL)
         {
