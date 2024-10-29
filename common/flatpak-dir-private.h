@@ -126,13 +126,13 @@ gboolean flatpak_remote_state_ensure_subsummary_all_arches (FlatpakRemoteState *
                                                             GError            **error);
 gboolean flatpak_remote_state_allow_ref (FlatpakRemoteState *self,
                                          const char *ref);
-gboolean flatpak_remote_state_lookup_ref (FlatpakRemoteState *self,
-                                          const char         *ref,
-                                          char              **out_checksum,
-                                          guint64            *out_timestamp,
-                                          VarRefInfoRef      *out_info,
-                                          GFile             **out_sideload_path,
-                                          GError            **error);
+gboolean flatpak_remote_state_lookup_ref (FlatpakRemoteState  *self,
+                                          const char          *ref,
+                                          char               **out_checksum,
+                                          guint64             *out_timestamp,
+                                          GVariant           **out_summary_metadata,
+                                          GFile              **out_sideload_path,
+                                          GError             **error);
 GPtrArray *flatpak_remote_state_match_subrefs (FlatpakRemoteState *self,
                                                FlatpakDecomposed *ref);
 GFile *flatpak_remote_state_lookup_sideload_checksum (FlatpakRemoteState *self,

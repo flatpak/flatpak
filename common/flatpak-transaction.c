@@ -3616,7 +3616,6 @@ try_resolve_op_from_metadata (FlatpakTransaction *self,
   guint64 installed_size = 0;
   const char *metadata = NULL;
   VarMetadataRef sparse_cache;
-  VarRefInfoRef info;
   g_autofree char *summary_checksum = NULL;
 
   /* Ref has to match the actual commit in the summary */
@@ -3633,9 +3632,8 @@ try_resolve_op_from_metadata (FlatpakTransaction *self,
 
   metadata_bytes = g_bytes_new (metadata, strlen (metadata));
 
-  if (flatpak_remote_state_lookup_ref (state, flatpak_decomposed_get_ref (op->ref),
-                                       NULL, NULL, &info, NULL, NULL))
-    op->summary_metadata = var_metadata_dup_to_gvariant (var_ref_info_get_metadata (info));
+  flatpak_remote_state_lookup_ref (state, flatpak_decomposed_get_ref (op->ref),
+                                   NULL, NULL, &op->summary_metadata, NULL, NULL);
 
   op->installed_size = installed_size;
   op->download_size = download_size;
@@ -3838,13 +3836,11 @@ resolve_ops (FlatpakTransaction *self,
                * Note, we don't have a token here, so this will not work for authenticated apps.
                * We handle this by catching the 401 http status and retrying. */
               g_autoptr(GVariant) commit_data = NULL;
-              VarRefInfoRef ref_info;
 
               /* OCI needs this to get the oci repository for the ref to request the token, so lets always set it here */
-              if (op->summary_metadata == NULL &&
-                  flatpak_remote_state_lookup_ref (state, flatpak_decomposed_get_ref (op->ref),
-                                                   NULL, NULL, &ref_info, NULL, NULL))
-                op->summary_metadata = var_metadata_dup_to_gvariant (var_ref_info_get_metadata (ref_info));
+              if (op->summary_metadata == NULL)
+                flatpak_remote_state_lookup_ref (state, flatpak_decomposed_get_ref (op->ref),
+                                                  NULL, NULL, &op->summary_metadata, NULL, NULL);
 
               commit_data = flatpak_remote_state_load_ref_commit (state, priv->dir,
                                                                   flatpak_decomposed_get_ref (op->ref),
