@@ -765,14 +765,14 @@ get_summary_for_ref (FlatpakRemoteState *self,
 /* Returns TRUE if the ref is found in the summary or cache.
  * out_checksum and out_variant are only set when the ref is found.
  */
-gboolean
-flatpak_remote_state_lookup_ref (FlatpakRemoteState *self,
-                                 const char         *ref,
-                                 char              **out_checksum,
-                                 guint64            *out_timestamp,
-                                 VarRefInfoRef      *out_info,
-                                 GFile             **out_sideload_path,
-                                 GError            **error)
+static gboolean
+flatpak_remote_state_lookup_ref_internal (FlatpakRemoteState  *self,
+                                          const char          *ref,
+                                          char               **out_checksum,
+                                          guint64             *out_timestamp,
+                                          VarRefInfoRef       *out_info,
+                                          GFile              **out_sideload_path,
+                                          GError             **error)
 {
   if (!flatpak_remote_state_allow_ref (self, ref))
     {
@@ -838,6 +838,30 @@ flatpak_remote_state_lookup_ref (FlatpakRemoteState *self,
       if (out_sideload_path)
         *out_sideload_path = g_steal_pointer (&found_sideload_path);
     }
+
+  return TRUE;
+}
+
+/* Returns TRUE if the ref is found in the summary or cache.
+ * out parameters are only set if the ref is found.
+ */
+gboolean
+flatpak_remote_state_lookup_ref (FlatpakRemoteState  *self,
+                                 const char          *ref,
+                                 char               **out_checksum,
+                                 guint64             *out_timestamp,
+                                 GVariant           **out_summary_metadata,
+                                 GFile              **out_sideload_path,
+                                 GError             **error)
+{
+  VarRefInfoRef info;
+
+  if (!flatpak_remote_state_lookup_ref_internal (self, ref, out_checksum, out_timestamp,
+                                                 &info, out_sideload_path, error))
+    return FALSE;
+
+  if (out_summary_metadata)
+    *out_summary_metadata = var_metadata_dup_to_gvariant (var_ref_info_get_metadata (info));
 
   return TRUE;
 }
@@ -1009,7 +1033,6 @@ flatpak_remote_state_load_data (FlatpakRemoteState *self,
       /* Look up from sideload */
       g_autofree char *checksum = NULL;
       guint64 timestamp;
-      VarRefInfoRef info;
       FlatpakSideloadState *ss = NULL;
       g_autoptr(GVariant) commit_data = NULL;
       g_autoptr(GVariant) commit_metadata = NULL;
@@ -1020,7 +1043,7 @@ flatpak_remote_state_load_data (FlatpakRemoteState *self,
       /* Use sideload refs if any */
 
       if (!flatpak_remote_state_resolve_sideloaded_ref (self, ref, &checksum, &timestamp,
-                                                        &info, &ss, error))
+                                                        NULL, &ss, error))
         return FALSE;
 
       if (!ostree_repo_load_commit (ss->repo, checksum, &commit_data, NULL, error))
@@ -1107,7 +1130,7 @@ flatpak_remote_state_fetch_image_source (FlatpakRemoteState *self,
   const char *delta_url = NULL;
 
   /* We extract the rev info from the latest, even if we don't use the latest digest, assuming refs don't move */
-  if (!flatpak_remote_state_lookup_ref (self, ref, &latest_rev, NULL, &latest_rev_info, NULL, error))
+  if (!flatpak_remote_state_lookup_ref_internal (self, ref, &latest_rev, NULL, &latest_rev_info, NULL, error))
     return NULL;
 
   if (latest_rev == NULL)
