@@ -31,6 +31,7 @@ struct _FlatpakImageSource
   FlatpakOciRegistry *registry;
   char *repository;
   char *digest;
+  char *delta_url;
 
   FlatpakOciManifest *manifest;
   size_t manifest_size;
@@ -47,6 +48,7 @@ flatpak_image_source_finalize (GObject *object)
   g_clear_object (&self->registry);
   g_clear_pointer (&self->repository, g_free);
   g_clear_pointer (&self->digest, g_free);
+  g_clear_pointer (&self->delta_url, g_free);
   g_clear_object (&self->manifest);
   g_clear_object (&self->image_config);
 
@@ -330,6 +332,20 @@ flatpak_image_source_set_token (FlatpakImageSource *self,
   flatpak_oci_registry_set_token (self->registry, token);
 }
 
+void
+flatpak_image_source_set_delta_url (FlatpakImageSource *self,
+                                    const char         *delta_url)
+{
+  g_free (self->delta_url);
+  self->delta_url = g_strdup (delta_url);
+}
+
+const char *
+flatpak_image_source_get_delta_url (FlatpakImageSource *self)
+{
+  return self->delta_url;
+}
+
 FlatpakOciRegistry *
 flatpak_image_source_get_registry (FlatpakImageSource *self)
 {
@@ -456,4 +472,29 @@ flatpak_image_source_build_commit_metadata (FlatpakImageSource *self,
                                                           bin));
       g_variant_builder_add (metadata_builder, "{s@v}", key, data);
     }
+}
+
+GVariant *
+flatpak_image_source_make_fake_commit (FlatpakImageSource *self)
+{
+  const char *parent = NULL;
+  g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
+  g_autoptr(GVariant) metadata_v = NULL;
+
+  flatpak_image_source_build_commit_metadata (self, metadata_builder);
+  metadata_v = g_variant_ref_sink (g_variant_builder_end (metadata_builder));
+
+  parent = flatpak_image_source_get_parent_commit (self);
+
+  /* This isn't going to be exactly the same as the reconstructed one from the pull, because we don't have the contents, but its useful to get metadata */
+  return
+    g_variant_ref_sink (g_variant_new ("(@a{sv}@ay@a(say)sst@ay@ay)",
+                                       metadata_v,
+                                       parent ? ostree_checksum_to_bytes_v (parent) :  g_variant_new_from_data (G_VARIANT_TYPE ("ay"), NULL, 0, FALSE, NULL, NULL),
+                                       g_variant_new_array (G_VARIANT_TYPE ("(say)"), NULL, 0),
+                                       flatpak_image_source_get_commit_subject (self),
+                                       flatpak_image_source_get_commit_body (self),
+                                       GUINT64_TO_BE (flatpak_image_source_get_commit_timestamp (self)),
+                                       ostree_checksum_to_bytes_v ("0000000000000000000000000000000000000000000000000000000000000000"),
+                                       ostree_checksum_to_bytes_v ("0000000000000000000000000000000000000000000000000000000000000000")));
 }

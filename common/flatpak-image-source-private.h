@@ -47,10 +47,13 @@ FlatpakImageSource *flatpak_image_source_new_for_location (const char   *locatio
 
 void flatpak_image_source_set_token (FlatpakImageSource *self,
                                      const char         *token);
+void flatpak_image_source_set_delta_url (FlatpakImageSource *self,
+                                         const char         *delta_url);
 
 FlatpakOciRegistry *flatpak_image_source_get_registry       (FlatpakImageSource *self);
 const char         *flatpak_image_source_get_oci_repository (FlatpakImageSource *self);
 const char         *flatpak_image_source_get_digest         (FlatpakImageSource *self);
+const char         *flatpak_image_source_get_delta_url      (FlatpakImageSource *self);
 FlatpakOciManifest *flatpak_image_source_get_manifest       (FlatpakImageSource *self);
 size_t              flatpak_image_source_get_manifest_size  (FlatpakImageSource *self);
 FlatpakOciImage    *flatpak_image_source_get_image_config   (FlatpakImageSource *self);
@@ -66,4 +69,5 @@ const char *flatpak_image_source_get_commit_body      (FlatpakImageSource *self)
 void flatpak_image_source_build_commit_metadata (FlatpakImageSource *self,
                                                  GVariantBuilder    *metadata_builder);
 
+GVariant *flatpak_image_source_make_fake_commit      (FlatpakImageSource *image_source);
 #endif /* __FLATPAK_IMAGE_SOURCE_H__ */
