@@ -1077,14 +1077,14 @@ flatpak_remote_state_new_image_source (FlatpakRemoteState *self,
   return g_steal_pointer (&image_source);
 }
 
-static GVariant *
-flatpak_remote_state_fetch_commit_object_oci (FlatpakRemoteState *self,
-                                              FlatpakDir   *dir,
-                                              const char   *ref,
-                                              const char   *checksum,
-                                              const char   *token,
-                                              GCancellable *cancellable,
-                                              GError      **error)
+static FlatpakImageSource *
+flatpak_remote_state_fetch_image_source (FlatpakRemoteState *self,
+                                         FlatpakDir         *dir,
+                                         const char         *ref,
+                                         const char         *opt_rev,
+                                         const char         *token,
+                                         GCancellable       *cancellable,
+                                         GError            **error)
 {
   g_autoptr(FlatpakImageSource) image_source = NULL;
   g_autofree char *oci_digest = NULL;
@@ -1092,9 +1092,7 @@ flatpak_remote_state_fetch_commit_object_oci (FlatpakRemoteState *self,
   VarRefInfoRef latest_rev_info;
   VarMetadataRef metadata;
   const char *oci_repository = NULL;
-  const char *parent = NULL;
-  g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
-  g_autoptr(GVariant) metadata_v = NULL;
+  const char *delta_url = NULL;
 
   /* We extract the rev info from the latest, even if we don't use the latest digest, assuming refs don't move */
   if (!flatpak_remote_state_lookup_ref (self, ref, &latest_rev, NULL, &latest_rev_info, NULL, error))
@@ -1110,8 +1108,9 @@ flatpak_remote_state_fetch_commit_object_oci (FlatpakRemoteState *self,
 
   metadata = var_ref_info_get_metadata (latest_rev_info);
   oci_repository = var_metadata_lookup_string (metadata, "xa.oci-repository", NULL);
+  delta_url = var_metadata_lookup_string (metadata, "xa.delta-url", NULL);
 
-  oci_digest = g_strconcat ("sha256:", checksum, NULL);
+  oci_digest = g_strconcat ("sha256:", opt_rev ? opt_rev : latest_rev, NULL);
 
   image_source = flatpak_remote_state_new_image_source (self, oci_repository, oci_digest, token, cancellable, error);
   if (image_source == NULL)
@@ -1123,22 +1122,28 @@ flatpak_remote_state_fetch_commit_object_oci (FlatpakRemoteState *self,
       return NULL;
     }
 
-  flatpak_image_source_build_commit_metadata (image_source, metadata_builder);
-  metadata_v = g_variant_ref_sink (g_variant_builder_end (metadata_builder));
+  flatpak_image_source_set_delta_url (image_source, delta_url);
 
-  parent = flatpak_image_source_get_parent_commit (image_source);
+  return g_steal_pointer (&image_source);
+}
 
-  /* This isn't going to be exactly the same as the reconstructed one from the pull, because we don't have the contents, but its useful to get metadata */
-  return
-    g_variant_ref_sink (g_variant_new ("(@a{sv}@ay@a(say)sst@ay@ay)",
-                                       metadata_v,
-                                       parent ? ostree_checksum_to_bytes_v (parent) :  g_variant_new_from_data (G_VARIANT_TYPE ("ay"), NULL, 0, FALSE, NULL, NULL),
-                                       g_variant_new_array (G_VARIANT_TYPE ("(say)"), NULL, 0),
-                                       flatpak_image_source_get_commit_subject (image_source),
-                                       flatpak_image_source_get_commit_body (image_source),
-                                       GUINT64_TO_BE (flatpak_image_source_get_commit_timestamp (image_source)),
-                                       ostree_checksum_to_bytes_v ("0000000000000000000000000000000000000000000000000000000000000000"),
-                                       ostree_checksum_to_bytes_v ("0000000000000000000000000000000000000000000000000000000000000000")));
+
+static GVariant *
+flatpak_remote_state_fetch_commit_object_oci (FlatpakRemoteState *self,
+                                              FlatpakDir   *dir,
+                                              const char   *ref,
+                                              const char   *checksum,
+                                              const char   *token,
+                                              GCancellable *cancellable,
+                                              GError      **error)
+{
+  g_autoptr(FlatpakImageSource) image_source = NULL;
+
+  image_source = flatpak_remote_state_fetch_image_source (self, dir, ref, checksum, token, cancellable, error);
+  if (image_source == NULL)
+    return NULL;
+
+  return flatpak_image_source_make_fake_commit (image_source);
 }
 
 static GVariant *
@@ -5910,49 +5915,18 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
                         GError             **error)
 {
   g_autoptr(FlatpakImageSource) image_source = NULL;
-  g_autofree char *oci_digest = NULL;
-  const char *delta_url = NULL;
   gboolean res;
 
   if (opt_image_source)
-    {
-      image_source = g_object_ref (opt_image_source);
-      oci_digest = g_strdup (flatpak_image_source_get_digest (image_source));
-    }
+    image_source = g_object_ref (opt_image_source);
   else
-    {
-      g_autofree char *latest_rev = NULL;
-      VarRefInfoRef latest_rev_info;
-      VarMetadataRef metadata;
-        const char *oci_repository = NULL;
-      const char *rev;
-
-      /* We use the summary so that we can reuse any cached json */
-      if (!flatpak_remote_state_lookup_ref (state, ref, &latest_rev, NULL, &latest_rev_info, NULL, error))
-        return FALSE;
-      if (latest_rev == NULL)
-        return flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
-                                  _("Couldn't find latest checksum for ref %s in remote %s"),
-                                  ref, state->remote_name);
-
-      rev = opt_rev != NULL ? opt_rev : latest_rev;
-
-      metadata = var_ref_info_get_metadata (latest_rev_info);
-      oci_repository = var_metadata_lookup_string (metadata, "xa.oci-repository", NULL);
-      delta_url = var_metadata_lookup_string (metadata, "xa.delta-url", NULL);
-
-      oci_digest = g_strconcat ("sha256:", rev, NULL);
-
-      image_source = flatpak_remote_state_new_image_source (state, oci_repository, oci_digest, token, cancellable, error);
-      if (image_source == NULL)
-        return FALSE;
-    }
+    image_source = flatpak_remote_state_fetch_image_source (state, self, ref, opt_rev, token, cancellable, error);
 
   flatpak_progress_start_oci_pull (progress);
 
-  g_info ("Mirroring OCI image %s", oci_digest);
+  g_info ("Mirroring OCI image %s", flatpak_image_source_get_digest (image_source));
 
-  res = flatpak_mirror_image_from_oci (dst_registry, image_source, state->remote_name, ref, delta_url, self->repo, oci_pull_progress_cb,
+  res = flatpak_mirror_image_from_oci (dst_registry, image_source, state->remote_name, ref, self->repo, oci_pull_progress_cb,
                                        progress, cancellable, error);
 
   if (!res)
@@ -5977,8 +5951,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
 {
   g_autoptr(FlatpakImageSource) image_source = NULL;
   FlatpakOciRegistry *registry = NULL;
-  const char *delta_url = NULL;
-  g_autofree char *oci_digest = NULL;
+  const char *oci_digest = NULL;
   g_autofree char *checksum = NULL;
   g_autofree char *latest_alt_commit = NULL;
   G_GNUC_UNUSED g_autofree char *latest_commit =
@@ -5986,35 +5959,11 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   g_autofree char *name = NULL;
 
   if (opt_image_source)
-    {
-      image_source = g_object_ref (opt_image_source);
-      oci_digest = g_strdup (flatpak_image_source_get_digest (image_source));
-    }
+    image_source = g_object_ref (opt_image_source);
   else
-    {
-      VarMetadataRef metadata;
-      VarRefInfoRef latest_rev_info;
-      const char *oci_repository = NULL;
-      g_autofree char *latest_rev = NULL;
+    image_source = flatpak_remote_state_fetch_image_source (state, self, ref, opt_rev, token, cancellable, error);
 
-      /* We use the summary so that we can reuse any cached json */
-      if (!flatpak_remote_state_lookup_ref (state, ref, &latest_rev, NULL, &latest_rev_info, NULL, error))
-        return FALSE;
-      if (latest_rev == NULL)
-        return flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
-                                  _("Couldn't find latest checksum for ref %s in remote %s"),
-                                  ref, state->remote_name);
-
-      metadata = var_ref_info_get_metadata (latest_rev_info);
-      oci_repository = var_metadata_lookup_string (metadata, "xa.oci-repository", NULL);
-      delta_url = var_metadata_lookup_string (metadata, "xa.delta-url", NULL);
-
-      oci_digest = g_strconcat ("sha256:", opt_rev != NULL ? opt_rev : latest_rev, NULL);
-
-      image_source = flatpak_remote_state_new_image_source (state, oci_repository, oci_digest, token, cancellable, error);
-      if (image_source == NULL)
-        return FALSE;
-    }
+  oci_digest = flatpak_image_source_get_digest (image_source);
 
   /* Short circuit if we've already got this commit */
   if (latest_alt_commit != NULL && strcmp (oci_digest + strlen ("sha256:"), latest_alt_commit) == 0)
@@ -6027,7 +5976,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
 
   g_info ("Pulling OCI image %s", oci_digest);
 
-  checksum = flatpak_pull_from_oci (repo, image_source, delta_url,
+  checksum = flatpak_pull_from_oci (repo, image_source,
                                     state->remote_name, ref, flatpak_flags, oci_pull_progress_cb, progress, cancellable, error);
 
   if (checksum == NULL)
