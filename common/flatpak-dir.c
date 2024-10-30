@@ -13006,9 +13006,13 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
         return NULL;
     }
 
+  /* For OCI remotes, the collection ID is local configuration only:
+   * In the future we could add it to the index format.
+   */
   if (state->collection_id != NULL &&
       state->summary != NULL &&
-      !_validate_summary_for_collection_id (state->summary, state->collection_id, error))
+      !(flatpak_dir_get_remote_oci (self, state->remote_name) ||
+        _validate_summary_for_collection_id (state->summary, state->collection_id, error)))
     return NULL;
 
   if (flatpak_dir_get_remote_oci (self, remote_or_uri))
