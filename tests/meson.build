@@ -18,6 +18,7 @@ endif
 
 tests_environment = {
   'FLATPAK_CONFIG_DIR' : '/dev/null',
+  'FLATPAK_DATA_DIR' : '/dev/null',
   'FLATPAK_PORTAL' : project_build_root / 'portal' / 'flatpak-portal',
   'FLATPAK_REVOKEFS_FUSE' : project_build_root / 'revokefs' / 'revokefs-fuse',
   'FLATPAK_TESTS_DEBUG' : '1',

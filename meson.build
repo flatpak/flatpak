@@ -343,12 +343,8 @@ cdata.set_quoted(
   get_option('prefix') / get_option('sysconfdir') / 'flatpak',
 )
 cdata.set_quoted(
-  'FLATPAK_BASEDIR',
+  'FLATPAK_DATADIR',
   get_option('prefix') / get_option('datadir') / 'flatpak',
-)
-cdata.set_quoted(
-  'FLATPAK_TRIGGERDIR',
-  get_option('prefix') / get_option('datadir') / 'flatpak' / 'triggers',
 )
 cdata.set_quoted('LIBEXECDIR', get_option('prefix') / get_option('libexecdir'))
 cdata.set_quoted('DATADIR', get_option('prefix') / get_option('datadir'))
