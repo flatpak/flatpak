@@ -1887,25 +1887,20 @@ get_system_locations (GCancellable *cancellable,
   return g_steal_pointer (&locations);
 }
 
-char **
-flatpak_get_preinstall_config_file_paths (GCancellable *cancellable,
-                                          GError      **error)
+static gboolean
+scan_preinstall_config_files (const char   *config_dir,
+                              GHashTable   *config_file_map,
+                              GCancellable *cancellable,
+                              GError      **error)
 {
-  g_autoptr(GPtrArray) paths = NULL;
   g_autoptr(GFile) conf_dir = NULL;
   g_autoptr(GFileEnumerator) dir_enum = NULL;
   g_autoptr(GError) my_error = NULL;
-  g_autofree char *config_dir = NULL;
-
-  paths = g_ptr_array_new_with_free_func (g_free);
-  config_dir = g_strdup_printf ("%s/%s",
-                                get_config_dir_location (),
-                                FLATPAK_PREINSTALL_DIR);
 
   if (!g_file_test (config_dir, G_FILE_TEST_IS_DIR))
     {
       g_info ("Skipping missing preinstall config directory %s", config_dir);
-      goto out;
+      return TRUE;
     }
 
   conf_dir = g_file_new_for_path (config_dir);
@@ -1918,7 +1913,7 @@ flatpak_get_preinstall_config_file_paths (GCancellable *cancellable,
       g_info ("Unexpected error retrieving preinstalls from %s: %s",
               config_dir, my_error->message);
       g_propagate_error (error, g_steal_pointer (&my_error));
-      return NULL;
+      return FALSE;
     }
 
   while (TRUE)
@@ -1934,7 +1929,7 @@ flatpak_get_preinstall_config_file_paths (GCancellable *cancellable,
           g_info ("Unexpected error reading file in %s: %s",
                   config_dir, my_error->message);
           g_propagate_error (error, g_steal_pointer (&my_error));
-          return NULL;
+          return FALSE;
         }
 
       if (file_info == NULL)
@@ -1945,9 +1940,43 @@ flatpak_get_preinstall_config_file_paths (GCancellable *cancellable,
 
       if (type == G_FILE_TYPE_REGULAR && g_str_has_suffix (name, FLATPAK_PREINSTALL_FILE_EXT))
         {
-          g_autofree char *path_str = g_file_get_path (path);
-          g_ptr_array_add (paths, g_steal_pointer (&path_str));
+          /* already found in another directory */
+          if (g_hash_table_contains (config_file_map, name))
+            continue;
+
+          g_hash_table_insert (config_file_map, g_strdup (name), g_object_ref (path));
         }
+    }
+
+  return TRUE;
+}
+
+char **
+flatpak_get_preinstall_config_file_paths (GCancellable *cancellable,
+                                          GError      **error)
+{
+  g_autoptr(GHashTable) config_file_map = NULL;
+  g_autoptr(GPtrArray) paths = NULL;
+  g_autofree char *config_dir = NULL;
+
+  config_file_map = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_object_unref);
+  paths = g_ptr_array_new_with_free_func (g_free);
+  config_dir = g_strdup_printf ("%s/%s",
+                                get_config_dir_location (),
+                                FLATPAK_PREINSTALL_DIR);
+
+  /* scan directories in priority order */
+  if (!scan_preinstall_config_files (config_dir,
+                                     config_file_map, cancellable, error))
+    goto out;
+  if (!scan_preinstall_config_files (FLATPAK_BASEDIR "/" FLATPAK_PREINSTALL_DIR,
+                                     config_file_map, cancellable, error))
+    goto out;
+
+  GLNX_HASH_TABLE_FOREACH_KV (config_file_map, const char *, name, GFile *, path)
+    {
+      g_autofree char *path_str = g_file_get_path (path);
+      g_ptr_array_add (paths, g_steal_pointer (&path_str));
     }
 
 out:
