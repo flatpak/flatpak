@@ -1935,8 +1935,8 @@ scan_preinstall_config_files (const char   *config_dir,
       if (file_info == NULL)
         break;
 
-      name = g_file_info_get_attribute_byte_string (file_info, "standard::name");
-      type = g_file_info_get_attribute_uint32 (file_info, "standard::type");
+      name = g_file_info_get_name (file_info);
+      type = g_file_info_get_file_type (file_info);
 
       if (type == G_FILE_TYPE_REGULAR && g_str_has_suffix (name, FLATPAK_PREINSTALL_FILE_EXT))
         {
@@ -1961,9 +1961,7 @@ flatpak_get_preinstall_config_file_paths (GCancellable *cancellable,
 
   config_file_map = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_object_unref);
   paths = g_ptr_array_new_with_free_func (g_free);
-  config_dir = g_strdup_printf ("%s/%s",
-                                get_config_dir_location (),
-                                FLATPAK_PREINSTALL_DIR);
+  config_dir = g_build_filename (get_config_dir_location (), FLATPAK_PREINSTALL_DIR, NULL);
 
   /* scan directories in priority order */
   if (!scan_preinstall_config_files (config_dir,
@@ -2003,7 +2001,11 @@ parse_preinstall_keyfile (GKeyFile *keyfile,
   *collection_id_out = NULL;
 
   if (!g_key_file_has_group (keyfile, FLATPAK_PREINSTALL_GROUP))
-    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid file format, no %s group"), FLATPAK_PREINSTALL_GROUP);
+    {
+      /* empty files are allowed and expected, in order to allow overriding
+         /usr configuration in /etc */
+      return TRUE;
+    }
 
   name = g_key_file_get_string (keyfile, FLATPAK_PREINSTALL_GROUP,
                                 FLATPAK_PREINSTALL_NAME_KEY, NULL);
