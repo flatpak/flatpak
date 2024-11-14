@@ -70,6 +70,7 @@ libflatpak_app_dep = declare_dependency(
 )
 
 sources = [
+  'flatpak-builtins-bind-mount.c',
   'flatpak-builtins-build-bundle.c',
   'flatpak-builtins-build-commit-from.c',
   'flatpak-builtins-build-export.c',

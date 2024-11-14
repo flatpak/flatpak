@@ -1,5 +1,6 @@
 # List of source files containing translatable strings.
 # Please keep this file sorted alphabetically.
+app/flatpak-builtins-bind-mount.c
 app/flatpak-builtins-build-bundle.c
 app/flatpak-builtins-build.c
 app/flatpak-builtins-build-commit-from.c
