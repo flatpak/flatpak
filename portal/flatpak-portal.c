@@ -783,6 +783,7 @@ handle_spawn (PortalFlatpak         *object,
   g_auto(GStrv) unset_env = NULL;
   g_auto(GStrv) sandbox_expose = NULL;
   g_auto(GStrv) sandbox_expose_ro = NULL;
+  g_auto(GStrv) sandbox_a11y_own_names = NULL;
   g_autoptr(FlatpakInstance) instance = NULL;
   g_autoptr(GVariant) sandbox_expose_fd = NULL;
   g_autoptr(GVariant) sandbox_expose_fd_ro = NULL;
@@ -800,6 +801,7 @@ handle_spawn (PortalFlatpak         *object,
   glnx_autofd int env_fd = -1;
   const char *flatpak;
   gboolean testing = FALSE;
+  g_autofree char *app_id_prefix = NULL;
 
   child_setup_data.instance_id_fd = -1;
   child_setup_data.env_fd = -1;
@@ -899,6 +901,7 @@ handle_spawn (PortalFlatpak         *object,
   g_variant_lookup (arg_options, "sandbox-expose", "^as", &sandbox_expose);
   g_variant_lookup (arg_options, "sandbox-expose-ro", "^as", &sandbox_expose_ro);
   g_variant_lookup (arg_options, "sandbox-flags", "u", &sandbox_flags);
+  g_variant_lookup (arg_options, "sandbox-a11y-own-names", "^as", &sandbox_a11y_own_names);
   sandbox_expose_fd = g_variant_lookup_value (arg_options, "sandbox-expose-fd", G_VARIANT_TYPE ("ah"));
   sandbox_expose_fd_ro = g_variant_lookup_value (arg_options, "sandbox-expose-fd-ro", G_VARIANT_TYPE ("ah"));
   g_variant_lookup (arg_options, "unset-env", "^as", &unset_env);
@@ -941,6 +944,26 @@ handle_spawn (PortalFlatpak         *object,
       if (!is_valid_expose (expose, &error))
         {
           g_dbus_method_invocation_return_gerror (invocation, error);
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
+        }
+    }
+
+  app_id_prefix = g_strdup_printf ("%s.", app_id);
+  for (i = 0; sandbox_a11y_own_names != NULL && sandbox_a11y_own_names[i] != NULL; i++)
+    {
+      if (!(sandbox_flags & FLATPAK_SPAWN_SANDBOX_FLAGS_ALLOW_A11Y))
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
+                                                 G_DBUS_ERROR_INVALID_ARGS,
+                                                 "Invalid sandbox a11y own name, accessibility disabled in the sandbox");
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
+        }
+
+      if (!g_str_has_prefix (sandbox_a11y_own_names[i], app_id_prefix))
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
+                                                 G_DBUS_ERROR_INVALID_ARGS,
+                                                 "Invalid sandbox a11y own name, doesn't match app id");
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
     }
@@ -1099,8 +1122,14 @@ handle_spawn (PortalFlatpak         *object,
         }
       if (sandbox_flags & FLATPAK_SPAWN_SANDBOX_FLAGS_ALLOW_DBUS)
         g_ptr_array_add (flatpak_argv, g_strdup ("--session-bus"));
+
       if (sandbox_flags & FLATPAK_SPAWN_SANDBOX_FLAGS_ALLOW_A11Y)
-        g_ptr_array_add (flatpak_argv, g_strdup ("--a11y-bus"));
+        {
+          g_ptr_array_add (flatpak_argv, g_strdup ("--a11y-bus"));
+
+          for (i = 0; sandbox_a11y_own_names != NULL && sandbox_a11y_own_names[i] != NULL; i++)
+            g_ptr_array_add (flatpak_argv, g_strdup_printf ("--a11y-own-name=%s", sandbox_a11y_own_names[i]));
+        }
     }
   else
     {
@@ -2940,7 +2969,7 @@ on_bus_acquired (GDBusConnection *connection,
   g_dbus_interface_skeleton_set_flags (G_DBUS_INTERFACE_SKELETON (portal),
                                        G_DBUS_INTERFACE_SKELETON_FLAGS_HANDLE_METHOD_INVOCATIONS_IN_THREAD);
 
-  portal_flatpak_set_version (PORTAL_FLATPAK (portal), 6);
+  portal_flatpak_set_version (PORTAL_FLATPAK (portal), 7);
   portal_flatpak_set_supports (PORTAL_FLATPAK (portal), supports);
 
   g_signal_connect (portal, "handle-spawn", G_CALLBACK (handle_spawn), NULL);

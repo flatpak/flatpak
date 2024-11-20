@@ -1,3 +1,61 @@
+Changes in 1.15.11
+~~~~~~~~~~~~~~~~~~
+Released: not yet
+
+Dependencies:
+
+ * In distributions that compile Flatpak to use a separate xdg-dbus-proxy
+   executable, version 0.1.6 is recommended (but not required).
+   The minimum xdg-dbus-proxy continues to be 0.1.0.
+
+Enhancements:
+
+ * Allow applications like WebKit to connect the AT-SPI accessibility tree
+   of processes in a sub-sandbox with the tree in the main process (#5898)
+
+     * New sandboxing parameter `flatpak run --a11y-own-name`, which is
+       like `--own-name` but for the accessibility bus
+
+     * flatpak-portal API v7: add new sandbox-a11y-own-names option, which
+       accepts names matching `${FLATPAK_ID}.*`
+
+     * Apps may call the `org.a11y.atspi.Socket.Embedded` method on names
+       matching `${FLATPAK_ID}.Sandboxed.*` by default
+
+ * `flatpak run -vv $app_id` shows all applicable sandboxing parameters
+   and their source, including overrides, as debug messages (#5895)
+
+Bug fixes:
+
+ * Update libglnx to 2024-08-23 (#5918)
+
+     * fix build in environments that use -Werror=return-type, such as
+       openSUSE Tumbleweed (#5778)
+
+     * add a fallback definition for G_PID_FORMAT with older GLib
+
+     * avoid warnings for g_steal_fd() with newer GLib
+
+     * improve compatibility of g_closefrom() backport with newer GLib
+
+ * Update meson wrap file for xdg-dbus-proxy to version 0.1.6:
+
+     * compatibility with D-Bus implementations that pipeline the
+       authentication handshake, such as sd-bus and zbus
+
+     * compatibility with D-Bus implementations that use non-consecutive
+       serial numbers, such as godbus and zbus
+
+     * broadcast signals can be allowed without having to add TALK permission
+       (#5828)
+
+     * fix memory leaks
+
+Internal changes:
+
+ * Better const-correctness (#5913)
+ * Fix a shellcheck warning in the tests (#5914)
+
 Changes in 1.15.10
 ~~~~~~~~~~~~~~~~~~
 Released: 2024-08-14

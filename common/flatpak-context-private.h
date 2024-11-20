@@ -1,5 +1,6 @@
 /*
  * Copyright © 2014-2018 Red Hat, Inc
+ * Copyright © 2024 GNOME Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,6 +17,8 @@
  *
  * Authors:
  *       Alexander Larsson <alexl@redhat.com>
+ *       Georges Basile Stavracas Neto <georges.stavracas@gmail.com>
+ *       Hubert Figuière <hub@figuiere.net>
  */
 
 #ifndef __FLATPAK_CONTEXT_H__
@@ -24,6 +27,13 @@
 #include "libglnx.h"
 #include <flatpak-common-types-private.h>
 #include "flatpak-exports-private.h"
+#include "flatpak-usb-private.h"
+
+typedef enum {
+  FLATPAK_SESSION_BUS,
+  FLATPAK_SYSTEM_BUS,
+  FLATPAK_A11Y_BUS,
+} FlatpakBus;
 
 typedef enum {
   FLATPAK_POLICY_NONE,
@@ -59,6 +69,7 @@ typedef enum {
   FLATPAK_CONTEXT_DEVICE_KVM         = 1 << 2,
   FLATPAK_CONTEXT_DEVICE_SHM         = 1 << 3,
   FLATPAK_CONTEXT_DEVICE_INPUT       = 1 << 4,
+  FLATPAK_CONTEXT_DEVICE_USB         = 1 << 5,
 } FlatpakContextDevices;
 
 typedef enum {
@@ -84,7 +95,10 @@ struct FlatpakContext
   GHashTable            *filesystems;
   GHashTable            *session_bus_policy;
   GHashTable            *system_bus_policy;
+  GHashTable            *a11y_bus_policy;
   GHashTable            *generic_policy;
+  GHashTable            *enumerable_usb_devices;
+  GHashTable            *hidden_usb_devices;
 };
 
 extern const char *flatpak_context_sockets[];
@@ -100,6 +114,8 @@ gboolean       flatpak_context_parse_filesystem (const char             *filesys
 
 FlatpakContext *flatpak_context_new (void);
 void           flatpak_context_free (FlatpakContext *context);
+void           flatpak_context_dump (FlatpakContext *context,
+                                     const char     *title);
 void           flatpak_context_merge (FlatpakContext *context,
                                       FlatpakContext *other);
 GOptionEntry  *flatpak_context_get_option_entries (void);
@@ -118,12 +134,17 @@ GStrv          flatpak_context_get_session_bus_policy_allowed_own_names (Flatpak
 void           flatpak_context_set_system_bus_policy (FlatpakContext *context,
                                                       const char     *name,
                                                       FlatpakPolicy   policy);
+void           flatpak_context_set_a11y_bus_policy (FlatpakContext *context,
+                                                    const char     *name,
+                                                    FlatpakPolicy   policy);
+char *         flatpak_context_devices_to_usb_list (GHashTable *devices,
+                                                    gboolean hidden);
 void           flatpak_context_to_args (FlatpakContext *context,
                                         GPtrArray      *args);
 FlatpakRunFlags flatpak_context_get_run_flags (FlatpakContext *context);
 void           flatpak_context_add_bus_filters (FlatpakContext *context,
                                                 const char     *app_id,
-                                                gboolean        session_bus,
+                                                FlatpakBus      bus,
                                                 gboolean        sandboxed,
                                                 FlatpakBwrap   *bwrap);
 

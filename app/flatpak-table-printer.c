@@ -614,7 +614,7 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
       for (i = 0; i < printer->columns->len && i < printer->n_columns; i++)
         {
           TableColumn *col = g_ptr_array_index (printer->columns, i);
-          char *title = col && col->title ? col->title : "";
+          const char *title = col && col->title ? col->title : "";
           gboolean expand = col ? col->expand : FALSE;
           gboolean ellipsize = col ? col->ellipsize : FALSE;
           int len = widths[i];
@@ -636,7 +636,7 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
           if (shrinks[i] > 0 && ellipsize)
             {
               len -= shrinks[i];
-              freeme = title = ellipsize_string (title, len);
+              title = freeme = ellipsize_string (title, len);
             }
 
           if (i > 0)

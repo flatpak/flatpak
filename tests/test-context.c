@@ -501,6 +501,399 @@ test_validate_path_meta (void)
 
 }
 
+static void
+test_usb_list (void)
+{
+  const char *gtest_srcdir = NULL;
+  g_autofree char *test_file_path = NULL;
+  g_autofree char *content = NULL;
+  g_autofree char *list = NULL;
+  gboolean ret = FALSE;
+  g_autoptr(GError) error = NULL;
+  g_autoptr(GHashTable) enumerable = g_hash_table_new_full (g_str_hash, g_str_equal,
+							 g_free, (GDestroyNotify) flatpak_usb_query_free);
+  g_autoptr(GHashTable) hidden = g_hash_table_new_full (g_str_hash, g_str_equal,
+							 g_free, (GDestroyNotify) flatpak_usb_query_free);
+
+  gtest_srcdir = g_getenv ("G_TEST_SRCDIR");
+  g_assert (gtest_srcdir);
+  test_file_path = g_build_filename (gtest_srcdir, "gphoto2-list", NULL);
+
+  ret = g_file_get_contents (test_file_path, &content, NULL, &error);
+  g_assert (ret);
+
+  ret = flatpak_usb_parse_usb_list (content, enumerable, hidden, &error);
+
+  g_assert (ret);
+  g_assert_no_error (error);
+  g_assert_cmpint (g_hash_table_size (hidden), ==, 4);
+  g_assert_cmpint (g_hash_table_size (enumerable), ==, 2344);
+
+  list = flatpak_context_devices_to_usb_list (hidden, TRUE);
+  g_assert_cmpstr (list, ==, "!vnd:0502+dev:33c3;!vnd:4102+dev:1213;!vnd:0502+dev:365e;!vnd:0502+dev:387a;");
+
+  g_hash_table_remove_all (enumerable);
+  g_hash_table_remove_all (hidden);
+  ret = flatpak_usb_parse_usb_list (list, enumerable, hidden, &error);
+  g_assert_cmpint (g_hash_table_size (hidden), ==, 4);
+  g_assert_cmpint (g_hash_table_size (enumerable), ==, 0);
+}
+
+static void
+test_usb_rules_all (void)
+{
+  g_autoptr(FlatpakUsbRule) usb_rule = NULL;
+  g_autoptr(GError) local_error = NULL;
+  gboolean ret = FALSE;
+
+  /* Valid USB 'all' rule */
+  ret = flatpak_usb_parse_usb_rule ("all", &usb_rule, &local_error);
+  g_assert_true (ret);
+  g_assert_no_error (local_error);
+  g_assert_cmpint (usb_rule->rule_type, ==, FLATPAK_USB_RULE_TYPE_ALL);
+    {
+      g_autoptr(GString) string = g_string_new (NULL);
+      flatpak_usb_rule_print (usb_rule, string);
+      g_assert_cmpstr (string->str, ==, "all");
+    }
+  g_clear_pointer (&usb_rule, flatpak_usb_rule_free);
+
+  /* Invalid USB 'all' rule */
+  ret = flatpak_usb_parse_usb_rule ("all:09", &usb_rule, &local_error);
+  g_assert_false (ret);
+  g_assert_null (usb_rule);
+  g_assert_error (local_error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE);
+  g_clear_error (&local_error);
+}
+
+static void
+test_usb_rules_cls (void)
+{
+  g_autoptr(FlatpakUsbRule) usb_rule = NULL;
+  g_autoptr(GError) local_error = NULL;
+  gboolean ret = FALSE;
+
+  /* Valid USB 'cls' rules */
+  ret = flatpak_usb_parse_usb_rule ("cls:09:03", &usb_rule, &local_error);
+  g_assert_true (ret);
+  g_assert_no_error (local_error);
+  g_assert_cmpint (usb_rule->rule_type, ==, FLATPAK_USB_RULE_TYPE_CLASS);
+  g_assert_cmpint (usb_rule->d.device_class.type, ==, FLATPAK_USB_RULE_CLASS_TYPE_CLASS_SUBCLASS);
+  g_assert_cmpuint (usb_rule->d.device_class.class, ==, 0x09);
+  g_assert_cmpuint (usb_rule->d.device_class.subclass, ==, 0x03);
+    {
+      g_autoptr(GString) string = g_string_new (NULL);
+      flatpak_usb_rule_print (usb_rule, string);
+      g_assert_cmpstr (string->str, ==, "cls:09:03");
+    }
+  g_clear_pointer (&usb_rule, flatpak_usb_rule_free);
+
+  ret = flatpak_usb_parse_usb_rule ("cls:09:*", &usb_rule, &local_error);
+  g_assert_true (ret);
+  g_assert_no_error (local_error);
+  g_assert_cmpint (usb_rule->rule_type, ==, FLATPAK_USB_RULE_TYPE_CLASS);
+  g_assert_cmpint (usb_rule->d.device_class.type, ==, FLATPAK_USB_RULE_CLASS_TYPE_CLASS_ONLY);
+  g_assert_cmpuint (usb_rule->d.device_class.class, ==, 0x09);
+    {
+      g_autoptr(GString) string = g_string_new (NULL);
+      flatpak_usb_rule_print (usb_rule, string);
+      g_assert_cmpstr (string->str, ==, "cls:09:*");
+    }
+  g_clear_pointer (&usb_rule, flatpak_usb_rule_free);
+
+  ret = flatpak_usb_parse_usb_rule ("cls:00:00", &usb_rule, &local_error);
+  g_assert_true (ret);
+  g_assert_no_error (local_error);
+  g_clear_pointer (&usb_rule, flatpak_usb_rule_free);
+
+  /* Invalid USB 'cls' rules */
+  ret = flatpak_usb_parse_usb_rule ("cls:0009:0003", &usb_rule, &local_error);
+  g_assert_false (ret);
+  g_assert_null (usb_rule);
+  g_assert_error (local_error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE);
+  g_clear_pointer (&usb_rule, flatpak_usb_rule_free);
+  g_clear_error (&local_error);
+
+  ret = flatpak_usb_parse_usb_rule ("cls:*:03", &usb_rule, &local_error);
+  g_assert_false (ret);
+  g_assert_null (usb_rule);
+  g_assert_error (local_error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE);
+  g_clear_pointer (&usb_rule, flatpak_usb_rule_free);
+  g_clear_error (&local_error);
+
+  ret = flatpak_usb_parse_usb_rule ("cls:*:*", &usb_rule, &local_error);
+  g_assert_false (ret);
+  g_assert_null (usb_rule);
+  g_assert_error (local_error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE);
+  g_clear_pointer (&usb_rule, flatpak_usb_rule_free);
+  g_clear_error (&local_error);
+
+  ret = flatpak_usb_parse_usb_rule ("cls:*", &usb_rule, &local_error);
+  g_assert_false (ret);
+  g_assert_null (usb_rule);
+  g_assert_error (local_error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE);
+  g_clear_pointer (&usb_rule, flatpak_usb_rule_free);
+  g_clear_error (&local_error);
+
+  ret = flatpak_usb_parse_usb_rule ("cls", &usb_rule, &local_error);
+  g_assert_false (ret);
+  g_assert_null (usb_rule);
+  g_assert_error (local_error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE);
+  g_clear_pointer (&usb_rule, flatpak_usb_rule_free);
+  g_clear_error (&local_error);
+}
+
+static void
+test_usb_rules_dev (void)
+{
+  g_autoptr(FlatpakUsbRule) usb_rule = NULL;
+  g_autoptr(GError) local_error = NULL;
+  gboolean ret = FALSE;
+
+  /* Valid USB 'dev' rules */
+  ret = flatpak_usb_parse_usb_rule ("dev:0060", &usb_rule, &local_error);
+  g_assert_true (ret);
+  g_assert_no_error (local_error);
+  g_assert_cmpint (usb_rule->rule_type, ==, FLATPAK_USB_RULE_TYPE_DEVICE);
+  g_assert_cmpuint (usb_rule->d.product.id, ==, 0x0060);
+    {
+      g_autoptr(GString) string = g_string_new (NULL);
+      flatpak_usb_rule_print (usb_rule, string);
+      g_assert_cmpstr (string->str, ==, "dev:0060");
+    }
+  g_clear_pointer (&usb_rule, flatpak_usb_rule_free);
+
+  ret = flatpak_usb_parse_usb_rule ("dev:0000", &usb_rule, &local_error);
+  g_assert_true (ret);
+  g_assert_no_error (local_error);
+  g_clear_pointer (&usb_rule, flatpak_usb_rule_free);
+
+  /* Invalid USB 'dev' rules */
+  ret = flatpak_usb_parse_usb_rule ("dev:00", &usb_rule, &local_error);
+  g_assert_false (ret);
+  g_assert_null (usb_rule);
+  g_assert_error (local_error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE);
+  g_clear_pointer (&usb_rule, flatpak_usb_rule_free);
+  g_clear_error (&local_error);
+
+  ret = flatpak_usb_parse_usb_rule ("dev:*", &usb_rule, &local_error);
+  g_assert_false (ret);
+  g_assert_null (usb_rule);
+  g_assert_error (local_error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE);
+  g_clear_pointer (&usb_rule, flatpak_usb_rule_free);
+  g_clear_error (&local_error);
+
+  ret = flatpak_usb_parse_usb_rule ("dev", &usb_rule, &local_error);
+  g_assert_false (ret);
+  g_assert_null (usb_rule);
+  g_assert_error (local_error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE);
+  g_clear_pointer (&usb_rule, flatpak_usb_rule_free);
+  g_clear_error (&local_error);
+}
+
+static void
+test_usb_rules_vnd (void)
+{
+  g_autoptr(FlatpakUsbRule) usb_rule = NULL;
+  g_autoptr(GError) local_error = NULL;
+  gboolean ret = FALSE;
+
+  /* Valid USB 'vnd' rules */
+  ret = flatpak_usb_parse_usb_rule ("vnd:0fd9", &usb_rule, &local_error);
+  g_assert_true (ret);
+  g_assert_no_error (local_error);
+  g_assert_cmpint (usb_rule->rule_type, ==, FLATPAK_USB_RULE_TYPE_VENDOR);
+  g_assert_cmpuint (usb_rule->d.vendor.id, ==, 0x0fd9);
+    {
+      g_autoptr(GString) string = g_string_new (NULL);
+      flatpak_usb_rule_print (usb_rule, string);
+      g_assert_cmpstr (string->str, ==, "vnd:0fd9");
+    }
+  g_clear_pointer (&usb_rule, flatpak_usb_rule_free);
+
+  ret = flatpak_usb_parse_usb_rule ("vnd:0000", &usb_rule, &local_error);
+  g_assert_true (ret);
+  g_assert_no_error (local_error);
+  g_clear_pointer (&usb_rule, flatpak_usb_rule_free);
+
+  /* Invalid USB 'vnd' rules */
+  ret = flatpak_usb_parse_usb_rule ("vnd:00", &usb_rule, &local_error);
+  g_assert_false (ret);
+  g_assert_null (usb_rule);
+  g_assert_error (local_error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE);
+  g_clear_pointer (&usb_rule, flatpak_usb_rule_free);
+  g_clear_error (&local_error);
+
+  ret = flatpak_usb_parse_usb_rule ("vnd:*", &usb_rule, &local_error);
+  g_assert_false (ret);
+  g_assert_null (usb_rule);
+  g_assert_error (local_error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE);
+  g_clear_pointer (&usb_rule, flatpak_usb_rule_free);
+  g_clear_error (&local_error);
+
+  ret = flatpak_usb_parse_usb_rule ("vnd", &usb_rule, &local_error);
+  g_assert_false (ret);
+  g_assert_null (usb_rule);
+  g_assert_error (local_error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE);
+  g_clear_pointer (&usb_rule, flatpak_usb_rule_free);
+  g_clear_error (&local_error);
+}
+
+static void
+test_usb_query_simple (void)
+{
+  g_autoptr(FlatpakUsbQuery) usb_query = NULL;
+  g_autoptr(GError) local_error = NULL;
+  gboolean ret = FALSE;
+
+  ret = flatpak_usb_parse_usb ("all", &usb_query, &local_error);
+  g_assert_true (ret);
+  g_assert_nonnull (usb_query);
+  g_assert_no_error (local_error);
+  g_assert_cmpuint (usb_query->rules->len, ==, 1);
+    {
+      FlatpakUsbRule *usb_rule = g_ptr_array_index (usb_query->rules, 0);
+      g_assert_cmpint (usb_rule->rule_type, ==, FLATPAK_USB_RULE_TYPE_ALL);
+    }
+    {
+      g_autoptr(GString) string = g_string_new (NULL);
+      flatpak_usb_query_print (usb_query, string);
+      g_assert_cmpstr (string->str, ==, "all");
+    }
+  g_clear_pointer (&usb_query, flatpak_usb_query_free);
+
+  ret = flatpak_usb_parse_usb ("cls:03:*", &usb_query, &local_error);
+  g_assert_true (ret);
+  g_assert_nonnull (usb_query);
+  g_assert_no_error (local_error);
+  g_assert_cmpuint (usb_query->rules->len, ==, 1);
+    {
+      FlatpakUsbRule *usb_rule = g_ptr_array_index (usb_query->rules, 0);
+      g_assert_cmpint (usb_rule->rule_type, ==, FLATPAK_USB_RULE_TYPE_CLASS);
+      g_assert_cmpint (usb_rule->d.device_class.type, ==, FLATPAK_USB_RULE_CLASS_TYPE_CLASS_ONLY);
+      g_assert_cmpuint (usb_rule->d.device_class.class, ==, 0x03);
+    }
+    {
+      g_autoptr(GString) string = g_string_new (NULL);
+      flatpak_usb_query_print (usb_query, string);
+      g_assert_cmpstr (string->str, ==, "cls:03:*");
+    }
+  g_clear_pointer (&usb_query, flatpak_usb_query_free);
+
+  ret = flatpak_usb_parse_usb ("vnd:0fd9", &usb_query, &local_error);
+  g_assert_true (ret);
+  g_assert_nonnull (usb_query);
+  g_assert_no_error (local_error);
+  g_assert_cmpuint (usb_query->rules->len, ==, 1);
+    {
+      FlatpakUsbRule *usb_rule = g_ptr_array_index (usb_query->rules, 0);
+      g_assert_cmpint (usb_rule->rule_type, ==, FLATPAK_USB_RULE_TYPE_VENDOR);
+      g_assert_cmpuint (usb_rule->d.vendor.id, ==, 0x0fd9);
+    }
+    {
+      g_autoptr(GString) string = g_string_new (NULL);
+      flatpak_usb_query_print (usb_query, string);
+      g_assert_cmpstr (string->str, ==, "vnd:0fd9");
+    }
+  g_clear_pointer (&usb_query, flatpak_usb_query_free);
+
+  /* Invalid USB query */
+  ret = flatpak_usb_parse_usb ("all:0123", &usb_query, &local_error);
+  g_assert_false (ret);
+  g_assert_null (usb_query);
+  g_assert_error (local_error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE);
+  g_clear_pointer (&usb_query, flatpak_usb_query_free);
+  g_clear_error (&local_error);
+
+  /* Invalid empty USB query */
+  ret = flatpak_usb_parse_usb ("", &usb_query, &local_error);
+  g_assert_false (ret);
+  g_assert_null (usb_query);
+  g_assert_error (local_error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE);
+  g_clear_pointer (&usb_query, flatpak_usb_query_free);
+  g_clear_error (&local_error);
+}
+
+static void
+test_usb_query_device_and_vendor (void)
+{
+  g_autoptr(FlatpakUsbQuery) usb_query = NULL;
+  g_autoptr(GError) local_error = NULL;
+  gboolean ret = FALSE;
+
+  ret = flatpak_usb_parse_usb ("vnd:0fd9+dev:0063", &usb_query, &local_error);
+  g_assert_true (ret);
+  g_assert_no_error (local_error);
+  g_assert_cmpuint (usb_query->rules->len, ==, 2);
+    {
+      FlatpakUsbRule *usb_rule;
+
+      usb_rule = g_ptr_array_index (usb_query->rules, 0);
+      g_assert_cmpint (usb_rule->rule_type, ==, FLATPAK_USB_RULE_TYPE_VENDOR);
+      g_assert_cmpuint (usb_rule->d.vendor.id, ==, 0x0fd9);
+
+      usb_rule = g_ptr_array_index (usb_query->rules, 1);
+      g_assert_cmpint (usb_rule->rule_type, ==, FLATPAK_USB_RULE_TYPE_DEVICE);
+      g_assert_cmpuint (usb_rule->d.product.id, ==, 0x063);
+    }
+    {
+      g_autoptr(GString) string = g_string_new (NULL);
+      flatpak_usb_query_print (usb_query, string);
+      g_assert_cmpstr (string->str, ==, "vnd:0fd9+dev:0063");
+    }
+  g_clear_pointer (&usb_query, flatpak_usb_query_free);
+
+  ret = flatpak_usb_parse_usb ("vnd:0fd9+dev:0063+cls:09:*", &usb_query, &local_error);
+  g_assert_true (ret);
+  g_assert_no_error (local_error);
+  g_assert_cmpuint (usb_query->rules->len, ==, 3);
+    {
+      FlatpakUsbRule *usb_rule;
+
+      usb_rule = g_ptr_array_index (usb_query->rules, 0);
+      g_assert_cmpint (usb_rule->rule_type, ==, FLATPAK_USB_RULE_TYPE_VENDOR);
+      g_assert_cmpuint (usb_rule->d.vendor.id, ==, 0x0fd9);
+
+      usb_rule = g_ptr_array_index (usb_query->rules, 1);
+      g_assert_cmpint (usb_rule->rule_type, ==, FLATPAK_USB_RULE_TYPE_DEVICE);
+      g_assert_cmpuint (usb_rule->d.product.id, ==, 0x063);
+
+      usb_rule = g_ptr_array_index (usb_query->rules, 2);
+      g_assert_cmpint (usb_rule->rule_type, ==, FLATPAK_USB_RULE_TYPE_CLASS);
+      g_assert_cmpint (usb_rule->d.device_class.type, ==, FLATPAK_USB_RULE_CLASS_TYPE_CLASS_ONLY);
+      g_assert_cmpuint (usb_rule->d.device_class.class, ==, 0x09);
+    }
+    {
+      g_autoptr(GString) string = g_string_new (NULL);
+      flatpak_usb_query_print (usb_query, string);
+      g_assert_cmpstr (string->str, ==, "vnd:0fd9+dev:0063+cls:09:*");
+    }
+  g_clear_pointer (&usb_query, flatpak_usb_query_free);
+
+  /* Device without vendor is invalid */
+  ret = flatpak_usb_parse_usb ("dev:0063", &usb_query, &local_error);
+  g_assert_false (ret);
+  g_assert_null (usb_query);
+  g_assert_error (local_error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE);
+  g_clear_pointer (&usb_query, flatpak_usb_query_free);
+  g_clear_error (&local_error);
+
+  /* 'all' in the query invalidates further rules */
+  ret = flatpak_usb_parse_usb ("all+dev:0063", &usb_query, &local_error);
+  g_assert_false (ret);
+  g_assert_null (usb_query);
+  g_assert_error (local_error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE);
+  g_clear_pointer (&usb_query, flatpak_usb_query_free);
+  g_clear_error (&local_error);
+
+  ret = flatpak_usb_parse_usb ("all+vnd:0fd+dev:0063", &usb_query, &local_error);
+  g_assert_false (ret);
+  g_assert_null (usb_query);
+  g_assert_error (local_error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE);
+  g_clear_pointer (&usb_query, flatpak_usb_query_free);
+  g_clear_error (&local_error);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -511,6 +904,15 @@ main (int argc, char *argv[])
   g_test_add_func ("/context/merge-fs", test_context_merge_fs);
   g_test_add_func ("/context/validate-path-args", test_validate_path_args);
   g_test_add_func ("/context/validate-path-meta", test_validate_path_meta);
+
+  g_test_add_func ("/context/usb-list", test_usb_list);
+  g_test_add_func ("/context/usb-rules/all", test_usb_rules_all);
+  g_test_add_func ("/context/usb-rules/cls", test_usb_rules_cls);
+  g_test_add_func ("/context/usb-rules/dev", test_usb_rules_dev);
+  g_test_add_func ("/context/usb-rules/vnd", test_usb_rules_vnd);
+
+  g_test_add_func ("/context/usb-query/simple", test_usb_query_simple);
+  g_test_add_func ("/context/usb-query/device-and-vendor", test_usb_query_device_and_vendor);
 
   return g_test_run ();
 }

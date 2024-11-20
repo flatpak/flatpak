@@ -92,16 +92,30 @@
             <member>LD_AUDIT</member>
             <member>XDG_CONFIG_DIRS</member>
             <member>XDG_DATA_DIRS</member>
-            <member>XDG_RUNTIME_DIR</member>
             <member>SHELL</member>
             <member>TEMP</member>
             <member>TEMPDIR</member>
             <member>TMP</member>
             <member>TMPDIR</member>
+            <member>XDG_RUNTIME_DIR</member>
+            <member>container</member>
+            <member>TZDIR</member>
             <member>PYTHONPATH</member>
             <member>PERLLIB</member>
             <member>PERL5LIB</member>
             <member>XCURSOR_PATH</member>
+            <member>GST_PLUGIN_PATH_1_0</member>
+            <member>GST_REGISTRY</member>
+            <member>GST_REGISTRY_1_0</member>
+            <member>GST_PLUGIN_PATH</member>
+            <member>GST_PLUGIN_SYSTEM_PATH</member>
+            <member>GST_PLUGIN_SCANNER</member>
+            <member>GST_PLUGIN_SCANNER_1_0</member>
+            <member>GST_PLUGIN_SYSTEM_PATH_1_0</member>
+            <member>GST_PRESET_PATH</member>
+            <member>GST_PTP_HELPER</member>
+            <member>GST_PTP_HELPER_1_0</member>
+            <member>GST_INSTALL_PLUGINS_HELPER</member>
             <member>KRB5CCNAME</member>
             <member>XKB_CONFIG_ROOT</member>
             <member>GIO_EXTRA_MODULES</member>
@@ -340,7 +354,7 @@
                 <listitem><para>
                     Expose a device to the application. This overrides to
                     the Context section from the application metadata.
-                    <arg choice="plain">DEVICE</arg> must be one of: dri, input, kvm, shm, all.
+                    <arg choice="plain">DEVICE</arg> must be one of: dri, usb, input, kvm, shm, all.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
@@ -351,7 +365,7 @@
                 <listitem><para>
                     Don't expose a device to the application. This overrides to
                     the Context section from the application metadata.
-                    <arg choice="plain">DEVICE</arg> must be one of: dri, input, kvm, shm, all.
+                    <arg choice="plain">DEVICE</arg> must be one of: dri, usb, input, kvm, shm, all.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
@@ -462,6 +476,76 @@ key=v1;v2;
             </varlistentry>
 
             <varlistentry>
+                <term><option>--usb=TYPE[:DATA]</option></term>
+
+                <listitem><para>
+                    Adds a USB device query to the application metadata. This
+                    allows device enumeration and usage by the USB portal.
+                    <arg choice="plain">TYPE</arg> must be one of: all, cls, dev, vnd.
+                </para><variablelist>
+                    <varlistentry>
+                        <term><option>all</option></term>
+
+                        <listitem><para>
+                            Match all devices.
+                        </para></listitem>
+                    </varlistentry>
+
+                    <varlistentry>
+                        <term><option>cls</option></term>
+
+                        <listitem><para>
+                            A device class and subclass query. <arg choice="plain">DATA</arg>
+                            must be in the form of <arg choice="plain">CLASS:SUBCLASS</arg> where
+                            both <arg choice="plain">CLASS</arg> and <arg choice="plain">SUBCLASS</arg>
+                            must be a valid 2-digit hexadecimal class id number. Alternatively,
+                            <arg choice="plain">SUBCLASS</arg> may be <literal>*</literal> to match
+                            all subclasses.
+                        </para></listitem>
+                    </varlistentry>
+
+                    <varlistentry>
+                        <term><option>dev</option></term>
+
+                        <listitem><para>
+                            A device product id query. <arg choice="plain">DATA</arg>
+                            must be a valid 4-digit hexadecimal product id number,
+                            for example <option>0a1b</option>. It requires a
+                            <option>vnd</option> filter in the query.
+                        </para></listitem>
+                    </varlistentry>
+
+                    <varlistentry>
+                        <term><option>vnd</option></term>
+
+                        <listitem><para>
+                            A device vendor id query. <arg choice="plain">DATA</arg>
+                            must be a valid 4-digit hexadecimal vendor id number
+                            greater than zero, for example <option>0fab</option>.
+                        </para></listitem>
+                    </varlistentry>
+
+                </variablelist><para>
+                    It is possible to compose multiple device queries together
+                    with the <literal>+</literal> sign, for example
+                    <option>--usb=vnd:0123+dev:4567</option>. The <arg choice="plain">dev</arg>
+                    filter requires a <arg choice="plain">vnd</arg>.
+                    Available since 1.15.11.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--nousb=VENDOR_ID:PRODUCT_ID</option></term>
+
+                <listitem><para>
+                    Adds a blocking USB device query to the application metadata. Blocked
+                    devices take precedence over allowed devices. The syntax is exactly
+                    equal to <option>--usb</option>.
+                    Available since 1.15.11.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--env=VAR=VALUE</option></term>
 
                 <listitem><para>
@@ -561,6 +645,17 @@ key=v1;v2;
                 <listitem><para>
                     Don't allow the application to talk to the well known name <arg choice="plain">NAME</arg> on the system bus.
                     If <arg choice="plain">NAME</arg> ends with .*, it allows the application to talk to all matching names.
+                    This overrides to the Context section from the application metadata.
+                    This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--a11y-own-name=NAME</option></term>
+
+                <listitem><para>
+                    Allow the application to own the well known name <arg choice="plain">NAME</arg> on the a11y bus.
+                    If <arg choice="plain">NAME</arg> ends with .*, it allows the application to own all matching names.
                     This overrides to the Context section from the application metadata.
                     This option can be used multiple times.
                 </para></listitem>
@@ -758,6 +853,9 @@ key=v1;v2;
         </para>
         <para>
             <command>$ flatpak run --command=bash org.gnome.Sdk</command>
+        </para>
+        <para>
+            <command>$ flatpak run org.gnome.Boxes --nousb=0fd9:*</command>
         </para>
 
     </refsect1>

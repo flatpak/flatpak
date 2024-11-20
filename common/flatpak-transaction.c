@@ -2410,9 +2410,8 @@ find_runtime_remote (FlatpakTransaction             *self,
   /* Put @app_remote before the others at its priority level */
   rsd.dir = priv->dir;
   rsd.prioritized_remote = app_remote;
-  g_qsort_with_data (all_remotes, g_strv_length (all_remotes), sizeof (char *),
-                     cmp_remote_with_prioritized, &rsd);
-
+  qsort_r (all_remotes, g_strv_length (all_remotes), sizeof (char *),
+           cmp_remote_with_prioritized, &rsd);
 
   app_pref = flatpak_decomposed_get_pref (app_ref);
   runtime_pref = flatpak_decomposed_get_pref (runtime_ref);

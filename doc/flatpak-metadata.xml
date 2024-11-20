@@ -164,7 +164,9 @@
                 <varlistentry>
                     <term><option>devices</option> (list)</term>
                     <listitem><para>
-                        List of devices to make available in the sandbox.
+                        List of devices to make available in the sandbox. This
+                        just expose the devices nodes, it doesn't grant any
+                        permission that the user doesn't already have.
                         Possible values:
                         <variablelist>
 
@@ -180,6 +182,14 @@
                                 Input devices
                                 (<filename>/dev/input</filename>).
                                 Available since 1.15.6.
+                            </para></listitem></varlistentry>
+
+                            <varlistentry><term><option>usb</option></term>
+                            <listitem><para>
+                                USB device bus
+                                (all device nodes below
+                                <filename>/dev/bus/usb</filename>).
+                                Available since 1.15.11.
                             </para></listitem></varlistentry>
 
                             <varlistentry><term><option>kvm</option></term>
@@ -1090,6 +1100,36 @@
             <!-- TODO: More information would be nice -->
           </para>
         </refsect2>
+        <refsect2 id="usb-devices">
+          <title>[USB Devices]</title>
+          <para>
+            USB devices can be enumerable or hidden by the USB portal as specified
+            by the keys in this group. The vendor and product ids are validated
+            by Flatpak, but aren't otherwise used or parsed.
+            This merely grant the permission to enumerate USB device for use by the
+            portal. This does give access to the devices.
+            Available since 1.15.11.
+          </para>
+          <variablelist>
+                <varlistentry>
+                    <term><option>enumerable-devices</option> (string list)</term>
+                    <listitem><para>
+                        List of enumerable USB devices. Each element is the same
+                        syntax the arguments to `--usb`.
+                        Available since 1.15.11.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>hidden-devices</option> (string list)</term>
+                    <listitem><para>
+                        List of hidden USB devices, i.e. to remove the enumarable
+                        devices list. Each element is the same syntax the arguments
+                        to `--nousb`. Hidden devices take precedence over enumerable
+                        devices. Available since 1.15.11.
+                    </para></listitem>
+                </varlistentry>
+            </variablelist>
+        </refsect2>
     </refsect1>
 
     <refsect1>
@@ -1111,6 +1151,10 @@ ca.desrt.dconf=talk
 
 [Environment]
 DCONF_USER_CONFIG_DIR=.config/dconf
+
+[USB Devices]
+enumerable-devices=0fd9:*;
+hidden-devices=0fd9:0063;
 
 [Extension org.gnome.Calculator.Locale]
 directory=share/runtime/locale

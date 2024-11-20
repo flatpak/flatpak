@@ -50,6 +50,8 @@ assert_has_file $FL_DIR/exports/share/metainfo/org.test.Hello.cmd.appdata.xml
 assert_file_has_content $FL_DIR/exports/share/applications/org.test.Hello.desktop "^Exec=.*flatpak run --branch=stable --arch=$ARCH --command=hello\.sh org\.test\.Hello$"
 assert_has_file $FL_DIR/exports/share/gnome-shell/search-providers/org.test.Hello.search-provider.ini
 assert_file_has_content $FL_DIR/exports/share/gnome-shell/search-providers/org.test.Hello.search-provider.ini "^DefaultDisabled=true$"
+assert_has_file $FL_DIR/exports/share/krunner/dbusplugins/org.test.Hello.desktop
+assert_file_has_content $FL_DIR/exports/share/krunner/dbusplugins/org.test.Hello.desktop "^X-KDE-PluginInfo-EnabledByDefault=false$"
 assert_has_file $FL_DIR/exports/share/icons/hicolor/64x64/apps/org.test.Hello.png
 assert_not_has_file $FL_DIR/exports/share/icons/hicolor/64x64/apps/dont-export.png
 assert_has_file $FL_DIR/exports/share/icons/HighContrast/64x64/apps/org.test.Hello.png
@@ -570,8 +572,8 @@ ok "--persist=.persist persists a directory"
 
 rm -fr "$HOME/.var/app/org.test.Hello"
 mkdir -p "$HOME/.var/app/org.test.Hello"
-# G_DEBUG= to avoid the deprecation warning being fatal
-G_DEBUG= run --command=sh --persist=/.persist org.test.Hello -c 'echo can-persist > .persist/rc'
+# G_DEBUG='' to avoid the deprecation warning being fatal
+G_DEBUG='' run --command=sh --persist=/.persist org.test.Hello -c 'echo can-persist > .persist/rc'
 sed -e 's,^,#--persist=/.persist# ,g' < "$HOME/.var/app/org.test.Hello/.persist/rc" >&2
 assert_file_has_content "$HOME/.var/app/org.test.Hello/.persist/rc" "can-persist"
 
@@ -590,9 +592,9 @@ echo FOO > ${TEST_DATA_DIR}/inaccessible/secret-file
 rm -fr "$HOME/.var/app/org.test.Hello"
 mkdir -p "$HOME/.var/app/org.test.Hello"
 ln -fns "${TEST_DATA_DIR}/inaccessible" "$HOME/.var/app/org.test.Hello/persist"
-# G_DEBUG= to avoid the warnings being fatal when we reject a --persist option.
+# G_DEBUG='' to avoid the warnings being fatal when we reject a --persist option.
 # LC_ALL=C so we get the expected non-localized string.
-LC_ALL=C G_DEBUG= run --command=ls --persist=persist --persist=relative/../escape org.test.Hello -la ~/persist &> hello_out || true
+LC_ALL=C G_DEBUG='' run --command=ls --persist=persist --persist=relative/../escape org.test.Hello -la ~/persist &> hello_out || true
 sed -e 's,^,#--persist=symlink# ,g' < hello_out >&2
 assert_file_has_content hello_out "not allowed to avoid sandbox escape"
 assert_not_file_has_content hello_out "secret-file"

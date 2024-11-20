@@ -28,6 +28,7 @@
 
 #include <string.h>
 
+#include <glib-unix.h>
 #include <gio/gio.h>
 
 G_BEGIN_DECLS
@@ -80,6 +81,10 @@ gboolean              glnx_set_object  (GObject **object_ptr,
 #define G_OPTION_FLAG_NONE ((GOptionFlags) 0)
 #endif
 
+#ifndef G_PID_FORMAT  /* added in 2.50 */
+#define G_PID_FORMAT "i"
+#endif
+
 #if !GLIB_CHECK_VERSION(2, 60, 0)
 #define g_strv_equal _glnx_strv_equal
 gboolean _glnx_strv_equal (const gchar * const *strv1,
@@ -125,16 +130,22 @@ _glnx_memdup2 (gconstpointer mem,
   (((a) > (b) ? (a) - (b) : (b) - (a)) < (epsilon))
 #endif
 
-#if !GLIB_CHECK_VERSION(2, 70, 0)
-#define g_steal_fd _glnx_steal_fd
 static inline int
 _glnx_steal_fd (int *fdp)
 {
+#if GLIB_CHECK_VERSION(2, 70, 0)
+  /* Allow it to be used without deprecation warnings, even if the target
+   * GLib version is older */
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+  return g_steal_fd (fdp);
+  G_GNUC_END_IGNORE_DEPRECATIONS
+#else
   int fd = *fdp;
   *fdp = -1;
   return fd;
-}
 #endif
+}
+#define g_steal_fd _glnx_steal_fd
 
 #if !GLIB_CHECK_VERSION(2, 74, 0)
 #define G_APPLICATION_DEFAULT_FLAGS ((GApplicationFlags) 0)

@@ -1,5 +1,6 @@
 /* vi:set et sw=2 sts=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e-s:
  * Copyright © 2014-2018 Red Hat, Inc
+ * Copyright © 2024 GNOME Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,6 +17,8 @@
  *
  * Authors:
  *       Alexander Larsson <alexl@redhat.com>
+ *       Georges Basile Stavracas Neto <georges.stavracas@gmail.com>
+ *       Hubert Figuière <hub@figuiere.net>
  */
 
 #include "config.h"
@@ -40,6 +43,7 @@
 
 #include "flatpak-error.h"
 #include "flatpak-metadata-private.h"
+#include "flatpak-usb-private.h"
 #include "flatpak-utils-private.h"
 
 /* Same order as enum */
@@ -71,6 +75,7 @@ const char *flatpak_context_devices[] = {
   "kvm",
   "shm",
   "input",
+  "usb",
   NULL
 };
 
@@ -104,8 +109,13 @@ flatpak_context_new (void)
   context->filesystems = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   context->session_bus_policy = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   context->system_bus_policy = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  context->a11y_bus_policy = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   context->generic_policy = g_hash_table_new_full (g_str_hash, g_str_equal,
                                                    g_free, (GDestroyNotify) g_strfreev);
+  context->enumerable_usb_devices = g_hash_table_new_full (g_str_hash, g_str_equal,
+                                                           g_free, (GDestroyNotify) flatpak_usb_query_free);
+  context->hidden_usb_devices = g_hash_table_new_full (g_str_hash, g_str_equal,
+                                                       g_free, (GDestroyNotify) flatpak_usb_query_free);
 
   return context;
 }
@@ -118,7 +128,10 @@ flatpak_context_free (FlatpakContext *context)
   g_hash_table_destroy (context->filesystems);
   g_hash_table_destroy (context->session_bus_policy);
   g_hash_table_destroy (context->system_bus_policy);
+  g_hash_table_destroy (context->a11y_bus_policy);
   g_hash_table_destroy (context->generic_policy);
+  g_hash_table_destroy (context->enumerable_usb_devices);
+  g_hash_table_destroy (context->hidden_usb_devices);
   g_slice_free (FlatpakContext, context);
 }
 
@@ -433,6 +446,14 @@ flatpak_context_set_session_bus_policy (FlatpakContext *context,
   g_hash_table_insert (context->session_bus_policy, g_strdup (name), GINT_TO_POINTER (policy));
 }
 
+void
+flatpak_context_set_a11y_bus_policy (FlatpakContext *context,
+                                     const char     *name,
+                                     FlatpakPolicy   policy)
+{
+  g_hash_table_insert (context->a11y_bus_policy, g_strdup (name), GINT_TO_POINTER (policy));
+}
+
 GStrv
 flatpak_context_get_session_bus_policy_allowed_own_names (FlatpakContext *context)
 {
@@ -489,6 +510,65 @@ flatpak_context_apply_generic_policy (FlatpakContext *context,
                        g_ptr_array_free (new, FALSE));
 }
 
+static void
+flatpak_context_add_query_to (GHashTable            *queries,
+                              const FlatpakUsbQuery *usb_query)
+{
+  g_autoptr(FlatpakUsbQuery) copy = NULL;
+  g_autoptr(GString) string = NULL;
+
+  g_assert (queries != NULL);
+  g_assert (usb_query != NULL && usb_query->rules != NULL);
+
+  copy = flatpak_usb_query_copy (usb_query);
+
+  string = g_string_new (NULL);
+  flatpak_usb_query_print (usb_query, string);
+
+  g_hash_table_insert (queries,
+                       g_strdup (string->str),
+                       g_steal_pointer (&copy));
+}
+
+static void
+flatpak_context_add_usb_query (FlatpakContext        *context,
+                               const FlatpakUsbQuery *usb_query)
+{
+  flatpak_context_add_query_to (context->enumerable_usb_devices, usb_query);
+}
+
+static void
+flatpak_context_add_nousb_query (FlatpakContext        *context,
+                                 const FlatpakUsbQuery *usb_query)
+{
+  flatpak_context_add_query_to (context->hidden_usb_devices, usb_query);
+}
+
+static gboolean
+flatpak_context_add_usb_list (FlatpakContext *context,
+                              const char     *list,
+                              GError        **error)
+{
+  return flatpak_usb_parse_usb_list (list, context->enumerable_usb_devices,
+                                     context->hidden_usb_devices, error);
+}
+
+static gboolean
+flatpak_context_add_usb_list_from_file (FlatpakContext *context,
+                                        const char     *path,
+                                        GError        **error)
+{
+  g_autofree char *contents = NULL;
+
+  if (!flatpak_validate_path_characters (path, error))
+    return FALSE;
+
+  if (!g_file_get_contents (path, &contents, NULL, error))
+    return FALSE;
+
+  return flatpak_usb_parse_usb_list (contents, context->enumerable_usb_devices,
+                                     context->hidden_usb_devices, error);
+}
 
 static gboolean
 flatpak_context_set_persistent (FlatpakContext *context,
@@ -573,12 +653,13 @@ static gboolean
 get_xdg_user_dir_from_string (const char  *filesystem,
                               const char **config_key,
                               const char **suffix,
-                              const char **dir)
+                              char **dir)
 {
   char *slash;
   const char *rest;
   g_autofree char *prefix = NULL;
   gsize len;
+  const char *dir_out = NULL;
 
   slash = strchr (filesystem, '/');
 
@@ -601,7 +682,7 @@ get_xdg_user_dir_from_string (const char  *filesystem,
       if (config_key)
         *config_key = "XDG_DESKTOP_DIR";
       if (dir)
-        *dir = g_get_user_special_dir (G_USER_DIRECTORY_DESKTOP);
+        *dir = g_strdup (g_get_user_special_dir (G_USER_DIRECTORY_DESKTOP));
       return TRUE;
     }
   if (strcmp (prefix, "xdg-documents") == 0)
@@ -609,7 +690,7 @@ get_xdg_user_dir_from_string (const char  *filesystem,
       if (config_key)
         *config_key = "XDG_DOCUMENTS_DIR";
       if (dir)
-        *dir = g_get_user_special_dir (G_USER_DIRECTORY_DOCUMENTS);
+        *dir = g_strdup (g_get_user_special_dir (G_USER_DIRECTORY_DOCUMENTS));
       return TRUE;
     }
   if (strcmp (prefix, "xdg-download") == 0)
@@ -617,7 +698,7 @@ get_xdg_user_dir_from_string (const char  *filesystem,
       if (config_key)
         *config_key = "XDG_DOWNLOAD_DIR";
       if (dir)
-        *dir = g_get_user_special_dir (G_USER_DIRECTORY_DOWNLOAD);
+        *dir = g_strdup (g_get_user_special_dir (G_USER_DIRECTORY_DOWNLOAD));
       return TRUE;
     }
   if (strcmp (prefix, "xdg-music") == 0)
@@ -625,7 +706,7 @@ get_xdg_user_dir_from_string (const char  *filesystem,
       if (config_key)
         *config_key = "XDG_MUSIC_DIR";
       if (dir)
-        *dir = g_get_user_special_dir (G_USER_DIRECTORY_MUSIC);
+        *dir = g_strdup (g_get_user_special_dir (G_USER_DIRECTORY_MUSIC));
       return TRUE;
     }
   if (strcmp (prefix, "xdg-pictures") == 0)
@@ -633,7 +714,7 @@ get_xdg_user_dir_from_string (const char  *filesystem,
       if (config_key)
         *config_key = "XDG_PICTURES_DIR";
       if (dir)
-        *dir = g_get_user_special_dir (G_USER_DIRECTORY_PICTURES);
+        *dir = g_strdup (g_get_user_special_dir (G_USER_DIRECTORY_PICTURES));
       return TRUE;
     }
   if (strcmp (prefix, "xdg-public-share") == 0)
@@ -641,7 +722,7 @@ get_xdg_user_dir_from_string (const char  *filesystem,
       if (config_key)
         *config_key = "XDG_PUBLICSHARE_DIR";
       if (dir)
-        *dir = g_get_user_special_dir (G_USER_DIRECTORY_PUBLIC_SHARE);
+        *dir = g_strdup (g_get_user_special_dir (G_USER_DIRECTORY_PUBLIC_SHARE));
       return TRUE;
     }
   if (strcmp (prefix, "xdg-templates") == 0)
@@ -649,7 +730,7 @@ get_xdg_user_dir_from_string (const char  *filesystem,
       if (config_key)
         *config_key = "XDG_TEMPLATES_DIR";
       if (dir)
-        *dir = g_get_user_special_dir (G_USER_DIRECTORY_TEMPLATES);
+        *dir = g_strdup (g_get_user_special_dir (G_USER_DIRECTORY_TEMPLATES));
       return TRUE;
     }
   if (strcmp (prefix, "xdg-videos") == 0)
@@ -657,13 +738,15 @@ get_xdg_user_dir_from_string (const char  *filesystem,
       if (config_key)
         *config_key = "XDG_VIDEOS_DIR";
       if (dir)
-        *dir = g_get_user_special_dir (G_USER_DIRECTORY_VIDEOS);
+        *dir = g_strdup (g_get_user_special_dir (G_USER_DIRECTORY_VIDEOS));
       return TRUE;
     }
-  if (get_xdg_dir_from_prefix (prefix, NULL, dir))
+  if (get_xdg_dir_from_prefix (prefix, NULL, &dir_out))
     {
       if (config_key)
         *config_key = NULL;
+      if (dir)
+        *dir = g_strdup (dir_out);
       return TRUE;
     }
   /* Don't support xdg-run without suffix, because that doesn't work */
@@ -1018,9 +1101,9 @@ flatpak_context_merge (FlatpakContext *context,
   while (g_hash_table_iter_next (&iter, &key, &value))
     g_hash_table_insert (context->system_bus_policy, g_strdup (key), value);
 
-  g_hash_table_iter_init (&iter, other->system_bus_policy);
+  g_hash_table_iter_init (&iter, other->a11y_bus_policy);
   while (g_hash_table_iter_next (&iter, &key, &value))
-    g_hash_table_insert (context->system_bus_policy, g_strdup (key), value);
+    g_hash_table_insert (context->a11y_bus_policy, g_strdup (key), value);
 
   g_hash_table_iter_init (&iter, other->generic_policy);
   while (g_hash_table_iter_next (&iter, &key, &value))
@@ -1031,6 +1114,14 @@ flatpak_context_merge (FlatpakContext *context,
       for (i = 0; policy_values[i] != NULL; i++)
         flatpak_context_apply_generic_policy (context, (char *) key, policy_values[i]);
     }
+
+  g_hash_table_iter_init (&iter, other->enumerable_usb_devices);
+  while (g_hash_table_iter_next (&iter, NULL, &value))
+    flatpak_context_add_usb_query (context, value);
+
+  g_hash_table_iter_init (&iter, other->hidden_usb_devices);
+  while (g_hash_table_iter_next (&iter, NULL, &value))
+    flatpak_context_add_nousb_query (context, value);
 }
 
 static gboolean
@@ -1342,6 +1433,21 @@ option_own_name_cb (const gchar *option_name,
 }
 
 static gboolean
+option_a11y_own_name_cb (const gchar  *option_name,
+                         const gchar  *value,
+                         gpointer      data,
+                         GError      **error)
+{
+  FlatpakContext *context = data;
+
+  if (!flatpak_verify_dbus_name (value, error))
+    return FALSE;
+
+  flatpak_context_set_a11y_bus_policy (context, value, FLATPAK_POLICY_OWN);
+  return TRUE;
+}
+
+static gboolean
 option_talk_name_cb (const gchar *option_name,
                      const gchar *value,
                      gpointer     data,
@@ -1498,8 +1604,58 @@ option_remove_generic_policy_cb (const gchar *option_name,
 }
 
 static gboolean
-option_persist_cb (const gchar *option_name,
-                   const gchar *value,
+option_usb_cb (const char  *option_name,
+               const char  *value,
+               gpointer     data,
+               GError     **error)
+{
+  g_autoptr(FlatpakUsbQuery) usb_query = NULL;
+  FlatpakContext *context = data;
+
+  if (!flatpak_usb_parse_usb (value, &usb_query, error))
+    return FALSE;
+
+  flatpak_context_add_usb_query (context, usb_query);
+  return TRUE;
+}
+
+static gboolean
+option_nousb_cb (const char  *option_name,
+		 const char  *value,
+		 gpointer     data,
+		 GError     **error)
+{
+  g_autoptr(FlatpakUsbQuery) usb_query = NULL;
+  FlatpakContext *context = data;
+
+  if (!flatpak_usb_parse_usb (value, &usb_query, error))
+    return FALSE;
+
+  flatpak_context_add_nousb_query (context, usb_query);
+  return TRUE;
+}
+
+static gboolean
+option_usb_list_file_cb (const char  *option_name,
+                         const char  *value,
+                         gpointer     data,
+                         GError     **error)
+{
+  return flatpak_context_add_usb_list_from_file (data, value, error);
+}
+
+static gboolean
+option_usb_list_cb (const char  *option_name,
+                    const char  *value,
+                    gpointer     data,
+                    GError     **error)
+{
+  return flatpak_context_add_usb_list (data, value, error);
+}
+
+static gboolean
+option_persist_cb (const char *option_name,
+                   const char *value,
                    gpointer     data,
                    GError     **error)
 {
@@ -1530,8 +1686,13 @@ static GOptionEntry context_options[] = {
   { "system-own-name", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_system_own_name_cb, N_("Allow app to own name on the system bus"), N_("DBUS_NAME") },
   { "system-talk-name", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_system_talk_name_cb, N_("Allow app to talk to name on the system bus"), N_("DBUS_NAME") },
   { "system-no-talk-name", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_system_no_talk_name_cb, N_("Don't allow app to talk to name on the system bus"), N_("DBUS_NAME") },
+  { "a11y-own-name", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_a11y_own_name_cb, N_("Allow app to own name on the a11y bus"), N_("DBUS_NAME") },
   { "add-policy", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_add_generic_policy_cb, N_("Add generic policy option"), N_("SUBSYSTEM.KEY=VALUE") },
   { "remove-policy", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_remove_generic_policy_cb, N_("Remove generic policy option"), N_("SUBSYSTEM.KEY=VALUE") },
+  { "usb", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_usb_cb, N_("Add USB device to enumerables"), N_("VENDOR_ID:PRODUCT_ID") },
+  { "nousb", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_nousb_cb, N_("Add USB device to hidden list"), N_("VENDOR_ID:PRODUCT_ID") },
+  { "usb-list", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_usb_list_cb, N_("A list of USB device that are enumerable"), N_("LIST") },
+  { "usb-list-file", 0, G_OPTION_FLAG_IN_MAIN | G_OPTION_FLAG_FILENAME, G_OPTION_ARG_CALLBACK, &option_usb_list_file_cb, N_("File containing a list of USB device to make enumerable"), N_("FILENAME") },
   { "persist", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_persist_cb, N_("Persist home directory subpath"), N_("FILENAME") },
   /* This is not needed/used anymore, so hidden, but we accept it for backwards compat */
   { "no-desktop", 0, G_OPTION_FLAG_IN_MAIN |  G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_NONE, &option_no_desktop_deprecated, N_("Don't require a running session (no cgroups creation)"), NULL },
@@ -1843,7 +2004,78 @@ flatpak_context_load_metadata (FlatpakContext *context,
         }
     }
 
+  if (g_key_file_has_key (metakey, FLATPAK_METADATA_GROUP_USB_DEVICES, FLATPAK_METADATA_KEY_USB_ENUMERABLE_DEVICES, NULL))
+    {
+      g_auto(GStrv) values = NULL;
+      size_t count;
+
+      values = g_key_file_get_string_list (metakey, FLATPAK_METADATA_GROUP_USB_DEVICES,
+                                           FLATPAK_METADATA_KEY_USB_ENUMERABLE_DEVICES,
+                                           &count, error);
+
+      if (!values)
+        return FALSE;
+
+      for (i = 0; i < count; i++)
+        {
+          g_autoptr(FlatpakUsbQuery) usb_query = NULL;
+
+          if (!flatpak_usb_parse_usb (values[i], &usb_query, error))
+            return FALSE;
+
+          flatpak_context_add_usb_query (context, usb_query);
+        }
+    }
+
+  if (g_key_file_has_key (metakey, FLATPAK_METADATA_GROUP_USB_DEVICES, FLATPAK_METADATA_KEY_USB_HIDDEN_DEVICES, NULL))
+    {
+      g_auto(GStrv) values = NULL;
+      size_t count;
+
+      values = g_key_file_get_string_list (metakey, FLATPAK_METADATA_GROUP_USB_DEVICES,
+                                           FLATPAK_METADATA_KEY_USB_HIDDEN_DEVICES,
+                                           &count, error);
+
+      if (!values)
+        return FALSE;
+
+      for (i = 0; i < count; i++)
+        {
+          g_autoptr(FlatpakUsbQuery) usb_query = NULL;
+
+          if (!flatpak_usb_parse_usb (values[i], &usb_query, error))
+            return FALSE;
+
+          flatpak_context_add_nousb_query (context, usb_query);
+        }
+    }
+
   return TRUE;
+}
+
+static void
+flatpak_context_save_usb_devices (GHashTable *devices, GKeyFile *keyfile, const char *key)
+{
+  GHashTableIter iter;
+  gpointer value;
+
+  if (g_hash_table_size (devices) > 0)
+    {
+      g_autoptr(GPtrArray) usb_devices = g_ptr_array_new ();
+
+      g_hash_table_iter_init (&iter, devices);
+      while (g_hash_table_iter_next (&iter, &value, NULL))
+        g_ptr_array_add (usb_devices, (char *) value);
+
+      if (usb_devices->len > 0)
+        {
+          g_key_file_set_string_list (keyfile,
+                                      FLATPAK_METADATA_GROUP_USB_DEVICES,
+                                      key,
+                                      (const char * const *) usb_devices->pdata,
+                                      usb_devices->len);
+        }
+    }
 }
 
 /*
@@ -2048,6 +2280,20 @@ flatpak_context_save_metadata (FlatpakContext *context,
                              (char *) key, flatpak_policy_to_string (policy));
     }
 
+  g_key_file_remove_group (metakey, FLATPAK_METADATA_GROUP_A11Y_BUS_POLICY, NULL);
+  g_hash_table_iter_init (&iter, context->a11y_bus_policy);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+      FlatpakPolicy policy = GPOINTER_TO_INT (value);
+
+      if (flatten && (policy == 0))
+        continue;
+
+      g_key_file_set_string (metakey,
+                             FLATPAK_METADATA_GROUP_A11Y_BUS_POLICY,
+                             (char *) key, flatpak_policy_to_string (policy));
+    }
+
   /* Elements are borrowed from context->env_vars */
   unset_env = g_ptr_array_new ();
 
@@ -2120,6 +2366,12 @@ flatpak_context_save_metadata (FlatpakContext *context,
                                       new->len);
         }
     }
+
+  g_key_file_remove_group (metakey, FLATPAK_METADATA_GROUP_USB_DEVICES, NULL);
+  flatpak_context_save_usb_devices (context->enumerable_usb_devices, metakey,
+                                    FLATPAK_METADATA_KEY_USB_ENUMERABLE_DEVICES);
+  flatpak_context_save_usb_devices (context->hidden_usb_devices, metakey,
+                                    FLATPAK_METADATA_KEY_USB_HIDDEN_DEVICES);
 }
 
 void
@@ -2217,6 +2469,30 @@ adds_filesystem_access (GHashTable *old, GHashTable *new)
   return FALSE;
 }
 
+static gboolean
+adds_usb_device (FlatpakContext *old, FlatpakContext *new)
+{
+  GHashTableIter iter;
+  gpointer value;
+
+  /* Does it add new devices to the allowlist? */
+  g_hash_table_iter_init (&iter, new->enumerable_usb_devices);
+  while (g_hash_table_iter_next (&iter, &value, NULL))
+    {
+      if (!g_hash_table_contains (old->enumerable_usb_devices, value))
+        return TRUE;
+    }
+
+  /* Does it remove devices from the blocklist? */
+  g_hash_table_iter_init (&iter, old->hidden_usb_devices);
+  while (g_hash_table_iter_next (&iter, &value, NULL))
+    {
+      if (!g_hash_table_contains (new->hidden_usb_devices, value))
+        return TRUE;
+    }
+
+  return FALSE;
+}
 
 gboolean
 flatpak_context_adds_permissions (FlatpakContext *old,
@@ -2258,10 +2534,16 @@ flatpak_context_adds_permissions (FlatpakContext *old,
   if (adds_bus_policy (old->system_bus_policy, new->system_bus_policy))
     return TRUE;
 
+  if (adds_bus_policy (old->a11y_bus_policy, new->a11y_bus_policy))
+    return TRUE;
+
   if (adds_generic_policy (old->generic_policy, new->generic_policy))
     return TRUE;
 
   if (adds_filesystem_access (old->filesystems, new->filesystems))
+    return TRUE;
+
+  if (adds_usb_device (old, new))
     return TRUE;
 
   return FALSE;
@@ -2274,12 +2556,33 @@ flatpak_context_allows_features (FlatpakContext        *context,
   return (context->features & features) == features;
 }
 
+char *
+flatpak_context_devices_to_usb_list (GHashTable *devices,
+                                     gboolean    hidden)
+{
+  GString *list = g_string_new (NULL);
+  GHashTableIter iter;
+  gpointer value;
+
+  g_hash_table_iter_init (&iter, devices);
+  while (g_hash_table_iter_next (&iter, &value, NULL))
+    {
+      if (hidden)
+        g_string_append_printf (list, "!%s;", (const char *) value);
+      else
+        g_string_append_printf (list, "%s;", (const char *) value);
+    }
+
+  return g_string_free (list, FALSE);
+}
+
 void
 flatpak_context_to_args (FlatpakContext *context,
                          GPtrArray      *args)
 {
   GHashTableIter iter;
   gpointer key, value;
+  char *usb_list = NULL;
 
   flatpak_context_shared_to_args (context->shares, context->shares_valid, args);
   flatpak_context_sockets_to_args (context->sockets, context->sockets_valid, args);
@@ -2348,12 +2651,20 @@ flatpak_context_to_args (FlatpakContext *context,
           g_ptr_array_add (args, g_strdup_printf ("--nofilesystem=%s", &fs[1]));
         }
     }
+
+  usb_list = flatpak_context_devices_to_usb_list (context->enumerable_usb_devices, FALSE);
+  g_ptr_array_add (args, g_strdup_printf ("--usb-list=%s", usb_list));
+  g_free (usb_list);
+
+  usb_list = flatpak_context_devices_to_usb_list (context->hidden_usb_devices, TRUE);
+  g_ptr_array_add (args, g_strdup_printf ("--usb-list=%s", usb_list));
+  g_free (usb_list);
 }
 
 void
 flatpak_context_add_bus_filters (FlatpakContext *context,
                                  const char     *app_id,
-                                 gboolean        session_bus,
+                                 FlatpakBus      bus,
                                  gboolean        sandboxed,
                                  FlatpakBwrap   *bwrap)
 {
@@ -2362,24 +2673,37 @@ flatpak_context_add_bus_filters (FlatpakContext *context,
   gpointer key, value;
 
   flatpak_bwrap_add_arg (bwrap, "--filter");
-  if (app_id && session_bus)
-    {
-      if (!sandboxed)
-        {
-          flatpak_bwrap_add_arg_printf (bwrap, "--own=%s.*", app_id);
-          flatpak_bwrap_add_arg_printf (bwrap, "--own=org.mpris.MediaPlayer2.%s.*", app_id);
-        }
-      else
-        {
-          flatpak_bwrap_add_arg_printf (bwrap, "--own=%s.Sandboxed.*", app_id);
-          flatpak_bwrap_add_arg_printf (bwrap, "--own=org.mpris.MediaPlayer2.%s.Sandboxed.*", app_id);
-        }
-    }
 
-  if (session_bus)
-    ht = context->session_bus_policy;
-  else
-    ht = context->system_bus_policy;
+  switch (bus)
+    {
+    case FLATPAK_SESSION_BUS:
+      if (app_id)
+        {
+          if (!sandboxed)
+            {
+              flatpak_bwrap_add_arg_printf (bwrap, "--own=%s.*", app_id);
+              flatpak_bwrap_add_arg_printf (bwrap, "--own=org.mpris.MediaPlayer2.%s.*", app_id);
+            }
+          else
+            {
+              flatpak_bwrap_add_arg_printf (bwrap, "--own=%s.Sandboxed.*", app_id);
+              flatpak_bwrap_add_arg_printf (bwrap, "--own=org.mpris.MediaPlayer2.%s.Sandboxed.*", app_id);
+            }
+        }
+      ht = context->session_bus_policy;
+      break;
+
+    case FLATPAK_SYSTEM_BUS:
+      ht = context->system_bus_policy;
+      break;
+
+    case FLATPAK_A11Y_BUS:
+      ht = context->a11y_bus_policy;
+      break;
+
+    default:
+      g_assert_not_reached ();
+   }
 
   g_hash_table_iter_init (&iter, ht);
   while (g_hash_table_iter_next (&iter, &key, &value))
@@ -2416,6 +2740,7 @@ flatpak_context_reset_permissions (FlatpakContext *context)
   g_hash_table_remove_all (context->filesystems);
   g_hash_table_remove_all (context->session_bus_policy);
   g_hash_table_remove_all (context->system_bus_policy);
+  g_hash_table_remove_all (context->a11y_bus_policy);
   g_hash_table_remove_all (context->generic_policy);
 }
 
@@ -2439,6 +2764,7 @@ flatpak_context_make_sandboxed (FlatpakContext *context)
   g_hash_table_remove_all (context->filesystems);
   g_hash_table_remove_all (context->session_bus_policy);
   g_hash_table_remove_all (context->system_bus_policy);
+  g_hash_table_remove_all (context->a11y_bus_policy);
   g_hash_table_remove_all (context->generic_policy);
 }
 
@@ -2609,7 +2935,8 @@ flatpak_context_export (FlatpakContext *context,
 
       if (g_str_has_prefix (filesystem, "xdg-"))
         {
-          const char *path, *rest = NULL;
+          g_autofree char *path = NULL;
+          const char *rest = NULL;
           const char *config_key = NULL;
           g_autofree char *subpath = NULL;
 
@@ -3116,6 +3443,10 @@ flatpak_context_get_allowed_exports (FlatpakContext *context,
     {
       g_ptr_array_add (allowed_extensions, g_strdup (".ini"));
     }
+  else if (strcmp (source_path, "share/krunner/dbusplugins") == 0)
+    {
+      g_ptr_array_add (allowed_extensions, g_strdup (".desktop"));
+    }
   else if (strcmp (source_path, "share/mime/packages") == 0)
     {
       g_ptr_array_add (allowed_extensions, g_strdup (".xml"));
@@ -3141,4 +3472,39 @@ flatpak_context_get_allowed_exports (FlatpakContext *context,
     *require_exact_match_out = require_exact_match;
 
   return TRUE;
+}
+
+void
+flatpak_context_dump (FlatpakContext *context,
+                      const char     *title)
+{
+  if (flatpak_is_debugging ())
+    {
+      g_autoptr(GError) local_error = NULL;
+      g_autoptr(GKeyFile) metakey = NULL;
+      g_autofree char *data = NULL;
+      char *saveptr = NULL;
+      const char *line;
+
+      metakey = g_key_file_new ();
+      flatpak_context_save_metadata (context, FALSE, metakey);
+
+      data = g_key_file_to_data (metakey, NULL, &local_error);
+
+      if (data == NULL)
+        {
+          g_debug ("%s: (unable to serialize: %s)",
+                   title, local_error->message);
+          return;
+        }
+
+      g_debug ("%s:", title);
+
+      for (line = strtok_r (data, "\n", &saveptr);
+           line != NULL;
+           line = strtok_r (NULL, "\n", &saveptr))
+        g_debug ("\t%s", line);
+
+      g_debug ("\t#");
+    }
 }

@@ -249,7 +249,7 @@ test_basic (Fixture *f,
   /* We can't easily tell whether EXPOSE_PIDS ought to be set or not */
   g_assert_cmpuint ((portal_flatpak_get_supports (f->proxy) &
                      (~FLATPAK_SPAWN_SUPPORT_FLAGS_EXPOSE_PIDS)), ==, 0);
-  g_assert_cmpuint (portal_flatpak_get_version (f->proxy), ==, 6);
+  g_assert_cmpuint (portal_flatpak_get_version (f->proxy), ==, 7);
 
   handler_id = g_signal_connect (f->proxy, "spawn-exited",
                                  G_CALLBACK (count_successful_exit_cb),

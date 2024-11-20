@@ -697,7 +697,7 @@ start_p11_kit_server (const char *flatpak_dir)
   g_autoptr(GError) local_error = NULL;
   g_auto(GStrv) stdout_lines = NULL;
   int i;
-  char *p11_argv[] = {
+  const char * const p11_argv[] = {
     "p11-kit", "server",
     /* We explicitly request --sh here, because we then fail on earlier versions that doesn't support
      * this flag. This is good, because those earlier versions did not properly daemonize and caused
@@ -713,7 +713,8 @@ start_p11_kit_server (const char *flatpak_dir)
   g_info ("starting p11-kit server");
 
   if (!g_spawn_sync (NULL,
-                     p11_argv, NULL, G_SPAWN_SEARCH_PATH | G_SPAWN_STDERR_TO_DEV_NULL,
+                     (char **) p11_argv, NULL,
+                     G_SPAWN_SEARCH_PATH | G_SPAWN_STDERR_TO_DEV_NULL,
                      NULL, NULL,
                      &p11_kit_stdout, NULL,
                      &exit_status, &local_error))

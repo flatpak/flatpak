@@ -304,7 +304,7 @@ static const char *
 flatpak_get_kernel_arch (void)
 {
   static struct utsname buf;
-  static char *arch = NULL;
+  static const char *arch = NULL;
   char *m;
 
   if (arch != NULL)
@@ -2451,4 +2451,23 @@ running_under_sudo (void)
     return TRUE;
 
   return FALSE;
+}
+
+static gboolean is_debugging = FALSE;
+
+void
+flatpak_set_debugging (gboolean debugging)
+{
+  is_debugging = debugging;
+}
+
+gboolean
+flatpak_is_debugging (void)
+{
+#if GLIB_CHECK_VERSION (2, 68, 0)
+  if (!g_log_writer_default_would_drop (G_LOG_LEVEL_DEBUG, G_LOG_DOMAIN))
+    return TRUE;
+#endif
+
+  return is_debugging;
 }
