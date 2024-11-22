@@ -630,12 +630,10 @@ get_appstream_timestamp (FlatpakDir *dir,
                          const char *arch)
 {
   g_autoptr(GFile) ts_file = NULL;
-  g_autofree char *ts_file_path = NULL;
   g_autofree char *subdir = NULL;
 
   subdir = g_strdup_printf ("appstream/%s/%s/.timestamp", remote, arch);
   ts_file = g_file_resolve_relative_path (flatpak_dir_get_path (dir), subdir);
-  ts_file_path = g_file_get_path (ts_file);
   return get_file_age (ts_file);
 }
 
