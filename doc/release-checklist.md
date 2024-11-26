@@ -2,7 +2,7 @@ Flatpak release checklist
 =========================
 
 * Update NEWS
-* Update version number in `meson.build`
+* Check that version number in `meson.build` is correct
 * Update release date in `NEWS`
 * Commit the changes
 * `ninja -C ${builddir} flatpak-update-po`
@@ -19,4 +19,13 @@ Flatpak release checklist
     * Upload the tarball that you built with `meson dist`
     * Get the `sha256sum` of the tarball and append it to the description
     * `Publish release`
-* Send an announcement to the mailing list
+
+After the release:
+
+* Update version number in `meson.build` to the next release version
+* Start a new section in `NEWS`
+
+After creating a stable branch:
+
+* Update version number in `meson.build` to the next unstable release version
+* Update the `NEWS` section header
