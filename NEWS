@@ -25,6 +25,25 @@ Enhancements:
  * `flatpak run -vv $app_id` shows all applicable sandboxing parameters
    and their source, including overrides, as debug messages (#5895)
 
+ * Introduce USB device listing
+
+   * Apps can list which USB devices they want to access ahead of time by
+     using the `--usb` parameter. Check the manpages for the more information
+     about the accepted syntax.
+
+   * Denying access to USB devices is also possible with the `--no-usb`
+     parameter. The syntax is equal to `--usb`.
+
+   * Both options merely store metadata, and aren't used by Flatpak itself.
+     This metadata is intended to be used by the (as of now, still in
+     progress) USB portal to decide which devices the app can enumerate and
+     request access.
+
+ * Add support for KDE search completion
+
+ * Use the instance id of the Flatpak app as part of the cgroup name. This
+   better matches the naming conventions for cgroup.
+
 Bug fixes:
 
  * Update libglnx to 2024-08-23 (#5918)
