@@ -324,6 +324,7 @@ if get_option('installed_tests')
   )
 
   install_data(
+    'gphoto2-list',
     'libtest.sh',
     'org.flatpak.Authenticator.test.service.in',
     'org.freedesktop.impl.portal.desktop.test.service.in',
