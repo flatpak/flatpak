@@ -1,7 +1,13 @@
 Changes in 1.15.12
 ~~~~~~~~~~~~~~~~~~
-Released: not yet
+Released: 2024-11-28
 
+Bug fixes:
+
+ * Return to using the process ID of the Flatpak app in the cgroup name.
+   Using the instance ID in 1.15.11 caused crashes when installing apps,
+   extensions or runtimes that use the "extra data" mechanism, which
+   does not set up an instance ID. (#6009)
 
 Changes in 1.15.11
 ~~~~~~~~~~~~~~~~~~
