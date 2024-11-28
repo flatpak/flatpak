@@ -309,6 +309,25 @@ get_config_dir_location (void)
 }
 
 static const char *
+get_os_config_dir_location (void)
+{
+  static gsize path = 0;
+
+  if (g_once_init_enter (&path))
+    {
+      gsize setup_value = 0;
+      const char *os_config_dir = g_getenv ("FLATPAK_OS_CONFIG_DIR");
+      if (os_config_dir != NULL)
+        setup_value = (gsize) os_config_dir;
+      else
+        setup_value = (gsize) FLATPAK_OS_CONFIGDIR;
+      g_once_init_leave (&path, setup_value);
+    }
+
+  return (const char *) path;
+}
+
+static const char *
 get_run_dir_location (void)
 {
   static gsize path = 0;
@@ -3974,7 +3993,8 @@ static GHashTable *
 _flatpak_dir_find_new_flatpakrepos (FlatpakDir *self, OstreeRepo *repo)
 {
   g_autoptr(GHashTable) flatpakrepos = NULL;
-  g_autofree char *dir_str = NULL;
+  g_autofree char *config_dir_str = NULL;
+  g_autofree char *os_config_dir_str = NULL;
   g_auto(GStrv) ostree_remotes = NULL;
   g_auto(GStrv) applied_remotes = NULL;
   g_autoptr(GPtrArray) remotes = NULL;
@@ -3997,12 +4017,13 @@ _flatpak_dir_find_new_flatpakrepos (FlatpakDir *self, OstreeRepo *repo)
     g_ptr_array_add (remotes, applied_remotes[i]);
   g_ptr_array_add (remotes, NULL);
 
-  dir_str = g_build_filename (get_config_dir_location (), FLATPAK_REMOTES_DIR, NULL);
-  _flatpak_dir_scan_new_flatpakrepos (dir_str,
+  config_dir_str = g_build_filename (get_config_dir_location (), FLATPAK_REMOTES_DIR, NULL);
+  _flatpak_dir_scan_new_flatpakrepos (config_dir_str,
                                       &flatpakrepos,
                                       (const char * const *) remotes->pdata);
 
-  _flatpak_dir_scan_new_flatpakrepos (FLATPAK_BASEDIR "/" FLATPAK_REMOTES_DIR,
+  os_config_dir_str = g_build_filename (get_os_config_dir_location (), FLATPAK_REMOTES_DIR, NULL);
+  _flatpak_dir_scan_new_flatpakrepos (os_config_dir_str,
                                       &flatpakrepos,
                                       (const char * const *) remotes->pdata);
 
@@ -7151,7 +7172,7 @@ flatpak_dir_run_triggers (FlatpakDir   *self,
   g_autoptr(GFileInfo) child_info = NULL;
   g_autoptr(GFile) triggersdir = NULL;
   GError *temp_error = NULL;
-  const char *triggerspath;
+  g_autofree char *triggerspath = NULL;
 
   maybe_reload_dbus_config (cancellable);
 
@@ -7169,9 +7190,12 @@ flatpak_dir_run_triggers (FlatpakDir   *self,
       return TRUE;
     }
 
-  triggerspath = g_getenv ("FLATPAK_TRIGGERSDIR");
+  triggerspath = g_strdup (g_getenv ("FLATPAK_TRIGGERSDIR"));
   if (triggerspath == NULL)
-    triggerspath = FLATPAK_TRIGGERDIR;
+    {
+      const char *os_config_dir = get_os_config_dir_location();
+      triggerspath = g_build_path (os_config_dir, "triggers", NULL);
+    }
 
   g_info ("running triggers from %s", triggerspath);
 
