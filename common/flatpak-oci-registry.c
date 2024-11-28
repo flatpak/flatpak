@@ -27,7 +27,9 @@
 #include "libglnx.h"
 
 #include <archive.h>
+#include <archive_entry.h>
 #include <gpgme.h>
+#include "flatpak-image-source-private.h"
 #include "flatpak-oci-registry-private.h"
 #include "flatpak-repo-utils-private.h"
 #include "flatpak-utils-base-private.h"
@@ -68,11 +70,13 @@ struct FlatpakOciRegistry
   gboolean valid;
   gboolean is_docker;
   char    *uri;
+  GFile   *archive;
   int      tmp_dfd;
   char    *token;
 
   /* Local repos */
   int dfd;
+  gboolean unlink_repo;
 
   /* Remote repos */
   FlatpakHttpSession *http_session;
@@ -88,6 +92,7 @@ enum {
   PROP_0,
 
   PROP_URI,
+  PROP_ARCHIVE,
   PROP_FOR_WRITE,
   PROP_TMP_DFD,
 };
@@ -115,11 +120,23 @@ flatpak_oci_registry_finalize (GObject *object)
 {
   FlatpakOciRegistry *self = FLATPAK_OCI_REGISTRY (object);
 
+  if (self->unlink_repo)
+    {
+      g_autoptr(GFile) file = g_file_new_for_uri (self->uri);
+      GError *local_error = NULL;
+      if (!glnx_shutil_rm_rf_at (AT_FDCWD, flatpak_file_get_path_cached (file), NULL, &local_error))
+        {
+          g_warning ("Can't remove %s: %s", flatpak_file_get_path_cached (file), local_error->message);
+          g_clear_error (&local_error);
+        }
+    }
+
   if (self->dfd != -1)
     close (self->dfd);
 
   g_clear_pointer (&self->http_session, flatpak_http_session_free);
   g_clear_pointer (&self->base_uri, g_uri_unref);
+  g_clear_object (&self->archive);
   g_free (self->uri);
   g_free (self->token);
 
@@ -140,10 +157,17 @@ flatpak_oci_registry_set_property (GObject      *object,
     case PROP_URI:
       /* Ensure the base uri ends with a / so relative urls work */
       uri = g_value_get_string (value);
-      if (g_str_has_suffix (uri, "/"))
-        self->uri = g_strdup (uri);
-      else
-        self->uri = g_strconcat (uri, "/", NULL);
+      if (uri)
+        {
+        if (g_str_has_suffix (uri, "/"))
+          self->uri = g_strdup (uri);
+        else
+          self->uri = g_strconcat (uri, "/", NULL);
+        }
+      break;
+
+    case PROP_ARCHIVE:
+      self->archive = g_value_dup_object (value);
       break;
 
     case PROP_FOR_WRITE:
@@ -172,6 +196,10 @@ flatpak_oci_registry_get_property (GObject    *object,
     {
     case PROP_URI:
       g_value_set_string (value, self->uri);
+      break;
+
+    case PROP_ARCHIVE:
+      g_value_set_object (value, self->archive);
       break;
 
     case PROP_FOR_WRITE:
@@ -203,6 +231,13 @@ flatpak_oci_registry_class_init (FlatpakOciRegistryClass *klass)
                                                         "",
                                                         "",
                                                         NULL,
+                                                        G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
+  g_object_class_install_property (object_class,
+                                   PROP_ARCHIVE,
+                                   g_param_spec_object ("archive",
+                                                        "",
+                                                        "",
+                                                        G_TYPE_FILE,
                                                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
   g_object_class_install_property (object_class,
                                    PROP_TMP_DFD,
@@ -268,6 +303,21 @@ flatpak_oci_registry_new (const char   *uri,
                                  "uri", uri,
                                  "for-write", for_write,
                                  "tmp-dfd", tmp_dfd,
+                                 NULL);
+
+  return oci_registry;
+}
+
+FlatpakOciRegistry *
+flatpak_oci_registry_new_for_archive (GFile        *archive,
+                                      GCancellable *cancellable,
+                                      GError      **error)
+{
+  FlatpakOciRegistry *oci_registry;
+
+  oci_registry = g_initable_new (FLATPAK_TYPE_OCI_REGISTRY,
+                                 cancellable, error,
+                                 "archive", archive,
                                  NULL);
 
   return oci_registry;
@@ -455,13 +505,152 @@ verify_oci_version (GBytes *oci_layout_bytes, gboolean *not_json, GCancellable *
   return TRUE;
 }
 
+/*
+ * This is a small helper to handle cleanup for thetemporary directory
+ * we unpack an archive into. We can't use GLnxTmpDir for this because
+ * the dfd usage isn't compatible with the way we use archive_write_disk
+ */
+typedef struct
+{
+  gboolean unlink;
+  char *path;
+} TemporaryDirectory;
+
+static void
+temporary_directory_free (TemporaryDirectory *self)
+{
+  if (self->path && self->unlink)
+    glnx_shutil_rm_rf_at (AT_FDCWD, self->path, NULL, NULL);
+
+  g_free (self->path);
+  g_free (self);
+}
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (TemporaryDirectory, temporary_directory_free)
+
+static TemporaryDirectory *
+temporary_directory_new (GError **error)
+{
+  g_autoptr(TemporaryDirectory) self = g_new0 (TemporaryDirectory, 1);
+  self->path = g_dir_make_tmp ("oci-XXXXXX", error);
+  if (self->path == NULL)
+    return NULL;
+  self->unlink = TRUE;
+
+  return g_steal_pointer (&self);
+}
+
+/*
+ * Code to extract an archive such as a tarfile into a temporary directory
+ *
+ * Based on: https://github.com/libarchive/libarchive/wiki/Examples#A_Complete_Extractor
+ *
+ * We treat ARCHIVE_WARNING as fatal - while this might be too strict, it
+ * will avoid surprises.
+ */
+
+static gboolean
+propagate_libarchive_error (GError        **error,
+                            struct archive *a)
+{
+  g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+               "%s", archive_error_string (a));
+  return FALSE;
+}
+
+static gboolean
+copy_data (struct archive *ar,
+           struct archive *aw,
+           GError        **error)
+{
+  int r;
+  const void *buff;
+  size_t size;
+  gint64 offset;
+
+  while (TRUE)
+    {
+      r = archive_read_data_block(ar, &buff, &size, &offset);
+      if (r == ARCHIVE_EOF)
+        return TRUE;
+
+      if (r < ARCHIVE_OK)
+        return propagate_libarchive_error(error, ar);
+
+      r = archive_write_data_block(aw, buff, size, offset);
+      if (r < ARCHIVE_OK)
+        return propagate_libarchive_error(error, aw);
+    }
+}
+
+static gboolean
+unpack_archive (GFile      *archive,
+                char       *destination,
+                GError    **error)
+{
+  g_autoptr(FlatpakAutoArchiveRead) a = NULL;
+  g_autoptr(FlatpakAutoArchiveWrite) ext = NULL;
+  int flags;
+  int r;
+
+  flags = 0;
+  flags |= ARCHIVE_EXTRACT_SECURE_NODOTDOT;
+  flags |= ARCHIVE_EXTRACT_SECURE_SYMLINKS;
+
+  a = archive_read_new ();
+  archive_read_support_format_all (a);
+  archive_read_support_filter_all (a);
+
+  ext = archive_write_disk_new ();
+  archive_write_disk_set_options (ext, flags);
+  archive_write_disk_set_standard_lookup (ext);
+
+  if ((r = archive_read_open_filename (a, g_file_get_path(archive), 10240)))
+    return propagate_libarchive_error (error, a);
+
+  while (TRUE)
+    {
+      g_autofree char *target_path = NULL;
+      struct archive_entry *entry;
+
+      r = archive_read_next_header (a, &entry);
+      if (r == ARCHIVE_EOF)
+        break;
+
+      if (r != ARCHIVE_OK)
+        return propagate_libarchive_error (error, a);
+
+      target_path = g_build_filename (destination, archive_entry_pathname (entry), NULL);
+      archive_entry_set_pathname (entry, target_path);
+
+      r = archive_write_header (ext, entry);
+      if (r != ARCHIVE_OK)
+        return propagate_libarchive_error (error, a);
+
+      if (archive_entry_size (entry) > 0)
+        {
+          if (!copy_data(a, ext, error))
+            return FALSE;
+        }
+
+      r = archive_write_finish_entry(ext);
+      if (r != ARCHIVE_OK)
+        return propagate_libarchive_error (error, a);
+    }
+
+  archive_read_close (a);
+  archive_write_close (ext);
+
+  return TRUE;
+}
+
 static gboolean
 flatpak_oci_registry_ensure_local (FlatpakOciRegistry *self,
                                    gboolean            for_write,
                                    GCancellable       *cancellable,
                                    GError            **error)
 {
-  g_autoptr(GFile) dir = g_file_new_for_uri (self->uri);
+  g_autoptr(TemporaryDirectory) temporary_directory = NULL;
   glnx_autofd int local_dfd = -1;
   int dfd;
   g_autoptr(GError) local_error = NULL;
@@ -471,8 +660,25 @@ flatpak_oci_registry_ensure_local (FlatpakOciRegistry *self,
 
   if (self->dfd != -1)
     dfd = self->dfd;
+  else if (self->archive)
+    {
+      temporary_directory = temporary_directory_new (error);
+      if (!temporary_directory)
+        return FALSE;
+
+      if (!unpack_archive (self->archive, temporary_directory->path, error))
+        return FALSE;
+
+      if (!glnx_opendirat (AT_FDCWD, temporary_directory->path,
+                           TRUE, &local_dfd, error))
+        return FALSE;
+
+      dfd = local_dfd;
+    }
   else
     {
+      g_autoptr(GFile) dir = g_file_new_for_uri (self->uri);
+
       if (!glnx_opendirat (AT_FDCWD, flatpak_file_get_path_cached (dir),
                            TRUE, &local_dfd, &local_error))
         {
@@ -535,8 +741,18 @@ flatpak_oci_registry_ensure_local (FlatpakOciRegistry *self,
         self->token = g_strndup (g_bytes_get_data (token_bytes, NULL), g_bytes_get_size (token_bytes));
     }
 
-  if (self->dfd == -1 && local_dfd != -1)
-    self->dfd = g_steal_fd (&local_dfd);
+  if (self->dfd == -1)
+    {
+      self->dfd = g_steal_fd (&local_dfd);
+      if (temporary_directory)
+        {
+          g_clear_pointer (&self->uri, g_free);
+          self->uri = g_strdup_printf("file://%s/", temporary_directory->path);
+
+          temporary_directory->unlink = FALSE;
+          self->unlink_repo = TRUE;
+        }
+    }
 
   return TRUE;
 }
@@ -583,7 +799,7 @@ flatpak_oci_registry_initable_init (GInitable    *initable,
       !glnx_opendirat (AT_FDCWD, "/var/tmp", TRUE, &self->tmp_dfd, error))
     return FALSE;
 
-  if (g_str_has_prefix (self->uri, "file:/"))
+  if (self->archive || g_str_has_prefix (self->uri, "file:/"))
     res = flatpak_oci_registry_ensure_local (self, self->for_write, cancellable, error);
   else
     res = flatpak_oci_registry_ensure_remote (self, self->for_write, cancellable, error);
@@ -812,7 +1028,6 @@ flatpak_oci_registry_download_blob (FlatpakOciRegistry    *self,
           if (uri_s == NULL)
             return -1;
         }
-
 
       if (!flatpak_open_in_tmpdir_at (self->tmp_dfd, 0600, tmpfile_name,
                                       &out_stream, cancellable, error))
@@ -1310,15 +1525,6 @@ typedef struct
 } FlatpakOciLayerWriterClass;
 
 G_DEFINE_TYPE (FlatpakOciLayerWriter, flatpak_oci_layer_writer, G_TYPE_OBJECT)
-
-static gboolean
-propagate_libarchive_error (GError        **error,
-                            struct archive *a)
-{
-  g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-               "%s", archive_error_string (a));
-  return FALSE;
-}
 
 static void
 flatpak_oci_layer_writer_reset (FlatpakOciLayerWriter *self)
@@ -3413,12 +3619,9 @@ oci_layer_progress (guint64  downloaded_bytes,
 
 gboolean
 flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
-                               FlatpakOciRegistry    *registry,
-                               const char            *oci_repository,
-                               const char            *digest,
+                               FlatpakImageSource    *image_source,
                                const char            *remote,
                                const char            *ref,
-                               const char            *delta_url,
                                OstreeRepo            *repo,
                                FlatpakOciPullProgress progress_cb,
                                gpointer               progress_user_data,
@@ -3426,8 +3629,12 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
                                GError               **error)
 {
   FlatpakOciPullProgressData progress_data = { progress_cb, progress_user_data };
-  g_autoptr(FlatpakOciVersioned) versioned = NULL;
-  FlatpakOciManifest *manifest = NULL;
+  FlatpakOciRegistry *registry = flatpak_image_source_get_registry (image_source);
+  const char *oci_repository = flatpak_image_source_get_oci_repository (image_source);
+  const char *digest = flatpak_image_source_get_digest (image_source);
+  FlatpakOciManifest *manifest = flatpak_image_source_get_manifest (image_source);
+  const char *delta_url = flatpak_image_source_get_delta_url (image_source);
+  FlatpakOciImage *image_config = flatpak_image_source_get_image_config (image_source);
   g_autoptr(FlatpakOciDescriptor) manifest_desc = NULL;
   g_autoptr(FlatpakOciManifest) delta_manifest = NULL;
   g_autofree char *old_checksum = NULL;
@@ -3435,34 +3642,14 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
   g_autoptr(GFile) old_root = NULL;
   OstreeRepoCommitState old_state = 0;
   g_autofree char *old_diffid = NULL;
-  gsize versioned_size;
   g_autoptr(FlatpakOciIndex) index = NULL;
-  g_autoptr(FlatpakOciImage) image_config = NULL;
   int n_layers;
   int i;
 
   if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, oci_repository, TRUE, digest, NULL, NULL, NULL, cancellable, error))
     return FALSE;
 
-  versioned = flatpak_oci_registry_load_versioned (dst_registry, NULL, digest, NULL, &versioned_size, cancellable, error);
-  if (versioned == NULL)
-    return FALSE;
-
-  if (!FLATPAK_IS_OCI_MANIFEST (versioned))
-    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Image is not a manifest"));
-
-  manifest = FLATPAK_OCI_MANIFEST (versioned);
-
-  if (manifest->config.digest == NULL)
-    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Image is not a manifest"));
-
   if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, oci_repository, FALSE, manifest->config.digest, (const char **)manifest->config.urls, NULL, NULL, cancellable, error))
-    return FALSE;
-
-  image_config = flatpak_oci_registry_load_image_config (dst_registry, NULL,
-                                                         manifest->config.digest, NULL,
-                                                         NULL, cancellable, error);
-  if (image_config == NULL)
     return FALSE;
 
   /* For deltas we ensure that the diffid and regular layers exists and match up */
@@ -3548,7 +3735,8 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
   if (index == NULL)
     index = flatpak_oci_index_new ();
 
-  manifest_desc = flatpak_oci_descriptor_new (versioned->mediatype, digest, versioned_size);
+  manifest_desc = flatpak_oci_descriptor_new (manifest->parent.mediatype, digest,
+                                              flatpak_image_source_get_manifest_size (image_source));
 
   flatpak_oci_index_add_manifest (index, ref, manifest_desc);
 
@@ -3560,12 +3748,7 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
 
 char *
 flatpak_pull_from_oci (OstreeRepo            *repo,
-                       FlatpakOciRegistry    *registry,
-                       const char            *oci_repository,
-                       const char            *digest,
-                       const char            *delta_url,
-                       FlatpakOciManifest    *manifest,
-                       FlatpakOciImage       *image_config,
+                       FlatpakImageSource    *image_source,
                        const char            *remote,
                        const char            *ref,
                        FlatpakPullFlags       flags,
@@ -3574,6 +3757,12 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
                        GCancellable          *cancellable,
                        GError               **error)
 {
+  FlatpakOciRegistry *registry = flatpak_image_source_get_registry (image_source);
+  const char *oci_repository = flatpak_image_source_get_oci_repository (image_source);
+  const char *digest = flatpak_image_source_get_digest (image_source);
+  FlatpakOciManifest *manifest = flatpak_image_source_get_manifest (image_source);
+  const char *delta_url = flatpak_image_source_get_delta_url (image_source);
+  FlatpakOciImage *image_config = flatpak_image_source_get_image_config (image_source);
   gboolean force_disable_deltas = (flags & FLATPAK_PULL_FLAGS_NO_STATIC_DELTAS) != 0;
   g_autoptr(OstreeMutableTree) archive_mtree = NULL;
   g_autoptr(GFile) archive_root = NULL;
@@ -3585,28 +3774,18 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
   g_autofree char *old_diffid = NULL;
   g_autofree char *commit_checksum = NULL;
   const char *parent = NULL;
-  g_autofree char *subject = NULL;
-  g_autofree char *body = NULL;
-  g_autofree char *manifest_ref = NULL;
+  const char *manifest_ref = NULL;
   g_autofree char *full_ref = NULL;
   const char *diffid;
-  guint64 timestamp = 0;
   FlatpakOciPullProgressData progress_data = { progress_cb, progress_user_data };
   g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
   g_autoptr(GVariant) metadata = NULL;
-  GHashTable *labels;
   int n_layers;
   int i;
 
-  g_assert (ref != NULL);
   g_assert (g_str_has_prefix (digest, "sha256:"));
 
-  labels = flatpak_oci_image_get_labels (image_config);
-  if (labels)
-    flatpak_oci_parse_commit_labels (labels, &timestamp,
-                                     &subject, &body,
-                                     &manifest_ref, NULL, NULL,
-                                     metadata_builder);
+  manifest_ref = flatpak_image_source_get_ref (image_source);
 
   if (manifest_ref == NULL)
     {
@@ -3614,11 +3793,17 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
       return NULL;
     }
 
-  if (strcmp (manifest_ref, ref) != 0)
+  if (ref == NULL)
+    {
+      ref = manifest_ref;
+    }
+  else if (strcmp (manifest_ref, ref) != 0)
     {
       flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Wrong ref (%s) specified for OCI image %s, expected %s"), manifest_ref, digest, ref);
       return NULL;
     }
+
+  flatpak_image_source_build_commit_metadata (image_source, metadata_builder);
 
   g_variant_builder_add (metadata_builder, "{s@v}", "xa.alt-id",
                          g_variant_new_variant (g_variant_new_string (digest + strlen ("sha256:"))));
@@ -3793,11 +3978,11 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
   metadata = g_variant_ref_sink (g_variant_builder_end (metadata_builder));
   if (!ostree_repo_write_commit_with_time (repo,
                                            parent,
-                                           subject,
-                                           body,
+                                           flatpak_image_source_get_commit_subject (image_source),
+                                           flatpak_image_source_get_commit_body (image_source),
                                            metadata,
                                            OSTREE_REPO_FILE (archive_root),
-                                           timestamp,
+                                           flatpak_image_source_get_commit_timestamp (image_source),
                                            &commit_checksum,
                                            cancellable, error))
     goto error;
