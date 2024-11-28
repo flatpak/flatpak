@@ -512,12 +512,15 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
 
   /* Must run this before spawning the dbus proxy, to ensure it
      ends up in the app cgroup */
-  if (!flatpak_run_in_transient_unit (app_id, &my_error))
+  if (instance_id)
     {
-      /* We still run along even if we don't get a cgroup, as nothing
-         really depends on it. Its just nice to have */
-      g_info ("Failed to run in transient scope: %s", my_error->message);
-      g_clear_error (&my_error);
+      if (!flatpak_run_in_transient_unit (app_id, instance_id, &my_error))
+        {
+          /* We still run along even if we don't get a cgroup, as nothing
+             really depends on it. Its just nice to have */
+          g_info ("Failed to run in transient scope: %s", my_error->message);
+          g_clear_error (&my_error);
+        }
     }
 
   if (!flatpak_run_maybe_start_dbus_proxy (bwrap, proxy_arg_bwrap,
@@ -821,13 +824,16 @@ systemd_unit_name_escape (const gchar *in)
 }
 
 gboolean
-flatpak_run_in_transient_unit (const char *appid, GError **error)
+flatpak_run_in_transient_unit (const char  *app_id,
+                               const char  *instance_id,
+                               GError     **error)
 {
   g_autoptr(GDBusConnection) conn = NULL;
   g_autofree char *path = NULL;
   g_autofree char *address = NULL;
   g_autofree char *name = NULL;
-  g_autofree char *appid_escaped = NULL;
+  g_autofree char *app_id_escaped = NULL;
+  g_autofree char *instance_id_escaped = NULL;
   g_autofree char *job = NULL;
   SystemdManager *manager = NULL;
   GVariantBuilder builder;
@@ -838,6 +844,9 @@ flatpak_run_in_transient_unit (const char *appid, GError **error)
   struct JobData data;
   gboolean res = FALSE;
   g_autoptr(GMainContextPopDefault) main_context = NULL;
+
+  g_return_val_if_fail (app_id != NULL, FALSE);
+  g_return_val_if_fail (instance_id != NULL, FALSE);
 
   path = g_strdup_printf ("/run/user/%d/systemd/private", getuid ());
 
@@ -865,8 +874,11 @@ flatpak_run_in_transient_unit (const char *appid, GError **error)
   if (!manager)
     goto out;
 
-  appid_escaped = systemd_unit_name_escape (appid);
-  name = g_strdup_printf ("app-flatpak-%s-%d.scope", appid_escaped, getpid ());
+  app_id_escaped = systemd_unit_name_escape (app_id);
+  instance_id_escaped = systemd_unit_name_escape (instance_id);
+  name = g_strdup_printf ("app-flatpak-%s-%s.scope",
+                          app_id_escaped,
+                          instance_id_escaped);
 
   g_variant_builder_init (&builder, G_VARIANT_TYPE ("a(sv)"));
 
@@ -874,8 +886,7 @@ flatpak_run_in_transient_unit (const char *appid, GError **error)
   g_variant_builder_add (&builder, "(sv)",
                          "PIDs",
                          g_variant_new_fixed_array (G_VARIANT_TYPE ("u"),
-                                                    &pid, 1, sizeof (guint32))
-                        );
+                                                    &pid, 1, sizeof (guint32)));
 
   properties = g_variant_builder_end (&builder);
 
