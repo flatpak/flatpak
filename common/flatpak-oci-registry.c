@@ -75,8 +75,9 @@ struct FlatpakOciRegistry
   int dfd;
 
   /* Remote repos */
-  FlatpakHttpSession *http_session;
-  GUri        *base_uri;
+  FlatpakHttpSession  *http_session;
+  GUri                *base_uri;
+  FlatpakCertificates *certificates;
 };
 
 typedef struct
@@ -353,31 +354,29 @@ choose_alt_uri (GUri        *base_uri,
 }
 
 static GBytes *
-remote_load_file (FlatpakHttpSession  *http_session,
-                  GUri         *base,
-                  const char   *subpath,
-                  const char  **alt_uris,
-                  const char   *token,
-                  char        **out_content_type,
-                  GCancellable *cancellable,
-                  GError      **error)
+remote_load_file (FlatpakOciRegistry *self,
+                  const char         *subpath,
+                  const char        **alt_uris,
+                  char              **out_content_type,
+                  GCancellable       *cancellable,
+                  GError            **error)
 {
   g_autoptr(GBytes) bytes = NULL;
   g_autofree char *uri_s = NULL;
 
-  uri_s = choose_alt_uri (base, alt_uris);
+  uri_s = choose_alt_uri (self->base_uri, alt_uris);
   if (uri_s == NULL)
     {
-      uri_s = parse_relative_uri (base, subpath, error);
+      uri_s = parse_relative_uri (self->base_uri, subpath, error);
       if (uri_s == NULL)
         return NULL;
     }
 
-  bytes = flatpak_load_uri (http_session,
-                            uri_s, FLATPAK_HTTP_FLAGS_ACCEPT_OCI,
-                            token,
-                            NULL, NULL, out_content_type,
-                            cancellable, error);
+  bytes = flatpak_load_uri_full (self->http_session,
+                                 uri_s, self->certificates, FLATPAK_HTTP_FLAGS_ACCEPT_OCI,
+                                 NULL, self->token,
+                                 NULL, NULL, NULL, out_content_type, NULL,
+                                 cancellable, error);
   if (bytes == NULL)
     return NULL;
 
@@ -395,7 +394,7 @@ flatpak_oci_registry_load_file (FlatpakOciRegistry *self,
   if (self->dfd != -1)
     return local_load_file (self->dfd, subpath, cancellable, error);
   else
-    return remote_load_file (self->http_session, self->base_uri, subpath, alt_uris, self->token, out_content_type, cancellable, error);
+    return remote_load_file (self, subpath, alt_uris, out_content_type, cancellable, error);
 }
 
 static JsonNode *
@@ -548,6 +547,7 @@ flatpak_oci_registry_ensure_remote (FlatpakOciRegistry *self,
                                     GError            **error)
 {
   g_autoptr(GUri) baseuri = NULL;
+  GError *local_error = NULL;
 
   if (for_write)
     {
@@ -567,6 +567,13 @@ flatpak_oci_registry_ensure_remote (FlatpakOciRegistry *self,
 
   self->is_docker = TRUE;
   self->base_uri = g_steal_pointer (&baseuri);
+
+  self->certificates = flatpak_get_certificates_for_uri (self->uri, &local_error);
+  if (local_error)
+    {
+      g_propagate_error (error, g_steal_pointer (&local_error));
+      return FALSE;
+    }
 
   return TRUE;
 }
@@ -825,6 +832,7 @@ flatpak_oci_registry_download_blob (FlatpakOciRegistry    *self,
         return -1;
 
       if (!flatpak_download_http_uri (self->http_session, uri_s,
+                                      self->certificates,
                                       FLATPAK_HTTP_FLAGS_ACCEPT_OCI,
                                       out_stream,
                                       self->token,
@@ -916,7 +924,8 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
 
       out_stream = g_unix_output_stream_new (tmpf.fd, FALSE);
 
-      if (!flatpak_download_http_uri (source_registry->http_session, uri_s,
+      if (!flatpak_download_http_uri (source_registry->http_session,
+                                      uri_s, source_registry->certificates,
                                       FLATPAK_HTTP_FLAGS_ACCEPT_OCI, out_stream,
                                       self->token,
                                       progress_cb, user_data,
@@ -1046,6 +1055,7 @@ get_token_for_www_auth (FlatpakOciRegistry *self,
 
   body = flatpak_load_uri_full (self->http_session,
                                 auth_uri_s,
+                                self->certificates,
                                 FLATPAK_HTTP_FLAGS_NOCHECK_STATUS,
                                 auth, NULL,
                                 NULL, NULL,
@@ -1137,7 +1147,7 @@ flatpak_oci_registry_get_token (FlatpakOciRegistry *self,
   if (uri_s == NULL)
     return NULL;
 
-  body = flatpak_load_uri_full (self->http_session, uri_s,
+  body = flatpak_load_uri_full (self->http_session, uri_s, self->certificates,
                                 FLATPAK_HTTP_FLAGS_ACCEPT_OCI | FLATPAK_HTTP_FLAGS_HEAD | FLATPAK_HTTP_FLAGS_NOCHECK_STATUS,
                                 NULL, NULL,
                                 NULL, NULL,
@@ -2071,11 +2081,11 @@ flatpak_oci_registry_find_delta_manifest (FlatpakOciRegistry    *registry,
       g_autofree char *uri_s = parse_relative_uri (registry->base_uri, delta_manifest_url, NULL);
 
       if (uri_s != NULL)
-        bytes = flatpak_load_uri (registry->http_session,
-                                  uri_s, FLATPAK_HTTP_FLAGS_ACCEPT_OCI,
-                                  registry->token,
-                                  NULL, NULL, NULL,
-                                  cancellable, NULL);
+        bytes = flatpak_load_uri_full (registry->http_session,
+                                       uri_s, registry->certificates, FLATPAK_HTTP_FLAGS_ACCEPT_OCI,
+                                       NULL, registry->token,
+                                       NULL, NULL, NULL, NULL, NULL,
+                                       cancellable, NULL);
       if (bytes != NULL)
         {
           g_autoptr(FlatpakOciVersioned) versioned =
@@ -2751,6 +2761,7 @@ flatpak_oci_index_ensure_cached (FlatpakHttpSession *http_session,
   g_autofree char *tag = NULL;
   const char *oci_arch = NULL;
   gboolean success = FALSE;
+  g_autoptr(FlatpakCertificates) certificates = NULL;
   g_autoptr(GError) local_error = NULL;
   GUri *tmp_uri;
 
@@ -2835,8 +2846,16 @@ flatpak_oci_index_ensure_cached (FlatpakHttpSession *http_session,
 
   query_uri_s = g_uri_to_string_partial (query_uri, G_URI_HIDE_PASSWORD);
 
+  certificates = flatpak_get_certificates_for_uri (query_uri_s, &local_error);
+  if (local_error)
+    {
+      g_propagate_error (error, g_steal_pointer (&local_error));
+      return FALSE;
+    }
+
   success = flatpak_cache_http_uri (http_session,
                                     query_uri_s,
+                                    certificates,
                                     FLATPAK_HTTP_FLAGS_STORE_COMPRESSED,
                                     AT_FDCWD, index_path,
                                     NULL, NULL,
@@ -3073,6 +3092,7 @@ flatpak_oci_index_make_summary (GFile        *index,
 static gboolean
 add_icon_image (FlatpakHttpSession  *http_session,
                 const char          *index_uri,
+                FlatpakCertificates *certificates,
                 int                  icons_dfd,
                 GHashTable          *used_icons,
                 const char          *subdir,
@@ -3123,7 +3143,7 @@ add_icon_image (FlatpakHttpSession  *http_session,
       if (icon_uri_s == NULL)
         return FALSE;
 
-      if (!flatpak_cache_http_uri (http_session, icon_uri_s,
+      if (!flatpak_cache_http_uri (http_session, icon_uri_s, certificates,
                                    0 /* flags */,
                                    icons_dfd, icon_path,
                                    NULL, NULL,
@@ -3161,6 +3181,7 @@ add_image_to_appstream (FlatpakHttpSession        *http_session,
   FlatpakXml *component;
   FlatpakXml *prev_component;
   const char *appdata;
+  g_autoptr(FlatpakCertificates) certificates = NULL;
   int i;
 
   static struct
@@ -3227,6 +3248,14 @@ add_image_to_appstream (FlatpakHttpSession        *http_session,
       component = next;
     }
 
+  certificates = flatpak_get_certificates_for_uri (index_uri, &error);
+  if (error)
+    {
+      g_print ("Failed to load certificates for %s: %s",
+               index_uri, error->message);
+      g_clear_error (&error);
+    }
+
   for (i = 0; i < G_N_ELEMENTS (icon_sizes); i++)
     {
       const char *icon_data = get_image_metadata (image, icon_sizes[i].label);
@@ -3234,6 +3263,7 @@ add_image_to_appstream (FlatpakHttpSession        *http_session,
         {
           if (!add_icon_image (http_session,
                                index_uri,
+                               certificates,
                                icons_dfd,
                                used_icons,
                                icon_sizes[i].subdir, id, icon_data,
