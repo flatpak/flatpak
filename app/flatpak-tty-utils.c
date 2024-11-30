@@ -521,3 +521,119 @@ flatpak_print_escaped_string (const char        *s,
   g_autofree char *escaped = flatpak_escape_string (s, flags);
   g_print ("%s", escaped);
 }
+
+/* Markup format documented here: https://www.freedesktop.org/software/appstream/docs/chap-Metadata.html#tag-description */
+typedef struct {
+  GString *formatted;
+  guint current_list_index;
+  gboolean in_list;
+  gboolean in_paragraph;
+} DescriptionParserData;
+
+static void
+start_element (GMarkupParseContext  *context,
+               const char           *element_name,
+               const char          **attribute_names,
+               const char          **attribute_values,
+               gpointer              user_data,
+               GError              **error)
+{
+  DescriptionParserData *data = user_data;
+
+  if (g_str_equal (element_name, "p"))
+    {
+      if (data->formatted->len != 0)
+        g_string_append_c (data->formatted, '\n');
+      data->in_paragraph = TRUE;
+    }
+  else if (!data->in_list && g_str_equal (element_name, "ol"))
+    {
+      data->in_list = TRUE;
+      data->current_list_index = 1;
+    }
+  else if (!data->in_list && g_str_equal (element_name, "ul"))
+    {
+      data->in_list = TRUE;
+    }
+  else if (data->in_list && g_str_equal (element_name, "li"))
+    {
+      if (data->formatted->len != 0)
+        g_string_append_c (data->formatted, '\n');
+
+      if (data->current_list_index)
+        g_string_append_printf(data->formatted, "  %u. ", data->current_list_index++);
+      else
+        g_string_append(data->formatted, "  - ");
+    }
+  else if ((data->in_list || data->in_paragraph) && g_str_equal (element_name, "em"))
+   {
+     g_string_append (data->formatted, "\033[3m");
+   }
+}
+
+static void
+end_element (GMarkupParseContext  *context,
+             const char           *element_name,
+             gpointer              user_data,
+             GError              **error)
+{
+  DescriptionParserData *data = user_data;
+
+  if (g_str_equal (element_name, "p"))
+    {
+      data->in_paragraph = FALSE;
+    }
+  else if (data->in_list && g_str_equal (element_name, "ol"))
+    {
+      data->in_list = FALSE;
+      data->current_list_index = 0;      
+    }
+  else if (data->in_list && g_str_equal (element_name, "ul"))
+    {
+      data->in_list = FALSE;
+    }
+  else if ((data->in_list || data->in_paragraph) && g_str_equal (element_name, "em"))
+   {
+     g_string_append (data->formatted, "\e[0m");
+   }
+}
+
+static void
+text (GMarkupParseContext *context,
+      const char          *text,
+      gsize                text_len,
+      gpointer             user_data,
+      GError             **error)
+{
+  DescriptionParserData *data = user_data;
+
+  g_string_append_len (data->formatted, text, text_len);
+}
+
+void
+flatpak_print_appstream_release_description_markup (const char *s)
+{
+  g_autoptr(GString) formatted = g_string_new_len(NULL, strlen (s));
+  g_autoptr(GError) error = NULL;
+  g_autoptr(GMarkupParseContext) context = NULL;
+  GMarkupParser parser = {
+    start_element,
+    end_element,
+    text,
+    NULL,
+    NULL
+  };
+
+  g_autofree DescriptionParserData *data = g_new0 (DescriptionParserData, 1);
+  data->formatted = formatted;
+
+  context = g_markup_parse_context_new (&parser, G_MARKUP_TREAT_CDATA_AS_TEXT, data, NULL);
+  if (!g_markup_parse_context_parse (context, s, -1, &error))
+    {
+      g_warning ("Failed to release description: %s", error->message);
+      return;
+    }
+
+  g_string_append_c (formatted, '\n');
+  g_print ("%s", formatted->str);
+}

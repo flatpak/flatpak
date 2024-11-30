@@ -47,6 +47,7 @@ static gboolean opt_show_sdk;
 static gboolean opt_show_permissions;
 static gboolean opt_show_extensions;
 static gboolean opt_show_location;
+static gboolean opt_show_changelog;
 static char *opt_arch;
 static char **opt_installations;
 static char *opt_file_access;
@@ -67,6 +68,7 @@ static GOptionEntry options[] = {
   { "file-access", 0, 0, G_OPTION_ARG_FILENAME, &opt_file_access, N_("Query file access"), N_("PATH") },
   { "show-extensions", 'e', 0, G_OPTION_ARG_NONE, &opt_show_extensions, N_("Show extensions"), NULL },
   { "show-location", 'l', 0, G_OPTION_ARG_NONE, &opt_show_location, N_("Show location"), NULL },
+  { "show-changelog", 0, 0, G_OPTION_ARG_NONE, &opt_show_changelog, N_("Show changelog"), NULL },
   { NULL }
 };
 
@@ -166,7 +168,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   metakey = flatpak_deploy_get_metadata (deploy);
 
   if (opt_show_ref || opt_show_origin || opt_show_commit || opt_show_size || opt_show_metadata || opt_show_permissions ||
-      opt_file_access || opt_show_location || opt_show_runtime || opt_show_sdk)
+      opt_file_access || opt_show_location || opt_show_runtime || opt_show_sdk || opt_show_changelog)
     friendly = FALSE;
 
   if (friendly)
@@ -442,6 +444,38 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
               else
                 g_print ("read-write\n");
             }
+        }
+
+      if (opt_show_changelog)
+        {
+#if AS_CHECK_VERSION(1, 0, 0)
+          g_autoptr(AsMetadata) mdata = as_metadata_new ();
+          g_autofree char *remote = g_strdup ("flathub"); // FIXME: Returns NULL: flatpak_decomposed_dup_remote(ref);
+          g_autofree char *arch = flatpak_decomposed_dup_arch (ref);
+          g_autoptr(GError) appstream_error = NULL;
+          g_autoptr(GPtrArray) dirs = g_ptr_array_new ();
+          AsComponent *component;
+
+          g_ptr_array_add(dirs, dir);
+
+          update_appstream (dirs, remote, arch, FLATPAK_APPSTREAM_TTL, TRUE, cancellable, NULL);
+          flatpak_dir_load_appstream_data (dir, remote, arch, mdata, cancellable, &appstream_error);
+
+          component = metadata_find_component (mdata, flatpak_decomposed_get_ref(ref));
+          if (component)
+            {
+              AsReleaseList *releases = as_component_get_releases_plain(component);
+              AsRelease *release = as_release_list_index_safe (releases, 0);
+              if (releases)
+                flatpak_print_appstream_release_description_markup (as_release_get_description (release));
+              else
+                g_print ("No changelog\n");
+            }
+          else
+            g_print ("Failed to find app, missing appstream data?\n");
+#else
+          g_warning ("Listing changelogs is not supported with this version of libappstream");     
+#endif
         }
     }
 
