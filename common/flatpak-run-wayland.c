@@ -140,11 +140,12 @@ create_wl_socket (char *template)
 }
 
 static gboolean
-flatpak_run_add_wayland_security_context_args (FlatpakBwrap *bwrap,
-                                               const char   *app_id,
-                                               const char   *instance_id,
-                                               const char   *wayland_display,
-                                               gboolean     *available_out)
+flatpak_run_create_wayland_security_context (FlatpakBwrap *bwrap,
+                                             const char   *app_id,
+                                             const char   *instance_id,
+                                             const char   *wayland_display,
+                                             gboolean     *available_out,
+                                             gchar       **socket_path_out)
 {
   gboolean res = FALSE;
   struct wl_display *display;
@@ -156,6 +157,7 @@ flatpak_run_add_wayland_security_context_args (FlatpakBwrap *bwrap,
   int listen_fd = -1, sync_fd, ret;
 
   *available_out = TRUE;
+  *socket_path_out = NULL;
 
   /* We don't use wl_display_connect () here, for two reasons:
    * 1. It would unsetenv ("WAYLAND_SOCKET"), which is not thread-safe.
@@ -181,6 +183,7 @@ flatpak_run_add_wayland_security_context_args (FlatpakBwrap *bwrap,
 
   if (!security_context_manager)
     {
+      g_debug ("Wayland display does not support security_context_manager_v1");
       *available_out = FALSE;
       goto out;
     }
@@ -218,11 +221,7 @@ flatpak_run_add_wayland_security_context_args (FlatpakBwrap *bwrap,
   if (wl_display_roundtrip (display) < 0)
     goto out;
 
-  flatpak_bwrap_add_args (bwrap,
-                          "--ro-bind", socket_path, "/run/flatpak/wayland-0",
-                          NULL);
-  flatpak_bwrap_set_env (bwrap, "WAYLAND_DISPLAY", "/run/flatpak/wayland-0", TRUE);
-
+  *socket_path_out = g_steal_pointer (&socket_path);
   res = TRUE;
 
 out:
@@ -260,20 +259,32 @@ flatpak_run_add_wayland_args (FlatpakBwrap *bwrap,
   wayland_display = get_wayland_display_name ();
 
 #ifdef ENABLE_WAYLAND_SECURITY_CONTEXT
-  if (flatpak_run_add_wayland_security_context_args (bwrap, app_id, instance_id,
-                                                     wayland_display,
-                                                     &security_context_available))
-    return TRUE;
+  if (flatpak_run_create_wayland_security_context (bwrap, app_id, instance_id,
+                                                   wayland_display,
+                                                   &security_context_available,
+                                                   &wayland_socket))
+    {
+      g_debug ("Created Wayland socket with security context: %s",
+               wayland_socket);
+      g_assert (security_context_available);
+    }
   /* If security-context is available but we failed to set it up, bail out */
-  if (security_context_available)
-    return FALSE;
+  else if (security_context_available)
+    {
+      g_debug ("Failed to set up Wayland security context");
+      return FALSE;
+    }
+  else
 #endif /* ENABLE_WAYLAND_SECURITY_CONTEXT */
-
-  wayland_socket = get_wayland_socket_path (wayland_display);
+    {
+      g_debug ("Using ordinary Wayland socket, without security context");
+      wayland_socket = get_wayland_socket_path (wayland_display);
+    }
 
   if (!g_str_has_prefix (wayland_display, "wayland-") ||
       strchr (wayland_display, '/') != NULL)
     {
+      g_debug ("Not preserving WAYLAND_DISPLAY=\"%s\"", wayland_display);
       wayland_display = "wayland-0";
       flatpak_bwrap_set_env (bwrap, "WAYLAND_DISPLAY", wayland_display, TRUE);
     }
@@ -289,6 +300,11 @@ flatpak_run_add_wayland_args (FlatpakBwrap *bwrap,
                               NULL);
       flatpak_bwrap_add_runtime_dir_member (bwrap, wayland_display);
     }
+
+#ifdef ENABLE_WAYLAND_SECURITY_CONTEXT
+  if (security_context_available)
+    return TRUE;
+#endif
 
   /* If inherit-wayland-socket is not set, unset WAYLAND_SOCKET unconditionally
    * without checking the validity of the value of WAYLAND_SOCKET. */
