@@ -301,11 +301,6 @@ flatpak_run_add_wayland_args (FlatpakBwrap *bwrap,
       flatpak_bwrap_add_runtime_dir_member (bwrap, wayland_display);
     }
 
-#ifdef ENABLE_WAYLAND_SECURITY_CONTEXT
-  if (security_context_available)
-    return TRUE;
-#endif
-
   /* If inherit-wayland-socket is not set, unset WAYLAND_SOCKET unconditionally
    * without checking the validity of the value of WAYLAND_SOCKET. */
   if (!inherit_wayland_socket)
