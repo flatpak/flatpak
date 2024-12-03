@@ -30,15 +30,22 @@
 
 #include "flatpak-utils-private.h"
 
-static char *
-get_wayland_socket_path (void)
+static const char *
+get_wayland_display_name (void)
 {
-  g_autofree char *user_runtime_dir = flatpak_get_real_xdg_runtime_dir ();
   const char *wayland_display;
 
   wayland_display = g_getenv ("WAYLAND_DISPLAY");
   if (!wayland_display)
     wayland_display = "wayland-0";
+
+  return wayland_display;
+}
+
+static char *
+get_wayland_socket_path (const char *wayland_display)
+{
+  g_autofree char *user_runtime_dir = flatpak_get_real_xdg_runtime_dir ();
 
   if (wayland_display[0] == '/')
     return g_strdup (wayland_display);
@@ -93,13 +100,13 @@ static const struct wl_registry_listener registry_listener = {
  * which can only be used once, and also does not unset environment
  * variables, which would not be thread-safe. */
 static struct wl_display *
-connect_to_wayland_display (void)
+connect_to_wayland_display (const char *wayland_display)
 {
   struct sockaddr_un sockaddr = {0};
   g_autofree char *socket_path = NULL;
   glnx_autofd int fd = -1;
 
-  socket_path = get_wayland_socket_path ();
+  socket_path = get_wayland_socket_path (wayland_display);
   fd = socket (AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
   if (fd < 0)
     return NULL;
@@ -133,10 +140,12 @@ create_wl_socket (char *template)
 }
 
 static gboolean
-flatpak_run_add_wayland_security_context_args (FlatpakBwrap *bwrap,
-                                               const char   *app_id,
-                                               const char   *instance_id,
-                                               gboolean     *available_out)
+flatpak_run_create_wayland_security_context (FlatpakBwrap *bwrap,
+                                             const char   *app_id,
+                                             const char   *instance_id,
+                                             const char   *wayland_display,
+                                             gboolean     *available_out,
+                                             gchar       **socket_path_out)
 {
   gboolean res = FALSE;
   struct wl_display *display;
@@ -148,6 +157,7 @@ flatpak_run_add_wayland_security_context_args (FlatpakBwrap *bwrap,
   int listen_fd = -1, sync_fd, ret;
 
   *available_out = TRUE;
+  *socket_path_out = NULL;
 
   /* We don't use wl_display_connect () here, for two reasons:
    * 1. It would unsetenv ("WAYLAND_SOCKET"), which is not thread-safe.
@@ -159,7 +169,7 @@ flatpak_run_add_wayland_security_context_args (FlatpakBwrap *bwrap,
    * We still set up a security context for the second and subsequent connections
    * to Wayland from within the sandbox.
    */
-  display = connect_to_wayland_display ();
+  display = connect_to_wayland_display (wayland_display);
   if (!display)
     return FALSE;
 
@@ -173,6 +183,7 @@ flatpak_run_add_wayland_security_context_args (FlatpakBwrap *bwrap,
 
   if (!security_context_manager)
     {
+      g_debug ("Wayland display does not support security_context_manager_v1");
       *available_out = FALSE;
       goto out;
     }
@@ -210,11 +221,7 @@ flatpak_run_add_wayland_security_context_args (FlatpakBwrap *bwrap,
   if (wl_display_roundtrip (display) < 0)
     goto out;
 
-  flatpak_bwrap_add_args (bwrap,
-                          "--ro-bind", socket_path, "/run/flatpak/wayland-0",
-                          NULL);
-  flatpak_bwrap_set_env (bwrap, "WAYLAND_DISPLAY", "/run/flatpak/wayland-0", TRUE);
-
+  *socket_path_out = g_steal_pointer (&socket_path);
   res = TRUE;
 
 out:
@@ -245,26 +252,39 @@ flatpak_run_add_wayland_args (FlatpakBwrap *bwrap,
   gboolean res = FALSE;
   struct stat statbuf;
   int fd;
-
 #ifdef ENABLE_WAYLAND_SECURITY_CONTEXT
   gboolean security_context_available = FALSE;
-  if (flatpak_run_add_wayland_security_context_args (bwrap, app_id, instance_id,
-                                                     &security_context_available))
-    return TRUE;
+#endif
+
+  wayland_display = get_wayland_display_name ();
+
+#ifdef ENABLE_WAYLAND_SECURITY_CONTEXT
+  if (flatpak_run_create_wayland_security_context (bwrap, app_id, instance_id,
+                                                   wayland_display,
+                                                   &security_context_available,
+                                                   &wayland_socket))
+    {
+      g_debug ("Created Wayland socket with security context: %s",
+               wayland_socket);
+      g_assert (security_context_available);
+    }
   /* If security-context is available but we failed to set it up, bail out */
-  if (security_context_available)
-    return FALSE;
+  else if (security_context_available)
+    {
+      g_debug ("Failed to set up Wayland security context");
+      return FALSE;
+    }
+  else
 #endif /* ENABLE_WAYLAND_SECURITY_CONTEXT */
-
-  wayland_display = g_getenv ("WAYLAND_DISPLAY");
-  if (!wayland_display)
-    wayland_display = "wayland-0";
-
-  wayland_socket = get_wayland_socket_path ();
+    {
+      g_debug ("Using ordinary Wayland socket, without security context");
+      wayland_socket = get_wayland_socket_path (wayland_display);
+    }
 
   if (!g_str_has_prefix (wayland_display, "wayland-") ||
       strchr (wayland_display, '/') != NULL)
     {
+      g_debug ("Not preserving WAYLAND_DISPLAY=\"%s\"", wayland_display);
       wayland_display = "wayland-0";
       flatpak_bwrap_set_env (bwrap, "WAYLAND_DISPLAY", wayland_display, TRUE);
     }
