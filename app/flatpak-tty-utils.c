@@ -521,3 +521,15 @@ flatpak_print_escaped_string (const char        *s,
   g_autofree char *escaped = flatpak_escape_string (s, flags);
   g_print ("%s", escaped);
 }
+
+void
+flatpak_pty_clear_progress (void)
+{
+  g_print ("\033]9;4;0\007");
+}
+
+void
+flatpak_pty_set_progress (guint percent)
+{
+  g_print ("\033]9;4;1;%d\007", MIN (percent, 100));
+}

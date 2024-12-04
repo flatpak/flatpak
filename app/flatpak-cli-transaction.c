@@ -378,6 +378,7 @@ progress_changed_cb (FlatpakTransactionProgress *progress,
         }
       if (!redraw (cli))
         g_print ("\r%s", str->str); /* redraw failed, just update the progress */
+      flatpak_pty_set_progress (percent);
     }
   else
     g_print ("%s\n", str->str);
@@ -1684,6 +1685,7 @@ flatpak_cli_transaction_run (FlatpakTransaction *transaction,
 
   if (flatpak_fancy_output ())
     {
+      flatpak_pty_clear_progress ();
       flatpak_disable_raw_mode ();
       flatpak_show_cursor ();
     }
