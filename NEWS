@@ -21,6 +21,10 @@ Released: 2024-11-26
 
 Dependencies:
 
+ * In distributions that compile Flatpak to use a separate bubblewrap
+   executable, version 0.11.0 is recommended (but not required).
+   The minimum bubblewrap continues to be 0.10.0.
+
  * In distributions that compile Flatpak to use a separate xdg-dbus-proxy
    executable, version 0.1.6 is recommended (but not required).
    The minimum xdg-dbus-proxy continues to be 0.1.0.
@@ -42,6 +46,8 @@ Enhancements:
  * `flatpak run -vv $app_id` shows all applicable sandboxing parameters
    and their source, including overrides, as debug messages (#5895)
 
+ * Add --device=usb, a subset of --device=all
+
  * Introduce USB device listing
 
    * Apps can list which USB devices they want to access ahead of time by
@@ -61,6 +67,11 @@ Enhancements:
  * Use the instance id of the Flatpak app as part of the cgroup name. This
    better matches the naming conventions for cgroup.
 
+ * Preconfigured repositories can now be set up by OS vendors using
+   `${datadir}/flatpak/remotes.d` (typically /usr/share/flatpak/remotes.d),
+   in addition to `${sysconfdir}/flatpak/remotes.d` (typically
+   /etc/flatpak/remotes.d) which is intended for local sysadmin use
+
 Bug fixes:
 
  * Update libglnx to 2024-08-23 (#5918)
@@ -74,6 +85,20 @@ Bug fixes:
 
      * improve compatibility of g_closefrom() backport with newer GLib
 
+ * Update meson wrap file for bubblewrap to version 0.11.0:
+
+     * drop Autotools build system
+
+     * improve handling of EINTR
+
+     * improve handling of socket control messages
+
+     * improve compatibility with busybox
+
+     * improve compatibility with older Meson
+
+     * fix deprecation warnings
+
  * Update meson wrap file for xdg-dbus-proxy to version 0.1.6:
 
      * compatibility with D-Bus implementations that pipeline the
@@ -86,6 +111,10 @@ Bug fixes:
        (#5828)
 
      * fix memory leaks
+
+ * Fix some memory leaks
+
+ * Translation updates: cs, pl, zh_CN
 
 Internal changes:
 
