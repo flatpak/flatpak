@@ -32,6 +32,7 @@
 static void
 test_mkdir_p_enoent (void)
 {
+  _GLNX_TEST_SCOPED_TEMP_DIR;
   _GLNX_TEST_DECLARE_ERROR(local_error, error);
   glnx_autofd int dfd = -1;
 
