@@ -33,4 +33,7 @@ FlatpakTransaction * flatpak_cli_transaction_new (FlatpakDir * dir,
                                                   gboolean non_default_arch,
                                                   GError **error);
 
+void flatpak_cli_transaction_set_show_eol_details (FlatpakCliTransaction *self,
+                                                   gboolean show_eol_details);
+
 #endif /* __FLATPAK_CLI_TRANSACTION_H__ */

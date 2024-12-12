@@ -46,6 +46,15 @@ struct _FlatpakCliTransaction
   GHashTable          *runtime_app_map;
   GHashTable          *extension_app_map;
 
+  /* used as hashsets */
+  GHashTable          *eol_apps;
+  GHashTable          *eol_extensions;
+  GHashTable          *eol_extension_apps;
+  GHashTable          *eol_runtimes;
+  GHashTable          *eol_runtime_apps;
+
+  gboolean             show_eol_details;
+
   int                  rows;
   int                  cols;
   int                  table_width;
@@ -877,6 +886,104 @@ find_reverse_dep_apps (FlatpakTransaction *transaction,
   return g_steal_pointer (&apps);
 }
 
+static void
+add_to_eol_summary (FlatpakTransaction *transaction,
+                    FlatpakDir         *dir,
+                    FlatpakDecomposed  *ref)
+{
+  FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
+
+  if (flatpak_decomposed_is_runtime (ref))
+    {
+      gboolean is_extension;
+      g_autoptr(GPtrArray) apps = find_reverse_dep_apps (transaction, dir, ref, &is_extension);
+
+      if (is_extension)
+          g_hash_table_add (self->eol_extensions, flatpak_decomposed_ref (ref));
+      else
+          g_hash_table_add (self->eol_runtimes, flatpak_decomposed_ref (ref));
+
+      for (guint i = 0; i < apps->len; i++)
+        {
+          FlatpakDecomposed *app_ref = g_ptr_array_index (apps, i);
+
+          if (is_extension)
+              g_hash_table_add (self->eol_extension_apps, flatpak_decomposed_ref (app_ref));
+          else
+              g_hash_table_add (self->eol_runtime_apps, flatpak_decomposed_ref (app_ref));
+        }
+    }
+  else
+    {
+      g_hash_table_add (self->eol_apps, flatpak_decomposed_ref (ref));
+    }
+}
+
+static gboolean
+print_eol_line (GHashTable *ref_set,
+                gboolean    show_branch,
+                gboolean    leading_newline,
+                const char *message)
+{
+  if (g_hash_table_size (ref_set) > 0) {
+    g_autoptr(GList) keys = g_hash_table_get_keys (ref_set);
+    int i = 0;
+
+    if (leading_newline)
+      g_print ("\n");
+
+    g_print ("%s", message);
+
+    for (GList *key = keys; key->next != NULL; key = key->next)
+      {
+        FlatpakDecomposed *ref = key->data;
+        g_autofree char *id = flatpak_decomposed_dup_id (ref);
+
+        if (i++ != 0)
+          g_print (", ");
+
+        if (show_branch)
+          g_print ("%s//%s", id, flatpak_decomposed_get_branch (ref));
+        else
+          g_print ("%s", id);
+      }
+
+    g_print ("\n");
+
+    return TRUE;
+  }
+  else
+    return FALSE;
+}
+
+static void
+print_eol_summary (FlatpakTransaction *transaction)
+{
+  FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
+  gboolean has_eol = FALSE;
+
+    if (print_eol_line (self->eol_apps, TRUE, TRUE, _("Info: The following applications are end-of-life: ")))
+      has_eol = TRUE;
+
+    if (print_eol_line (self->eol_runtimes, TRUE, TRUE, _("Info: The following runtimes are end-of-life: ")))
+      {
+        print_eol_line (self->eol_runtime_apps, FALSE, FALSE, _(" … used by these applications: "));
+        has_eol = TRUE;
+      }
+
+    if (print_eol_line (self->eol_extensions, TRUE, TRUE, _("Info: The following extensions are end-of-life: ")))
+      {
+        print_eol_line (self->eol_extension_apps, FALSE, FALSE, _(" … used by these applications: "));
+        has_eol = TRUE;
+      }
+
+    if (has_eol)
+      {
+        g_print ("\n");
+        g_print (_("Info: For more information, re-run with the --end-of-life-details option\n"));
+      }
+}
+
 static gboolean
 end_of_lifed_with_rebase (FlatpakTransaction *transaction,
                           const char         *remote,
@@ -938,46 +1045,53 @@ end_of_lifed_with_rebase (FlatpakTransaction *transaction,
     {
       action = EOL_IGNORE;
 
-      print_eol_info_message (dir, ref, name, rebased_to_ref, reason);
-
-      if (flatpak_decomposed_is_runtime (ref) && !rebased_to_ref)
+      if (self->show_eol_details || rebased_to_ref)
         {
-          gboolean is_extension;
-          g_autoptr(GPtrArray) apps = find_reverse_dep_apps (transaction, dir, ref, &is_extension);
+          print_eol_info_message (dir, ref, name, rebased_to_ref, reason);
 
-          if (apps && apps->len > 0)
+          if (flatpak_decomposed_is_runtime (ref) && !rebased_to_ref)
             {
-              if (is_extension)
-                g_print (_("Info: applications using this extension:\n"));
-              else
-                g_print (_("Info: applications using this runtime:\n"));
+              gboolean is_extension;
+              g_autoptr(GPtrArray) apps = find_reverse_dep_apps (transaction, dir, ref, &is_extension);
 
-              g_print ("   ");
-              for (guint i = 0; i < apps->len; i++)
+              if (apps && apps->len > 0)
                 {
-                  FlatpakDecomposed *app_ref = g_ptr_array_index (apps, i);
-                  g_autofree char *id = flatpak_decomposed_dup_id (app_ref);
-                  if (i != 0)
-                    g_print (", ");
-                  g_print ("%s", id);
+                  if (is_extension)
+                    g_print (_("Info: applications using this extension:\n"));
+                  else
+                    g_print (_("Info: applications using this runtime:\n"));
+
+                  g_print ("   ");
+                  for (guint i = 0; i < apps->len; i++)
+                    {
+                      FlatpakDecomposed *app_ref = g_ptr_array_index (apps, i);
+                      g_autofree char *id = flatpak_decomposed_dup_id (app_ref);
+                      if (i != 0)
+                        g_print (", ");
+                      g_print ("%s", id);
+                    }
+                  g_print ("\n");
                 }
-              g_print ("\n");
+            }
+
+          if (rebased_to_ref && remote)
+            {
+              /* The context for this prompt is in print_eol_info_message() */
+              if (self->disable_interaction ||
+                  flatpak_yes_no_prompt (TRUE, _("Replace?")))
+                {
+                  if (self->disable_interaction)
+                    g_print (_("Updating to rebased version\n"));
+
+                  action = EOL_REBASE;
+                }
+              else
+                action = EOL_NO_REBASE;
             }
         }
-
-      if (rebased_to_ref && remote)
+      else
         {
-          /* The context for this prompt is in print_eol_info_message() */
-          if (self->disable_interaction ||
-              flatpak_yes_no_prompt (TRUE, _("Replace?")))
-            {
-              if (self->disable_interaction)
-                g_print (_("Updating to rebased version\n"));
-
-              action = EOL_REBASE;
-            }
-          else
-            action = EOL_NO_REBASE;
+          add_to_eol_summary (transaction, dir, ref);
         }
     }
   else
@@ -1356,6 +1470,9 @@ transaction_ready_pre_auth (FlatpakTransaction *transaction)
   g_clear_pointer (&self->runtime_app_map, g_hash_table_unref);
   g_clear_pointer (&self->extension_app_map, g_hash_table_unref);
 
+  if (!self->show_eol_details)
+    print_eol_summary (transaction);
+
   if (ops == NULL)
     return TRUE;
 
@@ -1597,6 +1714,12 @@ flatpak_cli_transaction_finalize (GObject *object)
 
   g_hash_table_unref (self->eol_actions);
 
+  g_hash_table_unref (self->eol_apps);
+  g_hash_table_unref (self->eol_extensions);
+  g_hash_table_unref (self->eol_extension_apps);
+  g_hash_table_unref (self->eol_runtimes);
+  g_hash_table_unref (self->eol_runtime_apps);
+
   if (self->runtime_app_map)
     g_hash_table_unref (self->runtime_app_map);
 
@@ -1614,6 +1737,20 @@ flatpak_cli_transaction_init (FlatpakCliTransaction *self)
 {
   self->eol_actions = g_hash_table_new_full ((GHashFunc)flatpak_decomposed_hash, (GEqualFunc)flatpak_decomposed_equal,
                                              (GDestroyNotify)flatpak_decomposed_unref, NULL);
+
+  self->eol_apps = g_hash_table_new_full ((GHashFunc)flatpak_decomposed_hash, (GEqualFunc)flatpak_decomposed_equal,
+                                          (GDestroyNotify)flatpak_decomposed_unref, NULL);
+  self->eol_extensions = g_hash_table_new_full ((GHashFunc)flatpak_decomposed_hash, (GEqualFunc)flatpak_decomposed_equal,
+                                                (GDestroyNotify)flatpak_decomposed_unref, NULL);
+  self->eol_extension_apps = g_hash_table_new_full ((GHashFunc)flatpak_decomposed_hash, (GEqualFunc)flatpak_decomposed_equal,
+                                                    (GDestroyNotify)flatpak_decomposed_unref, NULL);
+  self->eol_runtimes = g_hash_table_new_full ((GHashFunc)flatpak_decomposed_hash, (GEqualFunc)flatpak_decomposed_equal,
+                                              (GDestroyNotify)flatpak_decomposed_unref, NULL);
+  self->eol_runtime_apps = g_hash_table_new_full ((GHashFunc)flatpak_decomposed_hash, (GEqualFunc)flatpak_decomposed_equal,
+                                                  (GDestroyNotify)flatpak_decomposed_unref, NULL);
+
+  /* The update command disables this by default */
+  self->show_eol_details = TRUE;
 }
 
 static gboolean flatpak_cli_transaction_run (FlatpakTransaction *transaction,
@@ -1671,6 +1808,13 @@ flatpak_cli_transaction_new (FlatpakDir *dir,
   flatpak_transaction_add_default_dependency_sources (FLATPAK_TRANSACTION (self));
 
   return (FlatpakTransaction *) g_steal_pointer (&self);
+}
+
+void
+flatpak_cli_transaction_set_show_eol_details (FlatpakCliTransaction *self,
+                                              gboolean               show_eol_details)
+{
+  self->show_eol_details = show_eol_details;
 }
 
 static gboolean
