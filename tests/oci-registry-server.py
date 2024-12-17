@@ -5,6 +5,7 @@ import base64
 import hashlib
 import json
 import os
+import ssl
 import time
 
 from urllib.parse import parse_qs
@@ -252,6 +253,19 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
 def run(args):
     RequestHandler.protocol_version = "HTTP/1.0"
     httpd = http_server.HTTPServer(("127.0.0.1", 0), RequestHandler)
+
+    if args.cert:
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        context.options |= ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1
+        context.load_cert_chain(certfile=args.cert, keyfile=args.key)
+
+        if args.mtls_cacert:
+            context.load_verify_locations(cafile=args.mtls_cacert)
+            # In a real application, we'd need to check the CN against authorized users
+            context.verify_mode = ssl.CERT_REQUIRED
+
+        httpd.socket = context.wrap_socket(httpd.socket, server_side=True)
+
     host, port = httpd.socket.getsockname()[:2]
     with open("httpd-port", "w") as file:
         file.write("%d" % port)
@@ -259,7 +273,10 @@ def run(args):
         os.write(3, bytes("Started\n", "utf-8"))
     except OSError:
         pass
-    print("Serving HTTP on port %d" % port)
+    if args.cert:
+        print("Serving HTTPS on port %d" % port)
+    else:
+        print("Serving HTTP on port %d" % port)
     if args.dir:
         os.chdir(args.dir)
     httpd.serve_forever()
@@ -268,6 +285,9 @@ def run(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--dir")
+    parser.add_argument("--cert")
+    parser.add_argument("--key")
+    parser.add_argument("--mtls-cacert")
     args = parser.parse_args()
 
     run(args)

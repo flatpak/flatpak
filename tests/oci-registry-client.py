@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import argparse
+import ssl
 import sys
 
 import http.client
@@ -9,7 +10,20 @@ import urllib.parse
 
 def get_conn(args):
     parsed = urllib.parse.urlparse(args.url)
-    return http.client.HTTPConnection(host=parsed.hostname, port=parsed.port)
+    if parsed.scheme == "http":
+        return http.client.HTTPConnection(host=parsed.hostname, port=parsed.port)
+    elif parsed.scheme == "https":
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        context.options |= ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1
+        if args.cert:
+            context.load_cert_chain(certfile=args.cert, keyfile=args.key)
+        if args.cacert:
+            context.load_verify_locations(cafile=args.cacert)
+        return http.client.HTTPSConnection(
+            host=parsed.hostname, port=parsed.port, context=context
+        )
+    else:
+        assert False, "Bad scheme: " + parsed.scheme
 
 
 def run_add(args):
@@ -42,6 +56,9 @@ def run_delete(args):
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--url", required=True)
+parser.add_argument("--cacert")
+parser.add_argument("--cert")
+parser.add_argument("--key")
 
 subparsers = parser.add_subparsers()
 subparsers.required = True
