@@ -119,23 +119,14 @@ flatpak_image_source_new (FlatpakOciRegistry *registry,
   return g_steal_pointer (&self);
 }
 
-FlatpakImageSource *
-flatpak_image_source_new_local (GFile        *file,
-                                const char   *reference,
-                                GCancellable *cancellable,
-                                GError      **error)
+static FlatpakImageSource *
+flatpak_image_source_new_local_for_registry (FlatpakOciRegistry *registry,
+                                             const char         *reference,
+                                             GCancellable       *cancellable,
+                                             GError            **error)
 {
-  g_autofree char *dir_uri = NULL;
-  g_autofree char *target_ref = NULL;
-  g_autoptr(FlatpakImageSource) image_source = NULL;
-  g_autoptr(FlatpakOciRegistry) registry = NULL;
   g_autoptr(FlatpakOciIndex) index = NULL;
   const FlatpakOciManifestDescriptor *desc;
-
-  dir_uri = g_file_get_uri (file);
-  registry = flatpak_oci_registry_new (dir_uri, FALSE, -1, cancellable, error);
-  if (registry == NULL)
-    return NULL;
 
   index = flatpak_oci_registry_load_index (registry, cancellable, error);
   if (index == NULL)
@@ -161,6 +152,23 @@ flatpak_image_source_new_local (GFile        *file,
     }
 
   return flatpak_image_source_new (registry, NULL, desc->parent.digest, cancellable, error);
+}
+
+FlatpakImageSource *
+flatpak_image_source_new_local (GFile        *file,
+                                const char   *reference,
+                                GCancellable *cancellable,
+                                GError      **error)
+{
+  g_autofree char *dir_uri = NULL;
+  g_autoptr(FlatpakOciRegistry) registry = NULL;
+
+  dir_uri = g_file_get_uri (file);
+  registry = flatpak_oci_registry_new (dir_uri, FALSE, -1, cancellable, error);
+  if (registry == NULL)
+    return NULL;
+
+  return flatpak_image_source_new_local_for_registry (registry, reference, cancellable, error);
 }
 
 FlatpakImageSource *
@@ -224,6 +232,20 @@ flatpak_image_source_new_for_location (const char   *location,
       get_path_and_reference (location, &path, &reference);
 
       return flatpak_image_source_new_local (path, reference, cancellable, error);
+    }
+  else if (g_str_has_prefix (location, "oci-archive:"))
+    {
+      g_autoptr(FlatpakOciRegistry) registry = NULL;
+      g_autoptr(GFile) path = NULL;
+      g_autofree char *reference = NULL;
+
+      get_path_and_reference (location, &path, &reference);
+
+      registry = flatpak_oci_registry_new_for_archive (path, cancellable, error);
+      if (registry == NULL)
+        return NULL;
+
+      return flatpak_image_source_new_local_for_registry (registry, reference, cancellable, error);
     }
   else if (g_str_has_prefix (location, "docker:"))
     {
