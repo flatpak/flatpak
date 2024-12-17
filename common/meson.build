@@ -186,6 +186,7 @@ sources = [
   'flatpak-context.c',
   'flatpak-dir.c',
   'flatpak-dir-utils.c',
+  'flatpak-docker-reference.c',
   'flatpak-error.c',
   'flatpak-exports.c',
   'flatpak-glib-backports.c',
