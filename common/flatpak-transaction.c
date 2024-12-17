@@ -138,15 +138,11 @@ struct _FlatpakTransactionOperation
   GPtrArray                      *related_to_ops;  /* (element-type FlatpakTransactionOperation) (nullable) */
 };
 
-typedef struct _FlatpakTransactionPrivate FlatpakTransactionPrivate;
-
-typedef struct _BundleData                BundleData;
-
-struct _BundleData
+typedef struct _BundleData
 {
   GFile  *file;
   GBytes *gpg_data;
-};
+} BundleData;
 
 typedef struct {
   FlatpakTransaction *transaction;
@@ -157,7 +153,7 @@ typedef struct {
   GVariant *results;
 } RequestData;
 
-struct _FlatpakTransactionPrivate
+typedef struct _FlatpakTransactionPrivate
 {
   GObject                      parent;
 
@@ -198,7 +194,7 @@ struct _FlatpakTransactionPrivate
 
   gboolean                     needs_resolve;
   gboolean                     needs_tokens;
-};
+} FlatpakTransactionPrivate;
 
 enum {
   NEW_OPERATION,
