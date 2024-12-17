@@ -5,7 +5,6 @@ import base64
 import hashlib
 import json
 import os
-import sys
 import time
 
 from urllib.parse import parse_qs
@@ -27,7 +26,7 @@ def get_index():
             }
         )
 
-    return json.dumps({"Registry": "/", "Results": results}, indent=4)
+    return json.dumps({"Registry": "/", "Results": results}, indent=4).encode("UTF-8")
 
 
 def cache_icon(data_uri):
@@ -62,7 +61,6 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
         path = parts[0].split("/")
 
         route_path = route.split("/")
-        print((route_path, path))
         if len(route_path) != len(path):
             return False
 
@@ -82,34 +80,47 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
         return True
 
     def do_GET(self):
-        response = 200
-        response_string = None
+        response = 404
+        response_string = b""
         response_content_type = "application/octet-stream"
-        response_file = None
 
         add_headers = {}
+
+        def get_file_contents(repo_name, type, ref):
+            try:
+                path = repositories[repo_name][type][ref]
+                with open(path, "rb") as f:
+                    return 200, f.read()
+            except KeyError:
+                return 404, b""
 
         if self.check_route("/v2/@repo_name/blobs/@digest"):
             repo_name = self.matches["repo_name"]
             digest = self.matches["digest"]
-            response_file = repositories[repo_name]["blobs"][digest]
+            response, response_string = get_file_contents(repo_name, "blobs", digest)
         elif self.check_route("/v2/@repo_name/manifests/@ref"):
             repo_name = self.matches["repo_name"]
             ref = self.matches["ref"]
-            response_file = repositories[repo_name]["manifests"][ref]
+            response, response_string = get_file_contents(repo_name, "manifests", ref)
         elif self.check_route("/index/static") or self.check_route("/index/dynamic"):
             etag = get_etag()
+            add_headers["Etag"] = etag
             if self.headers.get("If-None-Match") == etag:
                 response = 304
+                response_string = b""
             else:
+                response = 200
                 response_string = get_index()
-            add_headers["Etag"] = etag
         elif self.check_route("/icons/@filename"):
+            response = 200
             response_string = icons[self.matches["filename"]]
-            assert isinstance(response_string, bytes)
             response_content_type = "image/png"
-        else:
-            response = 404
+
+        assert isinstance(response, int)
+        assert isinstance(response_string, bytes)
+        assert isinstance(response_content_type, str)
+
+        add_headers["Content-Length"] = len(response_string)
 
         self.send_response(response)
         for k, v in list(add_headers.items()):
@@ -123,16 +134,7 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
 
         self.end_headers()
 
-        if response == 200:
-            if response_file:
-                with open(response_file, "rb") as f:
-                    response_string = f.read()
-
-            if isinstance(response_string, bytes):
-                self.wfile.write(response_string)
-            else:
-                assert isinstance(response_string, str)
-                self.wfile.write(response_string.encode("utf-8"))
+        self.wfile.write(response_string)
 
     def do_HEAD(self):
         return self.do_GET()
