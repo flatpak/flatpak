@@ -46,6 +46,7 @@ FlatpakImageSource *flatpak_image_source_new_remote (const char   *uri,
                                                      const char   *oci_repository,
                                                      const char   *digest,
                                                      const char   *token,
+                                                     const char   *signature_lookaside,
                                                      GCancellable *cancellable,
                                                      GError      **error);
 FlatpakImageSource *flatpak_image_source_new_for_location (const char   *location,

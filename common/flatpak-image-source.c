@@ -184,6 +184,7 @@ flatpak_image_source_new_remote (const char   *uri,
                                  const char   *oci_repository,
                                  const char   *digest,
                                  const char   *token,
+                                 const char   *signature_lookaside,
                                  GCancellable *cancellable,
                                  GError      **error)
 {
@@ -194,6 +195,7 @@ flatpak_image_source_new_remote (const char   *uri,
     return NULL;
 
   flatpak_oci_registry_set_token (registry, token);
+  flatpak_oci_registry_set_signature_lookaside (registry, signature_lookaside);
 
   return flatpak_image_source_new (registry, oci_repository, digest, cancellable, error);
 }

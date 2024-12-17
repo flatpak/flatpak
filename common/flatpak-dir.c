@@ -185,6 +185,9 @@ static gboolean flatpak_dir_lookup_remote_filter (FlatpakDir *self,
                                                   GRegex    **deny_regex,
                                                   GError **error);
 
+static char *flatpak_dir_get_remote_signature_lookaside (FlatpakDir *self,
+                                                         const char *remote_name);
+
 static void ensure_http_session (FlatpakDir *self);
 
 static void flatpak_dir_log (FlatpakDir *self,
@@ -1200,15 +1203,17 @@ lookup_oci_registry_uri_from_summary (GVariant *summary,
 }
 
 static FlatpakImageSource *
-flatpak_remote_state_new_image_source (FlatpakRemoteState *self,
-                                       const char   *oci_repository,
-                                       const char   *digest,
-                                       const char   *token,
-                                       GCancellable *cancellable,
-                                       GError      **error)
+flatpak_remote_state_new_image_source (FlatpakRemoteState  *self,
+                                       FlatpakDir          *dir,
+                                       const char          *oci_repository,
+                                       const char          *digest,
+                                       const char          *token,
+                                       GCancellable        *cancellable,
+                                       GError             **error)
 {
   g_autofree char *registry_uri = NULL;
   g_autoptr(FlatpakImageSource) image_source = NULL;
+  g_autofree char *signature_lookaside = NULL;
 
   if (!flatpak_remote_state_ensure_summary (self, error))
     return NULL;
@@ -1217,14 +1222,21 @@ flatpak_remote_state_new_image_source (FlatpakRemoteState *self,
   if (registry_uri == NULL)
     return NULL;
 
-  image_source = flatpak_image_source_new_remote (registry_uri, oci_repository, digest, token, NULL, error);
+  signature_lookaside = flatpak_dir_get_remote_signature_lookaside (dir, self->remote_name);
+
+  image_source = flatpak_image_source_new_remote (registry_uri,
+                                                  oci_repository,
+                                                  digest,
+                                                  token,
+                                                  signature_lookaside,
+                                                  NULL, error);
   if (image_source == NULL)
     return NULL;
 
   return g_steal_pointer (&image_source);
 }
 
-static FlatpakImageSource *
+FlatpakImageSource *
 flatpak_remote_state_fetch_image_source (FlatpakRemoteState *self,
                                          FlatpakDir         *dir,
                                          const char         *ref,
@@ -1262,7 +1274,7 @@ flatpak_remote_state_fetch_image_source (FlatpakRemoteState *self,
 
       oci_digest = g_strconcat ("sha256:", opt_rev ? opt_rev : latest_rev, NULL);
 
-      image_source = flatpak_remote_state_new_image_source (self, oci_repository, oci_digest, token, cancellable, error);
+      image_source = flatpak_remote_state_new_image_source (self, dir, oci_repository, oci_digest, token, cancellable, error);
       if (image_source == NULL)
         return NULL;
 
@@ -6867,7 +6879,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
 
   g_info ("Pulling OCI image %s", oci_digest);
 
-  checksum = flatpak_pull_from_oci (repo, image_source,
+  checksum = flatpak_pull_from_oci (repo, image_source, NULL,
                                     state->remote_name, ref, flatpak_flags, oci_pull_progress_cb, progress, cancellable, error);
 
   if (checksum == NULL)
@@ -15295,6 +15307,21 @@ flatpak_dir_get_remote_disabled (FlatpakDir *self,
     return TRUE; /* Empty URL => disabled */
 
   return FALSE;
+}
+
+static char *
+flatpak_dir_get_remote_signature_lookaside (FlatpakDir *self,
+                                            const char *remote_name)
+{
+  GKeyFile *config = flatpak_dir_get_repo_config (self);
+  g_autofree char *group = get_group (remote_name);
+  g_autofree char *signature_lookaside = NULL;
+
+  signature_lookaside = g_key_file_get_string (config, group, "xa.signature-lookaside", NULL);
+  if (signature_lookaside == NULL || *signature_lookaside == '\0')
+    return NULL;
+
+  return g_steal_pointer (&signature_lookaside);
 }
 
 static char *

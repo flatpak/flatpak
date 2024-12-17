@@ -61,6 +61,8 @@ FlatpakOciRegistry *   flatpak_oci_registry_new_for_archive (GFile        *archi
                                                              GError      **error);
 void                   flatpak_oci_registry_set_token (FlatpakOciRegistry *self,
                                                        const char *token);
+void                   flatpak_oci_registry_set_signature_lookaside (FlatpakOciRegistry *self,
+                                                                     const char         *signature_lookaside);
 gboolean               flatpak_oci_registry_is_local (FlatpakOciRegistry *self);
 const char          *  flatpak_oci_registry_get_uri (FlatpakOciRegistry *self);
 FlatpakOciIndex     *  flatpak_oci_registry_load_index (FlatpakOciRegistry *self,
@@ -164,16 +166,6 @@ gboolean flatpak_archive_read_open_fd_with_checksum (struct archive *a,
                                                      GChecksum      *checksum,
                                                      GError        **error);
 
-GBytes *flatpak_oci_sign_data (GBytes       *data,
-                               const gchar **okey_ids,
-                               const char   *homedir,
-                               GError      **error);
-
-FlatpakOciSignature *flatpak_oci_verify_signature (OstreeRepo *repo,
-                                                   const char *remote_name,
-                                                   GBytes     *signature,
-                                                   GError    **error);
-
 gboolean flatpak_oci_index_ensure_cached (FlatpakHttpSession  *http_session,
                                           const char          *uri,
                                           GFile               *index,
@@ -202,6 +194,7 @@ typedef void (*FlatpakOciPullProgress) (guint64  total_size,
 
 char * flatpak_pull_from_oci (OstreeRepo            *repo,
                               FlatpakImageSource    *image_source,
+                              FlatpakImageSource    *opt_dst_image_source,
                               const char            *remote,
                               const char            *ref,
                               FlatpakPullFlags       flags,

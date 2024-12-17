@@ -30,6 +30,7 @@
 #include <archive_entry.h>
 #include "flatpak-image-source-private.h"
 #include "flatpak-oci-registry-private.h"
+#include "flatpak-oci-signatures-private.h"
 #include "flatpak-repo-utils-private.h"
 #include "flatpak-utils-base-private.h"
 #include "flatpak-utils-private.h"
@@ -73,6 +74,7 @@ struct FlatpakOciRegistry
   GFile   *archive;
   int      tmp_dfd;
   char    *token;
+  char    *signature_lookaside;
 
   /* Local repos */
   int dfd;
@@ -134,11 +136,12 @@ flatpak_oci_registry_finalize (GObject *object)
 
   g_clear_pointer (&self->http_session, flatpak_http_session_free);
   g_clear_pointer (&self->base_uri, g_uri_unref);
-  g_free (self->uri);
-  g_free (self->token);
+  g_clear_pointer (&self->uri, g_free);
+  g_clear_pointer (&self->token, g_free);
   g_clear_object (&self->archive);
   g_clear_pointer (&self->tmp_dir, glnx_tmpdir_free);
   g_clear_pointer (&self->certificates, flatpak_certificates_free);
+  g_clear_pointer (&self->signature_lookaside, g_free);
 
   G_OBJECT_CLASS (flatpak_oci_registry_parent_class)->finalize (object);
 }
@@ -286,6 +289,21 @@ flatpak_oci_registry_set_token (FlatpakOciRegistry *self,
                                          (guchar *)self->token,
                                          strlen (self->token),
                                          0, NULL, NULL);
+}
+
+void
+flatpak_oci_registry_set_signature_lookaside (FlatpakOciRegistry *self,
+                                              const char         *signature_lookaside)
+{
+  g_set_str (&self->signature_lookaside, signature_lookaside);
+
+  if (self->signature_lookaside != NULL)
+    {
+      size_t last = strlen (self->signature_lookaside) - 1;
+
+      if (self->signature_lookaside[last] == '/')
+        self->signature_lookaside[last] = '\0';
+    }
 }
 
 FlatpakOciRegistry *
@@ -2321,6 +2339,91 @@ flatpak_oci_registry_find_delta_manifest (FlatpakOciRegistry    *registry,
   return NULL;
 }
 
+static FlatpakOciSignatures *
+remote_load_signatures (FlatpakOciRegistry *self,
+                        const char         *oci_repository,
+                        const char         *digest,
+                        GCancellable       *cancellable,
+                        GError            **error)
+{
+  g_autoptr(FlatpakOciSignatures) signatures = flatpak_oci_signatures_new ();
+  g_autofree char *digest_algorithm = NULL;
+  g_autofree char *digest_value = NULL;
+  guint i;
+  const char *colon;
+
+  if (self->signature_lookaside == NULL)
+    return g_steal_pointer (&signatures);
+
+  /*
+   * Look for signatures via the containers/image separate storage protocol:
+   *
+   * https://github.com/containers/image/blob/main/docs/signature-protocols.md
+   */
+
+  colon = strchr (digest, ':');
+  if (colon == NULL)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "can't parse digest %s", digest);
+      return NULL;
+    }
+
+  digest_algorithm = g_strndup (digest, colon - digest);
+  digest_value = g_strdup (colon + 1);
+
+  for (i = 1; i < G_MAXUINT; i++)
+    {
+      g_autoptr(GBytes) bytes = NULL;
+      g_autoptr(GError) local_error = NULL;
+      g_autofree char *uri_s = NULL;
+
+      uri_s = g_strdup_printf ("%s/%s@%s=%s/signature-%u", self->signature_lookaside,
+                               oci_repository, digest_algorithm, digest_value, i);
+
+      bytes = flatpak_load_uri (self->http_session,
+                                uri_s, FLATPAK_HTTP_FLAGS_ACCEPT_OCI,
+                                NULL,
+                                NULL, NULL, NULL,
+                                cancellable, &local_error);
+      if (bytes == NULL)
+        {
+          if (g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+            break;
+          else
+            {
+              g_propagate_error (error, g_steal_pointer (&local_error));
+              return NULL;
+            }
+        }
+
+        g_info ("Found OCI signature at %s", uri_s);
+        flatpak_oci_signatures_add_signature (signatures, g_steal_pointer (&bytes));
+    }
+
+  return g_steal_pointer (&signatures);
+}
+
+static FlatpakOciSignatures *
+flatpak_oci_registry_load_signatures (FlatpakOciRegistry *self,
+                                      const char         *oci_repository,
+                                      const char         *digest,
+                                      GCancellable       *cancellable,
+                                      GError            **error)
+{
+  if (self->dfd != -1)
+    {
+      g_autoptr(FlatpakOciSignatures) signatures = flatpak_oci_signatures_new ();
+
+      if (!flatpak_oci_signatures_load_from_dfd (signatures, self->dfd, cancellable, error))
+        return NULL;
+
+      return g_steal_pointer (&signatures);
+    }
+  else
+    return remote_load_signatures (self, oci_repository, digest, cancellable, error);
+}
+
 static const char *
 get_image_metadata (FlatpakOciIndexImage *img, const char *key)
 {
@@ -3079,6 +3182,7 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
   OstreeRepoCommitState old_state = 0;
   g_autofree char *old_diffid = NULL;
   g_autoptr(FlatpakOciIndex) index = NULL;
+  g_autoptr(FlatpakOciSignatures) signatures = NULL;
   int n_layers;
   int i;
 
@@ -3179,12 +3283,21 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
   if (!flatpak_oci_registry_save_index (dst_registry, index, cancellable, error))
     return FALSE;
 
+  signatures = flatpak_oci_registry_load_signatures (registry, oci_repository, digest,
+                                                     cancellable, error);
+  if (!signatures)
+    return FALSE;
+
+  if (!flatpak_oci_signatures_save_to_dfd (signatures, dst_registry->dfd, cancellable, error))
+    return FALSE;
+
   return TRUE;
 }
 
 char *
 flatpak_pull_from_oci (OstreeRepo            *repo,
                        FlatpakImageSource    *image_source,
+                       FlatpakImageSource    *opt_dst_image_source,
                        const char            *remote,
                        const char            *ref,
                        FlatpakPullFlags       flags,
@@ -3216,13 +3329,31 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
   FlatpakOciPullProgressData progress_data = { progress_cb, progress_user_data };
   g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
   g_autoptr(GVariant) metadata = NULL;
+  g_autoptr(FlatpakOciSignatures) signatures = NULL;
+  FlatpakOciRegistry *dst_registry = opt_dst_image_source ?
+    flatpak_image_source_get_registry (opt_dst_image_source) : registry;
+  const char *dest_oci_repository = opt_dst_image_source ?
+    flatpak_image_source_get_oci_repository (opt_dst_image_source) : oci_repository;
   int n_layers;
   int i;
 
   g_assert (g_str_has_prefix (digest, "sha256:"));
 
-  manifest_ref = flatpak_image_source_get_ref (image_source);
+  signatures = flatpak_oci_registry_load_signatures (dst_registry,
+                                                     dest_oci_repository,
+                                                     digest,
+                                                     cancellable, error);
+  if (!signatures)
+    return FALSE;
 
+  if (!flatpak_oci_signatures_verify (signatures, repo, remote,
+                                      dst_registry->uri,
+                                      dest_oci_repository,
+                                      digest,
+                                      error))
+    return FALSE;
+
+  manifest_ref = flatpak_image_source_get_ref (image_source);
   if (manifest_ref == NULL)
     {
       flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No ref specified for OCI image %s"), digest);
