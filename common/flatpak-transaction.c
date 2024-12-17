@@ -593,34 +593,25 @@ flatpak_transaction_operation_finalize (GObject *object)
 {
   FlatpakTransactionOperation *self = (FlatpakTransactionOperation *) object;
 
-  g_free (self->remote);
-  flatpak_decomposed_unref (self->ref);
-  g_free (self->commit);
-  g_strfreev (self->subpaths);
+  g_clear_pointer (&self->remote, g_free);
+  g_clear_pointer (&self->ref, flatpak_decomposed_unref);
+  g_clear_pointer (&self->commit, g_free);
+  g_clear_pointer (&self->subpaths, g_strfreev);
   g_clear_object (&self->bundle);
-  g_free (self->eol);
-  g_free (self->eol_rebase);
-  if (self->previous_ids)
-    g_strfreev (self->previous_ids);
-  if (self->external_metadata)
-    g_bytes_unref (self->external_metadata);
-  g_free (self->resolved_commit);
-  if (self->resolved_sideload_path)
-    g_object_unref (self->resolved_sideload_path);
-  if (self->resolved_metadata)
-    g_bytes_unref (self->resolved_metadata);
-  if (self->resolved_metakey)
-    g_key_file_unref (self->resolved_metakey);
-  if (self->resolved_old_metadata)
-    g_bytes_unref (self->resolved_old_metadata);
-  if (self->resolved_old_metakey)
-    g_key_file_unref (self->resolved_old_metakey);
-  g_free (self->resolved_token);
-  g_list_free (self->run_before_ops);
-  if (self->related_to_ops)
-    g_ptr_array_unref (self->related_to_ops);
-  if (self->summary_metadata)
-    g_variant_unref (self->summary_metadata);
+  g_clear_pointer (&self->eol, g_free);
+  g_clear_pointer (&self->eol_rebase, g_free);
+  g_clear_pointer (&self->previous_ids, g_strfreev);
+  g_clear_pointer (&self->external_metadata, g_bytes_unref);
+  g_clear_pointer (&self->resolved_commit, g_free);
+  g_clear_object (&self->resolved_sideload_path);
+  g_clear_pointer (&self->resolved_metadata, g_bytes_unref);
+  g_clear_pointer (&self->resolved_metakey, g_key_file_unref);
+  g_clear_pointer (&self->resolved_old_metadata, g_bytes_unref);
+  g_clear_pointer (&self->resolved_old_metakey, g_key_file_unref);
+  g_clear_pointer (&self->resolved_token, g_free);
+  g_clear_pointer (&self->run_before_ops, g_list_free);
+  g_clear_pointer (&self->related_to_ops, g_ptr_array_unref);
+  g_clear_pointer (&self->summary_metadata, g_variant_unref);
 
   G_OBJECT_CLASS (flatpak_transaction_operation_parent_class)->finalize (object);
 }
