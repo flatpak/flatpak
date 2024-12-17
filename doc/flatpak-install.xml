@@ -38,7 +38,7 @@
             <cmdsynopsis>
                 <command>flatpak install</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
-                <arg choice="opt">--from|--bundle</arg>
+                <arg choice="opt">--from|--bundle|--image</arg>
                 <arg choice="plain">LOCATION</arg>
             </cmdsynopsis>
     </refsynopsisdiv>
@@ -85,11 +85,11 @@
           <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
         </para>
         <para>
-          The alternative form of the command (with <option>--from</option> or
-          <option>--bundle</option>) allows to install directly from a source such as a
-          <filename>.flatpak</filename> single-file bundle or a <filename>.flatpakref</filename>
-          application description. The options are optional if the first argument has the expected
-          filename extension.
+          The alternative form of the command (with <option>--from</option>, <option>--bundle</option>,
+          or <option>--image</option>) allows to install directly from a source. The source can be a
+          <filename>.flatpak</filename> single-file bundle, <filename>.flatpakref</filename>
+          application description, or a reference to an OCI image. The options are optional if the
+          first argument has the expected filename extension or prefix.
         </para>
         <para>
           Note that flatpak allows to have multiple branches of an application and runtimes
@@ -136,6 +136,18 @@
                 <listitem><para>
                   Treat <arg choice="plain">LOCATION</arg> as an application description file.
                   This is assumed if the argument ends with <filename>.flatpakref</filename>.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--image</option></term>
+                <listitem><para>
+                  Treat <arg choice="plain">LOCATION</arg> as the location of a Flatpak in
+                  OCI image format. <arg choice="plan>">LOCATION</arg> is in the format of
+                  <citerefentry><refentrytitle>containers-transports</refentrytitle><manvolnum>5</manvolnum></citerefentry>.
+                  Supported schemes are <literal>docker://</literal> and <literal>oci:</literal>.
+                  This is assumed if the argument starts
+                  with one of these schemes.
                 </para></listitem>
             </varlistentry>
 

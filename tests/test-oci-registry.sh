@@ -23,7 +23,7 @@ set -euo pipefail
 
 skip_without_bwrap
 
-echo "1..14"
+echo "1..16"
 
 # Start the fake registry server
 
@@ -315,3 +315,34 @@ assert_file_has_content remotes-list "^hello-origin.*[ 	]${scheme}://127\.0\.0\.
 assert_not_has_file $base/oci/hello-origin.index.gz
 
 ok "change remote origin via bundle"
+
+${FLATPAK} ${U} -y uninstall org.test.Hello >&2
+${FLATPAK} ${U} -y uninstall org.test.Platform >&2
+
+${FLATPAK} ${U} list --columns=application,origin > flatpak-list
+assert_not_file_has_content flatpak-list 'org.test.Platform'
+assert_not_file_has_content flatpak-list 'org.test.Hello'
+
+${FLATPAK} ${U} remotes --show-disabled > remotes-list
+assert_not_file_has_content remotes-list '^platform-origin'
+assert_not_file_has_content remotes-list '^hello-origin'
+
+ok "clean up"
+
+# Install from registry via a docker:// location
+# TODO: docker:// locations only support HTTPS
+# This needs https://github.com/flatpak/flatpak/pull/5916
+
+if false && [ x${USE_SYSTEMDIR-} != xyes ]; then
+    $FLATPAK --user -y install docker://127.0.0.1/platform-image:latest >&2
+
+    ${FLATPAK} ${U} list --columns=application,origin > flatpak-list
+    assert_file_has_content flatpak-list '^org.test.Platform	*platform-origin$'
+
+    ${FLATPAK} ${U} remotes --show-disabled > remotes-list
+    assert_file_has_content remotes-list '^platform-origin'
+
+    ok "install image from registry"
+else
+    ok "install image from registry # skip  Not supported"
+fi
