@@ -2,12 +2,9 @@
 
 import sys
 
-if sys.version_info[0] >= 3:
-    import http.client as http_client
-    import urllib.parse as urllib_parse
-else:
-    import http.client as http_client
-    import urllib as urllib_parse
+import http.client
+import urllib.parse
+
 
 if sys.argv[2] == 'add':
     detach_icons = '--detach-icons' in sys.argv
@@ -16,8 +13,8 @@ if sys.argv[2] == 'add':
     params = {'d': sys.argv[5]}
     if detach_icons:
         params['detach-icons'] = 1
-    query = urllib_parse.urlencode(params)
-    conn = http_client.HTTPConnection(sys.argv[1])
+    query = urllib.parse.urlencode(params)
+    conn = http.client.HTTPConnection(sys.argv[1])
     path = "/testing/{repo}/{tag}?{query}".format(repo=sys.argv[3],
                                                    tag=sys.argv[4],
                                                    query=query)
@@ -28,7 +25,7 @@ if sys.argv[2] == 'add':
         print("Failed: status={}".format(response.status), file=sys.stderr)
         sys.exit(1)
 elif sys.argv[2] == 'delete':
-    conn = http_client.HTTPConnection(sys.argv[1])
+    conn = http.client.HTTPConnection(sys.argv[1])
     path = "/testing/{repo}/{ref}".format(repo=sys.argv[3],
                                           ref=sys.argv[4])
     conn.request("DELETE", path)
