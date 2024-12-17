@@ -129,6 +129,36 @@ read_gpg_data (GCancellable *cancellable,
   return flatpak_read_stream (source_stream, FALSE, error);
 }
 
+static FlatpakTransaction *
+create_install_transaction (FlatpakDir  *dir,
+                            GError     **error)
+{
+  g_autoptr(FlatpakTransaction) transaction = NULL;
+
+  if (opt_noninteractive)
+    transaction = flatpak_quiet_transaction_new (dir, error);
+  else
+    transaction = flatpak_cli_transaction_new (dir, opt_yes, TRUE, opt_arch != NULL, error);
+
+  if (transaction == NULL)
+    return NULL;
+
+  flatpak_transaction_set_no_pull (transaction, opt_no_pull);
+  flatpak_transaction_set_no_deploy (transaction, opt_no_deploy);
+  flatpak_transaction_set_disable_static_deltas (transaction, opt_no_static_deltas);
+  flatpak_transaction_set_disable_dependencies (transaction, opt_no_deps);
+  flatpak_transaction_set_disable_related (transaction, opt_no_related);
+  flatpak_transaction_set_disable_auto_pin (transaction, opt_no_auto_pin);
+  flatpak_transaction_set_reinstall (transaction, opt_reinstall);
+  flatpak_transaction_set_auto_install_sdk (transaction, opt_include_sdk);
+  flatpak_transaction_set_auto_install_debug (transaction, opt_include_debug);
+
+  for (int i = 0; opt_sideload_repos != NULL && opt_sideload_repos[i] != NULL; i++)
+    flatpak_transaction_add_sideload_repo (transaction, opt_sideload_repos[i]);
+
+  return g_steal_pointer (&transaction);
+}
+
 static gboolean
 install_bundle (FlatpakDir *dir,
                 GOptionContext *context,
@@ -162,25 +192,9 @@ install_bundle (FlatpakDir *dir,
         return FALSE;
     }
 
-  if (opt_noninteractive)
-    transaction = flatpak_quiet_transaction_new (dir, error);
-  else
-    transaction = flatpak_cli_transaction_new (dir, opt_yes, TRUE, opt_arch != NULL, error);
+  transaction = create_install_transaction (dir, error);
   if (transaction == NULL)
     return FALSE;
-
-  flatpak_transaction_set_no_pull (transaction, opt_no_pull);
-  flatpak_transaction_set_no_deploy (transaction, opt_no_deploy);
-  flatpak_transaction_set_disable_static_deltas (transaction, opt_no_static_deltas);
-  flatpak_transaction_set_disable_dependencies (transaction, opt_no_deps);
-  flatpak_transaction_set_disable_related (transaction, opt_no_related);
-  flatpak_transaction_set_disable_auto_pin (transaction, opt_no_auto_pin);
-  flatpak_transaction_set_reinstall (transaction, opt_reinstall);
-  flatpak_transaction_set_auto_install_sdk (transaction, opt_include_sdk);
-  flatpak_transaction_set_auto_install_debug (transaction, opt_include_debug);
-
-  for (int i = 0; opt_sideload_repos != NULL && opt_sideload_repos[i] != NULL; i++)
-    flatpak_transaction_add_sideload_repo (transaction, opt_sideload_repos[i]);
 
   if (!flatpak_transaction_add_install_bundle (transaction, file, gpg_data, error))
     return FALSE;
@@ -241,26 +255,9 @@ install_from (FlatpakDir *dir,
       file_data = g_bytes_new_take (g_steal_pointer (&data), data_len);
     }
 
-  if (opt_noninteractive)
-    transaction = flatpak_quiet_transaction_new (dir, error);
-  else
-    transaction = flatpak_cli_transaction_new (dir, opt_yes, TRUE, opt_arch != NULL, error);
+  transaction = create_install_transaction (dir, error);
   if (transaction == NULL)
     return FALSE;
-
-  flatpak_transaction_set_no_pull (transaction, opt_no_pull);
-  flatpak_transaction_set_no_deploy (transaction, opt_no_deploy);
-  flatpak_transaction_set_disable_static_deltas (transaction, opt_no_static_deltas);
-  flatpak_transaction_set_disable_dependencies (transaction, opt_no_deps);
-  flatpak_transaction_set_disable_related (transaction, opt_no_related);
-  flatpak_transaction_set_disable_auto_pin (transaction, opt_no_auto_pin);
-  flatpak_transaction_set_reinstall (transaction, opt_reinstall);
-  flatpak_transaction_set_default_arch (transaction, opt_arch);
-  flatpak_transaction_set_auto_install_sdk (transaction, opt_include_sdk);
-  flatpak_transaction_set_auto_install_debug (transaction, opt_include_debug);
-
-  for (int i = 0; opt_sideload_repos != NULL && opt_sideload_repos[i] != NULL; i++)
-    flatpak_transaction_add_sideload_repo (transaction, opt_sideload_repos[i]);
 
   if (!flatpak_transaction_add_install_flatpakref (transaction, file_data, error))
     return FALSE;
@@ -485,25 +482,9 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
 
   default_branch = flatpak_dir_get_remote_default_branch (dir, remote);
 
-  if (opt_noninteractive)
-    transaction = flatpak_quiet_transaction_new (dir, error);
-  else
-    transaction = flatpak_cli_transaction_new (dir, opt_yes, TRUE, opt_arch != NULL, error);
+  transaction = create_install_transaction (dir, error);
   if (transaction == NULL)
     return FALSE;
-
-  flatpak_transaction_set_no_pull (transaction, opt_no_pull);
-  flatpak_transaction_set_no_deploy (transaction, opt_no_deploy);
-  flatpak_transaction_set_disable_static_deltas (transaction, opt_no_static_deltas);
-  flatpak_transaction_set_disable_dependencies (transaction, opt_no_deps);
-  flatpak_transaction_set_disable_related (transaction, opt_no_related);
-  flatpak_transaction_set_disable_auto_pin (transaction, opt_no_auto_pin);
-  flatpak_transaction_set_reinstall (transaction, opt_reinstall);
-  flatpak_transaction_set_auto_install_sdk (transaction, opt_include_sdk);
-  flatpak_transaction_set_auto_install_debug (transaction, opt_include_debug);
-
-  for (i = 0; opt_sideload_repos != NULL && opt_sideload_repos[i] != NULL; i++)
-    flatpak_transaction_add_sideload_repo (transaction, opt_sideload_repos[i]);
 
   for (i = 0; i < n_prefs; i++)
     {
