@@ -23,7 +23,7 @@ set -euo pipefail
 
 skip_without_bwrap
 
-echo "1..2"
+echo "1..3"
 
 setup_repo_no_add oci
 
@@ -66,3 +66,23 @@ assert_has_file checked-out/files/bin/hello.sh
 assert_has_file checked-out/metadata
 
 ok "import oci"
+
+# Trying installing the bundle directly
+
+${FLATPAK} build-bundle --runtime --oci $FL_GPGARGS repos/oci oci/platform-image org.test.Platform >&2
+
+${FLATPAK} --user list --columns=application,origin > flatpak-list
+assert_not_file_has_content flatpak-list 'org.test.Platform'
+
+${FLATPAK} --user remotes --show-disabled > remotes-list
+assert_not_file_has_content remotes-list '^platform-origin'
+
+$FLATPAK --user -y install oci:oci/platform-image >&2
+
+${FLATPAK} --user list --columns=application,origin > flatpak-list
+assert_file_has_content flatpak-list '^org.test.Platform	*platform-origin$'
+
+${FLATPAK} --user remotes --show-disabled > remotes-list
+assert_file_has_content remotes-list '^platform-origin'
+
+ok "install oci"
