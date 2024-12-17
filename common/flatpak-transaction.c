@@ -3028,7 +3028,7 @@ flatpak_transaction_add_install_bundle (FlatpakTransaction *self,
  * reference.
  *
  * @image_location is specified in containers-transports(5) form. Only a subset
- * of transports are supported: oci: and docker:.
+ * of transports are supported: oci:, oci-archive:, and docker:.
  *
  * Returns: %TRUE on success; %FALSE with @error set on failure.
  */
