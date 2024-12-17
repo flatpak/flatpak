@@ -6,6 +6,11 @@ import http.client
 import urllib.parse
 
 
+def get_conn(url):
+    parsed = urllib.parse.urlparse(url)
+    return http.client.HTTPConnection(host=parsed.hostname, port=parsed.port)
+
+
 if sys.argv[2] == 'add':
     detach_icons = '--detach-icons' in sys.argv
     if detach_icons:
@@ -14,7 +19,7 @@ if sys.argv[2] == 'add':
     if detach_icons:
         params['detach-icons'] = 1
     query = urllib.parse.urlencode(params)
-    conn = http.client.HTTPConnection(sys.argv[1])
+    conn = get_conn(sys.argv[1])
     path = "/testing/{repo}/{tag}?{query}".format(repo=sys.argv[3],
                                                    tag=sys.argv[4],
                                                    query=query)
@@ -25,7 +30,7 @@ if sys.argv[2] == 'add':
         print("Failed: status={}".format(response.status), file=sys.stderr)
         sys.exit(1)
 elif sys.argv[2] == 'delete':
-    conn = http.client.HTTPConnection(sys.argv[1])
+    conn = get_conn(sys.argv[1])
     path = "/testing/{repo}/{ref}".format(repo=sys.argv[3],
                                           ref=sys.argv[4])
     conn.request("DELETE", path)

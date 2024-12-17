@@ -29,7 +29,7 @@ echo "1..14"
 
 httpd oci-registry-server.py .
 port=$(cat httpd-port)
-client="python3 $test_srcdir/oci-registry-client.py 127.0.0.1:$port"
+client="python3 $test_srcdir/oci-registry-client.py http://127.0.0.1:$port"
 
 setup_repo_no_add oci
 
