@@ -352,6 +352,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   if (!opt_bundle && !opt_from && !opt_image && argc >= 2)
     {
       if (g_str_has_prefix (argv[1], "oci:") ||
+          g_str_has_prefix (argv[1], "oci-archive:") ||
           g_str_has_prefix (argv[1], "docker:"))
         opt_image = TRUE;
       else if (flatpak_file_arg_has_suffix (argv[1], ".flatpakref"))

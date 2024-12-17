@@ -145,8 +145,8 @@
                   Treat <arg choice="plain">LOCATION</arg> as the location of a Flatpak in
                   OCI image format. <arg choice="plan>">LOCATION</arg> is in the format of
                   <citerefentry><refentrytitle>containers-transports</refentrytitle><manvolnum>5</manvolnum></citerefentry>.
-                  Supported schemes are <literal>docker://</literal> and <literal>oci:</literal>.
-                  This is assumed if the argument starts
+                  Supported schemes are <literal>docker://</literal>, <literal>oci:</literal>,
+                  and <literal>oci-archive:</literal>. This is assumed if the argument starts
                   with one of these schemes.
                 </para></listitem>
             </varlistentry>
