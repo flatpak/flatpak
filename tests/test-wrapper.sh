@@ -30,6 +30,12 @@ for feature in $(echo $1 | sed "s/^.*@\(.*\).wrap/\1/" | tr "," "\n"); do
         annotations)
             export USE_OCI_ANNOTATIONS=yes
             ;;
+        https)
+            export USE_HTTPS=yes
+            ;;
+        http)
+            export USE_HTTPS=no
+            ;;
         *)
             echo unsupported test feature $feature
             exit 1
