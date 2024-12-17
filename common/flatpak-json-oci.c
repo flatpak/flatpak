@@ -577,6 +577,27 @@ flatpak_oci_index_get_only_manifest (FlatpakOciIndex *self)
   return NULL;
 }
 
+FlatpakOciManifestDescriptor *
+flatpak_oci_index_get_manifest_for_arch (FlatpakOciIndex *self,
+                                         const char      *oci_arch)
+{
+  int i, found = -1;
+
+  if (self->manifests == NULL)
+    return NULL;
+
+  for (i = 0; self->manifests[i] != NULL; i++)
+    {
+      if (strcmp (self->manifests[i]->platform.architecture, oci_arch) == 0)
+        return self->manifests[i];
+    }
+
+  if (found >= 0)
+    return self->manifests[found];
+
+  return NULL;
+}
+
 gboolean
 flatpak_oci_index_remove_manifest (FlatpakOciIndex *self,
                                    const char      *ref)
