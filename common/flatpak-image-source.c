@@ -20,6 +20,7 @@
 
 #include <glib/gi18n-lib.h>
 
+#include "flatpak-docker-reference-private.h"
 #include "flatpak-image-source-private.h"
 #include "flatpak-oci-registry-private.h"
 
@@ -176,6 +177,128 @@ flatpak_image_source_new_remote (const char   *uri,
     return NULL;
 
   return flatpak_image_source_new (registry, oci_repository, digest, cancellable, error);
+}
+
+/* Parse an oci: or oci-archive: image location into a path
+ * and an optional reference
+ */
+static void
+get_path_and_reference (const char *image_location,
+                        GFile     **path,
+                        char      **reference)
+{
+  g_autofree char *path_str = NULL;
+  const char *bare;
+  const char *colon;
+
+  colon = strchr (image_location, ':');
+  g_assert (colon != NULL);
+
+  bare = colon + 1;
+  colon = strchr (bare, ':');
+
+  if (colon)
+     {
+      path_str = g_strndup (bare, colon - bare);
+      *reference = g_strdup (colon + 1);
+    }
+  else
+    {
+      path_str = g_strdup (bare);
+      *reference = NULL;
+    }
+
+  *path = g_file_new_for_path (path_str);
+}
+
+FlatpakImageSource *
+flatpak_image_source_new_for_location (const char   *location,
+                                       GCancellable *cancellable,
+                                       GError      **error)
+{
+  if (g_str_has_prefix (location, "oci:"))
+    {
+      g_autoptr(GFile) path = NULL;
+      g_autofree char *reference = NULL;
+
+      get_path_and_reference (location, &path, &reference);
+
+      return flatpak_image_source_new_local (path, reference, cancellable, error);
+    }
+  else if (g_str_has_prefix (location, "docker:"))
+    {
+      g_autoptr(FlatpakOciRegistry) registry = NULL;
+      g_autoptr(FlatpakDockerReference) docker_reference = NULL;
+      g_autofree char *local_digest = NULL;
+      const char *repository = NULL;
+
+      if (!g_str_has_prefix (location, "docker://"))
+        {
+          flatpak_fail (error, "docker: location must start docker://");
+          return NULL;
+        }
+
+      docker_reference = flatpak_docker_reference_parse (location + 9, error);
+      if (docker_reference == NULL)
+        return NULL;
+
+      registry = flatpak_oci_registry_new (flatpak_docker_reference_get_uri (docker_reference),
+                                           FALSE, -1, cancellable, error);
+      if (registry == NULL)
+        return NULL;
+
+      repository = flatpak_docker_reference_get_repository (docker_reference);
+
+      local_digest = g_strdup (flatpak_docker_reference_get_digest (docker_reference));
+      if (local_digest == NULL)
+        {
+          g_autoptr(GBytes) bytes = NULL;
+          g_autoptr(FlatpakOciVersioned) versioned = NULL;
+          const char *tag = flatpak_docker_reference_get_tag (docker_reference);
+
+          if (tag == NULL)
+            tag = "latest";
+
+          bytes = flatpak_oci_registry_load_blob (registry, repository, TRUE, tag,
+                                                  NULL, NULL, cancellable, error);
+          if (!bytes)
+            return NULL;
+
+          versioned = flatpak_oci_versioned_from_json (bytes, NULL, error);
+          if (!versioned)
+            return NULL;
+
+          if (FLATPAK_IS_OCI_MANIFEST (versioned))
+            {
+              g_autofree char *checksum = NULL;
+
+              checksum = g_compute_checksum_for_bytes (G_CHECKSUM_SHA256, bytes);
+              local_digest = g_strconcat ("sha256:", checksum, NULL);
+            }
+          else if (FLATPAK_IS_OCI_INDEX (versioned))
+            {
+              const char *oci_arch = flatpak_arch_to_oci_arch (flatpak_get_arch ());
+              FlatpakOciManifestDescriptor *descriptor;
+
+              descriptor = flatpak_oci_index_get_manifest_for_arch (FLATPAK_OCI_INDEX (versioned), oci_arch);
+              if (descriptor == NULL)
+                {
+                  flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                      "Can't find manifest for %s in image index", oci_arch);
+                  return NULL;
+                }
+
+              local_digest = g_strdup (descriptor->parent.digest);
+            }
+        }
+
+      return flatpak_image_source_new (registry, repository, local_digest, cancellable, error);
+    }
+  else
+    {
+      flatpak_fail (error, "unsupported image location: %s", location);
+      return NULL;
+    }
 }
 
 void
