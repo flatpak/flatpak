@@ -27,6 +27,7 @@
 #include "libglnx.h"
 
 #include <archive.h>
+#include <archive_entry.h>
 #include <gpgme.h>
 #include "flatpak-image-source-private.h"
 #include "flatpak-oci-registry-private.h"
@@ -69,11 +70,13 @@ struct FlatpakOciRegistry
   gboolean valid;
   gboolean is_docker;
   char    *uri;
+  GFile   *archive;
   int      tmp_dfd;
   char    *token;
 
   /* Local repos */
   int dfd;
+  GLnxTmpDir *tmp_dir;
 
   /* Remote repos */
   FlatpakHttpSession *http_session;
@@ -90,6 +93,7 @@ enum {
   PROP_0,
 
   PROP_URI,
+  PROP_ARCHIVE,
   PROP_FOR_WRITE,
   PROP_TMP_DFD,
 };
@@ -97,6 +101,14 @@ enum {
 G_DEFINE_TYPE_WITH_CODE (FlatpakOciRegistry, flatpak_oci_registry, G_TYPE_OBJECT,
                          G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE,
                                                 flatpak_oci_registry_initable_iface_init))
+
+static void
+glnx_tmpdir_free (GLnxTmpDir *tmpf)
+{
+  (void)glnx_tmpdir_delete (tmpf, NULL, NULL);
+  g_free (tmpf);
+}
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(GLnxTmpDir, glnx_tmpdir_free)
 
 static gchar *
 parse_relative_uri (GUri *base_uri,
@@ -124,6 +136,8 @@ flatpak_oci_registry_finalize (GObject *object)
   g_clear_pointer (&self->base_uri, g_uri_unref);
   g_free (self->uri);
   g_free (self->token);
+  g_clear_object (&self->archive);
+  g_clear_pointer (&self->tmp_dir, glnx_tmpdir_free);
 
   G_OBJECT_CLASS (flatpak_oci_registry_parent_class)->finalize (object);
 }
@@ -149,6 +163,10 @@ flatpak_oci_registry_set_property (GObject      *object,
         else
           self->uri = g_strconcat (uri, "/", NULL);
         }
+      break;
+
+    case PROP_ARCHIVE:
+      self->archive = g_value_dup_object (value);
       break;
 
     case PROP_FOR_WRITE:
@@ -177,6 +195,10 @@ flatpak_oci_registry_get_property (GObject    *object,
     {
     case PROP_URI:
       g_value_set_string (value, self->uri);
+      break;
+
+    case PROP_ARCHIVE:
+      g_value_set_object (value, self->archive);
       break;
 
     case PROP_FOR_WRITE:
@@ -208,6 +230,13 @@ flatpak_oci_registry_class_init (FlatpakOciRegistryClass *klass)
                                                         "",
                                                         "",
                                                         NULL,
+                                                        G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
+  g_object_class_install_property (object_class,
+                                   PROP_ARCHIVE,
+                                   g_param_spec_object ("archive",
+                                                        "",
+                                                        "",
+                                                        G_TYPE_FILE,
                                                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
   g_object_class_install_property (object_class,
                                    PROP_TMP_DFD,
@@ -272,6 +301,21 @@ flatpak_oci_registry_new (const char   *uri,
                                  "uri", uri,
                                  "for-write", for_write,
                                  "tmp-dfd", tmp_dfd,
+                                 NULL);
+
+  return oci_registry;
+}
+
+FlatpakOciRegistry *
+flatpak_oci_registry_new_for_archive (GFile        *archive,
+                                      GCancellable *cancellable,
+                                      GError      **error)
+{
+  FlatpakOciRegistry *oci_registry;
+
+  oci_registry = g_initable_new (FLATPAK_TYPE_OCI_REGISTRY,
+                                 cancellable, error,
+                                 "archive", archive,
                                  NULL);
 
   return oci_registry;
@@ -457,13 +501,164 @@ verify_oci_version (GBytes *oci_layout_bytes, gboolean *not_json, GCancellable *
   return TRUE;
 }
 
+/*
+ * Code to extract an archive such as a tarfile into a temporary directory
+ *
+ * Based on: https://github.com/libarchive/libarchive/wiki/Examples#A_Complete_Extractor
+ *
+ * We treat ARCHIVE_WARNING as fatal - while this might be too strict, it
+ * will avoid surprises.
+ */
+
+static gboolean
+propagate_libarchive_error (GError         **error,
+                            struct archive  *a)
+{
+  g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+               "%s", archive_error_string (a));
+  return FALSE;
+}
+
+static gboolean
+copy_data (struct archive  *ar,
+           struct archive  *aw,
+           GError         **error)
+{
+  int r;
+  const void *buff;
+  size_t size;
+  gint64 offset;
+
+  while (TRUE)
+    {
+      r = archive_read_data_block (ar, &buff, &size, &offset);
+
+      if (r == ARCHIVE_EOF)
+        return TRUE;
+
+      if (r == ARCHIVE_RETRY)
+        continue;
+
+      if (r != ARCHIVE_OK)
+        return propagate_libarchive_error (error, ar);
+
+      while (TRUE)
+        {
+          r = archive_write_data_block (aw, buff, size, offset);
+
+          if (r == ARCHIVE_RETRY)
+            continue;
+
+          if (r == ARCHIVE_OK)
+            break;
+
+          return propagate_libarchive_error (error, aw);
+        }
+    }
+}
+
+static gboolean
+unpack_archive (GFile   *archive,
+                char    *destination,
+                GError **error)
+{
+  g_autoptr(FlatpakAutoArchiveRead) a = NULL;
+  g_autoptr(FlatpakAutoArchiveWrite) ext = NULL;
+  int flags;
+  int r;
+
+  flags = 0;
+  flags |= ARCHIVE_EXTRACT_SECURE_NODOTDOT;
+  flags |= ARCHIVE_EXTRACT_SECURE_SYMLINKS;
+
+  a = archive_read_new ();
+  archive_read_support_format_all (a);
+  archive_read_support_filter_all (a);
+
+  ext = archive_write_disk_new ();
+  archive_write_disk_set_options (ext, flags);
+  archive_write_disk_set_standard_lookup (ext);
+
+  r = archive_read_open_filename (a, g_file_get_path(archive), 10240);
+  if (r != ARCHIVE_OK)
+    return propagate_libarchive_error (error, a);
+
+  while (TRUE)
+    {
+      g_autofree char *target_path = NULL;
+      struct archive_entry *entry;
+
+      r = archive_read_next_header (a, &entry);
+      if (r == ARCHIVE_EOF)
+        break;
+
+      if (r != ARCHIVE_OK)
+        return propagate_libarchive_error (error, a);
+
+      target_path = g_build_filename (destination, archive_entry_pathname (entry), NULL);
+      archive_entry_set_pathname (entry, target_path);
+
+      r = archive_write_header (ext, entry);
+      if (r != ARCHIVE_OK)
+        return propagate_libarchive_error (error, ext);
+
+      if (archive_entry_size (entry) > 0)
+        {
+          if (!copy_data (a, ext, error))
+            return FALSE;
+        }
+
+      r = archive_write_finish_entry (ext);
+      if (r != ARCHIVE_OK)
+        return propagate_libarchive_error (error, ext);
+    }
+
+  r = archive_read_close (a);
+  if (r != ARCHIVE_OK)
+    return propagate_libarchive_error (error, a);
+
+  r = archive_write_close (ext);
+  if (r != ARCHIVE_OK)
+    return propagate_libarchive_error (error, ext);
+
+  return TRUE;
+}
+
+static const char *
+get_download_tmpdir (void)
+{
+  /* We don't use TMPDIR because the downloaded artifacts can be
+   * very big, and we want to prefer /var/tmp to /tmp.
+   */
+  const char *tmpdir = g_getenv ("FLATPAK_DOWNLOAD_TMPDIR");
+  if (tmpdir)
+    return tmpdir;
+
+  return "/var/tmp";
+}
+
+static GLnxTmpDir *
+download_tmpdir_new (GError **error)
+{
+  g_autoptr(GLnxTmpDir) tmp_dir = g_new0 (GLnxTmpDir, 1);
+  glnx_autofd int base_dfd = -1;
+
+  if (!glnx_opendirat (AT_FDCWD, get_download_tmpdir (), TRUE, &base_dfd, error))
+    return NULL;
+
+  if (!glnx_mkdtempat (base_dfd, "oci-XXXXXX", 0700, tmp_dir, error))
+    return NULL;
+
+  return g_steal_pointer (&tmp_dir);
+}
+
 static gboolean
 flatpak_oci_registry_ensure_local (FlatpakOciRegistry *self,
                                    gboolean            for_write,
                                    GCancellable       *cancellable,
                                    GError            **error)
 {
-  g_autoptr(GFile) dir = g_file_new_for_uri (self->uri);
+  g_autoptr(GLnxTmpDir) local_tmp_dir = NULL;
   glnx_autofd int local_dfd = -1;
   int dfd;
   g_autoptr(GError) local_error = NULL;
@@ -472,9 +667,28 @@ flatpak_oci_registry_ensure_local (FlatpakOciRegistry *self,
   gboolean not_json;
 
   if (self->dfd != -1)
-    dfd = self->dfd;
+    {
+      dfd = self->dfd;
+    }
+  else if (self->archive)
+    {
+      local_tmp_dir = download_tmpdir_new (error);
+      if (!local_tmp_dir)
+        return FALSE;
+
+      if (!unpack_archive (self->archive, local_tmp_dir->path, error))
+        return FALSE;
+
+      if (!glnx_opendirat (AT_FDCWD, local_tmp_dir->path,
+                           TRUE, &local_dfd, error))
+        return FALSE;
+
+      dfd = local_dfd;
+    }
   else
     {
+      g_autoptr(GFile) dir = g_file_new_for_uri (self->uri);
+
       if (!glnx_opendirat (AT_FDCWD, flatpak_file_get_path_cached (dir),
                            TRUE, &local_dfd, &local_error))
         {
@@ -537,8 +751,11 @@ flatpak_oci_registry_ensure_local (FlatpakOciRegistry *self,
         self->token = g_strndup (g_bytes_get_data (token_bytes, NULL), g_bytes_get_size (token_bytes));
     }
 
-  if (self->dfd == -1 && local_dfd != -1)
-    self->dfd = g_steal_fd (&local_dfd);
+  if (self->dfd == -1)
+    {
+      self->dfd = g_steal_fd (&local_dfd);
+      self->tmp_dir = g_steal_pointer (&local_tmp_dir);
+    }
 
   return TRUE;
 }
@@ -589,20 +806,15 @@ flatpak_oci_registry_initable_init (GInitable    *initable,
   FlatpakOciRegistry *self = FLATPAK_OCI_REGISTRY (initable);
   gboolean res;
 
+  g_warn_if_fail (self->archive || self->uri);
+
   if (self->tmp_dfd == -1)
     {
-      /* We don't use TMPDIR because the downloaded artifacts can be
-       * very big, and we want to prefer /var/tmp to /tmp.
-       */
-      const char *tmpdir = g_getenv ("FLATPAK_DOWNLOAD_TMPDIR");
-      if (tmpdir == NULL)
-        tmpdir = "/var/tmp";
-
-      if (!glnx_opendirat (AT_FDCWD, tmpdir, TRUE, &self->tmp_dfd, error))
+      if (!glnx_opendirat (AT_FDCWD, get_download_tmpdir (), TRUE, &self->tmp_dfd, error))
         return FALSE;
     }
 
-  if (g_str_has_prefix (self->uri, "file:/"))
+  if (self->archive || g_str_has_prefix (self->uri, "file:/"))
     res = flatpak_oci_registry_ensure_local (self, self->for_write, cancellable, error);
   else
     res = flatpak_oci_registry_ensure_remote (self, self->for_write, cancellable, error);
@@ -1331,15 +1543,6 @@ typedef struct
 } FlatpakOciLayerWriterClass;
 
 G_DEFINE_TYPE (FlatpakOciLayerWriter, flatpak_oci_layer_writer, G_TYPE_OBJECT)
-
-static gboolean
-propagate_libarchive_error (GError        **error,
-                            struct archive *a)
-{
-  g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-               "%s", archive_error_string (a));
-  return FALSE;
-}
 
 static void
 flatpak_oci_layer_writer_reset (FlatpakOciLayerWriter *self)

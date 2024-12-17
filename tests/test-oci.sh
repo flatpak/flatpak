@@ -23,7 +23,7 @@ set -euo pipefail
 
 skip_without_bwrap
 
-echo "1..3"
+echo "1..4"
 
 setup_repo_no_add oci
 
@@ -85,4 +85,26 @@ assert_file_has_content flatpak-list '^org.test.Platform	*platform-origin$'
 ${FLATPAK} --user remotes --show-disabled > remotes-list
 assert_file_has_content remotes-list '^platform-origin'
 
+${FLATPAK} ${U} -y uninstall org.test.Platform >&2
+
 ok "install oci"
+
+# Trying installing an OCI archive bundle
+
+(cd oci/platform-image && tar cf - .) > oci/platform-image.tar
+
+${FLATPAK} --user list --columns=application,origin > flatpak-list
+assert_not_file_has_content flatpak-list 'org.test.Platform'
+
+${FLATPAK} --user remotes --show-disabled > remotes-list
+assert_not_file_has_content remotes-list '^platform-origin'
+
+$FLATPAK --user -y install oci-archive:oci/platform-image.tar >&2
+
+${FLATPAK} --user list --columns=application,origin > flatpak-list
+assert_file_has_content flatpak-list '^org.test.Platform	*platform-origin$'
+
+${FLATPAK} --user remotes --show-disabled > remotes-list
+assert_file_has_content remotes-list '^platform-origin'
+
+ok "install oci archive"

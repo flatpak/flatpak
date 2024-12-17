@@ -50,11 +50,15 @@ typedef struct FlatpakOciLayerWriter FlatpakOciLayerWriter;
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakOciLayerWriter, g_object_unref)
 
-FlatpakOciRegistry  *  flatpak_oci_registry_new (const char           *uri,
-                                                 gboolean for_write,
-                                                 int tmp_dfd,
-                                                 GCancellable         * cancellable,
-                                                 GError              **error);
+
+FlatpakOciRegistry  *  flatpak_oci_registry_new (const char    *uri,
+                                                 gboolean       for_write,
+                                                 int            tmp_dfd,
+                                                 GCancellable  *cancellable,
+                                                 GError       **error);
+FlatpakOciRegistry *   flatpak_oci_registry_new_for_archive (GFile        *archive,
+                                                             GCancellable *cancellable,
+                                                             GError      **error);
 void                   flatpak_oci_registry_set_token (FlatpakOciRegistry *self,
                                                        const char *token);
 gboolean               flatpak_oci_registry_is_local (FlatpakOciRegistry *self);
