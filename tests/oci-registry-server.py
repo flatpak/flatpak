@@ -1,10 +1,11 @@
 #!/usr/bin/python3
 
+import argparse
 import base64
 import hashlib
 import json
 import os
-import sys
+import ssl
 import time
 
 from urllib.parse import parse_qs
@@ -12,6 +13,7 @@ import http.server as http_server
 
 repositories = {}
 icons = {}
+
 
 def get_index():
     results = []
@@ -28,6 +30,7 @@ def get_index():
         'Results': results
         }, indent=4)
 
+
 def cache_icon(data_uri):
     prefix = 'data:image/png;base64,'
     assert data_uri.startswith(prefix)
@@ -40,32 +43,26 @@ def cache_icon(data_uri):
 
     return '/icons/' + filename
 
+
 serial = 0
 server_start_time = int(time.time())
 
+
 def get_etag():
     return str(server_start_time) + '-' + str(serial)
+
 
 def modified():
     global serial
     serial += 1
 
-def parse_http_date(date):
-    parsed = parsedate(date)
-    if parsed is not None:
-        return timegm(parsed)
-    else:
-        return None
 
 class RequestHandler(http_server.BaseHTTPRequestHandler):
     def check_route(self, route):
         parts = self.path.split('?', 1)
         path = parts[0].split('/')
 
-        result = []
-
         route_path = route.split('/')
-        print((route_path, path))
         if len(route_path) != len(path):
             return False
 
@@ -86,20 +83,29 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
 
     def do_GET(self):
         response = 200
-        response_string = None
+        response_string = b''
         response_content_type = "application/octet-stream"
-        response_file = None
 
         add_headers = {}
+
+        def get_file_contents(repo_name, type, ref):
+            repository = repositories.get(repo_name)
+            if repository and type in repository:
+                path = repository[type].get(ref)
+                if path:
+                    with open(path, 'rb') as f:
+                        return 200, f.read()
+
+            return 404, b''
 
         if self.check_route('/v2/@repo_name/blobs/@digest'):
             repo_name = self.matches['repo_name']
             digest = self.matches['digest']
-            response_file = repositories[repo_name]['blobs'][digest]
+            response, response_string = get_file_contents(repo_name, 'blobs', digest)
         elif self.check_route('/v2/@repo_name/manifests/@ref'):
             repo_name = self.matches['repo_name']
             ref = self.matches['ref']
-            response_file = repositories[repo_name]['manifests'][ref]
+            response, response_string = get_file_contents(repo_name, 'manifests', ref)
         elif self.check_route('/index/static') or self.check_route('/index/dynamic'):
             etag = get_etag()
             if self.headers.get("If-None-Match") == etag:
@@ -107,11 +113,16 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
             else:
                 response_string = get_index()
             add_headers['Etag'] = etag
-        elif self.check_route('/icons/@filename') :
+        elif self.check_route('/icons/@filename'):
             response_string = icons[self.matches['filename']]
+            assert isinstance(response_string, bytes)
             response_content_type = 'image/png'
         else:
             response = 404
+
+        if isinstance(response_string, str):
+            response_string = response_string.encode("UTF-8")
+        add_headers['Content-Length'] = len(response_string)
 
         self.send_response(response)
         for k, v in list(add_headers.items()):
@@ -125,15 +136,7 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
 
         self.end_headers()
 
-        if response == 200:
-            if response_file:
-                with open(response_file, 'rb') as f:
-                    response_string = f.read()
-
-            if isinstance(response_string, bytes):
-                self.wfile.write(response_string)
-            else:
-                self.wfile.write(response_string.encode('utf-8'))
+        self.wfile.write(response_string)
 
     def do_HEAD(self):
         return self.do_GET()
@@ -219,7 +222,7 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
             ref = self.matches['ref']
 
             repo = repositories.setdefault(repo_name, {})
-            blobs = repo.setdefault('blobs', {})
+            repo.setdefault('blobs', {})
             manifests = repo.setdefault('manifests', {})
             images = repo.setdefault('images', [])
 
@@ -245,24 +248,45 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
             self.end_headers()
             return
 
-def run(dir):
+
+def run(args):
     RequestHandler.protocol_version = "HTTP/1.0"
-    httpd = http_server.HTTPServer( ("127.0.0.1", 0), RequestHandler)
+    httpd = http_server.HTTPServer(("127.0.0.1", 0), RequestHandler)
+
+    if args.cert:
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        context.options |= ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1
+        context.load_cert_chain(certfile=args.cert, keyfile=args.key)
+
+        if args.mtls_cacert:
+            context.load_verify_locations(cafile=args.mtls_cacert)
+            # In a real application, we'd need to check the CN against authorized users
+            context.verify_mode = ssl.CERT_REQUIRED
+
+        httpd.socket = context.wrap_socket(httpd.socket, server_side=True)
+
     host, port = httpd.socket.getsockname()[:2]
     with open("httpd-port", 'w') as file:
         file.write("%d" % port)
     try:
-        os.write(3, bytes("Started\n", 'utf-8'));
-    except:
+        os.write(3, bytes("Started\n", 'utf-8'))
+    except OSError:
         pass
-    print("Serving HTTP on port %d" % port);
-    if dir:
-        os.chdir(dir)
+    if args.cert:
+        print("Serving HTTPS on port %d" % port)
+    else:
+        print("Serving HTTP on port %d" % port)
+    if args.dir:
+        os.chdir(args.dir)
     httpd.serve_forever()
 
-if __name__ == '__main__':
-    dir = None
-    if len(sys.argv) >= 2 and len(sys.argv[1]) > 0:
-        dir = sys.argv[1]
 
-    run(dir)
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dir")
+    parser.add_argument("--cert")
+    parser.add_argument("--key")
+    parser.add_argument("--mtls-cacert")
+    args = parser.parse_args()
+
+    run(args)
