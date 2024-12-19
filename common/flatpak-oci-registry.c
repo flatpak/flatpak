@@ -142,10 +142,13 @@ flatpak_oci_registry_set_property (GObject      *object,
     case PROP_URI:
       /* Ensure the base uri ends with a / so relative urls work */
       uri = g_value_get_string (value);
-      if (g_str_has_suffix (uri, "/"))
-        self->uri = g_strdup (uri);
-      else
-        self->uri = g_strconcat (uri, "/", NULL);
+      if (uri)
+        {
+        if (g_str_has_suffix (uri, "/"))
+          self->uri = g_strdup (uri);
+        else
+          self->uri = g_strconcat (uri, "/", NULL);
+        }
       break;
 
     case PROP_FOR_WRITE:
