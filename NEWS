@@ -1,8 +1,32 @@
 Changes in 1.15.91
 ~~~~~~~~~~~~~~~~~~
-Released: not yet
+Released: 2024-12-19
 
-...
+Enhancements:
+
+ * Add the `FLATPAK_DATA_DIR` environment variable, which allows overriding
+   at runtime the data directory location that Flatpak uses to search for
+   configuration files such as remotes. This is useful for running tests,
+   and for when installing using Flatpak in a chroot.
+
+ * Add a `FLATPAK_DOWNLOAD_TMPDIR` variable. This allows using download
+   directories other than /var/tmp.
+
+ * Emit progress escape sequence. This can be used by terminal emulators
+   to detect and display progress of Flatpak operations on their graphical
+   user interfaces.
+
+Bug fixes:
+
+ * Install missing test data. This should fix "as-installed" tests via
+   `ginsttest-runner`, used for example in Debian's autopkgtest framework.
+
+ * Unify and improve how the Wayland socket is passed to the sandboxed app.
+   This should fix a regression that is triggered by compositors that both
+   implement the security-context-v1 protocol, and sets the `WAYLAND_DISPLAY`
+   environment variable when launching Flatpak apps. (#5863)
+
+ * Fix the plural form of a translatable string.
 
 Changes in 1.15.12
 ~~~~~~~~~~~~~~~~~~
