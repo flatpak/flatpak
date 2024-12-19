@@ -255,7 +255,6 @@ flatpak_oci_registry_set_token (FlatpakOciRegistry *self,
                                          0, NULL, NULL);
 }
 
-
 FlatpakOciRegistry *
 flatpak_oci_registry_new (const char   *uri,
                           gboolean      for_write,
@@ -830,7 +829,6 @@ flatpak_oci_registry_download_blob (FlatpakOciRegistry    *self,
             return -1;
         }
 
-
       if (!flatpak_open_in_tmpdir_at (self->tmp_dfd, 0600, tmpfile_name,
                                       &out_stream, cancellable, error))
         return -1;
@@ -1357,7 +1355,6 @@ flatpak_oci_layer_writer_reset (FlatpakOciLayerWriter *self)
   g_clear_object (&self->compressor);
 }
 
-
 static void
 flatpak_oci_layer_writer_finalize (GObject *object)
 {
@@ -1724,7 +1721,6 @@ delta_read_byte (GInputStream   *in,
 
   return TRUE;
 }
-
 
 static gboolean
 delta_read_varuint (GInputStream   *in,
@@ -2731,7 +2727,6 @@ get_image_metadata (FlatpakOciIndexImage *img, const char *key)
   return NULL;
 }
 
-
 static const char *
 get_image_ref (FlatpakOciIndexImage *img)
 {
@@ -2837,7 +2832,6 @@ flatpak_oci_index_ensure_cached (FlatpakHttpSession *http_session,
   base_uri = tmp_uri;
 
   oci_arch = flatpak_arch_to_oci_arch (flatpak_get_arch ());
-
 
   query = g_string_new (NULL);
   flatpak_uri_encode_query_arg (query, "label:org.flatpak.ref:exists", "1");
