@@ -183,7 +183,6 @@ GBytes *flatpak_oci_index_make_appstream (FlatpakHttpSession  *http_session,
                                           GCancellable        *cancellable,
                                           GError             **error);
 
-
 typedef void (*FlatpakOciPullProgress) (guint64  total_size,
                                         guint64  pulled_size,
                                         guint32  n_layers,
