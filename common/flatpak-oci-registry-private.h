@@ -50,11 +50,15 @@ typedef struct FlatpakOciLayerWriter FlatpakOciLayerWriter;
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakOciLayerWriter, g_object_unref)
 
-FlatpakOciRegistry  *  flatpak_oci_registry_new (const char           *uri,
-                                                 gboolean for_write,
-                                                 int tmp_dfd,
-                                                 GCancellable         * cancellable,
-                                                 GError              **error);
+
+FlatpakOciRegistry  *  flatpak_oci_registry_new (const char    *uri,
+                                                 gboolean       for_write,
+                                                 int            tmp_dfd,
+                                                 GCancellable  *cancellable,
+                                                 GError       **error);
+FlatpakOciRegistry *   flatpak_oci_registry_new_for_archive (GFile        *archive,
+                                                             GCancellable *cancellable,
+                                                             GError      **error);
 void                   flatpak_oci_registry_set_token (FlatpakOciRegistry *self,
                                                        const char *token);
 gboolean               flatpak_oci_registry_is_local (FlatpakOciRegistry *self);
@@ -190,12 +194,7 @@ typedef void (*FlatpakOciPullProgress) (guint64  total_size,
                                         gpointer data);
 
 char * flatpak_pull_from_oci (OstreeRepo            *repo,
-                              FlatpakOciRegistry    *registry,
-                              const char            *oci_repository,
-                              const char            *digest,
-                              const char            *delta_url,
-                              FlatpakOciManifest    *manifest,
-                              FlatpakOciImage       *image_config,
+                              FlatpakImageSource    *image_source,
                               const char            *remote,
                               const char            *ref,
                               FlatpakPullFlags       flags,
@@ -205,12 +204,9 @@ char * flatpak_pull_from_oci (OstreeRepo            *repo,
                               GError               **error);
 
 gboolean flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
-                                        FlatpakOciRegistry    *registry,
-                                        const char            *oci_repository,
-                                        const char            *digest,
+                                        FlatpakImageSource    *image_source,
                                         const char            *remote,
                                         const char            *ref,
-                                        const char            *delta_url,
                                         OstreeRepo            *repo,
                                         FlatpakOciPullProgress progress_cb,
                                         gpointer               progress_data,
