@@ -40,6 +40,7 @@ ok "complete a commands"
 
 ${FLATPAK} complete "flatpak b" 9 "b" | sort > complete_out
 (diff -u complete_out - || exit 1) <<EOF
+bind-mount 
 build 
 build-bundle 
 build-commit-from 
