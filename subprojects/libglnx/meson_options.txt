@@ -5,5 +5,5 @@ option(
   'tests',
   type : 'boolean',
   description : 'build and run unit tests',
-  value : 'true',
+  value : true,
 )
