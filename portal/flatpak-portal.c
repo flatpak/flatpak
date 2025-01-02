@@ -963,7 +963,7 @@ handle_spawn (PortalFlatpak         *object,
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
                                                  G_DBUS_ERROR_INVALID_ARGS,
-                                                 "Invalid sandbox a11y own name, doesn't match app id");
+                                                 "Invalid sandbox a11y own name: '%s' doesn't match app id", sandbox_a11y_own_names[i]);
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
     }
