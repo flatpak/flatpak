@@ -353,8 +353,8 @@ flatpak_remote_ref_new (FlatpakDecomposed   *decomposed,
   if (state &&
       flatpak_remote_state_lookup_sparse_cache (state, flatpak_decomposed_get_ref (decomposed), &sparse_cache, NULL))
     {
-      eol = var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE, NULL);
-      eol_rebase = var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, NULL);
+      eol = var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLIFE, NULL);
+      eol_rebase = var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLIFE_REBASE, NULL);
     }
 
   ref = g_object_new (FLATPAK_TYPE_REMOTE_REF,

@@ -167,8 +167,8 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
   if (flatpak_remote_state_lookup_sparse_cache (state, flatpak_decomposed_get_ref (ref),
                                                 &sparse_cache, NULL))
     {
-      eol = var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE, NULL);
-      eol_rebase = var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, NULL);
+      eol = var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLIFE, NULL);
+      eol_rebase = var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLIFE_REBASE, NULL);
     }
 
   if (opt_show_ref || opt_show_commit || opt_show_parent || opt_show_metadata || opt_show_runtime || opt_show_sdk)

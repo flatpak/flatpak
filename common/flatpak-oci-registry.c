@@ -3036,9 +3036,9 @@ flatpak_oci_index_make_summary (GFile        *index,
           if (token_type_v != NULL)
             g_variant_builder_add (sparse_builder, "{s@v}", FLATPAK_SPARSE_CACHE_KEY_TOKEN_TYPE, token_type_v);
           if (endoflife_v != NULL)
-            g_variant_builder_add (sparse_builder, "{s@v}", FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE, endoflife_v);
+            g_variant_builder_add (sparse_builder, "{s@v}", FLATPAK_SPARSE_CACHE_KEY_ENDOFLIFE, endoflife_v);
           if (endoflife_rebase_v != NULL)
-            g_variant_builder_add (sparse_builder, "{s@v}", FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, endoflife_rebase_v);
+            g_variant_builder_add (sparse_builder, "{s@v}", FLATPAK_SPARSE_CACHE_KEY_ENDOFLIFE_REBASE, endoflife_rebase_v);
 
           g_variant_builder_add (ref_sparse_data_builder, "{s@a{sv}}",
                                  ref, g_variant_builder_end (sparse_builder));

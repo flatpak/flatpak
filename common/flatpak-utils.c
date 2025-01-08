@@ -3423,9 +3423,9 @@ read_commit_data (OstreeRepo   *repo,
       g_auto(GVariantBuilder) sparse_builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
       g_variant_builder_init (&sparse_builder, G_VARIANT_TYPE_VARDICT);
       if (eol)
-        g_variant_builder_add (&sparse_builder, "{sv}", FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE, g_variant_new_string (eol));
+        g_variant_builder_add (&sparse_builder, "{sv}", FLATPAK_SPARSE_CACHE_KEY_ENDOFLIFE, g_variant_new_string (eol));
       if (eol_rebase)
-        g_variant_builder_add (&sparse_builder, "{sv}", FLATPAK_SPARSE_CACHE_KEY_ENDOFLINE_REBASE, g_variant_new_string (eol_rebase));
+        g_variant_builder_add (&sparse_builder, "{sv}", FLATPAK_SPARSE_CACHE_KEY_ENDOFLIFE_REBASE, g_variant_new_string (eol_rebase));
       if (token_type >= 0)
         g_variant_builder_add (&sparse_builder, "{sv}", FLATPAK_SPARSE_CACHE_KEY_TOKEN_TYPE, g_variant_new_int32 (GINT32_TO_LE(token_type)));
       if (n_extra_data > 0)
