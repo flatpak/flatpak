@@ -2,7 +2,12 @@ Changes in 1.16.0
 ~~~~~~~~~~~~~~~~~~
 Released: not yet
 
-...
+Bug fixes:
+
+ * Update libglnx to 2024-12-06:
+    - Fix an assertion failure if creating a parent directory encounters a
+      dangling symlink (GNOME/libglnx#1)
+    - Fix a Meson warning
 
 Changes in 1.15.91
 ~~~~~~~~~~~~~~~~~~
