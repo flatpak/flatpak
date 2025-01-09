@@ -608,6 +608,16 @@
             </para>
             <variablelist>
                 <varlistentry>
+                    <term><envar>FLATPAK_FANCY_OUTPUT</envar></term>
+                    <listitem><para>
+                        May be set to <literal>0</literal> to avoid fancy
+                        formatting when outputting to a terminal.
+                        This feature is also disabled automatically when
+                        standard output is not a terminal,
+                        or when <envar>G_MESSAGES_DEBUG</envar> is set.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><envar>FLATPAK_USER_DIR</envar></term>
 
                     <listitem><para>
