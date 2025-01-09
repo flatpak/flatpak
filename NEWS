@@ -1,6 +1,6 @@
 Changes in 1.16.0
 ~~~~~~~~~~~~~~~~~~
-Released: not yet
+Released: 2025-01-09
 
 Bug fixes:
 
@@ -8,6 +8,19 @@ Bug fixes:
     - Fix an assertion failure if creating a parent directory encounters a
       dangling symlink (GNOME/libglnx#1)
     - Fix a Meson warning
+
+* Don't emit terminal progress indicator escape sequences by default. They are
+  interpreted as notifications by some terminal emulators. (#6052)
+
+* Fix introspection annotations in libflatpak
+
+Enhancements:
+
+* Add the `FLATPAK_TTY_PROGRESS` environment variable, which re-enables the
+  terminal progress indicator escape sequences added in 1.15.91.
+
+* Document the `FLATPAK_FANCY_OUTPUT` environment variable, which allows
+  disabling the fancy formatting when outputting to a terminal.
 
 Changes in 1.15.91
 ~~~~~~~~~~~~~~~~~~
