@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak main\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2024-12-19 16:42-0300\n"
+"POT-Creation-Date: 2025-01-09 13:37-0300\n"
 "PO-Revision-Date: 2024-07-22 12:56-0300\n"
 "Last-Translator: Rafael Fontenelle <rafaelff@gnome.org>\n"
 "Language-Team: Brazilian Portuguese <https://br.gnome.org/traducao>\n"
@@ -4297,8 +4297,8 @@ msgstr "os valores de --add-policy não podem iniciar com “!”"
 #, c-format
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
-"Os argumentos de --remove-policy devem estar no formato SUBSISTEMA."
-"CHAVE=VALOR"
+"Os argumentos de --remove-policy devem estar no formato "
+"SUBSISTEMA.CHAVE=VALOR"
 
 #: common/flatpak-context.c:1595
 #, c-format
@@ -5488,8 +5488,8 @@ msgstr ""
 
 #: common/flatpak-run.c:2951
 msgid ""
-"\"flatpak run\" is not intended to be run as `sudo flatpak run`. Use `sudo -"
-"i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell."
+"\"flatpak run\" is not intended to be run as `sudo flatpak run`. Use `sudo "
+"-i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell."
 msgstr ""
 "“flatpak run” não se destina a ser executado como `sudo flatpak run`, use "
 "`sudo -i` ou `su -l` no lugar e invoque “flatpak run” de dentro do novo "
