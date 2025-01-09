@@ -618,6 +618,14 @@
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><envar>FLATPAK_TTY_PROGRESS</envar></term>
+
+                    <listitem><para>
+                        May be set to <literal>1</literal> to enable emitting
+                        the progress escape character.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><envar>FLATPAK_USER_DIR</envar></term>
 
                     <listitem><para>
