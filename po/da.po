@@ -42,7 +42,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2024-12-19 16:42-0300\n"
+"POT-Creation-Date: 2025-01-09 13:37-0300\n"
 "PO-Revision-Date: 2021-05-21 18:36+0200\n"
 "Last-Translator: scootergrisen\n"
 "Language-Team: Danish\n"
@@ -5500,8 +5500,8 @@ msgstr ""
 
 #: common/flatpak-run.c:2951
 msgid ""
-"\"flatpak run\" is not intended to be run as `sudo flatpak run`. Use `sudo -"
-"i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell."
+"\"flatpak run\" is not intended to be run as `sudo flatpak run`. Use `sudo "
+"-i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell."
 msgstr ""
 
 #: common/flatpak-run.c:3141
