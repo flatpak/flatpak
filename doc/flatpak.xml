@@ -607,6 +607,16 @@
               <envar>XDG_DATA_HOME</envar>, flatpak is consulting some of its own.
             </para>
             <variablelist>
+                <!-- Please keep these in alphabetical order -->
+                <varlistentry>
+                    <term><envar>FLATPAK_CONFIG_DIR</envar></term>
+
+                    <listitem><para>
+                      The location of flatpak site configuration. If this is not set,
+                      <filename>/etc/flatpak</filename> is used (unless overridden at build
+                      time by --sysconfdir).
+                    </para></listitem>
+                </varlistentry>
                 <varlistentry>
                     <term><envar>FLATPAK_FANCY_OUTPUT</envar></term>
                     <listitem><para>
@@ -615,6 +625,35 @@
                         This feature is also disabled automatically when
                         standard output is not a terminal,
                         or when <envar>G_MESSAGES_DEBUG</envar> is set.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><envar>FLATPAK_RUN_DIR</envar></term>
+
+                    <listitem><para>
+                      The location of flatpak runtime global files. If this is not set,
+                      <filename>/run/flatpak</filename> is used.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><envar>FLATPAK_SYSTEM_CACHE_DIR</envar></term>
+
+                    <listitem><para>
+                      The location where temporary child repositories will be created during pulls
+                      into the system-wide installation.  If this is not set, a directory in
+                      <filename>/var/tmp/</filename> is used. This is useful because it is more
+                      likely to be on the same filesystem as the system repository (thus increasing
+                      the chances for e.g. reflink copying), and we can avoid filling the user's
+                      home directory with temporary data.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><envar>FLATPAK_SYSTEM_DIR</envar></term>
+
+                    <listitem><para>
+                      The location of the default system-wide installation. If this is not set,
+                      <filename>/var/lib/flatpak</filename> is used (unless overridden at build
+                      time by --localstatedir or --with-system-install-dir).
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
@@ -635,44 +674,6 @@
                     <listitem><para>
                       The location of the per-user installation. If this is not set,
                       <filename>$XDG_DATA_HOME/flatpak</filename> is used.
-                    </para></listitem>
-                </varlistentry>
-                <varlistentry>
-                    <term><envar>FLATPAK_SYSTEM_DIR</envar></term>
-
-                    <listitem><para>
-                      The location of the default system-wide installation. If this is not set,
-                      <filename>/var/lib/flatpak</filename> is used (unless overridden at build
-                      time by --localstatedir or --with-system-install-dir).
-                    </para></listitem>
-                </varlistentry>
-                <varlistentry>
-                    <term><envar>FLATPAK_SYSTEM_CACHE_DIR</envar></term>
-
-                    <listitem><para>
-                      The location where temporary child repositories will be created during pulls
-                      into the system-wide installation.  If this is not set, a directory in
-                      <filename>/var/tmp/</filename> is used. This is useful because it is more
-                      likely to be on the same filesystem as the system repository (thus increasing
-                      the chances for e.g. reflink copying), and we can avoid filling the user's
-                      home directory with temporary data.
-                    </para></listitem>
-                </varlistentry>
-                <varlistentry>
-                    <term><envar>FLATPAK_CONFIG_DIR</envar></term>
-
-                    <listitem><para>
-                      The location of flatpak site configuration. If this is not set,
-                      <filename>/etc/flatpak</filename> is used (unless overridden at build
-                      time by --sysconfdir).
-                    </para></listitem>
-                </varlistentry>
-                <varlistentry>
-                    <term><envar>FLATPAK_RUN_DIR</envar></term>
-
-                    <listitem><para>
-                      The location of flatpak runtime global files. If this is not set,
-                      <filename>/run/flatpak</filename> is used.
                     </para></listitem>
                 </varlistentry>
             </variablelist>
