@@ -604,7 +604,7 @@
         <title>Environment</title>
             <para>
               Besides standard environment variables such as <envar>XDG_DATA_DIRS</envar> and
-              <envar>XDG_DATA_HOME</envar>, flatpak is consulting some of its own.
+              <envar>XDG_DATA_HOME</envar>, flatpak consults some of its own.
             </para>
             <variablelist>
                 <!-- Please keep these in alphabetical order -->
