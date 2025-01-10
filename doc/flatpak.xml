@@ -608,6 +608,39 @@
             </para>
             <variablelist>
                 <!-- Please keep these in alphabetical order -->
+
+                <!-- FLATPAK intentionally not documented:
+                     it is intended for testing and development only
+                     (it is the flatpak executable used by the
+                     flatpak-portal) -->
+
+                <varlistentry>
+                    <term><envar>FLATPAK_BINARY</envar></term>
+                    <listitem><para>
+                        Path to the flatpak executable that will be written
+                        into exported <filename>.desktop</filename> files
+                        and scripts when an app is installed.
+                        The default is <filename>/usr/bin/flatpak</filename>,
+                        unless overridden at build time by
+                        <option>--bindir</option>.
+                    </para></listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term><envar>FLATPAK_BWRAP</envar></term>
+
+                    <listitem><para>
+                        Path to the
+                        <citerefentry><refentrytitle>bwrap</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+                        executable that will be used to create the sandbox.
+                        Depending on how Flatpak was configured at build-time,
+                        the default is either to search the
+                        <envar>PATH</envar>,
+                        or use a vendored copy which is normally installed as
+                        <filename>/usr/libexec/flatpak-bwrap</filename>.
+                    </para></listitem>
+                </varlistentry>
+
                 <varlistentry>
                     <term><envar>FLATPAK_CONFIG_DIR</envar></term>
 
@@ -617,6 +650,53 @@
                       time by --sysconfdir).
                     </para></listitem>
                 </varlistentry>
+
+                <varlistentry>
+                    <term><envar>FLATPAK_DATA_DIR</envar></term>
+                    <listitem><para>
+                        The location of Flatpak's OS-level defaults and
+                        integration hooks.
+                        If this is not set,
+                        <filename>/usr/share/flatpak</filename> is used,
+                        unless overridden at build time by
+                        <option>--datadir</option>.
+                    </para></listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term><envar>FLATPAK_DBUSPROXY</envar></term>
+
+                    <listitem><para>
+                        Path to the
+                        <citerefentry><refentrytitle>xdg-dbus-proxy</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+                        executable that will be used to filter D-Bus
+                        traffic between the sandbox and the host system.
+                        Depending on how Flatpak was configured at build-time,
+                        the default is either to search the
+                        <envar>PATH</envar>,
+                        or use a vendored copy which is normally installed as
+                        <filename>/usr/libexec/flatpak-dbus-proxy</filename>.
+                    </para></listitem>
+                </varlistentry>
+
+                <!-- FLATPAK_DISABLE_REVOKEFS intentionally not documented:
+                     it is intended for testing and development only
+                     (it forces use of the code path we would use if
+                     FUSE didn't work) -->
+
+                <varlistentry>
+                    <term><envar>FLATPAK_DOWNLOAD_TMPDIR</envar></term>
+                    <listitem><para>
+                        Path to a directory that will be used temporarily
+                        when downloading OCI layers,
+                        and potentially for other downloads in future.
+                        The standard <envar>TMPDIR</envar> is not used
+                        for this,
+                        because Flatpak apps are frequently too large to
+                        fit on a tmpfs.
+                    </para></listitem>
+                </varlistentry>
+
                 <varlistentry>
                     <term><envar>FLATPAK_FANCY_OUTPUT</envar></term>
                     <listitem><para>
@@ -627,6 +707,55 @@
                         or when <envar>G_MESSAGES_DEBUG</envar> is set.
                     </para></listitem>
                 </varlistentry>
+
+                <!-- FLATPAK_FORCE_ALLOW_FUZZY_MATCHING intentionally not documented:
+                     it is intended for testing and development only
+                     (it forces use of the fuzzy matching code path that
+                     we would normally only use when run on a tty) -->
+
+                <varlistentry>
+                    <term><envar>FLATPAK_FORCE_TEXT_AUTH</envar></term>
+                    <listitem><para>
+                        May be set to <literal>1</literal> to force use of
+                        a simple built-in
+                        <citerefentry><refentrytitle>polkit</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+                        agent when authentication is required to modify
+                        the system-wide installation.
+                        By default,
+                        the desktop environment's polkit agent is used,
+                        if one is available,
+                        usually resulting in a graphical prompt.
+                    </para></listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term><envar>FLATPAK_GL_DRIVERS</envar></term>
+                    <listitem><para>
+                        A colon-separated list of graphics driver extensions
+                        to try to use for OpenGL, Vulkan and similar APIs,
+                        most-preferred first.
+                        The default is to select a graphics driver
+                        automatically.
+                        Values in this list match the last dot-separated
+                        component of the names of extensions with the
+                        <literal>active-gl-driver</literal> condition.
+                        Typical values are
+                        <literal>default</literal>,
+                        <literal>mesa-git</literal> or
+                        <literal>nvidia-550-120</literal>
+                        (replacing the version number by the major and minor
+                        version of the <literal>nvidia</literal> kernel module).
+                    </para></listitem>
+                </varlistentry>
+
+                <!-- FLATPAK_PORTAL_MOCK_FLATPAK intentionally not documented:
+                     it is intended for testing and development only
+                     (flatpak-portal runs it instead of the real flatpak) -->
+
+                <!-- FLATPAK_REVOKEFS_FUSE intentionally not documented:
+                     it is intended for testing and development only
+                     (it replaces /usr/libexec/revokefs-fuse) -->
+
                 <varlistentry>
                     <term><envar>FLATPAK_RUN_DIR</envar></term>
 
@@ -635,6 +764,7 @@
                       <filename>/run/flatpak</filename> is used.
                     </para></listitem>
                 </varlistentry>
+
                 <varlistentry>
                     <term><envar>FLATPAK_SYSTEM_CACHE_DIR</envar></term>
 
@@ -647,15 +777,28 @@
                       home directory with temporary data.
                     </para></listitem>
                 </varlistentry>
+
                 <varlistentry>
                     <term><envar>FLATPAK_SYSTEM_DIR</envar></term>
 
                     <listitem><para>
                       The location of the default system-wide installation. If this is not set,
                       <filename>/var/lib/flatpak</filename> is used (unless overridden at build
-                      time by --localstatedir or --with-system-install-dir).
+                      time by <option>--localstatedir</option> or
+                      <option>-Dsystem_install_dir</option>).
                     </para></listitem>
                 </varlistentry>
+
+                <!-- FLATPAK_SYSTEM_HELPER_ON_SESSION intentionally not documented:
+                     it is intended for testing and development only -->
+
+                <!-- FLATPAK_TEST_COVERAGE intentionally not documented:
+                     it is intended for testing and development only -->
+
+                <!-- FLATPAK_TRIGGERSDIR intentionally not documented:
+                     it is intended for testing and development only,
+                     and is mostly superseded by FLATPAK_DATA_DIR -->
+
                 <varlistentry>
                     <term><envar>FLATPAK_TTY_PROGRESS</envar></term>
 
@@ -668,6 +811,7 @@
                         popup notification.
                     </para></listitem>
                 </varlistentry>
+
                 <varlistentry>
                     <term><envar>FLATPAK_USER_DIR</envar></term>
 
@@ -676,6 +820,9 @@
                       <filename>$XDG_DATA_HOME/flatpak</filename> is used.
                     </para></listitem>
                 </varlistentry>
+
+                <!-- FLATPAK_VALIDATE_ICON intentionally not documented:
+                     it is intended for testing and development only -->
             </variablelist>
     </refsect1>
 
