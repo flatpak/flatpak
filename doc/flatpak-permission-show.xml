@@ -45,14 +45,6 @@
         </para>
 
         <para>
-          When called without arguments, lists all
-          the entries in all permission store tables. When called
-          with one argument, lists all the entries in the named
-          table. When called with two arguments, lists the entry
-          in the named table for the given object ID.
-        </para>
-
-        <para>
           The permission store is used by portals.
           Each portal generally has its own table in the permission
           store, and the format of the table entries is specific to
