@@ -594,6 +594,18 @@ operation_error (FlatpakTransaction            *transaction,
         }
     }
 
+  /* On a fatal error, just clear the progress line. The error will be printed in main() before exiting. */
+  if (!non_fatal && self->stop_on_first_error)
+    {
+      if (flatpak_fancy_output ())
+        {
+          flatpak_table_printer_set_cell (self->printer, self->progress_row, 0, "");
+          redraw (self);
+        }
+
+      return FALSE;
+    }
+
   if (flatpak_fancy_output ())
     {
       flatpak_table_printer_set_cell (self->printer, self->progress_row, 0, text);
@@ -604,9 +616,6 @@ operation_error (FlatpakTransaction            *transaction,
     }
   else
     g_printerr ("%s\n", text);
-
-  if (!non_fatal && self->stop_on_first_error)
-    return FALSE;
 
   return TRUE; /* Continue */
 }
