@@ -4846,6 +4846,9 @@ flatpak_dir_set_config (FlatpakDir *self,
                                                      NULL, error))
         return FALSE;
 
+      if (!_flatpak_dir_reload_config (self, NULL, error))
+        return FALSE;
+
       return TRUE;
     }
 
