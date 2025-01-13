@@ -3857,8 +3857,8 @@ flatpak_pull_from_bundle (OstreeRepo   *repo,
   if (metadata_contents != NULL)
     metadata_size = strlen (metadata_contents);
 
-  if (!ostree_repo_get_remote_option (repo, remote, "collection-id", NULL,
-                                      &remote_collection_id, NULL))
+  if (!remote || !ostree_repo_get_remote_option (repo, remote, "collection-id", NULL,
+                                                 &remote_collection_id, NULL))
     remote_collection_id = NULL;
 
   if (remote_collection_id != NULL && collection_id != NULL &&
