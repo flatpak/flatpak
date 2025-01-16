@@ -32,7 +32,7 @@ main (int argc, char *argv[])
 
 
   if (!flatpak_cache_http_uri (session,
-                               url,
+                               url, NULL,
                                flags,
                                AT_FDCWD, dest,
                                NULL, NULL, NULL, &error))
