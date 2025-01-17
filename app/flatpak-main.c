@@ -102,6 +102,7 @@ static FlatpakCommand commands[] = {
   { "enter", N_("Enter the namespace of a running application"), flatpak_builtin_enter, flatpak_complete_enter },
   { "ps", N_("Enumerate running applications"), flatpak_builtin_ps, flatpak_complete_ps },
   { "kill", N_("Stop a running application"), flatpak_builtin_kill, flatpak_complete_kill },
+  { "bind-mount", N_("Bind mount into a running application"), flatpak_builtin_bind_mount, flatpak_complete_bind_mount },
 
   /* translators: please keep the leading newline and space */
   { N_("\n Manage file access") },
@@ -838,11 +839,13 @@ flatpak_run (int      argc,
   if (g_strcmp0 (command->name, "enter") != 0 &&
       g_strcmp0 (command->name, "run") != 0 &&
       g_strcmp0 (command->name, "build") != 0 &&
-      g_strcmp0 (command->name, "history") != 0)
+      g_strcmp0 (command->name, "history") != 0 &&
+      g_strcmp0 (command->name, "bind-mount") != 0)
     polkit_agent = install_polkit_agent ();
 
   /* g_vfs_get_default can spawn threads */
-  if (g_strcmp0 (command->name, "enter") != 0)
+  if (g_strcmp0 (command->name, "enter") != 0 &&
+      g_strcmp0 (command->name, "bind-mount") != 0)
     {
       g_autofree const char *old_env = NULL;
 
