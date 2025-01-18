@@ -2966,6 +2966,24 @@ flatpak_context_export (FlatpakContext *context,
                 g_info ("Unable to create directory %s", subpath);
             }
 
+          if (do_create && app_id_dir && *rest != 0)
+            {
+              g_autofree char *xdg_path = NULL;
+              const char *where;
+
+              xdg_path = get_xdg_dir_from_string (filesystem, NULL, &where);
+              if (xdg_path != NULL && g_file_test (xdg_path, G_FILE_TEST_EXISTS))
+                {
+                  g_autoptr(GFile) xdg_dir_in_app = g_file_get_child (app_id_dir, where);
+                  g_autoptr(GFile) xdg_path_in_app = g_file_resolve_relative_path (xdg_dir_in_app, rest);
+                  g_autoptr(GFile) xdg_path_in_app_parent = g_file_get_parent (xdg_path_in_app);
+                  g_autofree char *xdg_path_in_app_parent_path = g_file_get_path (xdg_path_in_app_parent);
+
+                  if (g_mkdir_with_parents (xdg_path_in_app_parent_path, 0755) != 0)
+                    g_info ("Unable to create directory %s", xdg_path_in_app_parent_path);
+                }
+            }
+
           if (g_file_test (subpath, G_FILE_TEST_EXISTS))
             {
               if (config_key && xdg_dirs_conf)
