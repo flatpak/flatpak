@@ -547,12 +547,12 @@ void
 flatpak_pty_clear_progress (void)
 {
   if (use_progress_escape_sequence ())
-    g_print ("\033]9;4;0\007");
+    g_print ("\033]9;4;0\e\\");
 }
 
 void
 flatpak_pty_set_progress (guint percent)
 {
   if (use_progress_escape_sequence ())
-    g_print ("\033]9;4;1;%d\007", MIN (percent, 100));
+    g_print ("\033]9;4;1;%d\e\\", MIN (percent, 100));
 }
