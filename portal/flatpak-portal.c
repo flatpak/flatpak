@@ -2719,6 +2719,7 @@ read_variant (GInputStream *in,
               GError **error)
 {
   guint32 size;
+  g_autofree guchar *data_owned = NULL;
   guchar *data;
   gsize bytes_read;
 
@@ -2732,7 +2733,8 @@ read_variant (GInputStream *in,
       return NULL;
     }
 
-  data = g_try_malloc (size);
+  data_owned = g_try_malloc (size);
+  data = data_owned;
   if (data == NULL)
     {
       flatpak_fail (error, "Out of memory");
@@ -2750,7 +2752,9 @@ read_variant (GInputStream *in,
     }
 
   return g_variant_ref_sink (g_variant_new_from_data (G_VARIANT_TYPE("(uuuuss)"),
-                                                      data, size, FALSE, g_free, data));
+                                                      data, size, FALSE,
+                                                      g_free,
+                                                      g_steal_pointer (&data_owned)));
 }
 
 /* We do the actual update out of process (in do_update_child_process,
