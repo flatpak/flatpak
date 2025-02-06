@@ -6064,6 +6064,23 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
 
   g_info ("Imported OCI image as checksum %s", checksum);
 
+  if (!flatpak_dir_setup_extra_data (self, state, repo,
+                                     ref, checksum, token,
+                                     flatpak_flags,
+                                     progress,
+                                     cancellable,
+                                     error))
+    return FALSE;
+
+  if (!flatpak_dir_pull_extra_data (self, repo,
+                                    state->remote_name,
+                                    ref, checksum,
+                                    flatpak_flags,
+                                    progress,
+                                    cancellable,
+                                    error))
+    return FALSE;
+
   if (repo == self->repo)
     name = flatpak_dir_get_name (self);
   else
