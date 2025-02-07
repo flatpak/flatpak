@@ -257,7 +257,7 @@ check_header(char **value_out,
   if (realsize < hlen + 1)
     return;
 
-  if (!g_ascii_strncasecmp(buffer, header, hlen) == 0 ||
+  if (g_ascii_strncasecmp (buffer, header, hlen) != 0 ||
       buffer[hlen] != ':')
     return;
 
