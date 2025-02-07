@@ -2984,11 +2984,13 @@ flatpak_oci_index_make_summary (GFile        *index,
       const char *delta_url;
       const char *installed_size_str;
       const char *download_size_str;
+      const char *extra_data_sources_base64;
       const char *token_type_base64;
       const char *endoflife_base64;
       const char *endoflife_rebase_base64 = NULL;
       const char *metadata_contents = NULL;
       g_autoptr(GVariantBuilder) ref_metadata_builder = NULL;
+      g_autoptr(GVariant) extra_data_sources_v = NULL;
       g_autoptr(GVariant) token_type_v = NULL;
       g_autoptr(GVariant) endoflife_v = NULL;
       g_autoptr(GVariant) endoflife_rebase_v = NULL;
@@ -3015,6 +3017,30 @@ flatpak_oci_index_make_summary (GFile        *index,
       download_size_str = get_image_metadata (image, "org.flatpak.download-size");
       if (download_size_str)
         download_size = g_ascii_strtoull (download_size_str, NULL, 10);
+
+      extra_data_sources_base64 = get_image_metadata (image, "org.flatpak.commit-metadata.xa.extra-data-sources");
+      extra_data_sources_v = maybe_variant_from_base64 (extra_data_sources_base64);
+
+      if (extra_data_sources_v != NULL)
+        {
+          g_autoptr(GVariant) extra_data_sources = g_variant_get_variant (extra_data_sources_v);
+          gsize n_extra_data = g_variant_n_children (extra_data_sources);
+
+          for (int j = 0; j < n_extra_data; j++)
+            {
+              guint64 extra_download_size;
+              guint64 extra_installed_size;
+
+              flatpak_repo_parse_extra_data_sources (extra_data_sources, j,
+                                                     NULL,
+                                                     &extra_download_size,
+                                                     &extra_installed_size,
+                                                     NULL, NULL);
+
+              download_size += extra_download_size;
+              installed_size += extra_installed_size;
+            }
+        }
 
       ref_metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
 
