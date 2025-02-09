@@ -1,26 +1,26 @@
 # Turkish translation for flatpak.
-# Copyright (C) 2017-2023 flatpak's COPYRIGHT HOLDER
+# Copyright (C) 2017-2025 flatpak's COPYRIGHT HOLDER
 # This file is distributed under the same license as the flatpak package.
 #
 # Çağatay Yiğit Şahin <cyigitsahin@outlook.com>, 2017.
 # Muhammet Kara <muhammetk@gmail.com>, 2017.
 # Serdar Sağlam <teknomobil@yandex.com>, 2019.
-# Sabri Ünal <libreajans@gmail.com>, 2022, 2023.
+# Sabri Ünal <yakushabb@gmail.com>, 2022-2025.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2025-01-09 13:37-0300\n"
-"PO-Revision-Date: 2024-04-01 16:09+0300\n"
+"PO-Revision-Date: 2025-02-09 21:18+0300\n"
 "Last-Translator: Sabri Ünal <yakushabb@gmail.com>\n"
-"Language-Team: Türkçe <gnome-turk@gnome.org>\n"
+"Language-Team: Türkçe <takim@gnome.org.tr>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 3.4.2\n"
+"X-Generator: Poedit 3.5\n"
 
 #: app/flatpak-builtins-build-bundle.c:58
 msgid "Export runtime instead of app"
@@ -3465,8 +3465,8 @@ msgstr "Kullanılabilir sütunları göster"
 #: app/flatpak-builtins-utils.c:915
 msgid "Append :s[tart], :m[iddle], :e[nd] or :f[ull] to change ellipsization"
 msgstr ""
-"Elipsleştirmeyi değiştirmek için :s[tart] (başlangıç), :m[iddle] "
-"(orta), :e[nd] (son) ya da :f[ull] (hepsi) ekleyin"
+"Elipsleştirmeyi değiştirmek için :s[tart] (başlangıç), :m[iddle] (orta), :"
+"e[nd] (son) ya da :f[ull] (hepsi) ekleyin"
 
 #: app/flatpak-cli-transaction.c:96 app/flatpak-cli-transaction.c:102
 #, c-format
@@ -3640,8 +3640,8 @@ msgstr "Parola"
 #, c-format
 msgid ""
 "\n"
-"Info: (pinned) runtime %s%s%s branch %s%s%s is end-of-life, in favor of "
-"%s%s%s branch %s%s%s\n"
+"Info: (pinned) runtime %s%s%s branch %s%s%s is end-of-life, in favor of %s%s"
+"%s branch %s%s%s\n"
 msgstr ""
 "\n"
 "Bilgi: (Sabitlenmiş) çalışma ortamı %s%s%s, dal %s%s%s, ömrünün sonuna "
@@ -3655,15 +3655,15 @@ msgid ""
 "%s%s%s\n"
 msgstr ""
 "\n"
-"Bilgi: Çalışma ortamı %s%s%s, dal %s%s%s, ömrünün sonuna geldi, %s%s%s dal "
-"%s%s%s yararına\n"
+"Bilgi: Çalışma ortamı %s%s%s, dal %s%s%s, ömrünün sonuna geldi, %s%s%s dal %s"
+"%s%s yararına\n"
 
 #: app/flatpak-cli-transaction.c:756
 #, c-format
 msgid ""
 "\n"
-"Info: app %s%s%s branch %s%s%s is end-of-life, in favor of %s%s%s branch "
-"%s%s%s\n"
+"Info: app %s%s%s branch %s%s%s is end-of-life, in favor of %s%s%s branch %s%s"
+"%s\n"
 msgstr ""
 "\n"
 "Bilgi: Uygulama %s%s%s, dal %s%s%s, ömrünün sonuna geldi, %s%s%s dal %s%s%s "
@@ -4429,9 +4429,8 @@ msgid "Don't allow app to talk to name on the system bus"
 msgstr "Uygulamanın sistem veri yolunda adla konuşmasına izin verme"
 
 #: common/flatpak-context.c:1689
-#, fuzzy
 msgid "Allow app to own name on the a11y bus"
-msgstr "Uygulamanın sistem veri yolunda kendi adı olmasına izin ver"
+msgstr "Uygulamanın a11y veri yolunda kendi adına izin ver"
 
 #: common/flatpak-context.c:1690
 msgid "Add generic policy option"
@@ -4447,27 +4446,28 @@ msgstr "Genel ilke seçeneğini kaldır"
 
 #: common/flatpak-context.c:1692
 msgid "Add USB device to enumerables"
-msgstr ""
+msgstr "USB aygıtını numaralandırılabilirlere ekle"
 
 #: common/flatpak-context.c:1692 common/flatpak-context.c:1693
 msgid "VENDOR_ID:PRODUCT_ID"
-msgstr ""
+msgstr "ÜRETİCİ_KİMLİĞİ:ÜRÜN_KİMLİĞİ"
 
 #: common/flatpak-context.c:1693
 msgid "Add USB device to hidden list"
-msgstr ""
+msgstr "USB aygıtını gizli listeye ekle"
 
 #: common/flatpak-context.c:1694
 msgid "A list of USB devices that are enumerable"
-msgstr ""
+msgstr "Numaralandırılabilir USB aygıtlarının listesi"
 
 #: common/flatpak-context.c:1694
 msgid "LIST"
-msgstr ""
+msgstr "LİSTE"
 
 #: common/flatpak-context.c:1695
 msgid "File containing a list of USB devices to make enumerable"
 msgstr ""
+"Numaralandırılabilir hale getirilecek USB aygıtlarının listesini içeren dosya"
 
 #: common/flatpak-context.c:1695 common/flatpak-context.c:1696
 msgid "FILENAME"
@@ -4523,9 +4523,9 @@ msgstr "Uzak %2$s içinde '%1$s' referansı bulunamadı"
 
 #: common/flatpak-dir.c:769 common/flatpak-dir.c:906 common/flatpak-dir.c:935
 #: common/flatpak-dir.c:947
-#, fuzzy, c-format
+#, c-format
 msgid "No entry for %s in remote %s summary flatpak cache"
-msgstr "Uzak '%2$s' özet flatpak önbelleğinde %1$s için girdi yok "
+msgstr "Uzak %2$s özet flatpak önbelleğinde %1$s için girdi yok"
 
 #: common/flatpak-dir.c:924
 #, c-format
@@ -5488,8 +5488,8 @@ msgstr ""
 
 #: common/flatpak-run.c:2951
 msgid ""
-"\"flatpak run\" is not intended to be run as `sudo flatpak run`. Use `sudo "
-"-i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell."
+"\"flatpak run\" is not intended to be run as `sudo flatpak run`. Use `sudo -"
+"i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell."
 msgstr ""
 "\"flatpak run\", `sudo flatpak run` olarak çalıştırılmak üzere "
 "tasarlanmamıştır. Bunun yerine `sudo -i` ya da `su -l`kullanın ve yeni "
@@ -5691,62 +5691,67 @@ msgstr "URI mutlak değil ve temel URI sağlanmamış"
 #: common/flatpak-usb.c:83
 #, c-format
 msgid "USB device query 'all' must not have data"
-msgstr ""
+msgstr "USB aygıt sorgusu 'all' veri içermemelidir"
 
 #: common/flatpak-usb.c:102
 #, c-format
 msgid "USB query rule 'cls' must be in the form CLASS:SUBCLASS or CLASS:*"
 msgstr ""
+"USB sorgu kuralı 'cls', SINIF:ALTSINIF ya da SINIF:* biçiminde olmalıdır"
 
 #: common/flatpak-usb.c:111
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid USB class"
-msgstr "Geçersiz id %s: %s"
+msgstr "Geçersiz USB sınıfı"
 
 #: common/flatpak-usb.c:125
 #, c-format
 msgid "Invalid USB subclass"
-msgstr ""
+msgstr "Geçersiz USB alt sınıfı"
 
 #: common/flatpak-usb.c:141 common/flatpak-usb.c:148
 #, c-format
 msgid "USB query rule 'dev' must have a valid 4-digit hexadecimal product id"
 msgstr ""
+"USB sorgu kuralı 'dev' geçerli bir 4 basamaklı onaltılık ürün kimliğine "
+"sahip olmalıdır"
 
 #: common/flatpak-usb.c:164 common/flatpak-usb.c:171
 #, c-format
 msgid "USB query rule 'vnd' must have a valid 4-digit hexadecimal vendor id"
 msgstr ""
+"USB sorgu kuralı 'vnd' geçerli bir 4 basamaklı onaltılık üretici kimliğine "
+"sahip olmalıdır"
 
 #: common/flatpak-usb.c:205
 #, c-format
 msgid "USB device queries must be in the form TYPE:DATA"
-msgstr ""
+msgstr "USB aygıt sorguları TİP:VERİ şeklinde olmalıdır"
 
 #: common/flatpak-usb.c:225
 #, c-format
 msgid "Unknown USB query rule %s"
-msgstr ""
+msgstr "Bilinmeyen USB sorgu kuralı %s"
 
 #: common/flatpak-usb.c:248
 #, c-format
 msgid "Empty USB query"
-msgstr ""
+msgstr "Boş USB sorgusu"
 
 #: common/flatpak-usb.c:274
 #, c-format
 msgid "Multiple USB query rules of the same type is not supported"
-msgstr ""
+msgstr "Aynı türde birden fazla USB sorgu kuralı desteklenmez"
 
 #: common/flatpak-usb.c:283
 #, c-format
 msgid "'all' must not contain extra query rules"
-msgstr ""
+msgstr "'all' ek sorgu kuralları içermemelidir"
 
 #: common/flatpak-usb.c:291
 #, c-format
 msgid "USB queries with 'dev' must also specify vendors"
-msgstr ""
+msgstr "'dev' içeren USB sorguları üreticileri de belirtmelidir"
 
 #: common/flatpak-utils.c:668
 msgid "Glob can't match apps"
@@ -6067,18 +6072,3 @@ msgid ""
 msgstr ""
 "Ebeveyn denetim politikası tarafından kısıtlanan yazılımı kurmak için kimlik "
 "doğrulaması gerekiyor"
-
-#, c-format
-#~ msgid ""
-#~ "Found similar ref(s) for ‘%s’ in remote ‘%s’ (%s).\n"
-#~ "Use this remote?"
-#~ msgstr ""
-#~ "‘%s’için benzer referans(lar) uzak ‘%s’ (%s) içinde bulundu.\n"
-#~ "Bu uzak kullanılsın mı?"
-
-#, c-format
-#~ msgid "No entry for %s in remote '%s' summary cache "
-#~ msgstr "Uzak '%2$s' özet önbelleğinde %1$s için girdi yok "
-
-#~ msgid "Unable to open directory %s"
-#~ msgstr "%s dizini açılamadı"
