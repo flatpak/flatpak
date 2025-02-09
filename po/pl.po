@@ -1,15 +1,15 @@
 # Polish translation for flatpak.
-# Copyright © 2016-2024 the flatpak authors.
+# Copyright © 2016-2025 the flatpak authors.
 # This file is distributed under the same license as the flatpak package.
-# Piotr Drąg <piotrdrag@gmail.com>, 2016-2024.
-# Aviary.pl <community-poland@mozilla.org>, 2016-2024.
+# Piotr Drąg <piotrdrag@gmail.com>, 2016-2025.
+# Aviary.pl <community-poland@mozilla.org>, 2016-2025.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2025-01-09 13:37-0300\n"
-"PO-Revision-Date: 2024-09-10 18:27+0200\n"
+"PO-Revision-Date: 2025-02-09 15:15+0100\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
 "Language: pl\n"
@@ -4500,27 +4500,27 @@ msgstr "Usuwa ogólną opcję polityki"
 
 #: common/flatpak-context.c:1692
 msgid "Add USB device to enumerables"
-msgstr ""
+msgstr "Dodaje urządzenie USB do wyliczeń"
 
 #: common/flatpak-context.c:1692 common/flatpak-context.c:1693
 msgid "VENDOR_ID:PRODUCT_ID"
-msgstr ""
+msgstr "IDENTYFIKATOR_PRODUCENTA:IDENTYFIKATOR_PRODUKTU"
 
 #: common/flatpak-context.c:1693
 msgid "Add USB device to hidden list"
-msgstr ""
+msgstr "Dodaje urządzenie USB do listy ukrytych"
 
 #: common/flatpak-context.c:1694
 msgid "A list of USB devices that are enumerable"
-msgstr ""
+msgstr "Lista urządzeń USB, które można wyliczać"
 
 #: common/flatpak-context.c:1694
 msgid "LIST"
-msgstr ""
+msgstr "LISTA"
 
 #: common/flatpak-context.c:1695
 msgid "File containing a list of USB devices to make enumerable"
-msgstr ""
+msgstr "Plik zawierający listę urządzeń USB, które będzie można wyliczać"
 
 #: common/flatpak-context.c:1695 common/flatpak-context.c:1696
 msgid "FILENAME"
@@ -5768,62 +5768,67 @@ msgstr "Adres URI nie jest bezwzględny i nie podano podstawy adresu URI"
 #: common/flatpak-usb.c:83
 #, c-format
 msgid "USB device query 'all' must not have data"
-msgstr ""
+msgstr "Zapytanie „all” urządzenia USB nie może mieć danych"
 
 #: common/flatpak-usb.c:102
 #, c-format
 msgid "USB query rule 'cls' must be in the form CLASS:SUBCLASS or CLASS:*"
 msgstr ""
+"Reguła „cls” zapytania USB musi być w formie KLASA:PODKLASA lub KLASA:*"
 
 #: common/flatpak-usb.c:111
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid USB class"
-msgstr "Nieprawidłowy identyfikator %s: %s"
+msgstr "Nieprawidłowa klasa USB"
 
 #: common/flatpak-usb.c:125
 #, c-format
 msgid "Invalid USB subclass"
-msgstr ""
+msgstr "Nieprawidłowa podklasa USB"
 
 #: common/flatpak-usb.c:141 common/flatpak-usb.c:148
 #, c-format
 msgid "USB query rule 'dev' must have a valid 4-digit hexadecimal product id"
 msgstr ""
+"Reguła „dev” zapytania USB musi mieć prawidłowy czterocyfrowy szesnastkowy "
+"identyfikator produktu"
 
 #: common/flatpak-usb.c:164 common/flatpak-usb.c:171
 #, c-format
 msgid "USB query rule 'vnd' must have a valid 4-digit hexadecimal vendor id"
 msgstr ""
+"Reguła „vnd” zapytania USB musi mieć prawidłowy czterocyfrowy szesnastkowy "
+"identyfikator producenta"
 
 #: common/flatpak-usb.c:205
 #, c-format
 msgid "USB device queries must be in the form TYPE:DATA"
-msgstr ""
+msgstr "Zapytania urządzeń USB muszą być w formie TYP:DANE"
 
 #: common/flatpak-usb.c:225
 #, c-format
 msgid "Unknown USB query rule %s"
-msgstr ""
+msgstr "Nieznana reguła zapytania USB %s"
 
 #: common/flatpak-usb.c:248
 #, c-format
 msgid "Empty USB query"
-msgstr ""
+msgstr "Puste zapytanie USB"
 
 #: common/flatpak-usb.c:274
 #, c-format
 msgid "Multiple USB query rules of the same type is not supported"
-msgstr ""
+msgstr "Wiele reguł zapytań USB tego samego typu nie jest obsługiwanych"
 
 #: common/flatpak-usb.c:283
 #, c-format
 msgid "'all' must not contain extra query rules"
-msgstr ""
+msgstr "„all” nie może zawierać dodatkowych reguł zapytań"
 
 #: common/flatpak-usb.c:291
 #, c-format
 msgid "USB queries with 'dev' must also specify vendors"
-msgstr ""
+msgstr "Zapytania USB z „dev” muszą także określać producentów"
 
 #: common/flatpak-utils.c:668
 msgid "Glob can't match apps"
