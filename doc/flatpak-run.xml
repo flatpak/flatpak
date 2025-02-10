@@ -101,6 +101,7 @@
             <member>container</member>
             <member>TZDIR</member>
             <member>PYTHONPATH</member>
+            <member>PYTHONPYCACHEPREFIX</member>
             <member>PERLLIB</member>
             <member>PERL5LIB</member>
             <member>XCURSOR_PATH</member>
