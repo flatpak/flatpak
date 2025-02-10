@@ -567,6 +567,7 @@ static const ExportData default_exports[] = {
      if set on the host. We clear these always. If updating this list,
      also update the list in flatpak-run.xml. */
   {"PYTHONPATH", NULL},
+  {"PYTHONPYCACHEPREFIX", NULL},
   {"PERLLIB", NULL},
   {"PERL5LIB", NULL},
   {"XCURSOR_PATH", NULL},
