@@ -65,7 +65,6 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (PortalFlatpakUpdateMonitorSkeleton, g_object_unre
 #define CHILD_STATUS_CHECK_ATTEMPTS 20
 
 static GStrv original_environ = NULL;
-static GHashTable *client_pid_data_hash = NULL;
 static GDBusConnection *session_bus = NULL;
 static GNetworkMonitor *network_monitor = NULL;
 static gboolean no_idle_exit = FALSE;
@@ -76,6 +75,9 @@ static gboolean opt_verbose;
 static int opt_poll_timeout;
 static gboolean opt_poll_when_metered;
 static FlatpakSpawnSupportFlags supports = 0;
+
+G_LOCK_DEFINE (client_pid_data_hash);
+GHashTable *client_pid_data_hash = NULL;
 
 G_LOCK_DEFINE (update_monitors); /* This protects the three variables below */
 static GHashTable *update_monitors;
@@ -174,6 +176,8 @@ static guint idle_timeout_id = 0;
 static gboolean
 idle_timeout_cb (gpointer user_data)
 {
+  G_LOCK (client_pid_data_hash);
+
   if (name_owner_id &&
       g_hash_table_size (client_pid_data_hash) == 0 &&
       !has_update_monitors ())
@@ -183,6 +187,9 @@ idle_timeout_cb (gpointer user_data)
     }
 
   idle_timeout_id = 0;
+
+  G_UNLOCK (client_pid_data_hash);
+
   return G_SOURCE_REMOVE;
 }
 
@@ -225,6 +232,7 @@ child_watch_died (GPid     pid,
                   gpointer user_data)
 {
   PidData *pid_data = user_data;
+  g_autoptr(GMutexLocker) locker = NULL;
   g_autoptr(GVariant) signal_variant = NULL;
 
   g_info ("Client Pid %d died", pid_data->pid);
@@ -237,6 +245,8 @@ child_watch_died (GPid     pid,
                                  "SpawnExited",
                                  signal_variant,
                                  NULL);
+
+  locker = g_mutex_locker_new (&G_LOCK_NAME (client_pid_data_hash));
 
   /* This frees the pid_data, so be careful */
   g_hash_table_remove (client_pid_data_hash, GUINT_TO_POINTER (pid_data->pid));
@@ -358,6 +368,7 @@ check_child_pid_status (void *user_data)
   static gint timeouts[] = {25, 50, 100};
 
   g_autoptr(GVariant) signal_variant = NULL;
+  g_autoptr(GMutexLocker) locker = NULL;
   g_autoptr(BwrapinfoWatcherData) data = user_data;
   PidData *pid_data;
   guint pid;
@@ -366,6 +377,7 @@ check_child_pid_status (void *user_data)
 
   pid = data->pid;
 
+  locker = g_mutex_locker_new (&G_LOCK_NAME (client_pid_data_hash));
   pid_data = g_hash_table_lookup (client_pid_data_hash, GUINT_TO_POINTER (pid));
 
   /* Process likely already exited if pid_data == NULL, so don't send the
@@ -754,6 +766,7 @@ handle_spawn (PortalFlatpak         *object,
               guint                  arg_flags,
               GVariant              *arg_options)
 {
+  g_autoptr(GMutexLocker) locker = NULL;
   g_autoptr(GError) error = NULL;
   ChildSetupData child_setup_data = { NULL };
   GPid pid;
@@ -1588,7 +1601,10 @@ handle_spawn (PortalFlatpak         *object,
 
   g_info ("Client Pid is %d", pid_data->pid);
 
-  g_hash_table_replace (client_pid_data_hash, GUINT_TO_POINTER (pid_data->pid),
+  locker = g_mutex_locker_new (&G_LOCK_NAME (client_pid_data_hash));
+
+  g_hash_table_replace (client_pid_data_hash,
+                        GUINT_TO_POINTER (pid_data->pid),
                         pid_data);
 
   portal_flatpak_complete_spawn (object, invocation, NULL, pid);
@@ -1602,9 +1618,12 @@ handle_spawn_signal (PortalFlatpak         *object,
                      guint                  arg_signal,
                      gboolean               arg_to_process_group)
 {
+  g_autoptr(GMutexLocker) locker = NULL;
   PidData *pid_data = NULL;
 
   g_info ("spawn_signal(%d %d)", arg_pid, arg_signal);
+
+  locker = g_mutex_locker_new (&G_LOCK_NAME (client_pid_data_hash));
 
   pid_data = g_hash_table_lookup (client_pid_data_hash, GUINT_TO_POINTER (arg_pid));
   if (pid_data == NULL ||
@@ -2902,10 +2921,13 @@ name_owner_changed (GDBusConnection *connection,
       strcmp (name, from) == 0 &&
       strcmp (to, "") == 0)
     {
+      g_autoptr(GMutexLocker) locker = NULL;
       GHashTableIter iter;
       PidData *pid_data = NULL;
       gpointer value = NULL;
       GList *list = NULL, *l;
+
+      locker = g_mutex_locker_new (&G_LOCK_NAME (client_pid_data_hash));
 
       g_hash_table_iter_init (&iter, client_pid_data_hash);
       while (g_hash_table_iter_next (&iter, NULL, &value))
