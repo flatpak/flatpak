@@ -8280,7 +8280,7 @@ extract_extra_data (FlatpakDir   *self,
           const guchar *data;
           gsize len;
 
-          g_variant_get_child (extra_data, j, "(^ay@ay)",
+          g_variant_get_child (extra_data, j, "(^&ay@ay)",
                                &extra_data_name,
                                &content);
 
