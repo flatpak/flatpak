@@ -275,7 +275,7 @@ assert_remote_has_config () {
 
 assert_remote_has_no_config () {
     { { local BASH_XTRACEFD=3; } 2> /dev/null
-    if ostree config --repo=$FL_DIR/repo get --group 'remote "'"$1"'"' "$2" > /dev/null &> /dev/null; then
+    if ostree config --repo=$FL_DIR/repo get --group 'remote "'"$1"'"' "$2" &> /dev/null; then
         echo 1>&2 "Remote '$1' unexpectedly has key '$2' at $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]}"
         exit 1
     fi
