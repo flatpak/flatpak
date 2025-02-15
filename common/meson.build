@@ -116,7 +116,24 @@ built_headers = [
   flatpak_variant[1],
 ]
 
-libflatpak_common_deps = []
+libflatpak_common_deps = [
+  base_deps,
+  dconf_dep,
+  gpgme_dep,
+  json_glib_dep,
+  libarchive_dep,
+  libcurl_dep,
+  libglnx_dep,
+  libostree_dep,
+  libseccomp_dep,
+  libsoup_dep,
+  libsystemd_dep,
+  libxml_dep,
+  libzstd_dep,
+  malcontent_dep,
+  polkit_agent_dep,
+  xau_dep,
+]
 built_sources = []
 
 if build_wayland_security_context
@@ -210,26 +227,7 @@ endif
 
 libflatpak_common = static_library(
   'flatpak-common',
-  dependencies : [
-    base_deps,
-    dconf_dep,
-    gpgme_dep,
-    json_glib_dep,
-    libarchive_dep,
-    libcurl_dep,
-    libflatpak_common_base_dep,
-    libflatpak_common_deps,
-    libglnx_dep,
-    libostree_dep,
-    libseccomp_dep,
-    libsoup_dep,
-    libsystemd_dep,
-    libxml_dep,
-    libzstd_dep,
-    malcontent_dep,
-    polkit_agent_dep,
-    xau_dep,
-  ],
+  dependencies : [libflatpak_common_base_dep] + libflatpak_common_deps,
   gnu_symbol_visibility : 'hidden',
   include_directories : [common_include_directories],
   install : false,
@@ -266,7 +264,7 @@ libflatpak = library(
   version : '0.@0@.0'.format(flatpak_binary_age),
 )
 libflatpak_dep = declare_dependency(
-  dependencies : base_deps,
+  dependencies : libflatpak_common_deps,
   include_directories : [common_include_directories],
   link_with : [
     libflatpak,
