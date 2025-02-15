@@ -44,12 +44,14 @@ static char *opt_since;
 static char *opt_until;
 static gboolean opt_reverse;
 static const char **opt_cols;
+static gboolean opt_show_appstream_pulls;
 
 static GOptionEntry options[] = {
   { "since", 0, 0, G_OPTION_ARG_STRING, &opt_since, N_("Only show changes after TIME"), N_("TIME") },
   { "until", 0, 0, G_OPTION_ARG_STRING, &opt_until, N_("Only show changes before TIME"), N_("TIME") },
   { "reverse", 0, 0, G_OPTION_ARG_NONE, &opt_reverse, N_("Show newest entries first"), NULL },
   { "columns", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_cols, N_("What information to show"), N_("FIELD,…") },
+  { "show-appstream-pulls", 0, 0, G_OPTION_ARG_NONE, &opt_show_appstream_pulls, N_("Show appstream pulls"), NULL },
   { NULL }
 };
 
@@ -121,6 +123,7 @@ print_history (GPtrArray    *dirs,
                GDateTime    *since,
                GDateTime    *until,
                gboolean      reverse,
+               gboolean      show_appstream_pulls,
                GCancellable *cancellable,
                GError      **error)
 {
@@ -169,10 +172,11 @@ print_history (GPtrArray    *dirs,
         if (*error)
           return FALSE;
 
+
         /* Appstream pulls are probably not interesting, and they are confusing
          * since by default we include the Application column which shows up blank.
          */
-        if (ref_str && ref_str[0] && g_str_has_prefix (ref_str, "appstream"))
+        if (!show_appstream_pulls && ref_str && ref_str[0] && g_str_has_prefix (ref_str, "appstream"))
           continue;
 
         remote = get_field (j, "REMOTE", error);
@@ -504,7 +508,7 @@ flatpak_builtin_history (int argc, char **argv, GCancellable *cancellable, GErro
   if (columns == NULL)
     return FALSE;
 
-  if (!print_history (dirs, columns, since, until, opt_reverse, cancellable, error))
+  if (!print_history (dirs, columns, since, until, opt_reverse, opt_show_appstream_pulls, cancellable, error))
     return FALSE;
 
   return TRUE;
