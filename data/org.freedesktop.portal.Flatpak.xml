@@ -36,7 +36,7 @@
       bus name org.freedesktop.portal.Flatpak and the object path
       /org/freedesktop/portal/Flatpak.
 
-      This documentation describes version 7 of this interface.
+      This documentation describes version 8 of this interface.
   -->
   <interface name='org.freedesktop.portal.Flatpak'>
     <property name="version" type="u" access="read"/>
@@ -232,6 +232,36 @@
                  <term>16</term>
                  <listitem><para>
                    Allow sandbox access to accessibility bus.
+                 </para></listitem>
+               </varlistentry>
+               <varlistentry>
+                 <term>32</term>
+                 <listitem><para>
+                   Allow sandbox access to input devices.
+                 </para></listitem>
+               </varlistentry>
+               <varlistentry>
+                 <term>64</term>
+                 <listitem><para>
+                   Allow sandbox access to USB devices.
+                 </para></listitem>
+               </varlistentry>
+               <varlistentry>
+                 <term>128</term>
+                 <listitem><para>
+                   Allow sandbox access to KVM.
+                 </para></listitem>
+               </varlistentry>
+               <varlistentry>
+                 <term>256</term>
+                 <listitem><para>
+                   Allow sandbox access to shared memory.
+                 </para></listitem>
+               </varlistentry>
+               <varlistentry>
+                 <term>512</term>
+                 <listitem><para>
+                   Allow sandbox access to all devices.
                  </para></listitem>
                </varlistentry>
              </variablelist>
