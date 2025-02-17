@@ -1120,6 +1120,39 @@ handle_spawn (PortalFlatpak         *object,
                g_strv_contains ((const char * const *) devices, "all")))
             g_ptr_array_add (flatpak_argv, g_strdup ("--device=dri"));
         }
+      if (sandbox_flags & FLATPAK_SPAWN_SANDBOX_FLAGS_SHARE_INPUT)
+        {
+          if (devices != NULL &&
+              (g_strv_contains ((const char * const *) devices, "input") ||
+               g_strv_contains ((const char * const *) devices, "all")))
+            g_ptr_array_add (flatpak_argv, g_strdup ("--device=input"));
+        }
+      if (sandbox_flags & FLATPAK_SPAWN_SANDBOX_FLAGS_SHARE_USB)
+        {
+          if (devices != NULL &&
+              (g_strv_contains ((const char * const *) devices, "usb") ||
+               g_strv_contains ((const char * const *) devices, "all")))
+            g_ptr_array_add (flatpak_argv, g_strdup ("--device=usb"));
+        }
+      if (sandbox_flags & FLATPAK_SPAWN_SANDBOX_FLAGS_SHARE_KVM)
+        {
+          if (devices != NULL &&
+              (g_strv_contains ((const char * const *) devices, "kvm") ||
+               g_strv_contains ((const char * const *) devices, "all")))
+            g_ptr_array_add (flatpak_argv, g_strdup ("--device=kvm"));
+        }
+      if (sandbox_flags & FLATPAK_SPAWN_SANDBOX_FLAGS_SHARE_SHM)
+        {
+          if (devices != NULL &&
+              (g_strv_contains ((const char * const *) devices, "shm")))
+            g_ptr_array_add (flatpak_argv, g_strdup ("--device=shm"));
+        }
+      if (sandbox_flags & FLATPAK_SPAWN_SANDBOX_FLAGS_SHARE_DEVICES)
+        {
+          if (devices != NULL &&
+              (g_strv_contains ((const char * const *) devices, "all")))
+            g_ptr_array_add (flatpak_argv, g_strdup ("--device=all"));
+        }
       if (sandbox_flags & FLATPAK_SPAWN_SANDBOX_FLAGS_ALLOW_DBUS)
         g_ptr_array_add (flatpak_argv, g_strdup ("--session-bus"));
 
@@ -2969,7 +3002,7 @@ on_bus_acquired (GDBusConnection *connection,
   g_dbus_interface_skeleton_set_flags (G_DBUS_INTERFACE_SKELETON (portal),
                                        G_DBUS_INTERFACE_SKELETON_FLAGS_HANDLE_METHOD_INVOCATIONS_IN_THREAD);
 
-  portal_flatpak_set_version (PORTAL_FLATPAK (portal), 7);
+  portal_flatpak_set_version (PORTAL_FLATPAK (portal), 8);
   portal_flatpak_set_supports (PORTAL_FLATPAK (portal), supports);
 
   g_signal_connect (portal, "handle-spawn", G_CALLBACK (handle_spawn), NULL);
