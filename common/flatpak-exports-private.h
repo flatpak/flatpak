@@ -43,6 +43,8 @@ void flatpak_exports_add_host_etc_expose (FlatpakExports       *exports,
                                           FlatpakFilesystemMode mode);
 void flatpak_exports_add_host_os_expose (FlatpakExports       *exports,
                                          FlatpakFilesystemMode mode);
+void flatpak_exports_add_host_root_expose (FlatpakExports       *exports,
+                                           FlatpakFilesystemMode mode);
 gboolean flatpak_exports_add_path_expose (FlatpakExports         *exports,
                                           FlatpakFilesystemMode   mode,
                                           const char             *path,
