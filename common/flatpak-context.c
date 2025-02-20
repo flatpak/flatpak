@@ -94,6 +94,7 @@ const char *flatpak_context_special_filesystems[] = {
   "host-etc",
   "host-os",
   "host-reset",
+  "host-complete",
   NULL
 };
 
@@ -1033,7 +1034,7 @@ flatpak_context_parse_filesystem (const char             *filesystem_and_mode,
     }
 
   g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
-               _("Unknown filesystem location %s, valid locations are: host, host-os, host-etc, home, xdg-*[/…], ~/dir, /dir"), filesystem);
+               _("Unknown filesystem location %s, valid locations are: host, host-os, host-etc, host-complete, home, xdg-*[/…], ~/dir, /dir"), filesystem);
   return FALSE;
 }
 
@@ -2839,7 +2840,7 @@ flatpak_context_export (FlatpakContext *context,
 {
   gboolean home_access = FALSE;
   g_autoptr(GString) xdg_dirs_conf = NULL;
-  FlatpakFilesystemMode fs_mode, os_mode, etc_mode, home_mode;
+  FlatpakFilesystemMode fs_mode, os_mode, etc_mode, complete_mode, home_mode;
   GHashTableIter iter;
   gpointer key, value;
   g_autoptr(GError) local_error = NULL;
@@ -2905,6 +2906,12 @@ flatpak_context_export (FlatpakContext *context,
 
   if (etc_mode != FLATPAK_FILESYSTEM_MODE_NONE)
     flatpak_exports_add_host_etc_expose (exports, etc_mode);
+
+  complete_mode = MAX (GPOINTER_TO_INT (g_hash_table_lookup (context->filesystems, "host-complete")),
+                        fs_mode);
+
+  if (complete_mode != FLATPAK_FILESYSTEM_MODE_NONE)
+    flatpak_exports_add_host_complete_expose (exports, complete_mode);
 
   home_mode = GPOINTER_TO_INT (g_hash_table_lookup (context->filesystems, "home"));
   if (home_mode != FLATPAK_FILESYSTEM_MODE_NONE)
