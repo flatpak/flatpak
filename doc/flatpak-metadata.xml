@@ -344,6 +344,26 @@
                                 Available since 1.7.
                             </para></listitem></varlistentry>
 
+                            <varlistentry><term><option>host-root</option></term>
+                            <listitem><para>
+                                The complete host operating system.
+                            </para>
+                            <para>
+                                To avoid conflicting with the Flatpak
+                                runtime, this is mounted in the sandbox
+                                at <filename>/run/host/root</filename>.
+                            </para>
+                            <para>
+                                This permission is only intended to be used
+                                as a last resort when there is no possible
+                                alternative with other filesystem
+                                permissions for applications that need the
+                                entire root filesystem of the host.
+                            </para>
+                            <para>
+                                Available since 1.17.
+                            </para></listitem></varlistentry>
+
                             <varlistentry><term><option>xdg-desktop</option>,
                                 <option>xdg-documents</option>,
                                 <option>xdg-download</option>,
