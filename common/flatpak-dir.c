@@ -8403,12 +8403,16 @@ apply_extra_data (FlatpakDir   *self,
     }
 
   runtime_pref = g_key_file_get_string (metakey, group,
-                                        FLATPAK_METADATA_KEY_RUNTIME, error);
+                                        FLATPAK_METADATA_KEY_RUNTIME, NULL);
   if (runtime_pref == NULL)
     runtime_pref = g_key_file_get_string (metakey, FLATPAK_METADATA_GROUP_EXTENSION_OF,
                                           FLATPAK_METADATA_KEY_RUNTIME, NULL);
   if (runtime_pref == NULL)
-    return FALSE;
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   _("Unable to get runtime key from metadata"));
+      return FALSE;
+    }
 
   runtime_ref = flatpak_decomposed_new_from_pref (FLATPAK_KINDS_RUNTIME, runtime_pref, error);
   if (runtime_ref == NULL)
