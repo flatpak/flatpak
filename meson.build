@@ -32,7 +32,7 @@ if '@0@.@1@.@2@@3@'.format(
   error('Project version does not match parts')
 endif
 
-required_glib = '2.46'
+required_glib = '2.62'
 # Before increasing this, update subprojects/bubblewrap.wrap
 required_bwrap = '0.10.0'
 # Before increasing this, update subprojects/dbus-proxy.wrap
