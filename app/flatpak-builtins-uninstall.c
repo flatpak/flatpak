@@ -520,7 +520,7 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
           * is limited to checking within the same installation; it won't
           * prompt for a user app depending on a system runtime.
          */
-        if (!opt_force_remove &&
+        if (!opt_force_remove && !opt_unused &&
             !confirm_runtime_removal (opt_yes, udir, ref))
           {
             uninstall_dir_remove_ref (udir, ref);
