@@ -344,6 +344,19 @@
                                 Available since 1.7.
                             </para></listitem></varlistentry>
 
+                            <varlistentry><term><option>host-complete</option></term>
+                            <listitem><para>
+                                The complete host operating system /.
+                            </para>
+                            <para>
+                                To avoid conflicting with the Flatpak
+                                runtime, this is mounted in the sandbox
+                                at <filename>/run/host/complete</filename>.
+                            </para>
+                            <para>
+                                Available since TBD.
+                            </para></listitem></varlistentry>
+
                             <varlistentry><term><option>xdg-desktop</option>,
                                 <option>xdg-documents</option>,
                                 <option>xdg-download</option>,
@@ -728,7 +741,7 @@
             <para>
                 The default policy for the session bus only allows the
                 application to own its own application ID, its
-                subnames and its own application id as a subname of 
+                subnames and its own application id as a subname of
                 "org.mpris.MediaPlayer2". For instance if the app is called
                 "org.my.App", it can only own "org.my.App", "org.my.App.*"
                 and "org.mpris.MediaPlayer2.org.my.App".
