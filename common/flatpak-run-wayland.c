@@ -244,6 +244,7 @@ gboolean
 flatpak_run_add_wayland_args (FlatpakBwrap *bwrap,
                               const char   *app_id,
                               const char   *instance_id,
+                              gboolean      allowed,
                               gboolean      inherit_wayland_socket)
 {
   const char *wayland_display;
@@ -255,6 +256,17 @@ flatpak_run_add_wayland_args (FlatpakBwrap *bwrap,
 #ifdef ENABLE_WAYLAND_SECURITY_CONTEXT
   gboolean security_context_available = FALSE;
 #endif
+
+  if (!allowed)
+    {
+      flatpak_bwrap_unset_env (bwrap, "WAYLAND_DISPLAY");
+      flatpak_bwrap_unset_env (bwrap, "WAYLAND_SOCKET");
+      return FALSE;
+    }
+
+  g_info ("Allowing wayland access");
+
+  g_assert (app_id && instance_id);
 
   wayland_display = get_wayland_display_name ();
 
