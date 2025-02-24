@@ -326,6 +326,10 @@ gboolean            flatpak_transaction_add_install_bundle (FlatpakTransaction *
                                                             GBytes             *gpg_data,
                                                             GError            **error);
 FLATPAK_EXTERN
+gboolean            flatpak_transaction_add_install_image (FlatpakTransaction *self,
+                                                           const char         *image_location,
+                                                           GError            **error);
+FLATPAK_EXTERN
 gboolean            flatpak_transaction_add_install_flatpakref (FlatpakTransaction *self,
                                                                 GBytes             *flatpakref_data,
                                                                 GError            **error);
