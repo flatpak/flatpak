@@ -73,6 +73,17 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (SoupURI, soup_uri_free)
 
 G_DEFINE_QUARK (flatpak_http_error, flatpak_http_error)
 
+/* Holds information about CA and client certificates found in
+ * system-wide and per-user certificate directories as documented
+ * in container-certs.d(5).
+ */
+struct FlatpakCertificates
+{
+  char *ca_cert_file;
+  char *client_cert_file;
+  char *client_key_file;
+};
+
 /* Information about the cache status of a file.
    Encoded in an xattr on the cached file, or a file on the side if xattrs don't work.
 */
@@ -95,6 +106,7 @@ typedef struct
   FlatpakHTTPFlags       flags;
   const char            *auth;
   const char            *token;
+  FlatpakCertificates   *certificates;
   FlatpakLoadUriProgress progress;
   GCancellable          *cancellable;
   gpointer               user_data;
@@ -229,6 +241,157 @@ check_http_status (guint status_code,
                "Server returned status %u",
                status_code);
   return FALSE;
+}
+
+FlatpakCertificates*
+flatpak_get_certificates_for_uri (const char  *uri,
+                                  GError     **error)
+{
+  g_autoptr(FlatpakCertificates) certificates = NULL;
+  g_autoptr(GUri) parsed_uri = NULL;
+  g_autofree char *hostport = NULL;
+  const char *system_certs_d = NULL;
+  g_autofree char *certs_path_str = NULL;
+  g_auto(GStrv) certs_path = NULL;
+
+  certificates = g_new0 (FlatpakCertificates, 1);
+
+  parsed_uri = g_uri_parse (uri, G_URI_FLAGS_PARSE_RELAXED, error);
+  if (!parsed_uri)
+    return NULL;
+
+  if (!g_uri_get_host (parsed_uri))
+    return NULL;
+
+  if (g_uri_get_port (parsed_uri) != -1)
+    hostport = g_strdup_printf ("%s:%d", g_uri_get_host (parsed_uri), g_uri_get_port (parsed_uri));
+  else
+    hostport = g_strdup (g_uri_get_host (parsed_uri));
+
+  system_certs_d = g_getenv ("FLATPAK_SYSTEM_CERTS_D");
+  if (system_certs_d == NULL || system_certs_d[0] == '\0')
+    system_certs_d = "/etc/containers/certs.d:/etc/docker/certs.d";
+
+  /* containers/image hardcodes ~/.config and doesn't honor XDG_CONFIG_HOME */
+  certs_path_str = g_strconcat (g_get_user_config_dir(), "/containers/certs.d:",
+                                system_certs_d, NULL);
+  certs_path = g_strsplit (certs_path_str, ":", -1);
+
+  for (int i = 0; certs_path[i]; i++)
+    {
+      g_autoptr(GFile) certs_dir = g_file_new_for_path (certs_path[i]);
+      g_autoptr(GFile) host_dir = g_file_get_child (certs_dir, hostport);
+      g_autoptr(GFileEnumerator) enumerator;
+      g_autoptr(GError) local_error = NULL;
+
+      enumerator = g_file_enumerate_children (host_dir, G_FILE_ATTRIBUTE_STANDARD_NAME,
+                                              G_FILE_QUERY_INFO_NONE,
+                                              NULL, &local_error);
+      if (enumerator == NULL)
+        {
+          /* This matches libpod - missing certificate directory or a permission
+           * error causes the directory to be skipped; any other error is fatal
+           */
+          if (g_error_matches(local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND) ||
+              g_error_matches(local_error, G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED))
+            {
+              g_clear_error (&local_error);
+              continue;
+            }
+          else
+            {
+              g_propagate_error (error, g_steal_pointer (&local_error));
+              return NULL;
+            }
+        }
+
+      while (TRUE)
+        {
+          GFile *child;
+          g_autofree char *basename = NULL;
+
+          if (!g_file_enumerator_iterate (enumerator, NULL, &child, NULL, error))
+            return NULL;
+
+          if (child == NULL)
+            break;
+
+          basename = g_file_get_basename (child);
+
+          /* In libpod, all CA certificates are added to the CA certificate
+           * database. We just use the first in readdir order.
+           */
+          if (g_str_has_suffix (basename, ".crt") && certificates->ca_cert_file == NULL)
+            certificates->ca_cert_file = g_file_get_path (child);
+
+          if (g_str_has_suffix (basename, ".cert"))
+            {
+              g_autofree char *nosuffix = g_strndup (basename, strlen (basename) - 5);
+              g_autofree char *key_basename = g_strconcat (nosuffix, ".key", NULL);
+              g_autoptr(GFile) key_file = g_file_get_child (host_dir, key_basename);
+
+              if (!g_file_query_exists (key_file, NULL))
+                {
+                  g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                               "missing key %s for client cert %s. "
+                               "Note that CA certificates should use the extension .crt",
+                               g_file_peek_path (key_file),
+                               g_file_peek_path (child));
+                  return NULL;
+                }
+
+              /* In libpod, all client certificates are added, and then the go TLS
+               * code selects the best based on TLS negotation. We just pick the first
+               * in readdir order
+               * */
+              if (certificates->client_cert_file == NULL)
+                {
+                  certificates->client_cert_file = g_file_get_path (child);
+                  certificates->client_key_file = g_file_get_path (key_file);
+                }
+            }
+
+          if (g_str_has_suffix (basename, ".key"))
+            {
+              g_autofree char *nosuffix = g_strndup (basename, strlen (basename) - 4);
+              g_autofree char *cert_basename = g_strconcat (nosuffix, ".cert", NULL);
+              g_autoptr(GFile) cert_file = g_file_get_child (host_dir, cert_basename);
+
+              if (!g_file_query_exists (cert_file, NULL))
+                {
+                  g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                               "missing client certificate %s for key %s",
+                               g_file_peek_path (cert_file),
+                               g_file_peek_path (child));
+                  return NULL;
+                }
+            }
+        }
+    }
+
+  return g_steal_pointer (&certificates);
+}
+
+FlatpakCertificates *
+flatpak_certificates_copy (FlatpakCertificates *other)
+{
+  FlatpakCertificates *certificates = g_new0 (FlatpakCertificates, 1);
+
+  certificates->ca_cert_file = g_strdup (other->ca_cert_file);
+  certificates->client_cert_file = g_strdup (other->client_cert_file);
+  certificates->client_key_file = g_strdup (other->client_key_file);
+
+  return certificates;
+}
+
+void
+flatpak_certificates_free (FlatpakCertificates *certificates)
+{
+  g_clear_pointer (&certificates->ca_cert_file, g_free);
+  g_clear_pointer (&certificates->client_cert_file, g_free);
+  g_clear_pointer (&certificates->client_key_file, g_free);
+
+  g_free (certificates);
 }
 
 #if defined(HAVE_CURL)
@@ -477,6 +640,18 @@ flatpak_download_http_uri_once (FlatpakHttpSession    *session,
   curl_easy_setopt (curl, CURLOPT_WRITEDATA, (void *)data);
   curl_easy_setopt (curl, CURLOPT_HEADERDATA, (void *)data);
 
+  if (data->certificates)
+    {
+      if (data->certificates->ca_cert_file)
+        curl_easy_setopt (curl, CURLOPT_CAINFO, data->certificates->ca_cert_file);
+
+      if (data->certificates->client_cert_file)
+        {
+          curl_easy_setopt (curl, CURLOPT_SSLCERT, data->certificates->client_cert_file);
+          curl_easy_setopt (curl, CURLOPT_SSLKEY, data->certificates->client_key_file);
+        }
+    }
+
   if (data->flags & FLATPAK_HTTP_FLAGS_HEAD)
     curl_easy_setopt (curl, CURLOPT_NOBODY, 1L);
   else
@@ -575,6 +750,73 @@ flatpak_download_http_uri_once (FlatpakHttpSession    *session,
 /************************************************************************
  *                        Soup implementation                           *
  ***********************************************************************/
+
+/*
+ * The implementation of /etc/containers/certs.d for Soup is made tricky
+ * because the CA certificate database in Soup is global to the session,
+ * but we share a single sesssion between different hosts that might
+ * need different custom CA certs based on what's configured in certs.d.
+ *
+ * So what we do is make the FlatpakSoupSession multiplex multiple
+ * SoupSessions, depending on the certificates we use. The most common
+ * case, is of course, a single session with no custom certificates.
+ */
+
+typedef struct
+{
+  char *user_agent;
+  GHashTable *soup_sessions;
+} FlatpakSoupSession;
+
+static guint
+certificates_hash(const FlatpakCertificates *certificates)
+{
+  guint hash = 0;
+
+  if (certificates && certificates->ca_cert_file)
+    hash |= 13 * g_str_hash (certificates->ca_cert_file);
+  if (certificates && certificates->client_cert_file)
+    hash |= 17 * g_str_hash (certificates->client_cert_file);
+  if (certificates && certificates->client_key_file)
+    hash |= 23 * g_str_hash (certificates->client_key_file);
+
+  return hash;
+}
+
+static gboolean
+certificates_equal (const FlatpakCertificates *a,
+                    const FlatpakCertificates *b)
+{
+  if (a && b)
+    {
+      return (g_strcmp0(a->ca_cert_file, b->ca_cert_file) == 0 &&
+              g_strcmp0(a->client_cert_file, b->client_cert_file) == 0 &&
+              g_strcmp0(a->client_key_file, b->client_key_file) == 0);
+    }
+  else
+    return a == b;
+}
+
+static void
+certificates_free (FlatpakCertificates *certificates)
+{
+  if (certificates)
+    flatpak_certificates_free (certificates);
+}
+
+static FlatpakSoupSession *
+flatpak_create_soup_session (const char *user_agent)
+{
+  FlatpakSoupSession *session = g_new0 (FlatpakSoupSession, 1);
+
+  session->user_agent = g_strdup (user_agent);
+  session->soup_sessions = g_hash_table_new_full ((GHashFunc)certificates_hash,
+                                                  (GEqualFunc)certificates_equal,
+                                                  (GDestroyNotify)certificates_free,
+                                                  (GDestroyNotify)g_object_unref);
+
+  return session;
+}
 
 static gboolean
 check_soup_transfer_error (SoupMessage *msg, GError **error)
@@ -768,18 +1010,114 @@ load_uri_callback (GObject      *source_object,
                              load_uri_read_cb, data);
 }
 
+/* Inline class for providing a pre-configured client certificate; from
+ * libsoup/examples/get.c. By Colin Walters.
+ */
+struct _FlatpakTlsInteraction
+{
+  GTlsInteraction parent_instance;
+
+  GTlsCertificate *cert;
+};
+
+struct _FlatpakTlsInteractionClass
+{
+  GTlsInteractionClass parent_class;
+};
+
+G_DECLARE_FINAL_TYPE (FlatpakTlsInteraction,
+                      flatpak_tls_interaction,
+                      FLATPAK, TLS_INTERACTION,
+                      GTlsInteraction)
+
+G_DEFINE_TYPE (FlatpakTlsInteraction,
+               flatpak_tls_interaction,
+               G_TYPE_TLS_INTERACTION)
+
+static GTlsInteractionResult
+flatpak_tls_interaction_request_certificate (GTlsInteraction              *interaction,
+                                             GTlsConnection               *connection,
+                                             GTlsCertificateRequestFlags   flags,
+                                             GCancellable                 *cancellable,
+                                             GError                      **error)
+{
+  FlatpakTlsInteraction *self = FLATPAK_TLS_INTERACTION (interaction);
+
+  g_tls_connection_set_certificate (connection, self->cert);
+
+  return G_TLS_INTERACTION_HANDLED;
+}
+
+static void
+flatpak_tls_interaction_finalize (GObject *object)
+{
+  FlatpakTlsInteraction *self = FLATPAK_TLS_INTERACTION (object);
+
+  g_clear_object (&self->cert);
+
+  G_OBJECT_CLASS (flatpak_tls_interaction_parent_class)->finalize (object);
+}
+
+static void
+flatpak_tls_interaction_init (FlatpakTlsInteraction *interaction)
+{
+}
+
+static void
+flatpak_tls_interaction_class_init (FlatpakTlsInteractionClass *klass)
+{
+  GObjectClass *object_class = G_OBJECT_CLASS (klass);
+  GTlsInteractionClass *interaction_class = G_TLS_INTERACTION_CLASS (klass);
+
+  object_class->finalize = flatpak_tls_interaction_finalize;
+
+  interaction_class->request_certificate = flatpak_tls_interaction_request_certificate;
+}
+
+static FlatpakTlsInteraction *
+flatpak_tls_interaction_new (GTlsCertificate *cert)
+{
+  FlatpakTlsInteraction *self = g_object_new (flatpak_tls_interaction_get_type (), NULL);
+
+  self->cert = g_object_ref (cert);
+
+  return self;
+}
+
 static SoupSession *
-flatpak_create_soup_session (const char *user_agent)
+get_soup_session (FlatpakSoupSession *session, FlatpakCertificates *certificates, GError **error)
 {
   SoupSession *soup_session;
   const char *http_proxy;
 
-  soup_session = soup_session_new_with_options (SOUP_SESSION_USER_AGENT, user_agent,
-                                                SOUP_SESSION_SSL_USE_SYSTEM_CA_FILE, TRUE,
+  soup_session = g_hash_table_lookup (session->soup_sessions, certificates);
+  if (soup_session)
+    return soup_session;
+
+  soup_session = soup_session_new_with_options (SOUP_SESSION_USER_AGENT, session->user_agent,
                                                 SOUP_SESSION_USE_THREAD_CONTEXT, TRUE,
                                                 SOUP_SESSION_TIMEOUT, FLATPAK_HTTP_TIMEOUT_SECS,
                                                 SOUP_SESSION_IDLE_TIMEOUT, FLATPAK_HTTP_TIMEOUT_SECS,
                                                 NULL);
+  if (certificates && certificates->ca_cert_file)
+    g_object_set (soup_session, SOUP_SESSION_SSL_CA_FILE, certificates->ca_cert_file, NULL);
+  else
+    g_object_set (soup_session, SOUP_SESSION_SSL_USE_SYSTEM_CA_FILE, TRUE, NULL);
+
+  if (certificates && certificates->client_cert_file)
+    {
+      g_autoptr(GTlsCertificate) client_cert = NULL;
+      g_autoptr(GTlsInteraction) interaction = NULL;
+
+      client_cert = g_tls_certificate_new_from_files (certificates->client_cert_file,
+                                                      certificates->client_key_file, error);
+      if (!client_cert)
+        return NULL;
+
+      interaction = G_TLS_INTERACTION (flatpak_tls_interaction_new (client_cert));
+      g_object_set (soup_session, SOUP_SESSION_TLS_INTERACTION, interaction, NULL);
+    }
+
   http_proxy = g_getenv ("http_proxy");
   if (http_proxy)
     {
@@ -793,6 +1131,10 @@ flatpak_create_soup_session (const char *user_agent)
   if (g_getenv ("OSTREE_DEBUG_HTTP"))
     soup_session_add_feature (soup_session, (SoupSessionFeature *) soup_logger_new (SOUP_LOGGER_LOG_BODY, 500));
 
+  g_hash_table_replace (session->soup_sessions,
+                        certificates ? flatpak_certificates_copy (certificates) : NULL,
+                        soup_session);
+
   return soup_session;
 }
 
@@ -805,9 +1147,11 @@ flatpak_create_http_session (const char *user_agent)
 void
 flatpak_http_session_free (FlatpakHttpSession* http_session)
 {
-  SoupSession *soup_session = (SoupSession *)http_session;
+  FlatpakSoupSession *session = (FlatpakSoupSession *)http_session;
 
-  g_object_unref (soup_session);
+  g_hash_table_destroy (session->soup_sessions);
+  g_free (session->user_agent);
+  g_free (session);
 }
 
 static gboolean
@@ -816,11 +1160,15 @@ flatpak_download_http_uri_once (FlatpakHttpSession    *http_session,
                                 const char            *uri,
                                 GError               **error)
 {
-  SoupSession *soup_session = (SoupSession *)http_session;
+  SoupSession *soup_session;
   g_autoptr(SoupRequestHTTP) request = NULL;
   SoupMessage *m;
 
   g_info ("Loading %s using libsoup", uri);
+
+  soup_session = get_soup_session ((FlatpakSoupSession *)http_session, data->certificates, error);
+  if (!soup_session)
+    return FALSE;
 
   request = soup_session_request_http (soup_session,
                                        (data->flags & FLATPAK_HTTP_FLAGS_HEAD) != 0 ? "HEAD" : "GET",
@@ -927,6 +1275,7 @@ flatpak_http_should_retry_request (const GError *error,
 GBytes *
 flatpak_load_uri_full (FlatpakHttpSession    *http_session,
                        const char            *uri,
+                       FlatpakCertificates   *certificates,
                        FlatpakHTTPFlags       flags,
                        const char            *auth,
                        const char            *token,
@@ -965,6 +1314,7 @@ flatpak_load_uri_full (FlatpakHttpSession    *http_session,
   data.last_progress_time = g_get_monotonic_time ();
   data.cancellable = cancellable;
   data.flags = flags;
+  data.certificates = certificates;
   data.auth = auth;
   data.token = token;
 
@@ -1018,7 +1368,7 @@ flatpak_load_uri (FlatpakHttpSession    *http_session,
                   GCancellable          *cancellable,
                   GError               **error)
 {
-  return flatpak_load_uri_full (http_session, uri, flags, NULL, token,
+  return flatpak_load_uri_full (http_session, uri, NULL, flags, NULL, token,
                                 progress, user_data, NULL, out_content_type, NULL,
                                 cancellable, error);
 }
@@ -1026,6 +1376,7 @@ flatpak_load_uri (FlatpakHttpSession    *http_session,
 gboolean
 flatpak_download_http_uri (FlatpakHttpSession    *http_session,
                            const char            *uri,
+                           FlatpakCertificates   *certificates,
                            FlatpakHTTPFlags       flags,
                            GOutputStream         *out,
                            const char            *token,
@@ -1047,6 +1398,7 @@ flatpak_download_http_uri (FlatpakHttpSession    *http_session,
   data.user_data = user_data;
   data.last_progress_time = g_get_monotonic_time ();
   data.cancellable = cancellable;
+  data.certificates = certificates;
   data.flags = flags;
   data.token = token;
 
@@ -1384,6 +1736,7 @@ set_cache_http_data_from_headers (CacheHttpData *cache_data,
 gboolean
 flatpak_cache_http_uri (FlatpakHttpSession    *http_session,
                         const char            *uri,
+                        FlatpakCertificates   *certificates,
                         FlatpakHTTPFlags       flags,
                         int                    dest_dfd,
                         const char            *dest_subpath,
@@ -1444,6 +1797,7 @@ flatpak_cache_http_uri (FlatpakHttpSession    *http_session,
   data.last_progress_time = g_get_monotonic_time ();
   data.cancellable = cancellable;
   data.flags = flags;
+  data.certificates = certificates;
 
   data.cache_data = cache_data;
 
