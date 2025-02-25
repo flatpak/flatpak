@@ -728,13 +728,14 @@
             <para>
                 The default policy for the session bus only allows the
                 application to own its own application ID, its
-                subnames and its own application id as a subname of 
-                "org.mpris.MediaPlayer2". For instance if the app is called
-                "org.my.App", it can only own "org.my.App", "org.my.App.*"
-                and "org.mpris.MediaPlayer2.org.my.App".
+                subnames and its own application ID as a subname of
+                <option>org.mpris.MediaPlayer2</option>. For instance if the app is called
+                <option>org.my.App</option>, it can only own <option>org.my.App</option>,
+                <option>org.my.App.*</option>
+                and <option>org.mpris.MediaPlayer2.org.my.App</option>.
                 It is only allowed to talk to names matching those patterns, plus
-                the bus itself (org.freedesktop.DBus)
-                and the portal APIs (bus names of the form org.freedesktop.portal.*).
+                the bus itself (<option>org.freedesktop.DBus</option>)
+                and the portal APIs (bus names of the form <option>org.freedesktop.portal.*</option>).
             </para>
             <para>
                 Additionally the app is always allowed to reply to
@@ -743,44 +744,44 @@
                 are allowed to talk to your app.
             </para>
             <para>
-                If the [Session Bus Policy] group is present, it provides
+                If the <option>[Session Bus Policy]</option> group is present, it provides
                 policy for session bus access.
             </para>
             <para>
                 Each key in this group has the form of a D-Bus bus name or
                 prefix thereof, for example <option>org.gnome.SessionManager</option>
-                or <option>org.freedesktop.portal.*</option>
+                or <option>org.freedesktop.portal.*</option>.
             </para>
             <para>
-                The possible values for entry are, in increasing order or
-                access:
+                The possible values for an entry are the following, in increasing order of
+                access. Each value implies all the access from any lower values:
             </para>
             <variablelist>
                 <varlistentry>
                     <term><option>none</option></term>
                     <listitem><para>
-                        The bus name or names in question is invisible to the application.
+                        The bus name is invisible to the application.
                         Available since 0.2.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>see</option></term>
                     <listitem><para>
-                        The bus name or names can be enumerated by the application.
+                        The bus name can be enumerated by the application.
                         Available since 0.2.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>talk</option></term>
                     <listitem><para>
-                        The application can send messages/ and receive replies and signals from the bus name or names.
+                        The application can send messages to, and receive replies and signals from, the bus name.
                         Available since 0.2.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>own</option></term>
                     <listitem><para>
-                        The application can own the bus name or names (as well as all the above).
+                        The application can own the bus name.
                         Available since 0.2.
                     </para></listitem>
                 </varlistentry>
@@ -791,11 +792,12 @@
             <para>
                 If the <option>sockets</option> key is not allowing full access
                 to the D-Bus system bus, then flatpak does not make the system
-                bus available unless the [System Bus Policy] group is present
+                bus available unless the <option>[System Bus Policy]</option> group is present
                 and provides a policy for filtered access. Available since 0.2.
             </para>
             <para>
-                Entries in this group have the same form as for the [Session Bus Policy] group.
+                Entries in this group have the same form as for the
+                <option>[Session Bus Policy]</option> group.
                 However, the app has no permissions by default.
             </para>
         </refsect2>
