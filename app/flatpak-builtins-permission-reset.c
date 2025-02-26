@@ -68,7 +68,8 @@ remove_for_app (XdpDbusPermissionStore *store,
       GVariantIter iter;
       char *key;
       GVariant *value;
-      GVariantBuilder builder;
+      g_auto(GVariantBuilder) builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
+      gboolean need_to_set = FALSE;
 
       g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sas}"));
 
@@ -81,16 +82,22 @@ remove_for_app (XdpDbusPermissionStore *store,
       while (g_variant_iter_loop (&iter, "{s@as}", &key, &value))
         {
           if (app_id == NULL || strcmp (key, app_id) == 0)
-            continue;
+            {
+              need_to_set = TRUE;
+              continue;
+            }
 
           g_variant_builder_add (&builder, "{s@as}", key, value);
         }
 
-      if (!xdp_dbus_permission_store_call_set_sync (store, table, TRUE, ids[i],
-                                                    g_variant_builder_end (&builder),
-                                                    data ? data : g_variant_new_byte (0),
-                                                    NULL, error))
-        return FALSE;
+      if (need_to_set)
+        {
+          if (!xdp_dbus_permission_store_call_set_sync (store, table, TRUE, ids[i],
+                                                        g_variant_builder_end (&builder),
+                                                        data ? data : g_variant_new_byte (0),
+                                                        NULL, error))
+            return FALSE;
+        }
     }
 
   return TRUE;
