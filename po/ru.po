@@ -3779,7 +3779,7 @@ msgstr "Перейти к пользовательской установке с
 
 #: app/flatpak-cli-transaction.c:1524
 msgid "Proceed with these changes to the system installation?"
-msgstr "Перейти к системой установке с этими изменениями?"
+msgstr "Перейти к системной установке с этими изменениями?"
 
 #: app/flatpak-cli-transaction.c:1526
 #, c-format
