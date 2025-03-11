@@ -2966,9 +2966,6 @@ on_bus_acquired (GDBusConnection *connection,
 
   g_object_set_data_full (G_OBJECT (portal), "track-alive", GINT_TO_POINTER (42), skeleton_died_cb);
 
-  g_dbus_interface_skeleton_set_flags (G_DBUS_INTERFACE_SKELETON (portal),
-                                       G_DBUS_INTERFACE_SKELETON_FLAGS_HANDLE_METHOD_INVOCATIONS_IN_THREAD);
-
   portal_flatpak_set_version (PORTAL_FLATPAK (portal), 7);
   portal_flatpak_set_supports (PORTAL_FLATPAK (portal), supports);
 
