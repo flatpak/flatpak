@@ -264,3 +264,22 @@ jobs:
       with:
         name: test logs
         path: test-logs
+
+  # This is a workaround to CodeQL not reporting status to the
+  # merge queue.
+  check_codeql_status:
+    name: Check CodeQL Status
+    needs: clang
+    permissions:
+      contents: read
+      checks: read
+      pull-requests: read
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'pull_request' }}
+    steps:
+    - name: Check CodeQL Status
+      uses: eldrick19/code-scanning-status-checker@v2
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        pr_number: ${{ github.event.pull_request.number }}
+        repo: ${{ github.repository }}
