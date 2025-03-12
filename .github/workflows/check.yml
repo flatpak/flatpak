@@ -31,6 +31,9 @@ on:
     - flatpak-1.10.x
     - flatpak-1.12.x
     - flatpak-1.14.x
+  merge_group:
+    types:
+    - checks_requested
 
 permissions:
   contents: read
