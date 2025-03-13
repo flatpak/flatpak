@@ -13,7 +13,30 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Block Autosquash Commits
-        uses: xt0rted/block-autosquash-commits-action@v2.2.0
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v4
+
+      - name: Determine PR number
+        run: |
+          if [[ "${{ github.event_name }}" == "merge_group" ]]; then
+            echo "Running in merge_group context"
+            echo "Branch ref: $GITHUB_REF_NAME"
+            PR_NUMBER=$(echo "$GITHUB_REF_NAME" | grep -oP 'pr-\K[0-9]+')
+          elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "Running in pull_request context"
+            PR_NUMBER="${{ github.event.pull_request.number }}"
+          else
+            echo "Unsupported event: ${{ github.event_name }}"
+            exit 1
+          fi
+
+          echo "Resolved PR Number: $PR_NUMBER"
+          echo "PR_NUMBER=$PR_NUMBER" >> "$GITHUB_ENV"
+
+      - name: Check for fixup/squash commits in PR ${{ env.PR_NUMBER }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr view "$PR_NUMBER" --json commits --jq '.commits[].messageHeadline' | \
+          grep -E '^(fixup!|squash!)' && \
+          { echo "❌ Found fixup!/squash! commits in PR #$PR_NUMBER"; exit 1; } || \
+          echo "✅ PR #$PR_NUMBER is clean!"
