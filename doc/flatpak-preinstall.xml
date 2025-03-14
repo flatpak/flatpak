@@ -1,0 +1,276 @@
+<?xml version='1.0'?> <!--*-nxml-*-->
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+    "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+
+<refentry id="flatpak-preinstall">
+
+    <refentryinfo>
+        <title>flatpak preinstall</title>
+        <productname>flatpak</productname>
+
+        <authorgroup>
+            <author>
+                <contrib>Developer</contrib>
+                <firstname>Kalev</firstname>
+                <surname>Lember</surname>
+                <email>klember@redhat.com</email>
+            </author>
+        </authorgroup>
+    </refentryinfo>
+
+    <refmeta>
+        <refentrytitle>flatpak preinstall</refentrytitle>
+        <manvolnum>1</manvolnum>
+    </refmeta>
+
+    <refnamediv>
+        <refname>flatpak-preinstall</refname>
+        <refpurpose>Install flatpaks that are part of the operating system</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+            <cmdsynopsis>
+                <command>flatpak preinstall</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+            </cmdsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+        <title>Description</title>
+
+        <para>
+          This command manages flatpaks that are part of the operating system. If no options are given, running <command>flatpak preinstall</command> will synchronize (install and remove) flatpaks to match the set that the OS vendor has chosen.
+        </para>
+
+        <para>
+          Preinstalled flatpaks are defined by dropping .preinstall files into the directories <filename>/usr/share/flatpak/preinstall.d/</filename> and <filename>/etc/flatpak/preinstall.d/</filename>. The OS runs <command>flatpak preinstall -y</command> (or its GUI equivalent) on system startup, which then does the actual installation.
+        </para>
+
+        <para>
+          This system allows the OS vendor to define the list of flatpaks that are installed together with the OS, and also makes it possible for the OS vendor to make changes to the list in the future, which is then applied once <command>flatpak preinstall</command> is run next time.
+
+          Users can opt out of preinstalled flatpaks by simply uninstalling them, at which point they won't get automatically reinstalled again.
+        </para>
+    </refsect1>
+
+    <refsect1>
+        <title>File format</title>
+
+        <para>
+            The .preinstall file is using the same .ini file format that is used for systemd unit files or application .desktop files.
+        </para>
+
+        <refsect2>
+            <title>[Flatpak Preinstall NAME]</title>
+
+            <para>
+                The NAME is the fully qualified name of the runtime or application. All the information for a single runtime or application is contained in one [Flatpak Preinstall NAME] group. Multiple groups can be defined in a single file.
+            </para>
+            <para>
+                The following keys can be present in this group:
+            </para>
+            <variablelist>
+                <varlistentry>
+                    <term><option>Install</option> (boolean)</term>
+                    <listitem><para>
+                        Whether this group should be installed. If this key is not specified, the group will be installed.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>Branch</option> (string)</term>
+                    <listitem><para>
+                        The name of the branch from which to install the application or runtime. If this key is not specified, the "master" branch is used.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>IsRuntime</option> (boolean)</term>
+                    <listitem><para>
+                        Whether this group refers to a runtime. If this key is not specified, the group is assumed to refer to an application.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>CollectionID</option> (string)</term>
+                    <listitem><para>
+                        The collection ID of the remote to use, if it has one.
+                    </para></listitem>
+                </varlistentry>
+            </variablelist>
+        </refsect2>
+    </refsect1>
+
+    <refsect1>
+        <title>Example</title>
+<programlisting>
+[Flatpak Preinstall org.gnome.Loupe]
+Branch=stable
+IsRuntime=false
+</programlisting>
+    </refsect1>
+
+    <refsect1>
+        <title>Options</title>
+
+        <para>The following options are understood:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term><option>-h</option></term>
+                <term><option>--help</option></term>
+
+                <listitem><para>
+                    Show help options and exit.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--reinstall</option></term>
+
+                <listitem><para>
+                  Uninstall first if already installed.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-u</option></term>
+                <term><option>--user</option></term>
+
+                <listitem><para>
+                    Install the application or runtime in a per-user installation.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--system</option></term>
+
+                <listitem><para>
+                    Install the application or runtime in the default system-wide installation.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--installation=NAME</option></term>
+
+                <listitem><para>
+                    Install the application or runtime in a system-wide installation
+                    specified by <arg choice="plain">NAME</arg> among those defined in
+                    <filename>/etc/flatpak/installations.d/</filename>. Using
+                    <option>--installation=default</option> is equivalent to using
+                    <option>--system</option>.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--no-deploy</option></term>
+
+                <listitem><para>
+                    Download the latest version, but don't deploy it.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--no-pull</option></term>
+
+                <listitem><para>
+                    Don't download the latest version, deploy whatever is locally available.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--no-related</option></term>
+
+                <listitem><para>
+                    Don't download related extensions, such as the locale data.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--no-deps</option></term>
+
+                <listitem><para>
+                    Don't verify runtime dependencies when installing.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--sideload-repo=PATH</option></term>
+
+                <listitem><para>
+                    Adds an extra local ostree repo as a source for installation. This is equivalent
+                    to using the <filename>sideload-repos</filename> directories (see
+                    <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>),
+                    but can be done on a per-command basis. Any path added here is used in addition
+                    to ones in those directories.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--include-sdk</option></term>
+
+                <listitem><para>
+                  For each app being installed, also installs the SDK that was used to build it.
+                  Implies <option>--or-update</option>; incompatible with <option>--no-deps</option>.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--include-debug</option></term>
+
+                <listitem><para>
+                  For each ref being installed, as well as all dependencies, also installs its
+                  debug info. Implies <option>--or-update</option>; incompatible with
+                  <option>--no-deps</option>.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-y</option></term>
+                <term><option>--assumeyes</option></term>
+                <listitem><para>
+                    Automatically answer yes to all questions (or pick the most prioritized answer). This is useful for automation.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--noninteractive</option></term>
+                <listitem><para>
+                    Produce minimal output and avoid most questions. This is suitable for use in
+                    non-interactive situations, e.g. in a build script.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-v</option></term>
+                <term><option>--verbose</option></term>
+
+                <listitem><para>
+                    Print debug information during command processing.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--ostree-verbose</option></term>
+
+                <listitem><para>
+                    Print OSTree debug information during command processing.
+                </para></listitem>
+            </varlistentry>
+        </variablelist>
+    </refsect1>
+
+    <refsect1>
+        <title>Examples</title>
+
+        <para>
+            <command>$ flatpak preinstall</command>
+        </para>
+    </refsect1>
+
+    <refsect1>
+        <title>See also</title>
+
+        <para>
+            <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+        </para>
+    </refsect1>
+
+</refentry>
