@@ -398,6 +398,7 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
           int i;
           static const char * const dri_devices[] = {
             "/dev/dri",
+            "/dev/udmabuf",
             /* mali */
             "/dev/mali",
             "/dev/mali0",
