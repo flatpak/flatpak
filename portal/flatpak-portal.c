@@ -76,7 +76,7 @@ static int opt_poll_timeout;
 static gboolean opt_poll_when_metered;
 static FlatpakSpawnSupportFlags supports = 0;
 
-G_LOCK_DEFINE (update_monitors); /* This protects the three variables below */
+G_LOCK_DEFINE_STATIC (update_monitors); /* This protects the three variables below */
 static GHashTable *update_monitors;
 static guint update_monitors_timeout = 0;
 static gboolean update_monitors_timeout_running_thread = FALSE;
@@ -2904,9 +2904,6 @@ on_bus_acquired (GDBusConnection *connection,
                                       NULL, NULL);
 
   g_object_set_data_full (G_OBJECT (portal), "track-alive", GINT_TO_POINTER (42), skeleton_died_cb);
-
-  g_dbus_interface_skeleton_set_flags (G_DBUS_INTERFACE_SKELETON (portal),
-                                       G_DBUS_INTERFACE_SKELETON_FLAGS_HANDLE_METHOD_INVOCATIONS_IN_THREAD);
 
   portal_flatpak_set_version (PORTAL_FLATPAK (portal), 6);
   portal_flatpak_set_supports (PORTAL_FLATPAK (portal), supports);
