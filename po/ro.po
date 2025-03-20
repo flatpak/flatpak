@@ -1585,7 +1585,7 @@ msgstr "Arată arhitectura"
 #: app/flatpak-builtins-ps.c:52 app/flatpak-builtins-remote-ls.c:70
 #: app/flatpak-builtins-search.c:46 app/flatpak-cli-transaction.c:1426
 msgid "Branch"
-msgstr "Ramifică"
+msgstr "Ramură"
 
 #: app/flatpak-builtins-history.c:62 app/flatpak-builtins-list.c:61
 #: app/flatpak-builtins-remote-ls.c:70
