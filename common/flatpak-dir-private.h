@@ -663,6 +663,7 @@ gboolean              flatpak_dir_deploy                                    (Fla
                                                                              const char                    *checksum_or_latest,
                                                                              const char * const            *subpaths,
                                                                              const char * const            *previous_ids,
+                                                                             const char                    *parental_controls_action_id,
                                                                              GCancellable                  *cancellable,
                                                                              GError                       **error);
 gboolean              flatpak_dir_deploy_update                             (FlatpakDir                    *self,

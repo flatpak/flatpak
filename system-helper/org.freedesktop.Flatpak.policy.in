@@ -284,13 +284,39 @@
              * Set the malcontent `is-system-installation-allowed` property of
                all users’ parental controls policies to true.
      -->
-    <description>Override parental controls</description>
+    <description>Override parental controls for installs</description>
     <message>Authentication is required to install software which is restricted by your parental controls policy</message>
     <icon_name>package-x-generic</icon_name>
     <defaults>
       <allow_any>auth_admin</allow_any>
       <allow_inactive>auth_admin</allow_inactive>
       <allow_active>auth_admin</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.imply">org.freedesktop.Flatpak.override-parental-controls-update</annotate>
+  </action>
+
+  <action id="org.freedesktop.Flatpak.override-parental-controls-update">
+    <!-- SECURITY:
+          - This is like org.freedesktop.Flatpak.override-parental-controls, but
+            it’s queried for app updates, whereas the former is queried for app
+            installs.
+          - As with the above action, this one is only queried if
+            org.freedesktop.Flatpak.app-update has allowed the app update, and
+            only if the app being updated has too extreme content for the user
+            who is trying to update it.
+          - The default policy for this is to *allow* updates to ‘too extreme’
+            apps by default, on the basis that having an out-of-date (i.e.
+            insecure or unsupported) app is a worse outcome than automatically
+            installing an update which has radically different content from the
+            version of the app which the parent originally vetted and installed.
+     -->
+    <description>Override parental controls for updates</description>
+    <message>Authentication is required to update software which is restricted by your parental controls policy</message>
+    <icon_name>package-x-generic</icon_name>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>yes</allow_active>
     </defaults>
   </action>
 
