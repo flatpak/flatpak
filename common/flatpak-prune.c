@@ -779,28 +779,28 @@ flatpak_repo_prune (OstreeRepo    *repo,
     g_clear_pointer (&timer, g_timer_destroy);
   }
 
-  {
-    /* exclusive lock in this region, see locking strategy above */
-    glnx_autofd int lock_fd = -1;
+  if (!dry_run)
+    {
+      /* exclusive lock in this region, see locking strategy above */
+      glnx_autofd int lock_fd = -1;
 
-    if (!get_repo_lock (repo, LOCK_EX, &lock_fd, cancellable, error))
-      return FALSE;
+      if (!get_repo_lock (repo, LOCK_EX, &lock_fd, cancellable, error))
+        return FALSE;
 
-    timer = g_timer_new ();
-    g_info ("Finding reachable objects, locked (depth=%d)", depth);
-    g_timer_start (timer);
+      timer = g_timer_new ();
+      g_info ("Finding reachable objects, locked (depth=%d)", depth);
+      g_timer_start (timer);
 
-    if (!traverse_reachable_refs_unlocked (repo, depth, reachable, cancellable, error))
-      return FALSE;
+      if (!traverse_reachable_refs_unlocked (repo, depth, reachable, cancellable, error))
+        return FALSE;
 
-    data.repo = repo;
-    data.reachable = reachable;
-    data.dont_prune = dry_run;
+      data.repo = repo;
+      data.reachable = reachable;
+      data.dont_prune = dry_run;
 
-    g_timer_stop (timer);
-    g_info ("Elapsed time: %.1f sec",  g_timer_elapsed (timer, NULL));
+      g_timer_stop (timer);
+      g_info ("Elapsed time: %.1f sec",  g_timer_elapsed (timer, NULL));
 
-    if (!dry_run)
       {
         g_info ("Pruning unreachable objects");
         g_timer_start (timer);
@@ -811,7 +811,7 @@ flatpak_repo_prune (OstreeRepo    *repo,
         g_timer_stop (timer);
         g_info ("Elapsed time: %.1f sec",  g_timer_elapsed (timer, NULL));
       }
-  }
+    }
 
   /* Prune static deltas outside lock to avoid conflict with its exclusive lock */
   if (!dry_run)
