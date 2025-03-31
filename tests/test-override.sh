@@ -17,7 +17,7 @@ reset_overrides () {
     assert_file_empty info
 }
 
-echo "1..18"
+echo "1..19"
 
 setup_repo
 install_repo
@@ -162,6 +162,28 @@ else
 
   ok "temporary environment variables"
 fi
+
+reset_overrides
+
+${FLATPAK} override --user --command='echo --foo' org.test.Hello
+${FLATPAK} override --user --show org.test.Hello > override
+
+assert_file_has_content override "^\[Context\]$"
+assert_file_has_content override "^command=echo --foo$"
+
+${FLATPAK} run org.test.Hello > out
+assert_file_has_content out "^--foo$"
+
+${FLATPAK} run --command=hello.sh org.test.Hello > out
+assert_file_has_content out "^--foo$"
+
+${FLATPAK} run org.test.Hello --bar > out
+assert_file_has_content out "^--foo --bar$"
+
+${FLATPAK} run --command=hello.sh org.test.Hello --bar > out
+assert_file_has_content out "^--foo --bar$"
+
+ok "override --command"
 
 reset_overrides
 
