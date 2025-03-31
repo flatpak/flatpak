@@ -2716,7 +2716,8 @@ read_variant (GInputStream *in,
               GError **error)
 {
   guint32 size;
-  guchar *data;
+  g_autofree guchar *data = NULL;
+  guchar *data_owned;
   gsize bytes_read;
 
   if (!g_input_stream_read_all (in, &size, 4, &bytes_read, cancellable, error))
@@ -2746,8 +2747,10 @@ read_variant (GInputStream *in,
       return NULL;
     }
 
+  data_owned = g_steal_pointer (&data);
+
   return g_variant_ref_sink (g_variant_new_from_data (G_VARIANT_TYPE("(uuuuss)"),
-                                                      data, size, FALSE, g_free, data));
+                                                      data_owned, size, FALSE, g_free, data_owned));
 }
 
 /* We do the actual update out of process (in do_update_child_process,
