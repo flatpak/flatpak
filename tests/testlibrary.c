@@ -4430,6 +4430,7 @@ test_overrides (void)
                          "--filesystem=~/foo:ro",
                          "--filesystem=xdg-download/subdir:create",
                          "--env=FOO=BAR",
+                         "--command=hello.sh",
                          "--own-name=foo.bar.baz",
                          "--talk-name=hello.bla.bla.*",
                          "--socket=wayland",
@@ -4480,6 +4481,9 @@ test_overrides (void)
   res = g_key_file_load_from_data (overrides, data, -1, 0, &error);
   g_assert_no_error (error);
   g_assert_true (res);
+
+  assert_cmpstr_free_lhs (g_key_file_get_string (overrides, "Context", "command", &error),
+                          ==, "hello.sh");
 
   assert_cmpstr_free_lhs (g_key_file_get_string (overrides, "Context", "devices", &error),
                           ==, "dri;!kvm;");

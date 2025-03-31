@@ -327,6 +327,16 @@ key=v1;v2;
             </varlistentry>
 
             <varlistentry>
+                <term><option>--command=COMMAND</option></term>
+
+                <listitem><para>
+                    Execute the string <arg choice="plain">COMMAND</arg> to launch the application,
+                    which must be an executable name followed by zero or more arguments.
+                    This override takes maximum precedence, but existing launch arguments are preserved.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--own-name=NAME</option></term>
 
                 <listitem><para>

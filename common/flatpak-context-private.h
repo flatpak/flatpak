@@ -91,6 +91,7 @@ struct FlatpakContext
   FlatpakContextFeatures features;
   FlatpakContextFeatures features_valid;
   GHashTable            *env_vars;
+  GHashTable            *command;
   GHashTable            *persistent;
   GHashTable            *filesystems;
   GHashTable            *session_bus_policy;

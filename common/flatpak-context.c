@@ -104,6 +104,7 @@ flatpak_context_new (void)
 
   context = g_slice_new0 (FlatpakContext);
   context->env_vars = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+  context->command = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
   context->persistent = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   /* filename or special filesystem name => FlatpakFilesystemMode */
   context->filesystems = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
@@ -124,6 +125,7 @@ void
 flatpak_context_free (FlatpakContext *context)
 {
   g_hash_table_destroy (context->env_vars);
+  g_hash_table_destroy (context->command);
   g_hash_table_destroy (context->persistent);
   g_hash_table_destroy (context->filesystems);
   g_hash_table_destroy (context->session_bus_policy);
@@ -436,6 +438,13 @@ flatpak_context_set_env_var (FlatpakContext *context,
                              const char     *value)
 {
   g_hash_table_insert (context->env_vars, g_strdup (name), g_strdup (value));
+}
+
+static void
+flatpak_context_set_command (FlatpakContext *context,
+                             const char     *value)
+{
+  g_hash_table_insert (context->command, g_strdup (FLATPAK_METADATA_KEY_COMMAND), g_strdup (value));
 }
 
 void
@@ -1077,6 +1086,10 @@ flatpak_context_merge (FlatpakContext *context,
   while (g_hash_table_iter_next (&iter, &key, &value))
     g_hash_table_insert (context->env_vars, g_strdup (key), g_strdup (value));
 
+  g_hash_table_iter_init (&iter, other->command);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    g_hash_table_insert (context->command, g_strdup (key), g_strdup (value));
+
   g_hash_table_iter_init (&iter, other->persistent);
   while (g_hash_table_iter_next (&iter, &key, &value))
     g_hash_table_insert (context->persistent, g_strdup (key), value);
@@ -1418,6 +1431,25 @@ option_unset_env_cb (const gchar *option_name,
 }
 
 static gboolean
+option_command_cb (const gchar *option_name,
+                   const gchar *value,
+                   gpointer     data,
+                   GError     **error)
+{
+  FlatpakContext *context = data;
+
+  if (value[0] == '\0')
+    {
+      g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
+                   "Command cannot be empty");
+      return FALSE;
+    }
+
+  flatpak_context_set_command (context, value);
+  return TRUE;
+}
+
+static gboolean
 option_own_name_cb (const gchar *option_name,
                     const gchar *value,
                     gpointer     data,
@@ -1680,6 +1712,7 @@ static GOptionEntry context_options[] = {
   { "env", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_env_cb, N_("Set environment variable"), N_("VAR=VALUE") },
   { "env-fd", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_env_fd_cb, N_("Read environment variables in env -0 format from FD"), N_("FD") },
   { "unset-env", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_unset_env_cb, N_("Remove variable from environment"), N_("VAR") },
+  { "command", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_command_cb, N_("Set launch command (including arguments)"), N_("COMMAND") },
   { "own-name", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_own_name_cb, N_("Allow app to own name on the session bus"), N_("DBUS_NAME") },
   { "talk-name", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_talk_name_cb, N_("Allow app to talk to name on the session bus"), N_("DBUS_NAME") },
   { "no-talk-name", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_no_talk_name_cb, N_("Don't allow app to talk to name on the session bus"), N_("DBUS_NAME") },
@@ -1951,6 +1984,16 @@ flatpak_context_load_metadata (FlatpakContext *context,
 
           flatpak_context_set_env_var (context, key, value);
         }
+    }
+
+  if (g_key_file_has_key (metakey, FLATPAK_METADATA_GROUP_CONTEXT, FLATPAK_METADATA_KEY_COMMAND, NULL))
+    {
+      g_autofree char *command = g_key_file_get_string (metakey, FLATPAK_METADATA_GROUP_CONTEXT,
+                                                        FLATPAK_METADATA_KEY_COMMAND, error);
+      if (command == NULL)
+        return FALSE;
+
+      flatpak_context_set_command (context, command);
     }
 
   /* unset-environment is higher precedence than Environment, so that
@@ -2330,6 +2373,13 @@ flatpak_context_save_metadata (FlatpakContext *context,
     {
       g_key_file_remove_key (metakey, FLATPAK_METADATA_GROUP_CONTEXT,
                              FLATPAK_METADATA_KEY_UNSET_ENVIRONMENT, NULL);
+    }
+
+  g_hash_table_iter_init (&iter, context->command);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+      g_key_file_set_string (metakey, FLATPAK_METADATA_GROUP_CONTEXT,
+                             FLATPAK_METADATA_KEY_COMMAND, value);
     }
 
   groups = g_key_file_get_groups (metakey, NULL);
@@ -2721,6 +2771,7 @@ void
 flatpak_context_reset_non_permissions (FlatpakContext *context)
 {
   g_hash_table_remove_all (context->env_vars);
+  g_hash_table_remove_all (context->command);
 }
 
 void
