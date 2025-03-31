@@ -753,6 +753,35 @@ flatpak_run_apply_env_vars (FlatpakBwrap *bwrap, FlatpakContext *context)
 }
 
 gboolean
+flatpak_run_apply_command (FlatpakBwrap *bwrap, FlatpakContext *context)
+{
+  GHashTableIter iter;
+  gpointer key, value;
+
+  g_hash_table_iter_init (&iter, context->command);
+  if (!g_hash_table_iter_next (&iter, &key, &value))
+    return FALSE;
+
+  const char *val = value;
+  gint argc;
+  g_auto(GStrv) argv = NULL;
+
+  if (!g_shell_parse_argv (val, &argc, &argv, NULL))
+    return FALSE;
+
+  flatpak_bwrap_add_args (bwrap, "--", argv[0], NULL);
+
+  int i;
+
+  for (i = 1; i < argc; i++)
+    {
+      flatpak_bwrap_add_arg (bwrap, argv[i]);
+    }
+
+  return TRUE;
+}
+
+gboolean
 flatpak_ensure_data_dir (GFile        *app_id_dir,
                          GCancellable *cancellable,
                          GError      **error)
@@ -3486,7 +3515,8 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
   if (!flatpak_bwrap_bundle_args (bwrap, 1, -1, FALSE, error))
     return FALSE;
 
-  flatpak_bwrap_add_args (bwrap, "--", command, NULL);
+  if (!flatpak_run_apply_command (bwrap, app_context))
+    flatpak_bwrap_add_args (bwrap, "--", command, NULL);
 
   if (!add_rest_args (bwrap, app_id,
                       exports, (flags & FLATPAK_RUN_FLAG_FILE_FORWARDING) != 0,

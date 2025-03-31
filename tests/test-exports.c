@@ -172,6 +172,7 @@ test_empty_context (void)
   gboolean home_access = FALSE;
 
   g_assert_cmpuint (g_hash_table_size (context->env_vars), ==, 0);
+  g_assert_cmpuint (g_hash_table_size (context->command), ==, 0);
   g_assert_cmpuint (g_hash_table_size (context->persistent), ==, 0);
   g_assert_cmpuint (g_hash_table_size (context->filesystems), ==, 0);
   g_assert_cmpuint (g_hash_table_size (context->session_bus_policy), ==, 0);
@@ -262,6 +263,10 @@ test_full_context (void)
                         FLATPAK_METADATA_KEY_UNSET_ENVIRONMENT,
                         "LD_PRELOAD;LD_AUDIT;");
   g_key_file_set_value (keyfile,
+                        FLATPAK_METADATA_GROUP_CONTEXT,
+                        FLATPAK_METADATA_KEY_COMMAND,
+                        "examplebinary --foo --bar");
+  g_key_file_set_value (keyfile,
                         FLATPAK_METADATA_GROUP_PREFIX_POLICY "MyPolicy",
                         "Colours", "blue;green;");
 
@@ -312,6 +317,11 @@ test_full_context (void)
   g_assert_true (g_hash_table_contains (context->env_vars, "HYPOTHETICAL_PATH"));
   g_assert_cmpstr (g_hash_table_lookup (context->env_vars, "HYPOTHETICAL_PATH"),
                    ==, "/foo:/bar");
+
+  g_assert_cmpuint (g_hash_table_size (context->command), ==, 1);
+  g_assert_true (g_hash_table_contains (context->command, FLATPAK_METADATA_KEY_COMMAND));
+  g_assert_cmpstr (g_hash_table_lookup (context->command, FLATPAK_METADATA_KEY_COMMAND),
+                   ==, "examplebinary --foo --bar");
 
   exports = flatpak_context_get_exports (context, "com.example.App");
   g_assert_nonnull (exports);
