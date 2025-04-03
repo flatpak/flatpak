@@ -1,14 +1,14 @@
 # Georgian translation for flatpak.
 # Copyright (C) 2023 flatpak authors.
 # This file is distributed under the same license as the flatpak package.
-# Ekaterine Papava <papava.e@gtu.ge>, 2023-2024.
+# Ekaterine Papava <papava.e@gtu.ge>, 2023-2025.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: flatpak git\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2025-01-09 13:37-0300\n"
-"PO-Revision-Date: 2024-07-17 00:02+0200\n"
+"PO-Revision-Date: 2025-04-03 10:16+0200\n"
 "Last-Translator: Ekaterine Papava <papava.e@gtu.ge>\n"
 "Language-Team: Georgian <(nothing)>\n"
 "Language: ka\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.3.2\n"
+"X-Generator: Poedit 3.5\n"
 
 #: app/flatpak-builtins-build-bundle.c:58
 msgid "Export runtime instead of app"
@@ -4469,9 +4469,8 @@ msgid "Don't allow app to talk to name on the system bus"
 msgstr "აპისთვის სისტემურ მატარებელზე სახელთან ლაპარაკის აკრძალვა"
 
 #: common/flatpak-context.c:1689
-#, fuzzy
 msgid "Allow app to own name on the a11y bus"
-msgstr "აპისთვის სისტემურ მატარებელზე საკუთარი სახელის ქონის ნების დართვა"
+msgstr "აპისთვის a11y მატარებელზე საკუთარი სახელის ქონის ნების დართვა"
 
 #: common/flatpak-context.c:1690
 msgid "Add generic policy option"
@@ -4487,27 +4486,28 @@ msgstr "ზოგადი პოლიტიკის პარამეტრ�
 
 #: common/flatpak-context.c:1692
 msgid "Add USB device to enumerables"
-msgstr ""
+msgstr "USB მოწყობილობის დამატება ჩამოთვლადებსი"
 
 #: common/flatpak-context.c:1692 common/flatpak-context.c:1693
 msgid "VENDOR_ID:PRODUCT_ID"
-msgstr ""
+msgstr "VENDOR_ID:PRODUCT_ID"
 
 #: common/flatpak-context.c:1693
 msgid "Add USB device to hidden list"
-msgstr ""
+msgstr "USB მოწყობილობის დამატება დამალულების სიაში"
 
 #: common/flatpak-context.c:1694
 msgid "A list of USB devices that are enumerable"
-msgstr ""
+msgstr "USB მოწყობილობების სია, რომლებიც ჩამოთვლადია"
 
 #: common/flatpak-context.c:1694
 msgid "LIST"
-msgstr ""
+msgstr "სია"
 
 #: common/flatpak-context.c:1695
 msgid "File containing a list of USB devices to make enumerable"
 msgstr ""
+"ფაილი, რომელიც შეიცავს USB მოწყობილობების სიას ჩამოთვლადების შესაქმნელად"
 
 #: common/flatpak-context.c:1695 common/flatpak-context.c:1696
 msgid "FILENAME"
@@ -4563,9 +4563,9 @@ msgstr "მიმართვა '%s' დაშორებულში %s ა�
 
 #: common/flatpak-dir.c:769 common/flatpak-dir.c:906 common/flatpak-dir.c:935
 #: common/flatpak-dir.c:947
-#, fuzzy, c-format
+#, c-format
 msgid "No entry for %s in remote %s summary flatpak cache"
-msgstr "ჩანაწერი %s არ არსბეობს დაშორებულში '%s' შეჯამების flatpak კეშში "
+msgstr "ჩანაწერი %s არ არსებობს დაშორებულში '%s' შეჯამების flatpak კეშში"
 
 #: common/flatpak-dir.c:924
 #, c-format
@@ -5530,8 +5530,8 @@ msgstr "%s-ის გაშვება აკრძალულია თქვ
 
 #: common/flatpak-run.c:2951
 msgid ""
-"\"flatpak run\" is not intended to be run as `sudo flatpak run`. Use `sudo "
-"-i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell."
+"\"flatpak run\" is not intended to be run as `sudo flatpak run`. Use `sudo -"
+"i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell."
 msgstr ""
 "\"flatpak run\"-ის გაშვება ბრძანებით `sudo flatpak run` შეუძლებელია. "
 "გამოიყენეთ `sudo -i` ან `su -l` და \"flatpak run\" ახალი გარსიდან გაუშვით."
@@ -5733,62 +5733,66 @@ msgstr "URI აბსოლუტური არაა და საბაზ�
 #: common/flatpak-usb.c:83
 #, c-format
 msgid "USB device query 'all' must not have data"
-msgstr ""
+msgstr "USB მოწყობილობის მოთხოვნას 'all' მონაცემები არ უნდა ჰქონდეს"
 
 #: common/flatpak-usb.c:102
 #, c-format
 msgid "USB query rule 'cls' must be in the form CLASS:SUBCLASS or CLASS:*"
-msgstr ""
+msgstr "USB მოთხოვნის წესი 'cls' უნდა იყოს ფორმით CLASS:SUBCLASS ან CLASS:*"
 
 #: common/flatpak-usb.c:111
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid USB class"
-msgstr "არასწორი id %s: %s"
+msgstr "არასწორი USB-ის კლასი"
 
 #: common/flatpak-usb.c:125
 #, c-format
 msgid "Invalid USB subclass"
-msgstr ""
+msgstr "არასწორი USB ქვეკლასი"
 
 #: common/flatpak-usb.c:141 common/flatpak-usb.c:148
 #, c-format
 msgid "USB query rule 'dev' must have a valid 4-digit hexadecimal product id"
 msgstr ""
+"USB მოთხოვნის წესს 'dev' სწორი 4-ციფრიანი თექვსმეტობითი პროდუქტის id უნდა "
+"ჰქონდეს"
 
 #: common/flatpak-usb.c:164 common/flatpak-usb.c:171
 #, c-format
 msgid "USB query rule 'vnd' must have a valid 4-digit hexadecimal vendor id"
 msgstr ""
+"USB მოთხოვნის წესს 'vnd' სწორი 4-ციფრიანი თექვსმეტობითი პროდუქტის id უნდა "
+"ჰქონდეს"
 
 #: common/flatpak-usb.c:205
 #, c-format
 msgid "USB device queries must be in the form TYPE:DATA"
-msgstr ""
+msgstr "USB მოწყობილობის მოთხოვნები უნდა იყოს ფორმით ტიპი:მონაცემები"
 
 #: common/flatpak-usb.c:225
 #, c-format
 msgid "Unknown USB query rule %s"
-msgstr ""
+msgstr "უცნობი USB მოთხოვნის წესი %s"
 
 #: common/flatpak-usb.c:248
 #, c-format
 msgid "Empty USB query"
-msgstr ""
+msgstr "ცარიელი USB მოთხოვნა"
 
 #: common/flatpak-usb.c:274
 #, c-format
 msgid "Multiple USB query rules of the same type is not supported"
-msgstr ""
+msgstr "ერთზე მეტი USB მოთხოვნის წესი იგივე ტიპით მხარდაჭერილი არაა"
 
 #: common/flatpak-usb.c:283
 #, c-format
 msgid "'all' must not contain extra query rules"
-msgstr ""
+msgstr "'all' დამატებითი მოთხოვნის წესებს არ უნდა შეიცავდეს"
 
 #: common/flatpak-usb.c:291
 #, c-format
 msgid "USB queries with 'dev' must also specify vendors"
-msgstr ""
+msgstr "USB მოთხოვნები სტრიქონით 'dev' ასევე უნდა შეიცავდეს მომწოდებელსაც"
 
 #: common/flatpak-utils.c:668
 msgid "Glob can't match apps"
@@ -6112,15 +6116,3 @@ msgid ""
 msgstr ""
 "თქვენი მშობლების საკონტროლო პოლიტიკის მიერ შეზღუდული პროგრამის დასაყენებლად "
 "ავთენტიკაცია დაგჭირდებათ"
-
-#, c-format
-#~ msgid ""
-#~ "Found similar ref(s) for ‘%s’ in remote ‘%s’ (%s).\n"
-#~ "Use this remote?"
-#~ msgstr ""
-#~ "აღმოჩენილია მსგავსი მიმართვ(ა/ები) '%s'-სთვის დაშორებულში '%s' (%s).\n"
-#~ "გამოვიყენო ეს დაშორებული?"
-
-#, c-format
-#~ msgid "No entry for %s in remote '%s' summary cache "
-#~ msgstr "ჩანაწერი %s-სთვის არ არსებობს დაშორებულში '%s' შეჯამების კეშში "
