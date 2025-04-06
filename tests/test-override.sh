@@ -68,6 +68,22 @@ ok "override --allow"
 
 reset_overrides
 
+${FLATPAK} override --user --extra-args="--foo '/bar baz/'" org.test.Hello
+${FLATPAK} override --user --show org.test.Hello > override
+
+assert_file_has_content override "^\[Context\]$"
+assert_file_has_content override "^extra-args=--foo;/bar baz/;$"
+
+${FLATPAK} run --command=echo org.test.Hello > out
+assert_file_has_content out "^--foo /bar baz/$"
+
+${FLATPAK} run --command=echo org.test.Hello -v > out
+assert_file_has_content out "^--foo /bar baz/ -v$"
+
+ok "override --extra-args"
+
+reset_overrides
+
 ${FLATPAK} override --user --env=FOO=BAR org.test.Hello
 ${FLATPAK} override --user --env=BAR= org.test.Hello
 ${FLATPAK} override --user --unset-env=CLEARME org.test.Hello
@@ -162,28 +178,6 @@ else
 
   ok "temporary environment variables"
 fi
-
-reset_overrides
-
-${FLATPAK} override --user --command='echo --foo' org.test.Hello
-${FLATPAK} override --user --show org.test.Hello > override
-
-assert_file_has_content override "^\[Context\]$"
-assert_file_has_content override "^command=echo --foo$"
-
-${FLATPAK} run org.test.Hello > out
-assert_file_has_content out "^--foo$"
-
-${FLATPAK} run --command=hello.sh org.test.Hello > out
-assert_file_has_content out "^--foo$"
-
-${FLATPAK} run org.test.Hello --bar > out
-assert_file_has_content out "^--foo --bar$"
-
-${FLATPAK} run --command=hello.sh org.test.Hello --bar > out
-assert_file_has_content out "^--foo --bar$"
-
-ok "override --command"
 
 reset_overrides
 
