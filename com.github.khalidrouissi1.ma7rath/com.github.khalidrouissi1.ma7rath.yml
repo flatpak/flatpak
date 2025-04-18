@@ -1,0 +1,47 @@
+app-id: com.github.khalidrouissi1.ma7rath
+runtime: org.freedesktop.Platform
+runtime-version: '23.08'
+sdk: org.freedesktop.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.golang
+command: ma7rath
+finish-args:
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --device=dri
+  - --filesystem=home
+build-options:
+  env:
+    - GOBIN=/app/bin
+    - GOROOT=/usr/lib/sdk/golang
+    - PATH=/usr/lib/sdk/golang/bin:/usr/bin:/bin
+modules:
+  - name: ma7rath
+    buildsystem: simple
+    build-commands:
+      - cd $FLATPAK_BUILDER_BUILDDIR
+      - /usr/lib/sdk/golang/bin/go build -o ma7rath
+      - install -Dm755 ma7rath /app/bin/ma7rath
+      - install -Dm644 $FLATPAK_BUILDER_BUILDDIR/LICENSE /app/share/licenses/ma7rath/LICENSE
+      - install -Dm644 $FLATPAK_BUILDER_BUILDDIR/com.github.khalidrouissi1.ma7rath.desktop /app/share/applications/com.github.khalidrouissi1.ma7rath.desktop
+      - install -Dm644 $FLATPAK_BUILDER_BUILDDIR/com.github.khalidrouissi1.ma7rath.metainfo.xml /app/share/metainfo/com.github.khalidrouissi1.ma7rath.metainfo.xml
+      - install -Dm644 $FLATPAK_BUILDER_BUILDDIR/com.github.khalidrouissi1.ma7rath.svg /app/share/icons/hicolor/scalable/apps/com.github.khalidrouissi1.ma7rath.svg
+    sources:
+      - type: git
+        url: https://github.com/khalidrouissi1/ma7rath.git
+        tag: v1.0.0
+        # Replace with actual commit hash when you have it
+        # commit: 8081c42f9a9e9a9a9a9a9a9a9a9a9a9a9a9a9a9a
+      - type: file
+        path: LICENSE
+        dest-filename: LICENSE
+      - type: file
+        path: com.github.khalidrouissi1.ma7rath.desktop
+        dest-filename: com.github.khalidrouissi1.ma7rath.desktop
+      - type: file
+        path: com.github.khalidrouissi1.ma7rath.metainfo.xml
+        dest-filename: com.github.khalidrouissi1.ma7rath.metainfo.xml
+      - type: file
+        path: com.github.khalidrouissi1.ma7rath.svg
+        dest-filename: com.github.khalidrouissi1.ma7rath.svg
