@@ -55,7 +55,7 @@ jobs:
         libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
         libseccomp-dev libsoup2.4-dev libcurl4-openssl-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
         libgirepository1.0-dev libappstream-dev libdconf-dev clang socat meson libdbus-1-dev e2fslibs-dev bubblewrap xdg-dbus-proxy \
-        meson ninja-build libyaml-dev libstemmer-dev gperf itstool libmalcontent-0-dev
+        meson ninja-build libyaml-dev libstemmer-dev gperf itstool libmalcontent-0-dev libxau-dev libgdk-pixbuf2.0-dev
         # One of the tests wants this
         sudo mkdir /tmp/flatpak-com.example.App-OwnedByRoot
     - name: Check out flatpak
@@ -187,7 +187,7 @@ jobs:
         libfuse-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
         libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
         libseccomp-dev libsoup2.4-dev libcurl4-openssl-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
-        libgirepository1.0-dev libappstream-dev libdconf-dev clang e2fslibs-dev meson socat
+        libgirepository1.0-dev libappstream-dev libdconf-dev clang e2fslibs-dev meson socat libxau-dev libgdk-pixbuf2.0-dev
     - name: Check out flatpak
       uses: actions/checkout@v4
       with:
@@ -222,7 +222,7 @@ jobs:
         libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
         libseccomp-dev libsoup2.4-dev libcurl4-openssl-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
         libgirepository1.0-dev libappstream-dev libdconf-dev clang socat meson libdbus-1-dev \
-        valgrind e2fslibs-dev meson
+        valgrind e2fslibs-dev meson libxau-dev libgdk-pixbuf2.0-dev
     - name: Check out flatpak
       uses: actions/checkout@v4
       with:
