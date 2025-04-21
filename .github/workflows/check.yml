@@ -41,7 +41,7 @@ permissions:
 jobs:
   check:
     name: Build with gcc and test
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
     - name: Install Dependencies
       run: |
@@ -113,7 +113,7 @@ jobs:
   # * Disable malcontent build-dependency
   check-alt2:
     name: Build with gcc and test (older)
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - name: Install Dependencies
       run: |
@@ -170,7 +170,7 @@ jobs:
     permissions:
       security-events: write # for codeql
     name: Build with clang and analyze
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -219,7 +219,7 @@ jobs:
   valgrind:
     name: Run tests in valgrind
     needs: check # Don't run expensive test if main check fails
-    runs-on: ubuntu-22.04 # Might as well test with a different one too
+    runs-on: ubuntu-24.04 # Might as well test with a different one too
     if: ${{ false }} # Currently Valgrind takes too long and always fails
     steps:
     - name: Install Dependencies
