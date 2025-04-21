@@ -55,22 +55,13 @@ jobs:
         libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
         libseccomp-dev libsoup2.4-dev libcurl4-openssl-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
         libgirepository1.0-dev libappstream-dev libdconf-dev clang socat meson libdbus-1-dev e2fslibs-dev bubblewrap xdg-dbus-proxy \
-        python3-pip meson ninja-build libyaml-dev libstemmer-dev gperf itstool libmalcontent-0-dev
+        meson ninja-build libyaml-dev libstemmer-dev gperf itstool libmalcontent-0-dev
         # One of the tests wants this
         sudo mkdir /tmp/flatpak-com.example.App-OwnedByRoot
     - name: Check out flatpak
       uses: actions/checkout@v4
       with:
         submodules: true
-    - name: Build appstream dependency # (We need at least 0.15.3 for the g_once fix)
-      run: |
-        sudo pip3 install 'meson~=0.62'
-        git clone --branch v0.15.4 --depth 1 --no-tags https://github.com/ximion/appstream.git ./appstream
-        pushd ./appstream
-        meson setup --prefix=/usr _build
-        meson compile -C _build
-        sudo meson install -C _build
-        popd
     - name: Create logs dir
       run: mkdir test-logs
     - name: configure
