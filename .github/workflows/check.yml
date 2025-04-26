@@ -124,11 +124,11 @@ jobs:
     - name: Create logs dir
       run: mkdir test-logs
     - name: configure
-      # We don't do gtk-doc or GObject-Introspection here, because they can
-      # clash with AddressSanitizer. Instead, the clang build enables those.
+      # Sometimes the older sanitizer toolchains will trigger issues that are either
+      # false positive or that have been already against in newer versions, so we don't
+      # enable them here.
       run: |
         meson setup \
-          -Db_sanitize=address,undefined \
           -Dgir=disabled \
           -Dgtkdoc=disabled \
           -Dhttp_backend=soup \
@@ -142,7 +142,6 @@ jobs:
     - name: Run tests
       run: meson test -C _build
       env:
-        ASAN_OPTIONS: detect_leaks=0 # Right now we're not fully clean, but this gets us use-after-free etc
         LC_ALL: en_US.UTF-8
     - name: Collect overall test logs on failure
       if: failure()
