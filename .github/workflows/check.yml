@@ -41,7 +41,7 @@ permissions:
 jobs:
   check:
     name: Build with gcc and test
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
     - name: Install Dependencies
       run: |
@@ -55,22 +55,13 @@ jobs:
         libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
         libseccomp-dev libsoup2.4-dev libcurl4-openssl-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
         libgirepository1.0-dev libappstream-dev libdconf-dev clang socat meson libdbus-1-dev e2fslibs-dev bubblewrap xdg-dbus-proxy \
-        python3-pip meson ninja-build libyaml-dev libstemmer-dev gperf itstool libmalcontent-0-dev
+        meson ninja-build libyaml-dev libstemmer-dev gperf itstool libmalcontent-0-dev libxau-dev libgdk-pixbuf2.0-dev
         # One of the tests wants this
         sudo mkdir /tmp/flatpak-com.example.App-OwnedByRoot
     - name: Check out flatpak
       uses: actions/checkout@v4
       with:
         submodules: true
-    - name: Build appstream dependency # (We need at least 0.15.3 for the g_once fix)
-      run: |
-        sudo pip3 install 'meson~=0.62'
-        git clone --branch v0.15.4 --depth 1 --no-tags https://github.com/ximion/appstream.git ./appstream
-        pushd ./appstream
-        meson setup --prefix=/usr _build
-        meson compile -C _build
-        sudo meson install -C _build
-        popd
     - name: Create logs dir
       run: mkdir test-logs
     - name: configure
@@ -113,7 +104,7 @@ jobs:
   # * Disable malcontent build-dependency
   check-alt2:
     name: Build with gcc and test (older)
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - name: Install Dependencies
       run: |
@@ -132,12 +123,12 @@ jobs:
         submodules: true
     - name: Create logs dir
       run: mkdir test-logs
-    - name: configure
-      # We don't do gtk-doc or GObject-Introspection here, because they can
-      # clash with AddressSanitizer. Instead, the clang build enables those.
+    - name: Configure
+      # Sometimes the older sanitizer toolchains will trigger issues that are either
+      # false positive or that have been already against in newer versions, so we don't
+      # enable them here.
       run: |
         meson setup \
-          -Db_sanitize=address,undefined \
           -Dgir=disabled \
           -Dgtkdoc=disabled \
           -Dhttp_backend=soup \
@@ -151,7 +142,6 @@ jobs:
     - name: Run tests
       run: meson test -C _build
       env:
-        ASAN_OPTIONS: detect_leaks=0 # Right now we're not fully clean, but this gets us use-after-free etc
         LC_ALL: en_US.UTF-8
     - name: Collect overall test logs on failure
       if: failure()
@@ -170,7 +160,7 @@ jobs:
     permissions:
       security-events: write # for codeql
     name: Build with clang and analyze
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -196,12 +186,12 @@ jobs:
         libfuse-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
         libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
         libseccomp-dev libsoup2.4-dev libcurl4-openssl-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
-        libgirepository1.0-dev libappstream-dev libdconf-dev clang e2fslibs-dev meson socat
+        libgirepository1.0-dev libappstream-dev libdconf-dev clang e2fslibs-dev meson socat libxau-dev libgdk-pixbuf2.0-dev
     - name: Check out flatpak
       uses: actions/checkout@v4
       with:
         submodules: true
-    - name: configure
+    - name: Configure
       run: |
         meson setup \
           -Dgir=enabled \
@@ -219,7 +209,7 @@ jobs:
   valgrind:
     name: Run tests in valgrind
     needs: check # Don't run expensive test if main check fails
-    runs-on: ubuntu-22.04 # Might as well test with a different one too
+    runs-on: ubuntu-24.04 # Might as well test with a different one too
     if: ${{ false }} # Currently Valgrind takes too long and always fails
     steps:
     - name: Install Dependencies
@@ -231,14 +221,14 @@ jobs:
         libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
         libseccomp-dev libsoup2.4-dev libcurl4-openssl-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
         libgirepository1.0-dev libappstream-dev libdconf-dev clang socat meson libdbus-1-dev \
-        valgrind e2fslibs-dev meson
+        valgrind e2fslibs-dev meson libxau-dev libgdk-pixbuf2.0-dev
     - name: Check out flatpak
       uses: actions/checkout@v4
       with:
         submodules: true
     - name: Create logs dir
       run: mkdir test-logs
-    - name: configure
+    - name: Configure
       run: |
         meson setup \
           -Dgir=enabled \
