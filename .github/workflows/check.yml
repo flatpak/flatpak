@@ -123,7 +123,7 @@ jobs:
         submodules: true
     - name: Create logs dir
       run: mkdir test-logs
-    - name: configure
+    - name: Configure
       # Sometimes the older sanitizer toolchains will trigger issues that are either
       # false positive or that have been already against in newer versions, so we don't
       # enable them here.
@@ -191,7 +191,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         submodules: true
-    - name: configure
+    - name: Configure
       run: |
         meson setup \
           -Dgir=enabled \
@@ -228,7 +228,7 @@ jobs:
         submodules: true
     - name: Create logs dir
       run: mkdir test-logs
-    - name: configure
+    - name: Configure
       run: |
         meson setup \
           -Dgir=enabled \
