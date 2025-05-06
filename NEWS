@@ -2,7 +2,74 @@ Changes in 1.16.1
 ~~~~~~~~~~~~~~~~~~
 Released: not yet
 
-...
+Enhancements:
+
+* When using parental controls, allow a child account to update existing
+  apps by default, to ensure that security and bugfix updates can be
+  installed. This can be overridden by setting polkit policy rules for
+  the new `org.freedesktop.Flatpak.override-parental-controls-update`
+  action if necessary. (#5552)
+
+* Make systemd scopes easier to match to Flatpak app instances,
+  by using the instance ID instead of the top-level process ID in the
+  scope name (#6015)
+
+* Access to `--device=dri` now includes `/dev/udmabuf` (#6158)
+
+* Improve the error message for an invalid parameter to
+  flatpak-spawn --sandbox-a11y-own-name (#6048)
+
+* Speed up `flatpak prune --dry-run` by not calculating potential freed
+  space and avoiding operations that would need to hold a lock
+  (#5813, #6121)
+
+* Speed up `flatpak permission-reset` by only writing entries that have
+  actually changed (#5772)
+
+* Documentation improvements (#4859, #6066, #6134)
+
+* Translation updates: bg (#6120), ka (#6176), pl (#6106),
+  pt_BR (#6076, #6188), ro (#6139), ru (#6145), sl (#6054), sv (#6193),
+  tr (#6109)
+
+Bug fixes:
+
+* Fix intermittent flatpak-portal crashes by avoiding unnecessary
+  multi-threading (#5605)
+
+* Don't show a confusing confirmation prompt when `flatpak remove --unused`
+  removes `autoprune-unless` extensions that are no longer needed, such as
+  older Nvidia drivers (#5712, #2718)
+
+* Don't propagate `$PYTHONPYCACHEPREFIX` from host into sandbox (#6110)
+
+* Don't propagate `$WAYLAND_DISPLAY`, `$WAYLAND_SOCKET` from host into
+  sandbox if access to the Wayland socket has been denied (#3948)
+
+* When discovering the AT-SPI bus, treat `$AT_SPI_BUS_ADDRESS` as
+  higher-priority than GetAddress(), more closely matching the behaviour
+  of AT-SPI itself (#6173)
+
+* Fix a memory leak when installing extra-data (#6069)
+
+* Don't show fatal transaction errors twice (#3400)
+
+* Fix the build with -Ddefault_library=static (#6119)
+
+* Fix incorrect error reporting (#6127, #5170)
+
+* When using `FLATPAK_TTY_PROGRESS`, terminate OSC escape sequence with
+  standard ST sequence instead of xterm-specific BEL (#6092)
+
+* Include all options in shell completion for `flatpak search` (#6096)
+
+Internal changes:
+
+* Fix an unclear boolean expression (no functional change) (#5013)
+
+* Avoid a duplicate redirection in the test suite (#6117)
+
+* CI updates
 
 Changes in 1.16.0
 ~~~~~~~~~~~~~~~~~~
