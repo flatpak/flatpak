@@ -172,4 +172,24 @@ guint g_string_replace (GString     *string,
 # define G_DBUS_METHOD_INVOCATION_UNHANDLED FALSE
 #endif
 
+#if !GLIB_CHECK_VERSION (2, 76, 0)
+/* All this code is backported directly from 2.84.1 */
+static inline gboolean
+g_set_str (char       **str_pointer,
+           const char  *new_str)
+{
+  char *copy;
+
+  if (*str_pointer == new_str ||
+      (*str_pointer && new_str && strcmp (*str_pointer, new_str) == 0))
+    return FALSE;
+
+  copy = g_strdup (new_str);
+  g_free (*str_pointer);
+  *str_pointer = copy;
+
+  return TRUE;
+}
+#endif /* GLIB_CHECK_VERSION (2, 76, 0) */
+
 G_END_DECLS
