@@ -69,6 +69,26 @@ get_wayland_socket_fd (void)
   return (int) fd;
 }
 
+gboolean
+flatpak_run_has_wayland (void)
+{
+  const char *wayland_display;
+  g_autofree char *wayland_socket = NULL;
+  struct stat statbuf;
+
+  wayland_display = get_wayland_display_name ();
+  wayland_socket = get_wayland_socket_path (wayland_display);
+
+  if (stat (wayland_socket, &statbuf) == 0 &&
+      (statbuf.st_mode & S_IFMT) == S_IFSOCK)
+    return TRUE;
+
+  if (get_wayland_socket_fd () >= 0)
+    return TRUE;
+
+  return FALSE;
+}
+
 #ifdef ENABLE_WAYLAND_SECURITY_CONTEXT
 
 static void registry_handle_global (void *data, struct wl_registry *registry,
