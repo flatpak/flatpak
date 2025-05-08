@@ -101,9 +101,12 @@ flatpak_image_source_new (FlatpakOciRegistry *registry,
       return NULL;
     }
 
-  self->image_config = flatpak_oci_registry_load_image_config (self->registry, self->repository,
-                                                                self->manifest->config.digest, NULL,
-                                                                NULL, cancellable, error);
+  self->image_config =
+    flatpak_oci_registry_load_image_config (self->registry,
+                                            self->repository,
+                                            self->manifest->config.digest,
+                                            (const char **) self->manifest->config.urls,
+                                            NULL, cancellable, error);
   if (self->image_config == NULL)
     return NULL;
 
