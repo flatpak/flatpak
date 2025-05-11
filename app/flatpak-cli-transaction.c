@@ -1359,7 +1359,7 @@ transaction_ready_pre_auth (FlatpakTransaction *transaction)
   GList *l;
   int i;
   FlatpakTablePrinter *printer;
-  const char *op_shorthand[] = { "i", "u", "i", "r" };
+  const char *op_shorthand[] = { "i", "u", "i", "r", "i" };
 
   /* These caches may no longer be valid once the transaction runs */
   g_clear_pointer (&self->runtime_app_map, g_hash_table_unref);
