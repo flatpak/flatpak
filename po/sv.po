@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2025-04-22 03:25+0000\n"
+"POT-Creation-Date: 2025-05-08 13:08-0300\n"
 "PO-Revision-Date: 2025-04-22 23:11+0200\n"
 "Last-Translator: Anders Jonsson <anders.jonsson@norsjovallen.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -259,7 +259,8 @@ msgstr "Ingen tilläggspunkt matchar %s i %s"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Saknar ”=” i bindningsmonteringsargument ”%s”"
 
-#: app/flatpak-builtins-build.c:609 common/flatpak-run.c:3588
+#: app/flatpak-builtins-build.c:609 common/flatpak-run.c:3599
+#, c-format
 msgid "Unable to start app"
 msgstr "Kunde inte starta program"
 
@@ -517,6 +518,7 @@ msgid "Unable to find basename in %s, specify a name explicitly"
 msgstr "Kunde inte hitta basnamn i %s, ange ett namn explicit"
 
 #: app/flatpak-builtins-build-export.c:746
+#, c-format
 msgid "No slashes allowed in extra data name"
 msgstr "Inga snedstreck tillåtna i namn för extra data"
 
@@ -526,6 +528,7 @@ msgid "Invalid format for sha256 checksum: '%s'"
 msgstr "Ogiltigt format för sha256-kontrollsumman: ”%s”"
 
 #: app/flatpak-builtins-build-export.c:768
+#, c-format
 msgid "Extra data sizes of zero not supported"
 msgstr "Extra datastorlekar med noll i storlek stöds inte"
 
@@ -575,6 +578,7 @@ msgid "Content Written: %u\n"
 msgstr "Skrivet innehåll: %u\n"
 
 #: app/flatpak-builtins-build-export.c:1171
+#, c-format
 msgid "Content Bytes Written:"
 msgstr "Skrivna innehållsbyte:"
 
@@ -677,6 +681,7 @@ msgid "Exporting %s\n"
 msgstr "Exporterar %s\n"
 
 #: app/flatpak-builtins-build-finish.c:439
+#, c-format
 msgid "More than one executable found\n"
 msgstr "Fler än en körbar fil funnen\n"
 
@@ -686,6 +691,7 @@ msgid "Using %s as command\n"
 msgstr "Använder %s som ett kommando\n"
 
 #: app/flatpak-builtins-build-finish.c:455
+#, c-format
 msgid "No executable found\n"
 msgstr "Ingen körbar fil funnen\n"
 
@@ -738,6 +744,7 @@ msgid "Build directory %s already finalized"
 msgstr "Byggkatalog %s redan slutförd"
 
 #: app/flatpak-builtins-build-finish.c:701
+#, c-format
 msgid "Please review the exported files and the metadata\n"
 msgstr "Granska de exporterade filerna och metadata\n"
 
@@ -1072,10 +1079,12 @@ msgid "LOCATION - Update repository metadata"
 msgstr "PLATS - Uppdatera förrådsmetadata"
 
 #: app/flatpak-builtins-build-update-repo.c:609
+#, c-format
 msgid "Updating appstream branch\n"
 msgstr "Uppdaterar appstream-gren\n"
 
 #: app/flatpak-builtins-build-update-repo.c:638
+#, c-format
 msgid "Updating summary\n"
 msgstr "Uppdaterar sammanfattning\n"
 
@@ -1085,6 +1094,7 @@ msgid "Total objects: %u\n"
 msgstr "Totalt antal objekt: %u\n"
 
 #: app/flatpak-builtins-build-update-repo.c:666
+#, c-format
 msgid "No unreachable objects\n"
 msgstr "Inga onåbara objekt\n"
 
@@ -1358,6 +1368,7 @@ msgstr "FIL - Hämta information om en exporterad fil"
 
 #: app/flatpak-builtins-document-info.c:100
 #: app/flatpak-builtins-document-unexport.c:92
+#, c-format
 msgid "Not exported\n"
 msgstr "Inte exporterad\n"
 
@@ -1650,10 +1661,12 @@ msgid " - Show history"
 msgstr " - Visa historik"
 
 #: app/flatpak-builtins-history.c:488
+#, c-format
 msgid "Failed to parse the --since option"
 msgstr "Misslyckades med att tolka flaggan --since"
 
 #: app/flatpak-builtins-history.c:499
+#, c-format
 msgid "Failed to parse the --until option"
 msgstr "Misslyckades med att tolka flaggan --until"
 
@@ -1736,6 +1749,7 @@ msgid "ref not present in origin"
 msgstr "ref finns inte i ursprung"
 
 #: app/flatpak-builtins-info.c:211 app/flatpak-builtins-remote-info.c:217
+#, c-format
 msgid "Warning: Commit has no flatpak metadata\n"
 msgstr "Varning: Incheckning har inga flatpak-metadata\n"
 
@@ -1978,6 +1992,7 @@ msgid "At least one REF must be specified"
 msgstr "Minst en REF måste anges"
 
 #: app/flatpak-builtins-install.c:336
+#, c-format
 msgid "Looking for matches…\n"
 msgstr "Söker efter matchningar…\n"
 
@@ -2181,10 +2196,12 @@ msgstr ""
 "matchar mönster"
 
 #: app/flatpak-builtins-mask.c:73
+#, c-format
 msgid "No masked patterns\n"
 msgstr "Inga maskerade mönster\n"
 
 #: app/flatpak-builtins-mask.c:78
+#, c-format
 msgid "Masked patterns:\n"
 msgstr "Maskerade mönster:\n"
 
@@ -2278,10 +2295,12 @@ msgstr ""
 "matchar mönster"
 
 #: app/flatpak-builtins-pin.c:75
+#, c-format
 msgid "No pinned patterns\n"
 msgstr "Inga nålade mönster\n"
 
 #: app/flatpak-builtins-pin.c:80
+#, c-format
 msgid "Pinned patterns:\n"
 msgstr "Nålade mönster:\n"
 
@@ -2819,6 +2838,7 @@ msgid "[%d/%d] Verifying %s…\n"
 msgstr "[%d/%d] Verifierar %s…\n"
 
 #: app/flatpak-builtins-repair.c:435
+#, c-format
 msgid "Dry run: "
 msgstr "Torrkörning: "
 
@@ -2838,6 +2858,7 @@ msgid "Deleting ref %s due to %d\n"
 msgstr "Tar bort ref %s på grund av %d\n"
 
 #: app/flatpak-builtins-repair.c:464
+#, c-format
 msgid "Checking remotes...\n"
 msgstr "Kontrollerar fjärrförråd…\n"
 
@@ -2852,18 +2873,22 @@ msgid "Remote %s for ref %s is disabled\n"
 msgstr "Fjärrförråd %s för ref %s är inaktiverat\n"
 
 #: app/flatpak-builtins-repair.c:490
+#, c-format
 msgid "Pruning objects\n"
 msgstr "Rensa objekt\n"
 
 #: app/flatpak-builtins-repair.c:498
+#, c-format
 msgid "Erasing .removed\n"
 msgstr "Tar bort .removed\n"
 
 #: app/flatpak-builtins-repair.c:523
+#, c-format
 msgid "Reinstalling refs\n"
 msgstr "Ominstallerar referenser\n"
 
 #: app/flatpak-builtins-repair.c:525
+#, c-format
 msgid "Reinstalling removed refs\n"
 msgstr "Ominstallerar borttagna referenser\n"
 
@@ -2898,6 +2923,7 @@ msgid "false"
 msgstr "falskt"
 
 #: app/flatpak-builtins-repo.c:120
+#, c-format
 msgid "Subsummaries: "
 msgstr "Undersammanfattningar: "
 
@@ -3220,6 +3246,7 @@ msgstr ""
 "bort; se flatpak-pin(1):\n"
 
 #: app/flatpak-builtins-uninstall.c:370
+#, c-format
 msgid "Nothing unused to uninstall\n"
 msgstr "Inget oanvänt att avinstallera\n"
 
@@ -3244,6 +3271,7 @@ msgid "Warning: %s is not installed\n"
 msgstr "Varning: %s är inte installerad\n"
 
 #: app/flatpak-builtins-uninstall.c:490
+#, c-format
 msgid "None of the specified refs are installed"
 msgstr "Inga av de angivna referenserna är installerade"
 
@@ -3284,6 +3312,7 @@ msgid "With --commit, only one REF may be specified"
 msgstr "Med --commit får endast en REF anges"
 
 #: app/flatpak-builtins-update.c:162
+#, c-format
 msgid "Looking for updates…\n"
 msgstr "Söker efter uppdateringar…\n"
 
@@ -3293,6 +3322,7 @@ msgid "Unable to update %s: %s\n"
 msgstr "Kunde inte uppdatera %s: %s\n"
 
 #: app/flatpak-builtins-update.c:274
+#, c-format
 msgid "Nothing to do.\n"
 msgstr "Inget att göra.\n"
 
@@ -3356,6 +3386,7 @@ msgid "Found installed ref ‘%s’ (%s). Is this correct?"
 msgstr "Hittade installerad ref ”%s” (%s). Stämmer detta?"
 
 #: app/flatpak-builtins-utils.c:522
+#, c-format
 msgid "All of the above"
 msgstr "Alla ovanstående"
 
@@ -3668,10 +3699,12 @@ msgstr ""
 "anledning:\n"
 
 #: app/flatpak-cli-transaction.c:960
+#, c-format
 msgid "Info: applications using this extension:\n"
 msgstr "Info: program använder detta tillägg:\n"
 
 #: app/flatpak-cli-transaction.c:962
+#, c-format
 msgid "Info: applications using this runtime:\n"
 msgstr "Info: program använder denna exekveringsmiljö:\n"
 
@@ -3680,6 +3713,7 @@ msgid "Replace?"
 msgstr "Ersätt?"
 
 #: app/flatpak-cli-transaction.c:984 app/flatpak-quiet-transaction.c:247
+#, c-format
 msgid "Updating to rebased version\n"
 msgstr "Uppdaterar till ombaserad version\n"
 
@@ -4227,6 +4261,7 @@ msgid "Filesystem location \"%s\" contains \"..\""
 msgstr "Filsystemsplatsen ”%s” innehåller ”..”"
 
 #: common/flatpak-context.c:1002
+#, c-format
 msgid ""
 "--filesystem=/ is not available, use --filesystem=host for a similar result"
 msgstr ""
@@ -4254,20 +4289,24 @@ msgid "Environment variable name must not contain '=': %s"
 msgstr "Miljövariabeln får inte innehålla '=': %s"
 
 #: common/flatpak-context.c:1540 common/flatpak-context.c:1548
+#, c-format
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 "Argument till --add-policy måste vara på formen UNDERSYSTEM.NYCKEL=VÄRDE"
 
 #: common/flatpak-context.c:1555
+#, c-format
 msgid "--add-policy values can't start with \"!\""
 msgstr "Värden till --add-policy får inte starta med ”!”"
 
 #: common/flatpak-context.c:1580 common/flatpak-context.c:1588
+#, c-format
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 "Argument till --remove-policy måste vara på formen UNDERSYSTEM.NYCKEL=VÄRDE"
 
 #: common/flatpak-context.c:1595
+#, c-format
 msgid "--remove-policy values can't start with \"!\""
 msgstr "Värden till --remove-policy får inte starta med ”!”"
 
@@ -4519,7 +4558,7 @@ msgid "Couldn't find ref %s in remote %s"
 msgstr "Det gick inte att hitta ref %s i fjärrförrådet %s"
 
 #: common/flatpak-dir.c:1131 common/flatpak-dir.c:6044
-#: common/flatpak-oci-registry.c:3461 common/flatpak-oci-registry.c:3466
+#: common/flatpak-oci-registry.c:3493 common/flatpak-oci-registry.c:3498
 msgid "Image is not a manifest"
 msgstr "Avbilden är inte ett manifest"
 
@@ -4737,6 +4776,7 @@ msgid "Extra data %s missing in detached metadata"
 msgstr "Extra data %s saknas i frånkopplade metadata"
 
 #: common/flatpak-dir.c:8413
+#, c-format
 msgid "Unable to get runtime key from metadata"
 msgstr "Kunde inte få nyckel för exekveringsmiljö från metadata"
 
@@ -4824,6 +4864,7 @@ msgid "This version of %s is already installed"
 msgstr "Denna version av %s är redan installerad"
 
 #: common/flatpak-dir.c:10369
+#, c-format
 msgid "Can't change remote during bundle install"
 msgstr "Kan inte ändra fjärrförråd under buntinstallering"
 
@@ -4989,6 +5030,7 @@ msgid "Skipping deletion of mirror ref (%s, %s)…\n"
 msgstr "Hoppar över borttagning av spegelref (%s, %s)…\n"
 
 #: common/flatpak-exports.c:916
+#, c-format
 msgid "An absolute path is required"
 msgstr "En absolut sökväg krävs"
 
@@ -5088,72 +5130,72 @@ msgstr "Kunde inte skapa filen %s"
 msgid "Unable to update symbolic link %s/%s"
 msgstr "Kunde inte uppdatera symbolisk länk %s/%s"
 
-#: common/flatpak-oci-registry.c:1012
+#: common/flatpak-oci-registry.c:1021
 msgid "Only Bearer authentication supported"
 msgstr "Endast Bearer-autentisering stöds"
 
-#: common/flatpak-oci-registry.c:1021
+#: common/flatpak-oci-registry.c:1030
 msgid "Only realm in authentication request"
 msgstr "Endast rike i autentiseringsbegäran"
 
-#: common/flatpak-oci-registry.c:1028
+#: common/flatpak-oci-registry.c:1037
 msgid "Invalid realm in authentication request"
 msgstr "Ogiltigt rike i autentiseringsbegäran"
 
-#: common/flatpak-oci-registry.c:1097
+#: common/flatpak-oci-registry.c:1107
 #, c-format
 msgid "Authorization failed: %s"
 msgstr "Auktorisering misslyckades: %s"
 
-#: common/flatpak-oci-registry.c:1099
+#: common/flatpak-oci-registry.c:1109
 msgid "Authorization failed"
 msgstr "Auktorisering misslyckades"
 
-#: common/flatpak-oci-registry.c:1103
+#: common/flatpak-oci-registry.c:1113
 #, c-format
 msgid "Unexpected response status %d when requesting token: %s"
 msgstr "Oväntad svarsstatus %d då token begärdes: %s"
 
-#: common/flatpak-oci-registry.c:1114
+#: common/flatpak-oci-registry.c:1124
 msgid "Invalid authentication request response"
 msgstr "Ogiltigt svar på autentiseringsbegäran"
 
-#: common/flatpak-oci-registry.c:1711 common/flatpak-oci-registry.c:1764
-#: common/flatpak-oci-registry.c:1793 common/flatpak-oci-registry.c:1848
-#: common/flatpak-oci-registry.c:1904 common/flatpak-oci-registry.c:1982
+#: common/flatpak-oci-registry.c:1721 common/flatpak-oci-registry.c:1774
+#: common/flatpak-oci-registry.c:1803 common/flatpak-oci-registry.c:1858
+#: common/flatpak-oci-registry.c:1914 common/flatpak-oci-registry.c:1992
 msgid "Invalid delta file format"
 msgstr "Ogiltigt deltafilformat"
 
-#: common/flatpak-oci-registry.c:2486
+#: common/flatpak-oci-registry.c:2496
 #, c-format
 msgid "No gpg key found with ID %s (homedir: %s)"
 msgstr "Ingen gpg-nyckel hittades med ID %s (hemkat: %s)"
 
-#: common/flatpak-oci-registry.c:2493
+#: common/flatpak-oci-registry.c:2503
 #, c-format
 msgid "Unable to lookup key ID %s: %d"
 msgstr "Kunde inte slå upp nyckel-ID %s: %d"
 
-#: common/flatpak-oci-registry.c:2501
+#: common/flatpak-oci-registry.c:2511
 #, c-format
 msgid "Error signing commit: %d"
 msgstr "Fel vid signering av incheckning: %d"
 
-#: common/flatpak-oci-registry.c:3480 common/flatpak-oci-registry.c:3639
+#: common/flatpak-oci-registry.c:3512 common/flatpak-oci-registry.c:3671
 msgid "Invalid OCI image config"
 msgstr "Ogiltig OCI-avbildskonfiguration"
 
-#: common/flatpak-oci-registry.c:3542 common/flatpak-oci-registry.c:3788
+#: common/flatpak-oci-registry.c:3574 common/flatpak-oci-registry.c:3820
 #, c-format
 msgid "Wrong layer checksum, expected %s, was %s"
 msgstr "Fel kontrollsumma för lager, förväntade %s, var %s"
 
-#: common/flatpak-oci-registry.c:3622
+#: common/flatpak-oci-registry.c:3654
 #, c-format
 msgid "No ref specified for OCI image %s"
 msgstr "Ingen ref angiven för OCI-avbild %s"
 
-#: common/flatpak-oci-registry.c:3628
+#: common/flatpak-oci-registry.c:3660
 #, c-format
 msgid "Wrong ref (%s) specified for OCI image %s, expected %s"
 msgstr "Fel ref (%s) angiven för OCI-avbild %s, förväntade %s"
@@ -5337,6 +5379,7 @@ msgid "GPG verification must be enabled when a collection ID is set"
 msgstr "GPG-verifiering måste vara aktiverat då ett samlings-ID har satts"
 
 #: common/flatpak-repo-utils.c:344
+#, c-format
 msgid "No extra data sources"
 msgstr "Inga extra data-källor"
 
@@ -5387,77 +5430,77 @@ msgstr "Samlingen ”%s” för bunt matchar inte samlingen ”%s” för fjärr
 msgid "Metadata in header and app are inconsistent"
 msgstr "Metadata i huvud och program är inkonsekventa"
 
-#: common/flatpak-run.c:846
+#: common/flatpak-run.c:855
 msgid "No systemd user session available, cgroups not available"
 msgstr "Ingen systemd-användarsession tillgänglig, cgroups inte tillgängligt"
 
-#: common/flatpak-run.c:1384
+#: common/flatpak-run.c:1395
 msgid "Unable to allocate instance id"
 msgstr "Kunde inte allokera instans-ID"
 
-#: common/flatpak-run.c:1520 common/flatpak-run.c:1530
+#: common/flatpak-run.c:1531 common/flatpak-run.c:1541
 #, c-format
 msgid "Failed to open flatpak-info file: %s"
 msgstr "Misslyckades med att öppna flatpak-info-fil: %s"
 
-#: common/flatpak-run.c:1559
+#: common/flatpak-run.c:1570
 #, c-format
 msgid "Failed to open bwrapinfo.json file: %s"
 msgstr "Misslyckades med att öppna bwrapinfo.json-fil: %s"
 
-#: common/flatpak-run.c:1584
+#: common/flatpak-run.c:1595
 #, c-format
 msgid "Failed to write to instance id fd: %s"
 msgstr "Misslyckades med att skriva till filhandtag för instans-ID: %s"
 
-#: common/flatpak-run.c:1979
+#: common/flatpak-run.c:1990
 msgid "Initialize seccomp failed"
 msgstr "Initiering av seccomp misslyckades"
 
-#: common/flatpak-run.c:2018
+#: common/flatpak-run.c:2029
 #, c-format
 msgid "Failed to add architecture to seccomp filter: %s"
 msgstr "Misslyckades med att lägga till arkitektur till seccomp-filter: %s"
 
-#: common/flatpak-run.c:2026
+#: common/flatpak-run.c:2037
 #, c-format
 msgid "Failed to add multiarch architecture to seccomp filter: %s"
 msgstr ""
 "Misslyckades med att lägga till multiarch-arkitektur till seccomp-filter: %s"
 
-#: common/flatpak-run.c:2058 common/flatpak-run.c:2075
-#: common/flatpak-run.c:2097
+#: common/flatpak-run.c:2069 common/flatpak-run.c:2086
+#: common/flatpak-run.c:2108
 #, c-format
 msgid "Failed to block syscall %d: %s"
 msgstr "Misslyckades med att blockera systemanrop %d: %s"
 
-#: common/flatpak-run.c:2130
+#: common/flatpak-run.c:2141
 #, c-format
 msgid "Failed to export bpf: %s"
 msgstr "Misslyckades med att exportera bpf: %s"
 
-#: common/flatpak-run.c:2429
+#: common/flatpak-run.c:2440
 #, c-format
 msgid "Failed to open ‘%s’"
 msgstr "Misslyckades med att öppna ”%s”"
 
-#: common/flatpak-run.c:2716
+#: common/flatpak-run.c:2727
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "misslyckades med ldconfig, avslutningsstatus %d"
 
-#: common/flatpak-run.c:2723
+#: common/flatpak-run.c:2734
 msgid "Can't open generated ld.so.cache"
 msgstr "Det går inte att öppna genererad ld.so.cache"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-run.c:2846
+#: common/flatpak-run.c:2857
 #, c-format
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr ""
 "Körning av %s tillåts inte av policyn som har satts av din administratör"
 
-#: common/flatpak-run.c:2953
+#: common/flatpak-run.c:2964
 msgid ""
 "\"flatpak run\" is not intended to be run as `sudo flatpak run`. Use `sudo "
 "-i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell."
@@ -5465,19 +5508,19 @@ msgstr ""
 "”flatpak run” är inte avsett att köras som ”sudo flatpak run”, använd ”sudo "
 "-i” eller ”su -l” istället och anropa ”flatpak run” inifrån det nya skalet."
 
-#: common/flatpak-run.c:3143
+#: common/flatpak-run.c:3154
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "Misslyckades att migrera från %s: %s"
 
-#: common/flatpak-run.c:3164
+#: common/flatpak-run.c:3175
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr ""
 "Misslyckades med att migrera gammal programdatakatalog %s till nytt namn %s: "
 "%s"
 
-#: common/flatpak-run.c:3173
+#: common/flatpak-run.c:3184
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "Misslyckades med att skapa symbolisk länk vid migrering av %s: %s"
@@ -5660,35 +5703,42 @@ msgid "URI is not absolute, and no base URI was provided"
 msgstr "URI är inte absolut, och ingen bas-URI angavs"
 
 #: common/flatpak-usb.c:83
+#, c-format
 msgid "USB device query 'all' must not have data"
 msgstr "USB-enhetsfrågan ”all” får inte ha data"
 
 #: common/flatpak-usb.c:102
+#, c-format
 msgid "USB query rule 'cls' must be in the form CLASS:SUBCLASS or CLASS:*"
 msgstr ""
 "USB-frågeregeln ”cls” måste vara på formen KLASS:UNDERKLASS eller KLASS:*"
 
 #: common/flatpak-usb.c:111
+#, c-format
 msgid "Invalid USB class"
 msgstr "Ogiltig USB-klass"
 
 #: common/flatpak-usb.c:125
+#, c-format
 msgid "Invalid USB subclass"
 msgstr "Ogiltig USB-underklass"
 
 #: common/flatpak-usb.c:141 common/flatpak-usb.c:148
+#, c-format
 msgid "USB query rule 'dev' must have a valid 4-digit hexadecimal product id"
 msgstr ""
 "USB-frågeregeln ”dev” måste ha ett giltigt fyrsiffrigt hexadecimalt produkt-"
 "ID"
 
 #: common/flatpak-usb.c:164 common/flatpak-usb.c:171
+#, c-format
 msgid "USB query rule 'vnd' must have a valid 4-digit hexadecimal vendor id"
 msgstr ""
 "USB-frågeregeln ”vnd” måste ha ett giltigt fyrsiffrigt hexadecimalt "
 "tillverkar-ID"
 
 #: common/flatpak-usb.c:205
+#, c-format
 msgid "USB device queries must be in the form TYPE:DATA"
 msgstr "USB-enhetsfrågor måste vara på formen TYP:DATA"
 
@@ -5698,18 +5748,22 @@ msgid "Unknown USB query rule %s"
 msgstr "Okänd USB-frågeregel %s"
 
 #: common/flatpak-usb.c:248
+#, c-format
 msgid "Empty USB query"
 msgstr "Tom USB-fråga"
 
 #: common/flatpak-usb.c:274
+#, c-format
 msgid "Multiple USB query rules of the same type is not supported"
 msgstr "Flera USB-frågeregler av samma typ stöds inte"
 
 #: common/flatpak-usb.c:283
+#, c-format
 msgid "'all' must not contain extra query rules"
 msgstr "”all” får inte innehålla extra frågeregler"
 
 #: common/flatpak-usb.c:291
+#, c-format
 msgid "USB queries with 'dev' must also specify vendors"
 msgstr "USB-frågor med ”dev” måste också ange tillverkare"
 
@@ -5773,6 +5827,7 @@ msgid "Invalid token"
 msgstr "Ogiltig token"
 
 #: portal/flatpak-portal.c:2337
+#, c-format
 msgid "No portal support found"
 msgstr "Inget portalstöd hittades"
 
@@ -5799,14 +5854,17 @@ msgstr ""
 "Uppdateringsåtkomst kan ändras när som helst från sekretessinställningarna."
 
 #: portal/flatpak-portal.c:2388
+#, c-format
 msgid "Application update not allowed"
 msgstr "Programuppdatering inte tillåten"
 
 #: portal/flatpak-portal.c:2546
+#, c-format
 msgid "Self update not supported, new version requires new permissions"
 msgstr "Självuppdatering stöds inte, nya versionen kräver nya rättigheter"
 
 #: portal/flatpak-portal.c:2728 portal/flatpak-portal.c:2745
+#, c-format
 msgid "Update ended unexpectedly"
 msgstr "Uppdateringen avslutades oväntat"
 
