@@ -1,6 +1,6 @@
 Changes in 1.16.1
 ~~~~~~~~~~~~~~~~~~
-Released: not yet
+Released: 2025-05-10
 
 Enhancements:
 
@@ -27,6 +27,9 @@ Enhancements:
   actually changed (#5772)
 
 * Documentation improvements (#4859, #6066, #6134)
+
+* Look for TLS certificates at /etc/containers/certs.d when interacting with
+  OCI registries (#5916)
 
 * Translation updates: bg (#6120), ka (#6176), pl (#6106),
   pt_BR (#6076, #6188), ro (#6139), ru (#6145), sl (#6054), sv (#6193),
