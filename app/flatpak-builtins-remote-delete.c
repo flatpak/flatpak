@@ -67,7 +67,7 @@ flatpak_builtin_remote_delete (int argc, char **argv, GCancellable *cancellable,
   if (argc > 2)
     return usage_error (context, _("Too many arguments"), error);
 
-  if (!flatpak_resolve_duplicate_remotes (dirs, remote_name, &preferred_dir, cancellable, error))
+  if (!flatpak_resolve_duplicate_remotes (dirs, remote_name, FALSE, &preferred_dir, cancellable, error))
     return FALSE;
 
   if (!opt_force)
