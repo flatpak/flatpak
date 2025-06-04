@@ -1346,6 +1346,155 @@ flatpak_run_add_dconf_args (FlatpakBwrap *bwrap,
 }
 
 static gboolean
+flatpak_run_add_nss_malcontent_library_args (FlatpakBwrap *bwrap)
+{
+#ifdef HAVE_LIBMALCONTENT
+  /* The SO version is set by glibc, so we only ever have to check for
+   * version 2 (until glibc breaks NSS API). It should always be in one of these
+   * two places on the host system. */
+  const char *nss_malcontent_library = "/lib/libnss_malcontent.so.2";
+  const char *nss_malcontent_library64 = "/lib64/libnss_malcontent.so.2";
+
+  /* Bind mount the malcontent NSS module into the sandbox, and list its bind
+   * location in ld.so.conf.d so it appears in the library load path. */
+  const char *ld_path_library = "/run/flatpak/nss-malcontent/lib/libnss_malcontent.so.2";
+
+  if (g_file_test (nss_malcontent_library64, G_FILE_TEST_EXISTS))
+    {
+      flatpak_bwrap_add_args (bwrap, "--ro-bind", nss_malcontent_library64, ld_path_library, NULL);
+    }
+  else if (g_file_test (nss_malcontent_library, G_FILE_TEST_EXISTS))
+    {
+      flatpak_bwrap_add_args (bwrap, "--ro-bind", nss_malcontent_library, ld_path_library, NULL);
+    }
+  else
+    {
+      g_debug ("%s or %s not found on host system; web filtering cannot be enabled",
+               nss_malcontent_library64, nss_malcontent_library);
+      return FALSE;
+    }
+#endif
+
+  return TRUE;
+}
+
+static void
+flatpak_run_add_nss_malcontent_args (FlatpakBwrap         *bwrap,
+                                     FlatpakContextShares  shares,
+                                     gboolean              use_ld_so_cache)
+{
+#ifdef HAVE_LIBMALCONTENT
+  /* We bind-mount the entire filter lists dir, so that a per-user blocklist can
+   * be created while this flatpak is running, without the sandbox having to be
+   * recreated to bind it. */
+  const char *nss_malcontent_filter_lists_dir = "/var/lib/malcontent-nss/filter-lists/";
+
+  /* If the app can’t use the network due to sandboxing, or malcontent doesn’t
+   * exist on the host system, don’t do anything. */
+  if (!(shares & FLATPAK_CONTEXT_SHARED_NETWORK) ||
+      !g_file_test (nss_malcontent_filter_lists_dir, G_FILE_TEST_EXISTS))
+    return;
+
+  /* Bind mount the malcontent NSS module into the sandbox, at the location
+   * pre-listed in `ld.so.conf` so it appears in the library load path. */
+  if (!flatpak_run_add_nss_malcontent_library_args (bwrap))
+    return;
+
+  /* If `ld.so.cache` isn’t being used, ensure the nss-malcontent module can
+   * still be found. */
+  if (!use_ld_so_cache)
+    flatpak_run_extend_ld_path (bwrap, "/run/flatpak/nss-malcontent/lib", NULL);
+
+  /* Actually bind the filter lists dir */
+  flatpak_bwrap_add_args (bwrap, "--ro-bind", nss_malcontent_filter_lists_dir, nss_malcontent_filter_lists_dir, NULL);
+#endif
+}
+
+static gboolean
+flatpak_run_add_nss_malcontent_args_late (FlatpakBwrap  *bwrap,
+                                          GFile         *runtime_files,
+                                          GError       **error)
+{
+#ifdef HAVE_LIBMALCONTENT
+  g_autofree char *runtime_etc_nsswitch_conf = NULL;
+  size_t runtime_etc_nsswitch_conf_len = 0;
+
+  /* Add the bwrap arguments necessary to override /etc/nsswitch.conf for the
+   * app. This is necessary to enable the libnss_malcontent.so.2 module for web
+   * filtering. It has to happen late in the app run process because it involves
+   *  1. Load `/etc/nsswitch.conf` from the runtime (or from the host system if
+   *     not provided by the runtime).
+   *  2. Parse and modify it to add `malcontent` to the `hosts:` line.
+   *  3. Bind the modified version into the sandbox on top of the version from
+   *     the runtime. This requires that the runtime’s files are already bound.
+   */
+  if (runtime_files != NULL)
+    {
+      g_autoptr(GFile) runtime_etc_nsswitch_conf_path = NULL;
+      g_autoptr(GError) local_error = NULL;
+
+      runtime_etc_nsswitch_conf_path = g_file_resolve_relative_path (runtime_files, "etc/nsswitch.conf");
+      if (!g_file_get_contents (g_file_peek_path (runtime_etc_nsswitch_conf_path), &runtime_etc_nsswitch_conf,
+                                &runtime_etc_nsswitch_conf_len, &local_error) &&
+          !g_error_matches (local_error, G_FILE_ERROR, G_FILE_ERROR_NOENT))
+        return FALSE;
+    }
+
+  /* Fall back to loading `/etc/nsswitch.conf` from the host if it’s not
+   * available in the runtime (which is unlikely). */
+  if (runtime_etc_nsswitch_conf == NULL)
+    {
+      if (!g_file_get_contents ("/etc/nsswitch.conf", &runtime_etc_nsswitch_conf,
+                                &runtime_etc_nsswitch_conf_len, error))
+        return FALSE;
+    }
+
+  /* Find the `hosts:` line (see man:nsswitch.conf(5) for details of the format). */
+  const char *hosts = g_strstr_len (runtime_etc_nsswitch_conf, runtime_etc_nsswitch_conf_len, "hosts:");
+  if (hosts == NULL)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVAL,
+                   _("Could not parse hosts: line from runtime’s /etc/nsswitch.conf"));
+      return FALSE;
+    }
+
+  /* Check that `hosts:` is actually the start of a new line (or the file). */
+  if (hosts != runtime_etc_nsswitch_conf &&
+      hosts[-1] != '\n')
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVAL,
+                   _("Could not parse hosts: line from runtime’s /etc/nsswitch.conf"));
+      return FALSE;
+    }
+
+  /* Skip any whitespace between `hosts:` and the next column. */
+  const char *insertion_point = hosts + strlen ("hosts:");
+  while (*insertion_point == ' ' || *insertion_point == '\t')
+    insertion_point++;
+
+  g_assert (insertion_point - runtime_etc_nsswitch_conf <= runtime_etc_nsswitch_conf_len);
+
+  /* Build and bind a modified version of the file, inserting `malcontent `
+   * immediately after `insertion_point`. */
+  g_autoptr(GString) app_etc_nsswitch_conf = g_string_new ("");
+  g_string_append_len (app_etc_nsswitch_conf, runtime_etc_nsswitch_conf,
+                       insertion_point - runtime_etc_nsswitch_conf);
+  g_string_append (app_etc_nsswitch_conf, "malcontent ");
+  g_string_append_len (app_etc_nsswitch_conf, insertion_point,
+                       runtime_etc_nsswitch_conf_len - (insertion_point - runtime_etc_nsswitch_conf));
+
+  return flatpak_bwrap_add_args_data (bwrap,
+                                      "nss-malcontent",
+                                      app_etc_nsswitch_conf->str,
+                                      app_etc_nsswitch_conf->len,
+                                      "/etc/nsswitch.conf",
+                                      error);
+#else
+  return TRUE;
+#endif
+}
+
+static gboolean
 flatpak_run_save_environ (const char * const  *run_environ,
                           const char          *dir,
                           GCancellable        *cancellable,
@@ -2680,6 +2829,9 @@ add_ld_so_conf (FlatpakBwrap *bwrap,
                 GError      **error)
 {
   const char *contents =
+#ifdef HAVE_LIBMALCONTENT
+    "/run/flatpak/nss-malcontent/lib\n"
+#endif
     "include /run/flatpak/ld.so.conf.d/app-*.conf\n"
     "include /app/etc/ld.so.conf\n"
     "/app/lib\n"
@@ -2745,6 +2897,11 @@ regenerate_ld_cache (GPtrArray    *base_argv_array,
     flatpak_bwrap_add_args (bwrap,
                             "--symlink", "../usr/etc/ld.so.conf", "/etc/ld.so.conf",
                             NULL);
+
+  /* Ensure the nss-malcontent library is available for `ldconfig` to see, as
+   * it’s bound to a non-standard path to avoid clashing with the /lib directory
+   * from the runtime. */
+  flatpak_run_add_nss_malcontent_library_args (bwrap);
 
   tmp_basename = g_strconcat (checksum, ".XXXXXX", NULL);
   glnx_gen_temp_name (tmp_basename);
@@ -3439,6 +3596,8 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
   if (custom_app_path == NULL)
     flatpak_run_extend_ld_path (bwrap, app_ld_path, NULL);
 
+  flatpak_run_add_nss_malcontent_args (bwrap, shares, use_ld_so_cache);
+
   runtime_ld_so_conf = g_file_resolve_relative_path (runtime_files, "etc/ld.so.conf");
   if (lstat (flatpak_file_get_path_cached (runtime_ld_so_conf), &s) == 0)
     generate_ld_so_conf = S_ISREG (s.st_mode) && s.st_size == 0;
@@ -3542,6 +3701,10 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
     }
 
   flatpak_run_add_socket_args_late (bwrap, shares);
+
+  if (!flatpak_run_add_nss_malcontent_args_late (bwrap, runtime_files, error))
+    return FALSE;
+
   add_font_path_args (bwrap);
   add_icon_path_args (bwrap);
 
