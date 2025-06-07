@@ -99,6 +99,7 @@ struct FlatpakContext
   GHashTable            *generic_policy;
   GHashTable            *enumerable_usb_devices;
   GHashTable            *hidden_usb_devices;
+  const char            *data_dir;
 };
 
 extern const char *flatpak_context_sockets[];
@@ -193,6 +194,8 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakContext, flatpak_context_free)
 
 GFile *flatpak_get_user_base_dir_location (void);
 GFile *flatpak_get_data_dir (const char *app_id);
+GFile *flatpak_context_get_data_dir (FlatpakContext *context,
+                             const char *app_id);
 
 gboolean flatpak_context_get_allowed_exports (FlatpakContext *context,
                                               const char     *source_path,

@@ -45,6 +45,7 @@
 #include "flatpak-metadata-private.h"
 #include "flatpak-usb-private.h"
 #include "flatpak-utils-private.h"
+#include "flatpak-dir-private.h"
 
 /* Same order as enum */
 const char *flatpak_context_shares[] = {
@@ -579,6 +580,18 @@ flatpak_context_set_persistent (FlatpakContext *context,
     return FALSE;
 
   g_hash_table_insert (context->persistent, g_strdup (path), GINT_TO_POINTER (1));
+  return TRUE;
+}
+
+static gboolean
+flatpak_context_set_data_dir (FlatpakContext *context,
+                              const char     *path,
+                              GError        **error)
+{
+  if (!flatpak_validate_path_characters (path, error))
+    return FALSE;
+
+  context->data_dir = g_strdup(path);
   return TRUE;
 }
 
@@ -1122,6 +1135,9 @@ flatpak_context_merge (FlatpakContext *context,
   g_hash_table_iter_init (&iter, other->hidden_usb_devices);
   while (g_hash_table_iter_next (&iter, NULL, &value))
     flatpak_context_add_nousb_query (context, value);
+
+  if (other->data_dir != NULL)
+    context->data_dir = other->data_dir;
 }
 
 static gboolean
@@ -1664,6 +1680,17 @@ option_persist_cb (const char *option_name,
   return flatpak_context_set_persistent (context, value, error);
 }
 
+static gboolean
+option_data_dir_cb (const char *option_name,
+                    const char *value,
+                    gpointer     data,
+                    GError     **error)
+{
+  FlatpakContext *context = data;
+
+  return flatpak_context_set_data_dir (context, value, error);
+}
+
 static gboolean option_no_desktop_deprecated;
 
 static GOptionEntry context_options[] = {
@@ -1694,6 +1721,7 @@ static GOptionEntry context_options[] = {
   { "usb-list", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_usb_list_cb, N_("A list of USB devices that are enumerable"), N_("LIST") },
   { "usb-list-file", 0, G_OPTION_FLAG_IN_MAIN | G_OPTION_FLAG_FILENAME, G_OPTION_ARG_CALLBACK, &option_usb_list_file_cb, N_("File containing a list of USB devices to make enumerable"), N_("FILENAME") },
   { "persist", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_persist_cb, N_("Persist home directory subpath"), N_("FILENAME") },
+  { "data-dir", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_data_dir_cb, N_("Custom data dir"), N_("FILENAME") },
   /* This is not needed/used anymore, so hidden, but we accept it for backwards compat */
   { "no-desktop", 0, G_OPTION_FLAG_IN_MAIN |  G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_NONE, &option_no_desktop_deprecated, N_("Don't require a running session (no cgroups creation)"), NULL },
   { NULL }
@@ -2050,6 +2078,21 @@ flatpak_context_load_metadata (FlatpakContext *context,
         }
     }
 
+  if (g_key_file_has_key (metakey, FLATPAK_METADATA_GROUP_CONFIG, FLATPAK_METADATA_KEY_DATA_DIR, NULL))
+    {
+      g_autofree char *value = NULL;
+
+      value = g_key_file_get_string (metakey, FLATPAK_METADATA_GROUP_CONFIG,
+                                    FLATPAK_METADATA_KEY_DATA_DIR,
+                                    error);
+
+      if (!value)
+        return FALSE;
+
+      if (!flatpak_context_set_data_dir (context, value, error))
+        return FALSE;
+    }
+
   return TRUE;
 }
 
@@ -2372,6 +2415,12 @@ flatpak_context_save_metadata (FlatpakContext *context,
                                     FLATPAK_METADATA_KEY_USB_ENUMERABLE_DEVICES);
   flatpak_context_save_usb_devices (context->hidden_usb_devices, metakey,
                                     FLATPAK_METADATA_KEY_USB_HIDDEN_DEVICES);
+
+  if (context->data_dir != NULL)
+    g_key_file_set_string (metakey,
+                           FLATPAK_METADATA_GROUP_CONFIG,
+                           FLATPAK_METADATA_KEY_DATA_DIR,
+                           context->data_dir);
 }
 
 void
@@ -3075,10 +3124,28 @@ flatpak_context_export (FlatpakContext *context,
 GFile *
 flatpak_get_data_dir (const char *app_id)
 {
-  g_autoptr(GFile) home = g_file_new_for_path (g_get_home_dir ());
-  g_autoptr(GFile) var_app = g_file_resolve_relative_path (home, ".var/app");
+  g_autofree char *data_dir = NULL;
 
-  return g_file_get_child (var_app, app_id);
+  data_dir = flatpak_dir_get_config (flatpak_dir_get_user (), "default-data-dir", NULL);
+
+  if (data_dir == NULL) {
+    g_autoptr(GFile) home = g_file_new_for_path (g_get_home_dir ());
+    g_autoptr(GFile) var_app = g_file_resolve_relative_path (home, ".var/app");
+
+    return g_file_get_child (var_app, app_id);
+  }
+
+  return g_file_get_child (g_file_new_for_path (data_dir), app_id);
+}
+
+GFile*
+flatpak_context_get_data_dir (FlatpakContext *context,
+                              const char     *app_id)
+{
+  if (context->data_dir != NULL)
+    return g_file_new_for_path (context->data_dir);
+
+  return flatpak_get_data_dir (app_id);
 }
 
 FlatpakExports *
@@ -3294,7 +3361,7 @@ flatpak_context_append_bwrap_filesystem (FlatpakContext  *context,
       while (g_hash_table_iter_next (&iter, &key, NULL))
         {
           const char *persist = key;
-          g_autofree char *appdir = g_build_filename (g_get_home_dir (), ".var/app", app_id, NULL);
+          g_autofree char *appdir = g_file_get_path (app_id_dir);
           g_autofree char *dest = g_build_filename (g_get_home_dir (), persist, NULL);
           g_autoptr(GError) local_error = NULL;
 

@@ -199,17 +199,37 @@ get_lang_default (FlatpakDir *dir)
   return g_strjoinv (";", langs);
 }
 
+static char *
+parse_directory (const char *value, GError **error)
+{
+  return g_strdup (value);
+}
+
+static char *
+print_directory (const char *value)
+{
+  return g_strdup (value);
+}
+
+typedef enum ConfigScope 
+{
+  CONFIG_SCOPE_INSTALLATION,
+  CONFIG_SCOPE_USER,
+} ConfigScope;
+
 typedef struct
 {
   const char *name;
   char *(*parse)(const char *value, GError **error);
   char *(*print)(const char *value);
   char *(*get_default)(FlatpakDir * dir);
+  ConfigScope scope;
 } ConfigKey;
 
 ConfigKey keys[] = {
-  { "languages", parse_lang, print_lang, get_lang_default },
-  { "extra-languages", parse_locale, print_locale, NULL },
+  { "languages", parse_lang, print_lang, get_lang_default, CONFIG_SCOPE_INSTALLATION },
+  { "extra-languages", parse_locale, print_locale, NULL, CONFIG_SCOPE_INSTALLATION },
+  { "default-data-dir", parse_directory, print_directory, NULL, CONFIG_SCOPE_USER },
 };
 
 static ConfigKey *
@@ -227,12 +247,32 @@ get_config_key (const char *arg, GError **error)
   return NULL;
 }
 
+static FlatpakDir *
+get_config_dir(FlatpakDir *dir, ConfigKey *key)
+{
+  switch (key->scope)
+    {
+      case CONFIG_SCOPE_INSTALLATION:
+        return dir;
+      case CONFIG_SCOPE_USER:
+        return flatpak_dir_get_user ();
+    }
+
+    g_printerr ("invalid config scope");
+    return NULL;
+}
+
 static char *
 print_config (FlatpakDir *dir, ConfigKey *key)
 {
   g_autofree char *value = NULL;
+  FlatpakDir *configDir = NULL;
 
-  value = flatpak_dir_get_config (dir, key->name, NULL);
+  configDir = get_config_dir (dir, key);
+  if (!configDir)
+    return FALSE;
+
+  value = flatpak_dir_get_config (configDir, key->name, NULL);
   if (value == NULL)
     return g_strdup ("*unset*");
 
@@ -297,6 +337,7 @@ set_config (GOptionContext *context, int argc, char **argv, FlatpakDir *dir, GCa
 {
   ConfigKey *key;
   g_autofree char *parsed = NULL;
+  g_autofree FlatpakDir *configDir = NULL;
 
   if (argc < 3)
     return usage_error (context, _("You must specify KEY and VALUE"), error);
@@ -311,7 +352,11 @@ set_config (GOptionContext *context, int argc, char **argv, FlatpakDir *dir, GCa
   if (!parsed)
     return FALSE;
 
-  if (!flatpak_dir_set_config (dir, key->name, parsed, error))
+  configDir = get_config_dir (dir, key);
+  if (!configDir)
+    return FALSE;
+
+  if (!flatpak_dir_set_config (configDir, key->name, parsed, error))
     return FALSE;
 
   return TRUE;
@@ -321,6 +366,7 @@ static gboolean
 unset_config (GOptionContext *context, int argc, char **argv, FlatpakDir *dir, GCancellable *cancellable, GError **error)
 {
   ConfigKey *key;
+  g_autofree FlatpakDir *configDir = NULL;
 
   if (argc < 2)
     return usage_error (context, _("You must specify KEY"), error);
@@ -331,7 +377,11 @@ unset_config (GOptionContext *context, int argc, char **argv, FlatpakDir *dir, G
   if (key == NULL)
     return FALSE;
 
-  if (!flatpak_dir_set_config (dir, key->name, argv[2], error))
+  configDir = get_config_dir (dir, key);
+  if (!configDir)
+    return FALSE;
+
+  if (!flatpak_dir_set_config (configDir, key->name, argv[2], error))
     return FALSE;
 
   return TRUE;
