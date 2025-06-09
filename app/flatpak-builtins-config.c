@@ -253,7 +253,7 @@ get_config_dir(FlatpakDir *dir, ConfigKey *key)
   switch (key->scope)
     {
       case CONFIG_SCOPE_INSTALLATION:
-        return dir;
+        return flatpak_dir_clone (dir);
       case CONFIG_SCOPE_USER:
         return flatpak_dir_get_user ();
     }
@@ -265,14 +265,14 @@ get_config_dir(FlatpakDir *dir, ConfigKey *key)
 static char *
 print_config (FlatpakDir *dir, ConfigKey *key)
 {
+  g_autofree FlatpakDir *config_dir = NULL;
   g_autofree char *value = NULL;
-  FlatpakDir *configDir = NULL;
 
-  configDir = get_config_dir (dir, key);
-  if (!configDir)
+  config_dir = get_config_dir (dir, key);
+  if (!config_dir)
     return FALSE;
 
-  value = flatpak_dir_get_config (configDir, key->name, NULL);
+  value = flatpak_dir_get_config (config_dir, key->name, NULL);
   if (value == NULL)
     return g_strdup ("*unset*");
 
@@ -337,7 +337,7 @@ set_config (GOptionContext *context, int argc, char **argv, FlatpakDir *dir, GCa
 {
   ConfigKey *key;
   g_autofree char *parsed = NULL;
-  g_autofree FlatpakDir *configDir = NULL;
+  g_autofree FlatpakDir *config_dir = NULL;
 
   if (argc < 3)
     return usage_error (context, _("You must specify KEY and VALUE"), error);
@@ -352,11 +352,11 @@ set_config (GOptionContext *context, int argc, char **argv, FlatpakDir *dir, GCa
   if (!parsed)
     return FALSE;
 
-  configDir = get_config_dir (dir, key);
-  if (!configDir)
+  config_dir = get_config_dir (dir, key);
+  if (!config_dir)
     return FALSE;
 
-  if (!flatpak_dir_set_config (configDir, key->name, parsed, error))
+  if (!flatpak_dir_set_config (config_dir, key->name, parsed, error))
     return FALSE;
 
   return TRUE;
@@ -366,7 +366,7 @@ static gboolean
 unset_config (GOptionContext *context, int argc, char **argv, FlatpakDir *dir, GCancellable *cancellable, GError **error)
 {
   ConfigKey *key;
-  g_autofree FlatpakDir *configDir = NULL;
+  g_autofree FlatpakDir *config_dir = NULL;
 
   if (argc < 2)
     return usage_error (context, _("You must specify KEY"), error);
@@ -377,11 +377,11 @@ unset_config (GOptionContext *context, int argc, char **argv, FlatpakDir *dir, G
   if (key == NULL)
     return FALSE;
 
-  configDir = get_config_dir (dir, key);
-  if (!configDir)
+  config_dir = get_config_dir (dir, key);
+  if (!config_dir)
     return FALSE;
 
-  if (!flatpak_dir_set_config (configDir, key->name, argv[2], error))
+  if (!flatpak_dir_set_config (config_dir, key->name, argv[2], error))
     return FALSE;
 
   return TRUE;

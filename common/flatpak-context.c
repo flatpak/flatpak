@@ -133,6 +133,7 @@ flatpak_context_free (FlatpakContext *context)
   g_hash_table_destroy (context->generic_policy);
   g_hash_table_destroy (context->enumerable_usb_devices);
   g_hash_table_destroy (context->hidden_usb_devices);
+  g_free               (context->data_dir);
   g_slice_free (FlatpakContext, context);
 }
 
@@ -591,6 +592,7 @@ flatpak_context_set_data_dir (FlatpakContext *context,
   if (!flatpak_validate_path_characters (path, error))
     return FALSE;
 
+  g_free (context->data_dir);
   context->data_dir = g_strdup(path);
   return TRUE;
 }
@@ -1137,7 +1139,7 @@ flatpak_context_merge (FlatpakContext *context,
     flatpak_context_add_nousb_query (context, value);
 
   if (other->data_dir != NULL)
-    context->data_dir = other->data_dir;
+    context->data_dir = g_strdup (other->data_dir);
 }
 
 static gboolean
@@ -3124,9 +3126,11 @@ flatpak_context_export (FlatpakContext *context,
 GFile *
 flatpak_get_data_dir (const char *app_id)
 {
+  g_autofree FlatpakDir *user_dir = NULL;
   g_autofree char *data_dir = NULL;
 
-  data_dir = flatpak_dir_get_config (flatpak_dir_get_user (), "default-data-dir", NULL);
+  user_dir = flatpak_dir_get_user ();
+  data_dir = flatpak_dir_get_config (user_dir, "default-data-dir", NULL);
 
   if (data_dir == NULL) {
     g_autoptr(GFile) home = g_file_new_for_path (g_get_home_dir ());
@@ -3135,7 +3139,8 @@ flatpak_get_data_dir (const char *app_id)
     return g_file_get_child (var_app, app_id);
   }
 
-  return g_file_get_child (g_file_new_for_path (data_dir), app_id);
+  g_autoptr(GFile) data_path = g_file_new_for_path (data_dir);
+  return g_file_get_child (data_path, app_id);
 }
 
 GFile*

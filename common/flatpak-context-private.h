@@ -99,7 +99,7 @@ struct FlatpakContext
   GHashTable            *generic_policy;
   GHashTable            *enumerable_usb_devices;
   GHashTable            *hidden_usb_devices;
-  const char            *data_dir;
+  gchar                 *data_dir;
 };
 
 extern const char *flatpak_context_sockets[];
