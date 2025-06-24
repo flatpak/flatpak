@@ -99,7 +99,9 @@
                 <term><option>--watch-bus</option></term>
 
                 <listitem><para>
-                    Make the spawned command exit if the caller disappears from the session bus
+                    Make the spawned command exit when <command>flatpak-spawn</command>
+                    itself exits; notably, this occurs when its connection to the
+                    session bus is closed.
                 </para></listitem>
             </varlistentry>
 
