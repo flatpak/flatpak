@@ -97,6 +97,18 @@ const char *flatpak_context_special_filesystems[] = {
   NULL
 };
 
+const char *flatpak_context_conditions[] = {
+  "true",
+  "false",
+  "has-input-device",
+  "has-wayland",
+  NULL
+};
+
+FlatpakContextConditions flatpak_context_true_conditions =
+  FLATPAK_CONTEXT_CONDITION_TRUE |
+  FLATPAK_CONTEXT_CONDITION_HAS_INPUT_DEV;
+
 FlatpakContext *
 flatpak_context_new (void)
 {
@@ -116,6 +128,10 @@ flatpak_context_new (void)
                                                            g_free, (GDestroyNotify) flatpak_usb_query_free);
   context->hidden_usb_devices = g_hash_table_new_full (g_str_hash, g_str_equal,
                                                        g_free, (GDestroyNotify) flatpak_usb_query_free);
+  context->conditional_devices = g_hash_table_new_full (NULL, NULL,
+                                                        NULL, (GDestroyNotify) g_ptr_array_unref);
+  context->conditional_sockets = g_hash_table_new_full (NULL, NULL,
+                                                        NULL, (GDestroyNotify) g_ptr_array_unref);
 
   return context;
 }
@@ -132,6 +148,8 @@ flatpak_context_free (FlatpakContext *context)
   g_hash_table_destroy (context->generic_policy);
   g_hash_table_destroy (context->enumerable_usb_devices);
   g_hash_table_destroy (context->hidden_usb_devices);
+  g_hash_table_destroy (context->conditional_devices);
+  g_hash_table_destroy (context->conditional_sockets);
   g_slice_free (FlatpakContext, context);
 }
 
@@ -149,17 +167,18 @@ flatpak_context_bitmask_from_string (const char *name, const char **names)
   return 0;
 }
 
-static char **
-flatpak_context_bitmask_to_string (guint32 enabled, guint32 valid, const char **names)
+static void
+flatpak_context_bitmask_to_string (guint32      enabled,
+                                   guint32      valid,
+                                   const char **names,
+                                   GPtrArray   *array)
 {
   guint32 i;
-  GPtrArray *array;
-
-  array = g_ptr_array_new ();
 
   for (i = 0; names[i] != NULL; i++)
     {
       guint32 bitmask = 1 << i;
+
       if (valid & bitmask)
         {
           if (enabled & bitmask)
@@ -168,9 +187,6 @@ flatpak_context_bitmask_to_string (guint32 enabled, guint32 valid, const char **
             g_ptr_array_add (array, g_strdup_printf ("!%s", names[i]));
         }
     }
-
-  g_ptr_array_add (array, NULL);
-  return (char **) g_ptr_array_free (array, FALSE);
 }
 
 static void
@@ -210,17 +226,27 @@ flatpak_context_share_from_string (const char *string, GError **error)
 }
 
 static char **
-flatpak_context_shared_to_string (FlatpakContextShares shares, FlatpakContextShares valid)
+flatpak_context_shared_to_string (FlatpakContextShares shares,
+                                  FlatpakContextShares valid)
 {
-  return flatpak_context_bitmask_to_string (shares, valid, flatpak_context_shares);
+  g_autoptr (GPtrArray) array = g_ptr_array_new_with_free_func (g_free);
+
+  flatpak_context_bitmask_to_string (shares, valid,
+                                     flatpak_context_shares,
+                                     array);
+
+  g_ptr_array_add (array, NULL);
+  return (char **) g_ptr_array_free (g_steal_pointer (&array), FALSE);
 }
 
 static void
-flatpak_context_shared_to_args (FlatpakContextShares shares,
-                                FlatpakContextShares valid,
-                                GPtrArray           *args)
+flatpak_context_shared_to_args (FlatpakContext *context,
+                                GPtrArray      *args)
 {
-  return flatpak_context_bitmask_to_args (shares, valid, flatpak_context_shares, "--share", "--unshare", args);
+  flatpak_context_bitmask_to_args (context->shares, context->shares_valid,
+                                   flatpak_context_shares,
+                                   "--share", "--unshare",
+                                   args);
 }
 
 static FlatpakPolicy
@@ -280,6 +306,62 @@ flatpak_verify_dbus_name (const char *name, GError **error)
   return FALSE;
 }
 
+static void
+flatpak_context_conditionals_to_string_impl (GHashTable  *conditionals,
+                                             const char **names,
+                                             const char  *prefix,
+                                             GPtrArray   *array)
+{
+  gpointer key;
+  GPtrArray *conditions;
+  GHashTableIter iter;
+  int i;
+
+  g_hash_table_iter_init (&iter, conditionals);
+  while (g_hash_table_iter_next (&iter, &key, (gpointer *) &conditions))
+    {
+      guint32 conditional = GPOINTER_TO_INT (key);
+      g_autofree char *condition_str;
+
+      if (!conditions->pdata)
+        continue;
+
+      g_ptr_array_add (conditions, NULL);
+      condition_str = g_strjoinv (":", (char **)conditions->pdata);
+      g_ptr_array_remove_index (conditions, conditions->len - 1);
+
+      for (i = 0; names[i] != NULL; i++)
+        {
+          if (conditional != 1 << i)
+            continue;
+
+          g_ptr_array_add (array, g_strdup_printf ("%s%s:%s",
+                                                   prefix,
+                                                   names[i],
+                                                   condition_str));
+          break;
+        }
+    }
+}
+
+static void
+flatpak_context_conditionals_to_string (GHashTable  *conditionals,
+                                        const char **names,
+                                        GPtrArray   *array)
+{
+  flatpak_context_conditionals_to_string_impl (conditionals, names,
+                                               "if:", array);
+}
+
+static void
+flatpak_context_conditionals_to_args (GHashTable  *conditionals,
+                                      const char **names,
+                                      GPtrArray   *array)
+{
+  flatpak_context_conditionals_to_string_impl (conditionals, names,
+                                               "--device-if=", array);
+}
+
 static FlatpakContextSockets
 flatpak_context_socket_from_string (const char *string, GError **error)
 {
@@ -296,17 +378,36 @@ flatpak_context_socket_from_string (const char *string, GError **error)
 }
 
 static char **
-flatpak_context_sockets_to_string (FlatpakContextSockets sockets, FlatpakContextSockets valid)
+flatpak_context_sockets_to_string (FlatpakContext        *context,
+                                   FlatpakContextSockets  sockets,
+                                   FlatpakContextSockets  valid)
 {
-  return flatpak_context_bitmask_to_string (sockets, valid, flatpak_context_sockets);
+  g_autoptr (GPtrArray) array = g_ptr_array_new_with_free_func (g_free);
+
+  flatpak_context_bitmask_to_string (sockets, valid,
+                                     flatpak_context_sockets,
+                                     array);
+
+  flatpak_context_conditionals_to_string (context->conditional_sockets,
+                                          flatpak_context_sockets,
+                                          array);
+
+  g_ptr_array_add (array, NULL);
+  return (char **) g_ptr_array_free (g_steal_pointer (&array), FALSE);
 }
 
 static void
-flatpak_context_sockets_to_args (FlatpakContextSockets sockets,
-                                 FlatpakContextSockets valid,
-                                 GPtrArray            *args)
+flatpak_context_sockets_to_args (FlatpakContext *context,
+                                 GPtrArray      *args)
 {
-  return flatpak_context_bitmask_to_args (sockets, valid, flatpak_context_sockets, "--socket", "--nosocket", args);
+  flatpak_context_bitmask_to_args (context->sockets, context->sockets_valid,
+                                   flatpak_context_sockets,
+                                   "--socket", "--nosocket",
+                                   args);
+
+  flatpak_context_conditionals_to_args (context->conditional_sockets,
+                                        flatpak_context_sockets,
+                                        args);
 }
 
 static FlatpakContextDevices
@@ -324,17 +425,36 @@ flatpak_context_device_from_string (const char *string, GError **error)
 }
 
 static char **
-flatpak_context_devices_to_string (FlatpakContextDevices devices, FlatpakContextDevices valid)
+flatpak_context_devices_to_string (FlatpakContext        *context,
+                                   FlatpakContextDevices  devices,
+                                   FlatpakContextDevices  valid)
 {
-  return flatpak_context_bitmask_to_string (devices, valid, flatpak_context_devices);
+  g_autoptr (GPtrArray) array = g_ptr_array_new_with_free_func (g_free);
+
+  flatpak_context_bitmask_to_string (devices, valid,
+                                     flatpak_context_devices,
+                                     array);
+
+  flatpak_context_conditionals_to_string (context->conditional_devices,
+                                          flatpak_context_devices,
+                                          array);
+
+  g_ptr_array_add (array, NULL);
+  return (char **) g_ptr_array_free (g_steal_pointer (&array), FALSE);
 }
 
 static void
-flatpak_context_devices_to_args (FlatpakContextDevices devices,
-                                 FlatpakContextDevices valid,
-                                 GPtrArray            *args)
+flatpak_context_devices_to_args (FlatpakContext *context,
+                                 GPtrArray      *args)
 {
-  return flatpak_context_bitmask_to_args (devices, valid, flatpak_context_devices, "--device", "--nodevice", args);
+  flatpak_context_bitmask_to_args (context->devices, context->devices_valid,
+                                   flatpak_context_devices,
+                                   "--device", "--nodevice",
+                                   args);
+
+  flatpak_context_conditionals_to_args (context->conditional_devices,
+                                        flatpak_context_devices,
+                                        args);
 }
 
 static FlatpakContextFeatures
@@ -355,15 +475,24 @@ flatpak_context_feature_from_string (const char *string, GError **error)
 static char **
 flatpak_context_features_to_string (FlatpakContextFeatures features, FlatpakContextFeatures valid)
 {
-  return flatpak_context_bitmask_to_string (features, valid, flatpak_context_features);
+  g_autoptr (GPtrArray) array = g_ptr_array_new_with_free_func (g_free);
+
+  flatpak_context_bitmask_to_string (features, valid,
+                                     flatpak_context_features,
+                                     array);
+
+  g_ptr_array_add (array, NULL);
+  return (char **) g_ptr_array_free (g_steal_pointer (&array), FALSE);
 }
 
 static void
-flatpak_context_features_to_args (FlatpakContextFeatures features,
-                                  FlatpakContextFeatures valid,
-                                  GPtrArray             *args)
+flatpak_context_features_to_args (FlatpakContext *context,
+                                  GPtrArray      *args)
 {
-  return flatpak_context_bitmask_to_args (features, valid, flatpak_context_features, "--allow", "--disallow", args);
+  flatpak_context_bitmask_to_args (context->features, context->features_valid,
+                                   flatpak_context_features,
+                                   "--allow", "--disallow",
+                                   args);
 }
 
 static void
@@ -1053,6 +1182,135 @@ flatpak_context_take_filesystem (FlatpakContext        *context,
   g_hash_table_insert (context->filesystems, fs, GINT_TO_POINTER (mode));
 }
 
+static gboolean
+flatpak_context_add_conditional (FlatpakContext  *context,
+                                 const char      *string,
+                                 const char     **names,
+                                 GHashTable      *conditionals,
+                                 guint32         *bitmask_out,
+                                 GError         **error)
+{
+  guint32 bitmask;
+  g_auto(GStrv) tokens = NULL;
+  g_autoptr(GPtrArray) conditions = NULL;
+  int i;
+
+  tokens = g_strsplit (string, ":", -1);
+
+  if (!tokens || !tokens[0] || !tokens[1])
+    {
+      g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
+                 _("Invalid conditional syntax: %s"), string);
+      return FALSE;
+    }
+
+  bitmask = flatpak_context_bitmask_from_string (tokens[0], names);
+  if (bitmask == 0)
+    return FALSE;
+
+  if (!g_hash_table_steal_extended (conditionals,
+                                    GINT_TO_POINTER (bitmask),
+                                    NULL, (gpointer *) &conditions))
+    conditions = g_ptr_array_new_with_free_func (g_free);
+
+  for (i = 1; i < g_strv_length (tokens); i++)
+    {
+      if (!tokens[i] || tokens[i][0] == '\0')
+        continue;
+
+      if (g_ptr_array_find_with_equal_func (conditions, tokens[i], g_str_equal, NULL))
+        continue;
+
+      g_ptr_array_add (conditions, g_strdup (tokens[i]));
+    }
+
+  g_ptr_array_sort (conditions, flatpak_strcmp0_ptr);
+
+  g_hash_table_insert (conditionals,
+                       GINT_TO_POINTER (bitmask),
+                       g_steal_pointer (&conditions));
+
+  if (bitmask_out)
+    *bitmask_out = bitmask;
+
+  return TRUE;
+}
+
+static gboolean
+flatpak_context_add_conditional_device (FlatpakContext  *context,
+                                        const char      *string,
+                                        GError         **error)
+{
+  FlatpakContextDevices device;
+
+  if (!flatpak_context_add_conditional (context, string,
+                                        flatpak_context_devices,
+                                        context->conditional_devices,
+                                        &device,
+                                        error))
+    return FALSE;
+
+  context->devices_valid |= device;
+  context->devices |= device;
+  return TRUE;
+}
+
+static gboolean
+flatpak_context_add_conditional_socket (FlatpakContext  *context,
+                                        const char      *string,
+                                        GError         **error)
+{
+  FlatpakContextSockets socket;
+
+  if (!flatpak_context_add_conditional (context, string,
+                                        flatpak_context_sockets,
+                                        context->conditional_sockets,
+                                        &socket,
+                                        error))
+    return FALSE;
+
+  context->sockets_valid |= socket;
+  context->sockets |= socket;
+  return TRUE;
+}
+
+static void
+flatpak_context_merge_conditionals (GHashTable *conditionals,
+                                    GHashTable *other_conditionals)
+{
+  GHashTableIter iter;
+  gpointer key, value;
+
+  g_hash_table_iter_init (&iter, other_conditionals);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+      g_autoptr (GPtrArray) array = NULL;
+      GPtrArray *other_array = value;
+      int i;
+
+      if (!other_array->pdata)
+        continue;
+
+      if (!g_hash_table_steal_extended (conditionals, key,
+                                        NULL, (gpointer *) &array))
+        array = g_ptr_array_new_with_free_func (g_free);
+
+      for (i = 0; i < other_array->len; i++)
+        {
+          const char *cond = other_array->pdata[i];
+
+          if (g_ptr_array_find_with_equal_func (array, cond, g_str_equal, NULL))
+            continue;
+
+          g_ptr_array_add (array, g_strdup (cond));
+        }
+
+      g_ptr_array_sort (array, flatpak_strcmp0_ptr);
+
+      g_hash_table_insert (conditionals, key, g_steal_pointer (&array));
+    }
+}
+
 void
 flatpak_context_merge (FlatpakContext *context,
                        FlatpakContext *other)
@@ -1122,6 +1380,12 @@ flatpak_context_merge (FlatpakContext *context,
   g_hash_table_iter_init (&iter, other->hidden_usb_devices);
   while (g_hash_table_iter_next (&iter, NULL, &value))
     flatpak_context_add_nousb_query (context, value);
+
+  flatpak_context_merge_conditionals (context->conditional_devices,
+                                      other->conditional_devices);
+
+  flatpak_context_merge_conditionals (context->conditional_sockets,
+                                      other->conditional_sockets);
 }
 
 static gboolean
@@ -1203,6 +1467,17 @@ option_nosocket_cb (const gchar *option_name,
 }
 
 static gboolean
+option_socket_if_cb (const gchar  *option_name,
+                     const gchar  *value,
+                     gpointer      data,
+                     GError      **error)
+{
+  FlatpakContext *context = data;
+
+  return flatpak_context_add_conditional_socket (context, value, error);
+}
+
+static gboolean
 option_device_cb (const gchar *option_name,
                   const gchar *value,
                   gpointer     data,
@@ -1236,6 +1511,17 @@ option_nodevice_cb (const gchar *option_name,
   flatpak_context_remove_devices (context, device);
 
   return TRUE;
+}
+
+static gboolean
+option_device_if_cb (const gchar  *option_name,
+                       const gchar  *value,
+                       gpointer      data,
+                       GError      **error)
+{
+  FlatpakContext *context = data;
+
+  return flatpak_context_add_conditional_device (context, value, error);
 }
 
 static gboolean
@@ -1671,8 +1957,10 @@ static GOptionEntry context_options[] = {
   { "unshare", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_unshare_cb, N_("Unshare with host"), N_("SHARE") },
   { "socket", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_socket_cb, N_("Expose socket to app"), N_("SOCKET") },
   { "nosocket", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_nosocket_cb, N_("Don't expose socket to app"), N_("SOCKET") },
+  { "socket-if", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_socket_if_cb, N_("Require conditions to be met for a socket to get exposed"), N_("DEVICE") },
   { "device", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_device_cb, N_("Expose device to app"), N_("DEVICE") },
   { "nodevice", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_nodevice_cb, N_("Don't expose device to app"), N_("DEVICE") },
+  { "device-if", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_device_if_cb, N_("Require conditions to be met for a device to get exposed"), N_("DEVICE") },
   { "allow", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_allow_cb, N_("Allow feature"), N_("FEATURE") },
   { "disallow", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_disallow_cb, N_("Don't allow feature"), N_("FEATURE") },
   { "filesystem", 0, G_OPTION_FLAG_IN_MAIN | G_OPTION_FLAG_FILENAME, G_OPTION_ARG_CALLBACK, &option_filesystem_cb, N_("Expose filesystem to app (:ro for read-only)"), N_("FILESYSTEM[:ro]") },
@@ -1737,6 +2025,135 @@ parse_negated (const char *option, gboolean *negated)
   return option;
 }
 
+static const char *
+parse_conditional (const char *option,
+                   gboolean   *conditional)
+{
+  if (option[0] == 'i' && option[1] == 'f' && option[2] == ':')
+    {
+      option += 3;
+      *conditional = TRUE;
+    }
+  else
+    {
+      *conditional = FALSE;
+    }
+
+  return option;
+}
+
+static void
+flatpak_context_load_share (FlatpakContext *context,
+                            const char     *share_str)
+{
+  FlatpakContextShares share;
+  gboolean remove;
+
+  share =
+    flatpak_context_share_from_string (parse_negated (share_str, &remove),
+                                       NULL);
+
+  if (share == 0)
+    {
+      g_info ("Unknown share type %s", share_str);
+      return;
+    }
+
+  if (remove)
+    flatpak_context_remove_shares (context, share);
+  else
+    flatpak_context_add_shares (context, share);
+}
+
+static void
+flatpak_context_load_socket (FlatpakContext *context,
+                             const char     *socket_expr)
+{
+  FlatpakContextSockets socket;
+  const char *socket_str;
+  gboolean conditional;
+  gboolean remove;
+
+  socket_str = parse_conditional (socket_expr, &conditional);
+  if (conditional)
+    {
+      if (!flatpak_context_add_conditional_socket (context, socket_str, NULL))
+        g_info ("Bad conditional socket %s", socket_expr);
+
+      return;
+    }
+
+  socket_str = parse_negated (socket_expr, &remove);
+  socket = flatpak_context_socket_from_string (socket_str, NULL);
+
+  if (socket == 0)
+    {
+      g_info ("Unknown socket type %s", socket_expr);
+      return;
+    }
+
+  if (remove)
+    flatpak_context_remove_sockets (context, socket);
+  else
+    flatpak_context_add_sockets (context, socket);
+}
+
+void
+flatpak_context_load_device (FlatpakContext *context,
+                             const char     *device_expr)
+{
+  FlatpakContextDevices device;
+  const char *device_str;
+  gboolean conditional;
+  gboolean remove;
+
+  device_str = parse_conditional (device_expr, &conditional);
+  if (conditional)
+    {
+      if (!flatpak_context_add_conditional_device (context, device_str, NULL))
+        g_info ("Bad conditional device %s", device_expr);
+
+      return;
+    }
+
+  device_str = parse_negated (device_expr, &remove);
+  device = flatpak_context_device_from_string (device_str, NULL);
+
+  if (device == 0)
+    {
+      g_info ("Unknown device type %s", device_str);
+      return;
+    }
+
+  if (remove)
+    flatpak_context_remove_devices (context, device);
+  else
+    flatpak_context_add_devices (context, device);
+}
+
+static void
+flatpak_context_load_feature (FlatpakContext *context,
+                              const char     *feature_str)
+{
+  FlatpakContextFeatures feature;
+  gboolean remove;
+
+  feature =
+    flatpak_context_feature_from_string (parse_negated (feature_str, &remove),
+                                         NULL);
+
+  if (feature == 0)
+    {
+      g_info ("Unknown feature type %s", feature_str);
+      return;
+    }
+
+  if (remove)
+    flatpak_context_remove_features (context, feature);
+  else
+    flatpak_context_add_features (context, feature);
+}
+
 /*
  * Merge the FLATPAK_METADATA_GROUP_CONTEXT,
  * FLATPAK_METADATA_GROUP_SESSION_BUS_POLICY,
@@ -1763,20 +2180,7 @@ flatpak_context_load_metadata (FlatpakContext *context,
         return FALSE;
 
       for (i = 0; shares[i] != NULL; i++)
-        {
-          FlatpakContextShares share;
-
-          share = flatpak_context_share_from_string (parse_negated (shares[i], &remove), NULL);
-          if (share == 0)
-            g_info ("Unknown share type %s", shares[i]);
-          else
-            {
-              if (remove)
-                flatpak_context_remove_shares (context, share);
-              else
-                flatpak_context_add_shares (context, share);
-            }
-        }
+        flatpak_context_load_share (context, shares[i]);
     }
 
   if (g_key_file_has_key (metakey, FLATPAK_METADATA_GROUP_CONTEXT, FLATPAK_METADATA_KEY_SOCKETS, NULL))
@@ -1787,18 +2191,7 @@ flatpak_context_load_metadata (FlatpakContext *context,
         return FALSE;
 
       for (i = 0; sockets[i] != NULL; i++)
-        {
-          FlatpakContextSockets socket = flatpak_context_socket_from_string (parse_negated (sockets[i], &remove), NULL);
-          if (socket == 0)
-            g_info ("Unknown socket type %s", sockets[i]);
-          else
-            {
-              if (remove)
-                flatpak_context_remove_sockets (context, socket);
-              else
-                flatpak_context_add_sockets (context, socket);
-            }
-        }
+        flatpak_context_load_socket (context, sockets[i]);
     }
 
   if (g_key_file_has_key (metakey, FLATPAK_METADATA_GROUP_CONTEXT, FLATPAK_METADATA_KEY_DEVICES, NULL))
@@ -1808,20 +2201,8 @@ flatpak_context_load_metadata (FlatpakContext *context,
       if (devices == NULL)
         return FALSE;
 
-
       for (i = 0; devices[i] != NULL; i++)
-        {
-          FlatpakContextDevices device = flatpak_context_device_from_string (parse_negated (devices[i], &remove), NULL);
-          if (device == 0)
-            g_info ("Unknown device type %s", devices[i]);
-          else
-            {
-              if (remove)
-                flatpak_context_remove_devices (context, device);
-              else
-                flatpak_context_add_devices (context, device);
-            }
-        }
+        flatpak_context_load_device (context, devices[i]);
     }
 
   if (g_key_file_has_key (metakey, FLATPAK_METADATA_GROUP_CONTEXT, FLATPAK_METADATA_KEY_FEATURES, NULL))
@@ -1831,20 +2212,8 @@ flatpak_context_load_metadata (FlatpakContext *context,
       if (features == NULL)
         return FALSE;
 
-
       for (i = 0; features[i] != NULL; i++)
-        {
-          FlatpakContextFeatures feature = flatpak_context_feature_from_string (parse_negated (features[i], &remove), NULL);
-          if (feature == 0)
-            g_info ("Unknown feature type %s", features[i]);
-          else
-            {
-              if (remove)
-                flatpak_context_remove_features (context, feature);
-              else
-                flatpak_context_add_features (context, feature);
-            }
-        }
+        flatpak_context_load_feature (context, features[i]);
     }
 
   if (g_key_file_has_key (metakey, FLATPAK_METADATA_GROUP_CONTEXT, FLATPAK_METADATA_KEY_FILESYSTEMS, NULL))
@@ -2129,8 +2498,8 @@ flatpak_context_save_metadata (FlatpakContext *context,
     }
 
   shared = flatpak_context_shared_to_string (shares_mask, shares_valid);
-  sockets = flatpak_context_sockets_to_string (sockets_mask, sockets_valid);
-  devices = flatpak_context_devices_to_string (devices_mask, devices_valid);
+  sockets = flatpak_context_sockets_to_string (context, sockets_mask, sockets_valid);
+  devices = flatpak_context_devices_to_string (context, devices_mask, devices_valid);
   features = flatpak_context_features_to_string (features_mask, features_valid);
 
   if (shared[0] != NULL)
@@ -2584,10 +2953,10 @@ flatpak_context_to_args (FlatpakContext *context,
   gpointer key, value;
   char *usb_list = NULL;
 
-  flatpak_context_shared_to_args (context->shares, context->shares_valid, args);
-  flatpak_context_sockets_to_args (context->sockets, context->sockets_valid, args);
-  flatpak_context_devices_to_args (context->devices, context->devices_valid, args);
-  flatpak_context_features_to_args (context->features, context->features_valid, args);
+  flatpak_context_shared_to_args (context, args);
+  flatpak_context_sockets_to_args (context, args);
+  flatpak_context_devices_to_args (context, args);
+  flatpak_context_features_to_args (context, args);
 
   g_hash_table_iter_init (&iter, context->env_vars);
   while (g_hash_table_iter_next (&iter, &key, &value))
@@ -2742,6 +3111,8 @@ flatpak_context_reset_permissions (FlatpakContext *context)
   g_hash_table_remove_all (context->system_bus_policy);
   g_hash_table_remove_all (context->a11y_bus_policy);
   g_hash_table_remove_all (context->generic_policy);
+  g_hash_table_remove_all (context->conditional_sockets);
+  g_hash_table_remove_all (context->conditional_devices);
 }
 
 void
@@ -2766,6 +3137,8 @@ flatpak_context_make_sandboxed (FlatpakContext *context)
   g_hash_table_remove_all (context->system_bus_policy);
   g_hash_table_remove_all (context->a11y_bus_policy);
   g_hash_table_remove_all (context->generic_policy);
+  g_hash_table_remove_all (context->conditional_sockets);
+  g_hash_table_remove_all (context->conditional_devices);
 }
 
 const char *dont_mount_in_root[] = {
@@ -3507,4 +3880,82 @@ flatpak_context_dump (FlatpakContext *context,
 
       g_debug ("\t#");
     }
+}
+
+static guint32
+flatpak_context_compute_allowed (guint32                           enabled,
+                                 GHashTable                       *conditionals,
+                                 FlatpakContextConditionEvaluator  evaluator)
+{
+  GHashTableIter iter;
+  gpointer key;
+  GPtrArray *conditions_strs;
+
+  g_hash_table_iter_init (&iter, conditionals);
+  while (g_hash_table_iter_next (&iter, &key, (gpointer *) &conditions_strs))
+    {
+      guint32 conditional_bitmask = GPOINTER_TO_INT (key);
+      int i;
+
+      for (i = 0; i < conditions_strs->len; i++)
+        {
+          FlatpakContextConditions condition;
+          const char *condition_str;
+          gboolean negated;
+
+          condition_str = parse_negated (conditions_strs->pdata[i], &negated);
+
+          condition =
+            flatpak_context_bitmask_from_string (condition_str,
+                                                 flatpak_context_conditions);
+
+          /* If condition is 0 it means this version of flatpak doesn't know
+           * about the condition and it cannot be satisfied. */
+          if (condition == 0)
+            continue;
+
+          /* Conditions which are always true in this version of flatpak */
+          if (!!(condition & flatpak_context_true_conditions) == !negated)
+            break;
+
+          /* Conditions which need runtime evaluation */
+          if (evaluator && evaluator (condition) == !negated)
+            break;
+        }
+
+      /* No condition evaluated to TRUE, so disable the thing */
+      if (i == conditions_strs->len)
+        enabled &= ~conditional_bitmask;
+    }
+
+  return enabled;
+}
+
+FlatpakContextSockets
+flatpak_context_compute_allowed_sockets (FlatpakContext                   *context,
+                                         FlatpakContextConditionEvaluator  evaluator)
+{
+  FlatpakContextSockets sockets = context->sockets;
+
+  /* The fallback-x11 socket permission was an ad-hoc fallback mechanism which
+   * we can take care of here so the caller can just ignore it. */
+  if (sockets & FLATPAK_CONTEXT_SOCKET_FALLBACK_X11)
+    {
+      sockets &= ~FLATPAK_CONTEXT_SOCKET_FALLBACK_X11;
+      if (!evaluator || evaluator (FLATPAK_CONTEXT_CONDITION_HAS_WAYLAND) == FALSE)
+        sockets |= FLATPAK_CONTEXT_SOCKET_X11;
+    }
+
+  return flatpak_context_compute_allowed (sockets,
+                                          context->conditional_sockets,
+                                          evaluator);
+}
+
+FlatpakContextDevices
+flatpak_context_compute_allowed_devices (FlatpakContext                   *context,
+                                         FlatpakContextConditionEvaluator  evaluator)
+{
+  return flatpak_context_compute_allowed (context->devices,
+                                          context->conditional_devices,
+                                          evaluator);
 }

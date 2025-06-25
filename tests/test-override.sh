@@ -17,7 +17,7 @@ reset_overrides () {
     assert_file_empty info
 }
 
-echo "1..18"
+echo "1..20"
 
 setup_repo
 install_repo
@@ -32,6 +32,16 @@ assert_file_has_content override "^\[Context\]$"
 assert_file_has_content override "^sockets=wayland;!ssh-auth;$"
 
 ok "override --socket"
+
+reset_overrides
+
+${FLATPAK} override --user --socket-if=wayland:!has-wayland org.test.Hello
+${FLATPAK} override --user --socket-if=wayland:true org.test.Hello
+${FLATPAK} override --user --show org.test.Hello > override
+
+assert_file_has_content override "^\[Context\]$"
+assert_file_has_content override "^sockets=wayland;if:wayland:!has-wayland:true;$"
+ok "override --socket-if"
 
 reset_overrides
 
@@ -54,6 +64,17 @@ assert_file_has_content override "^\[Context\]$"
 assert_file_has_content override "^shared=network;!ipc;$"
 
 ok "override --share"
+
+reset_overrides
+
+${FLATPAK} override --user --device-if=dri:a:b:c org.test.Hello
+${FLATPAK} override --user --device-if=kvm:x --device-if=dri:d org.test.Hello
+${FLATPAK} override --user --device-if=dri:!x:d org.test.Hello
+${FLATPAK} override --user --show org.test.Hello > override
+
+assert_file_has_content override "^\[Context\]$"
+assert_file_has_content override "^devices=dri;kvm;if:dri:!x:a:b:c:d;if:kvm:x;$"
+ok "override --device-if"
 
 reset_overrides
 
