@@ -3,6 +3,7 @@
 # This file is distributed under the same license as the flatpak package.
 # Philip Goto <philip.goto@gmail.com>, 2023.
 # Nathan Follens <nfollens@gnome.org>, 2023
+# Sijmen Schoon <me@sijmenschoon.nl>, 2025
 #
 msgid ""
 msgstr ""
@@ -92,7 +93,7 @@ msgstr "SLEUTEL-ID"
 #: app/flatpak-builtins-build-sign.c:45
 #: app/flatpak-builtins-build-update-repo.c:85
 msgid "GPG Homedir to use when looking for keyrings"
-msgstr "GPG-map om te gebruiken bij het zoeken naar sleutelbossen"
+msgstr "GPG-thuismap om te gebruiken bij het zoeken naar sleutelbossen"
 
 #: app/flatpak-builtins-build-bundle.c:64
 #: app/flatpak-builtins-build-commit-from.c:69
@@ -101,7 +102,7 @@ msgstr "GPG-map om te gebruiken bij het zoeken naar sleutelbossen"
 #: app/flatpak-builtins-build-sign.c:45
 #: app/flatpak-builtins-build-update-repo.c:85
 msgid "HOMEDIR"
-msgstr "MAP"
+msgstr "THUISMAP"
 
 #: app/flatpak-builtins-build-bundle.c:65
 msgid "OSTree commit to create a delta bundle from"
@@ -220,7 +221,7 @@ msgstr "Processen beëindigen wanneer het bovenliggende proces is beëindigd"
 
 #: app/flatpak-builtins-build.c:56
 msgid "Export application homedir directory to build"
-msgstr "Toepassingsmap exporteren om te compileren"
+msgstr "Thuismap van toepassing exporteren om te bouwen"
 
 #: app/flatpak-builtins-build.c:57 app/flatpak-builtins-run.c:73
 msgid "Log session bus calls"
@@ -232,7 +233,7 @@ msgstr "Systeembusaanroepen bijhouden"
 
 #: app/flatpak-builtins-build.c:208
 msgid "DIRECTORY [COMMAND [ARGUMENT…]] - Build in directory"
-msgstr "MAP [OPDRACHT [ARGUMENT…]] - Compileren in map"
+msgstr "MAP [OPDRACHT [ARGUMENT…]] - Bouwen in map"
 
 #: app/flatpak-builtins-build.c:231 app/flatpak-builtins-build-finish.c:655
 msgid "DIRECTORY must be specified"
@@ -270,7 +271,7 @@ msgstr "Map van source-pakketbron"
 
 #: app/flatpak-builtins-build-commit-from.c:58
 msgid "SRC-REPO"
-msgstr "SRC-BRON"
+msgstr "SRC-PAKKETBRON"
 
 #: app/flatpak-builtins-build-commit-from.c:59
 msgid "Source repo ref"
@@ -370,11 +371,11 @@ msgstr "Geen samenvattingsindex genereren"
 
 #: app/flatpak-builtins-build-commit-from.c:278
 msgid "DST-REPO [DST-REF…] - Make a new commit from existing commits"
-msgstr "DST-BRON [DST-REF…] - Nieuwe commit aanmaken van bestaande commits"
+msgstr "DST-PAKKETBRON [DST-REF…] - Nieuwe commit aanmaken van bestaande commits"
 
 #: app/flatpak-builtins-build-commit-from.c:285
 msgid "DST-REPO must be specified"
-msgstr "DST-BRON moet worden opgegeven"
+msgstr "DST-PAKKETBRON moet worden opgegeven"
 
 #: app/flatpak-builtins-build-commit-from.c:293
 msgid ""
@@ -495,7 +496,7 @@ msgstr "WAARSCHUWING: Kan Exec-sleutel in %s niet vinden: %s\n"
 #, c-format
 msgid "WARNING: Binary not found for Exec line in %s: %s\n"
 msgstr ""
-"WAARSCHUWING: programmabestand voor Exec-regel in %s niet gevonden: %s\n"
+"WAARSCHUWING: Programmabestand voor Exec-regel in %s niet gevonden: %s\n"
 
 #: app/flatpak-builtins-build-export.c:529
 #, c-format
@@ -667,7 +668,6 @@ msgstr "GROEP=SLEUTEL[=WAARDE]"
 msgid "Don't inherit permissions from runtime"
 msgstr "Rechten niet overnemen van runtime"
 
-# Het is mij soms niet duidelijk om wat voor soort ‘extension’ het gaat. In dit geval gok ik bestandsextensie, maar dit is misschien iets om na het inzenden te corrigeren.  - Philip
 #: app/flatpak-builtins-build-finish.c:155
 #, c-format
 msgid "Not exporting %s, wrong extension\n"
@@ -686,7 +686,7 @@ msgstr "%s exporteren\n"
 #: app/flatpak-builtins-build-finish.c:439
 #, c-format
 msgid "More than one executable found\n"
-msgstr "Meer dan één programmabestand gevonden\n"
+msgstr "Meer dan één uitvoerbaar bestand gevonden\n"
 
 #: app/flatpak-builtins-build-finish.c:450
 #, c-format
@@ -696,7 +696,7 @@ msgstr "%s wordt als opdracht gebruikt\n"
 #: app/flatpak-builtins-build-finish.c:455
 #, c-format
 msgid "No executable found\n"
-msgstr "Geen programmabestand gevonden\n"
+msgstr "Geen uitvoerbaar bestand gevonden\n"
 
 #: app/flatpak-builtins-build-finish.c:510
 #, c-format
@@ -823,7 +823,7 @@ msgstr "UITBREIDING"
 
 #: app/flatpak-builtins-build-init.c:58
 msgid "Extension tag to use if building extension"
-msgstr "Uitbreidings-tag om te gebruiken bij compileren van uitbreiding"
+msgstr "Uitbreidings-tag om te gebruiken bij het bouwen van uitbreiding"
 
 #: app/flatpak-builtins-build-init.c:58
 msgid "EXTENSION_TAG"
@@ -923,7 +923,7 @@ msgstr "Geen GPG-sleutel-ID’s opgegeven"
 
 #: app/flatpak-builtins-build-update-repo.c:68
 msgid "Redirect this repo to a new URL"
-msgstr "Deze bron doorverwijzen naar een nieuwe URL"
+msgstr "Deze pakketbron doorverwijzen naar een nieuwe URL"
 
 #: app/flatpak-builtins-build-update-repo.c:69
 msgid "A nice name to use for this repository"
@@ -1424,7 +1424,7 @@ msgstr "Toepassing"
 
 #: app/flatpak-builtins-document-list.c:50
 msgid "Show applications with permission"
-msgstr "Toepassingen met recht tonen"
+msgstr "Toepassingen met toestemming tonen"
 
 #: app/flatpak-builtins-document-list.c:51
 #: app/flatpak-builtins-permission-list.c:179
@@ -1947,7 +1947,7 @@ msgstr "Neem aan dat LOCATIE een .flatpak-single-file-bundel is"
 
 #: app/flatpak-builtins-install.c:78
 msgid "Assume LOCATION is a .flatpakref application description"
-msgstr "Neem aan dat LOCATIE een .flatpakref-applicatie-beschrijving is"
+msgstr "Neem aan dat LOCATIE een .flatpakref-toepassingsbeschrijving is"
 
 #: app/flatpak-builtins-install.c:79
 msgid "Check bundle signatures with GPG key from FILE (- for stdin)"
@@ -1979,7 +1979,7 @@ msgstr "Installatie bijwerken indien reeds geïnstalleerd"
 #. Translators: A sideload is when you install from a local USB drive rather than the Internet.
 #: app/flatpak-builtins-install.c:86 app/flatpak-builtins-update.c:71
 msgid "Use this local repo for sideloads"
-msgstr "Gebruik deze lokale repo voor sideloads"
+msgstr "Gebruik deze lokale pakketbron voor sideloads"
 
 #: app/flatpak-builtins-install.c:145
 msgid "Bundle filename must be specified"
@@ -1995,7 +1995,7 @@ msgstr "Bestandsnaam of URI moet worden opgegeven"
 
 #: app/flatpak-builtins-install.c:296
 msgid "[LOCATION/REMOTE] [REF…] - Install applications or runtimes"
-msgstr "[LOCATIE/REMOTE] [REF…] - Installeer applicaties of runtimes"
+msgstr "[LOCATIE/REMOTE] [REF…] - Installeer toepassingen of runtimes"
 
 #: app/flatpak-builtins-install.c:322
 msgid "At least one REF must be specified"
@@ -2341,11 +2341,11 @@ msgstr "PID van het zandbakproces tonen"
 
 #: app/flatpak-builtins-ps.c:52 app/flatpak-builtins-search.c:46
 msgid "Show the application branch"
-msgstr "Toepassings-branch tonen"
+msgstr "Toepassingsbranch tonen"
 
 #: app/flatpak-builtins-ps.c:53
 msgid "Show the application commit"
-msgstr "Toepassings-commit tonen"
+msgstr "Toepassingscommit tonen"
 
 #: app/flatpak-builtins-ps.c:54
 msgid "Show the runtime ID"
@@ -2393,7 +2393,7 @@ msgstr "Niets doen als de opgegeven remote bestaat"
 
 #: app/flatpak-builtins-remote-add.c:66
 msgid "LOCATION specifies a configuration file, not the repo location"
-msgstr "LOCATIE geeft een configuratiebestand aan, niet de bronlocatie"
+msgstr "LOCATIE geeft een configuratiebestand aan, niet de pakketbronlocatie"
 
 #: app/flatpak-builtins-remote-add.c:71 app/flatpak-builtins-remote-modify.c:77
 msgid "Disable GPG verification"
@@ -2556,7 +2556,7 @@ msgstr "Geef alleen refs weer die beschikbaar zijn als sideloads"
 msgid ""
 " REMOTE REF - Show information about an application or runtime in a remote"
 msgstr ""
-" REMOTE REF - Toon informatie over een applicatie of een runtime in een "
+" REMOTE REF - Toon informatie over een toepassing of een runtime in een "
 "remote"
 
 #: app/flatpak-builtins-remote-info.c:125
@@ -2704,7 +2704,7 @@ msgstr "Downloadgrootte tonen"
 
 #: app/flatpak-builtins-remote-ls.c:389
 msgid " [REMOTE or URI] - Show available runtimes and applications"
-msgstr " [REMOTE of URI] - Toon beschikbare runtimes en applicaties"
+msgstr " [REMOTE of URI] - Toon beschikbare runtimes en toepassingen"
 
 #: app/flatpak-builtins-remote-modify.c:66
 msgid "Enable GPG verification"
@@ -2914,7 +2914,7 @@ msgstr "Tijdens het uitrollen van de appstream voor %s: "
 #: app/flatpak-builtins-repo.c:105
 #, c-format
 msgid "Repo mode: %s\n"
-msgstr "Bronmodus: %s\n"
+msgstr "Modus van pakketbron: %s\n"
 
 #: app/flatpak-builtins-repo.c:112
 #, c-format
@@ -3033,11 +3033,11 @@ msgstr "Geschiedenislengte"
 
 #: app/flatpak-builtins-repo.c:709
 msgid "Print general information about the repository"
-msgstr "Algemene informatie tonen over de bron"
+msgstr "Algemene informatie tonen over de pakketbron"
 
 #: app/flatpak-builtins-repo.c:710
 msgid "List the branches in the repository"
-msgstr "Branches in de bron tonen"
+msgstr "Branches in de pakketbron tonen"
 
 #: app/flatpak-builtins-repo.c:711
 msgid "Print metadata for a branch"
@@ -3049,7 +3049,7 @@ msgstr "Commits van een branch tonen"
 
 #: app/flatpak-builtins-repo.c:713
 msgid "Print information about the repo subsets"
-msgstr "Informatie tonen over de bron-subsets"
+msgstr "Informatie tonen over de pakketbron-subsets"
 
 #: app/flatpak-builtins-repo.c:714
 msgid "Limit information to subsets with this prefix"
@@ -3143,7 +3143,7 @@ msgstr "Schrijf instantie-ID weg naar de opgegeven bestanddescriptor"
 
 #: app/flatpak-builtins-run.c:90
 msgid "Use PATH instead of the app's /app"
-msgstr "Gebruik PAD in plaats van de /app van de applicatie"
+msgstr "Gebruik PAD in plaats van de /app van de toepassing"
 
 #: app/flatpak-builtins-run.c:91
 msgid "Use PATH instead of the runtime's /usr"
@@ -3184,15 +3184,15 @@ msgstr "Geen overeenkomsten gevonden"
 
 #: app/flatpak-builtins-uninstall.c:54
 msgid "Arch to uninstall"
-msgstr "Arch om te deïnstalleren"
+msgstr "Arch om te de-installeren"
 
 #: app/flatpak-builtins-uninstall.c:55
 msgid "Keep ref in local repository"
-msgstr "Ref in lokale bron behouden"
+msgstr "Ref in lokale pakketbron behouden"
 
 #: app/flatpak-builtins-uninstall.c:56
 msgid "Don't uninstall related refs"
-msgstr "Gerelateerde refs niet deïnstalleren"
+msgstr "Gerelateerde refs niet de-installeren"
 
 #: app/flatpak-builtins-uninstall.c:57
 msgid "Remove files even if running"
@@ -3218,13 +3218,13 @@ msgstr "Gegevens voor %s verwijderen?"
 #: app/flatpak-builtins-uninstall.c:220
 #, c-format
 msgid "Info: applications using the extension %s%s%s branch %s%s%s:\n"
-msgstr "Info: applicaties die extensie %s%s%s, branch %s%s%s gebruiken:\n"
+msgstr "Info: toepassingen die extensie %s%s%s, branch %s%s%s gebruiken:\n"
 
 #: app/flatpak-builtins-uninstall.c:223
 #, c-format
 msgid "Info: applications using the runtime %s%s%s branch %s%s%s:\n"
 msgstr ""
-"Info: applicaties die de runtime %s%s%s, met branch %s%s%s gebruiken:\n"
+"Info: toepassingen die de runtime %s%s%s, met branch %s%s%s gebruiken:\n"
 
 #: app/flatpak-builtins-uninstall.c:238
 msgid "Really remove?"
@@ -3232,7 +3232,7 @@ msgstr "Echt verwijderen?"
 
 #: app/flatpak-builtins-uninstall.c:255
 msgid "[REF…] - Uninstall applications or runtimes"
-msgstr "[REF…] - Applicates of runtimes deïnstalleren"
+msgstr "[REF…] - Toepassingen of runtimes de-installeren"
 
 #: app/flatpak-builtins-uninstall.c:264
 msgid "Must specify at least one REF, --unused, --all or --delete-data"
@@ -3297,7 +3297,7 @@ msgstr "Commit om uit te rollen"
 
 #: app/flatpak-builtins-update.c:58
 msgid "Remove old files even if running"
-msgstr "Oude bestanden verwijderen, zelfs als het programma wordt uitgevoerd"
+msgstr "Oude bestanden verwijderen, zelfs als de toepassing wordt uitgevoerd"
 
 #: app/flatpak-builtins-update.c:59
 msgid "Don't pull, only update from local cache"
@@ -3511,7 +3511,7 @@ msgid ""
 "Should the remote be kept for future installations?"
 msgstr ""
 "De remote '%s', waarnaar gerefereerd wordt door '%s' op locatie %s, bevat "
-"aanvullende applicaties.\n"
+"aanvullende toepassingen.\n"
 "Moet deze remote behouden worden voor toekomstige installaties?"
 
 #. default to yes on Enter
@@ -3522,7 +3522,7 @@ msgid ""
 "  %s\n"
 "Configure this as new remote '%s'"
 msgstr ""
-"De applicatie %s is afhankelijk van runtimes van:\n"
+"De toepassing %s is afhankelijk van runtimes van:\n"
 "  %s\n"
 "Deze remote als nieuwe remote '%s' configureren?"
 
@@ -3709,12 +3709,12 @@ msgstr ""
 #: app/flatpak-cli-transaction.c:960
 #, c-format
 msgid "Info: applications using this extension:\n"
-msgstr "Info: applicaties die deze extensie gebruiken:\n"
+msgstr "Info: toepassingen die deze extensie gebruiken:\n"
 
 #: app/flatpak-cli-transaction.c:962
 #, c-format
 msgid "Info: applications using this runtime:\n"
-msgstr "Info: applicaties die deze runtime gebruiken:\n"
+msgstr "Info: toepassingen die deze runtime gebruiken:\n"
 
 #: app/flatpak-cli-transaction.c:981
 msgid "Replace?"
@@ -3776,7 +3776,7 @@ msgstr "Veranderingen voltooid"
 
 #: app/flatpak-cli-transaction.c:1709
 msgid "Uninstall complete."
-msgstr "Verwijdering voltooid"
+msgstr "De-installatie voltooid"
 
 #: app/flatpak-cli-transaction.c:1711
 msgid "Installation complete."
@@ -3807,7 +3807,7 @@ msgstr "Geïnstalleerde toepassing of runtime bijwerken"
 
 #: app/flatpak-main.c:81
 msgid "Uninstall an installed application or runtime"
-msgstr "Geïnstalleerde toepassing of runtime verwijderen"
+msgstr "Geïnstalleerde toepassing of runtime de-installeren"
 
 #: app/flatpak-main.c:84
 msgid "Mask out updates and automatic installation"
@@ -3948,7 +3948,7 @@ msgid ""
 " Manage remote repositories"
 msgstr ""
 "\n"
-"Externe pakketbronnen beheren"
+" Externe pakketbronnen beheren"
 
 #: app/flatpak-main.c:125
 msgid "List all configured remotes"
@@ -3981,7 +3981,7 @@ msgid ""
 " Build applications"
 msgstr ""
 "\n"
-"Toepassingen compileren"
+" Toepassingen bouwen"
 
 #: app/flatpak-main.c:135
 msgid "Initialize a directory for building"
@@ -4084,7 +4084,7 @@ msgid ""
 msgstr ""
 "Houd er rekening mee dat de mappen %s niet in het zoekpad staan dat is "
 "ingesteld via de omgevingsvariabele XDG_DATA_DIRS. Hierdoor verschijnen door "
-"Flatpak geïnstalleerde applicaties mogelijk niet op je bureaublad totdat je "
+"Flatpak geïnstalleerde toepassingen mogelijk niet op je bureaublad totdat je "
 "de sessie opnieuw start."
 
 #: app/flatpak-main.c:311
@@ -4096,7 +4096,7 @@ msgid ""
 msgstr ""
 "Houd er rekening mee dat de map %s niet in het zoekpad staat dat is "
 "ingesteld via de omgevingsvariabele XDG_DATA_DIRS. Hierdoor verschijnen door "
-"Flatpak geïnstalleerde applicaties mogelijk niet op je bureaublad totdat je "
+"Flatpak geïnstalleerde toepassingen mogelijk niet op je bureaublad totdat je "
 "de sessie opnieuw start."
 
 #: app/flatpak-main.c:380
@@ -4151,7 +4151,7 @@ msgstr "%s bijwerken\n"
 #: app/flatpak-quiet-transaction.c:85
 #, c-format
 msgid "Uninstalling %s\n"
-msgstr "%s verwijderen\n"
+msgstr "%s de-installeren\n"
 
 #: app/flatpak-quiet-transaction.c:107
 #, c-format
@@ -4186,12 +4186,12 @@ msgstr "Fout: Bundel %s installeren mislukt: %s\n"
 #: app/flatpak-quiet-transaction.c:134
 #, c-format
 msgid "Warning: Failed to uninstall %s: %s\n"
-msgstr "Waarschuwing: %s verwijderen mislukt: %s\n"
+msgstr "Waarschuwing: %s de-installeren mislukt: %s\n"
 
 #: app/flatpak-quiet-transaction.c:137
 #, c-format
 msgid "Error: Failed to uninstall %s: %s\n"
-msgstr "Fout: %s verwijderen mislukt: %s\n"
+msgstr "Fout: %s de-installeren mislukt: %s\n"
 
 #: app/flatpak-quiet-transaction.c:166 common/flatpak-dir.c:10535
 #, c-format
@@ -4724,7 +4724,7 @@ msgstr "Commit voor ‘%s’ staat niet in verwachte bound-refs: %s"
 
 #: common/flatpak-dir.c:6600
 msgid "Only applications can be made current"
-msgstr "Alleen applicaties kunnen als huidig gemarkeerd worden"
+msgstr "Alleen toepassingen kunnen als huidig gemarkeerd worden"
 
 #: common/flatpak-dir.c:7304
 msgid "Not enough memory"
@@ -4899,7 +4899,7 @@ msgstr "%s-commit %s is niet geïnstalleerd"
 #: common/flatpak-dir.c:11555
 #, c-format
 msgid "Pruning repo failed: %s"
-msgstr "Opruimen van bron mislukt: %s"
+msgstr "Opruimen van pakketbron mislukt: %s"
 
 #: common/flatpak-dir.c:11723 common/flatpak-dir.c:11729
 #, c-format
@@ -4971,7 +4971,7 @@ msgstr "Fout bij zoeken in remote %s: %s"
 #: common/flatpak-dir.c:13689
 #, c-format
 msgid "Error searching local repository: %s"
-msgstr "Fout bij zoeken in lokale bron: %s"
+msgstr "Fout bij zoeken in lokale pakketbron: %s"
 
 #: common/flatpak-dir.c:13826
 #, c-format
@@ -5178,7 +5178,7 @@ msgstr "Ongeldig deltabestandsformaat"
 #: common/flatpak-oci-registry.c:2496
 #, c-format
 msgid "No gpg key found with ID %s (homedir: %s)"
-msgstr "Geen GPG-sleutel gevonden met ID %s (map: %s)"
+msgstr "Geen GPG-sleutel gevonden met ID %s (thuismap: %s)"
 
 #: common/flatpak-oci-registry.c:2503
 #, c-format
@@ -5567,7 +5567,7 @@ msgstr "De toepassing %s vereist de runtime %s, welke niet is geïnstalleerd"
 #: common/flatpak-transaction.c:2576
 #, c-format
 msgid "Can't uninstall %s which is needed by %s"
-msgstr "Kan %s niet verwijderen, deze is benodigd door %s"
+msgstr "Kan %s niet de-installeren, deze is benodigd door %s"
 
 #: common/flatpak-transaction.c:2673
 #, c-format
@@ -5972,7 +5972,7 @@ msgstr "Authenticatie is vereist om software te installeren van $(path)"
 #. in the wheel group to uninstall without authenticating.
 #: system-helper/org.freedesktop.Flatpak.policy.in:144
 msgid "Uninstall runtime"
-msgstr "Runtime verwijderen"
+msgstr "Runtime de-installeren"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:145
 msgid "Authentication is required to uninstall software"
@@ -5985,7 +5985,7 @@ msgstr "Authenticatie is vereist om software te verwijderen"
 #. in the wheel group to uninstall without authenticating.
 #: system-helper/org.freedesktop.Flatpak.policy.in:161
 msgid "Uninstall app"
-msgstr "Toepassing verwijderen"
+msgstr "Toepassing de-installeren"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:162
 msgid "Authentication is required to uninstall $(ref)"
@@ -6000,7 +6000,7 @@ msgstr "Remote configureren"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:178
 msgid "Authentication is required to configure software repositories"
-msgstr "Authenticatie is vereist om softwarebronnen te configureren"
+msgstr "Authenticatie is vereist om softwarepakketbronnen te configureren"
 
 #. SECURITY:
 #. - Normal users need admin authentication to configure the system-wide
@@ -6091,7 +6091,7 @@ msgstr "Authenticatie is vereist om metagegevens bij te werken"
 #: system-helper/org.freedesktop.Flatpak.policy.in:287
 #, fuzzy
 msgid "Override parental controls for installs"
-msgstr "Ouderlijk toezicht overschrijven"
+msgstr "Ouderlijk toezicht overschrijven voor installaties"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:288
 msgid ""
@@ -6117,7 +6117,7 @@ msgstr ""
 #: system-helper/org.freedesktop.Flatpak.policy.in:313
 #, fuzzy
 msgid "Override parental controls for updates"
-msgstr "Ouderlijk toezicht overschrijven"
+msgstr "Ouderlijk toezicht overschrijven voor updates"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:314
 #, fuzzy
