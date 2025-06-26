@@ -239,6 +239,7 @@ collect_exports (GFile          *base,
     "share/krunner/dbusplugins",          /* KDE krunner DBus plugins */
     "share/appdata",                      /* Copy appdata/metainfo files (legacy path) */
     "share/metainfo",                     /* Copy appdata/metainfo files */
+    "share/metainfo/releases",            /* Copy AppStream release files */
     NULL,
   };
 
