@@ -64,6 +64,8 @@ void     flatpak_run_apply_env_default (FlatpakBwrap *bwrap,
                                         gboolean      use_ld_so_cache);
 void      flatpak_run_apply_env_vars (FlatpakBwrap   *bwrap,
                                       FlatpakContext *context);
+gboolean flatpak_run_apply_command (FlatpakBwrap   *bwrap,
+                                    FlatpakContext *context);
 FlatpakContext *flatpak_app_compute_permissions (GKeyFile *app_metadata,
                                                  GKeyFile *runtime_metadata,
                                                  GError  **error);
