@@ -2929,7 +2929,10 @@ flatpak_parse_repofile (const char   *remote_name,
                                                           FLATPAK_REPO_COLLECTION_ID_KEY);
   if (collection_id != NULL)
     {
-      if (gpg_key == NULL)
+      /* We don't support signatures for OCI remotes, but Collection ID's are
+       * still useful for preinstallation.
+       */
+      if (gpg_key == NULL && !g_str_has_prefix (uri, "oci+"))
         {
           flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Collection ID requires GPG key to be provided"));
           return NULL;
