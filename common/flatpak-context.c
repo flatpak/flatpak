@@ -315,22 +315,27 @@ flatpak_context_conditionals_to_string_impl (GHashTable  *conditionals,
   gpointer key;
   GPtrArray *conditions;
   GHashTableIter iter;
-  int i;
 
   g_hash_table_iter_init (&iter, conditionals);
   while (g_hash_table_iter_next (&iter, &key, (gpointer *) &conditions))
     {
       guint32 conditional = GPOINTER_TO_INT (key);
-      g_autofree char *condition_str;
+      g_autoptr(GString) condition_str = g_string_new ("");
 
       if (!conditions->pdata)
         continue;
 
-      g_ptr_array_add (conditions, NULL);
-      condition_str = g_strjoinv (":", (char **)conditions->pdata);
-      g_ptr_array_remove_index (conditions, conditions->len - 1);
+      for (size_t i = 0; i < conditions->len; i++)
+        {
+          const char *cond = conditions->pdata[i];
 
-      for (i = 0; names[i] != NULL; i++)
+          if (condition_str->len > 0)
+            g_string_append (condition_str, ":");
+
+          g_string_append (condition_str, cond);
+        }
+
+      for (size_t i = 0; names[i] != NULL; i++)
         {
           if (conditional != 1 << i)
             continue;
@@ -338,7 +343,7 @@ flatpak_context_conditionals_to_string_impl (GHashTable  *conditionals,
           g_ptr_array_add (array, g_strdup_printf ("%s%s:%s",
                                                    prefix,
                                                    names[i],
-                                                   condition_str));
+                                                   condition_str->str));
           break;
         }
     }
