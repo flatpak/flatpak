@@ -1187,38 +1187,21 @@ flatpak_context_take_filesystem (FlatpakContext        *context,
   g_hash_table_insert (context->filesystems, fs, GINT_TO_POINTER (mode));
 }
 
-static gboolean
-flatpak_context_add_conditional (FlatpakContext  *context,
-                                 const char      *string,
-                                 const char     **names,
-                                 GHashTable      *conditionals,
-                                 guint32         *bitmask_out,
-                                 GError         **error)
+static void
+flatpak_context_add_conditional_tokens (FlatpakContext  *context,
+                                        guint32          bitmask,
+                                        gsize            n_tokens,
+                                        char           **tokens,
+                                        GHashTable      *conditionals)
 {
-  guint32 bitmask;
-  g_auto(GStrv) tokens = NULL;
   g_autoptr(GPtrArray) conditions = NULL;
-  int i;
-
-  tokens = g_strsplit (string, ":", -1);
-
-  if (!tokens || !tokens[0] || !tokens[1])
-    {
-      g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
-                 _("Invalid conditional syntax: %s"), string);
-      return FALSE;
-    }
-
-  bitmask = flatpak_context_bitmask_from_string (tokens[0], names);
-  if (bitmask == 0)
-    return FALSE;
 
   if (!g_hash_table_steal_extended (conditionals,
                                     GINT_TO_POINTER (bitmask),
                                     NULL, (gpointer *) &conditions))
     conditions = g_ptr_array_new_with_free_func (g_free);
 
-  for (i = 1; i < g_strv_length (tokens); i++)
+  for (size_t i = 0; i < n_tokens; i++)
     {
       if (!tokens[i] || tokens[i][0] == '\0')
         continue;
@@ -1234,6 +1217,37 @@ flatpak_context_add_conditional (FlatpakContext  *context,
   g_hash_table_insert (conditionals,
                        GINT_TO_POINTER (bitmask),
                        g_steal_pointer (&conditions));
+}
+
+static gboolean
+flatpak_context_add_conditional (FlatpakContext  *context,
+                                 const char      *string,
+                                 const char     **names,
+                                 GHashTable      *conditionals,
+                                 guint32         *bitmask_out,
+                                 GError         **error)
+{
+  guint32 bitmask;
+  g_auto(GStrv) tokens = NULL;
+  g_autoptr(GPtrArray) conditions = NULL;
+
+  tokens = g_strsplit (string, ":", -1);
+
+  if (!tokens || !tokens[0] || !tokens[1])
+    {
+      g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
+                 _("Invalid conditional syntax: %s"), string);
+      return FALSE;
+    }
+
+  bitmask = flatpak_context_bitmask_from_string (tokens[0], names);
+  if (bitmask == 0)
+    return FALSE;
+
+  flatpak_context_add_conditional_tokens (context, bitmask,
+                                          g_strv_length (tokens),
+                                          tokens + 1,
+                                          conditionals);
 
   if (bitmask_out)
     *bitmask_out = bitmask;
