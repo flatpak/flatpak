@@ -4482,7 +4482,7 @@ test_overrides (void)
   g_assert_true (res);
 
   assert_cmpstr_free_lhs (g_key_file_get_string (overrides, "Context", "devices", &error),
-                          ==, "dri;!kvm;");
+                          ==, "dri;!kvm;if:dri:reset;if:kvm:reset;");
 
   assert_cmpstr_free_lhs (g_key_file_get_string (overrides, "Context", "features", &error),
                           ==, "bluetooth;!canbus;");
@@ -4495,9 +4495,11 @@ test_overrides (void)
   g_clear_pointer (&list, g_strfreev);
 
   list = g_key_file_get_string_list (overrides, "Context", "sockets", &len, &error);
-  g_assert_cmpint (len, ==, 2);
+  g_assert_cmpint (len, ==, 4);
   g_assert_true (g_strv_contains ((const char * const *) list, "wayland"));
   g_assert_true (g_strv_contains ((const char * const *) list, "!pulseaudio"));
+  g_assert_true (g_strv_contains ((const char * const *) list, "if:wayland:reset"));
+  g_assert_true (g_strv_contains ((const char * const *) list, "if:pulseaudio:reset"));
   g_clear_pointer (&list, g_strfreev);
 
   assert_cmpstr_free_lhs (g_key_file_get_string (overrides, "Session Bus Policy", "hello.bla.bla.*", &error),

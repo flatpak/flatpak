@@ -17,7 +17,7 @@ reset_overrides () {
     assert_file_empty info
 }
 
-echo "1..20"
+echo "1..21"
 
 setup_repo
 install_repo
@@ -29,7 +29,7 @@ ${FLATPAK} override --user --nosocket=ssh-auth org.test.Hello
 ${FLATPAK} override --user --show org.test.Hello > override
 
 assert_file_has_content override "^\[Context\]$"
-assert_file_has_content override "^sockets=wayland;!ssh-auth;$"
+assert_file_has_content override "^sockets=wayland;!ssh-auth;if:wayland:reset;if:ssh-auth:reset;$"
 
 ok "override --socket"
 
@@ -50,7 +50,7 @@ ${FLATPAK} override --user --nodevice=kvm org.test.Hello
 ${FLATPAK} override --user --show org.test.Hello > override
 
 assert_file_has_content override "^\[Context\]$"
-assert_file_has_content override "^devices=dri;!kvm;$"
+assert_file_has_content override "^devices=dri;!kvm;if:dri:reset;if:kvm:reset;$"
 
 ok "override --device"
 
@@ -75,6 +75,17 @@ ${FLATPAK} override --user --show org.test.Hello > override
 assert_file_has_content override "^\[Context\]$"
 assert_file_has_content override "^devices=dri;kvm;if:dri:!x:a:b:c:d;if:kvm:x;$"
 ok "override --device-if"
+
+reset_overrides
+
+${FLATPAK} override --user --device-if=dri:foo org.test.Hello
+${FLATPAK} override --user --device-if=dri:nope --nodevice=dri --device-if=dri:baz org.test.Hello
+${FLATPAK} override --user --device-if=dri:bar org.test.Hello
+${FLATPAK} override --user --show org.test.Hello > override
+
+assert_file_has_content override "^\[Context\]$"
+assert_file_has_content override "^devices=dri;if:dri:bar:baz:reset;$"
+ok "override --device-if layers"
 
 reset_overrides
 

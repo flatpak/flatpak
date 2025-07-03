@@ -310,7 +310,8 @@ static void
 flatpak_context_conditionals_to_string_impl (GHashTable  *conditionals,
                                              const char **names,
                                              const char  *prefix,
-                                             GPtrArray   *array)
+                                             GPtrArray   *array,
+                                             gboolean     flatten)
 {
   gpointer key;
   GPtrArray *conditions;
@@ -329,6 +330,10 @@ flatpak_context_conditionals_to_string_impl (GHashTable  *conditionals,
         {
           const char *cond = conditions->pdata[i];
 
+          /* When flattening, remove "reset" */
+          if (flatten && strcmp (cond, "reset") == 0)
+            continue;
+
           if (condition_str->len > 0)
             g_string_append (condition_str, ":");
 
@@ -340,10 +345,13 @@ flatpak_context_conditionals_to_string_impl (GHashTable  *conditionals,
           if (conditional != 1 << i)
             continue;
 
-          g_ptr_array_add (array, g_strdup_printf ("%s%s:%s",
-                                                   prefix,
-                                                   names[i],
-                                                   condition_str->str));
+          if (condition_str->len > 0)
+            {
+              g_ptr_array_add (array, g_strdup_printf ("%s%s:%s",
+                                                       prefix,
+                                                       names[i],
+                                                       condition_str->str));
+            }
           break;
         }
     }
@@ -352,10 +360,11 @@ flatpak_context_conditionals_to_string_impl (GHashTable  *conditionals,
 static void
 flatpak_context_conditionals_to_string (GHashTable  *conditionals,
                                         const char **names,
-                                        GPtrArray   *array)
+                                        GPtrArray   *array,
+                                        gboolean     flatten)
 {
   flatpak_context_conditionals_to_string_impl (conditionals, names,
-                                               "if:", array);
+                                               "if:", array, flatten);
 }
 
 static void
@@ -364,7 +373,7 @@ flatpak_context_conditionals_to_args (GHashTable  *conditionals,
                                       GPtrArray   *array)
 {
   flatpak_context_conditionals_to_string_impl (conditionals, names,
-                                               "--device-if=", array);
+                                               "--device-if=", array, FALSE);
 }
 
 static FlatpakContextSockets
@@ -385,7 +394,8 @@ flatpak_context_socket_from_string (const char *string, GError **error)
 static char **
 flatpak_context_sockets_to_string (FlatpakContext        *context,
                                    FlatpakContextSockets  sockets,
-                                   FlatpakContextSockets  valid)
+                                   FlatpakContextSockets  valid,
+                                   gboolean               flatten)
 {
   g_autoptr (GPtrArray) array = g_ptr_array_new_with_free_func (g_free);
 
@@ -395,7 +405,7 @@ flatpak_context_sockets_to_string (FlatpakContext        *context,
 
   flatpak_context_conditionals_to_string (context->conditional_sockets,
                                           flatpak_context_sockets,
-                                          array);
+                                          array, flatten);
 
   g_ptr_array_add (array, NULL);
   return (char **) g_ptr_array_free (g_steal_pointer (&array), FALSE);
@@ -432,7 +442,8 @@ flatpak_context_device_from_string (const char *string, GError **error)
 static char **
 flatpak_context_devices_to_string (FlatpakContext        *context,
                                    FlatpakContextDevices  devices,
-                                   FlatpakContextDevices  valid)
+                                   FlatpakContextDevices  valid,
+                                   gboolean               flatten)
 {
   g_autoptr (GPtrArray) array = g_ptr_array_new_with_free_func (g_free);
 
@@ -442,7 +453,7 @@ flatpak_context_devices_to_string (FlatpakContext        *context,
 
   flatpak_context_conditionals_to_string (context->conditional_devices,
                                           flatpak_context_devices,
-                                          array);
+                                          array, flatten);
 
   g_ptr_array_add (array, NULL);
   return (char **) g_ptr_array_free (g_steal_pointer (&array), FALSE);
@@ -1187,7 +1198,7 @@ flatpak_context_take_filesystem (FlatpakContext        *context,
   g_hash_table_insert (context->filesystems, fs, GINT_TO_POINTER (mode));
 }
 
-static void
+static gboolean
 flatpak_context_add_conditional_tokens (FlatpakContext  *context,
                                         guint32          bitmask,
                                         gsize            n_tokens,
@@ -1195,6 +1206,7 @@ flatpak_context_add_conditional_tokens (FlatpakContext  *context,
                                         GHashTable      *conditionals)
 {
   g_autoptr(GPtrArray) conditions = NULL;
+  gboolean has_token = FALSE;
 
   if (!g_hash_table_steal_extended (conditionals,
                                     GINT_TO_POINTER (bitmask),
@@ -1209,6 +1221,9 @@ flatpak_context_add_conditional_tokens (FlatpakContext  *context,
       if (g_ptr_array_find_with_equal_func (conditions, tokens[i], g_str_equal, NULL))
         continue;
 
+      if (!g_str_equal (tokens[i], "reset"))
+        has_token = TRUE;
+
       g_ptr_array_add (conditions, g_strdup (tokens[i]));
     }
 
@@ -1217,6 +1232,8 @@ flatpak_context_add_conditional_tokens (FlatpakContext  *context,
   g_hash_table_insert (conditionals,
                        GINT_TO_POINTER (bitmask),
                        g_steal_pointer (&conditions));
+
+  return has_token;
 }
 
 static gboolean
@@ -1230,6 +1247,7 @@ flatpak_context_add_conditional (FlatpakContext  *context,
   guint32 bitmask;
   g_auto(GStrv) tokens = NULL;
   g_autoptr(GPtrArray) conditions = NULL;
+  gboolean has_token;
 
   tokens = g_strsplit (string, ":", -1);
 
@@ -1244,15 +1262,36 @@ flatpak_context_add_conditional (FlatpakContext  *context,
   if (bitmask == 0)
     return FALSE;
 
-  flatpak_context_add_conditional_tokens (context, bitmask,
-                                          g_strv_length (tokens),
-                                          tokens + 1,
-                                          conditionals);
+  has_token = flatpak_context_add_conditional_tokens (context, bitmask,
+                                                      g_strv_length (tokens),
+                                                      tokens + 1,
+                                                      conditionals);
 
   if (bitmask_out)
-    *bitmask_out = bitmask;
+    *bitmask_out = has_token ? bitmask : 0;
 
   return TRUE;
+}
+
+static void
+flatpak_context_add_conditional_token (FlatpakContext *context,
+                                       guint32         bitmasks,
+                                       const char     *token,
+                                       GHashTable     *conditionals)
+{
+  for (guint32 i = 0; i < 32; i++)
+    {
+      guint32 bitmask = (guint32) 1 << i;
+
+      if (bitmask & bitmasks)
+        {
+          flatpak_context_add_conditional_tokens (context,
+                                                  bitmask,
+                                                  1,
+                                                  (char **)&token,
+                                                  conditionals);
+        }
+    }
 }
 
 static gboolean
@@ -1294,6 +1333,42 @@ flatpak_context_add_conditional_socket (FlatpakContext  *context,
 }
 
 static void
+flatpak_context_remove_conditionals (FlatpakContext *context,
+                                     GHashTable     *conditionals,
+                                     guint32         bitmask)
+{
+  GHashTableIter iter;
+  gpointer key, value;
+
+  g_hash_table_iter_init (&iter, conditionals);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+      guint32 conditional = GPOINTER_TO_INT (key);
+
+      if (conditional & bitmask)
+        g_hash_table_iter_remove (&iter);
+    }
+}
+
+static void
+flatpak_context_remove_conditional_sockets (FlatpakContext  *context,
+                                            guint32          sockets)
+{
+  flatpak_context_remove_conditionals (context,
+                                       context->conditional_sockets,
+                                       sockets);
+}
+
+static void
+flatpak_context_remove_conditional_devices (FlatpakContext  *context,
+                                            guint32          devices)
+{
+  flatpak_context_remove_conditionals (context,
+                                       context->conditional_devices,
+                                       devices);
+}
+
+static void
 flatpak_context_merge_conditionals (GHashTable *conditionals,
                                     GHashTable *other_conditionals)
 {
@@ -1313,6 +1388,9 @@ flatpak_context_merge_conditionals (GHashTable *conditionals,
       if (!g_hash_table_steal_extended (conditionals, key,
                                         NULL, (gpointer *) &array))
         array = g_ptr_array_new_with_free_func (g_free);
+
+      if (g_ptr_array_find_with_equal_func (other_array, "reset", g_str_equal, NULL))
+        g_ptr_array_set_size (array, 0);
 
       for (i = 0; i < other_array->len; i++)
         {
@@ -1349,6 +1427,12 @@ flatpak_context_merge (FlatpakContext *context,
   context->features &= ~other->features_valid;
   context->features |= other->features;
   context->features_valid |= other->features_valid;
+
+  /* For completely removed permissions, also remove contitional permisssions */
+  flatpak_context_remove_conditional_devices (context,
+                                              other->devices_valid & ~other->devices);
+  flatpak_context_remove_conditional_sockets (context,
+                                              other->sockets_valid & ~other->sockets);
 
   g_hash_table_iter_init (&iter, other->env_vars);
   while (g_hash_table_iter_next (&iter, &key, &value))
@@ -1461,6 +1545,14 @@ option_socket_cb (const gchar *option_name,
 
   flatpak_context_add_sockets (context, socket);
 
+  /* When we *add* unlimited access to a device, remove any conditional
+   * access as that may override and remove the unlimited access. */
+  flatpak_context_remove_conditional_sockets (context, socket);
+  flatpak_context_add_conditional_token (context,
+                                         socket,
+                                         "reset",
+                                         context->conditional_sockets);
+
   return TRUE;
 }
 
@@ -1481,6 +1573,11 @@ option_nosocket_cb (const gchar *option_name,
     socket |= FLATPAK_CONTEXT_SOCKET_X11;
 
   flatpak_context_remove_sockets (context, socket);
+  flatpak_context_remove_conditional_sockets (context, socket);
+  flatpak_context_add_conditional_token (context,
+                                         socket,
+                                         "reset",
+                                         context->conditional_sockets);
 
   return TRUE;
 }
@@ -1510,6 +1607,13 @@ option_device_cb (const gchar *option_name,
     return FALSE;
 
   flatpak_context_add_devices (context, device);
+  /* When we *add* unlimited access to a device, remove any conditional
+   * access as that may override and remove the unlimited access. */
+  flatpak_context_remove_conditional_devices (context, device);
+  flatpak_context_add_conditional_token (context,
+                                         device,
+                                         "reset",
+                                         context->conditional_devices);
 
   return TRUE;
 }
@@ -1528,6 +1632,11 @@ option_nodevice_cb (const gchar *option_name,
     return FALSE;
 
   flatpak_context_remove_devices (context, device);
+  flatpak_context_remove_conditional_devices (context, device);
+  flatpak_context_add_conditional_token (context,
+                                         device,
+                                         "reset",
+                                         context->conditional_devices);
 
   return TRUE;
 }
@@ -2112,7 +2221,10 @@ flatpak_context_load_socket (FlatpakContext *context,
     }
 
   if (remove)
-    flatpak_context_remove_sockets (context, socket);
+    {
+      flatpak_context_remove_sockets (context, socket);
+      flatpak_context_remove_conditional_sockets (context, socket);
+    }
   else
     flatpak_context_add_sockets (context, socket);
 }
@@ -2145,7 +2257,10 @@ flatpak_context_load_device (FlatpakContext *context,
     }
 
   if (remove)
-    flatpak_context_remove_devices (context, device);
+    {
+      flatpak_context_remove_devices (context, device);
+      flatpak_context_remove_conditional_devices (context, device);
+    }
   else
     flatpak_context_add_devices (context, device);
 }
@@ -2517,8 +2632,8 @@ flatpak_context_save_metadata (FlatpakContext *context,
     }
 
   shared = flatpak_context_shared_to_string (shares_mask, shares_valid);
-  sockets = flatpak_context_sockets_to_string (context, sockets_mask, sockets_valid);
-  devices = flatpak_context_devices_to_string (context, devices_mask, devices_valid);
+  sockets = flatpak_context_sockets_to_string (context, sockets_mask, sockets_valid, flatten);
+  devices = flatpak_context_devices_to_string (context, devices_mask, devices_valid, flatten);
   features = flatpak_context_features_to_string (features_mask, features_valid);
 
   if (shared[0] != NULL)
@@ -3914,6 +4029,7 @@ flatpak_context_compute_allowed (guint32                           enabled,
   while (g_hash_table_iter_next (&iter, &key, (gpointer *) &conditions_strs))
     {
       guint32 conditional_bitmask = GPOINTER_TO_INT (key);
+      gboolean has_conditional = FALSE;
       int i;
 
       for (i = 0; i < conditions_strs->len; i++)
@@ -3921,6 +4037,11 @@ flatpak_context_compute_allowed (guint32                           enabled,
           FlatpakContextConditions condition;
           const char *condition_str;
           gboolean negated;
+
+          if (g_str_equal (conditions_strs->pdata[i], "reset"))
+            continue;
+
+          has_conditional = TRUE;
 
           condition_str = parse_negated (conditions_strs->pdata[i], &negated);
 
@@ -3943,7 +4064,7 @@ flatpak_context_compute_allowed (guint32                           enabled,
         }
 
       /* No condition evaluated to TRUE, so disable the thing */
-      if (i == conditions_strs->len)
+      if (has_conditional && i == conditions_strs->len)
         enabled &= ~conditional_bitmask;
     }
 
