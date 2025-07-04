@@ -2471,3 +2471,23 @@ flatpak_is_debugging (void)
 
   return is_debugging;
 }
+
+#ifdef INCLUDE_INTERNAL_TESTS
+static GList *flatpak_test_paths = NULL;
+static GList *flatpak_test_fns = NULL;
+
+void flatpak_add_test (const char *path, flatpak_test_fn fn)
+{
+  flatpak_test_paths = g_list_prepend (flatpak_test_paths, (void *)path);
+  flatpak_test_fns = g_list_prepend (flatpak_test_fns, fn);
+}
+#endif
+
+void flatpak_add_all_tests (void)
+{
+#ifdef INCLUDE_INTERNAL_TESTS
+  for (GList *l1 = flatpak_test_paths, *l2 = flatpak_test_fns; l1 != NULL; l1 = l1->next, l2 = l2->next) {
+    g_test_add_func (l1->data, l2->data);
+  }
+#endif
+}
