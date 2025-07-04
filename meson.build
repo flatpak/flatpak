@@ -360,6 +360,10 @@ cdata.set_quoted('GETTEXT_PACKAGE', 'flatpak')
 cdata.set('FUSE_USE_VERSION', fuse_api)
 cdata.set_quoted('FUSERMOUNT', fusermount)
 
+if get_option('internal_tests')
+  cdata.set('INCLUDE_INTERNAL_TESTS', 1)
+endif
+
 if get_option('system_bubblewrap') == ''
   cdata.set_quoted('HELPER', get_option('prefix') / get_option('libexecdir') / 'flatpak-bwrap')
 else
