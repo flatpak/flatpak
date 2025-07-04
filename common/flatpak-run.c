@@ -76,6 +76,16 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (AutoFlatpakSessionHelper, g_object_unref)
 typedef XdpDbusDocuments AutoXdpDbusDocuments;
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (AutoXdpDbusDocuments, g_object_unref)
 
+/* flags enum for org.freedesktop.portal.Documents.AddFull */
+typedef enum {
+  DOCUMENT_ADD_FLAGS_REUSE_EXISTING             = (1 << 0),
+  DOCUMENT_ADD_FLAGS_PERSISTENT                 = (1 << 1),
+  DOCUMENT_ADD_FLAGS_AS_NEEDED_BY_APP           = (1 << 2),
+  DOCUMENT_ADD_FLAGS_DIRECTORY                  = (1 << 3),
+
+  DOCUMENT_ADD_FLAGS_FLAGS_ALL                  = ((1 << 4) - 1)
+} DocumentAddFullFlags;
+
 static int
 flatpak_extension_compare_by_path (gconstpointer _a,
                                    gconstpointer _b)
@@ -2431,6 +2441,9 @@ forward_file (XdpDbusDocuments *documents,
               GError          **error)
 {
   int fd, fd_id;
+  struct stat stbuf;
+  guint portal_version;
+  gboolean is_dir = FALSE;
   g_autofree char *doc_id = NULL;
   g_autoptr(GUnixFDList) fd_list = NULL;
   const char *perms[] = { "read", "write", NULL };
@@ -2441,33 +2454,74 @@ forward_file (XdpDbusDocuments *documents,
 
   fd_list = g_unix_fd_list_new ();
   fd_id = g_unix_fd_list_append (fd_list, fd, error);
+  if (fstat (fd, &stbuf) == 0 && S_ISDIR (stbuf.st_mode))
+    is_dir = TRUE;
   close (fd);
 
-  if (!xdp_dbus_documents_call_add_sync (documents,
-                                         g_variant_new ("h", fd_id),
-                                         TRUE, /* reuse */
-                                         FALSE, /* not persistent */
-                                         fd_list,
-                                         &doc_id,
-                                         NULL,
-                                         NULL,
-                                         error))
-    {
-      if (error)
-        g_dbus_error_strip_remote_error (*error);
-      return FALSE;
-    }
+  portal_version = xdp_dbus_documents_get_version (documents);
+  if (portal_version < 4 && is_dir)
+      return flatpak_fail (error, _("Directory forwarding needs version 4 of the document portal (have version %d)"), portal_version);
 
-  if (!xdp_dbus_documents_call_grant_permissions_sync (documents,
-                                                       doc_id,
-                                                       app_id,
-                                                       perms,
-                                                       NULL,
-                                                       error))
+  if (portal_version >= 2)
     {
-      if (error)
-        g_dbus_error_strip_remote_error (*error);
-      return FALSE;
+      guint flags = DOCUMENT_ADD_FLAGS_REUSE_EXISTING;
+      g_auto(GStrv) doc_ids = NULL;
+
+      if (is_dir)
+        flags |= DOCUMENT_ADD_FLAGS_DIRECTORY;
+
+      if (!xdp_dbus_documents_call_add_full_sync (documents,
+                                                  g_variant_new_fixed_array (G_VARIANT_TYPE_HANDLE, &fd_id, 1, sizeof (gint32)),
+                                                  flags,
+                                                  app_id,
+                                                  perms,
+                                                  fd_list,
+                                                  &doc_ids,
+                                                  NULL,
+                                                  NULL,
+                                                  NULL,
+                                                  error))
+        {
+          if (error)
+            g_dbus_error_strip_remote_error (*error);
+          return FALSE;
+        }
+
+      /* doc_ids should have value when xdp_dbus_documents_call_add_full_sync succeeds. */
+      g_assert (doc_ids && doc_ids[0]);
+      doc_id = g_strdup (doc_ids[0]);
+    }
+  else
+    {
+      /* Fallback to plain org.freedesktop.portal.Documents.Add and
+         org.freedesktop.portal.Documents.GrantPermissions if interface version is older.
+         This does not support directory export. */
+      if (!xdp_dbus_documents_call_add_sync (documents,
+                                             g_variant_new ("h", fd_id),
+                                             TRUE, /* reuse */
+                                             FALSE, /* not persistent */
+                                             fd_list,
+                                             &doc_id,
+                                             NULL,
+                                             NULL,
+                                             error))
+        {
+          if (error)
+            g_dbus_error_strip_remote_error (*error);
+          return FALSE;
+        }
+
+      if (!xdp_dbus_documents_call_grant_permissions_sync (documents,
+                                                           doc_id,
+                                                           app_id,
+                                                           perms,
+                                                           NULL,
+                                                           error))
+        {
+          if (error)
+            g_dbus_error_strip_remote_error (*error);
+          return FALSE;
+        }
     }
 
   *out_doc_id = g_steal_pointer (&doc_id);
