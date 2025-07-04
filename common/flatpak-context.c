@@ -98,6 +98,842 @@ const char *flatpak_context_special_filesystems[] = {
   NULL
 };
 
+const char *flatpak_context_conditions[] = {
+  "true",
+  "false",
+  "has-input-device",
+  "has-wayland",
+  NULL
+};
+
+FlatpakContextConditions flatpak_context_true_conditions =
+  FLATPAK_CONTEXT_CONDITION_TRUE |
+  FLATPAK_CONTEXT_CONDITION_HAS_INPUT_DEV;
+
+static const char *parse_negated (const char *option, gboolean *negated);
+static guint32 flatpak_context_bitmask_from_string (const char *name, const char **names);
+
+typedef struct FlatpakPermission FlatpakPermission;
+
+struct FlatpakPermission {
+  /* Is the permission unconditionally allowed */
+  gboolean allowed;
+  /* When layering, reset all permissions below */
+  gboolean reset;
+  /* Assumes allowed is false */
+  GPtrArray *conditionals;
+
+  /* Only used during deserialization */
+  gboolean disallow_if_conditional;
+  gboolean disallow_if_conditional_original_reset;
+  GPtrArray *disallow_if_conditional_original_conditionals;
+};
+
+
+static FlatpakPermission *
+flatpak_permission_new (void)
+{
+  FlatpakPermission *permission;
+
+  permission = g_slice_new0 (FlatpakPermission);
+  permission->conditionals = g_ptr_array_new_with_free_func (g_free);
+  permission->disallow_if_conditional_original_conditionals =
+    g_ptr_array_new_with_free_func (g_free);
+
+  return permission;
+};
+
+static void
+flatpak_permission_free (FlatpakPermission *permission)
+{
+  g_ptr_array_free (permission->conditionals, TRUE);
+  g_ptr_array_free (permission->disallow_if_conditional_original_conditionals,
+                    TRUE);
+  g_slice_free (FlatpakPermission, permission);
+}
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakPermission, flatpak_permission_free)
+
+static FlatpakPermission *
+flatpak_permission_dup (FlatpakPermission *permission)
+{
+  FlatpakPermission *copy = NULL;
+
+  copy = flatpak_permission_new ();
+  copy->allowed = permission->allowed;
+  copy->reset = permission->reset;
+
+  for (size_t i = 0; i < permission->conditionals->len; i++) {
+    const char *condition = permission->conditionals->pdata[i];
+
+    g_ptr_array_add (copy->conditionals, g_strdup (condition));
+  }
+
+  return copy;
+}
+
+static void
+flatpak_permission_set_not_allowed (FlatpakPermission *permission)
+{
+  permission->allowed = FALSE;
+  permission->reset = TRUE;
+  g_ptr_array_set_size (permission->conditionals, 0);
+}
+
+static void
+flatpak_permission_set_allowed (FlatpakPermission *permission)
+{
+  permission->allowed = TRUE;
+  /* We reset even when allowed, because lower layer conditionals being added
+   * at merge would make this non-conditional layer conditional. */
+  permission->reset = TRUE;
+  g_ptr_array_set_size (permission->conditionals, 0);
+}
+
+static void
+flatpak_permission_set_allowed_if (FlatpakPermission *permission,
+                                   const char        *condition)
+{
+  /* If we are already unconditionally allowed, don't add useless conditionals */
+  if (permission->allowed)
+    return;
+
+  /* Check if its already there */
+  if (g_ptr_array_find_with_equal_func (permission->conditionals,
+                                        condition,
+                                        g_str_equal, NULL))
+    return;
+
+  g_ptr_array_add (permission->conditionals, g_strdup (condition));
+  g_ptr_array_sort (permission->conditionals, flatpak_strcmp0_ptr);
+}
+
+static void
+flatpak_permission_serialize (FlatpakPermission *permission,
+                              const char        *name,
+                              GPtrArray         *res,
+                              gboolean           flatten)
+{
+  if (permission->allowed)
+    {
+      /* Completely allowed */
+
+      g_ptr_array_add (res, g_strdup (name));
+      g_assert (permission->conditionals->len == 0);
+      /* A non-conditional add always implies reset, so no need to serialize that */
+    }
+  else if (permission->conditionals->len > 0)
+    {
+      /* Partially allowed */
+
+      if (permission->reset && !flatten)
+        g_ptr_array_add (res, g_strdup_printf ("!%s", name));
+
+      /* As backwards compat for pre-conditional flatpaks we unconditionally
+       * add this first. New versions will ignore this if there are
+       * any conditionals.
+       * Note: This may result in both "!foo" and "foo", but that
+       * is fine as the "foo" is last and wins for older flatpaks.
+       */
+      g_ptr_array_add (res, g_strdup (name));
+
+      for (size_t i = 0; i < permission->conditionals->len; i++)
+        {
+          const char *conditional = permission->conditionals->pdata[i];
+
+          g_ptr_array_add (res, g_strdup_printf ("if:%s:%s", name, conditional));
+        }
+    }
+  else
+    {
+      /* Completely disallowed */
+
+      if (!flatten)
+        g_ptr_array_add (res, g_strdup_printf ("!%s", name));
+    }
+}
+
+static void
+flatpak_permission_to_args (FlatpakPermission *permission,
+                            const char        *argname,
+                            const char        *name,
+                            GPtrArray         *args)
+{
+  if (permission->allowed)
+    {
+      /* Completely allowed */
+
+      g_ptr_array_add (args, g_strdup_printf ("--%s=%s", argname, name));
+    }
+  else if (permission->conditionals->len > 0)
+    {
+      /* Partially allowed */
+
+      if (permission->reset)
+        g_ptr_array_add (args, g_strdup_printf ("--no%s=%s", argname, name));
+
+      for (size_t i = 0; i < permission->conditionals->len; i++)
+        {
+          const char *conditional = permission->conditionals->pdata[i];
+
+          g_ptr_array_add (args, g_strdup_printf ("--%s-if=%s:%s",
+                                                  argname, name, conditional));
+        }
+    }
+  else
+    {
+      /* Completely disallowed */
+
+      g_ptr_array_add (args, g_strdup_printf ("--no%s=%s", argname, name));
+    }
+}
+
+static void
+flatpak_permission_deserialize (FlatpakPermission *permission,
+                                gboolean           negated,
+                                const char        *maybe_condition)
+{
+  /* This can't use the flatpak_permission_set_ helpers, because we
+   * have to be wary of the backward compat non-conditional permission
+   * in case conditionals are used. */
+
+  if (maybe_condition == NULL)
+    {
+      /* Non-conditional option, these are always before conditionals,
+       * but if non-negated could be backwards compat for later conditional. */
+      if (negated)
+        {
+          permission->allowed = FALSE;
+          permission->reset = TRUE;
+        }
+      else
+        {
+          GPtrArray *tmp;
+
+          /* Allow us to revert this if it is a backwards compat */
+          permission->disallow_if_conditional = TRUE;
+          permission->disallow_if_conditional_original_reset = permission->reset;
+          tmp = permission->conditionals;
+          permission->conditionals =
+            permission->disallow_if_conditional_original_conditionals;
+          permission->disallow_if_conditional_original_conditionals = tmp;
+
+          permission->allowed = TRUE;
+          permission->reset = TRUE;
+        }
+    }
+  else
+    {
+      /* Conditional option */
+      if (permission->disallow_if_conditional)
+        {
+          GPtrArray *tmp;
+
+          /* Previous allow was a backward compat, revert it */
+          permission->allowed = FALSE;
+          permission->reset = permission->disallow_if_conditional_original_reset;
+          permission->disallow_if_conditional = FALSE;
+          tmp = permission->disallow_if_conditional_original_conditionals;
+          permission->disallow_if_conditional_original_conditionals =
+            permission->conditionals;
+          permission->conditionals = tmp;
+          g_ptr_array_set_size (
+            permission->disallow_if_conditional_original_conditionals, 0);
+        }
+
+      g_ptr_array_add (permission->conditionals, g_strdup (maybe_condition));
+      g_ptr_array_sort (permission->conditionals, flatpak_strcmp0_ptr);
+    }
+}
+
+static void
+flatpak_permission_merge (FlatpakPermission *permission,
+                          FlatpakPermission *other_permission)
+{
+  if (other_permission->reset)
+    {
+      permission->reset = TRUE;
+      g_ptr_array_set_size (permission->conditionals, 0);
+    }
+
+  permission->allowed = other_permission->allowed;
+
+  for (size_t i = 0; i < other_permission->conditionals->len; i++)
+    {
+      const char *conditional = other_permission->conditionals->pdata[i];
+
+      /* Check if its already there */
+      if (g_ptr_array_find_with_equal_func (permission->conditionals,
+                                            conditional,
+                                            g_str_equal, NULL))
+        return;
+
+      g_ptr_array_add (permission->conditionals, g_strdup (conditional));
+    }
+
+  g_ptr_array_sort (permission->conditionals, flatpak_strcmp0_ptr);
+
+  /* Internal consistency check */
+  if (permission->allowed)
+    g_assert (permission->conditionals->len == 0);
+}
+
+static gboolean
+flatpak_permission_compute_allowed (FlatpakPermission                *permission,
+                                    FlatpakContextConditionEvaluator  evaluator)
+{
+  if (permission->allowed)
+    return TRUE;
+
+  for (size_t i = 0; i < permission->conditionals->len; i++)
+    {
+      const char *conditional = permission->conditionals->pdata[i];
+      gboolean negated;
+      const char *condition_str;
+      guint32 condition;
+
+      condition_str = parse_negated (conditional, &negated);
+      condition =
+        flatpak_context_bitmask_from_string (condition_str,
+                                             flatpak_context_conditions);
+
+      /* If condition is 0 it means this version of flatpak doesn't know
+       * about the condition and it cannot be satisfied. */
+      if (condition == 0)
+        continue;
+
+      /* Conditions which are always true in this version of flatpak */
+      if ((condition & flatpak_context_true_conditions) && !negated)
+        return TRUE;
+
+      /* Conditions which need runtime evaluation */
+      if (evaluator && evaluator (condition) == !negated)
+        return TRUE;
+   }
+
+  /* No condition evaluated to TRUE, so disable the thing */
+  return FALSE;
+}
+
+static gboolean
+flatpak_permission_adds_permissions (FlatpakPermission *old,
+                                     FlatpakPermission *new)
+{
+  size_t i = 0, j = 0;
+
+  if (old->allowed)
+    return FALSE;
+
+  if (new->allowed)
+    return TRUE;
+
+  if (new->conditionals->len > old->conditionals->len)
+    return TRUE;
+
+  while (TRUE)
+    {
+      const char *old_cond = old->conditionals->pdata[i];
+      const char *new_cond = new->conditionals->pdata[j];
+      int res;
+
+      if (old_cond == NULL)
+        return new_cond != NULL;
+
+      if (new_cond == NULL)
+        return FALSE;
+
+      res = strcmp (old_cond, new_cond);
+      if (res == 0) /* Same conditional */
+        {
+          i++;
+          j++;
+        }
+      else if (res < 0) /* Old conditional was removed */
+        {
+          i++;
+        }
+      else /* new conditional */
+        {
+          return FALSE;
+        }
+    }
+
+  return FALSE;
+}
+
+static GHashTable *
+flatpak_permissions_new (void)
+{
+  return g_hash_table_new_full (g_str_hash, g_str_equal,
+                                (GDestroyNotify) g_free,
+                                (GDestroyNotify) flatpak_permission_free);
+}
+
+static GHashTable *
+flatpak_permissions_dup (GHashTable *old)
+{
+  GHashTable *new;
+  const char *name;
+  FlatpakPermission *old_permission;
+  GHashTableIter iter;
+
+  new = flatpak_permissions_new ();
+
+  g_hash_table_iter_init (&iter, old);
+  while (g_hash_table_iter_next (&iter,
+                                 (gpointer *) &name,
+                                 (gpointer *) &old_permission))
+    {
+      g_hash_table_insert (new,
+                           g_strdup (name),
+                           flatpak_permission_dup (old_permission));
+    }
+
+  return new;
+}
+
+static FlatpakPermission *
+flatpak_permissions_ensure (GHashTable *permissions,
+                            const char *name)
+{
+  FlatpakPermission *permission = g_hash_table_lookup (permissions, name);
+
+  if (permission == NULL)
+    {
+      permission = flatpak_permission_new ();
+      g_hash_table_insert (permissions, g_strdup (name), permission);
+    }
+
+  return permission;
+}
+
+static void
+flatpak_permissions_set_not_allowed (GHashTable *permissions,
+                                     const char *name)
+{
+  flatpak_permission_set_not_allowed (flatpak_permissions_ensure (permissions,
+                                                                  name));
+}
+
+static void
+flatpak_permissions_set_allowed (GHashTable *permissions,
+                                 const char *name)
+{
+  flatpak_permission_set_allowed (flatpak_permissions_ensure (permissions,
+                                                              name));
+}
+
+static void
+flatpak_permissions_set_allowed_if (GHashTable *permissions,
+                                    const char *name,
+                                    const char *condition)
+{
+  flatpak_permission_set_allowed_if (flatpak_permissions_ensure (permissions,
+                                                                 name),
+                                      condition);
+}
+
+static gboolean
+flatpak_permissions_allows_unconditionally (GHashTable *permissions,
+                                            const char *name)
+{
+  FlatpakPermission *permission = g_hash_table_lookup (permissions, name);
+
+  if (permission)
+    return permission->allowed;
+
+  return FALSE;
+}
+
+static void
+flatpak_permissions_to_args (GHashTable *permissions,
+                             const char *argname,
+                             GPtrArray  *args)
+{
+  g_autoptr(GList) ordered_keys = NULL;
+
+  ordered_keys = g_hash_table_get_keys (permissions);
+  ordered_keys = g_list_sort (ordered_keys, (GCompareFunc) strcmp);
+
+  for (GList *l = ordered_keys; l != NULL; l = l->next)
+    {
+      const char *name = l->data;
+      FlatpakPermission *permission = g_hash_table_lookup (permissions, name);
+
+      flatpak_permission_to_args (permission, argname, name, args);
+    }
+}
+
+static char **
+flatpak_permissions_to_strv (GHashTable *permissions,
+                             gboolean    flatten)
+{
+  g_autoptr(GList) ordered_keys = NULL;
+  g_autoptr(GPtrArray) res = g_ptr_array_new ();
+
+  ordered_keys = g_hash_table_get_keys (permissions);
+  ordered_keys = g_list_sort (ordered_keys, (GCompareFunc) strcmp);
+
+  for (GList *l = ordered_keys; l != NULL; l = l->next)
+    {
+      const char *name = l->data;
+      FlatpakPermission *permission = g_hash_table_lookup (permissions, name);
+
+      flatpak_permission_serialize (permission, name, res, flatten);
+    }
+
+  g_ptr_array_add (res, NULL);
+  return (char **)g_ptr_array_free (g_steal_pointer (&res), FALSE);
+}
+
+static guint32
+flatpak_permissions_compute_allowed (GHashTable                        *permissions,
+                                     const char                       **names,
+                                     FlatpakContextConditionEvaluator   evaluator)
+{
+  guint32 bitmask = 0;
+
+  for (size_t i = 0; names[i] != NULL; i++)
+    {
+      const char *name = names[i];
+      FlatpakPermission *permission = g_hash_table_lookup (permissions, name);
+
+      if (permission &&
+          flatpak_permission_compute_allowed (permission, evaluator))
+        bitmask |= 1 << i;
+    }
+
+  return bitmask;
+}
+
+static gboolean
+flatpak_permissions_from_strv (GHashTable  *permissions,
+                               const char **strv,
+                               GError     **error)
+{
+  for (size_t i = 0; strv[i] != NULL; i++)
+    {
+      g_auto(GStrv) tokens = g_strsplit (strv[i], ":", 3);
+      const char *name = NULL;
+      gboolean negated = FALSE;
+      const char *condition = NULL;
+      FlatpakPermission *permission;
+
+      if (strcmp (tokens[0], "if") == 0)
+        {
+          if (g_strv_length (tokens) != 3)
+            {
+              g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
+                           _("Invalid permission syntax: %s"), strv[i]);
+              return FALSE;
+            }
+
+          name = tokens[1];
+          condition = tokens[2];
+        }
+      else
+        {
+          if (g_strv_length (tokens) != 1)
+            {
+              g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
+                           _("Invalid permission syntax: %s"), strv[i]);
+              return FALSE;
+            }
+
+          name = parse_negated (tokens[0], &negated);
+        }
+
+      permission = flatpak_permissions_ensure (permissions, name);
+      flatpak_permission_deserialize (permission, negated, condition);
+    }
+
+  return TRUE;
+}
+
+static void
+flatpak_permissions_merge (GHashTable *permissions,
+                           GHashTable *other)
+{
+  const char *name;
+  FlatpakPermission *other_permission;
+  GHashTableIter iter;
+
+  g_hash_table_iter_init (&iter, other);
+  while (g_hash_table_iter_next (&iter,
+                                 (gpointer *) &name,
+                                 (gpointer *) &other_permission))
+    {
+      FlatpakPermission *permission = g_hash_table_lookup (permissions, name);
+
+      if (permission)
+        {
+          flatpak_permission_merge (permission, other_permission);
+        }
+      else
+        {
+          g_hash_table_insert (permissions,
+                               g_strdup (name),
+                               flatpak_permission_dup (other_permission));
+        }
+    }
+}
+
+static gboolean
+flatpak_permissions_adds_permissions (GHashTable *old,
+                                      GHashTable *new)
+{
+  const char *name;
+  FlatpakPermission *new_permission;
+  GHashTableIter iter;
+
+  g_hash_table_iter_init (&iter, new);
+  while (g_hash_table_iter_next (&iter,
+                                 (gpointer *) &name,
+                                 (gpointer *) &new_permission))
+    {
+      FlatpakPermission *old_permission = g_hash_table_lookup (old, name);
+
+      if (old_permission)
+        {
+          if (flatpak_permission_adds_permissions (old_permission,
+                                                   new_permission))
+            return TRUE;
+        }
+      else
+        {
+          if (new_permission->allowed ||
+              new_permission->conditionals->len > 0)
+            return TRUE; /* new is completely new permission */
+        }
+    }
+
+  return FALSE;
+}
+
+#ifdef INCLUDE_INTERNAL_TESTS
+static void flatpak_permissions_test_basic (void)
+{
+  /* This is in canonical form, so must be kept sorted by name */
+  const char *perms_strv[] =
+    {
+      /* Regular unconditional allowed (resets) */
+      "allowed",
+
+      /* conditional allowed with two conditions (doesn't reset) */
+      "cond1", /* backwards compat */
+      "if:cond1:check1",
+      "if:cond1:check2",
+
+      /* conditional allowed with one conditions (doesn't reset) */
+      "cond2", /* backwards compat */
+      "if:cond2:check3",
+
+      /* conditional allowed (resets) */
+      "!cond3", /* reset */
+      "cond3", /* backwards compat */
+      "if:cond3:check3",
+
+      /* Regular unconditional disallowed (resets) */
+      "!disallowed",
+
+      NULL,
+    };
+
+  const char *perms_args[] =
+    {
+      "--socket=allowed",
+
+      "--socket-if=cond1:check1",
+      "--socket-if=cond1:check2",
+
+      "--socket-if=cond2:check3",
+
+      /* conditional allowed (resets) */
+      "--nosocket=cond3",
+      "--socket-if=cond3:check3",
+
+      /* Regular unconditional disallowed (resets) */
+      "--nosocket=disallowed",
+
+      NULL,
+    };
+
+  GError *error = NULL;
+
+  /* Test parsing */
+  g_autoptr(GHashTable) perms = flatpak_permissions_new ();
+  gboolean ok = flatpak_permissions_from_strv (perms, perms_strv, &error);
+  g_assert_true(ok);
+  g_assert_no_error(error);
+  g_assert_nonnull(perms);
+
+  g_assert_cmpint(g_hash_table_size (perms), ==, 5);
+
+  FlatpakPermission *allowed = g_hash_table_lookup (perms, "allowed");
+  g_assert_nonnull(allowed);
+  g_assert_true(allowed->allowed);
+  g_assert_true(allowed->reset);
+  g_assert(allowed->conditionals->len == 0);
+
+  FlatpakPermission *disallowed = g_hash_table_lookup (perms, "disallowed");
+  g_assert_nonnull(disallowed);
+  g_assert_false(disallowed->allowed);
+  g_assert_true(disallowed->reset);
+  g_assert(disallowed->conditionals->len == 0);
+
+  FlatpakPermission *cond1 = g_hash_table_lookup (perms, "cond1");
+  g_assert_nonnull(cond1);
+  g_assert_false(cond1->allowed);
+  g_assert_false(cond1->reset);
+  g_assert(cond1->conditionals->len == 2);
+  g_assert_cmpstr(cond1->conditionals->pdata[0], ==, "check1");
+  g_assert_cmpstr(cond1->conditionals->pdata[1], ==, "check2");
+
+  FlatpakPermission *cond2 = g_hash_table_lookup (perms, "cond2");
+  g_assert_nonnull(cond2);
+  g_assert_false(cond2->allowed);
+  g_assert_false(cond2->reset);
+  g_assert(cond2->conditionals->len == 1);
+  g_assert_cmpstr(cond2->conditionals->pdata[0], ==, "check3");
+
+  FlatpakPermission *cond3 = g_hash_table_lookup (perms, "cond3");
+  g_assert_nonnull(cond3);
+  g_assert_false(cond3->allowed);
+  g_assert_true(cond3->reset);
+  g_assert(cond3->conditionals->len == 1);
+  g_assert_cmpstr(cond3->conditionals->pdata[0], ==, "check3");
+
+  /* Test roundtrip */
+  g_auto(GStrv) new_strv = flatpak_permissions_to_strv (perms, FALSE);
+  g_assert_cmpstrv (perms_strv, new_strv);
+
+  g_autoptr(GPtrArray) args = g_ptr_array_new_with_free_func (g_free);
+  flatpak_permissions_to_args (perms, "socket", args);
+  g_ptr_array_add(args, NULL);
+  g_assert_cmpstrv (perms_args, args->pdata);
+
+  /* Test copy */
+  g_autoptr(FlatpakPermission) cond1_copy = flatpak_permission_dup(cond1);
+  g_assert_nonnull(cond1_copy);
+  g_assert_false(cond1_copy->allowed);
+  g_assert_false(cond1_copy->reset);
+  g_assert(cond1_copy->conditionals->len == 2);
+  g_assert_cmpstr(cond1_copy->conditionals->pdata[0], ==, "check1");
+  g_assert_cmpstr(cond1_copy->conditionals->pdata[1], ==, "check2");
+
+  /* Test setters: */
+  {
+    g_autoptr(FlatpakPermission) copy = flatpak_permission_dup(cond1);
+    flatpak_permission_set_allowed (copy);
+    g_assert_true (copy->allowed);
+    g_assert_true (copy->reset);
+    g_assert(copy->conditionals->len == 0);
+  }
+
+  {
+    g_autoptr(FlatpakPermission) copy = flatpak_permission_dup(cond1);
+    flatpak_permission_set_not_allowed (copy);
+    g_assert_false (copy->allowed);
+    g_assert_true (copy->reset);
+    g_assert(copy->conditionals->len == 0);
+  }
+
+  {
+    g_autoptr(FlatpakPermission) copy = flatpak_permission_dup(cond1);
+    flatpak_permission_set_allowed_if (copy, "check0");
+    g_assert_false (copy->allowed);
+    g_assert_false (copy->reset);
+    g_assert(copy->conditionals->len == 3);
+    g_assert_cmpstr(copy->conditionals->pdata[0], ==, "check0");
+    g_assert_cmpstr(copy->conditionals->pdata[1], ==, "check1");
+    g_assert_cmpstr(copy->conditionals->pdata[2], ==, "check2");
+  }
+
+  /* Test merge */
+  {
+    g_autoptr(FlatpakPermission) copy = flatpak_permission_dup(cond1);
+    flatpak_permission_merge (copy, allowed);
+    g_assert_true (copy->allowed);
+    g_assert_true (copy->reset);
+    g_assert(copy->conditionals->len == 0);
+  }
+  {
+    g_autoptr(FlatpakPermission) copy = flatpak_permission_dup(cond1);
+    flatpak_permission_merge (copy, disallowed);
+    g_assert_false (copy->allowed);
+    g_assert_true (copy->reset);
+    g_assert(copy->conditionals->len == 0);
+  }
+  {
+    /* Merge from non-reset conditional */
+    g_autoptr(FlatpakPermission) copy = flatpak_permission_dup(cond1);
+    flatpak_permission_merge (copy, cond2);
+    g_assert_false (copy->allowed);
+    g_assert_false (copy->reset);
+    g_assert(copy->conditionals->len == 3);
+  }
+  {
+    /* Merge from reset conditional */
+    g_autoptr(FlatpakPermission) copy = flatpak_permission_dup(cond1);
+    flatpak_permission_merge (copy, cond3);
+    g_assert_false (copy->allowed);
+    g_assert_true (copy->reset);
+    g_assert(copy->conditionals->len == 1);
+  }
+}
+
+static void flatpak_permissions_test_backwards_compat (void)
+{
+  {
+    /* Deserialize if:wayland:foo;wayland
+     * The last wayland makes it unconditional. */
+    g_autoptr(FlatpakPermission) perm = flatpak_permission_new ();
+
+    flatpak_permission_deserialize (perm, FALSE, "foo");
+    flatpak_permission_deserialize (perm, FALSE, NULL);
+    g_assert_true (perm->allowed);
+    g_assert_true (perm->reset);
+    g_assert_cmpint (perm->conditionals->len, ==, 0);
+  }
+
+  {
+    /* Deserialize wayland;if:wayland:foo;wayland
+     * Should be the same as the one above. The first wayland is just for
+     * backwards compat. */
+    g_autoptr(FlatpakPermission) perm = flatpak_permission_new ();
+
+    flatpak_permission_deserialize (perm, FALSE, NULL);
+    flatpak_permission_deserialize (perm, FALSE, "foo");
+    flatpak_permission_deserialize (perm, FALSE, NULL);
+    g_assert_true (perm->allowed);
+    g_assert_true (perm->reset);
+    g_assert_cmpint (perm->conditionals->len, ==, 0);
+  }
+
+  {
+    /* Deserialize if:wayland:foo;wayland;if:wayland:bar
+     * Now the wayland is before a conditional, so it acts as backwards
+     * compat. */
+    g_autoptr(FlatpakPermission) perm = flatpak_permission_new ();
+
+    flatpak_permission_deserialize (perm, FALSE, "foo");
+    flatpak_permission_deserialize (perm, FALSE, NULL);
+    flatpak_permission_deserialize (perm, FALSE, "bar");
+    g_assert_false (perm->allowed);
+    g_assert_false (perm->reset);
+    g_assert_cmpint (perm->conditionals->len, ==, 2);
+    g_assert_cmpstr (perm->conditionals->pdata[0], ==, "bar");
+    g_assert_cmpstr (perm->conditionals->pdata[1], ==, "foo");
+  }
+}
+
+FLATPAK_INTERNAL_TEST("/context/permissions/basic",
+                      flatpak_permissions_test_basic);
+FLATPAK_INTERNAL_TEST("/context/permissions/backwards-compat",
+                      flatpak_permissions_test_backwards_compat);
+
+#endif /* INCLUDE_INTERNAL_TESTS */
+
 FlatpakContext *
 flatpak_context_new (void)
 {

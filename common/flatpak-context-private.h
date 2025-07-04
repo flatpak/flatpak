@@ -80,6 +80,13 @@ typedef enum {
   FLATPAK_CONTEXT_FEATURE_PER_APP_DEV_SHM = 1 << 4,
 } FlatpakContextFeatures;
 
+typedef enum {
+  FLATPAK_CONTEXT_CONDITION_TRUE          = 1 << 0,
+  FLATPAK_CONTEXT_CONDITION_FALSE         = 1 << 1,
+  FLATPAK_CONTEXT_CONDITION_HAS_INPUT_DEV = 1 << 2,
+  FLATPAK_CONTEXT_CONDITION_HAS_WAYLAND   = 1 << 3,
+} FlatpakContextConditions;
+
 struct FlatpakContext
 {
   FlatpakContextShares   shares;
@@ -100,6 +107,9 @@ struct FlatpakContext
   GHashTable            *enumerable_usb_devices;
   GHashTable            *hidden_usb_devices;
 };
+
+/* Gets a single condition as param and returns whether the condition is true. */
+typedef gboolean (*FlatpakContextConditionEvaluator) (FlatpakContextConditions condition);
 
 extern const char *flatpak_context_sockets[];
 extern const char *flatpak_context_devices[];
