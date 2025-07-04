@@ -78,6 +78,7 @@ jobs:
           -Dgtkdoc=disabled \
           -Dhttp_backend=curl \
           -Dinternal_checks=true \
+          -Dinternal_tests=true \
           -Dsystem_dbus_proxy=xdg-dbus-proxy \
           _build
       env:
@@ -137,6 +138,7 @@ jobs:
           -Dgtkdoc=disabled \
           -Dhttp_backend=soup \
           -Dinternal_checks=true \
+          -Dinternal_tests=true \
           _build
       env:
         CFLAGS: -O2 -Wp,-D_FORTIFY_SOURCE=2
