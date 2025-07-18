@@ -29,6 +29,7 @@
 
 #include <gio/gunixinputstream.h>
 
+#include "glib.h"
 #include "libglnx.h"
 
 #include "flatpak-builtins.h"
@@ -208,6 +209,8 @@ install_from (FlatpakDir *dir,
   g_autofree char *data = NULL;
   gsize data_len;
   const char *filename;
+  gboolean flatpak_uri = FALSE;
+  const char *uri;
   g_autoptr(FlatpakTransaction) transaction = NULL;
 
   if (argc < 2)
@@ -220,11 +223,13 @@ install_from (FlatpakDir *dir,
   filename = argv[1];
 
   if (g_str_has_prefix (filename, "http:") ||
-      g_str_has_prefix (filename, "https:"))
+      g_str_has_prefix (filename, "https:") ||
+      (flatpak_uri = g_str_has_prefix (filename, "flatpak+https:")))
     {
+      uri = flatpak_uri ? filename + 8 : filename;
       g_autoptr(FlatpakHttpSession) http_session = NULL;
       http_session = flatpak_create_http_session (PACKAGE_STRING);
-      file_data = flatpak_load_uri (http_session, filename, 0, NULL, NULL, NULL, NULL, cancellable, error);
+      file_data = flatpak_load_uri (http_session, uri, 0, NULL, NULL, NULL, NULL, cancellable, error);
       if (file_data == NULL)
         {
           g_prefix_error (error, "Can't load uri %s: ", filename);
