@@ -215,7 +215,7 @@ handle_host_command (FlatpakDevelopment    *object,
   gsize i, j, n_fds, n_envs;
   const gint *fds;
   g_autofree FdMapEntry *fd_map = NULL;
-  gchar **env;
+  g_auto(GStrv) env = NULL;
   gint32 max_fd;
 
   if (*arg_cwd_path == 0)
