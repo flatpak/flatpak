@@ -166,8 +166,10 @@ gboolean                      flatpak_oci_index_remove_manifest (FlatpakOciIndex
 FlatpakOciManifestDescriptor *flatpak_oci_index_get_manifest (FlatpakOciIndex *self,
                                                               const char      *ref);
 FlatpakOciManifestDescriptor *flatpak_oci_index_get_only_manifest (FlatpakOciIndex *self);
-int                           flatpak_oci_index_get_n_manifests (FlatpakOciIndex *self);
+FlatpakOciManifestDescriptor *flatpak_oci_index_get_manifest_for_arch (FlatpakOciIndex *self,
+                                                                       const char      *oci_arch);
 
+int                           flatpak_oci_index_get_n_manifests (FlatpakOciIndex *self);
 /* Only useful for delta index */
 FlatpakOciDescriptor *flatpak_oci_index_find_delta_for (FlatpakOciIndex *delta_index,
                                                         const char      *for_digest);
@@ -246,14 +248,6 @@ void flatpak_oci_add_labels_for_commit (GHashTable *labels,
                                         const char *ref,
                                         const char *commit,
                                         GVariant   *commit_data);
-void flatpak_oci_parse_commit_labels (GHashTable      *labels,
-                                      guint64         *out_timestamp,
-                                      char           **out_subject,
-                                      char           **out_body,
-                                      char           **out_ref,
-                                      char           **out_commit,
-                                      char           **out_parent_commit,
-                                      GVariantBuilder *metadata_builder);
 
 #define FLATPAK_TYPE_OCI_SIGNATURE flatpak_oci_signature_get_type ()
 G_DECLARE_FINAL_TYPE (FlatpakOciSignature, flatpak_oci_signature, FLATPAK, OCI_SIGNATURE, FlatpakJson)
