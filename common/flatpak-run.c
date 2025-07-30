@@ -2431,7 +2431,10 @@ forward_file (XdpDbusDocuments *documents,
               GError          **error)
 {
   int fd, fd_id;
+  struct stat stbuf;
+  gboolean is_dir = FALSE;
   g_autofree char *doc_id = NULL;
+  g_auto(GStrv) doc_ids = NULL;
   g_autoptr(GUnixFDList) fd_list = NULL;
   const char *perms[] = { "read", "write", NULL };
 
@@ -2441,33 +2444,62 @@ forward_file (XdpDbusDocuments *documents,
 
   fd_list = g_unix_fd_list_new ();
   fd_id = g_unix_fd_list_append (fd_list, fd, error);
+  if (fstat (fd, &stbuf) == 0 && S_ISDIR (stbuf.st_mode))
+    is_dir = TRUE;
   close (fd);
 
-  if (!xdp_dbus_documents_call_add_sync (documents,
-                                         g_variant_new ("h", fd_id),
-                                         TRUE, /* reuse */
-                                         FALSE, /* not persistent */
-                                         fd_list,
-                                         &doc_id,
-                                         NULL,
-                                         NULL,
-                                         error))
+  if (!is_dir)
     {
-      if (error)
-        g_dbus_error_strip_remote_error (*error);
-      return FALSE;
+      if (!xdp_dbus_documents_call_add_sync (documents,
+                                             g_variant_new ("h", fd_id),
+                                             TRUE, /* reuse */
+                                             FALSE, /* not persistent */
+                                             fd_list,
+                                             &doc_id,
+                                             NULL,
+                                             NULL,
+                                             error))
+        {
+          if (error)
+            g_dbus_error_strip_remote_error (*error);
+          return FALSE;
+        }
+      if (!xdp_dbus_documents_call_grant_permissions_sync (documents,
+                                                           doc_id,
+                                                           app_id,
+                                                           perms,
+                                                           NULL,
+                                                           error))
+        {
+          if (error)
+            g_dbus_error_strip_remote_error (*error);
+          return FALSE;
+        }
     }
-
-  if (!xdp_dbus_documents_call_grant_permissions_sync (documents,
-                                                       doc_id,
-                                                       app_id,
-                                                       perms,
-                                                       NULL,
-                                                       error))
+  else
     {
-      if (error)
-        g_dbus_error_strip_remote_error (*error);
-      return FALSE;
+      // Requires version 4 of AddFull interface
+      if (!xdp_dbus_documents_call_add_full_sync (documents,
+                                                  g_variant_new_fixed_array (G_VARIANT_TYPE_HANDLE, &fd_id, 1, sizeof (gint32)),
+                                                  8, /* export-directory */
+                                                  app_id,
+                                                  perms,
+                                                  fd_list,
+                                                  &doc_ids,
+                                                  NULL,
+                                                  NULL,
+                                                  NULL,
+                                                  error))
+        {
+          if (error)
+            g_dbus_error_strip_remote_error (*error);
+          return FALSE;
+        }
+
+      if (doc_ids && doc_ids[0])
+        {
+          doc_id = g_strdup (doc_ids[0]);
+        }
     }
 
   *out_doc_id = g_steal_pointer (&doc_id);
