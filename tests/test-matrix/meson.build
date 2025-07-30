@@ -45,3 +45,4 @@ wrapped_tests += {'name' : 'test-unused.sh', 'script' : 'test-unused.sh'}
 wrapped_tests += {'name' : 'test-prune.sh', 'script' : 'test-prune.sh'}
 wrapped_tests += {'name' : 'test-seccomp.sh', 'script' : 'test-seccomp.sh'}
 wrapped_tests += {'name' : 'test-repair.sh', 'script' : 'test-repair.sh'}
+wrapped_tests += {'name' : 'test-preinstall.sh', 'script' : 'test-preinstall.sh'}
