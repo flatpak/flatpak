@@ -67,6 +67,7 @@ print_documents (const char   *app_id,
   g_autoptr(FlatpakTablePrinter) printer = NULL;
   g_autofree char *mountpoint = NULL;
   gboolean need_perms = FALSE;
+  gboolean found_documents_to_print = FALSE;
   int i;
 
   if (columns[0].name == NULL)
@@ -148,11 +149,17 @@ print_documents (const char   *app_id,
             }
 
           flatpak_table_printer_finish_row (printer);
+          found_documents_to_print = TRUE;
 
           just_perms = TRUE;
         } while (have_perms && g_variant_iter_next (iter2, "{&s^a&s}", &app_id2, &perms));
     }
-
+    if (!found_documents_to_print)
+      {
+        g_print (_("No documents found\n"));
+        return TRUE;
+      }
+    
   flatpak_table_printer_print (printer);
 
   return TRUE;
