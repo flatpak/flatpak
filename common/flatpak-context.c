@@ -3372,6 +3372,8 @@ flatpak_context_append_bwrap_filesystem (FlatpakContext  *context,
                   g_file_test (xdg_path, G_FILE_TEST_IS_REGULAR))
                 {
                   g_autofree char *xdg_path_in_app = g_file_get_path (app_version_subdir);
+                  g_autofree char *xdg_path_in_app_parent = g_path_get_dirname (xdg_path_in_app);
+                  g_mkdir_with_parents (xdg_path_in_app_parent, 0755);
                   flatpak_bwrap_add_bind_arg (bwrap,
                                               mode == FLATPAK_FILESYSTEM_MODE_READ_ONLY ? "--ro-bind" : "--bind",
                                               xdg_path, xdg_path_in_app);
