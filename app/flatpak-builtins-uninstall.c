@@ -561,6 +561,7 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
       g_autoptr(GFileEnumerator) enumerator = NULL;
       g_autofree char *path = g_build_filename (g_get_home_dir (), ".var", "app", NULL);
       g_autoptr(GFile) app_dir = g_file_new_for_path (path);
+      gboolean found_data_to_delete = FALSE;
 
       enumerator = g_file_enumerate_children (app_dir,
                                               G_FILE_ATTRIBUTE_STANDARD_NAME "," G_FILE_ATTRIBUTE_STANDARD_TYPE,
@@ -588,8 +589,15 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
           if (ref)
             continue;
 
+          found_data_to_delete = TRUE;
+
           if (!flatpak_delete_data (opt_yes, g_file_info_get_name (info), error))
             return FALSE;
+        }
+
+      if (!found_data_to_delete)
+        {
+          g_print (_("No app data to delete\n"));
         }
     }
 
