@@ -17,7 +17,7 @@ reset_overrides () {
     assert_file_empty info
 }
 
-echo "1..18"
+echo "1..19"
 
 setup_repo
 install_repo
@@ -65,6 +65,22 @@ assert_file_has_content override "^\[Context\]$"
 assert_file_has_content override "^features=multiarch;!bluetooth;$"
 
 ok "override --allow"
+
+reset_overrides
+
+${FLATPAK} override --user --extra-args="--foo '/bar baz/'" org.test.Hello
+${FLATPAK} override --user --show org.test.Hello > override
+
+assert_file_has_content override "^\[Context\]$"
+assert_file_has_content override "^extra-args=--foo;/bar baz/;$"
+
+${FLATPAK} run --command=echo org.test.Hello > out
+assert_file_has_content out "^--foo /bar baz/$"
+
+${FLATPAK} run --command=echo org.test.Hello -v > out
+assert_file_has_content out "^--foo /bar baz/ -v$"
+
+ok "override --extra-args"
 
 reset_overrides
 
