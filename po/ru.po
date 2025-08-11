@@ -5,14 +5,15 @@
 # Roman Kharin <romiq.kh@gmail.com>, 2017.
 # Артемий Судаков <finziyr@yandex.ru>, 2020.
 # Дмитрий <dmitrydmitry761@gmail.com>, 2023.
+# Вячеслав Гурин <slavkaplay6@gmail.com>, 2025.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2025-05-08 13:08-0300\n"
-"PO-Revision-Date: 2023-02-21 22:52+0700\n"
-"Last-Translator: Dmitry <dmitrydmitry761@gmail.com>\n"
+"POT-Creation-Date: 2025-08-11 03:26+0000\n"
+"PO-Revision-Date: 2025-08-11 14:17+0800\n"
+"Last-Translator: Vyacheslav Gurin <slavkaplay6@gmail.com>\n"
 "Language-Team: Russian <gnome-cyr@gnome.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -20,7 +21,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Generator: Poedit 3.0\n"
+"X-Generator: Poedit 3.0.1\n"
 
 #: app/flatpak-builtins-build-bundle.c:58
 msgid "Export runtime instead of app"
@@ -137,7 +138,7 @@ msgstr "Должны быть указаны ПУТЬ, ИМЯ_ФАЙЛА и ИМ
 #: app/flatpak-builtins-build-init.c:217 app/flatpak-builtins-build-sign.c:76
 #: app/flatpak-builtins-document-export.c:112
 #: app/flatpak-builtins-document-info.c:75
-#: app/flatpak-builtins-document-list.c:182
+#: app/flatpak-builtins-document-list.c:189
 #: app/flatpak-builtins-document-unexport.c:70
 #: app/flatpak-builtins-history.c:480 app/flatpak-builtins-info.c:130
 #: app/flatpak-builtins-install.c:148 app/flatpak-builtins-install.c:217
@@ -262,8 +263,7 @@ msgstr "Не найдена точка расширения, подходяща�
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Отсутствует '=' в параметре связанного монтирования '%s'"
 
-#: app/flatpak-builtins-build.c:609 common/flatpak-run.c:3599
-#, c-format
+#: app/flatpak-builtins-build.c:609 common/flatpak-run.c:3653
 msgid "Unable to start app"
 msgstr "Невозможно запустить приложение"
 
@@ -521,7 +521,6 @@ msgid "Unable to find basename in %s, specify a name explicitly"
 msgstr "Невозможно найти базовое имя в %s, укажите его"
 
 #: app/flatpak-builtins-build-export.c:746
-#, c-format
 msgid "No slashes allowed in extra data name"
 msgstr ""
 "Не разрешается использовать символ '/' в названии дополнительных данных"
@@ -532,7 +531,6 @@ msgid "Invalid format for sha256 checksum: '%s'"
 msgstr "Неверный формат контрольной суммы sha256: '%s'"
 
 #: app/flatpak-builtins-build-export.c:768
-#, c-format
 msgid "Extra data sizes of zero not supported"
 msgstr "Дополнительные данные нулевого размера не поддерживаются"
 
@@ -582,7 +580,6 @@ msgid "Content Written: %u\n"
 msgstr "Данных записано: %u\n"
 
 #: app/flatpak-builtins-build-export.c:1171
-#, c-format
 msgid "Content Bytes Written:"
 msgstr "Байтов контента записано:"
 
@@ -684,7 +681,6 @@ msgid "Exporting %s\n"
 msgstr "Экспортирую %s\n"
 
 #: app/flatpak-builtins-build-finish.c:439
-#, c-format
 msgid "More than one executable found\n"
 msgstr "Найдено больше одного исполняемого файла\n"
 
@@ -694,7 +690,6 @@ msgid "Using %s as command\n"
 msgstr "Использовать %s как команду\n"
 
 #: app/flatpak-builtins-build-finish.c:455
-#, c-format
 msgid "No executable found\n"
 msgstr "Не найдено исполняемых файлов\n"
 
@@ -748,7 +743,6 @@ msgid "Build directory %s already finalized"
 msgstr "Каталог сборки %s уже финализирован"
 
 #: app/flatpak-builtins-build-finish.c:701
-#, c-format
 msgid "Please review the exported files and the metadata\n"
 msgstr "Пожалуйста, перепроверьте экспортированные файлы и метаданные\n"
 
@@ -1087,12 +1081,10 @@ msgid "LOCATION - Update repository metadata"
 msgstr "ПУТЬ - Обновить метаданные репозитория"
 
 #: app/flatpak-builtins-build-update-repo.c:609
-#, c-format
 msgid "Updating appstream branch\n"
 msgstr "Обновление ветви appstream\n"
 
 #: app/flatpak-builtins-build-update-repo.c:638
-#, c-format
 msgid "Updating summary\n"
 msgstr "Обновление сводной информации\n"
 
@@ -1102,7 +1094,6 @@ msgid "Total objects: %u\n"
 msgstr "Всего объектов: %u\n"
 
 #: app/flatpak-builtins-build-update-repo.c:666
-#, c-format
 msgid "No unreachable objects\n"
 msgstr "Нет недоступных объектов\n"
 
@@ -1378,7 +1369,6 @@ msgstr "ФАЙЛ - Получить информацию об экспортир
 
 #: app/flatpak-builtins-document-info.c:100
 #: app/flatpak-builtins-document-unexport.c:92
-#, c-format
 msgid "Not exported\n"
 msgstr "Не экспортировано\n"
 
@@ -1433,7 +1423,11 @@ msgstr "Разрешения"
 msgid "Show permissions for applications"
 msgstr "Показать разрешения для приложения"
 
-#: app/flatpak-builtins-document-list.c:171
+#: app/flatpak-builtins-document-list.c:159
+msgid "No documents found\n"
+msgstr "Документы не найдены\n"
+
+#: app/flatpak-builtins-document-list.c:178
 msgid "[APPID] - List exported files"
 msgstr "[ID_ПРИЛ] - Показать список экспортированных файлов"
 
@@ -1671,12 +1665,10 @@ msgid " - Show history"
 msgstr " - Показать историю"
 
 #: app/flatpak-builtins-history.c:488
-#, c-format
 msgid "Failed to parse the --since option"
 msgstr "Ошибка разбора параметра --since"
 
 #: app/flatpak-builtins-history.c:499
-#, c-format
 msgid "Failed to parse the --until option"
 msgstr "Ошибка разбора параметра --until"
 
@@ -1759,7 +1751,6 @@ msgid "ref not present in origin"
 msgstr "ссылка отсутствует в источнике"
 
 #: app/flatpak-builtins-info.c:211 app/flatpak-builtins-remote-info.c:217
-#, c-format
 msgid "Warning: Commit has no flatpak metadata\n"
 msgstr "Предупреждение: коммиит не содержит метаданных Flatpak\n"
 
@@ -2002,7 +1993,6 @@ msgid "At least one REF must be specified"
 msgstr "Должна быть указана хотя бы одна ССЫЛКА"
 
 #: app/flatpak-builtins-install.c:336
-#, c-format
 msgid "Looking for matches…\n"
 msgstr "Поиск совпадений…\n"
 
@@ -2206,12 +2196,10 @@ msgstr ""
 "под шаблон"
 
 #: app/flatpak-builtins-mask.c:73
-#, c-format
 msgid "No masked patterns\n"
 msgstr "Нет замаскированных шаблонов\n"
 
 #: app/flatpak-builtins-mask.c:78
-#, c-format
 msgid "Masked patterns:\n"
 msgstr "Замаскированные шаблоны:\n"
 
@@ -2304,12 +2292,10 @@ msgstr ""
 "[ШАБЛОН…] - отключить автоудаление сред выполнения, подходящих под шаблонны"
 
 #: app/flatpak-builtins-pin.c:75
-#, c-format
 msgid "No pinned patterns\n"
 msgstr "Нет закреплённых шаблонов\n"
 
 #: app/flatpak-builtins-pin.c:80
-#, c-format
 msgid "Pinned patterns:\n"
 msgstr "Закреплённые шаблоны:\n"
 
@@ -2852,7 +2838,6 @@ msgid "[%d/%d] Verifying %s…\n"
 msgstr "[%d/%d] Проверяется %s...\n"
 
 #: app/flatpak-builtins-repair.c:435
-#, c-format
 msgid "Dry run: "
 msgstr "Пробный запуск: "
 
@@ -2872,7 +2857,6 @@ msgid "Deleting ref %s due to %d\n"
 msgstr "Удаление ссылки %s из-за %d\n"
 
 #: app/flatpak-builtins-repair.c:464
-#, c-format
 msgid "Checking remotes...\n"
 msgstr "Проверка удалённых репозиториев...\n"
 
@@ -2887,22 +2871,18 @@ msgid "Remote %s for ref %s is disabled\n"
 msgstr "Удалённый репозиторий %s для ссылки %s отключён\n"
 
 #: app/flatpak-builtins-repair.c:490
-#, c-format
 msgid "Pruning objects\n"
 msgstr "Очистка объектов\n"
 
 #: app/flatpak-builtins-repair.c:498
-#, c-format
 msgid "Erasing .removed\n"
 msgstr "Удаление .removed\n"
 
 #: app/flatpak-builtins-repair.c:523
-#, c-format
 msgid "Reinstalling refs\n"
 msgstr "Переустановка ссылок\n"
 
 #: app/flatpak-builtins-repair.c:525
-#, c-format
 msgid "Reinstalling removed refs\n"
 msgstr "Переустановка удалённых ссылок\n"
 
@@ -2937,7 +2917,6 @@ msgid "false"
 msgstr "false"
 
 #: app/flatpak-builtins-repo.c:120
-#, c-format
 msgid "Subsummaries: "
 msgstr "Дочерние сводки: "
 
@@ -3269,7 +3248,6 @@ msgstr ""
 "flatpak-pin(1):\n"
 
 #: app/flatpak-builtins-uninstall.c:370
-#, c-format
 msgid "Nothing unused to uninstall\n"
 msgstr "Нет неиспользуемого для удаления\n"
 
@@ -3294,9 +3272,12 @@ msgid "Warning: %s is not installed\n"
 msgstr "Предупреждение: %s не установлено\n"
 
 #: app/flatpak-builtins-uninstall.c:490
-#, c-format
 msgid "None of the specified refs are installed"
 msgstr "Ни одна из указанных ссылок не установлена"
+
+#: app/flatpak-builtins-uninstall.c:599
+msgid "No app data to delete\n"
+msgstr "Нет данных приложения для удаления\n"
 
 #: app/flatpak-builtins-update.c:56
 msgid "Arch to update for"
@@ -3335,7 +3316,6 @@ msgid "With --commit, only one REF may be specified"
 msgstr "При указании --commit, должна быть указана хотя бы одна ССЫЛКА"
 
 #: app/flatpak-builtins-update.c:162
-#, c-format
 msgid "Looking for updates…\n"
 msgstr "Поиск обновлений…\n"
 
@@ -3345,7 +3325,6 @@ msgid "Unable to update %s: %s\n"
 msgstr "Не удалось обновить %s: %s\n"
 
 #: app/flatpak-builtins-update.c:274
-#, c-format
 msgid "Nothing to do.\n"
 msgstr "Нечего выполнять.\n"
 
@@ -3410,7 +3389,6 @@ msgid "Found installed ref ‘%s’ (%s). Is this correct?"
 msgstr "Найдена установленная ссылка '%s' (%s). Она верна?"
 
 #: app/flatpak-builtins-utils.c:522
-#, c-format
 msgid "All of the above"
 msgstr "Все вышеперечисленное"
 
@@ -3724,12 +3702,10 @@ msgstr ""
 "причине:\n"
 
 #: app/flatpak-cli-transaction.c:960
-#, c-format
 msgid "Info: applications using this extension:\n"
 msgstr "Информация: приложения, использующие это расширение:\n"
 
 #: app/flatpak-cli-transaction.c:962
-#, c-format
 msgid "Info: applications using this runtime:\n"
 msgstr "Информация: приложения, использующие эту среду выполнения:\n"
 
@@ -3738,7 +3714,6 @@ msgid "Replace?"
 msgstr "Заменить?"
 
 #: app/flatpak-cli-transaction.c:984 app/flatpak-quiet-transaction.c:247
-#, c-format
 msgid "Updating to rebased version\n"
 msgstr "Обновление перебазированной версии\n"
 
@@ -4288,7 +4263,6 @@ msgid "Filesystem location \"%s\" contains \"..\""
 msgstr "Путь \"%s\" файловой системы содержит \"..\""
 
 #: common/flatpak-context.c:1002
-#, c-format
 msgid ""
 "--filesystem=/ is not available, use --filesystem=host for a similar result"
 msgstr ""
@@ -4315,22 +4289,18 @@ msgid "Environment variable name must not contain '=': %s"
 msgstr "Имя переменной окружения не должно содежать'=': %s"
 
 #: common/flatpak-context.c:1540 common/flatpak-context.c:1548
-#, c-format
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr "Аргмуенты --add-policy должны быть в форме ПОДСИСТЕМА.КЛЮЧ=ЗНАЧЕНИЕ"
 
 #: common/flatpak-context.c:1555
-#, c-format
 msgid "--add-policy values can't start with \"!\""
 msgstr "Значения --add-policy не могут начинаться с '!'"
 
 #: common/flatpak-context.c:1580 common/flatpak-context.c:1588
-#, c-format
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr "Аргмуенты --remove-policy должны быть в форме ПОДСИСТЕМА.КЛЮЧ=ЗНАЧЕНИЕ"
 
 #: common/flatpak-context.c:1595
-#, c-format
 msgid "--remove-policy values can't start with \"!\""
 msgstr "Значения --remove-policy не могут начинаться с '!'"
 
@@ -4454,9 +4424,8 @@ msgid "Don't allow app to talk to name on the system bus"
 msgstr "Запретить приложению обмениваться с именем используя системную шину"
 
 #: common/flatpak-context.c:1689
-#, fuzzy
 msgid "Allow app to own name on the a11y bus"
-msgstr "Разрешить приложению владеть именем используя системную шину"
+msgstr "Разрешить приложению владеть именем на шине специальных возможностей"
 
 #: common/flatpak-context.c:1690
 msgid "Add generic policy option"
@@ -4472,27 +4441,27 @@ msgstr "Удалить параметр обобщенной политики"
 
 #: common/flatpak-context.c:1692
 msgid "Add USB device to enumerables"
-msgstr ""
+msgstr "Добавить USB-устройство в список доступных"
 
 #: common/flatpak-context.c:1692 common/flatpak-context.c:1693
 msgid "VENDOR_ID:PRODUCT_ID"
-msgstr ""
+msgstr "VENDOR_ID:PRODUCT_ID"
 
 #: common/flatpak-context.c:1693
 msgid "Add USB device to hidden list"
-msgstr ""
+msgstr "Добавить USB-устройство в список скрытых"
 
 #: common/flatpak-context.c:1694
 msgid "A list of USB devices that are enumerable"
-msgstr ""
+msgstr "Список доступных USB-устройств"
 
 #: common/flatpak-context.c:1694
 msgid "LIST"
-msgstr ""
+msgstr "СПИСОК"
 
 #: common/flatpak-context.c:1695
 msgid "File containing a list of USB devices to make enumerable"
-msgstr ""
+msgstr "Файл, содержащий список доступных USB-устройств"
 
 #: common/flatpak-context.c:1695 common/flatpak-context.c:1696
 msgid "FILENAME"
@@ -4548,10 +4517,9 @@ msgstr "Ссылки %s в удалённом репозитории %s не с�
 
 #: common/flatpak-dir.c:769 common/flatpak-dir.c:906 common/flatpak-dir.c:935
 #: common/flatpak-dir.c:947
-#, fuzzy, c-format
+#, c-format
 msgid "No entry for %s in remote %s summary flatpak cache"
-msgstr ""
-"Нет записи для %s в удаленном репозитории '%s' суммарного кеша flatpak "
+msgstr "Нет записи для «%s» в кэше сводки удалённого репозитория «%s»"
 
 #: common/flatpak-dir.c:924
 #, c-format
@@ -4798,9 +4766,8 @@ msgid "Extra data %s missing in detached metadata"
 msgstr "В отдельных метаданных отсутствуют отдельные данные %s"
 
 #: common/flatpak-dir.c:8413
-#, fuzzy, c-format
 msgid "Unable to get runtime key from metadata"
-msgstr "Использовать другой файл метаданных"
+msgstr "Не удалось получить ключ среды выполнения из метаданных"
 
 #: common/flatpak-dir.c:8526
 #, c-format
@@ -4885,7 +4852,6 @@ msgid "This version of %s is already installed"
 msgstr "Указанная версия %s уже установлена"
 
 #: common/flatpak-dir.c:10369
-#, c-format
 msgid "Can't change remote during bundle install"
 msgstr "Невозможно изменить удалённый репозиторий во время установки пакета"
 
@@ -5051,7 +5017,6 @@ msgid "Skipping deletion of mirror ref (%s, %s)…\n"
 msgstr "Пропуск удаления зеркальной ссылки (%s,%s)…\n"
 
 #: common/flatpak-exports.c:916
-#, c-format
 msgid "An absolute path is required"
 msgstr "Требуется абсолютный путь"
 
@@ -5401,7 +5366,6 @@ msgid "GPG verification must be enabled when a collection ID is set"
 msgstr "Проверка GPG должна быть включена, когда установлен ID коллекции"
 
 #: common/flatpak-repo-utils.c:344
-#, c-format
 msgid "No extra data sources"
 msgstr "Нет источников дополнительных данных"
 
@@ -5453,96 +5417,104 @@ msgstr ""
 msgid "Metadata in header and app are inconsistent"
 msgstr "Метаданные в заголовке и приложении несовместимы"
 
-#: common/flatpak-run.c:855
+#: common/flatpak-run.c:865
 msgid "No systemd user session available, cgroups not available"
 msgstr "Отсутствует пользовательская сессия systemd, cgroups недоступны"
 
-#: common/flatpak-run.c:1395
+#: common/flatpak-run.c:1405
 msgid "Unable to allocate instance id"
 msgstr "Невозможно выделить идентификатор экземпляра"
 
-#: common/flatpak-run.c:1531 common/flatpak-run.c:1541
+#: common/flatpak-run.c:1541 common/flatpak-run.c:1551
 #, c-format
 msgid "Failed to open flatpak-info file: %s"
 msgstr "Не удалось открыть файл flatpak-info: %s"
 
-#: common/flatpak-run.c:1570
+#: common/flatpak-run.c:1580
 #, c-format
 msgid "Failed to open bwrapinfo.json file: %s"
 msgstr "Не удалось открыть файл bwrapinfo.json: %s"
 
-#: common/flatpak-run.c:1595
+#: common/flatpak-run.c:1605
 #, c-format
 msgid "Failed to write to instance id fd: %s"
 msgstr "Не удалось записать файловый дескриптор с ID экземпляра: %s"
 
-#: common/flatpak-run.c:1990
+#: common/flatpak-run.c:2000
 msgid "Initialize seccomp failed"
 msgstr "Не удалось инициализировать seccomp"
 
-#: common/flatpak-run.c:2029
+#: common/flatpak-run.c:2039
 #, c-format
 msgid "Failed to add architecture to seccomp filter: %s"
 msgstr "Не удалось добавить архитектуру в фильтр seccomp: %s"
 
-#: common/flatpak-run.c:2037
+#: common/flatpak-run.c:2047
 #, c-format
 msgid "Failed to add multiarch architecture to seccomp filter: %s"
 msgstr "Не удалось добавить многоархивную архитектуру к фильтру seccomp: %s"
 
-#: common/flatpak-run.c:2069 common/flatpak-run.c:2086
-#: common/flatpak-run.c:2108
+#: common/flatpak-run.c:2079 common/flatpak-run.c:2096
+#: common/flatpak-run.c:2118
 #, c-format
 msgid "Failed to block syscall %d: %s"
 msgstr "Не удалось заблокировать системный вызов %d: %s"
 
-#: common/flatpak-run.c:2141
+#: common/flatpak-run.c:2151
 #, c-format
 msgid "Failed to export bpf: %s"
 msgstr "Не удалось экспортировать bpf: %s"
 
-#: common/flatpak-run.c:2440
+#: common/flatpak-run.c:2453
 #, c-format
 msgid "Failed to open ‘%s’"
 msgstr "Не удалось открыть '%s'"
 
-#: common/flatpak-run.c:2727
+#: common/flatpak-run.c:2463
+#, c-format
+msgid ""
+"Directory forwarding needs version 4 of the document portal (have version %d)"
+msgstr ""
+"Для перенаправления каталога требуется портал документов версии 4 "
+"(установлена версия %d)"
+
+#: common/flatpak-run.c:2781
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "ошибка ldconfig, статус ошибки %d"
 
-#: common/flatpak-run.c:2734
+#: common/flatpak-run.c:2788
 msgid "Can't open generated ld.so.cache"
 msgstr "Невозможно открыть сгенерированный файл ld.so.cache"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-run.c:2857
+#: common/flatpak-run.c:2911
 #, c-format
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr "Запуск %s не разрешен политикой, установленной вашим администратором"
 
-#: common/flatpak-run.c:2964
+#: common/flatpak-run.c:3018
 msgid ""
-"\"flatpak run\" is not intended to be run as `sudo flatpak run`. Use `sudo "
-"-i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell."
+"\"flatpak run\" is not intended to be run as `sudo flatpak run`. Use `sudo -"
+"i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell."
 msgstr ""
 "\"flatpak run\" не предназначен для запуска как `sudo flatpak run`. Вместо "
 "этого используйте `sudo -i` или `su -l` и вызывайте \"flatpak run\" из новой "
 "оболочки."
 
-#: common/flatpak-run.c:3154
+#: common/flatpak-run.c:3208
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "Не удалось перенести с %s: %s"
 
-#: common/flatpak-run.c:3175
+#: common/flatpak-run.c:3229
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr ""
 "Не удалось переместить старую папку с данными приложения %s в папку с новым "
 "именем %s: %s"
 
-#: common/flatpak-run.c:3184
+#: common/flatpak-run.c:3238
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "Не удалось создать символическую ссылку при переносе %s: %s"
@@ -5725,64 +5697,58 @@ msgid "URI is not absolute, and no base URI was provided"
 msgstr "URI не абсолютный, и базовый URI не указан"
 
 #: common/flatpak-usb.c:83
-#, c-format
 msgid "USB device query 'all' must not have data"
-msgstr ""
+msgstr "Запрос USB-устройства «all» не должен содержать данные"
 
 #: common/flatpak-usb.c:102
-#, c-format
 msgid "USB query rule 'cls' must be in the form CLASS:SUBCLASS or CLASS:*"
 msgstr ""
+"Правило запроса USB «cls» должно быть в формате CLASS:SUBCLASS или CLASS:*"
 
 #: common/flatpak-usb.c:111
-#, fuzzy, c-format
 msgid "Invalid USB class"
-msgstr "Некорректный ID %s: %s"
+msgstr "Недопустимый класс USB"
 
 #: common/flatpak-usb.c:125
-#, c-format
 msgid "Invalid USB subclass"
-msgstr ""
+msgstr "Недопустимый подкласс USB"
 
 #: common/flatpak-usb.c:141 common/flatpak-usb.c:148
-#, c-format
 msgid "USB query rule 'dev' must have a valid 4-digit hexadecimal product id"
 msgstr ""
+"Правило запроса USB «dev» должно содержать действительный 4-значный "
+"шестнадцатеричный идентификатор продукта"
 
 #: common/flatpak-usb.c:164 common/flatpak-usb.c:171
-#, c-format
 msgid "USB query rule 'vnd' must have a valid 4-digit hexadecimal vendor id"
 msgstr ""
+"Правило запроса USB «vnd» должно содержать действительный 4-значный "
+"шестнадцатеричный идентификатор производителя"
 
 #: common/flatpak-usb.c:205
-#, c-format
 msgid "USB device queries must be in the form TYPE:DATA"
-msgstr ""
+msgstr "Запросы USB-устройств должны быть в формате TYPE:DATA"
 
 #: common/flatpak-usb.c:225
 #, c-format
 msgid "Unknown USB query rule %s"
-msgstr ""
+msgstr "Неизвестное правило запроса USB: %s"
 
 #: common/flatpak-usb.c:248
-#, c-format
 msgid "Empty USB query"
-msgstr ""
+msgstr "Пустой запрос USB"
 
 #: common/flatpak-usb.c:274
-#, c-format
 msgid "Multiple USB query rules of the same type is not supported"
-msgstr ""
+msgstr "Несколько правил запроса USB одного типа не поддерживаются"
 
 #: common/flatpak-usb.c:283
-#, c-format
 msgid "'all' must not contain extra query rules"
-msgstr ""
+msgstr "Правило «all» не должно содержать дополнительных правил запроса"
 
 #: common/flatpak-usb.c:291
-#, c-format
 msgid "USB queries with 'dev' must also specify vendors"
-msgstr ""
+msgstr "В запросах USB с «dev» также должны быть указаны производители"
 
 #: common/flatpak-utils.c:668
 msgid "Glob can't match apps"
@@ -5845,7 +5811,6 @@ msgid "Invalid token"
 msgstr "Некорректный токен"
 
 #: portal/flatpak-portal.c:2337
-#, c-format
 msgid "No portal support found"
 msgstr "Поддержки порталов не обнаружено"
 
@@ -5873,19 +5838,16 @@ msgstr ""
 "конфиденциальности."
 
 #: portal/flatpak-portal.c:2388
-#, c-format
 msgid "Application update not allowed"
 msgstr "Обновления приложений не разрешены"
 
 #: portal/flatpak-portal.c:2546
-#, c-format
 msgid "Self update not supported, new version requires new permissions"
 msgstr ""
 "Самостоятельное обновление не поддерживается, новая версия требует новых "
 "разрешений"
 
 #: portal/flatpak-portal.c:2728 portal/flatpak-portal.c:2745
-#, c-format
 msgid "Update ended unexpectedly"
 msgstr "Обновление закончилось неожиданно"
 
@@ -6096,9 +6058,8 @@ msgstr "Требуется авторизация для обновления м
 #. * Set the malcontent `is-system-installation-allowed` property of
 #. all users’ parental controls policies to true.
 #: system-helper/org.freedesktop.Flatpak.policy.in:287
-#, fuzzy
 msgid "Override parental controls for installs"
-msgstr "Перезаписать данные для родительского контроля"
+msgstr "Переопределить родительский контроль для установок"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:288
 msgid ""
@@ -6122,18 +6083,16 @@ msgstr ""
 #. installing an update which has radically different content from the
 #. version of the app which the parent originally vetted and installed.
 #: system-helper/org.freedesktop.Flatpak.policy.in:313
-#, fuzzy
 msgid "Override parental controls for updates"
-msgstr "Перезаписать данные для родительского контроля"
+msgstr "Переопределить родительский контроль для обновлений"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:314
-#, fuzzy
 msgid ""
 "Authentication is required to update software which is restricted by your "
 "parental controls policy"
 msgstr ""
-"Для установки программного обеспечения требуется аутентификация, которая "
-"ограничена вашей политикой родительского контроля"
+"Требуется аутентификация для обновления программного обеспечения, "
+"ограниченного вашей политикой родительского контроля"
 
 #, c-format
 #~ msgid ""
