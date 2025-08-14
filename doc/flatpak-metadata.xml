@@ -142,7 +142,7 @@
                     <term><option>shared</option> (list)</term>
                     <listitem><para>
                         List of subsystems to share with the host system.
-                        Possible subsystems: network, ipc.
+                        Possible subsystems: network, ipc, ipc-x11.
                         Available since 0.3.
                     </para></listitem>
                 </varlistentry>

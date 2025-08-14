@@ -221,7 +221,7 @@ test_full_context (void)
   g_key_file_set_value (keyfile,
                         FLATPAK_METADATA_GROUP_CONTEXT,
                         FLATPAK_METADATA_KEY_SHARED,
-                        "network;ipc;");
+                        "network;ipc;ipc-x11;");
   g_key_file_set_value (keyfile,
                         FLATPAK_METADATA_GROUP_CONTEXT,
                         FLATPAK_METADATA_KEY_SOCKETS,
@@ -270,7 +270,8 @@ test_full_context (void)
 
   g_assert_cmpuint (context->shares, ==,
                     (FLATPAK_CONTEXT_SHARED_NETWORK |
-                     FLATPAK_CONTEXT_SHARED_IPC));
+                     FLATPAK_CONTEXT_SHARED_IPC |
+                     FLATPAK_CONTEXT_SHARED_IPC_X11));
   g_assert_cmpuint (context->shares_valid, ==, context->shares);
   g_assert_cmpuint (context->devices, ==,
                     (FLATPAK_CONTEXT_DEVICE_DRI |
@@ -359,6 +360,7 @@ test_full_context (void)
   qsort (strv, n, sizeof (char *), flatpak_strcmp0_ptr);
   i = 0;
   g_assert_cmpstr (strv[i++], ==, "ipc");
+  g_assert_cmpstr (strv[i++], ==, "ipc-x11");
   g_assert_cmpstr (strv[i++], ==, "network");
   g_assert_cmpstr (strv[i], ==, NULL);
   g_assert_cmpuint (i, ==, n);

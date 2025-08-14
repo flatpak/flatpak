@@ -114,7 +114,7 @@
                 <listitem><para>
                     Share a subsystem with the host session. This overrides
                     the Context section from the application metadata.
-                    <arg choice="plain">SUBSYSTEM</arg> must be one of: network, ipc.
+                    <arg choice="plain">SUBSYSTEM</arg> must be one of: network, ipc, ipc-x11.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
@@ -125,7 +125,7 @@
                 <listitem><para>
                     Don't share a subsystem with the host session. This overrides
                     the Context section from the application metadata.
-                    <arg choice="plain">SUBSYSTEM</arg> must be one of: network, ipc.
+                    <arg choice="plain">SUBSYSTEM</arg> must be one of: network, ipc, ipc-x11.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
