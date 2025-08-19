@@ -525,6 +525,11 @@ else
     _flatpak_bwrap_works=true
 fi
 
+have_working_bwrap() {
+    [[ "${_flatpak_bwrap_works}" == "true" ]]
+    return $?
+}
+
 # Use to skip all of these tests
 skip() {
     echo "1..0 # SKIP" "$@"
