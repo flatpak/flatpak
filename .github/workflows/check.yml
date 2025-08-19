@@ -49,6 +49,10 @@ jobs:
         head -v -n-0 /etc/apt/sources.list.d/* || :
         # Workaround for https://github.com/orgs/community/discussions/120966
         sudo rm -f /etc/apt/sources.list.d/microsoft-prod.list
+        # Workaround for apparmor breaking bwrap by disabling unpriv userns
+        sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+        sudo systemctl reload apparmor
+        # Dependencies
         sudo apt-get update
         sudo apt-get install -y libglib2.0-dev attr gettext bison  dbus gtk-doc-tools \
         libfuse3-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
