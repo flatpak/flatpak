@@ -123,6 +123,7 @@ flatpak_oci_registry_finalize (GObject *object)
   g_clear_pointer (&self->base_uri, g_uri_unref);
   g_free (self->uri);
   g_free (self->token);
+  g_clear_pointer (&self->certificates, flatpak_certificates_free);
 
   G_OBJECT_CLASS (flatpak_oci_registry_parent_class)->finalize (object);
 }
