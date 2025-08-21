@@ -289,12 +289,7 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
   g_autofree char *xdg_dirs_conf = NULL;
   gboolean home_access = FALSE;
   gboolean sandboxed = (flags & FLATPAK_RUN_FLAG_SANDBOX) != 0;
-
-  if ((context->shares & FLATPAK_CONTEXT_SHARED_IPC) == 0)
-    {
-      g_info ("Disallowing ipc access");
-      flatpak_bwrap_add_args (bwrap, "--unshare-ipc", NULL);
-    }
+  gboolean allow_x11;
 
   if ((context->shares & FLATPAK_CONTEXT_SHARED_NETWORK) == 0)
     {
@@ -515,7 +510,15 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
   flatpak_context_append_bwrap_filesystem (context, bwrap, app_id, app_id_dir,
                                            exports, xdg_dirs_conf, home_access);
 
-  flatpak_run_add_socket_args_environment (bwrap, context->shares, context->sockets, app_id, instance_id);
+  flatpak_run_add_socket_args_environment (bwrap, context->shares, context->sockets, app_id, instance_id, &allow_x11);
+
+  if (((context->shares & FLATPAK_CONTEXT_SHARED_IPC) == 0 ||
+       (context->shares & FLATPAK_CONTEXT_SHARED_IPC_X11) != 0) && !allow_x11)
+    {
+      g_info ("Disallowing ipc access");
+      flatpak_bwrap_add_args (bwrap, "--unshare-ipc", NULL);
+    }
+
   flatpak_run_add_session_dbus_args (bwrap, proxy_arg_bwrap, context, flags, app_id);
   flatpak_run_add_system_dbus_args (bwrap, proxy_arg_bwrap, context, flags);
   flatpak_run_add_a11y_dbus_args (bwrap, proxy_arg_bwrap, context, flags, app_id);
