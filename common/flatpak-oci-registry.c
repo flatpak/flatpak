@@ -138,6 +138,7 @@ flatpak_oci_registry_finalize (GObject *object)
   g_free (self->token);
   g_clear_object (&self->archive);
   g_clear_pointer (&self->tmp_dir, glnx_tmpdir_free);
+  g_clear_pointer (&self->certificates, flatpak_certificates_free);
 
   G_OBJECT_CLASS (flatpak_oci_registry_parent_class)->finalize (object);
 }
