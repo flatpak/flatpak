@@ -623,8 +623,31 @@ flatpak_permissions_from_strv (GHashTable  *permissions,
           name = parse_negated (tokens[0], &negated);
         }
 
-      permission = flatpak_permissions_ensure (permissions, name);
-      flatpak_permission_deserialize (permission, negated, condition);
+      if (strcmp (name, "fallback-x11") == 0)
+        {
+          if (condition != NULL)
+            {
+              g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
+                           _("fallback-x11 can not be conditional"));
+              return FALSE;
+            }
+
+          if (!negated)
+            {
+              permission = flatpak_permissions_ensure (permissions, "x11");
+              flatpak_permission_deserialize (permission, FALSE, "!has-wayland");
+            }
+          else
+            {
+              permission = flatpak_permissions_ensure (permissions, "x11");
+              flatpak_permission_deserialize (permission, TRUE, NULL);
+            }
+        }
+      else
+        {
+          permission = flatpak_permissions_ensure (permissions, name);
+          flatpak_permission_deserialize (permission, negated, condition);
+        }
     }
 
   return TRUE;
@@ -1901,6 +1924,14 @@ option_socket_cb (const gchar *option_name,
   if (socket == 0)
     return FALSE;
 
+  if (socket == FLATPAK_CONTEXT_SOCKET_FALLBACK_X11)
+    {
+      flatpak_permissions_set_allowed_if (context->socket_permissions,
+                                          "x11",
+                                          "!has-wayland");
+      return TRUE;
+    }
+
   flatpak_permissions_set_allowed (context->socket_permissions,
                                    value);
 
@@ -1919,6 +1950,12 @@ option_nosocket_cb (const gchar *option_name,
   socket = flatpak_context_socket_from_string (value, error);
   if (socket == 0)
     return FALSE;
+
+  if (socket == FLATPAK_CONTEXT_SOCKET_FALLBACK_X11)
+    {
+      flatpak_permissions_set_not_allowed (context->socket_permissions, "x11");
+      return TRUE;
+    }
 
   flatpak_permissions_set_not_allowed (context->socket_permissions,
                                        value);
@@ -1964,6 +2001,13 @@ option_socket_if_cb (const gchar  *option_name,
   socket = flatpak_context_socket_from_string (name, error);
   if (socket == 0)
     return FALSE;
+
+  if (socket == FLATPAK_CONTEXT_SOCKET_FALLBACK_X11)
+    {
+      g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
+                   _("fallback-x11 can not be conditional"));
+      return FALSE;
+    }
 
   flatpak_permissions_set_allowed_if (context->socket_permissions,
                                       name, condition);

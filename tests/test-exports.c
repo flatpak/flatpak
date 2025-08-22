@@ -278,13 +278,11 @@ test_full_context (void)
                      FLATPAK_CONTEXT_DEVICE_SHM));
   FlatpakContextSockets sockets = flatpak_context_compute_allowed_sockets (context, NULL);
   g_assert_cmpuint (sockets, ==,
-                    (FLATPAK_CONTEXT_SOCKET_X11 |
-                     FLATPAK_CONTEXT_SOCKET_WAYLAND |
+                    (FLATPAK_CONTEXT_SOCKET_WAYLAND |
                      FLATPAK_CONTEXT_SOCKET_INHERIT_WAYLAND_SOCKET |
                      FLATPAK_CONTEXT_SOCKET_PULSEAUDIO |
                      FLATPAK_CONTEXT_SOCKET_SESSION_BUS |
                      FLATPAK_CONTEXT_SOCKET_SYSTEM_BUS |
-                     FLATPAK_CONTEXT_SOCKET_FALLBACK_X11 |
                      FLATPAK_CONTEXT_SOCKET_SSH_AUTH |
                      FLATPAK_CONTEXT_SOCKET_PCSC |
                      FLATPAK_CONTEXT_SOCKET_CUPS));
@@ -370,7 +368,7 @@ test_full_context (void)
   qsort (strv, n, sizeof (char *), flatpak_strcmp0_ptr);
   i = 0;
   g_assert_cmpstr (strv[i++], ==, "cups");
-  g_assert_cmpstr (strv[i++], ==, "fallback-x11");
+  g_assert_cmpstr (strv[i++], ==, "if:x11:!has-wayland");
   g_assert_cmpstr (strv[i++], ==, "inherit-wayland-socket");
   g_assert_cmpstr (strv[i++], ==, "pcsc");
   g_assert_cmpstr (strv[i++], ==, "pulseaudio");
