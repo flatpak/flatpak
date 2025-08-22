@@ -208,6 +208,27 @@ flatpak_permission_set_allowed_if (FlatpakPermission *permission,
 }
 
 static void
+flatpak_permission_remove_conditional (FlatpakPermission *permission,
+                                       const char        *condition)
+{
+  guint index;
+
+  /* If we are already unconditionally allowed, we don't have conditions */
+  if (permission->allowed)
+    return;
+
+  if (!g_ptr_array_find_with_equal_func (permission->conditionals,
+                                         condition,
+                                         g_str_equal, &index))
+    return;
+
+  g_ptr_array_remove_index (permission->conditionals, index);
+
+  if (permission->conditionals->len == 0)
+    flatpak_permission_set_not_allowed (permission);
+}
+
+static void
 flatpak_permission_serialize (FlatpakPermission *permission,
                               const char        *name,
                               GPtrArray         *res,
@@ -532,6 +553,17 @@ flatpak_permissions_set_allowed_if (GHashTable *permissions,
                                       condition);
 }
 
+
+static void
+flatpak_permissions_remove_conditional (GHashTable *permissions,
+                                        const char *name,
+                                        const char *condition)
+{
+  flatpak_permission_remove_conditional (flatpak_permissions_ensure (permissions,
+                                                                     name),
+                                         condition);
+}
+
 static gboolean
 flatpak_permissions_allows_unconditionally (GHashTable *permissions,
                                             const char *name)
@@ -563,6 +595,23 @@ flatpak_permissions_to_args (GHashTable *permissions,
     }
 }
 
+static gboolean
+is_permission_fallback_x11 (const char        *name,
+                            FlatpakPermission *permission)
+{
+  if (strcmp (name, "x11") != 0)
+    return FALSE;
+
+  for (size_t i = 0; i < permission->conditionals->len; i++) {
+    const char *condition = permission->conditionals->pdata[i];
+
+    if (strcmp (condition, "!has-wayland") == 0)
+      return TRUE;
+  }
+
+  return FALSE;
+}
+
 static char **
 flatpak_permissions_to_strv (GHashTable *permissions,
                              gboolean    flatten)
@@ -579,6 +628,15 @@ flatpak_permissions_to_strv (GHashTable *permissions,
       FlatpakPermission *permission = g_hash_table_lookup (permissions, name);
 
       flatpak_permission_serialize (permission, name, res, flatten);
+
+      if (is_permission_fallback_x11 (name, permission))
+        {
+          g_autoptr(FlatpakPermission) fallback_x11 = flatpak_permission_new ();
+
+          flatpak_permission_set_allowed (fallback_x11);
+          flatpak_permission_serialize (fallback_x11, "fallback-x11",
+                                        res, flatten);
+        }
     }
 
   g_ptr_array_add (res, NULL);
@@ -642,8 +700,35 @@ flatpak_permissions_from_strv (GHashTable  *permissions,
           name = parse_negated (tokens[0], &negated);
         }
 
-      permission = flatpak_permissions_ensure (permissions, name);
-      flatpak_permission_deserialize (permission, negated, condition);
+      if (strcmp (name, "fallback-x11") == 0)
+        {
+          if (condition != NULL)
+            {
+              g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
+                           _("fallback-x11 can not be conditional"));
+              return FALSE;
+            }
+
+          if (!negated)
+            {
+              /* To make things backwards compatible and consistent with
+               * fallback-x11, we convert it to if:x11:!has-wayland */
+              permission = flatpak_permissions_ensure (permissions, "x11");
+              flatpak_permission_deserialize (permission, FALSE, "!has-wayland");
+            }
+          else
+            {
+              /* fallback-x11 was converted to if:x11:!has-wayland, so removing
+               * it should remove the !has-wayland conditional */
+              flatpak_permissions_remove_conditional (permissions,
+                                                      "x11", "!has-wayland");
+            }
+        }
+      else
+        {
+          permission = flatpak_permissions_ensure (permissions, name);
+          flatpak_permission_deserialize (permission, negated, condition);
+        }
     }
 
   return TRUE;
@@ -926,10 +1011,159 @@ static void flatpak_permissions_test_backwards_compat (void)
   }
 }
 
+static void flatpak_permissions_test_fallback_x11 (void)
+{
+  g_autoptr(GHashTable) perms = NULL;
+
+  {
+    FlatpakPermission *x11;
+    FlatpakPermission *wayland;
+    g_autoptr(GError) error = NULL;
+    gboolean ok;
+
+    perms = flatpak_permissions_new ();
+    ok = flatpak_permissions_from_strv (perms,
+                                        (const char * []) {
+                                          "fallback-x11",
+                                          "wayland",
+                                          NULL,
+                                        },
+                                        &error);
+    g_assert_true (ok);
+    g_assert_no_error (error);
+    g_assert_nonnull (perms);
+
+    g_assert_cmpint (g_hash_table_size (perms), ==, 2);
+
+    x11 = g_hash_table_lookup (perms, "x11");
+    g_assert_nonnull (x11);
+    wayland = g_hash_table_lookup (perms, "wayland");
+    g_assert_nonnull (wayland);
+
+    g_assert_false (x11->allowed);
+    g_assert_cmpint (x11->conditionals->len, ==, 1);
+    g_assert_cmpstr (x11->conditionals->pdata[0], ==, "!has-wayland");
+    g_assert_true (wayland->allowed);
+  }
+
+  {
+    g_autoptr(GHashTable) perms2 = NULL;
+    FlatpakPermission *x11;
+    FlatpakPermission *wayland;
+    g_autoptr(GError) error = NULL;
+    gboolean ok;
+
+    perms2 = flatpak_permissions_new ();
+    ok = flatpak_permissions_from_strv (perms2,
+                                        (const char * []) {
+                                          "if:x11:!has-wayland",
+                                          NULL,
+                                        },
+                                        &error);
+    g_assert_true (ok);
+    g_assert_no_error (error);
+    g_assert_nonnull (perms2);
+
+    g_assert_cmpint (g_hash_table_size (perms2), ==, 1);
+
+    x11 = g_hash_table_lookup (perms, "x11");
+    g_assert_nonnull (x11);
+    g_assert_false (x11->allowed);
+    g_assert_cmpint (x11->conditionals->len, ==, 1);
+    g_assert_cmpstr (x11->conditionals->pdata[0], ==, "!has-wayland");
+
+    /* lower: fallback-x11
+     * upper: if:x11:!has-wayland
+     * -> if:x11:!has-wayland */
+    flatpak_permissions_merge (perms, perms2);
+
+    g_assert_cmpint (g_hash_table_size (perms), ==, 2);
+
+    x11 = g_hash_table_lookup (perms, "x11");
+    g_assert_nonnull (x11);
+    wayland = g_hash_table_lookup (perms, "wayland");
+    g_assert_nonnull (wayland);
+
+    g_assert_false (x11->allowed);
+    g_assert_cmpint (x11->conditionals->len, ==, 1);
+    g_assert_cmpstr (x11->conditionals->pdata[0], ==, "!has-wayland");
+    g_assert_true (wayland->allowed);
+  }
+
+  {
+    g_autoptr(GHashTable) perms2 = NULL;
+    g_autoptr(GHashTable) perms3 = NULL;
+    FlatpakPermission *x11;
+    g_autoptr(GError) error = NULL;
+    gboolean ok;
+
+    perms2 = flatpak_permissions_new ();
+    ok = flatpak_permissions_from_strv (perms2,
+                                        (const char * []) {
+                                          "fallback-x11",
+                                          "if:x11:foo",
+                                          NULL,
+                                        },
+                                        &error);
+    g_assert_true (ok);
+    g_assert_no_error (error);
+    g_assert_nonnull (perms2);
+
+    g_assert_cmpint (g_hash_table_size (perms2), ==, 1);
+
+    x11 = g_hash_table_lookup (perms2, "x11");
+    g_assert_nonnull (x11);
+    g_assert_false (x11->allowed);
+    g_assert_false (x11->reset);
+    g_assert_cmpint (x11->conditionals->len, ==, 2);
+    g_assert_cmpstr (x11->conditionals->pdata[0], ==, "!has-wayland");
+    g_assert_cmpstr (x11->conditionals->pdata[1], ==, "foo");
+
+    perms3 = flatpak_permissions_new ();
+    ok = flatpak_permissions_from_strv (perms3,
+                                        (const char * []) {
+                                          "if:x11:!has-wayland",
+                                          "!fallback-x11",
+                                          "if:x11:bar",
+                                          NULL,
+                                        },
+                                        &error);
+    g_assert_true (ok);
+    g_assert_no_error (error);
+    g_assert_nonnull (perms3);
+
+    g_assert_cmpint (g_hash_table_size (perms3), ==, 1);
+
+    x11 = g_hash_table_lookup (perms3, "x11");
+    g_assert_nonnull (x11);
+    g_assert_false (x11->allowed);
+    g_assert_true (x11->reset);
+    g_assert_cmpint (x11->conditionals->len, ==, 1);
+    g_assert_cmpstr (x11->conditionals->pdata[0], ==, "bar");
+
+    /* lower: fallback-x11;if:x11:foo
+     * upper: if:x11:!has-wayland;!fallback-x11;if:x11:bar
+     * -> if:x11:bar
+     * The !fallback-x11 removes the if:x11:!has-wayland conditional which
+     * turns into !x11. */
+    flatpak_permissions_merge (perms2, perms3);
+
+    g_assert_cmpint (g_hash_table_size (perms2), ==, 1);
+
+    x11 = g_hash_table_lookup (perms2, "x11");
+    g_assert_nonnull (x11);
+    g_assert_false (x11->allowed);
+    g_assert_cmpint (x11->conditionals->len, ==, 1);
+    g_assert_cmpstr (x11->conditionals->pdata[0], ==, "bar");
+  }
+}
+
 FLATPAK_INTERNAL_TEST("/context/permissions/basic",
                       flatpak_permissions_test_basic);
 FLATPAK_INTERNAL_TEST("/context/permissions/backwards-compat",
                       flatpak_permissions_test_backwards_compat);
+FLATPAK_INTERNAL_TEST("/context/permissions/fallback-x11",
+                      flatpak_permissions_test_fallback_x11);
 
 #endif /* INCLUDE_INTERNAL_TESTS */
 
@@ -1969,6 +2203,14 @@ option_socket_cb (const gchar *option_name,
   if (socket == 0)
     return FALSE;
 
+  if (socket == FLATPAK_CONTEXT_SOCKET_FALLBACK_X11)
+    {
+      flatpak_permissions_set_allowed_if (context->socket_permissions,
+                                          "x11",
+                                          "!has-wayland");
+      return TRUE;
+    }
+
   flatpak_permissions_set_allowed (context->socket_permissions,
                                    value);
 
@@ -1987,6 +2229,13 @@ option_nosocket_cb (const gchar *option_name,
   socket = flatpak_context_socket_from_string (value, error);
   if (socket == 0)
     return FALSE;
+
+  if (socket == FLATPAK_CONTEXT_SOCKET_FALLBACK_X11)
+    {
+      flatpak_permissions_remove_conditional (context->socket_permissions,
+                                              "x11", "!has-wayland");
+      return TRUE;
+    }
 
   flatpak_permissions_set_not_allowed (context->socket_permissions,
                                        value);
@@ -2032,6 +2281,13 @@ option_socket_if_cb (const gchar  *option_name,
   socket = flatpak_context_socket_from_string (name, error);
   if (socket == 0)
     return FALSE;
+
+  if (socket == FLATPAK_CONTEXT_SOCKET_FALLBACK_X11)
+    {
+      g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
+                   _("fallback-x11 can not be conditional"));
+      return FALSE;
+    }
 
   flatpak_permissions_set_allowed_if (context->socket_permissions,
                                       name, condition);
