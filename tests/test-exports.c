@@ -278,13 +278,11 @@ test_full_context (void)
                      FLATPAK_CONTEXT_DEVICE_SHM));
   FlatpakContextSockets sockets = flatpak_context_compute_allowed_sockets (context, NULL);
   g_assert_cmpuint (sockets, ==,
-                    (FLATPAK_CONTEXT_SOCKET_X11 |
-                     FLATPAK_CONTEXT_SOCKET_WAYLAND |
+                    (FLATPAK_CONTEXT_SOCKET_WAYLAND |
                      FLATPAK_CONTEXT_SOCKET_INHERIT_WAYLAND_SOCKET |
                      FLATPAK_CONTEXT_SOCKET_PULSEAUDIO |
                      FLATPAK_CONTEXT_SOCKET_SESSION_BUS |
                      FLATPAK_CONTEXT_SOCKET_SYSTEM_BUS |
-                     FLATPAK_CONTEXT_SOCKET_FALLBACK_X11 |
                      FLATPAK_CONTEXT_SOCKET_SSH_AUTH |
                      FLATPAK_CONTEXT_SOCKET_PCSC |
                      FLATPAK_CONTEXT_SOCKET_CUPS));
@@ -378,7 +376,6 @@ test_full_context (void)
   g_assert_cmpstr (strv[i++], ==, "ssh-auth");
   g_assert_cmpstr (strv[i++], ==, "system-bus");
   g_assert_cmpstr (strv[i++], ==, "wayland");
-  g_assert_cmpstr (strv[i++], ==, "x11");
   g_assert_cmpstr (strv[i], ==, NULL);
   g_assert_cmpuint (i, ==, n);
   g_clear_pointer (&strv, g_strfreev);
