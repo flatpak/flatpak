@@ -6,6 +6,7 @@
 
 srcd=$(cd $(dirname $1) && pwd)
 bn=$(basename $1)
+shift
 tempdir=$(mktemp -d /tmp/tap-test.XXXXXX)
 touch ${tempdir}/.testtmp
 function cleanup () {
@@ -21,4 +22,4 @@ cd ${tempdir}
 if [[ $bn == *.wrap ]]; then
     WRAPPER=${srcd}/test-wrapper.sh
 fi
-$WRAPPER ${srcd}/${bn} -k --tap
+$WRAPPER ${srcd}/${bn} -k --tap "$@"
