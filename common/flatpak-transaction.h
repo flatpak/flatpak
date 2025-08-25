@@ -334,6 +334,9 @@ gboolean            flatpak_transaction_add_install_flatpakref (FlatpakTransacti
                                                                 GBytes             *flatpakref_data,
                                                                 GError            **error);
 FLATPAK_EXTERN
+gboolean            flatpak_transaction_add_sync_preinstalled (FlatpakTransaction *self,
+                                                               GError            **error);
+FLATPAK_EXTERN
 gboolean            flatpak_transaction_add_update (FlatpakTransaction *self,
                                                     const char         *ref,
                                                     const char        **subpaths,

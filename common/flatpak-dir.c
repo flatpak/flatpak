@@ -85,6 +85,16 @@
 #define FLATPAK_REMOTES_DIR "remotes.d"
 #define FLATPAK_REMOTES_FILE_EXT ".flatpakrepo"
 
+#define FLATPAK_PREINSTALL_DIR "preinstall.d"
+#define FLATPAK_PREINSTALL_FILE_EXT ".preinstall"
+
+#define FLATPAK_PREINSTALL_GROUP_PREFIX "Flatpak Preinstall "
+#define FLATPAK_PREINSTALL_IS_RUNTIME_KEY "IsRuntime"
+#define FLATPAK_PREINSTALL_NAME_KEY "Name"
+#define FLATPAK_PREINSTALL_BRANCH_KEY "Branch"
+#define FLATPAK_PREINSTALL_COLLECTION_ID_KEY "CollectionID"
+#define FLATPAK_PREINSTALL_INSTALL_KEY "Install"
+
 #define SIDELOAD_REPOS_DIR_NAME "sideload-repos"
 
 #define FLATPAK_TRIGGERS_DIR "triggers"
@@ -1876,6 +1886,405 @@ get_system_locations (GCancellable *cancellable,
   g_ptr_array_sort (locations, system_locations_compare_func);
 
   return g_steal_pointer (&locations);
+}
+
+typedef struct
+{
+  char *name;
+  char *branch;
+  gboolean is_runtime;
+  char *collection_id;
+  gboolean install;
+} PreinstallConfig;
+
+static PreinstallConfig *
+preinstall_config_new (const char *name)
+{
+  PreinstallConfig *config = g_new0 (PreinstallConfig, 1);
+
+  config->name = g_strdup (name);
+  config->branch = g_strdup ("master");
+  config->install = TRUE;
+
+  return config;
+}
+
+static void
+preinstall_config_free (PreinstallConfig *config)
+{
+  g_clear_pointer (&config->name, g_free);
+  g_clear_pointer (&config->branch, g_free);
+  g_clear_pointer (&config->collection_id, g_free);
+  g_free (config);
+}
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (PreinstallConfig, preinstall_config_free)
+
+static void
+flatpak_preinstall_config_free (FlatpakPreinstallConfig *preinstall)
+{
+  g_clear_pointer (&preinstall->ref, flatpak_decomposed_unref);
+  g_clear_pointer (&preinstall->collection_id, g_free);
+  g_free (preinstall);
+}
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakPreinstallConfig, flatpak_preinstall_config_free)
+
+static void
+flatpak_parse_preinstall_config_file (GKeyFile   *keyfile,
+                                      GHashTable *configs)
+{
+  g_auto(GStrv) groups = NULL;
+
+  groups = g_key_file_get_groups (keyfile, NULL);
+
+  for (int i = 0; groups[i] != NULL; i++)
+    {
+      const char *group_name = groups[i];
+      const char *name;
+      g_autoptr(PreinstallConfig) config = NULL;
+      g_autoptr(GError) local_error = NULL;
+      g_autofree char *owned_name = NULL;
+      g_autofree char *branch = NULL;
+      gboolean is_runtime = FALSE;
+      g_autofree char *collection_id = NULL;
+      gboolean install = TRUE;
+
+      if (!g_str_has_prefix (group_name, FLATPAK_PREINSTALL_GROUP_PREFIX) ||
+          *(group_name + strlen (FLATPAK_PREINSTALL_GROUP_PREFIX)) == '\0')
+        {
+          g_info ("Skipping unknown group %s", group_name);
+          continue;
+        }
+
+      name = group_name + strlen (FLATPAK_PREINSTALL_GROUP_PREFIX);
+
+      if (!g_hash_table_steal_extended (configs, name,
+                                        (gpointer *)&owned_name,
+                                        (gpointer *)&config))
+        {
+          config = preinstall_config_new (name);
+          owned_name = g_strdup (name);
+        }
+
+      branch = g_key_file_get_string (keyfile,
+                                      group_name,
+                                      FLATPAK_PREINSTALL_BRANCH_KEY,
+                                      NULL);
+      if (branch)
+        {
+          if (*branch == '\0')
+            g_clear_pointer (&branch, g_free);
+
+          g_set_str (&config->branch, branch);
+        }
+
+      is_runtime = g_key_file_get_boolean (keyfile,
+                                           group_name,
+                                           FLATPAK_PREINSTALL_IS_RUNTIME_KEY,
+                                           &local_error);
+      if (!local_error)
+        {
+          config->is_runtime = is_runtime;
+        }
+      else if (!g_error_matches (local_error, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_KEY_NOT_FOUND))
+        {
+          g_info ("Invalid file format, %s is not a boolean",
+                  FLATPAK_PREINSTALL_IS_RUNTIME_KEY);
+        }
+      g_clear_error (&local_error);
+
+      collection_id = g_key_file_get_string (keyfile,
+                                             group_name,
+                                             FLATPAK_PREINSTALL_COLLECTION_ID_KEY,
+                                             NULL);
+      if (collection_id)
+        {
+          if (*collection_id == '\0')
+            g_clear_pointer (&collection_id, g_free);
+
+          g_set_str (&config->collection_id, collection_id);
+        }
+
+      install = g_key_file_get_boolean (keyfile,
+                                        group_name,
+                                        FLATPAK_PREINSTALL_INSTALL_KEY,
+                                        &local_error);
+      if (!local_error)
+        {
+          config->install = install;
+        }
+      else if (!g_error_matches (local_error, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_KEY_NOT_FOUND))
+        {
+          g_info ("Invalid file format, %s is not a boolean",
+                  FLATPAK_PREINSTALL_INSTALL_KEY);
+        }
+      g_clear_error (&local_error);
+
+      g_hash_table_insert (configs,
+                           g_steal_pointer (&owned_name),
+                           g_steal_pointer (&config));
+    }
+}
+
+typedef struct
+{
+  char *name;
+  GFile *file;
+} PreinstallConfigFile;
+
+static gint
+preinstall_config_file_sort (gconstpointer a,
+                             gconstpointer b)
+{
+  const PreinstallConfigFile *ca = a;
+  const PreinstallConfigFile *cb = b;
+
+  return g_strcmp0 (ca->name, cb->name);
+}
+
+static void
+preinstall_config_file_free (PreinstallConfigFile *preinstall_config_file)
+{
+  g_clear_pointer (&preinstall_config_file->name, g_free);
+  g_clear_object (&preinstall_config_file->file);
+  g_free (preinstall_config_file);
+}
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (PreinstallConfigFile, preinstall_config_file_free);
+
+static gboolean
+scan_preinstall_config_files (const char    *config_dir,
+                              GHashTable    *configs,
+                              GCancellable  *cancellable,
+                              GError       **error)
+{
+  g_autoptr(GFile) conf_dir = NULL;
+  g_autoptr(GFileEnumerator) dir_enum = NULL;
+  g_autoptr(GPtrArray) config_files = NULL;
+  g_autoptr(GError) local_error = NULL;
+
+  if (!g_file_test (config_dir, G_FILE_TEST_IS_DIR))
+    {
+      g_info ("Skipping missing preinstall config directory %s", config_dir);
+      return TRUE;
+    }
+
+  conf_dir = g_file_new_for_path (config_dir);
+  dir_enum = g_file_enumerate_children (conf_dir,
+                                        G_FILE_ATTRIBUTE_STANDARD_NAME "," G_FILE_ATTRIBUTE_STANDARD_TYPE,
+                                        G_FILE_QUERY_INFO_NONE,
+                                        cancellable,
+                                        &local_error);
+  if (local_error != NULL)
+    {
+      g_info ("Unexpected error retrieving preinstalls from %s: %s",
+              config_dir,
+              local_error->message);
+
+      g_propagate_error (error, g_steal_pointer (&local_error));
+      return FALSE;
+    }
+
+  config_files = g_ptr_array_new_with_free_func ((GDestroyNotify)preinstall_config_file_free);
+
+  while (TRUE)
+    {
+      GFileInfo *file_info;
+      GFile *path;
+      const char *name;
+      guint32 type;
+      g_autoptr(PreinstallConfigFile) config_file = NULL;
+
+      if (!g_file_enumerator_iterate (dir_enum,
+                                      &file_info,
+                                      &path,
+                                      cancellable,
+                                      &local_error))
+        {
+          g_info ("Unexpected error reading file in %s: %s",
+                  config_dir,
+                  local_error->message);
+
+          g_propagate_error (error, g_steal_pointer (&local_error));
+          return FALSE;
+        }
+
+      if (file_info == NULL)
+        break;
+
+      name = g_file_info_get_name (file_info);
+      type = g_file_info_get_file_type (file_info);
+
+      if (type != G_FILE_TYPE_REGULAR ||
+          !g_str_has_suffix (name, FLATPAK_PREINSTALL_FILE_EXT))
+        continue;
+
+      config_file = g_new0 (PreinstallConfigFile, 1);
+      config_file->name = g_strdup (name);
+      config_file->file = g_object_ref (path);
+      g_ptr_array_add (config_files, g_steal_pointer (&config_file));
+    }
+
+  g_ptr_array_sort (config_files, preinstall_config_file_sort);
+
+  for (int i = 0; i < config_files->len; i++)
+    {
+      PreinstallConfigFile *config_file = g_ptr_array_index (config_files, i);
+      g_autofree char *path = NULL;
+      g_autoptr(GKeyFile) keyfile = NULL;
+      g_autoptr(GError) load_error = NULL;
+
+      path = g_file_get_path (config_file->file);
+
+      g_info ("Parsing config file %s", path);
+
+      keyfile = g_key_file_new ();
+
+      if (!g_key_file_load_from_file (keyfile, path, G_KEY_FILE_NONE, &load_error))
+        g_info ("Parsing config file %s failed: %s", path, load_error->message);
+
+      flatpak_parse_preinstall_config_file (keyfile, configs);
+    }
+
+  return TRUE;
+}
+
+GPtrArray *
+flatpak_get_preinstall_config (const char    *default_arch,
+                               GCancellable  *cancellable,
+                               GError       **error)
+{
+  g_autoptr(GHashTable) configs = NULL;
+  g_autoptr(GPtrArray) preinstalls = NULL;
+  g_autofree char *config_dir = NULL;
+  g_autofree char *data_dir = NULL;
+  GHashTableIter iter;
+  PreinstallConfig *config;
+
+  configs = g_hash_table_new_full (g_str_hash, g_str_equal,
+                                   g_free, (GDestroyNotify)preinstall_config_free);
+
+  /* scan directories in reverse priority order */
+  data_dir = g_build_filename (get_data_dir_location (), FLATPAK_PREINSTALL_DIR, NULL);
+  if (!scan_preinstall_config_files (data_dir, configs, cancellable, error))
+    return NULL;
+
+  config_dir = g_build_filename (get_config_dir_location (), FLATPAK_PREINSTALL_DIR, NULL);
+  if (!scan_preinstall_config_files (config_dir, configs, cancellable, error))
+    return NULL;
+
+  preinstalls = g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_preinstall_config_free);
+
+  g_hash_table_iter_init (&iter, configs);
+  while (g_hash_table_iter_next (&iter, NULL, (gpointer *)&config))
+    {
+      g_autoptr(FlatpakPreinstallConfig) preinstall = NULL;
+      g_autoptr(FlatpakDecomposed) ref = NULL;
+      g_autoptr(GError) local_error = NULL;
+
+      if (!config->install)
+        {
+          g_info ("Skipping preinstall of %s because it is configured to not install",
+                  config->name);
+          continue;
+        }
+
+      ref = flatpak_decomposed_new_from_parts (config->is_runtime ?
+                                                 FLATPAK_KINDS_RUNTIME :
+                                                 FLATPAK_KINDS_APP,
+                                               config->name,
+                                               default_arch,
+                                               config->branch,
+                                               &local_error);
+      if (ref == NULL)
+        {
+          g_info ("Skipping preinstall of %s because of problems in the configuration: %s",
+                  config->name,
+                  local_error->message);
+          continue;
+        }
+
+      preinstall = g_new0 (FlatpakPreinstallConfig, 1);
+      preinstall->ref = g_steal_pointer (&ref);
+      preinstall->collection_id = g_strdup (config->collection_id);
+
+      g_info ("Found preinstall ref %s",
+              flatpak_decomposed_get_ref (preinstall->ref));
+
+      g_ptr_array_add (preinstalls, g_steal_pointer (&preinstall));
+    }
+
+  return g_steal_pointer (&preinstalls);
+}
+
+static gboolean
+flatpak_is_ref_in_list (FlatpakDecomposed *needle,
+                        GPtrArray         *refs)
+{
+  for (size_t i = 0; i < refs->len; i++)
+    {
+      FlatpakDecomposed *ref = g_ptr_array_index (refs, i);
+
+      if (flatpak_decomposed_equal (ref, needle))
+        return TRUE;
+    }
+
+  return FALSE;
+}
+
+gboolean
+flatpak_dir_uninitialized_mark_preinstalled (FlatpakDir       *self,
+                                             const GPtrArray  *preinstall_config,
+                                             GError          **error)
+{
+  g_autoptr(GPtrArray) installed_refs = NULL;
+  g_autofree char *existing_preinstalls = NULL;
+  g_autoptr(GError) local_error = NULL;
+
+  existing_preinstalls = flatpak_dir_get_config (self,
+                                                 "preinstalled",
+                                                 &local_error);
+
+  if (existing_preinstalls != NULL)
+    return TRUE;
+
+  if (!g_error_matches (local_error, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_KEY_NOT_FOUND))
+    {
+      g_propagate_error (error, g_steal_pointer (&local_error));
+      return FALSE;
+    }
+
+  g_clear_error (&local_error);
+
+  installed_refs = flatpak_dir_list_refs (self, FLATPAK_KINDS_RUNTIME | FLATPAK_KINDS_APP,
+                                          NULL, error);
+  if (installed_refs == NULL)
+    return FALSE;
+
+  for (int i = 0; i < preinstall_config->len; i++)
+    {
+      const FlatpakPreinstallConfig *config = g_ptr_array_index (preinstall_config, i);
+      GError **append_error = local_error == NULL ? &local_error : NULL;
+
+      if (!flatpak_is_ref_in_list (config->ref, installed_refs))
+        continue;
+
+      flatpak_dir_config_append_pattern (self,
+                                         "preinstalled",
+                                         flatpak_decomposed_get_ref (config->ref),
+                                         FALSE,
+                                         NULL,
+                                         append_error);
+    }
+
+  if (local_error)
+    {
+      g_propagate_error (error, g_steal_pointer (&local_error));
+      return FALSE;
+    }
+
+  return TRUE;
 }
 
 GPtrArray *
@@ -9097,6 +9506,7 @@ flatpak_dir_deploy_install (FlatpakDir        *self,
                             const char       **previous_ids,
                             gboolean           reinstall,
                             gboolean           pin_on_deploy,
+                            gboolean           update_preinstalled_on_deploy,
                             GCancellable      *cancellable,
                             GError           **error)
 {
@@ -9202,6 +9612,14 @@ flatpak_dir_deploy_install (FlatpakDir        *self,
       !flatpak_dir_config_append_pattern (self, "pinned",
                                           flatpak_decomposed_get_ref (ref),
                                           TRUE, NULL, error))
+    goto out;
+
+  /* Save preinstalled refs to keep the data on what is user installed and what
+   * is automatically installed. */
+  if (update_preinstalled_on_deploy &&
+      !flatpak_dir_config_append_pattern (self, "preinstalled",
+                                          flatpak_decomposed_get_ref (ref),
+                                          FALSE, NULL, error))
     goto out;
 
   ret = TRUE;
@@ -9805,6 +10223,7 @@ flatpak_dir_install (FlatpakDir          *self,
                      gboolean             reinstall,
                      gboolean             app_hint,
                      gboolean             pin_on_deploy,
+                     gboolean             update_preinstalled_on_deploy,
                      FlatpakRemoteState  *state,
                      FlatpakDecomposed   *ref,
                      const char          *opt_commit,
@@ -10019,6 +10438,9 @@ flatpak_dir_install (FlatpakDir          *self,
       if (pin_on_deploy)
         helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE_PINNED;
 
+      if (update_preinstalled_on_deploy)
+        helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE_PREINSTALLED;
+
       helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_INSTALL_HINT;
 
       if (!flatpak_dir_system_helper_call_deploy (self,
@@ -10057,6 +10479,7 @@ flatpak_dir_install (FlatpakDir          *self,
     {
       if (!flatpak_dir_deploy_install (self, ref, state->remote_name, opt_subpaths,
                                        opt_previous_ids, reinstall, pin_on_deploy,
+                                       update_preinstalled_on_deploy,
                                        cancellable, error))
         return FALSE;
 
@@ -10347,7 +10770,7 @@ flatpak_dir_install_bundle (FlatpakDir         *self,
     }
   else
     {
-      if (!flatpak_dir_deploy_install (self, ref, remote, NULL, NULL, FALSE, FALSE, cancellable, error))
+      if (!flatpak_dir_deploy_install (self, ref, remote, NULL, NULL, FALSE, FALSE, FALSE, cancellable, error))
         return FALSE;
     }
 
@@ -10778,6 +11201,7 @@ flatpak_dir_uninstall (FlatpakDir                 *self,
   g_autoptr(GBytes) deploy_data = NULL;
   gboolean keep_ref = flags & FLATPAK_HELPER_UNINSTALL_FLAGS_KEEP_REF;
   gboolean force_remove = flags & FLATPAK_HELPER_UNINSTALL_FLAGS_FORCE_REMOVE;
+  gboolean update_preinstalled = flags & FLATPAK_HELPER_UNINSTALL_FLAGS_UPDATE_PREINSTALLED;
 
   name = flatpak_decomposed_dup_id (ref);
 
@@ -10882,6 +11306,10 @@ flatpak_dir_uninstall (FlatpakDir                 *self,
   flatpak_dir_cleanup_removed (self, cancellable, NULL);
 
   if (!flatpak_dir_mark_changed (self, error))
+    return FALSE;
+
+  if (update_preinstalled &&
+      !flatpak_dir_config_remove_pattern (self, "preinstalled", flatpak_decomposed_get_ref (ref), error))
     return FALSE;
 
   if (!was_deployed)

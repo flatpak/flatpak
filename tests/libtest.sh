@@ -105,6 +105,7 @@ export FLATPAK_SYSTEM_DIR=${TEST_DATA_DIR}/system
 export FLATPAK_SYSTEM_CACHE_DIR=${TEST_DATA_DIR}/system-cache
 export FLATPAK_SYSTEM_HELPER_ON_SESSION=1
 export FLATPAK_CONFIG_DIR=${TEST_DATA_DIR}/config
+export FLATPAK_DATA_DIR=${TEST_DATA_DIR}/datadir
 export FLATPAK_RUN_DIR=${TEST_DATA_DIR}/run
 export FLATPAK_FANCY_OUTPUT=0
 export FLATPAK_FORCE_ALLOW_FUZZY_MATCHING=1
@@ -524,6 +525,11 @@ elif ! "$FLATPAK_BWRAP" --unshare-ipc --unshare-net --unshare-pid \
 else
     _flatpak_bwrap_works=true
 fi
+
+have_working_bwrap() {
+    [[ "${_flatpak_bwrap_works}" == "true" ]]
+    return $?
+}
 
 # Use to skip all of these tests
 skip() {
