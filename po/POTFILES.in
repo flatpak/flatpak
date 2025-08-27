@@ -54,6 +54,7 @@ common/flatpak-dir-utils.c
 common/flatpak-dir.c
 common/flatpak-exports.c
 common/flatpak-glib-backports.c
+common/flatpak-image-source.c
 common/flatpak-installation.c
 common/flatpak-instance.c
 common/flatpak-oci-registry.c
