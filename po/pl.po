@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2025-05-08 13:08-0300\n"
-"PO-Revision-Date: 2025-02-09 15:15+0100\n"
+"PO-Revision-Date: 2025-08-27 17:35+0200\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
 "Language: pl\n"
@@ -4834,9 +4834,9 @@ msgid "Extra data %s missing in detached metadata"
 msgstr "Brak dodatkowych danych %s w odłączonych metadanych"
 
 #: common/flatpak-dir.c:8413
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to get runtime key from metadata"
-msgstr "Używa alternatywnego pliku dla metadanych"
+msgstr "Nie można uzyskać klucza środowiska wykonawczego z metadanych"
 
 #: common/flatpak-dir.c:8526
 #, c-format
@@ -6151,9 +6151,8 @@ msgstr "Wymagane jest uwierzytelnienie, aby zaktualizować metadane"
 #. * Set the malcontent `is-system-installation-allowed` property of
 #. all users’ parental controls policies to true.
 #: system-helper/org.freedesktop.Flatpak.policy.in:287
-#, fuzzy
 msgid "Override parental controls for installs"
-msgstr "Zastąpienie kontroli rodzicielskiej"
+msgstr "Zastąpienie kontroli rodzicielskiej dla instalacji"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:288
 msgid ""
@@ -6177,15 +6176,13 @@ msgstr ""
 #. installing an update which has radically different content from the
 #. version of the app which the parent originally vetted and installed.
 #: system-helper/org.freedesktop.Flatpak.policy.in:313
-#, fuzzy
 msgid "Override parental controls for updates"
-msgstr "Zastąpienie kontroli rodzicielskiej"
+msgstr "Zastąpienie kontroli rodzicielskiej dla aktualizacji"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:314
-#, fuzzy
 msgid ""
 "Authentication is required to update software which is restricted by your "
 "parental controls policy"
 msgstr ""
-"Wymagane jest uwierzytelnienie, aby zainstalować oprogramowanie ograniczane "
+"Wymagane jest uwierzytelnienie, aby zaktualizować oprogramowanie ograniczane "
 "przez zasady kontroli rodzicielskiej"
