@@ -257,7 +257,7 @@ tests_stdout_to_stderr_begin (void)
 {
   TestsStdoutToStderr *original = g_new0 (TestsStdoutToStderr, 1);
 
-  original->fd = fcntl (STDOUT_FILENO, F_DUPFD_CLOEXEC);
+  original->fd = fcntl (STDOUT_FILENO, F_DUPFD_CLOEXEC, 3);
 
   if (original->fd < 0)
     g_error ("fcntl F_DUPFD_CLOEXEC: %s", g_strerror (errno));
