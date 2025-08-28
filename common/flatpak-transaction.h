@@ -272,6 +272,11 @@ FLATPAK_EXTERN
 void                flatpak_transaction_add_sideload_repo (FlatpakTransaction  *self,
                                                            const char          *path);
 FLATPAK_EXTERN
+gboolean            flatpak_transaction_add_sideload_image_collection (FlatpakTransaction  *self,
+                                                                       const char          *location,
+                                                                       GCancellable        *cancellable,
+                                                                       GError             **error);
+FLATPAK_EXTERN
 void                flatpak_transaction_add_default_dependency_sources (FlatpakTransaction *self);
 FLATPAK_EXTERN
 gboolean            flatpak_transaction_run (FlatpakTransaction *transaction,
