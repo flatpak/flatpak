@@ -469,6 +469,53 @@ flatpak_get_arches (void)
   return (const char **) arches;
 }
 
+static GHashTable *
+load_kernel_module_list(void)
+{
+  GHashTable *modules = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+  g_autofree char *modules_data = NULL;
+  g_autoptr(GError) error = NULL;
+  char *start, *end;
+
+  if (!g_file_get_contents("/proc/modules", &modules_data, NULL, &error))
+  {
+    g_info("Failed to read /proc/modules: %s", error->message);
+    return modules;
+  }
+
+  /* /proc/modules is a table of modules.
+   * Columns are split by spaces and rows by newlines.
+   * The first column is the name. */
+  start = modules_data;
+  while (TRUE)
+  {
+    end = strchr(start, ' ');
+    if (end == NULL)
+      break;
+
+    g_hash_table_add(modules, g_strndup(start, (end - start)));
+
+    start = strchr(end, '\n');
+    if (start == NULL)
+      break;
+
+    start++;
+  }
+
+  return modules;
+}
+
+static gboolean
+flatpak_get_have_kernel_module(const char *module_name)
+{
+  static GHashTable *kernel_modules = NULL;
+
+  if (g_once_init_enter(&kernel_modules))
+    g_once_init_leave(&kernel_modules, load_kernel_module_list());
+
+  return g_hash_table_contains(kernel_modules, module_name);
+}
+
 const char **
 flatpak_get_gl_drivers (void)
 {
@@ -497,6 +544,12 @@ flatpak_get_gl_drivers (void)
               g_ptr_array_add (array, g_strconcat ("nvidia-", nvidia_version, NULL));
             }
 
+          if (flatpak_get_have_kernel_module ("amdgpu"))
+            {
+              g_ptr_array_add(array, (char *) "amf");
+              g_ptr_array_add(array, (char *) "rocm");
+            }
+          
           g_ptr_array_add (array, (char *) "default");
           g_ptr_array_add (array, (char *) "host");
 
@@ -520,53 +573,6 @@ flatpak_get_have_intel_gpu (void)
     have_intel = g_file_test ("/sys/module/i915", G_FILE_TEST_EXISTS);
 
   return have_intel;
-}
-
-static GHashTable *
-load_kernel_module_list (void)
-{
-  GHashTable *modules = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
-  g_autofree char *modules_data = NULL;
-  g_autoptr(GError) error = NULL;
-  char *start, *end;
-
-  if (!g_file_get_contents ("/proc/modules", &modules_data, NULL, &error))
-    {
-      g_info ("Failed to read /proc/modules: %s", error->message);
-      return modules;
-    }
-
-  /* /proc/modules is a table of modules.
-   * Columns are split by spaces and rows by newlines.
-   * The first column is the name. */
-  start = modules_data;
-  while (TRUE)
-    {
-      end = strchr (start, ' ');
-      if (end == NULL)
-        break;
-
-      g_hash_table_add (modules, g_strndup (start, (end - start)));
-
-      start = strchr (end, '\n');
-      if (start == NULL)
-        break;
-
-      start++;
-    }
-
-  return modules;
-}
-
-static gboolean
-flatpak_get_have_kernel_module (const char *module_name)
-{
-  static GHashTable *kernel_modules = NULL;
-
-  if (g_once_init_enter (&kernel_modules))
-    g_once_init_leave (&kernel_modules, load_kernel_module_list ());
-
-  return g_hash_table_contains (kernel_modules, module_name);
 }
 
 static const char *
