@@ -132,8 +132,9 @@ read_gpg_data (GCancellable *cancellable,
 }
 
 static FlatpakTransaction *
-create_install_transaction (FlatpakDir  *dir,
-                            GError     **error)
+create_install_transaction (FlatpakDir    *dir,
+                            GCancellable  *cancellable,
+                            GError       **error)
 {
   g_autoptr(FlatpakTransaction) transaction = NULL;
 
@@ -155,8 +156,8 @@ create_install_transaction (FlatpakDir  *dir,
   flatpak_transaction_set_auto_install_sdk (transaction, opt_include_sdk);
   flatpak_transaction_set_auto_install_debug (transaction, opt_include_debug);
 
-  for (int i = 0; opt_sideload_repos != NULL && opt_sideload_repos[i] != NULL; i++)
-    flatpak_transaction_add_sideload_repo (transaction, opt_sideload_repos[i]);
+  if (!setup_sideload_repositories (transaction, opt_sideload_repos, cancellable, error))
+    return FALSE;
 
   return g_steal_pointer (&transaction);
 }
@@ -194,7 +195,7 @@ install_bundle (FlatpakDir *dir,
         return FALSE;
     }
 
-  transaction = create_install_transaction (dir, error);
+  transaction = create_install_transaction (dir, cancellable, error);
   if (transaction == NULL)
     return FALSE;
 
@@ -257,7 +258,7 @@ install_from (FlatpakDir *dir,
       file_data = g_bytes_new_take (g_steal_pointer (&data), data_len);
     }
 
-  transaction = create_install_transaction (dir, error);
+  transaction = create_install_transaction (dir, cancellable, error);
   if (transaction == NULL)
     return FALSE;
 
@@ -303,7 +304,7 @@ install_image (FlatpakDir      *dir,
         return FALSE;
     }
 
-  transaction = create_install_transaction (dir, error);
+  transaction = create_install_transaction (dir, cancellable, error);
   if (transaction == NULL)
     return FALSE;
 
@@ -537,7 +538,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
 
   default_branch = flatpak_dir_get_remote_default_branch (dir, remote);
 
-  transaction = create_install_transaction (dir, error);
+  transaction = create_install_transaction (dir, cancellable, error);
   if (transaction == NULL)
     return FALSE;
 

@@ -85,6 +85,15 @@
           <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
         </para>
         <para>
+          For OCI remotes, sideload repositories can also be specified as
+          <option>--sideload-repo=oci:PATH</option> or <option>--sideload-repo=oci-archive:PATH</option>,
+          where path points to an OCI image layout or archive of an OCI image layout.
+          (See <citerefentry><refentrytitle>containers-transports</refentrytitle><manvolnum>5</manvolnum></citerefentry>.)
+          When specified in this fashion, the images found in the image layout are available for all OCI remotes,
+          without regard to collection ID. For this reason, there is no directory equivalent -
+          it can only be specified on the command line.
+        </para>
+        <para>
           The alternative form of the command (with <option>--from</option>, <option>--bundle</option>,
           or <option>--image</option>) allows to install directly from a source. The source can be a
           <filename>.flatpak</filename> single-file bundle, <filename>.flatpakref</filename>
