@@ -500,3 +500,20 @@ flatpak_image_source_make_fake_commit (FlatpakImageSource *self)
                                        ostree_checksum_to_bytes_v ("0000000000000000000000000000000000000000000000000000000000000000"),
                                        ostree_checksum_to_bytes_v ("0000000000000000000000000000000000000000000000000000000000000000")));
 }
+
+GVariant *
+flatpak_image_source_make_summary_metadata (FlatpakImageSource *self)
+{
+  g_autoptr(GVariantBuilder) ref_metadata_builder = NULL;
+
+  ref_metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
+
+  if (self->repository)
+    g_variant_builder_add (ref_metadata_builder, "{sv}", "xa.oci-repository",
+                          g_variant_new_string (self->repository));
+  if (self->delta_url)
+    g_variant_builder_add (ref_metadata_builder, "{sv}", "xa.delta-url",
+                           g_variant_new_string (self->delta_url));
+
+  return g_variant_ref_sink (g_variant_builder_end (ref_metadata_builder));
+}
