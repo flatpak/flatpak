@@ -827,12 +827,16 @@ flatpak_remote_state_lookup_ref (FlatpakRemoteState *self,
   else
     {
       FlatpakSideloadState *ss = NULL;
+      g_autoptr(GFile) found_sideload_path = NULL;
 
       if (!flatpak_remote_state_resolve_sideloaded_ref (self, ref, out_checksum, out_timestamp, out_info, &ss, error))
         return FALSE;
 
+      if (ss)
+        found_sideload_path = g_object_ref (ostree_repo_get_path (ss->repo));
+
       if (out_sideload_path)
-        *out_sideload_path = g_object_ref (ostree_repo_get_path (ss->repo));
+        *out_sideload_path = g_steal_pointer (&found_sideload_path);
     }
 
   return TRUE;
