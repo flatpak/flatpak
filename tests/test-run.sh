@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..26"
+echo "1..27"
 
 # Use stable rather than master as the branch so we can test that the run
 # command automatically finds the branch correctly
@@ -56,12 +56,6 @@ assert_has_file $FL_DIR/exports/share/icons/hicolor/64x64/apps/org.test.Hello.pn
 assert_not_has_file $FL_DIR/exports/share/icons/hicolor/64x64/apps/dont-export.png
 assert_has_file $FL_DIR/exports/share/icons/HighContrast/64x64/apps/org.test.Hello.png
 
-# Ensure triggers ran
-assert_has_file $FL_DIR/exports/share/applications/mimeinfo.cache
-assert_file_has_content $FL_DIR/exports/share/applications/mimeinfo.cache x-test/Hello
-assert_has_file $FL_DIR/exports/share/icons/hicolor/icon-theme.cache
-assert_has_file $FL_DIR/exports/share/icons/hicolor/index.theme
-
 $FLATPAK list ${U} | grep org.test.Hello > /dev/null
 $FLATPAK list ${U} -d | grep org.test.Hello | grep test-repo > /dev/null
 $FLATPAK list ${U} -d | grep org.test.Hello | grep current > /dev/null
@@ -72,6 +66,20 @@ $FLATPAK info ${U} org.test.Hello | grep test-repo > /dev/null
 $FLATPAK info ${U} org.test.Hello | grep $ID > /dev/null
 
 ok "install"
+
+if command -v update-desktop-database >/dev/null &&
+   command -v update-mime-database >/dev/null &&
+   command -v gtk-update-icon-cache >/dev/null; then
+    # Ensure triggers ran
+    assert_has_file $FL_DIR/exports/share/applications/mimeinfo.cache
+    assert_file_has_content $FL_DIR/exports/share/applications/mimeinfo.cache x-test/Hello
+    assert_has_file $FL_DIR/exports/share/icons/hicolor/icon-theme.cache
+    assert_has_file $FL_DIR/exports/share/icons/hicolor/index.theme
+
+    ok "install triggers"
+else
+    ok "install triggers # skip  Dependencies not available"
+fi
 
 run org.test.Hello &> hello_out
 assert_file_has_content hello_out '^Hello world, from a sandbox$'
