@@ -46,6 +46,7 @@ gnome.gtkdoc(
     'flatpak-document-dbus-generated.h',
     'flatpak-enum-types.h',
     'flatpak-exports-private.h',
+    'flatpak-image-collection-private.h',
     'flatpak-image-source-private.h',
     'flatpak-installed-ref-private.h',
     'flatpak-json-oci-private.h',
