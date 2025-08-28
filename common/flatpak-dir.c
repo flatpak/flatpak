@@ -1078,11 +1078,9 @@ flatpak_remote_state_new_image_source (FlatpakRemoteState *self,
   if (registry_uri == NULL)
     return NULL;
 
-  image_source = flatpak_image_source_new_remote (registry_uri, oci_repository, digest, NULL, error);
+  image_source = flatpak_image_source_new_remote (registry_uri, oci_repository, digest, token, NULL, error);
   if (image_source == NULL)
     return NULL;
-
-  flatpak_image_source_set_token (image_source, token);
 
   return g_steal_pointer (&image_source);
 }
