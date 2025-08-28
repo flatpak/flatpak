@@ -32,6 +32,12 @@ G_DECLARE_FINAL_TYPE (FlatpakImageSource,
                       FLATPAK, IMAGE_SOURCE,
                       GObject)
 
+FlatpakImageSource *flatpak_image_source_new (FlatpakOciRegistry *registry,
+                                              const char         *repository,
+                                              const char         *digest,
+                                              GCancellable       *cancellable,
+                                              GError            **error);
+
 FlatpakImageSource *flatpak_image_source_new_local (GFile        *file,
                                                     const char   *reference,
                                                     GCancellable *cancellable,
