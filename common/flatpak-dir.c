@@ -6326,8 +6326,15 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
 
   if (opt_image_source)
     image_source = g_object_ref (opt_image_source);
-  else
-    image_source = flatpak_remote_state_fetch_image_source (state, self, ref, opt_rev, token, cancellable, error);
+
+  if (!image_source)
+    {
+      image_source = flatpak_remote_state_fetch_image_source (state, self,
+                                                              ref, opt_rev, token,
+                                                              cancellable, error);
+      if (image_source == NULL)
+        return FALSE;
+    }
 
   flatpak_progress_start_oci_pull (progress);
 
@@ -6367,8 +6374,15 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
 
   if (opt_image_source)
     image_source = g_object_ref (opt_image_source);
-  else
-    image_source = flatpak_remote_state_fetch_image_source (state, self, ref, opt_rev, token, cancellable, error);
+
+  if (!image_source)
+    {
+      image_source = flatpak_remote_state_fetch_image_source (state, self,
+                                                              ref, opt_rev, token,
+                                                              cancellable, error);
+      if (image_source == NULL)
+        return FALSE;
+    }
 
   oci_digest = flatpak_image_source_get_digest (image_source);
 
