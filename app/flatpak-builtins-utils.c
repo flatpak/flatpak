@@ -1450,3 +1450,36 @@ ensure_remote_state_all_arches (FlatpakDir         *dir,
 
   return TRUE;
 }
+
+gboolean
+setup_sideload_repositories (FlatpakTransaction *transaction,
+                             char              **opt_sideload_repos,
+                             GCancellable       *cancellable,
+                             GError            **error)
+{
+  for (int i = 0; opt_sideload_repos != NULL && opt_sideload_repos[i] != NULL; i++)
+    {
+      const char *repo = opt_sideload_repos[i];
+      if (g_str_has_prefix (repo, "oci:") || g_str_has_prefix (repo, "oci-archive:"))
+        {
+          if (!flatpak_transaction_add_sideload_image_collection (transaction, repo, cancellable, error))
+            return FALSE;
+        }
+      else if (g_str_has_prefix (repo, "file:"))
+        {
+          g_autoptr(GFile) file = g_file_new_for_uri (repo);
+          const char *path = flatpak_file_get_path_cached (file);
+          flatpak_transaction_add_sideload_repo (transaction, path);
+        }
+      else
+        {
+          if (g_regex_match_simple ("^[A-Za-z][A-Za-z0-9+.-]*:", repo,
+                                    G_REGEX_DEFAULT, G_REGEX_MATCH_DEFAULT))
+            return flatpak_fail (error, _("Unknown scheme in sideload location %s"), repo);
+
+          flatpak_transaction_add_sideload_repo (transaction, repo);
+        }
+    }
+
+  return TRUE;
+}

@@ -27,6 +27,7 @@
 #include "flatpak-utils-private.h"
 #include "flatpak-dir-private.h"
 #include "flatpak-permission-dbus-generated.h"
+#include "flatpak-transaction.h"
 
 /* AS_CHECK_VERSION was introduced in 0.14.0; we still support 0.12.0, so
  * behave as though versions without this macro are arbitrarily old */
@@ -208,5 +209,10 @@ gboolean ensure_remote_state_all_arches (FlatpakDir         *dir,
                                          gboolean            only_sideloaded,
                                          GCancellable       *cancellable,
                                          GError            **error);
+
+gboolean setup_sideload_repositories (FlatpakTransaction *transaction,
+                                      char              **opt_sideload_repos,
+                                      GCancellable       *cancellable,
+                                      GError            **error);
 
 #endif /* __FLATPAK_BUILTINS_UTILS_H__ */
