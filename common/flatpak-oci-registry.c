@@ -565,6 +565,7 @@ unpack_archive (GFile   *archive,
 {
   g_autoptr(FlatpakAutoArchiveRead) a = NULL;
   g_autoptr(FlatpakAutoArchiveWrite) ext = NULL;
+  g_autofree char *archive_path = NULL;
   int flags;
   int r;
 
@@ -580,7 +581,8 @@ unpack_archive (GFile   *archive,
   archive_write_disk_set_options (ext, flags);
   archive_write_disk_set_standard_lookup (ext);
 
-  r = archive_read_open_filename (a, g_file_get_path(archive), 10240);
+  archive_path = g_file_get_path (archive);
+  r = archive_read_open_filename (a, archive_path, 10240);
   if (r != ARCHIVE_OK)
     return propagate_libarchive_error (error, a);
 
