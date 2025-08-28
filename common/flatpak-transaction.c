@@ -2373,7 +2373,7 @@ search_for_dependency (FlatpakTransaction  *self,
           continue;
         }
 
-      if (flatpak_remote_state_lookup_ref (state, flatpak_decomposed_get_ref (runtime_ref), NULL, NULL, NULL, NULL, NULL))
+      if (flatpak_remote_state_lookup_ref (state, flatpak_decomposed_get_ref (runtime_ref), NULL, NULL, NULL, NULL, NULL, NULL))
         g_ptr_array_add (found, g_strdup (remote));
     }
 
@@ -3377,7 +3377,7 @@ flatpak_transaction_add_auto_install (FlatpakTransaction *self,
               g_autoptr(FlatpakRemoteState) state = flatpak_transaction_ensure_remote_state (self, FLATPAK_TRANSACTION_OPERATION_UPDATE, remote, NULL, NULL);
 
               if (state != NULL &&
-                  flatpak_remote_state_lookup_ref (state, flatpak_decomposed_get_ref (auto_install_ref), NULL, NULL, NULL, NULL, NULL))
+                  flatpak_remote_state_lookup_ref (state, flatpak_decomposed_get_ref (auto_install_ref), NULL, NULL, NULL, NULL, NULL, NULL))
                 {
                   g_info ("Auto adding install of %s from remote %s", flatpak_decomposed_get_ref (auto_install_ref), remote);
 
@@ -3558,6 +3558,7 @@ resolve_op_from_commit (FlatpakTransaction *self,
                         FlatpakTransactionOperation *op,
                         const char *checksum,
                         GFile *sideload_path,
+                        FlatpakImageSource *image_source,
                         GVariant *commit_data,
                         GError **error)
 {
@@ -3597,7 +3598,7 @@ resolve_op_from_commit (FlatpakTransaction *self,
                                    flatpak_decomposed_get_ref (eolr_decomposed));
     }
 
-  return resolve_op_end (self, op, checksum, sideload_path, NULL, metadata_bytes, error);
+  return resolve_op_end (self, op, checksum, sideload_path, image_source, metadata_bytes, error);
 }
 
 /* NOTE: In case of non-available summary this returns FALSE with a
@@ -3608,6 +3609,7 @@ try_resolve_op_from_metadata (FlatpakTransaction *self,
                               FlatpakTransactionOperation *op,
                               const char *checksum,
                               GFile *sideload_path,
+                              FlatpakImageSource *image_source,
                               FlatpakRemoteState *state,
                               GError **error)
 {
@@ -3621,7 +3623,7 @@ try_resolve_op_from_metadata (FlatpakTransaction *self,
   /* Ref has to match the actual commit in the summary */
   if ((state->summary == NULL && state->index == NULL) ||
       !flatpak_remote_state_lookup_ref (state, flatpak_decomposed_get_ref (op->ref),
-                                        &summary_checksum, NULL, NULL, NULL, NULL) ||
+                                        &summary_checksum, NULL, NULL, NULL, NULL, NULL) ||
       strcmp (summary_checksum, checksum) != 0)
     return FALSE;
 
@@ -3633,7 +3635,7 @@ try_resolve_op_from_metadata (FlatpakTransaction *self,
   metadata_bytes = g_bytes_new (metadata, strlen (metadata));
 
   flatpak_remote_state_lookup_ref (state, flatpak_decomposed_get_ref (op->ref),
-                                   NULL, NULL, &op->summary_metadata, NULL, NULL);
+                                   NULL, NULL, &op->summary_metadata, NULL, NULL, NULL);
 
   op->installed_size = installed_size;
   op->download_size = download_size;
@@ -3763,36 +3765,39 @@ resolve_ops (FlatpakTransaction *self,
           if (commit_data == NULL)
             return FALSE;
 
-          if (!resolve_op_from_commit (self, op, checksum, NULL, commit_data, error))
+          if (!resolve_op_from_commit (self, op, checksum, NULL, NULL, commit_data, error))
             return FALSE;
         }
       else
         {
           g_autoptr(GError) local_error = NULL;
           g_autoptr(GFile) sideload_path = NULL;
+          g_autoptr(FlatpakImageSource) image_source = NULL;
 
           if (op->commit != NULL)
             {
               checksum = g_strdup (op->commit);
               /* Check if this is available offline and if so, use that */
-              sideload_path = flatpak_remote_state_lookup_sideload_checksum (state, op->commit);
+              flatpak_remote_state_lookup_sideload_checksum (state, op->commit, &sideload_path, &image_source);
             }
           else
             {
               g_autofree char *latest_checksum = NULL;
               g_autoptr(GFile) latest_sideload_path = NULL;
+              g_autoptr(FlatpakImageSource) latest_image_source = NULL;
               g_autofree char *local_checksum = NULL;
               guint64 latest_timestamp;
               g_autoptr(GVariant) local_commit_data = flatpak_dir_read_latest_commit (priv->dir, op->remote, op->ref,
                                                                                       &local_checksum, NULL, NULL);
 
               if (flatpak_dir_find_latest_rev (priv->dir, state, flatpak_decomposed_get_ref (op->ref), op->commit,
-                                               &latest_checksum, &latest_timestamp, &latest_sideload_path,
+                                               &latest_checksum, &latest_timestamp, &latest_sideload_path, &latest_image_source,
                                                cancellable, &local_error))
                 {
                   /* If we found the latest in a sideload repo, it may be older that what is locally available, check timestamps.
                    * Note: If the timestamps are equal (timestamp granularity issue), assume we want to update */
-                  if (latest_sideload_path != NULL && local_commit_data && latest_timestamp != 0 &&
+                  if ((latest_sideload_path != NULL || latest_image_source != NULL) &&
+                      local_commit_data && latest_timestamp != 0 &&
                       ostree_commit_get_timestamp (local_commit_data) > latest_timestamp)
                     {
                       g_info ("Installed commit %s newer than sideloaded %s, ignoring", local_checksum, latest_checksum);
@@ -3803,6 +3808,7 @@ resolve_ops (FlatpakTransaction *self,
                       /* Otherwise, use whatever we found */
                       checksum = g_steal_pointer (&latest_checksum);
                       sideload_path = g_steal_pointer (&latest_sideload_path);
+                      image_source = g_steal_pointer (&latest_image_source);
                     }
                 }
               else
@@ -3823,7 +3829,7 @@ resolve_ops (FlatpakTransaction *self,
             }
 
           /* First try to resolve via metadata (if remote is available and its metadata matches the commit version) */
-          if (!try_resolve_op_from_metadata (self, op, checksum, sideload_path, state, &local_error))
+          if (!try_resolve_op_from_metadata (self, op, checksum, sideload_path, image_source, state, &local_error))
             {
               if (local_error)
                 {
@@ -3840,7 +3846,7 @@ resolve_ops (FlatpakTransaction *self,
               /* OCI needs this to get the oci repository for the ref to request the token, so lets always set it here */
               if (op->summary_metadata == NULL)
                 flatpak_remote_state_lookup_ref (state, flatpak_decomposed_get_ref (op->ref),
-                                                  NULL, NULL, &op->summary_metadata, NULL, NULL);
+                                                  NULL, NULL, &op->summary_metadata, NULL, NULL, NULL);
 
               commit_data = flatpak_remote_state_load_ref_commit (state, priv->dir,
                                                                   flatpak_decomposed_get_ref (op->ref),
@@ -3866,7 +3872,7 @@ resolve_ops (FlatpakTransaction *self,
                   return FALSE;
                 }
 
-              if (!resolve_op_from_commit (self, op, checksum, sideload_path, commit_data, error))
+              if (!resolve_op_from_commit (self, op, checksum, sideload_path, image_source, commit_data, error))
                 return FALSE;
             }
         }

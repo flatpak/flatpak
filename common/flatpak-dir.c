@@ -52,6 +52,7 @@
 #include "flatpak-dir-utils-private.h"
 #include "flatpak-error.h"
 #include "flatpak-locale-utils-private.h"
+#include "flatpak-image-collection-private.h"
 #include "flatpak-image-source-private.h"
 #include "flatpak-oci-registry-private.h"
 #include "flatpak-ref.h"
@@ -675,31 +676,57 @@ get_timestamp_from_ref_info (VarRefInfoRef info)
  }
 
 
-GFile *
-flatpak_remote_state_lookup_sideload_checksum (FlatpakRemoteState *self,
-                                               char               *checksum)
+void
+flatpak_remote_state_lookup_sideload_checksum (FlatpakRemoteState   *self,
+                                               char                 *checksum,
+                                               GFile               **out_sideload_path,
+                                               FlatpakImageSource  **out_image_source)
 {
-  for (int i = 0; i < self->sideload_repos->len; i++)
+  if (out_sideload_path)
+    *out_sideload_path = NULL;
+  if (out_image_source)
+    *out_image_source = NULL;
+
+  if (self->is_oci && out_image_source)
     {
-      FlatpakSideloadState *ss = g_ptr_array_index (self->sideload_repos, i);
-      OstreeRepoCommitState commit_state;
+      g_autofree char *digest = g_strconcat ("sha256:", checksum, NULL);
 
-      if (ostree_repo_load_commit (ss->repo, checksum, NULL, &commit_state, NULL) &&
-          commit_state == OSTREE_REPO_COMMIT_STATE_NORMAL)
-        return g_object_ref (ostree_repo_get_path (ss->repo));
+      for (int i = 0; i < self->sideload_image_collections->len; i++)
+        {
+          FlatpakImageCollection *collection = g_ptr_array_index (self->sideload_image_collections, i);
+          g_autoptr(FlatpakImageSource) image_source = flatpak_image_collection_lookup_digest (collection, digest);
+          if (image_source)
+            {
+              *out_image_source = g_steal_pointer (&image_source);
+              return;
+            }
+        }
     }
+  else if (!self->is_oci && out_sideload_path)
+    {
+      for (int i = 0; i < self->sideload_repos->len; i++)
+        {
+          FlatpakSideloadState *ss = g_ptr_array_index (self->sideload_repos, i);
+          OstreeRepoCommitState commit_state;
 
-  return NULL;
+          if (ostree_repo_load_commit (ss->repo, checksum, NULL, &commit_state, NULL) &&
+              commit_state == OSTREE_REPO_COMMIT_STATE_NORMAL)
+            {
+              *out_sideload_path = g_object_ref (ostree_repo_get_path (ss->repo));
+              return;
+            }
+        }
+    }
 }
 
 static gboolean
-flatpak_remote_state_resolve_sideloaded_ref (FlatpakRemoteState *self,
-                                             const char         *ref,
-                                             char              **out_checksum,
-                                             guint64            *out_timestamp,
-                                             VarRefInfoRef      *out_info,
-                                             FlatpakSideloadState  **out_sideload_state,
-                                             GError            **error)
+flatpak_remote_state_resolve_sideloaded_ref_repos (FlatpakRemoteState    *self,
+                                                   const char            *ref,
+                                                   char                 **out_checksum,
+                                                   guint64               *out_timestamp,
+                                                   VarRefInfoRef         *out_info,
+                                                   FlatpakSideloadState **out_sideload_state,
+                                                   GError               **error)
 {
   g_autofree char *latest_checksum = NULL;
   guint64 latest_timestamp = 0;
@@ -744,6 +771,70 @@ flatpak_remote_state_resolve_sideloaded_ref (FlatpakRemoteState *self,
   return TRUE;
 }
 
+static gboolean
+flatpak_remote_state_resolve_sideloaded_ref_images (FlatpakRemoteState  *self,
+                                                    const char          *ref,
+                                                    char               **out_checksum,
+                                                    guint64             *out_timestamp,
+                                                    VarRefInfoRef       *out_info,
+                                                    FlatpakImageSource **out_image_source,
+                                                    GError             **error)
+{
+  g_autoptr(FlatpakImageSource) image_source = NULL;
+
+  for (int i = 0; i < self->sideload_image_collections->len; i++)
+    {
+      FlatpakImageCollection *collection = g_ptr_array_index (self->sideload_image_collections, i);
+      image_source = flatpak_image_collection_lookup_ref (collection, ref);
+      if (image_source)
+        break;
+    }
+
+  if (image_source == NULL)
+    return flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
+                               _("No such ref '%s' in remote %s"),
+                               ref, self->remote_name);
+
+  if (out_checksum)
+    {
+      const char *digest = flatpak_image_source_get_digest (image_source);
+      g_assert (g_str_has_prefix (digest, "sha256:"));
+      *out_checksum = g_strdup (digest + 7);
+    }
+
+  if (out_timestamp)
+    *out_timestamp = flatpak_image_source_get_commit_timestamp (image_source);
+
+  if (out_image_source)
+    *out_image_source = g_steal_pointer (&image_source);
+
+  return TRUE;
+}
+
+static gboolean
+flatpak_remote_state_resolve_sideloaded_ref (FlatpakRemoteState    *self,
+                                             const char            *ref,
+                                             char                 **out_checksum,
+                                             guint64               *out_timestamp,
+                                             VarRefInfoRef         *out_info,
+                                             FlatpakSideloadState **out_sideload_state,
+                                             FlatpakImageSource   **out_image_source,
+                                             GError               **error)
+{
+  if (out_sideload_state)
+    *out_sideload_state = NULL;
+  if (out_image_source)
+    *out_image_source = NULL;
+
+  if (self->is_oci)
+    return flatpak_remote_state_resolve_sideloaded_ref_images (self, ref, out_checksum, out_timestamp, out_info,
+                                                               out_image_source, error);
+  else
+    return flatpak_remote_state_resolve_sideloaded_ref_repos (self, ref, out_checksum, out_timestamp, out_info,
+                                                               out_sideload_state, error);
+
+}
+
 static GVariant *
 get_summary_for_ref (FlatpakRemoteState *self,
                      const char *ref)
@@ -773,6 +864,9 @@ get_summary_for_ref (FlatpakRemoteState *self,
 
 /* Returns TRUE if the ref is found in the summary or cache.
  * out_checksum and out_variant are only set when the ref is found.
+ *
+ * NOTE: The _internal() variant has the odd constraint that *out_info is only
+ * valid if *out_image_source is NULL.
  */
 static gboolean
 flatpak_remote_state_lookup_ref_internal (FlatpakRemoteState  *self,
@@ -781,8 +875,11 @@ flatpak_remote_state_lookup_ref_internal (FlatpakRemoteState  *self,
                                           guint64             *out_timestamp,
                                           VarRefInfoRef       *out_info,
                                           GFile              **out_sideload_path,
+                                          FlatpakImageSource **out_image_source,
                                           GError             **error)
 {
+  g_assert (out_info == NULL || out_image_source != NULL);
+
   if (!flatpak_remote_state_allow_ref (self, ref))
     {
       return flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
@@ -805,26 +902,7 @@ flatpak_remote_state_lookup_ref_internal (FlatpakRemoteState  *self,
                                    ref, self->remote_name);
 
       /* Even if its available in the summary we want to install it from a sideload repo if available */
-
-      if (out_sideload_path)
-        {
-          g_autoptr(GFile) found_sideload_path = NULL;
-
-          for (int i = 0; i < self->sideload_repos->len; i++)
-            {
-              FlatpakSideloadState *ss = g_ptr_array_index (self->sideload_repos, i);
-              OstreeRepoCommitState commit_state;
-
-              if (ostree_repo_load_commit (ss->repo, checksum, NULL, &commit_state, NULL) &&
-                  commit_state == OSTREE_REPO_COMMIT_STATE_NORMAL)
-                {
-                  found_sideload_path = g_object_ref (ostree_repo_get_path (ss->repo));
-                  break;
-                }
-            }
-
-          *out_sideload_path = g_steal_pointer (&found_sideload_path);
-        }
+      flatpak_remote_state_lookup_sideload_checksum (self, checksum, out_sideload_path, out_image_source);
 
       if (out_info)
         *out_info = info;
@@ -838,7 +916,7 @@ flatpak_remote_state_lookup_ref_internal (FlatpakRemoteState  *self,
       FlatpakSideloadState *ss = NULL;
       g_autoptr(GFile) found_sideload_path = NULL;
 
-      if (!flatpak_remote_state_resolve_sideloaded_ref (self, ref, out_checksum, out_timestamp, out_info, &ss, error))
+      if (!flatpak_remote_state_resolve_sideloaded_ref (self, ref, out_checksum, out_timestamp, out_info, &ss, out_image_source, error))
         return FALSE;
 
       if (ss)
@@ -861,16 +939,30 @@ flatpak_remote_state_lookup_ref (FlatpakRemoteState  *self,
                                  guint64             *out_timestamp,
                                  GVariant           **out_summary_metadata,
                                  GFile              **out_sideload_path,
+                                 FlatpakImageSource **out_image_source,
                                  GError             **error)
 {
   VarRefInfoRef info;
+  g_autoptr(FlatpakImageSource) image_source = NULL;
 
-  if (!flatpak_remote_state_lookup_ref_internal (self, ref, out_checksum, out_timestamp,
-                                                 &info, out_sideload_path, error))
+  if (!flatpak_remote_state_lookup_ref_internal (self, ref,
+                                                 out_checksum,
+                                                 out_timestamp,
+                                                 &info,
+                                                 out_sideload_path,
+                                                 &image_source,
+                                                 error))
     return FALSE;
 
   if (out_summary_metadata)
-    *out_summary_metadata = var_metadata_dup_to_gvariant (var_ref_info_get_metadata (info));
+    {
+      *out_summary_metadata = image_source ?
+        flatpak_image_source_make_summary_metadata (image_source) :
+        var_metadata_dup_to_gvariant (var_ref_info_get_metadata (info));
+    }
+
+  if (out_image_source)
+    *out_image_source = g_steal_pointer (&image_source);
 
   return TRUE;
 }
@@ -1043,6 +1135,7 @@ flatpak_remote_state_load_data (FlatpakRemoteState *self,
       g_autofree char *checksum = NULL;
       guint64 timestamp;
       FlatpakSideloadState *ss = NULL;
+      g_autoptr(FlatpakImageSource) image_source = NULL;
       g_autoptr(GVariant) commit_data = NULL;
       g_autoptr(GVariant) commit_metadata = NULL;
       const char *xa_metadata = NULL;
@@ -1052,13 +1145,23 @@ flatpak_remote_state_load_data (FlatpakRemoteState *self,
       /* Use sideload refs if any */
 
       if (!flatpak_remote_state_resolve_sideloaded_ref (self, ref, &checksum, &timestamp,
-                                                        NULL, &ss, error))
+                                                        NULL, &ss, &image_source, error))
         return FALSE;
 
-      if (!ostree_repo_load_commit (ss->repo, checksum, &commit_data, NULL, error))
-        return FALSE;
+      if (image_source)
+        {
+          g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
+          flatpak_image_source_build_commit_metadata (image_source, metadata_builder);
+          commit_metadata = g_variant_builder_end (metadata_builder);
+        }
+      else
+        {
+          if (!ostree_repo_load_commit (ss->repo, checksum, &commit_data, NULL, error))
+            return FALSE;
 
-      commit_metadata = g_variant_get_child_value (commit_data, 0);
+          commit_metadata = g_variant_get_child_value (commit_data, 0);
+        }
+
       g_variant_lookup (commit_metadata, "xa.metadata", "&s", &xa_metadata);
       if (xa_metadata == NULL)
         return flatpak_fail (error, "No xa.metadata in sideload commit %s ref %s", checksum, ref);
@@ -1133,15 +1236,11 @@ flatpak_remote_state_fetch_image_source (FlatpakRemoteState *self,
                                          GError            **error)
 {
   g_autoptr(FlatpakImageSource) image_source = NULL;
-  g_autofree char *oci_digest = NULL;
   g_autofree char *latest_rev = NULL;
   VarRefInfoRef latest_rev_info;
-  VarMetadataRef metadata;
-  const char *oci_repository = NULL;
-  const char *delta_url = NULL;
 
   /* We extract the rev info from the latest, even if we don't use the latest digest, assuming refs don't move */
-  if (!flatpak_remote_state_lookup_ref_internal (self, ref, &latest_rev, NULL, &latest_rev_info, NULL, error))
+  if (!flatpak_remote_state_lookup_ref_internal (self, ref, &latest_rev, NULL, &latest_rev_info, NULL, &image_source, error))
     return NULL;
 
   if (latest_rev == NULL)
@@ -1152,23 +1251,31 @@ flatpak_remote_state_fetch_image_source (FlatpakRemoteState *self,
       return NULL;
     }
 
-  metadata = var_ref_info_get_metadata (latest_rev_info);
-  oci_repository = var_metadata_lookup_string (metadata, "xa.oci-repository", NULL);
-  delta_url = var_metadata_lookup_string (metadata, "xa.delta-url", NULL);
-
-  oci_digest = g_strconcat ("sha256:", opt_rev ? opt_rev : latest_rev, NULL);
-
-  image_source = flatpak_remote_state_new_image_source (self, oci_repository, oci_digest, token, cancellable, error);
   if (image_source == NULL)
-    return NULL;
-
-  if (g_strcmp0 (flatpak_image_source_get_ref (image_source), ref) != 0)
     {
-      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Commit has no requested ref ‘%s’ in ref binding metadata"),  ref);
-      return NULL;
-    }
+      VarMetadataRef metadata;
+      g_autofree char *oci_digest = NULL;
+      const char *oci_repository = NULL;
+      const char *delta_url = NULL;
 
-  flatpak_image_source_set_delta_url (image_source, delta_url);
+      metadata = var_ref_info_get_metadata (latest_rev_info);
+      oci_repository = var_metadata_lookup_string (metadata, "xa.oci-repository", NULL);
+      delta_url = var_metadata_lookup_string (metadata, "xa.delta-url", NULL);
+
+      oci_digest = g_strconcat ("sha256:", opt_rev ? opt_rev : latest_rev, NULL);
+
+      image_source = flatpak_remote_state_new_image_source (self, oci_repository, oci_digest, token, cancellable, error);
+      if (image_source == NULL)
+        return NULL;
+
+      if (g_strcmp0 (flatpak_image_source_get_ref (image_source), ref) != 0)
+        {
+          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Commit has no requested ref ‘%s’ in ref binding metadata"),  ref);
+          return NULL;
+        }
+
+      flatpak_image_source_set_delta_url (image_source, delta_url);
+    }
 
   return g_steal_pointer (&image_source);
 }
@@ -1308,7 +1415,7 @@ flatpak_remote_state_load_ref_commit (FlatpakRemoteState *self,
 
   if (opt_commit == NULL)
     {
-      if (!flatpak_remote_state_lookup_ref (self, ref, &commit, NULL, NULL, NULL, error))
+      if (!flatpak_remote_state_lookup_ref (self, ref, &commit, NULL, NULL, NULL, NULL, error))
         return NULL;
 
       if (commit == NULL)
@@ -1326,12 +1433,26 @@ flatpak_remote_state_load_ref_commit (FlatpakRemoteState *self,
   if (ostree_repo_load_commit (dir->repo, commit, &commit_data, NULL, NULL))
     goto out;
 
-  for (int i = 0; i < self->sideload_repos->len; i++)
+  if (self->is_oci)
     {
-      FlatpakSideloadState *ss = g_ptr_array_index (self->sideload_repos, i);
+      g_autoptr(FlatpakImageSource) image_source;
 
-      if (ostree_repo_load_commit (ss->repo, commit, &commit_data, NULL, NULL))
-        goto out;
+      flatpak_remote_state_lookup_sideload_checksum (self, commit, NULL, &image_source);
+      if (image_source)
+        {
+          commit_data = flatpak_image_source_make_fake_commit (image_source);
+          goto out;
+        }
+    }
+  else
+    {
+      for (int i = 0; i < self->sideload_repos->len; i++)
+        {
+          FlatpakSideloadState *ss = g_ptr_array_index (self->sideload_repos, i);
+
+          if (ostree_repo_load_commit (ss->repo, commit, &commit_data, NULL, NULL))
+            goto out;
+        }
     }
 
   if (flatpak_dir_get_remote_oci (dir, self->remote_name))
@@ -5442,6 +5563,7 @@ flatpak_dir_find_latest_rev (FlatpakDir               *self,
                              char                    **out_rev,
                              guint64                  *out_timestamp,
                              GFile                   **out_sideload_path,
+                             FlatpakImageSource      **out_image_source,
                              GCancellable             *cancellable,
                              GError                  **error)
 {
@@ -5449,7 +5571,7 @@ flatpak_dir_find_latest_rev (FlatpakDir               *self,
 
   g_return_val_if_fail (out_rev != NULL, FALSE);
 
-  if (!flatpak_remote_state_lookup_ref (state, ref, &latest_rev, out_timestamp, NULL, out_sideload_path, error))
+  if (!flatpak_remote_state_lookup_ref (state, ref, &latest_rev, out_timestamp, NULL, out_sideload_path, out_image_source, error))
     return FALSE;
   if (latest_rev == NULL)
     return flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
@@ -5694,10 +5816,10 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
   used_branch = new_branch;
   if (!is_oci)
     {
-      if (!flatpak_dir_find_latest_rev (self, state, used_branch, NULL, &appstream_commit, NULL, &appstream_sideload_path, cancellable, &first_error))
+      if (!flatpak_dir_find_latest_rev (self, state, used_branch, NULL, &appstream_commit, NULL, &appstream_sideload_path, NULL, cancellable, &first_error))
         {
           used_branch = old_branch;
-          if (!flatpak_dir_find_latest_rev (self, state, used_branch, NULL, &appstream_commit, NULL, &appstream_sideload_path, cancellable, &second_error))
+          if (!flatpak_dir_find_latest_rev (self, state, used_branch, NULL, &appstream_commit, NULL, &appstream_sideload_path, NULL, cancellable, &second_error))
             {
               g_prefix_error (&first_error, "Error updating appstream2: ");
               g_prefix_error (&second_error, "Error updating appstream: ");
@@ -6503,7 +6625,7 @@ flatpak_dir_pull (FlatpakDir                           *self,
     {
       rev = g_strdup (opt_rev);
     }
-  else if (!flatpak_remote_state_lookup_ref (state, ref, &rev, NULL, NULL, NULL, error))
+  else if (!flatpak_remote_state_lookup_ref (state, ref, &rev, NULL, NULL, NULL, NULL, error))
     {
       g_assert (error == NULL || *error != NULL);
       return FALSE;
@@ -10922,7 +11044,7 @@ flatpak_dir_check_for_update (FlatpakDir               *self,
   else
     {
       if (!flatpak_dir_find_latest_rev (self, state, flatpak_decomposed_get_ref (ref), checksum_or_latest, &latest_rev,
-                                        NULL, NULL, cancellable, error))
+                                        NULL, NULL, NULL, cancellable, error))
         return NULL;
     }
 
@@ -13547,6 +13669,56 @@ populate_hash_table_from_refs_map (GHashTable         *ret_all_refs,
 }
 
 
+static void
+populate_hash_table_from_image_collection (GHashTable             *ret_all_refs,
+                                           GHashTable             *ref_timestamps,
+                                           FlatpakImageCollection *image_collection,
+                                           const char             *opt_collection_id,
+                                           FlatpakRemoteState     *state)
+{
+  g_autoptr(GPtrArray) sources = flatpak_image_collection_get_sources (image_collection);
+
+  for (guint i = 0; i < sources->len; i++)
+    {
+      FlatpakImageSource *image_source = g_ptr_array_index (sources, i);
+      const char *ref_name = flatpak_image_source_get_ref (image_source);
+      const char *digest = flatpak_image_source_get_digest (image_source);
+      const char *checksum;
+      guint64 *new_timestamp = NULL;
+      g_autoptr(FlatpakDecomposed) decomposed = NULL;
+
+      if (!flatpak_remote_state_allow_ref (state, ref_name))
+        continue;
+
+      g_assert (g_str_has_prefix (digest, "sha256:"));
+      checksum = digest + 7;
+
+      decomposed = flatpak_decomposed_new_from_col_ref (ref_name, opt_collection_id, NULL);
+      if (decomposed == NULL)
+        continue;
+
+      if (ref_timestamps)
+        {
+          guint64 timestamp = flatpak_image_source_get_commit_timestamp (image_source);
+          gpointer value;
+
+          if (g_hash_table_lookup_extended (ref_timestamps, ref_name, NULL, &value))
+            {
+              guint64 *old_timestamp = value;
+              if (*old_timestamp >= timestamp)
+                continue; /* New timestamp is older, skip this commit */
+            }
+
+          new_timestamp = g_memdup2 (&timestamp, sizeof (guint64));
+        }
+
+      g_hash_table_replace (ret_all_refs, g_steal_pointer (&decomposed), g_strdup (checksum));
+      if (new_timestamp)
+        g_hash_table_replace (ref_timestamps, g_strdup (ref_name), new_timestamp);
+    }
+}
+
+
 /* This tries to list all available remote refs but also tries to keep
  * working when offline, so it looks in sideloaded repos. Also it uses
  * in-memory cached summaries which ostree doesn't. */
@@ -13618,25 +13790,37 @@ flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
       ref_map = var_summary_get_ref_map (summary);
       populate_hash_table_from_refs_map (ret_all_refs, NULL, ref_map, main_collection_id, state);
     }
-  else if (state->collection_id)
+  else
     {
       g_autoptr(GHashTable) ref_mtimes = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 
       /* No main summary, add just all sideloded refs, with the latest version of each checksum */
 
-      for (int i = 0; i < state->sideload_repos->len; i++)
+      if (state->collection_id)
         {
-          FlatpakSideloadState *ss = g_ptr_array_index (state->sideload_repos, i);
-
-          summary = var_summary_from_gvariant (ss->summary);
-          exts = var_summary_get_metadata (summary);
-
-          if (var_metadata_lookup (exts, "ostree.summary.collection-map", NULL, &v))
+          for (int i = 0; i < state->sideload_repos->len; i++)
             {
-              VarCollectionMapRef map = var_collection_map_from_variant (v);
+              FlatpakSideloadState *ss = g_ptr_array_index (state->sideload_repos, i);
 
-              if (var_collection_map_lookup (map, state->collection_id, NULL, &ref_map))
-                populate_hash_table_from_refs_map (ret_all_refs, ref_mtimes, ref_map, NULL, state);
+              summary = var_summary_from_gvariant (ss->summary);
+              exts = var_summary_get_metadata (summary);
+
+              if (var_metadata_lookup (exts, "ostree.summary.collection-map", NULL, &v))
+                {
+                  VarCollectionMapRef map = var_collection_map_from_variant (v);
+
+                  if (var_collection_map_lookup (map, state->collection_id, NULL, &ref_map))
+                    populate_hash_table_from_refs_map (ret_all_refs, ref_mtimes, ref_map, NULL, state);
+                }
+            }
+        }
+
+      if (state->is_oci)
+        {
+          for (int i = 0; i < state->sideload_image_collections->len; i++)
+            {
+              FlatpakImageCollection *collection = g_ptr_array_index (state->sideload_image_collections, i);
+              populate_hash_table_from_image_collection (ret_all_refs, ref_mtimes, collection, NULL, state);
             }
         }
     }
@@ -16216,7 +16400,7 @@ flatpak_dir_find_remote_related_for_metadata (FlatpakDir         *self,
               if (extension_ref == NULL)
                 continue;
 
-              if (flatpak_remote_state_lookup_ref (state, flatpak_decomposed_get_ref (extension_ref), &checksum, NULL, NULL, NULL, NULL))
+              if (flatpak_remote_state_lookup_ref (state, flatpak_decomposed_get_ref (extension_ref), &checksum, NULL, NULL, NULL, NULL, NULL))
                 {
                   if (flatpak_filters_allow_ref (NULL, masked, flatpak_decomposed_get_ref (extension_ref)))
                     add_related (self, related, state->remote_name, extension, extension_ref, checksum,
@@ -16231,7 +16415,7 @@ flatpak_dir_find_remote_related_for_metadata (FlatpakDir         *self,
                       g_autofree char *subref_checksum = NULL;
 
                       if (flatpak_remote_state_lookup_ref (state, flatpak_decomposed_get_ref (subref_ref),
-                                                           &subref_checksum, NULL, NULL, NULL, NULL) &&
+                                                           &subref_checksum, NULL, NULL, NULL, NULL, NULL) &&
                           flatpak_filters_allow_ref (NULL, masked,  flatpak_decomposed_get_ref (subref_ref)))
                         add_related (self, related, state->remote_name, extension, subref_ref, subref_checksum,
                                      no_autodownload, download_if, autoprune_unless, autodelete, locale_subset);
