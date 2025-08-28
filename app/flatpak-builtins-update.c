@@ -150,8 +150,8 @@ flatpak_builtin_update (int           argc,
       if (opt_arch)
         flatpak_transaction_set_default_arch (transaction, opt_arch);
 
-      for (i = 0; opt_sideload_repos != NULL && opt_sideload_repos[i] != NULL; i++)
-        flatpak_transaction_add_sideload_repo (transaction, opt_sideload_repos[i]);
+      if (!setup_sideload_repositories (transaction, opt_sideload_repos, cancellable, error))
+        return FALSE;
 
       g_ptr_array_insert (transactions, 0, transaction);
     }
