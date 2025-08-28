@@ -26,6 +26,7 @@
 #include "flatpak-auth-private.h"
 #include "flatpak-dir-private.h"
 #include "flatpak-error.h"
+#include "flatpak-image-collection-private.h"
 #include "flatpak-image-source-private.h"
 #include "flatpak-installation-private.h"
 #include "flatpak-oci-registry-private.h"
@@ -173,6 +174,7 @@ typedef struct _FlatpakTransactionPrivate
   GHashTable                  *remote_states; /* (element-type utf8 FlatpakRemoteState) */
   GPtrArray                   *extra_dependency_dirs;
   GPtrArray                   *extra_sideload_repos;
+  GPtrArray                   *sideload_image_collections;
   GList                       *ops;
   GPtrArray                   *added_origin_remotes;
 
@@ -523,6 +525,38 @@ flatpak_transaction_add_sideload_repo (FlatpakTransaction  *self,
 
   g_ptr_array_add (priv->extra_sideload_repos,
                    g_strdup (path));
+}
+
+/**
+ * flatpak_transaction_add_sideload_image_collection:
+ * @self: a #FlatpakTransaction
+ * @location: source of images for installation
+ *
+ * Adds a set of images to be used as source for installation. This is similar
+ * to flatpak_transaction_add_sideload_repo(), but the Flatpaks are stored
+ * as OCI images rather than ostree commits, and the images are used for
+ * all OCI remotes without regard to collection ID.
+ *
+ * Currently @location should be either 'oci:<path>' or 'oci-archive:<path>'.
+ * Additional schemes may be added in the future.
+ *
+ * Since: 1.7.1
+ */
+gboolean
+flatpak_transaction_add_sideload_image_collection (FlatpakTransaction  *self,
+                                                   const char          *location,
+                                                   GCancellable        *cancellable,
+                                                   GError             **error)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  g_autoptr(FlatpakImageCollection) collection = NULL;
+
+  collection = flatpak_image_collection_new (location, cancellable, error);
+  if (collection == NULL)
+    return FALSE;
+
+  g_ptr_array_add (priv->sideload_image_collections, g_steal_pointer (&collection));
+  return TRUE;
 }
 
 /**
@@ -1036,6 +1070,7 @@ flatpak_transaction_finalize (GObject *object)
 
   g_ptr_array_free (priv->extra_dependency_dirs, TRUE);
   g_ptr_array_free (priv->extra_sideload_repos, TRUE);
+  g_ptr_array_free (priv->sideload_image_collections, TRUE);
 
   G_OBJECT_CLASS (flatpak_transaction_parent_class)->finalize (object);
 }
@@ -1511,6 +1546,7 @@ flatpak_transaction_init (FlatpakTransaction *self)
   priv->added_origin_remotes = g_ptr_array_new_with_free_func (g_free);
   priv->extra_dependency_dirs = g_ptr_array_new_with_free_func (g_object_unref);
   priv->extra_sideload_repos = g_ptr_array_new_with_free_func (g_free);
+  priv->sideload_image_collections = g_ptr_array_new_with_free_func (g_object_unref);
   priv->can_run = TRUE;
 }
 
@@ -2088,6 +2124,13 @@ flatpak_transaction_ensure_remote_state (FlatpakTransaction             *self,
           g_autoptr(GFile) f = g_file_new_for_path (path);
           flatpak_remote_state_add_sideload_dir (state, f);
         }
+
+      for (int i = 0; i < priv->sideload_image_collections->len; i++)
+        {
+          FlatpakImageCollection *collection = g_ptr_array_index (priv->sideload_image_collections, i);
+          flatpak_remote_state_add_sideload_image_collection (state, collection);
+        }
+
     }
 
   if (opt_arch != NULL &&
