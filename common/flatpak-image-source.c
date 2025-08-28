@@ -177,6 +177,7 @@ FlatpakImageSource *
 flatpak_image_source_new_remote (const char   *uri,
                                  const char   *oci_repository,
                                  const char   *digest,
+                                 const char   *token,
                                  GCancellable *cancellable,
                                  GError      **error)
 {
@@ -185,6 +186,8 @@ flatpak_image_source_new_remote (const char   *uri,
   registry = flatpak_oci_registry_new (uri, FALSE, -1, cancellable, error);
   if (!registry)
     return NULL;
+
+  flatpak_oci_registry_set_token (registry, token);
 
   return flatpak_image_source_new (registry, oci_repository, digest, cancellable, error);
 }
@@ -323,13 +326,6 @@ flatpak_image_source_new_for_location (const char   *location,
       flatpak_fail (error, "unsupported image location: %s", location);
       return NULL;
     }
-}
-
-void
-flatpak_image_source_set_token (FlatpakImageSource *self,
-                                const char            *token)
-{
-  flatpak_oci_registry_set_token (self->registry, token);
 }
 
 void

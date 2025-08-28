@@ -39,14 +39,13 @@ FlatpakImageSource *flatpak_image_source_new_local (GFile        *file,
 FlatpakImageSource *flatpak_image_source_new_remote (const char   *uri,
                                                      const char   *oci_repository,
                                                      const char   *digest,
+                                                     const char   *token,
                                                      GCancellable *cancellable,
                                                      GError      **error);
 FlatpakImageSource *flatpak_image_source_new_for_location (const char   *location,
                                                            GCancellable *cancellable,
                                                            GError      **error);
 
-void flatpak_image_source_set_token (FlatpakImageSource *self,
-                                     const char         *token);
 void flatpak_image_source_set_delta_url (FlatpakImageSource *self,
                                          const char         *delta_url);
 

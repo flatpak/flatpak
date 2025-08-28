@@ -1078,11 +1078,9 @@ flatpak_remote_state_new_image_source (FlatpakRemoteState *self,
   if (registry_uri == NULL)
     return NULL;
 
-  image_source = flatpak_image_source_new_remote (registry_uri, oci_repository, digest, NULL, error);
+  image_source = flatpak_image_source_new_remote (registry_uri, oci_repository, digest, token, NULL, error);
   if (image_source == NULL)
     return NULL;
-
-  flatpak_image_source_set_token (image_source, token);
 
   return g_steal_pointer (&image_source);
 }
@@ -6328,8 +6326,15 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
 
   if (opt_image_source)
     image_source = g_object_ref (opt_image_source);
-  else
-    image_source = flatpak_remote_state_fetch_image_source (state, self, ref, opt_rev, token, cancellable, error);
+
+  if (!image_source)
+    {
+      image_source = flatpak_remote_state_fetch_image_source (state, self,
+                                                              ref, opt_rev, token,
+                                                              cancellable, error);
+      if (image_source == NULL)
+        return FALSE;
+    }
 
   flatpak_progress_start_oci_pull (progress);
 
@@ -6369,8 +6374,15 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
 
   if (opt_image_source)
     image_source = g_object_ref (opt_image_source);
-  else
-    image_source = flatpak_remote_state_fetch_image_source (state, self, ref, opt_rev, token, cancellable, error);
+
+  if (!image_source)
+    {
+      image_source = flatpak_remote_state_fetch_image_source (state, self,
+                                                              ref, opt_rev, token,
+                                                              cancellable, error);
+      if (image_source == NULL)
+        return FALSE;
+    }
 
   oci_digest = flatpak_image_source_get_digest (image_source);
 

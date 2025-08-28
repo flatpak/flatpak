@@ -553,28 +553,28 @@ flatpak_oci_index_get_manifest (FlatpakOciIndex *self,
 FlatpakOciManifestDescriptor *
 flatpak_oci_index_get_only_manifest (FlatpakOciIndex *self)
 {
-  int i, found = -1;
+  FlatpakOciManifestDescriptor *manifest = NULL;
 
   if (self->manifests == NULL)
     return NULL;
 
-  for (i = 0; self->manifests[i] != NULL; i++)
+  for (size_t i = 0; self->manifests[i] != NULL; i++)
     {
-      const char *m_ref = flatpak_oci_manifest_descriptor_get_ref (self->manifests[i]);
+      FlatpakOciManifestDescriptor *m = self->manifests[i];
 
-      if (m_ref == NULL)
+      if (m->parent.mediatype == NULL ||
+          (strcmp (m->parent.mediatype, FLATPAK_OCI_MEDIA_TYPE_IMAGE_MANIFEST) != 0 &&
+           strcmp (m->parent.mediatype, FLATPAK_DOCKER_MEDIA_TYPE_IMAGE_MANIFEST2) != 0))
         continue;
 
-      if (found == -1)
-        found = i;
-      else
+      /* multiple manifests */
+      if (manifest != NULL)
         return NULL;
+
+      manifest = m;
     }
 
-  if (found >= 0)
-    return self->manifests[found];
-
-  return NULL;
+  return manifest;
 }
 
 FlatpakOciManifestDescriptor *
