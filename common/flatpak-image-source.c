@@ -68,7 +68,7 @@ flatpak_image_source_init (FlatpakImageSource *self)
 {
 }
 
-static FlatpakImageSource *
+FlatpakImageSource *
 flatpak_image_source_new (FlatpakOciRegistry *registry,
                           const char         *repository,
                           const char         *digest,
@@ -77,6 +77,12 @@ flatpak_image_source_new (FlatpakOciRegistry *registry,
 {
   g_autoptr(FlatpakImageSource) self = NULL;
   g_autoptr(FlatpakOciVersioned) versioned = NULL;
+
+  if (!g_str_has_prefix (digest, "sha256:"))
+    {
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Only sha256 image checksums are supported"));
+      return NULL;
+    }
 
   self = g_object_new (FLATPAK_TYPE_IMAGE_SOURCE, NULL);
   self->registry = g_object_ref (registry);
