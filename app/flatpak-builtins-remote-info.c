@@ -151,7 +151,7 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
       if (opt_commit)
         commit = g_strdup (opt_commit);
       else if (!flatpak_remote_state_lookup_ref (state, flatpak_decomposed_get_ref (ref),
-                                                 &commit, NULL, NULL, NULL, error))
+                                                 &commit, NULL, NULL, NULL, NULL, error))
         {
           g_assert (error == NULL || *error != NULL);
           return FALSE;
