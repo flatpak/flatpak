@@ -87,6 +87,7 @@ typedef struct
 {
   char     *remote_name;
   gboolean  is_file_uri;
+  gboolean  is_oci;
   char     *collection_id;
 
   /* New format summary */
@@ -107,6 +108,7 @@ typedef struct
   int       refcount;
   gint32    default_token_type;
   GPtrArray *sideload_repos;
+  GPtrArray *sideload_image_collections;
 } FlatpakRemoteState;
 
 FlatpakRemoteState *flatpak_remote_state_ref (FlatpakRemoteState *remote_state);
@@ -163,6 +165,8 @@ GVariant *flatpak_remote_state_load_ref_commit (FlatpakRemoteState *self,
                                                 GError            **error);
 void flatpak_remote_state_add_sideload_dir (FlatpakRemoteState *self,
                                             GFile              *path);
+void flatpak_remote_state_add_sideload_image_collection (FlatpakRemoteState     *self,
+                                                         FlatpakImageCollection *image_collection);
 
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakDir, g_object_unref)
