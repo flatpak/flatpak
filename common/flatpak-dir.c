@@ -385,6 +385,7 @@ flatpak_remote_state_new (void)
 
   state->refcount = 1;
   state->sideload_repos = g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_sideload_state_free);
+  state->sideload_image_collections = g_ptr_array_new_with_free_func ((GDestroyNotify)g_object_unref);
   state->subsummaries = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, (GDestroyNotify)variant_maybe_unref);
   return state;
 }
@@ -418,6 +419,7 @@ flatpak_remote_state_unref (FlatpakRemoteState *remote_state)
       g_clear_pointer (&remote_state->allow_refs, g_regex_unref);
       g_clear_pointer (&remote_state->deny_refs, g_regex_unref);
       g_clear_pointer (&remote_state->sideload_repos, g_ptr_array_unref);
+      g_clear_pointer (&remote_state->sideload_image_collections, g_ptr_array_unref);
 
       g_free (remote_state);
     }
@@ -478,6 +480,13 @@ flatpak_remote_state_add_sideload_repo (FlatpakRemoteState *self,
           g_info ("Using sideloaded repo %s for remote %s", flatpak_file_get_path_cached (dir), self->remote_name);
         }
     }
+}
+
+void
+flatpak_remote_state_add_sideload_image_collection (FlatpakRemoteState     *self,
+                                                    FlatpakImageCollection *image_collection)
+{
+  g_ptr_array_add (self->sideload_image_collections, g_object_ref (image_collection));
 }
 
 static void add_sideload_subdirs (GPtrArray *res,
@@ -13262,6 +13271,7 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
       if (!ostree_repo_remote_get_url (self->repo, remote_or_uri, &url, error))
         return NULL;
 
+      state->is_oci = flatpak_dir_get_remote_oci (self, remote_or_uri);
       state->default_token_type = flatpak_dir_get_remote_default_token_type (self, remote_or_uri);
     }
 
