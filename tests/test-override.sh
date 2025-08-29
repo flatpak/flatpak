@@ -17,7 +17,7 @@ reset_overrides () {
     assert_file_empty info
 }
 
-echo "1..18"
+echo "1..21"
 
 setup_repo
 install_repo
@@ -29,9 +29,19 @@ ${FLATPAK} override --user --nosocket=ssh-auth org.test.Hello
 ${FLATPAK} override --user --show org.test.Hello > override
 
 assert_file_has_content override "^\[Context\]$"
-assert_file_has_content override "^sockets=wayland;!ssh-auth;$"
+assert_file_has_content override "^sockets=wayland;!ssh-auth;if:wayland:reset;if:ssh-auth:reset;$"
 
 ok "override --socket"
+
+reset_overrides
+
+${FLATPAK} override --user --socket-if=wayland:!has-wayland org.test.Hello
+${FLATPAK} override --user --socket-if=wayland:true org.test.Hello
+${FLATPAK} override --user --show org.test.Hello > override
+
+assert_file_has_content override "^\[Context\]$"
+assert_file_has_content override "^sockets=wayland;if:wayland:!has-wayland:true;$"
+ok "override --socket-if"
 
 reset_overrides
 
@@ -40,7 +50,7 @@ ${FLATPAK} override --user --nodevice=kvm org.test.Hello
 ${FLATPAK} override --user --show org.test.Hello > override
 
 assert_file_has_content override "^\[Context\]$"
-assert_file_has_content override "^devices=dri;!kvm;$"
+assert_file_has_content override "^devices=dri;!kvm;if:dri:reset;if:kvm:reset;$"
 
 ok "override --device"
 
@@ -54,6 +64,28 @@ assert_file_has_content override "^\[Context\]$"
 assert_file_has_content override "^shared=network;!ipc;$"
 
 ok "override --share"
+
+reset_overrides
+
+${FLATPAK} override --user --device-if=dri:a:b:c org.test.Hello
+${FLATPAK} override --user --device-if=kvm:x --device-if=dri:d org.test.Hello
+${FLATPAK} override --user --device-if=dri:!x:d org.test.Hello
+${FLATPAK} override --user --show org.test.Hello > override
+
+assert_file_has_content override "^\[Context\]$"
+assert_file_has_content override "^devices=dri;kvm;if:dri:!x:a:b:c:d;if:kvm:x;$"
+ok "override --device-if"
+
+reset_overrides
+
+${FLATPAK} override --user --device-if=dri:foo org.test.Hello
+${FLATPAK} override --user --device-if=dri:nope --nodevice=dri --device-if=dri:baz org.test.Hello
+${FLATPAK} override --user --device-if=dri:bar org.test.Hello
+${FLATPAK} override --user --show org.test.Hello > override
+
+assert_file_has_content override "^\[Context\]$"
+assert_file_has_content override "^devices=dri;if:dri:bar:baz:reset;$"
+ok "override --device-if layers"
 
 reset_overrides
 

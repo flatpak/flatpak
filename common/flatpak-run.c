@@ -59,6 +59,7 @@
 #include "flatpak-run-dbus-private.h"
 #include "flatpak-run-private.h"
 #include "flatpak-run-sockets-private.h"
+#include "flatpak-run-wayland-private.h"
 #include "flatpak-utils-base-private.h"
 #include "flatpak-dir-private.h"
 #include "flatpak-dir-utils-private.h"
@@ -265,6 +266,18 @@ flatpak_run_add_extension_args (FlatpakBwrap      *bwrap,
   return TRUE;
 }
 
+static gboolean
+flatpak_run_evaluate_conditions (FlatpakContextConditions condition)
+{
+  switch (condition)
+    {
+    case FLATPAK_CONTEXT_CONDITION_HAS_WAYLAND:
+      return flatpak_run_has_wayland ();
+    default:
+      return FALSE;
+    }
+}
+
 /*
  * @per_app_dir_lock_fd: If >= 0, make use of per-app directories in
  *  the host's XDG_RUNTIME_DIR to share /tmp between instances.
@@ -289,6 +302,10 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
   g_autofree char *xdg_dirs_conf = NULL;
   gboolean home_access = FALSE;
   gboolean sandboxed = (flags & FLATPAK_RUN_FLAG_SANDBOX) != 0;
+  FlatpakContextDevices devices =
+    flatpak_context_compute_allowed_devices (context, flatpak_run_evaluate_conditions);
+  FlatpakContextSockets sockets =
+    flatpak_context_compute_allowed_sockets (context, flatpak_run_evaluate_conditions);
 
   if ((context->shares & FLATPAK_CONTEXT_SHARED_IPC) == 0)
     {
@@ -302,7 +319,7 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
       flatpak_bwrap_add_args (bwrap, "--unshare-net", NULL);
     }
 
-  if (context->devices & FLATPAK_CONTEXT_DEVICE_ALL)
+  if (devices & FLATPAK_CONTEXT_DEVICE_ALL)
     {
       flatpak_bwrap_add_args (bwrap,
                               "--dev-bind", "/dev", "/dev",
@@ -310,7 +327,7 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
       /* Don't expose the host /dev/shm, just the device nodes, unless explicitly allowed */
       if (g_file_test ("/dev/shm", G_FILE_TEST_IS_DIR))
         {
-          if (context->devices & FLATPAK_CONTEXT_DEVICE_SHM)
+          if (devices & FLATPAK_CONTEXT_DEVICE_SHM)
             {
               /* Don't do anything special: include shm in the
                * shared /dev. The host and all sandboxes and subsandboxes
@@ -352,7 +369,7 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
              mount on top of it. */
           if (g_strcmp0 (link, "/run/shm") == 0)
             {
-              if (context->devices & FLATPAK_CONTEXT_DEVICE_SHM &&
+              if (devices & FLATPAK_CONTEXT_DEVICE_SHM &&
                   g_file_test ("/run/shm", G_FILE_TEST_IS_DIR))
                 {
                   flatpak_bwrap_add_args (bwrap,
@@ -394,7 +411,7 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
                               "--dev", "/dev",
                               NULL);
 
-      if (context->devices & FLATPAK_CONTEXT_DEVICE_USB)
+      if (devices & FLATPAK_CONTEXT_DEVICE_USB)
         {
           g_info ("Allowing USB device access.");
 
@@ -402,7 +419,7 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
               flatpak_bwrap_add_args (bwrap, "--dev-bind", "/dev/bus/usb", "/dev/bus/usb", NULL);
         }
 
-      if (context->devices & FLATPAK_CONTEXT_DEVICE_DRI)
+      if (devices & FLATPAK_CONTEXT_DEVICE_DRI)
         {
           g_info ("Allowing dri access");
           int i;
@@ -438,7 +455,7 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
             }
         }
 
-      if (context->devices & FLATPAK_CONTEXT_DEVICE_INPUT)
+      if (devices & FLATPAK_CONTEXT_DEVICE_INPUT)
         {
           g_info ("Allowing input device access. Note: raw and virtual input currently require --device=all");
 
@@ -446,14 +463,14 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
               flatpak_bwrap_add_args (bwrap, "--dev-bind", "/dev/input", "/dev/input", NULL);
         }
 
-      if (context->devices & FLATPAK_CONTEXT_DEVICE_KVM)
+      if (devices & FLATPAK_CONTEXT_DEVICE_KVM)
         {
           g_info ("Allowing kvm access");
           if (g_file_test ("/dev/kvm", G_FILE_TEST_EXISTS))
             flatpak_bwrap_add_args (bwrap, "--dev-bind", "/dev/kvm", "/dev/kvm", NULL);
         }
 
-      if (context->devices & FLATPAK_CONTEXT_DEVICE_SHM)
+      if (devices & FLATPAK_CONTEXT_DEVICE_SHM)
         {
           /* This is a symlink to /run/shm on debian, so bind to real target */
           g_autofree char *real_dev_shm = realpath ("/dev/shm", NULL);
@@ -515,7 +532,7 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
   flatpak_context_append_bwrap_filesystem (context, bwrap, app_id, app_id_dir,
                                            exports, xdg_dirs_conf, home_access);
 
-  flatpak_run_add_socket_args_environment (bwrap, context->shares, context->sockets, app_id, instance_id);
+  flatpak_run_add_socket_args_environment (bwrap, context->shares, sockets, app_id, instance_id);
   flatpak_run_add_session_dbus_args (bwrap, proxy_arg_bwrap, context, flags, app_id);
   flatpak_run_add_system_dbus_args (bwrap, proxy_arg_bwrap, context, flags);
   flatpak_run_add_a11y_dbus_args (bwrap, proxy_arg_bwrap, context, flags, app_id);
