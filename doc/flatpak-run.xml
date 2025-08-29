@@ -80,10 +80,10 @@
         </para>
         <para>
             Environment variables are generally passed on to the sandboxed application, with
-            certain exceptions. The application metadata can override environment variables,
-            as well as the <option>--env</option> option. Apart from that, Flatpak always
-            unsets or overrides the following variables, since their session values
-            are likely to interfere with the functioning of the sandbox:
+            certain exceptions, if <option>--clear-env</option> is not specified. The application
+            metadata can override environment variables, as well as the <option>--env</option>
+            option. Apart from that, Flatpak always unsets or overrides the following variables,
+            since their session values are likely to interfere with the functioning of the sandbox:
         </para>
         <simplelist>
             <member>PATH</member>
@@ -582,6 +582,16 @@ key=v1;v2;
                     followed by a zero byte. This is the same format used by
                     <literal>env -0</literal> and
                     <filename>/proc/*/environ</filename>.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--clear-env</option></term>
+
+                <listitem><para>
+                    Do not pass environment variables from the outside to the
+                    sandboxed application. Explicitly set and unset environment
+                    variables still get applied.
                 </para></listitem>
             </varlistentry>
 
