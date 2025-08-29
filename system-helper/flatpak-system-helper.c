@@ -558,6 +558,15 @@ handle_deploy (FlatpakSystemHelper   *object,
                                                  "Can't pull ref %s from child OCI registry index: %s", arg_ref, error->message);
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
+
+      if (!flatpak_dir_pull_oci_extra_data (flatpak_dir_get_repo (system), image_source,
+                                            checksum, NULL, &error))
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "Can't pull extra data for ref %s from child OCI registry index: %s",
+                                                 arg_ref, error->message);
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
+        }
     }
   else if (strlen (arg_repo_path) > 0)
     {

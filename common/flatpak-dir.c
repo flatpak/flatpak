@@ -6602,6 +6602,166 @@ flatpak_dir_pull_ostree_extra_data (FlatpakDir        *self,
   return TRUE;
 }
 
+/* Extra-data usually is downloaded on the user side into an ostree repo.
+ * For system installs, a temporary ostree repo is used on the user side
+ * and then imported on the system side. This doesn't work for OCI images
+ * because importing the image into an ostree repo makes it impossible for
+ * the system side to verify the data.
+ *
+ * So instead, the OCI image is first mirrored into a local OCI repo and
+ * then gets imported on the system side, which can verify the image from
+ * the index by the digest.
+ */
+static gboolean
+flatpak_dir_mirror_oci_extra_data (FlatpakDir          *self,
+                                   FlatpakOciRegistry  *dst_registry,
+                                   FlatpakImageSource  *image_source,
+                                   FlatpakProgress     *progress,
+                                   GCancellable        *cancellable,
+                                   GError             **error)
+{
+  g_autoptr(GVariantBuilder) metadata_builder =
+    g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
+  g_autoptr(GVariant) commit_metadata = NULL;
+  g_autoptr(GVariant) extra_data_sources = NULL;
+  g_autoptr(GPtrArray) extra_data = NULL;
+
+  flatpak_image_source_build_commit_metadata (image_source, metadata_builder);
+  commit_metadata = g_variant_ref_sink (g_variant_builder_end (metadata_builder));
+  extra_data_sources = g_variant_lookup_value (commit_metadata,
+                                               "xa.extra-data-sources",
+                                               G_VARIANT_TYPE ("a(ayttays)"));
+  if (extra_data_sources == NULL)
+    return TRUE;
+
+  {
+    guint64 n_extra_data = 0;
+    guint64 total_download_size = 0;
+
+    compute_extra_data_download_size (extra_data_sources,
+                                      &n_extra_data,
+                                      &total_download_size);
+    flatpak_progress_init_extra_data (progress,
+                                      n_extra_data,
+                                      total_download_size);
+  }
+
+  extra_data = g_ptr_array_new_with_free_func ((GDestroyNotify) g_bytes_unref);
+
+  if (!flatpak_dir_pull_extra_data (self,
+                                    extra_data_sources,
+                                    progress,
+                                    extra_data,
+                                    NULL,
+                                    cancellable,
+                                    error))
+    return FALSE;
+
+  for (size_t i = 0; i < extra_data->len; i++)
+    {
+      GBytes *bytes = g_ptr_array_index (extra_data, i);
+      g_autofree char *rev = NULL;
+
+      rev = flatpak_oci_registry_store_blob (dst_registry,
+                                             bytes,
+                                             cancellable,
+                                             error);
+      if (rev == NULL)
+        return FALSE;
+    }
+
+  return TRUE;
+}
+
+gboolean
+flatpak_dir_pull_oci_extra_data (OstreeRepo              *repo,
+                                 FlatpakImageSource      *image_source,
+                                 const char              *rev,
+                                 GCancellable            *cancellable,
+                                 GError                 **error)
+{
+  g_autoptr(GVariant) extra_data_sources = NULL;
+  g_autoptr(GVariant) detached_metadata = NULL;
+  g_autoptr(GVariantBuilder) extra_data_builder = NULL;
+  g_auto(GVariantDict) new_metadata_dict = FLATPAK_VARIANT_DICT_INITIALIZER;
+  g_autoptr(GVariant) new_detached_metadata = NULL;
+  size_t n_extra_data;
+  FlatpakOciRegistry *registry = flatpak_image_source_get_registry (image_source);
+  const char *repository = flatpak_image_source_get_oci_repository (image_source);
+
+  extra_data_sources = flatpak_repo_get_extra_data_sources (repo, rev,
+                                                            cancellable, NULL);
+  if (extra_data_sources == NULL)
+    return TRUE;
+
+  n_extra_data = g_variant_n_children (extra_data_sources);
+  if (n_extra_data == 0)
+    return TRUE;
+
+  extra_data_builder = g_variant_builder_new (G_VARIANT_TYPE ("a(ayay)"));
+
+  for (size_t i = 0; i < n_extra_data; i++)
+    {
+      const char *name = NULL;
+      const char *uri = NULL;
+      const guchar *expected_sha256_bytes;
+      g_autofree char *expected_sha256 = NULL;
+      g_autofree char *digest = NULL;
+      g_autoptr(GBytes) bytes = NULL;
+
+      flatpak_repo_parse_extra_data_sources (extra_data_sources,
+                                             i,
+                                             &name,
+                                             NULL,
+                                             NULL,
+                                             &expected_sha256_bytes,
+                                             &uri);
+
+      if (expected_sha256_bytes == NULL)
+        {
+          return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                     _("Invalid checksum for extra data uri %s"),
+                                     uri);
+        }
+
+      expected_sha256 = ostree_checksum_from_bytes (expected_sha256_bytes);
+      digest = g_strdup_printf ("sha256:%s", expected_sha256);
+
+      bytes = flatpak_oci_registry_load_blob (registry,
+                                              repository,
+                                              FALSE,
+                                              digest,
+                                              NULL,
+                                              NULL,
+                                              cancellable,
+                                              error);
+      if (!bytes)
+        return FALSE;
+
+      g_variant_builder_add (extra_data_builder,
+                             "(^ay@ay)",
+                             name,
+                             g_variant_new_from_bytes (G_VARIANT_TYPE ("ay"),
+                                                       bytes, TRUE));
+    }
+
+  if (!ostree_repo_read_commit_detached_metadata (repo, rev, &detached_metadata,
+                                                  cancellable, error))
+    return FALSE;
+
+  g_variant_dict_init (&new_metadata_dict, detached_metadata);
+  g_variant_dict_insert_value (&new_metadata_dict, "xa.extra-data",
+                               g_variant_builder_end (extra_data_builder));
+  new_detached_metadata = g_variant_ref_sink (g_variant_dict_end (&new_metadata_dict));
+
+  if (!ostree_repo_write_commit_detached_metadata (repo, rev,
+                                                   new_detached_metadata,
+                                                   cancellable, error))
+    return FALSE;
+
+  return TRUE;
+}
+
 static void
 oci_pull_progress_cb (guint64 total_size, guint64 pulled_size,
                       guint32 n_layers, guint32 pulled_layers,
@@ -6645,8 +6805,15 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
 
   res = flatpak_mirror_image_from_oci (dst_registry, image_source, state->remote_name, ref, self->repo, oci_pull_progress_cb,
                                        progress, cancellable, error);
-
   if (!res)
+    return FALSE;
+
+  if (!flatpak_dir_mirror_oci_extra_data (self,
+                                          dst_registry,
+                                          image_source,
+                                          progress,
+                                          cancellable,
+                                          error))
     return FALSE;
 
   return TRUE;
@@ -6707,6 +6874,23 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
     return FALSE;
 
   g_info ("Imported OCI image as checksum %s", checksum);
+
+  if (!flatpak_dir_setup_extra_data (self, state, repo,
+                                     ref, checksum, token,
+                                     flatpak_flags,
+                                     progress,
+                                     cancellable,
+                                     error))
+    return FALSE;
+
+  if (!flatpak_dir_pull_ostree_extra_data (self, repo,
+                                           state->remote_name,
+                                           ref, checksum,
+                                           flatpak_flags,
+                                           progress,
+                                           cancellable,
+                                           error))
+    return FALSE;
 
   if (repo == self->repo)
     name = flatpak_dir_get_name (self);
