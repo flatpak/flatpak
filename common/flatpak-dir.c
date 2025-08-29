@@ -6319,6 +6319,140 @@ flatpak_dir_setup_extra_data (FlatpakDir                           *self,
 }
 
 static gboolean
+flatpak_dir_pull_extra_data_to_bytes (FlatpakDir       *self,
+                                      GVariant         *extra_data_sources,
+                                      int               extra_data_index,
+                                      FlatpakProgress  *progress,
+                                      GBytes          **bytes_out,
+                                      const char      **name_out,
+                                      GCancellable     *cancellable,
+                                      GError          **error)
+{
+  const char *name = NULL;
+  guint64 download_size;
+  guint64 installed_size;
+  const guchar *expected_sha256_bytes;
+  const char *uri = NULL;
+  g_autofree char *expected_sha256 = NULL;
+  g_autofree char *actual_sha256 = NULL;
+  g_autoptr(GBytes) bytes = NULL;
+  g_autoptr(GFile) extra_local_file = NULL;
+  g_autoptr(GFile) base_dir = NULL;
+
+  flatpak_repo_parse_extra_data_sources (extra_data_sources,
+                                         extra_data_index,
+                                         &name,
+                                         &download_size,
+                                         &installed_size,
+                                         &expected_sha256_bytes,
+                                         &uri);
+
+  if (expected_sha256_bytes == NULL)
+    {
+      return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                 _("Invalid checksum for extra data uri %s"),
+                                 uri);
+    }
+
+  expected_sha256 = ostree_checksum_from_bytes (expected_sha256_bytes);
+
+  if (name == NULL || *name == '\0')
+    {
+      return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                 _("Empty name for extra data uri %s"), uri);
+    }
+
+  /* Don't allow file uris here as that could read local files based on remote data */
+  if (!g_str_has_prefix (uri, "http:") &&
+      !g_str_has_prefix (uri, "https:"))
+    {
+      return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                 _("Unsupported extra data uri %s"), uri);
+    }
+
+  /* TODO: Download to disk to support resumed downloads on error */
+
+  base_dir = flatpak_get_user_base_dir_location ();
+  extra_local_file = flatpak_build_file (base_dir,
+                                         "extra-data",
+                                         expected_sha256,
+                                         name,
+                                         NULL);
+
+  if (g_file_query_exists (extra_local_file, cancellable))
+    {
+      gsize extra_local_size;
+      g_autofree char *extra_local_contents = NULL;
+      g_autoptr(GError) local_error = NULL;
+
+      g_info ("Loading extra-data from local file %s",
+              flatpak_file_get_path_cached (extra_local_file));
+
+      if (!g_file_load_contents (extra_local_file,
+                                 cancellable,
+                                 &extra_local_contents,
+                                 &extra_local_size,
+                                 NULL,
+                                 &local_error))
+        {
+          return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                     _("Failed to load local extra-data %s: %s"),
+                                     flatpak_file_get_path_cached (extra_local_file),
+                                     local_error->message);
+        }
+
+      if (extra_local_size != download_size)
+        {
+          return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                     _("Wrong size for extra-data %s"),
+                                     flatpak_file_get_path_cached (extra_local_file));
+        }
+
+      bytes = g_bytes_new (extra_local_contents, extra_local_size);
+    }
+  else
+    {
+      ensure_http_session (self);
+      bytes = flatpak_load_uri (self->http_session,
+                                uri,
+                                0, NULL,
+                                extra_data_progress_report,
+                                progress,
+                                NULL,
+                                cancellable, error);
+
+      if (bytes == NULL)
+        {
+          g_prefix_error (error, _("While downloading %s: "), uri);
+          return FALSE;
+        }
+    }
+
+  g_assert (bytes != NULL);
+
+  if (g_bytes_get_size (bytes) != download_size)
+    {
+      return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                 _("Wrong size for extra data %s"), uri);
+    }
+
+  flatpak_progress_complete_extra_data_download (progress, download_size);
+
+  actual_sha256 = g_compute_checksum_for_bytes (G_CHECKSUM_SHA256, bytes);
+  if (strcmp (actual_sha256, expected_sha256) != 0)
+    {
+      return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                 _("Invalid checksum for extra data %s"), uri);
+    }
+
+  if (bytes_out)
+    *bytes_out = g_steal_pointer (&bytes);
+  if (name_out)
+    *name_out = name;
+  return TRUE;
+}
+
+static gboolean
 flatpak_dir_pull_extra_data (FlatpakDir          *self,
                              OstreeRepo          *repo,
                              const char          *repository,
@@ -6335,7 +6469,6 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
   g_autoptr(GVariantBuilder) extra_data_builder = NULL;
   g_autoptr(GVariant) new_detached_metadata = NULL;
   g_autoptr(GVariant) extra_data = NULL;
-  g_autoptr(GFile) base_dir = NULL;
   int i;
   gsize n_extra_data;
 
@@ -6355,95 +6488,29 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
   /* Other fields were already set in flatpak_dir_setup_extra_data() */
   flatpak_progress_start_extra_data (progress);
 
-  base_dir = flatpak_get_user_base_dir_location ();
-
   for (i = 0; i < n_extra_data; i++)
     {
-      const char *extra_data_uri = NULL;
-      g_autofree char *extra_data_sha256 = NULL;
-      const char *extra_data_name = NULL;
-      guint64 download_size;
-      guint64 installed_size;
-      g_autofree char *sha256 = NULL;
-      const guchar *sha256_bytes;
       g_autoptr(GBytes) bytes = NULL;
-      g_autoptr(GFile) extra_local_file = NULL;
+      const char *name = NULL;
 
-      flatpak_repo_parse_extra_data_sources (extra_data_sources, i,
-                                             &extra_data_name,
-                                             &download_size,
-                                             &installed_size,
-                                             &sha256_bytes,
-                                             &extra_data_uri);
-
-      if (sha256_bytes == NULL)
-        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid checksum for extra data uri %s"), extra_data_uri);
-
-      extra_data_sha256 = ostree_checksum_from_bytes (sha256_bytes);
-
-      if (*extra_data_name == 0)
-        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Empty name for extra data uri %s"), extra_data_uri);
-
-      /* Don't allow file uris here as that could read local files based on remote data */
-      if (!g_str_has_prefix (extra_data_uri, "http:") &&
-          !g_str_has_prefix (extra_data_uri, "https:"))
+      if (!flatpak_dir_pull_extra_data_to_bytes (self,
+                                                 extra_data_sources,
+                                                 i,
+                                                 progress,
+                                                 &bytes,
+                                                 &name,
+                                                 cancellable,
+                                                 error))
         {
           flatpak_progress_reset_extra_data (progress);
-          return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Unsupported extra data uri %s"), extra_data_uri);
-        }
-
-      /* TODO: Download to disk to support resumed downloads on error */
-
-      extra_local_file = flatpak_build_file (base_dir, "extra-data", extra_data_sha256, extra_data_name, NULL);
-      if (g_file_query_exists (extra_local_file, cancellable))
-        {
-          g_info ("Loading extra-data from local file %s", flatpak_file_get_path_cached (extra_local_file));
-          gsize extra_local_size;
-          g_autofree char *extra_local_contents = NULL;
-          g_autoptr(GError) my_error = NULL;
-
-          if (!g_file_load_contents (extra_local_file, cancellable, &extra_local_contents, &extra_local_size, NULL, &my_error))
-            return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Failed to load local extra-data %s: %s"),
-                                       flatpak_file_get_path_cached (extra_local_file), my_error->message);
-          if (extra_local_size != download_size)
-            return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Wrong size for extra-data %s"), flatpak_file_get_path_cached (extra_local_file));
-
-          bytes = g_bytes_new (extra_local_contents, extra_local_size);
-        }
-      else
-        {
-          ensure_http_session (self);
-          bytes = flatpak_load_uri (self->http_session, extra_data_uri, 0, NULL,
-                                    extra_data_progress_report, progress, NULL,
-                                    cancellable, error);
-        }
-
-      if (bytes == NULL)
-        {
-          flatpak_progress_reset_extra_data (progress);
-          g_prefix_error (error, _("While downloading %s: "), extra_data_uri);
           return FALSE;
-        }
-
-      if (g_bytes_get_size (bytes) != download_size)
-        {
-          flatpak_progress_reset_extra_data (progress);
-          return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Wrong size for extra data %s"), extra_data_uri);
-        }
-
-      flatpak_progress_complete_extra_data_download (progress, download_size);
-
-      sha256 = g_compute_checksum_for_bytes (G_CHECKSUM_SHA256, bytes);
-      if (strcmp (sha256, extra_data_sha256) != 0)
-        {
-          flatpak_progress_reset_extra_data (progress);
-          return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid checksum for extra data %s"), extra_data_uri);
         }
 
       g_variant_builder_add (extra_data_builder,
                              "(^ay@ay)",
-                             extra_data_name,
-                             g_variant_new_from_bytes (G_VARIANT_TYPE ("ay"), bytes, TRUE));
+                             name,
+                             g_variant_new_from_bytes (G_VARIANT_TYPE ("ay"),
+                                                       bytes, TRUE));
     }
 
   extra_data = g_variant_ref_sink (g_variant_builder_end (extra_data_builder));
