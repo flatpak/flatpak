@@ -728,6 +728,15 @@ apply_exports (char            **envp,
   return envp;
 }
 
+static void
+flatpak_run_apply_env_clear (FlatpakBwrap *bwrap, gboolean clear_env)
+{
+  if (!clear_env)
+    return;
+
+  flatpak_bwrap_add_args (bwrap, "--clearenv", NULL);
+}
+
 void
 flatpak_run_apply_env_default (FlatpakBwrap *bwrap, gboolean use_ld_so_cache)
 {
@@ -3268,6 +3277,7 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
       app_files = g_object_ref (original_app_files);
     }
 
+  flatpak_run_apply_env_clear (bwrap, !!(flags & FLATPAK_RUN_FLAG_CLEAR_ENV));
   flatpak_run_apply_env_default (bwrap, use_ld_so_cache);
   flatpak_run_apply_env_vars (bwrap, app_context);
   flatpak_run_apply_env_prompt (bwrap, app_id);
