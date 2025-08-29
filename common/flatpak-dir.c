@@ -6224,16 +6224,14 @@ extra_data_progress_report (guint64  downloaded_bytes,
 }
 
 static void
-compute_extra_data_download_size (GVariant *commitv,
-                                  guint64 *out_n_extra_data,
-                                  guint64 *out_total_download_size)
+compute_extra_data_download_size (GVariant *extra_data_sources,
+                                  guint64  *out_n_extra_data,
+                                  guint64  *out_total_download_size)
 {
   guint64 i;
   guint64 n_extra_data = 0;
   guint64 total_download_size = 0;
-  g_autoptr(GVariant) extra_data_sources = NULL;
 
-  extra_data_sources = flatpak_commit_get_extra_data_sources (commitv, NULL);
   if (extra_data_sources != NULL)
     {
       n_extra_data = g_variant_n_children (extra_data_sources);
@@ -6301,11 +6299,16 @@ flatpak_dir_setup_extra_data (FlatpakDir                           *self,
       else
         {
           /* No summary/cache or old cache version, download commit and get size from there */
-          g_autoptr(GVariant) commitv = flatpak_remote_state_load_ref_commit (state, self, ref, rev, token, NULL, cancellable, error);
+          g_autoptr(GVariant) commitv = NULL;
+          g_autoptr(GVariant) extra_data_sources = NULL;
+
+          commitv = flatpak_remote_state_load_ref_commit (state, self, ref, rev,
+                                                          token, NULL, cancellable, error);
           if (commitv == NULL)
             return FALSE;
 
-          compute_extra_data_download_size (commitv, &n_extra_data, &total_download_size);
+          extra_data_sources = flatpak_commit_get_extra_data_sources (commitv, NULL);
+          compute_extra_data_download_size (extra_data_sources, &n_extra_data, &total_download_size);
         }
     }
 
