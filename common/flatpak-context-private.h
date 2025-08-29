@@ -90,6 +90,7 @@ struct FlatpakContext
   FlatpakContextDevices  devices_valid;
   FlatpakContextFeatures features;
   FlatpakContextFeatures features_valid;
+  GStrv                  extra_args;
   GHashTable            *env_vars;
   GHashTable            *persistent;
   GHashTable            *filesystems;
@@ -127,6 +128,9 @@ void           flatpak_context_save_metadata (FlatpakContext *context,
                                               gboolean        flatten,
                                               GKeyFile       *metakey);
 void           flatpak_context_allow_host_fs (FlatpakContext *context);
+gboolean       flatpak_context_set_extra_args (FlatpakContext *context,
+                                               const char     *value,
+                                               GError        **error);
 void           flatpak_context_set_session_bus_policy (FlatpakContext *context,
                                                        const char     *name,
                                                        FlatpakPolicy   policy);
