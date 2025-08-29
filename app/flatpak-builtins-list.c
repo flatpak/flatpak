@@ -38,6 +38,7 @@ static gboolean opt_show_details;
 static gboolean opt_runtime;
 static gboolean opt_app;
 static gboolean opt_all;
+static gboolean opt_bytes;
 static char *opt_arch;
 static char *opt_app_runtime;
 static const char **opt_cols;
@@ -50,6 +51,7 @@ static GOptionEntry options[] = {
   { "all", 'a', 0, G_OPTION_ARG_NONE, &opt_all, N_("List all refs (including locale/debug)"), NULL },
   { "app-runtime", 0, 0, G_OPTION_ARG_STRING, &opt_app_runtime, N_("List all applications using RUNTIME"), N_("RUNTIME") },
   { "columns", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_cols, N_("What information to show"), N_("FIELD,…")  },
+  { "bytes", 'b', 0, G_OPTION_ARG_NONE, &opt_bytes, N_("Show installed size in bytes (if the column is present)"), NULL },
   { NULL }
 };
 
@@ -303,7 +305,10 @@ print_table_for_refs (gboolean      print_apps,
                   guint64 size = 0;
 
                   size = flatpak_deploy_data_get_installed_size (deploy_data);
-                  size_s = g_format_size (size);
+                  if (opt_bytes)
+                    size_s = g_strdup_printf("%lu", size);
+                  else
+                    size_s = g_format_size (size);
                   flatpak_table_printer_add_decimal_column (printer, size_s);
                 }
               else if (strcmp (columns[k].name, "options") == 0)
