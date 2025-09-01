@@ -226,56 +226,6 @@ schedule_idle_callback (void)
   G_UNLOCK (idle);
 }
 
-#define DBUS_NAME_DBUS "org.freedesktop.DBus"
-#define DBUS_INTERFACE_DBUS DBUS_NAME_DBUS
-#define DBUS_PATH_DBUS "/org/freedesktop/DBus"
-
-static int
-get_sender_pid (GDBusMethodInvocation *invocation)
-{
-  g_autoptr(GDBusMessage) msg = NULL;
-  g_autoptr(GDBusMessage) reply = NULL;
-  GDBusConnection *connection;
-  const char *sender;
-  GVariant *body;
-  g_autoptr(GVariantIter) iter = NULL;
-  const char *key;
-  g_autoptr(GVariant) value = NULL;
-
-  connection = g_dbus_method_invocation_get_connection (invocation);
-  sender = g_dbus_method_invocation_get_sender (invocation);
-
-  msg = g_dbus_message_new_method_call (DBUS_NAME_DBUS,
-                                        DBUS_PATH_DBUS,
-                                        DBUS_INTERFACE_DBUS,
-                                        "GetConnectionCredentials");
-  g_dbus_message_set_body (msg, g_variant_new ("(s)", sender));
-
-  reply = g_dbus_connection_send_message_with_reply_sync (connection, msg,
-                                                          G_DBUS_SEND_MESSAGE_FLAGS_NONE,
-                                                          30000,
-                                                          NULL,
-                                                          NULL,
-                                                          NULL);
-  if (reply == NULL)
-    return 0;
-
-  if (g_dbus_message_get_message_type (reply) == G_DBUS_MESSAGE_TYPE_ERROR)
-    return 0;
-
-  body = g_dbus_message_get_body (reply);
-
-  g_variant_get (body, "(a{sv})", &iter);
-  while (g_variant_iter_loop (iter, "{&sv}", &key, &value))
-    {
-      if (strcmp (key, "ProcessID") == 0)
-        return g_variant_get_uint32 (value);
-    }
-  value = NULL; /* g_variant_iter_loop freed it */
-
-  return 0;
-}
-
 static FlatpakDir *
 dir_get_system (const char             *installation,
                 GDBusMethodInvocation  *invocation,
@@ -283,7 +233,8 @@ dir_get_system (const char             *installation,
                 GError                **error)
 {
   FlatpakDir *system = NULL;
-  pid_t source_pid = invocation ? get_sender_pid (invocation) : 0;
+  const char *sender;
+  g_autoptr(AutoPolkitSubject) subject = NULL;
 
   if (installation != NULL && *installation != '\0')
     system = flatpak_dir_get_system_by_id (installation, NULL, error);
@@ -294,7 +245,10 @@ dir_get_system (const char             *installation,
   if (system == NULL)
     return NULL;
 
-  flatpak_dir_set_source_pid (system, source_pid);
+  sender = g_dbus_method_invocation_get_sender (invocation);
+  subject = polkit_system_bus_name_new (sender);
+
+  flatpak_dir_set_subject (system, subject);
   flatpak_dir_set_no_system_helper (system, TRUE);
   flatpak_dir_set_no_interaction (system, no_interaction);
 
