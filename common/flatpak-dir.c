@@ -249,7 +249,7 @@ struct FlatpakDir
   GFile           *cache_dir;
   gboolean         no_system_helper;
   gboolean         no_interaction;
-  pid_t            source_pid;
+  PolkitSubject   *subject;
 
   GDBusConnection *system_helper_bus;
 
@@ -3216,6 +3216,7 @@ flatpak_dir_finalize (GObject *object)
   g_clear_pointer (&self->remote_filters, g_hash_table_unref);
   g_clear_pointer (&self->masked, g_regex_unref);
   g_clear_pointer (&self->pinned, g_regex_unref);
+  g_clear_object (&self->subject);
 
   G_OBJECT_CLASS (flatpak_dir_parent_class)->finalize (object);
 }
@@ -9107,9 +9108,8 @@ flatpak_dir_check_parental_controls (FlatpakDir    *self,
   /* Assume that root is allowed to install any ref and shouldn't have any
    * parental controls restrictions applied to them. Note that this branch
    * must not be taken if this code is running within the system-helper, as that
-   * runs as root but on behalf of another process. If running within the
-   * system-helper, self->source_pid is non-zero. */
-  if (self->source_pid == 0 && getuid () == 0)
+   * runs as root but on behalf of another process. */
+  if (!self->subject && getuid () == 0)
     {
       g_info ("Skipping parental controls check for %s due to running as root", ref);
       return TRUE;
@@ -9141,19 +9141,33 @@ flatpak_dir_check_parental_controls (FlatpakDir    *self,
       return FALSE;
     }
 
-  if (self->user || self->source_pid == 0)
-    subject = polkit_unix_process_new_for_owner (getpid (), 0, getuid ());
-  else
-    subject = polkit_unix_process_new_for_owner (self->source_pid, 0, -1);
+  if (self->subject)
+    {
+      g_autoptr(PolkitSubject) process_subject = NULL;
 
-  /* Get the parental controls for the invoking user. */
-  subject_uid = polkit_unix_process_get_uid (POLKIT_UNIX_PROCESS (subject));
+      subject = g_object_ref (self->subject);
+      /* This internally uses dbus GetConnectionCredentials which ensures we
+       * get the right UID. We should *not* use it for authorization via the
+       * PID though! */
+      process_subject =
+        polkit_system_bus_name_get_process_sync (POLKIT_SYSTEM_BUS_NAME (subject),
+                                                 cancellable, NULL);
+      subject_uid = polkit_unix_process_get_uid (POLKIT_UNIX_PROCESS (process_subject));
+    }
+  else
+    {
+      subject_uid = getuid ();
+      subject = polkit_unix_process_new_for_owner (getpid (), 0, subject_uid);
+    }
+
   if (subject_uid == -1)
     {
       g_set_error_literal (error, G_DBUS_ERROR, G_DBUS_ERROR_AUTH_FAILED,
                            "Failed to get subject UID");
       return FALSE;
     }
+
+  g_assert (subject != NULL);
 
   manager = mct_manager_new (dbus_connection);
   manager_flags = MCT_MANAGER_GET_VALUE_FLAGS_NONE;
@@ -17016,16 +17030,10 @@ flatpak_dir_get_locale_subpaths (FlatpakDir *self)
 }
 
 void
-flatpak_dir_set_source_pid (FlatpakDir *self,
-                            pid_t       pid)
+flatpak_dir_set_subject (FlatpakDir    *self,
+                         PolkitSubject *subject)
 {
-  self->source_pid = pid;
-}
-
-pid_t
-flatpak_dir_get_source_pid (FlatpakDir *self)
-{
-  return self->source_pid;
+  g_set_object (&self->subject, subject);
 }
 
 static void
@@ -17045,7 +17053,7 @@ static void
 {
 #ifdef HAVE_LIBSYSTEMD
   const char *installation = source ? source : flatpak_dir_get_name_cached (self);
-  pid_t source_pid = flatpak_dir_get_source_pid (self);
+  const char *subject = self->subject ? polkit_subject_to_string (self->subject) : "(none)";
   char message[1024];
   int len;
   va_list args;
@@ -17061,7 +17069,7 @@ static void
    */
   sd_journal_send ("MESSAGE_ID=" FLATPAK_MESSAGE_ID,
                    "PRIORITY=5",
-                   "OBJECT_PID=%d", source_pid,
+                   "SUBJECT=%s", subject,
                    "CODE_FILE=%s", file,
                    "CODE_LINE=%d", line,
                    "CODE_FUNC=%s", func,

@@ -60,6 +60,8 @@ GType flatpak_deploy_get_type (void);
 
 #define FLATPAK_CLI_UPDATE_INTERVAL_MS 300
 
+typedef struct _PolkitSubject PolkitSubject;
+
 typedef struct
 {
   FlatpakDecomposed *ref;
@@ -1022,9 +1024,8 @@ char **               flatpak_dir_get_default_locale_languages              (Fla
 char **               flatpak_dir_get_locales                               (FlatpakDir                    *self);
 char **               flatpak_dir_get_locale_languages                      (FlatpakDir                    *self);
 char **               flatpak_dir_get_locale_subpaths                       (FlatpakDir                    *self);
-void                  flatpak_dir_set_source_pid                            (FlatpakDir                    *self,
-                                                                             pid_t                          pid);
-pid_t                 flatpak_dir_get_source_pid                            (FlatpakDir                    *self);
+void                  flatpak_dir_set_subject                               (FlatpakDir                    *self,
+                                                                             PolkitSubject                 *subject);
 gboolean              flatpak_dir_delete_mirror_refs                        (FlatpakDir                    *self,
                                                                              gboolean                       dry_run,
                                                                              GCancellable                  *cancellable,
