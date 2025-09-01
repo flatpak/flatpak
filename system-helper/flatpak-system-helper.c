@@ -226,30 +226,6 @@ schedule_idle_callback (void)
   G_UNLOCK (idle);
 }
 
-static FlatpakDir *
-dir_get_system (const char *installation,
-                pid_t       source_pid,
-                gboolean    no_interaction,
-                GError    **error)
-{
-  FlatpakDir *system = NULL;
-
-  if (installation != NULL && *installation != '\0')
-    system = flatpak_dir_get_system_by_id (installation, NULL, error);
-  else
-    system = flatpak_dir_get_system_default ();
-
-  /* This can happen in case of error with flatpak_dir_get_system_by_id(). */
-  if (system == NULL)
-    return NULL;
-
-  flatpak_dir_set_source_pid (system, source_pid);
-  flatpak_dir_set_no_system_helper (system, TRUE);
-  flatpak_dir_set_no_interaction (system, no_interaction);
-
-  return system;
-}
-
 #define DBUS_NAME_DBUS "org.freedesktop.DBus"
 #define DBUS_INTERFACE_DBUS DBUS_NAME_DBUS
 #define DBUS_PATH_DBUS "/org/freedesktop/DBus"
@@ -298,6 +274,31 @@ get_sender_pid (GDBusMethodInvocation *invocation)
   value = NULL; /* g_variant_iter_loop freed it */
 
   return 0;
+}
+
+static FlatpakDir *
+dir_get_system (const char             *installation,
+                GDBusMethodInvocation  *invocation,
+                gboolean                no_interaction,
+                GError                **error)
+{
+  FlatpakDir *system = NULL;
+  pid_t source_pid = invocation ? get_sender_pid (invocation) : 0;
+
+  if (installation != NULL && *installation != '\0')
+    system = flatpak_dir_get_system_by_id (installation, NULL, error);
+  else
+    system = flatpak_dir_get_system_default ();
+
+  /* This can happen in case of error with flatpak_dir_get_system_by_id(). */
+  if (system == NULL)
+    return NULL;
+
+  flatpak_dir_set_source_pid (system, source_pid);
+  flatpak_dir_set_no_system_helper (system, TRUE);
+  flatpak_dir_set_no_interaction (system, no_interaction);
+
+  return system;
 }
 
 static void
@@ -412,7 +413,7 @@ handle_deploy (FlatpakSystemHelper   *object,
 
   g_info ("Deploy %s %u %s %s %s", arg_repo_path, arg_flags, arg_ref, arg_origin, arg_installation);
 
-  system = dir_get_system (arg_installation, get_sender_pid (invocation), (arg_flags & FLATPAK_HELPER_DEPLOY_FLAGS_NO_INTERACTION) != 0, &error);
+  system = dir_get_system (arg_installation, invocation, (arg_flags & FLATPAK_HELPER_DEPLOY_FLAGS_NO_INTERACTION) != 0, &error);
   if (system == NULL)
     {
       g_dbus_method_invocation_return_gerror (invocation, error);
@@ -697,7 +698,7 @@ handle_cancel_pull (FlatpakSystemHelper   *object,
 
   g_info ("CancelPull %s %u %s", arg_installation, arg_flags, arg_src_dir);
 
-  system = dir_get_system (arg_installation, get_sender_pid (invocation), (arg_flags & FLATPAK_HELPER_CANCEL_PULL_FLAGS_NO_INTERACTION) != 0, &error);
+  system = dir_get_system (arg_installation, invocation, (arg_flags & FLATPAK_HELPER_CANCEL_PULL_FLAGS_NO_INTERACTION) != 0, &error);
   if (system == NULL)
     {
       g_dbus_method_invocation_return_gerror (invocation, error);
@@ -755,7 +756,7 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
 
   g_info ("DeployAppstream %s %u %s %s %s", arg_repo_path, arg_flags, arg_origin, arg_arch, arg_installation);
 
-  system = dir_get_system (arg_installation, get_sender_pid (invocation), (arg_flags & FLATPAK_HELPER_DEPLOY_APPSTREAM_FLAGS_NO_INTERACTION) != 0, &error);
+  system = dir_get_system (arg_installation, invocation, (arg_flags & FLATPAK_HELPER_DEPLOY_APPSTREAM_FLAGS_NO_INTERACTION) != 0, &error);
   if (system == NULL)
     {
       g_dbus_method_invocation_return_gerror (invocation, error);
@@ -923,7 +924,7 @@ handle_uninstall (FlatpakSystemHelper   *object,
 
   g_info ("Uninstall %u %s %s", arg_flags, arg_ref, arg_installation);
 
-  system = dir_get_system (arg_installation, get_sender_pid (invocation), (arg_flags & FLATPAK_HELPER_UNINSTALL_FLAGS_NO_INTERACTION) != 0, &error);
+  system = dir_get_system (arg_installation, invocation, (arg_flags & FLATPAK_HELPER_UNINSTALL_FLAGS_NO_INTERACTION) != 0, &error);
   if (system == NULL)
     {
       g_dbus_method_invocation_return_gerror (invocation, error);
@@ -977,7 +978,7 @@ handle_install_bundle (FlatpakSystemHelper   *object,
 
   g_info ("InstallBundle %s %u %s %s", arg_bundle_path, arg_flags, arg_remote, arg_installation);
 
-  system = dir_get_system (arg_installation, get_sender_pid (invocation), (arg_flags & FLATPAK_HELPER_INSTALL_BUNDLE_FLAGS_NO_INTERACTION) != 0, &error);
+  system = dir_get_system (arg_installation, invocation, (arg_flags & FLATPAK_HELPER_INSTALL_BUNDLE_FLAGS_NO_INTERACTION) != 0, &error);
   if (system == NULL)
     {
       g_dbus_method_invocation_return_gerror (invocation, error);
@@ -1029,7 +1030,7 @@ handle_configure_remote (FlatpakSystemHelper   *object,
 
   g_info ("ConfigureRemote %u %s %s", arg_flags, arg_remote, arg_installation);
 
-  system = dir_get_system (arg_installation, get_sender_pid (invocation), (arg_flags & FLATPAK_HELPER_CONFIGURE_REMOTE_FLAGS_NO_INTERACTION) != 0, &error);
+  system = dir_get_system (arg_installation, invocation, (arg_flags & FLATPAK_HELPER_CONFIGURE_REMOTE_FLAGS_NO_INTERACTION) != 0, &error);
   if (system == NULL)
     {
       g_dbus_method_invocation_return_gerror (invocation, error);
@@ -1104,7 +1105,7 @@ handle_configure (FlatpakSystemHelper   *object,
 
   g_info ("Configure %u %s=%s %s", arg_flags, arg_key, arg_value, arg_installation);
 
-  system = dir_get_system (arg_installation, get_sender_pid (invocation), (arg_flags & FLATPAK_HELPER_CONFIGURE_FLAGS_NO_INTERACTION) != 0, &error);
+  system = dir_get_system (arg_installation, invocation, (arg_flags & FLATPAK_HELPER_CONFIGURE_FLAGS_NO_INTERACTION) != 0, &error);
   if (system == NULL)
     {
       g_dbus_method_invocation_return_gerror (invocation, error);
@@ -1170,7 +1171,7 @@ handle_update_remote (FlatpakSystemHelper   *object,
 
   g_info ("UpdateRemote %u %s %s %s %s", arg_flags, arg_remote, arg_installation, arg_summary_path, arg_summary_sig_path);
 
-  system = dir_get_system (arg_installation, get_sender_pid (invocation), (arg_flags & FLATPAK_HELPER_UPDATE_REMOTE_FLAGS_NO_INTERACTION) != 0, &error);
+  system = dir_get_system (arg_installation, invocation, (arg_flags & FLATPAK_HELPER_UPDATE_REMOTE_FLAGS_NO_INTERACTION) != 0, &error);
   if (system == NULL)
     {
       g_dbus_method_invocation_return_gerror (invocation, error);
@@ -1249,7 +1250,7 @@ handle_remove_local_ref (FlatpakSystemHelper   *object,
 
   g_info ("RemoveLocalRef %u %s %s %s", arg_flags, arg_remote, arg_ref, arg_installation);
 
-  system = dir_get_system (arg_installation, get_sender_pid (invocation), (arg_flags & FLATPAK_HELPER_REMOVE_LOCAL_REF_FLAGS_NO_INTERACTION) != 0, &error);
+  system = dir_get_system (arg_installation, invocation, (arg_flags & FLATPAK_HELPER_REMOVE_LOCAL_REF_FLAGS_NO_INTERACTION) != 0, &error);
   if (system == NULL)
     {
       g_dbus_method_invocation_return_gerror (invocation, error);
@@ -1298,7 +1299,7 @@ handle_prune_local_repo (FlatpakSystemHelper   *object,
 
   g_info ("PruneLocalRepo %u %s", arg_flags, arg_installation);
 
-  system = dir_get_system (arg_installation, get_sender_pid (invocation), (arg_flags & FLATPAK_HELPER_PRUNE_LOCAL_REPO_FLAGS_NO_INTERACTION) != 0, &error);
+  system = dir_get_system (arg_installation, invocation, (arg_flags & FLATPAK_HELPER_PRUNE_LOCAL_REPO_FLAGS_NO_INTERACTION) != 0, &error);
   if (system == NULL)
     {
       g_dbus_method_invocation_return_gerror (invocation, error);
@@ -1342,7 +1343,7 @@ handle_ensure_repo (FlatpakSystemHelper   *object,
 
   g_info ("EnsureRepo %u %s", arg_flags, arg_installation);
 
-  system = dir_get_system (arg_installation, get_sender_pid (invocation), (arg_flags & FLATPAK_HELPER_ENSURE_REPO_FLAGS_NO_INTERACTION) != 0, &error);
+  system = dir_get_system (arg_installation, invocation, (arg_flags & FLATPAK_HELPER_ENSURE_REPO_FLAGS_NO_INTERACTION) != 0, &error);
   if (system == NULL)
     {
       g_dbus_method_invocation_return_gerror (invocation, error);
@@ -1381,7 +1382,7 @@ handle_run_triggers (FlatpakSystemHelper   *object,
 
   g_info ("RunTriggers %u %s", arg_flags, arg_installation);
 
-  system = dir_get_system (arg_installation, get_sender_pid (invocation), (arg_flags & FLATPAK_HELPER_RUN_TRIGGERS_FLAGS_NO_INTERACTION) != 0, &error);
+  system = dir_get_system (arg_installation, invocation, (arg_flags & FLATPAK_HELPER_RUN_TRIGGERS_FLAGS_NO_INTERACTION) != 0, &error);
   if (system == NULL)
     {
       g_dbus_method_invocation_return_gerror (invocation, error);
@@ -1673,7 +1674,7 @@ handle_get_revokefs_fd (FlatpakSystemHelper   *object,
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
-  system = dir_get_system (arg_installation, get_sender_pid (invocation), (arg_flags & FLATPAK_HELPER_GET_REVOKEFS_FD_FLAGS_NO_INTERACTION) != 0, &error);
+  system = dir_get_system (arg_installation, invocation, (arg_flags & FLATPAK_HELPER_GET_REVOKEFS_FD_FLAGS_NO_INTERACTION) != 0, &error);
   if (system == NULL)
     {
       g_dbus_method_invocation_return_gerror (invocation, error);
@@ -1770,7 +1771,7 @@ handle_update_summary (FlatpakSystemHelper   *object,
 
   g_info ("UpdateSummary %u %s", arg_flags, arg_installation);
 
-  system = dir_get_system (arg_installation, get_sender_pid (invocation), (arg_flags & FLATPAK_HELPER_UPDATE_SUMMARY_FLAGS_NO_INTERACTION) != 0, &error);
+  system = dir_get_system (arg_installation, invocation, (arg_flags & FLATPAK_HELPER_UPDATE_SUMMARY_FLAGS_NO_INTERACTION) != 0, &error);
   if (system == NULL)
     {
       g_dbus_method_invocation_return_gerror (invocation, error);
@@ -1816,7 +1817,7 @@ handle_generate_oci_summary (FlatpakSystemHelper   *object,
 
   g_info ("GenerateOciSummary %u %s %s", arg_flags, arg_origin, arg_installation);
 
-  system = dir_get_system (arg_installation, get_sender_pid (invocation), (arg_flags & FLATPAK_HELPER_GENERATE_OCI_SUMMARY_FLAGS_NO_INTERACTION) != 0, &error);
+  system = dir_get_system (arg_installation, invocation, (arg_flags & FLATPAK_HELPER_GENERATE_OCI_SUMMARY_FLAGS_NO_INTERACTION) != 0, &error);
   if (system == NULL)
     {
       g_dbus_method_invocation_return_gerror (invocation, error);
@@ -1949,7 +1950,10 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
             is_install = TRUE;
           else
             {
-              g_autoptr(FlatpakDir) system = dir_get_system (installation, 0, no_interaction, &error);
+              g_autoptr(FlatpakDir) system = dir_get_system (installation,
+                                                             invocation,
+                                                             no_interaction,
+                                                             &error);
 
               if (system == NULL)
                 {
@@ -2048,7 +2052,7 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
           g_autoptr(GError) sys_error = NULL;
           const char *name = NULL;
 
-          system = dir_get_system (installation, 0, no_interaction, &sys_error);
+          system = dir_get_system (installation, invocation, no_interaction, &sys_error);
           if (system == NULL)
             {
               g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
