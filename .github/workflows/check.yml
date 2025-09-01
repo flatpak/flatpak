@@ -4,15 +4,7 @@ on:
   push:
     branches:
     - main
-    - flatpak-1.0.x
-    - flatpak-1.2.x
-    - flatpak-1.4.x
-    - flatpak-1.6.x
-    - flatpak-1.8.x
-    - flatpak-1.10.x
-    - flatpak-1.12.x
-    - flatpak-1.14.x
-    - flatpak-1.16.x
+    - 'flatpak-1.[0-9]+.x'
   pull_request:
     paths-ignore:
     - README.md
@@ -24,15 +16,7 @@ on:
     - uncrustify.sh
     branches:
     - main
-    - flatpak-1.0.x
-    - flatpak-1.2.x
-    - flatpak-1.4.x
-    - flatpak-1.6.x
-    - flatpak-1.8.x
-    - flatpak-1.10.x
-    - flatpak-1.12.x
-    - flatpak-1.14.x
-    - flatpak-1.16.x
+    - 'flatpak-1.[0-9]+.x'
   merge_group:
     types:
     - checks_requested
