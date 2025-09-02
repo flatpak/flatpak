@@ -215,6 +215,8 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   char pid_str[64];
   g_autofree char *pid_path = NULL;
   g_autoptr(GFile) app_id_dir = NULL;
+  FlatpakContextDevices devices;
+  FlatpakContextSockets sockets;
 
   context = g_option_context_new (_("DIRECTORY [COMMAND [ARGUMENT…]] - Build in directory"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -552,12 +554,16 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
                             "--bind", flatpak_file_get_path_cached (res_files), extension_point,
                             NULL);
 
+  devices = flatpak_run_compute_allowed_devices (app_context);
+  sockets = flatpak_run_compute_allowed_sockets (app_context);
+
   if (!flatpak_run_add_app_info_args (bwrap,
                                       app_files, app_files, NULL, app_extensions,
                                       runtime_files, runtime_files, runtime_deploy_data, runtime_extensions,
                                       id, NULL,
                                       runtime_ref,
                                       app_id_dir, app_context, NULL,
+                                      sockets,
                                       FALSE, TRUE, TRUE,
                                       &app_info_path, -1,
                                       &instance_id_host_dir, NULL,
@@ -566,7 +572,8 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
     return FALSE;
 
   if (!flatpak_run_add_environment_args (bwrap, app_info_path, run_flags, id,
-                                         app_context, app_id_dir, NULL, -1,
+                                         app_context, devices, sockets,
+                                         app_id_dir, NULL, -1,
                                          instance_id, NULL, cancellable, error))
     return FALSE;
 
