@@ -87,6 +87,7 @@ typedef struct
 {
   char     *remote_name;
   gboolean  is_file_uri;
+  gboolean  is_oci;
   char     *collection_id;
 
   /* New format summary */
@@ -107,6 +108,7 @@ typedef struct
   int       refcount;
   gint32    default_token_type;
   GPtrArray *sideload_repos;
+  GPtrArray *sideload_image_collections;
 } FlatpakRemoteState;
 
 FlatpakRemoteState *flatpak_remote_state_ref (FlatpakRemoteState *remote_state);
@@ -126,17 +128,20 @@ gboolean flatpak_remote_state_ensure_subsummary_all_arches (FlatpakRemoteState *
                                                             GError            **error);
 gboolean flatpak_remote_state_allow_ref (FlatpakRemoteState *self,
                                          const char *ref);
-gboolean flatpak_remote_state_lookup_ref (FlatpakRemoteState *self,
-                                          const char         *ref,
-                                          char              **out_checksum,
-                                          guint64            *out_timestamp,
-                                          VarRefInfoRef      *out_info,
-                                          GFile             **out_sideload_path,
-                                          GError            **error);
+gboolean flatpak_remote_state_lookup_ref (FlatpakRemoteState  *self,
+                                          const char          *ref,
+                                          char               **out_checksum,
+                                          guint64             *out_timestamp,
+                                          GVariant           **out_summary_metadata,
+                                          GFile              **out_sideload_path,
+                                          FlatpakImageSource **out_image_Source,
+                                          GError             **error);
 GPtrArray *flatpak_remote_state_match_subrefs (FlatpakRemoteState *self,
                                                FlatpakDecomposed *ref);
-GFile *flatpak_remote_state_lookup_sideload_checksum (FlatpakRemoteState *self,
-                                                      char               *checksum);
+void flatpak_remote_state_lookup_sideload_checksum (FlatpakRemoteState  *self,
+                                                    char                *checksum,
+                                                    GFile              **out_sideload_path,
+                                                    FlatpakImageSource **out_image_source);
 gboolean flatpak_remote_state_lookup_cache (FlatpakRemoteState *self,
                                             const char         *ref,
                                             guint64            *download_size,
@@ -163,6 +168,8 @@ GVariant *flatpak_remote_state_load_ref_commit (FlatpakRemoteState *self,
                                                 GError            **error);
 void flatpak_remote_state_add_sideload_dir (FlatpakRemoteState *self,
                                             GFile              *path);
+void flatpak_remote_state_add_sideload_image_collection (FlatpakRemoteState     *self,
+                                                         FlatpakImageCollection *image_collection);
 
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakDir, g_object_unref)
@@ -1002,6 +1009,7 @@ gboolean              flatpak_dir_find_latest_rev                           (Fla
                                                                              char                         **out_rev,
                                                                              guint64                       *out_timestamp,
                                                                              GFile                        **out_sideload_path,
+                                                                             FlatpakImageSource           **out_image_source,
                                                                              GCancellable                  *cancellable,
                                                                              GError                       **error);
 FlatpakDecomposed *   flatpak_dir_get_remote_auto_install_authenticator_ref (FlatpakDir                    *self,
