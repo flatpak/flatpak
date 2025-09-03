@@ -233,6 +233,7 @@
                     See the "[Context] filesystems" list in
                     <citerefentry><refentrytitle>flatpak-metadata</refentrytitle><manvolnum>5</manvolnum></citerefentry>
                     for details of the meanings of these filesystems.
+                    Before flatpak 1.17.0, access to host was granted by default.
                 </para></listitem>
             </varlistentry>
 
