@@ -438,7 +438,6 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   if (app_context == NULL)
     return FALSE;
 
-  flatpak_context_allow_host_fs (app_context);
   flatpak_context_merge (app_context, arg_context);
 
   minimal_envp = flatpak_run_get_minimal_env (TRUE, FALSE);
