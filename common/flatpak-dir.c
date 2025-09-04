@@ -8451,6 +8451,7 @@ flatpak_export_dir (GFile        *source,
     "share/krunner/dbusplugins",           "../../..",
     "share/mime/packages",                 "../../..",
     "share/metainfo",                      "../..",
+    "share/metainfo/releases",             "../../..",
     "bin",                                 "..",
   };
   int i;
