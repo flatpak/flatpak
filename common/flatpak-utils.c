@@ -519,8 +519,9 @@ flatpak_get_have_intel_gpu (void)
   if (have_intel == -1)
     have_intel = g_file_test ("/sys/module/i915", G_FILE_TEST_EXISTS);
 
+  // Added second test for systems that no longer support Intel HD graphics
   if (have_intel == -1)
-    have_intel = g_file_test ("/sys/module/intel_quicki2c", G_FILE_TEST_EXISTS);
+    have_intel = g_file_test ("/sys/module/xe", G_FILE_TEST_EXISTS);
 
   return have_intel;
 }
