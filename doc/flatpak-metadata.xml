@@ -361,6 +361,25 @@
                                 entire root filesystem of the host.
                             </para>
                             <para>
+                                Please note that following symlinks under
+                                <filename>/run/host/root</filename> naively
+                                will result in a wrong path. For example,
+                                using <literal>realpath()</literal> is wrong.
+                                Instead, applications will have to implement
+                                some way of following symlinks in a way that
+                                behaves as if it were chroot'd into
+                                <filename>/run/host/root</filename>.
+                            </para>
+                            <para>
+                                There are a few ways to do this. Modern
+                                kernels support the <ulink url="https://man7.org/linux/man-pages/man2/openat2.2.html">openat2()</ulink>
+                                call with <literal>RESOLVE_IN_ROOT</literal>.
+                                For a more portable solution with support for
+                                older kernels, see the implementation from
+                                the <ulink url="https://gitlab.steamos.cloud/steamrt/steam-runtime-tools/-/blob/65adfdd5fc812aeb5f33986755f6ff72c9612afa/steam-runtime-tools/resolve-in-sysroot.c">steam-runtime-tools</ulink>
+                                as an example.
+                            </para>
+                            <para>
                                 Available since 1.17.
                             </para></listitem></varlistentry>
 
