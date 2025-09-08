@@ -2,7 +2,60 @@ Changes in 1.17.0
 ~~~~~~~~~~~~~~~~~~
 Released: not yet
 
-...
+Enhancements:
+
+* Allow directories to be forwarded to the sandboxed app as command-line
+  arguments. This requires xdg-desktop-portal >= 1.7.0. (#4799)
+
+* Allow Flatpak apps that are conceptually part of the operating system
+  to be preinstalled by dropping files into /etc/flatpak/preinstall.d.
+  To implement this, something needs to run `flatpak preinstall` or make
+  equivalent calls into libflatpak during system initialization.
+  (#5579)
+
+* Allow direct installation from an OCI image:
+  `flatpak install [--image] docker://registry.example.com/image:latest`,
+  `flatpak install [--image] oci:/path/to/image`,
+  `flatpak install [--image] oci-archive:/path/to/image.tar`
+  (#5972)
+
+* Allow OCI remotes to have a collection ID, so they can be used with
+  /etc/flatpak/preinstall.d
+
+* Show a message if `flatpak document-list` finds no documents
+  (#6197)
+
+* Show a message if `flatpak uninstall` finds nothing to uninstall
+  (#6197)
+
+* Documentation improvements (#5501, #6266)
+
+* Translation updates: cs (#6306), nl (#6241), pl (#6290), sl (#6279), ru (#6278), zh_CN (#6304)
+
+Bug fixes:
+
+* Fix a memory leak in flatpak-session-helper when an app with permission
+  to do so runs unsandboxed commands on the host (#5821)
+
+* Implement the --reinstall option when combined with --bundle (#2489)
+
+* Provide an empty /run/host/font-dirs.xml during `flatpak build` (#6137)
+
+* Fix assertion failures during `flatpak build-import-bundle` (#4662)
+
+* Fix memory leaks in OCI registry handling (#6286)
+
+* Fix a test failure caused by incorrect arguments to fcntl F_DUPFD_CLOEXEC
+  (#6291, Launchpad#2121039)
+
+* Don't require --ref on `flatpak build-import-bundle` from an OCI archive
+  (#6081)
+
+Internal changes:
+
+* Refactoring
+
+* CI updates
 
 Changes in 1.16.1
 ~~~~~~~~~~~~~~~~~~
