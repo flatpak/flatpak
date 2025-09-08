@@ -2228,6 +2228,7 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
   g_autoptr(GFile) etc = NULL;
   gboolean parent_expose_pids = (flags & FLATPAK_RUN_FLAG_PARENT_EXPOSE_PIDS) != 0;
   gboolean parent_share_pids = (flags & FLATPAK_RUN_FLAG_PARENT_SHARE_PIDS) != 0;
+  gboolean host_share_pids = (flags & FLATPAK_RUN_FLAG_HOST_SHARE_PIDS) != 0;
   gboolean bwrap_unprivileged = flatpak_bwrap_is_unprivileged ();
   gsize i;
 
@@ -2288,7 +2289,7 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
                             "--proc", "/proc",
                             NULL);
 
-  if (!(flags & FLATPAK_RUN_FLAG_PARENT_SHARE_PIDS))
+  if (!host_share_pids && !(flags & FLATPAK_RUN_FLAG_PARENT_SHARE_PIDS))
     flatpak_bwrap_add_arg (bwrap, "--unshare-pid");
 
   flatpak_bwrap_add_args (bwrap,
