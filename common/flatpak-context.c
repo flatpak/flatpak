@@ -50,6 +50,7 @@
 const char *flatpak_context_shares[] = {
   "network",
   "ipc",
+  "ipc-x11",
   NULL
 };
 
@@ -1137,6 +1138,9 @@ option_share_cb (const gchar *option_name,
   if (share == 0)
     return FALSE;
 
+  if (share == FLATPAK_CONTEXT_SHARED_IPC_X11)
+    share |= FLATPAK_CONTEXT_SHARED_IPC;
+
   flatpak_context_add_shares (context, share);
 
   return TRUE;
@@ -1154,6 +1158,9 @@ option_unshare_cb (const gchar *option_name,
   share = flatpak_context_share_from_string (value, error);
   if (share == 0)
     return FALSE;
+
+  if (share == FLATPAK_CONTEXT_SHARED_IPC_X11)
+    share |= FLATPAK_CONTEXT_SHARED_IPC;
 
   flatpak_context_remove_shares (context, share);
 
@@ -2503,9 +2510,15 @@ flatpak_context_adds_permissions (FlatpakContext *old,
    * not a security concern. */
   guint32 harmless_features = (FLATPAK_CONTEXT_FEATURE_MULTIARCH |
                                FLATPAK_CONTEXT_FEATURE_PER_APP_DEV_SHM);
-  guint32 old_sockets;
+  guint32 old_shares, old_sockets;
 
-  if (adds_flags (old->shares & old->shares_valid,
+  old_shares = old->shares & old->shares_valid;
+
+  /* share=ipc-x11 is more restrictive than share=ipc */
+  if (old_shares & FLATPAK_CONTEXT_SHARED_IPC)
+    old_shares |= FLATPAK_CONTEXT_SHARED_IPC_X11;
+
+  if (adds_flags (old_shares,
                   new->shares & new->shares_valid))
     return TRUE;
 

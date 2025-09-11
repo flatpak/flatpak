@@ -47,6 +47,7 @@ typedef struct FlatpakContext FlatpakContext;
 typedef enum {
   FLATPAK_CONTEXT_SHARED_NETWORK   = 1 << 0,
   FLATPAK_CONTEXT_SHARED_IPC       = 1 << 1,
+  FLATPAK_CONTEXT_SHARED_IPC_X11   = 1 << 2,
 } FlatpakContextShares;
 
 typedef enum {
