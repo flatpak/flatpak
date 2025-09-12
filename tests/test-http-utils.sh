@@ -128,14 +128,15 @@ ok 'compress after download'
 
 # Testing that things work without xattr support
 
-if have_xattrs $test_tmpdir ; then
-    ok "no-xattrs # skip /tmp doesn't have user xattr support"
-else
+if command -v setfattr >/dev/null &&
+   ! have_xattrs $test_tmpdir ; then
     assert_ok "/?etag&no-cache" $test_tmpdir/output
     assert_has_file $test_tmpdir/output.flatpak.http
     assert_304 "/?etag&no-cache" $test_tmpdir/output
     rm -f $test_tmpdir/output*
     ok "no-xattrs"
+else
+    ok "no-xattrs # skip No setfattr or /tmp doesn't have user xattr support"
 fi
 
 # Testing with xattr support
@@ -147,12 +148,13 @@ xattrs_cleanup () {
 }
 trap xattrs_cleanup EXIT
 
-if have_xattrs $xattrs_tempdir ; then
+if command -v setfattr >/dev/null &&
+   have_xattrs $xattrs_tempdir ; then
     assert_ok "/?etag&no-cache" $xattrs_tempdir/output
     assert_not_has_file $xattrs_tempdir/output.flatpak.http
     assert_304 "/?etag&no-cache" $xattrs_tempdir/output
     rm -f $xattrs_tempdir/output*
     ok "xattrs"
 else
-    ok "xattrs # skip /var/tmp has user no xattr support"
+    ok "xattrs # skip No setfattr or /var/tmp has user no xattr support"
 fi
