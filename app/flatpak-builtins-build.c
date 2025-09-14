@@ -59,6 +59,17 @@ static GOptionEntry options[] = {
   { NULL }
 };
 
+static void
+add_empty_font_dirs_xml (FlatpakBwrap *bwrap)
+{
+  g_autoptr(GString) xml_snippet = g_string_new ("<?xml version=\"1.0\"?>\n"
+                                                 "<!DOCTYPE fontconfig SYSTEM \"urn:fontconfig:fonts.dtd\">\n"
+                                                 "<fontconfig></fontconfig>\n");
+
+  if (!flatpak_bwrap_add_args_data (bwrap, "font-dirs.xml", xml_snippet->str, xml_snippet->len, "/run/host/font-dirs.xml", NULL))
+    g_warning ("Unable to add fontconfig data snippet");
+}
+
 /* Unset FD_CLOEXEC on the array of fds passed in @user_data */
 static void
 child_setup (gpointer user_data)
@@ -558,6 +569,8 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
                                          app_context, app_id_dir, NULL, -1,
                                          instance_id, NULL, cancellable, error))
     return FALSE;
+
+  add_empty_font_dirs_xml (bwrap);
 
   for (i = 0; opt_bind_mounts != NULL && opt_bind_mounts[i] != NULL; i++)
     {
