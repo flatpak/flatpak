@@ -2896,13 +2896,13 @@ flatpak_context_export (FlatpakContext *context,
     }
 
   os_mode = MAX (GPOINTER_TO_INT (g_hash_table_lookup (context->filesystems, "host-os")),
-                   fs_mode);
+                 fs_mode);
 
   if (os_mode != FLATPAK_FILESYSTEM_MODE_NONE)
     flatpak_exports_add_host_os_expose (exports, os_mode);
 
   etc_mode = MAX (GPOINTER_TO_INT (g_hash_table_lookup (context->filesystems, "host-etc")),
-                   fs_mode);
+                  fs_mode);
 
   if (etc_mode != FLATPAK_FILESYSTEM_MODE_NONE)
     flatpak_exports_add_host_etc_expose (exports, etc_mode);
