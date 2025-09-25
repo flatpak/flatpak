@@ -29,6 +29,11 @@
 #include "flatpak-error.h"
 #include "flatpak-glib-backports-private.h"
 
+#define XCONCATENATE(x, y) x ## y
+#define CONCATENATE(x, y) XCONCATENATE(x, y)
+
+#define FLATPAK_UNIQUE_NAME(base) CONCATENATE(base, __COUNTER__)
+
 #define AUTOFS_SUPER_MAGIC 0x0187
 
 #define FLATPAK_XA_CACHE_VERSION 2
@@ -347,6 +352,21 @@ gboolean running_under_sudo (void);
 
 void flatpak_set_debugging (gboolean debugging);
 gboolean flatpak_is_debugging (void);
+
+#ifdef INCLUDE_INTERNAL_TESTS
+typedef void (*flatpak_test_fn) (void);
+void flatpak_add_test (const char *path, flatpak_test_fn fn);
+#define FLATPAK_INTERNAL_TEST(path, fn) \
+  __attribute__((constructor)) static void       \
+  FLATPAK_UNIQUE_NAME(internal_test_) (void) {   \
+    flatpak_add_test (path, fn);                 \
+  }
+#else
+#define FLATPAK_INTERNAL_TEST(path, fn)
+#endif
+
+FLATPAK_EXTERN
+void flatpak_add_all_tests (void);
 
 #define FLATPAK_MESSAGE_ID "c7b39b1e006b464599465e105b361485"
 
