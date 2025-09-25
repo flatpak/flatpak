@@ -32,6 +32,12 @@ G_DECLARE_FINAL_TYPE (FlatpakImageSource,
                       FLATPAK, IMAGE_SOURCE,
                       GObject)
 
+FlatpakImageSource *flatpak_image_source_new (FlatpakOciRegistry *registry,
+                                              const char         *repository,
+                                              const char         *digest,
+                                              GCancellable       *cancellable,
+                                              GError            **error);
+
 FlatpakImageSource *flatpak_image_source_new_local (GFile        *file,
                                                     const char   *reference,
                                                     GCancellable *cancellable,
@@ -69,4 +75,5 @@ void flatpak_image_source_build_commit_metadata (FlatpakImageSource *self,
                                                  GVariantBuilder    *metadata_builder);
 
 GVariant *flatpak_image_source_make_fake_commit      (FlatpakImageSource *image_source);
+GVariant *flatpak_image_source_make_summary_metadata (FlatpakImageSource *self);
 #endif /* __FLATPAK_IMAGE_SOURCE_H__ */
