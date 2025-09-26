@@ -44,11 +44,12 @@ typedef enum {
   FLATPAK_RUN_FLAG_SANDBOX            = (1 << 14),
   FLATPAK_RUN_FLAG_NO_DOCUMENTS_PORTAL = (1 << 15),
   FLATPAK_RUN_FLAG_BLUETOOTH          = (1 << 16),
-  FLATPAK_RUN_FLAG_CANBUS            = (1 << 17),
+  FLATPAK_RUN_FLAG_CANBUS             = (1 << 17),
   FLATPAK_RUN_FLAG_DO_NOT_REAP        = (1 << 18),
   FLATPAK_RUN_FLAG_NO_PROC            = (1 << 19),
   FLATPAK_RUN_FLAG_PARENT_EXPOSE_PIDS = (1 << 20),
   FLATPAK_RUN_FLAG_PARENT_SHARE_PIDS  = (1 << 21),
+  FLATPAK_RUN_FLAG_CLEAR_ENV          = (1 << 22),
 } FlatpakRunFlags;
 
 typedef struct FlatpakDir          FlatpakDir;
