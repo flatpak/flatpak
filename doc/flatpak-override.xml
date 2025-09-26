@@ -327,6 +327,17 @@ key=v1;v2;
             </varlistentry>
 
             <varlistentry>
+                <term><option>--extra-args=ARGS</option></term>
+
+                <listitem><para>
+                    Prepend the arguments <arg choice="plain">ARGS</arg> to the command used to
+                    launch the application, in a shell-like syntax similar to the <literal>Exec</literal> field in
+                    a <literal>.desktop</literal> file (special characters must be quoted
+                    using backslashes or single or double quotes).
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--own-name=NAME</option></term>
 
                 <listitem><para>
