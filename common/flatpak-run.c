@@ -767,7 +767,7 @@ static void
 flatpak_run_apply_env_prompt (FlatpakBwrap *bwrap, const char *app_id)
 {
   /* A custom shell prompt. FLATPAK_ID is always set.
-   * PS1 can be overwritten by runtime metadata or by --env overrides
+   * PS1 can be overwritten by runtime metadata or by --env or --env-expanded overrides
    */
   flatpak_bwrap_set_env (bwrap, "FLATPAK_ID", app_id, TRUE);
   flatpak_bwrap_set_env (bwrap, "PS1", "[📦 $FLATPAK_ID \\W]\\$ ", FALSE);
@@ -779,6 +779,7 @@ flatpak_run_apply_env_vars (FlatpakBwrap *bwrap, FlatpakContext *context)
   GHashTableIter iter;
   gpointer key, value;
 
+  // Apply regular env vars
   g_hash_table_iter_init (&iter, context->env_vars);
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
@@ -788,6 +789,38 @@ flatpak_run_apply_env_vars (FlatpakBwrap *bwrap, FlatpakContext *context)
       if (val)
         flatpak_bwrap_set_env (bwrap, var, val, TRUE);
       else
+        flatpak_bwrap_unset_env (bwrap, var);
+    }
+  // We first expand all the variables, THEN apply them, to avoid expanded variables referencing
+  // other expanded variables.
+  g_autoptr(GHashTable) expanded_env_vars = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+  g_hash_table_iter_init (&iter, context->expanded_env_vars);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+      const char *var = key;
+      const char *val = value;
+
+      if (val)
+        {
+          g_autofree char *expanded_val = flatpak_bwrap_expand_env (bwrap, val);
+          g_hash_table_insert (expanded_env_vars, g_strdup (var), g_strdup (expanded_val));
+        }
+      else
+        g_hash_table_insert (expanded_env_vars, g_strdup (var), NULL);
+    }
+  // Apply expanded env vars
+  g_hash_table_iter_init (&iter, expanded_env_vars);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+      const char *var = key;
+      const char *val = value;
+
+      if (val)
+      {
+        g_autofree char *expanded_val = flatpak_bwrap_expand_env (bwrap, val);
+        flatpak_bwrap_set_env (bwrap, var, val, TRUE);
+      }
+      else if (!g_hash_table_contains(context->env_vars, var))
         flatpak_bwrap_unset_env (bwrap, var);
     }
 }
