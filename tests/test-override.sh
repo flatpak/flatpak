@@ -93,6 +93,7 @@ reset_overrides
 
 ${FLATPAK} override --user --env=FOO=BAR org.test.Hello
 ${FLATPAK} override --user --env=BAR= org.test.Hello
+${FLATPAK} override --user --env-expanded=BAZ='${FOO}$BAR' org.test.Hello
 ${FLATPAK} override --user --unset-env=CLEARME org.test.Hello
 # --env-fd with terminating \0 (strictly as documented).
 printf '%s\0' "SECRET_TOKEN=3047225e-5e38-4357-b21c-eac83b7e8ea6" > env.3
@@ -113,6 +114,8 @@ assert_file_has_content override "^SECRET_TOKEN=3047225e-5e38-4357-b21c-eac83b7e
 assert_file_has_content override "^TMPDIR=/nonexistent/tmp$"
 assert_file_has_content override "^TZDIR=/nonexistent/tz$"
 assert_file_has_content override "^unset-environment=CLEARME;$"
+assert_file_has_content override "^\[Expanded Environment\]$"
+assert_file_has_content override "^BAZ=\${FOO}\$BAR$"
 
 ok "override --env"
 
@@ -120,9 +123,10 @@ if skip_one_without_bwrap "sandbox environment variables"; then
   :
 else
   CLEARME=wrong ${FLATPAK} run --command=bash org.test.Hello \
-      -c 'echo "FOO=$FOO"; echo "BAR=${BAR-unset}"; echo "SECRET_TOKEN=$SECRET_TOKEN"; echo "TMPDIR=$TMPDIR"; echo "TZDIR=$TZDIR"; echo "CLEARME=${CLEARME-unset}"' > out
+      -c 'echo "FOO=$FOO"; echo "BAR=${BAR-unset}"; echo "BAZ=$BAZ"; echo "SECRET_TOKEN=$SECRET_TOKEN"; echo "TMPDIR=$TMPDIR"; echo "TZDIR=$TZDIR"; echo "CLEARME=${CLEARME-unset}"' > out
   assert_file_has_content out '^FOO=BAR$'
   assert_file_has_content out '^BAR=$'
+  assert_file_has_content out "^BAZ=BAR$"
   assert_file_has_content out '^SECRET_TOKEN=3047225e-5e38-4357-b21c-eac83b7e8ea6$'
   # The variables that would be filtered out by a setuid bwrap get set
   assert_file_has_content out '^TZDIR=/nonexistent/tz$'
@@ -143,6 +147,7 @@ if skip_one_without_bwrap "temporary environment variables"; then
 else
   ${FLATPAK} override --user --env=FOO=wrong org.test.Hello
   ${FLATPAK} override --user --unset-env=BAR org.test.Hello
+  ${FLATPAK} override --user --env-expanded=BAZ='${FOO}' org.test.Hello
   ${FLATPAK} override --user --env=SECRET_TOKEN=wrong org.test.Hello
   ${FLATPAK} override --user --env=TMPDIR=/nonexistent/wrong org.test.Hello
   ${FLATPAK} override --user --env=TZDIR=/nonexistent/wrong org.test.Hello
@@ -157,11 +162,12 @@ else
       --env-fd=3 \
       --env-fd=4 \
       org.test.Hello \
-      -c 'echo "FOO=$FOO"; echo "BAR=${BAR-unset}"; echo "SECRET_TOKEN=$SECRET_TOKEN"; echo "TMPDIR=$TMPDIR"; echo "TZDIR=$TZDIR"; echo "CLEARME=${CLEARME-unset}"' \
+      -c 'echo "FOO=$FOO"; echo "BAR=${BAR-unset}"; echo "BAZ=$BAZ"; echo "SECRET_TOKEN=$SECRET_TOKEN"; echo "TMPDIR=$TMPDIR"; echo "TZDIR=$TZDIR"; echo "CLEARME=${CLEARME-unset}"' \
       3<env.3 4<env.4 > out
   # The versions from `flatpak run` overrule `flatpak override`
   assert_file_has_content out '^FOO=BAR$'
   assert_file_has_content out '^BAR=$'
+  assert_file_has_content out '^BAZ=BAR$'
   assert_file_has_content out '^SECRET_TOKEN=3047225e-5e38-4357-b21c-eac83b7e8ea6$'
   assert_file_has_content out '^TZDIR=/nonexistent/tz$'
   assert_file_has_content out '^TMPDIR=/nonexistent/tmp$'
