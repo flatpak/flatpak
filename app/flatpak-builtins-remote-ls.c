@@ -46,6 +46,7 @@ static gboolean opt_sideloaded;
 static char *opt_arch;
 static char *opt_app_runtime;
 static const char **opt_cols;
+static gboolean opt_json;
 
 static GOptionEntry options[] = {
   { "show-details", 'd', 0, G_OPTION_ARG_NONE, &opt_show_details, N_("Show arches and branches"), NULL },
@@ -59,6 +60,7 @@ static GOptionEntry options[] = {
   { "cached", 0, 0, G_OPTION_ARG_NONE, &opt_cached, N_("Use local caches even if they are stale"), NULL },
   /* Translators: A sideload is when you install from a local USB drive rather than the Internet. */
   { "sideloaded", 0, 0, G_OPTION_ARG_NONE, &opt_sideloaded, N_("Only list refs available as sideloads"), NULL },
+  { "json", 'j', 0, G_OPTION_ARG_NONE, &opt_json, N_("Show output in JSON format"), NULL },
   { NULL }
 };
 
@@ -368,7 +370,7 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
 
   if (flatpak_table_printer_get_current_row (printer) > 0)
     {
-      flatpak_table_printer_print (printer);
+      opt_json ? flatpak_table_printer_print_json (printer) : flatpak_table_printer_print (printer);
     }
 
   return TRUE;
