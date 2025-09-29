@@ -89,6 +89,7 @@ ${FLATPAK} complete "flatpak list --" 15 "--" | sort > complete_out
 --columns=
 --help 
 --installation=
+--json 
 --ostree-verbose 
 --runtime 
 --show-details 

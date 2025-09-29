@@ -44,12 +44,14 @@ static char *opt_since;
 static char *opt_until;
 static gboolean opt_reverse;
 static const char **opt_cols;
+static gboolean opt_json;
 
 static GOptionEntry options[] = {
   { "since", 0, 0, G_OPTION_ARG_STRING, &opt_since, N_("Only show changes after TIME"), N_("TIME") },
   { "until", 0, 0, G_OPTION_ARG_STRING, &opt_until, N_("Only show changes before TIME"), N_("TIME") },
   { "reverse", 0, 0, G_OPTION_ARG_NONE, &opt_reverse, N_("Show newest entries first"), NULL },
   { "columns", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_cols, N_("What information to show"), N_("FIELD,…") },
+  { "json", 'j', 0, G_OPTION_ARG_NONE, &opt_json, N_("Show output in JSON format"), NULL },
   { NULL }
 };
 
@@ -362,7 +364,7 @@ print_history (GPtrArray    *dirs,
         flatpak_table_printer_finish_row (printer);
       }
 
-  flatpak_table_printer_print (printer);
+  opt_json ? flatpak_table_printer_print_json (printer) : flatpak_table_printer_print (printer);
 
   sd_journal_close (j);
 
