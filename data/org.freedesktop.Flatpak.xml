@@ -324,6 +324,15 @@
       <arg type='s' name='src_dir' direction='out'/>
     </method>
 
+    <method name="AddInstallation">
+      <arg type='s' name='id' direction='in'/>
+      <arg type='s' name='path' direction='in'/>
+      <arg type="a{sv}" name="options" direction="in"/>
+    </method>
+
+    <method name="RemoveInstallation">
+      <arg type='s' name='id' direction='in'/>
+    </method>
   </interface>
 
 </node>

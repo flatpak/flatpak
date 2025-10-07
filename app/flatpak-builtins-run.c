@@ -145,7 +145,8 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
       for (i = dirs->len; i > 0; i--)
         {
           FlatpakDir *dir = g_ptr_array_index (dirs, i - 1);
-          if (flatpak_dir_is_user (dir))
+          const char *dir_id = flatpak_dir_get_id (dir);
+          if (g_strcmp0 (dir_id, USER_DIR_DEFAULT_ID) == 0)
             {
               g_ptr_array_insert (dirs, 0, g_object_ref (dir));
               g_ptr_array_remove_index (dirs, i);
@@ -338,8 +339,7 @@ gboolean
 flatpak_complete_run (FlatpakCompletion *completion)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(FlatpakDir) user_dir = NULL;
-  g_autoptr(GPtrArray) system_dirs = NULL;
+  g_autoptr(GPtrArray) dirs = NULL;
   g_autoptr(GError) error = NULL;
   int i;
   g_autoptr(FlatpakContext) arg_context = NULL;
@@ -363,28 +363,16 @@ flatpak_complete_run (FlatpakCompletion *completion)
       flatpak_complete_options (completion, options);
       flatpak_complete_context (completion);
 
-      user_dir = flatpak_dir_get_user ();
-      {
-        g_autoptr(GPtrArray) refs = flatpak_dir_find_installed_refs (user_dir, NULL, NULL, opt_arch,
-                                                                     FLATPAK_KINDS_APP,
-                                                                     FIND_MATCHING_REFS_FLAGS_NONE,
-                                                                     &error);
-        if (refs == NULL)
-          flatpak_completion_debug ("find local refs error: %s", error->message);
-
-        flatpak_complete_ref_id (completion, refs);
-      }
-
-      system_dirs = flatpak_dir_get_system_list (NULL, &error);
-      if (system_dirs == NULL)
+      dirs = flatpak_dir_get_list (NULL, &error);
+      if (dirs == NULL)
         {
-          flatpak_completion_debug ("find system installations error: %s", error->message);
+          flatpak_completion_debug ("find installations error: %s", error->message);
           break;
         }
 
-      for (i = 0; i < system_dirs->len; i++)
+      for (i = 0; i < dirs->len; i++)
         {
-          FlatpakDir *dir = g_ptr_array_index (system_dirs, i);
+          FlatpakDir *dir = g_ptr_array_index (dirs, i);
           g_autoptr(GPtrArray) refs = flatpak_dir_find_installed_refs (dir, NULL, NULL, opt_arch,
                                                                        FLATPAK_KINDS_APP,
                                                                        FIND_MATCHING_REFS_FLAGS_NONE,
