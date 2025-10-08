@@ -281,7 +281,7 @@ flatpak_get_certificates_for_uri (const char  *uri,
     {
       g_autoptr(GFile) certs_dir = g_file_new_for_path (certs_path[i]);
       g_autoptr(GFile) host_dir = g_file_get_child (certs_dir, hostport);
-      g_autoptr(GFileEnumerator) enumerator;
+      g_autoptr(GFileEnumerator) enumerator = NULL;
       g_autoptr(GError) local_error = NULL;
 
       enumerator = g_file_enumerate_children (host_dir, G_FILE_ATTRIBUTE_STANDARD_NAME,
