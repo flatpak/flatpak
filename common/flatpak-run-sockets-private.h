@@ -32,7 +32,8 @@ void flatpak_run_add_socket_args_environment (FlatpakBwrap          *bwrap,
                                               FlatpakContextShares   shares,
                                               FlatpakContextSockets  sockets,
                                               const char            *app_id,
-                                              const char            *instance_id);
+                                              const char            *instance_id,
+                                              gboolean              *allow_x11);
 void flatpak_run_add_socket_args_late        (FlatpakBwrap          *bwrap,
                                               FlatpakContextShares   shares);
 

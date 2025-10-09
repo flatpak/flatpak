@@ -111,8 +111,13 @@
                 <listitem><para>
                     Share a subsystem with the host session. This updates
                     the [Context] group in the metadata.
-                    SUBSYSTEM must be one of: network, ipc.
+                    SUBSYSTEM must be one of: network, ipc, ipc-x11.
                     This option can be used multiple times.
+                </para><para>
+                    The IPC namespace will always be shared if X11 access is
+                    allowed. This behavior was introduced in 1.17.0. To support
+                    older Flatpak releases, specify both ipc and ipc-x11 to
+                    allow IPC access only if X11 access is also allowed.
                 </para></listitem>
             </varlistentry>
 
@@ -122,7 +127,7 @@
                 <listitem><para>
                     Don't share a subsystem with the host session. This updates
                     the [Context] group in the metadata.
-                    SUBSYSTEM must be one of: network, ipc.
+                    SUBSYSTEM must be one of: network, ipc, ipc-x11.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>

@@ -1106,10 +1106,6 @@ handle_spawn (PortalFlatpak         *object,
             g_ptr_array_add (flatpak_argv, g_strdup ("--socket=fallback-x11"));
           if (sockets != NULL && g_strv_contains ((const char * const *) sockets, "x11"))
             g_ptr_array_add (flatpak_argv, g_strdup ("--socket=x11"));
-          if (shares != NULL && g_strv_contains ((const char * const *) shares, "ipc") &&
-              sockets != NULL && (g_strv_contains ((const char * const *) sockets, "fallback-x11") ||
-                                  g_strv_contains ((const char * const *) sockets, "x11")))
-            g_ptr_array_add (flatpak_argv, g_strdup ("--share=ipc"));
         }
       if (sandbox_flags & FLATPAK_SPAWN_SANDBOX_FLAGS_SHARE_SOUND)
         {
