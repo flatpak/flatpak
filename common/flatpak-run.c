@@ -3174,7 +3174,7 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
       gsize len = 0;
       gboolean do_migrate;
 
-      real_app_id_dir = flatpak_get_data_dir (app_id);
+      real_app_id_dir = flatpak_context_get_data_dir (app_context, app_id);
       original_app_files = flatpak_deploy_get_files (app_deploy);
 
       previous_app_id_dirs = g_ptr_array_new_with_free_func (g_object_unref);
