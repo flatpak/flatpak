@@ -178,6 +178,21 @@ parse_lang (const char *value, GError **error)
 }
 
 static char *
+parse_boolean (const char  *value,
+               GError     **error)
+{
+  if (g_strcmp0 (value, "true") == 0)
+    return g_strdup ("true");
+  else if (g_strcmp0 (value, "false") == 0)
+    return g_strdup ("false");
+  else
+    {
+      flatpak_fail (error, _("'%s' is not a valid value (use 'true' or 'false')"), value);
+      return NULL;
+    }
+}
+
+static char *
 print_locale (const char *value)
 {
   return g_strdup (value);
@@ -192,11 +207,31 @@ print_lang (const char *value)
 }
 
 static char *
+print_boolean (const char *value)
+{
+  if (!value)
+    return g_strdup ("*unset*");
+  
+  if (g_strcmp0 (value, "true") == 0)
+    return g_strdup ("true");
+  else if (g_strcmp0 (value, "false") == 0)
+    return g_strdup ("false");
+  else
+    return g_strdup ("*invalid*");
+}
+
+static char *
 get_lang_default (FlatpakDir *dir)
 {
   g_auto(GStrv) langs = flatpak_dir_get_default_locale_languages (dir);
 
   return g_strjoinv (";", langs);
+}
+
+static char *
+get_report_os_info_default (FlatpakDir *dir)
+{
+  return g_strdup ("true");
 }
 
 typedef struct
@@ -210,6 +245,7 @@ typedef struct
 ConfigKey keys[] = {
   { "languages", parse_lang, print_lang, get_lang_default },
   { "extra-languages", parse_locale, print_locale, NULL },
+  { "report-os-info", parse_boolean, print_boolean, get_report_os_info_default },
 };
 
 static ConfigKey *

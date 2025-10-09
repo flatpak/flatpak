@@ -76,6 +76,16 @@
                    (for example, <literal>en;en_DK;zh_HK.big5hkscs;uz_UZ.utf8@cyrillic</literal>).
                 </para></listitem>
             </varlistentry>
+            <varlistentry>
+                <term><varname>report-os-info</varname></term>
+                <listitem><para>
+                   If this key is set to <literal>false</literal> or the <filename>no-report-os-info</filename>
+                   file exists at <envar>FLATPAK_CONFIG_DIR</envar> Flatpak will not report the OS name,
+                   version, and architecture from <filename>/etc/os-release</filename> to the Flatpak
+                   remote via the <literal>Flatpak-Os-Info</literal> HTTP header when pulling objects.
+                   The default value of the key if unset is <literal>true</literal>.
+                </para></listitem>
+            </varlistentry>
         </variablelist>
 
         <para>
