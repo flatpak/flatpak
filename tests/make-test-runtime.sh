@@ -93,8 +93,10 @@ chmod a+x ${DIR}/usr/bin/runtime_hello.sh
 # We copy the C.UTF8 locale and call it en_US. Its a bit of a lie, but
 # the real en_US locale is often not available, because its in the
 # local archive.
-mkdir -p ${DIR}/usr/lib/locale/
-cp -r /usr/lib/locale/C.* ${DIR}/usr/lib/locale/en_US
+if [ -d /usr/lib/locale ]; then
+    mkdir -p ${DIR}/usr/lib/locale/
+    cp -r /usr/lib/locale/C.* ${DIR}/usr/lib/locale/en_US
+fi
 
 if [ x$COLLECTION_ID != x ]; then
     collection_args=--collection-id=${COLLECTION_ID}
