@@ -176,7 +176,8 @@ jobs:
         libfuse-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
         libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
         libseccomp-dev libsoup2.4-dev libcurl4-openssl-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
-        libgirepository1.0-dev libappstream-dev libdconf-dev clang e2fslibs-dev meson socat libxau-dev libgdk-pixbuf2.0-dev
+        libgirepository1.0-dev libappstream-dev libdconf-dev clang e2fslibs-dev meson socat libxau-dev libgdk-pixbuf2.0-dev \
+        xmlto
     - name: Check out flatpak
       uses: actions/checkout@v4
       with:
@@ -195,6 +196,14 @@ jobs:
       run: ninja -C _build
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
+    - name: Upload docs
+      uses: actions/upload-artifact@v4
+      with:
+        if-no-files-found: error
+        overwrite: true
+        name: docs
+        path: |
+          _build/doc/
 
   valgrind:
     name: Run tests in valgrind
