@@ -2444,6 +2444,24 @@ flatpak_ensure_user_cache_dir_location (GError **error)
   return g_steal_pointer (&cache_dir);
 }
 
+static char *
+flatpak_dir_get_os_info (FlatpakDir *self)
+{
+  g_autofree char *os_report_config = NULL;
+  g_autofree char *os_id = NULL;
+  g_autofree char *os_version = NULL;
+
+  os_report_config = flatpak_dir_get_config (self, "report-os-info", NULL);
+
+  if (g_strcmp0 (os_report_config, "false") == 0)
+    return NULL;
+
+  os_id = flatpak_get_os_release_id ();
+  os_version = flatpak_get_os_release_version_id ();
+
+  return g_strdup_printf ("%s;%s;%s", os_id, os_version, flatpak_get_arch ());
+}
+
 static GFile *
 flatpak_dir_get_oci_cache_file (FlatpakDir *self,
                                 const char *remote,
@@ -5815,7 +5833,8 @@ get_common_pull_options (GVariantBuilder     *builder,
                          const char          *current_local_checksum,
                          gboolean             force_disable_deltas,
                          OstreeRepoPullFlags  flags,
-                         FlatpakProgress     *progress)
+                         FlatpakProgress     *progress,
+                         FlatpakDir          *dir)
 {
   guint32 update_interval = 0;
   GVariantBuilder hdr_builder;
@@ -5857,6 +5876,13 @@ get_common_pull_options (GVariantBuilder     *builder,
     }
   if (current_local_checksum)
     g_variant_builder_add (&hdr_builder, "(ss)", "Flatpak-Upgrade-From", current_local_checksum);
+
+  {
+    g_autofree char *os_info = flatpak_dir_get_os_info (dir);
+    if (os_info)
+      g_variant_builder_add (&hdr_builder, "(ss)", "Flatpak-Os-Info", os_info);
+  }
+
   g_variant_builder_add (builder, "{s@v}", "http-headers",
                          g_variant_new_variant (g_variant_builder_end (&hdr_builder)));
   g_variant_builder_add (builder, "{s@v}", "append-user-agent",
@@ -5895,6 +5921,7 @@ repo_pull (OstreeRepo                           *self,
            FlatpakPullFlags                      flatpak_flags,
            OstreeRepoPullFlags                   flags,
            FlatpakProgress                      *progress,
+           FlatpakDir                           *dir,
            GCancellable                         *cancellable,
            GError                              **error)
 {
@@ -5930,7 +5957,7 @@ repo_pull (OstreeRepo                           *self,
   /* Pull options */
   g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
   get_common_pull_options (&builder, state, ref_to_fetch, token, dirs_to_pull, current_checksum,
-                           force_disable_deltas, flags, progress);
+                           force_disable_deltas, flags, progress, dir);
 
   if (sideload_repo)
     {
@@ -6544,7 +6571,7 @@ flatpak_dir_pull (FlatpakDir                           *self,
   if (!repo_pull (repo, state,
                   subdirs_arg ? (const char **) subdirs_arg->pdata : NULL,
                   ref, rev, sideload_repo, token, flatpak_flags, flags,
-                  progress,
+                  progress, self,
                   cancellable, error))
     {
       g_prefix_error (error, _("While pulling %s from remote %s: "), ref, state->remote_name);

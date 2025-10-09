@@ -77,6 +77,8 @@ gint flatpak_strcmp0_ptr (gconstpointer a,
 /* Sometimes this is /var/run which is a symlink, causing weird issues when we pass
  * it as a path into the sandbox */
 char * flatpak_get_real_xdg_runtime_dir (void);
+char * flatpak_get_os_release_id (void);
+char * flatpak_get_os_release_version_id (void);
 
 gboolean  flatpak_has_path_prefix (const char *str,
                                    const char *prefix);
