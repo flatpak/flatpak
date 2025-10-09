@@ -469,6 +469,50 @@ flatpak_get_arches (void)
   return (const char **) arches;
 }
 
+static char *
+get_os_release_value (const char *key,
+                      const char *default_value)
+{
+  const char *file = "/etc/os-release";
+  g_autofree char *contents = NULL;
+  g_autoptr(GKeyFile) keyfile = g_key_file_new ();
+  g_autoptr(GString) str = NULL;
+  g_autofree char *value = NULL;
+  g_autofree char *unquoted = NULL;
+
+  if (!g_file_test (file, G_FILE_TEST_EXISTS))
+    file = "/usr/lib/os-release";
+
+  if (!g_file_get_contents (file, &contents, NULL, NULL))
+    return g_strdup (default_value);
+
+  str = g_string_new (contents);
+  g_string_prepend (str, "[os-release]\n");
+
+  if (!g_key_file_load_from_data (keyfile, str->str, -1, G_KEY_FILE_NONE, NULL))
+    return g_strdup (default_value);
+
+  value = flatpak_keyfile_get_string_non_empty (keyfile, "os-release", key);
+  unquoted = value ? g_shell_unquote (value, NULL) : NULL;
+
+  if (!unquoted)
+    return g_strdup (default_value);
+
+  return g_steal_pointer (&unquoted);
+}
+
+char *
+flatpak_get_os_release_id (void)
+{
+  return get_os_release_value ("ID", "linux");
+}
+
+char *
+flatpak_get_os_release_version_id (void)
+{
+  return get_os_release_value ("VERSION_ID", "unknown");
+}
+
 const char **
 flatpak_get_gl_drivers (void)
 {
