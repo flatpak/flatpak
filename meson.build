@@ -126,7 +126,7 @@ endif
 
 dbus_config_dir = get_option('dbus_config_dir')
 if dbus_config_dir == ''
-  dbus_config_dir = get_option('sysconfdir') / 'dbus-1' / 'system.d'
+  dbus_config_dir = get_option('datadir') / 'dbus-1' / 'system.d'
 endif
 
 dbus_service_dir = get_option('dbus_service_dir')
