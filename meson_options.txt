@@ -16,7 +16,7 @@ option(
 option(
   'dbus_config_dir',
   type : 'string',
-  description : 'directory for D-Bus system configuration [$sysconfdir/dbus-1/system.d]',
+  description : 'directory for D-Bus system configuration [$datadir/dbus-1/system.d]',
   value : '',
 )
 option(
