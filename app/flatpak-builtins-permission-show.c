@@ -37,7 +37,10 @@
 #include "flatpak-utils-private.h"
 #include "flatpak-run-private.h"
 
+static gboolean opt_json;
+
 static GOptionEntry options[] = {
+  { "json", 'j', 0, G_OPTION_ARG_NONE, &opt_json, N_("Show output in JSON format"), NULL },
   { NULL }
 };
 
@@ -149,7 +152,7 @@ flatpak_builtin_permission_show (int argc, char **argv,
         return FALSE;
     }
 
-  flatpak_table_printer_print (printer);
+  opt_json ? flatpak_table_printer_print_json (printer) : flatpak_table_printer_print (printer);
 
   return TRUE;
 }

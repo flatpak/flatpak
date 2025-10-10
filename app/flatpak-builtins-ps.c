@@ -37,9 +37,11 @@
 #include "flatpak-instance.h"
 
 static const char **opt_cols;
+static gboolean opt_json;
 
 static GOptionEntry options[] = {
   { "columns", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_cols, N_("What information to show"), N_("FIELD,…") },
+  { "json", 'j', 0, G_OPTION_ARG_NONE, &opt_json, N_("Show output in JSON format"), NULL },
   { NULL }
 };
 
@@ -226,7 +228,7 @@ enumerate_instances (Column *columns, GError **error)
       flatpak_table_printer_finish_row (printer);
     }
 
-  flatpak_table_printer_print (printer);
+  opt_json ? flatpak_table_printer_print_json (printer) : flatpak_table_printer_print (printer);
 
   return TRUE;
 }

@@ -71,6 +71,88 @@ uninstall	org.test.Hello.Locale	master	system (history-installation)
 remove remote			system (history-installation)	test-repo
 EOF
 
+if ! ${FLATPAK} --installation=history-installation history --since="${HISTORY_START_TIME}" \
+    --columns=change,application,branch,installation,remote --json > history-log 2>&1; then
+    cat history-log >&2
+    echo "Bail out! 'flatpak history' failed"
+    exit 1
+fi
+
+diff history-log - >&2 << EOF
+[
+  {
+    "Change" : "add remote",
+    "Application" : "",
+    "Branch" : "",
+    "Installation" : "system (history-installation)",
+    "Remote" : "test-repo"
+  },
+  {
+    "Change" : "deploy install",
+    "Application" : "org.test.Hello.Locale",
+    "Branch" : "master",
+    "Installation" : "system (history-installation)",
+    "Remote" : "test-repo"
+  },
+  {
+    "Change" : "deploy install",
+    "Application" : "org.test.Platform",
+    "Branch" : "master",
+    "Installation" : "system (history-installation)",
+    "Remote" : "test-repo"
+  },
+  {
+    "Change" : "deploy install",
+    "Application" : "org.test.Hello",
+    "Branch" : "master",
+    "Installation" : "system (history-installation)",
+    "Remote" : "test-repo"
+  },
+  {
+    "Change" : "deploy update",
+    "Application" : "org.test.Hello.Locale",
+    "Branch" : "master",
+    "Installation" : "system (history-installation)",
+    "Remote" : "test-repo"
+  },
+  {
+    "Change" : "deploy update",
+    "Application" : "org.test.Hello",
+    "Branch" : "master",
+    "Installation" : "system (history-installation)",
+    "Remote" : "test-repo"
+  },
+  {
+    "Change" : "uninstall",
+    "Application" : "org.test.Hello",
+    "Branch" : "master",
+    "Installation" : "system (history-installation)",
+    "Remote" : ""
+  },
+  {
+    "Change" : "uninstall",
+    "Application" : "org.test.Platform",
+    "Branch" : "master",
+    "Installation" : "system (history-installation)",
+    "Remote" : ""
+  },
+  {
+    "Change" : "uninstall",
+    "Application" : "org.test.Hello.Locale",
+    "Branch" : "master",
+    "Installation" : "system (history-installation)",
+    "Remote" : ""
+  },
+  {
+    "Change" : "remove remote",
+    "Application" : "",
+    "Branch" : "",
+    "Installation" : "system (history-installation)",
+    "Remote" : "test-repo"
+  }
+]
+EOF
+
 rm -f ${FLATPAK_CONFIG_DIR}/installations.d/history-inst.conf
 rm -rf ${TEST_DATA_DIR}/system-history-installation
 

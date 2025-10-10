@@ -31,10 +31,12 @@
 
 static char *opt_arch;
 static const char **opt_cols;
+static gboolean opt_json;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to search for"), N_("ARCH") },
   { "columns", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_cols, N_("What information to show"), N_("FIELD,…") },
+  { "json", 'j', 0, G_OPTION_ARG_NONE, &opt_json, N_("Show output in JSON format"), NULL },
   { NULL}
 };
 
@@ -230,7 +232,7 @@ print_matches (Column *columns, GSList *matches)
       print_app (columns, res, printer);
     }
 
-  flatpak_table_printer_print (printer);
+  opt_json ? flatpak_table_printer_print_json (printer) : flatpak_table_printer_print (printer);
 }
 
 gboolean

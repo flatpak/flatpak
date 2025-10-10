@@ -61,6 +61,7 @@ void                flatpak_table_printer_sort (FlatpakTablePrinter *printer,
                                                 GCompareFunc         cmp);
 int                 flatpak_table_printer_lookup_row (FlatpakTablePrinter *printer, const char *key);
 void                flatpak_table_printer_print (FlatpakTablePrinter *printer);
+void                flatpak_table_printer_print_json (FlatpakTablePrinter *printer);
 void                flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
                                                       int                  skip,
                                                       int                  columns,
