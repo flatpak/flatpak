@@ -563,12 +563,15 @@ static void file_changed (GFileMonitor     *monitor,
 static void
 update_real_monitor (MonitorData *data)
 {
-  char *real = realpath (data->source, NULL);
+  char *real = NULL;
+  g_autoptr(GError) error = NULL;
+
+  real = flatpak_realpath (data->source, &error);
 
   if (real == NULL)
     {
       g_info ("unable to get real path to monitor host file %s: %s", data->source,
-              g_strerror (errno));
+              error->message);
       return;
     }
 
