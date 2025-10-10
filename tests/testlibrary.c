@@ -4429,6 +4429,7 @@ test_overrides (void)
                          "--filesystem=xdg-music",
                          "--filesystem=~/foo:ro",
                          "--filesystem=xdg-download/subdir:create",
+                         "--extra-args=--foo '/bar baz/'",
                          "--env=FOO=BAR",
                          "--own-name=foo.bar.baz",
                          "--talk-name=hello.bla.bla.*",
@@ -4498,6 +4499,12 @@ test_overrides (void)
   g_assert_cmpint (len, ==, 2);
   g_assert_true (g_strv_contains ((const char * const *) list, "wayland"));
   g_assert_true (g_strv_contains ((const char * const *) list, "!pulseaudio"));
+  g_clear_pointer (&list, g_strfreev);
+
+  list = g_key_file_get_string_list (overrides, "Context", "extra-args", &len, &error);
+  g_assert_cmpint (len, ==, 2);
+  g_assert_true (g_strv_contains ((const char * const *) list, "--foo"));
+  g_assert_true (g_strv_contains ((const char * const *) list, "/bar baz/"));
   g_clear_pointer (&list, g_strfreev);
 
   assert_cmpstr_free_lhs (g_key_file_get_string (overrides, "Session Bus Policy", "hello.bla.bla.*", &error),

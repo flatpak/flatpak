@@ -171,6 +171,7 @@ test_empty_context (void)
   g_autofree char *xdg_dirs_conf = NULL;
   gboolean home_access = FALSE;
 
+  g_assert_null (context->extra_args);
   g_assert_cmpuint (g_hash_table_size (context->env_vars), ==, 0);
   g_assert_cmpuint (g_hash_table_size (context->persistent), ==, 0);
   g_assert_cmpuint (g_hash_table_size (context->filesystems), ==, 0);
@@ -243,6 +244,10 @@ test_full_context (void)
                         FLATPAK_METADATA_GROUP_CONTEXT,
                         FLATPAK_METADATA_KEY_PERSISTENT,
                         ".openarena;");
+  g_key_file_set_value (keyfile,
+                        FLATPAK_METADATA_GROUP_CONTEXT,
+                        FLATPAK_METADATA_KEY_EXTRA_ARGS,
+                        "--foo;/bar baz/;");
   g_key_file_set_value (keyfile,
                         FLATPAK_METADATA_GROUP_SESSION_BUS_POLICY,
                         "org.example.SessionService",
@@ -421,6 +426,19 @@ test_full_context (void)
   i = 0;
   g_assert_cmpstr (strv[i++], ==, "LD_AUDIT");
   g_assert_cmpstr (strv[i++], ==, "LD_PRELOAD");
+  g_assert_cmpstr (strv[i], ==, NULL);
+  g_assert_cmpuint (i, ==, n);
+  g_clear_pointer (&strv, g_strfreev);
+
+  strv = g_key_file_get_string_list (keyfile, FLATPAK_METADATA_GROUP_CONTEXT,
+                                     FLATPAK_METADATA_KEY_EXTRA_ARGS,
+                                     &n, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (strv);
+  qsort (strv, n, sizeof (char *), flatpak_strcmp0_ptr);
+  i = 0;
+  g_assert_cmpstr (strv[i++], ==, "--foo");
+  g_assert_cmpstr (strv[i++], ==, "/bar baz/");
   g_assert_cmpstr (strv[i], ==, NULL);
   g_assert_cmpuint (i, ==, n);
   g_clear_pointer (&strv, g_strfreev);

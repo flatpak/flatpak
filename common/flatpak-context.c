@@ -104,6 +104,7 @@ flatpak_context_new (void)
   FlatpakContext *context;
 
   context = g_slice_new0 (FlatpakContext);
+  context->extra_args = NULL;
   context->env_vars = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
   context->persistent = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   /* filename or special filesystem name => FlatpakFilesystemMode */
@@ -124,6 +125,7 @@ flatpak_context_new (void)
 void
 flatpak_context_free (FlatpakContext *context)
 {
+  g_strfreev (context->extra_args);
   g_hash_table_destroy (context->env_vars);
   g_hash_table_destroy (context->persistent);
   g_hash_table_destroy (context->filesystems);
@@ -429,6 +431,30 @@ flatpak_context_remove_features (FlatpakContext        *context,
 {
   context->features_valid |= features;
   context->features &= ~features;
+}
+
+static void
+flatpak_context_set_extra_argsv (FlatpakContext *context,
+                                 GStrv           argv)
+{
+  g_strfreev (context->extra_args);
+  context->extra_args = g_strdupv (argv);
+}
+
+gboolean
+flatpak_context_set_extra_args (FlatpakContext *context,
+                                const char     *value,
+                                GError        **error)
+{
+  gint argc;
+  g_auto(GStrv) argv = NULL;
+
+  if (!g_shell_parse_argv (value, &argc, &argv, error))
+    return FALSE;
+
+  flatpak_context_set_extra_argsv (context, argv);
+
+  return TRUE;
 }
 
 static void
@@ -1074,6 +1100,9 @@ flatpak_context_merge (FlatpakContext *context,
   context->features |= other->features;
   context->features_valid |= other->features_valid;
 
+  if (other->extra_args != NULL)
+    flatpak_context_set_extra_argsv (context, other->extra_args);
+
   g_hash_table_iter_init (&iter, other->env_vars);
   while (g_hash_table_iter_next (&iter, &key, &value))
     g_hash_table_insert (context->env_vars, g_strdup (key), g_strdup (value));
@@ -1307,6 +1336,20 @@ option_nofilesystem_cb (const gchar *option_name,
 
   flatpak_context_take_filesystem (context, g_steal_pointer (&fs),
                                    FLATPAK_FILESYSTEM_MODE_NONE);
+  return TRUE;
+}
+
+static gboolean
+option_extra_args_cb (const gchar *option_name,
+                      const gchar *value,
+                      gpointer     data,
+                      GError     **error)
+{
+  FlatpakContext *context = data;
+
+  if (!flatpak_context_set_extra_args (context, value, error))
+    return FALSE;
+
   return TRUE;
 }
 
@@ -1678,6 +1721,7 @@ static GOptionEntry context_options[] = {
   { "disallow", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_disallow_cb, N_("Don't allow feature"), N_("FEATURE") },
   { "filesystem", 0, G_OPTION_FLAG_IN_MAIN | G_OPTION_FLAG_FILENAME, G_OPTION_ARG_CALLBACK, &option_filesystem_cb, N_("Expose filesystem to app (:ro for read-only)"), N_("FILESYSTEM[:ro]") },
   { "nofilesystem", 0, G_OPTION_FLAG_IN_MAIN | G_OPTION_FLAG_FILENAME, G_OPTION_ARG_CALLBACK, &option_nofilesystem_cb, N_("Don't expose filesystem to app"), N_("FILESYSTEM") },
+  { "extra-args", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_extra_args_cb, N_("Set launch arguments"), N_("EXTRA_ARGS") },
   { "env", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_env_cb, N_("Set environment variable"), N_("VAR=VALUE") },
   { "env-fd", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_env_fd_cb, N_("Read environment variables in env -0 format from FD"), N_("FD") },
   { "unset-env", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_unset_env_cb, N_("Remove variable from environment"), N_("VAR") },
@@ -1895,6 +1939,16 @@ flatpak_context_load_metadata (FlatpakContext *context,
       for (i = 0; persistent[i] != NULL; i++)
         if (!flatpak_context_set_persistent (context, persistent[i], error))
           return FALSE;
+    }
+
+  if (g_key_file_has_key (metakey, FLATPAK_METADATA_GROUP_CONTEXT, FLATPAK_METADATA_KEY_EXTRA_ARGS, NULL))
+    {
+      g_auto(GStrv) extra_args = g_key_file_get_string_list (metakey, FLATPAK_METADATA_GROUP_CONTEXT,
+                                                             FLATPAK_METADATA_KEY_EXTRA_ARGS, NULL, error);
+      if (extra_args == NULL)
+        return FALSE;
+
+      flatpak_context_set_extra_argsv (context, extra_args);
     }
 
   if (g_key_file_has_group (metakey, FLATPAK_METADATA_GROUP_SESSION_BUS_POLICY))
@@ -2250,6 +2304,22 @@ flatpak_context_save_metadata (FlatpakContext *context,
       g_key_file_remove_key (metakey,
                              FLATPAK_METADATA_GROUP_CONTEXT,
                              FLATPAK_METADATA_KEY_PERSISTENT,
+                             NULL);
+    }
+
+  if (context->extra_args != NULL)
+    {
+      g_key_file_set_string_list (metakey,
+                                  FLATPAK_METADATA_GROUP_CONTEXT,
+                                  FLATPAK_METADATA_KEY_EXTRA_ARGS,
+                                  (const char * const *) context->extra_args,
+                                  g_strv_length (context->extra_args));
+    }
+  else
+    {
+      g_key_file_remove_key (metakey,
+                             FLATPAK_METADATA_GROUP_CONTEXT,
+                             FLATPAK_METADATA_KEY_EXTRA_ARGS,
                              NULL);
     }
 
@@ -2721,6 +2791,7 @@ flatpak_context_add_bus_filters (FlatpakContext *context,
 void
 flatpak_context_reset_non_permissions (FlatpakContext *context)
 {
+  g_strfreev (context->extra_args);
   g_hash_table_remove_all (context->env_vars);
 }
 

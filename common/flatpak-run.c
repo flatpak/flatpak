@@ -3564,6 +3564,9 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
 
   flatpak_bwrap_add_args (bwrap, "--", command, NULL);
 
+  if (app_context->extra_args != NULL)
+    flatpak_bwrap_append_argsv (bwrap, app_context->extra_args, g_strv_length (app_context->extra_args));
+
   if (!add_rest_args (bwrap, app_id,
                       exports, (flags & FLATPAK_RUN_FLAG_FILE_FORWARDING) != 0,
                       doc_mount_path,
