@@ -821,6 +821,21 @@
                     </para></listitem>
                 </varlistentry>
 
+                <varlistentry>
+                    <term><envar>FLATPAK_REPORT_OS_INFO</envar></term>
+                    <listitem>
+                        <para>
+                            If this environment variable is set to <literal>false</literal>, or the
+                            <literal>xa.report-os-info</literal> repo configuration option is set to
+                            <literal>false</literal>, or the <filename>no-report-os-info</filename>
+                            file exists at <envar>FLATPAK_CONFIG_DIR</envar>, Flatpak will not
+                            report the OS name, version, and architecture from <filename>/etc/os-release</filename>
+                            to the Flatpak remote via the <literal>Flatpak-Os-Info</literal> HTTP header
+                            when pulling objects.
+                        </para>
+                    </listitem>
+                </varlistentry>
+
                 <!-- FLATPAK_VALIDATE_ICON intentionally not documented:
                      it is intended for testing and development only -->
             </variablelist>
