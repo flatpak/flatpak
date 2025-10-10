@@ -37,6 +37,8 @@ char * flatpak_readlink (const char *path,
                          GError    **error);
 char * flatpak_resolve_link (const char *path,
                              GError    **error);
+char * flatpak_realpath (const char  *path,
+                         GError     **error);
 char * flatpak_canonicalize_filename (const char *path);
 
 #endif /* __FLATPAK_UTILS_BASE_H__ */

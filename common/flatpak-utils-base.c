@@ -100,6 +100,29 @@ flatpak_resolve_link (const char *path,
   return g_build_filename (dirname, link, NULL);
 }
 
+char *
+flatpak_realpath (const char  *path,
+                  GError     **error)
+{
+  struct stat stbuf;
+
+  if (!glnx_fstatat (AT_FDCWD, path, &stbuf, AT_SYMLINK_NOFOLLOW, error))
+    return NULL;
+
+  if (S_ISLNK (stbuf.st_mode))
+    {
+      g_autofree char *resolved = NULL;
+
+      resolved = flatpak_resolve_link (path, error);
+      if (!resolved)
+        return NULL;
+
+      return flatpak_canonicalize_filename (resolved);
+    }
+
+  return flatpak_canonicalize_filename (path);
+}
+
 /*
  * Syntactically canonicalize a filename, similar to
  * g_canonicalize_filename() in newer GLib.
