@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..8"
+echo "1..9"
 
 mkdir bundles
 
@@ -77,12 +77,6 @@ assert_file_has_content $FL_DIR/exports/share/applications/org.test.Hello.deskto
 assert_has_file $FL_DIR/exports/share/icons/hicolor/64x64/apps/org.test.Hello.png
 assert_has_file $FL_DIR/exports/share/icons/HighContrast/64x64/apps/org.test.Hello.png
 
-# Ensure triggers ran
-assert_has_file $FL_DIR/exports/share/applications/mimeinfo.cache
-assert_file_has_content $FL_DIR/exports/share/applications/mimeinfo.cache x-test/Hello
-assert_has_file $FL_DIR/exports/share/icons/hicolor/icon-theme.cache
-assert_has_file $FL_DIR/exports/share/icons/hicolor/index.theme
-
 $FLATPAK list ${U} | grep org.test.Hello > /dev/null
 $FLATPAK list ${U} -d | grep org.test.Hello | grep hello-origin > /dev/null
 $FLATPAK list ${U} -d | grep org.test.Hello | grep current > /dev/null
@@ -97,6 +91,21 @@ $FLATPAK remote-list ${U} -d | grep hello-origin | grep no-enumerate > /dev/null
 assert_has_file $FL_DIR/repo/hello-origin.trustedkeys.gpg
 
 ok "install app bundle"
+
+if command -v update-desktop-database >/dev/null &&
+   command -v update-mime-database >/dev/null &&
+   command -v gtk-update-icon-cache >/dev/null &&
+   test -f /usr/share/icons/hicolor/index.theme; then
+    # Ensure triggers ran
+    assert_has_file $FL_DIR/exports/share/applications/mimeinfo.cache
+    assert_file_has_content $FL_DIR/exports/share/applications/mimeinfo.cache x-test/Hello
+    assert_has_file $FL_DIR/exports/share/icons/hicolor/icon-theme.cache
+    assert_has_file $FL_DIR/exports/share/icons/hicolor/index.theme
+
+    ok "install app bundle triggers"
+else
+    ok "install app bundle triggers triggers # skip  Dependencies not available"
+fi
 
 ${FLATPAK} uninstall -y --force-remove ${U} org.test.Platform >&2
 
