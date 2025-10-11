@@ -3232,9 +3232,6 @@ extract_appstream (OstreeRepo        *repo,
               continue;
             }
 
-          if (g_str_has_suffix (component_id_suffix, ".desktop"))
-            component_id_suffix[strlen (component_id_suffix) - strlen (".desktop")] = 0;
-
           if (!copy_icon (component_id_text, icons_dir, repo, size1_mtree, "64x64", &my_error))
             {
               g_print (_("Error copying 64x64 icon for component %s: %s\n"), component_id_text, my_error->message);
