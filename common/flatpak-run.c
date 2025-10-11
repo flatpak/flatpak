@@ -59,6 +59,7 @@
 #include "flatpak-run-dbus-private.h"
 #include "flatpak-run-private.h"
 #include "flatpak-run-sockets-private.h"
+#include "flatpak-run-wayland-private.h"
 #include "flatpak-utils-base-private.h"
 #include "flatpak-dir-private.h"
 #include "flatpak-dir-utils-private.h"
@@ -265,23 +266,37 @@ flatpak_run_add_extension_args (FlatpakBwrap      *bwrap,
   return TRUE;
 }
 
+static gboolean
+flatpak_run_evaluate_conditions (FlatpakContextConditions condition)
+{
+  switch (condition)
+    {
+    case FLATPAK_CONTEXT_CONDITION_HAS_WAYLAND:
+      return flatpak_run_has_wayland ();
+    default:
+      return FALSE;
+    }
+}
+
 /*
  * @per_app_dir_lock_fd: If >= 0, make use of per-app directories in
  *  the host's XDG_RUNTIME_DIR to share /tmp between instances.
  */
 gboolean
-flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
-                                  const char      *app_info_path,
-                                  FlatpakRunFlags  flags,
-                                  const char      *app_id,
-                                  FlatpakContext  *context,
-                                  GFile           *app_id_dir,
-                                  GPtrArray       *previous_app_id_dirs,
-                                  int              per_app_dir_lock_fd,
-                                  const char      *instance_id,
-                                  FlatpakExports **exports_out,
-                                  GCancellable    *cancellable,
-                                  GError         **error)
+flatpak_run_add_environment_args (FlatpakBwrap           *bwrap,
+                                  const char             *app_info_path,
+                                  FlatpakRunFlags         flags,
+                                  const char             *app_id,
+                                  FlatpakContext         *context,
+                                  FlatpakContextDevices   devices,
+                                  FlatpakContextSockets   sockets,
+                                  GFile                  *app_id_dir,
+                                  GPtrArray              *previous_app_id_dirs,
+                                  int                     per_app_dir_lock_fd,
+                                  const char             *instance_id,
+                                  FlatpakExports        **exports_out,
+                                  GCancellable           *cancellable,
+                                  GError                **error)
 {
   g_autoptr(GError) my_error = NULL;
   g_autoptr(FlatpakExports) exports = NULL;
@@ -302,7 +317,7 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
       flatpak_bwrap_add_args (bwrap, "--unshare-net", NULL);
     }
 
-  if (context->devices & FLATPAK_CONTEXT_DEVICE_ALL)
+  if (devices & FLATPAK_CONTEXT_DEVICE_ALL)
     {
       flatpak_bwrap_add_args (bwrap,
                               "--dev-bind", "/dev", "/dev",
@@ -310,7 +325,7 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
       /* Don't expose the host /dev/shm, just the device nodes, unless explicitly allowed */
       if (g_file_test ("/dev/shm", G_FILE_TEST_IS_DIR))
         {
-          if (context->devices & FLATPAK_CONTEXT_DEVICE_SHM)
+          if (devices & FLATPAK_CONTEXT_DEVICE_SHM)
             {
               /* Don't do anything special: include shm in the
                * shared /dev. The host and all sandboxes and subsandboxes
@@ -352,7 +367,7 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
              mount on top of it. */
           if (g_strcmp0 (link, "/run/shm") == 0)
             {
-              if (context->devices & FLATPAK_CONTEXT_DEVICE_SHM &&
+              if (devices & FLATPAK_CONTEXT_DEVICE_SHM &&
                   g_file_test ("/run/shm", G_FILE_TEST_IS_DIR))
                 {
                   flatpak_bwrap_add_args (bwrap,
@@ -394,7 +409,7 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
                               "--dev", "/dev",
                               NULL);
 
-      if (context->devices & FLATPAK_CONTEXT_DEVICE_USB)
+      if (devices & FLATPAK_CONTEXT_DEVICE_USB)
         {
           g_info ("Allowing USB device access.");
 
@@ -402,7 +417,7 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
               flatpak_bwrap_add_args (bwrap, "--dev-bind", "/dev/bus/usb", "/dev/bus/usb", NULL);
         }
 
-      if (context->devices & FLATPAK_CONTEXT_DEVICE_DRI)
+      if (devices & FLATPAK_CONTEXT_DEVICE_DRI)
         {
           g_info ("Allowing dri access");
           int i;
@@ -438,7 +453,7 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
             }
         }
 
-      if (context->devices & FLATPAK_CONTEXT_DEVICE_INPUT)
+      if (devices & FLATPAK_CONTEXT_DEVICE_INPUT)
         {
           g_info ("Allowing input device access. Note: raw and virtual input currently require --device=all");
 
@@ -446,14 +461,14 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
               flatpak_bwrap_add_args (bwrap, "--dev-bind", "/dev/input", "/dev/input", NULL);
         }
 
-      if (context->devices & FLATPAK_CONTEXT_DEVICE_KVM)
+      if (devices & FLATPAK_CONTEXT_DEVICE_KVM)
         {
           g_info ("Allowing kvm access");
           if (g_file_test ("/dev/kvm", G_FILE_TEST_EXISTS))
             flatpak_bwrap_add_args (bwrap, "--dev-bind", "/dev/kvm", "/dev/kvm", NULL);
         }
 
-      if (context->devices & FLATPAK_CONTEXT_DEVICE_SHM)
+      if (devices & FLATPAK_CONTEXT_DEVICE_SHM)
         {
           /* This is a symlink to /run/shm on debian, so bind to real target */
           g_autofree char *real_dev_shm = realpath ("/dev/shm", NULL);
@@ -515,9 +530,9 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
   flatpak_context_append_bwrap_filesystem (context, bwrap, app_id, app_id_dir,
                                            exports, xdg_dirs_conf, home_access);
 
-  flatpak_run_add_socket_args_environment (bwrap, context->shares, context->sockets, app_id, instance_id);
-  flatpak_run_add_session_dbus_args (bwrap, proxy_arg_bwrap, context, flags, app_id);
-  flatpak_run_add_system_dbus_args (bwrap, proxy_arg_bwrap, context, flags);
+  flatpak_run_add_socket_args_environment (bwrap, context->shares, sockets, app_id, instance_id);
+  flatpak_run_add_session_dbus_args (bwrap, proxy_arg_bwrap, sockets, context, flags, app_id);
+  flatpak_run_add_system_dbus_args (bwrap, proxy_arg_bwrap, sockets, context, flags);
   flatpak_run_add_a11y_dbus_args (bwrap, proxy_arg_bwrap, context, flags, app_id);
 
   /* Must run this before spawning the dbus proxy, to ensure it
@@ -1366,30 +1381,31 @@ flatpak_run_save_environ (const char * const  *run_environ,
 }
 
 gboolean
-flatpak_run_add_app_info_args (FlatpakBwrap       *bwrap,
-                               GFile              *app_files,
-                               GFile              *original_app_files,
-                               GBytes             *app_deploy_data,
-                               const char         *app_extensions,
-                               GFile              *runtime_files,
-                               GFile              *original_runtime_files,
-                               GBytes             *runtime_deploy_data,
-                               const char         *runtime_extensions,
-                               const char         *app_id,
-                               const char         *app_branch,
-                               FlatpakDecomposed  *runtime_ref,
-                               GFile              *app_id_dir,
-                               FlatpakContext     *final_app_context,
-                               FlatpakContext     *cmdline_context,
-                               gboolean            sandbox,
-                               gboolean            build,
-                               gboolean            devel,
-                               char              **app_info_path_out,
-                               int                 instance_id_fd,
-                               char              **instance_id_host_dir_out,
-                               char              **instance_id_host_private_dir_out,
-                               char              **instance_id_out,
-                               GError             **error)
+flatpak_run_add_app_info_args (FlatpakBwrap           *bwrap,
+                               GFile                  *app_files,
+                               GFile                  *original_app_files,
+                               GBytes                 *app_deploy_data,
+                               const char             *app_extensions,
+                               GFile                  *runtime_files,
+                               GFile                  *original_runtime_files,
+                               GBytes                 *runtime_deploy_data,
+                               const char             *runtime_extensions,
+                               const char             *app_id,
+                               const char             *app_branch,
+                               FlatpakDecomposed      *runtime_ref,
+                               GFile                  *app_id_dir,
+                               FlatpakContext         *final_app_context,
+                               FlatpakContext         *cmdline_context,
+                               FlatpakContextSockets   sockets,
+                               gboolean                sandbox,
+                               gboolean                build,
+                               gboolean                devel,
+                               char                  **app_info_path_out,
+                               int                     instance_id_fd,
+                               char                  **instance_id_host_dir_out,
+                               char                  **instance_id_host_private_dir_out,
+                               char                  **instance_id_out,
+                               GError                **error)
 {
   g_autofree char *info_path = NULL;
   g_autofree char *bwrapinfo_path = NULL;
@@ -1495,11 +1511,11 @@ flatpak_run_add_app_info_args (FlatpakBwrap       *bwrap,
   g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
                          FLATPAK_METADATA_KEY_FLATPAK_VERSION, PACKAGE_VERSION);
 
-  if ((final_app_context->sockets & FLATPAK_CONTEXT_SOCKET_SESSION_BUS) == 0)
+  if ((sockets & FLATPAK_CONTEXT_SOCKET_SESSION_BUS) == 0)
     g_key_file_set_boolean (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
                             FLATPAK_METADATA_KEY_SESSION_BUS_PROXY, TRUE);
 
-  if ((final_app_context->sockets & FLATPAK_CONTEXT_SOCKET_SYSTEM_BUS) == 0)
+  if ((sockets & FLATPAK_CONTEXT_SOCKET_SYSTEM_BUS) == 0)
     g_key_file_set_boolean (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
                             FLATPAK_METADATA_KEY_SYSTEM_BUS_PROXY, TRUE);
 
@@ -2943,6 +2959,20 @@ open_namespace_fd_if_needed (const char *path,
   return -1;
 }
 
+FlatpakContextDevices
+flatpak_run_compute_allowed_devices (FlatpakContext *context)
+{
+  return flatpak_context_compute_allowed_devices (context,
+                                                  flatpak_run_evaluate_conditions);
+}
+
+FlatpakContextSockets
+flatpak_run_compute_allowed_sockets (FlatpakContext *context)
+{
+  return flatpak_context_compute_allowed_sockets (context,
+                                                  flatpak_run_evaluate_conditions);
+}
+
 gboolean
 flatpak_run_app (FlatpakDecomposed   *app_ref,
                  FlatpakDeploy       *app_deploy,
@@ -3014,6 +3044,8 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
   const char *app_target_path = "/app";
   const char *runtime_target_path = "/usr";
   struct stat s;
+  FlatpakContextDevices devices;
+  FlatpakContextSockets sockets;
 
   g_assert (run_environ != NULL);
 
@@ -3143,6 +3175,10 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
     }
 
   flatpak_context_dump (app_context, "Final context");
+
+  devices = flatpak_run_compute_allowed_devices (app_context);
+  sockets = flatpak_run_compute_allowed_sockets (app_context);
+
   original_runtime_files = flatpak_deploy_get_files (runtime_deploy);
 
   if (custom_usr_path != NULL)
@@ -3440,7 +3476,8 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
                                       app_files, original_app_files, app_deploy_data, app_extensions,
                                       runtime_files, original_runtime_files, runtime_deploy_data, runtime_extensions,
                                       app_id, flatpak_decomposed_get_branch (app_ref),
-                                      runtime_ref, app_id_dir, app_context, extra_context,
+                                      runtime_ref, app_id_dir,
+                                      app_context, extra_context, sockets,
                                       sandboxed, FALSE, flags & FLATPAK_RUN_FLAG_DEVEL,
                                       &app_info_path, instance_id_fd,
                                       &instance_id_host_dir, &instance_id_host_private_dir,
@@ -3479,7 +3516,8 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
     add_document_portal_args (bwrap, app_id, &doc_mount_path);
 
   if (!flatpak_run_add_environment_args (bwrap, app_info_path, flags,
-                                         app_id, app_context, app_id_dir, previous_app_id_dirs,
+                                         app_id, app_context, devices, sockets,
+                                         app_id_dir, previous_app_id_dirs,
                                          per_app_dir_lock_fd, instance_id,
                                          &exports, cancellable, error))
     return FALSE;

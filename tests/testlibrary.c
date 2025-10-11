@@ -13,6 +13,8 @@
 #include "can-use-fuse.h"
 #include "testlib.h"
 
+void flatpak_add_all_tests (void);
+
 static char *testdir;
 static char *flatpak_runtimedir;
 static char *flatpak_systemdir;
@@ -5127,6 +5129,8 @@ main (int argc, char *argv[])
   g_test_add_func ("/library/installation-unused-refs", test_installation_unused_refs);
   g_test_add_func ("/library/installation-unused-refs-excludes-pins", test_installation_unused_refs_excludes_pins);
   g_test_add_func ("/library/installation-unused-refs-across-installations", test_installation_unused_refs_across_installations);
+
+  flatpak_add_all_tests ();
 
   global_setup ();
 
