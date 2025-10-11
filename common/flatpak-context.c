@@ -76,6 +76,7 @@ const char *flatpak_context_devices[] = {
   "shm",
   "input",
   "usb",
+  "ntsync",
   NULL
 };
 
