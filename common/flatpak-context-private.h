@@ -70,6 +70,7 @@ typedef enum {
   FLATPAK_CONTEXT_DEVICE_SHM         = 1 << 3,
   FLATPAK_CONTEXT_DEVICE_INPUT       = 1 << 4,
   FLATPAK_CONTEXT_DEVICE_USB         = 1 << 5,
+  FLATPAK_CONTEXT_DEVICE_NTSYNC      = 1 << 6,
 } FlatpakContextDevices;
 
 typedef enum {

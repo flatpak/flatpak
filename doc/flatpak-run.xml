@@ -355,7 +355,7 @@
                 <listitem><para>
                     Expose a device to the application. This overrides to
                     the Context section from the application metadata.
-                    <arg choice="plain">DEVICE</arg> must be one of: dri, usb, input, kvm, shm, all.
+                    <arg choice="plain">DEVICE</arg> must be one of: dri, input, usb, ntsync, kvm, shm, all.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
@@ -366,7 +366,7 @@
                 <listitem><para>
                     Don't expose a device to the application. This overrides to
                     the Context section from the application metadata.
-                    <arg choice="plain">DEVICE</arg> must be one of: dri, usb, input, kvm, shm, all.
+                    <arg choice="plain">DEVICE</arg> must be one of: dri, input, usb, ntsync, kvm, shm, all.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>

@@ -192,6 +192,12 @@
                                 Available since 1.15.11.
                             </para></listitem></varlistentry>
 
+                            <varlistentry><term><option>ntsync</option></term>
+                            <listitem><para>
+                                NTSync device
+                                (<filename>/dev/ntsync</filename>).
+                            </para></listitem></varlistentry>
+
                             <varlistentry><term><option>kvm</option></term>
                             <listitem><para>
                                 Virtualization

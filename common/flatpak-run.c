@@ -446,6 +446,14 @@ flatpak_run_add_environment_args (FlatpakBwrap    *bwrap,
               flatpak_bwrap_add_args (bwrap, "--dev-bind", "/dev/input", "/dev/input", NULL);
         }
 
+      if (context->devices & FLATPAK_CONTEXT_DEVICE_NTSYNC)
+        {
+          g_info ("Allowing ntsync device access.");
+
+          if (g_file_test ("/dev/ntsync", G_FILE_TEST_EXISTS))
+              flatpak_bwrap_add_args (bwrap, "--dev-bind", "/dev/ntsync", "/dev/ntsync", NULL);
+        }
+
       if (context->devices & FLATPAK_CONTEXT_DEVICE_KVM)
         {
           g_info ("Allowing kvm access");
