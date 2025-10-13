@@ -47,6 +47,7 @@ static gboolean opt_show_sdk;
 static gboolean opt_show_permissions;
 static gboolean opt_show_extensions;
 static gboolean opt_show_location;
+static gboolean opt_show_data_dir;
 static char *opt_arch;
 static char **opt_installations;
 static char *opt_file_access;
@@ -67,6 +68,7 @@ static GOptionEntry options[] = {
   { "file-access", 0, 0, G_OPTION_ARG_FILENAME, &opt_file_access, N_("Query file access"), N_("PATH") },
   { "show-extensions", 'e', 0, G_OPTION_ARG_NONE, &opt_show_extensions, N_("Show extensions"), NULL },
   { "show-location", 'l', 0, G_OPTION_ARG_NONE, &opt_show_location, N_("Show location"), NULL },
+  { "show-data-dir", 'd', 0, G_OPTION_ARG_NONE, &opt_show_data_dir, N_("Show data dir"), NULL },
   { NULL }
 };
 
@@ -90,6 +92,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   g_autoptr(FlatpakDeploy) deploy = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
   g_autoptr(GKeyFile) metakey = NULL;
+  g_autoptr(FlatpakContext) app_context = NULL;
   const char *commit = NULL;
   const char *alt_id = NULL;
   const char *eol;
@@ -98,6 +101,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   const char *summary;
   const char *version;
   const char *license;
+  const char *data_dir;
   const char *pref = NULL;
   const char *default_branch = NULL;
   const char *origin = NULL;
@@ -148,6 +152,10 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   if (deploy == NULL)
     return FALSE;
 
+  app_context = flatpak_context_load_for_deploy (deploy, error);
+  if (app_context == NULL)
+    return FALSE;
+
   commit = flatpak_deploy_data_get_commit (deploy_data);
   alt_id = flatpak_deploy_data_get_alt_id (deploy_data);
   origin = flatpak_deploy_data_get_origin (deploy_data);
@@ -162,11 +170,12 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   summary = flatpak_deploy_data_get_appdata_summary (deploy_data);
   version = flatpak_deploy_data_get_appdata_version (deploy_data);
   license = flatpak_deploy_data_get_appdata_license (deploy_data);
+  data_dir = g_file_get_path (flatpak_context_get_data_dir (app_context, flatpak_decomposed_dup_id (ref)));
 
   metakey = flatpak_deploy_get_metadata (deploy);
 
   if (opt_show_ref || opt_show_origin || opt_show_commit || opt_show_size || opt_show_metadata || opt_show_permissions ||
-      opt_file_access || opt_show_location || opt_show_runtime || opt_show_sdk)
+      opt_file_access || opt_show_location || opt_show_runtime || opt_show_sdk || opt_show_data_dir)
     friendly = FALSE;
 
   if (friendly)
@@ -231,6 +240,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
           len = MAX (len, g_utf8_strlen (_("Runtime:"), -1));
           len = MAX (len, g_utf8_strlen (_("Sdk:"), -1));
         }
+      len = MAX (len, g_utf8_strlen (_("Data dir:"), -1));
       if (formatted_timestamp)
         len = MAX (len, g_utf8_strlen (_("Date:"), -1));
       if (subject)
@@ -287,6 +297,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
                                        error);
           print_aligned (len, _("Sdk:"), sdk ? sdk : "-");
         }
+      print_aligned (len, _("Data dir:"), data_dir);
       g_print ("\n");
 
       if (strcmp (commit, latest) != 0)
@@ -386,6 +397,12 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
           g_print ("%s", sdk ? sdk : "-");
         }
 
+      if (opt_show_data_dir)
+        {
+          maybe_print_space (&first);
+          g_print ("%s", data_dir);
+        }
+
       if (!first)
         g_print ("\n");
 
@@ -407,13 +424,8 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
 
       if (opt_show_permissions || opt_file_access)
         {
-          g_autoptr(FlatpakContext) app_context = NULL;
           g_autoptr(GKeyFile) keyfile = NULL;
           g_autofree gchar *contents = NULL;
-
-          app_context = flatpak_context_load_for_deploy (deploy, error);
-          if (app_context == NULL)
-            return FALSE;
 
           if (opt_show_permissions)
             {
