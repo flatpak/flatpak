@@ -52,11 +52,12 @@ typedef enum {
   FLATPAK_RUN_FLAG_CLEAR_ENV          = (1 << 22),
 } FlatpakRunFlags;
 
-typedef struct FlatpakDir          FlatpakDir;
-typedef struct FlatpakDeploy       FlatpakDeploy;
-typedef struct _FlatpakImageSource FlatpakImageSource;
-typedef struct FlatpakOciRegistry  FlatpakOciRegistry;
-typedef struct _FlatpakOciManifest FlatpakOciManifest;
-typedef struct _FlatpakOciImage    FlatpakOciImage;
+typedef struct FlatpakDir             FlatpakDir;
+typedef struct FlatpakDeploy          FlatpakDeploy;
+typedef struct FlatpakImageCollection FlatpakImageCollection;
+typedef struct _FlatpakImageSource    FlatpakImageSource;
+typedef struct FlatpakOciRegistry     FlatpakOciRegistry;
+typedef struct _FlatpakOciManifest    FlatpakOciManifest;
+typedef struct _FlatpakOciImage       FlatpakOciImage;
 
 #endif /* __FLATPAK_COMMON_TYPES_H__ */
