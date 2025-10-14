@@ -5,7 +5,6 @@ if command -v flatpak > /dev/null; then
     new_dirs=$(
         (
             unset G_MESSAGES_DEBUG
-            echo "${XDG_DATA_HOME:-"$HOME/.local/share"}/flatpak"
             GIO_USE_VFS=local flatpak --installations
         ) | (
             new_dirs=
