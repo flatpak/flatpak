@@ -127,7 +127,7 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
   remote = argv[1];
   pref = argv[2];
 
-  if (!flatpak_resolve_duplicate_remotes (dirs, remote, &preferred_dir, cancellable, error))
+  if (!flatpak_resolve_duplicate_remotes (dirs, remote, FALSE, &preferred_dir, cancellable, error))
     return FALSE;
 
   default_branch = flatpak_dir_get_remote_default_branch (preferred_dir, remote);
