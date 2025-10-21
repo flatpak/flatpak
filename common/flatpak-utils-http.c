@@ -146,7 +146,6 @@ clear_load_uri_data_headers (LoadUriData *data)
   g_clear_pointer (&data->hdr_www_authenticate, g_free);
   g_clear_pointer (&data->hdr_etag, g_free);
   g_clear_pointer (&data->hdr_last_modified, g_free);
-  g_clear_pointer (&data->hdr_last_modified, g_free);
   g_clear_pointer (&data->hdr_cache_control, g_free);
   g_clear_pointer (&data->hdr_expires, g_free);
   g_clear_pointer (&data->hdr_content_encoding, g_free);
