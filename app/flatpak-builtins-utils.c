@@ -105,7 +105,7 @@ flatpak_find_installed_pref (const char *pref, FlatpakKinds kinds, const char *d
   g_autoptr(GError) lookup_error = NULL;
   g_autoptr(FlatpakDecomposed) ref = NULL;
   g_autoptr(FlatpakDir) dir = NULL;
-  g_autoptr(GPtrArray) system_dirs = NULL;
+  g_autoptr(GPtrArray) dirs = NULL;
 
   if (!flatpak_split_partial_ref_arg (pref, kinds, default_arch, default_branch,
                                       &kinds, &id, &arch, &branch, error))
@@ -133,23 +133,23 @@ flatpak_find_installed_pref (const char *pref, FlatpakKinds kinds, const char *d
     {
       int i;
 
-      system_dirs = flatpak_dir_get_system_list (cancellable, error);
-      if (system_dirs == NULL)
+      dirs = flatpak_dir_get_list (cancellable, error);
+      if (dirs == NULL)
         return FALSE;
 
-      for (i = 0; i < system_dirs->len; i++)
+      for (i = 0; i < dirs->len; i++)
         {
-          FlatpakDir *system_dir = g_ptr_array_index (system_dirs, i);
+          FlatpakDir *current_dir = g_ptr_array_index (dirs, i);
 
           g_clear_error (&lookup_error);
 
-          ref = flatpak_dir_find_installed_ref (system_dir,
+          ref = flatpak_dir_find_installed_ref (current_dir,
                                                 id, branch, arch,
                                                 kinds,
                                                 &lookup_error);
           if (ref)
             {
-              dir = g_object_ref (system_dir);
+              dir = g_object_ref (current_dir);
               break;
             }
 
@@ -170,7 +170,7 @@ flatpak_find_installed_pref (const char *pref, FlatpakKinds kinds, const char *d
             {
               g_autoptr(FlatpakDir) installation_dir = NULL;
 
-              installation_dir = flatpak_dir_get_system_by_id (search_installations[i], cancellable, error);
+              installation_dir = flatpak_dir_get_by_id (search_installations[i], cancellable, error);
               if (installation_dir == NULL)
                 return FALSE;
 
