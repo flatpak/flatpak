@@ -2481,7 +2481,7 @@ flatpak_validate_path_characters (const char *path,
 }
 
 gboolean
-running_under_sudo (void)
+running_under_sudo_root (void)
 {
   const char *sudo_command_env = g_getenv ("SUDO_COMMAND");
   g_auto(GStrv) split_command = NULL;
@@ -2491,7 +2491,9 @@ running_under_sudo (void)
 
   /* SUDO_COMMAND could be a value like `/usr/bin/flatpak run foo` */
   split_command = g_strsplit (sudo_command_env, " ", 2);
-  if (g_str_has_suffix (split_command[0], "flatpak"))
+  /* Check if sudo was used to run as root instead of non-root users
+   * using -u or -g for example. */
+  if (g_str_has_suffix (split_command[0], "flatpak") && geteuid () == 0)
     return TRUE;
 
   return FALSE;

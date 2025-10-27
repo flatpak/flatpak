@@ -350,7 +350,7 @@ char * flatpak_escape_string (const char        *s,
 gboolean flatpak_validate_path_characters (const char *path,
                                            GError    **error);
 
-gboolean running_under_sudo (void);
+gboolean running_under_sudo_root (void);
 
 void flatpak_set_debugging (gboolean debugging);
 gboolean flatpak_is_debugging (void);

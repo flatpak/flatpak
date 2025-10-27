@@ -3054,7 +3054,7 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
   /* This check exists to stop accidental usage of `sudo flatpak run`
      and is not to prevent running as root.
    */
-  if (running_under_sudo ())
+  if (running_under_sudo_root ())
     return flatpak_fail_error (error, FLATPAK_ERROR,
                                _("\"flatpak run\" is not intended to be run as `sudo flatpak run`. "
                                  "Use `sudo -i` or `su -l` instead and invoke \"flatpak run\" from "
