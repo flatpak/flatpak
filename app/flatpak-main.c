@@ -376,7 +376,7 @@ flatpak_option_context_parse (GOptionContext     *context,
    * which is almost certainly not what the user intended so just consider it
    * an error.
    */
-  if (opt_user && running_under_sudo ())
+  if (opt_user && running_under_sudo_root ())
     return flatpak_fail_error (error, FLATPAK_ERROR,
                                _("Refusing to operate under sudo with --user. "
                                  "Omit sudo to operate on the user installation, "
