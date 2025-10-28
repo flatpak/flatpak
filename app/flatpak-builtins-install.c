@@ -236,6 +236,9 @@ install_from (FlatpakDir *dir,
 
   filename = argv[1];
 
+  if (g_str_has_prefix (filename, "flatpak+https:"))
+    filename += strlen ("flatpak+");
+
   if (g_str_has_prefix (filename, "http:") ||
       g_str_has_prefix (filename, "https:"))
     {
