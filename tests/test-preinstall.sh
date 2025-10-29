@@ -63,6 +63,10 @@ Install=false
 Install=true
 EOF
 
+cat << EOF > hello-3.preinstall
+[Flatpak Preinstall org.test.Hello3]
+EOF
+
 # Set up the runtimes
 # org.test.Platform//master and org.test.Platform//devel
 # and the apps
@@ -76,8 +80,9 @@ make_updated_app test org.test.Collection.test devel HELLO2_DEVEL org.test.Hello
 
 setup_repo test2
 make_updated_app test2 org.test.Collection.test2 master HELLO2_MASTER_C2 org.test.Hello2
+make_updated_app test2 org.test.Collection.test2 master HELLO2_MASTER_C3 org.test.Hello3
 
-echo "1..10"
+echo "1..11"
 
 # just checking that the test remote got added
 port=$(cat httpd-port)
@@ -252,3 +257,13 @@ ${FLATPAK} ${U} preinstall -y > nothingtodo
 assert_file_has_content nothingtodo "Nothing to do"
 
 ok "bad config"
+
+# Hello3 is in the second repo. Make sure we still manage to install it.
+cp hello-3.preinstall $FLATPAK_CONFIG_DIR/preinstall.d/
+
+${FLATPAK} ${U} preinstall -y >&2
+
+${FLATPAK} ${U} list --columns=ref > list-log
+assert_file_has_content list-log "^org\.test\.Hello3/.*/master$"
+
+ok "app not in first repo"

@@ -3185,8 +3185,9 @@ flatpak_transaction_add_sync_preinstalled (FlatpakTransaction *self,
       for (int j = 0; remotes[j] != NULL; j++)
         {
           const char *remote = remotes[j];
-          g_autoptr(GError) local_error = NULL;
+          g_autoptr(FlatpakRemoteState) state = NULL;
           g_autofree char *remote_collection_id = NULL;
+          g_autoptr(GError) local_error = NULL;
 
           if (flatpak_dir_get_remote_disabled (priv->dir, remote))
             continue;
@@ -3194,9 +3195,27 @@ flatpak_transaction_add_sync_preinstalled (FlatpakTransaction *self,
           remote_collection_id = flatpak_dir_get_remote_collection_id (priv->dir,
                                                                        remote);
 
-          /* Choose the first match if the collection ID was not specified */
           if (config->collection_id != NULL &&
               g_strcmp0 (remote_collection_id, config->collection_id) != 0)
+            continue;
+
+          state = flatpak_transaction_ensure_remote_state (self,
+                                                           FLATPAK_TRANSACTION_OPERATION_INSTALL,
+                                                           remote,
+                                                           priv->default_arch,
+                                                           &local_error);
+          if (state == NULL)
+            {
+              g_warning ("Checking if preinstall ref %s is in remote %s failed: %s",
+                         flatpak_decomposed_get_ref (config->ref),
+                         remote,
+                         local_error->message);
+              continue;
+            }
+
+          if (!flatpak_remote_state_lookup_ref (state,
+                                                flatpak_decomposed_get_ref (config->ref),
+                                                NULL, NULL, NULL, NULL, NULL, NULL))
             continue;
 
           g_info ("Adding preinstall of %s from remote %s",
