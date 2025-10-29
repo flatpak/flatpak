@@ -134,8 +134,108 @@
                 This group determines various system resources that may be shared
                 with the application when it is run in a flatpak sandbox.
             </para>
+            <refsect3 id="conditional-permissions">
+                <title>Conditional Permissions</title>
+                <para>
+                    Some permissions (such as <option>sockets</option> and
+                    <option>devices</option>) support conditional grants,
+                    where access is only provided when specific runtime
+                    conditions are met. This allows applications to adapt
+                    to different system capabilities and session types.
+                    Available since 1.17.
+                </para>
+                <para>
+                    Conditional permissions use the syntax
+                    <literal>if:PERMISSION:CONDITION</literal> in the
+                    metadata file. For example,
+                    <literal>if:wayland:has-wayland</literal> grants
+                    Wayland socket access only when running in a Wayland session.
+                </para>
+                <para>
+                    The following conditions are supported:
+                </para>
+                <variablelist>
+                    <varlistentry>
+                        <term><option>true</option></term>
+                        <listitem><para>
+                            Always evaluates to true.
+                        </para></listitem>
+                    </varlistentry>
+                    <varlistentry>
+                        <term><option>false</option></term>
+                        <listitem><para>
+                            Always evaluates to false.
+                        </para></listitem>
+                    </varlistentry>
+                    <varlistentry>
+                        <term><option>has-input-device</option></term>
+                        <listitem><para>
+                            True if this version of Flatpak supports the
+                            <option>input</option> device permission.
+                            This is always true in Flatpak 1.15.6 and later,
+                            and can be used to provide fallback behavior for
+                            older Flatpak versions.
+                        </para></listitem>
+                    </varlistentry>
+                    <varlistentry>
+                        <term><option>has-wayland</option></term>
+                        <listitem><para>
+                            True if the current desktop session supports
+                            Wayland.
+                        </para></listitem>
+                    </varlistentry>
+                </variablelist>
+                <para>
+                    Conditions can be negated by prefixing with
+                    <literal>!</literal>. For example,
+                    <literal>if:x11:!has-wayland</literal> grants
+                    X11 socket access only when NOT running in a Wayland session.
+                </para>
+                <para>
+                    Multiple conditional permissions can be specified for
+                    the same resource. If any condition matches, the
+                    permission is granted (OR logic). For example:
+<programlisting>
+sockets=wayland;if:x11:!has-wayland;if:x11:false
+</programlisting>
+                </para>
+                <para>
+                    For backward compatibility with older Flatpak versions,
+                    conditional permissions can be combined with unconditional
+                    grants:
+<programlisting>
+sockets=x11;if:x11:!has-wayland;
+</programlisting>
+                    Older Flatpak versions will grant X11 access unconditionally
+                    (seeing only <literal>x11</literal>), while newer
+                    versions recognize the conditional syntax and grant
+                    X11 access only when not in Wayland sessions.
+                </para>
+                <para>
+                    To explicitly deny a permission that might be granted at
+                    a lower layer (such as from the runtime or a global override),
+                    prefix the permission name with <literal>!</literal>:
+<programlisting>
+sockets=!x11;
+</programlisting>
+                    This denial can be combined with conditional grants to
+                    remove unconditional access while allowing conditional access:
+<programlisting>
+sockets=!x11;x11;if:x11:!has-wayland;
+</programlisting>
+                    This denies unconditional X11 access, but allows X11
+                    access conditionally when not running in a Wayland session.
+                    The seemingly contradictory <literal>!x11</literal> and
+                    <literal>x11</literal> ensures backward compatibility:
+                    older Flatpak versions see the final <literal>x11</literal>
+                    grant, while newer versions understand the conditional logic.
+                </para>
+            </refsect3>
             <para>
                 All keys in this group (and the group itself) are optional.
+            </para>
+            <para>
+                The keys supported in this group are:
             </para>
             <variablelist>
                 <varlistentry>
@@ -158,6 +258,11 @@
                         DBUS_SYSTEM_BUS_ADDRESS to let the application
                         find sockets that are not in a fixed location.
                         Available since 0.3.
+                    </para><para>
+                        This option supports conditional permissions.
+                        See <link linkend="conditional-permissions">Conditional Permissions</link>
+                        for details on how to grant socket access conditionally
+                        based on runtime conditions.
                     </para></listitem>
                 </varlistentry>
 
@@ -213,6 +318,11 @@
                             </para></listitem></varlistentry>
 
                         </variablelist>
+                    </para><para>
+                        This option supports conditional permissions.
+                        See <link linkend="conditional-permissions">Conditional Permissions</link>
+                        for details on how to grant device access conditionally
+                        based on runtime conditions.
                     </para></listitem>
                 </varlistentry>
 
@@ -1204,6 +1314,26 @@ subdirectories=true
 [Extension org.gnome.Calculator.Debug]
 directory=lib/debug
 </programlisting>
+        <para>
+            Example using conditional permissions to support fallback
+            from Wayland to X11:
+        </para>
+<programlisting>
+[Application]
+name=org.example.App
+runtime=org.gnome.Platform/x86_64/3.20
+sdk=org.gnome.Sdk/x86_64/3.20
+
+[Context]
+shared=network;ipc;
+sockets=wayland;x11;if:x11:!has-wayland;
+</programlisting>
+        <para>
+            In this example, the application will always have access to
+            the Wayland socket if there the app runs in a Wayland session.
+            The X11 socket only is available if the app does not run in
+            a wayland session (<option>!has-wayland</option>).
+        </para>
     </refsect1>
 
     <refsect1>

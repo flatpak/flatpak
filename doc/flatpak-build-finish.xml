@@ -157,6 +157,27 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--socket-if=SOCKET:CONDITION</option></term>
+
+                <listitem><para>
+                    Expose a well-known socket to the application conditionally,
+                    only when the specified condition is met at runtime.
+                    This updates the [Context] group in the metadata.
+                    SOCKET must be one of: x11, wayland, fallback-x11, pulseaudio, system-bus, session-bus,
+                    ssh-auth, pcsc, cups, gpg-agent, inherit-wayland-socket.
+                    CONDITION must be one of: true, false, has-input-device, has-wayland.
+                    Conditions can be negated with <literal>!</literal>,
+                    for example <option>!has-wayland</option>.
+                    This option can be used multiple times.
+                    Available since 1.17.
+                </para><para>
+                    See the Conditional Permissions section in
+                    <citerefentry><refentrytitle>flatpak-metadata</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+                    for more details.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--device=DEVICE</option></term>
 
                 <listitem><para>
@@ -175,6 +196,26 @@
                     the [Context] group in the metadata.
                     DEVICE must be one of: dri, input, usb, kvm, shm, all.
                     This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--device-if=DEVICE:CONDITION</option></term>
+
+                <listitem><para>
+                    Expose a device to the application conditionally,
+                    only when the specified condition is met at runtime.
+                    This updates the [Context] group in the metadata.
+                    DEVICE must be one of: dri, input, usb, kvm, shm, all.
+                    CONDITION must be one of: true, false, has-input-device, has-wayland.
+                    Conditions can be negated with <literal>!</literal>,
+                    for example <option>!has-input-device</option>.
+                    This option can be used multiple times.
+                    Available since 1.17.
+                </para><para>
+                    See the Conditional Permissions section in
+                    <citerefentry><refentrytitle>flatpak-metadata</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+                    for more details.
                 </para></listitem>
             </varlistentry>
 
@@ -593,6 +634,14 @@ More than one executable
 Using gcalccmd as command
 Please review the exported files and the metadata
 </programlisting>
+
+        <para>
+            <command>$ flatpak build-finish /build/my-app --socket=wayland --socket-if=x11:!has-wayland --share=ipc</command>
+        </para>
+        <para>
+            This grants Wayland access unconditionally and X11 access only when not running in a Wayland session,
+            allowing the application to fall back to X11 when needed.
+        </para>
 
     </refsect1>
 
