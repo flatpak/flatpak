@@ -2660,7 +2660,7 @@ add_deps (FlatpakTransaction          *self,
                 return FALSE;
             }
 
-          if (sdk_op->kind != FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
+          if (sdk_op && sdk_op->kind != FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
             {
               flatpak_transaction_operation_add_related_to_op (sdk_op, op);
               run_operation_before (sdk_op, op, 2);
