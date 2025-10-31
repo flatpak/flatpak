@@ -1459,7 +1459,7 @@ flatpak_oci_registry_store_blob (FlatpakOciRegistry *self,
                                       g_bytes_get_data (data, NULL),
                                       g_bytes_get_size (data),
                                       0, cancellable, error))
-    return FALSE;
+    return NULL;
 
   return g_strdup_printf ("sha256:%s", sha256);
 }
