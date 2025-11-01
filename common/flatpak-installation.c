@@ -215,37 +215,19 @@ flatpak_get_supported_arches (void)
   return (const char * const *) flatpak_get_arches ();
 }
 
-/**
- * flatpak_get_system_installations:
- * @cancellable: (nullable): a #GCancellable
- * @error: return location for a #GError
- *
- * Lists the system installations according to the current configuration and current
- * availability (e.g. doesn't return a configured installation if not reachable).
- *
- * Returns: (transfer container) (element-type FlatpakInstallation): a GPtrArray of
- *   #FlatpakInstallation instances
- *
- * Since: 0.8
- */
-GPtrArray *
-flatpak_get_system_installations (GCancellable *cancellable,
-                                  GError      **error)
+static GPtrArray *
+flatpak_get_installations_internal (GPtrArray    *dirs,  
+                           GCancellable *cancellable,
+                           GError      **error)
 {
-  g_autoptr(GPtrArray) system_dirs = NULL;
   g_autoptr(GPtrArray) installs = NULL;
-  GPtrArray *ret = NULL;
   int i;
 
-  system_dirs = flatpak_dir_get_system_list (cancellable, error);
-  if (system_dirs == NULL)
-    goto out;
-
   installs = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-  for (i = 0; i < system_dirs->len; i++)
+  for (i = 0; i < dirs->len; i++)
     {
       g_autoptr(GError) local_error = NULL;
-      FlatpakDir *install_dir = g_ptr_array_index (system_dirs, i);
+      FlatpakDir *install_dir = g_ptr_array_index (dirs, i);
       g_autoptr(FlatpakInstallation) installation = NULL;
 
       installation = flatpak_installation_new_for_dir (install_dir,
@@ -268,10 +250,85 @@ flatpak_get_system_installations (GCancellable *cancellable,
                    "No system installations found");
     }
 
-  ret = g_steal_pointer (&installs);
+  return g_steal_pointer (&installs);
+}
 
-out:
-  return ret;
+/**
+ * flatpak_get_system_installations:
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Lists the system installations according to the current configuration and current
+ * availability (e.g. doesn't return a configured installation if not reachable).
+ *
+ * Returns: (transfer container) (element-type FlatpakInstallation): a GPtrArray of
+ *   #FlatpakInstallation instances
+ *
+ * Since: 0.8
+ */
+GPtrArray *
+flatpak_get_system_installations (GCancellable *cancellable,
+                                  GError      **error)
+{
+  g_autoptr(GPtrArray) system_dirs = NULL;
+
+  system_dirs = flatpak_dir_get_system_list (cancellable, error);
+  if (system_dirs == NULL)
+    return NULL;
+
+  return flatpak_get_installations_internal (system_dirs, cancellable, error);
+}
+
+/**
+ * flatpak_get_user_installations:
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Lists the user installations according to the current configuration and current
+ * availability (e.g. doesn't return a configured installation if not reachable).
+ *
+ * Returns: (transfer container) (element-type FlatpakInstallation): a GPtrArray of
+ *   #FlatpakInstallation instances
+ *
+ * Since: 1.17
+ */
+GPtrArray *
+flatpak_get_user_installations (GCancellable *cancellable,
+                                GError      **error)
+{
+  g_autoptr(GPtrArray) user_dirs = NULL;
+
+  user_dirs = flatpak_dir_get_user_list (cancellable, error);
+  if (user_dirs == NULL)
+    return NULL;
+
+  return flatpak_get_installations_internal (user_dirs, cancellable, error);
+}
+
+/**
+ * flatpak_get_installations:
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Lists the installations according to the current configuration and current
+ * availability (e.g. doesn't return a configured installation if not reachable).
+ *
+ * Returns: (transfer container) (element-type FlatpakInstallation): a GPtrArray of
+ *   #FlatpakInstallation instances
+ *
+ * Since: 1.17
+ */
+GPtrArray *
+flatpak_get_installations (GCancellable *cancellable,
+                           GError      **error)
+{
+  g_autoptr(GPtrArray) dirs = NULL;
+
+  dirs = flatpak_dir_get_list (cancellable, error);
+  if (dirs == NULL)
+    return NULL;
+
+  return flatpak_get_installations_internal (dirs, cancellable, error);
 }
 
 /**
@@ -288,6 +345,27 @@ flatpak_installation_new_system (GCancellable *cancellable,
                                  GError      **error)
 {
   return flatpak_installation_new_steal_dir (flatpak_dir_get_system_default (), cancellable, error);
+}
+
+static FlatpakInstallation *
+flatpak_installation_from_id_internal (FlatpakDir   *install_dir,
+                                       GCancellable *cancellable,
+                                       GError      **error)
+{
+  g_autoptr(FlatpakInstallation) installation = NULL;
+  g_autoptr(GError) local_error = NULL;
+
+  installation = flatpak_installation_new_for_dir (install_dir,
+                                                   cancellable,
+                                                   &local_error);
+  if (installation == NULL)
+    {
+      g_info ("Error creating Flatpak installation: %s", local_error->message);
+      g_propagate_error (error, g_steal_pointer (&local_error));
+    }
+
+  g_info ("Found Flatpak installation for '%s'", flatpak_dir_get_id (install_dir));
+  return g_steal_pointer (&installation);
 }
 
 /**
@@ -308,24 +386,12 @@ flatpak_installation_new_system_with_id (const char   *id,
                                          GError      **error)
 {
   g_autoptr(FlatpakDir) install_dir = NULL;
-  g_autoptr(FlatpakInstallation) installation = NULL;
-  g_autoptr(GError) local_error = NULL;
 
   install_dir = flatpak_dir_get_system_by_id (id, cancellable, error);
   if (install_dir == NULL)
     return NULL;
 
-  installation = flatpak_installation_new_for_dir (install_dir,
-                                                   cancellable,
-                                                   &local_error);
-  if (installation == NULL)
-    {
-      g_info ("Error creating Flatpak installation: %s", local_error->message);
-      g_propagate_error (error, g_steal_pointer (&local_error));
-    }
-
-  g_info ("Found Flatpak installation for '%s'", id);
-  return g_steal_pointer (&installation);
+  return flatpak_installation_from_id_internal (install_dir, cancellable, error);
 }
 
 /**
@@ -342,6 +408,58 @@ flatpak_installation_new_user (GCancellable *cancellable,
                                GError      **error)
 {
   return flatpak_installation_new_steal_dir (flatpak_dir_get_user (), cancellable, error);
+}
+
+/**
+ * flatpak_installation_new_user_with_id:
+ * @id: (nullable): the ID of the user-wide installation
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Creates a new #FlatpakInstallation for the user-wide installation @id.
+ *
+ * Returns: (transfer full): a new #FlatpakInstallation
+ *
+ * Since: 1.17
+ */
+FlatpakInstallation *
+flatpak_installation_new_user_with_id (const char   *id,
+                                       GCancellable *cancellable,
+                                       GError      **error)
+{
+  g_autoptr(FlatpakDir) install_dir = NULL;
+
+  install_dir = flatpak_dir_get_user_by_id (id, cancellable, error);
+  if (install_dir == NULL)
+    return NULL;
+
+  return flatpak_installation_from_id_internal (install_dir, cancellable, error);
+}
+
+/**
+ * flatpak_installation_new_with_id:
+ * @id: (nullable): the ID of the installation
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Creates a new #FlatpakInstallation for the installation @id.
+ *
+ * Returns: (transfer full): a new #FlatpakInstallation
+ *
+ * Since: 1.17
+ */
+FlatpakInstallation *
+flatpak_installation_new_with_id (const char   *id,
+                                  GCancellable *cancellable,
+                                  GError      **error)
+{
+  g_autoptr(FlatpakDir) install_dir = NULL;
+
+  install_dir = flatpak_dir_get_by_id (id, cancellable, error);
+  if (install_dir == NULL)
+    return NULL;
+
+  return flatpak_installation_from_id_internal (install_dir, cancellable, error);
 }
 
 /**

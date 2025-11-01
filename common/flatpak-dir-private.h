@@ -46,6 +46,7 @@
 #define FLATPAK_DIR(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), FLATPAK_TYPE_DIR, FlatpakDir))
 #define FLATPAK_IS_DIR(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), FLATPAK_TYPE_DIR))
 
+#define USER_DIR_DEFAULT_ID "user"
 #define SYSTEM_DIR_DEFAULT_ID "default"
 #define SYSTEM_DIR_DEFAULT_DISPLAY_NAME _("Default system installation")
 #define SYSTEM_DIR_DEFAULT_STORAGE_TYPE FLATPAK_DIR_STORAGE_TYPE_DEFAULT
@@ -361,6 +362,7 @@ GQuark       flatpak_dir_error_quark (void);
 #define FLATPAK_DEPLOY_DATA_GVARIANT_STRING "(ssasta{sv})"
 #define FLATPAK_DEPLOY_DATA_GVARIANT_FORMAT G_VARIANT_TYPE (FLATPAK_DEPLOY_DATA_GVARIANT_STRING)
 
+char *    get_user_dir_config_location                  (void);
 GPtrArray *flatpak_get_system_base_dir_locations        (GCancellable  *cancellable,
                                                          GError       **error);
 GFile *    flatpak_get_system_default_base_dir_location (void);
@@ -413,6 +415,8 @@ const char * flatpak_deploy_data_get_appdata_license             (GBytes *deploy
 const char **flatpak_deploy_data_get_previous_ids                (GBytes *deploy_data,
                                                                   gsize  *length);
 
+FlatpakDirStorageType parse_storage_type (const char *type_string);
+
 GFile *         flatpak_deploy_get_dir         (FlatpakDeploy      *deploy);
 GBytes *        flatpak_load_deploy_data       (GFile              *deploy_dir,
                                                 FlatpakDecomposed  *ref,
@@ -435,7 +439,17 @@ FlatpakDir  *         flatpak_dir_get_user                                  (voi
 FlatpakDir  *         flatpak_dir_get_system_default                        (void);
 GPtrArray   *         flatpak_dir_get_system_list                           (GCancellable                  *cancellable,
                                                                              GError                       **error);
+GPtrArray   *         flatpak_dir_get_user_list                             (GCancellable                  *cancellable,
+                                                                             GError                       **error);
+GPtrArray   *         flatpak_dir_get_list                                  (GCancellable                  *cancellable,
+                                                                             GError                       **error);
 FlatpakDir  *         flatpak_dir_get_system_by_id                          (const char                    *id,
+                                                                             GCancellable                  *cancellable,
+                                                                             GError                       **error);
+FlatpakDir  *         flatpak_dir_get_user_by_id                            (const char                    *id,
+                                                                             GCancellable                  *cancellable,
+                                                                             GError                       **error);
+FlatpakDir  *         flatpak_dir_get_by_id                                 (const char                    *id,
                                                                              GCancellable                  *cancellable,
                                                                              GError                       **error);
 FlatpakDir *          flatpak_dir_get_by_path                               (GFile                         *path);
@@ -452,6 +466,7 @@ char       *          flatpak_dir_get_display_name                          (Fla
 char *                flatpak_dir_get_name                                  (FlatpakDir                    *self);
 const char *          flatpak_dir_get_name_cached                           (FlatpakDir                    *self);
 gint                  flatpak_dir_get_priority                              (FlatpakDir                    *self);
+gboolean              flatpak_dir_is_user                                   (FlatpakDir                    *self);
 FlatpakDirStorageType flatpak_dir_get_storage_type                          (FlatpakDir                    *self);
 GFile *               flatpak_dir_get_deploy_dir                            (FlatpakDir                    *self,
                                                                              FlatpakDecomposed             *ref);
@@ -1038,5 +1053,25 @@ char **               flatpak_dir_list_unused_refs                          (Fla
                                                                              FlatpakDirFilterFlags          filter_flags,
                                                                              GCancellable                  *cancellable,
                                                                              GError                       **error);
+gboolean              flatpak_dir_add_system_installation                   (const char             *id,
+                                                                             const char             *path,
+                                                                             const char             *display_name,
+                                                                             FlatpakDirStorageType   storage_type,
+                                                                             gint                    priority,
+                                                                             GCancellable           *cancellable,
+                                                                             GError                **error);
+gboolean              flatpak_dir_add_user_installation                     (const char             *id,
+                                                                             const char             *path,
+                                                                             const char             *display_name,
+                                                                             FlatpakDirStorageType   storage_type,
+                                                                             gint                    priority,
+                                                                             GCancellable           *cancellable,
+                                                                             GError                **error);
+gboolean              flatpak_dir_remove_system_installation                (const char   *id,
+                                                                             GCancellable *cancellable,
+                                                                             GError       **error);
+gboolean              flatpak_dir_remove_user_installation                  (const char   *id,
+                                                                             GCancellable *cancellable,
+                                                                             GError       **error);
 
 #endif /* __FLATPAK_DIR_H__ */
