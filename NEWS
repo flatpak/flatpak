@@ -1,61 +1,107 @@
 Changes in 1.17.0
 ~~~~~~~~~~~~~~~~~~
-Released: not yet
+Released: 2025-11-03
 
 Enhancements:
 
 * Allow directories to be forwarded to the sandboxed app as command-line
-  arguments. This requires xdg-desktop-portal >= 1.7.0. (#4799)
+  arguments. This requires xdg-desktop-portal >= 1.7.0. (#6247)
 
 * Allow Flatpak apps that are conceptually part of the operating system
-  to be preinstalled by dropping files into /etc/flatpak/preinstall.d.
-  To implement this, something needs to run `flatpak preinstall` or make
-  equivalent calls into libflatpak during system initialization.
-  (#5579)
+  to be preinstalled by dropping files into `preinstall.d` directories.
+  (#6116)
 
-* Allow direct installation from an OCI image:
-  `flatpak install [--image] docker://registry.example.com/image:latest`,
-  `flatpak install [--image] oci:/path/to/image`,
-  `flatpak install [--image] oci-archive:/path/to/image.tar`
-  (#5972)
+* Allow direct installation from an OCI image (#5972)
 
 * Allow OCI remotes to have a collection ID, so they can be used with
-  /etc/flatpak/preinstall.d
+  flatpak preinstall (#6083)
 
-* Show a message if `flatpak document-list` finds no documents
-  (#6197)
+* Show a message if `flatpak document-list` finds no documents, and if
+  `flatpak uninstall` finds nothing to uninstall (#6197)
 
-* Show a message if `flatpak uninstall` finds nothing to uninstall
-  (#6197)
+* Support sideloading from OCI repositories and archives. This allows
+  installing apps from OCI images stored in local sideload repositories.
+  (#6294)
 
-* Documentation improvements (#5501, #6266)
+* Add support for flatpak+https:// URIs in `flatpak install --from`
+  (#6372)
 
-* Translation updates: cs (#6306), nl (#6241), pl (#6290), sl (#6279), ru (#6278), zh_CN (#6304)
+* New `--clear-env` option for `flatpak run` to clear the environment
+  from the host before running the application (#6298)
+
+* Support for conditional permissions. Permissions can now be conditioned
+  on system and runtime capabilities. This for example allows to replace
+  `--device=all` permissions with
+  `--device-if=all:!has-input-device --device=input`. (#6285)
+
+* Add host-root export which exposes the host's root directory at
+  /run/host/root in the sandbox (#6314)
+
+* Enable the VA-API extension for Intel Xe GPUs (#6311)
+
+* JSON output support for various commands, making it easier to parse
+  flatpak command output programmatically (#6337)
+
+* Add basic OS information to Flatpak-Os-Info header when pulling objects,
+  helping repository administrators understand their user base (#6346)
+
+* `flatpak build` does not grant the host permissions by default, improving
+  build isolation and reproducibility (#6308)
+
+* Support the reinstall option on bundle installations (#5546)
+
+* Drop a workaround for AppStream CIDs with duplicate `.desktop` suffixes
+  (#6350)
+
+* Add cancellation support for curl downloads (#6356)
+
+* `build-finish` exports external AppStream release metainfo (#6133)
+
+* The default D-Bus configuration moved from /etc to /usr (#6347)
+
+* Documentation improvements (#6266, #6348, #6240, #6374)
+
+* Translation updates: cs (#6306), nl (#6241), pl (#6290, #6288),
+  sl (#6279, #6377), ru (#6278), zh_CN (#6304, #6334, #6354, #6366)
 
 Bug fixes:
 
-* Fix a memory leak in flatpak-session-helper when an app with permission
-  to do so runs unsandboxed commands on the host (#5821)
+* Provide an empty /run/host/font-dirs.xml during `flatpak build` (#6138)
 
-* Implement the --reinstall option when combined with --bundle (#2489)
+* Various bug fixes for the OCI support (#6296)
 
-* Provide an empty /run/host/font-dirs.xml during `flatpak build` (#6137)
+* Improve clearing the environment in the flatpak portal to fix support for
+  FLATPAK_SPAWN_FLAGS_CLEAR_ENV with FLATPAK_SPAWN_FLAGS_NOTIFY_START (#6298)
 
-* Fix assertion failures during `flatpak build-import-bundle` (#4662)
+* Fix various issues with `flatpak mask` and `flatpak pin` by reloading the
+  repo configuration after changes done via the system helper (#6073)
 
-* Fix memory leaks in OCI registry handling (#6286)
+* Fix propagation of `resolv.conf` into the sandbox via the session-helper by
+  improving the file monitoring in case of broken symlinks (#6349)
 
-* Fix a test failure caused by incorrect arguments to fcntl F_DUPFD_CLOEXEC
-  (#6291, Launchpad#2121039)
+* Preinstallation now works if the ref is not available in the first configured
+  remote (#6373)
 
-* Don't require --ref on `flatpak build-import-bundle` from an OCI archive
-  (#6081)
+* Flatpak now allows the usage of sudo for changing the user (#6371)
+
+* `flatpak-kill` will no longer send SIGKILL to all processes in the current
+  process group (#6375)
+
+* Authorization for parental controls no longer relies on racy PIDs (#6303)
+
+* Fix various memory leaks (#6286, #6260)
+
+* Fix various crashes (#6074, #6376)
 
 Internal changes:
 
-* Refactoring
+* Testing and CI improvements (#6284, #6302, #6291, #6295, #6067)
 
-* CI updates
+* Improvements to the formatting (#6331)
+
+* Avoid using an uninitialised variable (#6345)
+
+* Remove duplicate pointer clearing (#6361)
 
 Changes in 1.16.1
 ~~~~~~~~~~~~~~~~~~
