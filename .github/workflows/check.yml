@@ -6,14 +6,6 @@ on:
     - main
     - 'flatpak-1.[0-9]+.x'
   pull_request:
-    paths-ignore:
-    - README.md
-    - CONTRIBUTING.md
-    - NEWS
-    - COPYING
-    - CODE_OF_CONDUCT.md
-    - uncrustify.cfg
-    - uncrustify.sh
     branches:
     - main
     - 'flatpak-1.[0-9]+.x'
