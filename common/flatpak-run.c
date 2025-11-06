@@ -1886,34 +1886,22 @@ setup_seccomp (FlatpakBwrap   *bwrap,
 
   /**** BEGIN NOTE ON CODE SHARING
    *
-   * There are today a number of different Linux container
-   * implementations.  That will likely continue for long into the
-   * future.  But we can still try to share code, and it's important
-   * to do so because it affects what library and application writers
-   * can do, and we should support code portability between different
-   * container tools.
+   * This code was originally part of the obsolete linux-user-chroot project,
+   * which was itself heavily influenced by Sandstorm's seccomp filters.
+   * Nowadays, the canonical upstream location for this code is Flatpak:
    *
-   * This syscall blocklist is copied from linux-user-chroot, which was in turn
-   * clearly influenced by the Sandstorm.io blocklist.
+   *   https://github.com/flatpak/flatpak/blob/main/common/flatpak-run.c
    *
-   * If you make any changes here, I suggest sending the changes along
-   * to other sandbox maintainers.  Using the libseccomp list is also
-   * an appropriate venue:
-   * https://groups.google.com/forum/#!forum/libseccomp
+   * Here is a list of projects that have directly copied Flatpak's sandbox
+   * filters. These projects aim to exactly or almost exactly match what Flatpak
+   * is doing, so we almost always need to update them whenever the code here is
+   * touched:
    *
-   * A non-exhaustive list of links to container tooling that might
-   * want to share this blocklist:
+   *   https://github.com/WebKit/WebKit/blob/main/Source/WebKit/UIProcess/Launcher/glib/BubblewrapLauncher.cpp
+   *   https://gitlab.gnome.org/GNOME/gnome-desktop/-/blob/master/libgnome-desktop/gnome-desktop-thumbnail-script.c
    *
-   *  https://github.com/sandstorm-io/sandstorm
-   *    in src/sandstorm/supervisor.c++
-   *  https://github.com/flatpak/flatpak.git
-   *    in common/flatpak-run.c
-   *  https://git.gnome.org/browse/linux-user-chroot
-   *    in src/setup-seccomp.c
-   *
-   * Other useful resources:
-   * https://github.com/systemd/systemd/blob/HEAD/src/shared/seccomp-util.c
-   * https://github.com/moby/moby/blob/HEAD/profiles/seccomp/default.json
+   * (We perhaps ought to split this code out of Flatpak into a subproject, to
+   * make code sharing easier and reduce the need for manual copy/pasting.)
    *
    **** END NOTE ON CODE SHARING
    */
