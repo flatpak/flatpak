@@ -51,7 +51,6 @@
 #endif
 
 #include <glib/gi18n-lib.h>
-
 #include <gio/gio.h>
 #include "libglnx.h"
 
@@ -304,6 +303,40 @@ flatpak_run_add_environment_args (FlatpakBwrap           *bwrap,
   g_autofree char *xdg_dirs_conf = NULL;
   gboolean home_access = FALSE;
   gboolean sandboxed = (flags & FLATPAK_RUN_FLAG_SANDBOX) != 0;
+
+  gboolean parent_expose_pids = (flags & FLATPAK_RUN_FLAG_PARENT_EXPOSE_PIDS) != 0;
+  gboolean parent_share_pids = (flags & FLATPAK_RUN_FLAG_PARENT_SHARE_PIDS) != 0;
+  gboolean bwrap_unprivileged = flatpak_bwrap_is_unprivileged ();
+
+  if ((context->features & FLATPAK_CONTEXT_FEATURE_USERNS) == 0 && bwrap_unprivileged)
+    /* Disable recursive userns for all flatpak processes, as we need this
+     * to guarantee that the sandbox can't restructure the filesystem.
+     * Allowing to change e.g. /.flatpak-info would allow sandbox escape
+     * via portals.
+     *
+     * This is also done via seccomp, but here we do it using userns
+     * unsharing in combination with max_user_namespaces.
+     *
+     * If bwrap is setuid, then --disable-userns will not work, which
+     * makes the seccomp filter security-critical.
+     */
+    {
+      g_info ("Disallowing user namespace access");
+      if (parent_expose_pids || parent_share_pids)
+        {
+          /* If we're joining an existing sandbox's user and process
+           * namespaces, then it should already have creation of
+           * nested user namespaces disabled. */
+          flatpak_bwrap_add_arg (bwrap, "--assert-userns-disabled");
+        }
+      else
+        {
+          /* This is a new sandbox, so we need to disable creation of
+           * nested user namespaces. */
+          flatpak_bwrap_add_arg (bwrap, "--unshare-user");
+          flatpak_bwrap_add_arg (bwrap, "--disable-userns");
+        }
+    }
 
   if ((context->shares & FLATPAK_CONTEXT_SHARED_IPC) == 0)
     {
@@ -1881,6 +1914,7 @@ setup_seccomp (FlatpakBwrap   *bwrap,
 {
   gboolean multiarch = (run_flags & FLATPAK_RUN_FLAG_MULTIARCH) != 0;
   gboolean devel = (run_flags & FLATPAK_RUN_FLAG_DEVEL) != 0;
+  gboolean userns = (run_flags & FLATPAK_RUN_FLAG_USERNS) != 0;
 
   __attribute__((cleanup (cleanup_seccomp))) scmp_filter_ctx seccomp = NULL;
 
@@ -1944,23 +1978,6 @@ setup_seccomp (FlatpakBwrap   *bwrap,
     {SCMP_SYS (set_mempolicy), EPERM},
     {SCMP_SYS (migrate_pages), EPERM},
 
-    /* Don't allow subnamespace setups: */
-    {SCMP_SYS (unshare), EPERM},
-    {SCMP_SYS (setns), EPERM},
-    {SCMP_SYS (mount), EPERM},
-    {SCMP_SYS (umount), EPERM},
-    {SCMP_SYS (umount2), EPERM},
-    {SCMP_SYS (pivot_root), EPERM},
-    {SCMP_SYS (chroot), EPERM},
-#if defined(__s390__) || defined(__s390x__) || defined(__CRIS__)
-    /* Architectures with CONFIG_CLONE_BACKWARDS2: the child stack
-     * and flags arguments are reversed so the flags come second */
-    {SCMP_SYS (clone), EPERM, &SCMP_A1 (SCMP_CMP_MASKED_EQ, CLONE_NEWUSER, CLONE_NEWUSER)},
-#else
-    /* Normally the flags come first */
-    {SCMP_SYS (clone), EPERM, &SCMP_A0 (SCMP_CMP_MASKED_EQ, CLONE_NEWUSER, CLONE_NEWUSER)},
-#endif
-
     /* Don't allow faking input to the controlling tty (CVE-2017-5226) */
     {SCMP_SYS (ioctl), EPERM, &SCMP_A1 (SCMP_CMP_MASKED_EQ, 0xFFFFFFFFu, (int) TIOCSTI)},
     /* In the unlikely event that the controlling tty is a Linux virtual
@@ -2001,6 +2018,31 @@ setup_seccomp (FlatpakBwrap   *bwrap,
     {SCMP_SYS (personality), EPERM, &SCMP_A0 (SCMP_CMP_NE, allowed_personality)},
     {SCMP_SYS (ptrace), EPERM}
   };
+
+  struct
+  {
+    int                  scall;
+    int                  errnum;
+    struct scmp_arg_cmp *arg;
+  } syscall_subsandbox_blocklist[] = {
+
+    {SCMP_SYS (unshare), EPERM},
+    {SCMP_SYS (setns), EPERM},
+    {SCMP_SYS (mount), EPERM},
+    {SCMP_SYS (umount), EPERM},
+    {SCMP_SYS (umount2), EPERM},
+    {SCMP_SYS (pivot_root), EPERM},
+    {SCMP_SYS (chroot), EPERM},
+#if defined(__s390__) || defined(__s390x__) || defined(__CRIS__)
+    /* Architectures with CONFIG_CLONE_BACKWARDS2: the child stack
+     * and flags arguments are reversed so the flags come second */
+    {SCMP_SYS (clone), EPERM, &SCMP_A1 (SCMP_CMP_MASKED_EQ, CLONE_NEWUSER, CLONE_NEWUSER)},
+#else
+    /* Normally the flags come first */
+    {SCMP_SYS (clone), EPERM, &SCMP_A0 (SCMP_CMP_MASKED_EQ, CLONE_NEWUSER, CLONE_NEWUSER)},
+#endif
+  };
+
   /* Blocklist all but unix, inet, inet6 and netlink */
   struct
   {
@@ -2120,6 +2162,31 @@ setup_seccomp (FlatpakBwrap   *bwrap,
       else if (r < 0)
         return flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Failed to block syscall %d: %s"), scall, flatpak_seccomp_strerror (r));
     }
+
+
+  if (!userns)
+    {
+      for (i = 0; i < G_N_ELEMENTS (syscall_subsandbox_blocklist); i++)
+        {
+          int scall = syscall_subsandbox_blocklist[i].scall;
+          int errnum = syscall_subsandbox_blocklist[i].errnum;
+
+          g_return_val_if_fail (errnum == EPERM || errnum == ENOSYS, FALSE);
+
+          if (syscall_subsandbox_blocklist[i].arg)
+            r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO (errnum), scall, 1, *syscall_subsandbox_blocklist[i].arg);
+          else
+            r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO (errnum), scall, 0);
+
+          /* See above for the meaning of EFAULT. */
+          if (r == -EFAULT)
+            g_debug ("Unable to block syscall %d: syscall not known to libseccomp?",
+                     scall);
+          else if (r < 0)
+            return flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Failed to block syscall %d: %s"), scall, flatpak_seccomp_strerror (r));
+        }
+    }
+
 
   if (!devel)
     {
@@ -2251,39 +2318,6 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
   gulong pers;
   gid_t gid = getgid ();
   g_autoptr(GFile) etc = NULL;
-  gboolean parent_expose_pids = (flags & FLATPAK_RUN_FLAG_PARENT_EXPOSE_PIDS) != 0;
-  gboolean parent_share_pids = (flags & FLATPAK_RUN_FLAG_PARENT_SHARE_PIDS) != 0;
-  gboolean bwrap_unprivileged = flatpak_bwrap_is_unprivileged ();
-  gsize i;
-
-  /* Disable recursive userns for all flatpak processes, as we need this
-   * to guarantee that the sandbox can't restructure the filesystem.
-   * Allowing to change e.g. /.flatpak-info would allow sandbox escape
-   * via portals.
-   *
-   * This is also done via seccomp, but here we do it using userns
-   * unsharing in combination with max_user_namespaces.
-   *
-   * If bwrap is setuid, then --disable-userns will not work, which
-   * makes the seccomp filter security-critical.
-   */
-  if (bwrap_unprivileged)
-    {
-      if (parent_expose_pids || parent_share_pids)
-        {
-          /* If we're joining an existing sandbox's user and process
-           * namespaces, then it should already have creation of
-           * nested user namespaces disabled. */
-          flatpak_bwrap_add_arg (bwrap, "--assert-userns-disabled");
-        }
-      else
-        {
-          /* This is a new sandbox, so we need to disable creation of
-           * nested user namespaces. */
-          flatpak_bwrap_add_arg (bwrap, "--unshare-user");
-          flatpak_bwrap_add_arg (bwrap, "--disable-userns");
-        }
-    }
 
   run_dir = g_strdup_printf ("/run/user/%d", getuid ());
 
@@ -2328,7 +2362,7 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
                           "--symlink", "/etc/timezone", "/var/db/zoneinfo",
                           NULL);
 
-  for (i = 0; i < G_N_ELEMENTS (sysfs_dirs); i++)
+  for (int i = 0; i < G_N_ELEMENTS (sysfs_dirs); i++)
     {
       const char *dir = sysfs_dirs[i];
 

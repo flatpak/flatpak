@@ -42,6 +42,7 @@ static char *opt_branch;
 static char *opt_command;
 static char *opt_cwd;
 static gboolean opt_devel;
+static gboolean opt_userns;
 static gboolean opt_log_session_bus;
 static gboolean opt_log_system_bus;
 static gboolean opt_log_a11y_bus;
@@ -69,6 +70,7 @@ static GOptionEntry options[] = {
   { "cwd", 0, 0, G_OPTION_ARG_STRING, &opt_cwd, N_("Directory to run the command in"), N_("DIR") },
   { "branch", 0, 0, G_OPTION_ARG_STRING, &opt_branch, N_("Branch to use"), N_("BRANCH") },
   { "devel", 'd', 0, G_OPTION_ARG_NONE, &opt_devel, N_("Use development runtime"), NULL },
+  { "userns", 0, 0, G_OPTION_ARG_NONE, &opt_userns, N_("Allow user namespaces inside sandbox"), NULL },
   { "runtime", 0, 0, G_OPTION_ARG_STRING, &opt_runtime, N_("Runtime to use"), N_("RUNTIME") },
   { "runtime-version", 0, 0, G_OPTION_ARG_STRING, &opt_runtime_version, N_("Runtime version to use"), N_("VERSION") },
   { "log-session-bus", 0, 0, G_OPTION_ARG_NONE, &opt_log_session_bus, N_("Log session bus calls"), NULL },
@@ -312,6 +314,8 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
     flags |= FLATPAK_RUN_FLAG_NO_SESSION_BUS_PROXY;
   if (!opt_clear_env)
     flags |= FLATPAK_RUN_FLAG_CLEAR_ENV;
+  if (opt_userns)
+    flags |= FLATPAK_RUN_FLAG_USERNS;
 
   if (!flatpak_run_app (app_deploy ? app_ref : runtime_ref,
                         app_deploy,
