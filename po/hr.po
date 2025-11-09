@@ -1,15 +1,15 @@
 # Croatian translation for flatpak.
 # Copyright (C) 2020 flatpak's COPYRIGHT HOLDER
 # This file is distributed under the same license as the flatpak package.
-# Milo Ivir <mail@milotype.de>, 2020.
+# Milo Ivir <mail@milotype.de>, 2020., 2025.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2025-10-31 13:58+0100\n"
-"PO-Revision-Date: 2021-12-18 20:09+0100\n"
-"Last-Translator: Milo Ivir <mail@milotype.de>\n"
+"PO-Revision-Date: 2025-11-09 15:59+0100\n"
+"Last-Translator: Milo Ivir <mail@mivirtype.de>\n"
 "Language-Team: Croatian <hr@li.org>\n"
 "Language: hr\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Generator: Poedit 3.0\n"
+"X-Generator: Poedit 3.8\n"
 
 #: app/flatpak-builtins-build-bundle.c:58
 msgid "Export runtime instead of app"
@@ -849,14 +849,14 @@ msgid "Re-initialize the sdk/var"
 msgstr "Ponovo inicijaliziraj sdk/var"
 
 #: app/flatpak-builtins-build-init.c:118
-#, fuzzy, c-format
+#, c-format
 msgid "Requested extension %s/%s/%s is only partially installed"
-msgstr "Potrebno proširenje %s je samo djelomično instalirano"
+msgstr "Zatraženo proširenje %s/%s/%s je samo djelomično instalirano"
 
 #: app/flatpak-builtins-build-init.c:147
-#, fuzzy, c-format
+#, c-format
 msgid "Requested extension %s/%s/%s not installed"
-msgstr "Potrebno proširenje %s nije instalirano"
+msgstr "Zatraženo proširenje %s/%s/%s nije instalirano"
 
 #: app/flatpak-builtins-build-init.c:207
 msgid ""
@@ -1398,9 +1398,8 @@ msgstr "POLJE, …"
 #: app/flatpak-builtins-permission-show.c:43 app/flatpak-builtins-ps.c:44
 #: app/flatpak-builtins-remote-list.c:46 app/flatpak-builtins-remote-ls.c:63
 #: app/flatpak-builtins-repo.c:716 app/flatpak-builtins-search.c:39
-#, fuzzy
 msgid "Show output in JSON format"
-msgstr "Prikaži dodatne informacije"
+msgstr "Prikaži rezultat u JSON formatu"
 
 #: app/flatpak-builtins-document-list.c:49
 msgid "Show the document ID"
@@ -1440,18 +1439,17 @@ msgid "Show permissions for applications"
 msgstr "Prikaži dozvole za programe"
 
 #: app/flatpak-builtins-document-list.c:161
-#, fuzzy, c-format
+#, c-format
 msgid "No documents found\n"
-msgstr "Nema poklapanja"
+msgstr "Nije pronađen niti jedan dokumenti\n"
 
 #: app/flatpak-builtins-document-list.c:180
 msgid "[APPID] - List exported files"
 msgstr "[PROGRAMID] – Izradi popis izvezenih datoteka"
 
 #: app/flatpak-builtins-document-unexport.c:43
-#, fuzzy
 msgid "Specify the document ID"
-msgstr "Prikaži ID dokumenta"
+msgstr "Odredi ID dokumenta"
 
 #: app/flatpak-builtins-document-unexport.c:58
 msgid "FILE - Unexport a file to apps"
@@ -2007,9 +2005,8 @@ msgid "Filename or uri must be specified"
 msgstr "Ime datoteke ili uri se moraju odrediti"
 
 #: app/flatpak-builtins-install.c:295
-#, fuzzy
 msgid "Image location must be specified"
-msgstr "Mora se odrediti barem jedna REFERENCA"
+msgstr "Mjesto slike se mora odrediti"
 
 #: app/flatpak-builtins-install.c:345
 msgid "[LOCATION/REMOTE] [REF…] - Install applications or runtimes"
@@ -2182,14 +2179,14 @@ msgid "Show options"
 msgstr "Prikaži opcije"
 
 #: app/flatpak-builtins-list.c:180
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to load details of %s: %s"
-msgstr "Nije moguće stvoriti datoteku %s"
+msgstr "Nije moguće učitati detalje o %s: %s"
 
 #: app/flatpak-builtins-list.c:190
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to inspect current version of %s: %s"
-msgstr "Nije moguće stvoriti datoteku %s"
+msgstr "Nije moguće pregledati trenutačnu verziju od %s: %s"
 
 #: app/flatpak-builtins-list.c:408
 msgid " - List installed apps and/or runtimes"
@@ -2338,7 +2335,7 @@ msgstr "Prikvačeni uzorci:\n"
 
 #: app/flatpak-builtins-preinstall.c:80
 msgid "- Install flatpaks that are part of the operating system"
-msgstr ""
+msgstr "- Instaliraj flatpakove koji su dio operacijskog sustava"
 
 #: app/flatpak-builtins-preinstall.c:118 app/flatpak-builtins-update.c:274
 #, c-format
@@ -2832,19 +2829,19 @@ msgid "Can't load object %s: %s\n"
 msgstr "Nije moguće učitati objekt %s: %s\n"
 
 #: app/flatpak-builtins-repair.c:228
-#, fuzzy, c-format
+#, c-format
 msgid "Commit invalid %s: %s\n"
-msgstr "Objekt neispravan: %s.%s\n"
+msgstr "Izmjena neispravna: %s.%s\n"
 
 #: app/flatpak-builtins-repair.c:231
-#, fuzzy, c-format
+#, c-format
 msgid "Deleting invalid commit %s: %s\n"
-msgstr "Neispravna referenca izmjene %s: "
+msgstr "Brisanje nevažećih izmjena %s: %s\n"
 
 #: app/flatpak-builtins-repair.c:261
 #, c-format
 msgid "Commit should be marked partial: %s\n"
-msgstr ""
+msgstr "Izmjena bi se trebala označiti kao djelomična: %s\n"
 
 #: app/flatpak-builtins-repair.c:264
 #, c-format
@@ -3182,9 +3179,8 @@ msgid "Use PATH instead of the runtime's /usr"
 msgstr "Koristi STAZU umjesto okruženje/korisnik"
 
 #: app/flatpak-builtins-run.c:93
-#, fuzzy
 msgid "Clear all outside environment variables"
-msgstr "Postavi varijablu okruženja"
+msgstr "Izbriši sve vanjske varijable okruženja"
 
 #: app/flatpak-builtins-run.c:119
 msgid "APP [ARGUMENT…] - Run an app"
@@ -3263,9 +3259,8 @@ msgid "Info: applications using the runtime %s%s%s branch %s%s%s:\n"
 msgstr "Programi koji koriste ovo okruženje:\n"
 
 #: app/flatpak-builtins-uninstall.c:238
-#, fuzzy
 msgid "Really remove?"
-msgstr "Udaljeni repozitorij"
+msgstr "Stvarno ukloniti?"
 
 #: app/flatpak-builtins-uninstall.c:255
 #, fuzzy
@@ -3324,7 +3319,7 @@ msgstr "Upozorenje: %s nije instalirano\n"
 #: app/flatpak-builtins-uninstall.c:490
 #, c-format
 msgid "None of the specified refs are installed"
-msgstr ""
+msgstr "Nijedna od navedenih referenci nije instalirana"
 
 #: app/flatpak-builtins-uninstall.c:599
 #, c-format
@@ -3545,7 +3540,7 @@ msgstr "Koji želiš instalirati (0 za prekid)?"
 #: app/flatpak-cli-transaction.c:132
 #, fuzzy, c-format
 msgid "Configuring %s as new remote '%s'\n"
-msgstr "Konfiguriraj %s kao novi udaljeni repozitorij „%s”"
+msgstr "Konfiguriraj %s kao novi udaljeni repozitorij „%s”\n"
 
 #. default to yes on Enter
 #: app/flatpak-cli-transaction.c:139
@@ -3604,74 +3599,72 @@ msgid "Info: %s was skipped"
 msgstr "Informacija: %s je preskočeno"
 
 #: app/flatpak-cli-transaction.c:516
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: %s%s%s already installed"
-msgstr "%s već instalirano"
+msgstr "Upozorenje: %s%s%s je već instalirano"
 
 #: app/flatpak-cli-transaction.c:519
-#, fuzzy, c-format
+#, c-format
 msgid "Error: %s%s%s already installed"
-msgstr "%s već instalirano"
+msgstr "Greška: %s%s%s već je instalirano"
 
 #: app/flatpak-cli-transaction.c:525
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: %s%s%s not installed"
-msgstr "Upozorenje: %s nije instalirano\n"
+msgstr "Upozorenje: %s%s%s nije instalirano"
 
 #: app/flatpak-cli-transaction.c:528
-#, fuzzy, c-format
+#, c-format
 msgid "Error: %s%s%s not installed"
-msgstr "%s/%s/%s nije instalirano"
+msgstr "Greška: %s%s%s nije instalirano"
 
 #: app/flatpak-cli-transaction.c:534
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: %s%s%s needs a later flatpak version"
-msgstr "%s treba noviju flatpak verziju"
+msgstr "Upozorenje: %s%s%s treba noviju flatpak verziju"
 
 #: app/flatpak-cli-transaction.c:537
-#, fuzzy, c-format
+#, c-format
 msgid "Error: %s%s%s needs a later flatpak version"
-msgstr "%s treba noviju flatpak verziju"
+msgstr "Greška: %s%s%s treba noviju flatpak verziju"
 
 #: app/flatpak-cli-transaction.c:543
-#, fuzzy
 msgid "Warning: Not enough disk space to complete this operation"
-msgstr "Nema dovoljno prostora na disku za završavanje ove operacije"
+msgstr "Nema dovoljno memorije na disku za završavanje ove operacije"
 
 #: app/flatpak-cli-transaction.c:545
-#, fuzzy
 msgid "Error: Not enough disk space to complete this operation"
-msgstr "Nema dovoljno prostora na disku za završavanje ove operacije"
+msgstr "Nema dovoljno memorije na disku za završavanje ove operacije"
 
 #: app/flatpak-cli-transaction.c:550
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: %s"
-msgstr "Upozorenje: "
+msgstr "Upozorenje: %s"
 
 #: app/flatpak-cli-transaction.c:552
-#, fuzzy, c-format
+#, c-format
 msgid "Error: %s"
-msgstr "Greška:"
+msgstr "Greška: %s"
 
 #: app/flatpak-cli-transaction.c:567
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to install %s%s%s: "
-msgstr "Neuspjelo premještanje %s na %s: "
+msgstr "Neuspjelo instaliranje %s%s%s: "
 
 #: app/flatpak-cli-transaction.c:574
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to update %s%s%s: "
-msgstr "Neuspjelo %s %s: "
+msgstr "Neuspjelo aktualiziranje %s%s%s: "
 
 #: app/flatpak-cli-transaction.c:581
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to install bundle %s%s%s: "
-msgstr "Neuspjelo premještanje %s na %s: "
+msgstr "Neuspjelo instaliranje paketa %s%s%s: "
 
 #: app/flatpak-cli-transaction.c:588
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to uninstall %s%s%s: "
-msgstr "Neuspjelo premještanje %s na %s: "
+msgstr "Neuspjelo deinstaliranje %s%s%s: "
 
 #: app/flatpak-cli-transaction.c:639
 #, c-format
@@ -3739,18 +3732,18 @@ msgid ""
 msgstr "Informacija: %s//%s je kraj-života, s razlogom:\n"
 
 #: app/flatpak-cli-transaction.c:960
-#, fuzzy, c-format
+#, c-format
 msgid "Info: applications using this extension:\n"
-msgstr "Programi koji koriste ovo okruženje:\n"
+msgstr "Informacija: aplikacije koje koriste ovo proširenje:\n"
 
 #: app/flatpak-cli-transaction.c:962
-#, fuzzy, c-format
+#, c-format
 msgid "Info: applications using this runtime:\n"
-msgstr "Programi koji koriste ovo okruženje:\n"
+msgstr "Informacija: aplikacije koje koriste ovo vrijeme izvođenja:\n"
 
 #: app/flatpak-cli-transaction.c:981
 msgid "Replace?"
-msgstr ""
+msgstr "Zamijeniti?"
 
 #: app/flatpak-cli-transaction.c:984 app/flatpak-quiet-transaction.c:247
 #, c-format
@@ -3763,14 +3756,14 @@ msgid "Failed to rebase %s to %s: "
 msgstr "Neuspjelo premještanje %s na %s: "
 
 #: app/flatpak-cli-transaction.c:1274
-#, fuzzy, c-format
+#, c-format
 msgid "New %s%s%s permissions:"
-msgstr "Nove %s dozvole:"
+msgstr "Nove %s%s%s dozvole:"
 
 #: app/flatpak-cli-transaction.c:1276
-#, fuzzy, c-format
+#, c-format
 msgid "%s%s%s permissions:"
-msgstr "%s dozvole:"
+msgstr "%s%s%s dozvole:"
 
 #: app/flatpak-cli-transaction.c:1340
 msgid "Warning: "
@@ -3874,7 +3867,7 @@ msgstr "Stavi programe ili okurženja na prijenosne medije"
 
 #: app/flatpak-main.c:92
 msgid "Install flatpaks that are part of the operating system"
-msgstr ""
+msgstr "Instaliraj flatpakove koji su dio operacijskog sustava"
 
 #. translators: please keep the leading newline and space
 #: app/flatpak-main.c:95
@@ -4185,44 +4178,44 @@ msgid "Uninstalling %s\n"
 msgstr "Deinstaliranje %s\n"
 
 #: app/flatpak-quiet-transaction.c:107
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: Failed to install %s: %s\n"
-msgstr "%s Neuspjelo %s %s: %s\n"
+msgstr "Greška: Neuspjelo intaliranje %s: %s\n"
 
 #: app/flatpak-quiet-transaction.c:110
-#, fuzzy, c-format
+#, c-format
 msgid "Error: Failed to install %s: %s\n"
-msgstr "Greška pri ponovnom instaliranju %s: %s\n"
+msgstr "Greška: Neuspjelo intaliranje %s: %s\n"
 
 #: app/flatpak-quiet-transaction.c:116
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: Failed to update %s: %s\n"
-msgstr "Nije moguće aktualizirati %s: %s\n"
+msgstr "Greška: Neuspjelo aktualiziranje %s: %s\n"
 
 #: app/flatpak-quiet-transaction.c:119
-#, fuzzy, c-format
+#, c-format
 msgid "Error: Failed to update %s: %s\n"
-msgstr "Nije moguće aktualizirati %s: %s\n"
+msgstr "Greška: Neuspjelo aktualiziranje %s: %s\n"
 
 #: app/flatpak-quiet-transaction.c:125
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: Failed to install bundle %s: %s\n"
-msgstr "Neuspjelo premještanje %s na %s: %s\n"
+msgstr "Greška: Neuspjelo intaliranje paketa %s: %s\n"
 
 #: app/flatpak-quiet-transaction.c:128
-#, fuzzy, c-format
+#, c-format
 msgid "Error: Failed to install bundle %s: %s\n"
-msgstr "Greška pri ponovnom instaliranju %s: %s\n"
+msgstr "Greška: Neuspjelo intaliranje paketa %s: %s\n"
 
 #: app/flatpak-quiet-transaction.c:134
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: Failed to uninstall %s: %s\n"
-msgstr "%s Neuspjelo %s %s: %s\n"
+msgstr "Greška: Neuspjelo deintaliranje %s: %s\n"
 
 #: app/flatpak-quiet-transaction.c:137
-#, fuzzy, c-format
+#, c-format
 msgid "Error: Failed to uninstall %s: %s\n"
-msgstr "Greška pri ponovnom instaliranju %s: %s\n"
+msgstr "Greška: Neuspjelo deintaliranje %s: %s\n"
 
 #: app/flatpak-quiet-transaction.c:166 common/flatpak-dir.c:11117
 #, c-format
@@ -4268,9 +4261,9 @@ msgid "No authenticator configured for remote `%s`"
 msgstr "Nijedan autentifikator nije konfiguriran za udaljeni repozitorij „%s”"
 
 #: common/flatpak-context.c:710 common/flatpak-context.c:722
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid permission syntax: %s"
-msgstr "Neispravno ime proširenja %s"
+msgstr "Neispravna sintaksa dozvola: %s"
 
 #: common/flatpak-context.c:1281
 #, c-format
@@ -4324,14 +4317,14 @@ msgstr ""
 "os, host-etc, home, xdg-*[/…], ~/dir, /dir"
 
 #: common/flatpak-context.c:2261
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid syntax for %s: %s"
-msgstr "Neispravno ime %s: %s"
+msgstr "Neispravna sintaksa za %s: %s"
 
 #: common/flatpak-context.c:2291
 #, c-format
 msgid "fallback-x11 can not be conditional"
-msgstr ""
+msgstr "rezervni x11 ne može biti uvjetan"
 
 #: common/flatpak-context.c:2444
 #, c-format
@@ -4394,7 +4387,7 @@ msgstr ""
 
 #: common/flatpak-context.c:2794 common/flatpak-context.c:2797
 msgid "DEVICE:CONDITION"
-msgstr ""
+msgstr "UREĐAJ:STANJE"
 
 #: common/flatpak-context.c:2795
 msgid "Expose device to app"
@@ -4522,7 +4515,7 @@ msgstr ""
 
 #: common/flatpak-context.c:2815
 msgid "Add USB device to hidden list"
-msgstr ""
+msgstr "Dodaj USB uređaj u skriveni popis"
 
 #: common/flatpak-context.c:2816
 msgid "A list of USB devices that are enumerable"
@@ -4530,7 +4523,7 @@ msgstr ""
 
 #: common/flatpak-context.c:2816
 msgid "LIST"
-msgstr ""
+msgstr "POPIS"
 
 #: common/flatpak-context.c:2817
 msgid "File containing a list of USB devices to make enumerable"
@@ -4979,11 +4972,9 @@ msgid "No cached summary for remote '%s'"
 msgstr "Nema predmemoriranog sažetka za udaljeni repozitorij „%s”"
 
 #: common/flatpak-dir.c:12890
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid checksum for indexed summary %s read from %s"
-msgstr ""
-"Neispravan kontrolni zbroj za indeksirani sažetak %s za udaljeni repozitorij "
-"„%s”"
+msgstr "Neispravan kontrolni zbroj za indeksirani sažetak %s učitan od %s"
 
 #: common/flatpak-dir.c:12963
 #, c-format
@@ -5095,17 +5086,17 @@ msgstr "Preskače se brisanje reference zrcaljenog repozitorija (%s, %s) …\n"
 #: common/flatpak-exports.c:931
 #, c-format
 msgid "An absolute path is required"
-msgstr ""
+msgstr "Potrebna je apsolutna putanja"
 
 #: common/flatpak-exports.c:948
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to open path \"%s\": %s"
-msgstr "Nije moguće aktualizirati %s: %s\n"
+msgstr "Nije moguće otvoriti putanju „%s“: %s"
 
 #: common/flatpak-exports.c:955
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to get file type of \"%s\": %s"
-msgstr "Nije moguće stvoriti datoteku %s"
+msgstr "Nije moguće dobiti vrstu datoteke od „%s“: %s"
 
 #: common/flatpak-exports.c:964
 #, c-format
@@ -5126,7 +5117,7 @@ msgstr ""
 #: common/flatpak-exports.c:1022
 #, c-format
 msgid "Path \"%s\" is reserved by Flatpak"
-msgstr ""
+msgstr "Putanja „%s“ je rezervirana od Flatpaka"
 
 #: common/flatpak-exports.c:1076
 #, fuzzy, c-format
@@ -5543,25 +5534,26 @@ msgid "Initialize seccomp failed"
 msgstr "Inicijaliziraj seccomp neuspjelo"
 
 #: common/flatpak-run.c:2064
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to add architecture to seccomp filter: %s"
-msgstr "Neuspjelo dodavanje arhitekture seccomp filtru"
+msgstr "Neuspjelo dodavanje arhitekture seccomp filtru: %s"
 
 #: common/flatpak-run.c:2072
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to add multiarch architecture to seccomp filter: %s"
-msgstr "Neuspjelo dodavanje arhitekture višestrukih arhitektura seccomp filtru"
+msgstr ""
+"Neuspjelo dodavanje arhitekture višestrukih arhitektura seccomp filtru: %s"
 
 #: common/flatpak-run.c:2104 common/flatpak-run.c:2121
 #: common/flatpak-run.c:2143
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to block syscall %d: %s"
-msgstr "Neuspjelo blokiranje syscall %d"
+msgstr "Neuspjelo blokiranje syscall %d: %s"
 
 #: common/flatpak-run.c:2176
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to export bpf: %s"
-msgstr "Neuspio bdf izvoz"
+msgstr "Neuspio bdf izvoz: %s"
 
 #: common/flatpak-run.c:2478
 #, c-format
@@ -5672,6 +5664,8 @@ msgstr "Neispravni .flatpakref: %s"
 #: common/flatpak-transaction.c:3161
 msgid "Warning: Could not mark already installed apps as preinstalled"
 msgstr ""
+"Upozorenje: nije bilo moguće označiti već instalirane aplikacije kao "
+"unaprijed instalirane"
 
 #: common/flatpak-transaction.c:3382
 #, c-format
@@ -5708,9 +5702,8 @@ msgid "Ref %s from %s matches more than one transaction operation"
 msgstr ""
 
 #: common/flatpak-transaction.c:4581 common/flatpak-transaction.c:4591
-#, fuzzy
 msgid "any remote"
-msgstr "Udaljeni repozitorij"
+msgstr "bilo koji udaljeni uređaj"
 
 #: common/flatpak-transaction.c:4590
 #, c-format
@@ -5759,27 +5752,27 @@ msgid "Aborted due to failure (%s)"
 msgstr "Prekinuto zbog greške (%s)"
 
 #: common/flatpak-uri.c:118
-#, fuzzy, no-c-format
+#, no-c-format
 msgid "Invalid %-encoding in URI"
-msgstr "Neispravno ime proširenja %s"
+msgstr "Neispravno %-enkodiranje u URI-ju"
 
 #: common/flatpak-uri.c:135
 msgid "Illegal character in URI"
-msgstr ""
+msgstr "Neisravni znak u URI-ju"
 
 #: common/flatpak-uri.c:169
 msgid "Non-UTF-8 characters in URI"
-msgstr ""
+msgstr "Znakovi koji nisu UTF-8 u URI-ju"
 
 #: common/flatpak-uri.c:275
 #, c-format
 msgid "Invalid IPv6 address ‘%.*s’ in URI"
-msgstr ""
+msgstr "Neispravna IPv6 adresa „%.*s“ u URI-ju"
 
 #: common/flatpak-uri.c:330
 #, c-format
 msgid "Illegal encoded IP address ‘%.*s’ in URI"
-msgstr ""
+msgstr "Neisravno kodirana IP adresa „%.*s“ u URI-ju"
 
 #: common/flatpak-uri.c:342
 #, c-format
@@ -5798,7 +5791,7 @@ msgstr ""
 
 #: common/flatpak-uri.c:910
 msgid "URI is not absolute, and no base URI was provided"
-msgstr ""
+msgstr "URI nije apsolutan i nije naveden osnovni URI"
 
 #: common/flatpak-usb.c:83
 #, c-format
@@ -5811,14 +5804,14 @@ msgid "USB query rule 'cls' must be in the form CLASS:SUBCLASS or CLASS:*"
 msgstr ""
 
 #: common/flatpak-usb.c:111
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid USB class"
-msgstr "Neispravni ID %s: %s"
+msgstr "Neispravna USB klasa"
 
 #: common/flatpak-usb.c:125
 #, c-format
 msgid "Invalid USB subclass"
-msgstr ""
+msgstr "Neispravna USB podklasa"
 
 #: common/flatpak-usb.c:141 common/flatpak-usb.c:148
 #, c-format
@@ -6170,9 +6163,8 @@ msgstr "Potrebna je autentifikacija za aktualiziranje metapodataka"
 #. * Set the malcontent `is-system-installation-allowed` property of
 #. all users’ parental controls policies to true.
 #: system-helper/org.freedesktop.Flatpak.policy.in:287
-#, fuzzy
 msgid "Override parental controls for installs"
-msgstr "Nadjačaj roditeljski nadzor"
+msgstr "Isključi roditeljski nadzor za instaliranja"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:288
 msgid ""
@@ -6196,17 +6188,15 @@ msgstr ""
 #. installing an update which has radically different content from the
 #. version of the app which the parent originally vetted and installed.
 #: system-helper/org.freedesktop.Flatpak.policy.in:313
-#, fuzzy
 msgid "Override parental controls for updates"
-msgstr "Nadjačaj roditeljski nadzor"
+msgstr "Isključi roditeljski nadzor za aktualiziranja"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:314
-#, fuzzy
 msgid ""
 "Authentication is required to update software which is restricted by your "
 "parental controls policy"
 msgstr ""
-"Potrebna je autentifikacija za instaliranje softvera, koja je ograničena "
+"Za instaliranje softvera je potrebna autentifikacija, koja je ograničena "
 "tvojim pravilima roditeljskog nadzora"
 
 #, c-format
