@@ -6,25 +6,26 @@
 # Muhammet Kara <muhammetk@gmail.com>, 2017.
 # Serdar Sağlam <teknomobil@yandex.com>, 2019.
 # Sabri Ünal <yakushabb@gmail.com>, 2022-2025.
+# Emin Tufan Çetin <etcetin@gmail.com>, 2025.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2025-10-31 13:58+0100\n"
-"PO-Revision-Date: 2025-02-09 21:18+0300\n"
-"Last-Translator: Sabri Ünal <yakushabb@gmail.com>\n"
+"POT-Creation-Date: 2025-11-11 03:26+0000\n"
+"PO-Revision-Date: 2025-11-11 08:00+0300\n"
+"Last-Translator: Emin Tufan Çetin <etcetin@gmail.com>\n"
 "Language-Team: Türkçe <takim@gnome.org.tr>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 3.5\n"
+"X-Generator: Poedit 3.8\n"
 
 #: app/flatpak-builtins-build-bundle.c:58
 msgid "Export runtime instead of app"
-msgstr "Uygulama yerine çalışma ortamını dışa aktar"
+msgstr "Uygulama yerine çalışma zamanını dışa aktar"
 
 #: app/flatpak-builtins-build-bundle.c:59
 msgid "Arch to bundle for"
@@ -60,7 +61,7 @@ msgstr "URL"
 
 #: app/flatpak-builtins-build-bundle.c:61
 msgid "Url for runtime flatpakrepo file"
-msgstr "Çalışma ortamı flatpakrepo dosyası için url"
+msgstr "Çalışma zamanı flatpakrepo dosyası için url"
 
 #: app/flatpak-builtins-build-bundle.c:62
 msgid "Add GPG key from FILE (- for stdin)"
@@ -86,7 +87,7 @@ msgstr "OCI görüntüsünün imzalanacağı GPG Anahtar Kimliği"
 #: app/flatpak-builtins-build-sign.c:44
 #: app/flatpak-builtins-build-update-repo.c:84
 msgid "KEY-ID"
-msgstr "ANAHTAR-KİMLİK"
+msgstr "ANAHTAR-KİMLİĞİ"
 
 #: app/flatpak-builtins-build-bundle.c:64
 #: app/flatpak-builtins-build-commit-from.c:69
@@ -104,7 +105,7 @@ msgstr "Anahtarlık aramak için GPG Evdizini"
 #: app/flatpak-builtins-build-sign.c:45
 #: app/flatpak-builtins-build-update-repo.c:85
 msgid "HOMEDIR"
-msgstr "EVDİZİN"
+msgstr "EVDİZİNİ"
 
 #: app/flatpak-builtins-build-bundle.c:65
 msgid "OSTree commit to create a delta bundle from"
@@ -184,7 +185,7 @@ msgstr "'%s' geçerli bir dosya adı değil"
 
 #: app/flatpak-builtins-build.c:49
 msgid "Use Platform runtime rather than Sdk"
-msgstr "Sdkʼdense Platform çalışma ortamını kullan"
+msgstr "Sdkʼdense Platform çalışma zamanını kullan"
 
 #: app/flatpak-builtins-build.c:50
 msgid "Make destination readonly"
@@ -242,24 +243,23 @@ msgstr "DİZİN belirtilmelidir"
 #: app/flatpak-builtins-build.c:255 app/flatpak-builtins-build-export.c:887
 #, c-format
 msgid "Build directory %s not initialized, use flatpak build-init"
-msgstr "İnşa dizini %s ilklenmedi, flatpak build-init'i kullanın"
+msgstr "İnşa dizini %s ilklenmedi, flatpak build-init’i kullanın"
 
 #: app/flatpak-builtins-build.c:274
 msgid "metadata invalid, not application or runtime"
-msgstr "üst veri geçersiz, uygulama veya çalışma ortamı değil"
+msgstr "üst veri geçersiz, uygulama ya da çalışma zamanı değil"
 
 #: app/flatpak-builtins-build.c:405
 #, c-format
 msgid "No extension point matching %s in %s"
-msgstr "%s'e uyan Uzantı noktası %s'te yok"
+msgstr "%2$s içinde %1$s ile eşleşen uzantı noktası yok"
 
 #: app/flatpak-builtins-build.c:587
 #, c-format
 msgid "Missing '=' in bind mount option '%s'"
-msgstr "Bağlama noktası seçeneği '%s'te eksik '='"
+msgstr "Bağlama noktası seçeneği '%s' içinde '=' eksik"
 
-#: app/flatpak-builtins-build.c:628 common/flatpak-run.c:3701
-#, c-format
+#: app/flatpak-builtins-build.c:628 common/flatpak-run.c:3689
 msgid "Unable to start app"
 msgstr "Uygulama başlatılamadı"
 
@@ -292,7 +292,7 @@ msgstr "KONU"
 #: app/flatpak-builtins-build-commit-from.c:65
 #: app/flatpak-builtins-build-export.c:61
 msgid "Full description"
-msgstr "Tam açıklama"
+msgstr "Tüm açıklama"
 
 #: app/flatpak-builtins-build-commit-from.c:65
 #: app/flatpak-builtins-build-export.c:61
@@ -322,7 +322,7 @@ msgstr "İşlemeyi imzalamak için GPG Anahtar Kimliği"
 #: app/flatpak-builtins-build-commit-from.c:70
 #: app/flatpak-builtins-build-export.c:73
 msgid "Mark build as end-of-life"
-msgstr "İnşayı end-of-life olarak işaretle"
+msgstr "İnşayı ömrünü doldurdu olarak imle"
 
 #: app/flatpak-builtins-build-commit-from.c:70
 #: app/flatpak-builtins-build-export.c:73
@@ -335,7 +335,7 @@ msgid ""
 "given NEWID"
 msgstr ""
 "ESKİKİMLİK ön ekiyle eşleşen referansları, verilen YENİKİMLİK ile "
-"değiştirilmek üzere end-of-life olarak işaretle"
+"değiştirilmek üzere ömrünü doldurdu olarak imle"
 
 #: app/flatpak-builtins-build-commit-from.c:71
 msgid "OLDID=NEWID"
@@ -360,13 +360,12 @@ msgstr "İşleme zaman damgasını geçeriz kıl (şimdiki zaman için NOW)"
 msgid "TIMESTAMP"
 msgstr "ZAMANDAMGASI"
 
-# Burada index için normalde Dizin çevirisi kullanabiliyorduk, Directory için de Dizin çevirisini kullandığımızdan karışmasın diye fihrist olarak çevirdim. Sabri.
 #: app/flatpak-builtins-build-commit-from.c:75
 #: app/flatpak-builtins-build-export.c:80
 #: app/flatpak-builtins-build-import-bundle.c:53
 #: app/flatpak-builtins-build-update-repo.c:97
 msgid "Don't generate a summary index"
-msgstr "Özet fihristi oluşturma"
+msgstr "Özet indeksi oluşturma"
 
 #: app/flatpak-builtins-build-commit-from.c:278
 msgid "DST-REPO [DST-REF…] - Make a new commit from existing commits"
@@ -381,12 +380,13 @@ msgstr "HEDEF-DEPO belirtilmelidir"
 msgid ""
 "If --src-repo is not specified, exactly one destination ref must be specified"
 msgstr ""
-"--src-repo belirtilmemişse sadece tek bir hedef referans belirtilmelidir"
+"--src-repo belirtilmemişse yalnızca tek bir hedef referans belirtilmelidir"
 
 #: app/flatpak-builtins-build-commit-from.c:296
 msgid ""
 "If --src-ref is specified, exactly one destination ref must be specified"
-msgstr "--src-ref belirtilmişse, sadece tek bir hedef referans belirtilmelidir"
+msgstr ""
+"--src-ref belirtilmişse, yalnızca tek bir hedef referans belirtilmelidir"
 
 #: app/flatpak-builtins-build-commit-from.c:299
 msgid "Either --src-repo or --src-ref must be specified"
@@ -420,11 +420,11 @@ msgstr "%s: değişiklik yok\n"
 
 #: app/flatpak-builtins-build-export.c:62
 msgid "Architecture to export for (must be host compatible)"
-msgstr "Dışa aktarılacağı mimari (makinayla uyumlu olmalıdır)"
+msgstr "Dışa aktarılacağı mimari (makineyle uyumlu olmalıdır)"
 
 #: app/flatpak-builtins-build-export.c:63
 msgid "Commit runtime (/usr), not /app"
-msgstr "Çalışma ortamını (/usr) işle, /app'i değil"
+msgstr "Çalışma zamanını (/usr) işle, /app’i değil"
 
 #: app/flatpak-builtins-build-export.c:66
 msgid "Use alternative directory for the files"
@@ -436,22 +436,22 @@ msgstr "ALTDİZİN"
 
 #: app/flatpak-builtins-build-export.c:69
 msgid "Files to exclude"
-msgstr "Hariç tutulacak dosyalar"
+msgstr "Dışlanacak dosyalar"
 
 #: app/flatpak-builtins-build-export.c:69
 #: app/flatpak-builtins-build-export.c:70
 #: app/flatpak-builtins-build-update-repo.c:90
 msgid "PATTERN"
-msgstr "DESEN"
+msgstr "ÖRÜNTÜ"
 
 #: app/flatpak-builtins-build-export.c:70
 msgid "Excluded files to include"
-msgstr "Dahil edilecek hariç tutulmuş dosyalar"
+msgstr "İçerilecek dışlanan dosyalar"
 
 #: app/flatpak-builtins-build-export.c:74
 msgid "Mark build as end-of-life, to be replaced with the given ID"
 msgstr ""
-"İnşayı, verilen kimlikle değiştirilmek üzere end-of-life olarak işaretle"
+"İnşayı, verilen kimlikle değiştirilmek üzere ömrünü doldurdu olarak imle"
 
 #: app/flatpak-builtins-build-export.c:74
 #: app/flatpak-builtins-document-list.c:49 app/flatpak-cli-transaction.c:1424
@@ -510,7 +510,7 @@ msgstr ""
 #: app/flatpak-builtins-build-export.c:719
 #, c-format
 msgid "Invalid uri type %s, only http/https supported"
-msgstr "Geçersiz uri türü %s, sadece http/https destekli"
+msgstr "Geçersiz uri türü %s, yalnızca http/https destekli"
 
 #: app/flatpak-builtins-build-export.c:737
 #, c-format
@@ -518,7 +518,6 @@ msgid "Unable to find basename in %s, specify a name explicitly"
 msgstr "%s'te temel ad bulunamadı, bir ad belirtin"
 
 #: app/flatpak-builtins-build-export.c:746
-#, c-format
 msgid "No slashes allowed in extra data name"
 msgstr "Ek veri adında yan çizgi kullanılamaz"
 
@@ -528,7 +527,6 @@ msgid "Invalid format for sha256 checksum: '%s'"
 msgstr "Sha256 sağlama toplamı için geçersiz format: '%s'"
 
 #: app/flatpak-builtins-build-export.c:768
-#, c-format
 msgid "Extra data sizes of zero not supported"
 msgstr "Sıfır ek veri boyutu desteklenmemektedir"
 
@@ -578,7 +576,6 @@ msgid "Content Written: %u\n"
 msgstr "Yazılan İçerik: %u\n"
 
 #: app/flatpak-builtins-build-export.c:1171
-#, c-format
 msgid "Content Bytes Written:"
 msgstr "Yazılan İçerik Baytları:"
 
@@ -628,7 +625,7 @@ msgstr "AD"
 
 #: app/flatpak-builtins-build-finish.c:58
 msgid "Set extension priority (only for extensions)"
-msgstr "Uzantı önceliğini belirle (sadece uzantılar için)"
+msgstr "Uzantı önceliğini belirle (yalnızca uzantılar için)"
 
 #: app/flatpak-builtins-build-finish.c:58
 msgid "VALUE"
@@ -644,13 +641,13 @@ msgstr "SDK"
 
 #: app/flatpak-builtins-build-finish.c:60
 msgid "Change the runtime used for the app"
-msgstr "Uygulama için kullanılan çalışma ortamını değiştir"
+msgstr "Uygulama için kullanılan çalışma zamanını değiştir"
 
 #: app/flatpak-builtins-build-finish.c:60 app/flatpak-builtins-build-init.c:54
 #: app/flatpak-builtins-list.c:53 app/flatpak-builtins-remote-ls.c:58
 #: app/flatpak-builtins-run.c:72
 msgid "RUNTIME"
-msgstr "ÇALIŞMAORTAMI"
+msgstr "ÇALIŞMAZAMANI"
 
 #: app/flatpak-builtins-build-finish.c:61
 msgid "Set generic metadata option"
@@ -662,7 +659,7 @@ msgstr "GRUP=ANAHTAR[=DEĞER]"
 
 #: app/flatpak-builtins-build-finish.c:62
 msgid "Don't inherit permissions from runtime"
-msgstr "Çalışma ortamından izinleri devralma"
+msgstr "Çalışma zamanından izinleri devralma"
 
 #: app/flatpak-builtins-build-finish.c:155
 #, c-format
@@ -680,7 +677,6 @@ msgid "Exporting %s\n"
 msgstr "%s dışa aktarılıyor\n"
 
 #: app/flatpak-builtins-build-finish.c:440
-#, c-format
 msgid "More than one executable found\n"
 msgstr "Birden çok yürütülebilir dosya bulundu\n"
 
@@ -690,7 +686,6 @@ msgid "Using %s as command\n"
 msgstr "%s komut olarak kullanılıyor\n"
 
 #: app/flatpak-builtins-build-finish.c:456
-#, c-format
 msgid "No executable found\n"
 msgstr "Yürütülebilir bulunamadı\n"
 
@@ -710,7 +705,7 @@ msgid ""
 "Too few elements in --metadata argument %s, format should be "
 "GROUP=KEY[=VALUE]]"
 msgstr ""
-"--metadata argümanı %s'te çok az öge, format GRUP=ANAHTAR[=DEĞER] olmalıdır"
+"--metadata argümanı %s'te çok az öge, biçim GRUP=ANAHTAR[=DEĞER] olmalıdır"
 
 #: app/flatpak-builtins-build-finish.c:597
 #: app/flatpak-builtins-build-init.c:458
@@ -719,7 +714,7 @@ msgid ""
 "Too few elements in --extension argument %s, format should be "
 "NAME=VAR[=VALUE]"
 msgstr ""
-"--extension argümanı %s'te çok az öge, format AD=DEĞİŞKEN[=DEĞER] olmalıdır"
+"--extension argümanı %s’te çok az öge, biçim AD=DEĞİŞKEN[=DEĞER] olmalıdır"
 
 #: app/flatpak-builtins-build-finish.c:603
 #: app/flatpak-builtins-build-init.c:461
@@ -742,7 +737,6 @@ msgid "Build directory %s already finalized"
 msgstr "İnşa dizini %s zaten sonlandırılmış"
 
 #: app/flatpak-builtins-build-finish.c:702
-#, c-format
 msgid "Please review the exported files and the metadata\n"
 msgstr "Lütfen dışa aktarılmış dosyaları ve üst veriyi gözden geçirin\n"
 
@@ -779,7 +773,7 @@ msgstr "Kullanılacak mimari"
 
 #: app/flatpak-builtins-build-init.c:54
 msgid "Initialize var from named runtime"
-msgstr "Var'ı adlandırılmış çalışma ortamından ilklendir"
+msgstr "Var'ı adlandırılmış çalışma zamanından ilklendir"
 
 #: app/flatpak-builtins-build-init.c:55
 msgid "Initialize apps from named app"
@@ -799,7 +793,7 @@ msgstr "SÜRÜM"
 
 #: app/flatpak-builtins-build-init.c:57
 msgid "Include this base extension"
-msgstr "Bu temel uzantısını dahil et"
+msgstr "Bu temel uzantısını içer"
 
 #: app/flatpak-builtins-build-init.c:57 app/flatpak-builtins-build-init.c:62
 msgid "EXTENSION"
@@ -819,7 +813,7 @@ msgstr "/usr'yi SDKʼnin yazılabilir bir kopyasıyla ilklendir"
 
 #: app/flatpak-builtins-build-init.c:60
 msgid "Specify the build type (app, runtime, extension)"
-msgstr "İnşa türünü belirt (uygulama, çalışma ortamı, uzantı)"
+msgstr "İnşa türünü belirt (uygulama, çalışma zamanı, uzantı)"
 
 #: app/flatpak-builtins-build-init.c:60
 msgid "TYPE"
@@ -835,7 +829,7 @@ msgstr "ETİKET"
 
 #: app/flatpak-builtins-build-init.c:62
 msgid "Include this sdk extension in /usr"
-msgstr "Bu SDK uzantısını /usr'ye dahil et"
+msgstr "Bu SDK uzantısını /usr’de içer"
 
 #: app/flatpak-builtins-build-init.c:64
 msgid "Where to store sdk (defaults to 'usr')"
@@ -848,12 +842,12 @@ msgstr "Sdk/varʼı yeniden ilklendir"
 #: app/flatpak-builtins-build-init.c:118
 #, c-format
 msgid "Requested extension %s/%s/%s is only partially installed"
-msgstr "Talep edilen uzantı %s/%s/%s sadece kısmi olarak kurulmuş"
+msgstr "İstenen uzantı %s/%s/%s yalnızca kısmi kurulmuş"
 
 #: app/flatpak-builtins-build-init.c:147
 #, c-format
 msgid "Requested extension %s/%s/%s not installed"
-msgstr "Talep edilen uzantı %s/%s/%s kurulu değil"
+msgstr "İstenen uzantı %s/%s/%s kurulu değil"
 
 #: app/flatpak-builtins-build-init.c:207
 msgid ""
@@ -869,8 +863,8 @@ msgstr "ÇALIŞMAORTAMI belirtilmelidir"
 #, c-format
 msgid "'%s' is not a valid build type name, use app, runtime or extension"
 msgstr ""
-"'%s' geçerli bir inşa türü adı değil, uygulama, çalışma ortamı ya da "
-"uzantıyı kullanın"
+"'%s' geçerli bir inşa türü adı değil, uygulama, çalışma zamanı ya da "
+"uzantıyı kullan"
 
 #: app/flatpak-builtins-build-init.c:241 app/flatpak-builtins-override.c:79
 #, c-format
@@ -891,11 +885,11 @@ msgstr "Kurulacağı mimari"
 #: app/flatpak-builtins-install.c:74 app/flatpak-builtins-remote-info.c:56
 #: app/flatpak-builtins-uninstall.c:58 app/flatpak-builtins-update.c:64
 msgid "Look for runtime with the specified name"
-msgstr "Belirtilmiş adla çalışma ortamı ara"
+msgstr "Belirtilmiş adla çalışma zamanı ara"
 
 #: app/flatpak-builtins-build-sign.c:66
 msgid "LOCATION [ID [BRANCH]] - Sign an application or runtime"
-msgstr "KONUM [KİMLİK [DAL]] - Uygulamayı veya çalışma ortamını imzala"
+msgstr "KONUM [KİMLİK [DAL]] - Uygulamayı ya da çalışma zamanını imzala"
 
 #: app/flatpak-builtins-build-sign.c:73
 #: app/flatpak-builtins-build-update-repo.c:499
@@ -1016,11 +1010,11 @@ msgstr "Appstream dalını güncelleme"
 
 #: app/flatpak-builtins-build-update-repo.c:89
 msgid "Max parallel jobs when creating deltas (default: NUMCPUs)"
-msgstr "Delta oluştururken en fazla paralel iş (öntanımlı: NUMCPU'lar)"
+msgstr "Delta oluştururken en çok paralel iş (öntanımlı: NUMCPU’lar)"
 
 #: app/flatpak-builtins-build-update-repo.c:89
 msgid "NUM-JOBS"
-msgstr ""
+msgstr "SAYI-İŞ"
 
 #: app/flatpak-builtins-build-update-repo.c:90
 msgid "Don't create deltas matching refs"
@@ -1032,12 +1026,13 @@ msgstr "Kullanılmayan nesneleri buda"
 
 #: app/flatpak-builtins-build-update-repo.c:92
 msgid "Prune but don't actually remove anything"
-msgstr "Buda fakat hiçbir şeyi gerçekte kaldırma"
+msgstr "Buda ancak hiçbir şeyi gerçekte kaldırma"
 
 #: app/flatpak-builtins-build-update-repo.c:93
 msgid "Only traverse DEPTH parents for each commit (default: -1=infinite)"
 msgstr ""
-"Her işleme için sadece DERİNLİK ebeveynlerini çaprazla (öntanımlı: -1=sonsuz)"
+"Her işleme için yalnızca DERİNLİK ebeveynlerini çaprazla (öntanımlı: "
+"-1=sonsuz)"
 
 #: app/flatpak-builtins-build-update-repo.c:93
 msgid "DEPTH"
@@ -1068,12 +1063,10 @@ msgid "LOCATION - Update repository metadata"
 msgstr "KONUM - Depo üst verisini güncelle"
 
 #: app/flatpak-builtins-build-update-repo.c:609
-#, c-format
 msgid "Updating appstream branch\n"
 msgstr "Appstream dalı güncelleniyor\n"
 
 #: app/flatpak-builtins-build-update-repo.c:638
-#, c-format
 msgid "Updating summary\n"
 msgstr "Özet güncelleniyor\n"
 
@@ -1083,7 +1076,6 @@ msgid "Total objects: %u\n"
 msgstr "Toplam nesne: %u\n"
 
 #: app/flatpak-builtins-build-update-repo.c:666
-#, c-format
 msgid "No unreachable objects\n"
 msgstr "Ulaşılamayan nesne yok\n"
 
@@ -1119,9 +1111,9 @@ msgid "'%s' does not look like a language code"
 msgstr "'%s' dil kodu gibi görünmüyor"
 
 #: app/flatpak-builtins-config.c:190
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is not a valid value (use 'true' or 'false')"
-msgstr "'%s' geçerli bir depo değil: "
+msgstr "'%s' geçerli bir değer değil ('true' ya da 'false' kullanın)"
 
 #: app/flatpak-builtins-config.c:262
 #, c-format
@@ -1158,7 +1150,8 @@ msgstr "[ANAHTAR [DEĞER]] - Yapılandırmayı yönet"
 
 #: app/flatpak-builtins-config.c:394
 msgid "Can only use one of --list, --get, --set or --unset"
-msgstr "--list, --get, --set ya da --unset içinden sadece biri kullanılabilir"
+msgstr ""
+"--list, --get, --set ya da --unset içinden yalnızca biri kullanılabilir"
 
 #: app/flatpak-builtins-config.c:408
 msgid "Must specify one of --list, --get, --set or --unset"
@@ -1188,8 +1181,8 @@ msgid ""
 "Warning: Related ref ‘%s’ is partially installed. Use --allow-partial to "
 "suppress this message.\n"
 msgstr ""
-"Uyarı: İlgili referans ‘%s’ kısmen kuruldu. Mesajı bastırmak için --allow-"
-"partial kullanın.\n"
+"Uyarı: İlgili referans ‘%s’ kısmen kuruldu. Bu iletiyi bastırmak için --"
+"allow-partial kullanın.\n"
 
 #: app/flatpak-builtins-create-usb.c:158
 #, c-format
@@ -1224,7 +1217,7 @@ msgstr ""
 #, c-format
 msgid "Warning: Omitting ref ‘%s’ (runtime of ‘%s’) because it's extra-data.\n"
 msgstr ""
-"Uyarı: Ek veri olduğu için ‘%s’ referansı (‘%s’ çalışma ortamı) atlanıyor.\n"
+"Uyarı: Ek veri olduğu için ‘%s’ referansı (‘%s’ çalışma zamanı) atlanıyor.\n"
 
 #: app/flatpak-builtins-create-usb.c:484
 msgid "MOUNT-PATH [REF…] - Copy apps or runtimes onto removable media"
@@ -1245,8 +1238,7 @@ msgstr ""
 #: app/flatpak-builtins-create-usb.c:620
 #, c-format
 msgid "Refs must all be in the same installation (found in %s and %s)."
-msgstr ""
-"Referansların hepsi aynı kurulumda olmalıdır (%s ve %s içinde bulundu)."
+msgstr "Referansların tümü aynı kurulumda olmalıdır (%s ve %s içinde bulundu)."
 
 #: app/flatpak-builtins-create-usb.c:670
 #, c-format
@@ -1254,8 +1246,8 @@ msgid ""
 "Warning: Ref ‘%s’ is partially installed. Use --allow-partial to suppress "
 "this message.\n"
 msgstr ""
-"Uyarı: Referans ‘%s’ kısmen kuruldu. Mesajı bastırmak için --allow-partial "
-"kullanın.\n"
+"Uyarı: Referans ‘%s’ kısmen kuruldu. Bu iletiyi bastırmak için --allow-"
+"partial kullanın.\n"
 
 #: app/flatpak-builtins-create-usb.c:681
 #, c-format
@@ -1271,7 +1263,7 @@ msgstr "Uyarı: Depo üst verisi ‘%s’ uzağı için güncellenemedi: %s\n"
 #, c-format
 msgid "Warning: Couldn't update appstream data for remote ‘%s’ arch ‘%s’: %s\n"
 msgstr ""
-"Uyarı: Appstream verisi uzak ‘%s’ mimari ‘%s’ için güncellenemedi: %s\n"
+"Uyarı: Uzak ‘%s’ mimari ‘%s’ için appstream verisi güncellenemedi: %s\n"
 
 #. Print a warning if both appstream and appstream2 are missing
 #: app/flatpak-builtins-create-usb.c:784
@@ -1279,13 +1271,13 @@ msgstr ""
 msgid ""
 "Warning: Couldn't find appstream data for remote ‘%s’ arch ‘%s’: %s; %s\n"
 msgstr ""
-"Uyarı: Appstream verisi uzak ‘%s’ mimari ‘%s’ için bulunamadı: %s; %s\n"
+"Uyarı: Uzak ‘%s’ mimari ‘%s’ için appstream verisi bulunamadı: %s; %s\n"
 
 #. Appstream2 is only for efficiency, so just print a debug message
 #: app/flatpak-builtins-create-usb.c:790
 #, c-format
 msgid "Couldn't find appstream2 data for remote ‘%s’ arch ‘%s’: %s\n"
-msgstr "Appstream2 verisi uzak ‘%s’ mimari ‘%s’ için bulunamadı: %s\n"
+msgstr "Uzak ‘%s’ mimari ‘%s’ için appstream2 verisi bulunamadı: %s\n"
 
 #: app/flatpak-builtins-document-export.c:62
 msgid "Create a unique document reference"
@@ -1293,11 +1285,11 @@ msgstr "Bir eşsiz belge referansı oluştur"
 
 #: app/flatpak-builtins-document-export.c:63
 msgid "Make the document transient for the current session"
-msgstr "Belgeyi mevcut oturum için geçici yap"
+msgstr "Belgeyi geçerli oturum için geçici yap"
 
 #: app/flatpak-builtins-document-export.c:64
 msgid "Don't require the file to exist already"
-msgstr "Belgenin zaten varolmasını gerektirme"
+msgstr "Belgenin zaten var olmasını gerektirme"
 
 #: app/flatpak-builtins-document-export.c:65
 msgid "Give the app read permissions"
@@ -1313,7 +1305,7 @@ msgstr "Uygulamaya silme izinleri ver"
 
 #: app/flatpak-builtins-document-export.c:68
 msgid "Give the app permissions to grant further permissions"
-msgstr "Uygulamaya daha fazla izin tanıma izinleri ver"
+msgstr "Uygulamaya daha çok izin tanıma izinleri ver"
 
 #: app/flatpak-builtins-document-export.c:69
 msgid "Revoke read permissions of the app"
@@ -1329,7 +1321,7 @@ msgstr "Uygulamanın silme izinlerini geri çek"
 
 #: app/flatpak-builtins-document-export.c:72
 msgid "Revoke the permission to grant further permissions"
-msgstr "Uygulamanın daha fazla izin tanıma izinlerini geri çek"
+msgstr "Uygulamanın daha çok izin tanıma izinlerini geri çek"
 
 #: app/flatpak-builtins-document-export.c:73
 msgid "Add permissions for this app"
@@ -1351,11 +1343,10 @@ msgstr "DOSYA belirtilmelidir"
 
 #: app/flatpak-builtins-document-info.c:63
 msgid "FILE - Get information about an exported file"
-msgstr "DOSYA - Dışa aktarılmış bir belgeyle ilgili bilgi al"
+msgstr "DOSYA - Dışa aktarılmış belgeyle ilgili bilgi al"
 
 #: app/flatpak-builtins-document-info.c:100
 #: app/flatpak-builtins-document-unexport.c:92
-#, c-format
 msgid "Not exported\n"
 msgstr "Dışa aktarılmamış\n"
 
@@ -1378,9 +1369,8 @@ msgstr "ALAN,…"
 #: app/flatpak-builtins-permission-show.c:43 app/flatpak-builtins-ps.c:44
 #: app/flatpak-builtins-remote-list.c:46 app/flatpak-builtins-remote-ls.c:63
 #: app/flatpak-builtins-repo.c:716 app/flatpak-builtins-search.c:39
-#, fuzzy
 msgid "Show output in JSON format"
-msgstr "Ek bilgi göster"
+msgstr "Çıktıyı JSON biçiminde göster"
 
 #: app/flatpak-builtins-document-list.c:49
 msgid "Show the document ID"
@@ -1407,7 +1397,7 @@ msgstr "Uygulama"
 
 #: app/flatpak-builtins-document-list.c:52
 msgid "Show applications with permission"
-msgstr "Uygulamaları, izinleriyle birlikte göster"
+msgstr "Uygulamaları izinleriyle birlikte göster"
 
 #: app/flatpak-builtins-document-list.c:53
 #: app/flatpak-builtins-permission-list.c:182
@@ -1420,9 +1410,8 @@ msgid "Show permissions for applications"
 msgstr "Uygulamalar için izinleri göster"
 
 #: app/flatpak-builtins-document-list.c:161
-#, fuzzy, c-format
 msgid "No documents found\n"
-msgstr "Hiçbir sonuç bulunamadı"
+msgstr "Belge bulunamadı\n"
 
 #: app/flatpak-builtins-document-list.c:180
 msgid "[APPID] - List exported files"
@@ -1510,7 +1499,7 @@ msgstr "uid değiştirilemedi"
 
 #: app/flatpak-builtins-history.c:50
 msgid "Only show changes after TIME"
-msgstr "Sadece ZAMAN tarihinden sonraki değişiklikleri göster"
+msgstr "Yalnızca ZAMAN tarihinden sonraki değişiklikleri göster"
 
 #: app/flatpak-builtins-history.c:50 app/flatpak-builtins-history.c:51
 msgid "TIME"
@@ -1518,7 +1507,7 @@ msgstr "ZAMAN"
 
 #: app/flatpak-builtins-history.c:51
 msgid "Only show changes before TIME"
-msgstr "Sadece ZAMAN tarihinden önceki değişiklikleri göster"
+msgstr "Yalnızca ZAMAN tarihinden önceki değişiklikleri göster"
 
 #: app/flatpak-builtins-history.c:52
 msgid "Show newest entries first"
@@ -1553,7 +1542,7 @@ msgstr "Referansı göster"
 
 #: app/flatpak-builtins-history.c:62
 msgid "Show the application/runtime ID"
-msgstr "Uygulama/çalışma ortamı kimliğini göster"
+msgstr "Uygulama/çalışma zamanı kimliğini göster"
 
 #: app/flatpak-builtins-history.c:63 app/flatpak-builtins-list.c:64
 #: app/flatpak-builtins-ps.c:53 app/flatpak-builtins-remote-ls.c:73
@@ -1660,12 +1649,10 @@ msgid " - Show history"
 msgstr " - Geçmişi göster"
 
 #: app/flatpak-builtins-history.c:490
-#, c-format
 msgid "Failed to parse the --since option"
 msgstr "--since seçeneği ayrıştırılamadı"
 
 #: app/flatpak-builtins-history.c:501
-#, c-format
 msgid "Failed to parse the --until option"
 msgstr "--until seçeneği ayrıştırılamadı"
 
@@ -1703,7 +1690,7 @@ msgstr "Üst veri göster"
 
 #: app/flatpak-builtins-info.c:64 app/flatpak-builtins-remote-info.c:63
 msgid "Show runtime"
-msgstr "Çalışma ortamı göster"
+msgstr "Çalışma zamanı göster"
 
 #: app/flatpak-builtins-info.c:65 app/flatpak-builtins-remote-info.c:64
 msgid "Show sdk"
@@ -1735,7 +1722,7 @@ msgstr "Konumu göster"
 #: app/flatpak-builtins-info.c:116
 msgid "NAME [BRANCH] - Get info about an installed app or runtime"
 msgstr ""
-"AD [DAL] - Kurulu uygulamalar ve/veya çalışma ortamları hakkında bilgi al"
+"AD [DAL] - Kurulu uygulamalar ve/veya çalışma ortamlarıyla ilgili bilgi al"
 
 #: app/flatpak-builtins-info.c:123 app/flatpak-builtins-remote-add.c:312
 #: app/flatpak-builtins-remote-delete.c:63
@@ -1747,7 +1734,6 @@ msgid "ref not present in origin"
 msgstr "referans kökende yok"
 
 #: app/flatpak-builtins-info.c:211 app/flatpak-builtins-remote-info.c:217
-#, c-format
 msgid "Warning: Commit has no flatpak metadata\n"
 msgstr "Uyarı: İşleme flatpak üst verisi içermiyor\n"
 
@@ -1810,7 +1796,7 @@ msgstr "Kurulu:"
 #: app/flatpak-builtins-remote-info.c:252
 #: app/flatpak-builtins-remote-info.c:288
 msgid "Runtime:"
-msgstr "Çalışma ortamı:"
+msgstr "Çalışma zamanı:"
 
 #: app/flatpak-builtins-info.c:232 app/flatpak-builtins-info.c:288
 #: app/flatpak-builtins-remote-info.c:253
@@ -1853,19 +1839,19 @@ msgstr "Üst:"
 
 #: app/flatpak-builtins-info.c:248 app/flatpak-builtins-info.c:321
 msgid "Alt-id:"
-msgstr "Alt-kimlik:"
+msgstr "Alternatif kimlik:"
 
 #: app/flatpak-builtins-info.c:250 app/flatpak-builtins-info.c:325
 #: app/flatpak-builtins-remote-info.c:263
 #: app/flatpak-builtins-remote-info.c:308
 msgid "End-of-life:"
-msgstr "Ömür-sonu:"
+msgstr "Ömrünü doldurdu:"
 
 #: app/flatpak-builtins-info.c:252 app/flatpak-builtins-info.c:330
 #: app/flatpak-builtins-remote-info.c:265
 #: app/flatpak-builtins-remote-info.c:313
 msgid "End-of-life-rebase:"
-msgstr "Ömür-sonu-yeniden-temellendirme:"
+msgstr "Ömrünü doldurdu yeniden temellendirme:"
 
 #: app/flatpak-builtins-info.c:254 app/flatpak-builtins-info.c:317
 msgid "Subdirectories:"
@@ -1895,12 +1881,12 @@ msgstr "bilinmeyen"
 
 #: app/flatpak-builtins-install.c:68 app/flatpak-builtins-preinstall.c:57
 msgid "Don't pull, only install from local cache"
-msgstr "Çekme, sadece yerel önbellekten kur"
+msgstr "Çekme, yalnızca yerel önbellekten kur"
 
 #: app/flatpak-builtins-install.c:69 app/flatpak-builtins-preinstall.c:58
 #: app/flatpak-builtins-update.c:60
 msgid "Don't deploy, only download to local cache"
-msgstr "Dağıtma, sadece yerel önbelleğe indir"
+msgstr "Dağıtma, yalnızca yerel önbelleğe indir"
 
 #: app/flatpak-builtins-install.c:70 app/flatpak-builtins-preinstall.c:59
 msgid "Don't install related refs"
@@ -1909,7 +1895,7 @@ msgstr "İlişkili referansları kurma"
 #: app/flatpak-builtins-install.c:71 app/flatpak-builtins-preinstall.c:60
 #: app/flatpak-builtins-update.c:62
 msgid "Don't verify/install runtime dependencies"
-msgstr "Çalışma ortamı bağımlılıklarını doğrulama/kurma"
+msgstr "Çalışma zamanı bağımlılıklarını doğrulama/kurma"
 
 #: app/flatpak-builtins-install.c:72
 msgid "Don't automatically pin explicit installs"
@@ -1918,7 +1904,7 @@ msgstr "Açık kurulumları kendiliğinden sabitleme"
 #: app/flatpak-builtins-install.c:73 app/flatpak-builtins-preinstall.c:61
 #: app/flatpak-builtins-update.c:63
 msgid "Don't use static deltas"
-msgstr "Sabit deltaları kullanma"
+msgstr "Durağan deltaları kullanma"
 
 #: app/flatpak-builtins-install.c:76 app/flatpak-builtins-preinstall.c:62
 msgid "Additionally install the SDK used to build the given refs"
@@ -1942,6 +1928,8 @@ msgstr "KONUM'un .flatpakref uygulama açıklaması olduğunu varsay"
 #: app/flatpak-builtins-install.c:80
 msgid "Assume LOCATION is containers-transports(5) reference to an OCI image"
 msgstr ""
+"KONUM'un OCI görüntüsü için containers-transports(5) referansı olduğunu "
+"varsay"
 
 #: app/flatpak-builtins-install.c:81
 msgid "Check bundle signatures with GPG key from FILE (- for stdin)"
@@ -1949,12 +1937,12 @@ msgstr "Paket imzalarını DOSYA'daki (stdin için -) GPG anahtarıyla denetle"
 
 #: app/flatpak-builtins-install.c:82
 msgid "Only install this subpath"
-msgstr "Sadece bu alt yolu kur"
+msgstr "Yalnızca bu alt yolu kur"
 
 #: app/flatpak-builtins-install.c:83 app/flatpak-builtins-preinstall.c:64
 #: app/flatpak-builtins-uninstall.c:63 app/flatpak-builtins-update.c:68
 msgid "Automatically answer yes for all questions"
-msgstr "Tüm soruları otomatik olarak evetle cevapla"
+msgstr "Tüm soruları kendiliğinden evetle yanıtla"
 
 #: app/flatpak-builtins-install.c:84 app/flatpak-builtins-preinstall.c:65
 msgid "Uninstall first if already installed"
@@ -1988,9 +1976,8 @@ msgid "Filename or uri must be specified"
 msgstr "Dosya adı veya uri belirtilmelidir"
 
 #: app/flatpak-builtins-install.c:295
-#, fuzzy
 msgid "Image location must be specified"
-msgstr "En az bir REFERANS belirtilmelidir"
+msgstr "Görüntü konumu belirtilmelidir"
 
 #: app/flatpak-builtins-install.c:345
 msgid "[LOCATION/REMOTE] [REF…] - Install applications or runtimes"
@@ -2001,7 +1988,6 @@ msgid "At least one REF must be specified"
 msgstr "En az bir REFERANS belirtilmelidir"
 
 #: app/flatpak-builtins-install.c:392
-#, c-format
 msgid "Looking for matches…\n"
 msgstr "Eşleşmeler aranıyor…\n"
 
@@ -2066,7 +2052,7 @@ msgstr "Gösterilecek mimari"
 
 #: app/flatpak-builtins-list.c:51 app/flatpak-builtins-remote-ls.c:57
 msgid "List all refs (including locale/debug)"
-msgstr "Tüm referansları listele (yerel/hata ayıklama dahil)"
+msgstr "Tüm referansları listele (yerel/hata ayıklama içerilir)"
 
 #: app/flatpak-builtins-list.c:53 app/flatpak-builtins-remote-ls.c:58
 msgid "List all applications using RUNTIME"
@@ -2110,11 +2096,11 @@ msgstr "Sürümü göster"
 #: app/flatpak-builtins-list.c:65 app/flatpak-builtins-ps.c:56
 #: app/flatpak-builtins-remote-ls.c:77
 msgid "Runtime"
-msgstr "Çalışma ortamı"
+msgstr "Çalışma zamanı"
 
 #: app/flatpak-builtins-list.c:65
 msgid "Show the used runtime"
-msgstr "Kullanılan çalışma ortamını göster"
+msgstr "Kullanılan çalışma zamanını göster"
 
 # Fuzzy: Durduğu yere bakmak lazım.
 #: app/flatpak-builtins-list.c:66 app/flatpak-builtins-remote-ls.c:74
@@ -2176,11 +2162,11 @@ msgstr " - Kurulu uygulamaları ve/veya çalışma ortamlarını listele"
 
 #: app/flatpak-builtins-make-current.c:38
 msgid "Arch to make current for"
-msgstr "Mevcutun yapılacağı mimariler"
+msgstr "Geçerli yapılacak mimari"
 
 #: app/flatpak-builtins-make-current.c:58
 msgid "APP BRANCH - Make branch of application current"
-msgstr "UYGULAMA DAL - Uygulamanın dalını mevcut yap"
+msgstr "UYGULAMA DAL - Uygulamanın dalını geçerli yap"
 
 #: app/flatpak-builtins-make-current.c:69 app/flatpak-builtins-run.c:160
 msgid "APP must be specified"
@@ -2203,26 +2189,24 @@ msgstr "Eşleşen maskeleri kaldır"
 msgid ""
 "[PATTERN…] - disable updates and automatic installation matching patterns"
 msgstr ""
-"[DESEN…] - desenlerle eşleşenlerin güncellemelerini ve kendiliğinden "
-"kurulumlarını devre dışı bırak"
+"[ÖRÜNTÜ…] - örüntülerle eşleşen güncellemeleri ve kendiliğinden kurulumları "
+"devre dışı bırak"
 
 #: app/flatpak-builtins-mask.c:73
-#, c-format
 msgid "No masked patterns\n"
-msgstr "Maskelenen desen yok\n"
+msgstr "Maskelenen örüntü yok\n"
 
 #: app/flatpak-builtins-mask.c:78
-#, c-format
 msgid "Masked patterns:\n"
-msgstr "Maskelenen desenler:\n"
+msgstr "Maskelenen örüntüler:\n"
 
 #: app/flatpak-builtins-override.c:42
 msgid "Remove existing overrides"
-msgstr "Mevcut geçersiz kılmaları kaldır"
+msgstr "Var olan geçersiz kılmaları kaldır"
 
 #: app/flatpak-builtins-override.c:43
 msgid "Show existing overrides"
-msgstr "Mevcut geçersiz kılmaları göster"
+msgstr "Var olan geçersiz kılmaları göster"
 
 #: app/flatpak-builtins-override.c:59
 msgid "[APP] - Override settings [for application]"
@@ -2302,25 +2286,22 @@ msgstr "Eşleyen sabitlemeleri kaldır"
 #: app/flatpak-builtins-pin.c:56
 msgid "[PATTERN…] - disable automatic removal of runtimes matching patterns"
 msgstr ""
-"[DESEN…] - desenlerle eşleşen kalıpların kendiliğinden kaldırılmasını devre "
-"dışı bırak"
+"[ÖRÜNTÜ…] - örüntülerle eşleşen çalışma zamanlarının kendiliğinden "
+"kaldırılmasını devre dışı bırak"
 
 #: app/flatpak-builtins-pin.c:75
-#, c-format
 msgid "No pinned patterns\n"
-msgstr "Sabitlenmiş desen yok\n"
+msgstr "Sabitlenmiş örüntü yok\n"
 
 #: app/flatpak-builtins-pin.c:80
-#, c-format
 msgid "Pinned patterns:\n"
-msgstr "Sabitlenmiş desenler:\n"
+msgstr "Sabitlenmiş örüntüler:\n"
 
 #: app/flatpak-builtins-preinstall.c:80
 msgid "- Install flatpaks that are part of the operating system"
-msgstr ""
+msgstr "- İşletim sisteminin parçası olan flatpakları kur"
 
 #: app/flatpak-builtins-preinstall.c:118 app/flatpak-builtins-update.c:274
-#, c-format
 msgid "Nothing to do.\n"
 msgstr "Yapacak bir şey yok.\n"
 
@@ -2358,25 +2339,25 @@ msgstr "Uygulama işlemesini göster"
 
 #: app/flatpak-builtins-ps.c:56
 msgid "Show the runtime ID"
-msgstr "Çalışma ortamı kimliğini göster"
+msgstr "Çalışma zamanı kimliğini göster"
 
-# R. kelimesi Runtime kelimesinin kısaltması olması sebebiyle ÇO (Çalışma Ortamı) olarak kukllanıldı.
+# R. kelimesi Runtime kelimesinin kısaltması olması sebebiyle ÇZ (Çalışma Zamanı) olarak kullanıldı.
 #: app/flatpak-builtins-ps.c:57
 msgid "R.-Branch"
-msgstr "ÇO.-Dalı"
+msgstr "ÇZ.-Dalı"
 
 #: app/flatpak-builtins-ps.c:57
 msgid "Show the runtime branch"
-msgstr "Çalışma ortamı dalını göster"
+msgstr "Çalışma zamanı dalını göster"
 
-# R. kelimesi Runtime kelimesinin kısaltması olması sebebiyle ÇO (Çalışma Ortamı) olarak kullanıldı.
+# R. kelimesi Runtime kelimesinin kısaltması olması sebebiyle ÇZ (Çalışma Zamanı) olarak kullanıldı.
 #: app/flatpak-builtins-ps.c:58
 msgid "R.-Commit"
-msgstr "ÇO.-İşlemesi"
+msgstr "ÇZ.-İşlemesi"
 
 #: app/flatpak-builtins-ps.c:58
 msgid "Show the runtime commit"
-msgstr "Çalışma ortamı işlemesini göster"
+msgstr "Çalışma zamanı işlemesini göster"
 
 #: app/flatpak-builtins-ps.c:59
 msgid "Active"
@@ -2484,12 +2465,12 @@ msgstr "Kimlik doğrulayıcıyı kendiliğinden kurma"
 
 #: app/flatpak-builtins-remote-add.c:90 app/flatpak-builtins-remote-modify.c:97
 msgid "Don't follow the redirect set in the summary file"
-msgstr "Özet dosyasındaki yönlendirme kümesini takip etme"
+msgstr "Özet dosyasındaki yönlendirme kümesini izleme"
 
 #: app/flatpak-builtins-remote-add.c:256 app/flatpak-builtins-remote-add.c:263
 #, c-format
 msgid "Can't load uri %s: %s\n"
-msgstr "%s uri yüklenemedi: %s\n"
+msgstr "Uri %s yüklenemedi: %s\n"
 
 #: app/flatpak-builtins-remote-add.c:271 common/flatpak-dir.c:4614
 #, c-format
@@ -2561,13 +2542,13 @@ msgstr "Eski olsalar bile yerel önbellekleri kullan"
 #. Translators: A sideload is when you install from a local USB drive rather than the Internet.
 #: app/flatpak-builtins-remote-info.c:67 app/flatpak-builtins-remote-ls.c:62
 msgid "Only list refs available as sideloads"
-msgstr "Sadece yan kurulum olarak kullanılabilen referansları listele"
+msgstr "Yalnızca yan kurulum olarak kullanılabilen referansları listele"
 
 #: app/flatpak-builtins-remote-info.c:114
 msgid ""
 " REMOTE REF - Show information about an application or runtime in a remote"
 msgstr ""
-" UZAK REFERANS - Uzaktaki uygulama ya da çalışma zamanı hakkındaki bilgileri "
+" UZAK REFERANS - Uzaktaki uygulama ya da çalışma zamanıyla ilgili bilgileri "
 "göster"
 
 #: app/flatpak-builtins-remote-info.c:125
@@ -2603,7 +2584,7 @@ msgstr "Uyarı: %s işlemesi flatpak üst verisi içermiyor\n"
 
 #: app/flatpak-builtins-remote-list.c:43
 msgid "Show remote details"
-msgstr "Uzak detaylarını göster"
+msgstr "Uzak ayrıntılarını göster"
 
 #: app/flatpak-builtins-remote-list.c:44
 msgid "Show disabled remotes"
@@ -2619,7 +2600,7 @@ msgstr "Başlığı göster"
 
 #: app/flatpak-builtins-remote-list.c:53
 msgid "Show the URL"
-msgstr "URL'yi göster"
+msgstr "URL’yi göster"
 
 #: app/flatpak-builtins-remote-list.c:54
 msgid "Show the collection ID"
@@ -2687,23 +2668,23 @@ msgstr "Mimarileri ve dalları göster"
 
 #: app/flatpak-builtins-remote-ls.c:53
 msgid "Show only runtimes"
-msgstr "Sadece çalışma ortamlarını göster"
+msgstr "Yalnızca çalışma zamanlarını göster"
 
 #: app/flatpak-builtins-remote-ls.c:54
 msgid "Show only apps"
-msgstr "Sadece uygulamaları göster"
+msgstr "Yalnızca uygulamaları göster"
 
 #: app/flatpak-builtins-remote-ls.c:55
 msgid "Show only those where updates are available"
-msgstr "Sadece güncellemeleri olanları göster"
+msgstr "Yalnızca güncellemeleri olanları göster"
 
 #: app/flatpak-builtins-remote-ls.c:56
 msgid "Limit to this arch (* for all)"
-msgstr "Bu mimariyle kısıtla (hepsi için *)"
+msgstr "Bu mimariyle kısıtla (tümü için *)"
 
 #: app/flatpak-builtins-remote-ls.c:77
 msgid "Show the runtime"
-msgstr "Çalışma ortamını göster"
+msgstr "Çalışma zamanını göster"
 
 #: app/flatpak-builtins-remote-ls.c:79
 msgid "Download size"
@@ -2716,7 +2697,7 @@ msgstr "İndirme boyutunu göster"
 #: app/flatpak-builtins-remote-ls.c:391
 msgid " [REMOTE or URI] - Show available runtimes and applications"
 msgstr ""
-" [UZAK ya da URI] - Kullanılabilir çalışma ortamlarını ve uygulamaları göster"
+" [UZAK ya da URI] - Kullanılabilir çalışma zamanlarını ve uygulamaları göster"
 
 #: app/flatpak-builtins-remote-modify.c:66
 msgid "Enable GPG verification"
@@ -2732,11 +2713,11 @@ msgstr "Uzağı bağımlılık için kullanılmış olarak işaretle"
 
 #: app/flatpak-builtins-remote-modify.c:69
 msgid "Set a new url"
-msgstr "Yeni bir url belirle"
+msgstr "Yeni url belirle"
 
 #: app/flatpak-builtins-remote-modify.c:70
 msgid "Set a new subset to use"
-msgstr "Yeni bir alt küme belirle"
+msgstr "Yeni alt küme belirle"
 
 #: app/flatpak-builtins-remote-modify.c:71
 msgid "Enable the remote"
@@ -2756,7 +2737,7 @@ msgstr "Kimlik doğrulayıcı seçenekleri"
 
 #: app/flatpak-builtins-remote-modify.c:96
 msgid "Follow the redirect set in the summary file"
-msgstr "Özet dosyasındaki yönlendirme kümesini takip et"
+msgstr "Özet dosyasındaki yönlendirme kümesini izle"
 
 #: app/flatpak-builtins-remote-modify.c:298
 msgid "NAME - Modify a remote repository"
@@ -2792,7 +2773,7 @@ msgstr "Tüm referansları yeniden kur"
 #: app/flatpak-builtins-repair.c:68
 #, c-format
 msgid "Object missing: %s.%s\n"
-msgstr "Nesne kayıp: %s.%s\n"
+msgstr "Nesne yitik: %s.%s\n"
 
 #: app/flatpak-builtins-repair.c:76
 #, c-format
@@ -2861,34 +2842,32 @@ msgid "[%d/%d] Verifying %s…\n"
 msgstr "[%d/%d] %s doğrulanıyor…\n"
 
 #: app/flatpak-builtins-repair.c:435
-#, c-format
 msgid "Dry run: "
 msgstr "Kuru çalıştırma: "
 
 #: app/flatpak-builtins-repair.c:440
 #, c-format
 msgid "Deleting ref %s due to missing objects\n"
-msgstr "%s referansı eksik nesneler sebebiyle siniliyor\n"
+msgstr "%s referansı eksik nesneler nedeniyle siliniyor\n"
 
 #: app/flatpak-builtins-repair.c:444
 #, c-format
 msgid "Deleting ref %s due to invalid objects\n"
-msgstr "%s referansı geçersiz nesneler sebebiyle siliniyor\n"
+msgstr "%s referansı geçersiz nesneler nedeniyle siliniyor\n"
 
 #: app/flatpak-builtins-repair.c:448
 #, c-format
 msgid "Deleting ref %s due to %d\n"
-msgstr "%s referansı %d sebebiyle siliniyor\n"
+msgstr "%s referansı %d nedeniyle siliniyor\n"
 
 #: app/flatpak-builtins-repair.c:464
-#, c-format
 msgid "Checking remotes...\n"
 msgstr "Uzaklar denetleniyor...\n"
 
 #: app/flatpak-builtins-repair.c:482
 #, c-format
 msgid "Remote %s for ref %s is missing\n"
-msgstr "%2$s referansı için %1$s uzağı kayıp\n"
+msgstr "%2$s referansı için %1$s uzağı yitik\n"
 
 #: app/flatpak-builtins-repair.c:484
 #, c-format
@@ -2896,22 +2875,18 @@ msgid "Remote %s for ref %s is disabled\n"
 msgstr "%2$s referansı için %1$s devre dışı\n"
 
 #: app/flatpak-builtins-repair.c:490
-#, c-format
 msgid "Pruning objects\n"
 msgstr "Nesneler budanıyor\n"
 
 #: app/flatpak-builtins-repair.c:498
-#, c-format
 msgid "Erasing .removed\n"
 msgstr ".removed siliniyor\n"
 
 #: app/flatpak-builtins-repair.c:523
-#, c-format
 msgid "Reinstalling refs\n"
 msgstr "Referanslar yeniden kuruluyor\n"
 
 #: app/flatpak-builtins-repair.c:525
-#, c-format
 msgid "Reinstalling removed refs\n"
 msgstr "Kaldırılan referanslar yeniden kuruluyor\n"
 
@@ -2946,7 +2921,6 @@ msgid "false"
 msgstr "yanlış"
 
 #: app/flatpak-builtins-repo.c:121
-#, c-format
 msgid "Subsummaries: "
 msgstr "Alt özetler: "
 
@@ -3049,7 +3023,7 @@ msgstr "Geçmiş uzunluğu"
 
 #: app/flatpak-builtins-repo.c:710
 msgid "Print general information about the repository"
-msgstr "Depo hakkında genel bilgileri yazdır"
+msgstr "Depoyla ilgili genel bilgileri yazdır"
 
 #: app/flatpak-builtins-repo.c:711
 msgid "List the branches in the repository"
@@ -3065,7 +3039,7 @@ msgstr "Dal için işlemeleri göster"
 
 #: app/flatpak-builtins-repo.c:714
 msgid "Print information about the repo subsets"
-msgstr "Depo alt kümeleri hakkında bilgileri yazdır"
+msgstr "Depo alt kümeleriyle ilgili bilgileri yazdır"
 
 #: app/flatpak-builtins-repo.c:715
 msgid "Limit information to subsets with this prefix"
@@ -3089,15 +3063,15 @@ msgstr "Kullanılacak dal"
 
 #: app/flatpak-builtins-run.c:71
 msgid "Use development runtime"
-msgstr "Geliştirme çalışma ortamı kullan"
+msgstr "Geliştirme çalışma zamanı kullan"
 
 #: app/flatpak-builtins-run.c:72
 msgid "Runtime to use"
-msgstr "Kullanılacak çalışma ortamı"
+msgstr "Kullanılacak çalışma zamanı"
 
 #: app/flatpak-builtins-run.c:73
 msgid "Runtime version to use"
-msgstr "Kullanılacak çalışma ortamı sürümü"
+msgstr "Kullanılacak çalışma zamanı sürümü"
 
 #: app/flatpak-builtins-run.c:76
 msgid "Log accessibility bus calls"
@@ -3137,7 +3111,7 @@ msgstr "Belirtilen işlemeyi çalıştır"
 
 #: app/flatpak-builtins-run.c:84
 msgid "Use specified runtime commit"
-msgstr "Belirtilen çalışma ortamı işlemesini kullan"
+msgstr "Belirtilen çalışma zamanı işlemesini kullan"
 
 #: app/flatpak-builtins-run.c:85
 msgid "Run completely sandboxed"
@@ -3165,12 +3139,11 @@ msgstr "Uygulamanın /app dizini yerine YOL kullan"
 
 #: app/flatpak-builtins-run.c:92
 msgid "Use PATH instead of the runtime's /usr"
-msgstr "Çalışma ortamının /usr dizini yerine YOL kullan"
+msgstr "Çalışma zamanının /usr dizini yerine YOL kullan"
 
 #: app/flatpak-builtins-run.c:93
-#, fuzzy
 msgid "Clear all outside environment variables"
-msgstr "Ortam değişkeni belirle"
+msgstr "Tüm dış çevre değişkenlerini temizle"
 
 #: app/flatpak-builtins-run.c:119
 msgid "APP [ARGUMENT…] - Run an app"
@@ -3179,7 +3152,7 @@ msgstr "UYGULAMA [ARGÜMAN…] - Uygulamayı çalıştır"
 #: app/flatpak-builtins-run.c:270
 #, c-format
 msgid "runtime/%s/%s/%s not installed"
-msgstr "çalışma ortamı/%s/%s/%s kurulu değil"
+msgstr "çalışma zamanı/%s/%s/%s kurulu değil"
 
 #: app/flatpak-builtins-search.c:37
 msgid "Arch to search for"
@@ -3195,7 +3168,7 @@ msgstr "Uzakları göster"
 
 #: app/flatpak-builtins-search.c:244
 msgid "TEXT - Search remote apps/runtimes for text"
-msgstr "METİN - Uzak uygulamaları/çalışma ortamlarını metin için ara"
+msgstr "METİN - Uzak uygulamaları/çalışma zamanlarını metin için ara"
 
 #: app/flatpak-builtins-search.c:255
 msgid "TEXT must be specified"
@@ -3246,7 +3219,7 @@ msgstr "Bilgi: %s%s%s eklentisinin %s%s%s dalını kullanan uygulamalar:\n"
 #: app/flatpak-builtins-uninstall.c:223
 #, c-format
 msgid "Info: applications using the runtime %s%s%s branch %s%s%s:\n"
-msgstr "%s%s%s çalışma ortamının %s%s%s dalını kullanan uygulamalar:\n"
+msgstr "%s%s%s çalışma zamanının %s%s%s dalını kullanan uygulamalar:\n"
 
 #: app/flatpak-builtins-uninstall.c:238
 msgid "Really remove?"
@@ -3254,7 +3227,7 @@ msgstr "Gerçekten kaldırılsın mı?"
 
 #: app/flatpak-builtins-uninstall.c:255
 msgid "[REF…] - Uninstall applications or runtimes"
-msgstr "[REFERANS…] - Uygulamaları veya çalışma ortamlarını kaldır"
+msgstr "[REFERANS…] - Uygulamaları veya çalışma zamanlarını kaldır"
 
 #: app/flatpak-builtins-uninstall.c:264
 msgid "Must specify at least one REF, --unused, --all or --delete-data"
@@ -3282,9 +3255,8 @@ msgstr ""
 
 # Biraz bulanık oldu fakat sade oldu
 #: app/flatpak-builtins-uninstall.c:370
-#, c-format
 msgid "Nothing unused to uninstall\n"
-msgstr "Kullanılmayan hiçbir şey yok\n"
+msgstr "Kaldırılacak kullanılmayan bir şey yok\n"
 
 #: app/flatpak-builtins-uninstall.c:444
 #, c-format
@@ -3307,14 +3279,12 @@ msgid "Warning: %s is not installed\n"
 msgstr "Uyarı: %s kurulu değil\n"
 
 #: app/flatpak-builtins-uninstall.c:490
-#, c-format
 msgid "None of the specified refs are installed"
 msgstr "Belirtilen referansların hiçbiri kurulmadı"
 
 #: app/flatpak-builtins-uninstall.c:599
-#, c-format
 msgid "No app data to delete\n"
-msgstr ""
+msgstr "Silinecek uygulama verisi yok\n"
 
 #: app/flatpak-builtins-update.c:56
 msgid "Arch to update for"
@@ -3330,7 +3300,7 @@ msgstr "Eski dosyaları çalışıyor olsalar da kaldır"
 
 #: app/flatpak-builtins-update.c:59
 msgid "Don't pull, only update from local cache"
-msgstr "Çekme, sadece yerel önbellekten güncelle"
+msgstr "Çekme, yalnızca yerel önbellekten güncelle"
 
 #: app/flatpak-builtins-update.c:61
 msgid "Don't update related refs"
@@ -3338,22 +3308,21 @@ msgstr "İlişkili referansları güncelleme"
 
 #: app/flatpak-builtins-update.c:66
 msgid "Update appstream for remote"
-msgstr "Appstream'i uzak için güncelle"
+msgstr "Appstream’i uzak için güncelle"
 
 #: app/flatpak-builtins-update.c:67
 msgid "Only update this subpath"
-msgstr "Sadece bu alt yolu güncelle"
+msgstr "Yalnızca bu alt yolu güncelle"
 
 #: app/flatpak-builtins-update.c:90
 msgid "[REF…] - Update applications or runtimes"
-msgstr "[REFERANS…] - Uygulamaları veya çalışma ortamlarını güncelle"
+msgstr "[REFERANS…] - Uygulamaları ya da çalışma zamanlarını güncelle"
 
 #: app/flatpak-builtins-update.c:121
 msgid "With --commit, only one REF may be specified"
 msgstr "--commit ile, tek bir REFERANS belirtilebilir"
 
 #: app/flatpak-builtins-update.c:162
-#, c-format
 msgid "Looking for updates…\n"
 msgstr "Güncellemeler aranıyor…\n"
 
@@ -3365,7 +3334,7 @@ msgstr "%s güncellenemedi: %s\n"
 #: app/flatpak-builtins-utils.c:342
 #, c-format
 msgid "Remote ‘%s’ found in multiple installations:"
-msgstr "Uzak ‘%s’ birden fazla kurulumda bulundu:"
+msgstr "Uzak ‘%s’ birden çok kurulumda bulundu:"
 
 #: app/flatpak-builtins-utils.c:343 app/flatpak-builtins-utils.c:434
 #: app/flatpak-builtins-utils.c:526 app/flatpak-builtins-utils.c:528
@@ -3376,7 +3345,7 @@ msgstr "Hangisini kurmak istiyorsunuz (vazgeçmek için 0)?"
 #: app/flatpak-builtins-utils.c:345
 #, c-format
 msgid "No remote chosen to resolve ‘%s’ which exists in multiple installations"
-msgstr "Birden fazla kurulumda bulunan ‘%s’ çözümü için uzak seçilmedi"
+msgstr "Birden çok kurulumda bulunan ‘%s’ çözümü için uzak seçilmedi"
 
 # Vurgu ve netlik olması amacıyla komut tırnak içine alındı
 #: app/flatpak-builtins-utils.c:354
@@ -3421,9 +3390,8 @@ msgid "Found installed ref ‘%s’ (%s). Is this correct?"
 msgstr "Kurulu referans ‘%s’ (%s) bulundu. Bu doğru mu?"
 
 #: app/flatpak-builtins-utils.c:522
-#, c-format
 msgid "All of the above"
-msgstr "Üsttekilerin tamamı"
+msgstr "Üsttekilerin tümü"
 
 #: app/flatpak-builtins-utils.c:523
 #, c-format
@@ -3470,7 +3438,7 @@ msgstr "Belirsiz son ek: '%s'."
 msgid "Possible values are :s[tart], :m[iddle], :e[nd] or :f[ull]"
 msgstr ""
 "Kullanılabilir değerler :s[tart] (başlangıç), :m[iddle] (orta), :e[nd] (son) "
-"ya da :f[ull] (hepsi)"
+"ya da :f[ull] (tümü)"
 
 #: app/flatpak-builtins-utils.c:795
 #, c-format
@@ -3503,17 +3471,17 @@ msgstr "Kullanılabilir sütunları göster"
 msgid "Append :s[tart], :m[iddle], :e[nd] or :f[ull] to change ellipsization"
 msgstr ""
 "Elipsleştirmeyi değiştirmek için :s[tart] (başlangıç), :m[iddle] "
-"(orta), :e[nd] (son) ya da :f[ull] (hepsi) ekleyin"
+"(orta), :e[nd] (son) ya da :f[ull] (tümü) ekleyin"
 
 #: app/flatpak-builtins-utils.c:1478
 #, c-format
 msgid "Unknown scheme in sideload location %s"
-msgstr ""
+msgstr "%s yan kurulum konumunda bilinmeyen şema"
 
 #: app/flatpak-cli-transaction.c:96 app/flatpak-cli-transaction.c:102
 #, c-format
 msgid "Required runtime for %s (%s) found in remote %s\n"
-msgstr "%s (%s) için gerekli çalışma ortamı %s uzağında bulundu\n"
+msgstr "%s (%s) için gerekli çalışma zamanı %s uzağında bulundu\n"
 
 #: app/flatpak-cli-transaction.c:104
 msgid "Do you want to install it?"
@@ -3522,7 +3490,7 @@ msgstr "Kurmak istiyor musunuz?"
 #: app/flatpak-cli-transaction.c:110
 #, c-format
 msgid "Required runtime for %s (%s) found in remotes:"
-msgstr "%s (%s) için gerekli çalışma ortamı uzaklarda bulundu:"
+msgstr "%s (%s) için gerekli çalışma zamanı uzaklarda bulundu:"
 
 #: app/flatpak-cli-transaction.c:112
 msgid "Which do you want to install (0 to abort)?"
@@ -3553,7 +3521,7 @@ msgid ""
 "  %s\n"
 "Configure this as new remote '%s'"
 msgstr ""
-"%s uygulaması şuradan çalışma ortamlarına bağımlı:\n"
+"%s uygulaması şuradan çalışma zamanlarına bağımlı:\n"
 "  %s\n"
 "Bunu yeni uzak '%s' olarak yapılandır"
 
@@ -3686,8 +3654,8 @@ msgid ""
 "%s%s%s branch %s%s%s\n"
 msgstr ""
 "\n"
-"Bilgi: (Sabitlenmiş) çalışma ortamı %s%s%s, dal %s%s%s, ömrünün sonuna "
-"geldi, %s%s%s dal %s%s%s yararına\n"
+"Bilgi: (ilişik) çalışma zamanı %s%s%s dal %s%s%s ömrünü doldurdu, %s%s%s dal "
+"%s%s%s yararına\n"
 
 #: app/flatpak-cli-transaction.c:762
 #, c-format
@@ -3697,8 +3665,8 @@ msgid ""
 "%s%s%s\n"
 msgstr ""
 "\n"
-"Bilgi: Çalışma ortamı %s%s%s, dal %s%s%s, ömrünün sonuna geldi, %s%s%s dal "
-"%s%s%s yararına\n"
+"Bilgi: Çalışma zamanı %s%s%s dal %s%s%s ömrünü doldurdu, %s%s%s dal %s%s%s "
+"yararına\n"
 
 #: app/flatpak-cli-transaction.c:765
 #, c-format
@@ -3708,7 +3676,7 @@ msgid ""
 "%s%s%s\n"
 msgstr ""
 "\n"
-"Bilgi: Uygulama %s%s%s, dal %s%s%s, ömrünün sonuna geldi, %s%s%s dal %s%s%s "
+"Bilgi: Uygulama %s%s%s dal %s%s%s ömrünü doldurdu, %s%s%s dal %s%s%s "
 "yararına\n"
 
 #. Only runtimes can be pinned
@@ -3719,8 +3687,8 @@ msgid ""
 "Info: (pinned) runtime %s%s%s branch %s%s%s is end-of-life, with reason:\n"
 msgstr ""
 "\n"
-"Bilgi: (Sabitlenmiş) çalışma ortamı %s%s%s, dal %s%s%s, ömrünün sonuna "
-"geldi, şu sebeple:\n"
+"Bilgi: (ilişik) çalışma zamanı %s%s%s dal %s%s%s ömrünü doldurdu şu "
+"nedenle:\n"
 
 #: app/flatpak-cli-transaction.c:783
 #, c-format
@@ -3729,7 +3697,7 @@ msgid ""
 "Info: runtime %s%s%s branch %s%s%s is end-of-life, with reason:\n"
 msgstr ""
 "\n"
-"Bilgi: Çalışma ortamı %s%s%s, dal %s%s%s, ömrünün sonuna geldi, şu sebeple:\n"
+"Bilgi: Çalışma zamanı %s%s%s dal %s%s%s ömrünü doldurdu, şu nedenle:\n"
 
 #: app/flatpak-cli-transaction.c:786
 #, c-format
@@ -3738,24 +3706,21 @@ msgid ""
 "Info: app %s%s%s branch %s%s%s is end-of-life, with reason:\n"
 msgstr ""
 "\n"
-"Bilgi: Uygulama %s%s%s, dal %s%s%s, ömrünün sonuna geldi, şu sebeple:\n"
+"Bilgi: Uygulama %s%s%s dal %s%s%s ömrünü doldurdu, şu nedenle:\n"
 
 #: app/flatpak-cli-transaction.c:960
-#, c-format
 msgid "Info: applications using this extension:\n"
 msgstr "Bilgi: Eklentiyi kullanan uygulamalar:\n"
 
 #: app/flatpak-cli-transaction.c:962
-#, c-format
 msgid "Info: applications using this runtime:\n"
-msgstr "Bilgi: Çalışma ortamını kullanan uygulamalar:\n"
+msgstr "Bilgi: Çalışma zamanını kullanan uygulamalar:\n"
 
 #: app/flatpak-cli-transaction.c:981
 msgid "Replace?"
 msgstr "Değiştirilsin mi?"
 
 #: app/flatpak-cli-transaction.c:984 app/flatpak-quiet-transaction.c:247
-#, c-format
 msgid "Updating to rebased version\n"
 msgstr "Yeniden temellendirilmiş sürüme güncelleniyor\n"
 
@@ -3767,12 +3732,12 @@ msgstr "%s, %s referansına yeniden temellendirilemedi: "
 #: app/flatpak-cli-transaction.c:1274
 #, c-format
 msgid "New %s%s%s permissions:"
-msgstr "Yeni %s%s%s izinler:"
+msgstr "Yeni %s%s%s izinleri:"
 
 #: app/flatpak-cli-transaction.c:1276
 #, c-format
 msgid "%s%s%s permissions:"
-msgstr "%s%s%s izinler:"
+msgstr "%s%s%s izinleri:"
 
 #: app/flatpak-cli-transaction.c:1340
 msgid "Warning: "
@@ -3793,16 +3758,16 @@ msgstr "kısmi"
 
 #: app/flatpak-cli-transaction.c:1531
 msgid "Proceed with these changes to the user installation?"
-msgstr "Kullanıcı kurulumunda bu değişikliklerle devam edilsin mi?"
+msgstr "Kullanıcı kurulumunda bu değişikliklerle sürdürülsün mü?"
 
 #: app/flatpak-cli-transaction.c:1533
 msgid "Proceed with these changes to the system installation?"
-msgstr "Sistem kurulumunda bu değişikliklerle devam edilsin mi?"
+msgstr "Sistem kurulumunda bu değişikliklerle sürdürülsün mü?"
 
 #: app/flatpak-cli-transaction.c:1535
 #, c-format
 msgid "Proceed with these changes to the %s?"
-msgstr "Bu değişikliklerle devam et %s?"
+msgstr "%s değişiklikleriyle sürdürülsün mü?"
 
 #: app/flatpak-cli-transaction.c:1707
 msgid "Changes complete."
@@ -3824,24 +3789,24 @@ msgstr "Güncellemeler tamamlandı."
 #. a different one.
 #: app/flatpak-cli-transaction.c:1746
 msgid "There were one or more errors"
-msgstr "Bir veya daha fazla hata oluştu"
+msgstr "Bir veya daha çok hata oluştu"
 
 #. translators: please keep the leading space
 #: app/flatpak-main.c:76
 msgid " Manage installed applications and runtimes"
-msgstr " Kurulu uygulamaları ve çalışma ortamlarını yönet"
+msgstr " Kurulu uygulamaları ve çalışma zamanlarını yönet"
 
 #: app/flatpak-main.c:77
 msgid "Install an application or runtime"
-msgstr "Bir uygulama veya çalışma ortamı kur"
+msgstr "Bir uygulama ya da çalışma zamanı kur"
 
 #: app/flatpak-main.c:78
 msgid "Update an installed application or runtime"
-msgstr "Kurulu uygulamayı veya çalışma ortamını güncelle"
+msgstr "Kurulu uygulamayı ya da çalışma zamanını güncelle"
 
 #: app/flatpak-main.c:81
 msgid "Uninstall an installed application or runtime"
-msgstr "Kurulu uygulama veya çalışma ortamını kaldır"
+msgstr "Kurulu uygulama ya da çalışma zamanını kaldır"
 
 #: app/flatpak-main.c:84
 msgid "Mask out updates and automatic installation"
@@ -3853,11 +3818,11 @@ msgstr "Kendiliğinden kaldırmayı önlemek için çalışma zamanını sabitle
 
 #: app/flatpak-main.c:86
 msgid "List installed apps and/or runtimes"
-msgstr "Kurulu uygulamaları ve/veya çalışma ortamlarını listele"
+msgstr "Kurulu uygulamaları ve/veya çalışma zamanlarını listele"
 
 #: app/flatpak-main.c:87
 msgid "Show info for installed app or runtime"
-msgstr "Kurulu uygulama veya çalışma ortamı için bilgi göster"
+msgstr "Kurulu uygulama ya da çalışma zamanı için bilgi göster"
 
 #: app/flatpak-main.c:88
 msgid "Show history"
@@ -3873,11 +3838,11 @@ msgstr "Flatpak kurulumunu onar"
 
 #: app/flatpak-main.c:91
 msgid "Put applications or runtimes onto removable media"
-msgstr "Uygulamaları veya çalışma ortamlarını çıkarılabilir ortama yerleştir"
+msgstr "Uygulamaları ya da çalışma zamanlarını çıkarılabilir ortama yerleştir"
 
 #: app/flatpak-main.c:92
 msgid "Install flatpaks that are part of the operating system"
-msgstr ""
+msgstr "İşletim sisteminin bir parçası olan flatpakları kur"
 
 #. translators: please keep the leading newline and space
 #: app/flatpak-main.c:95
@@ -3948,7 +3913,7 @@ msgstr "Belirli bir dosyaya erişimi geri çek"
 
 #: app/flatpak-main.c:112
 msgid "Show information about a specific file"
-msgstr "Belirli bir dosya hakkında bilgi göster"
+msgstr "Belirli bir dosyayla ilgili bilgi göster"
 
 #. translators: please keep the leading newline and space
 #: app/flatpak-main.c:116
@@ -4010,7 +3975,7 @@ msgstr "Yapılandırılmış uzağın içeriklerini listele"
 
 #: app/flatpak-main.c:132
 msgid "Show information about a remote app or runtime"
-msgstr "Uzak uygulama veya çalışma ortamı hakkında bilgi göster"
+msgstr "Uzak uygulama veya çalışma zamanıyla ilgili bilgi göster"
 
 #. translators: please keep the leading newline and space
 #: app/flatpak-main.c:135
@@ -4047,7 +4012,7 @@ msgstr "Paket dosyasını içe aktar"
 
 #: app/flatpak-main.c:142
 msgid "Sign an application or runtime"
-msgstr "Uygulamayı veya çalışma ortamını imzala"
+msgstr "Uygulamayı veya çalışma zamanını imzala"
 
 #: app/flatpak-main.c:143
 msgid "Update the summary file in a repository"
@@ -4059,7 +4024,7 @@ msgstr "Var olan referansa dayalı yeni işleme oluştur"
 
 #: app/flatpak-main.c:145
 msgid "Show information about a repo"
-msgstr "Depo hakkında bilgi göster"
+msgstr "Depoyla ilgili bilgi göster"
 
 #: app/flatpak-main.c:162
 msgid "Show debug information, -vv for more detail"
@@ -4095,7 +4060,7 @@ msgstr "Flatpakleri çalıştırmak için gereken güncellenmiş ortamı yazdır
 
 #: app/flatpak-main.c:175
 msgid "Only include the system installation with --print-updated-env"
-msgstr "Sadece --print-updated-env ile sistem kurulumunu dahil et"
+msgstr "Yalnızca --print-updated-env ile sistem kurulumunu içer"
 
 #: app/flatpak-main.c:180
 msgid "Work on the user installation"
@@ -4120,9 +4085,9 @@ msgid ""
 "XDG_DATA_DIRS environment variable, so applications installed by Flatpak may "
 "not appear on your desktop until the session is restarted."
 msgstr ""
-"%s dizinleri XDG_DATA_DIRS ortam değişkeni tarafından ayarlanan arama "
-"yolunda olmadığınan, Flatpak tarafından kurulan uygulamalar, oturum yeniden "
-"başlatılana kadar masaüstünüzde görünmeyebilir."
+"%s dizinleri XDG_DATA_DIRS ortam değişkenince ayarlanan arama yolunda "
+"olmadığınan, Flatpak tarafından kurulan uygulamalar, oturum yeniden "
+"başlatılana dek masaüstünüzde görünmeyebilir."
 
 #: app/flatpak-main.c:312
 #, c-format
@@ -4131,9 +4096,9 @@ msgid ""
 "XDG_DATA_DIRS environment variable, so applications installed by Flatpak may "
 "not appear on your desktop until the session is restarted."
 msgstr ""
-"%s dizini XDG_DATA_DIRS ortam değişkeni tarafından ayarlanan arama yolunda "
+"%s dizini XDG_DATA_DIRS ortam değişkenince ayarlanan arama yolunda "
 "olmadığınan, Flatpak tarafından kurulan uygulamalar, oturum yeniden "
-"başlatılana kadar masaüstünüzde görünmeyebilir."
+"başlatılana dek masaüstünüzde görünmeyebilir."
 
 #: app/flatpak-main.c:381
 msgid ""
@@ -4147,7 +4112,7 @@ msgstr ""
 #: app/flatpak-main.c:453
 msgid ""
 "Multiple installations specified for a command that works on one installation"
-msgstr "Bir kurulumda çalışan komut için birden fazla kurulum belirtildi"
+msgstr "Bir kurulumda çalışan komut için birden çok kurulum belirtildi"
 
 #: app/flatpak-main.c:504 app/flatpak-main.c:691
 #, c-format
@@ -4253,12 +4218,12 @@ msgstr "Bu işlemi tamamlamak için yeterli disk alanı yok"
 #: app/flatpak-quiet-transaction.c:239
 #, c-format
 msgid "Info: %s is end-of-life, in favor of %s\n"
-msgstr "Bilgi: %s ömrünün sonuna geldi, %s yararına\n"
+msgstr "Bilgi: %s ömrünü doldurdu, %s yararına\n"
 
 #: app/flatpak-quiet-transaction.c:241
 #, c-format
 msgid "Info: %s is end-of-life, with reason: %s\n"
-msgstr "Bilgi: %s ömrünün sonuna geldi, şu sebeple: %s\n"
+msgstr "Bilgi: %s ömrünü doldurdu, şu nedenle: %s\n"
 
 #: app/flatpak-quiet-transaction.c:251
 #, c-format
@@ -4271,9 +4236,9 @@ msgid "No authenticator configured for remote `%s`"
 msgstr "Uzak `%s` için kimlik doğrulayıcı yapılandırılmadı"
 
 #: common/flatpak-context.c:710 common/flatpak-context.c:722
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid permission syntax: %s"
-msgstr "Geçersiz uzantı adı %s"
+msgstr "Geçersiz izin söz dizimi: %s"
 
 #: common/flatpak-context.c:1281
 #, c-format
@@ -4293,12 +4258,12 @@ msgstr "Geçersiz dbus adı %s"
 #: common/flatpak-context.c:1377
 #, c-format
 msgid "Unknown socket type %s, valid types are: %s"
-msgstr "Bilinmeyen soket türü %s, geçerli türler: %s"
+msgstr "Bilinmeyen yuva türü %s, geçerli türler: %s"
 
 #: common/flatpak-context.c:1392
 #, c-format
 msgid "Unknown device type %s, valid types are: %s"
-msgstr "Bilinmeyen cihaz türü %s, geçerli türler: %s"
+msgstr "Bilinmeyen aygıt türü %s, geçerli türler: %s"
 
 #: common/flatpak-context.c:1406
 #, c-format
@@ -4311,7 +4276,6 @@ msgid "Filesystem location \"%s\" contains \"..\""
 msgstr "Dosya sistemi konumu \"%s\", \"..\" içeriyor"
 
 #: common/flatpak-context.c:2036
-#, c-format
 msgid ""
 "--filesystem=/ is not available, use --filesystem=host for a similar result"
 msgstr ""
@@ -4320,23 +4284,22 @@ msgstr ""
 
 # Cümlenin sonundaki kısım çevrilebilir konumlar değil.
 #: common/flatpak-context.c:2070
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Unknown filesystem location %s, valid locations are: host, host-os, host-"
 "etc, host-root, home, xdg-*[/…], ~/dir, /dir"
 msgstr ""
 "Bilinmeyen dosya sistemi konumu %s, geçerli konumlar: host, host-os, host-"
-"etc, home, xdg-*[/…], ~/dir, /dir"
+"etc, host-root, home, xdg-*[/…], ~/dir, /dir"
 
 #: common/flatpak-context.c:2261
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid syntax for %s: %s"
-msgstr "Geçersiz ad %s: %s"
+msgstr "%s için geçersiz söz dizimi: %s"
 
 #: common/flatpak-context.c:2291
-#, c-format
 msgid "fallback-x11 can not be conditional"
-msgstr ""
+msgstr "fallback-x11 koşullu olamaz"
 
 #: common/flatpak-context.c:2444
 #, c-format
@@ -4349,29 +4312,25 @@ msgid "Environment variable name must not contain '=': %s"
 msgstr "Ortam değişkeni adı '=' içeremez: %s"
 
 #: common/flatpak-context.c:2660 common/flatpak-context.c:2668
-#, c-format
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr "--add-policy argümanları ALTSİSTEM.ANAHTAR=DEĞER biçiminde olmalıdır"
 
 #: common/flatpak-context.c:2675
-#, c-format
 msgid "--add-policy values can't start with \"!\""
 msgstr "--add-policy değerleri \"!\" ile başlayamaz"
 
 #: common/flatpak-context.c:2700 common/flatpak-context.c:2708
-#, c-format
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 "--remove-policy argümanları ALTSİSTEM.ANAHTAR=DEĞER biçiminde olmalıdır"
 
 #: common/flatpak-context.c:2715
-#, c-format
 msgid "--remove-policy values can't start with \"!\""
 msgstr "--remove-policy değerleri \"!\" ile başlayamaz"
 
 #: common/flatpak-context.c:2790
 msgid "Share with host"
-msgstr "Makinayla paylaş"
+msgstr "Makineyle paylaş"
 
 #: common/flatpak-context.c:2790 common/flatpak-context.c:2791
 msgid "SHARE"
@@ -4379,31 +4338,31 @@ msgstr "PAYLAŞ"
 
 #: common/flatpak-context.c:2791
 msgid "Unshare with host"
-msgstr "Makinayla paylaşma"
+msgstr "Makineyle paylaşma"
 
 #: common/flatpak-context.c:2792
 msgid "Expose socket to app"
-msgstr "Soketi uygulamaya göster"
+msgstr "Yuvayı uygulamaya göster"
 
 #: common/flatpak-context.c:2792 common/flatpak-context.c:2793
 msgid "SOCKET"
-msgstr "SOKET"
+msgstr "YUVA"
 
 #: common/flatpak-context.c:2793
 msgid "Don't expose socket to app"
-msgstr "Soketi uygulamaya gösterme"
+msgstr "Yuvayı uygulamaya gösterme"
 
 #: common/flatpak-context.c:2794
 msgid "Require conditions to be met for a socket to get exposed"
-msgstr ""
+msgstr "Yuvanın gösterilmesi için koşulların karşılanmasını gerektir"
 
 #: common/flatpak-context.c:2794 common/flatpak-context.c:2797
 msgid "DEVICE:CONDITION"
-msgstr ""
+msgstr "AYGIT:KOŞULLAR"
 
 #: common/flatpak-context.c:2795
 msgid "Expose device to app"
-msgstr "Cihazı uygulamaya göster"
+msgstr "Aygıtı uygulamaya göster"
 
 #: common/flatpak-context.c:2795 common/flatpak-context.c:2796
 msgid "DEVICE"
@@ -4411,11 +4370,11 @@ msgstr "CİHAZ"
 
 #: common/flatpak-context.c:2796
 msgid "Don't expose device to app"
-msgstr "Cihazı uygulamaya gösterme"
+msgstr "Aygıtı uygulamaya gösterme"
 
 #: common/flatpak-context.c:2797
 msgid "Require conditions to be met for a device to get exposed"
-msgstr ""
+msgstr "Aygıtın gösterilmesi için gerekli koşulların karşılanmasını gerektir"
 
 #: common/flatpak-context.c:2798
 msgid "Allow feature"
@@ -4483,7 +4442,7 @@ msgstr "DBUS_ADI"
 
 #: common/flatpak-context.c:2806
 msgid "Allow app to talk to name on the session bus"
-msgstr "Uygulamanın oturum veri yolunda isme konuşmasına izin ver"
+msgstr "Uygulamanın oturum veri yolunda adla konuşmasına izin ver"
 
 #: common/flatpak-context.c:2807
 msgid "Don't allow app to talk to name on the session bus"
@@ -4495,7 +4454,7 @@ msgstr "Uygulamanın sistem veri yolunda kendi adı olmasına izin ver"
 
 #: common/flatpak-context.c:2809
 msgid "Allow app to talk to name on the system bus"
-msgstr "Uygulamanın sistem veri yolunda isme konuşmasına izin ver"
+msgstr "Uygulamanın sistem veri yolunda adla konuşmasına izin ver"
 
 #: common/flatpak-context.c:2810
 msgid "Don't allow app to talk to name on the system bus"
@@ -4617,7 +4576,7 @@ msgstr "Uzak %2$s için desteklenmeyen özet sürümü %1$d"
 
 #: common/flatpak-dir.c:1195
 msgid "Remote OCI index has no registry uri"
-msgstr "Uzak OCI indeksinde sicil uri'si yok"
+msgstr "Uzak OCI indeksinde sicil uri’si yok"
 
 #: common/flatpak-dir.c:1247
 #, c-format
@@ -4627,8 +4586,7 @@ msgstr "%s referansı %s uzağında bulunamadı"
 #: common/flatpak-dir.c:1271 common/flatpak-dir.c:1355
 #, c-format
 msgid "Commit has no requested ref ‘%s’ in ref binding metadata"
-msgstr ""
-"İşlemede, referans bağlama üst verilerinde talep edilen ‘%s’ referansı yok"
+msgstr "İşlemede, referans bağlama üst verilerinde istenen ‘%s’ referansı yok"
 
 #: common/flatpak-dir.c:1386
 #, c-format
@@ -4671,7 +4629,7 @@ msgstr "%s için geçersiz kılma bulunamadı"
 #: common/flatpak-dir.c:3598
 #, c-format
 msgid "%s (commit %s) not installed"
-msgstr "%s (işleme %s) kurulu değil"
+msgstr "%s (%s işlemesi) kurulu değil"
 
 #: common/flatpak-dir.c:4621
 #, c-format
@@ -4692,7 +4650,7 @@ msgstr "Ayar anahtarı %s ayarlanmadı"
 #: common/flatpak-dir.c:5093
 #, c-format
 msgid "No current %s pattern matching %s"
-msgstr "%2$s deseniyle eşleyen %1$s yok"
+msgstr "%2$s örüntüsüyle eşleyen %1$s yok"
 
 #: common/flatpak-dir.c:5375
 msgid "No appstream commit to deploy"
@@ -4716,12 +4674,12 @@ msgstr "Ek veri uri %s için sağlama toplamı geçersiz"
 #: common/flatpak-dir.c:6386
 #, c-format
 msgid "Empty name for extra data uri %s"
-msgstr "Ek veri uri'si %s için boş ad"
+msgstr "Ek veri uri’si %s için boş ad"
 
 #: common/flatpak-dir.c:6393
 #, c-format
 msgid "Unsupported extra data uri %s"
-msgstr "Desteklenmeyen ek veri uri'si %s"
+msgstr "Desteklenmeyen ek veri uri’si %s"
 
 #: common/flatpak-dir.c:6407
 #, c-format
@@ -4770,7 +4728,7 @@ msgstr "‘%s’ için işleme, beklenen sınır referanslarında değil: %s"
 
 #: common/flatpak-dir.c:7131
 msgid "Only applications can be made current"
-msgstr "Sadece uygulamalar geçerli yapılabilir"
+msgstr "Yalnızca uygulamalar geçerli yapılabilir"
 
 #: common/flatpak-dir.c:7835
 msgid "Not enough memory"
@@ -4831,9 +4789,8 @@ msgid "Extra data %s missing in detached metadata"
 msgstr "%s ek verisi ayrılmış üst verilerde eksik"
 
 #: common/flatpak-dir.c:8945
-#, fuzzy, c-format
 msgid "Unable to get runtime key from metadata"
-msgstr "Üst veri için alternatif dosya kullan"
+msgstr "Üst verilerden çalışma zamanı anahtarı alınamadı"
 
 #: common/flatpak-dir.c:9059
 #, c-format
@@ -4844,7 +4801,7 @@ msgstr "apply_extra betiği başarısız oldu, çıkış durumu %d"
 #: common/flatpak-dir.c:9239
 #, c-format
 msgid "Installing %s is not allowed by the policy set by your administrator"
-msgstr "%s kurulmasına, yöneticinizce ayarlanan ilke sebebiyle izin verilmiyor"
+msgstr "%s kurulumuna yöneticinizce ayarlanan ilke nedeniyle izin verilmiyor"
 
 #: common/flatpak-dir.c:9338
 #, c-format
@@ -4859,7 +4816,7 @@ msgstr "%s kullanılabilir değil"
 #: common/flatpak-dir.c:9362 common/flatpak-dir.c:11137
 #, c-format
 msgid "%s commit %s already installed"
-msgstr "%s işlemesi %s zaten kurulu"
+msgstr "%s işleme %s zaten kurulu"
 
 #: common/flatpak-dir.c:9369
 msgid "Can't create deploy directory"
@@ -4873,7 +4830,7 @@ msgstr "%s işlemesi okunamadı: "
 #: common/flatpak-dir.c:9398
 #, c-format
 msgid "While trying to checkout %s into %s: "
-msgstr "%s'i %s'e geçirmeye çalışırken: "
+msgstr "%s’i %s’e geçirmeye çalışırken: "
 
 #: common/flatpak-dir.c:9417
 msgid "While trying to checkout metadata subpath: "
@@ -4921,10 +4878,9 @@ msgstr "%s konumunda revokefs-fuse dosya sistemi bağlantısı kaldırılamadı 
 #: common/flatpak-dir.c:10937
 #, c-format
 msgid "This version of %s is already installed"
-msgstr "%s'in bu sürümü zaten kurulu"
+msgstr "%s’in bu sürümü zaten kurulu"
 
 #: common/flatpak-dir.c:10950
-#, c-format
 msgid "Can't change remote during bundle install"
 msgstr "Paket kurulumu sırasında uzak değiştirilemedi"
 
@@ -4935,7 +4891,7 @@ msgstr "Kök izinleri olmadan belirli işleme güncellenemez"
 #: common/flatpak-dir.c:11494
 #, c-format
 msgid "Can't remove %s, it is needed for: %s"
-msgstr "%s kaldırılamaz, şunun için ihtiyaç duyuluyor: %s"
+msgstr "%s kaldırılamaz, şunun için gerekiyor: %s"
 
 #: common/flatpak-dir.c:11554 common/flatpak-installation.c:2068
 #, c-format
@@ -4945,7 +4901,7 @@ msgstr "%s dalı %s kurulu değil"
 #: common/flatpak-dir.c:11807
 #, c-format
 msgid "%s commit %s not installed"
-msgstr "%s işlemesi %s kurulu değil"
+msgstr "%s işleme %s kurulu değil"
 
 #: common/flatpak-dir.c:12143
 #, c-format
@@ -5000,7 +4956,7 @@ msgstr "Uzak '%2$s' içinde, indeksli özet %1$s için sağlama toplamı geçers
 #, c-format
 msgid "Multiple branches available for %s, you must specify one of: "
 msgstr ""
-"%s için birden fazla kullanılabilir dal, şunlardan birisini belirtmelisiniz: "
+"%s için birden çok kullanılabilir dal, şunlardan birisini belirtmelisiniz: "
 
 #: common/flatpak-dir.c:14096
 #, c-format
@@ -5011,7 +4967,7 @@ msgstr "%s için eşleşme yok"
 #: common/flatpak-dir.c:14204
 #, c-format
 msgid "Can't find ref %s%s%s%s%s"
-msgstr "Referans %s%s%s%s%s bulunamadı"
+msgstr "%s%s%s%s%s referansı bulunamadı"
 
 #: common/flatpak-dir.c:14247
 #, c-format
@@ -5041,7 +4997,7 @@ msgstr "Geçersiz dosya biçimi, %s grubu yok"
 #: common/flatpak-dir.c:15234 common/flatpak-repo-utils.c:2861
 #, c-format
 msgid "Invalid version %s, only 1 supported"
-msgstr "Geçersiz sürüm %s, sadece 1 destekli"
+msgstr "Geçersiz sürüm %s, yalnızca 1 destekli"
 
 #: common/flatpak-dir.c:15239 common/flatpak-dir.c:15244
 #, c-format
@@ -5060,7 +5016,7 @@ msgstr "Koleksiyon kimliği, GPG anahtarı sağlanmasını gerektirir"
 #: common/flatpak-dir.c:15335
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
-msgstr "Çalışma ortamı %s, dal %s zaten kurulu"
+msgstr "Çalışma zamanı %s, dal %s zaten kurulu"
 
 #: common/flatpak-dir.c:15336
 #, c-format
@@ -5088,7 +5044,6 @@ msgid "Skipping deletion of mirror ref (%s, %s)…\n"
 msgstr "Yansı referans (%s, %s) silme atlanıyor…\n"
 
 #: common/flatpak-exports.c:931
-#, c-format
 msgid "An absolute path is required"
 msgstr "Mutlak yol gerekli"
 
@@ -5144,15 +5099,15 @@ msgstr "“%s” sayısı sınırların dışında [%s, %s]"
 
 #: common/flatpak-image-source.c:83
 msgid "Only sha256 image checksums are supported"
-msgstr ""
+msgstr "Yalnızca sha256 görüntü sağlama toplamları desteklenir"
 
 #: common/flatpak-image-source.c:100 common/flatpak-image-source.c:108
 msgid "Image is not a manifest"
-msgstr "Resim manifesto değil"
+msgstr "Görüntü manifesto değil"
 
 #: common/flatpak-image-source.c:123
 msgid "No org.flatpak.ref found in image"
-msgstr ""
+msgstr "Görüntüde org.flatpak.ref bulunamadı"
 
 #: common/flatpak-image-source.c:148
 #, c-format
@@ -5161,7 +5116,7 @@ msgstr "Referans '%s' sicilde bulunamadı"
 
 #: common/flatpak-image-source.c:157
 msgid "Multiple images in registry, specify a ref with --ref"
-msgstr "Sicilde birden fazla görüntü, --ref'le bir referans belirtin"
+msgstr "Sicilde birden çok görüntü, --ref'le bir referans belirtin"
 
 #: common/flatpak-installation.c:835
 #, c-format
@@ -5211,11 +5166,11 @@ msgstr "Sembolik bağlantı %s/%s güncellenemedi"
 
 #: common/flatpak-oci-registry.c:1238
 msgid "Only Bearer authentication supported"
-msgstr "Sadece Bearer kimlik doğrulaması deneniyor"
+msgstr "Yalnızca Bearer kimlik doğrulaması deneniyor"
 
 #: common/flatpak-oci-registry.c:1247
 msgid "Only realm in authentication request"
-msgstr "Kimlik doğrulama isteğinde sadece erişim alanı"
+msgstr "Kimlik doğrulama isteğinde tek erişim alanı"
 
 #: common/flatpak-oci-registry.c:1254
 msgid "Invalid realm in authentication request"
@@ -5277,7 +5232,8 @@ msgstr "OCI görüntüsü %s için referans belirtilmedi"
 #: common/flatpak-oci-registry.c:3841
 #, c-format
 msgid "Wrong ref (%s) specified for OCI image %s, expected %s"
-msgstr "OCI resmi %2$s için belirtilen referans (%1$s) yanlış, beklenen %3$s"
+msgstr ""
+"OCI görüntüsü %2$s için belirtilen referans (%1$s) yanlış, beklenen %3$s"
 
 #: common/flatpak-progress.c:236
 #, c-format
@@ -5322,7 +5278,7 @@ msgstr "Ad nokta ile bitemez"
 
 #: common/flatpak-ref-utils.c:171 common/flatpak-ref-utils.c:183
 msgid "Only last name segment can contain -"
-msgstr "Sadece son ad bölümü tire içerebilir"
+msgstr "Yalnızca son ad bölümü kısa çizgi içerebilir"
 
 #: common/flatpak-ref-utils.c:174
 #, c-format
@@ -5372,7 +5328,7 @@ msgstr "Geçersiz uzak adı"
 #: common/flatpak-ref-utils.c:641
 #, c-format
 msgid "%s is not application or runtime"
-msgstr "%s uygulama ya da çalışma ortamı değil"
+msgstr "%s uygulama ya da çalışma zamanı değil"
 
 #: common/flatpak-ref-utils.c:650 common/flatpak-ref-utils.c:667
 #: common/flatpak-ref-utils.c:683
@@ -5458,19 +5414,18 @@ msgid "GPG verification must be enabled when a collection ID is set"
 msgstr "Koleksiyon kimliği ayarlandığında GPG doğrulaması etkinleştirilmelidir"
 
 #: common/flatpak-repo-utils.c:344
-#, c-format
 msgid "No extra data sources"
 msgstr "Ek veri kaynağı yok"
 
 #: common/flatpak-repo-utils.c:2842
 #, c-format
 msgid "Invalid %s: Missing group ‘%s’"
-msgstr "Geçersiz %s: Kayıp grup ‘%s’"
+msgstr "Geçersiz %s: Yitik grup ‘%s’"
 
 #: common/flatpak-repo-utils.c:2851
 #, c-format
 msgid "Invalid %s: Missing key ‘%s’"
-msgstr "Geçersiz %s: Kayıp anahtar ‘%s’"
+msgstr "Geçersiz %s: Yitik anahtar ‘%s’"
 
 #: common/flatpak-repo-utils.c:2901
 msgid "Invalid gpg key"
@@ -5532,59 +5487,60 @@ msgstr "bwrapinfo.json dosyası açılamadı: %s"
 msgid "Failed to write to instance id fd: %s"
 msgstr "Örnek kimliği fd'ye yazılamadı: %s"
 
-#: common/flatpak-run.c:2025
+#: common/flatpak-run.c:2013
 msgid "Initialize seccomp failed"
 msgstr "Seccomp ilklendirme başarısız oldu"
 
-#: common/flatpak-run.c:2064
+#: common/flatpak-run.c:2052
 #, c-format
 msgid "Failed to add architecture to seccomp filter: %s"
 msgstr "Seccomp süzgecine mimari eklenemedi: %s"
 
-#: common/flatpak-run.c:2072
+#: common/flatpak-run.c:2060
 #, c-format
 msgid "Failed to add multiarch architecture to seccomp filter: %s"
 msgstr "Seccomp süzgecine multiarch mimarisi eklenemedi: %s"
 
-#: common/flatpak-run.c:2104 common/flatpak-run.c:2121
-#: common/flatpak-run.c:2143
+#: common/flatpak-run.c:2092 common/flatpak-run.c:2109
+#: common/flatpak-run.c:2131
 #, c-format
 msgid "Failed to block syscall %d: %s"
 msgstr "Syscall %d engellenemedi: %s"
 
-#: common/flatpak-run.c:2176
+#: common/flatpak-run.c:2164
 #, c-format
 msgid "Failed to export bpf: %s"
 msgstr "Bpf dışa aktarılamadı: %s"
 
-#: common/flatpak-run.c:2478
+#: common/flatpak-run.c:2466
 #, c-format
 msgid "Failed to open ‘%s’"
 msgstr "‘%s’ açılamadı"
 
-#: common/flatpak-run.c:2488
+#: common/flatpak-run.c:2476
 #, c-format
 msgid ""
 "Directory forwarding needs version 4 of the document portal (have version %d)"
 msgstr ""
+"Dizin yönlendirme, belge kapısının 4. sürümüne gereksinir (sürüm %d var)"
 
-#: common/flatpak-run.c:2806
+#: common/flatpak-run.c:2794
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "ldconfig başarısız oldu, çıkış durumu %d"
 
-#: common/flatpak-run.c:2813
+#: common/flatpak-run.c:2801
 msgid "Can't open generated ld.so.cache"
 msgstr "Oluşturulan ld.so.cache açılamadı"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-run.c:2936
+#: common/flatpak-run.c:2924
 #, c-format
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr ""
-"%s çalıştırılmasına, yöneticinizce ayarlanan ilke sebebiyle izin verilmiyor"
+"%s çalıştırılmasına yöneticinizce ayarlanan ilke nedeniyle izin verilmiyor"
 
-#: common/flatpak-run.c:3059
+#: common/flatpak-run.c:3047
 msgid ""
 "\"flatpak run\" is not intended to be run as `sudo flatpak run`. Use `sudo "
 "-i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell."
@@ -5594,17 +5550,17 @@ msgstr ""
 "kabuğun içinden \"flatpak run\" komutunu çalıştırın."
 
 # ilk %s previous_app_id_dir olup uygulamanın eski konumu anlanına gelmektedir.
-#: common/flatpak-run.c:3253
+#: common/flatpak-run.c:3241
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "%s konumundan taşınamadı: %s"
 
-#: common/flatpak-run.c:3274
+#: common/flatpak-run.c:3262
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr "Eski uygulama veri dizini %s, yeni %s adına taşınamadı: %s"
 
-#: common/flatpak-run.c:3283
+#: common/flatpak-run.c:3271
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "%s taşınırken sembolik bağlantı oluşturulamadı: %s"
@@ -5629,17 +5585,17 @@ msgstr "Uyarı: İlişkili referansları ararken sorun: %s"
 #: common/flatpak-transaction.c:2493
 #, c-format
 msgid "The application %s requires the runtime %s which was not found"
-msgstr "%s uygulaması bulunmayan %s çalışma ortamını gerektirir"
+msgstr "%s uygulaması bulunmayan %s çalışma zamanını gerektirir"
 
 #: common/flatpak-transaction.c:2509
 #, c-format
 msgid "The application %s requires the runtime %s which is not installed"
-msgstr "%s uygulaması kurulmamış %s çalışma ortamını gerektirir"
+msgstr "%s uygulaması kurulmamış %s çalışma zamanını gerektirir"
 
 #: common/flatpak-transaction.c:2641
 #, c-format
 msgid "Can't uninstall %s which is needed by %s"
-msgstr "%s kaldırılamıyor çünkü %s tarafından ihtiyaç duyuluyor"
+msgstr "%s kaldırılamıyor çünkü %s gereksiniyor"
 
 #: common/flatpak-transaction.c:2740
 #, c-format
@@ -5663,7 +5619,7 @@ msgstr "Geçersiz .flatpakref: %s"
 
 #: common/flatpak-transaction.c:3161
 msgid "Warning: Could not mark already installed apps as preinstalled"
-msgstr ""
+msgstr "Uyarı: Zaten kurulmuş uygulamalar önden-kurulu olarak imlenemedi"
 
 #: common/flatpak-transaction.c:3382
 #, c-format
@@ -5696,7 +5652,7 @@ msgstr "Referans için jetonlar alınamadı"
 #: common/flatpak-transaction.c:4580
 #, c-format
 msgid "Ref %s from %s matches more than one transaction operation"
-msgstr "%s referansı, %s uzağından birden fazla aktarım işlemiyle eşleşiyor"
+msgstr "%s referansı, %s uzağından birden çok aktarım işlemiyle eşleşiyor"
 
 #: common/flatpak-transaction.c:4581 common/flatpak-transaction.c:4591
 msgid "any remote"
@@ -5736,12 +5692,12 @@ msgstr ""
 
 #: common/flatpak-transaction.c:5567 common/flatpak-transaction.c:5580
 msgid "Aborted by user"
-msgstr "Kullanıcı tarafından vazgeçildi"
+msgstr "Kullanıcıca vazgeçildi"
 
 #: common/flatpak-transaction.c:5605
 #, c-format
 msgid "Skipping %s due to previous error"
-msgstr "Önceki hata sebebiyle %s atlanıyor"
+msgstr "Önceki hata nedeniyle %s atlanıyor"
 
 #: common/flatpak-transaction.c:5659
 #, c-format
@@ -5791,44 +5747,37 @@ msgid "URI is not absolute, and no base URI was provided"
 msgstr "URI mutlak değil ve temel URI sağlanmamış"
 
 #: common/flatpak-usb.c:83
-#, c-format
 msgid "USB device query 'all' must not have data"
 msgstr "USB aygıt sorgusu 'all' veri içermemelidir"
 
 #: common/flatpak-usb.c:102
-#, c-format
 msgid "USB query rule 'cls' must be in the form CLASS:SUBCLASS or CLASS:*"
 msgstr ""
 "USB sorgu kuralı 'cls', SINIF:ALTSINIF ya da SINIF:* biçiminde olmalıdır"
 
 #: common/flatpak-usb.c:111
-#, c-format
 msgid "Invalid USB class"
 msgstr "Geçersiz USB sınıfı"
 
 #: common/flatpak-usb.c:125
-#, c-format
 msgid "Invalid USB subclass"
 msgstr "Geçersiz USB alt sınıfı"
 
 #: common/flatpak-usb.c:141 common/flatpak-usb.c:148
-#, c-format
 msgid "USB query rule 'dev' must have a valid 4-digit hexadecimal product id"
 msgstr ""
-"USB sorgu kuralı 'dev' geçerli bir 4 basamaklı onaltılık ürün kimliğine "
-"sahip olmalıdır"
+"'dev' USB sorgu kuralının geçerli 4 basamaklı onaltılık ürün kimliği "
+"olmalıdır"
 
 #: common/flatpak-usb.c:164 common/flatpak-usb.c:171
-#, c-format
 msgid "USB query rule 'vnd' must have a valid 4-digit hexadecimal vendor id"
 msgstr ""
-"USB sorgu kuralı 'vnd' geçerli bir 4 basamaklı onaltılık üretici kimliğine "
-"sahip olmalıdır"
+"'vnd' USB sorgu kuralının geçerli 4 basamaklı onaltılık üretici kimliği "
+"olmalıdır"
 
 #: common/flatpak-usb.c:205
-#, c-format
 msgid "USB device queries must be in the form TYPE:DATA"
-msgstr "USB aygıt sorguları TİP:VERİ şeklinde olmalıdır"
+msgstr "USB aygıt sorguları TÜR:VERİ şeklinde olmalıdır"
 
 #: common/flatpak-usb.c:225
 #, c-format
@@ -5836,22 +5785,18 @@ msgid "Unknown USB query rule %s"
 msgstr "Bilinmeyen USB sorgu kuralı %s"
 
 #: common/flatpak-usb.c:248
-#, c-format
 msgid "Empty USB query"
 msgstr "Boş USB sorgusu"
 
 #: common/flatpak-usb.c:274
-#, c-format
 msgid "Multiple USB query rules of the same type is not supported"
-msgstr "Aynı türde birden fazla USB sorgu kuralı desteklenmez"
+msgstr "Aynı türde birden çok USB sorgu kuralı desteklenmez"
 
 #: common/flatpak-usb.c:283
-#, c-format
 msgid "'all' must not contain extra query rules"
 msgstr "'all' ek sorgu kuralları içermemelidir"
 
 #: common/flatpak-usb.c:291
-#, c-format
 msgid "USB queries with 'dev' must also specify vendors"
 msgstr "'dev' içeren USB sorguları üreticileri de belirtmelidir"
 
@@ -5865,7 +5810,7 @@ msgstr "Glob boş"
 
 #: common/flatpak-utils.c:756
 msgid "Too many segments in glob"
-msgstr "Glob'da çok fazla bölüm"
+msgstr "Glob’da çok fazla bölüm"
 
 #: common/flatpak-utils.c:777
 #, c-format
@@ -5875,7 +5820,7 @@ msgstr "Geçersiz glob karakter '%c'"
 #: common/flatpak-utils.c:831
 #, c-format
 msgid "Missing glob on line %d"
-msgstr "%d. satırda kayıp glob"
+msgstr "%d. satırda yitik glob"
 
 #: common/flatpak-utils.c:835
 #, c-format
@@ -5904,7 +5849,7 @@ msgstr "%s daha üst bir flatpak sürümünü gerektiriyor (%s)"
 
 #: oci-authenticator/flatpak-oci-authenticator.c:291
 msgid "Not a oci remote, missing summary.xa.oci-repository"
-msgstr "Oci uzağı değil, summary.xa.oci-repository kayıp"
+msgstr "Oci uzağı değil, summary.xa.oci-repository yitik"
 
 #: oci-authenticator/flatpak-oci-authenticator.c:477
 msgid "Not a OCI remote"
@@ -5915,7 +5860,6 @@ msgid "Invalid token"
 msgstr "Geçersiz jeton"
 
 #: portal/flatpak-portal.c:2340
-#, c-format
 msgid "No portal support found"
 msgstr "Kapı desteği bulunamadı"
 
@@ -5941,18 +5885,15 @@ msgid "Update access can be changed any time from the privacy settings."
 msgstr "Güncelleme erişimi, gizlilik ayarlarından her zaman değiştirilebilir."
 
 #: portal/flatpak-portal.c:2391
-#, c-format
 msgid "Application update not allowed"
 msgstr "Uygulama güncelleme izin verilmiyor"
 
 #: portal/flatpak-portal.c:2549
-#, c-format
 msgid "Self update not supported, new version requires new permissions"
 msgstr ""
 "Kendini güncelleme desteklenmiyor, yeni sürüm yeni izinler gerektiriyor"
 
 #: portal/flatpak-portal.c:2731 portal/flatpak-portal.c:2748
-#, c-format
 msgid "Update ended unexpectedly"
 msgstr "Güncelleme beklenmeyen bir şekilde sonlandı"
 
@@ -5977,7 +5918,7 @@ msgstr "Yazılım kurmak için kimlik doğrulaması gerekiyor"
 #. in the wheel group to install without authenticating.
 #: system-helper/org.freedesktop.Flatpak.policy.in:41
 msgid "Install signed runtime"
-msgstr "İmzalı çalışma ortamı kur"
+msgstr "İmzalı çalışma zamanı kur"
 
 #. SECURITY:
 #. - Normal users do not require admin authentication to update an
@@ -6002,7 +5943,7 @@ msgstr "Uygulama güncellemek için kimlik doğrulaması gerekiyor"
 #. updates.
 #: system-helper/org.freedesktop.Flatpak.policy.in:79
 msgid "Update signed runtime"
-msgstr "İmzalı çalışma ortamını güncelle"
+msgstr "İmzalı çalışma zamanını güncelle"
 
 #. SECURITY:
 #. - Normal users do not need authentication to update metadata
@@ -6046,7 +5987,7 @@ msgstr "Yazılımı $(path) yolundan kurmak için kimlik doğrulaması gerekiyor
 #. in the wheel group to uninstall without authenticating.
 #: system-helper/org.freedesktop.Flatpak.policy.in:144
 msgid "Uninstall runtime"
-msgstr "Çalışma ortamı kaldır"
+msgstr "Çalışma zamanı kaldır"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:145
 msgid "Authentication is required to uninstall software"
@@ -6100,7 +6041,7 @@ msgstr "Appstream'i güncelle"
 #: system-helper/org.freedesktop.Flatpak.policy.in:211
 msgid "Authentication is required to update information about software"
 msgstr ""
-"Yazılım hakkındaki bilgileri güncellemek için kimlik doğrulaması gerekiyor"
+"Yazılımla ilgili bilgileri güncellemek için kimlik doğrulaması gerekiyor"
 
 #. SECURITY:
 #. - Normal users do not require admin authentication to update
@@ -6164,17 +6105,16 @@ msgstr "Üst verileri güncellemek için kimlik doğrulaması gerekiyor"
 #. * Set the malcontent `is-system-installation-allowed` property of
 #. all users’ parental controls policies to true.
 #: system-helper/org.freedesktop.Flatpak.policy.in:287
-#, fuzzy
 msgid "Override parental controls for installs"
-msgstr "Ebeveyn denetimlerini geçersiz kıl"
+msgstr "Kurulumlar için ebeveyn denetimlerini geçersiz kıl"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:288
 msgid ""
 "Authentication is required to install software which is restricted by your "
 "parental controls policy"
 msgstr ""
-"Ebeveyn denetim politikası tarafından kısıtlanan yazılımı kurmak için kimlik "
-"doğrulaması gerekiyor"
+"Ebeveyn denetim ilkesince kısıtlanan yazılımı kurmak için kimlik doğrulaması "
+"gerekiyor"
 
 #. SECURITY:
 #. - This is like org.freedesktop.Flatpak.override-parental-controls, but
@@ -6190,15 +6130,13 @@ msgstr ""
 #. installing an update which has radically different content from the
 #. version of the app which the parent originally vetted and installed.
 #: system-helper/org.freedesktop.Flatpak.policy.in:313
-#, fuzzy
 msgid "Override parental controls for updates"
-msgstr "Ebeveyn denetimlerini geçersiz kıl"
+msgstr "Güncellemeler için ebeveyn denetimlerini geçersiz kıl"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:314
-#, fuzzy
 msgid ""
 "Authentication is required to update software which is restricted by your "
 "parental controls policy"
 msgstr ""
-"Ebeveyn denetim politikası tarafından kısıtlanan yazılımı kurmak için kimlik "
+"Ebeveyn denetim ilkesince kısıtlanan yazılımın güncellenmesi için kimlik "
 "doğrulaması gerekiyor"
