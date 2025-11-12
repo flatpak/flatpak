@@ -234,7 +234,7 @@ jobs:
     - name: Run tests under valgrind
       run: meson test -C _build
       env:
-        FLATPAK_TESTS_VALGRIND: true
+        FLATPAK_TESTS_VALGRIND_LEAKS: true
     - name: Collect overall test logs on failure
       if: failure()
       run: mv _build/meson-logs/* test-logs/ || true
