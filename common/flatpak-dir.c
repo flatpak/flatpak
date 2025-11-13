@@ -6260,7 +6260,6 @@ flatpak_dir_setup_extra_data (FlatpakDir                           *self,
                               OstreeRepo                           *repo,
                               const char                           *ref,
                               const char                           *rev,
-                              GFile                                *sideload_repo,
                               const char                           *token,
                               FlatpakPullFlags                      flatpak_flags,
                               FlatpakProgress                      *progress,
@@ -6594,6 +6593,23 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
 
   g_info ("Imported OCI image as checksum %s", checksum);
 
+  if (!flatpak_dir_setup_extra_data (self, state, repo,
+                                     ref, checksum, token,
+                                     flatpak_flags,
+                                     progress,
+                                     cancellable,
+                                     error))
+    return FALSE;
+
+  if (!flatpak_dir_pull_extra_data (self, repo,
+                                    state->remote_name,
+                                    ref, checksum,
+                                    flatpak_flags,
+                                    progress,
+                                    cancellable,
+                                    error))
+    return FALSE;
+
   if (repo == self->repo)
     name = flatpak_dir_get_name (self);
   else
@@ -6700,7 +6716,7 @@ flatpak_dir_pull (FlatpakDir                           *self,
   /* Setup extra data information before starting to pull, so we can have precise
    * progress reports */
   if (!flatpak_dir_setup_extra_data (self, state, repo,
-                                     ref, rev, sideload_repo, token,
+                                     ref, rev, token,
                                      flatpak_flags,
                                      progress,
                                      cancellable,
