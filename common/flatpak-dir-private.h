@@ -1038,5 +1038,10 @@ char **               flatpak_dir_list_unused_refs                          (Fla
                                                                              FlatpakDirFilterFlags          filter_flags,
                                                                              GCancellable                  *cancellable,
                                                                              GError                       **error);
+gboolean              flatpak_dir_pull_oci_extra_data                       (OstreeRepo              *repo,
+                                                                             FlatpakImageSource      *image_source,
+                                                                             const char              *rev,
+                                                                             GCancellable            *cancellable,
+                                                                             GError                 **error);
 
 #endif /* __FLATPAK_DIR_H__ */
