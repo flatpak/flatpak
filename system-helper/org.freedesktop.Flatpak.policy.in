@@ -235,6 +235,21 @@
     </defaults>
   </action>
 
+  <action id="org.freedesktop.Flatpak.modify-installations">
+    <!-- SECURITY:
+          - Normal users need admin authentication to modify the system-wide
+            Flatpak installations.
+     -->
+    <description>Modify installations</description>
+    <message>Authentication is required to modify system installations</message>
+    <icon_name>package-x-generic</icon_name>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+  </action>
+
   <action id="org.freedesktop.Flatpak.override-parental-controls">
     <!-- SECURITY:
           - Authorisation to actually install software is controlled by
@@ -321,4 +336,3 @@
   </action>
 
 </policyconfig>
-

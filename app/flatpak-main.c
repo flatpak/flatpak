@@ -131,6 +131,12 @@ static FlatpakCommand commands[] = {
   { "remote-ls", N_("List contents of a configured remote"), flatpak_builtin_remote_ls, flatpak_complete_remote_ls },
   { "remote-info", N_("Show information about a remote app or runtime"), flatpak_builtin_remote_info, flatpak_complete_remote_info },
 
+    /* translators: please keep the leading newline and space */
+  { N_("\n Manage installations") },
+  { "installations", N_("List all installations"), flatpak_builtin_installations_list, flatpak_complete_installations_list },
+  { "installations-add", N_("Add a installation"), flatpak_builtin_installations_add, flatpak_complete_installations_add },
+  { "installations-remove", N_("Remove a installation"), flatpak_builtin_installations_remove, flatpak_complete_installations_remove },
+
   /* translators: please keep the leading newline and space */
   { N_("\n Build applications") },
   { "build-init", N_("Initialize a directory for building"), flatpak_builtin_build_init, flatpak_complete_build_init },
@@ -170,7 +176,7 @@ static GOptionEntry empty_entries[] = {
   { "default-arch", 0, 0, G_OPTION_ARG_NONE, &opt_default_arch, N_("Print default arch and exit"), NULL },
   { "supported-arches", 0, 0, G_OPTION_ARG_NONE, &opt_supported_arches, N_("Print supported arches and exit"), NULL },
   { "gl-drivers", 0, 0, G_OPTION_ARG_NONE, &opt_gl_drivers, N_("Print active gl drivers and exit"), NULL },
-  { "installations", 0, 0, G_OPTION_ARG_NONE, &opt_list_installations, N_("Print paths for system installations and exit"), NULL },
+  { "installations", 0, 0, G_OPTION_ARG_NONE, &opt_list_installations, N_("Print paths for installations and exit"), NULL },
   { "print-updated-env", 0, 0, G_OPTION_ARG_NONE, &opt_print_updated_env, N_("Print the updated environment needed to run flatpaks"), NULL },
   { "print-system-only", 0, 0, G_OPTION_ARG_NONE, &opt_print_system_only, N_("Only include the system installation with --print-updated-env"), NULL },
   { NULL }
@@ -411,7 +417,7 @@ flatpak_option_context_parse (GOptionContext     *context,
                   if (opt_system && g_strcmp0 (opt_installations[i], "default") == 0)
                     continue;
 
-                  installation_dir = flatpak_dir_get_system_by_id (opt_installations[i], cancellable, error);
+                  installation_dir = flatpak_dir_get_by_id (opt_installations[i], cancellable, error);
                   if (installation_dir == NULL)
                     return FALSE;
 
@@ -422,22 +428,22 @@ flatpak_option_context_parse (GOptionContext     *context,
           if (flags & FLATPAK_BUILTIN_FLAG_ALL_DIRS &&
               opt_installations == NULL && !opt_user && !opt_system)
             {
-              g_autoptr(GPtrArray) system_dirs = NULL;
+              g_autoptr(GPtrArray) extra_dirs = NULL;
 
               g_ptr_array_set_size (dirs, 0);
               /* The first dir should be the default */
               g_ptr_array_add (dirs, flatpak_dir_get_system_default ());
               g_ptr_array_add (dirs, flatpak_dir_get_user ());
 
-              system_dirs = flatpak_dir_get_system_list (cancellable, error);
-              if (system_dirs == NULL)
+              extra_dirs = flatpak_dir_get_list (cancellable, error);
+              if (extra_dirs == NULL)
                 return FALSE;
 
-              for (i = 0; i < system_dirs->len; i++)
+              for (i = 0; i < extra_dirs->len; i++)
                 {
-                  FlatpakDir *dir = g_ptr_array_index (system_dirs, i);
+                  FlatpakDir *dir = g_ptr_array_index (extra_dirs, i);
                   const char *id = flatpak_dir_get_id (dir);
-                  if (g_strcmp0 (id, SYSTEM_DIR_DEFAULT_ID) != 0)
+                  if (g_strcmp0 (id, SYSTEM_DIR_DEFAULT_ID) != 0 && g_strcmp0 (id, USER_DIR_DEFAULT_ID) != 0)
                     g_ptr_array_add (dirs, g_object_ref (dir));
                 }
             }
@@ -459,7 +465,7 @@ flatpak_option_context_parse (GOptionContext     *context,
             dir = flatpak_dir_get_user ();
           else if (opt_installations != NULL)
             {
-              dir = flatpak_dir_get_system_by_id (opt_installations[0], cancellable, error);
+              dir = flatpak_dir_get_by_id (opt_installations[0], cancellable, error);
               if (dir == NULL)
                 return FALSE;
             }
@@ -743,16 +749,16 @@ flatpak_run (int      argc,
 
               if (opt_list_installations)
                 {
-                  GPtrArray *paths;
+                  g_autoptr(GPtrArray) dirs = NULL;
 
-                  paths = flatpak_get_system_base_dir_locations (NULL, &local_error);
-                  if (paths)
+                  dirs = flatpak_dir_get_list (NULL, &local_error);
+                  if (dirs)
                     {
                       guint i;
-                      for (i = 0; i < paths->len; i++)
+                      for (i = 0; i < dirs->len; i++)
                         {
-                          GFile *file = paths->pdata[i];
-                          g_print ("%s\n", flatpak_file_get_path_cached (file));
+                          FlatpakDir *dir = g_ptr_array_index (dirs, i);
+                          g_print ("%s\n", flatpak_file_get_path_cached (flatpak_dir_get_path (dir)));
                         }
                       return EXIT_SUCCESS;
                     }

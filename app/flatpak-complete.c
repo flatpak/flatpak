@@ -384,7 +384,7 @@ flatpak_complete_options (FlatpakCompletion *completion,
               else if (strcmp (e->long_name, "installation") == 0)
                 {
                   g_autoptr(GPtrArray) installations = NULL;
-                  installations = flatpak_get_system_installations (NULL, NULL);
+                  installations = flatpak_get_installations (NULL, NULL);
                   for (i = 0; i < installations->len; i++)
                     {
                       FlatpakInstallation *inst = g_ptr_array_index (installations, i);

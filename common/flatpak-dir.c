@@ -364,6 +364,18 @@ get_run_dir_location (void)
   return (const char *) path;
 }
 
+static char *
+get_system_dir_config_location (void)
+{
+  return g_strdup_printf("%s/%s", get_config_dir_location (), SYSCONF_INSTALLATIONS_DIR);
+}
+
+char *
+get_user_dir_config_location (void)
+{
+  return g_strdup_printf("%s/flatpak/%s", g_get_user_config_dir (), SYSCONF_INSTALLATIONS_DIR);
+}
+
 static void
 flatpak_sideload_state_free (FlatpakSideloadState *sideload_state)
 {
@@ -1756,7 +1768,7 @@ flatpak_get_system_default_base_dir_location (void)
   return g_object_ref ((GFile *) file);
 }
 
-static FlatpakDirStorageType
+FlatpakDirStorageType
 parse_storage_type (const char *type_string)
 {
   if (type_string != NULL)
@@ -1773,7 +1785,8 @@ parse_storage_type (const char *type_string)
       if (g_strcmp0 (type_low, "sdcard") == 0)
         return FLATPAK_DIR_STORAGE_TYPE_SDCARD;
 
-      if (g_strcmp0 (type_low, "hardisk") == 0)
+      // There was a typo here. We keep it for backwards compatibility.
+      if (g_strcmp0 (type_low, "hardisk") == 0 || g_strcmp0 (type_low, "harddisk") == 0)
         return FLATPAK_DIR_STORAGE_TYPE_HARD_DISK;
     }
 
@@ -1929,7 +1942,7 @@ out:
 }
 
 static gint
-system_locations_compare_func (gconstpointer location_a, gconstpointer location_b)
+locations_compare_func (gconstpointer location_a, gconstpointer location_b)
 {
   const GFile *location_object_a = *(const GFile **) location_a;
   const GFile *location_object_b = *(const GFile **) location_b;
@@ -1948,19 +1961,16 @@ system_locations_compare_func (gconstpointer location_a, gconstpointer location_
 }
 
 static GPtrArray *
-system_locations_from_configuration (GCancellable *cancellable,
-                                     GError      **error)
+locations_from_configuration (GCancellable *cancellable,
+                              GError       **error,
+                              const char   *config_dir)
 {
   g_autoptr(GPtrArray) locations = NULL;
   g_autoptr(GFile) conf_dir = NULL;
   g_autoptr(GFileEnumerator) dir_enum = NULL;
   g_autoptr(GError) my_error = NULL;
-  g_autofree char *config_dir = NULL;
 
   locations = g_ptr_array_new_with_free_func (g_object_unref);
-  config_dir = g_strdup_printf ("%s/%s",
-                                get_config_dir_location (),
-                                SYSCONF_INSTALLATIONS_DIR);
 
   if (!g_file_test (config_dir, G_FILE_TEST_IS_DIR))
     {
@@ -2016,6 +2026,20 @@ out:
 }
 
 static GPtrArray *
+system_locations_from_configuration (GCancellable *cancellable,
+                                     GError      **error)
+{
+  return locations_from_configuration (cancellable, error, get_system_dir_config_location ());
+}
+
+static GPtrArray *
+user_locations_from_configuration (GCancellable *cancellable,
+                                   GError      **error)
+{
+  return locations_from_configuration (cancellable, error, get_user_dir_config_location ());
+}
+
+static GPtrArray *
 get_system_locations (GCancellable *cancellable,
                       GError      **error)
 {
@@ -2038,7 +2062,7 @@ get_system_locations (GCancellable *cancellable,
     }
 
   /* Store the list of system locations sorted according to priorities */
-  g_ptr_array_sort (locations, system_locations_compare_func);
+  g_ptr_array_sort (locations, locations_compare_func);
 
   return g_steal_pointer (&locations);
 }
@@ -2754,6 +2778,9 @@ flatpak_dir_use_system_helper (FlatpakDir *self,
                                const char *installing_from_remote)
 {
 #ifdef USE_SYSTEM_HELPER
+  if (self == NULL)
+    return getuid () != 0;
+
   if (self->no_system_helper || self->user || getuid () == 0)
     return FALSE;
 
@@ -3198,6 +3225,79 @@ flatpak_dir_system_helper_call_generate_oci_summary (FlatpakDir   *self,
   return ret != NULL;
 }
 
+static gboolean
+flatpak_dir_system_helper_call_add_installation (const gchar           *arg_id,
+                                                 const gchar           *arg_path,
+                                                 const char            *arg_display_name,
+                                                 FlatpakDirStorageType  arg_storage_type,
+                                                 gint                   arg_priority,
+                                                 GCancellable          *cancellable,
+                                                 GError               **error)
+{
+  g_autoptr(GVariant) options = NULL;
+  g_autoptr(FlatpakDir) dir = NULL;
+  GVariantBuilder options_builder;
+  g_autoptr(GFile) path = NULL;
+
+  g_variant_builder_init (&options_builder, G_VARIANT_TYPE ("a{sv}"));
+  path = g_file_new_for_path (arg_path);
+  dir = flatpak_dir_new (path, FALSE);
+
+  if (arg_display_name != NULL)
+    g_variant_builder_add (&options_builder, "{s@v}", "display-name", g_variant_new_variant (g_variant_new_string (arg_display_name)));
+
+  switch (arg_storage_type)
+    {
+      case FLATPAK_DIR_STORAGE_TYPE_HARD_DISK:
+        g_variant_builder_add (&options_builder, "{s@v}", "storage-type", g_variant_new_variant (g_variant_new_string ("harddisk")));
+        break;
+      case FLATPAK_DIR_STORAGE_TYPE_SDCARD:
+        g_variant_builder_add (&options_builder, "{s@v}", "storage-type", g_variant_new_variant (g_variant_new_string ("sdcard")));
+        break;
+      case FLATPAK_DIR_STORAGE_TYPE_MMC:
+        g_variant_builder_add (&options_builder, "{s@v}", "storage-type", g_variant_new_variant (g_variant_new_string ("mcc")));
+        break;
+      case FLATPAK_DIR_STORAGE_TYPE_NETWORK:
+        g_variant_builder_add (&options_builder, "{s@v}", "storage-type", g_variant_new_variant (g_variant_new_string ("network")));
+        break;
+      case FLATPAK_DIR_STORAGE_TYPE_DEFAULT:
+        break;
+    }
+
+  if (arg_priority != 0)
+    g_variant_builder_add (&options_builder, "{s@v}", "priority", g_variant_new_variant (g_variant_new_int32 (arg_priority)));
+
+  options = g_variant_ref_sink (g_variant_builder_end (&options_builder));
+
+  g_autoptr(GVariant) ret =
+    flatpak_dir_system_helper_call (dir, "AddInstallation",
+                                    g_variant_new ("(ss@a{sv})",
+                                                   arg_id,
+                                                   arg_path,
+                                                   options),
+                                    G_VARIANT_TYPE ("()"), NULL,
+                                    cancellable, error);
+  return ret != NULL;
+}
+
+static gboolean
+flatpak_dir_system_helper_call_remove_installation (FlatpakDir    *self,
+                                                    GCancellable  *cancellable,
+                                                    GError       **error)
+{
+  const char *id;
+
+  id = flatpak_dir_get_id (self);
+
+  g_autoptr(GVariant) ret =
+    flatpak_dir_system_helper_call (self, "RemoveInstallation",
+                                    g_variant_new ("(s)",
+                                                   id),
+                                    G_VARIANT_TYPE ("()"), NULL,
+                                    cancellable, error);
+  return ret != NULL;
+}
+
 static void
 flatpak_dir_finalize (GObject *object)
 {
@@ -3346,13 +3446,13 @@ flatpak_dir_get_changed_path (FlatpakDir *self)
 const char *
 flatpak_dir_get_id (FlatpakDir *self)
 {
-  if (self->user)
-    return "user";
-
   if (self->extra_data != NULL)
     return self->extra_data->id;
 
-  return NULL;
+  if (self->user)
+    return USER_DIR_DEFAULT_ID;
+
+  return SYSTEM_DIR_DEFAULT_ID;
 }
 
 char *
@@ -3360,14 +3460,20 @@ flatpak_dir_get_name (FlatpakDir *self)
 {
   const char *id = NULL;
 
-  if (self->user)
+  id = flatpak_dir_get_id (self);
+  if (id == NULL)
+    return g_strdup ("unkown");
+
+  if (g_strcmp0 (id, SYSTEM_DIR_DEFAULT_ID) == 0)
+    return g_strdup ("system");
+
+  if (g_strcmp0 (id, USER_DIR_DEFAULT_ID) == 0)
     return g_strdup ("user");
 
-  id = flatpak_dir_get_id (self);
-  if (id != NULL && g_strcmp0 (id, SYSTEM_DIR_DEFAULT_ID) != 0)
-    return g_strdup_printf ("system (%s)", id);
+  if (self->user)
+    return g_strdup_printf ("user (%s)", id);
 
-  return g_strdup ("system");
+  return g_strdup_printf ("system (%s)", id);
 }
 
 const char *
@@ -3385,21 +3491,27 @@ flatpak_dir_get_name_cached (FlatpakDir *self)
   return (const char *) name;
 }
 
-char *
-flatpak_dir_get_display_name (FlatpakDir *self)
+static char *
+format_dir_display_name (FlatpakDir *self, const char *default_id, char *default_name, const char *prefix)
 {
-  if (self->user)
-    return g_strdup (_("User installation"));
-
-  if (self->extra_data != NULL && g_strcmp0 (self->extra_data->id, SYSTEM_DIR_DEFAULT_ID) != 0)
+  if (self->extra_data != NULL && g_strcmp0 (self->extra_data->id, default_id) != 0)
     {
       if (self->extra_data->display_name)
         return g_strdup (self->extra_data->display_name);
 
-      return g_strdup_printf (_("System (%s) installation"), self->extra_data->id);
+      return g_strdup_printf (_("%s (%s) installation"), prefix, self->extra_data->id);
     }
 
-  return g_strdup (SYSTEM_DIR_DEFAULT_DISPLAY_NAME);
+  return default_name;
+}
+
+char *
+flatpak_dir_get_display_name (FlatpakDir *self)
+{
+  if (self->user)
+    return format_dir_display_name (self, USER_DIR_DEFAULT_ID, _("User installation"), "User");
+
+  return format_dir_display_name (self, SYSTEM_DIR_DEFAULT_ID, SYSTEM_DIR_DEFAULT_DISPLAY_NAME, "System");
 }
 
 gint
@@ -14644,6 +14756,37 @@ flatpak_dir_get_by_path (GFile *path)
   return flatpak_dir_new (path, TRUE);
 }
 
+static FlatpakDir *
+flatpak_dir_filter_by_id (const char *id,
+                          gboolean    user,
+                          GPtrArray  *locations,
+                          GError    **error)
+{
+  FlatpakDir *ret = NULL;
+  int i;
+
+  g_ptr_array_sort (locations, locations_compare_func);
+
+  for (i = 0; i < locations->len; i++)
+    {
+      GFile *path = g_ptr_array_index (locations, i);
+      DirExtraData *extra_data = g_object_get_data (G_OBJECT (path), "extra-data");
+      if (extra_data != NULL && g_strcmp0 (extra_data->id, id) == 0)
+        {
+          ret = flatpak_dir_new_full (path, user, extra_data);
+          break;
+        }
+    }
+
+  if (ret == NULL)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                   _("Could not find installation %s"), id);
+    }
+
+  return ret;
+}
+
 FlatpakDir *
 flatpak_dir_get_system_by_id (const char   *id,
                               GCancellable *cancellable,
@@ -14651,8 +14794,6 @@ flatpak_dir_get_system_by_id (const char   *id,
 {
   g_autoptr(GError) local_error = NULL;
   GPtrArray *locations = NULL;
-  FlatpakDir *ret = NULL;
-  int i;
 
   if (id == NULL || g_strcmp0 (id, SYSTEM_DIR_DEFAULT_ID) == 0)
     return flatpak_dir_get_system_default ();
@@ -14667,24 +14808,59 @@ flatpak_dir_get_system_by_id (const char   *id,
       return NULL;
     }
 
+  return flatpak_dir_filter_by_id (id, FALSE, locations, error);
+}
+
+FlatpakDir *
+flatpak_dir_get_user_by_id (const char   *id,
+                            GCancellable *cancellable,
+                            GError      **error)
+{
+  g_autoptr(GError) local_error = NULL;
+  GPtrArray *locations = NULL;
+
+  if (id == NULL || g_strcmp0 (id, USER_DIR_DEFAULT_ID) == 0)
+    return flatpak_dir_get_user ();
+
+  locations = user_locations_from_configuration (cancellable, &local_error);
+  if (local_error != NULL)
+    {
+      g_propagate_error (error, g_steal_pointer (&local_error));
+      return NULL;
+    }
+
+  return flatpak_dir_filter_by_id (id, TRUE, locations, error);
+}
+
+FlatpakDir *
+flatpak_dir_get_by_id (const char   *id,
+                       GCancellable *cancellable,
+                       GError      **error)
+{
+  FlatpakDir *ret = NULL;
+
+  ret = flatpak_dir_get_user_by_id (id, cancellable, NULL);
+  if (ret != NULL)
+    return ret;
+
+  return flatpak_dir_get_system_by_id (id, cancellable, error);
+}
+
+static GPtrArray *
+flatpak_locations_parse (GPtrArray *locations, gboolean user)
+{
+  g_autoptr(GPtrArray) result = NULL;
+  int i;
+
+  result = g_ptr_array_new_with_free_func (g_object_unref);
   for (i = 0; i < locations->len; i++)
     {
       GFile *path = g_ptr_array_index (locations, i);
       DirExtraData *extra_data = g_object_get_data (G_OBJECT (path), "extra-data");
-      if (extra_data != NULL && g_strcmp0 (extra_data->id, id) == 0)
-        {
-          ret = flatpak_dir_new_full (path, FALSE, extra_data);
-          break;
-        }
+      g_ptr_array_add (result, flatpak_dir_new_full (path, user, extra_data));
     }
 
-  if (ret == NULL)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-                   _("Could not find installation %s"), id);
-    }
-
-  return ret;
+  return g_steal_pointer (&result);
 }
 
 GPtrArray *
@@ -14694,7 +14870,6 @@ flatpak_dir_get_system_list (GCancellable *cancellable,
   g_autoptr(GPtrArray) result = NULL;
   g_autoptr(GError) local_error = NULL;
   GPtrArray *locations = NULL;
-  int i;
 
   /* An error in flatpak_get_system_base_dir_locations() will still return
    * return an empty array with the GError set, but we want to return NULL.
@@ -14706,13 +14881,9 @@ flatpak_dir_get_system_list (GCancellable *cancellable,
       return NULL;
     }
 
-  result = g_ptr_array_new_with_free_func (g_object_unref);
-  for (i = 0; i < locations->len; i++)
-    {
-      GFile *path = g_ptr_array_index (locations, i);
-      DirExtraData *extra_data = g_object_get_data (G_OBJECT (path), "extra-data");
-      g_ptr_array_add (result, flatpak_dir_new_full (path, FALSE, extra_data));
-    }
+  result = flatpak_locations_parse (locations, FALSE);
+
+  g_ptr_array_sort (result, locations_compare_func);
 
   return g_steal_pointer (&result);
 }
@@ -14722,6 +14893,66 @@ flatpak_dir_get_user (void)
 {
   g_autoptr(GFile) path = flatpak_get_user_base_dir_location ();
   return flatpak_dir_new (path, TRUE);
+}
+
+GPtrArray *
+flatpak_dir_get_user_list (GCancellable *cancellable,
+                           GError      **error)
+{
+  g_autoptr(GError) local_error = NULL;
+  g_autoptr(GPtrArray) result = NULL;
+  GPtrArray *locations = NULL;
+
+  result = g_ptr_array_new_with_free_func (g_object_unref);
+
+  locations = user_locations_from_configuration (cancellable, &local_error);
+  if (local_error != NULL)
+    {
+      g_propagate_error (error, g_steal_pointer (&local_error));
+      return NULL;
+    }
+
+  result = flatpak_locations_parse (locations, TRUE);
+
+  g_ptr_array_insert (result, 0, flatpak_dir_get_user ());
+
+  g_ptr_array_sort (result, locations_compare_func);
+
+  return g_steal_pointer (&result);
+}
+
+GPtrArray *
+flatpak_dir_get_list (GCancellable *cancellable,
+                      GError      **error)
+{
+  g_autoptr(GPtrArray) system_dirs = NULL;
+  g_autoptr(GPtrArray) user_dirs = NULL;
+  g_autoptr(GPtrArray) result = NULL;
+  int i;
+
+  result = g_ptr_array_new_with_free_func (g_object_unref);
+
+  user_dirs = flatpak_dir_get_user_list (cancellable, error);
+  if (user_dirs == NULL)
+    return NULL;
+
+  for (i = 0; i < user_dirs->len; i++)
+    {
+      g_ptr_array_add (result, flatpak_dir_clone (g_ptr_array_index (user_dirs, i)));
+    }
+
+  system_dirs = flatpak_dir_get_system_list (cancellable, error);
+  if (system_dirs == NULL)
+    return NULL;
+
+  for (i = 0; i < system_dirs->len; i++)
+    {
+      g_ptr_array_add (result, flatpak_dir_clone (g_ptr_array_index (system_dirs, i)));
+    }
+
+  g_ptr_array_sort (result, locations_compare_func);
+
+  return g_steal_pointer (&result);
 }
 
 static char *
@@ -17588,4 +17819,272 @@ flatpak_dir_list_unused_refs (FlatpakDir            *self,
 
   g_ptr_array_add (refs, NULL);
   return (char **)g_ptr_array_free (g_steal_pointer (&refs), FALSE);
+}
+
+static char *
+flatpak_dir_get_installation_config_path (const char *config_dir,
+                                          const char *id)
+{
+  char *current_path;
+  int i;
+
+  current_path = g_strdup_printf ("%s/%s.conf", config_dir, id);
+
+  for (i = 0;;i++)
+   {
+    if (!g_file_test (current_path, G_FILE_TEST_EXISTS))
+      return current_path;
+
+    g_free (current_path);
+    current_path = g_strdup_printf ("%s/%s_%d.conf", config_dir, id, i);
+   }
+}
+
+static gboolean
+flatpak_dir_add_installation (const char             *config_dir,
+                              const char             *id,
+                              const char             *path,
+                              const char             *display_name,
+                              FlatpakDirStorageType   storage_type,
+                              gint                    priority,
+                              GCancellable           *cancellable,
+                              GError                **error)
+{
+  g_autoptr(GError) local_error = NULL;
+  g_autoptr(GKeyFile) keyfile = NULL;
+  const char *group_name;
+
+  group_name = g_strdup_printf ("Installation \"%s\"", id);
+
+  keyfile = g_key_file_new ();
+  g_key_file_set_string (keyfile, group_name, "Path", path);
+
+  if (display_name != NULL)
+    g_key_file_set_string (keyfile, group_name, "DisplayName", display_name);
+
+  switch (storage_type)
+    {
+      case FLATPAK_DIR_STORAGE_TYPE_HARD_DISK:
+         g_key_file_set_string (keyfile, group_name, "StorageType", "harddisk");
+         break;
+      case FLATPAK_DIR_STORAGE_TYPE_SDCARD:
+         g_key_file_set_string (keyfile, group_name, "StorageType", "sdcard");
+         break;
+      case FLATPAK_DIR_STORAGE_TYPE_MMC:
+         g_key_file_set_string (keyfile, group_name, "StorageType", "mmc");
+         break;
+      case FLATPAK_DIR_STORAGE_TYPE_NETWORK:
+         g_key_file_set_string (keyfile, group_name, "StorageType", "network");
+         break;
+      case FLATPAK_DIR_STORAGE_TYPE_DEFAULT:
+        break;
+    }
+
+  if (priority != 0)
+    g_key_file_set_integer (keyfile, group_name, "Priority", priority);
+
+  // Make sure the config dir exists
+  if (!g_file_test (config_dir, G_FILE_TEST_IS_DIR))
+    if (!g_file_make_directory_with_parents (g_file_new_for_path (config_dir), cancellable, &local_error))
+      {
+        g_propagate_error (error, g_steal_pointer (&local_error));
+        return FALSE;
+      }
+
+  if (!g_key_file_save_to_file (keyfile, flatpak_dir_get_installation_config_path (config_dir, id), &local_error))
+  {
+    g_propagate_error (error, g_steal_pointer (&local_error));
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+gboolean
+flatpak_dir_add_system_installation (const char             *id,
+                                     const char             *path,
+                                     const char             *display_name,
+                                     FlatpakDirStorageType   storage_type,
+                                     gint                    priority,
+                                     GCancellable           *cancellable,
+                                     GError                **error)
+{
+  g_autoptr(FlatpakDir) dir = NULL;
+
+  dir = flatpak_dir_get_system_by_id (id, cancellable, NULL);
+  if (dir != NULL)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_EXISTS,
+                   _("Instalation %s alraedy exists"), id);
+      return FALSE;
+    }
+
+  if (flatpak_dir_use_system_helper (NULL, NULL))
+    return flatpak_dir_system_helper_call_add_installation (id, path, display_name, storage_type, priority, cancellable, error);
+
+  return flatpak_dir_add_installation (get_system_dir_config_location (),
+                                        id, path, display_name, storage_type, priority, cancellable, error);
+}
+
+gboolean
+flatpak_dir_add_user_installation (const char             *id,
+                                   const char             *path,
+                                   const char             *display_name,
+                                   FlatpakDirStorageType   storage_type,
+                                   gint                    priority,
+                                   GCancellable           *cancellable,
+                                   GError                **error)
+{
+  g_autoptr(FlatpakDir) dir = NULL;
+
+  dir = flatpak_dir_get_user_by_id (id, cancellable, NULL);
+  if (dir != NULL)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_EXISTS,
+                   _("Instalation %s alraedy exists"), id);
+      return FALSE;
+    }
+
+  return flatpak_dir_add_installation (get_user_dir_config_location (),
+                                        id, path, display_name, storage_type, priority, cancellable, error);
+}
+
+static void
+flatpak_dir_remove_from_file (const char   *path,
+                              const char   *id,
+                              GCancellable *cancellable,
+                              GError       **error)
+{
+  g_autoptr(GKeyFile) key_file = g_key_file_new ();
+  const char *group_name;
+  gsize group_count;
+  gchar** groups;
+
+  if (!g_key_file_load_from_file (key_file, path, G_KEY_FILE_NONE, error))
+    return;
+
+  group_name = g_strdup_printf ("Installation \"%s\"", id);
+
+  if (!g_key_file_has_group (key_file, group_name))
+    return;
+
+  if (!g_key_file_remove_group (key_file, group_name, error))
+    return;
+
+  // A config file could have more than one group. Let's see how many are left.
+  groups = g_key_file_get_groups (key_file, &group_count);
+  g_strfreev (groups);
+
+  if (group_count == 0)
+    g_file_delete (g_file_new_for_path (path), cancellable, error);
+  else
+    g_key_file_save_to_file (key_file, path, error);
+}
+
+static gboolean
+flatpak_dir_remove_installation (const char    *config_dir, 
+                                 const char    *id,
+                                 GCancellable  *cancellable,
+                                 GError       **error)
+{
+  g_autoptr(GFileEnumerator) dir_enum = NULL;
+  g_autoptr(GError) local_error = NULL;
+
+  dir_enum = g_file_enumerate_children (g_file_new_for_path (config_dir),
+                                        G_FILE_ATTRIBUTE_STANDARD_NAME "," G_FILE_ATTRIBUTE_STANDARD_TYPE,
+                                        G_FILE_QUERY_INFO_NONE,
+                                        cancellable, &local_error);
+  if (local_error != NULL)
+    {
+      g_info ("Unexpected error retrieving extra installations in %s: %s",
+              config_dir, local_error->message);
+      g_propagate_error (error, g_steal_pointer (&local_error));
+      return FALSE;
+    }
+
+  while (TRUE)
+    {
+      const char *name;
+      GFileInfo *info;
+      GFile *path;
+
+      if (!g_file_enumerator_iterate (dir_enum, &info, &path, NULL, NULL) ||
+          info == NULL)
+        break;
+
+      name = g_file_info_get_attribute_byte_string (info, "standard::name");
+
+      if (g_file_info_get_file_type (info) != G_FILE_TYPE_REGULAR || !g_str_has_suffix (name, SYSCONF_INSTALLATIONS_FILE_EXT))
+        {
+          continue;
+        }
+
+      flatpak_dir_remove_from_file (g_file_get_path (path), id, cancellable, &local_error);
+      if (local_error != NULL)
+        {
+          g_info ("Unexpected error editing %s: %s",
+                  g_file_get_path (path), local_error->message);
+          g_propagate_error (error, g_steal_pointer (&local_error));
+          return FALSE;
+        }
+    }
+
+  return TRUE;
+}
+
+gboolean
+flatpak_dir_remove_system_installation(const char   *id,
+                                       GCancellable *cancellable,
+                                       GError       **error) 
+{
+  g_autoptr(GError) local_error = NULL;
+  g_autoptr(FlatpakDir) dir = NULL;
+
+  if (g_strcmp0 (id, SYSTEM_DIR_DEFAULT_ID) == 0)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                   _("Unable to delete default system installation"));
+      return FALSE;
+    }
+
+  dir = flatpak_dir_get_system_by_id (id, cancellable, NULL);
+  if (dir == NULL)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                   _("Could not find installation %s"), id);
+      return FALSE;
+    }
+
+  if (flatpak_dir_use_system_helper (dir, NULL))
+    return flatpak_dir_system_helper_call_remove_installation (dir, cancellable, error);
+
+  return flatpak_dir_remove_installation (get_system_dir_config_location(),
+                                          id, cancellable, error);
+}
+
+gboolean
+flatpak_dir_remove_user_installation(const char   *id,
+                                       GCancellable *cancellable,
+                                       GError       **error) 
+{
+  g_autoptr(GError) local_error = NULL;
+  g_autoptr(FlatpakDir) dir = NULL;
+
+  if (g_strcmp0 (id, USER_DIR_DEFAULT_ID) == 0)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                   _("Unable to delete default user installation"));
+      return FALSE;
+    }
+
+  dir = flatpak_dir_get_user_by_id (id, cancellable, NULL);
+  if (dir == NULL)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                   _("Could not find installation %s"), id);
+      return FALSE;
+    }
+
+  return flatpak_dir_remove_installation (get_user_dir_config_location(),
+                                          id, cancellable, error);
 }
