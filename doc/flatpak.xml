@@ -803,11 +803,10 @@
                     <term><envar>FLATPAK_TTY_PROGRESS</envar></term>
 
                     <listitem><para>
-                        May be set to <literal>1</literal> to enable reporting
+                        May be set to <literal>0</literal> to disable reporting
                         machine-readable progress to the terminal.
-                        This feature is not currently enabled by default
-                        because it uses the OSC 9;4 sequence,
-                        which some terminal emulators interpret as a
+                        This feature can be disabled because it uses the OSC 9;4
+                        sequence, which some terminal emulators interpret as a
                         popup notification.
                     </para></listitem>
                 </varlistentry>
