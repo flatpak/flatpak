@@ -1815,6 +1815,70 @@ handle_generate_oci_summary (FlatpakSystemHelper   *object,
 }
 
 static gboolean
+handle_add_installation (FlatpakSystemHelper   *object,
+                             GDBusMethodInvocation *invocation,
+                             const gchar           *arg_id,
+                             const gchar           *arg_path,
+                         GVariant *arg_options)
+{
+  g_autoptr(GCancellable) cancellable = NULL;
+  const char *storage_type_text = NULL;
+  FlatpakDirStorageType storage_type;
+  const char *display_name = NULL;
+  g_autoptr(GError) error = NULL;
+  gint priority = 0;
+
+
+  g_variant_lookup (arg_options, "display-name", "&s", &display_name);
+  g_variant_lookup (arg_options, "storage-type", "&s", &storage_type_text);
+  g_variant_lookup (arg_options, "priority", "i", &priority);
+
+  if (storage_type_text != NULL)
+    {
+      storage_type = parse_storage_type (storage_type_text);
+      if (storage_type == FLATPAK_DIR_STORAGE_TYPE_DEFAULT)
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                                                 "Invalid storage type. Valid types are harddisk, sdcard, mmc or network.");
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
+        }
+    }
+  else
+    storage_type = FLATPAK_DIR_STORAGE_TYPE_DEFAULT;
+
+  cancellable = g_cancellable_new ();
+  if (!flatpak_dir_add_system_installation (arg_id, arg_path, display_name, storage_type, priority, cancellable, &error))
+    {
+      flatpak_invocation_return_error (invocation, error, "Failed to add system installation");
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  flatpak_system_helper_complete_add_installation (object, invocation);
+
+  return G_DBUS_METHOD_INVOCATION_HANDLED;
+}
+
+static gboolean
+handle_remove_installation (FlatpakSystemHelper   *object,
+                            GDBusMethodInvocation *invocation,
+                            const gchar           *arg_id)
+{
+  g_autoptr(GCancellable) cancellable = NULL;
+  g_autoptr(GError) error = NULL;
+
+  cancellable = g_cancellable_new ();
+  if (!flatpak_dir_remove_system_installation (arg_id, cancellable, &error))
+    {
+      flatpak_invocation_return_error (invocation, error, "Failed to remove system installation");
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  flatpak_system_helper_complete_remove_installation (object, invocation);
+
+  return G_DBUS_METHOD_INVOCATION_HANDLED;
+}
+
+static gboolean
 dir_ref_is_installed (FlatpakDir *dir,
                       FlatpakDecomposed *ref)
 {
@@ -2089,6 +2153,11 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
       g_variant_get_child (parameters, 0, "u", &flags);
       no_interaction = (flags & (1 << 0)) != 0;
     }
+  else if (g_strcmp0 (method_name, "AddInstallation") == 0 ||
+           g_strcmp0 (method_name, "RemoveInstallation") == 0)
+    {
+      action = "org.freedesktop.Flatpak.modify-installations";
+    }
 
   if (action)
     {
@@ -2162,6 +2231,8 @@ on_bus_acquired (GDBusConnection *connection,
   g_signal_connect (helper, "handle-generate-oci-summary", G_CALLBACK (handle_generate_oci_summary), NULL);
   g_signal_connect (helper, "handle-get-revokefs-fd", G_CALLBACK (handle_get_revokefs_fd), NULL);
   g_signal_connect (helper, "handle-cancel-pull", G_CALLBACK (handle_cancel_pull), NULL);
+  g_signal_connect (helper, "handle-add-installation", G_CALLBACK (handle_add_installation), NULL);
+  g_signal_connect (helper, "handle-remove-installation", G_CALLBACK (handle_remove_installation), NULL);
 
   g_signal_connect (helper, "g-authorize-method",
                     G_CALLBACK (flatpak_authorize_method_handler),
