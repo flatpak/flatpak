@@ -533,11 +533,10 @@ use_progress_escape_sequence (void)
 
   if (g_once_init_enter (&tty_progress_once))
     {
-      // FIXME: make this opt-out for Flatpak 1.18
-      if (g_strcmp0 (g_getenv ("FLATPAK_TTY_PROGRESS"), "1") == 0)
-        g_once_init_leave (&tty_progress_once, TTY_PROGRESS_ENABLED);
-      else
+      if (g_strcmp0 (g_getenv ("FLATPAK_TTY_PROGRESS"), "0") == 0)
         g_once_init_leave (&tty_progress_once, TTY_PROGRESS_DISABLED);
+      else
+        g_once_init_leave (&tty_progress_once, TTY_PROGRESS_ENABLED);
     }
 
   return tty_progress_once == TTY_PROGRESS_ENABLED;
