@@ -152,11 +152,11 @@
            </varlistentry>
          </variablelist>
 
-        Unknown (unsupported) flags are an error and will cause Spawn()
-        to fail.
+         Unknown (unsupported) flags are an error and will cause Spawn()
+         to fail.
 
-        Unknown (unsupported) options are ignored.
-        The following options are supported:
+         Unknown (unsupported) options are ignored.
+         The following options are supported:
          <variablelist>
            <varlistentry>
              <term>sandbox-expose as</term>
