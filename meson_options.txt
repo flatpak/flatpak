@@ -56,13 +56,6 @@ option(
   value : 'auto',
 )
 option(
-  'http_backend',
-  type : 'combo',
-  description : 'library used to implement HTTP',
-  choices : ['curl', 'soup'],
-  value : 'curl',
-)
-option(
   'installed_tests',
   type : 'boolean',
   description : 'install automated tests',

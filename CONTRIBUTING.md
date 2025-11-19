@@ -52,7 +52,7 @@ meson test -C _build test-info@user.wrap test-info@system.wrap
 
 ## More info
 Dependencies you will need include: meson, bison,
-gettext, gtk-doc, gobject-introspection, libcap, libarchive, libxml2, libsoup,
+gettext, gtk-doc, gobject-introspection, libcap, libarchive, libxml2, libcurl,
 gpgme, polkit, libXau, ostree, json-glib, appstream, libseccomp (or their devel
 packages).
 

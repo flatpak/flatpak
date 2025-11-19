@@ -754,7 +754,7 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
     {
       g_auto(FlatpakMainContext) context = FLATKPAK_MAIN_CONTEXT_INIT;
 
-      /* This does soup http requests spinning the current mainloop, so we need one
+      /* This does http requests spinning the current mainloop, so we need one
          for this thread. */
       flatpak_progress_init_main_context (NULL, &context);
       /* In the OCI case, we just do the full update, including network i/o, in the

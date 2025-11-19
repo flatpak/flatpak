@@ -10,7 +10,6 @@ executable(
     libflatpak_common_dep,
     libglnx_dep,
     libostree_dep,
-    libsoup_dep,
     polkit_agent_dep,
   ],
   install : true,

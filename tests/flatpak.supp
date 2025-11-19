@@ -128,16 +128,6 @@
   fun:g_thread_pool_thread_proxy
 }
 
-# libsoup thing
-{
-  ignore_libsoup_file_leak
-  Memcheck:Leak
-  fun:calloc
-  ...
-  fun:_g_local_file_new
-  fun:soup_request_file_ensure_file
-}
-
 # glibc valgrind fnmatch issue (https://www.mail-archive.com/kde-bugs-dist@kde.org/msg214842.html)
 {
   ignore_glibc_fnmatch

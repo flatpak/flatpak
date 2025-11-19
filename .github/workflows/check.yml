@@ -35,7 +35,7 @@ jobs:
         sudo apt-get install -y libglib2.0-dev attr gettext bison  dbus gtk-doc-tools \
         libfuse3-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
         libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
-        libseccomp-dev libsoup2.4-dev libcurl4-openssl-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
+        libseccomp-dev libcurl4-openssl-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
         libgirepository1.0-dev libappstream-dev libdconf-dev clang socat meson libdbus-1-dev e2fslibs-dev bubblewrap xdg-dbus-proxy \
         meson ninja-build libyaml-dev libstemmer-dev gperf itstool libmalcontent-0-dev libxau-dev libgdk-pixbuf2.0-dev openssl
         # One of the tests wants this
@@ -54,7 +54,6 @@ jobs:
           -Db_sanitize=address,undefined \
           -Dgir=disabled \
           -Dgtkdoc=disabled \
-          -Dhttp_backend=curl \
           -Dinternal_checks=true \
           -Dinternal_tests=true \
           -Dsystem_dbus_proxy=xdg-dbus-proxy \
@@ -96,7 +95,7 @@ jobs:
         sudo apt-get install -y libglib2.0-dev attr gettext bison dbus gtk-doc-tools \
         libfuse-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
         libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
-        libseccomp-dev libsoup2.4-dev libcurl4-openssl-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
+        libseccomp-dev libcurl4-openssl-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
         libgirepository1.0-dev libappstream-dev libdconf-dev clang socat meson libdbus-1-dev e2fslibs-dev
         # One of the tests wants this
         sudo mkdir /tmp/flatpak-com.example.App-OwnedByRoot
@@ -114,7 +113,6 @@ jobs:
         meson setup \
           -Dgir=disabled \
           -Dgtkdoc=disabled \
-          -Dhttp_backend=soup \
           -Dinternal_checks=true \
           -Dinternal_tests=true \
           _build
@@ -169,7 +167,7 @@ jobs:
         sudo apt-get install -y libglib2.0-dev attr gettext bison dbus gtk-doc-tools \
         libfuse-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
         libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
-        libseccomp-dev libsoup2.4-dev libcurl4-openssl-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
+        libseccomp-dev libcurl4-openssl-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
         libgirepository1.0-dev libappstream-dev libdconf-dev clang e2fslibs-dev meson socat libxau-dev libgdk-pixbuf2.0-dev \
         xmlto
     - name: Check out flatpak
@@ -212,7 +210,7 @@ jobs:
         sudo apt-get install -y libglib2.0-dev attr gettext bison dbus gtk-doc-tools \
         libfuse-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
         libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
-        libseccomp-dev libsoup2.4-dev libcurl4-openssl-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
+        libseccomp-dev libcurl4-openssl-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
         libgirepository1.0-dev libappstream-dev libdconf-dev clang socat meson libdbus-1-dev \
         valgrind e2fslibs-dev meson libxau-dev libgdk-pixbuf2.0-dev
     - name: Check out flatpak

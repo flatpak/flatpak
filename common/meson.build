@@ -126,7 +126,6 @@ libflatpak_common_deps = [
   libglnx_dep,
   libostree_dep,
   libseccomp_dep,
-  libsoup_dep,
   libsystemd_dep,
   libxml_dep,
   libzstd_dep,
