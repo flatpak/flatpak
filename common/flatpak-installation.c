@@ -106,9 +106,6 @@ flatpak_installation_class_init (FlatpakInstallationClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
   object_class->finalize = flatpak_installation_finalize;
-
-  /* Avoid weird recursive type initialization deadlocks from libsoup */
-  g_type_ensure (G_TYPE_SOCKET);
 }
 
 static void

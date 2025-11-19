@@ -956,9 +956,6 @@ main (int    argc,
 
   g_set_prgname (argv[0]);
 
-  /* Avoid weird recursive type initialization deadlocks from libsoup */
-  g_type_ensure (G_TYPE_SOCKET);
-
   if (argc >= 4 && strcmp (argv[1], "complete") == 0)
     return complete (argc, argv);
 
