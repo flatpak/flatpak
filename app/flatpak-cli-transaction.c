@@ -317,7 +317,8 @@ progress_changed_cb (FlatpakTransactionProgress *progress,
           guint64 total_time = elapsed_time * 100 / (double) percent;
           remaining = format_duration (total_time - elapsed_time);
         }
-      speed = g_strdup_printf ("%s/s%s%s", formatted_bytes_sec, remaining ? "  " : "", remaining ? remaining : "");
+      /* Formatted size/remaining time in seconds */
+      speed = g_strdup_printf (_("%s/s%s%s"), formatted_bytes_sec, remaining ? "  " : "", remaining ? remaining : "");
       cli->speed_len = MAX (cli->speed_len, strlen (speed) + 2);
     }
 
@@ -353,7 +354,9 @@ progress_changed_cb (FlatpakTransactionProgress *progress,
     g_string_append (str, " ");
 
   g_string_append (str, " ");
-  g_string_append_printf (str, "%3d%%", percent);
+  /* Download progress percentage, use the appropriate
+    percent format for your language */
+  g_string_append_printf (str, _("%3d%%"), percent);
 
   if (speed)
     g_string_append_printf (str, "  %s", speed);
