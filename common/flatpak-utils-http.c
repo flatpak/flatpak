@@ -544,7 +544,7 @@ flatpak_create_http_session (const char *user_agent)
 #else
   rc = curl_easy_setopt (curl, CURLOPT_PROTOCOLS, (long)(CURLPROTO_HTTP | CURLPROTO_HTTPS));
 #endif
-  g_assert_cmpint (rc, ==, CURLE_OK);
+  g_assert (rc == CURLE_OK);
 
   curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 
@@ -560,14 +560,14 @@ flatpak_create_http_session (const char *user_agent)
 #if CURL_AT_LEAST_VERSION(7, 51, 0)
   if ((curl_version_info (CURLVERSION_NOW))->features & CURL_VERSION_HTTP2) {
     rc = curl_easy_setopt (curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_0);
-    g_assert_cmpint (rc, ==, CURLE_OK);
+    g_assert (rc == CURLE_OK);
   }
 #endif
   /* https://github.com/curl/curl/blob/curl-7_53_0/docs/examples/http2-download.c */
 #if (CURLPIPE_MULTIPLEX > 0)
   /* wait for pipe connection to confirm */
   rc = curl_easy_setopt (curl, CURLOPT_PIPEWAIT, 1L);
-  g_assert_cmpint (rc, ==, CURLE_OK);
+  g_assert (rc == CURLE_OK);
 #endif
 
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, _write_cb);
