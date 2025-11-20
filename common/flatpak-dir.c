@@ -17053,11 +17053,14 @@ static void
                      ...)
 {
 #ifdef HAVE_LIBSYSTEMD
-  const char *installation = source ? source : flatpak_dir_get_name_cached (self);
-  const char *subject = self->subject ? polkit_subject_to_string (self->subject) : "(none)";
+  const char *installation;
+  g_autofree char *subject = NULL;
   char message[1024];
   int len;
   va_list args;
+
+  installation = source ? source : flatpak_dir_get_name_cached (self);
+  subject = self->subject ? polkit_subject_to_string (self->subject) : g_strdup ("(none)");
 
   len = g_snprintf (message, sizeof (message), "%s: ", installation);
 
