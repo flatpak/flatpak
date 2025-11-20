@@ -4,6 +4,8 @@ leak:flatpak_get_system_default_base_dir_location
 # external (libostree)
 leak:static_delta_part_execute_thread
 leak:_ostree_static_delta_part_open
+# external (glib/gdk-pixbuf) used in validate-icon
+leak:g_daemon_vfs_init
 # Bugs in our code
 # Take a look at them and try to figure out  what's going on!
 leak:flatpak_authenticator_request_proxy_new_for_bus_sync
