@@ -253,7 +253,7 @@ int
 main (int argc, char *argv[])
 {
   g_autoptr(GOptionContext) context = NULL;
-  GError *error = NULL;
+  g_autoptr(GError) error = NULL;
 
   context = g_option_context_new ("WIDTH HEIGHT PATH");
   g_option_context_add_main_entries (context, entries, NULL);
