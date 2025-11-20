@@ -1775,7 +1775,7 @@ flatpak_installation_install_bundle (FlatpakInstallation    *self,
   if (!flatpak_dir_ensure_repo (dir_clone, cancellable, error))
     return NULL;
 
-  if (!flatpak_dir_install_bundle (dir_clone, file, remote, NULL,
+  if (!flatpak_dir_install_bundle (dir_clone, FALSE, file, remote, NULL,
                                    cancellable, error))
     return NULL;
 
