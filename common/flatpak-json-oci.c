@@ -1100,31 +1100,31 @@ flatpak_oci_index_response_class_init (FlatpakOciIndexResponseClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   FlatpakJsonClass *json_class = FLATPAK_JSON_CLASS (klass);
   static FlatpakJsonProp image_props[] = {
-    FLATPAK_JSON_STRING_PROP (FlatpakOciIndexImage, digest, "Digest"),
-    FLATPAK_JSON_STRING_PROP (FlatpakOciIndexImage, mediatype, "MediaType"),
-    FLATPAK_JSON_STRING_PROP (FlatpakOciIndexImage, os, "OS"),
-    FLATPAK_JSON_STRING_PROP (FlatpakOciIndexImage, architecture, "Architecture"),
+    FLATPAK_JSON_MANDATORY_STRING_PROP (FlatpakOciIndexImage, digest, "Digest"),
+    FLATPAK_JSON_MANDATORY_STRING_PROP (FlatpakOciIndexImage, mediatype, "MediaType"),
+    FLATPAK_JSON_MANDATORY_STRING_PROP (FlatpakOciIndexImage, os, "OS"),
+    FLATPAK_JSON_MANDATORY_STRING_PROP (FlatpakOciIndexImage, architecture, "Architecture"),
     FLATPAK_JSON_STRMAP_PROP (FlatpakOciIndexImage, annotations, "Annotations"),
     FLATPAK_JSON_STRMAP_PROP (FlatpakOciIndexImage, labels, "Labels"),
     FLATPAK_JSON_STRV_PROP (FlatpakOciIndexImage, tags, "Tags"),
     FLATPAK_JSON_LAST_PROP
   };
   static FlatpakJsonProp lists_props[] = {
-    FLATPAK_JSON_STRING_PROP (FlatpakOciIndexImageList, digest, "Digest"),
-    FLATPAK_JSON_STRUCTV_PROP (FlatpakOciIndexImageList, images, "Images", image_props),
-    FLATPAK_JSON_STRING_PROP (FlatpakOciIndexImageList, mediatype, "MediaType"),
+    FLATPAK_JSON_MANDATORY_STRING_PROP (FlatpakOciIndexImageList, digest, "Digest"),
+    FLATPAK_JSON_MANDATORY_STRUCTV_PROP (FlatpakOciIndexImageList, images, "Images", image_props),
+    FLATPAK_JSON_MANDATORY_STRING_PROP (FlatpakOciIndexImageList, mediatype, "MediaType"),
     FLATPAK_JSON_STRV_PROP (FlatpakOciIndexImageList, tags, "Tags"),
     FLATPAK_JSON_LAST_PROP
   };
   static FlatpakJsonProp results_props[] = {
-    FLATPAK_JSON_STRING_PROP (FlatpakOciIndexRepository, name, "Name"),
-    FLATPAK_JSON_STRUCTV_PROP (FlatpakOciIndexRepository, images, "Images", image_props),
+    FLATPAK_JSON_MANDATORY_STRING_PROP (FlatpakOciIndexRepository, name, "Name"),
+    FLATPAK_JSON_MANDATORY_STRUCTV_PROP (FlatpakOciIndexRepository, images, "Images", image_props),
     FLATPAK_JSON_STRUCTV_PROP (FlatpakOciIndexRepository, lists, "Lists", lists_props),
     FLATPAK_JSON_LAST_PROP
   };
   static FlatpakJsonProp props[] = {
-    FLATPAK_JSON_STRING_PROP (FlatpakOciIndexResponse, registry, "Registry"),
-    FLATPAK_JSON_STRUCTV_PROP (FlatpakOciIndexResponse, results, "Results", results_props),
+    FLATPAK_JSON_MANDATORY_STRING_PROP (FlatpakOciIndexResponse, registry, "Registry"),
+    FLATPAK_JSON_MANDATORY_STRUCTV_PROP (FlatpakOciIndexResponse, results, "Results", results_props),
     FLATPAK_JSON_LAST_PROP
   };
 
