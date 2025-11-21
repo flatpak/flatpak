@@ -407,7 +407,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
       if (!auto_remote)
         {
           g_autoptr(GError) local_error = NULL;
-          if (!flatpak_resolve_duplicate_remotes (dirs, argv[1], &dir_with_remote, cancellable, &local_error))
+          if (!flatpak_resolve_duplicate_remotes (dirs, argv[1], opt_noninteractive, &dir_with_remote, cancellable, &local_error))
             {
               if (g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_REMOTE_NOT_FOUND))
                 {
@@ -512,7 +512,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
           if (remote_dir_pairs->len == 0)
             return flatpak_fail (error, _("No remote refs found for ‘%s’"), argv[1]);
 
-          if (!flatpak_resolve_matching_remotes (remote_dir_pairs, argv[1], &chosen_pair, error))
+          if (!flatpak_resolve_matching_remotes (remote_dir_pairs, argv[1], opt_noninteractive, &chosen_pair, error))
             return FALSE;
 
           remote = g_strdup (chosen_pair->remote_name);
@@ -609,7 +609,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
           return FALSE;
         }
 
-      if (!flatpak_resolve_matching_refs (remote, dir, opt_yes, refs, id, &ref, error))
+      if (!flatpak_resolve_matching_refs (remote, dir, opt_yes, refs, id, opt_noninteractive, &ref, error))
         return FALSE;
 
       if (!flatpak_transaction_add_install (transaction, remote, ref, (const char **) opt_subpaths, &local_error))
