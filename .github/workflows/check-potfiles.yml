@@ -1,0 +1,28 @@
+name: Check POTFILES.in
+
+on:
+  push:
+    branches:
+    - main
+    - 'flatpak-1.[0-9]+.x'
+  pull_request:
+    branches:
+    - main
+    - 'flatpak-1.[0-9]+.x'
+  merge_group:
+    types:
+    - checks_requested
+
+jobs:
+  potfiles:
+    name: Check POTFILES.in
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Repository checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check POTFILES.in
+        run: .github/workflows/check-potfiles.sh
