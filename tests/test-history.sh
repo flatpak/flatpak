@@ -15,13 +15,12 @@ skip_without_libsystemd
 HISTORY_START_TIME=$(date +"%Y-%m-%d %H:%M:%S")
 sleep 1
 
-if ! logger "Checking whether Flatpak can use the journal..."; then
+MESSAGE="Checking whether Flatpak can use the journal..."
+if ! logger "${MESSAGE}"; then
     skip "Cannot write to Journal with logger"
 fi
 
-messages="$(journalctl --user --since="${HISTORY_START_TIME}" || true)"
-
-if [ -z "$messages" ]; then
+if ! journalctl --user --since="${HISTORY_START_TIME}" | grep -q "${MESSAGE}"; then
     skip "Cannot read back from Journal with journalctl"
 fi
 
