@@ -390,6 +390,7 @@ generate_labels (FlatpakOciDescriptor *layer_desc,
                  const char *name,
                  const char *ref,
                  const char *commit_checksum,
+                 const char *runtime_repo,
                  GVariant   *commit_data,
                  GCancellable *cancellable,
                  GError **error)
@@ -432,6 +433,11 @@ generate_labels (FlatpakOciDescriptor *layer_desc,
                         g_strdup ("org.flatpak.download-size"),
                         g_strdup_printf ("%" G_GUINT64_FORMAT, layer_desc->size));
 
+
+  if (runtime_repo)
+    g_hash_table_replace (labels,
+                          g_strdup ("org.flatpak.runtime-repo"),
+                          g_strdup (runtime_repo));
 
   if (!get_bundle_appstream_data (root, ref, name, keyfile, FALSE,
                                   &xml_data, cancellable, error))
@@ -523,7 +529,7 @@ build_oci (OstreeRepo                 *repo,
                                        error))
     return FALSE;
 
-  flatpak_labels = generate_labels (layer_desc, repo, root, name, flatpak_decomposed_get_ref (ref), commit_checksum, commit_data, cancellable, error);
+  flatpak_labels = generate_labels (layer_desc, repo, root, name, flatpak_decomposed_get_ref (ref), commit_checksum, opt_runtime_repo, commit_data, cancellable, error);
   if (flatpak_labels == NULL)
     return FALSE;
 
