@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2025-10-31 13:58+0100\n"
-"PO-Revision-Date: 2025-10-26 08:04+0800\n"
+"POT-Creation-Date: 2025-11-25 15:27+0000\n"
+"PO-Revision-Date: 2025-11-26 10:08+0800\n"
 "Last-Translator: lumingzh <lumingzh@qq.com>\n"
 "Language-Team: Chinese (China) <i18n-zh@googlegroups.com>\n"
 "Language: zh_CN\n"
@@ -18,15 +18,15 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Gtranslator 49.0\n"
 
-#: app/flatpak-builtins-build-bundle.c:58
+#: app/flatpak-builtins-build-bundle.c:59
 msgid "Export runtime instead of app"
 msgstr "导出运行时而不是应用"
 
-#: app/flatpak-builtins-build-bundle.c:59
+#: app/flatpak-builtins-build-bundle.c:60
 msgid "Arch to bundle for"
 msgstr "要打包的架构"
 
-#: app/flatpak-builtins-build-bundle.c:59
+#: app/flatpak-builtins-build-bundle.c:60
 #: app/flatpak-builtins-build-export.c:62 app/flatpak-builtins-build-init.c:53
 #: app/flatpak-builtins-build-sign.c:42 app/flatpak-builtins-create-usb.c:46
 #: app/flatpak-builtins-info.c:55 app/flatpak-builtins-install.c:67
@@ -37,12 +37,12 @@ msgstr "要打包的架构"
 msgid "ARCH"
 msgstr "架构"
 
-#: app/flatpak-builtins-build-bundle.c:60
+#: app/flatpak-builtins-build-bundle.c:61
 msgid "Url for repo"
 msgstr "仓库网址"
 
-#: app/flatpak-builtins-build-bundle.c:60
 #: app/flatpak-builtins-build-bundle.c:61
+#: app/flatpak-builtins-build-bundle.c:62
 #: app/flatpak-builtins-build-update-repo.c:68
 #: app/flatpak-builtins-build-update-repo.c:72
 #: app/flatpak-builtins-build-update-repo.c:73
@@ -54,15 +54,15 @@ msgstr "仓库网址"
 msgid "URL"
 msgstr "网址"
 
-#: app/flatpak-builtins-build-bundle.c:61
+#: app/flatpak-builtins-build-bundle.c:62
 msgid "Url for runtime flatpakrepo file"
 msgstr "运行时 flatpakrepo 文件的网址"
 
-#: app/flatpak-builtins-build-bundle.c:62
+#: app/flatpak-builtins-build-bundle.c:63
 msgid "Add GPG key from FILE (- for stdin)"
 msgstr "从文件添加 GPG 密钥（- 用于 stdin）"
 
-#: app/flatpak-builtins-build-bundle.c:62 app/flatpak-builtins-build.c:54
+#: app/flatpak-builtins-build-bundle.c:63 app/flatpak-builtins-build.c:54
 #: app/flatpak-builtins-build-export.c:67
 #: app/flatpak-builtins-build-update-repo.c:83
 #: app/flatpak-builtins-install.c:81 app/flatpak-builtins-remote-add.c:83
@@ -71,11 +71,11 @@ msgstr "从文件添加 GPG 密钥（- 用于 stdin）"
 msgid "FILE"
 msgstr "文件"
 
-#: app/flatpak-builtins-build-bundle.c:63
+#: app/flatpak-builtins-build-bundle.c:64
 msgid "GPG Key ID to sign the OCI image with"
 msgstr "签名 OCI 映像使用的 GPG 密钥身份标识"
 
-#: app/flatpak-builtins-build-bundle.c:63
+#: app/flatpak-builtins-build-bundle.c:64
 #: app/flatpak-builtins-build-commit-from.c:68
 #: app/flatpak-builtins-build-export.c:68
 #: app/flatpak-builtins-build-import-bundle.c:49
@@ -84,7 +84,7 @@ msgstr "签名 OCI 映像使用的 GPG 密钥身份标识"
 msgid "KEY-ID"
 msgstr "KEY-ID"
 
-#: app/flatpak-builtins-build-bundle.c:64
+#: app/flatpak-builtins-build-bundle.c:65
 #: app/flatpak-builtins-build-commit-from.c:69
 #: app/flatpak-builtins-build-export.c:71
 #: app/flatpak-builtins-build-import-bundle.c:50
@@ -93,7 +93,7 @@ msgstr "KEY-ID"
 msgid "GPG Homedir to use when looking for keyrings"
 msgstr "查找密钥环时使用的 GPG 主目录"
 
-#: app/flatpak-builtins-build-bundle.c:64
+#: app/flatpak-builtins-build-bundle.c:65
 #: app/flatpak-builtins-build-commit-from.c:69
 #: app/flatpak-builtins-build-export.c:71
 #: app/flatpak-builtins-build-import-bundle.c:50
@@ -102,30 +102,34 @@ msgstr "查找密钥环时使用的 GPG 主目录"
 msgid "HOMEDIR"
 msgstr "主目录"
 
-#: app/flatpak-builtins-build-bundle.c:65
+#: app/flatpak-builtins-build-bundle.c:66
 msgid "OSTree commit to create a delta bundle from"
 msgstr "创建增量包使用的 OSTree 提交"
 
-#: app/flatpak-builtins-build-bundle.c:65 app/flatpak-builtins-remote-info.c:55
+#: app/flatpak-builtins-build-bundle.c:66 app/flatpak-builtins-remote-info.c:55
 #: app/flatpak-builtins-update.c:57
 msgid "COMMIT"
 msgstr "提交"
 
-#: app/flatpak-builtins-build-bundle.c:66
+#: app/flatpak-builtins-build-bundle.c:67
 msgid "Export oci image instead of flatpak bundle"
 msgstr "导出 OCI 映像而不是 flatpak 捆绑包"
 
-#: app/flatpak-builtins-build-bundle.c:621
+#: app/flatpak-builtins-build-bundle.c:70
+msgid "How to compress OCI image layers (default: gzip)"
+msgstr "压缩 OCI 映像层的方式（默认：gzip）"
+
+#: app/flatpak-builtins-build-bundle.c:628
 msgid ""
 "LOCATION FILENAME NAME [BRANCH] - Create a single file bundle from a local "
 "repository"
 msgstr "位置 文件名 名称 [分支] - 从本地仓库创建单文件捆绑包"
 
-#: app/flatpak-builtins-build-bundle.c:628
+#: app/flatpak-builtins-build-bundle.c:635
 msgid "LOCATION, FILENAME and NAME must be specified"
 msgstr "必须指定位置、文件名和名称"
 
-#: app/flatpak-builtins-build-bundle.c:631
+#: app/flatpak-builtins-build-bundle.c:638
 #: app/flatpak-builtins-build-export.c:844
 #: app/flatpak-builtins-build-import-bundle.c:136
 #: app/flatpak-builtins-build-init.c:217 app/flatpak-builtins-build-sign.c:76
@@ -145,7 +149,7 @@ msgstr "必须指定位置、文件名和名称"
 msgid "Too many arguments"
 msgstr "参数太多"
 
-#: app/flatpak-builtins-build-bundle.c:646
+#: app/flatpak-builtins-build-bundle.c:653
 #: app/flatpak-builtins-build-commit-from.c:338
 #: app/flatpak-builtins-build-commit-from.c:351
 #: app/flatpak-builtins-build-import-bundle.c:145
@@ -153,30 +157,34 @@ msgstr "参数太多"
 msgid "'%s' is not a valid repository"
 msgstr "“%s”不是有效的仓库"
 
-#: app/flatpak-builtins-build-bundle.c:650
+#: app/flatpak-builtins-build-bundle.c:657
 #, c-format
 msgid "'%s' is not a valid repository: "
 msgstr "“%s”不是有效的仓库："
 
-#: app/flatpak-builtins-build-bundle.c:661 app/flatpak-builtins-build-sign.c:88
-#: common/flatpak-dir.c:13935
+#: app/flatpak-builtins-build-bundle.c:668 app/flatpak-builtins-build-sign.c:88
+#: common/flatpak-dir.c:14233
 #, c-format
 msgid "'%s' is not a valid name: %s"
 msgstr "“%s”不是有效的名称：%s"
 
-#: app/flatpak-builtins-build-bundle.c:664
+#: app/flatpak-builtins-build-bundle.c:671
 #: app/flatpak-builtins-build-export.c:865 app/flatpak-builtins-build-sign.c:91
-#: common/flatpak-dir.c:13941
+#: common/flatpak-dir.c:14239
 #, c-format
 msgid "'%s' is not a valid branch name: %s"
 msgstr "“%s”不是有效的分支名称：%s"
 
-#: app/flatpak-builtins-build-bundle.c:678
+#: app/flatpak-builtins-build-bundle.c:685
 #: app/flatpak-builtins-build-import-bundle.c:149
 #: app/flatpak-builtins-build-init.c:281
 #, c-format
 msgid "'%s' is not a valid filename"
 msgstr "“%s”不是有效的文件名"
+
+#: app/flatpak-builtins-build-bundle.c:700
+msgid "--oci-layer-compress value must be gzip or zstd"
+msgstr "--oci-layer-compress 的值必须为 gzip 或 zstd"
 
 #: app/flatpak-builtins-build.c:49
 msgid "Use Platform runtime rather than Sdk"
@@ -254,8 +262,7 @@ msgstr "在 %2$s 中没有匹配 %1$s 的扩展点"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "在绑定挂载选项“%s”中缺少“=”"
 
-#: app/flatpak-builtins-build.c:628 common/flatpak-run.c:3701
-#, c-format
+#: app/flatpak-builtins-build.c:628 common/flatpak-run.c:3689
 msgid "Unable to start app"
 msgstr "无法启动应用"
 
@@ -443,7 +450,7 @@ msgid "Mark build as end-of-life, to be replaced with the given ID"
 msgstr "将构建标记为寿命完结，使用给定的身份标识进行替换"
 
 #: app/flatpak-builtins-build-export.c:74
-#: app/flatpak-builtins-document-list.c:49 app/flatpak-cli-transaction.c:1424
+#: app/flatpak-builtins-document-list.c:49 app/flatpak-cli-transaction.c:1427
 msgid "ID"
 msgstr "ID"
 
@@ -505,7 +512,6 @@ msgid "Unable to find basename in %s, specify a name explicitly"
 msgstr "在 %s 中找不到基本名称，请明确指定名称"
 
 #: app/flatpak-builtins-build-export.c:746
-#, c-format
 msgid "No slashes allowed in extra data name"
 msgstr "在额外数据名称中不允许有斜线符号"
 
@@ -515,7 +521,6 @@ msgid "Invalid format for sha256 checksum: '%s'"
 msgstr "SHA256 校验和的格式无效：“%s”"
 
 #: app/flatpak-builtins-build-export.c:768
-#, c-format
 msgid "Extra data sizes of zero not supported"
 msgstr "不支持零的额外数据大小"
 
@@ -565,7 +570,6 @@ msgid "Content Written: %u\n"
 msgstr "写入内容：%u\n"
 
 #: app/flatpak-builtins-build-export.c:1171
-#, c-format
 msgid "Content Bytes Written:"
 msgstr "写入内容字节："
 
@@ -669,7 +673,6 @@ msgid "Exporting %s\n"
 msgstr "正在导出 %s\n"
 
 #: app/flatpak-builtins-build-finish.c:440
-#, c-format
 msgid "More than one executable found\n"
 msgstr "找到多个可执行文件\n"
 
@@ -679,7 +682,6 @@ msgid "Using %s as command\n"
 msgstr "使用 %s 作为命令\n"
 
 #: app/flatpak-builtins-build-finish.c:456
-#, c-format
 msgid "No executable found\n"
 msgstr "未发现可执行文件\n"
 
@@ -729,7 +731,6 @@ msgid "Build directory %s already finalized"
 msgstr "构建目录 %s 已完成"
 
 #: app/flatpak-builtins-build-finish.c:702
-#, c-format
 msgid "Please review the exported files and the metadata\n"
 msgstr "请审阅导出的文件和元数据\n"
 
@@ -1048,12 +1049,10 @@ msgid "LOCATION - Update repository metadata"
 msgstr "位置 - 更新仓库元数据"
 
 #: app/flatpak-builtins-build-update-repo.c:609
-#, c-format
 msgid "Updating appstream branch\n"
 msgstr "更新 appstream 分支\n"
 
 #: app/flatpak-builtins-build-update-repo.c:638
-#, c-format
 msgid "Updating summary\n"
 msgstr "更新摘要\n"
 
@@ -1063,7 +1062,6 @@ msgid "Total objects: %u\n"
 msgstr "对象总计：%u\n"
 
 #: app/flatpak-builtins-build-update-repo.c:666
-#, c-format
 msgid "No unreachable objects\n"
 msgstr "没有无法访问的对象\n"
 
@@ -1319,7 +1317,6 @@ msgstr "文件 - 获取关于导出文件的信息"
 
 #: app/flatpak-builtins-document-info.c:100
 #: app/flatpak-builtins-document-unexport.c:92
-#, c-format
 msgid "Not exported\n"
 msgstr "未导出\n"
 
@@ -1383,7 +1380,6 @@ msgid "Show permissions for applications"
 msgstr "显示应用程序的权限"
 
 #: app/flatpak-builtins-document-list.c:161
-#, c-format
 msgid "No documents found\n"
 msgstr "未找到文档\n"
 
@@ -1517,7 +1513,7 @@ msgstr "显示应用/运行时标识"
 
 #: app/flatpak-builtins-history.c:63 app/flatpak-builtins-list.c:64
 #: app/flatpak-builtins-ps.c:53 app/flatpak-builtins-remote-ls.c:73
-#: app/flatpak-cli-transaction.c:1432
+#: app/flatpak-cli-transaction.c:1435
 msgid "Arch"
 msgstr "架构"
 
@@ -1528,7 +1524,7 @@ msgstr "显示架构"
 
 #: app/flatpak-builtins-history.c:64 app/flatpak-builtins-list.c:63
 #: app/flatpak-builtins-ps.c:54 app/flatpak-builtins-remote-ls.c:72
-#: app/flatpak-builtins-search.c:48 app/flatpak-cli-transaction.c:1435
+#: app/flatpak-builtins-search.c:48 app/flatpak-cli-transaction.c:1438
 msgid "Branch"
 msgstr "分支"
 
@@ -1545,7 +1541,7 @@ msgstr "安装"
 msgid "Show the affected installation"
 msgstr "显示受影响的安装"
 
-#: app/flatpak-builtins-history.c:66 app/flatpak-cli-transaction.c:1449
+#: app/flatpak-builtins-history.c:66 app/flatpak-cli-transaction.c:1452
 msgid "Remote"
 msgstr "远程"
 
@@ -1574,7 +1570,7 @@ msgstr "显示上一次提交"
 msgid "Show the remote URL"
 msgstr "显示远程仓库网址"
 
-#: app/flatpak-builtins-history.c:70 app/flatpak-cli-transaction.c:697
+#: app/flatpak-builtins-history.c:70 app/flatpak-cli-transaction.c:700
 msgid "User"
 msgstr "用户"
 
@@ -1619,12 +1615,10 @@ msgid " - Show history"
 msgstr " - 显示历史"
 
 #: app/flatpak-builtins-history.c:490
-#, c-format
 msgid "Failed to parse the --since option"
 msgstr "解析 --since 选项失败"
 
 #: app/flatpak-builtins-history.c:501
-#, c-format
 msgid "Failed to parse the --until option"
 msgstr "解析 --until 选项失败"
 
@@ -1705,7 +1699,6 @@ msgid "ref not present in origin"
 msgstr "引用在来源中不存在"
 
 #: app/flatpak-builtins-info.c:211 app/flatpak-builtins-remote-info.c:217
-#, c-format
 msgid "Warning: Commit has no flatpak metadata\n"
 msgstr "警告：提交中没有 flatpak 元数据\n"
 
@@ -1956,7 +1949,6 @@ msgid "At least one REF must be specified"
 msgstr "必须至少指定一个引用"
 
 #: app/flatpak-builtins-install.c:392
-#, c-format
 msgid "Looking for matches…\n"
 msgstr "寻找匹配项…\n"
 
@@ -2158,12 +2150,10 @@ msgid ""
 msgstr "[匹配模式…] - 禁用更新和自动安装匹配模式"
 
 #: app/flatpak-builtins-mask.c:73
-#, c-format
 msgid "No masked patterns\n"
 msgstr "没有屏蔽的匹配模式\n"
 
 #: app/flatpak-builtins-mask.c:78
-#, c-format
 msgid "Masked patterns:\n"
 msgstr "屏蔽的匹配模式：\n"
 
@@ -2255,12 +2245,10 @@ msgid "[PATTERN…] - disable automatic removal of runtimes matching patterns"
 msgstr "[匹配模式…] - 禁用对匹配匹配模式的运行时的自动移除"
 
 #: app/flatpak-builtins-pin.c:75
-#, c-format
 msgid "No pinned patterns\n"
 msgstr "没有置顶的匹配模式\n"
 
 #: app/flatpak-builtins-pin.c:80
-#, c-format
 msgid "Pinned patterns:\n"
 msgstr "置顶的匹配模式：\n"
 
@@ -2269,7 +2257,6 @@ msgid "- Install flatpaks that are part of the operating system"
 msgstr "- 安装视为操作系统一部分的 flatpak"
 
 #: app/flatpak-builtins-preinstall.c:118 app/flatpak-builtins-update.c:274
-#, c-format
 msgid "Nothing to do.\n"
 msgstr "无事可做。\n"
 
@@ -2803,7 +2790,6 @@ msgid "[%d/%d] Verifying %s…\n"
 msgstr "[%d/%d] 正在校验 %s…\n"
 
 #: app/flatpak-builtins-repair.c:435
-#, c-format
 msgid "Dry run: "
 msgstr "演练："
 
@@ -2823,7 +2809,6 @@ msgid "Deleting ref %s due to %d\n"
 msgstr "由于 %2$d 正在删除引用 %1$s\n"
 
 #: app/flatpak-builtins-repair.c:464
-#, c-format
 msgid "Checking remotes...\n"
 msgstr "正在检查远程仓库…\n"
 
@@ -2838,22 +2823,18 @@ msgid "Remote %s for ref %s is disabled\n"
 msgstr "引用 %2$s 的远程仓库 %1$s 已禁用\n"
 
 #: app/flatpak-builtins-repair.c:490
-#, c-format
 msgid "Pruning objects\n"
 msgstr "正在修剪对象\n"
 
 #: app/flatpak-builtins-repair.c:498
-#, c-format
 msgid "Erasing .removed\n"
 msgstr "正在擦除 .removed\n"
 
 #: app/flatpak-builtins-repair.c:523
-#, c-format
 msgid "Reinstalling refs\n"
 msgstr "重新安装引用\n"
 
 #: app/flatpak-builtins-repair.c:525
-#, c-format
 msgid "Reinstalling removed refs\n"
 msgstr "重新安装已移除的引用\n"
 
@@ -2888,7 +2869,6 @@ msgid "false"
 msgstr "失败的"
 
 #: app/flatpak-builtins-repo.c:121
-#, c-format
 msgid "Subsummaries: "
 msgstr "子摘要："
 
@@ -2971,7 +2951,7 @@ msgstr "%zd 摘要分支\n"
 msgid "Installed"
 msgstr "已安装"
 
-#: app/flatpak-builtins-repo.c:337 app/flatpak-cli-transaction.c:1458
+#: app/flatpak-builtins-repo.c:337 app/flatpak-cli-transaction.c:1461
 msgid "Download"
 msgstr "下载"
 
@@ -3214,7 +3194,6 @@ msgstr ""
 "这些运行时在安装“%s”中是置顶的且不会被移除；查阅 flatpak-pin(1)：\n"
 
 #: app/flatpak-builtins-uninstall.c:370
-#, c-format
 msgid "Nothing unused to uninstall\n"
 msgstr "无可卸载的未使用项目\n"
 
@@ -3239,12 +3218,10 @@ msgid "Warning: %s is not installed\n"
 msgstr "警告：%s 未安装\n"
 
 #: app/flatpak-builtins-uninstall.c:490
-#, c-format
 msgid "None of the specified refs are installed"
 msgstr "指定的引用都没有安装"
 
 #: app/flatpak-builtins-uninstall.c:599
-#, c-format
 msgid "No app data to delete\n"
 msgstr "无可删除的应用数据\n"
 
@@ -3285,7 +3262,6 @@ msgid "With --commit, only one REF may be specified"
 msgstr "带有 --commit，仅可指定一个引用"
 
 #: app/flatpak-builtins-update.c:162
-#, c-format
 msgid "Looking for updates…\n"
 msgstr "正在查找更新…\n"
 
@@ -3352,7 +3328,6 @@ msgid "Found installed ref ‘%s’ (%s). Is this correct?"
 msgstr "找到已安装的引用“%s”（%s）。这结果正确吗？"
 
 #: app/flatpak-builtins-utils.c:522
-#, c-format
 msgid "All of the above"
 msgstr "上面全部"
 
@@ -3482,126 +3457,139 @@ msgstr ""
 "  %s\n"
 "将其配置为新的远程仓库“%s”"
 
-#: app/flatpak-cli-transaction.c:411
+#. Formatted size/remaining time in seconds
+#: app/flatpak-cli-transaction.c:321
+#, c-format
+msgid "%s/s%s%s"
+msgstr "%s/s%s%s"
+
+#. Download progress percentage, use the appropriate
+#. percent format for your language
+#: app/flatpak-cli-transaction.c:359
+#, c-format
+msgid "%3d%%"
+msgstr "%3d%%"
+
+#: app/flatpak-cli-transaction.c:414
 msgid "Installing…"
 msgstr "正在安装…"
 
-#: app/flatpak-cli-transaction.c:413
+#: app/flatpak-cli-transaction.c:416
 #, c-format
 msgid "Installing %d/%d…"
 msgstr "正在安装 %d/%d…"
 
-#: app/flatpak-cli-transaction.c:418
+#: app/flatpak-cli-transaction.c:421
 msgid "Updating…"
 msgstr "正在更新…"
 
-#: app/flatpak-cli-transaction.c:420
+#: app/flatpak-cli-transaction.c:423
 #, c-format
 msgid "Updating %d/%d…"
 msgstr "正在更新 %d/%d…"
 
-#: app/flatpak-cli-transaction.c:425
+#: app/flatpak-cli-transaction.c:428
 msgid "Uninstalling…"
 msgstr "正在卸载…"
 
-#: app/flatpak-cli-transaction.c:427
+#: app/flatpak-cli-transaction.c:430
 #, c-format
 msgid "Uninstalling %d/%d…"
 msgstr "正在卸载 %d/%d…"
 
-#: app/flatpak-cli-transaction.c:493 app/flatpak-quiet-transaction.c:161
+#: app/flatpak-cli-transaction.c:496 app/flatpak-quiet-transaction.c:161
 #, c-format
 msgid "Info: %s was skipped"
 msgstr "信息：%s 已跳过"
 
-#: app/flatpak-cli-transaction.c:516
+#: app/flatpak-cli-transaction.c:519
 #, c-format
 msgid "Warning: %s%s%s already installed"
 msgstr "警告：%s%s%s 已安装"
 
-#: app/flatpak-cli-transaction.c:519
+#: app/flatpak-cli-transaction.c:522
 #, c-format
 msgid "Error: %s%s%s already installed"
 msgstr "错误：%s%s%s 已安装"
 
-#: app/flatpak-cli-transaction.c:525
+#: app/flatpak-cli-transaction.c:528
 #, c-format
 msgid "Warning: %s%s%s not installed"
 msgstr "警告：%s%s%s 未安装"
 
-#: app/flatpak-cli-transaction.c:528
+#: app/flatpak-cli-transaction.c:531
 #, c-format
 msgid "Error: %s%s%s not installed"
 msgstr "错误：%s%s%s 未安装"
 
-#: app/flatpak-cli-transaction.c:534
+#: app/flatpak-cli-transaction.c:537
 #, c-format
 msgid "Warning: %s%s%s needs a later flatpak version"
 msgstr "警告：%s%s%s 需要更高的 flatpak 版本"
 
-#: app/flatpak-cli-transaction.c:537
+#: app/flatpak-cli-transaction.c:540
 #, c-format
 msgid "Error: %s%s%s needs a later flatpak version"
 msgstr "错误：%s%s%s 需要更高的 flatpak 版本"
 
-#: app/flatpak-cli-transaction.c:543
+#: app/flatpak-cli-transaction.c:546
 msgid "Warning: Not enough disk space to complete this operation"
 msgstr "警告：没有足够的硬盘空间以完成该操作"
 
-#: app/flatpak-cli-transaction.c:545
+#: app/flatpak-cli-transaction.c:548
 msgid "Error: Not enough disk space to complete this operation"
 msgstr "错误：没有足够的硬盘空间以完成该操作"
 
-#: app/flatpak-cli-transaction.c:550
+#: app/flatpak-cli-transaction.c:553
 #, c-format
 msgid "Warning: %s"
 msgstr "警告：%s"
 
-#: app/flatpak-cli-transaction.c:552
+#: app/flatpak-cli-transaction.c:555
 #, c-format
 msgid "Error: %s"
 msgstr "错误：%s"
 
-#: app/flatpak-cli-transaction.c:567
+#: app/flatpak-cli-transaction.c:570
 #, c-format
 msgid "Failed to install %s%s%s: "
 msgstr "安装 %s%s%s 失败："
 
-#: app/flatpak-cli-transaction.c:574
+#: app/flatpak-cli-transaction.c:577
 #, c-format
 msgid "Failed to update %s%s%s: "
 msgstr "更新 %s%s%s 失败"
 
-#: app/flatpak-cli-transaction.c:581
+#: app/flatpak-cli-transaction.c:584
 #, c-format
 msgid "Failed to install bundle %s%s%s: "
 msgstr "安装捆绑包 %s%s%s 失败："
 
-#: app/flatpak-cli-transaction.c:588
+#: app/flatpak-cli-transaction.c:591
 #, c-format
 msgid "Failed to uninstall %s%s%s: "
 msgstr "卸载 %s%s%s 失败："
 
-#: app/flatpak-cli-transaction.c:639
+#: app/flatpak-cli-transaction.c:642
 #, c-format
 msgid "Authentication required for remote '%s'\n"
 msgstr "远程仓库“%s”需要身份验证\n"
 
-#: app/flatpak-cli-transaction.c:640
+#: app/flatpak-cli-transaction.c:643
 msgid "Open browser?"
 msgstr "打开浏览器吗？"
 
-#: app/flatpak-cli-transaction.c:696
+#: app/flatpak-cli-transaction.c:699
 #, c-format
 msgid "Login required remote %s (realm %s)\n"
 msgstr "需要登录的远程仓库 %s（域 %s）\n"
 
-#: app/flatpak-cli-transaction.c:701
+#: app/flatpak-cli-transaction.c:704
 msgid "Password"
 msgstr "密码"
 
 #. Only runtimes can be pinned
-#: app/flatpak-cli-transaction.c:756
+#: app/flatpak-cli-transaction.c:759
 #, c-format
 msgid ""
 "\n"
@@ -3612,7 +3600,7 @@ msgstr ""
 "信息：（已置顶）运行时 %s%s%s 分支 %s%s%s 已结束生命周期，替代为 %s%s%s 分支 "
 "%s%s%s\n"
 
-#: app/flatpak-cli-transaction.c:762
+#: app/flatpak-cli-transaction.c:765
 #, c-format
 msgid ""
 "\n"
@@ -3622,7 +3610,7 @@ msgstr ""
 "\n"
 "信息：运行时 %s%s%s 分支 %s%s%s 已结束生命周期，替代为 %s%s%s 分支 %s%s%s\n"
 
-#: app/flatpak-cli-transaction.c:765
+#: app/flatpak-cli-transaction.c:768
 #, c-format
 msgid ""
 "\n"
@@ -3633,7 +3621,7 @@ msgstr ""
 "信息：应用 %s%s%s 分支 %s%s%s 已结束生命周期，替代为 %s%s%s 分支 %s%s%s\n"
 
 #. Only runtimes can be pinned
-#: app/flatpak-cli-transaction.c:777
+#: app/flatpak-cli-transaction.c:780
 #, c-format
 msgid ""
 "\n"
@@ -3642,7 +3630,7 @@ msgstr ""
 "\n"
 "信息：（已置顶）运行时 %s%s%s 分支 %s%s%s 已结束生命周期，原因：\n"
 
-#: app/flatpak-cli-transaction.c:783
+#: app/flatpak-cli-transaction.c:786
 #, c-format
 msgid ""
 "\n"
@@ -3651,7 +3639,7 @@ msgstr ""
 "\n"
 "信息：运行时 %s%s%s 分支 %s%s%s 已结束生命周期，原因：\n"
 
-#: app/flatpak-cli-transaction.c:786
+#: app/flatpak-cli-transaction.c:789
 #, c-format
 msgid ""
 "\n"
@@ -3660,88 +3648,85 @@ msgstr ""
 "\n"
 "信息：应用 %s%s%s 分支 %s%s%s 已结束生命周期，原因：\n"
 
-#: app/flatpak-cli-transaction.c:960
-#, c-format
+#: app/flatpak-cli-transaction.c:963
 msgid "Info: applications using this extension:\n"
 msgstr "信息：使用该扩展的应用程序：\n"
 
-#: app/flatpak-cli-transaction.c:962
-#, c-format
+#: app/flatpak-cli-transaction.c:965
 msgid "Info: applications using this runtime:\n"
 msgstr "信息：使用该运行时的应用程序：\n"
 
-#: app/flatpak-cli-transaction.c:981
+#: app/flatpak-cli-transaction.c:984
 msgid "Replace?"
 msgstr "替换吗？"
 
-#: app/flatpak-cli-transaction.c:984 app/flatpak-quiet-transaction.c:247
-#, c-format
+#: app/flatpak-cli-transaction.c:987 app/flatpak-quiet-transaction.c:247
 msgid "Updating to rebased version\n"
 msgstr "正在更新到重新建基版本\n"
 
-#: app/flatpak-cli-transaction.c:1008
+#: app/flatpak-cli-transaction.c:1011
 #, c-format
 msgid "Failed to rebase %s to %s: "
 msgstr "重新建基 %s 至 %s 失败："
 
-#: app/flatpak-cli-transaction.c:1274
+#: app/flatpak-cli-transaction.c:1277
 #, c-format
 msgid "New %s%s%s permissions:"
 msgstr "新的 %s%s%s 权限："
 
-#: app/flatpak-cli-transaction.c:1276
+#: app/flatpak-cli-transaction.c:1279
 #, c-format
 msgid "%s%s%s permissions:"
 msgstr "%s%s%s 权限："
 
-#: app/flatpak-cli-transaction.c:1340
+#: app/flatpak-cli-transaction.c:1343
 msgid "Warning: "
 msgstr "警告："
 
 #. translators: This is short for operation, the title of a one-char column
-#: app/flatpak-cli-transaction.c:1439
+#: app/flatpak-cli-transaction.c:1442
 msgid "Op"
 msgstr "操作"
 
 #. Avoid resizing the download column too much,
 #. * by making the title as long as typical content
 #.
-#: app/flatpak-cli-transaction.c:1455 app/flatpak-cli-transaction.c:1499
+#: app/flatpak-cli-transaction.c:1458 app/flatpak-cli-transaction.c:1502
 msgid "partial"
 msgstr "部分的"
 
-#: app/flatpak-cli-transaction.c:1531
+#: app/flatpak-cli-transaction.c:1534
 msgid "Proceed with these changes to the user installation?"
 msgstr "继续对用户安装进行这些更改吗？"
 
-#: app/flatpak-cli-transaction.c:1533
+#: app/flatpak-cli-transaction.c:1536
 msgid "Proceed with these changes to the system installation?"
 msgstr "继续对系统安装进行这些更改吗？"
 
-#: app/flatpak-cli-transaction.c:1535
+#: app/flatpak-cli-transaction.c:1538
 #, c-format
 msgid "Proceed with these changes to the %s?"
 msgstr "继续对 %s 进行这些更改吗？"
 
-#: app/flatpak-cli-transaction.c:1707
+#: app/flatpak-cli-transaction.c:1710
 msgid "Changes complete."
 msgstr "更改完成。"
 
-#: app/flatpak-cli-transaction.c:1709
+#: app/flatpak-cli-transaction.c:1712
 msgid "Uninstall complete."
 msgstr "卸载完成。"
 
-#: app/flatpak-cli-transaction.c:1711
+#: app/flatpak-cli-transaction.c:1714
 msgid "Installation complete."
 msgstr "安装完成。"
 
-#: app/flatpak-cli-transaction.c:1713
+#: app/flatpak-cli-transaction.c:1716
 msgid "Updates complete."
 msgstr "更新完成。"
 
 #. For updates/!stop_on_first_error we already printed all errors so we make up
 #. a different one.
-#: app/flatpak-cli-transaction.c:1746
+#: app/flatpak-cli-transaction.c:1749
 msgid "There were one or more errors"
 msgstr "存在一个或多个错误"
 
@@ -4084,7 +4069,7 @@ msgstr "“%s”不是 flatpak 命令"
 msgid "No command specified"
 msgstr "未指定命令"
 
-#: app/flatpak-main.c:977
+#: app/flatpak-main.c:974
 msgid "error:"
 msgstr "错误："
 
@@ -4143,15 +4128,15 @@ msgstr "警告：卸载 %s 失败：%s\n"
 msgid "Error: Failed to uninstall %s: %s\n"
 msgstr "错误：卸载 %s 失败：%s\n"
 
-#: app/flatpak-quiet-transaction.c:166 common/flatpak-dir.c:11117
+#: app/flatpak-quiet-transaction.c:166 common/flatpak-dir.c:11415
 #, c-format
 msgid "%s already installed"
 msgstr "%s 已安装"
 
 #: app/flatpak-quiet-transaction.c:168 common/flatpak-dir-utils.c:166
 #: common/flatpak-dir-utils.c:259 common/flatpak-dir.c:3595
-#: common/flatpak-dir.c:4294 common/flatpak-dir.c:16543
-#: common/flatpak-dir.c:16833 common/flatpak-transaction.c:2736
+#: common/flatpak-dir.c:4294 common/flatpak-dir.c:16841
+#: common/flatpak-dir.c:17131 common/flatpak-transaction.c:2736
 #: common/flatpak-transaction.c:2791
 #, c-format
 msgid "%s not installed"
@@ -4227,7 +4212,6 @@ msgid "Filesystem location \"%s\" contains \"..\""
 msgstr "文件系统位置“%s”包含“..”"
 
 #: common/flatpak-context.c:2036
-#, c-format
 msgid ""
 "--filesystem=/ is not available, use --filesystem=host for a similar result"
 msgstr "--filesystem=/ 不可用，使用 --filesystem=host 获得相似结果"
@@ -4247,7 +4231,6 @@ msgid "Invalid syntax for %s: %s"
 msgstr "无效的 %s 语法：%s"
 
 #: common/flatpak-context.c:2291
-#, c-format
 msgid "fallback-x11 can not be conditional"
 msgstr "fallback-x11 无法成为条件性的"
 
@@ -4262,22 +4245,18 @@ msgid "Environment variable name must not contain '=': %s"
 msgstr "环境变量名称不能包含“=”：%s"
 
 #: common/flatpak-context.c:2660 common/flatpak-context.c:2668
-#, c-format
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr "--add-policy 参数的格式必须为 SUBSYSTEM.KEY=VALUE"
 
 #: common/flatpak-context.c:2675
-#, c-format
 msgid "--add-policy values can't start with \"!\""
 msgstr "--add-policy 值不能以“!”开头"
 
 #: common/flatpak-context.c:2700 common/flatpak-context.c:2708
-#, c-format
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr "--remove-policy 参数的格式必须为 SUBSYSTEM.KEY=VALUE"
 
 #: common/flatpak-context.c:2715
-#, c-format
 msgid "--remove-policy values can't start with \"!\""
 msgstr "--remove-policy 值不能以“!”开头"
 
@@ -4606,31 +4585,31 @@ msgstr "当前 %s 没有匹配模式 %s"
 msgid "No appstream commit to deploy"
 msgstr "没有 appstream 提交可部署"
 
-#: common/flatpak-dir.c:5894 common/flatpak-dir.c:6909
-#: common/flatpak-dir.c:10529 common/flatpak-dir.c:11260
+#: common/flatpak-dir.c:5894 common/flatpak-dir.c:7207
+#: common/flatpak-dir.c:10827 common/flatpak-dir.c:11558
 msgid "Can't pull from untrusted non-gpg verified remote"
 msgstr "无法从不信任的无 GPG 校验的远程仓库提取"
 
-#: common/flatpak-dir.c:6315 common/flatpak-dir.c:6352
+#: common/flatpak-dir.c:6317 common/flatpak-dir.c:6532
 msgid "Extra data not supported for non-gpg-verified local system installs"
 msgstr "无 GPG 校验的本地系统级安装不支持额外数据"
 
-#: common/flatpak-dir.c:6381
+#: common/flatpak-dir.c:6356 common/flatpak-dir.c:6723
 #, c-format
 msgid "Invalid checksum for extra data uri %s"
 msgstr "额外数据网址 %s 校验和无效"
 
-#: common/flatpak-dir.c:6386
+#: common/flatpak-dir.c:6365
 #, c-format
 msgid "Empty name for extra data uri %s"
 msgstr "额外数据网址 %s 的空白名称"
 
-#: common/flatpak-dir.c:6393
+#: common/flatpak-dir.c:6373
 #, c-format
 msgid "Unsupported extra data uri %s"
 msgstr "不支持的额外数据网址 %s"
 
-#: common/flatpak-dir.c:6407
+#: common/flatpak-dir.c:6402
 #, c-format
 msgid "Failed to load local extra-data %s: %s"
 msgstr "加载本地额外数据 %s 失败：%s"
@@ -4640,252 +4619,250 @@ msgstr "加载本地额外数据 %s 失败：%s"
 msgid "Wrong size for extra-data %s"
 msgstr "额外数据 %s 的大小错误"
 
-#: common/flatpak-dir.c:6425
+#: common/flatpak-dir.c:6429
 #, c-format
 msgid "While downloading %s: "
 msgstr "下载 %s 时："
 
-#: common/flatpak-dir.c:6432
+#: common/flatpak-dir.c:6439
 #, c-format
 msgid "Wrong size for extra data %s"
 msgstr "额外数据 %s 的大小错误"
 
-#: common/flatpak-dir.c:6441
+#: common/flatpak-dir.c:6448
 #, c-format
 msgid "Invalid checksum for extra data %s"
 msgstr "额外数据 %s 的校验和无效"
 
-#: common/flatpak-dir.c:6739 common/flatpak-dir.c:6992
+#: common/flatpak-dir.c:7037 common/flatpak-dir.c:7290
 #, c-format
 msgid "While pulling %s from remote %s: "
 msgstr "从远程仓库 %2$s 提取 %1$s 时："
 
-#: common/flatpak-dir.c:6933 common/flatpak-repo-utils.c:3906
+#: common/flatpak-dir.c:7231 common/flatpak-repo-utils.c:3906
 msgid "GPG signatures found, but none are in trusted keyring"
 msgstr "找到 GPG 签名，但都不在信任的密钥环中"
 
-#: common/flatpak-dir.c:6950
+#: common/flatpak-dir.c:7248
 #, c-format
 msgid "Commit for ‘%s’ has no ref binding"
 msgstr "“%s”的提交没有引用绑定"
 
-#: common/flatpak-dir.c:6955
+#: common/flatpak-dir.c:7253
 #, c-format
 msgid "Commit for ‘%s’ is not in expected bound refs: %s"
 msgstr "“%s”的提交不在预期的绑定引用中：%s"
 
-#: common/flatpak-dir.c:7131
+#: common/flatpak-dir.c:7429
 msgid "Only applications can be made current"
 msgstr "仅应用程序可被作为当前"
 
-#: common/flatpak-dir.c:7835
+#: common/flatpak-dir.c:8133
 msgid "Not enough memory"
 msgstr "内存不足"
 
-#: common/flatpak-dir.c:7854
+#: common/flatpak-dir.c:8152
 msgid "Failed to read from exported file"
 msgstr "从导出的文件读取失败"
 
-#: common/flatpak-dir.c:8044
+#: common/flatpak-dir.c:8342
 msgid "Error reading mimetype xml file"
 msgstr "读取 mimetype xml 文件时出错"
 
-#: common/flatpak-dir.c:8049
+#: common/flatpak-dir.c:8347
 msgid "Invalid mimetype xml file"
 msgstr "无效的 mimetype xml 文件"
 
-#: common/flatpak-dir.c:8135
+#: common/flatpak-dir.c:8433
 #, c-format
 msgid "D-Bus service file '%s' has wrong name"
 msgstr "D-Bus 服务文件“%s”名称错误"
 
-#: common/flatpak-dir.c:8290
+#: common/flatpak-dir.c:8588
 #, c-format
 msgid "Invalid Exec argument %s"
 msgstr "无效的执行参数 %s"
 
-#: common/flatpak-dir.c:8758
+#: common/flatpak-dir.c:9056
 msgid "While getting detached metadata: "
 msgstr "获取分离的元数据时："
 
-#: common/flatpak-dir.c:8763 common/flatpak-dir.c:8768
-#: common/flatpak-dir.c:8772
+#: common/flatpak-dir.c:9061 common/flatpak-dir.c:9066
+#: common/flatpak-dir.c:9070
 msgid "Extra data missing in detached metadata"
 msgstr "分离的元数据中缺少额外的数据"
 
-#: common/flatpak-dir.c:8776
+#: common/flatpak-dir.c:9074
 msgid "While creating extradir: "
 msgstr "创建 extradir 时："
 
-#: common/flatpak-dir.c:8797 common/flatpak-dir.c:8830
+#: common/flatpak-dir.c:9095 common/flatpak-dir.c:9128
 msgid "Invalid checksum for extra data"
 msgstr "额外数据的校验和无效"
 
-#: common/flatpak-dir.c:8826
+#: common/flatpak-dir.c:9124
 msgid "Wrong size for extra data"
 msgstr "额外数据的大小错误"
 
-#: common/flatpak-dir.c:8839
+#: common/flatpak-dir.c:9137
 #, c-format
 msgid "While writing extra data file '%s': "
 msgstr "写入额外数据文件“%s”时："
 
-#: common/flatpak-dir.c:8847
+#: common/flatpak-dir.c:9145
 #, c-format
 msgid "Extra data %s missing in detached metadata"
 msgstr "分离的元数据中缺少额外的数据 %s"
 
-#: common/flatpak-dir.c:8945
-#, c-format
+#: common/flatpak-dir.c:9243
 msgid "Unable to get runtime key from metadata"
 msgstr "无法从元数据获取运行时密钥"
 
-#: common/flatpak-dir.c:9059
+#: common/flatpak-dir.c:9357
 #, c-format
 msgid "apply_extra script failed, exit status %d"
 msgstr "apply_extra 脚本失败，退出状态为 %d"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-dir.c:9239
+#: common/flatpak-dir.c:9537
 #, c-format
 msgid "Installing %s is not allowed by the policy set by your administrator"
 msgstr "您的管理员设置的策略不允许安装 %s"
 
-#: common/flatpak-dir.c:9338
+#: common/flatpak-dir.c:9636
 #, c-format
 msgid "While trying to resolve ref %s: "
 msgstr "尝试解决引用 %s 时："
 
-#: common/flatpak-dir.c:9350
+#: common/flatpak-dir.c:9648
 #, c-format
 msgid "%s is not available"
 msgstr "%s 不可用"
 
-#: common/flatpak-dir.c:9362 common/flatpak-dir.c:11137
+#: common/flatpak-dir.c:9660 common/flatpak-dir.c:11435
 #, c-format
 msgid "%s commit %s already installed"
 msgstr "%s 提交 %s 已安装"
 
-#: common/flatpak-dir.c:9369
+#: common/flatpak-dir.c:9667
 msgid "Can't create deploy directory"
 msgstr "无法创建部署目录"
 
-#: common/flatpak-dir.c:9377
+#: common/flatpak-dir.c:9675
 #, c-format
 msgid "Failed to read commit %s: "
 msgstr "读取提交 %s 失败："
 
-#: common/flatpak-dir.c:9398
+#: common/flatpak-dir.c:9696
 #, c-format
 msgid "While trying to checkout %s into %s: "
 msgstr "尝试检验 %s 至 %s 时："
 
-#: common/flatpak-dir.c:9417
+#: common/flatpak-dir.c:9715
 msgid "While trying to checkout metadata subpath: "
 msgstr "尝试检验元数据子路径时："
 
-#: common/flatpak-dir.c:9449
+#: common/flatpak-dir.c:9747
 #, c-format
 msgid "While trying to checkout subpath ‘%s’: "
 msgstr "尝试检验子路径“%s”时："
 
-#: common/flatpak-dir.c:9459
+#: common/flatpak-dir.c:9757
 msgid "While trying to remove existing extra dir: "
 msgstr "尝试移除现存额外目录时："
 
-#: common/flatpak-dir.c:9470
+#: common/flatpak-dir.c:9768
 msgid "While trying to apply extra data: "
 msgstr "尝试应用额外数据时："
 
-#: common/flatpak-dir.c:9497
+#: common/flatpak-dir.c:9795
 #, c-format
 msgid "Invalid commit ref %s: "
 msgstr "无效的提交引用 %s："
 
-#: common/flatpak-dir.c:9505 common/flatpak-dir.c:9517
+#: common/flatpak-dir.c:9803 common/flatpak-dir.c:9815
 #, c-format
 msgid "Deployed ref %s does not match commit (%s)"
 msgstr "已部署的引用 %s 不匹配提交（%s）"
 
-#: common/flatpak-dir.c:9511
+#: common/flatpak-dir.c:9809
 #, c-format
 msgid "Deployed ref %s branch does not match commit (%s)"
 msgstr "已部署的引用 %s 分支不匹配提交（%s）"
 
-#: common/flatpak-dir.c:9773 common/flatpak-installation.c:1912
+#: common/flatpak-dir.c:10071 common/flatpak-installation.c:1909
 #, c-format
 msgid "%s branch %s already installed"
 msgstr "%s 分支 %s 已安装"
 
-#: common/flatpak-dir.c:10633
+#: common/flatpak-dir.c:10931
 #, c-format
 msgid "Could not unmount revokefs-fuse filesystem at %s: "
 msgstr "无法取消挂载位于 %s 的 revokefs-fuse 文件系统："
 
-#: common/flatpak-dir.c:10937
+#: common/flatpak-dir.c:11235
 #, c-format
 msgid "This version of %s is already installed"
 msgstr "此版本的 %s 已安装"
 
-#: common/flatpak-dir.c:10950
-#, c-format
+#: common/flatpak-dir.c:11248
 msgid "Can't change remote during bundle install"
 msgstr "捆绑包安装期间无法更改远程仓库"
 
-#: common/flatpak-dir.c:11213
+#: common/flatpak-dir.c:11511
 msgid "Can't update to a specific commit without root permissions"
 msgstr "没有 root 权限无法更新至指定提交"
 
-#: common/flatpak-dir.c:11494
+#: common/flatpak-dir.c:11792
 #, c-format
 msgid "Can't remove %s, it is needed for: %s"
 msgstr "无法移除 %s，需要它的有：%s"
 
-#: common/flatpak-dir.c:11554 common/flatpak-installation.c:2068
+#: common/flatpak-dir.c:11852 common/flatpak-installation.c:2065
 #, c-format
 msgid "%s branch %s is not installed"
 msgstr "%s 分支 %s 未安装"
 
-#: common/flatpak-dir.c:11807
+#: common/flatpak-dir.c:12105
 #, c-format
 msgid "%s commit %s not installed"
 msgstr "%s 提交 %s 未安装"
 
-#: common/flatpak-dir.c:12143
+#: common/flatpak-dir.c:12441
 #, c-format
 msgid "Pruning repo failed: %s"
 msgstr "修剪仓库失败：%s"
 
-#: common/flatpak-dir.c:12311 common/flatpak-dir.c:12317
+#: common/flatpak-dir.c:12609 common/flatpak-dir.c:12615
 #, c-format
 msgid "Failed to load filter '%s'"
 msgstr "加载筛选器“%s”失败"
 
-#: common/flatpak-dir.c:12323
+#: common/flatpak-dir.c:12621
 #, c-format
 msgid "Failed to parse filter '%s'"
 msgstr "解析筛选器“%s”失败"
 
-#: common/flatpak-dir.c:12605
+#: common/flatpak-dir.c:12903
 msgid "Failed to write summary cache: "
 msgstr "写入摘要缓存失败："
 
-#: common/flatpak-dir.c:12624
+#: common/flatpak-dir.c:12922
 #, c-format
 msgid "No oci summary cached for remote '%s'"
 msgstr "远程仓库“%s”没有已缓存的 OCI 摘要"
 
-#: common/flatpak-dir.c:12849
+#: common/flatpak-dir.c:13147
 #, c-format
 msgid "No cached summary for remote '%s'"
 msgstr "远程仓库“%s”没有已缓存的摘要"
 
-#: common/flatpak-dir.c:12890
+#: common/flatpak-dir.c:13188
 #, c-format
 msgid "Invalid checksum for indexed summary %s read from %s"
 msgstr "从“%2$s”读取的已索引摘要 %1$s 的校验和无效"
 
-#: common/flatpak-dir.c:12963
+#: common/flatpak-dir.c:13261
 #, c-format
 msgid ""
 "Remote listing for %s not available; server has no summary file. Check the "
@@ -4894,102 +4871,101 @@ msgstr ""
 "%s 的远程列表不可用；服务器没有摘要文件。请检查传递给 remote-add 的网址是否有"
 "效。"
 
-#: common/flatpak-dir.c:13340
+#: common/flatpak-dir.c:13638
 #, c-format
 msgid "Invalid checksum for indexed summary %s for remote '%s'"
 msgstr "远程仓库“%2$s”的已索引摘要 %1$s 的校验和无效"
 
-#: common/flatpak-dir.c:14030
+#: common/flatpak-dir.c:14328
 #, c-format
 msgid "Multiple branches available for %s, you must specify one of: "
 msgstr "%s 有多个可用分支，您必须指定一个："
 
-#: common/flatpak-dir.c:14096
+#: common/flatpak-dir.c:14394
 #, c-format
 msgid "Nothing matches %s"
 msgstr "没有 %s 的匹配项"
 
-#: common/flatpak-dir.c:14204
+#: common/flatpak-dir.c:14502
 #, c-format
 msgid "Can't find ref %s%s%s%s%s"
 msgstr "无法找到引用 %s%s%s%s%s"
 
-#: common/flatpak-dir.c:14247
+#: common/flatpak-dir.c:14545
 #, c-format
 msgid "Error searching remote %s: %s"
 msgstr "搜索远程仓库 %s 时出错：%s"
 
-#: common/flatpak-dir.c:14344
+#: common/flatpak-dir.c:14642
 #, c-format
 msgid "Error searching local repository: %s"
 msgstr "搜索本地仓库时出错：%s"
 
-#: common/flatpak-dir.c:14481
+#: common/flatpak-dir.c:14779
 #, c-format
 msgid "%s/%s/%s not installed"
 msgstr "%s/%s/%s 未安装"
 
-#: common/flatpak-dir.c:14684
+#: common/flatpak-dir.c:14982
 #, c-format
 msgid "Could not find installation %s"
 msgstr "无法找到安装 %s"
 
-#: common/flatpak-dir.c:15229
+#: common/flatpak-dir.c:15527
 #, c-format
 msgid "Invalid file format, no %s group"
 msgstr "无效的文件格式，没有 %s 组"
 
-#: common/flatpak-dir.c:15234 common/flatpak-repo-utils.c:2861
+#: common/flatpak-dir.c:15532 common/flatpak-repo-utils.c:2861
 #, c-format
 msgid "Invalid version %s, only 1 supported"
 msgstr "无效的版本 %s，仅支持 1"
 
-#: common/flatpak-dir.c:15239 common/flatpak-dir.c:15244
+#: common/flatpak-dir.c:15537 common/flatpak-dir.c:15542
 #, c-format
 msgid "Invalid file format, no %s specified"
 msgstr "无效的文件格式，没有指定 %s"
 
 #. Check some minimal size so we don't get crap
-#: common/flatpak-dir.c:15264
+#: common/flatpak-dir.c:15562
 msgid "Invalid file format, gpg key invalid"
 msgstr "无效的文件格式，GPG 密钥无效"
 
-#: common/flatpak-dir.c:15292 common/flatpak-repo-utils.c:2937
+#: common/flatpak-dir.c:15590 common/flatpak-repo-utils.c:2937
 msgid "Collection ID requires GPG key to be provided"
 msgstr "集合标识要求提供 GPG 密钥"
 
-#: common/flatpak-dir.c:15335
+#: common/flatpak-dir.c:15633
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "运行时 %s、分支 %s 已安装"
 
-#: common/flatpak-dir.c:15336
+#: common/flatpak-dir.c:15634
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "应用 %s、分支 %s 已安装"
 
-#: common/flatpak-dir.c:15569
+#: common/flatpak-dir.c:15867
 #, c-format
 msgid "Can't remove remote '%s' with installed ref %s (at least)"
 msgstr "无法移除具有已安装引用 %2$s（至少）的远程仓库“%1$s”"
 
-#: common/flatpak-dir.c:15668
+#: common/flatpak-dir.c:15966
 #, c-format
 msgid "Invalid character '/' in remote name: %s"
 msgstr "远程仓库名称中有无效字符“/”：%s"
 
-#: common/flatpak-dir.c:15674
+#: common/flatpak-dir.c:15972
 #, c-format
 msgid "No configuration for remote %s specified"
 msgstr "没有为远程仓库 %s 指定配置"
 
-#: common/flatpak-dir.c:17165
+#: common/flatpak-dir.c:17466
 #, c-format
 msgid "Skipping deletion of mirror ref (%s, %s)…\n"
 msgstr "正在跳过删除镜像引用（%s，%s）…\n"
 
 #: common/flatpak-exports.c:931
-#, c-format
 msgid "An absolute path is required"
 msgstr "需要绝对路径"
 
@@ -5064,22 +5040,22 @@ msgstr "在注册表中未发现引用“%s”"
 msgid "Multiple images in registry, specify a ref with --ref"
 msgstr "注册表中有多个映像，使用 --ref 指定一个引用"
 
-#: common/flatpak-installation.c:835
+#: common/flatpak-installation.c:832
 #, c-format
 msgid "Ref %s not installed"
 msgstr "引用 %s 未安装"
 
-#: common/flatpak-installation.c:876
+#: common/flatpak-installation.c:873
 #, c-format
 msgid "App %s not installed"
 msgstr "应用 %s 未安装"
 
-#: common/flatpak-installation.c:1396
+#: common/flatpak-installation.c:1393
 #, c-format
 msgid "Remote '%s' already exists"
 msgstr "远程仓库“%s”已存在"
 
-#: common/flatpak-installation.c:1947
+#: common/flatpak-installation.c:1944
 #, c-format
 msgid "As requested, %s was only pulled, but not installed"
 msgstr "根据请求，%s 仅被提取，没有安装"
@@ -5110,72 +5086,76 @@ msgstr "无法创建文件 %s"
 msgid "Unable to update symbolic link %s/%s"
 msgstr "无法更新符号链接 %s/%s"
 
-#: common/flatpak-oci-registry.c:1238
+#: common/flatpak-oci-registry.c:1239
 msgid "Only Bearer authentication supported"
 msgstr "仅支持 Bearer 身份验证"
 
-#: common/flatpak-oci-registry.c:1247
+#: common/flatpak-oci-registry.c:1248
 msgid "Only realm in authentication request"
 msgstr "身份验证中仅请求领域"
 
-#: common/flatpak-oci-registry.c:1254
+#: common/flatpak-oci-registry.c:1255
 msgid "Invalid realm in authentication request"
 msgstr "身份验证中请求的领域无效"
 
-#: common/flatpak-oci-registry.c:1324
+#: common/flatpak-oci-registry.c:1325
 #, c-format
 msgid "Authorization failed: %s"
 msgstr "身份验证失败：%s"
 
-#: common/flatpak-oci-registry.c:1326
+#: common/flatpak-oci-registry.c:1327
 msgid "Authorization failed"
 msgstr "身份验证失败"
 
-#: common/flatpak-oci-registry.c:1330
+#: common/flatpak-oci-registry.c:1331
 #, c-format
 msgid "Unexpected response status %d when requesting token: %s"
 msgstr "请求令牌时遇到意料之外的响应状态 %d：%s"
 
-#: common/flatpak-oci-registry.c:1341
+#: common/flatpak-oci-registry.c:1342
 msgid "Invalid authentication request response"
 msgstr "无效的身份验证请求响应"
 
-#: common/flatpak-oci-registry.c:1928 common/flatpak-oci-registry.c:1980
-#: common/flatpak-oci-registry.c:2009 common/flatpak-oci-registry.c:2064
-#: common/flatpak-oci-registry.c:2120 common/flatpak-oci-registry.c:2198
+#: common/flatpak-oci-registry.c:1773
+msgid "Flatpak was compiled without zstd support"
+msgstr "Flatpak 编译时未开启 zstd 支持"
+
+#: common/flatpak-oci-registry.c:1965 common/flatpak-oci-registry.c:2017
+#: common/flatpak-oci-registry.c:2046 common/flatpak-oci-registry.c:2101
+#: common/flatpak-oci-registry.c:2157 common/flatpak-oci-registry.c:2235
 msgid "Invalid delta file format"
 msgstr "无效的增量文件格式"
 
-#: common/flatpak-oci-registry.c:2702
+#: common/flatpak-oci-registry.c:2739
 #, c-format
 msgid "No gpg key found with ID %s (homedir: %s)"
 msgstr "未找到身份标识 %s 的 GPG 密钥（主目录：%s）"
 
-#: common/flatpak-oci-registry.c:2709
+#: common/flatpak-oci-registry.c:2746
 #, c-format
 msgid "Unable to lookup key ID %s: %d"
 msgstr "无法查找密钥标识 %s：%d"
 
-#: common/flatpak-oci-registry.c:2717
+#: common/flatpak-oci-registry.c:2754
 #, c-format
 msgid "Error signing commit: %d"
 msgstr "签署提交时出错：%d"
 
-#: common/flatpak-oci-registry.c:3697 common/flatpak-oci-registry.c:3854
+#: common/flatpak-oci-registry.c:3734 common/flatpak-oci-registry.c:3891
 msgid "Invalid OCI image config"
 msgstr "无效的 OCI 映像配置"
 
-#: common/flatpak-oci-registry.c:3759 common/flatpak-oci-registry.c:4003
+#: common/flatpak-oci-registry.c:3796 common/flatpak-oci-registry.c:4040
 #, c-format
 msgid "Wrong layer checksum, expected %s, was %s"
 msgstr "错误的层校验和，预期为 %s，实际为 %s"
 
-#: common/flatpak-oci-registry.c:3831
+#: common/flatpak-oci-registry.c:3868
 #, c-format
 msgid "No ref specified for OCI image %s"
 msgstr "没有为 OCI 映像 %s 指定引用"
 
-#: common/flatpak-oci-registry.c:3841
+#: common/flatpak-oci-registry.c:3878
 #, c-format
 msgid "Wrong ref (%s) specified for OCI image %s, expected %s"
 msgstr "为 OCI 映像 %2$s 指定了错误的引用（%1$s），预期为 %3$s"
@@ -5359,7 +5339,6 @@ msgid "GPG verification must be enabled when a collection ID is set"
 msgstr "设置集合标识时必须启用 GPG 校验"
 
 #: common/flatpak-repo-utils.c:344
-#, c-format
 msgid "No extra data sources"
 msgstr "没有额外的数据源"
 
@@ -5433,58 +5412,58 @@ msgstr "打开 bwrapinfo.json 文件失败：%s"
 msgid "Failed to write to instance id fd: %s"
 msgstr "写入实例标识 FD 失败：%s"
 
-#: common/flatpak-run.c:2025
+#: common/flatpak-run.c:2013
 msgid "Initialize seccomp failed"
 msgstr "初始化 seccomp 失败"
 
-#: common/flatpak-run.c:2064
+#: common/flatpak-run.c:2052
 #, c-format
 msgid "Failed to add architecture to seccomp filter: %s"
 msgstr "将架构添加到 seccomp 筛选器失败：%s"
 
-#: common/flatpak-run.c:2072
+#: common/flatpak-run.c:2060
 #, c-format
 msgid "Failed to add multiarch architecture to seccomp filter: %s"
 msgstr "将多体系结构添加到 seccomp 筛选器失败：%s"
 
-#: common/flatpak-run.c:2104 common/flatpak-run.c:2121
-#: common/flatpak-run.c:2143
+#: common/flatpak-run.c:2092 common/flatpak-run.c:2109
+#: common/flatpak-run.c:2131
 #, c-format
 msgid "Failed to block syscall %d: %s"
 msgstr "封锁系统调用 %d 失败：%s"
 
-#: common/flatpak-run.c:2176
+#: common/flatpak-run.c:2164
 #, c-format
 msgid "Failed to export bpf: %s"
 msgstr "导出 bpf 失败：%s"
 
-#: common/flatpak-run.c:2478
+#: common/flatpak-run.c:2466
 #, c-format
 msgid "Failed to open ‘%s’"
 msgstr "打开“%s”失败"
 
-#: common/flatpak-run.c:2488
+#: common/flatpak-run.c:2476
 #, c-format
 msgid ""
 "Directory forwarding needs version 4 of the document portal (have version %d)"
 msgstr "目录转发需要版本 4 的文档门户（拥有版本 %d）"
 
-#: common/flatpak-run.c:2806
+#: common/flatpak-run.c:2794
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "ldconfig 失败，退出状态为 %d"
 
-#: common/flatpak-run.c:2813
+#: common/flatpak-run.c:2801
 msgid "Can't open generated ld.so.cache"
 msgstr "无法打开生成的 ld.so.cache"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-run.c:2936
+#: common/flatpak-run.c:2924
 #, c-format
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr "您的管理员设置的策略不允许运行 %s"
 
-#: common/flatpak-run.c:3059
+#: common/flatpak-run.c:3047
 msgid ""
 "\"flatpak run\" is not intended to be run as `sudo flatpak run`. Use `sudo "
 "-i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell."
@@ -5492,17 +5471,17 @@ msgstr ""
 "“flatpak run”不是设计为以“sudo flatpak run”运行的。使用“sudo -i”或者“su -l”代"
 "替且从新的 shell 内部调用“flatpak run”。"
 
-#: common/flatpak-run.c:3253
+#: common/flatpak-run.c:3241
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "从 %s 迁移失败：%s"
 
-#: common/flatpak-run.c:3274
+#: common/flatpak-run.c:3262
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr "将旧应用数据目录 %s 迁移至新名称 %s 失败：%s"
 
-#: common/flatpak-run.c:3283
+#: common/flatpak-run.c:3271
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "迁移 %s 时创建符号链接失败：%s"
@@ -5685,37 +5664,30 @@ msgid "URI is not absolute, and no base URI was provided"
 msgstr "URI 不是绝对路径，且未提供基础 URI"
 
 #: common/flatpak-usb.c:83
-#, c-format
 msgid "USB device query 'all' must not have data"
 msgstr "USB 设备查询“all”不能具有数据"
 
 #: common/flatpak-usb.c:102
-#, c-format
 msgid "USB query rule 'cls' must be in the form CLASS:SUBCLASS or CLASS:*"
 msgstr "USB 查询规则“cls”必须为 CLASS:SUBCLASS 或 CLASS:* 的形式"
 
 #: common/flatpak-usb.c:111
-#, c-format
 msgid "Invalid USB class"
 msgstr "无效的 USB 类"
 
 #: common/flatpak-usb.c:125
-#, c-format
 msgid "Invalid USB subclass"
 msgstr "无效的 USB 子类"
 
 #: common/flatpak-usb.c:141 common/flatpak-usb.c:148
-#, c-format
 msgid "USB query rule 'dev' must have a valid 4-digit hexadecimal product id"
 msgstr "USB 查询规则“dev”必须具有有效的 4 位数 16 进制产品标识符"
 
 #: common/flatpak-usb.c:164 common/flatpak-usb.c:171
-#, c-format
 msgid "USB query rule 'vnd' must have a valid 4-digit hexadecimal vendor id"
 msgstr "USB 查询规则“vnd”必须具有有效的 4 位数 16 进制厂商标识符"
 
 #: common/flatpak-usb.c:205
-#, c-format
 msgid "USB device queries must be in the form TYPE:DATA"
 msgstr "USB 设备查询必须为 TYPE:DATA 的形式"
 
@@ -5725,22 +5697,18 @@ msgid "Unknown USB query rule %s"
 msgstr "未知的 USB 查询规则 %s"
 
 #: common/flatpak-usb.c:248
-#, c-format
 msgid "Empty USB query"
 msgstr "空的 USB 查询"
 
 #: common/flatpak-usb.c:274
-#, c-format
 msgid "Multiple USB query rules of the same type is not supported"
 msgstr "不支持同一类型的多 USB 查询规则"
 
 #: common/flatpak-usb.c:283
-#, c-format
 msgid "'all' must not contain extra query rules"
 msgstr "“all”不能包含额外查询规则"
 
 #: common/flatpak-usb.c:291
-#, c-format
 msgid "USB queries with 'dev' must also specify vendors"
 msgstr "使用“dev”的 USB 查询必须同时指定厂商"
 
@@ -5803,44 +5771,40 @@ msgstr "不是 OCI 远程仓库"
 msgid "Invalid token"
 msgstr "无效的令牌"
 
-#: portal/flatpak-portal.c:2340
-#, c-format
+#: portal/flatpak-portal.c:2373
 msgid "No portal support found"
 msgstr "未发现传送门支持"
 
-#: portal/flatpak-portal.c:2346
+#: portal/flatpak-portal.c:2379
 msgid "Deny"
 msgstr "拒绝"
 
-#: portal/flatpak-portal.c:2348
+#: portal/flatpak-portal.c:2381
 msgid "Update"
 msgstr "更新"
 
-#: portal/flatpak-portal.c:2353
+#: portal/flatpak-portal.c:2386
 #, c-format
 msgid "Update %s?"
 msgstr "更新 %s 吗？"
 
-#: portal/flatpak-portal.c:2365
+#: portal/flatpak-portal.c:2398
 msgid "The application wants to update itself."
 msgstr "该应用程序想要更新自身。"
 
-#: portal/flatpak-portal.c:2366
+#: portal/flatpak-portal.c:2399
 msgid "Update access can be changed any time from the privacy settings."
 msgstr "您可以随时通过隐私设置更改更新访问。"
 
-#: portal/flatpak-portal.c:2391
-#, c-format
+#: portal/flatpak-portal.c:2424
 msgid "Application update not allowed"
 msgstr "不允许更新应用程序"
 
-#: portal/flatpak-portal.c:2549
-#, c-format
+#: portal/flatpak-portal.c:2582
 msgid "Self update not supported, new version requires new permissions"
 msgstr "不支持自我更新，新版本需要新的权限"
 
-#: portal/flatpak-portal.c:2731 portal/flatpak-portal.c:2748
-#, c-format
+#: portal/flatpak-portal.c:2765 portal/flatpak-portal.c:2783
 msgid "Update ended unexpectedly"
 msgstr "更新意外结束"
 
