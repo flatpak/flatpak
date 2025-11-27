@@ -597,7 +597,7 @@ flatpak_oci_verify_signature (OstreeRepo *repo,
     {
       g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
                            "GPG signatures found, but none are in trusted keyring");
-      return FALSE;
+      return NULL;
     }
 
   plain = read_gpg_buffer (plain_buffer, error);
@@ -606,7 +606,7 @@ flatpak_oci_verify_signature (OstreeRepo *repo,
   plain_bytes = g_string_free_to_bytes (g_steal_pointer (&plain));
   json = flatpak_json_from_bytes (plain_bytes, FLATPAK_TYPE_OCI_SIGNATURE, error);
   if (json == NULL)
-    return FALSE;
+    return NULL;
 
   return (FlatpakOciSignature *) g_steal_pointer (&json);
 }
