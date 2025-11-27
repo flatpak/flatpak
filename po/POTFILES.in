@@ -48,10 +48,11 @@ app/flatpak-builtins-utils.c
 app/flatpak-cli-transaction.c
 app/flatpak-main.c
 app/flatpak-quiet-transaction.c
+app/flatpak-table-printer.c
 common/flatpak-auth.c
 common/flatpak-context.c
-common/flatpak-dir-utils.c
 common/flatpak-dir.c
+common/flatpak-dir-utils.c
 common/flatpak-exports.c
 common/flatpak-glib-backports.c
 common/flatpak-image-source.c
@@ -70,5 +71,4 @@ common/flatpak-usb.c
 common/flatpak-utils.c
 oci-authenticator/flatpak-oci-authenticator.c
 portal/flatpak-portal.c
-system-helper/flatpak-system-helper.service.in
 system-helper/org.freedesktop.Flatpak.policy.in

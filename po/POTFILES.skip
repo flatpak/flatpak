@@ -1,3 +1,6 @@
 # List of source files that should *not* be translated.
 # Please keep this file sorted alphabetically.
+app/flatpak-builtins-utils.h
 app/parse-datetime.c
+common/flatpak-dir-private.h
+common/valgrind-private.h
