@@ -29,7 +29,7 @@ skip_revokefs_without_fuse
 
 echo "1..3"
 
-setup_empty_repo &> /dev/null > /dev/null
+setup_empty_repo &> /dev/null
 
 # Manually add the user remote too
 $FLATPAK remote-add --user --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg test-repo "http://127.0.0.1:${port}/test" >&2
@@ -83,8 +83,8 @@ sdk=${SDK}/$ARCH/$BRANCH
 EOF
     fi
 
-    $FLATPAK build-finish $DIR ${finish_args[$ID]:-} &> /dev/null > /dev/null
-    $FLATPAK build-export -v ${FL_GPGARGS} --disable-sandbox --runtime repos/test ${DIR} ${BRANCH} &> /dev/null > /dev/null
+    $FLATPAK build-finish $DIR ${finish_args[$ID]:-} &> /dev/null
+    $FLATPAK build-export -v ${FL_GPGARGS} --disable-sandbox --runtime repos/test ${DIR} ${BRANCH} &> /dev/null
     rm -rf ${DIR}
 }
 
@@ -110,7 +110,7 @@ EOF
     fi
 
     set -x
-    $FLATPAK build-finish ${DIR}  ${finish_args[$ID]:-} &> /dev/null > /dev/null
+    $FLATPAK build-finish ${DIR}  ${finish_args[$ID]:-} &> /dev/null
 
     $FLATPAK build-export ${FL_GPGARGS} --disable-sandbox repos/test ${DIR} ${BRANCH} &> /dev/null > /dev/null
     rm -rf ${DIR}
@@ -255,15 +255,15 @@ make_it_happen() {
     for app in "${apps[@]}"; do
         create_app "$app" "${apps_runtime[$app]}" "${apps_sdk[$app]}"
     done
-    update_repo  &> /dev/null > /dev/null
+    update_repo  &> /dev/null
 
     for runtime in "${runtimes[@]}"; do
         local in=${installs_in[${runtime}]:-system}
         if test $in = system -o $in = both; then
-            $FLATPAK install -y --system --no-deps --no-related --no-auto-pin test-repo runtime/$runtime/$ARCH/stable  &> /dev/null > /dev/null
+            $FLATPAK install -y --system --no-deps --no-related --no-auto-pin test-repo runtime/$runtime/$ARCH/stable  &> /dev/null
         fi
         if test $in = user -o $in = both; then
-            $FLATPAK install -y --user --no-deps --no-related --no-auto-pin test-repo runtime/$runtime/$ARCH/stable  &> /dev/null > /dev/null
+            $FLATPAK install -y --user --no-deps --no-related --no-auto-pin test-repo runtime/$runtime/$ARCH/stable  &> /dev/null
         fi
         if test "x${runtimes_pinned[$runtime]:-}" == "xyes"; then
             $FLATPAK pin $runtime//stable
@@ -272,10 +272,10 @@ make_it_happen() {
     for app in "${apps[@]}"; do
         local in=${installs_in[$app]:-system}
         if test $in = system -o $in = both; then
-            $FLATPAK install -y --system --no-deps --no-related --no-auto-pin test-repo app/$app/$ARCH/stable  &> /dev/null > /dev/null
+            $FLATPAK install -y --system --no-deps --no-related --no-auto-pin test-repo app/$app/$ARCH/stable  &> /dev/null
         fi
         if test $in = user -o $in = both; then
-            $FLATPAK install -y --user --no-deps --no-related --no-auto-pin test-repo app/$app/$ARCH/stable  &> /dev/null > /dev/null
+            $FLATPAK install -y --user --no-deps --no-related --no-auto-pin test-repo app/$app/$ARCH/stable  &> /dev/null
         fi
     done
 

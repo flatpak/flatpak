@@ -9442,7 +9442,7 @@ flatpak_dir_check_parental_controls (FlatpakDir    *self,
 
   if (self->subject)
     {
-      g_autoptr(PolkitSubject) process_subject = NULL;
+      g_autoptr(AutoPolkitSubject) process_subject = NULL;
 
       subject = g_object_ref (self->subject);
       /* This internally uses dbus GetConnectionCredentials which ensures we
