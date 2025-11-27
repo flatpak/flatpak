@@ -54,6 +54,34 @@ def run_delete(args):
         sys.exit(1)
 
 
+def run_add_sig(args):
+    params = {"s": args.signature}
+    query = urllib.parse.urlencode(params)
+    conn = get_conn(args)
+    path = "/testing-sig/{repo}/{digest}?{query}".format(
+        repo=args.repo, digest=args.digest, query=query
+    )
+    conn.request("POST", path)
+    response = conn.getresponse()
+    if response.status != 200:
+        print(response.read(), file=sys.stderr)
+        print("Failed: status={}".format(response.status), file=sys.stderr)
+        sys.exit(1)
+
+
+def run_delete_sig(args):
+    conn = get_conn(args)
+    path = "/testing-sig/{repo}/{digest}".format(
+        repo=args.repo, digest=args.digest
+    )
+    conn.request("DELETE", path)
+    response = conn.getresponse()
+    if response.status != 200:
+        print(response.read(), file=sys.stderr)
+        print("Failed: status={}".format(response.status), file=sys.stderr)
+        sys.exit(1)
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--url", required=True)
 parser.add_argument("--cacert")
@@ -74,6 +102,17 @@ delete_parser = subparsers.add_parser("delete")
 delete_parser.add_argument("repo")
 delete_parser.add_argument("ref")
 delete_parser.set_defaults(func=run_delete)
+
+add_sig_parser = subparsers.add_parser("add-signature")
+add_sig_parser.add_argument("repo")
+add_sig_parser.add_argument("digest")
+add_sig_parser.add_argument("signature")
+add_sig_parser.set_defaults(func=run_add_sig)
+
+delete_sig_parser = subparsers.add_parser("delete-signature")
+delete_sig_parser.add_argument("repo")
+delete_sig_parser.add_argument("digest")
+delete_sig_parser.set_defaults(func=run_delete_sig)
 
 args = parser.parse_args()
 args.func(args)
