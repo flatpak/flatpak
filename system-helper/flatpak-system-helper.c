@@ -493,6 +493,7 @@ handle_deploy (FlatpakSystemHelper   *object,
       const char *image_source_digest;
       const char *verified_digest;
       g_autofree char *upstream_url = NULL;
+      g_autoptr(FlatpakImageSource) system_image_source = NULL;
 
       ostree_repo_remote_get_url (flatpak_dir_get_repo (system),
                                   arg_origin,
@@ -550,7 +551,21 @@ handle_deploy (FlatpakSystemHelper   *object,
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
-      checksum = flatpak_pull_from_oci (flatpak_dir_get_repo (system), image_source,
+      system_image_source =
+        flatpak_remote_state_fetch_image_source (state,
+                                                 system,
+                                                 arg_ref,
+                                                 verified_digest,
+                                                 NULL,
+                                                 NULL, &error);
+      if (!system_image_source)
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "Can't fetch image source: %s", error->message);
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
+        }
+
+      checksum = flatpak_pull_from_oci (flatpak_dir_get_repo (system), image_source, system_image_source,
                                         arg_origin, arg_ref, FLATPAK_PULL_FLAGS_NONE, NULL, NULL, NULL, &error);
       if (checksum == NULL)
         {

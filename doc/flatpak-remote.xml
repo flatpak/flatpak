@@ -179,6 +179,13 @@
                     <term><option>xa.main-ref</option> (string)</term>
                     <listitem><para>The main reference served by this remote. This is used for origin remotes of applications installed via a flatpakref file.</para></listitem>
                 </varlistentry>
+                <varlistentry>
+                    <term><option>xa.signature-lookaside</option> (string)</term>
+                    <listitem><para>URL to load signatures from (OCI remotes only),
+                    using the <ulink url="https://github.com/containers/image/blob/main/docs/signature-protocols.md">
+                    containers/image separate storage mechanism.</ulink>
+                    </para></listitem>
+                </varlistentry>
             </variablelist>
         </refsect2>
     </refsect1>
