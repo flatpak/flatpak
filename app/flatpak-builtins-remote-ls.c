@@ -432,7 +432,7 @@ flatpak_builtin_remote_ls (int argc, char **argv, GCancellable *cancellable, GEr
         preferred_dir = flatpak_dir_get_system_default ();
       else
         {
-          if (!flatpak_resolve_duplicate_remotes (dirs, argv[1], &preferred_dir, cancellable, error))
+          if (!flatpak_resolve_duplicate_remotes (dirs, argv[1], FALSE, &preferred_dir, cancellable, error))
             return FALSE;
         }
 
