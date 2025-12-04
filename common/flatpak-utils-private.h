@@ -307,6 +307,16 @@ gboolean flatpak_allocate_tmpdir (int           tmpdir_dfd,
                                   GCancellable *cancellable,
                                   GError      **error);
 
+int flatpak_open_file_at (int           dfd,
+                          const char   *subpath,
+                          struct stat  *st_buf,
+                          GCancellable *cancellable,
+                          GError      **error);
+GBytes *flatpak_load_file_at (int           dfd,
+                              const char   *subpath,
+                              GCancellable *cancellable,
+                              GError      **error);
+
 gboolean flatpak_check_required_version (const char *ref,
                                          GKeyFile   *metakey,
                                          GError    **error);
