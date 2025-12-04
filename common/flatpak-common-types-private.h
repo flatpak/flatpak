@@ -50,6 +50,7 @@ typedef enum {
   FLATPAK_RUN_FLAG_PARENT_EXPOSE_PIDS = (1 << 20),
   FLATPAK_RUN_FLAG_PARENT_SHARE_PIDS  = (1 << 21),
   FLATPAK_RUN_FLAG_CLEAR_ENV          = (1 << 22),
+  FLATPAK_RUN_FLAG_USERNS          = (1 << 23),
 } FlatpakRunFlags;
 
 typedef struct FlatpakDir             FlatpakDir;

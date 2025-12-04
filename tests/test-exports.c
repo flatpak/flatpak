@@ -291,6 +291,7 @@ test_full_context (void)
                      FLATPAK_CONTEXT_FEATURE_MULTIARCH |
                      FLATPAK_CONTEXT_FEATURE_BLUETOOTH |
                      FLATPAK_CONTEXT_FEATURE_CANBUS |
+                     FLATPAK_CONTEXT_FEATURE_USERNS |
                      FLATPAK_CONTEXT_FEATURE_PER_APP_DEV_SHM));
   g_assert_cmpuint (context->features_valid, ==, context->features);
 
