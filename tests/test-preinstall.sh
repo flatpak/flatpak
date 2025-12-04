@@ -82,7 +82,7 @@ setup_repo test2
 make_updated_app test2 org.test.Collection.test2 master HELLO2_MASTER_C2 org.test.Hello2
 make_updated_app test2 org.test.Collection.test2 master HELLO2_MASTER_C3 org.test.Hello3
 
-echo "1..11"
+echo "1..12"
 
 # just checking that the test remote got added
 port=$(cat httpd-port)
@@ -267,3 +267,27 @@ ${FLATPAK} ${U} list --columns=ref > list-log
 assert_file_has_content list-log "^org\.test\.Hello3/.*/master$"
 
 ok "app not in first repo"
+
+# create sideload repo
+${FLATPAK} ${U} install -y test-repo org.test.Hello//master >&2
+mkdir usb_dir
+${FLATPAK} ${U} create-usb --destination-repo=repo usb_dir org.test.Hello//master >&2
+SIDELOAD_REPO=$(realpath usb_dir/repo)
+${FLATPAK} ${U} uninstall -y --all >&2
+
+# make sure nothing is installed
+${FLATPAK} ${U} list --columns=ref > list-log
+assert_file_empty list-log
+! ostree config --repo=$XDG_DATA_HOME/flatpak/repo get --group "core" xa.preinstalled &> /dev/null
+
+# The preinstall config wants org.test.Hello.
+cp hello-install.preinstall $FLATPAK_DATA_DIR/preinstall.d/
+
+# simulate broken network
+${FLATPAK} ${U} remote-modify --url="http://no.127.0.0.1:${port}/test" test-repo >&2
+${FLATPAK} ${U} remote-modify --url="http://no.127.0.0.1:${port}/test" test2-repo >&2
+
+# ensure that installation from the sideload repo works
+${FLATPAK} ${U} -vvvv preinstall -y --sideload-repo=${SIDELOAD_REPO} >&2
+
+ok "sideload with network failure"
