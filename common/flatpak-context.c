@@ -279,6 +279,7 @@ flatpak_permission_serialize (FlatpakPermission *permission,
 static void
 flatpak_permission_to_args (FlatpakPermission *permission,
                             const char        *argname,
+                            const char        *noargname,
                             const char        *name,
                             GPtrArray         *args)
 {
@@ -293,7 +294,7 @@ flatpak_permission_to_args (FlatpakPermission *permission,
       /* Partially allowed */
 
       if (permission->reset)
-        g_ptr_array_add (args, g_strdup_printf ("--no%s=%s", argname, name));
+        g_ptr_array_add (args, g_strdup_printf ("--%s=%s", noargname, name));
 
       for (size_t i = 0; i < permission->conditionals->len; i++)
         {
@@ -582,6 +583,7 @@ flatpak_permissions_allows_unconditionally (GHashTable *permissions,
 static void
 flatpak_permissions_to_args (GHashTable *permissions,
                              const char *argname,
+                             const char *noargname,
                              GPtrArray  *args)
 {
   g_autoptr(GList) ordered_keys = NULL;
@@ -594,7 +596,7 @@ flatpak_permissions_to_args (GHashTable *permissions,
       const char *name = l->data;
       FlatpakPermission *permission = g_hash_table_lookup (permissions, name);
 
-      flatpak_permission_to_args (permission, argname, name, args);
+      flatpak_permission_to_args (permission, argname, noargname, name, args);
     }
 }
 
@@ -892,7 +894,7 @@ static void flatpak_permissions_test_basic (void)
   g_assert_cmpstrv (perms_strv, new_strv);
 
   g_autoptr(GPtrArray) args = g_ptr_array_new_with_free_func (g_free);
-  flatpak_permissions_to_args (perms, "socket", args);
+  flatpak_permissions_to_args (perms, "socket", "nosocket", args);
   g_ptr_array_add(args, NULL);
   g_assert_cmpstrv (perms_args, args->pdata);
 
@@ -3695,9 +3697,10 @@ flatpak_context_to_args (FlatpakContext *context,
 
   flatpak_context_shared_to_args (context, args);
   flatpak_context_features_to_args (context, args);
-
-  flatpak_permissions_to_args (context->device_permissions, "device", args);
-  flatpak_permissions_to_args (context->socket_permissions, "socket", args);
+  flatpak_permissions_to_args (context->device_permissions,
+                               "device", "nodevice", args);
+  flatpak_permissions_to_args (context->socket_permissions,
+                               "socket", "nosocket", args);
 
   g_hash_table_iter_init (&iter, context->env_vars);
   while (g_hash_table_iter_next (&iter, &key, &value))
