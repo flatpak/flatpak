@@ -1191,6 +1191,13 @@ sockets=!x11;x11;if:x11:!has-wayland;
                         point in the parent flatpak. Available since 0.11.4.
                     </para></listitem>
                 </varlistentry>
+                <varlistentry>
+                    <term><option>RequireRef</option> (boolean)</term>
+                    <listitem><para>
+                        Require the extension's <literal>ref</literal> to be installed.
+                        Automatically install it if it is not.
+                    </para></listitem>
+                </varlistentry>
             </variablelist>
         </refsect2>
         <refsect2 id="extra-data-metadata">
