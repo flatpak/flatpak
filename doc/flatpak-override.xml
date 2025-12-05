@@ -131,6 +131,28 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--share-if=SUBSYSTEM:CONDITION</option></term>
+
+                <listitem><para>
+                    Share a subsystem with the host session conditionally,
+                    only when the specified condition is met at runtime.
+                    This overrides to the Context section from the application metadata.
+                    <arg choice="plain">SUBSYSTEM</arg> must be one of: network, ipc.
+                    <arg choice="plain">CONDITION</arg> must be one of:
+                    <option>true</option>, <option>false</option>,
+                    <option>has-input-device</option>, <option>has-wayland</option>.
+                    Conditions can be negated with <literal>!</literal>,
+                    for example <option>!has-input-device</option>.
+                    This option can be used multiple times.
+                    Available since 1.17.
+                </para><para>
+                    See the Conditional Permissions section in
+                    <citerefentry><refentrytitle>flatpak-metadata</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+                    for more details.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--socket=SOCKET</option></term>
 
                 <listitem><para>
@@ -245,6 +267,28 @@
                     devel, multiarch, bluetooth, canbus,
                     per-app-dev-shm.
                     This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--allow-if=FEATURE:CONDITION</option></term>
+
+                <listitem><para>
+                    Allow access to a specific feature conditionally,
+                    only when the specified condition is met at runtime.
+                    This overrides to the Context section from the application metadata.
+                    <arg choice="plain">FEATURE</arg> must be one of: devel, multiarch, bluetooth.
+                    <arg choice="plain">CONDITION</arg> must be one of:
+                    <option>true</option>, <option>false</option>,
+                    <option>has-input-device</option>, <option>has-wayland</option>.
+                    Conditions can be negated with <literal>!</literal>,
+                    for example <option>!has-input-device</option>.
+                    This option can be used multiple times.
+                    Available since 1.17.
+                </para><para>
+                    See the Conditional Permissions section in
+                    <citerefentry><refentrytitle>flatpak-metadata</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+                    for more details.
                 </para></listitem>
             </varlistentry>
 

@@ -244,6 +244,11 @@ sockets=!x11;x11;if:x11:!has-wayland;
                         List of subsystems to share with the host system.
                         Possible subsystems: network, ipc.
                         Available since 0.3.
+                    </para><para>
+                        This option supports conditional permissions.
+                        See <link linkend="conditional-permissions">Conditional Permissions</link>
+                        for details on how to share subsystem access conditionally
+                        based on runtime conditions.
                     </para></listitem>
                 </varlistentry>
 
@@ -663,6 +668,11 @@ sockets=!x11;x11;if:x11:!has-wayland;
                         indicate the absence of that feature, for example
                         <option>!devel</option> if development and debugging
                         are not allowed.
+                    </para><para>
+                        This option supports conditional permissions.
+                        See <link linkend="conditional-permissions">Conditional Permissions</link>
+                        for details on how to allow features based
+                        conditionally on runtime conditions.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>

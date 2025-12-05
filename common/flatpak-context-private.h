@@ -89,12 +89,10 @@ typedef enum {
 
 struct FlatpakContext
 {
-  FlatpakContextShares   shares;
-  FlatpakContextShares   shares_valid;
+  GHashTable            *shares_permissions;
   GHashTable            *socket_permissions;
   GHashTable            *device_permissions;
-  FlatpakContextFeatures features;
-  FlatpakContextFeatures features_valid;
+  GHashTable            *features_permissions;
   GHashTable            *env_vars;
   GHashTable            *persistent;
   GHashTable            *filesystems;
@@ -148,7 +146,7 @@ char *         flatpak_context_devices_to_usb_list (GHashTable *devices,
                                                     gboolean hidden);
 void           flatpak_context_to_args (FlatpakContext *context,
                                         GPtrArray      *args);
-FlatpakRunFlags flatpak_context_get_run_flags (FlatpakContext *context);
+FlatpakRunFlags flatpak_context_features_to_run_flags (FlatpakContextFeatures features);
 void           flatpak_context_add_bus_filters (FlatpakContext *context,
                                                 const char     *app_id,
                                                 FlatpakBus      bus,
@@ -163,9 +161,6 @@ gboolean       flatpak_context_adds_permissions (FlatpakContext *old_context,
 void           flatpak_context_reset_permissions (FlatpakContext *context);
 void           flatpak_context_reset_non_permissions (FlatpakContext *context);
 void           flatpak_context_make_sandboxed (FlatpakContext *context);
-
-gboolean       flatpak_context_allows_features (FlatpakContext        *context,
-                                                FlatpakContextFeatures features);
 
 FlatpakContext *flatpak_context_load_for_deploy (FlatpakDeploy *deploy,
                                                  GError       **error);
@@ -208,9 +203,14 @@ gboolean flatpak_context_get_allowed_exports (FlatpakContext *context,
                                               char         ***allowed_prefixes_out,
                                               gboolean       *require_exact_match_out);
 
+
+FlatpakContextShares flatpak_context_compute_allowed_shares (FlatpakContext                   *context,
+                                                              FlatpakContextConditionEvaluator  evaluator);
 FlatpakContextSockets flatpak_context_compute_allowed_sockets (FlatpakContext                   *context,
                                                                FlatpakContextConditionEvaluator  evaluator);
 FlatpakContextDevices flatpak_context_compute_allowed_devices (FlatpakContext                   *context,
                                                                FlatpakContextConditionEvaluator  evaluator);
+FlatpakContextFeatures flatpak_context_compute_allowed_features (FlatpakContext                   *context,
+                                                                FlatpakContextConditionEvaluator  evaluator);
 
 #endif /* __FLATPAK_CONTEXT_H__ */
