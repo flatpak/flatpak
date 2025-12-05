@@ -61,7 +61,7 @@ ${FLATPAK} override --user --unshare=ipc org.test.Hello
 ${FLATPAK} override --user --show org.test.Hello > override
 
 assert_file_has_content override "^\[Context\]$"
-assert_file_has_content override "^shared=network;!ipc;$"
+assert_file_has_content override "^shared=!ipc;network;$"
 
 ok "override --share"
 
@@ -85,7 +85,7 @@ ${FLATPAK} override --user --disallow=bluetooth org.test.Hello
 ${FLATPAK} override --user --show org.test.Hello > override
 
 assert_file_has_content override "^\[Context\]$"
-assert_file_has_content override "^features=multiarch;!bluetooth;$"
+assert_file_has_content override "^features=!bluetooth;multiarch;$"
 
 ok "override --allow"
 

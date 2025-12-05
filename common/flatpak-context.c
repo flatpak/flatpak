@@ -161,6 +161,10 @@ flatpak_permission_dup (FlatpakPermission *permission)
   FlatpakPermission *copy = NULL;
 
   copy = flatpak_permission_new ();
+
+  if (!permission)
+    return copy;
+
   copy->allowed = permission->allowed;
   copy->reset = permission->reset;
 
@@ -1192,8 +1196,10 @@ flatpak_context_new (void)
                                                            g_free, (GDestroyNotify) flatpak_usb_query_free);
   context->hidden_usb_devices = g_hash_table_new_full (g_str_hash, g_str_equal,
                                                        g_free, (GDestroyNotify) flatpak_usb_query_free);
+  context->shares_permissions = flatpak_permissions_new ();
   context->socket_permissions = flatpak_permissions_new ();
   context->device_permissions = flatpak_permissions_new ();
+  context->features_permissions = flatpak_permissions_new ();
 
   return context;
 }
@@ -1210,8 +1216,10 @@ flatpak_context_free (FlatpakContext *context)
   g_hash_table_destroy (context->generic_policy);
   g_hash_table_destroy (context->enumerable_usb_devices);
   g_hash_table_destroy (context->hidden_usb_devices);
+  g_hash_table_destroy (context->shares_permissions);
   g_hash_table_destroy (context->device_permissions);
   g_hash_table_destroy (context->socket_permissions);
+  g_hash_table_destroy (context->features_permissions);
   g_slice_free (FlatpakContext, context);
 }
 
@@ -1229,49 +1237,6 @@ flatpak_context_bitmask_from_string (const char *name, const char **names)
   return 0;
 }
 
-static void
-flatpak_context_bitmask_to_string (guint32      enabled,
-                                   guint32      valid,
-                                   const char **names,
-                                   GPtrArray   *array)
-{
-  guint32 i;
-
-  for (i = 0; names[i] != NULL; i++)
-    {
-      guint32 bitmask = 1 << i;
-
-      if (valid & bitmask)
-        {
-          if (enabled & bitmask)
-            g_ptr_array_add (array, g_strdup (names[i]));
-          else
-            g_ptr_array_add (array, g_strdup_printf ("!%s", names[i]));
-        }
-    }
-}
-
-static void
-flatpak_context_bitmask_to_args (guint32 enabled, guint32 valid, const char **names,
-                                 const char *enable_arg, const char *disable_arg,
-                                 GPtrArray *args)
-{
-  guint32 i;
-
-  for (i = 0; names[i] != NULL; i++)
-    {
-      guint32 bitmask = 1 << i;
-      if (valid & bitmask)
-        {
-          if (enabled & bitmask)
-            g_ptr_array_add (args, g_strdup_printf ("%s=%s", enable_arg, names[i]));
-          else
-            g_ptr_array_add (args, g_strdup_printf ("%s=%s", disable_arg, names[i]));
-        }
-    }
-}
-
-
 static FlatpakContextShares
 flatpak_context_share_from_string (const char *string, GError **error)
 {
@@ -1285,30 +1250,6 @@ flatpak_context_share_from_string (const char *string, GError **error)
     }
 
   return shares;
-}
-
-static char **
-flatpak_context_shared_to_string (FlatpakContextShares shares,
-                                  FlatpakContextShares valid)
-{
-  g_autoptr (GPtrArray) array = g_ptr_array_new_with_free_func (g_free);
-
-  flatpak_context_bitmask_to_string (shares, valid,
-                                     flatpak_context_shares,
-                                     array);
-
-  g_ptr_array_add (array, NULL);
-  return (char **) g_ptr_array_free (g_steal_pointer (&array), FALSE);
-}
-
-static void
-flatpak_context_shared_to_args (FlatpakContext *context,
-                                GPtrArray      *args)
-{
-  flatpak_context_bitmask_to_args (context->shares, context->shares_valid,
-                                   flatpak_context_shares,
-                                   "--share", "--unshare",
-                                   args);
 }
 
 static FlatpakPolicy
@@ -1410,61 +1351,6 @@ flatpak_context_feature_from_string (const char *string, GError **error)
     }
 
   return feature;
-}
-
-static char **
-flatpak_context_features_to_string (FlatpakContextFeatures features, FlatpakContextFeatures valid)
-{
-  g_autoptr (GPtrArray) array = g_ptr_array_new_with_free_func (g_free);
-
-  flatpak_context_bitmask_to_string (features, valid,
-                                     flatpak_context_features,
-                                     array);
-
-  g_ptr_array_add (array, NULL);
-  return (char **) g_ptr_array_free (g_steal_pointer (&array), FALSE);
-}
-
-static void
-flatpak_context_features_to_args (FlatpakContext *context,
-                                  GPtrArray      *args)
-{
-  flatpak_context_bitmask_to_args (context->features, context->features_valid,
-                                   flatpak_context_features,
-                                   "--allow", "--disallow",
-                                   args);
-}
-
-static void
-flatpak_context_add_shares (FlatpakContext      *context,
-                            FlatpakContextShares shares)
-{
-  context->shares_valid |= shares;
-  context->shares |= shares;
-}
-
-static void
-flatpak_context_remove_shares (FlatpakContext      *context,
-                               FlatpakContextShares shares)
-{
-  context->shares_valid |= shares;
-  context->shares &= ~shares;
-}
-
-static void
-flatpak_context_add_features (FlatpakContext        *context,
-                              FlatpakContextFeatures features)
-{
-  context->features_valid |= features;
-  context->features |= features;
-}
-
-static void
-flatpak_context_remove_features (FlatpakContext        *context,
-                                 FlatpakContextFeatures features)
-{
-  context->features_valid |= features;
-  context->features &= ~features;
 }
 
 static void
@@ -2097,17 +1983,14 @@ flatpak_context_merge (FlatpakContext *context,
   GHashTableIter iter;
   gpointer key, value;
 
-  context->shares &= ~other->shares_valid;
-  context->shares |= other->shares;
-  context->shares_valid |= other->shares_valid;
-  context->features &= ~other->features_valid;
-  context->features |= other->features;
-  context->features_valid |= other->features_valid;
-
+  flatpak_permissions_merge (context->shares_permissions,
+                             other->shares_permissions);
   flatpak_permissions_merge (context->socket_permissions,
                              other->socket_permissions);
   flatpak_permissions_merge (context->device_permissions,
                              other->device_permissions);
+  flatpak_permissions_merge (context->features_permissions,
+                             other->features_permissions);
 
   g_hash_table_iter_init (&iter, other->env_vars);
   while (g_hash_table_iter_next (&iter, &key, &value))
@@ -2173,7 +2056,7 @@ option_share_cb (const gchar *option_name,
   if (share == 0)
     return FALSE;
 
-  flatpak_context_add_shares (context, share);
+  flatpak_permissions_set_allowed (context->shares_permissions, value);
 
   return TRUE;
 }
@@ -2191,7 +2074,7 @@ option_unshare_cb (const gchar *option_name,
   if (share == 0)
     return FALSE;
 
-  flatpak_context_remove_shares (context, share);
+  flatpak_permissions_set_not_allowed (context->shares_permissions, value);
 
   return TRUE;
 }
@@ -2374,7 +2257,7 @@ option_allow_cb (const gchar *option_name,
   if (feature == 0)
     return FALSE;
 
-  flatpak_context_add_features (context, feature);
+  flatpak_permissions_set_allowed (context->features_permissions, value);
 
   return TRUE;
 }
@@ -2392,7 +2275,7 @@ option_disallow_cb (const gchar *option_name,
   if (feature == 0)
     return FALSE;
 
-  flatpak_context_remove_features (context, feature);
+  flatpak_permissions_set_not_allowed (context->features_permissions, value);
 
   return TRUE;
 }
@@ -2862,52 +2745,6 @@ parse_negated (const char *option, gboolean *negated)
   return option;
 }
 
-static void
-flatpak_context_load_share (FlatpakContext *context,
-                            const char     *share_str)
-{
-  FlatpakContextShares share;
-  gboolean remove;
-
-  share =
-    flatpak_context_share_from_string (parse_negated (share_str, &remove),
-                                       NULL);
-
-  if (share == 0)
-    {
-      g_info ("Unknown share type %s", share_str);
-      return;
-    }
-
-  if (remove)
-    flatpak_context_remove_shares (context, share);
-  else
-    flatpak_context_add_shares (context, share);
-}
-
-static void
-flatpak_context_load_feature (FlatpakContext *context,
-                              const char     *feature_str)
-{
-  FlatpakContextFeatures feature;
-  gboolean remove;
-
-  feature =
-    flatpak_context_feature_from_string (parse_negated (feature_str, &remove),
-                                         NULL);
-
-  if (feature == 0)
-    {
-      g_info ("Unknown feature type %s", feature_str);
-      return;
-    }
-
-  if (remove)
-    flatpak_context_remove_features (context, feature);
-  else
-    flatpak_context_add_features (context, feature);
-}
-
 /*
  * Merge the FLATPAK_METADATA_GROUP_CONTEXT,
  * FLATPAK_METADATA_GROUP_SESSION_BUS_POLICY,
@@ -2933,8 +2770,8 @@ flatpak_context_load_metadata (FlatpakContext *context,
       if (shares == NULL)
         return FALSE;
 
-      for (i = 0; shares[i] != NULL; i++)
-        flatpak_context_load_share (context, shares[i]);
+      if (!flatpak_permissions_from_strv (context->shares_permissions, (const char **)shares, error))
+        return FALSE;
     }
 
   if (g_key_file_has_key (metakey, FLATPAK_METADATA_GROUP_CONTEXT, FLATPAK_METADATA_KEY_SOCKETS, NULL))
@@ -2967,8 +2804,8 @@ flatpak_context_load_metadata (FlatpakContext *context,
       if (features == NULL)
         return FALSE;
 
-      for (i = 0; features[i] != NULL; i++)
-        flatpak_context_load_feature (context, features[i]);
+      if (!flatpak_permissions_from_strv (context->features_permissions, (const char **)features, error))
+        return FALSE;
     }
 
   if (g_key_file_has_key (metakey, FLATPAK_METADATA_GROUP_CONTEXT, FLATPAK_METADATA_KEY_FILESYSTEMS, NULL))
@@ -3221,34 +3058,14 @@ flatpak_context_save_metadata (FlatpakContext *context,
   g_autoptr(GPtrArray) unset_env = NULL;
   GHashTableIter iter;
   gpointer key, value;
-  FlatpakContextShares shares_mask = context->shares;
-  FlatpakContextShares shares_valid = context->shares_valid;
-  FlatpakContextFeatures features_mask = context->features;
-  FlatpakContextFeatures features_valid = context->features_valid;
   g_auto(GStrv) groups = NULL;
   int i;
 
-  if (flatten)
-    {
-      /* A flattened format means we don't expect this to be merged on top of
-         another context. In that case we never need to negate any flags.
-         We calculate this by removing the zero parts of the mask from the valid set.
-       */
-      /* First we make sure only the valid parts of the mask are set, in case we
-         got some leftover */
-      shares_mask &= shares_valid;
-      features_mask &= features_valid;
-
-      /* Then just set the valid set to be the mask set */
-      shares_valid = shares_mask;
-      features_valid = features_mask;
-    }
-
-  shared = flatpak_context_shared_to_string (shares_mask, shares_valid);
+  shared = flatpak_permissions_to_strv (context->shares_permissions, flatten);
   g_autoptr(GHashTable) socket_permissions = flatpak_decanonicalize_x11_permissions (context->socket_permissions);
   sockets = flatpak_permissions_to_strv (socket_permissions, flatten);
   devices = flatpak_permissions_to_strv (context->device_permissions, flatten);
-  features = flatpak_context_features_to_string (features_mask, features_valid);
+  features = flatpak_permissions_to_strv (context->features_permissions, flatten);
 
   if (shared[0] != NULL)
     {
@@ -3504,12 +3321,6 @@ flatpak_context_get_needs_system_bus_proxy (FlatpakContext *context)
 }
 
 static gboolean
-adds_flags (guint32 old_flags, guint32 new_flags)
-{
-  return (new_flags & ~old_flags) != 0;
-}
-
-static gboolean
 adds_bus_policy (GHashTable *old, GHashTable *new)
 {
   GLNX_HASH_TABLE_FOREACH_KV (new, const char *, name, gpointer, _new_policy)
@@ -3608,24 +3419,25 @@ gboolean
 flatpak_context_adds_permissions (FlatpakContext *old,
                                   FlatpakContext *new)
 {
+  g_autoptr(GHashTable) old_features_permissions = NULL;
   g_autoptr(GHashTable) old_socket_permissions = NULL;
-  guint32 harmless_features;
 
+  old_features_permissions = flatpak_permissions_dup (old->features_permissions);
   /* We allow upgrade to multiarch, that is really not a huge problem.
    * Similarly, having sensible semantics for /dev/shm is
    * not a security concern. */
-  harmless_features = (FLATPAK_CONTEXT_FEATURE_MULTIARCH |
-                       FLATPAK_CONTEXT_FEATURE_PER_APP_DEV_SHM);
-
-  if (adds_flags (old->shares & old->shares_valid,
-                  new->shares & new->shares_valid))
-    return TRUE;
+  flatpak_permissions_set_allowed (old_features_permissions, "multiarch");
+  flatpak_permissions_set_allowed (old_features_permissions, "per-app-dev-shm");
 
   old_socket_permissions = flatpak_permissions_dup (old->socket_permissions);
   /* If we used to allow X11, also allow new fallback X11,
      as that is actually less permissions */
   if (flatpak_permissions_allows_unconditionally (old_socket_permissions, "x11"))
     flatpak_permissions_set_allowed (old_socket_permissions, "fallback-x11");
+
+  if (flatpak_permissions_adds_permissions (old->shares_permissions,
+                                            new->shares_permissions))
+      return TRUE;
 
   if (flatpak_permissions_adds_permissions (old_socket_permissions,
                                             new->socket_permissions))
@@ -3635,9 +3447,9 @@ flatpak_context_adds_permissions (FlatpakContext *old,
                                             new->device_permissions))
     return TRUE;
 
-  if (adds_flags ((old->features & old->features_valid) | harmless_features,
-                  new->features & new->features_valid))
-    return TRUE;
+  if (flatpak_permissions_adds_permissions (old_features_permissions,
+                                            new->features_permissions))
+      return TRUE;
 
   if (adds_bus_policy (old->session_bus_policy, new->session_bus_policy))
     return TRUE;
@@ -3658,13 +3470,6 @@ flatpak_context_adds_permissions (FlatpakContext *old,
     return TRUE;
 
   return FALSE;
-}
-
-gboolean
-flatpak_context_allows_features (FlatpakContext        *context,
-                                 FlatpakContextFeatures features)
-{
-  return (context->features & features) == features;
 }
 
 char *
@@ -3695,8 +3500,10 @@ flatpak_context_to_args (FlatpakContext *context,
   gpointer key, value;
   char *usb_list = NULL;
 
-  flatpak_context_shared_to_args (context, args);
-  flatpak_context_features_to_args (context, args);
+  flatpak_permissions_to_args (context->features_permissions,
+                               "allow", "disallow", args);
+  flatpak_permissions_to_args (context->shares_permissions,
+                               "share", "unshare", args);
   flatpak_permissions_to_args (context->device_permissions,
                                "device", "nodevice", args);
   flatpak_permissions_to_args (context->socket_permissions,
@@ -3839,14 +3646,10 @@ flatpak_context_reset_non_permissions (FlatpakContext *context)
 void
 flatpak_context_reset_permissions (FlatpakContext *context)
 {
-  context->shares_valid = 0;
-  context->features_valid = 0;
-
-  context->shares = 0;
-  context->features = 0;
-
+  g_hash_table_remove_all (context->shares_permissions);
   g_hash_table_remove_all (context->socket_permissions);
   g_hash_table_remove_all (context->device_permissions);
+  g_hash_table_remove_all (context->features_permissions);
   g_hash_table_remove_all (context->persistent);
   g_hash_table_remove_all (context->filesystems);
   g_hash_table_remove_all (context->session_bus_policy);
@@ -3861,14 +3664,20 @@ flatpak_context_make_sandboxed (FlatpakContext *context)
   /* We drop almost everything from the app permission, except
    * multiarch which is inherited, to make sure app code keeps
    * running. */
-  context->shares_valid &= 0;
-  context->features_valid &= FLATPAK_CONTEXT_FEATURE_MULTIARCH;
+  FlatpakPermission *multiarch =
+    g_hash_table_lookup (context->features_permissions, "multiarch");
 
-  context->shares &= context->shares_valid;
-  context->features &= context->features_valid;
-
+  g_hash_table_remove_all (context->shares_permissions);
   g_hash_table_remove_all (context->socket_permissions);
   g_hash_table_remove_all (context->device_permissions);
+  g_hash_table_remove_all (context->features_permissions);
+
+  if (multiarch)
+    {
+      g_hash_table_insert (context->features_permissions,
+                           g_strdup ("multiarch"),
+                           flatpak_permission_dup (multiarch));
+    }
 
   g_hash_table_remove_all (context->persistent);
   g_hash_table_remove_all (context->filesystems);
@@ -4214,20 +4023,20 @@ flatpak_context_get_exports (FlatpakContext *context,
 }
 
 FlatpakRunFlags
-flatpak_context_get_run_flags (FlatpakContext *context)
+flatpak_context_features_to_run_flags (FlatpakContextFeatures features)
 {
   FlatpakRunFlags flags = 0;
 
-  if (flatpak_context_allows_features (context, FLATPAK_CONTEXT_FEATURE_DEVEL))
+  if (features & FLATPAK_CONTEXT_FEATURE_DEVEL)
     flags |= FLATPAK_RUN_FLAG_DEVEL;
 
-  if (flatpak_context_allows_features (context, FLATPAK_CONTEXT_FEATURE_MULTIARCH))
+  if (features & FLATPAK_CONTEXT_FEATURE_MULTIARCH)
     flags |= FLATPAK_RUN_FLAG_MULTIARCH;
 
-  if (flatpak_context_allows_features (context, FLATPAK_CONTEXT_FEATURE_BLUETOOTH))
+  if (features & FLATPAK_CONTEXT_FEATURE_BLUETOOTH)
     flags |= FLATPAK_RUN_FLAG_BLUETOOTH;
 
-  if (flatpak_context_allows_features (context, FLATPAK_CONTEXT_FEATURE_CANBUS))
+  if (features & FLATPAK_CONTEXT_FEATURE_CANBUS)
     flags |= FLATPAK_RUN_FLAG_CANBUS;
 
   return flags;
@@ -4634,6 +4443,15 @@ flatpak_context_dump (FlatpakContext *context,
     }
 }
 
+FlatpakContextShares
+flatpak_context_compute_allowed_shares (FlatpakContext                   *context,
+                                        FlatpakContextConditionEvaluator  evaluator)
+{
+  return flatpak_permissions_compute_allowed (context->shares_permissions,
+                                              flatpak_context_shares,
+                                              evaluator);
+}
+
 FlatpakContextSockets
 flatpak_context_compute_allowed_sockets (FlatpakContext                   *context,
                                          FlatpakContextConditionEvaluator  evaluator)
@@ -4649,5 +4467,15 @@ flatpak_context_compute_allowed_devices (FlatpakContext                   *conte
 {
   return flatpak_permissions_compute_allowed (context->device_permissions,
                                               flatpak_context_devices,
+                                              evaluator);
+}
+
+
+FlatpakContextFeatures
+flatpak_context_compute_allowed_features (FlatpakContext                   *context,
+                                          FlatpakContextConditionEvaluator  evaluator)
+{
+  return flatpak_permissions_compute_allowed (context->features_permissions,
+                                              flatpak_context_features,
                                               evaluator);
 }
