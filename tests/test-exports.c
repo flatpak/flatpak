@@ -177,13 +177,10 @@ test_empty_context (void)
   g_assert_cmpuint (g_hash_table_size (context->session_bus_policy), ==, 0);
   g_assert_cmpuint (g_hash_table_size (context->system_bus_policy), ==, 0);
   g_assert_cmpuint (g_hash_table_size (context->generic_policy), ==, 0);
+  g_assert_cmpuint (g_hash_table_size (context->shares_permissions), ==, 0);
   g_assert_cmpuint (g_hash_table_size (context->socket_permissions), ==, 0);
   g_assert_cmpuint (g_hash_table_size (context->device_permissions), ==, 0);
-  g_assert_cmpuint (context->shares, ==, 0);
-  g_assert_cmpuint (context->shares_valid, ==, 0);
-  g_assert_cmpuint (context->features, ==, 0);
-  g_assert_cmpuint (context->features_valid, ==, 0);
-  g_assert_cmpuint (flatpak_context_get_run_flags (context), ==, 0);
+  g_assert_cmpuint (g_hash_table_size (context->features_permissions), ==, 0);
 
   exports = flatpak_context_get_exports (context, "com.example.App");
   g_assert_nonnull (exports);
@@ -266,10 +263,10 @@ test_full_context (void)
   flatpak_context_load_metadata (context, keyfile, &error);
   g_assert_no_error (error);
 
-  g_assert_cmpuint (context->shares, ==,
+  FlatpakContextShares shares = flatpak_context_compute_allowed_shares (context, NULL);
+  g_assert_cmpuint (shares, ==,
                     (FLATPAK_CONTEXT_SHARED_NETWORK |
                      FLATPAK_CONTEXT_SHARED_IPC));
-  g_assert_cmpuint (context->shares_valid, ==, context->shares);
   FlatpakContextDevices devices = flatpak_context_compute_allowed_devices (context, NULL);
   g_assert_cmpuint (devices, ==,
                     (FLATPAK_CONTEXT_DEVICE_DRI |
@@ -286,19 +283,13 @@ test_full_context (void)
                      FLATPAK_CONTEXT_SOCKET_SSH_AUTH |
                      FLATPAK_CONTEXT_SOCKET_PCSC |
                      FLATPAK_CONTEXT_SOCKET_CUPS));
-  g_assert_cmpuint (context->features, ==,
+  FlatpakContextFeatures features = flatpak_context_compute_allowed_features (context, NULL);
+  g_assert_cmpuint (features, ==,
                     (FLATPAK_CONTEXT_FEATURE_DEVEL |
                      FLATPAK_CONTEXT_FEATURE_MULTIARCH |
                      FLATPAK_CONTEXT_FEATURE_BLUETOOTH |
                      FLATPAK_CONTEXT_FEATURE_CANBUS |
                      FLATPAK_CONTEXT_FEATURE_PER_APP_DEV_SHM));
-  g_assert_cmpuint (context->features_valid, ==, context->features);
-
-  g_assert_cmpuint (flatpak_context_get_run_flags (context), ==,
-                    (FLATPAK_RUN_FLAG_DEVEL |
-                     FLATPAK_RUN_FLAG_MULTIARCH |
-                     FLATPAK_RUN_FLAG_BLUETOOTH |
-                     FLATPAK_RUN_FLAG_CANBUS));
 
   g_assert_cmpuint (g_hash_table_size (context->env_vars), ==, 3);
   g_assert_true (g_hash_table_contains (context->env_vars, "LD_AUDIT"));
