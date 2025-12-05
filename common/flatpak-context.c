@@ -2044,6 +2044,27 @@ flatpak_context_merge (FlatpakContext *context,
 }
 
 static gboolean
+parse_if_option (const char  *option_name,
+                 const char  *value,
+                 char       **name_out,
+                 char       **condition_out,
+                 GError     **error)
+{
+  g_auto(GStrv) tokens = g_strsplit (value, ":", 2);
+
+  if (g_strv_length (tokens) != 2)
+    {
+      g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
+                   _("Invalid syntax for %s: %s"), option_name, value);
+      return FALSE;
+    }
+
+  *name_out = g_strdup (tokens[0]);
+  *condition_out = g_strdup (tokens[1]);
+  return TRUE;
+}
+
+static gboolean
 option_share_cb (const gchar *option_name,
                  const gchar *value,
                  gpointer     data,
@@ -2076,6 +2097,29 @@ option_unshare_cb (const gchar *option_name,
 
   flatpak_permissions_set_not_allowed (context->shares_permissions, value);
 
+  return TRUE;
+}
+
+static gboolean
+option_share_if_cb (const gchar  *option_name,
+                    const gchar  *value,
+                    gpointer      data,
+                    GError      **error)
+{
+  FlatpakContext *context = data;
+  g_autofree char *name = NULL;
+  g_autofree char *condition = NULL;
+  FlatpakContextShares share;
+
+  if (!parse_if_option (option_name, value, &name, &condition, error))
+    return FALSE;
+
+  share = flatpak_context_share_from_string (name, error);
+  if (share == 0)
+    return FALSE;
+
+  flatpak_permissions_set_allowed_if (context->shares_permissions,
+                                      name, condition);
   return TRUE;
 }
 
@@ -2129,27 +2173,6 @@ option_nosocket_cb (const gchar *option_name,
   flatpak_permissions_set_not_allowed (context->socket_permissions,
                                        value);
 
-  return TRUE;
-}
-
-static gboolean
-parse_if_option (const char  *option_name,
-                 const char  *value,
-                 char       **name_out,
-                 char       **condition_out,
-                 GError     **error)
-{
-  g_auto(GStrv) tokens = g_strsplit (value, ":", 2);
-
-  if (g_strv_length (tokens) != 2)
-    {
-      g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
-                   _("Invalid syntax for %s: %s"), option_name, value);
-      return FALSE;
-    }
-
-  *name_out = g_strdup (tokens[0]);
-  *condition_out = g_strdup (tokens[1]);
   return TRUE;
 }
 
@@ -2277,6 +2300,29 @@ option_disallow_cb (const gchar *option_name,
 
   flatpak_permissions_set_not_allowed (context->features_permissions, value);
 
+  return TRUE;
+}
+
+static gboolean
+option_allow_if_cb (const gchar  *option_name,
+                    const gchar  *value,
+                    gpointer      data,
+                    GError      **error)
+{
+  FlatpakContext *context = data;
+  g_autofree char *name = NULL;
+  g_autofree char *condition = NULL;
+  FlatpakContextFeatures feature;
+
+  if (!parse_if_option (option_name, value, &name, &condition, error))
+    return FALSE;
+
+  feature = flatpak_context_feature_from_string (name, error);
+  if (feature == 0)
+    return FALSE;
+
+  flatpak_permissions_set_allowed_if (context->features_permissions,
+                                      name, condition);
   return TRUE;
 }
 
@@ -2675,6 +2721,7 @@ static gboolean option_no_desktop_deprecated;
 static GOptionEntry context_options[] = {
   { "share", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_share_cb, N_("Share with host"), N_("SHARE") },
   { "unshare", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_unshare_cb, N_("Unshare with host"), N_("SHARE") },
+  { "share-if", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_share_if_cb, N_("Require conditions to be met for a subsystem to get shared"), N_("SHARE:CONDITION") },
   { "socket", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_socket_cb, N_("Expose socket to app"), N_("SOCKET") },
   { "nosocket", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_nosocket_cb, N_("Don't expose socket to app"), N_("SOCKET") },
   { "socket-if", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_socket_if_cb, N_("Require conditions to be met for a socket to get exposed"), N_("SOCKET:CONDITION") },
@@ -2683,6 +2730,7 @@ static GOptionEntry context_options[] = {
   { "device-if", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_device_if_cb, N_("Require conditions to be met for a device to get exposed"), N_("DEVICE:CONDITION") },
   { "allow", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_allow_cb, N_("Allow feature"), N_("FEATURE") },
   { "disallow", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_disallow_cb, N_("Don't allow feature"), N_("FEATURE") },
+  { "allow-if", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_allow_if_cb, N_("Require conditions to be met for a feature to get allowed"), N_("FEATURE:CONDITION") },
   { "filesystem", 0, G_OPTION_FLAG_IN_MAIN | G_OPTION_FLAG_FILENAME, G_OPTION_ARG_CALLBACK, &option_filesystem_cb, N_("Expose filesystem to app (:ro for read-only)"), N_("FILESYSTEM[:ro]") },
   { "nofilesystem", 0, G_OPTION_FLAG_IN_MAIN | G_OPTION_FLAG_FILENAME, G_OPTION_ARG_CALLBACK, &option_nofilesystem_cb, N_("Don't expose filesystem to app"), N_("FILESYSTEM") },
   { "env", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_env_cb, N_("Set environment variable"), N_("VAR=VALUE") },
