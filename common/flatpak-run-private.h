@@ -51,8 +51,10 @@ gboolean flatpak_run_add_environment_args (FlatpakBwrap           *bwrap,
                                            FlatpakRunFlags         flags,
                                            const char             *app_id,
                                            FlatpakContext         *context,
+                                           FlatpakContextShares    shares,
                                            FlatpakContextDevices   devices,
                                            FlatpakContextSockets   sockets,
+                                           FlatpakContextFeatures  features,
                                            GFile                  *app_id_dir,
                                            GPtrArray              *previous_app_id_dirs,
                                            int                     per_app_dir_lock_fd,
@@ -125,8 +127,10 @@ gboolean flatpak_run_app (FlatpakDecomposed   *app_ref,
                           GCancellable        *cancellable,
                           GError             **error);
 
-FlatpakContextDevices flatpak_run_compute_allowed_devices (FlatpakContext *context);
 
+FlatpakContextShares flatpak_run_compute_allowed_shares (FlatpakContext *context);
+FlatpakContextDevices flatpak_run_compute_allowed_devices (FlatpakContext *context);
 FlatpakContextSockets flatpak_run_compute_allowed_sockets (FlatpakContext *context);
+FlatpakContextFeatures flatpak_run_compute_allowed_features (FlatpakContext *context);
 
 #endif /* __FLATPAK_RUN_H__ */

@@ -215,8 +215,10 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   char pid_str[64];
   g_autofree char *pid_path = NULL;
   g_autoptr(GFile) app_id_dir = NULL;
+  FlatpakContextShares shares;
   FlatpakContextDevices devices;
   FlatpakContextSockets sockets;
+  FlatpakContextFeatures features;
 
   context = g_option_context_new (_("DIRECTORY [COMMAND [ARGUMENT…]] - Build in directory"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -440,6 +442,11 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
 
   flatpak_context_merge (app_context, arg_context);
 
+  shares = flatpak_run_compute_allowed_shares (app_context);
+  devices = flatpak_run_compute_allowed_devices (app_context);
+  sockets = flatpak_run_compute_allowed_sockets (app_context);
+  features = flatpak_run_compute_allowed_features (app_context);
+
   minimal_envp = flatpak_run_get_minimal_env (TRUE, FALSE);
   bwrap = flatpak_bwrap_new (minimal_envp);
   flatpak_bwrap_add_args (bwrap, flatpak_get_bwrap (), NULL);
@@ -452,7 +459,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   if (custom_usr)
     run_flags |= FLATPAK_RUN_FLAG_WRITABLE_ETC;
 
-  run_flags |= flatpak_context_get_run_flags (app_context);
+  run_flags |= flatpak_context_features_to_run_flags (features);
 
   /* Unless manually specified, we disable dbus proxy */
   if (!flatpak_context_get_needs_session_bus_proxy (arg_context))
@@ -553,9 +560,6 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
                             "--bind", flatpak_file_get_path_cached (res_files), extension_point,
                             NULL);
 
-  devices = flatpak_run_compute_allowed_devices (app_context);
-  sockets = flatpak_run_compute_allowed_sockets (app_context);
-
   if (!flatpak_run_add_app_info_args (bwrap,
                                       app_files, app_files, NULL, app_extensions,
                                       runtime_files, runtime_files, runtime_deploy_data, runtime_extensions,
@@ -571,7 +575,8 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
     return FALSE;
 
   if (!flatpak_run_add_environment_args (bwrap, app_info_path, run_flags, id,
-                                         app_context, devices, sockets,
+                                         app_context,
+                                         shares, devices, sockets, features,
                                          app_id_dir, NULL, -1,
                                          instance_id, NULL, cancellable, error))
     return FALSE;
