@@ -128,7 +128,7 @@ load_installed_portals (gboolean opt_verbose)
   g_info ("load portals from %s", portal_dir);
 
   dir = g_file_new_for_path (portal_dir);
-  enumerator = g_file_enumerate_children (dir, "*", G_FILE_QUERY_INFO_NONE, NULL, NULL);
+  enumerator = g_file_enumerate_children (dir, G_FILE_ATTRIBUTE_STANDARD_NAME, G_FILE_QUERY_INFO_NONE, NULL, NULL);
 
   if (enumerator == NULL)
     return;
