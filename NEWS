@@ -1,8 +1,67 @@
 Changes in 1.17.1
 ~~~~~~~~~~~~~~~~~~
-Released: not yet
+Released: 2025-12-15
 
-...
+Enhancements:
+
+* Drop libsoup2 support in favor of libcurl. The `http_backend` build option has
+  been dropped as well. (#6395)
+
+* Support conditional permissions for shared subsystems and features. This
+  extends the conditional permission system that was introduced in 1.17.0 to
+  shares and features.
+
+* Enable progress escape sequence by default (#6393)
+
+* Allow passing device permissions to sub-sandbox created via the Flatpak portal
+  (#6123)
+
+* Add the runtime repository to the OCI image metadata when building OCI bundles
+  (#6409)
+
+* The CI now checks for translatable files and is now used to do releases
+  (#6408, #6407)
+
+* OCI remotes can now be configured to check for a matching signature in a
+  standard OCI signature storage lookaside service, when installing apps and
+  runtimes. (#6426)
+
+* Applications distributed as OCI images now support the extra-data mechanism
+  which should help with h.265 playback in Fedora Flatpaks (#6299)
+
+* Add support for building OCI bundles with zstd compressed layers. This speeds
+  up compression by several times, resulting in about a 20% smaller result. gzip
+  is kept as the default for maximum compatibility. (#5540)
+
+* Improve i18n of the command line progress reporting (#6397)
+
+* Translation updates: tr (#6388), hr (#6387), sl (#6405), zh_CN (#6366, #6410)
+
+Bug fixes:
+
+* Fix an issue where the home directory would accidentally be accessible when
+  a bad version of glib is in use, the app has access to a standard XDG
+  directory, and that directory is not available on the system. (#6420)
+
+* Fix incorrect CURLM_OK comparison in curl_easy_setopt checks (#6396)
+
+* Error out when mandatory OCI JSON fields are missing (#6402)
+
+* Fix various memory leaks (#6403, #6093)
+
+Internal changes:
+
+* Avoid triggering glib thumbnailing when enumerating `.portals` files
+  (#6427)
+
+* Add a test case for pre-installing from a sideload repo and a non-reachable
+  network repo (#6423)
+
+* Remove references to the defunct Open Collective (#6406)
+
+* Improve various tests (#6406)
+
+* Update note on seccomp filter code sharing (#6383)
 
 Changes in 1.17.0
 ~~~~~~~~~~~~~~~~~~
