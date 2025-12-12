@@ -1,1 +1,21 @@
 ## <summary></summary>
+
+#########################################
+## <summary>
+##	Transition to flatpak named content in user home
+## </summary>
+## <param name="domain">
+##	<summary>
+##      Domain allowed access.
+##	</summary>
+## </param>
+#
+interface(`flatpak_named_filetrans_home_content',`
+	gen_require(`
+		type flatpak_home_t;
+	')
+
+	optional_policy(`
+		gnome_data_filetrans($1, flatpak_home_t, dir, "flatpak")
+	')
+')
