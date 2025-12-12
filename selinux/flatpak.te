@@ -12,6 +12,9 @@ type flatpak_helper_t;
 type flatpak_helper_exec_t;
 init_daemon_domain(flatpak_helper_t, flatpak_helper_exec_t)
 
+type flatpak_home_t;
+userdom_user_home_content(flatpak_home_t)
+
 auth_read_passwd(flatpak_helper_t)
 files_list_var_lib(flatpak_helper_t)
 files_read_var_lib_files(flatpak_helper_t)
