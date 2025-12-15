@@ -69,9 +69,10 @@ jobs:
           echo $preRelease
 
       - name: Create release
-        uses: ncipollo/release-action@v1.15.0
+        uses: ncipollo/release-action@v1.20.0
         with:
           tag: ${{ env.releaseVersion }}
           body: ${{ env.releaseChangelog }}
           prerelease: ${{ env.preRelease }}
           artifacts: _build/meson-dist/*
+          immutableCreate: true
