@@ -1,8 +1,9 @@
 Changes in 1.17.2
 ~~~~~~~~~~~~~~~~~~
-Released: not yet
+Released: 2025-12-15
 
-...
+This is a follow-up release for the 1.17.1 release, which was published
+immutably without the dist artifacts due to a bug in the release workflow.
 
 Changes in 1.17.1
 ~~~~~~~~~~~~~~~~~~
