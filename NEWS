@@ -1,14 +1,48 @@
 Changes in 1.16.2
 ~~~~~~~~~~~~~~~~~~
-Released: not yet
+Released: 2025-12-15
 
 Enhancements:
 
+* Documentation improvements (#6240)
+
+* Support the reinstall option on bundle installations (#5546)
+
+* Enable the VA-API extension for Intel Xe GPUs (#6311)
+
+* Documentation improvements (#6348)
+
+* Add cancellation support for curl downloads (#6356)
+
 * Translation updates: pl
+
+Bug fixes:
+
+* Provide an empty /run/host/font-dirs.xml during `flatpak build` (#6138)
+
+* Fix various issues with flatpak mask and flatpak pin by reloading the repo
+  configuration after changes done via the system helper (#6073)
+
+* Fix an issue where the home directory would accidentally be accessible when a
+  bad version of glib is in use, the app has access to a standard XDG directory,
+  and that directory is not available on the system. (#6420)
+
+* `flatpak-kill` will no longer send SIGKILL to all processes in the current
+  process group (#6375)
+
+* Various bug fixes for the OCI support (#6296)
+
+* Fix various memory leaks (#6286, #6260)
+
+* Fix various crashes (#6074, #6376)
 
 Internal changes:
 
-* CI updates
+* Testing and CI improvements (#6291)
+
+* Avoid using an uninitialised variable (#6345)
+
+* Flatpak now allows the usage of sudo for changing the user (#6371)
 
 Changes in 1.16.1
 ~~~~~~~~~~~~~~~~~~
