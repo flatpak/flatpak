@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2025-05-08 13:08-0300\n"
+"POT-Creation-Date: 2025-12-04 01:34+0100\n"
 "PO-Revision-Date: 2023-03-14 20:45+0100\n"
 "Last-Translator: Quentin PAGÈS\n"
 "Language-Team: \n"
@@ -154,14 +154,14 @@ msgid "'%s' is not a valid repository: "
 msgstr "« %s » es pas un repertòri valid : "
 
 #: app/flatpak-builtins-build-bundle.c:661 app/flatpak-builtins-build-sign.c:88
-#: common/flatpak-dir.c:13280
+#: common/flatpak-dir.c:13302
 #, c-format
 msgid "'%s' is not a valid name: %s"
 msgstr "« %s » es pas un nom valid : %s"
 
 #: app/flatpak-builtins-build-bundle.c:664
 #: app/flatpak-builtins-build-export.c:865 app/flatpak-builtins-build-sign.c:91
-#: common/flatpak-dir.c:13286
+#: common/flatpak-dir.c:13308
 #, c-format
 msgid "'%s' is not a valid branch name: %s"
 msgstr "« %s » es pas un nom de branca valid : %s"
@@ -222,34 +222,34 @@ msgstr ""
 msgid "Log system bus calls"
 msgstr ""
 
-#: app/flatpak-builtins-build.c:208
+#: app/flatpak-builtins-build.c:219
 msgid "DIRECTORY [COMMAND [ARGUMENT…]] - Build in directory"
 msgstr ""
 
-#: app/flatpak-builtins-build.c:231 app/flatpak-builtins-build-finish.c:655
+#: app/flatpak-builtins-build.c:242 app/flatpak-builtins-build-finish.c:655
 msgid "DIRECTORY must be specified"
 msgstr ""
 
-#: app/flatpak-builtins-build.c:242 app/flatpak-builtins-build-export.c:887
+#: app/flatpak-builtins-build.c:253 app/flatpak-builtins-build-export.c:887
 #, c-format
 msgid "Build directory %s not initialized, use flatpak build-init"
 msgstr ""
 
-#: app/flatpak-builtins-build.c:261
+#: app/flatpak-builtins-build.c:272
 msgid "metadata invalid, not application or runtime"
 msgstr ""
 
-#: app/flatpak-builtins-build.c:392
+#: app/flatpak-builtins-build.c:403
 #, c-format
 msgid "No extension point matching %s in %s"
 msgstr ""
 
-#: app/flatpak-builtins-build.c:568
+#: app/flatpak-builtins-build.c:581
 #, c-format
 msgid "Missing '=' in bind mount option '%s'"
 msgstr ""
 
-#: app/flatpak-builtins-build.c:609 common/flatpak-run.c:3599
+#: app/flatpak-builtins-build.c:622 common/flatpak-run.c:3599
 #, c-format
 msgid "Unable to start app"
 msgstr ""
@@ -1958,20 +1958,20 @@ msgstr ""
 msgid "Skipping: %s\n"
 msgstr "Passant : %s\n"
 
-#: app/flatpak-builtins-kill.c:68
+#: app/flatpak-builtins-kill.c:110
 #, c-format
 msgid "%s is not running"
 msgstr "%s es pas en execucion"
 
-#: app/flatpak-builtins-kill.c:82
+#: app/flatpak-builtins-kill.c:136
 msgid "INSTANCE - Stop a running application"
 msgstr ""
 
-#: app/flatpak-builtins-kill.c:90 app/flatpak-builtins-ps.c:254
+#: app/flatpak-builtins-kill.c:144 app/flatpak-builtins-ps.c:254
 msgid "Extra arguments given"
 msgstr ""
 
-#: app/flatpak-builtins-kill.c:96
+#: app/flatpak-builtins-kill.c:150
 msgid "Must specify the app to kill"
 msgstr ""
 
@@ -4054,15 +4054,15 @@ msgstr ""
 msgid "Error: Failed to uninstall %s: %s\n"
 msgstr ""
 
-#: app/flatpak-quiet-transaction.c:166 common/flatpak-dir.c:10535
+#: app/flatpak-quiet-transaction.c:166 common/flatpak-dir.c:10557
 #, c-format
 msgid "%s already installed"
 msgstr "%s ja installat"
 
 #: app/flatpak-quiet-transaction.c:168 common/flatpak-dir-utils.c:166
 #: common/flatpak-dir-utils.c:259 common/flatpak-dir.c:3033
-#: common/flatpak-dir.c:3732 common/flatpak-dir.c:15888
-#: common/flatpak-dir.c:16178 common/flatpak-transaction.c:2669
+#: common/flatpak-dir.c:3732 common/flatpak-dir.c:15910
+#: common/flatpak-dir.c:16200 common/flatpak-transaction.c:2669
 #: common/flatpak-transaction.c:2724
 #, c-format
 msgid "%s not installed"
@@ -4097,262 +4097,262 @@ msgstr ""
 msgid "No authenticator configured for remote `%s`"
 msgstr ""
 
-#: common/flatpak-context.c:206
+#: common/flatpak-context.c:207
 #, c-format
 msgid "Unknown share type %s, valid types are: %s"
 msgstr ""
 
-#: common/flatpak-context.c:241
+#: common/flatpak-context.c:242
 #, c-format
 msgid "Unknown policy type %s, valid types are: %s"
 msgstr ""
 
-#: common/flatpak-context.c:279
+#: common/flatpak-context.c:280
 #, c-format
 msgid "Invalid dbus name %s"
 msgstr ""
 
-#: common/flatpak-context.c:292
+#: common/flatpak-context.c:293
 #, c-format
 msgid "Unknown socket type %s, valid types are: %s"
 msgstr ""
 
-#: common/flatpak-context.c:321
+#: common/flatpak-context.c:322
 #, c-format
 msgid "Unknown device type %s, valid types are: %s"
 msgstr ""
 
-#: common/flatpak-context.c:349
+#: common/flatpak-context.c:350
 #, c-format
 msgid "Unknown feature type %s, valid types are: %s"
 msgstr ""
 
-#: common/flatpak-context.c:964
+#: common/flatpak-context.c:965
 #, c-format
 msgid "Filesystem location \"%s\" contains \"..\""
 msgstr ""
 
-#: common/flatpak-context.c:1002
+#: common/flatpak-context.c:1003
 #, c-format
 msgid ""
 "--filesystem=/ is not available, use --filesystem=host for a similar result"
 msgstr ""
 
-#: common/flatpak-context.c:1036
+#: common/flatpak-context.c:1037
 #, c-format
 msgid ""
 "Unknown filesystem location %s, valid locations are: host, host-os, host-"
 "etc, home, xdg-*[/…], ~/dir, /dir"
 msgstr ""
 
-#: common/flatpak-context.c:1324
+#: common/flatpak-context.c:1325
 #, c-format
 msgid "Invalid env format %s"
 msgstr ""
 
-#: common/flatpak-context.c:1412
+#: common/flatpak-context.c:1413
 #, c-format
 msgid "Environment variable name must not contain '=': %s"
 msgstr ""
 
-#: common/flatpak-context.c:1540 common/flatpak-context.c:1548
+#: common/flatpak-context.c:1541 common/flatpak-context.c:1549
 #, c-format
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 
-#: common/flatpak-context.c:1555
+#: common/flatpak-context.c:1556
 #, c-format
 msgid "--add-policy values can't start with \"!\""
 msgstr ""
 
-#: common/flatpak-context.c:1580 common/flatpak-context.c:1588
+#: common/flatpak-context.c:1581 common/flatpak-context.c:1589
 #, c-format
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 
-#: common/flatpak-context.c:1595
+#: common/flatpak-context.c:1596
 #, c-format
 msgid "--remove-policy values can't start with \"!\""
 msgstr ""
 
-#: common/flatpak-context.c:1670
+#: common/flatpak-context.c:1671
 msgid "Share with host"
 msgstr ""
 
-#: common/flatpak-context.c:1670 common/flatpak-context.c:1671
+#: common/flatpak-context.c:1671 common/flatpak-context.c:1672
 msgid "SHARE"
 msgstr "PARTEJAR"
 
-#: common/flatpak-context.c:1671
+#: common/flatpak-context.c:1672
 msgid "Unshare with host"
 msgstr ""
 
-#: common/flatpak-context.c:1672
+#: common/flatpak-context.c:1673
 msgid "Expose socket to app"
 msgstr ""
 
-#: common/flatpak-context.c:1672 common/flatpak-context.c:1673
+#: common/flatpak-context.c:1673 common/flatpak-context.c:1674
 msgid "SOCKET"
 msgstr ""
 
-#: common/flatpak-context.c:1673
+#: common/flatpak-context.c:1674
 msgid "Don't expose socket to app"
 msgstr ""
 
-#: common/flatpak-context.c:1674
+#: common/flatpak-context.c:1675
 msgid "Expose device to app"
 msgstr ""
 
-#: common/flatpak-context.c:1674 common/flatpak-context.c:1675
+#: common/flatpak-context.c:1675 common/flatpak-context.c:1676
 msgid "DEVICE"
 msgstr "PERIFERIC"
 
-#: common/flatpak-context.c:1675
+#: common/flatpak-context.c:1676
 msgid "Don't expose device to app"
 msgstr ""
 
-#: common/flatpak-context.c:1676
+#: common/flatpak-context.c:1677
 msgid "Allow feature"
 msgstr ""
 
-#: common/flatpak-context.c:1676 common/flatpak-context.c:1677
+#: common/flatpak-context.c:1677 common/flatpak-context.c:1678
 msgid "FEATURE"
 msgstr "FONCTIONALITAT"
 
-#: common/flatpak-context.c:1677
+#: common/flatpak-context.c:1678
 msgid "Don't allow feature"
 msgstr ""
 
-#: common/flatpak-context.c:1678
+#: common/flatpak-context.c:1679
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr ""
 
-#: common/flatpak-context.c:1678
+#: common/flatpak-context.c:1679
 msgid "FILESYSTEM[:ro]"
 msgstr ""
 
-#: common/flatpak-context.c:1679
+#: common/flatpak-context.c:1680
 msgid "Don't expose filesystem to app"
 msgstr ""
 
-#: common/flatpak-context.c:1679
+#: common/flatpak-context.c:1680
 msgid "FILESYSTEM"
 msgstr ""
 
-#: common/flatpak-context.c:1680
+#: common/flatpak-context.c:1681
 msgid "Set environment variable"
 msgstr ""
 
-#: common/flatpak-context.c:1680
+#: common/flatpak-context.c:1681
 msgid "VAR=VALUE"
 msgstr "VAR=VALOR"
 
-#: common/flatpak-context.c:1681
+#: common/flatpak-context.c:1682
 msgid "Read environment variables in env -0 format from FD"
 msgstr ""
 
-#: common/flatpak-context.c:1681
+#: common/flatpak-context.c:1682
 msgid "FD"
 msgstr ""
 
-#: common/flatpak-context.c:1682
+#: common/flatpak-context.c:1683
 msgid "Remove variable from environment"
 msgstr ""
 
-#: common/flatpak-context.c:1682
+#: common/flatpak-context.c:1683
 msgid "VAR"
 msgstr "VAR"
 
-#: common/flatpak-context.c:1683
+#: common/flatpak-context.c:1684
 msgid "Allow app to own name on the session bus"
 msgstr ""
 
-#: common/flatpak-context.c:1683 common/flatpak-context.c:1684
-#: common/flatpak-context.c:1685 common/flatpak-context.c:1686
-#: common/flatpak-context.c:1687 common/flatpak-context.c:1688
-#: common/flatpak-context.c:1689
+#: common/flatpak-context.c:1684 common/flatpak-context.c:1685
+#: common/flatpak-context.c:1686 common/flatpak-context.c:1687
+#: common/flatpak-context.c:1688 common/flatpak-context.c:1689
+#: common/flatpak-context.c:1690
 msgid "DBUS_NAME"
 msgstr ""
 
-#: common/flatpak-context.c:1684
+#: common/flatpak-context.c:1685
 msgid "Allow app to talk to name on the session bus"
 msgstr ""
 
-#: common/flatpak-context.c:1685
+#: common/flatpak-context.c:1686
 msgid "Don't allow app to talk to name on the session bus"
 msgstr ""
 
-#: common/flatpak-context.c:1686
+#: common/flatpak-context.c:1687
 msgid "Allow app to own name on the system bus"
 msgstr ""
 
-#: common/flatpak-context.c:1687
+#: common/flatpak-context.c:1688
 msgid "Allow app to talk to name on the system bus"
 msgstr ""
 
-#: common/flatpak-context.c:1688
+#: common/flatpak-context.c:1689
 msgid "Don't allow app to talk to name on the system bus"
 msgstr ""
 
-#: common/flatpak-context.c:1689
+#: common/flatpak-context.c:1690
 msgid "Allow app to own name on the a11y bus"
 msgstr ""
 
-#: common/flatpak-context.c:1690
+#: common/flatpak-context.c:1691
 msgid "Add generic policy option"
 msgstr ""
 
-#: common/flatpak-context.c:1690 common/flatpak-context.c:1691
+#: common/flatpak-context.c:1691 common/flatpak-context.c:1692
 msgid "SUBSYSTEM.KEY=VALUE"
 msgstr ""
 
-#: common/flatpak-context.c:1691
+#: common/flatpak-context.c:1692
 msgid "Remove generic policy option"
 msgstr ""
 
-#: common/flatpak-context.c:1692
+#: common/flatpak-context.c:1693
 msgid "Add USB device to enumerables"
 msgstr ""
 
-#: common/flatpak-context.c:1692 common/flatpak-context.c:1693
+#: common/flatpak-context.c:1693 common/flatpak-context.c:1694
 msgid "VENDOR_ID:PRODUCT_ID"
 msgstr ""
 
-#: common/flatpak-context.c:1693
+#: common/flatpak-context.c:1694
 msgid "Add USB device to hidden list"
 msgstr ""
 
-#: common/flatpak-context.c:1694
+#: common/flatpak-context.c:1695
 msgid "A list of USB devices that are enumerable"
 msgstr ""
 
-#: common/flatpak-context.c:1694
+#: common/flatpak-context.c:1695
 msgid "LIST"
 msgstr ""
 
-#: common/flatpak-context.c:1695
+#: common/flatpak-context.c:1696
 msgid "File containing a list of USB devices to make enumerable"
 msgstr ""
 
-#: common/flatpak-context.c:1695 common/flatpak-context.c:1696
+#: common/flatpak-context.c:1696 common/flatpak-context.c:1697
 msgid "FILENAME"
 msgstr ""
 
-#: common/flatpak-context.c:1696
+#: common/flatpak-context.c:1697
 msgid "Persist home directory subpath"
 msgstr ""
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-context.c:1698
+#: common/flatpak-context.c:1699
 msgid "Don't require a running session (no cgroups creation)"
 msgstr ""
 
-#: common/flatpak-context.c:2817
+#: common/flatpak-context.c:2818
 #, c-format
 msgid "Not replacing \"%s\" with tmpfs: %s"
 msgstr ""
 
-#: common/flatpak-context.c:2825
+#: common/flatpak-context.c:2826
 #, c-format
 msgid "Not sharing \"%s\" with sandbox: %s"
 msgstr ""
@@ -4361,12 +4361,12 @@ msgstr ""
 #. * the path not existing, it seems reasonable to make more of a fuss
 #. * about the home directory not existing or otherwise being unusable,
 #. * so this is intentionally not using cannot_export()
-#: common/flatpak-context.c:2921
+#: common/flatpak-context.c:2922
 #, c-format
 msgid "Not allowing home directory access: %s"
 msgstr ""
 
-#: common/flatpak-context.c:3150
+#: common/flatpak-context.c:3156
 #, c-format
 msgid "Unable to provide a temporary home directory in the sandbox: %s"
 msgstr ""
@@ -4416,8 +4416,8 @@ msgstr ""
 msgid "Couldn't find ref %s in remote %s"
 msgstr ""
 
-#: common/flatpak-dir.c:1131 common/flatpak-dir.c:6044
-#: common/flatpak-oci-registry.c:3493 common/flatpak-oci-registry.c:3498
+#: common/flatpak-dir.c:1131 common/flatpak-dir.c:6047
+#: common/flatpak-oci-registry.c:3494 common/flatpak-oci-registry.c:3499
 msgid "Image is not a manifest"
 msgstr ""
 
@@ -4431,8 +4431,8 @@ msgstr ""
 msgid "Configured collection ID ‘%s’ not in binding metadata"
 msgstr ""
 
-#: common/flatpak-dir.c:1292 common/flatpak-dir.c:5032
-#: common/flatpak-dir.c:5953 common/flatpak-dir.c:6021
+#: common/flatpak-dir.c:1292 common/flatpak-dir.c:5035
+#: common/flatpak-dir.c:5956 common/flatpak-dir.c:6024
 #, c-format
 msgid "Couldn't find latest checksum for ref %s in remote %s"
 msgstr ""
@@ -4485,392 +4485,392 @@ msgstr ""
 msgid "The config key %s is not set"
 msgstr ""
 
-#: common/flatpak-dir.c:4528
+#: common/flatpak-dir.c:4531
 #, c-format
 msgid "No current %s pattern matching %s"
 msgstr ""
 
-#: common/flatpak-dir.c:4810
+#: common/flatpak-dir.c:4813
 msgid "No appstream commit to deploy"
 msgstr ""
 
-#: common/flatpak-dir.c:5328 common/flatpak-dir.c:6378
-#: common/flatpak-dir.c:9971 common/flatpak-dir.c:10677
+#: common/flatpak-dir.c:5331 common/flatpak-dir.c:6381
+#: common/flatpak-dir.c:9974 common/flatpak-dir.c:10699
 msgid "Can't pull from untrusted non-gpg verified remote"
 msgstr ""
 
-#: common/flatpak-dir.c:5740 common/flatpak-dir.c:5777
+#: common/flatpak-dir.c:5743 common/flatpak-dir.c:5780
 msgid "Extra data not supported for non-gpg-verified local system installs"
 msgstr ""
 
-#: common/flatpak-dir.c:5806
+#: common/flatpak-dir.c:5809
 #, c-format
 msgid "Invalid checksum for extra data uri %s"
 msgstr ""
 
-#: common/flatpak-dir.c:5811
+#: common/flatpak-dir.c:5814
 #, c-format
 msgid "Empty name for extra data uri %s"
 msgstr ""
 
-#: common/flatpak-dir.c:5818
+#: common/flatpak-dir.c:5821
 #, c-format
 msgid "Unsupported extra data uri %s"
 msgstr ""
 
-#: common/flatpak-dir.c:5832
+#: common/flatpak-dir.c:5835
 #, c-format
 msgid "Failed to load local extra-data %s: %s"
 msgstr ""
 
-#: common/flatpak-dir.c:5835
+#: common/flatpak-dir.c:5838
 #, c-format
 msgid "Wrong size for extra-data %s"
 msgstr ""
 
-#: common/flatpak-dir.c:5850
+#: common/flatpak-dir.c:5853
 #, c-format
 msgid "While downloading %s: "
 msgstr ""
 
-#: common/flatpak-dir.c:5857
+#: common/flatpak-dir.c:5860
 #, c-format
 msgid "Wrong size for extra data %s"
 msgstr ""
 
-#: common/flatpak-dir.c:5866
+#: common/flatpak-dir.c:5869
 #, c-format
 msgid "Invalid checksum for extra data %s"
 msgstr ""
 
-#: common/flatpak-dir.c:5961 common/flatpak-dir.c:8816
-#: common/flatpak-dir.c:10555
+#: common/flatpak-dir.c:5964 common/flatpak-dir.c:8819
+#: common/flatpak-dir.c:10577
 #, c-format
 msgid "%s commit %s already installed"
 msgstr ""
 
-#: common/flatpak-dir.c:6208 common/flatpak-dir.c:6461
+#: common/flatpak-dir.c:6211 common/flatpak-dir.c:6464
 #, c-format
 msgid "While pulling %s from remote %s: "
 msgstr ""
 
-#: common/flatpak-dir.c:6402 common/flatpak-repo-utils.c:3906
+#: common/flatpak-dir.c:6405 common/flatpak-repo-utils.c:3906
 msgid "GPG signatures found, but none are in trusted keyring"
 msgstr ""
 
-#: common/flatpak-dir.c:6419
+#: common/flatpak-dir.c:6422
 #, c-format
 msgid "Commit for ‘%s’ has no ref binding"
 msgstr ""
 
-#: common/flatpak-dir.c:6424
+#: common/flatpak-dir.c:6427
 #, c-format
 msgid "Commit for ‘%s’ is not in expected bound refs: %s"
 msgstr ""
 
-#: common/flatpak-dir.c:6600
+#: common/flatpak-dir.c:6603
 msgid "Only applications can be made current"
 msgstr ""
 
-#: common/flatpak-dir.c:7304
+#: common/flatpak-dir.c:7307
 msgid "Not enough memory"
 msgstr "Pas pro de memòria"
 
-#: common/flatpak-dir.c:7323
+#: common/flatpak-dir.c:7326
 msgid "Failed to read from exported file"
 msgstr ""
 
-#: common/flatpak-dir.c:7513
+#: common/flatpak-dir.c:7516
 msgid "Error reading mimetype xml file"
 msgstr ""
 
-#: common/flatpak-dir.c:7518
+#: common/flatpak-dir.c:7521
 msgid "Invalid mimetype xml file"
 msgstr ""
 
-#: common/flatpak-dir.c:7604
+#: common/flatpak-dir.c:7607
 #, c-format
 msgid "D-Bus service file '%s' has wrong name"
 msgstr ""
 
-#: common/flatpak-dir.c:7759
+#: common/flatpak-dir.c:7762
 #, fuzzy, c-format
 msgid "Invalid Exec argument %s"
 msgstr "Invalid group: %d"
 
-#: common/flatpak-dir.c:8226
+#: common/flatpak-dir.c:8229
 msgid "While getting detached metadata: "
 msgstr ""
 
-#: common/flatpak-dir.c:8231 common/flatpak-dir.c:8236
-#: common/flatpak-dir.c:8240
+#: common/flatpak-dir.c:8234 common/flatpak-dir.c:8239
+#: common/flatpak-dir.c:8243
 msgid "Extra data missing in detached metadata"
 msgstr ""
 
-#: common/flatpak-dir.c:8244
+#: common/flatpak-dir.c:8247
 msgid "While creating extradir: "
 msgstr ""
 
-#: common/flatpak-dir.c:8265 common/flatpak-dir.c:8298
+#: common/flatpak-dir.c:8268 common/flatpak-dir.c:8301
 msgid "Invalid checksum for extra data"
 msgstr ""
 
-#: common/flatpak-dir.c:8294
+#: common/flatpak-dir.c:8297
 msgid "Wrong size for extra data"
 msgstr ""
 
-#: common/flatpak-dir.c:8307
+#: common/flatpak-dir.c:8310
 #, c-format
 msgid "While writing extra data file '%s': "
 msgstr ""
 
-#: common/flatpak-dir.c:8315
+#: common/flatpak-dir.c:8318
 #, c-format
 msgid "Extra data %s missing in detached metadata"
 msgstr ""
 
-#: common/flatpak-dir.c:8413
+#: common/flatpak-dir.c:8416
 #, c-format
 msgid "Unable to get runtime key from metadata"
 msgstr ""
 
-#: common/flatpak-dir.c:8526
+#: common/flatpak-dir.c:8529
 #, c-format
 msgid "apply_extra script failed, exit status %d"
 msgstr ""
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-dir.c:8693
+#: common/flatpak-dir.c:8696
 #, c-format
 msgid "Installing %s is not allowed by the policy set by your administrator"
 msgstr ""
 
-#: common/flatpak-dir.c:8792
+#: common/flatpak-dir.c:8795
 #, c-format
 msgid "While trying to resolve ref %s: "
 msgstr ""
 
-#: common/flatpak-dir.c:8804
+#: common/flatpak-dir.c:8807
 #, c-format
 msgid "%s is not available"
 msgstr ""
 
-#: common/flatpak-dir.c:8823
+#: common/flatpak-dir.c:8826
 msgid "Can't create deploy directory"
 msgstr ""
 
-#: common/flatpak-dir.c:8831
+#: common/flatpak-dir.c:8834
 #, c-format
 msgid "Failed to read commit %s: "
 msgstr ""
 
-#: common/flatpak-dir.c:8852
+#: common/flatpak-dir.c:8855
 #, c-format
 msgid "While trying to checkout %s into %s: "
 msgstr ""
 
-#: common/flatpak-dir.c:8871
+#: common/flatpak-dir.c:8874
 msgid "While trying to checkout metadata subpath: "
 msgstr ""
 
-#: common/flatpak-dir.c:8903
+#: common/flatpak-dir.c:8906
 #, c-format
 msgid "While trying to checkout subpath ‘%s’: "
 msgstr ""
 
-#: common/flatpak-dir.c:8913
+#: common/flatpak-dir.c:8916
 msgid "While trying to remove existing extra dir: "
 msgstr ""
 
-#: common/flatpak-dir.c:8924
+#: common/flatpak-dir.c:8927
 msgid "While trying to apply extra data: "
 msgstr ""
 
-#: common/flatpak-dir.c:8951
+#: common/flatpak-dir.c:8954
 #, c-format
 msgid "Invalid commit ref %s: "
 msgstr ""
 
-#: common/flatpak-dir.c:8959 common/flatpak-dir.c:8971
+#: common/flatpak-dir.c:8962 common/flatpak-dir.c:8974
 #, c-format
 msgid "Deployed ref %s does not match commit (%s)"
 msgstr ""
 
-#: common/flatpak-dir.c:8965
+#: common/flatpak-dir.c:8968
 #, c-format
 msgid "Deployed ref %s branch does not match commit (%s)"
 msgstr ""
 
-#: common/flatpak-dir.c:9226 common/flatpak-installation.c:1912
+#: common/flatpak-dir.c:9229 common/flatpak-installation.c:1912
 #, c-format
 msgid "%s branch %s already installed"
 msgstr ""
 
-#: common/flatpak-dir.c:10075
+#: common/flatpak-dir.c:10078
 #, c-format
 msgid "Could not unmount revokefs-fuse filesystem at %s: "
 msgstr ""
 
-#: common/flatpak-dir.c:10362
+#: common/flatpak-dir.c:10377
 #, c-format
 msgid "This version of %s is already installed"
 msgstr ""
 
-#: common/flatpak-dir.c:10369
+#: common/flatpak-dir.c:10390
 #, c-format
 msgid "Can't change remote during bundle install"
 msgstr ""
 
-#: common/flatpak-dir.c:10630
+#: common/flatpak-dir.c:10652
 msgid "Can't update to a specific commit without root permissions"
 msgstr ""
 
-#: common/flatpak-dir.c:10910
+#: common/flatpak-dir.c:10932
 #, c-format
 msgid "Can't remove %s, it is needed for: %s"
 msgstr ""
 
-#: common/flatpak-dir.c:10966 common/flatpak-installation.c:2068
+#: common/flatpak-dir.c:10988 common/flatpak-installation.c:2068
 #, c-format
 msgid "%s branch %s is not installed"
 msgstr ""
 
-#: common/flatpak-dir.c:11219
+#: common/flatpak-dir.c:11241
 #, c-format
 msgid "%s commit %s not installed"
 msgstr ""
 
-#: common/flatpak-dir.c:11555
+#: common/flatpak-dir.c:11577
 #, c-format
 msgid "Pruning repo failed: %s"
 msgstr ""
 
-#: common/flatpak-dir.c:11723 common/flatpak-dir.c:11729
+#: common/flatpak-dir.c:11745 common/flatpak-dir.c:11751
 #, c-format
 msgid "Failed to load filter '%s'"
 msgstr ""
 
-#: common/flatpak-dir.c:11735
+#: common/flatpak-dir.c:11757
 #, c-format
 msgid "Failed to parse filter '%s'"
 msgstr ""
 
-#: common/flatpak-dir.c:12017
+#: common/flatpak-dir.c:12039
 msgid "Failed to write summary cache: "
 msgstr ""
 
-#: common/flatpak-dir.c:12036
+#: common/flatpak-dir.c:12058
 #, c-format
 msgid "No oci summary cached for remote '%s'"
 msgstr ""
 
-#: common/flatpak-dir.c:12261
+#: common/flatpak-dir.c:12283
 #, fuzzy, c-format
 msgid "No cached summary for remote '%s'"
 msgstr "No repo metadata cached for remote '%s'"
 
-#: common/flatpak-dir.c:12302
+#: common/flatpak-dir.c:12324
 #, c-format
 msgid "Invalid checksum for indexed summary %s read from %s"
 msgstr ""
 
-#: common/flatpak-dir.c:12375
+#: common/flatpak-dir.c:12397
 #, c-format
 msgid ""
 "Remote listing for %s not available; server has no summary file. Check the "
 "URL passed to remote-add was valid."
 msgstr ""
 
-#: common/flatpak-dir.c:12752
+#: common/flatpak-dir.c:12774
 #, c-format
 msgid "Invalid checksum for indexed summary %s for remote '%s'"
 msgstr ""
 
-#: common/flatpak-dir.c:13375
+#: common/flatpak-dir.c:13397
 #, c-format
 msgid "Multiple branches available for %s, you must specify one of: "
 msgstr ""
 
-#: common/flatpak-dir.c:13441
+#: common/flatpak-dir.c:13463
 #, c-format
 msgid "Nothing matches %s"
 msgstr "Cap de correspondéncia per %s"
 
-#: common/flatpak-dir.c:13549
+#: common/flatpak-dir.c:13571
 #, c-format
 msgid "Can't find ref %s%s%s%s%s"
 msgstr ""
 
-#: common/flatpak-dir.c:13592
+#: common/flatpak-dir.c:13614
 #, c-format
 msgid "Error searching remote %s: %s"
 msgstr ""
 
-#: common/flatpak-dir.c:13689
+#: common/flatpak-dir.c:13711
 #, c-format
 msgid "Error searching local repository: %s"
 msgstr ""
 
-#: common/flatpak-dir.c:13826
+#: common/flatpak-dir.c:13848
 #, c-format
 msgid "%s/%s/%s not installed"
 msgstr "%s/%s/%s pas installat"
 
-#: common/flatpak-dir.c:14029
+#: common/flatpak-dir.c:14051
 #, c-format
 msgid "Could not find installation %s"
 msgstr "Impossible de trobar l'installacion %s"
 
-#: common/flatpak-dir.c:14574
+#: common/flatpak-dir.c:14596
 #, c-format
 msgid "Invalid file format, no %s group"
 msgstr ""
 
-#: common/flatpak-dir.c:14579 common/flatpak-repo-utils.c:2861
+#: common/flatpak-dir.c:14601 common/flatpak-repo-utils.c:2861
 #, c-format
 msgid "Invalid version %s, only 1 supported"
 msgstr ""
 
-#: common/flatpak-dir.c:14584 common/flatpak-dir.c:14589
+#: common/flatpak-dir.c:14606 common/flatpak-dir.c:14611
 #, c-format
 msgid "Invalid file format, no %s specified"
 msgstr ""
 
 #. Check some minimal size so we don't get crap
-#: common/flatpak-dir.c:14609
+#: common/flatpak-dir.c:14631
 msgid "Invalid file format, gpg key invalid"
 msgstr ""
 
-#: common/flatpak-dir.c:14637 common/flatpak-repo-utils.c:2934
+#: common/flatpak-dir.c:14659 common/flatpak-repo-utils.c:2934
 msgid "Collection ID requires GPG key to be provided"
 msgstr ""
 
-#: common/flatpak-dir.c:14680
+#: common/flatpak-dir.c:14702
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr ""
 
-#: common/flatpak-dir.c:14681
+#: common/flatpak-dir.c:14703
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr ""
 
-#: common/flatpak-dir.c:14914
+#: common/flatpak-dir.c:14936
 #, c-format
 msgid "Can't remove remote '%s' with installed ref %s (at least)"
 msgstr ""
 
-#: common/flatpak-dir.c:15013
+#: common/flatpak-dir.c:15035
 #, c-format
 msgid "Invalid character '/' in remote name: %s"
 msgstr ""
 
-#: common/flatpak-dir.c:15019
+#: common/flatpak-dir.c:15041
 #, c-format
 msgid "No configuration for remote %s specified"
 msgstr ""
 
-#: common/flatpak-dir.c:16516
+#: common/flatpak-dir.c:16538
 #, c-format
 msgid "Skipping deletion of mirror ref (%s, %s)…\n"
 msgstr ""
@@ -4976,72 +4976,72 @@ msgstr ""
 msgid "Unable to update symbolic link %s/%s"
 msgstr ""
 
-#: common/flatpak-oci-registry.c:1021
+#: common/flatpak-oci-registry.c:1022
 msgid "Only Bearer authentication supported"
 msgstr ""
 
-#: common/flatpak-oci-registry.c:1030
+#: common/flatpak-oci-registry.c:1031
 msgid "Only realm in authentication request"
 msgstr ""
 
-#: common/flatpak-oci-registry.c:1037
+#: common/flatpak-oci-registry.c:1038
 msgid "Invalid realm in authentication request"
 msgstr ""
 
-#: common/flatpak-oci-registry.c:1107
+#: common/flatpak-oci-registry.c:1108
 #, c-format
 msgid "Authorization failed: %s"
 msgstr ""
 
-#: common/flatpak-oci-registry.c:1109
+#: common/flatpak-oci-registry.c:1110
 msgid "Authorization failed"
 msgstr "Error d'autorizacion"
 
-#: common/flatpak-oci-registry.c:1113
+#: common/flatpak-oci-registry.c:1114
 #, c-format
 msgid "Unexpected response status %d when requesting token: %s"
 msgstr ""
 
-#: common/flatpak-oci-registry.c:1124
+#: common/flatpak-oci-registry.c:1125
 msgid "Invalid authentication request response"
 msgstr ""
 
-#: common/flatpak-oci-registry.c:1721 common/flatpak-oci-registry.c:1774
-#: common/flatpak-oci-registry.c:1803 common/flatpak-oci-registry.c:1858
-#: common/flatpak-oci-registry.c:1914 common/flatpak-oci-registry.c:1992
+#: common/flatpak-oci-registry.c:1722 common/flatpak-oci-registry.c:1775
+#: common/flatpak-oci-registry.c:1804 common/flatpak-oci-registry.c:1859
+#: common/flatpak-oci-registry.c:1915 common/flatpak-oci-registry.c:1993
 msgid "Invalid delta file format"
 msgstr ""
 
-#: common/flatpak-oci-registry.c:2496
+#: common/flatpak-oci-registry.c:2497
 #, c-format
 msgid "No gpg key found with ID %s (homedir: %s)"
 msgstr ""
 
-#: common/flatpak-oci-registry.c:2503
+#: common/flatpak-oci-registry.c:2504
 #, c-format
 msgid "Unable to lookup key ID %s: %d"
 msgstr ""
 
-#: common/flatpak-oci-registry.c:2511
+#: common/flatpak-oci-registry.c:2512
 #, c-format
 msgid "Error signing commit: %d"
 msgstr ""
 
-#: common/flatpak-oci-registry.c:3512 common/flatpak-oci-registry.c:3671
+#: common/flatpak-oci-registry.c:3513 common/flatpak-oci-registry.c:3672
 msgid "Invalid OCI image config"
 msgstr ""
 
-#: common/flatpak-oci-registry.c:3574 common/flatpak-oci-registry.c:3820
+#: common/flatpak-oci-registry.c:3575 common/flatpak-oci-registry.c:3821
 #, c-format
 msgid "Wrong layer checksum, expected %s, was %s"
 msgstr ""
 
-#: common/flatpak-oci-registry.c:3654
+#: common/flatpak-oci-registry.c:3655
 #, c-format
 msgid "No ref specified for OCI image %s"
 msgstr ""
 
-#: common/flatpak-oci-registry.c:3660
+#: common/flatpak-oci-registry.c:3661
 #, c-format
 msgid "Wrong ref (%s) specified for OCI image %s, expected %s"
 msgstr ""
