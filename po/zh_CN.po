@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2025-12-09 15:26+0000\n"
+"POT-Creation-Date: 2025-12-08 20:33+0100\n"
 "PO-Revision-Date: 2025-12-10 09:33+0800\n"
 "Last-Translator: lumingzh <lumingzh@qq.com>\n"
 "Language-Team: Chinese (China) <i18n-zh@googlegroups.com>\n"
@@ -265,6 +265,7 @@ msgid "Missing '=' in bind mount option '%s'"
 msgstr "在绑定挂载选项“%s”中缺少“=”"
 
 #: app/flatpak-builtins-build.c:633 common/flatpak-run.c:3710
+#, c-format
 msgid "Unable to start app"
 msgstr "无法启动应用"
 
@@ -514,6 +515,7 @@ msgid "Unable to find basename in %s, specify a name explicitly"
 msgstr "在 %s 中找不到基本名称，请明确指定名称"
 
 #: app/flatpak-builtins-build-export.c:746
+#, c-format
 msgid "No slashes allowed in extra data name"
 msgstr "在额外数据名称中不允许有斜线符号"
 
@@ -523,6 +525,7 @@ msgid "Invalid format for sha256 checksum: '%s'"
 msgstr "SHA256 校验和的格式无效：“%s”"
 
 #: app/flatpak-builtins-build-export.c:768
+#, c-format
 msgid "Extra data sizes of zero not supported"
 msgstr "不支持零的额外数据大小"
 
@@ -572,6 +575,7 @@ msgid "Content Written: %u\n"
 msgstr "写入内容：%u\n"
 
 #: app/flatpak-builtins-build-export.c:1171
+#, c-format
 msgid "Content Bytes Written:"
 msgstr "写入内容字节："
 
@@ -675,6 +679,7 @@ msgid "Exporting %s\n"
 msgstr "正在导出 %s\n"
 
 #: app/flatpak-builtins-build-finish.c:440
+#, c-format
 msgid "More than one executable found\n"
 msgstr "找到多个可执行文件\n"
 
@@ -684,6 +689,7 @@ msgid "Using %s as command\n"
 msgstr "使用 %s 作为命令\n"
 
 #: app/flatpak-builtins-build-finish.c:456
+#, c-format
 msgid "No executable found\n"
 msgstr "未发现可执行文件\n"
 
@@ -733,6 +739,7 @@ msgid "Build directory %s already finalized"
 msgstr "构建目录 %s 已完成"
 
 #: app/flatpak-builtins-build-finish.c:702
+#, c-format
 msgid "Please review the exported files and the metadata\n"
 msgstr "请审阅导出的文件和元数据\n"
 
@@ -1051,10 +1058,12 @@ msgid "LOCATION - Update repository metadata"
 msgstr "位置 - 更新仓库元数据"
 
 #: app/flatpak-builtins-build-update-repo.c:609
+#, c-format
 msgid "Updating appstream branch\n"
 msgstr "更新 appstream 分支\n"
 
 #: app/flatpak-builtins-build-update-repo.c:638
+#, c-format
 msgid "Updating summary\n"
 msgstr "更新摘要\n"
 
@@ -1064,6 +1073,7 @@ msgid "Total objects: %u\n"
 msgstr "对象总计：%u\n"
 
 #: app/flatpak-builtins-build-update-repo.c:666
+#, c-format
 msgid "No unreachable objects\n"
 msgstr "没有无法访问的对象\n"
 
@@ -1319,6 +1329,7 @@ msgstr "文件 - 获取关于导出文件的信息"
 
 #: app/flatpak-builtins-document-info.c:100
 #: app/flatpak-builtins-document-unexport.c:92
+#, c-format
 msgid "Not exported\n"
 msgstr "未导出\n"
 
@@ -1382,6 +1393,7 @@ msgid "Show permissions for applications"
 msgstr "显示应用程序的权限"
 
 #: app/flatpak-builtins-document-list.c:161
+#, c-format
 msgid "No documents found\n"
 msgstr "未找到文档\n"
 
@@ -1617,10 +1629,12 @@ msgid " - Show history"
 msgstr " - 显示历史"
 
 #: app/flatpak-builtins-history.c:490
+#, c-format
 msgid "Failed to parse the --since option"
 msgstr "解析 --since 选项失败"
 
 #: app/flatpak-builtins-history.c:501
+#, c-format
 msgid "Failed to parse the --until option"
 msgstr "解析 --until 选项失败"
 
@@ -1701,6 +1715,7 @@ msgid "ref not present in origin"
 msgstr "引用在来源中不存在"
 
 #: app/flatpak-builtins-info.c:211 app/flatpak-builtins-remote-info.c:217
+#, c-format
 msgid "Warning: Commit has no flatpak metadata\n"
 msgstr "警告：提交中没有 flatpak 元数据\n"
 
@@ -1951,6 +1966,7 @@ msgid "At least one REF must be specified"
 msgstr "必须至少指定一个引用"
 
 #: app/flatpak-builtins-install.c:392
+#, c-format
 msgid "Looking for matches…\n"
 msgstr "寻找匹配项…\n"
 
@@ -2152,10 +2168,12 @@ msgid ""
 msgstr "[匹配模式…] - 禁用更新和自动安装匹配模式"
 
 #: app/flatpak-builtins-mask.c:73
+#, c-format
 msgid "No masked patterns\n"
 msgstr "没有屏蔽的匹配模式\n"
 
 #: app/flatpak-builtins-mask.c:78
+#, c-format
 msgid "Masked patterns:\n"
 msgstr "屏蔽的匹配模式：\n"
 
@@ -2247,10 +2265,12 @@ msgid "[PATTERN…] - disable automatic removal of runtimes matching patterns"
 msgstr "[匹配模式…] - 禁用对匹配匹配模式的运行时的自动移除"
 
 #: app/flatpak-builtins-pin.c:75
+#, c-format
 msgid "No pinned patterns\n"
 msgstr "没有置顶的匹配模式\n"
 
 #: app/flatpak-builtins-pin.c:80
+#, c-format
 msgid "Pinned patterns:\n"
 msgstr "置顶的匹配模式：\n"
 
@@ -2259,6 +2279,7 @@ msgid "- Install flatpaks that are part of the operating system"
 msgstr "- 安装视为操作系统一部分的 flatpak"
 
 #: app/flatpak-builtins-preinstall.c:118 app/flatpak-builtins-update.c:274
+#, c-format
 msgid "Nothing to do.\n"
 msgstr "无事可做。\n"
 
@@ -2796,6 +2817,7 @@ msgid "[%d/%d] Verifying %s…\n"
 msgstr "[%d/%d] 正在校验 %s…\n"
 
 #: app/flatpak-builtins-repair.c:435
+#, c-format
 msgid "Dry run: "
 msgstr "演练："
 
@@ -2815,6 +2837,7 @@ msgid "Deleting ref %s due to %d\n"
 msgstr "由于 %2$d 正在删除引用 %1$s\n"
 
 #: app/flatpak-builtins-repair.c:464
+#, c-format
 msgid "Checking remotes...\n"
 msgstr "正在检查远程仓库…\n"
 
@@ -2829,18 +2852,22 @@ msgid "Remote %s for ref %s is disabled\n"
 msgstr "引用 %2$s 的远程仓库 %1$s 已禁用\n"
 
 #: app/flatpak-builtins-repair.c:490
+#, c-format
 msgid "Pruning objects\n"
 msgstr "正在修剪对象\n"
 
 #: app/flatpak-builtins-repair.c:498
+#, c-format
 msgid "Erasing .removed\n"
 msgstr "正在擦除 .removed\n"
 
 #: app/flatpak-builtins-repair.c:523
+#, c-format
 msgid "Reinstalling refs\n"
 msgstr "重新安装引用\n"
 
 #: app/flatpak-builtins-repair.c:525
+#, c-format
 msgid "Reinstalling removed refs\n"
 msgstr "重新安装已移除的引用\n"
 
@@ -2875,6 +2902,7 @@ msgid "false"
 msgstr "失败的"
 
 #: app/flatpak-builtins-repo.c:121
+#, c-format
 msgid "Subsummaries: "
 msgstr "子摘要："
 
@@ -3200,6 +3228,7 @@ msgstr ""
 "这些运行时在安装“%s”中是置顶的且不会被移除；查阅 flatpak-pin(1)：\n"
 
 #: app/flatpak-builtins-uninstall.c:370
+#, c-format
 msgid "Nothing unused to uninstall\n"
 msgstr "无可卸载的未使用项目\n"
 
@@ -3224,10 +3253,12 @@ msgid "Warning: %s is not installed\n"
 msgstr "警告：%s 未安装\n"
 
 #: app/flatpak-builtins-uninstall.c:490
+#, c-format
 msgid "None of the specified refs are installed"
 msgstr "指定的引用都没有安装"
 
 #: app/flatpak-builtins-uninstall.c:599
+#, c-format
 msgid "No app data to delete\n"
 msgstr "无可删除的应用数据\n"
 
@@ -3268,6 +3299,7 @@ msgid "With --commit, only one REF may be specified"
 msgstr "带有 --commit，仅可指定一个引用"
 
 #: app/flatpak-builtins-update.c:162
+#, c-format
 msgid "Looking for updates…\n"
 msgstr "正在查找更新…\n"
 
@@ -3334,6 +3366,7 @@ msgid "Found installed ref ‘%s’ (%s). Is this correct?"
 msgstr "找到已安装的引用“%s”（%s）。这结果正确吗？"
 
 #: app/flatpak-builtins-utils.c:522
+#, c-format
 msgid "All of the above"
 msgstr "上面全部"
 
@@ -3655,10 +3688,12 @@ msgstr ""
 "信息：应用 %s%s%s 分支 %s%s%s 已结束生命周期，原因：\n"
 
 #: app/flatpak-cli-transaction.c:963
+#, c-format
 msgid "Info: applications using this extension:\n"
 msgstr "信息：使用该扩展的应用程序：\n"
 
 #: app/flatpak-cli-transaction.c:965
+#, c-format
 msgid "Info: applications using this runtime:\n"
 msgstr "信息：使用该运行时的应用程序：\n"
 
@@ -3667,6 +3702,7 @@ msgid "Replace?"
 msgstr "替换吗？"
 
 #: app/flatpak-cli-transaction.c:987 app/flatpak-quiet-transaction.c:247
+#, c-format
 msgid "Updating to rebased version\n"
 msgstr "正在更新到重新建基版本\n"
 
@@ -4218,6 +4254,7 @@ msgid "Filesystem location \"%s\" contains \"..\""
 msgstr "文件系统位置“%s”包含“..”"
 
 #: common/flatpak-context.c:1925
+#, c-format
 msgid ""
 "--filesystem=/ is not available, use --filesystem=host for a similar result"
 msgstr "--filesystem=/ 不可用，使用 --filesystem=host 获得相似结果"
@@ -4237,6 +4274,7 @@ msgid "Invalid syntax for %s: %s"
 msgstr "无效的 %s 语法：%s"
 
 #: common/flatpak-context.c:2200
+#, c-format
 msgid "fallback-x11 can not be conditional"
 msgstr "fallback-x11 无法成为条件性的"
 
@@ -4251,18 +4289,22 @@ msgid "Environment variable name must not contain '=': %s"
 msgstr "环境变量名称不能包含“=”：%s"
 
 #: common/flatpak-context.c:2592 common/flatpak-context.c:2600
+#, c-format
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr "--add-policy 参数的格式必须为 SUBSYSTEM.KEY=VALUE"
 
 #: common/flatpak-context.c:2607
+#, c-format
 msgid "--add-policy values can't start with \"!\""
 msgstr "--add-policy 值不能以“!”开头"
 
 #: common/flatpak-context.c:2632 common/flatpak-context.c:2640
+#, c-format
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr "--remove-policy 参数的格式必须为 SUBSYSTEM.KEY=VALUE"
 
 #: common/flatpak-context.c:2647
+#, c-format
 msgid "--remove-policy values can't start with \"!\""
 msgstr "--remove-policy 值不能以“!”开头"
 
@@ -4741,6 +4783,7 @@ msgid "Extra data %s missing in detached metadata"
 msgstr "分离的元数据中缺少额外的数据 %s"
 
 #: common/flatpak-dir.c:9255
+#, c-format
 msgid "Unable to get runtime key from metadata"
 msgstr "无法从元数据获取运行时密钥"
 
@@ -4832,6 +4875,7 @@ msgid "This version of %s is already installed"
 msgstr "此版本的 %s 已安装"
 
 #: common/flatpak-dir.c:11260
+#, c-format
 msgid "Can't change remote during bundle install"
 msgstr "捆绑包安装期间无法更改远程仓库"
 
@@ -4992,6 +5036,7 @@ msgid "Skipping deletion of mirror ref (%s, %s)…\n"
 msgstr "正在跳过删除镜像引用（%s，%s）…\n"
 
 #: common/flatpak-exports.c:931
+#, c-format
 msgid "An absolute path is required"
 msgstr "需要绝对路径"
 
@@ -5143,6 +5188,7 @@ msgid "Invalid authentication request response"
 msgstr "无效的身份验证请求响应"
 
 #: common/flatpak-oci-registry.c:1731
+#, c-format
 msgid "Flatpak was compiled without zstd support"
 msgstr "Flatpak 编译时未开启 zstd 支持"
 
@@ -5350,6 +5396,7 @@ msgid "GPG verification must be enabled when a collection ID is set"
 msgstr "设置集合标识时必须启用 GPG 校验"
 
 #: common/flatpak-repo-utils.c:344
+#, c-format
 msgid "No extra data sources"
 msgstr "没有额外的数据源"
 
@@ -5675,30 +5722,37 @@ msgid "URI is not absolute, and no base URI was provided"
 msgstr "URI 不是绝对路径，且未提供基础 URI"
 
 #: common/flatpak-usb.c:83
+#, c-format
 msgid "USB device query 'all' must not have data"
 msgstr "USB 设备查询“all”不能具有数据"
 
 #: common/flatpak-usb.c:102
+#, c-format
 msgid "USB query rule 'cls' must be in the form CLASS:SUBCLASS or CLASS:*"
 msgstr "USB 查询规则“cls”必须为 CLASS:SUBCLASS 或 CLASS:* 的形式"
 
 #: common/flatpak-usb.c:111
+#, c-format
 msgid "Invalid USB class"
 msgstr "无效的 USB 类"
 
 #: common/flatpak-usb.c:125
+#, c-format
 msgid "Invalid USB subclass"
 msgstr "无效的 USB 子类"
 
 #: common/flatpak-usb.c:141 common/flatpak-usb.c:148
+#, c-format
 msgid "USB query rule 'dev' must have a valid 4-digit hexadecimal product id"
 msgstr "USB 查询规则“dev”必须具有有效的 4 位数 16 进制产品标识符"
 
 #: common/flatpak-usb.c:164 common/flatpak-usb.c:171
+#, c-format
 msgid "USB query rule 'vnd' must have a valid 4-digit hexadecimal vendor id"
 msgstr "USB 查询规则“vnd”必须具有有效的 4 位数 16 进制厂商标识符"
 
 #: common/flatpak-usb.c:205
+#, c-format
 msgid "USB device queries must be in the form TYPE:DATA"
 msgstr "USB 设备查询必须为 TYPE:DATA 的形式"
 
@@ -5708,18 +5762,22 @@ msgid "Unknown USB query rule %s"
 msgstr "未知的 USB 查询规则 %s"
 
 #: common/flatpak-usb.c:248
+#, c-format
 msgid "Empty USB query"
 msgstr "空的 USB 查询"
 
 #: common/flatpak-usb.c:274
+#, c-format
 msgid "Multiple USB query rules of the same type is not supported"
 msgstr "不支持同一类型的多 USB 查询规则"
 
 #: common/flatpak-usb.c:283
+#, c-format
 msgid "'all' must not contain extra query rules"
 msgstr "“all”不能包含额外查询规则"
 
 #: common/flatpak-usb.c:291
+#, c-format
 msgid "USB queries with 'dev' must also specify vendors"
 msgstr "使用“dev”的 USB 查询必须同时指定厂商"
 
@@ -5783,6 +5841,7 @@ msgid "Invalid token"
 msgstr "无效的令牌"
 
 #: portal/flatpak-portal.c:2373
+#, c-format
 msgid "No portal support found"
 msgstr "未发现传送门支持"
 
@@ -5808,14 +5867,17 @@ msgid "Update access can be changed any time from the privacy settings."
 msgstr "您可以随时通过隐私设置更改更新访问。"
 
 #: portal/flatpak-portal.c:2424
+#, c-format
 msgid "Application update not allowed"
 msgstr "不允许更新应用程序"
 
 #: portal/flatpak-portal.c:2582
+#, c-format
 msgid "Self update not supported, new version requires new permissions"
 msgstr "不支持自我更新，新版本需要新的权限"
 
 #: portal/flatpak-portal.c:2765 portal/flatpak-portal.c:2783
+#, c-format
 msgid "Update ended unexpectedly"
 msgstr "更新意外结束"
 
