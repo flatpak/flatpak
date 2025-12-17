@@ -46,6 +46,7 @@ if get_option('installed_tests')
     output : 'installed-tests.sh',
     configuration : {
       'FUSERMOUNT' : fusermount,
+      'FLATPAK_TRIGGERSDIR' : get_option('prefix') / get_option('datadir') / 'flatpak' / 'triggers',
     },
     install_dir : installed_testdir,
   )

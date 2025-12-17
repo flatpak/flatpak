@@ -1,4 +1,7 @@
 # Copyright 2024 Collabora Ltd.
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
+FLATPAK_TRIGGERSDIR='@FLATPAK_TRIGGERSDIR@'
 FUSERMOUNT='@FUSERMOUNT@'
+
+export FLATPAK_TRIGGERSDIR
