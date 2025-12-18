@@ -35,6 +35,7 @@ TEST_MATRIX_SOURCE=(
 	'tests/test-seccomp.sh' \
 	'tests/test-repair.sh' \
 	'tests/test-extra-data.sh{user+system}' \
+	'tests/test-install-extension.sh' \
 )
 
 "${tests_srcdir}/expand-test-matrix.sh" --meson "${TEST_MATRIX_SOURCE[*]}" > "${tests_srcdir}/test-matrix/meson.build"
