@@ -300,6 +300,7 @@ flatpak_load_gpg_keys (char        **gpg_import,
 gboolean
 flatpak_resolve_duplicate_remotes (GPtrArray    *dirs,
                                    const char   *remote_name,
+                                   gboolean      opt_noninteractive,
                                    FlatpakDir  **out_dir,
                                    GCancellable *cancellable,
                                    GError      **error)
@@ -332,6 +333,9 @@ flatpak_resolve_duplicate_remotes (GPtrArray    *dirs,
     chosen = 1;
   else if (dirs_with_remote->len > 1)
     {
+      if (opt_noninteractive)
+        return flatpak_fail (error, _("Remote ‘%s’ found in multiple installations, unable to proceed in non-interactive mode"), remote_name);
+
       g_auto(GStrv) names = g_new0 (char *, dirs_with_remote->len + 1);
       for (i = 0; i < dirs_with_remote->len; i++)
         {
@@ -388,12 +392,16 @@ flatpak_resolve_matching_refs (const char *remote_name,
                                gboolean    assume_yes,
                                GPtrArray  *refs,
                                const char *opt_search_ref,
+                               gboolean    opt_noninteractive,
                                char      **out_ref,
                                GError    **error)
 {
   guint chosen = 0;
 
   g_assert (refs->len > 0);
+
+  if (opt_noninteractive && refs->len > 1)
+    return flatpak_fail (error, _("Multiple refs match ‘%s’, unable to proceed in non-interactive mode"), opt_search_ref);
 
   /* When there's only one match, we only choose it without user interaction if
    * either the --assume-yes option was used or it's an exact match
@@ -466,6 +474,7 @@ flatpak_resolve_matching_installed_refs (gboolean    assume_yes,
                                          gboolean    only_one,
                                          GPtrArray  *ref_dir_pairs,
                                          const char *opt_search_ref,
+                                         gboolean    opt_noninteractive,
                                          GPtrArray  *out_pairs,
                                          GError    **error)
 {
@@ -474,6 +483,9 @@ flatpak_resolve_matching_installed_refs (gboolean    assume_yes,
   guint i, k;
 
   g_assert (ref_dir_pairs->len > 0);
+
+  if (opt_noninteractive && ref_dir_pairs->len > 1)
+    return flatpak_fail (error, _("Multiple installed refs match ‘%s’, unable to proceed in non-interactive mode"), opt_search_ref);
 
   /* When there's only one match, we only choose it without user interaction if
    * either the --assume-yes option was used or it's an exact match
@@ -555,12 +567,16 @@ flatpak_resolve_matching_installed_refs (gboolean    assume_yes,
 gboolean
 flatpak_resolve_matching_remotes (GPtrArray      *remote_dir_pairs,
                                   const char     *opt_search_ref,
+                                  gboolean        opt_noninteractive,
                                   RemoteDirPair **out_pair,
                                   GError        **error)
 {
   guint chosen = 0; /* 1 indexed */
 
   g_assert (remote_dir_pairs->len > 0);
+
+  if (opt_noninteractive && remote_dir_pairs->len > 1)
+    return flatpak_fail (error, _("Multiple remotes have refs matching ‘%s’, unable to proceed in non-interactive mode"), opt_search_ref);
 
   /* Here we use the only matching remote even if --assumeyes wasn't specified
    * because the user will still be asked to confirm the operation in the next
