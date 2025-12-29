@@ -123,6 +123,7 @@ gboolean flatpak_run_app (FlatpakDecomposed   *app_ref,
                           int                  n_args,
                           int                  instance_id_fd,
                           const char * const  *run_environ,
+                          char               **extra_bwrap_args,
                           char               **instance_dir_out,
                           GCancellable        *cancellable,
                           GError             **error);

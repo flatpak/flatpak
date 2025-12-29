@@ -62,6 +62,7 @@ static int opt_instance_id_fd = -1;
 static char *opt_app_path;
 static char *opt_usr_path;
 static gboolean opt_clear_env;
+static char **opt_bwrap_args = NULL;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to use"), N_("ARCH") },
@@ -91,6 +92,7 @@ static GOptionEntry options[] = {
   { "app-path", 0, 0, G_OPTION_ARG_FILENAME, &opt_app_path, N_("Use PATH instead of the app's /app"), N_("PATH") },
   { "usr-path", 0, 0, G_OPTION_ARG_FILENAME, &opt_usr_path, N_("Use PATH instead of the runtime's /usr"), N_("PATH") },
   { "clear-env", 0, 0, G_OPTION_ARG_NONE, &opt_clear_env, N_("Clear all outside environment variables"), NULL },
+  { "bwrap-arg", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_bwrap_args, N_("Argument to pass to bubblewrap"), N_("ARG") },
   { NULL }
 };
 
@@ -329,6 +331,7 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
                         rest_argc - 1,
                         opt_instance_id_fd,
                         (const char * const *) run_environ,
+                        opt_bwrap_args,
                         NULL,
                         cancellable,
                         error))
