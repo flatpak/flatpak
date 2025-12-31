@@ -1,0 +1,20 @@
+app-id: com.github.theofficalnoodles.ArchMode
+runtime: org.freedesktop.Platform
+runtime-version: "23.08"
+sdk: org.freedesktop.Sdk
+command: archmode
+finish-args:
+  - --filesystem=host
+  - --share=network
+  - --talk-name=org.freedesktop.systemd1
+
+modules:
+  - name: archmode
+    buildsystem: simple
+    build-commands:
+      - install -Dm755 archmode.sh /app/bin/archmode
+      - install -Dm644 archmode.service /app/lib/systemd/system/archmode.service
+    sources:
+      - type: git
+        url: https://github.com/theofficalnoodles/ArchMode.git
+        branch: main
