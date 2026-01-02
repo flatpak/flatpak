@@ -225,7 +225,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
       if (collection_id != NULL)
         len = MAX (len, g_utf8_strlen (_("Collection:"), -1));
       len = MAX (len, g_utf8_strlen (_("Installation:"), -1));
-      len = MAX (len, g_utf8_strlen (_("Installed:"), -1));
+      len = MAX (len, g_utf8_strlen (_("Installed Size:"), -1));
       if (flatpak_decomposed_is_app (ref))
         {
           len = MAX (len, g_utf8_strlen (_("Runtime:"), -1));
@@ -268,7 +268,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
       if (collection_id)
         print_aligned (len, _("Collection:"), collection_id);
       print_aligned (len, _("Installation:"), flatpak_dir_get_name_cached (dir));
-      print_aligned (len, _("Installed:"), formatted_size);
+      print_aligned (len, _("Installed Size:"), formatted_size);
       if (flatpak_decomposed_is_app (ref))
         {
           g_autofree char *runtime = NULL;
@@ -456,7 +456,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
       len = MAX (len, g_utf8_strlen (_("Origin:"), -1));
       len = MAX (len, g_utf8_strlen (_("Commit:"), -1));
       len = MAX (len, g_utf8_strlen (_("Installation:"), -1));
-      len = MAX (len, g_utf8_strlen (_("Installed:"), -1));
+      len = MAX (len, g_utf8_strlen (_("Installed Size:"), -1));
       len = MAX (len, g_utf8_strlen (_("Subpaths:"), -1));
 
       flatpak_get_window_size (&rows, &cols);
@@ -514,7 +514,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
           print_aligned (len, _("Origin:"), origin ? origin : "-");
           print_aligned (len, _("Commit:"), formatted_commit);
           print_aligned (len, _("Installation:"), ext_installation);
-          print_aligned (len, _("Installed:"), ext_formatted_size);
+          print_aligned (len, _("Installed Size:"), ext_formatted_size);
 
           if (ext_subpaths && ext_subpaths[0])
             {
