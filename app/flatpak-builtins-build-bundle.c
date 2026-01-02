@@ -58,8 +58,8 @@ static char *opt_from_commit;
 static GOptionEntry options[] = {
   { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, N_("Export runtime instead of app"), NULL },
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to bundle for"), N_("ARCH") },
-  { "repo-url", 0, 0, G_OPTION_ARG_STRING, &opt_repo_url, N_("Url for repo"), N_("URL") },
-  { "runtime-repo", 0, 0, G_OPTION_ARG_STRING, &opt_runtime_repo, N_("Url for runtime flatpakrepo file"), N_("URL") },
+  { "repo-url", 0, 0, G_OPTION_ARG_STRING, &opt_repo_url, N_("URL for repo"), N_("URL") },
+  { "runtime-repo", 0, 0, G_OPTION_ARG_STRING, &opt_runtime_repo, N_("URL for runtime flatpakrepo file"), N_("URL") },
   { "gpg-keys", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_file, N_("Add GPG key from FILE (- for stdin)"), N_("FILE") },
   { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_key_ids, N_("GPG Key ID to sign the OCI image with"), N_("KEY-ID") },
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, N_("GPG Homedir to use when looking for keyrings"), N_("HOMEDIR") },
