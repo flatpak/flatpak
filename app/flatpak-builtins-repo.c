@@ -334,6 +334,7 @@ print_branches (OstreeRepo *repo,
   printer = flatpak_table_printer_new ();
   flatpak_table_printer_set_column_title (printer, 0, _("Ref"));
   flatpak_table_printer_set_column_title (printer, 1, _("Installed"));
+  /* Translators: Download is used here as a noun */
   flatpak_table_printer_set_column_title (printer, 2, _("Download"));
   flatpak_table_printer_set_column_title (printer, 3, _("Subsets"));
   flatpak_table_printer_set_column_title (printer, 4, _("Options"));
