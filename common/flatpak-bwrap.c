@@ -60,9 +60,6 @@ flatpak_bwrap_new (char **env)
   else
     bwrap->envp = g_get_environ ();
 
-  bwrap->sync_fds[0] = -1;
-  bwrap->sync_fds[1] = -1;
-
   return bwrap;
 }
 
@@ -571,18 +568,35 @@ flatpak_bwrap_child_setup_inherit_fds_cb (gpointer user_data)
   flatpak_bwrap_child_setup (fd_array, FALSE);
 }
 
-/* Add a --sync-fd argument for bwrap(1). Returns the write end of the pipe on
- * success, or -1 on error. */
-int
-flatpak_bwrap_add_sync_fd (FlatpakBwrap *bwrap)
+/* Add a --sync-fd argument for bwrap(1).
+ * sync_fd_user_out contains the end of the socket which is owned by the caller
+ * and becomes readable when the child dies.
+ * sync_fd_bwrap_out contains the end of the socket which is owned by bwrap
+ * and will be closed when the child dies.
+ */
+gboolean
+flatpak_bwrap_add_sync_fd (FlatpakBwrap *bwrap,
+                           int          *sync_fd_user_out,
+                           int          *sync_fd_bwrap_out)
 {
-  /* --sync-fd is only allowed once */
-  if (bwrap->sync_fds[1] >= 0)
-    return bwrap->sync_fds[1];
+  int sync_fds[2];
 
-  if (pipe2 (bwrap->sync_fds, O_CLOEXEC) < 0)
-    return -1;
+  if (pipe2 (sync_fds, O_CLOEXEC) < 0)
+    return FALSE;
 
-  flatpak_bwrap_add_args_data_fd (bwrap, "--sync-fd", bwrap->sync_fds[0], NULL);
-  return bwrap->sync_fds[1];
+  flatpak_bwrap_add_args_data_fd (bwrap,
+                                  "--sync-fd",
+                                  sync_fds[0], /* takes ownership */
+                                  NULL);
+
+  /* takes ownership */
+  if (sync_fd_user_out)
+    *sync_fd_user_out = sync_fds[1];
+  else
+    close (sync_fds[1]);
+
+  if (sync_fd_bwrap_out)
+    *sync_fd_bwrap_out = sync_fds[0];
+
+  return TRUE;
 }
