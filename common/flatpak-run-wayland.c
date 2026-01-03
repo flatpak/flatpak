@@ -235,8 +235,7 @@ flatpak_run_create_wayland_security_context (FlatpakBwrap *bwrap,
   if (listen (listen_fd, 0) != 0)
     goto out;
 
-  sync_fd = flatpak_bwrap_add_sync_fd (bwrap);
-  if (sync_fd < 0)
+  if (!flatpak_bwrap_add_sync_fd (bwrap, &sync_fd, NULL))
     goto out;
 
   security_context = wp_security_context_manager_v1_create_listener (security_context_manager,
