@@ -966,6 +966,22 @@ out:
   return ret;
 }
 
+static gboolean
+flatpak_str_is_alphanumeric (const char *arg)
+{
+  while (*arg != '\0')
+    {
+      char c = *arg;
+
+      if (!g_ascii_isalnum (c))
+        return FALSE;
+
+      arg++;
+    }
+
+  return TRUE;
+}
+
 /* This atomically replaces a symlink with a new value, removing the
  * existing symlink target, if it exstis and is different from
  * @target. This is atomic in the sense that we're guaranteed to
@@ -975,6 +991,9 @@ out:
  * symlink for some reason, ending up with neither the old or the new
  * target. That is fine if the reason for the symlink is keeping a
  * cache though.
+ * The target shall only be a file in the same directory as the symlink, and
+ * shall only contain the characters a-zA-Z0-9. This is so that the target of
+ * the symlink that gets removed is in the same directory as the link.
  */
 gboolean
 flatpak_switch_symlink_and_remove (const char *symlink_path,
@@ -1018,10 +1037,21 @@ flatpak_switch_symlink_and_remove (const char *symlink_path,
           g_autofree char *old_target = flatpak_readlink (tmp_path, error);
           if (old_target == NULL)
             return FALSE;
-          if (strcmp (old_target, target) != 0) /* Don't remove old file if its the same as the new one */
+
+          /* Don't remove old file if its the same as the new one */
+          if (strcmp (old_target, target) != 0)
             {
-              g_autofree char *old_target_path = g_build_filename (symlink_dir, old_target, NULL);
-              unlink (old_target_path);
+              if (flatpak_str_is_alphanumeric (old_target))
+                {
+                  g_autofree char *old_target_path = NULL;
+
+                  old_target_path = g_build_filename (symlink_dir, old_target, NULL);
+                  unlink (old_target_path);
+                }
+              else
+                {
+                  g_warning ("Refusing to delete old link target %s", old_target);
+                }
             }
         }
       else if (errno != ENOENT)
