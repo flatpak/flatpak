@@ -1874,21 +1874,20 @@ flatpak_context_parse_filesystem (const char             *filesystem_and_mode,
   if (filesystem == NULL)
     return FALSE;
 
+  /* Forbid /../ in paths */
+  if (g_str_has_suffix (filesystem, "/..") ||
+      strstr (filesystem, "/../") != NULL)
+    {
+      g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                   _("Filesystem location \"%s\" contains \"..\""),
+                   filesystem);
+      return FALSE;
+    }
+
   slash = strchr (filesystem, '/');
 
-  /* Forbid /../ in paths */
   if (slash != NULL)
     {
-      if (g_str_has_prefix (slash + 1, "../") ||
-          g_str_has_suffix (slash + 1, "/..") ||
-          strstr (slash + 1, "/../") != NULL)
-        {
-          g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
-                       _("Filesystem location \"%s\" contains \"..\""),
-                       filesystem);
-          return FALSE;
-        }
-
       /* Convert "//" and "/./" to "/" */
       for (; slash != NULL; slash = strchr (slash + 1, '/'))
         {
