@@ -275,6 +275,9 @@ flatpak_oci_registry_new (const char   *uri,
   return oci_registry;
 }
 
+/* Carefully opens a file from a base directory and subpath,
+ * making sure that its not a symlink, pipe, etc.
+ */
 static int
 local_open_file (int           dfd,
                  const char   *subpath,
@@ -286,7 +289,7 @@ local_open_file (int           dfd,
   struct stat tmp_st_buf;
 
   do
-    fd = openat (dfd, subpath, O_RDONLY | O_NONBLOCK | O_CLOEXEC | O_NOCTTY);
+    fd = openat (dfd, subpath, O_NOFOLLOW | O_RDONLY | O_NONBLOCK | O_CLOEXEC | O_NOCTTY);
   while (G_UNLIKELY (fd == -1 && errno == EINTR));
   if (fd == -1)
     {
