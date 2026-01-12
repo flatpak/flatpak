@@ -1912,7 +1912,7 @@ flatpak_allocate_tmpdir (int           tmpdir_dfd,
 }
 
 /* Carefully opens a file from a base directory and subpath,
- * making sure that its not a symlink.
+ * making sure that its not a symlink, pipe, etc.
  */
 int
 flatpak_open_file_at (int           dfd,
@@ -1925,7 +1925,7 @@ flatpak_open_file_at (int           dfd,
   struct stat tmp_st_buf;
 
   do
-    fd = openat (dfd, subpath, O_RDONLY | O_NONBLOCK | O_CLOEXEC | O_NOCTTY);
+    fd = openat (dfd, subpath, O_NOFOLLOW | O_RDONLY | O_NONBLOCK | O_CLOEXEC | O_NOCTTY);
   while (G_UNLIKELY (fd == -1 && errno == EINTR));
   if (fd == -1)
     {
