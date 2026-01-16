@@ -2994,6 +2994,7 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
                  int                  n_args,
                  int                  instance_id_fd,
                  const char * const  *run_environ,
+                 char               **extra_bwrap_args,
                  char               **instance_dir_out,
                  GCancellable        *cancellable,
                  GError             **error)
@@ -3602,10 +3603,13 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
         }
       command = default_command;
     }
-
+  
   flatpak_bwrap_sort_envp (bwrap);
   flatpak_bwrap_envp_to_args (bwrap);
-
+  
+  if (extra_bwrap_args != NULL)
+    flatpak_bwrap_append_argsv (bwrap, extra_bwrap_args, -1);
+  
   if (!flatpak_bwrap_bundle_args (bwrap, 1, -1, FALSE, error))
     return FALSE;
 
