@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2025-12-04 01:34+0100\n"
+"POT-Creation-Date: 2026-01-21 11:29+0100\n"
 "PO-Revision-Date: 2019-08-24 23:27+0100\n"
 "Last-Translator: Zander Brown <zbrown@gnome.org>\n"
 "Language-Team: English - United Kingdom <en_GB@li.org>\n"
@@ -229,34 +229,34 @@ msgstr "Log session bus calls"
 msgid "Log system bus calls"
 msgstr "Log system bus calls"
 
-#: app/flatpak-builtins-build.c:219
+#: app/flatpak-builtins-build.c:258
 msgid "DIRECTORY [COMMAND [ARGUMENT…]] - Build in directory"
 msgstr "DIRECTORY [COMMAND [ARGUMENT…]] - Build in directory"
 
-#: app/flatpak-builtins-build.c:242 app/flatpak-builtins-build-finish.c:655
+#: app/flatpak-builtins-build.c:281 app/flatpak-builtins-build-finish.c:655
 msgid "DIRECTORY must be specified"
 msgstr "DIRECTORY must be specified"
 
-#: app/flatpak-builtins-build.c:253 app/flatpak-builtins-build-export.c:887
+#: app/flatpak-builtins-build.c:292 app/flatpak-builtins-build-export.c:887
 #, c-format
 msgid "Build directory %s not initialized, use flatpak build-init"
 msgstr "Build directory %s not initialised, use flatpak build-init"
 
-#: app/flatpak-builtins-build.c:272
+#: app/flatpak-builtins-build.c:311
 msgid "metadata invalid, not application or runtime"
 msgstr "metadata invalid, not application or runtime"
 
-#: app/flatpak-builtins-build.c:403
+#: app/flatpak-builtins-build.c:442
 #, c-format
 msgid "No extension point matching %s in %s"
 msgstr "No extension point matching %s in %s"
 
-#: app/flatpak-builtins-build.c:581
+#: app/flatpak-builtins-build.c:618
 #, c-format
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Missing '=' in bind mount option '%s'"
 
-#: app/flatpak-builtins-build.c:622 common/flatpak-run.c:3599
+#: app/flatpak-builtins-build.c:662 common/flatpak-run.c:3599
 #, c-format
 msgid "Unable to start app"
 msgstr "Unable to start app"

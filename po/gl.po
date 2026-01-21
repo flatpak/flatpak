@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2025-12-04 01:34+0100\n"
+"POT-Creation-Date: 2026-01-21 11:29+0100\n"
 "PO-Revision-Date: 2019-12-28 11:56+0100\n"
 "Last-Translator: Fran Diéguez <frandieguez@gnome.org>\n"
 "Language-Team: Galician <gnome-l10n-gl@gnome.org>\n"
@@ -230,35 +230,35 @@ msgstr "Rexistrar chamadas ao bus de sesión"
 msgid "Log system bus calls"
 msgstr "Rexistrar chamadas ao bus de sistema"
 
-#: app/flatpak-builtins-build.c:219
+#: app/flatpak-builtins-build.c:258
 #, fuzzy
 msgid "DIRECTORY [COMMAND [ARGUMENT…]] - Build in directory"
 msgstr "DIRECTORIO [ORDE [argumentos...]] - Construír no directorio"
 
-#: app/flatpak-builtins-build.c:242 app/flatpak-builtins-build-finish.c:655
+#: app/flatpak-builtins-build.c:281 app/flatpak-builtins-build-finish.c:655
 msgid "DIRECTORY must be specified"
 msgstr "Debe especificar o DIRECTORIO"
 
-#: app/flatpak-builtins-build.c:253 app/flatpak-builtins-build-export.c:887
+#: app/flatpak-builtins-build.c:292 app/flatpak-builtins-build-export.c:887
 #, c-format
 msgid "Build directory %s not initialized, use flatpak build-init"
 msgstr "Directorio de construción %s non iniciado, usar flatpak build-init"
 
-#: app/flatpak-builtins-build.c:272
+#: app/flatpak-builtins-build.c:311
 msgid "metadata invalid, not application or runtime"
 msgstr "metadatos non válidos, sen aplicación ou runtime"
 
-#: app/flatpak-builtins-build.c:403
+#: app/flatpak-builtins-build.c:442
 #, c-format
 msgid "No extension point matching %s in %s"
 msgstr "Non hai ningún punto de extensión que coincida con %s en %s"
 
-#: app/flatpak-builtins-build.c:581
+#: app/flatpak-builtins-build.c:618
 #, c-format
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Falta o «=» na opción «%s» de punto de montaxe"
 
-#: app/flatpak-builtins-build.c:622 common/flatpak-run.c:3599
+#: app/flatpak-builtins-build.c:662 common/flatpak-run.c:3599
 #, c-format
 msgid "Unable to start app"
 msgstr "Non foi posíbel iniciar a aplicación"

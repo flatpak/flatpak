@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2025-12-04 01:34+0100\n"
+"POT-Creation-Date: 2026-01-21 11:29+0100\n"
 "PO-Revision-Date: 2025-04-22 23:11+0200\n"
 "Last-Translator: Anders Jonsson <anders.jonsson@norsjovallen.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -231,35 +231,35 @@ msgstr "Logga sessionsbussanrop"
 msgid "Log system bus calls"
 msgstr "Logga systembussanrop"
 
-#: app/flatpak-builtins-build.c:219
+#: app/flatpak-builtins-build.c:258
 msgid "DIRECTORY [COMMAND [ARGUMENT…]] - Build in directory"
 msgstr "KATALOG [KOMMANDO [ARGUMENT…]] - Bygg i katalog"
 
-#: app/flatpak-builtins-build.c:242 app/flatpak-builtins-build-finish.c:655
+#: app/flatpak-builtins-build.c:281 app/flatpak-builtins-build-finish.c:655
 msgid "DIRECTORY must be specified"
 msgstr "KATALOG måste anges"
 
-#: app/flatpak-builtins-build.c:253 app/flatpak-builtins-build-export.c:887
+#: app/flatpak-builtins-build.c:292 app/flatpak-builtins-build-export.c:887
 #, c-format
 msgid "Build directory %s not initialized, use flatpak build-init"
 msgstr "Byggkatalog %s är inte initierad, använd flatpak build-init"
 
-#: app/flatpak-builtins-build.c:272
+#: app/flatpak-builtins-build.c:311
 msgid "metadata invalid, not application or runtime"
 msgstr "metadata ogiltigt, inte program eller exekveringsmiljö"
 
-#: app/flatpak-builtins-build.c:403
+#: app/flatpak-builtins-build.c:442
 #, c-format
 msgid "No extension point matching %s in %s"
 msgstr "Ingen tilläggspunkt matchar %s i %s"
 
 # sebras: how is this translated?
-#: app/flatpak-builtins-build.c:581
+#: app/flatpak-builtins-build.c:618
 #, c-format
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Saknar ”=” i bindningsmonteringsargument ”%s”"
 
-#: app/flatpak-builtins-build.c:622 common/flatpak-run.c:3599
+#: app/flatpak-builtins-build.c:662 common/flatpak-run.c:3599
 #, c-format
 msgid "Unable to start app"
 msgstr "Kunde inte starta program"

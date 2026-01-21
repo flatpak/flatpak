@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2025-12-04 01:34+0100\n"
+"POT-Creation-Date: 2026-01-21 11:29+0100\n"
 "PO-Revision-Date: 2024-06-08 20:21+0530\n"
 "Last-Translator: Scrambled777 <weblate.scrambled777@simplelogin.com>\n"
 "Language-Team: Hindi <indlinux-hindi@lists.sourceforge.net>\n"
@@ -229,34 +229,34 @@ msgstr "सत्र बस कॉल लॉग करें"
 msgid "Log system bus calls"
 msgstr "सिस्टम बस कॉल लॉग करें"
 
-#: app/flatpak-builtins-build.c:219
+#: app/flatpak-builtins-build.c:258
 msgid "DIRECTORY [COMMAND [ARGUMENT…]] - Build in directory"
 msgstr "निर्देशिका [कमांड [तर्क…]] - निर्देशिका में बनाएं"
 
-#: app/flatpak-builtins-build.c:242 app/flatpak-builtins-build-finish.c:655
+#: app/flatpak-builtins-build.c:281 app/flatpak-builtins-build-finish.c:655
 msgid "DIRECTORY must be specified"
 msgstr "निर्देशिका निर्दिष्ट होनी चाहिए"
 
-#: app/flatpak-builtins-build.c:253 app/flatpak-builtins-build-export.c:887
+#: app/flatpak-builtins-build.c:292 app/flatpak-builtins-build-export.c:887
 #, c-format
 msgid "Build directory %s not initialized, use flatpak build-init"
 msgstr "निर्माण निर्देशिका %s प्रारंभ नहीं हुई, flatpak build-init का प्रयोग करें"
 
-#: app/flatpak-builtins-build.c:272
+#: app/flatpak-builtins-build.c:311
 msgid "metadata invalid, not application or runtime"
 msgstr "मेटाडेटा अमान्य है, अनुप्रयोग या रनटाइम नहीं"
 
-#: app/flatpak-builtins-build.c:403
+#: app/flatpak-builtins-build.c:442
 #, c-format
 msgid "No extension point matching %s in %s"
 msgstr "%2$s में %1$s से मेल खाने वाला कोई विस्तार बिंदु नहीं"
 
-#: app/flatpak-builtins-build.c:581
+#: app/flatpak-builtins-build.c:618
 #, c-format
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "बाइंड माउंट विकल्प '%s' में '=' गुम है"
 
-#: app/flatpak-builtins-build.c:622 common/flatpak-run.c:3599
+#: app/flatpak-builtins-build.c:662 common/flatpak-run.c:3599
 #, c-format
 msgid "Unable to start app"
 msgstr "ऐप प्रारंभ करने में असमर्थ"

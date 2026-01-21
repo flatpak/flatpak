@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2025-12-04 01:34+0100\n"
+"POT-Creation-Date: 2026-01-21 11:29+0100\n"
 "PO-Revision-Date: 2024-10-27 08:17+0800\n"
 "Last-Translator: lumingzh <lumingzh@qq.com>\n"
 "Language-Team: Chinese (China) <i18n-zh@googlegroups.com>\n"
@@ -227,34 +227,34 @@ msgstr "日志会话总线调用"
 msgid "Log system bus calls"
 msgstr "日志系统总线调用"
 
-#: app/flatpak-builtins-build.c:219
+#: app/flatpak-builtins-build.c:258
 msgid "DIRECTORY [COMMAND [ARGUMENT…]] - Build in directory"
 msgstr "目录 [命令 [参数…]] - 在目录中构建"
 
-#: app/flatpak-builtins-build.c:242 app/flatpak-builtins-build-finish.c:655
+#: app/flatpak-builtins-build.c:281 app/flatpak-builtins-build-finish.c:655
 msgid "DIRECTORY must be specified"
 msgstr "必须指定目录"
 
-#: app/flatpak-builtins-build.c:253 app/flatpak-builtins-build-export.c:887
+#: app/flatpak-builtins-build.c:292 app/flatpak-builtins-build-export.c:887
 #, c-format
 msgid "Build directory %s not initialized, use flatpak build-init"
 msgstr "构建目录 %s 未初始化，使用 flatpak build-init"
 
-#: app/flatpak-builtins-build.c:272
+#: app/flatpak-builtins-build.c:311
 msgid "metadata invalid, not application or runtime"
 msgstr "元数据无效，不是应用或运行时"
 
-#: app/flatpak-builtins-build.c:403
+#: app/flatpak-builtins-build.c:442
 #, c-format
 msgid "No extension point matching %s in %s"
 msgstr "在 %2$s 中没有匹配 %1$s 的扩展点"
 
-#: app/flatpak-builtins-build.c:581
+#: app/flatpak-builtins-build.c:618
 #, c-format
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "在绑定挂载选项“%s”中缺少“=”"
 
-#: app/flatpak-builtins-build.c:622 common/flatpak-run.c:3599
+#: app/flatpak-builtins-build.c:662 common/flatpak-run.c:3599
 #, c-format
 msgid "Unable to start app"
 msgstr "无法启动应用"

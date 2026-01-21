@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak git\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2025-12-04 01:34+0100\n"
+"POT-Creation-Date: 2026-01-21 11:29+0100\n"
 "PO-Revision-Date: 2025-04-03 10:16+0200\n"
 "Last-Translator: Ekaterine Papava <papava.e@gtu.ge>\n"
 "Language-Team: Georgian <(nothing)>\n"
@@ -230,36 +230,36 @@ msgstr "სესიის მატარებლის გამოძახ�
 msgid "Log system bus calls"
 msgstr "სისტემური მატარებლის გამოძახებების ჟურნალი"
 
-#: app/flatpak-builtins-build.c:219
+#: app/flatpak-builtins-build.c:258
 msgid "DIRECTORY [COMMAND [ARGUMENT…]] - Build in directory"
 msgstr "საქაღალდე [ბრძანება [არგუმენტი…]] - აგების საქაღალდე"
 
-#: app/flatpak-builtins-build.c:242 app/flatpak-builtins-build-finish.c:655
+#: app/flatpak-builtins-build.c:281 app/flatpak-builtins-build-finish.c:655
 msgid "DIRECTORY must be specified"
 msgstr "საქაღალდის მითითება აუცილებელია"
 
-#: app/flatpak-builtins-build.c:253 app/flatpak-builtins-build-export.c:887
+#: app/flatpak-builtins-build.c:292 app/flatpak-builtins-build-export.c:887
 #, c-format
 msgid "Build directory %s not initialized, use flatpak build-init"
 msgstr ""
 "აგების საქაღალდე %s ინიციალიზებული არაა. გამოიყენეთ flatpack build-init"
 
-#: app/flatpak-builtins-build.c:272
+#: app/flatpak-builtins-build.c:311
 msgid "metadata invalid, not application or runtime"
 msgstr ""
 "მეტამონაცემები არასწორია. არ წარმოადგენს არც აპლიკაციას, არც გაშვების გარემოს"
 
-#: app/flatpak-builtins-build.c:403
+#: app/flatpak-builtins-build.c:442
 #, c-format
 msgid "No extension point matching %s in %s"
 msgstr "%2$s-ში %1$s-ს გაფართოების წერტილი არ ემთხვევა"
 
-#: app/flatpak-builtins-build.c:581
+#: app/flatpak-builtins-build.c:618
 #, c-format
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "მიბმული მიმაგრების პარამეტრში '%s' '=' მითითებული არაა"
 
-#: app/flatpak-builtins-build.c:622 common/flatpak-run.c:3599
+#: app/flatpak-builtins-build.c:662 common/flatpak-run.c:3599
 #, c-format
 msgid "Unable to start app"
 msgstr "აპის გასვების შეცდომა"
