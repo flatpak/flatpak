@@ -207,7 +207,7 @@ demarshal (JsonNode            *parent_node,
             if (!JSON_NODE_HOLDS_OBJECT (val))
               {
                 g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                             "Expecting object elemen for property %s", name);
+                             "Expecting object element for property %s", name);
                 res = FALSE;
                 break;
               }

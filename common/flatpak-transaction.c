@@ -1652,7 +1652,7 @@ flatpak_transaction_get_no_pull (FlatpakTransaction *self)
  * same as used by xdg-desktop-portal.
  *
  * On X11 it should be of the form x11:$xid where $xid is the hex
- * version of the xwindows id.
+ * version of the X11 window ID.
  *
  * On wayland is should be wayland:$handle where handle is gotten by
  * using the export call of the xdg-foreign-unstable wayland extension.
@@ -1917,7 +1917,7 @@ flatpak_transaction_set_default_arch (FlatpakTransaction *self,
  * transaction for each runtime it considers unused. This is used by the
  * "update" CLI command to garbage collect runtimes and free disk space.
  *
- * No guarantees are made about the exact hueristic used; e.g. only end-of-life
+ * No guarantees are made about the exact heuristic used; e.g. only end-of-life
  * unused runtimes may be uninstalled with this set. To see the full list of
  * unused runtimes in an installation, use
  * flatpak_installation_list_unused_refs().
@@ -3588,7 +3588,7 @@ mark_op_resolved (FlatpakTransactionOperation *op,
         }
       else
         {
-          /* This shouldn't happen, but a NULL old metadata is safe (all permisssions are considered new) */
+          /* This shouldn't happen, but a NULL old metadata is safe (all permissions are considered new) */
           g_message ("Warning: Failed to parse old metadata for %s\n", flatpak_decomposed_get_ref (op->ref));
         }
     }
@@ -4080,7 +4080,7 @@ request_tokens_basic_auth (FlatpakAuthenticatorRequest *object,
  * %TRUE, and #FlatpakTransaction::webflow-done is emitted. It will
  * cancel the ongoing authentication operation.
  *
- * This is useful for example if you're showing an authenticaion
+ * This is useful for example if you're showing an authentication
  * window with a browser, but the user closed it before it was finished.
  *
  * Since: 1.5.1

@@ -318,7 +318,7 @@ flatpak_get_certificates_for_uri (const char  *uri,
                 }
 
               /* In libpod, all client certificates are added, and then the go TLS
-               * code selects the best based on TLS negotation. We just pick the first
+               * code selects the best based on TLS negotiation. We just pick the first
                * in readdir order
                * */
               if (certificates->client_cert_file == NULL)

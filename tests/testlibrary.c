@@ -1019,7 +1019,7 @@ test_list_refs_in_remotes (void)
       const char *ref_spec = flatpak_ref_format_ref_cached (ref);
       const char *collection_id = flatpak_ref_get_collection_id (ref);
 
-      /* Directly listing a file:/ uri remore returns collection ids for all refs */
+      /* Directly listing a file:/ uri remote returns collection ids for all refs */
       g_assert_nonnull (collection_id);
 
       /* All the main 1 collection ids should have been recorded above */

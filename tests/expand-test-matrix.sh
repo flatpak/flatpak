@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script expands test-matrix expressions into indiviual featuressets
+# This script expands test-matrix expressions into individual featuressets
 #
 # The basic element is a feature, which is just a name:
 #  "a" == enable feature a

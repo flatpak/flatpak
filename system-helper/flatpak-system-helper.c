@@ -429,7 +429,7 @@ handle_deploy (FlatpakSystemHelper   *object,
             }
 
           /* At this point, the cache-dir's repo is owned by root. Hence, any failure
-           * from here on, should always cleanup the cache-dir and not preserve it to be re-used. */
+           * from here on, should always cleanup the cache-dir and not preserve it to be reused. */
           ongoing_pull->preserve_pull = FALSE;
         }
     }

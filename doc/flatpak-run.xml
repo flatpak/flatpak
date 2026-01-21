@@ -814,7 +814,7 @@ key=v1;v2;
 
                 <listitem><para>
                   Run the application in sandboxed mode, which means dropping all the extra permissions it would otherwise have, as
-                  well as access to the session/system/a11y busses and document portal.
+                  well as access to the session/system/a11y buses and document portal.
                 </para></listitem>
             </varlistentry>
 

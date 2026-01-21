@@ -1232,7 +1232,7 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
  * Lists only the remotes whose type is included in the @types argument.
  *
  * Since flatpak 1.7 this will never return any types except FLATPAK_REMOTE_TYPE_STATIC.
- * Equivalent functionallity to FLATPAK_REMOTE_TYPE_USB can be had by listing remote refs
+ * Equivalent functionality to FLATPAK_REMOTE_TYPE_USB can be had by listing remote refs
  * with FLATPAK_QUERY_FLAGS_ONLY_SIDELOADED.
  *
  * Returns: (transfer container) (element-type FlatpakRemote): a GPtrArray of

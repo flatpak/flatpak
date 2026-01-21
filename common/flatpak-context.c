@@ -223,8 +223,8 @@ flatpak_permission_remove_conditional (FlatpakPermission *permission,
   if (permission->allowed)
     return;
 
-  /* The only way to correcly layer removal of conditional is to completely
-     remove eveything from the lower layer */
+  /* The only way to correctly layer removal of conditional is to completely
+     remove everything from the lower layer */
   permission->reset = TRUE;
 
   if (!g_ptr_array_find_with_equal_func (permission->conditionals,
