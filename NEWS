@@ -1,8 +1,10 @@
 Changes in 1.16.3
 ~~~~~~~~~~~~~~~~~~
-Released: not yet
+Released: 2026-01-21
 
-...
+Bug fixes:
+
+* Be selective about when to map `font-dirs.xml` in `flatpak build` (#6450)
 
 Changes in 1.16.2
 ~~~~~~~~~~~~~~~~~~
