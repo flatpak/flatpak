@@ -656,7 +656,7 @@ verify_proc_self_fd (const char *proc_path,
   /* File descriptors to actually deleted files have " (deleted)"
      appended to them. This also happens to some fake fd types
      like shmem which are "/<name> (deleted)". All such
-     files are considered invalid. Unfortunatelly this also
+     files are considered invalid. Unfortunately this also
      matches files with filenames that actually end in " (deleted)",
      but there is not much to do about this. */
   if (g_str_has_suffix (path_buffer, " (deleted)"))
@@ -1052,7 +1052,7 @@ handle_spawn (PortalFlatpak         *object,
   g_ptr_array_add (flatpak_argv, g_strdup ("run"));
 
   /* If we don't clear the env, the flatpak portal service environment would
-   * leak into the flatpak instance. By default we re-use the environment of
+   * leak into the flatpak instance. By default we reuse the environment of
    * the calling instance by passing it as arguments after the --clear-env.
    */
   g_ptr_array_add (flatpak_argv, g_strdup ("--clear-env"));
@@ -2565,7 +2565,7 @@ transaction_ready (FlatpakTransaction *transaction,
       const char *ref = flatpak_transaction_operation_get_ref (op);
       FlatpakTransactionOperationType type = flatpak_transaction_operation_get_operation_type (op);
 
-      /* Actual app updates need to not increase premission requirements */
+      /* Actual app updates need to not increase permission requirements */
       if (type == FLATPAK_TRANSACTION_OPERATION_UPDATE && g_str_has_prefix (ref, "app/"))
         {
           GKeyFile *new_metadata = flatpak_transaction_operation_get_metadata (op);
@@ -2826,7 +2826,7 @@ handle_update_responses (PortalFlatpakUpdateMonitor *monitor,
     }
   while (status == PROGRESS_STATUS_RUNNING);
 
-  /* Don't return an received error as we emited it already, that would cause it to be emitted twice */
+  /* Don't return an received error as we emitted it already, that would cause it to be emitted twice */
   return TRUE;
 }
 

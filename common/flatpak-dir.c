@@ -2535,7 +2535,7 @@ validate_commit_metadata (GVariant   *commit_data,
  * the system repo (thus increasing chances for e.g. reflink copying),
  * and avoids filling the users homedirectory with temporary data.
  *
- * In order to re-use this between instances we create a symlink
+ * In order to reuse this between instances we create a symlink
  * in /run to it and verify it before use.
  */
 static GFile *
@@ -14520,7 +14520,7 @@ find_ref_for_refs_set (GHashTable   *refs,
   return NULL;
 }
 
-/* This tries to find a single ref based on the specfied name/branch/arch
+/* This tries to find a single ref based on the specified name/branch/arch
  * triplet from  a remote. If arch is not specified, matches only on compatible arches.
 */
 FlatpakDecomposed *
@@ -14704,7 +14704,7 @@ flatpak_dir_get_all_installed_refs (FlatpakDir  *self,
   return g_steal_pointer (&local_refs);
 }
 
-/* This tries to find a all installed refs based on the specfied name/branch/arch
+/* This tries to find a all installed refs based on the specified name/branch/arch
  * triplet. Matches on all arches.
 */
 GPtrArray *
@@ -14743,7 +14743,7 @@ flatpak_dir_find_installed_refs (FlatpakDir           *self,
   return g_steal_pointer (&matched_refs);
 }
 
-/* This tries to find a single ref based on the specfied name/branch/arch
+/* This tries to find a single ref based on the specified name/branch/arch
  * triplet. This matches on all (installed) arches, but defaults to the primary
  * arch if that is installed. Otherwise, ambiguity is an error.
 */
@@ -17660,7 +17660,7 @@ find_used_refs (FlatpakDir         *self,
 
   /* Any injected refs are considered used, because this is used by transaction
    * to emulate installing a new ref, and we never want the new ref:s dependencies
-   * seem ununsed. */
+   * seem unused. */
   if (metadata_injection)
     {
       GLNX_HASH_TABLE_FOREACH (metadata_injection, const char *, injected_ref)

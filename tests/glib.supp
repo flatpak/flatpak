@@ -1,4 +1,4 @@
-# Based on the libhif supressions
+# Based on the libhif suppressions
 {
    gobject_init_1
    Memcheck:Leak

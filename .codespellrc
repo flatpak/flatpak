@@ -1,0 +1,4 @@
+[codespell]
+skip = node_modules,po,subprojects
+ignore-regex = .*(ratatui|Affinitized|affinitized).*
+ignore-words-list = nd,ot,THUR,IST,fo,hel,bu

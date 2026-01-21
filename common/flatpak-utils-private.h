@@ -45,7 +45,7 @@
  * version 1 is compact format with inline cache and no deltas
  */
 
-/* Thse are key names in the per-ref metadata in the summary */
+/* These are key names in the per-ref metadata in the summary */
 #define OSTREE_COMMIT_TIMESTAMP "ostree.commit.timestamp"
 #define OSTREE_COMMIT_TIMESTAMP2 "ot.ts" /* Shorter version of the above */
 

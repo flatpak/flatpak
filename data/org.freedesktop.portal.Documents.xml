@@ -262,7 +262,7 @@
     <!--
         List:
         @app_id: an application ID, or '' to list all documents
-        @docs: a dictonary mapping document IDs to their filesystem path
+        @docs: a dictionary mapping document IDs to their filesystem path
 
         Lists documents in the document store for an application (or for
         all applications).

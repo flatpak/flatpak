@@ -1283,7 +1283,7 @@ sockets=!x11;x11;if:x11:!has-wayland;
                 <varlistentry>
                     <term><option>hidden-devices</option> (string list)</term>
                     <listitem><para>
-                        List of hidden USB devices, i.e. to remove the enumarable
+                        List of hidden USB devices, i.e. to remove the enumerable
                         devices list. Each element is the same syntax the arguments
                         to `--nousb`. Hidden devices take precedence over enumerable
                         devices. Available since 1.15.11.

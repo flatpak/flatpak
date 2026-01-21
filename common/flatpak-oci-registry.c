@@ -3383,7 +3383,7 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
       return NULL;
     }
 
-  /* Assuming everyting looks good, we record the uncompressed checksum (the diff-id) of the last layer,
+  /* Assuming everything looks good, we record the uncompressed checksum (the diff-id) of the last layer,
      because that is what we can read back easily from the deploy dir, and thus is easy to use for applying deltas */
   diffid = image_config->rootfs.diff_ids[n_layers-1];
   if (diffid != NULL && g_str_has_prefix (diffid, "sha256:"))
@@ -3482,7 +3482,7 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
           blob_fd = flatpak_oci_registry_download_blob (registry, oci_repository, FALSE,
                                                         image_config->rootfs.diff_ids[i], NULL,
                                                         oci_layer_progress, &progress_data,
-                                                        cancellable, NULL); /* No error here, we report the first error if this failes */
+                                                        cancellable, NULL); /* No error here, we report the first error if this fails */
         }
 
       if (blob_fd == -1)
