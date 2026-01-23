@@ -938,6 +938,21 @@ key=v1;v2;
                 </para></listitem>
             </varlistentry>
 
+            <varlistentry>
+                <term><option>--bwrap-arg=<replaceable>ARG</replaceable></option></term>
+                <listitem><para>
+                    Append arguments to the bubblewrap sandbox for the
+                    application to be ran. Each argument requires its own
+                    <option>--bwrap-arg</option> in order to work. Arguments
+                    are put at the end of the list of all arguments sent to
+                    bubblewrap.
+                </para><para>
+                    This option is intended for debugging/hacking purposes,
+                    and is not a replacement for the permission system of
+                    flatpak. As such, it is not exposed as a static permission.
+                </para></listitem>
+            </varlistentry>
+
         </variablelist>
 
     </refsect1>
