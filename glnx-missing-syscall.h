@@ -384,3 +384,208 @@ glnx_statx_syscall (int                dfd,
 
 #define HAVE_GLNX_STATX
 #endif
+
+/* Copied from systemd git: ff83795469 ("boot: Improve log message")
+ * - open_tree
+ * - openat2
+ */
+
+#ifndef __IGNORE_open_tree
+#  if defined(__aarch64__)
+#    define systemd_NR_open_tree 428
+#  elif defined(__alpha__)
+#    define systemd_NR_open_tree 538
+#  elif defined(__arc__) || defined(__tilegx__)
+#    define systemd_NR_open_tree 428
+#  elif defined(__arm__)
+#    define systemd_NR_open_tree 428
+#  elif defined(__i386__)
+#    define systemd_NR_open_tree 428
+#  elif defined(__ia64__)
+#    define systemd_NR_open_tree 1452
+#  elif defined(__loongarch_lp64)
+#    define systemd_NR_open_tree 428
+#  elif defined(__m68k__)
+#    define systemd_NR_open_tree 428
+#  elif defined(_MIPS_SIM)
+#    if _MIPS_SIM == _MIPS_SIM_ABI32
+#      define systemd_NR_open_tree 4428
+#    elif _MIPS_SIM == _MIPS_SIM_NABI32
+#      define systemd_NR_open_tree 6428
+#    elif _MIPS_SIM == _MIPS_SIM_ABI64
+#      define systemd_NR_open_tree 5428
+#    else
+#      error "Unknown MIPS ABI"
+#    endif
+#  elif defined(__hppa__)
+#    define systemd_NR_open_tree 428
+#  elif defined(__powerpc__)
+#    define systemd_NR_open_tree 428
+#  elif defined(__riscv)
+#    if __riscv_xlen == 32
+#      define systemd_NR_open_tree 428
+#    elif __riscv_xlen == 64
+#      define systemd_NR_open_tree 428
+#    else
+#      error "Unknown RISC-V ABI"
+#    endif
+#  elif defined(__s390__)
+#    define systemd_NR_open_tree 428
+#  elif defined(__sparc__)
+#    define systemd_NR_open_tree 428
+#  elif defined(__x86_64__)
+#    if defined(__ILP32__)
+#      define systemd_NR_open_tree (428 | /* __X32_SYSCALL_BIT */ 0x40000000)
+#    else
+#      define systemd_NR_open_tree 428
+#    endif
+#  elif !defined(missing_arch_template)
+#    warning "open_tree() syscall number is unknown for your architecture"
+#  endif
+
+/* may be an (invalid) negative number due to libseccomp, see PR 13319 */
+#  if defined __NR_open_tree && __NR_open_tree >= 0
+#    if defined systemd_NR_open_tree
+G_STATIC_ASSERT (__NR_open_tree == systemd_NR_open_tree);
+#    endif
+#  else
+#    if defined __NR_open_tree
+#      undef __NR_open_tree
+#    endif
+#    if defined systemd_NR_open_tree && systemd_NR_open_tree >= 0
+#      define __NR_open_tree systemd_NR_open_tree
+#    endif
+#  endif
+#endif
+
+#if !defined(HAVE_OPEN_TREE) && defined(__NR_open_tree)
+#ifndef OPEN_TREE_CLONE
+#define OPEN_TREE_CLONE 1
+#endif
+
+#ifndef OPEN_TREE_CLOEXEC
+#define OPEN_TREE_CLOEXEC O_CLOEXEC
+#endif
+
+static inline int
+inline_open_tree (int         dfd,
+                  const char *filename,
+                  unsigned    flags)
+{
+  return syscall(__NR_open_tree, dfd, filename, flags);
+}
+#define open_tree inline_open_tree
+#define HAVE_OPEN_TREE
+#endif
+
+#ifndef __IGNORE_openat2
+#  if defined(__aarch64__)
+#    define systemd_NR_openat2 437
+#  elif defined(__alpha__)
+#    define systemd_NR_openat2 547
+#  elif defined(__arc__) || defined(__tilegx__)
+#    define systemd_NR_openat2 437
+#  elif defined(__arm__)
+#    define systemd_NR_openat2 437
+#  elif defined(__i386__)
+#    define systemd_NR_openat2 437
+#  elif defined(__ia64__)
+#    define systemd_NR_openat2 1461
+#  elif defined(__loongarch_lp64)
+#    define systemd_NR_openat2 437
+#  elif defined(__m68k__)
+#    define systemd_NR_openat2 437
+#  elif defined(_MIPS_SIM)
+#    if _MIPS_SIM == _MIPS_SIM_ABI32
+#      define systemd_NR_openat2 4437
+#    elif _MIPS_SIM == _MIPS_SIM_NABI32
+#      define systemd_NR_openat2 6437
+#    elif _MIPS_SIM == _MIPS_SIM_ABI64
+#      define systemd_NR_openat2 5437
+#    else
+#      error "Unknown MIPS ABI"
+#    endif
+#  elif defined(__hppa__)
+#    define systemd_NR_openat2 437
+#  elif defined(__powerpc__)
+#    define systemd_NR_openat2 437
+#  elif defined(__riscv)
+#    if __riscv_xlen == 32
+#      define systemd_NR_openat2 437
+#    elif __riscv_xlen == 64
+#      define systemd_NR_openat2 437
+#    else
+#      error "Unknown RISC-V ABI"
+#    endif
+#  elif defined(__s390__)
+#    define systemd_NR_openat2 437
+#  elif defined(__sparc__)
+#    define systemd_NR_openat2 437
+#  elif defined(__x86_64__)
+#    if defined(__ILP32__)
+#      define systemd_NR_openat2 (437 | /* __X32_SYSCALL_BIT */ 0x40000000)
+#    else
+#      define systemd_NR_openat2 437
+#    endif
+#  elif !defined(missing_arch_template)
+#    warning "openat2() syscall number is unknown for your architecture"
+#  endif
+
+/* may be an (invalid) negative number due to libseccomp, see PR 13319 */
+#  if defined __NR_openat2 && __NR_openat2 >= 0
+#    if defined systemd_NR_openat2
+G_STATIC_ASSERT (__NR_openat2 == systemd_NR_openat2);
+#    endif
+#  else
+#    if defined __NR_openat2
+#      undef __NR_openat2
+#    endif
+#    if defined systemd_NR_openat2 && systemd_NR_openat2 >= 0
+#      define __NR_openat2 systemd_NR_openat2
+#    endif
+#  endif
+#endif
+
+#if !defined(HAVE_OPENAT2) && defined(__NR_openat2)
+#ifndef RESOLVE_NO_XDEV
+#define RESOLVE_NO_XDEV 0x01
+#endif
+
+#ifndef RESOLVE_NO_MAGICLINKS
+#define RESOLVE_NO_MAGICLINKS 0x02
+#endif
+
+#ifndef RESOLVE_NO_SYMLINKS
+#define RESOLVE_NO_SYMLINKS 0x04
+#endif
+
+#ifndef RESOLVE_BENEATH
+#define RESOLVE_BENEATH 0x08
+#endif
+
+#ifndef RESOLVE_IN_ROOT
+#define RESOLVE_IN_ROOT 0x10
+#endif
+
+#ifndef RESOLVE_CACHED
+#define RESOLVE_CACHED 0x20
+#endif
+
+struct inline_open_how {
+        uint64_t flags;
+        uint64_t mode;
+        uint64_t resolve;
+};
+#define open_how inline_open_how
+
+static inline int
+inline_openat2 (int         dfd,
+                const char *filename,
+                void       *buffer,
+                size_t      size)
+{
+  return syscall(__NR_openat2, dfd, filename, buffer, size);
+}
+#define openat2 inline_openat2
+#define HAVE_OPENAT2
+#endif
