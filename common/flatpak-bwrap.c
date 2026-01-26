@@ -92,6 +92,59 @@ flatpak_bwrap_is_empty (FlatpakBwrap *bwrap)
   return bwrap->argv->len == 0;
 }
 
+char *
+flatpak_bwrap_expand_env (FlatpakBwrap *bwrap,
+                          const char   *value)
+{
+  g_autoptr(GString) res = g_string_new ("");
+  const char *p;
+
+  for (p = value; *p != '\0'; p++)
+    {
+      if (*p == '$')
+        {
+          const char *var_start, *var_end;
+          g_autofree char *var_name = NULL;
+          const char *var_val;
+
+          p++;
+          if (*p == '{')
+            {
+              var_start = p + 1;
+              var_end = strchr (var_start, '}');
+              if (var_end == NULL)
+                {
+                  /* Unmatched brace, just treat as literal */
+                  g_string_append (res, "${");
+                  p = var_start;
+                  continue;
+                }
+              var_name = g_strndup (var_start, var_end - var_start);
+              p = var_end;
+            }
+          else
+            {
+              var_start = p;
+              while (g_ascii_isalnum (*p) || *p == '_')
+                p++;
+              var_end = p;
+              var_name = g_strndup (var_start, var_end - var_start);
+              p--; /* The loop will increment it */
+            }
+
+          var_val = g_environ_getenv (bwrap->envp, var_name);
+          if (var_val != NULL)
+            g_string_append (res, var_val);
+        }
+      else
+        {
+          g_string_append_c (res, *p);
+        }
+    }
+
+  return g_string_free (g_steal_pointer (&res), FALSE);
+}
+
 void
 flatpak_bwrap_set_env (FlatpakBwrap *bwrap,
                        const char   *variable,
