@@ -1544,7 +1544,7 @@ get_xdg_dir_from_string (const char  *filesystem,
                          const char **suffix,
                          const char **where)
 {
-  char *slash;
+  const char *slash;
   const char *rest;
   g_autofree char *prefix = NULL;
   const char *dir = NULL;
@@ -1578,7 +1578,7 @@ get_xdg_user_dir_from_string (const char  *filesystem,
                               const char **suffix,
                               char **dir)
 {
-  char *slash;
+  const char *slash;
   const char *rest;
   g_autofree char *prefix = NULL;
   gsize len;
@@ -2580,7 +2580,7 @@ option_add_generic_policy_cb (const gchar *option_name,
                               GError     **error)
 {
   FlatpakContext *context = data;
-  char *t;
+  const char *t;
   g_autofree char *key = NULL;
   const char *policy_value;
 
@@ -2619,7 +2619,7 @@ option_remove_generic_policy_cb (const gchar *option_name,
                                  GError     **error)
 {
   FlatpakContext *context = data;
-  char *t;
+  const char *t;
   g_autofree char *key = NULL;
   const char *policy_value;
   g_autofree char *extended_value = NULL;
