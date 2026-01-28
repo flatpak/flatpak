@@ -824,7 +824,7 @@ find_column (Column     *columns,
 {
   int i;
   int candidate;
-  char *p = strchr (name, ':');
+  const char *p = strchr (name, ':');
 
   candidate = -1;
   for (i = 0; columns[i].name; i++)
