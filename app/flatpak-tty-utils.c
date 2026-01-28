@@ -253,7 +253,7 @@ flatpak_number_prompt (gboolean default_yes, int min, int max, const char *promp
 }
 
 static gboolean
-parse_range (const char *s, int *a, int *b)
+parse_range (char *s, int *a, int *b)
 {
   char *p;
 
