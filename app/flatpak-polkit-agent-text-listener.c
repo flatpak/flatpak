@@ -422,7 +422,7 @@ flatpak_polkit_agent_text_listener_initiate_authentication (PolkitAgentListener 
 
   fprintf (listener->tty, "%s\n", message);
 
-  /* handle multiple identies by asking which one to use */
+  /* handle multiple identities by asking which one to use */
   if (g_list_length (identities) > 1)
     {
       identity = choose_identity (listener, identities);

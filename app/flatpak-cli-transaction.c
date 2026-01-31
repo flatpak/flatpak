@@ -1564,7 +1564,7 @@ transaction_ready (FlatpakTransaction *transaction)
 
   if (self->did_interaction)
     {
-      /* We did some interaction since ready_pre_auth which messes up the formating, so re-print table */
+      /* We did some interaction since ready_pre_auth which messes up the formatting, so re-print table */
       flatpak_table_printer_print_full (printer, 0, self->cols,
                                         &self->table_height, &self->table_width);
       g_print ("\n\n");

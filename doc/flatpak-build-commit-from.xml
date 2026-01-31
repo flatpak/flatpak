@@ -126,7 +126,7 @@
                 <term><option>--untrusted</option></term>
 
                 <listitem><para>
-                    The source repostory is not trusted, all objects are copied (not hardlinked) and
+                    The source repository is not trusted, all objects are copied (not hardlinked) and
                     all checksums are verified.
                 </para></listitem>
             </varlistentry>

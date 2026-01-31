@@ -53,7 +53,7 @@ create_commit() {
         mkdir $F/shared-dir
         echo "$APP.shared2" > $F/shared-dir/shared2
 
-        echo commiting $APP depth $DEPTH >&2
+        echo committing $APP depth $DEPTH >&2
         ostree --repo=$REPO --branch=$APP --fsync=false --canonical-permissions --no-xattrs commit $F >&2
         rm -rf $F
 

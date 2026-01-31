@@ -917,7 +917,7 @@ populate_commit_data_cache (OstreeRepo *repo,
           return NULL;
         }
 
-      /* Note that all summaries refered to by the index is in new format */
+      /* Note that all summaries referred to by the index is in new format */
       summary = var_summary_from_gvariant (summary_v);
       ref_map = var_summary_get_ref_map (summary);
       n_refs = var_ref_map_get_length (ref_map);

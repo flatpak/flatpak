@@ -472,7 +472,7 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
 
           chosen_pairs = g_ptr_array_new ();
 
-          if (!flatpak_resolve_matching_installed_refs (opt_yes, FALSE, ref_dir_pairs, match_id, chosen_pairs, error))
+          if (!flatpak_resolve_matching_installed_refs (opt_yes, FALSE, ref_dir_pairs, match_id, opt_noninteractive, chosen_pairs, error))
             return FALSE;
 
           for (i = 0; i < chosen_pairs->len; i++)

@@ -1,4 +1,4 @@
-# Use this to suppress "possibly lost" for global statics
+# Use this to suppress "possibly lost" for global statistics
 {
    handle_reflink
    Memcheck:Param

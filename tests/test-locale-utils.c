@@ -172,13 +172,13 @@ test_langs_from_localed (void)
 
   if (proxy == NULL)
     {
-      g_test_skip ("Unable to communicate with localed");
+      g_test_skip ("Unable to communicate with located");
       return;
     }
 
   flatpak_get_locale_langs_from_localed_dbus (proxy, langs);
 
-  g_test_message ("Languages from localed:");
+  g_test_message ("Languages from located:");
 
   for (i = 0; i < langs->len; i++)
     {

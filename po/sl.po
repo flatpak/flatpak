@@ -8,16 +8,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak main\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2026-01-05 15:46+0000\n"
-"PO-Revision-Date: 2026-01-06 13:04+0100\n"
+"POT-Creation-Date: 2026-01-15 17:45+0000\n"
+"PO-Revision-Date: 2026-01-17 00:18+0100\n"
 "Last-Translator: Martin Srebotnjak <miles@filmsi.net>\n"
 "Language-Team: Slovenian GNOME Translation Team <gnome-si@googlegroups.com>\n"
 "Language: sl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=4; plural=(n%100==1 ? 1 : n%100==2 ? 2 : n%100==3 || n"
-"%100==4 ? 3 : 0) ;\n"
+"Plural-Forms: nplurals=4; plural=(n%100==1 ? 1 : n%100==2 ? 2 : n%100==3 || n%100==4 ? 3 : 0) ;\n"
 "X-Generator: Poedit 2.2.1\n"
 
 #: app/flatpak-builtins-build-bundle.c:59
@@ -241,34 +240,34 @@ msgstr "Beleži klice vodila seje"
 msgid "Log system bus calls"
 msgstr "Beleži klice sistemskega vodila"
 
-#: app/flatpak-builtins-build.c:223
+#: app/flatpak-builtins-build.c:262
 msgid "DIRECTORY [COMMAND [ARGUMENT…]] - Build in directory"
 msgstr "MAPA [UKAZ [ARGUMENT...]] - Gradi v mapi"
 
-#: app/flatpak-builtins-build.c:246 app/flatpak-builtins-build-finish.c:656
+#: app/flatpak-builtins-build.c:285 app/flatpak-builtins-build-finish.c:656
 msgid "DIRECTORY must be specified"
 msgstr "Navesti je treba MAPO"
 
-#: app/flatpak-builtins-build.c:257 app/flatpak-builtins-build-export.c:887
+#: app/flatpak-builtins-build.c:296 app/flatpak-builtins-build-export.c:887
 #, c-format
 msgid "Build directory %s not initialized, use flatpak build-init"
 msgstr "Mapa za gradnjo %s ni inicializirana, uporabite flatpak build-init"
 
-#: app/flatpak-builtins-build.c:276
+#: app/flatpak-builtins-build.c:315
 msgid "metadata invalid, not application or runtime"
 msgstr "metapodatki neveljavni, niti aplikacija niti izvajalna datoteka"
 
-#: app/flatpak-builtins-build.c:407
+#: app/flatpak-builtins-build.c:446
 #, c-format
 msgid "No extension point matching %s in %s"
 msgstr "Ni razširitvene točke, ki bi se ujemala z %s (v %s)"
 
-#: app/flatpak-builtins-build.c:592
+#: app/flatpak-builtins-build.c:629
 #, c-format
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Manjka »=« v možnosti bind mount »%s«"
 
-#: app/flatpak-builtins-build.c:633 common/flatpak-run.c:3710
+#: app/flatpak-builtins-build.c:673 common/flatpak-run.c:3710
 msgid "Unable to start app"
 msgstr "Aplikacije ni mogoče zagnati"
 
@@ -3328,24 +3327,33 @@ msgstr "Iskanje posodobitev ...\n"
 msgid "Unable to update %s: %s\n"
 msgstr "Ni mogoče posodobiti %s: %s\n"
 
-#: app/flatpak-builtins-utils.c:342
+#: app/flatpak-builtins-utils.c:337
+#, c-format
+msgid ""
+"Remote ‘%s’ found in multiple installations, unable to proceed in non-"
+"interactive mode"
+msgstr ""
+"Oddaljeni »%s« je moč najti v več namestitvah, ni možno nadaljevati v ne-"
+"interaktivnem načinu"
+
+#: app/flatpak-builtins-utils.c:346
 #, c-format
 msgid "Remote ‘%s’ found in multiple installations:"
 msgstr "Oddaljeni »%s« najden v več namestitvah:"
 
-#: app/flatpak-builtins-utils.c:343 app/flatpak-builtins-utils.c:434
-#: app/flatpak-builtins-utils.c:526 app/flatpak-builtins-utils.c:528
-#: app/flatpak-builtins-utils.c:582
+#: app/flatpak-builtins-utils.c:347 app/flatpak-builtins-utils.c:442
+#: app/flatpak-builtins-utils.c:538 app/flatpak-builtins-utils.c:540
+#: app/flatpak-builtins-utils.c:598
 msgid "Which do you want to use (0 to abort)?"
 msgstr "Katero želite uporabiti (0 za prekinitev)?"
 
-#: app/flatpak-builtins-utils.c:345
+#: app/flatpak-builtins-utils.c:349
 #, c-format
 msgid "No remote chosen to resolve ‘%s’ which exists in multiple installations"
 msgstr ""
 "Noben oddaljeni ni izbran za razreševanje %s, ki obstaja v več namestitvah"
 
-#: app/flatpak-builtins-utils.c:354
+#: app/flatpak-builtins-utils.c:358
 #, c-format
 msgid ""
 "Remote \"%s\" not found\n"
@@ -3354,13 +3362,20 @@ msgstr ""
 "Oddaljeni »%s« ni najden\n"
 "Namig: Za dodajanje oddaljenega uporabite flatpak remote-add"
 
-#: app/flatpak-builtins-utils.c:360
+#: app/flatpak-builtins-utils.c:364
 #, c-format
 msgid "Remote \"%s\" not found in the %s installation"
 msgstr "Oddaljeni »%s« ni najden v namestitvi %s"
 
+#: app/flatpak-builtins-utils.c:404
+#, c-format
+msgid "Multiple refs match ‘%s’, unable to proceed in non-interactive mode"
+msgstr ""
+"Več sklicev ref se ujema z »%s«, ni možno nadaljevati v ne-interaktivnem "
+"načinu"
+
 #. default to yes on Enter
-#: app/flatpak-builtins-utils.c:422
+#: app/flatpak-builtins-utils.c:430
 #, c-format
 msgid ""
 "Found ref ‘%s’ in remote ‘%s’ (%s).\n"
@@ -3369,106 +3384,123 @@ msgstr ""
 "Najden ref »%s« v oddaljenem »%s« (%s).\n"
 "Ali želite uporabiti ta ref?"
 
-#: app/flatpak-builtins-utils.c:426 app/flatpak-builtins-utils.c:436
-#: app/flatpak-builtins-utils.c:510 app/flatpak-builtins-utils.c:531
+#: app/flatpak-builtins-utils.c:434 app/flatpak-builtins-utils.c:444
+#: app/flatpak-builtins-utils.c:522 app/flatpak-builtins-utils.c:543
 #, c-format
 msgid "No ref chosen to resolve matches for ‘%s’"
 msgstr "Noben ref ni izbran za razrešitev ujemanja za »%s«"
 
-#: app/flatpak-builtins-utils.c:432
+#: app/flatpak-builtins-utils.c:440
 #, c-format
 msgid "Similar refs found for ‘%s’ in remote ‘%s’ (%s):"
 msgstr "Podobni ref za »%s« najdeni v oddaljenem »%s« (%s):"
 
+#: app/flatpak-builtins-utils.c:488
+#, c-format
+msgid ""
+"Multiple installed refs match ‘%s’, unable to proceed in non-interactive mode"
+msgstr ""
+"Več nameščenih sklicev (ref) se ujema z »%s«, ni možno nadaljevati v ne-"
+"interaktivnem načinu"
+
 #. default to yes on Enter
-#: app/flatpak-builtins-utils.c:506
+#: app/flatpak-builtins-utils.c:518
 #, c-format
 msgid "Found installed ref ‘%s’ (%s). Is this correct?"
 msgstr "Najden nameščeni ref »%s« (%s). Ali je to pravilno?"
 
-#: app/flatpak-builtins-utils.c:522
+#: app/flatpak-builtins-utils.c:534
 msgid "All of the above"
 msgstr "Vse zgoraj navedeno"
 
-#: app/flatpak-builtins-utils.c:523
+#: app/flatpak-builtins-utils.c:535
 #, c-format
 msgid "Similar installed refs found for ‘%s’:"
 msgstr "Podobni nameščeni ref najdeni za »%s«:"
 
-#: app/flatpak-builtins-utils.c:581
+#: app/flatpak-builtins-utils.c:579
+#, c-format
+msgid ""
+"Multiple remotes have refs matching ‘%s’, unable to proceed in non-"
+"interactive mode"
+msgstr ""
+"Več oddaljenih ima sklice, ki se ujemajo z »%s«, ne morejo nadaljevati v ne-"
+"interaktivnem načinu"
+
+#: app/flatpak-builtins-utils.c:597
 #, c-format
 msgid "Remotes found with refs similar to ‘%s’:"
 msgstr "Oddaljeni, najdeni z ref, podobnimi »%s«:"
 
-#: app/flatpak-builtins-utils.c:584
+#: app/flatpak-builtins-utils.c:600
 #, c-format
 msgid "No remote chosen to resolve matches for ‘%s’"
 msgstr "Za razrešitev ujemanja za »%s« ni izbran noben oddaljeni"
 
-#: app/flatpak-builtins-utils.c:680 app/flatpak-builtins-utils.c:683
+#: app/flatpak-builtins-utils.c:696 app/flatpak-builtins-utils.c:699
 #, c-format
 msgid "Updating appstream data for user remote %s"
 msgstr "Posodabljanje podatkov appstream za uporabniški oddaljeni %s"
 
-#: app/flatpak-builtins-utils.c:690 app/flatpak-builtins-utils.c:693
+#: app/flatpak-builtins-utils.c:706 app/flatpak-builtins-utils.c:709
 #, c-format
 msgid "Updating appstream data for remote %s"
 msgstr "Posodabljanje podatkov appstream za oddaljeni %s"
 
-#: app/flatpak-builtins-utils.c:701 app/flatpak-builtins-utils.c:703
+#: app/flatpak-builtins-utils.c:717 app/flatpak-builtins-utils.c:719
 msgid "Error updating"
 msgstr "Napaka pri posodabljanju"
 
-#: app/flatpak-builtins-utils.c:739
+#: app/flatpak-builtins-utils.c:755
 #, c-format
 msgid "Remote \"%s\" not found"
 msgstr "Oddaljenega skladišča »%s« ni možno najti"
 
-#: app/flatpak-builtins-utils.c:780
+#: app/flatpak-builtins-utils.c:796
 #, c-format
 msgid "Ambiguous suffix: '%s'."
 msgstr "Dvoumna pripona: »%s«."
 
 #. Translators: don't translate the values
-#: app/flatpak-builtins-utils.c:782 app/flatpak-builtins-utils.c:797
+#: app/flatpak-builtins-utils.c:798 app/flatpak-builtins-utils.c:813
 msgid "Possible values are :s[tart], :m[iddle], :e[nd] or :f[ull]"
 msgstr ""
 "Možne vrednosti so :s[tart] (začetek), :m[iddle] (sredina), :e[nd] (konec) "
 "in :f[ull] (polno)"
 
-#: app/flatpak-builtins-utils.c:795
+#: app/flatpak-builtins-utils.c:811
 #, c-format
 msgid "Invalid suffix: '%s'."
 msgstr "Neveljavna pripona: »%s«."
 
-#: app/flatpak-builtins-utils.c:830
+#: app/flatpak-builtins-utils.c:846
 #, c-format
 msgid "Ambiguous column: %s"
 msgstr "Dvoumni stolpec: %s"
 
-#: app/flatpak-builtins-utils.c:843
+#: app/flatpak-builtins-utils.c:859
 #, c-format
 msgid "Unknown column: %s"
 msgstr "Neznan stolpec: %s"
 
-#: app/flatpak-builtins-utils.c:901
+#: app/flatpak-builtins-utils.c:917
 msgid "Available columns:\n"
 msgstr "Razpoložljivi stolpci:\n"
 
-#: app/flatpak-builtins-utils.c:911
+#: app/flatpak-builtins-utils.c:927
 msgid "Show all columns"
 msgstr "Pokaži vse stolpce"
 
-#: app/flatpak-builtins-utils.c:912
+#: app/flatpak-builtins-utils.c:928
 msgid "Show available columns"
 msgstr "Pokaži razpoložljive stolpce"
 
-#: app/flatpak-builtins-utils.c:915
+#: app/flatpak-builtins-utils.c:931
 msgid "Append :s[tart], :m[iddle], :e[nd] or :f[ull] to change ellipsization"
 msgstr ""
 "Dodatajte :s[tart], :m[iddle], :e[nd] ali :f[ull] za spremembo elipsizacije"
 
-#: app/flatpak-builtins-utils.c:1478
+#: app/flatpak-builtins-utils.c:1494
 #, c-format
 msgid "Unknown scheme in sideload location %s"
 msgstr "Neznana shema na mestu nalaganja z naprave %s"
@@ -4277,18 +4309,18 @@ msgstr "Neznana vrsta naprave %s, veljavne vrste so: %s"
 msgid "Unknown feature type %s, valid types are: %s"
 msgstr "Neznana vrsta funkcije %s, veljavne vrste so: %s"
 
-#: common/flatpak-context.c:1887
+#: common/flatpak-context.c:1882
 #, c-format
 msgid "Filesystem location \"%s\" contains \"..\""
 msgstr "Mesto datotečnega sistema »%s« vsebuje »..«"
 
-#: common/flatpak-context.c:1925
+#: common/flatpak-context.c:1924
 msgid ""
 "--filesystem=/ is not available, use --filesystem=host for a similar result"
 msgstr ""
 "--filesystem=/ ni na voljo, uporabite --filesystem=host za podoben rezultat"
 
-#: common/flatpak-context.c:1959
+#: common/flatpak-context.c:1958
 #, c-format
 msgid ""
 "Unknown filesystem location %s, valid locations are: host, host-os, host-"
@@ -4297,252 +4329,252 @@ msgstr ""
 "Neznano mesto datotečnega sistema %s, veljavna mesta so: host, host-os, host-"
 "etc, host-root, home, xdg-*[/…], ~/dir, /dir"
 
-#: common/flatpak-context.c:2058
+#: common/flatpak-context.c:2057
 #, c-format
 msgid "Invalid syntax for %s: %s"
 msgstr "Neveljavna skladnja za %s: %s"
 
-#: common/flatpak-context.c:2200
+#: common/flatpak-context.c:2199
 msgid "fallback-x11 can not be conditional"
 msgstr "fallback-x11 ne more biti pogojen"
 
-#: common/flatpak-context.c:2376
+#: common/flatpak-context.c:2375
 #, c-format
 msgid "Invalid env format %s"
 msgstr "Neveljavna oblika env %s"
 
-#: common/flatpak-context.c:2464
+#: common/flatpak-context.c:2463
 #, c-format
 msgid "Environment variable name must not contain '=': %s"
 msgstr "Ime spremenljivke okolja ne sme vsebovati »=«: %s"
 
-#: common/flatpak-context.c:2592 common/flatpak-context.c:2600
+#: common/flatpak-context.c:2591 common/flatpak-context.c:2599
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr "Argumenti --add-policy morajo biti v obliki PODSISTEM.KLJUČ=VREDNOST"
 
-#: common/flatpak-context.c:2607
+#: common/flatpak-context.c:2606
 msgid "--add-policy values can't start with \"!\""
 msgstr "Vrednosti --add-policy se ne morejo začeti z »!«"
 
-#: common/flatpak-context.c:2632 common/flatpak-context.c:2640
+#: common/flatpak-context.c:2631 common/flatpak-context.c:2639
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 "Argumenti --remove-policy morajo biti v obliki PODSISTEM.KLJUČ=VREDNOST"
 
-#: common/flatpak-context.c:2647
+#: common/flatpak-context.c:2646
 msgid "--remove-policy values can't start with \"!\""
 msgstr "Vrednosti --remove-policy se ne morejo začeti z »!«"
 
-#: common/flatpak-context.c:2722
+#: common/flatpak-context.c:2721
 msgid "Share with host"
 msgstr "Skupna raba z gostiteljem"
 
-#: common/flatpak-context.c:2722 common/flatpak-context.c:2723
+#: common/flatpak-context.c:2721 common/flatpak-context.c:2722
 msgid "SHARE"
 msgstr "DELI"
 
-#: common/flatpak-context.c:2723
+#: common/flatpak-context.c:2722
 msgid "Unshare with host"
 msgstr "Preklic skupne rabe z gostiteljem"
 
-#: common/flatpak-context.c:2724
+#: common/flatpak-context.c:2723
 msgid "Require conditions to be met for a subsystem to get shared"
 msgstr "Zahtevaj izpolnjene pogoje, da se podsistem deli v skupni rabi"
 
-#: common/flatpak-context.c:2724
+#: common/flatpak-context.c:2723
 msgid "SHARE:CONDITION"
 msgstr "SKUPNARABA:POGOJ"
 
-#: common/flatpak-context.c:2725
+#: common/flatpak-context.c:2724
 msgid "Expose socket to app"
 msgstr "Razkrij vtičnico aplikaciji"
 
-#: common/flatpak-context.c:2725 common/flatpak-context.c:2726
+#: common/flatpak-context.c:2724 common/flatpak-context.c:2725
 msgid "SOCKET"
 msgstr "VTIČNICA"
 
-#: common/flatpak-context.c:2726
+#: common/flatpak-context.c:2725
 msgid "Don't expose socket to app"
 msgstr "Ne razkrij vtičnice aplikaciji"
 
-#: common/flatpak-context.c:2727
+#: common/flatpak-context.c:2726
 msgid "Require conditions to be met for a socket to get exposed"
 msgstr "Zahtevaj izpolnjene pogoje, da se vtičnica izpostavi"
 
-#: common/flatpak-context.c:2727
+#: common/flatpak-context.c:2726
 msgid "SOCKET:CONDITION"
 msgstr "VTIČNICA:POGOJ"
 
-#: common/flatpak-context.c:2728
+#: common/flatpak-context.c:2727
 msgid "Expose device to app"
 msgstr "Razkrij napravo aplikaciji"
 
-#: common/flatpak-context.c:2728 common/flatpak-context.c:2729
+#: common/flatpak-context.c:2727 common/flatpak-context.c:2728
 msgid "DEVICE"
 msgstr "NAPRAVA"
 
-#: common/flatpak-context.c:2729
+#: common/flatpak-context.c:2728
 msgid "Don't expose device to app"
 msgstr "Naprave ne razkrij aplikaciji"
 
-#: common/flatpak-context.c:2730
+#: common/flatpak-context.c:2729
 msgid "Require conditions to be met for a device to get exposed"
 msgstr "Zahtevaj izpolnjene pogoje, da se naprava izpostavi"
 
-#: common/flatpak-context.c:2730
+#: common/flatpak-context.c:2729
 msgid "DEVICE:CONDITION"
 msgstr "NAPRAVA:POGOJ"
 
-#: common/flatpak-context.c:2731
+#: common/flatpak-context.c:2730
 msgid "Allow feature"
 msgstr "Dovoli funkcijo"
 
-#: common/flatpak-context.c:2731 common/flatpak-context.c:2732
+#: common/flatpak-context.c:2730 common/flatpak-context.c:2731
 msgid "FEATURE"
 msgstr "FUNKCIJA"
 
-#: common/flatpak-context.c:2732
+#: common/flatpak-context.c:2731
 msgid "Don't allow feature"
 msgstr "Ne dovoli funkcije"
 
-#: common/flatpak-context.c:2733
+#: common/flatpak-context.c:2732
 msgid "Require conditions to be met for a feature to get allowed"
 msgstr "Zahtevaj izpolnjene pogoje, da bo funkcija dovoljena"
 
-#: common/flatpak-context.c:2733
+#: common/flatpak-context.c:2732
 msgid "FEATURE:CONDITION"
 msgstr "FUNKCIJA:POGOJ"
 
-#: common/flatpak-context.c:2734
+#: common/flatpak-context.c:2733
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr "Razrkij datotečni sistem aplikaciji (:ro samo za branje)"
 
-#: common/flatpak-context.c:2734
+#: common/flatpak-context.c:2733
 msgid "FILESYSTEM[:ro]"
 msgstr "DATOTEČNISISTEM[:RO]"
 
-#: common/flatpak-context.c:2735
+#: common/flatpak-context.c:2734
 msgid "Don't expose filesystem to app"
 msgstr "Ne razkrij datotečnega sistema aplikaciji"
 
-#: common/flatpak-context.c:2735
+#: common/flatpak-context.c:2734
 msgid "FILESYSTEM"
 msgstr "DATOTEČNISISTEM"
 
-#: common/flatpak-context.c:2736
+#: common/flatpak-context.c:2735
 msgid "Set environment variable"
 msgstr "Nastavi spremenljivko okolja"
 
-#: common/flatpak-context.c:2736
+#: common/flatpak-context.c:2735
 msgid "VAR=VALUE"
 msgstr "SPREMENLJIVKA=VREDNOST"
 
-#: common/flatpak-context.c:2737
+#: common/flatpak-context.c:2736
 msgid "Read environment variables in env -0 format from FD"
 msgstr "Beri spremenljivke okolja v obliki env -0 iz FD"
 
-#: common/flatpak-context.c:2737
+#: common/flatpak-context.c:2736
 msgid "FD"
 msgstr "FD"
 
-#: common/flatpak-context.c:2738
+#: common/flatpak-context.c:2737
 msgid "Remove variable from environment"
 msgstr "Odstrani spremenljivko iz okolja"
 
-#: common/flatpak-context.c:2738
+#: common/flatpak-context.c:2737
 msgid "VAR"
 msgstr "SPRE"
 
-#: common/flatpak-context.c:2739
+#: common/flatpak-context.c:2738
 msgid "Allow app to own name on the session bus"
 msgstr "Dovoli aplikaciji, da si lasti ime na vodilu seje"
 
-#: common/flatpak-context.c:2739 common/flatpak-context.c:2740
-#: common/flatpak-context.c:2741 common/flatpak-context.c:2742
-#: common/flatpak-context.c:2743 common/flatpak-context.c:2744
-#: common/flatpak-context.c:2745
+#: common/flatpak-context.c:2738 common/flatpak-context.c:2739
+#: common/flatpak-context.c:2740 common/flatpak-context.c:2741
+#: common/flatpak-context.c:2742 common/flatpak-context.c:2743
+#: common/flatpak-context.c:2744
 msgid "DBUS_NAME"
 msgstr "DBUS_IME"
 
-#: common/flatpak-context.c:2740
+#: common/flatpak-context.c:2739
 msgid "Allow app to talk to name on the session bus"
 msgstr "Dovoli aplikaciji, da govori z imenom na vodilu seje"
 
-#: common/flatpak-context.c:2741
+#: common/flatpak-context.c:2740
 msgid "Don't allow app to talk to name on the session bus"
 msgstr "Ne dovoli aplikaciji, da govori z imenom na vodilu seje"
 
-#: common/flatpak-context.c:2742
+#: common/flatpak-context.c:2741
 msgid "Allow app to own name on the system bus"
 msgstr "Dovoli aplikaciji, da ima lastno ime v sistemskem vodilu"
 
-#: common/flatpak-context.c:2743
+#: common/flatpak-context.c:2742
 msgid "Allow app to talk to name on the system bus"
 msgstr "Dovoli aplikaciji, da govori z imenom na sistemskem vodilu"
 
-#: common/flatpak-context.c:2744
+#: common/flatpak-context.c:2743
 msgid "Don't allow app to talk to name on the system bus"
 msgstr "Ne dovoli aplikaciji, da govori z imenom na sistemskem vodilu"
 
-#: common/flatpak-context.c:2745
+#: common/flatpak-context.c:2744
 msgid "Allow app to own name on the a11y bus"
 msgstr "Dovoli aplikaciji, da ima lastno ime na sistemskem vodilu"
 
-#: common/flatpak-context.c:2746
+#: common/flatpak-context.c:2745
 msgid "Add generic policy option"
 msgstr "Dodaja možnostisplošnega pravilnika"
 
-#: common/flatpak-context.c:2746 common/flatpak-context.c:2747
+#: common/flatpak-context.c:2745 common/flatpak-context.c:2746
 msgid "SUBSYSTEM.KEY=VALUE"
 msgstr "PODSISTEM.KLJUČ=VREDNOST"
 
-#: common/flatpak-context.c:2747
+#: common/flatpak-context.c:2746
 msgid "Remove generic policy option"
 msgstr "Odstrani možnost splošnega pravilnika"
 
-#: common/flatpak-context.c:2748
+#: common/flatpak-context.c:2747
 msgid "Add USB device to enumerables"
 msgstr "Dodaj napravo USB med oštevičene"
 
-#: common/flatpak-context.c:2748 common/flatpak-context.c:2749
+#: common/flatpak-context.c:2747 common/flatpak-context.c:2748
 msgid "VENDOR_ID:PRODUCT_ID"
 msgstr "ID_PROIZVAJALCA:ID_IZDELKA"
 
-#: common/flatpak-context.c:2749
+#: common/flatpak-context.c:2748
 msgid "Add USB device to hidden list"
 msgstr "Dodaj napravo USB na skriti seznam"
 
-#: common/flatpak-context.c:2750
+#: common/flatpak-context.c:2749
 msgid "A list of USB devices that are enumerable"
 msgstr "Seznam naprav USB, ki jih je mogoče našteti"
 
-#: common/flatpak-context.c:2750
+#: common/flatpak-context.c:2749
 msgid "LIST"
 msgstr "SEZNAM"
 
-#: common/flatpak-context.c:2751
+#: common/flatpak-context.c:2750
 msgid "File containing a list of USB devices to make enumerable"
 msgstr "Datoteka, ki vsebuje seznam naprav USB, ki jih je mogoče našteti"
 
-#: common/flatpak-context.c:2751 common/flatpak-context.c:2752
+#: common/flatpak-context.c:2750 common/flatpak-context.c:2751
 msgid "FILENAME"
 msgstr "IMEDATOTEKE"
 
-#: common/flatpak-context.c:2752
+#: common/flatpak-context.c:2751
 msgid "Persist home directory subpath"
 msgstr "Vztrajaj pri podpoti domačega mape"
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-context.c:2754
+#: common/flatpak-context.c:2753
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "Ni potrebno izvajati seje (brez ustvarjanja cgroups)"
 
-#: common/flatpak-context.c:3784
+#: common/flatpak-context.c:3783
 #, c-format
 msgid "Not replacing \"%s\" with tmpfs: %s"
 msgstr "Brez zamenjave »%s« s tmpfs: %s"
 
-#: common/flatpak-context.c:3792
+#: common/flatpak-context.c:3791
 #, c-format
 msgid "Not sharing \"%s\" with sandbox: %s"
 msgstr "Ni skupne rabe »%s« s peskovnikom: %s"
@@ -4551,12 +4583,12 @@ msgstr "Ni skupne rabe »%s« s peskovnikom: %s"
 #. * the path not existing, it seems reasonable to make more of a fuss
 #. * about the home directory not existing or otherwise being unusable,
 #. * so this is intentionally not using cannot_export()
-#: common/flatpak-context.c:3894
+#: common/flatpak-context.c:3893
 #, c-format
 msgid "Not allowing home directory access: %s"
 msgstr "Dostop do domače mape ni dovoljen: %s"
 
-#: common/flatpak-context.c:4128
+#: common/flatpak-context.c:4127
 #, c-format
 msgid "Unable to provide a temporary home directory in the sandbox: %s"
 msgstr "Ni mogoče zagotoviti začasne domače mape v peskovniku: %s"
@@ -6127,11 +6159,9 @@ msgstr "Preglasi starševski nadzor za namestitve"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:288
 msgid ""
-"Authentication is required to install software which is restricted by your "
-"parental controls policy"
+"Authentication is required to install software which is restricted by your parental controls policy"
 msgstr ""
-"Preverjanje pristnosti je potrebno za namestitev programske opreme, ki jo "
-"omejuje pravilnik starševskega nadzora"
+"Preverjanje pristnosti je potrebno za namestitev programske opreme, ki jo omejuje pravilnik starševskega nadzora"
 
 #. SECURITY:
 #. - This is like org.freedesktop.Flatpak.override-parental-controls, but
@@ -6152,8 +6182,6 @@ msgstr "Preglasi starševski nadzor za posodobitve"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:314
 msgid ""
-"Authentication is required to update software which is restricted by your "
-"parental controls policy"
+"Authentication is required to update software which is restricted by your parental controls policy"
 msgstr ""
-"Preverjanje pristnosti je potrebno za namestitev programske opreme, ki jo "
-"omejujejo pravila starševskega nadzora"
+"Preverjanje pristnosti je potrebno za namestitev programske opreme, ki jo omejujejo pravila starševskega nadzora"

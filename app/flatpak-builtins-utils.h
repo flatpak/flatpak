@@ -78,6 +78,7 @@ FlatpakDir * flatpak_find_installed_pref (const char         *pref,
 
 gboolean flatpak_resolve_duplicate_remotes (GPtrArray    *dirs,
                                             const char   *remote_name,
+                                            gboolean      opt_noninteractive,
                                             FlatpakDir  **out_dir,
                                             GCancellable *cancellable,
                                             GError      **error);
@@ -87,6 +88,7 @@ gboolean flatpak_resolve_matching_refs (const char *remote_name,
                                         gboolean    assume_yes,
                                         GPtrArray  *refs,
                                         const char *opt_search_ref,
+                                        gboolean    opt_noninteractive,
                                         char      **out_ref,
                                         GError    **error);
 
@@ -94,11 +96,13 @@ gboolean flatpak_resolve_matching_installed_refs (gboolean    assume_yes,
                                                   gboolean    only_one,
                                                   GPtrArray  *ref_dir_pairs,
                                                   const char *opt_search_ref,
+                                                  gboolean    opt_noninteractive,
                                                   GPtrArray  *out_pairs,
                                                   GError    **error);
 
 gboolean flatpak_resolve_matching_remotes (GPtrArray      *remote_dir_pairs,
                                            const char     *opt_search_ref,
+                                           gboolean        opt_noninteractive,
                                            RemoteDirPair **out_pair,
                                            GError        **error);
 

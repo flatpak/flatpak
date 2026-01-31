@@ -789,7 +789,7 @@ main (int    argc,
                          m_localtime = NULL;
   struct sigaction action;
 
-  /* Save the enviroment before changing anything, so that subprocesses
+  /* Save the environment before changing anything, so that subprocesses
    * can get the unchanged version */
   original_environ = g_get_environ ();
 
