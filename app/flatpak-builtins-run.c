@@ -385,6 +385,8 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
                         opt_instance_id_fd,
                         (const char * const *) run_environ,
                         NULL,
+                        NULL,
+                        NULL,
                         cancellable,
                         error))
     return FALSE;

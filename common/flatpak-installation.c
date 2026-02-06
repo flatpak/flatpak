@@ -714,6 +714,7 @@ flatpak_installation_launch_full (FlatpakInstallation *self,
                         NULL, 0, -1,
                         (const char * const *) run_environ,
                         &instance_dir,
+                        NULL, NULL,
                         cancellable, error))
     return FALSE;
 
