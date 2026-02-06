@@ -42,15 +42,6 @@
 #include "flatpak-utils-private.h"
 #include "flatpak-utils-base-private.h"
 
-static void
-clear_fd (gpointer data)
-{
-  int *fd_p = data;
-
-  if (fd_p != NULL && *fd_p != -1)
-    close (*fd_p);
-}
-
 char *flatpak_bwrap_empty_env[] = { NULL };
 
 FlatpakBwrap *
@@ -60,9 +51,9 @@ flatpak_bwrap_new (char **env)
 
   bwrap->argv = g_ptr_array_new_with_free_func (g_free);
   bwrap->noinherit_fds = g_array_new (FALSE, TRUE, sizeof (int));
-  g_array_set_clear_func (bwrap->noinherit_fds, clear_fd);
+  g_array_set_clear_func (bwrap->noinherit_fds, (GDestroyNotify) glnx_close_fd);
   bwrap->fds = g_array_new (FALSE, TRUE, sizeof (int));
-  g_array_set_clear_func (bwrap->fds, clear_fd);
+  g_array_set_clear_func (bwrap->fds, (GDestroyNotify) glnx_close_fd);
 
   if (env)
     bwrap->envp = g_strdupv (env);
