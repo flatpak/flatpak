@@ -146,6 +146,26 @@ flatpak_bwrap_add_fd (FlatpakBwrap *bwrap,
   g_array_append_val (bwrap->fds, fd);
 }
 
+gboolean
+flatpak_bwrap_add_args_data_fd_dup (FlatpakBwrap  *bwrap,
+                                    const char    *op,
+                                    int            fd,
+                                    const char    *path_optional,
+                                    GError       **error)
+{
+  glnx_autofd int fd_dup = -1;
+
+  fd_dup = fcntl (fd, F_DUPFD_CLOEXEC, 3);
+  if (fd_dup < 0)
+    return glnx_throw_errno_prefix (error, "Failed to dup fd %d", fd);
+
+  flatpak_bwrap_add_args_data_fd (bwrap,
+                                  op,
+                                  g_steal_fd (&fd_dup),
+                                  path_optional);
+  return TRUE;
+}
+
 void
 flatpak_bwrap_add_arg_printf (FlatpakBwrap *bwrap, const char *format, ...)
 {
