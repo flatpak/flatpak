@@ -64,6 +64,46 @@ static int opt_app_fd = -1;
 static char *opt_usr_path;
 static int opt_usr_fd = -1;
 static gboolean opt_clear_env;
+static GArray *opt_bind_fds = NULL;
+static GArray *opt_ro_bind_fds = NULL;
+
+static gboolean
+option_bind_fd_cb (const char  *option_name,
+                   const char  *value,
+                   gpointer     data,
+                   GError     **error)
+{
+  glnx_autofd int fd = -1;
+
+  fd = flatpak_parse_fd (value, error);
+  if (fd < 0)
+    return FALSE;
+
+  if (fd < 3)
+    return glnx_throw (error, "File descriptors 0, 1, 2 are reserved");
+
+  g_array_append_val (opt_bind_fds, fd);
+  return TRUE;
+}
+
+static gboolean
+option_ro_bind_fd_cb (const char  *option_name,
+                      const char  *value,
+                      gpointer     data,
+                      GError     **error)
+{
+  glnx_autofd int fd = -1;
+
+  fd = flatpak_parse_fd (value, error);
+  if (fd < 0)
+    return FALSE;
+
+  if (fd < 3)
+    return glnx_throw (error, "File descriptors 0, 1, 2 are reserved");
+
+  g_array_append_val (opt_ro_bind_fds, fd);
+  return TRUE;
+}
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to use"), N_("ARCH") },
@@ -95,6 +135,8 @@ static GOptionEntry options[] = {
   { "usr-path", 0, 0, G_OPTION_ARG_FILENAME, &opt_usr_path, N_("Use PATH instead of the runtime's /usr"), N_("PATH") },
   { "usr-fd", 0, 0, G_OPTION_ARG_INT, &opt_usr_fd, N_("Use FD instead of the runtime's /usr"), N_("FD") },
   { "clear-env", 0, 0, G_OPTION_ARG_NONE, &opt_clear_env, N_("Clear all outside environment variables"), NULL },
+  { "bind-fd", 0, 0, G_OPTION_ARG_CALLBACK | G_OPTION_FLAG_HIDDEN, &option_bind_fd_cb, N_("Bind mount the file or directory referred to by FD to its canonicalized path"), N_("FD") },
+  { "ro-bind-fd", 0, 0, G_OPTION_ARG_CALLBACK | G_OPTION_FLAG_HIDDEN, &option_ro_bind_fd_cb, N_("Bind mount the file or directory referred to by FD read-only to its canonicalized path"), N_("FD") },
   { NULL }
 };
 
@@ -121,6 +163,9 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   glnx_autofd int usr_fd = -1;
 
   run_environ = g_get_environ ();
+
+  opt_bind_fds = g_array_new (FALSE, FALSE, sizeof (int));
+  opt_ro_bind_fds = g_array_new (FALSE, FALSE, sizeof (int));
 
   context = g_option_context_new (_("APP [ARGUMENT…] - Run an app"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -389,8 +434,8 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
                         opt_instance_id_fd,
                         (const char * const *) run_environ,
                         NULL,
-                        NULL,
-                        NULL,
+                        opt_bind_fds,
+                        opt_ro_bind_fds,
                         cancellable,
                         error))
     return FALSE;
