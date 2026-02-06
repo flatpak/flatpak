@@ -30,6 +30,11 @@
 #include "flatpak-utils-private.h"
 #include "flatpak-exports-private.h"
 
+#define FLATPAK_RUN_APP_DEPLOY_APP_ORIGINAL (-2)
+#define FLATPAK_RUN_APP_DEPLOY_APP_EMPTY (-3)
+
+#define FLATPAK_RUN_APP_DEPLOY_USR_ORIGINAL (-2)
+
 gboolean flatpak_run_in_transient_unit (const char *app_id,
                                         const char *instance_id,
                                         GError    **error);
@@ -72,7 +77,7 @@ gboolean flatpak_ensure_data_dir (GFile        *app_id_dir,
                                   GError      **error);
 
 gboolean flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
-                                      GFile          *runtime_files,
+                                      int             runtime_fd,
                                       GFile          *app_id_dir,
                                       const char     *arch,
                                       FlatpakRunFlags flags,
@@ -104,12 +109,12 @@ gboolean flatpak_run_add_app_info_args (FlatpakBwrap       *bwrap,
 
 gboolean flatpak_run_app (FlatpakDecomposed   *app_ref,
                           FlatpakDeploy       *app_deploy,
-                          const char          *custom_app_path,
+                          int                  custom_app_fd,
                           FlatpakContext      *extra_context,
                           const char          *custom_runtime,
                           const char          *custom_runtime_version,
                           const char          *custom_runtime_commit,
-                          const char          *custom_usr_path,
+                          int                  custom_usr_fd,
                           int                  parent_pid,
                           FlatpakRunFlags      flags,
                           const char          *cwd,

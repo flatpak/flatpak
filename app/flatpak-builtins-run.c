@@ -111,6 +111,8 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   g_autoptr(GError) local_error = NULL;
   g_autoptr(GPtrArray) dirs = NULL;
   FlatpakRunFlags flags = 0;
+  glnx_autofd int app_fd = -1;
+  glnx_autofd int usr_fd = -1;
 
   run_environ = g_get_environ ();
 
@@ -309,14 +311,45 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   if (!opt_session_bus)
     flags |= FLATPAK_RUN_FLAG_NO_SESSION_BUS_PROXY;
 
+  if (opt_app_path != NULL)
+    {
+      if (g_strcmp0 (opt_app_path, "") == 0)
+        {
+          app_fd = FLATPAK_RUN_APP_DEPLOY_APP_EMPTY;
+        }
+      else
+        {
+          app_fd = open (opt_app_path, O_PATH | O_CLOEXEC | O_NOFOLLOW);
+
+          if (app_fd < 0)
+            return glnx_throw_errno_prefix (error, "Failed to open app-path");
+        }
+    }
+  else
+    {
+      app_fd = FLATPAK_RUN_APP_DEPLOY_APP_ORIGINAL;
+    }
+
+  if (opt_usr_path != NULL)
+    {
+      usr_fd = open (opt_usr_path, O_PATH | O_CLOEXEC | O_NOFOLLOW);
+
+      if (usr_fd < 0)
+        return glnx_throw_errno_prefix (error, "Failed to open usr-path");
+    }
+  else
+    {
+      usr_fd = FLATPAK_RUN_APP_DEPLOY_USR_ORIGINAL;
+    }
+
   if (!flatpak_run_app (app_deploy ? app_ref : runtime_ref,
                         app_deploy,
-                        opt_app_path,
+                        app_fd,
                         arg_context,
                         opt_runtime,
                         opt_runtime_version,
                         opt_runtime_commit,
-                        opt_usr_path,
+                        usr_fd,
                         opt_parent_pid,
                         flags,
                         opt_cwd,
