@@ -2582,6 +2582,28 @@ flatpak_is_debugging (void)
   return is_debugging;
 }
 
+int
+flatpak_parse_fd (const char  *fd_string,
+                  GError     **error)
+{
+  guint64 parsed;
+  char *endptr;
+  int fd;
+  struct stat stbuf;
+
+  parsed = g_ascii_strtoull (fd_string, &endptr, 10);
+
+  if (endptr == NULL || *endptr != '\0' || parsed > G_MAXINT)
+    return glnx_fd_throw (error, "Not a valid file descriptor: %s", fd_string);
+
+  fd = (int) parsed;
+
+  if (!glnx_fstat (fd, &stbuf, error))
+    return -1;
+
+  return fd;
+}
+
 #ifdef INCLUDE_INTERNAL_TESTS
 static GList *flatpak_test_paths = NULL;
 static GList *flatpak_test_fns = NULL;
