@@ -551,195 +551,60 @@ child_setup_func (gpointer user_data)
 }
 
 static gboolean
-is_valid_expose (const char *expose,
-                 GError    **error)
+validate_opath_fd (int        fd,
+                   gboolean   needs_writable,
+                   GError   **error)
 {
-  /* No subdirs or absolute paths */
-  if (expose[0] == '/')
+  int fd_flags;
+  struct stat st_buf;
+  int access_mode;
+
+  /* Must be able to get fd flags */
+  fd_flags = fcntl (fd, F_GETFL);
+  if (fd_flags < 0)
+    return glnx_throw_errno_prefix (error, "Failed to get fd flags");
+
+  /* Must be O_PATH */
+  if ((fd_flags & O_PATH) != O_PATH)
     {
-      g_set_error (error, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
-                   "Invalid sandbox expose: absolute paths not allowed");
+      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                           "File descriptor is not O_PATH");
       return FALSE;
     }
-  else if (strchr (expose, '/'))
-    {
-      g_set_error (error, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
-                   "Invalid sandbox expose: subdirectories not allowed");
-      return FALSE;
-    }
+
+  /* Must be able to fstat */
+  if (fstat (fd, &st_buf) < 0)
+    return glnx_throw_errno_prefix (error, "Failed to fstat");
+
+  access_mode = R_OK;
+  if (S_ISDIR (st_buf.st_mode))
+    access_mode |= X_OK;
+
+  if (needs_writable)
+    access_mode |= W_OK;
+
+  /* Must be able to access readable and potentially writable */
+  if (faccessat (fd, "", access_mode, AT_EMPTY_PATH | AT_SYMLINK_NOFOLLOW) != 0)
+    return glnx_throw_errno_prefix (error, "Bad access mode");
 
   return TRUE;
 }
 
-static char *
-filesystem_arg (const char *path,
-                gboolean    readonly)
+static int
+fd_map_remap_fd (GArray *fd_map,
+                 int    *max_fd_in_out,
+                 int     fd)
 {
-  g_autoptr(GString) s = g_string_new ("--filesystem=");
-  const char *p;
+  FdMapEntry fd_map_entry;
 
-  for (p = path; *p != 0; p++)
-    {
-      if (*p == ':')
-        g_string_append (s, "\\:");
-      else
-        g_string_append_c (s, *p);
-    }
+  /* Use a fd that hasn't been used yet. We might have to reshuffle
+   * fd_map_entry.to, a bit later. */
+  fd_map_entry.from = fd;
+  fd_map_entry.to = ++(*max_fd_in_out);
+  fd_map_entry.final = fd_map_entry.to;
+  g_array_append_val (fd_map, fd_map_entry);
 
-  if (readonly)
-    g_string_append (s, ":ro");
-
-  return g_string_free (g_steal_pointer (&s), FALSE);
-}
-
-
-static char *
-filesystem_sandbox_arg (const char *path,
-                        const char *sandbox,
-                        gboolean    readonly)
-{
-  g_autoptr(GString) s = g_string_new ("--filesystem=");
-  const char *p;
-
-  for (p = path; *p != 0; p++)
-    {
-      if (*p == ':')
-        g_string_append (s, "\\:");
-      else
-        g_string_append_c (s, *p);
-    }
-
-  g_string_append (s, "/sandbox/");
-
-  for (p = sandbox; *p != 0; p++)
-    {
-      if (*p == ':')
-        g_string_append (s, "\\:");
-      else
-        g_string_append_c (s, *p);
-    }
-
-  if (readonly)
-    g_string_append (s, ":ro");
-
-  return g_string_free (g_steal_pointer (&s), FALSE);
-}
-
-static char *
-bubblewrap_remap_path (const char *path)
-{
-  if (g_str_has_prefix (path, "/newroot/"))
-    path = path + strlen ("/newroot");
-  return g_strdup (path);
-}
-
-static char *
-verify_proc_self_fd (const char *proc_path,
-                     GError **error)
-{
-  char path_buffer[PATH_MAX + 1];
-  ssize_t symlink_size;
-
-  symlink_size = readlink (proc_path, path_buffer, PATH_MAX);
-  if (symlink_size < 0)
-    return glnx_null_throw_errno_prefix (error, "readlink");
-
-  path_buffer[symlink_size] = 0;
-
-  /* All normal paths start with /, but some weird things
-     don't, such as socket:[27345] or anon_inode:[eventfd].
-     We don't support any of these */
-  if (path_buffer[0] != '/')
-    return glnx_null_throw (error, "%s resolves to non-absolute path %s",
-                            proc_path, path_buffer);
-
-  /* File descriptors to actually deleted files have " (deleted)"
-     appended to them. This also happens to some fake fd types
-     like shmem which are "/<name> (deleted)". All such
-     files are considered invalid. Unfortunately this also
-     matches files with filenames that actually end in " (deleted)",
-     but there is not much to do about this. */
-  if (g_str_has_suffix (path_buffer, " (deleted)"))
-    return glnx_null_throw (error, "%s resolves to deleted path %s",
-                            proc_path, path_buffer);
-
-  /* remap from sandbox to host if needed */
-  return bubblewrap_remap_path (path_buffer);
-}
-
-static char *
-get_path_for_fd (int fd,
-                 gboolean *writable_out,
-                 GError **error)
-{
-  g_autofree char *proc_path = NULL;
-  int fd_flags;
-  struct stat st_buf;
-  struct stat real_st_buf;
-  g_autofree char *path = NULL;
-  gboolean writable = FALSE;
-  int read_access_mode;
-
-  /* Must be able to get fd flags */
-  fd_flags = fcntl (fd, F_GETFL);
-  if (fd_flags == -1)
-    return glnx_null_throw_errno_prefix (error, "fcntl F_GETFL");
-
-  /* Must be O_PATH */
-  if ((fd_flags & O_PATH) != O_PATH)
-    return glnx_null_throw (error, "not opened with O_PATH");
-
-  /* We don't want to allow exposing symlinks, because if they are
-   * under the callers control they could be changed between now and
-   * starting the child allowing it to point anywhere, so enforce NOFOLLOW.
-   * and verify that stat is not a link.
-   */
-  if ((fd_flags & O_NOFOLLOW) != O_NOFOLLOW)
-    return glnx_null_throw (error, "not opened with O_NOFOLLOW");
-
-  /* Must be able to fstat */
-  if (fstat (fd, &st_buf) < 0)
-    return glnx_null_throw_errno_prefix (error, "fstat");
-
-  /* As per above, no symlinks */
-  if (S_ISLNK (st_buf.st_mode))
-    return glnx_null_throw (error, "is a symbolic link");
-
-  proc_path = g_strdup_printf ("/proc/self/fd/%d", fd);
-
-  /* Must be able to read valid path from /proc/self/fd */
-  /* This is an absolute and (at least at open time) symlink-expanded path */
-  path = verify_proc_self_fd (proc_path, error);
-  if (path == NULL)
-    return NULL;
-
-  /* Verify that this is the same file as the app opened */
-  if (stat (path, &real_st_buf) < 0 ||
-      st_buf.st_dev != real_st_buf.st_dev ||
-      st_buf.st_ino != real_st_buf.st_ino)
-    {
-      /* Different files on the inside and the outside, reject the request */
-      return glnx_null_throw (error,
-                              "different file inside and outside sandbox");
-    }
-
-  read_access_mode = R_OK;
-  if (S_ISDIR (st_buf.st_mode))
-    read_access_mode |= X_OK;
-
-  /* Must be able to access the path via the sandbox supplied O_PATH fd,
-     which applies the sandbox side mount options (like readonly). */
-  if (access (proc_path, read_access_mode) != 0)
-    return glnx_null_throw (error, "not %s in sandbox",
-                            read_access_mode & X_OK ? "accessible" : "readable");
-
-  if (access (proc_path, W_OK) == 0)
-    writable = TRUE;
-
-  if (writable_out != NULL)
-    *writable_out = writable;
-
-  return g_steal_pointer (&path);
+  return fd_map_entry.final;
 }
 
 static gboolean
@@ -797,10 +662,13 @@ handle_spawn (PortalFlatpak         *object,
   gboolean devel;
   gboolean empty_app;
   g_autoptr(GString) env_string = g_string_new ("");
-  glnx_autofd int env_fd = -1;
   const char *flatpak;
   gboolean testing = FALSE;
   g_autofree char *app_id_prefix = NULL;
+  g_autoptr(GArray) owned_fds = NULL;
+  g_autoptr(GArray) expose_fds = NULL;
+  g_autoptr(GArray) expose_fds_ro = NULL;
+  glnx_autofd int instance_sandbox_fd = -1;
 
   child_setup_data.instance_id_fd = -1;
   child_setup_data.env_fd = -1;
@@ -922,29 +790,6 @@ handle_spawn (PortalFlatpak         *object,
                                              G_DBUS_ERROR_INVALID_ARGS,
                                              "Invalid sandbox expose, caller has no instance path");
       return G_DBUS_METHOD_INVOCATION_HANDLED;
-    }
-
-  for (i = 0; sandbox_expose != NULL && sandbox_expose[i] != NULL; i++)
-    {
-      const char *expose = sandbox_expose[i];
-
-      g_info ("exposing %s", expose);
-      if (!is_valid_expose (expose, &error))
-        {
-          g_dbus_method_invocation_return_gerror (invocation, error);
-          return G_DBUS_METHOD_INVOCATION_HANDLED;
-        }
-    }
-
-  for (i = 0; sandbox_expose_ro != NULL && sandbox_expose_ro[i] != NULL; i++)
-    {
-      const char *expose = sandbox_expose_ro[i];
-      g_info ("exposing %s", expose);
-      if (!is_valid_expose (expose, &error))
-        {
-          g_dbus_method_invocation_return_gerror (invocation, error);
-          return G_DBUS_METHOD_INVOCATION_HANDLED;
-        }
     }
 
   app_id_prefix = g_strdup_printf ("%s.", app_id);
@@ -1233,10 +1078,14 @@ handle_spawn (PortalFlatpak         *object,
       g_string_append_c (env_string, '\0');
     }
 
+  owned_fds = g_array_new (FALSE, FALSE, sizeof (int));
+  g_array_set_clear_func (owned_fds, (GDestroyNotify) glnx_close_fd);
+
   if (env_string->len > 0)
     {
-      FdMapEntry fd_map_entry;
       g_auto(GLnxTmpfile) env_tmpf  = { 0, };
+      int env_fd = -1;
+      int remapped_fd;
 
       if (!flatpak_buffer_to_sealed_memfd_or_tmpfile (&env_tmpf, "environ",
                                                       env_string->str,
@@ -1247,16 +1096,12 @@ handle_spawn (PortalFlatpak         *object,
         }
 
       env_fd = g_steal_fd (&env_tmpf.fd);
+      g_array_append_val (owned_fds, env_fd);
 
-      /* Use a fd that hasn't been used yet. We might have to reshuffle
-       * fd_map_entry.to, a bit later. */
-      fd_map_entry.from = env_fd;
-      fd_map_entry.to = ++max_fd;
-      fd_map_entry.final = fd_map_entry.to;
-      g_array_append_val (fd_map, fd_map_entry);
+      remapped_fd = fd_map_remap_fd (fd_map, &max_fd, env_fd);
 
       g_ptr_array_add (flatpak_argv,
-                       g_strdup_printf ("--env-fd=%d", fd_map_entry.final));
+                       g_strdup_printf ("--env-fd=%d", remapped_fd));
     }
 
   for (i = 0; unset_env != NULL && unset_env[i] != NULL; i++)
@@ -1354,54 +1199,100 @@ handle_spawn (PortalFlatpak         *object,
   else
     g_ptr_array_add (flatpak_argv, g_strdup ("--unshare=network"));
 
+  expose_fds = g_array_new (FALSE, FALSE, sizeof (int));
+  expose_fds_ro = g_array_new (FALSE, FALSE, sizeof (int));
 
-  if (instance_path)
+  if (instance_path != NULL)
     {
-      for (i = 0; sandbox_expose != NULL && sandbox_expose[i] != NULL; i++)
-        g_ptr_array_add (flatpak_argv,
-                         filesystem_sandbox_arg (instance_path, sandbox_expose[i], FALSE));
-      for (i = 0; sandbox_expose_ro != NULL && sandbox_expose_ro[i] != NULL; i++)
-        g_ptr_array_add (flatpak_argv,
-                         filesystem_sandbox_arg (instance_path, sandbox_expose_ro[i], TRUE));
+      glnx_autofd int instance_fd = -1;
+
+      instance_fd = glnx_chaseat (AT_FDCWD, instance_path,
+                                  GLNX_CHASE_DEFAULT,
+                                  &error);
+      if (instance_fd < 0)
+        {
+          g_dbus_method_invocation_return_gerror (invocation, error);
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
+        }
+
+      if (!glnx_ensure_dir (instance_fd, "sandbox", 0700, &error))
+        {
+          g_warning ("Unable to create %s/sandbox: %s", instance_path, error->message);
+          g_clear_error (&error);
+        }
+
+      instance_sandbox_fd = glnx_chaseat (instance_fd, "sandbox",
+                                          GLNX_CHASE_RESOLVE_NO_SYMLINKS,
+                                          &error);
+      if (instance_sandbox_fd < 0)
+        {
+          g_dbus_method_invocation_return_gerror (invocation, error);
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
+        }
+    }
+
+  for (i = 0; sandbox_expose != NULL && sandbox_expose[i] != NULL; i++)
+    {
+      int expose_fd;
+
+      g_assert (instance_sandbox_fd >= 0);
+
+      expose_fd = glnx_chaseat (instance_sandbox_fd, sandbox_expose[i],
+                                GLNX_CHASE_RESOLVE_NO_SYMLINKS |
+                                GLNX_CHASE_RESOLVE_BENEATH,
+                                &error);
+      if (expose_fd < 0)
+        {
+          g_dbus_method_invocation_return_gerror (invocation, error);
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
+        }
+
+      g_array_append_val (expose_fds, expose_fd);
+      /* transfers ownership, can't g_steal_fd with g_array_append_val */
+      g_array_append_val (owned_fds, expose_fd);
     }
 
   for (i = 0; sandbox_expose_ro != NULL && sandbox_expose_ro[i] != NULL; i++)
     {
-      const char *expose = sandbox_expose_ro[i];
-      g_info ("exposing %s", expose);
+      int expose_fd;
+
+      g_assert (instance_sandbox_fd >= 0);
+
+      expose_fd = glnx_chaseat (instance_sandbox_fd, sandbox_expose_ro[i],
+                                GLNX_CHASE_RESOLVE_NO_SYMLINKS |
+                                GLNX_CHASE_RESOLVE_BENEATH,
+                                &error);
+      if (expose_fd < 0)
+        {
+          g_dbus_method_invocation_return_gerror (invocation, error);
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
+        }
+
+      g_array_append_val (expose_fds_ro, expose_fd);
+      /* transfers ownership, can't g_steal_fd with g_array_append_val */
+      g_array_append_val (owned_fds, expose_fd);
     }
 
   if (sandbox_expose_fd != NULL)
     {
       gsize len = g_variant_n_children (sandbox_expose_fd);
+
       for (i = 0; i < len; i++)
         {
           gint32 handle;
+
           g_variant_get_child (sandbox_expose_fd, i, "h", &handle);
-          if (handle >= 0 && handle < fds_len)
+          if (handle >= 0 && handle < fds_len &&
+              validate_opath_fd (fds[handle], TRUE, &error))
             {
-              int handle_fd = fds[handle];
-              g_autofree char *path = NULL;
-              gboolean writable = FALSE;
-
-              path = get_path_for_fd (handle_fd, &writable, &error);
-
-              if (path)
-                {
-                  g_ptr_array_add (flatpak_argv, filesystem_arg (path, !writable));
-                }
-              else
-                {
-                  g_info ("unable to get path for sandbox-exposed fd %d, ignoring: %s",
-                          handle_fd, error->message);
-                  g_clear_error (&error);
-                }
+              g_array_append_val (expose_fds, fds[handle]);
             }
           else
             {
+              g_debug ("Invalid sandbox expose fd: %s", error->message);
               g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
                                                      G_DBUS_ERROR_INVALID_ARGS,
-                                                     "No file descriptor for handle %d",
+                                                     "No valid file descriptor for handle %d",
                                                      handle);
               return G_DBUS_METHOD_INVOCATION_HANDLED;
             }
@@ -1411,31 +1302,20 @@ handle_spawn (PortalFlatpak         *object,
   if (sandbox_expose_fd_ro != NULL)
     {
       gsize len = g_variant_n_children (sandbox_expose_fd_ro);
+
       for (i = 0; i < len; i++)
         {
           gint32 handle;
+
           g_variant_get_child (sandbox_expose_fd_ro, i, "h", &handle);
-          if (handle >= 0 && handle < fds_len)
+          if (handle >= 0 && handle < fds_len &&
+              validate_opath_fd (fds[handle], FALSE, &error))
             {
-              int handle_fd = fds[handle];
-              g_autofree char *path = NULL;
-              gboolean writable = FALSE;
-
-              path = get_path_for_fd (handle_fd, &writable, &error);
-
-              if (path)
-                {
-                  g_ptr_array_add (flatpak_argv, filesystem_arg (path, TRUE));
-                }
-              else
-                {
-                  g_info ("unable to get path for sandbox-exposed fd %d, ignoring: %s",
-                          handle_fd, error->message);
-                  g_clear_error (&error);
-                }
+              g_array_append_val (expose_fds_ro, fds[handle]);
             }
           else
             {
+              g_debug ("Invalid sandbox expose ro fd: %s", error->message);
               g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
                                                      G_DBUS_ERROR_INVALID_ARGS,
                                                      "No file descriptor for handle %d",
@@ -1445,20 +1325,40 @@ handle_spawn (PortalFlatpak         *object,
         }
     }
 
+  for (i = 0; i < expose_fds->len; i++)
+    {
+      int remapped_fd;
+
+      remapped_fd = fd_map_remap_fd (fd_map, &max_fd, expose_fds->data[i]);
+
+      g_ptr_array_add (flatpak_argv, g_strdup_printf ("--bind-fd=%d",
+                                                      remapped_fd));
+    }
+
+  for (i = 0; i < expose_fds_ro->len; i++)
+    {
+      int remapped_fd;
+
+      remapped_fd = fd_map_remap_fd (fd_map, &max_fd, expose_fds_ro->data[i]);
+
+      g_ptr_array_add (flatpak_argv, g_strdup_printf ("--ro-bind-fd=%d",
+                                                      remapped_fd));
+    }
+
   empty_app = (arg_flags & FLATPAK_SPAWN_FLAGS_EMPTY_APP) != 0;
+
+  if (empty_app && app_fd != NULL)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
+                                             G_DBUS_ERROR_INVALID_ARGS,
+                                             "app-fd and EMPTY_APP cannot both be used");
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
 
   if (app_fd != NULL)
     {
+      int remapped_fd;
       gint32 handle = g_variant_get_handle (app_fd);
-      g_autofree char *path = NULL;
-
-      if (empty_app)
-        {
-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
-                                                 G_DBUS_ERROR_INVALID_ARGS,
-                                                 "app-fd and EMPTY_APP cannot both be used");
-          return G_DBUS_METHOD_INVOCATION_HANDLED;
-        }
 
       if (handle >= fds_len || handle < 0)
         {
@@ -1470,18 +1370,11 @@ handle_spawn (PortalFlatpak         *object,
         }
 
       g_assert (fds != NULL);   /* otherwise fds_len would be 0 */
-      path = get_path_for_fd (fds[handle], NULL, &error);
 
-      if (path == NULL)
-        {
-          g_prefix_error (&error, "Unable to convert /app fd %d into path: ",
-                          fds[handle]);
-          g_dbus_method_invocation_return_gerror (invocation, error);
-          return G_DBUS_METHOD_INVOCATION_HANDLED;
-        }
+      remapped_fd = fd_map_remap_fd (fd_map, &max_fd, fds[handle]);
 
-      g_info ("Using %s as /app instead of app", path);
-      g_ptr_array_add (flatpak_argv, g_strdup_printf ("--app-path=%s", path));
+      g_ptr_array_add (flatpak_argv, g_strdup_printf ("--app-fd=%d",
+                                                      remapped_fd));
     }
   else if (empty_app)
     {
@@ -1490,8 +1383,8 @@ handle_spawn (PortalFlatpak         *object,
 
   if (usr_fd != NULL)
     {
+      int remapped_fd;
       gint32 handle = g_variant_get_handle (usr_fd);
-      g_autofree char *path = NULL;
 
       if (handle >= fds_len || handle < 0)
         {
@@ -1503,18 +1396,11 @@ handle_spawn (PortalFlatpak         *object,
         }
 
       g_assert (fds != NULL);   /* otherwise fds_len would be 0 */
-      path = get_path_for_fd (fds[handle], NULL, &error);
 
-      if (path == NULL)
-        {
-          g_prefix_error (&error, "Unable to convert /usr fd %d into path: ",
-                          fds[handle]);
-          g_dbus_method_invocation_return_gerror (invocation, error);
-          return G_DBUS_METHOD_INVOCATION_HANDLED;
-        }
+      remapped_fd = fd_map_remap_fd (fd_map, &max_fd, fds[handle]);
 
-      g_info ("Using %s as /usr instead of runtime", path);
-      g_ptr_array_add (flatpak_argv, g_strdup_printf ("--usr-path=%s", path));
+      g_ptr_array_add (flatpak_argv, g_strdup_printf ("--usr-fd=%d",
+                                                      remapped_fd));
     }
 
   g_ptr_array_add (flatpak_argv, g_strdup_printf ("--runtime=%s", runtime_parts[1]));
