@@ -60,7 +60,9 @@ static gboolean opt_parent_expose_pids;
 static gboolean opt_parent_share_pids;
 static int opt_instance_id_fd = -1;
 static char *opt_app_path;
+static int opt_app_fd = -1;
 static char *opt_usr_path;
+static int opt_usr_fd = -1;
 static gboolean opt_clear_env;
 
 static GOptionEntry options[] = {
@@ -89,7 +91,9 @@ static GOptionEntry options[] = {
   { "parent-share-pids", 0, 0, G_OPTION_ARG_NONE, &opt_parent_share_pids, N_("Share process ID namespace with parent"), NULL },
   { "instance-id-fd", 0, 0, G_OPTION_ARG_INT, &opt_instance_id_fd, N_("Write the instance ID to the given file descriptor"), NULL },
   { "app-path", 0, 0, G_OPTION_ARG_FILENAME, &opt_app_path, N_("Use PATH instead of the app's /app"), N_("PATH") },
+  { "app-fd", 0, 0, G_OPTION_ARG_INT, &opt_app_fd, N_("Use FD instead of the app's /app"), N_("FD") },
   { "usr-path", 0, 0, G_OPTION_ARG_FILENAME, &opt_usr_path, N_("Use PATH instead of the runtime's /usr"), N_("PATH") },
+  { "usr-fd", 0, 0, G_OPTION_ARG_INT, &opt_usr_fd, N_("Use FD instead of the runtime's /usr"), N_("FD") },
   { "clear-env", 0, 0, G_OPTION_ARG_NONE, &opt_clear_env, N_("Clear all outside environment variables"), NULL },
   { NULL }
 };
@@ -315,7 +319,18 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   if (!opt_clear_env)
     flags |= FLATPAK_RUN_FLAG_CLEAR_ENV;
 
-  if (opt_app_path != NULL)
+  if (opt_app_fd >= 0 && opt_app_path != NULL)
+    {
+      flatpak_fail_error (error, FLATPAK_ERROR,
+                          _("app-fd and app-path cannot both be used"));
+      return FALSE;
+    }
+
+  if (opt_app_fd >= 0)
+    {
+      app_fd = opt_app_fd;
+    }
+  else if (opt_app_path != NULL)
     {
       if (g_strcmp0 (opt_app_path, "") == 0)
         {
@@ -334,7 +349,18 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
       app_fd = FLATPAK_RUN_APP_DEPLOY_APP_ORIGINAL;
     }
 
-  if (opt_usr_path != NULL)
+  if (opt_usr_fd >= 0 && opt_usr_path != NULL)
+    {
+      flatpak_fail_error (error, FLATPAK_ERROR,
+                          _("usr-fd and usr-path cannot both be used"));
+      return FALSE;
+    }
+
+  if (opt_usr_fd >= 0)
+    {
+      usr_fd = opt_usr_fd;
+    }
+  else if (opt_usr_path != NULL)
     {
       usr_fd = open (opt_usr_path, O_PATH | O_CLOEXEC | O_NOFOLLOW);
 
