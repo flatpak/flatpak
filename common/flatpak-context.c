@@ -1382,21 +1382,16 @@ option_env_fd_cb (const gchar *option_name,
                   GError     **error)
 {
   FlatpakContext *context = data;
-  guint64 fd;
-  gchar *endptr;
-  gboolean ret;
+  glnx_autofd int fd = -1;
 
-  fd = g_ascii_strtoull (value, &endptr, 10);
+  fd = flatpak_parse_fd (value, error);
+  if (fd < 0)
+    return FALSE;
 
-  if (endptr == NULL || *endptr != '\0' || fd > G_MAXINT)
-    return glnx_throw (error, "Not a valid file descriptor: %s", value);
+  if (fd < 3)
+    return glnx_throw (error, "File descriptors 0, 1, 2 are reserved");
 
-  ret = flatpak_context_parse_env_fd (context, (int) fd, error);
-
-  if (fd >= 3)
-    close (fd);
-
-  return ret;
+  return flatpak_context_parse_env_fd (context, fd, error);
 }
 
 static gboolean

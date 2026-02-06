@@ -348,6 +348,9 @@ gboolean running_under_sudo_root (void);
 void flatpak_set_debugging (gboolean debugging);
 gboolean flatpak_is_debugging (void);
 
+int flatpak_parse_fd (const char  *fd_string,
+                      GError     **error);
+
 #define FLATPAK_MESSAGE_ID "c7b39b1e006b464599465e105b361485"
 
 #endif /* __FLATPAK_UTILS_H__ */
