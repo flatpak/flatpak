@@ -41,4 +41,11 @@ int glnx_chaseat (int              dirfd,
                   GlnxChaseFlags   flags,
                   GError         **error);
 
+int glnx_chase_and_statxat (int                 dirfd,
+                            const char         *path,
+                            GlnxChaseFlags      flags,
+                            unsigned int        mask,
+                            struct glnx_statx  *statbuf,
+                            GError            **error);
+
 G_END_DECLS

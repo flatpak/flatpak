@@ -732,3 +732,47 @@ glnx_chaseat (int              dirfd,
 
   return g_steal_fd (&fd);
 }
+
+/**
+ * glnx_chase_and_statxat:
+ * @dirfd: a directory file descriptor
+ * @path: a path
+ * @flags: combination of GlnxChaseFlags flags
+ * @mask: combination of GLNX_STATX_ flags
+ * @statbuf: a pointer to a struct glnx_statx which will be filled out
+ * @error: a #GError
+ *
+ * Stats the file at @path relative to @dirfd and fills out @statbuf with the
+ * result according to the interest mask @mask.
+ *
+ * See glnx_chaseat for the meaning of @dirfd, @path, and @flags.
+ *
+ * Returns: the chased file, or -1 with @error set on error
+ */
+int
+glnx_chase_and_statxat (int                 dirfd,
+                        const char         *path,
+                        GlnxChaseFlags      flags,
+                        unsigned int        mask,
+                        struct glnx_statx  *statbuf,
+                        GError            **error)
+{
+  glnx_autofd int fd = -1;
+
+  /* other args are checked by glnx_chaseat */
+  g_return_val_if_fail (statbuf != NULL, FALSE);
+
+  fd = glnx_chaseat (dirfd, path, flags, error);
+  if (fd < 0)
+    return -1;
+
+  if (!glnx_statx (fd, "",
+                   AT_EMPTY_PATH | AT_SYMLINK_NOFOLLOW |
+                   ((flags & GLNX_CHASE_NO_AUTOMOUNT) ? AT_NO_AUTOMOUNT : 0),
+                   mask,
+                   statbuf,
+                   error))
+    return -1;
+
+  return g_steal_fd (&fd);
+}
