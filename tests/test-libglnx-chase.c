@@ -386,6 +386,206 @@ test_chase_resolve_in_root_absolute (void)
   check_chase (bar_dfd, "./baz/link1", GLNX_CHASE_RESOLVE_IN_ROOT, get_ino (bar_dfd));
 }
 
+static void
+check_chase_and_statxat (int             dfd,
+                         const char     *path,
+                         GlnxChaseFlags  flags,
+                         ino_t           expected_ino,
+                         mode_t          expected_type)
+{
+  g_autoptr(GError) error = NULL;
+  glnx_autofd int chase_fd = -1;
+  struct glnx_statx stx;
+
+  /* let's try to test the openat2 impl */
+  chase_fd = glnx_chase_and_statxat (dfd, path, flags,
+                                     GLNX_STATX_TYPE | GLNX_STATX_INO,
+                                     &stx, &error);
+  g_assert_cmpint (chase_fd, >=, 0);
+  g_assert_no_error (error);
+  g_assert_cmpint (stx.stx_ino, ==, expected_ino);
+  g_assert_cmpint (stx.stx_mode & S_IFMT, ==, expected_type);
+  g_clear_fd (&chase_fd, NULL);
+
+  /* let's try to test the open_tree impl */
+  chase_fd = glnx_chase_and_statxat (dfd, path,
+                                     flags | GLNX_CHASE_DEBUG_NO_OPENAT2,
+                                     GLNX_STATX_TYPE | GLNX_STATX_INO,
+                                     &stx, &error);
+  g_assert_cmpint (chase_fd, >=, 0);
+  g_assert_no_error (error);
+  g_assert_cmpint (stx.stx_ino, ==, expected_ino);
+  g_assert_cmpint (stx.stx_mode & S_IFMT, ==, expected_type);
+  g_clear_fd (&chase_fd, NULL);
+
+  /* let's try to test the openat impl */
+  chase_fd = glnx_chase_and_statxat (dfd, path,
+                                     flags |
+                                     GLNX_CHASE_DEBUG_NO_OPENAT2 |
+                                     GLNX_CHASE_DEBUG_NO_OPEN_TREE,
+                                     GLNX_STATX_TYPE | GLNX_STATX_INO,
+                                     &stx, &error);
+  g_assert_cmpint (chase_fd, >=, 0);
+  g_assert_no_error (error);
+  g_assert_cmpint (stx.stx_ino, ==, expected_ino);
+  g_assert_cmpint (stx.stx_mode & S_IFMT, ==, expected_type);
+  g_clear_fd (&chase_fd, NULL);
+}
+
+static void
+check_chase_and_statxat_error (int             dfd,
+                               const char     *path,
+                               GlnxChaseFlags  flags,
+                               GQuark          err_domain,
+                               gint            err_code)
+{
+  g_autoptr(GError) error = NULL;
+  glnx_autofd int chase_fd = -1;
+  struct glnx_statx stx;
+
+  /* let's try to test the openat2 impl */
+  chase_fd = glnx_chase_and_statxat (dfd, path, flags,
+                                     GLNX_STATX_TYPE | GLNX_STATX_INO,
+                                     &stx, &error);
+  g_assert_cmpint (chase_fd, <, 0);
+  g_assert_error (error, err_domain, err_code);
+  g_clear_error (&error);
+
+  /* let's try to test the open_tree impl */
+  chase_fd = glnx_chase_and_statxat (dfd, path,
+                                     flags | GLNX_CHASE_DEBUG_NO_OPENAT2,
+                                     GLNX_STATX_TYPE | GLNX_STATX_INO,
+                                     &stx, &error);
+  g_assert_cmpint (chase_fd, <, 0);
+  g_assert_error (error, err_domain, err_code);
+  g_clear_error (&error);
+
+  /* let's try to test the openat impl */
+  chase_fd = glnx_chase_and_statxat (dfd, path,
+                                     flags |
+                                     GLNX_CHASE_DEBUG_NO_OPENAT2 |
+                                     GLNX_CHASE_DEBUG_NO_OPEN_TREE,
+                                     GLNX_STATX_TYPE | GLNX_STATX_INO,
+                                     &stx, &error);
+  g_assert_cmpint (chase_fd, <, 0);
+  g_assert_error (error, err_domain, err_code);
+  g_clear_error (&error);
+}
+
+static void
+test_chase_and_statxat_basic (void)
+{
+  g_autoptr(GError) error = NULL;
+  glnx_autofd int dfd = -1;
+  glnx_autofd int file_fd = -1;
+  ino_t expected_ino;
+
+  g_assert_true (glnx_shutil_mkdir_p_at_open (AT_FDCWD, "file/baz", 0755,
+                                              &dfd,
+                                              NULL, &error));
+  g_assert_no_error (error);
+  g_assert_cmpint (dfd, >=, 0);
+
+  expected_ino = get_ino (dfd);
+
+  /* Test with various path forms */
+  for (size_t i = 0; i < G_N_ELEMENTS (test_paths); i++)
+    check_chase_and_statxat (AT_FDCWD, test_paths[i], 0, expected_ino, S_IFDIR);
+
+  /* Create a regular file and test it */
+  file_fd = openat (dfd, "testfile", O_WRONLY | O_CREAT | O_CLOEXEC, 0644);
+  g_assert_cmpint (file_fd, >=, 0);
+  g_clear_fd (&file_fd, NULL);
+
+  expected_ino = path_get_ino ("file/baz/testfile");
+  check_chase_and_statxat (AT_FDCWD, "file/baz/testfile", 0, expected_ino, S_IFREG);
+
+  /* Test error cases */
+  check_chase_and_statxat_error (AT_FDCWD, "nope", 0, G_IO_ERROR, G_IO_ERROR_NOT_FOUND);
+}
+
+static void
+test_chase_and_statxat_symlink (void)
+{
+  g_autoptr(GError) error = NULL;
+  glnx_autofd int dfd = -1;
+  glnx_autofd int chase_fd = -1;
+  ino_t link_ino;
+  ino_t target_ino;
+  struct glnx_statx stx;
+
+  g_assert_true (glnx_shutil_mkdir_p_at_open (AT_FDCWD, "file/baz", 0755,
+                                              &dfd,
+                                              NULL, &error));
+  g_assert_no_error (error);
+  g_assert_cmpint (dfd, >=, 0);
+
+  g_assert_cmpint (symlinkat ("file/baz", AT_FDCWD, "fstatlink"), ==, 0);
+
+  target_ino = get_ino (dfd);
+  link_ino = path_get_ino ("fstatlink");
+
+  /* Following symlinks should give us the directory */
+  check_chase_and_statxat (AT_FDCWD, "fstatlink", 0, target_ino, S_IFDIR);
+  check_chase_and_statxat (AT_FDCWD, "fstatlink/", 0, target_ino, S_IFDIR);
+
+  /* With NOFOLLOW, we should get the symlink itself */
+  check_chase_and_statxat (AT_FDCWD, "fstatlink", GLNX_CHASE_NOFOLLOW, link_ino, S_IFLNK);
+
+  /* Verify we can distinguish between regular files, directories, and symlinks */
+  chase_fd = glnx_chase_and_statxat (AT_FDCWD, "fstatlink", GLNX_CHASE_NOFOLLOW,
+                                     GLNX_STATX_TYPE | GLNX_STATX_INO,
+                                     &stx, &error);
+  g_assert_cmpint (chase_fd, >=, 0);
+  g_assert_no_error (error);
+  g_assert_true (S_ISLNK (stx.stx_mode));
+  g_clear_fd (&chase_fd, NULL);
+
+  chase_fd = glnx_chase_and_statxat (AT_FDCWD, "fstatlink", 0,
+                                     GLNX_STATX_TYPE | GLNX_STATX_INO,
+                                     &stx, &error);
+  g_assert_cmpint (chase_fd, >=, 0);
+  g_assert_no_error (error);
+  g_assert_true (S_ISDIR (stx.stx_mode));
+  g_clear_fd (&chase_fd, NULL);
+
+  /* Test with RESOLVE_NO_SYMLINKS */
+  check_chase_and_statxat_error (AT_FDCWD, "fstatlink",
+                                 GLNX_CHASE_RESOLVE_NO_SYMLINKS,
+                                 G_IO_ERROR, G_IO_ERROR_TOO_MANY_LINKS);
+}
+
+static void
+test_chase_and_statxat_permissions (void)
+{
+  g_autoptr(GError) error = NULL;
+  glnx_autofd int dfd = -1;
+  glnx_autofd int file_fd = -1;
+  glnx_autofd int chase_fd = -1;
+  struct glnx_statx stx;
+  mode_t expected_mode = 0640;
+
+  g_assert_true (glnx_shutil_mkdir_p_at_open (AT_FDCWD, "permtest", 0755,
+                                              &dfd,
+                                              NULL, &error));
+  g_assert_no_error (error);
+
+  /* Create a file with specific permissions */
+  file_fd = openat (dfd, "testfile", O_WRONLY | O_CREAT | O_CLOEXEC, expected_mode);
+  g_assert_cmpint (file_fd, >=, 0);
+  g_clear_fd (&file_fd, NULL);
+
+  /* Verify that glnx_chase_and_statxat returns the correct permissions */
+  chase_fd = glnx_chase_and_statxat (dfd, "testfile", 0,
+                                     GLNX_STATX_TYPE | GLNX_STATX_MODE,
+                                     &stx, &error);
+  g_assert_cmpint (chase_fd, >=, 0);
+  g_assert_no_error (error);
+  g_assert_cmpint (stx.stx_mode & 0777, ==, expected_mode);
+  g_assert_true (S_ISREG (stx.stx_mode));
+  g_clear_fd (&chase_fd, NULL);
+}
+
 int main (int argc, char **argv)
 {
   _GLNX_TEST_SCOPED_TEMP_DIR;
@@ -399,6 +599,9 @@ int main (int argc, char **argv)
   g_test_add_func ("/chase-link", test_chase_link);
   g_test_add_func ("/chase-resolve", test_chase_resolve);
   g_test_add_func ("/chase-resolve-in-root-absolute", test_chase_resolve_in_root_absolute);
+  g_test_add_func ("/chase-and-statxat-basic", test_chase_and_statxat_basic);
+  g_test_add_func ("/chase-and-statxat-symlink", test_chase_and_statxat_symlink);
+  g_test_add_func ("/chase-and-statxat-permissions", test_chase_and_statxat_permissions);
 
   ret = g_test_run();
 
