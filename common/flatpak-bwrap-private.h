@@ -73,6 +73,12 @@ gboolean      flatpak_bwrap_add_args_data (FlatpakBwrap *bwrap,
                                            gssize        content_size,
                                            const char   *path,
                                            GError      **error);
+gboolean      flatpak_bwrap_add_args_file (FlatpakBwrap *bwrap,
+                                           const char   *name,
+                                           const char   *content,
+                                           gssize        content_size,
+                                           const char   *path,
+                                           GError      **error);
 void          flatpak_bwrap_add_bind_arg (FlatpakBwrap *bwrap,
                                           const char   *type,
                                           const char   *src,
