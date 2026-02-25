@@ -271,7 +271,7 @@ flatpak_builtin_update (int           argc,
   if (!has_updates)
     {
       g_print ("\n");
-      g_print (_("No apps need to be updated.\n"));
+      g_print (_("Nothing needs to be updated.\n"));
     }
 
   if (n_prefs == 0)
