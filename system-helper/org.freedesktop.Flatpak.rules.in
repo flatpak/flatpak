@@ -3,6 +3,7 @@ polkit.addRule(function(action, subject) {
          action.id == "org.freedesktop.Flatpak.runtime-install"||
          action.id == "org.freedesktop.Flatpak.app-uninstall" ||
          action.id == "org.freedesktop.Flatpak.runtime-uninstall" ||
+         action.id == "org.freedesktop.Flatpak.appstream-update" ||
          action.id == "org.freedesktop.Flatpak.modify-repo") &&
         subject.active == true && subject.local == true &&
         subject.isInGroup("@privileged_group@")) {
