@@ -271,11 +271,12 @@ flatpak_builtin_update (int           argc,
   if (!has_updates)
     {
       g_print ("\n");
-      g_print (_("Nothing to do.\n"));
+      g_print (_("Nothing needs to be updated.\n"));
     }
 
   if (n_prefs == 0)
     {
+      g_print (_("Updating AppStream...\n"));
       if (!update_appstream (dirs, NULL, opt_arch, FLATPAK_APPSTREAM_TTL, TRUE, cancellable, error))
         return FALSE;
     }
