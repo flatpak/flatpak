@@ -6051,6 +6051,8 @@ get_common_pull_options (GVariantBuilder     *builder,
   if (current_local_checksum)
     g_variant_builder_add (&hdr_builder, "(ss)", "Flatpak-Upgrade-From", current_local_checksum);
 
+  g_variant_builder_add (&hdr_builder, "(ss)", "Flatpak-Is-Update", current_local_checksum != NULL ? "true" : "false");
+
   {
     g_autofree char *os_info = flatpak_dir_get_os_info (dir);
     if (os_info)
