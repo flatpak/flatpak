@@ -16,6 +16,11 @@ a development machine that's expected to break sometimes!**
 
 ### On Debian
 
+Make sure that `deb-src` apt sources are enabled in `/etc/apt/sources.list.d/*.sources` or `/etc/apt/sources.list`. 
+See distribution documentation for details.
+
+Then use commands similar to these:
+
 ```
 git clone https://github.com/flatpak/flatpak
 cd flatpak
@@ -26,6 +31,8 @@ meson compile -C _build
 meson test -C _build
 sudo meson install -C _build
 ```
+
+Note: Older versions of Ubuntu/Debian, such as `Ubuntu 24.04`, may require also installing `meson` and cannot use the system `bwrap`.
 
 ### On Fedora
 
