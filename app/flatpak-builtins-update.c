@@ -97,7 +97,7 @@ flatpak_builtin_update (int           argc,
 
   if (opt_appstream)
     {
-      if (!update_appstream (dirs, argc >= 2 ? argv[1] : NULL, opt_arch, 0, FALSE, cancellable, error))
+      if (!update_appstream (dirs, argc >= 2 ? argv[1] : NULL, opt_arch, 0, opt_noninteractive, cancellable, error))
         return FALSE;
 
       return TRUE;
@@ -276,7 +276,7 @@ flatpak_builtin_update (int           argc,
 
   if (n_prefs == 0)
     {
-      if (!update_appstream (dirs, NULL, opt_arch, FLATPAK_APPSTREAM_TTL, TRUE, cancellable, error))
+      if (!update_appstream (dirs, NULL, opt_arch, FLATPAK_APPSTREAM_TTL, opt_noninteractive, cancellable, error))
         return FALSE;
     }
 
