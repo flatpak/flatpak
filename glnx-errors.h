@@ -32,6 +32,10 @@ gboolean glnx_throw (GError **error, const char *fmt, ...) G_GNUC_PRINTF (2,3);
 #define glnx_null_throw(error, args...) \
   ({glnx_throw (error, args); NULL;})
 
+/* Like glnx_throw(), but yields -1 (invalid fd). */
+#define glnx_fd_throw(error, args...) \
+  ({glnx_throw (error, args); -1;})
+
 /* Implementation detail of glnx_throw_prefix() */
 void glnx_real_set_prefix_error_va (GError     *error,
                                     const char *format,
@@ -108,6 +112,10 @@ glnx_throw_errno (GError **error)
 #define glnx_null_throw_errno(error) \
   ({glnx_throw_errno (error); NULL;})
 
+/* Like glnx_throw_errno(), but yields -1 (invalid fd). */
+#define glnx_fd_throw_errno(error) \
+  ({glnx_throw_errno (error); -1;})
+
 /* Implementation detail of glnx_throw_errno_prefix() */
 void glnx_real_set_prefix_error_from_errno_va (GError     **error,
                                                gint         errsv,
@@ -119,6 +127,10 @@ gboolean glnx_throw_errno_prefix (GError **error, const char *fmt, ...) G_GNUC_P
 /* Like glnx_throw_errno_prefix(), but yields a NULL pointer. */
 #define glnx_null_throw_errno_prefix(error, args...) \
   ({glnx_throw_errno_prefix (error, args); NULL;})
+
+/* Like glnx_throw_errno_prefix(), but yields -1 (invalid fd). */
+#define glnx_fd_throw_errno_prefix(error, args...) \
+  ({glnx_throw_errno_prefix (error, args); -1;})
 
 /* BEGIN LEGACY APIS */
 

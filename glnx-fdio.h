@@ -383,4 +383,8 @@ glnx_unlinkat (int           dfd,
   return TRUE;
 }
 
+int glnx_fd_reopen (int      fd,
+                    int      flags,
+                    GError **error);
+
 G_END_DECLS
