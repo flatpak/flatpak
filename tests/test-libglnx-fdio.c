@@ -309,7 +309,8 @@ test_fd_reopen (void)
   g_assert_true (ok);
   g_assert_no_errno (dfd);
 
-  glnx_file_replace_contents_at (dfd, "testfile", test_data, strlen (test_data),
+  glnx_file_replace_contents_at (dfd, "testfile",
+                                 (const void *) test_data, strlen (test_data),
                                  GLNX_FILE_REPLACE_NODATASYNC, NULL, &error);
   g_assert_no_error (error);
 
