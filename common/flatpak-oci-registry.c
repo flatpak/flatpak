@@ -2711,6 +2711,7 @@ flatpak_oci_index_make_summary (GFile        *index,
       const char *endoflife_base64;
       const char *endoflife_rebase_base64 = NULL;
       const char *metadata_contents = NULL;
+      const char *runtime_repo = NULL;
       g_autoptr(GVariantBuilder) ref_metadata_builder = NULL;
       g_autoptr(GVariant) token_type_v = NULL;
       g_autoptr(GVariant) endoflife_v = NULL;
@@ -2766,10 +2767,12 @@ flatpak_oci_index_make_summary (GFile        *index,
       endoflife_v = maybe_variant_from_base64 (endoflife_base64);
       endoflife_rebase_base64 = get_image_metadata (image, "org.flatpak.commit-metadata.ostree.endoflife-rebase");
       endoflife_rebase_v = maybe_variant_from_base64 (endoflife_rebase_base64);
+      runtime_repo = get_image_metadata (image, "org.flatpak.runtime-repo");
 
       if (token_type_v != NULL ||
           endoflife_v != NULL ||
-          endoflife_rebase_v != NULL)
+          endoflife_rebase_v != NULL ||
+          runtime_repo != NULL)
         {
           g_autoptr(GVariantBuilder) sparse_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
 
@@ -2779,6 +2782,8 @@ flatpak_oci_index_make_summary (GFile        *index,
             g_variant_builder_add (sparse_builder, "{s@v}", FLATPAK_SPARSE_CACHE_KEY_ENDOFLIFE, endoflife_v);
           if (endoflife_rebase_v != NULL)
             g_variant_builder_add (sparse_builder, "{s@v}", FLATPAK_SPARSE_CACHE_KEY_ENDOFLIFE_REBASE, endoflife_rebase_v);
+          if (runtime_repo != NULL)
+            g_variant_builder_add (sparse_builder, "{sv}", FLATPAK_SPARSE_CACHE_KEY_RUNTIME_REPO, g_variant_new_string (runtime_repo));
 
           g_variant_builder_add (ref_sparse_data_builder, "{s@a{sv}}",
                                  ref, g_variant_builder_end (sparse_builder));
