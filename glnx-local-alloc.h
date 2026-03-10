@@ -43,7 +43,6 @@ glnx_local_obj_unref (void *v)
   if (o)
     g_object_unref (o);
 }
-#define glnx_unref_object __attribute__ ((cleanup(glnx_local_obj_unref)))
 
 /* Backwards-compat with older libglnx */
 #define glnx_steal_fd g_steal_fd
