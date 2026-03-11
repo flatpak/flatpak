@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..27"
+echo "1..30"
 
 # Use stable rather than master as the branch so we can test that the run
 # command automatically finds the branch correctly
@@ -608,3 +608,25 @@ assert_file_has_content hello_out "not allowed to avoid sandbox escape"
 assert_not_file_has_content hello_out "secret-file"
 
 ok "--persist doesn't allow sandbox escape via a symlink (CVE-2024-42472)"
+
+# --dbus-call tests
+
+# --dbus-call option is accepted and app runs successfully
+ARGS="--sandbox --dbus-call=org.freedesktop.portal.Desktop=org.freedesktop.portal.Settings.*" \
+  run_sh org.test.Hello 'echo dbus-call-ok' > dbus_call_out
+assert_file_has_content dbus_call_out '^dbus-call-ok$'
+
+ok "--dbus-call accepted in sandbox mode"
+
+# --dbus-call without explicit --session-bus still works (auto-enabled)
+ARGS="--sandbox --dbus-call=org.freedesktop.portal.Desktop=org.freedesktop.portal.Settings.*" \
+  run_sh org.test.Hello cat /.flatpak-info > dbus_call_fpi
+assert_file_has_content dbus_call_fpi '^\[Session Bus Policy\]$'
+
+ok "--dbus-call auto-enables session bus proxy"
+
+# without --dbus-call, default behavior is preserved (backward compat)
+run_sh org.test.Hello cat /.flatpak-info > no_dbus_call_fpi
+assert_not_file_has_content no_dbus_call_fpi 'dbus-call'
+
+ok "--dbus-call absent preserves default behavior"

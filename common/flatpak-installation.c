@@ -709,6 +709,7 @@ flatpak_installation_launch_full (FlatpakInstallation *self,
                         NULL,
                         NULL, 0, -1,
                         (const char * const *) run_environ,
+                        NULL, /* extra_dbus_calls */
                         &instance_dir,
                         cancellable, error))
     return FALSE;

@@ -685,6 +685,25 @@ key=v1;v2;
             </varlistentry>
 
             <varlistentry>
+                <term><option>--dbus-call=RULE</option></term>
+
+                <listitem><para>
+                    Add a D-Bus call rule to the session bus proxy, replacing
+                    the default portal access policy. When this option is used,
+                    only the specified call rules are allowed instead of the
+                    default <literal>org.freedesktop.portal.*=*</literal>. Can
+                    be specified multiple times. The rule format follows
+                    xdg-dbus-proxy's <option>--call</option> syntax:
+                    <literal>BUSNAME=INTERFACE.METHOD</literal>.
+                </para><para>
+                    This option only has an effect when the session bus is
+                    filtered (not unrestricted). If no
+                    <option>--dbus-call</option> options are given, the default
+                    behavior of allowing all portal calls is preserved.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--own-name=NAME</option></term>
 
                 <listitem><para>

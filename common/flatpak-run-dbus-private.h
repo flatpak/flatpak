@@ -33,7 +33,8 @@ gboolean flatpak_run_add_session_dbus_args (FlatpakBwrap          *app_bwrap,
                                             FlatpakContextSockets  sockets,
                                             FlatpakContext        *context,
                                             FlatpakRunFlags        flags,
-                                            const char            *app_id);
+                                            const char            *app_id,
+                                            const char * const    *extra_dbus_calls);
 
 gboolean flatpak_run_add_system_dbus_args (FlatpakBwrap          *app_bwrap,
                                            FlatpakBwrap          *proxy_arg_bwrap,

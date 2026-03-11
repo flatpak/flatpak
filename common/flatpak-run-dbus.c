@@ -237,7 +237,8 @@ flatpak_run_add_session_dbus_args (FlatpakBwrap          *app_bwrap,
                                    FlatpakContextSockets  sockets,
                                    FlatpakContext        *context,
                                    FlatpakRunFlags        flags,
-                                   const char            *app_id)
+                                   const char            *app_id,
+                                   const char * const    *extra_dbus_calls)
 {
   static const char sandbox_socket_path[] = "/run/flatpak/bus";
   static const char sandbox_dbus_address[] = "unix:path=/run/flatpak/bus";
@@ -292,9 +293,20 @@ flatpak_run_add_session_dbus_args (FlatpakBwrap          *app_bwrap,
         {
           flatpak_context_add_bus_filters (context, app_id, FLATPAK_SESSION_BUS, flags & FLATPAK_RUN_FLAG_SANDBOX, proxy_arg_bwrap);
 
-          /* Allow calling any interface+method on all portals, but only receive broadcasts under /org/desktop/portal */
-          flatpak_bwrap_add_arg (proxy_arg_bwrap,
-                                 "--call=org.freedesktop.portal.*=*");
+          /* Use explicit --dbus-call rules if given, otherwise allow all portals */
+          if (extra_dbus_calls == NULL)
+            {
+              flatpak_bwrap_add_arg (proxy_arg_bwrap,
+                                     "--call=org.freedesktop.portal.*=*");
+            }
+          else
+            {
+              for (int i = 0; extra_dbus_calls[i] != NULL; i++)
+                flatpak_bwrap_add_arg_printf (proxy_arg_bwrap, "--call=%s",
+                                              extra_dbus_calls[i]);
+            }
+
+          /* Portal signals */
           flatpak_bwrap_add_arg (proxy_arg_bwrap,
                                  "--broadcast=org.freedesktop.portal.*=@/org/freedesktop/portal/*");
         }

@@ -62,6 +62,7 @@ static int opt_instance_id_fd = -1;
 static char *opt_app_path;
 static char *opt_usr_path;
 static gboolean opt_clear_env;
+static char **opt_dbus_calls;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to use"), N_("ARCH") },
@@ -91,6 +92,7 @@ static GOptionEntry options[] = {
   { "app-path", 0, 0, G_OPTION_ARG_FILENAME, &opt_app_path, N_("Use PATH instead of the app's /app"), N_("PATH") },
   { "usr-path", 0, 0, G_OPTION_ARG_FILENAME, &opt_usr_path, N_("Use PATH instead of the runtime's /usr"), N_("PATH") },
   { "clear-env", 0, 0, G_OPTION_ARG_NONE, &opt_clear_env, N_("Clear all outside environment variables"), NULL },
+  { "dbus-call", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_dbus_calls, N_("Add a D-Bus call rule to the session bus proxy (replaces default portal access)"), N_("RULE") },
   { NULL }
 };
 
@@ -280,11 +282,13 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
       g_clear_error (&local_error);
     }
 
-  /* Default to TRUE, unless sandboxed */
+  /* Default to TRUE, unless sandboxed; --dbus-call forces session bus on */
   if (opt_a11y_bus == -1)
     opt_a11y_bus = !opt_sandbox;
   if (opt_session_bus == -1)
-    opt_session_bus = !opt_sandbox;
+    opt_session_bus = (opt_dbus_calls != NULL) ? TRUE : !opt_sandbox;
+  if (opt_dbus_calls != NULL && !opt_session_bus)
+    g_printerr ("Warning: --dbus-call has no effect without session bus proxy\n");
 
   if (opt_sandbox)
     flags |= FLATPAK_RUN_FLAG_SANDBOX | FLATPAK_RUN_FLAG_NO_SYSTEM_BUS_PROXY;
@@ -329,6 +333,7 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
                         rest_argc - 1,
                         opt_instance_id_fd,
                         (const char * const *) run_environ,
+                        (const char * const *) opt_dbus_calls,
                         NULL,
                         cancellable,
                         error))

@@ -296,6 +296,7 @@ flatpak_run_add_environment_args (FlatpakBwrap           *bwrap,
                                   GPtrArray              *previous_app_id_dirs,
                                   int                     per_app_dir_lock_fd,
                                   const char             *instance_id,
+                                  const char * const     *extra_dbus_calls,
                                   FlatpakExports        **exports_out,
                                   GCancellable           *cancellable,
                                   GError                **error)
@@ -533,7 +534,7 @@ flatpak_run_add_environment_args (FlatpakBwrap           *bwrap,
                                            exports, xdg_dirs_conf, home_access);
 
   flatpak_run_add_socket_args_environment (bwrap, shares, sockets, app_id, instance_id);
-  flatpak_run_add_session_dbus_args (bwrap, proxy_arg_bwrap, sockets, context, flags, app_id);
+  flatpak_run_add_session_dbus_args (bwrap, proxy_arg_bwrap, sockets, context, flags, app_id, extra_dbus_calls);
   flatpak_run_add_system_dbus_args (bwrap, proxy_arg_bwrap, sockets, context, flags);
   flatpak_run_add_a11y_dbus_args (bwrap, proxy_arg_bwrap, context, flags, app_id);
 
@@ -2994,6 +2995,7 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
                  int                  n_args,
                  int                  instance_id_fd,
                  const char * const  *run_environ,
+                 const char * const  *extra_dbus_calls,
                  char               **instance_dir_out,
                  GCancellable        *cancellable,
                  GError             **error)
@@ -3528,6 +3530,7 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
                                          shares, devices, sockets, features,
                                          app_id_dir, previous_app_id_dirs,
                                          per_app_dir_lock_fd, instance_id,
+                                         extra_dbus_calls,
                                          &exports, cancellable, error))
     return FALSE;
 

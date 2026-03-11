@@ -617,7 +617,8 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
                                          app_context,
                                          shares, devices, sockets, features,
                                          app_id_dir, NULL, -1,
-                                         instance_id, NULL, cancellable, error))
+                                         instance_id, NULL,
+                                         NULL, cancellable, error))
     return FALSE;
 
   for (i = 0; opt_bind_mounts != NULL && opt_bind_mounts[i] != NULL; i++)
