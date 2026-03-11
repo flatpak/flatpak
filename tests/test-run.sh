@@ -621,7 +621,7 @@ ok "--dbus-call accepted in sandbox mode"
 # --dbus-call without explicit --session-bus still works (auto-enabled)
 ARGS="--sandbox --dbus-call=org.freedesktop.portal.Desktop=org.freedesktop.portal.Settings.*" \
   run_sh org.test.Hello cat /.flatpak-info > dbus_call_fpi
-assert_file_has_content dbus_call_fpi '^\[Session Bus Policy\]$'
+assert_file_has_content dbus_call_fpi '^session-bus-proxy=true$'
 
 ok "--dbus-call auto-enables session bus proxy"
 
