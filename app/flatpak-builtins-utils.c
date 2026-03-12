@@ -1428,19 +1428,6 @@ ensure_remote_state_arch (FlatpakDir         *dir,
   return flatpak_remote_state_ensure_subsummary (state, dir, arch, FALSE, cancellable, error);
 }
 
-gboolean
-ensure_remote_state_arch_for_ref (FlatpakDir         *dir,
-                                  FlatpakRemoteState *state,
-                                  const char         *ref,
-                                  gboolean            cached,
-                                  gboolean            only_sideloaded,
-                                  GCancellable       *cancellable,
-                                  GError            **error)
-{
-  g_autofree char *ref_arch = flatpak_get_arch_for_ref (ref);
-  return ensure_remote_state_arch (dir, state, ref_arch, cached, only_sideloaded,cancellable, error);
-}
-
 /* Note: cached == TRUE here means prefer-cache, not only-cache */
 gboolean
 ensure_remote_state_all_arches (FlatpakDir         *dir,
