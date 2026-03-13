@@ -44,8 +44,6 @@
 #include <libmalcontent/malcontent.h>
 #endif
 
-#include "flatpak-syscalls-private.h"
-
 #ifdef ENABLE_SECCOMP
 #include <seccomp.h>
 #endif
@@ -1874,6 +1872,32 @@ cleanup_seccomp (void *p)
     seccomp_release (*pp);
 }
 
+static const char * const known_syscall_names[] =
+{
+#include "known-syscall-names.h"
+};
+
+static const char * const disallowed_syscall_names[] =
+{
+  /* seccomp can't look into clone3()'s struct clone_args to check whether
+   * the flags are OK, so we have no choice but to block clone3().
+   * Return ENOSYS so user-space will fall back to clone().
+   * (CVE-2021-41133; see also https://github.com/moby/moby/commit/9f6b562d) */
+  "clone3",
+
+  /* New mount manipulation APIs can also change our VFS. There's no
+   * legitimate reason to do these in the sandbox, so block all of them
+   * rather than thinking about which ones might be dangerous.
+   * (CVE-2021-41133) */
+  "open_tree",
+  "move_mount",
+  "fsopen",
+  "fsconfig",
+  "fsmount",
+  "fspick",
+  "mount_setattr",
+};
+
 static gboolean
 setup_seccomp (FlatpakBwrap   *bwrap,
                const char     *arch,
@@ -1884,7 +1908,8 @@ setup_seccomp (FlatpakBwrap   *bwrap,
   gboolean multiarch = (run_flags & FLATPAK_RUN_FLAG_MULTIARCH) != 0;
   gboolean devel = (run_flags & FLATPAK_RUN_FLAG_DEVEL) != 0;
 
-  __attribute__((cleanup (cleanup_seccomp))) scmp_filter_ctx seccomp = NULL;
+  __attribute__((cleanup (cleanup_seccomp))) scmp_filter_ctx allowlist_ctx = NULL;
+  __attribute__((cleanup (cleanup_seccomp))) scmp_filter_ctx blocklist_ctx = NULL;
 
   /**** BEGIN NOTE ON CODE SHARING
    *
@@ -1942,6 +1967,7 @@ setup_seccomp (FlatpakBwrap   *bwrap,
     {SCMP_SYS (umount2), EPERM},
     {SCMP_SYS (pivot_root), EPERM},
     {SCMP_SYS (chroot), EPERM},
+
 #if defined(__s390__) || defined(__s390x__) || defined(__CRIS__)
     /* Architectures with CONFIG_CLONE_BACKWARDS2: the child stack
      * and flags arguments are reversed so the flags come second */
@@ -1957,24 +1983,6 @@ setup_seccomp (FlatpakBwrap   *bwrap,
      * console (/dev/tty2 or similar), copy/paste operations have an effect
      * similar to TIOCSTI (CVE-2023-28100) */
     {SCMP_SYS (ioctl), EPERM, &SCMP_A1 (SCMP_CMP_MASKED_EQ, 0xFFFFFFFFu, (int) TIOCLINUX)},
-
-    /* seccomp can't look into clone3()'s struct clone_args to check whether
-     * the flags are OK, so we have no choice but to block clone3().
-     * Return ENOSYS so user-space will fall back to clone().
-     * (CVE-2021-41133; see also https://github.com/moby/moby/commit/9f6b562d) */
-    {SCMP_SYS (clone3), ENOSYS},
-
-    /* New mount manipulation APIs can also change our VFS. There's no
-     * legitimate reason to do these in the sandbox, so block all of them
-     * rather than thinking about which ones might be dangerous.
-     * (CVE-2021-41133) */
-    {SCMP_SYS (open_tree), ENOSYS},
-    {SCMP_SYS (move_mount), ENOSYS},
-    {SCMP_SYS (fsopen), ENOSYS},
-    {SCMP_SYS (fsconfig), ENOSYS},
-    {SCMP_SYS (fsmount), ENOSYS},
-    {SCMP_SYS (fspick), ENOSYS},
-    {SCMP_SYS (mount_setattr), ENOSYS},
   };
 
   struct
@@ -2008,10 +2016,28 @@ setup_seccomp (FlatpakBwrap   *bwrap,
   };
   int last_allowed_family;
   int i, r;
-  g_auto(GLnxTmpfile) seccomp_tmpf  = { 0, };
+  g_auto(GLnxTmpfile) allowlist_tmpf  = { 0, };
+  g_auto(GLnxTmpfile) blocklist_tmpf  = { 0, };
 
-  seccomp = seccomp_init (SCMP_ACT_ALLOW);
-  if (!seccomp)
+  /* Allow-list for known system calls.
+   *
+   * Only system calls from this list will be allowed. All others will
+   * fail with ENOSYS.
+   *
+   * In particular, any system call that is not known to libseccomp will
+   * fail to be added to this list, therefore it will fail with ENOSYS
+   * in the sandbox, protecting us from future vulnerabilities similar
+   * to CVE-2021-41133. */
+  allowlist_ctx = seccomp_init (SCMP_ACT_ERRNO (ENOSYS));
+  if (!allowlist_ctx)
+    return flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Initialize seccomp failed"));
+
+  /* Deny-list (block-list) for known-bad system calls.
+   *
+   * System calls from this list will fail, even if they are also on the
+   * allow-list. All others will be allowed (subject to the allow-list). */
+  blocklist_ctx = seccomp_init (SCMP_ACT_ALLOW);
+  if (!blocklist_ctx)
     return flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Initialize seccomp failed"));
 
   if (arch != NULL)
@@ -2049,7 +2075,11 @@ setup_seccomp (FlatpakBwrap   *bwrap,
              allow the target arch, but we can't really disallow the
              native arch at this point, because then bubblewrap
              couldn't continue running. */
-          r = seccomp_arch_add (seccomp, arch_id);
+          r = seccomp_arch_add (allowlist_ctx, arch_id);
+          if (r < 0 && r != -EEXIST)
+            return flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Failed to add architecture to seccomp filter: %s"), flatpak_seccomp_strerror (r));
+
+          r = seccomp_arch_add (blocklist_ctx, arch_id);
           if (r < 0 && r != -EEXIST)
             return flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Failed to add architecture to seccomp filter: %s"), flatpak_seccomp_strerror (r));
 
@@ -2057,12 +2087,56 @@ setup_seccomp (FlatpakBwrap   *bwrap,
             {
               for (i = 0; extra_arches[i] != 0; i++)
                 {
-                  r = seccomp_arch_add (seccomp, extra_arches[i]);
+                  r = seccomp_arch_add (allowlist_ctx, extra_arches[i]);
+                  if (r < 0 && r != -EEXIST)
+                    return flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Failed to add multiarch architecture to seccomp filter: %s"), flatpak_seccomp_strerror (r));
+
+                  r = seccomp_arch_add (blocklist_ctx, extra_arches[i]);
                   if (r < 0 && r != -EEXIST)
                     return flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Failed to add multiarch architecture to seccomp filter: %s"), flatpak_seccomp_strerror (r));
                 }
             }
         }
+    }
+
+  for (i = 0; i < G_N_ELEMENTS (known_syscall_names); i++)
+    {
+      const char *name = known_syscall_names[i];
+      int scall;
+      gsize j;
+
+      for (j = 0; j < G_N_ELEMENTS (disallowed_syscall_names); j++)
+        {
+          const char *disallowed = disallowed_syscall_names[j];
+
+          if (strcmp (disallowed, name) == 0)
+            break;
+        }
+
+      /* Don't add syscalls to the allowlist if they are not one that
+       * we intend to allow */
+      if (j < G_N_ELEMENTS (disallowed_syscall_names))
+        continue;
+
+      scall = seccomp_syscall_resolve_name (name);
+
+      if (scall == __NR_SCMP_ERROR)
+        {
+          g_debug ("syscall \"%s\" not known to libseccomp", name);
+          continue;
+        }
+
+      /* scall is either a real errno value, or a pseudo-errno value
+       * for a multiplexed syscall like socket(), or a new syscall known
+       * to libseccomp but not to the kernel. */
+      r = seccomp_rule_add (allowlist_ctx, SCMP_ACT_ALLOW, scall, 0);
+
+      if (r < 0)
+        g_debug ("Unable to allow syscall \"%s\" (%d): %s",
+                 name, scall, flatpak_seccomp_strerror (r));
+      else
+        g_debug ("Allowed known syscall \"%s\" (%d)",
+                 name, scall);
     }
 
   /* TODO: Should we filter the kernel keyring syscalls in some way?
@@ -2078,15 +2152,14 @@ setup_seccomp (FlatpakBwrap   *bwrap,
       g_return_val_if_fail (errnum == EPERM || errnum == ENOSYS, FALSE);
 
       if (syscall_blocklist[i].arg)
-        r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO (errnum), scall, 1, *syscall_blocklist[i].arg);
+        r = seccomp_rule_add (blocklist_ctx, SCMP_ACT_ERRNO (errnum), scall, 1, *syscall_blocklist[i].arg);
       else
-        r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO (errnum), scall, 0);
+        r = seccomp_rule_add (blocklist_ctx, SCMP_ACT_ERRNO (errnum), scall, 0);
 
       /* EFAULT means "internal libseccomp error", but in practice we get
-       * this for syscall numbers added via flatpak-syscalls-private.h
-       * when trying to filter them on a non-native architecture, because
-       * libseccomp cannot map the syscall number to a name and back to a
-       * number for the non-native architecture. */
+       * this for syscall numbers that are not known to libseccomp.
+       * It's OK to "fail open" here, because the allowlist will make
+       * these syscalls fail with ENOSYS. */
       if (r == -EFAULT)
         g_debug ("Unable to block syscall %d: syscall not known to libseccomp?",
                  scall);
@@ -2121,9 +2194,9 @@ setup_seccomp (FlatpakBwrap   *bwrap,
           g_return_val_if_fail (errnum == EPERM || errnum == ENOSYS, FALSE);
 
           if (syscall_nondevel_blocklist[i].arg)
-            r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO (errnum), scall, 1, *syscall_nondevel_blocklist[i].arg);
+            r = seccomp_rule_add (blocklist_ctx, SCMP_ACT_ERRNO (errnum), scall, 1, *syscall_nondevel_blocklist[i].arg);
           else
-            r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO (errnum), scall, 0);
+            r = seccomp_rule_add (blocklist_ctx, SCMP_ACT_ERRNO (errnum), scall, 0);
 
           /* See above for the meaning of EFAULT. */
           if (r == -EFAULT)
@@ -2150,25 +2223,40 @@ setup_seccomp (FlatpakBwrap   *bwrap,
       for (disallowed = last_allowed_family + 1; disallowed < family; disallowed++)
         {
           /* Blocklist the in-between valid families */
-          seccomp_rule_add_exact (seccomp, SCMP_ACT_ERRNO (EAFNOSUPPORT), SCMP_SYS (socket), 1, SCMP_A0 (SCMP_CMP_EQ, disallowed));
+          seccomp_rule_add_exact (blocklist_ctx, SCMP_ACT_ERRNO (EAFNOSUPPORT), SCMP_SYS (socket), 1, SCMP_A0 (SCMP_CMP_EQ, disallowed));
         }
       last_allowed_family = family;
     }
   /* Blocklist the rest */
-  seccomp_rule_add_exact (seccomp, SCMP_ACT_ERRNO (EAFNOSUPPORT), SCMP_SYS (socket), 1, SCMP_A0 (SCMP_CMP_GE, last_allowed_family + 1));
+  seccomp_rule_add_exact (blocklist_ctx, SCMP_ACT_ERRNO (EAFNOSUPPORT), SCMP_SYS (socket), 1, SCMP_A0 (SCMP_CMP_GE, last_allowed_family + 1));
 
-  if (!glnx_open_anonymous_tmpfile_full (O_RDWR | O_CLOEXEC, "/tmp", &seccomp_tmpf, error))
+  if (!glnx_open_anonymous_tmpfile_full (O_RDWR | O_CLOEXEC, "/tmp", &allowlist_tmpf, error))
     return FALSE;
 
-  r = seccomp_export_bpf (seccomp, seccomp_tmpf.fd);
+  if (!glnx_open_anonymous_tmpfile_full (O_RDWR | O_CLOEXEC, "/tmp", &blocklist_tmpf, error))
+    return FALSE;
+
+  r = seccomp_export_bpf (allowlist_ctx, allowlist_tmpf.fd);
 
   if (r != 0)
     return flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Failed to export bpf: %s"), flatpak_seccomp_strerror (r));
 
-  lseek (seccomp_tmpf.fd, 0, SEEK_SET);
+  r = seccomp_export_bpf (blocklist_ctx, blocklist_tmpf.fd);
 
+  if (r != 0)
+    return flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Failed to export bpf: %s"), flatpak_seccomp_strerror (r));
+
+  lseek (allowlist_tmpf.fd, 0, SEEK_SET);
+  lseek (blocklist_tmpf.fd, 0, SEEK_SET);
+
+  /* We add the allowlist before the blocklist, because the kernel evaluates
+   * seccomp programs most-recently-added first. This means that if the
+   * blocklist rejects a syscall with EPERM, we will get EPERM rather than
+   * ENOSYS, which is what we want. */
   flatpak_bwrap_add_args_data_fd (bwrap,
-                                  "--seccomp", g_steal_fd (&seccomp_tmpf.fd), NULL);
+                                  "--add-seccomp-fd", g_steal_fd (&allowlist_tmpf.fd), NULL);
+  flatpak_bwrap_add_args_data_fd (bwrap,
+                                  "--add-seccomp-fd", g_steal_fd (&blocklist_tmpf.fd), NULL);
 
   return TRUE;
 }
