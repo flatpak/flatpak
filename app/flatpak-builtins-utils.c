@@ -1413,6 +1413,8 @@ ensure_remote_state_arch (FlatpakDir         *dir,
 {
   g_autoptr(GError) local_error = NULL;
 
+  g_return_val_if_fail (arch != NULL, FALSE);
+
   if (only_sideloaded)
     return TRUE;
 
