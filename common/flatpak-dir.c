@@ -14429,7 +14429,7 @@ flatpak_dir_get_remote_collection_id (FlatpakDir *self,
   return collection_id;
 }
 
-/* This tries to find all available refs based on the specified name/branch/arch
+/* This tries to find all available refs based on the specified name/arch/branch
  * triplet from  a remote. If arch is not specified, matches only on compatible arches.
 */
 GPtrArray *
@@ -14528,7 +14528,7 @@ find_ref_for_refs_set (GHashTable   *refs,
   return NULL;
 }
 
-/* This tries to find a single ref based on the specified name/branch/arch
+/* This tries to find a single ref based on the specified name/arch/branch
  * triplet from  a remote. If arch is not specified, matches only on compatible arches.
 */
 FlatpakDecomposed *
@@ -14712,7 +14712,7 @@ flatpak_dir_get_all_installed_refs (FlatpakDir  *self,
   return g_steal_pointer (&local_refs);
 }
 
-/* This tries to find a all installed refs based on the specified name/branch/arch
+/* This tries to find a all installed refs based on the specified name/arch/branch
  * triplet. Matches on all arches.
 */
 GPtrArray *
@@ -14751,7 +14751,7 @@ flatpak_dir_find_installed_refs (FlatpakDir           *self,
   return g_steal_pointer (&matched_refs);
 }
 
-/* This tries to find a single ref based on the specified name/branch/arch
+/* This tries to find a single ref based on the specified name/arch/branch
  * triplet. This matches on all (installed) arches, but defaults to the primary
  * arch if that is installed. Otherwise, ambiguity is an error.
 */
