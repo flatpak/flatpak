@@ -604,6 +604,8 @@ flatpak_remote_state_ensure_subsummary (FlatpakRemoteState *self,
 
   g_autoptr(GBytes) bytes = NULL;
 
+  g_return_val_if_fail (arch != NULL, FALSE);
+
   if (self->summary != NULL)
     return TRUE; /* We have them all anyway */
 
