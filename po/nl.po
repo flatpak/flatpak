@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak main\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2025-12-08 20:33+0100\n"
+"POT-Creation-Date: 2026-03-12 10:50-0300\n"
 "PO-Revision-Date: 2023-04-02 11:48+0200\n"
 "Last-Translator: Nathan Follens <nfollens@gnome.org>\n"
 "Language-Team: Dutch https://matrix.to/#/#nl:gnome.org\n"
@@ -40,7 +40,8 @@ msgid "ARCH"
 msgstr "ARCH"
 
 #: app/flatpak-builtins-build-bundle.c:61
-msgid "Url for repo"
+#, fuzzy
+msgid "URL for repo"
 msgstr "URL voor bron"
 
 #: app/flatpak-builtins-build-bundle.c:61
@@ -59,7 +60,8 @@ msgid "URL"
 msgstr "URL"
 
 #: app/flatpak-builtins-build-bundle.c:62
-msgid "Url for runtime flatpakrepo file"
+#, fuzzy
+msgid "URL for runtime flatpakrepo file"
 msgstr "URL voor runtime-flatpakrepo-bestand"
 
 #: app/flatpak-builtins-build-bundle.c:63
@@ -241,35 +243,35 @@ msgstr "Sessiebusaanroepen bijhouden"
 msgid "Log system bus calls"
 msgstr "Systeembusaanroepen bijhouden"
 
-#: app/flatpak-builtins-build.c:223
+#: app/flatpak-builtins-build.c:262
 msgid "DIRECTORY [COMMAND [ARGUMENT…]] - Build in directory"
 msgstr "MAP [OPDRACHT [ARGUMENT…]] - Bouwen in map"
 
-#: app/flatpak-builtins-build.c:246 app/flatpak-builtins-build-finish.c:656
+#: app/flatpak-builtins-build.c:285 app/flatpak-builtins-build-finish.c:656
 msgid "DIRECTORY must be specified"
 msgstr "MAP moet worden opgegeven"
 
 # Aanhalingstekens toegevoegd ter verduidlijking van opdracht
-#: app/flatpak-builtins-build.c:257 app/flatpak-builtins-build-export.c:887
+#: app/flatpak-builtins-build.c:296 app/flatpak-builtins-build-export.c:887
 #, c-format
 msgid "Build directory %s not initialized, use flatpak build-init"
 msgstr "Compilatiemap %s niet geïnitialiseerd, gebruik ‘flatpak build-init’"
 
-#: app/flatpak-builtins-build.c:276
+#: app/flatpak-builtins-build.c:315
 msgid "metadata invalid, not application or runtime"
 msgstr "metadata ongeldig, geen toepassing of runtime"
 
-#: app/flatpak-builtins-build.c:407
+#: app/flatpak-builtins-build.c:446
 #, c-format
 msgid "No extension point matching %s in %s"
 msgstr "Geen uitbreidingspunt overeenkomend met %s in %s"
 
-#: app/flatpak-builtins-build.c:592
+#: app/flatpak-builtins-build.c:629
 #, c-format
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Ontbrekende ‘=’ in bindingskoppelingsoptie ‘%s’"
 
-#: app/flatpak-builtins-build.c:633 common/flatpak-run.c:3710
+#: app/flatpak-builtins-build.c:673 common/flatpak-run.c:3710
 #, c-format
 msgid "Unable to start app"
 msgstr "Kon toepassing niet starten"
@@ -915,7 +917,7 @@ msgstr "LOCATIE [ID [BRANCH]] - Toepassing of runtime ondertekenen"
 
 #: app/flatpak-builtins-build-sign.c:73
 #: app/flatpak-builtins-build-update-repo.c:499
-#: app/flatpak-builtins-remote-add.c:320 app/flatpak-builtins-repo.c:738
+#: app/flatpak-builtins-remote-add.c:320 app/flatpak-builtins-repo.c:739
 msgid "LOCATION must be specified"
 msgstr "LOCATIE moet worden opgegeven"
 
@@ -968,7 +970,7 @@ msgstr "Standaard-branch om te gebruiken voor deze pakketbron"
 
 #: app/flatpak-builtins-build-update-repo.c:74
 #: app/flatpak-builtins-remote-add.c:82 app/flatpak-builtins-remote-modify.c:87
-#: app/flatpak-builtins-repo.c:712 app/flatpak-builtins-repo.c:713
+#: app/flatpak-builtins-repo.c:713 app/flatpak-builtins-repo.c:714
 #: app/flatpak-builtins-run.c:70
 msgid "BRANCH"
 msgstr "BRANCH"
@@ -1388,7 +1390,7 @@ msgid "FILE - Get information about an exported file"
 msgstr "BESTAND - Informatie verkrijgen over een geëxporteerd bestand"
 
 #: app/flatpak-builtins-document-info.c:100
-#: app/flatpak-builtins-document-unexport.c:92
+#: app/flatpak-builtins-document-unexport.c:94
 #, c-format
 msgid "Not exported\n"
 msgstr "Niet geëxporteerd\n"
@@ -1411,7 +1413,7 @@ msgstr "VELD,…"
 #: app/flatpak-builtins-list.c:52 app/flatpak-builtins-permission-list.c:43
 #: app/flatpak-builtins-permission-show.c:43 app/flatpak-builtins-ps.c:44
 #: app/flatpak-builtins-remote-list.c:46 app/flatpak-builtins-remote-ls.c:63
-#: app/flatpak-builtins-repo.c:716 app/flatpak-builtins-search.c:39
+#: app/flatpak-builtins-repo.c:717 app/flatpak-builtins-search.c:39
 #, fuzzy
 msgid "Show output in JSON format"
 msgstr "Extra informatie tonen"
@@ -1838,8 +1840,9 @@ msgstr "Installatie:"
 #: app/flatpak-builtins-info.c:459 app/flatpak-builtins-info.c:517
 #: app/flatpak-builtins-remote-info.c:249
 #: app/flatpak-builtins-remote-info.c:284
-msgid "Installed:"
-msgstr "Geïnstalleerd:"
+#, fuzzy
+msgid "Installed Size:"
+msgstr "Geïnstalleerde grootte"
 
 #: app/flatpak-builtins-info.c:231 app/flatpak-builtins-info.c:279
 #: app/flatpak-builtins-remote-info.c:252
@@ -2184,7 +2187,7 @@ msgid "Show the installed size"
 msgstr "Geïnstalleerde grootte tonen"
 
 #: app/flatpak-builtins-list.c:72 app/flatpak-builtins-remote-list.c:58
-#: app/flatpak-builtins-remote-ls.c:80 app/flatpak-builtins-repo.c:339
+#: app/flatpak-builtins-remote-ls.c:80 app/flatpak-builtins-repo.c:340
 msgid "Options"
 msgstr "Opties"
 
@@ -2354,7 +2357,7 @@ msgid "- Install flatpaks that are part of the operating system"
 msgstr ""
 
 # Ik heb de punten hier weggelaten voor consistentie met de rest van de mededelingen  - Philip
-#: app/flatpak-builtins-preinstall.c:118 app/flatpak-builtins-update.c:274
+#: app/flatpak-builtins-preinstall.c:118
 #, c-format
 msgid "Nothing to do.\n"
 msgstr "Er valt niets te doen\n"
@@ -2613,8 +2616,9 @@ msgstr "REMOTE en REF moeten worden opgegeven"
 
 #: app/flatpak-builtins-remote-info.c:247
 #: app/flatpak-builtins-remote-info.c:282
-msgid "Download:"
-msgstr "Download:"
+#, fuzzy
+msgid "Download Size:"
+msgstr "Downloadgrootte"
 
 #: app/flatpak-builtins-remote-info.c:267
 #: app/flatpak-builtins-remote-info.c:325
@@ -2662,7 +2666,7 @@ msgstr "URL tonen"
 msgid "Show the collection ID"
 msgstr "Verzamelings-ID tonen"
 
-#: app/flatpak-builtins-remote-list.c:55 app/flatpak-builtins-repo.c:391
+#: app/flatpak-builtins-remote-list.c:55 app/flatpak-builtins-repo.c:392
 msgid "Subset"
 msgstr "Subset"
 
@@ -2767,7 +2771,8 @@ msgid "Mark the remote as used for dependencies"
 msgstr "Remote markeren als te gebruiken voor afhankelijkheden"
 
 #: app/flatpak-builtins-remote-modify.c:70
-msgid "Set a new url"
+#, fuzzy
+msgid "Set a new URL"
 msgstr "Nieuwe URL instellen"
 
 #: app/flatpak-builtins-remote-modify.c:71
@@ -3063,47 +3068,48 @@ msgstr "%zd samenvattings-branches\n"
 msgid "Installed"
 msgstr "Geïnstalleerd"
 
-#: app/flatpak-builtins-repo.c:337 app/flatpak-cli-transaction.c:1461
+#. Translators: Download is used here as a noun
+#: app/flatpak-builtins-repo.c:338 app/flatpak-cli-transaction.c:1462
 msgid "Download"
 msgstr "Downloaden"
 
-#: app/flatpak-builtins-repo.c:338
+#: app/flatpak-builtins-repo.c:339
 msgid "Subsets"
 msgstr "Subsets"
 
-#: app/flatpak-builtins-repo.c:392
+#: app/flatpak-builtins-repo.c:393
 msgid "Digest"
 msgstr "Overzicht"
 
-#: app/flatpak-builtins-repo.c:393
+#: app/flatpak-builtins-repo.c:394
 msgid "History length"
 msgstr "Geschiedenislengte"
 
-#: app/flatpak-builtins-repo.c:710
+#: app/flatpak-builtins-repo.c:711
 msgid "Print general information about the repository"
 msgstr "Algemene informatie tonen over de pakketbron"
 
-#: app/flatpak-builtins-repo.c:711
+#: app/flatpak-builtins-repo.c:712
 msgid "List the branches in the repository"
 msgstr "Branches in de pakketbron tonen"
 
-#: app/flatpak-builtins-repo.c:712
+#: app/flatpak-builtins-repo.c:713
 msgid "Print metadata for a branch"
 msgstr "Metadata van een branch tonen"
 
-#: app/flatpak-builtins-repo.c:713
+#: app/flatpak-builtins-repo.c:714
 msgid "Show commits for a branch"
 msgstr "Commits van een branch tonen"
 
-#: app/flatpak-builtins-repo.c:714
+#: app/flatpak-builtins-repo.c:715
 msgid "Print information about the repo subsets"
 msgstr "Informatie tonen over de pakketbron-subsets"
 
-#: app/flatpak-builtins-repo.c:715
+#: app/flatpak-builtins-repo.c:716
 msgid "Limit information to subsets with this prefix"
 msgstr "Informatie tot subsets met deze prefix limiteren"
 
-#: app/flatpak-builtins-repo.c:731
+#: app/flatpak-builtins-repo.c:732
 msgid "LOCATION - Repository maintenance"
 msgstr "LOCATIE - Onderhoud van pakketbronnen"
 
@@ -3392,25 +3398,40 @@ msgstr "Zoeken naar updates…\n"
 msgid "Unable to update %s: %s\n"
 msgstr "Kon %s niet bijwerken:%s\n"
 
-#: app/flatpak-builtins-utils.c:342
+# Ik heb de punten hier weggelaten voor consistentie met de rest van de mededelingen  - Philip
+#: app/flatpak-builtins-update.c:274
+#, fuzzy, c-format
+msgid "Nothing to update.\n"
+msgstr "Er valt niets te doen\n"
+
+#: app/flatpak-builtins-utils.c:337
+#, fuzzy, c-format
+msgid ""
+"Remote ‘%s’ found in multiple installations, unable to proceed in non-"
+"interactive mode"
+msgstr ""
+"De ref ‘%s’ is gevonden in meerdere installaties: %s. Er moet er één "
+"gespecificeerd worden."
+
+#: app/flatpak-builtins-utils.c:346
 #, c-format
 msgid "Remote ‘%s’ found in multiple installations:"
 msgstr "Remote ‘%s’ in meerdere installaties gevonden:"
 
-#: app/flatpak-builtins-utils.c:343 app/flatpak-builtins-utils.c:434
-#: app/flatpak-builtins-utils.c:526 app/flatpak-builtins-utils.c:528
-#: app/flatpak-builtins-utils.c:582
+#: app/flatpak-builtins-utils.c:347 app/flatpak-builtins-utils.c:442
+#: app/flatpak-builtins-utils.c:538 app/flatpak-builtins-utils.c:540
+#: app/flatpak-builtins-utils.c:598
 msgid "Which do you want to use (0 to abort)?"
 msgstr "Welke wilt u gebruiken (0 om af te breken)?"
 
-#: app/flatpak-builtins-utils.c:345
+#: app/flatpak-builtins-utils.c:349
 #, c-format
 msgid "No remote chosen to resolve ‘%s’ which exists in multiple installations"
 msgstr ""
 "Geen remote gekozen om ‘%s’, welke in meerdere installaties voorkomt, mee op "
 "te lossen"
 
-#: app/flatpak-builtins-utils.c:354
+#: app/flatpak-builtins-utils.c:358
 #, c-format
 msgid ""
 "Remote \"%s\" not found\n"
@@ -3419,13 +3440,18 @@ msgstr ""
 "Remote \"%s\" niet gevonden\n"
 "Hint: Gebruik flatpak remote-add om een remote toe te voegen"
 
-#: app/flatpak-builtins-utils.c:360
+#: app/flatpak-builtins-utils.c:364
 #, c-format
 msgid "Remote \"%s\" not found in the %s installation"
 msgstr "Remote \"%s\" niet gevonden in de %s-installatie"
 
+#: app/flatpak-builtins-utils.c:404
+#, c-format
+msgid "Multiple refs match ‘%s’, unable to proceed in non-interactive mode"
+msgstr ""
+
 #. default to yes on Enter
-#: app/flatpak-builtins-utils.c:422
+#: app/flatpak-builtins-utils.c:430
 #, c-format
 msgid ""
 "Found ref ‘%s’ in remote ‘%s’ (%s).\n"
@@ -3434,105 +3460,118 @@ msgstr ""
 "Ref ‘%s’ in remote ‘%s’ (%s) gevonden.\n"
 "Deze ref gebruiken?"
 
-#: app/flatpak-builtins-utils.c:426 app/flatpak-builtins-utils.c:436
-#: app/flatpak-builtins-utils.c:510 app/flatpak-builtins-utils.c:531
+#: app/flatpak-builtins-utils.c:434 app/flatpak-builtins-utils.c:444
+#: app/flatpak-builtins-utils.c:522 app/flatpak-builtins-utils.c:543
 #, c-format
 msgid "No ref chosen to resolve matches for ‘%s’"
 msgstr "Geen ref gekozen om overeenkomsten voor ‘%s’ mee op te lossen"
 
-#: app/flatpak-builtins-utils.c:432
+#: app/flatpak-builtins-utils.c:440
 #, c-format
 msgid "Similar refs found for ‘%s’ in remote ‘%s’ (%s):"
 msgstr "Vergelijkbare refs gevonden voor ‘%s’ in remote ‘%s’"
 
+#: app/flatpak-builtins-utils.c:488
+#, c-format
+msgid ""
+"Multiple installed refs match ‘%s’, unable to proceed in non-interactive mode"
+msgstr ""
+
 #. default to yes on Enter
-#: app/flatpak-builtins-utils.c:506
+#: app/flatpak-builtins-utils.c:518
 #, c-format
 msgid "Found installed ref ‘%s’ (%s). Is this correct?"
 msgstr "Geïnstalleerde ref ‘%s’ (%s) gevonden. Is dit correct?"
 
-#: app/flatpak-builtins-utils.c:522
+#: app/flatpak-builtins-utils.c:534
 #, c-format
 msgid "All of the above"
 msgstr "Alle bovenstaanden"
 
-#: app/flatpak-builtins-utils.c:523
+#: app/flatpak-builtins-utils.c:535
 #, c-format
 msgid "Similar installed refs found for ‘%s’:"
 msgstr "Vergelijkbare geïnstalleerde refs gevonden voor ‘%s’:"
 
-#: app/flatpak-builtins-utils.c:581
+#: app/flatpak-builtins-utils.c:579
+#, c-format
+msgid ""
+"Multiple remotes have refs matching ‘%s’, unable to proceed in non-"
+"interactive mode"
+msgstr ""
+
+#: app/flatpak-builtins-utils.c:597
 #, c-format
 msgid "Remotes found with refs similar to ‘%s’:"
 msgstr "Remotes gevonden met refs vergelijkbaar met ‘%s’:"
 
-#: app/flatpak-builtins-utils.c:584
+#: app/flatpak-builtins-utils.c:600
 #, c-format
 msgid "No remote chosen to resolve matches for ‘%s’"
 msgstr "Geen remote gekozen om overeenkomsten voor ‘%s’ mee op te lossen"
 
-#: app/flatpak-builtins-utils.c:680 app/flatpak-builtins-utils.c:683
+#: app/flatpak-builtins-utils.c:696 app/flatpak-builtins-utils.c:699
 #, c-format
 msgid "Updating appstream data for user remote %s"
 msgstr "Appstream-data bijwerken voor gebruikersremote %s"
 
-#: app/flatpak-builtins-utils.c:690 app/flatpak-builtins-utils.c:693
+#: app/flatpak-builtins-utils.c:706 app/flatpak-builtins-utils.c:709
 #, c-format
 msgid "Updating appstream data for remote %s"
 msgstr "Appstream-data bijwerken voor remote %s"
 
-#: app/flatpak-builtins-utils.c:701 app/flatpak-builtins-utils.c:703
+#: app/flatpak-builtins-utils.c:717 app/flatpak-builtins-utils.c:719
 msgid "Error updating"
 msgstr "Fout bij bijwerken"
 
-#: app/flatpak-builtins-utils.c:739
+#: app/flatpak-builtins-utils.c:755
 #, c-format
 msgid "Remote \"%s\" not found"
 msgstr "Remote ‘%s’ niet gevonden"
 
-#: app/flatpak-builtins-utils.c:780
+#: app/flatpak-builtins-utils.c:796
 #, c-format
 msgid "Ambiguous suffix: '%s'."
 msgstr "Dubbelzinnig achtervoegsel ‘%s’"
 
 #. Translators: don't translate the values
-#: app/flatpak-builtins-utils.c:782 app/flatpak-builtins-utils.c:797
+#: app/flatpak-builtins-utils.c:798 app/flatpak-builtins-utils.c:813
 msgid "Possible values are :s[tart], :m[iddle], :e[nd] or :f[ull]"
 msgstr "Geldige waarden zijn :s[tart], :m[iddle], :e[nd] of :f[ull]"
 
-#: app/flatpak-builtins-utils.c:795
+#: app/flatpak-builtins-utils.c:811
 #, c-format
 msgid "Invalid suffix: '%s'."
 msgstr "Ongeldig achtervoegsel ‘%s’"
 
-#: app/flatpak-builtins-utils.c:830
+#: app/flatpak-builtins-utils.c:846
 #, c-format
 msgid "Ambiguous column: %s"
 msgstr "Dubbelzinnige kolom: %s"
 
-#: app/flatpak-builtins-utils.c:843
+#: app/flatpak-builtins-utils.c:859
 #, c-format
 msgid "Unknown column: %s"
 msgstr "Onbekende kolom: %s"
 
-#: app/flatpak-builtins-utils.c:901
+#: app/flatpak-builtins-utils.c:917
 msgid "Available columns:\n"
 msgstr "Beschikbare kolommen:\n"
 
-#: app/flatpak-builtins-utils.c:911
+#: app/flatpak-builtins-utils.c:927
 msgid "Show all columns"
 msgstr "Alle kolommen tonen"
 
-#: app/flatpak-builtins-utils.c:912
+#: app/flatpak-builtins-utils.c:928
 msgid "Show available columns"
 msgstr "Beschikbare kolommen tonen"
 
-#: app/flatpak-builtins-utils.c:915
+#: app/flatpak-builtins-utils.c:931
 msgid "Append :s[tart], :m[iddle], :e[nd] or :f[ull] to change ellipsization"
 msgstr ""
 "Voeg :s[tart], :m[iddle], :e[nd] of :f[ull] toe om weglating te wijzigen"
 
-#: app/flatpak-builtins-utils.c:1478
+#: app/flatpak-builtins-utils.c:1481
 #, c-format
 msgid "Unknown scheme in sideload location %s"
 msgstr ""
@@ -3823,43 +3862,43 @@ msgstr "Op"
 #. Avoid resizing the download column too much,
 #. * by making the title as long as typical content
 #.
-#: app/flatpak-cli-transaction.c:1458 app/flatpak-cli-transaction.c:1502
+#: app/flatpak-cli-transaction.c:1458 app/flatpak-cli-transaction.c:1503
 msgid "partial"
 msgstr "deels"
 
-#: app/flatpak-cli-transaction.c:1534
+#: app/flatpak-cli-transaction.c:1535
 msgid "Proceed with these changes to the user installation?"
 msgstr "Deze wijzigingen doorzetten in de gebruikersinstallatie?"
 
-#: app/flatpak-cli-transaction.c:1536
+#: app/flatpak-cli-transaction.c:1537
 msgid "Proceed with these changes to the system installation?"
 msgstr "Deze wijzigingen doorzetten in de systeeminstallatie?"
 
-#: app/flatpak-cli-transaction.c:1538
+#: app/flatpak-cli-transaction.c:1539
 #, c-format
 msgid "Proceed with these changes to the %s?"
 msgstr "Deze wijzigingen doorzetten in de %s?"
 
 # Ik heb de punten hier weggelaten voor consistentie met de rest van de mededelingen  - Philip
-#: app/flatpak-cli-transaction.c:1710
+#: app/flatpak-cli-transaction.c:1711
 msgid "Changes complete."
 msgstr "Veranderingen voltooid"
 
-#: app/flatpak-cli-transaction.c:1712
+#: app/flatpak-cli-transaction.c:1713
 msgid "Uninstall complete."
 msgstr "De-installatie voltooid"
 
-#: app/flatpak-cli-transaction.c:1714
+#: app/flatpak-cli-transaction.c:1715
 msgid "Installation complete."
 msgstr "Installatie voltooid"
 
-#: app/flatpak-cli-transaction.c:1716
+#: app/flatpak-cli-transaction.c:1717
 msgid "Updates complete."
 msgstr "Updates voltooid"
 
 #. For updates/!stop_on_first_error we already printed all errors so we make up
 #. a different one.
-#: app/flatpak-cli-transaction.c:1749
+#: app/flatpak-cli-transaction.c:1750
 msgid "There were one or more errors"
 msgstr "Er waren één of meerdere fouten"
 
@@ -4190,26 +4229,26 @@ msgstr ""
 "Meerdere installaties opgegeven voor een commando dat werkt met één "
 "installatie"
 
-#: app/flatpak-main.c:504 app/flatpak-main.c:691
+#: app/flatpak-main.c:504 app/flatpak-main.c:697
 #, c-format
 msgid "See '%s --help'"
 msgstr "Zie ‘%s --help’"
 
-#: app/flatpak-main.c:700
+#: app/flatpak-main.c:706
 #, c-format
 msgid "'%s' is not a flatpak command. Did you mean '%s%s'?"
 msgstr "‘%s’ is geen flatpak-opdracht. Bedoelde u ‘%s%s’?"
 
-#: app/flatpak-main.c:703
+#: app/flatpak-main.c:709
 #, c-format
 msgid "'%s' is not a flatpak command"
 msgstr "‘%s’ is geen flatpak-opdracht"
 
-#: app/flatpak-main.c:818
+#: app/flatpak-main.c:824
 msgid "No command specified"
 msgstr "Geen opdracht opgegeven"
 
-#: app/flatpak-main.c:974
+#: app/flatpak-main.c:980
 msgid "error:"
 msgstr "fout:"
 
@@ -4346,12 +4385,12 @@ msgstr "Onbekend apparaattype %s, geldige types zijn: %s"
 msgid "Unknown feature type %s, valid types are: %s"
 msgstr "Onbekend functietype %s, geldige types zijn: %s"
 
-#: common/flatpak-context.c:1887
+#: common/flatpak-context.c:1882
 #, c-format
 msgid "Filesystem location \"%s\" contains \"..\""
 msgstr "Bestandssysteemlocatie ‘%s’ bevat ‘..’"
 
-#: common/flatpak-context.c:1925
+#: common/flatpak-context.c:1924
 #, c-format
 msgid ""
 "--filesystem=/ is not available, use --filesystem=host for a similar result"
@@ -4359,7 +4398,7 @@ msgstr ""
 "--filesystem=/ is niet beschikbaar; gebruik --filesystem=host voor een "
 "vergelijkbaar resultaat"
 
-#: common/flatpak-context.c:1959
+#: common/flatpak-context.c:1958
 #, fuzzy, c-format
 msgid ""
 "Unknown filesystem location %s, valid locations are: host, host-os, host-"
@@ -4368,260 +4407,260 @@ msgstr ""
 "Onbekende bestandssysteemlocatie %s; geldige locaties zijn: host, host-os, "
 "host-etc, home, xdg-*[/…], ~/dir, /dir"
 
-#: common/flatpak-context.c:2058
+#: common/flatpak-context.c:2057
 #, fuzzy, c-format
 msgid "Invalid syntax for %s: %s"
 msgstr "Ongeldige naam %s: %s"
 
-#: common/flatpak-context.c:2200
+#: common/flatpak-context.c:2199
 #, c-format
 msgid "fallback-x11 can not be conditional"
 msgstr ""
 
-#: common/flatpak-context.c:2376
+#: common/flatpak-context.c:2375
 #, c-format
 msgid "Invalid env format %s"
 msgstr "Ongeldig omgevingsformaat %s"
 
-#: common/flatpak-context.c:2464
+#: common/flatpak-context.c:2463
 #, c-format
 msgid "Environment variable name must not contain '=': %s"
 msgstr "Naam van omgevingsvariabele mag geen '=' bevatten: %s"
 
-#: common/flatpak-context.c:2592 common/flatpak-context.c:2600
+#: common/flatpak-context.c:2591 common/flatpak-context.c:2599
 #, c-format
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 "Argumenten voor --add-policy moeten in het formaat SUBSYSTEEM.SLEUTEL=WAARDE "
 "zijn"
 
-#: common/flatpak-context.c:2607
+#: common/flatpak-context.c:2606
 #, c-format
 msgid "--add-policy values can't start with \"!\""
 msgstr "Waarden voor --add-policy kunnen niet beginnen met \"!\""
 
-#: common/flatpak-context.c:2632 common/flatpak-context.c:2640
+#: common/flatpak-context.c:2631 common/flatpak-context.c:2639
 #, c-format
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 "Argumenten voor --remove-policy moeten in het formaat "
 "SUBSYSTEEM.SLEUTEL=WAARDE zijn"
 
-#: common/flatpak-context.c:2647
+#: common/flatpak-context.c:2646
 #, c-format
 msgid "--remove-policy values can't start with \"!\""
 msgstr "Waarden voor --remove-policy kunnen niet beginnen met \"!\""
 
-#: common/flatpak-context.c:2722
+#: common/flatpak-context.c:2721
 msgid "Share with host"
 msgstr "Delen met host"
 
-#: common/flatpak-context.c:2722 common/flatpak-context.c:2723
+#: common/flatpak-context.c:2721 common/flatpak-context.c:2722
 msgid "SHARE"
 msgstr "DELEN"
 
-#: common/flatpak-context.c:2723
+#: common/flatpak-context.c:2722
 msgid "Unshare with host"
 msgstr "Niet meer delen met host"
 
-#: common/flatpak-context.c:2724
+#: common/flatpak-context.c:2723
 msgid "Require conditions to be met for a subsystem to get shared"
 msgstr ""
 
-#: common/flatpak-context.c:2724
+#: common/flatpak-context.c:2723
 msgid "SHARE:CONDITION"
 msgstr ""
 
-#: common/flatpak-context.c:2725
+#: common/flatpak-context.c:2724
 msgid "Expose socket to app"
 msgstr "Socket blootstellen aan toepassing"
 
-#: common/flatpak-context.c:2725 common/flatpak-context.c:2726
+#: common/flatpak-context.c:2724 common/flatpak-context.c:2725
 msgid "SOCKET"
 msgstr "SOCKET"
 
-#: common/flatpak-context.c:2726
+#: common/flatpak-context.c:2725
 msgid "Don't expose socket to app"
 msgstr "Socket niet blootstellen aan toepassing"
 
-#: common/flatpak-context.c:2727
+#: common/flatpak-context.c:2726
 msgid "Require conditions to be met for a socket to get exposed"
 msgstr ""
 
-#: common/flatpak-context.c:2727
+#: common/flatpak-context.c:2726
 msgid "SOCKET:CONDITION"
 msgstr ""
 
-#: common/flatpak-context.c:2728
+#: common/flatpak-context.c:2727
 msgid "Expose device to app"
 msgstr "Apparaat blootstellen aan toepassing"
 
-#: common/flatpak-context.c:2728 common/flatpak-context.c:2729
+#: common/flatpak-context.c:2727 common/flatpak-context.c:2728
 msgid "DEVICE"
 msgstr "APPARAAT"
 
-#: common/flatpak-context.c:2729
+#: common/flatpak-context.c:2728
 msgid "Don't expose device to app"
 msgstr "Apparaat niet blootstellen aan toepassing"
 
-#: common/flatpak-context.c:2730
+#: common/flatpak-context.c:2729
 msgid "Require conditions to be met for a device to get exposed"
 msgstr ""
 
-#: common/flatpak-context.c:2730
+#: common/flatpak-context.c:2729
 msgid "DEVICE:CONDITION"
 msgstr ""
 
-#: common/flatpak-context.c:2731
+#: common/flatpak-context.c:2730
 msgid "Allow feature"
 msgstr "Functie toestaan"
 
-#: common/flatpak-context.c:2731 common/flatpak-context.c:2732
+#: common/flatpak-context.c:2730 common/flatpak-context.c:2731
 msgid "FEATURE"
 msgstr "FUNCTIE"
 
-#: common/flatpak-context.c:2732
+#: common/flatpak-context.c:2731
 msgid "Don't allow feature"
 msgstr "Functie niet toestaan"
 
-#: common/flatpak-context.c:2733
+#: common/flatpak-context.c:2732
 msgid "Require conditions to be met for a feature to get allowed"
 msgstr ""
 
-#: common/flatpak-context.c:2733
+#: common/flatpak-context.c:2732
 msgid "FEATURE:CONDITION"
 msgstr ""
 
-#: common/flatpak-context.c:2734
+#: common/flatpak-context.c:2733
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr "Apparaat blootstellen aan toepassing (:ro voor alleen-lezen)"
 
-#: common/flatpak-context.c:2734
+#: common/flatpak-context.c:2733
 msgid "FILESYSTEM[:ro]"
 msgstr "BESTANDSSYSTEEM[:ro]"
 
-#: common/flatpak-context.c:2735
+#: common/flatpak-context.c:2734
 msgid "Don't expose filesystem to app"
 msgstr "Bestandssysteem niet aan toepassing blootstellen"
 
-#: common/flatpak-context.c:2735
+#: common/flatpak-context.c:2734
 msgid "FILESYSTEM"
 msgstr "BESTANDSSYSTEEM"
 
-#: common/flatpak-context.c:2736
+#: common/flatpak-context.c:2735
 msgid "Set environment variable"
 msgstr "Omgevingsvariabele instellen"
 
-#: common/flatpak-context.c:2736
+#: common/flatpak-context.c:2735
 msgid "VAR=VALUE"
 msgstr "VAR=WAARDE"
 
-#: common/flatpak-context.c:2737
+#: common/flatpak-context.c:2736
 msgid "Read environment variables in env -0 format from FD"
 msgstr "Lees omgevingsvariabelen in ‘env -0’-formaat vanaf FD"
 
-#: common/flatpak-context.c:2737
+#: common/flatpak-context.c:2736
 msgid "FD"
 msgstr "FD"
 
-#: common/flatpak-context.c:2738
+#: common/flatpak-context.c:2737
 msgid "Remove variable from environment"
 msgstr "Variabele verwijderen uit omgeving"
 
-#: common/flatpak-context.c:2738
+#: common/flatpak-context.c:2737
 msgid "VAR"
 msgstr "VAR"
 
-#: common/flatpak-context.c:2739
+#: common/flatpak-context.c:2738
 msgid "Allow app to own name on the session bus"
 msgstr "Sta app toe naam te bezitten op de sessiebus"
 
-#: common/flatpak-context.c:2739 common/flatpak-context.c:2740
-#: common/flatpak-context.c:2741 common/flatpak-context.c:2742
-#: common/flatpak-context.c:2743 common/flatpak-context.c:2744
-#: common/flatpak-context.c:2745
+#: common/flatpak-context.c:2738 common/flatpak-context.c:2739
+#: common/flatpak-context.c:2740 common/flatpak-context.c:2741
+#: common/flatpak-context.c:2742 common/flatpak-context.c:2743
+#: common/flatpak-context.c:2744
 msgid "DBUS_NAME"
 msgstr "DBUS-NAAM"
 
-#: common/flatpak-context.c:2740
+#: common/flatpak-context.c:2739
 msgid "Allow app to talk to name on the session bus"
 msgstr "Sta app toe om met naam te communiceren op de sessiebus"
 
-#: common/flatpak-context.c:2741
+#: common/flatpak-context.c:2740
 msgid "Don't allow app to talk to name on the session bus"
 msgstr "Sta app niet toe om met naam te communiceren op de sessiebus"
 
-#: common/flatpak-context.c:2742
+#: common/flatpak-context.c:2741
 msgid "Allow app to own name on the system bus"
 msgstr "Sta app toe om naam te bezitten op de systeembus"
 
-#: common/flatpak-context.c:2743
+#: common/flatpak-context.c:2742
 msgid "Allow app to talk to name on the system bus"
 msgstr "Sta app toe om te communiceren met naam op de systeembus"
 
-#: common/flatpak-context.c:2744
+#: common/flatpak-context.c:2743
 msgid "Don't allow app to talk to name on the system bus"
 msgstr "Sta app niet toe om te communiceren met naam op de systeembus"
 
-#: common/flatpak-context.c:2745
+#: common/flatpak-context.c:2744
 msgid "Allow app to own name on the a11y bus"
 msgstr "Sta app toe om naam te bezitten op de toegankelijkheidsbus"
 
-#: common/flatpak-context.c:2746
+#: common/flatpak-context.c:2745
 msgid "Add generic policy option"
 msgstr "Voeg generieke beleidoptie toe"
 
-#: common/flatpak-context.c:2746 common/flatpak-context.c:2747
+#: common/flatpak-context.c:2745 common/flatpak-context.c:2746
 msgid "SUBSYSTEM.KEY=VALUE"
 msgstr "SUBSYSTEEM.SLEUTEL=WAARDE"
 
-#: common/flatpak-context.c:2747
+#: common/flatpak-context.c:2746
 msgid "Remove generic policy option"
 msgstr "Algemeen beleidoptie verwijderen"
 
-#: common/flatpak-context.c:2748
+#: common/flatpak-context.c:2747
 msgid "Add USB device to enumerables"
 msgstr "Voeg USB-apparaat toe aan lijst van enumereerbare USB-apparaten"
 
-#: common/flatpak-context.c:2748 common/flatpak-context.c:2749
+#: common/flatpak-context.c:2747 common/flatpak-context.c:2748
 msgid "VENDOR_ID:PRODUCT_ID"
 msgstr "LEVERANCIER_ID:PRODUCT_ID"
 
-#: common/flatpak-context.c:2749
+#: common/flatpak-context.c:2748
 msgid "Add USB device to hidden list"
 msgstr "Voeg USB-apparaat toe aan lijst met verborgen apparaten"
 
-#: common/flatpak-context.c:2750
+#: common/flatpak-context.c:2749
 msgid "A list of USB devices that are enumerable"
 msgstr "Lijst van enumereerbare USB-apparaten"
 
-#: common/flatpak-context.c:2750
+#: common/flatpak-context.c:2749
 msgid "LIST"
 msgstr "LIJST"
 
-#: common/flatpak-context.c:2751
+#: common/flatpak-context.c:2750
 msgid "File containing a list of USB devices to make enumerable"
 msgstr "Bestand met een lijst van USB-apparaten om enumereerbaar te maken"
 
-#: common/flatpak-context.c:2751 common/flatpak-context.c:2752
+#: common/flatpak-context.c:2750 common/flatpak-context.c:2751
 msgid "FILENAME"
 msgstr "BESTANDSNAAM"
 
-#: common/flatpak-context.c:2752
+#: common/flatpak-context.c:2751
 msgid "Persist home directory subpath"
 msgstr "Subpad van persoonlijke map behouden"
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-context.c:2754
+#: common/flatpak-context.c:2753
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "Vereis geen actieve sessie (cgroups worden niet aangemaakt)"
 
-#: common/flatpak-context.c:3784
+#: common/flatpak-context.c:3783
 #, c-format
 msgid "Not replacing \"%s\" with tmpfs: %s"
 msgstr "Kan ‘%s’ niet vervangen door tmpfs: %s"
 
-#: common/flatpak-context.c:3792
+#: common/flatpak-context.c:3791
 #, c-format
 msgid "Not sharing \"%s\" with sandbox: %s"
 msgstr "Kan ‘%s’ niet delen met de sandbox: %s"
@@ -4630,12 +4669,12 @@ msgstr "Kan ‘%s’ niet delen met de sandbox: %s"
 #. * the path not existing, it seems reasonable to make more of a fuss
 #. * about the home directory not existing or otherwise being unusable,
 #. * so this is intentionally not using cannot_export()
-#: common/flatpak-context.c:3894
+#: common/flatpak-context.c:3893
 #, c-format
 msgid "Not allowing home directory access: %s"
 msgstr "Geen toegang toegestaan tot thuismap: %s"
 
-#: common/flatpak-context.c:4128
+#: common/flatpak-context.c:4127
 #, c-format
 msgid "Unable to provide a temporary home directory in the sandbox: %s"
 msgstr "Kan geen tijdelijke thuismap bieden in de sandbox: %s"
@@ -5506,7 +5545,8 @@ msgid "Bad remote name: %s"
 msgstr "Ongeldige remote-naam: %s"
 
 #: common/flatpak-remote.c:1220
-msgid "No url specified"
+#, fuzzy
+msgid "No URL specified"
 msgstr "Geen URL opgegeven"
 
 #: common/flatpak-remote.c:1266
@@ -6263,6 +6303,12 @@ msgid ""
 msgstr ""
 "Authenticatie is vereist om software te installeren welke is beperkt door uw "
 "beleid van ouderlijk toezicht"
+
+#~ msgid "Installed:"
+#~ msgstr "Geïnstalleerd:"
+
+#~ msgid "Download:"
+#~ msgstr "Download:"
 
 #, c-format
 #~ msgid "No gpg key found with ID %s (homedir: %s)"

@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak main\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2026-02-07 09:47+0000\n"
+"POT-Creation-Date: 2026-03-12 10:50-0300\n"
 "PO-Revision-Date: 2026-02-23 00:36+0100\n"
 "Last-Translator: Anders Jonsson <anders.jonsson@norsjovallen.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -270,6 +270,7 @@ msgid "Missing '=' in bind mount option '%s'"
 msgstr "Saknar ”=” i bindningsmonteringsargument ”%s”"
 
 #: app/flatpak-builtins-build.c:673 common/flatpak-run.c:3710
+#, c-format
 msgid "Unable to start app"
 msgstr "Kunde inte starta program"
 
@@ -527,6 +528,7 @@ msgid "Unable to find basename in %s, specify a name explicitly"
 msgstr "Kunde inte hitta basnamn i %s, ange ett namn explicit"
 
 #: app/flatpak-builtins-build-export.c:746
+#, c-format
 msgid "No slashes allowed in extra data name"
 msgstr "Inga snedstreck tillåtna i namn för extra data"
 
@@ -536,6 +538,7 @@ msgid "Invalid format for sha256 checksum: '%s'"
 msgstr "Ogiltigt format för sha256-kontrollsumman: ”%s”"
 
 #: app/flatpak-builtins-build-export.c:768
+#, c-format
 msgid "Extra data sizes of zero not supported"
 msgstr "Extra datastorlekar med noll i storlek stöds inte"
 
@@ -585,6 +588,7 @@ msgid "Content Written: %u\n"
 msgstr "Skrivet innehåll: %u\n"
 
 #: app/flatpak-builtins-build-export.c:1171
+#, c-format
 msgid "Content Bytes Written:"
 msgstr "Skrivna innehållsbyte:"
 
@@ -687,6 +691,7 @@ msgid "Exporting %s\n"
 msgstr "Exporterar %s\n"
 
 #: app/flatpak-builtins-build-finish.c:440
+#, c-format
 msgid "More than one executable found\n"
 msgstr "Fler än en körbar fil funnen\n"
 
@@ -696,6 +701,7 @@ msgid "Using %s as command\n"
 msgstr "Använder %s som ett kommando\n"
 
 #: app/flatpak-builtins-build-finish.c:456
+#, c-format
 msgid "No executable found\n"
 msgstr "Ingen körbar fil funnen\n"
 
@@ -748,6 +754,7 @@ msgid "Build directory %s already finalized"
 msgstr "Byggkatalog %s redan slutförd"
 
 #: app/flatpak-builtins-build-finish.c:702
+#, c-format
 msgid "Please review the exported files and the metadata\n"
 msgstr "Granska de exporterade filerna och metadata\n"
 
@@ -1073,10 +1080,12 @@ msgid "LOCATION - Update repository metadata"
 msgstr "PLATS - Uppdatera förrådsmetadata"
 
 #: app/flatpak-builtins-build-update-repo.c:609
+#, c-format
 msgid "Updating appstream branch\n"
 msgstr "Uppdaterar appstream-gren\n"
 
 #: app/flatpak-builtins-build-update-repo.c:638
+#, c-format
 msgid "Updating summary\n"
 msgstr "Uppdaterar sammanfattning\n"
 
@@ -1086,6 +1095,7 @@ msgid "Total objects: %u\n"
 msgstr "Totalt antal objekt: %u\n"
 
 #: app/flatpak-builtins-build-update-repo.c:666
+#, c-format
 msgid "No unreachable objects\n"
 msgstr "Inga onåbara objekt\n"
 
@@ -1363,7 +1373,8 @@ msgid "FILE - Get information about an exported file"
 msgstr "FIL - Hämta information om en exporterad fil"
 
 #: app/flatpak-builtins-document-info.c:100
-#: app/flatpak-builtins-document-unexport.c:92
+#: app/flatpak-builtins-document-unexport.c:94
+#, c-format
 msgid "Not exported\n"
 msgstr "Inte exporterad\n"
 
@@ -1427,6 +1438,7 @@ msgid "Show permissions for applications"
 msgstr "Visa rättigheter för program"
 
 #: app/flatpak-builtins-document-list.c:161
+#, c-format
 msgid "No documents found\n"
 msgstr "Inga dokument hittades\n"
 
@@ -1668,10 +1680,12 @@ msgid " - Show history"
 msgstr " - Visa historik"
 
 #: app/flatpak-builtins-history.c:490
+#, c-format
 msgid "Failed to parse the --since option"
 msgstr "Misslyckades med att tolka flaggan --since"
 
 #: app/flatpak-builtins-history.c:501
+#, c-format
 msgid "Failed to parse the --until option"
 msgstr "Misslyckades med att tolka flaggan --until"
 
@@ -1754,6 +1768,7 @@ msgid "ref not present in origin"
 msgstr "ref finns inte i ursprung"
 
 #: app/flatpak-builtins-info.c:211 app/flatpak-builtins-remote-info.c:217
+#, c-format
 msgid "Warning: Commit has no flatpak metadata\n"
 msgstr "Varning: Incheckning har inga flatpak-metadata\n"
 
@@ -2009,6 +2024,7 @@ msgid "At least one REF must be specified"
 msgstr "Minst en REF måste anges"
 
 #: app/flatpak-builtins-install.c:392
+#, c-format
 msgid "Looking for matches…\n"
 msgstr "Söker efter matchningar…\n"
 
@@ -2212,10 +2228,12 @@ msgstr ""
 "matchar mönster"
 
 #: app/flatpak-builtins-mask.c:73
+#, c-format
 msgid "No masked patterns\n"
 msgstr "Inga maskerade mönster\n"
 
 #: app/flatpak-builtins-mask.c:78
+#, c-format
 msgid "Masked patterns:\n"
 msgstr "Maskerade mönster:\n"
 
@@ -2309,10 +2327,12 @@ msgstr ""
 "matchar mönster"
 
 #: app/flatpak-builtins-pin.c:75
+#, c-format
 msgid "No pinned patterns\n"
 msgstr "Inga nålade mönster\n"
 
 #: app/flatpak-builtins-pin.c:80
+#, c-format
 msgid "Pinned patterns:\n"
 msgstr "Nålade mönster:\n"
 
@@ -2320,7 +2340,8 @@ msgstr "Nålade mönster:\n"
 msgid "- Install flatpaks that are part of the operating system"
 msgstr "- Installera flatpak-filer som är en del av operativsystemet"
 
-#: app/flatpak-builtins-preinstall.c:118 app/flatpak-builtins-update.c:274
+#: app/flatpak-builtins-preinstall.c:118
+#, c-format
 msgid "Nothing to do.\n"
 msgstr "Inget att göra.\n"
 
@@ -2862,6 +2883,7 @@ msgid "[%d/%d] Verifying %s…\n"
 msgstr "[%d/%d] Verifierar %s…\n"
 
 #: app/flatpak-builtins-repair.c:435
+#, c-format
 msgid "Dry run: "
 msgstr "Torrkörning: "
 
@@ -2881,6 +2903,7 @@ msgid "Deleting ref %s due to %d\n"
 msgstr "Tar bort ref %s på grund av %d\n"
 
 #: app/flatpak-builtins-repair.c:464
+#, c-format
 msgid "Checking remotes...\n"
 msgstr "Kontrollerar fjärrförråd…\n"
 
@@ -2895,18 +2918,22 @@ msgid "Remote %s for ref %s is disabled\n"
 msgstr "Fjärrförråd %s för ref %s är inaktiverat\n"
 
 #: app/flatpak-builtins-repair.c:490
+#, c-format
 msgid "Pruning objects\n"
 msgstr "Rensa objekt\n"
 
 #: app/flatpak-builtins-repair.c:498
+#, c-format
 msgid "Erasing .removed\n"
 msgstr "Tar bort .removed\n"
 
 #: app/flatpak-builtins-repair.c:523
+#, c-format
 msgid "Reinstalling refs\n"
 msgstr "Ominstallerar referenser\n"
 
 #: app/flatpak-builtins-repair.c:525
+#, c-format
 msgid "Reinstalling removed refs\n"
 msgstr "Ominstallerar borttagna referenser\n"
 
@@ -2941,6 +2968,7 @@ msgid "false"
 msgstr "falskt"
 
 #: app/flatpak-builtins-repo.c:121
+#, c-format
 msgid "Subsummaries: "
 msgstr "Undersammanfattningar: "
 
@@ -3268,6 +3296,7 @@ msgstr ""
 "bort; se flatpak-pin(1):\n"
 
 #: app/flatpak-builtins-uninstall.c:370
+#, c-format
 msgid "Nothing unused to uninstall\n"
 msgstr "Inget oanvänt att avinstallera\n"
 
@@ -3292,10 +3321,12 @@ msgid "Warning: %s is not installed\n"
 msgstr "Varning: %s är inte installerad\n"
 
 #: app/flatpak-builtins-uninstall.c:490
+#, c-format
 msgid "None of the specified refs are installed"
 msgstr "Inga av de angivna referenserna är installerade"
 
 #: app/flatpak-builtins-uninstall.c:599
+#, c-format
 msgid "No app data to delete\n"
 msgstr "Inga programdata att ta bort\n"
 
@@ -3336,6 +3367,7 @@ msgid "With --commit, only one REF may be specified"
 msgstr "Med --commit får endast en REF anges"
 
 #: app/flatpak-builtins-update.c:162
+#, c-format
 msgid "Looking for updates…\n"
 msgstr "Söker efter uppdateringar…\n"
 
@@ -3343,6 +3375,11 @@ msgstr "Söker efter uppdateringar…\n"
 #, c-format
 msgid "Unable to update %s: %s\n"
 msgstr "Kunde inte uppdatera %s: %s\n"
+
+#: app/flatpak-builtins-update.c:274
+#, fuzzy, c-format
+msgid "Nothing to update.\n"
+msgstr "Inget att göra.\n"
 
 #: app/flatpak-builtins-utils.c:337
 #, c-format
@@ -3427,6 +3464,7 @@ msgid "Found installed ref ‘%s’ (%s). Is this correct?"
 msgstr "Hittade installerad ref ”%s” (%s). Stämmer detta?"
 
 #: app/flatpak-builtins-utils.c:534
+#, c-format
 msgid "All of the above"
 msgstr "Alla ovanstående"
 
@@ -3517,7 +3555,7 @@ msgstr ""
 "Lägg till :s[tart], :m[iddle] (mitt), :e[nd] (slut) eller :f[ull] för att "
 "ändra elliptisering"
 
-#: app/flatpak-builtins-utils.c:1494
+#: app/flatpak-builtins-utils.c:1481
 #, c-format
 msgid "Unknown scheme in sideload location %s"
 msgstr "Okänt schema i sidoinläsningsplats %s"
@@ -3766,10 +3804,12 @@ msgstr ""
 "anledning:\n"
 
 #: app/flatpak-cli-transaction.c:963
+#, c-format
 msgid "Info: applications using this extension:\n"
 msgstr "Info: program använder detta tillägg:\n"
 
 #: app/flatpak-cli-transaction.c:965
+#, c-format
 msgid "Info: applications using this runtime:\n"
 msgstr "Info: program använder denna exekveringsmiljö:\n"
 
@@ -3778,6 +3818,7 @@ msgid "Replace?"
 msgstr "Ersätt?"
 
 #: app/flatpak-cli-transaction.c:987 app/flatpak-quiet-transaction.c:247
+#, c-format
 msgid "Updating to rebased version\n"
 msgstr "Uppdaterar till ombaserad version\n"
 
@@ -4334,6 +4375,7 @@ msgid "Filesystem location \"%s\" contains \"..\""
 msgstr "Filsystemsplatsen ”%s” innehåller ”..”"
 
 #: common/flatpak-context.c:1924
+#, c-format
 msgid ""
 "--filesystem=/ is not available, use --filesystem=host for a similar result"
 msgstr ""
@@ -4356,6 +4398,7 @@ msgid "Invalid syntax for %s: %s"
 msgstr "Ogiltig syntax för %s: %s"
 
 #: common/flatpak-context.c:2199
+#, c-format
 msgid "fallback-x11 can not be conditional"
 msgstr "fallback-x11 kan inte vara villkorlig"
 
@@ -4370,20 +4413,24 @@ msgid "Environment variable name must not contain '=': %s"
 msgstr "Miljövariabeln får inte innehålla '=': %s"
 
 #: common/flatpak-context.c:2591 common/flatpak-context.c:2599
+#, c-format
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 "Argument till --add-policy måste vara på formen UNDERSYSTEM.NYCKEL=VÄRDE"
 
 #: common/flatpak-context.c:2606
+#, c-format
 msgid "--add-policy values can't start with \"!\""
 msgstr "Värden till --add-policy får inte starta med ”!”"
 
 #: common/flatpak-context.c:2631 common/flatpak-context.c:2639
+#, c-format
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 "Argument till --remove-policy måste vara på formen UNDERSYSTEM.NYCKEL=VÄRDE"
 
 #: common/flatpak-context.c:2646
+#, c-format
 msgid "--remove-policy values can't start with \"!\""
 msgstr "Värden till --remove-policy får inte starta med ”!”"
 
@@ -4873,6 +4920,7 @@ msgid "Extra data %s missing in detached metadata"
 msgstr "Extra data %s saknas i frånkopplade metadata"
 
 #: common/flatpak-dir.c:9255
+#, c-format
 msgid "Unable to get runtime key from metadata"
 msgstr "Kunde inte få nyckel för exekveringsmiljö från metadata"
 
@@ -4965,6 +5013,7 @@ msgid "This version of %s is already installed"
 msgstr "Denna version av %s är redan installerad"
 
 #: common/flatpak-dir.c:11260
+#, c-format
 msgid "Can't change remote during bundle install"
 msgstr "Kan inte ändra fjärrförråd under buntinstallering"
 
@@ -5130,6 +5179,7 @@ msgid "Skipping deletion of mirror ref (%s, %s)…\n"
 msgstr "Hoppar över borttagning av spegelref (%s, %s)…\n"
 
 #: common/flatpak-exports.c:931
+#, c-format
 msgid "An absolute path is required"
 msgstr "En absolut sökväg krävs"
 
@@ -5281,6 +5331,7 @@ msgid "Invalid authentication request response"
 msgstr "Ogiltigt svar på autentiseringsbegäran"
 
 #: common/flatpak-oci-registry.c:1731
+#, c-format
 msgid "Flatpak was compiled without zstd support"
 msgstr "Flatpak kompilerades utan stöd för zstd"
 
@@ -5488,6 +5539,7 @@ msgid "GPG verification must be enabled when a collection ID is set"
 msgstr "GPG-verifiering måste vara aktiverat då ett samlings-ID har satts"
 
 #: common/flatpak-repo-utils.c:344
+#, c-format
 msgid "No extra data sources"
 msgstr "Inga extra data-källor"
 
@@ -5823,35 +5875,42 @@ msgid "URI is not absolute, and no base URI was provided"
 msgstr "URI är inte absolut, och ingen bas-URI angavs"
 
 #: common/flatpak-usb.c:83
+#, c-format
 msgid "USB device query 'all' must not have data"
 msgstr "USB-enhetsfrågan ”all” får inte ha data"
 
 #: common/flatpak-usb.c:102
+#, c-format
 msgid "USB query rule 'cls' must be in the form CLASS:SUBCLASS or CLASS:*"
 msgstr ""
 "USB-frågeregeln ”cls” måste vara på formen KLASS:UNDERKLASS eller KLASS:*"
 
 #: common/flatpak-usb.c:111
+#, c-format
 msgid "Invalid USB class"
 msgstr "Ogiltig USB-klass"
 
 #: common/flatpak-usb.c:125
+#, c-format
 msgid "Invalid USB subclass"
 msgstr "Ogiltig USB-underklass"
 
 #: common/flatpak-usb.c:141 common/flatpak-usb.c:148
+#, c-format
 msgid "USB query rule 'dev' must have a valid 4-digit hexadecimal product id"
 msgstr ""
 "USB-frågeregeln ”dev” måste ha ett giltigt fyrsiffrigt hexadecimalt produkt-"
 "ID"
 
 #: common/flatpak-usb.c:164 common/flatpak-usb.c:171
+#, c-format
 msgid "USB query rule 'vnd' must have a valid 4-digit hexadecimal vendor id"
 msgstr ""
 "USB-frågeregeln ”vnd” måste ha ett giltigt fyrsiffrigt hexadecimalt "
 "tillverkar-ID"
 
 #: common/flatpak-usb.c:205
+#, c-format
 msgid "USB device queries must be in the form TYPE:DATA"
 msgstr "USB-enhetsfrågor måste vara på formen TYP:DATA"
 
@@ -5861,18 +5920,22 @@ msgid "Unknown USB query rule %s"
 msgstr "Okänd USB-frågeregel %s"
 
 #: common/flatpak-usb.c:248
+#, c-format
 msgid "Empty USB query"
 msgstr "Tom USB-fråga"
 
 #: common/flatpak-usb.c:274
+#, c-format
 msgid "Multiple USB query rules of the same type is not supported"
 msgstr "Flera USB-frågeregler av samma typ stöds inte"
 
 #: common/flatpak-usb.c:283
+#, c-format
 msgid "'all' must not contain extra query rules"
 msgstr "”all” får inte innehålla extra frågeregler"
 
 #: common/flatpak-usb.c:291
+#, c-format
 msgid "USB queries with 'dev' must also specify vendors"
 msgstr "USB-frågor med ”dev” måste också ange tillverkare"
 
@@ -5936,6 +5999,7 @@ msgid "Invalid token"
 msgstr "Ogiltig token"
 
 #: portal/flatpak-portal.c:2373
+#, c-format
 msgid "No portal support found"
 msgstr "Inget portalstöd hittades"
 
@@ -5962,14 +6026,17 @@ msgstr ""
 "Uppdateringsåtkomst kan ändras när som helst från sekretessinställningarna."
 
 #: portal/flatpak-portal.c:2424
+#, c-format
 msgid "Application update not allowed"
 msgstr "Programuppdatering inte tillåten"
 
 #: portal/flatpak-portal.c:2582
+#, c-format
 msgid "Self update not supported, new version requires new permissions"
 msgstr "Självuppdatering stöds inte, nya versionen kräver nya rättigheter"
 
 #: portal/flatpak-portal.c:2765 portal/flatpak-portal.c:2783
+#, c-format
 msgid "Update ended unexpectedly"
 msgstr "Uppdateringen avslutades oväntat"
 
