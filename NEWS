@@ -1,8 +1,53 @@
 Changes in 1.17.3
 ~~~~~~~~~~~~~~~~~~
-Released: not yet
+Released: 2026-03-14
 
-...
+Enhancements:
+
+* Improve check for --filesystem paths pointing to a parent folder (#6473)
+
+* Fail if non-interactive and multiple refs, remotes or installations match
+  (#5754)
+
+* Default to text auth on WSL (#6491)
+
+* Add build instructions for Ubuntu 24.04 (#6498)
+
+* Show a better message when there are no refs to update (#6521)
+
+* Silence AppStream refresh output on non-interactive runs (#6521)
+
+* Translation updates: pt_BR (#6483), sl (#6468, #6475), sv (#6514), tr (#6528),
+  zh_CN (#6469, #6477)
+
+Bug fixes:
+
+* Map the font-dirs.xml file more selectively (#6450)
+
+* Change const pointers. This fixes build issues with glibc 2.43. (#6490)
+
+* Add custom type flatpak_home_t for ~/.local/share/flatpak for SELinux (#6437)
+
+* Fix build warnings when compiling with -Wanalyzer-null-argument and with
+  -Wanalyzer-null-dereference (#6527)
+
+* Use raw string for regular expression in the flatpak-bisect script (#6519)
+
+Internal changes:
+
+* Set the `FLATPAK_TRIGGERSDIR` environment variable when running
+  installed tests. This fixes a regression with autopkg tests in
+  Debian. (#6444)
+
+* Add translator comments for some translatable strings (#6462)
+
+* Fix typos in translatable strings (#6463)
+
+* Fix lots of typos in code comments (#6482)
+
+* Remove an unused function (#6529)
+
+* Update two strings (#6464)
 
 Changes in 1.17.2
 ~~~~~~~~~~~~~~~~~~
