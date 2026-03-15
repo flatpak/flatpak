@@ -1312,6 +1312,30 @@ flatpak_installation_list_remotes (FlatpakInstallation *self,
 }
 
 /**
+ * flatpak_installation_get_remotes_config_timestamp:
+ * @self: a #FlatpakInstallation
+ *
+ * Gets the modification timestamp of the remotes configuration. This can be
+ * used to detect when remotes have been added, removed, or modified, including
+ * cases where flatpak_installation_list_remotes() would not show a change
+ * (such as when a remote is removed).
+ *
+ * Returns: the timestamp (seconds since the Unix epoch) of the last modification
+ *   to the remotes configuration, or 0 if unavailable
+ *
+ * Since: 1.18.0
+ */
+guint64
+flatpak_installation_get_remotes_config_timestamp (FlatpakInstallation *self)
+{
+  g_autoptr(FlatpakDir) dir = NULL;
+
+  dir = flatpak_installation_get_dir_maybe_no_repo (self);
+
+  return flatpak_dir_get_remotes_config_timestamp (dir);
+}
+
+/**
  * flatpak_installation_modify_remote:
  * @self: a #FlatpakInstallation
  * @remote: the modified #FlatpakRemote

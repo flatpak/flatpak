@@ -280,6 +280,7 @@ FLATPAK_EXTERN GPtrArray           *flatpak_installation_list_remotes_by_type (F
                                                                                gsize                   num_types,
                                                                                GCancellable           *cancellable,
                                                                                GError                **error);
+FLATPAK_EXTERN guint64              flatpak_installation_get_remotes_config_timestamp (FlatpakInstallation *self);
 FLATPAK_EXTERN FlatpakRemote        *flatpak_installation_get_remote_by_name (FlatpakInstallation *self,
                                                                               const gchar         *name,
                                                                               GCancellable        *cancellable,
