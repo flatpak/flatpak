@@ -2673,6 +2673,41 @@ flatpak_installation_create_monitor (FlatpakInstallation *self,
                               cancellable, error);
 }
 
+/**
+ * flatpak_installation_get_timestamp:
+ * @self: a #FlatpakInstallation
+ *
+ * Gets the modification time of the installation, based on the file monitored by
+ * flatpak_installation_create_monitor(). This can be used to detect when
+ * applications or runtimes have been installed, uninstalled, or updated, or when
+ * remotes have been added, removed, or modified, to aid cache invalidation.
+ *
+ * Returns: the modification time (seconds since the Unix epoch) of the
+ *   installation configuration, or %G_MAXUINT64 if unavailable
+ *
+ * Since: 1.18.0
+ */
+guint64
+flatpak_installation_get_timestamp (FlatpakInstallation *self)
+{
+  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(GFile) changed_file = NULL;
+  g_autoptr(GFileInfo) info = NULL;
+
+  dir = flatpak_installation_get_dir_maybe_no_repo (self);
+  changed_file = flatpak_dir_get_changed_path (dir);
+
+  info = g_file_query_info (changed_file,
+                            G_FILE_ATTRIBUTE_TIME_MODIFIED,
+                            G_FILE_QUERY_INFO_NONE,
+                            NULL,
+                            NULL);
+  if (info == NULL)
+    return G_MAXUINT64;
+
+  return g_file_info_get_attribute_uint64 (info, G_FILE_ATTRIBUTE_TIME_MODIFIED);
+}
+
 
 /**
  * flatpak_installation_list_remote_related_refs_sync:
