@@ -3478,8 +3478,16 @@ _flatpak_repo_generate_appstream (OstreeRepo   *repo,
         }
     }
 
-  if (!flatpak_appstream_xml_root_to_data (appstream_root, &xml_data, &xml_gz_data, error))
-    return FALSE;
+  if (*subset != 0)
+    {
+      if (!flatpak_appstream_xml_root_to_data (appstream_root, &xml_data, NULL, error))
+        return FALSE;
+    }
+  else
+    {
+      if (!flatpak_appstream_xml_root_to_data (appstream_root, &xml_data, &xml_gz_data, error))
+        return FALSE;
+    }
 
   for (int i = 0; i < G_N_ELEMENTS (branch_names); i++)
     {
