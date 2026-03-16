@@ -526,6 +526,99 @@ flatpak_xml_copy (FlatpakXml *node)
   return copy;
 }
 
+static gboolean
+flatpak_appstream_xml_component_matches_ref (FlatpakXml  *component,
+                                             const char  *ref)
+{
+  FlatpakXml *bundle;
+
+  if (g_strcmp0 (component->element_name, "component") != 0)
+    return FALSE;
+
+  bundle = flatpak_xml_find (component, "bundle", NULL);
+  return bundle != NULL &&
+         bundle->first_child != NULL &&
+         bundle->first_child->text != NULL &&
+         strcmp (bundle->first_child->text, ref) == 0;
+}
+
+void
+flatpak_appstream_xml_collect_ids_for_ref (FlatpakXml *appstream,
+                                           const char *ref,
+                                           GPtrArray  *component_ids)
+{
+  FlatpakXml *components;
+
+  g_return_if_fail (component_ids != NULL);
+
+  for (components = appstream->first_child;
+       components != NULL;
+       components = components->next_sibling)
+    {
+      FlatpakXml *component;
+
+      if (g_strcmp0 (components->element_name, "components") != 0)
+        continue;
+
+      for (component = components->first_child;
+           component != NULL;
+           component = component->next_sibling)
+        {
+          FlatpakXml *id_node, *id_text_node;
+          g_autofree char *id_text = NULL;
+
+          if (!flatpak_appstream_xml_component_matches_ref (component, ref))
+            continue;
+
+          id_node = flatpak_xml_find (component, "id", NULL);
+          if (id_node == NULL)
+            continue;
+
+          id_text_node = flatpak_xml_find (id_node, NULL, NULL);
+          if (id_text_node == NULL || id_text_node->text == NULL)
+            continue;
+
+          id_text = g_strstrip (g_strdup (id_text_node->text));
+          g_ptr_array_add (component_ids, g_steal_pointer (&id_text));
+        }
+    }
+}
+
+gboolean
+flatpak_appstream_xml_copy_components (FlatpakXml *source,
+                                       FlatpakXml *dest,
+                                       const char *ref)
+{
+  FlatpakXml *source_components;
+  FlatpakXml *dest_components;
+  FlatpakXml *component;
+  gboolean copied = FALSE;
+
+  if (source->first_child == NULL ||
+      source->first_child->next_sibling != NULL ||
+      g_strcmp0 (source->first_child->element_name, "components") != 0 ||
+      dest->first_child == NULL ||
+      dest->first_child->next_sibling != NULL ||
+      g_strcmp0 (dest->first_child->element_name, "components") != 0)
+    return FALSE;
+
+  source_components = source->first_child;
+  dest_components = dest->first_child;
+
+  for (component = source_components->first_child;
+       component != NULL;
+       component = component->next_sibling)
+    {
+      if (!flatpak_appstream_xml_component_matches_ref (component, ref))
+        continue;
+
+      flatpak_xml_add (dest_components, flatpak_xml_copy (component));
+      copied = TRUE;
+    }
+
+  return copied;
+}
+
 gboolean
 flatpak_appstream_xml_migrate (FlatpakXml *source,
                                FlatpakXml *dest,

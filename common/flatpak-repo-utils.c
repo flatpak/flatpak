@@ -3355,6 +3355,204 @@ load_previous_appstream_refs (OstreeRepo   *repo,
 }
 
 static gboolean
+load_appstream_xml_from_commit (OstreeRepo   *repo,
+                                const char   *commit,
+                                GCancellable *cancellable,
+                                FlatpakXml  **out_appstream_root,
+                                GError      **error)
+{
+  g_autoptr(GFile) root = NULL;
+  g_autoptr(GFile) appstream_file = NULL;
+  g_autoptr(GInputStream) in = NULL;
+  g_autofree char *contents = NULL;
+  gsize len = 0;
+
+  if (!ostree_repo_read_commit (repo, commit, &root, NULL, cancellable, error))
+    return FALSE;
+
+  appstream_file = g_file_get_child (root, "appstream.xml");
+  if (!g_file_load_contents (appstream_file, cancellable, &contents, &len, NULL, error))
+    return FALSE;
+
+  in = g_memory_input_stream_new_from_data (contents, len, NULL);
+  *out_appstream_root = flatpak_xml_parse (in, FALSE, cancellable, error);
+  return *out_appstream_root != NULL;
+}
+
+static gboolean
+remove_appstream_ref_icons (FlatpakXml         *appstream_root,
+                            const char         *ref,
+                            OstreeMutableTree  *size1_mtree,
+                            OstreeMutableTree  *size2_mtree,
+                            GError            **error)
+{
+  g_autoptr(GPtrArray) component_ids = g_ptr_array_new_with_free_func (g_free);
+
+  flatpak_appstream_xml_collect_ids_for_ref (appstream_root, ref, component_ids);
+
+  for (guint i = 0; i < component_ids->len; i++)
+    {
+      const char *component_id = g_ptr_array_index (component_ids, i);
+      g_autofree char *icon_name = g_strconcat (component_id, ".png", NULL);
+
+      if (!ostree_mutable_tree_remove (size1_mtree, icon_name, TRUE, error) ||
+          !ostree_mutable_tree_remove (size2_mtree, icon_name, TRUE, error))
+        return FALSE;
+    }
+
+  return TRUE;
+}
+
+static FlatpakXml *
+find_appstream_components (FlatpakXml *appstream_root)
+{
+  for (FlatpakXml *node = appstream_root->first_child; node != NULL; node = node->next_sibling)
+    {
+      if (g_strcmp0 (node->element_name, "components") == 0)
+        return node;
+    }
+
+  return NULL;
+}
+
+static FlatpakXml *
+next_appstream_component (FlatpakXml *node)
+{
+  while (node != NULL && g_strcmp0 (node->element_name, "component") != 0)
+    node = node->next_sibling;
+
+  return node;
+}
+
+static const char *
+get_appstream_component_ref (FlatpakXml *component)
+{
+  FlatpakXml *bundle;
+
+  if (component == NULL || g_strcmp0 (component->element_name, "component") != 0)
+    return NULL;
+
+  bundle = flatpak_xml_find (component, "bundle", NULL);
+  if (bundle == NULL || bundle->first_child == NULL)
+    return NULL;
+
+  return bundle->first_child->text;
+}
+
+static void
+splice_components_before (FlatpakXml *dest_root,
+                         FlatpakXml *next_sibling,
+                         FlatpakXml *src_root)
+{
+  FlatpakXml *dest_components = find_appstream_components (dest_root);
+  FlatpakXml *src_components = find_appstream_components (src_root);
+  FlatpakXml *component;
+  FlatpakXml *prev_component = NULL;
+  FlatpakXml *insert_after = NULL;
+
+  g_assert (dest_components != NULL);
+  g_assert (src_components != NULL);
+
+  if (next_sibling == NULL)
+    insert_after = dest_components->last_child;
+  else if (dest_components->first_child != next_sibling)
+    {
+      for (insert_after = dest_components->first_child;
+           insert_after != NULL && insert_after->next_sibling != next_sibling;
+           insert_after = insert_after->next_sibling)
+        ;
+      g_assert (insert_after != NULL);
+    }
+
+  component = src_components->first_child;
+  while (component != NULL)
+    {
+      FlatpakXml *next = component->next_sibling;
+
+      if (g_strcmp0 (component->element_name, "component") != 0)
+        {
+          prev_component = component;
+          component = next;
+          continue;
+        }
+
+      flatpak_xml_unlink (component, prev_component);
+      component->parent = dest_components;
+
+      if (insert_after == NULL)
+        {
+          component->next_sibling = dest_components->first_child;
+          dest_components->first_child = component;
+          if (dest_components->last_child == NULL)
+            dest_components->last_child = component;
+        }
+      else
+        {
+          component->next_sibling = insert_after->next_sibling;
+          insert_after->next_sibling = component;
+          if (dest_components->last_child == insert_after)
+            dest_components->last_child = component;
+        }
+
+      insert_after = component;
+      prev_component = NULL;
+      component = next;
+    }
+}
+
+static void
+remove_appstream_ref_components (FlatpakXml  *appstream_root,
+                                 const char  *ref)
+{
+  FlatpakXml *components = find_appstream_components (appstream_root);
+  FlatpakXml *component;
+  FlatpakXml *prev_component = NULL;
+
+  if (components == NULL)
+    return;
+
+  component = components->first_child;
+  while (component != NULL)
+    {
+      FlatpakXml *next = component->next_sibling;
+      const char *component_ref = get_appstream_component_ref (component);
+
+      if (component_ref == NULL || strcmp (component_ref, ref) != 0)
+        {
+          prev_component = component;
+          component = next;
+          continue;
+        }
+
+      flatpak_xml_free (flatpak_xml_unlink (component, prev_component));
+      component = next;
+    }
+}
+
+static void
+strip_appstream_trailing_newline (FlatpakXml *appstream_root)
+{
+  FlatpakXml *components = find_appstream_components (appstream_root);
+  FlatpakXml *child, *prev_child = NULL;
+
+  if (components == NULL)
+    return;
+
+  for (child = components->first_child; child != NULL; child = child->next_sibling)
+    prev_child = child;
+
+  if (prev_child != NULL && prev_child->text != NULL && strcmp (prev_child->text, "\n") == 0)
+    {
+      FlatpakXml *before_last = NULL;
+
+      for (child = components->first_child; child != NULL && child != prev_child; child = child->next_sibling)
+        before_last = child;
+
+      flatpak_xml_free (flatpak_xml_unlink (prev_child, before_last));
+    }
+}
+
+static gboolean
 _flatpak_repo_generate_appstream (OstreeRepo   *repo,
                                   const char  **gpg_key_ids,
                                   const char   *gpg_homedir,
@@ -3380,9 +3578,15 @@ _flatpak_repo_generate_appstream (OstreeRepo   *repo,
   g_autoptr(GVariantBuilder) current_appstream_refs_builder = NULL;
   g_autoptr(GVariant) current_appstream_refs = NULL;
   g_autoptr(GVariant) previous_appstream_refs = NULL;
+  g_autoptr(FlatpakXml) previous_appstream_root = NULL;
+  g_autoptr(GArray) included_ref_changed = NULL;
   g_autoptr(GPtrArray) included_refs = NULL;
   g_autofree char *current_branch = NULL;
   g_autofree char *current_parent = NULL;
+  guint previous_ref_count = 0;
+  guint added_ref_count = 0;
+  gboolean all_changes_are_additions = TRUE;
+  gboolean additions_only = FALSE;
   const char *compat_arch;
   compat_arch = flatpak_get_compat_arch (arch);
   const char *branch_names[] = { "appstream", "appstream2" };
@@ -3395,6 +3599,7 @@ _flatpak_repo_generate_appstream (OstreeRepo   *repo,
 
   collection_id = ostree_repo_get_collection_id (repo);
   included_refs = g_ptr_array_new ();
+  included_ref_changed = g_array_new (FALSE, FALSE, sizeof (gboolean));
   current_appstream_refs_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{ss}"));
 
   current_branch = (*subset != 0) ?
@@ -3408,6 +3613,9 @@ _flatpak_repo_generate_appstream (OstreeRepo   *repo,
   if (current_parent != NULL &&
       !load_previous_appstream_refs (repo, current_parent, &previous_appstream_refs, error))
     return FALSE;
+
+  if (previous_appstream_refs != NULL)
+    previous_ref_count = g_variant_n_children (previous_appstream_refs);
 
   for (int i = 0; i < n_keys; i++)
     {
@@ -3465,13 +3673,39 @@ _flatpak_repo_generate_appstream (OstreeRepo   *repo,
             continue;
         }
 
-      g_variant_builder_add (current_appstream_refs_builder, "{ss}",
-                             flatpak_decomposed_get_ref (ref),
-                             (const char *) g_hash_table_lookup (all_refs, ref));
+      {
+        gboolean ref_changed = (previous_appstream_refs == NULL);
+        const char *current_checksum = g_hash_table_lookup (all_refs, ref);
+
+        if (previous_appstream_refs != NULL)
+          {
+            const char *old_checksum = NULL;
+
+            if (!g_variant_lookup (previous_appstream_refs, flatpak_decomposed_get_ref (ref), "&s", &old_checksum))
+              {
+                ref_changed = TRUE;
+                added_ref_count++;
+              }
+            else if (strcmp (old_checksum, current_checksum) != 0)
+              {
+                ref_changed = TRUE;
+                all_changes_are_additions = FALSE;
+              }
+          }
+
+        g_variant_builder_add (current_appstream_refs_builder, "{ss}",
+                               flatpak_decomposed_get_ref (ref),
+                               current_checksum);
+        g_array_append_val (included_ref_changed, ref_changed);
+      }
       g_ptr_array_add (included_refs, ref);
     }
 
   current_appstream_refs = g_variant_ref_sink (g_variant_builder_end (current_appstream_refs_builder));
+  additions_only = previous_appstream_refs != NULL &&
+                   all_changes_are_additions &&
+                   previous_ref_count + added_ref_count == included_refs->len;
+
   if (previous_appstream_refs != NULL &&
       g_variant_equal (previous_appstream_refs, current_appstream_refs))
     {
@@ -3479,50 +3713,137 @@ _flatpak_repo_generate_appstream (OstreeRepo   *repo,
       return TRUE;
     }
 
-  mtree = ostree_mutable_tree_new ();
-  if (!flatpak_mtree_ensure_dir_metadata (repo, mtree, cancellable, error))
-    return FALSE;
-
-  if (!flatpak_mtree_create_dir (repo, mtree, "icons", &icons_mtree, error))
-    return FALSE;
-
-  if (!flatpak_mtree_create_dir (repo, icons_mtree, "64x64", &size1_mtree, error))
-    return FALSE;
-
-  if (!flatpak_mtree_create_dir (repo, icons_mtree, "128x128", &size2_mtree, error))
-    return FALSE;
-
-  /* For compatibility with libappstream we create a $origin ("flatpak") subdirectory with symlinks
-   * to the size directories thus matching the standard merged appstream layout if we assume the
-   * appstream has origin=flatpak, which flatpak-builder creates.
-   *
-   * See https://github.com/ximion/appstream/pull/224 for details.
-   */
-  if (!flatpak_mtree_create_dir (repo, icons_mtree, "flatpak", &icons_flatpak_mtree, error))
-    return FALSE;
-  if (!flatpak_mtree_create_symlink (repo, icons_flatpak_mtree, "64x64", "../64x64", error))
-    return FALSE;
-  if (!flatpak_mtree_create_symlink (repo, icons_flatpak_mtree, "128x128", "../128x128", error))
-    return FALSE;
-
-  appstream_root = flatpak_appstream_xml_new ();
-
-  for (guint i = 0; i < included_refs->len; i++)
+  if (previous_appstream_refs != NULL && current_parent != NULL)
     {
-      FlatpakDecomposed *ref = g_ptr_array_index (included_refs, i);
-      g_autoptr(GError) my_error = NULL;
-      g_autofree char *id = flatpak_decomposed_dup_id (ref);
+      if (!load_appstream_xml_from_commit (repo, current_parent, cancellable,
+                                           &previous_appstream_root, error))
+        return FALSE;
 
-      if (!extract_appstream (repo, appstream_root,
-                              ref, id, size1_mtree, size2_mtree,
-                              appstream_sources,
-                              cancellable, &my_error))
+      strip_appstream_trailing_newline (previous_appstream_root);
+
+      mtree = ostree_mutable_tree_new_from_commit (repo, current_parent, error);
+      if (mtree == NULL)
+        return FALSE;
+
+      if (!ostree_mutable_tree_ensure_dir (mtree, "icons", &icons_mtree, error) ||
+          !ostree_mutable_tree_ensure_dir (icons_mtree, "64x64", &size1_mtree, error) ||
+          !ostree_mutable_tree_ensure_dir (icons_mtree, "128x128", &size2_mtree, error) ||
+          !ostree_mutable_tree_ensure_dir (icons_mtree, "flatpak", &icons_flatpak_mtree, error))
+        return FALSE;
+
+      if (!additions_only)
         {
-          if (flatpak_decomposed_is_app (ref))
-            g_print (_("No appstream data for %s: %s\n"), flatpak_decomposed_get_ref (ref), my_error->message);
-          continue;
+          GVariantIter iter;
+          const char *old_ref;
+          const char *old_checksum;
+
+          g_variant_iter_init (&iter, previous_appstream_refs);
+          while (g_variant_iter_next (&iter, "{&s&s}", &old_ref, &old_checksum))
+            {
+              const char *current_checksum = NULL;
+
+              if (!g_variant_lookup (current_appstream_refs, old_ref, "&s", &current_checksum) ||
+                  strcmp (old_checksum, current_checksum) != 0)
+                {
+                  if (!remove_appstream_ref_icons (previous_appstream_root, old_ref,
+                                                   size1_mtree, size2_mtree,
+                                                   error))
+                    return FALSE;
+
+                  remove_appstream_ref_components (previous_appstream_root, old_ref);
+                }
+            }
         }
     }
+  else
+    {
+      mtree = ostree_mutable_tree_new ();
+      if (!flatpak_mtree_ensure_dir_metadata (repo, mtree, cancellable, error))
+        return FALSE;
+
+      if (!flatpak_mtree_create_dir (repo, mtree, "icons", &icons_mtree, error))
+        return FALSE;
+
+      if (!flatpak_mtree_create_dir (repo, icons_mtree, "64x64", &size1_mtree, error))
+        return FALSE;
+
+      if (!flatpak_mtree_create_dir (repo, icons_mtree, "128x128", &size2_mtree, error))
+        return FALSE;
+
+      /* For compatibility with libappstream we create a $origin ("flatpak") subdirectory with symlinks
+       * to the size directories thus matching the standard merged appstream layout if we assume the
+       * appstream has origin=flatpak, which flatpak-builder creates.
+       *
+       * See https://github.com/ximion/appstream/pull/224 for details.
+       */
+      if (!flatpak_mtree_create_dir (repo, icons_mtree, "flatpak", &icons_flatpak_mtree, error))
+        return FALSE;
+      if (!flatpak_mtree_create_symlink (repo, icons_flatpak_mtree, "64x64", "../64x64", error))
+        return FALSE;
+      if (!flatpak_mtree_create_symlink (repo, icons_flatpak_mtree, "128x128", "../128x128", error))
+        return FALSE;
+    }
+
+  if (previous_appstream_root != NULL)
+    appstream_root = g_steal_pointer (&previous_appstream_root);
+  else
+    appstream_root = flatpak_appstream_xml_new ();
+
+  {
+    FlatpakXml *next_existing_component = next_appstream_component (find_appstream_components (appstream_root)->first_child);
+
+    for (guint i = 0; i < included_refs->len; i++)
+      {
+        FlatpakDecomposed *ref = g_ptr_array_index (included_refs, i);
+        g_autoptr(GError) my_error = NULL;
+        g_autofree char *id = flatpak_decomposed_dup_id (ref);
+        gboolean ref_changed = g_array_index (included_ref_changed, gboolean, i);
+        const char *ref_name = flatpak_decomposed_get_ref (ref);
+
+        while (next_existing_component != NULL)
+          {
+            const char *existing_ref = get_appstream_component_ref (next_existing_component);
+
+            if (existing_ref == NULL || strcmp (existing_ref, ref_name) >= 0)
+              break;
+
+            next_existing_component = next_appstream_component (next_existing_component->next_sibling);
+          }
+
+        if (!ref_changed)
+          {
+            while (next_existing_component != NULL)
+              {
+                const char *existing_ref = get_appstream_component_ref (next_existing_component);
+
+                if (existing_ref == NULL || strcmp (existing_ref, ref_name) != 0)
+                  break;
+
+                next_existing_component = next_appstream_component (next_existing_component->next_sibling);
+              }
+
+            continue;
+          }
+
+        {
+          g_autoptr(FlatpakXml) new_components_root = flatpak_appstream_xml_new ();
+
+          if (!extract_appstream (repo, new_components_root,
+                                  ref, id, size1_mtree, size2_mtree,
+                                  appstream_sources,
+                                  cancellable, &my_error))
+            {
+              if (flatpak_decomposed_is_app (ref))
+                g_print (_("No appstream data for %s: %s\n"), ref_name, my_error->message);
+              continue;
+            }
+
+          splice_components_before (appstream_root, next_existing_component, new_components_root);
+        }
+      }
+  }
+
+  strip_appstream_trailing_newline (appstream_root);
 
   if (*subset != 0)
     {

@@ -58,6 +58,12 @@ gboolean flatpak_appstream_xml_root_to_data (FlatpakXml *appstream_root,
                                              GBytes    **uncompressed,
                                              GBytes    **compressed,
                                              GError    **error);
+gboolean flatpak_appstream_xml_copy_components (FlatpakXml *source,
+                                                FlatpakXml *dest,
+                                                const char *ref);
+void flatpak_appstream_xml_collect_ids_for_ref (FlatpakXml *appstream,
+                                                const char *ref,
+                                                GPtrArray  *component_ids);
 void flatpak_appstream_xml_filter (FlatpakXml *appstream,
                                    GRegex *allow_refs,
                                    GRegex *deny_refs);
