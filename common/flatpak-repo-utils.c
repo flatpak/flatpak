@@ -3335,11 +3335,32 @@ flatpak_repo_list_flatpak_refs (OstreeRepo   *repo,
 }
 
 static gboolean
+load_previous_appstream_refs (OstreeRepo   *repo,
+                              const char   *commit,
+                              GVariant    **out_appstream_refs,
+                              GError      **error)
+{
+  g_autoptr(GVariant) commit_v = NULL;
+  VarMetadataRef commit_metadata;
+  VarVariantRef appstream_refs_v;
+
+  if (!ostree_repo_load_commit (repo, commit, &commit_v, NULL, error))
+    return FALSE;
+
+  commit_metadata = var_commit_get_metadata (var_commit_from_gvariant (commit_v));
+  if (var_metadata_lookup (commit_metadata, "xa.appstream-refs", NULL, &appstream_refs_v))
+    *out_appstream_refs = g_variant_ref_sink (var_variant_dup_child_to_gvariant (appstream_refs_v));
+
+  return TRUE;
+}
+
+static gboolean
 _flatpak_repo_generate_appstream (OstreeRepo   *repo,
                                   const char  **gpg_key_ids,
                                   const char   *gpg_homedir,
                                   FlatpakDecomposed **all_refs_keys,
                                   guint         n_keys,
+                                  GHashTable   *all_refs,
                                   GHashTable   *all_commits,
                                   GHashTable   *appstream_sources,
                                   const char   *arch,
@@ -3351,11 +3372,17 @@ _flatpak_repo_generate_appstream (OstreeRepo   *repo,
   g_autoptr(FlatpakXml) appstream_root = NULL;
   g_autoptr(GBytes) xml_data = NULL;
   g_autoptr(GBytes) xml_gz_data = NULL;
-  g_autoptr(OstreeMutableTree) mtree = ostree_mutable_tree_new ();
+  g_autoptr(OstreeMutableTree) mtree = NULL;
   g_autoptr(OstreeMutableTree) icons_mtree = NULL;
   g_autoptr(OstreeMutableTree) icons_flatpak_mtree = NULL;
   g_autoptr(OstreeMutableTree) size1_mtree = NULL;
   g_autoptr(OstreeMutableTree) size2_mtree = NULL;
+  g_autoptr(GVariantBuilder) current_appstream_refs_builder = NULL;
+  g_autoptr(GVariant) current_appstream_refs = NULL;
+  g_autoptr(GVariant) previous_appstream_refs = NULL;
+  g_autoptr(GPtrArray) included_refs = NULL;
+  g_autofree char *current_branch = NULL;
+  g_autofree char *current_parent = NULL;
   const char *compat_arch;
   compat_arch = flatpak_get_compat_arch (arch);
   const char *branch_names[] = { "appstream", "appstream2" };
@@ -3367,41 +3394,26 @@ _flatpak_repo_generate_appstream (OstreeRepo   *repo,
     g_info ("Generating appstream for %s", arch);
 
   collection_id = ostree_repo_get_collection_id (repo);
+  included_refs = g_ptr_array_new ();
+  current_appstream_refs_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{ss}"));
 
-  if (!flatpak_mtree_ensure_dir_metadata (repo, mtree, cancellable, error))
-    return FALSE;
+  current_branch = (*subset != 0) ?
+    g_strdup_printf ("appstream2/%s-%s", subset, arch) :
+    g_strdup_printf ("appstream2/%s", arch);
 
-  if (!flatpak_mtree_create_dir (repo, mtree, "icons", &icons_mtree, error))
-    return FALSE;
-
-  if (!flatpak_mtree_create_dir (repo, icons_mtree, "64x64", &size1_mtree, error))
-    return FALSE;
-
-  if (!flatpak_mtree_create_dir (repo, icons_mtree, "128x128", &size2_mtree, error))
+  if (!flatpak_repo_resolve_rev (repo, collection_id, NULL, current_branch, TRUE,
+                                 &current_parent, cancellable, error))
     return FALSE;
 
-  /* For compatibility with libappstream we create a $origin ("flatpak") subdirectory with symlinks
-   * to the size directories thus matching the standard merged appstream layout if we assume the
-   * appstream has origin=flatpak, which flatpak-builder creates.
-   *
-   * See https://github.com/ximion/appstream/pull/224 for details.
-   */
-  if (!flatpak_mtree_create_dir (repo, icons_mtree, "flatpak", &icons_flatpak_mtree, error))
+  if (current_parent != NULL &&
+      !load_previous_appstream_refs (repo, current_parent, &previous_appstream_refs, error))
     return FALSE;
-  if (!flatpak_mtree_create_symlink (repo, icons_flatpak_mtree, "64x64", "../64x64", error))
-    return FALSE;
-  if (!flatpak_mtree_create_symlink (repo, icons_flatpak_mtree, "128x128", "../128x128", error))
-    return FALSE;
-
-  appstream_root = flatpak_appstream_xml_new ();
 
   for (int i = 0; i < n_keys; i++)
     {
       FlatpakDecomposed *ref = all_refs_keys[i];
       GVariant *commit_v = NULL;
       VarMetadataRef commit_metadata;
-      g_autoptr(GError) my_error = NULL;
-      g_autofree char *id = NULL;
 
       if (!flatpak_decomposed_is_arch (ref, arch))
         {
@@ -3453,7 +3465,54 @@ _flatpak_repo_generate_appstream (OstreeRepo   *repo,
             continue;
         }
 
-      id = flatpak_decomposed_dup_id (ref);
+      g_variant_builder_add (current_appstream_refs_builder, "{ss}",
+                             flatpak_decomposed_get_ref (ref),
+                             (const char *) g_hash_table_lookup (all_refs, ref));
+      g_ptr_array_add (included_refs, ref);
+    }
+
+  current_appstream_refs = g_variant_ref_sink (g_variant_builder_end (current_appstream_refs_builder));
+  if (previous_appstream_refs != NULL &&
+      g_variant_equal (previous_appstream_refs, current_appstream_refs))
+    {
+      g_info ("Skipping %s, appstream refs unchanged", current_branch);
+      return TRUE;
+    }
+
+  mtree = ostree_mutable_tree_new ();
+  if (!flatpak_mtree_ensure_dir_metadata (repo, mtree, cancellable, error))
+    return FALSE;
+
+  if (!flatpak_mtree_create_dir (repo, mtree, "icons", &icons_mtree, error))
+    return FALSE;
+
+  if (!flatpak_mtree_create_dir (repo, icons_mtree, "64x64", &size1_mtree, error))
+    return FALSE;
+
+  if (!flatpak_mtree_create_dir (repo, icons_mtree, "128x128", &size2_mtree, error))
+    return FALSE;
+
+  /* For compatibility with libappstream we create a $origin ("flatpak") subdirectory with symlinks
+   * to the size directories thus matching the standard merged appstream layout if we assume the
+   * appstream has origin=flatpak, which flatpak-builder creates.
+   *
+   * See https://github.com/ximion/appstream/pull/224 for details.
+   */
+  if (!flatpak_mtree_create_dir (repo, icons_mtree, "flatpak", &icons_flatpak_mtree, error))
+    return FALSE;
+  if (!flatpak_mtree_create_symlink (repo, icons_flatpak_mtree, "64x64", "../64x64", error))
+    return FALSE;
+  if (!flatpak_mtree_create_symlink (repo, icons_flatpak_mtree, "128x128", "../128x128", error))
+    return FALSE;
+
+  appstream_root = flatpak_appstream_xml_new ();
+
+  for (guint i = 0; i < included_refs->len; i++)
+    {
+      FlatpakDecomposed *ref = g_ptr_array_index (included_refs, i);
+      g_autoptr(GError) my_error = NULL;
+      g_autofree char *id = flatpak_decomposed_dup_id (ref);
+
       if (!extract_appstream (repo, appstream_root,
                               ref, id, size1_mtree, size2_mtree,
                               appstream_sources,
@@ -3541,6 +3600,8 @@ _flatpak_repo_generate_appstream (OstreeRepo   *repo,
                                  "s", (collection_id != NULL) ? collection_id : "");
           g_variant_dict_insert_value (metadata_dict, "ostree.ref-binding",
                                        g_variant_new_strv ((const gchar * const *) &branch, 1));
+          g_variant_dict_insert_value (metadata_dict, "xa.appstream-refs",
+                                       g_variant_ref (current_appstream_refs));
           metadata = g_variant_ref_sink (g_variant_dict_end (metadata_dict));
 
           if (timestamp > 0)
@@ -3698,6 +3759,7 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
                                                  gpg_homedir,
                                                  all_refs_keys,
                                                  n_keys,
+                                                 all_refs,
                                                  all_commits,
                                                  appstream_sources,
                                                  arch,
