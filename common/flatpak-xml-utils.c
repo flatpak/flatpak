@@ -165,9 +165,11 @@ flatpak_xml_to_string (FlatpakXml *node, GString *res)
             {
               for (i = 0; node->attribute_names[i] != NULL; i++)
                 {
-                  g_string_append_printf (res, " %s=\"%s\"",
-                                          node->attribute_names[i],
-                                          node->attribute_values[i]);
+                  g_string_append_c (res, ' ');
+                  g_string_append (res, node->attribute_names[i]);
+                  g_string_append (res, "=\"");
+                  g_string_append (res, node->attribute_values[i]);
+                  g_string_append_c (res, '"');
                 }
             }
           if (node->first_child == NULL)
@@ -185,13 +187,22 @@ flatpak_xml_to_string (FlatpakXml *node, GString *res)
       if (node->parent != NULL)
         {
           if (node->first_child != NULL)
-            g_string_append_printf (res, "</%s>", node->element_name);
+            {
+              g_string_append (res, "</");
+              g_string_append (res, node->element_name);
+              g_string_append_c (res, '>');
+            }
         }
     }
   else if (node->text)
     {
-      g_autofree char *escaped = g_markup_escape_text (node->text, -1);
-      g_string_append (res, escaped);
+      if (strpbrk (node->text, "<&>'\"") == NULL)
+        g_string_append (res, node->text);
+      else
+        {
+          g_autofree char *escaped = g_markup_escape_text (node->text, -1);
+          g_string_append (res, escaped);
+        }
     }
 }
 
