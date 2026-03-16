@@ -500,6 +500,21 @@ validate_component (FlatpakXml *component,
   return TRUE;
 }
 
+static FlatpakXml *
+flatpak_xml_copy (FlatpakXml *node)
+{
+  FlatpakXml *copy = flatpak_xml_new (node->element_name);
+
+  copy->attribute_names = g_strdupv (node->attribute_names);
+  copy->attribute_values = g_strdupv (node->attribute_values);
+  copy->text = g_strdup (node->text);
+
+  for (FlatpakXml *child = node->first_child; child != NULL; child = child->next_sibling)
+    flatpak_xml_add (copy, flatpak_xml_copy (child));
+
+  return copy;
+}
+
 gboolean
 flatpak_appstream_xml_migrate (FlatpakXml *source,
                                FlatpakXml *dest,
@@ -510,7 +525,6 @@ flatpak_appstream_xml_migrate (FlatpakXml *source,
   FlatpakXml *source_components;
   FlatpakXml *dest_components;
   FlatpakXml *component;
-  FlatpakXml *prev_component;
   gboolean migrated = FALSE;
   g_auto(GStrv) tags = NULL;
   g_autofree const char *runtime = NULL;
@@ -537,23 +551,17 @@ flatpak_appstream_xml_migrate (FlatpakXml *source,
   dest_components = dest->first_child;
 
   component = source_components->first_child;
-  prev_component = NULL;
   while (component != NULL)
     {
-      FlatpakXml *next = component->next_sibling;
+      g_autoptr(FlatpakXml) component_copy = flatpak_xml_copy (component);
 
-      if (validate_component (component, ref, id, tags, runtime, sdk))
+      if (validate_component (component_copy, ref, id, tags, runtime, sdk))
         {
-          flatpak_xml_add (dest_components,
-                           flatpak_xml_unlink (component, prev_component));
+          flatpak_xml_add (dest_components, g_steal_pointer (&component_copy));
           migrated = TRUE;
         }
-      else
-        {
-          prev_component = component;
-        }
 
-      component = next;
+      component = component->next_sibling;
     }
 
   return migrated;

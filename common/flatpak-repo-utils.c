@@ -3121,6 +3121,27 @@ flatpak_mtree_ensure_dir_metadata (OstreeRepo        *repo,
   return TRUE;
 }
 
+typedef struct
+{
+  FlatpakXml *xml_root;
+  GKeyFile *keyfile;
+  GFile *icons_dir;
+} FlatpakAppstreamSource;
+
+static void
+flatpak_appstream_source_free (FlatpakAppstreamSource *source)
+{
+  if (source == NULL)
+    return;
+
+  g_clear_pointer (&source->xml_root, flatpak_xml_free);
+  g_clear_pointer (&source->keyfile, g_key_file_unref);
+  g_clear_object (&source->icons_dir);
+  g_free (source);
+}
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakAppstreamSource, flatpak_appstream_source_free)
+
 static gboolean
 copy_icon (const char        *id,
            GFile             *icons_dir,
@@ -3148,30 +3169,26 @@ copy_icon (const char        *id,
 }
 
 static gboolean
-extract_appstream (OstreeRepo        *repo,
-                   FlatpakXml        *appstream_root,
-                   FlatpakDecomposed *ref,
-                   const char        *id,
-                   OstreeMutableTree *size1_mtree,
-                   OstreeMutableTree *size2_mtree,
-                   GCancellable       *cancellable,
-                   GError            **error)
+load_appstream_source (OstreeRepo              *repo,
+                       FlatpakDecomposed       *ref,
+                       const char              *id,
+                       GCancellable            *cancellable,
+                       FlatpakAppstreamSource **out_source,
+                       GError                 **error)
 {
   g_autoptr(GFile) root = NULL;
   g_autoptr(GFile) app_info_dir = NULL;
   g_autoptr(GFile) xmls_dir = NULL;
-  g_autoptr(GFile) icons_dir = NULL;
   g_autoptr(GFile) appstream_file = NULL;
   g_autoptr(GFile) metadata = NULL;
   g_autofree char *appstream_basename = NULL;
   g_autoptr(GInputStream) in = NULL;
-  g_autoptr(FlatpakXml) xml_root = NULL;
-  g_autoptr(GKeyFile) keyfile = NULL;
+  g_autoptr(FlatpakAppstreamSource) source = g_new0 (FlatpakAppstreamSource, 1);
 
   if (!ostree_repo_read_commit (repo, flatpak_decomposed_get_ref (ref), &root, NULL, NULL, error))
     return FALSE;
 
-  keyfile = g_key_file_new ();
+  source->keyfile = g_key_file_new ();
   metadata = g_file_get_child (root, "metadata");
   if (g_file_query_exists (metadata, cancellable))
     {
@@ -3181,28 +3198,62 @@ extract_appstream (OstreeRepo        *repo,
       if (!g_file_load_contents (metadata, cancellable, &content, &len, NULL, error))
         return FALSE;
 
-      if (!g_key_file_load_from_data (keyfile, content, len, G_KEY_FILE_NONE, error))
+      if (!g_key_file_load_from_data (source->keyfile, content, len, G_KEY_FILE_NONE, error))
         return FALSE;
     }
 
   app_info_dir = g_file_resolve_relative_path (root, "files/share/app-info");
-
   xmls_dir = g_file_resolve_relative_path (app_info_dir, "xmls");
-  icons_dir = g_file_resolve_relative_path (app_info_dir, "icons/flatpak");
+  source->icons_dir = g_file_resolve_relative_path (app_info_dir, "icons/flatpak");
 
   appstream_basename = g_strconcat (id, ".xml.gz", NULL);
   appstream_file = g_file_get_child (xmls_dir, appstream_basename);
-
   in = (GInputStream *) g_file_read (appstream_file, cancellable, error);
-  if (!in)
+  if (in == NULL)
     return FALSE;
 
-  xml_root = flatpak_xml_parse (in, TRUE, cancellable, error);
-  if (xml_root == NULL)
+  source->xml_root = flatpak_xml_parse (in, TRUE, cancellable, error);
+  if (source->xml_root == NULL)
     return FALSE;
 
-  if (flatpak_appstream_xml_migrate (xml_root, appstream_root,
-                                     flatpak_decomposed_get_ref (ref), id, keyfile))
+  *out_source = g_steal_pointer (&source);
+  return TRUE;
+}
+
+static gboolean
+extract_appstream (OstreeRepo        *repo,
+                   FlatpakXml        *appstream_root,
+                   FlatpakDecomposed *ref,
+                   const char        *id,
+                   OstreeMutableTree *size1_mtree,
+                   OstreeMutableTree *size2_mtree,
+                   GHashTable        *appstream_sources,
+                   GCancellable       *cancellable,
+                   GError            **error)
+{
+  FlatpakAppstreamSource *source = NULL;
+  g_autoptr(FlatpakAppstreamSource) owned_source = NULL;
+
+  if (appstream_sources != NULL)
+    source = g_hash_table_lookup (appstream_sources, ref);
+
+  if (source == NULL)
+    {
+      if (!load_appstream_source (repo, ref, id, cancellable, &owned_source, error))
+        return FALSE;
+
+      source = owned_source;
+
+      if (appstream_sources != NULL)
+        {
+          g_hash_table_insert (appstream_sources,
+                               flatpak_decomposed_ref (ref),
+                               g_steal_pointer (&owned_source));
+        }
+    }
+
+  if (flatpak_appstream_xml_migrate (source->xml_root, appstream_root,
+                                     flatpak_decomposed_get_ref (ref), id, source->keyfile))
     {
       g_autoptr(GError) my_error = NULL;
       FlatpakXml *components = appstream_root->first_child;
@@ -3238,13 +3289,13 @@ extract_appstream (OstreeRepo        *repo,
               continue;
             }
 
-          if (!copy_icon (component_id_text, icons_dir, repo, size1_mtree, "64x64", &my_error))
+          if (!copy_icon (component_id_text, source->icons_dir, repo, size1_mtree, "64x64", &my_error))
             {
               g_print (_("Error copying 64x64 icon for component %s: %s\n"), component_id_text, my_error->message);
               g_clear_error (&my_error);
             }
 
-          if (!copy_icon (component_id_text, icons_dir, repo, size2_mtree, "128x128", &my_error))
+          if (!copy_icon (component_id_text, source->icons_dir, repo, size2_mtree, "128x128", &my_error))
              {
                g_print (_("Error copying 128x128 icon for component %s: %s\n"), component_id_text, my_error->message);
                g_clear_error (&my_error);
@@ -3303,6 +3354,7 @@ _flatpak_repo_generate_appstream (OstreeRepo   *repo,
                                   FlatpakDecomposed **all_refs_keys,
                                   guint         n_keys,
                                   GHashTable   *all_commits,
+                                  GHashTable   *appstream_sources,
                                   const char   *arch,
                                   const char   *subset,
                                   guint64       timestamp,
@@ -3417,6 +3469,7 @@ _flatpak_repo_generate_appstream (OstreeRepo   *repo,
       id = flatpak_decomposed_dup_id (ref);
       if (!extract_appstream (repo, appstream_root,
                               ref, id, size1_mtree, size2_mtree,
+                              appstream_sources,
                               cancellable, &my_error))
         {
           if (flatpak_decomposed_is_app (ref))
@@ -3558,6 +3611,7 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
   guint n_keys;
   g_autoptr(GPtrArray) arches = NULL;  /* (element-type utf8 utf8) */
   g_autoptr(GPtrArray) subsets = NULL;  /* (element-type utf8 utf8) */
+  g_autoptr(GHashTable) appstream_sources = NULL;
   g_autoptr(FlatpakRepoTransaction) transaction = NULL;
   OstreeRepoTransactionStats stats;
 
@@ -3620,6 +3674,12 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
   g_ptr_array_sort (subsets, flatpak_strcmp0_ptr);
   g_ptr_array_sort (arches, flatpak_strcmp0_ptr);
 
+  if (subsets->len > 1)
+    appstream_sources = g_hash_table_new_full ((GHashFunc) flatpak_decomposed_hash,
+                                               (GEqualFunc) flatpak_decomposed_equal,
+                                               (GDestroyNotify) flatpak_decomposed_unref,
+                                               (GDestroyNotify) flatpak_appstream_source_free);
+
   all_refs_keys = (FlatpakDecomposed **) g_hash_table_get_keys_as_array (all_refs, &n_keys);
 
   /* Sort refs so that appdata order is stable for e.g. deltas */
@@ -3644,6 +3704,7 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
                                                  all_refs_keys,
                                                  n_keys,
                                                  all_commits,
+                                                 appstream_sources,
                                                  arch,
                                                  subset,
                                                  timestamp,
