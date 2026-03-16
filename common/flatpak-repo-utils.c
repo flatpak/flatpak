@@ -3061,31 +3061,18 @@ flatpak_mtree_add_file_from_bytes (OstreeRepo *repo,
                                    GCancellable *cancellable,
                                    GError      **error)
 {
-  g_autoptr(GFileInfo) info = g_file_info_new ();
-  g_autoptr(GInputStream) memstream = NULL;
-  g_autoptr(GInputStream) content_stream = NULL;
-  g_autofree guchar *raw_checksum = NULL;
+  gconstpointer data;
+  gsize len;
   g_autofree char *checksum = NULL;
-  guint64 length;
 
-  g_file_info_set_attribute_uint32 (info, "standard::type", G_FILE_TYPE_REGULAR);
-  g_file_info_set_attribute_uint64 (info, "standard::size", g_bytes_get_size (bytes));
-  g_file_info_set_attribute_uint32 (info, "unix::uid", 0);
-  g_file_info_set_attribute_uint32 (info, "unix::gid", 0);
-  g_file_info_set_attribute_uint32 (info, "unix::mode", S_IFREG | 0644);
-
-  memstream = g_memory_input_stream_new_from_bytes (bytes);
-
-  if (!ostree_raw_file_to_content_stream (memstream, info, NULL,
-                                          &content_stream, &length,
-                                          cancellable, error))
+  data = g_bytes_get_data (bytes, &len);
+  checksum = ostree_repo_write_regfile_inline (repo, NULL,
+                                               0, 0, S_IFREG | 0644,
+                                               NULL,
+                                               data, len,
+                                               cancellable, error);
+  if (checksum == NULL)
     return FALSE;
-
-  if (!ostree_repo_write_content (repo, NULL, content_stream, length,
-                                  &raw_checksum, cancellable, error))
-    return FALSE;
-
-  checksum = ostree_checksum_from_bytes (raw_checksum);
 
   if (!ostree_mutable_tree_replace_file (parent, filename, checksum, error))
     return FALSE;
