@@ -1,0 +1,6156 @@
+# Esperanto translation for flatpak.
+# Copyright (C) 2026 flatpak's COPYRIGHT HOLDER
+# This file is distributed under the same license as the flatpak package.
+# Kristjan SCHMIDT <kristjan.schmidt@googlemail.com>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: flatpak master\n"
+"Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
+"POT-Creation-Date: 2026-03-19 23:40+0000\n"
+"PO-Revision-Date: 2026-03-20 11:07+0100\n"
+"Last-Translator: Kristjan SCHMIDT <kristjan.schmidt@googlemail.com>\n"
+"Language-Team: Esperanto <gnome-eo-list@gnome.org>\n"
+"Language: eo\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Gtranslator 49.0\n"
+
+#: app/flatpak-builtins-build-bundle.c:59
+msgid "Export runtime instead of app"
+msgstr "Eksporti rultempon anstataŭ aplikaĵon"
+
+#: app/flatpak-builtins-build-bundle.c:60
+msgid "Arch to bundle for"
+msgstr "Arko al pakaĵo por"
+
+#: app/flatpak-builtins-build-bundle.c:60
+#: app/flatpak-builtins-build-export.c:62 app/flatpak-builtins-build-init.c:53
+#: app/flatpak-builtins-build-sign.c:42 app/flatpak-builtins-create-usb.c:46
+#: app/flatpak-builtins-info.c:55 app/flatpak-builtins-install.c:67
+#: app/flatpak-builtins-list.c:50 app/flatpak-builtins-make-current.c:38
+#: app/flatpak-builtins-remote-info.c:54 app/flatpak-builtins-remote-ls.c:56
+#: app/flatpak-builtins-run.c:67 app/flatpak-builtins-search.c:37
+#: app/flatpak-builtins-uninstall.c:54 app/flatpak-builtins-update.c:56
+msgid "ARCH"
+msgstr "ARCH"
+
+#: app/flatpak-builtins-build-bundle.c:61
+msgid "URL for repo"
+msgstr "URL por repo"
+
+#: app/flatpak-builtins-build-bundle.c:61
+#: app/flatpak-builtins-build-bundle.c:62
+#: app/flatpak-builtins-build-update-repo.c:68
+#: app/flatpak-builtins-build-update-repo.c:72
+#: app/flatpak-builtins-build-update-repo.c:73
+#: app/flatpak-builtins-history.c:69 app/flatpak-builtins-remote-add.c:80
+#: app/flatpak-builtins-remote-add.c:81 app/flatpak-builtins-remote-add.c:85
+#: app/flatpak-builtins-remote-list.c:53
+#: app/flatpak-builtins-remote-modify.c:70
+#: app/flatpak-builtins-remote-modify.c:85
+#: app/flatpak-builtins-remote-modify.c:86
+#: app/flatpak-builtins-remote-modify.c:90
+msgid "URL"
+msgstr "URL"
+
+#: app/flatpak-builtins-build-bundle.c:62
+msgid "URL for runtime flatpakrepo file"
+msgstr "URL por rultempa flatpakrepo-dosiero"
+
+#: app/flatpak-builtins-build-bundle.c:63
+msgid "Add GPG key from FILE (- for stdin)"
+msgstr "Aldoni GPG-ŝlosilon el DOSIERO (- por stdin)"
+
+#: app/flatpak-builtins-build-bundle.c:63 app/flatpak-builtins-build.c:54
+#: app/flatpak-builtins-build-export.c:67
+#: app/flatpak-builtins-build-update-repo.c:83
+#: app/flatpak-builtins-install.c:81 app/flatpak-builtins-remote-add.c:84
+#: app/flatpak-builtins-remote-add.c:86 app/flatpak-builtins-remote-modify.c:89
+#: app/flatpak-builtins-remote-modify.c:92
+msgid "FILE"
+msgstr "DOSIERO"
+
+#: app/flatpak-builtins-build-bundle.c:64
+msgid "GPG Key ID to sign the OCI image with"
+msgstr "GPG Key ID por subskribi la OCI-bildon per"
+
+#: app/flatpak-builtins-build-bundle.c:64
+#: app/flatpak-builtins-build-commit-from.c:68
+#: app/flatpak-builtins-build-export.c:68
+#: app/flatpak-builtins-build-import-bundle.c:49
+#: app/flatpak-builtins-build-sign.c:44
+#: app/flatpak-builtins-build-update-repo.c:84
+msgid "KEY-ID"
+msgstr "KEY-ID"
+
+#: app/flatpak-builtins-build-bundle.c:65
+#: app/flatpak-builtins-build-commit-from.c:69
+#: app/flatpak-builtins-build-export.c:71
+#: app/flatpak-builtins-build-import-bundle.c:50
+#: app/flatpak-builtins-build-sign.c:45
+#: app/flatpak-builtins-build-update-repo.c:85
+msgid "GPG Homedir to use when looking for keyrings"
+msgstr "GPG Homedir por uzi kiam vi serĉas ŝlosilringojn"
+
+#: app/flatpak-builtins-build-bundle.c:65
+#: app/flatpak-builtins-build-commit-from.c:69
+#: app/flatpak-builtins-build-export.c:71
+#: app/flatpak-builtins-build-import-bundle.c:50
+#: app/flatpak-builtins-build-sign.c:45
+#: app/flatpak-builtins-build-update-repo.c:85
+msgid "HOMEDIR"
+msgstr "HOMEDIR"
+
+#: app/flatpak-builtins-build-bundle.c:66
+msgid "OSTree commit to create a delta bundle from"
+msgstr "OSTree kompromitas krei deltan pakaĵon el"
+
+#: app/flatpak-builtins-build-bundle.c:66 app/flatpak-builtins-remote-info.c:55
+#: app/flatpak-builtins-update.c:57
+msgid "COMMIT"
+msgstr "COMMIT"
+
+#: app/flatpak-builtins-build-bundle.c:67
+msgid "Export oci image instead of flatpak bundle"
+msgstr "Eksporti oci-bildon anstataŭ flatpak-faskon"
+
+#: app/flatpak-builtins-build-bundle.c:70
+msgid "How to compress OCI image layers (default: gzip)"
+msgstr "Kiel kunpremi OCI-bildtavolojn (defaŭlte: gzip)"
+
+#: app/flatpak-builtins-build-bundle.c:634
+msgid ""
+"LOCATION FILENAME NAME [BRANCH] - Create a single file bundle from a local "
+"repository"
+msgstr ""
+"LOKO DOSIERONOMO [BRANĈO] - Krei ununuran dosierpakaĵon el loka deponejo"
+
+#: app/flatpak-builtins-build-bundle.c:641
+msgid "LOCATION, FILENAME and NAME must be specified"
+msgstr "LOKO, FILENAME kaj NAME devas esti specifitaj"
+
+#: app/flatpak-builtins-build-bundle.c:644
+#: app/flatpak-builtins-build-export.c:844
+#: app/flatpak-builtins-build-import-bundle.c:136
+#: app/flatpak-builtins-build-init.c:217 app/flatpak-builtins-build-sign.c:76
+#: app/flatpak-builtins-document-export.c:112
+#: app/flatpak-builtins-document-info.c:75
+#: app/flatpak-builtins-document-list.c:191
+#: app/flatpak-builtins-document-unexport.c:70
+#: app/flatpak-builtins-history.c:482 app/flatpak-builtins-info.c:130
+#: app/flatpak-builtins-install.c:181 app/flatpak-builtins-install.c:234
+#: app/flatpak-builtins-install.c:298 app/flatpak-builtins-list.c:419
+#: app/flatpak-builtins-make-current.c:72 app/flatpak-builtins-override.c:73
+#: app/flatpak-builtins-permission-list.c:162
+#: app/flatpak-builtins-permission-remove.c:132
+#: app/flatpak-builtins-remote-add.c:323
+#: app/flatpak-builtins-remote-delete.c:68
+#: app/flatpak-builtins-remote-list.c:241 app/flatpak-builtins-remote-ls.c:407
+msgid "Too many arguments"
+msgstr "Tro da argumentoj"
+
+#: app/flatpak-builtins-build-bundle.c:659
+#: app/flatpak-builtins-build-commit-from.c:338
+#: app/flatpak-builtins-build-commit-from.c:351
+#: app/flatpak-builtins-build-import-bundle.c:145
+#, c-format
+msgid "'%s' is not a valid repository"
+msgstr "'%s' ne estas valida deponejo"
+
+#: app/flatpak-builtins-build-bundle.c:663
+#, c-format
+msgid "'%s' is not a valid repository: "
+msgstr "'%s' ne estas valida deponejo:"
+
+#: app/flatpak-builtins-build-bundle.c:674 app/flatpak-builtins-build-sign.c:88
+#: common/flatpak-dir.c:14253
+#, c-format
+msgid "'%s' is not a valid name: %s"
+msgstr "'%s' ne estas valida nomo: %s"
+
+#: app/flatpak-builtins-build-bundle.c:677
+#: app/flatpak-builtins-build-export.c:865 app/flatpak-builtins-build-sign.c:91
+#: common/flatpak-dir.c:14259
+#, c-format
+msgid "'%s' is not a valid branch name: %s"
+msgstr "'%s' ne estas valida filionomo: %s"
+
+#: app/flatpak-builtins-build-bundle.c:691
+#: app/flatpak-builtins-build-import-bundle.c:149
+#: app/flatpak-builtins-build-init.c:281
+#, c-format
+msgid "'%s' is not a valid filename"
+msgstr "'%s' ne estas valida dosiernomo"
+
+#: app/flatpak-builtins-build-bundle.c:706
+msgid "--oci-layer-compress value must be gzip or zstd"
+msgstr "--oci-layer-compress valoro devas esti gzip aŭ zstd"
+
+#: app/flatpak-builtins-build.c:49
+msgid "Use Platform runtime rather than Sdk"
+msgstr "Uzi la rultempon de Platformo anstataŭ Sdk"
+
+#: app/flatpak-builtins-build.c:50
+msgid "Make destination readonly"
+msgstr "Fari celon nur legebla"
+
+#: app/flatpak-builtins-build.c:51
+msgid "Add bind mount"
+msgstr "Aldoni bind-monton"
+
+#: app/flatpak-builtins-build.c:51
+msgid "DEST=SRC"
+msgstr "DEST=SRC"
+
+#: app/flatpak-builtins-build.c:52
+msgid "Start build in this directory"
+msgstr "Komenci konstrui en ĉi tiu dosierujo"
+
+#: app/flatpak-builtins-build.c:52 app/flatpak-builtins-build.c:53
+#: app/flatpak-builtins-build-init.c:64 app/flatpak-builtins-run.c:69
+msgid "DIR"
+msgstr "DIR"
+
+#: app/flatpak-builtins-build.c:53
+msgid "Where to look for custom sdk dir (defaults to 'usr')"
+msgstr "Kie serĉi kutiman sdk-diraĵon (defaŭlte al 'usr')"
+
+#: app/flatpak-builtins-build.c:54 app/flatpak-builtins-build-export.c:67
+msgid "Use alternative file for the metadata"
+msgstr "Uzi alternativan dosieron por la metadatumoj"
+
+#: app/flatpak-builtins-build.c:55 app/flatpak-builtins-run.c:86
+msgid "Kill processes when the parent process dies"
+msgstr "Mortigi procezojn kiam la gepatra procezo mortas"
+
+#: app/flatpak-builtins-build.c:56
+msgid "Export application homedir directory to build"
+msgstr "Elporti aplikaĵon homedir-dosierujon por konstrui"
+
+#: app/flatpak-builtins-build.c:57 app/flatpak-builtins-run.c:74
+msgid "Log session bus calls"
+msgstr "Ensaluti sesiajn busvokojn"
+
+#: app/flatpak-builtins-build.c:58 app/flatpak-builtins-run.c:75
+msgid "Log system bus calls"
+msgstr "Ensaluti sistemajn busalvokojn"
+
+#: app/flatpak-builtins-build.c:262
+msgid "DIRECTORY [COMMAND [ARGUMENT…]] - Build in directory"
+msgstr "DIRECTORY [KOMANDO [ARGUMENTO...]] - Konstrui en dosierujo"
+
+#: app/flatpak-builtins-build.c:285 app/flatpak-builtins-build-finish.c:656
+msgid "DIRECTORY must be specified"
+msgstr "DIRECTORY devas esti specifita"
+
+#: app/flatpak-builtins-build.c:296 app/flatpak-builtins-build-export.c:887
+#, c-format
+msgid "Build directory %s not initialized, use flatpak build-init"
+msgstr "Konstrua dosierujo %s ne pravigita, uzi flatpak build-init"
+
+#: app/flatpak-builtins-build.c:315
+msgid "metadata invalid, not application or runtime"
+msgstr "metadatenoj nevalidaj, ne aplikaĵo aŭ rultempo"
+
+#: app/flatpak-builtins-build.c:446
+#, c-format
+msgid "No extension point matching %s in %s"
+msgstr "Neniu etendpunkto kongrua kun %s en %s"
+
+#: app/flatpak-builtins-build.c:629
+#, c-format
+msgid "Missing '=' in bind mount option '%s'"
+msgstr "Mankas '=' en bind munta opcio '%s'"
+
+#: app/flatpak-builtins-build.c:673 common/flatpak-run.c:3710
+msgid "Unable to start app"
+msgstr "Ne eblas lanĉi la apon"
+
+#: app/flatpak-builtins-build-commit-from.c:58
+msgid "Source repo dir"
+msgstr "Font-repo dir"
+
+#: app/flatpak-builtins-build-commit-from.c:58
+msgid "SRC-REPO"
+msgstr "SRC-REPO"
+
+#: app/flatpak-builtins-build-commit-from.c:59
+msgid "Source repo ref"
+msgstr "Fonta deponejo ref"
+
+#: app/flatpak-builtins-build-commit-from.c:59
+msgid "SRC-REF"
+msgstr "SRC-REF"
+
+#: app/flatpak-builtins-build-commit-from.c:64
+#: app/flatpak-builtins-build-export.c:60
+msgid "One line subject"
+msgstr "Unulinia temo"
+
+#: app/flatpak-builtins-build-commit-from.c:64
+#: app/flatpak-builtins-build-export.c:60
+msgid "SUBJECT"
+msgstr "SUBJECT"
+
+#: app/flatpak-builtins-build-commit-from.c:65
+#: app/flatpak-builtins-build-export.c:61
+msgid "Full description"
+msgstr "Plena priskribo"
+
+#: app/flatpak-builtins-build-commit-from.c:65
+#: app/flatpak-builtins-build-export.c:61
+msgid "BODY"
+msgstr "BODY"
+
+#: app/flatpak-builtins-build-commit-from.c:66
+#: app/flatpak-builtins-build-export.c:64
+#: app/flatpak-builtins-build-import-bundle.c:51
+msgid "Update the appstream branch"
+msgstr "Ĝisdatigi la branĉon de appstream"
+
+#: app/flatpak-builtins-build-commit-from.c:67
+#: app/flatpak-builtins-build-export.c:65
+#: app/flatpak-builtins-build-import-bundle.c:52
+#: app/flatpak-builtins-build-update-repo.c:87
+msgid "Don't update the summary"
+msgstr "Ne ĝisdatigi la resumon"
+
+#: app/flatpak-builtins-build-commit-from.c:68
+#: app/flatpak-builtins-build-export.c:68
+#: app/flatpak-builtins-build-import-bundle.c:49
+#: app/flatpak-builtins-build-sign.c:44
+msgid "GPG Key ID to sign the commit with"
+msgstr "GPG-Ŝlosila ID por subskribi la kompromison"
+
+#: app/flatpak-builtins-build-commit-from.c:70
+#: app/flatpak-builtins-build-export.c:73
+msgid "Mark build as end-of-life"
+msgstr "Marki konstruon kiel finon de vivo"
+
+#: app/flatpak-builtins-build-commit-from.c:70
+#: app/flatpak-builtins-build-export.c:73
+msgid "REASON"
+msgstr "REASON"
+
+#: app/flatpak-builtins-build-commit-from.c:71
+msgid ""
+"Mark refs matching the OLDID prefix as end-of-life, to be replaced with the "
+"given NEWID"
+msgstr ""
+"Marki refs kongruantajn la OLDID-prefikson kiel finon de vivo, por esti "
+"anstataŭigitaj per la donita NEWID"
+
+#: app/flatpak-builtins-build-commit-from.c:71
+msgid "OLDID=NEWID"
+msgstr "OLDID=NOVA"
+
+#: app/flatpak-builtins-build-commit-from.c:72
+#: app/flatpak-builtins-build-export.c:75
+msgid "Set type of token needed to install this commit"
+msgstr "Agordi tipon de ĵetono necesa por instali ĉi tiun kommit"
+
+#: app/flatpak-builtins-build-commit-from.c:72
+#: app/flatpak-builtins-build-export.c:75
+msgid "VAL"
+msgstr "VALUE"
+
+#: app/flatpak-builtins-build-commit-from.c:73
+msgid "Override the timestamp of the commit (NOW for current time)"
+msgstr "Anstataŭigi la tempomarkon de la transdono (NUN por la nuna tempo)"
+
+#: app/flatpak-builtins-build-commit-from.c:73
+#: app/flatpak-builtins-build-export.c:76
+msgid "TIMESTAMP"
+msgstr "TIMESTAMP"
+
+#: app/flatpak-builtins-build-commit-from.c:75
+#: app/flatpak-builtins-build-export.c:80
+#: app/flatpak-builtins-build-import-bundle.c:53
+#: app/flatpak-builtins-build-update-repo.c:97
+msgid "Don't generate a summary index"
+msgstr "Ne ĝisdatigi la resumon"
+
+#: app/flatpak-builtins-build-commit-from.c:278
+msgid "DST-REPO [DST-REF…] - Make a new commit from existing commits"
+msgstr "DST-REPO [DST-REF...] - Fari novan kommit el ekzistantaj kommits"
+
+#: app/flatpak-builtins-build-commit-from.c:285
+msgid "DST-REPO must be specified"
+msgstr "DST-REPO devas esti specifita"
+
+#: app/flatpak-builtins-build-commit-from.c:293
+msgid ""
+"If --src-repo is not specified, exactly one destination ref must be specified"
+msgstr ""
+"Se --src-repo ne estas specifita, precize unu celreferenco devas esti "
+"specifita"
+
+#: app/flatpak-builtins-build-commit-from.c:296
+msgid ""
+"If --src-ref is specified, exactly one destination ref must be specified"
+msgstr "Se --src-ref estas specifita, precize unu celref devas esti specifita"
+
+#: app/flatpak-builtins-build-commit-from.c:299
+msgid "Either --src-repo or --src-ref must be specified"
+msgstr "Aŭ --src-repo aŭ --src-ref devas esti specifitaj."
+
+#: app/flatpak-builtins-build-commit-from.c:315
+msgid "Invalid argument format of use  --end-of-life-rebase=OLDID=NEWID"
+msgstr "Nevalida argumentformato de uzo --end-of-life-rebase=OLDID=NEWID"
+
+#: app/flatpak-builtins-build-commit-from.c:321
+#: app/flatpak-builtins-build-commit-from.c:324
+#, c-format
+msgid "Invalid name %s in --end-of-life-rebase"
+msgstr "Nevalida nomo %s en --end-of-life-rebase"
+
+#: app/flatpak-builtins-build-commit-from.c:333
+#: app/flatpak-builtins-build-export.c:1092
+#, c-format
+msgid "Could not parse '%s'"
+msgstr "Ne eblis analizi '%s'"
+
+#: app/flatpak-builtins-build-commit-from.c:498
+msgid "Can't commit from partial source commit"
+msgstr "Ne povas fari de parta fonto."
+
+#: app/flatpak-builtins-build-commit-from.c:503
+#, c-format
+msgid "%s: no change\n"
+msgstr "%s: neniu ŝanĝo\n"
+
+#: app/flatpak-builtins-build-export.c:62
+msgid "Architecture to export for (must be host compatible)"
+msgstr "Arkitekturo por eksporti (devas esti gastiganto kongrua)"
+
+#: app/flatpak-builtins-build-export.c:63
+msgid "Commit runtime (/usr), not /app"
+msgstr "Fari rultempon (/usr), ne /app"
+
+#: app/flatpak-builtins-build-export.c:66
+msgid "Use alternative directory for the files"
+msgstr "Uzi alternativan dosierujon por la dosieroj"
+
+#: app/flatpak-builtins-build-export.c:66
+msgid "SUBDIR"
+msgstr "SUBDIR"
+
+#: app/flatpak-builtins-build-export.c:69
+msgid "Files to exclude"
+msgstr "Dosieroj por ekskludi"
+
+#: app/flatpak-builtins-build-export.c:69
+#: app/flatpak-builtins-build-export.c:70
+#: app/flatpak-builtins-build-update-repo.c:90
+msgid "PATTERN"
+msgstr "PATTERN"
+
+#: app/flatpak-builtins-build-export.c:70
+msgid "Excluded files to include"
+msgstr "Ekskluditaj dosieroj por inkluzivi"
+
+#: app/flatpak-builtins-build-export.c:74
+msgid "Mark build as end-of-life, to be replaced with the given ID"
+msgstr ""
+"Marki konstruaĵon kiel finon de vivo, por esti anstataŭigita per la donita "
+"identigilo"
+
+#: app/flatpak-builtins-build-export.c:74
+#: app/flatpak-builtins-document-list.c:49 app/flatpak-cli-transaction.c:1427
+msgid "ID"
+msgstr "ID"
+
+#: app/flatpak-builtins-build-export.c:76
+msgid "Override the timestamp of the commit"
+msgstr "Anstataŭigi la tempomarkon de la kommit"
+
+#: app/flatpak-builtins-build-export.c:77
+#: app/flatpak-builtins-build-update-repo.c:75
+#: app/flatpak-builtins-remote-add.c:83 app/flatpak-builtins-remote-list.c:54
+#: app/flatpak-builtins-remote-modify.c:88
+msgid "Collection ID"
+msgstr "Kolekta ID"
+
+#: app/flatpak-builtins-build-export.c:472
+#, c-format
+msgid "WARNING: Error running desktop-file-validate: %s\n"
+msgstr "AVERTO: Eraro pri funkciado de desktop-file-validate: %s\n"
+
+#: app/flatpak-builtins-build-export.c:480
+#, c-format
+msgid "WARNING: Error reading from desktop-file-validate: %s\n"
+msgstr "AVERTO: Eraro legante el desktop-file-validate: %s\n"
+
+#: app/flatpak-builtins-build-export.c:486
+#, c-format
+msgid "WARNING: Failed to validate desktop file %s: %s\n"
+msgstr "AVERTO: Malsukcesis validigi labortablan dosieron %s: %s\n"
+
+#: app/flatpak-builtins-build-export.c:513
+#, c-format
+msgid "WARNING: Can't find Exec key in %s: %s\n"
+msgstr "AVERTO: Ne povas trovi Exec-ŝlosilon en %s: %s\n"
+
+#: app/flatpak-builtins-build-export.c:521
+#: app/flatpak-builtins-build-export.c:614
+#, c-format
+msgid "WARNING: Binary not found for Exec line in %s: %s\n"
+msgstr "AVERTO: Binaro ne trovita por Exec-linio en %s: %s\n"
+
+#: app/flatpak-builtins-build-export.c:529
+#, c-format
+msgid "WARNING: Icon not matching app id in %s: %s\n"
+msgstr "AVERTO: Ikono ne kongruas kun la idilo de la aplikaĵo en %s: %s\n"
+
+#: app/flatpak-builtins-build-export.c:552
+#, c-format
+msgid "WARNING: Icon referenced in desktop file but not exported: %s\n"
+msgstr ""
+"AVERTO: Ikono referencita en labortabla dosiero sed ne eksportita: %s\n"
+
+#: app/flatpak-builtins-build-export.c:719
+#, c-format
+msgid "Invalid uri type %s, only http/https supported"
+msgstr "Nevalida uri-tipo %s, nur http/https subtenata"
+
+#: app/flatpak-builtins-build-export.c:737
+#, c-format
+msgid "Unable to find basename in %s, specify a name explicitly"
+msgstr "Ne eblas trovi baznomon en %s, specifi nomon eksplicite"
+
+#: app/flatpak-builtins-build-export.c:746
+msgid "No slashes allowed in extra data name"
+msgstr "Neniuj oblikvoj permesitaj en kroma datuma nomo"
+
+#: app/flatpak-builtins-build-export.c:758
+#, c-format
+msgid "Invalid format for sha256 checksum: '%s'"
+msgstr "Nevalida formato por sha256-kontrolsumo: '%s'"
+
+#: app/flatpak-builtins-build-export.c:768
+msgid "Extra data sizes of zero not supported"
+msgstr "Kromaj datumgrandoj de nulo ne subtenataj"
+
+#: app/flatpak-builtins-build-export.c:830
+msgid ""
+"LOCATION DIRECTORY [BRANCH] - Create a repository from a build directory"
+msgstr "LOKA DOSIERO [BRANĈO] - Krei deponejon el konstrua dosierujo"
+
+#: app/flatpak-builtins-build-export.c:838
+msgid "LOCATION and DIRECTORY must be specified"
+msgstr "LOKO kaj ADRESARO devas esti precizigitaj"
+
+#: app/flatpak-builtins-build-export.c:859
+#: app/flatpak-builtins-remote-add.c:327
+#, c-format
+msgid "‘%s’ is not a valid collection ID: %s"
+msgstr "‘%s’ ne estas valida kolekto ID: %s"
+
+#: app/flatpak-builtins-build-export.c:904
+#: app/flatpak-builtins-build-finish.c:684
+msgid "No name specified in the metadata"
+msgstr "Neniu nomo specifita en la metadatenoj"
+
+#: app/flatpak-builtins-build-export.c:1166
+#, c-format
+msgid "Commit: %s\n"
+msgstr "Faru: %s\n"
+
+#: app/flatpak-builtins-build-export.c:1167
+#, c-format
+msgid "Metadata Total: %u\n"
+msgstr "Sumo de metadatumoj: %u\n"
+
+#: app/flatpak-builtins-build-export.c:1168
+#, c-format
+msgid "Metadata Written: %u\n"
+msgstr "Metadatumoj Skribita: %u\n"
+
+#: app/flatpak-builtins-build-export.c:1169
+#, c-format
+msgid "Content Total: %u\n"
+msgstr "Enhavo Sumo: %u\n"
+
+#: app/flatpak-builtins-build-export.c:1170
+#, c-format
+msgid "Content Written: %u\n"
+msgstr "Enhavo Skribita: %u\n"
+
+#: app/flatpak-builtins-build-export.c:1171
+msgid "Content Bytes Written:"
+msgstr "Enhavaj bajtoj skribitaj:"
+
+#: app/flatpak-builtins-build-finish.c:52
+msgid "Command to set"
+msgstr "Komando por agordi"
+
+#: app/flatpak-builtins-build-finish.c:52 app/flatpak-builtins-run.c:68
+#: app/flatpak-main.c:209
+msgid "COMMAND"
+msgstr "COMMAND"
+
+#: app/flatpak-builtins-build-finish.c:53
+msgid "Flatpak version to require"
+msgstr "Flatpak-versio por postuli"
+
+#: app/flatpak-builtins-build-finish.c:53
+msgid "MAJOR.MINOR.MICRO"
+msgstr "MAJOR.MINOR.MICRO"
+
+#: app/flatpak-builtins-build-finish.c:54
+msgid "Don't process exports"
+msgstr "Ne prilabori eksportaĵojn"
+
+#: app/flatpak-builtins-build-finish.c:55
+msgid "Extra data info"
+msgstr "Kromaj datumoj informoj"
+
+#: app/flatpak-builtins-build-finish.c:56 app/flatpak-builtins-build-init.c:63
+msgid "Add extension point info"
+msgstr "Aldoni informojn pri etendpunkto"
+
+#: app/flatpak-builtins-build-finish.c:56 app/flatpak-builtins-build-init.c:63
+msgid "NAME=VARIABLE[=VALUE]"
+msgstr "NOMO=VARIABLE[=VALO]"
+
+#: app/flatpak-builtins-build-finish.c:57
+msgid "Remove extension point info"
+msgstr "Forigi informojn pri etendpunkto"
+
+#: app/flatpak-builtins-build-finish.c:57
+#: app/flatpak-builtins-build-update-repo.c:79 app/flatpak-builtins-info.c:58
+#: app/flatpak-builtins-remote-add.c:88 app/flatpak-builtins-remote-modify.c:94
+#: app/flatpak-main.c:182
+msgid "NAME"
+msgstr "NAME"
+
+#: app/flatpak-builtins-build-finish.c:58
+msgid "Set extension priority (only for extensions)"
+msgstr "Agordi etendan prioritaton (nur por etendaĵoj)"
+
+#: app/flatpak-builtins-build-finish.c:58
+msgid "VALUE"
+msgstr "VALUE"
+
+#: app/flatpak-builtins-build-finish.c:59
+msgid "Change the sdk used for the app"
+msgstr "Ŝanĝi la sdk uzatan por la programo"
+
+#: app/flatpak-builtins-build-finish.c:59
+msgid "SDK"
+msgstr "SDK"
+
+#: app/flatpak-builtins-build-finish.c:60
+msgid "Change the runtime used for the app"
+msgstr "Ŝanĝi la rultempon uzatan por la programo"
+
+#: app/flatpak-builtins-build-finish.c:60 app/flatpak-builtins-build-init.c:54
+#: app/flatpak-builtins-list.c:53 app/flatpak-builtins-remote-ls.c:58
+#: app/flatpak-builtins-run.c:72
+msgid "RUNTIME"
+msgstr "RUNTIME"
+
+#: app/flatpak-builtins-build-finish.c:61
+msgid "Set generic metadata option"
+msgstr "Agordi ĝeneralajn metadatumojn"
+
+#: app/flatpak-builtins-build-finish.c:61
+msgid "GROUP=KEY[=VALUE]"
+msgstr "GRUPO=ŝlosilo[=VALO]"
+
+#: app/flatpak-builtins-build-finish.c:62
+msgid "Don't inherit permissions from runtime"
+msgstr "Ne heredi permesojn de rultempo"
+
+#: app/flatpak-builtins-build-finish.c:155
+#, c-format
+msgid "Not exporting %s, wrong extension\n"
+msgstr "Ne eksportante %s, malĝusta etendo\n"
+
+#: app/flatpak-builtins-build-finish.c:163
+#, c-format
+msgid "Not exporting %s, non-allowed export filename\n"
+msgstr "Ne eksportante %s, nepermesata eksporta dosiernomo\n"
+
+#: app/flatpak-builtins-build-finish.c:167
+#, c-format
+msgid "Exporting %s\n"
+msgstr "Eksportante %s\n"
+
+#: app/flatpak-builtins-build-finish.c:440
+msgid "More than one executable found\n"
+msgstr "Pli ol unu ekzekutebla trovita\n"
+
+#: app/flatpak-builtins-build-finish.c:451
+#, c-format
+msgid "Using %s as command\n"
+msgstr "Uzante %s kiel komandon\n"
+
+#: app/flatpak-builtins-build-finish.c:456
+msgid "No executable found\n"
+msgstr "Neniu ekzekutebla trovita\n"
+
+#: app/flatpak-builtins-build-finish.c:511
+#, c-format
+msgid "Invalid --require-version argument: %s"
+msgstr "Nevalida --require-version argumento: %s"
+
+#: app/flatpak-builtins-build-finish.c:543
+#, c-format
+msgid "Too few elements in --extra-data argument %s"
+msgstr "Tro malmultaj elementoj en --extra-data argumento %s"
+
+#: app/flatpak-builtins-build-finish.c:575
+#, c-format
+msgid ""
+"Too few elements in --metadata argument %s, format should be "
+"GROUP=KEY[=VALUE]]"
+msgstr ""
+"Tro malmultaj elementoj en --metadata argumento %s, formato devus esti "
+"GROUP=KEY[=VALUE]]"
+
+#: app/flatpak-builtins-build-finish.c:597
+#: app/flatpak-builtins-build-init.c:458
+#, c-format
+msgid ""
+"Too few elements in --extension argument %s, format should be "
+"NAME=VAR[=VALUE]"
+msgstr ""
+"Tro malmultaj elementoj en --extension argumento %s, formato devus esti "
+"NAME=VAR[=VALUE]"
+
+#: app/flatpak-builtins-build-finish.c:603
+#: app/flatpak-builtins-build-init.c:461
+#, c-format
+msgid "Invalid extension name %s"
+msgstr "Nevalida dbus-nomo %s"
+
+#: app/flatpak-builtins-build-finish.c:646
+msgid "DIRECTORY - Finalize a build directory"
+msgstr "DIRECTORY - Finigi konstruan dosierujon"
+
+#: app/flatpak-builtins-build-finish.c:668
+#, c-format
+msgid "Build directory %s not initialized"
+msgstr "Konstrua dosierujo %s ne pravigita"
+
+#: app/flatpak-builtins-build-finish.c:689
+#, c-format
+msgid "Build directory %s already finalized"
+msgstr "Konstrua dosierujo %s jam finpretigita"
+
+#: app/flatpak-builtins-build-finish.c:702
+msgid "Please review the exported files and the metadata\n"
+msgstr "Bonvolu revizii la eksportitajn dosierojn kaj la metadatumojn\n"
+
+#: app/flatpak-builtins-build-import-bundle.c:47
+msgid "Override the ref used for the imported bundle"
+msgstr "Anstataŭigi la refon uzatan por la enportita pakaĵo"
+
+#: app/flatpak-builtins-build-import-bundle.c:47
+msgid "REF"
+msgstr "REF"
+
+#: app/flatpak-builtins-build-import-bundle.c:48
+msgid "Import oci image instead of flatpak bundle"
+msgstr "Enporti oci-bildon anstataŭ flatpak-faskon"
+
+#: app/flatpak-builtins-build-import-bundle.c:77
+#: app/flatpak-builtins-build-import-bundle.c:105
+#, c-format
+msgid "Importing %s (%s)\n"
+msgstr "Enportado de %s (%s)\n"
+
+#: app/flatpak-builtins-build-import-bundle.c:126
+msgid "LOCATION FILENAME - Import a file bundle into a local repository"
+msgstr "LOCATION FILENAME - Enporti dosierpakaĵon en lokan deponejon"
+
+#: app/flatpak-builtins-build-import-bundle.c:133
+msgid "LOCATION and FILENAME must be specified"
+msgstr "LOCATION kaj FILENAME devas esti specifitaj"
+
+#: app/flatpak-builtins-build-init.c:53 app/flatpak-builtins-info.c:55
+#: app/flatpak-builtins-run.c:67
+msgid "Arch to use"
+msgstr "Arko por uzi"
+
+#: app/flatpak-builtins-build-init.c:54
+msgid "Initialize var from named runtime"
+msgstr "Inicialigi var de nomita rultempo"
+
+#: app/flatpak-builtins-build-init.c:55
+msgid "Initialize apps from named app"
+msgstr "Komenci aplikaĵojn de nomita aplikaĵo"
+
+#: app/flatpak-builtins-build-init.c:55
+msgid "APP"
+msgstr "APP"
+
+#: app/flatpak-builtins-build-init.c:56
+msgid "Specify version for --base"
+msgstr "Specifi version por --base"
+
+#: app/flatpak-builtins-build-init.c:56 app/flatpak-builtins-run.c:73
+msgid "VERSION"
+msgstr "VERSION"
+
+#: app/flatpak-builtins-build-init.c:57
+msgid "Include this base extension"
+msgstr "Inkluzivi ĉi tiun bazan etendon"
+
+#: app/flatpak-builtins-build-init.c:57 app/flatpak-builtins-build-init.c:62
+msgid "EXTENSION"
+msgstr "EXTENSION"
+
+#: app/flatpak-builtins-build-init.c:58
+msgid "Extension tag to use if building extension"
+msgstr "Etenda etikedo por uzi se konstruas etendon"
+
+#: app/flatpak-builtins-build-init.c:58
+msgid "EXTENSION_TAG"
+msgstr "EXTENSION_TAG"
+
+#: app/flatpak-builtins-build-init.c:59
+msgid "Initialize /usr with a writable copy of the sdk"
+msgstr "Komenci /usr per skribebla kopio de la sdk"
+
+#: app/flatpak-builtins-build-init.c:60
+msgid "Specify the build type (app, runtime, extension)"
+msgstr "Indiki la konstrutipon (aplikaĵo, rultempo, etendaĵo)"
+
+#: app/flatpak-builtins-build-init.c:60
+msgid "TYPE"
+msgstr "TYPE"
+
+#: app/flatpak-builtins-build-init.c:61
+msgid "Add a tag"
+msgstr "Aldoni etikedon"
+
+#: app/flatpak-builtins-build-init.c:61
+msgid "TAG"
+msgstr "TAG"
+
+#: app/flatpak-builtins-build-init.c:62
+msgid "Include this sdk extension in /usr"
+msgstr "Enmeti ĉi tiun sdk-etendon en /usr"
+
+#: app/flatpak-builtins-build-init.c:64
+msgid "Where to store sdk (defaults to 'usr')"
+msgstr "Kie stoki sdk (defaŭlte al 'usr')"
+
+#: app/flatpak-builtins-build-init.c:65
+msgid "Re-initialize the sdk/var"
+msgstr "Rekomencigi la sdk/var"
+
+#: app/flatpak-builtins-build-init.c:118
+#, c-format
+msgid "Requested extension %s/%s/%s is only partially installed"
+msgstr "La petita etendo %s/%s/%s estas nur parte instalita"
+
+#: app/flatpak-builtins-build-init.c:147
+#, c-format
+msgid "Requested extension %s/%s/%s not installed"
+msgstr "Petita etendo %s/%s/%s ne instalita"
+
+#: app/flatpak-builtins-build-init.c:207
+msgid ""
+"DIRECTORY APPNAME SDK RUNTIME [BRANCH] - Initialize a directory for building"
+msgstr ""
+"DIRECTORY APPNAME SDK RUNTIME [BRANCH] - Komenci dosierujon por konstruado"
+
+#: app/flatpak-builtins-build-init.c:214
+msgid "RUNTIME must be specified"
+msgstr "RUNTIME devas esti specifita"
+
+#: app/flatpak-builtins-build-init.c:235
+#, c-format
+msgid "'%s' is not a valid build type name, use app, runtime or extension"
+msgstr "'%s' ne estas valida konstrutipa nomo, uzi apon, rultempon aŭ etendon"
+
+#: app/flatpak-builtins-build-init.c:241 app/flatpak-builtins-override.c:79
+#, c-format
+msgid "'%s' is not a valid application name: %s"
+msgstr "'%s' ne estas valida aplika nomo: %s"
+
+#: app/flatpak-builtins-build-init.c:295
+#, c-format
+msgid "Build directory %s already initialized"
+msgstr "Konstrua dosierujo %s jam pravigita"
+
+#: app/flatpak-builtins-build-sign.c:42 app/flatpak-builtins-install.c:67
+#: app/flatpak-builtins-remote-info.c:54
+msgid "Arch to install for"
+msgstr "Arko por instali"
+
+#: app/flatpak-builtins-build-sign.c:43 app/flatpak-builtins-create-usb.c:48
+#: app/flatpak-builtins-install.c:74 app/flatpak-builtins-remote-info.c:56
+#: app/flatpak-builtins-uninstall.c:58 app/flatpak-builtins-update.c:64
+msgid "Look for runtime with the specified name"
+msgstr "Serĉi rultempon kun la specifita nomo"
+
+#: app/flatpak-builtins-build-sign.c:66
+msgid "LOCATION [ID [BRANCH]] - Sign an application or runtime"
+msgstr "LOKO [ID [ID [BRANĈO]] - Subskribi aplikaĵon aŭ rultempon"
+
+#: app/flatpak-builtins-build-sign.c:73
+#: app/flatpak-builtins-build-update-repo.c:499
+#: app/flatpak-builtins-remote-add.c:320 app/flatpak-builtins-repo.c:739
+msgid "LOCATION must be specified"
+msgstr "LOKO devas esti precizigita"
+
+#: app/flatpak-builtins-build-sign.c:94
+msgid "No gpg key ids specified"
+msgstr "Neniuj gpg-ŝlosilidentigiloj specifitaj"
+
+#: app/flatpak-builtins-build-update-repo.c:68
+msgid "Redirect this repo to a new URL"
+msgstr "Redirektas ĉi tiun deponejon al nova URL"
+
+#: app/flatpak-builtins-build-update-repo.c:69
+msgid "A nice name to use for this repository"
+msgstr "Bela nomo uzinda por ĉi tiu deponejo"
+
+#: app/flatpak-builtins-build-update-repo.c:69
+#: app/flatpak-builtins-remote-add.c:77 app/flatpak-builtins-remote-modify.c:82
+msgid "TITLE"
+msgstr "TITLE"
+
+#: app/flatpak-builtins-build-update-repo.c:70
+msgid "A one-line comment for this repository"
+msgstr "Unulinia komento por ĉi tiu deponejo"
+
+#: app/flatpak-builtins-build-update-repo.c:70
+#: app/flatpak-builtins-remote-add.c:78 app/flatpak-builtins-remote-modify.c:83
+msgid "COMMENT"
+msgstr "COMMENT"
+
+#: app/flatpak-builtins-build-update-repo.c:71
+msgid "A full-paragraph description for this repository"
+msgstr "Plena alinea priskribo por ĉi tiu deponejo"
+
+#: app/flatpak-builtins-build-update-repo.c:71
+#: app/flatpak-builtins-remote-add.c:79 app/flatpak-builtins-remote-modify.c:84
+msgid "DESCRIPTION"
+msgstr "DESCRIPTION"
+
+#: app/flatpak-builtins-build-update-repo.c:72
+msgid "URL for a website for this repository"
+msgstr "URL por retejo por ĉi tiu deponejo"
+
+#: app/flatpak-builtins-build-update-repo.c:73
+msgid "URL for an icon for this repository"
+msgstr "URL por ikono por ĉi tiu deponejo"
+
+#: app/flatpak-builtins-build-update-repo.c:74
+msgid "Default branch to use for this repository"
+msgstr "Defaŭlta branĉo uzinda por ĉi tiu deponejo"
+
+#: app/flatpak-builtins-build-update-repo.c:74
+#: app/flatpak-builtins-remote-add.c:82 app/flatpak-builtins-remote-modify.c:87
+#: app/flatpak-builtins-repo.c:713 app/flatpak-builtins-repo.c:714
+#: app/flatpak-builtins-run.c:70
+msgid "BRANCH"
+msgstr "BRANCH"
+
+#: app/flatpak-builtins-build-update-repo.c:75
+#: app/flatpak-builtins-remote-add.c:83 app/flatpak-builtins-remote-modify.c:88
+msgid "COLLECTION-ID"
+msgstr "COLLECTION-ID"
+
+#. Translators: A sideload is when you install from a local USB drive rather than the Internet.
+#: app/flatpak-builtins-build-update-repo.c:77
+msgid ""
+"Permanently deploy collection ID to client remote configurations, only for "
+"sideload support"
+msgstr "Konstante deploji kolekton-identigilon al klientaj foraj agordoj"
+
+#: app/flatpak-builtins-build-update-repo.c:78
+msgid "Permanently deploy collection ID to client remote configurations"
+msgstr "Konstante deploji kolekton-identigilon al klientaj foraj agordoj"
+
+#: app/flatpak-builtins-build-update-repo.c:79
+msgid "Name of authenticator for this repository"
+msgstr "URL por ikono por ĉi tiu deponejo"
+
+#: app/flatpak-builtins-build-update-repo.c:80
+msgid "Autoinstall authenticator for this repository"
+msgstr "URL por ikono por ĉi tiu deponejo"
+
+#: app/flatpak-builtins-build-update-repo.c:81
+msgid "Don't autoinstall authenticator for this repository"
+msgstr "Defaŭlta branĉo uzinda por ĉi tiu deponejo"
+
+#: app/flatpak-builtins-build-update-repo.c:82
+#: app/flatpak-builtins-remote-add.c:89
+msgid "Authenticator option"
+msgstr "Montri eblojn"
+
+#: app/flatpak-builtins-build-update-repo.c:82
+#: app/flatpak-builtins-remote-add.c:89 app/flatpak-builtins-remote-modify.c:95
+msgid "KEY=VALUE"
+msgstr "VALUE"
+
+#: app/flatpak-builtins-build-update-repo.c:83
+msgid "Import new default GPG public key from FILE"
+msgstr "Enporti novan defaŭltan publikan ŝlosilon de GPG el DOSIERO"
+
+#: app/flatpak-builtins-build-update-repo.c:84
+msgid "GPG Key ID to sign the summary with"
+msgstr "GPG-Ŝlosila ID por subskribi la resumon"
+
+#: app/flatpak-builtins-build-update-repo.c:86
+msgid "Generate delta files"
+msgstr "Generi deltajn dosierojn"
+
+#: app/flatpak-builtins-build-update-repo.c:88
+msgid "Don't update the appstream branch"
+msgstr "Ne ĝisdatigi la branĉon de appstream"
+
+#: app/flatpak-builtins-build-update-repo.c:89
+msgid "Max parallel jobs when creating deltas (default: NUMCPUs)"
+msgstr "Maksimumaj paralelaj laboroj dum kreado de deltoj (defaŭlte: NUMCPUoj)"
+
+#: app/flatpak-builtins-build-update-repo.c:89
+msgid "NUM-JOBS"
+msgstr "NUM-JOBS"
+
+#: app/flatpak-builtins-build-update-repo.c:90
+msgid "Don't create deltas matching refs"
+msgstr "Ne krei deltajn kongruajn referencojn"
+
+#: app/flatpak-builtins-build-update-repo.c:91
+msgid "Prune unused objects"
+msgstr "Pritondi neuzatajn objektojn"
+
+#: app/flatpak-builtins-build-update-repo.c:92
+msgid "Prune but don't actually remove anything"
+msgstr "Pritondi sed efektive ne forigi ion ajn"
+
+#: app/flatpak-builtins-build-update-repo.c:93
+msgid "Only traverse DEPTH parents for each commit (default: -1=infinite)"
+msgstr "Nur trapasi DEPTH-gepatrojn por ĉiu transdono (defaŭlte: -1=senfina)"
+
+#: app/flatpak-builtins-build-update-repo.c:93
+msgid "DEPTH"
+msgstr "DEPTH"
+
+#: app/flatpak-builtins-build-update-repo.c:223
+#, c-format
+msgid "Generating delta: %s (%.10s)\n"
+msgstr "Genera delto: %s (%.10s)\n"
+
+#: app/flatpak-builtins-build-update-repo.c:225
+#, c-format
+msgid "Generating delta: %s (%.10s-%.10s)\n"
+msgstr "Genera delto: Z%s (%.10s-%.10s)\n"
+
+#: app/flatpak-builtins-build-update-repo.c:233
+#, c-format
+msgid "Failed to generate delta %s (%.10s): "
+msgstr "Malsukcesis generi delta %s (%.10s):"
+
+#: app/flatpak-builtins-build-update-repo.c:236
+#, c-format
+msgid "Failed to generate delta %s (%.10s-%.10s): "
+msgstr "Malsukcesis generi delta %s (%.10s-%.10s):"
+
+#: app/flatpak-builtins-build-update-repo.c:492
+msgid "LOCATION - Update repository metadata"
+msgstr "LOKO - Ĝisdatigi metadatumojn de deponejo"
+
+#: app/flatpak-builtins-build-update-repo.c:609
+msgid "Updating appstream branch\n"
+msgstr "Ĝisdatigi filion de appstream\n"
+
+#: app/flatpak-builtins-build-update-repo.c:638
+msgid "Updating summary\n"
+msgstr "Ĝisdatiganta resumon\n"
+
+#: app/flatpak-builtins-build-update-repo.c:664
+#, c-format
+msgid "Total objects: %u\n"
+msgstr "Sumaj objektoj: %u\n"
+
+#: app/flatpak-builtins-build-update-repo.c:666
+msgid "No unreachable objects\n"
+msgstr "Neniuj neatingeblaj objektoj\n"
+
+#: app/flatpak-builtins-build-update-repo.c:668
+#, c-format
+msgid "Deleted %u objects, %s freed\n"
+msgstr "Forigitaj %u objektoj, %s liberigitaj\n"
+
+#: app/flatpak-builtins-config.c:41
+msgid "List configuration keys and values"
+msgstr "Listo de agordaj ŝlosiloj kaj valoroj"
+
+#: app/flatpak-builtins-config.c:42
+msgid "Get configuration for KEY"
+msgstr "Akiri agordon por KEY"
+
+#: app/flatpak-builtins-config.c:43
+msgid "Set configuration for KEY to VALUE"
+msgstr "Agordi agordon por KEY al VALUE"
+
+#: app/flatpak-builtins-config.c:44
+msgid "Unset configuration for KEY"
+msgstr "Malŝalti agordon por KEY"
+
+#: app/flatpak-builtins-config.c:149
+#, c-format
+msgid "'%s' does not look like a language/locale code"
+msgstr "'%s' ne aspektas kiel lingvokodo"
+
+#: app/flatpak-builtins-config.c:172
+#, c-format
+msgid "'%s' does not look like a language code"
+msgstr "'%s' ne aspektas kiel lingvokodo"
+
+#: app/flatpak-builtins-config.c:190
+#, c-format
+msgid "'%s' is not a valid value (use 'true' or 'false')"
+msgstr "'%s' ne estas valida deponejo:"
+
+#: app/flatpak-builtins-config.c:262
+#, c-format
+msgid "Unknown configure key '%s'"
+msgstr "Nekonata agorda ŝlosilo '%s'"
+
+#: app/flatpak-builtins-config.c:284
+msgid "Too many arguments for --list"
+msgstr "Tro da argumentoj por --list"
+
+#: app/flatpak-builtins-config.c:314 app/flatpak-builtins-config.c:362
+msgid "You must specify KEY"
+msgstr "Vi devas specifi KEY"
+
+#: app/flatpak-builtins-config.c:316
+msgid "Too many arguments for --get"
+msgstr "Tro da argumentoj por --get"
+
+#: app/flatpak-builtins-config.c:338
+msgid "You must specify KEY and VALUE"
+msgstr "Vi devas specifi KEY kaj VALUE"
+
+#: app/flatpak-builtins-config.c:340
+msgid "Too many arguments for --set"
+msgstr "Tro da argumentoj por --set"
+
+#: app/flatpak-builtins-config.c:364
+msgid "Too many arguments for --unset"
+msgstr "Tro da argumentoj por --unset"
+
+#: app/flatpak-builtins-config.c:383
+msgid "[KEY [VALUE]] - Manage configuration"
+msgstr "[KEY [VALUE]] - Administri agordon"
+
+#: app/flatpak-builtins-config.c:394
+msgid "Can only use one of --list, --get, --set or --unset"
+msgstr "Povas uzi nur unu el --list, --get, --set aŭ --unset"
+
+#: app/flatpak-builtins-config.c:408
+msgid "Must specify one of --list, --get, --set or --unset"
+msgstr "Devas specifi unu el --list, --get, --set aŭ --unset"
+
+#: app/flatpak-builtins-create-usb.c:45 app/flatpak-builtins-install.c:75
+#: app/flatpak-builtins-remote-info.c:57 app/flatpak-builtins-uninstall.c:59
+#: app/flatpak-builtins-update.c:65
+msgid "Look for app with the specified name"
+msgstr "Serĉi apon kun la specifita nomo"
+
+#: app/flatpak-builtins-create-usb.c:46
+msgid "Arch to copy"
+msgstr "Arko por kopii"
+
+#: app/flatpak-builtins-create-usb.c:47
+msgid "DEST"
+msgstr "DEST"
+
+#: app/flatpak-builtins-create-usb.c:49
+msgid "Allow partial commits in the created repo"
+msgstr "Permesi partajn komitojn en la kreita deponejo"
+
+#: app/flatpak-builtins-create-usb.c:125 app/flatpak-builtins-create-usb.c:165
+#, c-format
+msgid ""
+"Warning: Related ref ‘%s’ is partially installed. Use --allow-partial to "
+"suppress this message.\n"
+msgstr "Averto: Forlasante rilatan ref '%s' ĉar ĝi ne estas instalita.\n"
+
+#: app/flatpak-builtins-create-usb.c:158
+#, c-format
+msgid "Warning: Omitting related ref ‘%s’ because it is not installed.\n"
+msgstr "Averto: Forlasante rilatan ref '%s' ĉar ĝi ne estas instalita.\n"
+
+#: app/flatpak-builtins-create-usb.c:175
+#, c-format
+msgid ""
+"Warning: Omitting related ref ‘%s’ because its remote ‘%s’ does not have a "
+"collection ID set.\n"
+msgstr ""
+"Averto: Forlasante rilatan ref '%s' ĉar ĝia fora '%s' ne havas kolekto-"
+"identigilon agordita.\n"
+
+#: app/flatpak-builtins-create-usb.c:187
+#, c-format
+msgid "Warning: Omitting related ref ‘%s’ because it's extra-data.\n"
+msgstr "Averto: Forlasante rilatan ref '%s' ĉar ĝi ne estas instalita.\n"
+
+#: app/flatpak-builtins-create-usb.c:262 app/flatpak-builtins-create-usb.c:637
+#, c-format
+msgid ""
+"Remote ‘%s’ does not have a collection ID set, which is required for P2P "
+"distribution of ‘%s’."
+msgstr ""
+"Fora '%s' ne havas kolekton-identigilon, kiu estas postulata por P2P-"
+"distribuo de '%s'."
+
+#: app/flatpak-builtins-create-usb.c:272
+#, c-format
+msgid "Warning: Omitting ref ‘%s’ (runtime of ‘%s’) because it's extra-data.\n"
+msgstr ""
+"Averto: Preteratentante referencon '%s' (rultempo de '%s') ĉar ĝi estas "
+"ekstra-dato.\n"
+
+#: app/flatpak-builtins-create-usb.c:484
+msgid "MOUNT-PATH [REF…] - Copy apps or runtimes onto removable media"
+msgstr ""
+"MOUNT-PATH [REF...] - Kopii programojn aŭ rultempojn sur forpreneblajn "
+"rimedojn"
+
+#: app/flatpak-builtins-create-usb.c:493
+msgid "MOUNT-PATH and REF must be specified"
+msgstr "MOUNT-PATH kaj REF devas esti specifitaj"
+
+#: app/flatpak-builtins-create-usb.c:607
+#, c-format
+msgid "Ref ‘%s’ found in multiple installations: %s. You must specify one."
+msgstr "Ref '%s' trovita en pluraj instalaĵoj: %s. Vi devas specifi unu."
+
+#: app/flatpak-builtins-create-usb.c:620
+#, c-format
+msgid "Refs must all be in the same installation (found in %s and %s)."
+msgstr "Refs devas ĉiuj esti en la sama instalaĵo (trovebla en %s kaj %s)."
+
+#: app/flatpak-builtins-create-usb.c:670
+#, c-format
+msgid ""
+"Warning: Ref ‘%s’ is partially installed. Use --allow-partial to suppress "
+"this message.\n"
+msgstr ""
+"Averto: Ref '%s' estas parte instalita. Uzu --allow-partial por subpremi ĉi "
+"tiun mesaĝon.\n"
+
+#: app/flatpak-builtins-create-usb.c:681
+#, c-format
+msgid "Installed ref ‘%s’ is extra-data, and cannot be distributed offline"
+msgstr ""
+"Instalita ref '%s' estas kromdatumo, kaj ne povas esti distribuita eksterrete"
+
+#: app/flatpak-builtins-create-usb.c:721
+#, c-format
+msgid "Warning: Couldn't update repo metadata for remote ‘%s’: %s\n"
+msgstr "Averto: Ne eblis ĝisdatigi repo-metadatenojn por fora '%s': %s\n"
+
+#: app/flatpak-builtins-create-usb.c:751
+#, c-format
+msgid "Warning: Couldn't update appstream data for remote ‘%s’ arch ‘%s’: %s\n"
+msgstr ""
+"Averto: Ne eblis ĝisdatigi datenojn de la aplikaĵo por fora '%s' arko '%s': "
+"%s\n"
+
+#. Print a warning if both appstream and appstream2 are missing
+#: app/flatpak-builtins-create-usb.c:784
+#, c-format
+msgid ""
+"Warning: Couldn't find appstream data for remote ‘%s’ arch ‘%s’: %s; %s\n"
+msgstr ""
+"Averto: Ne eblis trovi datenojn de aplikfluo por fora '%s' arko '%s': %s; "
+"%s\n"
+
+#. Appstream2 is only for efficiency, so just print a debug message
+#: app/flatpak-builtins-create-usb.c:790
+#, c-format
+msgid "Couldn't find appstream2 data for remote ‘%s’ arch ‘%s’: %s\n"
+msgstr "Ne eblis trovi datumojn de appstream2 por fora '%s' arko '%s': %s\n"
+
+#: app/flatpak-builtins-document-export.c:62
+msgid "Create a unique document reference"
+msgstr "Krei unikan dokumentan referencon"
+
+#: app/flatpak-builtins-document-export.c:63
+msgid "Make the document transient for the current session"
+msgstr "Fari la dokumenton pasema por la nuna sesio"
+
+#: app/flatpak-builtins-document-export.c:64
+msgid "Don't require the file to exist already"
+msgstr "Ne postulu, ke la dosiero jam ekzistus"
+
+#: app/flatpak-builtins-document-export.c:65
+msgid "Give the app read permissions"
+msgstr "Doni al la aplikaĵo legi permesojn"
+
+#: app/flatpak-builtins-document-export.c:66
+msgid "Give the app write permissions"
+msgstr "Doni al la aplikaĵo skribi permesojn"
+
+#: app/flatpak-builtins-document-export.c:67
+msgid "Give the app delete permissions"
+msgstr "Doni al la apo forigi permesojn"
+
+#: app/flatpak-builtins-document-export.c:68
+msgid "Give the app permissions to grant further permissions"
+msgstr "Doni al la aplikaĵo permesojn por doni pliajn permesojn"
+
+#: app/flatpak-builtins-document-export.c:69
+msgid "Revoke read permissions of the app"
+msgstr "Revoki legajn permesojn de la programo"
+
+#: app/flatpak-builtins-document-export.c:70
+msgid "Revoke write permissions of the app"
+msgstr "Revoki skribajn permesojn de la programo"
+
+#: app/flatpak-builtins-document-export.c:71
+msgid "Revoke delete permissions of the app"
+msgstr "Revoki forigi permesojn de la programo"
+
+#: app/flatpak-builtins-document-export.c:72
+msgid "Revoke the permission to grant further permissions"
+msgstr "Nuligi la permeson doni pliajn permesojn"
+
+#: app/flatpak-builtins-document-export.c:73
+msgid "Add permissions for this app"
+msgstr "Aldoni permesojn por ĉi tiu programo"
+
+#: app/flatpak-builtins-document-export.c:73
+msgid "APPID"
+msgstr "APPID"
+
+#: app/flatpak-builtins-document-export.c:100
+msgid "FILE - Export a file to apps"
+msgstr "DOSIERO - Elporti dosieron al programoj"
+
+#: app/flatpak-builtins-document-export.c:109
+#: app/flatpak-builtins-document-info.c:72
+#: app/flatpak-builtins-document-unexport.c:67
+msgid "FILE must be specified"
+msgstr "DOSIERO devas esti specifita"
+
+#: app/flatpak-builtins-document-info.c:63
+msgid "FILE - Get information about an exported file"
+msgstr "DOSIERO - Akiri informojn pri eksportita dosiero"
+
+#: app/flatpak-builtins-document-info.c:100
+#: app/flatpak-builtins-document-unexport.c:94
+msgid "Not exported\n"
+msgstr "Ne eksportita\n"
+
+#: app/flatpak-builtins-document-list.c:43 app/flatpak-builtins-history.c:53
+#: app/flatpak-builtins-list.c:54 app/flatpak-builtins-ps.c:43
+#: app/flatpak-builtins-remote-list.c:45 app/flatpak-builtins-remote-ls.c:59
+#: app/flatpak-builtins-search.c:38
+msgid "What information to show"
+msgstr "Kiajn informojn montri"
+
+#: app/flatpak-builtins-document-list.c:43 app/flatpak-builtins-history.c:53
+#: app/flatpak-builtins-list.c:54 app/flatpak-builtins-ps.c:43
+#: app/flatpak-builtins-remote-list.c:45 app/flatpak-builtins-remote-ls.c:59
+#: app/flatpak-builtins-search.c:38
+msgid "FIELD,…"
+msgstr "KAMPO,…"
+
+#: app/flatpak-builtins-document-list.c:44 app/flatpak-builtins-history.c:54
+#: app/flatpak-builtins-list.c:52 app/flatpak-builtins-permission-list.c:43
+#: app/flatpak-builtins-permission-show.c:43 app/flatpak-builtins-ps.c:44
+#: app/flatpak-builtins-remote-list.c:46 app/flatpak-builtins-remote-ls.c:63
+#: app/flatpak-builtins-repo.c:717 app/flatpak-builtins-search.c:39
+msgid "Show output in JSON format"
+msgstr "Montri kromajn informojn"
+
+#: app/flatpak-builtins-document-list.c:49
+msgid "Show the document ID"
+msgstr "Montri la dokumentidentigilon"
+
+#: app/flatpak-builtins-document-list.c:50
+msgid "Path"
+msgstr "Vojo"
+
+#: app/flatpak-builtins-document-list.c:50
+#: app/flatpak-builtins-document-list.c:51
+msgid "Show the document path"
+msgstr "Montri la dokumentvojon"
+
+#: app/flatpak-builtins-document-list.c:51 app/flatpak-builtins-list.c:66
+#: app/flatpak-builtins-remote-ls.c:74
+msgid "Origin"
+msgstr "Origino"
+
+#: app/flatpak-builtins-document-list.c:52 app/flatpak-builtins-history.c:62
+#: app/flatpak-builtins-ps.c:52
+msgid "Application"
+msgstr "Apliko"
+
+#: app/flatpak-builtins-document-list.c:52
+msgid "Show applications with permission"
+msgstr "Montri aplikaĵojn kun permeso"
+
+#: app/flatpak-builtins-document-list.c:53
+#: app/flatpak-builtins-permission-list.c:182
+#: app/flatpak-builtins-permission-show.c:145
+msgid "Permissions"
+msgstr "Permesoj"
+
+#: app/flatpak-builtins-document-list.c:53
+msgid "Show permissions for applications"
+msgstr "Montri permesojn por aplikoj"
+
+#: app/flatpak-builtins-document-list.c:161
+msgid "No documents found\n"
+msgstr "Neniuj dokumentoj trovitaj\n"
+
+#: app/flatpak-builtins-document-list.c:180
+msgid "[APPID] - List exported files"
+msgstr "[APPID] - Listo de eksportitaj dosieroj"
+
+#: app/flatpak-builtins-document-unexport.c:43
+msgid "Specify the document ID"
+msgstr "Montri la dokumentidentigilon"
+
+#: app/flatpak-builtins-document-unexport.c:58
+msgid "FILE - Unexport a file to apps"
+msgstr "DOSIERO - Malelporti dosieron al programoj"
+
+#: app/flatpak-builtins-enter.c:88
+msgid "INSTANCE COMMAND [ARGUMENT…] - Run a command inside a running sandbox"
+msgstr ""
+"INSTANCE [KOMANDO [ARGUMENTO...]] - Ruli komandon en funkcianta sablokesto"
+
+#: app/flatpak-builtins-enter.c:111
+msgid "INSTANCE and COMMAND must be specified"
+msgstr "INSTANCE kaj COMMAND devas esti specifitaj"
+
+#: app/flatpak-builtins-enter.c:138
+#, c-format
+msgid "%s is neither a pid nor an application or instance ID"
+msgstr "%s estas nek pid nek aplikaĵo aŭ ekzempla ID"
+
+#: app/flatpak-builtins-enter.c:144
+msgid "entering not supported (need unprivileged user namespaces, or sudo -E)"
+msgstr ""
+"enigo ne subtenata (bezonas senprivilegiajn uzantnomspacojn, aŭ sudo -E)"
+
+#: app/flatpak-builtins-enter.c:145
+#, c-format
+msgid "No such pid %s"
+msgstr "Ne tia pid %s"
+
+#: app/flatpak-builtins-enter.c:158
+msgid "Can't read cwd"
+msgstr "Ne povas legi cwd"
+
+#: app/flatpak-builtins-enter.c:163
+msgid "Can't read root"
+msgstr "Ne povas legi radikon"
+
+#: app/flatpak-builtins-enter.c:191
+#, c-format
+msgid "Invalid %s namespace for pid %d"
+msgstr "Nevalida %s nomspaco por pid %d"
+
+#: app/flatpak-builtins-enter.c:202
+#, c-format
+msgid "Invalid %s namespace for self"
+msgstr "Nevalida %s nomspaco por mem"
+
+#: app/flatpak-builtins-enter.c:216
+#, c-format
+msgid "Can't open %s namespace: %s"
+msgstr "Ne povas malfermi %s nomspacon: %s"
+
+#: app/flatpak-builtins-enter.c:226
+msgid "entering not supported (need unprivileged user namespaces)"
+msgstr "enigo ne subtenata (bezonas senprivilegiajn uzantnomspacojn)"
+
+#: app/flatpak-builtins-enter.c:227
+#, c-format
+msgid "Can't enter %s namespace: %s"
+msgstr "Ne povas enigi %s nomspacon: %s"
+
+#: app/flatpak-builtins-enter.c:234
+msgid "Can't chdir"
+msgstr "Ne povas chdir"
+
+#: app/flatpak-builtins-enter.c:237
+msgid "Can't chroot"
+msgstr "Ne povas chroot"
+
+#: app/flatpak-builtins-enter.c:240
+msgid "Can't switch gid"
+msgstr "Ne povas ŝanĝi gid"
+
+#: app/flatpak-builtins-enter.c:243
+msgid "Can't switch uid"
+msgstr "Ne povas ŝanĝi uid"
+
+#: app/flatpak-builtins-history.c:50
+msgid "Only show changes after TIME"
+msgstr "Montri ŝanĝojn nur post TIME"
+
+#: app/flatpak-builtins-history.c:50 app/flatpak-builtins-history.c:51
+msgid "TIME"
+msgstr "TIME"
+
+#: app/flatpak-builtins-history.c:51
+msgid "Only show changes before TIME"
+msgstr "Montri ŝanĝojn nur antaŭ TIME"
+
+#: app/flatpak-builtins-history.c:52
+msgid "Show newest entries first"
+msgstr "Montri plej novajn enskribojn unue"
+
+#: app/flatpak-builtins-history.c:59
+msgid "Time"
+msgstr "Tempo"
+
+#: app/flatpak-builtins-history.c:59
+msgid "Show when the change happened"
+msgstr "Montri kiam la ŝanĝo okazis"
+
+#: app/flatpak-builtins-history.c:60
+msgid "Change"
+msgstr "Ŝanĝi"
+
+#: app/flatpak-builtins-history.c:60
+msgid "Show the kind of change"
+msgstr "Montri la specon de ŝanĝo"
+
+#: app/flatpak-builtins-history.c:61 app/flatpak-builtins-list.c:68
+#: app/flatpak-builtins-remote-ls.c:75 app/flatpak-builtins-repo.c:335
+msgid "Ref"
+msgstr "Ref"
+
+#: app/flatpak-builtins-history.c:61 app/flatpak-builtins-list.c:68
+#: app/flatpak-builtins-remote-ls.c:75
+msgid "Show the ref"
+msgstr "Montri la ref"
+
+#: app/flatpak-builtins-history.c:62
+msgid "Show the application/runtime ID"
+msgstr "Montri la aplikaĵon/rultempan ID"
+
+#: app/flatpak-builtins-history.c:63 app/flatpak-builtins-list.c:64
+#: app/flatpak-builtins-ps.c:53 app/flatpak-builtins-remote-ls.c:73
+#: app/flatpak-cli-transaction.c:1435
+msgid "Arch"
+msgstr "Arch"
+
+#: app/flatpak-builtins-history.c:63 app/flatpak-builtins-list.c:64
+#: app/flatpak-builtins-ps.c:53 app/flatpak-builtins-remote-ls.c:73
+msgid "Show the architecture"
+msgstr "Montri la arkitekturon"
+
+#: app/flatpak-builtins-history.c:64 app/flatpak-builtins-list.c:63
+#: app/flatpak-builtins-ps.c:54 app/flatpak-builtins-remote-ls.c:72
+#: app/flatpak-builtins-search.c:48 app/flatpak-cli-transaction.c:1438
+msgid "Branch"
+msgstr "Branĉo"
+
+#: app/flatpak-builtins-history.c:64 app/flatpak-builtins-list.c:63
+#: app/flatpak-builtins-remote-ls.c:72
+msgid "Show the branch"
+msgstr "Montri la branĉon"
+
+#: app/flatpak-builtins-history.c:65 app/flatpak-builtins-list.c:67
+msgid "Installation"
+msgstr "Instalado"
+
+#: app/flatpak-builtins-history.c:65
+msgid "Show the affected installation"
+msgstr "Montri la tuŝitan instaladon"
+
+#: app/flatpak-builtins-history.c:66 app/flatpak-cli-transaction.c:1452
+msgid "Remote"
+msgstr "Malproksima"
+
+#: app/flatpak-builtins-history.c:66
+msgid "Show the remote"
+msgstr "Montri la telemanieron"
+
+#: app/flatpak-builtins-history.c:67 app/flatpak-builtins-ps.c:55
+#: app/flatpak-builtins-remote-ls.c:76
+msgid "Commit"
+msgstr "Engaĝiĝu"
+
+#: app/flatpak-builtins-history.c:67
+msgid "Show the current commit"
+msgstr "Montri la nunan transdonon"
+
+#: app/flatpak-builtins-history.c:68
+msgid "Old Commit"
+msgstr "Old Commit"
+
+#: app/flatpak-builtins-history.c:68
+msgid "Show the previous commit"
+msgstr "Montri la antaŭan devontigon"
+
+#: app/flatpak-builtins-history.c:69
+msgid "Show the remote URL"
+msgstr "Montri la foran URL"
+
+#: app/flatpak-builtins-history.c:70 app/flatpak-cli-transaction.c:700
+msgid "User"
+msgstr "Uzanto"
+
+#: app/flatpak-builtins-history.c:70
+msgid "Show the user doing the change"
+msgstr "Montri la uzanton farantan la ŝanĝon"
+
+#: app/flatpak-builtins-history.c:71
+msgid "Tool"
+msgstr "Ilo"
+
+#: app/flatpak-builtins-history.c:71
+msgid "Show the tool that was used"
+msgstr "Montri la ilon kiu estis uzita"
+
+#: app/flatpak-builtins-history.c:72 app/flatpak-builtins-list.c:62
+#: app/flatpak-builtins-remote-ls.c:71 app/flatpak-builtins-search.c:47
+msgid "Version"
+msgstr "Versio"
+
+#: app/flatpak-builtins-history.c:72
+msgid "Show the Flatpak version"
+msgstr "Montri la Flatpak-version"
+
+#: app/flatpak-builtins-history.c:91
+#, c-format
+msgid "Failed to get journal data (%s): %s"
+msgstr "Malsukcesis akiri ĵurnalan datumojn (%s): %s"
+
+#: app/flatpak-builtins-history.c:146
+#, c-format
+msgid "Failed to open journal: %s"
+msgstr "Malsukcesis malfermi ĵurnalon: %s"
+
+#: app/flatpak-builtins-history.c:153
+#, c-format
+msgid "Failed to add match to journal: %s"
+msgstr "Malsukcesis aldoni kongruon al ĵurnalo: %s"
+
+#: app/flatpak-builtins-history.c:471
+msgid " - Show history"
+msgstr "- Montri historion"
+
+#: app/flatpak-builtins-history.c:490
+msgid "Failed to parse the --since option"
+msgstr "Malsukcesis analizi la opcion --since"
+
+#: app/flatpak-builtins-history.c:501
+msgid "Failed to parse the --until option"
+msgstr "Malsukcesis analizi la opcion --ĝis"
+
+#: app/flatpak-builtins-info.c:56
+msgid "Show user installations"
+msgstr "Montri uzantinstalaĵojn"
+
+#: app/flatpak-builtins-info.c:57
+msgid "Show system-wide installations"
+msgstr "Montri tutsistemajn instalaĵojn"
+
+#: app/flatpak-builtins-info.c:58
+msgid "Show specific system-wide installations"
+msgstr "Montri specifajn tutsistemajn instalaĵojn"
+
+#: app/flatpak-builtins-info.c:59 app/flatpak-builtins-remote-info.c:59
+msgid "Show ref"
+msgstr "Montri ref"
+
+#: app/flatpak-builtins-info.c:60 app/flatpak-builtins-remote-info.c:60
+msgid "Show commit"
+msgstr "Montri komision"
+
+#: app/flatpak-builtins-info.c:61
+msgid "Show origin"
+msgstr "Montri originon"
+
+#: app/flatpak-builtins-info.c:62
+msgid "Show size"
+msgstr "Montri grandecon"
+
+#: app/flatpak-builtins-info.c:63 app/flatpak-builtins-remote-info.c:62
+msgid "Show metadata"
+msgstr "Montri metadatenojn"
+
+#: app/flatpak-builtins-info.c:64 app/flatpak-builtins-remote-info.c:63
+msgid "Show runtime"
+msgstr "Montri rultempon"
+
+#: app/flatpak-builtins-info.c:65 app/flatpak-builtins-remote-info.c:64
+msgid "Show sdk"
+msgstr "Montri sdk"
+
+#: app/flatpak-builtins-info.c:66
+msgid "Show permissions"
+msgstr "Montri permesojn"
+
+#: app/flatpak-builtins-info.c:67
+msgid "Query file access"
+msgstr "Demandi dosiero-aliron"
+
+#: app/flatpak-builtins-info.c:67 app/flatpak-builtins-install.c:82
+#: app/flatpak-builtins-install.c:88 app/flatpak-builtins-preinstall.c:68
+#: app/flatpak-builtins-run.c:91 app/flatpak-builtins-run.c:92
+#: app/flatpak-builtins-update.c:67 app/flatpak-builtins-update.c:71
+msgid "PATH"
+msgstr "PATH"
+
+#: app/flatpak-builtins-info.c:68
+msgid "Show extensions"
+msgstr "Montri etendaĵojn"
+
+#: app/flatpak-builtins-info.c:69
+msgid "Show location"
+msgstr "Montri lokon"
+
+#: app/flatpak-builtins-info.c:116
+msgid "NAME [BRANCH] - Get info about an installed app or runtime"
+msgstr "NOMO [BRANCH] - Akiri informojn pri instalita aplikaĵo aŭ rultempo"
+
+#: app/flatpak-builtins-info.c:123 app/flatpak-builtins-remote-add.c:317
+#: app/flatpak-builtins-remote-delete.c:63
+msgid "NAME must be specified"
+msgstr "NOMO devas esti specifita"
+
+#: app/flatpak-builtins-info.c:196
+msgid "ref not present in origin"
+msgstr "ref ne ĉeestanta en origino"
+
+#: app/flatpak-builtins-info.c:211 app/flatpak-builtins-remote-info.c:217
+msgid "Warning: Commit has no flatpak metadata\n"
+msgstr "Averto: Commit ne havas metadatumojn de flatpak\n"
+
+#: app/flatpak-builtins-info.c:217 app/flatpak-builtins-info.c:259
+#: app/flatpak-builtins-info.c:455 app/flatpak-builtins-info.c:513
+#: app/flatpak-builtins-remote-info.c:236
+#: app/flatpak-builtins-remote-info.c:271
+msgid "ID:"
+msgstr "ID:"
+
+#: app/flatpak-builtins-info.c:218 app/flatpak-builtins-info.c:260
+#: app/flatpak-builtins-remote-info.c:237
+#: app/flatpak-builtins-remote-info.c:272
+msgid "Ref:"
+msgstr "Ref:"
+
+#: app/flatpak-builtins-info.c:219 app/flatpak-builtins-info.c:261
+#: app/flatpak-builtins-remote-info.c:238
+#: app/flatpak-builtins-remote-info.c:273
+msgid "Arch:"
+msgstr "Arko:"
+
+#: app/flatpak-builtins-info.c:220 app/flatpak-builtins-info.c:262
+#: app/flatpak-builtins-remote-info.c:239
+#: app/flatpak-builtins-remote-info.c:274
+msgid "Branch:"
+msgstr "Branĉo:"
+
+#: app/flatpak-builtins-info.c:222 app/flatpak-builtins-info.c:264
+#: app/flatpak-builtins-remote-info.c:241
+#: app/flatpak-builtins-remote-info.c:276
+msgid "Version:"
+msgstr "Versio:"
+
+#: app/flatpak-builtins-info.c:224 app/flatpak-builtins-info.c:266
+#: app/flatpak-builtins-remote-info.c:243
+#: app/flatpak-builtins-remote-info.c:278
+msgid "License:"
+msgstr "Licenco:"
+
+#: app/flatpak-builtins-info.c:226 app/flatpak-builtins-info.c:269
+#: app/flatpak-builtins-remote-info.c:245
+#: app/flatpak-builtins-remote-info.c:280
+msgid "Collection:"
+msgstr "Kolekto:"
+
+#: app/flatpak-builtins-info.c:227 app/flatpak-builtins-info.c:270
+#: app/flatpak-builtins-info.c:458 app/flatpak-builtins-info.c:516
+msgid "Installation:"
+msgstr "Instalado:"
+
+#: app/flatpak-builtins-info.c:228 app/flatpak-builtins-info.c:271
+#: app/flatpak-builtins-info.c:459 app/flatpak-builtins-info.c:517
+#: app/flatpak-builtins-remote-info.c:249
+#: app/flatpak-builtins-remote-info.c:284
+msgid "Installed Size:"
+msgstr "Instalita grandeco"
+
+#: app/flatpak-builtins-info.c:231 app/flatpak-builtins-info.c:279
+#: app/flatpak-builtins-remote-info.c:252
+#: app/flatpak-builtins-remote-info.c:288
+msgid "Runtime:"
+msgstr "Rultempo:"
+
+#: app/flatpak-builtins-info.c:232 app/flatpak-builtins-info.c:288
+#: app/flatpak-builtins-remote-info.c:253
+#: app/flatpak-builtins-remote-info.c:293
+msgid "Sdk:"
+msgstr "Sdk:"
+
+#: app/flatpak-builtins-info.c:235 app/flatpak-builtins-info.c:313
+#: app/flatpak-builtins-remote-info.c:256
+#: app/flatpak-builtins-remote-info.c:319
+msgid "Date:"
+msgstr "Dato:"
+
+#: app/flatpak-builtins-info.c:237 app/flatpak-builtins-info.c:311
+#: app/flatpak-builtins-remote-info.c:258
+#: app/flatpak-builtins-remote-info.c:317
+msgid "Subject:"
+msgstr "Temo:"
+
+#: app/flatpak-builtins-info.c:240 app/flatpak-builtins-info.c:295
+msgid "Active commit:"
+msgstr "Aktiva kompromiso:"
+
+#: app/flatpak-builtins-info.c:241 app/flatpak-builtins-info.c:298
+msgid "Latest commit:"
+msgstr "Plej lasta kompromiso:"
+
+#: app/flatpak-builtins-info.c:244 app/flatpak-builtins-info.c:303
+#: app/flatpak-builtins-info.c:457 app/flatpak-builtins-info.c:515
+#: app/flatpak-builtins-remote-info.c:259
+#: app/flatpak-builtins-remote-info.c:298
+msgid "Commit:"
+msgstr "Faru:"
+
+#: app/flatpak-builtins-info.c:246 app/flatpak-builtins-info.c:308
+#: app/flatpak-builtins-remote-info.c:261
+#: app/flatpak-builtins-remote-info.c:303
+msgid "Parent:"
+msgstr "Gepatro:"
+
+#: app/flatpak-builtins-info.c:248 app/flatpak-builtins-info.c:321
+msgid "Alt-id:"
+msgstr "Alt-id:"
+
+#: app/flatpak-builtins-info.c:250 app/flatpak-builtins-info.c:325
+#: app/flatpak-builtins-remote-info.c:263
+#: app/flatpak-builtins-remote-info.c:308
+msgid "End-of-life:"
+msgstr "Fino de vivo:"
+
+#: app/flatpak-builtins-info.c:252 app/flatpak-builtins-info.c:330
+#: app/flatpak-builtins-remote-info.c:265
+#: app/flatpak-builtins-remote-info.c:313
+msgid "End-of-life-rebase:"
+msgstr "Rebazo de fino de vivo:"
+
+#: app/flatpak-builtins-info.c:254 app/flatpak-builtins-info.c:317
+msgid "Subdirectories:"
+msgstr "Subdosierujoj:"
+
+#: app/flatpak-builtins-info.c:255 app/flatpak-builtins-info.c:454
+#: app/flatpak-builtins-info.c:512
+msgid "Extension:"
+msgstr "Etendo:"
+
+#: app/flatpak-builtins-info.c:267 app/flatpak-builtins-info.c:456
+#: app/flatpak-builtins-info.c:514
+msgid "Origin:"
+msgstr "Origino:"
+
+#: app/flatpak-builtins-info.c:460 app/flatpak-builtins-info.c:522
+msgid "Subpaths:"
+msgstr "Subvojoj:"
+
+#: app/flatpak-builtins-info.c:478
+msgid "unmaintained"
+msgstr "neprizorgita"
+
+#: app/flatpak-builtins-info.c:480 app/flatpak-builtins-info.c:482
+msgid "unknown"
+msgstr "nekonata"
+
+#: app/flatpak-builtins-install.c:68 app/flatpak-builtins-preinstall.c:57
+msgid "Don't pull, only install from local cache"
+msgstr "Ne tiri, nur instali el loka kaŝmemoro"
+
+#: app/flatpak-builtins-install.c:69 app/flatpak-builtins-preinstall.c:58
+#: app/flatpak-builtins-update.c:60
+msgid "Don't deploy, only download to local cache"
+msgstr "Ne disfaldu, nur elŝuti al loka kaŝmemoro"
+
+#: app/flatpak-builtins-install.c:70 app/flatpak-builtins-preinstall.c:59
+msgid "Don't install related refs"
+msgstr "Ne instali rilatajn referencojn"
+
+#: app/flatpak-builtins-install.c:71 app/flatpak-builtins-preinstall.c:60
+#: app/flatpak-builtins-update.c:62
+msgid "Don't verify/install runtime dependencies"
+msgstr "Ne konfirmi/instali rultempajn dependecojn"
+
+#: app/flatpak-builtins-install.c:72
+msgid "Don't automatically pin explicit installs"
+msgstr "Ne aŭtomate alpingli eksplicitajn instalojn"
+
+#: app/flatpak-builtins-install.c:73 app/flatpak-builtins-preinstall.c:61
+#: app/flatpak-builtins-update.c:63
+msgid "Don't use static deltas"
+msgstr "Ne uzi senmovajn deltojn"
+
+#: app/flatpak-builtins-install.c:76 app/flatpak-builtins-preinstall.c:62
+msgid "Additionally install the SDK used to build the given refs"
+msgstr "Aldone instali la SDK uzatan por konstrui la donitajn referencojn"
+
+#: app/flatpak-builtins-install.c:77 app/flatpak-builtins-preinstall.c:63
+msgid ""
+"Additionally install the debug info for the given refs and their dependencies"
+msgstr ""
+"Aldone instali la sencimigan informon por la donitaj referencoj kaj iliaj "
+"dependecoj"
+
+#: app/flatpak-builtins-install.c:78
+msgid "Assume LOCATION is a .flatpak single-file bundle"
+msgstr "Supozi LOKO estas .flatpak unudosiera pakaĵo"
+
+#: app/flatpak-builtins-install.c:79
+msgid "Assume LOCATION is a .flatpakref application description"
+msgstr "Supozi LOKO estas .flatpakref aplika priskribo"
+
+#: app/flatpak-builtins-install.c:80
+msgid "Assume LOCATION is containers-transports(5) reference to an OCI image"
+msgstr "Supozi LOKO estas ujoj-transportoj(5) referenco al OCI-bildo"
+
+#: app/flatpak-builtins-install.c:81
+msgid "Check bundle signatures with GPG key from FILE (- for stdin)"
+msgstr "Kontroli pakajn subskribojn per GPG-ŝlosilo el DOSIERO (- por stdin)"
+
+#: app/flatpak-builtins-install.c:82
+msgid "Only install this subpath"
+msgstr "Nur instali ĉi tiun subvojon"
+
+#: app/flatpak-builtins-install.c:83 app/flatpak-builtins-preinstall.c:64
+#: app/flatpak-builtins-uninstall.c:63 app/flatpak-builtins-update.c:68
+msgid "Automatically answer yes for all questions"
+msgstr "Aŭtomate respondi jes por ĉiuj demandoj"
+
+#: app/flatpak-builtins-install.c:84 app/flatpak-builtins-preinstall.c:65
+msgid "Uninstall first if already installed"
+msgstr "Unue malinstali se jam instalite"
+
+#: app/flatpak-builtins-install.c:85 app/flatpak-builtins-preinstall.c:66
+#: app/flatpak-builtins-uninstall.c:64 app/flatpak-builtins-update.c:69
+msgid "Produce minimal output and don't ask questions"
+msgstr "Produkti minimuman produktadon kaj ne fari demandojn"
+
+#: app/flatpak-builtins-install.c:86
+msgid "Update install if already installed"
+msgstr "Unue malinstali se jam instalite"
+
+#. Translators: A sideload is when you install from a local USB drive rather than the Internet.
+#: app/flatpak-builtins-install.c:88 app/flatpak-builtins-preinstall.c:68
+#: app/flatpak-builtins-update.c:71
+msgid "Use this local repo for sideloads"
+msgstr "Uzi ĉi tiun lokan repo por flankŝarĝoj"
+
+#: app/flatpak-builtins-install.c:178
+msgid "Bundle filename must be specified"
+msgstr "Paka dosiernomo devas esti specifita"
+
+#: app/flatpak-builtins-install.c:188
+msgid "Remote bundles are not supported"
+msgstr "Foraj pakaĵoj ne estas subtenataj"
+
+#: app/flatpak-builtins-install.c:231
+msgid "Filename or uri must be specified"
+msgstr "Dosiernomo aŭ uri devas esti specifitaj"
+
+#: app/flatpak-builtins-install.c:295
+msgid "Image location must be specified"
+msgstr "Almenaŭ unu REF devas esti specifita"
+
+#: app/flatpak-builtins-install.c:345
+msgid "[LOCATION/REMOTE] [REF…] - Install applications or runtimes"
+msgstr "[LOKIO/FORTA] [REF...] - Instali aplikaĵojn aŭ rultempojn"
+
+#: app/flatpak-builtins-install.c:378
+msgid "At least one REF must be specified"
+msgstr "Almenaŭ unu REF devas esti specifita"
+
+#: app/flatpak-builtins-install.c:392
+msgid "Looking for matches…\n"
+msgstr "Serĉante alumetojn...\n"
+
+#: app/flatpak-builtins-install.c:513
+#, c-format
+msgid "No remote refs found for ‘%s’"
+msgstr "Neniuj malproksimaj referencoj trovitaj similaj al '%s'"
+
+#: app/flatpak-builtins-install.c:573 app/flatpak-builtins-uninstall.c:405
+#: common/flatpak-ref-utils.c:689 common/flatpak-ref-utils.c:1595
+#, c-format
+msgid "Invalid branch %s: %s"
+msgstr "Nevalida branĉo %s: %s"
+
+#: app/flatpak-builtins-install.c:606
+#, c-format
+msgid "Nothing matches %s in local repository for remote %s"
+msgstr "Nenio kongruas kun %s en loka deponejo por fora %s"
+
+#: app/flatpak-builtins-install.c:608
+#, c-format
+msgid "Nothing matches %s in remote %s"
+msgstr "Nenio kongruas kun %s en fora %s"
+
+#: app/flatpak-builtins-install.c:629
+#, c-format
+msgid "Skipping: %s\n"
+msgstr "Preterpasi: %s\n"
+
+#: app/flatpak-builtins-kill.c:110
+#, c-format
+msgid "%s is not running"
+msgstr "%s ne funkcias."
+
+#: app/flatpak-builtins-kill.c:136
+msgid "INSTANCE - Stop a running application"
+msgstr "INSTANCE - Ĉesigi funkciantan aplikaĵon"
+
+#: app/flatpak-builtins-kill.c:144 app/flatpak-builtins-ps.c:256
+msgid "Extra arguments given"
+msgstr "Kromaj argumentoj donitaj"
+
+#: app/flatpak-builtins-kill.c:150
+msgid "Must specify the app to kill"
+msgstr "Devas specifi la apon por mortigi"
+
+#: app/flatpak-builtins-list.c:47
+msgid "Show extra information"
+msgstr "Montri kromajn informojn"
+
+#: app/flatpak-builtins-list.c:48
+msgid "List installed runtimes"
+msgstr "Listigi instalitajn rultempojn"
+
+#: app/flatpak-builtins-list.c:49
+msgid "List installed applications"
+msgstr "Listigi instalitajn aplikojn"
+
+#: app/flatpak-builtins-list.c:50
+msgid "Arch to show"
+msgstr "Arko por montri"
+
+#: app/flatpak-builtins-list.c:51 app/flatpak-builtins-remote-ls.c:57
+msgid "List all refs (including locale/debug)"
+msgstr "Listigi ĉiujn referencojn (inkluzive de loka/sencimigo)"
+
+#: app/flatpak-builtins-list.c:53 app/flatpak-builtins-remote-ls.c:58
+msgid "List all applications using RUNTIME"
+msgstr "Listigi ĉiujn aplikojn uzante RUNTIME"
+
+#: app/flatpak-builtins-list.c:59 app/flatpak-builtins-remote-list.c:51
+#: app/flatpak-builtins-remote-ls.c:68 app/flatpak-builtins-search.c:44
+msgid "Name"
+msgstr "Nomo"
+
+#: app/flatpak-builtins-list.c:59 app/flatpak-builtins-remote-list.c:51
+#: app/flatpak-builtins-remote-ls.c:68 app/flatpak-builtins-search.c:44
+msgid "Show the name"
+msgstr "Montri la nomon"
+
+#: app/flatpak-builtins-list.c:60 app/flatpak-builtins-remote-list.c:60
+#: app/flatpak-builtins-remote-ls.c:69 app/flatpak-builtins-search.c:45
+msgid "Description"
+msgstr "Priskribo"
+
+#: app/flatpak-builtins-list.c:60 app/flatpak-builtins-remote-ls.c:69
+#: app/flatpak-builtins-search.c:45
+msgid "Show the description"
+msgstr "Montri la priskribon"
+
+#: app/flatpak-builtins-list.c:61 app/flatpak-builtins-remote-ls.c:70
+#: app/flatpak-builtins-search.c:46
+msgid "Application ID"
+msgstr "Aplika ID"
+
+#: app/flatpak-builtins-list.c:61 app/flatpak-builtins-ps.c:52
+#: app/flatpak-builtins-remote-ls.c:70 app/flatpak-builtins-search.c:46
+msgid "Show the application ID"
+msgstr "Montri la aplikan ID"
+
+#: app/flatpak-builtins-list.c:62 app/flatpak-builtins-remote-ls.c:71
+#: app/flatpak-builtins-search.c:47
+msgid "Show the version"
+msgstr "Montri la version"
+
+#: app/flatpak-builtins-list.c:65 app/flatpak-builtins-ps.c:56
+#: app/flatpak-builtins-remote-ls.c:77
+msgid "Runtime"
+msgstr "Runtime"
+
+#: app/flatpak-builtins-list.c:65
+msgid "Show the used runtime"
+msgstr "Montri la uzatan rultempon"
+
+#: app/flatpak-builtins-list.c:66 app/flatpak-builtins-remote-ls.c:74
+msgid "Show the origin remote"
+msgstr "Montri la originforan foron"
+
+#: app/flatpak-builtins-list.c:67
+msgid "Show the installation"
+msgstr "Montri la instaladon"
+
+#: app/flatpak-builtins-list.c:69
+msgid "Active commit"
+msgstr "Aktiva kompromiso"
+
+#: app/flatpak-builtins-list.c:69 app/flatpak-builtins-remote-ls.c:76
+msgid "Show the active commit"
+msgstr "Montri la aktivan devontigon"
+
+#: app/flatpak-builtins-list.c:70
+msgid "Latest commit"
+msgstr "Plej lasta kompromiso"
+
+#: app/flatpak-builtins-list.c:70
+msgid "Show the latest commit"
+msgstr "Montri la plej novan kompromiton"
+
+#: app/flatpak-builtins-list.c:71 app/flatpak-builtins-remote-ls.c:78
+msgid "Installed size"
+msgstr "Instalita grandeco"
+
+#: app/flatpak-builtins-list.c:71 app/flatpak-builtins-remote-ls.c:78
+msgid "Show the installed size"
+msgstr "Montri la instalitan grandecon"
+
+#: app/flatpak-builtins-list.c:72 app/flatpak-builtins-remote-list.c:58
+#: app/flatpak-builtins-remote-ls.c:80 app/flatpak-builtins-repo.c:340
+msgid "Options"
+msgstr "Opcioj"
+
+#: app/flatpak-builtins-list.c:72 app/flatpak-builtins-remote-list.c:58
+#: app/flatpak-builtins-remote-ls.c:80
+msgid "Show options"
+msgstr "Montri eblojn"
+
+#: app/flatpak-builtins-list.c:180
+#, c-format
+msgid "Unable to load details of %s: %s"
+msgstr "Ne eblas ŝargi metadatenojn de fora %s: %s"
+
+#: app/flatpak-builtins-list.c:190
+#, c-format
+msgid "Unable to inspect current version of %s: %s"
+msgstr "Ne eblas inspekti nunan version de %s: %s"
+
+#: app/flatpak-builtins-list.c:408
+msgid " - List installed apps and/or runtimes"
+msgstr "- Listigi instalitajn programojn kaj/aŭ rultempojn"
+
+#: app/flatpak-builtins-make-current.c:38
+msgid "Arch to make current for"
+msgstr "Arko por fari fluon"
+
+#: app/flatpak-builtins-make-current.c:58
+msgid "APP BRANCH - Make branch of application current"
+msgstr "APP BRANCH - Fari branĉon de aplikaĵo aktuala"
+
+#: app/flatpak-builtins-make-current.c:69 app/flatpak-builtins-run.c:160
+msgid "APP must be specified"
+msgstr "APP devas esti specifita"
+
+#: app/flatpak-builtins-make-current.c:84
+msgid "BRANCH must be specified"
+msgstr "BRANĈO devas esti precizigita"
+
+#: app/flatpak-builtins-make-current.c:97
+#, c-format
+msgid "App %s branch %s is not installed"
+msgstr "Apo %s branĉo %s ne estas instalita"
+
+#: app/flatpak-builtins-mask.c:42
+msgid "Remove matching masks"
+msgstr "Ĉu forigi ilin?"
+
+#: app/flatpak-builtins-mask.c:54
+msgid ""
+"[PATTERN…] - disable updates and automatic installation matching patterns"
+msgstr ""
+"[PATTERN...] - malebligi ĝisdatigojn kaj aŭtomatajn instalaĵojn kongruajn "
+"ŝablonojn"
+
+#: app/flatpak-builtins-mask.c:73
+msgid "No masked patterns\n"
+msgstr "Neniuj maskitaj ŝablonoj\n"
+
+#: app/flatpak-builtins-mask.c:78
+msgid "Masked patterns:\n"
+msgstr "Maskitaj ŝablonoj:\n"
+
+#: app/flatpak-builtins-override.c:42
+msgid "Remove existing overrides"
+msgstr "Forigi ekzistantajn anstataŭojn"
+
+#: app/flatpak-builtins-override.c:43
+msgid "Show existing overrides"
+msgstr "Montri ekzistantajn anstataŭojn"
+
+#: app/flatpak-builtins-override.c:59
+msgid "[APP] - Override settings [for application]"
+msgstr "[APP] - Anstataŭigi agordojn [por aplikaĵo]"
+
+#: app/flatpak-builtins-permission-list.c:143
+msgid "[TABLE] [ID] - List permissions"
+msgstr "[TABLO] [ID] - Listo de permesoj"
+
+#: app/flatpak-builtins-permission-list.c:179
+#: app/flatpak-builtins-permission-show.c:142
+msgid "Table"
+msgstr "Tablo"
+
+#: app/flatpak-builtins-permission-list.c:180
+#: app/flatpak-builtins-permission-show.c:143
+msgid "Object"
+msgstr "Objekto"
+
+#: app/flatpak-builtins-permission-list.c:181
+#: app/flatpak-builtins-permission-show.c:144
+msgid "App"
+msgstr "App"
+
+#: app/flatpak-builtins-permission-list.c:183
+#: app/flatpak-builtins-permission-show.c:146
+msgid "Data"
+msgstr "Datumoj"
+
+#: app/flatpak-builtins-permission-remove.c:120
+msgid "TABLE ID [APP_ID] - Remove item from permission store"
+msgstr "TABLA ID - Forigi objekton el permesa vendejo"
+
+#: app/flatpak-builtins-permission-remove.c:129
+#: app/flatpak-builtins-permission-set.c:120
+msgid "Too few arguments"
+msgstr "Tro malmultaj argumentoj"
+
+#: app/flatpak-builtins-permission-reset.c:43
+msgid "Reset all permissions"
+msgstr "Restarigi ĉiujn permesojn"
+
+#: app/flatpak-builtins-permission-reset.c:144
+msgid "APP_ID - Reset permissions for an app"
+msgstr "APP_ID - Restarigi permesojn por programo"
+
+#: app/flatpak-builtins-permission-reset.c:153
+#: app/flatpak-builtins-permission-show.c:124
+msgid "Wrong number of arguments"
+msgstr "Malĝusta nombro da argumentoj"
+
+#: app/flatpak-builtins-permission-set.c:42
+msgid "Associate DATA with the entry"
+msgstr "Asocii DATUJN kun la eniro"
+
+#: app/flatpak-builtins-permission-set.c:42
+msgid "DATA"
+msgstr "DATA"
+
+#: app/flatpak-builtins-permission-set.c:111
+msgid "TABLE ID APP_ID [PERMISSION...] - Set permissions"
+msgstr "[TABLO] [ID] - Listo de permesoj"
+
+#: app/flatpak-builtins-permission-set.c:132
+#, c-format
+msgid "Failed to parse '%s' as GVariant: "
+msgstr "Malsukcesis analizi filtrilon '%s'"
+
+#: app/flatpak-builtins-permission-show.c:115
+msgid "APP_ID - Show permissions for an app"
+msgstr "APP_ID - Montri permesojn por aplikaĵo"
+
+#: app/flatpak-builtins-pin.c:44
+msgid "Remove matching pins"
+msgstr "Ĉu forigi ilin?"
+
+#: app/flatpak-builtins-pin.c:56
+msgid "[PATTERN…] - disable automatic removal of runtimes matching patterns"
+msgstr ""
+"[PATTERN...] - malebligi aŭtomatan forigon de rultempoj kongruaj ŝablonoj"
+
+#: app/flatpak-builtins-pin.c:75
+msgid "No pinned patterns\n"
+msgstr "Neniuj alpinglitaj ŝablonoj\n"
+
+#: app/flatpak-builtins-pin.c:80
+msgid "Pinned patterns:\n"
+msgstr "Alpinglitaj ŝablonoj:\n"
+
+#: app/flatpak-builtins-preinstall.c:80
+msgid "- Install flatpaks that are part of the operating system"
+msgstr "- Instali flatpakaĵojn kiuj estas parto de la operaciumo"
+
+#: app/flatpak-builtins-preinstall.c:118
+msgid "Nothing to do.\n"
+msgstr "Nenio farenda.\n"
+
+#: app/flatpak-builtins-ps.c:49
+msgid "Instance"
+msgstr "Kazo"
+
+#: app/flatpak-builtins-ps.c:49
+msgid "Show the instance ID"
+msgstr "Montri la instantan ID"
+
+#: app/flatpak-builtins-ps.c:50 app/flatpak-builtins-run.c:87
+msgid "PID"
+msgstr "PID"
+
+#: app/flatpak-builtins-ps.c:50
+msgid "Show the PID of the wrapper process"
+msgstr "Montri la PID de la envolvaĵprocezo"
+
+#: app/flatpak-builtins-ps.c:51
+msgid "Child-PID"
+msgstr "Infano-PID"
+
+#: app/flatpak-builtins-ps.c:51
+msgid "Show the PID of the sandbox process"
+msgstr "Montri la PID de la sandbox-procezo"
+
+#: app/flatpak-builtins-ps.c:54 app/flatpak-builtins-search.c:48
+msgid "Show the application branch"
+msgstr "Montri la aplikan branĉon"
+
+#: app/flatpak-builtins-ps.c:55
+msgid "Show the application commit"
+msgstr "Montri la aplikaĵon"
+
+#: app/flatpak-builtins-ps.c:56
+msgid "Show the runtime ID"
+msgstr "Montri la rultempan ID"
+
+#: app/flatpak-builtins-ps.c:57
+msgid "R.-Branch"
+msgstr "R.-Branĉo"
+
+#: app/flatpak-builtins-ps.c:57
+msgid "Show the runtime branch"
+msgstr "Montri la rultempan branĉon"
+
+#: app/flatpak-builtins-ps.c:58
+msgid "R.-Commit"
+msgstr "R.-Engaĝiĝu"
+
+#: app/flatpak-builtins-ps.c:58
+msgid "Show the runtime commit"
+msgstr "Montri la rultempan komision"
+
+#: app/flatpak-builtins-ps.c:59
+msgid "Active"
+msgstr "Aktiva kompromiso"
+
+#: app/flatpak-builtins-ps.c:59
+msgid "Show whether the app is active"
+msgstr "Montri kiam la ŝanĝo okazis"
+
+#: app/flatpak-builtins-ps.c:60
+msgid "Background"
+msgstr "Fono"
+
+#: app/flatpak-builtins-ps.c:60
+msgid "Show whether the app is background"
+msgstr "Montri kiam la ŝanĝo okazis"
+
+#: app/flatpak-builtins-ps.c:246
+msgid " - Enumerate running sandboxes"
+msgstr "- Nombri kurantajn sablokestojn"
+
+#: app/flatpak-builtins-remote-add.c:66
+msgid "Do nothing if the provided remote exists"
+msgstr "Fari nenion se la provizita telecomando ekzistas"
+
+#: app/flatpak-builtins-remote-add.c:67
+msgid "LOCATION specifies a configuration file, not the repo location"
+msgstr "LOKO specifas agordan dosieron, ne la deponejo"
+
+#: app/flatpak-builtins-remote-add.c:72 app/flatpak-builtins-remote-modify.c:78
+msgid "Disable GPG verification"
+msgstr "Malebligi GPG-konfirmon"
+
+#: app/flatpak-builtins-remote-add.c:73 app/flatpak-builtins-remote-modify.c:79
+msgid "Mark the remote as don't enumerate"
+msgstr "Marki la teleilon kiel ne listigu"
+
+#: app/flatpak-builtins-remote-add.c:74 app/flatpak-builtins-remote-modify.c:80
+msgid "Mark the remote as don't use for deps"
+msgstr "Marki la teleilon kiel ne uzi por dep"
+
+#: app/flatpak-builtins-remote-add.c:75 app/flatpak-builtins-remote-modify.c:81
+msgid "Set priority (default 1, higher is more prioritized)"
+msgstr "Agordi prioritaton (defaŭlte 1, pli alta estas pli prioritatita)"
+
+#: app/flatpak-builtins-remote-add.c:75 app/flatpak-builtins-remote-modify.c:81
+msgid "PRIORITY"
+msgstr "PRIORITY"
+
+#: app/flatpak-builtins-remote-add.c:76
+msgid "The named subset to use for this remote"
+msgstr "Bela nomo uzinda por ĉi tiu telecomando"
+
+#: app/flatpak-builtins-remote-add.c:76 app/flatpak-builtins-remote-modify.c:71
+msgid "SUBSET"
+msgstr "SUBSET"
+
+#: app/flatpak-builtins-remote-add.c:77 app/flatpak-builtins-remote-modify.c:82
+msgid "A nice name to use for this remote"
+msgstr "Bela nomo uzinda por ĉi tiu telecomando"
+
+#: app/flatpak-builtins-remote-add.c:78 app/flatpak-builtins-remote-modify.c:83
+msgid "A one-line comment for this remote"
+msgstr "Unulinia komento por ĉi tiu telecomando"
+
+#: app/flatpak-builtins-remote-add.c:79 app/flatpak-builtins-remote-modify.c:84
+msgid "A full-paragraph description for this remote"
+msgstr "Plena alinea priskribo por ĉi tiu fora"
+
+#: app/flatpak-builtins-remote-add.c:80 app/flatpak-builtins-remote-modify.c:85
+msgid "URL for a website for this remote"
+msgstr "URL por retejo por ĉi tiu fora"
+
+#: app/flatpak-builtins-remote-add.c:81 app/flatpak-builtins-remote-modify.c:86
+msgid "URL for an icon for this remote"
+msgstr "URL por ikono por ĉi tiu telecomando"
+
+#: app/flatpak-builtins-remote-add.c:82 app/flatpak-builtins-remote-modify.c:87
+msgid "Default branch to use for this remote"
+msgstr "Defaŭlta branĉo uzinda por ĉi tiu fora"
+
+#: app/flatpak-builtins-remote-add.c:84 app/flatpak-builtins-remote-modify.c:89
+msgid "Import GPG key from FILE (- for stdin)"
+msgstr "Enporti GPG-ŝlosilon el DOSIERO (- por stdin)"
+
+#: app/flatpak-builtins-remote-add.c:85 app/flatpak-builtins-remote-modify.c:90
+msgid "Load signatures from URL"
+msgstr "Ŝarĝi subskribojn de URL"
+
+#: app/flatpak-builtins-remote-add.c:86 app/flatpak-builtins-remote-modify.c:92
+msgid "Set path to local filter FILE"
+msgstr "Agordi vojon al loka filtrila DOSIERO"
+
+#: app/flatpak-builtins-remote-add.c:87 app/flatpak-builtins-remote-modify.c:93
+msgid "Disable the remote"
+msgstr "Malŝalti la telecomandilon"
+
+#: app/flatpak-builtins-remote-add.c:88 app/flatpak-builtins-remote-modify.c:94
+msgid "Name of authenticator"
+msgstr "Nomo de aŭtentikigilo"
+
+#: app/flatpak-builtins-remote-add.c:90 app/flatpak-builtins-remote-modify.c:96
+msgid "Autoinstall authenticator"
+msgstr "Nevalida dbus-nomo %s"
+
+#: app/flatpak-builtins-remote-add.c:91 app/flatpak-builtins-remote-modify.c:97
+msgid "Don't autoinstall authenticator"
+msgstr "Ne malinstali rilatajn referencojn"
+
+#: app/flatpak-builtins-remote-add.c:92 app/flatpak-builtins-remote-modify.c:99
+msgid "Don't follow the redirect set in the summary file"
+msgstr "Ne sekvi la alidirektilon fiksitan en la resuma dosiero"
+
+#: app/flatpak-builtins-remote-add.c:261 app/flatpak-builtins-remote-add.c:268
+#, c-format
+msgid "Can't load uri %s: %s\n"
+msgstr "Ne povas ŝargi uri %s: %s\n"
+
+#: app/flatpak-builtins-remote-add.c:276 common/flatpak-dir.c:4628
+#, c-format
+msgid "Can't load file %s: %s\n"
+msgstr "Ne povas ŝargi dosieron %s: %s\n"
+
+#: app/flatpak-builtins-remote-add.c:304
+msgid "NAME LOCATION - Add a remote repository"
+msgstr "NOMO LOKO - Aldoni malproksiman deponejon"
+
+#: app/flatpak-builtins-remote-add.c:331
+msgid "GPG verification is required if collections are enabled"
+msgstr "GPG-konfirmo estas postulata se kolektoj estas ebligitaj"
+
+#: app/flatpak-builtins-remote-add.c:393
+#, c-format
+msgid "Remote %s already exists"
+msgstr "Fora %s jam ekzistas"
+
+#: app/flatpak-builtins-remote-add.c:405
+#: app/flatpak-builtins-remote-modify.c:340
+#, c-format
+msgid "Invalid authenticator name %s"
+msgstr "Nevalida dbus-nomo %s"
+
+#: app/flatpak-builtins-remote-add.c:422
+#, c-format
+msgid "Warning: Could not update extra metadata for '%s': %s\n"
+msgstr "Averto: Ne eblis ĝisdatigi kromajn metadatenojn por '%s': %s\n"
+
+#: app/flatpak-builtins-remote-delete.c:39
+msgid "Remove remote even if in use"
+msgstr "Forigi telerilon eĉ se estas uzata"
+
+#: app/flatpak-builtins-remote-delete.c:53
+msgid "NAME - Delete a remote repository"
+msgstr "NOMO - Forigi foran deponejon"
+
+#: app/flatpak-builtins-remote-delete.c:100
+#, c-format
+msgid "The following refs are installed from remote '%s':"
+msgstr "La sekvaj referencoj estas instalitaj de fora '%s':"
+
+#: app/flatpak-builtins-remote-delete.c:101
+msgid "Remove them?"
+msgstr "Ĉu forigi ilin?"
+
+#: app/flatpak-builtins-remote-delete.c:103
+#, c-format
+msgid "Can't remove remote '%s' with installed refs"
+msgstr "Ne povas forigi fora '%s' kun instalitaj referencoj"
+
+#: app/flatpak-builtins-remote-info.c:55
+msgid "Commit to show info for"
+msgstr "Engaĝiĝi montri informojn por"
+
+#: app/flatpak-builtins-remote-info.c:58
+msgid "Display log"
+msgstr "Montri protokolon"
+
+#: app/flatpak-builtins-remote-info.c:61
+msgid "Show parent"
+msgstr "Montri gepatron"
+
+#: app/flatpak-builtins-remote-info.c:65 app/flatpak-builtins-remote-ls.c:60
+msgid "Use local caches even if they are stale"
+msgstr "Uzi lokajn kaŝmemorojn eĉ se ili estas malnoviĝintaj"
+
+#. Translators: A sideload is when you install from a local USB drive rather than the Internet.
+#: app/flatpak-builtins-remote-info.c:67 app/flatpak-builtins-remote-ls.c:62
+msgid "Only list refs available as sideloads"
+msgstr "Nur listaj referencoj haveblaj kiel flankŝarĝoj"
+
+#: app/flatpak-builtins-remote-info.c:114
+msgid ""
+" REMOTE REF - Show information about an application or runtime in a remote"
+msgstr "REMOTE REF - Montri informojn pri aplikaĵo aŭ rultempo en fora"
+
+#: app/flatpak-builtins-remote-info.c:125
+msgid "REMOTE and REF must be specified"
+msgstr "REMOTE kaj REF devas esti specifitaj"
+
+#: app/flatpak-builtins-remote-info.c:247
+#: app/flatpak-builtins-remote-info.c:282
+msgid "Download Size:"
+msgstr "Elŝuta grandeco"
+
+#: app/flatpak-builtins-remote-info.c:267
+#: app/flatpak-builtins-remote-info.c:325
+msgid "History:"
+msgstr "Historio:"
+
+#: app/flatpak-builtins-remote-info.c:348
+msgid " Commit:"
+msgstr "Faru:"
+
+#: app/flatpak-builtins-remote-info.c:349
+msgid " Subject:"
+msgstr "Temo:"
+
+#: app/flatpak-builtins-remote-info.c:350
+msgid " Date:"
+msgstr "Dato:"
+
+#: app/flatpak-builtins-remote-info.c:383
+#, c-format
+msgid "Warning: Commit %s has no flatpak metadata\n"
+msgstr "Averto: Fari %s ne havas metadatumojn de flatpak\n"
+
+#: app/flatpak-builtins-remote-list.c:43
+msgid "Show remote details"
+msgstr "Montri forajn detalojn"
+
+#: app/flatpak-builtins-remote-list.c:44
+msgid "Show disabled remotes"
+msgstr "Montri malfunkciigitajn teleremotojn"
+
+#: app/flatpak-builtins-remote-list.c:52
+msgid "Title"
+msgstr "Titolo"
+
+#: app/flatpak-builtins-remote-list.c:52
+msgid "Show the title"
+msgstr "Montri la titolon"
+
+#: app/flatpak-builtins-remote-list.c:53
+msgid "Show the URL"
+msgstr "Montri la URL"
+
+#: app/flatpak-builtins-remote-list.c:54
+msgid "Show the collection ID"
+msgstr "Montri la kolekton ID"
+
+#: app/flatpak-builtins-remote-list.c:55 app/flatpak-builtins-repo.c:392
+msgid "Subset"
+msgstr "Subaro"
+
+#: app/flatpak-builtins-remote-list.c:55
+msgid "Show the subset"
+msgstr "Montri la ref"
+
+#: app/flatpak-builtins-remote-list.c:56
+msgid "Filter"
+msgstr "Filtrilo"
+
+#: app/flatpak-builtins-remote-list.c:56
+msgid "Show filter file"
+msgstr "Montri filtrilan dosieron"
+
+#: app/flatpak-builtins-remote-list.c:57
+msgid "Priority"
+msgstr "Prioritato"
+
+#: app/flatpak-builtins-remote-list.c:57
+msgid "Show the priority"
+msgstr "Montri la prioritaton"
+
+#: app/flatpak-builtins-remote-list.c:59
+msgid "Comment"
+msgstr "Komento"
+
+#: app/flatpak-builtins-remote-list.c:59
+msgid "Show comment"
+msgstr "Montri komenton"
+
+#: app/flatpak-builtins-remote-list.c:60
+msgid "Show description"
+msgstr "Montri priskribon"
+
+#: app/flatpak-builtins-remote-list.c:61
+msgid "Homepage"
+msgstr "Hejmpaĝo"
+
+#: app/flatpak-builtins-remote-list.c:61
+msgid "Show homepage"
+msgstr "Montri hejmpaĝon"
+
+#: app/flatpak-builtins-remote-list.c:62
+msgid "Icon"
+msgstr "Ikono"
+
+#: app/flatpak-builtins-remote-list.c:62
+msgid "Show icon"
+msgstr "Montri ikonon"
+
+#: app/flatpak-builtins-remote-list.c:231
+msgid " - List remote repositories"
+msgstr "- Listigi forajn deponejojn"
+
+#: app/flatpak-builtins-remote-ls.c:52
+msgid "Show arches and branches"
+msgstr "Montri arkojn kaj branĉojn"
+
+#: app/flatpak-builtins-remote-ls.c:53
+msgid "Show only runtimes"
+msgstr "Montri nur rultempojn"
+
+#: app/flatpak-builtins-remote-ls.c:54
+msgid "Show only apps"
+msgstr "Montri nur apojn"
+
+#: app/flatpak-builtins-remote-ls.c:55
+msgid "Show only those where updates are available"
+msgstr "Montri nur tiujn, kie ĝisdatigoj estas disponeblaj"
+
+#: app/flatpak-builtins-remote-ls.c:56
+msgid "Limit to this arch (* for all)"
+msgstr "Limigi al ĉi tiu arko (* por ĉiuj)"
+
+#: app/flatpak-builtins-remote-ls.c:77
+msgid "Show the runtime"
+msgstr "Montri la rultempon"
+
+#: app/flatpak-builtins-remote-ls.c:79
+msgid "Download size"
+msgstr "Elŝuta grandeco"
+
+#: app/flatpak-builtins-remote-ls.c:79
+msgid "Show the download size"
+msgstr "Montri la elŝutan grandecon"
+
+#: app/flatpak-builtins-remote-ls.c:391
+msgid " [REMOTE or URI] - Show available runtimes and applications"
+msgstr "[REMOTO aŭ URI] - Montri disponeblajn rultempojn kaj aplikaĵojn"
+
+#: app/flatpak-builtins-remote-modify.c:67
+msgid "Enable GPG verification"
+msgstr "Ebligi GPG-kontrolon"
+
+#: app/flatpak-builtins-remote-modify.c:68
+msgid "Mark the remote as enumerate"
+msgstr "Marki la telerilon kiel listigi"
+
+#: app/flatpak-builtins-remote-modify.c:69
+msgid "Mark the remote as used for dependencies"
+msgstr "Marki la teleremolon kiel uzatan por dependecoj"
+
+#: app/flatpak-builtins-remote-modify.c:70
+msgid "Set a new URL"
+msgstr "Agordi novan URL"
+
+#: app/flatpak-builtins-remote-modify.c:71
+msgid "Set a new subset to use"
+msgstr "Agordi novan URL"
+
+#: app/flatpak-builtins-remote-modify.c:72
+msgid "Enable the remote"
+msgstr "Ebligi la telemanieron"
+
+#: app/flatpak-builtins-remote-modify.c:73
+msgid "Update extra metadata from the summary file"
+msgstr "Ĝisdatigi kromajn metadatumojn de la resuma dosiero"
+
+#: app/flatpak-builtins-remote-modify.c:91
+msgid "Disable local filter"
+msgstr "Malebligi lokan filtrilon"
+
+#: app/flatpak-builtins-remote-modify.c:95
+msgid "Authenticator options"
+msgstr "Montri eblojn"
+
+#: app/flatpak-builtins-remote-modify.c:98
+msgid "Follow the redirect set in the summary file"
+msgstr "Ĝisdatigi kromajn metadatumojn de la resuma dosiero"
+
+#: app/flatpak-builtins-remote-modify.c:306
+msgid "NAME - Modify a remote repository"
+msgstr "NOMO - Modifi foran deponejon"
+
+#: app/flatpak-builtins-remote-modify.c:316
+msgid "Remote NAME must be specified"
+msgstr "Fora NOMO devas esti specifita"
+
+#: app/flatpak-builtins-remote-modify.c:327
+#, c-format
+msgid "Updating extra metadata from remote summary for %s\n"
+msgstr "Ĝisdatigante kromajn metadatenojn de fora resumo por %s\n"
+
+#: app/flatpak-builtins-remote-modify.c:330
+#, c-format
+msgid "Error updating extra metadata for '%s': %s\n"
+msgstr "Eraro dum ĝisdatigo de kromaj metadatenoj por '%s': %s\n"
+
+#: app/flatpak-builtins-remote-modify.c:331
+#, c-format
+msgid "Could not update extra metadata for %s"
+msgstr "Ne eblis ĝisdatigi kromajn metadatenojn por %s"
+
+#: app/flatpak-builtins-repair.c:43
+msgid "Don't make any changes"
+msgstr "Ne fari ajnajn ŝanĝojn"
+
+#: app/flatpak-builtins-repair.c:44
+msgid "Reinstall all refs"
+msgstr "Reinstali ĉiujn refojn"
+
+#: app/flatpak-builtins-repair.c:68
+#, c-format
+msgid "Object missing: %s.%s\n"
+msgstr "Objekto mankas: %s.%s\n"
+
+#: app/flatpak-builtins-repair.c:76
+#, c-format
+msgid "Object invalid: %s.%s\n"
+msgstr "Objekto nevalida: %s.%s\n"
+
+#: app/flatpak-builtins-repair.c:81
+#, c-format
+msgid "%s, deleting object\n"
+msgstr "%s, forigo de objekto\n"
+
+#: app/flatpak-builtins-repair.c:146
+#, c-format
+msgid "Can't load object %s: %s\n"
+msgstr "Ne povas ŝargi objekton %s: %s\n"
+
+#: app/flatpak-builtins-repair.c:228
+#, c-format
+msgid "Commit invalid %s: %s\n"
+msgstr "Objekto nevalida: %s.%s\n"
+
+#: app/flatpak-builtins-repair.c:231
+#, c-format
+msgid "Deleting invalid commit %s: %s\n"
+msgstr "Forigas nevalidan faraĵon %s: %s\n"
+
+#: app/flatpak-builtins-repair.c:261
+#, c-format
+msgid "Commit should be marked partial: %s\n"
+msgstr "Commit devus esti markita parta: %s\n"
+
+#: app/flatpak-builtins-repair.c:264
+#, c-format
+msgid "Marking commit as partial: %s\n"
+msgstr "Markado de kompromiso kiel parta: %s\n"
+
+#: app/flatpak-builtins-repair.c:293
+#, c-format
+msgid "Problems loading data for %s: %s\n"
+msgstr "Problemoj dum ŝarĝo de datumoj por %s: %s\n"
+
+#: app/flatpak-builtins-repair.c:306
+#, c-format
+msgid "Error reinstalling %s: %s\n"
+msgstr "Eraro dum reinstalo de %s: %s\n"
+
+#: app/flatpak-builtins-repair.c:327
+msgid "- Repair a flatpak installation"
+msgstr "- Ripari instaladon de flatpak"
+
+#: app/flatpak-builtins-repair.c:406
+#, c-format
+msgid "Removing non-deployed ref %s…\n"
+msgstr "Forigante ne-deplojitan ref %s...\n"
+
+#: app/flatpak-builtins-repair.c:411
+#, c-format
+msgid "Skipping non-deployed ref %s…\n"
+msgstr "Preterpasi ne-deplojitan ref %s...\n"
+
+#: app/flatpak-builtins-repair.c:429
+#, c-format
+msgid "[%d/%d] Verifying %s…\n"
+msgstr "[%d/%d] Kontrolante %s…\n"
+
+#: app/flatpak-builtins-repair.c:435
+msgid "Dry run: "
+msgstr "Seka kurado:"
+
+#: app/flatpak-builtins-repair.c:440
+#, c-format
+msgid "Deleting ref %s due to missing objects\n"
+msgstr "Forigo de ref %s pro mankantaj objektoj\n"
+
+#: app/flatpak-builtins-repair.c:444
+#, c-format
+msgid "Deleting ref %s due to invalid objects\n"
+msgstr "Forigo de ref %s pro nevalidaj objektoj\n"
+
+#: app/flatpak-builtins-repair.c:448
+#, c-format
+msgid "Deleting ref %s due to %d\n"
+msgstr "Forigo de ref %s pro %d\n"
+
+#: app/flatpak-builtins-repair.c:464
+msgid "Checking remotes...\n"
+msgstr "Kontrolante telefakojn...\n"
+
+#: app/flatpak-builtins-repair.c:482
+#, c-format
+msgid "Remote %s for ref %s is missing\n"
+msgstr "Fora %s por ref %s mankas\n"
+
+#: app/flatpak-builtins-repair.c:484
+#, c-format
+msgid "Remote %s for ref %s is disabled\n"
+msgstr "Fora %s por ref %s estas malŝaltita\n"
+
+#: app/flatpak-builtins-repair.c:490
+msgid "Pruning objects\n"
+msgstr "Pritondi objektojn\n"
+
+#: app/flatpak-builtins-repair.c:498
+msgid "Erasing .removed\n"
+msgstr "Forigo .forigita\n"
+
+#: app/flatpak-builtins-repair.c:523
+msgid "Reinstalling refs\n"
+msgstr "Reinstalante refs\n"
+
+#: app/flatpak-builtins-repair.c:525
+msgid "Reinstalling removed refs\n"
+msgstr "Reinstalante forigitajn referencojn\n"
+
+#: app/flatpak-builtins-repair.c:550
+#, c-format
+msgid "While removing appstream for %s: "
+msgstr "Dum forigo de appstream por %s:"
+
+#: app/flatpak-builtins-repair.c:557
+#, c-format
+msgid "While deploying appstream for %s: "
+msgstr "Dum deplojado de appstream por %s:"
+
+#: app/flatpak-builtins-repo.c:106
+#, c-format
+msgid "Repo mode: %s\n"
+msgstr "Repo-reĝimo: %s\n"
+
+#: app/flatpak-builtins-repo.c:113
+#, c-format
+msgid "Indexed summaries: %s\n"
+msgstr "Indeksitaj resumoj: %s\n"
+
+#: app/flatpak-builtins-repo.c:113 app/flatpak-builtins-repo.c:139
+#: app/flatpak-builtins-repo.c:172
+msgid "true"
+msgstr "vera"
+
+#: app/flatpak-builtins-repo.c:113 app/flatpak-builtins-repo.c:139
+#: app/flatpak-builtins-repo.c:172
+msgid "false"
+msgstr "malvera"
+
+#: app/flatpak-builtins-repo.c:121
+msgid "Subsummaries: "
+msgstr "Subresumoj:"
+
+#: app/flatpak-builtins-repo.c:136
+#, c-format
+msgid "Cache version: %d\n"
+msgstr "Cache versio: %d\n"
+
+#: app/flatpak-builtins-repo.c:139
+#, c-format
+msgid "Indexed deltas: %s\n"
+msgstr "Indeksitaj deltoj: %s\n"
+
+#: app/flatpak-builtins-repo.c:142
+#, c-format
+msgid "Title: %s\n"
+msgstr "Titolo: %s\n"
+
+#: app/flatpak-builtins-repo.c:145
+#, c-format
+msgid "Comment: %s\n"
+msgstr "Komento: %s\n"
+
+#: app/flatpak-builtins-repo.c:148
+#, c-format
+msgid "Description: %s\n"
+msgstr "Priskribo: %s\n"
+
+#: app/flatpak-builtins-repo.c:151
+#, c-format
+msgid "Homepage: %s\n"
+msgstr "Hejmpaĝo: %s\n"
+
+#: app/flatpak-builtins-repo.c:154
+#, c-format
+msgid "Icon: %s\n"
+msgstr "Ikono: %s\n"
+
+#: app/flatpak-builtins-repo.c:157
+#, c-format
+msgid "Collection ID: %s\n"
+msgstr "Kolekto ID: %s\n"
+
+#: app/flatpak-builtins-repo.c:160
+#, c-format
+msgid "Default branch: %s\n"
+msgstr "Defaŭlta branĉo: %s\n"
+
+#: app/flatpak-builtins-repo.c:163
+#, c-format
+msgid "Redirect URL: %s\n"
+msgstr "Redirekta URL: %s\n"
+
+#: app/flatpak-builtins-repo.c:166
+#, c-format
+msgid "Deploy collection ID: %s\n"
+msgstr "Deploji kolekto ID: %s\n"
+
+#: app/flatpak-builtins-repo.c:169
+#, c-format
+msgid "Authenticator name: %s\n"
+msgstr "Aŭtentikigilnomo: %s\n"
+
+#: app/flatpak-builtins-repo.c:172
+#, c-format
+msgid "Authenticator install: %s\n"
+msgstr "Aŭtentikigil-instalado: %s\n"
+
+#: app/flatpak-builtins-repo.c:180
+#, c-format
+msgid "GPG key hash: %s\n"
+msgstr "GPG-ŝlosilo hash: %s\n"
+
+#: app/flatpak-builtins-repo.c:184
+#, c-format
+msgid "%zd summary branches\n"
+msgstr "%zd branĉoj\n"
+
+#: app/flatpak-builtins-repo.c:336
+msgid "Installed"
+msgstr "Instalita"
+
+#. Translators: Download is used here as a noun
+#: app/flatpak-builtins-repo.c:338 app/flatpak-cli-transaction.c:1462
+msgid "Download"
+msgstr "Elŝutu"
+
+#: app/flatpak-builtins-repo.c:339
+msgid "Subsets"
+msgstr "Subaroj"
+
+#: app/flatpak-builtins-repo.c:393
+msgid "Digest"
+msgstr "Digesto"
+
+#: app/flatpak-builtins-repo.c:394
+msgid "History length"
+msgstr "Historio:"
+
+#: app/flatpak-builtins-repo.c:711
+msgid "Print general information about the repository"
+msgstr "Presi ĝeneralajn informojn pri la deponejo"
+
+#: app/flatpak-builtins-repo.c:712
+msgid "List the branches in the repository"
+msgstr "Listigi la branĉojn en la deponejo"
+
+#: app/flatpak-builtins-repo.c:713
+msgid "Print metadata for a branch"
+msgstr "Presi metadatenojn por branĉo"
+
+#: app/flatpak-builtins-repo.c:714
+msgid "Show commits for a branch"
+msgstr "Montri komitojn por branĉo"
+
+#: app/flatpak-builtins-repo.c:715
+msgid "Print information about the repo subsets"
+msgstr "Presi ĝeneralajn informojn pri la deponejo"
+
+#: app/flatpak-builtins-repo.c:716
+msgid "Limit information to subsets with this prefix"
+msgstr "Limigi informojn al subaroj kun ĉi tiu prefikso"
+
+#: app/flatpak-builtins-repo.c:732
+msgid "LOCATION - Repository maintenance"
+msgstr "LOKO - Deponejo prizorgado"
+
+#: app/flatpak-builtins-run.c:68
+msgid "Command to run"
+msgstr "Ordono kuri"
+
+#: app/flatpak-builtins-run.c:69
+msgid "Directory to run the command in"
+msgstr "Dosierujo por ruli la komandon en"
+
+#: app/flatpak-builtins-run.c:70
+msgid "Branch to use"
+msgstr "Branĉo por uzi"
+
+#: app/flatpak-builtins-run.c:71
+msgid "Use development runtime"
+msgstr "Uzi evoluan rultempon"
+
+#: app/flatpak-builtins-run.c:72
+msgid "Runtime to use"
+msgstr "Rultempo por uzi"
+
+#: app/flatpak-builtins-run.c:73
+msgid "Runtime version to use"
+msgstr "Rultempa versio por uzi"
+
+#: app/flatpak-builtins-run.c:76
+msgid "Log accessibility bus calls"
+msgstr "Ensaluti alireblajn busvokojn"
+
+#: app/flatpak-builtins-run.c:77
+msgid "Don't proxy accessibility bus calls"
+msgstr "Ne prokuri alireblajn busalvokojn"
+
+#: app/flatpak-builtins-run.c:78
+msgid "Proxy accessibility bus calls (default except when sandboxed)"
+msgstr "Prokuraj alireblaj busvokoj (defaŭlte krom kiam sablokesto)"
+
+#: app/flatpak-builtins-run.c:79
+msgid "Don't proxy session bus calls"
+msgstr "Ne prokuri alireblajn busalvokojn"
+
+#: app/flatpak-builtins-run.c:80
+msgid "Proxy session bus calls (default except when sandboxed)"
+msgstr "Prokura-sesiobusvokoj (defaŭlte krom kiam sablokesto)"
+
+#: app/flatpak-builtins-run.c:81
+msgid "Don't start portals"
+msgstr "Ne lanĉi portalojn"
+
+#: app/flatpak-builtins-run.c:82
+msgid "Enable file forwarding"
+msgstr "Ebligi dosiersendadon"
+
+#: app/flatpak-builtins-run.c:83
+msgid "Run specified commit"
+msgstr "Ruli specifitan kommit"
+
+#: app/flatpak-builtins-run.c:84
+msgid "Use specified runtime commit"
+msgstr "Uzi specifitan rultempokomiton"
+
+#: app/flatpak-builtins-run.c:85
+msgid "Run completely sandboxed"
+msgstr "Kuri tute sandboxed"
+
+#: app/flatpak-builtins-run.c:87
+msgid "Use PID as parent pid for sharing namespaces"
+msgstr "Uzi PID kiel gepatran pid por kunhavi nomspacojn"
+
+#: app/flatpak-builtins-run.c:88
+msgid "Make processes visible in parent namespace"
+msgstr "Fari procezojn videblaj en gepatra nomspaco"
+
+#: app/flatpak-builtins-run.c:89
+msgid "Share process ID namespace with parent"
+msgstr "Kunhavigi procezan ID-nomspacon kun gepatro"
+
+#: app/flatpak-builtins-run.c:90
+msgid "Write the instance ID to the given file descriptor"
+msgstr "Skribi la instantan ID al la donita dosierpriskribilo"
+
+#: app/flatpak-builtins-run.c:91
+msgid "Use PATH instead of the app's /app"
+msgstr "Uzi PATH anstataŭ la /app de la programo"
+
+#: app/flatpak-builtins-run.c:92
+msgid "Use PATH instead of the runtime's /usr"
+msgstr "Uzi PATH anstataŭ la rultempo /usr"
+
+#: app/flatpak-builtins-run.c:93
+msgid "Clear all outside environment variables"
+msgstr "Agordi mediovariablon"
+
+#: app/flatpak-builtins-run.c:119
+msgid "APP [ARGUMENT…] - Run an app"
+msgstr "APP [ARGUMENTO...] - Ruli apon"
+
+#: app/flatpak-builtins-run.c:270
+#, c-format
+msgid "runtime/%s/%s/%s not installed"
+msgstr "rultempo/%s/%s/%s ne instalita"
+
+#: app/flatpak-builtins-search.c:37
+msgid "Arch to search for"
+msgstr "Arko por serĉi"
+
+#: app/flatpak-builtins-search.c:49
+msgid "Remotes"
+msgstr "Remotoj"
+
+#: app/flatpak-builtins-search.c:49
+msgid "Show the remotes"
+msgstr "Montri la telerojn"
+
+#: app/flatpak-builtins-search.c:244
+msgid "TEXT - Search remote apps/runtimes for text"
+msgstr "TEKSTO - Serĉi forajn programojn/rultempojn por teksto"
+
+#: app/flatpak-builtins-search.c:255
+msgid "TEXT must be specified"
+msgstr "TEKSTO devas esti specifita"
+
+#: app/flatpak-builtins-search.c:338
+msgid "No matches found"
+msgstr "Neniuj kongruoj trovitaj"
+
+#: app/flatpak-builtins-uninstall.c:54
+msgid "Arch to uninstall"
+msgstr "Arch por malinstali"
+
+#: app/flatpak-builtins-uninstall.c:55
+msgid "Keep ref in local repository"
+msgstr "Konservi ref en loka deponejo"
+
+#: app/flatpak-builtins-uninstall.c:56
+msgid "Don't uninstall related refs"
+msgstr "Ne malinstali rilatajn referencojn"
+
+#: app/flatpak-builtins-uninstall.c:57
+msgid "Remove files even if running"
+msgstr "Forigi dosierojn eĉ se funkcias"
+
+#: app/flatpak-builtins-uninstall.c:60
+msgid "Uninstall all"
+msgstr "Malinstali ĉion"
+
+#: app/flatpak-builtins-uninstall.c:61
+msgid "Uninstall unused"
+msgstr "Malinstali neuzatan"
+
+#: app/flatpak-builtins-uninstall.c:62
+msgid "Delete app data"
+msgstr "Forigi aplikajn datumojn"
+
+#: app/flatpak-builtins-uninstall.c:141
+#, c-format
+msgid "Delete data for %s?"
+msgstr "Ĉu forigi datumojn por %s?"
+
+#: app/flatpak-builtins-uninstall.c:220
+#, c-format
+msgid "Info: applications using the extension %s%s%s branch %s%s%s:\n"
+msgstr "Informoj: aplikaĵoj uzante la etendon %s%s%s branĉo %s%s%s:\n"
+
+#: app/flatpak-builtins-uninstall.c:223
+#, c-format
+msgid "Info: applications using the runtime %s%s%s branch %s%s%s:\n"
+msgstr "Informo: aplikaĵoj uzantaj la rultemon %s%s%s branĉon %s%s%s:\n"
+
+#: app/flatpak-builtins-uninstall.c:238
+msgid "Really remove?"
+msgstr "Malproksima"
+
+#: app/flatpak-builtins-uninstall.c:255
+msgid "[REF…] - Uninstall applications or runtimes"
+msgstr "[REF...] - Ĝisdatigi aplikaĵojn aŭ rultempojn"
+
+#: app/flatpak-builtins-uninstall.c:264
+msgid "Must specify at least one REF, --unused, --all or --delete-data"
+msgstr "Devas specifi almenaŭ unu REF, --unused, --all aŭ --delete-data"
+
+#: app/flatpak-builtins-uninstall.c:267
+msgid "Must not specify REFs when using --all"
+msgstr "Ne devas specifi REFojn kiam oni uzas --all"
+
+#: app/flatpak-builtins-uninstall.c:270
+msgid "Must not specify REFs when using --unused"
+msgstr "Ne devas specifi REFojn kiam oni uzas --unused"
+
+#: app/flatpak-builtins-uninstall.c:336
+#, c-format
+msgid ""
+"\n"
+"These runtimes in installation '%s' are pinned and won't be removed; see "
+"flatpak-pin(1):\n"
+msgstr ""
+"\n"
+"Ĉi tiuj rultempoj en instalo '%s' estas alpinglitaj kaj ne estos forigitaj; "
+"vidi flatpak-pin(1):\n"
+
+#: app/flatpak-builtins-uninstall.c:370
+msgid "Nothing unused to uninstall\n"
+msgstr "Nenio neuzata por malinstali\n"
+
+#: app/flatpak-builtins-uninstall.c:444
+#, c-format
+msgid "No installed refs found for ‘%s’"
+msgstr "Similaj instalitaj referencoj trovitaj por '%s':"
+
+#: app/flatpak-builtins-uninstall.c:447
+#, c-format
+msgid " with arch ‘%s’"
+msgstr "kun arko ‘%s’"
+
+#: app/flatpak-builtins-uninstall.c:449
+#, c-format
+msgid " with branch ‘%s’"
+msgstr "kun branĉo ‘%s’"
+
+#: app/flatpak-builtins-uninstall.c:456
+#, c-format
+msgid "Warning: %s is not installed\n"
+msgstr "Averto: %s ne estas instalita\n"
+
+#: app/flatpak-builtins-uninstall.c:490
+msgid "None of the specified refs are installed"
+msgstr "Neniu el la specifitaj referencoj estas instalita"
+
+#: app/flatpak-builtins-uninstall.c:599
+msgid "No app data to delete\n"
+msgstr "Neniuj aplikaj datumoj por forigi\n"
+
+#: app/flatpak-builtins-update.c:56
+msgid "Arch to update for"
+msgstr "Arko por ĝisdatigi"
+
+#: app/flatpak-builtins-update.c:57
+msgid "Commit to deploy"
+msgstr "Engaĝiĝi por deploji"
+
+#: app/flatpak-builtins-update.c:58
+msgid "Remove old files even if running"
+msgstr "Forigi malnovajn dosierojn eĉ se funkcias"
+
+#: app/flatpak-builtins-update.c:59
+msgid "Don't pull, only update from local cache"
+msgstr "Ne tiru, nur ĝisdatigi el loka kaŝmemoro"
+
+#: app/flatpak-builtins-update.c:61
+msgid "Don't update related refs"
+msgstr "Ne ĝisdatigi rilatajn referencojn"
+
+#: app/flatpak-builtins-update.c:66
+msgid "Update appstream for remote"
+msgstr "Ĝisdatigi appstream por fora"
+
+#: app/flatpak-builtins-update.c:67
+msgid "Only update this subpath"
+msgstr "Ĝisdatigi nur ĉi tiun subvojon"
+
+#: app/flatpak-builtins-update.c:90
+msgid "[REF…] - Update applications or runtimes"
+msgstr "[REF...] - Ĝisdatigi aplikaĵojn aŭ rultempojn"
+
+#: app/flatpak-builtins-update.c:121
+msgid "With --commit, only one REF may be specified"
+msgstr "Almenaŭ unu REF devas esti specifita"
+
+#: app/flatpak-builtins-update.c:162
+msgid "Looking for updates…\n"
+msgstr "Serĉante ĝisdatigojn...\n"
+
+#: app/flatpak-builtins-update.c:215
+#, c-format
+msgid "Unable to update %s: %s\n"
+msgstr "Ne eblas ĝisdatigi %s: %s\n"
+
+#: app/flatpak-builtins-update.c:274
+msgid "Nothing to update.\n"
+msgstr "Nenio farenda.\n"
+
+#: app/flatpak-builtins-utils.c:337
+#, c-format
+msgid ""
+"Remote ‘%s’ found in multiple installations, unable to proceed in non-"
+"interactive mode"
+msgstr ""
+"Fora ‘%s’ trovita en pluraj instalaĵoj, ne eblas daŭrigi en neinteraga reĝimo"
+
+#: app/flatpak-builtins-utils.c:346
+#, c-format
+msgid "Remote ‘%s’ found in multiple installations:"
+msgstr "Fora '%s' trovita en pluraj instalaĵoj:"
+
+#: app/flatpak-builtins-utils.c:347 app/flatpak-builtins-utils.c:442
+#: app/flatpak-builtins-utils.c:538 app/flatpak-builtins-utils.c:540
+#: app/flatpak-builtins-utils.c:598
+msgid "Which do you want to use (0 to abort)?"
+msgstr "Kiun vi volas uzi (0 por ĉesigi)?"
+
+#: app/flatpak-builtins-utils.c:349
+#, c-format
+msgid "No remote chosen to resolve ‘%s’ which exists in multiple installations"
+msgstr ""
+"Neniu teleilo elektita por solvi '%s' kiu ekzistas en pluraj instalaĵoj"
+
+#: app/flatpak-builtins-utils.c:358
+#, c-format
+msgid ""
+"Remote \"%s\" not found\n"
+"Hint: Use flatpak remote-add to add a remote"
+msgstr ""
+"Fora \"%s\" ne trovita\n"
+"Konsilo: Uzi flatpak remote-add por aldoni telecomandilon"
+
+#: app/flatpak-builtins-utils.c:364
+#, c-format
+msgid "Remote \"%s\" not found in the %s installation"
+msgstr "Fora \"%s\" ne trovita en la instalaĵo %s"
+
+#: app/flatpak-builtins-utils.c:404
+#, c-format
+msgid "Multiple refs match ‘%s’, unable to proceed in non-interactive mode"
+msgstr ""
+"Multoblaj referencoj kongruas kun '%s', ne povas daŭrigi en ne-interaga "
+"reĝimo"
+
+#. default to yes on Enter
+#: app/flatpak-builtins-utils.c:430
+#, c-format
+msgid ""
+"Found ref ‘%s’ in remote ‘%s’ (%s).\n"
+"Use this ref?"
+msgstr ""
+"Trovita ref '%s' en fora '%s' (%s).\n"
+"Ĉu uzi ĉi tiun refon?"
+
+#: app/flatpak-builtins-utils.c:434 app/flatpak-builtins-utils.c:444
+#: app/flatpak-builtins-utils.c:522 app/flatpak-builtins-utils.c:543
+#, c-format
+msgid "No ref chosen to resolve matches for ‘%s’"
+msgstr "Neniu referenco elektita por solvi matĉojn por '%s'"
+
+#: app/flatpak-builtins-utils.c:440
+#, c-format
+msgid "Similar refs found for ‘%s’ in remote ‘%s’ (%s):"
+msgstr "Similaj referencoj trovitaj por '%s' en fora '%s' (%s):"
+
+#: app/flatpak-builtins-utils.c:488
+#, c-format
+msgid ""
+"Multiple installed refs match ‘%s’, unable to proceed in non-interactive mode"
+msgstr ""
+"Multoblaj instalitaj referencoj kongruas kun '%s', ne povas daŭrigi en ne-"
+"interaga reĝimo"
+
+#. default to yes on Enter
+#: app/flatpak-builtins-utils.c:518
+#, c-format
+msgid "Found installed ref ‘%s’ (%s). Is this correct?"
+msgstr "Trovita instalita ref '%s' (%s). Ĉu ĉi tio estas ĝusta?"
+
+#: app/flatpak-builtins-utils.c:534
+msgid "All of the above"
+msgstr "Ĉio el la supre"
+
+#: app/flatpak-builtins-utils.c:535
+#, c-format
+msgid "Similar installed refs found for ‘%s’:"
+msgstr "Similaj instalitaj referencoj trovitaj por '%s':"
+
+#: app/flatpak-builtins-utils.c:579
+#, c-format
+msgid ""
+"Multiple remotes have refs matching ‘%s’, unable to proceed in non-"
+"interactive mode"
+msgstr ""
+"Multoblaj telefroloj havas referencojn kongruajn kun '%s', nekapablaj "
+"daŭrigi en ne-interaga reĝimo"
+
+#: app/flatpak-builtins-utils.c:597
+#, c-format
+msgid "Remotes found with refs similar to ‘%s’:"
+msgstr "Telefonoj trovitaj kun referencoj similaj al '%s':"
+
+#: app/flatpak-builtins-utils.c:600
+#, c-format
+msgid "No remote chosen to resolve matches for ‘%s’"
+msgstr "Neniu teleilo elektita por solvi kongruojn por '%s'"
+
+#: app/flatpak-builtins-utils.c:696 app/flatpak-builtins-utils.c:699
+#, c-format
+msgid "Updating appstream data for user remote %s"
+msgstr "Ĝisdatigante aplikaĵfluajn datumojn por fora uzanto %s"
+
+#: app/flatpak-builtins-utils.c:706 app/flatpak-builtins-utils.c:709
+#, c-format
+msgid "Updating appstream data for remote %s"
+msgstr "Ĝisdatigante datenojn de aplikfluo por fora %s"
+
+#: app/flatpak-builtins-utils.c:717 app/flatpak-builtins-utils.c:719
+msgid "Error updating"
+msgstr "Eraro dum ĝisdatigo"
+
+#: app/flatpak-builtins-utils.c:755
+#, c-format
+msgid "Remote \"%s\" not found"
+msgstr "Fora \"%s\" ne trovita"
+
+#: app/flatpak-builtins-utils.c:796
+#, c-format
+msgid "Ambiguous suffix: '%s'."
+msgstr "Ambigua sufikso: '%s'."
+
+#. Translators: don't translate the values
+#: app/flatpak-builtins-utils.c:798 app/flatpak-builtins-utils.c:813
+msgid "Possible values are :s[tart], :m[iddle], :e[nd] or :f[ull]"
+msgstr "Eblaj valoroj estas :s[tart], :m[iddle], :e[nd] aŭ :f[ull]"
+
+#: app/flatpak-builtins-utils.c:811
+#, c-format
+msgid "Invalid suffix: '%s'."
+msgstr "Nevalida sufikso: '%s'."
+
+#: app/flatpak-builtins-utils.c:846
+#, c-format
+msgid "Ambiguous column: %s"
+msgstr "Ambigua kolumno: %s"
+
+#: app/flatpak-builtins-utils.c:859
+#, c-format
+msgid "Unknown column: %s"
+msgstr "Nekonata kolumno: %s"
+
+#: app/flatpak-builtins-utils.c:917
+msgid "Available columns:\n"
+msgstr "Disponeblaj kolumnoj:\n"
+
+#: app/flatpak-builtins-utils.c:927
+msgid "Show all columns"
+msgstr "Montri ĉiujn kolumnojn"
+
+#: app/flatpak-builtins-utils.c:928
+msgid "Show available columns"
+msgstr "Montri disponeblajn kolumnojn"
+
+#: app/flatpak-builtins-utils.c:931
+msgid "Append :s[tart], :m[iddle], :e[nd] or :f[ull] to change ellipsization"
+msgstr "Aldoni :s[tart], :m[iddle], :e[nd] aŭ :f[ull] por ŝanĝi elipson"
+
+#: app/flatpak-builtins-utils.c:1483
+#, c-format
+msgid "Unknown scheme in sideload location %s"
+msgstr "Nekonata skemo en flankŝarĝa loko %s"
+
+#: app/flatpak-cli-transaction.c:96 app/flatpak-cli-transaction.c:102
+#, c-format
+msgid "Required runtime for %s (%s) found in remote %s\n"
+msgstr "Bezonata rultempo por %s (%s) trovita en fora %s\n"
+
+#: app/flatpak-cli-transaction.c:104
+msgid "Do you want to install it?"
+msgstr "Ĉu vi volas instali ĝin?"
+
+#: app/flatpak-cli-transaction.c:110
+#, c-format
+msgid "Required runtime for %s (%s) found in remotes:"
+msgstr "Bezonata rultempo por Z%s (%s) trovita en teleremotoj:"
+
+#: app/flatpak-cli-transaction.c:112
+msgid "Which do you want to install (0 to abort)?"
+msgstr "Kiun vi volas instali (0 por ĉesigi)?"
+
+#: app/flatpak-cli-transaction.c:132
+#, c-format
+msgid "Configuring %s as new remote '%s'\n"
+msgstr "Agordante %s kiel nova fora '%s'\n"
+
+#. default to yes on Enter
+#: app/flatpak-cli-transaction.c:139
+#, c-format
+msgid ""
+"The remote '%s', referred to by '%s' at location %s contains additional "
+"applications.\n"
+"Should the remote be kept for future installations?"
+msgstr ""
+"La fora '%s', referita per '%s' ĉe loko %s enhavas pliajn aplikaĵojn.\n"
+"Ĉu la telecomando estu konservita por estontaj instalaĵoj?"
+
+#. default to yes on Enter
+#: app/flatpak-cli-transaction.c:147
+#, c-format
+msgid ""
+"The application %s depends on runtimes from:\n"
+"  %s\n"
+"Configure this as new remote '%s'"
+msgstr ""
+"La aplikaĵo %s dependas de rultempoj de:\n"
+"%s\n"
+"Agordi ĉi tion kiel novan fora '%s'"
+
+#. Formatted size/remaining time in seconds
+#: app/flatpak-cli-transaction.c:321
+#, c-format
+msgid "%s/s%s%s"
+msgstr "%s/s%s%s"
+
+#. Download progress percentage, use the appropriate
+#. percent format for your language
+#: app/flatpak-cli-transaction.c:359
+#, c-format
+msgid "%3d%%"
+msgstr "%3d%%"
+
+#: app/flatpak-cli-transaction.c:414
+msgid "Installing…"
+msgstr "Instalante…"
+
+#: app/flatpak-cli-transaction.c:416
+#, c-format
+msgid "Installing %d/%d…"
+msgstr "Instalante %d/%d..."
+
+#: app/flatpak-cli-transaction.c:421
+msgid "Updating…"
+msgstr "Ĝisdatigante…"
+
+#: app/flatpak-cli-transaction.c:423
+#, c-format
+msgid "Updating %d/%d…"
+msgstr "Ĝisdatigante %d/%d..."
+
+#: app/flatpak-cli-transaction.c:428
+msgid "Uninstalling…"
+msgstr "Malinstalante…"
+
+#: app/flatpak-cli-transaction.c:430
+#, c-format
+msgid "Uninstalling %d/%d…"
+msgstr "Malinstalante %d/%d..."
+
+#: app/flatpak-cli-transaction.c:496 app/flatpak-quiet-transaction.c:161
+#, c-format
+msgid "Info: %s was skipped"
+msgstr "Informoj: %s estis preterlasita"
+
+#: app/flatpak-cli-transaction.c:519
+#, c-format
+msgid "Warning: %s%s%s already installed"
+msgstr "Averto: %s%s%s jam instalita"
+
+#: app/flatpak-cli-transaction.c:522
+#, c-format
+msgid "Error: %s%s%s already installed"
+msgstr "Eraro: %s%s%s jam instalita"
+
+#: app/flatpak-cli-transaction.c:528
+#, c-format
+msgid "Warning: %s%s%s not installed"
+msgstr "Averto: %s%s%s ne instalita"
+
+#: app/flatpak-cli-transaction.c:531
+#, c-format
+msgid "Error: %s%s%s not installed"
+msgstr "%s/%s/%s ne instalita"
+
+#: app/flatpak-cli-transaction.c:537
+#, c-format
+msgid "Warning: %s%s%s needs a later flatpak version"
+msgstr "Averto: %s%s%s bezonas pli postan flatpak-version"
+
+#: app/flatpak-cli-transaction.c:540
+#, c-format
+msgid "Error: %s%s%s needs a later flatpak version"
+msgstr "Eraro: %s%s%s bezonas pli postan flatpak-version"
+
+#: app/flatpak-cli-transaction.c:546
+msgid "Warning: Not enough disk space to complete this operation"
+msgstr "Ne sufiĉa diskospaco por plenumi ĉi tiun operacion"
+
+#: app/flatpak-cli-transaction.c:548
+msgid "Error: Not enough disk space to complete this operation"
+msgstr "Ne sufiĉa diskospaco por plenumi ĉi tiun operacion"
+
+#: app/flatpak-cli-transaction.c:553
+#, c-format
+msgid "Warning: %s"
+msgstr "Averto: %s"
+
+#: app/flatpak-cli-transaction.c:555
+#, c-format
+msgid "Error: %s"
+msgstr "Eraro: %s"
+
+#: app/flatpak-cli-transaction.c:570
+#, c-format
+msgid "Failed to install %s%s%s: "
+msgstr "Malsukcesis instali %s%s%s: "
+
+#: app/flatpak-cli-transaction.c:577
+#, c-format
+msgid "Failed to update %s%s%s: "
+msgstr "Malsukcesis ĝisdatigi %s%s%s: "
+
+#: app/flatpak-cli-transaction.c:584
+#, c-format
+msgid "Failed to install bundle %s%s%s: "
+msgstr "Malsukcesis instali pakon %s%s%s: "
+
+#: app/flatpak-cli-transaction.c:591
+#, c-format
+msgid "Failed to uninstall %s%s%s: "
+msgstr "Malsukcesis malinstali %s%s%s: "
+
+#: app/flatpak-cli-transaction.c:642
+#, c-format
+msgid "Authentication required for remote '%s'\n"
+msgstr "Aŭtentikigo necesa por fora '%s'\n"
+
+#: app/flatpak-cli-transaction.c:643
+msgid "Open browser?"
+msgstr "Ĉu malfermi retumilon?"
+
+#: app/flatpak-cli-transaction.c:699
+#, c-format
+msgid "Login required remote %s (realm %s)\n"
+msgstr "Ensaluti bezonata fora %s (sfero %s)\n"
+
+#: app/flatpak-cli-transaction.c:704
+msgid "Password"
+msgstr "Pasvorto"
+
+#. Only runtimes can be pinned
+#: app/flatpak-cli-transaction.c:759
+#, c-format
+msgid ""
+"\n"
+"Info: (pinned) runtime %s%s%s branch %s%s%s is end-of-life, in favor of "
+"%s%s%s branch %s%s%s\n"
+msgstr ""
+"\n"
+"Informo: (pinita) rultempa %s%s%s branĉo %s%s%s estas fino de vivo, "
+"anstataŭita de %s%s%s branĉo %s%s%s\n"
+
+#: app/flatpak-cli-transaction.c:765
+#, c-format
+msgid ""
+"\n"
+"Info: runtime %s%s%s branch %s%s%s is end-of-life, in favor of %s%s%s branch "
+"%s%s%s\n"
+msgstr ""
+"\n"
+"Informo: rultempa %s%s%s branĉo %s%s%s estas fino de vivo, anstataŭita de "
+"%s%s%s branĉo %s%s%s\n"
+
+#: app/flatpak-cli-transaction.c:768
+#, c-format
+msgid ""
+"\n"
+"Info: app %s%s%s branch %s%s%s is end-of-life, in favor of %s%s%s branch "
+"%s%s%s\n"
+msgstr ""
+"\n"
+"Informo: apliko %s%s%s branĉo %s%s%s estas fino de vivo, anstataŭita de "
+"%s%s%s branĉo %s%s%s\n"
+
+#. Only runtimes can be pinned
+#: app/flatpak-cli-transaction.c:780
+#, c-format
+msgid ""
+"\n"
+"Info: (pinned) runtime %s%s%s branch %s%s%s is end-of-life, with reason:\n"
+msgstr ""
+"\n"
+"Informo: (pinita) rultempa %s%s%s branĉo %s%s%s estas fino de vivo, kun "
+"kialo:\n"
+
+#: app/flatpak-cli-transaction.c:786
+#, c-format
+msgid ""
+"\n"
+"Info: runtime %s%s%s branch %s%s%s is end-of-life, with reason:\n"
+msgstr ""
+"\n"
+"Informo: rultempa %s%s%s branĉo %s%s%s estas fino de vivo, kun kialo:\n"
+
+#: app/flatpak-cli-transaction.c:789
+#, c-format
+msgid ""
+"\n"
+"Info: app %s%s%s branch %s%s%s is end-of-life, with reason:\n"
+msgstr ""
+"\n"
+"Informo: apliko %s%s%s branĉo %s%s%s estas fino de vivo, kun kialo:\n"
+
+#: app/flatpak-cli-transaction.c:963
+msgid "Info: applications using this extension:\n"
+msgstr "Informo: aplikaĵoj uzantaj ĉi tiun etendon:\n"
+
+#: app/flatpak-cli-transaction.c:965
+msgid "Info: applications using this runtime:\n"
+msgstr "Informo: aplikaĵoj uzantaj ĉi tiun rultemon:\n"
+
+#: app/flatpak-cli-transaction.c:984
+msgid "Replace?"
+msgstr "Anstataŭigi?"
+
+#: app/flatpak-cli-transaction.c:987 app/flatpak-quiet-transaction.c:247
+msgid "Updating to rebased version\n"
+msgstr "Ĝisdatigo al rebazita versio\n"
+
+#: app/flatpak-cli-transaction.c:1011
+#, c-format
+msgid "Failed to rebase %s to %s: "
+msgstr "Malsukcesis rebazi %s al %s:"
+
+#: app/flatpak-cli-transaction.c:1277
+#, c-format
+msgid "New %s%s%s permissions:"
+msgstr "Novaj %s%s%s-permesoj:"
+
+#: app/flatpak-cli-transaction.c:1279
+#, c-format
+msgid "%s%s%s permissions:"
+msgstr "%s%s%s-permesoj:"
+
+#: app/flatpak-cli-transaction.c:1343
+msgid "Warning: "
+msgstr "Averto:"
+
+#. translators: This is short for operation, the title of a one-char column
+#: app/flatpak-cli-transaction.c:1442
+msgid "Op"
+msgstr "Op"
+
+#. Avoid resizing the download column too much,
+#. * by making the title as long as typical content
+#.
+#: app/flatpak-cli-transaction.c:1458 app/flatpak-cli-transaction.c:1503
+msgid "partial"
+msgstr "parta"
+
+#: app/flatpak-cli-transaction.c:1535
+msgid "Proceed with these changes to the user installation?"
+msgstr "Ĉu daŭrigi ĉi tiujn ŝanĝojn al la uzanta instalado?"
+
+#: app/flatpak-cli-transaction.c:1537
+msgid "Proceed with these changes to the system installation?"
+msgstr "Ĉu daŭrigi ĉi tiujn ŝanĝojn al la sisteminstalado?"
+
+#: app/flatpak-cli-transaction.c:1539
+#, c-format
+msgid "Proceed with these changes to the %s?"
+msgstr "Ĉu daŭrigi ĉi tiujn ŝanĝojn al la %s?"
+
+#: app/flatpak-cli-transaction.c:1711
+msgid "Changes complete."
+msgstr "Ŝanĝoj finiĝis."
+
+#: app/flatpak-cli-transaction.c:1713
+msgid "Uninstall complete."
+msgstr "Malinstalo kompleta."
+
+#: app/flatpak-cli-transaction.c:1715
+msgid "Installation complete."
+msgstr "Instalado kompleta."
+
+#: app/flatpak-cli-transaction.c:1717
+msgid "Updates complete."
+msgstr "Ĝisdatigoj finiĝis."
+
+#. For updates/!stop_on_first_error we already printed all errors so we make up
+#. a different one.
+#: app/flatpak-cli-transaction.c:1750
+msgid "There were one or more errors"
+msgstr "Estis unu aŭ pluraj eraroj"
+
+#. translators: please keep the leading space
+#: app/flatpak-main.c:76
+msgid " Manage installed applications and runtimes"
+msgstr "Administri instalitajn aplikojn kaj rultempojn"
+
+#: app/flatpak-main.c:77
+msgid "Install an application or runtime"
+msgstr "Instali aplikaĵon aŭ rultempon"
+
+#: app/flatpak-main.c:78
+msgid "Update an installed application or runtime"
+msgstr "Ĝisdatigi instalitan aplikaĵon aŭ rultempon"
+
+#: app/flatpak-main.c:81
+msgid "Uninstall an installed application or runtime"
+msgstr "Malinstali instalitan aplikaĵon aŭ rultempon"
+
+#: app/flatpak-main.c:84
+msgid "Mask out updates and automatic installation"
+msgstr "Maski ĝisdatigojn kaj aŭtomatan instaladon"
+
+#: app/flatpak-main.c:85
+msgid "Pin a runtime to prevent automatic removal"
+msgstr "Alpingli rultempon por malhelpi aŭtomatan forigon"
+
+#: app/flatpak-main.c:86
+msgid "List installed apps and/or runtimes"
+msgstr "Listigi instalitajn programojn kaj/aŭ rultempojn"
+
+#: app/flatpak-main.c:87
+msgid "Show info for installed app or runtime"
+msgstr "Montri informojn por instalita aplikaĵo aŭ rultempo"
+
+#: app/flatpak-main.c:88
+msgid "Show history"
+msgstr "Montri historion"
+
+#: app/flatpak-main.c:89
+msgid "Configure flatpak"
+msgstr "Agordi flatpak"
+
+#: app/flatpak-main.c:90
+msgid "Repair flatpak installation"
+msgstr "Ripari instaladon de flatpak"
+
+#: app/flatpak-main.c:91
+msgid "Put applications or runtimes onto removable media"
+msgstr "Meti aplikojn aŭ rultempojn sur forpreneblajn rimedojn"
+
+#: app/flatpak-main.c:92
+msgid "Install flatpaks that are part of the operating system"
+msgstr "Instali flatpakaĵojn kiuj estas parto de la operaciumo"
+
+#. translators: please keep the leading newline and space
+#: app/flatpak-main.c:95
+msgid ""
+"\n"
+" Find applications and runtimes"
+msgstr ""
+"\n"
+"Trovi aplikojn kaj rultempojn"
+
+#: app/flatpak-main.c:96
+msgid "Search for remote apps/runtimes"
+msgstr "Serĉi forajn programojn/rultempojn"
+
+#. translators: please keep the leading newline and space
+#: app/flatpak-main.c:99
+msgid ""
+"\n"
+" Manage running applications"
+msgstr ""
+"\n"
+"Kuranta aplikojn"
+
+#: app/flatpak-main.c:100
+msgid "Run an application"
+msgstr "Ruli aplikaĵon"
+
+#: app/flatpak-main.c:101
+msgid "Override permissions for an application"
+msgstr "Anstataŭigi permesojn por aplikaĵo"
+
+#: app/flatpak-main.c:102
+msgid "Specify default version to run"
+msgstr "Specifi defaŭltan version por ruliĝi"
+
+#: app/flatpak-main.c:103
+msgid "Enter the namespace of a running application"
+msgstr "Enigi la nomspacon de funkcianta aplikaĵo"
+
+#: app/flatpak-main.c:104
+msgid "Enumerate running applications"
+msgstr "Nombri kurantajn aplikojn"
+
+#: app/flatpak-main.c:105
+msgid "Stop a running application"
+msgstr "Ĉesi ruliĝantan aplikaĵon"
+
+#. translators: please keep the leading newline and space
+#: app/flatpak-main.c:108
+msgid ""
+"\n"
+" Manage file access"
+msgstr ""
+"\n"
+"Administri dosiero-aliron"
+
+#: app/flatpak-main.c:109
+msgid "List exported files"
+msgstr "Listo de eksportitaj dosieroj"
+
+#: app/flatpak-main.c:110
+msgid "Grant an application access to a specific file"
+msgstr "Doni aplikan aliron al specifa dosiero"
+
+#: app/flatpak-main.c:111
+msgid "Revoke access to a specific file"
+msgstr "Nuligi aliron al specifa dosiero"
+
+#: app/flatpak-main.c:112
+msgid "Show information about a specific file"
+msgstr "Montri informojn pri specifa dosiero"
+
+#. translators: please keep the leading newline and space
+#: app/flatpak-main.c:116
+msgid ""
+"\n"
+" Manage dynamic permissions"
+msgstr ""
+"\n"
+"Administri dinamikajn permesojn"
+
+#: app/flatpak-main.c:117
+msgid "List permissions"
+msgstr "Listo de permesoj"
+
+#: app/flatpak-main.c:118
+msgid "Remove item from permission store"
+msgstr "Forigi objekton de permesa vendejo"
+
+#: app/flatpak-main.c:120
+msgid "Set permissions"
+msgstr "Listo de permesoj"
+
+#: app/flatpak-main.c:121
+msgid "Show app permissions"
+msgstr "Montri aplikajn permesojn"
+
+#: app/flatpak-main.c:122
+msgid "Reset app permissions"
+msgstr "Restarigi aplikajn permesojn"
+
+#. translators: please keep the leading newline and space
+#: app/flatpak-main.c:125
+msgid ""
+"\n"
+" Manage remote repositories"
+msgstr ""
+"\n"
+"Administri forajn deponejojn"
+
+#: app/flatpak-main.c:126
+msgid "List all configured remotes"
+msgstr "Listigi ĉiujn agorditajn teleremotojn"
+
+#: app/flatpak-main.c:127
+msgid "Add a new remote repository (by URL)"
+msgstr "Aldoni novan foran deponejon (per URL)"
+
+#: app/flatpak-main.c:128
+msgid "Modify properties of a configured remote"
+msgstr "Modifi ecojn de agordita fora"
+
+#: app/flatpak-main.c:129
+msgid "Delete a configured remote"
+msgstr "Forigu agordita telecomando"
+
+#: app/flatpak-main.c:131
+msgid "List contents of a configured remote"
+msgstr "Listigi enhavon de agordita fora"
+
+#: app/flatpak-main.c:132
+msgid "Show information about a remote app or runtime"
+msgstr "Montri informojn pri fora aplikaĵo aŭ rultempo"
+
+#. translators: please keep the leading newline and space
+#: app/flatpak-main.c:135
+msgid ""
+"\n"
+" Build applications"
+msgstr ""
+"\n"
+"Konstrui aplikojn"
+
+#: app/flatpak-main.c:136
+msgid "Initialize a directory for building"
+msgstr "Komenci dosierujon por konstrui"
+
+#: app/flatpak-main.c:137
+msgid "Run a build command inside the build dir"
+msgstr "Ruli konstrukomandon ene de la konstrudirektoro"
+
+#: app/flatpak-main.c:138
+msgid "Finish a build dir for export"
+msgstr "Fini konstrudirektoron por eksporto"
+
+#: app/flatpak-main.c:139
+msgid "Export a build dir to a repository"
+msgstr "Elporti konstrudirektoron al deponejo"
+
+#: app/flatpak-main.c:140
+msgid "Create a bundle file from a ref in a local repository"
+msgstr "Krei pakdosieron de ref en loka deponejo"
+
+#: app/flatpak-main.c:141
+msgid "Import a bundle file"
+msgstr "Enporti pakdosieron"
+
+#: app/flatpak-main.c:142
+msgid "Sign an application or runtime"
+msgstr "Subskribi aplikaĵon aŭ rultempon"
+
+#: app/flatpak-main.c:143
+msgid "Update the summary file in a repository"
+msgstr "Ĝisdatigi la resuman dosieron en deponejo"
+
+#: app/flatpak-main.c:144
+msgid "Create new commit based on existing ref"
+msgstr "Krei novan kommit surbaze de ekzistanta ref"
+
+#: app/flatpak-main.c:145
+msgid "Show information about a repo"
+msgstr "Montri informojn pri repo"
+
+#: app/flatpak-main.c:162
+msgid "Show debug information, -vv for more detail"
+msgstr "Montri sencimigan informon, -vv por pliaj detaloj"
+
+#: app/flatpak-main.c:163
+msgid "Show OSTree debug information"
+msgstr "Montri OSTree-sencimigan informon"
+
+#: app/flatpak-main.c:169
+msgid "Print version information and exit"
+msgstr "Presi versio-informojn kaj eliru"
+
+#: app/flatpak-main.c:170
+msgid "Print default arch and exit"
+msgstr "Presi defaŭltan arkon kaj eliru"
+
+#: app/flatpak-main.c:171
+msgid "Print supported arches and exit"
+msgstr "Presi subtenatajn arkojn kaj eliron"
+
+#: app/flatpak-main.c:172
+msgid "Print active gl drivers and exit"
+msgstr "Presi aktivajn gl-ŝoforojn kaj eliru"
+
+#: app/flatpak-main.c:173
+msgid "Print paths for system installations and exit"
+msgstr "Presi vojojn por sistemaj instalaĵoj kaj eliro"
+
+#: app/flatpak-main.c:174
+msgid "Print the updated environment needed to run flatpaks"
+msgstr "Presi la ĝisdatigitan medion necesan por ruli flatpakojn"
+
+#: app/flatpak-main.c:175
+msgid "Only include the system installation with --print-updated-env"
+msgstr "Nur inkluzivi la sisteminstaladon per --print-updated-env"
+
+#: app/flatpak-main.c:180
+msgid "Work on the user installation"
+msgstr "Labori pri la uzanta instalado"
+
+#: app/flatpak-main.c:181
+msgid "Work on the system-wide installation (default)"
+msgstr "Labori pri la tutsistema instalado (defaŭlte)"
+
+#: app/flatpak-main.c:182
+msgid "Work on a non-default system-wide installation"
+msgstr "Labori pri ne-defaŭlta tutsistema instalaĵo"
+
+#: app/flatpak-main.c:212
+msgid "Builtin Commands:"
+msgstr "Enkonstruitaj Komandoj:"
+
+#: app/flatpak-main.c:298
+#, c-format
+msgid ""
+"Note that the directories %s are not in the search path set by the "
+"XDG_DATA_DIRS environment variable, so applications installed by Flatpak may "
+"not appear on your desktop until the session is restarted."
+msgstr ""
+"Notu, ke la dosierujoj %s ne estas en la serĉvojo agordita de la "
+"mediovariablo XDG_DATA_DIRS, do aplikaĵoj instalitaj de Flatpak eble ne "
+"aperos sur via labortablo ĝis la sesio estas rekomencita."
+
+#: app/flatpak-main.c:312
+#, c-format
+msgid ""
+"Note that the directory %s is not in the search path set by the "
+"XDG_DATA_DIRS environment variable, so applications installed by Flatpak may "
+"not appear on your desktop until the session is restarted."
+msgstr ""
+"Notu, ke la dosierujo %s ne estas en la serĉvojo agordita de la "
+"mediovariablo XDG_DATA_DIRS, do aplikaĵoj instalitaj de Flatpak eble ne "
+"aperos sur via labortablo ĝis la sesio estas rekomencita."
+
+#: app/flatpak-main.c:381
+msgid ""
+"Refusing to operate under sudo with --user. Omit sudo to operate on the user "
+"installation, or use a root shell to operate on the root user's installation."
+msgstr ""
+"Rifuzo funkcii sub sudo kun --user. Forlasi sudo por funkcii sur la "
+"instalaĵo de la uzanto, aŭ uzi radikan ŝelon por funkcii sur la instalaĵo de "
+"la radika uzanto."
+
+#: app/flatpak-main.c:453
+msgid ""
+"Multiple installations specified for a command that works on one installation"
+msgstr ""
+"Multoblaj instalaĵoj specifitaj por komando kiu funkcias sur unu instalado"
+
+#: app/flatpak-main.c:504 app/flatpak-main.c:697
+#, c-format
+msgid "See '%s --help'"
+msgstr "Vidi '%s --help'"
+
+#: app/flatpak-main.c:706
+#, c-format
+msgid "'%s' is not a flatpak command. Did you mean '%s%s'?"
+msgstr "'%s' ne estas flatpak-komando. Ĉu vi volis diri '%s%s'?"
+
+#: app/flatpak-main.c:709
+#, c-format
+msgid "'%s' is not a flatpak command"
+msgstr "'%s' ne estas flatpak-komando"
+
+#: app/flatpak-main.c:824
+msgid "No command specified"
+msgstr "Neniu komando specifita"
+
+#: app/flatpak-main.c:980
+msgid "error:"
+msgstr "eraro:"
+
+#: app/flatpak-quiet-transaction.c:77
+#, c-format
+msgid "Installing %s\n"
+msgstr "Instalante %s\n"
+
+#: app/flatpak-quiet-transaction.c:81
+#, c-format
+msgid "Updating %s\n"
+msgstr "Ĝisdatigas %s\n"
+
+#: app/flatpak-quiet-transaction.c:85
+#, c-format
+msgid "Uninstalling %s\n"
+msgstr "Malinstalante %s\n"
+
+#: app/flatpak-quiet-transaction.c:107
+#, c-format
+msgid "Warning: Failed to install %s: %s\n"
+msgstr "Averto: Malsukcesis instali %s: %s\n"
+
+#: app/flatpak-quiet-transaction.c:110
+#, c-format
+msgid "Error: Failed to install %s: %s\n"
+msgstr "Eraro dum reinstalo de %s: %s\n"
+
+#: app/flatpak-quiet-transaction.c:116
+#, c-format
+msgid "Warning: Failed to update %s: %s\n"
+msgstr "Ne eblas ĝisdatigi %s: %s\n"
+
+#: app/flatpak-quiet-transaction.c:119
+#, c-format
+msgid "Error: Failed to update %s: %s\n"
+msgstr "Ne eblas ĝisdatigi %s: %s\n"
+
+#: app/flatpak-quiet-transaction.c:125
+#, c-format
+msgid "Warning: Failed to install bundle %s: %s\n"
+msgstr "Averto: Malsukcesis instali pakon %s: %s\n"
+
+#: app/flatpak-quiet-transaction.c:128
+#, c-format
+msgid "Error: Failed to install bundle %s: %s\n"
+msgstr "Eraro dum reinstalo de %s: %s\n"
+
+#: app/flatpak-quiet-transaction.c:134
+#, c-format
+msgid "Warning: Failed to uninstall %s: %s\n"
+msgstr "Averto: Malsukcesis malinstali %s: %s\n"
+
+#: app/flatpak-quiet-transaction.c:137
+#, c-format
+msgid "Error: Failed to uninstall %s: %s\n"
+msgstr "Eraro dum reinstalo de %s: %s\n"
+
+#: app/flatpak-quiet-transaction.c:166 common/flatpak-dir.c:11435
+#, c-format
+msgid "%s already installed"
+msgstr "%s jam instalita"
+
+#: app/flatpak-quiet-transaction.c:168 common/flatpak-dir.c:3609
+#: common/flatpak-dir.c:4308 common/flatpak-dir.c:16891
+#: common/flatpak-dir.c:17181 common/flatpak-dir-utils.c:166
+#: common/flatpak-dir-utils.c:259 common/flatpak-transaction.c:2736
+#: common/flatpak-transaction.c:2791
+#, c-format
+msgid "%s not installed"
+msgstr "%s ne instalita"
+
+#: app/flatpak-quiet-transaction.c:170
+#, c-format
+msgid "%s needs a later flatpak version"
+msgstr "%s bezonas pli postan flatpak-version"
+
+#: app/flatpak-quiet-transaction.c:172
+msgid "Not enough disk space to complete this operation"
+msgstr "Ne sufiĉa diskospaco por plenumi ĉi tiun operacion"
+
+#: app/flatpak-quiet-transaction.c:239
+#, c-format
+msgid "Info: %s is end-of-life, in favor of %s\n"
+msgstr "Informoj: %s estas fino de vivo, prefere de %s\n"
+
+#: app/flatpak-quiet-transaction.c:241
+#, c-format
+msgid "Info: %s is end-of-life, with reason: %s\n"
+msgstr "Info: %s estas fino de vivo, kun kialo: %s\n"
+
+#: app/flatpak-quiet-transaction.c:251
+#, c-format
+msgid "Failed to rebase %s to %s: %s\n"
+msgstr "Malsukcesis rebazi %s al %s: %s\n"
+
+#: common/flatpak-auth.c:58
+#, c-format
+msgid "No authenticator configured for remote `%s`"
+msgstr "Neniu aŭtentikigilo agordita por fora `%s`"
+
+#: common/flatpak-context.c:717 common/flatpak-context.c:729
+#, c-format
+msgid "Invalid permission syntax: %s"
+msgstr "Nevalida dbus-nomo %s"
+
+#: common/flatpak-context.c:1249
+#, c-format
+msgid "Unknown share type %s, valid types are: %s"
+msgstr "Nekonata akcia tipo %s, validaj tipoj estas: %s"
+
+#: common/flatpak-context.c:1270
+#, c-format
+msgid "Unknown policy type %s, valid types are: %s"
+msgstr "Nekonata politika tipo %s, validaj tipoj estas: %s"
+
+#: common/flatpak-context.c:1308
+#, c-format
+msgid "Invalid dbus name %s"
+msgstr "Nevalida dbus-nomo %s"
+
+#: common/flatpak-context.c:1321
+#, c-format
+msgid "Unknown socket type %s, valid types are: %s"
+msgstr "Nekonata ingotipo %s, validaj tipoj estas: %s"
+
+#: common/flatpak-context.c:1336
+#, c-format
+msgid "Unknown device type %s, valid types are: %s"
+msgstr "Nekonata aparato tipo %s, validaj tipoj estas: %s"
+
+#: common/flatpak-context.c:1350
+#, c-format
+msgid "Unknown feature type %s, valid types are: %s"
+msgstr "Nekonata trajtotipo %s, validaj tipoj estas: %s"
+
+#: common/flatpak-context.c:1882
+#, c-format
+msgid "Filesystem location \"%s\" contains \"..\""
+msgstr "Dosiersistemloko \"%s\" enhavas \"..\""
+
+#: common/flatpak-context.c:1924
+msgid ""
+"--filesystem=/ is not available, use --filesystem=host for a similar result"
+msgstr ""
+"--filesystem=/ ne disponeblas, uzi --filesystem=gastiganton por simila "
+"rezulto"
+
+#: common/flatpak-context.c:1958
+#, c-format
+msgid ""
+"Unknown filesystem location %s, valid locations are: host, host-os, host-"
+"etc, host-root, home, xdg-*[/…], ~/dir, /dir"
+msgstr ""
+"Nekonata dosiersistemloko %s, validaj lokoj estas: gastiganto, hejmo, xdg-"
+"*[/...], ~/dir, /dir"
+
+#: common/flatpak-context.c:2057
+#, c-format
+msgid "Invalid syntax for %s: %s"
+msgstr "Nevalida nomo %s: %s"
+
+#: common/flatpak-context.c:2199
+msgid "fallback-x11 can not be conditional"
+msgstr "fallback-x11 ne povas esti kondiĉa"
+
+#: common/flatpak-context.c:2375
+#, c-format
+msgid "Invalid env format %s"
+msgstr "Nevalida env-formato %s"
+
+#: common/flatpak-context.c:2463
+#, c-format
+msgid "Environment variable name must not contain '=': %s"
+msgstr "Nomo de mediovariablo ne devas enhavi '=': %s"
+
+#: common/flatpak-context.c:2591 common/flatpak-context.c:2599
+msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
+msgstr "--add-policy-argumentoj devas esti en la formo SUBSYSTEM.KEY=VALUE"
+
+#: common/flatpak-context.c:2606
+msgid "--add-policy values can't start with \"!\""
+msgstr "--add-policy-valoroj ne povas komenci per \"!\""
+
+#: common/flatpak-context.c:2631 common/flatpak-context.c:2639
+msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
+msgstr "--remove-policy argumentoj devas esti en la formo SUBSYSTEM.KEY=VALUE"
+
+#: common/flatpak-context.c:2646
+msgid "--remove-policy values can't start with \"!\""
+msgstr "--remove-policy valoroj ne povas komenci per \"!\""
+
+#: common/flatpak-context.c:2721
+msgid "Share with host"
+msgstr "Kunhavigi kun gastiganto"
+
+#: common/flatpak-context.c:2721 common/flatpak-context.c:2722
+msgid "SHARE"
+msgstr "SHARE"
+
+#: common/flatpak-context.c:2722
+msgid "Unshare with host"
+msgstr "Maldividi kun gastiganto"
+
+#: common/flatpak-context.c:2723
+msgid "Require conditions to be met for a subsystem to get shared"
+msgstr "Postuli kondiĉojn esti plenumita por subsistemo esti dividita"
+
+#: common/flatpak-context.c:2723
+msgid "SHARE:CONDITION"
+msgstr "SHARE:CONDITION"
+
+#: common/flatpak-context.c:2724
+msgid "Expose socket to app"
+msgstr "Eksponi ingon al app"
+
+#: common/flatpak-context.c:2724 common/flatpak-context.c:2725
+msgid "SOCKET"
+msgstr "SOCKET"
+
+#: common/flatpak-context.c:2725
+msgid "Don't expose socket to app"
+msgstr "Ne elmontri ingon al app"
+
+#: common/flatpak-context.c:2726
+msgid "Require conditions to be met for a socket to get exposed"
+msgstr "Postuli kondiĉojn por esti plenumitaj por ke ingo elmontriĝu"
+
+#: common/flatpak-context.c:2726
+msgid "SOCKET:CONDITION"
+msgstr "SOCKET:CONDITION"
+
+#: common/flatpak-context.c:2727
+msgid "Expose device to app"
+msgstr "Ekspozi aparaton al app"
+
+#: common/flatpak-context.c:2727 common/flatpak-context.c:2728
+msgid "DEVICE"
+msgstr "DEVICE"
+
+#: common/flatpak-context.c:2728
+msgid "Don't expose device to app"
+msgstr "Ne elmontri aparaton al app"
+
+#: common/flatpak-context.c:2729
+msgid "Require conditions to be met for a device to get exposed"
+msgstr "Postuli kondiĉojn por esti plenumita por aparato esti elmontrita"
+
+#: common/flatpak-context.c:2729
+msgid "DEVICE:CONDITION"
+msgstr "DEVICE:CONDITION"
+
+#: common/flatpak-context.c:2730
+msgid "Allow feature"
+msgstr "Permesi funkcion"
+
+#: common/flatpak-context.c:2730 common/flatpak-context.c:2731
+msgid "FEATURE"
+msgstr "FEATURE"
+
+#: common/flatpak-context.c:2731
+msgid "Don't allow feature"
+msgstr "Ne permesi funkcion"
+
+#: common/flatpak-context.c:2732
+msgid "Require conditions to be met for a feature to get allowed"
+msgstr "Postuli kondiĉojn por esti plenumita por funkcio esti permesita"
+
+#: common/flatpak-context.c:2732
+msgid "FEATURE:CONDITION"
+msgstr "FEATURE:CONDITION"
+
+#: common/flatpak-context.c:2733
+msgid "Expose filesystem to app (:ro for read-only)"
+msgstr "Eksponi dosiersistemon al aplikaĵo (:ro por nurlegebla)"
+
+#: common/flatpak-context.c:2733
+msgid "FILESYSTEM[:ro]"
+msgstr "FILESISTO[:ro]"
+
+#: common/flatpak-context.c:2734
+msgid "Don't expose filesystem to app"
+msgstr "Ne elmontri dosiersistemon al app"
+
+#: common/flatpak-context.c:2734
+msgid "FILESYSTEM"
+msgstr "FILESYSTEM"
+
+#: common/flatpak-context.c:2735
+msgid "Set environment variable"
+msgstr "Agordi mediovariablon"
+
+#: common/flatpak-context.c:2735
+msgid "VAR=VALUE"
+msgstr "VAR=VALORO"
+
+#: common/flatpak-context.c:2736
+msgid "Read environment variables in env -0 format from FD"
+msgstr "Legi mediovariablojn en env -0 formato de FD"
+
+#: common/flatpak-context.c:2736
+msgid "FD"
+msgstr "FD"
+
+#: common/flatpak-context.c:2737
+msgid "Remove variable from environment"
+msgstr "Forigi objekton de permesa vendejo"
+
+#: common/flatpak-context.c:2737
+msgid "VAR"
+msgstr "VALUE"
+
+#: common/flatpak-context.c:2738
+msgid "Allow app to own name on the session bus"
+msgstr "Permesi al aplikaĵo posedi nomon sur la sesiobuso"
+
+#: common/flatpak-context.c:2738 common/flatpak-context.c:2739
+#: common/flatpak-context.c:2740 common/flatpak-context.c:2741
+#: common/flatpak-context.c:2742 common/flatpak-context.c:2743
+#: common/flatpak-context.c:2744
+msgid "DBUS_NAME"
+msgstr "DBUS_NAME"
+
+#: common/flatpak-context.c:2739
+msgid "Allow app to talk to name on the session bus"
+msgstr "Permesi al app paroli kun nomo sur la sesiobuso"
+
+#: common/flatpak-context.c:2740
+msgid "Don't allow app to talk to name on the session bus"
+msgstr "Ne permesi al aplikaĵo paroli kun nomo sur la sesiobuso"
+
+#: common/flatpak-context.c:2741
+msgid "Allow app to own name on the system bus"
+msgstr "Permesi al app posedi nomon sur la sistema buso"
+
+#: common/flatpak-context.c:2742
+msgid "Allow app to talk to name on the system bus"
+msgstr "Permesi al app paroli kun nomo sur la sistema buso"
+
+#: common/flatpak-context.c:2743
+msgid "Don't allow app to talk to name on the system bus"
+msgstr "Ne permesi al aplikaĵo paroli kun nomo sur la sistema buso"
+
+#: common/flatpak-context.c:2744
+msgid "Allow app to own name on the a11y bus"
+msgstr "Permesi al app posedi nomon sur la sistema buso"
+
+#: common/flatpak-context.c:2745
+msgid "Add generic policy option"
+msgstr "Aldoni ĝeneralan politikan opcion"
+
+#: common/flatpak-context.c:2745 common/flatpak-context.c:2746
+msgid "SUBSYSTEM.KEY=VALUE"
+msgstr "SUBSYSTEM.KEY=VALORO"
+
+#: common/flatpak-context.c:2746
+msgid "Remove generic policy option"
+msgstr "Forigi ĝeneralan politikan opcion"
+
+#: common/flatpak-context.c:2747
+msgid "Add USB device to enumerables"
+msgstr "Aldoni USB-aparaton al kalkuleblaj"
+
+#: common/flatpak-context.c:2747 common/flatpak-context.c:2748
+msgid "VENDOR_ID:PRODUCT_ID"
+msgstr "VENDOR_ID:PRODUCT_ID"
+
+#: common/flatpak-context.c:2748
+msgid "Add USB device to hidden list"
+msgstr "Aldoni USB-aparaton al kaŝita listo"
+
+#: common/flatpak-context.c:2749
+msgid "A list of USB devices that are enumerable"
+msgstr "Listo de USB-aparatoj kiuj estas listeblaj"
+
+#: common/flatpak-context.c:2749
+msgid "LIST"
+msgstr "LIST"
+
+#: common/flatpak-context.c:2750
+msgid "File containing a list of USB devices to make enumerable"
+msgstr "Dosiero enhavanta liston de USB-aparatoj por fari enumeblan"
+
+#: common/flatpak-context.c:2750 common/flatpak-context.c:2751
+msgid "FILENAME"
+msgstr "FILENAME"
+
+#: common/flatpak-context.c:2751
+msgid "Persist home directory subpath"
+msgstr "Daŭri hejman dosierujon"
+
+#. This is not needed/used anymore, so hidden, but we accept it for backwards compat
+#: common/flatpak-context.c:2753
+msgid "Don't require a running session (no cgroups creation)"
+msgstr "Ne postulas kurantan sesion (neniu cgroup-kreado)"
+
+#: common/flatpak-context.c:3784
+#, c-format
+msgid "Not replacing \"%s\" with tmpfs: %s"
+msgstr "Ne anstataŭigante \"%s\" per tmpfs: %s"
+
+#: common/flatpak-context.c:3792
+#, c-format
+msgid "Not sharing \"%s\" with sandbox: %s"
+msgstr "Ne kundividante \"%s\" kun sablokesto: %s"
+
+#. Even if the error is one that we would normally silence, like
+#. * the path not existing, it seems reasonable to make more of a fuss
+#. * about the home directory not existing or otherwise being unusable,
+#. * so this is intentionally not using cannot_export()
+#: common/flatpak-context.c:3894
+#, c-format
+msgid "Not allowing home directory access: %s"
+msgstr "Ne permesante aliron al hejma dosierujo: %s"
+
+#: common/flatpak-context.c:4128
+#, c-format
+msgid "Unable to provide a temporary home directory in the sandbox: %s"
+msgstr "Ne eblas provizi provizoran hejmdosierujon en la sablokesto: %s"
+
+#: common/flatpak-dir.c:442
+#, c-format
+msgid "Configured collection ID ‘%s’ not in summary file"
+msgstr "Agordita kolekto ID '%s' ne en resuma dosiero"
+
+#: common/flatpak-dir.c:587
+#, c-format
+msgid "Unable to load summary from remote %s: %s"
+msgstr "Ne eblas ŝargi resumon de fora %s: %s"
+
+#: common/flatpak-dir.c:764 common/flatpak-dir.c:800 common/flatpak-dir.c:906
+#, c-format
+msgid "No such ref '%s' in remote %s"
+msgstr "Ne tia ref '%s' en fora %s"
+
+#: common/flatpak-dir.c:891 common/flatpak-dir.c:1051 common/flatpak-dir.c:1080
+#: common/flatpak-dir.c:1092
+#, c-format
+msgid "No entry for %s in remote %s summary flatpak cache"
+msgstr "Neniu eniro por %s en fora '%s' resuma flatpakkaŝmemoro"
+
+#: common/flatpak-dir.c:1069
+#, c-format
+msgid "No summary or Flatpak cache available for remote %s"
+msgstr "Neniu resumo aŭ Flatpak-kaŝmemoro havebla por fora %s"
+
+#: common/flatpak-dir.c:1097
+#, c-format
+msgid "Missing xa.data in summary for remote %s"
+msgstr "Neniu oci-resumo konservita por fora '%s'"
+
+#: common/flatpak-dir.c:1103 common/flatpak-dir.c:1533
+#, c-format
+msgid "Unsupported summary version %d for remote %s"
+msgstr "Nesubtenata resumversio %d por fora %s"
+
+#: common/flatpak-dir.c:1200
+msgid "Remote OCI index has no registry uri"
+msgstr "Fora OCI-indekso ne havas registran uri"
+
+#: common/flatpak-dir.c:1261
+#, c-format
+msgid "Couldn't find ref %s in remote %s"
+msgstr "Ne eblis trovi la plej novan kontrolsumon por ref Z%s en fora Z%s"
+
+#: common/flatpak-dir.c:1285 common/flatpak-dir.c:1369
+#, c-format
+msgid "Commit has no requested ref ‘%s’ in ref binding metadata"
+msgstr "Commit havas neniun petitan refon '%s' en ref-ligaj metadatenoj"
+
+#: common/flatpak-dir.c:1400
+#, c-format
+msgid "Configured collection ID ‘%s’ not in binding metadata"
+msgstr "Commit havas neniun petitan refon '%s' en ref-ligaj metadatenoj"
+
+#: common/flatpak-dir.c:1436 common/flatpak-dir.c:5612
+#, c-format
+msgid "Couldn't find latest checksum for ref %s in remote %s"
+msgstr "Ne eblis trovi la plej novan kontrolsumon por ref Z%s en fora Z%s"
+
+#: common/flatpak-dir.c:1503 common/flatpak-dir.c:1539
+#, c-format
+msgid "No entry for %s in remote %s summary flatpak sparse cache"
+msgstr "Neniu eniro por %s en fora %s resumo flatpak maldensa kaŝmemoro"
+
+#: common/flatpak-dir.c:2527
+#, c-format
+msgid "Commit metadata for %s not matching expected metadata"
+msgstr "Enmeti metadatenojn por %s ne kongruas kun atendataj metadatenoj"
+
+#: common/flatpak-dir.c:2810
+msgid "Unable to connect to system bus"
+msgstr "Ne eblas konektiĝi al sistema buso"
+
+#: common/flatpak-dir.c:3406
+msgid "User installation"
+msgstr "Instalado de uzanto"
+
+#: common/flatpak-dir.c:3413
+#, c-format
+msgid "System (%s) installation"
+msgstr "Sistemo (%s) instalado"
+
+#: common/flatpak-dir.c:3459
+#, c-format
+msgid "No overrides found for %s"
+msgstr "Neniuj anstataŭaĵoj trovitaj por %s"
+
+#: common/flatpak-dir.c:3612
+#, c-format
+msgid "%s (commit %s) not installed"
+msgstr "%s (kommit %s) ne instalita"
+
+#: common/flatpak-dir.c:4635
+#, c-format
+msgid "Error parsing system flatpakrepo file for %s: %s"
+msgstr "Eraro analizante la flatpakrepo-dosieron de la sistemo por %s: %s"
+
+#: common/flatpak-dir.c:4710
+#, c-format
+msgid "While opening repository %s: "
+msgstr "Malfermante deponejon %s:"
+
+#: common/flatpak-dir.c:4971
+#, c-format
+msgid "The config key %s is not set"
+msgstr "La agorda ŝlosilo %s ne estas agordita"
+
+#: common/flatpak-dir.c:5107
+#, c-format
+msgid "No current %s pattern matching %s"
+msgstr "Neniu aktuala %s ŝablono kongrua kun %s"
+
+#: common/flatpak-dir.c:5389
+msgid "No appstream commit to deploy"
+msgstr "Neniu appstream kompromitas deploji"
+
+#: common/flatpak-dir.c:5908 common/flatpak-dir.c:7221
+#: common/flatpak-dir.c:10841 common/flatpak-dir.c:11578
+msgid "Can't pull from untrusted non-gpg verified remote"
+msgstr "Ne povas tiri de nefidinda ne-gpg kontrolita fora"
+
+#: common/flatpak-dir.c:6331 common/flatpak-dir.c:6546
+msgid "Extra data not supported for non-gpg-verified local system installs"
+msgstr ""
+"Kromaj datumoj ne subtenataj por ne-gpg-kontrolitaj lokaj sistemaj instaloj"
+
+#: common/flatpak-dir.c:6370 common/flatpak-dir.c:6737
+#, c-format
+msgid "Invalid checksum for extra data uri %s"
+msgstr "Nevalida ĉeksumo por kromaj datumoj uri %s"
+
+#: common/flatpak-dir.c:6379
+#, c-format
+msgid "Empty name for extra data uri %s"
+msgstr "Malplena nomo por kromaj datumoj uri %s"
+
+#: common/flatpak-dir.c:6387
+#, c-format
+msgid "Unsupported extra data uri %s"
+msgstr "Nesubtenataj kromaj datumoj uri %s"
+
+#: common/flatpak-dir.c:6416
+#, c-format
+msgid "Failed to load local extra-data %s: %s"
+msgstr "Malsukcesis ŝargi lokajn kromdatumojn %s: %s"
+
+#: common/flatpak-dir.c:6424
+#, c-format
+msgid "Wrong size for extra-data %s"
+msgstr "Malĝusta grandeco por kromdatumoj %s"
+
+#: common/flatpak-dir.c:6443
+#, c-format
+msgid "While downloading %s: "
+msgstr "Dum elŝuto de Z%s:"
+
+#: common/flatpak-dir.c:6453
+#, c-format
+msgid "Wrong size for extra data %s"
+msgstr "Malĝusta grandeco por kromaj datumoj %s"
+
+#: common/flatpak-dir.c:6462
+#, c-format
+msgid "Invalid checksum for extra data %s"
+msgstr "Nevalida ĉeksumo por kromaj datumoj %s"
+
+#: common/flatpak-dir.c:7051 common/flatpak-dir.c:7304
+#, c-format
+msgid "While pulling %s from remote %s: "
+msgstr "Tirante %s de fora %s:"
+
+#: common/flatpak-dir.c:7245 common/flatpak-repo-utils.c:3886
+msgid "GPG signatures found, but none are in trusted keyring"
+msgstr "GPG-subskriboj trovitaj, sed neniu estas en fidinda ŝlosilringo"
+
+#: common/flatpak-dir.c:7262
+#, c-format
+msgid "Commit for ‘%s’ has no ref binding"
+msgstr "Commit havas neniun petitan refon '%s' en ref-ligaj metadatenoj"
+
+#: common/flatpak-dir.c:7267
+#, c-format
+msgid "Commit for ‘%s’ is not in expected bound refs: %s"
+msgstr "Devota por '%s' ne estas en atendataj ligitaj referencoj: %s"
+
+#: common/flatpak-dir.c:7443
+msgid "Only applications can be made current"
+msgstr "Nur aplikaĵoj povas esti aktualigataj"
+
+#: common/flatpak-dir.c:8147
+msgid "Not enough memory"
+msgstr "Ne sufiĉa memoro"
+
+#: common/flatpak-dir.c:8166
+msgid "Failed to read from exported file"
+msgstr "Malsukcesis legi el eksportita dosiero"
+
+#: common/flatpak-dir.c:8356
+msgid "Error reading mimetype xml file"
+msgstr "Eraro legante mimetype xml-dosieron"
+
+#: common/flatpak-dir.c:8361
+msgid "Invalid mimetype xml file"
+msgstr "Nevalida mimetype xml-dosiero"
+
+#: common/flatpak-dir.c:8447
+#, c-format
+msgid "D-Bus service file '%s' has wrong name"
+msgstr "D-Bus-servodosiero '%s' havas malĝustan nomon"
+
+#: common/flatpak-dir.c:8602
+#, c-format
+msgid "Invalid Exec argument %s"
+msgstr "Nevalida postul-flatpak argumento %s"
+
+#: common/flatpak-dir.c:9070
+msgid "While getting detached metadata: "
+msgstr "Dum akiro de malfiksitaj metadatenoj:"
+
+#: common/flatpak-dir.c:9075 common/flatpak-dir.c:9080
+#: common/flatpak-dir.c:9084
+msgid "Extra data missing in detached metadata"
+msgstr "Kromaj datumoj mankas en dekroĉitaj metadatenoj"
+
+#: common/flatpak-dir.c:9088
+msgid "While creating extradir: "
+msgstr "Dum kreado de ekstradir:"
+
+#: common/flatpak-dir.c:9109 common/flatpak-dir.c:9142
+msgid "Invalid checksum for extra data"
+msgstr "Nevalida ĉeksumo por kromaj datumoj"
+
+#: common/flatpak-dir.c:9138
+msgid "Wrong size for extra data"
+msgstr "Malĝusta grandeco por kromaj datumoj"
+
+#: common/flatpak-dir.c:9151
+#, c-format
+msgid "While writing extra data file '%s': "
+msgstr "Dum skribado de ekstra datuma dosiero '%s':"
+
+#: common/flatpak-dir.c:9159
+#, c-format
+msgid "Extra data %s missing in detached metadata"
+msgstr "Ekstraj datumoj %s mankas en seigitaj metadatenoj"
+
+#: common/flatpak-dir.c:9257
+msgid "Unable to get runtime key from metadata"
+msgstr "Uzi alternativan dosieron por la metadatumoj"
+
+#: common/flatpak-dir.c:9371
+#, c-format
+msgid "apply_extra script failed, exit status %d"
+msgstr "apply_extra skripto malsukcesis, elira stato %d"
+
+#. Translators: The placeholder is for an app ref.
+#: common/flatpak-dir.c:9551
+#, c-format
+msgid "Installing %s is not allowed by the policy set by your administrator"
+msgstr ""
+"Instali %s ne estas permesita de la politiko fiksita de via administranto"
+
+#: common/flatpak-dir.c:9650
+#, c-format
+msgid "While trying to resolve ref %s: "
+msgstr "Dum vi provas solvi ref %s:"
+
+#: common/flatpak-dir.c:9662
+#, c-format
+msgid "%s is not available"
+msgstr "%s ne haveblas"
+
+#: common/flatpak-dir.c:9674 common/flatpak-dir.c:11455
+#, c-format
+msgid "%s commit %s already installed"
+msgstr "%s kommit %s jam instalita"
+
+#: common/flatpak-dir.c:9681
+msgid "Can't create deploy directory"
+msgstr "Ne povas krei deplojan dosierujon"
+
+#: common/flatpak-dir.c:9689
+#, c-format
+msgid "Failed to read commit %s: "
+msgstr "Malsukcesis legi commit %s:"
+
+#: common/flatpak-dir.c:9710
+#, c-format
+msgid "While trying to checkout %s into %s: "
+msgstr "Dum vi provas kontroli %s en %s:"
+
+#: common/flatpak-dir.c:9729
+msgid "While trying to checkout metadata subpath: "
+msgstr "Dum vi provas kontroli la subvojon de metadatumoj:"
+
+#: common/flatpak-dir.c:9761
+#, c-format
+msgid "While trying to checkout subpath ‘%s’: "
+msgstr "Dum vi provas kontroli la subvojon '%s':"
+
+#: common/flatpak-dir.c:9771
+msgid "While trying to remove existing extra dir: "
+msgstr "Dum vi provas forigi ekzistantan kroman diraĵon:"
+
+#: common/flatpak-dir.c:9782
+msgid "While trying to apply extra data: "
+msgstr "Dum vi provas apliki kromajn datumojn:"
+
+#: common/flatpak-dir.c:9809
+#, c-format
+msgid "Invalid commit ref %s: "
+msgstr "Nevalida kompromisa ref %s:"
+
+#: common/flatpak-dir.c:9817 common/flatpak-dir.c:9829
+#, c-format
+msgid "Deployed ref %s does not match commit (%s)"
+msgstr "Deplojita ref %s ne kongruas kun commit (%s)"
+
+#: common/flatpak-dir.c:9823
+#, c-format
+msgid "Deployed ref %s branch does not match commit (%s)"
+msgstr "Deplojita ref %s-branĉo ne kongruas kun commit (%s)"
+
+#: common/flatpak-dir.c:10085 common/flatpak-installation.c:1909
+#, c-format
+msgid "%s branch %s already installed"
+msgstr "%s branĉo %s jam instalita"
+
+#: common/flatpak-dir.c:10945
+#, c-format
+msgid "Could not unmount revokefs-fuse filesystem at %s: "
+msgstr "Ne eblis malmunti revokefs-fuse dosiersistemon ĉe %s:"
+
+#: common/flatpak-dir.c:11249
+#, c-format
+msgid "This version of %s is already installed"
+msgstr "Ĉi tiu versio de %s jam estas instalita"
+
+#: common/flatpak-dir.c:11262
+msgid "Can't change remote during bundle install"
+msgstr "Ne povas ŝanĝi telerdistancon dum pakinstalado"
+
+#: common/flatpak-dir.c:11531
+msgid "Can't update to a specific commit without root permissions"
+msgstr "Ne povas ĝisdatigi al specifa transdono sen radikaj permesoj"
+
+#: common/flatpak-dir.c:11812
+#, c-format
+msgid "Can't remove %s, it is needed for: %s"
+msgstr "Ne povas forigi %s, ĝi estas bezonata por: %s"
+
+#: common/flatpak-dir.c:11872 common/flatpak-installation.c:2065
+#, c-format
+msgid "%s branch %s is not installed"
+msgstr "%s branĉo %s ne estas instalita"
+
+#: common/flatpak-dir.c:12125
+#, c-format
+msgid "%s commit %s not installed"
+msgstr "%s kommit %s ne instalita"
+
+#: common/flatpak-dir.c:12461
+#, c-format
+msgid "Pruning repo failed: %s"
+msgstr "Pritondado de repo malsukcesis: %s"
+
+#: common/flatpak-dir.c:12629 common/flatpak-dir.c:12635
+#, c-format
+msgid "Failed to load filter '%s'"
+msgstr "Malsukcesis ŝargi filtrilon '%s'"
+
+#: common/flatpak-dir.c:12641
+#, c-format
+msgid "Failed to parse filter '%s'"
+msgstr "Malsukcesis analizi filtrilon '%s'"
+
+#: common/flatpak-dir.c:12923
+msgid "Failed to write summary cache: "
+msgstr "Malsukcesis skribi resuman kaŝmemoron:"
+
+#: common/flatpak-dir.c:12942
+#, c-format
+msgid "No oci summary cached for remote '%s'"
+msgstr "Neniu oci-resumo konservita por fora '%s'"
+
+#: common/flatpak-dir.c:13167
+#, c-format
+msgid "No cached summary for remote '%s'"
+msgstr "Neniu oci-resumo konservita por fora '%s'"
+
+#: common/flatpak-dir.c:13208
+#, c-format
+msgid "Invalid checksum for indexed summary %s read from %s"
+msgstr "Nevalida ĉeksumo por indeksita resumo %s legita el %s"
+
+#: common/flatpak-dir.c:13281
+#, c-format
+msgid ""
+"Remote listing for %s not available; server has no summary file. Check the "
+"URL passed to remote-add was valid."
+msgstr ""
+"Fora listo por %s ne havebla; servilo ne havas resuman dosieron. Kontrolu, "
+"ke la URL transdonita al remote-add estis valida."
+
+#: common/flatpak-dir.c:13658
+#, c-format
+msgid "Invalid checksum for indexed summary %s for remote '%s'"
+msgstr "Nevalida ĉeksumo por indeksita resumo %s por fora '%s'"
+
+#: common/flatpak-dir.c:14348
+#, c-format
+msgid "Multiple branches available for %s, you must specify one of: "
+msgstr "Pluraj branĉoj disponeblaj por %s, vi devas specifi unu el:"
+
+#: common/flatpak-dir.c:14414
+#, c-format
+msgid "Nothing matches %s"
+msgstr "Nenio kongruas kun %s"
+
+#: common/flatpak-dir.c:14522
+#, c-format
+msgid "Can't find ref %s%s%s%s%s"
+msgstr "Ne povas trovi ref Z%s%s%s%s%s"
+
+#: common/flatpak-dir.c:14565
+#, c-format
+msgid "Error searching remote %s: %s"
+msgstr "Eraro serĉante fora %s: %s"
+
+#: common/flatpak-dir.c:14662
+#, c-format
+msgid "Error searching local repository: %s"
+msgstr "Eraro serĉante lokan deponejon: %s"
+
+#: common/flatpak-dir.c:14799
+#, c-format
+msgid "%s/%s/%s not installed"
+msgstr "%s/%s/%s ne instalita"
+
+#: common/flatpak-dir.c:15002
+#, c-format
+msgid "Could not find installation %s"
+msgstr "Ne eblis trovi instalaĵon %s"
+
+#: common/flatpak-dir.c:15572
+#, c-format
+msgid "Invalid file format, no %s group"
+msgstr "Nevalida dosierformato, neniu %s grupo"
+
+#: common/flatpak-dir.c:15577 common/flatpak-repo-utils.c:2836
+#, c-format
+msgid "Invalid version %s, only 1 supported"
+msgstr "Nevalida versio %s, nur 1 subtenata"
+
+#: common/flatpak-dir.c:15582 common/flatpak-dir.c:15587
+#, c-format
+msgid "Invalid file format, no %s specified"
+msgstr "Nevalida dosierformato, neniu %s specifita"
+
+#. Check some minimal size so we don't get crap
+#: common/flatpak-dir.c:15607
+msgid "Invalid file format, gpg key invalid"
+msgstr "Nevalida dosierformato, gpg-ŝlosilo nevalida"
+
+#: common/flatpak-dir.c:15635 common/flatpak-repo-utils.c:2917
+msgid "Collection ID requires GPG key to be provided"
+msgstr "Kolekta ID postulas GPG-ŝlosilon esti provizita"
+
+#: common/flatpak-dir.c:15678
+#, c-format
+msgid "Runtime %s, branch %s is already installed"
+msgstr "Runtime %s, branĉo %s jam estas instalita"
+
+#: common/flatpak-dir.c:15679
+#, c-format
+msgid "App %s, branch %s is already installed"
+msgstr "Apo %s, branĉo %s jam estas instalita"
+
+#: common/flatpak-dir.c:15913
+#, c-format
+msgid "Can't remove remote '%s' with installed ref %s (at least)"
+msgstr "Ne povas forigi fora '%s' kun instalita ref %s (almenaŭ)"
+
+#: common/flatpak-dir.c:16016
+#, c-format
+msgid "Invalid character '/' in remote name: %s"
+msgstr "Nevalida signo '/' en fora nomo: %s"
+
+#: common/flatpak-dir.c:16022
+#, c-format
+msgid "No configuration for remote %s specified"
+msgstr "Neniu agordo por fora %s specifita"
+
+#: common/flatpak-dir.c:17516
+#, c-format
+msgid "Skipping deletion of mirror ref (%s, %s)…\n"
+msgstr "Preterpasante forigan de spegul-ref (%s, %s)…\n"
+
+#: common/flatpak-exports.c:931
+msgid "An absolute path is required"
+msgstr "Absoluta vojo estas postulata"
+
+#: common/flatpak-exports.c:948
+#, c-format
+msgid "Unable to open path \"%s\": %s"
+msgstr "Ne eblas malfermi vojon \"%s\": %s"
+
+#: common/flatpak-exports.c:955
+#, c-format
+msgid "Unable to get file type of \"%s\": %s"
+msgstr "Ne eblas akiri dosier-tipon de \"%s\": %s"
+
+#: common/flatpak-exports.c:964
+#, c-format
+msgid "File \"%s\" has unsupported type 0o%o"
+msgstr "Dosiero \"%s\" havas nesubtenan tipon 0o%o"
+
+#: common/flatpak-exports.c:970
+#, c-format
+msgid "Unable to get filesystem information for \"%s\": %s"
+msgstr "Ne eblas ricevi dosiersistemenformojn por \"%s\": %s"
+
+#: common/flatpak-exports.c:980
+#, c-format
+msgid "Ignoring blocking autofs path \"%s\""
+msgstr "Ignorante blokadon de aŭtofs vojo \"%s\""
+
+#: common/flatpak-exports.c:996 common/flatpak-exports.c:1009
+#: common/flatpak-exports.c:1022
+#, c-format
+msgid "Path \"%s\" is reserved by Flatpak"
+msgstr "Vojo \"%s\" estas rezervita de Flatpak"
+
+#: common/flatpak-exports.c:1076
+#, c-format
+msgid "Unable to resolve symbolic link \"%s\": %s"
+msgstr "Ne eblas solvi simbolan ligilon \"%s\": %s"
+
+#: common/flatpak-glib-backports.c:69
+msgid "Empty string is not a number"
+msgstr "Malplena ĉeno ne estas nombro"
+
+#: common/flatpak-glib-backports.c:95
+#, c-format
+msgid "“%s” is not an unsigned number"
+msgstr "“%s” ne estas nesubskribita numero"
+
+#: common/flatpak-glib-backports.c:105
+#, c-format
+msgid "Number “%s” is out of bounds [%s, %s]"
+msgstr "Numero \"%s\" estas ekster limoj [%s, %s]"
+
+#: common/flatpak-image-source.c:83
+msgid "Only sha256 image checksums are supported"
+msgstr "Nur sha256 bildaj kontrolsumoj estas subtenataj"
+
+#: common/flatpak-image-source.c:100 common/flatpak-image-source.c:108
+msgid "Image is not a manifest"
+msgstr "Bildo ne estas manifesto"
+
+#: common/flatpak-image-source.c:123
+msgid "No org.flatpak.ref found in image"
+msgstr "Neniu org.flatpak.ref trovita en bildo"
+
+#: common/flatpak-image-source.c:148
+#, c-format
+msgid "Ref '%s' not found in registry"
+msgstr "Ref '%s' ne trovita en registro"
+
+#: common/flatpak-image-source.c:157
+msgid "Multiple images in registry, specify a ref with --ref"
+msgstr "Multoblaj bildoj en registro, specifi ref per --ref"
+
+#: common/flatpak-installation.c:832
+#, c-format
+msgid "Ref %s not installed"
+msgstr "Ref %s ne instalita"
+
+#: common/flatpak-installation.c:873
+#, c-format
+msgid "App %s not installed"
+msgstr "Apliko %s ne instalita"
+
+#: common/flatpak-installation.c:1393
+#, c-format
+msgid "Remote '%s' already exists"
+msgstr "Fora '%s' jam ekzistas"
+
+#: common/flatpak-installation.c:1944
+#, c-format
+msgid "As requested, %s was only pulled, but not installed"
+msgstr "Kiel postulite, %s estis nur tirita, sed ne instalita"
+
+#: common/flatpak-instance.c:533 common/flatpak-instance.c:687
+#: common/flatpak-instance.c:728
+#, c-format
+msgid "Unable to create directory %s"
+msgstr "Ne eblas krei dosierujon %s"
+
+#: common/flatpak-instance.c:554
+#, c-format
+msgid "Unable to lock %s"
+msgstr "Ne eblas ŝlosi %s"
+
+#: common/flatpak-instance.c:627
+#, c-format
+msgid "Unable to create temporary directory in %s"
+msgstr "Ne eblas krei provizoran dosierujon en %s"
+
+#: common/flatpak-instance.c:639
+#, c-format
+msgid "Unable to create file %s"
+msgstr "Ne eblas krei dosieron %s"
+
+#: common/flatpak-instance.c:646
+#, c-format
+msgid "Unable to update symbolic link %s/%s"
+msgstr "Ne eblas ĝisdatigi simbolan ligilon %s/%s"
+
+#: common/flatpak-oci-registry.c:1197
+msgid "Only Bearer authentication supported"
+msgstr "Nur Bearer-aŭtentikigo subtenata"
+
+#: common/flatpak-oci-registry.c:1206
+msgid "Only realm in authentication request"
+msgstr "Nevalida dbus-nomo %s"
+
+#: common/flatpak-oci-registry.c:1213
+msgid "Invalid realm in authentication request"
+msgstr "Nevalida dbus-nomo %s"
+
+#: common/flatpak-oci-registry.c:1283
+#, c-format
+msgid "Authorization failed: %s"
+msgstr "Nevalida dbus-nomo %s"
+
+#: common/flatpak-oci-registry.c:1285
+msgid "Authorization failed"
+msgstr "Rajtigo malsukcesis"
+
+#: common/flatpak-oci-registry.c:1289
+#, c-format
+msgid "Unexpected response status %d when requesting token: %s"
+msgstr "Neatendita responda stato %d dum petado de ĵetono: %s"
+
+#: common/flatpak-oci-registry.c:1300
+msgid "Invalid authentication request response"
+msgstr "Nevalida dbus-nomo %s"
+
+#: common/flatpak-oci-registry.c:1731
+msgid "Flatpak was compiled without zstd support"
+msgstr "Flatpak estis kompilita sen zstd-subteno"
+
+#: common/flatpak-oci-registry.c:1923 common/flatpak-oci-registry.c:1975
+#: common/flatpak-oci-registry.c:2004 common/flatpak-oci-registry.c:2059
+#: common/flatpak-oci-registry.c:2115 common/flatpak-oci-registry.c:2193
+msgid "Invalid delta file format"
+msgstr "Nevalida env-formato %s"
+
+#: common/flatpak-oci-registry.c:3198 common/flatpak-oci-registry.c:3382
+msgid "Invalid OCI image config"
+msgstr "Nevalida OCI-bilda agordo"
+
+#: common/flatpak-oci-registry.c:3260 common/flatpak-oci-registry.c:3531
+#, c-format
+msgid "Wrong layer checksum, expected %s, was %s"
+msgstr "Malĝusta tavola kontrolsumo, atendita %s, estis %s"
+
+#: common/flatpak-oci-registry.c:3359
+#, c-format
+msgid "No ref specified for OCI image %s"
+msgstr "Neniu ref specifita por OCI-bildo %s"
+
+#: common/flatpak-oci-registry.c:3369
+#, c-format
+msgid "Wrong ref (%s) specified for OCI image %s, expected %s"
+msgstr "Malĝusta ref (%s) specifita por OCI-bildo %s, atendita %s"
+
+#: common/flatpak-progress.c:236
+#, c-format
+msgid "Downloading metadata: %u/(estimating) %s"
+msgstr "Elŝuto de metadatenoj: %u/(taksado) %s"
+
+#: common/flatpak-progress.c:260
+#, c-format
+msgid "Downloading: %s/%s"
+msgstr "Elŝuto: %s/%s"
+
+#: common/flatpak-progress.c:280
+#, c-format
+msgid "Downloading extra data: %s/%s"
+msgstr "Elŝutante kromajn datumojn: %s/%s"
+
+#: common/flatpak-progress.c:285
+#, c-format
+msgid "Downloading files: %d/%d %s"
+msgstr "Elŝutante dosierojn: %d/%d %s"
+
+#: common/flatpak-ref-utils.c:122
+msgid "Name can't be empty"
+msgstr "Nomo ne povas esti malplena"
+
+#: common/flatpak-ref-utils.c:129
+msgid "Name can't be longer than 255 characters"
+msgstr "Nomo ne povas esti pli longa ol 255 signoj"
+
+#: common/flatpak-ref-utils.c:142
+msgid "Name can't start with a period"
+msgstr "Nomo ne povas komenci per punkto"
+
+#: common/flatpak-ref-utils.c:148
+#, c-format
+msgid "Name can't start with %c"
+msgstr "Nomo ne povas komenci per %c"
+
+#: common/flatpak-ref-utils.c:164
+msgid "Name can't end with a period"
+msgstr "Nomo ne povas finiĝi per punkto"
+
+#: common/flatpak-ref-utils.c:171 common/flatpak-ref-utils.c:183
+msgid "Only last name segment can contain -"
+msgstr "Nur familinoma segmento povas enhavi -"
+
+#: common/flatpak-ref-utils.c:174
+#, c-format
+msgid "Name segment can't start with %c"
+msgstr "Nomsegmento ne povas komenci per %c"
+
+#: common/flatpak-ref-utils.c:186
+#, c-format
+msgid "Name can't contain %c"
+msgstr "Nomo ne povas enhavi %c"
+
+#: common/flatpak-ref-utils.c:195
+msgid "Names must contain at least 2 periods"
+msgstr "Nomoj devas enhavi almenaŭ 2 punktojn"
+
+#: common/flatpak-ref-utils.c:312
+msgid "Arch can't be empty"
+msgstr "Branĉo ne povas esti malplena"
+
+#: common/flatpak-ref-utils.c:323
+#, c-format
+msgid "Arch can't contain %c"
+msgstr "Branĉo ne povas enhavi %c"
+
+#: common/flatpak-ref-utils.c:385
+msgid "Branch can't be empty"
+msgstr "Branĉo ne povas esti malplena"
+
+#: common/flatpak-ref-utils.c:395
+#, c-format
+msgid "Branch can't start with %c"
+msgstr "Branĉo ne povas komenci per %c"
+
+#: common/flatpak-ref-utils.c:405
+#, c-format
+msgid "Branch can't contain %c"
+msgstr "Branĉo ne povas enhavi %c"
+
+#: common/flatpak-ref-utils.c:615 common/flatpak-ref-utils.c:865
+msgid "Ref too long"
+msgstr "Ref tro longa"
+
+#: common/flatpak-ref-utils.c:627
+msgid "Invalid remote name"
+msgstr "Malbona fora nomo: %s"
+
+#: common/flatpak-ref-utils.c:641
+#, c-format
+msgid "%s is not application or runtime"
+msgstr "%s ne estas aplikaĵo aŭ rultempo"
+
+#: common/flatpak-ref-utils.c:650 common/flatpak-ref-utils.c:667
+#: common/flatpak-ref-utils.c:683
+#, c-format
+msgid "Wrong number of components in %s"
+msgstr "Malĝusta nombro da komponantoj en %s"
+
+#: common/flatpak-ref-utils.c:656
+#, c-format
+msgid "Invalid name %.*s: %s"
+msgstr "Nevalida nomo %.*s: %s"
+
+#: common/flatpak-ref-utils.c:673
+#, c-format
+msgid "Invalid arch: %.*s: %s"
+msgstr "Nevalida arkitekturo: %.*s: %s"
+
+#: common/flatpak-ref-utils.c:816
+#, c-format
+msgid "Invalid name %s: %s"
+msgstr "Nevalida nomo %s: %s"
+
+#: common/flatpak-ref-utils.c:834
+#, c-format
+msgid "Invalid arch: %s: %s"
+msgstr "Nevalida branĉo %s: %s"
+
+#: common/flatpak-ref-utils.c:853
+#, c-format
+msgid "Invalid branch: %s: %s"
+msgstr "Nevalida branĉo %s: %s"
+
+#: common/flatpak-ref-utils.c:962 common/flatpak-ref-utils.c:970
+#: common/flatpak-ref-utils.c:978
+#, c-format
+msgid "Wrong number of components in partial ref %s"
+msgstr "Malĝusta nombro da komponantoj en rultempo %s"
+
+#: common/flatpak-ref-utils.c:1298
+msgid " development platform"
+msgstr "Uzi evoluan rultempon"
+
+#: common/flatpak-ref-utils.c:1300
+msgid " platform"
+msgstr "platformo"
+
+#: common/flatpak-ref-utils.c:1302
+msgid " application base"
+msgstr "Apliko"
+
+#: common/flatpak-ref-utils.c:1305
+msgid " debug symbols"
+msgstr "sencimigaj simboloj"
+
+#: common/flatpak-ref-utils.c:1307
+msgid " sourcecode"
+msgstr "fontkodo"
+
+#: common/flatpak-ref-utils.c:1309
+msgid " translations"
+msgstr "Instalado"
+
+#: common/flatpak-ref-utils.c:1311
+msgid " docs"
+msgstr "dokumentoj"
+
+#: common/flatpak-ref-utils.c:1578
+#, c-format
+msgid "Invalid id %s: %s"
+msgstr "Nevalida identigilo %s: %s"
+
+#: common/flatpak-remote.c:1216
+#, c-format
+msgid "Bad remote name: %s"
+msgstr "Malbona fora nomo: %s"
+
+#: common/flatpak-remote.c:1220
+msgid "No URL specified"
+msgstr "Neniu URL specifita"
+
+#: common/flatpak-remote.c:1266
+msgid "GPG verification must be enabled when a collection ID is set"
+msgstr "GPG-konfirmo estas postulata se kolektoj estas ebligitaj"
+
+#: common/flatpak-repo-utils.c:344
+msgid "No extra data sources"
+msgstr "Neniuj kromaj datumfontoj"
+
+#: common/flatpak-repo-utils.c:2817
+#, c-format
+msgid "Invalid %s: Missing group ‘%s’"
+msgstr "Nevalida Z%s: Mankas grupo '%s'"
+
+#: common/flatpak-repo-utils.c:2826
+#, c-format
+msgid "Invalid %s: Missing key ‘%s’"
+msgstr "Nevalida Z%s: mankas ŝlosilo '%s'"
+
+#: common/flatpak-repo-utils.c:2876
+msgid "Invalid gpg key"
+msgstr "Nevalida gpg-ŝlosilo"
+
+#: common/flatpak-repo-utils.c:3217
+#, c-format
+msgid "Error copying 64x64 icon for component %s: %s\n"
+msgstr "Eraro kopiante 64x64 ikonon por komponanto %s: %s\n"
+
+#: common/flatpak-repo-utils.c:3223
+#, c-format
+msgid "Error copying 128x128 icon for component %s: %s\n"
+msgstr "Eraro kopiante 128x128 ikonon por komponanto %s: %s\n"
+
+#: common/flatpak-repo-utils.c:3362
+#, c-format
+msgid "%s is end-of-life, ignoring for appstream"
+msgstr "%s estas fino de vivo, ignorante por appstream"
+
+#: common/flatpak-repo-utils.c:3397
+#, c-format
+msgid "No appstream data for %s: %s\n"
+msgstr "Neniuj datenoj pri appstream por %s: %s\n"
+
+#: common/flatpak-repo-utils.c:3744
+msgid "Invalid bundle, no ref in metadata"
+msgstr "Nevalida pakaĵo, neniu ref en metadatumoj"
+
+#: common/flatpak-repo-utils.c:3846
+#, c-format
+msgid "Collection ‘%s’ of bundle doesn’t match collection ‘%s’ of remote"
+msgstr "Kolekto '%s' de pakaĵo ne kongruas kun kolekto '%s' de fora"
+
+#: common/flatpak-repo-utils.c:3923
+msgid "Metadata in header and app are inconsistent"
+msgstr "Metadatumoj en kaplinio kaj aplikaĵo estas malkonsekvencaj"
+
+#: common/flatpak-run.c:891
+msgid "No systemd user session available, cgroups not available"
+msgstr "Neniu systemd uzantsesio havebla, cgroups ne havebla"
+
+#: common/flatpak-run.c:1432
+msgid "Unable to allocate instance id"
+msgstr "Ne eblas asigni ekzempleridentigilon"
+
+#: common/flatpak-run.c:1568 common/flatpak-run.c:1578
+#, c-format
+msgid "Failed to open flatpak-info file: %s"
+msgstr "Malsukcesis malfermi flatpak-info-dosieron: %s"
+
+#: common/flatpak-run.c:1607
+#, c-format
+msgid "Failed to open bwrapinfo.json file: %s"
+msgstr "Malsukcesis malfermi bwrapinfo.json dosieron: %s"
+
+#: common/flatpak-run.c:1632
+#, c-format
+msgid "Failed to write to instance id fd: %s"
+msgstr "Malsukcesis skribi al instance-id fd: %s"
+
+#: common/flatpak-run.c:2015
+msgid "Initialize seccomp failed"
+msgstr "Inicialigi seccomp malsukcesis"
+
+#: common/flatpak-run.c:2054
+#, c-format
+msgid "Failed to add architecture to seccomp filter: %s"
+msgstr "Malsukcesis aldoni arkitekturon al seccomp-filtrilo: %s"
+
+#: common/flatpak-run.c:2062
+#, c-format
+msgid "Failed to add multiarch architecture to seccomp filter: %s"
+msgstr "Malsukcesis aldoni plurarka arkitekturon al seccomp-filtrilo: %s"
+
+#: common/flatpak-run.c:2094 common/flatpak-run.c:2111
+#: common/flatpak-run.c:2133
+#, c-format
+msgid "Failed to block syscall %d: %s"
+msgstr "Malsukcesis bloki sistemovokon %d: %s"
+
+#: common/flatpak-run.c:2166
+#, c-format
+msgid "Failed to export bpf: %s"
+msgstr "Malsukcesis eksporti bpf: %s"
+
+#: common/flatpak-run.c:2468
+#, c-format
+msgid "Failed to open ‘%s’"
+msgstr "Malsukcesis malfermi '%s'"
+
+#: common/flatpak-run.c:2478
+#, c-format
+msgid ""
+"Directory forwarding needs version 4 of the document portal (have version %d)"
+msgstr ""
+"Adresaro plusendado bezonas version 4 de la dokumentportalo (havi version %d)"
+
+#: common/flatpak-run.c:2796
+#, c-format
+msgid "ldconfig failed, exit status %d"
+msgstr "ldconfig malsukcesis, elira stato %d"
+
+#: common/flatpak-run.c:2803
+msgid "Can't open generated ld.so.cache"
+msgstr "Ne povas malfermi generitan ld.so.cache"
+
+#. Translators: The placeholder is for an app ref.
+#: common/flatpak-run.c:2926
+#, c-format
+msgid "Running %s is not allowed by the policy set by your administrator"
+msgstr "Ruli %s ne estas permesita de la politiko fiksita de via administranto"
+
+#: common/flatpak-run.c:3065
+msgid ""
+"\"flatpak run\" is not intended to be run as `sudo flatpak run`. Use `sudo "
+"-i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell."
+msgstr ""
+"\"flatpak run\" ne intencas esti rulita kiel `sudo flatpak run`. Uzi `sudo "
+"-i` aŭ `su -l` anstataŭe kaj alvoki \"flatpak run\" de ene de la nova ŝelo."
+
+#: common/flatpak-run.c:3261
+#, c-format
+msgid "Failed to migrate from %s: %s"
+msgstr "Malsukcesis migri de %s: %s"
+
+#: common/flatpak-run.c:3282
+#, c-format
+msgid "Failed to migrate old app data directory %s to new name %s: %s"
+msgstr ""
+"Malsukcesis migri malnovan datumdosierujon de la aplikaĵo %s al nova nomo "
+"%s: %s"
+
+#: common/flatpak-run.c:3291
+#, c-format
+msgid "Failed to create symlink while migrating %s: %s"
+msgstr "Malsukcesis krei simbolligon dum migrado de %s: %s"
+
+#: common/flatpak-run-dbus.c:46
+msgid "Failed to open app info file"
+msgstr "Malsukcesis malfermi aplikan informodosieron"
+
+#: common/flatpak-run-dbus.c:149
+msgid "Unable to create sync pipe"
+msgstr "Ne eblas krei sinkronigan tubon"
+
+#: common/flatpak-run-dbus.c:185
+msgid "Failed to sync with dbus proxy"
+msgstr "Malsukcesis sinkronigi kun dbus-prokurilo"
+
+#: common/flatpak-transaction.c:2275
+#, c-format
+msgid "Warning: Problem looking for related refs: %s"
+msgstr "Averto: Problemo serĉante rilatajn referencojn: %s"
+
+#: common/flatpak-transaction.c:2493
+#, c-format
+msgid "The application %s requires the runtime %s which was not found"
+msgstr "La aplikaĵo %s postulas la rultempon %s kiu ne estis trovita"
+
+#: common/flatpak-transaction.c:2509
+#, c-format
+msgid "The application %s requires the runtime %s which is not installed"
+msgstr "La aplikaĵo %s postulas la rultempon %s kiu ne estas instalita"
+
+#: common/flatpak-transaction.c:2641
+#, c-format
+msgid "Can't uninstall %s which is needed by %s"
+msgstr "Ne povas malinstali %s kiu estas bezonata de %s"
+
+#: common/flatpak-transaction.c:2740
+#, c-format
+msgid "Remote %s disabled, ignoring %s update"
+msgstr "Fora %s malŝaltita, ignorante %s ĝisdatigon"
+
+#: common/flatpak-transaction.c:2773
+#, c-format
+msgid "%s is already installed"
+msgstr "%s jam estas instalita"
+
+#: common/flatpak-transaction.c:2776
+#, c-format
+msgid "%s is already installed from remote %s"
+msgstr "%s jam estas instalita de fora %s"
+
+#: common/flatpak-transaction.c:3120
+#, c-format
+msgid "Invalid .flatpakref: %s"
+msgstr "Nevalida .flatpakref: %s"
+
+#: common/flatpak-transaction.c:3161
+msgid "Warning: Could not mark already installed apps as preinstalled"
+msgstr ""
+"Averto: Ne eblis marki jam instalitajn programojn kiel antaŭinstalitajn"
+
+#: common/flatpak-transaction.c:3382
+#, c-format
+msgid "Error updating remote metadata for '%s': %s"
+msgstr "Eraro dum ĝisdatigo de foraj metadatenoj por '%s': %s"
+
+#: common/flatpak-transaction.c:3885
+#, c-format
+msgid ""
+"Warning: Treating remote fetch error as non-fatal since %s is already "
+"installed: %s"
+msgstr ""
+"Averto: Traktante eraron de fora alporto kiel ne mortiga ĉar %s jam estas "
+"instalita: %s"
+
+#: common/flatpak-transaction.c:4209
+#, c-format
+msgid "No authenticator installed for remote '%s'"
+msgstr "Neniu aŭtentikigilo instalita por fora '%s'"
+
+#: common/flatpak-transaction.c:4313 common/flatpak-transaction.c:4320
+#, c-format
+msgid "Failed to get tokens for ref: %s"
+msgstr "Malsukcesis determini partojn de ref: %s"
+
+#: common/flatpak-transaction.c:4315 common/flatpak-transaction.c:4322
+msgid "Failed to get tokens for ref"
+msgstr "Malsukcesis determini partojn de ref: %s"
+
+#: common/flatpak-transaction.c:4580
+#, c-format
+msgid "Ref %s from %s matches more than one transaction operation"
+msgstr "Ref %s de %s kongruas kun pli ol unu transakcia operacio"
+
+#: common/flatpak-transaction.c:4581 common/flatpak-transaction.c:4591
+msgid "any remote"
+msgstr "Malproksima"
+
+#: common/flatpak-transaction.c:4590
+#, c-format
+msgid "No transaction operation found for ref %s from %s"
+msgstr "Neniu transakcia operacio trovita por ref %s de %s"
+
+#: common/flatpak-transaction.c:4713
+#, c-format
+msgid "Flatpakrepo URL %s not file, HTTP or HTTPS"
+msgstr "Flatpakrepo URL %s ne HTTP aŭ HTTPS"
+
+#: common/flatpak-transaction.c:4719
+#, c-format
+msgid "Can't load dependent file %s: "
+msgstr "Ne povas ŝargi dependan dosieron %s:"
+
+#: common/flatpak-transaction.c:4727
+#, c-format
+msgid "Invalid .flatpakrepo: %s"
+msgstr "Nevalida .flatpakrepo: %s"
+
+#: common/flatpak-transaction.c:5454
+msgid "Transaction already executed"
+msgstr "Transakcio jam efektivigita"
+
+#: common/flatpak-transaction.c:5469
+msgid ""
+"Refusing to operate on a user installation as root! This can lead to "
+"incorrect file ownership and permission errors."
+msgstr ""
+"Rifuzo funkcii sur uzanta instalado kiel radiko! Ĉi tio povas konduki al "
+"malĝusta dosierposedo kaj permesaj eraroj."
+
+#: common/flatpak-transaction.c:5567 common/flatpak-transaction.c:5580
+msgid "Aborted by user"
+msgstr "Abortita de uzanto"
+
+#: common/flatpak-transaction.c:5605
+#, c-format
+msgid "Skipping %s due to previous error"
+msgstr "Preterpasi %s pro antaŭa eraro"
+
+#: common/flatpak-transaction.c:5659
+#, c-format
+msgid "Aborted due to failure (%s)"
+msgstr "Ĉesigita pro fiasko (%s)"
+
+#: common/flatpak-uri.c:118
+#, no-c-format
+msgid "Invalid %-encoding in URI"
+msgstr "Nevalida dbus-nomo %s"
+
+#: common/flatpak-uri.c:135
+msgid "Illegal character in URI"
+msgstr "Kontraŭleĝa signo en URI"
+
+#: common/flatpak-uri.c:169
+msgid "Non-UTF-8 characters in URI"
+msgstr "Ne-UTF-8-signoj en URI"
+
+#: common/flatpak-uri.c:275
+#, c-format
+msgid "Invalid IPv6 address ‘%.*s’ in URI"
+msgstr "Nevalida IPv6-adreso ‘%.*s’ en URI"
+
+#: common/flatpak-uri.c:330
+#, c-format
+msgid "Illegal encoded IP address ‘%.*s’ in URI"
+msgstr "Kontraŭleĝa kodita IP-adreso ‘%.*s’ en URI"
+
+#: common/flatpak-uri.c:342
+#, c-format
+msgid "Illegal internationalized hostname ‘%.*s’ in URI"
+msgstr "Kontraŭleĝa internaciigita gastiga nomo '%.*s' en URI"
+
+#: common/flatpak-uri.c:374 common/flatpak-uri.c:386
+#, c-format
+msgid "Could not parse port ‘%.*s’ in URI"
+msgstr "Ne eblis analizi pordon ‘%.*s’ en URI"
+
+#: common/flatpak-uri.c:393
+#, c-format
+msgid "Port ‘%.*s’ in URI is out of range"
+msgstr "Haveno '%.*s' en URI estas ekster intervalo"
+
+#: common/flatpak-uri.c:910
+msgid "URI is not absolute, and no base URI was provided"
+msgstr "URI ne estas absoluta, kaj neniu baza URI estis disponigita"
+
+#: common/flatpak-usb.c:83
+msgid "USB device query 'all' must not have data"
+msgstr "Demando pri USB-aparato 'ĉiuj' ne devas havi datumojn"
+
+#: common/flatpak-usb.c:102
+msgid "USB query rule 'cls' must be in the form CLASS:SUBCLASS or CLASS:*"
+msgstr ""
+"USB-demanda regulo 'cls' devas esti en la formo KLASO:SUBKLASO aŭ KLASO:*"
+
+#: common/flatpak-usb.c:111
+msgid "Invalid USB class"
+msgstr "Nevalida USB-klaso"
+
+#: common/flatpak-usb.c:125
+msgid "Invalid USB subclass"
+msgstr "Nevalida USB-subklaso"
+
+#: common/flatpak-usb.c:141 common/flatpak-usb.c:148
+msgid "USB query rule 'dev' must have a valid 4-digit hexadecimal product id"
+msgstr ""
+"USB-demanda regulo 'dev' devas havi validan 4-ciferan deksesuma "
+"produktidentigilo"
+
+#: common/flatpak-usb.c:164 common/flatpak-usb.c:171
+msgid "USB query rule 'vnd' must have a valid 4-digit hexadecimal vendor id"
+msgstr ""
+"USB-demanda regulo 'vnd' devas havi validan 4-ciferan deksesuman vendistan "
+"identigilon"
+
+#: common/flatpak-usb.c:205
+msgid "USB device queries must be in the form TYPE:DATA"
+msgstr "Demandoj pri USB-aparatoj devas esti en la formo TYPE:DATA"
+
+#: common/flatpak-usb.c:225
+#, c-format
+msgid "Unknown USB query rule %s"
+msgstr "Nekonata USB-demanda regulo %s"
+
+#: common/flatpak-usb.c:248
+msgid "Empty USB query"
+msgstr "Malplena USB-demando"
+
+#: common/flatpak-usb.c:274
+msgid "Multiple USB query rules of the same type is not supported"
+msgstr "Multoblaj USB-demandaj reguloj de la sama tipo ne estas subtenataj"
+
+#: common/flatpak-usb.c:283
+msgid "'all' must not contain extra query rules"
+msgstr "'ĉio' ne devas enhavi kromajn demandregulojn"
+
+#: common/flatpak-usb.c:291
+msgid "USB queries with 'dev' must also specify vendors"
+msgstr "USB-demandoj kun 'dev' ankaŭ devas specifi vendistojn"
+
+#: common/flatpak-utils.c:712
+msgid "Glob can't match apps"
+msgstr "Glob ne povas kongrui kun aplikaĵoj"
+
+#: common/flatpak-utils.c:737
+msgid "Empty glob"
+msgstr "Malplena globo"
+
+#: common/flatpak-utils.c:756
+msgid "Too many segments in glob"
+msgstr "Tro da segmentoj en globo"
+
+#: common/flatpak-utils.c:777
+#, c-format
+msgid "Invalid glob character '%c'"
+msgstr "Nevalida globa signo '%c'"
+
+#: common/flatpak-utils.c:831
+#, c-format
+msgid "Missing glob on line %d"
+msgstr "Mankas globo en linio %d"
+
+#: common/flatpak-utils.c:835
+#, c-format
+msgid "Trailing text on line %d"
+msgstr "Malantaŭa teksto en linio %d"
+
+#: common/flatpak-utils.c:839
+#, c-format
+msgid "on line %d"
+msgstr "en linio %d"
+
+#: common/flatpak-utils.c:861
+#, c-format
+msgid "Unexpected word '%s' on line %d"
+msgstr "Neatendita vorto '%s' en linio %d"
+
+#: common/flatpak-utils.c:2088
+#, c-format
+msgid "Invalid require-flatpak argument %s"
+msgstr "Nevalida postul-flatpak argumento %s"
+
+#: common/flatpak-utils.c:2098 common/flatpak-utils.c:2117
+#, c-format
+msgid "%s needs a later flatpak version (%s)"
+msgstr "%s bezonas pli postan flatpak-version (%s)"
+
+#: oci-authenticator/flatpak-oci-authenticator.c:291
+msgid "Not a oci remote, missing summary.xa.oci-repository"
+msgstr "Ne oci fora, mankas summary.xa.oci-repository"
+
+#: oci-authenticator/flatpak-oci-authenticator.c:477
+msgid "Not a OCI remote"
+msgstr "Ne OCI-forilo"
+
+#: oci-authenticator/flatpak-oci-authenticator.c:488
+msgid "Invalid token"
+msgstr "Nevalida gpg-ŝlosilo"
+
+#: portal/flatpak-portal.c:2373
+msgid "No portal support found"
+msgstr "Neniu resumo trovita"
+
+#: portal/flatpak-portal.c:2379
+msgid "Deny"
+msgstr "Nei"
+
+#: portal/flatpak-portal.c:2381
+msgid "Update"
+msgstr "ĝisdatigo"
+
+#: portal/flatpak-portal.c:2386
+#, c-format
+msgid "Update %s?"
+msgstr "Ĝisdatigi %s?"
+
+#: portal/flatpak-portal.c:2398
+msgid "The application wants to update itself."
+msgstr "La aplikaĵo volas ĝisdatigi sin."
+
+#: portal/flatpak-portal.c:2399
+msgid "Update access can be changed any time from the privacy settings."
+msgstr "Ĝisdatigita aliro povas esti ŝanĝita iam ajn de la privateca agordo."
+
+#: portal/flatpak-portal.c:2424
+msgid "Application update not allowed"
+msgstr "Ĝisdatigo de aplikaĵo ne estas permesita"
+
+#: portal/flatpak-portal.c:2582
+msgid "Self update not supported, new version requires new permissions"
+msgstr ""
+"Mem-ĝisdatigo ne estas subtenata, nova versio postulas novajn permesojn"
+
+#: portal/flatpak-portal.c:2765 portal/flatpak-portal.c:2783
+msgid "Update ended unexpectedly"
+msgstr "Ĝisdatigi subskribitan rultempon"
+
+#. SECURITY:
+#. - Normal users need admin authentication to install software
+#. system-wide.
+#. - Note that we install polkit rules that allow local users
+#. in the wheel group to install without authenticating.
+#: system-helper/org.freedesktop.Flatpak.policy.in:23
+msgid "Install signed application"
+msgstr "Instali subskribitan aplikaĵon"
+
+#: system-helper/org.freedesktop.Flatpak.policy.in:24
+#: system-helper/org.freedesktop.Flatpak.policy.in:42
+msgid "Authentication is required to install software"
+msgstr "Aŭtentikigo estas bezonata por instali programaron"
+
+#. SECURITY:
+#. - Normal users need admin authentication to install software
+#. system-wide.
+#. - Note that we install polkit rules that allow local users
+#. in the wheel group to install without authenticating.
+#: system-helper/org.freedesktop.Flatpak.policy.in:41
+msgid "Install signed runtime"
+msgstr "Instali subskribitan rultempon"
+
+#. SECURITY:
+#. - Normal users do not require admin authentication to update an
+#. app as the commit will be signed, and the action is required
+#. to update the system when unattended.
+#. - Changing this to anything other than 'yes' will break unattended
+#. updates.
+#: system-helper/org.freedesktop.Flatpak.policy.in:60
+msgid "Update signed application"
+msgstr "Ĝisdatigi subskribitan aplikaĵon"
+
+#: system-helper/org.freedesktop.Flatpak.policy.in:61
+#: system-helper/org.freedesktop.Flatpak.policy.in:80
+msgid "Authentication is required to update software"
+msgstr "Aŭtentikigo estas necesa por ĝisdatigi programaron"
+
+#. SECURITY:
+#. - Normal users do not require admin authentication to update a
+#. runtime as the commit will be signed, and the action is required
+#. to update the system when unattended.
+#. - Changing this to anything other than 'yes' will break unattended
+#. updates.
+#: system-helper/org.freedesktop.Flatpak.policy.in:79
+msgid "Update signed runtime"
+msgstr "Ĝisdatigi subskribitan rultempon"
+
+#. SECURITY:
+#. - Normal users do not need authentication to update metadata
+#. from signed repositories.
+#: system-helper/org.freedesktop.Flatpak.policy.in:94
+msgid "Update remote metadata"
+msgstr "Ĝisdatigi forajn metadatumojn"
+
+#: system-helper/org.freedesktop.Flatpak.policy.in:95
+msgid "Authentication is required to update remote info"
+msgstr "Aŭtentikigo estas necesa por ĝisdatigi forajn informojn"
+
+#. SECURITY:
+#. - Normal users do not need authentication to modify the
+#. OSTree repository
+#. - Note that we install polkit rules that allow local users
+#. in the wheel group to modify repos without authenticating.
+#: system-helper/org.freedesktop.Flatpak.policy.in:111
+msgid "Update system repository"
+msgstr "Ĝisdatigi sisteman deponejon"
+
+#: system-helper/org.freedesktop.Flatpak.policy.in:112
+msgid "Authentication is required to modify a system repository"
+msgstr "Aŭtentikigo estas postulata por modifi sisteman deponejon"
+
+#. SECURITY:
+#. - Normal users need admin authentication to install software
+#. system-wide.
+#: system-helper/org.freedesktop.Flatpak.policy.in:126
+msgid "Install bundle"
+msgstr "Instali pakaĵon"
+
+#: system-helper/org.freedesktop.Flatpak.policy.in:127
+msgid "Authentication is required to install software from $(path)"
+msgstr "Aŭtentigo estas bezonata por instali programaron de $(pado)"
+
+#. SECURITY:
+#. - Normal users need admin authentication to uninstall software
+#. system-wide.
+#. - Note that we install polkit rules that allow local users
+#. in the wheel group to uninstall without authenticating.
+#: system-helper/org.freedesktop.Flatpak.policy.in:144
+msgid "Uninstall runtime"
+msgstr "Malinstali rultempon"
+
+#: system-helper/org.freedesktop.Flatpak.policy.in:145
+msgid "Authentication is required to uninstall software"
+msgstr "Aŭtentikigo estas necesa por malinstali programaron"
+
+#. SECURITY:
+#. - Normal users need admin authentication to uninstall software
+#. system-wide.
+#. - Note that we install polkit rules that allow local users
+#. in the wheel group to uninstall without authenticating.
+#: system-helper/org.freedesktop.Flatpak.policy.in:161
+msgid "Uninstall app"
+msgstr "Malinstali la apon"
+
+#: system-helper/org.freedesktop.Flatpak.policy.in:162
+msgid "Authentication is required to uninstall $(ref)"
+msgstr "Aŭtentigo estas bezonata por malinstali $(ref)"
+
+#. SECURITY:
+#. - Normal users need admin authentication to configure system-wide
+#. software repositories.
+#: system-helper/org.freedesktop.Flatpak.policy.in:177
+msgid "Configure Remote"
+msgstr "Agordi Remote"
+
+#: system-helper/org.freedesktop.Flatpak.policy.in:178
+msgid "Authentication is required to configure software repositories"
+msgstr "Aŭtentikigo estas postulata por agordi programarajn deponejojn"
+
+#. SECURITY:
+#. - Normal users need admin authentication to configure the system-wide
+#. Flatpak installation.
+#: system-helper/org.freedesktop.Flatpak.policy.in:192
+msgid "Configure"
+msgstr "Agordi"
+
+#: system-helper/org.freedesktop.Flatpak.policy.in:193
+msgid "Authentication is required to configure software installation"
+msgstr "Aŭtentikigo estas necesa por agordi programaran instaladon"
+
+#. SECURITY:
+#. - Normal users do not require admin authentication to update
+#. appstream data as it will be signed, and the action is required
+#. to update the system when unattended.
+#. - Changing this to anything other than 'yes' will break unattended
+#. updates.
+#: system-helper/org.freedesktop.Flatpak.policy.in:210
+msgid "Update appstream"
+msgstr "Ĝisdatigi appstream"
+
+#: system-helper/org.freedesktop.Flatpak.policy.in:211
+msgid "Authentication is required to update information about software"
+msgstr "Aŭtentikigo estas necesa por ĝisdatigi informojn pri programaro"
+
+#. SECURITY:
+#. - Normal users do not require admin authentication to update
+#. metadata as it will be signed, and the action is required
+#. to update the system when unattended.
+#. - Changing this to anything other than 'yes' will break unattended
+#. updates.
+#: system-helper/org.freedesktop.Flatpak.policy.in:228
+msgid "Update metadata"
+msgstr "Ĝisdatigi metadatenojn"
+
+#: system-helper/org.freedesktop.Flatpak.policy.in:229
+msgid "Authentication is required to update metadata"
+msgstr "Aŭtentikigo estas necesa por ĝisdatigi metadatenojn"
+
+#. SECURITY:
+#. - Authorisation to actually install software is controlled by
+#. org.freedesktop.Flatpak.app-install.
+#. - This action is checked after app-install, as it can only be done
+#. once the app’s data (including its content rating) has been
+#. downloaded.
+#. - This action is checked to see if the installation should be allowed
+#. based on whether the app being installed has content which doesn’t
+#. comply with the user’s parental controls policy (the content is
+#. ‘too extreme’).
+#. - It is checked only if an app has too extreme content for the user
+#. who is trying to install it (in which case, the app is ‘unsafe’).
+#. - Typically, normal users will need admin permission to install apps
+#. with extreme content; admins will be able to install it without
+#. additional checks.
+#. - In order to configure the policy so that admins can install safe and
+#. unsafe software anywhere without authorisation, and non-admins can
+#. install safe software in their user or system dirs without
+#. authorisation, but need authorisation to install unsafe software
+#. anywhere:
+#. * Unconditionally return `yes` from `app-install`.
+#. * Return `auth_admin` from `override-parental-controls` for users
+#. not in `@privileged_group@`, and `yes` for users in it.
+#. * Set the malcontent `is-{user,system}-installation-allowed`
+#. properties of all non-admins’ parental controls policies to true.
+#. - In order to configure the policy so that admins can install safe and
+#. unsafe software anywhere without authorisation, and non-admins can
+#. install safe software in their user dir without authorisation, but
+#. need authorisation to install safe software in the system dir or to
+#. install unsafe software anywhere:
+#. * Unconditionally return `yes` from `app-install`.
+#. * Return `auth_admin` from `override-parental-controls` for users
+#. not in `@privileged_group@`, and `yes` for users in it.
+#. * Set the malcontent `is-user-installation-allowed` property of all
+#. non-admins’ parental controls policies to true.
+#. * Set the malcontent `is-system-installation-allowed` property of
+#. all non-admins’ parental controls policies to false.
+#. - In order to configure the policy so that all users (including
+#. admins) can install safe software anywhere without authorisation,
+#. but need authorisation to install unsafe software anywhere (i.e.
+#. applying parental controls to admins too):
+#. * Unconditionally return `yes` from `app-install`.
+#. * Unconditionally return `auth_admin` from `override-parental-controls`.
+#. * Set the malcontent `is-user-installation-allowed` property of all
+#. users’ parental controls policies to true.
+#. * Set the malcontent `is-system-installation-allowed` property of
+#. all users’ parental controls policies to true.
+#: system-helper/org.freedesktop.Flatpak.policy.in:287
+msgid "Override parental controls for installs"
+msgstr "Anstataŭigi gepatrajn kontrolojn por instaloj"
+
+#: system-helper/org.freedesktop.Flatpak.policy.in:288
+msgid ""
+"Authentication is required to install software which is restricted by your "
+"parental controls policy"
+msgstr "Aŭtentigo estas bezonata por instali programaron de $(pado)"
+
+#. SECURITY:
+#. - This is like org.freedesktop.Flatpak.override-parental-controls, but
+#. it’s queried for app updates, whereas the former is queried for app
+#. installs.
+#. - As with the above action, this one is only queried if
+#. org.freedesktop.Flatpak.app-update has allowed the app update, and
+#. only if the app being updated has too extreme content for the user
+#. who is trying to update it.
+#. - The default policy for this is to *allow* updates to ‘too extreme’
+#. apps by default, on the basis that having an out-of-date (i.e.
+#. insecure or unsupported) app is a worse outcome than automatically
+#. installing an update which has radically different content from the
+#. version of the app which the parent originally vetted and installed.
+#: system-helper/org.freedesktop.Flatpak.policy.in:313
+msgid "Override parental controls for updates"
+msgstr "Anstataŭigi gepatrajn kontrolojn por ĝisdatigoj"
+
+#: system-helper/org.freedesktop.Flatpak.policy.in:314
+msgid ""
+"Authentication is required to update software which is restricted by your "
+"parental controls policy"
+msgstr "Aŭtentigo estas bezonata por instali programaron de $(pado)"
