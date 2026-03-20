@@ -3357,6 +3357,30 @@ flatpak_dir_get_changed_path (FlatpakDir *self)
   return g_file_get_child (self->basedir, ".changed");
 }
 
+guint64
+flatpak_dir_get_remotes_config_timestamp (FlatpakDir *self)
+{
+  GFile *repo_path;
+  g_autoptr(GFile) config_file = NULL;
+  g_autoptr(GFileInfo) info = NULL;
+
+  if (self->repo == NULL)
+    return 0;
+
+  repo_path = ostree_repo_get_path (self->repo);
+  config_file = g_file_get_child (repo_path, "config");
+
+  info = g_file_query_info (config_file,
+                            G_FILE_ATTRIBUTE_TIME_MODIFIED,
+                            G_FILE_QUERY_INFO_NONE,
+                            NULL,
+                            NULL);
+  if (info == NULL)
+    return 0;
+
+  return g_file_info_get_attribute_uint64 (info, G_FILE_ATTRIBUTE_TIME_MODIFIED);
+}
+
 const char *
 flatpak_dir_get_id (FlatpakDir *self)
 {

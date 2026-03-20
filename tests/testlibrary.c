@@ -547,6 +547,52 @@ test_list_remotes (void)
 }
 
 static void
+test_remotes_config_timestamp (void)
+{
+  g_autoptr(FlatpakInstallation) inst = NULL;
+  g_autoptr(GError) error = NULL;
+  g_autoptr(FlatpakRemote) remote = NULL;
+  guint64 timestamp1, timestamp2, timestamp3;
+
+  inst = flatpak_installation_new_user (NULL, &error);
+  g_assert_no_error (error);
+
+  /* Get initial timestamp */
+  timestamp1 = flatpak_installation_get_remotes_config_timestamp (inst);
+  g_assert_cmpuint (timestamp1, >, 0);
+
+  /* Wait at least 1 second so the timestamp will change */
+  sleep (1);
+
+  /* Timestamp should be stable when nothing changes */
+  timestamp2 = flatpak_installation_get_remotes_config_timestamp (inst);
+  g_assert_cmpuint (timestamp2, ==, timestamp1);
+
+  /* Wait at least 1 second so the timestamp will change */
+  sleep (1);
+
+  /* Modifying a remote should update the timestamp */
+  remote = flatpak_installation_get_remote_by_name (inst, repo_name, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (remote);
+
+  flatpak_remote_set_disabled (remote, TRUE);
+  flatpak_installation_modify_remote (inst, remote, NULL, &error);
+  g_assert_no_error (error);
+
+  /* Need to drop caches to see the new timestamp */
+  flatpak_installation_drop_caches (inst, NULL, NULL);
+
+  timestamp3 = flatpak_installation_get_remotes_config_timestamp (inst);
+  g_assert_cmpuint (timestamp3, >, timestamp1);
+
+  /* Restore the remote state */
+  flatpak_remote_set_disabled (remote, FALSE);
+  flatpak_installation_modify_remote (inst, remote, NULL, &error);
+  g_assert_no_error (error);
+}
+
+static void
 test_remote_by_name (void)
 {
   g_autoptr(FlatpakInstallation) inst = NULL;
@@ -5088,6 +5134,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/library/arches", test_arches);
   g_test_add_func ("/library/ref", test_ref);
   g_test_add_func ("/library/list-remotes", test_list_remotes);
+  g_test_add_func ("/library/remotes-config-timestamp", test_remotes_config_timestamp);
   g_test_add_func ("/library/remote-by-name", test_remote_by_name);
   g_test_add_func ("/library/remote", test_remote);
   g_test_add_func ("/library/remote-new", test_remote_new);
