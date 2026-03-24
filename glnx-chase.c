@@ -26,8 +26,8 @@
 
 #define AUTOFS_SUPER_MAGIC 0x0187 /* man fstatfs */
 
-#define GLNX_CHASE_DEBUG_NO_OPENAT2 (1 << 31)
-#define GLNX_CHASE_DEBUG_NO_OPEN_TREE (1 << 30)
+#define GLNX_CHASE_DEBUG_NO_OPENAT2 (1U << 31)
+#define GLNX_CHASE_DEBUG_NO_OPEN_TREE (1U << 30)
 
 #define GLNX_CHASE_ALL_DEBUG_FLAGS \
   (GLNX_CHASE_DEBUG_NO_OPENAT2 | \
@@ -47,6 +47,16 @@
   (GLNX_CHASE_ALL_DEBUG_FLAGS | GLNX_CHASE_ALL_REGULAR_FLAGS)
 
 typedef GQueue GlnxStatxQueue;
+
+static void
+glnx_statx_queue_push (GlnxStatxQueue          *queue,
+                       const struct glnx_statx *st)
+{
+  struct glnx_statx *copy;
+
+  copy = g_memdup2 (st, sizeof (*st));
+  g_queue_push_tail (queue, copy);
+}
 
 static void
 glnx_statx_queue_free_element (gpointer element,
@@ -403,7 +413,7 @@ chase_manual (int              dirfd,
   if (!glnx_chase_statx (root_fd, no_automount, &st, error))
     return -1;
 
-  g_queue_push_tail (&path_st, g_memdup2 (&st, sizeof (st)));
+  glnx_statx_queue_push (&path_st, &st);
 
   /* Let's start walking the path! */
   buffer = g_strdup (path);
@@ -530,7 +540,7 @@ chase_manual (int              dirfd,
 
               glnx_statx_queue_free (&path_st);
               g_queue_init (&path_st);
-              g_queue_push_tail (&path_st, g_memdup2 (&st, sizeof (st)));
+              glnx_statx_queue_push (&path_st, &st);
             }
 
           continue;
@@ -541,9 +551,10 @@ chase_manual (int              dirfd,
        * we saw before (if we saw it before). */
       if (g_strcmp0 (segment, "..") == 0)
         {
+          g_autofree struct glnx_statx *old_tail = NULL;
           struct glnx_statx *lower_st;
 
-          g_queue_pop_tail (&path_st);
+          old_tail = g_queue_pop_tail (&path_st);
 
           lower_st = g_queue_peek_tail (&path_st);
           if (lower_st &&
@@ -556,7 +567,7 @@ chase_manual (int              dirfd,
         }
       else
         {
-          g_queue_push_tail (&path_st, g_memdup2 (&st, sizeof (st)));
+          glnx_statx_queue_push (&path_st, &st);
         }
 
       /* There is still another path component, but the next fd is not a
