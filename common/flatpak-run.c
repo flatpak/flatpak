@@ -474,9 +474,7 @@ flatpak_run_add_environment_args (FlatpakBwrap           *bwrap,
         {
           g_info ("Allowing ntsync access");
           if (g_file_test ("/dev/ntsync", G_FILE_TEST_EXISTS))
-            {
-              flatpak_bwrap_add_args (bwrap, "--dev-bind", "/dev/ntsync", "/dev/ntsync", NULL);
-            }
+            flatpak_bwrap_add_args (bwrap, "--dev-bind", "/dev/ntsync", "/dev/ntsync", NULL);
         }
 
       if (devices & FLATPAK_CONTEXT_DEVICE_SHM)
