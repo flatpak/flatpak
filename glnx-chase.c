@@ -541,9 +541,10 @@ chase_manual (int              dirfd,
        * we saw before (if we saw it before). */
       if (g_strcmp0 (segment, "..") == 0)
         {
+          g_autofree struct glnx_statx *old_tail = NULL;
           struct glnx_statx *lower_st;
 
-          g_queue_pop_tail (&path_st);
+          old_tail = g_queue_pop_tail (&path_st);
 
           lower_st = g_queue_peek_tail (&path_st);
           if (lower_st &&
