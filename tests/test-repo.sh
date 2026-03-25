@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..45"
+echo "1..46"
 
 #Regular repo
 setup_repo
@@ -133,6 +133,19 @@ if ${FLATPAK} ${U} install -y test-repo org.test.Platform &> install-error-log; 
     assert_not_reached "Should not be able to install again from different remote without reinstall"
 fi
 ok "failed to install again from different remote"
+
+port=$(cat httpd-port)
+${FLATPAK} remote-add ${U} --gpg-import=/dev/null test-broken-repo "http://127.0.0.1:${port}/test-broken-repo" >&2 || true
+
+if ostree config --repo=$FL_DIR/repo get --group 'remote "test-broken-repo"' url > /dev/null 2>&1; then
+    if [ ! -f "$FL_DIR/repo/test-broken-repo.trustedkeys.gpg" ]; then
+        ${FLATPAK} ${U} remote-delete --force test-broken-repo >&2 || true
+        assert_not_reached "Bug #6449: Remote added but GPG keys missing"
+    fi
+    ${FLATPAK} ${U} remote-delete --force test-broken-repo >&2 || true
+fi
+
+ok "fail with broken repo"
 
 ${FLATPAK} ${U} install -y --reinstall test-repo org.test.Platform >&2
 ok "re-install"
