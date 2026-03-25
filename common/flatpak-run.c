@@ -411,6 +411,8 @@ flatpak_run_add_environment_args (FlatpakBwrap           *bwrap,
                               "--dev", "/dev",
                               NULL);
 
+      flatpak_bwrap_add_args (bwrap, "--dev-bind-try", "/dev/ntsync", "/dev/ntsync", NULL);
+
       if (devices & FLATPAK_CONTEXT_DEVICE_USB)
         {
           g_info ("Allowing USB device access.");
