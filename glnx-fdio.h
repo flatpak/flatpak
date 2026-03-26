@@ -419,4 +419,11 @@ int glnx_fd_reopen (int      fd,
                     int      flags,
                     GError **error);
 
+gboolean glnx_name_to_handle_at (int                  dfd,
+                                 const char          *path,
+                                 int                  flags,
+                                 struct file_handle **handle_out,
+                                 uint64_t            *mnt_id_out,
+                                 GError             **error);
+
 G_END_DECLS

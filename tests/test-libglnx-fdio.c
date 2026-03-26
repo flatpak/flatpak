@@ -287,6 +287,111 @@ test_filecopy_procfs (void)
 }
 
 static void
+test_name_to_handle_at (void)
+{
+  g_autoptr(GError) error = NULL;
+  g_autofree struct file_handle *handle1 = NULL;
+  g_autofree struct file_handle *handle2 = NULL;
+  g_autofree struct file_handle *handle3 = NULL;
+  uint64_t mnt_id1 = 0;
+  uint64_t mnt_id2 = 0;
+  uint64_t mnt_id3 = 0;
+  glnx_autofd int dfd = -1;
+  gboolean ok;
+
+  /* Create a test directory and file */
+  ok = glnx_shutil_mkdir_p_at_open (AT_FDCWD, "handle_test", 0755, &dfd, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (ok);
+
+  ok = glnx_file_replace_contents_at (dfd, "testfile",
+                                      (const guint8 *)"test", 4,
+                                      GLNX_FILE_REPLACE_NODATASYNC, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (ok);
+
+  ok = glnx_name_to_handle_at (dfd, "testfile", 0, &handle1, &mnt_id1, &error);
+
+  /* Skip the test if the syscall is not supported */
+  if (!ok && g_error_matches (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED))
+    return g_test_skip ("name_to_handle_at not supported");
+
+  /* Test 1: Get handle for a regular file */
+  g_assert_no_error (error);
+  g_assert_true (ok);
+  g_assert_nonnull (handle1);
+  g_assert_cmpuint (mnt_id1, >, 0);
+
+  /* Test 2: Get handle for the same file again - should have same handle and mount ID */
+  ok = glnx_name_to_handle_at (dfd, "testfile", 0, &handle2, &mnt_id2, &error);
+  g_assert_no_error (error);
+  g_assert_true (ok);
+  g_assert_nonnull (handle2);
+  g_assert_cmpuint (mnt_id1, ==, mnt_id2);
+  g_assert_cmpuint (handle1->handle_bytes, ==, handle2->handle_bytes);
+  g_assert_cmpuint (handle1->handle_type, ==, handle2->handle_type);
+  g_assert_cmpmem (handle1->f_handle, handle1->handle_bytes,
+                   handle2->f_handle, handle2->handle_bytes);
+
+  g_clear_pointer (&handle1, g_free);
+  g_clear_pointer (&handle2, g_free);
+
+  /* Test 3: Get handle for a directory */
+  ok = glnx_name_to_handle_at (AT_FDCWD, "handle_test", 0, &handle1, &mnt_id1, &error);
+  g_assert_no_error (error);
+  g_assert_true (ok);
+  g_assert_nonnull (handle1);
+  g_assert_cmpuint (mnt_id1, >, 0);
+
+  g_clear_pointer (&handle1, g_free);
+
+  /* Test 4: Test with AT_EMPTY_PATH */
+  ok = glnx_name_to_handle_at (dfd, "", AT_EMPTY_PATH, &handle1, &mnt_id1, &error);
+  g_assert_no_error (error);
+  g_assert_true (ok);
+  g_assert_nonnull (handle1);
+  g_assert_cmpuint (mnt_id1, >, 0);
+
+  g_clear_pointer (&handle1, g_free);
+
+  /* Test 5: Create symlink and test AT_SYMLINK_FOLLOW */
+  g_assert_no_errno (symlinkat ("testfile", dfd, "testlink"));
+
+  ok = glnx_name_to_handle_at (dfd, "testlink", 0, &handle1, &mnt_id1, &error);
+  g_assert_no_error (error);
+  g_assert_true (ok);
+  g_assert_nonnull (handle1);
+
+  ok = glnx_name_to_handle_at (dfd, "testlink", AT_SYMLINK_FOLLOW, &handle2, &mnt_id2, &error);
+  g_assert_no_error (error);
+  g_assert_true (ok);
+  g_assert_nonnull (handle2);
+
+  /* files are on the same mount, so we should get the same kind of handle */
+  g_assert_true (handle1->handle_bytes == handle2->handle_bytes);
+  g_assert_true (handle1->handle_type == handle2->handle_type);
+  /* handle1 != handle2 */
+  g_assert_false (memcmp (handle1->f_handle, handle2->f_handle, handle1->handle_bytes) == 0);
+
+  /* Following the symlink should give us the same handle as the target */
+  ok = glnx_name_to_handle_at (dfd, "testfile", 0, &handle3, &mnt_id3, &error);
+  g_assert_no_error (error);
+  g_assert_true (ok);
+  g_assert_cmpmem (handle2->f_handle, handle2->handle_bytes,
+                   handle3->f_handle, handle3->handle_bytes);
+
+  g_clear_pointer (&handle1, g_free);
+  g_clear_pointer (&handle2, g_free);
+  g_clear_pointer (&handle3, g_free);
+
+  /* Test 6: Error case - non-existent file */
+  ok = glnx_name_to_handle_at (dfd, "nosuchfile", 0, &handle1, &mnt_id1, &error);
+  g_assert_false (ok);
+  g_assert_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND);
+  g_clear_error (&error);
+}
+
+static void
 test_fd_reopen (void)
 {
   g_autoptr(GError) error = NULL;
@@ -452,6 +557,7 @@ int main (int argc, char **argv)
   g_test_add_func ("/renameat2-noreplace", test_renameat2_noreplace);
   g_test_add_func ("/renameat2-exchange", test_renameat2_exchange);
   g_test_add_func ("/fstat", test_fstatat);
+  g_test_add_func ("/name-to-handle-at", test_name_to_handle_at);
   g_test_add_func ("/fd-reopen", test_fd_reopen);
 
   ret = g_test_run();

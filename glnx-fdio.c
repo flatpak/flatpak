@@ -33,6 +33,7 @@
 #include <sys/sendfile.h>
 #include <errno.h>
 
+#include <glnx-chase.h>
 #include <glnx-fdio.h>
 #include <glnx-dirfd.h>
 #include <glnx-errors.h>
@@ -41,6 +42,18 @@
 #include <glnx-backports.h>
 #include <glnx-local-alloc.h>
 #include <glnx-missing.h>
+
+/* From systemd mountpoint-util.c at d2b27a7:
+ * This is the original MAX_HANDLE_SZ definition from the kernel, when the API
+ * was introduced. We use that in place of any more currently defined value to
+ * future-proof things: if the size is increased in the API headers, and our code
+ * is recompiled then it would cease working on old kernels, as those refuse any
+ * sizes larger than this value with EINVAL right-away. Hence, let's disconnect
+ * ourselves from any such API changes, and stick to the original definition
+ * from when it was introduced. We use it as a start value only anyway (see
+ * below), and hence should be able to deal with large file handles anyway.
+ */
+#define ORIGINAL_MAX_HANDLE_SZ 128
 
 /* The standardized version of BTRFS_IOC_CLONE */
 #ifndef FICLONE
@@ -1278,4 +1291,170 @@ glnx_fd_reopen (int      fd,
     return glnx_fd_throw_errno (error);
 
   return g_steal_fd (&new_fd);
+}
+
+static gboolean
+glnx_name_to_handle_at_internal (int                  fd,
+                                 int                  flags,
+                                 struct file_handle **handle_out,
+                                 uint64_t            *mnt_id_out,
+                                 GError             **error)
+{
+  size_t handle_bytes = ORIGINAL_MAX_HANDLE_SZ;
+
+  for (;;)
+    {
+      g_autofree struct file_handle *handle = NULL;
+      uint64_t mnt_id_unique = 0;
+      unsigned int mnt_id = 0;
+      int *mnt_id_ptr;
+      int r;
+
+      /* The kernel ABI involves an int * for backward compatibility,
+       * but with AT_HANDLE_MNT_ID_UNIQUE it's really expecting a
+       * uint64_t and will write a full 64-bit ID into it. */
+      if ((flags & AT_HANDLE_MNT_ID_UNIQUE))
+        mnt_id_ptr = (int *) &mnt_id_unique;
+      else
+        mnt_id_ptr = (int *) &mnt_id;
+
+      handle = g_malloc0 (offsetof (struct file_handle, f_handle) + handle_bytes);
+      handle->handle_bytes = handle_bytes;
+      r = name_to_handle_at (fd, "",
+                             handle,
+                             mnt_id_ptr,
+                             flags | AT_EMPTY_PATH);
+
+      if (r < 0)
+        {
+          if (errno != EOVERFLOW)
+            return glnx_throw_errno (error);
+
+          if (handle->handle_bytes <= handle_bytes)
+            return glnx_throw (error, "No file handle available");
+        }
+
+      if (r >= 0)
+        {
+          if (handle_out)
+            *handle_out = g_steal_pointer (&handle);
+          if (mnt_id_out)
+            *mnt_id_out = (flags & AT_HANDLE_MNT_ID_UNIQUE) ? mnt_id_unique : mnt_id;
+          return TRUE;
+        }
+
+      handle_bytes = handle->handle_bytes;
+    }
+}
+
+/**
+ * glnx_name_to_handle_at:
+ * @dfd: Directory FD to stat beneath
+ * @path: Path to get the handle to beneath @dfd
+ * @flags: Flags
+ * @handle_out: (out) (transfer full): Return location for the `struct file_handle`
+ * @mnt_id_out: (out caller-allocates): Return location for the mount id
+ * @error: Return location for a #GError, or %NULL
+ *
+ * Wrapper around name_to_handle_at() which adds #GError support,  takes care of
+ * allocating the right size, and falls back to glnx_statx() for
+ * AT_HANDLE_MNT_ID_UNIQUE.
+ *
+ * The @mnt_id_out is pointer to a 64 bit location, but can contain either a
+ * traditional 32 bit mount id or a 64 bit unique mount id if
+ * AT_HANDLE_MNT_ID_UNIQUE is set.
+ *
+ * The @flags must be a combination of AT_SYMLINK_FOLLOW, AT_EMPTY_PATH,
+ * AT_HANDLE_FID, AT_HANDLE_MNT_ID_UNIQUE.
+ *
+ * Returns: %TRUE on success, or %FALSE setting both @error and `errno`
+ * Since: UNRELEASED
+ */
+gboolean
+glnx_name_to_handle_at (int                  dfd,
+                        const char          *path,
+                        int                  flags,
+                        struct file_handle **handle_out,
+                        uint64_t            *mnt_id_out,
+                        GError             **error)
+{
+  int fd = -1;
+  glnx_autofd int fd_owned = -1;
+  uint64_t mnt_id;
+  g_autoptr(GError) local_error = NULL;
+
+  g_return_val_if_fail (dfd >= 0 || dfd == AT_FDCWD, FALSE);
+  g_return_val_if_fail (path != NULL, FALSE);
+  g_return_val_if_fail ((flags & ~(AT_SYMLINK_FOLLOW |
+                                   AT_EMPTY_PATH |
+                                   AT_HANDLE_FID |
+                                   AT_HANDLE_MNT_ID_UNIQUE)) == 0, FALSE);
+
+  if ((flags & AT_EMPTY_PATH) && path[0] == '\0')
+    {
+      fd = dfd;
+    }
+  else
+    {
+      int chase_flags = GLNX_CHASE_NO_AUTOMOUNT;
+
+      if ((flags & AT_SYMLINK_FOLLOW) == 0)
+        chase_flags |= GLNX_CHASE_NOFOLLOW;
+
+      fd = fd_owned = glnx_chaseat (dfd, path, chase_flags, error);
+      if (fd < 0)
+        return FALSE;
+    }
+
+  if (glnx_name_to_handle_at_internal (fd,
+                                       flags,
+                                       handle_out, mnt_id_out,
+                                       &local_error))
+    return TRUE;
+
+  if (errno != EINVAL || (flags & AT_HANDLE_MNT_ID_UNIQUE) == 0)
+    {
+      g_propagate_prefixed_error (error, g_steal_pointer (&local_error),
+                                  "name_to_handle_at: ");
+      return FALSE;
+    }
+  g_clear_error (&local_error);
+
+  {
+    struct glnx_statx stx;
+    int statx_flags = AT_EMPTY_PATH;
+
+    if ((flags & AT_SYMLINK_FOLLOW) == 0)
+      statx_flags |= AT_SYMLINK_NOFOLLOW;
+
+    if (!glnx_statx (fd, "", statx_flags, GLNX_STATX_MNT_ID_UNIQUE, &stx, error))
+      {
+        g_prefix_error (error, "statx: ");
+        return FALSE;
+      }
+
+    if ((stx.stx_mask & GLNX_STATX_MNT_ID_UNIQUE) == 0)
+      {
+        errno = ENODATA;
+        return glnx_throw_errno_prefix (error,
+                                        "unique mount ID not in statx result");
+      }
+
+    mnt_id = stx.stx_mnt_id;
+  }
+
+  if (!glnx_name_to_handle_at_internal (fd,
+                                        flags & (~AT_HANDLE_MNT_ID_UNIQUE),
+                                        handle_out, NULL,
+                                        &local_error))
+    {
+      g_propagate_prefixed_error (error, g_steal_pointer (&local_error),
+                                  "name_to_handle_at: ");
+      return FALSE;
+    }
+
+  if (mnt_id_out)
+    *mnt_id_out = mnt_id;
+
+  return TRUE;
 }

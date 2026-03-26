@@ -589,3 +589,102 @@ inline_openat2 (int         dfd,
 #define openat2 inline_openat2
 #define HAVE_OPENAT2
 #endif
+
+#ifndef __IGNORE_name_to_handle_at
+#  if defined(__aarch64__)
+#    define systemd_NR_name_to_handle_at 264
+#  elif defined(__alpha__)
+#    define systemd_NR_name_to_handle_at 497
+#  elif defined(__arc__) || defined(__tilegx__)
+#    define systemd_NR_name_to_handle_at 264
+#  elif defined(__arm__)
+#    define systemd_NR_name_to_handle_at 370
+#  elif defined(__i386__)
+#    define systemd_NR_name_to_handle_at 341
+#  elif defined(__ia64__)
+#    define systemd_NR_name_to_handle_at 1326
+#  elif defined(__loongarch_lp64)
+#    define systemd_NR_name_to_handle_at 264
+#  elif defined(__m68k__)
+#    define systemd_NR_name_to_handle_at 340
+#  elif defined(_MIPS_SIM)
+#    if _MIPS_SIM == _MIPS_SIM_ABI32
+#      define systemd_NR_name_to_handle_at 4339
+#    elif _MIPS_SIM == _MIPS_SIM_NABI32
+#      define systemd_NR_name_to_handle_at 6303
+#    elif _MIPS_SIM == _MIPS_SIM_ABI64
+#      define systemd_NR_name_to_handle_at 5298
+#    else
+#      error "Unknown MIPS ABI"
+#    endif
+#  elif defined(__hppa__)
+#    define systemd_NR_name_to_handle_at 325
+#  elif defined(__powerpc__)
+#    define systemd_NR_name_to_handle_at 345
+#  elif defined(__riscv)
+#    if __riscv_xlen == 32
+#      define systemd_NR_name_to_handle_at 264
+#    elif __riscv_xlen == 64
+#      define systemd_NR_name_to_handle_at 264
+#    else
+#      error "Unknown RISC-V ABI"
+#    endif
+#  elif defined(__s390__)
+#    define systemd_NR_name_to_handle_at 335
+#  elif defined(__sparc__)
+#    define systemd_NR_name_to_handle_at 332
+#  elif defined(__x86_64__)
+#    if defined(__ILP32__)
+#      define systemd_NR_name_to_handle_at (303 | /* __X32_SYSCALL_BIT */ 0x40000000)
+#    else
+#      define systemd_NR_name_to_handle_at 303
+#    endif
+#  elif !defined(missing_arch_template)
+#    warning "name_to_handle_at() syscall number is unknown for your architecture"
+#  endif
+
+/* may be an (invalid) negative number due to libseccomp, see PR 13319 */
+#  if defined __NR_name_to_handle_at && __NR_name_to_handle_at >= 0
+#    if defined systemd_NR_name_to_handle_at
+G_STATIC_ASSERT (__NR_name_to_handle_at == systemd_NR_name_to_handle_at);
+#    endif
+#  else
+#    if defined __NR_name_to_handle_at
+#      undef __NR_name_to_handle_at
+#    endif
+#    if defined systemd_NR_name_to_handle_at && systemd_NR_name_to_handle_at >= 0
+#      define __NR_name_to_handle_at systemd_NR_name_to_handle_at
+#    endif
+#  endif
+#endif
+
+#ifndef AT_HANDLE_FID
+#define AT_HANDLE_FID 0x200
+#endif
+
+#ifndef AT_HANDLE_MNT_ID_UNIQUE
+#define AT_HANDLE_MNT_ID_UNIQUE 0x001
+#endif
+
+#ifndef AT_HANDLE_CONNECTABLE
+#define AT_HANDLE_CONNECTABLE 0x002
+#endif
+
+#if !HAVE_DECL_NAME_TO_HANDLE_AT && defined(__NR_name_to_handle_at)
+struct file_handle {
+        unsigned int handle_bytes;
+        int handle_type;
+        unsigned char f_handle[0];
+};
+
+static inline int
+name_to_handle_at (int                 fd,
+                   const char         *name,
+                   struct file_handle *handle,
+                   int                *mnt_id,
+                   int                 flags)
+{
+  return syscall(__NR_name_to_handle_at, fd, name, handle, mnt_id, flags);
+}
+
+#endif
