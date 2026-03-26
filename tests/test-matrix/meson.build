@@ -40,6 +40,7 @@ wrapped_tests += {'name' : 'test-history.sh', 'script' : 'test-history.sh'}
 wrapped_tests += {'name' : 'test-default-remotes.sh', 'script' : 'test-default-remotes.sh'}
 wrapped_tests += {'name' : 'test-metadata-validation.sh', 'script' : 'test-metadata-validation.sh'}
 wrapped_tests += {'name' : 'test-extensions.sh', 'script' : 'test-extensions.sh'}
+wrapped_tests += {'name' : 'test-extension-branch-follow.sh', 'script' : 'test-extension-branch-follow.sh'}
 wrapped_tests += {'name' : 'test-oci.sh', 'script' : 'test-oci.sh'}
 wrapped_tests += {'name' : 'test-override.sh', 'script' : 'test-override.sh'}
 wrapped_tests += {'name' : 'test-auth.sh', 'script' : 'test-auth.sh'}
