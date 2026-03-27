@@ -236,6 +236,7 @@ FLATPAK_EXTERN gboolean             flatpak_installation_launch_full (FlatpakIns
 FLATPAK_EXTERN GFileMonitor        *flatpak_installation_create_monitor (FlatpakInstallation *self,
                                                                          GCancellable        *cancellable,
                                                                          GError             **error);
+FLATPAK_EXTERN guint64              flatpak_installation_get_age (FlatpakInstallation *self);
 FLATPAK_EXTERN GPtrArray           *flatpak_installation_list_installed_refs (FlatpakInstallation *self,
                                                                               GCancellable        *cancellable,
                                                                               GError             **error);
@@ -280,7 +281,6 @@ FLATPAK_EXTERN GPtrArray           *flatpak_installation_list_remotes_by_type (F
                                                                                gsize                   num_types,
                                                                                GCancellable           *cancellable,
                                                                                GError                **error);
-FLATPAK_EXTERN guint64              flatpak_installation_get_remotes_config_timestamp (FlatpakInstallation *self);
 FLATPAK_EXTERN FlatpakRemote        *flatpak_installation_get_remote_by_name (FlatpakInstallation *self,
                                                                               const gchar         *name,
                                                                               GCancellable        *cancellable,

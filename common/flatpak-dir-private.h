@@ -454,7 +454,6 @@ void                  flatpak_dir_set_no_interaction                        (Fla
 gboolean              flatpak_dir_get_no_interaction                        (FlatpakDir                    *self);
 GFile *               flatpak_dir_get_path                                  (FlatpakDir                    *self);
 GFile *               flatpak_dir_get_changed_path                          (FlatpakDir                    *self);
-guint64               flatpak_dir_get_remotes_config_timestamp              (FlatpakDir                    *self);
 const char *          flatpak_dir_get_id                                    (FlatpakDir                    *self);
 char       *          flatpak_dir_get_display_name                          (FlatpakDir                    *self);
 char *                flatpak_dir_get_name                                  (FlatpakDir                    *self);
