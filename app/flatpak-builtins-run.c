@@ -62,6 +62,7 @@ static int opt_instance_id_fd = -1;
 static char *opt_app_path;
 static char *opt_usr_path;
 static gboolean opt_clear_env;
+static gboolean opt_no_scope;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to use"), N_("ARCH") },
@@ -91,6 +92,7 @@ static GOptionEntry options[] = {
   { "app-path", 0, 0, G_OPTION_ARG_FILENAME, &opt_app_path, N_("Use PATH instead of the app's /app"), N_("PATH") },
   { "usr-path", 0, 0, G_OPTION_ARG_FILENAME, &opt_usr_path, N_("Use PATH instead of the runtime's /usr"), N_("PATH") },
   { "clear-env", 0, 0, G_OPTION_ARG_NONE, &opt_clear_env, N_("Clear all outside environment variables"), NULL },
+  { "no-scope", 0, 0, G_OPTION_ARG_NONE, &opt_no_scope, N_("Don't run inside a transient systemd scope"), NULL },
   { NULL }
 };
 
@@ -312,6 +314,8 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
     flags |= FLATPAK_RUN_FLAG_NO_SESSION_BUS_PROXY;
   if (!opt_clear_env)
     flags |= FLATPAK_RUN_FLAG_CLEAR_ENV;
+  if (opt_no_scope)
+    flags |= FLATPAK_RUN_FLAG_NO_SCOPE;
 
   if (!flatpak_run_app (app_deploy ? app_ref : runtime_ref,
                         app_deploy,

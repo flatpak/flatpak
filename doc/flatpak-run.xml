@@ -938,6 +938,14 @@ key=v1;v2;
                 </para></listitem>
             </varlistentry>
 
+            <varlistentry>
+                <term><option>--no-scope</option></term>
+
+                <listitem><para>
+                    Don't run inside a transient systemd scope
+                </para></listitem>
+            </varlistentry>
+
         </variablelist>
 
     </refsect1>
