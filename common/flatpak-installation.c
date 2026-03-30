@@ -2674,27 +2674,25 @@ flatpak_installation_create_monitor (FlatpakInstallation *self,
 }
 
 /**
- * flatpak_installation_get_age:
+ * flatpak_installation_get_timestamp:
  * @self: a #FlatpakInstallation
  *
- * Gets the age of the installation, based on the file monitored by
+ * Gets the modification time of the installation, based on the file monitored by
  * flatpak_installation_create_monitor(). This can be used to detect when
- * applications or runtimes have been installed, uninstalled, or updated, or
- * when remotes have been added, removed, or modified, to aid cache invalidation.
+ * applications or runtimes have been installed, uninstalled, or updated, or when
+ * remotes have been added, removed, or modified, to aid cache invalidation.
  *
- * Returns: the age (in seconds since the last modification) of the installation,
- *   or %G_MAXUINT64 if unavailable
+ * Returns: the modification time (seconds since the Unix epoch) of the
+ *   installation configuration, or %G_MAXUINT64 if unavailable
  *
  * Since: 1.18.0
  */
 guint64
-flatpak_installation_get_age (FlatpakInstallation *self)
+flatpak_installation_get_timestamp (FlatpakInstallation *self)
 {
   g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(GFile) changed_file = NULL;
   g_autoptr(GFileInfo) info = NULL;
-  guint64 now;
-  guint64 mtime;
 
   dir = flatpak_installation_get_dir_maybe_no_repo (self);
   changed_file = flatpak_dir_get_changed_path (dir);
@@ -2707,12 +2705,7 @@ flatpak_installation_get_age (FlatpakInstallation *self)
   if (info == NULL)
     return G_MAXUINT64;
 
-  mtime = g_file_info_get_attribute_uint64 (info, G_FILE_ATTRIBUTE_TIME_MODIFIED);
-  now = (guint64) g_get_real_time () / G_USEC_PER_SEC;
-  if (mtime > now)
-    return G_MAXUINT64;
-
-  return (guint64) (now - mtime);
+  return g_file_info_get_attribute_uint64 (info, G_FILE_ATTRIBUTE_TIME_MODIFIED);
 }
 
 

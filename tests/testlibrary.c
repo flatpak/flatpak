@@ -547,28 +547,28 @@ test_list_remotes (void)
 }
 
 static void
-test_age (void)
+test_timestamp (void)
 {
   g_autoptr(FlatpakInstallation) inst = NULL;
   g_autoptr(GError) error = NULL;
   g_autoptr(FlatpakRemote) remote = NULL;
-  guint64 age1, age2, age3;
+  guint64 mtime1, mtime2, mtime3;
 
   inst = flatpak_installation_new_user (NULL, &error);
   g_assert_no_error (error);
 
-  /* Get initial age */
-  age1 = flatpak_installation_get_age (inst);
-  g_assert_cmpuint (age1, <, G_MAXUINT64);
+  /* Get initial modification time */
+  mtime1 = flatpak_installation_get_timestamp (inst);
+  g_assert_cmpuint (mtime1, <, G_MAXUINT64);
 
-  /* Wait at least 2 seconds so the age will increase */
-  sleep (2);
+  /* Wait at least 1 second */
+  sleep (1);
 
-  /* Age should increase when nothing changes */
-  age2 = flatpak_installation_get_age (inst);
-  g_assert_cmpuint (age2, >, age1);
+  /* Modification time should stay the same when nothing changes */
+  mtime2 = flatpak_installation_get_timestamp (inst);
+  g_assert_cmpuint (mtime2, ==, mtime1);
 
-  /* Modifying a remote should reset the age (make it smaller) */
+  /* Modifying a remote should update the modification time */
   remote = flatpak_installation_get_remote_by_name (inst, repo_name, NULL, &error);
   g_assert_no_error (error);
   g_assert_nonnull (remote);
@@ -577,11 +577,11 @@ test_age (void)
   flatpak_installation_modify_remote (inst, remote, NULL, &error);
   g_assert_no_error (error);
 
-  /* Need to drop caches to see the new age */
+  /* Need to drop caches to see the new modification time */
   flatpak_installation_drop_caches (inst, NULL, NULL);
 
-  age3 = flatpak_installation_get_age (inst);
-  g_assert_cmpuint (age3, <, age2);
+  mtime3 = flatpak_installation_get_timestamp (inst);
+  g_assert_cmpuint (mtime3, >, mtime2);
 
   /* Restore the remote state */
   flatpak_remote_set_disabled (remote, FALSE);
@@ -5131,7 +5131,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/library/arches", test_arches);
   g_test_add_func ("/library/ref", test_ref);
   g_test_add_func ("/library/list-remotes", test_list_remotes);
-  g_test_add_func ("/library/age", test_age);
+  g_test_add_func ("/library/timestamp", test_timestamp);
   g_test_add_func ("/library/remote-by-name", test_remote_by_name);
   g_test_add_func ("/library/remote", test_remote);
   g_test_add_func ("/library/remote-new", test_remote_new);
