@@ -608,6 +608,7 @@
   </interface>
 
   <interface name="org.freedesktop.portal.Flatpak.ExtensionManager">
+    <property name="version" type="u" access="read"/>
 
     <!--
         Close:
@@ -681,7 +682,7 @@
 
         Currently, no options are accepted.
 
-        This was added in version 9 of this interface.
+        This was added in version 1 of this interface.
     -->
     <method name="ListExtensions">
       <arg type="a{sv}" name="options" direction="in"/>
@@ -706,7 +707,7 @@
 
         Currently, no options are accepted.
 
-        This was added in version 9 of this interface.
+        This was added in version 1 of this interface.
     -->
     <method name="Install">
       <arg type="s" name="ref" direction="in"/>
@@ -729,7 +730,7 @@
 
         Currently, no options are accepted.
 
-        This was added in version 9 of this interface.
+        This was added in version 1 of this interface.
     -->
     <method name="Update">
       <arg type="s" name="ref" direction="in"/>
@@ -752,7 +753,7 @@
 
         Currently, no options are accepted.
 
-        This was added in version 9 of this interface.
+        This was added in version 1 of this interface.
     -->
     <method name="Uninstall">
       <arg type="s" name="ref" direction="in"/>
@@ -819,7 +820,7 @@
            </varlistentry>
          </variablelist>
 
-      This was added in version 9 of this interface.
+      This was added in version 1 of this interface.
     -->
     <signal name="Progress">
       <arg type="a{sv}" name="info" direction="out"/>

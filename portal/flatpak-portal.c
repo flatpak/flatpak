@@ -3001,6 +3001,7 @@ create_extension_manager (GDBusMethodInvocation *invocation,
                                         "app-path", NULL);
 
   manager = portal_flatpak_extension_manager_skeleton_new ();
+  portal_flatpak_extension_manager_set_version (manager, 1);
 
   g_object_set_data_full (G_OBJECT (manager), "extension-manager-data", em, extension_manager_data_free);
   g_object_set_data_full (G_OBJECT (manager), "required-sender", g_strdup (em->sender), g_free);
