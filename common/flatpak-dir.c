@@ -16011,6 +16011,7 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
   g_autoptr(GKeyFile) new_config = NULL;
   g_autofree gchar *filter_path = NULL;
   gboolean has_remote;
+  gboolean res = FALSE;
 
   if (strchr (remote_name, '/') != NULL)
     return flatpak_fail_error (error, FLATPAK_ERROR_REMOTE_NOT_FOUND, _("Invalid character '/' in remote name: %s"),
@@ -16076,7 +16077,7 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
   copy_remote_config (new_config, config, remote_name);
 
   if (!ostree_repo_write_config (self->repo, new_config, error))
-    return FALSE;
+    goto out;
 
   if (gpg_data != NULL)
     {
@@ -16085,7 +16086,7 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
 
       if (!ostree_repo_remote_gpg_import (self->repo, remote_name, input_stream,
                                           NULL, &imported, cancellable, error))
-        return FALSE;
+        goto out;
 
       /* XXX If we ever add internationalization, use ngettext() here. */
       g_info ("Imported %u GPG key%s to remote \"%s\"",
@@ -16120,10 +16121,10 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
 
   /* If we e.g. changed url or gpg config the cached summary may be invalid */
   if (!flatpak_dir_remote_clear_cached_summary (self, remote_name, cancellable, error))
-    return FALSE;
+    goto out;
 
   if (!flatpak_dir_mark_changed (self, error))
-    return FALSE;
+    goto out;
 
   if (has_remote)
     flatpak_dir_log (self, "modify remote", remote_name, NULL, NULL, NULL, url,
@@ -16132,7 +16133,11 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
     flatpak_dir_log (self, "add remote", remote_name, NULL, NULL, NULL, url,
                      "Added remote %s to %s", remote_name, url);
 
-  return TRUE;
+  res = TRUE;
+out:
+  if (!res)
+    ostree_repo_remote_delete (self->repo, remote_name, cancellable, NULL);
+  return res;
 }
 
 gboolean
