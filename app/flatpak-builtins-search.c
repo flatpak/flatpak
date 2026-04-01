@@ -191,14 +191,24 @@ print_app (Column *columns, MatchResult *res, FlatpakTablePrinter *printer)
   g_autofree char *id = component_get_flatpak_id (res->app);
   const char *name = as_component_get_name (res->app);
   const char *comment = as_component_get_summary (res->app);
+  g_autofree char *cleaned_comment = NULL;
   guint i;
 
+  if (comment) 
+  {
+    const char *nl = strchr(comment, '\n');
+    if (nl)
+      cleaned_comment = g_strndup(comment, nl - comment);
+    else
+      cleaned_comment = g_strdup(comment);
+  }
+  
   for (i = 0; columns[i].name; i++)
     {
       if (strcmp (columns[i].name, "name") == 0)
         flatpak_table_printer_add_column (printer, name);
       if (strcmp (columns[i].name, "description") == 0)
-        flatpak_table_printer_add_column (printer, comment);
+        flatpak_table_printer_add_column (printer, cleaned_comment ? cleaned_comment : "");
       else if (strcmp (columns[i].name, "application") == 0)
         flatpak_table_printer_add_column (printer, id);
       else if (strcmp (columns[i].name, "version") == 0)
