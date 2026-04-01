@@ -217,6 +217,10 @@ handle_host_command (FlatpakDevelopment    *object,
   g_autofree FdMapEntry *fd_map = NULL;
   g_auto(GStrv) env = NULL;
   gint32 max_fd;
+  const char *sender;
+  const char *wrapper;
+  g_autofree const char **wrapped_argv = NULL;
+  const char *const *spawn_argv;
 
   if (*arg_cwd_path == 0)
     arg_cwd_path = NULL;
@@ -240,7 +244,40 @@ handle_host_command (FlatpakDevelopment    *object,
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
-  g_info ("Running host command %s", arg_argv[0]);
+  sender = g_dbus_method_invocation_get_sender (invocation);
+
+  g_info ("Running host command %s (sender %s)", arg_argv[0], sender);
+
+  /*
+   * If FLATPAK_HOST_COMMAND_WRAPPER is set, prepend it as argv[0] so
+   * the wrapper program is exec'd instead of the original command.
+   * The original argv is preserved as trailing arguments.  The value
+   * must be a single executable path; if you need wrapper arguments,
+   * use a shell script.
+   *
+   * The wrapper can inspect FLATPAK_HOST_COMMAND_SENDER to identify
+   * the D-Bus caller (e.g. for per-container policy decisions).
+   */
+  wrapper = g_environ_getenv (original_environ,
+                              "FLATPAK_HOST_COMMAND_WRAPPER");
+  if (wrapper != NULL && *wrapper != '\0')
+    {
+      guint n_orig = g_strv_length ((char **) arg_argv);
+      guint k;
+
+      wrapped_argv = g_new0 (const char *, n_orig + 2);
+      wrapped_argv[0] = wrapper;
+      for (k = 0; k < n_orig; k++)
+        wrapped_argv[k + 1] = arg_argv[k];
+      wrapped_argv[n_orig + 1] = NULL;
+
+      spawn_argv = wrapped_argv;
+      g_info ("Wrapper active, effective argv[0] is %s", spawn_argv[0]);
+    }
+  else
+    {
+      spawn_argv = arg_argv;
+    }
 
   n_fds = 0;
   fds = NULL;
@@ -323,8 +360,15 @@ handle_host_command (FlatpakDevelopment    *object,
       env = g_environ_setenv (env, var, val, TRUE);
     }
 
+  /*
+   * Always inject FLATPAK_HOST_COMMAND_SENDER so that wrappers (or
+   * even unwrapped commands) can identify the D-Bus caller.  The
+   * value is the unique bus name, e.g. ":1.42".
+   */
+  env = g_environ_setenv (env, "FLATPAK_HOST_COMMAND_SENDER", sender, TRUE);
+
   if (!g_spawn_async_with_pipes (arg_cwd_path,
-                                 (char **) arg_argv,
+                                 (char **) spawn_argv,
                                  env,
                                  G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD,
                                  child_setup_func, &child_setup_data,
@@ -347,7 +391,7 @@ handle_host_command (FlatpakDevelopment    *object,
 
   pid_data = g_new0 (PidData, 1);
   pid_data->pid = pid;
-  pid_data->client = g_strdup (g_dbus_method_invocation_get_sender (invocation));
+  pid_data->client = g_strdup (sender);
   pid_data->watch_bus = (flags & FLATPAK_HOST_COMMAND_FLAGS_WATCH_BUS) != 0;
   pid_data->child_watch = g_child_watch_add_full (G_PRIORITY_DEFAULT,
                                                   pid,
