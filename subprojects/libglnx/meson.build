@@ -76,6 +76,8 @@ libglnx_sources = [
   'glnx-backport-testutils.h',
   'glnx-backports.c',
   'glnx-backports.h',
+  'glnx-chase.c',
+  'glnx-chase.h',
   'glnx-console.c',
   'glnx-console.h',
   'glnx-dirfd.c',

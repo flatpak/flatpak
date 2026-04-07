@@ -106,6 +106,78 @@ _glnx_strv_equal (const gchar * const *strv1,
 }
 #endif
 
+#if !GLIB_CHECK_VERSION(2, 76, 0)
+gboolean
+_glnx_close (gint     fd,
+             GError **error)
+{
+  int res;
+
+  /* Important: if @error is NULL, we must not do anything that is
+   * not async-signal-safe.
+   */
+  res = close (fd);
+
+  if (res == -1)
+    {
+      int errsv = errno;
+
+      if (errsv == EINTR)
+        {
+          /* Just ignore EINTR for now; a retry loop is the wrong thing to do
+           * on Linux at least.  Anyone who wants to add a conditional check
+           * for e.g. HP-UX is welcome to do so later...
+           *
+           * close_func_with_invalid_fds() in gspawn.c has similar logic.
+           *
+           * https://lwn.net/Articles/576478/
+           * http://lkml.indiana.edu/hypermail/linux/kernel/0509.1/0877.html
+           * https://bugzilla.gnome.org/show_bug.cgi?id=682819
+           * http://utcc.utoronto.ca/~cks/space/blog/unix/CloseEINTR
+           * https://sites.google.com/site/michaelsafyan/software-engineering/checkforeintrwheninvokingclosethinkagain
+           *
+           * `close$NOCANCEL()` in gstdioprivate.h, on macOS, ensures that the fd is
+           * closed even if it did return EINTR.
+           */
+          return TRUE;
+        }
+
+      if (error)
+        {
+          g_set_error_literal (error, G_FILE_ERROR,
+                               g_file_error_from_errno (errsv),
+                               g_strerror (errsv));
+        }
+
+      if (errsv == EBADF)
+        {
+          /* There is a bug. Fail an assertion. Note that this function is supposed to be
+           * async-signal-safe, but in case an assertion fails, all bets are already off. */
+          if (fd >= 0)
+            {
+              /* Closing an non-negative, invalid file descriptor is a bug. The bug is
+               * not necessarily in the caller of _glnx_close(), but somebody else
+               * might have wrongly closed fd. In any case, there is a serious bug
+               * somewhere. */
+              g_critical ("_glnx_close(fd:%d) failed with EBADF. The tracking of file descriptors got messed up", fd);
+            }
+          else
+            {
+              /* Closing a negative "file descriptor" is less problematic. It's still a nonsensical action
+               * from the caller. Assert against that too. */
+              g_critical ("_glnx_close(fd:%d) failed with EBADF. This is not a valid file descriptor", fd);
+            }
+        }
+
+      errno = errsv;
+
+      return FALSE;
+    }
+
+  return TRUE;
+}
+#endif
+
 #if !GLIB_CHECK_VERSION(2, 80, 0)
 /* This function is called between fork() and exec() and hence must be
  * async-signal-safe (see signal-safety(7)). */
