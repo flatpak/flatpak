@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2026-01-21 11:29+0100\n"
+"POT-Creation-Date: 2026-04-07 22:24+0200\n"
 "PO-Revision-Date: 2025-04-22 23:11+0200\n"
 "Last-Translator: Anders Jonsson <anders.jonsson@norsjovallen.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -35,7 +35,7 @@ msgstr "Arkitektur att skapa bunt för"
 #: app/flatpak-builtins-info.c:55 app/flatpak-builtins-install.c:66
 #: app/flatpak-builtins-list.c:49 app/flatpak-builtins-make-current.c:38
 #: app/flatpak-builtins-remote-info.c:54 app/flatpak-builtins-remote-ls.c:55
-#: app/flatpak-builtins-run.c:66 app/flatpak-builtins-search.c:36
+#: app/flatpak-builtins-run.c:108 app/flatpak-builtins-search.c:36
 #: app/flatpak-builtins-uninstall.c:54 app/flatpak-builtins-update.c:56
 msgid "ARCH"
 msgstr "ARK"
@@ -162,14 +162,14 @@ msgid "'%s' is not a valid repository: "
 msgstr "”%s” är inte ett giltigt förråd: "
 
 #: app/flatpak-builtins-build-bundle.c:661 app/flatpak-builtins-build-sign.c:88
-#: common/flatpak-dir.c:13302
+#: common/flatpak-dir.c:13308
 #, c-format
 msgid "'%s' is not a valid name: %s"
 msgstr "”%s” är inte ett giltigt namn: %s"
 
 #: app/flatpak-builtins-build-bundle.c:664
 #: app/flatpak-builtins-build-export.c:865 app/flatpak-builtins-build-sign.c:91
-#: common/flatpak-dir.c:13308
+#: common/flatpak-dir.c:13314
 #, c-format
 msgid "'%s' is not a valid branch name: %s"
 msgstr "”%s” är inte ett giltigt grennamn: %s"
@@ -203,7 +203,7 @@ msgid "Start build in this directory"
 msgstr "Starta bygge i denna katalog"
 
 #: app/flatpak-builtins-build.c:52 app/flatpak-builtins-build.c:53
-#: app/flatpak-builtins-build-init.c:64 app/flatpak-builtins-run.c:68
+#: app/flatpak-builtins-build-init.c:64 app/flatpak-builtins-run.c:110
 msgid "DIR"
 msgstr "KAT"
 
@@ -215,7 +215,7 @@ msgstr "Var anpassad sdk-katalog ska eftersökas (standardvärdet är ”usr”)
 msgid "Use alternative file for the metadata"
 msgstr "Använd alternativ fil för metadata"
 
-#: app/flatpak-builtins-build.c:55 app/flatpak-builtins-run.c:85
+#: app/flatpak-builtins-build.c:55 app/flatpak-builtins-run.c:127
 msgid "Kill processes when the parent process dies"
 msgstr "Döda processen när den överordnade processen dör"
 
@@ -223,11 +223,11 @@ msgstr "Döda processen när den överordnade processen dör"
 msgid "Export application homedir directory to build"
 msgstr "Exportera programmets hemkatalog till bygge"
 
-#: app/flatpak-builtins-build.c:57 app/flatpak-builtins-run.c:73
+#: app/flatpak-builtins-build.c:57 app/flatpak-builtins-run.c:115
 msgid "Log session bus calls"
 msgstr "Logga sessionsbussanrop"
 
-#: app/flatpak-builtins-build.c:58 app/flatpak-builtins-run.c:74
+#: app/flatpak-builtins-build.c:58 app/flatpak-builtins-run.c:116
 msgid "Log system bus calls"
 msgstr "Logga systembussanrop"
 
@@ -254,12 +254,12 @@ msgid "No extension point matching %s in %s"
 msgstr "Ingen tilläggspunkt matchar %s i %s"
 
 # sebras: how is this translated?
-#: app/flatpak-builtins-build.c:618
+#: app/flatpak-builtins-build.c:624
 #, c-format
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Saknar ”=” i bindningsmonteringsargument ”%s”"
 
-#: app/flatpak-builtins-build.c:662 common/flatpak-run.c:3599
+#: app/flatpak-builtins-build.c:668 common/flatpak-run.c:3810
 #, c-format
 msgid "Unable to start app"
 msgstr "Kunde inte starta program"
@@ -586,7 +586,7 @@ msgstr "Skrivna innehållsbyte:"
 msgid "Command to set"
 msgstr "Kommando att ställa in"
 
-#: app/flatpak-builtins-build-finish.c:52 app/flatpak-builtins-run.c:67
+#: app/flatpak-builtins-build-finish.c:52 app/flatpak-builtins-run.c:109
 #: app/flatpak-main.c:208
 msgid "COMMAND"
 msgstr "KOMMANDO"
@@ -648,7 +648,7 @@ msgstr "Ändra exekveringsmiljö som används för programmet"
 
 #: app/flatpak-builtins-build-finish.c:60 app/flatpak-builtins-build-init.c:54
 #: app/flatpak-builtins-list.c:51 app/flatpak-builtins-remote-ls.c:57
-#: app/flatpak-builtins-run.c:71
+#: app/flatpak-builtins-run.c:113
 msgid "RUNTIME"
 msgstr "EXEKVERINGSMILJÖ"
 
@@ -784,7 +784,7 @@ msgid "LOCATION and FILENAME must be specified"
 msgstr "PLATS och FILNAMN måste anges"
 
 #: app/flatpak-builtins-build-init.c:53 app/flatpak-builtins-info.c:55
-#: app/flatpak-builtins-run.c:66
+#: app/flatpak-builtins-run.c:108
 msgid "Arch to use"
 msgstr "Ark att använda"
 
@@ -804,7 +804,7 @@ msgstr "PROG"
 msgid "Specify version for --base"
 msgstr "Ange version för --base"
 
-#: app/flatpak-builtins-build-init.c:56 app/flatpak-builtins-run.c:72
+#: app/flatpak-builtins-build-init.c:56 app/flatpak-builtins-run.c:114
 msgid "VERSION"
 msgstr "VERSION"
 
@@ -963,7 +963,7 @@ msgstr "Standardgren att använda för detta förråd"
 #: app/flatpak-builtins-build-update-repo.c:74
 #: app/flatpak-builtins-remote-add.c:81 app/flatpak-builtins-remote-modify.c:86
 #: app/flatpak-builtins-repo.c:711 app/flatpak-builtins-repo.c:712
-#: app/flatpak-builtins-run.c:69
+#: app/flatpak-builtins-run.c:111
 msgid "BRANCH"
 msgstr "GREN"
 
@@ -1720,8 +1720,8 @@ msgid "Query file access"
 msgstr "Efterfråga filåtkomst"
 
 #: app/flatpak-builtins-info.c:67 app/flatpak-builtins-install.c:80
-#: app/flatpak-builtins-install.c:86 app/flatpak-builtins-run.c:90
-#: app/flatpak-builtins-run.c:91 app/flatpak-builtins-update.c:67
+#: app/flatpak-builtins-install.c:86 app/flatpak-builtins-run.c:132
+#: app/flatpak-builtins-run.c:134 app/flatpak-builtins-update.c:67
 #: app/flatpak-builtins-update.c:71
 msgid "PATH"
 msgstr "SÖKVÄG"
@@ -2171,7 +2171,7 @@ msgstr "Ark att göra aktuell för"
 msgid "APP BRANCH - Make branch of application current"
 msgstr "PROG GREN - Gör gren av program aktuell"
 
-#: app/flatpak-builtins-make-current.c:69 app/flatpak-builtins-run.c:158
+#: app/flatpak-builtins-make-current.c:69 app/flatpak-builtins-run.c:209
 msgid "APP must be specified"
 msgstr "PROG måste anges"
 
@@ -2312,7 +2312,7 @@ msgstr "Instans"
 msgid "Show the instance ID"
 msgstr "Visa instans-ID:t"
 
-#: app/flatpak-builtins-ps.c:48 app/flatpak-builtins-run.c:86
+#: app/flatpak-builtins-ps.c:48 app/flatpak-builtins-run.c:128
 msgid "PID"
 msgstr "PID"
 
@@ -3050,102 +3050,138 @@ msgstr "Begränsa information till delmängder med detta prefix"
 msgid "LOCATION - Repository maintenance"
 msgstr "PLATS - underhåll av förråd"
 
-#: app/flatpak-builtins-run.c:67
+#: app/flatpak-builtins-run.c:109
 msgid "Command to run"
 msgstr "Kommando att köra"
 
-#: app/flatpak-builtins-run.c:68
+#: app/flatpak-builtins-run.c:110
 msgid "Directory to run the command in"
 msgstr "Katalog att köra kommando i"
 
-#: app/flatpak-builtins-run.c:69
+#: app/flatpak-builtins-run.c:111
 msgid "Branch to use"
 msgstr "Gren att använda"
 
-#: app/flatpak-builtins-run.c:70
+#: app/flatpak-builtins-run.c:112
 msgid "Use development runtime"
 msgstr "Använd utvecklingsexekveringsmiljö"
 
-#: app/flatpak-builtins-run.c:71
+#: app/flatpak-builtins-run.c:113
 msgid "Runtime to use"
 msgstr "Exekveringsmiljö att använda"
 
-#: app/flatpak-builtins-run.c:72
+#: app/flatpak-builtins-run.c:114
 msgid "Runtime version to use"
 msgstr "Version av exekveringsmiljö att använda"
 
-#: app/flatpak-builtins-run.c:75
+#: app/flatpak-builtins-run.c:117
 msgid "Log accessibility bus calls"
 msgstr "Logga hjälpmedelsbussanrop"
 
-#: app/flatpak-builtins-run.c:76
+#: app/flatpak-builtins-run.c:118
 msgid "Don't proxy accessibility bus calls"
 msgstr "Använd inte proxy för hjälpmedelsbussanrop"
 
-#: app/flatpak-builtins-run.c:77
+#: app/flatpak-builtins-run.c:119
 msgid "Proxy accessibility bus calls (default except when sandboxed)"
 msgstr "Använd proxy för hjälpmedelsbussanrop (standard utom när i sandlåda)"
 
-#: app/flatpak-builtins-run.c:78
+#: app/flatpak-builtins-run.c:120
 msgid "Don't proxy session bus calls"
 msgstr "Använd inte proxy för sessionsbussanrop"
 
-#: app/flatpak-builtins-run.c:79
+#: app/flatpak-builtins-run.c:121
 msgid "Proxy session bus calls (default except when sandboxed)"
 msgstr "Använd proxy för sessionsbussanrop (standard utom när i sandlåda)"
 
-#: app/flatpak-builtins-run.c:80
+#: app/flatpak-builtins-run.c:122
 msgid "Don't start portals"
 msgstr "Starta inte portaler"
 
-#: app/flatpak-builtins-run.c:81
+#: app/flatpak-builtins-run.c:123
 msgid "Enable file forwarding"
 msgstr "Aktivera filvidarebefordran"
 
-#: app/flatpak-builtins-run.c:82
+#: app/flatpak-builtins-run.c:124
 msgid "Run specified commit"
 msgstr "Kör angiven incheckning"
 
-#: app/flatpak-builtins-run.c:83
+#: app/flatpak-builtins-run.c:125
 msgid "Use specified runtime commit"
 msgstr "Använd angiven incheckning för exekveringsmiljö"
 
-#: app/flatpak-builtins-run.c:84
+#: app/flatpak-builtins-run.c:126
 msgid "Run completely sandboxed"
 msgstr "Kör fullständigt i sandlåda"
 
-#: app/flatpak-builtins-run.c:86
+#: app/flatpak-builtins-run.c:128
 msgid "Use PID as parent pid for sharing namespaces"
 msgstr "Använd PID som överordnad pid för att dela namnrymder"
 
-#: app/flatpak-builtins-run.c:87
+#: app/flatpak-builtins-run.c:129
 msgid "Make processes visible in parent namespace"
 msgstr "Gör processer synliga i överordnad namnrymd"
 
-#: app/flatpak-builtins-run.c:88
+#: app/flatpak-builtins-run.c:130
 msgid "Share process ID namespace with parent"
 msgstr "Dela namnrymd för process-ID med överordnad"
 
-#: app/flatpak-builtins-run.c:89
+#: app/flatpak-builtins-run.c:131
 msgid "Write the instance ID to the given file descriptor"
 msgstr "Skriv instans-ID:t till det givna filhandtaget"
 
-#: app/flatpak-builtins-run.c:90
+#: app/flatpak-builtins-run.c:132
 msgid "Use PATH instead of the app's /app"
 msgstr "Använd SÖKVÄG istället för programmets /app"
 
-#: app/flatpak-builtins-run.c:91
+#: app/flatpak-builtins-run.c:133
+#, fuzzy
+msgid "Use FD instead of the app's /app"
+msgstr "Använd SÖKVÄG istället för programmets /app"
+
+# Filhandtag
+#: app/flatpak-builtins-run.c:133 app/flatpak-builtins-run.c:135
+#: app/flatpak-builtins-run.c:136 app/flatpak-builtins-run.c:137
+#: common/flatpak-context.c:1677
+msgid "FD"
+msgstr "FH"
+
+#: app/flatpak-builtins-run.c:134
 msgid "Use PATH instead of the runtime's /usr"
 msgstr "Använd SÖKVÄG istället för exekveringsmiljöns /usr"
 
-#: app/flatpak-builtins-run.c:117
+#: app/flatpak-builtins-run.c:135
+#, fuzzy
+msgid "Use FD instead of the runtime's /usr"
+msgstr "Använd SÖKVÄG istället för exekveringsmiljöns /usr"
+
+#: app/flatpak-builtins-run.c:136
+msgid ""
+"Bind mount the file or directory referred to by FD to its canonicalized path"
+msgstr ""
+
+#: app/flatpak-builtins-run.c:137
+msgid ""
+"Bind mount the file or directory referred to by FD read-only to its "
+"canonicalized path"
+msgstr ""
+
+#: app/flatpak-builtins-run.c:168
 msgid "APP [ARGUMENT…] - Run an app"
 msgstr "PROGRAM [ARGUMENT…] - Kör ett program"
 
-#: app/flatpak-builtins-run.c:268
+#: app/flatpak-builtins-run.c:319
 #, c-format
 msgid "runtime/%s/%s/%s not installed"
 msgstr "runtime/%s/%s/%s inte installerad"
+
+#: app/flatpak-builtins-run.c:366
+msgid "app-fd and app-path cannot both be used"
+msgstr ""
+
+#: app/flatpak-builtins-run.c:396
+msgid "usr-fd and usr-path cannot both be used"
+msgstr ""
 
 #: app/flatpak-builtins-search.c:36
 msgid "Arch to search for"
@@ -4182,15 +4218,15 @@ msgstr "Varning: Misslyckades med att avinstallera %s: %s\n"
 msgid "Error: Failed to uninstall %s: %s\n"
 msgstr "Fel: Misslyckades med att avinstallera %s: %s\n"
 
-#: app/flatpak-quiet-transaction.c:166 common/flatpak-dir.c:10557
+#: app/flatpak-quiet-transaction.c:166 common/flatpak-dir.c:10563
 #, c-format
 msgid "%s already installed"
 msgstr "%s redan installerad"
 
 #: app/flatpak-quiet-transaction.c:168 common/flatpak-dir-utils.c:166
 #: common/flatpak-dir-utils.c:259 common/flatpak-dir.c:3033
-#: common/flatpak-dir.c:3732 common/flatpak-dir.c:15910
-#: common/flatpak-dir.c:16200 common/flatpak-transaction.c:2669
+#: common/flatpak-dir.c:3732 common/flatpak-dir.c:15916
+#: common/flatpak-dir.c:16206 common/flatpak-transaction.c:2669
 #: common/flatpak-transaction.c:2724
 #, c-format
 msgid "%s not installed"
@@ -4283,215 +4319,210 @@ msgstr ""
 msgid "Invalid env format %s"
 msgstr "Ogiltigt miljöformat %s"
 
-#: common/flatpak-context.c:1413
+#: common/flatpak-context.c:1408
 #, c-format
 msgid "Environment variable name must not contain '=': %s"
 msgstr "Miljövariabeln får inte innehålla '=': %s"
 
-#: common/flatpak-context.c:1541 common/flatpak-context.c:1549
+#: common/flatpak-context.c:1536 common/flatpak-context.c:1544
 #, c-format
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 "Argument till --add-policy måste vara på formen UNDERSYSTEM.NYCKEL=VÄRDE"
 
-#: common/flatpak-context.c:1556
+#: common/flatpak-context.c:1551
 #, c-format
 msgid "--add-policy values can't start with \"!\""
 msgstr "Värden till --add-policy får inte starta med ”!”"
 
-#: common/flatpak-context.c:1581 common/flatpak-context.c:1589
+#: common/flatpak-context.c:1576 common/flatpak-context.c:1584
 #, c-format
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 "Argument till --remove-policy måste vara på formen UNDERSYSTEM.NYCKEL=VÄRDE"
 
-#: common/flatpak-context.c:1596
+#: common/flatpak-context.c:1591
 #, c-format
 msgid "--remove-policy values can't start with \"!\""
 msgstr "Värden till --remove-policy får inte starta med ”!”"
 
-#: common/flatpak-context.c:1671
+#: common/flatpak-context.c:1666
 msgid "Share with host"
 msgstr "Dela med värd"
 
-#: common/flatpak-context.c:1671 common/flatpak-context.c:1672
+#: common/flatpak-context.c:1666 common/flatpak-context.c:1667
 msgid "SHARE"
 msgstr "DELNING"
 
-#: common/flatpak-context.c:1672
+#: common/flatpak-context.c:1667
 msgid "Unshare with host"
 msgstr "Avsluta delning med värd"
 
-#: common/flatpak-context.c:1673
+#: common/flatpak-context.c:1668
 msgid "Expose socket to app"
 msgstr "Exponera uttag för program"
 
-#: common/flatpak-context.c:1673 common/flatpak-context.c:1674
+#: common/flatpak-context.c:1668 common/flatpak-context.c:1669
 msgid "SOCKET"
 msgstr "UTTAG"
 
-#: common/flatpak-context.c:1674
+#: common/flatpak-context.c:1669
 msgid "Don't expose socket to app"
 msgstr "Exponera inte detta uttag för program"
 
-#: common/flatpak-context.c:1675
+#: common/flatpak-context.c:1670
 msgid "Expose device to app"
 msgstr "Exponera enhet för program"
 
-#: common/flatpak-context.c:1675 common/flatpak-context.c:1676
+#: common/flatpak-context.c:1670 common/flatpak-context.c:1671
 msgid "DEVICE"
 msgstr "ENHET"
 
-#: common/flatpak-context.c:1676
+#: common/flatpak-context.c:1671
 msgid "Don't expose device to app"
 msgstr "Exponera inte enhet för program"
 
-#: common/flatpak-context.c:1677
+#: common/flatpak-context.c:1672
 msgid "Allow feature"
 msgstr "Tillåt funktion"
 
-#: common/flatpak-context.c:1677 common/flatpak-context.c:1678
+#: common/flatpak-context.c:1672 common/flatpak-context.c:1673
 msgid "FEATURE"
 msgstr "FUNKTION"
 
-#: common/flatpak-context.c:1678
+#: common/flatpak-context.c:1673
 msgid "Don't allow feature"
 msgstr "Tillåt inte funktion"
 
 # :ro can't be translated
-#: common/flatpak-context.c:1679
+#: common/flatpak-context.c:1674
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr "Exponera filsystem för program (:ro för skrivskyddat)"
 
 # :ro can't be translated
-#: common/flatpak-context.c:1679
+#: common/flatpak-context.c:1674
 msgid "FILESYSTEM[:ro]"
 msgstr "FILSYSTEM[:ro]"
 
-#: common/flatpak-context.c:1680
+#: common/flatpak-context.c:1675
 msgid "Don't expose filesystem to app"
 msgstr "Exponera inte filsystem för program"
 
-#: common/flatpak-context.c:1680
+#: common/flatpak-context.c:1675
 msgid "FILESYSTEM"
 msgstr "FILSYSTEM"
 
-#: common/flatpak-context.c:1681
+#: common/flatpak-context.c:1676
 msgid "Set environment variable"
 msgstr "Ställ in miljövariabel"
 
-#: common/flatpak-context.c:1681
+#: common/flatpak-context.c:1676
 msgid "VAR=VALUE"
 msgstr "VAR=VÄRDE"
 
-#: common/flatpak-context.c:1682
+#: common/flatpak-context.c:1677
 msgid "Read environment variables in env -0 format from FD"
 msgstr "Läs miljövariabler i formatet env -0 från FH"
 
-# Filhandtag
-#: common/flatpak-context.c:1682
-msgid "FD"
-msgstr "FH"
-
-#: common/flatpak-context.c:1683
+#: common/flatpak-context.c:1678
 msgid "Remove variable from environment"
 msgstr "Ta bort variabel från miljö"
 
-#: common/flatpak-context.c:1683
+#: common/flatpak-context.c:1678
 msgid "VAR"
 msgstr "VAR"
 
-#: common/flatpak-context.c:1684
+#: common/flatpak-context.c:1679
 msgid "Allow app to own name on the session bus"
 msgstr "Tillåt program att äga namn på sessionsbussen"
 
-#: common/flatpak-context.c:1684 common/flatpak-context.c:1685
-#: common/flatpak-context.c:1686 common/flatpak-context.c:1687
-#: common/flatpak-context.c:1688 common/flatpak-context.c:1689
-#: common/flatpak-context.c:1690
+#: common/flatpak-context.c:1679 common/flatpak-context.c:1680
+#: common/flatpak-context.c:1681 common/flatpak-context.c:1682
+#: common/flatpak-context.c:1683 common/flatpak-context.c:1684
+#: common/flatpak-context.c:1685
 msgid "DBUS_NAME"
 msgstr "DBUSNAMN"
 
-#: common/flatpak-context.c:1685
+#: common/flatpak-context.c:1680
 msgid "Allow app to talk to name on the session bus"
 msgstr "Tillåt program att prata med namn på sessionsbussen"
 
-#: common/flatpak-context.c:1686
+#: common/flatpak-context.c:1681
 msgid "Don't allow app to talk to name on the session bus"
 msgstr "Tillåt inte program att prata med namn på sessionsbussen"
 
-#: common/flatpak-context.c:1687
+#: common/flatpak-context.c:1682
 msgid "Allow app to own name on the system bus"
 msgstr "Tillåt program att äga namn på systembussen"
 
-#: common/flatpak-context.c:1688
+#: common/flatpak-context.c:1683
 msgid "Allow app to talk to name on the system bus"
 msgstr "Tillåt program att prata med namn på systembussen"
 
-#: common/flatpak-context.c:1689
+#: common/flatpak-context.c:1684
 msgid "Don't allow app to talk to name on the system bus"
 msgstr "Tillåt inte program att prata med namn på systembussen"
 
-#: common/flatpak-context.c:1690
+#: common/flatpak-context.c:1685
 msgid "Allow app to own name on the a11y bus"
 msgstr "Tillåt program att äga namn på a11y-bussen"
 
-#: common/flatpak-context.c:1691
+#: common/flatpak-context.c:1686
 msgid "Add generic policy option"
 msgstr "Lägg till alternativ för generell policy"
 
-#: common/flatpak-context.c:1691 common/flatpak-context.c:1692
+#: common/flatpak-context.c:1686 common/flatpak-context.c:1687
 msgid "SUBSYSTEM.KEY=VALUE"
 msgstr "UNDERSYSTEM.NYCKEL=VÄRDE"
 
-#: common/flatpak-context.c:1692
+#: common/flatpak-context.c:1687
 msgid "Remove generic policy option"
 msgstr "Ta bort alternativet för generell policy"
 
-#: common/flatpak-context.c:1693
+#: common/flatpak-context.c:1688
 msgid "Add USB device to enumerables"
 msgstr "Lägg till USB-enhet till uppräkningsbara"
 
-#: common/flatpak-context.c:1693 common/flatpak-context.c:1694
+#: common/flatpak-context.c:1688 common/flatpak-context.c:1689
 msgid "VENDOR_ID:PRODUCT_ID"
 msgstr "TILLVERKAR-ID:PRODUKT-ID"
 
-#: common/flatpak-context.c:1694
+#: common/flatpak-context.c:1689
 msgid "Add USB device to hidden list"
 msgstr "Lägg till USB-enhet till dold lista"
 
-#: common/flatpak-context.c:1695
+#: common/flatpak-context.c:1690
 msgid "A list of USB devices that are enumerable"
 msgstr "En lista över USB-enheter som är uppräkningsbara"
 
-#: common/flatpak-context.c:1695
+#: common/flatpak-context.c:1690
 msgid "LIST"
 msgstr "LISTA"
 
-#: common/flatpak-context.c:1696
+#: common/flatpak-context.c:1691
 msgid "File containing a list of USB devices to make enumerable"
 msgstr "Fil som innehåller en lista över USB-enheter att göra uppräkningsbara"
 
-#: common/flatpak-context.c:1696 common/flatpak-context.c:1697
+#: common/flatpak-context.c:1691 common/flatpak-context.c:1692
 msgid "FILENAME"
 msgstr "FILNAMN"
 
 # https://github.com/flatpak/flatpak/commit/d5909171bbd7f0157066e2b73007d326fa74df88
-#: common/flatpak-context.c:1697
+#: common/flatpak-context.c:1692
 msgid "Persist home directory subpath"
 msgstr "Gör undersökväg i hemkatalog beständig"
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-context.c:1699
+#: common/flatpak-context.c:1694
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "Kräv inte en körande session (inget cgroups-skapande)"
 
-#: common/flatpak-context.c:2818
+#: common/flatpak-context.c:2813
 #, c-format
 msgid "Not replacing \"%s\" with tmpfs: %s"
 msgstr "Ersätter inte ”%s” med tmpfs: %s"
 
-#: common/flatpak-context.c:2826
+#: common/flatpak-context.c:2821
 #, c-format
 msgid "Not sharing \"%s\" with sandbox: %s"
 msgstr "Delar inte ”%s” med sandlåda: %s"
@@ -4500,12 +4531,12 @@ msgstr "Delar inte ”%s” med sandlåda: %s"
 #. * the path not existing, it seems reasonable to make more of a fuss
 #. * about the home directory not existing or otherwise being unusable,
 #. * so this is intentionally not using cannot_export()
-#: common/flatpak-context.c:2922
+#: common/flatpak-context.c:2917
 #, c-format
 msgid "Not allowing home directory access: %s"
 msgstr "Tillåter inte åtkomst till hemkatalog: %s"
 
-#: common/flatpak-context.c:3156
+#: common/flatpak-context.c:3151
 #, c-format
 msgid "Unable to provide a temporary home directory in the sandbox: %s"
 msgstr "Kunde inte tillhandahålla en temporär hemkatalog i sandlådan: %s"
@@ -4558,7 +4589,7 @@ msgid "Couldn't find ref %s in remote %s"
 msgstr "Det gick inte att hitta ref %s i fjärrförrådet %s"
 
 #: common/flatpak-dir.c:1131 common/flatpak-dir.c:6047
-#: common/flatpak-oci-registry.c:3494 common/flatpak-oci-registry.c:3499
+#: common/flatpak-oci-registry.c:3497 common/flatpak-oci-registry.c:3502
 msgid "Image is not a manifest"
 msgstr "Avbilden är inte ett manifest"
 
@@ -4638,7 +4669,7 @@ msgid "No appstream commit to deploy"
 msgstr "Ingen appstream-incheckning att distribuera"
 
 #: common/flatpak-dir.c:5331 common/flatpak-dir.c:6381
-#: common/flatpak-dir.c:9974 common/flatpak-dir.c:10699
+#: common/flatpak-dir.c:9980 common/flatpak-dir.c:10705
 msgid "Can't pull from untrusted non-gpg verified remote"
 msgstr ""
 "Det går inte att hämta från ej betrott fjärrförråd som ej är gpg-verifierat"
@@ -4689,8 +4720,8 @@ msgstr "Fel storlek för extra data %s"
 msgid "Invalid checksum for extra data %s"
 msgstr "Ogiltig kontrollsumma för extra data %s"
 
-#: common/flatpak-dir.c:5964 common/flatpak-dir.c:8819
-#: common/flatpak-dir.c:10577
+#: common/flatpak-dir.c:5964 common/flatpak-dir.c:8825
+#: common/flatpak-dir.c:10583
 #, c-format
 msgid "%s commit %s already installed"
 msgstr "%s incheckning %s redan installerad"
@@ -4780,149 +4811,149 @@ msgstr "Extra data %s saknas i frånkopplade metadata"
 msgid "Unable to get runtime key from metadata"
 msgstr "Kunde inte få nyckel för exekveringsmiljö från metadata"
 
-#: common/flatpak-dir.c:8529
+#: common/flatpak-dir.c:8535
 #, c-format
 msgid "apply_extra script failed, exit status %d"
 msgstr "misslyckades med skriptet apply_extra, avslutningsstatus %d"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-dir.c:8696
+#: common/flatpak-dir.c:8702
 #, c-format
 msgid "Installing %s is not allowed by the policy set by your administrator"
 msgstr ""
 "Installation av %s tillåts inte av policyn som har satts av din administratör"
 
-#: common/flatpak-dir.c:8795
+#: common/flatpak-dir.c:8801
 #, c-format
 msgid "While trying to resolve ref %s: "
 msgstr "Under upplösningsförsök för ref %s: "
 
-#: common/flatpak-dir.c:8807
+#: common/flatpak-dir.c:8813
 #, c-format
 msgid "%s is not available"
 msgstr "%s är inte tillgängligt"
 
-#: common/flatpak-dir.c:8826
+#: common/flatpak-dir.c:8832
 msgid "Can't create deploy directory"
 msgstr "Det går inte att skapa distributionskatalog"
 
-#: common/flatpak-dir.c:8834
+#: common/flatpak-dir.c:8840
 #, c-format
 msgid "Failed to read commit %s: "
 msgstr "Misslyckades läsa incheckning %s: "
 
-#: common/flatpak-dir.c:8855
+#: common/flatpak-dir.c:8861
 #, c-format
 msgid "While trying to checkout %s into %s: "
 msgstr "Under utcheckningsförsök av %s i %s: "
 
-#: common/flatpak-dir.c:8874
+#: common/flatpak-dir.c:8880
 msgid "While trying to checkout metadata subpath: "
 msgstr "Under utcheckningsförsök av metadataundersökväg: "
 
-#: common/flatpak-dir.c:8906
+#: common/flatpak-dir.c:8912
 #, c-format
 msgid "While trying to checkout subpath ‘%s’: "
 msgstr "Under utcheckningsförsök av undersökvägen ”%s”: "
 
-#: common/flatpak-dir.c:8916
+#: common/flatpak-dir.c:8922
 msgid "While trying to remove existing extra dir: "
 msgstr "Under försök att ta bort befintlig extra katalog: "
 
-#: common/flatpak-dir.c:8927
+#: common/flatpak-dir.c:8933
 msgid "While trying to apply extra data: "
 msgstr "Under försök att tillämpa extra data: "
 
-#: common/flatpak-dir.c:8954
+#: common/flatpak-dir.c:8960
 #, c-format
 msgid "Invalid commit ref %s: "
 msgstr "Ogiltig incheckningsref %s: "
 
-#: common/flatpak-dir.c:8962 common/flatpak-dir.c:8974
+#: common/flatpak-dir.c:8968 common/flatpak-dir.c:8980
 #, c-format
 msgid "Deployed ref %s does not match commit (%s)"
 msgstr "Distribuerad ref %s matchar inte incheckning (%s)"
 
-#: common/flatpak-dir.c:8968
+#: common/flatpak-dir.c:8974
 #, c-format
 msgid "Deployed ref %s branch does not match commit (%s)"
 msgstr "Distribuerad referens %s-gren matchar inte incheckning (%s)"
 
-#: common/flatpak-dir.c:9229 common/flatpak-installation.c:1912
+#: common/flatpak-dir.c:9235 common/flatpak-installation.c:1914
 #, c-format
 msgid "%s branch %s already installed"
 msgstr "%s gren %s redan installerad"
 
-#: common/flatpak-dir.c:10078
+#: common/flatpak-dir.c:10084
 #, c-format
 msgid "Could not unmount revokefs-fuse filesystem at %s: "
 msgstr "Det gick inte att avmontera revokefs-fuse-filsystem på %s: "
 
-#: common/flatpak-dir.c:10377
+#: common/flatpak-dir.c:10383
 #, c-format
 msgid "This version of %s is already installed"
 msgstr "Denna version av %s är redan installerad"
 
-#: common/flatpak-dir.c:10390
+#: common/flatpak-dir.c:10396
 #, c-format
 msgid "Can't change remote during bundle install"
 msgstr "Kan inte ändra fjärrförråd under buntinstallering"
 
-#: common/flatpak-dir.c:10652
+#: common/flatpak-dir.c:10658
 msgid "Can't update to a specific commit without root permissions"
 msgstr ""
 "Det går inte att uppdatera till en specifik incheckning utan root-rättigheter"
 
-#: common/flatpak-dir.c:10932
+#: common/flatpak-dir.c:10938
 #, c-format
 msgid "Can't remove %s, it is needed for: %s"
 msgstr "Det går inte att ta bort %s, det behövs för: %s"
 
-#: common/flatpak-dir.c:10988 common/flatpak-installation.c:2068
+#: common/flatpak-dir.c:10994 common/flatpak-installation.c:2070
 #, c-format
 msgid "%s branch %s is not installed"
 msgstr "%s gren %s är inte installerad"
 
-#: common/flatpak-dir.c:11241
+#: common/flatpak-dir.c:11247
 #, c-format
 msgid "%s commit %s not installed"
 msgstr "%s incheckning %s inte installerad"
 
-#: common/flatpak-dir.c:11577
+#: common/flatpak-dir.c:11583
 #, c-format
 msgid "Pruning repo failed: %s"
 msgstr "Rensning av förråd misslyckades: %s"
 
-#: common/flatpak-dir.c:11745 common/flatpak-dir.c:11751
+#: common/flatpak-dir.c:11751 common/flatpak-dir.c:11757
 #, c-format
 msgid "Failed to load filter '%s'"
 msgstr "Misslyckades med att läsa in filtret ”%s”"
 
-#: common/flatpak-dir.c:11757
+#: common/flatpak-dir.c:11763
 #, c-format
 msgid "Failed to parse filter '%s'"
 msgstr "Misslyckades med att tolka filtret ”%s”"
 
-#: common/flatpak-dir.c:12039
+#: common/flatpak-dir.c:12045
 msgid "Failed to write summary cache: "
 msgstr "Misslyckades med att skriva sammanfattningscache: "
 
-#: common/flatpak-dir.c:12058
+#: common/flatpak-dir.c:12064
 #, c-format
 msgid "No oci summary cached for remote '%s'"
 msgstr "Ingen oci-sammanfattning cachad för fjärrförrådet ”%s”"
 
-#: common/flatpak-dir.c:12283
+#: common/flatpak-dir.c:12289
 #, c-format
 msgid "No cached summary for remote '%s'"
 msgstr "Ingen cachad sammanfattning för fjärrförrådet ”%s”"
 
-#: common/flatpak-dir.c:12324
+#: common/flatpak-dir.c:12330
 #, c-format
 msgid "Invalid checksum for indexed summary %s read from %s"
 msgstr "Ogiltig kontrollsumma för indexerad sammanfattning %s lästes från %s"
 
-#: common/flatpak-dir.c:12397
+#: common/flatpak-dir.c:12403
 #, c-format
 msgid ""
 "Remote listing for %s not available; server has no summary file. Check the "
@@ -4931,100 +4962,100 @@ msgstr ""
 "Fjärrlista för %s inte tillgänglig; servern har ingen sammanfattningsfil. "
 "Kontrollera att URL:en som skickades till remote-add var giltig."
 
-#: common/flatpak-dir.c:12774
+#: common/flatpak-dir.c:12780
 #, c-format
 msgid "Invalid checksum for indexed summary %s for remote '%s'"
 msgstr ""
 "Ogiltig kontrollsumma för indexerad sammanfattning %s för fjärrförrådet ”%s”"
 
-#: common/flatpak-dir.c:13397
+#: common/flatpak-dir.c:13403
 #, c-format
 msgid "Multiple branches available for %s, you must specify one of: "
 msgstr "Flera grenar tillgängliga för %s, du måste ange en av: "
 
-#: common/flatpak-dir.c:13463
+#: common/flatpak-dir.c:13469
 #, c-format
 msgid "Nothing matches %s"
 msgstr "Ingenting matchar %s"
 
 # sebras: how to translate in here?
-#: common/flatpak-dir.c:13571
+#: common/flatpak-dir.c:13577
 #, c-format
 msgid "Can't find ref %s%s%s%s%s"
 msgstr "Det går inte att hitta ref %s%s%s%s%s"
 
-#: common/flatpak-dir.c:13614
+#: common/flatpak-dir.c:13620
 #, c-format
 msgid "Error searching remote %s: %s"
 msgstr "Fel vid sökning av fjärrförråd %s: %s"
 
-#: common/flatpak-dir.c:13711
+#: common/flatpak-dir.c:13717
 #, c-format
 msgid "Error searching local repository: %s"
 msgstr "Fel vid sökning i lokalt förråd: %s"
 
-#: common/flatpak-dir.c:13848
+#: common/flatpak-dir.c:13854
 #, c-format
 msgid "%s/%s/%s not installed"
 msgstr "%s/%s/%s inte installerad"
 
-#: common/flatpak-dir.c:14051
+#: common/flatpak-dir.c:14057
 #, c-format
 msgid "Could not find installation %s"
 msgstr "Det gick inte att hitta installationen %s"
 
-#: common/flatpak-dir.c:14596
+#: common/flatpak-dir.c:14602
 #, c-format
 msgid "Invalid file format, no %s group"
 msgstr "Ogiltigt filformat, ingen %s-grupp"
 
-#: common/flatpak-dir.c:14601 common/flatpak-repo-utils.c:2861
+#: common/flatpak-dir.c:14607 common/flatpak-repo-utils.c:2861
 #, c-format
 msgid "Invalid version %s, only 1 supported"
 msgstr "Ogiltig version %s, endast 1 stöds"
 
-#: common/flatpak-dir.c:14606 common/flatpak-dir.c:14611
+#: common/flatpak-dir.c:14612 common/flatpak-dir.c:14617
 #, c-format
 msgid "Invalid file format, no %s specified"
 msgstr "Ogiltigt filformat, ingen %s angiven"
 
 #. Check some minimal size so we don't get crap
-#: common/flatpak-dir.c:14631
+#: common/flatpak-dir.c:14637
 msgid "Invalid file format, gpg key invalid"
 msgstr "Ogiltigt filformat, gpg-nyckel ogiltig"
 
-#: common/flatpak-dir.c:14659 common/flatpak-repo-utils.c:2934
+#: common/flatpak-dir.c:14665 common/flatpak-repo-utils.c:2934
 msgid "Collection ID requires GPG key to be provided"
 msgstr "Samlings-ID kräver att GPG-nyckel tillhandahålls"
 
-#: common/flatpak-dir.c:14702
+#: common/flatpak-dir.c:14708
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "Exekveringsmiljö %s, gren %s är redan installerad"
 
-#: common/flatpak-dir.c:14703
+#: common/flatpak-dir.c:14709
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "Program %s, gren %s är redan installerad"
 
-#: common/flatpak-dir.c:14936
+#: common/flatpak-dir.c:14942
 #, c-format
 msgid "Can't remove remote '%s' with installed ref %s (at least)"
 msgstr ""
 "Det går inte att ta bort fjärrförrådet ”%s” med installerad ref %s "
 "(åtminstone)"
 
-#: common/flatpak-dir.c:15035
+#: common/flatpak-dir.c:15041
 #, c-format
 msgid "Invalid character '/' in remote name: %s"
 msgstr "Ogiltigt tecken ”/” i namn på fjärrförråd: %s"
 
-#: common/flatpak-dir.c:15041
+#: common/flatpak-dir.c:15047
 #, c-format
 msgid "No configuration for remote %s specified"
 msgstr "Ingen konfiguration angavs för fjärrförrådet %s"
 
-#: common/flatpak-dir.c:16538
+#: common/flatpak-dir.c:16544
 #, c-format
 msgid "Skipping deletion of mirror ref (%s, %s)…\n"
 msgstr "Hoppar över borttagning av spegelref (%s, %s)…\n"
@@ -5084,22 +5115,22 @@ msgstr "”%s” är inte ett teckenlöst tal"
 msgid "Number “%s” is out of bounds [%s, %s]"
 msgstr "Talet ”%s” är utanför gränserna [%s, %s]"
 
-#: common/flatpak-installation.c:835
+#: common/flatpak-installation.c:837
 #, c-format
 msgid "Ref %s not installed"
 msgstr "Ref %s inte installerad"
 
-#: common/flatpak-installation.c:876
+#: common/flatpak-installation.c:878
 #, c-format
 msgid "App %s not installed"
 msgstr "Program %s inte installerat"
 
-#: common/flatpak-installation.c:1396
+#: common/flatpak-installation.c:1398
 #, c-format
 msgid "Remote '%s' already exists"
 msgstr "Fjärrförrådet ”%s” existerar redan"
 
-#: common/flatpak-installation.c:1947
+#: common/flatpak-installation.c:1949
 #, c-format
 msgid "As requested, %s was only pulled, but not installed"
 msgstr "Som begärt hämtades bara %s, men installerades inte"
@@ -5130,72 +5161,72 @@ msgstr "Kunde inte skapa filen %s"
 msgid "Unable to update symbolic link %s/%s"
 msgstr "Kunde inte uppdatera symbolisk länk %s/%s"
 
-#: common/flatpak-oci-registry.c:1022
+#: common/flatpak-oci-registry.c:1025
 msgid "Only Bearer authentication supported"
 msgstr "Endast Bearer-autentisering stöds"
 
-#: common/flatpak-oci-registry.c:1031
+#: common/flatpak-oci-registry.c:1034
 msgid "Only realm in authentication request"
 msgstr "Endast rike i autentiseringsbegäran"
 
-#: common/flatpak-oci-registry.c:1038
+#: common/flatpak-oci-registry.c:1041
 msgid "Invalid realm in authentication request"
 msgstr "Ogiltigt rike i autentiseringsbegäran"
 
-#: common/flatpak-oci-registry.c:1108
+#: common/flatpak-oci-registry.c:1111
 #, c-format
 msgid "Authorization failed: %s"
 msgstr "Auktorisering misslyckades: %s"
 
-#: common/flatpak-oci-registry.c:1110
+#: common/flatpak-oci-registry.c:1113
 msgid "Authorization failed"
 msgstr "Auktorisering misslyckades"
 
-#: common/flatpak-oci-registry.c:1114
+#: common/flatpak-oci-registry.c:1117
 #, c-format
 msgid "Unexpected response status %d when requesting token: %s"
 msgstr "Oväntad svarsstatus %d då token begärdes: %s"
 
-#: common/flatpak-oci-registry.c:1125
+#: common/flatpak-oci-registry.c:1128
 msgid "Invalid authentication request response"
 msgstr "Ogiltigt svar på autentiseringsbegäran"
 
-#: common/flatpak-oci-registry.c:1722 common/flatpak-oci-registry.c:1775
-#: common/flatpak-oci-registry.c:1804 common/flatpak-oci-registry.c:1859
-#: common/flatpak-oci-registry.c:1915 common/flatpak-oci-registry.c:1993
+#: common/flatpak-oci-registry.c:1725 common/flatpak-oci-registry.c:1778
+#: common/flatpak-oci-registry.c:1807 common/flatpak-oci-registry.c:1862
+#: common/flatpak-oci-registry.c:1918 common/flatpak-oci-registry.c:1996
 msgid "Invalid delta file format"
 msgstr "Ogiltigt deltafilformat"
 
-#: common/flatpak-oci-registry.c:2497
+#: common/flatpak-oci-registry.c:2500
 #, c-format
 msgid "No gpg key found with ID %s (homedir: %s)"
 msgstr "Ingen gpg-nyckel hittades med ID %s (hemkat: %s)"
 
-#: common/flatpak-oci-registry.c:2504
+#: common/flatpak-oci-registry.c:2507
 #, c-format
 msgid "Unable to lookup key ID %s: %d"
 msgstr "Kunde inte slå upp nyckel-ID %s: %d"
 
-#: common/flatpak-oci-registry.c:2512
+#: common/flatpak-oci-registry.c:2515
 #, c-format
 msgid "Error signing commit: %d"
 msgstr "Fel vid signering av incheckning: %d"
 
-#: common/flatpak-oci-registry.c:3513 common/flatpak-oci-registry.c:3672
+#: common/flatpak-oci-registry.c:3516 common/flatpak-oci-registry.c:3675
 msgid "Invalid OCI image config"
 msgstr "Ogiltig OCI-avbildskonfiguration"
 
-#: common/flatpak-oci-registry.c:3575 common/flatpak-oci-registry.c:3821
+#: common/flatpak-oci-registry.c:3578 common/flatpak-oci-registry.c:3824
 #, c-format
 msgid "Wrong layer checksum, expected %s, was %s"
 msgstr "Fel kontrollsumma för lager, förväntade %s, var %s"
 
-#: common/flatpak-oci-registry.c:3655
+#: common/flatpak-oci-registry.c:3658
 #, c-format
 msgid "No ref specified for OCI image %s"
 msgstr "Ingen ref angiven för OCI-avbild %s"
 
-#: common/flatpak-oci-registry.c:3661
+#: common/flatpak-oci-registry.c:3664
 #, c-format
 msgid "Wrong ref (%s) specified for OCI image %s, expected %s"
 msgstr "Fel ref (%s) angiven för OCI-avbild %s, förväntade %s"
@@ -5453,54 +5484,54 @@ msgstr "Misslyckades med att öppna bwrapinfo.json-fil: %s"
 msgid "Failed to write to instance id fd: %s"
 msgstr "Misslyckades med att skriva till filhandtag för instans-ID: %s"
 
-#: common/flatpak-run.c:1990
+#: common/flatpak-run.c:2006
 msgid "Initialize seccomp failed"
 msgstr "Initiering av seccomp misslyckades"
 
-#: common/flatpak-run.c:2029
+#: common/flatpak-run.c:2045
 #, c-format
 msgid "Failed to add architecture to seccomp filter: %s"
 msgstr "Misslyckades med att lägga till arkitektur till seccomp-filter: %s"
 
-#: common/flatpak-run.c:2037
+#: common/flatpak-run.c:2053
 #, c-format
 msgid "Failed to add multiarch architecture to seccomp filter: %s"
 msgstr ""
 "Misslyckades med att lägga till multiarch-arkitektur till seccomp-filter: %s"
 
-#: common/flatpak-run.c:2069 common/flatpak-run.c:2086
-#: common/flatpak-run.c:2108
+#: common/flatpak-run.c:2085 common/flatpak-run.c:2102
+#: common/flatpak-run.c:2124
 #, c-format
 msgid "Failed to block syscall %d: %s"
 msgstr "Misslyckades med att blockera systemanrop %d: %s"
 
-#: common/flatpak-run.c:2141
+#: common/flatpak-run.c:2157
 #, c-format
 msgid "Failed to export bpf: %s"
 msgstr "Misslyckades med att exportera bpf: %s"
 
-#: common/flatpak-run.c:2440
+#: common/flatpak-run.c:2485
 #, c-format
 msgid "Failed to open ‘%s’"
 msgstr "Misslyckades med att öppna ”%s”"
 
-#: common/flatpak-run.c:2727
+#: common/flatpak-run.c:2772
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "misslyckades med ldconfig, avslutningsstatus %d"
 
-#: common/flatpak-run.c:2734
+#: common/flatpak-run.c:2779
 msgid "Can't open generated ld.so.cache"
 msgstr "Det går inte att öppna genererad ld.so.cache"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-run.c:2857
+#: common/flatpak-run.c:2902
 #, c-format
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr ""
 "Körning av %s tillåts inte av policyn som har satts av din administratör"
 
-#: common/flatpak-run.c:2964
+#: common/flatpak-run.c:3063
 msgid ""
 "\"flatpak run\" is not intended to be run as `sudo flatpak run`. Use `sudo "
 "-i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell."
@@ -5508,19 +5539,19 @@ msgstr ""
 "”flatpak run” är inte avsett att köras som ”sudo flatpak run”, använd ”sudo "
 "-i” eller ”su -l” istället och anropa ”flatpak run” inifrån det nya skalet."
 
-#: common/flatpak-run.c:3154
+#: common/flatpak-run.c:3268
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "Misslyckades att migrera från %s: %s"
 
-#: common/flatpak-run.c:3175
+#: common/flatpak-run.c:3289
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr ""
 "Misslyckades med att migrera gammal programdatakatalog %s till nytt namn %s: "
 "%s"
 
-#: common/flatpak-run.c:3184
+#: common/flatpak-run.c:3298
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "Misslyckades med att skapa symbolisk länk vid migrering av %s: %s"
@@ -5804,12 +5835,12 @@ msgstr "på rad %d"
 msgid "Unexpected word '%s' on line %d"
 msgstr "Oväntat ord ”%s” på rad %d"
 
-#: common/flatpak-utils.c:1980
+#: common/flatpak-utils.c:2010
 #, c-format
 msgid "Invalid require-flatpak argument %s"
 msgstr "Ogiltigt argument %s för require-flatpak"
 
-#: common/flatpak-utils.c:1990 common/flatpak-utils.c:2009
+#: common/flatpak-utils.c:2020 common/flatpak-utils.c:2039
 #, c-format
 msgid "%s needs a later flatpak version (%s)"
 msgstr "%s behöver en senare flatpak-version (%s)"
@@ -5826,44 +5857,44 @@ msgstr "Inte ett OCI-fjärrförråd"
 msgid "Invalid token"
 msgstr "Ogiltig token"
 
-#: portal/flatpak-portal.c:2337
+#: portal/flatpak-portal.c:2223
 #, c-format
 msgid "No portal support found"
 msgstr "Inget portalstöd hittades"
 
-#: portal/flatpak-portal.c:2343
+#: portal/flatpak-portal.c:2229
 msgid "Deny"
 msgstr "Neka"
 
-#: portal/flatpak-portal.c:2345
+#: portal/flatpak-portal.c:2231
 msgid "Update"
 msgstr "Uppdatera"
 
-#: portal/flatpak-portal.c:2350
+#: portal/flatpak-portal.c:2236
 #, c-format
 msgid "Update %s?"
 msgstr "Uppdatera %s?"
 
-#: portal/flatpak-portal.c:2362
+#: portal/flatpak-portal.c:2248
 msgid "The application wants to update itself."
 msgstr "Programmet vill uppdatera sig själv."
 
-#: portal/flatpak-portal.c:2363
+#: portal/flatpak-portal.c:2249
 msgid "Update access can be changed any time from the privacy settings."
 msgstr ""
 "Uppdateringsåtkomst kan ändras när som helst från sekretessinställningarna."
 
-#: portal/flatpak-portal.c:2388
+#: portal/flatpak-portal.c:2274
 #, c-format
 msgid "Application update not allowed"
 msgstr "Programuppdatering inte tillåten"
 
-#: portal/flatpak-portal.c:2546
+#: portal/flatpak-portal.c:2432
 #, c-format
 msgid "Self update not supported, new version requires new permissions"
 msgstr "Självuppdatering stöds inte, nya versionen kräver nya rättigheter"
 
-#: portal/flatpak-portal.c:2728 portal/flatpak-portal.c:2745
+#: portal/flatpak-portal.c:2614 portal/flatpak-portal.c:2631
 #, c-format
 msgid "Update ended unexpectedly"
 msgstr "Uppdateringen avslutades oväntat"
