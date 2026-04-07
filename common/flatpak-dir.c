@@ -14469,6 +14469,29 @@ flatpak_dir_find_remote_refs (FlatpakDir           *self,
   if (matched_refs == NULL)
     return NULL;
 
+  if (flags & FIND_MATCHING_REFS_FLAGS_EXCLUDE_EOL)
+    {
+      guint i;
+
+      for (i = matched_refs->len; i > 0; i--)
+        {
+          FlatpakDecomposed *matched_ref = g_ptr_array_index (matched_refs, i - 1);
+          const char *matched_ref_str = flatpak_decomposed_get_ref (matched_ref);
+          VarMetadataRef sparse_cache;
+          const char *eol;
+          const char *eol_rebase;
+
+          if (!flatpak_remote_state_lookup_sparse_cache (state, matched_ref_str, &sparse_cache, NULL))
+            continue;
+
+          eol = var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLIFE, NULL);
+          eol_rebase = var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLIFE_REBASE, NULL);
+
+          if (eol != NULL || eol_rebase != NULL)
+            g_ptr_array_remove_index (matched_refs, i - 1);
+        }
+    }
+
   /* If we can't match anything and we had an error downloading (offline?), report that as its more helpful */
   if (matched_refs->len == 0 && state->summary_fetch_error)
     {

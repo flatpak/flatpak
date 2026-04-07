@@ -352,6 +352,7 @@ typedef enum {
 typedef enum {
   FIND_MATCHING_REFS_FLAGS_NONE = 0,
   FIND_MATCHING_REFS_FLAGS_FUZZY = (1 << 0),
+  FIND_MATCHING_REFS_FLAGS_EXCLUDE_EOL = (1 << 1),
 } FindMatchingRefsFlags;
 
 GQuark       flatpak_dir_error_quark (void);

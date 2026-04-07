@@ -453,7 +453,8 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
               if (!flatpak_allow_fuzzy_matching (argv[1]))
                 matching_refs_flags = FIND_MATCHING_REFS_FLAGS_NONE;
               else
-                matching_refs_flags = FIND_MATCHING_REFS_FLAGS_FUZZY;
+                matching_refs_flags = FIND_MATCHING_REFS_FLAGS_FUZZY |
+                                      FIND_MATCHING_REFS_FLAGS_EXCLUDE_EOL;
 
               for (j = 0; remotes[j] != NULL; j++)
                 {
@@ -560,7 +561,8 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
       if (!flatpak_allow_fuzzy_matching (pref))
         matching_refs_flags = FIND_MATCHING_REFS_FLAGS_NONE;
       else
-        matching_refs_flags = FIND_MATCHING_REFS_FLAGS_FUZZY;
+        matching_refs_flags = FIND_MATCHING_REFS_FLAGS_FUZZY |
+                              FIND_MATCHING_REFS_FLAGS_EXCLUDE_EOL;
 
       if (matching_refs_flags & FIND_MATCHING_REFS_FLAGS_FUZZY)
         {
