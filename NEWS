@@ -1,8 +1,18 @@
  Changes in 1.16.4
  ~~~~~~~~~~~~~~~~~~
-Released: not yet
+Released: 2026-04-07
 
-...
+Security fixes:
+
+* Fix a complete sandbox escape which leads to host file access and code
+  execution in the host context (CVE-2026-34078)
+
+* Prevent arbitrary file deletion on the host filesystem (CVE-2026-34079)
+
+* Prevent arbitrary read-access to files in the system-helper context
+  (GHSA-2fxp-43j9-pwvc)
+
+* Prevent orphaning cross-user pull operations (GHSA-89xm-3m96-w3jg)
 
 Changes in 1.16.3
 ~~~~~~~~~~~~~~~~~~
