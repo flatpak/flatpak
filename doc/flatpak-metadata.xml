@@ -184,6 +184,23 @@
                             Wayland.
                         </para></listitem>
                     </varlistentry>
+                    <varlistentry>
+                        <term><option>has-usb-device</option></term>
+                        <listitem><para>
+                            True if this version of Flatpak supports the
+                            <option>usb</option> device permission.
+                            This is always true in Flatpak 1.16.0 and later,
+                            and can be used to provide fallback behavior for
+                            older Flatpak versions.
+                        </para></listitem>
+                    </varlistentry>
+                    <varlistentry>
+                        <term><option>has-usb-portal</option></term>
+                        <listitem><para>
+                            True if the current desktop session supports
+                            the USB Portal.
+                        </para></listitem>
+                    </varlistentry>
                 </variablelist>
                 <para>
                     Conditions can be negated by prefixing with

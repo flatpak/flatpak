@@ -335,7 +335,8 @@
                     <arg choice="plain">SUBSYSTEM</arg> must be one of: network, ipc.
                     <arg choice="plain">CONDITION</arg> must be one of:
                     <option>true</option>, <option>false</option>,
-                    <option>has-input-device</option>, <option>has-wayland</option>.
+                    <option>has-input-device</option>, <option>has-wayland</option>,
+                    <option>has-usb-device</option>, <option>has-usb-portal</option>.
                     Conditions can be negated with <literal>!</literal>,
                     for example <option>!has-input-device</option>.
                     This option can be used multiple times.
@@ -382,7 +383,8 @@
                     ssh-auth, pcsc, cups, gpg-agent, inherit-wayland-socket.
                     <arg choice="plain">CONDITION</arg> must be one of:
                     <option>true</option>, <option>false</option>,
-                    <option>has-input-device</option>, <option>has-wayland</option>.
+                    <option>has-input-device</option>, <option>has-wayland</option>,
+                    <option>has-usb-device</option>, <option>has-usb-portal</option>.
                     Conditions can be negated with <literal>!</literal>,
                     for example <option>!has-wayland</option>.
                     This option can be used multiple times.
@@ -426,7 +428,8 @@
                     <arg choice="plain">DEVICE</arg> must be one of: dri, input, usb, kvm, shm, all.
                     <arg choice="plain">CONDITION</arg> must be one of:
                     <option>true</option>, <option>false</option>,
-                    <option>has-input-device</option>, <option>has-wayland</option>.
+                    <option>has-input-device</option>, <option>has-wayland</option>,
+                    <option>has-usb-device</option>, <option>has-usb-portal</option>.
                     Conditions can be negated with <literal>!</literal>,
                     for example <option>!has-input-device</option>.
                     This option can be used multiple times.
@@ -473,7 +476,8 @@
                     <arg choice="plain">FEATURE</arg> must be one of: devel, multiarch, bluetooth.
                     <arg choice="plain">CONDITION</arg> must be one of:
                     <option>true</option>, <option>false</option>,
-                    <option>has-input-device</option>, <option>has-wayland</option>.
+                    <option>has-input-device</option>, <option>has-wayland</option>,
+                    <option>has-usb-device</option>, <option>has-usb-portal</option>.
                     Conditions can be negated with <literal>!</literal>,
                     for example <option>!has-input-device</option>.
                     This option can be used multiple times.
