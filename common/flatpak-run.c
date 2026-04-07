@@ -267,12 +267,68 @@ flatpak_run_add_extension_args (FlatpakBwrap      *bwrap,
 }
 
 static gboolean
+check_usb_portal (void)
+{
+  g_autoptr(GDBusConnection) bus = NULL;
+  g_autoptr(GVariant) ret = NULL;
+  g_autoptr(GError) error = NULL;
+
+  bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, NULL);
+  if (!bus)
+    return FALSE;
+
+  ret = g_dbus_connection_call_sync (bus,
+                                     "org.freedesktop.portal.Desktop",
+                                     "/org/freedesktop/portal/desktop",
+                                     "org.freedesktop.DBus.Properties",
+                                     "Get",
+                                     g_variant_new ("(ss)",
+                                                    "org.freedesktop.portal.Usb",
+                                                    "version"),
+                                     G_VARIANT_TYPE ("(v)"),
+                                     G_DBUS_CALL_FLAGS_NONE,
+                                     -1,
+                                     NULL,
+                                     &error);
+  if (ret)
+    return TRUE;
+
+  if (!g_error_matches (error, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS) &&
+      !g_error_matches (error, G_DBUS_ERROR, G_DBUS_ERROR_SERVICE_UNKNOWN) &&
+      !g_error_matches (error, G_DBUS_ERROR, G_DBUS_ERROR_NAME_HAS_NO_OWNER))
+    g_warning ("Querying availability of USB Portal failed: %s", error->message);
+
+  return FALSE;
+}
+
+static gboolean
+flatpak_run_has_usb_portal (void)
+{
+  static gsize usb_portal_once = 0;
+  enum {
+    HAS_USB_PORTAL_TRUE = 1,
+    HAS_USB_PORTAL_FALSE = 2
+  };
+
+  if (g_once_init_enter (&usb_portal_once))
+    {
+      g_once_init_leave (&usb_portal_once, check_usb_portal () ?
+                                           HAS_USB_PORTAL_TRUE :
+                                           HAS_USB_PORTAL_FALSE);
+    }
+
+  return usb_portal_once == HAS_USB_PORTAL_TRUE;
+}
+
+static gboolean
 flatpak_run_evaluate_conditions (FlatpakContextConditions condition)
 {
   switch (condition)
     {
     case FLATPAK_CONTEXT_CONDITION_HAS_WAYLAND:
       return flatpak_run_has_wayland ();
+    case FLATPAK_CONTEXT_CONDITION_HAS_USB_PORTAL:
+      return flatpak_run_has_usb_portal ();
     default:
       return FALSE;
     }
