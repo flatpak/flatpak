@@ -103,13 +103,15 @@ const char *flatpak_context_conditions[] = {
   "true",
   "false",
   "has-input-device",
+  "has-usb-device",
   "has-wayland",
   NULL
 };
 
 FlatpakContextConditions flatpak_context_true_conditions =
   FLATPAK_CONTEXT_CONDITION_TRUE |
-  FLATPAK_CONTEXT_CONDITION_HAS_INPUT_DEV;
+  FLATPAK_CONTEXT_CONDITION_HAS_INPUT_DEV |
+  FLATPAK_CONTEXT_CONDITION_HAS_USB_DEV;
 
 static const char *parse_negated (const char *option, gboolean *negated);
 static guint32 flatpak_context_bitmask_from_string (const char *name, const char **names);
