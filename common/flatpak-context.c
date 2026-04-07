@@ -105,6 +105,7 @@ const char *flatpak_context_conditions[] = {
   "has-input-device",
   "has-usb-device",
   "has-wayland",
+  "has-usb-portal",
   NULL
 };
 
