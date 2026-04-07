@@ -541,8 +541,7 @@ flatpak_run_add_environment_args (FlatpakBwrap           *bwrap,
 
   /* Must run this before spawning the dbus proxy, to ensure it
      ends up in the app cgroup */
-  if (instance_id &&
-      (flags & FLATPAK_RUN_FLAG_NO_SCOPE) == 0)
+  if (instance_id)
     {
       if (!flatpak_run_in_transient_unit (app_id, instance_id, &my_error))
         {
