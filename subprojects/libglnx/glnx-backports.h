@@ -29,6 +29,7 @@
 #include <string.h>
 
 #include <glib-unix.h>
+#include <glib/gstdio.h>
 #include <gio/gio.h>
 
 G_BEGIN_DECLS
@@ -51,6 +52,34 @@ G_BEGIN_DECLS
         _destroy (_p);                                                         \
       }                                                                        \
   } G_STMT_END
+#endif
+
+#if !GLIB_CHECK_VERSION(2, 76, 0)
+gboolean _glnx_close (gint     fd,
+                      GError **error);
+#else
+#define _glnx_close g_close
+#endif
+
+#if !GLIB_CHECK_VERSION(2, 76, 0)
+static inline gboolean
+g_clear_fd (int     *fd_ptr,
+            GError **error)
+{
+  int fd = *fd_ptr;
+
+  *fd_ptr = -1;
+
+  if (fd < 0)
+    return TRUE;
+
+  /* Suppress "Not available before" warning */
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+  /* This importantly calls _glnx_close to always get async-signal-safe if
+   * error == NULL */
+  return _glnx_close (fd, error);
+  G_GNUC_END_IGNORE_DEPRECATIONS
+}
 #endif
 
 #if !GLIB_CHECK_VERSION(2, 40, 0)
