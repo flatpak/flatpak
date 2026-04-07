@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..47"
+echo "1..48"
 
 #Regular repo
 setup_repo
@@ -453,6 +453,33 @@ ${FLATPAK} ${U} uninstall -y org.test.Hello >&2
 EXPORT_ARGS="" make_updated_app
 
 ok "eol build-export"
+
+make_updated_app test "" master "" org.test.FuzzyInstall
+EXPORT_ARGS="--end-of-life=Legacy-reason" make_updated_app test "" master "" org.test.FuzzyInstallOld
+
+if ${FLATPAK} ${U} install --app test-repo fuzzyinstallold > install-log 2>&1; then
+    assert_not_reached "fuzzy install of end-of-life ref should fail"
+fi
+assert_file_has_content install-log "Nothing matches fuzzyinstallold in remote test-repo"
+
+${FLATPAK} ${U} install --app -y test-repo fuzzyinstall >&2
+
+${FLATPAK} ${U} list --columns=ref > list-log
+assert_file_has_content list-log "org\.test\.FuzzyInstall/"
+assert_not_file_has_content list-log "org\.test\.FuzzyInstallOld/"
+
+${FLATPAK} ${U} uninstall -y org.test.FuzzyInstall >&2
+
+${FLATPAK} ${U} install -y test-repo org.test.FuzzyInstallOld > install-log
+assert_file_has_content install-log "org\.test\.FuzzyInstallOld"
+assert_file_has_content install-log "end-of-life"
+
+${FLATPAK} ${U} uninstall -y fuzzyinstallold >&2
+
+${FLATPAK} ${U} list --columns=ref > list-log
+assert_not_file_has_content list-log "org\.test\.FuzzyInstallOld/"
+
+ok "fuzzy install filters eol refs"
 
 if [ x${USE_COLLECTIONS_IN_SERVER-} == xyes ] ; then
     REBASE_COLLECTION_ID=org.test.Collection.rebase
