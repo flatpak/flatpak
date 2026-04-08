@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..10"
+echo "1..11"
 
 # Use stable rather than master as the branch so we can test that the run
 # command automatically finds the branch correctly
@@ -154,3 +154,26 @@ run --usr-path=custom-runtime/files --app-path="" \
 assert_file_has_content hello_out '^Hello world, from a runtime$'
 
 ok "custom usr and empty app path"
+
+path="$(readlink -f .)/foo"
+echo "bar" > "${path}"
+
+exec 3< "${path}"
+run --bind-fd=3 --command=cat org.test.Hello "${path}" > hello_out
+assert_file_has_content hello_out '^bar$'
+
+exec 3< "${path}"
+run --bind-fd=3 --command=bash org.test.Hello -c "echo baz > ${path}" > /dev/null
+assert_file_has_content "${path}" '^baz$'
+exec 3>&-
+
+exec 3< "${path}"
+run --ro-bind-fd=3 --command=cat org.test.Hello "${path}" > hello_out
+assert_file_has_content hello_out '^baz$'
+exec 3>&-
+
+exec 3< "${path}"
+! run --ro-bind-fd=3 --command=bash org.test.Hello -c "echo baz > ${path}" > /dev/null
+exec 3>&-
+
+ok "bind-fd and ro-bind-fd"
