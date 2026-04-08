@@ -45,3 +45,5 @@ wrapped_tests += {'name' : 'test-unused.sh', 'script' : 'test-unused.sh'}
 wrapped_tests += {'name' : 'test-prune.sh', 'script' : 'test-prune.sh'}
 wrapped_tests += {'name' : 'test-seccomp.sh', 'script' : 'test-seccomp.sh'}
 wrapped_tests += {'name' : 'test-repair.sh', 'script' : 'test-repair.sh'}
+wrapped_tests += {'name' : 'test-run-custom@user.wrap', 'script' : 'test-run-custom.sh'}
+wrapped_tests += {'name' : 'test-run-custom@system.wrap', 'script' : 'test-run-custom.sh'}
