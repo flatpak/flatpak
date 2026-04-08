@@ -1,8 +1,39 @@
 Changes in 1.17.4
 ~~~~~~~~~~~~~~~~~~
-Released: not yet
+Released: 2026-04-08
 
-...
+Security fixes:
+
+* Fix a complete sandbox escape which leads to host file access and code
+  execution in the host context (CVE-2026-34078)
+
+* Prevent arbitrary file deletion on the host filesystem (CVE-2026-34079)
+
+* Prevent arbitrary read-access to files in the system-helper context
+  (GHSA-2fxp-43j9-pwvc)
+
+* Prevent orphaning cross-user pull operations (GHSA-89xm-3m96-w3jg)
+
+Enhancements:
+
+* Enable ntsync unconditionally (#6546)
+
+* Automatic branch following for extensions to ensure that "no-autodownload"
+  extensions stay functional after an update that requires a new branch (#6550)
+
+* Translation updates: eo (#6538), kk (#6553), sr (#6537), zh_CN (#6534)
+
+Bug fixes:
+
+* Prevent CPR sequence from showing up in the terminal (#6549)
+
+* Fix a crash for apps/runtimes with multiarch permission (#6535)
+
+* Fixes for Coverity warnings (#4932)
+
+* Add test-preinstall.sh to the test matrix source (#6551)
+
+* Fix a test message to refer to "systemd-localed" instead of "located" (#6536)
 
 Changes in 1.17.3
 ~~~~~~~~~~~~~~~~~~
