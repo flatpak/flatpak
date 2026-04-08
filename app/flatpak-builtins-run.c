@@ -83,6 +83,7 @@ option_bind_fd_cb (const char  *option_name,
     return glnx_throw (error, "File descriptors 0, 1, 2 are reserved");
 
   g_array_append_val (opt_bind_fds, fd);
+  fd = -1; /* ownership transferred to GArray */
   return TRUE;
 }
 
@@ -102,6 +103,7 @@ option_ro_bind_fd_cb (const char  *option_name,
     return glnx_throw (error, "File descriptors 0, 1, 2 are reserved");
 
   g_array_append_val (opt_ro_bind_fds, fd);
+  fd = -1; /* ownership transferred to GArray */
   return TRUE;
 }
 
