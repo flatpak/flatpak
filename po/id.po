@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2026-04-07 22:24+0200\n"
+"POT-Creation-Date: 2026-04-09 01:07+0200\n"
 "PO-Revision-Date: 2023-04-29 13:15+0700\n"
 "Last-Translator: Kukuh Syafaat <kukuhsyafaat@gnome.org>\n"
 "Language-Team: Indonesian <gnome-l10n-id@googlegroups.com>\n"
@@ -31,7 +31,7 @@ msgstr "Arsitektur tujuan bundel"
 #: app/flatpak-builtins-info.c:55 app/flatpak-builtins-install.c:66
 #: app/flatpak-builtins-list.c:49 app/flatpak-builtins-make-current.c:38
 #: app/flatpak-builtins-remote-info.c:54 app/flatpak-builtins-remote-ls.c:55
-#: app/flatpak-builtins-run.c:108 app/flatpak-builtins-search.c:36
+#: app/flatpak-builtins-run.c:167 app/flatpak-builtins-search.c:36
 #: app/flatpak-builtins-uninstall.c:54 app/flatpak-builtins-update.c:56
 msgid "ARCH"
 msgstr "ARSITEKTUR"
@@ -200,7 +200,7 @@ msgid "Start build in this directory"
 msgstr "Mulai bangun di direktori ini"
 
 #: app/flatpak-builtins-build.c:52 app/flatpak-builtins-build.c:53
-#: app/flatpak-builtins-build-init.c:64 app/flatpak-builtins-run.c:110
+#: app/flatpak-builtins-build-init.c:64 app/flatpak-builtins-run.c:169
 msgid "DIR"
 msgstr "DIR"
 
@@ -212,7 +212,7 @@ msgstr "Di mana mencari direktori sdk tersuai (bawaan ke 'usr')"
 msgid "Use alternative file for the metadata"
 msgstr "Gunakan berkas alternatif untuk metadata"
 
-#: app/flatpak-builtins-build.c:55 app/flatpak-builtins-run.c:127
+#: app/flatpak-builtins-build.c:55 app/flatpak-builtins-run.c:186
 msgid "Kill processes when the parent process dies"
 msgstr "Bunuh proses saat proses induk mati"
 
@@ -220,11 +220,11 @@ msgstr "Bunuh proses saat proses induk mati"
 msgid "Export application homedir directory to build"
 msgstr "Ekspor direktori homedir aplikasi untuk membangun"
 
-#: app/flatpak-builtins-build.c:57 app/flatpak-builtins-run.c:115
+#: app/flatpak-builtins-build.c:57 app/flatpak-builtins-run.c:174
 msgid "Log session bus calls"
 msgstr "Catat log pemanggilan bus sesi"
 
-#: app/flatpak-builtins-build.c:58 app/flatpak-builtins-run.c:116
+#: app/flatpak-builtins-build.c:58 app/flatpak-builtins-run.c:175
 msgid "Log system bus calls"
 msgstr "Catat log pemanggilan bus sistem"
 
@@ -582,7 +582,7 @@ msgstr "Byte Konten Tertulis:"
 msgid "Command to set"
 msgstr "Perintah yang akan diatur"
 
-#: app/flatpak-builtins-build-finish.c:52 app/flatpak-builtins-run.c:109
+#: app/flatpak-builtins-build-finish.c:52 app/flatpak-builtins-run.c:168
 #: app/flatpak-main.c:208
 msgid "COMMAND"
 msgstr "PERINTAH"
@@ -644,7 +644,7 @@ msgstr "Ubah runtime yang digunakan untuk aplikasi"
 
 #: app/flatpak-builtins-build-finish.c:60 app/flatpak-builtins-build-init.c:54
 #: app/flatpak-builtins-list.c:51 app/flatpak-builtins-remote-ls.c:57
-#: app/flatpak-builtins-run.c:113
+#: app/flatpak-builtins-run.c:172
 msgid "RUNTIME"
 msgstr "RUNTIME"
 
@@ -780,7 +780,7 @@ msgid "LOCATION and FILENAME must be specified"
 msgstr "LOKASI dan NAMABERKAS harus ditentukan"
 
 #: app/flatpak-builtins-build-init.c:53 app/flatpak-builtins-info.c:55
-#: app/flatpak-builtins-run.c:108
+#: app/flatpak-builtins-run.c:167
 msgid "Arch to use"
 msgstr "Arsitektur yang digunakan"
 
@@ -800,7 +800,7 @@ msgstr "APP"
 msgid "Specify version for --base"
 msgstr "Tentukan versi untuk --base"
 
-#: app/flatpak-builtins-build-init.c:56 app/flatpak-builtins-run.c:114
+#: app/flatpak-builtins-build-init.c:56 app/flatpak-builtins-run.c:173
 msgid "VERSION"
 msgstr "VERSI"
 
@@ -960,7 +960,7 @@ msgstr "Cabang bawaan yang akan digunakan untuk repositori ini"
 #: app/flatpak-builtins-build-update-repo.c:74
 #: app/flatpak-builtins-remote-add.c:81 app/flatpak-builtins-remote-modify.c:86
 #: app/flatpak-builtins-repo.c:711 app/flatpak-builtins-repo.c:712
-#: app/flatpak-builtins-run.c:111
+#: app/flatpak-builtins-run.c:170
 msgid "BRANCH"
 msgstr "CABANG"
 
@@ -1713,8 +1713,8 @@ msgid "Query file access"
 msgstr "Akses berkas kueri"
 
 #: app/flatpak-builtins-info.c:67 app/flatpak-builtins-install.c:80
-#: app/flatpak-builtins-install.c:86 app/flatpak-builtins-run.c:132
-#: app/flatpak-builtins-run.c:134 app/flatpak-builtins-update.c:67
+#: app/flatpak-builtins-install.c:86 app/flatpak-builtins-run.c:191
+#: app/flatpak-builtins-run.c:193 app/flatpak-builtins-update.c:67
 #: app/flatpak-builtins-update.c:71
 msgid "PATH"
 msgstr "PATH"
@@ -2164,7 +2164,7 @@ msgstr "Arsitektur seperti sekarang"
 msgid "APP BRANCH - Make branch of application current"
 msgstr "APL CABANG - Buat cabang aplikasi saat ini"
 
-#: app/flatpak-builtins-make-current.c:69 app/flatpak-builtins-run.c:209
+#: app/flatpak-builtins-make-current.c:69 app/flatpak-builtins-run.c:268
 msgid "APP must be specified"
 msgstr "APL harus ditentukan"
 
@@ -2302,7 +2302,7 @@ msgstr "Instansi"
 msgid "Show the instance ID"
 msgstr "Tampilkan ID instance"
 
-#: app/flatpak-builtins-ps.c:48 app/flatpak-builtins-run.c:128
+#: app/flatpak-builtins-ps.c:48 app/flatpak-builtins-run.c:187
 msgid "PID"
 msgstr "PID"
 
@@ -3039,135 +3039,135 @@ msgstr "Batasi informasi ke subset dengan awalan ini"
 msgid "LOCATION - Repository maintenance"
 msgstr "LOKASI - Pemeliharaan repositori"
 
-#: app/flatpak-builtins-run.c:109
+#: app/flatpak-builtins-run.c:168
 msgid "Command to run"
 msgstr "Perintah untuk menjalankan"
 
-#: app/flatpak-builtins-run.c:110
+#: app/flatpak-builtins-run.c:169
 msgid "Directory to run the command in"
 msgstr "Direktori untuk menjalankan perintah"
 
-#: app/flatpak-builtins-run.c:111
+#: app/flatpak-builtins-run.c:170
 msgid "Branch to use"
 msgstr "Cabang untuk digunakan"
 
-#: app/flatpak-builtins-run.c:112
+#: app/flatpak-builtins-run.c:171
 msgid "Use development runtime"
 msgstr "Gunakan runtime pengembangan"
 
-#: app/flatpak-builtins-run.c:113
+#: app/flatpak-builtins-run.c:172
 msgid "Runtime to use"
 msgstr "Runtime untuk digunakan"
 
-#: app/flatpak-builtins-run.c:114
+#: app/flatpak-builtins-run.c:173
 msgid "Runtime version to use"
 msgstr "Versi runtime untuk digunakan"
 
-#: app/flatpak-builtins-run.c:117
+#: app/flatpak-builtins-run.c:176
 msgid "Log accessibility bus calls"
 msgstr "Catat log aksesibilitas bus sesi"
 
-#: app/flatpak-builtins-run.c:118
+#: app/flatpak-builtins-run.c:177
 msgid "Don't proxy accessibility bus calls"
 msgstr "Jangan proksi aksesibilitas panggilan bus"
 
-#: app/flatpak-builtins-run.c:119
+#: app/flatpak-builtins-run.c:178
 msgid "Proxy accessibility bus calls (default except when sandboxed)"
 msgstr "Panggilan bus aksesibilitas proksi (bawaan kecuali saat sandbox)"
 
-#: app/flatpak-builtins-run.c:120
+#: app/flatpak-builtins-run.c:179
 msgid "Don't proxy session bus calls"
 msgstr "Jangan proksi panggilan bus sesi"
 
-#: app/flatpak-builtins-run.c:121
+#: app/flatpak-builtins-run.c:180
 msgid "Proxy session bus calls (default except when sandboxed)"
 msgstr "Panggilan bus sesi proksi (bawaan kecuali saat sandbox)"
 
-#: app/flatpak-builtins-run.c:122
+#: app/flatpak-builtins-run.c:181
 msgid "Don't start portals"
 msgstr "Jangan memulai portal"
 
-#: app/flatpak-builtins-run.c:123
+#: app/flatpak-builtins-run.c:182
 msgid "Enable file forwarding"
 msgstr "Aktifkan penerusan berkas"
 
-#: app/flatpak-builtins-run.c:124
+#: app/flatpak-builtins-run.c:183
 msgid "Run specified commit"
 msgstr "Jalankan komit yang ditentukan"
 
-#: app/flatpak-builtins-run.c:125
+#: app/flatpak-builtins-run.c:184
 msgid "Use specified runtime commit"
 msgstr "Gunakan komit runtime yang ditentukan"
 
-#: app/flatpak-builtins-run.c:126
+#: app/flatpak-builtins-run.c:185
 msgid "Run completely sandboxed"
 msgstr "Jalankan sepenuhnya di dalam sandbox"
 
-#: app/flatpak-builtins-run.c:128
+#: app/flatpak-builtins-run.c:187
 msgid "Use PID as parent pid for sharing namespaces"
 msgstr "Gunakan PID sebagai pid induk untuk berbagi ruang nama"
 
-#: app/flatpak-builtins-run.c:129
+#: app/flatpak-builtins-run.c:188
 msgid "Make processes visible in parent namespace"
 msgstr "Jadikan proses terlihat di ruang nama induk"
 
-#: app/flatpak-builtins-run.c:130
+#: app/flatpak-builtins-run.c:189
 msgid "Share process ID namespace with parent"
 msgstr "Bagikan ruang nama ID proses dengan induk"
 
-#: app/flatpak-builtins-run.c:131
+#: app/flatpak-builtins-run.c:190
 msgid "Write the instance ID to the given file descriptor"
 msgstr "Tulis ID instance ke deskriptor berkas yang diberikan"
 
-#: app/flatpak-builtins-run.c:132
+#: app/flatpak-builtins-run.c:191
 msgid "Use PATH instead of the app's /app"
 msgstr "Gunakan PATH alih-alih /app aplikasi"
 
-#: app/flatpak-builtins-run.c:133
+#: app/flatpak-builtins-run.c:192
 #, fuzzy
 msgid "Use FD instead of the app's /app"
 msgstr "Gunakan PATH alih-alih /app aplikasi"
 
-#: app/flatpak-builtins-run.c:133 app/flatpak-builtins-run.c:135
-#: app/flatpak-builtins-run.c:136 app/flatpak-builtins-run.c:137
+#: app/flatpak-builtins-run.c:192 app/flatpak-builtins-run.c:194
+#: app/flatpak-builtins-run.c:195 app/flatpak-builtins-run.c:196
 #: common/flatpak-context.c:1677
 msgid "FD"
 msgstr "FD"
 
-#: app/flatpak-builtins-run.c:134
+#: app/flatpak-builtins-run.c:193
 msgid "Use PATH instead of the runtime's /usr"
 msgstr "Gunakan PATH alih-alih /usr runtime"
 
-#: app/flatpak-builtins-run.c:135
+#: app/flatpak-builtins-run.c:194
 #, fuzzy
 msgid "Use FD instead of the runtime's /usr"
 msgstr "Gunakan PATH alih-alih /usr runtime"
 
-#: app/flatpak-builtins-run.c:136
+#: app/flatpak-builtins-run.c:195
 msgid ""
 "Bind mount the file or directory referred to by FD to its canonicalized path"
 msgstr ""
 
-#: app/flatpak-builtins-run.c:137
+#: app/flatpak-builtins-run.c:196
 msgid ""
 "Bind mount the file or directory referred to by FD read-only to its "
 "canonicalized path"
 msgstr ""
 
-#: app/flatpak-builtins-run.c:168
+#: app/flatpak-builtins-run.c:227
 msgid "APP [ARGUMENT…] - Run an app"
 msgstr "APP ARGUMEN...] - Jalankan aplikasi"
 
-#: app/flatpak-builtins-run.c:319
+#: app/flatpak-builtins-run.c:378
 #, c-format
 msgid "runtime/%s/%s/%s not installed"
 msgstr "runtime/%s/%s/%s tidak terpasang"
 
-#: app/flatpak-builtins-run.c:366
+#: app/flatpak-builtins-run.c:425
 msgid "app-fd and app-path cannot both be used"
 msgstr ""
 
-#: app/flatpak-builtins-run.c:396
+#: app/flatpak-builtins-run.c:455
 msgid "usr-fd and usr-path cannot both be used"
 msgstr ""
 
@@ -5448,73 +5448,73 @@ msgstr "Metadata pada header dan aplikasi tidak konsisten"
 msgid "No systemd user session available, cgroups not available"
 msgstr "Tidak ada sesi pengguna systemd, cgroup tidak tersedia"
 
-#: common/flatpak-run.c:1395
+#: common/flatpak-run.c:1399
 msgid "Unable to allocate instance id"
 msgstr "Tidak dapat mengalokasikan id instance"
 
-#: common/flatpak-run.c:1531 common/flatpak-run.c:1541
+#: common/flatpak-run.c:1535 common/flatpak-run.c:1544
 #, c-format
 msgid "Failed to open flatpak-info file: %s"
 msgstr "Gagal membuka berkas flatpak-info: %s"
 
-#: common/flatpak-run.c:1570
+#: common/flatpak-run.c:1571
 #, c-format
 msgid "Failed to open bwrapinfo.json file: %s"
 msgstr "Gagal membuka berkas bwrapinfo.json: %s"
 
-#: common/flatpak-run.c:1595
+#: common/flatpak-run.c:1592
 #, c-format
 msgid "Failed to write to instance id fd: %s"
 msgstr "Gagal menulis ke id instance fd: %s"
 
-#: common/flatpak-run.c:2006
+#: common/flatpak-run.c:2004
 msgid "Initialize seccomp failed"
 msgstr "Inisialisasi seccomp gagal"
 
-#: common/flatpak-run.c:2045
+#: common/flatpak-run.c:2043
 #, c-format
 msgid "Failed to add architecture to seccomp filter: %s"
 msgstr "Gagal menambahkan arsitektur ke penyaring seccomp: %s"
 
-#: common/flatpak-run.c:2053
+#: common/flatpak-run.c:2051
 #, c-format
 msgid "Failed to add multiarch architecture to seccomp filter: %s"
 msgstr "Gagal menambahkan arsitektur multiarch ke penyaring seccomp: %s"
 
-#: common/flatpak-run.c:2085 common/flatpak-run.c:2102
-#: common/flatpak-run.c:2124
+#: common/flatpak-run.c:2083 common/flatpak-run.c:2100
+#: common/flatpak-run.c:2122
 #, c-format
 msgid "Failed to block syscall %d: %s"
 msgstr "Gagal memblokir syscall %d: %s"
 
-#: common/flatpak-run.c:2157
+#: common/flatpak-run.c:2155
 #, c-format
 msgid "Failed to export bpf: %s"
 msgstr "Gagal mengekspor bpf: %s"
 
-#: common/flatpak-run.c:2485
+#: common/flatpak-run.c:2483
 #, c-format
 msgid "Failed to open ‘%s’"
 msgstr "Gagal membuka ‘%s’"
 
-#: common/flatpak-run.c:2772
+#: common/flatpak-run.c:2770
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "ldconfig gagal, status keluar %d"
 
-#: common/flatpak-run.c:2779
+#: common/flatpak-run.c:2777
 msgid "Can't open generated ld.so.cache"
 msgstr "Tidak dapat membuka ld.so.cache yang dihasilkan"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-run.c:2902
+#: common/flatpak-run.c:2900
 #, c-format
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr ""
 "Menjalankan %s tidak diizinkan oleh kebijakan yang ditetapkan oleh "
 "administrator Anda"
 
-#: common/flatpak-run.c:3063
+#: common/flatpak-run.c:3061
 msgid ""
 "\"flatpak run\" is not intended to be run as `sudo flatpak run`. Use `sudo "
 "-i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell."
@@ -5523,17 +5523,17 @@ msgstr ""
 "run`. Gunakan `sudo -i` atau `su -l` sebagai gantinya dan panggil \"flatpak "
 "run\" dari dalam shell baru."
 
-#: common/flatpak-run.c:3268
+#: common/flatpak-run.c:3266
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "Gagal bermigrasi dari %s: %s"
 
-#: common/flatpak-run.c:3289
+#: common/flatpak-run.c:3287
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr "Gagal memigrasi direktori data aplikasi lama %s ke nama baru %s: %s"
 
-#: common/flatpak-run.c:3298
+#: common/flatpak-run.c:3296
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "Gagal membuat tautan simbolik saat memigrasi %s: %s"
@@ -5834,44 +5834,44 @@ msgstr "Bukan remote OCI"
 msgid "Invalid token"
 msgstr "Token tidak valid"
 
-#: portal/flatpak-portal.c:2223
+#: portal/flatpak-portal.c:2224
 #, c-format
 msgid "No portal support found"
 msgstr "Dukungan portal tidak ditemukan"
 
-#: portal/flatpak-portal.c:2229
+#: portal/flatpak-portal.c:2230
 msgid "Deny"
 msgstr "Tolak"
 
-#: portal/flatpak-portal.c:2231
+#: portal/flatpak-portal.c:2232
 msgid "Update"
 msgstr "Mutakhirkan"
 
-#: portal/flatpak-portal.c:2236
+#: portal/flatpak-portal.c:2237
 #, c-format
 msgid "Update %s?"
 msgstr "Mutakhirkan %s?"
 
-#: portal/flatpak-portal.c:2248
+#: portal/flatpak-portal.c:2249
 msgid "The application wants to update itself."
 msgstr "Aplikasi ingin memutakhirkan dirinya sendiri."
 
-#: portal/flatpak-portal.c:2249
+#: portal/flatpak-portal.c:2250
 msgid "Update access can be changed any time from the privacy settings."
 msgstr "Akses pemutakhiran dapat diubah kapan saja dari pengaturan privasi."
 
-#: portal/flatpak-portal.c:2274
+#: portal/flatpak-portal.c:2275
 #, c-format
 msgid "Application update not allowed"
 msgstr "Pemutakhiran aplikasi tidak diizinkan"
 
-#: portal/flatpak-portal.c:2432
+#: portal/flatpak-portal.c:2433
 #, c-format
 msgid "Self update not supported, new version requires new permissions"
 msgstr ""
 "Pemutakhiran diri sendiri tidak didukung, versi baru memerlukan izin baru"
 
-#: portal/flatpak-portal.c:2614 portal/flatpak-portal.c:2631
+#: portal/flatpak-portal.c:2615 portal/flatpak-portal.c:2632
 #, c-format
 msgid "Update ended unexpectedly"
 msgstr "Pemutakhiran berakhir tidak terduga"
