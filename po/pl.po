@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2026-04-07 22:24+0200\n"
+"POT-Creation-Date: 2026-04-09 00:04+0200\n"
 "PO-Revision-Date: 2025-08-27 18:42+0200\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
@@ -33,7 +33,7 @@ msgstr "Architektura pakietu"
 #: app/flatpak-builtins-info.c:55 app/flatpak-builtins-install.c:67
 #: app/flatpak-builtins-list.c:50 app/flatpak-builtins-make-current.c:38
 #: app/flatpak-builtins-remote-info.c:54 app/flatpak-builtins-remote-ls.c:56
-#: app/flatpak-builtins-run.c:109 app/flatpak-builtins-search.c:37
+#: app/flatpak-builtins-run.c:168 app/flatpak-builtins-search.c:37
 #: app/flatpak-builtins-uninstall.c:54 app/flatpak-builtins-update.c:56
 msgid "ARCH"
 msgstr "ARCHITEKTURA"
@@ -216,7 +216,7 @@ msgid "Start build in this directory"
 msgstr "Rozpoczyna budowanie w tym katalogu"
 
 #: app/flatpak-builtins-build.c:52 app/flatpak-builtins-build.c:53
-#: app/flatpak-builtins-build-init.c:64 app/flatpak-builtins-run.c:111
+#: app/flatpak-builtins-build-init.c:64 app/flatpak-builtins-run.c:170
 msgid "DIR"
 msgstr "KATALOG"
 
@@ -230,7 +230,7 @@ msgstr ""
 msgid "Use alternative file for the metadata"
 msgstr "Używa alternatywnego pliku dla metadanych"
 
-#: app/flatpak-builtins-build.c:55 app/flatpak-builtins-run.c:128
+#: app/flatpak-builtins-build.c:55 app/flatpak-builtins-run.c:187
 msgid "Kill processes when the parent process dies"
 msgstr "Usuwa procesy po usunięciu procesu nadrzędnego"
 
@@ -238,11 +238,11 @@ msgstr "Usuwa procesy po usunięciu procesu nadrzędnego"
 msgid "Export application homedir directory to build"
 msgstr "Eksportuje katalog domowy programu do budowania"
 
-#: app/flatpak-builtins-build.c:57 app/flatpak-builtins-run.c:116
+#: app/flatpak-builtins-build.c:57 app/flatpak-builtins-run.c:175
 msgid "Log session bus calls"
 msgstr "Zapisywanie wywołań magistrali sesji w dzienniku"
 
-#: app/flatpak-builtins-build.c:58 app/flatpak-builtins-run.c:117
+#: app/flatpak-builtins-build.c:58 app/flatpak-builtins-run.c:176
 msgid "Log system bus calls"
 msgstr "Zapisywanie wywołań magistrali systemu w dzienniku"
 
@@ -612,7 +612,7 @@ msgstr "Zapisane bajty treści:"
 msgid "Command to set"
 msgstr "Ustawiane polecenie"
 
-#: app/flatpak-builtins-build-finish.c:52 app/flatpak-builtins-run.c:110
+#: app/flatpak-builtins-build-finish.c:52 app/flatpak-builtins-run.c:169
 #: app/flatpak-main.c:209
 msgid "COMMAND"
 msgstr "POLECENIE"
@@ -674,7 +674,7 @@ msgstr "Zatwierdza środowisko wykonawcze używane dla programu"
 
 #: app/flatpak-builtins-build-finish.c:60 app/flatpak-builtins-build-init.c:54
 #: app/flatpak-builtins-list.c:53 app/flatpak-builtins-remote-ls.c:58
-#: app/flatpak-builtins-run.c:114
+#: app/flatpak-builtins-run.c:173
 msgid "RUNTIME"
 msgstr "ŚRODOWISKO-WYKONAWCZE"
 
@@ -802,7 +802,7 @@ msgid "LOCATION and FILENAME must be specified"
 msgstr "Należy podać POŁOŻENIE i NAZWĘ-PLIKU"
 
 #: app/flatpak-builtins-build-init.c:53 app/flatpak-builtins-info.c:55
-#: app/flatpak-builtins-run.c:109
+#: app/flatpak-builtins-run.c:168
 msgid "Arch to use"
 msgstr "Używana architektura"
 
@@ -822,7 +822,7 @@ msgstr "PROGRAM"
 msgid "Specify version for --base"
 msgstr "Podaje wersję dla opcji --base"
 
-#: app/flatpak-builtins-build-init.c:56 app/flatpak-builtins-run.c:115
+#: app/flatpak-builtins-build-init.c:56 app/flatpak-builtins-run.c:174
 msgid "VERSION"
 msgstr "WERSJA"
 
@@ -987,7 +987,7 @@ msgstr "Domyślna gałąź używana dla tego repozytorium"
 #: app/flatpak-builtins-build-update-repo.c:74
 #: app/flatpak-builtins-remote-add.c:82 app/flatpak-builtins-remote-modify.c:87
 #: app/flatpak-builtins-repo.c:713 app/flatpak-builtins-repo.c:714
-#: app/flatpak-builtins-run.c:112
+#: app/flatpak-builtins-run.c:171
 msgid "BRANCH"
 msgstr "GAŁĄŹ"
 
@@ -1773,7 +1773,7 @@ msgstr "Odpytuje dostęp do plików"
 
 #: app/flatpak-builtins-info.c:67 app/flatpak-builtins-install.c:82
 #: app/flatpak-builtins-install.c:88 app/flatpak-builtins-preinstall.c:68
-#: app/flatpak-builtins-run.c:133 app/flatpak-builtins-run.c:135
+#: app/flatpak-builtins-run.c:192 app/flatpak-builtins-run.c:194
 #: app/flatpak-builtins-update.c:67 app/flatpak-builtins-update.c:71
 msgid "PATH"
 msgstr "ŚCIEŻKA"
@@ -2244,7 +2244,7 @@ msgstr "Architektura ustawiania na bieżącą"
 msgid "APP BRANCH - Make branch of application current"
 msgstr "PROGRAM GAŁĄŹ — ustawia gałąź programu jako bieżącą"
 
-#: app/flatpak-builtins-make-current.c:69 app/flatpak-builtins-run.c:211
+#: app/flatpak-builtins-make-current.c:69 app/flatpak-builtins-run.c:270
 msgid "APP must be specified"
 msgstr "Należy podać PROGRAM"
 
@@ -2397,7 +2397,7 @@ msgstr "Wystąpienie"
 msgid "Show the instance ID"
 msgstr "Wyświetla identyfikator wystąpienia"
 
-#: app/flatpak-builtins-ps.c:50 app/flatpak-builtins-run.c:129
+#: app/flatpak-builtins-ps.c:50 app/flatpak-builtins-run.c:188
 msgid "PID"
 msgstr "PID"
 
@@ -3143,143 +3143,143 @@ msgstr "Ogranicza informacje do podzbiorów o tym przedrostku"
 msgid "LOCATION - Repository maintenance"
 msgstr "POŁOŻENIE — zarządzanie repozytorium"
 
-#: app/flatpak-builtins-run.c:110
+#: app/flatpak-builtins-run.c:169
 msgid "Command to run"
 msgstr "Wykonywane polecenie"
 
-#: app/flatpak-builtins-run.c:111
+#: app/flatpak-builtins-run.c:170
 msgid "Directory to run the command in"
 msgstr "Katalog, w którym wykonać polecenie"
 
-#: app/flatpak-builtins-run.c:112
+#: app/flatpak-builtins-run.c:171
 msgid "Branch to use"
 msgstr "Używana gałąź"
 
-#: app/flatpak-builtins-run.c:113
+#: app/flatpak-builtins-run.c:172
 msgid "Use development runtime"
 msgstr "Używa programistycznego środowiska wykonawczego"
 
-#: app/flatpak-builtins-run.c:114
+#: app/flatpak-builtins-run.c:173
 msgid "Runtime to use"
 msgstr "Używane środowisko wykonawcze"
 
-#: app/flatpak-builtins-run.c:115
+#: app/flatpak-builtins-run.c:174
 msgid "Runtime version to use"
 msgstr "Używana wersja środowiska wykonawczego"
 
-#: app/flatpak-builtins-run.c:118
+#: app/flatpak-builtins-run.c:177
 msgid "Log accessibility bus calls"
 msgstr "Zapisywanie wywołań magistrali ułatwień dostępu w dzienniku"
 
-#: app/flatpak-builtins-run.c:119
+#: app/flatpak-builtins-run.c:178
 msgid "Don't proxy accessibility bus calls"
 msgstr "Bez pośredniczenia wywołań magistrali ułatwień dostępu"
 
-#: app/flatpak-builtins-run.c:120
+#: app/flatpak-builtins-run.c:179
 msgid "Proxy accessibility bus calls (default except when sandboxed)"
 msgstr ""
 "Pośredniczy wywołania magistrali ułatwień dostępu (domyślne, chyba że "
 "w piaskownicy)"
 
-#: app/flatpak-builtins-run.c:121
+#: app/flatpak-builtins-run.c:180
 msgid "Don't proxy session bus calls"
 msgstr "Bez pośredniczenia wywołań magistrali sesji"
 
-#: app/flatpak-builtins-run.c:122
+#: app/flatpak-builtins-run.c:181
 msgid "Proxy session bus calls (default except when sandboxed)"
 msgstr ""
 "Pośredniczy wywołania magistrali sesji (domyślne, chyba że w piaskownicy)"
 
-#: app/flatpak-builtins-run.c:123
+#: app/flatpak-builtins-run.c:182
 msgid "Don't start portals"
 msgstr "Bez uruchamiania portali"
 
-#: app/flatpak-builtins-run.c:124
+#: app/flatpak-builtins-run.c:183
 msgid "Enable file forwarding"
 msgstr "Włącza przekazywanie plików"
 
-#: app/flatpak-builtins-run.c:125
+#: app/flatpak-builtins-run.c:184
 msgid "Run specified commit"
 msgstr "Wykonuje podane zatwierdzenie"
 
-#: app/flatpak-builtins-run.c:126
+#: app/flatpak-builtins-run.c:185
 msgid "Use specified runtime commit"
 msgstr "Używa podanego zatwierdzenia środowiska wykonawczego"
 
-#: app/flatpak-builtins-run.c:127
+#: app/flatpak-builtins-run.c:186
 msgid "Run completely sandboxed"
 msgstr "Wykonuje całkowicie w piaskownicy"
 
-#: app/flatpak-builtins-run.c:129
+#: app/flatpak-builtins-run.c:188
 msgid "Use PID as parent pid for sharing namespaces"
 msgstr "Używa PID jako nadrzędny PID do współdzielenia przestrzeni nazw"
 
-#: app/flatpak-builtins-run.c:130
+#: app/flatpak-builtins-run.c:189
 msgid "Make processes visible in parent namespace"
 msgstr "Sprawia, że procesy są widoczne w nadrzędnej przestrzeni nazw"
 
-#: app/flatpak-builtins-run.c:131
+#: app/flatpak-builtins-run.c:190
 msgid "Share process ID namespace with parent"
 msgstr "Współdzieli przestrzeń nazw identyfikatora procesu z nadrzędnym"
 
-#: app/flatpak-builtins-run.c:132
+#: app/flatpak-builtins-run.c:191
 msgid "Write the instance ID to the given file descriptor"
 msgstr "Zapisuje identyfikator wystąpienia do podanego deskryptora pliku"
 
-#: app/flatpak-builtins-run.c:133
+#: app/flatpak-builtins-run.c:192
 msgid "Use PATH instead of the app's /app"
 msgstr "Używa ŚCIEŻKI zamiast /app programu"
 
-#: app/flatpak-builtins-run.c:134
+#: app/flatpak-builtins-run.c:193
 #, fuzzy
 msgid "Use FD instead of the app's /app"
 msgstr "Używa ŚCIEŻKI zamiast /app programu"
 
-#: app/flatpak-builtins-run.c:134 app/flatpak-builtins-run.c:136
-#: app/flatpak-builtins-run.c:138 app/flatpak-builtins-run.c:139
+#: app/flatpak-builtins-run.c:193 app/flatpak-builtins-run.c:195
+#: app/flatpak-builtins-run.c:197 app/flatpak-builtins-run.c:198
 #: common/flatpak-context.c:2731
 msgid "FD"
 msgstr "FD"
 
-#: app/flatpak-builtins-run.c:135
+#: app/flatpak-builtins-run.c:194
 msgid "Use PATH instead of the runtime's /usr"
 msgstr "Używa ŚCIEŻKI zamiast /usr środowiska wykonawczego"
 
-#: app/flatpak-builtins-run.c:136
+#: app/flatpak-builtins-run.c:195
 #, fuzzy
 msgid "Use FD instead of the runtime's /usr"
 msgstr "Używa ŚCIEŻKI zamiast /usr środowiska wykonawczego"
 
-#: app/flatpak-builtins-run.c:137
+#: app/flatpak-builtins-run.c:196
 #, fuzzy
 msgid "Clear all outside environment variables"
 msgstr "Ustawia zmienną środowiskową"
 
-#: app/flatpak-builtins-run.c:138
+#: app/flatpak-builtins-run.c:197
 msgid ""
 "Bind mount the file or directory referred to by FD to its canonicalized path"
 msgstr ""
 
-#: app/flatpak-builtins-run.c:139
+#: app/flatpak-builtins-run.c:198
 msgid ""
 "Bind mount the file or directory referred to by FD read-only to its "
 "canonicalized path"
 msgstr ""
 
-#: app/flatpak-builtins-run.c:170
+#: app/flatpak-builtins-run.c:229
 msgid "APP [ARGUMENT…] - Run an app"
 msgstr "PROGRAM [PARAMETR…] — uruchamia program"
 
-#: app/flatpak-builtins-run.c:321
+#: app/flatpak-builtins-run.c:380
 #, c-format
 msgid "runtime/%s/%s/%s not installed"
 msgstr "Nie zainstalowano środowiska wykonawczego/%s/%s/%s"
 
-#: app/flatpak-builtins-run.c:370
+#: app/flatpak-builtins-run.c:429
 msgid "app-fd and app-path cannot both be used"
 msgstr ""
 
-#: app/flatpak-builtins-run.c:400
+#: app/flatpak-builtins-run.c:459
 msgid "usr-fd and usr-path cannot both be used"
 msgstr ""
 
@@ -5689,58 +5689,58 @@ msgstr "Metadane w nagłówku i programie są niespójne"
 msgid "No systemd user session available, cgroups not available"
 msgstr "Brak dostępnej sesji użytkownika systemd, cgroups nie są dostępne"
 
-#: common/flatpak-run.c:1434
+#: common/flatpak-run.c:1438
 msgid "Unable to allocate instance id"
 msgstr "Nie można przydzielić identyfikatora wystąpienia"
 
-#: common/flatpak-run.c:1570 common/flatpak-run.c:1580
+#: common/flatpak-run.c:1574 common/flatpak-run.c:1583
 #, c-format
 msgid "Failed to open flatpak-info file: %s"
 msgstr "Otwarcie pliku „flatpak-info” się nie powiodło: %s"
 
-#: common/flatpak-run.c:1609
+#: common/flatpak-run.c:1610
 #, c-format
 msgid "Failed to open bwrapinfo.json file: %s"
 msgstr "Otwarcie pliku „bwrapinfo.json” się nie powiodło: %s"
 
-#: common/flatpak-run.c:1634
+#: common/flatpak-run.c:1631
 #, c-format
 msgid "Failed to write to instance id fd: %s"
 msgstr "Zapisanie do FD identyfikatora wystąpienia się nie powiodło: %s"
 
-#: common/flatpak-run.c:2033
+#: common/flatpak-run.c:2031
 msgid "Initialize seccomp failed"
 msgstr "Inicjacja seccomp się nie powiodła"
 
-#: common/flatpak-run.c:2072
+#: common/flatpak-run.c:2070
 #, c-format
 msgid "Failed to add architecture to seccomp filter: %s"
 msgstr "Dodanie architektury do filtru seccomp się nie powiodło: %s"
 
-#: common/flatpak-run.c:2080
+#: common/flatpak-run.c:2078
 #, c-format
 msgid "Failed to add multiarch architecture to seccomp filter: %s"
 msgstr ""
 "Dodanie wieloarchitekturowej architektury do filtru seccomp się nie "
 "powiodło: %s"
 
-#: common/flatpak-run.c:2112 common/flatpak-run.c:2129
-#: common/flatpak-run.c:2151
+#: common/flatpak-run.c:2110 common/flatpak-run.c:2127
+#: common/flatpak-run.c:2149
 #, c-format
 msgid "Failed to block syscall %d: %s"
 msgstr "Zablokowanie wywołania systemowego %d się nie powiodło: %s"
 
-#: common/flatpak-run.c:2184
+#: common/flatpak-run.c:2182
 #, c-format
 msgid "Failed to export bpf: %s"
 msgstr "Wyeksportowanie bpf się nie powiodło: %s"
 
-#: common/flatpak-run.c:2515
+#: common/flatpak-run.c:2513
 #, c-format
 msgid "Failed to open ‘%s’"
 msgstr "Otwarcie „%s” się nie powiodło"
 
-#: common/flatpak-run.c:2525
+#: common/flatpak-run.c:2523
 #, c-format
 msgid ""
 "Directory forwarding needs version 4 of the document portal (have version %d)"
@@ -5748,24 +5748,24 @@ msgstr ""
 "Przekazywanie katalogów wymaga 4. wersji portalu dokumentów (obecna wersja "
 "to %d)"
 
-#: common/flatpak-run.c:2843
+#: common/flatpak-run.c:2841
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "ldconfig się nie powiodło, stan wyjścia %d"
 
-#: common/flatpak-run.c:2850
+#: common/flatpak-run.c:2848
 msgid "Can't open generated ld.so.cache"
 msgstr "Nie można otworzyć utworzonego ld.so.cache"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-run.c:2973
+#: common/flatpak-run.c:2971
 #, c-format
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr ""
 "Uruchomienie programu %s jest zabronione przez zasady ustawione przez "
 "administratora"
 
-#: common/flatpak-run.c:3166
+#: common/flatpak-run.c:3164
 msgid ""
 "\"flatpak run\" is not intended to be run as `sudo flatpak run`. Use `sudo "
 "-i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell."
@@ -5774,19 +5774,19 @@ msgstr ""
 "użyć „sudo -i” lub „su -l” zamiast tego i wywołać „flatpak run” z nowej "
 "powłoki."
 
-#: common/flatpak-run.c:3377
+#: common/flatpak-run.c:3375
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "Migracja z %s się nie powiodła: %s"
 
-#: common/flatpak-run.c:3398
+#: common/flatpak-run.c:3396
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr ""
 "Migracja poprzedniego katalogu danych programu %s do nowej nazwy %s się nie "
 "powiodła: %s"
 
-#: common/flatpak-run.c:3407
+#: common/flatpak-run.c:3405
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr ""
@@ -6101,47 +6101,47 @@ msgstr "Nie jest repozytorium OCI"
 msgid "Invalid token"
 msgstr "Nieprawidłowy token"
 
-#: portal/flatpak-portal.c:2259
+#: portal/flatpak-portal.c:2260
 #, c-format
 msgid "No portal support found"
 msgstr "Nie odnaleziono obsługi portali"
 
-#: portal/flatpak-portal.c:2265
+#: portal/flatpak-portal.c:2266
 msgid "Deny"
 msgstr "Odmów"
 
-#: portal/flatpak-portal.c:2267
+#: portal/flatpak-portal.c:2268
 msgid "Update"
 msgstr "Zaktualizuj"
 
-#: portal/flatpak-portal.c:2272
+#: portal/flatpak-portal.c:2273
 #, c-format
 msgid "Update %s?"
 msgstr "Zaktualizować %s?"
 
-#: portal/flatpak-portal.c:2284
+#: portal/flatpak-portal.c:2285
 msgid "The application wants to update itself."
 msgstr "Program chce się zaktualizować."
 
-#: portal/flatpak-portal.c:2285
+#: portal/flatpak-portal.c:2286
 msgid "Update access can be changed any time from the privacy settings."
 msgstr ""
 "Dostęp do aktualizacji można zmienić w każdej chwili w ustawieniach "
 "prywatności."
 
-#: portal/flatpak-portal.c:2310
+#: portal/flatpak-portal.c:2311
 #, c-format
 msgid "Application update not allowed"
 msgstr "Aktualizacja programu jest zabroniona"
 
-#: portal/flatpak-portal.c:2468
+#: portal/flatpak-portal.c:2469
 #, c-format
 msgid "Self update not supported, new version requires new permissions"
 msgstr ""
 "Samodzielna aktualizacja nie jest obsługiwana, nowa wersja wymaga nowych "
 "uprawnień"
 
-#: portal/flatpak-portal.c:2651 portal/flatpak-portal.c:2669
+#: portal/flatpak-portal.c:2652 portal/flatpak-portal.c:2670
 #, c-format
 msgid "Update ended unexpectedly"
 msgstr "Aktualizacja została nieoczekiwanie zakończona"
