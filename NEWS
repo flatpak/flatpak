@@ -1,8 +1,15 @@
 Changes in 1.16.5
 ~~~~~~~~~~~~~~~~~~
-Released: not yet
+Released: 2026-04-09
 
-...
+Bug fixes:
+
+* Fix regressions caused by the sandbox escape security fix, which impact some
+  browsers, browser-based apps and Steam (#6577, #6569, #6576, #6574)
+
+Enhancements:
+
+* Expand test coverage of flatpak-run features used by flatpak-portal (#6573)
 
 Changes in 1.16.4
 ~~~~~~~~~~~~~~~~~~
