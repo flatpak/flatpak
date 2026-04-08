@@ -2520,8 +2520,8 @@ flatpak_parse_fd (const char  *fd_string,
 
   fd = (int) parsed;
 
-  if (!glnx_fstat (fd, &stbuf, error))
-    return -1;
+  if (!glnx_fstat (fd, &stbuf, NULL))
+    return glnx_fd_throw (error, "Not an open file descriptor: %d", fd);
 
   return fd;
 }
