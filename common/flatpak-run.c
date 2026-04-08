@@ -3444,6 +3444,7 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
     }
   else if (custom_app_fd == FLATPAK_RUN_APP_DEPLOY_APP_EMPTY)
     {
+      original_app_target_path = "/run/parent/app";
       app_fd = -1;
       app_files = NULL;
     }
