@@ -1186,6 +1186,7 @@ handle_spawn (PortalFlatpak         *object,
 
       g_ptr_array_add (flatpak_argv, g_strdup_printf ("--instance-id-fd=%d", pipe_fds[1]));
       child_setup_data.instance_id_fd = pipe_fds[1];
+      max_fd = MAX(max_fd, pipe_fds[1]);
     }
 
   if (devel)
