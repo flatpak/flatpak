@@ -191,7 +191,7 @@ static GOptionEntry options[] = {
   { "app-path", 0, 0, G_OPTION_ARG_FILENAME, &opt_app_path, N_("Use PATH instead of the app's /app"), N_("PATH") },
   { "app-fd", 0, 0, G_OPTION_ARG_CALLBACK, &opt_app_fd_cb, N_("Use FD instead of the app's /app"), N_("FD") },
   { "usr-path", 0, 0, G_OPTION_ARG_FILENAME, &opt_usr_path, N_("Use PATH instead of the runtime's /usr"), N_("PATH") },
-  { "usr-fd", 0, 0, G_OPTION_ARG_INT, &opt_usr_fd_cb, N_("Use FD instead of the runtime's /usr"), N_("FD") },
+  { "usr-fd", 0, 0, G_OPTION_ARG_CALLBACK, &opt_usr_fd_cb, N_("Use FD instead of the runtime's /usr"), N_("FD") },
   { "bind-fd", 0, 0, G_OPTION_ARG_CALLBACK | G_OPTION_FLAG_HIDDEN, &option_bind_fd_cb, N_("Bind mount the file or directory referred to by FD to its canonicalized path"), N_("FD") },
   { "ro-bind-fd", 0, 0, G_OPTION_ARG_CALLBACK | G_OPTION_FLAG_HIDDEN, &option_ro_bind_fd_cb, N_("Bind mount the file or directory referred to by FD read-only to its canonicalized path"), N_("FD") },
   { NULL }
