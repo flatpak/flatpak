@@ -3312,7 +3312,7 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
       runtime_fd = custom_runtime_fd;
       runtime_files = custom_runtime_files;
     }
-  else if (custom_app_fd == FLATPAK_RUN_APP_DEPLOY_USR_ORIGINAL)
+  else if (custom_runtime_fd == FLATPAK_RUN_APP_DEPLOY_USR_ORIGINAL)
     {
       original_runtime_target_path = "/usr";
       runtime_fd = original_runtime_fd;
