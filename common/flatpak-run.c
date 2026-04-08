@@ -3588,7 +3588,7 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
                               NULL);
     }
 
-  if (metakey != NULL &&
+  if (metakey != NULL && original_app_target_path != NULL &&
       !flatpak_run_add_extension_args (bwrap, metakey, app_ref,
                                        use_ld_so_cache, original_app_target_path,
                                        &app_extensions, &app_ld_path,
