@@ -3585,6 +3585,38 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
       flatpak_bwrap_add_arg_printf (bwrap, "/run/user/%d", getuid ());
     }
 
+  if (!flatpak_run_add_dconf_args (bwrap, app_id, metakey, error))
+    return FALSE;
+
+  if (!sandboxed && !(flags & FLATPAK_RUN_FLAG_NO_DOCUMENTS_PORTAL))
+    add_document_portal_args (bwrap, app_id, &doc_mount_path);
+
+  if (!flatpak_run_add_environment_args (bwrap, app_info_path, flags,
+                                         app_id, app_context, app_id_dir, previous_app_id_dirs,
+                                         per_app_dir_lock_fd, instance_id,
+                                         &exports, cancellable, error))
+    return FALSE;
+
+  if (per_app_dir_lock_path != NULL)
+    {
+      static const char lock[] = "/run/flatpak/per-app-dirs-ref";
+
+      flatpak_bwrap_add_args (bwrap,
+                              "--ro-bind", per_app_dir_lock_path, lock,
+                              "--lock-file", lock,
+                              NULL);
+    }
+
+  flatpak_run_add_socket_args_late (bwrap, app_context->shares);
+  add_font_path_args (bwrap);
+  add_icon_path_args (bwrap);
+
+  flatpak_bwrap_add_args (bwrap,
+                          /* Not in base, because we don't want this for flatpak build */
+                          "--symlink", "/app/lib/debug/source", "/run/build",
+                          "--symlink", "/usr/lib/debug/source", "/run/build-runtime",
+                          NULL);
+
   for (i = 0; bind_fds && i < bind_fds->len; i++)
     {
       int fd = g_array_index (bind_fds, int, i);
@@ -3618,38 +3650,6 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
                                                error))
         return FALSE;
     }
-
-  if (!flatpak_run_add_dconf_args (bwrap, app_id, metakey, error))
-    return FALSE;
-
-  if (!sandboxed && !(flags & FLATPAK_RUN_FLAG_NO_DOCUMENTS_PORTAL))
-    add_document_portal_args (bwrap, app_id, &doc_mount_path);
-
-  if (!flatpak_run_add_environment_args (bwrap, app_info_path, flags,
-                                         app_id, app_context, app_id_dir, previous_app_id_dirs,
-                                         per_app_dir_lock_fd, instance_id,
-                                         &exports, cancellable, error))
-    return FALSE;
-
-  if (per_app_dir_lock_path != NULL)
-    {
-      static const char lock[] = "/run/flatpak/per-app-dirs-ref";
-
-      flatpak_bwrap_add_args (bwrap,
-                              "--ro-bind", per_app_dir_lock_path, lock,
-                              "--lock-file", lock,
-                              NULL);
-    }
-
-  flatpak_run_add_socket_args_late (bwrap, app_context->shares);
-  add_font_path_args (bwrap);
-  add_icon_path_args (bwrap);
-
-  flatpak_bwrap_add_args (bwrap,
-                          /* Not in base, because we don't want this for flatpak build */
-                          "--symlink", "/app/lib/debug/source", "/run/build",
-                          "--symlink", "/usr/lib/debug/source", "/run/build-runtime",
-                          NULL);
 
   if (cwd)
     flatpak_bwrap_add_args (bwrap, "--chdir", cwd, NULL);
