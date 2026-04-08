@@ -3696,40 +3696,6 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
       flatpak_bwrap_add_arg_printf (bwrap, "/run/user/%d", getuid ());
     }
 
-  for (i = 0; bind_fds && i < bind_fds->len; i++)
-    {
-      int fd = g_array_index (bind_fds, int, i);
-      g_autofree char *path = NULL;
-
-      /* We get the path the fd refers to, to determine to mount point
-       * destination inside the sandbox */
-      path = get_path_for_fd (fd, error);
-      if (!path)
-        return FALSE;
-
-      if (!flatpak_bwrap_add_args_data_fd_dup (bwrap,
-                                               "--bind-fd", fd, path,
-                                               error))
-        return FALSE;
-    }
-
-  for (i = 0; ro_bind_fds && i < ro_bind_fds->len; i++)
-    {
-      int fd = g_array_index (ro_bind_fds, int, i);
-      g_autofree char *path = NULL;
-
-      /* We get the path the fd refers to, to determine to mount point
-       * destination inside the sandbox */
-      path = get_path_for_fd (fd, error);
-      if (!path)
-        return FALSE;
-
-      if (!flatpak_bwrap_add_args_data_fd_dup (bwrap,
-                                               "--ro-bind-fd", fd, path,
-                                               error))
-        return FALSE;
-    }
-
   if (!flatpak_run_add_dconf_args (bwrap, app_id, metakey, error))
     return FALSE;
 
@@ -3763,6 +3729,40 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
                           "--symlink", "/app/lib/debug/source", "/run/build",
                           "--symlink", "/usr/lib/debug/source", "/run/build-runtime",
                           NULL);
+
+  for (i = 0; bind_fds && i < bind_fds->len; i++)
+    {
+      int fd = g_array_index (bind_fds, int, i);
+      g_autofree char *path = NULL;
+
+      /* We get the path the fd refers to, to determine to mount point
+       * destination inside the sandbox */
+      path = get_path_for_fd (fd, error);
+      if (!path)
+        return FALSE;
+
+      if (!flatpak_bwrap_add_args_data_fd_dup (bwrap,
+                                               "--bind-fd", fd, path,
+                                               error))
+        return FALSE;
+    }
+
+  for (i = 0; ro_bind_fds && i < ro_bind_fds->len; i++)
+    {
+      int fd = g_array_index (ro_bind_fds, int, i);
+      g_autofree char *path = NULL;
+
+      /* We get the path the fd refers to, to determine to mount point
+       * destination inside the sandbox */
+      path = get_path_for_fd (fd, error);
+      if (!path)
+        return FALSE;
+
+      if (!flatpak_bwrap_add_args_data_fd_dup (bwrap,
+                                               "--ro-bind-fd", fd, path,
+                                               error))
+        return FALSE;
+    }
 
   if (cwd)
     flatpak_bwrap_add_args (bwrap, "--chdir", cwd, NULL);
