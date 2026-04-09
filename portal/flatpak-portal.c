@@ -1299,12 +1299,9 @@ handle_spawn (PortalFlatpak         *object,
             }
           else
             {
-              g_debug ("Invalid sandbox expose fd: %s", error->message);
-              g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
-                                                     G_DBUS_ERROR_INVALID_ARGS,
-                                                     "No valid file descriptor for handle %d",
-                                                     handle);
-              return G_DBUS_METHOD_INVOCATION_HANDLED;
+              g_info ("unable to validate sandbox-expose-fd %d, ignoring: %s",
+                      fds[handle], error->message);
+              g_clear_error (&error);
             }
         }
     }
@@ -1334,12 +1331,9 @@ handle_spawn (PortalFlatpak         *object,
             }
           else
             {
-              g_debug ("Invalid sandbox expose ro fd: %s", error->message);
-              g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
-                                                     G_DBUS_ERROR_INVALID_ARGS,
-                                                     "No file descriptor for handle %d",
-                                                     handle);
-              return G_DBUS_METHOD_INVOCATION_HANDLED;
+              g_info ("unable to validate sandbox-expose-ro-fd %d, ignoring: %s",
+                      fds[handle], error->message);
+              g_clear_error (&error);
             }
         }
     }
