@@ -739,7 +739,11 @@ handle_spawn (PortalFlatpak         *object,
       g_return_val_if_fail (fds_len >= 0, FALSE);
 
       for (i = 0; i < (gsize) fds_len; i++)
-        g_debug ("handle %zu: fd %d", i, fds[i]);
+        {
+          g_autofree char *desc = flatpak_describe_fd (fds[i]);
+
+          g_debug ("handle %zu: fd %d: %s", i, fds[i], desc);
+        }
 
       g_debug (".");
     }
@@ -907,7 +911,9 @@ handle_spawn (PortalFlatpak         *object,
         }
 
       handle_fd = fds[handle];
-      g_debug ("caller-specified fd mapping: portal:%d -> flatpak:%d", handle_fd, dest_fd);
+
+      g_autofree char *desc = flatpak_describe_fd (handle_fd);
+      g_debug ("caller-specified fd mapping: portal:%d -> flatpak:%d (%s)", handle_fd, dest_fd, desc);
 
       fd_map_entry.to = dest_fd;
       fd_map_entry.from = handle_fd;
@@ -1168,7 +1174,9 @@ handle_spawn (PortalFlatpak         *object,
       g_array_append_val (owned_fds, env_fd);
 
       remapped_fd = fd_map_remap_fd (fd_map, &max_fd, env_fd);
-      g_debug ("Environment from fd: portal:%d -> flatpak:%d", env_fd, remapped_fd);
+
+      g_autofree char *desc = flatpak_describe_fd (env_fd);
+      g_debug ("Environment from fd: portal:%d -> flatpak:%d (%s)", env_fd, remapped_fd, desc);
 
       g_ptr_array_add (flatpak_argv,
                        g_strdup_printf ("--env-fd=%d", remapped_fd));
@@ -1360,7 +1368,9 @@ handle_spawn (PortalFlatpak         *object,
           if (handle >= 0 && handle < fds_len &&
               validate_opath_fd (fds[handle], TRUE, &error))
             {
-              g_debug ("sandbox-expose-fd: portal:%d -> flatpak:tbd", fds[handle]);
+              g_autofree char *desc = flatpak_describe_fd (fds[handle]);
+
+              g_debug ("sandbox-expose-fd: portal:%d -> flatpak:tbd (%s)", fds[handle], desc);
               g_array_append_val (expose_fds, fds[handle]);
             }
           else
@@ -1387,7 +1397,9 @@ handle_spawn (PortalFlatpak         *object,
           if (handle >= 0 && handle < fds_len &&
               validate_opath_fd (fds[handle], FALSE, &error))
             {
-              g_debug ("sandbox-expose-fd-ro: portal:%d -> flatpak:tbd", fds[handle]);
+              g_autofree char *desc = flatpak_describe_fd (fds[handle]);
+
+              g_debug ("sandbox-expose-fd-ro: portal:%d -> flatpak:tbd (%s)", fds[handle], desc);
               g_array_append_val (expose_fds_ro, fds[handle]);
             }
           else
@@ -1453,7 +1465,9 @@ handle_spawn (PortalFlatpak         *object,
       g_assert (fds != NULL);   /* otherwise fds_len would be 0 */
 
       remapped_fd = fd_map_remap_fd (fd_map, &max_fd, fds[handle]);
-      g_debug ("app-fd: portal:%d -> flatpak:%d", fds[handle], remapped_fd);
+
+      g_autofree char *desc = flatpak_describe_fd (fds[handle]);
+      g_debug ("app-fd: portal:%d -> flatpak:%d (%s)", fds[handle], remapped_fd, desc);
 
       g_ptr_array_add (flatpak_argv, g_strdup_printf ("--app-fd=%d",
                                                       remapped_fd));
@@ -1481,7 +1495,8 @@ handle_spawn (PortalFlatpak         *object,
       g_assert (fds != NULL);   /* otherwise fds_len would be 0 */
 
       remapped_fd = fd_map_remap_fd (fd_map, &max_fd, fds[handle]);
-      g_debug ("usr-fd: portal:%d -> flatpak:%d", fds[handle], remapped_fd);
+      g_autofree char *desc = flatpak_describe_fd (fds[handle]);
+      g_debug ("usr-fd: portal:%d -> flatpak:%d (%s)", fds[handle], remapped_fd, desc);
 
       g_ptr_array_add (flatpak_argv, g_strdup_printf ("--usr-fd=%d",
                                                       remapped_fd));
