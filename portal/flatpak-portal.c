@@ -38,6 +38,7 @@
 #include <gio/gunixinputstream.h>
 #include <gio/gunixoutputstream.h>
 #include <gio/gdesktopappinfo.h>
+#include "describe-fd.h"
 #include "flatpak-portal-dbus.h"
 #include "flatpak-portal.h"
 #include "flatpak-dir-private.h"
