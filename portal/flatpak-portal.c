@@ -662,8 +662,6 @@ handle_spawn (PortalFlatpak         *object,
   PidData *pid_data;
   InstanceIdReadData *instance_id_read_data = NULL;
   gsize i, j, n_fds, n_envs;
-  const gint *fds = NULL;
-  gint fds_len = 0;
   g_autoptr(GArray) fd_map = NULL;
   g_auto(GStrv) env = NULL;
   gint32 max_fd;
@@ -710,9 +708,6 @@ handle_spawn (PortalFlatpak         *object,
 
   child_setup_data.instance_id_fd = -1;
   child_setup_data.env_fd = -1;
-
-  if (fd_list != NULL)
-    fds = g_unix_fd_list_peek_fds (fd_list, &fds_len);
 
   app_info = g_object_get_data (G_OBJECT (invocation), "app-info");
   g_assert (app_info != NULL);
@@ -853,7 +848,7 @@ handle_spawn (PortalFlatpak         *object,
   g_info ("Running spawn command %s", arg_argv[0]);
 
   n_fds = 0;
-  if (fds != NULL)
+  if (fd_list != NULL)
     n_fds = g_variant_n_children (arg_fds);
 
   fd_map = g_array_sized_new (FALSE, FALSE, sizeof (FdMapEntry), n_fds);
