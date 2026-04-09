@@ -3010,42 +3010,6 @@ open_namespace_fd_if_needed (const char *path,
   return -1;
 }
 
-static char *
-get_path_for_fd (int        fd,
-                 GError   **error)
-{
-  g_autofree char *proc_path = NULL;
-  g_autofree char *path = NULL;
-
-  proc_path = g_strdup_printf ("/proc/self/fd/%d", fd);
-  path = glnx_readlinkat_malloc (AT_FDCWD, proc_path, NULL, error);
-  if (path == NULL)
-    return NULL;
-
-  /* All normal paths start with /, but some weird things
-     don't, such as socket:[27345] or anon_inode:[eventfd].
-     We don't support any of these */
-  if (path[0] != '/')
-    {
-      return glnx_null_throw (error, "%s resolves to non-absolute path %s",
-                              proc_path, path);
-    }
-
-  /* File descriptors to actually deleted files have " (deleted)"
-     appended to them. This also happens to some fake fd types
-     like shmem which are "/<name> (deleted)". All such
-     files are considered invalid. Unfortunately this also
-     matches files with filenames that actually end in " (deleted)",
-     but there is not much to do about this. */
-  if (g_str_has_suffix (path, " (deleted)"))
-    {
-      return glnx_null_throw (error, "%s resolves to deleted path %s",
-                              proc_path, path);
-    }
-
-  return g_steal_pointer (&path);
-}
-
 FlatpakContextShares
 flatpak_run_compute_allowed_shares (FlatpakContext *context)
 {
@@ -3312,7 +3276,7 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
     {
       g_autofree char *path = NULL;
 
-      path = get_path_for_fd (custom_runtime_fd, &my_error);
+      path = flatpak_get_path_for_fd (custom_runtime_fd, &my_error);
       if (path == NULL)
         {
           return flatpak_fail_error (error, FLATPAK_ERROR,
@@ -3440,7 +3404,7 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
     {
       g_autofree char *path = NULL;
 
-      path = get_path_for_fd (custom_app_fd, error);
+      path = flatpak_get_path_for_fd (custom_app_fd, error);
       if (path == NULL)
         return glnx_prefix_error (error, "Cannot convert custom app fd to path");
 
@@ -3753,7 +3717,7 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
 
       /* We get the path the fd refers to, to determine to mount point
        * destination inside the sandbox */
-      path = get_path_for_fd (fd, error);
+      path = flatpak_get_path_for_fd (fd, error);
       if (!path)
         return FALSE;
 
@@ -3770,7 +3734,7 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
 
       /* We get the path the fd refers to, to determine to mount point
        * destination inside the sandbox */
-      path = get_path_for_fd (fd, error);
+      path = flatpak_get_path_for_fd (fd, error);
       if (!path)
         return FALSE;
 
