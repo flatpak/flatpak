@@ -551,6 +551,44 @@ child_setup_func (gpointer user_data)
 }
 
 static gboolean
+peek_fd_for_handle (GUnixFDList *fd_list,
+                    gint32 handle,
+                    int *fd_out,
+                    GError **error)
+{
+  const int *fds;
+  int fds_len = 0;
+
+  if (fd_list == NULL)
+    {
+      g_set_error (error, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                   "No file descriptors attached to message");
+      return FALSE;
+    }
+
+  if (handle < 0)
+    {
+      g_set_error (error, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                   "Invalid handle %d", handle);
+      return FALSE;
+    }
+
+  fds = g_unix_fd_list_peek_fds (fd_list, &fds_len);
+
+  if (handle >= fds_len)
+    {
+      g_set_error (error, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                   "Handle %d out of range for message", handle);
+      return FALSE;
+    }
+
+  if (fd_out != NULL)
+    *fd_out = fds[handle];
+
+  return TRUE;
+}
+
+static gboolean
 validate_opath_fd (int        fd,
                    gboolean   needs_writable,
                    GError   **error)
@@ -1281,16 +1319,22 @@ handle_spawn (PortalFlatpak         *object,
       for (i = 0; i < len; i++)
         {
           gint32 handle;
+          int handle_fd = -1;
 
           g_variant_get_child (sandbox_expose_fd, i, "h", &handle);
-          if (handle >= 0 && handle < fds_len &&
-              validate_opath_fd (fds[handle], TRUE, &error))
+
+          if (!peek_fd_for_handle (fd_list, handle, &handle_fd, &error))
             {
-              g_array_append_val (expose_fds, fds[handle]);
+              g_dbus_method_invocation_return_gerror (invocation, error);
+              return G_DBUS_METHOD_INVOCATION_HANDLED;
+            }
+
+          if (validate_opath_fd (handle_fd, TRUE, &error))
+            {
+              g_array_append_val (expose_fds, handle_fd);
             }
           else
             {
-              g_debug ("Invalid sandbox expose fd: %s", error->message);
               g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
                                                      G_DBUS_ERROR_INVALID_ARGS,
                                                      "No valid file descriptor for handle %d",
@@ -1307,12 +1351,19 @@ handle_spawn (PortalFlatpak         *object,
       for (i = 0; i < len; i++)
         {
           gint32 handle;
+          int handle_fd = -1;
 
           g_variant_get_child (sandbox_expose_fd_ro, i, "h", &handle);
-          if (handle >= 0 && handle < fds_len &&
-              validate_opath_fd (fds[handle], FALSE, &error))
+
+          if (!peek_fd_for_handle (fd_list, handle, &handle_fd, &error))
             {
-              g_array_append_val (expose_fds_ro, fds[handle]);
+              g_dbus_method_invocation_return_gerror (invocation, error);
+              return G_DBUS_METHOD_INVOCATION_HANDLED;
+            }
+
+          if (validate_opath_fd (handle_fd, FALSE, &error))
+            {
+              g_array_append_val (expose_fds_ro, handle_fd);
             }
           else
             {
