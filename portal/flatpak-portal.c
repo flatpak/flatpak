@@ -867,16 +867,11 @@ handle_spawn (PortalFlatpak         *object,
 
       g_variant_get_child (arg_fds, i, "{uh}", &dest_fd, &handle);
 
-      if (handle >= fds_len || handle < 0)
+      if (!peek_fd_for_handle (fd_list, handle, &handle_fd, &error))
         {
-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
-                                                 G_DBUS_ERROR_INVALID_ARGS,
-                                                 "No file descriptor for handle %d",
-                                                 handle);
+          g_dbus_method_invocation_return_gerror (invocation, error);
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
-
-      handle_fd = fds[handle];
 
       fd_map_entry.to = dest_fd;
       fd_map_entry.from = handle_fd;
@@ -1411,19 +1406,15 @@ handle_spawn (PortalFlatpak         *object,
     {
       int remapped_fd;
       gint32 handle = g_variant_get_handle (app_fd);
+      int handle_fd = -1;
 
-      if (handle >= fds_len || handle < 0)
+      if (!peek_fd_for_handle (fd_list, handle, &handle_fd, &error))
         {
-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
-                                                 G_DBUS_ERROR_INVALID_ARGS,
-                                                 "No file descriptor for handle %d",
-                                                 handle);
+          g_dbus_method_invocation_return_gerror (invocation, error);
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
-      g_assert (fds != NULL);   /* otherwise fds_len would be 0 */
-
-      remapped_fd = fd_map_remap_fd (fd_map, &max_fd, fds[handle]);
+      remapped_fd = fd_map_remap_fd (fd_map, &max_fd, handle_fd);
 
       g_ptr_array_add (flatpak_argv, g_strdup_printf ("--app-fd=%d",
                                                       remapped_fd));
@@ -1437,19 +1428,15 @@ handle_spawn (PortalFlatpak         *object,
     {
       int remapped_fd;
       gint32 handle = g_variant_get_handle (usr_fd);
+      int handle_fd = -1;
 
-      if (handle >= fds_len || handle < 0)
+      if (!peek_fd_for_handle (fd_list, handle, &handle_fd, &error))
         {
-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
-                                                 G_DBUS_ERROR_INVALID_ARGS,
-                                                 "No file descriptor for handle %d",
-                                                 handle);
+          g_dbus_method_invocation_return_gerror (invocation, error);
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
-      g_assert (fds != NULL);   /* otherwise fds_len would be 0 */
-
-      remapped_fd = fd_map_remap_fd (fd_map, &max_fd, fds[handle]);
+      remapped_fd = fd_map_remap_fd (fd_map, &max_fd, handle_fd);
 
       g_ptr_array_add (flatpak_argv, g_strdup_printf ("--usr-fd=%d",
                                                       remapped_fd));
