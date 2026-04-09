@@ -557,7 +557,9 @@ validate_opath_fd (int        fd,
 {
   int fd_flags;
   struct stat st_buf;
+  struct stat real_st_buf;
   int access_mode;
+  g_autofree char *path = NULL;
 
   /* Must be able to get fd flags */
   fd_flags = fcntl (fd, F_GETFL);
@@ -575,6 +577,24 @@ validate_opath_fd (int        fd,
   /* Must be able to fstat */
   if (fstat (fd, &st_buf) < 0)
     return glnx_throw_errno_prefix (error, "Failed to fstat");
+
+  path = flatpak_get_path_for_fd (fd, error);
+  if (path == NULL)
+    return FALSE;
+
+  /* Verify that this is the same file as the app opened.
+   * Note that this is not security relevant because flatpak-run/bwrap will
+   * check things and abort if something is off. We do this only for backwards
+   * compatibility reasons: we need to be able to ignore the issue instead of
+   * aborting the entire sandbox setup later. */
+  if (stat (path, &real_st_buf) < 0 ||
+      st_buf.st_dev != real_st_buf.st_dev ||
+      st_buf.st_ino != real_st_buf.st_ino)
+    {
+      /* Different files on the inside and the outside, reject the request */
+      return glnx_throw (error,
+                         "different file inside and outside sandbox");
+    }
 
   access_mode = R_OK;
   if (S_ISDIR (st_buf.st_mode))
