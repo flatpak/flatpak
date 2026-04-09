@@ -1319,11 +1319,7 @@ handle_spawn (PortalFlatpak         *object,
               return G_DBUS_METHOD_INVOCATION_HANDLED;
             }
 
-          if (validate_opath_fd (handle_fd, TRUE, &error))
-            {
-              g_array_append_val (expose_fds, handle_fd);
-            }
-          else
+          if (!validate_opath_fd (handle_fd, TRUE, &error))
             {
               g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
                                                      G_DBUS_ERROR_INVALID_ARGS,
@@ -1331,6 +1327,8 @@ handle_spawn (PortalFlatpak         *object,
                                                      handle);
               return G_DBUS_METHOD_INVOCATION_HANDLED;
             }
+
+          g_array_append_val (expose_fds, handle_fd);
         }
     }
 
@@ -1351,11 +1349,7 @@ handle_spawn (PortalFlatpak         *object,
               return G_DBUS_METHOD_INVOCATION_HANDLED;
             }
 
-          if (validate_opath_fd (handle_fd, FALSE, &error))
-            {
-              g_array_append_val (expose_fds_ro, handle_fd);
-            }
-          else
+          if (!validate_opath_fd (handle_fd, FALSE, &error))
             {
               g_debug ("Invalid sandbox expose ro fd: %s", error->message);
               g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
@@ -1364,6 +1358,8 @@ handle_spawn (PortalFlatpak         *object,
                                                      handle);
               return G_DBUS_METHOD_INVOCATION_HANDLED;
             }
+
+          g_array_append_val (expose_fds_ro, handle_fd);
         }
     }
 
