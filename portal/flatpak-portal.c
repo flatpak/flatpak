@@ -38,6 +38,7 @@
 #include <gio/gunixinputstream.h>
 #include <gio/gunixoutputstream.h>
 #include <gio/gdesktopappinfo.h>
+#include "describe-fd.h"
 #include "flatpak-portal-dbus.h"
 #include "flatpak-portal.h"
 #include "flatpak-dir-private.h"
@@ -475,8 +476,66 @@ drop_cloexec (int fd)
 }
 
 static void
+log_child_setup_data (const ChildSetupData *data)
+{
+  /* Keep this in sync with what actually happens in child_setup_func() */
+  FdMapEntry *fd_map = data->fd_map;
+  gsize i;
+
+  g_debug ("Will set CLOEXEC on fds >= 3");
+
+  if (data->instance_id_fd != -1)
+    g_debug ("Will unset CLOEXEC on instance ID fd %d", data->instance_id_fd);
+
+  if (data->env_fd != -1)
+    g_debug ("Will unset CLOEXEC on env fd %d", data->env_fd);
+
+  g_debug ("fd map, first pass:");
+
+  for (i = 0; i < data->fd_map_len; i++)
+    {
+      if (fd_map[i].from != fd_map[i].to)
+        {
+          g_debug ("Will dup2 %d onto %d", fd_map[i].from, fd_map[i].to);
+          g_debug ("Will close %d", fd_map[i].from);
+        }
+    }
+
+  g_debug ("fd map, second pass:");
+
+  /* Second pass in case we needed an in-between fd value to avoid conflicts */
+  for (i = 0; i < data->fd_map_len; i++)
+    {
+      if (fd_map[i].to != fd_map[i].final)
+        {
+          g_debug ("Will dup2 %d onto %d", fd_map[i].to, fd_map[i].final);
+          g_debug ("Will close %d", fd_map[i].to);
+        }
+
+      g_debug ("Will unset CLOEXEC on %d", fd_map[i].final);
+    }
+
+  if (data->set_tty)
+    {
+      /* data->tty is our from fd which is closed at this point.
+       * so locate the destination fd and use it for the ioctl.
+       */
+      for (i = 0; i < data->fd_map_len; i++)
+        {
+          if (fd_map[i].from == data->tty)
+            {
+              g_debug ("Will try to make %d our controlling tty", fd_map[i].final);
+              break;
+            }
+        }
+    }
+}
+
+static void
 child_setup_func (gpointer user_data)
 {
+  /* We can't debug-log from here because that wouldn't be async-signal safe,
+   * so keep this in sync with log_child_setup_data() */
   ChildSetupData *data = (ChildSetupData *) user_data;
   FdMapEntry *fd_map = data->fd_map;
   sigset_t set;
@@ -674,7 +733,20 @@ handle_spawn (PortalFlatpak         *object,
   child_setup_data.env_fd = -1;
 
   if (fd_list != NULL)
-    fds = g_unix_fd_list_peek_fds (fd_list, &fds_len);
+    {
+      fds = g_unix_fd_list_peek_fds (fd_list, &fds_len);
+      g_debug ("spawn(), %d fds attached to message:", fds_len);
+      g_return_val_if_fail (fds_len >= 0, FALSE);
+
+      for (i = 0; i < (gsize) fds_len; i++)
+        {
+          g_autofree char *desc = flatpak_describe_fd (fds[i]);
+
+          g_debug ("handle %zu: fd %d: %s", i, fds[i], desc);
+        }
+
+      g_debug (".");
+    }
 
   app_info = g_object_get_data (G_OBJECT (invocation), "app-info");
   g_assert (app_info != NULL);
@@ -839,6 +911,9 @@ handle_spawn (PortalFlatpak         *object,
         }
 
       handle_fd = fds[handle];
+
+      g_autofree char *desc = flatpak_describe_fd (handle_fd);
+      g_debug ("caller-specified fd mapping: portal:%d -> flatpak:%d (%s)", handle_fd, dest_fd, desc);
 
       fd_map_entry.to = dest_fd;
       fd_map_entry.from = handle_fd;
@@ -1100,6 +1175,9 @@ handle_spawn (PortalFlatpak         *object,
 
       remapped_fd = fd_map_remap_fd (fd_map, &max_fd, env_fd);
 
+      g_autofree char *desc = flatpak_describe_fd (env_fd);
+      g_debug ("Environment from fd: portal:%d -> flatpak:%d (%s)", env_fd, remapped_fd, desc);
+
       g_ptr_array_add (flatpak_argv,
                        g_strdup_printf ("--env-fd=%d", remapped_fd));
     }
@@ -1184,6 +1262,8 @@ handle_spawn (PortalFlatpak         *object,
                                  INSTANCE_ID_BUFFER_SIZE - 1, G_PRIORITY_DEFAULT, NULL,
                                  instance_id_read_finish, instance_id_read_data);
 
+      /* TODO: This probably needs remapping, too */
+      g_debug ("--instance-id-fd: portal:%d -> flatpak:%d", pipe_fds[1], pipe_fds[1]);
       g_ptr_array_add (flatpak_argv, g_strdup_printf ("--instance-id-fd=%d", pipe_fds[1]));
       child_setup_data.instance_id_fd = pipe_fds[1];
       max_fd = MAX(max_fd, pipe_fds[1]);
@@ -1248,6 +1328,7 @@ handle_spawn (PortalFlatpak         *object,
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
+      g_debug ("sandbox-expose: %s: portal:%d -> flatpak:tbd", sandbox_expose[i], expose_fd);
       g_array_append_val (expose_fds, expose_fd);
       /* transfers ownership, can't g_steal_fd with g_array_append_val */
       g_array_append_val (owned_fds, expose_fd);
@@ -1269,6 +1350,7 @@ handle_spawn (PortalFlatpak         *object,
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
+      g_debug ("sandbox-expose-ro: %s: portal:%d -> flatpak:tbd", sandbox_expose_ro[i], expose_fd);
       g_array_append_val (expose_fds_ro, expose_fd);
       /* transfers ownership, can't g_steal_fd with g_array_append_val */
       g_array_append_val (owned_fds, expose_fd);
@@ -1286,6 +1368,9 @@ handle_spawn (PortalFlatpak         *object,
           if (handle >= 0 && handle < fds_len &&
               validate_opath_fd (fds[handle], TRUE, &error))
             {
+              g_autofree char *desc = flatpak_describe_fd (fds[handle]);
+
+              g_debug ("sandbox-expose-fd: portal:%d -> flatpak:tbd (%s)", fds[handle], desc);
               g_array_append_val (expose_fds, fds[handle]);
             }
           else
@@ -1312,6 +1397,9 @@ handle_spawn (PortalFlatpak         *object,
           if (handle >= 0 && handle < fds_len &&
               validate_opath_fd (fds[handle], FALSE, &error))
             {
+              g_autofree char *desc = flatpak_describe_fd (fds[handle]);
+
+              g_debug ("sandbox-expose-fd-ro: portal:%d -> flatpak:tbd (%s)", fds[handle], desc);
               g_array_append_val (expose_fds_ro, fds[handle]);
             }
           else
@@ -1328,9 +1416,11 @@ handle_spawn (PortalFlatpak         *object,
 
   for (i = 0; i < expose_fds->len; i++)
     {
+      int fd = g_array_index (expose_fds, int, i);
       int remapped_fd;
 
-      remapped_fd = fd_map_remap_fd (fd_map, &max_fd, g_array_index (expose_fds, int, i));
+      remapped_fd = fd_map_remap_fd (fd_map, &max_fd, fd);
+      g_debug ("sandbox-expose[-fd]: portal:%d -> flatpak:%d", fd, remapped_fd);
 
       g_ptr_array_add (flatpak_argv, g_strdup_printf ("--bind-fd=%d",
                                                       remapped_fd));
@@ -1338,9 +1428,11 @@ handle_spawn (PortalFlatpak         *object,
 
   for (i = 0; i < expose_fds_ro->len; i++)
     {
+      int fd = g_array_index (expose_fds_ro, int, i);
       int remapped_fd;
 
-      remapped_fd = fd_map_remap_fd (fd_map, &max_fd, g_array_index (expose_fds_ro, int, i));
+      remapped_fd = fd_map_remap_fd (fd_map, &max_fd, fd);
+      g_debug ("sandbox-expose[-fd]-ro: portal:%d -> flatpak:%d", fd, remapped_fd);
 
       g_ptr_array_add (flatpak_argv, g_strdup_printf ("--ro-bind-fd=%d",
                                                       remapped_fd));
@@ -1374,12 +1466,16 @@ handle_spawn (PortalFlatpak         *object,
 
       remapped_fd = fd_map_remap_fd (fd_map, &max_fd, fds[handle]);
 
+      g_autofree char *desc = flatpak_describe_fd (fds[handle]);
+      g_debug ("app-fd: portal:%d -> flatpak:%d (%s)", fds[handle], remapped_fd, desc);
+
       g_ptr_array_add (flatpak_argv, g_strdup_printf ("--app-fd=%d",
                                                       remapped_fd));
     }
   else if (empty_app)
     {
       g_ptr_array_add (flatpak_argv, g_strdup ("--app-path="));
+      g_debug ("using empty /app");
     }
 
   if (usr_fd != NULL)
@@ -1399,6 +1495,8 @@ handle_spawn (PortalFlatpak         *object,
       g_assert (fds != NULL);   /* otherwise fds_len would be 0 */
 
       remapped_fd = fd_map_remap_fd (fd_map, &max_fd, fds[handle]);
+      g_autofree char *desc = flatpak_describe_fd (fds[handle]);
+      g_debug ("usr-fd: portal:%d -> flatpak:%d (%s)", fds[handle], remapped_fd, desc);
 
       g_ptr_array_add (flatpak_argv, g_strdup_printf ("--usr-fd=%d",
                                                       remapped_fd));
@@ -1440,6 +1538,15 @@ handle_spawn (PortalFlatpak         *object,
       g_info ("Starting: %s\n", cmd->str);
     }
 
+  g_debug ("fd map before resolving conflicts, if any:");
+
+  for (i = 0; i < fd_map->len; i++)
+    {
+      const FdMapEntry *entry = &g_array_index (fd_map, FdMapEntry, i);
+
+      g_debug ("portal:%d -> to:%d -> final:%d", entry->from, entry->to, entry->final);
+    }
+
   /* We make a second pass over the fds to find if any "to" fd index
      overlaps an already in use fd (i.e. one in the "from" category
      that are allocated randomly). If a fd overlaps "to" fd then its
@@ -1465,11 +1572,27 @@ handle_spawn (PortalFlatpak         *object,
         }
 
       if (conflict)
-        g_array_index (fd_map, FdMapEntry, i).to = ++max_fd;
+        {
+          FdMapEntry *entry = &g_array_index (fd_map, FdMapEntry, i);
+
+          entry->to = ++max_fd;
+          g_debug ("Resolving conflict by going portal:%d -> to:%d -> final:%d", entry->from, entry->to, entry->final);
+        }
+    }
+
+  g_debug ("fd map after resolving conflicts, if any:");
+
+  for (i = 0; i < fd_map->len; i++)
+    {
+      const FdMapEntry *entry = &g_array_index (fd_map, FdMapEntry, i);
+
+      g_debug ("portal:%d -> to:%d -> final:%d", entry->from, entry->to, entry->final);
     }
 
   child_setup_data.fd_map = &g_array_index (fd_map, FdMapEntry, 0);
   child_setup_data.fd_map_len = fd_map->len;
+
+  log_child_setup_data (&child_setup_data);
 
   /* We use LEAVE_DESCRIPTORS_OPEN and close them in the child_setup
    * to work around a deadlock in GLib < 2.60 */
