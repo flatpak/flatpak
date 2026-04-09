@@ -1247,8 +1247,17 @@ handle_spawn (PortalFlatpak         *object,
           gint32 handle;
 
           g_variant_get_child (sandbox_expose_fd, i, "h", &handle);
-          if (handle >= 0 && handle < fds_len &&
-              validate_opath_fd (fds[handle], TRUE, &error))
+          if (handle >= fds_len || handle < 0)
+            {
+              g_debug ("Invalid sandbox-expose-fd handle %d", handle);
+              g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
+                                                     G_DBUS_ERROR_INVALID_ARGS,
+                                                     "No file descriptor for handle %d",
+                                                     handle);
+              return G_DBUS_METHOD_INVOCATION_HANDLED;
+            }
+
+          if (validate_opath_fd (fds[handle], TRUE, &error))
             {
               g_array_append_val (expose_fds, fds[handle]);
             }
@@ -1273,8 +1282,17 @@ handle_spawn (PortalFlatpak         *object,
           gint32 handle;
 
           g_variant_get_child (sandbox_expose_fd_ro, i, "h", &handle);
-          if (handle >= 0 && handle < fds_len &&
-              validate_opath_fd (fds[handle], FALSE, &error))
+          if (handle >= fds_len || handle < 0)
+            {
+              g_debug ("Invalid sandbox-expose-ro-fd handle %d", handle);
+              g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
+                                                     G_DBUS_ERROR_INVALID_ARGS,
+                                                     "No file descriptor for handle %d",
+                                                     handle);
+              return G_DBUS_METHOD_INVOCATION_HANDLED;
+            }
+
+          if (validate_opath_fd (fds[handle], FALSE, &error))
             {
               g_array_append_val (expose_fds_ro, fds[handle]);
             }
