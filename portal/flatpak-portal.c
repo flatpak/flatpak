@@ -588,6 +588,48 @@ peek_fd_for_handle (GUnixFDList *fd_list,
   return TRUE;
 }
 
+static char *
+bubblewrap_remap_path (const char *path)
+{
+  if (g_str_has_prefix (path, "/newroot/"))
+    path = path + strlen ("/newroot");
+  return g_strdup (path);
+}
+
+static char *
+verify_proc_self_fd (const char *proc_path,
+                     GError **error)
+{
+  char path_buffer[PATH_MAX + 1];
+  ssize_t symlink_size;
+
+  symlink_size = readlink (proc_path, path_buffer, PATH_MAX);
+  if (symlink_size < 0)
+    return glnx_null_throw_errno_prefix (error, "readlink");
+
+  path_buffer[symlink_size] = 0;
+
+  /* All normal paths start with /, but some weird things
+     don't, such as socket:[27345] or anon_inode:[eventfd].
+     We don't support any of these */
+  if (path_buffer[0] != '/')
+    return glnx_null_throw (error, "%s resolves to non-absolute path %s",
+                            proc_path, path_buffer);
+
+  /* File descriptors to actually deleted files have " (deleted)"
+     appended to them. This also happens to some fake fd types
+     like shmem which are "/<name> (deleted)". All such
+     files are considered invalid. Unfortunately this also
+     matches files with filenames that actually end in " (deleted)",
+     but there is not much to do about this. */
+  if (g_str_has_suffix (path_buffer, " (deleted)"))
+    return glnx_null_throw (error, "%s resolves to deleted path %s",
+                            proc_path, path_buffer);
+
+  /* remap from sandbox to host if needed */
+  return bubblewrap_remap_path (path_buffer);
+}
+
 static gboolean
 validate_opath_fd (int        fd,
                    gboolean   needs_writable,
@@ -624,6 +666,40 @@ validate_opath_fd (int        fd,
   /* Must be able to access readable and potentially writable */
   if (faccessat (fd, "", access_mode, AT_EMPTY_PATH | AT_SYMLINK_NOFOLLOW) != 0)
     return glnx_throw_errno_prefix (error, "Bad access mode");
+
+  return TRUE;
+}
+
+static gboolean
+check_fd_exposable (int fd,
+                    GError **error)
+{
+  g_autofree char *proc_path = NULL;
+  struct stat st_buf;
+  struct stat real_st_buf;
+  g_autofree char *path = NULL;
+
+  /* Must be able to fstat */
+  if (fstat (fd, &st_buf) < 0)
+    return glnx_throw_errno_prefix (error, "fstat");
+
+  proc_path = g_strdup_printf ("/proc/self/fd/%d", fd);
+
+  /* Must be able to read valid path from /proc/self/fd */
+  /* This is an absolute and (at least at open time) symlink-expanded path */
+  path = verify_proc_self_fd (proc_path, error);
+  if (path == NULL)
+    return FALSE;
+
+  /* Verify that this is the same file as the app opened */
+  if (stat (path, &real_st_buf) < 0 ||
+      st_buf.st_dev != real_st_buf.st_dev ||
+      st_buf.st_ino != real_st_buf.st_ino)
+    {
+      /* Different files on the inside and the outside, reject the request */
+      return glnx_throw (error,
+                         "different file inside and outside sandbox");
+    }
 
   return TRUE;
 }
@@ -1328,6 +1404,14 @@ handle_spawn (PortalFlatpak         *object,
               return G_DBUS_METHOD_INVOCATION_HANDLED;
             }
 
+          if (!check_fd_exposable (handle_fd, &error))
+            {
+              g_info ("Unable to get path for sandbox-exposed fd %d, ignoring: %s",
+                      handle_fd, error->message);
+              g_clear_error (&error);
+              continue;
+            }
+
           g_array_append_val (expose_fds, handle_fd);
         }
     }
@@ -1357,6 +1441,14 @@ handle_spawn (PortalFlatpak         *object,
                                                      "No file descriptor for handle %d",
                                                      handle);
               return G_DBUS_METHOD_INVOCATION_HANDLED;
+            }
+
+          if (!check_fd_exposable (handle_fd, &error))
+            {
+              g_info ("Unable to get path for sandbox-exposed fd %d, ignoring: %s",
+                      handle_fd, error->message);
+              g_clear_error (&error);
+              continue;
             }
 
           g_array_append_val (expose_fds_ro, handle_fd);
@@ -1405,6 +1497,14 @@ handle_spawn (PortalFlatpak         *object,
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
+      if (!check_fd_exposable (handle_fd, &error))
+        {
+          g_prefix_error (&error, "Unable to use /app fd %d as path: ", handle_fd);
+          g_info ("%s", error->message);
+          g_dbus_method_invocation_return_gerror (invocation, error);
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
+        }
+
       remapped_fd = fd_map_remap_fd (fd_map, &max_fd, handle_fd);
 
       g_ptr_array_add (flatpak_argv, g_strdup_printf ("--app-fd=%d",
@@ -1423,6 +1523,14 @@ handle_spawn (PortalFlatpak         *object,
 
       if (!peek_fd_for_handle (fd_list, handle, &handle_fd, &error))
         {
+          g_dbus_method_invocation_return_gerror (invocation, error);
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
+        }
+
+      if (!check_fd_exposable (handle_fd, &error))
+        {
+          g_prefix_error (&error, "Unable to use /usr fd %d as path: ", handle_fd);
+          g_info ("%s", error->message);
           g_dbus_method_invocation_return_gerror (invocation, error);
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
