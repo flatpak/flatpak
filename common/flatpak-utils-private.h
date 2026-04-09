@@ -383,6 +383,9 @@ void flatpak_add_test (const char *path, flatpak_test_fn fn);
 FLATPAK_EXTERN
 void flatpak_add_all_tests (void);
 
+char * flatpak_get_path_for_fd (int      fd,
+                                GError **error);
+
 #define FLATPAK_MESSAGE_ID "c7b39b1e006b464599465e105b361485"
 
 gboolean flatpak_set_cloexec (int fd);
