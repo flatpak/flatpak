@@ -1406,8 +1406,8 @@ handle_spawn (PortalFlatpak         *object,
 
           if (!check_fd_exposable (handle_fd, &error))
             {
-              g_info ("Unable to get path for sandbox-exposed fd %d, ignoring: %s",
-                      handle_fd, error->message);
+              g_warning ("Unable to get path for sandbox-exposed fd %d, ignoring: %s",
+                         handle_fd, error->message);
               g_clear_error (&error);
               continue;
             }
@@ -1445,8 +1445,8 @@ handle_spawn (PortalFlatpak         *object,
 
           if (!check_fd_exposable (handle_fd, &error))
             {
-              g_info ("Unable to get path for sandbox-exposed fd %d, ignoring: %s",
-                      handle_fd, error->message);
+              g_warning ("Unable to get path for sandbox-exposed fd %d, ignoring: %s",
+                         handle_fd, error->message);
               g_clear_error (&error);
               continue;
             }
