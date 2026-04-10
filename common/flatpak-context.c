@@ -2439,7 +2439,11 @@ option_env_fd_cb (const gchar *option_name,
     return FALSE;
 
   if (fd < 3)
-    return glnx_throw (error, "File descriptors 0, 1, 2 are reserved");
+    {
+      /* Don't close these fds! */
+      fd = -1;
+      return glnx_throw (error, "File descriptors 0, 1, 2 are reserved");
+    }
 
   /* This is not strictly necessary, because we're going to close it after
    * parsing the environment block, but let's be consistent with other fd
