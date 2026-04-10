@@ -1,8 +1,23 @@
 Changes in 1.16.6
 ~~~~~~~~~~~~~~~~~~
-Released: not yet
+Released: 2026-04-10
 
-...
+Bug fixes:
+
+* Fix the remaining regression for Chromium based browsers by not leaking file
+  descriptors down to wrapped command (#6589, #6594)
+
+* Fix a regression when installing extra-data without a runtime, which is the
+  case for openh264 (#6587)
+
+* Fix the remaining regression for Epiphany by ignoring unusable sandbox-expose
+  paths for sub-sandboxes in the portal (#6588)
+
+* Fix the installed tests by allowing to add a new ref to an existing temporary
+  ostree repo (#6592)
+
+* Avoid closing fds 0/1/2 when they are used as a bad argument to flatpak-run,
+  and reduce duplication in handling file descriptor arguments (#6598)
 
 Changes in 1.16.5
 ~~~~~~~~~~~~~~~~~~
