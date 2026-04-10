@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..11"
+echo "1..12"
 
 # Use stable rather than master as the branch so we can test that the run
 # command automatically finds the branch correctly
@@ -177,3 +177,24 @@ exec 3< "${path}"
 exec 3>&-
 
 ok "bind-fd and ro-bind-fd"
+
+exec 3< custom-app/files
+exec 4< custom-runtime/files
+exec 5< "${path}"
+exec 6< "${path}"
+run --app-fd=3 --usr-fd=4 --bind-fd=5 --ro-bind-fd=6 \
+    --command=sh org.test.Hello \
+    -c 'for fd in $(ls /proc/self/fd); do readlink -f /proc/self/fd/$fd; done' > hello_out
+exec 6>&-
+exec 5>&-
+exec 4>&-
+exec 3>&-
+
+wd="$(readlink -f .)"
+while read fdpath; do
+  if [[ "$fdpath" == "$wd"* && "$fdpath" != "$wd/hello_out" ]]; then
+    assert_not_reached "A fd for '$fdpath' unexpectedly made it to the app"
+  fi
+done < hello_out
+
+ok "check no fd leak"
