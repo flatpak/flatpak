@@ -510,6 +510,7 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
   flatpak_transaction_set_disable_dependencies (transaction, TRUE);
   flatpak_transaction_set_disable_related (transaction, TRUE);
   flatpak_transaction_set_reinstall (transaction, TRUE);
+  flatpak_transaction_set_disable_auto_pin (transaction, TRUE);
 
   for (i = 0; i < refs->len; i++)
     {
