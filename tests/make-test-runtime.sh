@@ -83,6 +83,14 @@ for i in `cat $LIBS`; do
 done
 ln -s bash ${DIR}/usr/bin/sh
 
+if [ -n "${G_TEST_BUILDDIR:-}" ]; then
+    test_builddir="${G_TEST_BUILDDIR}"
+else
+    test_builddir=$(dirname $0)
+fi
+
+cp "${test_builddir}/assert-fds-open" "${DIR}/usr/bin"
+
 # This only exists so we can update the runtime
 cat > ${DIR}/usr/bin/runtime_hello.sh <<EOF
 #!/bin/sh
