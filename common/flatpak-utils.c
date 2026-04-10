@@ -2525,3 +2525,20 @@ flatpak_parse_fd (const char  *fd_string,
 
   return fd;
 }
+
+/* Sets errno on failure. */
+gboolean
+flatpak_set_cloexec (int fd)
+{
+  int flags = fcntl (fd, F_GETFD);
+
+  if (flags == -1)
+    return FALSE;
+
+  flags |= FD_CLOEXEC;
+
+  if (fcntl (fd, F_SETFD, flags) < 0)
+    return FALSE;
+
+  return TRUE;
+}
