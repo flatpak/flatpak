@@ -79,7 +79,11 @@ option_bind_fd_cb (const char  *option_name,
     return FALSE;
 
   if (fd < 3)
-    return glnx_throw (error, "File descriptors 0, 1, 2 are reserved");
+    {
+      /* Don't close these fds! */
+      fd = -1;
+      return glnx_throw (error, "File descriptors 0, 1, 2 are reserved");
+    }
 
   if (!flatpak_set_cloexec (fd))
     return glnx_throw_errno_prefix (error, "--bind-fd");
@@ -102,7 +106,10 @@ option_ro_bind_fd_cb (const char  *option_name,
     return FALSE;
 
   if (fd < 3)
-    return glnx_throw (error, "File descriptors 0, 1, 2 are reserved");
+    {
+      fd = -1;
+      return glnx_throw (error, "File descriptors 0, 1, 2 are reserved");
+    }
 
   if (!flatpak_set_cloexec (fd))
     return glnx_throw_errno_prefix (error, "--ro-bind-fd");
@@ -125,7 +132,10 @@ opt_instance_id_fd_cb (const char  *option_name,
     return FALSE;
 
   if (fd < 3)
-    return glnx_throw (error, "File descriptors 0, 1, 2 are reserved");
+    {
+      fd = -1;
+      return glnx_throw (error, "File descriptors 0, 1, 2 are reserved");
+    }
 
   if (!flatpak_set_cloexec (fd))
     return glnx_throw_errno_prefix (error, "--instance-id-fd");
@@ -147,7 +157,10 @@ opt_app_fd_cb (const char  *option_name,
     return FALSE;
 
   if (fd < 3)
-    return glnx_throw (error, "File descriptors 0, 1, 2 are reserved");
+    {
+      fd = -1;
+      return glnx_throw (error, "File descriptors 0, 1, 2 are reserved");
+    }
 
   if (!flatpak_set_cloexec (fd))
     return glnx_throw_errno_prefix (error, "--app-fd");
@@ -169,7 +182,10 @@ opt_usr_fd_cb (const char  *option_name,
     return FALSE;
 
   if (fd < 3)
-    return glnx_throw (error, "File descriptors 0, 1, 2 are reserved");
+    {
+      fd = -1;
+      return glnx_throw (error, "File descriptors 0, 1, 2 are reserved");
+    }
 
   if (!flatpak_set_cloexec (fd))
     return glnx_throw_errno_prefix (error, "--usr-fd");
