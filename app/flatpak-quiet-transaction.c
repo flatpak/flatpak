@@ -234,13 +234,14 @@ end_of_lifed_with_rebase (FlatpakTransaction *transaction,
 {
   FlatpakQuietTransaction *self = FLATPAK_QUIET_TRANSACTION (transaction);
   g_autoptr(FlatpakRef) rref = flatpak_ref_parse (ref, NULL);
+  gboolean no_eol_rebase = flatpak_transaction_ref_no_eol_rebase (transaction, ref);
 
   if (rebased_to_ref)
-    g_print (_("Info: %s is end-of-life, in favor of %s\n"), flatpak_ref_get_name (rref), rebased_to_ref);
+    g_print (_("Warning: %s is end-of-life, in favor of %s\n"), flatpak_ref_get_name (rref), rebased_to_ref);
   else if (reason)
-    g_print (_("Info: %s is end-of-life, with reason: %s\n"), flatpak_ref_get_name (rref), reason);
+    g_print (_("Warning: %s is end-of-life, with reason: %s\n"), flatpak_ref_get_name (rref), reason);
 
-  if (rebased_to_ref && remote)
+  if (rebased_to_ref && remote && !no_eol_rebase)
     {
       g_autoptr(GError) error = NULL;
 

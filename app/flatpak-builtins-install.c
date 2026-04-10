@@ -387,15 +387,15 @@ resolve_fuzzy_rebased_refs (FlatpakRemoteState  *state,
 }
 
 static void
-print_auto_resolved_rebase_warning (const char *old_ref,
-                                    const char *new_ref)
+print_auto_resolved_rebase_info (const char *old_ref,
+                                 const char *new_ref)
 {
   if (old_ref != NULL)
-    g_printerr (_("Warning: %s is end-of-life and has been replaced by %s. Specify the full ref explicitly to install it.\n"),
-                old_ref, new_ref);
+    g_print (_("Info: %s is end-of-life and has been replaced by %s. Specify the full ref explicitly to install it.\n"),
+             old_ref, new_ref);
   else
-    g_printerr (_("Warning: one or more matching refs are end-of-life and have been replaced by %s. To install one of the end-of-life refs explicitly, use its full ref.\n"),
-                new_ref);
+    g_print (_("Info: one or more matching refs are end-of-life and have been replaced by %s. To install one of the end-of-life refs explicitly, use its full ref.\n"),
+             new_ref);
 }
 
 gboolean
@@ -698,12 +698,15 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
         {
           FlatpakDecomposed *chosen_ref = g_ptr_array_index (refs, 0);
 
-          print_auto_resolved_rebase_warning (explicit_install_ref,
-                                              flatpak_decomposed_get_ref (chosen_ref));
+          print_auto_resolved_rebase_info (explicit_install_ref,
+                                           flatpak_decomposed_get_ref (chosen_ref));
           ref = flatpak_decomposed_dup_ref (chosen_ref);
         }
       else if (!flatpak_resolve_matching_refs (remote, dir, opt_yes, refs, id, opt_noninteractive, &ref, error))
         return FALSE;
+
+      if (!(matching_refs_flags & FIND_MATCHING_REFS_FLAGS_FUZZY))
+        flatpak_transaction_add_no_eol_rebase_ref (transaction, ref);
 
       if (!flatpak_transaction_add_install (transaction, remote, ref, (const char **) opt_subpaths, &local_error))
         {
