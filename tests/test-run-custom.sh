@@ -23,6 +23,7 @@ set -euo pipefail
 
 skip_without_bwrap
 skip_revokefs_without_fuse
+original_cmd_prefix="$CMD_PREFIX"
 
 echo "1..11"
 
@@ -61,6 +62,10 @@ assert_file_has_content hello_out '^Hello world, from a sandbox$'
 
 ! run --app-path="" --command=/run/parent/usr/bin/runtime_hello.sh org.test.Hello > /dev/null
 
+CMD_PREFIX="${test_builddir}/close-fds-except -- $original_cmd_prefix"
+run --app-path="" --command=assert-fds-open org.test.Hello 0 1 2 >&2
+CMD_PREFIX="$original_cmd_prefix"
+
 ok "empty app path"
 
 run --app-path=custom-app/files --command=/app/bin/hello.sh org.test.Hello > hello_out
@@ -74,6 +79,10 @@ assert_file_has_content hello_out '^Hello world, from a sandbox$'
 
 ! run --app-path=custom-app/files --command=/run/parent/usr/bin/runtime_hello.sh org.test.Hello > /dev/null
 
+CMD_PREFIX="${test_builddir}/close-fds-except -- $original_cmd_prefix"
+run --app-path=custom-app/files --command=assert-fds-open org.test.Hello 0 1 2 >&2
+CMD_PREFIX="$original_cmd_prefix"
+
 ok "custom app path"
 
 ! run --app-path=path-which-does-not-exist org.test.Hello > /dev/null
@@ -83,6 +92,12 @@ ok "bad custom app path"
 exec 3< custom-app/files
 run --app-fd=3 --command=/app/bin/hello.sh org.test.Hello > hello_out
 assert_file_has_content hello_out '^Hello world, from a sandboxCUSTOM$'
+exec 3>&-
+
+exec 3< custom-app/files
+CMD_PREFIX="${test_builddir}/close-fds-except 3 -- $original_cmd_prefix"
+run --app-fd=3 --command=assert-fds-open org.test.Hello 0 1 2 >&2
+CMD_PREFIX="$original_cmd_prefix"
 exec 3>&-
 
 ! run --app-fd=3 --command=/app/bin/hello.sh org.test.Hello > /dev/null
@@ -100,6 +115,11 @@ assert_file_has_content hello_out '^Hello world, from a runtimeCUSTOM$'
 run --usr-path=custom-runtime/files --command=/run/parent/usr/bin/runtime_hello.sh org.test.Hello > hello_out
 assert_file_has_content hello_out '^Hello world, from a runtime$'
 
+CMD_PREFIX="${test_builddir}/close-fds-except -- $original_cmd_prefix"
+run --usr-path=custom-runtime/files \
+    --command=/run/parent/usr/bin/assert-fds-open org.test.Hello 0 1 2 >&2
+CMD_PREFIX="$original_cmd_prefix"
+
 ok "custom usr path"
 
 ! run --usr-path=path-which-does-not-exist org.test.Hello > /dev/null
@@ -114,6 +134,12 @@ exec 3>&-
 exec 3< custom-runtime/files
 run --usr-fd=3 --command=/usr/bin/runtime_hello.sh org.test.Hello > hello_out
 assert_file_has_content hello_out '^Hello world, from a runtimeCUSTOM$'
+exec 3>&-
+
+exec 3< custom-runtime/files
+CMD_PREFIX="${test_builddir}/close-fds-except 3 -- $original_cmd_prefix"
+run --usr-fd=3 --command=/run/parent/usr/bin/assert-fds-open org.test.Hello 0 1 2 >&2
+CMD_PREFIX="$original_cmd_prefix"
 exec 3>&-
 
 ! run --usr-fd=3 --command=/app/bin/hello.sh org.test.Hello > /dev/null
@@ -136,6 +162,11 @@ run --usr-path=custom-runtime/files --app-path=custom-app/files \
     --command=/run/parent/usr/bin/runtime_hello.sh org.test.Hello > hello_out
 assert_file_has_content hello_out '^Hello world, from a runtime$'
 
+CMD_PREFIX="${test_builddir}/close-fds-except -- $original_cmd_prefix"
+run --usr-path=custom-runtime/files --app-path=custom-app/files \
+    --command=/run/parent/usr/bin/assert-fds-open org.test.Hello 0 1 2 >&2
+CMD_PREFIX="$original_cmd_prefix"
+
 ok "custom usr and app path"
 
 ! run --usr-path=custom-runtime/files --app-path="" \
@@ -152,6 +183,11 @@ assert_file_has_content hello_out '^Hello world, from a sandbox$'
 run --usr-path=custom-runtime/files --app-path="" \
     --command=/run/parent/usr/bin/runtime_hello.sh org.test.Hello > hello_out
 assert_file_has_content hello_out '^Hello world, from a runtime$'
+
+CMD_PREFIX="${test_builddir}/close-fds-except -- $original_cmd_prefix"
+run --usr-path=custom-runtime/files --app-path="" \
+    --command=/run/parent/usr/bin/assert-fds-open org.test.Hello 0 1 2 >&2
+CMD_PREFIX="$original_cmd_prefix"
 
 ok "custom usr and empty app path"
 
@@ -174,6 +210,14 @@ exec 3>&-
 
 exec 3< "${path}"
 ! run --ro-bind-fd=3 --command=bash org.test.Hello -c "echo baz > ${path}" > /dev/null
+exec 3>&-
+
+exec 3> "${path}3"
+exec 4> "${path}4"
+CMD_PREFIX="${test_builddir}/close-fds-except 3 4 -- $original_cmd_prefix"
+run --ro-bind-fd=3 --bind-fd=4 --command=assert-fds-open org.test.Hello 0 1 2 >&2
+CMD_PREFIX="$original_cmd_prefix"
+exec 4>&-
 exec 3>&-
 
 ok "bind-fd and ro-bind-fd"

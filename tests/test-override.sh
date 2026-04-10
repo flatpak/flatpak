@@ -10,6 +10,7 @@ else
 fi
 
 skip_revokefs_without_fuse
+original_cmd_prefix="$CMD_PREFIX"
 
 reset_overrides () {
     ${FLATPAK} override --user --reset org.test.Hello
@@ -170,6 +171,16 @@ else
   # The secret doesn't end up in bubblewrap's cmdline where other users
   # could see it
   assert_not_file_has_content out 3047225e-5e38-4357-b21c-eac83b7e8ea6
+
+  # The --env-fd isn't inherited by the command
+  CMD_PREFIX="${test_builddir}/close-fds-except 3 4 -- $original_cmd_prefix"
+  ${CMD_PREFIX} flatpak run --command=assert-fds-open \
+      --env-fd=3 \
+      --env-fd=4 \
+      org.test.Hello \
+      0 1 2 \
+      3<env.3 4<env.4 >&2
+  CMD_PREFIX="$original_cmd_prefix"
 
   # libpreload.so will abort() if it gets loaded into the `flatpak run`
   # or `bwrap` processes, so if this succeeds, everything's OK

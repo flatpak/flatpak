@@ -23,8 +23,9 @@ set -euo pipefail
 
 skip_without_bwrap
 skip_revokefs_without_fuse
+original_cmd_prefix="$CMD_PREFIX"
 
-echo "1..27"
+echo "1..29"
 
 # Use stable rather than master as the branch so we can test that the run
 # command automatically finds the branch correctly
@@ -85,6 +86,18 @@ run org.test.Hello &> hello_out
 assert_file_has_content hello_out '^Hello world, from a sandbox$'
 
 ok "hello"
+
+CMD_PREFIX="${test_builddir}/close-fds-except -- $original_cmd_prefix"
+run --command=assert-fds-open org.test.Hello 0 1 2 >&2
+CMD_PREFIX="$original_cmd_prefix"
+
+ok "no extraneous fds open"
+
+CMD_PREFIX="${test_builddir}/close-fds-except 3 9 -- $original_cmd_prefix"
+run --command=assert-fds-open org.test.Hello 0 1 2 3 9 3>/dev/null 9</dev/null >&2
+CMD_PREFIX="$original_cmd_prefix"
+
+ok "extra fds can be inherited"
 
 # This should try and fail to run e.g. /usr/bin/--tmpfs, which will
 # exit with a nonzero status because there is no such executable.
