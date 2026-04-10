@@ -390,4 +390,8 @@ char * flatpak_get_path_for_fd (int      fd,
 
 gboolean flatpak_set_cloexec (int fd);
 
+int flatpak_accept_fd_argument (const char  *option_name,
+                                const char  *value,
+                                GError     **error);
+
 #endif /* __FLATPAK_UTILS_H__ */
