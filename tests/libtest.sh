@@ -312,7 +312,7 @@ make_runtime () {
         RUNTIME_REPO=${TEST_DATA_DIR}/runtime-repo
         (
             flock -s 200
-            if [ ! -d ${RUNTIME_REPO} ]; then
+            if [ ! -f "${RUNTIME_REPO}/refs/heads/${RUNTIME_REF}" ]; then
                 $(dirname $0)/make-test-runtime.sh ${RUNTIME_REPO} org.test.Platform ${BRANCH} "" "" > /dev/null
             fi
         ) 200>${TEST_DATA_DIR}/runtime-repo-lock
