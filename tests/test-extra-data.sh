@@ -45,7 +45,7 @@ curl "${EXTRA_DATA_URL}" -o "${DOWNLOADED_EXTRA_DATA}"
 EXTRA_DATA_SIZE=$(stat --printf="%s" "${DOWNLOADED_EXTRA_DATA}")
 EXTRA_DATA_SHA256=$(sha256sum "${DOWNLOADED_EXTRA_DATA}" | cut -f1 -d' ')
 
-echo "1..1"
+echo "1..2"
 
 # build the app with the extra data
 EXTRA_DATA="--extra-data=test:${EXTRA_DATA_SHA256}:${EXTRA_DATA_SIZE}:${EXTRA_DATA_SIZE}:${EXTRA_DATA_URL}"
@@ -61,3 +61,44 @@ assert_file_has_content out "extra-data-test-content"
 ${FLATPAK} ${U} uninstall -y org.test.Hello >&2
 
 ok "install extra data app with ostree"
+
+build_extra_data_noruntime_app() {
+    local repo="$1"
+    local branch="$2"
+
+    DIR="$(mktemp -d)"
+    ARCH="$(flatpak --default-arch)"
+
+    mkdir -p "${DIR}/files/bin"
+
+    cp "${G_TEST_BUILDDIR}/apply-extra-static" "${DIR}/files/bin/apply_extra"
+    chmod +x "${DIR}/files/bin/apply_extra"
+
+    cat > "${DIR}/metadata" <<EOF
+[Application]
+name=org.test.ExtraDataNoRuntime
+runtime=org.test.Platform/${ARCH}/${branch}
+
+[Extra Data]
+NoRuntime=true
+uri=${EXTRA_DATA_URL}
+size=${EXTRA_DATA_SIZE}
+checksum=${EXTRA_DATA_SHA256}
+EOF
+
+    flatpak build-finish "${DIR}" >&2
+    flatpak build-export ${FL_GPGARGS} "${repo}" "${DIR}" "${branch}" >&2
+    rm -rf "${DIR}"
+}
+
+if test -f "${G_TEST_BUILDDIR}/apply-extra-static"; then
+    build_extra_data_noruntime_app repos/test ${BRANCH}
+    update_repo ${REPONAME} ${COLLECTION_ID}
+    ${FLATPAK} ${U} install --or-update -y ${REPONAME}-repo org.test.ExtraDataNoRuntime ${BRANCH} >&2
+    DEPLOY_DIR="$(${FLATPAK} ${U} info --show-location org.test.ExtraDataNoRuntime)"
+    assert_file_has_content "${DEPLOY_DIR}/files/extra/ran" "^noruntime-extra-data$"
+    ${FLATPAK} ${U} uninstall -y org.test.ExtraDataNoRuntime >&2
+    ok "install+run extra data app with NoRuntime"
+else
+    ok "# SKIP install+run extra data app with NoRuntime apply-extra-static not found"
+fi
