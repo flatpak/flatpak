@@ -487,7 +487,7 @@ fi
 assert_not_file_has_content install-log "No ref chosen to resolve matches for ‘fuzzyrebasedold’"
 assert_not_file_has_content install-log "Replace\\?"
 assert_file_has_content install-log "Proceed with these changes to the .*installation\\?"
-assert_file_has_content install-log "Warning: app/org\\.test\\.FuzzyRebasedOld/$ARCH/master is end-of-life and has been replaced by app/org\\.test\\.FuzzyRebasedNew/$ARCH/master"
+assert_file_has_content install-log "Info: app/org\\.test\\.FuzzyRebasedOld/$ARCH/master is end-of-life and has been replaced by app/org\\.test\\.FuzzyRebasedNew/$ARCH/master"
 assert_file_has_content install-log "Specify the full ref explicitly to install it\\."
 
 ${FLATPAK} ${U} install --app -y test-repo fuzzyrebasedold >&2
@@ -498,7 +498,23 @@ assert_not_file_has_content list-log "org\.test\.FuzzyRebasedOld/"
 
 ${FLATPAK} ${U} uninstall -y fuzzyrebasednew >&2
 
-ok "fuzzy install handles eol refs"
+if ${FLATPAK} ${U} install --app test-repo org.test.FuzzyRebasedOld > install-log 2>&1; then
+    assert_not_reached "install of exact rebased app id should still require the transaction confirmation"
+fi
+assert_not_file_has_content install-log "Replace\\?"
+assert_not_file_has_content install-log "Specify the full ref explicitly to install it\\."
+assert_file_has_content install-log "Warning: app org\\.test\\.FuzzyRebasedOld branch master is end-of-life, in favor of org\\.test\\.FuzzyRebasedNew branch master"
+assert_file_has_content install-log "Proceed with these changes to the .*installation\\?"
+
+${FLATPAK} ${U} install --app -y test-repo org.test.FuzzyRebasedOld >&2
+
+${FLATPAK} ${U} list --columns=ref > list-log
+assert_file_has_content list-log "org\.test\.FuzzyRebasedOld/"
+assert_not_file_has_content list-log "org\.test\.FuzzyRebasedNew/"
+
+${FLATPAK} ${U} uninstall -y fuzzyrebasedold >&2
+
+ok "install handles eol refs"
 
 if [ x${USE_COLLECTIONS_IN_SERVER-} == xyes ] ; then
     REBASE_COLLECTION_ID=org.test.Collection.rebase

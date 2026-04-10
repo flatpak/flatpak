@@ -756,16 +756,16 @@ print_eol_info_message (FlatpakDir        *dir,
       if (is_pinned)
         {
           /* Only runtimes can be pinned */
-          g_print (_("\nInfo: (pinned) runtime %s%s%s branch %s%s%s is end-of-life, in favor of %s%s%s branch %s%s%s\n"),
+          g_print (_("\nWarning: (pinned) runtime %s%s%s branch %s%s%s is end-of-life, in favor of %s%s%s branch %s%s%s\n"),
                    on, ref_name, off, on, ref_branch, off, on, eolr_name, off, on, eolr_branch, off);
         }
       else
         {
           if (flatpak_decomposed_is_runtime (ref))
-            g_print (_("\nInfo: runtime %s%s%s branch %s%s%s is end-of-life, in favor of %s%s%s branch %s%s%s\n"),
+            g_print (_("\nWarning: runtime %s%s%s branch %s%s%s is end-of-life, in favor of %s%s%s branch %s%s%s\n"),
                      on, ref_name, off, on, ref_branch, off, on, eolr_name, off, on, eolr_branch, off);
           else
-            g_print (_("\nInfo: app %s%s%s branch %s%s%s is end-of-life, in favor of %s%s%s branch %s%s%s\n"),
+            g_print (_("\nWarning: app %s%s%s branch %s%s%s is end-of-life, in favor of %s%s%s branch %s%s%s\n"),
                      on, ref_name, off, on, ref_branch, off, on, eolr_name, off, on, eolr_branch, off);
         }
     }
@@ -777,16 +777,16 @@ print_eol_info_message (FlatpakDir        *dir,
       if (is_pinned)
         {
           /* Only runtimes can be pinned */
-          g_print (_("\nInfo: (pinned) runtime %s%s%s branch %s%s%s is end-of-life, with reason:\n"),
+          g_print (_("\nWarning: (pinned) runtime %s%s%s branch %s%s%s is end-of-life, with reason:\n"),
                    on, ref_name, off, on, ref_branch, off);
         }
       else
         {
           if (flatpak_decomposed_is_runtime (ref))
-            g_print (_("\nInfo: runtime %s%s%s branch %s%s%s is end-of-life, with reason:\n"),
+            g_print (_("\nWarning: runtime %s%s%s branch %s%s%s is end-of-life, with reason:\n"),
                      on, ref_name, off, on, ref_branch, off);
           else
-            g_print (_("\nInfo: app %s%s%s branch %s%s%s is end-of-life, with reason:\n"),
+            g_print (_("\nWarning: app %s%s%s branch %s%s%s is end-of-life, with reason:\n"),
                      on, ref_name, off, on, ref_branch, off);
         }
       g_print ("   %s\n", escaped_reason);
@@ -903,6 +903,7 @@ end_of_lifed_with_rebase (FlatpakTransaction *transaction,
   EolAction action = EOL_UNDECIDED;
   EolAction old_action = EOL_UNDECIDED;
   gboolean can_rebase = rebased_to_ref != NULL && remote != NULL;
+  gboolean no_eol_rebase = flatpak_transaction_ref_no_eol_rebase (transaction, ref_str);
   g_autoptr(FlatpakInstallation) installation = flatpak_transaction_get_installation (transaction);
   g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (installation, NULL);
 
@@ -977,7 +978,9 @@ end_of_lifed_with_rebase (FlatpakTransaction *transaction,
             }
         }
 
-      if (rebased_to_ref && remote)
+      if (no_eol_rebase && can_rebase)
+        action = EOL_NO_REBASE;
+      else if (rebased_to_ref && remote)
         {
           /* The context for this prompt is in print_eol_info_message() */
           if (self->disable_interaction ||

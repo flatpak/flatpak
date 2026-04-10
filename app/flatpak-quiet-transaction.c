@@ -236,9 +236,9 @@ end_of_lifed_with_rebase (FlatpakTransaction *transaction,
   g_autoptr(FlatpakRef) rref = flatpak_ref_parse (ref, NULL);
 
   if (rebased_to_ref)
-    g_print (_("Info: %s is end-of-life, in favor of %s\n"), flatpak_ref_get_name (rref), rebased_to_ref);
+    g_print (_("Warning: %s is end-of-life, in favor of %s\n"), flatpak_ref_get_name (rref), rebased_to_ref);
   else if (reason)
-    g_print (_("Info: %s is end-of-life, with reason: %s\n"), flatpak_ref_get_name (rref), reason);
+    g_print (_("Warning: %s is end-of-life, with reason: %s\n"), flatpak_ref_get_name (rref), reason);
 
   if (rebased_to_ref && remote)
     {

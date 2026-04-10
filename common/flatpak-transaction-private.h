@@ -31,6 +31,10 @@ FlatpakRemoteState *flatpak_transaction_ensure_remote_state (FlatpakTransaction 
                                                              GError                        **error);
 
 FlatpakDecomposed * flatpak_transaction_operation_get_decomposed (FlatpakTransactionOperation *self);
+void                flatpak_transaction_add_no_eol_rebase_ref   (FlatpakTransaction          *self,
+                                                                 const char                  *ref);
+gboolean            flatpak_transaction_ref_no_eol_rebase       (FlatpakTransaction          *self,
+                                                                 const char                  *ref);
 
 #include "flatpak-dir-private.h"
 
