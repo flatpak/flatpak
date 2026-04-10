@@ -82,6 +82,9 @@ option_bind_fd_cb (const char  *option_name,
   if (fd < 3)
     return glnx_throw (error, "File descriptors 0, 1, 2 are reserved");
 
+  if (!flatpak_set_cloexec (fd))
+    return glnx_throw_errno_prefix (error, "--bind-fd");
+
   g_array_append_val (opt_bind_fds, fd);
   fd = -1; /* ownership transferred to GArray */
   return TRUE;
@@ -101,6 +104,9 @@ option_ro_bind_fd_cb (const char  *option_name,
 
   if (fd < 3)
     return glnx_throw (error, "File descriptors 0, 1, 2 are reserved");
+
+  if (!flatpak_set_cloexec (fd))
+    return glnx_throw_errno_prefix (error, "--ro-bind-fd");
 
   g_array_append_val (opt_ro_bind_fds, fd);
   fd = -1; /* ownership transferred to GArray */
@@ -122,6 +128,9 @@ opt_instance_id_fd_cb (const char  *option_name,
   if (fd < 3)
     return glnx_throw (error, "File descriptors 0, 1, 2 are reserved");
 
+  if (!flatpak_set_cloexec (fd))
+    return glnx_throw_errno_prefix (error, "--instance-id-fd");
+
   opt_instance_id_fd = g_steal_fd (&fd);
   return TRUE;
 }
@@ -141,6 +150,9 @@ opt_app_fd_cb (const char  *option_name,
   if (fd < 3)
     return glnx_throw (error, "File descriptors 0, 1, 2 are reserved");
 
+  if (!flatpak_set_cloexec (fd))
+    return glnx_throw_errno_prefix (error, "--app-fd");
+
   opt_app_fd = g_steal_fd (&fd);
   return TRUE;
 }
@@ -159,6 +171,9 @@ opt_usr_fd_cb (const char  *option_name,
 
   if (fd < 3)
     return glnx_throw (error, "File descriptors 0, 1, 2 are reserved");
+
+  if (!flatpak_set_cloexec (fd))
+    return glnx_throw_errno_prefix (error, "--usr-fd");
 
   opt_usr_fd = g_steal_fd (&fd);
   return TRUE;
