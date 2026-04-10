@@ -385,4 +385,6 @@ void flatpak_add_all_tests (void);
 
 #define FLATPAK_MESSAGE_ID "c7b39b1e006b464599465e105b361485"
 
+gboolean flatpak_set_cloexec (int fd);
+
 #endif /* __FLATPAK_UTILS_H__ */
