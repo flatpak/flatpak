@@ -58,18 +58,28 @@ tap_test = find_program(
   files(project_source_root / 'buildutil/tap-test'),
 )
 
+assert_fds_open = executable(
+  'assert-fds-open',
+  'assert-fds-open.c',
+  override_options : ['b_sanitize=none'],
+  install : get_option('installed_tests'),
+  install_dir : installed_testdir,
+)
+
 if can_run_host_binaries
   runtime_repo = custom_target(
     'runtime-repo',
     build_by_default : false,
     command : [
+      'env',
+      'G_TEST_BUILDDIR=@0@'.format(meson.current_build_dir()),
       files('make-runtime-repos'),
       project_build_root / 'app',
       files('make-test-runtime.sh'),
       project_build_root / 'tests/runtime-repo',
       '@OUTPUT@',
     ],
-    depends : [flatpak_exe],
+    depends : [flatpak_exe, assert_fds_open],
     output : 'runtime-repo.stamp',
   )
 endif
@@ -185,6 +195,19 @@ foreach testcase : c_tests
     )
   endif
 endforeach
+
+executable(
+  'close-fds-except',
+  'close-fds-except.c',
+  dependencies : [
+    base_deps,
+    libflatpak_common_dep,
+    libflatpak_common_base_dep,
+    libglnx_dep,
+  ],
+  install : get_option('installed_tests'),
+  install_dir : installed_testdir,
+)
 
 executable(
   'hold-lock',

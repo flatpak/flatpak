@@ -2671,6 +2671,70 @@ flatpak_set_cloexec (int fd)
   return TRUE;
 }
 
+/* Sets errno on failure. */
+gboolean
+flatpak_unset_cloexec (int fd)
+{
+  int flags = fcntl (fd, F_GETFD);
+
+  if (flags == -1)
+    return FALSE;
+
+  flags &= ~FD_CLOEXEC;
+
+  if (fcntl (fd, F_SETFD, flags) < 0)
+    return FALSE;
+
+  return TRUE;
+}
+
+/*
+ * flatpak_accept_fd_argument:
+ * @option_name: Name of a command-line option such as `--env-fd`
+ * @value: Value of the command-line option
+ *
+ * Parse a command-line argument whose value is a file descriptor to be
+ * used internally by Flatpak.
+ *
+ * The file descriptor must be 3 or higher (cannot be stdin, stdout
+ * or stderr).
+ *
+ * The file descriptor is set to be close-on-execute (CLOEXEC).
+ * If child processes are meant to inherit it, the caller must clear the
+ * close-on-execute flag, or duplicate the fd.
+ *
+ * Returns: A file descriptor to be closed by the caller, or -1 on error
+ */
+int
+flatpak_accept_fd_argument (const char  *option_name,
+                            const char  *value,
+                            GError     **error)
+{
+  glnx_autofd int fd = -1;
+
+  fd = flatpak_parse_fd (value, error);
+
+  if (fd < 0)
+    {
+      g_prefix_error (error, "%s: ", option_name);
+      return -1;
+    }
+
+  if (fd < 3)
+    {
+      /* We don't want to close stdin, stdout or stderr */
+      fd = -1;
+      return glnx_fd_throw (error,
+                            "%s: Cannot use reserved file descriptor 0, 1 or 2",
+                            option_name);
+    }
+
+  if (!flatpak_set_cloexec (fd))
+    return glnx_fd_throw_errno_prefix (error, "%s", option_name);
+
+  return g_steal_fd (&fd);
+}
+
 /*
  * Attempt to discover the filesystem path corresponding to @fd.
  *
