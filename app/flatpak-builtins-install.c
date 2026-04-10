@@ -550,10 +550,40 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
                                                             &matched_kinds, &id, &arch, &branch);
 
                   if (opt_no_pull)
-                    refs = flatpak_dir_find_local_refs (this_dir, this_remote, id, branch, this_default_branch, arch,
-                                                        flatpak_get_default_arch (),
-                                                        matched_kinds, matching_refs_flags,
-                                                        cancellable, &local_error);
+                    {
+                      g_autoptr(FlatpakRemoteState) local_state = NULL;
+
+                      refs = flatpak_dir_find_local_refs (this_dir, this_remote, id, branch, this_default_branch, arch,
+                                                          flatpak_get_default_arch (),
+                                                          matched_kinds, matching_refs_flags,
+                                                          cancellable, &local_error);
+
+                      if (refs == NULL)
+                        continue;
+
+                      local_state = flatpak_dir_get_remote_state_optional (this_dir, this_remote, TRUE, cancellable, NULL);
+
+                      if (local_state != NULL && (matching_refs_flags & FIND_MATCHING_REFS_FLAGS_EXCLUDE_EOL))
+                        {
+                          for (guint k = refs->len; k > 0; k--)
+                            {
+                              FlatpakDecomposed *matched_ref = g_ptr_array_index (refs, k - 1);
+                              VarMetadataRef sparse_cache;
+                              const char *eol, *eol_rebase;
+
+                              if (!flatpak_remote_state_lookup_sparse_cache (local_state,
+                                                                             flatpak_decomposed_get_ref (matched_ref),
+                                                                             &sparse_cache, NULL))
+                                continue;
+
+                              eol       = var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLIFE, NULL);
+                              eol_rebase = var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLIFE_REBASE, NULL);
+
+                              if (eol != NULL && eol_rebase == NULL)
+                                g_ptr_array_remove_index (refs, k - 1);
+                            }
+                        }
+                    }
                   else
                     {
                       g_autoptr(FlatpakRemoteState) state = get_remote_state (this_dir, this_remote, FALSE, FALSE,
@@ -656,10 +686,48 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
         }
 
       if (opt_no_pull)
-        refs = flatpak_dir_find_local_refs (dir, remote, id, branch, default_branch, arch,
-                                            flatpak_get_default_arch (),
-                                            matched_kinds, matching_refs_flags,
-                                            cancellable, error);
+        {
+          g_autoptr(FlatpakRemoteState) local_state = NULL;
+
+          refs = flatpak_dir_find_local_refs (dir, remote, id, branch, default_branch, arch,
+                                              flatpak_get_default_arch (),
+                                              matched_kinds, matching_refs_flags,
+                                              cancellable, error);
+
+          if (refs == NULL)
+            return FALSE;
+
+          local_state = flatpak_dir_get_remote_state_optional (dir, remote, TRUE, cancellable, NULL);
+
+          if (local_state != NULL && (matching_refs_flags & FIND_MATCHING_REFS_FLAGS_EXCLUDE_EOL))
+            {
+              for (guint k = refs->len; k > 0; k--)
+                {
+                  FlatpakDecomposed *matched_ref = g_ptr_array_index (refs, k - 1);
+                  VarMetadataRef sparse_cache;
+                  const char *eol, *eol_rebase;
+
+                  if (!flatpak_remote_state_lookup_sparse_cache (local_state,
+                                                                 flatpak_decomposed_get_ref (matched_ref),
+                                                                 &sparse_cache, NULL))
+                    continue;
+
+                  eol       = var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLIFE, NULL);
+                  eol_rebase = var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLIFE_REBASE, NULL);
+
+                  if (eol != NULL && eol_rebase == NULL)
+                    g_ptr_array_remove_index (refs, k - 1);
+                }
+            }
+
+          if (local_state != NULL && (matching_refs_flags & FIND_MATCHING_REFS_FLAGS_FUZZY))
+            {
+              refs = resolve_fuzzy_rebased_refs (local_state, refs, &auto_resolved_rebase,
+                                                 &explicit_install_ref, error);
+              if (refs == NULL)
+                return FALSE;
+            }
+        }
       else
         {
           g_autoptr(FlatpakRemoteState) state = NULL;

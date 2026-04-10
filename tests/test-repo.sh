@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..48"
+echo "1..50"
 
 #Regular repo
 setup_repo
@@ -515,6 +515,83 @@ assert_not_file_has_content list-log "org\.test\.FuzzyRebasedNew/"
 ${FLATPAK} ${U} uninstall -y fuzzyrebasedold >&2
 
 ok "install handles eol refs"
+
+# --no-pull variants: pre-populate the local cache via --no-deploy
+
+${FLATPAK} ${U} install -y --no-deploy test-repo org.test.FuzzyInstall >&2
+${FLATPAK} ${U} install -y --no-deploy test-repo org.test.FuzzyInstallOld >&2
+${FLATPAK} ${U} install -y --no-deploy test-repo org.test.FuzzyRebasedNew >&2
+${FLATPAK} ${U} install -y --no-deploy test-repo org.test.FuzzyRebasedOld >&2
+
+if ${FLATPAK} ${U} install --no-pull --app test-repo fuzzyinstallold > install-log 2>&1; then
+    assert_not_reached "fuzzy --no-pull install of end-of-life ref should fail"
+fi
+assert_file_has_content install-log "Nothing matches fuzzyinstallold in local repository for remote test-repo"
+
+${FLATPAK} ${U} install --no-pull --app -y test-repo fuzzyinstall >&2
+
+${FLATPAK} ${U} list --columns=ref > list-log
+assert_file_has_content list-log "org\.test\.FuzzyInstall/"
+assert_not_file_has_content list-log "org\.test\.FuzzyInstallOld/"
+
+${FLATPAK} ${U} uninstall -y org.test.FuzzyInstall >&2
+
+${FLATPAK} ${U} install --no-pull --app -y test-repo fuzzyrebasedold >&2
+
+${FLATPAK} ${U} list --columns=ref > list-log
+assert_file_has_content list-log "org\.test\.FuzzyRebasedNew/"
+
+${FLATPAK} ${U} uninstall -y fuzzyrebasednew >&2
+
+${FLATPAK} ${U} install --no-pull --app -y test-repo org.test.FuzzyRebasedOld >&2
+
+${FLATPAK} ${U} list --columns=ref > list-log
+assert_file_has_content list-log "org\.test\.FuzzyRebasedOld/"
+
+${FLATPAK} ${U} uninstall -y fuzzyrebasedold >&2
+
+ok "install handles eol refs with --no-pull"
+
+# --noninteractive variants
+
+if ${FLATPAK} ${U} install --noninteractive --app test-repo fuzzyinstallold > install-log 2>&1; then
+    assert_not_reached "noninteractive fuzzy install of end-of-life ref should fail"
+fi
+assert_file_has_content install-log "Nothing matches fuzzyinstallold in remote test-repo"
+
+${FLATPAK} ${U} install --noninteractive --app test-repo fuzzyinstall >&2
+
+${FLATPAK} ${U} list --columns=ref > list-log
+assert_file_has_content list-log "org\.test\.FuzzyInstall/"
+assert_not_file_has_content list-log "org\.test\.FuzzyInstallOld/"
+
+${FLATPAK} ${U} uninstall -y org.test.FuzzyInstall >&2
+
+${FLATPAK} ${U} install --noninteractive --app test-repo fuzzyrebasedold >&2
+
+${FLATPAK} ${U} list --columns=ref > list-log
+assert_file_has_content list-log "org\.test\.FuzzyRebasedNew/"
+assert_not_file_has_content list-log "org\.test\.FuzzyRebasedOld/"
+
+${FLATPAK} ${U} uninstall -y fuzzyrebasednew >&2
+
+${FLATPAK} ${U} install --noninteractive --app test-repo org.test.FuzzyRebasedOld >&2
+
+${FLATPAK} ${U} list --columns=ref > list-log
+assert_file_has_content list-log "org\.test\.FuzzyRebasedNew/"
+assert_not_file_has_content list-log "org\.test\.FuzzyRebasedOld/"
+
+${FLATPAK} ${U} uninstall -y fuzzyrebasednew >&2
+
+${FLATPAK} ${U} install --noninteractive --app test-repo "app/org.test.FuzzyRebasedOld/$ARCH/master" >&2
+
+${FLATPAK} ${U} list --columns=ref > list-log
+assert_file_has_content list-log "org\.test\.FuzzyRebasedNew/"
+assert_not_file_has_content list-log "org\.test\.FuzzyRebasedOld/"
+
+${FLATPAK} ${U} uninstall -y fuzzyrebasednew >&2
+
+ok "install handles eol refs with --noninteractive"
 
 if [ x${USE_COLLECTIONS_IN_SERVER-} == xyes ] ; then
     REBASE_COLLECTION_ID=org.test.Collection.rebase
