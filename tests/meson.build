@@ -187,6 +187,19 @@ foreach testcase : c_tests
 endforeach
 
 executable(
+  'close-fds-except',
+  'close-fds-except.c',
+  dependencies : [
+    base_deps,
+    libflatpak_common_dep,
+    libflatpak_common_base_dep,
+    libglnx_dep,
+  ],
+  install : get_option('installed_tests'),
+  install_dir : installed_testdir,
+)
+
+executable(
   'hold-lock',
   'hold-lock.c',
   dependencies : [
