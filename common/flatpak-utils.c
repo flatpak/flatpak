@@ -2671,6 +2671,23 @@ flatpak_set_cloexec (int fd)
   return TRUE;
 }
 
+/* Sets errno on failure. */
+gboolean
+flatpak_unset_cloexec (int fd)
+{
+  int flags = fcntl (fd, F_GETFD);
+
+  if (flags == -1)
+    return FALSE;
+
+  flags &= ~FD_CLOEXEC;
+
+  if (fcntl (fd, F_SETFD, flags) < 0)
+    return FALSE;
+
+  return TRUE;
+}
+
 /*
  * flatpak_accept_fd_argument:
  * @option_name: Name of a command-line option such as `--env-fd`

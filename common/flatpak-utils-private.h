@@ -389,6 +389,7 @@ char * flatpak_get_path_for_fd (int      fd,
 #define FLATPAK_MESSAGE_ID "c7b39b1e006b464599465e105b361485"
 
 gboolean flatpak_set_cloexec (int fd);
+gboolean flatpak_unset_cloexec (int fd);
 
 int flatpak_accept_fd_argument (const char  *option_name,
                                 const char  *value,
