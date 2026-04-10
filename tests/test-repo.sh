@@ -416,6 +416,13 @@ ok "eol build-export"
 
 make_updated_app test "" master "" org.test.FuzzyInstall
 EXPORT_ARGS="--end-of-life=Legacy-reason" make_updated_app test "" master "" org.test.FuzzyInstallOld
+make_updated_app test "" master "" org.test.FuzzyRebasedNew
+EXPORT_ARGS="--end-of-life-rebase=org.test.FuzzyRebasedNew" make_updated_app test "" master "" org.test.FuzzyRebasedOld
+
+if ${FLATPAK} ${U} install --app test-repo fuzzyinstallold > install-log 2>&1; then
+    assert_not_reached "fuzzy install of end-of-life ref should fail"
+fi
+assert_file_has_content install-log "Nothing matches fuzzyinstallold in remote test-repo"
 
 ${FLATPAK} ${U} install --app -y test-repo fuzzyinstall > install-log
 assert_file_has_content install-log "org\.test\.FuzzyInstall"
@@ -436,7 +443,26 @@ ${FLATPAK} ${U} uninstall -y fuzzyinstallold >&2
 ${FLATPAK} ${U} list --columns=ref > list-log
 assert_not_file_has_content list-log "org\.test\.FuzzyInstallOld/"
 
-ok "fuzzy install filters eol refs"
+if ${FLATPAK} ${U} install --app test-repo fuzzyrebasedold > install-log 2>&1; then
+    assert_not_reached "fuzzy install of rebased ref should still require the transaction confirmation"
+fi
+assert_not_file_has_content install-log "No ref chosen to resolve matches for ‘fuzzyrebasedold’"
+assert_not_file_has_content install-log "Replace\\?"
+assert_file_has_content install-log "Proceed with these changes to the .*installation\\?"
+assert_file_has_content install-log "Warning: app/org\\.test\\.FuzzyRebasedOld/$ARCH/master is end-of-life and has been replaced by app/org\\.test\\.FuzzyRebasedNew/$ARCH/master"
+assert_file_has_content install-log "Specify the full ref explicitly to install it\\."
+
+${FLATPAK} ${U} install --app -y test-repo fuzzyrebasedold > install-log 2>&1
+assert_file_has_content install-log "org\.test\.FuzzyRebasedNew"
+assert_file_has_content install-log "Specify the full ref explicitly to install it\\."
+
+${FLATPAK} ${U} list --columns=ref > list-log
+assert_file_has_content list-log "org\.test\.FuzzyRebasedNew/"
+assert_not_file_has_content list-log "org\.test\.FuzzyRebasedOld/"
+
+${FLATPAK} ${U} uninstall -y fuzzyrebasednew >&2
+
+ok "fuzzy install handles eol refs"
 
 if [ x${USE_COLLECTIONS_IN_SERVER-} == xyes ] ; then
     REBASE_COLLECTION_ID=org.test.Collection.rebase

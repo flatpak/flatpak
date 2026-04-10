@@ -14487,7 +14487,7 @@ flatpak_dir_find_remote_refs (FlatpakDir           *self,
           eol = var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLIFE, NULL);
           eol_rebase = var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLIFE_REBASE, NULL);
 
-          if (eol != NULL || eol_rebase != NULL)
+          if (eol != NULL && eol_rebase == NULL)
             g_ptr_array_remove_index (matched_refs, i - 1);
         }
     }
