@@ -291,6 +291,21 @@ executable(
   install_dir : installed_testdir,
 )
 
+if cc.links('#include <stdio.h>\nint main(void) { printf("test"); return 0; }',
+            args: ['-static'],
+            name: 'static libc')
+  executable(
+    'apply-extra-static',
+    'apply-extra-static.c',
+    install : get_option('installed_tests'),
+    install_dir : installed_testdir,
+    override_options : ['b_sanitize=none'],
+    link_args : ['-static'],
+  )
+else
+  warning('static libc not available, apply-extra-static will be skipped')
+endif
+
 subdir('share/xdg-desktop-portal/portals')
 subdir('services')
 subdir('test-keyring')
