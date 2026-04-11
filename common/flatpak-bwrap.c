@@ -533,7 +533,8 @@ flatpak_bwrap_child_setup (GArray *fd_array,
          us use the same fd_array multiple times */
       if (lseek (fd, 0, SEEK_SET) < 0)
         {
-          /* Ignore the error, this happens on e.g. pipe fds */
+          /* Ignore the error, not all fds are seekable
+           * (for example pipes and O_PATH fds are not) */
         }
 
       fcntl (fd, F_SETFD, 0);
