@@ -743,9 +743,6 @@ test_full (void)
   if (g_mkdir_with_parents (dont_hide, S_IRWXU) != 0)
     g_error ("mkdir: %s", g_strerror (errno));
 
-  if (g_mkdir_with_parents (dont_hide, S_IRWXU) != 0)
-    g_error ("mkdir: %s", g_strerror (errno));
-
   if (g_mkdir_with_parents (abs_target, S_IRWXU) != 0)
     g_error ("mkdir: %s", g_strerror (errno));
 
