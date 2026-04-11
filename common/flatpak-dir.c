@@ -9165,30 +9165,6 @@ extract_extra_data (FlatpakDir   *self,
   return TRUE;
 }
 
-static void
-child_setup (gpointer user_data)
-{
-  GArray *fd_array = user_data;
-  int i;
-
-  /* If no fd_array was specified, don't care. */
-  if (fd_array == NULL)
-    return;
-
-  /* Otherwise, mark not - close-on-exec all the fds in the array */
-  for (i = 0; i < fd_array->len; i++)
-    {
-      int fd = g_array_index (fd_array, int, i);
-
-      /* We also seek all fds to the start, because this lets
-         us use the same fd_array multiple times */
-      if (lseek (fd, 0, SEEK_SET) < 0)
-        g_printerr ("lseek error in child setup");
-
-      fcntl (fd, F_SETFD, 0);
-    }
-}
-
 static gboolean
 apply_extra_data (FlatpakDir   *self,
                   GFile        *checkoutdir,
@@ -9363,7 +9339,7 @@ apply_extra_data (FlatpakDir   *self,
                      (char **) bwrap->argv->pdata,
                      bwrap->envp,
                      G_SPAWN_SEARCH_PATH,
-                     child_setup, bwrap->fds,
+                     flatpak_bwrap_child_setup_inherit_fds_cb, bwrap->fds,
                      NULL, NULL,
                      &exit_status,
                      error))
