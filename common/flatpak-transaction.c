@@ -677,6 +677,7 @@ flatpak_transaction_operation_finalize (GObject *object)
   g_clear_pointer (&self->summary_metadata, g_variant_unref);
   g_clear_object (&self->image_source);
   g_clear_object (&self->resolved_image_source);
+  g_clear_pointer (&self->runtime_repo_url, g_free);
 
   G_OBJECT_CLASS (flatpak_transaction_operation_parent_class)->finalize (object);
 }
