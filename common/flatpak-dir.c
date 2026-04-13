@@ -4767,11 +4767,19 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
 
       if (flatpak_dir_use_system_helper (self, NULL))
         {
+          g_autoptr(GError) local_error = NULL;
+
           if (!system_helper_maybe_ensure_repo (self, ensure_flags, allow_empty, cancellable, error))
             return FALSE;
 
-          if (!ensure_repo_opened (repo, cancellable, error))
-            return FALSE;
+          if (!ensure_repo_opened (repo, cancellable, &local_error))
+            {
+              if (allow_empty)
+                return TRUE;
+
+              g_propagate_error (error, g_steal_pointer (&local_error));
+              return FALSE;
+            }
         }
       else
         {
