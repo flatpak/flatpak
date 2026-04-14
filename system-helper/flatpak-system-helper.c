@@ -961,7 +961,7 @@ handle_install_bundle (FlatpakSystemHelper   *object,
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
-  reinstall = !!(arg_flags & FLATPAK_HELPER_INSTALL_BUNDLE_FLAGS_NO_INTERACTION);
+  reinstall = (arg_flags & FLATPAK_HELPER_INSTALL_BUNDLE_FLAGS_REINSTALL) != 0;
   if (!flatpak_dir_install_bundle (system, reinstall, bundle_file, arg_remote, &ref, NULL, &error))
     {
       flatpak_invocation_return_error (invocation, error, "Error installing bundle");
