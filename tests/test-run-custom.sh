@@ -51,7 +51,7 @@ assert_file_has_content hello_out '^Hello world, from a runtime$'
 
 ok "setup"
 
-! run --app-path="" --command=/app/bin/hello.sh org.test.Hello > /dev/null
+assert_fail run --app-path="" --command=/app/bin/hello.sh org.test.Hello > /dev/null
 
 run --app-path="" --command=/usr/bin/runtime_hello.sh org.test.Hello > hello_out
 assert_file_has_content hello_out '^Hello world, from a runtime$'
@@ -59,7 +59,7 @@ assert_file_has_content hello_out '^Hello world, from a runtime$'
 run --app-path="" --command=/run/parent/app/bin/hello.sh org.test.Hello > hello_out
 assert_file_has_content hello_out '^Hello world, from a sandbox$'
 
-! run --app-path="" --command=/run/parent/usr/bin/runtime_hello.sh org.test.Hello > /dev/null
+assert_fail run --app-path="" --command=/run/parent/usr/bin/runtime_hello.sh org.test.Hello > /dev/null
 
 ok "empty app path"
 
@@ -72,11 +72,11 @@ assert_file_has_content hello_out '^Hello world, from a runtime$'
 run --app-path=custom-app/files --command=/run/parent/app/bin/hello.sh org.test.Hello > hello_out
 assert_file_has_content hello_out '^Hello world, from a sandbox$'
 
-! run --app-path=custom-app/files --command=/run/parent/usr/bin/runtime_hello.sh org.test.Hello > /dev/null
+assert_fail run --app-path=custom-app/files --command=/run/parent/usr/bin/runtime_hello.sh org.test.Hello > /dev/null
 
 ok "custom app path"
 
-! run --app-path=path-which-does-not-exist org.test.Hello > /dev/null
+assert_fail run --app-path=path-which-does-not-exist org.test.Hello > /dev/null
 
 ok "bad custom app path"
 
@@ -85,7 +85,7 @@ run --app-fd=3 --command=/app/bin/hello.sh org.test.Hello > hello_out
 assert_file_has_content hello_out '^Hello world, from a sandboxCUSTOM$'
 exec 3>&-
 
-! run --app-fd=3 --command=/app/bin/hello.sh org.test.Hello > /dev/null
+assert_fail run --app-fd=3 --command=/app/bin/hello.sh org.test.Hello > /dev/null
 
 ok "custom app fd"
 
@@ -95,14 +95,14 @@ assert_file_has_content hello_out '^Hello world, from a sandbox$'
 run --usr-path=custom-runtime/files --command=/usr/bin/runtime_hello.sh org.test.Hello > hello_out
 assert_file_has_content hello_out '^Hello world, from a runtimeCUSTOM$'
 
-! run --usr-path=custom-runtime/files --command=/run/parent/app/bin/hello.sh org.test.Hello > /dev/null
+assert_fail run --usr-path=custom-runtime/files --command=/run/parent/app/bin/hello.sh org.test.Hello > /dev/null
 
 run --usr-path=custom-runtime/files --command=/run/parent/usr/bin/runtime_hello.sh org.test.Hello > hello_out
 assert_file_has_content hello_out '^Hello world, from a runtime$'
 
 ok "custom usr path"
 
-! run --usr-path=path-which-does-not-exist org.test.Hello > /dev/null
+assert_fail run --usr-path=path-which-does-not-exist org.test.Hello > /dev/null
 
 ok "bad custom usr path"
 
@@ -116,7 +116,7 @@ run --usr-fd=3 --command=/usr/bin/runtime_hello.sh org.test.Hello > hello_out
 assert_file_has_content hello_out '^Hello world, from a runtimeCUSTOM$'
 exec 3>&-
 
-! run --usr-fd=3 --command=/app/bin/hello.sh org.test.Hello > /dev/null
+assert_fail run --usr-fd=3 --command=/app/bin/hello.sh org.test.Hello > /dev/null
 
 ok "custom usr fd"
 
@@ -138,8 +138,8 @@ assert_file_has_content hello_out '^Hello world, from a runtime$'
 
 ok "custom usr and app path"
 
-! run --usr-path=custom-runtime/files --app-path="" \
-    --command=/app/bin/hello.sh org.test.Hello > /dev/null
+assert_fail run --usr-path=custom-runtime/files --app-path="" \
+               --command=/app/bin/hello.sh org.test.Hello > /dev/null
 
 run --usr-path=custom-runtime/files --app-path="" \
     --command=/usr/bin/runtime_hello.sh org.test.Hello > hello_out
@@ -173,7 +173,7 @@ assert_file_has_content hello_out '^baz$'
 exec 3>&-
 
 exec 3< "${path}"
-! run --ro-bind-fd=3 --command=bash org.test.Hello -c "echo baz > ${path}" > /dev/null
+assert_fail run --ro-bind-fd=3 --command=bash org.test.Hello -c "echo baz > ${path}" > /dev/null
 exec 3>&-
 
 ok "bind-fd and ro-bind-fd"
