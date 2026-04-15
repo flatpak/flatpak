@@ -21,6 +21,7 @@ wrapped_tests += {'name' : 'test-oci-registry@user,http.wrap', 'script' : 'test-
 wrapped_tests += {'name' : 'test-oci-registry@user,https.wrap', 'script' : 'test-oci-registry.sh'}
 wrapped_tests += {'name' : 'test-oci-registry@system,http.wrap', 'script' : 'test-oci-registry.sh'}
 wrapped_tests += {'name' : 'test-oci-registry@system,https.wrap', 'script' : 'test-oci-registry.sh'}
+wrapped_tests += {'name' : 'test-oci-runtime-repo@user.wrap', 'script' : 'test-oci-runtime-repo.sh'}
 wrapped_tests += {'name' : 'test-update-remote-configuration@newsummary.wrap', 'script' : 'test-update-remote-configuration.sh'}
 wrapped_tests += {'name' : 'test-update-remote-configuration@oldsummary.wrap', 'script' : 'test-update-remote-configuration.sh'}
 wrapped_tests += {'name' : 'test-update-portal@user.wrap', 'script' : 'test-update-portal.sh'}

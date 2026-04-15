@@ -131,6 +131,7 @@ struct _FlatpakTransactionOperation
   guint64                         installed_size;
   char                           *eol;
   char                           *eol_rebase;
+  char                           *runtime_repo_url;
   gint32                          token_type;
   GVariant                       *summary_metadata; /* Additional metadatafield for commit from summary */
   int                             run_after_count;
@@ -676,6 +677,7 @@ flatpak_transaction_operation_finalize (GObject *object)
   g_clear_pointer (&self->summary_metadata, g_variant_unref);
   g_clear_object (&self->image_source);
   g_clear_object (&self->resolved_image_source);
+  g_clear_pointer (&self->runtime_repo_url, g_free);
 
   G_OBJECT_CLASS (flatpak_transaction_operation_parent_class)->finalize (object);
 }
@@ -3709,6 +3711,7 @@ try_resolve_op_from_metadata (FlatpakTransaction *self,
       op->eol = g_strdup (var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLIFE, NULL));
       op->eol_rebase = g_strdup (var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLIFE_REBASE, NULL));
       op->token_type = GINT32_FROM_LE (var_metadata_lookup_int32 (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_TOKEN_TYPE, op->token_type));
+      op->runtime_repo_url = g_strdup (var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_RUNTIME_REPO, NULL));
 
       if (op->eol_rebase)
         {
@@ -3912,7 +3915,7 @@ resolve_ops (FlatpakTransaction *self,
 
               commit_data = flatpak_remote_state_load_ref_commit (state, priv->dir,
                                                                   flatpak_decomposed_get_ref (op->ref),
-                                                                  checksum, /* initially NULL */ op->resolved_token,
+                                      checksum, /* initially NULL */ op->resolved_token,
                                                                   NULL, NULL, &local_error);
               if (commit_data == NULL)
                 {
@@ -5035,6 +5038,36 @@ flatpak_transaction_resolve_images (FlatpakTransaction *self,
   return TRUE;
 }
 
+static gboolean
+flatpak_transaction_resolve_runtime_repo_url (FlatpakTransaction *self,
+                                              GCancellable       *cancellable,
+                                              GError            **error)
+{
+  GList *list;
+
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+
+  for (list = priv->ops; list != NULL; list = list->next)
+    {
+      g_autoptr(GKeyFile) runtime_repo_keyfile = NULL;
+      g_autofree char *id = NULL;
+
+      FlatpakTransactionOperation *op = list->data;
+
+      if (!op->runtime_repo_url)
+        continue;
+
+      if (!load_flatpakrepo_file (self, op->runtime_repo_url, &runtime_repo_keyfile, cancellable, error))
+        return FALSE;
+
+      id = flatpak_decomposed_dup_id (op->ref);
+      if (!handle_runtime_repo_deps (self,  id, op->runtime_repo_url, runtime_repo_keyfile, cancellable, error))
+        return FALSE;
+    }
+
+  return TRUE;
+}
+
 /**
  * flatpak_transaction_run:
  * @transaction: a #FlatpakTransaction
@@ -5117,7 +5150,7 @@ _run_op_kind (FlatpakTransaction           *self,
       /* Handle noop-installs (maybe we raced, or this was installed in install-authenticator)
        * We do initial checks and fail with already installed in add_ref() for other cases. */
       if (!res && g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED))
-        {
+        { 
           res = TRUE;
           g_clear_error (&local_error);
 
@@ -5127,7 +5160,7 @@ _run_op_kind (FlatpakTransaction           *self,
         {
           g_propagate_error (error, g_steal_pointer (&local_error));
         }
-
+ 
       if (res)
         {
           emit_op_done (self, op, result_details);
@@ -5503,6 +5536,13 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
 
   /* Resolve initial ops */
   if (!resolve_all_ops (self, cancellable, error))
+    {
+      g_assert (error == NULL || *error != NULL);
+      return FALSE;
+    }
+
+  /* Add all runtime repos */
+  if (!flatpak_transaction_resolve_runtime_repo_url (self, cancellable, error))
     {
       g_assert (error == NULL || *error != NULL);
       return FALSE;
