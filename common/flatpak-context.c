@@ -230,12 +230,15 @@ flatpak_permission_remove_conditional (FlatpakPermission *permission,
      remove everything from the lower layer */
   permission->reset = TRUE;
 
-  if (!g_ptr_array_find_with_equal_func (permission->conditionals,
-                                         condition,
-                                         g_str_equal, &index))
-    return;
+  if (g_ptr_array_find_with_equal_func (permission->conditionals,
+                                        condition,
+                                        g_str_equal, &index))
+    {
+      g_ptr_array_remove_index (permission->conditionals, index);
+    }
 
-  g_ptr_array_remove_index (permission->conditionals, index);
+  if (permission->conditionals->len == 0)
+    permission->allowed = TRUE;
 }
 
 static void
