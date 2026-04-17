@@ -410,6 +410,7 @@ tests = {
   'update-remote-configuration': {'wrap': ['newsummary', 'oldsummary']},
   'override': {},
   'update-portal': {'wrap': ['user', 'system']},
+  'extension-portal': {'wrap': ['user', 'system']},
   'auth': {},
   'unused': {},
   'summaries': {'wrap': ['user', 'system']},
