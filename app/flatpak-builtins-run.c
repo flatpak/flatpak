@@ -60,8 +60,99 @@ static gboolean opt_parent_expose_pids;
 static gboolean opt_parent_share_pids;
 static int opt_instance_id_fd = -1;
 static char *opt_app_path;
+static int opt_app_fd = -1;
 static char *opt_usr_path;
+static int opt_usr_fd = -1;
 static gboolean opt_clear_env;
+static GArray *opt_bind_fds = NULL;
+static GArray *opt_ro_bind_fds = NULL;
+
+static gboolean
+option_bind_fd_cb (const char  *option_name,
+                   const char  *value,
+                   gpointer     data,
+                   GError     **error)
+{
+  glnx_autofd int fd = -1;
+
+  fd = flatpak_accept_fd_argument (option_name, value, error);
+
+  if (fd < 0)
+    return FALSE;
+
+  g_array_append_val (opt_bind_fds, fd);
+  fd = -1; /* ownership transferred to GArray */
+  return TRUE;
+}
+
+static gboolean
+option_ro_bind_fd_cb (const char  *option_name,
+                      const char  *value,
+                      gpointer     data,
+                      GError     **error)
+{
+  glnx_autofd int fd = -1;
+
+  fd = flatpak_accept_fd_argument (option_name, value, error);
+
+  if (fd < 0)
+    return FALSE;
+
+  g_array_append_val (opt_ro_bind_fds, fd);
+  fd = -1; /* ownership transferred to GArray */
+  return TRUE;
+}
+
+static gboolean
+opt_instance_id_fd_cb (const char  *option_name,
+                       const char  *value,
+                       gpointer     data,
+                       GError     **error)
+{
+  glnx_autofd int fd = -1;
+
+  fd = flatpak_accept_fd_argument (option_name, value, error);
+
+  if (fd < 0)
+    return FALSE;
+
+  opt_instance_id_fd = g_steal_fd (&fd);
+  return TRUE;
+}
+
+static gboolean
+opt_app_fd_cb (const char  *option_name,
+               const char  *value,
+               gpointer     data,
+               GError     **error)
+{
+  glnx_autofd int fd = -1;
+
+  fd = flatpak_accept_fd_argument (option_name, value, error);
+
+  if (fd < 0)
+    return FALSE;
+
+  opt_app_fd = g_steal_fd (&fd);
+  return TRUE;
+}
+
+static gboolean
+opt_usr_fd_cb (const char  *option_name,
+               const char  *value,
+               gpointer     data,
+               GError     **error)
+{
+  glnx_autofd int fd = -1;
+
+  fd = flatpak_accept_fd_argument (option_name, value, error);
+
+  if (fd < 0)
+    return FALSE;
+
+  opt_usr_fd = g_steal_fd (&fd);
+  return TRUE;
+}
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to use"), N_("ARCH") },
@@ -87,10 +178,14 @@ static GOptionEntry options[] = {
   { "parent-pid", 0, 0, G_OPTION_ARG_INT, &opt_parent_pid, N_("Use PID as parent pid for sharing namespaces"), N_("PID") },
   { "parent-expose-pids", 0, 0, G_OPTION_ARG_NONE, &opt_parent_expose_pids, N_("Make processes visible in parent namespace"), NULL },
   { "parent-share-pids", 0, 0, G_OPTION_ARG_NONE, &opt_parent_share_pids, N_("Share process ID namespace with parent"), NULL },
-  { "instance-id-fd", 0, 0, G_OPTION_ARG_INT, &opt_instance_id_fd, N_("Write the instance ID to the given file descriptor"), NULL },
+  { "instance-id-fd", 0, 0, G_OPTION_ARG_CALLBACK, &opt_instance_id_fd_cb, N_("Write the instance ID to the given file descriptor"), NULL },
   { "app-path", 0, 0, G_OPTION_ARG_FILENAME, &opt_app_path, N_("Use PATH instead of the app's /app"), N_("PATH") },
+  { "app-fd", 0, 0, G_OPTION_ARG_CALLBACK, &opt_app_fd_cb, N_("Use FD instead of the app's /app"), N_("FD") },
   { "usr-path", 0, 0, G_OPTION_ARG_FILENAME, &opt_usr_path, N_("Use PATH instead of the runtime's /usr"), N_("PATH") },
+  { "usr-fd", 0, 0, G_OPTION_ARG_CALLBACK, &opt_usr_fd_cb, N_("Use FD instead of the runtime's /usr"), N_("FD") },
   { "clear-env", 0, 0, G_OPTION_ARG_NONE, &opt_clear_env, N_("Clear all outside environment variables"), NULL },
+  { "bind-fd", 0, 0, G_OPTION_ARG_CALLBACK | G_OPTION_FLAG_HIDDEN, &option_bind_fd_cb, N_("Bind mount the file or directory referred to by FD to its canonicalized path"), N_("FD") },
+  { "ro-bind-fd", 0, 0, G_OPTION_ARG_CALLBACK | G_OPTION_FLAG_HIDDEN, &option_ro_bind_fd_cb, N_("Bind mount the file or directory referred to by FD read-only to its canonicalized path"), N_("FD") },
   { NULL }
 };
 
@@ -113,8 +208,13 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   g_autoptr(GError) local_error = NULL;
   g_autoptr(GPtrArray) dirs = NULL;
   FlatpakRunFlags flags = 0;
+  glnx_autofd int app_fd = -1;
+  glnx_autofd int usr_fd = -1;
 
   run_environ = g_get_environ ();
+
+  opt_bind_fds = g_array_new (FALSE, FALSE, sizeof (int));
+  opt_ro_bind_fds = g_array_new (FALSE, FALSE, sizeof (int));
 
   context = g_option_context_new (_("APP [ARGUMENT…] - Run an app"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -313,14 +413,67 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   if (!opt_clear_env)
     flags |= FLATPAK_RUN_FLAG_CLEAR_ENV;
 
+  if (opt_app_fd >= 0 && opt_app_path != NULL)
+    {
+      flatpak_fail_error (error, FLATPAK_ERROR,
+                          _("app-fd and app-path cannot both be used"));
+      return FALSE;
+    }
+
+  if (opt_app_fd >= 0)
+    {
+      app_fd = opt_app_fd;
+    }
+  else if (opt_app_path != NULL)
+    {
+      if (g_strcmp0 (opt_app_path, "") == 0)
+        {
+          app_fd = FLATPAK_RUN_APP_DEPLOY_APP_EMPTY;
+        }
+      else
+        {
+          app_fd = open (opt_app_path, O_PATH | O_CLOEXEC | O_NOFOLLOW);
+
+          if (app_fd < 0)
+            return glnx_throw_errno_prefix (error, "Failed to open app-path");
+        }
+    }
+  else
+    {
+      app_fd = FLATPAK_RUN_APP_DEPLOY_APP_ORIGINAL;
+    }
+
+  if (opt_usr_fd >= 0 && opt_usr_path != NULL)
+    {
+      flatpak_fail_error (error, FLATPAK_ERROR,
+                          _("usr-fd and usr-path cannot both be used"));
+      return FALSE;
+    }
+
+  if (opt_usr_fd >= 0)
+    {
+      usr_fd = opt_usr_fd;
+    }
+  else if (opt_usr_path != NULL)
+    {
+      usr_fd = open (opt_usr_path, O_PATH | O_CLOEXEC | O_NOFOLLOW);
+
+      if (usr_fd < 0)
+        return glnx_throw_errno_prefix (error, "Failed to open usr-path");
+    }
+  else
+    {
+      usr_fd = FLATPAK_RUN_APP_DEPLOY_USR_ORIGINAL;
+    }
+
   if (!flatpak_run_app (app_deploy ? app_ref : runtime_ref,
                         app_deploy,
-                        opt_app_path,
+                        app_fd,
                         arg_context,
                         opt_runtime,
                         opt_runtime_version,
                         opt_runtime_commit,
-                        opt_usr_path,
+                        usr_fd,
                         opt_parent_pid,
                         flags,
                         opt_cwd,
@@ -330,6 +483,8 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
                         opt_instance_id_fd,
                         (const char * const *) run_environ,
                         NULL,
+                        opt_bind_fds,
+                        opt_ro_bind_fds,
                         cancellable,
                         error))
     return FALSE;

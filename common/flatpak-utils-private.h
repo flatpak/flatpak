@@ -365,6 +365,9 @@ gboolean running_under_sudo_root (void);
 void flatpak_set_debugging (gboolean debugging);
 gboolean flatpak_is_debugging (void);
 
+int flatpak_parse_fd (const char  *fd_string,
+                      GError     **error);
+
 #ifdef INCLUDE_INTERNAL_TESTS
 typedef void (*flatpak_test_fn) (void);
 void flatpak_add_test (const char *path, flatpak_test_fn fn);
@@ -380,6 +383,15 @@ void flatpak_add_test (const char *path, flatpak_test_fn fn);
 FLATPAK_EXTERN
 void flatpak_add_all_tests (void);
 
+char * flatpak_get_path_for_fd (int      fd,
+                                GError **error);
+
 #define FLATPAK_MESSAGE_ID "c7b39b1e006b464599465e105b361485"
+
+gboolean flatpak_set_cloexec (int fd);
+
+int flatpak_accept_fd_argument (const char  *option_name,
+                                const char  *value,
+                                GError     **error);
 
 #endif /* __FLATPAK_UTILS_H__ */

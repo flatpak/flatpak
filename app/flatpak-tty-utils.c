@@ -448,7 +448,7 @@ flatpak_get_cursor_pos (int * row, int *col)
   term = initial_term;
   term.c_lflag &= ~ICANON;
   term.c_lflag &= ~ECHO;
-  tcsetattr (STDIN_FILENO, TCSANOW, &term);
+  tcsetattr (STDIN_FILENO, TCSAFLUSH, &term);
 
   printf ("\033[6n");
   fflush (stdout);
@@ -461,7 +461,7 @@ flatpak_get_cursor_pos (int * row, int *col)
   if (select (STDIN_FILENO + 1, &readset, NULL, NULL, &time) == 1)
     res = scanf ("\033[%d;%dR", row, col);
 
-  tcsetattr (STDIN_FILENO, TCSADRAIN, &initial_term);
+  tcsetattr (STDIN_FILENO, TCSAFLUSH, &initial_term);
 
   return res == 2;
 }

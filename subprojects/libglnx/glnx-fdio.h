@@ -22,6 +22,7 @@
 #pragma once
 
 #include <glnx-backport-autocleanups.h>
+#include <glnx-missing.h>
 #include <gio/gfiledescriptorbased.h>
 #include <limits.h>
 #include <dirent.h>
@@ -314,6 +315,37 @@ glnx_fstatat (int           dfd,
 }
 
 /**
+ * glnx_statx:
+ * @dfd: Directory FD to stat beneath
+ * @path: Path to stat beneath @dfd
+ * @flags: Flags to pass to statx()
+ * @mask: Mask to pass to statx()
+ * @buf: (out caller-allocates): Return location for statx details
+ * @error: Return location for a #GError, or %NULL
+ *
+ * Wrapper around statx() which adds #GError support and ensures that it
+ * retries on %EINTR.
+ *
+ * The mask to pass must be a combination of GLNX_STATX_* flags which are
+ * defined by glnx, which map up with the struct glnx_statx.
+ *
+ * Returns: %TRUE on success, or %FALSE setting both @error and `errno`
+ * Since: UNRELEASED
+ */
+static inline gboolean
+glnx_statx (int                 dfd,
+            const char         *path,
+            unsigned            flags,
+            unsigned int        mask,
+            struct glnx_statx  *buf,
+            GError            **error)
+{
+  if (TEMP_FAILURE_RETRY (glnx_statx_syscall (dfd, path, flags, mask, buf)) != 0)
+    return glnx_throw_errno_prefix (error, "statx(%s)", path);
+  return TRUE;
+}
+
+/**
  * glnx_fstatat_allow_noent:
  * @dfd: Directory FD to stat beneath
  * @path: Path to stat beneath @dfd
@@ -382,5 +414,9 @@ glnx_unlinkat (int           dfd,
     return glnx_throw_errno_prefix (error, "unlinkat(%s)", path);
   return TRUE;
 }
+
+int glnx_fd_reopen (int      fd,
+                    int      flags,
+                    GError **error);
 
 G_END_DECLS

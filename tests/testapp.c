@@ -80,7 +80,6 @@ test_format_choices (void)
   g_string_truncate (g_print_buffer, 0);
 
   g_set_print_handler (print_func);
-  g_set_print_handler (print_func);
   g_string_free (g_print_buffer, TRUE);
   g_print_buffer = NULL;
 }

@@ -58,6 +58,10 @@ assert_next_is_os_release (FlatpakBwrap *bwrap,
       g_assert_cmpuint (i, <, bwrap->argv->len);
       g_assert_cmpstr (bwrap->argv->pdata[i++], ==, "/run/host/os-release");
     }
+  else
+    {
+      g_test_message ("neither /etc/os-release nor /usr/lib/os-release exists on this host");
+    }
 
   return i;
 }
@@ -734,9 +738,6 @@ test_full (void)
     g_error ("mkdir: %s", g_strerror (errno));
 
   if (g_mkdir_with_parents (hide, S_IRWXU) != 0)
-    g_error ("mkdir: %s", g_strerror (errno));
-
-  if (g_mkdir_with_parents (dont_hide, S_IRWXU) != 0)
     g_error ("mkdir: %s", g_strerror (errno));
 
   if (g_mkdir_with_parents (dont_hide, S_IRWXU) != 0)

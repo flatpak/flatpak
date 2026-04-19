@@ -4767,11 +4767,19 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
 
       if (flatpak_dir_use_system_helper (self, NULL))
         {
+          g_autoptr(GError) local_error = NULL;
+
           if (!system_helper_maybe_ensure_repo (self, ensure_flags, allow_empty, cancellable, error))
             return FALSE;
 
-          if (!ensure_repo_opened (repo, cancellable, error))
-            return FALSE;
+          if (!ensure_repo_opened (repo, cancellable, &local_error))
+            {
+              if (allow_empty)
+                return TRUE;
+
+              g_propagate_error (error, g_steal_pointer (&local_error));
+              return FALSE;
+            }
         }
       else
         {
@@ -9165,30 +9173,6 @@ extract_extra_data (FlatpakDir   *self,
   return TRUE;
 }
 
-static void
-child_setup (gpointer user_data)
-{
-  GArray *fd_array = user_data;
-  int i;
-
-  /* If no fd_array was specified, don't care. */
-  if (fd_array == NULL)
-    return;
-
-  /* Otherwise, mark not - close-on-exec all the fds in the array */
-  for (i = 0; i < fd_array->len; i++)
-    {
-      int fd = g_array_index (fd_array, int, i);
-
-      /* We also seek all fds to the start, because this lets
-         us use the same fd_array multiple times */
-      if (lseek (fd, 0, SEEK_SET) < 0)
-        g_printerr ("lseek error in child setup");
-
-      fcntl (fd, F_SETFD, 0);
-    }
-}
-
 static gboolean
 apply_extra_data (FlatpakDir   *self,
                   GFile        *checkoutdir,
@@ -9316,7 +9300,17 @@ apply_extra_data (FlatpakDir   *self,
    * Disable /proc entirely in this context. */
   run_flags |= FLATPAK_RUN_FLAG_NO_PROC;
 
-  if (!flatpak_run_setup_base_argv (bwrap, runtime_files, NULL, runtime_arch,
+  glnx_autofd int usr_fd = -1;
+
+  if (runtime_files != NULL)
+    {
+      usr_fd = open (flatpak_file_get_path_cached (runtime_files),
+                     O_PATH | O_CLOEXEC | O_NOFOLLOW);
+      if (usr_fd < 0)
+        return glnx_throw_errno_prefix (error, "Failed to open runtime files");
+    }
+
+  if (!flatpak_run_setup_base_argv (bwrap, usr_fd, NULL, runtime_arch,
                                     run_flags, error))
     return FALSE;
 
@@ -9353,7 +9347,7 @@ apply_extra_data (FlatpakDir   *self,
                      (char **) bwrap->argv->pdata,
                      bwrap->envp,
                      G_SPAWN_SEARCH_PATH,
-                     child_setup, bwrap->fds,
+                     flatpak_bwrap_child_setup_inherit_fds_cb, bwrap->fds,
                      NULL, NULL,
                      &exit_status,
                      error))
@@ -16572,6 +16566,26 @@ add_related (FlatpakDir        *self,
   download =
     flatpak_extension_matches_reason (id, download_if, !no_autodownload) ||
     deploy_data != NULL;
+
+  /* Automatic branch following: if this extension wouldn't normally be
+   * auto-downloaded, still download it if there's already an installed branch
+   * of the same extension for this arch. This handles the case where an app
+   * updates its extension version requirement. */
+  if (!download)
+    {
+      g_autoptr(GPtrArray) installed_branches =
+        flatpak_dir_list_refs_for_name (self, FLATPAK_KINDS_RUNTIME, id, NULL, NULL);
+
+      for (size_t i = 0; installed_branches && i < installed_branches->len; i++)
+        {
+          FlatpakDecomposed *installed_ref = g_ptr_array_index (installed_branches, i);
+          if (flatpak_decomposed_is_arch (installed_ref, arch))
+            {
+              download = TRUE;
+              break;
+            }
+        }
+    }
 
   if (!flatpak_extension_matches_reason (id, autoprune_unless, TRUE))
     auto_prune = TRUE;
