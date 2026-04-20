@@ -171,6 +171,7 @@ typedef struct _FlatpakTransactionPrivate
   FlatpakInstallation         *installation;
   FlatpakDir                  *dir;
   GHashTable                  *last_op_for_ref;
+  GHashTable                  *no_eol_rebase_refs;
   GHashTable                  *remote_states; /* (element-type utf8 FlatpakRemoteState) */
   GPtrArray                   *extra_dependency_dirs;
   GPtrArray                   *extra_sideload_repos;
@@ -1062,6 +1063,7 @@ flatpak_transaction_finalize (GObject *object)
   g_list_free_full (priv->images, (GDestroyNotify) image_data_free);
   g_free (priv->default_arch);
   g_hash_table_unref (priv->last_op_for_ref);
+  g_hash_table_unref (priv->no_eol_rebase_refs);
   g_hash_table_unref (priv->remote_states);
   g_list_free_full (priv->ops, (GDestroyNotify) g_object_unref);
   g_clear_object (&priv->dir);
@@ -1542,12 +1544,63 @@ flatpak_transaction_init (FlatpakTransaction *self)
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
 
   priv->last_op_for_ref = g_hash_table_new_full ((GHashFunc)flatpak_decomposed_hash, (GEqualFunc)flatpak_decomposed_equal, (GDestroyNotify) flatpak_decomposed_unref, NULL);
+  priv->no_eol_rebase_refs = g_hash_table_new_full ((GHashFunc) flatpak_decomposed_hash, (GEqualFunc) flatpak_decomposed_equal, (GDestroyNotify) flatpak_decomposed_unref, NULL);
   priv->remote_states = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, (GDestroyNotify) flatpak_remote_state_unref);
   priv->added_origin_remotes = g_ptr_array_new_with_free_func (g_free);
   priv->extra_dependency_dirs = g_ptr_array_new_with_free_func (g_object_unref);
   priv->extra_sideload_repos = g_ptr_array_new_with_free_func (g_free);
   priv->sideload_image_collections = g_ptr_array_new_with_free_func (g_object_unref);
   priv->can_run = TRUE;
+}
+
+void
+flatpak_transaction_add_no_eol_rebase_ref (FlatpakTransaction *self,
+                                           const char         *ref)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  g_autoptr(FlatpakDecomposed) decomposed = NULL;
+
+  g_return_if_fail (FLATPAK_IS_TRANSACTION (self));
+  g_return_if_fail (ref != NULL);
+
+  decomposed = flatpak_decomposed_new_from_ref (ref, NULL);
+  g_return_if_fail (decomposed != NULL);
+
+  g_hash_table_add (priv->no_eol_rebase_refs, g_steal_pointer (&decomposed));
+}
+
+gboolean
+flatpak_transaction_ref_no_eol_rebase (FlatpakTransaction *self,
+                                       const char         *ref)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  g_autoptr(FlatpakDecomposed) decomposed = NULL;
+  GHashTableIter iter;
+  gpointer key;
+
+  g_return_val_if_fail (FLATPAK_IS_TRANSACTION (self), FALSE);
+  g_return_val_if_fail (ref != NULL, FALSE);
+
+  decomposed = flatpak_decomposed_new_from_ref (ref, NULL);
+  if (decomposed == NULL)
+    return FALSE;
+
+  if (g_hash_table_contains (priv->no_eol_rebase_refs, decomposed))
+    return TRUE;
+
+  if (!flatpak_decomposed_id_is_subref (decomposed))
+    return FALSE;
+
+  g_hash_table_iter_init (&iter, priv->no_eol_rebase_refs);
+  while (g_hash_table_iter_next (&iter, &key, NULL))
+    {
+      FlatpakDecomposed *marked_ref = key;
+
+      if (flatpak_decomposed_id_is_subref_of (decomposed, marked_ref))
+        return TRUE;
+    }
+
+  return FALSE;
 }
 
 
