@@ -6146,6 +6146,18 @@ repo_pull (OstreeRepo                           *self,
                                  &current_checksum, cancellable, error))
     return FALSE;
 
+  /* The remote tracking ref may be absent (e.g. the remote was removed and
+   * re-added, the app was installed from a bundle, or the ref was deleted by
+   * ostree-prune/flatpak-repair).  Fall back to the deploy/ ref that flatpak
+   * always writes on every successful deploy so that Flatpak-Upgrade-From is
+   * still sent correctly on the next update. */
+  if (current_checksum == NULL && dir != NULL)
+    {
+      g_autofree char *deploy_ref = g_strconcat ("deploy/", ref_to_fetch, NULL);
+      flatpak_repo_resolve_rev (self, NULL, NULL, deploy_ref, TRUE,
+                                &current_checksum, cancellable, NULL);
+    }
+
   if (current_checksum != NULL &&
       !ostree_repo_load_commit (self, current_checksum, &old_commit, NULL, error))
     return FALSE;
