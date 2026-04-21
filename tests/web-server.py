@@ -15,6 +15,8 @@ from io import BytesIO
 import sys
 
 class RequestHandler(http_server.SimpleHTTPRequestHandler):
+    headers_log_file = None
+
     def handle_tokens(self):
         need_token_path = self.translate_path(self.path) + ".need_token"
         if os.path.isfile(need_token_path):
@@ -34,14 +36,26 @@ class RequestHandler(http_server.SimpleHTTPRequestHandler):
                 return True
         return False
 
+    def log_flatpak_headers(self):
+        if self.headers_log_file is None:
+            return
+
+        for name in ("Flatpak-Ref", "Flatpak-Upgrade-From", "Flatpak-Is-Update"):
+            value = self.headers.get(name)
+            if value is not None:
+                with open(self.headers_log_file, 'a+') as f:
+                    f.write("%s: %s\n" % (name, value))
+
     def do_GET(self):
+        self.log_flatpak_headers()
         if self.handle_tokens():
             return None
         self.headers.__delitem__("If-Modified-Since")
         return super().do_GET()
 
-def run(dir):
+def run(dir, headers_log=None):
     RequestHandler.protocol_version = "HTTP/1.0"
+    RequestHandler.headers_log_file = headers_log
     httpd = http_server.HTTPServer( ("127.0.0.1", 0), RequestHandler)
     host, port = httpd.socket.getsockname()[:2]
     with open("httpd-port", 'w') as file:
@@ -59,7 +73,10 @@ def run(dir):
 
 if __name__ == '__main__':
     dir = None
+    headers_log = None
     if len(sys.argv) >= 2 and len(sys.argv[1]) > 0:
         dir = sys.argv[1]
+    if len(sys.argv) >= 3 and len(sys.argv[2]) > 0:
+        headers_log = sys.argv[2]
 
-    run(dir)
+    run(dir, headers_log)
