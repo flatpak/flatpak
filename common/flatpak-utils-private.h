@@ -34,7 +34,9 @@
 
 #define FLATPAK_UNIQUE_NAME(base) CONCATENATE(base, __COUNTER__)
 
+/* Defined locally to avoid depending on <linux/magic.h> */
 #define AUTOFS_SUPER_MAGIC 0x0187
+#define FUSE_SUPER_MAGIC 0x65735546
 
 #define FLATPAK_XA_CACHE_VERSION 2
 /* version 1 added extra data download size */

@@ -891,6 +891,12 @@ check_if_autofs_works (FlatpakExports *exports,
         return FALSE;
     }
 
+  if (G_UNLIKELY (exports->test_flags & FLATPAK_EXPORTS_TEST_FLAGS_FUSE))
+    {
+      if (strcmp (path, "/broken-fuse") == 0)
+        return FALSE;
+    }
+
   return TRUE;
 }
 
@@ -970,14 +976,22 @@ _exports_path_expose (FlatpakExports *exports,
                        _("Unable to get filesystem information for \"%s\": %s"),
                        path, g_strerror (errno));
 
+  /* Both autofs and FUSE mounts can block indefinitely on open(). Apply the
+   * fork+select probe for either type. Well-behaved FUSE mounts (sshfs,
+   * gocryptfs, etc.) will pass the probe quickly; only unresponsive ones are
+   * rejected. The ~200ms timeout is incurred once per FUSE path encountered
+   * during export, which is an acceptable tradeoff to avoid hangs. */
   if (stfs.f_type == AUTOFS_SUPER_MAGIC ||
+      stfs.f_type == FUSE_SUPER_MAGIC ||
       (G_UNLIKELY (exports->test_flags & FLATPAK_EXPORTS_TEST_FLAGS_AUTOFS) &&
+       S_ISDIR (st.st_mode)) ||
+      (G_UNLIKELY (exports->test_flags & FLATPAK_EXPORTS_TEST_FLAGS_FUSE) &&
        S_ISDIR (st.st_mode)))
     {
       if (!check_if_autofs_works (exports, path))
         {
           g_set_error (error, G_IO_ERROR, G_IO_ERROR_WOULD_BLOCK,
-                       _("Ignoring blocking autofs path \"%s\""), path);
+                       _("Ignoring blocking mount path \"%s\""), path);
           return FALSE;
         }
     }
