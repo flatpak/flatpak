@@ -29,6 +29,7 @@
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <sys/socket.h>
 
 #include <glib-unix.h>
@@ -57,6 +58,8 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (PortalFlatpakProxy, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (PortalFlatpakSkeleton, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (PortalFlatpakUpdateMonitorProxy, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (PortalFlatpakUpdateMonitorSkeleton, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (PortalFlatpakExtensionManagerProxy, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (PortalFlatpakExtensionManagerSkeleton, g_object_unref)
 #endif
 
 #define IDLE_TIMEOUT_SECS 10 * 60
@@ -80,6 +83,9 @@ G_LOCK_DEFINE_STATIC (update_monitors); /* This protects the three variables bel
 static GHashTable *update_monitors;
 static guint update_monitors_timeout = 0;
 static gboolean update_monitors_timeout_running_thread = FALSE;
+
+G_LOCK_DEFINE_STATIC (extension_managers); /* This protects extension_managers hash table */
+static GHashTable *extension_managers;
 
 /* Poll all update monitors twice an hour */
 #define DEFAULT_UPDATE_POLL_TIMEOUT_SEC (30 * 60)
@@ -131,6 +137,42 @@ static gboolean           handle_update            (PortalFlatpakUpdateMonitor *
                                                     const char                 *arg_window,
                                                     GVariant                   *arg_options);
 
+typedef struct {
+  GMutex lock; /* This protects the closed and running state */
+  gboolean closed;
+  gboolean running; /* While this is set, don't close the manager */
+
+  char *sender;
+  char *obj_path;
+  GCancellable *cancellable;
+
+  /* Static data from the calling app */
+  char *app_id;
+  char *arch;
+  char *branch;
+  char *app_path;
+} ExtensionManagerData;
+
+static ExtensionManagerData *extension_manager_get_data      (PortalFlatpakExtensionManager *manager);
+static gboolean              has_extension_managers           (void);
+static gboolean              handle_extension_manager_close   (PortalFlatpakExtensionManager *manager,
+                                                               GDBusMethodInvocation         *invocation);
+static gboolean              handle_list_extensions           (PortalFlatpakExtensionManager *manager,
+                                                               GDBusMethodInvocation         *invocation,
+                                                               GVariant                      *arg_options);
+static gboolean              handle_install_extension         (PortalFlatpakExtensionManager *manager,
+                                                               GDBusMethodInvocation         *invocation,
+                                                               const char                    *arg_ref,
+                                                               GVariant                      *arg_options);
+static gboolean              handle_update_extension          (PortalFlatpakExtensionManager *manager,
+                                                               GDBusMethodInvocation         *invocation,
+                                                               const char                    *arg_ref,
+                                                               GVariant                      *arg_options);
+static gboolean              handle_uninstall_extension       (PortalFlatpakExtensionManager *manager,
+                                                               GDBusMethodInvocation         *invocation,
+                                                               const char                    *arg_ref,
+                                                               GVariant                      *arg_options);
+
 static void
 skeleton_died_cb (gpointer data)
 {
@@ -175,7 +217,8 @@ idle_timeout_cb (gpointer user_data)
 {
   if (name_owner_id &&
       g_hash_table_size (client_pid_data_hash) == 0 &&
-      !has_update_monitors ())
+      !has_update_monitors () &&
+      !has_extension_managers ())
     {
       g_info ("Idle - unowning name");
       unref_skeleton_in_timeout ();
@@ -2841,8 +2884,1007 @@ handle_update (PortalFlatpakUpdateMonitor *monitor,
   return G_DBUS_METHOD_INVOCATION_HANDLED;
 }
 
+static void
+register_extension_manager (PortalFlatpakExtensionManager *manager,
+                            const char                     *obj_path)
+{
+  G_LOCK (extension_managers);
+  g_hash_table_insert (extension_managers, g_strdup (obj_path), g_object_ref (manager));
+  G_UNLOCK (extension_managers);
+}
 
+static void
+unregister_extension_manager (const char *obj_path)
+{
+  G_LOCK (extension_managers);
+  g_hash_table_remove (extension_managers, obj_path);
+  G_UNLOCK (extension_managers);
+}
 
+static gboolean
+has_extension_managers (void)
+{
+  gboolean res;
+  G_LOCK (extension_managers);
+  res = g_hash_table_size (extension_managers) > 0;
+  G_UNLOCK (extension_managers);
+  return res;
+}
+
+static GList *
+extension_managers_get_all (const char *optional_sender)
+{
+  GList *list = NULL;
+
+  G_LOCK (extension_managers);
+  if (extension_managers)
+    {
+      GLNX_HASH_TABLE_FOREACH_V (extension_managers, PortalFlatpakExtensionManager *, manager)
+        {
+          ExtensionManagerData *data = extension_manager_get_data (manager);
+
+          if (optional_sender == NULL ||
+              strcmp (data->sender, optional_sender) == 0)
+            list = g_list_prepend (list, g_object_ref (manager));
+        }
+    }
+  G_UNLOCK (extension_managers);
+
+  return list;
+}
+
+static void
+extension_manager_data_free (gpointer data)
+{
+  ExtensionManagerData *em = data;
+
+  g_mutex_clear (&em->lock);
+
+  g_free (em->sender);
+  g_free (em->obj_path);
+  g_object_unref (em->cancellable);
+
+  g_free (em->app_id);
+  g_free (em->arch);
+  g_free (em->branch);
+  g_free (em->app_path);
+
+  g_free (em);
+}
+
+static ExtensionManagerData *
+extension_manager_get_data (PortalFlatpakExtensionManager *manager)
+{
+  return (ExtensionManagerData *)g_object_get_data (G_OBJECT (manager), "extension-manager-data");
+}
+
+static PortalFlatpakExtensionManager *
+create_extension_manager (GDBusMethodInvocation *invocation,
+                          const char            *obj_path,
+                          GError               **error)
+{
+  PortalFlatpakExtensionManager *manager;
+  ExtensionManagerData *em;
+  g_autoptr(GKeyFile) app_info = NULL;
+  g_autofree char *name = NULL;
+
+  app_info = flatpak_invocation_lookup_app_info (invocation, NULL, error);
+  if (app_info == NULL)
+    return NULL;
+
+  name = g_key_file_get_string (app_info,
+                                FLATPAK_METADATA_GROUP_APPLICATION,
+                                "name", NULL);
+  if (name == NULL || *name == 0)
+    {
+      g_set_error (error, G_DBUS_ERROR, G_DBUS_ERROR_NOT_SUPPORTED,
+                   "Extension management only supported by flatpak apps");
+      return NULL;
+    }
+
+  em = g_new0 (ExtensionManagerData, 1);
+
+  g_mutex_init (&em->lock);
+  em->obj_path = g_strdup (obj_path);
+  em->sender = g_strdup (g_dbus_method_invocation_get_sender (invocation));
+  em->cancellable = g_cancellable_new ();
+
+  em->app_id = g_steal_pointer (&name);
+  em->arch = g_key_file_get_string (app_info,
+                                    FLATPAK_METADATA_GROUP_INSTANCE,
+                                    "arch", NULL);
+  em->branch = g_key_file_get_string (app_info,
+                                      FLATPAK_METADATA_GROUP_INSTANCE,
+                                      "branch", NULL);
+  em->app_path = g_key_file_get_string (app_info,
+                                        FLATPAK_METADATA_GROUP_INSTANCE,
+                                        "app-path", NULL);
+
+  manager = portal_flatpak_extension_manager_skeleton_new ();
+  portal_flatpak_extension_manager_set_version (manager, 1);
+
+  g_object_set_data_full (G_OBJECT (manager), "extension-manager-data", em, extension_manager_data_free);
+  g_object_set_data_full (G_OBJECT (manager), "required-sender", g_strdup (em->sender), g_free);
+
+  g_info ("created ExtensionManager for %s at %s", em->app_id, obj_path);
+
+  return manager;
+}
+
+static void
+extension_manager_do_close (PortalFlatpakExtensionManager *manager)
+{
+  ExtensionManagerData *em = extension_manager_get_data (manager);
+
+  g_dbus_interface_skeleton_unexport (G_DBUS_INTERFACE_SKELETON (manager));
+  unregister_extension_manager (em->obj_path);
+}
+
+/* Always called in worker thread */
+static void
+extension_manager_close (PortalFlatpakExtensionManager *manager)
+{
+  ExtensionManagerData *em = extension_manager_get_data (manager);
+  gboolean do_close;
+
+  g_mutex_lock (&em->lock);
+  /* Close at most once, but not if running, if running it will be closed when that is done */
+  do_close = !em->closed && !em->running;
+  em->closed = TRUE;
+  g_mutex_unlock (&em->lock);
+
+  /* Always cancel though, so we can exit any running code early */
+  g_cancellable_cancel (em->cancellable);
+
+  if (do_close)
+    extension_manager_do_close (manager);
+}
+
+static GDBusConnection *
+extension_manager_get_connection (PortalFlatpakExtensionManager *manager)
+{
+  return g_dbus_interface_skeleton_get_connection (G_DBUS_INTERFACE_SKELETON (manager));
+}
+
+static GFile *
+extension_manager_get_installation_path (PortalFlatpakExtensionManager *manager)
+{
+  ExtensionManagerData *em = extension_manager_get_data (manager);
+  g_autoptr(GFile) app_path = NULL;
+
+  app_path = g_file_new_for_path (em->app_path);
+
+  /* The app path is always 6 level deep inside the installation dir,
+   * like $dir/app/org.the.app/x86_64/stable/$commit/files, so we find
+   * the installation by just going up 6 parents. */
+  return g_file_resolve_relative_path (app_path, "../../../../../..");
+}
+
+static gboolean
+is_valid_extension_ref_for_app (const char *ref_name,
+                                const char *app_id)
+{
+  gsize app_id_len;
+
+  if (ref_name == NULL || app_id == NULL)
+    return FALSE;
+
+  app_id_len = strlen (app_id);
+
+  /* The ref name must start with the app_id followed by a dot */
+  return (strncmp (ref_name, app_id, app_id_len) == 0 &&
+          ref_name[app_id_len] == '.');
+}
+
+static void
+emit_extension_progress (PortalFlatpakExtensionManager *manager,
+                         int op,
+                         int n_ops,
+                         int progress,
+                         int status,
+                         const char *error_name,
+                         const char *error_message)
+{
+  ExtensionManagerData *em = extension_manager_get_data (manager);
+  GDBusConnection *connection;
+  GVariantBuilder builder;
+  g_autoptr(GError) error = NULL;
+
+  g_info ("extension %d/%d ops, progress %d, status: %d", op, n_ops, progress, status);
+
+  g_variant_builder_init (&builder, G_VARIANT_TYPE_VARDICT);
+  if (n_ops > 0)
+    {
+      g_variant_builder_add (&builder, "{sv}", "op", g_variant_new_uint32 (op));
+      g_variant_builder_add (&builder, "{sv}", "n_ops", g_variant_new_uint32 (n_ops));
+      g_variant_builder_add (&builder, "{sv}", "progress", g_variant_new_uint32 (progress));
+    }
+
+  g_variant_builder_add (&builder, "{sv}", "status", g_variant_new_uint32 (status));
+
+  if (error_name)
+    {
+      g_variant_builder_add (&builder, "{sv}", "error", g_variant_new_string (error_name));
+      g_variant_builder_add (&builder, "{sv}", "error_message", g_variant_new_string (error_message));
+    }
+
+  connection = extension_manager_get_connection (manager);
+  if (!g_dbus_connection_emit_signal (connection,
+                                      em->sender,
+                                      em->obj_path,
+                                      FLATPAK_PORTAL_INTERFACE_EXTENSION_MANAGER,
+                                      "Progress",
+                                      g_variant_new ("(a{sv})", &builder),
+                                      &error))
+    {
+      g_warning ("Failed to emit extension ::progress: %s", error->message);
+    }
+}
+
+static void
+emit_extension_progress_error (PortalFlatpakExtensionManager *manager,
+                               GError *update_error)
+{
+  g_autofree gchar *error_name = get_progress_error (update_error);
+
+  emit_extension_progress (manager, 0, 0, 0,
+                           PROGRESS_STATUS_ERROR,
+                           error_name, update_error->message);
+}
+
+static void
+close_extension_managers_in_thread_func (GTask *task,
+                                         gpointer source_object,
+                                         gpointer task_data,
+                                         GCancellable *cancellable)
+{
+  GList *list = task_data;
+  GList *l;
+
+  for (l = list; l; l = l->next)
+    {
+      PortalFlatpakExtensionManager *manager = l->data;
+      ExtensionManagerData *em = extension_manager_get_data (manager);
+
+      g_info ("closing extension manager %s", em->obj_path);
+      extension_manager_close (manager);
+    }
+}
+
+static void
+close_extension_managers_for_sender (const char *sender)
+{
+  GList *list = extension_managers_get_all (sender);
+
+  if (list)
+    {
+      g_autoptr(GTask) task = g_task_new (NULL, NULL, NULL, NULL);
+      g_task_set_task_data (task, list, deep_free_object_list);
+
+      g_info ("%s dropped off the bus, closing extension managers", sender);
+      g_task_run_in_thread (task, close_extension_managers_in_thread_func);
+    }
+}
+
+/* Runs in worker thread */
+static gboolean
+handle_create_extension_manager (PortalFlatpak *object,
+                                 GDBusMethodInvocation *invocation,
+                                 GVariant *options)
+{
+  GDBusConnection *connection = g_dbus_method_invocation_get_connection (invocation);
+  g_autoptr(PortalFlatpakExtensionManagerSkeleton) manager = NULL;
+  const char *sender;
+  g_autofree char *sender_escaped = NULL;
+  g_autofree char *obj_path = NULL;
+  g_autofree char *token = NULL;
+  g_autoptr(GError) error = NULL;
+  int i;
+
+  if (!g_variant_lookup (options, "handle_token", "s", &token))
+    token = g_strdup_printf ("%d", g_random_int_range (0, 1000));
+
+  sender = g_dbus_method_invocation_get_sender (invocation);
+  g_info ("handle CreateExtensionManager from %s", sender);
+
+  sender_escaped = g_strdup (sender + 1);
+  for (i = 0; sender_escaped[i]; i++)
+    {
+      if (sender_escaped[i] == '.')
+        sender_escaped[i] = '_';
+    }
+
+  obj_path = g_strdup_printf ("%s/extension_manager/%s/%s",
+                              FLATPAK_PORTAL_PATH,
+                              sender_escaped,
+                              token);
+
+  manager = (PortalFlatpakExtensionManagerSkeleton *) create_extension_manager (invocation, obj_path, &error);
+  if (manager == NULL)
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  g_signal_connect (manager, "handle-close", G_CALLBACK (handle_extension_manager_close), NULL);
+  g_signal_connect (manager, "handle-list-extensions", G_CALLBACK (handle_list_extensions), NULL);
+  g_signal_connect (manager, "handle-install", G_CALLBACK (handle_install_extension), NULL);
+  g_signal_connect (manager, "handle-update", G_CALLBACK (handle_update_extension), NULL);
+  g_signal_connect (manager, "handle-uninstall", G_CALLBACK (handle_uninstall_extension), NULL);
+  g_signal_connect (manager, "g-authorize-method", G_CALLBACK (authorize_method_handler), NULL);
+
+  if (!g_dbus_interface_skeleton_export (G_DBUS_INTERFACE_SKELETON (manager),
+                                         connection,
+                                         obj_path,
+                                         &error))
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  register_extension_manager ((PortalFlatpakExtensionManager*)manager, obj_path);
+
+  portal_flatpak_complete_create_extension_manager (portal, invocation, obj_path);
+
+  return G_DBUS_METHOD_INVOCATION_HANDLED;
+}
+
+/* Runs in worker thread */
+static gboolean
+handle_extension_manager_close (PortalFlatpakExtensionManager *manager,
+                                GDBusMethodInvocation *invocation)
+{
+  extension_manager_close (manager);
+
+  g_info ("handle ExtensionManager.Close");
+
+  portal_flatpak_extension_manager_complete_close (manager, invocation);
+
+  return G_DBUS_METHOD_INVOCATION_HANDLED;
+}
+
+static void
+handle_list_extensions_in_thread_func (GTask *task,
+                                       gpointer source_object,
+                                       gpointer task_data,
+                                       GCancellable *cancellable)
+{
+  PortalFlatpakExtensionManager *manager = source_object;
+  ExtensionManagerData *em = extension_manager_get_data (manager);
+  GDBusMethodInvocation *invocation = task_data;
+  g_autoptr(GFile) installation_path = NULL;
+  g_autoptr(FlatpakInstallation) installation = NULL;
+  g_autoptr(GPtrArray) installed_refs = NULL;
+  g_autoptr(GPtrArray) remotes = NULL;
+  g_autoptr(GError) error = NULL;
+  GVariantBuilder outer_builder;
+  GHashTable *seen_refs; /* set of "name/arch/branch" -> TRUE, to deduplicate */
+  guint i;
+
+  installation_path = extension_manager_get_installation_path (manager);
+  installation = lookup_installation_for_path (installation_path, &error);
+  if (installation == NULL)
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return;
+    }
+
+  g_variant_builder_init (&outer_builder, G_VARIANT_TYPE ("aa{sv}"));
+  seen_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+
+  /* First, list installed extensions matching this app's prefix */
+  installed_refs = flatpak_installation_list_installed_refs (installation,
+                                                            em->cancellable, &error);
+  if (installed_refs == NULL)
+    {
+      g_hash_table_unref (seen_refs);
+      g_variant_builder_clear (&outer_builder);
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return;
+    }
+
+  for (i = 0; i < installed_refs->len; i++)
+    {
+      FlatpakInstalledRef *ref = g_ptr_array_index (installed_refs, i);
+      const char *ref_name = flatpak_ref_get_name (FLATPAK_REF (ref));
+      const char *ref_arch = flatpak_ref_get_arch (FLATPAK_REF (ref));
+      const char *ref_branch = flatpak_ref_get_branch (FLATPAK_REF (ref));
+      const char *commit = flatpak_ref_get_commit (FLATPAK_REF (ref));
+      const char *origin = flatpak_installed_ref_get_origin (ref);
+      guint64 installed_size = flatpak_installed_ref_get_installed_size (ref);
+      g_autofree char *ref_key = NULL;
+      GVariantBuilder entry_builder;
+
+      if (!is_valid_extension_ref_for_app (ref_name, em->app_id))
+        continue;
+
+      ref_key = g_strdup_printf ("%s/%s/%s", ref_name, ref_arch, ref_branch);
+      g_hash_table_insert (seen_refs, g_strdup (ref_key), GINT_TO_POINTER (TRUE));
+
+      g_variant_builder_init (&entry_builder, G_VARIANT_TYPE_VARDICT);
+      g_variant_builder_add (&entry_builder, "{sv}", "name", g_variant_new_string (ref_name));
+      g_variant_builder_add (&entry_builder, "{sv}", "arch", g_variant_new_string (ref_arch ? ref_arch : ""));
+      g_variant_builder_add (&entry_builder, "{sv}", "branch", g_variant_new_string (ref_branch ? ref_branch : ""));
+      g_variant_builder_add (&entry_builder, "{sv}", "commit", g_variant_new_string (commit ? commit : ""));
+      g_variant_builder_add (&entry_builder, "{sv}", "origin", g_variant_new_string (origin ? origin : ""));
+      g_variant_builder_add (&entry_builder, "{sv}", "installed", g_variant_new_boolean (TRUE));
+      g_variant_builder_add (&entry_builder, "{sv}", "download-size", g_variant_new_uint64 (0));
+      g_variant_builder_add (&entry_builder, "{sv}", "installed-size", g_variant_new_uint64 (installed_size));
+      g_variant_builder_add_value (&outer_builder, g_variant_builder_end (&entry_builder));
+    }
+
+  /* Next, list remote extensions - skip disabled or unavailable remotes gracefully */
+  remotes = flatpak_installation_list_remotes (installation, em->cancellable, &error);
+  if (remotes == NULL)
+    {
+      /* Can't list remotes at all - still return the installed refs we found */
+      g_info ("Unable to list remotes: %s", error->message);
+      g_clear_error (&error);
+    }
+  else
+    {
+      for (i = 0; i < remotes->len; i++)
+        {
+          FlatpakRemote *remote = g_ptr_array_index (remotes, i);
+          const char *remote_name = flatpak_remote_get_name (remote);
+          g_autoptr(GPtrArray) remote_refs = NULL;
+          g_autoptr(GError) remote_error = NULL;
+          guint j;
+
+          if (flatpak_remote_get_disabled (remote))
+            continue;
+
+          remote_refs = flatpak_installation_list_remote_refs_sync (installation,
+                                                                    remote_name,
+                                                                    em->cancellable,
+                                                                    &remote_error);
+          if (remote_refs == NULL)
+            {
+              g_info ("Unable to list refs from remote %s, skipping: %s",
+                      remote_name, remote_error->message);
+              continue;
+            }
+
+          for (j = 0; j < remote_refs->len; j++)
+            {
+              FlatpakRemoteRef *ref = g_ptr_array_index (remote_refs, j);
+              const char *ref_name = flatpak_ref_get_name (FLATPAK_REF (ref));
+              const char *ref_arch = flatpak_ref_get_arch (FLATPAK_REF (ref));
+              const char *ref_branch = flatpak_ref_get_branch (FLATPAK_REF (ref));
+              guint64 download_size = flatpak_remote_ref_get_download_size (ref);
+              guint64 installed_size = flatpak_remote_ref_get_installed_size (ref);
+              g_autofree char *ref_key = NULL;
+              GVariantBuilder entry_builder;
+
+              if (!is_valid_extension_ref_for_app (ref_name, em->app_id))
+                continue;
+
+              ref_key = g_strdup_printf ("%s/%s/%s", ref_name, ref_arch, ref_branch);
+              if (g_hash_table_contains (seen_refs, ref_key))
+                continue; /* Already reported as installed */
+
+              g_hash_table_insert (seen_refs, g_strdup (ref_key), GINT_TO_POINTER (TRUE));
+
+              g_variant_builder_init (&entry_builder, G_VARIANT_TYPE_VARDICT);
+              g_variant_builder_add (&entry_builder, "{sv}", "name", g_variant_new_string (ref_name));
+              g_variant_builder_add (&entry_builder, "{sv}", "arch", g_variant_new_string (ref_arch ? ref_arch : ""));
+              g_variant_builder_add (&entry_builder, "{sv}", "branch", g_variant_new_string (ref_branch ? ref_branch : ""));
+              g_variant_builder_add (&entry_builder, "{sv}", "commit", g_variant_new_string (""));
+              g_variant_builder_add (&entry_builder, "{sv}", "origin", g_variant_new_string (remote_name));
+              g_variant_builder_add (&entry_builder, "{sv}", "installed", g_variant_new_boolean (FALSE));
+              g_variant_builder_add (&entry_builder, "{sv}", "download-size", g_variant_new_uint64 (download_size));
+              g_variant_builder_add (&entry_builder, "{sv}", "installed-size", g_variant_new_uint64 (installed_size));
+              g_variant_builder_add_value (&outer_builder, g_variant_builder_end (&entry_builder));
+            }
+        }
+    }
+
+  g_hash_table_unref (seen_refs);
+
+  portal_flatpak_extension_manager_complete_list_extensions (
+    manager, invocation, g_variant_builder_end (&outer_builder));
+
+  {
+    gboolean should_close;
+
+    g_mutex_lock (&em->lock);
+    em->running = FALSE;
+    should_close = em->closed;
+    g_mutex_unlock (&em->lock);
+
+    if (should_close)
+      extension_manager_do_close (manager);
+  }
+}
+
+static gboolean
+handle_list_extensions (PortalFlatpakExtensionManager *manager,
+                        GDBusMethodInvocation *invocation,
+                        GVariant *arg_options)
+{
+  ExtensionManagerData *em = extension_manager_get_data (manager);
+  g_autoptr(GTask) task = NULL;
+  gboolean rejected = FALSE;
+  const char *reject_reason = NULL;
+
+  g_info ("handle ExtensionManager.ListExtensions");
+
+  g_mutex_lock (&em->lock);
+  if (em->closed)
+    {
+      rejected = TRUE;
+      reject_reason = "Extension manager is closed";
+    }
+  else if (em->running)
+    {
+      rejected = TRUE;
+      reject_reason = "An operation is already in progress";
+    }
+  else
+    {
+      em->running = TRUE;
+    }
+  g_mutex_unlock (&em->lock);
+
+  if (rejected)
+    {
+      g_dbus_method_invocation_return_error (invocation,
+                                             G_DBUS_ERROR,
+                                             G_DBUS_ERROR_FAILED,
+                                             "%s", reject_reason);
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  task = g_task_new (manager, NULL, NULL, NULL);
+  g_task_set_task_data (task, invocation, NULL);
+  g_task_run_in_thread (task, handle_list_extensions_in_thread_func);
+
+  return G_DBUS_METHOD_INVOCATION_HANDLED;
+}
+
+/* Child process for install-extension. Resolves remote automatically. */
+static int
+do_install_extension_child_process (const char *installation_path, const char *ref, int socket_fd)
+{
+  g_autoptr(GOutputStream) out = g_unix_output_stream_new (socket_fd, TRUE);
+  g_autoptr(FlatpakInstallation) installation = NULL;
+  g_autoptr(FlatpakTransaction) transaction = NULL;
+  g_autoptr(GFile) f = g_file_new_for_path (installation_path);
+  g_autoptr(GError) error = NULL;
+  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(GPtrArray) remotes = NULL;
+  g_autofree char *resolved_remote = NULL;
+  g_auto(GStrv) ref_parts = NULL;
+  TransactionData transaction_data = { NULL };
+
+  dir = flatpak_dir_get_by_path (f);
+
+  if (!flatpak_dir_maybe_ensure_repo (dir, NULL, &error))
+    {
+      send_progress (out, 0, 0, 0, PROGRESS_STATUS_ERROR, error);
+      return 0;
+    }
+
+  installation = flatpak_installation_new_for_dir (dir, NULL, &error);
+  if (installation == NULL)
+    {
+      send_progress (out, 0, 0, 0, PROGRESS_STATUS_ERROR, error);
+      return 0;
+    }
+
+  /* Parse the ref to extract name/arch/branch for remote lookup */
+  ref_parts = g_strsplit (ref, "/", 4);
+  if (g_strv_length (ref_parts) != 4)
+    {
+      g_set_error (&error, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                   "Invalid ref format: %s", ref);
+      send_progress (out, 0, 0, 0, PROGRESS_STATUS_ERROR, error);
+      return 0;
+    }
+
+  /* Auto-resolve which remote has this ref.
+   * First check the parent app's origin remote, then try others. */
+  remotes = flatpak_installation_list_remotes (installation, NULL, &error);
+  if (remotes == NULL)
+    {
+      send_progress (out, 0, 0, 0, PROGRESS_STATUS_ERROR, error);
+      return 0;
+    }
+
+  /* Try to find the ref in configured remotes */
+  for (guint i = 0; i < remotes->len; i++)
+    {
+      FlatpakRemote *remote = g_ptr_array_index (remotes, i);
+      const char *remote_name = flatpak_remote_get_name (remote);
+      g_autoptr(FlatpakRemoteRef) remote_ref = NULL;
+      g_autoptr(GError) local_error = NULL;
+      FlatpakRefKind kind;
+
+      if (flatpak_remote_get_disabled (remote))
+        continue;
+
+      kind = (g_strcmp0 (ref_parts[0], "app") == 0) ? FLATPAK_REF_KIND_APP : FLATPAK_REF_KIND_RUNTIME;
+
+      remote_ref = flatpak_installation_fetch_remote_ref_sync (installation,
+                                                               remote_name,
+                                                               kind,
+                                                               ref_parts[1],
+                                                               ref_parts[2],
+                                                               ref_parts[3],
+                                                               NULL, &local_error);
+      if (remote_ref != NULL)
+        {
+          resolved_remote = g_strdup (remote_name);
+          break;
+        }
+
+      g_info ("Ref %s not found in remote %s: %s", ref, remote_name, local_error->message);
+    }
+
+  if (resolved_remote == NULL)
+    {
+      g_set_error (&error, G_DBUS_ERROR, G_DBUS_ERROR_FILE_NOT_FOUND,
+                   "Extension ref %s not found in any configured remote", ref);
+      send_progress (out, 0, 0, 0, PROGRESS_STATUS_ERROR, error);
+      return 0;
+    }
+
+  g_info ("Resolved extension %s to remote %s", ref, resolved_remote);
+
+  transaction = flatpak_transaction_new_for_installation (installation, NULL, &error);
+  if (transaction == NULL)
+    {
+      send_progress (out, 0, 0, 0, PROGRESS_STATUS_ERROR, error);
+      return 0;
+    }
+
+  flatpak_transaction_add_default_dependency_sources (transaction);
+
+  if (!flatpak_transaction_add_install (transaction, resolved_remote, ref, NULL, &error))
+    {
+      send_progress (out, 0, 0, 0, PROGRESS_STATUS_ERROR, error);
+      return 0;
+    }
+
+  transaction_data.out = out;
+
+  g_signal_connect (transaction, "ready", G_CALLBACK (transaction_ready), &transaction_data);
+  g_signal_connect (transaction, "new-operation", G_CALLBACK (transaction_new_operation), &transaction_data);
+  g_signal_connect (transaction, "operation-done", G_CALLBACK (transaction_operation_done), &transaction_data);
+  g_signal_connect (transaction, "operation-error", G_CALLBACK (transaction_operation_error), &transaction_data);
+
+  if (!flatpak_transaction_run (transaction, NULL, &error))
+    {
+      if (!g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_ABORTED))
+        send_progress (out, transaction_data.op, transaction_data.n_ops, transaction_data.progress,
+                       PROGRESS_STATUS_ERROR, error);
+      return 0;
+    }
+
+  send_progress (out, transaction_data.op, transaction_data.n_ops, transaction_data.progress,
+                 PROGRESS_STATUS_DONE, error);
+
+  return 0;
+}
+
+/* Child process for update-extension */
+static int
+do_update_extension_child_process (const char *installation_path, const char *ref, int socket_fd)
+{
+  g_autoptr(GOutputStream) out = g_unix_output_stream_new (socket_fd, TRUE);
+  g_autoptr(FlatpakInstallation) installation = NULL;
+  g_autoptr(FlatpakTransaction) transaction = NULL;
+  g_autoptr(GFile) f = g_file_new_for_path (installation_path);
+  g_autoptr(GError) error = NULL;
+  g_autoptr(FlatpakDir) dir = NULL;
+  TransactionData transaction_data = { NULL };
+
+  dir = flatpak_dir_get_by_path (f);
+
+  if (!flatpak_dir_maybe_ensure_repo (dir, NULL, &error))
+    {
+      send_progress (out, 0, 0, 0, PROGRESS_STATUS_ERROR, error);
+      return 0;
+    }
+
+  installation = flatpak_installation_new_for_dir (dir, NULL, &error);
+  if (installation)
+    transaction = flatpak_transaction_new_for_installation (installation, NULL, &error);
+  if (transaction == NULL)
+    {
+      send_progress (out, 0, 0, 0, PROGRESS_STATUS_ERROR, error);
+      return 0;
+    }
+
+  flatpak_transaction_add_default_dependency_sources (transaction);
+
+  if (!flatpak_transaction_add_update (transaction, ref, NULL, NULL, &error))
+    {
+      send_progress (out, 0, 0, 0, PROGRESS_STATUS_ERROR, error);
+      return 0;
+    }
+
+  transaction_data.out = out;
+
+  g_signal_connect (transaction, "ready", G_CALLBACK (transaction_ready), &transaction_data);
+  g_signal_connect (transaction, "new-operation", G_CALLBACK (transaction_new_operation), &transaction_data);
+  g_signal_connect (transaction, "operation-done", G_CALLBACK (transaction_operation_done), &transaction_data);
+  g_signal_connect (transaction, "operation-error", G_CALLBACK (transaction_operation_error), &transaction_data);
+
+  if (!flatpak_transaction_run (transaction, NULL, &error))
+    {
+      if (!g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_ABORTED))
+        send_progress (out, transaction_data.op, transaction_data.n_ops, transaction_data.progress,
+                       PROGRESS_STATUS_ERROR, error);
+      return 0;
+    }
+
+  send_progress (out, transaction_data.op, transaction_data.n_ops, transaction_data.progress,
+                 PROGRESS_STATUS_DONE, error);
+
+  return 0;
+}
+
+/* Child process for uninstall-extension */
+static int
+do_uninstall_extension_child_process (const char *installation_path, const char *ref, int socket_fd)
+{
+  g_autoptr(GOutputStream) out = g_unix_output_stream_new (socket_fd, TRUE);
+  g_autoptr(FlatpakInstallation) installation = NULL;
+  g_autoptr(FlatpakTransaction) transaction = NULL;
+  g_autoptr(GFile) f = g_file_new_for_path (installation_path);
+  g_autoptr(GError) error = NULL;
+  g_autoptr(FlatpakDir) dir = NULL;
+  TransactionData transaction_data = { NULL };
+
+  dir = flatpak_dir_get_by_path (f);
+
+  if (!flatpak_dir_maybe_ensure_repo (dir, NULL, &error))
+    {
+      send_progress (out, 0, 0, 0, PROGRESS_STATUS_ERROR, error);
+      return 0;
+    }
+
+  installation = flatpak_installation_new_for_dir (dir, NULL, &error);
+  if (installation)
+    transaction = flatpak_transaction_new_for_installation (installation, NULL, &error);
+  if (transaction == NULL)
+    {
+      send_progress (out, 0, 0, 0, PROGRESS_STATUS_ERROR, error);
+      return 0;
+    }
+
+  if (!flatpak_transaction_add_uninstall (transaction, ref, &error))
+    {
+      send_progress (out, 0, 0, 0, PROGRESS_STATUS_ERROR, error);
+      return 0;
+    }
+
+  transaction_data.out = out;
+
+  g_signal_connect (transaction, "ready", G_CALLBACK (transaction_ready), &transaction_data);
+  g_signal_connect (transaction, "new-operation", G_CALLBACK (transaction_new_operation), &transaction_data);
+  g_signal_connect (transaction, "operation-done", G_CALLBACK (transaction_operation_done), &transaction_data);
+  g_signal_connect (transaction, "operation-error", G_CALLBACK (transaction_operation_error), &transaction_data);
+
+  if (!flatpak_transaction_run (transaction, NULL, &error))
+    {
+      if (!g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_ABORTED))
+        send_progress (out, transaction_data.op, transaction_data.n_ops, transaction_data.progress,
+                       PROGRESS_STATUS_ERROR, error);
+      return 0;
+    }
+
+  send_progress (out, transaction_data.op, transaction_data.n_ops, transaction_data.progress,
+                 PROGRESS_STATUS_DONE, error);
+
+  return 0;
+}
+
+/* We do extension operations out of process (via spawn) and just proxy
+   the feedback here - same pattern as update monitor */
+static gboolean
+handle_extension_responses (PortalFlatpakExtensionManager *manager,
+                            int socket_fd,
+                            GError **error)
+{
+  g_autoptr(GInputStream) in = g_unix_input_stream_new (socket_fd, FALSE);
+  ExtensionManagerData *em = extension_manager_get_data (manager);
+  guint32 status;
+
+  do
+    {
+      g_autoptr(GVariant) v = NULL;
+      guint32 op;
+      guint32 n_ops;
+      guint32 progress;
+      const char *error_name;
+      const char *error_message;
+
+      v = read_variant (in, em->cancellable, error);
+      if (v == NULL)
+        {
+          g_info ("Reading message from child extension process failed %s", (*error)->message);
+          return FALSE;
+        }
+
+      g_variant_get (v, "(uuuu&s&s)",
+                     &op, &n_ops, &progress, &status, &error_name, &error_message);
+
+      emit_extension_progress (manager, op, n_ops, progress, status,
+                               *error_name != 0 ? error_name : NULL,
+                               *error_message != 0 ? error_message : NULL);
+    }
+  while (status == PROGRESS_STATUS_RUNNING);
+
+  return TRUE;
+}
+
+static void
+handle_extension_op_in_thread_func (GTask *task,
+                                    gpointer source_object,
+                                    gpointer task_data,
+                                    GCancellable *cancellable)
+{
+  PortalFlatpakExtensionManager *manager = source_object;
+  ExtensionManagerData *em = extension_manager_get_data (manager);
+  g_autoptr(GError) error = NULL;
+  const char *ref;
+  const char *op_flag;
+
+  ref = (const char *)g_object_get_data (G_OBJECT (task), "ref");
+  op_flag = (const char *)g_object_get_data (G_OBJECT (task), "op-flag");
+
+  {
+    g_autoptr(GFile) installation_path = extension_manager_get_installation_path (manager);
+    const char *argv[] = { "/proc/self/exe", "flatpak-portal", op_flag, flatpak_file_get_path_cached (installation_path), ref, NULL };
+    int sockets[2];
+    GPid pid;
+
+    if (socketpair (AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, sockets) != 0)
+      {
+        glnx_throw_errno (&error);
+      }
+    else
+      {
+        gboolean spawn_ok;
+
+        spawn_ok = g_spawn_async (NULL, (char **)argv, NULL,
+                                  G_SPAWN_FILE_AND_ARGV_ZERO |
+                                  G_SPAWN_DO_NOT_REAP_CHILD |
+                                  G_SPAWN_LEAVE_DESCRIPTORS_OPEN,
+                                  update_child_setup_func, &sockets[1],
+                                  &pid, &error);
+        close (sockets[1]);
+        if (spawn_ok)
+          {
+            if (!handle_extension_responses (manager, sockets[0], &error))
+              {
+                if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+                  kill (pid, SIGINT);
+              }
+            waitpid (pid, NULL, 0);
+            g_spawn_close_pid (pid);
+          }
+        close (sockets[0]);
+      }
+  }
+
+  if (error)
+    emit_extension_progress_error (manager, error);
+
+  {
+    gboolean should_close;
+
+    g_mutex_lock (&em->lock);
+    em->running = FALSE;
+    should_close = em->closed;
+    g_mutex_unlock (&em->lock);
+
+    if (should_close)
+      extension_manager_do_close (manager);
+  }
+}
+
+static gboolean
+handle_extension_operation (PortalFlatpakExtensionManager *manager,
+                            GDBusMethodInvocation *invocation,
+                            const char *ref,
+                            const char *op_flag,
+                            const char *op_name)
+{
+  ExtensionManagerData *em = extension_manager_get_data (manager);
+  g_autoptr(GTask) task = NULL;
+  gboolean already_running = FALSE;
+  g_auto(GStrv) ref_parts = NULL;
+
+  g_info ("handle ExtensionManager.%s for %s", op_name, ref);
+
+  /* Validate ref format - must be type/name/arch/branch */
+  ref_parts = g_strsplit (ref, "/", 4);
+  if (g_strv_length (ref_parts) != 4)
+    {
+      g_dbus_method_invocation_return_error (invocation,
+                                             G_DBUS_ERROR,
+                                             G_DBUS_ERROR_INVALID_ARGS,
+                                             "Invalid ref format: %s", ref);
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  /* Security check: ref name must start with the caller's app ID + '.' */
+  if (!is_valid_extension_ref_for_app (ref_parts[1], em->app_id))
+    {
+      g_dbus_method_invocation_return_error (invocation,
+                                             G_DBUS_ERROR,
+                                             G_DBUS_ERROR_ACCESS_DENIED,
+                                             "Extension ref %s does not belong to app %s",
+                                             ref, em->app_id);
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  g_mutex_lock (&em->lock);
+  if (em->running)
+    already_running = TRUE;
+  else
+    em->running = TRUE;
+  g_mutex_unlock (&em->lock);
+
+  if (already_running)
+    {
+      g_dbus_method_invocation_return_error (invocation,
+                                             G_DBUS_ERROR,
+                                             G_DBUS_ERROR_FAILED,
+                                             "An operation is already in progress");
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  task = g_task_new (manager, NULL, NULL, NULL);
+  g_object_set_data_full (G_OBJECT (task), "ref", g_strdup (ref), g_free);
+  g_object_set_data_full (G_OBJECT (task), "op-flag", g_strdup (op_flag), g_free);
+  g_task_run_in_thread (task, handle_extension_op_in_thread_func);
+
+  /* Complete the D-Bus method call immediately - progress is delivered via signals */
+  if (g_strcmp0 (op_flag, "--install-extension") == 0)
+    portal_flatpak_extension_manager_complete_install (manager, invocation);
+  else if (g_strcmp0 (op_flag, "--update-extension") == 0)
+    portal_flatpak_extension_manager_complete_update (manager, invocation);
+  else if (g_strcmp0 (op_flag, "--uninstall-extension") == 0)
+    portal_flatpak_extension_manager_complete_uninstall (manager, invocation);
+  else
+    g_assert_not_reached ();
+
+  return G_DBUS_METHOD_INVOCATION_HANDLED;
+}
+
+static gboolean
+handle_install_extension (PortalFlatpakExtensionManager *manager,
+                          GDBusMethodInvocation *invocation,
+                          const char *arg_ref,
+                          GVariant *arg_options)
+{
+  return handle_extension_operation (manager, invocation, arg_ref,
+                                    "--install-extension", "Install");
+}
+
+static gboolean
+handle_update_extension (PortalFlatpakExtensionManager *manager,
+                         GDBusMethodInvocation *invocation,
+                         const char *arg_ref,
+                         GVariant *arg_options)
+{
+  return handle_extension_operation (manager, invocation, arg_ref,
+                                    "--update-extension", "Update");
+}
+
+static gboolean
+handle_uninstall_extension (PortalFlatpakExtensionManager *manager,
+                            GDBusMethodInvocation *invocation,
+                            const char *arg_ref,
+                            GVariant *arg_options)
+{
+  return handle_extension_operation (manager, invocation, arg_ref,
+                                    "--uninstall-extension", "Uninstall");
+}
 
 static void
 name_owner_changed (GDBusConnection *connection,
@@ -2885,6 +3927,7 @@ name_owner_changed (GDBusConnection *connection,
       g_list_free (list);
 
       close_update_monitors_for_sender (name);
+      close_extension_managers_for_sender (name);
     }
 }
 
@@ -2904,6 +3947,7 @@ on_bus_acquired (GDBusConnection *connection,
   g_dbus_connection_set_exit_on_close (connection, FALSE);
 
   update_monitors = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_object_unref);
+  extension_managers = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_object_unref);
 
   permission_store = xdp_dbus_permission_store_proxy_new_sync (connection,
                                                                G_DBUS_PROXY_FLAGS_NONE,
@@ -2925,12 +3969,13 @@ on_bus_acquired (GDBusConnection *connection,
 
   g_object_set_data_full (G_OBJECT (portal), "track-alive", GINT_TO_POINTER (42), skeleton_died_cb);
 
-  portal_flatpak_set_version (PORTAL_FLATPAK (portal), 8);
+  portal_flatpak_set_version (PORTAL_FLATPAK (portal), 9);
   portal_flatpak_set_supports (PORTAL_FLATPAK (portal), supports);
 
   g_signal_connect (portal, "handle-spawn", G_CALLBACK (handle_spawn), NULL);
   g_signal_connect (portal, "handle-spawn-signal", G_CALLBACK (handle_spawn_signal), NULL);
   g_signal_connect (portal, "handle-create-update-monitor", G_CALLBACK (handle_create_update_monitor), NULL);
+  g_signal_connect (portal, "handle-create-extension-manager", G_CALLBACK (handle_create_extension_manager), NULL);
 
   g_signal_connect (portal, "g-authorize-method", G_CALLBACK (authorize_method_handler), NULL);
 
@@ -3025,6 +4070,21 @@ main (int    argc,
   if (argc >= 4 && strcmp (argv[1], "--update") == 0)
     {
       return do_update_child_process (argv[2], argv[3], 3);
+    }
+
+  if (argc >= 4 && strcmp (argv[1], "--install-extension") == 0)
+    {
+      return do_install_extension_child_process (argv[2], argv[3], 3);
+    }
+
+  if (argc >= 4 && strcmp (argv[1], "--update-extension") == 0)
+    {
+      return do_update_extension_child_process (argv[2], argv[3], 3);
+    }
+
+  if (argc >= 4 && strcmp (argv[1], "--uninstall-extension") == 0)
+    {
+      return do_uninstall_extension_child_process (argv[2], argv[3], 3);
     }
 
   context = g_option_context_new ("");
