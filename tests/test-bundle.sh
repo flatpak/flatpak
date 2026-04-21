@@ -49,7 +49,7 @@ ${FLATPAK} uninstall ${U} -y org.test.Hello >&2
 ${FLATPAK} install ${U} -y --bundle bundles/hello.flatpak >&2
 
 # Installing again without reinstall option should fail...
-! ${FLATPAK} install ${U} -y --bundle bundles/hello.flatpak >&2
+assert_not ${FLATPAK} install ${U} -y --bundle bundles/hello.flatpak >&2
 # Now with reinstall option it should pass...
 ${FLATPAK} install ${U} -y --bundle bundles/hello.flatpak --reinstall >&2
 

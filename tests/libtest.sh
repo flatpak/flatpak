@@ -283,6 +283,10 @@ assert_remote_has_no_config () {
     } 3> /dev/null
 }
 
+assert_not () {
+    "$@" && exit 1 || true
+}
+
 export FL_GPG_HOMEDIR=${TEST_DATA_DIR}/gpghome
 export FL_GPG_HOMEDIR2=${TEST_DATA_DIR}/gpghome2
 mkdir -p ${FL_GPG_HOMEDIR}

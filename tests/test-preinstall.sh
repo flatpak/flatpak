@@ -101,7 +101,7 @@ ok "no config"
 # make sure nothing is installed
 ${FLATPAK} ${U} list --columns=ref > list-log
 assert_file_empty list-log
-! ostree config --repo=$XDG_DATA_HOME/flatpak/repo get --group "core" xa.preinstalled &> /dev/null
+assert_not ostree config --repo=$XDG_DATA_HOME/flatpak/repo get --group "core" xa.preinstalled &> /dev/null
 
 # The preinstall config wants org.test.Hello.
 cp hello-install.preinstall $FLATPAK_DATA_DIR/preinstall.d/
@@ -278,7 +278,7 @@ ${FLATPAK} ${U} uninstall -y --all >&2
 # make sure nothing is installed
 ${FLATPAK} ${U} list --columns=ref > list-log
 assert_file_empty list-log
-! ostree config --repo=$XDG_DATA_HOME/flatpak/repo get --group "core" xa.preinstalled &> /dev/null
+ostree config --repo=$XDG_DATA_HOME/flatpak/repo unset --group "core" xa.preinstalled
 
 # The preinstall config wants org.test.Hello.
 cp hello-install.preinstall $FLATPAK_DATA_DIR/preinstall.d/
