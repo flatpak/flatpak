@@ -70,12 +70,14 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakExports, flatpak_exports_free);
 /*
  * FlatpakExportsTestFlags:
  * @FLATPAK_EXPORTS_TEST_FLAGS_AUTOFS: Pretend everything is an autofs.
+ * @FLATPAK_EXPORTS_TEST_FLAGS_FUSE: Pretend everything is a FUSE filesystem.
  *
  * Flags used to provide mock behaviour during unit testing.
  */
 typedef enum
 {
   FLATPAK_EXPORTS_TEST_FLAGS_AUTOFS = (1 << 0),
+  FLATPAK_EXPORTS_TEST_FLAGS_FUSE = (1 << 1),
   FLATPAK_EXPORTS_TEST_FLAGS_NONE = 0
 } FlatpakExportsTestFlags;
 

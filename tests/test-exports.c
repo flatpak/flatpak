@@ -1450,6 +1450,46 @@ test_exports_unusual (void)
   g_assert_cmpuint (i, ==, bwrap->argv->len);
 }
 
+/*
+ * Test that a blocking FUSE mount (like kbfs/keybase) is skipped rather than
+ * hanging flatpak indefinitely. Reproduces https://github.com/flatpak/flatpak/issues/5496
+ */
+static void
+test_exports_fuse (void)
+{
+  static const FakeFile files[] =
+  {
+    { "etc", FAKE_DIR },
+    { "etc/ld.so.cache", FAKE_FILE },
+    { "etc/ld.so.conf", FAKE_FILE },
+    { "etc/ld.so.conf.d", FAKE_DIR },
+    { "broken-fuse", FAKE_DIR },
+    { "usr/bin", FAKE_DIR },
+    { "usr/lib", FAKE_DIR },
+    { "usr/share", FAKE_DIR },
+    { NULL }
+  };
+  g_autoptr(FlatpakBwrap) bwrap = flatpak_bwrap_new (NULL);
+  g_autoptr(FlatpakExports) exports = NULL;
+  g_autoptr(GError) error = NULL;
+  gboolean ok;
+
+  exports = test_host_exports_setup (files,
+                                     FLATPAK_FILESYSTEM_MODE_NONE,
+                                     FLATPAK_FILESYSTEM_MODE_READ_ONLY);
+  flatpak_exports_set_test_flags (exports, FLATPAK_EXPORTS_TEST_FLAGS_FUSE);
+
+  /* A blocking (unresponsive) FUSE mount must be rejected with WOULD_BLOCK,
+   * not hang flatpak indefinitely. */
+  ok = flatpak_exports_add_path_expose (exports,
+                                        FLATPAK_FILESYSTEM_MODE_READ_ONLY,
+                                        "/broken-fuse", &error);
+  g_assert_error (error, G_IO_ERROR, G_IO_ERROR_WOULD_BLOCK);
+  g_test_message ("attempting to export /broken-fuse: %s", error->message);
+  g_assert_false (ok);
+  g_clear_error (&error);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -1472,6 +1512,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/exports/host/fedora", test_exports_fedora);
   g_test_add_func ("/exports/ignored", test_exports_ignored);
   g_test_add_func ("/exports/unusual", test_exports_unusual);
+  g_test_add_func ("/exports/fuse", test_exports_fuse);
 
   res = g_test_run ();
 
