@@ -371,6 +371,7 @@ test_full_context (void)
   g_assert_cmpstr (strv[i++], ==, "ssh-auth");
   g_assert_cmpstr (strv[i++], ==, "system-bus");
   g_assert_cmpstr (strv[i++], ==, "wayland");
+  g_assert_cmpstr (strv[i++], ==, "x11");
   g_assert_cmpstr (strv[i], ==, NULL);
   g_assert_cmpuint (i, ==, n);
   g_clear_pointer (&strv, g_strfreev);
