@@ -110,6 +110,9 @@ libglnx_dep = declare_dependency(
   dependencies : libglnx_deps,
   include_directories : libglnx_inc,
   link_with : libglnx)
+if meson.version().version_compare('>= 0.54.0')
+  meson.override_dependency('libglnx', libglnx_dep)
+endif
 
 subdir('tests')
 
