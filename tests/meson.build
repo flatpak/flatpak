@@ -409,6 +409,7 @@ tests = {
   'extra-data': {'wrap': ['user', 'system']},
   'preinstall': {},
   'run-custom': {'wrap': ['user', 'system']},
+  'upgrade-from-header': {'wrap': ['user', 'system', 'system-norevokefs']},
 }
 
 wrapped_tests = []
