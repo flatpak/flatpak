@@ -2,6 +2,14 @@ Changes in 1.17.7
 ~~~~~~~~~~~~~~~~~~
 Released: not yet
 
+Enhancements:
+
+* profile/flatpak.fish: skip spawning `flatpak --installations` when the
+  canonical user installation export directory is already present in
+  XDG_DATA_DIRS (typical on any booted desktop where pam_env or the
+  login manager has populated it). Reduces fish shell startup cost by
+  ~15 ms per invocation.
+
 ...
 
 Changes in 1.17.6
