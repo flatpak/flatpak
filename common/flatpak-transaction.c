@@ -3738,6 +3738,13 @@ op_may_need_token (FlatpakTransactionOperation *op)
      op->kind == FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE);
 }
 
+static void
+op_clear_token (FlatpakTransactionOperation *op)
+{
+  g_clear_pointer (&op->resolved_token, g_free);
+  op->requested_token = FALSE;
+}
+
 /* Resolving an operation means figuring out the target commit
    checksum and the metadata for that commit, so that we can handle
    dependencies from it, and verify versions. */
@@ -5615,7 +5622,33 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
       if (res && !_run_op_kind (self, op, state,
                                 &needs_prune, &needs_triggers, &needs_cache_drop,
                                 cancellable, &local_error))
-        res = FALSE;
+        {
+          res = FALSE;
+
+          if (g_error_matches (local_error, FLATPAK_HTTP_ERROR,
+                               FLATPAK_HTTP_ERROR_UNAUTHORIZED) &&
+              op->requested_token &&
+              op_may_need_token (op))
+            {
+              GList single_op_list = { .data = op, .next = NULL, .prev = NULL };
+
+              g_info ("Got 401 during %s of %s, re-requesting token and retrying",
+                      op->kind == FLATPAK_TRANSACTION_OPERATION_INSTALL ? "install" : "update",
+                      flatpak_decomposed_get_ref (op->ref));
+              g_clear_error (&local_error);
+
+              op_clear_token (op);
+
+              if (request_tokens_for_remote (self, op->remote, &single_op_list,
+                                             cancellable, &local_error) &&
+                  _run_op_kind (self, op, state,
+                                &needs_prune, &needs_triggers, &needs_cache_drop,
+                                cancellable, &local_error))
+                {
+                  res = TRUE;
+                }
+            }
+        }
 
       if (res)
         {
