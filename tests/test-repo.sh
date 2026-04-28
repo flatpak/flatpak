@@ -138,12 +138,12 @@ port=$(cat httpd-port)
 echo "bad key" > badkey
 
 gpg2_repo_url=$(ostree config --repo=$FL_DIR/repo get --group 'remote "test-gpg2-repo"' url)
-gpg2_repo_key=$(cat "$FL_DIR/repo/test-gpg2-repo.trustedkeys.gpg")
+cp "$FL_DIR/repo/test-gpg2-repo.trustedkeys.gpg" gpg2_repo_key
 ${FLATPAK} ${U} remote-modify --gpg-import=badkey test-gpg2-repo >&2 || true
 gpg2_repo_url2=$(ostree config --repo=$FL_DIR/repo get --group 'remote "test-gpg2-repo"' url)
-gpg2_repo_key2=$(cat "$FL_DIR/repo/test-gpg2-repo.trustedkeys.gpg")
+cp "$FL_DIR/repo/test-gpg2-repo.trustedkeys.gpg" gpg2_repo_key2
 
-if [[ "${gpg2_repo_url}" != "${gpg2_repo_url2}" || "${gpg2_repo_key}" != "${gpg2_repo_key2}" ]]; then
+if [[ "${gpg2_repo_url}" != "${gpg2_repo_url2}" ]] || ! diff -q gpg2_repo_key gpg2_repo_key2 > /dev/null 2>&1; then
   assert_not_reached "remote-modify failed but remote was modified"
 fi
 
