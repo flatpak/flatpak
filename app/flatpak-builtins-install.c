@@ -40,6 +40,8 @@
 #include "flatpak-utils-private.h"
 #include "flatpak-error.h"
 #include "flatpak-chain-input-stream-private.h"
+#include "flatpak-repo-utils-private.h"
+#include "flatpak-variant-impl-private.h"
 
 static char *opt_arch;
 static char **opt_gpg_file;
@@ -325,6 +327,77 @@ install_image (FlatpakDir      *dir,
   return TRUE;
 }
 
+static GPtrArray *
+resolve_fuzzy_rebased_refs (FlatpakRemoteState  *state,
+                            GPtrArray           *refs,
+                            gboolean            *out_auto_resolved_rebase,
+                            char               **out_explicit_install_ref,
+                            GError             **error)
+{
+  g_autoptr(GPtrArray) resolved_refs = g_ptr_array_new_with_free_func ((GDestroyNotify) flatpak_decomposed_unref);
+  gboolean auto_resolved_rebase = FALSE;
+  g_autofree char *explicit_install_ref = NULL;
+  gboolean multiple_explicit_install_refs = FALSE;
+
+  for (size_t i = 0; i < refs->len; i++)
+    {
+      g_autoptr(FlatpakDecomposed) rebased_ref = NULL;
+      FlatpakDecomposed *ref = g_ptr_array_index (refs, i);
+      FlatpakDecomposed *resolved_ref = ref;
+      VarMetadataRef sparse_cache;
+
+      if (!flatpak_remote_state_lookup_sparse_cache (state, flatpak_decomposed_get_ref (ref), &sparse_cache, NULL))
+        goto add;
+
+      const char *rebased_ref_str = var_metadata_lookup_string (sparse_cache, FLATPAK_SPARSE_CACHE_KEY_ENDOFLIFE_REBASE, NULL);
+
+      if (rebased_ref_str == NULL)
+        goto add;
+
+      rebased_ref = flatpak_decomposed_new_from_ref (rebased_ref_str, error);
+
+      if (rebased_ref == NULL)
+        return NULL;
+
+      if (flatpak_remote_state_lookup_ref (state, rebased_ref_str,
+                                           NULL, NULL, NULL, NULL, NULL, NULL))
+        {
+          resolved_ref = rebased_ref;
+          auto_resolved_rebase = TRUE;
+
+          if (explicit_install_ref == NULL)
+            explicit_install_ref = g_strdup (flatpak_decomposed_get_ref (ref));
+          else if (g_strcmp0 (explicit_install_ref, flatpak_decomposed_get_ref (ref)) != 0)
+            multiple_explicit_install_refs = TRUE;
+        }
+
+    add:
+      if (!g_ptr_array_find_with_equal_func (resolved_refs, resolved_ref,
+                                             (GEqualFunc) flatpak_decomposed_equal, NULL))
+        g_ptr_array_add (resolved_refs, flatpak_decomposed_ref (resolved_ref));
+    }
+
+  if (out_auto_resolved_rebase != NULL)
+    *out_auto_resolved_rebase = auto_resolved_rebase;
+
+  if (out_explicit_install_ref != NULL && !multiple_explicit_install_refs)
+    *out_explicit_install_ref = g_steal_pointer (&explicit_install_ref);
+
+  return g_steal_pointer (&resolved_refs);
+}
+
+static void
+print_auto_resolved_rebase_warning (const char *old_ref,
+                                    const char *new_ref)
+{
+  if (old_ref != NULL)
+    g_printerr (_("Warning: %s is end-of-life and has been replaced by %s. Specify the full ref explicitly to install it.\n"),
+                old_ref, new_ref);
+  else
+    g_printerr (_("Warning: one or more matching refs are end-of-life and have been replaced by %s. To install one of the end-of-life refs explicitly, use its full ref.\n"),
+                new_ref);
+}
+
 gboolean
 flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
@@ -556,7 +629,9 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
       g_autofree char *ref = NULL;
       g_autoptr(GPtrArray) refs = NULL;
       g_autoptr(GError) local_error = NULL;
+      g_autofree char *explicit_install_ref = NULL;
       FindMatchingRefsFlags matching_refs_flags;
+      gboolean auto_resolved_rebase = FALSE;
 
       if (!flatpak_allow_fuzzy_matching (pref))
         matching_refs_flags = FIND_MATCHING_REFS_FLAGS_NONE;
@@ -600,6 +675,14 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
                                                cancellable, error);
           if (refs == NULL)
             return FALSE;
+
+          if (matching_refs_flags & FIND_MATCHING_REFS_FLAGS_FUZZY)
+            {
+              refs = resolve_fuzzy_rebased_refs (state, refs, &auto_resolved_rebase,
+                                                 &explicit_install_ref, error);
+              if (refs == NULL)
+                return FALSE;
+            }
         }
 
       if (refs->len == 0)
@@ -611,7 +694,16 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
           return FALSE;
         }
 
-      if (!flatpak_resolve_matching_refs (remote, dir, opt_yes, refs, id, opt_noninteractive, &ref, error))
+      if (auto_resolved_rebase && refs->len == 1)
+        {
+          FlatpakDecomposed *chosen_ref = g_ptr_array_index (refs, 0);
+
+          if (!opt_noninteractive)
+            print_auto_resolved_rebase_warning (explicit_install_ref,
+                                                flatpak_decomposed_get_ref (chosen_ref));
+          ref = flatpak_decomposed_dup_ref (chosen_ref);
+        }
+      else if (!flatpak_resolve_matching_refs (remote, dir, opt_yes, refs, id, opt_noninteractive, &ref, error))
         return FALSE;
 
       if (!flatpak_transaction_add_install (transaction, remote, ref, (const char **) opt_subpaths, &local_error))
