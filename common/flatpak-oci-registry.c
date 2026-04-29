@@ -3213,24 +3213,38 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
         }
     }
 
+  guint64 already_present_size = 0;
+  guint32 already_present_count = 0;
+
   for (i = 0; manifest->layers[i] != NULL; i++)
     {
       FlatpakOciDescriptor *layer = manifest->layers[i];
       FlatpakOciDescriptor *delta_layer = NULL;
+      const char *blob_digest;
+      guint64 layer_size;
+      g_autofree char *dst_subpath = NULL;
+      struct stat stbuf;
 
       if (delta_manifest)
         delta_layer = flatpak_oci_manifest_find_delta_for (delta_manifest, old_diffid, image_config->rootfs.diff_ids[i]);
 
-      if (delta_layer)
-        progress_data.total_size += delta_layer->size;
-      else
-        progress_data.total_size += layer->size;
+      blob_digest = delta_layer ? delta_layer->digest : layer->digest;
+      layer_size = delta_layer ? delta_layer->size : layer->size;
+
+      dst_subpath = get_digest_subpath (dst_registry, NULL, FALSE, FALSE, blob_digest, NULL);
+      if (dst_subpath != NULL &&
+          fstatat (dst_registry->dfd, dst_subpath, &stbuf, AT_SYMLINK_NOFOLLOW) == 0)
+        {
+          already_present_size += layer_size;
+          already_present_count++;
+        }
+      progress_data.total_size += layer_size;
       progress_data.n_layers++;
     }
 
   if (progress_cb)
-    progress_cb (progress_data.total_size, 0,
-                 progress_data.n_layers, progress_data.pulled_layers,
+    progress_cb (progress_data.total_size, already_present_size,
+                 progress_data.n_layers, already_present_count,
                  progress_user_data);
 
   for (i = 0; manifest->layers[i] != NULL; i++)
