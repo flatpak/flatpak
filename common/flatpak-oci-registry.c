@@ -3233,7 +3233,7 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
 
       dst_subpath = get_digest_subpath (dst_registry, NULL, FALSE, FALSE, blob_digest, NULL);
       if (dst_subpath != NULL &&
-          fstatat (dst_registry->dfd, dst_subpath, &stbuf, AT_SYMLINK_NOFOLLOW) == 0)
+          glnx_fstatat (dst_registry->dfd, dst_subpath, &stbuf, AT_SYMLINK_NOFOLLOW, NULL))
         {
           already_present_size += layer_size;
           already_present_count++;

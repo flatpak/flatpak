@@ -5630,7 +5630,7 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
               op->requested_token &&
               op_may_need_token (op))
             {
-              GList single_op_list = { .data = op, .next = NULL, .prev = NULL };
+              g_autoptr(GList) single_op_list = g_list_prepend (NULL, op);
 
               g_info ("Got 401 during %s of %s, re-requesting token and retrying",
                       op->kind == FLATPAK_TRANSACTION_OPERATION_INSTALL ? "install" : "update",
@@ -5639,7 +5639,7 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
 
               op_clear_token (op);
 
-              if (request_tokens_for_remote (self, op->remote, &single_op_list,
+              if (request_tokens_for_remote (self, op->remote, single_op_list,
                                              cancellable, &local_error) &&
                   _run_op_kind (self, op, state,
                                 &needs_prune, &needs_triggers, &needs_cache_drop,
