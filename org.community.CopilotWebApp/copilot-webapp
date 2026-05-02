@@ -1,0 +1,7 @@
+#!/bin/sh
+if ! flatpak-spawn --host flatpak info org.chromium.Chromium >/dev/null 2>&1; then
+  zenity --error --text="Chromium Flatpak (org.chromium.Chromium) is not installed. Please install it from Flathub."
+  exit 1
+fi
+exec flatpak-spawn --host flatpak run org.chromium.Chromium --app=https://copilot.microsoft.com "$@"
+

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Copilot WebApp
+Comment=Unofficial Copilot WebApp wrapper
+Exec=copilot-webapp
+Icon=org.community.CopilotWebApp
+Terminal=false
+Type=Application
+Categories=Utility;Network;
+

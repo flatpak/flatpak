@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>org.community.CopilotWebApp</id>
+  <name>Copilot WebApp</name>
+  <summary>Unofficial Copilot WebApp wrapper for Linux</summary>
+  <description>
+    <p>Copilot WebApp is a community-maintained wrapper that runs Copilot in Chromium app mode using Flathub’s Chromium package.</p>
+    <p>This is an unofficial project and is not affiliated with or endorsed by Microsoft.</p>
+  </description>
+
+  <developer id="org.community">
+    <name>Partha</name>
+  </developer>
+
+  <project_license>MIT</project_license>
+  <metadata_license>CC0-1.0</metadata_license>
+
+  <url type="homepage">https://copilot.microsoft.com</url>
+
+  <launchable type="desktop-id">org.community.CopilotWebApp.desktop</launchable>
+
+<content_rating type="oars-1.1">
+  <content_attribute id="violence-cartoon">none</content_attribute>
+  <content_attribute id="violence-fantasy">none</content_attribute>
+  <content_attribute id="violence-realistic">none</content_attribute>
+  <content_attribute id="drugs-alcohol">none</content_attribute>
+  <content_attribute id="drugs-narcotics">none</content_attribute>
+  <content_attribute id="drugs-tobacco">none</content_attribute>
+  <content_attribute id="sex-nudity">none</content_attribute>
+  <content_attribute id="sex-themes">none</content_attribute>
+  <content_attribute id="language-profanity">none</content_attribute>
+  <content_attribute id="language-humor">none</content_attribute>
+  <content_attribute id="language-discrimination">none</content_attribute>
+  <content_attribute id="social-chat">none</content_attribute>
+  <content_attribute id="social-info">none</content_attribute>
+  <content_attribute id="social-audio">none</content_attribute>
+  <content_attribute id="social-location">none</content_attribute>
+  <content_attribute id="social-contacts">none</content_attribute>
+</content_rating>
+</component>
+

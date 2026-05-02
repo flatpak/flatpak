@@ -1,0 +1,36 @@
+{
+  "id": "org.community.CopilotWebApp",
+  "runtime": "org.freedesktop.Platform",
+  "runtime-version": "24.08",
+  "sdk": "org.freedesktop.Sdk",
+  "command": "copilot-webapp",
+  "finish-args": [
+    "--share=network",
+    "--socket=fallback-x11",
+    "--socket=wayland",
+    "--device=dri",
+    "--talk-name=org.freedesktop.Flatpak"
+  ],
+  "suggests": {
+    "runtime": "org.chromium.Chromium"
+  },
+  "modules": [
+    {
+      "name": "copilot-webapp",
+      "buildsystem": "simple",
+      "build-commands": [
+        "install -Dm755 copilot-webapp /app/bin/copilot-webapp",
+        "install -Dm644 org.community.CopilotWebApp.desktop /app/share/applications/org.community.CopilotWebApp.desktop",
+        "install -Dm644 org.community.CopilotWebApp.appdata.xml /app/share/metainfo/org.community.CopilotWebApp.appdata.xml",
+        "install -Dm644 files/icons/org.community.CopilotWebApp.png /app/share/icons/hicolor/256x256/apps/org.community.CopilotWebApp.png"
+      ],
+      "sources": [
+        {
+          "type": "dir",
+          "path": "."
+        }
+      ]
+    }
+  ]
+}
+
