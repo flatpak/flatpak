@@ -49,22 +49,6 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
                 response = 304
             add_headers['Etag'] = etag
 
-        self.send_response(response)
-        for k, v in list(add_headers.items()):
-            self.send_header(k, v)
-
-        if 'max-age' in query:
-            self.send_header('Cache-Control', 'max-age=' + query['max-age'][0])
-        if 'no-cache' in query:
-            self.send_header('Cache-Control', 'no-cache')
-        if 'expires-past' in query:
-            self.send_header('Expires', format_date_time(server_start_time - 3600))
-        if 'expires-future' in query:
-            self.send_header('Expires', format_date_time(server_start_time + 3600))
-
-        if response == 200:
-            self.send_header("Content-Type", "text/plain; charset=UTF-8")
-
         contents = "path=" + self.path + "\n"
 
         if 'partial-fail' in query:
@@ -94,6 +78,22 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
                 self.wfile.flush()
                 self.connection.shutdown(2)
             return
+
+        self.send_response(response)
+        for k, v in list(add_headers.items()):
+            self.send_header(k, v)
+
+        if 'max-age' in query:
+            self.send_header('Cache-Control', 'max-age=' + query['max-age'][0])
+        if 'no-cache' in query:
+            self.send_header('Cache-Control', 'no-cache')
+        if 'expires-past' in query:
+            self.send_header('Expires', format_date_time(server_start_time - 3600))
+        if 'expires-future' in query:
+            self.send_header('Expires', format_date_time(server_start_time + 3600))
+
+        if response == 200:
+            self.send_header("Content-Type", "text/plain; charset=UTF-8")
 
         if not 'ignore-accept-encoding' in query:
             accept_encoding = self.headers.get("Accept-Encoding")
