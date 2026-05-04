@@ -93,6 +93,7 @@ typedef struct
   /* Output from the request, set even on http server errors */
 
   guint64               downloaded_bytes;
+  guint64               resume_offset;
   int                   status;
   char                  *hdr_content_type;
   char                  *hdr_www_authenticate;
@@ -136,6 +137,7 @@ reset_load_uri_data (LoadUriData *data)
   g_clear_error (&data->error);
   data->status = 0;
   data->downloaded_bytes = 0;
+  data->resume_offset = 0;
   if (data->content)
     g_string_set_size (data->content, 0);
 
@@ -150,6 +152,25 @@ reset_load_uri_data (LoadUriData *data)
   /* Reset the progress */
   if (data->progress)
     data->progress (0, data->user_data);
+}
+
+/* Reset between retries when resuming a partial GOutputStream download.
+ * Unlike reset_load_uri_data(), this accumulates downloaded_bytes into
+ * resume_offset (used for the Range request) and resets downloaded_bytes
+ * to zero so subsequent writes don't double-count already-received bytes. */
+static void
+reset_load_uri_data_for_resume (LoadUriData *data)
+{
+  g_clear_error (&data->error);
+  data->status = 0;
+
+  clear_load_uri_data_headers (data);
+
+  data->resume_offset += data->downloaded_bytes;
+  data->downloaded_bytes = 0;
+
+  if (data->progress)
+    data->progress (data->resume_offset, data->user_data);
 }
 
 /* Free allocated data at end of full repeated download */
@@ -627,6 +648,8 @@ flatpak_download_http_uri_once (FlatpakHttpSession    *session,
   curl_easy_setopt (curl, CURLOPT_WRITEDATA, (void *)data);
   curl_easy_setopt (curl, CURLOPT_HEADERDATA, (void *)data);
 
+  curl_easy_setopt (curl, CURLOPT_RESUME_FROM_LARGE, (curl_off_t) data->resume_offset);
+
   if (data->certificates)
     {
       if (data->certificates->ca_cert_file)
@@ -898,8 +921,41 @@ flatpak_download_http_uri (FlatpakHttpSession    *http_session,
     {
       if (n_retries_remaining < DEFAULT_N_NETWORK_RETRIES)
         {
+          glong last_status = data.status;
           g_clear_error (&local_error);
-          reset_load_uri_data (&data);
+          if ((data.downloaded_bytes > 0 || data.resume_offset > 0) &&
+              data.out != NULL)
+            {
+              if (G_IS_SEEKABLE (data.out) &&
+                  g_seekable_can_seek (G_SEEKABLE (data.out)) &&
+                  !(data.resume_offset > 0 && last_status == 200))
+                {
+                  reset_load_uri_data_for_resume (&data);
+                  if (!g_seekable_seek (G_SEEKABLE (data.out), data.resume_offset,
+                                        G_SEEK_SET, cancellable, &local_error))
+                    break;
+                }
+              else if (G_IS_SEEKABLE (data.out) &&
+                       g_seekable_can_seek (G_SEEKABLE (data.out)) &&
+                       g_seekable_can_truncate (G_SEEKABLE (data.out)))
+                {
+                  if (!g_seekable_truncate (G_SEEKABLE (data.out), 0, cancellable, &local_error))
+                    break;
+                  if (!g_seekable_seek (G_SEEKABLE (data.out), 0, G_SEEK_SET, cancellable, &local_error))
+                    break;
+                  reset_load_uri_data (&data);
+                }
+              else
+                {
+                  g_set_error_literal (&local_error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                                       data.resume_offset > 0 && last_status == 200
+                                       ? "Server ignored Range header and output stream cannot be reset"
+                                       : "Transfer interrupted and output stream cannot be reset");
+                  break;
+                }
+            }
+          else
+            reset_load_uri_data (&data);
         }
 
       success =  flatpak_download_http_uri_once (http_session, &data, uri, &local_error);
@@ -908,11 +964,6 @@ flatpak_download_http_uri (FlatpakHttpSession    *http_session,
         break;
 
       g_assert (local_error != NULL);
-
-      /* If the output stream has already been written to we can't retry.
-       * TODO: use a range request to resume the download */
-      if (data.downloaded_bytes > 0)
-        break;
     }
   while (flatpak_http_should_retry_request (local_error, n_retries_remaining--));
 

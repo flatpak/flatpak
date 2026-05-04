@@ -215,6 +215,22 @@ executable(
 )
 
 executable(
+  'httpdownload',
+  'httpdownload.c',
+  dependencies : [
+    base_deps,
+    json_glib_dep,
+    libflatpak_common_dep,
+    libflatpak_common_base_dep,
+    libglnx_dep,
+    libostree_dep,
+  ],
+  include_directories : [common_include_directories],
+  install : get_option('installed_tests'),
+  install_dir : installed_testdir,
+)
+
+executable(
   'mock-flatpak',
   'mock-flatpak.c',
   dependencies : [
