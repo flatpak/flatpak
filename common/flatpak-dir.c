@@ -1920,7 +1920,7 @@ append_locations_from_config_file (GPtrArray    *locations,
           g_autofree char *display_name = NULL;
           g_autofree char *priority = NULL;
           g_autofree char *storage_type = NULL;
-          gint priority_val = 0;
+          gint64 priority_val = 0;
 
           display_name = g_key_file_get_string (keyfile, groups[i], "DisplayName", NULL);
           priority = g_key_file_get_string (keyfile, groups[i], "Priority", NULL);
