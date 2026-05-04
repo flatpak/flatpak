@@ -1187,9 +1187,7 @@ set_cache_http_data_from_headers (CacheHttpData *cache_data,
               gint64 max_age_sec = g_ascii_strtoll (max_age,  &end, 10);
               if (*max_age != '\0' && *end == '\0')
                 {
-                  GTimeVal now;
-                  g_get_current_time (&now);
-                  cache_data->expires = now.tv_sec + max_age_sec;
+                  cache_data->expires = (g_get_real_time () / G_USEC_PER_SEC) + max_age_sec;
                   expires_computed = TRUE;
                 }
             }
@@ -1217,9 +1215,7 @@ set_cache_http_data_from_headers (CacheHttpData *cache_data,
        * 0.1 * (Date - Last-Modified), but it's clearly appropriate here, and
        * better if server's send a value.
        */
-      GTimeVal now;
-      g_get_current_time (&now);
-      cache_data->expires = now.tv_sec + 1800;
+      cache_data->expires = (g_get_real_time () / G_USEC_PER_SEC) + 1800;
     }
 }
 
@@ -1262,10 +1258,7 @@ flatpak_cache_http_uri (FlatpakHttpSession    *http_session,
 
   if (cache_data->uri)
     {
-      GTimeVal now;
-
-      g_get_current_time (&now);
-      if (cache_data->expires > now.tv_sec)
+      if (cache_data->expires > (g_get_real_time () / G_USEC_PER_SEC))
         {
           g_set_error (error, FLATPAK_HTTP_ERROR,
                        FLATPAK_HTTP_ERROR_NOT_CHANGED,
