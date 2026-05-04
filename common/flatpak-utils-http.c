@@ -1184,7 +1184,7 @@ set_cache_http_data_from_headers (CacheHttpData *cache_data,
               char *end;
 
               char *max_age = value;
-              int max_age_sec = g_ascii_strtoll (max_age,  &end, 10);
+              gint64 max_age_sec = g_ascii_strtoll (max_age,  &end, 10);
               if (*max_age != '\0' && *end == '\0')
                 {
                   GTimeVal now;
