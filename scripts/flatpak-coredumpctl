@@ -32,7 +32,7 @@ class CoreDumper():
 
         # We need access to the host from the sandbox to run.
         flatpak_command = ["flatpak", "build" if self.build_directory else "run", "--filesystem=home",
-                           "--filesystem=%s" % tempfile.gettempdir()] + shlex.split(self.extra_flatpak_args)
+                           f"--filesystem={tempfile.gettempdir()}"] + shlex.split(self.extra_flatpak_args)
         if not self.build_directory:
             flatpak_command.extend(["--command=gdb",
                                     "--devel", self.app])
@@ -41,21 +41,31 @@ class CoreDumper():
 
         with tempfile.NamedTemporaryFile() as coredump:
             with tempfile.NamedTemporaryFile() as stderr:
-                subprocess.check_call(["coredumpctl", "dump"] + shlex.split(self.coredumpctl_matches),
-                                      stdout=coredump, stderr=stderr)
+                try:
+                    subprocess.check_call(["coredumpctl", "dump"] + shlex.split(self.coredumpctl_matches),
+                                          stdout=coredump, stderr=stderr)
+                except subprocess.CalledProcessError as e:
+                    stderr.seek(0)
+                    err_output = stderr.read().decode(errors="replace")
+
+                    print("Failed to retrieve coredump via coredumpctl.", file=sys.stderr)
+                    if err_output:
+                        print(f"Reason:\n{err_output}", file=sys.stderr)
+
+                    sys.exit(e.returncode)
 
                 with open(stderr.name, "r") as stderrf:
                     stderr = stderrf.read()
                 executable, = re.findall(".*Executable: (.*)", stderr)
                 if not executable.startswith("/newroot/") and not executable.startswith("/app/"):
-                    print("Executable %s doesn't seem to be a flatpaked application." % executable,
+                    print(f"Executable {executable} doesn't seem to be a flatpaked application.",
                         file=sys.stderr)
                 executable = executable.replace("/newroot", "")
                 flatpak_command.extend([executable, coredump.name])
                 flatpak_command.extend(shlex.split(self.gdb_arguments))
 
-                print('Running: `"%s"`' % '" "'.join(flatpak_command))
-                subprocess.check_call(flatpak_command)
+                print(f"Running: `{shlex.join(flatpak_command)}`")
+                subprocess.run(flatpak_command)
 
 
 if __name__ == "__main__":
@@ -69,7 +79,7 @@ if __name__ == "__main__":
                         help="Extra argument to pass to flatpak")
     parser.add_argument("app", nargs="?",
                         help="The flatpak application to use. eg. `org.gnome.Epiphany//3.28`.")
-    parser.add_argument("-m", '--coredumpctl-matches', default="", nargs="?",
+    parser.add_argument("-m", "--coredumpctl-matches", default="", nargs="?",
                         help="Coredumpctl matches, see `man coredumpctl` for more information.")
     parser.add_argument("--gdb-arguments", default="",
                         help="Arguments to pass to gdb.")
