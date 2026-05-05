@@ -8,6 +8,8 @@
 
 #include <glib.h>
 
+#include <glnx-missing.h>
+
 typedef enum _GlnxChaseFlags {
   /* Default */
   GLNX_CHASE_DEFAULT = 0,

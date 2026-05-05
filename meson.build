@@ -26,6 +26,7 @@ check_functions = [
   'renameat2',
   'memfd_create',
   'copy_file_range',
+  'name_to_handle_at',
 ]
 conf = configuration_data()
 foreach check_function : check_functions
