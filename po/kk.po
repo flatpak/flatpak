@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak main\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2026-04-10 18:00+0200\n"
+"POT-Creation-Date: 2026-04-29 12:14+0200\n"
 "PO-Revision-Date: 2026-03-29 22:26+0500\n"
 "Last-Translator: Baurzhan Muftakhidinov <baurthefirst@gmail.com>\n"
 "Language-Team: Kazakh\n"
@@ -167,14 +167,14 @@ msgid "'%s' is not a valid repository: "
 msgstr "'%s' жарамды репозиторий емес: "
 
 #: app/flatpak-builtins-build-bundle.c:674 app/flatpak-builtins-build-sign.c:88
-#: common/flatpak-dir.c:14263
+#: common/flatpak-dir.c:14271
 #, c-format
 msgid "'%s' is not a valid name: %s"
 msgstr "'%s' жарамды атау емес: %s"
 
 #: app/flatpak-builtins-build-bundle.c:677
 #: app/flatpak-builtins-build-export.c:865 app/flatpak-builtins-build-sign.c:91
-#: common/flatpak-dir.c:14269
+#: common/flatpak-dir.c:14277
 #, c-format
 msgid "'%s' is not a valid branch name: %s"
 msgstr "'%s' жарамды тармақ атауы емес: %s"
@@ -267,7 +267,7 @@ msgstr "%2$s ішінде %1$s сәйкес келетін кеңейту нүк
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "'%s' байланыстырылған тіркеу опциясында '=' жоқ"
 
-#: app/flatpak-builtins-build.c:679 common/flatpak-run.c:3903
+#: app/flatpak-builtins-build.c:679 common/flatpak-run.c:3959
 #, c-format
 msgid "Unable to start app"
 msgstr "Қолданбаны іске қосу мүмкін емес"
@@ -2518,7 +2518,7 @@ msgstr "Жиынтық файлында орнатылған қайта бағы
 msgid "Can't load uri %s: %s\n"
 msgstr "%s uri-ін жүктеу мүмкін емес: %s\n"
 
-#: app/flatpak-builtins-remote-add.c:276 common/flatpak-dir.c:4628
+#: app/flatpak-builtins-remote-add.c:276 common/flatpak-dir.c:4630
 #, c-format
 msgid "Can't load file %s: %s\n"
 msgstr "%s файлын жүктеу мүмкін емес: %s\n"
@@ -3197,7 +3197,7 @@ msgstr "Қолданбаның /app орнына ЖОЛ-ды қолдану"
 
 #: app/flatpak-builtins-run.c:183 app/flatpak-builtins-run.c:185
 #: app/flatpak-builtins-run.c:187 app/flatpak-builtins-run.c:188
-#: common/flatpak-context.c:2729
+#: common/flatpak-context.c:2672
 msgid "FD"
 msgstr "FD"
 
@@ -4344,14 +4344,14 @@ msgstr "Ескерту: %s өшіру сәтсіз аяқталды: %s\n"
 msgid "Error: Failed to uninstall %s: %s\n"
 msgstr "Қате: %s өшіру сәтсіз аяқталды: %s\n"
 
-#: app/flatpak-quiet-transaction.c:166 common/flatpak-dir.c:11445
+#: app/flatpak-quiet-transaction.c:166 common/flatpak-dir.c:11453
 #, c-format
 msgid "%s already installed"
 msgstr "%s қазірдің өзінде орнатылған"
 
 #: app/flatpak-quiet-transaction.c:168 common/flatpak-dir.c:3609
-#: common/flatpak-dir.c:4308 common/flatpak-dir.c:16921
-#: common/flatpak-dir.c:17211 common/flatpak-dir-utils.c:166
+#: common/flatpak-dir.c:4308 common/flatpak-dir.c:16946
+#: common/flatpak-dir.c:17236 common/flatpak-dir-utils.c:166
 #: common/flatpak-dir-utils.c:259 common/flatpak-transaction.c:2736
 #: common/flatpak-transaction.c:2791
 #, c-format
@@ -4388,47 +4388,47 @@ msgid "No authenticator configured for remote `%s`"
 msgstr ""
 "‘%s’ қашықтағы репозиторийі үшін ешқандай аутентификатор конфигурацияланбаған"
 
-#: common/flatpak-context.c:717 common/flatpak-context.c:729
+#: common/flatpak-context.c:637 common/flatpak-context.c:649
 #, c-format
 msgid "Invalid permission syntax: %s"
 msgstr "Рұқсат синтаксисі жарамсыз: %s"
 
-#: common/flatpak-context.c:1249
+#: common/flatpak-context.c:1207
 #, c-format
 msgid "Unknown share type %s, valid types are: %s"
 msgstr "Бөлісу түрі %s белгісіз, жарамды түрлері: %s"
 
-#: common/flatpak-context.c:1270
+#: common/flatpak-context.c:1228
 #, c-format
 msgid "Unknown policy type %s, valid types are: %s"
 msgstr "Саясат түрі %s белгісіз, жарамды түрлері: %s"
 
-#: common/flatpak-context.c:1308
+#: common/flatpak-context.c:1266
 #, c-format
 msgid "Invalid dbus name %s"
 msgstr "dbus атауы жарамсыз: %s"
 
-#: common/flatpak-context.c:1321
+#: common/flatpak-context.c:1279
 #, c-format
 msgid "Unknown socket type %s, valid types are: %s"
 msgstr "Сокет түрі %s белгісіз, жарамды түрлері: %s"
 
-#: common/flatpak-context.c:1336
+#: common/flatpak-context.c:1294
 #, c-format
 msgid "Unknown device type %s, valid types are: %s"
 msgstr "Құрылғы түрі %s белгісіз, жарамды түрлері: %s"
 
-#: common/flatpak-context.c:1350
+#: common/flatpak-context.c:1308
 #, c-format
 msgid "Unknown feature type %s, valid types are: %s"
 msgstr "Мүмкіндік түрі %s белгісіз, жарамды түрлері: %s"
 
-#: common/flatpak-context.c:1882
+#: common/flatpak-context.c:1840
 #, c-format
 msgid "Filesystem location \"%s\" contains \"..\""
 msgstr "Файлдық жүйе орны \"%s\" құрамында \"..\" бар"
 
-#: common/flatpak-context.c:1924
+#: common/flatpak-context.c:1882
 #, c-format
 msgid ""
 "--filesystem=/ is not available, use --filesystem=host for a similar result"
@@ -4436,7 +4436,7 @@ msgstr ""
 "--filesystem=/ қолжетімді емес, ұқсас нәтиже үшін --filesystem=host "
 "қолданыңыз"
 
-#: common/flatpak-context.c:1958
+#: common/flatpak-context.c:1916
 #, c-format
 msgid ""
 "Unknown filesystem location %s, valid locations are: host, host-os, host-"
@@ -4445,252 +4445,252 @@ msgstr ""
 "Файлдық жүйе орны %s белгісіз, жарамды орындар: host, host-os, host-etc, "
 "host-root, home, xdg-*[/…], ~/бума, /бума"
 
-#: common/flatpak-context.c:2057
+#: common/flatpak-context.c:2015
 #, c-format
 msgid "Invalid syntax for %s: %s"
 msgstr "%s үшін синтаксис жарамсыз: %s"
 
-#: common/flatpak-context.c:2199
+#: common/flatpak-context.c:2142
 #, c-format
 msgid "fallback-x11 can not be conditional"
 msgstr "fallback-x11 шартты бола алмайды"
 
-#: common/flatpak-context.c:2375
+#: common/flatpak-context.c:2318
 #, c-format
 msgid "Invalid env format %s"
 msgstr "Орта айнымалысының пішімі жарамсыз: %s"
 
-#: common/flatpak-context.c:2456
+#: common/flatpak-context.c:2399
 #, c-format
 msgid "Environment variable name must not contain '=': %s"
 msgstr "Орта айнымалысының атауында '=' болмауы тиіс: %s"
 
-#: common/flatpak-context.c:2584 common/flatpak-context.c:2592
+#: common/flatpak-context.c:2527 common/flatpak-context.c:2535
 #, c-format
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr "--add-policy аргументтері ІШКІ_ЖҮЙЕ.КІЛТ=МӘНІ түрінде болуы тиіс"
 
-#: common/flatpak-context.c:2599
+#: common/flatpak-context.c:2542
 #, c-format
 msgid "--add-policy values can't start with \"!\""
 msgstr "--add-policy мәндері \"!\" таңбасынан басталмауы тиіс"
 
-#: common/flatpak-context.c:2624 common/flatpak-context.c:2632
+#: common/flatpak-context.c:2567 common/flatpak-context.c:2575
 #, c-format
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr "--remove-policy аргументтері ІШКІ_ЖҮЙЕ.КІЛТ=МӘНІ түрінде болуы тиіс"
 
-#: common/flatpak-context.c:2639
+#: common/flatpak-context.c:2582
 #, c-format
 msgid "--remove-policy values can't start with \"!\""
 msgstr "--remove-policy мәндері \"!\" таңбасынан басталмауы тиіс"
 
-#: common/flatpak-context.c:2714
+#: common/flatpak-context.c:2657
 msgid "Share with host"
 msgstr "Хостпен бөлісу"
 
-#: common/flatpak-context.c:2714 common/flatpak-context.c:2715
+#: common/flatpak-context.c:2657 common/flatpak-context.c:2658
 msgid "SHARE"
 msgstr "БӨЛІСУ"
 
-#: common/flatpak-context.c:2715
+#: common/flatpak-context.c:2658
 msgid "Unshare with host"
 msgstr "Хостпен бөлісуді тоқтату"
 
-#: common/flatpak-context.c:2716
+#: common/flatpak-context.c:2659
 msgid "Require conditions to be met for a subsystem to get shared"
 msgstr "Ішкі жүйені бөлісу үшін шарттардың орындалуын талап ету"
 
-#: common/flatpak-context.c:2716
+#: common/flatpak-context.c:2659
 msgid "SHARE:CONDITION"
 msgstr "БӨЛІСУ:ШАРТ"
 
-#: common/flatpak-context.c:2717
+#: common/flatpak-context.c:2660
 msgid "Expose socket to app"
 msgstr "Сокетті қолданбаға ашу"
 
-#: common/flatpak-context.c:2717 common/flatpak-context.c:2718
+#: common/flatpak-context.c:2660 common/flatpak-context.c:2661
 msgid "SOCKET"
 msgstr "СОКЕТ"
 
-#: common/flatpak-context.c:2718
+#: common/flatpak-context.c:2661
 msgid "Don't expose socket to app"
 msgstr "Сокетті қолданбаға ашпау"
 
-#: common/flatpak-context.c:2719
+#: common/flatpak-context.c:2662
 msgid "Require conditions to be met for a socket to get exposed"
 msgstr "Сокетті ашу үшін шарттардың орындалуын талап ету"
 
-#: common/flatpak-context.c:2719
+#: common/flatpak-context.c:2662
 msgid "SOCKET:CONDITION"
 msgstr "СОКЕТ:ШАРТ"
 
-#: common/flatpak-context.c:2720
+#: common/flatpak-context.c:2663
 msgid "Expose device to app"
 msgstr "Құрылғыны қолданбаға ашу"
 
-#: common/flatpak-context.c:2720 common/flatpak-context.c:2721
+#: common/flatpak-context.c:2663 common/flatpak-context.c:2664
 msgid "DEVICE"
 msgstr "ҚҰРЫЛҒЫ"
 
-#: common/flatpak-context.c:2721
+#: common/flatpak-context.c:2664
 msgid "Don't expose device to app"
 msgstr "Құрылғыны қолданбаға ашпау"
 
-#: common/flatpak-context.c:2722
+#: common/flatpak-context.c:2665
 msgid "Require conditions to be met for a device to get exposed"
 msgstr "Құрылғыны ашу үшін шарттардың орындалуын талап ету"
 
-#: common/flatpak-context.c:2722
+#: common/flatpak-context.c:2665
 msgid "DEVICE:CONDITION"
 msgstr "ҚҰРЫЛҒЫ:ШАРТ"
 
-#: common/flatpak-context.c:2723
+#: common/flatpak-context.c:2666
 msgid "Allow feature"
 msgstr "Мүмкіндікке рұқсат беру"
 
-#: common/flatpak-context.c:2723 common/flatpak-context.c:2724
+#: common/flatpak-context.c:2666 common/flatpak-context.c:2667
 msgid "FEATURE"
 msgstr "МҮМКІНДІК"
 
-#: common/flatpak-context.c:2724
+#: common/flatpak-context.c:2667
 msgid "Don't allow feature"
 msgstr "Мүмкіндікке рұқсат бермеу"
 
-#: common/flatpak-context.c:2725
+#: common/flatpak-context.c:2668
 msgid "Require conditions to be met for a feature to get allowed"
 msgstr "Мүмкіндікке рұқсат беру үшін шарттардың орындалуын талап ету"
 
-#: common/flatpak-context.c:2725
+#: common/flatpak-context.c:2668
 msgid "FEATURE:CONDITION"
 msgstr "МҮМКІНДІК:ШАРТ"
 
-#: common/flatpak-context.c:2726
+#: common/flatpak-context.c:2669
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr "Файлдық жүйені қолданбаға ашу (тек оқу үшін :ro)"
 
-#: common/flatpak-context.c:2726
+#: common/flatpak-context.c:2669
 msgid "FILESYSTEM[:ro]"
 msgstr "ФАЙЛДЫҚ_ЖҮЙЕ[:ro]"
 
-#: common/flatpak-context.c:2727
+#: common/flatpak-context.c:2670
 msgid "Don't expose filesystem to app"
 msgstr "Файлдық жүйені қолданбаға ашпау"
 
-#: common/flatpak-context.c:2727
+#: common/flatpak-context.c:2670
 msgid "FILESYSTEM"
 msgstr "ФАЙЛДЫҚ_ЖҮЙЕ"
 
-#: common/flatpak-context.c:2728
+#: common/flatpak-context.c:2671
 msgid "Set environment variable"
 msgstr "Орта айнымалысын орнату"
 
-#: common/flatpak-context.c:2728
+#: common/flatpak-context.c:2671
 msgid "VAR=VALUE"
 msgstr "АЙНЫМАЛЫ=МӘН"
 
-#: common/flatpak-context.c:2729
+#: common/flatpak-context.c:2672
 msgid "Read environment variables in env -0 format from FD"
 msgstr "Орта айнымалыларын FD-дан env -0 пішімінде оқу"
 
-#: common/flatpak-context.c:2730
+#: common/flatpak-context.c:2673
 msgid "Remove variable from environment"
 msgstr "Айнымалыны ортадан өшіру"
 
-#: common/flatpak-context.c:2730
+#: common/flatpak-context.c:2673
 msgid "VAR"
 msgstr "АЙНЫМАЛЫ"
 
-#: common/flatpak-context.c:2731
+#: common/flatpak-context.c:2674
 msgid "Allow app to own name on the session bus"
 msgstr "Қолданбаға сессия шинасында атау иеленуге рұқсат беру"
 
-#: common/flatpak-context.c:2731 common/flatpak-context.c:2732
-#: common/flatpak-context.c:2733 common/flatpak-context.c:2734
-#: common/flatpak-context.c:2735 common/flatpak-context.c:2736
-#: common/flatpak-context.c:2737
+#: common/flatpak-context.c:2674 common/flatpak-context.c:2675
+#: common/flatpak-context.c:2676 common/flatpak-context.c:2677
+#: common/flatpak-context.c:2678 common/flatpak-context.c:2679
+#: common/flatpak-context.c:2680
 msgid "DBUS_NAME"
 msgstr "DBUS_АТАУЫ"
 
-#: common/flatpak-context.c:2732
+#: common/flatpak-context.c:2675
 msgid "Allow app to talk to name on the session bus"
 msgstr "Қолданбаға сессия шинасындағы атаумен сөйлесуге рұқсат беру"
 
-#: common/flatpak-context.c:2733
+#: common/flatpak-context.c:2676
 msgid "Don't allow app to talk to name on the session bus"
 msgstr "Қолданбаға сессия шинасындағы атаумен сөйлесуге рұқсат бермеу"
 
-#: common/flatpak-context.c:2734
+#: common/flatpak-context.c:2677
 msgid "Allow app to own name on the system bus"
 msgstr "Қолданбаға жүйелік шинада атау иеленуге рұқсат беру"
 
-#: common/flatpak-context.c:2735
+#: common/flatpak-context.c:2678
 msgid "Allow app to talk to name on the system bus"
 msgstr "Қолданбаға жүйелік шинадағы атаумен сөйлесуге рұқсат беру"
 
-#: common/flatpak-context.c:2736
+#: common/flatpak-context.c:2679
 msgid "Don't allow app to talk to name on the system bus"
 msgstr "Қолданбаға жүйелік шинадағы атаумен сөйлесуге рұқсат бермеу"
 
-#: common/flatpak-context.c:2737
+#: common/flatpak-context.c:2680
 msgid "Allow app to own name on the a11y bus"
 msgstr "Қолданбаға a11y шинасында атау иеленуге рұқсат беру"
 
-#: common/flatpak-context.c:2738
+#: common/flatpak-context.c:2681
 msgid "Add generic policy option"
 msgstr "Жалпы саясат опциясын қосу"
 
-#: common/flatpak-context.c:2738 common/flatpak-context.c:2739
+#: common/flatpak-context.c:2681 common/flatpak-context.c:2682
 msgid "SUBSYSTEM.KEY=VALUE"
 msgstr "ІШКІ_ЖҮЙЕ.КІЛТ=МӘНІ"
 
-#: common/flatpak-context.c:2739
+#: common/flatpak-context.c:2682
 msgid "Remove generic policy option"
 msgstr "Жалпы саясат опциясын өшіру"
 
-#: common/flatpak-context.c:2740
+#: common/flatpak-context.c:2683
 msgid "Add USB device to enumerables"
 msgstr "USB құрылғысын санаулыларға қосу"
 
-#: common/flatpak-context.c:2740 common/flatpak-context.c:2741
+#: common/flatpak-context.c:2683 common/flatpak-context.c:2684
 msgid "VENDOR_ID:PRODUCT_ID"
 msgstr "ӨНДІРУШІ_ID:ӨНІМ_ID"
 
-#: common/flatpak-context.c:2741
+#: common/flatpak-context.c:2684
 msgid "Add USB device to hidden list"
 msgstr "USB құрылғысын жасырын тізімге қосу"
 
-#: common/flatpak-context.c:2742
+#: common/flatpak-context.c:2685
 msgid "A list of USB devices that are enumerable"
 msgstr "Саналатын USB құрылғыларының тізімі"
 
-#: common/flatpak-context.c:2742
+#: common/flatpak-context.c:2685
 msgid "LIST"
 msgstr "ТІЗІМ"
 
-#: common/flatpak-context.c:2743
+#: common/flatpak-context.c:2686
 msgid "File containing a list of USB devices to make enumerable"
 msgstr "Саналатын USB құрылғыларының тізімі бар файл"
 
-#: common/flatpak-context.c:2743 common/flatpak-context.c:2744
+#: common/flatpak-context.c:2686 common/flatpak-context.c:2687
 msgid "FILENAME"
 msgstr "ФАЙЛ_АТАУЫ"
 
-#: common/flatpak-context.c:2744
+#: common/flatpak-context.c:2687
 msgid "Persist home directory subpath"
 msgstr "Үй бумасының ішкі жолын тұрақты ету"
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-context.c:2746
+#: common/flatpak-context.c:2689
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "Жұмыс істеп тұрған сессияны талап етпеу (cgroups жасалмауы)"
 
-#: common/flatpak-context.c:3777
+#: common/flatpak-context.c:3718
 #, c-format
 msgid "Not replacing \"%s\" with tmpfs: %s"
 msgstr "\"%s\" мәні tmpfs-пен алмастырылмайды: %s"
 
-#: common/flatpak-context.c:3785
+#: common/flatpak-context.c:3726
 #, c-format
 msgid "Not sharing \"%s\" with sandbox: %s"
 msgstr "\"%s\" құмсалғышпен бөлісілмейді: %s"
@@ -4699,12 +4699,12 @@ msgstr "\"%s\" құмсалғышпен бөлісілмейді: %s"
 #. * the path not existing, it seems reasonable to make more of a fuss
 #. * about the home directory not existing or otherwise being unusable,
 #. * so this is intentionally not using cannot_export()
-#: common/flatpak-context.c:3887
+#: common/flatpak-context.c:3828
 #, c-format
 msgid "Not allowing home directory access: %s"
 msgstr "Үй бумасына қол жеткізуге рұқсат берілмейді: %s"
 
-#: common/flatpak-context.c:4121
+#: common/flatpak-context.c:4062
 #, c-format
 msgid "Unable to provide a temporary home directory in the sandbox: %s"
 msgstr "Құмсалғыш ішінде уақытша үй бумасын қамтамасыз ету мүмкін емес: %s"
@@ -4770,7 +4770,7 @@ msgid "Configured collection ID ‘%s’ not in binding metadata"
 msgstr ""
 "Байланыстыру метадеректерінде конфигурацияланған ‘%s’ коллекция ID-і жоқ"
 
-#: common/flatpak-dir.c:1436 common/flatpak-dir.c:5612
+#: common/flatpak-dir.c:1436 common/flatpak-dir.c:5632
 #, c-format
 msgid "Couldn't find latest checksum for ref %s in remote %s"
 msgstr ""
@@ -4810,315 +4810,315 @@ msgstr "%s үшін қайта анықтаулар табылмады"
 msgid "%s (commit %s) not installed"
 msgstr "%s (%s коммиті) орнатылмаған"
 
-#: common/flatpak-dir.c:4635
+#: common/flatpak-dir.c:4637
 #, c-format
 msgid "Error parsing system flatpakrepo file for %s: %s"
 msgstr "%s үшін жүйелік flatpakrepo файлын өңдеу қатесі: %s"
 
-#: common/flatpak-dir.c:4710
+#: common/flatpak-dir.c:4722
 #, c-format
 msgid "While opening repository %s: "
 msgstr "%s репозиторийін ашу кезінде: "
 
-#: common/flatpak-dir.c:4971
+#: common/flatpak-dir.c:4991
 #, c-format
 msgid "The config key %s is not set"
 msgstr "%s конфигурация кілті орнатылмаған"
 
-#: common/flatpak-dir.c:5107
+#: common/flatpak-dir.c:5127
 #, c-format
 msgid "No current %s pattern matching %s"
 msgstr "%2$s-ге сәйкес келетін ағымдағы %1$s шаблоны жоқ"
 
-#: common/flatpak-dir.c:5389
+#: common/flatpak-dir.c:5409
 msgid "No appstream commit to deploy"
 msgstr "Орналастыратын appstream коммиті жоқ"
 
-#: common/flatpak-dir.c:5908 common/flatpak-dir.c:7221
-#: common/flatpak-dir.c:10851 common/flatpak-dir.c:11588
+#: common/flatpak-dir.c:5928 common/flatpak-dir.c:7253
+#: common/flatpak-dir.c:10859 common/flatpak-dir.c:11596
 msgid "Can't pull from untrusted non-gpg verified remote"
 msgstr ""
 "Сенімсіз, gpg арқылы тексерілмеген қашықтағы репозиторийден тарту мүмкін емес"
 
-#: common/flatpak-dir.c:6331 common/flatpak-dir.c:6546
+#: common/flatpak-dir.c:6363 common/flatpak-dir.c:6578
 msgid "Extra data not supported for non-gpg-verified local system installs"
 msgstr ""
 "gpg-тексерілмеген жергілікті жүйелік орнатылымдар үшін қосымша деректерге "
 "қолдау көрсетілмейді"
 
-#: common/flatpak-dir.c:6370 common/flatpak-dir.c:6737
+#: common/flatpak-dir.c:6402 common/flatpak-dir.c:6769
 #, c-format
 msgid "Invalid checksum for extra data uri %s"
 msgstr "%s қосымша деректер uri-і үшін бақылау сомасы жарамсыз"
 
-#: common/flatpak-dir.c:6379
+#: common/flatpak-dir.c:6411
 #, c-format
 msgid "Empty name for extra data uri %s"
 msgstr "%s қосымша деректер uri-і үшін атау бос"
 
-#: common/flatpak-dir.c:6387
+#: common/flatpak-dir.c:6419
 #, c-format
 msgid "Unsupported extra data uri %s"
 msgstr "Қолдау көрсетілмейтін %s қосымша деректер uri-і"
 
-#: common/flatpak-dir.c:6416
+#: common/flatpak-dir.c:6448
 #, c-format
 msgid "Failed to load local extra-data %s: %s"
 msgstr "Жергілікті %s қосымша деректерін жүктеу мүмкін емес: %s"
 
-#: common/flatpak-dir.c:6424
+#: common/flatpak-dir.c:6456
 #, c-format
 msgid "Wrong size for extra-data %s"
 msgstr "%s қосымша деректерінің өлшемі қате"
 
-#: common/flatpak-dir.c:6443
+#: common/flatpak-dir.c:6475
 #, c-format
 msgid "While downloading %s: "
 msgstr "%s жүктеп алу кезінде: "
 
-#: common/flatpak-dir.c:6453
+#: common/flatpak-dir.c:6485
 #, c-format
 msgid "Wrong size for extra data %s"
 msgstr "%s қосымша деректері үшін қате өлшем"
 
-#: common/flatpak-dir.c:6462
+#: common/flatpak-dir.c:6494
 #, c-format
 msgid "Invalid checksum for extra data %s"
 msgstr "%s қосымша деректері үшін бақылау сомасы жарамсыз"
 
-#: common/flatpak-dir.c:7051 common/flatpak-dir.c:7304
+#: common/flatpak-dir.c:7083 common/flatpak-dir.c:7336
 #, c-format
 msgid "While pulling %s from remote %s: "
 msgstr "%2$s қашықтағы репозиторийден %1$s тарту кезінде: "
 
-#: common/flatpak-dir.c:7245 common/flatpak-repo-utils.c:3886
+#: common/flatpak-dir.c:7277 common/flatpak-repo-utils.c:3886
 msgid "GPG signatures found, but none are in trusted keyring"
 msgstr ""
 "GPG қолтаңбалары табылды, бірақ олардың ешқайсысы сенімді кілттер жинағында "
 "жоқ"
 
-#: common/flatpak-dir.c:7262
+#: common/flatpak-dir.c:7294
 #, c-format
 msgid "Commit for ‘%s’ has no ref binding"
 msgstr "‘%s’ коммитінде сілтеме байланысы жоқ"
 
-#: common/flatpak-dir.c:7267
+#: common/flatpak-dir.c:7299
 #, c-format
 msgid "Commit for ‘%s’ is not in expected bound refs: %s"
 msgstr "‘%s’ коммиті күтілген байланысты сілтемелерде жоқ: %s"
 
-#: common/flatpak-dir.c:7443
+#: common/flatpak-dir.c:7475
 msgid "Only applications can be made current"
 msgstr "Тек қолданбаларды ағымдағы етуге болады"
 
-#: common/flatpak-dir.c:8147
+#: common/flatpak-dir.c:8179
 msgid "Not enough memory"
 msgstr "Жад жеткіліксіз"
 
-#: common/flatpak-dir.c:8166
+#: common/flatpak-dir.c:8198
 msgid "Failed to read from exported file"
 msgstr "Экспортталған файлдан оқу сәтсіз аяқталды"
 
-#: common/flatpak-dir.c:8356
+#: common/flatpak-dir.c:8388
 msgid "Error reading mimetype xml file"
 msgstr "mimetype xml файлын оқу қатесі"
 
-#: common/flatpak-dir.c:8361
+#: common/flatpak-dir.c:8393
 msgid "Invalid mimetype xml file"
 msgstr "mimetype xml файлы жарамсыз"
 
-#: common/flatpak-dir.c:8447
+#: common/flatpak-dir.c:8479
 #, c-format
 msgid "D-Bus service file '%s' has wrong name"
 msgstr "'%s' D-Bus қызмет файлының атауы қате"
 
-#: common/flatpak-dir.c:8602
+#: common/flatpak-dir.c:8634
 #, c-format
 msgid "Invalid Exec argument %s"
 msgstr "Exec аргументі жарамсыз: %s"
 
-#: common/flatpak-dir.c:9070
+#: common/flatpak-dir.c:9102
 msgid "While getting detached metadata: "
 msgstr "Бөлінген метадеректерді алу кезінде: "
 
-#: common/flatpak-dir.c:9075 common/flatpak-dir.c:9080
-#: common/flatpak-dir.c:9084
+#: common/flatpak-dir.c:9107 common/flatpak-dir.c:9112
+#: common/flatpak-dir.c:9116
 msgid "Extra data missing in detached metadata"
 msgstr "Бөлінген метадеректерде қосымша деректер жоқ"
 
-#: common/flatpak-dir.c:9088
+#: common/flatpak-dir.c:9120
 msgid "While creating extradir: "
 msgstr "extradir жасау кезінде: "
 
-#: common/flatpak-dir.c:9109 common/flatpak-dir.c:9142
+#: common/flatpak-dir.c:9141 common/flatpak-dir.c:9174
 msgid "Invalid checksum for extra data"
 msgstr "Қосымша деректер үшін бақылау сомасы жарамсыз"
 
-#: common/flatpak-dir.c:9138
+#: common/flatpak-dir.c:9170
 msgid "Wrong size for extra data"
 msgstr "Қосымша деректер өлшемі қате"
 
-#: common/flatpak-dir.c:9151
+#: common/flatpak-dir.c:9183
 #, c-format
 msgid "While writing extra data file '%s': "
 msgstr "'%s' қосымша деректер файлын жазу кезінде: "
 
-#: common/flatpak-dir.c:9159
+#: common/flatpak-dir.c:9191
 #, c-format
 msgid "Extra data %s missing in detached metadata"
 msgstr "Бөлінген метадеректерде %s қосымша деректері жоқ"
 
-#: common/flatpak-dir.c:9257
+#: common/flatpak-dir.c:9265
 #, c-format
 msgid "Unable to get runtime key from metadata"
 msgstr "Метадеректерден орындалу ортасы кілтін алу мүмкін емес"
 
-#: common/flatpak-dir.c:9381
+#: common/flatpak-dir.c:9389
 #, c-format
 msgid "apply_extra script failed, exit status %d"
 msgstr "apply_extra скрипті сәтсіз аяқталды, шығу күйі %d"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-dir.c:9561
+#: common/flatpak-dir.c:9569
 #, c-format
 msgid "Installing %s is not allowed by the policy set by your administrator"
 msgstr "%s орнатуға әкімші орнатқан саясатпен рұқсат берілмеген"
 
-#: common/flatpak-dir.c:9660
+#: common/flatpak-dir.c:9668
 #, c-format
 msgid "While trying to resolve ref %s: "
 msgstr "%s сілтемесін шешу кезінде: "
 
-#: common/flatpak-dir.c:9672
+#: common/flatpak-dir.c:9680
 #, c-format
 msgid "%s is not available"
 msgstr "%s қолжетімді емес"
 
-#: common/flatpak-dir.c:9684 common/flatpak-dir.c:11465
+#: common/flatpak-dir.c:9692 common/flatpak-dir.c:11473
 #, c-format
 msgid "%s commit %s already installed"
 msgstr "%s %s коммиті қазірдің өзінде орнатылған"
 
-#: common/flatpak-dir.c:9691
+#: common/flatpak-dir.c:9699
 msgid "Can't create deploy directory"
 msgstr "Орналастыру бумасын жасау мүмкін емес"
 
-#: common/flatpak-dir.c:9699
+#: common/flatpak-dir.c:9707
 #, c-format
 msgid "Failed to read commit %s: "
 msgstr "%s коммитін оқу сәтсіз аяқталды: "
 
-#: common/flatpak-dir.c:9720
+#: common/flatpak-dir.c:9728
 #, c-format
 msgid "While trying to checkout %s into %s: "
 msgstr "%s-ді %s ішіне тексеріп шығу (checkout) кезінде: "
 
-#: common/flatpak-dir.c:9739
+#: common/flatpak-dir.c:9747
 msgid "While trying to checkout metadata subpath: "
 msgstr "Метадеректердің ішкі жолын тексеріп шығу (checkout) кезінде: "
 
-#: common/flatpak-dir.c:9771
+#: common/flatpak-dir.c:9779
 #, c-format
 msgid "While trying to checkout subpath ‘%s’: "
 msgstr "‘%s’ ішкі жолын тексеріп шығу (checkout) кезінде: "
 
-#: common/flatpak-dir.c:9781
+#: common/flatpak-dir.c:9789
 msgid "While trying to remove existing extra dir: "
 msgstr "Бар қосымша буманы өшіру кезінде: "
 
-#: common/flatpak-dir.c:9792
+#: common/flatpak-dir.c:9800
 msgid "While trying to apply extra data: "
 msgstr "Қосымша деректерді қолдану кезінде: "
 
-#: common/flatpak-dir.c:9819
+#: common/flatpak-dir.c:9827
 #, c-format
 msgid "Invalid commit ref %s: "
 msgstr "%s коммит сілтемесі жарамсыз: "
 
-#: common/flatpak-dir.c:9827 common/flatpak-dir.c:9839
+#: common/flatpak-dir.c:9835 common/flatpak-dir.c:9847
 #, c-format
 msgid "Deployed ref %s does not match commit (%s)"
 msgstr "Орналастырылған %s сілтемесі коммитке (%s) сәйкес келмейді"
 
-#: common/flatpak-dir.c:9833
+#: common/flatpak-dir.c:9841
 #, c-format
 msgid "Deployed ref %s branch does not match commit (%s)"
 msgstr "Орналастырылған %s сілтеме тармағы коммитке (%s) сәйкес келмейді"
 
-#: common/flatpak-dir.c:10095 common/flatpak-installation.c:1911
+#: common/flatpak-dir.c:10103 common/flatpak-installation.c:1911
 #, c-format
 msgid "%s branch %s already installed"
 msgstr "%s %s тармағы қазірдің өзінде орнатылған"
 
-#: common/flatpak-dir.c:10955
+#: common/flatpak-dir.c:10963
 #, c-format
 msgid "Could not unmount revokefs-fuse filesystem at %s: "
 msgstr "%s орнындағы revokefs-fuse файлдық жүйесін ажырату мүмкін болмады: "
 
-#: common/flatpak-dir.c:11259
+#: common/flatpak-dir.c:11267
 #, c-format
 msgid "This version of %s is already installed"
 msgstr "%s осы нұсқасы қазірдің өзінде орнатылған"
 
-#: common/flatpak-dir.c:11272
+#: common/flatpak-dir.c:11280
 #, c-format
 msgid "Can't change remote during bundle install"
 msgstr "Дестені орнату кезінде қашықтағы репозиторийді өзгерту мүмкін емес"
 
-#: common/flatpak-dir.c:11541
+#: common/flatpak-dir.c:11549
 msgid "Can't update to a specific commit without root permissions"
 msgstr "root рұқсатынсыз арнайы коммитке жаңарту мүмкін емес"
 
-#: common/flatpak-dir.c:11822
+#: common/flatpak-dir.c:11830
 #, c-format
 msgid "Can't remove %s, it is needed for: %s"
 msgstr "%s өшіру мүмкін емес, ол мынау үшін қажет: %s"
 
-#: common/flatpak-dir.c:11882 common/flatpak-installation.c:2067
+#: common/flatpak-dir.c:11890 common/flatpak-installation.c:2067
 #, c-format
 msgid "%s branch %s is not installed"
 msgstr "%s %s тармағы орнатылмаған"
 
-#: common/flatpak-dir.c:12135
+#: common/flatpak-dir.c:12143
 #, c-format
 msgid "%s commit %s not installed"
 msgstr "%s %s коммиті орнатылмаған"
 
-#: common/flatpak-dir.c:12471
+#: common/flatpak-dir.c:12479
 #, c-format
 msgid "Pruning repo failed: %s"
 msgstr "Репозиторийді тазалау сәтсіз аяқталды: %s"
 
-#: common/flatpak-dir.c:12639 common/flatpak-dir.c:12645
+#: common/flatpak-dir.c:12647 common/flatpak-dir.c:12653
 #, c-format
 msgid "Failed to load filter '%s'"
 msgstr "'%s' сүзгісін жүктеу сәтсіз аяқталды"
 
-#: common/flatpak-dir.c:12651
+#: common/flatpak-dir.c:12659
 #, c-format
 msgid "Failed to parse filter '%s'"
 msgstr "'%s' сүзгісін өңдеу сәтсіз аяқталды"
 
-#: common/flatpak-dir.c:12933
+#: common/flatpak-dir.c:12941
 msgid "Failed to write summary cache: "
 msgstr "Жиынтық кэшін жазу сәтсіз аяқталды: "
 
-#: common/flatpak-dir.c:12952
+#: common/flatpak-dir.c:12960
 #, c-format
 msgid "No oci summary cached for remote '%s'"
 msgstr "'%s' қашықтағы репозиторийі үшін ешқандай oci жиынтығы кэштелмеген"
 
-#: common/flatpak-dir.c:13177
+#: common/flatpak-dir.c:13185
 #, c-format
 msgid "No cached summary for remote '%s'"
 msgstr "'%s' қашықтағы репозиторийі үшін ешқандай кэштелген жиынтық жоқ"
 
-#: common/flatpak-dir.c:13218
+#: common/flatpak-dir.c:13226
 #, c-format
 msgid "Invalid checksum for indexed summary %s read from %s"
 msgstr "%2$s-ден оқылған индекстелген %1$s жиынтығының бақылау сомасы жарамсыз"
 
-#: common/flatpak-dir.c:13291
+#: common/flatpak-dir.c:13299
 #, c-format
 msgid ""
 "Remote listing for %s not available; server has no summary file. Check the "
@@ -5127,101 +5127,101 @@ msgstr ""
 "%s үшін қашықтағы тізім қолжетімді емес; серверде жиынтық файлы жоқ. remote-"
 "add үшін берілген URL дұрыстығын тексеріңіз."
 
-#: common/flatpak-dir.c:13668
+#: common/flatpak-dir.c:13676
 #, c-format
 msgid "Invalid checksum for indexed summary %s for remote '%s'"
 msgstr ""
 "'%2$s' қашықтағы репозиторийі үшін индекстелген %1$s жиынтығының бақылау "
 "сомасы жарамсыз"
 
-#: common/flatpak-dir.c:14358
+#: common/flatpak-dir.c:14366
 #, c-format
 msgid "Multiple branches available for %s, you must specify one of: "
 msgstr ""
 "%s үшін бірнеше тармақ қолжетімді, сіз мыналардың біреуін көрсетуіңіз керек: "
 
-#: common/flatpak-dir.c:14424
+#: common/flatpak-dir.c:14432
 #, c-format
 msgid "Nothing matches %s"
 msgstr "%s-ге сәйкес келетін ештеңе жоқ"
 
-#: common/flatpak-dir.c:14532
+#: common/flatpak-dir.c:14540
 #, c-format
 msgid "Can't find ref %s%s%s%s%s"
 msgstr "%s%s%s%s%s сілтемесі табылмады"
 
-#: common/flatpak-dir.c:14575
+#: common/flatpak-dir.c:14583
 #, c-format
 msgid "Error searching remote %s: %s"
 msgstr "%s қашықтағы репозиторийден іздеу қатесі: %s"
 
-#: common/flatpak-dir.c:14672
+#: common/flatpak-dir.c:14680
 #, c-format
 msgid "Error searching local repository: %s"
 msgstr "Жергілікті репозиторийден іздеу қатесі: %s"
 
-#: common/flatpak-dir.c:14809
+#: common/flatpak-dir.c:14817
 #, c-format
 msgid "%s/%s/%s not installed"
 msgstr "%s/%s/%s орнатылмаған"
 
-#: common/flatpak-dir.c:15012
+#: common/flatpak-dir.c:15020
 #, c-format
 msgid "Could not find installation %s"
 msgstr "%s орнатылымы табылмады"
 
-#: common/flatpak-dir.c:15582
+#: common/flatpak-dir.c:15590
 #, c-format
 msgid "Invalid file format, no %s group"
 msgstr "Файл пішімі жарамсыз, %s тобы жоқ"
 
-#: common/flatpak-dir.c:15587 common/flatpak-repo-utils.c:2836
+#: common/flatpak-dir.c:15595 common/flatpak-repo-utils.c:2836
 #, c-format
 msgid "Invalid version %s, only 1 supported"
 msgstr "Жарамсыз нұсқа %s, тек 1 қолдау көрсетіледі"
 
-#: common/flatpak-dir.c:15592 common/flatpak-dir.c:15597
+#: common/flatpak-dir.c:15600 common/flatpak-dir.c:15605
 #, c-format
 msgid "Invalid file format, no %s specified"
 msgstr "Файл пішімі жарамсыз, %s көрсетілмеген"
 
 #. Check some minimal size so we don't get crap
-#: common/flatpak-dir.c:15617
+#: common/flatpak-dir.c:15625
 msgid "Invalid file format, gpg key invalid"
 msgstr "Файл пішімі жарамсыз, gpg кілті жарамсыз"
 
-#: common/flatpak-dir.c:15645 common/flatpak-repo-utils.c:2917
+#: common/flatpak-dir.c:15653 common/flatpak-repo-utils.c:2917
 msgid "Collection ID requires GPG key to be provided"
 msgstr "Коллекция ID-і GPG кілтінің берілуін талап етеді"
 
-#: common/flatpak-dir.c:15688
+#: common/flatpak-dir.c:15696
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "%s орындалу ортасының %s тармағы қазірдің өзінде орнатылған"
 
-#: common/flatpak-dir.c:15689
+#: common/flatpak-dir.c:15697
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "%s қолданбасының %s тармағы қазірдің өзінде орнатылған"
 
-#: common/flatpak-dir.c:15923
+#: common/flatpak-dir.c:15931
 #, c-format
 msgid "Can't remove remote '%s' with installed ref %s (at least)"
 msgstr ""
 "Орнатылған %s сілтемесі (кем дегенде) болғандықтан, '%s' қашықтағы "
 "репозиторийін өшіру мүмкін емес"
 
-#: common/flatpak-dir.c:16026
+#: common/flatpak-dir.c:16036
 #, c-format
 msgid "Invalid character '/' in remote name: %s"
 msgstr "Қашықтағы репозиторий атауында жарамсыз '/' таңбасы бар: %s"
 
-#: common/flatpak-dir.c:16032
+#: common/flatpak-dir.c:16042
 #, c-format
 msgid "No configuration for remote %s specified"
 msgstr "%s қашықтағы репозиторийі үшін ешқандай конфигурация көрсетілмеген"
 
-#: common/flatpak-dir.c:17546
+#: common/flatpak-dir.c:17571
 #, c-format
 msgid "Skipping deletion of mirror ref (%s, %s)…\n"
 msgstr "Айна сілтемесін (%s, %s) өшіру өткізіліп жіберілуде…\n"
@@ -5640,82 +5640,82 @@ msgstr ""
 msgid "Metadata in header and app are inconsistent"
 msgstr "Тақырыптама және қолданбадағы метадеректер сәйкес емес"
 
-#: common/flatpak-run.c:893
+#: common/flatpak-run.c:949
 msgid "No systemd user session available, cgroups not available"
 msgstr "systemd пайдаланушы сессиясы қолжетімді емес, cgroups қолжетімді емес"
 
-#: common/flatpak-run.c:1438
+#: common/flatpak-run.c:1494
 msgid "Unable to allocate instance id"
 msgstr "Инстанция id-ін бөлу мүмкін емес"
 
-#: common/flatpak-run.c:1574 common/flatpak-run.c:1583
+#: common/flatpak-run.c:1630 common/flatpak-run.c:1639
 #, c-format
 msgid "Failed to open flatpak-info file: %s"
 msgstr "flatpak-info файлын ашу сәтсіз аяқталды: %s"
 
-#: common/flatpak-run.c:1610
+#: common/flatpak-run.c:1666
 #, c-format
 msgid "Failed to open bwrapinfo.json file: %s"
 msgstr "bwrapinfo.json файлын ашу сәтсіз аяқталды: %s"
 
-#: common/flatpak-run.c:1631
+#: common/flatpak-run.c:1687
 #, c-format
 msgid "Failed to write to instance id fd: %s"
 msgstr "Инстанция id fd-ге жазу сәтсіз аяқталды: %s"
 
-#: common/flatpak-run.c:2038
+#: common/flatpak-run.c:2094
 msgid "Initialize seccomp failed"
 msgstr "Seccomp инициализациясы сәтсіз аяқталды"
 
-#: common/flatpak-run.c:2077
+#: common/flatpak-run.c:2133
 #, c-format
 msgid "Failed to add architecture to seccomp filter: %s"
 msgstr "Архитектураны seccomp сүзгісіне қосу сәтсіз аяқталды: %s"
 
-#: common/flatpak-run.c:2085
+#: common/flatpak-run.c:2141
 #, c-format
 msgid "Failed to add multiarch architecture to seccomp filter: %s"
 msgstr "Мультиархитектураны seccomp сүзгісіне қосу сәтсіз аяқталды: %s"
 
-#: common/flatpak-run.c:2117 common/flatpak-run.c:2134
-#: common/flatpak-run.c:2156
+#: common/flatpak-run.c:2173 common/flatpak-run.c:2190
+#: common/flatpak-run.c:2212
 #, c-format
 msgid "Failed to block syscall %d: %s"
 msgstr "%d жүйелік шақыруын бөгеу сәтсіз аяқталды: %s"
 
-#: common/flatpak-run.c:2189
+#: common/flatpak-run.c:2245
 #, c-format
 msgid "Failed to export bpf: %s"
 msgstr "bpf экспорттау сәтсіз аяқталды: %s"
 
-#: common/flatpak-run.c:2529
+#: common/flatpak-run.c:2585
 #, c-format
 msgid "Failed to open ‘%s’"
 msgstr "‘%s’ ашу мүмкін болмады"
 
-#: common/flatpak-run.c:2539
+#: common/flatpak-run.c:2595
 #, c-format
 msgid ""
 "Directory forwarding needs version 4 of the document portal (have version %d)"
 msgstr ""
 "Буманы қайта бағыттау үшін құжат порталының 4-нұсқасы қажет (%d нұсқасы бар)"
 
-#: common/flatpak-run.c:2857
+#: common/flatpak-run.c:2913
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "ldconfig сәтсіз аяқталды, шығу күйі %d"
 
-#: common/flatpak-run.c:2864
+#: common/flatpak-run.c:2920
 msgid "Can't open generated ld.so.cache"
 msgstr "Жасалған ld.so.cache файлын ашу мүмкін емес"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-run.c:2987
+#: common/flatpak-run.c:3043
 #, c-format
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr "%s орындауға әкімші орнатқан саясатпен рұқсат берілмеген"
 
-#: common/flatpak-run.c:3144
+#: common/flatpak-run.c:3200
 msgid ""
 "\"flatpak run\" is not intended to be run as `sudo flatpak run`. Use `sudo "
 "-i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell."
@@ -5724,18 +5724,18 @@ msgstr ""
 "Оның орнына `sudo -i` немесе `su -l` қолданыңыз және жаңа қоршам ішінен "
 "\"flatpak run\" шақырыңыз."
 
-#: common/flatpak-run.c:3355
+#: common/flatpak-run.c:3411
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "%s-ден көшіру сәтсіз аяқталды: %s"
 
-#: common/flatpak-run.c:3376
+#: common/flatpak-run.c:3432
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr ""
 "Ескі қолданба деректер бумасын %s жаңа %s атауына көшіру сәтсіз аяқталды: %s"
 
-#: common/flatpak-run.c:3385
+#: common/flatpak-run.c:3441
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "%s көшіру кезінде символдық сілтеме жасау сәтсіз аяқталды: %s"
