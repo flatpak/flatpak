@@ -1,8 +1,40 @@
 Changes in 1.17.7
 ~~~~~~~~~~~~~~~~~~
-Released: not yet
+Released: 2026-05-06
 
-...
+Enhancements:
+
+* Add the new permission conditionals `has-usb-device` and `has-usb-portal` to
+  allow apps to drop --device=all and --device=usb permissions (#6560)
+
+* Always send the `Flatpak-Upgrade-From` header when updating instead of
+  freshly installing, to improve the quality of statistics (#6626)
+
+* Improve how the absence of the system repo is handled (#6621)
+
+* Changes to repos are now more atomic which helps to avoid them being in an
+  invalid state. This could be observed when importing the GPG key failed,
+  because the system clock was wrong. (#6547)
+
+* A function to report the age of the configuration was added to libflatpak,
+  which will help GNOME Software to prevent unnecessary work (#6532)
+
+* Improvements to the build system (#6614, #6610)
+
+* Improve various tests (#6604, #6606, #6619, #6617, #6605, #6625)
+
+* Translation updates: tr (#6629), ‎zh_CN (#6630)
+
+Bug fixes:
+
+* Fix a regression in handling of the fallback-x11 permission, which was
+  affecting overrides from Flatseal (#6632)
+
+* Fix a memory leak in the Flatpak portal (#6613)
+
+* Install SELinux configuration files to the right directory (#6622)
+
+* Silence wrong `lseek()` errors when creating sub-sandboxes (#6609)
 
 Changes in 1.17.6
 ~~~~~~~~~~~~~~~~~~
