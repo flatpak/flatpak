@@ -84,10 +84,14 @@ if __name__ == "__main__":
     parser.add_argument("--gdb-arguments", default="",
                         help="Arguments to pass to gdb.")
 
+    if len(sys.argv) == 1:
+        parser.print_help(sys.stderr)
+        sys.exit(1)
+
     coredumper = CoreDumper()
     options = parser.parse_args(namespace=coredumper)
     if not coredumper.clean_args():
-        parser.print_help()
+        parser.print_help(sys.stderr)
         sys.exit(1)
 
     coredumper.run()
