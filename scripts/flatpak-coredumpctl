@@ -65,7 +65,7 @@ class CoreDumper():
                 flatpak_command.extend(shlex.split(self.gdb_arguments))
 
                 print(f"Running: `{shlex.join(flatpak_command)}`")
-                subprocess.run(flatpak_command)
+                sys.exit(subprocess.run(flatpak_command).returncode)
 
 
 if __name__ == "__main__":
