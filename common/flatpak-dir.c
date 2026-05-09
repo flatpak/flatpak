@@ -17463,7 +17463,11 @@ static void
   va_list args;
 
   installation = source ? source : flatpak_dir_get_name_cached (self);
+#ifdef USE_SYSTEM_HELPER
   subject = self->subject ? polkit_subject_to_string (self->subject) : g_strdup ("(none)");
+#else
+  subject = g_strdup ("(none)");
+#endif
 
   len = g_snprintf (message, sizeof (message), "%s: ", installation);
 
