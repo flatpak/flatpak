@@ -69,7 +69,7 @@ class CoreDumper():
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
+    parser = argparse.ArgumentParser(description=
         "Debug in gdb an application that crashed inside flatpak."
         " It uses (and thus requires) coredumpctl to retrieve the coredump file.")
     parser.add_argument("-b", "--build-directory", default=None,
