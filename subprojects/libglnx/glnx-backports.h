@@ -139,7 +139,7 @@ _glnx_memdup2 (gconstpointer mem,
 
   if (mem && byte_size != 0)
     {
-      new_mem = g_malloc (byte_size);
+      new_mem = g_malloc_n (1, byte_size);
       memcpy (new_mem, mem, byte_size);
     }
   else
