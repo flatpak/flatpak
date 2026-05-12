@@ -9,7 +9,8 @@ int main(void) {
     int fd = open("/app/extra/ran", O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (fd < 0)
         return 1;
-    write(fd, msg, sizeof(msg) - 1);
+    ssize_t ret = write(fd, msg, sizeof(msg) - 1);
+    (void)ret;
     close(fd);
     return 0;
 }
