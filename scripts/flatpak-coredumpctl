@@ -57,7 +57,7 @@ class CoreDumper():
                 with open(stderr.name, "r") as stderrf:
                     stderr = stderrf.read()
                 executable, = re.findall(".*Executable: (.*)", stderr)
-                if not executable.startswith("/newroot/") and not executable.startswith("/app/"):
+                if not executable.startswith(("/newroot/", "/app/")):
                     print(f"Executable {executable} doesn't seem to be a flatpaked application.",
                         file=sys.stderr)
                 executable = executable.replace("/newroot", "")
