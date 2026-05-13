@@ -2801,6 +2801,7 @@ flatpak_parse_repofile (const char   *remote_name,
   g_autofree char *subset = NULL;
   g_autofree char *authenticator_name = NULL;
   gboolean nodeps;
+  gboolean disable;
   const char *source_group;
   g_autofree char *version = NULL;
 
@@ -2962,6 +2963,12 @@ flatpak_parse_repofile (const char   *remote_name,
     g_key_file_set_string (config, group, "xa.filter", filter);
   else
     g_key_file_set_string (config, group, "xa.filter", ""); /* Default to override any pre-existing filters */
+
+  disable = g_key_file_get_boolean (keyfile, FLATPAK_REPO_GROUP,
+                                    FLATPAK_REPO_DISABLE_KEY, NULL);
+
+  if (disable)
+    g_key_file_set_boolean (config, group, "xa.disable", TRUE);
 
   *gpg_data_out = g_steal_pointer (&gpg_data);
 

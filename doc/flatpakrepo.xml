@@ -118,6 +118,10 @@
                     <listitem><para>The url of a webpage describing the remote.</para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>Disable</option> (boolean)</term>
+                    <listitem><para>Disable the remote.</para></listitem>
+                </varlistentry>                
+                <varlistentry>
                     <term><option>Filter</option> (string)</term>
                     <listitem><para>The path of a local file to use to filter remote refs. See
                        <citerefentry><refentrytitle>flatpak-remote-add</refentrytitle><manvolnum>1</manvolnum></citerefentry>
