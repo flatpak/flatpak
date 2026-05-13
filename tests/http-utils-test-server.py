@@ -49,6 +49,36 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
                 response = 304
             add_headers['Etag'] = etag
 
+        contents = "path=" + self.path + "\n"
+
+        if 'partial-fail' in query:
+            # On the first request, send half the content then close the
+            # connection to simulate a transient network failure mid-download.
+            # On a retry with a Range header (resume), serve the remainder.
+            contents_bytes = contents.encode('utf-8')
+            range_header = self.headers.get("Range")
+            if range_header and range_header.startswith("bytes="):
+                byte_range = range_header[len("bytes="):]
+                start = int(byte_range.split('-')[0])
+                remainder = contents_bytes[start:]
+                self.send_response(206)
+                self.send_header("Content-Type", "text/plain; charset=UTF-8")
+                self.send_header("Content-Range",
+                                 "bytes %d-%d/%d" % (start, len(contents_bytes) - 1, len(contents_bytes)))
+                self.send_header("Content-Length", str(len(remainder)))
+                self.end_headers()
+                self.wfile.write(remainder)
+            else:
+                half = max(1, len(contents_bytes) // 2)
+                self.send_response(200)
+                self.send_header("Content-Type", "text/plain; charset=UTF-8")
+                self.send_header("Content-Length", str(len(contents_bytes)))
+                self.end_headers()
+                self.wfile.write(contents_bytes[:half])
+                self.wfile.flush()
+                self.connection.shutdown(2)
+            return
+
         self.send_response(response)
         for k, v in list(add_headers.items()):
             self.send_header(k, v)
@@ -64,8 +94,6 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
 
         if response == 200:
             self.send_header("Content-Type", "text/plain; charset=UTF-8")
-
-        contents = "path=" + self.path + "\n"
 
         if not 'ignore-accept-encoding' in query:
             accept_encoding = self.headers.get("Accept-Encoding")
