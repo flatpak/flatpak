@@ -410,6 +410,7 @@ tests = {
   'preinstall': {},
   'run-custom': {'wrap': ['user', 'system']},
   'upgrade-from-header': {'wrap': ['user', 'system', 'system-norevokefs']},
+  'oci-runtime-repo': {'wrap': ['user', 'system']},
 }
 
 wrapped_tests = []
@@ -436,6 +437,7 @@ foreach testcase : wrapped_tests
   timeout = {
     'test-bundle.sh' : 60,
     'test-oci-registry.sh' : 60,
+    'test-oci-runtime-repo.sh' : 60,
     'test-repo.sh' : 300,
     'test-run.sh' : 90,
     'test-summaries.sh' : 60,
