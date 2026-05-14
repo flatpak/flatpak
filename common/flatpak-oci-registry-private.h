@@ -61,6 +61,8 @@ FlatpakOciRegistry *   flatpak_oci_registry_new_for_archive (GFile        *archi
                                                              GError      **error);
 void                   flatpak_oci_registry_set_token (FlatpakOciRegistry *self,
                                                        const char *token);
+void                   flatpak_oci_registry_set_token_provider (FlatpakOciRegistry   *self,
+                                                               FlatpakTokenProvider  *provider);
 void                   flatpak_oci_registry_set_signature_lookaside (FlatpakOciRegistry *self,
                                                                      const char         *signature_lookaside);
 gboolean               flatpak_oci_registry_is_local (FlatpakOciRegistry *self);

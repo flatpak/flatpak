@@ -164,6 +164,25 @@ typedef struct {
   GVariant *results;
 } RequestData;
 
+/* Pointers are not ref'd; the provider never outlives the transaction or op. */
+struct _FlatpakTokenProvider {
+  GObject                      parent;
+  FlatpakTransaction          *transaction;
+  FlatpakTransactionOperation *op;
+};
+
+G_DEFINE_TYPE (FlatpakTokenProvider, flatpak_token_provider, G_TYPE_OBJECT)
+
+static void
+flatpak_token_provider_class_init (FlatpakTokenProviderClass *klass)
+{
+}
+
+static void
+flatpak_token_provider_init (FlatpakTokenProvider *self)
+{
+}
+
 typedef struct _FlatpakTransactionPrivate
 {
   GObject                      parent;
@@ -244,6 +263,8 @@ enum {
 };
 
 static gboolean op_may_need_token (FlatpakTransactionOperation *op);
+static FlatpakTokenProvider *flatpak_token_provider_new_for_op (FlatpakTransaction          *transaction,
+                                                                FlatpakTransactionOperation *op);
 
 static void flatpak_transaction_normalize_ops (FlatpakTransaction *self);
 static gboolean request_required_tokens (FlatpakTransaction *self,
@@ -3910,9 +3931,12 @@ resolve_ops (FlatpakTransaction *self,
                 flatpak_remote_state_lookup_ref (state, flatpak_decomposed_get_ref (op->ref),
                                                   NULL, NULL, &op->summary_metadata, NULL, NULL, NULL);
 
+              g_autoptr(FlatpakTokenProvider) token_provider =
+                  flatpak_token_provider_new_for_op (self, op);
+
               commit_data = flatpak_remote_state_load_ref_commit (state, priv->dir,
                                                                   flatpak_decomposed_get_ref (op->ref),
-                                                                  checksum, /* initially NULL */ op->resolved_token,
+                                                                  checksum, token_provider,
                                                                   NULL, NULL, &local_error);
               if (commit_data == NULL)
                 {
@@ -4351,8 +4375,44 @@ request_tokens_for_remote (FlatpakTransaction *self,
 
       /* Allow sending empty tokens to mean no token needed */
 
+      g_free (op->resolved_token);
       op->resolved_token = *token == 0 ? NULL : g_strdup (token);
       op->requested_token = TRUE;
+    }
+
+  return TRUE;
+}
+
+static FlatpakTokenProvider *
+flatpak_token_provider_new_for_op (FlatpakTransaction          *transaction,
+                                   FlatpakTransactionOperation *op)
+{
+  FlatpakTokenProvider *self = g_object_new (FLATPAK_TYPE_TOKEN_PROVIDER, NULL);
+
+  self->transaction = transaction;
+  self->op = op;
+
+  return self;
+}
+
+const char *
+flatpak_token_provider_get_token (FlatpakTokenProvider *self)
+{
+  return self->op->resolved_token;
+}
+
+gboolean
+flatpak_token_provider_refresh_token (FlatpakTokenProvider *self,
+                                      GCancellable         *cancellable)
+{
+  GList op_list = { .data = self->op, .next = NULL, .prev = NULL };
+  g_autoptr(GError) local_error = NULL;
+
+  if (!request_tokens_for_remote (self->transaction, self->op->remote,
+                                  &op_list, cancellable, &local_error))
+    {
+      g_info ("Token refresh failed: %s", local_error->message);
+      return FALSE;
     }
 
   return TRUE;
@@ -5093,24 +5153,29 @@ _run_op_kind (FlatpakTransaction           *self,
                                                                    op->resolved_metakey, &local_error))
         res = FALSE;
       else
-        res = flatpak_dir_install (priv->dir,
-                                   priv->no_pull,
-                                   priv->no_deploy,
-                                   priv->disable_static_deltas,
-                                   priv->reinstall,
-                                   priv->max_op >= APP_UPDATE,
-                                   op->pin_on_deploy,
-                                   op->update_preinstalled_on_deploy,
-                                   remote_state, op->ref,
-                                   op->resolved_commit,
-                                   (const char **) op->subpaths,
-                                   (const char **) op->previous_ids,
-                                   op->resolved_sideload_path,
-                                   op->resolved_image_source,
-                                   op->resolved_metadata,
-                                   op->resolved_token,
-                                   progress->progress_obj,
-                                   cancellable, &local_error);
+        {
+          g_autoptr(FlatpakTokenProvider) token_provider =
+              flatpak_token_provider_new_for_op (self, op);
+
+          res = flatpak_dir_install (priv->dir,
+                                     priv->no_pull,
+                                     priv->no_deploy,
+                                     priv->disable_static_deltas,
+                                     priv->reinstall,
+                                     priv->max_op >= APP_UPDATE,
+                                     op->pin_on_deploy,
+                                     op->update_preinstalled_on_deploy,
+                                     remote_state, op->ref,
+                                     op->resolved_commit,
+                                     (const char **) op->subpaths,
+                                     (const char **) op->previous_ids,
+                                     op->resolved_sideload_path,
+                                     op->resolved_image_source,
+                                     op->resolved_metadata,
+                                     token_provider,
+                                     progress->progress_obj,
+                                     cancellable, &local_error);
+        }
 
       flatpak_transaction_progress_done (progress);
 
@@ -5167,24 +5232,29 @@ _run_op_kind (FlatpakTransaction           *self,
                                              (const char **) op->previous_ids,
                                              cancellable, &local_error);
           else
-            res = flatpak_dir_update (priv->dir,
-                                      priv->no_pull,
-                                      priv->no_deploy,
-                                      priv->disable_static_deltas,
-                                      op->commit != NULL, /* Allow downgrade if we specify commit */
-                                      priv->max_op >= APP_UPDATE,
-                                      priv->max_op == APP_INSTALL || priv->max_op == RUNTIME_INSTALL,
-                                      remote_state,
-                                      op->ref,
-                                      op->resolved_commit,
-                                      (const char **) op->subpaths,
-                                      (const char **) op->previous_ids,
-                                      op->resolved_sideload_path,
-                                      op->resolved_image_source,
-                                      op->resolved_metadata,
-                                      op->resolved_token,
-                                      progress->progress_obj,
-                                      cancellable, &local_error);
+            {
+              g_autoptr(FlatpakTokenProvider) token_provider =
+                  flatpak_token_provider_new_for_op (self, op);
+
+              res = flatpak_dir_update (priv->dir,
+                                        priv->no_pull,
+                                        priv->no_deploy,
+                                        priv->disable_static_deltas,
+                                        op->commit != NULL, /* Allow downgrade if we specify commit */
+                                        priv->max_op >= APP_UPDATE,
+                                        priv->max_op == APP_INSTALL || priv->max_op == RUNTIME_INSTALL,
+                                        remote_state,
+                                        op->ref,
+                                        op->resolved_commit,
+                                        (const char **) op->subpaths,
+                                        (const char **) op->previous_ids,
+                                        op->resolved_sideload_path,
+                                        op->resolved_image_source,
+                                        op->resolved_metadata,
+                                        token_provider,
+                                        progress->progress_obj,
+                                        cancellable, &local_error);
+            }
           flatpak_transaction_progress_done (progress);
 
           /* Handle noop-updates */

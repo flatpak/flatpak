@@ -62,6 +62,13 @@ GType flatpak_deploy_get_type (void);
 
 typedef struct _PolkitSubject PolkitSubject;
 
+#define FLATPAK_TYPE_TOKEN_PROVIDER flatpak_token_provider_get_type ()
+G_DECLARE_FINAL_TYPE (FlatpakTokenProvider, flatpak_token_provider, FLATPAK, TOKEN_PROVIDER, GObject)
+
+const char *flatpak_token_provider_get_token      (FlatpakTokenProvider *self);
+gboolean    flatpak_token_provider_refresh_token  (FlatpakTokenProvider *self,
+                                                    GCancellable         *cancellable);
+
 typedef struct
 {
   FlatpakDecomposed *ref;
@@ -160,25 +167,25 @@ gboolean flatpak_remote_state_lookup_sparse_cache (FlatpakRemoteState *self,
                                                    const char         *ref,
                                                    VarMetadataRef     *out_metadata,
                                                    GError            **error);
-GVariant *flatpak_remote_state_load_ref_commit (FlatpakRemoteState *self,
-                                                FlatpakDir         *dir,
-                                                const char         *ref,
-                                                const char         *opt_commit,
-                                                const char         *token,
-                                                char              **out_commit,
-                                                GCancellable       *cancellable,
-                                                GError            **error);
+GVariant *flatpak_remote_state_load_ref_commit (FlatpakRemoteState   *self,
+                                                FlatpakDir           *dir,
+                                                const char           *ref,
+                                                const char           *opt_commit,
+                                                FlatpakTokenProvider *token_provider,
+                                                char                **out_commit,
+                                                GCancellable         *cancellable,
+                                                GError              **error);
 void flatpak_remote_state_add_sideload_dir (FlatpakRemoteState *self,
                                             GFile              *path);
 void flatpak_remote_state_add_sideload_image_collection (FlatpakRemoteState     *self,
                                                          FlatpakImageCollection *image_collection);
-FlatpakImageSource * flatpak_remote_state_fetch_image_source (FlatpakRemoteState  *self,
-                                                              FlatpakDir          *dir,
-                                                              const char          *ref,
-                                                              const char          *opt_rev,
-                                                              const char          *token,
-                                                              GCancellable        *cancellable,
-                                                              GError             **error);
+FlatpakImageSource * flatpak_remote_state_fetch_image_source (FlatpakRemoteState   *self,
+                                                              FlatpakDir           *dir,
+                                                              const char           *ref,
+                                                              const char           *opt_rev,
+                                                              FlatpakTokenProvider *token_provider,
+                                                              GCancellable         *cancellable,
+                                                              GError              **error);
 
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakDir, g_object_unref)
@@ -611,7 +618,7 @@ gboolean              flatpak_dir_pull                                      (Fla
                                                                              GFile                         *sideload_repo,
                                                                              FlatpakImageSource            *opt_image_source,
                                                                              GBytes                        *require_metadata,
-                                                                             const char                    *token,
+                                                                             FlatpakTokenProvider          *token_provider,
                                                                              OstreeRepo                    *repo,
                                                                              FlatpakPullFlags               flatpak_flags,
                                                                              OstreeRepoPullFlags            flags,
@@ -735,7 +742,7 @@ gboolean              flatpak_dir_install                                   (Fla
                                                                              GFile                         *sideload_repo,
                                                                              FlatpakImageSource            *opt_image_source,
                                                                              GBytes                        *require_metadata,
-                                                                             const char                    *token,
+                                                                             FlatpakTokenProvider          *token_provider,
                                                                              FlatpakProgress               *progress,
                                                                              GCancellable                  *cancellable,
                                                                              GError                       **error);
@@ -783,7 +790,7 @@ gboolean              flatpak_dir_update                                    (Fla
                                                                              GFile                         *sideload_repo,
                                                                              FlatpakImageSource            *opt_image_source,
                                                                              GBytes                        *require_metadata,
-                                                                             const char                    *token,
+                                                                             FlatpakTokenProvider          *token_provider,
                                                                              FlatpakProgress               *progress,
                                                                              GCancellable                  *cancellable,
                                                                              GError                       **error);
