@@ -294,7 +294,7 @@ get_token_for_ref (FlatpakOciRegistry *registry,
 
   oci_digest = g_strconcat ("sha256:", commit, NULL);
 
-  return flatpak_oci_registry_get_token (registry, oci_repository, oci_digest, basic_auth, NULL, error);
+  return flatpak_oci_registry_fetch_token (registry, oci_repository, oci_digest, basic_auth, NULL, error);
 }
 
 static gboolean
