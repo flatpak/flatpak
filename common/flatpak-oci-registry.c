@@ -74,6 +74,7 @@ struct FlatpakOciRegistry
   GFile   *archive;
   int      tmp_dfd;
   char    *token;
+  FlatpakTokenProvider *token_provider;
   char    *signature_lookaside;
 
   /* Local repos */
@@ -138,6 +139,7 @@ flatpak_oci_registry_finalize (GObject *object)
   g_clear_pointer (&self->base_uri, g_uri_unref);
   g_clear_pointer (&self->uri, g_free);
   g_clear_pointer (&self->token, g_free);
+  g_clear_object (&self->token_provider);
   g_clear_object (&self->archive);
   g_clear_pointer (&self->tmp_dir, glnx_tmpdir_free);
   g_clear_pointer (&self->certificates, flatpak_certificates_free);
@@ -292,6 +294,66 @@ flatpak_oci_registry_set_token (FlatpakOciRegistry *self,
 }
 
 void
+flatpak_oci_registry_set_token_provider (FlatpakOciRegistry   *self,
+                                         FlatpakTokenProvider *provider)
+{
+  g_set_object (&self->token_provider, provider);
+}
+
+static gboolean
+flatpak_oci_registry_try_refresh_token (FlatpakOciRegistry *self,
+                                        GCancellable       *cancellable)
+{
+  if (self->token_provider == NULL)
+    return FALSE;
+
+  g_info ("Refreshing token for registry %s", self->uri);
+
+  if (!flatpak_token_provider_refresh_token (self->token_provider, cancellable))
+    return FALSE;
+
+  flatpak_oci_registry_set_token (self, flatpak_token_provider_get_token (self->token_provider));
+  return TRUE;
+}
+
+static gboolean
+flatpak_oci_registry_download_with_retry (FlatpakOciRegistry     *self,
+                                          FlatpakHttpSession     *http_session,
+                                          const char             *uri,
+                                          FlatpakCertificates    *certificates,
+                                          GOutputStream          *out_stream,
+                                          FlatpakLoadUriProgress  progress_cb,
+                                          gpointer                user_data,
+                                          GCancellable           *cancellable,
+                                          GError                **error)
+{
+  gboolean ok = flatpak_download_http_uri (http_session, uri, certificates,
+                                           FLATPAK_HTTP_FLAGS_ACCEPT_OCI,
+                                           out_stream, self->token,
+                                           progress_cb, user_data,
+                                           cancellable, error);
+  if (!ok
+      && error != NULL
+      && g_error_matches (*error, FLATPAK_HTTP_ERROR, FLATPAK_HTTP_ERROR_UNAUTHORIZED)
+      && flatpak_oci_registry_try_refresh_token (self, cancellable))
+    {
+      int fd = g_unix_output_stream_get_fd (G_UNIX_OUTPUT_STREAM (out_stream));
+
+      g_clear_error (error);
+      ftruncate (fd, 0);
+      lseek (fd, 0, SEEK_SET);
+
+      ok = flatpak_download_http_uri (http_session, uri, certificates,
+                                      FLATPAK_HTTP_FLAGS_ACCEPT_OCI,
+                                      out_stream, self->token,
+                                      progress_cb, user_data,
+                                      cancellable, error);
+    }
+
+  return ok;
+}
+
+void
 flatpak_oci_registry_set_signature_lookaside (FlatpakOciRegistry *self,
                                               const char         *signature_lookaside)
 {
@@ -384,6 +446,19 @@ remote_load_file (FlatpakOciRegistry *self,
                                  NULL, self->token,
                                  NULL, NULL, NULL, out_content_type, NULL,
                                  cancellable, error);
+  if (bytes == NULL
+      && error != NULL
+      && g_error_matches (*error, FLATPAK_HTTP_ERROR, FLATPAK_HTTP_ERROR_UNAUTHORIZED)
+      && flatpak_oci_registry_try_refresh_token (self, cancellable))
+    {
+      g_clear_error (error);
+      bytes = flatpak_load_uri_full (self->http_session,
+                                     uri_s, self->certificates, FLATPAK_HTTP_FLAGS_ACCEPT_OCI,
+                                     NULL, self->token,
+                                     NULL, NULL, NULL, out_content_type, NULL,
+                                     cancellable, error);
+    }
+
   if (bytes == NULL)
     return NULL;
 
@@ -1016,13 +1091,11 @@ flatpak_oci_registry_download_blob (FlatpakOciRegistry    *self,
       if (fd == -1)
         return -1;
 
-      if (!flatpak_download_http_uri (self->http_session, uri_s,
-                                      self->certificates,
-                                      FLATPAK_HTTP_FLAGS_ACCEPT_OCI,
-                                      out_stream,
-                                      self->token,
-                                      progress_cb, user_data,
-                                      cancellable, error))
+      if (!flatpak_oci_registry_download_with_retry (self,
+                                                     self->http_session, uri_s,
+                                                     self->certificates, out_stream,
+                                                     progress_cb, user_data,
+                                                     cancellable, error))
         return -1;
 
       if (!g_output_stream_close (out_stream, cancellable, error))
@@ -1109,12 +1182,11 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
 
       out_stream = g_unix_output_stream_new (tmpf.fd, FALSE);
 
-      if (!flatpak_download_http_uri (source_registry->http_session,
-                                      uri_s, source_registry->certificates,
-                                      FLATPAK_HTTP_FLAGS_ACCEPT_OCI, out_stream,
-                                      self->token,
-                                      progress_cb, user_data,
-                                      cancellable, error))
+      if (!flatpak_oci_registry_download_with_retry (self,
+                                                     source_registry->http_session, uri_s,
+                                                     source_registry->certificates, out_stream,
+                                                     progress_cb, user_data,
+                                                     cancellable, error))
         return FALSE;
 
       if (!g_output_stream_close (out_stream, cancellable, error))

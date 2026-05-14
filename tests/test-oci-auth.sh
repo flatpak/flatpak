@@ -24,7 +24,7 @@ set -euo pipefail
 
 skip_without_bwrap
 
-echo "1..1"
+echo "1..6"
 
 # Start the fake OCI registry server
 
@@ -52,18 +52,110 @@ $client add hello latest "$(pwd)/oci/app-image"
 ${FLATPAK} remote-add ${U} oci-auth-registry "oci+http://127.0.0.1:${port}" \
     --authenticator-name org.flatpak.Authenticator.test >&2
 
-# Test: install from an auth-protected OCI registry
-#
-# The registry requires a bearer token for all /v2/ requests.  The client
-# authenticates via the mock authenticator and completes the installation
-# successfully.
+# Test: install from an auth-protected registry
 
 echo -n "token-1" > "${XDG_RUNTIME_DIR}/required-token"
-$client configure-auth --token token-1
+$client set-auth --token token-1
 
 ${FLATPAK} ${U} install -y oci-auth-registry org.test.Hello >&2
 
 run org.test.Hello > hello_out
 assert_file_has_content hello_out '^Hello world, from a sandbox$'
 
-ok "install from auth-protected OCI registry"
+ok "install"
+
+# Test: token expires during install on manifest fetch
+
+$client reset-auth
+${FLATPAK} ${U} uninstall -y org.test.Hello >&2
+
+echo -n "token-1" > "${XDG_RUNTIME_DIR}/required-token"
+$client set-auth --token token-1 \
+    --expire-on-path '/v2/*/manifests/*' \
+    --next-token token-2 \
+    --token-update-file "${XDG_RUNTIME_DIR}/required-token"
+
+${FLATPAK} ${U} install -y oci-auth-registry org.test.Hello >&2
+
+run org.test.Hello > hello_out
+assert_file_has_content hello_out '^Hello world, from a sandbox$'
+
+ok "install with token expiry on manifest fetch"
+
+# Test: token expires during install on blob fetch
+
+$client reset-auth
+${FLATPAK} ${U} uninstall -y org.test.Hello >&2
+
+echo -n "token-1" > "${XDG_RUNTIME_DIR}/required-token"
+$client set-auth --token token-1 \
+    --expire-on-path '/v2/*/blobs/*' \
+    --next-token token-2 \
+    --token-update-file "${XDG_RUNTIME_DIR}/required-token"
+
+${FLATPAK} ${U} install -y oci-auth-registry org.test.Hello >&2
+
+run org.test.Hello > hello_out
+assert_file_has_content hello_out '^Hello world, from a sandbox$'
+
+ok "install with token expiry on blob fetch"
+
+# Test: update from an auth-protected registry
+
+$client reset-auth
+make_updated_app oci "" "" UPDATE
+
+${FLATPAK} build-bundle --oci $FL_GPGARGS repos/oci oci/app-image org.test.Hello >&2
+$client add hello latest "$(pwd)/oci/app-image"
+
+echo -n "token-1" > "${XDG_RUNTIME_DIR}/required-token"
+$client set-auth --token token-1
+
+${FLATPAK} ${U} update -y org.test.Hello >&2
+
+run org.test.Hello > hello_out
+assert_file_has_content hello_out '^Hello world, from a sandboxUPDATE$'
+
+ok "update"
+
+# Test: token expires during update on manifest fetch
+
+$client reset-auth
+make_updated_app oci "" "" UPDATE1
+
+${FLATPAK} build-bundle --oci $FL_GPGARGS repos/oci oci/app-image org.test.Hello >&2
+$client add hello latest "$(pwd)/oci/app-image"
+
+echo -n "token-1" > "${XDG_RUNTIME_DIR}/required-token"
+$client set-auth --token token-1 \
+    --expire-on-path '/v2/*/manifests/*' \
+    --next-token token-2 \
+    --token-update-file "${XDG_RUNTIME_DIR}/required-token"
+
+${FLATPAK} ${U} update -y org.test.Hello >&2
+
+run org.test.Hello > hello_out
+assert_file_has_content hello_out '^Hello world, from a sandboxUPDATE1$'
+
+ok "update with token expiry on manifest fetch"
+
+# Test: token expires during update on blob fetch
+
+$client reset-auth
+make_updated_app oci "" "" UPDATE2
+
+${FLATPAK} build-bundle --oci $FL_GPGARGS repos/oci oci/app-image org.test.Hello >&2
+$client add hello latest "$(pwd)/oci/app-image"
+
+echo -n "token-1" > "${XDG_RUNTIME_DIR}/required-token"
+$client set-auth --token token-1 \
+    --expire-on-path '/v2/*/blobs/*' \
+    --next-token token-2 \
+    --token-update-file "${XDG_RUNTIME_DIR}/required-token"
+
+${FLATPAK} ${U} update -y org.test.Hello >&2
+
+run org.test.Hello > hello_out
+assert_file_has_content hello_out '^Hello world, from a sandboxUPDATE2$'
+
+ok "update with token expiry on blob fetch"
