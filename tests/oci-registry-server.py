@@ -2,6 +2,7 @@
 
 import argparse
 import base64
+import fnmatch
 import hashlib
 import json
 import os
@@ -15,7 +16,12 @@ repositories = {}
 icons = {}
 signatures = {}
 
-required_token = None
+token_config = {
+    "token": None,
+    "expire_on_path": None,
+    "next_token": None,
+    "update_file": None,
+}
 
 
 def get_index():
@@ -85,12 +91,27 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
 
     def check_auth(self):
         """Return True if auth is not required or the Authorization: Bearer header matches the required token."""
-        if required_token is None:
+        cfg = token_config
+        if cfg["token"] is None:
             return True
+
+        if cfg["expire_on_path"] is not None:
+            path = self.path.split("?", 1)[0]
+            if fnmatch.fnmatch(path, cfg["expire_on_path"]):
+                cfg["token"] = cfg["next_token"]
+                cfg["expire_on_path"] = None
+                if cfg["update_file"]:
+                    with open(cfg["update_file"], "w") as f:
+                        f.write(cfg["next_token"])
+                return False
+
         auth_header = self.headers.get("Authorization", "")
         if not auth_header.startswith("Bearer "):
             return False
-        return auth_header[len("Bearer "):] == required_token
+        if auth_header[len("Bearer "):] != cfg["token"]:
+            return False
+
+        return True
 
     def do_GET(self):
         response = 404
@@ -255,9 +276,11 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
             sigs.append(signature_bytes)
             self.send_response(200)
             self.end_headers()
-        elif self.check_route("/testing-auth/configure"):
-            global required_token
-            required_token = self.query.get("token", [None])[0]
+        elif self.check_route("/testing-auth"):
+            token_config["token"] = self.query.get("token", [None])[0]
+            token_config["expire_on_path"] = self.query.get("expire-on-path", [None])[0]
+            token_config["next_token"] = self.query.get("next-token", [None])[0]
+            token_config["update_file"] = self.query.get("token-update-file", [None])[0]
 
             self.send_response(200)
             self.end_headers()
@@ -300,6 +323,14 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
             digest = digest.replace(":", "=")
             ref = f"{repo_name}@{digest}"
             signatures[ref] = list()
+            self.send_response(200)
+            self.end_headers()
+            return
+        elif self.check_route("/testing-auth"):
+            token_config["token"] = None
+            token_config["expire_on_path"] = None
+            token_config["next_token"] = None
+            token_config["update_file"] = None
             self.send_response(200)
             self.end_headers()
             return
