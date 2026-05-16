@@ -9481,8 +9481,17 @@ flatpak_dir_check_parental_controls (FlatpakDir    *self,
   dbus_connection = g_bus_get_sync (G_BUS_TYPE_SYSTEM, cancellable, &local_error);
   if (dbus_connection == NULL)
     {
-      g_propagate_error (error, g_steal_pointer (&local_error));
-      return FALSE;
+      /* Since the checks below allow access when malcontent or
+       * accounts-service aren't available on the bus, this whole routine can
+       * be trivially bypassed by setting DBUS_SYSTEM_BUS_ADDRESS to a
+       * temporary dbus-daemon. Not being able to connect to the system bus is
+       * basically equivalent.
+       */
+      g_debug ("Skipping parental controls check for %s since D-Bus system "
+               "bus connection failed: %s",
+               ref,
+               local_error ? local_error->message : "unknown reason");
+      return TRUE;
     }
 
   if (self->subject)
