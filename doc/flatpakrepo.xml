@@ -119,8 +119,11 @@
                 </varlistentry>
                 <varlistentry>
                     <term><option>Disable</option> (boolean)</term>
-                    <listitem><para>Disable the remote.</para></listitem>
-                </varlistentry>                
+                    <listitem><para>Disable the remote.</para>
+                    <para>
+                      Note: This field is ignored by flatpak remote-add. Use flatpak remote-add --disable instead.
+                    </para></listitem>
+                </varlistentry>
                 <varlistentry>
                     <term><option>Filter</option> (string)</term>
                     <listitem><para>The path of a local file to use to filter remote refs. See

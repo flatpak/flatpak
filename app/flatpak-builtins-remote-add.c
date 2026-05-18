@@ -184,6 +184,9 @@ get_config_from_opts (GKeyFile *config,
 
   if (opt_disable)
     g_key_file_set_boolean (config, group, "xa.disable", TRUE);
+  else
+    // Ignore the field to make sure users don't add a disabled repo
+    g_key_file_remove_key (config, group, "xa.disable", NULL);
 
   if (opt_prio != -1)
     {
