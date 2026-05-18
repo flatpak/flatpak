@@ -1024,6 +1024,7 @@ Homepage=https://the.homepage/
 Icon=https://the.icon/
 DefaultBranch=default-branch
 NoDeps=true
+Disable=true
 EOF
 
 if ${FLATPAK} ${U} remote-add test-repo test.flatpakrepo >&2; then
@@ -1053,9 +1054,10 @@ assert_remote_has_no_config new-repo xa.default-branch-is-set
 assert_remote_has_config new-repo xa.nodeps "true"
 assert_remote_has_no_config new-repo xa.noenumerate
 assert_remote_has_no_config new-repo xa.filter
+assert_remote_has_no_config new-repo xa.disable
 
 ${FLATPAK} ${U} remote-delete new-repo >&2
-${FLATPAK} ${U} remote-add  --title=Title2 --comment=Comment2 --default-branch=branch2 new-repo test.flatpakrepo >&2
+${FLATPAK} ${U} remote-add  --title=Title2 --comment=Comment2 --default-branch=branch2 --disable new-repo test.flatpakrepo >&2
 
 assert_remote_has_config new-repo url "http://127.0.0.1:${port}/test-no-gpg"
 assert_remote_has_config new-repo gpg-verify "false"
@@ -1074,6 +1076,7 @@ assert_remote_has_config new-repo xa.default-branch-is-set true
 assert_remote_has_config new-repo xa.nodeps "true"
 assert_remote_has_no_config new-repo xa.noenumerate
 assert_remote_has_no_config new-repo xa.filter
+assert_remote_has_config new-repo xa.disable "true"
 
 ${FLATPAK} ${U} remote-delete new-repo >&2
 ${FLATPAK} ${U} remote-add  --filter="${test_srcdir}/test.filter" new-repo test.flatpakrepo >&2

@@ -38,7 +38,7 @@ Homepage=https://the.homepage/
 Icon=https://the.icon/
 EOF
 
-echo "1..5"
+echo "1..6"
 
 mkdir -p $FLATPAK_CONFIG_DIR/remotes.d
 
@@ -131,3 +131,16 @@ assert_file_has_content remotes "added-default"
 assert_remote_has_no_config added-default xa.filter
 
 ok "override default filter"
+
+rm -rf $FL_DIR
+rm -rf $FLATPAK_CONFIG_DIR/remotes.d/*
+
+cp added-default.flatpakrepo $FLATPAK_CONFIG_DIR/remotes.d/
+echo "Disable=true" >> $FLATPAK_CONFIG_DIR/remotes.d/added-default.flatpakrepo
+
+${FLATPAK} --system remotes > remotes
+assert_not_file_has_content remotes "added-default"
+${FLATPAK} --system remotes --show-disabled > remotes
+assert_file_has_content remotes "added-default"
+
+ok "disabled remote"
