@@ -462,6 +462,7 @@ foreach testcase : wrapped_tests
   }.get(script, 30)
 
   is_parallel = {
+    'test-extension-portal.sh' : false,
     'test-history.sh' : false,
   }.get(script, true)
 
