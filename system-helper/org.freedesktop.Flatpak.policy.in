@@ -86,6 +86,42 @@
     </defaults>
   </action>
 
+  <action id="org.freedesktop.Flatpak.app-downgrade">
+    <!-- SECURITY:
+          - Normal users need admin authentication to downgrade an
+            application system-wide, as downgrading may install an older
+            version with known vulnerabilities or unverified changes.
+          - Note that we install polkit rules that allow local users
+            in the wheel group to downgrade without authenticating.
+     -->
+    <description>Update application to older version</description>
+    <message>Authentication is required to downgrade an application</message>
+    <icon_name>package-x-generic</icon_name>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+  </action>
+
+  <action id="org.freedesktop.Flatpak.runtime-downgrade">
+    <!-- SECURITY:
+          - Normal users need admin authentication to downgrade a
+            runtime system-wide, as downgrading may install an older
+            version with known vulnerabilities or unverified changes.
+          - Note that we install polkit rules that allow local users
+            in the wheel group to downgrade without authenticating.
+     -->
+    <description>Update runtime to older version</description>
+    <message>Authentication is required to downgrade a runtime</message>
+    <icon_name>package-x-generic</icon_name>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+  </action>
+
   <action id="org.freedesktop.Flatpak.update-remote">
     <!-- SECURITY:
           - Normal users do not need authentication to update metadata

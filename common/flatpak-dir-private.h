@@ -197,6 +197,7 @@ typedef enum {
   FLATPAK_HELPER_DEPLOY_FLAGS_INSTALL_HINT = 1 << 6,
   FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE_PINNED = 1 << 7,
   FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE_PREINSTALLED = 1 << 8,
+  FLATPAK_HELPER_DEPLOY_FLAGS_ALLOW_DOWNGRADE     = 1 << 9,
 } FlatpakHelperDeployFlags;
 
 #define FLATPAK_HELPER_DEPLOY_FLAGS_ALL (FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE | \
@@ -207,7 +208,8 @@ typedef enum {
                                          FLATPAK_HELPER_DEPLOY_FLAGS_APP_HINT | \
                                          FLATPAK_HELPER_DEPLOY_FLAGS_INSTALL_HINT | \
                                          FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE_PINNED | \
-                                         FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE_PREINSTALLED)
+                                         FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE_PREINSTALLED | \
+                                         FLATPAK_HELPER_DEPLOY_FLAGS_ALLOW_DOWNGRADE)
 
 typedef enum {
   FLATPAK_HELPER_UNINSTALL_FLAGS_NONE = 0,
@@ -623,6 +625,7 @@ gboolean              flatpak_dir_pull_untrusted_local                      (Fla
                                                                              const char                    *remote_name,
                                                                              const char                    *ref,
                                                                              const char                   **subpaths,
+                                                                             FlatpakPullFlags               flags,
                                                                              FlatpakProgress               *progress,
                                                                              GCancellable                  *cancellable,
                                                                              GError                       **error);
