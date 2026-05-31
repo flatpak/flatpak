@@ -89,7 +89,7 @@ if __name__ == "__main__":
                         help="Extra argument to pass to flatpak")
     parser.add_argument("app", nargs="?",
                         help="The flatpak application to use. eg. `org.gnome.Epiphany//3.28`.")
-    parser.add_argument("-m", "--coredumpctl-matches", default="", nargs="?",
+    parser.add_argument("-m", "--coredumpctl-matches", default="",
                         help="Coredumpctl matches, see `man coredumpctl` for more information.")
     parser.add_argument("--gdb-arguments", default="",
                         help="Arguments to pass to gdb.")
