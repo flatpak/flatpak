@@ -303,13 +303,13 @@ print_history (GPtrArray    *dirs,
               {
                 g_autofree char *id = get_field (j, "_UID", error);
                 g_autofree char *oid = NULL;
-                int uid;
+                uid_t uid;
                 struct passwd *pwd;
 
                 if (*error)
                   return FALSE;
 
-                uid = g_ascii_strtoll (id, NULL, 10);
+                uid = (uid_t) g_ascii_strtoull (id, NULL, 10);
                 pwd = getpwuid (uid);
                 if (pwd)
                   {
@@ -322,7 +322,7 @@ print_history (GPtrArray    *dirs,
                   {
                     /* flatpak-system-helper acting on behalf of sb else */
                     g_autofree char *str = NULL;
-                    uid = g_ascii_strtoll (oid, NULL, 10);
+                    uid = (uid_t) g_ascii_strtoull (oid, NULL, 10);
                     pwd = getpwuid (uid);
                     str = g_strdup_printf ("%s (%s)", id, pwd ? pwd->pw_name : oid);
                     flatpak_table_printer_add_column (printer, str);

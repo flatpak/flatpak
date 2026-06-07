@@ -1269,6 +1269,7 @@ flatpak_remote_state_fetch_image_source (FlatpakRemoteState *self,
       g_autofree char *oci_digest = NULL;
       const char *oci_repository = NULL;
       const char *delta_url = NULL;
+      const char *source_ref = NULL;
 
       metadata = var_ref_info_get_metadata (latest_rev_info);
       oci_repository = var_metadata_lookup_string (metadata, "xa.oci-repository", NULL);
@@ -1280,9 +1281,12 @@ flatpak_remote_state_fetch_image_source (FlatpakRemoteState *self,
       if (image_source == NULL)
         return NULL;
 
-      if (g_strcmp0 (flatpak_image_source_get_ref (image_source), ref) != 0)
+      source_ref = flatpak_image_source_get_ref (image_source);
+      if (g_strcmp0 (source_ref, ref) != 0)
         {
-          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Commit has no requested ref ‘%s’ in ref binding metadata"),  ref);
+          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                              _("Commit has no requested ref ‘%s’ in ref binding metadata (found: ‘%s’)"),
+                              ref, source_ref ?: "");
           return NULL;
         }
 
@@ -1366,7 +1370,16 @@ flatpak_remote_state_fetch_commit_object (FlatpakRemoteState *self,
           (g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_REF_BINDING, "^a&s", &commit_refs) &&
            !g_strv_contains ((const char * const *) commit_refs, ref)))
         {
-          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Commit has no requested ref ‘%s’ in ref binding metadata"),  ref);
+          const char *xa_ref_v[] = { xa_ref, NULL };
+          g_auto(GStrv) found = NULL;
+          g_autofree char *found_s = NULL;
+
+          found = flatpak_strv_merge ((char **) xa_ref_v, (char **) commit_refs);
+          found_s = g_strjoinv (", ", (char **) found);
+
+          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                              _("Commit has no requested ref ‘%s’ in ref binding metadata (found: ‘%s’)"),
+                              ref, found_s);
           return NULL;
         }
 
@@ -1920,7 +1933,7 @@ append_locations_from_config_file (GPtrArray    *locations,
           g_autofree char *display_name = NULL;
           g_autofree char *priority = NULL;
           g_autofree char *storage_type = NULL;
-          gint priority_val = 0;
+          gint64 priority_val = 0;
 
           display_name = g_key_file_get_string (keyfile, groups[i], "DisplayName", NULL);
           priority = g_key_file_get_string (keyfile, groups[i], "Priority", NULL);
@@ -9468,8 +9481,17 @@ flatpak_dir_check_parental_controls (FlatpakDir    *self,
   dbus_connection = g_bus_get_sync (G_BUS_TYPE_SYSTEM, cancellable, &local_error);
   if (dbus_connection == NULL)
     {
-      g_propagate_error (error, g_steal_pointer (&local_error));
-      return FALSE;
+      /* Since the checks below allow access when malcontent or
+       * accounts-service aren't available on the bus, this whole routine can
+       * be trivially bypassed by setting DBUS_SYSTEM_BUS_ADDRESS to a
+       * temporary dbus-daemon. Not being able to connect to the system bus is
+       * basically equivalent.
+       */
+      g_debug ("Skipping parental controls check for %s since D-Bus system "
+               "bus connection failed: %s",
+               ref,
+               local_error ? local_error->message : "unknown reason");
+      return TRUE;
     }
 
   if (self->subject)
@@ -17463,7 +17485,11 @@ static void
   va_list args;
 
   installation = source ? source : flatpak_dir_get_name_cached (self);
+#ifdef USE_SYSTEM_HELPER
   subject = self->subject ? polkit_subject_to_string (self->subject) : g_strdup ("(none)");
+#else
+  subject = g_strdup ("(none)");
+#endif
 
   len = g_snprintf (message, sizeof (message), "%s: ", installation);
 

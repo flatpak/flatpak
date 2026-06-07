@@ -7,8 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2026-04-29 10:14+0000\n"
-"PO-Revision-Date: 2026-05-03 16:44+0300\n"
+"POT-Creation-Date: 2026-04-29 12:14+0200\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <trans-uk@lists.fedoraproject.org>\n"
 "Language: uk\n"
@@ -270,6 +269,7 @@ msgid "Missing '=' in bind mount option '%s'"
 msgstr "Пропущено «=» у параметрі монтування прив’язки «%s»"
 
 #: app/flatpak-builtins-build.c:679 common/flatpak-run.c:3959
+#, c-format
 msgid "Unable to start app"
 msgstr "Не вдалося запустити програму"
 
@@ -4420,6 +4420,7 @@ msgid "Filesystem location \"%s\" contains \"..\""
 msgstr "Розташування файлової системи «%s» містить «..»"
 
 #: common/flatpak-context.c:1882
+#, c-format
 msgid ""
 "--filesystem=/ is not available, use --filesystem=host for a similar result"
 msgstr ""
@@ -4441,6 +4442,7 @@ msgid "Invalid syntax for %s: %s"
 msgstr "Некоректний синтаксис %s: %s"
 
 #: common/flatpak-context.c:2142
+#, c-format
 msgid "fallback-x11 can not be conditional"
 msgstr "fallback-x11 не може бути умовним"
 
@@ -4455,22 +4457,26 @@ msgid "Environment variable name must not contain '=': %s"
 msgstr "У змінній середовища не повинно бути символу «=»: %s"
 
 #: common/flatpak-context.c:2527 common/flatpak-context.c:2535
+#, c-format
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 "Аргументи --add-policy має бути записано у такому форматі: "
 "ПІДСИСТЕМА.КЛЮЧ=ЗНАЧЕННЯ"
 
 #: common/flatpak-context.c:2542
+#, c-format
 msgid "--add-policy values can't start with \"!\""
 msgstr "Значення --add-policy не можуть починатися з «!»"
 
 #: common/flatpak-context.c:2567 common/flatpak-context.c:2575
+#, c-format
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 "Аргументи --remove-policy має бути записано у такому форматі: "
 "ПІДСИСТЕМА.КЛЮЧ=ЗНАЧЕННЯ"
 
 #: common/flatpak-context.c:2582
+#, c-format
 msgid "--remove-policy values can't start with \"!\""
 msgstr "Значення --remove-policy не можуть починатися з «!»"
 
@@ -4954,6 +4960,7 @@ msgid "Extra data %s missing in detached metadata"
 msgstr "У від’єднаних метаданих немає додаткових даних %s"
 
 #: common/flatpak-dir.c:9265
+#, c-format
 msgid "Unable to get runtime key from metadata"
 msgstr "Не вдалося отримати ключ середовища виконання з метаданих"
 
@@ -5047,6 +5054,7 @@ msgid "This version of %s is already installed"
 msgstr "Цю версію %s вже встановлено"
 
 #: common/flatpak-dir.c:11280
+#, c-format
 msgid "Can't change remote during bundle install"
 msgstr "Не можна змінювати сховище під час встановлення пакунка"
 
