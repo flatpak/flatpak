@@ -1,8 +1,31 @@
-Changes in 1.17.8
-~~~~~~~~~~~~~~~~~~
-Released: not yet
+Changes in 1.18.0
+~~~~~~~~~~~~~~~~~
+Released: 2026-06-08
 
-...
+Enhancements:
+
+* Improve error handling and printed output of `flatpak-coredumpctl` (#6649,
+  #6680)
+
+* Support the AMD vendor specific compute interface (`/dev/kfd`) via the DRI
+  device permission (#6648)
+
+* Improve the output of `flatpak update` with failure causes (#6657)
+
+* Improve startup time for fish shell integration (#6635)
+
+* Translation updates: ‎zh_CN (#6671)
+
+Bug fixes:
+
+* Fix building when HAVE_LIBSYSTEMD but not USE_SYSTEM_HELPER is defined (#6652)
+
+* Ignore system bus failures in parental controls check (#6663)
+
+* Fix some return values and replace deprecated `GTimeVal` with
+  `g_get_real_time()` (#6646)
+
+* Suppress an unused-result warning in the tests (#6655)
 
 Changes in 1.17.7
 ~~~~~~~~~~~~~~~~~~
