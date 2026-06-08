@@ -31,6 +31,7 @@ tests_environment = {
   'FLATPAK_BWRAP' : env_flatpak_bwrap,
   'FLATPAK_DBUSPROXY' : env_flatpak_dbusproxy,
   'HAVE_SECCOMP' : libseccomp_dep.found() ? '1' : '0',
+  'HAVE_SYSTEM_HELPER' : build_system_helper ? '1' : '0',
 }
 
 tests_environment_prepend = {
