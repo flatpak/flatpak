@@ -30,6 +30,7 @@ tests_environment = {
   'G_TEST_SRCDIR' : meson.current_source_dir(),
   'FLATPAK_BWRAP' : env_flatpak_bwrap,
   'FLATPAK_DBUSPROXY' : env_flatpak_dbusproxy,
+  'HAVE_SECCOMP' : libseccomp_dep.found() ? '1' : '0',
 }
 
 tests_environment_prepend = {
