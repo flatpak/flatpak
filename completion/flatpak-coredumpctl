@@ -1,0 +1,109 @@
+# shellcheck shell=bash
+# Check for bash
+[ -z "$BASH_VERSION" ] && return
+
+####################################################################################################
+
+__flatpak_coredumpctl() {
+    local cur prev words cword
+    _comp_initialize -n = -- "$@" || return
+
+    local IFS=$' \n'
+    local subcommands="debug list"
+
+    # taken from coredumpctl's bash completion
+    local -a journal_fields=(MESSAGE{,_ID} PRIORITY CODE_{FILE,LINE,FUNC}
+                             ERRNO SYSLOG_{FACILITY,IDENTIFIER,PID} COREDUMP_EXE
+                             _{P,U,G}ID _COMM _EXE _CMDLINE
+                             _AUDIT_{SESSION,LOGINUID}
+                             _SYSTEMD_{CGROUP,SESSION,UNIT,OWNER_UID}
+                             _SELINUX_CONTEXT _SOURCE_REALTIME_TIMESTAMP
+                             _{BOOT,MACHINE}_ID _HOSTNAME _TRANSPORT
+                             _KERNEL_{DEVICE,SUBSYSTEM}
+                             _UDEV_{SYSNAME,DEVNODE,DEVLINK}
+                             __CURSOR __{REALTIME,MONOTONIC}_TIMESTAMP)
+
+    # subcommand completion
+    if [[ $cword -eq 1 ]]; then
+        readarray -t COMPREPLY < <(compgen -W "${subcommands}" -- "$cur")
+        return
+    fi
+
+    local subcommand="${words[1]}"
+
+    # coredumpctl matches completion
+    local -a journal_field_vals
+    if [[ ${words[cword]} == ?*= ]]; then
+        # just skip these completions if coredumpctl is missing
+        if ! command -v coredumpctl >/dev/null 2>&1; then
+            return
+        fi
+        readarray -t journal_field_vals < <(coredumpctl -F "${cur%=*}" 2>/dev/null)
+        readarray -t COMPREPLY < <(compgen -W "${journal_field_vals[*]}" -- "${cur#*=}")
+        return
+    fi
+
+    # debug subcommand
+    if [[ $subcommand == "debug" ]]; then
+        case "$prev" in
+            -b|--build-directory)
+                compopt -o filenames
+                readarray -t COMPREPLY < <(compgen -d -- "$cur")
+                return
+                ;;
+            -m|--coredumpctl-matches)
+                compopt -o nospace
+                readarray -t COMPREPLY < <(compgen -W "${journal_fields[*]}" -S= -- "$cur")
+                return
+                ;;
+        esac
+
+        case "$cur" in
+            -*)
+                readarray -t COMPREPLY < <(compgen -W "\
+                    -b --build-directory \
+                    -m --coredumpctl-matches \
+                    --extra-flatpak-args \
+                    --gdb-arguments \
+                " -- "$cur")
+                return
+                ;;
+            *)
+                # slightly hacky way of reusing flatpak's own
+                # completion helper to complete the app ids
+                local -a RES
+                readarray -t RES < <(flatpak complete "flatpak run $cur" "$COMP_POINT" "$cur")
+                COMPREPLY=()
+                local r
+                for r in "${RES[@]}"; do
+                    [[ $r == __FLATPAK_* ]] && continue
+                    COMPREPLY+=("$r")
+                done
+                return
+                ;;
+        esac
+    fi
+
+    # list subcommand
+    if [[ $subcommand == "list" ]]; then
+        case "$cur" in
+            -*)
+                readarray -t COMPREPLY < <(compgen -W "\
+                    --show-inaccessible \
+                    --reverse -r \
+                    --no-pager \
+                " -- "$cur")
+                return
+                ;;
+            *)
+                compopt -o nospace
+                readarray -t COMPREPLY < <(compgen -W "${journal_fields[*]}" -S= -- "$cur")
+                return
+                ;;
+        esac
+    fi
+}
+
+####################################################################################################
+
+complete -F __flatpak_coredumpctl flatpak-coredumpctl
