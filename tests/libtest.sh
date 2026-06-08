@@ -631,6 +631,12 @@ skip_without_libsystemd () {
   fi
 }
 
+skip_without_seccomp () {
+    if [ "${HAVE_SECCOMP:-0}" != "1" ]; then
+        skip "seccomp support disabled"
+    fi
+}
+
 FLATPAK_SYSTEM_CERTS_D=$(pwd)/certs.d
 export FLATPAK_SYSTEM_CERTS_D
 
