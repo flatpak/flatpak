@@ -60,11 +60,17 @@ class CoreDumper():
 
                 sys.exit(dumpres.returncode)
 
-            executable, = re.findall(".*Executable: (.*)", dumpres.stderr)
+            matches = re.findall(r".*Executable: (.*)", dumpres.stderr)
+            if len(matches) != 1:
+                print(f"Could not determine executable from coredumpctl output "
+                      f"(found {len(matches)} 'Executable:' line(s)).",
+                      file=sys.stderr)
+                sys.exit(1)
+            executable = matches[0]
             if not executable.startswith(("/newroot/", "/app/")):
                 print(f"Executable {executable} doesn't seem to be a flatpaked application.",
                     file=sys.stderr)
-            executable = executable.replace("/newroot", "")
+            executable = executable.replace("/newroot", "", 1)
             flatpak_command.extend([executable, coredump.name])
             flatpak_command.extend(shlex.split(self.gdb_arguments))
 
