@@ -5,12 +5,14 @@
 
 __flatpak() {
     local IFS=$'\n'
-    local cur=`_get_cword :`
+    local cur
     local -a RES
-    RES=($(flatpak complete "${COMP_LINE}" "${COMP_POINT}" "${cur}"))
+    cur=$(_get_cword :)
+    readarray -t RES < <(flatpak complete "${COMP_LINE}" "${COMP_POINT}" "${cur}")
 
     COMPREPLY=()
     local i
+    local -a REPLIES
     for i in "${!RES[@]}"; do
         if [[ "${RES[$i]}" = "__FLATPAK_FILE" ]]; then
             declare -a COMPGEN_OPTS=('-f')
@@ -31,7 +33,8 @@ __flatpak() {
             else
                 CUR="${cur}"
             fi
-            COMPREPLY=("${COMPREPLY[@]}" $(compgen ${COMPGEN_OPTS[@]} -- "${CUR}") )
+            readarray -t REPLIES < <(compgen "${COMPGEN_OPTS[@]}" -- "${CUR}")
+            COMPREPLY+=("${REPLIES[@]}")
         else
             COMPREPLY=("${COMPREPLY[@]}" "${RES[$i]}")
         fi
