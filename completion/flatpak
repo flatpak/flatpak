@@ -6,9 +6,11 @@
 __flatpak() {
     local IFS=$'\n'
     local cur=`_get_cword :`
+    local -a RES
     RES=($(flatpak complete "${COMP_LINE}" "${COMP_POINT}" "${cur}"))
 
     COMPREPLY=()
+    local i
     for i in "${!RES[@]}"; do
         if [[ "${RES[$i]}" = "__FLATPAK_FILE" ]]; then
             declare -a COMPGEN_OPTS=('-f')
@@ -23,6 +25,7 @@ __flatpak() {
         fi
 
         if [[ ${#COMPGEN_OPTS[@]} -ne 0 ]]; then
+            local CUR
             if [[ "${cur}" = "=" ]]; then
                 CUR=""
             else
