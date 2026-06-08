@@ -93,6 +93,9 @@
             version with known vulnerabilities or unverified changes.
           - Note that we install polkit rules that allow local users
             in the wheel group to downgrade without authenticating.
+          - Note that authorizing this action also authorizes
+            org.freedesktop.Flatpak.app-update, as a downgrade implies
+            the ability to update.
      -->
     <description>Update application to older version</description>
     <message>Authentication is required to downgrade an application</message>
@@ -112,6 +115,9 @@
             version with known vulnerabilities or unverified changes.
           - Note that we install polkit rules that allow local users
             in the wheel group to downgrade without authenticating.
+          - Note that authorizing this action also authorizes
+            org.freedesktop.Flatpak.runtime-update, as a downgrade implies
+            the ability to update.
      -->
     <description>Update runtime to older version</description>
     <message>Authentication is required to downgrade a runtime</message>
