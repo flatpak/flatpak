@@ -395,6 +395,22 @@ flatpak_transaction_progress_get_start_time (FlatpakTransactionProgress *self)
   return flatpak_progress_get_start_time (self->progress_obj);
 }
 
+/**
+ * flatpak_transaction_progress_get_bytes_per_second:
+ * @self: a #FlatpakTransactionProgress
+ *
+ * Gets the current transfer speed in bytes per second. Returns 0 during
+ * the first second of a transfer while the rate is being established.
+ *
+ * Returns: the current transfer rate in bytes per second
+ * Since: 1.19.0
+ */
+guint64
+flatpak_transaction_progress_get_bytes_per_second (FlatpakTransactionProgress *self)
+{
+  return flatpak_progress_get_bytes_per_second (self->progress_obj);
+}
+
 static void
 flatpak_transaction_progress_finalize (GObject *object)
 {

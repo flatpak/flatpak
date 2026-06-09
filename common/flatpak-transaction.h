@@ -175,6 +175,8 @@ FLATPAK_EXTERN
 guint64     flatpak_transaction_progress_get_bytes_transferred (FlatpakTransactionProgress *self);
 FLATPAK_EXTERN
 guint64     flatpak_transaction_progress_get_start_time (FlatpakTransactionProgress *self);
+FLATPAK_EXTERN
+guint64     flatpak_transaction_progress_get_bytes_per_second (FlatpakTransactionProgress *self);
 
 
 FLATPAK_EXTERN
