@@ -113,6 +113,7 @@ struct _FlatpakProgress
   /* Self-progress-reporting fields, not from OSTree */
   guint   progress;
   guint   last_total;
+  guint64 bytes_per_second;
 
   guint32 update_interval;
 
@@ -190,6 +191,7 @@ update_status_progress_and_estimating (FlatpakProgress *self)
      extra data, so ignore those */
   if (self->requested == 0)
     {
+      self->bytes_per_second = 0;
       return;
     }
 
@@ -209,6 +211,7 @@ update_status_progress_and_estimating (FlatpakProgress *self)
     {
       g_string_append (buf, self->ostree_status);
       new_progress = 100;
+      self->bytes_per_second = 0;
       goto out;
     }
 
@@ -302,8 +305,14 @@ update_status_progress_and_estimating (FlatpakProgress *self)
 
   if (elapsed_time > 0) // Ignore first second
     {
-      g_autofree gchar *formatted_bytes_sec = g_format_size (total_transferred / elapsed_time);
+      g_autofree gchar *formatted_bytes_sec = NULL;
+      self->bytes_per_second = total_transferred / elapsed_time;
+      formatted_bytes_sec = g_format_size (self->bytes_per_second);
       g_string_append_printf (buf, " (%s/s)", formatted_bytes_sec);
+    }
+  else
+    {
+      self->bytes_per_second = 0;
     }
 
 out:
@@ -480,6 +489,12 @@ guint64
 flatpak_progress_get_start_time (FlatpakProgress *self)
 {
   return self->start_time;
+}
+
+guint64
+flatpak_progress_get_bytes_per_second (FlatpakProgress *self)
+{
+  return self->bytes_per_second;
 }
 
 const char *
