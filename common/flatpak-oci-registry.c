@@ -3301,7 +3301,8 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
 char *
 flatpak_pull_from_oci (OstreeRepo            *repo,
                        FlatpakImageSource    *image_source,
-                       FlatpakImageSource    *opt_dst_image_source,
+                       const char            *opt_sigcheck_repository,
+                       const char            *opt_sigcheck_registry_uri,
                        const char            *remote,
                        const char            *ref,
                        FlatpakPullFlags       flags,
@@ -3334,23 +3335,20 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
   g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
   g_autoptr(GVariant) metadata = NULL;
   g_autoptr(FlatpakOciSignatures) signatures = NULL;
-  FlatpakOciRegistry *dst_registry = opt_dst_image_source ?
-    flatpak_image_source_get_registry (opt_dst_image_source) : registry;
-  const char *dest_oci_repository = opt_dst_image_source ?
-    flatpak_image_source_get_oci_repository (opt_dst_image_source) : oci_repository;
+  const char *sigcheck_registry_uri = opt_sigcheck_registry_uri ? opt_sigcheck_registry_uri : registry->uri;
+  const char *sigcheck_repository = opt_sigcheck_repository ? opt_sigcheck_repository : oci_repository;
   int n_layers;
   int i;
 
   g_assert (g_str_has_prefix (digest, "sha256:"));
 
-  signatures = load_signatures (opt_dst_image_source ? opt_dst_image_source : image_source,
-                                cancellable, error);
+  signatures = load_signatures (image_source, cancellable, error);
   if (!signatures)
     return FALSE;
 
   if (!flatpak_oci_signatures_verify (signatures, repo, remote,
-                                      dst_registry->uri,
-                                      dest_oci_repository,
+                                      sigcheck_registry_uri,
+                                      sigcheck_repository,
                                       digest,
                                       error))
     return FALSE;
