@@ -2405,23 +2405,28 @@ remote_load_signatures (FlatpakOciRegistry *self,
 }
 
 static FlatpakOciSignatures *
-flatpak_oci_registry_load_signatures (FlatpakOciRegistry *self,
-                                      const char         *oci_repository,
-                                      const char         *digest,
-                                      GCancellable       *cancellable,
-                                      GError            **error)
+load_signatures (FlatpakImageSource  *image_source,
+                 GCancellable        *cancellable,
+                 GError             **error)
 {
-  if (self->dfd != -1)
+  FlatpakOciRegistry *registry = flatpak_image_source_get_registry (image_source);
+
+  if (registry->dfd != -1)
     {
       g_autoptr(FlatpakOciSignatures) signatures = flatpak_oci_signatures_new ();
 
-      if (!flatpak_oci_signatures_load_from_dfd (signatures, self->dfd, cancellable, error))
+      if (!flatpak_oci_signatures_load_from_dfd (signatures, registry->dfd, cancellable, error))
         return NULL;
 
       return g_steal_pointer (&signatures);
     }
   else
-    return remote_load_signatures (self, oci_repository, digest, cancellable, error);
+    {
+      const char *oci_repository = flatpak_image_source_get_oci_repository (image_source);
+      const char *digest = flatpak_image_source_get_digest (image_source);
+
+      return remote_load_signatures (registry, oci_repository, digest, cancellable, error);
+    }
 }
 
 static const char *
@@ -3283,8 +3288,7 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
   if (!flatpak_oci_registry_save_index (dst_registry, index, cancellable, error))
     return FALSE;
 
-  signatures = flatpak_oci_registry_load_signatures (registry, oci_repository, digest,
-                                                     cancellable, error);
+  signatures = load_signatures (image_source, cancellable, error);
   if (!signatures)
     return FALSE;
 
@@ -3339,10 +3343,8 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
 
   g_assert (g_str_has_prefix (digest, "sha256:"));
 
-  signatures = flatpak_oci_registry_load_signatures (dst_registry,
-                                                     dest_oci_repository,
-                                                     digest,
-                                                     cancellable, error);
+  signatures = load_signatures (opt_dst_image_source ? opt_dst_image_source : image_source,
+                                cancellable, error);
   if (!signatures)
     return FALSE;
 
