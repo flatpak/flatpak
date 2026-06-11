@@ -396,6 +396,7 @@ tests = {
     'system,http',
     'system,https',
   ]},
+  'oci-auth': {'wrap': ['user', 'system']},
   'update-remote-configuration': {'wrap': ['newsummary', 'oldsummary']},
   'override': {},
   'update-portal': {'wrap': ['user', 'system']},
