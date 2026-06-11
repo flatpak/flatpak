@@ -492,6 +492,9 @@ handle_deploy (FlatpakSystemHelper   *object,
       const char *verified_digest;
       g_autofree char *upstream_url = NULL;
       g_autoptr(FlatpakImageSource) system_image_source = NULL;
+      g_autoptr(GVariant) metadata = NULL;
+      const char *sigcheck_repository = NULL;
+      g_autofree char *sigcheck_registry_uri = NULL;
 
       if (!ostree_repo_remote_get_url (flatpak_dir_get_repo (system),
                                        arg_origin,
@@ -546,21 +549,26 @@ handle_deploy (FlatpakSystemHelper   *object,
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
-      system_image_source =
-        flatpak_remote_state_fetch_image_source (state,
-                                                 system,
-                                                 arg_ref,
-                                                 verified_digest,
-                                                 NULL,
-                                                 NULL, &error);
-      if (!system_image_source)
+      flatpak_remote_state_lookup_ref (state, arg_ref,
+                                       NULL, NULL,
+                                       &metadata,
+                                       NULL, NULL, NULL);
+
+      if (!g_variant_lookup (metadata, "xa.oci-repository", "s", &sigcheck_repository))
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Can't fetch image source: %s", error->message);
+                                                 "Can't get the OCI repository from the summary");
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
-      checksum = flatpak_pull_from_oci (flatpak_dir_get_repo (system), image_source, system_image_source,
+      if (!ostree_repo_remote_get_url (flatpak_dir_get_repo (system), arg_origin, &sigcheck_registry_uri, NULL))
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "Can't get the OCI registry URI");
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
+        }
+
+      checksum = flatpak_pull_from_oci (flatpak_dir_get_repo (system), image_source, sigcheck_repository, sigcheck_registry_uri,
                                         arg_origin, arg_ref, FLATPAK_PULL_FLAGS_NONE, NULL, NULL, NULL, &error);
       if (checksum == NULL)
         {
