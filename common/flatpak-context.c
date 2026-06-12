@@ -1126,12 +1126,51 @@ static void flatpak_permissions_test_fallback_x11 (void)
   }
 }
 
+static void flatpak_permissions_test_negated_args (void)
+{
+  static const struct {
+    const char *perm;
+    const char *argname;
+    const char *noargname;
+    const char *expected_arg;
+  }
+
+  cases[] = {
+    { "!network",   "share",  "unshare",  "--unshare=network"    },
+    { "!x11",       "socket", "nosocket", "--nosocket=x11"       },
+    { "!dri",       "device", "nodevice", "--nodevice=dri"       },
+    { "!bluetooth", "allow",  "disallow", "--disallow=bluetooth" },
+  };
+
+  for (size_t i = 0; i < G_N_ELEMENTS (cases); i++)
+    {
+      g_autoptr(GError) error = NULL;
+      g_autoptr(GHashTable) perms = flatpak_permissions_new ();
+      g_autoptr(GPtrArray) args = g_ptr_array_new_with_free_func (g_free);
+      gboolean ok;
+
+      const char *perms_strv[] = { cases[i].perm, NULL };
+      ok = flatpak_permissions_from_strv (perms, perms_strv, &error);
+
+      g_assert_true (ok);
+      g_assert_no_error (error);
+
+      flatpak_permissions_to_args (perms, cases[i].argname, cases[i].noargname, args);
+
+      g_ptr_array_add (args, NULL);
+      g_assert_cmpuint (args->len - 1, ==, 1);
+      g_assert_cmpstr (args->pdata[0], ==, cases[i].expected_arg);
+    }
+}
+
 FLATPAK_INTERNAL_TEST("/context/permissions/basic",
                       flatpak_permissions_test_basic);
 FLATPAK_INTERNAL_TEST("/context/permissions/backwards-compat",
                       flatpak_permissions_test_backwards_compat);
 FLATPAK_INTERNAL_TEST("/context/permissions/fallback-x11",
                       flatpak_permissions_test_fallback_x11);
+FLATPAK_INTERNAL_TEST("/context/permissions/negated-args",
+                      flatpak_permissions_test_negated_args);
 
 #endif /* INCLUDE_INTERNAL_TESTS */
 
