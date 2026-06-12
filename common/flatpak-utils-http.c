@@ -627,6 +627,10 @@ flatpak_download_http_uri_once (FlatpakHttpSession    *session,
   curl_easy_setopt (curl, CURLOPT_WRITEDATA, (void *)data);
   curl_easy_setopt (curl, CURLOPT_HEADERDATA, (void *)data);
 
+  curl_easy_setopt (curl, CURLOPT_CAINFO, NULL);
+  curl_easy_setopt (curl, CURLOPT_SSLCERT, NULL);
+  curl_easy_setopt (curl, CURLOPT_SSLKEY, NULL);
+
   if (data->certificates)
     {
       if (data->certificates->ca_cert_file)
