@@ -50,6 +50,18 @@ path_get_ino (const char *path)
   return st.st_ino;
 }
 
+static mode_t
+get_mode (int fd)
+{
+  int r;
+  struct stat st;
+
+  r = fstatat (fd, "", &st, AT_EMPTY_PATH | AT_SYMLINK_NOFOLLOW);
+  g_assert_cmpint (r, >=, 0);
+
+  return st.st_mode & 0777;
+}
+
 static char *
 get_abspath (int         dfd,
              const char *path)
@@ -586,6 +598,62 @@ test_chase_and_statxat_permissions (void)
   g_clear_fd (&chase_fd, NULL);
 }
 
+static void
+test_chase_and_mkdir (void)
+{
+  g_autoptr(GError) error = NULL;
+  glnx_autofd int dfd = -1;
+  glnx_autofd int file_fd = -1;
+  glnx_autofd int chase_fd = -1;
+  ino_t expected_ino;
+
+  g_assert_true (glnx_shutil_mkdir_p_at_open (AT_FDCWD, "d1", 0755,
+                                              &dfd,
+                                              NULL, &error));
+  g_assert_no_error (error);
+
+  chase_fd = glnx_chase_and_mkdirat (AT_FDCWD, "d1/d2/d3",
+                                     GLNX_CHASE_DEFAULT,
+                                     0755,
+                                     &error);
+  g_assert_cmpint (chase_fd, >=, 0);
+  g_assert_no_error (error);
+
+  file_fd = openat (AT_FDCWD, "d1/d2/d3", O_PATH | O_CLOEXEC | O_NOFOLLOW);
+  g_assert_cmpint (file_fd, >=, 0);
+  expected_ino = get_ino (file_fd);
+
+  g_assert_cmpint (get_ino (chase_fd), ==, expected_ino);
+
+  g_assert_cmpint (get_mode (dfd), ==, 0755);
+  g_assert_cmpint (get_mode (chase_fd), ==, 0755);
+
+  g_clear_fd (&chase_fd, NULL);
+  g_clear_fd (&file_fd, NULL);
+
+  chase_fd = glnx_chase_and_mkdirat (AT_FDCWD, "d1/d4/d5",
+                                     GLNX_CHASE_DEFAULT,
+                                     0700,
+                                     &error);
+  g_assert_cmpint (chase_fd, >=, 0);
+  g_assert_no_error (error);
+
+  file_fd = openat (AT_FDCWD, "d1", O_PATH | O_CLOEXEC | O_NOFOLLOW);
+  g_assert_cmpint (file_fd, >=, 0);
+  g_assert_cmpint (get_mode (file_fd), ==, 0755);
+  g_clear_fd (&file_fd, NULL);
+
+  file_fd = openat (AT_FDCWD, "d1/d4", O_PATH | O_CLOEXEC | O_NOFOLLOW);
+  g_assert_cmpint (file_fd, >=, 0);
+  g_assert_cmpint (get_mode (file_fd), ==, 0700);
+  g_clear_fd (&file_fd, NULL);
+
+  file_fd = openat (AT_FDCWD, "d1/d4/d5", O_PATH | O_CLOEXEC | O_NOFOLLOW);
+  g_assert_cmpint (file_fd, >=, 0);
+  g_assert_cmpint (get_mode (file_fd), ==, 0700);
+  g_clear_fd (&file_fd, NULL);
+}
+
 int main (int argc, char **argv)
 {
   _GLNX_TEST_SCOPED_TEMP_DIR;
@@ -602,6 +670,7 @@ int main (int argc, char **argv)
   g_test_add_func ("/chase-and-statxat-basic", test_chase_and_statxat_basic);
   g_test_add_func ("/chase-and-statxat-symlink", test_chase_and_statxat_symlink);
   g_test_add_func ("/chase-and-statxat-permissions", test_chase_and_statxat_permissions);
+  g_test_add_func ("/chase-and-mkdir", test_chase_and_mkdir);
 
   ret = g_test_run();
 
