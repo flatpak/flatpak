@@ -334,6 +334,26 @@ flatpak_run_evaluate_conditions (FlatpakContextConditions condition)
     }
 }
 
+/* Bind an optional device node into the sandbox if the host node exists
+ * and is accessible. bwrap aborts the whole launch when it cannot stat a
+ * bind source (e.g. an LSM denies the stat even though the node exists),
+ * so probe with lstat() — the same call bwrap performs — and skip the
+ * node with a notice instead of failing the launch. A missing node stays
+ * silently skipped, matching the previous G_FILE_TEST_EXISTS behavior;
+ * note that --dev-bind-try would not cover this, because bubblewrap only
+ * tolerates ENOENT there, not e.g. EACCES. */
+static void
+add_dev_node_args (FlatpakBwrap *bwrap,
+                   const char   *path)
+{
+  struct stat st;
+
+  if (lstat (path, &st) == 0)
+    flatpak_bwrap_add_args (bwrap, "--dev-bind", path, path, NULL);
+  else if (errno != ENOENT)
+    g_info ("Not sharing device %s with sandbox: %s", path, g_strerror (errno));
+}
+
 /*
  * @per_app_dir_lock_fd: If >= 0, make use of per-app directories in
  *  the host's XDG_RUNTIME_DIR to share /tmp between instances.
@@ -499,10 +519,7 @@ flatpak_run_add_environment_args (FlatpakBwrap           *bwrap,
           };
 
           for (i = 0; i < G_N_ELEMENTS (dri_devices); i++)
-            {
-              if (g_file_test (dri_devices[i], G_FILE_TEST_EXISTS))
-                flatpak_bwrap_add_args (bwrap, "--dev-bind", dri_devices[i], dri_devices[i], NULL);
-            }
+            add_dev_node_args (bwrap, dri_devices[i]);
 
           /* Each Nvidia card gets its own device.
              This is a fairly arbitrary limit but ASUS sells mining boards supporting 20 in theory. */
@@ -510,8 +527,7 @@ flatpak_run_add_environment_args (FlatpakBwrap           *bwrap,
           for (i = 0; i < 20; i++)
             {
               g_snprintf (nvidia_dev, sizeof (nvidia_dev), "/dev/nvidia%d", i);
-              if (g_file_test (nvidia_dev, G_FILE_TEST_EXISTS))
-                flatpak_bwrap_add_args (bwrap, "--dev-bind", nvidia_dev, nvidia_dev, NULL);
+              add_dev_node_args (bwrap, nvidia_dev);
             }
         }
 
