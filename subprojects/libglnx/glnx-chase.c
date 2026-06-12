@@ -17,6 +17,7 @@
 #include <unistd.h>
 
 #include <glnx-backports.h>
+#include <glnx-dirfd.h>
 #include <glnx-errors.h>
 #include <glnx-fdio.h>
 #include <glnx-local-alloc.h>
@@ -822,4 +823,90 @@ glnx_chase_and_statxat (int                 dirfd,
     return -1;
 
   return g_steal_fd (&fd);
+}
+
+static int
+chase_and_mkdir (int                 next_fd,
+                 int                 current_fd,
+                 const char         *segment,
+                 G_GNUC_UNUSED int   open_tree_flags,
+                 gpointer            user_data,
+                 GError            **error)
+{
+  mode_t mode = GPOINTER_TO_INT (user_data);
+  glnx_autofd int new_fd = -1;
+
+  /* if chase managed to get the next segment, we already got our answer */
+  if (next_fd >= 0)
+    return next_fd;
+
+  /* if the problem isn't that the file doesn't exist, we propagate the error */
+  g_assert (*error != NULL);
+  if (!g_error_matches (*error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+    return -1;
+  g_clear_error (error);
+
+  /* create the directory with the specified mode */
+  if (!glnx_ensure_dir (current_fd, segment, mode, error))
+    return -1;
+
+  /* Get a fd to the created dir.
+   * This is racy, meaning another process can modify the filesystem and we
+   * might open a directory that we did not create and might have a different
+   * mode. There isn't a kernel API which returns a fd or an inode which makes
+   * this race unavoidable. This is fine though because the semantics of
+   * `glnx_chase_and_mkdirat` accept arbitrary directories (even with different
+   * modes) when chasing the path.
+   */
+  new_fd = openat (current_fd, segment,
+                   O_CLOEXEC | O_PATH | O_DIRECTORY | O_NOFOLLOW);
+  if (new_fd < 0)
+    return glnx_fd_throw_errno_prefix (error, "opening created dir failed");
+
+  return g_steal_fd (&new_fd);
+}
+
+/**
+ * glnx_chase_and_mkdirat:
+ * @dirfd: a directory file descriptor
+ * @path: a path
+ * @flags: restricted combination of GlnxChaseFlags flags
+ * @mode: the mode for new directories
+ * @error: a #GError
+ *
+ * Same as glnx_chase with `GLNX_CHASE_MUST_BE_DIRECTORY`, but when a path
+ * segment does not exist, a directory is created for the segment with the mode
+ * @mode.
+ * This essentially implement a fd-relative equivalent of g_mkdir_with_parents()
+ * or `mkdir -p`.
+ * Note, that directories in the path which already exist can have arbitrary
+ * modes.
+ *
+ * See glnx_chaseat for the meaning of @dirfd and @path.
+ *
+ * The @flags argument is the same as in glnx_chaseat, but setting
+ * `GLNX_CHASE_MUST_BE_REGULAR`, `GLNX_CHASE_MUST_BE_SOCKET`, or
+ * `GLNX_CHASE_MUST_BE_DIRECTORY` is an error.
+ *
+ * Returns: the chased file, or -1 with @error set on error
+ */
+int
+glnx_chase_and_mkdirat (int              dirfd,
+                        const char      *path,
+                        GlnxChaseFlags   flags,
+                        mode_t           mode,
+                        GError         **error)
+{
+  g_return_val_if_fail ((flags & ~(GLNX_CHASE_ALL_FLAGS)) == 0, -1);
+  g_return_val_if_fail ((flags & (GLNX_CHASE_MUST_BE_REGULAR |
+                                  GLNX_CHASE_MUST_BE_SOCKET |
+                                  GLNX_CHASE_MUST_BE_DIRECTORY)) == 0, -1);
+  g_return_val_if_fail ((mode & ~((mode_t) 07777)) == 0, -1);
+
+  /* This function always implies GLNX_CHASE_MUST_BE_DIRECTORY */
+  flags |= GLNX_CHASE_MUST_BE_DIRECTORY;
+
+  return glnx_chaseat_full (dirfd, path, flags,
+                            chase_and_mkdir, GINT_TO_POINTER (mode),
+                            error);
 }
