@@ -65,7 +65,7 @@ have_xattrs() {
     setfattr -n user.testvalue -v somevalue $1/test-xattrs > /dev/null 2>&1
 }
 
-echo "1..6"
+echo "1..7"
 
 # Without anything else, cached for 30 minutes
 assert_ok "/" $test_tmpdir/output
@@ -125,6 +125,15 @@ assert_streq $contents path=/compress?ignore-accept-encoding
 rm -f $test_tmpdir/output*
 
 ok 'compress after download'
+
+# Test that a partial download is resumed on retry
+out=$(${test_builddir}/httpdownload "http://localhost:$port/?partial-fail" $test_tmpdir/output || :)
+assert_streq "$out" "Download succeeded"
+contents=$(cat $test_tmpdir/output)
+assert_streq "$contents" "path=/?partial-fail"
+rm -f $test_tmpdir/output*
+
+ok 'partial download resume'
 
 # Testing that things work without xattr support
 
