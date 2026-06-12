@@ -485,9 +485,10 @@ _write_cb (void *content_data,
     }
   else if (data->out)
     {
-      /* We ignore the error here, but reporting a short read will make curl report the error */
-      g_output_stream_write_all (data->out, content_data, realsize,
-                                 &n_written, NULL, NULL);
+      /* Returning a short write makes curl report CURLE_WRITE_ERROR. */
+      if (!g_output_stream_write_all (data->out, content_data, realsize,
+                                      &n_written, NULL, NULL))
+        return n_written;
     }
 
   data->downloaded_bytes += realsize;
