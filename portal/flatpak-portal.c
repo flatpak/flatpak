@@ -2357,7 +2357,6 @@ emit_progress (PortalFlatpakUpdateMonitor *monitor,
                const char *error_message)
 {
   UpdateMonitorData *m = update_monitor_get_data (monitor);
-  GDBusConnection *connection;
   GVariantBuilder builder;
   g_autoptr(GError) error = NULL;
 
@@ -2379,8 +2378,10 @@ emit_progress (PortalFlatpakUpdateMonitor *monitor,
       g_variant_builder_add (&builder, "{sv}", "error_message", g_variant_new_string (error_message));
     }
 
-  connection = update_monitor_get_connection (monitor);
-  if (!g_dbus_connection_emit_signal (connection,
+  g_mutex_lock (&m->lock);
+
+  if (!m->closed &&
+      !g_dbus_connection_emit_signal (update_monitor_get_connection (monitor),
                                       m->sender,
                                       m->obj_path,
                                       FLATPAK_PORTAL_INTERFACE_UPDATE_MONITOR,
@@ -2390,6 +2391,8 @@ emit_progress (PortalFlatpakUpdateMonitor *monitor,
     {
       g_warning ("Failed to emit ::progress: %s", error->message);
     }
+
+  g_mutex_unlock (&m->lock);
 }
 
 static char *
