@@ -1168,7 +1168,7 @@ flatpak_instance_iterate_all_and_gc (GPtrArray *out_instances)
  *
  * Gets FlatpakInstance objects for all running sandboxes in the current session.
  *
- * Returns: (transfer full) (element-type FlatpakInstance): a #GPtrArray of
+ * Returns: (transfer container) (element-type FlatpakInstance): a #GPtrArray of
  *   #FlatpakInstance objects
  *
  * Since: 1.1
