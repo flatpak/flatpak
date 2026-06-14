@@ -2375,17 +2375,27 @@ remote_load_signatures (FlatpakOciRegistry *self,
   for (i = 1; i < G_MAXUINT; i++)
     {
       g_autoptr(GBytes) bytes = NULL;
+      g_autoptr(FlatpakCertificates) certificates = NULL;
       g_autoptr(GError) local_error = NULL;
       g_autofree char *uri_s = NULL;
 
       uri_s = g_strdup_printf ("%s/%s@%s=%s/signature-%u", self->signature_lookaside,
                                oci_repository, digest_algorithm, digest_value, i);
 
-      bytes = flatpak_load_uri (self->http_session,
-                                uri_s, FLATPAK_HTTP_FLAGS_ACCEPT_OCI,
-                                NULL,
-                                NULL, NULL, NULL,
-                                cancellable, &local_error);
+      certificates = flatpak_get_certificates_for_uri (uri_s, &local_error);
+      if (local_error)
+        {
+          g_propagate_error (error, g_steal_pointer (&local_error));
+          return NULL;
+        }
+
+      bytes = flatpak_load_uri_full (self->http_session,
+                                     uri_s, certificates,
+                                     FLATPAK_HTTP_FLAGS_ACCEPT_OCI,
+                                     NULL, NULL,
+                                     NULL, NULL,
+                                     NULL, NULL, NULL,
+                                     cancellable, &local_error);
       if (bytes == NULL)
         {
           if (g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
