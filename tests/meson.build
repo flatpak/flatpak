@@ -411,6 +411,7 @@ tests = {
   'preinstall': {},
   'run-custom': {'wrap': ['user', 'system']},
   'upgrade-from-header': {'wrap': ['user', 'system', 'system-norevokefs']},
+  'metainfo-export': {},
 }
 
 wrapped_tests = []
