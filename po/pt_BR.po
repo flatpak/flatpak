@@ -3411,7 +3411,7 @@ msgid "Unable to update %s: %s\n"
 msgstr "Não foi possível atualizar %s: %s\n"
 
 #: app/flatpak-builtins-update.c:274
-#, fuzzy, c-format
+#, c-format
 msgid "Nothing to update.\n"
 msgstr "Nada para fazer.\n"
 
