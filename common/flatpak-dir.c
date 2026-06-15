@@ -16606,6 +16606,7 @@ add_related (FlatpakDir        *self,
   g_auto(GStrv) subpaths = NULL;
   FlatpakRelated *rel;
   gboolean download;
+  gboolean can_follow_branch;
   gboolean delete = autodelete;
   gboolean auto_prune = FALSE;
   g_autoptr(GFile) unmaintained_path = NULL;
@@ -16629,26 +16630,7 @@ add_related (FlatpakDir        *self,
   download =
     flatpak_extension_matches_reason (id, download_if, !no_autodownload) ||
     deploy_data != NULL;
-
-  /* Automatic branch following: if this extension wouldn't normally be
-   * auto-downloaded, still download it if there's already an installed branch
-   * of the same extension for this arch. This handles the case where an app
-   * updates its extension version requirement. */
-  if (!download)
-    {
-      g_autoptr(GPtrArray) installed_branches =
-        flatpak_dir_list_refs_for_name (self, FLATPAK_KINDS_RUNTIME, id, NULL, NULL);
-
-      for (size_t i = 0; installed_branches && i < installed_branches->len; i++)
-        {
-          FlatpakDecomposed *installed_ref = g_ptr_array_index (installed_branches, i);
-          if (flatpak_decomposed_is_arch (installed_ref, arch))
-            {
-              download = TRUE;
-              break;
-            }
-        }
-    }
+  can_follow_branch = !download;
 
   if (!flatpak_extension_matches_reason (id, autoprune_unless, TRUE))
     auto_prune = TRUE;
@@ -16665,13 +16647,17 @@ add_related (FlatpakDir        *self,
               "installed as an unmaintained extension in ‘%s’.",
               id, flatpak_file_get_path_cached (unmaintained_path));
       download = FALSE;
+      can_follow_branch = FALSE;
     }
 
   if (g_str_has_suffix (extension, ".Debug"))
     {
       /* debug files only updated if already installed */
       if (deploy_data == NULL)
-        download = FALSE;
+        {
+          download = FALSE;
+          can_follow_branch = FALSE;
+        }
 
       /* Always remove debug */
       delete = TRUE;
@@ -16696,6 +16682,7 @@ add_related (FlatpakDir        *self,
   rel->commit = g_strdup (checksum);
   rel->subpaths = g_steal_pointer (&subpaths);
   rel->download = download;
+  rel->can_follow_branch = can_follow_branch;
   rel->delete = delete;
   rel->auto_prune = auto_prune;
 

@@ -69,6 +69,7 @@ typedef struct
   char              *commit;
   char             **subpaths;
   gboolean           download;
+  gboolean           can_follow_branch;
   gboolean           delete;
   gboolean           auto_prune;
 } FlatpakRelated;
