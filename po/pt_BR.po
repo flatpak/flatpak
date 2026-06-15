@@ -6,21 +6,21 @@
 # Matheus Barbosa <mdpb.matheus@gmail.com>, 2022.
 # Álvaro Burns <>, 2025.
 # Rafael Fontenelle <rafaelff@gnome.org>, 2017-2026.
+# Miguel Peçanha <pecanhamiguel@gmail.com>, 2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: flatpak main\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2026-05-27 16:39+0200\n"
-"PO-Revision-Date: 2026-01-21 15:19-0300\n"
-"Last-Translator: Rafael Fontenelle <rafaelff@gnome.org>\n"
-"Language-Team: Brazilian Portuguese <https://br.gnome.org/traducao>\n"
+"PO-Revision-Date: 2026-06-15 15:00-0300\n"
+"Last-Translator: Miguel Peçanha <pecanhamiguel@gmail.com>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Gtranslator 49.0\n"
+"X-Generator: Poedit 3.9\n"
 
 #: app/flatpak-builtins-build-bundle.c:59
 msgid "Export runtime instead of app"
@@ -3180,9 +3180,8 @@ msgid "Use PATH instead of the app's /app"
 msgstr "Usa PATH em vez do /app do aplicativo"
 
 #: app/flatpak-builtins-run.c:183
-#, fuzzy
 msgid "Use FD instead of the app's /app"
-msgstr "Usa PATH em vez do /app do aplicativo"
+msgstr "Usa FD em vez do /app do aplicativo"
 
 #: app/flatpak-builtins-run.c:183 app/flatpak-builtins-run.c:185
 #: app/flatpak-builtins-run.c:187 app/flatpak-builtins-run.c:188
@@ -3195,9 +3194,8 @@ msgid "Use PATH instead of the runtime's /usr"
 msgstr "Usa PATH em vez de /usr do runtime"
 
 #: app/flatpak-builtins-run.c:185
-#, fuzzy
 msgid "Use FD instead of the runtime's /usr"
-msgstr "Usa PATH em vez de /usr do runtime"
+msgstr "Usa FD em vez de /usr do runtime"
 
 #: app/flatpak-builtins-run.c:186
 msgid "Clear all outside environment variables"
@@ -3413,7 +3411,7 @@ msgstr "Não foi possível atualizar %s: %s\n"
 #: app/flatpak-builtins-update.c:274
 #, c-format
 msgid "Nothing to update.\n"
-msgstr "Nada para fazer.\n"
+msgstr "Nada para atualizar.\n"
 
 #: app/flatpak-builtins-utils.c:337
 #, c-format
@@ -4741,10 +4739,9 @@ msgid "Couldn't find ref %s in remote %s"
 msgstr "Não foi possível localizar a ref %s no remoto %s"
 
 #: common/flatpak-dir.c:1288 common/flatpak-dir.c:1381
-#, fuzzy, c-format
+#, c-format
 msgid "Commit has no requested ref ‘%s’ in ref binding metadata (found: ‘%s’)"
-msgstr ""
-"O commit não tem solicitação de ref “%s” nos metadados de associação de ref"
+msgstr "O commit não tem solicitação de ref ‘%s’ nos metadados de associação de ref (localizado: ‘%s’)"
 
 #: common/flatpak-dir.c:1413
 #, c-format
