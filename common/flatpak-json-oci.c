@@ -595,7 +595,7 @@ flatpak_oci_index_get_manifest_for_arch (FlatpakOciIndex *self,
 
   for (i = 0; self->manifests[i] != NULL; i++)
     {
-      if (strcmp (self->manifests[i]->platform.architecture, oci_arch) == 0)
+      if (g_strcmp0 (self->manifests[i]->platform.architecture, oci_arch) == 0)
         return self->manifests[i];
     }
 
