@@ -65,6 +65,8 @@ struct _FlatpakJsonProp
   { _name, G_STRUCT_OFFSET (_struct, _field), FLATPAK_JSON_PROP_TYPE_STRING, 0, 0, FLATPAK_JSON_PROP_FLAGS_MANDATORY }
 #define FLATPAK_JSON_INT64_PROP(_struct, _field, _name) \
   { _name, G_STRUCT_OFFSET (_struct, _field), FLATPAK_JSON_PROP_TYPE_INT64 }
+#define FLATPAK_JSON_MANDATORY_INT64_PROP(_struct, _field, _name) \
+  { _name, G_STRUCT_OFFSET (_struct, _field), FLATPAK_JSON_PROP_TYPE_INT64, 0, 0, FLATPAK_JSON_PROP_FLAGS_MANDATORY }
 #define FLATPAK_JSON_BOOL_PROP(_struct, _field, _name) \
   { _name, G_STRUCT_OFFSET (_struct, _field), FLATPAK_JSON_PROP_TYPE_BOOL }
 #define FLATPAK_JSON_STRV_PROP(_struct, _field, _name) \
@@ -77,6 +79,10 @@ struct _FlatpakJsonProp
   { _name, G_STRUCT_OFFSET (_struct, _field), FLATPAK_JSON_PROP_TYPE_BOOLMAP }
 #define FLATPAK_JSON_STRUCT_PROP(_struct, _field, _name, _props) \
   { _name, G_STRUCT_OFFSET (_struct, _field), FLATPAK_JSON_PROP_TYPE_STRUCT, (gpointer) _props}
+/* MANDATORY_STRUCT_PROP is one that must be present when demarshalling */
+#define FLATPAK_JSON_MANDATORY_STRUCT_PROP(_struct, _field, _name, _props) \
+  { _name, G_STRUCT_OFFSET (_struct, _field), FLATPAK_JSON_PROP_TYPE_STRUCT, (gpointer) _props, 0, FLATPAK_JSON_PROP_FLAGS_MANDATORY}
+/* OPT_STRUCT_PROP is one that is not emitted into the result when marshalling if it would be empty */
 #define FLATPAK_JSON_OPT_STRUCT_PROP(_struct, _field, _name, _props) \
   { _name, G_STRUCT_OFFSET (_struct, _field), FLATPAK_JSON_PROP_TYPE_STRUCT, (gpointer) _props, 0, FLATPAK_JSON_PROP_FLAGS_OPTIONAL}
 #define FLATPAK_JSON_STRICT_STRUCT_PROP(_struct, _field, _name, _props) \
