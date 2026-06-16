@@ -10,14 +10,24 @@ if sys.version_info < (3, 10):
     sys.exit(1)
 
 import argparse
+import json
+import os
 import re
 import shutil
 import subprocess
 import shlex
 import tempfile
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
+from datetime import datetime
+from enum import Enum
+from signal import Signals
+from typing import IO
 
-class CoreDumperArgs:
+### 'debug' subcommand ###
+
+class DebugDumpArgs:
     @dataclass
     class AppId:
         app_id: str
@@ -39,17 +49,17 @@ class CoreDumperArgs:
         self.extra_flatpak_args: str = ns.extra_flatpak_args
         self.gdb_arguments: str = ns.gdb_arguments
 
-def run(args: CoreDumperArgs) -> int:
+def debug_dump(args: DebugDumpArgs) -> int:
     if not shutil.which("coredumpctl"):
         print("'coredumpctl' not present on the system, can't run.",
               file=sys.stderr)
         return 1
 
     match args.target:
-        case CoreDumperArgs.AppId(app_id):
+        case DebugDumpArgs.AppId(app_id):
             flatpak_subcommand = "run"
             target_args = ["--command=gdb", "--devel", app_id]
-        case CoreDumperArgs.BuildDir(build_dir):
+        case DebugDumpArgs.BuildDir(build_dir):
             flatpak_subcommand = "build"
             target_args = [build_dir, "gdb"]
 
@@ -92,29 +102,224 @@ def run(args: CoreDumperArgs) -> int:
         print(f"Running: `{shlex.join(flatpak_command)}`")
         return subprocess.run(flatpak_command).returncode
 
+### 'list' subcommand ###
+
+@contextmanager
+def pager_stream(use_pager: bool) -> Iterator[IO[str]]:
+    proc = None
+    out: IO[str] = sys.stdout
+
+    if use_pager and sys.stdout.isatty():
+        pager = shlex.split(os.getenv("PAGER", "less"))
+        if pager and shutil.which(pager[0]):
+            env = os.environ.copy()
+            # Use env instead of cli flags because other pagers
+            # sometime also read the LESS variable
+            env["LESS"] = "FRSX"
+            proc = subprocess.Popen(
+                pager,
+                stdin=subprocess.PIPE,
+                text=True,
+                env=env
+            )
+            # subprocess.PIPE guarantees stdin is not None
+            assert proc.stdin is not None
+            out = proc.stdin
+
+    try:
+        yield out
+    finally:
+        if proc is not None and proc.stdin is not None:
+            proc.stdin.close()
+            proc.wait()
+
+class TextStyle(Enum):
+    RESET = "0"
+    UNDERLINE = "4"
+    GRAY = "90"
+
+class TextStyler:
+    def __init__(self) -> None:
+        term = os.getenv("TERM")
+        self.__use_color = (
+            sys.stdout.isatty()
+            and not os.getenv("NO_COLOR")
+            and term not in (None, "dumb")
+        )
+        if os.getenv("FORCE_COLOR"):
+            self.__use_color = True
+
+    def style_to_ansi(self, style: TextStyle) -> str:
+        if not self.__use_color:
+            return ""
+        return f"\033[{style.value}m"
+
+    def style(self, style: TextStyle, string: str) -> str:
+        return f"{self.style_to_ansi(style)}{string}{self.style_to_ansi(TextStyle.RESET)}"
+
+def microseconds_to_datetime(us: int) -> str:
+    return (
+        datetime
+            .fromtimestamp(us / 1_000_000)
+            .astimezone()
+            .strftime("%a %Y-%m-%d %H:%M:%S %Z")
+    )
+
+def format_bytes(num: float | None) -> str:
+    if num is None:
+        return "-"
+
+    for unit in ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z']:
+        if abs(num) < 1024.0:
+            return f"{num:3.1f}{unit}"
+        num /= 1024.0
+
+    return f"{num:.1f}Yi"
+
+def list_dumps(show_inaccessible: bool, use_pager: bool, reverse: bool, matches: list[str]) -> int:
+    coredumpctl_command = ["coredumpctl", "list", "--json=short"]
+    if reverse:
+        coredumpctl_command.append("--reverse")
+    coredumpctl_command.extend(matches)
+
+    result = subprocess.run(
+        coredumpctl_command,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+
+    if result.returncode != 0:
+        print("Failed to retrieve coredump list from coredumpctl.", file=sys.stderr)
+        if result.stderr:
+            print(f"Reason:\n{result.stderr}", file=sys.stderr)
+        return result.returncode
+
+    entries = json.loads(result.stdout)
+    rows: list[dict[str, str]] = []
+    widths: dict[str, int] = {
+        "time": len("TIME"),
+        "pid": len("PID"),
+        "uid": len("UID"),
+        "gid": len("GID"),
+        "sig": len("SIG"),
+        "corefile": len("COREFILE"),
+        "exe": len("EXE"),
+        "size": len("SIZE"),
+    }
+    for entry in entries:
+        corefile = entry["corefile"]
+        exe = entry["exe"]
+        if not exe.startswith(("/newroot/", "/app/")):
+            continue
+        if not show_inaccessible and corefile != "present":
+            continue
+        row: dict[str, str] = {
+            "time": microseconds_to_datetime(entry["time"]),
+            "pid": str(entry["pid"]),
+            "uid": str(entry["uid"]),
+            "gid": str(entry["gid"]),
+            "sig": Signals(entry["sig"]).name,
+            "corefile": corefile,
+            "exe": exe,
+            "size": format_bytes(entry["size"])
+        }
+        rows.append(row)
+        for key, value in row.items():
+            widths[key] = max(widths[key], len(value))
+
+    if len(rows) == 0:
+        if show_inaccessible:
+            print("No coredumps were found. Maybe try again with '--show-inaccessible'")
+        else:
+            print("No coredumps were found.")
+        return 0
+
+    with pager_stream(use_pager) as output_file:
+        styler = TextStyler()
+
+        print(
+            styler.style(TextStyle.UNDERLINE,
+                f"{'TIME':<{widths['time']}} "
+                f"{'PID':>{widths['pid']}} "
+                f"{'UID':>{widths['uid']}} "
+                f"{'GID':>{widths['gid']}} "
+                f"{'SIG':<{widths['sig']}} "
+                f"{'COREFILE':<{widths['corefile']}} "
+                f"{'EXE':<{widths['exe']}} "
+                f"{'SIZE':<{widths['size']}}"
+            ),
+            file=output_file
+        )
+
+        for r in rows:
+            corefile = r['corefile']
+            if corefile != "present":
+                corefile = styler.style(TextStyle.GRAY, corefile)
+            print(
+                f"{r['time']:<{widths['time']}} "
+                f"{r['pid']:>{widths['pid']}} "
+                f"{r['uid']:>{widths['uid']}} "
+                f"{r['gid']:>{widths['gid']}} "
+                f"{r['sig']:>{widths['sig']}} "
+                f"{corefile:<{widths['corefile']}} "
+                f"{r['exe']:<{widths['exe']}} "
+                f"{r['size']:>{widths['size']}}",
+                file=output_file
+            )
+
+    return 0
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=
-        "Debug in gdb an application that crashed inside flatpak."
-        " It uses (and thus requires) coredumpctl to retrieve the coredump file.")
-    parser.add_argument("-b", "--build-directory", default=None,
-                        help="The build directory to use. It allows you to retrieve a coredump"
-                        " for applications being built")
-    parser.add_argument("--extra-flatpak-args", default="", metavar="ARGS",
-                        help="Extra argument to pass to flatpak")
-    parser.add_argument("app", nargs="?",
-                        help="The flatpak application to use. eg. `org.gnome.Epiphany//3.28`")
-    parser.add_argument("-m", "--coredumpctl-matches", default="", metavar="MATCHES",
-                        help="Coredumpctl matches, see `man coredumpctl` for more information")
-    parser.add_argument("--gdb-arguments", default="", metavar="ARGS",
-                        help="Arguments to pass to gdb")
+        "Inspect and debug application coredumps from Flatpaks. "
+        "Requires coredumpctl to retrieve crash dumps.")
+    subparsers = parser.add_subparsers(dest="command")
+
+    debug_parser = subparsers.add_parser("debug", help="Debug coredump inside a flatpak",
+                                         description="Debug in gdb an application that crashed inside a flatpak")
+    debug_parser.add_argument("-b", "--build-directory", default=None,
+                              help="The build directory to use. It allows you to retrieve a coredump"
+                              " for applications being built")
+    debug_parser.add_argument("--extra-flatpak-args", default="", metavar="ARGS",
+                              help="Extra argument to pass to flatpak")
+    debug_parser.add_argument("app", nargs="?",
+                              help="The flatpak application to use. eg. `org.gnome.Epiphany//3.28`")
+    debug_parser.add_argument("-m", "--coredumpctl-matches", default="", metavar="MATCHES",
+                              help="Coredumpctl matches, see `man coredumpctl` for more information")
+    debug_parser.add_argument("--gdb-arguments", default="", metavar="ARGS",
+                              help="Arguments to pass to gdb")
+
+    list_parser = subparsers.add_parser("list", help="List available coredumps",
+                                        description="List all coredumps from crashes that occurred inside flatpaks")
+    list_parser.add_argument("--show-inaccessible", action="store_true",
+                             help="List coredumps that are missing or inaccessible")
+    list_parser.add_argument("-r", "--reverse", action="store_true",
+                             help="Show the newest entries first")
+    list_parser.add_argument("--no-pager", action="store_false", dest="use_pager",
+                             help="Don't pipe output to a pager")
+    list_parser.add_argument("matches", nargs="*",
+                             help="Coredumpctl matches, see `man coredumpctl` for more information")
 
     args = parser.parse_args()
-    try:
-        validated_args = CoreDumperArgs(args)
-    except ValueError as e:
-        print(e, file=sys.stderr)
-        parser.print_help(sys.stderr)
-        sys.exit(1)
+    match args.command:
+        case "debug":
+            try:
+                validated_args = DebugDumpArgs(args)
+            except ValueError as e:
+                print(e, file=sys.stderr)
+                debug_parser.print_help(sys.stderr)
+                sys.exit(1)
+            exit_code = debug_dump(validated_args)
+        case "list":
+            exit_code = list_dumps(
+                args.show_inaccessible,
+                args.use_pager,
+                args.reverse,
+                args.matches
+            )
+        case _:
+            parser.print_help(sys.stderr)
+            sys.exit(1)
 
-    exit_code = run(validated_args)
     sys.exit(exit_code)
