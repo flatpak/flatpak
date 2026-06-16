@@ -59,12 +59,18 @@ demarshal (JsonNode            *parent_node,
   JsonObject *parent_object;
   JsonNode *node;
 
+  /* We treat <property>: null the same as missing. While you could
+   * have JSON data structures where the distinction is significant, we
+   * don't need to handle any such.
+   */
+
   if (type != FLATPAK_JSON_PROP_TYPE_PARENT)
     {
       parent_object = json_node_get_object (parent_node);
       node = json_object_get_member (parent_object, name);
 
-      if (node == NULL && (flags & FLATPAK_JSON_PROP_FLAGS_MANDATORY) != 0)
+      if ((node == NULL || JSON_NODE_TYPE (node) == JSON_NODE_NULL)
+          && (flags & FLATPAK_JSON_PROP_FLAGS_MANDATORY) != 0)
         {
           g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
                        "No value for mandatory property %s", name);

@@ -415,6 +415,7 @@ flatpak_oci_signatures_verify (FlatpakOciSignatures *self,
     {
       g_autoptr(FlatpakOciSignature) signature = NULL;
       g_autoptr(GError) local_error = NULL;
+      g_autofree char *stripped_reference = NULL;
 
       signature = flatpak_oci_verify_signature (repo, remote_name,
                                                 g_ptr_array_index (self->signatures, i),
@@ -439,19 +440,17 @@ flatpak_oci_signatures_verify (FlatpakOciSignatures *self,
           continue;
         }
 
-      if (signature->critical.identity.reference != NULL)
+      /* checked during demarshaling via mandatory properties */
+      g_assert (signature->critical.identity.reference != NULL);
+
+      stripped_reference = reference_strip_tag_and_digest (signature->critical.identity.reference);
+
+      if (g_strcmp0 (expected_identity, stripped_reference) != 0)
         {
-          g_autofree char *stripped = NULL;
-
-          stripped = reference_strip_tag_and_digest (signature->critical.identity.reference);
-
-          if (g_strcmp0 (expected_identity, stripped) != 0)
-            {
-              g_info ("Identity in signature (%s) does not match %s",
-                      signature->critical.identity.reference,
-                      expected_identity);
-              continue;
-            }
+          g_info ("Identity in signature (%s) does not match %s",
+                  signature->critical.identity.reference,
+                  expected_identity);
+          continue;
         }
 
       g_info ("%s: found valid signature for %s@%s",
