@@ -50,11 +50,6 @@ class DebugDumpArgs:
         self.gdb_arguments: str = ns.gdb_arguments
 
 def debug_dump(args: DebugDumpArgs) -> int:
-    if not shutil.which("coredumpctl"):
-        print("'coredumpctl' not present on the system, can't run.",
-              file=sys.stderr)
-        return 1
-
     match args.target:
         case DebugDumpArgs.AppId(app_id):
             flatpak_subcommand = "run"
@@ -271,6 +266,11 @@ def list_dumps(show_inaccessible: bool, use_pager: bool, reverse: bool, matches:
     return 0
 
 if __name__ == "__main__":
+    if not shutil.which("coredumpctl"):
+        print("'coredumpctl' is required but could not be found in PATH",
+              file=sys.stderr)
+        sys.exit(1)
+
     parser = argparse.ArgumentParser(description=
         "Inspect and debug application coredumps from Flatpaks. "
         "Requires coredumpctl to retrieve crash dumps.")
