@@ -761,30 +761,35 @@ flatpak_ensure_data_dir (GFile        *app_id_dir,
                          GCancellable *cancellable,
                          GError      **error)
 {
-  g_autoptr(GFile) data_dir = g_file_get_child (app_id_dir, "data");
-  g_autoptr(GFile) cache_dir = g_file_get_child (app_id_dir, "cache");
-  g_autoptr(GFile) fontconfig_cache_dir = g_file_get_child (cache_dir, "fontconfig");
-  g_autoptr(GFile) tmp_dir = g_file_get_child (cache_dir, "tmp");
-  g_autoptr(GFile) config_dir = g_file_get_child (app_id_dir, "config");
-  g_autoptr(GFile) state_dir = g_file_get_child (app_id_dir, ".local/state");
+  glnx_autofd int app_id_dir_fd = -1;
+  static const char *const subdirs[] = {
+    "data",
+    "cache",
+    "cache/fontconfig",
+    "cache/tmp",
+    "config",
+    ".local/state",
+  };
 
-  if (!flatpak_mkdir_p (data_dir, cancellable, error))
+  app_id_dir_fd = glnx_chase_and_mkdirat (AT_FDCWD,
+                                          flatpak_file_get_path_cached (app_id_dir),
+                                          GLNX_CHASE_DEFAULT,
+                                          0755,
+                                          error);
+  if (app_id_dir_fd < 0)
     return FALSE;
 
-  if (!flatpak_mkdir_p (cache_dir, cancellable, error))
-    return FALSE;
+  for (size_t i = 0; i < G_N_ELEMENTS (subdirs); i++)
+    {
+      glnx_autofd int fd = -1;
 
-  if (!flatpak_mkdir_p (fontconfig_cache_dir, cancellable, error))
-    return FALSE;
-
-  if (!flatpak_mkdir_p (tmp_dir, cancellable, error))
-    return FALSE;
-
-  if (!flatpak_mkdir_p (config_dir, cancellable, error))
-    return FALSE;
-
-  if (!flatpak_mkdir_p (state_dir, cancellable, error))
-    return FALSE;
+      fd = glnx_chase_and_mkdirat (app_id_dir_fd, subdirs[i],
+                                   GLNX_CHASE_RESOLVE_BENEATH,
+                                   0755,
+                                   error);
+      if (fd < 0)
+        return FALSE;
+    }
 
   return TRUE;
 }
@@ -2441,18 +2446,39 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
 
   if (app_id_dir != NULL)
     {
-      g_autoptr(GFile) app_cache_dir = g_file_get_child (app_id_dir, "cache");
-      g_autoptr(GFile) app_tmp_dir = g_file_get_child (app_cache_dir, "tmp");
-      g_autoptr(GFile) app_data_dir = g_file_get_child (app_id_dir, "data");
-      g_autoptr(GFile) app_config_dir = g_file_get_child (app_id_dir, "config");
+      glnx_autofd int app_id_dir_fd = -1;
+      static const struct
+        {
+          const char *src;
+          const char *dst;
+        }
+      mounts[] = {
+        { "cache", "/var/cache" },
+        { "data", "/var/data" },
+        { "config", "/var/config" },
+        { "cache/tmp", "/var/tmp" },
+      };
 
-      flatpak_bwrap_add_args (bwrap,
-                              /* These are nice to have as a fixed path */
-                              "--bind", flatpak_file_get_path_cached (app_cache_dir), "/var/cache",
-                              "--bind", flatpak_file_get_path_cached (app_data_dir), "/var/data",
-                              "--bind", flatpak_file_get_path_cached (app_config_dir), "/var/config",
-                              "--bind", flatpak_file_get_path_cached (app_tmp_dir), "/var/tmp",
-                              NULL);
+      app_id_dir_fd = glnx_chaseat (AT_FDCWD,
+                                    flatpak_file_get_path_cached (app_id_dir),
+                                    GLNX_CHASE_MUST_BE_DIRECTORY,
+                                    error);
+      if (app_id_dir_fd < 0)
+        return FALSE;
+
+      for (i = 0; i < G_N_ELEMENTS (mounts); i++)
+        {
+          glnx_autofd int fd = -1;
+
+          fd = glnx_chase_and_mkdirat (app_id_dir_fd, mounts[i].src,
+                                       GLNX_CHASE_RESOLVE_BENEATH,
+                                       0755, error);
+          if (fd < 0)
+            return FALSE;
+
+          flatpak_bwrap_add_args_data_fd (bwrap, "--bind-fd",
+                                          g_steal_fd (&fd), mounts[i].dst);
+        }
     }
 
   flatpak_run_setup_usr_links (bwrap, runtime_fd, NULL);
