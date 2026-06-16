@@ -37,7 +37,7 @@ class CoreDumper():
         if not shutil.which("coredumpctl"):
             print("'coredumpctl' not present on the system, can't run.",
                   file=sys.stderr)
-            sys.exit(1)
+            return 1
 
         # We need access to the host from the sandbox to run.
         flatpak_command = ["flatpak", "build" if self.build_directory else "run", "--filesystem=home",
@@ -58,14 +58,14 @@ class CoreDumper():
                 if dumpres.stderr:
                     print(f"Reason:\n{dumpres.stderr}", file=sys.stderr)
 
-                sys.exit(dumpres.returncode)
+                return dumpres.returncode
 
             matches = re.findall(r".*Executable: (.*)", dumpres.stderr)
             if len(matches) != 1:
                 print(f"Could not determine executable from coredumpctl output "
                       f"(found {len(matches)} 'Executable:' line(s)).",
                       file=sys.stderr)
-                sys.exit(1)
+                return 1
             executable = matches[0]
             if not executable.startswith(("/newroot/", "/app/")):
                 print(f"Executable {executable} doesn't seem to be a flatpaked application.",
@@ -75,7 +75,7 @@ class CoreDumper():
             flatpak_command.extend(shlex.split(self.gdb_arguments))
 
             print(f"Running: `{shlex.join(flatpak_command)}`")
-            sys.exit(subprocess.run(flatpak_command).returncode)
+            return subprocess.run(flatpak_command).returncode
 
 
 if __name__ == "__main__":
@@ -100,4 +100,5 @@ if __name__ == "__main__":
         parser.print_help(sys.stderr)
         sys.exit(1)
 
-    coredumper.run()
+    exit_code = coredumper.run()
+    sys.exit(exit_code)
