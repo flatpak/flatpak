@@ -88,9 +88,9 @@ flatpak_oci_descriptor_free (FlatpakOciDescriptor *self)
 }
 
 static FlatpakJsonProp flatpak_oci_descriptor_props[] = {
-  FLATPAK_JSON_STRING_PROP (FlatpakOciDescriptor, mediatype, "mediaType"),
-  FLATPAK_JSON_STRING_PROP (FlatpakOciDescriptor, digest, "digest"),
-  FLATPAK_JSON_INT64_PROP (FlatpakOciDescriptor, size, "size"),
+  FLATPAK_JSON_MANDATORY_STRING_PROP (FlatpakOciDescriptor, mediatype, "mediaType"),
+  FLATPAK_JSON_MANDATORY_STRING_PROP (FlatpakOciDescriptor, digest, "digest"),
+  FLATPAK_JSON_MANDATORY_INT64_PROP (FlatpakOciDescriptor, size, "size"),
   FLATPAK_JSON_STRV_PROP (FlatpakOciDescriptor, urls, "urls"),
   FLATPAK_JSON_STRMAP_PROP (FlatpakOciDescriptor, annotations, "annotations"),
   FLATPAK_JSON_LAST_PROP
@@ -127,6 +127,10 @@ flatpak_oci_manifest_descriptor_free (FlatpakOciManifestDescriptor *self)
   g_free (self);
 }
 
+/* Note that according to the OCI image spec, architecture and os are mandatory
+ * elements of the `platform` object - but the platform object is itself optional,
+ * so we leave them marked optional here to avoid confusion.
+ */
 static FlatpakJsonProp flatpak_oci_manifest_platform_props[] = {
   FLATPAK_JSON_STRING_PROP (FlatpakOciManifestPlatform, architecture, "architecture"),
   FLATPAK_JSON_STRING_PROP (FlatpakOciManifestPlatform, os, "os"),
@@ -276,8 +280,11 @@ flatpak_oci_manifest_class_init (FlatpakOciManifestClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   FlatpakJsonClass *json_class = FLATPAK_JSON_CLASS (klass);
   static FlatpakJsonProp props[] = {
-    FLATPAK_JSON_STRUCT_PROP (FlatpakOciManifest, config, "config", flatpak_oci_descriptor_props),
-    FLATPAK_JSON_STRUCTV_PROP (FlatpakOciManifest, layers, "layers", flatpak_oci_descriptor_props),
+    FLATPAK_JSON_MANDATORY_STRUCT_PROP (FlatpakOciManifest, config, "config", flatpak_oci_descriptor_props),
+    /* Not marked as REQUIRED in the OCI spec, but also not marked OPTIONAL. A manifest
+     * without layers, is in any case, useless to us.
+     */
+    FLATPAK_JSON_MANDATORY_STRUCTV_PROP (FlatpakOciManifest, layers, "layers", flatpak_oci_descriptor_props),
     FLATPAK_JSON_STRMAP_PROP (FlatpakOciManifest, annotations, "annotations"),
     FLATPAK_JSON_LAST_PROP
   };
@@ -433,7 +440,7 @@ flatpak_oci_index_class_init (FlatpakOciIndexClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   FlatpakJsonClass *json_class = FLATPAK_JSON_CLASS (klass);
   static FlatpakJsonProp props[] = {
-    FLATPAK_JSON_STRUCTV_PROP (FlatpakOciIndex, manifests, "manifests", flatpak_oci_manifest_descriptor_props),
+    FLATPAK_JSON_MANDATORY_STRUCTV_PROP (FlatpakOciIndex, manifests, "manifests", flatpak_oci_manifest_descriptor_props),
     FLATPAK_JSON_STRMAP_PROP (FlatpakOciIndex, annotations, "annotations"),
     FLATPAK_JSON_LAST_PROP
   };
