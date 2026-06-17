@@ -396,6 +396,7 @@ tests = {
     'system,http',
     'system,https',
   ]},
+  'oci-auth': {'wrap': ['user', 'system']},
   'update-remote-configuration': {'wrap': ['newsummary', 'oldsummary']},
   'override': {},
   'update-portal': {'wrap': ['user', 'system']},
@@ -410,6 +411,7 @@ tests = {
   'preinstall': {},
   'run-custom': {'wrap': ['user', 'system']},
   'upgrade-from-header': {'wrap': ['user', 'system', 'system-norevokefs']},
+  'metainfo-export': {},
 }
 
 wrapped_tests = []
