@@ -939,10 +939,10 @@ flatpak_str_is_alphanumeric (const char *arg)
 }
 
 /* This atomically replaces a symlink with a new value, removing the
- * existing symlink target, if it exstis and is different from
+ * existing symlink target, if it exists and is different from
  * @target. This is atomic in the sense that we're guaranteed to
  * remove any existing symlink target (once), independent of how many
- * processes do the same operation in parallele. However, it is still
+ * processes do the same operation in parallel. However, it is still
  * possible that we remove the old and then fail to create the new
  * symlink for some reason, ending up with neither the old or the new
  * target. That is fine if the reason for the symlink is keeping a
@@ -994,7 +994,7 @@ flatpak_switch_symlink_and_remove (const char *symlink_path,
           if (old_target == NULL)
             return FALSE;
 
-          /* Don't remove old file if its the same as the new one */
+          /* Don't remove old file if it's the same as the new one */
           if (strcmp (old_target, target) != 0)
             {
               if (flatpak_str_is_alphanumeric (old_target))
@@ -1014,7 +1014,7 @@ flatpak_switch_symlink_and_remove (const char *symlink_path,
         {
           glnx_set_error_from_errno (error);
           unlink (tmp_path);
-          return -1;
+          return FALSE;
         }
       unlink (tmp_path);
 
