@@ -23,6 +23,7 @@
 #include "libglnx-testlib.h"
 
 #include <errno.h>
+#include <fcntl.h>
 
 #include <glib/gstdio.h>
 
@@ -71,4 +72,22 @@ _glnx_test_auto_temp_dir_leave (_GLnxTestAutoTempDir *dir)
 
   g_free (dir->old_cwd);
   g_free (dir);
+}
+
+void
+_glnx_test_assert_fd_was_closed (int fd)
+{
+  /* We can't tell a fd was really closed without behaving as though it
+   * was still valid */
+  if (g_test_undefined ())
+    {
+      int result;
+      int errsv;
+
+      errno = 0;
+      result = fcntl (fd, F_GETFD, 0);
+      errsv = errno;
+      g_assert_cmpint (result, <, 0);
+      g_assert_cmpint (errsv, ==, EBADF);
+    }
 }
