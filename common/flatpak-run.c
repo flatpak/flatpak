@@ -2826,33 +2826,72 @@ regenerate_ld_cache (GPtrArray    *base_argv_array,
 {
   g_autoptr(FlatpakBwrap) bwrap = NULL;
   g_autoptr(GArray) combined_fd_array = NULL;
-  g_autoptr(GFile) ld_so_cache = NULL;
-  g_autoptr(GFile) ld_so_cache_tmp = NULL;
   g_autofree char *sandbox_cache_path = NULL;
   g_autofree char *tmp_basename = NULL;
   g_auto(GStrv) minimal_envp = NULL;
   g_autofree char *commandline = NULL;
   int exit_status;
   glnx_autofd int ld_so_fd = -1;
-  g_autoptr(GFile) ld_so_dir = NULL;
+  glnx_autofd int ld_so_dir_fd = -1;
+  g_autofree char *ld_so_dir_path = NULL;
 
   if (app_id_dir)
-    ld_so_dir = g_file_get_child (app_id_dir, ".ld.so");
+    {
+      glnx_autofd int app_id_dir_fd = -1;
+
+      app_id_dir_fd = glnx_chase_and_mkdirat (AT_FDCWD,
+                                              flatpak_file_get_path_cached (app_id_dir),
+                                              GLNX_CHASE_DEFAULT,
+                                              0700, error);
+      if (app_id_dir_fd < 0)
+        {
+          g_prefix_error (error, "cannot open %s: ",
+                          flatpak_file_get_path_cached (app_id_dir));
+          return -1;
+        }
+
+      ld_so_dir_fd = glnx_chase_and_mkdirat (app_id_dir_fd, ".ld.so",
+                                             GLNX_CHASE_RESOLVE_NO_SYMLINKS,
+                                             0755, error);
+
+      ld_so_dir_path = g_build_filename (flatpak_file_get_path_cached (app_id_dir),
+                                         ".ld.so",
+                                         NULL);
+    }
   else
     {
-      g_autoptr(GFile) base_dir = g_file_new_for_path (g_get_user_cache_dir ());
-      ld_so_dir = g_file_resolve_relative_path (base_dir, "flatpak/ld.so");
+      glnx_autofd int cache_dir_fd = -1;
+
+      cache_dir_fd = glnx_chase_and_mkdirat (AT_FDCWD,
+                                             g_get_user_cache_dir (),
+                                             GLNX_CHASE_DEFAULT,
+                                             0700, error);
+      if (cache_dir_fd < 0)
+        {
+          g_prefix_error (error, "cannot open %s: ",
+                          g_get_user_cache_dir ());
+          return -1;
+        }
+
+      ld_so_dir_fd = glnx_chase_and_mkdirat (cache_dir_fd, "flatpak/ld.so",
+                                             GLNX_CHASE_RESOLVE_NO_SYMLINKS,
+                                             0755, error);
+
+      ld_so_dir_path = g_build_filename (g_get_user_cache_dir (),
+                                         "flatpak/ld.so",
+                                         NULL);
     }
 
-  ld_so_cache = g_file_get_child (ld_so_dir, checksum);
-  ld_so_fd = open (flatpak_file_get_path_cached (ld_so_cache), O_RDONLY);
-  if (ld_so_fd >= 0)
+  if (ld_so_dir_fd < 0)
+    {
+      g_prefix_error (error, "cannot open %s: ", ld_so_dir_path);
+      return -1;
+    }
+
+  if (glnx_openat_rdonly (ld_so_dir_fd, checksum, FALSE, &ld_so_fd, NULL))
     return g_steal_fd (&ld_so_fd);
 
-  g_info ("Regenerating ld.so.cache %s", flatpak_file_get_path_cached (ld_so_cache));
-
-  if (!flatpak_mkdir_p (ld_so_dir, cancellable, error))
-    return FALSE;
+  g_info ("Regenerating ld.so.cache %s/%s", ld_so_dir_path, checksum);
 
   minimal_envp = flatpak_run_get_minimal_env (FALSE, FALSE);
   bwrap = flatpak_bwrap_new (minimal_envp);
@@ -2875,7 +2914,6 @@ regenerate_ld_cache (GPtrArray    *base_argv_array,
   glnx_gen_temp_name (tmp_basename);
 
   sandbox_cache_path = g_build_filename ("/run/ld-so-cache-dir", tmp_basename, NULL);
-  ld_so_cache_tmp = g_file_get_child (ld_so_dir, tmp_basename);
 
   flatpak_bwrap_add_args (bwrap,
                           "--unshare-pid",
@@ -2883,8 +2921,13 @@ regenerate_ld_cache (GPtrArray    *base_argv_array,
                           "--unshare-net",
                           "--proc", "/proc",
                           "--dev", "/dev",
-                          "--bind", flatpak_file_get_path_cached (ld_so_dir), "/run/ld-so-cache-dir",
                           NULL);
+
+  if (!flatpak_bwrap_add_args_data_fd_dup (bwrap, "--bind-fd",
+                                           ld_so_dir_fd, "/run/ld-so-cache-dir",
+                                           error))
+    return -1;
+
   flatpak_bwrap_sort_envp (bwrap);
   flatpak_bwrap_envp_to_args (bwrap);
 
@@ -2922,8 +2965,7 @@ regenerate_ld_cache (GPtrArray    *base_argv_array,
       return -1;
     }
 
-  ld_so_fd = open (flatpak_file_get_path_cached (ld_so_cache_tmp), O_RDONLY);
-  if (ld_so_fd < 0)
+  if (!glnx_openat_rdonly (ld_so_dir_fd, tmp_basename, FALSE, &ld_so_fd, NULL))
     {
       flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Can't open generated ld.so.cache"));
       return -1;
@@ -2932,26 +2974,18 @@ regenerate_ld_cache (GPtrArray    *base_argv_array,
   if (app_id_dir == NULL)
     {
       /* For runs without an app id dir we always regenerate the ld.so.cache */
-      unlink (flatpak_file_get_path_cached (ld_so_cache_tmp));
+      unlinkat (ld_so_dir_fd, tmp_basename, 0);
     }
   else
     {
-      glnx_autofd int ld_so_dir_fd = -1;
-
       /* For app-dirs we keep one checksum alive, by pointing the active symlink to it */
 
       /* Rename to known name, possibly overwriting existing ref if race */
-      if (rename (flatpak_file_get_path_cached (ld_so_cache_tmp), flatpak_file_get_path_cached (ld_so_cache)) == -1)
+      if (renameat (ld_so_dir_fd, tmp_basename, ld_so_dir_fd, checksum) == -1)
         {
           glnx_set_error_from_errno (error);
           return -1;
         }
-
-      if (!glnx_opendirat (AT_FDCWD,
-                           flatpak_file_get_path_cached (ld_so_dir),
-                           FALSE, &ld_so_dir_fd,
-                           error))
-        return -1;
 
       if (!flatpak_switch_symlink_and_remove (ld_so_dir_fd, "active",
                                               checksum, error))
