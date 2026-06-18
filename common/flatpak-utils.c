@@ -938,34 +938,38 @@ flatpak_str_is_alphanumeric (const char *arg)
   return TRUE;
 }
 
-/* This atomically replaces a symlink with a new value, removing the
- * existing symlink target, if it exists and is different from
- * @target. This is atomic in the sense that we're guaranteed to
- * remove any existing symlink target (once), independent of how many
- * processes do the same operation in parallel. However, it is still
- * possible that we remove the old and then fail to create the new
- * symlink for some reason, ending up with neither the old or the new
- * target. That is fine if the reason for the symlink is keeping a
- * cache though.
- * The target shall only be a file in the same directory as the symlink, and
- * shall only contain the characters a-zA-Z0-9. This is so that the target of
- * the symlink that gets removed is in the same directory as the link.
+/* Atomically replace the @symlink_name symlink in @dir_fd with one
+ * pointing to @target, removing the previous target file (if it
+ * exists and differs from @target).
+ *
+ * This is atomic in the sense that we're guaranteed to remove any
+ * existing symlink target (once), independent of how many processes
+ * do the same operation in parallel. However, it is still possible
+ * that we remove the old and then fail to create the new symlink for
+ * some reason, ending up with neither the old or the new target.
+ * That is fine if the reason for the symlink is keeping a cache
+ * though.
+ *
+ * All filesystem operations go through @dir_fd so the caller can
+ * guarantee the directory identity even if the path to it is
+ * attacker-controlled.
+ *
+ * @target shall only contain the characters a-zA-Z0-9 so that the
+ * old target file to be removed is always in the same directory.
  */
 gboolean
-flatpak_switch_symlink_and_remove (const char *symlink_path,
+flatpak_switch_symlink_and_remove (int         dir_fd,
+                                   const char *symlink_name,
                                    const char *target,
                                    GError    **error)
 {
-  g_autofree char *symlink_dir = g_path_get_dirname (symlink_path);
-  int try;
-
-  for (try = 0; try < 100; try++)
+  for (size_t try = 0; try < 100; try++)
     {
-      g_autofree char *tmp_path = NULL;
-      int fd;
+      g_autofree char *tmp_name = NULL;
+      glnx_autofd int fd = -1;
 
       /* Try to atomically create the symlink */
-      if (TEMP_FAILURE_RETRY (symlink (target, symlink_path)) == 0)
+      if (TEMP_FAILURE_RETRY (symlinkat (target, dir_fd, symlink_name)) == 0)
         return TRUE;
 
       if (errno != EEXIST)
@@ -975,22 +979,32 @@ flatpak_switch_symlink_and_remove (const char *symlink_path,
           return FALSE;
         }
 
-      /* The symlink existed, move it to a temporary name atomically, and remove target
-         if that succeeded. */
-      tmp_path = g_build_filename (symlink_dir, ".switched-symlink-XXXXXX", NULL);
+      /* The symlink existed, move it to a temporary name atomically,
+       * and remove its target if that succeeded.
+       * This generated filename doesn't need to be securely unique:
+       * we're only protecting against accidental collisions if two
+       * processes try to regenerate ld.so.cache at the same time. */
+      tmp_name = g_strdup_printf (".switched-symlink-%08X", g_random_int ());
 
-      fd = g_mkstemp_full (tmp_path, O_RDWR, 0644);
+      fd = openat (dir_fd, tmp_name,
+                   O_CREAT | O_WRONLY | O_EXCL | O_CLOEXEC | O_NOFOLLOW, 0644);
       if (fd == -1)
         {
+          if (errno == EEXIST)
+            continue;
+
           glnx_set_error_from_errno (error);
           return FALSE;
         }
-      close (fd);
+      g_clear_fd (&fd, NULL);
 
-      if (TEMP_FAILURE_RETRY (rename (symlink_path, tmp_path)) == 0)
+      if (TEMP_FAILURE_RETRY (renameat (dir_fd, symlink_name,
+                                        dir_fd, tmp_name)) == 0)
         {
           /* The move succeeded, now we can remove the old target */
-          g_autofree char *old_target = flatpak_readlink (tmp_path, error);
+          g_autofree char *old_target = NULL;
+
+          old_target = glnx_readlinkat_malloc (dir_fd, tmp_name, NULL, error);
           if (old_target == NULL)
             return FALSE;
 
@@ -998,25 +1012,19 @@ flatpak_switch_symlink_and_remove (const char *symlink_path,
           if (strcmp (old_target, target) != 0)
             {
               if (flatpak_str_is_alphanumeric (old_target))
-                {
-                  g_autofree char *old_target_path = NULL;
-
-                  old_target_path = g_build_filename (symlink_dir, old_target, NULL);
-                  unlink (old_target_path);
-                }
+                unlinkat (dir_fd, old_target, 0);
               else
-                {
-                  g_warning ("Refusing to delete old link target %s", old_target);
-                }
+                g_warning ("Refusing to delete old link target %s", old_target);
             }
         }
       else if (errno != ENOENT)
         {
           glnx_set_error_from_errno (error);
-          unlink (tmp_path);
+          unlinkat (dir_fd, tmp_name, 0);
           return FALSE;
         }
-      unlink (tmp_path);
+
+      unlinkat (dir_fd, tmp_name, 0);
 
       /* An old target was removed, try again */
     }
