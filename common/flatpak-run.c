@@ -2933,7 +2933,7 @@ regenerate_ld_cache (GPtrArray    *base_argv_array,
     }
   else
     {
-      g_autoptr(GFile) active = g_file_get_child (ld_so_dir, "active");
+      glnx_autofd int ld_so_dir_fd = -1;
 
       /* For app-dirs we keep one checksum alive, by pointing the active symlink to it */
 
@@ -2944,7 +2944,13 @@ regenerate_ld_cache (GPtrArray    *base_argv_array,
           return -1;
         }
 
-      if (!flatpak_switch_symlink_and_remove (flatpak_file_get_path_cached (active),
+      if (!glnx_opendirat (AT_FDCWD,
+                           flatpak_file_get_path_cached (ld_so_dir),
+                           FALSE, &ld_so_dir_fd,
+                           error))
+        return -1;
+
+      if (!flatpak_switch_symlink_and_remove (ld_so_dir_fd, "active",
                                               checksum, error))
         return -1;
     }

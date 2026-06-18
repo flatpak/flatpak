@@ -161,7 +161,8 @@ flatpak_auto_lock_helper (GMutex *mutex)
   return mutex;
 }
 
-gboolean flatpak_switch_symlink_and_remove (const char *symlink_path,
+gboolean flatpak_switch_symlink_and_remove (int         dir_fd,
+                                            const char *symlink_name,
                                             const char *target,
                                             GError    **error);
 
