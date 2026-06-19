@@ -6990,7 +6990,6 @@ flatpak_dir_pull (FlatpakDir                           *self,
   g_autofree char *url = NULL;
   g_autoptr(GPtrArray) subdirs_arg = NULL;
   g_auto(GLnxLockFile) lock = { 0, };
-  g_autofree char *name = NULL;
   g_autofree char *current_checksum = NULL;
 
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
@@ -7125,15 +7124,7 @@ flatpak_dir_pull (FlatpakDir                           *self,
 
   ret = TRUE;
 
-  if (repo == self->repo)
-    name = flatpak_dir_get_name (self);
-  else
-    {
-      GFile *file = ostree_repo_get_path (repo);
-      name = g_file_get_path (file);
-    }
-
-  (flatpak_dir_log) (self, __FILE__, __LINE__, __FUNCTION__, name,
+  (flatpak_dir_log) (self, __FILE__, __LINE__, __FUNCTION__, NULL,
                      "pull", state->remote_name, ref, rev, current_checksum, NULL,
                      "Pulled %s from %s", ref, state->remote_name);
 
