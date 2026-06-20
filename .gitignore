@@ -73,6 +73,7 @@ revokefs-demo
 Flatpak-1.0.*
 libglnx-config.h
 /app/parse-datetime.c
+/common/known-syscall-names.h
 /doc/reference/gtkdoc-check.log
 /doc/reference/gtkdoc-check.test
 /doc/reference/gtkdoc-check.trs
