@@ -2239,6 +2239,71 @@ run_operation_last (FlatpakTransactionOperation *op)
 }
 
 static gboolean
+related_refs_contain (GPtrArray          *related,
+                      FlatpakDecomposed *ref)
+{
+  for (int i = 0; related != NULL && i < related->len; i++)
+    {
+      FlatpakRelated *rel = g_ptr_array_index (related, i);
+
+      if (flatpak_decomposed_equal (rel->ref, ref))
+        return TRUE;
+    }
+
+  return FALSE;
+}
+
+static gboolean
+related_refs_contain_installed_branch (FlatpakTransaction *self,
+                                       GPtrArray          *related,
+                                       FlatpakDecomposed *ref)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  g_autofree char *id = flatpak_decomposed_dup_id (ref);
+  g_autofree char *arch = flatpak_decomposed_dup_arch (ref);
+
+  for (int i = 0; related != NULL && i < related->len; i++)
+    {
+      FlatpakRelated *rel = g_ptr_array_index (related, i);
+      g_autofree char *rel_id = flatpak_decomposed_dup_id (rel->ref);
+      g_autofree char *rel_arch = flatpak_decomposed_dup_arch (rel->ref);
+      g_autoptr(GBytes) deploy_data = NULL;
+
+      if (g_strcmp0 (rel_id, id) != 0 ||
+          g_strcmp0 (rel_arch, arch) != 0)
+        continue;
+
+      deploy_data = flatpak_dir_get_deploy_data (priv->dir, rel->ref,
+                                                 FLATPAK_DEPLOY_VERSION_ANY,
+                                                 NULL, NULL);
+      if (deploy_data != NULL)
+        return TRUE;
+    }
+
+  return FALSE;
+}
+
+static void
+apply_extension_branch_following (FlatpakTransaction *self,
+                                  GPtrArray          *related,
+                                  GPtrArray          *old_related)
+{
+  for (int i = 0; related != NULL && i < related->len; i++)
+    {
+      FlatpakRelated *rel = g_ptr_array_index (related, i);
+
+      if (rel->download || !rel->can_follow_branch)
+        continue;
+
+      if (related_refs_contain (old_related, rel->ref))
+        continue;
+
+      if (related_refs_contain_installed_branch (self, old_related, rel->ref))
+        rel->download = TRUE;
+    }
+}
+
+static gboolean
 op_get_related (FlatpakTransaction           *self,
                 FlatpakTransactionOperation  *op,
                 GPtrArray                   **out_related,
@@ -2247,6 +2312,7 @@ op_get_related (FlatpakTransaction           *self,
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   g_autoptr(FlatpakRemoteState) state = NULL;
   g_autoptr(GPtrArray) related = NULL;
+  g_autoptr(GPtrArray) old_related = NULL;
   g_autoptr(GError) related_error = NULL;
 
   if (op->kind != FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
@@ -2270,6 +2336,25 @@ op_get_related (FlatpakTransaction           *self,
   else
     related = flatpak_dir_find_remote_related_for_metadata (priv->dir, state, op->ref,
                                                             op->resolved_metakey, NULL, &related_error);
+
+  if (related != NULL && op->resolved_old_metakey != NULL)
+    {
+      g_autoptr(GError) old_related_error = NULL;
+
+      if (transaction_is_local_only (self, op->kind))
+        old_related = flatpak_dir_find_local_related_for_metadata (priv->dir, op->ref,
+                                                                   NULL,
+                                                                   op->resolved_old_metakey,
+                                                                   NULL, &old_related_error);
+      else
+        old_related = flatpak_dir_find_remote_related_for_metadata (priv->dir, state, op->ref,
+                                                                    op->resolved_old_metakey, NULL, &old_related_error);
+
+      if (old_related_error != NULL)
+        g_message (_("Warning: Problem looking for old related refs: %s"), old_related_error->message);
+
+      apply_extension_branch_following (self, related, old_related);
+    }
 
   if (related_error != NULL)
     g_message (_("Warning: Problem looking for related refs: %s"), related_error->message);
