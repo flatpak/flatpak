@@ -7220,6 +7220,7 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
                                   const char          *remote_name,
                                   const char          *ref,
                                   const char         **subpaths,
+                                  FlatpakPullFlags     flags,
                                   FlatpakProgress     *progress,
                                   GCancellable        *cancellable,
                                   GError             **error)
@@ -7320,7 +7321,7 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
       old_timestamp = ostree_commit_get_timestamp (old_commit);
       new_timestamp = ostree_commit_get_timestamp (new_commit);
 
-      if (new_timestamp < old_timestamp)
+      if (new_timestamp < old_timestamp && !(flags & FLATPAK_PULL_FLAGS_ALLOW_DOWNGRADE))
         return flatpak_fail_error (error, FLATPAK_ERROR_DOWNGRADE, "Not allowed to downgrade %s (old_commit: %s/%" G_GINT64_FORMAT " new_commit: %s/%" G_GINT64_FORMAT ")",
                                    ref, current_checksum, old_timestamp, checksum, new_timestamp);
     }
@@ -11565,11 +11566,10 @@ flatpak_dir_update (FlatpakDir                           *self,
       gboolean gpg_verify;
       gboolean is_revokefs_pull = FALSE;
 
-      if (allow_downgrade)
-        return flatpak_fail_error (error, FLATPAK_ERROR_DOWNGRADE,
-                                   _("Can't update to a specific commit without root permissions"));
-
       helper_flags = FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE;
+
+      if (allow_downgrade)
+        helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_ALLOW_DOWNGRADE;
 
       if (!ostree_repo_remote_get_gpg_verify_summary (self->repo, state->remote_name,
                                                       &gpg_verify_summary, error))

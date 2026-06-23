@@ -368,6 +368,7 @@ handle_deploy (FlatpakSystemHelper   *object,
   gboolean reinstall;
   gboolean update_pinned;
   gboolean update_preinstalled;
+  gboolean allow_downgrade;
   g_autofree char *url = NULL;
   g_autoptr(OngoingPull) ongoing_pull = NULL;
   g_autofree gchar *src_dir = NULL;
@@ -444,6 +445,7 @@ handle_deploy (FlatpakSystemHelper   *object,
   reinstall = (arg_flags & FLATPAK_HELPER_DEPLOY_FLAGS_REINSTALL) != 0;
   update_pinned = (arg_flags & FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE_PINNED) != 0;
   update_preinstalled = (arg_flags & FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE_PREINSTALLED) != 0;
+  allow_downgrade = (arg_flags & FLATPAK_HELPER_DEPLOY_FLAGS_ALLOW_DOWNGRADE) != 0;
 
   deploy_dir = flatpak_dir_get_if_deployed (system, ref, NULL, NULL);
 
@@ -592,6 +594,7 @@ handle_deploy (FlatpakSystemHelper   *object,
                                              arg_origin,
                                              arg_ref,
                                              (const char **) arg_subpaths,
+                                             allow_downgrade ? FLATPAK_PULL_FLAGS_ALLOW_DOWNGRADE : FLATPAK_PULL_FLAGS_NONE,
                                              NULL, NULL, &error))
         {
           flatpak_invocation_return_error (invocation, error, "Error pulling from repo");
@@ -625,7 +628,8 @@ handle_deploy (FlatpakSystemHelper   *object,
         }
 
       if (!flatpak_dir_pull (system, state, arg_ref, NULL, (const char **) arg_subpaths, NULL, NULL, NULL, NULL, NULL,
-                             FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_UNTRUSTED, NULL,
+                             allow_downgrade ? FLATPAK_PULL_FLAGS_ALLOW_DOWNGRADE : FLATPAK_PULL_FLAGS_NONE,
+                             OSTREE_REPO_PULL_FLAGS_UNTRUSTED, NULL,
                              NULL, &error))
         {
           flatpak_invocation_return_error (invocation, error, "Error pulling from repo");
@@ -800,6 +804,7 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
                                              arg_origin,
                                              new_branch,
                                              NULL,
+                                             FLATPAK_PULL_FLAGS_NONE,
                                              NULL,
                                              NULL, &first_error))
         {
@@ -807,6 +812,7 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
                                                  arg_origin,
                                                  old_branch,
                                                  NULL,
+                                                 FLATPAK_PULL_FLAGS_NONE,
                                                  NULL,
                                                  NULL, &second_error))
             {
@@ -1945,9 +1951,19 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
           else
             {
               if (is_app)
-                action = "org.freedesktop.Flatpak.app-update";
+                {
+                  if ((flags & FLATPAK_HELPER_DEPLOY_FLAGS_ALLOW_DOWNGRADE) != 0)
+                    action = "org.freedesktop.Flatpak.app-downgrade";
+                  else
+                    action = "org.freedesktop.Flatpak.app-update";
+                }
               else
-                action = "org.freedesktop.Flatpak.runtime-update";
+                {
+                  if ((flags & FLATPAK_HELPER_DEPLOY_FLAGS_ALLOW_DOWNGRADE) != 0)
+                    action = "org.freedesktop.Flatpak.runtime-downgrade";
+                  else
+                    action = "org.freedesktop.Flatpak.runtime-update";
+                }
             }
         }
 
