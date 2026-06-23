@@ -41,7 +41,7 @@ jobs:
         # One of the tests wants this
         sudo mkdir /tmp/flatpak-com.example.App-OwnedByRoot
     - name: Check out flatpak
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         submodules: true
     - name: Create logs dir
@@ -73,7 +73,7 @@ jobs:
       if: failure() || cancelled()
       run: mv _build/meson-logs/* test-logs/ || true
     - name: Upload test logs
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       if: failure() || cancelled()
       with:
         name: test logs
@@ -100,7 +100,7 @@ jobs:
         # One of the tests wants this
         sudo mkdir /tmp/flatpak-com.example.App-OwnedByRoot
     - name: Check out flatpak
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         submodules: true
     - name: Create logs dir
@@ -132,7 +132,7 @@ jobs:
       if: failure() || cancelled()
       run: mv _build/meson-logs/* test-logs/ || true
     - name: Upload test logs
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       if: failure() || cancelled()
       with:
         name: test logs
@@ -153,7 +153,7 @@ jobs:
     steps:
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
+      uses: github/codeql-action/init@v4
       with:
         languages: ${{ matrix.language }}
         # If you wish to specify custom queries, you can do so here or in a config file.
@@ -171,7 +171,7 @@ jobs:
         libgirepository1.0-dev libappstream-dev libdconf-dev clang e2fslibs-dev meson socat libxau-dev libgdk-pixbuf2.0-dev \
         xmlto libc6-dev
     - name: Check out flatpak
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         submodules: true
     - name: Configure
@@ -187,9 +187,9 @@ jobs:
       # Can't use `meson compile` here because Ubuntu 20.04 is too old
       run: ninja -C _build
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3
+      uses: github/codeql-action/analyze@v4
     - name: Upload docs
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         if-no-files-found: error
         overwrite: true
@@ -214,7 +214,7 @@ jobs:
         libgirepository1.0-dev libappstream-dev libdconf-dev clang socat meson libdbus-1-dev \
         valgrind e2fslibs-dev meson libxau-dev libgdk-pixbuf2.0-dev libc6-dev
     - name: Check out flatpak
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         submodules: true
     - name: Create logs dir
@@ -240,7 +240,7 @@ jobs:
       if: failure() || cancelled()
       run: mv _build/tests/*.log test-logs/ || true
     - name: Upload test logs
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       if: failure() || cancelled()
       with:
         name: test logs

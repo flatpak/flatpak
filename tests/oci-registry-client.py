@@ -82,6 +82,19 @@ def run_delete_sig(args):
         sys.exit(1)
 
 
+def run_configure_auth(args):
+    params = {"token": args.token}
+    query = urllib.parse.urlencode(params)
+    conn = get_conn(args)
+    path = "/testing-auth/configure?{query}".format(query=query)
+    conn.request("POST", path)
+    response = conn.getresponse()
+    if response.status != 200:
+        print(response.read(), file=sys.stderr)
+        print("Failed: status={}".format(response.status), file=sys.stderr)
+        sys.exit(1)
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--url", required=True)
 parser.add_argument("--cacert")
@@ -113,6 +126,10 @@ delete_sig_parser = subparsers.add_parser("delete-signature")
 delete_sig_parser.add_argument("repo")
 delete_sig_parser.add_argument("digest")
 delete_sig_parser.set_defaults(func=run_delete_sig)
+
+configure_auth_parser = subparsers.add_parser("configure-auth")
+configure_auth_parser.add_argument("--token", required=True)
+configure_auth_parser.set_defaults(func=run_configure_auth)
 
 args = parser.parse_args()
 args.func(args)

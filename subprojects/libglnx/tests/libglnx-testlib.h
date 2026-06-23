@@ -1,7 +1,7 @@
 /* -*- mode: C; c-file-style: "gnu"; indent-tabs-mode: nil; -*-
  *
  * Copyright (C) 2017 Red Hat, Inc.
- * Copyright 2019 Collabora Ltd.
+ * Copyright 2019-2022 Collabora Ltd.
  * SPDX-License-Identifier: LGPL-2.0-or-later
  *
  * This library is free software; you can redistribute it and/or
@@ -23,6 +23,7 @@
 #pragma once
 
 #include <glib.h>
+#include <glib/gstdio.h>
 
 #include "glnx-backport-autoptr.h"
 
@@ -47,3 +48,5 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(_GLnxTestAutoTempDir, _glnx_test_auto_temp_dir_lea
 
 #define _GLNX_TEST_SCOPED_TEMP_DIR \
   G_GNUC_UNUSED g_autoptr(_GLnxTestAutoTempDir) temp_dir = _glnx_test_auto_temp_dir_enter ()
+
+void _glnx_test_assert_fd_was_closed (int fd);

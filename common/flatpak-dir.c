@@ -6926,7 +6926,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
 
   g_info ("Pulling OCI image %s", oci_digest);
 
-  checksum = flatpak_pull_from_oci (repo, image_source, NULL,
+  checksum = flatpak_pull_from_oci (repo, image_source, NULL, NULL,
                                     state->remote_name, ref, flatpak_flags, oci_pull_progress_cb, progress, cancellable, error);
 
   if (checksum == NULL)
@@ -8997,7 +8997,6 @@ flatpak_export_dir (GFile        *source,
     "share/krunner/dbusplugins",           "../../..",
     "share/mime/packages",                 "../../..",
     "share/metainfo",                      "../..",
-    "share/metainfo/releases",             "../../..",
     "bin",                                 "..",
   };
   int i;

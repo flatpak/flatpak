@@ -5,32 +5,39 @@
 
 __flatpak() {
     local IFS=$'\n'
-    local cur=`_get_cword :`
-    RES=($(flatpak complete "${COMP_LINE}" "${COMP_POINT}" "${cur}"))
+    local cur
+    local -a RES
+    cur=$(_get_cword :)
+    readarray -t RES < <(flatpak complete "${COMP_LINE}" "${COMP_POINT}" "${cur}")
 
     COMPREPLY=()
-    for i in "${!RES[@]}"; do
-        if [[ "${RES[$i]}" = "__FLATPAK_FILE" ]]; then
-            declare -a COMPGEN_OPTS=('-f')
-        elif [[ "${RES[$i]}" = "__FLATPAK_BUNDLE_FILE" ]]; then
-            declare -a COMPGEN_OPTS=('-f' '-X' '!*.flatpak')
-        elif [[ "${RES[$i]}" = "__FLATPAK_BUNDLE_OR_REF_FILE" ]]; then
-            declare -a COMPGEN_OPTS=('-f' '-X' '!*.flatpak@(|ref)')
-        elif [[ "${RES[$i]}" = "__FLATPAK_DIR" ]]; then
-            declare -a COMPGEN_OPTS=('-d')
+    local res
+    local -a COMPGEN_OPTS
+    local -a REPLIES
+    for res in "${RES[@]}"; do
+        if [[ $res == "__FLATPAK_FILE" ]]; then
+            COMPGEN_OPTS=('-f')
+        elif [[ $res == "__FLATPAK_BUNDLE_FILE" ]]; then
+            COMPGEN_OPTS=('-f' '-X' '!*.flatpak')
+        elif [[ $res == "__FLATPAK_BUNDLE_OR_REF_FILE" ]]; then
+            COMPGEN_OPTS=('-f' '-X' '!*.flatpak@(|ref)')
+        elif [[ $res == "__FLATPAK_DIR" ]]; then
+            COMPGEN_OPTS=('-d')
         else
-            declare -a COMPGEN_OPTS=()
+            COMPGEN_OPTS=()
         fi
 
         if [[ ${#COMPGEN_OPTS[@]} -ne 0 ]]; then
-            if [[ "${cur}" = "=" ]]; then
+            local CUR
+            if [[ $cur == "=" ]]; then
                 CUR=""
             else
-                CUR="${cur}"
+                CUR="$cur"
             fi
-            COMPREPLY=("${COMPREPLY[@]}" $(compgen ${COMPGEN_OPTS[@]} -- "${CUR}") )
+            readarray -t REPLIES < <(compgen "${COMPGEN_OPTS[@]}" -- "${CUR}")
+            COMPREPLY+=("${REPLIES[@]}")
         else
-            COMPREPLY=("${COMPREPLY[@]}" "${RES[$i]}")
+            COMPREPLY=("${COMPREPLY[@]}" "$res")
         fi
     done
 }

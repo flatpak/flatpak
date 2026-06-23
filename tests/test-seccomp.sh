@@ -6,6 +6,7 @@ set -euo pipefail
 
 . $(dirname $0)/libtest.sh
 
+skip_without_seccomp
 skip_without_bwrap
 
 echo "1..18"
