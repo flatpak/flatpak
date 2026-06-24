@@ -82,12 +82,28 @@ def run_delete_sig(args):
         sys.exit(1)
 
 
-def run_configure_auth(args):
+def run_set_auth(args):
     params = {"token": args.token}
+    if args.expire_on_path is not None:
+        params["expire-on-path"] = args.expire_on_path
+    if args.next_token is not None:
+        params["next-token"] = args.next_token
+    if args.token_update_file is not None:
+        params["token-update-file"] = args.token_update_file
     query = urllib.parse.urlencode(params)
     conn = get_conn(args)
-    path = "/testing-auth/configure?{query}".format(query=query)
+    path = "/testing-auth?{query}".format(query=query)
     conn.request("POST", path)
+    response = conn.getresponse()
+    if response.status != 200:
+        print(response.read(), file=sys.stderr)
+        print("Failed: status={}".format(response.status), file=sys.stderr)
+        sys.exit(1)
+
+
+def run_reset_auth(args):
+    conn = get_conn(args)
+    conn.request("DELETE", "/testing-auth")
     response = conn.getresponse()
     if response.status != 200:
         print(response.read(), file=sys.stderr)
@@ -127,9 +143,15 @@ delete_sig_parser.add_argument("repo")
 delete_sig_parser.add_argument("digest")
 delete_sig_parser.set_defaults(func=run_delete_sig)
 
-configure_auth_parser = subparsers.add_parser("configure-auth")
-configure_auth_parser.add_argument("--token", required=True)
-configure_auth_parser.set_defaults(func=run_configure_auth)
+set_auth_parser = subparsers.add_parser("set-auth")
+set_auth_parser.add_argument("--token", required=True)
+set_auth_parser.add_argument("--expire-on-path", default=None)
+set_auth_parser.add_argument("--next-token", default=None)
+set_auth_parser.add_argument("--token-update-file", default=None)
+set_auth_parser.set_defaults(func=run_set_auth)
+
+reset_auth_parser = subparsers.add_parser("reset-auth")
+reset_auth_parser.set_defaults(func=run_reset_auth)
 
 args = parser.parse_args()
 args.func(args)

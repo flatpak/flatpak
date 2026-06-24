@@ -180,13 +180,13 @@ flatpak_image_source_new_local (GFile        *file,
 }
 
 FlatpakImageSource *
-flatpak_image_source_new_remote (const char   *uri,
-                                 const char   *oci_repository,
-                                 const char   *digest,
-                                 const char   *token,
-                                 const char   *signature_lookaside,
-                                 GCancellable *cancellable,
-                                 GError      **error)
+flatpak_image_source_new_remote (const char           *uri,
+                                 const char           *oci_repository,
+                                 const char           *digest,
+                                 FlatpakTokenProvider *token_provider,
+                                 const char           *signature_lookaside,
+                                 GCancellable         *cancellable,
+                                 GError              **error)
 {
   g_autoptr(FlatpakOciRegistry) registry = NULL;
 
@@ -194,7 +194,11 @@ flatpak_image_source_new_remote (const char   *uri,
   if (!registry)
     return NULL;
 
-  flatpak_oci_registry_set_token (registry, token);
+  if (token_provider)
+    {
+      flatpak_oci_registry_set_token (registry, flatpak_token_provider_get_token (token_provider));
+      flatpak_oci_registry_set_token_provider (registry, token_provider);
+    }
   flatpak_oci_registry_set_signature_lookaside (registry, signature_lookaside);
 
   return flatpak_image_source_new (registry, oci_repository, digest, cancellable, error);
