@@ -257,9 +257,18 @@ test_full_context (void)
                         FLATPAK_METADATA_GROUP_ENVIRONMENT,
                         "LD_PRELOAD", "");
   g_key_file_set_value (keyfile,
+                        FLATPAK_METADATA_GROUP_EXPANDED_ENVIRONMENT,
+                        "HYPOTHETICAL_PATH_EXT", "$HYPOTHETICAL_PATH:/foo2:/bar2");
+  g_key_file_set_value (keyfile,
+                        FLATPAK_METADATA_GROUP_EXPANDED_ENVIRONMENT,
+                        "LD_PRELOAD", "$LD_PRELOAD:${HYPOTHETICAL_PATH}");
+  g_key_file_set_value (keyfile,
+                        FLATPAK_METADATA_GROUP_EXPANDED_ENVIRONMENT,
+                        "CLEAR_ME_EXP", "$PATH:$HOME/.local/bin");
+  g_key_file_set_value (keyfile,
                         FLATPAK_METADATA_GROUP_CONTEXT,
                         FLATPAK_METADATA_KEY_UNSET_ENVIRONMENT,
-                        "LD_PRELOAD;LD_AUDIT;");
+                        "LD_PRELOAD;LD_AUDIT;CLEAR_ME_EXP");
   g_key_file_set_value (keyfile,
                         FLATPAK_METADATA_GROUP_PREFIX_POLICY "MyPolicy",
                         "Colours", "blue;green;");
@@ -295,14 +304,25 @@ test_full_context (void)
                      FLATPAK_CONTEXT_FEATURE_CANBUS |
                      FLATPAK_CONTEXT_FEATURE_PER_APP_DEV_SHM));
 
-  g_assert_cmpuint (g_hash_table_size (context->env_vars), ==, 3);
+  g_assert_cmpuint (g_hash_table_size (context->env_vars), ==, 4);
+  // g_assert_cmpuint (g_hash_table_size (context->expanded_env_vars), ==, 4);
   g_assert_true (g_hash_table_contains (context->env_vars, "LD_AUDIT"));
   g_assert_null (g_hash_table_lookup (context->env_vars, "LD_AUDIT"));
   g_assert_true (g_hash_table_contains (context->env_vars, "LD_PRELOAD"));
   g_assert_null (g_hash_table_lookup (context->env_vars, "LD_PRELOAD"));
+  g_assert_true (g_hash_table_contains (context->env_vars, "CLEAR_ME_EXP"));
+  g_assert_null (g_hash_table_lookup (context->env_vars, "CLEAR_ME_EXP"));
   g_assert_true (g_hash_table_contains (context->env_vars, "HYPOTHETICAL_PATH"));
   g_assert_cmpstr (g_hash_table_lookup (context->env_vars, "HYPOTHETICAL_PATH"),
                    ==, "/foo:/bar");
+  g_assert_true (g_hash_table_contains (context->expanded_env_vars, "LD_PRELOAD"));
+  g_assert_null (g_hash_table_lookup (context->expanded_env_vars, "LD_PRELOAD"));
+  g_assert_true (g_hash_table_contains (context->expanded_env_vars, "HYPOTHETICAL_PATH_EXT"));
+  g_assert_cmpstr (g_hash_table_lookup (context->expanded_env_vars, "HYPOTHETICAL_PATH_EXT"),
+                   ==, "$HYPOTHETICAL_PATH:/foo2:/bar2");
+  g_assert_true (g_hash_table_contains (context->expanded_env_vars, "CLEAR_ME_EXP"));
+  g_assert_null (g_hash_table_lookup (context->expanded_env_vars, "CLEAR_ME_EXP"));
+  
 
   exports = flatpak_context_get_exports (context, "com.example.App");
   g_assert_nonnull (exports);
@@ -412,6 +432,7 @@ test_full_context (void)
   g_assert_nonnull (strv);
   qsort (strv, n, sizeof (char *), flatpak_strcmp0_ptr);
   i = 0;
+  g_assert_cmpstr (strv[i++], ==, "CLEAR_ME_EXP");
   g_assert_cmpstr (strv[i++], ==, "LD_AUDIT");
   g_assert_cmpstr (strv[i++], ==, "LD_PRELOAD");
   g_assert_cmpstr (strv[i], ==, NULL);
@@ -458,6 +479,7 @@ test_full_context (void)
   g_assert_nonnull (strv);
   qsort (strv, n, sizeof (char *), flatpak_strcmp0_ptr);
   i = 0;
+  g_assert_cmpstr (strv[i++], ==, "CLEAR_ME_EXP");
   g_assert_cmpstr (strv[i++], ==, "HYPOTHETICAL_PATH");
   g_assert_cmpstr (strv[i++], ==, "LD_AUDIT");
   g_assert_cmpstr (strv[i++], ==, "LD_PRELOAD");
@@ -465,6 +487,11 @@ test_full_context (void)
   g_assert_cmpuint (i, ==, n);
   g_clear_pointer (&strv, g_strfreev);
 
+  text = g_key_file_get_string (keyfile, FLATPAK_METADATA_GROUP_ENVIRONMENT,
+                                "CLEAR_ME_EXP", &error);
+  g_assert_no_error (error);
+  g_assert_cmpstr (text, ==, "");
+  g_clear_pointer (&text, g_free);
   text = g_key_file_get_string (keyfile, FLATPAK_METADATA_GROUP_ENVIRONMENT,
                                 "HYPOTHETICAL_PATH", &error);
   g_assert_no_error (error);
@@ -479,6 +506,23 @@ test_full_context (void)
                                 "LD_PRELOAD", &error);
   g_assert_no_error (error);
   g_assert_cmpstr (text, ==, "");
+  g_clear_pointer (&text, g_free);
+
+    strv = g_key_file_get_keys (keyfile, FLATPAK_METADATA_GROUP_EXPANDED_ENVIRONMENT,
+                              &n, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (strv);
+  qsort (strv, n, sizeof (char *), flatpak_strcmp0_ptr);
+  i = 0;
+  g_assert_cmpstr (strv[i++], ==, "HYPOTHETICAL_PATH_EXT");
+  g_assert_cmpstr (strv[i], ==, NULL);
+  g_assert_cmpuint (i, ==, n);
+  g_clear_pointer (&strv, g_strfreev);
+
+  text = g_key_file_get_string (keyfile, FLATPAK_METADATA_GROUP_EXPANDED_ENVIRONMENT,
+                                "HYPOTHETICAL_PATH_EXT", &error);
+  g_assert_no_error (error);
+  g_assert_cmpstr (text, ==, "$HYPOTHETICAL_PATH:/foo2:/bar2");
   g_clear_pointer (&text, g_free);
 
   strv = g_key_file_get_keys (keyfile, FLATPAK_METADATA_GROUP_PREFIX_POLICY "MyPolicy",

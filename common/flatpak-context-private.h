@@ -96,6 +96,7 @@ struct FlatpakContext
   GHashTable            *device_permissions;
   GHashTable            *features_permissions;
   GHashTable            *env_vars;
+  GHashTable            *expanded_env_vars;
   GHashTable            *persistent;
   GHashTable            *filesystems;
   GHashTable            *session_bus_policy;
@@ -189,6 +190,10 @@ gboolean flatpak_context_parse_env_block (FlatpakContext *context,
                                           const char *data,
                                           gsize length,
                                           GError **error);
+gboolean flatpak_context_parse_expanded_env_block (FlatpakContext *context,
+                                                   const char *data,
+                                                   gsize length,
+                                                   GError **error);
 gboolean flatpak_context_parse_env_fd (FlatpakContext *context,
                                        int fd,
                                        GError **error);
