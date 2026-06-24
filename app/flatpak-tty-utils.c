@@ -427,6 +427,9 @@ flatpak_set_tty_echo (gboolean echo)
   tcgetattr (STDIN_FILENO, &term);
   was = (term.c_lflag & ECHO) != 0;
 
+  if (was == echo)
+    return was;
+
   if (echo)
     term.c_lflag |= ECHO;
   else
