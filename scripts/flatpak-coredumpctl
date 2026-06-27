@@ -36,6 +36,11 @@ class DebugDumpArgs:
     class BuildDir:
         directory: str
 
+    target: AppId | BuildDir
+    coredumpctl_matches: str
+    extra_flatpak_args: str
+    gdb_arguments: str
+
     def __init__(self, ns: argparse.Namespace) -> None:
         if ns.app is None and ns.build_directory is None:
             raise ValueError("Either `--build-directory` or `APP` must be specified.")
@@ -45,9 +50,9 @@ class DebugDumpArgs:
             self.target = self.AppId(ns.app)
         else:
             self.target = self.BuildDir(ns.build_directory)
-        self.coredumpctl_matches: str = ns.coredumpctl_matches
-        self.extra_flatpak_args: str = ns.extra_flatpak_args
-        self.gdb_arguments: str = ns.gdb_arguments
+        self.coredumpctl_matches= ns.coredumpctl_matches
+        self.extra_flatpak_args = ns.extra_flatpak_args
+        self.gdb_arguments = ns.gdb_arguments
 
 def debug_dump(args: DebugDumpArgs) -> int:
     match args.target:
