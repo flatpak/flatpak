@@ -521,6 +521,7 @@ sockets=!x11;x11;if:x11:!has-wayland;
                                 <option>xdg-download</option>,
                                 <option>xdg-music</option>,
                                 <option>xdg-pictures</option>,
+                                <option>xdg-projects</option>,
                                 <option>xdg-public-share</option>,
                                 <option>xdg-videos</option>,
                                 <option>xdg-templates</option>
