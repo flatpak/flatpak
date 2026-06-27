@@ -265,11 +265,11 @@ def list_dumps(show_inaccessible: bool, use_pager: bool, reverse: bool, matches:
 
     return 0
 
-if __name__ == "__main__":
+def main() -> int:
     if not shutil.which("coredumpctl"):
         print("'coredumpctl' is required but could not be found in PATH",
               file=sys.stderr)
-        sys.exit(1)
+        return 1
 
     parser = argparse.ArgumentParser(description=
         "Inspect and debug application coredumps from Flatpaks. "
@@ -309,7 +309,7 @@ if __name__ == "__main__":
             except ValueError as e:
                 print(e, file=sys.stderr)
                 debug_parser.print_help(sys.stderr)
-                sys.exit(1)
+                return 1
             exit_code = debug_dump(validated_args)
         case "list":
             exit_code = list_dumps(
@@ -320,6 +320,9 @@ if __name__ == "__main__":
             )
         case _:
             parser.print_help(sys.stderr)
-            sys.exit(1)
+            return 1
 
-    sys.exit(exit_code)
+    return exit_code
+
+if __name__ == "__main__":
+    sys.exit(main())
