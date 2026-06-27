@@ -1637,6 +1637,16 @@ get_xdg_user_dir_from_string (const char  *filesystem,
         *dir = g_strdup (g_get_user_special_dir (G_USER_DIRECTORY_PICTURES));
       return TRUE;
     }
+#if GLIB_CHECK_VERSION (2, 90, 0)
+  if (strcmp (prefix, "xdg-projects") == 0)
+    {
+      if (config_key)
+        *config_key = "XDG_PROJECTS_DIR";
+      if (dir)
+        *dir = g_strdup (g_get_user_special_dir (G_USER_DIRECTORY_PROJECTS));
+      return TRUE;
+    }
+#endif
   if (strcmp (prefix, "xdg-public-share") == 0)
     {
       if (config_key)
