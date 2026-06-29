@@ -24,6 +24,7 @@
 #include "flatpak-dir-private.h"
 #include "flatpak-metadata-private.h"
 #include "flatpak-utils-private.h"
+#include "flatpak-utils-base-private.h"
 
 char **
 flatpak_list_deployed_refs (const char   *type,
@@ -393,6 +394,21 @@ flatpak_extension_new (const char        *id,
   return ext;
 }
 
+static gboolean
+relative_path_has_no_traversal (const char *path)
+{
+  if (path == NULL || *path == '\0' || *path == '/')
+    return FALSE;
+
+  if (strcmp (path, "..") == 0 ||
+      g_str_has_prefix (path, "../") ||
+      strstr (path, "/../") != NULL ||
+      g_str_has_suffix (path, "/.."))
+    return FALSE;
+
+  return TRUE;
+}
+
 static GList *
 add_extension (GKeyFile   *metakey,
                const char *group,
@@ -423,8 +439,39 @@ add_extension (GKeyFile   *metakey,
   g_autoptr(GFile) deploy_dir = NULL;
   g_autoptr(FlatpakDir) dir = NULL;
 
-  if (directory == NULL)
-    return res;
+  if (directory == NULL || !relative_path_has_no_traversal (directory))
+    {
+      g_warning ("Extension %s key %s is missing or has directory traversal, ignoring",
+                 extension, FLATPAK_METADATA_KEY_DIRECTORY);
+      return res;
+    }
+
+  if (subdir_suffix != NULL && !relative_path_has_no_traversal (subdir_suffix))
+    {
+      g_warning ("Extension %s key %s is missing or has directory traversal, ignoring",
+                 extension, FLATPAK_METADATA_KEY_SUBDIRECTORY_SUFFIX);
+      return res;
+    }
+
+  if (add_ld_path != NULL && !relative_path_has_no_traversal (add_ld_path))
+    {
+      g_warning ("Extension %s key %s is missing or has directory traversal, ignoring",
+                 extension, FLATPAK_METADATA_KEY_ADD_LD_PATH);
+      return res;
+    }
+
+  if (merge_dirs != NULL)
+    {
+      for (size_t i = 0; merge_dirs[i] != NULL; i++)
+        {
+          if (!relative_path_has_no_traversal (merge_dirs[i]))
+            {
+              g_warning ("Extension %s key %s is missing or has directory traversal, ignoring",
+                         extension, FLATPAK_METADATA_KEY_MERGE_DIRS);
+              return res;
+            }
+        }
+    }
 
   ref = flatpak_decomposed_new_from_parts (FLATPAK_KINDS_RUNTIME, extension, arch, branch, NULL);
   if (ref == NULL)
