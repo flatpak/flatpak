@@ -1250,46 +1250,37 @@ typedef struct {
   gsize last_new_offset;
 } DiffData;
 
-static gsize
-match_bytes_at_start (const guchar *data1,
-                      gsize data1_len,
-                      const guchar *data2,
-                      gsize data2_len)
+static size_t
+match_bytes_at_start (const unsigned char *data1,
+                      size_t               data1_len,
+                      const unsigned char *data2,
+                      size_t               data2_len)
 {
-  gsize len = 0;
-  gsize max_len = MIN (data1_len, data2_len);
+  size_t len;
 
-  while (len < max_len)
+  for (len = 0; len < MIN (data1_len, data2_len); len++)
     {
-      if (*data1 != *data2)
+      if (data1[len] != data2[len])
         break;
-      data1++;
-      data2++;
-      len++;
     }
+
   return len;
 }
 
-static gsize
-match_bytes_at_end (const guchar *data1,
-                    gsize data1_len,
-                    const guchar *data2,
-                    gsize data2_len)
+static size_t
+match_bytes_at_end (const unsigned char *data1,
+                    size_t               data1_len,
+                    const unsigned char *data2,
+                    size_t               data2_len)
 {
-  gsize len = 0;
-  gsize max_len = MIN (data1_len, data2_len);
+  size_t len;
 
-  data1 += data1_len - 1;
-  data2 += data2_len - 1;
-
-  while (len < max_len)
+  for (len = 0; len < MIN (data1_len, data2_len); len++)
     {
-      if (*data1 != *data2)
+      if (data1[data1_len - len - 1] != data2[data2_len - len - 1])
         break;
-      data1--;
-      data2--;
-      len++;
     }
+
   return len;
 }
 
