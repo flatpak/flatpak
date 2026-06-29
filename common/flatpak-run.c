@@ -160,7 +160,8 @@ flatpak_run_add_extension_args (FlatpakBwrap      *bwrap,
       g_autofree char *directory = g_build_filename (target_path, ext->directory, NULL);
       g_autofree char *full_directory = g_build_filename (directory, ext->subdir_suffix, NULL);
       g_autofree char *ref_file = g_build_filename (full_directory, ".ref", NULL);
-      g_autofree char *real_ref = g_build_filename (ext->files_path, ext->directory, ".ref", NULL);
+      g_autofree char *ref_subpath = g_build_filename (ext->directory, ".ref", NULL);
+      glnx_autofd int ext_files_dfd = -1;
 
       if (ext->needs_tmpfs)
         {
@@ -179,10 +180,16 @@ flatpak_run_add_extension_args (FlatpakBwrap      *bwrap,
                               "--ro-bind", ext->files_path, full_directory,
                               NULL);
 
-      if (g_file_test (real_ref, G_FILE_TEST_EXISTS))
-        flatpak_bwrap_add_args (bwrap,
-                                "--lock-file", ref_file,
-                                NULL);
+      if (glnx_opendirat (AT_FDCWD, ext->files_path, FALSE, &ext_files_dfd, NULL))
+        {
+          glnx_autofd int ref_fd = glnx_chaseat (ext_files_dfd, ref_subpath,
+                                                 GLNX_CHASE_RESOLVE_BENEATH,
+                                                 NULL);
+          if (ref_fd >= 0)
+            flatpak_bwrap_add_args (bwrap,
+                                    "--lock-file", ref_file,
+                                    NULL);
+        }
     }
 
   g_list_free (path_sorted_extensions);
@@ -194,7 +201,15 @@ flatpak_run_add_extension_args (FlatpakBwrap      *bwrap,
       FlatpakExtension *ext = l->data;
       g_autofree char *directory = g_build_filename (target_path, ext->directory, NULL);
       g_autofree char *full_directory = g_build_filename (directory, ext->subdir_suffix, NULL);
+      glnx_autofd int files_dfd = -1;
       int i;
+
+      if (!glnx_opendirat (AT_FDCWD, ext->files_path, FALSE, &files_dfd, NULL))
+        {
+          return flatpak_fail_error (error, FLATPAK_ERROR,
+                                     "Failed to open extension %s files",
+                                     ext->installed_id);
+        }
 
       if (used_extensions->len > 0)
         g_string_append (used_extensions, ";");
@@ -232,11 +247,30 @@ flatpak_run_add_extension_args (FlatpakBwrap      *bwrap,
         {
           g_autofree char *parent = g_path_get_dirname (directory);
           g_autofree char *merge_dir = g_build_filename (parent, ext->merge_dirs[i], NULL);
-          g_autofree char *source_dir = g_build_filename (ext->files_path, ext->merge_dirs[i], NULL);
+          glnx_autofd int source_dfd = -1;
+          glnx_autofd int source_read_dfd = -1;
           g_auto(GLnxDirFdIterator) source_iter = { 0 };
           struct dirent *dent;
 
-          if (glnx_dirfd_iterator_init_at (AT_FDCWD, source_dir, TRUE, &source_iter, NULL))
+          source_dfd = glnx_chaseat (files_dfd, ext->merge_dirs[i],
+                                     GLNX_CHASE_RESOLVE_BENEATH |
+                                     GLNX_CHASE_MUST_BE_DIRECTORY,
+                                     NULL);
+          if (source_dfd < 0)
+            {
+              if (errno == ENOENT || errno == ENOTDIR)
+                continue;
+
+              return flatpak_fail_error (error, FLATPAK_ERROR,
+                                         "Extension %s has invalid merge-dirs",
+                                         ext->installed_id);
+            }
+
+          source_read_dfd = glnx_fd_reopen (source_dfd, O_RDONLY, error);
+          if (source_read_dfd < 0)
+            return FALSE;
+
+          if (glnx_dirfd_iterator_init_take_fd (&source_read_dfd, &source_iter, NULL))
             {
               while (glnx_dirfd_iterator_next_dent (&source_iter, &dent, NULL, NULL) && dent != NULL)
                 {
