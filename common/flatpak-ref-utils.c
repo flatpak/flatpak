@@ -753,11 +753,11 @@ flatpak_decomposed_new_from_col_ref      (const char         *ref,
 
   if (collection_id != NULL &&
       !ostree_validate_collection_id (collection_id, error))
-    return FALSE;
+    return NULL;
 
   decomposed = flatpak_decomposed_new_from_ref (ref, error);
   if (decomposed == NULL)
-    return FALSE;
+    return NULL;
 
   decomposed->collection_id = g_strdup (collection_id);
 
