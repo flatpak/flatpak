@@ -126,7 +126,7 @@ flatpak_image_collection_lookup_ref (FlatpakImageCollection *self,
   for (guint i = 0; i < self->sources->len; i++)
     {
       FlatpakImageSource *source = g_ptr_array_index (self->sources, i);
-      if (strcmp (flatpak_image_source_get_ref (source), ref) == 0)
+      if (g_strcmp0 (flatpak_image_source_get_ref (source), ref) == 0)
         return g_object_ref (source);
     }
 
@@ -140,7 +140,7 @@ flatpak_image_collection_lookup_digest (FlatpakImageCollection *self,
   for (guint i = 0; i < self->sources->len; i++)
     {
       FlatpakImageSource *source = g_ptr_array_index (self->sources, i);
-      if (strcmp (flatpak_image_source_get_digest (source), digest) == 0)
+      if (g_strcmp0 (flatpak_image_source_get_digest (source), digest) == 0)
         return g_object_ref (source);
     }
 
