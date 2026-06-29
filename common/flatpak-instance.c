@@ -392,34 +392,47 @@ get_child_pid (const char *dir)
 }
 
 static int
-get_pid (const char *dir)
+get_pid (const char *dir,
+         GError    **error)
 {
   g_autofree char *file = NULL;
   g_autofree char *contents = NULL;
-  g_autoptr(GError) error = NULL;
+  int pid;
 
   file = g_build_filename (dir, "pid", NULL);
 
-  if (!g_file_get_contents (file, &contents, NULL, &error))
+  if (!g_file_get_contents (file, &contents, NULL, error))
+    return 0;
+
+  pid = (int) g_ascii_strtoll (contents, NULL, 10);
+  if (pid <= 0)
     {
-      g_info ("Failed to load pid file '%s': %s", file, error->message);
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_DATA,
+                   "Invalid pid in '%s'", file);
       return 0;
     }
 
-  return (int) g_ascii_strtoll (contents, NULL, 10);
+  return pid;
 }
 
 FlatpakInstance *
-flatpak_instance_new (const char *dir)
+flatpak_instance_new (const char  *dir,
+                      GError     **error)
 {
-  FlatpakInstance *self = g_object_new (flatpak_instance_get_type (), NULL);
-  FlatpakInstancePrivate *priv = flatpak_instance_get_instance_private (self);
+  g_autoptr(FlatpakInstance) self = NULL;
+  FlatpakInstancePrivate *priv;
+
+  self = g_object_new (flatpak_instance_get_type (), NULL);
+  priv = flatpak_instance_get_instance_private (self);
 
   priv->dir = g_strdup (dir);
   priv->private_dir = g_strdup_printf ("%s-private", dir);
   priv->id = g_path_get_basename (dir);
 
-  priv->pid = get_pid (priv->dir);
+  priv->pid = get_pid (priv->dir, error);
+  if (priv->pid <= 0)
+    return NULL;
+
   priv->child_pid = get_child_pid (priv->dir);
   priv->info = get_instance_info (priv->dir);
 
@@ -448,7 +461,7 @@ flatpak_instance_new (const char *dir)
                                                     FLATPAK_METADATA_GROUP_INSTANCE, FLATPAK_METADATA_KEY_RUNTIME_COMMIT, NULL);
     }
 
-  return self;
+  return g_steal_pointer (&self);
 }
 
 /*
@@ -822,13 +835,14 @@ flatpak_instance_allocate_id (char **host_dir_out,
 }
 
 FlatpakInstance *
-flatpak_instance_new_for_id (const char *id)
+flatpak_instance_new_for_id (const char  *id,
+                             GError     **error)
 {
   g_autofree char *base_dir = flatpak_instance_get_instances_directory ();
   g_autofree char *dir = NULL;
 
   dir = g_build_filename (base_dir, id, NULL);
-  return flatpak_instance_new (dir);
+  return flatpak_instance_new (dir, error);
 }
 
 /*
@@ -1158,7 +1172,13 @@ flatpak_instance_iterate_all_and_gc (GPtrArray *out_instances)
             }
 
           if (out_instances != NULL)
-            g_ptr_array_add (out_instances, flatpak_instance_new_for_id (dent->d_name));
+            {
+              g_autoptr(FlatpakInstance) inst = NULL;
+
+              inst = flatpak_instance_new_for_id (dent->d_name, NULL);
+              if (inst)
+                g_ptr_array_add (out_instances, g_steal_pointer (&inst));
+            }
         }
     }
 }
