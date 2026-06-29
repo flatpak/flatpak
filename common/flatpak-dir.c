@@ -9774,28 +9774,27 @@ flatpak_dir_deploy (FlatpakDir          *self,
       for (i = 0; subpaths[i] != NULL; i++)
         {
           g_autofree char *subpath = g_build_filename ("files", subpaths[i], NULL);
-          g_autofree char *dstpath = g_build_filename (checkoutdirpath, "/files", subpaths[i], NULL);
-          g_autofree char *dstpath_parent = g_path_get_dirname (dstpath);
-          g_autofree char *dstpath_relative_to_deploy_base = g_build_filename (checkoutdir_basename, "/files", subpaths[i], NULL);
+          g_autofree char *dstpath = g_build_filename (checkoutdir_basename, subpath, NULL);
+          g_autofree char *dstdir = g_path_get_dirname (dstpath);
+          g_autofree char *dstbase = g_path_get_basename (dstpath);
+          glnx_autofd int parent_dfd = -1;
           g_autoptr(GFile) child = NULL;
 
           child = g_file_resolve_relative_path (root, subpath);
-
           if (!g_file_query_exists (child, cancellable))
             {
               g_info ("subpath %s not in tree", subpaths[i]);
               continue;
             }
 
-          if (g_mkdir_with_parents (dstpath_parent, 0755))
-            {
-              glnx_set_error_from_errno (error);
-              return FALSE;
-            }
+          parent_dfd = glnx_chase_and_mkdirat (deploy_base_dfd, dstdir,
+                                               GLNX_CHASE_RESOLVE_BENEATH, 0755, error);
+          if (parent_dfd < 0)
+            return FALSE;
 
           options.subpath = subpath;
           if (!ostree_repo_checkout_at (self->repo, &options,
-                                        deploy_base_dfd, dstpath_relative_to_deploy_base,
+                                        parent_dfd, dstbase,
                                         checksum,
                                         cancellable, error))
             {
