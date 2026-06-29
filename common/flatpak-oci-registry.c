@@ -1926,7 +1926,7 @@ delta_read_byte (GInputStream   *in,
 
 static gboolean
 delta_read_varuint (GInputStream   *in,
-                    guint64        *out,
+                    gsize          *out,
                     GCancellable   *cancellable,
                     GError        **error)
 {
@@ -1950,6 +1950,9 @@ delta_read_varuint (GInputStream   *in,
     }
   while (more_data);
 
+  if (res > G_MAXSIZE)
+    return flatpak_fail (error, _("Invalid delta file format"));
+
   *out = res;
   return TRUE;
 }
@@ -1957,7 +1960,7 @@ delta_read_varuint (GInputStream   *in,
 static gboolean
 delta_copy_data (GInputStream   *in,
                  GOutputStream  *out,
-                 guint64         size,
+                 gsize           size,
                  guchar         *buffer,
                  GCancellable   *cancellable,
                  GError        **error)
@@ -1985,7 +1988,7 @@ static gboolean
 delta_add_data (GInputStream   *in1,
                 GInputStream   *in2,
                 GOutputStream  *out,
-                guint64         size,
+                gsize           size,
                 guchar         *buffer1,
                 guchar         *buffer2,
                 GCancellable   *cancellable,
@@ -2018,7 +2021,7 @@ delta_add_data (GInputStream   *in1,
 
 static guchar *
 delta_read_data (GInputStream   *in,
-                 guint64         size,
+                 gsize           size,
                  GCancellable   *cancellable,
                  GError        **error)
 {
@@ -2119,7 +2122,7 @@ flatpak_oci_registry_apply_delta_stream (FlatpakOciRegistry    *self,
   while (TRUE)
     {
       guint8 op;
-      guint64 size;
+      gsize size;
       g_autofree char *path = NULL;
       g_autofree char *clean_path = NULL;
       g_autoptr(GError) local_error = NULL;
