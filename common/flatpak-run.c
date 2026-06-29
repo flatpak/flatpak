@@ -1660,7 +1660,7 @@ flatpak_run_add_app_info_args (FlatpakBwrap           *bwrap,
     return FALSE;
 
   bwrapinfo_path = g_build_filename (instance_id_host_dir, "bwrapinfo.json", NULL);
-  fd3 = open (bwrapinfo_path, O_RDWR | O_CREAT, 0644);
+  fd3 = open (bwrapinfo_path, O_RDWR | O_CREAT | O_EXCL | O_CLOEXEC, 0644);
   if (fd3 == -1)
     {
       int errsv = errno;
