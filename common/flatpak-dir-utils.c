@@ -242,7 +242,7 @@ flatpak_find_current_ref (const char   *app_id,
 
       system_dirs = flatpak_dir_get_system_list (cancellable, error);
       if (system_dirs == NULL)
-        return FALSE;
+        return NULL;
 
       for (i = 0; i < system_dirs->len; i++)
         {
