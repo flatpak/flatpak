@@ -25,8 +25,10 @@
 
 #include "flatpak-instance.h"
 
-FlatpakInstance *flatpak_instance_new (const char *dir);
-FlatpakInstance *flatpak_instance_new_for_id (const char *id);
+FlatpakInstance *flatpak_instance_new (const char  *dir,
+                                       GError     **error);
+FlatpakInstance *flatpak_instance_new_for_id (const char  *id,
+                                              GError     **error);
 char *flatpak_instance_get_apps_directory (void);
 char *flatpak_instance_get_instances_directory (void);
 char *flatpak_instance_allocate_id (char **host_dir_out,
