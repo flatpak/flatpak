@@ -410,7 +410,7 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
     flags |= FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY;
   if (!opt_session_bus)
     flags |= FLATPAK_RUN_FLAG_NO_SESSION_BUS_PROXY;
-  if (!opt_clear_env)
+  if (opt_clear_env)
     flags |= FLATPAK_RUN_FLAG_CLEAR_ENV;
 
   if (opt_app_fd >= 0 && opt_app_path != NULL)
