@@ -422,6 +422,118 @@ test_fd_passing (Fixture *f,
     }
 }
 
+static char *
+spawn_and_capture_output (Fixture *f,
+                          guint flags,
+                          GVariant *envs)
+{
+  g_autoptr(GError) error = NULL;
+  g_autoptr(GUnixFDList) fds_in = g_unix_fd_list_new ();
+  g_autoptr(GUnixFDList) fds_out = NULL;
+  g_auto(GVariantBuilder) fd_map_builder = {};
+  g_autofree char *stdout_path = NULL;
+  glnx_autofd int stdout_fd = -1;
+  guint pid;
+  gboolean ok;
+  const char * const argv[] = { "hello", NULL };
+  gsize times_exited = 0;
+  gulong handler_id;
+  char *output;
+  int handle;
+
+  stdout_path = g_strdup ("/tmp/flatpak-portal-test.XXXXXX");
+  stdout_fd = g_mkstemp (stdout_path);
+  g_assert_no_errno (stdout_fd);
+  g_assert_no_errno (unlink (stdout_path));
+
+  g_variant_builder_init (&fd_map_builder, G_VARIANT_TYPE ("a{uh}"));
+
+  handle = g_unix_fd_list_append (fds_in, stdout_fd, &error);
+  g_assert_no_error (error);
+  g_variant_builder_add (&fd_map_builder, "{uh}",
+                         (guint32) STDOUT_FILENO, (gint32) handle);
+
+  handler_id = g_signal_connect (f->proxy, "spawn-exited",
+                                 G_CALLBACK (count_successful_exit_cb),
+                                 &times_exited);
+
+  ok = portal_flatpak_call_spawn_sync (f->proxy,
+                                       "/",
+                                       argv,
+                                       g_variant_builder_end (&fd_map_builder),
+                                       envs,
+                                       flags,
+                                       g_variant_new ("a{sv}", NULL),
+                                       fds_in,
+                                       &pid,
+                                       &fds_out,
+                                       NULL,
+                                       &error);
+  g_assert_no_error (error);
+  g_assert_true (ok);
+
+  while (times_exited == 0)
+    g_main_context_iteration (NULL, TRUE);
+
+  g_signal_handler_disconnect (f->proxy, handler_id);
+
+  g_assert_no_errno (lseek (stdout_fd, 0, SEEK_SET));
+  output = glnx_fd_readall_utf8 (stdout_fd, NULL, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (output);
+
+  return output;
+}
+
+static void
+test_spawn_env (Fixture *f,
+                gconstpointer context G_GNUC_UNUSED)
+{
+  g_autofree char *output = NULL;
+
+  fixture_start_portal (f);
+
+  /* The mock run-environ (FOO=bar) should be in the spawned process
+   * environment, not injected into the sandbox via --env-fd */
+  output = spawn_and_capture_output (f, FLATPAK_SPAWN_FLAGS_NONE,
+                                     g_variant_new ("a{ss}", NULL));
+  g_test_message ("Output (default): %s", output);
+  g_assert_nonnull (strstr (output, "envp[FOO] = bar"));
+  g_assert_null (strstr (output, "env[FOO] = bar"));
+  g_assert_null (strstr (output, "--clear-env"));
+  g_clear_pointer (&output, g_free);
+
+  /* With CLEAR_ENV, --clear-env should be passed to flatpak run, but
+   * the run-environ should still be in the spawned process environment */
+  output = spawn_and_capture_output (f, FLATPAK_SPAWN_FLAGS_CLEAR_ENV,
+                                     g_variant_new ("a{ss}", NULL));
+  g_test_message ("Output (clear-env): %s", output);
+  g_assert_nonnull (strstr (output, "envp[FOO] = bar"));
+  g_assert_null (strstr (output, "env[FOO] = bar"));
+  g_assert_nonnull (strstr (output, "--clear-env"));
+  g_clear_pointer (&output, g_free);
+
+  /* Env vars passed explicitly via D-Bus arg_envs should end up in
+   * --env-fd (sandbox payload), not in the process environment */
+  {
+    g_auto(GVariantBuilder) env_builder = {};
+
+    g_variant_builder_init (&env_builder, G_VARIANT_TYPE ("a{ss}"));
+    g_variant_builder_add (&env_builder, "{ss}", "BAZ", "qux");
+
+    output = spawn_and_capture_output (f, FLATPAK_SPAWN_FLAGS_NONE,
+                                       g_variant_builder_end (&env_builder));
+    g_test_message ("Output (with arg_envs): %s", output);
+    g_assert_nonnull (strstr (output, "env[BAZ] = qux"));
+    g_assert_null (strstr (output, "envp[BAZ] = qux"));
+    g_assert_nonnull (strstr (output, "envp[FOO] = bar"));
+    g_clear_pointer (&output, g_free);
+  }
+
+  g_subprocess_send_signal (f->portal, SIGTERM);
+  g_subprocess_wait (f->portal, NULL, NULL);
+}
+
 static void
 test_replace (Fixture *f,
               gconstpointer context G_GNUC_UNUSED)
@@ -478,6 +590,7 @@ main (int argc,
   g_test_add ("/help", Fixture, NULL, setup, test_help, teardown);
   g_test_add ("/basic", Fixture, NULL, setup, test_basic, teardown);
   g_test_add ("/fd-passing", Fixture, NULL, setup, test_fd_passing, teardown);
+  g_test_add ("/spawn-env", Fixture, NULL, setup, test_spawn_env, teardown);
   g_test_add ("/replace", Fixture, NULL, setup, test_replace, teardown);
 
   return g_test_run ();

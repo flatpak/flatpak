@@ -28,7 +28,8 @@
 
 int
 main (int argc,
-      char **argv)
+      char **argv,
+      char **envp)
 {
   int i;
 
@@ -36,6 +37,18 @@ main (int argc,
 
   for (i = 0; i < argc; i++)
     g_print ("argv[%d] = %s\n", i, argv[i]);
+
+  for (i = 0; envp != NULL && envp[i] != NULL; i++)
+    {
+      const char *eq = strchr (envp[i], '=');
+
+      if (eq != NULL)
+        {
+          g_autofree char *key = g_strndup (envp[i], eq - envp[i]);
+
+          g_print ("envp[%s] = %s\n", key, eq + 1);
+        }
+    }
 
   for (i = 0; i < argc; i++)
     {
