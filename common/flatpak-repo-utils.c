@@ -1279,6 +1279,9 @@ match_bytes_at_end (const guchar *data1,
   gsize len = 0;
   gsize max_len = MIN (data1_len, data2_len);
 
+  if (max_len == 0)
+    return 0;
+
   data1 += data1_len - 1;
   data2 += data2_len - 1;
 
