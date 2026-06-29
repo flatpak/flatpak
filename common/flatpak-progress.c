@@ -257,7 +257,10 @@ update_status_progress_and_estimating (FlatpakProgress *self)
            * delta parts and fallback objects that were already
            * available at the start and need not be downloaded.
            */
-          total = self->total_delta_part_size - self->fetched_delta_part_size + self->total_extra_data_bytes;
+          /* Clamp to avoid unsigned underflow if fetched exceeds total */
+          total = self->total_delta_part_size + self->total_extra_data_bytes -
+            MIN (self->fetched_delta_part_size, self->total_delta_part_size);
+
           formatted_bytes_total = g_format_size_full (total, 0);
 
           g_string_append_printf (buf, _("Downloading: %s/%s"),
