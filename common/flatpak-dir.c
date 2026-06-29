@@ -2575,7 +2575,8 @@ flatpak_ensure_system_user_cache_dir_location (GError **error)
   symlink_path = g_build_filename (g_get_user_runtime_dir (), ".flatpak-cache", NULL);
   path = flatpak_readlink (symlink_path, NULL);
 
-  if (stat (path, &st_buf) == 0 &&
+  if (path != NULL &&
+      stat (path, &st_buf) == 0 &&
       /* Must be owned by us */
       st_buf.st_uid == getuid () &&
       /* and not writeable by others, but readable */
