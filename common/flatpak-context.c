@@ -375,7 +375,7 @@ flatpak_permission_merge (FlatpakPermission *permission,
       if (g_ptr_array_find_with_equal_func (permission->conditionals,
                                             conditional,
                                             g_str_equal, NULL))
-        return;
+        continue;
 
       g_ptr_array_add (permission->conditionals, g_strdup (conditional));
     }
