@@ -459,7 +459,13 @@ instance_id_read_finish (GObject      *source,
 
   data->buffer[bytes_read] = 0;
 
-  instance = flatpak_instance_new_for_id (data->buffer);
+  instance = flatpak_instance_new_for_id (data->buffer, &error);
+  if (!instance)
+    {
+      g_warning ("Failed to create instance for id %s: %s",
+                 data->buffer, error->message);
+      return;
+    }
 
   watcher_data = g_new0 (BwrapinfoWatcherData, 1);
   watcher_data->instance = g_steal_pointer (&instance);
@@ -888,23 +894,23 @@ handle_spawn (PortalFlatpak         *object,
       instance_id = g_key_file_get_string (app_info,
                                            FLATPAK_METADATA_GROUP_INSTANCE,
                                            FLATPAK_METADATA_KEY_INSTANCE_ID, NULL);
-    }
+      if (!instance_id)
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
+                                                 G_DBUS_ERROR_INVALID_ARGS,
+                                                 "Caller has no instance id");
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
+        }
 
-  if (!instance_id)
-    {
-      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
-                                             G_DBUS_ERROR_INVALID_ARGS,
-                                             "Caller has no instance id");
-      return G_DBUS_METHOD_INVOCATION_HANDLED;
-    }
-
-  instance = flatpak_instance_new_for_id (instance_id);
-  if (!instance)
-    {
-      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
-                                             G_DBUS_ERROR_FAILED,
-                                             "Could not access caller instance");
-      return G_DBUS_METHOD_INVOCATION_HANDLED;
+      instance = flatpak_instance_new_for_id (instance_id, &error);
+      if (!instance)
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
+                                                 G_DBUS_ERROR_FAILED,
+                                                 "Could not access caller instance: %s",
+                                                 error->message);
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
+        }
     }
 
   if ((flatpak = g_getenv ("FLATPAK_PORTAL_MOCK_FLATPAK")) != NULL)

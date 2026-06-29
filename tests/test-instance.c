@@ -150,6 +150,13 @@ test_gc (void)
   g_assert_cmpint (pid, >, 1);
   g_assert_cmpint (stdout_fd, >=, 0);
 
+  {
+    g_autofree char *pid_file = g_build_filename (alive_instance_dir, "pid", NULL);
+    g_autofree char *pid_str = g_strdup_printf ("%d", pid);
+    g_file_set_contents (pid_file, pid_str, -1, &error);
+    g_assert_no_error (error);
+  }
+
   /* com.example.Dead has no instances running.
    * Instance #4 was running until recently but has exited. */
   dead_app_dir = g_build_filename (apps_dir, "com.example.Dead", NULL);

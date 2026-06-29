@@ -723,7 +723,15 @@ flatpak_installation_launch_full (FlatpakInstallation *self,
     return FALSE;
 
   if (instance_out)
-    *instance_out = flatpak_instance_new (instance_dir);
+    {
+      g_autoptr(FlatpakInstance) instance = NULL;
+
+      instance = flatpak_instance_new (instance_dir, error);
+      if (instance == NULL)
+        return FALSE;
+
+      *instance_out = g_steal_pointer (&instance);
+    }
 
   return TRUE;
 }
