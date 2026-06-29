@@ -412,8 +412,12 @@ flatpak_permission_compute_allowed (FlatpakPermission                *permission
         continue;
 
       /* Conditions which are always true in this version of flatpak */
-      if ((condition & flatpak_context_true_conditions) && !negated)
-        return TRUE;
+      if (condition & flatpak_context_true_conditions)
+        {
+          if (!negated)
+            return TRUE;
+          continue;
+        }
 
       /* Conditions which need runtime evaluation */
       if (evaluator && evaluator (condition) == !negated)
