@@ -36,8 +36,16 @@ get_wayland_display_name (void)
   const char *wayland_display;
 
   wayland_display = g_getenv ("WAYLAND_DISPLAY");
-  if (!wayland_display)
-    wayland_display = "wayland-0";
+
+  if (wayland_display == NULL)
+    return "wayland-0";
+
+  if (!g_str_has_prefix (wayland_display, "wayland-") ||
+      strchr (wayland_display, '/') != NULL)
+    {
+      g_debug ("Not preserving WAYLAND_DISPLAY=\"%s\"", wayland_display);
+      return "wayland-0";
+    }
 
   return wayland_display;
 }
@@ -313,14 +321,6 @@ flatpak_run_add_wayland_args (FlatpakBwrap *bwrap,
       wayland_socket = get_wayland_socket_path (wayland_display);
     }
 
-  if (!g_str_has_prefix (wayland_display, "wayland-") ||
-      strchr (wayland_display, '/') != NULL)
-    {
-      g_debug ("Not preserving WAYLAND_DISPLAY=\"%s\"", wayland_display);
-      wayland_display = "wayland-0";
-      flatpak_bwrap_set_env (bwrap, "WAYLAND_DISPLAY", wayland_display, TRUE);
-    }
-
   sandbox_wayland_socket = g_strdup_printf ("/run/flatpak/%s", wayland_display);
 
   if (stat (wayland_socket, &statbuf) == 0 &&
@@ -332,6 +332,8 @@ flatpak_run_add_wayland_args (FlatpakBwrap *bwrap,
                               NULL);
       flatpak_bwrap_add_runtime_dir_member (bwrap, wayland_display);
     }
+
+  flatpak_bwrap_set_env (bwrap, "WAYLAND_DISPLAY", wayland_display, TRUE);
 
   /* If inherit-wayland-socket is not set, unset WAYLAND_SOCKET unconditionally
    * without checking the validity of the value of WAYLAND_SOCKET. */
