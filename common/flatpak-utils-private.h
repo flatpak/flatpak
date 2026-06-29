@@ -212,6 +212,13 @@ gboolean   flatpak_cp_a (GFile         *src,
                          GCancellable  *cancellable,
                          GError       **error);
 
+gboolean   flatpak_cp_a_at (int            src_dfd,
+                            int            dest_parent_dfd,
+                            const char    *dest_name,
+                            FlatpakCpFlags flags,
+                            GCancellable  *cancellable,
+                            GError       **error);
+
 gboolean flatpak_mkdir_p (GFile        *dir,
                           GCancellable *cancellable,
                           GError      **error);

@@ -1353,6 +1353,85 @@ out:
   return ret;
 }
 
+gboolean
+flatpak_cp_a_at (int            src_dfd,
+                 int            dest_parent_dfd,
+                 const char    *dest_name,
+                 FlatpakCpFlags flags,
+                 GCancellable  *cancellable,
+                 GError       **error)
+{
+  gboolean merge = (flags & FLATPAK_CP_FLAGS_MERGE) != 0;
+  gboolean no_chown = (flags & FLATPAK_CP_FLAGS_NO_CHOWN) != 0;
+  struct stat src_stbuf;
+  glnx_autofd int dest_dfd = -1;
+  g_auto(GLnxDirFdIterator) src_iter = { 0, };
+
+  if (fstat (src_dfd, &src_stbuf) != 0)
+    return glnx_throw_errno_prefix (error, "fstat");
+
+  if (TEMP_FAILURE_RETRY (mkdirat (dest_parent_dfd, dest_name, 0755)) != 0 &&
+      (!merge || errno != EEXIST))
+    return glnx_throw_errno_prefix (error, "mkdirat(%s)", dest_name);
+
+  if (!glnx_opendirat (dest_parent_dfd, dest_name, FALSE, &dest_dfd, error))
+    return FALSE;
+
+  if (!no_chown)
+    {
+      if (TEMP_FAILURE_RETRY (fchown (dest_dfd, src_stbuf.st_uid, src_stbuf.st_gid)) != 0)
+        return glnx_throw_errno_prefix (error, "fchown");
+    }
+
+  if (TEMP_FAILURE_RETRY (fchmod (dest_dfd, src_stbuf.st_mode & 07777)) != 0)
+    return glnx_throw_errno_prefix (error, "fchmod");
+
+  if (!glnx_dirfd_iterator_init_at (src_dfd, ".", FALSE, &src_iter, error))
+    return FALSE;
+
+  while (TRUE)
+    {
+      struct dirent *dent;
+      const char *name;
+
+      if (!glnx_dirfd_iterator_next_dent_ensure_dtype (&src_iter, &dent,
+                                                       cancellable, error))
+        return FALSE;
+
+      if (dent == NULL)
+        break;
+
+      name = dent->d_name;
+
+      if (dent->d_type == DT_DIR)
+        {
+          glnx_autofd int child_src_dfd = -1;
+
+          if (!glnx_opendirat (src_iter.fd, name, FALSE, &child_src_dfd, error))
+            return FALSE;
+
+          if (!flatpak_cp_a_at (child_src_dfd, dest_dfd,
+                                name, flags, cancellable, error))
+            return FALSE;
+        }
+      else
+        {
+          GLnxFileCopyFlags copyflags = GLNX_FILE_COPY_OVERWRITE;
+          if (no_chown)
+            copyflags |= GLNX_FILE_COPY_NOCHOWN;
+
+          (void) unlinkat (dest_dfd, name, 0);
+
+          if (!glnx_file_copy_at (src_iter.fd, name, NULL,
+                                  dest_dfd, name, copyflags,
+                                  cancellable, error))
+            return FALSE;
+        }
+    }
+
+  return TRUE;
+}
+
 static gboolean
 _flatpak_canonicalize_permissions (int         parent_dfd,
                                    const char *rel_path,
