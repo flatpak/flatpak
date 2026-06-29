@@ -64,6 +64,12 @@ flatpak_get_lang_from_locale (const char *locale)
   if (strcmp (lang, "C") == 0)
     return NULL;
 
+  for (c = lang; *c != 0; c++)
+    {
+      if (!g_ascii_isalpha (*c))
+        return NULL;
+    }
+
   return g_steal_pointer (&lang);
 }
 
