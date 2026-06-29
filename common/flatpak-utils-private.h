@@ -198,12 +198,6 @@ typedef enum {
   FLATPAK_CP_FLAGS_NO_CHOWN = 1 << 1,
 } FlatpakCpFlags;
 
-gboolean   flatpak_cp_a (GFile         *src,
-                         GFile         *dest,
-                         FlatpakCpFlags flags,
-                         GCancellable  *cancellable,
-                         GError       **error);
-
 gboolean   flatpak_cp_a_at (int            src_dfd,
                             int            dest_parent_dfd,
                             const char    *dest_name,

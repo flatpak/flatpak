@@ -1260,30 +1260,6 @@ flatpak_cp_a_at (int            src_dfd,
   return TRUE;
 }
 
-gboolean
-flatpak_cp_a (GFile         *src,
-              GFile         *dest,
-              FlatpakCpFlags flags,
-              GCancellable  *cancellable,
-              GError       **error)
-{
-  const char *src_path = flatpak_file_get_path_cached (src);
-  g_autoptr(GFile) dest_parent = g_file_get_parent (dest);
-  const char *dest_parent_path = flatpak_file_get_path_cached (dest_parent);
-  const char *dest_name = glnx_basename (flatpak_file_get_path_cached (dest));
-  glnx_autofd int src_dfd = -1;
-  glnx_autofd int dest_parent_dfd = -1;
-
-  if (!glnx_opendirat (AT_FDCWD, src_path, FALSE, &src_dfd, error))
-    return FALSE;
-
-  if (!glnx_opendirat (AT_FDCWD, dest_parent_path, FALSE, &dest_parent_dfd, error))
-    return FALSE;
-
-  return flatpak_cp_a_at (src_dfd, dest_parent_dfd, dest_name, flags,
-                          cancellable, error);
-}
-
 static gboolean
 _flatpak_canonicalize_permissions (int         parent_dfd,
                                    const char *rel_path,
