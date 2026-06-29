@@ -290,6 +290,14 @@ flatpak_run_add_wayland_args (FlatpakBwrap *bwrap,
 
   wayland_display = get_wayland_display_name ();
 
+  if (!g_str_has_prefix (wayland_display, "wayland-") ||
+      strchr (wayland_display, '/') != NULL)
+    {
+      g_debug ("Not preserving WAYLAND_DISPLAY=\"%s\"", wayland_display);
+      wayland_display = "wayland-0";
+      flatpak_bwrap_set_env (bwrap, "WAYLAND_DISPLAY", wayland_display, TRUE);
+    }
+
 #ifdef ENABLE_WAYLAND_SECURITY_CONTEXT
   if (flatpak_run_create_wayland_security_context (bwrap, app_id, instance_id,
                                                    wayland_display,
@@ -311,14 +319,6 @@ flatpak_run_add_wayland_args (FlatpakBwrap *bwrap,
     {
       g_debug ("Using ordinary Wayland socket, without security context");
       wayland_socket = get_wayland_socket_path (wayland_display);
-    }
-
-  if (!g_str_has_prefix (wayland_display, "wayland-") ||
-      strchr (wayland_display, '/') != NULL)
-    {
-      g_debug ("Not preserving WAYLAND_DISPLAY=\"%s\"", wayland_display);
-      wayland_display = "wayland-0";
-      flatpak_bwrap_set_env (bwrap, "WAYLAND_DISPLAY", wayland_display, TRUE);
     }
 
   sandbox_wayland_socket = g_strdup_printf ("/run/flatpak/%s", wayland_display);
