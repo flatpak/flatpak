@@ -382,8 +382,9 @@ flatpak_parse_appdata (const char  *appdata_xml,
     {
       Component *component = g_ptr_array_index (data->components, i);
 
-      if (g_str_equal (component->id, app_id) ||
-          g_str_equal (component->id, legacy_id))
+      if (component->id != NULL &&
+          (g_str_equal (component->id, app_id) ||
+           g_str_equal (component->id, legacy_id)))
         {
           *names = g_hash_table_ref (component->names);
           *comments = g_hash_table_ref (component->comments);
