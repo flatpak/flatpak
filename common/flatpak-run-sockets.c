@@ -103,7 +103,7 @@ flatpak_run_add_pcsc_args (FlatpakBwrap *bwrap)
 static void
 flatpak_run_add_gpg_agent_args (FlatpakBwrap *bwrap)
 {
-  const char * agent_socket;
+  g_autofree char * agent_socket = NULL;
   g_autofree char * sandbox_agent_socket = NULL;
   g_autoptr(GError) gpgconf_error = NULL;
   g_autoptr(GSubprocess) process = NULL;
