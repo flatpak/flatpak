@@ -196,7 +196,6 @@ typedef enum {
   FLATPAK_CP_FLAGS_NONE = 0,
   FLATPAK_CP_FLAGS_MERGE = 1 << 0,
   FLATPAK_CP_FLAGS_NO_CHOWN = 1 << 1,
-  FLATPAK_CP_FLAGS_MOVE = 1 << 2,
 } FlatpakCpFlags;
 
 gboolean   flatpak_cp_a (GFile         *src,

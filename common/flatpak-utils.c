@@ -1182,134 +1182,6 @@ flatpak_openat_noatime (int           dfd,
 }
 
 gboolean
-flatpak_cp_a (GFile         *src,
-              GFile         *dest,
-              FlatpakCpFlags flags,
-              GCancellable  *cancellable,
-              GError       **error)
-{
-  gboolean ret = FALSE;
-  GFileEnumerator *enumerator = NULL;
-  GFileInfo *src_info = NULL;
-  GFile *dest_child = NULL;
-  int dest_dfd = -1;
-  gboolean merge = (flags & FLATPAK_CP_FLAGS_MERGE) != 0;
-  gboolean no_chown = (flags & FLATPAK_CP_FLAGS_NO_CHOWN) != 0;
-  gboolean move = (flags & FLATPAK_CP_FLAGS_MOVE) != 0;
-  g_autoptr(GFileInfo) child_info = NULL;
-  GError *temp_error = NULL;
-  int r;
-
-  enumerator = g_file_enumerate_children (src, "standard::type,standard::name,unix::uid,unix::gid,unix::mode",
-                                          G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
-                                          cancellable, error);
-  if (!enumerator)
-    goto out;
-
-  src_info = g_file_query_info (src, "standard::name,unix::mode,unix::uid,unix::gid," \
-                                     "time::modified,time::modified-usec,time::access,time::access-usec",
-                                G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
-                                cancellable, error);
-  if (!src_info)
-    goto out;
-
-  do
-    r = mkdir (flatpak_file_get_path_cached (dest), 0755);
-  while (G_UNLIKELY (r == -1 && errno == EINTR));
-  if (r == -1 &&
-      (!merge || errno != EEXIST))
-    {
-      glnx_set_error_from_errno (error);
-      goto out;
-    }
-
-  if (!glnx_opendirat (AT_FDCWD, flatpak_file_get_path_cached (dest), TRUE,
-                       &dest_dfd, error))
-    goto out;
-
-  if (!no_chown)
-    {
-      do
-        r = fchown (dest_dfd,
-                    g_file_info_get_attribute_uint32 (src_info, "unix::uid"),
-                    g_file_info_get_attribute_uint32 (src_info, "unix::gid"));
-      while (G_UNLIKELY (r == -1 && errno == EINTR));
-      if (r == -1)
-        {
-          glnx_set_error_from_errno (error);
-          goto out;
-        }
-    }
-
-  do
-    r = fchmod (dest_dfd, g_file_info_get_attribute_uint32 (src_info, "unix::mode"));
-  while (G_UNLIKELY (r == -1 && errno == EINTR));
-
-  if (dest_dfd != -1)
-    {
-      (void) close (dest_dfd);
-      dest_dfd = -1;
-    }
-
-  while ((child_info = g_file_enumerator_next_file (enumerator, cancellable, &temp_error)))
-    {
-      const char *name = g_file_info_get_name (child_info);
-      g_autoptr(GFile) src_child = g_file_get_child (src, name);
-
-      if (dest_child)
-        g_object_unref (dest_child);
-      dest_child = g_file_get_child (dest, name);
-
-      if (g_file_info_get_file_type (child_info) == G_FILE_TYPE_DIRECTORY)
-        {
-          if (!flatpak_cp_a (src_child, dest_child, flags,
-                             cancellable, error))
-            goto out;
-        }
-      else
-        {
-          (void) unlink (flatpak_file_get_path_cached (dest_child));
-          GFileCopyFlags copyflags = G_FILE_COPY_OVERWRITE | G_FILE_COPY_NOFOLLOW_SYMLINKS;
-          if (!no_chown)
-            copyflags |= G_FILE_COPY_ALL_METADATA;
-          if (move)
-            {
-              if (!g_file_move (src_child, dest_child, copyflags,
-                                cancellable, NULL, NULL, error))
-                goto out;
-            }
-          else
-            {
-              if (!g_file_copy (src_child, dest_child, copyflags,
-                                cancellable, NULL, NULL, error))
-                goto out;
-            }
-        }
-
-      g_clear_object (&child_info);
-    }
-
-  if (temp_error != NULL)
-    {
-      g_propagate_error (error, temp_error);
-      goto out;
-    }
-
-  if (move &&
-      !g_file_delete (src, NULL, error))
-    goto out;
-
-  ret = TRUE;
-out:
-  if (dest_dfd != -1)
-    (void) close (dest_dfd);
-  g_clear_object (&src_info);
-  g_clear_object (&enumerator);
-  g_clear_object (&dest_child);
-  return ret;
-}
-
-gboolean
 flatpak_cp_a_at (int            src_dfd,
                  int            dest_parent_dfd,
                  const char    *dest_name,
@@ -1386,6 +1258,30 @@ flatpak_cp_a_at (int            src_dfd,
     }
 
   return TRUE;
+}
+
+gboolean
+flatpak_cp_a (GFile         *src,
+              GFile         *dest,
+              FlatpakCpFlags flags,
+              GCancellable  *cancellable,
+              GError       **error)
+{
+  const char *src_path = flatpak_file_get_path_cached (src);
+  g_autoptr(GFile) dest_parent = g_file_get_parent (dest);
+  const char *dest_parent_path = flatpak_file_get_path_cached (dest_parent);
+  const char *dest_name = glnx_basename (flatpak_file_get_path_cached (dest));
+  glnx_autofd int src_dfd = -1;
+  glnx_autofd int dest_parent_dfd = -1;
+
+  if (!glnx_opendirat (AT_FDCWD, src_path, FALSE, &src_dfd, error))
+    return FALSE;
+
+  if (!glnx_opendirat (AT_FDCWD, dest_parent_path, FALSE, &dest_parent_dfd, error))
+    return FALSE;
+
+  return flatpak_cp_a_at (src_dfd, dest_parent_dfd, dest_name, flags,
+                          cancellable, error);
 }
 
 static gboolean
