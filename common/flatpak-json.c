@@ -159,7 +159,7 @@ demarshal (JsonNode            *parent_node,
         FlatpakJsonProp *struct_props = type_data;
         int i;
 
-        if ((struct_props->flags & FLATPAK_JSON_PROP_FLAGS_STRICT) != 0)
+        if ((flags & FLATPAK_JSON_PROP_FLAGS_STRICT) != 0)
           {
             JsonObject *object = json_node_get_object (node);
             g_autoptr(GList) members = json_object_get_members (object);
