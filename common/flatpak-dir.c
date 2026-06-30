@@ -8172,6 +8172,13 @@ read_fd (int          fd,
   gsize size;
   gsize alloc_size;
 
+  if (stat_buf->st_size < 0 || (guint64) stat_buf->st_size > G_MAXSIZE - 1)
+    {
+      g_set_error_literal (error, G_FILE_ERROR, G_FILE_ERROR_NOMEM,
+                           _("Not enough memory"));
+      return FALSE;
+    }
+
   size = stat_buf->st_size;
 
   alloc_size = size + 1;
