@@ -3922,7 +3922,7 @@ flatpak_pull_from_bundle (OstreeRepo   *repo,
   if (!metadata_valid)
     {
       /* Immediately remove this broken commit */
-      ostree_repo_set_ref_immediate (repo, remote, ref, NULL, cancellable, error);
+      ostree_repo_set_ref_immediate (repo, remote, ref, NULL, cancellable, NULL);
       return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Metadata in header and app are inconsistent"));
     }
 
