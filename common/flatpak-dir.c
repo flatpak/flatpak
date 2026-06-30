@@ -12732,7 +12732,7 @@ flatpak_dir_lookup_remote_filter (FlatpakDir *self,
       guint64 now = g_get_monotonic_time ();
       GTimeVal mtime;
 
-      if (g_file_equal (filter->path, filter_file) != 0)
+      if (!g_file_equal (filter->path, filter_file))
         filter = NULL; /* New path, reload */
       else if ((now - filter->last_mtime_check) > (1000 * (FILTER_MTIME_CHECK_TIMEOUT_MSEC)))
         {
