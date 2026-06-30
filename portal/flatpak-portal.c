@@ -121,6 +121,9 @@ typedef struct {
   char *reported_remote_commit;
 } UpdateMonitorData;
 
+static void update_monitor_data_free (gpointer data);
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (UpdateMonitorData, update_monitor_data_free)
+
 static gboolean           check_all_for_updates_cb (void                       *data);
 static gboolean           has_update_monitors      (void);
 static UpdateMonitorData *update_monitor_get_data  (PortalFlatpakUpdateMonitor *monitor);
@@ -1729,7 +1732,7 @@ create_update_monitor (GDBusMethodInvocation *invocation,
                        GError               **error)
 {
   PortalFlatpakUpdateMonitor *monitor;
-  UpdateMonitorData *m;
+  g_autoptr(UpdateMonitorData) m = NULL;
   g_autoptr(GKeyFile) app_info = NULL;
   g_autofree char *name = NULL;
 
@@ -1768,15 +1771,23 @@ create_update_monitor (GDBusMethodInvocation *invocation,
                                        FLATPAK_METADATA_GROUP_INSTANCE,
                                        "app-path", NULL);
 
+  if (m->branch == NULL || m->commit == NULL || m->app_path == NULL)
+    {
+      g_set_error (error, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                   "Incomplete instance info for update monitor");
+      return NULL;
+    }
+
   m->reported_local_commit = g_strdup (m->commit);
   m->reported_remote_commit = g_strdup (m->commit);
 
   monitor = portal_flatpak_update_monitor_skeleton_new ();
 
-  g_object_set_data_full (G_OBJECT (monitor), "update-monitor-data", m, update_monitor_data_free);
-  g_object_set_data_full (G_OBJECT (monitor), "required-sender", g_strdup (m->sender), g_free);
-
   g_info ("created UpdateMonitor for %s/%s at %s", m->name, m->branch, obj_path);
+
+  g_object_set_data_full (G_OBJECT (monitor), "required-sender", g_strdup (m->sender), g_free);
+  g_object_set_data_full (G_OBJECT (monitor), "update-monitor-data",
+                          g_steal_pointer (&m), update_monitor_data_free);
 
   return monitor;
 }
