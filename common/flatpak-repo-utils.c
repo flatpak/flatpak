@@ -318,7 +318,7 @@ flatpak_repo_get_summary_history_length (OstreeRepo *repo)
   GKeyFile *config = ostree_repo_get_config (repo);
   int length;
 
-  length = g_key_file_get_integer (config, "flatpak", "sumary-history-length", NULL);
+  length = g_key_file_get_integer (config, "flatpak", "summary-history-length", NULL);
 
   if (length <= 0)
     return FLATPAK_SUMMARY_HISTORY_LENGTH_DEFAULT;
@@ -1278,6 +1278,9 @@ match_bytes_at_end (const guchar *data1,
 {
   gsize len = 0;
   gsize max_len = MIN (data1_len, data2_len);
+
+  if (max_len == 0)
+    return 0;
 
   data1 += data1_len - 1;
   data2 += data2_len - 1;
@@ -3919,7 +3922,7 @@ flatpak_pull_from_bundle (OstreeRepo   *repo,
   if (!metadata_valid)
     {
       /* Immediately remove this broken commit */
-      ostree_repo_set_ref_immediate (repo, remote, ref, NULL, cancellable, error);
+      ostree_repo_set_ref_immediate (repo, remote, ref, NULL, cancellable, NULL);
       return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Metadata in header and app are inconsistent"));
     }
 

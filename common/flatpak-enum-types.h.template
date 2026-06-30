@@ -20,5 +20,5 @@ FLATPAK_EXTERN GType @enum_name@_get_type (void) G_GNUC_CONST;
 /*** BEGIN file-tail ***/
 G_END_DECLS
 
-#endif /* __GIO_ENUM_TYPES_H__ */
+#endif /* __FLATPAK_ENUM_TYPES_H__ */
 /*** END file-tail ***/

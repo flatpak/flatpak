@@ -179,7 +179,6 @@ static gboolean flatpak_dir_cleanup_remote_for_url_change (FlatpakDir   *self,
 
 static gboolean flatpak_dir_lookup_remote_filter (FlatpakDir *self,
                                                   const char *name,
-                                                  gboolean    force_load,
                                                   char      **checksum_out,
                                                   GRegex    **allow_regex,
                                                   GRegex    **deny_regex,
@@ -2575,7 +2574,8 @@ flatpak_ensure_system_user_cache_dir_location (GError **error)
   symlink_path = g_build_filename (g_get_user_runtime_dir (), ".flatpak-cache", NULL);
   path = flatpak_readlink (symlink_path, NULL);
 
-  if (stat (path, &st_buf) == 0 &&
+  if (path != NULL &&
+      stat (path, &st_buf) == 0 &&
       /* Must be owned by us */
       st_buf.st_uid == getuid () &&
       /* and not writeable by others, but readable */
@@ -2762,6 +2762,9 @@ flatpak_dir_revokefs_fuse_unmount (OstreeRepo **repo,
   fusermount = g_subprocess_new (G_SUBPROCESS_FLAGS_NONE,
                                  error,
                                  FUSERMOUNT, "-u", "-z", mnt_dir, NULL);
+  if (fusermount == NULL)
+    return FALSE;
+
   if (g_subprocess_wait_check (fusermount, NULL, error))
     {
       g_autoptr(GFile) mnt_dir_file = g_file_new_for_path (mnt_dir);
@@ -5364,7 +5367,7 @@ flatpak_dir_deploy_appstream (FlatpakDir   *self,
   if (!flatpak_dir_repo_lock (self, &lock, LOCK_SH, cancellable, error))
     return FALSE;
 
-  if (!flatpak_dir_lookup_remote_filter (self, remote, TRUE, &filter_checksum, &allow_refs, &deny_refs, error))
+  if (!flatpak_dir_lookup_remote_filter (self, remote, &filter_checksum, &allow_refs, &deny_refs, error))
     return FALSE;
 
   appstream_dir = g_file_get_child (flatpak_dir_get_path (self), "appstream");
@@ -5738,9 +5741,10 @@ replace_contents_compressed (GFile        *dest,
   compressor = g_zlib_compressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP, -1);
   out = g_file_replace (dest, NULL, FALSE, G_FILE_CREATE_REPLACE_DESTINATION,
                         NULL, error);
-  out2 = g_converter_output_stream_new (G_OUTPUT_STREAM (out), G_CONVERTER (compressor));
   if (out == NULL)
     return FALSE;
+
+  out2 = g_converter_output_stream_new (G_OUTPUT_STREAM (out), G_CONVERTER (compressor));
 
   if (!g_output_stream_write_all (out2,
                                   g_bytes_get_data (contents, NULL),
@@ -8172,6 +8176,13 @@ read_fd (int          fd,
   gsize size;
   gsize alloc_size;
 
+  if (stat_buf->st_size < 0 || (guint64) stat_buf->st_size > G_MAXSIZE - 1)
+    {
+      g_set_error_literal (error, G_FILE_ERROR, G_FILE_ERROR_NOMEM,
+                           _("Not enough memory"));
+      return FALSE;
+    }
+
   size = stat_buf->st_size;
 
   alloc_size = size + 1;
@@ -10365,7 +10376,7 @@ rewrite_one_dynamic_launcher (const char *portal_desktop_dir,
 
   /* And rename the icon */
   icon_path = g_key_file_get_string (old_key_file, G_KEY_FILE_DESKTOP_GROUP, "Icon", NULL);
-  if (g_str_has_prefix (icon_path, portal_icon_dir))
+  if (icon_path != NULL && g_str_has_prefix (icon_path, portal_icon_dir))
     {
       g_autoptr(GFile) icon_file = NULL;
       g_autofree char *icon_basename = NULL;
@@ -12688,7 +12699,6 @@ G_LOCK_DEFINE_STATIC (filters);
 static gboolean
 flatpak_dir_lookup_remote_filter (FlatpakDir *self,
                                   const char *name,
-                                  gboolean    force_load,
                                   char      **checksum_out,
                                   GRegex    **allow_regex,
                                   GRegex    **deny_regex,
@@ -12722,7 +12732,7 @@ flatpak_dir_lookup_remote_filter (FlatpakDir *self,
       guint64 now = g_get_monotonic_time ();
       GTimeVal mtime;
 
-      if (g_file_equal (filter->path, filter_file) != 0)
+      if (!g_file_equal (filter->path, filter_file))
         filter = NULL; /* New path, reload */
       else if ((now - filter->last_mtime_check) > (1000 * (FILTER_MTIME_CHECK_TIMEOUT_MSEC)))
         {
@@ -13751,7 +13761,7 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
         return NULL;
       if (!repo_get_remote_collection_id (self->repo, remote_or_uri, &state->collection_id, error))
         return NULL;
-      if (!flatpak_dir_lookup_remote_filter (self, remote_or_uri, FALSE, NULL, &state->allow_refs, &state->deny_refs, error))
+      if (!flatpak_dir_lookup_remote_filter (self, remote_or_uri, NULL, &state->allow_refs, &state->deny_refs, error))
         return NULL;
       if (!ostree_repo_remote_get_url (self->repo, remote_or_uri, &url, error))
         return NULL;
@@ -15404,7 +15414,7 @@ flatpak_dir_remote_has_deploys (FlatpakDir *self,
       FlatpakDecomposed *ref = key;
       g_autofree char *origin = flatpak_dir_get_origin (self, ref, NULL, NULL);
 
-      if (strcmp (remote, origin) == 0)
+      if (g_strcmp0 (remote, origin) == 0)
         return TRUE;
     }
 
@@ -15564,7 +15574,7 @@ flatpak_dir_create_origin_remote (FlatpakDir   *self,
     return NULL;
 
   if (new_config && !_flatpak_dir_reload_config (self, cancellable, error))
-    return FALSE;
+    return NULL;
 
   if (changed_config)
     *changed_config = (new_config != NULL);

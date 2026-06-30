@@ -141,7 +141,7 @@ flatpak_remote_ref_get_property (GObject    *object,
       break;
 
     case PROP_DOWNLOAD_SIZE:
-      g_value_set_uint64 (value, priv->installed_size);
+      g_value_set_uint64 (value, priv->download_size);
       break;
 
     case PROP_METADATA:

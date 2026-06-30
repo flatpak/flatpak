@@ -667,10 +667,10 @@ flatpak_exports_append_bwrap_args (FlatpakExports *exports,
     flatpak_bwrap_add_args (bwrap, "--ro-bind", "/usr/lib/os-release", "/run/host/os-release", NULL);
 }
 
-/* Returns FLATPAK_FILESYSTEM_MODE_NONE if not visible */
-FlatpakFilesystemMode
-flatpak_exports_path_get_mode (FlatpakExports *exports,
-                               const char     *path)
+static FlatpakFilesystemMode
+flatpak_exports_path_get_mode_full (FlatpakExports *exports,
+                                    const char     *path,
+                                    int             level)
 {
   guint n_keys;
   g_autofree const char **keys = (const char **) g_hash_table_get_keys_as_array (exports->hash, &n_keys);
@@ -680,6 +680,9 @@ flatpak_exports_path_get_mode (FlatpakExports *exports,
   int i;
   g_autoptr(GString) path_builder = g_string_new ("");
   struct stat st;
+
+  if (level > 40)
+    return FLATPAK_FILESYSTEM_MODE_NONE;
 
   qsort (keys, n_keys, sizeof (char *), flatpak_strcmp0_ptr);
 
@@ -739,7 +742,7 @@ flatpak_exports_path_get_mode (FlatpakExports *exports,
                   g_string_append (path2_builder, parts[j]);
                 }
 
-              return flatpak_exports_path_get_mode (exports, path2_builder->str);
+              return flatpak_exports_path_get_mode_full (exports, path2_builder->str, level + 1);
             }
         }
       else if (parts[i + 1] == NULL)
@@ -750,6 +753,14 @@ flatpak_exports_path_get_mode (FlatpakExports *exports,
     return FLATPAK_FILESYSTEM_MODE_READ_ONLY;
 
   return FLATPAK_FILESYSTEM_MODE_READ_WRITE;
+}
+
+/* Returns FLATPAK_FILESYSTEM_MODE_NONE if not visible */
+FlatpakFilesystemMode
+flatpak_exports_path_get_mode (FlatpakExports *exports,
+                               const char     *path)
+{
+  return flatpak_exports_path_get_mode_full (exports, path, 0);
 }
 
 gboolean

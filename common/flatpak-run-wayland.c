@@ -174,7 +174,8 @@ flatpak_run_create_wayland_security_context (FlatpakBwrap *bwrap,
   struct wp_security_context_v1 *security_context;
   struct sockaddr_un sockaddr = {0};
   g_autofree char *socket_path = NULL;
-  int listen_fd = -1, sync_fd, ret;
+  glnx_autofd int listen_fd = -1;
+  int sync_fd, ret;
 
   *available_out = TRUE;
   *socket_path_out = NULL;
@@ -214,7 +215,7 @@ flatpak_run_create_wayland_security_context (FlatpakBwrap *bwrap,
 
   unlink (socket_path);
 
-  listen_fd = socket (AF_UNIX, SOCK_STREAM, 0);
+  listen_fd = socket (AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
   if (listen_fd < 0)
     goto out;
 
@@ -245,8 +246,6 @@ flatpak_run_create_wayland_security_context (FlatpakBwrap *bwrap,
   res = TRUE;
 
 out:
-  if (listen_fd >= 0)
-    close (listen_fd);
   if (security_context_manager)
     wp_security_context_manager_v1_destroy (security_context_manager);
   wl_display_disconnect (display);
@@ -290,6 +289,14 @@ flatpak_run_add_wayland_args (FlatpakBwrap *bwrap,
 
   wayland_display = get_wayland_display_name ();
 
+  if (!g_str_has_prefix (wayland_display, "wayland-") ||
+      strchr (wayland_display, '/') != NULL)
+    {
+      g_debug ("Not preserving WAYLAND_DISPLAY=\"%s\"", wayland_display);
+      wayland_display = "wayland-0";
+      flatpak_bwrap_set_env (bwrap, "WAYLAND_DISPLAY", wayland_display, TRUE);
+    }
+
 #ifdef ENABLE_WAYLAND_SECURITY_CONTEXT
   if (flatpak_run_create_wayland_security_context (bwrap, app_id, instance_id,
                                                    wayland_display,
@@ -311,14 +318,6 @@ flatpak_run_add_wayland_args (FlatpakBwrap *bwrap,
     {
       g_debug ("Using ordinary Wayland socket, without security context");
       wayland_socket = get_wayland_socket_path (wayland_display);
-    }
-
-  if (!g_str_has_prefix (wayland_display, "wayland-") ||
-      strchr (wayland_display, '/') != NULL)
-    {
-      g_debug ("Not preserving WAYLAND_DISPLAY=\"%s\"", wayland_display);
-      wayland_display = "wayland-0";
-      flatpak_bwrap_set_env (bwrap, "WAYLAND_DISPLAY", wayland_display, TRUE);
     }
 
   sandbox_wayland_socket = g_strdup_printf ("/run/flatpak/%s", wayland_display);

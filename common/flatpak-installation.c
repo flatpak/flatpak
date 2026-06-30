@@ -537,10 +537,17 @@ const char *
 flatpak_installation_get_display_name (FlatpakInstallation *self)
 {
   FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir_maybe_no_repo (self);
 
   if (priv->display_name == NULL)
-    priv->display_name = flatpak_dir_get_display_name (dir);
+    {
+      g_autoptr(FlatpakDir) d = flatpak_installation_get_dir_maybe_no_repo (self);
+      g_autofree char *name = flatpak_dir_get_display_name (d);
+
+      G_LOCK (dir);
+      if (priv->display_name == NULL)
+        priv->display_name = g_steal_pointer (&name);
+      G_UNLOCK (dir);
+    }
 
   return (const char *) priv->display_name;
 }
@@ -716,7 +723,15 @@ flatpak_installation_launch_full (FlatpakInstallation *self,
     return FALSE;
 
   if (instance_out)
-    *instance_out = flatpak_instance_new (instance_dir);
+    {
+      g_autoptr(FlatpakInstance) instance = NULL;
+
+      instance = flatpak_instance_new (instance_dir, error);
+      if (instance == NULL)
+        return FALSE;
+
+      *instance_out = g_steal_pointer (&instance);
+    }
 
   return TRUE;
 }
@@ -1601,7 +1616,7 @@ flatpak_installation_get_min_free_space_bytes (FlatpakInstallation *self,
   g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(FlatpakDir) dir_clone = NULL;
 
-  dir = flatpak_installation_get_dir (self, NULL);
+  dir = flatpak_installation_get_dir (self, error);
   if (dir == NULL)
     return FALSE;
 
@@ -2358,7 +2373,7 @@ flatpak_installation_fetch_remote_metadata_sync (FlatpakInstallation *self,
 
   state = flatpak_dir_get_remote_state_optional (dir, remote_name, FALSE, cancellable, error);
   if (state == NULL)
-    return FALSE;
+    return NULL;
 
   if (!flatpak_remote_state_load_data (state, full_ref,
                                        NULL, NULL, &res,

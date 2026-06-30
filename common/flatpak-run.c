@@ -1660,7 +1660,7 @@ flatpak_run_add_app_info_args (FlatpakBwrap           *bwrap,
     return FALSE;
 
   bwrapinfo_path = g_build_filename (instance_id_host_dir, "bwrapinfo.json", NULL);
-  fd3 = open (bwrapinfo_path, O_RDWR | O_CREAT, 0644);
+  fd3 = open (bwrapinfo_path, O_RDWR | O_CREAT | O_EXCL | O_CLOEXEC, 0644);
   if (fd3 == -1)
     {
       int errsv = errno;
@@ -2574,7 +2574,8 @@ forward_file (XdpDbusDocuments *documents,
               char            **out_doc_id,
               GError          **error)
 {
-  int fd, fd_id;
+  glnx_autofd int fd = -1;
+  int fd_id;
   struct stat stbuf;
   guint portal_version;
   gboolean is_dir = FALSE;
@@ -2586,11 +2587,13 @@ forward_file (XdpDbusDocuments *documents,
   if (fd == -1)
     return flatpak_fail (error, _("Failed to open ‘%s’"), file);
 
-  fd_list = g_unix_fd_list_new ();
-  fd_id = g_unix_fd_list_append (fd_list, fd, error);
   if (fstat (fd, &stbuf) == 0 && S_ISDIR (stbuf.st_mode))
     is_dir = TRUE;
-  close (fd);
+
+  fd_list = g_unix_fd_list_new ();
+  fd_id = g_unix_fd_list_append (fd_list, fd, error);
+  if (fd_id == -1)
+    return FALSE;
 
   portal_version = xdp_dbus_documents_get_version (documents);
   if (portal_version < 4 && is_dir)
@@ -3885,6 +3888,7 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
       GPid child_pid;
       char pid_str[64];
       g_autofree char *pid_path = NULL;
+      g_autoptr(GError) local_error = NULL;
       GSpawnFlags spawn_flags;
       GSpawnChildSetupFunc child_setup;
 
@@ -3920,7 +3924,11 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
 
       g_snprintf (pid_str, sizeof (pid_str), "%d", child_pid);
       pid_path = g_build_filename (instance_id_host_dir, "pid", NULL);
-      g_file_set_contents (pid_path, pid_str, -1, NULL);
+      if (!g_file_set_contents (pid_path, pid_str, -1, &local_error))
+        {
+          g_warning ("Failed to write pid file: %s", local_error->message);
+          g_clear_error (&local_error);
+        }
 
       if ((flags & (FLATPAK_RUN_FLAG_BACKGROUND)) == 0)
         {
@@ -3942,10 +3950,15 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
     {
       char pid_str[64];
       g_autofree char *pid_path = NULL;
+      g_autoptr(GError) local_error = NULL;
 
       g_snprintf (pid_str, sizeof (pid_str), "%d", getpid ());
       pid_path = g_build_filename (instance_id_host_dir, "pid", NULL);
-      g_file_set_contents (pid_path, pid_str, -1, NULL);
+      if (!g_file_set_contents (pid_path, pid_str, -1, &local_error))
+        {
+          g_warning ("Failed to write pid file: %s", local_error->message);
+          g_clear_error (&local_error);
+        }
 
       /* Ensure we unset O_CLOEXEC for marked fds and rewind fds as needed.
        * Note that this does not close fds that are not already marked O_CLOEXEC, because
