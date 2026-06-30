@@ -10376,7 +10376,7 @@ rewrite_one_dynamic_launcher (const char *portal_desktop_dir,
 
   /* And rename the icon */
   icon_path = g_key_file_get_string (old_key_file, G_KEY_FILE_DESKTOP_GROUP, "Icon", NULL);
-  if (g_str_has_prefix (icon_path, portal_icon_dir))
+  if (icon_path != NULL && g_str_has_prefix (icon_path, portal_icon_dir))
     {
       g_autoptr(GFile) icon_file = NULL;
       g_autofree char *icon_basename = NULL;
@@ -15414,7 +15414,7 @@ flatpak_dir_remote_has_deploys (FlatpakDir *self,
       FlatpakDecomposed *ref = key;
       g_autofree char *origin = flatpak_dir_get_origin (self, ref, NULL, NULL);
 
-      if (strcmp (remote, origin) == 0)
+      if (g_strcmp0 (remote, origin) == 0)
         return TRUE;
     }
 
