@@ -916,46 +916,42 @@ handle_spawn (PortalFlatpak         *object,
 
   g_ptr_array_add (flatpak_argv, g_strdup ("run"));
 
-  /* If we don't clear the env, the flatpak portal service environment would
-   * leak into the flatpak instance. By default we reuse the environment of
-   * the calling instance by passing it as arguments after the --clear-env.
+  /* Pass the calling instance's run-environ as the envp for spawning
+   * flatpak run, so it can make host-level decisions (DISPLAY, GL drivers,
+   * XDG_RUNTIME_DIR, etc.) based on the original environment. This must NOT
+   * go into --env-fd, because run-environ is host-like and --env-fd injects
+   * into the sandbox payload environment.
    */
-  g_ptr_array_add (flatpak_argv, g_strdup ("--clear-env"));
+  {
+    static const char * const mock_run_environ[] = { "FOO=bar", NULL };
 
-  if (!(arg_flags & FLATPAK_SPAWN_FLAGS_CLEAR_ENV))
-    {
-      static const char * const mock_run_environ[] = { "FOO=bar", NULL };
+    if (testing)
+      env = g_strdupv ((GStrv) mock_run_environ);
+    else
+      env = flatpak_instance_get_run_environ (instance, &error);
 
-      if (testing)
-        env = g_strdupv ((GStrv) mock_run_environ);
-      else
-        env = flatpak_instance_get_run_environ (instance, &error);
+    if (env == NULL)
+      {
+        if (g_error_matches (error, G_FILE_ERROR, G_FILE_ERROR_NOENT))
+          {
+            g_warning ("Environment for \"flatpak run\" was not found, "
+                       "falling back to the flatpak portal environment");
+          }
+        else
+          {
+            g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
+                                                   G_DBUS_ERROR_INVALID_ARGS,
+                                                   "Could not load environment for \"flatpak run\": %s",
+                                                   error->message);
+            return G_DBUS_METHOD_INVOCATION_HANDLED;
+          }
 
-      if (env == NULL)
-        {
-          if (g_error_matches (error, G_FILE_ERROR, G_FILE_ERROR_NOENT))
-            {
-              g_warning ("Environment for \"flatpak run\" was not found, "
-                         "falling back to a clean environment");
-            }
-          else
-            {
-              g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
-                                                     G_DBUS_ERROR_INVALID_ARGS,
-                                                     "Could not load environment for \"flatpak run\": %s",
-                                                     error->message);
-              return G_DBUS_METHOD_INVOCATION_HANDLED;
-            }
-        }
-      else
-        {
-          for (i = 0; env != NULL && env[i] != NULL; i++)
-            {
-              g_string_append (env_string, env[i]);
-              g_string_append_c (env_string, '\0');
-            }
-        }
-    }
+        g_clear_error (&error);
+      }
+  }
+
+  if (arg_flags & FLATPAK_SPAWN_FLAGS_CLEAR_ENV)
+    g_ptr_array_add (flatpak_argv, g_strdup ("--clear-env"));
 
   sandboxed = (arg_flags & FLATPAK_SPAWN_FLAGS_SANDBOX) != 0;
 
@@ -1507,7 +1503,7 @@ handle_spawn (PortalFlatpak         *object,
    * to work around a deadlock in GLib < 2.60 */
   if (!g_spawn_async_with_pipes (NULL,
                                  (char **) flatpak_argv->pdata,
-                                 NULL,
+                                 env,
                                  G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD | G_SPAWN_LEAVE_DESCRIPTORS_OPEN,
                                  child_setup_func, &child_setup_data,
                                  &pid,
