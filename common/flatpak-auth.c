@@ -41,7 +41,7 @@ flatpak_auth_new_for_remote (FlatpakDir *dir,
   int i;
 
   if (!flatpak_dir_ensure_repo (dir, cancellable, error))
-    return FALSE;
+    return NULL;
 
   repo = flatpak_dir_get_repo (dir);
   if (repo != NULL)
