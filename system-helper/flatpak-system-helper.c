@@ -1894,7 +1894,7 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
           if (ref == NULL)
             {
               g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                     "Error deployings: %s", error->message);
+                                                     "Error deploying: %s", error->message);
               return FALSE;
             }
 
