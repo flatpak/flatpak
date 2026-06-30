@@ -2574,7 +2574,8 @@ forward_file (XdpDbusDocuments *documents,
               char            **out_doc_id,
               GError          **error)
 {
-  int fd, fd_id;
+  glnx_autofd int fd = -1;
+  int fd_id;
   struct stat stbuf;
   guint portal_version;
   gboolean is_dir = FALSE;
@@ -2586,11 +2587,13 @@ forward_file (XdpDbusDocuments *documents,
   if (fd == -1)
     return flatpak_fail (error, _("Failed to open ‘%s’"), file);
 
-  fd_list = g_unix_fd_list_new ();
-  fd_id = g_unix_fd_list_append (fd_list, fd, error);
   if (fstat (fd, &stbuf) == 0 && S_ISDIR (stbuf.st_mode))
     is_dir = TRUE;
-  close (fd);
+
+  fd_list = g_unix_fd_list_new ();
+  fd_id = g_unix_fd_list_append (fd_list, fd, error);
+  if (fd_id == -1)
+    return FALSE;
 
   portal_version = xdp_dbus_documents_get_version (documents);
   if (portal_version < 4 && is_dir)
