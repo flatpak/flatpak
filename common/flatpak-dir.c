@@ -179,7 +179,6 @@ static gboolean flatpak_dir_cleanup_remote_for_url_change (FlatpakDir   *self,
 
 static gboolean flatpak_dir_lookup_remote_filter (FlatpakDir *self,
                                                   const char *name,
-                                                  gboolean    force_load,
                                                   char      **checksum_out,
                                                   GRegex    **allow_regex,
                                                   GRegex    **deny_regex,
@@ -5365,7 +5364,7 @@ flatpak_dir_deploy_appstream (FlatpakDir   *self,
   if (!flatpak_dir_repo_lock (self, &lock, LOCK_SH, cancellable, error))
     return FALSE;
 
-  if (!flatpak_dir_lookup_remote_filter (self, remote, TRUE, &filter_checksum, &allow_refs, &deny_refs, error))
+  if (!flatpak_dir_lookup_remote_filter (self, remote, &filter_checksum, &allow_refs, &deny_refs, error))
     return FALSE;
 
   appstream_dir = g_file_get_child (flatpak_dir_get_path (self), "appstream");
@@ -12689,7 +12688,6 @@ G_LOCK_DEFINE_STATIC (filters);
 static gboolean
 flatpak_dir_lookup_remote_filter (FlatpakDir *self,
                                   const char *name,
-                                  gboolean    force_load,
                                   char      **checksum_out,
                                   GRegex    **allow_regex,
                                   GRegex    **deny_regex,
@@ -13752,7 +13750,7 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
         return NULL;
       if (!repo_get_remote_collection_id (self->repo, remote_or_uri, &state->collection_id, error))
         return NULL;
-      if (!flatpak_dir_lookup_remote_filter (self, remote_or_uri, FALSE, NULL, &state->allow_refs, &state->deny_refs, error))
+      if (!flatpak_dir_lookup_remote_filter (self, remote_or_uri, NULL, &state->allow_refs, &state->deny_refs, error))
         return NULL;
       if (!ostree_repo_remote_get_url (self->repo, remote_or_uri, &url, error))
         return NULL;
