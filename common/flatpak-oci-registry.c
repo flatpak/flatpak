@@ -42,8 +42,6 @@
 #include "flatpak-zstd-compressor-private.h"
 #include "flatpak-zstd-decompressor-private.h"
 
-#define MAX_JSON_SIZE (1024 * 1024)
-
 typedef struct archive FlatpakAutoArchiveWrite;
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakAutoArchiveWrite, archive_write_free)
 
