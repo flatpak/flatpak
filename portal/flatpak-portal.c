@@ -804,7 +804,7 @@ handle_spawn (PortalFlatpak         *object,
   if ((sandbox_flags & ~FLATPAK_SPAWN_SANDBOX_FLAGS_ALL) != 0)
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
-                                             "Unsupported sandbox flags enabled: 0x%x", arg_flags & ~FLATPAK_SPAWN_SANDBOX_FLAGS_ALL);
+                                             "Unsupported sandbox flags enabled: 0x%x", sandbox_flags & ~FLATPAK_SPAWN_SANDBOX_FLAGS_ALL);
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
