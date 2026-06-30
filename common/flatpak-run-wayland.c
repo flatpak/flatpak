@@ -174,7 +174,8 @@ flatpak_run_create_wayland_security_context (FlatpakBwrap *bwrap,
   struct wp_security_context_v1 *security_context;
   struct sockaddr_un sockaddr = {0};
   g_autofree char *socket_path = NULL;
-  int listen_fd = -1, sync_fd, ret;
+  glnx_autofd int listen_fd = -1;
+  int sync_fd, ret;
 
   *available_out = TRUE;
   *socket_path_out = NULL;
@@ -214,7 +215,7 @@ flatpak_run_create_wayland_security_context (FlatpakBwrap *bwrap,
 
   unlink (socket_path);
 
-  listen_fd = socket (AF_UNIX, SOCK_STREAM, 0);
+  listen_fd = socket (AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
   if (listen_fd < 0)
     goto out;
 
@@ -245,8 +246,6 @@ flatpak_run_create_wayland_security_context (FlatpakBwrap *bwrap,
   res = TRUE;
 
 out:
-  if (listen_fd >= 0)
-    close (listen_fd);
   if (security_context_manager)
     wp_security_context_manager_v1_destroy (security_context_manager);
   wl_display_disconnect (display);
