@@ -3888,6 +3888,7 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
       GPid child_pid;
       char pid_str[64];
       g_autofree char *pid_path = NULL;
+      g_autoptr(GError) local_error = NULL;
       GSpawnFlags spawn_flags;
       GSpawnChildSetupFunc child_setup;
 
@@ -3923,7 +3924,11 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
 
       g_snprintf (pid_str, sizeof (pid_str), "%d", child_pid);
       pid_path = g_build_filename (instance_id_host_dir, "pid", NULL);
-      g_file_set_contents (pid_path, pid_str, -1, NULL);
+      if (!g_file_set_contents (pid_path, pid_str, -1, &local_error))
+        {
+          g_warning ("Failed to write pid file: %s", local_error->message);
+          g_clear_error (&local_error);
+        }
 
       if ((flags & (FLATPAK_RUN_FLAG_BACKGROUND)) == 0)
         {
@@ -3945,10 +3950,15 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
     {
       char pid_str[64];
       g_autofree char *pid_path = NULL;
+      g_autoptr(GError) local_error = NULL;
 
       g_snprintf (pid_str, sizeof (pid_str), "%d", getpid ());
       pid_path = g_build_filename (instance_id_host_dir, "pid", NULL);
-      g_file_set_contents (pid_path, pid_str, -1, NULL);
+      if (!g_file_set_contents (pid_path, pid_str, -1, &local_error))
+        {
+          g_warning ("Failed to write pid file: %s", local_error->message);
+          g_clear_error (&local_error);
+        }
 
       /* Ensure we unset O_CLOEXEC for marked fds and rewind fds as needed.
        * Note that this does not close fds that are not already marked O_CLOEXEC, because
