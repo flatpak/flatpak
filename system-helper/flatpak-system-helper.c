@@ -389,6 +389,13 @@ handle_deploy (FlatpakSystemHelper   *object,
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
+  if (*arg_origin == 0 || strchr (arg_origin, '/') != NULL)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                                             "Invalid remote name: %s", arg_origin);
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
   if (strlen (arg_repo_path) > 0)
     {
       g_autoptr(GError) local_error = NULL;
@@ -733,6 +740,13 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
+  if (*arg_origin == 0 || strchr (arg_origin, '/') != NULL)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                                             "Invalid remote name: %s", arg_origin);
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
   if (strlen (arg_repo_path) > 0)
     {
       g_autoptr(GFile) repo_file = g_file_new_for_path (arg_repo_path);
@@ -959,6 +973,13 @@ handle_install_bundle (FlatpakSystemHelper   *object,
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
                                              "Unsupported flags enabled: 0x%x", (arg_flags & ~FLATPAK_HELPER_INSTALL_BUNDLE_FLAGS_ALL));
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  if (*arg_remote == 0 || strchr (arg_remote, '/') != NULL)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                                             "Invalid remote name: %s", arg_remote);
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
