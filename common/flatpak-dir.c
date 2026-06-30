@@ -15565,7 +15565,7 @@ flatpak_dir_create_origin_remote (FlatpakDir   *self,
     return NULL;
 
   if (new_config && !_flatpak_dir_reload_config (self, cancellable, error))
-    return FALSE;
+    return NULL;
 
   if (changed_config)
     *changed_config = (new_config != NULL);
