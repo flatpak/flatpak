@@ -1608,7 +1608,7 @@ flatpak_installation_get_min_free_space_bytes (FlatpakInstallation *self,
   g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(FlatpakDir) dir_clone = NULL;
 
-  dir = flatpak_installation_get_dir (self, NULL);
+  dir = flatpak_installation_get_dir (self, error);
   if (dir == NULL)
     return FALSE;
 
