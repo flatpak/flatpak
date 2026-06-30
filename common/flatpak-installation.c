@@ -537,10 +537,17 @@ const char *
 flatpak_installation_get_display_name (FlatpakInstallation *self)
 {
   FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
-  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir_maybe_no_repo (self);
 
   if (priv->display_name == NULL)
-    priv->display_name = flatpak_dir_get_display_name (dir);
+    {
+      g_autoptr(FlatpakDir) d = flatpak_installation_get_dir_maybe_no_repo (self);
+      g_autofree char *name = flatpak_dir_get_display_name (d);
+
+      G_LOCK (dir);
+      if (priv->display_name == NULL)
+        priv->display_name = g_steal_pointer (&name);
+      G_UNLOCK (dir);
+    }
 
   return (const char *) priv->display_name;
 }
