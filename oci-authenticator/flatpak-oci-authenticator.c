@@ -202,7 +202,7 @@ handle_request_ref_tokens_basic_auth_reply (FlatpakAuthenticatorRequest *object,
 {
   BasicAuthData *auth = user_data;
 
-  g_info ("handling Request.BasicAuthReply %s %s", arg_user, arg_password);
+  g_info ("handling Request.BasicAuthReply %s", arg_user);
 
   flatpak_authenticator_request_complete_basic_auth_reply (object, invocation);
 
