@@ -5741,9 +5741,10 @@ replace_contents_compressed (GFile        *dest,
   compressor = g_zlib_compressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP, -1);
   out = g_file_replace (dest, NULL, FALSE, G_FILE_CREATE_REPLACE_DESTINATION,
                         NULL, error);
-  out2 = g_converter_output_stream_new (G_OUTPUT_STREAM (out), G_CONVERTER (compressor));
   if (out == NULL)
     return FALSE;
+
+  out2 = g_converter_output_stream_new (G_OUTPUT_STREAM (out), G_CONVERTER (compressor));
 
   if (!g_output_stream_write_all (out2,
                                   g_bytes_get_data (contents, NULL),
