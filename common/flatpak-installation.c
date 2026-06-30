@@ -2365,7 +2365,7 @@ flatpak_installation_fetch_remote_metadata_sync (FlatpakInstallation *self,
 
   state = flatpak_dir_get_remote_state_optional (dir, remote_name, FALSE, cancellable, error);
   if (state == NULL)
-    return FALSE;
+    return NULL;
 
   if (!flatpak_remote_state_load_data (state, full_ref,
                                        NULL, NULL, &res,
