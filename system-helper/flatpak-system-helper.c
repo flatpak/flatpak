@@ -2369,7 +2369,7 @@ main (int    argc,
                                       NULL,
                                       &local_error);
       if (monitor == NULL)
-        g_warning ("Failed to set watch on %s: %s", exe_path, error->message);
+        g_warning ("Failed to set watch on %s: %s", exe_path, local_error->message);
       else
         g_signal_connect (monitor, "changed",
                           G_CALLBACK (binary_file_changed_cb), NULL);
