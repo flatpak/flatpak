@@ -458,6 +458,17 @@ handle_deploy (FlatpakSystemHelper   *object,
   deploy_dir = flatpak_dir_get_if_deployed (system, ref, NULL, NULL);
 
   is_update = (deploy_dir && !reinstall);
+
+  if (!is_update &&
+      GPOINTER_TO_INT (g_object_get_data (G_OBJECT (invocation),
+                                          "authorized-as-update")))
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                             "Ref %s is not installed, but install was not authorized",
+                                             flatpak_decomposed_get_ref (ref));
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
   if (is_update)
     {
       g_autofree char *real_origin = NULL;
@@ -1969,6 +1980,11 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
 
               is_install = !dir_ref_is_installed (system, ref);
             }
+
+          if (!is_install)
+            g_object_set_data (G_OBJECT (invocation),
+                               "authorized-as-update",
+                               GINT_TO_POINTER (TRUE));
 
           if (is_install)
             {
