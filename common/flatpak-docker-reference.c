@@ -76,7 +76,12 @@ flatpak_docker_reference_parse (const char *reference_str,
   const char *slash;
 
   matched = g_regex_match (regex, reference_str, G_REGEX_MATCH_DEFAULT, &match_info);
-  g_assert (matched);
+  if (!matched)
+    {
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                          "Invalid docker reference: %s", reference_str);
+      return NULL;
+    }
 
   tag_match = g_match_info_fetch (match_info, 2);
   if (tag_match[0] == '\0')
