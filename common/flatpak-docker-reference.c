@@ -19,6 +19,7 @@
  */
 
 #include "flatpak-docker-reference-private.h"
+#include "flatpak-uri-private.h"
 #include "flatpak-utils-private.h"
 
 struct _FlatpakDockerReference
@@ -42,7 +43,9 @@ struct _FlatpakDockerReference
 
 #define TAG "[0-9A-Za-z_][0-9A-Za-z_-]{0,127}"
 #define DIGEST "[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][[:xdigit:]]{32,}"
-#define REMAINDER_TAG_AND_DIGEST_RE "^(.*?)(:" TAG ")?" "(@" DIGEST ")?$"
+#define DOMAIN "[a-zA-Z0-9._:-]+"
+#define REPOSITORY "[a-z0-9._/-]+"
+#define REMAINDER_TAG_AND_DIGEST_RE "^(" DOMAIN ")/(" REPOSITORY ")(:" TAG ")?" "(@" DIGEST ")?$"
 
 static GRegex *
 get_remainder_tag_and_digest_regex (void)
@@ -70,10 +73,7 @@ flatpak_docker_reference_parse (const char *reference_str,
   g_autoptr(GMatchInfo) match_info = NULL;
   g_autofree char *tag_match = NULL;
   g_autofree char *digest_match = NULL;
-  g_autofree char *remainder = NULL;
-  g_autofree char *domain = NULL;
   gboolean matched;
-  const char *slash;
 
   matched = g_regex_match (regex, reference_str, G_REGEX_MATCH_DEFAULT, &match_info);
   if (!matched)
@@ -83,29 +83,35 @@ flatpak_docker_reference_parse (const char *reference_str,
       return NULL;
     }
 
-  tag_match = g_match_info_fetch (match_info, 2);
+  {
+    g_autofree char *domain = g_match_info_fetch (match_info, 1);
+    g_autofree char *uri_str = g_strconcat ("https://", domain, NULL);
+    g_autoptr(GUri) uri = g_uri_parse (uri_str, FLATPAK_HTTP_URI_FLAGS, NULL);
+
+    if (uri == NULL ||
+        g_strcmp0 (g_uri_get_host (uri), domain) != 0)
+      {
+        flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                            "Invalid registry domain: %s", domain);
+        return NULL;
+      }
+
+    reference->uri = g_steal_pointer (&uri_str);
+  }
+
+  reference->repository = g_match_info_fetch (match_info, 2);
+
+  tag_match = g_match_info_fetch (match_info, 3);
   if (tag_match[0] == '\0')
     reference->tag = NULL;
   else
     reference->tag = g_strdup (tag_match + 1);
 
-  digest_match = g_match_info_fetch (match_info, 3);
+  digest_match = g_match_info_fetch (match_info, 4);
   if (digest_match[0] == '\0')
     reference->digest = NULL;
   else
     reference->digest = g_strdup (digest_match + 1);
-
-  remainder = g_match_info_fetch (match_info, 1);
-  slash = strchr (remainder, '/');
-  if (slash == NULL || slash == reference_str || *slash == '\0')
-    {
-      flatpak_fail(error, "Can't parse %s into <domain>/<repository>", remainder);
-      return NULL;
-    }
-
-  domain = g_strndup (remainder, slash - remainder);
-  reference->uri = g_strconcat ("https://", domain, NULL);
-  reference->repository = g_strdup (slash + 1);
 
   return g_steal_pointer (&reference);
 }
