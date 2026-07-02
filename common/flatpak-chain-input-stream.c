@@ -198,19 +198,18 @@ flatpak_chain_input_stream_close (GInputStream *stream,
                                   GCancellable *cancellable,
                                   GError      **error)
 {
-  gboolean ret = FALSE;
-  FlatpakChainInputStream *self = (gpointer) stream;
-  FlatpakChainInputStreamPrivate *priv = flatpak_chain_input_stream_get_instance_private (self);
-  guint i;
+  FlatpakChainInputStream *self = FLATPAK_CHAIN_INPUT_STREAM (stream);
+  FlatpakChainInputStreamPrivate *priv =
+    flatpak_chain_input_stream_get_instance_private (self);
+  gboolean ret = TRUE;
 
-  for (i = 0; i < priv->streams->len; i++)
+  for (size_t i = 0; i < priv->streams->len; i++)
     {
       GInputStream *child = priv->streams->pdata[i];
-      if (!g_input_stream_close (child, cancellable, error))
-        goto out;
+
+      if (!g_input_stream_close (child, cancellable, ret ? error : NULL))
+        ret = FALSE;
     }
 
-  ret = TRUE;
-out:
   return ret;
 }
