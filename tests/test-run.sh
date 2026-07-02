@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..27"
+echo "1..30"
 
 # Use stable rather than master as the branch so we can test that the run
 # command automatically finds the branch correctly
@@ -608,3 +608,18 @@ assert_file_has_content hello_out "not allowed to avoid sandbox escape"
 assert_not_file_has_content hello_out "secret-file"
 
 ok "--persist doesn't allow sandbox escape via a symlink (CVE-2024-42472)"
+
+run --file-forwarding --command=sh org.test.Hello -c 'echo "$@"' sh @@u https://google.com @@ > file_fwd_out
+assert_file_has_content file_fwd_out "^https://google.com$"
+ok "file-forwarding remote URI"
+
+echo "test" > local_file.txt
+run --file-forwarding --command=sh org.test.Hello -c 'echo "$@"' sh @@ local_file.txt @@ > file_fwd_out2
+assert_file_has_content file_fwd_out2 "/doc/"
+ok "file-forwarding valid path"
+
+if run --file-forwarding --command=sh org.test.Hello -c 'echo "$@"' sh @@ "" @@ &> file_fwd_err; then
+    assert_not_reached "Should not be able to forward empty path"
+fi
+assert_file_has_content file_fwd_err "Invalid path"
+ok "file-forwarding empty path"
