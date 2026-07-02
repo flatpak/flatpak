@@ -2725,7 +2725,7 @@ add_rest_args (FlatpakBwrap   *bwrap,
           else
             file = g_file_new_for_path (args[i]);
 
-          if (flatpak_file_get_path_cached (file) == NULL)
+          if (file && flatpak_file_get_path_cached (file) == NULL)
             return flatpak_fail (error, _("Invalid path ‘%s’"), args[i]);
         }
 
