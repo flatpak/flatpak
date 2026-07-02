@@ -2535,7 +2535,7 @@ validate_commit_metadata (GVariant   *commit_data,
       xa_metadata_size != required_metadata_size ||
       memcmp (xa_metadata, required_metadata, xa_metadata_size) != 0)
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED,
+      g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_PERMISSION_DENIED,
                    _("Commit metadata for %s not matching expected metadata"), ref);
       return FALSE;
     }
@@ -9855,7 +9855,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
           /* Fatal if kind/name/arch don't match. Warn for branch mismatch. */
           if (!flatpak_decomposed_equal_except_branch (checkout_ref, commit_ref))
             {
-              g_set_error (error, G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED,
+              g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_PERMISSION_DENIED,
                            _("Deployed ref %s does not match commit (%s)"),
                            flatpak_decomposed_get_ref (ref), xa_ref);
               return FALSE;
@@ -9867,7 +9867,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
         }
       else if (strcmp (flatpak_decomposed_get_ref (ref), xa_ref) != 0)
         {
-          g_set_error (error, G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED,
+          g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_PERMISSION_DENIED,
                        _("Deployed ref %s does not match commit (%s)"), flatpak_decomposed_get_ref (ref), xa_ref);
           return FALSE;
         }
