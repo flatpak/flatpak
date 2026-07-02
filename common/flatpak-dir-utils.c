@@ -338,7 +338,13 @@ flatpak_extension_compare (gconstpointer _a,
   const FlatpakExtension *a = _a;
   const FlatpakExtension *b = _b;
 
-  return b->priority - a->priority;
+  /* Subtraction would overflow for far-apart priorities */
+  if (b->priority > a->priority)
+    return 1;
+  else if (b->priority < a->priority)
+    return -1;
+  else
+    return 0;
 }
 
 static FlatpakExtension *
