@@ -434,26 +434,23 @@ flatpak_permission_adds_permissions (FlatpakPermission *old,
 {
   size_t i = 0, j = 0;
 
+  /* Already unconditionally allowed, can't add more */
   if (old->allowed)
     return FALSE;
 
+  /* Upgrading from conditional to unconditional */
   if (new->allowed)
     return TRUE;
 
+  /* More conditionals means more ways to grant the permission (OR) */
   if (new->conditionals->len > old->conditionals->len)
     return TRUE;
 
-  while (TRUE)
+  while (i < old->conditionals->len && j < new->conditionals->len)
     {
       const char *old_cond = old->conditionals->pdata[i];
       const char *new_cond = new->conditionals->pdata[j];
       int res;
-
-      if (old_cond == NULL)
-        return new_cond != NULL;
-
-      if (new_cond == NULL)
-        return FALSE;
 
       res = strcmp (old_cond, new_cond);
       if (res == 0) /* Same conditional */
@@ -465,13 +462,14 @@ flatpak_permission_adds_permissions (FlatpakPermission *old,
         {
           i++;
         }
-      else /* new conditional */
+      else /* New conditional not in old — adds permissions */
         {
-          return FALSE;
+          return TRUE;
         }
     }
 
-  return FALSE;
+  /* New conditionals remain that weren't matched in old */
+  return j < new->conditionals->len;
 }
 
 static GHashTable *
