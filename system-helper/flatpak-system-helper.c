@@ -28,6 +28,7 @@
 #include <polkit/polkit.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <grp.h>
 #include <pwd.h>
 #include <gio/gunixfdlist.h>
 #include <sys/mount.h>
@@ -1465,6 +1466,13 @@ revokefs_fuse_backend_child_setup (gpointer user_data)
    * socket and fd 4 is the --close-with-fd pipe; both were dup2()'d into place
    * before this by GSubprocess */
   g_fdwalk_set_cloexec (5);
+
+  if (setgroups (0, NULL) == -1 && errno != EPERM)
+    {
+      g_warning ("Failed to drop supplementary groups for revokefs backend: %s",
+                 g_strerror (errno));
+      exit (1);
+    }
 
   if (setgid (passwd->pw_gid) == -1)
     {
