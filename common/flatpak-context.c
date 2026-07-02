@@ -3493,6 +3493,10 @@ flatpak_context_adds_permissions (FlatpakContext *old,
   if (adds_usb_device (old, new))
     return TRUE;
 
+  /* env_vars and persistent are intentionally not checked here.
+   * They only affect the sandbox-internal environment and layout,
+   * not the app's access to host resources. */
+
   return FALSE;
 }
 
