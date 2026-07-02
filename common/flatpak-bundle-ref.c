@@ -66,10 +66,10 @@ flatpak_bundle_ref_finalize (GObject *object)
 
   g_clear_object (&priv->file);
 
-  g_bytes_unref (priv->metadata);
-  g_bytes_unref (priv->appstream);
-  g_bytes_unref (priv->icon_64);
-  g_bytes_unref (priv->icon_128);
+  g_clear_pointer (&priv->metadata, g_bytes_unref);
+  g_clear_pointer (&priv->appstream, g_bytes_unref);
+  g_clear_pointer (&priv->icon_64, g_bytes_unref);
+  g_clear_pointer (&priv->icon_128, g_bytes_unref);
   g_free (priv->origin);
   g_free (priv->runtime_repo);
 
