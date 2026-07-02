@@ -1110,7 +1110,7 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
       if (!flatpak_download_http_uri (source_registry->http_session,
                                       uri_s, source_registry->certificates,
                                       FLATPAK_HTTP_FLAGS_ACCEPT_OCI, out_stream,
-                                      self->token,
+                                      source_registry->token,
                                       progress_cb, user_data,
                                       cancellable, error))
         return FALSE;
