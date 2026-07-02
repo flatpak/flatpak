@@ -109,8 +109,8 @@ start_element (GMarkupParseContext *context,
 {
   ParserData *data = user_data;
 
-  g_assert (data->text->len == 0);
-  g_assert (data->lang == NULL);
+  g_string_truncate (data->text, 0);
+  g_clear_pointer (&data->lang, g_free);
 
   if (g_str_equal (element_name, "component"))
     {
@@ -150,7 +150,8 @@ start_element (GMarkupParseContext *context,
       const char *version;
       Component *component = NULL;
 
-      g_assert (data->components->len > 0);
+      if (data->components->len == 0)
+        return;
 
       component = g_ptr_array_index (data->components, data->components->len - 1);
 
@@ -200,7 +201,8 @@ start_element (GMarkupParseContext *context,
       /* https://www.freedesktop.org/software/appstream/docs/chap-Metadata.html#tag-content_rating */
       Component *component = NULL;
 
-      g_assert (data->components->len > 0);
+      if (data->components->len == 0)
+        return;
 
       component = g_ptr_array_index (data->components, data->components->len - 1);
 
@@ -235,10 +237,12 @@ start_element (GMarkupParseContext *context,
       Component *component = NULL;
       const gchar *id = NULL;
 
-      g_assert (data->components->len > 0);
+      if (data->components->len == 0)
+        return;
 
       component = g_ptr_array_index (data->components, data->components->len - 1);
-      g_assert (component->content_rating != NULL);
+      if (component->content_rating == NULL)
+        return;
 
       if (g_markup_collect_attributes (element_name,
                                        attribute_names,
@@ -282,7 +286,8 @@ end_element (GMarkupParseContext *context,
   if (elements->next)
     parent = (const char *) elements->next->data;
 
-  g_assert (data->components->len > 0);
+  if (data->components->len == 0)
+    return;
 
   component = g_ptr_array_index (data->components, data->components->len - 1);
 
@@ -296,8 +301,7 @@ end_element (GMarkupParseContext *context,
   /* avoid picking up <id> elements from e.g. <provides> */
   if (g_str_equal (element_name, "id"))
     {
-      g_assert (parent != NULL);
-      if (g_str_equal (parent, "component"))
+      if (parent != NULL && g_str_equal (parent, "component"))
         component->id = g_steal_pointer (&text);
     }
   else if (!data->in_developer && g_str_equal (element_name, "name"))
@@ -319,8 +323,8 @@ end_element (GMarkupParseContext *context,
   else if (data->in_content_rating && g_str_equal (element_name, "content_attribute"))
     {
       /* https://www.freedesktop.org/software/appstream/docs/chap-Metadata.html#tag-content_rating */
-      g_assert (component->content_rating != NULL);
-      g_hash_table_insert (component->content_rating, (gpointer) data->id, (gpointer) g_intern_string (text));
+      if (component->content_rating != NULL)
+        g_hash_table_insert (component->content_rating, (gpointer) data->id, (gpointer) g_intern_string (text));
     }
   else if (g_str_equal (element_name, "developer"))
     {
