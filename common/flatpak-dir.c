@@ -9634,7 +9634,6 @@ flatpak_dir_deploy (FlatpakDir          *self,
   g_autofree char *checkoutdirpath = NULL;
   const char *checkoutdir_basename;
   g_autoptr(GFile) real_checkoutdir = NULL;
-  g_autoptr(GFile) dotref = NULL;
   g_autoptr(GFile) files_etc = NULL;
   g_autoptr(GFile) deploy_data_file = NULL;
   g_autoptr(GVariant) commit_data = NULL;
@@ -9894,10 +9893,19 @@ flatpak_dir_deploy (FlatpakDir          *self,
                                  metadata_contents, metadata_size, error))
     return FALSE;
 
-  dotref = g_file_resolve_relative_path (checkoutdir, "files/.ref");
-  if (!g_file_replace_contents (dotref, "", 0, NULL, FALSE,
-                                G_FILE_CREATE_REPLACE_DESTINATION, NULL, cancellable, error))
-    return FALSE;
+  {
+    g_autofree char *files_path = g_build_filename (checkoutdir_basename, "files", NULL);
+    glnx_autofd int files_dfd = -1;
+
+    if (!glnx_opendirat (deploy_base_dfd, files_path, FALSE, &files_dfd, error))
+      return FALSE;
+
+    if (!glnx_file_replace_contents_at (files_dfd, ".ref",
+                                        (const guint8 *) "", 0,
+                                        GLNX_FILE_REPLACE_NODATASYNC,
+                                        cancellable, error))
+      return FALSE;
+  }
 
   export = g_file_get_child (checkoutdir, "export");
 
@@ -12148,7 +12156,6 @@ flatpak_dir_undeploy (FlatpakDir        *self,
   g_autofree char *id = NULL;
   g_autofree char *dirname = NULL;
   g_autofree char *current_active = NULL;
-  g_autoptr(GFile) change_file = NULL;
   g_autoptr(GError) child_error = NULL;
   int i, retry;
 
@@ -12240,18 +12247,23 @@ flatpak_dir_undeploy (FlatpakDir        *self,
     }
 
 
-  if (is_update)
-    change_file = g_file_resolve_relative_path (removed_subdir, "files/.updated");
-  else
-    change_file = g_file_resolve_relative_path (removed_subdir, "files/.removed");
+  {
+    glnx_autofd int files_dfd = -1;
+    const char *marker = is_update ? ".updated" : ".removed";
+    g_autofree char *files_path = g_build_filename (flatpak_file_get_path_cached (removed_subdir), "files", NULL);
 
-  if (!g_file_replace_contents (change_file, "", 0, NULL, FALSE,
-                                G_FILE_CREATE_REPLACE_DESTINATION, NULL, NULL, &child_error))
-    {
-      g_autofree gchar *path = g_file_get_path (change_file);
-      g_warning ("Unable to clear %s: %s", path, child_error->message);
-      g_clear_error (&child_error);
-    }
+    if (!glnx_opendirat (AT_FDCWD, files_path,
+                         FALSE, &files_dfd, &child_error) ||
+        !glnx_file_replace_contents_at (files_dfd, marker,
+                                        (const guint8 *) "", 0,
+                                        GLNX_FILE_REPLACE_NODATASYNC,
+                                        NULL, &child_error))
+      {
+        g_warning ("Unable to write %s marker: %s", marker,
+                   child_error ? child_error->message : g_strerror (errno));
+        g_clear_error (&child_error);
+      }
+  }
 
   if (force_remove || !dir_is_locked (removed_subdir))
     {
