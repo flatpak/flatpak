@@ -200,13 +200,6 @@ gboolean ensure_remote_state_arch (FlatpakDir         *dir,
                                    gboolean            only_sideloaded,
                                    GCancellable       *cancellable,
                                    GError            **error);
-gboolean ensure_remote_state_arch_for_ref (FlatpakDir         *dir,
-                                           FlatpakRemoteState *state,
-                                           const char         *ref,
-                                           gboolean            cached,
-                                           gboolean            only_sideloaded,
-                                           GCancellable       *cancellable,
-                                           GError            **error);
 gboolean ensure_remote_state_all_arches (FlatpakDir         *dir,
                                          FlatpakRemoteState *state,
                                          gboolean            cached,

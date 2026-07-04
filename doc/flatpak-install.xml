@@ -49,7 +49,7 @@
         <para>
           Installs an application or runtime. The primary way to
           install is to specify a <arg choice="plain">REMOTE</arg>
-          name as the source and one ore more <arg choice="plain">REF</arg>s to specify the
+          name as the source and one or more <arg choice="plain">REF</arg>s to specify the
           application or runtime to install. If <arg choice="plain">REMOTE</arg> is omitted,
           the configured remotes are searched for the first <arg choice="plain">REF</arg>
           and the user is asked to confirm the resulting choice.

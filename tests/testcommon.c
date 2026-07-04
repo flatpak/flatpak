@@ -171,8 +171,8 @@ test_decompose (void)
   runtime_branch = flatpak_decomposed_dup_branch (runtime_ref);
   g_assert_cmpstr (runtime_branch, ==, "master");
   g_assert (flatpak_decomposed_is_branch (runtime_ref, "master"));
-  g_assert (!flatpak_decomposed_is_arch (runtime_ref, "maste"));
-  g_assert (!flatpak_decomposed_is_arch (runtime_ref, "masterr"));
+  g_assert (!flatpak_decomposed_is_branch (runtime_ref, "maste"));
+  g_assert (!flatpak_decomposed_is_branch (runtime_ref, "masterr"));
 
   app_ref = flatpak_decomposed_new_from_ref ("app/org.the.app/mips64/master", &error);
   g_assert (app_ref != NULL);
@@ -210,8 +210,8 @@ test_decompose (void)
   app_branch = flatpak_decomposed_dup_branch (app_ref);
   g_assert_cmpstr (app_branch, ==, "master");
   g_assert (flatpak_decomposed_is_branch (app_ref, "master"));
-  g_assert (!flatpak_decomposed_is_arch (app_ref, "maste"));
-  g_assert (!flatpak_decomposed_is_arch (app_ref, "masterr"));
+  g_assert (!flatpak_decomposed_is_branch (app_ref, "maste"));
+  g_assert (!flatpak_decomposed_is_branch (app_ref, "masterr"));
 
   refspec = flatpak_decomposed_new_from_ref ("remote:app/org.the.app/mips64/master", &error);
   g_assert (refspec == NULL);

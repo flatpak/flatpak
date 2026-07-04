@@ -74,6 +74,7 @@ void flatpak_progress_set_update_interval (FlatpakProgress *self,
 guint64 flatpak_progress_get_bytes_transferred (FlatpakProgress *self);
 guint64 flatpak_progress_get_transferred_extra_data_bytes (FlatpakProgress *self);
 guint64 flatpak_progress_get_start_time (FlatpakProgress *self);
+guint64 flatpak_progress_get_bytes_per_second (FlatpakProgress *self);
 const char *flatpak_progress_get_status (FlatpakProgress *self);
 int flatpak_progress_get_progress (FlatpakProgress *self);
 gboolean flatpak_progress_get_estimating (FlatpakProgress *self);

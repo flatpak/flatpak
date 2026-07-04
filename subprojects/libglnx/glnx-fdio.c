@@ -33,6 +33,7 @@
 #include <sys/sendfile.h>
 #include <errno.h>
 
+#include <glnx-chase.h>
 #include <glnx-fdio.h>
 #include <glnx-dirfd.h>
 #include <glnx-errors.h>
@@ -41,6 +42,18 @@
 #include <glnx-backports.h>
 #include <glnx-local-alloc.h>
 #include <glnx-missing.h>
+
+/* From systemd mountpoint-util.c at d2b27a7:
+ * This is the original MAX_HANDLE_SZ definition from the kernel, when the API
+ * was introduced. We use that in place of any more currently defined value to
+ * future-proof things: if the size is increased in the API headers, and our code
+ * is recompiled then it would cease working on old kernels, as those refuse any
+ * sizes larger than this value with EINVAL right-away. Hence, let's disconnect
+ * ourselves from any such API changes, and stick to the original definition
+ * from when it was introduced. We use it as a start value only anyway (see
+ * below), and hence should be able to deal with large file handles anyway.
+ */
+#define ORIGINAL_MAX_HANDLE_SZ 128
 
 /* The standardized version of BTRFS_IOC_CLONE */
 #ifndef FICLONE
@@ -321,6 +334,8 @@ glnx_open_anonymous_tmpfile (int          flags,
                                            error);
 }
 
+static const char proc_self_fd_slash[] = "/proc/self/fd/";
+
 /* Use this after calling glnx_open_tmpfile_linkable_at() to give
  * the file its final name (link into place).
  */
@@ -367,8 +382,8 @@ glnx_link_tmpfile_at (GLnxTmpfile *tmpf,
   else
     {
       /* This case we have O_TMPFILE, so our reference to it is via /proc/self/fd */
-      char proc_fd_path[strlen("/proc/self/fd/") + DECIMAL_STR_MAX(tmpf->fd) + 1];
-      snprintf (proc_fd_path, sizeof (proc_fd_path), "/proc/self/fd/%i", tmpf->fd);
+      char proc_fd_path[sizeof (proc_self_fd_slash) + DECIMAL_STR_MAX(tmpf->fd)];
+      snprintf (proc_fd_path, sizeof (proc_fd_path), "%s%i", proc_self_fd_slash, tmpf->fd);
 
       if (replace)
         {
@@ -455,8 +470,8 @@ glnx_tmpfile_reopen_rdonly (GLnxTmpfile *tmpf,
   else
     {
       /* This case we have O_TMPFILE, so our reference to it is via /proc/self/fd */
-      char proc_fd_path[strlen("/proc/self/fd/") + DECIMAL_STR_MAX(tmpf->fd) + 1];
-      snprintf (proc_fd_path, sizeof (proc_fd_path), "/proc/self/fd/%i", tmpf->fd);
+      char proc_fd_path[sizeof (proc_self_fd_slash) + DECIMAL_STR_MAX(tmpf->fd)];
+      snprintf (proc_fd_path, sizeof (proc_fd_path), "%s%i", proc_self_fd_slash, tmpf->fd);
 
       if (!glnx_openat_rdonly (AT_FDCWD, proc_fd_path, TRUE, &rdonly_fd, error))
         return FALSE;
@@ -1202,6 +1217,244 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
   if (!glnx_link_tmpfile_at (&tmpf, GLNX_LINK_TMPFILE_REPLACE,
                              dfd, subpath, error))
     return FALSE;
+
+  return TRUE;
+}
+
+/**
+ * glnx_fd_reopen:
+ * @fd: a file descriptor
+ * @flags: combination of openat flags
+ * @error: a #GError
+ *
+ * Reopens the specified fd with new flags. This is useful for converting an
+ * O_PATH fd into a regular one, or to turn O_RDWR fds into O_RDONLY fds.
+ *
+ * This implicitly sets `O_CLOEXEC | O_NOCTTY` in @flags.
+ *
+ * `O_CREAT` isn't allowed in @flags.
+ *
+ * This doesn't work on sockets (since they cannot be open()ed, ever).
+ *
+ * This implicitly resets the file read index to 0.
+ *
+ * If AT_FDCWD is specified as file descriptor, the function returns an fd to
+ * the current working directory.
+ *
+ * If the specified file descriptor refers to a symlink via O_PATH, then this
+ * function cannot be used to follow that symlink. Because we cannot have
+ * non-O_PATH fds to symlinks reopening it without O_PATH will always result in
+ * ELOOP. Or in other words: if you have an O_PATH fd to a symlink you can
+ * reopen it only if you pass O_PATH again.
+ */
+int
+glnx_fd_reopen (int      fd,
+                int      flags,
+                GError **error)
+{
+  glnx_autofd int new_fd = -1;
+
+  g_return_val_if_fail (fd >= 0 || fd == AT_FDCWD, -1);
+  g_return_val_if_fail ((flags & O_CREAT) == 0, -1);
+
+  /* */
+  flags |= O_CLOEXEC | O_NOCTTY;
+
+  /* O_NOFOLLOW is not allowed in fd_reopen(), because after all this is
+   * primarily implemented via a symlink-based interface in /proc/self/fd. Let's
+   * refuse this here early. Note that the kernel would generate ELOOP here too,
+   * hence this manual check is mostly redundant – the only reason we add it
+   * here is so that the O_DIRECTORY special case (see below) behaves the same
+   * way as the non-O_DIRECTORY case. */
+  if ((flags & O_NOFOLLOW) != 0)
+    {
+      errno = ELOOP;
+      return glnx_fd_throw_errno (error);
+    }
+
+  if ((flags & O_DIRECTORY) != 0 || fd == AT_FDCWD)
+    {
+      /* If we shall reopen the fd as directory we can just go via "." and thus
+       * bypass the whole magic /proc/ directory, and make ourselves independent
+       * of that being mounted. */
+      new_fd = openat (fd, ".", flags | O_DIRECTORY);
+    }
+  else
+    {
+      g_autofree char *proc_fd_path = NULL;
+
+      proc_fd_path = g_strdup_printf ("/proc/self/fd/%d", fd);
+      new_fd = open (proc_fd_path, flags);
+    }
+
+  if (new_fd < 0)
+    return glnx_fd_throw_errno (error);
+
+  return g_steal_fd (&new_fd);
+}
+
+static gboolean
+glnx_name_to_handle_at_internal (int                  fd,
+                                 int                  flags,
+                                 struct file_handle **handle_out,
+                                 uint64_t            *mnt_id_out,
+                                 GError             **error)
+{
+  size_t handle_bytes = ORIGINAL_MAX_HANDLE_SZ;
+
+  for (;;)
+    {
+      g_autofree struct file_handle *handle = NULL;
+      uint64_t mnt_id_unique = 0;
+      unsigned int mnt_id = 0;
+      int *mnt_id_ptr;
+      int r;
+
+      /* The kernel ABI involves an int * for backward compatibility,
+       * but with AT_HANDLE_MNT_ID_UNIQUE it's really expecting a
+       * uint64_t and will write a full 64-bit ID into it. */
+      if ((flags & AT_HANDLE_MNT_ID_UNIQUE))
+        mnt_id_ptr = (int *) &mnt_id_unique;
+      else
+        mnt_id_ptr = (int *) &mnt_id;
+
+      handle = g_malloc0 (offsetof (struct file_handle, f_handle) + handle_bytes);
+      handle->handle_bytes = handle_bytes;
+      r = name_to_handle_at (fd, "",
+                             handle,
+                             mnt_id_ptr,
+                             flags | AT_EMPTY_PATH);
+
+      if (r < 0)
+        {
+          if (errno != EOVERFLOW)
+            return glnx_throw_errno (error);
+
+          if (handle->handle_bytes <= handle_bytes)
+            return glnx_throw (error, "No file handle available");
+        }
+
+      if (r >= 0)
+        {
+          if (handle_out)
+            *handle_out = g_steal_pointer (&handle);
+          if (mnt_id_out)
+            *mnt_id_out = (flags & AT_HANDLE_MNT_ID_UNIQUE) ? mnt_id_unique : mnt_id;
+          return TRUE;
+        }
+
+      handle_bytes = handle->handle_bytes;
+    }
+}
+
+/**
+ * glnx_name_to_handle_at:
+ * @dfd: Directory FD to stat beneath
+ * @path: Path to get the handle to beneath @dfd
+ * @flags: Flags
+ * @handle_out: (out) (transfer full): Return location for the `struct file_handle`
+ * @mnt_id_out: (out caller-allocates): Return location for the mount id
+ * @error: Return location for a #GError, or %NULL
+ *
+ * Wrapper around name_to_handle_at() which adds #GError support,  takes care of
+ * allocating the right size, and falls back to glnx_statx() for
+ * AT_HANDLE_MNT_ID_UNIQUE.
+ *
+ * The @mnt_id_out is pointer to a 64 bit location, but can contain either a
+ * traditional 32 bit mount id or a 64 bit unique mount id if
+ * AT_HANDLE_MNT_ID_UNIQUE is set.
+ *
+ * The @flags must be a combination of AT_SYMLINK_FOLLOW, AT_EMPTY_PATH,
+ * AT_HANDLE_FID, AT_HANDLE_MNT_ID_UNIQUE.
+ *
+ * Returns: %TRUE on success, or %FALSE setting both @error and `errno`
+ * Since: UNRELEASED
+ */
+gboolean
+glnx_name_to_handle_at (int                  dfd,
+                        const char          *path,
+                        int                  flags,
+                        struct file_handle **handle_out,
+                        uint64_t            *mnt_id_out,
+                        GError             **error)
+{
+  int fd = -1;
+  glnx_autofd int fd_owned = -1;
+  uint64_t mnt_id;
+  g_autoptr(GError) local_error = NULL;
+
+  g_return_val_if_fail (dfd >= 0 || dfd == AT_FDCWD, FALSE);
+  g_return_val_if_fail (path != NULL, FALSE);
+  g_return_val_if_fail ((flags & ~(AT_SYMLINK_FOLLOW |
+                                   AT_EMPTY_PATH |
+                                   AT_HANDLE_FID |
+                                   AT_HANDLE_MNT_ID_UNIQUE)) == 0, FALSE);
+
+  if ((flags & AT_EMPTY_PATH) && path[0] == '\0')
+    {
+      fd = dfd;
+    }
+  else
+    {
+      int chase_flags = GLNX_CHASE_NO_AUTOMOUNT;
+
+      if ((flags & AT_SYMLINK_FOLLOW) == 0)
+        chase_flags |= GLNX_CHASE_NOFOLLOW;
+
+      fd = fd_owned = glnx_chaseat (dfd, path, chase_flags, error);
+      if (fd < 0)
+        return FALSE;
+    }
+
+  if (glnx_name_to_handle_at_internal (fd,
+                                       flags,
+                                       handle_out, mnt_id_out,
+                                       &local_error))
+    return TRUE;
+
+  if (errno != EINVAL || (flags & AT_HANDLE_MNT_ID_UNIQUE) == 0)
+    {
+      g_propagate_prefixed_error (error, g_steal_pointer (&local_error),
+                                  "name_to_handle_at: ");
+      return FALSE;
+    }
+  g_clear_error (&local_error);
+
+  {
+    struct glnx_statx stx;
+    int statx_flags = AT_EMPTY_PATH;
+
+    if ((flags & AT_SYMLINK_FOLLOW) == 0)
+      statx_flags |= AT_SYMLINK_NOFOLLOW;
+
+    if (!glnx_statx (fd, "", statx_flags, GLNX_STATX_MNT_ID_UNIQUE, &stx, error))
+      {
+        g_prefix_error (error, "statx: ");
+        return FALSE;
+      }
+
+    if ((stx.stx_mask & GLNX_STATX_MNT_ID_UNIQUE) == 0)
+      {
+        errno = ENODATA;
+        return glnx_throw_errno_prefix (error,
+                                        "unique mount ID not in statx result");
+      }
+
+    mnt_id = stx.stx_mnt_id;
+  }
+
+  if (!glnx_name_to_handle_at_internal (fd,
+                                        flags & (~AT_HANDLE_MNT_ID_UNIQUE),
+                                        handle_out, NULL,
+                                        &local_error))
+    {
+      g_propagate_prefixed_error (error, g_steal_pointer (&local_error),
+                                  "name_to_handle_at: ");
+      return FALSE;
+    }
+
+  if (mnt_id_out)
+    *mnt_id_out = mnt_id;
 
   return TRUE;
 }

@@ -966,6 +966,22 @@ out:
   return ret;
 }
 
+static gboolean
+flatpak_str_is_alphanumeric (const char *arg)
+{
+  while (*arg != '\0')
+    {
+      char c = *arg;
+
+      if (!g_ascii_isalnum (c))
+        return FALSE;
+
+      arg++;
+    }
+
+  return TRUE;
+}
+
 /* This atomically replaces a symlink with a new value, removing the
  * existing symlink target, if it exstis and is different from
  * @target. This is atomic in the sense that we're guaranteed to
@@ -975,6 +991,9 @@ out:
  * symlink for some reason, ending up with neither the old or the new
  * target. That is fine if the reason for the symlink is keeping a
  * cache though.
+ * The target shall only be a file in the same directory as the symlink, and
+ * shall only contain the characters a-zA-Z0-9. This is so that the target of
+ * the symlink that gets removed is in the same directory as the link.
  */
 gboolean
 flatpak_switch_symlink_and_remove (const char *symlink_path,
@@ -1018,10 +1037,21 @@ flatpak_switch_symlink_and_remove (const char *symlink_path,
           g_autofree char *old_target = flatpak_readlink (tmp_path, error);
           if (old_target == NULL)
             return FALSE;
-          if (strcmp (old_target, target) != 0) /* Don't remove old file if its the same as the new one */
+
+          /* Don't remove old file if its the same as the new one */
+          if (strcmp (old_target, target) != 0)
             {
-              g_autofree char *old_target_path = g_build_filename (symlink_dir, old_target, NULL);
-              unlink (old_target_path);
+              if (flatpak_str_is_alphanumeric (old_target))
+                {
+                  g_autofree char *old_target_path = NULL;
+
+                  old_target_path = g_build_filename (symlink_dir, old_target, NULL);
+                  unlink (old_target_path);
+                }
+              else
+                {
+                  g_warning ("Refusing to delete old link target %s", old_target);
+                }
             }
         }
       else if (errno != ENOENT)
@@ -1882,7 +1912,7 @@ flatpak_allocate_tmpdir (int           tmpdir_dfd,
 }
 
 /* Carefully opens a file from a base directory and subpath,
- * making sure that its not a symlink.
+ * making sure that its not a symlink, pipe, etc.
  */
 int
 flatpak_open_file_at (int           dfd,
@@ -1895,7 +1925,7 @@ flatpak_open_file_at (int           dfd,
   struct stat tmp_st_buf;
 
   do
-    fd = openat (dfd, subpath, O_RDONLY | O_NONBLOCK | O_CLOEXEC | O_NOCTTY);
+    fd = openat (dfd, subpath, O_NOFOLLOW | O_RDONLY | O_NONBLOCK | O_CLOEXEC | O_NOCTTY);
   while (G_UNLIKELY (fd == -1 && errno == EINTR));
   if (fd == -1)
     {
@@ -2582,6 +2612,28 @@ flatpak_is_debugging (void)
   return is_debugging;
 }
 
+int
+flatpak_parse_fd (const char  *fd_string,
+                  GError     **error)
+{
+  guint64 parsed;
+  char *endptr;
+  int fd;
+  struct stat stbuf;
+
+  parsed = g_ascii_strtoull (fd_string, &endptr, 10);
+
+  if (endptr == NULL || *endptr != '\0' || parsed > G_MAXINT)
+    return glnx_fd_throw (error, "Not a valid file descriptor: %s", fd_string);
+
+  fd = (int) parsed;
+
+  if (!glnx_fstat (fd, &stbuf, NULL))
+    return glnx_fd_throw (error, "Not an open file descriptor: %d", fd);
+
+  return fd;
+}
+
 #ifdef INCLUDE_INTERNAL_TESTS
 static GList *flatpak_test_paths = NULL;
 static GList *flatpak_test_fns = NULL;
@@ -2600,4 +2652,118 @@ void flatpak_add_all_tests (void)
     g_test_add_func (l1->data, l2->data);
   }
 #endif
+}
+
+/* Sets errno on failure. */
+gboolean
+flatpak_set_cloexec (int fd)
+{
+  int flags = fcntl (fd, F_GETFD);
+
+  if (flags == -1)
+    return FALSE;
+
+  flags |= FD_CLOEXEC;
+
+  if (fcntl (fd, F_SETFD, flags) < 0)
+    return FALSE;
+
+  return TRUE;
+}
+
+/*
+ * flatpak_accept_fd_argument:
+ * @option_name: Name of a command-line option such as `--env-fd`
+ * @value: Value of the command-line option
+ *
+ * Parse a command-line argument whose value is a file descriptor to be
+ * used internally by Flatpak.
+ *
+ * The file descriptor must be 3 or higher (cannot be stdin, stdout
+ * or stderr).
+ *
+ * The file descriptor is set to be close-on-execute (CLOEXEC).
+ * If child processes are meant to inherit it, the caller must clear the
+ * close-on-execute flag, or duplicate the fd.
+ *
+ * Returns: A file descriptor to be closed by the caller, or -1 on error
+ */
+int
+flatpak_accept_fd_argument (const char  *option_name,
+                            const char  *value,
+                            GError     **error)
+{
+  glnx_autofd int fd = -1;
+
+  fd = flatpak_parse_fd (value, error);
+
+  if (fd < 0)
+    {
+      g_prefix_error (error, "%s: ", option_name);
+      return -1;
+    }
+
+  if (fd < 3)
+    {
+      /* We don't want to close stdin, stdout or stderr */
+      fd = -1;
+      return glnx_fd_throw (error,
+                            "%s: Cannot use reserved file descriptor 0, 1 or 2",
+                            option_name);
+    }
+
+  if (!flatpak_set_cloexec (fd))
+    return glnx_fd_throw_errno_prefix (error, "%s", option_name);
+
+  return g_steal_fd (&fd);
+}
+
+/*
+ * Attempt to discover the filesystem path corresponding to @fd.
+ *
+ * If @fd points to an existing file, return the absolute path of that
+ * file in the environment where it was opened. Note that this is not
+ * necessarily a valid path in the current namespace, if it was
+ * transferred via fd-passing from a process in a different filesystem
+ * namespace.
+ *
+ * If @fd points to a deleted file, or to a socket, fifo, memfd or similar
+ * non-filesystem object, set an error and return %NULL.
+ *
+ * Returns: (type filename) (transfer full) (nullable):
+ */
+char *
+flatpak_get_path_for_fd (int        fd,
+                         GError   **error)
+{
+  g_autofree char *proc_path = NULL;
+  g_autofree char *path = NULL;
+
+  proc_path = g_strdup_printf ("/proc/self/fd/%d", fd);
+  path = glnx_readlinkat_malloc (AT_FDCWD, proc_path, NULL, error);
+  if (path == NULL)
+    return NULL;
+
+  /* All normal paths start with /, but some weird things
+     don't, such as socket:[27345] or anon_inode:[eventfd].
+     We don't support any of these */
+  if (path[0] != '/')
+    {
+      return glnx_null_throw (error, "%s resolves to non-absolute path %s",
+                              proc_path, path);
+    }
+
+  /* File descriptors to actually deleted files have " (deleted)"
+     appended to them. This also happens to some fake fd types
+     like shmem which are "/<name> (deleted)". All such
+     files are considered invalid. Unfortunately this also
+     matches files with filenames that actually end in " (deleted)",
+     but there is not much to do about this. */
+  if (g_str_has_suffix (path, " (deleted)"))
+    {
+      return glnx_null_throw (error, "%s resolves to deleted path %s",
+                              proc_path, path);
+    }
+
+  return g_steal_pointer (&path);
 }

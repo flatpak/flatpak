@@ -59,7 +59,7 @@ fi
 assert_failed_with_401
 assert_not_has_dir $FL_DIR/app/org.flatpak.Authenticator.test/$ARCH/autoinstall/active/files
 
-# Propertly mark it with token-type
+# Properly mark it with token-type
 EXPORT_ARGS="--token-type=2" make_updated_app
 mark_need_token app/org.test.Hello/$ARCH/master the-secret
 

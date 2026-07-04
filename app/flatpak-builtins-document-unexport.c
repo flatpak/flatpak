@@ -87,6 +87,8 @@ flatpak_builtin_document_unexport (int argc, char **argv,
   else if (!xdp_dbus_documents_call_lookup_sync (documents, file, &doc_id, NULL, error))
     return FALSE;
 
+  g_assert (doc_id != NULL);
+
   if (strcmp (doc_id, "") == 0)
     {
       g_print (_("Not exported\n"));

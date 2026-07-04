@@ -440,6 +440,10 @@ test_claim_per_app_temp_directory (void)
       g_assert_false (ok);
       g_clear_error (&error);
     }
+  else
+    {
+      g_test_message ("pre-create /tmp/flatpak-com.example.App-OwnedByRoot as root to enable this check");
+    }
 
   glnx_close_fd (&fd);
   g_assert_no_errno (unlink (non_directory_path));

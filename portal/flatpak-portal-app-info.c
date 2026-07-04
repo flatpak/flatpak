@@ -33,7 +33,8 @@ ensure_app_infos (void)
 {
   if (app_infos == NULL)
     app_infos = g_hash_table_new_full (g_str_hash, g_str_equal,
-                                       NULL, (GDestroyNotify) g_key_file_unref);
+                                       g_free,
+                                       (GDestroyNotify) g_key_file_unref);
 }
 
 static GKeyFile *
@@ -62,7 +63,7 @@ static void
 add_cached_app_info_by_sender (const char *sender, GKeyFile *keyfile)
 {
   G_LOCK (app_infos);
-  g_hash_table_add (app_infos, g_key_file_ref (keyfile));
+  g_hash_table_insert (app_infos, g_strdup (sender), g_key_file_ref (keyfile));
   G_UNLOCK (app_infos);
 }
 

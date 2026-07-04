@@ -314,23 +314,31 @@ get_connection_uid (GDBusMethodInvocation *invocation, uid_t *out_uid, GError **
 }
 
 static OngoingPull *
-take_ongoing_pull_by_dir (const gchar *src_dir)
+take_ongoing_pull_by_dir (const char *src_dir,
+                          uid_t       uid)
 {
   OngoingPull *pull = NULL;
-  gpointer key, value;
+  char *cache_dir_name = NULL;
 
   G_LOCK (cache_dirs_in_use);
-  /* Keep src_dir key inside hashtable but remove its OngoingPull
-   * value and set it to NULL. This way src_dir is still marked
-   * as in-use (as Deploy or CancelPull might be executing on it,
-   * whereas OngoingPull ownership is transferred to respective
-   * callers. */
-  if (g_hash_table_steal_extended (cache_dirs_in_use, src_dir, &key, &value))
+  if (g_hash_table_steal_extended (cache_dirs_in_use, src_dir,
+                                   (gpointer) &cache_dir_name,
+                                   (gpointer) &pull))
     {
-      if (value)
+      if (pull && pull->uid == uid)
         {
-          g_hash_table_insert (cache_dirs_in_use, key, NULL);
-          pull = value;
+          /* Keep src_dir key inside hashtable but remove its OngoingPull
+           * value and set it to NULL. This way src_dir is still marked
+           * as in-use (as Deploy or CancelPull might be executing on it,
+           * whereas OngoingPull ownership is transferred to respective
+           * callers. */
+          g_hash_table_insert (cache_dirs_in_use, cache_dir_name, NULL);
+        }
+      else
+        {
+          /* Otherwise, re-insert what is currently there and return NULL */
+          g_hash_table_insert (cache_dirs_in_use, cache_dir_name, pull);
+          pull = NULL;
         }
     }
   G_UNLOCK (cache_dirs_in_use);
@@ -383,6 +391,9 @@ handle_deploy (FlatpakSystemHelper   *object,
 
   if (strlen (arg_repo_path) > 0)
     {
+      g_autoptr(GError) local_error = NULL;
+      uid_t uid;
+
       if (!g_file_query_exists (repo_file, NULL))
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
@@ -390,30 +401,17 @@ handle_deploy (FlatpakSystemHelper   *object,
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
+      /* Ensure that pull's uid is same as the caller's uid */
+      if (!get_connection_uid (invocation, &uid, &local_error))
+        {
+          g_dbus_method_invocation_return_gerror (invocation, local_error);
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
+        }
+
       src_dir = g_path_get_dirname (arg_repo_path);
-      ongoing_pull = take_ongoing_pull_by_dir (src_dir);
+      ongoing_pull = take_ongoing_pull_by_dir (src_dir, uid);
       if (ongoing_pull != NULL)
         {
-          g_autoptr(GError) local_error = NULL;
-          uid_t uid;
-
-          /* Ensure that pull's uid is same as the caller's uid */
-          if (!get_connection_uid (invocation, &uid, &local_error))
-            {
-              g_dbus_method_invocation_return_gerror (invocation, local_error);
-              return G_DBUS_METHOD_INVOCATION_HANDLED;
-            }
-          else
-            {
-              if (ongoing_pull->uid != uid)
-                {
-                  g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                         "Ongoing pull's uid(%d) does not match with peer uid(%d)",
-                                                         ongoing_pull->uid, uid);
-                  return G_DBUS_METHOD_INVOCATION_HANDLED;
-                }
-            }
-
           terminate_revokefs_backend (ongoing_pull);
 
           if (!flatpak_canonicalize_permissions (AT_FDCWD,
@@ -429,7 +427,7 @@ handle_deploy (FlatpakSystemHelper   *object,
             }
 
           /* At this point, the cache-dir's repo is owned by root. Hence, any failure
-           * from here on, should always cleanup the cache-dir and not preserve it to be re-used. */
+           * from here on, should always cleanup the cache-dir and not preserve it to be reused. */
           ongoing_pull->preserve_pull = FALSE;
         }
     }
@@ -494,16 +492,16 @@ handle_deploy (FlatpakSystemHelper   *object,
       const char *verified_digest;
       g_autofree char *upstream_url = NULL;
       g_autoptr(FlatpakImageSource) system_image_source = NULL;
+      g_autoptr(GVariant) metadata = NULL;
+      const char *sigcheck_repository = NULL;
+      g_autofree char *sigcheck_registry_uri = NULL;
 
-      ostree_repo_remote_get_url (flatpak_dir_get_repo (system),
-                                  arg_origin,
-                                  &upstream_url,
-                                  NULL);
-
-      if (upstream_url == NULL)
+      if (!ostree_repo_remote_get_url (flatpak_dir_get_repo (system),
+                                       arg_origin,
+                                       &upstream_url,
+                                       &error))
         {
-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Remote %s is disabled", arg_origin);
+          flatpak_invocation_return_error (invocation, error, "Unable to get the URL for remote %s", arg_origin);
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
@@ -551,21 +549,26 @@ handle_deploy (FlatpakSystemHelper   *object,
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
-      system_image_source =
-        flatpak_remote_state_fetch_image_source (state,
-                                                 system,
-                                                 arg_ref,
-                                                 verified_digest,
-                                                 NULL,
-                                                 NULL, &error);
-      if (!system_image_source)
+      flatpak_remote_state_lookup_ref (state, arg_ref,
+                                       NULL, NULL,
+                                       &metadata,
+                                       NULL, NULL, NULL);
+
+      if (!g_variant_lookup (metadata, "xa.oci-repository", "s", &sigcheck_repository))
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Can't fetch image source: %s", error->message);
+                                                 "Can't get the OCI repository from the summary");
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
-      checksum = flatpak_pull_from_oci (flatpak_dir_get_repo (system), image_source, system_image_source,
+      if (!ostree_repo_remote_get_url (flatpak_dir_get_repo (system), arg_origin, &sigcheck_registry_uri, NULL))
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "Can't get the OCI registry URI");
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
+        }
+
+      checksum = flatpak_pull_from_oci (flatpak_dir_get_repo (system), image_source, sigcheck_repository, sigcheck_registry_uri,
                                         arg_origin, arg_ref, FLATPAK_PULL_FLAGS_NONE, NULL, NULL, NULL, &error);
       if (checksum == NULL)
         {
@@ -603,7 +606,7 @@ handle_deploy (FlatpakSystemHelper   *object,
                                        &url,
                                        &error))
         {
-          flatpak_invocation_return_error (invocation, error, "Error getting remote url");
+          flatpak_invocation_return_error (invocation, error, "Unable to get the URL for remote %s", arg_origin);
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
@@ -683,30 +686,19 @@ handle_cancel_pull (FlatpakSystemHelper   *object,
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
-  ongoing_pull = take_ongoing_pull_by_dir (arg_src_dir);
+  if (!get_connection_uid (invocation, &uid, &error))
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  ongoing_pull = take_ongoing_pull_by_dir (arg_src_dir, uid);
   if (ongoing_pull == NULL)
     {
       g_set_error (&error, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
                    "Cannot find ongoing pull to cancel at %s", arg_src_dir);
       g_dbus_method_invocation_return_gerror (invocation, error);
       return G_DBUS_METHOD_INVOCATION_HANDLED;
-    }
-
-  /* Ensure that pull's uid is same as the caller's uid */
-  if (!get_connection_uid (invocation, &uid, &error))
-    {
-      g_dbus_method_invocation_return_gerror (invocation, error);
-      return G_DBUS_METHOD_INVOCATION_HANDLED;
-    }
-  else
-    {
-      if (ongoing_pull->uid != uid)
-        {
-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Ongoing pull's uid(%d) does not match with peer uid(%d)",
-                                                 ongoing_pull->uid, uid);
-          return G_DBUS_METHOD_INVOCATION_HANDLED;
-        }
     }
 
   ongoing_pull->preserve_pull = (arg_flags & FLATPAK_HELPER_CANCEL_PULL_FLAGS_PRESERVE_PULL) != 0;
@@ -838,7 +830,7 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
                                        &url,
                                        &error))
         {
-          flatpak_invocation_return_error (invocation, error, "Error getting remote url");
+          flatpak_invocation_return_error (invocation, error, "Unable to get the URL for remote %s", arg_origin);
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
@@ -977,7 +969,7 @@ handle_install_bundle (FlatpakSystemHelper   *object,
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
-  reinstall = !!(arg_flags & FLATPAK_HELPER_INSTALL_BUNDLE_FLAGS_NO_INTERACTION);
+  reinstall = (arg_flags & FLATPAK_HELPER_INSTALL_BUNDLE_FLAGS_REINSTALL) != 0;
   if (!flatpak_dir_install_bundle (system, reinstall, bundle_file, arg_remote, &ref, NULL, &error))
     {
       flatpak_invocation_return_error (invocation, error, "Error installing bundle");
@@ -1888,7 +1880,7 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
 
       /* For metadata updates, redirect to the metadata-update action which
        * should basically always be allowed */
-      if (ref_str != NULL && g_strcmp0 (ref_str, OSTREE_REPO_METADATA_REF) == 0)
+      if (g_strcmp0 (ref_str, OSTREE_REPO_METADATA_REF) == 0)
         {
           action = "org.freedesktop.Flatpak.metadata-update";
         }

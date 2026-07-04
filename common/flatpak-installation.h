@@ -236,6 +236,7 @@ FLATPAK_EXTERN gboolean             flatpak_installation_launch_full (FlatpakIns
 FLATPAK_EXTERN GFileMonitor        *flatpak_installation_create_monitor (FlatpakInstallation *self,
                                                                          GCancellable        *cancellable,
                                                                          GError             **error);
+FLATPAK_EXTERN guint64              flatpak_installation_get_timestamp (FlatpakInstallation *self);
 FLATPAK_EXTERN GPtrArray           *flatpak_installation_list_installed_refs (FlatpakInstallation *self,
                                                                               GCancellable        *cancellable,
                                                                               GError             **error);

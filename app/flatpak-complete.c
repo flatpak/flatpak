@@ -180,7 +180,7 @@ find_current_element (const char *str)
   else if (g_str_has_prefix (str, "runtime/"))
     str += strlen ("runtime/");
 
-  while (str != NULL && count <= 3)
+  while (str != NULL)
     {
       str = strchr (str, '/');
       count++;
@@ -211,6 +211,8 @@ flatpak_complete_partial_ref (FlatpakCompletion *completion,
 
   pref = completion->cur;
   element = find_current_element (pref);
+  if (element > 3)
+    return;
 
   flatpak_split_partial_ref_arg_novalidate (pref, kinds,
                                             NULL, NULL,
@@ -228,7 +230,7 @@ flatpak_complete_partial_ref (FlatpakCompletion *completion,
       if (state != NULL)
         refs = flatpak_dir_find_remote_refs (dir, state,
                                              (element > 1) ? id : NULL,
-                                             (element > 3) ? branch : NULL,
+                                             NULL, /* branch */
                                              NULL, /* default branch */
                                              (element > 2) ? arch : only_arch,
                                              NULL, /* default arch */
@@ -240,7 +242,7 @@ flatpak_complete_partial_ref (FlatpakCompletion *completion,
     {
       refs = flatpak_dir_find_installed_refs (dir,
                                               (element > 1) ? id : NULL,
-                                              (element > 3) ? branch : NULL,
+                                              NULL, /* branch */
                                               (element > 2) ? arch : only_arch,
                                               matched_kinds,
                                               FIND_MATCHING_REFS_FLAGS_NONE,

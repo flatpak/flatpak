@@ -32,7 +32,7 @@ flatpak_run_cups_check_server_is_socket (const char *server)
   return FALSE;
 }
 
-/* Try to find a default server from a cups confguration file */
+/* Try to find a default server from a cups configuration file */
 static char *
 flatpak_run_get_cups_server_name_config (const char *path)
 {

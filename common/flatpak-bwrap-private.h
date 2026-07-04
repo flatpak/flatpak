@@ -63,6 +63,11 @@ void          flatpak_bwrap_append_bwrap (FlatpakBwrap *bwrap,
                                           FlatpakBwrap *other);       /* Steals the fds */
 void          flatpak_bwrap_append_args (FlatpakBwrap *bwrap,
                                          GPtrArray    *other_array);
+gboolean      flatpak_bwrap_add_args_data_fd_dup (FlatpakBwrap  *bwrap,
+                                                  const char    *op,
+                                                  int            fd,
+                                                  const char    *path_optional,
+                                                  GError       **error);
 void          flatpak_bwrap_add_args_data_fd (FlatpakBwrap *bwrap,
                                               const char   *op,
                                               int           fd,

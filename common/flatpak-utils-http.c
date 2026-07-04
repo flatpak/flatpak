@@ -318,7 +318,7 @@ flatpak_get_certificates_for_uri (const char  *uri,
                 }
 
               /* In libpod, all client certificates are added, and then the go TLS
-               * code selects the best based on TLS negotation. We just pick the first
+               * code selects the best based on TLS negotiation. We just pick the first
                * in readdir order
                * */
               if (certificates->client_cert_file == NULL)
@@ -485,9 +485,10 @@ _write_cb (void *content_data,
     }
   else if (data->out)
     {
-      /* We ignore the error here, but reporting a short read will make curl report the error */
-      g_output_stream_write_all (data->out, content_data, realsize,
-                                 &n_written, NULL, NULL);
+      /* Returning a short write makes curl report CURLE_WRITE_ERROR. */
+      if (!g_output_stream_write_all (data->out, content_data, realsize,
+                                      &n_written, NULL, NULL))
+        return n_written;
     }
 
   data->downloaded_bytes += realsize;
@@ -626,6 +627,10 @@ flatpak_download_http_uri_once (FlatpakHttpSession    *session,
   curl_easy_setopt (curl, CURLOPT_URL, uri);
   curl_easy_setopt (curl, CURLOPT_WRITEDATA, (void *)data);
   curl_easy_setopt (curl, CURLOPT_HEADERDATA, (void *)data);
+
+  curl_easy_setopt (curl, CURLOPT_CAINFO, NULL);
+  curl_easy_setopt (curl, CURLOPT_SSLCERT, NULL);
+  curl_easy_setopt (curl, CURLOPT_SSLKEY, NULL);
 
   if (data->certificates)
     {
@@ -1184,12 +1189,10 @@ set_cache_http_data_from_headers (CacheHttpData *cache_data,
               char *end;
 
               char *max_age = value;
-              int max_age_sec = g_ascii_strtoll (max_age,  &end, 10);
+              gint64 max_age_sec = g_ascii_strtoll (max_age,  &end, 10);
               if (*max_age != '\0' && *end == '\0')
                 {
-                  GTimeVal now;
-                  g_get_current_time (&now);
-                  cache_data->expires = now.tv_sec + max_age_sec;
+                  cache_data->expires = (g_get_real_time () / G_USEC_PER_SEC) + max_age_sec;
                   expires_computed = TRUE;
                 }
             }
@@ -1217,9 +1220,7 @@ set_cache_http_data_from_headers (CacheHttpData *cache_data,
        * 0.1 * (Date - Last-Modified), but it's clearly appropriate here, and
        * better if server's send a value.
        */
-      GTimeVal now;
-      g_get_current_time (&now);
-      cache_data->expires = now.tv_sec + 1800;
+      cache_data->expires = (g_get_real_time () / G_USEC_PER_SEC) + 1800;
     }
 }
 
@@ -1262,10 +1263,7 @@ flatpak_cache_http_uri (FlatpakHttpSession    *http_session,
 
   if (cache_data->uri)
     {
-      GTimeVal now;
-
-      g_get_current_time (&now);
-      if (cache_data->expires > now.tv_sec)
+      if (cache_data->expires > (g_get_real_time () / G_USEC_PER_SEC))
         {
           g_set_error (error, FLATPAK_HTTP_ERROR,
                        FLATPAK_HTTP_ERROR_NOT_CHANGED,

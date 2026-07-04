@@ -57,18 +57,25 @@ if ! ${FLATPAK} --installation=history-installation history --since="${HISTORY_S
     exit 1
 fi
 
-diff history-log - >&2 << EOF
+cat > expected-log << 'EOF'
 add remote			system (history-installation)	test-repo
+pull	org.test.Hello.Locale	master	system (history-installation)	test-repo
 deploy install	org.test.Hello.Locale	master	system (history-installation)	test-repo
+pull	org.test.Platform	master	system (history-installation)	test-repo
 deploy install	org.test.Platform	master	system (history-installation)	test-repo
+pull	org.test.Hello	master	system (history-installation)	test-repo
 deploy install	org.test.Hello	master	system (history-installation)	test-repo
+pull	org.test.Hello.Locale	master	system (history-installation)	test-repo
 deploy update	org.test.Hello.Locale	master	system (history-installation)	test-repo
+pull	org.test.Hello	master	system (history-installation)	test-repo
 deploy update	org.test.Hello	master	system (history-installation)	test-repo
 uninstall	org.test.Hello	master	system (history-installation)
 uninstall	org.test.Platform	master	system (history-installation)
 uninstall	org.test.Hello.Locale	master	system (history-installation)
 remove remote			system (history-installation)	test-repo
 EOF
+
+diff history-log expected-log >&2
 
 if ! ${FLATPAK} --installation=history-installation history --since="${HISTORY_START_TIME}" \
     --columns=change,application,branch,installation,remote --json > history-log 2>&1; then
@@ -77,7 +84,7 @@ if ! ${FLATPAK} --installation=history-installation history --since="${HISTORY_S
     exit 1
 fi
 
-diff history-log - >&2 << EOF
+cat > expected-log << 'EOF'
 [
   {
     "change" : "add remote",
@@ -87,8 +94,22 @@ diff history-log - >&2 << EOF
     "remote" : "test-repo"
   },
   {
+    "change" : "pull",
+    "application" : "org.test.Hello.Locale",
+    "branch" : "master",
+    "installation" : "system (history-installation)",
+    "remote" : "test-repo"
+  },
+  {
     "change" : "deploy install",
     "application" : "org.test.Hello.Locale",
+    "branch" : "master",
+    "installation" : "system (history-installation)",
+    "remote" : "test-repo"
+  },
+  {
+    "change" : "pull",
+    "application" : "org.test.Platform",
     "branch" : "master",
     "installation" : "system (history-installation)",
     "remote" : "test-repo"
@@ -101,6 +122,13 @@ diff history-log - >&2 << EOF
     "remote" : "test-repo"
   },
   {
+    "change" : "pull",
+    "application" : "org.test.Hello",
+    "branch" : "master",
+    "installation" : "system (history-installation)",
+    "remote" : "test-repo"
+  },
+  {
     "change" : "deploy install",
     "application" : "org.test.Hello",
     "branch" : "master",
@@ -108,8 +136,22 @@ diff history-log - >&2 << EOF
     "remote" : "test-repo"
   },
   {
+    "change" : "pull",
+    "application" : "org.test.Hello.Locale",
+    "branch" : "master",
+    "installation" : "system (history-installation)",
+    "remote" : "test-repo"
+  },
+  {
     "change" : "deploy update",
     "application" : "org.test.Hello.Locale",
+    "branch" : "master",
+    "installation" : "system (history-installation)",
+    "remote" : "test-repo"
+  },
+  {
+    "change" : "pull",
+    "application" : "org.test.Hello",
     "branch" : "master",
     "installation" : "system (history-installation)",
     "remote" : "test-repo"
@@ -151,6 +193,8 @@ diff history-log - >&2 << EOF
   }
 ]
 EOF
+
+diff history-log expected-log >&2
 
 rm -f ${FLATPAK_CONFIG_DIR}/installations.d/history-inst.conf
 rm -rf ${TEST_DATA_DIR}/system-history-installation

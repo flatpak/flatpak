@@ -29,6 +29,7 @@
 #include <string.h>
 
 #include <glib-unix.h>
+#include <glib/gstdio.h>
 #include <gio/gio.h>
 
 G_BEGIN_DECLS
@@ -51,6 +52,68 @@ G_BEGIN_DECLS
         _destroy (_p);                                                         \
       }                                                                        \
   } G_STMT_END
+#endif
+
+#if !GLIB_CHECK_VERSION(2, 76, 0)
+gboolean _glnx_close (gint     fd,
+                      GError **error);
+#else
+#define _glnx_close g_close
+#endif
+
+#if !GLIB_CHECK_VERSION(2, 76, 0)
+static inline gboolean
+g_clear_fd (int     *fd_ptr,
+            GError **error)
+{
+  int fd = *fd_ptr;
+
+  *fd_ptr = -1;
+
+  if (fd < 0)
+    return TRUE;
+
+  /* Suppress "Not available before" warning */
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+  /* This importantly calls _glnx_close to always get async-signal-safe if
+   * error == NULL */
+  return _glnx_close (fd, error);
+  G_GNUC_END_IGNORE_DEPRECATIONS
+}
+
+#else
+
+static inline gboolean
+_glnx_clear_fd (int     *fd_ptr,
+                GError **error)
+{
+    G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+    return g_clear_fd (fd_ptr, error);
+    G_GNUC_END_IGNORE_DEPRECATIONS
+}
+#define g_clear_fd _glnx_clear_fd
+
+#endif
+
+/* This is part of the backport of g_autofd, but we define it
+ * unconditionally because it's also used to implement glnx_close_fd() */
+static inline void
+_glnx_clear_fd_ignore_error (int *fd_ptr)
+{
+  /* Don't overwrite thread-local errno if closing the fd fails */
+  int errsv = errno;
+
+  if (!g_clear_fd (fd_ptr, NULL))
+    {
+      /* Do nothing: we ignore all errors, except for EBADF which
+       * is a programming error, checked for by g_close(). */
+    }
+
+  errno = errsv;
+}
+
+#if !GLIB_CHECK_VERSION(2, 76, 0)
+#define g_autofd __attribute__((cleanup(_glnx_clear_fd_ignore_error)))
 #endif
 
 #if !GLIB_CHECK_VERSION(2, 40, 0)

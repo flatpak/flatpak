@@ -15,6 +15,8 @@ repositories = {}
 icons = {}
 signatures = {}
 
+required_token = None
+
 
 def get_index():
     results = []
@@ -81,6 +83,15 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
 
         return True
 
+    def check_auth(self):
+        """Return True if auth is not required or the Authorization: Bearer header matches the required token."""
+        if required_token is None:
+            return True
+        auth_header = self.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            return False
+        return auth_header[len("Bearer "):] == required_token
+
     def do_GET(self):
         response = 404
         response_string = b""
@@ -97,10 +108,18 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
                 return 404, b""
 
         if self.check_route("/v2/@repo_name/blobs/@digest"):
+            if not self.check_auth():
+                self.send_response(401)
+                self.end_headers()
+                return
             repo_name = self.matches["repo_name"]
             digest = self.matches["digest"]
             response, response_string = get_file_contents(repo_name, "blobs", digest)
         elif self.check_route("/v2/@repo_name/manifests/@ref"):
+            if not self.check_auth():
+                self.send_response(401)
+                self.end_headers()
+                return
             repo_name = self.matches["repo_name"]
             ref = self.matches["ref"]
             response, response_string = get_file_contents(repo_name, "manifests", ref)
@@ -234,6 +253,12 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
             ref = f"{repo_name}@{digest}"
             sigs = signatures.setdefault(ref, [])
             sigs.append(signature_bytes)
+            self.send_response(200)
+            self.end_headers()
+        elif self.check_route("/testing-auth/configure"):
+            global required_token
+            required_token = self.query.get("token", [None])[0]
+
             self.send_response(200)
             self.end_headers()
         else:

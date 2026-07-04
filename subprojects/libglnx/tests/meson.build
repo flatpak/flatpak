@@ -34,6 +34,7 @@ if get_option('tests')
 
   test_names = [
     'backports',
+    'chase',
     'errors',
     'fdio',
     'macros',

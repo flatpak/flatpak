@@ -136,13 +136,16 @@ if [ x${USE_SYSTEMDIR-} == xyes ] ; then
     export FL_DIR=${SYSTEMDIR}
     export U=
     export INVERT_U=--user
-    if [ x${UID} == x0 ] ; then
-        # If running as root (which happens on some build machines), the
-        # system-helper will not be used, and hence the fallback cache dir will
-        # be used in _flatpak_dir_ensure_repo().
-        export FL_CACHE_DIR=$FL_DIR/repo/tmp/cache
-    else
+    if [ x${HAVE_SYSTEM_HELPER-} == x1 ] && [ x${UID} != x0 ] ; then
+        # If system helper is compiled during build and will actually be
+        # used at runtime eg. UID != 0, Flatpak stores summary caches
+        # in the user's XDG cache directory
         export FL_CACHE_DIR=${XDG_CACHE_HOME}/flatpak/system-cache
+    else
+        # If the system helper is unavailable at build time, or it
+        # cannot be used eg. UID == 0 Flatpak uses the repo-local cache
+        # directory.
+        export FL_CACHE_DIR=$FL_DIR/repo/tmp/cache
     fi
 else
     export FL_DIR=${USERDIR}
@@ -283,6 +286,15 @@ assert_remote_has_no_config () {
     } 3> /dev/null
 }
 
+assert_fail () {
+    if "$@"; then
+        { { local BASH_XTRACEFD=3; } 2> /dev/null
+            echo "Command '$*' should not have succeeded at $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]}" >&2
+            exit 1
+        } 3> /dev/null
+    fi
+}
+
 export FL_GPG_HOMEDIR=${TEST_DATA_DIR}/gpghome
 export FL_GPG_HOMEDIR2=${TEST_DATA_DIR}/gpghome2
 mkdir -p ${FL_GPG_HOMEDIR}
@@ -336,7 +348,7 @@ make_runtime () {
         RUNTIME_REPO=${TEST_DATA_DIR}/runtime-repo
         (
             flock -s 200
-            if [ ! -d ${RUNTIME_REPO} ]; then
+            if [ ! -f "${RUNTIME_REPO}/refs/heads/${RUNTIME_REF}" ]; then
                 $(dirname $0)/make-test-runtime.sh ${RUNTIME_REPO} org.test.Platform ${BRANCH} "" "" > /dev/null
             fi
         ) 200>${TEST_DATA_DIR}/runtime-repo-lock
@@ -620,6 +632,12 @@ skip_without_libsystemd () {
   if  grep -q 'history not available without libsystemd' history-log; then
       skip "no libsystemd available"
   fi
+}
+
+skip_without_seccomp () {
+    if [ "${HAVE_SECCOMP:-0}" != "1" ]; then
+        skip "seccomp support disabled"
+    fi
 }
 
 FLATPAK_SYSTEM_CERTS_D=$(pwd)/certs.d

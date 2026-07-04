@@ -50,7 +50,7 @@
 
       The authenticator dbus calls are not regular dbus calls, but
       instead long running (cancellable) object implementing the
-      AuthenticatorRequest interface. This is very similiar to how
+      AuthenticatorRequest interface. This is very similar to how
       org.freedesktop.portal.Request work when its used in
       xdg-desktop-portal.
 
@@ -85,7 +85,7 @@
 
         This is not a regular dbus call that blocks until the result is done, instead it creates
         a org.freedesktop.Flatpak.AuthenticatorRequest object representing the ongoing operation and
-        returns an object path @handle to it. When the operation succeds the Response signal is emitted
+        returns an object path @handle to it. When the operation succeeds the Response signal is emitted
         on the request with a response status and a dict with details.
 
         The @refs array elements are of type (ssia{sv}) where the items are:
@@ -93,7 +93,7 @@
           <member>s: The ref being pulled</member>
           <member>s: The exact commit being pulled</member>
           <member>i: The token-type of the commit</member>
-          <member>a{sv}: Extra per-ref metadata, currenlty only has summary.* fields which are copied from the summary per-commit metadata.</member>
+          <member>a{sv}: Extra per-ref metadata, currently only has summary.* fields which are copied from the summary per-commit metadata.</member>
         </simplelist>
 
         On success (response 0) the returned details should have:
@@ -186,7 +186,7 @@
         related user interaction (dialogs, webflows etc).
 
         A Response signal with the cancelled response will be emitted if the operation
-        was cancelled. There is still a posibility of a race, so the operation might succeed
+        was cancelled. There is still a possibility of a race, so the operation might succeed
         or fail before processing the close request, so there is no guarantee that the
         operation will be cancelled.
     -->

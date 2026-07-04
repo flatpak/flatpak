@@ -118,7 +118,7 @@ class Bisector():
         message = ""
         _hash = ''
         for l in history.split('\n'):
-            rehash = re.search('(?<=^commit )\w+', l)
+            rehash = re.search(r'(?<=^commit )\w+', l)
             if rehash:
                 if message:
                     messages[_hash] = message

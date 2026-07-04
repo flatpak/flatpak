@@ -23,7 +23,7 @@
 
 #include "flatpak-utils-private.h"
 
-/* Try to find a default server from a pulseaudio confguration file */
+/* Try to find a default server from a pulseaudio configuration file */
 static char *
 flatpak_run_get_pulseaudio_server_user_config (const char *path)
 {

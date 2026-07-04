@@ -7,6 +7,9 @@ Flatpak release checklist
 * Commit the changes
 * `ninja -C ${builddir} flatpak-update-po`
     * This will update `po/`; commit those changes too
+* If this is the first release of a new stable release series, update
+  `SECURITY.md`. It should list the development branch and new stable branch as
+  currently maintained.
 * `git evtag sign $VERSION`
 * `git push --atomic origin main $VERSION`
 * Ensure the release.yml workflow succeeds

@@ -42,15 +42,6 @@
 #include "flatpak-utils-private.h"
 #include "flatpak-utils-base-private.h"
 
-static void
-clear_fd (gpointer data)
-{
-  int *fd_p = data;
-
-  if (fd_p != NULL && *fd_p != -1)
-    close (*fd_p);
-}
-
 char *flatpak_bwrap_empty_env[] = { NULL };
 
 FlatpakBwrap *
@@ -60,9 +51,9 @@ flatpak_bwrap_new (char **env)
 
   bwrap->argv = g_ptr_array_new_with_free_func (g_free);
   bwrap->noinherit_fds = g_array_new (FALSE, TRUE, sizeof (int));
-  g_array_set_clear_func (bwrap->noinherit_fds, clear_fd);
+  g_array_set_clear_func (bwrap->noinherit_fds, (GDestroyNotify) glnx_close_fd);
   bwrap->fds = g_array_new (FALSE, TRUE, sizeof (int));
-  g_array_set_clear_func (bwrap->fds, clear_fd);
+  g_array_set_clear_func (bwrap->fds, (GDestroyNotify) glnx_close_fd);
 
   if (env)
     bwrap->envp = g_strdupv (env);
@@ -144,6 +135,26 @@ flatpak_bwrap_add_fd (FlatpakBwrap *bwrap,
                       int           fd)
 {
   g_array_append_val (bwrap->fds, fd);
+}
+
+gboolean
+flatpak_bwrap_add_args_data_fd_dup (FlatpakBwrap  *bwrap,
+                                    const char    *op,
+                                    int            fd,
+                                    const char    *path_optional,
+                                    GError       **error)
+{
+  glnx_autofd int fd_dup = -1;
+
+  fd_dup = fcntl (fd, F_DUPFD_CLOEXEC, 3);
+  if (fd_dup < 0)
+    return glnx_throw_errno_prefix (error, "Failed to dup fd %d", fd);
+
+  flatpak_bwrap_add_args_data_fd (bwrap,
+                                  op,
+                                  g_steal_fd (&fd_dup),
+                                  path_optional);
+  return TRUE;
 }
 
 void
@@ -522,7 +533,8 @@ flatpak_bwrap_child_setup (GArray *fd_array,
          us use the same fd_array multiple times */
       if (lseek (fd, 0, SEEK_SET) < 0)
         {
-          /* Ignore the error, this happens on e.g. pipe fds */
+          /* Ignore the error, not all fds are seekable
+           * (for example pipes and O_PATH fds are not) */
         }
 
       fcntl (fd, F_SETFD, 0);
