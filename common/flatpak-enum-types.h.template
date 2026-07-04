@@ -13,7 +13,7 @@ G_BEGIN_DECLS
 /*** END file-production ***/
 
 /*** BEGIN value-header ***/
-FLATPAK_EXTERN GType @enum_name@_get_type (void) G_GNUC_CONST;
+FLATPAK_EXTERN GType @enum_name@_get_type (void);
 #define @ENUMPREFIX@_TYPE_@ENUMSHORT@ (@enum_name@_get_type ())
 /*** END value-header ***/
 
