@@ -2128,8 +2128,6 @@ flatpak_oci_registry_apply_delta_stream (FlatpakOciRegistry    *self,
     {
       guint8 op;
       gsize size;
-      g_autofree char *path = NULL;
-      g_autofree char *clean_path = NULL;
       g_autoptr(GError) local_error = NULL;
       gboolean eof;
 
@@ -2152,22 +2150,29 @@ flatpak_oci_registry_apply_delta_stream (FlatpakOciRegistry    *self,
           break;
 
         case DELTA_OP_OPEN:
-          path = (char *)delta_read_data (in, size, cancellable, error);
-          if (path == NULL)
-            return FALSE;
-          clean_path = delta_clean_path (path);
-
-          g_clear_object (&content_file);
-
           {
-            g_autoptr(GFile) child = g_file_resolve_relative_path (content_dir, clean_path);
+            g_autofree char *path = NULL;
+            g_autofree char *clean_path = NULL;
+            g_autoptr(GFile) child = NULL;
             g_autoptr(GFileInputStream) child_in = NULL;
+
+            if (size > PATH_MAX)
+              return flatpak_fail (error, _("Invalid delta file format"));
+
+            path = (char *) delta_read_data (in, size, cancellable, error);
+            if (path == NULL)
+              return FALSE;
+
+            clean_path = delta_clean_path (path);
+
+            child = g_file_resolve_relative_path (content_dir, clean_path);
 
             child_in = g_file_read (child, cancellable, error);
             if (child_in == NULL)
               return FALSE;
 
             /* We can't seek in the ostree repo file, so copy it to temp file */
+            g_clear_object (&content_file);
             content_file = copy_stream_to_file (self, G_INPUT_STREAM (child_in), cancellable, error);
             if (content_file == NULL)
               return FALSE;
