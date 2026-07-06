@@ -64,6 +64,7 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (PortalFlatpakUpdateMonitorSkeleton, g_object_unre
 /* Should be roughly 2 seconds */
 #define CHILD_STATUS_CHECK_ATTEMPTS 20
 
+static GStrv original_environ = NULL;
 static GHashTable *client_pid_data_hash = NULL;
 static GDBusConnection *session_bus = NULL;
 static GNetworkMonitor *network_monitor = NULL;
@@ -907,22 +908,17 @@ handle_spawn (PortalFlatpak         *object,
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
-  if ((flatpak = g_getenv ("FLATPAK_PORTAL_MOCK_FLATPAK")) != NULL)
-    g_ptr_array_add (flatpak_argv, g_strdup (flatpak));
-  else if ((flatpak = g_getenv ("FLATPAK")) != NULL)
-    g_ptr_array_add (flatpak_argv, g_strdup (flatpak));
+  /* TODO: Ideally we should let `flatpak run` inherit the run environment
+   * of the instance, in case e.g. a LD_LIBRARY_PATH is needed to be able
+   * to run `flatpak run`, but tell it to start from a blank environment
+   * when running the Flatpak app; but this isn't currently possible, so
+   * for now we preserve existing behaviour. */
+  if (arg_flags & FLATPAK_SPAWN_FLAGS_CLEAR_ENV)
+    {
+      char *empty[] = { NULL };
+      env = g_strdupv (empty);
+    }
   else
-    g_ptr_array_add (flatpak_argv, g_strdup (FLATPAK_BINDIR "/flatpak"));
-
-  g_ptr_array_add (flatpak_argv, g_strdup ("run"));
-
-  /* If we don't clear the env, the flatpak portal service environment would
-   * leak into the flatpak instance. By default we reuse the environment of
-   * the calling instance by passing it as arguments after the --clear-env.
-   */
-  g_ptr_array_add (flatpak_argv, g_strdup ("--clear-env"));
-
-  if (!(arg_flags & FLATPAK_SPAWN_FLAGS_CLEAR_ENV))
     {
       static const char * const mock_run_environ[] = { "FOO=bar", NULL };
 
@@ -935,8 +931,8 @@ handle_spawn (PortalFlatpak         *object,
         {
           if (g_error_matches (error, G_FILE_ERROR, G_FILE_ERROR_NOENT))
             {
-              g_warning ("Environment for \"flatpak run\" was not found, "
-                         "falling back to a clean environment");
+              g_warning ("Environment for \"flatpak run\" was not found, falling back to current environment");
+              env = g_strdupv (original_environ);
             }
           else
             {
@@ -947,15 +943,16 @@ handle_spawn (PortalFlatpak         *object,
               return G_DBUS_METHOD_INVOCATION_HANDLED;
             }
         }
-      else
-        {
-          for (i = 0; env != NULL && env[i] != NULL; i++)
-            {
-              g_string_append (env_string, env[i]);
-              g_string_append_c (env_string, '\0');
-            }
-        }
     }
+
+  if ((flatpak = g_getenv ("FLATPAK_PORTAL_MOCK_FLATPAK")) != NULL)
+    g_ptr_array_add (flatpak_argv, g_strdup (flatpak));
+  else if ((flatpak = g_getenv ("FLATPAK")) != NULL)
+    g_ptr_array_add (flatpak_argv, g_strdup (flatpak));
+  else
+    g_ptr_array_add (flatpak_argv, g_strdup (FLATPAK_BINDIR "/flatpak"));
+
+  g_ptr_array_add (flatpak_argv, g_strdup ("run"));
 
   sandboxed = (arg_flags & FLATPAK_SPAWN_FLAGS_SANDBOX) != 0;
 
@@ -1507,7 +1504,7 @@ handle_spawn (PortalFlatpak         *object,
    * to work around a deadlock in GLib < 2.60 */
   if (!g_spawn_async_with_pipes (NULL,
                                  (char **) flatpak_argv->pdata,
-                                 NULL,
+                                 env,
                                  G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD | G_SPAWN_LEAVE_DESCRIPTORS_OPEN,
                                  child_setup_func, &child_setup_data,
                                  &pid,
@@ -3017,6 +3014,10 @@ main (int    argc,
     { NULL }
   };
 
+  /* Save the enviroment before changing anything, so that subprocesses
+   * can get the unchanged version */
+  original_environ = g_get_environ ();
+
   setlocale (LC_ALL, "");
 
   g_setenv ("GIO_USE_VFS", "local", TRUE);
@@ -3119,5 +3120,6 @@ main (int    argc,
   main_loop = g_main_loop_new (NULL, FALSE);
   g_main_loop_run (main_loop);
 
+  g_strfreev (original_environ);
   return 0;
 }
