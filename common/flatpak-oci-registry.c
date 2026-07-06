@@ -531,6 +531,9 @@ unpack_archive (GFile   *archive,
   flags = 0;
   flags |= ARCHIVE_EXTRACT_SECURE_NODOTDOT;
   flags |= ARCHIVE_EXTRACT_SECURE_SYMLINKS;
+  /* ARCHIVE_EXTRACT_SECURE_NOABSOLUTEPATHS is not needed because we manually
+   * build paths, where absolute archive entry paths and hardlink targets are
+   * treated as relative to the destination. */
 
   a = archive_read_new ();
   archive_read_support_format_all (a);
@@ -547,7 +550,6 @@ unpack_archive (GFile   *archive,
 
   while (TRUE)
     {
-      g_autofree char *target_path = NULL;
       struct archive_entry *entry;
 
       r = archive_read_next_header (a, &entry);
@@ -557,8 +559,29 @@ unpack_archive (GFile   *archive,
       if (r != ARCHIVE_OK)
         return propagate_libarchive_error (error, a);
 
-      target_path = g_build_filename (destination, archive_entry_pathname (entry), NULL);
-      archive_entry_set_pathname (entry, target_path);
+      {
+        g_autofree char *target_path = NULL;
+
+        /* It's OK if archive_entry_pathname() returns absolute: we'll append it
+         * to destination as though it was relative. We know that with
+         * ARCHIVE_EXTRACT_SECURE_NODOTDOT, it cannot return anything with `..`
+         * path segments, so it can't escape from destination. */
+        target_path = g_build_filename (destination, archive_entry_pathname (entry), NULL);
+        archive_entry_set_pathname (entry, target_path);
+      }
+
+      /* Similar to the pathname above, the hardlink target gets the same
+       * treatment. ARCHIVE_EXTRACT_SECURE_NODOTDOT also applies to the result
+       * of archive_entry_hardlink(). */
+      if (archive_entry_hardlink (entry) != NULL)
+        {
+          g_autofree char *target_hardlink = NULL;
+
+          target_hardlink = g_build_filename (destination,
+                                              archive_entry_hardlink (entry),
+                                              NULL);
+          archive_entry_set_hardlink (entry, target_hardlink);
+        }
 
       r = archive_write_header (ext, entry);
       if (r != ARCHIVE_OK)
