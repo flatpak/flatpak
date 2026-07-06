@@ -942,6 +942,8 @@ handle_spawn (PortalFlatpak         *object,
                                                      error->message);
               return G_DBUS_METHOD_INVOCATION_HANDLED;
             }
+
+          g_clear_error (&error);
         }
     }
 
