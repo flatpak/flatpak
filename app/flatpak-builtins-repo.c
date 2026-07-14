@@ -93,6 +93,7 @@ print_info (OstreeRepo *repo,
   const char *deploy_collection_id;
   const char *authenticator_name;
   gboolean authenticator_install = FALSE;
+  const char *gpg_keys_url;
   g_autoptr(GVariant) gpg_keys = NULL;
   OstreeRepoMode mode;
   const char *mode_string = "unknown";
@@ -170,6 +171,9 @@ print_info (OstreeRepo *repo,
 
   if (g_variant_lookup (meta, "xa.authenticator-install", "&s", &authenticator_install))
     g_print (_("Authenticator install: %s\n"), authenticator_install ? _("true") : _("false"));
+
+  if (g_variant_lookup (meta, "xa.gpg-keys-url", "&s", &gpg_keys_url))
+    g_print (_("GPG keys URL: %s\n"), gpg_keys_url);
 
   if ((gpg_keys = g_variant_lookup_value (meta, "xa.gpg-keys", G_VARIANT_TYPE_BYTESTRING)) != NULL)
     {

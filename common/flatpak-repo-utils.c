@@ -1689,6 +1689,7 @@ add_summary_metadata (OstreeRepo   *repo,
   g_autofree char *remote_mode_str = NULL;
   g_autofree char *authenticator_name = NULL;
   g_autofree char *gpg_keys = NULL;
+  g_autofree char *gpg_keys_url = NULL;
   g_auto(GStrv) config_keys = NULL;
   int authenticator_install = -1;
   const char *collection_id;
@@ -1710,6 +1711,7 @@ add_summary_metadata (OstreeRepo   *repo,
       icon = g_key_file_get_string (config, "flatpak", "icon", NULL);
       default_branch = g_key_file_get_string (config, "flatpak", "default-branch", NULL);
       gpg_keys = g_key_file_get_string (config, "flatpak", "gpg-keys", NULL);
+      gpg_keys_url = g_key_file_get_string (config, "flatpak", "gpg-keys-url", NULL);
       redirect_url = g_key_file_get_string (config, "flatpak", "redirect-url", NULL);
       deploy_sideload_collection_id = g_key_file_get_boolean (config, "flatpak", "deploy-sideload-collection-id", NULL);
       deploy_collection_id = g_key_file_get_boolean (config, "flatpak", "deploy-collection-id", NULL);
@@ -1771,6 +1773,10 @@ add_summary_metadata (OstreeRepo   *repo,
                            g_variant_new_string (collection_id));
   else if (deploy_collection_id)
     g_info ("Ignoring deploy-collection-id=true because no collection ID is set.");
+
+  if (gpg_keys_url)
+    g_variant_builder_add (metadata_builder, "{sv}", "xa.gpg-keys-url",
+                           g_variant_new_string (gpg_keys_url));
 
   if (authenticator_name)
     g_variant_builder_add (metadata_builder, "{sv}", "xa.authenticator-name",
