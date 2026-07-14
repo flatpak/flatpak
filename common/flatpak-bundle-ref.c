@@ -305,7 +305,7 @@ flatpak_bundle_ref_new (GFile   *file,
   g_autofree char *collection_id = NULL;
 
   metadata = flatpak_bundle_load (file, &commit, &full_ref, &origin, &runtime_repo, &metadata_contents, &installed_size,
-                                  NULL, &collection_id, error);
+                                  NULL, NULL, &collection_id, error);
   if (metadata == NULL)
     return NULL;
 

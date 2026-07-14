@@ -2726,6 +2726,7 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
                                                         flatpak_decomposed_get_ref (ref),
                                                         NULL,
                                                         NULL,
+                                                        NULL,
                                                         &changed_config,
                                                         NULL, error);
       if (origin_remote == NULL)
@@ -4930,6 +4931,7 @@ handle_runtime_repo_deps_from_bundle (FlatpakTransaction *self,
                                   NULL,
                                   NULL,
                                   NULL,
+                                  NULL,
                                   NULL);
 
   if (metadata == NULL || dep_url == NULL || ref == NULL)
@@ -5032,7 +5034,9 @@ flatpak_transaction_resolve_images (FlatpakTransaction *self,
 
           remote = flatpak_dir_create_origin_remote (priv->dir, NULL /* url */, id,
                                                      NULL /* title */, ref_label,
-                                                     NULL /* gpg_data */, NULL /* collection_id */,
+                                                     NULL /* gpg_data */,
+                                                     NULL /* gpg_keys_url */,
+                                                     NULL /* collection_id */,
                                                      &created_remote,
                                                      cancellable, error);
           if (!remote)

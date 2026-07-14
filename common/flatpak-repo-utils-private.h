@@ -49,6 +49,7 @@
 #define FLATPAK_REF_SUGGEST_REMOTE_NAME_KEY "SuggestRemoteName"
 #define FLATPAK_REF_TITLE_KEY "Title"
 #define FLATPAK_REF_GPGKEY_KEY "GPGKey"
+#define FLATPAK_REF_GPGKEYSURL_KEY "GPGKeysUrl"
 #define FLATPAK_REF_IS_RUNTIME_KEY "IsRuntime"
 #define FLATPAK_REF_NAME_KEY "Name"
 #define FLATPAK_REF_BRANCH_KEY "Branch"
@@ -63,6 +64,7 @@
 #define FLATPAK_REPO_TITLE_KEY "Title"
 #define FLATPAK_REPO_DEFAULT_BRANCH_KEY "DefaultBranch"
 #define FLATPAK_REPO_GPGKEY_KEY "GPGKey"
+#define FLATPAK_REPO_GPGKEYSURL_KEY "GPGKeysUrl"
 #define FLATPAK_REPO_SIGNATURE_LOOKASIDE_KEY "SignatureLookaside"
 #define FLATPAK_REPO_NODEPS_KEY "NoDeps"
 #define FLATPAK_REPO_COMMENT_KEY "Comment"
@@ -251,6 +253,7 @@ GVariant *flatpak_bundle_load (GFile              *file,
                                char              **app_metadata,
                                guint64            *installed_size,
                                GBytes            **gpg_keys,
+                               char              **gpg_keys_url,
                                char              **collection_id,
                                GError            **error);
 

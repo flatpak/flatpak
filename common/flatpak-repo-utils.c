@@ -2781,6 +2781,7 @@ flatpak_parse_repofile (const char   *remote_name,
   g_autofree char *uri = NULL;
   g_autofree char *title = NULL;
   g_autofree char *gpg_key = NULL;
+  g_autofree char *gpg_keys_url = NULL;
   g_autofree char *signature_lookaside = NULL;
   g_autofree char *collection_id = NULL;
   g_autofree char *default_branch = NULL;
@@ -2875,6 +2876,11 @@ flatpak_parse_repofile (const char   *remote_name,
     {
       g_key_file_set_boolean (config, group, "gpg-verify", FALSE);
     }
+
+  gpg_keys_url = g_key_file_get_string (keyfile, source_group,
+                                        FLATPAK_REPO_GPGKEYSURL_KEY, NULL);
+  if (gpg_keys_url != NULL)
+    g_key_file_set_string (config, group, "xa.gpg-keys-url", gpg_keys_url);
 
   signature_lookaside = g_key_file_get_string (keyfile, source_group,
                                                FLATPAK_REPO_SIGNATURE_LOOKASIDE_KEY, NULL);
@@ -3671,6 +3677,7 @@ flatpak_bundle_load (GFile              *file,
                      char              **app_metadata,
                      guint64            *installed_size,
                      GBytes            **gpg_keys,
+                     char              **gpg_keys_url,
                      char              **collection_id,
                      GError             **error)
 {
@@ -3756,6 +3763,12 @@ flatpak_bundle_load (GFile              *file,
         *runtime_repo = NULL;
     }
 
+  if (gpg_keys_url != NULL)
+    {
+      if (!g_variant_lookup (metadata, "gpg-keys-url", "s", gpg_keys_url))
+        *gpg_keys_url = NULL;
+    }
+
   if (collection_id != NULL)
     {
       if (!g_variant_lookup (metadata, "collection-id", "s", collection_id))
@@ -3821,7 +3834,7 @@ flatpak_pull_from_bundle (OstreeRepo   *repo,
   g_autofree char *remote_collection_id = NULL;
   g_autofree char *collection_id = NULL;
 
-  metadata = flatpak_bundle_load (file, &to_checksum, NULL, NULL, NULL, &metadata_contents, NULL, NULL, &collection_id, error);
+  metadata = flatpak_bundle_load (file, &to_checksum, NULL, NULL, NULL, &metadata_contents, NULL, NULL, NULL, &collection_id, error);
   if (metadata == NULL)
     return FALSE;
 

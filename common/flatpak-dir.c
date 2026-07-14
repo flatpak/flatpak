@@ -11216,6 +11216,7 @@ flatpak_dir_ensure_bundle_remote (FlatpakDir         *self,
   GBytes *gpg_data = NULL;
   g_autofree char *to_checksum = NULL;
   g_autofree char *remote = NULL;
+  g_autofree char *gpg_keys_url = NULL;
   g_autofree char *collection_id = NULL;
 
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
@@ -11226,6 +11227,7 @@ flatpak_dir_ensure_bundle_remote (FlatpakDir         *self,
                                   &origin,
                                   NULL, &fp_metadata, NULL,
                                   &included_gpg_data,
+                                  &gpg_keys_url,
                                   &collection_id,
                                   error);
   if (metadata == NULL)
@@ -11268,6 +11270,7 @@ flatpak_dir_ensure_bundle_remote (FlatpakDir         *self,
                                                  basename,
                                                  flatpak_decomposed_get_ref (ref),
                                                  gpg_data,
+                                                 gpg_keys_url,
                                                  collection_id,
                                                  &created_remote,
                                                  cancellable,
@@ -11400,7 +11403,7 @@ flatpak_dir_install_bundle (FlatpakDir         *self,
   metadata = flatpak_bundle_load (file, &to_checksum,
                                   &ref,
                                   &origin,
-                                  NULL, NULL,
+                                  NULL, NULL, NULL,
                                   NULL, NULL, NULL,
                                   error);
   if (metadata == NULL)
@@ -15677,6 +15680,7 @@ create_origin_remote_config (OstreeRepo *repo,
                              const char *title,
                              const char *main_ref,
                              gboolean    gpg_verify,
+                             const char *gpg_keys_url,
                              const char *collection_id,
                              GKeyFile  **new_config)
 {
@@ -15724,6 +15728,9 @@ create_origin_remote_config (OstreeRepo *repo,
   if (main_ref)
     g_key_file_set_string (*new_config, group, "xa.main-ref", main_ref);
 
+  if (gpg_keys_url != NULL)
+    g_key_file_set_string (*new_config, group, "xa.gpg-keys-url", gpg_keys_url);
+
   if (collection_id)
     g_key_file_set_string (*new_config, group, "collection-id", collection_id);
 
@@ -15737,6 +15744,7 @@ flatpak_dir_create_origin_remote (FlatpakDir   *self,
                                   const char   *title,
                                   const char   *main_ref,
                                   GBytes       *gpg_data,
+                                  const char   *gpg_keys_url,
                                   const char   *collection_id,
                                   gboolean     *changed_config,
                                   GCancellable *cancellable,
@@ -15745,7 +15753,8 @@ flatpak_dir_create_origin_remote (FlatpakDir   *self,
   g_autoptr(GKeyFile) new_config = NULL;
   g_autofree char *remote = NULL;
 
-  remote = create_origin_remote_config (self->repo, url, id, title, main_ref, gpg_data != NULL, collection_id, &new_config);
+  remote = create_origin_remote_config (self->repo, url, id, title, main_ref, gpg_data != NULL,
+                                        gpg_keys_url, collection_id, &new_config);
 
   if (new_config &&
       !flatpak_dir_modify_remote (self, remote, new_config,
@@ -15767,6 +15776,7 @@ parse_ref_file (GKeyFile *keyfile,
                 char    **branch_out,
                 char    **url_out,
                 GBytes  **gpg_data_out,
+                char    **gpg_keys_url_out,
                 gboolean *is_runtime_out,
                 char    **collection_id_out,
                 GError  **error)
@@ -15776,6 +15786,7 @@ parse_ref_file (GKeyFile *keyfile,
   g_autofree char *branch = NULL;
   g_autofree char *version = NULL;
   g_autoptr(GBytes) gpg_data = NULL;
+  g_autofree char *gpg_keys_url = NULL;
   gboolean is_runtime = FALSE;
   g_autofree char *collection_id = NULL;
   g_autofree char *str = NULL;
@@ -15784,6 +15795,7 @@ parse_ref_file (GKeyFile *keyfile,
   *branch_out = NULL;
   *url_out = NULL;
   *gpg_data_out = NULL;
+  *gpg_keys_url_out = NULL;
   *is_runtime_out = FALSE;
   *collection_id_out = NULL;
 
@@ -15828,6 +15840,9 @@ parse_ref_file (GKeyFile *keyfile,
       gpg_data = g_bytes_new_take (g_steal_pointer (&decoded), decoded_len);
     }
 
+  gpg_keys_url = g_key_file_get_string (keyfile, FLATPAK_REF_GROUP,
+                                        FLATPAK_REF_GPGKEYSURL_KEY, NULL);
+
   /* We have a hierarchy of keys for setting the collection ID, which all have
    * the same effect. The only difference is which versions of Flatpak support
    * them, and therefore what P2P implementation is enabled by them:
@@ -15857,6 +15872,7 @@ parse_ref_file (GKeyFile *keyfile,
   *branch_out = g_steal_pointer (&branch);
   *url_out = g_steal_pointer (&url);
   *gpg_data_out = g_steal_pointer (&gpg_data);
+  *gpg_keys_url_out = g_steal_pointer (&gpg_keys_url);
   *is_runtime_out = is_runtime;
   *collection_id_out = g_steal_pointer (&collection_id);
 
@@ -15873,6 +15889,7 @@ flatpak_dir_create_remote_for_ref_file (FlatpakDir         *self,
                                         GError            **error)
 {
   g_autoptr(GBytes) gpg_data = NULL;
+  g_autofree char *gpg_keys_url = NULL;
   g_autofree char *name = NULL;
   g_autofree char *branch = NULL;
   g_autofree char *url = NULL;
@@ -15882,7 +15899,7 @@ flatpak_dir_create_remote_for_ref_file (FlatpakDir         *self,
   g_autoptr(GFile) deploy_dir = NULL;
   g_autoptr(FlatpakDecomposed) ref = NULL;
 
-  if (!parse_ref_file (keyfile, &name, &branch, &url, &gpg_data, &is_runtime, &collection_id, error))
+  if (!parse_ref_file (keyfile, &name, &branch, &url, &gpg_data, &gpg_keys_url, &is_runtime, &collection_id, error))
     return FALSE;
 
   ref = flatpak_decomposed_new_from_parts (is_runtime ? FLATPAK_KINDS_RUNTIME : FLATPAK_KINDS_APP,
@@ -15907,7 +15924,7 @@ flatpak_dir_create_remote_for_ref_file (FlatpakDir         *self,
     {
       /* title is NULL because the title from the ref file is the title of the app not the remote */
       remote = flatpak_dir_create_origin_remote (self, url, name, NULL, flatpak_decomposed_get_ref (ref),
-                                                 gpg_data, collection_id, NULL, NULL, error);
+                                                 gpg_data, gpg_keys_url, collection_id, NULL, NULL, error);
       if (remote == NULL)
         return FALSE;
     }

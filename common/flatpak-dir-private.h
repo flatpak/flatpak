@@ -861,6 +861,7 @@ char      *           flatpak_dir_create_origin_remote                      (Fla
                                                                              const char                    *title,
                                                                              const char                    *main_ref,
                                                                              GBytes                        *gpg_data,
+                                                                             const char                    *gpg_keys_url,
                                                                              const char                    *collection_id,
                                                                              gboolean                      *changed_config,
                                                                              GCancellable                  *cancellable,
