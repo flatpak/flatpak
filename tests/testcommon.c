@@ -8,6 +8,7 @@
 #include "flatpak.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-appdata-private.h"
+#include "flatpak-progress-private.h"
 #include "flatpak-run-private.h"
 #include "flatpak-run-x11-private.h"
 
@@ -1348,6 +1349,51 @@ test_validate_path_characters (void)
     }
 }
 
+static void
+progress_test_cb (const char *status,
+                  guint       progress,
+                  gboolean    estimating,
+                  gpointer    user_data)
+{
+  int *count = user_data;
+
+  *count += 1;
+}
+
+static void
+test_progress_bytes_total (void)
+{
+  g_autoptr(FlatpakProgress) progress = NULL;
+  int count = 0;
+
+  progress = flatpak_progress_new (progress_test_cb, &count);
+  g_assert_cmpuint (flatpak_progress_get_bytes_total (progress), ==, 0);
+
+  flatpak_progress_start_oci_pull (progress);
+  g_assert_cmpuint (flatpak_progress_get_bytes_total (progress), ==, 0);
+
+  flatpak_progress_update_oci_pull (progress, 1000, 250, 4, 1);
+  g_assert_cmpuint (count, ==, 1);
+  g_assert_cmpuint (flatpak_progress_get_bytes_transferred (progress), ==, 250);
+  g_assert_cmpuint (flatpak_progress_get_transferred_extra_data_bytes (progress), ==, 0);
+  g_assert_cmpuint (flatpak_progress_get_bytes_total (progress), ==, 1000);
+
+  flatpak_progress_init_extra_data (progress, 1, 200);
+  g_assert_cmpuint (flatpak_progress_get_bytes_total (progress), ==, 1200);
+
+  flatpak_progress_start_extra_data (progress);
+  flatpak_progress_update_extra_data (progress, 50);
+  g_assert_cmpuint (count, ==, 2);
+  g_assert_cmpuint (flatpak_progress_get_bytes_transferred (progress), ==, 250);
+  g_assert_cmpuint (flatpak_progress_get_transferred_extra_data_bytes (progress), ==, 50);
+  g_assert_cmpuint (flatpak_progress_get_bytes_total (progress), ==, 1200);
+
+  flatpak_progress_start_oci_pull (progress);
+  g_assert_cmpuint (flatpak_progress_get_bytes_transferred (progress), ==, 0);
+  g_assert_cmpuint (flatpak_progress_get_transferred_extra_data_bytes (progress), ==, 0);
+  g_assert_cmpuint (flatpak_progress_get_bytes_total (progress), ==, 0);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -1377,6 +1423,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/common/parse-x11-display", test_parse_x11_display);
   g_test_add_func ("/common/string-escape", test_string_escape);
   g_test_add_func ("/common/validate-path-characters", test_validate_path_characters);
+  g_test_add_func ("/common/progress-bytes-total", test_progress_bytes_total);
 
   res = g_test_run ();
 
