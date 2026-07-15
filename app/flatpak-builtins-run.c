@@ -66,6 +66,7 @@ static int opt_usr_fd = -1;
 static gboolean opt_clear_env;
 static GArray *opt_bind_fds = NULL;
 static GArray *opt_ro_bind_fds = NULL;
+static char *opt_custom_slice;
 
 static gboolean
 option_bind_fd_cb (const char  *option_name,
@@ -186,6 +187,7 @@ static GOptionEntry options[] = {
   { "clear-env", 0, 0, G_OPTION_ARG_NONE, &opt_clear_env, N_("Clear all outside environment variables"), NULL },
   { "bind-fd", 0, 0, G_OPTION_ARG_CALLBACK | G_OPTION_FLAG_HIDDEN, &option_bind_fd_cb, N_("Bind mount the file or directory referred to by FD to its canonicalized path"), N_("FD") },
   { "ro-bind-fd", 0, 0, G_OPTION_ARG_CALLBACK | G_OPTION_FLAG_HIDDEN, &option_ro_bind_fd_cb, N_("Bind mount the file or directory referred to by FD read-only to its canonicalized path"), N_("FD") },
+  { "custom-slice", 0, 0, G_OPTION_ARG_STRING, &opt_custom_slice, N_("The app will be put under the slice app-flatpak-SLICE.slice"), N_("SLICE") },
   { NULL }
 };
 
@@ -485,6 +487,7 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
                         NULL,
                         opt_bind_fds,
                         opt_ro_bind_fds,
+                        opt_custom_slice,
                         cancellable,
                         error))
     return FALSE;

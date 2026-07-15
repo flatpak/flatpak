@@ -37,6 +37,7 @@
 
 gboolean flatpak_run_in_transient_unit (const char *app_id,
                                         const char *instance_id,
+                                        const char *custom_slice,
                                         GError    **error);
 
 void     flatpak_run_extend_ld_path       (FlatpakBwrap       *bwrap,
@@ -65,6 +66,7 @@ gboolean flatpak_run_add_environment_args (FlatpakBwrap           *bwrap,
                                            int                     per_app_dir_lock_fd,
                                            const char             *instance_id,
                                            FlatpakExports        **exports_out,
+                                           const char             *custom_slice,
                                            GCancellable           *cancellable,
                                            GError                **error);
 char **  flatpak_run_get_minimal_env (gboolean devel,
@@ -131,6 +133,7 @@ gboolean flatpak_run_app (FlatpakDecomposed   *app_ref,
                           char               **instance_dir_out,
                           GArray              *bind_fds,
                           GArray              *ro_bind_fds,
+                          const char          *custom_slice,
                           GCancellable        *cancellable,
                           GError             **error);
 
