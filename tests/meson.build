@@ -200,9 +200,25 @@ executable(
   install_dir : installed_testdir,
 )
 
-executable(
+httpcache = executable(
   'httpcache',
   'httpcache.c',
+  dependencies : [
+    base_deps,
+    json_glib_dep,
+    libflatpak_common_dep,
+    libflatpak_common_base_dep,
+    libglnx_dep,
+    libostree_dep,
+  ],
+  include_directories : [common_include_directories],
+  install : get_option('installed_tests'),
+  install_dir : installed_testdir,
+)
+
+httpdownload = executable(
+  'httpdownload',
+  'httpdownload.c',
   dependencies : [
     base_deps,
     json_glib_dep,
@@ -367,7 +383,7 @@ tests = {
   'completion': {},
   'config': {},
   'build-update-repo': {},
-  'http-utils': {},
+  'http-utils': {'depends': [httpcache, httpdownload]},
   'run': {'wrap': [
     'user,nodeltas',
     'user,deltas',
@@ -419,9 +435,10 @@ tests = {
 wrapped_tests = []
 foreach name, testcase : tests
   script = 'test-@0@.sh'.format(name)
+  test_depends = testcase.get('depends', [])
 
   if not testcase.has_key('wrap')
-    wrapped_tests += {'name': script, 'script': script}
+    wrapped_tests += {'name': script, 'script': script, 'depends': test_depends}
     continue
   endif
 
@@ -429,6 +446,7 @@ foreach name, testcase : tests
     wrapped_tests += {
       'name': 'test-@0@@@1@.wrap'.format(name, wrap),
       'script': script,
+      'depends': test_depends,
     }
   endforeach
 endforeach
@@ -490,7 +508,7 @@ foreach testcase : wrapped_tests
       name,
       tap_test,
       args : [meson.current_source_dir() / name],
-      depends : runtime_repo,
+      depends : [runtime_repo] + testcase.get('depends', []),
       env : test_env,
       is_parallel : is_parallel,
       protocol : 'tap',

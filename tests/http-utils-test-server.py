@@ -22,7 +22,22 @@ def parse_http_date(date):
     else:
         return None
 
+def gzip_with_sync_flush(contents_bytes):
+    buf = BytesIO()
+    gzfile = gzip.GzipFile(mode='wb', fileobj=buf)
+    half = max(1, len(contents_bytes) // 2)
+
+    gzfile.write(contents_bytes[:half])
+    gzfile.flush(zlib.Z_SYNC_FLUSH)
+    split = len(buf.getvalue())
+    gzfile.write(contents_bytes[half:])
+    gzfile.close()
+
+    return buf.getvalue(), split
+
 class RequestHandler(http_server.BaseHTTPRequestHandler):
+    request_counts = {}
+
     def do_GET(self):
         parts = self.path.split('?', 1)
         path = parts[0]
@@ -49,6 +64,164 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
                 response = 304
             add_headers['Etag'] = etag
 
+        contents = "path=" + self.path + "\n"
+
+        if 'partial-fail-non-206-on-resume' in query:
+            n_requests = RequestHandler.request_counts.get(self.path, 0)
+            RequestHandler.request_counts[self.path] = n_requests + 1
+
+            contents_bytes = contents.encode('utf-8')
+            range_header = self.headers.get("Range")
+            if range_header and range_header.startswith("bytes="):
+                self.send_response(204)
+                self.end_headers()
+            elif n_requests == 0:
+                half = max(1, len(contents_bytes) // 2)
+                self.send_response(200)
+                self.send_header("Content-Type", "text/plain; charset=UTF-8")
+                self.send_header("Content-Length", str(len(contents_bytes)))
+                self.end_headers()
+                self.wfile.write(contents_bytes[:half])
+                self.wfile.flush()
+                self.connection.shutdown(2)
+            else:
+                self.send_response(200)
+                self.send_header("Content-Type", "text/plain; charset=UTF-8")
+                self.send_header("Content-Length", str(len(contents_bytes)))
+                self.end_headers()
+                self.wfile.write(contents_bytes)
+            return
+
+        if 'compressed-partial-fail' in query:
+            n_requests = RequestHandler.request_counts.get(self.path, 0)
+            RequestHandler.request_counts[self.path] = n_requests + 1
+            range_seen_key = self.path + ':range-seen'
+            range_header = self.headers.get("Range")
+
+            if RequestHandler.request_counts.get(range_seen_key, 0) > 0:
+                contents_bytes = b"unexpected range retry\n"
+                self.send_response(500)
+                self.send_header("Content-Type", "text/plain; charset=UTF-8")
+                self.send_header("Content-Length", str(len(contents_bytes)))
+                self.end_headers()
+                self.wfile.write(contents_bytes)
+                return
+
+            if range_header and range_header.startswith("bytes="):
+                RequestHandler.request_counts[range_seen_key] = 1
+                contents_bytes = b"unexpected range\n"
+                self.send_response(500)
+                self.send_header("Content-Type", "text/plain; charset=UTF-8")
+                self.send_header("Content-Length", str(len(contents_bytes)))
+                self.end_headers()
+                self.wfile.write(contents_bytes)
+                return
+
+            contents_bytes = (contents + ("data\n" * 4096)).encode('utf-8')
+            compressed, split = gzip_with_sync_flush(contents_bytes)
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain; charset=UTF-8")
+            self.send_header("Content-Encoding", "gzip")
+            self.send_header("Content-Length", str(len(compressed)))
+            self.end_headers()
+
+            if n_requests == 0:
+                self.wfile.write(compressed[:split])
+                self.wfile.flush()
+                self.connection.shutdown(2)
+            else:
+                self.wfile.write(compressed)
+            return
+
+        if 'empty-reply-then-ok' in query:
+            n_requests = RequestHandler.request_counts.get(self.path, 0)
+            RequestHandler.request_counts[self.path] = n_requests + 1
+
+            if n_requests == 0:
+                self.connection.close()
+                return
+
+        if 'error-then-ok' in query:
+            n_requests = RequestHandler.request_counts.get(self.path, 0)
+            RequestHandler.request_counts[self.path] = n_requests + 1
+
+            if n_requests == 0:
+                contents_bytes = b"server-error\n"
+                self.send_response(500)
+                self.send_header("Content-Type", "text/plain; charset=UTF-8")
+                self.send_header("Content-Length", str(len(contents_bytes)))
+                self.end_headers()
+                self.wfile.write(contents_bytes)
+                return
+
+        if 'partial-fail-no-body-on-resume' in query:
+            n_requests = RequestHandler.request_counts.get(self.path, 0)
+            RequestHandler.request_counts[self.path] = n_requests + 1
+
+            contents_bytes = contents.encode('utf-8')
+            range_header = self.headers.get("Range")
+            if range_header and range_header.startswith("bytes="):
+                byte_range = range_header[len("bytes="):]
+                start = int(byte_range.split('-')[0])
+                remainder = contents_bytes[start:]
+                self.send_response(206)
+                self.send_header("Content-Type", "text/plain; charset=UTF-8")
+                self.send_header("Content-Range",
+                                 "bytes %d-%d/%d" % (start, len(contents_bytes) - 1, len(contents_bytes)))
+                self.send_header("Content-Length", str(len(remainder)))
+                self.end_headers()
+
+                if n_requests == 1:
+                    self.wfile.flush()
+                    self.connection.shutdown(2)
+                else:
+                    self.wfile.write(remainder)
+            elif n_requests == 0:
+                half = max(1, len(contents_bytes) // 2)
+                self.send_response(200)
+                self.send_header("Content-Type", "text/plain; charset=UTF-8")
+                self.send_header("Content-Length", str(len(contents_bytes)))
+                self.end_headers()
+                self.wfile.write(contents_bytes[:half])
+                self.wfile.flush()
+                self.connection.shutdown(2)
+            else:
+                contents_bytes = b"unexpected restart\n"
+                self.send_response(500)
+                self.send_header("Content-Type", "text/plain; charset=UTF-8")
+                self.send_header("Content-Length", str(len(contents_bytes)))
+                self.end_headers()
+                self.wfile.write(contents_bytes)
+            return
+
+        if 'partial-fail' in query:
+            # On the first request, send half the content then close the
+            # connection to simulate a transient network failure mid-download.
+            # On a retry with a Range header (resume), serve the remainder.
+            contents_bytes = contents.encode('utf-8')
+            range_header = self.headers.get("Range")
+            if range_header and range_header.startswith("bytes="):
+                byte_range = range_header[len("bytes="):]
+                start = int(byte_range.split('-')[0])
+                remainder = contents_bytes[start:]
+                self.send_response(206)
+                self.send_header("Content-Type", "text/plain; charset=UTF-8")
+                self.send_header("Content-Range",
+                                 "bytes %d-%d/%d" % (start, len(contents_bytes) - 1, len(contents_bytes)))
+                self.send_header("Content-Length", str(len(remainder)))
+                self.end_headers()
+                self.wfile.write(remainder)
+            else:
+                half = max(1, len(contents_bytes) // 2)
+                self.send_response(200)
+                self.send_header("Content-Type", "text/plain; charset=UTF-8")
+                self.send_header("Content-Length", str(len(contents_bytes)))
+                self.end_headers()
+                self.wfile.write(contents_bytes[:half])
+                self.wfile.flush()
+                self.connection.shutdown(2)
+            return
+
         self.send_response(response)
         for k, v in list(add_headers.items()):
             self.send_header(k, v)
@@ -64,8 +237,6 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
 
         if response == 200:
             self.send_header("Content-Type", "text/plain; charset=UTF-8")
-
-        contents = "path=" + self.path + "\n"
 
         if not 'ignore-accept-encoding' in query:
             accept_encoding = self.headers.get("Accept-Encoding")

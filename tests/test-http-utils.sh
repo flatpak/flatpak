@@ -65,7 +65,7 @@ have_xattrs() {
     setfattr -n user.testvalue -v somevalue $1/test-xattrs > /dev/null 2>&1
 }
 
-echo "1..6"
+echo "1..13"
 
 # Without anything else, cached for 30 minutes
 assert_ok "/" $test_tmpdir/output
@@ -125,6 +125,83 @@ assert_streq $contents path=/compress?ignore-accept-encoding
 rm -f $test_tmpdir/output*
 
 ok 'compress after download'
+
+# Test that a partial download is resumed on retry
+out=$(${test_builddir}/httpdownload --progress "http://localhost:$port/?partial-fail" $test_tmpdir/output || :)
+case "$out" in
+    "Download succeeded; progress="*) ;;
+    *)
+        echo "Expected successful progress output, got '$out'" >&2
+        exit 1
+        ;;
+esac
+contents=$(cat $test_tmpdir/output)
+assert_streq "$contents" "path=/?partial-fail"
+progress=${out#Download succeeded; progress=}
+last_progress=${progress##*,}
+expected_size=$(stat -c %s $test_tmpdir/output)
+assert_streq "$last_progress" "$expected_size"
+rm -f $test_tmpdir/output*
+
+ok 'partial download resume'
+
+# Test retrying a receive-side network error that returns no response.
+out=$(${test_builddir}/httpdownload "http://localhost:$port/?empty-reply-then-ok" $test_tmpdir/output || :)
+assert_streq "$out" "Download succeeded"
+contents=$(cat $test_tmpdir/output)
+assert_streq "$contents" "path=/?empty-reply-then-ok"
+rm -f $test_tmpdir/output*
+
+ok 'empty reply retry'
+
+# Test that an interrupted resumed request retries from the previous offset
+# even if the 206 response delivered no additional body bytes.
+out=$(${test_builddir}/httpdownload "http://localhost:$port/?partial-fail-no-body-on-resume" $test_tmpdir/output || :)
+assert_streq "$out" "Download succeeded"
+contents=$(cat $test_tmpdir/output)
+assert_streq "$contents" "path=/?partial-fail-no-body-on-resume"
+rm -f $test_tmpdir/output*
+
+ok 'partial download resume after empty 206 retry'
+
+# Test that a resumed request receiving a successful non-206 response does
+# not succeed with only the previously downloaded prefix.
+out=$(${test_builddir}/httpdownload "http://localhost:$port/?partial-fail-non-206-on-resume" $test_tmpdir/output || :)
+assert_streq "$out" "Download succeeded"
+contents=$(cat $test_tmpdir/output)
+assert_streq "$contents" "path=/?partial-fail-non-206-on-resume"
+rm -f $test_tmpdir/output*
+
+ok 'partial download reset after non-206 resume response'
+
+# Test that downloads are not resumed when curl decodes Content-Encoding,
+# because Range offsets address encoded bytes, not callback output bytes.
+out=$(${test_builddir}/httpdownload "http://localhost:$port/?compressed-partial-fail" $test_tmpdir/output || :)
+assert_streq "$out" "Download succeeded"
+read -r first_line < $test_tmpdir/output
+assert_streq "$first_line" "path=/?compressed-partial-fail"
+rm -f $test_tmpdir/output*
+
+ok 'compressed partial download reset before retry'
+
+# Test that a partial download can be resumed for the fd-based output
+# streams used by OCI registry downloads.
+out=$(${test_builddir}/httpdownload --unix-output-stream "http://localhost:$port/?partial-fail" $test_tmpdir/output || :)
+assert_streq "$out" "Download succeeded"
+contents=$(cat $test_tmpdir/output)
+assert_streq "$contents" "path=/?partial-fail"
+rm -f $test_tmpdir/output*
+
+ok 'partial download resume with unix output stream'
+
+# Test that a retryable HTTP error body is discarded before retrying.
+out=$(${test_builddir}/httpdownload "http://localhost:$port/?error-then-ok" $test_tmpdir/output || :)
+assert_streq "$out" "Download succeeded"
+contents=$(cat $test_tmpdir/output)
+assert_streq "$contents" "path=/?error-then-ok"
+rm -f $test_tmpdir/output*
+
+ok 'http error body reset before retry'
 
 # Testing that things work without xattr support
 
