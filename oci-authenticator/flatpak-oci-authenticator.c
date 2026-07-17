@@ -35,6 +35,9 @@ static guint name_owner_id = 0;
 static gboolean no_idle_exit = FALSE;
 static FlatpakHttpSession *http_session = NULL;
 
+G_LOCK_DEFINE (cached_auth);
+static GHashTable *cached_auth; /* "peer_name\nregistry_uri" -> auth_string */
+
 #define IDLE_TIMEOUT_SECS 10 * 60
 
 static void
@@ -74,13 +77,30 @@ unref_skeleton_in_timeout (void)
   g_timeout_add (500, unref_skeleton_in_timeout_cb, NULL);
 }
 
+static void schedule_idle_callback (void);
+
 static gboolean
 idle_timeout_cb (gpointer user_data)
 {
+  gboolean have_cached_auth = FALSE;
+
   if (name_owner_id)
     {
-      g_info ("Idle - unowning name");
-      unref_skeleton_in_timeout ();
+      G_LOCK (cached_auth);
+      if (cached_auth != NULL)
+        have_cached_auth = g_hash_table_size (cached_auth) > 0;
+      G_UNLOCK (cached_auth);
+
+      if (have_cached_auth)
+        {
+          g_info ("Idle but have cached credentials - rescheduling");
+          schedule_idle_callback ();
+        }
+      else
+        {
+          g_info ("Idle - unowning name");
+          unref_skeleton_in_timeout ();
+        }
     }
   return G_SOURCE_REMOVE;
 }
@@ -170,6 +190,78 @@ remove_auth_for_peer (const char *sender,
   G_UNLOCK (active_auth);
 }
 
+static char *
+make_cached_auth_key (const char *sender,
+                      const char *registry_uri)
+{
+  return g_strconcat (sender, "\n", registry_uri, NULL);
+}
+
+static gboolean
+cached_auth_key_has_peer (gpointer key,
+                          gpointer value,
+                          gpointer user_data)
+{
+  const char *k = key;
+  const char *peer = user_data;
+  gsize peer_len = strlen (peer);
+
+  return strncmp (k, peer, peer_len) == 0 && k[peer_len] == '\n';
+}
+
+static void
+add_cached_auth_for_peer (const char *sender,
+                          const char *registry_uri,
+                          const char *auth)
+{
+  G_LOCK (cached_auth);
+
+  if (cached_auth == NULL)
+    cached_auth = g_hash_table_new_full (g_str_hash, g_str_equal,
+                                         g_free, g_free);
+
+  g_hash_table_insert (cached_auth,
+                       make_cached_auth_key (sender, registry_uri),
+                       g_strdup (auth));
+
+  G_UNLOCK (cached_auth);
+}
+
+static char *
+get_cached_auth_for_peer (const char *sender,
+                          const char *registry_uri)
+{
+  char *auth = NULL;
+
+  G_LOCK (cached_auth);
+
+  if (cached_auth != NULL)
+    {
+      g_autofree char *key = make_cached_auth_key (sender, registry_uri);
+      const char *cached = g_hash_table_lookup (cached_auth, key);
+      if (cached != NULL)
+        auth = g_strdup (cached);
+    }
+
+  G_UNLOCK (cached_auth);
+  return auth;
+}
+
+static void
+remove_cached_auth_for_peer (const char *sender,
+                             const char *registry_uri)
+{
+  G_LOCK (cached_auth);
+
+  if (cached_auth != NULL)
+    {
+      g_autofree char *key = make_cached_auth_key (sender, registry_uri);
+      g_hash_table_remove (cached_auth, key);
+    }
+
+  G_UNLOCK (cached_auth);
+}
+
 static gpointer
 peer_died (const char *name)
 {
@@ -189,6 +281,12 @@ peer_died (const char *name)
         }
     }
   G_UNLOCK (active_auth);
+
+  G_LOCK (cached_auth);
+  if (cached_auth != NULL)
+    g_hash_table_foreach_remove (cached_auth, cached_auth_key_has_peer, (gpointer) name);
+  G_UNLOCK (cached_auth);
+
   return NULL;
 }
 
@@ -514,8 +612,38 @@ handle_request_ref_tokens (FlatpakAuthenticator *f_authenticator,
       have_auth = auth != NULL;
     }
 
-  /* Try to see if we can get a token without presenting credentials */
+  /* Try previously cached credentials from interactive auth */
   n_refs = g_variant_n_children (arg_refs);
+  if (!have_auth && n_refs > 0)
+    {
+      g_autofree char *cached = get_cached_auth_for_peer (sender, oci_registry_uri);
+
+      if (cached != NULL)
+        {
+          g_autoptr(GVariant) ref_data = g_variant_get_child_value (arg_refs, 0);
+
+          g_info ("Trying cached credentials for %s", oci_registry_uri);
+
+          first_token = get_token_for_ref (registry, ref_data, cached, &error);
+          if (first_token != NULL)
+            {
+              auth = g_steal_pointer (&cached);
+              have_auth = TRUE;
+            }
+          else if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_AUTHORIZED))
+            {
+              g_info ("Cached credentials failed: %s", error->message);
+              remove_cached_auth_for_peer (sender, oci_registry_uri);
+              g_clear_error (&error);
+            }
+          else
+            {
+              return error_request (request, sender, error);
+            }
+        }
+    }
+
+  /* Try to see if we can get a token without presenting credentials */
   if (!have_auth && n_refs > 0)
     {
       g_autoptr(GVariant) ref_data = g_variant_get_child_value (arg_refs, 0);
@@ -569,6 +697,7 @@ handle_request_ref_tokens (FlatpakAuthenticator *f_authenticator,
             {
               auth = g_steal_pointer (&test_auth);
               have_auth = TRUE;
+              add_cached_auth_for_peer (sender, oci_registry_uri, auth);
             }
           else
             {
