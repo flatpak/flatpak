@@ -21,6 +21,7 @@ token_config = {
     "expire_on_path": None,
     "next_token": None,
     "update_file": None,
+    "basic_auth": None,
 }
 
 
@@ -113,6 +114,17 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
 
         return True
 
+    def send_auth_required(self):
+        """Send a 401 with WWW-Authenticate header pointing to the /token endpoint."""
+        host, port = self.server.server_address[:2]
+        realm = "http://{}:{}/token".format(host, port)
+        self.send_response(401)
+        self.send_header(
+            "WWW-Authenticate",
+            'Bearer realm="{}",service="test-registry"'.format(realm),
+        )
+        self.end_headers()
+
     def do_GET(self):
         response = 404
         response_string = b""
@@ -130,20 +142,33 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
 
         if self.check_route("/v2/@repo_name/blobs/@digest"):
             if not self.check_auth():
-                self.send_response(401)
-                self.end_headers()
+                self.send_auth_required()
                 return
             repo_name = self.matches["repo_name"]
             digest = self.matches["digest"]
             response, response_string = get_file_contents(repo_name, "blobs", digest)
         elif self.check_route("/v2/@repo_name/manifests/@ref"):
             if not self.check_auth():
-                self.send_response(401)
-                self.end_headers()
+                self.send_auth_required()
                 return
             repo_name = self.matches["repo_name"]
             ref = self.matches["ref"]
             response, response_string = get_file_contents(repo_name, "manifests", ref)
+        elif self.check_route("/token"):
+            cfg = token_config
+            auth_header = self.headers.get("Authorization", "")
+            expected_auth = "Basic " + cfg["basic_auth"] if cfg["basic_auth"] else None
+            if expected_auth is not None and auth_header != expected_auth:
+                response = 401
+                response_string = json.dumps(
+                    {"errors": [{"message": "unauthorized"}]}
+                ).encode("UTF-8")
+            else:
+                response = 200
+                response_string = json.dumps(
+                    {"token": cfg["token"]}
+                ).encode("UTF-8")
+            response_content_type = "application/json"
         elif self.check_route("/index/static") or self.check_route("/index/dynamic"):
             etag = get_etag()
             add_headers["Etag"] = etag
@@ -281,6 +306,7 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
             token_config["expire_on_path"] = self.query.get("expire-on-path", [None])[0]
             token_config["next_token"] = self.query.get("next-token", [None])[0]
             token_config["update_file"] = self.query.get("token-update-file", [None])[0]
+            token_config["basic_auth"] = self.query.get("basic-auth", [None])[0]
 
             self.send_response(200)
             self.end_headers()
@@ -331,6 +357,7 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
             token_config["expire_on_path"] = None
             token_config["next_token"] = None
             token_config["update_file"] = None
+            token_config["basic_auth"] = None
             self.send_response(200)
             self.end_headers()
             return

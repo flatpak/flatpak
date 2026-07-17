@@ -90,6 +90,8 @@ def run_set_auth(args):
         params["next-token"] = args.next_token
     if args.token_update_file is not None:
         params["token-update-file"] = args.token_update_file
+    if args.basic_auth is not None:
+        params["basic-auth"] = args.basic_auth
     query = urllib.parse.urlencode(params)
     conn = get_conn(args)
     path = "/testing-auth?{query}".format(query=query)
@@ -148,6 +150,7 @@ set_auth_parser.add_argument("--token", required=True)
 set_auth_parser.add_argument("--expire-on-path", default=None)
 set_auth_parser.add_argument("--next-token", default=None)
 set_auth_parser.add_argument("--token-update-file", default=None)
+set_auth_parser.add_argument("--basic-auth", default=None)
 set_auth_parser.set_defaults(func=run_set_auth)
 
 reset_auth_parser = subparsers.add_parser("reset-auth")

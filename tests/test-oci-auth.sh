@@ -24,7 +24,7 @@ set -euo pipefail
 
 skip_without_bwrap
 
-echo "1..6"
+echo "1..7"
 
 # Start the fake OCI registry server
 
@@ -159,3 +159,15 @@ run org.test.Hello > hello_out
 assert_file_has_content hello_out '^Hello world, from a sandboxUPDATE2$'
 
 ok "update with token expiry on blob fetch"
+
+# Test: credential cache avoids repeated BasicAuth prompts.
+# Uses the real org.flatpak.Authenticator.Oci (not the mock test authenticator).
+# dXNlcjpwYXNz = base64("user:pass"), must match the C binary's BasicAuthReply args.
+
+$client reset-auth
+$client set-auth --token token-1 --basic-auth dXNlcjpwYXNz
+
+# shellcheck disable=SC2154
+${test_builddir}/test-oci-auth-cache
+
+ok "credential cache reuses basic auth"
