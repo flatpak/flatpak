@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..31"
+echo "1..32"
 
 # Use stable rather than master as the branch so we can test that the run
 # command automatically finds the branch correctly
@@ -664,6 +664,46 @@ rm -fr "$app_dir"
 
 ok "--persist=. behaving like com.valvesoftware.Steam"
 
+app_dir="$HOME/.var/app/org.test.Hello"
+inaccessible="${TEST_DATA_DIR}/inaccessible"
+
+for path in cache data config cache/tmp; do
+    rm -fr "$app_dir" "$inaccessible"
+    mkdir -p "$app_dir" "$inaccessible"
+    case "$path" in
+        (cache/tmp)
+            mkdir -m700 "$app_dir/cache"
+            escape=../../../../../inaccessible
+            test "$app_dir/cache/$escape" -ef "$inaccessible"
+            ;;
+        (*)
+            escape=../../../../inaccessible
+            test "$app_dir/$escape" -ef "$inaccessible"
+            ;;
+    esac
+    for target in "$inaccessible" "$escape"; do
+        # There are various ways that an app could manipulate the contents
+        # of its per-app directory so that the next run of the same app would
+        # have a sandbox escape, but for the purposes of this test we cheat
+        # by setting up the same situation from outside the sandbox.
+        ln -fns "$target" "$app_dir/$path"
+        # The symlink target has been chosen to make these paths,
+        # outside the container, equivalent
+        test "$app_dir/$path" -ef "$inaccessible"
+        # The "|| :" inside the command ensures that if the app runs, then
+        # it succeeds, and then the assert_fail assertion fails.
+        # This is done because in the exploitable situations, we want Flatpak
+        # to refuse to run the app at all
+        assert_fail run --command=sh org.test.Hello -c "echo pwned > ~/$path/pwned || :"
+        assert_fail test -e "$inaccessible/pwned"
+        assert_fail run --command=sh org.test.Hello -c "echo pwned > /var/${path#*/}/pwned || :"
+        assert_fail test -e "$inaccessible/pwned"
+    done
+done
+
+ok "various attempts to escape app directory via symlinks (GHSA-8688-9x26-hhxj)"
+
+rm -fr "${TEST_DATA_DIR}/inaccessible"
 mkdir "${TEST_DATA_DIR}/inaccessible"
 echo FOO > ${TEST_DATA_DIR}/inaccessible/secret-file
 rm -fr "$HOME/.var/app/org.test.Hello"
