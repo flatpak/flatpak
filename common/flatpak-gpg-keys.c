@@ -74,14 +74,14 @@ flatpak_gpgme_ctx_tmp_home_dir (gpgme_ctx_t   gpgme_ctx,
   gpgme_error_t gpg_error;
   g_autoptr(GFile) keyring_file = NULL;
   g_autofree char *keyring_name = NULL;
+  g_autoptr(GError) local_error = NULL;
 
   g_return_val_if_fail (gpgme_ctx != NULL, FALSE);
 
   /* GPGME has no API for using multiple keyrings (aka, gpg --keyring),
    * so we create a temporary directory and tell GPGME to use it as the
-   * home directory.  Then (optionally) create a pubring.gpg file there
-   * and hand the caller an open output stream to concatenate necessary
-   * keyring files. */
+   * home directory.  Then copy in the ${remote_name}.trustedkeys.gpg keyring
+   * from the repo to begin with (if it exists). */
 
   tmp_home_dir_pattern = g_build_filename (g_get_tmp_dir (), "flatpak-gpg-XXXXXX", NULL);
 
@@ -103,12 +103,35 @@ flatpak_gpgme_ctx_tmp_home_dir (gpgme_ctx_t   gpgme_ctx,
   keyring_name = g_strdup_printf ("%s.trustedkeys.gpg", remote_name);
   keyring_file = g_file_get_child (ostree_repo_get_path (repo), keyring_name);
 
-  if (g_file_query_exists (keyring_file, NULL) &&
-      !glnx_file_copy_at (AT_FDCWD, flatpak_file_get_path_cached (keyring_file), NULL,
+  if (!glnx_file_copy_at (AT_FDCWD, flatpak_file_get_path_cached (keyring_file), NULL,
                           tmpdir->fd, "pubring.gpg",
                           GLNX_FILE_COPY_OVERWRITE | GLNX_FILE_COPY_NOXATTRS,
-                          cancellable, error))
-    return FALSE;
+                          cancellable, &local_error))
+    {
+      if (g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        {
+          glnx_autofd int fd = -1;
+
+          /* Create an empty pubring.gpg file prior to importing keys.  This
+           * prevents gpg2 from creating a pubring.kbx file in the new keybox
+           * format [1].  We want to stay with the older keyring format since
+           * its performance issues are not relevant here.
+           *
+           * [1] https://gnupg.org/faq/whats-new-in-2.1.html#keybox
+           */
+          fd = openat (tmpdir->fd, "pubring.gpg", O_WRONLY | O_CREAT | O_CLOEXEC | O_NOCTTY, 0644);
+          if (fd == -1)
+            {
+              glnx_set_prefix_error_from_errno (error, "%s", "Unable to create pubring.gpg");
+              return FALSE;
+            }
+        }
+      else
+        {
+          g_propagate_error (error, g_steal_pointer (&local_error));
+          return FALSE;
+        }
+    }
 
   return TRUE;
 }
