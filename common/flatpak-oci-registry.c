@@ -2027,7 +2027,12 @@ delta_read_data (GInputStream   *in,
                  GCancellable   *cancellable,
                  GError        **error)
 {
-  g_autofree guchar *buf = g_malloc (size+1);
+  g_autofree guchar *buf = NULL;
+
+  if (size > SIZE_MAX - 1)
+    return glnx_null_throw (error, _("Invalid delta file format"));
+
+  buf = g_malloc (size + 1);
 
   if (!g_input_stream_read_all (in, buf, size, NULL, cancellable, error))
     return NULL;
