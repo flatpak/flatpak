@@ -49,6 +49,10 @@ ${FLATPAK} --installation=history-installation update -y org.test.Hello >&2
 ${FLATPAK} --installation=history-installation uninstall -y org.test.Platform org.test.Hello >&2
 ${FLATPAK} --installation=history-installation remote-delete test-repo >&2
 
+# Temporarily disable coverage warnings from libgcov so they don’t affect
+# comparing the whole process’ output to the expected-log.
+export GCOV_ERROR_FILE=/dev/null
+
 # need --since and --columns here to make the test idempotent
 if ! ${FLATPAK} --installation=history-installation history --since="${HISTORY_START_TIME}" \
     --columns=change,application,branch,installation,remote > history-log 2>&1; then
@@ -83,6 +87,8 @@ if ! ${FLATPAK} --installation=history-installation history --since="${HISTORY_S
     echo "Bail out! 'flatpak history' failed"
     exit 1
 fi
+
+unset GCOV_ERROR_FILE
 
 cat > expected-log << 'EOF'
 [
