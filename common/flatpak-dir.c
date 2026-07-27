@@ -51,6 +51,7 @@
 #include "flatpak-dir-private.h"
 #include "flatpak-dir-utils-private.h"
 #include "flatpak-error.h"
+#include "flatpak-gpg-keys-private.h"
 #include "flatpak-locale-utils-private.h"
 #include "flatpak-image-collection-private.h"
 #include "flatpak-image-source-private.h"
@@ -186,6 +187,11 @@ static gboolean flatpak_dir_lookup_remote_filter (FlatpakDir *self,
 
 static char *flatpak_dir_get_remote_signature_lookaside (FlatpakDir *self,
                                                          const char *remote_name);
+
+static gboolean flatpak_dir_update_gpg_keys (FlatpakDir    *self,
+                                             const char    *remote_name,
+                                             GCancellable  *cancellable,
+                                             GError       **error);
 
 static void ensure_http_session (FlatpakDir *self);
 
@@ -14135,6 +14141,14 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
         return NULL;
     }
 
+  /* If we have a GPG keys URL configured, or if the summary just gave us one
+   * which we didn’t know about before, check for (and apply) updates to that. */
+  if (!flatpak_dir_update_gpg_keys (self, state->remote_name, cancellable, &my_error))
+    {
+      g_info ("Error when updating GPG keys from server, ignoring: %s", my_error->message);
+      g_clear_error (&my_error);
+    }
+
   /* For OCI remotes, the collection ID is local configuration only:
    * In the future we could add it to the index format.
    */
@@ -16767,6 +16781,124 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
 
   if (updated_out)
     *updated_out = has_changed;
+
+  return TRUE;
+}
+
+/* Potentially download an updated GPG keyring for @remote_name, if a
+ * gpg-keys-url is configured, GPG is enabled for the remote, and the cached
+ * copy of the keyring at gpg-keys-url is out of date.
+ *
+ * If the cache gets updated, the new keyring will be validated and imported
+ * into the existing `${remote_name}.trustedkeys.gpg` local keyring. The details
+ * of validation are documented in flatpak_gpg_keys_validate_binding(), but
+ * broadly only subkeys of existing trusted keys, and new primary keys which are
+ * cross-signed by existing trusted keys, are imported.
+ *
+ * Returns FALSE on failure (with @error set), and TRUE on success (keys were
+ * imported, or no keys needed to be imported).
+ */
+static gboolean
+flatpak_dir_update_gpg_keys (FlatpakDir    *self,
+                             const char    *remote_name,
+                             GCancellable  *cancellable,
+                             GError       **error)
+{
+  OstreeRepo *repo = flatpak_dir_get_repo (self);
+  gboolean gpg_verify = TRUE, gpg_verify_summary = TRUE;
+  g_autofree char *gpg_keys_url = NULL;
+  g_autoptr(GError) local_error = NULL;
+
+  if (!ostree_repo_get_remote_boolean_option (repo, remote_name, "gpg-verify",
+                                              TRUE, &gpg_verify, error) ||
+      !ostree_repo_get_remote_boolean_option (repo, remote_name, "gpg-verify-summary",
+                                              TRUE, &gpg_verify_summary, error) ||
+      !ostree_repo_get_remote_option (repo, remote_name, "xa.gpg-keys-url",
+                                      NULL, &gpg_keys_url, error))
+    return FALSE;
+
+  /* Don’t bother updating if the remote has GPG disabled entirely */
+  if (!gpg_verify && !gpg_verify_summary)
+    return TRUE;
+
+  if (g_strcmp0 (gpg_keys_url, "") == 0)
+    g_clear_pointer (&gpg_keys_url, g_free);
+
+  if (gpg_keys_url != NULL)
+    {
+      g_autofree char *filename = g_strconcat (remote_name, ".trustedkeys.gpg", NULL);
+      g_autoptr(GFile) cached_gpg_keys_path = g_file_get_child (self->cache_dir, filename);
+
+      /* This will only do a HTTP request if the cached copy doesn’t exist or is
+       * out of date (wrt the max-age specified by the server when it was last
+       * requested). */
+      if (flatpak_cache_http_uri (self->http_session,
+                                  gpg_keys_url,
+                                  NULL,
+                                  FLATPAK_HTTP_FLAGS_NONE,
+                                  AT_FDCWD,
+                                  flatpak_file_get_path_cached (cached_gpg_keys_path),
+                                  NULL,
+                                  NULL,
+                                  cancellable,
+                                  &local_error))
+        {
+          g_autoptr(GFile) lock_file = g_file_get_child (flatpak_dir_get_path (self), "gpg-lock");
+          g_autofree char *lock_path = g_file_get_path (lock_file);
+          g_auto(GLnxLockFile) lock = { 0, };
+
+          /* We now have an updated GPG keys file in the cache, so validate it
+           * and then potentially import it into the OSTree repository configuration.
+           * Do all this under an exclusive lock, so we’re not potentially racing
+           * with another process, which could reopardise the validation of the
+           * new keyring. */
+          if (!glnx_make_lock_file (AT_FDCWD, lock_path, LOCK_EX, &lock, error))
+            return FALSE;
+
+          g_autoptr(GFileInputStream) input_stream = NULL;
+          unsigned int n_imported = 0;
+          g_auto(GStrv) trusted_keys = NULL;
+
+          trusted_keys = flatpak_gpg_keys_validate_binding (repo,
+                                                            remote_name,
+                                                            cached_gpg_keys_path,
+                                                            cancellable,
+                                                            error);
+          if (trusted_keys == NULL)
+            {
+              /* If validation failed, it’s possible the cache file is corrupt
+               * or invalid; delete it just in case. */
+              g_file_delete (cached_gpg_keys_path, NULL, NULL);
+              return FALSE;
+            }
+
+          input_stream = g_file_read (cached_gpg_keys_path, cancellable, error);
+          if (input_stream == NULL)
+            {
+              g_file_delete (cached_gpg_keys_path, NULL, NULL);
+              return FALSE;
+            }
+
+          if (!ostree_repo_remote_gpg_import (repo, remote_name,
+                                              G_INPUT_STREAM (input_stream),
+                                              (const char * const *) trusted_keys,
+                                              &n_imported, cancellable, error))
+            {
+              g_file_delete (cached_gpg_keys_path, NULL, NULL);
+              return FALSE;
+            }
+        }
+      else if (g_error_matches (local_error, FLATPAK_HTTP_ERROR, FLATPAK_HTTP_ERROR_NOT_CHANGED))
+        {
+          /* nothing changed on the server, and our cache is up to date, so we don’t need to do anything */
+          return TRUE;
+        }
+      else
+        {
+          g_propagate_error (error, g_steal_pointer (&local_error));
+          return FALSE;
+        }
+    }
 
   return TRUE;
 }
