@@ -43,4 +43,10 @@ gboolean flatpak_gpgme_ctx_tmp_home_dir (gpgme_ctx_t    gpgme_ctx,
                                          GCancellable  *cancellable,
                                          GError       **error);
 
+char **flatpak_gpg_keys_validate_binding (OstreeRepo    *repo,
+                                          const char    *remote_name,
+                                          GFile         *gpg_keys_file,
+                                          GCancellable  *cancellable,
+                                          GError       **error);
+
 #endif /* __FLATPAK_GPG_KEYS_H__ */
