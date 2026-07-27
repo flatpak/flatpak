@@ -318,7 +318,7 @@ flatpak_repo_get_summary_history_length (OstreeRepo *repo)
   GKeyFile *config = ostree_repo_get_config (repo);
   int length;
 
-  length = g_key_file_get_integer (config, "flatpak", "sumary-history-length", NULL);
+  length = g_key_file_get_integer (config, "flatpak", "summary-history-length", NULL);
 
   if (length <= 0)
     return FLATPAK_SUMMARY_HISTORY_LENGTH_DEFAULT;
