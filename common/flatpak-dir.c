@@ -306,6 +306,182 @@ enum {
 #define OSTREE_GIO_FAST_QUERYINFO ("standard::name,standard::type,standard::size,standard::is-symlink,standard::symlink-target," \
                                    "unix::device,unix::inode,unix::mode,unix::uid,unix::gid,unix::rdev")
 
+#define X_FLATPAK_KEY_ID "X-Flatpak"
+#define X_FLATPAK_KEY_RENAMED_FROM "X-Flatpak-RenamedFrom"
+#define X_FLATPAK_KEY_TAGS "X-Flatpak-Tags"
+
+static const char * const allowed_desktop_entry_keys[] = {
+  /* OFFICIAL SPECIFICATION */
+  /* Standardised fields that are safe for an app to specify: */
+  "Actions",
+  "Categories",
+  "Comment",
+  "DBusActivatable",
+  "GenericName",
+  "Hidden",
+  "Icon",
+  "Implements",
+  "Keywords",
+  "MimeType",
+  "Name",
+  "NoDisplay",
+  "NotShowIn",
+  "OnlyShowIn",
+  "Path",
+  "PrefersNonDefaultGPU",
+  "SingleMainWindow",
+  "StartupNotify",
+  "StartupWMClass",
+  "Terminal",
+  "Type",
+  "Version",
+
+  /* Unsafe to export without proper sanitisation or adjustments, but rewritten
+   * by Flatpak: */
+  "Exec",
+
+  /* Intentionally not exported, only useful for Type=Link and not
+   * Type=Application:
+   *
+   * "URL",
+   *
+   * Intentionally not exported, unsafe and unnecessary due sandbox being an
+   * app controlled environment:
+   *
+   * "TryExec",
+   */
+
+  /* CUSTOM EXTENSIONS */
+
+/* Keys controlled by Flatpak: */
+  X_FLATPAK_KEY_ID,
+  X_FLATPAK_KEY_RENAMED_FROM,
+  X_FLATPAK_KEY_TAGS,
+
+  /* Exported, because they are deemed harmless: */
+  "X-AppInstall-Keywords",
+  "X-AppStream-Ignore",
+  "X-GNOME-FullName",
+  "X-GNOME-Gettext-Domain",
+  "X-GNOME-UsesNotifications",
+  "X-GNOME-SingleWindow",
+  "X-Meego-Priority",
+  "X-MultipleArgs",
+  "X-KDE-AliasFor",
+  "X-KDE-FormFactor",
+  "X-KDE-Keywords",
+  "X-KDE-PluginInfo-Author",
+  "X-KDE-PluginInfo-Email",
+  "X-KDE-PluginInfo-License",
+  "X-KDE-PluginInfo-Name",
+  "X-KDE-PluginInfo-Version",
+  "X-KDE-Priority",
+  "X-KDE-Submenu",
+  "X-KDE-Wayland-VirtualKeyboard",
+  "X-Plasma-API",
+  "X-Plasma-DBusRunner-Service",
+  "X-Plasma-DBusRunner-Path",
+  "X-Plasma-Request-Actions-Once",
+  "X-Plasma-Runner-Match-Regex",
+  "X-Plasma-Runner-Min-Letter-Count",
+  "X-Plasma-Runner-Syntax-Descriptions",
+  "X-Plasma-Runner-Syntaxes",
+  "X-Plasma-Runner-Unique-Results",
+  "X-Plasma-Runner-Weak-Results",
+  "X-Krita-Version",
+  "X-Phosh-Lockscreen-Actions",
+  "X-Phosh-UsesFeedback",
+  "X-Purism-FormFactor",
+  "X-SingleMainWindow",
+  "X-systemd-skip",
+  "X-Ubuntu-Gettext-Domain",
+  "X-Unity-IconBackgroundColor",
+
+  /* Exported key, whose implications are only evaluated for
+   * $XDG_DATA_DIRS/krunner/dbusplugins, i.e. in the context of KRunner runners,
+   * but not in e.g. $XDG_DATA_DIRS/kio/servicemenus, because non of those other
+   * directories are exported:
+   */
+  "X-KDE-ServiceTypes",
+
+  /* Intentionally not exported, these are unnecessary or would not work with
+   * sandboxed Flatpak apps:
+   *
+   * "DocPath",
+   * "Encoding",
+   * "X-DocPath",
+   * "X-Geoclue-Reason",
+   * "X-GNOME-Bugzilla-Bugzilla",
+   * "X-GNOME-Bugzilla-Component",
+   * "X-GNOME-Bugzilla-Product",
+   * "X-GNOME-Bugzilla-Version",
+   * "X-GNOME-DocPath",
+   * "X-KDE-NativeMimeType",
+   */
+
+  /* Intentionally not exported, these show potential for sandbox or portal
+   * bypass, incl. inferring host file structure, denial of service, code
+   * execution on host:
+   *
+   * "AutostartCondition",
+   * "InitialPreference",
+   * "ServiceTypes",
+   * "X-DBUS-StartupType",
+   * "X-DBUS-ServiceName",
+   * "X-GIO-NoFuse",
+   * "X-GNOME-AutoRestart",
+   * "X-GNOME-Autostart-Delay",
+   * "X-GNOME-Autostart-enabled",
+   * "X-GNOME-Bugzilla-ExtraInfoScript",
+   * "X-GNOME-SearchProvider-Path",
+   * "X-GNOME-SearchProvider-Prefix",
+   * "X-KDE-autostart-after",
+   * "X-KDE-autostart-phase",
+   * "X-KDE-DBus-Restricted-Interfaces",
+   * "X-KDE-ExtraNativeMimeTypes",
+   * "X-KDE-PluginInfo-EnabledByDefault",
+   * "X-KDE-Protocols",
+   * "X-KDE-SubstituteUID",
+   * "X-KDE-Username",
+   */
+  NULL
+};
+
+static const char * const allowed_desktop_entry_action_keys[] = {
+  "Exec",
+  "Icon",
+  "Name",
+  NULL
+};
+
+static const char * const allowed_dbus_service_keys[] = {
+  /* STANDARDISED FIELDS */
+  "Exec",
+  "Name",
+
+  /* CUSTOM EXTENSIONS */
+  /* These fields were used by LocalSearch, but are no longer used and thus
+   * are not necessary to export:
+   *
+   * "Comment",
+   * "DisplayName",
+   * "NameSuffix",
+   * "Path",
+   */
+
+  /* Intentionally not exported, makes only sense when system-controlled:
+   *
+   * "AssumedAppArmorLabel",
+   */
+
+  /* Intentionally not exported, these show potential for sandbox bypass:
+   *
+   * "User",
+   * "SystemdService",
+   */
+  NULL
+};
+
 static const char *
 get_config_dir_location (void)
 {
@@ -8526,6 +8702,7 @@ export_desktop_file (const char         *app,
   gsize new_data_len;
   g_autoptr(GKeyFile) keyfile = NULL;
   g_auto(GStrv) groups = NULL;
+  g_auto(GStrv) intents = NULL;
   g_autofree char *escaped_app = maybe_quote (app);
   g_autofree char *escaped_branch = maybe_quote (branch);
   g_autofree char *escaped_arch = maybe_quote (arch);
@@ -8559,30 +8736,41 @@ export_desktop_file (const char         *app,
   if (g_str_has_suffix (name, ".desktop"))
     {
       gsize length;
-      g_auto(GStrv) tags = g_key_file_get_string_list (metadata,
-                                                       "Application",
-                                                       "tags", &length,
-                                                       NULL);
+      g_auto(GStrv) tags = NULL;
+      g_autofree gchar *type = NULL;
+
+      tags = g_key_file_get_string_list (metadata,
+                                         "Application",
+                                         "tags", &length,
+                                         NULL);
+
+      intents = g_key_file_get_string_list (keyfile, G_KEY_FILE_DESKTOP_GROUP,
+                                            "Implements", NULL, NULL);
+
+      type = g_key_file_get_string (keyfile, G_KEY_FILE_DESKTOP_GROUP,
+                                    G_KEY_FILE_DESKTOP_KEY_TYPE, error);
+
+      if (type == NULL)
+        return FALSE;
+
+      if (g_strcmp0 (type, G_KEY_FILE_DESKTOP_TYPE_APPLICATION) != 0 &&
+          g_strcmp0 (type, "Service") != 0)
+        {
+          return flatpak_fail_error (error, FLATPAK_ERROR_EXPORT_FAILED,
+                                     _("Desktop Entry '%s' neither has Type=Application nor Type=Service"),
+                                     name);
+        }
 
       if (tags != NULL)
         {
           g_key_file_set_string_list (keyfile,
                                       G_KEY_FILE_DESKTOP_GROUP,
-                                      "X-Flatpak-Tags",
+                                      X_FLATPAK_KEY_TAGS,
                                       (const char * const *) tags, length);
         }
 
       /* Add a marker so consumers can easily find out that this launches a sandbox */
-      g_key_file_set_string (keyfile, G_KEY_FILE_DESKTOP_GROUP, "X-Flatpak", app);
-
-      /* Disable krunner dbusplugins by default, so that flatpak applications cannot
-       * unintentionally grab sensitive search data.
-       */
-      if (g_key_file_get_boolean (keyfile, G_KEY_FILE_DESKTOP_GROUP,
-                               "X-KDE-PluginInfo-EnabledByDefault", NULL))
-        {
-          g_key_file_set_boolean (keyfile, G_KEY_FILE_DESKTOP_GROUP, "X-KDE-PluginInfo-EnabledByDefault", FALSE);
-        }
+      g_key_file_set_string (keyfile, G_KEY_FILE_DESKTOP_GROUP, X_FLATPAK_KEY_ID, app);
 
       /* If the app has been renamed, add its old .desktop filename to
        * X-Flatpak-RenamedFrom in the new .desktop file, taking care not to
@@ -8590,10 +8778,9 @@ export_desktop_file (const char         *app,
        */
       if (previous_ids != NULL)
         {
-          const char *X_FLATPAK_RENAMED_FROM = "X-Flatpak-RenamedFrom";
           g_auto(GStrv) renamed_from = g_key_file_get_string_list (keyfile,
                                                                    G_KEY_FILE_DESKTOP_GROUP,
-                                                                   X_FLATPAK_RENAMED_FROM,
+                                                                   X_FLATPAK_KEY_RENAMED_FROM,
                                                                    NULL, NULL);
           g_autoptr(GPtrArray) merged = g_ptr_array_new_with_free_func (g_free);
           g_autoptr(GHashTable) seen = g_hash_table_new (g_str_hash, g_str_equal);
@@ -8638,7 +8825,7 @@ export_desktop_file (const char         *app,
               g_ptr_array_add (merged, NULL);
               g_key_file_set_string_list (keyfile,
                                           G_KEY_FILE_DESKTOP_GROUP,
-                                          X_FLATPAK_RENAMED_FROM,
+                                          X_FLATPAK_KEY_RENAMED_FROM,
                                           (const char * const *) merged->pdata,
                                           merged->len - 1);
             }
@@ -8655,12 +8842,67 @@ export_desktop_file (const char         *app,
       g_autoptr(GString) new_exec = NULL;
       g_auto(GStrv) flatpak_run_opts = g_key_file_get_string_list (keyfile, groups[i], "X-Flatpak-RunOptions", NULL, NULL);
       g_autofree char *flatpak_run_args = format_flatpak_run_args_from_run_opts (flatpak_run_opts);
+      g_auto(GStrv) keys_for_group = NULL;
+      const char * const *allowed_keys;
 
       g_key_file_remove_key (keyfile, groups[i], "X-Flatpak-RunOptions", NULL);
-      g_key_file_remove_key (keyfile, groups[i], "TryExec", NULL);
 
-      /* Remove this to make sure nothing tries to execute it outside the sandbox*/
-      g_key_file_remove_key (keyfile, groups[i], "X-GNOME-Bugzilla-ExtraInfoScript", NULL);
+      keys_for_group = g_key_file_get_keys (keyfile, groups[i], NULL, error);
+
+      if (keys_for_group == NULL)
+        return FALSE;
+
+      if (g_str_has_suffix (name, ".desktop") &&
+          g_strcmp0 (groups[i], G_KEY_FILE_DESKTOP_GROUP) == 0)
+        {
+          allowed_keys = allowed_desktop_entry_keys;
+        }
+      else if (g_str_has_suffix (name, ".desktop") &&
+               g_str_has_prefix (groups[i], "Desktop Action "))
+        {
+          allowed_keys = allowed_desktop_entry_action_keys;
+        }
+      else if (g_str_has_suffix (name, ".desktop") &&
+               intents != NULL &&
+               g_strv_contains ((const char * const *) intents, groups[i]))
+        {
+          continue;
+        }
+      else if (g_str_has_suffix (name, ".service") &&
+               g_strcmp0 (groups[i], "D-BUS Service") == 0)
+        {
+          allowed_keys = allowed_dbus_service_keys;
+        }
+      else
+        {
+          if (!g_key_file_remove_group (keyfile, groups[i], error))
+            return FALSE;
+          continue;
+        }
+
+      for (size_t k = 0; keys_for_group[k] != NULL; k++)
+        {
+          char *locale_suffix;
+          g_autofree char *base_key = NULL;
+
+          locale_suffix = g_strrstr (keys_for_group[k], "[");
+
+          if (locale_suffix != NULL && g_str_has_suffix (locale_suffix, "]"))
+            {
+              base_key = g_strndup (keys_for_group[k],
+                                    strlen (keys_for_group[k]) - strlen (locale_suffix));
+            }
+          else
+            {
+              base_key = g_strdup (keys_for_group[k]);
+            }
+
+          if (!g_strv_contains (allowed_keys, base_key))
+            {
+              if (!g_key_file_remove_key (keyfile, groups[i], keys_for_group[k], error))
+                return FALSE;
+            }
+        }
 
       new_exec = g_string_new ("");
       if ((flatpak = g_getenv ("FLATPAK_BINARY")) == NULL)
@@ -10449,7 +10691,7 @@ rewrite_one_dynamic_launcher (const char *portal_desktop_dir,
       g_warning ("Error encountered loading key file %s: %s", desktop_path, local_error->message);
       return;
     }
-  if (!g_key_file_has_key (old_key_file, G_KEY_FILE_DESKTOP_GROUP, "X-Flatpak", NULL))
+  if (!g_key_file_has_key (old_key_file, G_KEY_FILE_DESKTOP_GROUP, X_FLATPAK_KEY_ID, NULL))
     {
       g_info ("Ignoring non-Flatpak dynamic launcher: %s", desktop_path);
       return;
