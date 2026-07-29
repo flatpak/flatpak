@@ -85,6 +85,16 @@
 
 #define FLATPAK_REMOTES_DIR "remotes.d"
 #define FLATPAK_REMOTES_FILE_EXT ".flatpakrepo"
+#define FLATPAK_LOCKDOWN_USER_REMOTES_DIR "user.remotes.d"
+
+#define FLATPAK_CENTRAL_CONFIG_FILE "config"
+#define FLATPAK_CENTRAL_CONFIGD_DIR "config.d"
+#define FLATPAK_CENTRAL_CONFIGD_FILE_EXT ".conf"
+#define FLATPAK_CENTRAL_CONFIG_GROUP "core"
+#define FLATPAK_CENTRAL_KEY_CONFIG_LOCKDOWN "config-lockdown"
+#define FLATPAK_CENTRAL_KEY_ALLOW_USER_REMOTES "allow-user-remotes"
+#define FLATPAK_CENTRAL_KEY_LOCKDOWN_MANAGED_REMOTE "xa.config-lockdown-managed"
+#define FLATPAK_LOCKDOWN_TEST_CONFIG_DIR_ENV "FLATPAK_LOCKDOWN_TEST_CONFIG_DIR"
 
 #define FLATPAK_PREINSTALL_DIR "preinstall.d"
 #define FLATPAK_PREINSTALL_FILE_EXT ".preinstall"
@@ -184,10 +194,173 @@ static gboolean flatpak_dir_lookup_remote_filter (FlatpakDir *self,
                                                   GRegex    **deny_regex,
                                                   GError **error);
 
+static char *get_group (const char *remote_name);
+
 static char *flatpak_dir_get_remote_signature_lookaside (FlatpakDir *self,
                                                          const char *remote_name);
 
 static void ensure_http_session (FlatpakDir *self);
+
+typedef struct
+{
+  gboolean config_lockdown;
+  gboolean allow_user_remotes;
+} FlatpakCentralConfig;
+
+static const FlatpakCentralConfig *flatpak_get_central_config (void);
+static const char *flatpak_get_central_config_dir (void);
+
+static void
+flatpak_maybe_warn_ignored_lockdown_env (void)
+{
+  static gsize warned = 0;
+
+  if (g_once_init_enter (&warned))
+    {
+      g_warning ("Configuration lockdown is enabled; ignoring FLATPAK_* directory environment overrides");
+      g_once_init_leave (&warned, 1);
+    }
+}
+
+static void
+flatpak_central_config_read_boolean (GKeyFile    *keyfile,
+                                     const char  *key,
+                                     gboolean    *value,
+                                     gboolean     fail_closed,
+                                     const char  *path)
+{
+  g_autoptr(GError) local_error = NULL;
+  gboolean parsed;
+
+  parsed = g_key_file_get_boolean (keyfile,
+                                   FLATPAK_CENTRAL_CONFIG_GROUP,
+                                   key,
+                                   &local_error);
+  if (local_error != NULL)
+    {
+      if (g_error_matches (local_error, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_KEY_NOT_FOUND) ||
+          g_error_matches (local_error, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_GROUP_NOT_FOUND))
+        return;
+
+      g_warning ("Ignoring invalid value for [%s] %s in %s: %s",
+                 FLATPAK_CENTRAL_CONFIG_GROUP,
+                 key,
+                 path,
+                 local_error->message);
+      *value = fail_closed;
+      return;
+    }
+
+  *value = parsed;
+}
+
+static void
+flatpak_central_config_apply_file (FlatpakCentralConfig *config,
+                                   const char           *path)
+{
+  g_autoptr(GKeyFile) keyfile = g_key_file_new ();
+  g_autoptr(GError) local_error = NULL;
+
+  if (!g_key_file_load_from_file (keyfile, path, G_KEY_FILE_NONE, &local_error))
+    {
+      g_warning ("Unable to read central Flatpak config %s: %s", path, local_error->message);
+      return;
+    }
+
+  flatpak_central_config_read_boolean (keyfile,
+                                       FLATPAK_CENTRAL_KEY_CONFIG_LOCKDOWN,
+                                       &config->config_lockdown,
+                                       TRUE,
+                                       path);
+  flatpak_central_config_read_boolean (keyfile,
+                                       FLATPAK_CENTRAL_KEY_ALLOW_USER_REMOTES,
+                                       &config->allow_user_remotes,
+                                       FALSE,
+                                       path);
+}
+
+static void
+flatpak_central_config_apply_config_dir (FlatpakCentralConfig *config,
+                                         const char           *dir)
+{
+  g_autoptr(GDir) conf_dir = NULL;
+  const char *name;
+  g_autoptr(GPtrArray) entries = g_ptr_array_new_with_free_func (g_free);
+
+  conf_dir = g_dir_open (dir, 0, NULL);
+  if (conf_dir == NULL)
+    return;
+
+  while ((name = g_dir_read_name (conf_dir)) != NULL)
+    {
+      if (g_str_has_suffix (name, FLATPAK_CENTRAL_CONFIGD_FILE_EXT))
+        g_ptr_array_add (entries, g_strdup (name));
+    }
+
+  if (entries->len == 0)
+    return;
+
+  g_ptr_array_sort (entries, flatpak_strcmp0_ptr);
+
+  for (guint i = 0; i < entries->len; i++)
+    {
+      const char *entry = g_ptr_array_index (entries, i);
+      g_autofree char *path = g_build_filename (dir, entry, NULL);
+
+      flatpak_central_config_apply_file (config, path);
+    }
+}
+
+static const char *
+flatpak_get_central_config_dir (void)
+{
+  const char *test_dir = g_getenv (FLATPAK_LOCKDOWN_TEST_CONFIG_DIR_ENV);
+
+  if (test_dir != NULL && g_getenv ("FLATPAK_TESTS_DEBUG") != NULL)
+    return test_dir;
+
+  return FLATPAK_CONFIGDIR;
+}
+
+static const FlatpakCentralConfig *
+flatpak_get_central_config (void)
+{
+  static gsize initialized = 0;
+  static FlatpakCentralConfig config = {
+    .config_lockdown = FALSE,
+    .allow_user_remotes = TRUE,
+  };
+
+  if (g_once_init_enter (&initialized))
+    {
+      g_autofree char *config_path = NULL;
+      g_autofree char *configd_path = NULL;
+
+      config_path = g_build_filename (flatpak_get_central_config_dir (), FLATPAK_CENTRAL_CONFIG_FILE, NULL);
+      configd_path = g_build_filename (flatpak_get_central_config_dir (), FLATPAK_CENTRAL_CONFIGD_DIR, NULL);
+
+      if (g_file_test (config_path, G_FILE_TEST_IS_REGULAR))
+        flatpak_central_config_apply_file (&config, config_path);
+
+      flatpak_central_config_apply_config_dir (&config, configd_path);
+
+      g_once_init_leave (&initialized, 1);
+    }
+
+  return &config;
+}
+
+gboolean
+flatpak_is_config_lockdown_enabled (void)
+{
+  return flatpak_get_central_config ()->config_lockdown;
+}
+
+gboolean
+flatpak_allow_user_remotes_in_lockdown (void)
+{
+  return flatpak_get_central_config ()->allow_user_remotes;
+}
 
 static void flatpak_dir_log (FlatpakDir *self,
                              const char *file,
@@ -314,7 +487,14 @@ get_config_dir_location (void)
     {
       gsize setup_value = 0;
       const char *config_dir = g_getenv ("FLATPAK_CONFIG_DIR");
-      if (config_dir != NULL)
+
+      if (flatpak_is_config_lockdown_enabled ())
+        {
+          if (config_dir != NULL)
+            flatpak_maybe_warn_ignored_lockdown_env ();
+          setup_value = (gsize) FLATPAK_CONFIGDIR;
+        }
+      else if (config_dir != NULL)
         setup_value = (gsize) config_dir;
       else
         setup_value = (gsize) FLATPAK_CONFIGDIR;
@@ -333,7 +513,14 @@ get_data_dir_location (void)
     {
       gsize setup_value = 0;
       const char *data_dir = g_getenv ("FLATPAK_DATA_DIR");
-      if (data_dir != NULL)
+
+      if (flatpak_is_config_lockdown_enabled ())
+        {
+          if (data_dir != NULL)
+            flatpak_maybe_warn_ignored_lockdown_env ();
+          setup_value = (gsize) FLATPAK_DATADIR;
+        }
+      else if (data_dir != NULL)
         setup_value = (gsize) data_dir;
       else
         setup_value = (gsize) FLATPAK_DATADIR;
@@ -356,7 +543,14 @@ get_run_dir_location (void)
        * flatpak-create-sideload-symlinks.sh
        */
       const char *config_dir = g_getenv ("FLATPAK_RUN_DIR");
-      if (config_dir != NULL)
+
+      if (flatpak_is_config_lockdown_enabled ())
+        {
+          if (config_dir != NULL)
+            flatpak_maybe_warn_ignored_lockdown_env ();
+          setup_value = (gsize) "/run/flatpak";
+        }
+      else if (config_dir != NULL)
         setup_value = (gsize) config_dir;
       else
         setup_value = (gsize) "/run/flatpak";
@@ -1769,7 +1963,14 @@ flatpak_get_system_default_base_dir_location (void)
       gsize setup_value = 0;
       const char *path;
       const char *system_dir = g_getenv ("FLATPAK_SYSTEM_DIR");
-      if (system_dir != NULL && *system_dir != 0)
+
+      if (flatpak_is_config_lockdown_enabled ())
+        {
+          if (system_dir != NULL)
+            flatpak_maybe_warn_ignored_lockdown_env ();
+          path = FLATPAK_SYSTEMDIR;
+        }
+      else if (system_dir != NULL && *system_dir != 0)
         path = system_dir;
       else
         path = FLATPAK_SYSTEMDIR;
@@ -2495,7 +2696,14 @@ flatpak_get_user_base_dir_location (void)
       const char *path;
       g_autofree char *free_me = NULL;
       const char *user_dir = g_getenv ("FLATPAK_USER_DIR");
-      if (user_dir != NULL && *user_dir != 0)
+
+      if (flatpak_is_config_lockdown_enabled ())
+        {
+          if (user_dir != NULL)
+            flatpak_maybe_warn_ignored_lockdown_env ();
+          path = free_me = g_build_filename (g_get_user_data_dir (), "flatpak", NULL);
+        }
+      else if (user_dir != NULL && *user_dir != 0)
         path = user_dir;
       else
         path = free_me = g_build_filename (g_get_user_data_dir (), "flatpak", NULL);
@@ -4584,6 +4792,18 @@ _flatpak_dir_scan_new_flatpakrepos (const char          *dir_str,
 }
 
 static GHashTable *
+flatpak_dir_find_central_lockdown_flatpakrepos (void)
+{
+  g_autoptr(GHashTable) flatpakrepos = NULL;
+  g_autofree char *config_dir_str = NULL;
+
+  config_dir_str = g_build_filename (flatpak_get_central_config_dir (), FLATPAK_LOCKDOWN_USER_REMOTES_DIR, NULL);
+  _flatpak_dir_scan_new_flatpakrepos (config_dir_str, &flatpakrepos, NULL);
+
+  return g_steal_pointer (&flatpakrepos);
+}
+
+static GHashTable *
 _flatpak_dir_find_new_flatpakrepos (FlatpakDir *self, OstreeRepo *repo)
 {
   g_autoptr(GHashTable) flatpakrepos = NULL;
@@ -4595,11 +4815,20 @@ _flatpak_dir_find_new_flatpakrepos (FlatpakDir *self, OstreeRepo *repo)
 
   g_assert (repo != NULL);
 
-  /* Predefined remotes only applies for the default system installation */
-  if (self->user ||
-      (self->extra_data &&
-       g_strcmp0 (self->extra_data->id, SYSTEM_DIR_DEFAULT_ID) != 0))
-    return NULL;
+  if (self->user)
+    {
+      if (!flatpak_is_config_lockdown_enabled ())
+        return NULL;
+
+      return flatpak_dir_find_central_lockdown_flatpakrepos ();
+    }
+  else
+    {
+      /* Predefined remotes only applies for the default system installation */
+      if (self->extra_data &&
+          g_strcmp0 (self->extra_data->id, SYSTEM_DIR_DEFAULT_ID) != 0)
+        return NULL;
+    }
 
   ostree_remotes = ostree_repo_remote_list (repo, NULL);
   applied_remotes = g_key_file_get_string_list (ostree_repo_get_config (repo),
@@ -4611,15 +4840,18 @@ _flatpak_dir_find_new_flatpakrepos (FlatpakDir *self, OstreeRepo *repo)
     g_ptr_array_add (remotes, applied_remotes[i]);
   g_ptr_array_add (remotes, NULL);
 
-  config_dir_str = g_build_filename (get_config_dir_location (), FLATPAK_REMOTES_DIR, NULL);
-  _flatpak_dir_scan_new_flatpakrepos (config_dir_str,
-                                      &flatpakrepos,
-                                      (const char * const *) remotes->pdata);
+  if (!self->user)
+    {
+      config_dir_str = g_build_filename (get_config_dir_location (), FLATPAK_REMOTES_DIR, NULL);
+      _flatpak_dir_scan_new_flatpakrepos (config_dir_str,
+                                          &flatpakrepos,
+                                          (const char * const *) remotes->pdata);
 
-  os_config_dir_str = g_build_filename (get_data_dir_location (), FLATPAK_REMOTES_DIR, NULL);
-  _flatpak_dir_scan_new_flatpakrepos (os_config_dir_str,
-                                      &flatpakrepos,
-                                      (const char * const *) remotes->pdata);
+      os_config_dir_str = g_build_filename (get_data_dir_location (), FLATPAK_REMOTES_DIR, NULL);
+      _flatpak_dir_scan_new_flatpakrepos (os_config_dir_str,
+                                          &flatpakrepos,
+                                          (const char * const *) remotes->pdata);
+    }
 
   return g_steal_pointer (&flatpakrepos);
 }
@@ -4628,6 +4860,7 @@ static gboolean
 apply_new_flatpakrepo (const char *remote_name,
                        GFile      *file,
                        OstreeRepo *repo,
+                       gboolean    lockdown_managed,
                        GError    **error)
 {
   g_autoptr(GBytes) gpg_data = NULL;
@@ -4654,6 +4887,12 @@ apply_new_flatpakrepo (const char *remote_name,
       return FALSE;
     }
 
+  if (lockdown_managed)
+    {
+      g_autofree char *group = g_strdup_printf ("remote \"%s\"", remote_name);
+      g_key_file_set_boolean (group_config, group, FLATPAK_CENTRAL_KEY_LOCKDOWN_MANAGED_REMOTE, TRUE);
+    }
+
   old_config = ostree_repo_copy_config (repo);
   new_config = ostree_repo_copy_config (repo);
 
@@ -4665,7 +4904,9 @@ apply_new_flatpakrepo (const char *remote_name,
   for (i = 0; old_applied_remotes != NULL && old_applied_remotes[i] != NULL; i++)
     g_ptr_array_add (new_applied_remotes, g_strdup (old_applied_remotes[i]));
 
-  g_ptr_array_add (new_applied_remotes, g_strdup (remote_name));
+  if (old_applied_remotes == NULL ||
+      !g_strv_contains ((const char * const *) old_applied_remotes, remote_name))
+    g_ptr_array_add (new_applied_remotes, g_strdup (remote_name));
 
   g_key_file_set_string_list (new_config, "core", "xa.applied-remotes",
                               (const char * const *) new_applied_remotes->pdata, new_applied_remotes->len);
@@ -4698,6 +4939,52 @@ out:
       ostree_repo_reload_config (repo, NULL, NULL);
     }
   return res;
+}
+
+static gboolean
+flatpak_dir_prune_user_defined_remotes_in_lockdown (FlatpakDir   *self,
+                                                     OstreeRepo   *repo,
+                                                     GError      **error)
+{
+  g_autoptr(GHashTable) central_remotes = NULL;
+  g_auto(GStrv) remotes = NULL;
+  gboolean changed = FALSE;
+
+  if (!self->user ||
+      !flatpak_is_config_lockdown_enabled () ||
+      flatpak_allow_user_remotes_in_lockdown ())
+    return TRUE;
+
+  remotes = ostree_repo_remote_list (repo, NULL);
+  if (remotes == NULL)
+    return TRUE;
+
+  central_remotes = flatpak_dir_find_central_lockdown_flatpakrepos ();
+
+  for (int i = 0; remotes[i] != NULL; i++)
+    {
+      const char *remote_name = remotes[i];
+      if (central_remotes != NULL && g_hash_table_contains (central_remotes, remote_name))
+        continue;
+
+      if (!ostree_repo_remote_change (repo,
+                                      NULL,
+                                      OSTREE_REPO_REMOTE_CHANGE_DELETE,
+                                      remote_name,
+                                      NULL,
+                                      NULL,
+                                      NULL,
+                                      error))
+        return FALSE;
+
+      g_info ("Removed user-defined remote '%s' due to central configuration lockdown", remote_name);
+      changed = TRUE;
+    }
+
+  if (changed && !ostree_repo_reload_config (repo, NULL, error))
+    return FALSE;
+
+  return TRUE;
 }
 
 static gboolean
@@ -4935,11 +5222,16 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
         {
           GLNX_HASH_TABLE_FOREACH_KV (flatpakrepos, const char *, remote_name, GFile *, file)
             {
-              if (!apply_new_flatpakrepo (remote_name, file, repo, error))
+              if (!apply_new_flatpakrepo (remote_name, file, repo,
+                                          self->user && flatpak_is_config_lockdown_enabled (),
+                                          error))
                 return FALSE;
             }
         }
     }
+
+  if (!flatpak_dir_prune_user_defined_remotes_in_lockdown (self, repo, error))
+    return FALSE;
 
 
   if (cache_dir == NULL)
@@ -15088,6 +15380,21 @@ get_group (const char *remote_name)
   return g_strdup_printf ("remote \"%s\"", remote_name);
 }
 
+static gboolean
+flatpak_dir_remote_is_lockdown_managed (FlatpakDir   *self,
+                                        const char   *remote_name,
+                                        GError      **error)
+{
+  g_autoptr(GHashTable) central_remotes = NULL;
+
+  if (!self->user || !flatpak_is_config_lockdown_enabled ())
+    return FALSE;
+
+  central_remotes = flatpak_dir_find_central_lockdown_flatpakrepos ();
+
+  return central_remotes != NULL && g_hash_table_contains (central_remotes, remote_name);
+}
+
 static GKeyFile *
 flatpak_dir_get_repo_config (FlatpakDir *self)
 {
@@ -15900,6 +16207,16 @@ flatpak_dir_remove_remote (FlatpakDir   *self,
   g_autofree char *url = NULL;
   g_autoptr(GError) local_error = NULL;
 
+  if (self->user &&
+      flatpak_is_config_lockdown_enabled () &&
+      flatpak_dir_remote_is_lockdown_managed (self, remote_name, error))
+    {
+      return flatpak_fail_error (error,
+                                 FLATPAK_ERROR_PERMISSION_DENIED,
+                                 _("Central lockdown-managed remote '%s' cannot be removed"),
+                                 remote_name);
+    }
+
   if (flatpak_dir_use_system_helper (self, NULL))
     {
       g_autoptr(GVariant) gpg_data_v = NULL;
@@ -16052,6 +16369,7 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
   g_autoptr(GKeyFile) new_config = NULL;
   g_autofree gchar *filter_path = NULL;
   gboolean has_remote;
+  gboolean is_lockdown_managed = FALSE;
   gboolean res = FALSE;
 
   if (strchr (remote_name, '/') != NULL)
@@ -16059,6 +16377,29 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
                                remote_name);
 
   has_remote = flatpak_dir_has_remote (self, remote_name, NULL);
+
+  if (self->user && flatpak_is_config_lockdown_enabled ())
+    {
+      is_lockdown_managed = has_remote && flatpak_dir_remote_is_lockdown_managed (self, remote_name, error);
+
+      if (has_remote && is_lockdown_managed)
+        return flatpak_fail_error (error,
+                                   FLATPAK_ERROR_PERMISSION_DENIED,
+                                   _("Central lockdown-managed remote '%s' cannot be modified"),
+                                   remote_name);
+
+      if (!flatpak_allow_user_remotes_in_lockdown ())
+        {
+          if (!has_remote)
+            return flatpak_fail_error (error,
+                                       FLATPAK_ERROR_PERMISSION_DENIED,
+                                       _("Adding user-defined remotes is disabled by central configuration lockdown"));
+
+          return flatpak_fail_error (error,
+                                     FLATPAK_ERROR_PERMISSION_DENIED,
+                                     _("Modifying user-defined remotes is disabled by central configuration lockdown"));
+        }
+    }
 
   if (!g_key_file_has_group (config, group))
     return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No configuration for remote %s specified"),
