@@ -290,46 +290,6 @@ chase_request_any_and_path (RevokefsRequest *request,
                           data_size - request->arg1, out_name);
 }
 
-static gboolean
-validate_path (char *path)
-{
-  char *end_segment;
-
-  /* No absolute or empty paths */
-  if (*path == '/' || *path == 0)
-    return FALSE;
-
-  while (*path != 0)
-    {
-      end_segment = strchr (path, '/');
-      if (end_segment == NULL)
-        end_segment = path + strlen (path);
-
-      if (strncmp (path, "..", 2) == 0)
-        return FALSE;
-
-      path = end_segment;
-      while (*path == '/')
-        path++;
-    }
-
-  return TRUE;
-}
-
-static char *
-get_valid_path (guchar *data, size_t len)
-{
-  char *path = g_strndup ((const char *) data, len);
-
-  if (!validate_path (path))
-    {
-      g_printerr ("Invalid path argument %s\n", path);
-      exit (1);
-    }
-
-  return path;
-}
-
 static int
 mask_mode (int mode)
 {
@@ -496,17 +456,30 @@ handle_chmod (RevokefsRequest *request,
               gsize data_size,
               RevokefsResponse *response)
 {
-  g_autofree char *path = get_valid_path (request->data, data_size);
+  g_autofree char *name = NULL;
+  glnx_autofd int parent_fd = chase_request_path (request, data_size, &name);
+  glnx_autofd int fd = -1;
   int mode = request->arg1;
 
-  /* Note we can't use AT_SYMLINK_NOFOLLOW yet;
-   * https://marc.info/?l=linux-kernel&m=148830147803162&w=2
-   * https://marc.info/?l=linux-fsdevel&m=149193779929561&w=2
-   */
-  if (fchmodat (basefd, path, mask_mode (mode), 0) != 0)
-    response->result = -errno;
+  if (fchmodat (parent_fd, name, mask_mode (mode), AT_SYMLINK_NOFOLLOW) == 0)
+    {
+      response->result = 0;
+    }
+  else if (errno == ENOTSUP)
+    {
+      /* Linux < 6.6 didn't implement fchmodat() with AT_SYMLINK_NOFOLLOW */
+      fd = openat (parent_fd, name, O_RDONLY | O_NOFOLLOW | O_NONBLOCK | O_CLOEXEC);
+      if (fd == -1)
+        response->result = -errno;
+      else if (fchmod (fd, mask_mode (mode)) != 0)
+        response->result = -errno;
+      else
+        response->result = 0;
+    }
   else
-    response->result = 0;
+    {
+      response->result = -errno;
+    }
 
   return 0;
 }
