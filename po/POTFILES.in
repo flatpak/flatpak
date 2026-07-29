@@ -71,4 +71,5 @@ common/flatpak-usb.c
 common/flatpak-utils.c
 oci-authenticator/flatpak-oci-authenticator.c
 portal/flatpak-portal.c
+system-helper/flatpak-system-helper.service.in
 system-helper/org.freedesktop.Flatpak.policy.in
