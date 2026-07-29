@@ -256,6 +256,23 @@ chase_request_path (RevokefsRequest *request,
   return chase_parent (request->data, data_size, out_name);
 }
 
+static void
+chase_request_2path (RevokefsRequest *request,
+                     gsize data_size,
+                     int *out_fd1, char **out_name1,
+                     int *out_fd2, char **out_name2)
+{
+  if (request->arg1 >= data_size)
+    {
+      g_printerr ("Invalid path1 size\n");
+      exit (1);
+    }
+
+  *out_fd1 = chase_parent (request->data, request->arg1, out_name1);
+  *out_fd2 = chase_parent (request->data + request->arg1,
+                           data_size - request->arg1, out_name2);
+}
+
 static gboolean
 validate_path (char *path)
 {
@@ -317,22 +334,6 @@ get_any_path_and_valid_path (RevokefsRequest *request,
 
   *any_path1 = g_strndup ((const char *) request->data, request->arg1);
   *valid_path2 = get_valid_path (request->data + request->arg1, data_size - request->arg1);
-}
-
-static void
-get_valid_2path (RevokefsRequest *request,
-                 gsize data_size,
-                 char **path1,
-                 char **path2)
-{
-  if (request->arg1 >= data_size)
-    {
-      g_printerr ("Invalid path1 size\n");
-      exit (1);
-    }
-
-  *path1 = get_valid_path (request->data, request->arg1);
-  *path2 = get_valid_path (request->data + request->arg1, data_size - request->arg1);
 }
 
 static ssize_t
@@ -432,12 +433,16 @@ handle_link (RevokefsRequest *request,
              gsize data_size,
              RevokefsResponse *response)
 {
-  g_autofree char *from = NULL;
-  g_autofree char *to = NULL;
+  g_autofree char *from_name = NULL;
+  g_autofree char *to_name = NULL;
+  glnx_autofd int from_parent_fd = -1;
+  glnx_autofd int to_parent_fd = -1;
 
-  get_valid_2path (request, data_size,  &from, &to);
+  chase_request_2path (request, data_size,
+                       &from_parent_fd, &from_name,
+                       &to_parent_fd, &to_name);
 
-  if (linkat (basefd, from, basefd, to, 0) == -1)
+  if (linkat (from_parent_fd, from_name, to_parent_fd, to_name, 0) == -1)
     response->result = -errno;
   else
     response->result = 0;
@@ -456,14 +461,18 @@ handle_rename (RevokefsRequest *request,
              gsize data_size,
              RevokefsResponse *response)
 {
-  g_autofree char *from = NULL;
-  g_autofree char *to = NULL;
+  g_autofree char *from_name = NULL;
+  g_autofree char *to_name = NULL;
+  glnx_autofd int from_parent_fd = -1;
+  glnx_autofd int to_parent_fd = -1;
   unsigned int flags;
 
-  get_valid_2path (request, data_size,  &from, &to);
+  chase_request_2path (request, data_size,
+                       &from_parent_fd, &from_name,
+                       &to_parent_fd, &to_name);
   flags = (unsigned int)request->arg2;
 
-  if (renameat2 (basefd, from, basefd, to, flags) == -1)
+  if (renameat2 (from_parent_fd, from_name, to_parent_fd, to_name, flags) == -1)
     response->result = -errno;
   else
     response->result = 0;
