@@ -273,6 +273,23 @@ chase_request_2path (RevokefsRequest *request,
                            data_size - request->arg1, out_name2);
 }
 
+static void
+chase_request_any_and_path (RevokefsRequest *request,
+                            gsize data_size,
+                            char **out_any_path,
+                            int *out_fd, char **out_name)
+{
+  if (request->arg1 >= data_size)
+    {
+      g_printerr ("Invalid path1 size\n");
+      exit (1);
+    }
+
+  *out_any_path = g_strndup ((const char *) request->data, request->arg1);
+  *out_fd = chase_parent (request->data + request->arg1,
+                          data_size - request->arg1, out_name);
+}
+
 static gboolean
 validate_path (char *path)
 {
@@ -318,22 +335,6 @@ mask_mode (int mode)
 {
   /* mask setuid, setgid and world-writable permissions bits */
   return mode & ~S_ISUID & ~S_ISGID & ~(S_IWGRP | S_IWOTH);
-}
-
-static void
-get_any_path_and_valid_path (RevokefsRequest *request,
-                             gsize data_size,
-                             char **any_path1,
-                             char **valid_path2)
-{
-  if (request->arg1 >= data_size)
-    {
-      g_printerr ("Invalid path1 size\n");
-      exit (1);
-    }
-
-  *any_path1 = g_strndup ((const char *) request->data, request->arg1);
-  *valid_path2 = get_valid_path (request->data + request->arg1, data_size - request->arg1);
 }
 
 static ssize_t
@@ -409,12 +410,13 @@ handle_symlink (RevokefsRequest *request,
                 RevokefsResponse *response)
 {
   g_autofree char *from = NULL;
-  g_autofree char *to = NULL;
+  g_autofree char *to_name = NULL;
+  glnx_autofd int to_parent_fd = -1;
 
-  /* from doesn't have to be a valid path, it can be absolute or whatever */
-  get_any_path_and_valid_path (request, data_size,  &from, &to);
+  chase_request_any_and_path (request, data_size,
+                              &from, &to_parent_fd, &to_name);
 
-  if (symlinkat (from, basefd, to) == -1)
+  if (symlinkat (from, to_parent_fd, to_name) == -1)
     response->result = -errno;
   else
     response->result = 0;
