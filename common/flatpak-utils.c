@@ -2162,7 +2162,7 @@ dist (const char *s, int ls, const char *t, int lt, int i, int j, int *d)
     x = lt - j;
   else if (j == lt)
     x = ls - i;
-  else if (s[i] == t[j])
+  else if (g_ascii_tolower (s[i]) == g_ascii_tolower (t[j]))
     x = dist (s, ls, t, lt, i + 1, j + 1, d);
   else
     {

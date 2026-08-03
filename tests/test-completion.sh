@@ -146,7 +146,7 @@ ok "complete ref"
 
 ${FLATPAK} complete "flatpak permission-reset o" 26 "o" | sort > complete_out
 (diff -u complete_out - || exit 1) <<EOF
-org.test.Hello
+org.test.Hello 
 EOF
 
 ok "complete partial ref"

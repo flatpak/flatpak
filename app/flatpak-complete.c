@@ -125,7 +125,7 @@ flatpak_complete_ref_id (FlatpakCompletion *completion,
     {
       FlatpakDecomposed *ref = g_ptr_array_index (refs, i);
       g_autofree char *id = flatpak_decomposed_dup_id (ref);
-      flatpak_complete_word (completion, "%s ", id);
+      g_print ("%s \n", id);
     }
 }
 
@@ -222,6 +222,10 @@ flatpak_complete_partial_ref (FlatpakCompletion *completion,
   cur_parts[2] = arch ? arch : "";
   cur_parts[3] = branch ? branch : "";
 
+  FindMatchingRefsFlags flags = FIND_MATCHING_REFS_FLAGS_NONE;
+  if (element == 1)
+    flags |= FIND_MATCHING_REFS_FLAGS_FUZZY | FIND_MATCHING_REFS_FLAGS_FUZZY_SUBSEQ;
+
   if (remote)
     {
       g_autoptr(FlatpakRemoteState) state = get_remote_state (dir, remote, TRUE, FALSE,
@@ -229,23 +233,23 @@ flatpak_complete_partial_ref (FlatpakCompletion *completion,
                                                               NULL, &error);
       if (state != NULL)
         refs = flatpak_dir_find_remote_refs (dir, state,
-                                             (element > 1) ? id : NULL,
+                                             id,
                                              NULL, /* branch */
                                              NULL, /* default branch */
                                              (element > 2) ? arch : only_arch,
                                              NULL, /* default arch */
                                              matched_kinds,
-                                             FIND_MATCHING_REFS_FLAGS_NONE,
+                                             flags,
                                              NULL, &error);
     }
   else
     {
       refs = flatpak_dir_find_installed_refs (dir,
-                                              (element > 1) ? id : NULL,
+                                              id,
                                               NULL, /* branch */
                                               (element > 2) ? arch : only_arch,
                                               matched_kinds,
-                                              FIND_MATCHING_REFS_FLAGS_NONE,
+                                              flags,
                                               &error);
     }
   if (refs == NULL)
@@ -256,6 +260,15 @@ flatpak_complete_partial_ref (FlatpakCompletion *completion,
       FlatpakDecomposed *ref = g_ptr_array_index (refs, i);
       int j;
       g_autoptr(GString) comp = NULL;
+
+      if (element <= 1)
+        {
+          size_t len;
+          const char *ref_id = flatpak_decomposed_peek_id (ref, &len);
+          g_print ("%.*s \n", (int)len, ref_id);
+          continue;
+        }
+
       g_auto(GStrv) parts = g_strsplit (flatpak_decomposed_get_ref (ref), "/", 0);
 
       if (!g_str_has_prefix (parts[element], cur_parts[element]))
