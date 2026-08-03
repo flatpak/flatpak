@@ -135,9 +135,9 @@ flatpak_complete_make_current_app (FlatpakCompletion *completion)
       flatpak_complete_options (completion, options);
       flatpak_complete_options (completion, user_entries);
 
-      refs = flatpak_dir_find_installed_refs (dir, NULL, NULL, opt_arch,
+      refs = flatpak_dir_find_installed_refs (dir, completion->cur, NULL, opt_arch,
                                               FLATPAK_KINDS_APP,
-                                              FIND_MATCHING_REFS_FLAGS_NONE,
+                                              FIND_MATCHING_REFS_FLAGS_FUZZY_SUBSEQ,
                                               &error);
       if (refs == NULL)
         flatpak_completion_debug ("find installed refs error: %s", error->message);

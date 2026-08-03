@@ -1381,6 +1381,15 @@ flatpak_decomposed_id_has_prefix (FlatpakDecomposed  *ref,
   return str_has_prefix (ref_id, id_len, prefix);
 }
 
+gboolean
+flatpak_decomposed_id_has_substr (FlatpakDecomposed  *ref,
+                                  const char         *substr)
+{
+  size_t ref_id_len;
+  const char *ref_id = flatpak_decomposed_peek_id (ref, &ref_id_len);
+  return slashed_str_strcasestr (ref_id, ref_id_len, substr);
+}
+
 
 /* See if the given id looks similar to this ref. The
  * Levenshtein distance constant was chosen pretty arbitrarily. */
@@ -1396,6 +1405,65 @@ flatpak_decomposed_is_id_fuzzy (FlatpakDecomposed  *ref,
 
   return flatpak_levenshtein_distance (id, -1, ref_id, ref_id_len) <= 2;
 }
+
+gboolean
+flatpak_decomposed_id_part_fuzzy_dist (FlatpakDecomposed  *ref,
+                                       const char         *pat)
+{
+  size_t pat_len = strlen (pat);
+  size_t ref_id_len;
+  const char *ref_id = flatpak_decomposed_peek_id (ref, &ref_id_len);
+  const char *end = ref_id + ref_id_len;
+
+  int res = INT_MAX;
+  const char *last = ref_id;
+  for (const char *next; (next = memchr (last, '.', end - last)); last = next + 1)
+    res = MIN (res, flatpak_levenshtein_distance (pat, pat_len, last, next - last));
+  res = MIN (res, flatpak_levenshtein_distance (pat, pat_len, last, end - last));
+
+  return res;
+}
+
+static gboolean
+_flatpak_has_subseq (const char *ref_id,
+                     size_t      ref_id_len,
+                     const char *subseq)
+{
+  while (*subseq != '\0' && ref_id_len > 0) {
+    if (g_ascii_tolower (*subseq) == g_ascii_tolower (*ref_id))
+      subseq += 1;
+    ref_id_len -= 1;
+    ref_id += 1;
+  }
+  return *subseq == '\0';
+}
+
+gboolean
+flatpak_decomposed_id_has_subseq (FlatpakDecomposed  *ref,
+                                  const char         *subseq)
+{
+  size_t ref_id_len;
+  const char *ref_id = flatpak_decomposed_peek_id (ref, &ref_id_len);
+
+  return _flatpak_has_subseq (ref_id, ref_id_len, subseq);
+}
+
+gboolean
+flatpak_decomposed_id_part_has_subseq (FlatpakDecomposed  *ref,
+                                       const char         *subseq)
+{
+  size_t ref_id_len;
+  const char *ref_id = flatpak_decomposed_peek_id (ref, &ref_id_len);
+  const char *end = ref_id + ref_id_len;
+
+  const char *last = ref_id;
+  for (const char *next; (next = memchr (last, '.', end - last)); last = next + 1)
+    if (_flatpak_has_subseq (last, next - last, subseq))
+      return TRUE;
+
+  return _flatpak_has_subseq (last, end - last, subseq);
+}
+
 
 gboolean
 flatpak_decomposed_id_is_subref (FlatpakDecomposed  *ref)
