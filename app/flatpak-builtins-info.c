@@ -564,6 +564,7 @@ flatpak_complete_info (FlatpakCompletion *completion)
 
           flatpak_complete_ref_id (completion, refs);
         }
+      flatpak_complete_ref_id_flush (completion);
       break;
 
     case 2: /* BRANCH */

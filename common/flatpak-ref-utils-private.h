@@ -142,6 +142,9 @@ const char *       flatpak_decomposed_get_branch            (FlatpakDecomposed  
 char *             flatpak_decomposed_dup_branch            (FlatpakDecomposed  *ref);
 gboolean           flatpak_decomposed_is_branch             (FlatpakDecomposed  *ref,
                                                              const char         *branch);
+int                flatpak_decomposed_get_score             (FlatpakDecomposed *ref);
+void               flatpak_decomposed_set_score             (FlatpakDecomposed *ref,
+                                                             int                score);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakDecomposed, flatpak_decomposed_unref)
 

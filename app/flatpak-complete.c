@@ -26,6 +26,8 @@
 
 /* Uncomment to get debug traces in /tmp/flatpak-completion-debug.txt (nice
  * to not have it interfere with stdout/stderr)
+ *
+ *    tail -f /tmp/flatpak-completion-debug.txt
  */
 #if 0
 void
@@ -115,18 +117,112 @@ flatpak_complete_word (FlatpakCompletion *completion,
 }
 
 void
+flatpak_complete_raw (FlatpakCompletion *completion,
+                      const char *format,
+                      ...)
+{
+  va_list args;
+  g_autofree char *string = NULL;
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+  va_start (args, format);
+  string = g_strdup_vprintf (format, args);
+  va_end (args);
+#pragma GCC diagnostic pop
+
+  flatpak_completion_debug ("completing: %s", string);
+
+  g_print ("%s\n", string);
+}
+
+void flatpak_complete_ref_id_flush (FlatpakCompletion *completion)
+{
+  GPtrArray *refs = completion->ref_scores;
+
+  int best = INT_MIN;
+  for (int i = 0; i < refs->len; ++i)
+    best = MAX (best, flatpak_decomposed_get_score (g_ptr_array_index (refs, i)));
+
+  for (int i = 0; i < refs->len; ++i)
+    {
+      FlatpakDecomposed *ref = g_ptr_array_index (refs, i);
+      size_t len;
+      const char *ref_id = flatpak_decomposed_peek_id (ref, &len);
+      flatpak_completion_debug ("ref=%.*s pat=%s score=%i", (int)len, ref_id, completion->cur, flatpak_decomposed_get_score (ref));
+    }
+  flatpak_completion_debug ("best_score=%i", best);
+  flatpak_completion_debug ("----");
+
+  for (int i = refs->len; i > 0; --i)
+    if (flatpak_decomposed_get_score (g_ptr_array_index (refs, i - 1)) != best)
+      g_ptr_array_remove_index_fast(refs, i - 1);
+
+  g_ptr_array_sort (refs, (GCompareFunc)flatpak_decomposed_strcmp_p);
+
+  gboolean is_substr = TRUE;
+  const char* pref = NULL;
+  size_t pref_len = 0;
+  size_t completions = 0;
+  for (int i = 0; i < refs->len; ++i)
+    {
+      FlatpakDecomposed *ref = g_ptr_array_index (refs, i);
+
+      size_t len;
+      const char *ref_id = flatpak_decomposed_peek_id (ref, &len);
+
+      // Skip duplicates
+      if (i > 0)
+        {
+          size_t next_len;
+          const char *next_ref_id = flatpak_decomposed_peek_id (g_ptr_array_index (refs, i - 1), &next_len);
+          if (next_len == len && !strncmp(next_ref_id, ref_id, len))
+            continue;
+        }
+
+      flatpak_complete_raw (completion, "%.*s ", (int)len, ref_id);
+      completions += 1;
+
+      if (!is_substr)
+        continue;
+
+      // Check if there's a common prefix that includes the user's pattern
+      const char* pos;
+      for (pos = ref_id; pos < ref_id + len; ++pos)
+        if (!g_ascii_strncasecmp (pos, completion->cur, strlen (completion->cur)))
+          break;
+
+      if (pos == ref_id + len)
+        {
+          is_substr = FALSE;
+          continue;
+        }
+
+      if (!pref)
+        {
+          pref = ref_id;
+          pref_len = pos - ref_id;
+          continue;
+        }
+
+      if (pref_len != pos - ref_id || strncmp (ref_id, pref, pref_len))
+        is_substr = FALSE;
+    }
+
+  if (!is_substr && completions > 1)
+    flatpak_complete_raw (completion, " "); // a junk variant for bash not to attempt to coalesce a prefix
+
+  g_ptr_array_set_size (refs, 0);
+}
+
+void
 flatpak_complete_ref_id (FlatpakCompletion *completion,
                          GPtrArray         *refs)
 {
   if (refs == NULL)
     return;
 
-  for (int i = 0; i < refs->len; i++)
-    {
-      FlatpakDecomposed *ref = g_ptr_array_index (refs, i);
-      g_autofree char *id = flatpak_decomposed_dup_id (ref);
-      g_print ("%s \n", id);
-    }
+  g_ptr_array_extend (completion->ref_scores, refs, (GCopyFunc)flatpak_decomposed_ref, NULL);
 }
 
 void
@@ -263,9 +359,8 @@ flatpak_complete_partial_ref (FlatpakCompletion *completion,
 
       if (element <= 1)
         {
-          size_t len;
-          const char *ref_id = flatpak_decomposed_peek_id (ref, &len);
-          g_print ("%.*s \n", (int)len, ref_id);
+          flatpak_decomposed_ref (ref);
+          g_ptr_array_add (completion->ref_scores, ref);
           continue;
         }
 
@@ -652,6 +747,8 @@ flatpak_completion_new (const char *arg_line,
 
   flatpak_completion_debug ("----");
 
+  completion->ref_scores = g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_decomposed_unref);
+
   return completion;
 }
 
@@ -664,5 +761,6 @@ flatpak_completion_free (FlatpakCompletion *completion)
   g_free (completion->argv);
   g_free (completion->shell_cur);
   g_strfreev (completion->original_argv);
+  g_ptr_array_free (completion->ref_scores, TRUE);
   g_free (completion);
 }

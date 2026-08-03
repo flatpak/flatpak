@@ -14518,6 +14518,8 @@ find_matching_refs (GHashTable           *refs,
 
               if (score < 0)
                 continue;
+
+              flatpak_decomposed_set_score (ref, score);
             }
           else
             {
@@ -14556,7 +14558,10 @@ find_matching_refs (GHashTable           *refs,
         {
           FlatpakDecomposed *matched_ref = g_ptr_array_index (matched_refs, i - 1);
 
-          if (found_exact_name_match && !flatpak_decomposed_is_id (matched_ref, opt_name))
+          if (found_exact_name_match &&
+              (flags & FIND_MATCHING_REFS_FLAGS_FUZZY_WITH_SUBREFS
+                ? !flatpak_decomposed_id_has_prefix (matched_ref, opt_name)
+                : !flatpak_decomposed_is_id (matched_ref, opt_name)))
             g_ptr_array_remove_index (matched_refs, i - 1);
           else if (found_default_arch_match && !flatpak_decomposed_is_arch (matched_ref, opt_default_arch))
             g_ptr_array_remove_index (matched_refs, i - 1);

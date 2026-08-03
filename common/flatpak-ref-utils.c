@@ -558,6 +558,7 @@ struct _FlatpakDecomposed {
   guint16 id_offset;
   guint16 arch_offset;
   guint16 branch_offset;
+  int fuzzy_score;
   char *data;
 
   /* This is only used when we're directly manipulating sideload repos, by giving
@@ -753,6 +754,7 @@ _flatpak_decomposed_new (char            *ref,
   decomposed->id_offset = (guint16)id_offset;
   decomposed->arch_offset = (guint16)arch_offset;
   decomposed->branch_offset = (guint16)branch_offset;
+  decomposed->fuzzy_score = INT_MIN;
 
   return decomposed;
 }
@@ -1602,6 +1604,19 @@ flatpak_decomposed_is_branch (FlatpakDecomposed  *ref,
   const char *ref_branch = flatpak_decomposed_get_branch (ref);
 
   return strcmp (ref_branch, branch) == 0;
+}
+
+int
+flatpak_decomposed_get_score (FlatpakDecomposed  *ref)
+{
+  return ref->fuzzy_score;
+}
+
+void
+flatpak_decomposed_set_score (FlatpakDecomposed  *ref,
+                              int                 score)
+{
+  ref->fuzzy_score = score;
 }
 
 static const char *

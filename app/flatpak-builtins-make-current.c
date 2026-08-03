@@ -142,6 +142,7 @@ flatpak_complete_make_current_app (FlatpakCompletion *completion)
       if (refs == NULL)
         flatpak_completion_debug ("find installed refs error: %s", error->message);
       flatpak_complete_ref_id (completion, refs);
+      flatpak_complete_ref_id_flush (completion);
       break;
 
     case 2: /* Branch */
