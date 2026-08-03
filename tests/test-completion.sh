@@ -149,6 +149,19 @@ EOF
 
 ok "complete partial ref"
 
+${FLATPAK} complete "flatpak info pl" 100 "" > complete_out
+(diff -u complete_out - || exit 1) <<EOF
+org.test.Platform 
+EOF
+
+${FLATPAK} complete "flatpak info hello" 100 "" > complete_out
+(diff -u complete_out - || exit 1) <<EOF
+org.test.Hello 
+org.test.Hello.Locale 
+EOF
+
+ok "complete ref order"
+
 # flatpak CMD ... APP
 for cmd in \
     "run" \
