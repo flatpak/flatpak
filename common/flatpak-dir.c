@@ -14329,6 +14329,8 @@ find_matching_refs (GHashTable           *refs,
 
               if (score < 0)
                 continue;
+
+              flatpak_decomposed_set_score (ref, score);
             }
           else
             {

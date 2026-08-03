@@ -554,6 +554,8 @@ flatpak_complete_run (FlatpakCompletion *completion)
           flatpak_complete_ref_id (completion, refs);
         }
 
+      flatpak_complete_ref_id_flush (completion);
+
       break;
     }
 
