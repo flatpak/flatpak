@@ -122,6 +122,17 @@ void flatpak_complete_ref_id_flush (FlatpakCompletion *completion)
   for (int i = 0; i < refs->len; ++i)
     best = MAX(best, flatpak_decomposed_get_score (g_ptr_array_index (refs, i)));
 
+  for (int i = 0; i < refs->len; ++i)
+    {
+      FlatpakDecomposed *ref = g_ptr_array_index (refs, i);
+      size_t len;
+      const char *ref_id = flatpak_decomposed_peek_id (ref, &len);
+      fprintf(stderr, "%.*s pat=%s score=%i\n", (int)len, ref_id, completion->cur, flatpak_decomposed_get_score (ref));
+    }
+
+  fprintf(stderr, "best_score=%i\n", best);
+  fprintf(stderr, "----\n");
+
   for (int i = refs->len; i > 0; --i)
     if (flatpak_decomposed_get_score (g_ptr_array_index (refs, i - 1)) != best)
       g_ptr_array_remove_index_fast(refs, i - 1);

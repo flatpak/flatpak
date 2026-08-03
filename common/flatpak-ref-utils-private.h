@@ -118,6 +118,8 @@ gboolean           flatpak_decomposed_is_id_fuzzy           (FlatpakDecomposed  
                                                              const char         *id);
 gboolean           flatpak_decomposed_id_part_fuzzy_dist    (FlatpakDecomposed  *ref,
                                                              const char         *pat);
+int                flatpak_decomposed_id_fuzzy_trig         (FlatpakDecomposed  *ref,
+                                                             const char         *id);
 gboolean           flatpak_decomposed_id_has_subseq         (FlatpakDecomposed  *ref,
                                                              const char         *subseq);
 gboolean           flatpak_decomposed_id_part_has_subseq    (FlatpakDecomposed  *ref,

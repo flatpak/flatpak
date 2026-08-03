@@ -1385,6 +1385,51 @@ flatpak_decomposed_id_part_fuzzy_dist (FlatpakDecomposed  *ref,
   return res;
 }
 
+static inline char _trig_char (char c)
+{
+  return g_ascii_isalnum(c) ? g_ascii_tolower(c) : '.';
+}
+
+static inline void* _trig (char a,
+                           char b,
+                           char c)
+{
+  return (void*)((size_t)(_trig_char (a) << 16) | (_trig_char (b) << 8) | _trig_char (c));
+}
+
+static inline void* _trig_p (const char *a)
+{
+  return (void*)((size_t)(_trig_char (a[0]) << 16) | (_trig_char (a[1]) << 8) | _trig_char (a[2]));
+}
+
+int
+flatpak_decomposed_id_fuzzy_trig      (FlatpakDecomposed  *ref,
+                                       const char         *pat)
+{
+  g_autoptr(GHashTable) set = g_hash_table_new (g_direct_hash, g_direct_equal);
+  size_t ref_id_len;
+  const char *ref_id = flatpak_decomposed_peek_id (ref, &ref_id_len);
+
+  if (ref_id_len > 1)
+    g_hash_table_add (set, _trig ('.', ref_id[0], ref_id[1]));
+  for (int i = 0; i < ref_id_len - 2; ++i)
+    if (ref_id[i + 1] != '.')
+      g_hash_table_add (set, _trig_p (&ref_id[i]));
+  if (ref_id_len > 1)
+    g_hash_table_add (set, _trig (ref_id[ref_id_len-2], ref_id[ref_id_len-1], '.'));
+
+  int score = 0;
+  int pat_len = strlen(pat);
+  if (pat_len > 1)
+    score += g_hash_table_contains (set, _trig ('.', pat[0], pat[1]));
+  for (int i = 0; i < pat_len - 2; ++i)
+    score += g_hash_table_contains (set, _trig_p (&pat[i]));
+  if (pat_len > 1)
+    score += g_hash_table_contains (set, _trig (pat[pat_len-2], pat[pat_len-1], '.'));
+
+  return score;
+}
+
 static gboolean
 _flatpak_has_subseq (const char *ref_id,
                      size_t      ref_id_len,

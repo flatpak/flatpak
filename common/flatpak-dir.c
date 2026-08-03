@@ -14312,18 +14312,22 @@ find_matching_refs (GHashTable           *refs,
               int score;
               if (flatpak_decomposed_id_has_prefix (ref, opt_name))
                 score = INT_MAX;
-              else if (flatpak_decomposed_id_has_substr (ref, opt_name))
-                score = INT_MAX - 1;
-              else if (!(flags & FIND_MATCHING_REFS_FLAGS_FUZZY_SUBSEQ))
-                score = 2 - flatpak_levenshtein_distance (opt_name, opt_len, ref_id, ref_id_len);
-              else if ((score = flatpak_decomposed_id_part_fuzzy_dist (ref, opt_name)) <= 1)
-                score = INT_MAX - 10 - score;
-              else if (flatpak_decomposed_id_part_has_subseq (ref, opt_name))
-                score = INT_MAX - 20;
-              else if (flatpak_decomposed_id_has_subseq (ref, opt_name))
-                score = INT_MAX - 21;
-              else if (g_hash_table_size (refs) < 10000)
-                score = 1 + abs ((int)ref_id_len - (int)opt_len) - flatpak_levenshtein_distance (opt_name, opt_len, ref_id, ref_id_len);
+              // else if (flatpak_decomposed_id_has_substr (ref, opt_name))
+              //   score = INT_MAX - 1;
+              // else if (!(flags & FIND_MATCHING_REFS_FLAGS_FUZZY_SUBSEQ))
+              //   score = 2 - flatpak_levenshtein_distance (opt_name, opt_len, ref_id, ref_id_len);
+              else if (opt_len < 3 && flatpak_decomposed_id_part_has_subseq (ref, opt_name))
+                score = INT_MAX - 2;
+              else if ((score = flatpak_decomposed_id_fuzzy_trig (ref, opt_name)))
+                ;
+              // else if ((score = flatpak_decomposed_id_part_fuzzy_dist (ref, opt_name)) <= 1)
+              //   score = INT_MAX - 10 - score;
+              // else if (flatpak_decomposed_id_part_has_subseq (ref, opt_name))
+              //   score = INT_MAX - 20;
+              // else if (flatpak_decomposed_id_has_subseq (ref, opt_name))
+              //   score = INT_MAX - 21;
+              // else if (g_hash_table_size (refs) < 10000)
+              //   score = 1 + abs ((int)ref_id_len - (int)opt_len) - flatpak_levenshtein_distance (opt_name, opt_len, ref_id, ref_id_len);
               else
                 score = INT_MIN;
 
