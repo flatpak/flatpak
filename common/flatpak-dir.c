@@ -12357,25 +12357,61 @@ flatpak_dir_undeploy_all (FlatpakDir        *self,
  * flatpak_dir_remove_ref:
  * @self: a #FlatpakDir
  * @remote_name: the name of the remote
- * @ref: the flatpak ref to remove
+ * @ref: the ref to remove
  * @cancellable: (nullable) (optional): a #GCancellable
  * @error: a #GError
  *
- * Remove the flatpak ref given by @remote_name:@ref from the underlying
- * OSTree repo. Attempting to remove a ref that is currently deployed
- * is an error, you need to uninstall the flatpak first. Note that this does
- * not remove the objects bound to @ref from the disk, you will need to
- * call flatpak_dir_prune() to do that.
+ * Remove the ref given by @remote_name:@ref from the underlying
+ * OSTree repo. Note that this does not remove the objects bound to
+ * @ref from the disk, you will need to call flatpak_dir_prune()
+ * to do that.
  *
  * Returns: %TRUE if removing the ref succeeded, %FALSE otherwise.
  */
 gboolean
 flatpak_dir_remove_ref (FlatpakDir        *self,
                         const char        *remote_name,
-                        const char        *ref, /* NOTE: Not necessarily a app/runtime ref */
+                        const char        *ref,
                         GCancellable      *cancellable,
                         GError           **error)
 {
+  if (!ostree_repo_set_ref_immediate (self->repo,
+                                      remote_name,
+                                      ref,
+                                      NULL,
+                                      cancellable,
+                                      error))
+    return FALSE;
+
+  return TRUE;
+}
+
+/**
+ * flatpak_dir_remove_undeployed_ref:
+ * @self: a #FlatpakDir
+ * @remote_name: the name of the remote
+ * @ref: the flatpak ref to remove
+ * @cancellable: (nullable) (optional): a #GCancellable
+ * @error: a #GError
+ *
+ * Remove the flatpak ref given by @remote_name:@ref from the underlying
+ * OSTree repo. The ref must be a valid app or runtime ref, and it must
+ * not be currently deployed. Note that this does not remove the objects
+ * bound to @ref from the disk, you will need to call
+ * flatpak_dir_prune() to do that.
+ *
+ * Returns: %TRUE if removing the ref succeeded, %FALSE otherwise.
+ */
+gboolean
+flatpak_dir_remove_undeployed_ref (FlatpakDir    *self,
+                                   const char    *remote_name,
+                                   const char    *ref,
+                                   GCancellable  *cancellable,
+                                   GError       **error)
+{
+  g_autoptr(FlatpakDecomposed) decomposed = NULL;
+  g_autoptr(GBytes) deploy_data = NULL;
+
   if (flatpak_dir_use_system_helper (self, NULL))
     {
       const char *installation = flatpak_dir_get_id (self);
@@ -12392,15 +12428,21 @@ flatpak_dir_remove_ref (FlatpakDir        *self,
       return TRUE;
     }
 
-  if (!ostree_repo_set_ref_immediate (self->repo,
-                                      remote_name,
-                                      ref,
-                                      NULL,
-                                      cancellable,
-                                      error))
+  decomposed = flatpak_decomposed_new_from_ref (ref, error);
+  if (decomposed == NULL)
     return FALSE;
 
-  return TRUE;
+  deploy_data = flatpak_dir_get_deploy_data (self, decomposed,
+                                             FLATPAK_DEPLOY_VERSION_ANY,
+                                             NULL, NULL);
+  if (deploy_data != NULL)
+    {
+      g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
+                   _("%s is currently deployed, you need to uninstall it first"), ref);
+      return FALSE;
+    }
+
+  return flatpak_dir_remove_ref (self, remote_name, ref, cancellable, error);
 }
 
 gboolean
@@ -14945,7 +14987,7 @@ flatpak_dir_cleanup_undeployed_refs (FlatpakDir   *self,
       FlatpakDecomposed *ref = g_ptr_array_index (undeployed_refs, i);
       g_autofree gchar *remote = flatpak_decomposed_dup_remote (ref);
 
-      if (!flatpak_dir_remove_ref (self, remote, flatpak_decomposed_get_ref (ref), cancellable, error))
+      if (!flatpak_dir_remove_undeployed_ref (self, remote, flatpak_decomposed_get_ref (ref), cancellable, error))
         return FALSE;
     }
 

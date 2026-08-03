@@ -2943,8 +2943,10 @@ flatpak_installation_list_remote_related_refs_for_installed_sync (FlatpakInstall
  * @error: return location for a #GError
  *
  * Remove the OSTree ref given by @remote_name:@ref from the local flatpak
- * repository. The next time the underlying OSTree repo is pruned, objects
- * which were attached to that ref will be removed. This is useful if you
+ * repository. The ref must not be currently deployed; attempting to remove
+ * a deployed ref will return an error. Use flatpak_installation_uninstall_full()
+ * to remove deployed refs. The next time the underlying OSTree repo is pruned,
+ * objects which were attached to that ref will be removed. This is useful if you
  * pulled a flatpak ref using flatpak_installation_install_full() and
  * specified %FLATPAK_INSTALL_FLAGS_NO_DEPLOY but then decided not to
  * deploy the ref later on and want to remove the local ref to prevent it
@@ -2968,7 +2970,7 @@ flatpak_installation_remove_local_ref_sync (FlatpakInstallation *self,
   if (dir == NULL)
     return FALSE;
 
-  return flatpak_dir_remove_ref (dir, remote_name, ref, cancellable, error);
+  return flatpak_dir_remove_undeployed_ref (dir, remote_name, ref, cancellable, error);
 }
 
 /**

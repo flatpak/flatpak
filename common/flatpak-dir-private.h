@@ -810,6 +810,11 @@ gboolean              flatpak_dir_remove_ref                                (Fla
                                                                              const char                    *ref,
                                                                              GCancellable                  *cancellable,
                                                                              GError                       **error);
+gboolean              flatpak_dir_remove_undeployed_ref                     (FlatpakDir                    *self,
+                                                                             const char                    *remote_name,
+                                                                             const char                    *ref,
+                                                                             GCancellable                  *cancellable,
+                                                                             GError                       **error);
 gboolean              flatpak_dir_update_exports                            (FlatpakDir                    *self,
                                                                              const char                    *app,
                                                                              GCancellable                  *cancellable,

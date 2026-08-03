@@ -1268,7 +1268,7 @@ handle_remove_local_ref (FlatpakSystemHelper   *object,
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
-  if (!flatpak_dir_remove_ref (system, arg_remote, arg_ref, NULL, &error))
+  if (!flatpak_dir_remove_undeployed_ref (system, arg_remote, arg_ref, NULL, &error))
     {
       flatpak_invocation_return_error (invocation, error, "Error removing ref");
       return G_DBUS_METHOD_INVOCATION_HANDLED;
