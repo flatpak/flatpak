@@ -27,7 +27,7 @@ skip_revokefs_without_fuse
 # This test looks for specific localized strings.
 export LC_ALL=C
 
-echo "1..28"
+echo "1..29"
 
 setup_repo
 install_repo
@@ -150,6 +150,20 @@ org.test.Hello
 EOF
 
 ok "complete partial ref"
+
+${FLATPAK} complete "flatpak info pl" 100 "" > complete_out
+(diff -u complete_out - || exit 1) <<EOF
+org.test.Platform 
+EOF
+
+${FLATPAK} complete "flatpak info hello" 100 "" > complete_out
+(diff -u complete_out - || exit 1) <<EOF
+org.test.Hello 
+org.test.Hello.Locale 
+ 
+EOF
+
+ok "complete ref order"
 
 # flatpak CMD ... APP
 for cmd in \
