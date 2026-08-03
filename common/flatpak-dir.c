@@ -7265,6 +7265,18 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
                                  &current_checksum, NULL, error))
     return FALSE;
 
+  /* The remote tracking ref may be absent (e.g. the remote was removed and
+   * re-added, the app was installed from a bundle, or the ref was deleted by
+   * ostree-prune/flatpak-repair).  Fall back to the deploy/ ref that flatpak
+   * always writes on every successful deploy so that our downgrade check can
+   * work. */
+  if (current_checksum == NULL)
+    {
+      g_autofree char *deploy_ref = g_strconcat ("deploy/", ref, NULL);
+      flatpak_repo_resolve_rev (self->repo, NULL, NULL, deploy_ref, TRUE,
+                                &current_checksum, NULL, NULL);
+    }
+
   if (current_checksum != NULL &&
       !ostree_repo_load_commit (self->repo, current_checksum, &old_commit, NULL, error))
     return FALSE;
