@@ -8,6 +8,8 @@
 
 #include <glib.h>
 
+#include <glnx-missing.h>
+
 typedef enum _GlnxChaseFlags {
   /* Default */
   GLNX_CHASE_DEFAULT = 0,
@@ -47,5 +49,11 @@ int glnx_chase_and_statxat (int                 dirfd,
                             unsigned int        mask,
                             struct glnx_statx  *statbuf,
                             GError            **error);
+
+int glnx_chase_and_mkdirat (int              dirfd,
+                            const char      *path,
+                            GlnxChaseFlags   flags,
+                            mode_t           mode,
+                            GError         **error);
 
 G_END_DECLS

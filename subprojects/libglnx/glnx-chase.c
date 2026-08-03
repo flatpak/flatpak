@@ -17,6 +17,7 @@
 #include <unistd.h>
 
 #include <glnx-backports.h>
+#include <glnx-dirfd.h>
 #include <glnx-errors.h>
 #include <glnx-fdio.h>
 #include <glnx-local-alloc.h>
@@ -45,6 +46,13 @@
 
 #define GLNX_CHASE_ALL_FLAGS \
   (GLNX_CHASE_ALL_DEBUG_FLAGS | GLNX_CHASE_ALL_REGULAR_FLAGS)
+
+typedef int (* GlnxChaseCallback)(int          next_fd,
+                                  int          current_fd,
+                                  const char  *segment,
+                                  int          open_tree_flags,
+                                  gpointer     user_data,
+                                  GError     **error);
 
 typedef GQueue GlnxStatxQueue;
 
@@ -328,10 +336,12 @@ extract_next_segment (const char **remaining,
  * we're in full control over the resolving.
  */
 static int
-chase_manual (int              dirfd,
-              const char      *path,
-              GlnxChaseFlags   flags,
-              GError         **error)
+chase_manual (int                 dirfd,
+              const char         *path,
+              GlnxChaseFlags      flags,
+              GlnxChaseCallback   callback,
+              gpointer            user_data,
+              GError            **error)
 {
   gboolean is_absolute;
   g_autofree char *buffer = NULL;
@@ -349,6 +359,7 @@ chase_manual (int              dirfd,
    * - none of the resolve flags are set (they would require work here)
    * - NO_AUTOMOUNT is set (chase_open_tree only triggers the automount for
    *   last component in some cases)
+   * - there is no callback
    *
    * TODO: if we have a guarantee that the open_tree syscall works, we can
    * shortcut even without GLNX_CHASE_NO_AUTOMOUNT
@@ -356,7 +367,8 @@ chase_manual (int              dirfd,
   if ((flags & (GLNX_CHASE_NO_AUTOMOUNT |
                 GLNX_CHASE_RESOLVE_BENEATH |
                 GLNX_CHASE_RESOLVE_IN_ROOT |
-                GLNX_CHASE_RESOLVE_NO_SYMLINKS)) == GLNX_CHASE_NO_AUTOMOUNT)
+                GLNX_CHASE_RESOLVE_NO_SYMLINKS)) == GLNX_CHASE_NO_AUTOMOUNT &&
+      callback == NULL)
     {
       GlnxChaseFlags open_tree_flags =
         (flags & (GLNX_CHASE_NOFOLLOW | GLNX_CHASE_ALL_DEBUG_FLAGS));
@@ -466,10 +478,25 @@ chase_manual (int              dirfd,
         GlnxChaseFlags open_tree_flags =
           GLNX_CHASE_NOFOLLOW |
           (flags & (GLNX_CHASE_NO_AUTOMOUNT | GLNX_CHASE_ALL_DEBUG_FLAGS));
+        g_autoptr(GError) local_error = NULL;
 
-        next_fd = chase_open_tree (fd, segment, open_tree_flags, error);
+        next_fd = chase_open_tree (fd, segment, open_tree_flags, &local_error);
+
+        /* Note that the callback can be called with next_fd < 0.
+         * If so, the error is already set, but may be cleared by
+         * the callback if it can recover from an error that already
+         * occurred. */
+        if (callback)
+          {
+            next_fd = callback (next_fd, fd, segment, open_tree_flags,
+                                user_data, &local_error);
+          }
+
         if (next_fd < 0)
-          return -1;
+          {
+            g_propagate_error (error, g_steal_pointer (&local_error));
+            return -1;
+          }
       }
 
       if (!glnx_chase_statx (next_fd, no_automount, &st, error))
@@ -602,30 +629,13 @@ chase_manual (int              dirfd,
   return g_steal_fd (&owned_fd);
 }
 
-/**
- * glnx_chaseat:
- * @dirfd: a directory file descriptor
- * @path: a path
- * @flags: combination of GlnxChaseFlags flags
- * @error: a #GError
- *
- * Behaves similar to openat, but with a number of differences:
- *
- * - All file descriptors which get returned are O_PATH and O_CLOEXEC. If you
- *   want to actually open the file for reading or writing, use glnx_fd_reopen,
- *   openat, or other at-style functions.
- * - By default, automounts get triggered and the O_PATH fd will point to inodes
- *   in the newly mounted filesystem if an automount is encountered. This can be
- *   turned off with GLNX_CHASE_NO_AUTOMOUNT.
- * - The GLNX_CHASE_RESOLVE_ flags can be used to safely deal with symlinks.
- *
- * Returns: the chased file, or -1 with @error set on error
- */
-int
-glnx_chaseat (int              dirfd,
-              const char      *path,
-              GlnxChaseFlags   flags,
-              GError         **error)
+static int
+glnx_chaseat_full (int                 dirfd,
+                   const char         *path,
+                   GlnxChaseFlags      flags,
+                   GlnxChaseCallback   callback,
+                   gpointer            user_data,
+                   GError            **error)
 {
   static gboolean can_openat2 = TRUE;
   glnx_autofd int fd = -1;
@@ -643,15 +653,14 @@ glnx_chaseat (int              dirfd,
     g_return_val_if_fail ((must_flags & (must_flags - 1)) == 0, -1);
   }
 
-  /* TODO: Add a callback which is called for every resolved path segment, to
-   * allow users to verify and expand the functionality safely. */
-
   /* We need the manual impl for NO_AUTOMOUNT, and we can skip this, if we don't
    * have openat2 at all.
    * Technically racy (static, not synced), but both paths work fine so it
    * doesn't matter. */
-  if (can_openat2 && (flags & GLNX_CHASE_NO_AUTOMOUNT) == 0 &&
-      (flags & GLNX_CHASE_DEBUG_NO_OPENAT2) == 0)
+  if (can_openat2 &&
+      (flags & GLNX_CHASE_NO_AUTOMOUNT) == 0 &&
+      (flags & GLNX_CHASE_DEBUG_NO_OPENAT2) == 0 &&
+      callback == NULL)
     {
       uint64_t openat2_flags = 0;
       uint64_t openat2_resolve = 0;
@@ -690,7 +699,7 @@ glnx_chaseat (int              dirfd,
 
   if (fd < 0)
     {
-      fd = chase_manual (dirfd, path, flags, error);
+      fd = chase_manual (dirfd, path, flags, callback, user_data, error);
       if (fd < 0)
         return -1;
     }
@@ -745,6 +754,34 @@ glnx_chaseat (int              dirfd,
 }
 
 /**
+ * glnx_chaseat:
+ * @dirfd: a directory file descriptor
+ * @path: a path
+ * @flags: combination of GlnxChaseFlags flags
+ * @error: a #GError
+ *
+ * Behaves similar to openat, but with a number of differences:
+ *
+ * - All file descriptors which get returned are O_PATH and O_CLOEXEC. If you
+ *   want to actually open the file for reading or writing, use glnx_fd_reopen,
+ *   openat, or other at-style functions.
+ * - By default, automounts get triggered and the O_PATH fd will point to inodes
+ *   in the newly mounted filesystem if an automount is encountered. This can be
+ *   turned off with GLNX_CHASE_NO_AUTOMOUNT.
+ * - The GLNX_CHASE_RESOLVE_ flags can be used to safely deal with symlinks.
+ *
+ * Returns: the chased file, or -1 with @error set on error
+ */
+int
+glnx_chaseat (int              dirfd,
+              const char      *path,
+              GlnxChaseFlags   flags,
+              GError         **error)
+{
+  return glnx_chaseat_full (dirfd, path, flags, NULL, NULL, error);
+}
+
+/**
  * glnx_chase_and_statxat:
  * @dirfd: a directory file descriptor
  * @path: a path
@@ -786,4 +823,90 @@ glnx_chase_and_statxat (int                 dirfd,
     return -1;
 
   return g_steal_fd (&fd);
+}
+
+static int
+chase_and_mkdir (int                 next_fd,
+                 int                 current_fd,
+                 const char         *segment,
+                 G_GNUC_UNUSED int   open_tree_flags,
+                 gpointer            user_data,
+                 GError            **error)
+{
+  mode_t mode = GPOINTER_TO_INT (user_data);
+  glnx_autofd int new_fd = -1;
+
+  /* if chase managed to get the next segment, we already got our answer */
+  if (next_fd >= 0)
+    return next_fd;
+
+  /* if the problem isn't that the file doesn't exist, we propagate the error */
+  g_assert (*error != NULL);
+  if (!g_error_matches (*error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+    return -1;
+  g_clear_error (error);
+
+  /* create the directory with the specified mode */
+  if (!glnx_ensure_dir (current_fd, segment, mode, error))
+    return -1;
+
+  /* Get a fd to the created dir.
+   * This is racy, meaning another process can modify the filesystem and we
+   * might open a directory that we did not create and might have a different
+   * mode. There isn't a kernel API which returns a fd or an inode which makes
+   * this race unavoidable. This is fine though because the semantics of
+   * `glnx_chase_and_mkdirat` accept arbitrary directories (even with different
+   * modes) when chasing the path.
+   */
+  new_fd = openat (current_fd, segment,
+                   O_CLOEXEC | O_PATH | O_DIRECTORY | O_NOFOLLOW);
+  if (new_fd < 0)
+    return glnx_fd_throw_errno_prefix (error, "opening created dir failed");
+
+  return g_steal_fd (&new_fd);
+}
+
+/**
+ * glnx_chase_and_mkdirat:
+ * @dirfd: a directory file descriptor
+ * @path: a path
+ * @flags: restricted combination of GlnxChaseFlags flags
+ * @mode: the mode for new directories
+ * @error: a #GError
+ *
+ * Same as glnx_chase with `GLNX_CHASE_MUST_BE_DIRECTORY`, but when a path
+ * segment does not exist, a directory is created for the segment with the mode
+ * @mode.
+ * This essentially implement a fd-relative equivalent of g_mkdir_with_parents()
+ * or `mkdir -p`.
+ * Note, that directories in the path which already exist can have arbitrary
+ * modes.
+ *
+ * See glnx_chaseat for the meaning of @dirfd and @path.
+ *
+ * The @flags argument is the same as in glnx_chaseat, but setting
+ * `GLNX_CHASE_MUST_BE_REGULAR`, `GLNX_CHASE_MUST_BE_SOCKET`, or
+ * `GLNX_CHASE_MUST_BE_DIRECTORY` is an error.
+ *
+ * Returns: the chased file, or -1 with @error set on error
+ */
+int
+glnx_chase_and_mkdirat (int              dirfd,
+                        const char      *path,
+                        GlnxChaseFlags   flags,
+                        mode_t           mode,
+                        GError         **error)
+{
+  g_return_val_if_fail ((flags & ~(GLNX_CHASE_ALL_FLAGS)) == 0, -1);
+  g_return_val_if_fail ((flags & (GLNX_CHASE_MUST_BE_REGULAR |
+                                  GLNX_CHASE_MUST_BE_SOCKET |
+                                  GLNX_CHASE_MUST_BE_DIRECTORY)) == 0, -1);
+  g_return_val_if_fail ((mode & ~((mode_t) 07777)) == 0, -1);
+
+  /* This function always implies GLNX_CHASE_MUST_BE_DIRECTORY */
+  flags |= GLNX_CHASE_MUST_BE_DIRECTORY;
+
+  return glnx_chaseat_full (dirfd, path, flags,
+                            chase_and_mkdir, GINT_TO_POINTER (mode),
+                            error);
 }

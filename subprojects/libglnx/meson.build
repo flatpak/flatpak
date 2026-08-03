@@ -26,6 +26,7 @@ check_functions = [
   'renameat2',
   'memfd_create',
   'copy_file_range',
+  'name_to_handle_at',
 ]
 conf = configuration_data()
 foreach check_function : check_functions
@@ -110,6 +111,9 @@ libglnx_dep = declare_dependency(
   dependencies : libglnx_deps,
   include_directories : libglnx_inc,
   link_with : libglnx)
+if meson.version().version_compare('>= 0.54.0')
+  meson.override_dependency('libglnx', libglnx_dep)
+endif
 
 subdir('tests')
 
