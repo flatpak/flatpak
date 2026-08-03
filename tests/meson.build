@@ -268,6 +268,19 @@ executable(
 )
 
 executable(
+  'test-oci-auth-cache',
+  'test-oci-auth-cache.c',
+  dependencies : [
+    base_deps,
+    libflatpak_common_dep,
+    libflatpak_common_base_dep,
+    libglnx_dep,
+  ],
+  install : get_option('installed_tests'),
+  install_dir : installed_testdir,
+)
+
+executable(
   'try-syscall',
   'try-syscall.c',
   include_directories : [common_include_directories],
