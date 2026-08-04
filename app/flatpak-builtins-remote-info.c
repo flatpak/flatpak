@@ -188,6 +188,13 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
 
       flatpak_get_window_size (&rows, &cols);
 
+      if (!opt_cached)
+        {
+          g_autoptr(GError) appstream_error = NULL;
+          if (!update_appstream (dirs, remote, arch, FLATPAK_APPSTREAM_TTL, TRUE, cancellable, &appstream_error))
+            g_info ("Failed to refresh AppStream data: %s", appstream_error->message);
+        }
+
       flatpak_dir_load_appstream_data (preferred_dir, remote, arch, mdata, NULL, NULL);
       cpt = metadata_find_component (mdata, flatpak_decomposed_get_ref (ref));
       if (cpt)
