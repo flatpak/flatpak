@@ -127,6 +127,7 @@ c_tests = [
       portal_gdbus[1],
     ],
   }],
+  ['test-ref-utils', {}],
 ]
 
 foreach testcase : c_tests
