@@ -183,7 +183,7 @@ flatpak_is_valid_name (const char *string,
                                 _("Only last name segment can contain -"));
           else
             flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME,
-                                _("Name can't contain %c"), *s);
+                                _("Name can't contain »%c«"), *s);
           goto out;
         }
       s += 1;
