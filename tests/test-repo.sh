@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..47"
+echo "1..48"
 
 #Regular repo
 setup_repo
@@ -290,6 +290,41 @@ else
 fi
 
 ok "install flatpakref sets collection-id on remote if available"
+
+setup_repo_no_add flatpakref-update org.test.Collection.Flatpakref
+make_updated_app flatpakref-update org.test.Collection.Flatpakref master FLATPAKREF_UPDATE
+
+cat << EOF > org.test.Hello-update.flatpakref
+[Flatpak Ref]
+Name=org.test.Hello
+Branch=master
+Url=http://127.0.0.1:$(cat httpd-port)/flatpakref-update
+SuggestRemoteName=alltheupdates
+GPGKey=${FL_GPG_BASE64}
+RuntimeRepo=http://127.0.0.1:$(cat httpd-port)/flatpakref/flatpakref-repo.flatpakrepo
+EOF
+
+if [ x${USE_COLLECTIONS_IN_CLIENT-} == xyes ]; then
+    echo "DeploySideloadCollectionID=org.test.Collection.Flatpakref" >> org.test.Hello-update.flatpakref
+fi
+
+ORIGINAL_COMMIT=$(${FLATPAK} ${U} info --show-commit org.test.Hello)
+ORIGINAL_ORIGIN=$(${FLATPAK} ${U} info --show-origin org.test.Hello)
+UPDATED_COMMIT=$(ostree rev-parse --repo=repos/flatpakref-update app/org.test.Hello/${ARCH}/master)
+assert_not_streq "$ORIGINAL_COMMIT" "$UPDATED_COMMIT"
+
+if ${FLATPAK} ${U} install -y org.test.Hello-update.flatpakref &> install-error-log; then
+    assert_not_reached "Should not replace a flatpakref install without --or-update"
+fi
+assert_file_has_content install-error-log "already installed"
+assert_streq "$(${FLATPAK} ${U} info --show-commit org.test.Hello)" "$ORIGINAL_COMMIT"
+assert_streq "$(${FLATPAK} ${U} info --show-origin org.test.Hello)" "$ORIGINAL_ORIGIN"
+
+${FLATPAK} ${U} install -y --or-update org.test.Hello-update.flatpakref >&2
+assert_streq "$(${FLATPAK} ${U} info --show-commit org.test.Hello)" "$UPDATED_COMMIT"
+assert_streq "$(${FLATPAK} ${U} info --show-origin org.test.Hello)" "alltheupdates"
+
+ok "flatpakref --or-update replaces from new remote"
 
 ${FLATPAK} ${U} uninstall -y org.test.Platform org.test.Hello >&2
 
