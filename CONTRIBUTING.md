@@ -40,7 +40,7 @@ Note: Older versions of Ubuntu/Debian, such as `Ubuntu 24.04`, may require also 
 git clone https://github.com/flatpak/flatpak
 cd flatpak
 sudo dnf builddep flatpak
-sudo dnf install gettext-devel socat
+sudo dnf install gettext-devel socat ostree
 git submodule update --init
 meson setup --prefix=/usr --sysconfdir=/etc --localstatedir=/var -Dinstalled_tests=true -Dselinux_module=enabled -Dsystem_bubblewrap=bwrap -Dsystem_dbus_proxy=xdg-dbus-proxy _build
 meson compile -C _build
