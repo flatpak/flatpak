@@ -27,7 +27,7 @@ skip_revokefs_without_fuse
 # This test looks for specific localized strings.
 export LC_ALL=C
 
-echo "1..17"
+echo "1..18"
 
 setup_repo
 install_repo
@@ -178,6 +178,13 @@ done
 
 ok "complete non-NO_DIR commands"
 
+${FLATPAK} complete "flatpak remote-delete --" 24 "--" > complete_out
+assert_file_has_content complete_out "^--unused "
+${FLATPAK} complete "flatpak remote-delete --unused " 31 "" > complete_out
+assert_not_file_has_content complete_out "^test-repo "
+
+ok "complete remote-delete options"
+
 ${FLATPAK} complete "flatpak list --columns=" 24 "--columns=" | sort > complete_out
 (diff -u complete_out - || exit 1) <<EOF
 active
@@ -230,4 +237,3 @@ arch,version
 EOF
 
 ok "complete list --columns=arch,"
-

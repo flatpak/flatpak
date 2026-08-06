@@ -34,6 +34,11 @@
                 <arg choice="opt" rep="repeat">OPTION</arg>
                 <arg choice="plain">NAME</arg>
             </cmdsynopsis>
+            <cmdsynopsis>
+                <command>flatpak remote-delete</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="plain"><option>--unused</option></arg>
+            </cmdsynopsis>
     </refsynopsisdiv>
 
     <refsect1>
@@ -44,10 +49,19 @@
             <arg choice="plain">NAME</arg> is the name of an existing remote.
         </para>
         <para>
+            With <option>--unused</option>, all configured remotes which are not
+            the origin of an installed app or runtime are listed, grouped by
+            installation. After one confirmation, all the listed remotes are
+            removed. <option>--unused</option> cannot be combined with
+            <arg choice="plain">NAME</arg>. If no unused remotes are found, the
+            command exits successfully without prompting.
+        </para>
+        <para>
             Unless overridden with the <option>--system</option>, <option>--user</option>, or <option>--installation</option> options,
-            this command uses either the default system-wide installation or the
-            per-user one, depending on which has the specified
-            <arg choice="plain">REMOTE</arg>.
+            named deletion uses either the default system-wide installation or
+            the per-user one, depending on which has the specified
+            <arg choice="plain">REMOTE</arg>. With <option>--unused</option>, all
+            standard installations available to the command are examined.
         </para>
 
     </refsect1>
@@ -104,6 +118,16 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--unused</option></term>
+
+                <listitem><para>
+                    Remove every remote which is not the origin of an installed
+                    app or runtime. This option cannot be combined with
+                    <arg choice="plain">NAME</arg>.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--verbose</option></term>
 
@@ -127,6 +151,9 @@
 
         <para>
             <command>$ flatpak --user remote-delete dried-raisins</command>
+        </para>
+        <para>
+            <command>$ flatpak remote-delete --unused</command>
         </para>
     </refsect1>
 

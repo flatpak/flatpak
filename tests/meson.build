@@ -384,6 +384,7 @@ tests = {
     'user,oldsummary',
     'system,oldsummary',
   ]},
+  'remote-delete-unused': {'wrap': ['system-norevokefs']},
   'history': {},
   'sideload': {'wrap': ['user', 'system']},
   'default-remotes': {},
