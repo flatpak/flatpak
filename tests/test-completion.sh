@@ -27,7 +27,7 @@ skip_revokefs_without_fuse
 # This test looks for specific localized strings.
 export LC_ALL=C
 
-echo "1..17"
+echo "1..21"
 
 setup_repo
 install_repo
@@ -151,6 +151,30 @@ EOF
 
 ok "complete partial ref"
 
+${FLATPAK} --user pin --remove "runtime/org.test.Platform/$ARCH/master"
+${FLATPAK} --user pin org.test.Platform 'org.test.*//master'
+
+${FLATPAK} complete "flatpak --user pin --remove " 28 "" | sort > complete_out
+printf '%s \n' 'org.test.*//master' org.test.Platform > expected_out
+diff -u expected_out complete_out
+
+ok "complete configured pin patterns for removal"
+
+${FLATPAK} complete "flatpak --user pin --remove org.test.Platform " 46 "" | sort > complete_out
+diff -u expected_out complete_out
+
+ok "complete repeated pin patterns for removal"
+
+${FLATPAK} complete "flatpak --user pin --remove --sys" 33 "--sys" > complete_out
+assert_file_has_content complete_out '^--system $'
+
+ok "complete options when removing pins"
+
+${FLATPAK} complete "flatpak --user pin " 19 "" > complete_out
+assert_not_file_has_content complete_out '^org\.test\.'
+
+ok "do not complete pin patterns when adding"
+
 for cmd in build-bundle build-commit-from build-export build-finish \
            build-import-bundle build-init build-sign build-update-repo \
            build document-export document-info document-list document-unexport \
@@ -230,4 +254,3 @@ arch,version
 EOF
 
 ok "complete list --columns=arch,"
-
