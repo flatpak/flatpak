@@ -6418,10 +6418,13 @@ flatpak_dir_pull_extra_data_to_bytes (FlatpakDir       *self,
 
   expected_sha256 = ostree_checksum_from_bytes (expected_sha256_bytes);
 
-  if (name == NULL || *name == '\0')
+  if (name == NULL || *name == '\0' ||
+      strcmp (name, ".") == 0 ||
+      strcmp (name, "..") == 0 ||
+      strchr (name, '/') != NULL)
     {
       return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
-                                 _("Empty name for extra data uri %s"), uri);
+                                 _("Invalid extra data name '%s'"), name);
     }
 
   /* Don't allow file uris here as that could read local files based on remote data */
