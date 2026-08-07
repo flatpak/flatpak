@@ -8352,11 +8352,10 @@ extract_extra_data (FlatpakDir   *self,
 
 static gboolean
 apply_extra_data (FlatpakDir   *self,
-                  GFile        *checkoutdir,
+                  int           checkoutdir_dfd,
                   GCancellable *cancellable,
                   GError      **error)
 {
-  g_autoptr(GFile) metadata = NULL;
   g_autofree char *metadata_contents = NULL;
   gsize metadata_size;
   g_autoptr(GKeyFile) metakey = NULL;
@@ -8365,27 +8364,60 @@ apply_extra_data (FlatpakDir   *self,
   g_autoptr(FlatpakDecomposed) runtime_ref = NULL;
   g_autoptr(FlatpakDeploy) runtime_deploy = NULL;
   g_autoptr(FlatpakBwrap) bwrap = NULL;
-  g_autoptr(GFile) app_files = NULL;
-  g_autoptr(GFile) apply_extra_file = NULL;
-  g_autoptr(GFile) app_export_file = NULL;
-  g_autoptr(GFile) extra_export_file = NULL;
-  g_autoptr(GFile) extra_files = NULL;
   g_autoptr(GFile) runtime_files = NULL;
   g_autoptr(FlatpakContext) app_context = NULL;
   g_auto(GStrv) minimal_envp = NULL;
   g_autofree char *runtime_arch = NULL;
+  glnx_autofd int app_files_dfd = -1;
+  glnx_autofd int metadata_path_fd = -1;
+  glnx_autofd int metadata_read_fd = -1;
+  glnx_autofd int extra_dfd = -1;
+  glnx_autofd int usr_fd = -1;
   int exit_status;
   const char *group = FLATPAK_METADATA_GROUP_APPLICATION;
   g_autoptr(GError) local_error = NULL;
   FlatpakRunFlags run_flags;
 
-  apply_extra_file = g_file_resolve_relative_path (checkoutdir, "files/bin/apply_extra");
-  if (!g_file_query_exists (apply_extra_file, cancellable))
-    return TRUE;
+  app_files_dfd = glnx_chaseat (checkoutdir_dfd, "files",
+                                GLNX_CHASE_RESOLVE_NO_SYMLINKS |
+                                GLNX_CHASE_MUST_BE_DIRECTORY,
+                                error);
+  if (app_files_dfd < 0)
+    return FALSE;
 
-  metadata = g_file_get_child (checkoutdir, "metadata");
+  {
+    glnx_autofd int apply_extra_fd = -1;
 
-  if (!g_file_load_contents (metadata, cancellable, &metadata_contents, &metadata_size, NULL, error))
+    apply_extra_fd = glnx_chaseat (app_files_dfd, "bin/apply_extra",
+                                   GLNX_CHASE_RESOLVE_BENEATH |
+                                   GLNX_CHASE_MUST_BE_REGULAR,
+                                   &local_error);
+    if (apply_extra_fd < 0)
+      {
+        if (g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+          {
+            g_clear_error (&local_error);
+            return TRUE;
+          }
+        g_propagate_error (error, g_steal_pointer (&local_error));
+        return FALSE;
+      }
+  }
+
+  metadata_path_fd = glnx_chaseat (checkoutdir_dfd, "metadata",
+                                   GLNX_CHASE_RESOLVE_NO_SYMLINKS |
+                                   GLNX_CHASE_MUST_BE_REGULAR,
+                                   error);
+  if (metadata_path_fd < 0)
+    return FALSE;
+
+  metadata_read_fd = glnx_fd_reopen (metadata_path_fd, O_RDONLY, error);
+  if (metadata_read_fd < 0)
+    return FALSE;
+
+  metadata_contents = glnx_fd_readall_utf8 (metadata_read_fd, &metadata_size,
+                                            cancellable, error);
+  if (metadata_contents == NULL)
     return FALSE;
 
   metakey = g_key_file_new ();
@@ -8438,24 +8470,36 @@ apply_extra_data (FlatpakDir   *self,
       runtime_files = flatpak_deploy_get_files (runtime_deploy);
     }
 
-  app_files = g_file_get_child (checkoutdir, "files");
-  app_export_file = g_file_get_child (checkoutdir, "export");
-  extra_files = g_file_get_child (app_files, "extra");
-  extra_export_file = g_file_get_child (extra_files, "export");
+  extra_dfd = glnx_chaseat (app_files_dfd, "extra",
+                            GLNX_CHASE_RESOLVE_BENEATH |
+                            GLNX_CHASE_MUST_BE_DIRECTORY,
+                            error);
+  if (extra_dfd < 0)
+    return FALSE;
 
   minimal_envp = flatpak_run_get_minimal_env (FALSE, FALSE);
   bwrap = flatpak_bwrap_new (minimal_envp);
   flatpak_bwrap_add_args (bwrap, flatpak_get_bwrap (), NULL);
 
   if (runtime_files)
-    flatpak_bwrap_add_args (bwrap,
-                            "--ro-bind", flatpak_file_get_path_cached (runtime_files), "/usr",
-                            "--lock-file", "/usr/.ref",
-                            NULL);
+    {
+      usr_fd = glnx_chaseat (AT_FDCWD, flatpak_file_get_path_cached (runtime_files),
+                             GLNX_CHASE_MUST_BE_DIRECTORY,
+                             error);
+      if (usr_fd < 0)
+        return FALSE;
+
+      if (!flatpak_bwrap_add_args_data_fd_dup (bwrap, "--ro-bind-fd", usr_fd, "/usr", error))
+        return FALSE;
+      flatpak_bwrap_add_args (bwrap, "--lock-file", "/usr/.ref", NULL);
+    }
+
+  if (!flatpak_bwrap_add_args_data_fd_dup (bwrap, "--ro-bind-fd", app_files_dfd, "/app", error))
+    return FALSE;
+  if (!flatpak_bwrap_add_args_data_fd_dup (bwrap, "--bind-fd", extra_dfd, "/app/extra", error))
+    return FALSE;
 
   flatpak_bwrap_add_args (bwrap,
-                          "--ro-bind", flatpak_file_get_path_cached (app_files), "/app",
-                          "--bind", flatpak_file_get_path_cached (extra_files), "/app/extra",
                           "--chdir", "/app/extra",
                           /* We run as root in the system-helper case, so drop all caps */
                           "--cap-drop", "ALL",
@@ -8476,16 +8520,6 @@ apply_extra_data (FlatpakDir   *self,
    * access outside files (see cd21428).
    * Disable /proc entirely in this context. */
   run_flags |= FLATPAK_RUN_FLAG_NO_PROC;
-
-  glnx_autofd int usr_fd = -1;
-
-  if (runtime_files != NULL)
-    {
-      usr_fd = open (flatpak_file_get_path_cached (runtime_files),
-                     O_PATH | O_CLOEXEC | O_NOFOLLOW);
-      if (usr_fd < 0)
-        return glnx_throw_errno_prefix (error, "Failed to open runtime files");
-    }
 
   if (!flatpak_run_setup_base_argv (bwrap, usr_fd, NULL, runtime_arch,
                                     run_flags, error))
@@ -8513,11 +8547,19 @@ apply_extra_data (FlatpakDir   *self,
    * this runs as root in the system helper case. We canonicalize the permissions at the
    * end, but to avoid non-canonical permissions leaking out before then we make the
    * toplevel dir only accessible to the user */
-  if (chmod (flatpak_file_get_path_cached (extra_files), 0700) != 0)
-    {
-      glnx_set_error_from_errno (error);
+  {
+    glnx_autofd int extra_real_dfd =
+      glnx_fd_reopen (extra_dfd, O_RDONLY | O_DIRECTORY, error);
+
+    if (extra_real_dfd < 0)
       return FALSE;
-    }
+
+    if (fchmod (extra_real_dfd, 0700) != 0)
+      {
+        glnx_set_error_from_errno (error);
+        return FALSE;
+      }
+  }
 
   if (!g_spawn_sync (NULL,
                      (char **) bwrap->argv->pdata,
@@ -8529,7 +8571,7 @@ apply_extra_data (FlatpakDir   *self,
                      error))
     return FALSE;
 
-  if (!flatpak_canonicalize_permissions (AT_FDCWD, flatpak_file_get_path_cached (extra_files),
+  if (!flatpak_canonicalize_permissions (app_files_dfd, "extra",
                                          getuid () == 0 ? 0 : -1,
                                          getuid () == 0 ? 0 : -1,
                                          error))
@@ -8542,16 +8584,20 @@ apply_extra_data (FlatpakDir   *self,
       return FALSE;
     }
 
-  if (g_file_query_exists (extra_export_file, cancellable))
-    {
-      if (!flatpak_mkdir_p (app_export_file, cancellable, error))
-        return FALSE;
-      if (!flatpak_cp_a (extra_export_file,
-                         app_export_file,
-                         FLATPAK_CP_FLAGS_MERGE,
-                         cancellable, error))
-        return FALSE;
-    }
+  {
+    glnx_autofd int extra_export_dfd = -1;
+
+    extra_export_dfd = glnx_chaseat (extra_dfd, "export",
+                                     GLNX_CHASE_RESOLVE_BENEATH |
+                                     GLNX_CHASE_MUST_BE_DIRECTORY,
+                                     NULL);
+    if (extra_export_dfd >= 0)
+      {
+        if (!flatpak_cp_a_at (extra_export_dfd, checkoutdir_dfd, "export",
+                              FLATPAK_CP_FLAGS_MERGE, cancellable, error))
+          return FALSE;
+      }
+  }
 
   return TRUE;
 }
@@ -8942,7 +8988,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
 
   if (created_extra_data)
     {
-      if (!apply_extra_data (self, checkoutdir, cancellable, error))
+      if (!apply_extra_data (self, checkoutdir_dfd, cancellable, error))
         {
           g_prefix_error (error, _("While trying to apply extra data: "));
           return FALSE;
