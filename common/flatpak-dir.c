@@ -9090,7 +9090,7 @@ out:
 static gboolean
 extract_extra_data (FlatpakDir   *self,
                     const char   *checksum,
-                    GFile        *extradir,
+                    int           app_files_dfd,
                     gboolean     *created_extra_data,
                     GCancellable *cancellable,
                     GError      **error)
@@ -9099,6 +9099,7 @@ extract_extra_data (FlatpakDir   *self,
   g_autoptr(GVariant) extra_data = NULL;
   g_autoptr(GVariant) extra_data_sources = NULL;
   g_autoptr(GError) local_error = NULL;
+  glnx_autofd int extra_dfd = -1;
   gsize i, n_extra_data = 0;
   gsize n_extra_data_sources;
 
@@ -9121,7 +9122,7 @@ extract_extra_data (FlatpakDir   *self,
   if (n_extra_data_sources == 0)
     return TRUE;
 
-  g_info ("extracting extra data to %s", flatpak_file_get_path_cached (extradir));
+  g_info ("extracting extra data");
 
   if (!ostree_repo_read_commit_detached_metadata (self->repo, checksum, &detached_metadata,
                                                   cancellable, error))
@@ -9142,7 +9143,10 @@ extract_extra_data (FlatpakDir   *self,
   if (n_extra_data < n_extra_data_sources)
     return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Extra data missing in detached metadata"));
 
-  if (!flatpak_mkdir_p (extradir, cancellable, error))
+  extra_dfd = glnx_chase_and_mkdirat (app_files_dfd, "extra",
+                                      GLNX_CHASE_RESOLVE_BENEATH,
+                                      0777, error);
+  if (extra_dfd < 0)
     {
       g_prefix_error (error, _("While creating extradir: "));
       return FALSE;
@@ -9177,7 +9181,6 @@ extract_extra_data (FlatpakDir   *self,
       for (j = 0; j < n_extra_data; j++)
         {
           g_autoptr(GVariant) content = NULL;
-          g_autoptr(GFile) dest = NULL;
           g_autofree char *sha256 = NULL;
           const char *extra_data_name = NULL;
           const guchar *data;
@@ -9190,6 +9193,13 @@ extract_extra_data (FlatpakDir   *self,
           if (strcmp (extra_data_source_name, extra_data_name) != 0)
             continue;
 
+          if (extra_data_name[0] == '\0' ||
+              strcmp (extra_data_name, ".") == 0 ||
+              strcmp (extra_data_name, "..") == 0 ||
+              strchr (extra_data_name, '/') != NULL)
+            return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                       _("Invalid extra data filename '%s'"), extra_data_name);
+
           data = g_variant_get_data (content);
           len = g_variant_get_size (content);
 
@@ -9200,12 +9210,10 @@ extract_extra_data (FlatpakDir   *self,
           if (strcmp (sha256, extra_data_sha256) != 0)
             return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid checksum for extra data"));
 
-          dest = g_file_get_child (extradir, extra_data_name);
-          if (!g_file_replace_contents (dest,
-                                        g_variant_get_data (content),
-                                        g_variant_get_size (content),
-                                        NULL, FALSE, G_FILE_CREATE_REPLACE_DESTINATION,
-                                        NULL, cancellable, error))
+          if (!glnx_file_replace_contents_at (extra_dfd, extra_data_name,
+                                              data, len,
+                                              GLNX_FILE_REPLACE_NODATASYNC,
+                                              cancellable, error))
             {
               g_prefix_error (error, _("While writing extra data file '%s': "), extra_data_name);
               return FALSE;
@@ -9660,6 +9668,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
   OstreeRepoCheckoutAtOptions options = { 0, };
   const char *checksum;
   glnx_autofd int checkoutdir_dfd = -1;
+  glnx_autofd int app_files_dfd = -1;
   const char *xa_ref = NULL;
   g_autofree char *checkout_basename = NULL;
   gboolean created_extra_data = FALSE;
@@ -9816,15 +9825,24 @@ flatpak_dir_deploy (FlatpakDir          *self,
         }
     }
 
+  if (!glnx_opendirat (deploy_base_dfd, checkoutdir_basename, FALSE, &checkoutdir_dfd, error))
+    return FALSE;
+
   /* Extract any extra data */
-  extradir = g_file_resolve_relative_path (checkoutdir, "files/extra");
-  if (!flatpak_rm_rf (extradir, cancellable, error))
+  app_files_dfd = glnx_chaseat (checkoutdir_dfd, "files",
+                                GLNX_CHASE_RESOLVE_NO_SYMLINKS |
+                                GLNX_CHASE_MUST_BE_DIRECTORY,
+                                error);
+  if (app_files_dfd < 0)
+    return FALSE;
+
+  if (!glnx_shutil_rm_rf_at (app_files_dfd, "extra", cancellable, error))
     {
       g_prefix_error (error, _("While trying to remove existing extra dir: "));
       return FALSE;
     }
 
-  if (!extract_extra_data (self, checksum, extradir, &created_extra_data, cancellable, error))
+  if (!extract_extra_data (self, checksum, app_files_dfd, &created_extra_data, cancellable, error))
     return FALSE;
 
   if (created_extra_data)
@@ -10031,9 +10049,6 @@ flatpak_dir_deploy (FlatpakDir          *self,
 
   deploy_data_file = g_file_get_child (checkoutdir, "deploy");
   if (!flatpak_bytes_save (deploy_data_file, deploy_data, cancellable, error))
-    return FALSE;
-
-  if (!glnx_opendirat (deploy_base_dfd, checkoutdir_basename, TRUE, &checkoutdir_dfd, error))
     return FALSE;
 
   if (syncfs (checkoutdir_dfd) != 0)
