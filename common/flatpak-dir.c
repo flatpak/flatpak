@@ -5810,8 +5810,14 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
 
       extra_data_sha256 = ostree_checksum_from_bytes (sha256_bytes);
 
-      if (*extra_data_name == 0)
-        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Empty name for extra data uri %s"), extra_data_uri);
+      if (extra_data_name == NULL || *extra_data_name == '\0' ||
+          strcmp (extra_data_name, ".") == 0 ||
+          strcmp (extra_data_name, "..") == 0 ||
+          strchr (extra_data_name, '/') != NULL)
+        {
+          return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                     _("Invalid extra data name '%s'"), extra_data_name);
+        }
 
       /* Don't allow file uris here as that could read local files based on remote data */
       if (!g_str_has_prefix (extra_data_uri, "http:") &&
