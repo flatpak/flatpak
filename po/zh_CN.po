@@ -2336,7 +2336,7 @@ msgstr " - 列出正在运行的沙盒"
 
 #: app/flatpak-builtins-remote-add.c:66
 msgid "Do nothing if the provided remote exists"
-msgstr "如果提供的远程仓库不存在则不进行任何操作"
+msgstr "如果提供的远程仓库已存在则不进行任何操作"
 
 #: app/flatpak-builtins-remote-add.c:67
 msgid "LOCATION specifies a configuration file, not the repo location"
