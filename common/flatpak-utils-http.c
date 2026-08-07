@@ -31,6 +31,7 @@
 
 #include <sys/types.h>
 #include <sys/xattr.h>
+#include <unistd.h>
 #include <curl/curl.h>
 
 /* These macros came from 7.43.0, but we want to check
@@ -93,6 +94,7 @@ typedef struct
   /* Output from the request, set even on http server errors */
 
   guint64               downloaded_bytes;
+  guint64               resume_offset;
   int                   status;
   char                  *hdr_content_type;
   char                  *hdr_www_authenticate;
@@ -136,6 +138,7 @@ reset_load_uri_data (LoadUriData *data)
   g_clear_error (&data->error);
   data->status = 0;
   data->downloaded_bytes = 0;
+  data->resume_offset = 0;
   if (data->content)
     g_string_set_size (data->content, 0);
 
@@ -150,6 +153,123 @@ reset_load_uri_data (LoadUriData *data)
   /* Reset the progress */
   if (data->progress)
     data->progress (0, data->user_data);
+}
+
+/* Reset between retries when resuming a partial GOutputStream download.
+ * Unlike reset_load_uri_data(), this accumulates downloaded_bytes into
+ * resume_offset (used for the Range request) and resets downloaded_bytes
+ * to zero so subsequent writes don't double-count already-received bytes. */
+static void
+reset_load_uri_data_for_resume (LoadUriData *data)
+{
+  g_clear_error (&data->error);
+  data->status = 0;
+
+  clear_load_uri_data_headers (data);
+
+  data->resume_offset += data->downloaded_bytes;
+  data->downloaded_bytes = 0;
+
+  if (data->progress)
+    data->progress (data->resume_offset, data->user_data);
+}
+
+static guint64
+load_uri_data_progress_bytes (LoadUriData *data)
+{
+  return data->resume_offset + data->downloaded_bytes;
+}
+
+static gboolean
+seek_output_stream (GOutputStream  *out,
+                    guint64         offset,
+                    GCancellable   *cancellable,
+                    GError        **error)
+{
+  if (G_IS_SEEKABLE (out) && g_seekable_can_seek (G_SEEKABLE (out)))
+    return g_seekable_seek (G_SEEKABLE (out), offset, G_SEEK_SET, cancellable, error);
+
+  if (G_IS_UNIX_OUTPUT_STREAM (out))
+    {
+      int fd = g_unix_output_stream_get_fd (G_UNIX_OUTPUT_STREAM (out));
+
+      if (lseek (fd, (off_t) offset, SEEK_SET) < 0)
+        return glnx_throw_errno_prefix (error, "lseek");
+
+      return TRUE;
+    }
+
+  g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                       "Output stream cannot be seeked");
+  return FALSE;
+}
+
+static gboolean
+reset_output_stream (GOutputStream  *out,
+                     GCancellable   *cancellable,
+                     GError        **error)
+{
+  if (G_IS_SEEKABLE (out) &&
+      g_seekable_can_seek (G_SEEKABLE (out)) &&
+      g_seekable_can_truncate (G_SEEKABLE (out)))
+    {
+      if (!g_seekable_truncate (G_SEEKABLE (out), 0, cancellable, error))
+        return FALSE;
+
+      return g_seekable_seek (G_SEEKABLE (out), 0, G_SEEK_SET, cancellable, error);
+    }
+
+  if (G_IS_UNIX_OUTPUT_STREAM (out))
+    {
+      int fd = g_unix_output_stream_get_fd (G_UNIX_OUTPUT_STREAM (out));
+
+      if (ftruncate (fd, 0) < 0)
+        return glnx_throw_errno_prefix (error, "ftruncate");
+
+      if (lseek (fd, 0, SEEK_SET) < 0)
+        return glnx_throw_errno_prefix (error, "lseek");
+
+      return TRUE;
+    }
+
+  g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                       "Output stream cannot be reset");
+  return FALSE;
+}
+
+static gboolean
+flatpak_http_error_is_retryable (const GError *error)
+{
+  return error != NULL &&
+         (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_TIMED_OUT) ||
+          g_error_matches (error, G_IO_ERROR, G_IO_ERROR_HOST_NOT_FOUND) ||
+          g_error_matches (error, G_IO_ERROR, G_IO_ERROR_HOST_UNREACHABLE) ||
+          g_error_matches (error, G_IO_ERROR, G_IO_ERROR_PARTIAL_INPUT) ||
+          g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CONNECTION_CLOSED) ||
+          g_error_matches (error, G_RESOLVER_ERROR, G_RESOLVER_ERROR_NOT_FOUND) ||
+          g_error_matches (error, G_RESOLVER_ERROR, G_RESOLVER_ERROR_TEMPORARY_FAILURE));
+}
+
+static gboolean
+load_uri_data_should_resume (LoadUriData *data,
+                             const GError *error)
+{
+  if (!flatpak_http_error_is_retryable (error))
+    return FALSE;
+
+  if (data->resume_offset > 0 && data->downloaded_bytes == 0 && data->status == 0)
+    return TRUE;
+
+  if (data->hdr_content_encoding && data->hdr_content_encoding[0])
+    return FALSE;
+
+  if (data->status == 206)
+    return TRUE;
+
+  if (data->downloaded_bytes == 0)
+    return FALSE;
+
+  return data->status == 200 && data->resume_offset == 0;
 }
 
 /* Free allocated data at end of full repeated download */
@@ -496,7 +616,7 @@ _write_cb (void *content_data,
   if (g_get_monotonic_time () - data->last_progress_time > 1 * G_USEC_PER_SEC)
     {
       if (data->progress)
-        data->progress (data->downloaded_bytes, data->user_data);
+        data->progress (load_uri_data_progress_bytes (data), data->user_data);
       data->last_progress_time = g_get_monotonic_time ();
     }
 
@@ -599,6 +719,15 @@ set_error_from_curl (GError        **error,
     case CURLE_OPERATION_TIMEDOUT:
       code = G_IO_ERROR_TIMED_OUT;
       break;
+    case CURLE_GOT_NOTHING:
+    case CURLE_RECV_ERROR:
+    case CURLE_SEND_ERROR:
+      code = G_IO_ERROR_CONNECTION_CLOSED;
+      break;
+    case CURLE_RANGE_ERROR:
+    case CURLE_PARTIAL_FILE:
+      code = G_IO_ERROR_PARTIAL_INPUT;
+      break;
     default:
       code =  G_IO_ERROR_FAILED;
     }
@@ -631,6 +760,7 @@ flatpak_download_http_uri_once (FlatpakHttpSession    *session,
   curl_easy_setopt (curl, CURLOPT_CAINFO, NULL);
   curl_easy_setopt (curl, CURLOPT_SSLCERT, NULL);
   curl_easy_setopt (curl, CURLOPT_SSLKEY, NULL);
+  curl_easy_setopt (curl, CURLOPT_RESUME_FROM_LARGE, (curl_off_t) data->resume_offset);
 
   if (data->certificates)
     {
@@ -696,6 +826,9 @@ flatpak_download_http_uri_once (FlatpakHttpSession    *session,
 
   curl_easy_setopt (session->curl, CURLOPT_HTTPHEADER, NULL); /* Don't point to freed list */
 
+  curl_easy_getinfo (session->curl, CURLINFO_RESPONSE_CODE, &response);
+  data->status = response;
+
   if (res != CURLE_OK)
     {
       set_error_from_curl (error, uri, res, data->cancellable);
@@ -716,12 +849,15 @@ flatpak_download_http_uri_once (FlatpakHttpSession    *session,
       g_clear_pointer (&data->out, g_object_unref);
     }
 
+  if (data->resume_offset > 0 && data->status != 206)
+    {
+      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_PARTIAL_INPUT,
+                           "Server did not honor Range header");
+      return FALSE;
+    }
+
   if (data->progress)
-    data->progress (data->downloaded_bytes, data->user_data);
-
-  curl_easy_getinfo (session->curl, CURLINFO_RESPONSE_CODE, &response);
-
-  data->status = response;
+    data->progress (load_uri_data_progress_bytes (data), data->user_data);
 
   if ((data->flags & FLATPAK_HTTP_FLAGS_NOCHECK_STATUS) == 0 &&
       !check_http_status (data->status, error))
@@ -747,17 +883,11 @@ static gboolean
 flatpak_http_should_retry_request (const GError *error,
                                    guint         n_retries_remaining)
 {
-  if (error == NULL || n_retries_remaining == 0)
+  if (n_retries_remaining == 0)
     return FALSE;
 
   /* Return TRUE for transient errors. */
-  if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_TIMED_OUT) ||
-      g_error_matches (error, G_IO_ERROR, G_IO_ERROR_HOST_NOT_FOUND) ||
-      g_error_matches (error, G_IO_ERROR, G_IO_ERROR_HOST_UNREACHABLE) ||
-      g_error_matches (error, G_IO_ERROR, G_IO_ERROR_PARTIAL_INPUT) ||
-      g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CONNECTION_CLOSED) ||
-      g_error_matches (error, G_RESOLVER_ERROR, G_RESOLVER_ERROR_NOT_FOUND) ||
-      g_error_matches (error, G_RESOLVER_ERROR, G_RESOLVER_ERROR_TEMPORARY_FAILURE))
+  if (flatpak_http_error_is_retryable (error))
     {
       g_info ("Should retry request (remaining: %u retries), due to transient error: %s",
               n_retries_remaining, error->message);
@@ -903,8 +1033,28 @@ flatpak_download_http_uri (FlatpakHttpSession    *http_session,
     {
       if (n_retries_remaining < DEFAULT_N_NETWORK_RETRIES)
         {
+          gboolean resume = load_uri_data_should_resume (&data, local_error);
           g_clear_error (&local_error);
-          reset_load_uri_data (&data);
+          if ((data.downloaded_bytes > 0 || data.resume_offset > 0) &&
+              data.out != NULL)
+            {
+              if (resume)
+                {
+                  reset_load_uri_data_for_resume (&data);
+                  if (!seek_output_stream (data.out, data.resume_offset,
+                                           cancellable, &local_error))
+                    break;
+                }
+              else
+                {
+                  if (!reset_output_stream (data.out, cancellable, &local_error))
+                    break;
+
+                  reset_load_uri_data (&data);
+                }
+            }
+          else
+            reset_load_uri_data (&data);
         }
 
       success =  flatpak_download_http_uri_once (http_session, &data, uri, &local_error);
@@ -913,11 +1063,6 @@ flatpak_download_http_uri (FlatpakHttpSession    *http_session,
         break;
 
       g_assert (local_error != NULL);
-
-      /* If the output stream has already been written to we can't retry.
-       * TODO: use a range request to resume the download */
-      if (data.downloaded_bytes > 0)
-        break;
     }
   while (flatpak_http_should_retry_request (local_error, n_retries_remaining--));
 
