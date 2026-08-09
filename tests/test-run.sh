@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..27"
+echo "1..28"
 
 # Use stable rather than master as the branch so we can test that the run
 # command automatically finds the branch correctly
@@ -594,6 +594,75 @@ sed -e 's,^,#--persist=.# ,g' < "$HOME/.var/app/org.test.Hello/.persistrc" >&2
 assert_file_has_content "$HOME/.var/app/org.test.Hello/.persistrc" "can-persist"
 
 ok "--persist=. persists all files"
+
+# com.valvesoftware.Steam is an example of an app that wants to use the
+# canonical paths ~/.cache, ~/.config and ~/.local/share, to work around
+# games that don't support the XDG basedir spec properly
+app_dir="$HOME/.var/app/org.test.Hello"
+rm -fr "$app_dir"
+mkdir -p "$app_dir"
+for subdir in .cache .config .local .local/share; do
+    mkdir -m700 "$app_dir/$subdir"
+done
+# This is the symlink that com.valvesoftware.Steam uses to achieve that
+ln -fns .cache "$app_dir/cache"
+ln -fns .config "$app_dir/config"
+ln -fns .local/share "$app_dir/data"
+run --command=sh --persist=. org.test.Hello -c '
+echo "HOME=$HOME"
+echo "XDG_CACHE_HOME=$XDG_CACHE_HOME"
+echo "XDG_CONFIG_HOME=$XDG_CONFIG_HOME"
+echo "XDG_DATA_HOME=$XDG_DATA_HOME"
+echo "via-HOME" > ~/via-HOME
+echo "via-var-app" > ~/.var/app/org.test.Hello/via-var-app
+echo "via-XDG_CACHE_HOME" > "$XDG_CACHE_HOME/via-XDG_CACHE_HOME"
+echo "via-XDG_CONFIG_HOME" > "$XDG_CONFIG_HOME/via-XDG_CONFIG_HOME"
+echo "via-XDG_DATA_HOME" > "$XDG_DATA_HOME/via-XDG_DATA_HOME"
+echo "via-.cache" > ~/.cache/via-.cache
+echo "via-.config" > ~/.config/via-.config
+echo "via-.local-share" > ~/.local/share/via-.local-share
+echo "via-cache" > ~/cache/via-cache
+echo "via-config" > ~/config/via-config
+echo "via-data" > ~/data/via-data
+echo "via-var-cache" > /var/cache/via-var-cache
+echo "via-var-config" > /var/config/via-var-config
+echo "via-var-data" > /var/data/via-var-data
+' >&2
+# $HOME and $app_dir in the sandbox are both the same as $app_dir outside
+assert_file_has_content "$app_dir/via-HOME" '^via-HOME$'
+assert_file_has_content "$app_dir/via-var-app" '^via-var-app$'
+# $app_dir/.cache, $app_dir/cache, /var/cache are the same place
+assert_file_has_content "$app_dir/cache/via-XDG_CACHE_HOME" '^via-XDG_CACHE_HOME$'
+assert_file_has_content "$app_dir/cache/via-.cache" '^via-\.cache$'
+assert_file_has_content "$app_dir/cache/via-cache" '^via-cache$'
+assert_file_has_content "$app_dir/cache/via-var-cache" '^via-var-cache$'
+# Same for config
+assert_file_has_content "$app_dir/config/via-XDG_CONFIG_HOME" '^via-XDG_CONFIG_HOME$'
+assert_file_has_content "$app_dir/config/via-.config" '^via-\.config$'
+assert_file_has_content "$app_dir/config/via-config" '^via-config$'
+assert_file_has_content "$app_dir/config/via-var-config" '^via-var-config$'
+# Same for data, except the canonical name is .local/share
+assert_file_has_content "$app_dir/data/via-XDG_DATA_HOME" '^via-XDG_DATA_HOME$'
+assert_file_has_content "$app_dir/data/via-.local-share" '^via-\.local-share$'
+assert_file_has_content "$app_dir/data/via-data" '^via-data$'
+assert_file_has_content "$app_dir/data/via-var-data" '^via-var-data$'
+# The realpath of $HOME/.cache canonicalizes to (realpath of $HOME)/.cache.
+# Experimentally, this is the arrangement that is least likely to break
+# non-spec-compliant game engines
+run --command=sh --persist=. org.test.Hello -c 'readlink -f ~/.cache' > "$app_dir/cache/realpath"
+echo "$(readlink -f "$HOME")/.cache" > "$app_dir/cache/expected-realpath"
+diff -u "$app_dir/cache/expected-realpath" "$app_dir/cache/realpath" >&2
+# Similarly $XDG_CONFIG_HOME canonicalizes to $HOME/.config
+run --command=sh --persist=. org.test.Hello -c 'readlink -f ~/.config' > "$app_dir/config/realpath"
+echo "$(readlink -f "$HOME")/.config" > "$app_dir/config/expected-realpath"
+diff -u "$app_dir/config/expected-realpath" "$app_dir/config/realpath" >&2
+# Similarly $XDG_DATA_HOME canonicalizes to $HOME/.local/share
+run --command=sh --persist=. org.test.Hello -c 'readlink -f ~/.local/share' > "$app_dir/data/realpath"
+echo "$(readlink -f "$HOME")/.local/share" > "$app_dir/data/expected-realpath"
+diff -u "$app_dir/data/expected-realpath" "$app_dir/data/realpath" >&2
+rm -fr "$app_dir"
+
+ok "--persist=. behaving like com.valvesoftware.Steam"
 
 mkdir "${TEST_DATA_DIR}/inaccessible"
 echo FOO > ${TEST_DATA_DIR}/inaccessible/secret-file
