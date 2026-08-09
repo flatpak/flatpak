@@ -389,6 +389,19 @@ handle_deploy (FlatpakSystemHelper   *object,
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
+  ref = flatpak_decomposed_new_from_ref (arg_ref, &error);
+  if (ref == NULL)
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  if (!flatpak_is_valid_remote_name (arg_origin, -1, &error))
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
   if (strlen (arg_repo_path) > 0)
     {
       g_autoptr(GError) local_error = NULL;
@@ -430,13 +443,6 @@ handle_deploy (FlatpakSystemHelper   *object,
            * from here on, should always cleanup the cache-dir and not preserve it to be reused. */
           ongoing_pull->preserve_pull = FALSE;
         }
-    }
-
-  ref = flatpak_decomposed_new_from_ref (arg_ref, &error);
-  if (ref == NULL)
-    {
-      g_dbus_method_invocation_return_gerror (invocation, error);
-      return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
   no_deploy = (arg_flags & FLATPAK_HELPER_DEPLOY_FLAGS_NO_DEPLOY) != 0;
@@ -733,6 +739,18 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
+  if (!flatpak_is_valid_remote_name (arg_origin, -1, &error))
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  if (!flatpak_is_valid_arch (arg_arch, -1, &error))
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
   if (strlen (arg_repo_path) > 0)
     {
       g_autoptr(GFile) repo_file = g_file_new_for_path (arg_repo_path);
@@ -962,6 +980,12 @@ handle_install_bundle (FlatpakSystemHelper   *object,
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
+  if (!flatpak_is_valid_remote_name (arg_remote, -1, &error))
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
   if (!g_file_query_exists (bundle_file, NULL))
     {
       g_dbus_method_invocation_return_error (invocation, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
@@ -1007,10 +1031,9 @@ handle_configure_remote (FlatpakSystemHelper   *object,
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
-  if (*arg_remote == 0 || strchr (arg_remote, '/') != NULL)
+  if (!flatpak_is_valid_remote_name (arg_remote, -1, &error))
     {
-      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
-                                             "Invalid remote name: %s", arg_remote);
+      g_dbus_method_invocation_return_gerror (invocation, error);
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
@@ -1148,10 +1171,9 @@ handle_update_remote (FlatpakSystemHelper   *object,
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
-  if (*arg_remote == 0 || strchr (arg_remote, '/') != NULL)
+  if (!flatpak_is_valid_remote_name (arg_remote, -1, &error))
     {
-      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
-                                             "Invalid remote name: %s", arg_remote);
+      g_dbus_method_invocation_return_gerror (invocation, error);
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
@@ -1234,10 +1256,9 @@ handle_remove_local_ref (FlatpakSystemHelper   *object,
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
-  if (*arg_remote == 0 || strchr (arg_remote, '/') != NULL)
+  if (!flatpak_is_valid_remote_name (arg_remote, -1, &error))
     {
-      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
-                                             "Invalid remote name: %s", arg_remote);
+      g_dbus_method_invocation_return_gerror (invocation, error);
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
@@ -1798,6 +1819,12 @@ handle_generate_oci_summary (FlatpakSystemHelper   *object,
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
                                              "Unsupported flags enabled: 0x%x", (arg_flags & ~FLATPAK_HELPER_GENERATE_OCI_SUMMARY_FLAGS_ALL));
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  if (!flatpak_is_valid_remote_name (arg_origin, -1, &error))
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
