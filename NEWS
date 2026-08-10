@@ -1,8 +1,92 @@
 Changes in 1.19.0
 ~~~~~~~~~~~~~~~~~
-Released: not yet
+Released: 2026-08-11
 
-...
+Security fixes:
+
+* Fix sandbox escape with full host filesystem read/write access via symlink
+  attack on app data directories (GHSA-8688-9x26-hhxj)
+
+* Fix local root privilege escalation via revokefs symlink path traversal and
+  commit tampering (GHSA-qrwq-7qwx-q9rp)
+
+* Fix arbitrary root write via symlink and path traversal in extra-data
+  extraction (GHSA-fqx6-vh4p-42cg)
+
+* Fix arbitrary root write via path traversal in `flatpak build-init`
+  (GHSA-8qxj-x646-phcm)
+
+* Fix arbitrary host file read via hardlink path traversal in OCI archive
+  extraction (GHSA-9rww-v4mm-x4jg)
+
+* Fix path traversal via unvalidated architecture parameter in DeployAppstream
+  (GHSA-v2gw-v9h5-9q4x)
+
+* Fix buffer overflow in OCI delta stream path names on 32-bit systems
+  (GHSA-jr92-2v97-wgvc)
+
+* Fix fixed-filename writes to arbitrary locations via symlink attack on .ld.so
+  (GHSA-99wv-m8rp-g58x)
+
+* Fix extension metadata path traversal allowing host filesystem probing and
+  unintended mount locations (GHSA-w69g-9x8j-7p8f)
+
+* Fix anti-downgrade bypass allowing unprivileged users to downgrade system
+  apps (GHSA-q4gr-vc25-57m5)
+
+Enhancements:
+
+* Allow system-wide downgrades through the system helper, authenticated via
+  new polkit actions instead of requiring root (#6669)
+
+* Add `flatpak-coredumpctl list` subcommand and Bash completion for
+  flatpak-coredumpctl (#6705, #6678, #6677)
+
+* Add flatpak_transaction_progress_get_bytes_per_second() to the library API
+  (#6679)
+
+* Lock the session helper's runtime directory to prevent systemd-tmpfiles from
+  cleaning the p11-kit socket (#6754)
+
+* Check OCI signatures from the mirrored repo in the system helper instead of
+  fetching them from the lookaside server (#6682)
+
+* Cleanup of Bash completion (#6710)
+
+* Translation updates: pt_BR (#6701, #6751), sl (#6726), sv (#6750), uk
+  (#6715), zh_CN (#6748)
+
+Bug fixes:
+
+* Fix portal flatpak-spawn environment handling regression (#6721)
+
+* Don't set no_interaction for --assumeyes, so that credential and polkit
+  prompts still work (#6744)
+
+* Fix the inverted behavior of --clear-env (#6722)
+
+* Fix negated permission strings for allow and share run options (#6684, #6687)
+
+* Error out if file forwarding of empty paths is attempted (#6693)
+
+* Fix build failure when exporting metainfo releases.xml files (#6698)
+
+* Fix crashes in the portal update monitor (#6692) and OCI JSON handling
+  (#6704)
+
+* Fix GI annotation for flatpak_instance_get_all (#6696)
+
+* Apply TLS certs to OCI registry requests and propagate stream write failures
+  to curl (#6685)
+
+* Harden the system helper by validating remote names, dropping supplementary
+  groups, and not logging credentials (#6722, #6724)
+
+* Numerous fixes for crashes, memory leaks, integer overflows, and error
+  handling (#6722, #6724, #6723, #6713, #6725)
+
+* Test, CI, and documentation improvements (#6681, #6742, #6711, #6712, #6752,
+  #6755)
 
 Changes in 1.18.0
 ~~~~~~~~~~~~~~~~~
