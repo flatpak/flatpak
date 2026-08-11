@@ -3103,6 +3103,7 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
   gboolean sandboxed = (flags & FLATPAK_RUN_FLAG_SANDBOX) != 0;
   gboolean parent_expose_pids = (flags & FLATPAK_RUN_FLAG_PARENT_EXPOSE_PIDS) != 0;
   gboolean parent_share_pids = (flags & FLATPAK_RUN_FLAG_PARENT_SHARE_PIDS) != 0;
+  glnx_autofd int runtime_deploy_dfd = -1;
   glnx_autofd int original_runtime_fd = -1;
   g_autoptr(GFile) original_runtime_files = NULL;
   g_autoptr(GFile) custom_runtime_files = NULL;
@@ -3228,6 +3229,11 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
   if (runtime_deploy == NULL)
     return FALSE;
 
+  if (!glnx_opendirat (AT_FDCWD,
+                       flatpak_file_get_path_cached (flatpak_deploy_get_dir (runtime_deploy)),
+                       FALSE, &runtime_deploy_dfd, error))
+    return FALSE;
+
   runtime_deploy_data = flatpak_deploy_get_deploy_data (runtime_deploy, FLATPAK_DEPLOY_VERSION_ANY, cancellable, error);
   if (runtime_deploy_data == NULL)
     return FALSE;
@@ -3258,10 +3264,9 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
 
   flatpak_context_dump (app_context, "Final context");
   original_runtime_files = flatpak_deploy_get_files (runtime_deploy);
-  original_runtime_fd = open (flatpak_file_get_path_cached (original_runtime_files),
-                              O_PATH | O_CLOEXEC);
+  original_runtime_fd = flatpak_deploy_get_files_fd (runtime_deploy_dfd, NULL, 0, error);
   if (original_runtime_fd < 0)
-    return glnx_throw_errno_prefix (error, "Failed to open original runtime");
+    return glnx_prefix_error (error, "Failed to open original runtime");
 
   if (custom_runtime_fd >= 0)
     {
