@@ -969,6 +969,41 @@ test_sockets_evaluate_conditions_has_wayland (FlatpakContextConditions condition
 }
 
 static void
+test_persist_trailing_slash (void)
+{
+  g_autoptr(FlatpakContext) context = flatpak_context_new ();
+  g_autoptr(GError) local_error = NULL;
+
+  context_parse_args (context, &local_error, "--persist=folder/", NULL);
+  g_assert_no_error (local_error);
+  g_assert_true (g_hash_table_contains (context->persistent, "folder"));
+  g_assert_false (g_hash_table_contains (context->persistent, "folder/"));
+
+  g_hash_table_remove_all (context->persistent);
+
+  context_parse_args (context, &local_error, "--persist=foo/bar/", NULL);
+  g_assert_no_error (local_error);
+  g_assert_true (g_hash_table_contains (context->persistent, "foo/bar"));
+  g_assert_false (g_hash_table_contains (context->persistent, "foo/bar/"));
+
+  g_hash_table_remove_all (context->persistent);
+
+  context_parse_args (context, &local_error, "--persist=/", NULL);
+  g_assert_no_error (local_error);
+  g_assert_cmpuint (g_hash_table_size (context->persistent), ==, 0);
+
+  context_parse_args (context, &local_error, "--persist=a///", NULL);
+  g_assert_no_error (local_error);
+  g_assert_true (g_hash_table_contains (context->persistent, "a"));
+
+  g_hash_table_remove_all (context->persistent);
+
+  context_parse_args (context, &local_error, "--persist=no-trailing-slash", NULL);
+  g_assert_no_error (local_error);
+  g_assert_true (g_hash_table_contains (context->persistent, "no-trailing-slash"));
+}
+
+static void
 test_sockets (void)
 {
   FlatpakContextSockets sockets;
@@ -1031,6 +1066,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/context/env", test_context_env);
   g_test_add_func ("/context/env-fd", test_context_env_fd);
   g_test_add_func ("/context/merge-fs", test_context_merge_fs);
+  g_test_add_func ("/context/persist-trailing-slash", test_persist_trailing_slash);
   g_test_add_func ("/context/validate-path-args", test_validate_path_args);
   g_test_add_func ("/context/validate-path-meta", test_validate_path_meta);
   g_test_add_func ("/context/devices", test_devices);
