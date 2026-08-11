@@ -229,8 +229,9 @@ glnx_fd_get_all_xattrs (int            fd,
                         GCancellable  *cancellable,
                         GError       **error)
 {
-  return get_xattrs_impl (NULL, fd, out_xattrs,
-                          cancellable, error);
+  char buf[PATH_MAX];
+  snprintf (buf, sizeof (buf), "/proc/self/fd/%d", fd);
+  return get_xattrs_impl (buf, -1, out_xattrs, cancellable, error);
 }
 
 /**
