@@ -9145,41 +9145,21 @@ flatpak_rewrite_export_dir (const char         *app,
                             const char         *arch,
                             GKeyFile           *metadata,
                             const char * const *previous_ids,
-                            GFile              *source,
+                            int                 export_dfd,
                             GCancellable       *cancellable,
                             GError            **error)
 {
-  gboolean ret = FALSE;
-  g_autoptr(GFile) parent = g_file_get_parent (source);
-  glnx_autofd int parentfd = -1;
-  g_autofree char *name = g_file_get_basename (source);
-
-  /* Start with a source path of "" - we don't care about
-   * the "export" component and we want to start path traversal
-   * relative to it. */
-  const char *source_path = "";
   g_autoptr(FlatpakContext) context = flatpak_context_new ();
 
   if (!flatpak_context_load_metadata (context, metadata, error))
     return FALSE;
 
-  if (!glnx_opendirat (AT_FDCWD,
-                       flatpak_file_get_path_cached (parent),
-                       TRUE,
-                       &parentfd,
-                       error))
+  if (!rewrite_export_dir (app, branch, arch, metadata, previous_ids, context,
+                           export_dfd, ".", "",
+                           cancellable, error))
     return FALSE;
 
-  /* The fds are closed by this call */
-  if (!rewrite_export_dir (app, branch, arch, metadata, previous_ids, context,
-                           parentfd, name, source_path,
-                           cancellable, error))
-    goto out;
-
-  ret = TRUE;
-
-out:
-  return ret;
+  return TRUE;
 }
 
 
@@ -10080,7 +10060,6 @@ flatpak_dir_deploy (FlatpakDir          *self,
   g_autoptr(GFile) deploy_base = NULL;
   glnx_autofd int deploy_base_dfd = -1;
   g_autoptr(GFile) checkoutdir = NULL;
-  g_autoptr(GFile) bindir = NULL;
   g_autofree char *checkoutdirpath = NULL;
   const char *checkoutdir_basename;
   g_autoptr(GFile) real_checkoutdir = NULL;
@@ -10088,7 +10067,6 @@ flatpak_dir_deploy (FlatpakDir          *self,
   g_autoptr(GFile) deploy_data_file = NULL;
   g_autoptr(GVariant) commit_data = NULL;
   g_autoptr(GBytes) deploy_data = NULL;
-  g_autoptr(GFile) export = NULL;
   g_autoptr(GFile) extradir = NULL;
   g_autoptr(GKeyFile) keyfile = NULL;
   guint64 installed_size = 0;
@@ -10439,32 +10417,43 @@ flatpak_dir_deploy (FlatpakDir          *self,
       g_autofree char *escaped_branch = maybe_quote (ref_branch);
       g_autofree char *escaped_arch = maybe_quote (ref_arch);
       g_autofree char *bin_data = NULL;
-      g_autoptr(GFile) wrapper = NULL;
+      glnx_autofd int export_dfd = -1;
+      glnx_autofd int bin_dfd = -1;
       int r;
 
-      export = g_file_get_child (checkoutdir, "export");
-      bindir = g_file_get_child (export, "bin");
-      wrapper = g_file_get_child (bindir, ref_id);
+      export_dfd = glnx_chase_and_mkdirat (checkoutdir_dfd, "export",
+                                           GLNX_CHASE_RESOLVE_NO_SYMLINKS,
+                                           0755, error);
+      if (export_dfd < 0)
+        return FALSE;
 
-      if (!flatpak_mkdir_p (bindir, cancellable, error))
+      bin_dfd = glnx_chase_and_mkdirat (export_dfd, "bin",
+                                        GLNX_CHASE_RESOLVE_NO_SYMLINKS,
+                                        0755, error);
+      if (bin_dfd < 0)
         return FALSE;
 
       if (!flatpak_rewrite_export_dir (ref_id, ref_branch, ref_arch,
-                                       keyfile, previous_ids, export,
+                                       keyfile, previous_ids, export_dfd,
                                        cancellable,
                                        error))
         return FALSE;
+
       if ((flatpak = g_getenv ("FLATPAK_BINARY")) == NULL)
         flatpak = FLATPAK_BINDIR "/flatpak";
 
       bin_data = g_strdup_printf ("#!/bin/sh\nexec %s run --branch=%s --arch=%s %s \"$@\"\n",
                                   flatpak, escaped_branch, escaped_arch, escaped_app);
-      if (!g_file_replace_contents (wrapper, bin_data, strlen (bin_data), NULL, FALSE,
-                                    G_FILE_CREATE_REPLACE_DESTINATION, NULL, cancellable, error))
+
+      if (!glnx_file_replace_contents_at (bin_dfd, ref_id,
+                                          (const uint8_t *) bin_data,
+                                          strlen (bin_data),
+                                          GLNX_FILE_REPLACE_NODATASYNC,
+                                          cancellable, error))
         return FALSE;
 
       do
-        r = fchmodat (AT_FDCWD, flatpak_file_get_path_cached (wrapper), 0755, 0);
+        r = fchmodat (bin_dfd, ref_id, 0755, 0);
       while (G_UNLIKELY (r == -1 && errno == EINTR));
       if (r == -1)
         return glnx_throw_errno_prefix (error, "fchmodat");
