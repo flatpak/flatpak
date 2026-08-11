@@ -9110,7 +9110,6 @@ flatpak_dir_deploy (FlatpakDir          *self,
   g_autofree char *checkoutdirpath = NULL;
   const char *checkoutdir_basename;
   g_autoptr(GFile) real_checkoutdir = NULL;
-  g_autoptr(GFile) files_etc = NULL;
   g_autoptr(GFile) deploy_data_file = NULL;
   g_autoptr(GVariant) commit_data = NULL;
   g_autoptr(GBytes) deploy_data = NULL;
@@ -9413,43 +9412,55 @@ flatpak_dir_deploy (FlatpakDir          *self,
     {
       /* Ensure that various files exist as regular files in /usr/etc, as we
          want to bind-mount over them */
-      files_etc = g_file_resolve_relative_path (checkoutdir, "files/etc");
-      if (g_file_query_exists (files_etc, cancellable))
-        {
-          static const char * const etcfiles[] = {"passwd", "group", "machine-id" };
-          g_autoptr(GFile) etc_resolve_conf = g_file_get_child (files_etc, "resolv.conf");
-          int i;
-          for (i = 0; i < G_N_ELEMENTS (etcfiles); i++)
-            {
-              g_autoptr(GFile) etc_file = g_file_get_child (files_etc, etcfiles[i]);
-              GFileType type;
+      g_autoptr(GError) local_error = NULL;
+      glnx_autofd int etc_dfd = -1;
 
-              type = g_file_query_file_type (etc_file, G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
-                                             cancellable);
-              if (type == G_FILE_TYPE_REGULAR)
+      etc_dfd = flatpak_deploy_get_files_fd (checkoutdir_dfd, "etc",
+                                             GLNX_CHASE_MUST_BE_DIRECTORY,
+                                             &local_error);
+      if (etc_dfd < 0 &&
+          !g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        {
+          g_propagate_error (error, g_steal_pointer (&local_error));
+          return FALSE;
+        }
+      g_clear_error (&local_error);
+
+      if (etc_dfd >= 0)
+        {
+          static const char * const etcfiles[] = {
+            "passwd", "group", "machine-id",
+          };
+
+          for (size_t i = 0; i < G_N_ELEMENTS (etcfiles); i++)
+            {
+              struct stat stbuf;
+
+              if (!glnx_fstatat_allow_noent (etc_dfd, etcfiles[i], &stbuf,
+                                             AT_SYMLINK_NOFOLLOW, error))
+                return FALSE;
+              if (errno == 0 && S_ISREG (stbuf.st_mode))
                 continue;
 
-              if (type != G_FILE_TYPE_UNKNOWN)
-                {
-                  /* Already exists, but not regular, probably symlink. Remove it */
-                  if (!g_file_delete (etc_file, cancellable, error))
-                    return FALSE;
-                }
-
-              if (!g_file_replace_contents (etc_file, "", 0, NULL, FALSE,
-                                            G_FILE_CREATE_REPLACE_DESTINATION,
-                                            NULL, cancellable, error))
+              if (!glnx_file_replace_contents_at (etc_dfd, etcfiles[i],
+                                                  (const guint8 *) "", 0,
+                                                  GLNX_FILE_REPLACE_NODATASYNC,
+                                                  cancellable, error))
                 return FALSE;
             }
 
-          if (g_file_query_exists (etc_resolve_conf, cancellable) &&
-              !g_file_delete (etc_resolve_conf, cancellable, error))
-            return FALSE;
+          if (!glnx_unlinkat (etc_dfd, "resolv.conf", 0, &local_error))
+            {
+              if (!g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+                {
+                  g_propagate_error (error, g_steal_pointer (&local_error));
+                  return FALSE;
+                }
+              g_clear_error (&local_error);
+            }
 
-          if (!g_file_make_symbolic_link (etc_resolve_conf,
-                                          "/run/host/monitor/resolv.conf",
-                                          cancellable, error))
-            return FALSE;
+          if (symlinkat ("/run/host/monitor/resolv.conf", etc_dfd, "resolv.conf") != 0)
+            return glnx_throw_errno_prefix (error, "symlinkat(files/etc/resolv.conf)");
         }
 
       /* Runtime should never export anything */
