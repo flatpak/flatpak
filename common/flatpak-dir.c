@@ -10369,12 +10369,23 @@ flatpak_dir_deploy (FlatpakDir          *self,
       return FALSE;
   }
 
-  export = g_file_get_child (checkoutdir, "export");
-
   /* Never export any binaries bundled with the app */
-  bindir = g_file_get_child (export, "bin");
-  if (!flatpak_rm_rf (bindir, cancellable, error))
-    return FALSE;
+  {
+    g_autoptr(GError) local_error = NULL;
+    glnx_autofd int export_dfd = -1;
+
+    export_dfd = flatpak_deploy_get_export_fd (checkoutdir_dfd, NULL, 0, &local_error);
+    if (export_dfd < 0 &&
+        !g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+      {
+        g_propagate_error (error, g_steal_pointer (&local_error));
+        return FALSE;
+      }
+
+    if (export_dfd >= 0 &&
+        !glnx_shutil_rm_rf_at (export_dfd, "bin", cancellable, error))
+      return FALSE;
+  }
 
   if (flatpak_decomposed_is_runtime (ref))
     {
@@ -10420,19 +10431,23 @@ flatpak_dir_deploy (FlatpakDir          *self,
         }
 
       /* Runtime should never export anything */
-      if (!flatpak_rm_rf (export, cancellable, error))
+      if (!glnx_shutil_rm_rf_at (checkoutdir_dfd, "export", cancellable, error))
         return FALSE;
     }
   else /* is app */
     {
       g_autofree char *ref_arch = flatpak_decomposed_dup_arch (ref);
       g_autofree char *ref_branch = flatpak_decomposed_dup_branch (ref);
-      g_autoptr(GFile) wrapper = g_file_get_child (bindir, ref_id);
       g_autofree char *escaped_app = maybe_quote (ref_id);
       g_autofree char *escaped_branch = maybe_quote (ref_branch);
       g_autofree char *escaped_arch = maybe_quote (ref_arch);
       g_autofree char *bin_data = NULL;
+      g_autoptr(GFile) wrapper = NULL;
       int r;
+
+      export = g_file_get_child (checkoutdir, "export");
+      bindir = g_file_get_child (export, "bin");
+      wrapper = g_file_get_child (bindir, ref_id);
 
       if (!flatpak_mkdir_p (bindir, cancellable, error))
         return FALSE;
