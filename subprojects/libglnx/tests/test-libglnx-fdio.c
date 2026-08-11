@@ -356,6 +356,30 @@ test_filecopy (void)
 }
 
 static void
+test_copy_symlink (void)
+{
+  _GLNX_TEST_DECLARE_ERROR(local_error, error);
+  struct stat stbuf;
+  g_autofree char *target = NULL;
+
+  if (symlinkat ("sometarget", AT_FDCWD, "srclink") < 0)
+    return (void) glnx_throw_errno_prefix (error, "symlinkat");
+
+  if (!glnx_file_copy_at (AT_FDCWD, "srclink", NULL, AT_FDCWD, "dstlink",
+                          GLNX_FILE_COPY_NOXATTRS, NULL, error))
+    return;
+
+  if (!glnx_fstatat (AT_FDCWD, "dstlink", &stbuf, AT_SYMLINK_NOFOLLOW, error))
+    return;
+  g_assert (S_ISLNK (stbuf.st_mode));
+
+  target = glnx_readlinkat_malloc (AT_FDCWD, "dstlink", NULL, error);
+  if (!target)
+    return;
+  g_assert_cmpstr (target, ==, "sometarget");
+}
+
+static void
 test_filecopy_procfs (void)
 {
   const char * const pseudo_files[] =
@@ -674,6 +698,7 @@ int main (int argc, char **argv)
   g_test_add_func ("/tmpfile", test_tmpfile);
   g_test_add_func ("/stdio-file", test_stdio_file);
   g_test_add_func ("/filecopy", test_filecopy);
+  g_test_add_func ("/copy-symlink", test_copy_symlink);
   g_test_add_func ("/filecopy-procfs", test_filecopy_procfs);
   g_test_add_func ("/renameat2-noreplace", test_renameat2_noreplace);
   g_test_add_func ("/renameat2-exchange", test_renameat2_exchange);
