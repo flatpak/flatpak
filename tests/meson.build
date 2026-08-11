@@ -183,7 +183,6 @@ foreach testcase : c_tests
       args : [exe],
       depends : runtime_repo,
       env : test_env,
-      protocol : 'tap',
       timeout : options.get('timeout', 30),
     )
   endif
