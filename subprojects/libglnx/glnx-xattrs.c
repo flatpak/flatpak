@@ -338,25 +338,12 @@ glnx_dfd_name_set_all_xattrs (int            dfd,
 gboolean
 glnx_fd_set_all_xattrs (int            fd,
                         GVariant      *xattrs,
-                        G_GNUC_UNUSED GCancellable *cancellable,
+                        GCancellable  *cancellable,
                         GError       **error)
 {
-  const guint n = g_variant_n_children (xattrs);
-  for (guint i = 0; i < n; i++)
-    {
-      const guint8* name;
-      g_autoptr(GVariant) value = NULL;
-      g_variant_get_child (xattrs, i, "(^&ay@ay)",
-                           &name, &value);
-
-      gsize value_len;
-      const guint8* value_data = g_variant_get_fixed_array (value, &value_len, 1);
-
-      if (TEMP_FAILURE_RETRY (fsetxattr (fd, (char*)name, (char*)value_data, value_len, 0)) < 0)
-        return glnx_throw_errno_prefix (error, "Setting xattrs: fsetxattr(%s)", name);
-    }
-
-  return TRUE;
+  char buf[PATH_MAX];
+  snprintf (buf, sizeof (buf), "/proc/self/fd/%d", fd);
+  return set_all_xattrs_for_path (buf, xattrs, cancellable, error);
 }
 
 /**
