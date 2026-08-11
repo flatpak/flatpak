@@ -12590,27 +12590,36 @@ out:
 }
 
 static gboolean
-dir_is_locked (GFile *dir)
+deploy_dir_is_locked (GFile *deploy_dir)
 {
+  glnx_autofd int deploy_dfd = -1;
+  glnx_autofd int ref_path_fd = -1;
   glnx_autofd int ref_fd = -1;
   struct flock lock = {0};
-  g_autoptr(GFile) reffile = NULL;
 
-  reffile = g_file_resolve_relative_path (dir, "files/.ref");
+  if (!glnx_opendirat (AT_FDCWD, flatpak_file_get_path_cached (deploy_dir),
+                       FALSE, &deploy_dfd, NULL))
+    return FALSE;
 
-  ref_fd = open (flatpak_file_get_path_cached (reffile), O_RDWR | O_CLOEXEC);
-  if (ref_fd != -1)
-    {
-      lock.l_type = F_WRLCK;
-      lock.l_whence = SEEK_SET;
-      lock.l_start = 0;
-      lock.l_len = 0;
+  ref_path_fd = flatpak_deploy_get_files_fd (deploy_dfd, ".ref",
+                                             GLNX_CHASE_MUST_BE_REGULAR,
+                                             NULL);
+  if (ref_path_fd < 0)
+    return FALSE;
 
-      if (fcntl (ref_fd, F_GETLK, &lock) == 0)
-        return lock.l_type != F_UNLCK;
-    }
+  ref_fd = glnx_fd_reopen (ref_path_fd, O_RDWR, NULL);
+  if (ref_fd < 0)
+    return FALSE;
 
-  return FALSE;
+  lock.l_type = F_WRLCK;
+  lock.l_whence = SEEK_SET;
+  lock.l_start = 0;
+  lock.l_len = 0;
+
+  if (fcntl (ref_fd, F_GETLK, &lock) != 0)
+    return FALSE;
+
+  return lock.l_type != F_UNLCK;
 }
 
 gboolean
@@ -12738,7 +12747,7 @@ flatpak_dir_undeploy (FlatpakDir        *self,
       }
   }
 
-  if (force_remove || !dir_is_locked (removed_subdir))
+  if (force_remove || !deploy_dir_is_locked (removed_subdir))
     {
       g_autoptr(GError) tmp_error = NULL;
 
@@ -12935,7 +12944,7 @@ flatpak_dir_cleanup_removed (FlatpakDir   *self,
       g_autoptr(GFile) child = g_file_get_child (removed_dir, name);
 
       if (g_file_info_get_file_type (child_info) == G_FILE_TYPE_DIRECTORY &&
-          !dir_is_locked (child))
+          !deploy_dir_is_locked (child))
         {
           g_autoptr(GError) tmp_error = NULL;
           if (!flatpak_rm_rf (child, cancellable, &tmp_error))
