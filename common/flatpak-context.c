@@ -1497,10 +1497,21 @@ flatpak_context_set_persistent (FlatpakContext *context,
                                 const char     *path,
                                 GError        **error)
 {
-  if (!flatpak_validate_path_characters (path, error))
+  gsize len;
+
+  len = strlen (path);
+  while (len > 0 && path[len - 1] == '/')
+    len--;
+
+  if (len == 0)
+    return TRUE;
+
+  g_autofree char *stripped = g_strndup (path, len);
+
+  if (!flatpak_validate_path_characters (stripped, error))
     return FALSE;
 
-  g_hash_table_insert (context->persistent, g_strdup (path), GINT_TO_POINTER (1));
+  g_hash_table_insert (context->persistent, g_strdup (stripped), GINT_TO_POINTER (1));
   return TRUE;
 }
 
