@@ -710,12 +710,28 @@ copy_symlink_at (int                   src_dfd,
                  GCancellable         *cancellable,
                  GError              **error)
 {
-  g_autofree char *buf = glnx_readlinkat_malloc (src_dfd, src_subpath, cancellable, error);
+  g_autofree char *buf = NULL;
+  glnx_autofd int fd = -1;
+  g_autofree char *target = NULL;
+
+  buf = glnx_readlinkat_malloc (src_dfd, src_subpath, cancellable, error);
   if (!buf)
     return FALSE;
 
   if (TEMP_FAILURE_RETRY (symlinkat (buf, dest_dfd, dest_subpath)) != 0)
     return glnx_throw_errno_prefix (error, "symlinkat");
+
+  fd = TEMP_FAILURE_RETRY (openat (dest_dfd, dest_subpath,
+                                   O_PATH | O_NOFOLLOW | O_CLOEXEC));
+  if (fd < 0)
+    return glnx_throw_errno_prefix (error, "openat(O_PATH)");
+
+  target = glnx_readlinkat_malloc (fd, "", cancellable, error);
+  if (!target)
+    return FALSE;
+
+  if (strcmp (buf, target) != 0)
+    return glnx_throw (error, "Symlink target changed during copy");
 
   if (!(copyflags & GLNX_FILE_COPY_NOXATTRS))
     {
@@ -725,14 +741,12 @@ copy_symlink_at (int                   src_dfd,
                                          cancellable, error))
         return FALSE;
 
-      if (!glnx_dfd_name_set_all_xattrs (dest_dfd, dest_subpath, xattrs,
-                                         cancellable, error))
+      if (!glnx_fd_set_all_xattrs (fd, xattrs, cancellable, error))
         return FALSE;
     }
 
-  if (TEMP_FAILURE_RETRY (fchownat (dest_dfd, dest_subpath,
-                                    src_stbuf->st_uid, src_stbuf->st_gid,
-                                    AT_SYMLINK_NOFOLLOW)) != 0)
+  if (TEMP_FAILURE_RETRY (fchownat (fd, "", src_stbuf->st_uid, src_stbuf->st_gid,
+                                    AT_EMPTY_PATH)) != 0)
     return glnx_throw_errno_prefix (error, "fchownat");
 
   return TRUE;
