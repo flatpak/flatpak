@@ -52,7 +52,7 @@
         <para>
             The collection ID set on the repository at
             <arg choice="plain">LOCATION</arg> (if set) will be used for the
-            bundle.
+            bundle. Similarly the GPG keys URL will be used if set.
         </para>
         <para>
             Unless <option>--oci</option> is used, the format of the bundle file is
