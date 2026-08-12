@@ -243,7 +243,7 @@ flatpak_gpg_keys_validate_binding (OstreeRepo    *repo,
                                    GCancellable  *cancellable,
                                    GError       **error)
 {
-  const unsigned int MAX_N_KEYS_TO_PROCESS = 20;  /* arbitrarily chosen */
+  const unsigned int MAX_N_KEYS_TO_PROCESS = 20;  /* arbitrarily chosen; keep up to date with doc/flatpak-key-rotation.xml */
   g_auto(gpgme_ctx_t) context = NULL;
   gpgme_error_t gpg_error;
   g_auto(GLnxTmpDir) tmp_home_dir = { 0, };

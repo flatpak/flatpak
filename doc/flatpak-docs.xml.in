@@ -76,4 +76,8 @@
       <xi:include href="@srcdir@/flatpak-metadata.xml"/>
       <xi:include href="@srcdir@/flatpak-remote.xml"/>
     </chapter>
+    <chapter>
+      <title>Miscellaneous</title>
+      <xi:include href="@srcdir@/flatpak-key-rotation.xml"/>
+    </chapter>
 </reference>
