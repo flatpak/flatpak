@@ -4686,7 +4686,8 @@ handle_suggested_remote_name (FlatpakTransaction *self,
 
       /* In case the runtime repo is the same repo, use its title, comment,
        * description, etc. since flatpakref files don't have those fields. */
-      runtime_repo_url = g_key_file_get_string (runtime_repo_keyfile, FLATPAK_REPO_GROUP, FLATPAK_REPO_URL_KEY, NULL);
+      if (runtime_repo_keyfile != NULL)
+        runtime_repo_url = g_key_file_get_string (runtime_repo_keyfile, FLATPAK_REPO_GROUP, FLATPAK_REPO_URL_KEY, NULL);
       if (runtime_repo_url != NULL && flatpak_uri_equal (runtime_repo_url, url))
         config = flatpak_parse_repofile (suggested_name, FALSE, runtime_repo_keyfile, &gpg_key, NULL, error);
       else
