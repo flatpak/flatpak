@@ -314,7 +314,9 @@ cp $(dirname $0)/test-keyring/*.gpg ${FL_GPG_HOMEDIR}/
 cp $(dirname $0)/test-keyring2/*.gpg ${FL_GPG_HOMEDIR2}/
 
 export FL_GPG_ID=7B0961FD
+export FL_GPG_FINGERPRINT=3718EEBEB5740A7AB3D651B7138B31E07B0961FD
 export FL_GPG_ID2=B2314EFC
+export FL_GPG_FINGERPRINT2=E47567C56629E90B6791C5EE759F5FD0B2314EFC
 export FL_GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${FL_GPG_ID}"
 export FL_GPGARGS2="--gpg-homedir=${FL_GPG_HOMEDIR2} --gpg-sign=${FL_GPG_ID2}"
 export FL_GPGCMDARGS="--homedir ${FL_GPG_HOMEDIR} -u ${FL_GPG_ID}"
