@@ -203,6 +203,8 @@ flatpak_remote_get_filter
 flatpak_remote_set_filter
 flatpak_remote_get_main_ref
 flatpak_remote_set_main_ref
+flatpak_remote_get_gpg_keys_url
+flatpak_remote_set_gpg_keys_url
 FlatpakRemoteType
 <SUBSECTION Standard>
 FlatpakRemoteClass

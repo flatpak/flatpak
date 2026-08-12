@@ -713,6 +713,10 @@ test_remote (void)
   flatpak_remote_set_default_branch (remote, "master");
   assert_cmpstr_free_lhs (flatpak_remote_get_default_branch (remote), ==, "master");
 
+  g_assert_null (flatpak_remote_get_gpg_keys_url (remote));
+  flatpak_remote_set_gpg_keys_url (remote, "https://example.com/keyring.gpg");
+  assert_cmpstr_free_lhs (flatpak_remote_get_gpg_keys_url (remote), ==, "https://example.com/keyring.gpg");
+
   /* It should be an error to disable GPG while a collection ID is set. */
   g_assert_true (flatpak_remote_get_gpg_verify (remote));
   flatpak_remote_set_gpg_verify (remote, FALSE);
@@ -742,6 +746,7 @@ test_remote (void)
   g_assert_true (flatpak_remote_get_nodeps (remote));
   g_assert_false (flatpak_remote_get_gpg_verify (remote));
   assert_cmpstr_free_lhs (flatpak_remote_get_default_branch (remote), ==, "master");
+  assert_cmpstr_free_lhs (flatpak_remote_get_gpg_keys_url (remote), ==, "https://example.com/keyring.gpg");
 
   /* back to defaults */
   flatpak_remote_set_title (remote, NULL);
@@ -750,6 +755,7 @@ test_remote (void)
   flatpak_remote_set_nodeps (remote, FALSE);
   flatpak_remote_set_disabled (remote, FALSE);
   flatpak_remote_set_default_branch (remote, NULL);
+  flatpak_remote_set_gpg_keys_url (remote, NULL);
   flatpak_remote_set_gpg_verify (remote, TRUE);
   flatpak_remote_set_collection_id (remote, repo_collection_id);
 

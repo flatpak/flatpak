@@ -65,6 +65,7 @@ struct _FlatpakRemotePrivate
   char             *local_default_branch;
   char             *local_main_ref;
   char             *local_filter;
+  char             *local_gpg_keys_url;
   gboolean          local_gpg_verify;
   gboolean          local_noenumerate;
   gboolean          local_nodeps;
@@ -82,6 +83,7 @@ struct _FlatpakRemotePrivate
   guint             local_default_branch_set : 1;
   guint             local_main_ref_set       : 1;
   guint             local_filter_set         : 1;
+  guint             local_gpg_keys_url_set   : 1;
   guint             local_gpg_verify_set     : 1;
   guint             local_noenumerate_set    : 1;
   guint             local_nodeps_set         : 1;
@@ -122,6 +124,7 @@ flatpak_remote_finalize (GObject *object)
   g_free (priv->local_default_branch);
   g_free (priv->local_main_ref);
   g_free (priv->local_filter);
+  g_free (priv->local_gpg_keys_url);
   g_free (priv->local_comment);
   g_free (priv->local_description);
   g_free (priv->local_homepage);
@@ -787,6 +790,55 @@ flatpak_remote_set_main_ref (FlatpakRemote *self,
 }
 
 /**
+ * flatpak_remote_get_gpg_keys_url:
+ * @self: a #FlatpakRemote
+ *
+ * Returns the GPG keys URL of this remote, if set. This is an URL which can be
+ * used to update the keyring for verifying the repository.
+ *
+ * Returns: (transfer full) (nullable): the GPG keys URL, or %NULL
+ * Since: 1.20.0
+ */
+char *
+flatpak_remote_get_gpg_keys_url (FlatpakRemote *self)
+{
+  FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
+
+  if (priv->local_gpg_keys_url_set)
+    return g_strdup (priv->local_gpg_keys_url);
+
+  if (priv->dir)
+    return flatpak_dir_get_remote_gpg_keys_url (priv->dir, priv->name);
+
+  return NULL;
+}
+
+/**
+ * flatpak_remote_set_gpg_keys_url:
+ * @self: a #FlatpakRemote
+ * @gpg_keys_url: (nullable): The new GPG keys URL
+ *
+ * Sets the GPG keys URL of this remote. This is an URL which can be
+ * used to update the keyring for verifying the repository.
+ *
+ * Note: This is a local modification of this object, you must commit changes
+ * using flatpak_installation_modify_remote() for the changes to take
+ * effect.
+ *
+ * Since: 1.20.0
+ */
+void
+flatpak_remote_set_gpg_keys_url (FlatpakRemote *self,
+                                 const char    *gpg_keys_url)
+{
+  FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
+
+  g_free (priv->local_gpg_keys_url);
+  priv->local_gpg_keys_url = g_strdup (gpg_keys_url);
+  priv->local_gpg_keys_url_set = TRUE;
+}
+
+/**
  * flatpak_remote_get_noenumerate:
  * @self: a #FlatpakRemote
  *
@@ -1134,6 +1186,7 @@ flatpak_remote_new_from_file (const char *name, GBytes *data, GError **error)
   read_str_option("xa.icon", icon);
   read_str_option("xa.default-branch", default_branch);
   read_str_option("xa.main-ref", main_ref);
+  read_str_option("xa.gpg-keys-url", gpg_keys_url);
 
   read_bool_option("xa.gpg-verify", gpg_verify);
   read_bool_option("xa.noenumerate", noenumerate);
@@ -1257,6 +1310,9 @@ flatpak_remote_commit (FlatpakRemote *self,
 
   if (priv->local_main_ref_set)
     g_key_file_set_string (config, group, "xa.main-ref", priv->local_main_ref);
+
+  if (priv->local_gpg_keys_url_set)
+    _key_file_set_or_unset_string (config, group, "xa.gpg-keys-url", priv->local_gpg_keys_url);
 
   if (priv->local_gpg_verify_set)
     {
