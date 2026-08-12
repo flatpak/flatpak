@@ -256,6 +256,18 @@ flatpak_repo_set_gpg_keys (OstreeRepo *repo,
 }
 
 gboolean
+flatpak_repo_set_gpg_keys_url (OstreeRepo  *repo,
+                               const char  *gpg_keys_url,
+                               GError     **error)
+{
+  g_autoptr(GKeyFile) config = NULL;
+
+  config = ostree_repo_copy_config (repo);
+  g_key_file_set_string (config, "flatpak", "gpg-keys-url", gpg_keys_url);
+  return ostree_repo_write_config (repo, config, error);
+}
+
+gboolean
 flatpak_repo_set_default_branch (OstreeRepo *repo,
                                  const char *branch,
                                  GError    **error)

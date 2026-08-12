@@ -133,6 +133,9 @@ guint    flatpak_repo_get_summary_history_length (OstreeRepo *repo);
 gboolean flatpak_repo_set_gpg_keys (OstreeRepo *repo,
                                     GBytes     *bytes,
                                     GError    **error);
+gboolean flatpak_repo_set_gpg_keys_url (OstreeRepo  *repo,
+                                        const char  *gpg_keys_url,
+                                        GError     **error);
 
 gboolean flatpak_repo_collect_sizes (OstreeRepo   *repo,
                                      GFile        *root,
