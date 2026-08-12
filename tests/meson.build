@@ -385,6 +385,10 @@ tests = {
     'user,oldsummary',
     'system,oldsummary',
   ]},
+  'repo-gpg-key-updates': {'wrap': [
+    'user',
+    'system',
+  ]},
   'history': {},
   'sideload': {'wrap': ['user', 'system']},
   'default-remotes': {},
@@ -442,6 +446,7 @@ foreach testcase : wrapped_tests
     'test-bundle.sh' : 60,
     'test-oci-registry.sh' : 60,
     'test-repo.sh' : 300,
+    'test-repo-gpg-key-updates.sh' : 300,
     'test-run.sh' : 90,
     'test-summaries.sh' : 60,
     'test-unused.sh' : 90,

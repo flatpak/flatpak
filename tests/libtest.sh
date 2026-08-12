@@ -723,3 +723,29 @@ assert_not_semicolon_list_contains () {
             ;;
     esac
 }
+
+push_gpg_homedir () {
+    if [ ! -z ${OLD_FL_GPG_HOMEDIR+x} ]; then
+        assert_not_reached "push_gpg_homedir() doesn’t actually implement a stack (yet)"
+    fi
+
+    export OLD_FL_GPG_HOMEDIR="${FL_GPG_HOMEDIR}"
+    export FL_GPG_HOMEDIR="${TEST_DATA_DIR}/gpghome-pushed"
+    mkdir -p "${FL_GPG_HOMEDIR}"
+    cp $(dirname $0)/test-keyring/*.gpg "${FL_GPG_HOMEDIR}"
+    cp -r $(dirname $0)/test-keyring/openpgp-revocs.d/ "${FL_GPG_HOMEDIR}"
+
+    # Force gpg to update the storage format for secret keys before we end up
+    # doing it as part of a random command in a test
+    ${GPG} --homedir="${FL_GPG_HOMEDIR}" --list-secret-keys >&2
+}
+
+pop_gpg_homedir () {
+    if [ -z ${FL_GPG_HOMEDIR+x} ]; then
+        assert_not_reached "pop_gpg_homedir() called too many times"
+    fi
+
+    rm -rf "${FL_GPG_HOMEDIR}"
+    export FL_GPG_HOMEDIR="${OLD_FL_GPG_HOMEDIR}"
+    unset OLD_FL_GPG_HOMEDIR
+}
