@@ -1523,6 +1523,10 @@ name_vanished_cb (GDBusConnection *connection, const gchar *name, gpointer user_
   while (g_hash_table_iter_next (&iter, NULL, &value))
     {
       OngoingPull *pull = (OngoingPull *) value;
+
+      if (pull == NULL)
+        continue;
+
       if (g_strcmp0 (pull->unique_name, unique_name) == 0)
         {
           g_ptr_array_add (cleanup_pulls, pull);
