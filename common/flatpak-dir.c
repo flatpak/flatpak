@@ -443,6 +443,44 @@ _validate_summary_for_collection_id (GVariant    *summary_v,
   return TRUE;
 }
 
+static GVariant *
+summary_new_from_bytes_checked (GBytes  *bytes,
+                                GError **error)
+{
+  g_autoptr(GVariant) v = NULL;
+
+  v = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
+                                                    bytes, FALSE));
+
+  if (!g_variant_is_normal_form (v))
+    {
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                          _("Summary has invalid or corrupted data"));
+      return NULL;
+    }
+
+  return g_steal_pointer (&v);
+}
+
+static GVariant *
+summary_index_new_from_bytes_checked (GBytes  *bytes,
+                                      GError **error)
+{
+  g_autoptr(GVariant) v = NULL;
+
+  v = g_variant_ref_sink (g_variant_new_from_bytes (FLATPAK_SUMMARY_INDEX_GVARIANT_FORMAT,
+                                                    bytes, FALSE));
+
+  if (!g_variant_is_normal_form (v))
+    {
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                          _("Summary index has invalid or corrupted data"));
+      return NULL;
+    }
+
+  return g_steal_pointer (&v);
+}
+
 static void
 flatpak_remote_state_add_sideload_repo (FlatpakRemoteState *self,
                                         GFile *dir)
@@ -466,7 +504,14 @@ flatpak_remote_state_add_sideload_repo (FlatpakRemoteState *self,
       FlatpakSideloadState *ss = g_new0 (FlatpakSideloadState, 1);
 
       ss->repo = g_steal_pointer (&sideload_repo);
-      ss->summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT, summary_bytes, TRUE));
+      ss->summary = summary_new_from_bytes_checked (summary_bytes, NULL);
+      if (ss->summary == NULL)
+        {
+          g_info ("Sideload repo at path %s has invalid summary data",
+                  flatpak_file_get_path_cached (dir));
+          flatpak_sideload_state_free (ss);
+          return;
+        }
 
       if (!_validate_summary_for_collection_id (ss->summary, self->collection_id, &local_error))
         {
@@ -597,7 +642,7 @@ flatpak_remote_state_ensure_subsummary (FlatpakRemoteState *self,
                                         GCancellable       *cancellable,
                                         GError            **error)
 {
-  GVariant *subsummary;
+  g_autoptr(GVariant) subsummary = NULL;
   const char *alt_arch;
   GVariant *subsummary_info_v;
 
@@ -629,8 +674,11 @@ flatpak_remote_state_ensure_subsummary (FlatpakRemoteState *self,
                                                  &bytes, cancellable, error))
     return FALSE;
 
-  subsummary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT, bytes, FALSE));
-  g_hash_table_insert (self->subsummaries, g_strdup (arch), subsummary);
+  subsummary = summary_new_from_bytes_checked (bytes, error);
+  if (subsummary == NULL)
+    return FALSE;
+
+  g_hash_table_insert (self->subsummaries, g_strdup (arch), g_steal_pointer (&subsummary));
 
   return TRUE;
 }
@@ -14017,14 +14065,16 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
 
   if (index_bytes)
     {
-      state->index = g_variant_ref_sink (g_variant_new_from_bytes (FLATPAK_SUMMARY_INDEX_GVARIANT_FORMAT,
-                                                                   index_bytes, FALSE));
+      state->index = summary_index_new_from_bytes_checked (index_bytes, error);
+      if (state->index == NULL)
+        return NULL;
       state->index_sig_bytes = g_steal_pointer (&index_sig_bytes);
     }
   else if (summary_bytes)
     {
-      state->summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
-                                                                     summary_bytes, FALSE));
+      state->summary = summary_new_from_bytes_checked (summary_bytes, error);
+      if (state->summary == NULL)
+        return NULL;
       state->summary_bytes = g_steal_pointer (&summary_bytes);
       state->summary_sig_bytes = g_steal_pointer (&summary_sig_bytes);
     }
