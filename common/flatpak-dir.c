@@ -15465,6 +15465,19 @@ flatpak_dir_get_remote_main_ref (FlatpakDir *self,
 }
 
 char *
+flatpak_dir_get_remote_gpg_keys_url (FlatpakDir *self,
+                                     const char *remote_name)
+{
+  GKeyFile *config = flatpak_dir_get_repo_config (self);
+  g_autofree char *group = get_group (remote_name);
+
+  if (config)
+    return g_key_file_get_string (config, group, "xa.gpg-keys-url", NULL);
+
+  return NULL;
+}
+
+char *
 flatpak_dir_get_remote_default_branch (FlatpakDir *self,
                                        const char *remote_name)
 {
