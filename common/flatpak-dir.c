@@ -98,6 +98,10 @@
 
 #define SIDELOAD_REPOS_DIR_NAME "sideload-repos"
 
+#define MAX_DECOMPRESSED_APPDATA_SIZE (1024 * 1024 * 1024)
+#define MAX_DECOMPRESSED_APPSTREAM_SIZE (1024 * 1024 * 1024)
+#define MAX_DECOMPRESSED_SUMMARY_SIZE (1024 * 1024 * 1024)
+
 #define FLATPAK_TRIGGERS_DIR "triggers"
 
 #ifdef USE_SYSTEM_HELPER
@@ -4031,11 +4035,17 @@ read_appdata_xml_from_deploy_dir (GFile *deploy_dir, const char *id)
   appdata_in = g_file_read (appdata_file, NULL, NULL);
   if (appdata_in)
     {
-      g_autoptr(GZlibDecompressor) decompressor = g_zlib_decompressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP);
-      g_autoptr(GInputStream) converter = g_converter_input_stream_new (G_INPUT_STREAM (appdata_in), G_CONVERTER (decompressor));
+      g_autoptr(GZlibDecompressor) decompressor = NULL;
+      g_autoptr(GInputStream) converter = NULL;
       g_autoptr(GBytes) appdata_xml = NULL;
 
-      appdata_xml = flatpak_read_stream (converter, TRUE, NULL);
+      decompressor = g_zlib_decompressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP);
+      converter = g_converter_input_stream_new (G_INPUT_STREAM (appdata_in),
+                                                G_CONVERTER (decompressor));
+
+      appdata_xml = flatpak_read_stream_limited (converter, TRUE,
+                                                 MAX_DECOMPRESSED_APPDATA_SIZE,
+                                                 NULL);
       if (appdata_xml)
         return g_bytes_unref_to_data (g_steal_pointer (&appdata_xml), &size);
     }
@@ -5472,22 +5482,30 @@ flatpak_dir_deploy_appstream (FlatpakDir   *self,
     {
       g_autoptr(GFile) appstream_xml = g_file_get_child (checkout_dir, "appstream.xml");
       g_autoptr(GFile) appstream_gz_xml = g_file_get_child (checkout_dir, "appstream.xml.gz");
-      g_autoptr(GOutputStream) out2 = NULL;
       g_autoptr(GFileOutputStream) out = NULL;
       g_autoptr(GFileInputStream) in = NULL;
 
       in = g_file_read (appstream_gz_xml, NULL, NULL);
       if (in)
         {
-          g_autoptr(GZlibDecompressor) decompressor = g_zlib_decompressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP);
+          g_autoptr(GZlibDecompressor) decompressor = NULL;
+          g_autoptr(GInputStream) decompressed_in = NULL;
+
           out = g_file_replace (appstream_xml, NULL, FALSE, G_FILE_CREATE_REPLACE_DESTINATION,
                                 NULL, error);
           if (out == NULL)
             return FALSE;
 
-          out2 = g_converter_output_stream_new (G_OUTPUT_STREAM (out), G_CONVERTER (decompressor));
-          if (g_output_stream_splice (out2, G_INPUT_STREAM (in), G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE | G_OUTPUT_STREAM_SPLICE_CLOSE_TARGET,
-                                      NULL, error) < 0)
+          decompressor = g_zlib_decompressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP);
+          decompressed_in = g_converter_input_stream_new (G_INPUT_STREAM (in),
+                                                          G_CONVERTER (decompressor));
+
+          if (flatpak_splice_stream_limited (G_OUTPUT_STREAM (out), decompressed_in,
+                                             MAX_DECOMPRESSED_APPSTREAM_SIZE,
+                                             NULL, error) < 0)
+            return FALSE;
+
+          if (!g_output_stream_close (G_OUTPUT_STREAM (out), NULL, error))
             return FALSE;
         }
     }
@@ -13817,7 +13835,9 @@ flatpak_dir_remote_fetch_indexed_summary (FlatpakDir   *self,
           if (summary_z == NULL)
             return FALSE;
 
-          summary = flatpak_zlib_decompress_bytes (summary_z, error);
+          summary = flatpak_zlib_decompress_bytes_limited (summary_z,
+                                                           MAX_DECOMPRESSED_SUMMARY_SIZE,
+                                                           error);
           if (summary == NULL)
             return FALSE;
 
