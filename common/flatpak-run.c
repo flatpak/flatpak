@@ -2254,9 +2254,18 @@ setup_seccomp (FlatpakBwrap   *bwrap,
         }
     }
 
-  /* Socket filtering doesn't work on e.g. i386, so ignore failures here
-   * However, we need to user seccomp_rule_add_exact to avoid libseccomp doing
-   * something else: https://github.com/seccomp/libseccomp/issues/8 */
+  /* On architectures like i386, socket operations were historically
+   * multiplexed through the socketcall syscall. libseccomp cannot filter
+   * socketcall by argument (they are behind a userspace pointer), so
+   * using seccomp_rule_add will also block all of socketcall on those
+   * architectures. This is intentional: direct socket syscalls have been
+   * available on i386 since Linux 4.3.
+   *
+   * On kernels older than 4.3 where only socketcall exists, this means
+   * socket creation is blocked entirely. On kernels 4.3+ with userspace
+   * old enough to still use socketcall, all socket operations will fail
+   * — but any such userspace predates the glibc switch to direct
+   * syscalls and is not a realistic flatpak target. */
   last_allowed_family = -1;
   for (i = 0; i < G_N_ELEMENTS (socket_family_allowlist); i++)
     {
@@ -2270,12 +2279,12 @@ setup_seccomp (FlatpakBwrap   *bwrap,
       for (disallowed = last_allowed_family + 1; disallowed < family; disallowed++)
         {
           /* Blocklist the in-between valid families */
-          seccomp_rule_add_exact (seccomp, SCMP_ACT_ERRNO (EAFNOSUPPORT), SCMP_SYS (socket), 1, SCMP_A0 (SCMP_CMP_EQ, disallowed));
+          seccomp_rule_add (seccomp, SCMP_ACT_ERRNO (EAFNOSUPPORT), SCMP_SYS (socket), 1, SCMP_A0 (SCMP_CMP_EQ, disallowed));
         }
       last_allowed_family = family;
     }
   /* Blocklist the rest */
-  seccomp_rule_add_exact (seccomp, SCMP_ACT_ERRNO (EAFNOSUPPORT), SCMP_SYS (socket), 1, SCMP_A0 (SCMP_CMP_GE, last_allowed_family + 1));
+  seccomp_rule_add (seccomp, SCMP_ACT_ERRNO (EAFNOSUPPORT), SCMP_SYS (socket), 1, SCMP_A0 (SCMP_CMP_GE, last_allowed_family + 1));
 
   if (!glnx_open_anonymous_tmpfile_full (O_RDWR | O_CLOEXEC, "/tmp", &seccomp_tmpf, error))
     return FALSE;
