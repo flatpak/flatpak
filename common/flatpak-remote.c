@@ -1135,7 +1135,7 @@ flatpak_remote_new_from_file (const char *name, GBytes *data, GError **error)
   read_str_option("xa.default-branch", default_branch);
   read_str_option("xa.main-ref", main_ref);
 
-  read_bool_option("xa.gpg-verify", gpg_verify);
+  read_bool_option("gpg-verify", gpg_verify);
   read_bool_option("xa.noenumerate", noenumerate);
   read_bool_option("xa.disable", disabled);
   read_bool_option("xa.nodeps", nodeps);
