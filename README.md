@@ -33,3 +33,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md)
 Here are some notable projects in the Flatpak ecosystem:
 * [Flatseal](https://github.com/tchx84/flatseal): An app for managing permissions of Flatpak apps without using the CLI
 * [Flat-manager](https://github.com/flatpak/flat-manager): A tool for managing Flatpak repositories
+
+# Host Requirements
+
+Flatpak aims to run on a wide variety of systems. It is therefore conservative
+with required dependency versions and kernel features.
+
+Currently, the main branch requires at least kernel version 5.8 (for
+`statx` `STATX_MNT_ID`).
