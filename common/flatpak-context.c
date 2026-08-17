@@ -4438,8 +4438,7 @@ FlatpakContextSockets
 flatpak_context_compute_allowed_sockets (FlatpakContext                   *context,
                                          FlatpakContextConditionEvaluator  evaluator)
 {
-  g_autoptr(GHashTable) permissions =
-    g_hash_table_new_similar (context->socket_permissions);
+  g_autoptr(GHashTable) permissions = flatpak_permissions_new ();
   GHashTableIter iter;
   gpointer key, value;
   FlatpakPermission *fallback_x11;
