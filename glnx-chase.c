@@ -684,7 +684,10 @@ glnx_chaseat_full (int                 dirfd,
         .resolve = openat2_resolve,
       };
 
-      fd = openat2 (dirfd, path, &how, sizeof (how));
+      do
+        fd = openat2 (dirfd, path, &how, sizeof (how));
+      while (fd < 0 && errno == EAGAIN);
+
       if (fd < 0)
         {
           /* If the syscall is not implemented (ENOSYS) or blocked by
