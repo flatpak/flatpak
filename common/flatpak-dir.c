@@ -8682,8 +8682,7 @@ apply_extra_data (FlatpakDir   *self,
   g_auto(GStrv) minimal_envp = NULL;
   g_autofree char *runtime_arch = NULL;
   glnx_autofd int app_files_dfd = -1;
-  glnx_autofd int metadata_path_fd = -1;
-  glnx_autofd int metadata_read_fd = -1;
+  glnx_autofd int metadata_fd = -1;
   glnx_autofd int extra_dfd = -1;
   glnx_autofd int usr_fd = -1;
   int exit_status;
@@ -8691,20 +8690,17 @@ apply_extra_data (FlatpakDir   *self,
   g_autoptr(GError) local_error = NULL;
   FlatpakRunFlags run_flags;
 
-  app_files_dfd = glnx_chaseat (checkoutdir_dfd, "files",
-                                GLNX_CHASE_RESOLVE_NO_SYMLINKS |
-                                GLNX_CHASE_MUST_BE_DIRECTORY,
-                                error);
+  app_files_dfd = flatpak_deploy_get_files_fd (checkoutdir_dfd, NULL, 0, error);
   if (app_files_dfd < 0)
     return FALSE;
 
   {
     glnx_autofd int apply_extra_fd = -1;
 
-    apply_extra_fd = glnx_chaseat (app_files_dfd, "bin/apply_extra",
-                                   GLNX_CHASE_RESOLVE_BENEATH |
-                                   GLNX_CHASE_MUST_BE_REGULAR,
-                                   &local_error);
+    apply_extra_fd = flatpak_deploy_get_files_fd (checkoutdir_dfd,
+                                                  "bin/apply_extra",
+                                                  GLNX_CHASE_MUST_BE_REGULAR,
+                                                  &local_error);
     if (apply_extra_fd < 0)
       {
         if (g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
@@ -8717,18 +8713,11 @@ apply_extra_data (FlatpakDir   *self,
       }
   }
 
-  metadata_path_fd = glnx_chaseat (checkoutdir_dfd, "metadata",
-                                   GLNX_CHASE_RESOLVE_NO_SYMLINKS |
-                                   GLNX_CHASE_MUST_BE_REGULAR,
-                                   error);
-  if (metadata_path_fd < 0)
+  metadata_fd = flatpak_deploy_get_metadata_fd (checkoutdir_dfd, O_RDONLY, error);
+  if (metadata_fd < 0)
     return FALSE;
 
-  metadata_read_fd = glnx_fd_reopen (metadata_path_fd, O_RDONLY, error);
-  if (metadata_read_fd < 0)
-    return FALSE;
-
-  metadata_contents = glnx_fd_readall_utf8 (metadata_read_fd, &metadata_size,
+  metadata_contents = glnx_fd_readall_utf8 (metadata_fd, &metadata_size,
                                             cancellable, error);
   if (metadata_contents == NULL)
     return FALSE;
@@ -8783,10 +8772,9 @@ apply_extra_data (FlatpakDir   *self,
       runtime_files = flatpak_deploy_get_files (runtime_deploy);
     }
 
-  extra_dfd = glnx_chaseat (app_files_dfd, "extra",
-                            GLNX_CHASE_RESOLVE_BENEATH |
-                            GLNX_CHASE_MUST_BE_DIRECTORY,
-                            error);
+  extra_dfd = flatpak_deploy_get_files_fd (checkoutdir_dfd, "extra",
+                                           GLNX_CHASE_MUST_BE_DIRECTORY,
+                                           error);
   if (extra_dfd < 0)
     return FALSE;
 
@@ -9125,7 +9113,6 @@ flatpak_dir_deploy (FlatpakDir          *self,
   gboolean created_extra_data = FALSE;
   g_autoptr(GVariant) commit_metadata = NULL;
   g_auto(GLnxLockFile) lock = { 0, };
-  g_autoptr(GFile) metadata_file = NULL;
   g_autofree char *metadata_contents = NULL;
   gsize metadata_size = 0;
   const char *flatpak;
@@ -9280,10 +9267,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
     return FALSE;
 
   /* Extract any extra data */
-  app_files_dfd = glnx_chaseat (checkoutdir_dfd, "files",
-                                GLNX_CHASE_RESOLVE_NO_SYMLINKS |
-                                GLNX_CHASE_MUST_BE_DIRECTORY,
-                                error);
+  app_files_dfd = flatpak_deploy_get_files_fd (checkoutdir_dfd, NULL, 0, error);
   if (app_files_dfd < 0)
     return FALSE;
 
@@ -9353,10 +9337,33 @@ flatpak_dir_deploy (FlatpakDir          *self,
     }
 
   keyfile = g_key_file_new ();
-  metadata_file = g_file_resolve_relative_path (checkoutdir, "metadata");
-  if (g_file_load_contents (metadata_file, NULL,
-                            &metadata_contents,
-                            &metadata_size, NULL, NULL))
+
+  {
+    g_autoptr(GError) local_error = NULL;
+    glnx_autofd int metadata_fd = -1;
+
+    metadata_fd = flatpak_deploy_get_metadata_fd (checkoutdir_dfd, O_RDONLY, &local_error);
+    if (metadata_fd < 0 &&
+        !g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+      {
+        g_propagate_error (error, g_steal_pointer (&local_error));
+        return FALSE;
+      }
+
+    if (metadata_fd >= 0)
+      {
+        g_autoptr(GBytes) bytes = NULL;
+
+        bytes = glnx_fd_readall_bytes (metadata_fd, cancellable, error);
+        if (bytes == NULL)
+          return FALSE;
+
+        metadata_contents = g_bytes_unref_to_data (g_steal_pointer (&bytes),
+                                                   &metadata_size);
+      }
+  }
+
+  if (metadata_contents != NULL)
     {
       if (!g_key_file_load_from_data (keyfile,
                                       metadata_contents,
