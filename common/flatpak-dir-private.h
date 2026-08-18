@@ -435,6 +435,18 @@ GFile *         flatpak_deploy_get_files       (FlatpakDeploy      *deploy);
 FlatpakContext *flatpak_deploy_get_overrides   (FlatpakDeploy      *deploy);
 GKeyFile *      flatpak_deploy_get_metadata    (FlatpakDeploy      *deploy);
 
+int flatpak_deploy_get_files_fd    (int              deploy_dfd,
+                                    const char      *subpath,
+                                    GlnxChaseFlags   flags,
+                                    GError         **error);
+int flatpak_deploy_get_export_fd   (int              deploy_dfd,
+                                    const char      *subpath,
+                                    GlnxChaseFlags   flags,
+                                    GError         **error);
+int flatpak_deploy_get_metadata_fd (int              deploy_dfd,
+                                    int              access_flags,
+                                    GError         **error);
+
 FlatpakDir *          flatpak_dir_new                                       (GFile                         *basedir,
                                                                              gboolean                       user);
 FlatpakDir *          flatpak_dir_clone                                     (FlatpakDir                    *self);
