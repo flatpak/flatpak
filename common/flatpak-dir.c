@@ -9525,6 +9525,97 @@ extract_extra_data (FlatpakDir   *self,
   return TRUE;
 }
 
+static int
+deploy_open_fd (int              deploy_dfd,
+                const char      *name,
+                const char      *subpath,
+                GlnxChaseFlags   flags,
+                GError         **error)
+{
+  glnx_autofd int dfd = -1;
+  glnx_autofd int fd = -1;
+
+  g_return_val_if_fail ((flags & ~(GLNX_CHASE_MUST_BE_DIRECTORY |
+                                   GLNX_CHASE_MUST_BE_REGULAR)) == 0, -1);
+
+  if (subpath == NULL)
+    {
+      fd = glnx_chaseat (deploy_dfd, name,
+                         GLNX_CHASE_RESOLVE_NO_SYMLINKS | flags,
+                         error);
+      if (fd < 0)
+        g_prefix_error (error, _("Failed to open %s: "), name);
+
+      return g_steal_fd (&fd);
+    }
+
+  dfd = glnx_chaseat (deploy_dfd, name,
+                      GLNX_CHASE_RESOLVE_NO_SYMLINKS |
+                      GLNX_CHASE_MUST_BE_DIRECTORY,
+                      error);
+  if (dfd < 0)
+    {
+      g_prefix_error (error, _("Failed to open %s: "), name);
+      return -1;
+    }
+
+  /* We cannot use RESOLVE_IN_ROOT because files gets mounted either in
+   * /app or /usr in the real filesystem, making resolution incorrect.
+   * Using RESOLVE_BENEATH gives us support for most symlink setups. */
+  fd = glnx_chaseat (dfd, subpath,
+                     GLNX_CHASE_RESOLVE_BENEATH | flags,
+                     error);
+  if (fd < 0)
+    g_prefix_error (error, _("Failed to open %s/%s: "), name, subpath);
+
+  return g_steal_fd (&fd);
+}
+
+int
+flatpak_deploy_get_files_fd (int              deploy_dfd,
+                             const char      *subpath,
+                             GlnxChaseFlags   flags,
+                             GError         **error)
+{
+  return deploy_open_fd (deploy_dfd, "files", subpath, flags, error);
+}
+
+int
+flatpak_deploy_get_export_fd (int              deploy_dfd,
+                              const char      *subpath,
+                              GlnxChaseFlags   flags,
+                              GError         **error)
+{
+  return deploy_open_fd (deploy_dfd, "export", subpath, flags, error);
+}
+
+int
+flatpak_deploy_get_metadata_fd (int      deploy_dfd,
+                                int      access_flags,
+                                GError **error)
+{
+  glnx_autofd int path_fd = -1;
+  glnx_autofd int fd = -1;
+
+  g_return_val_if_fail ((access_flags & ~(O_RDONLY | O_RDWR)) == 0, -1);
+
+  path_fd = glnx_chaseat (deploy_dfd, "metadata",
+                          GLNX_CHASE_RESOLVE_NO_SYMLINKS |
+                          GLNX_CHASE_MUST_BE_REGULAR,
+                          error);
+  if (path_fd < 0)
+    {
+      g_prefix_error (error, _("Failed to open metadata: "));
+      return -1;
+    }
+
+  fd = glnx_fd_reopen (path_fd, access_flags, error);
+  if (fd < 0)
+    g_prefix_error (error, _("Failed to open metadata: "));
+
+  return g_steal_fd (&fd);
+}
+
 static gboolean
 apply_extra_data (FlatpakDir   *self,
                   int           checkoutdir_dfd,
