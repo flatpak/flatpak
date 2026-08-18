@@ -31,6 +31,7 @@
 
 #include "flatpak-builtins.h"
 #include "flatpak-builtins-utils.h"
+#include "flatpak-app-data-private.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-cli-transaction.h"
 #include "flatpak-quiet-transaction.h"
@@ -134,20 +135,11 @@ flatpak_delete_data (gboolean    yes_opt,
                      const char *app_id,
                      GError    **error)
 {
-  g_autofree char *path = g_build_filename (g_get_home_dir (), ".var", "app", app_id, NULL);
-  g_autoptr(GFile) file = g_file_new_for_path (path);
-
   if (!yes_opt &&
       !flatpak_yes_no_prompt (FALSE, _("Delete data for %s?"), app_id))
     return TRUE;
 
-  if (g_file_query_exists (file, NULL))
-    {
-      if (!flatpak_rm_rf (file, NULL, error))
-        return FALSE;
-    }
-
-  if (!reset_permissions_for_app (app_id, error))
+  if (!flatpak_delete_app_data (app_id, error))
     return FALSE;
 
   return TRUE;

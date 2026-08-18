@@ -34,6 +34,7 @@
 #include "flatpak-builtins.h"
 #include "flatpak-builtins-utils.h"
 #include "flatpak-table-printer.h"
+#include "flatpak-permission-utils-private.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-run-private.h"
 
