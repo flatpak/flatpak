@@ -27,11 +27,11 @@ char **
 get_permission_tables (XdpDbusPermissionStore *store)
 {
   g_autofree char *path = NULL;
+  g_autoptr(GPtrArray) tables = NULL;
   GDir *dir;
   const char *name;
-  GPtrArray *tables = NULL;
 
-  tables = g_ptr_array_new ();
+  tables = g_ptr_array_new_with_free_func (g_free);
 
   path = g_build_filename (g_get_user_data_dir (), "flatpak/db", NULL);
   dir = g_dir_open (path, 0, NULL);
@@ -46,7 +46,7 @@ get_permission_tables (XdpDbusPermissionStore *store)
 
   g_ptr_array_add (tables, NULL);
 
-  return (char **) g_ptr_array_free (tables, FALSE);
+  return (char **) g_ptr_array_free (g_steal_pointer (&tables), FALSE);
 }
 
 static gboolean
