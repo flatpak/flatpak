@@ -10332,19 +10332,11 @@ flatpak_dir_deploy (FlatpakDir          *self,
                                  metadata_contents, metadata_size, error))
     return FALSE;
 
-  {
-    g_autofree char *files_path = g_build_filename (checkoutdir_basename, "files", NULL);
-    glnx_autofd int files_dfd = -1;
-
-    if (!glnx_opendirat (deploy_base_dfd, files_path, FALSE, &files_dfd, error))
-      return FALSE;
-
-    if (!glnx_file_replace_contents_at (files_dfd, ".ref",
-                                        (const guint8 *) "", 0,
-                                        GLNX_FILE_REPLACE_NODATASYNC,
-                                        cancellable, error))
-      return FALSE;
-  }
+  if (!glnx_file_replace_contents_at (app_files_dfd, ".ref",
+                                      (const guint8 *) "", 0,
+                                      GLNX_FILE_REPLACE_NODATASYNC,
+                                      cancellable, error))
+    return FALSE;
 
   /* Never export any binaries bundled with the app */
   {
