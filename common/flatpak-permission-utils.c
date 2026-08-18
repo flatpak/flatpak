@@ -24,7 +24,7 @@
 #include "flatpak-utils-private.h"
 
 char **
-get_permission_tables (XdpDbusPermissionStore *store)
+get_permission_tables (void)
 {
   g_autofree char *path = NULL;
   g_autoptr(GPtrArray) tables = NULL;
@@ -128,7 +128,7 @@ flatpak_reset_permissions_for_app (const char *app_id,
   if (store == NULL)
     return FALSE;
 
-  tables = get_permission_tables (store);
+  tables = get_permission_tables ();
   for (i = 0; tables[i]; i++)
     {
       if (!remove_for_app (store, tables[i], app_id, error))
