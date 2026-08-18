@@ -31,7 +31,8 @@
 
 #include "flatpak-builtins.h"
 #include "flatpak-builtins-utils.h"
-#include "flatpak-app-data-private.h"
+#include "flatpak-app-data.h"
+#include "flatpak-ref-utils-private.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-cli-transaction.h"
 #include "flatpak-quiet-transaction.h"
@@ -131,15 +132,16 @@ uninstall_dir_ensure (GHashTable *uninstall_dirs,
 }
 
 static gboolean
-flatpak_delete_data (gboolean    yes_opt,
-                     const char *app_id,
-                     GError    **error)
+flatpak_delete_data (gboolean      yes_opt,
+                     const char   *app_id,
+                     GCancellable *cancellable,
+                     GError      **error)
 {
   if (!yes_opt &&
       !flatpak_yes_no_prompt (FALSE, _("Delete data for %s?"), app_id))
     return TRUE;
 
-  if (!flatpak_delete_app_data (app_id, error))
+  if (!flatpak_app_data_delete (app_id, cancellable, error))
     return FALSE;
 
   return TRUE;
@@ -542,7 +544,7 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
             FlatpakDecomposed *ref = g_ptr_array_index (udir->refs, i);
             g_autofree char *id = flatpak_decomposed_dup_id (ref);
 
-            if (!flatpak_delete_data (opt_yes, id, error))
+            if (!flatpak_delete_data (opt_yes, id, cancellable, error))
               return FALSE;
           }
       }
@@ -565,10 +567,9 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
       while (TRUE)
         {
           GFileInfo *info;
-          GFile *file;
           g_autoptr(FlatpakDecomposed) ref = NULL;
 
-          if (!g_file_enumerator_iterate (enumerator, &info, &file, cancellable, error))
+          if (!g_file_enumerator_iterate (enumerator, &info, NULL, cancellable, error))
             return FALSE;
 
           if (info == NULL)
@@ -581,9 +582,13 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
           if (ref)
             continue;
 
+          if (!flatpak_is_valid_name (g_file_info_get_name (info), -1, NULL))
+            continue;
+
           found_data_to_delete = TRUE;
 
-          if (!flatpak_delete_data (opt_yes, g_file_info_get_name (info), error))
+          if (!flatpak_delete_data (opt_yes, g_file_info_get_name (info),
+                                    cancellable, error))
             return FALSE;
         }
 

@@ -190,7 +190,10 @@ flatpak_builtin_permission_list (int argc, char **argv,
     }
   else
     {
-      g_auto(GStrv) tables = get_permission_tables ();
+      g_auto(GStrv) tables = get_permission_tables (error);
+
+      if (tables == NULL)
+        return FALSE;
 
       for (i = 0; tables[i]; i++)
         {
@@ -238,7 +241,7 @@ flatpak_complete_permission_list (FlatpakCompletion *completion)
       flatpak_complete_options (completion, options);
 
       {
-        g_auto(GStrv) tables = get_permission_tables ();
+        g_auto(GStrv) tables = get_permission_tables (NULL);
         for (i = 0; tables != NULL && tables[i] != NULL; i++)
           {
             flatpak_complete_word (completion, "%s ", tables[i]);

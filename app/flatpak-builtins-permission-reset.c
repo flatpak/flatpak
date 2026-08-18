@@ -69,7 +69,7 @@ flatpak_builtin_permission_reset (int argc, char **argv,
   else
     app_id = argv[1];
 
-  return flatpak_reset_permissions_for_app (app_id, error);
+  return flatpak_reset_permissions_for_app (app_id, cancellable, error);
 }
 
 gboolean

@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 public_headers = [
+  'flatpak-app-data.h',
   'flatpak-bundle-ref.h',
   'flatpak-error.h',
   'flatpak-installation.h',
