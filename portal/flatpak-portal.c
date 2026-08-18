@@ -619,7 +619,13 @@ fd_map_remap_fd (GArray *fd_map,
   FdMapEntry fd_map_entry;
 
   /* Use a fd that hasn't been used yet. We might have to reshuffle
-   * fd_map_entry.to, a bit later. */
+   * fd_map_entry.to a bit later during conflict resolution, which
+   * assigns ++max_fd as replacement values. Account for the source fd
+   * in max_fd so those replacements can never collide with any source
+   * fd in the map. */
+  if (fd > *max_fd_in_out)
+    *max_fd_in_out = fd;
+
   fd_map_entry.from = fd;
   fd_map_entry.to = ++(*max_fd_in_out);
   fd_map_entry.final = fd_map_entry.to;
