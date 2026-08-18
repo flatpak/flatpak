@@ -146,7 +146,7 @@ flatpak_builtin_permission_show (int argc, char **argv,
   flatpak_table_printer_set_column_title (printer, i++, _("Permissions"));
   flatpak_table_printer_set_column_title (printer, i++, _("Data"));
 
-  tables = get_permission_tables (store);
+  tables = get_permission_tables ();
   for (i = 0; tables[i]; i++)
     {
       if (!list_for_app (store, tables[i], app_id, printer, error))
