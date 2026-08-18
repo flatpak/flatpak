@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 public_headers = [
+  'flatpak-app-data.h',
   'flatpak-bundle-ref.h',
   'flatpak-error.h',
   'flatpak-installation.h',
@@ -187,7 +188,7 @@ libflatpak_common_base_dep = declare_dependency(
 )
 
 sources = [
-  'flatpak-app-data.c',
+  'flatpak-app-data-delete.c',
   'flatpak-appdata.c',
   'flatpak-auth.c',
   'flatpak-bundle-ref.c',

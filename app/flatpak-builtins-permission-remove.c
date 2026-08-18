@@ -187,7 +187,7 @@ flatpak_complete_permission_remove (FlatpakCompletion *completion)
       flatpak_complete_options (completion, options);
 
       {
-        g_auto(GStrv) tables = get_permission_tables ();
+        g_auto(GStrv) tables = get_permission_tables (NULL);
         for (i = 0; tables != NULL && tables[i] != NULL; i++)
           {
             flatpak_complete_word (completion, "%s ", tables[i]);

@@ -24,8 +24,9 @@
 #include "flatpak-utils-private.h"
 
 char **
-get_permission_tables (void)
+get_permission_tables (GError **error)
 {
+  g_autoptr(GError) local_error = NULL;
   g_autofree char *path = NULL;
   g_autoptr(GPtrArray) tables = NULL;
   GDir *dir;
@@ -34,7 +35,7 @@ get_permission_tables (void)
   tables = g_ptr_array_new_with_free_func (g_free);
 
   path = g_build_filename (g_get_user_data_dir (), "flatpak/db", NULL);
-  dir = g_dir_open (path, 0, NULL);
+  dir = g_dir_open (path, 0, &local_error);
   if (dir != NULL)
     {
       while ((name = g_dir_read_name (dir)) != NULL)
@@ -42,6 +43,11 @@ get_permission_tables (void)
           g_ptr_array_add (tables, g_strdup (name));
         }
       g_dir_close (dir);
+    }
+  else if (!g_error_matches (local_error, G_FILE_ERROR, G_FILE_ERROR_NOENT))
+    {
+      g_propagate_error (error, g_steal_pointer (&local_error));
+      return NULL;
     }
 
   g_ptr_array_add (tables, NULL);
@@ -53,9 +59,10 @@ static gboolean
 remove_for_app (XdpDbusPermissionStore *store,
                 const char             *table,
                 const char             *app_id,
+                GCancellable           *cancellable,
                 GError                **error)
 {
-  char **ids;
+  g_auto(GStrv) ids = NULL;
   int i;
 
   /* FIXME some portals cache their permission tables and assume that they're
@@ -63,7 +70,8 @@ remove_for_app (XdpDbusPermissionStore *store,
    * See https://github.com/flatpak/xdg-desktop-portal/issues/197
    */
 
-  if (!xdp_dbus_permission_store_call_list_sync (store, table, &ids, NULL, error))
+  if (!xdp_dbus_permission_store_call_list_sync (store, table, &ids,
+                                                 cancellable, error))
     return FALSE;
 
   for (i = 0; ids[i]; i++)
@@ -80,7 +88,7 @@ remove_for_app (XdpDbusPermissionStore *store,
 
       if (!xdp_dbus_permission_store_call_lookup_sync (store, table, ids[i],
                                                        &permissions, &data,
-                                                       NULL, error))
+                                                       cancellable, error))
         return FALSE;
 
       g_variant_iter_init (&iter, permissions);
@@ -100,7 +108,7 @@ remove_for_app (XdpDbusPermissionStore *store,
           if (!xdp_dbus_permission_store_call_set_sync (store, table, TRUE, ids[i],
                                                         g_variant_builder_end (&builder),
                                                         data ? data : g_variant_new_byte (0),
-                                                        NULL, error))
+                                                        cancellable, error))
             return FALSE;
         }
     }
@@ -109,29 +117,39 @@ remove_for_app (XdpDbusPermissionStore *store,
 }
 
 gboolean
-flatpak_reset_permissions_for_app (const char *app_id,
-                                   GError    **error)
+flatpak_reset_permissions_for_app (const char   *app_id,
+                                   GCancellable *cancellable,
+                                   GError      **error)
 {
   g_autoptr(GDBusConnection) session_bus = NULL;
-  XdpDbusPermissionStore *store = NULL;
+  g_autoptr(XdpDbusPermissionStore) store = NULL;
   int i;
   g_auto(GStrv) tables = NULL;
 
-  session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, error);
+  tables = get_permission_tables (error);
+  if (tables == NULL)
+    return FALSE;
+
+  if (g_cancellable_set_error_if_cancelled (cancellable, error))
+    return FALSE;
+
+  if (tables[0] == NULL)
+    return TRUE;
+
+  session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, cancellable, error);
   if (session_bus == NULL)
     return FALSE;
 
   store = xdp_dbus_permission_store_proxy_new_sync (session_bus, 0,
                                                     "org.freedesktop.impl.portal.PermissionStore",
                                                     "/org/freedesktop/impl/portal/PermissionStore",
-                                                    NULL, error);
+                                                    cancellable, error);
   if (store == NULL)
     return FALSE;
 
-  tables = get_permission_tables ();
   for (i = 0; tables[i]; i++)
     {
-      if (!remove_for_app (store, tables[i], app_id, error))
+      if (!remove_for_app (store, tables[i], app_id, cancellable, error))
         return FALSE;
     }
 
