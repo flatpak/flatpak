@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: LGPL-2.1-or-later
+# SPDX-FileCopyrightText: Copyright 2026 Red Hat, Inc.
+
+[wrap-git]
+url = https://gitlab.gnome.org/alexl/variant-schema-compiler.git
+revision = 4c18b9ef404bb97ba4cfd1312f9de7cffea62334
+depth = 1
+patch_directory = variant-schema-compiler
+
+[provide]
+program_names = variant-schema-compiler

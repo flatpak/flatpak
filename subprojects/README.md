@@ -43,5 +43,5 @@ Upstream: <https://gitlab.gnome.org/alexl/variant-schema-compiler>
 
 This is a "copylib" like libglnx.
 
-To compare with upstream or merge from upstream, the procedure is similar
-to libglnx (see above).
+To update the version Flatpak gets compiled with, edit
+variant-schema-compiler.wrap.
