@@ -1,3 +1,4 @@
 /.wraplock
 bubblewrap/
 dbus-proxy/
+libglnx/

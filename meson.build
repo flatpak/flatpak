@@ -156,6 +156,7 @@ endif
 libglnx = subproject(
   'libglnx',
   default_options : [
+    'default_library=static',
     'warning_level=1',
     'tests=false',
   ],
@@ -165,7 +166,7 @@ not_found = dependency('', required : false)
 threads_dep = dependency('threads')
 bison = find_program('bison')
 libcap_dep = dependency('libcap')
-libglnx_dep = libglnx.get_variable('libglnx_dep')
+libglnx_dep = dependency('libglnx')
 libglnx_testlib_dep = libglnx.get_variable('libglnx_testlib_dep')
 libarchive_dep = dependency('libarchive', version : '>=2.8.0')
 glib_dep = dependency('glib-2.0', version : '>=' + required_glib)
