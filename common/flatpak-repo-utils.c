@@ -28,6 +28,8 @@
 
 #include "flatpak-utils-private.h"
 #include "flatpak-variant-private.h"
+
+#define MAX_DECOMPRESSED_SUMMARY_SIZE (1024 * 1024 * 1024)
 #include "flatpak-variant-impl-private.h"
 #include "flatpak-xml-utils-private.h"
 
@@ -730,7 +732,9 @@ flatpak_repo_load_digested_summary (OstreeRepo *repo,
     return NULL;
 
   compressed_bytes = g_mapped_file_get_bytes (mfile);
-  bytes = flatpak_zlib_decompress_bytes (compressed_bytes, error);
+  bytes = flatpak_zlib_decompress_bytes_limited (compressed_bytes,
+                                                 MAX_DECOMPRESSED_SUMMARY_SIZE,
+                                                 error);
   if (bytes == NULL)
     return NULL;
 
@@ -1481,7 +1485,9 @@ flatpak_summary_apply_diff (GBytes *old,
   gsize old_size = g_bytes_get_size (old);
   g_autoptr(GByteArray) res = g_byte_array_new ();
 
-  uncompressed = flatpak_zlib_decompress_bytes (diff, error);
+  uncompressed = flatpak_zlib_decompress_bytes_limited (diff,
+                                                       MAX_DECOMPRESSED_SUMMARY_SIZE,
+                                                       error);
   if (uncompressed == NULL)
     {
       g_prefix_error (error, "Invalid summary diff: ");
