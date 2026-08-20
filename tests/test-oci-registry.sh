@@ -23,8 +23,6 @@ set -euo pipefail
 
 skip_without_bwrap
 
-plan_tests 18
-
 # Start the fake registry server
 
 if [ x${USE_HTTPS} = xyes ] ; then

@@ -22,8 +22,6 @@ set -euo pipefail
 . $(dirname $0)/libtest.sh
 
 
-plan_tests 4
-
 setup_repo
 
 commit_to_obj () {

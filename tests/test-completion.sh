@@ -27,8 +27,6 @@ skip_revokefs_without_fuse
 # This test looks for specific localized strings.
 export LC_ALL=C
 
-plan_tests 17
-
 setup_repo
 install_repo
 

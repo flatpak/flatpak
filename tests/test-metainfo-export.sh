@@ -21,8 +21,6 @@ set -euo pipefail
 
 source "$(dirname "$0")/libtest.sh"
 
-plan_tests 2
-
 setup_repo
 install_repo
 

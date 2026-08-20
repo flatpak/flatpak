@@ -27,8 +27,6 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-plan_tests 5
-
 # Configure a repository, then set a collection ID on it and check that the ID
 # is saved in the config file.
 setup_repo
