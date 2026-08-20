@@ -37,8 +37,10 @@ jobs:
 
       - name: Build flatpak
         run: |
-          meson setup _build
-          meson dist -C _build
+          meson setup _build \
+            -Dsystem_bubblewrap=bwrap \
+            -Dsystem_dbus_proxy=xdg-dbus-proxy
+          meson dist -C _build --include-subprojects
 
       - name: Extract release information
         run: |
