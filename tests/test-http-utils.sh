@@ -65,8 +65,6 @@ have_xattrs() {
     setfattr -n user.testvalue -v somevalue $1/test-xattrs > /dev/null 2>&1
 }
 
-plan_tests 6
-
 # Without anything else, cached for 30 minutes
 assert_ok "/" $test_tmpdir/output
 assert_cached "/" $test_tmpdir/output

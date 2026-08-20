@@ -24,8 +24,6 @@ set -euo pipefail
 
 skip_without_bwrap
 
-plan_tests 1
-
 # Start the fake OCI registry server
 
 httpd oci-registry-server.py --dir=.

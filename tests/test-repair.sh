@@ -8,8 +8,6 @@ set -euo pipefail
 
 . $(dirname $0)/libtest.sh
 
-plan_tests 2
-
 setup_repo
 ${FLATPAK} ${U} install -y test-repo org.test.Hello >&2
 

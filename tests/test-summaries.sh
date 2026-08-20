@@ -21,8 +21,6 @@ set -euo pipefail
 
 . $(dirname $0)/libtest.sh
 
-plan_tests 2
-
 setup_repo
 
 sha256() {

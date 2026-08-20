@@ -8,8 +8,6 @@ set -euo pipefail
 
 . $(dirname $0)/libtest.sh
 
-plan_tests 7
-
 setup_repo
 
 COUNTER=1

@@ -8,8 +8,6 @@ set -euo pipefail
 
 skip_without_bwrap
 
-plan_tests 1
-
 setup_repo () {
     mkdir -p repos
     ostree init --repo=repos/test --mode=archive-z2
