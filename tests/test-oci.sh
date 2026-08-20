@@ -23,7 +23,7 @@ set -euo pipefail
 
 skip_without_bwrap
 
-echo "1..4"
+plan_tests 4
 
 setup_repo_no_add oci
 

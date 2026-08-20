@@ -24,7 +24,7 @@ set -euo pipefail
 
 skip_without_bwrap
 
-echo "1..1"
+plan_tests 1
 
 # Start the fake OCI registry server
 

@@ -17,7 +17,7 @@ reset_overrides () {
     assert_file_empty info
 }
 
-echo "1..20"
+plan_tests 20
 
 setup_repo
 install_repo

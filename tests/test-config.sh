@@ -24,7 +24,7 @@ set -euo pipefail
 # This test looks for specific localized strings.
 export LC_ALL=C
 
-echo "1..5"
+plan_tests 5
 
 ${FLATPAK} config --list > list_out
 assert_file_has_content list_out "^languages:"

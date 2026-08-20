@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..32"
+plan_tests 32
 
 # Use stable rather than master as the branch so we can test that the run
 # command automatically finds the branch correctly

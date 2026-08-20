@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..3"
+plan_tests 3
 
 EXPORT_ARGS="--subset=subset1 --subset=subset2" setup_repo
 
