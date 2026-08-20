@@ -74,7 +74,7 @@ for extra_argv in "" "--allow=multiarch"; do
   e=0
   try_syscall "ioctl TIOCSTI CVE-2019-10063" || e="$?"
   if test "$e" = "$ENOENT"; then
-    echo "ok # SKIP Cannot replicate CVE-2019-10063 on 32-bit architecture"
+    ok "# SKIP Cannot replicate CVE-2019-10063 on 32-bit architecture"
   else
     assert_streq "$e" "$EPERM"
     ok "ioctl TIOCSTI with high bits blocked (CVE-2019-10063)"
