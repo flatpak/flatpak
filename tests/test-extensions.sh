@@ -23,8 +23,6 @@ set -euo pipefail
 
 skip_without_bwrap
 
-plan_tests 2
-
 make_extension () {
     local ID=$1
     local VERSION=$2

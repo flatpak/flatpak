@@ -17,8 +17,6 @@ reset_overrides () {
     assert_file_empty info
 }
 
-plan_tests 20
-
 setup_repo
 install_repo
 

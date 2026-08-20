@@ -24,8 +24,6 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-plan_tests 9
-
 mkdir bundles
 
 setup_repo

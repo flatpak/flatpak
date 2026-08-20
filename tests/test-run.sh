@@ -24,8 +24,6 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-plan_tests 29
-
 # Use stable rather than master as the branch so we can test that the run
 # command automatically finds the branch correctly
 setup_repo "" "" stable

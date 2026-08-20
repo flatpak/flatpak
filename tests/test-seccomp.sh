@@ -8,8 +8,6 @@ set -euo pipefail
 
 skip_without_bwrap
 
-plan_tests 18
-
 setup_repo
 install_repo
 

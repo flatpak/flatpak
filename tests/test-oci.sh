@@ -23,8 +23,6 @@ set -euo pipefail
 
 skip_without_bwrap
 
-plan_tests 4
-
 setup_repo_no_add oci
 
 mkdir -p oci

@@ -21,8 +21,6 @@ set -euo pipefail
 
 . $(dirname $0)/libtest.sh
 
-plan_tests 5
-
 create_commit() {
     # Wrap this to avoid set -x showing the commands
     { { local BASH_XTRACEFD=3; } 2> /dev/null

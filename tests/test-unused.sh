@@ -27,8 +27,6 @@ export USE_SYSTEMDIR=yes
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-plan_tests 3
-
 setup_empty_repo &> /dev/null
 
 # Manually add the user remote too

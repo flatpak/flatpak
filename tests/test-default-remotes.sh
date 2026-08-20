@@ -38,8 +38,6 @@ Homepage=https://the.homepage/
 Icon=https://the.icon/
 EOF
 
-plan_tests 5
-
 mkdir -p $FLATPAK_CONFIG_DIR/remotes.d
 
 ${FLATPAK} -vv --system  remotes > remotes
