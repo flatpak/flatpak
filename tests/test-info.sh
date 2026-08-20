@@ -6,7 +6,7 @@ set -euo pipefail
 
 skip_revokefs_without_fuse
 
-echo "1..9"
+plan_tests 9
 
 INCLUDE_SPECIAL_CHARACTER=1 setup_repo
 install_repo

@@ -38,7 +38,7 @@ Homepage=https://the.homepage/
 Icon=https://the.icon/
 EOF
 
-echo "1..5"
+plan_tests 5
 
 mkdir -p $FLATPAK_CONFIG_DIR/remotes.d
 

@@ -22,7 +22,7 @@ set -euo pipefail
 . $(dirname $0)/libtest.sh
 
 
-echo "1..4"
+plan_tests 4
 
 setup_repo
 

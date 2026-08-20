@@ -21,7 +21,7 @@ set -euo pipefail
 
 . $(dirname $0)/libtest.sh
 
-echo "1..5"
+plan_tests 5
 
 create_commit() {
     # Wrap this to avoid set -x showing the commands

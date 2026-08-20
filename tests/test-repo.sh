@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..47"
+plan_tests 47
 
 #Regular repo
 setup_repo

@@ -23,7 +23,7 @@ set -euo pipefail
 
 skip_without_bwrap
 
-echo "1..18"
+plan_tests 18
 
 # Start the fake registry server
 

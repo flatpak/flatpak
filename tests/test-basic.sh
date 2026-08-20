@@ -24,7 +24,7 @@ set -euo pipefail
 # This test looks for specific localized strings.
 export LC_ALL=C
 
-echo "1..11"
+plan_tests 11
 
 ${FLATPAK} --version > version_out
 
