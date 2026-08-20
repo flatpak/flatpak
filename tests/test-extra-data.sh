@@ -137,3 +137,5 @@ if test -f "${G_TEST_BUILDDIR}/apply-extra-static"; then
 else
     ok "# SKIP install+run extra data app with NoRuntime apply-extra-static not found"
 fi
+
+done_testing

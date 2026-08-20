@@ -299,3 +299,5 @@ rm -rf repo/objects/*/*.commitmeta2
 diff -r repo ostree-repo >&2
 
 ok "Compare with ostree prune"
+
+done_testing

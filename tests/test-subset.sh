@@ -112,3 +112,5 @@ assert_file_has_content $FL_DIR/appstream/test-repo/$ARCH/active/appstream.xml o
 assert_not_file_has_content $FL_DIR/appstream/test-repo/$ARCH/active/appstream.xml org.test.NoSubset.desktop
 
 ok "remote subset switching works"
+
+done_testing

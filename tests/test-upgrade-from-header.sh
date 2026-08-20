@@ -88,3 +88,5 @@ ok "Flatpak-Upgrade-From header sent when remote tracking ref is missing"
 assert_file_has_content httpd-headers-log "Flatpak-Ref: ${APP_REF}"
 
 ok "Flatpak-Ref header sent when remote tracking ref is missing"
+
+done_testing

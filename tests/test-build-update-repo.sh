@@ -67,3 +67,5 @@ ${FLATPAK} build-update-repo --default-branch=no-such-branch repos/test >&2
 assert_file_has_content repos/test/config '^default-branch=no-such-branch$'
 
 ok "can update default branch"
+
+done_testing

@@ -424,3 +424,5 @@ $client add-signature hello "${digest}" "$(pwd)/oci/app-image-signature-2"
 ${FLATPAK} ${U} install -y oci-registry-sig org.test.Hello >&2
 
 ok "signed images"
+
+done_testing

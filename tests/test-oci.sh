@@ -108,3 +108,5 @@ ${FLATPAK} --user remotes --show-disabled > remotes-list
 assert_file_has_content remotes-list '^platform-origin'
 
 ok "install oci archive"
+
+done_testing

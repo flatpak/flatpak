@@ -208,3 +208,5 @@ assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=true$'
 assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=false$'
 
 ok "migrate to gpg-verify-summary"
+
+done_testing

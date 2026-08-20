@@ -176,3 +176,5 @@ assert_has_extension_file /app multiversion/master/extension-org.test.Multiversi
 assert_has_extension_file /app multiversion/notmaster/extension-org.test.Multiversion.notmaster:not-master
 
 ok "app extensions"
+
+done_testing

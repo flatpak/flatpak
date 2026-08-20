@@ -737,3 +737,5 @@ else
     ok "file-forwarding valid path # SKIP (no document portal)"
     ok "file-forwarding empty path # SKIP (no document portal)"
 fi
+
+done_testing

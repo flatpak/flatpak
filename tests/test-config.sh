@@ -54,3 +54,5 @@ ${FLATPAK} config --get languages > get_out
 assert_file_has_content get_out "^[*]unset[*]"
 
 ok "config unset"
+
+done_testing
