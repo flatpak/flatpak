@@ -105,3 +105,5 @@ else
 fi
 
 ok "extension branch follow"
+
+done_testing

@@ -68,3 +68,5 @@ ${FLATPAK} info org.test.Hello > info
 assert_file_has_content info "^Hello world test app: org\.test\.Hello - Print a greeting$"
 
 ok "info (name header)"
+
+done_testing

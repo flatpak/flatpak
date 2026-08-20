@@ -131,3 +131,5 @@ assert_file_has_content remotes "added-default"
 assert_remote_has_no_config added-default xa.filter
 
 ok "override default filter"
+
+done_testing

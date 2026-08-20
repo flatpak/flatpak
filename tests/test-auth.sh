@@ -159,3 +159,5 @@ EXPORT_ARGS="--token-type=2" make_updated_app test "" master UPDATE5
 mark_need_token app/org.test.Hello/$ARCH/master the-secret
 
 ok "update with webflow"
+
+done_testing

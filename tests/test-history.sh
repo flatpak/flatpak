@@ -156,3 +156,5 @@ rm -f ${FLATPAK_CONFIG_DIR}/installations.d/history-inst.conf
 rm -rf ${TEST_DATA_DIR}/system-history-installation
 
 ok "history looks correct"
+
+done_testing

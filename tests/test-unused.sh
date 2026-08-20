@@ -432,3 +432,5 @@ if [ $(cat newly-unused.txt | wc -l) -ne 10 ]; then
 fi
 
 ok "list unused exclude"
+
+done_testing

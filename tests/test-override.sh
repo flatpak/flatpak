@@ -500,3 +500,5 @@ if ! skip_one_without_bwrap "runtime override --nofilesystem=host:reset"; then
 
   ok "runtime override --nofilesystem=host:reset"
 fi
+
+done_testing

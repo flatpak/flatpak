@@ -1085,3 +1085,5 @@ ${FLATPAK} ${U} remote-add --if-not-exists new-repo test.flatpakrepo >&2
 assert_remote_has_no_config new-repo xa.filter
 
 ok "flatpakrepo"
+
+done_testing

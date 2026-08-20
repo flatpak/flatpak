@@ -127,3 +127,5 @@ make_updated_app test "" master UPDATE45
 run_with_sandboxed_bus ${test_builddir}/test-update-portal update monitor.pid >&2
 
 ok "update with changed permissions"
+
+done_testing

@@ -717,3 +717,5 @@ assert_file_has_content hello_out "not allowed to avoid sandbox escape"
 assert_not_file_has_content hello_out "secret-file"
 
 ok "--persist doesn't allow sandbox escape via a symlink (CVE-2024-42472)"
+
+done_testing

@@ -158,3 +158,5 @@ if command -v setfattr >/dev/null &&
 else
     ok "xattrs # skip No setfattr or /var/tmp has user no xattr support"
 fi
+
+done_testing

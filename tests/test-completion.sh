@@ -231,3 +231,4 @@ EOF
 
 ok "complete list --columns=arch,"
 
+done_testing

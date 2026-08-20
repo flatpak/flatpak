@@ -56,6 +56,18 @@ plan_tests () {
     } 3> /dev/null
 }
 
+done_testing () {
+    { { local BASH_XTRACEFD=3; } 2> /dev/null
+    if [ -z "$planned_tests" ]; then
+        echo "1..$test_number"
+    elif [ "$planned_tests" != "$test_number" ]; then
+        echo "Bail out! Expected $planned_tests tests, but saw $test_number tests"
+        exit 1
+    fi
+    echo "# Done testing"
+    } 3> /dev/null
+}
+
 # All the asserts and ok functions below are wrapped such that they
 # don't output any set -x traces of their internals (but still echo
 # errors to stderr). This way the log output focuses on tracing what
