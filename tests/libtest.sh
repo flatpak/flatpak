@@ -42,6 +42,8 @@ if [ -e "$test_srcdir/installed-tests.sh" ]; then
     . "$test_srcdir/installed-tests.sh"
 fi
 
+test_number=0
+
 # All the asserts and ok functions below are wrapped such that they
 # don't output any set -x traces of their internals (but still echo
 # errors to stderr). This way the log output focuses on tracing what
@@ -55,7 +57,8 @@ assert_not_reached () {
 
 ok () {
     { { local BASH_XTRACEFD=3; } 2> /dev/null
-        echo "ok $@";
+        test_number=$(( test_number + 1 ))
+        echo "ok $test_number - $*";
         echo "================ $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]} - $@ ================" >&2;
     } 3> /dev/null
 }
@@ -585,6 +588,7 @@ skip_one_without_bwrap () {
     if "${_flatpak_bwrap_works}"; then
         return 1
     else
+        test_number=$(( test_number + 1 ))
         echo "ok $* # SKIP Cannot run bwrap"
         return 0
     fi
