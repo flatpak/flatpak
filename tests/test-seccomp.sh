@@ -99,3 +99,5 @@ for extra_argv in "" "--allow=multiarch"; do
   assert_streq "$e" "$EFAULT"
   ok "prctl not blocked"
 done
+
+done_testing

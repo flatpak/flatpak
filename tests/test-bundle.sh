@@ -185,3 +185,5 @@ run org.test.Hello &> hello_out
 assert_file_has_content hello_out '^Hello world, from a sandboxUPDATED2$'
 
 ok "update as bundle"
+
+done_testing

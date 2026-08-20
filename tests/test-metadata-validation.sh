@@ -156,3 +156,5 @@ assert_not_has_dir $FL_DIR/app/org.test.Malicious/current/active
 cleanup_repo
 
 ok "app with mismatched metadata (in summary) can't be installed"
+
+done_testing

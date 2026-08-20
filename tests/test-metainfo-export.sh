@@ -77,3 +77,5 @@ assert_file_has_content "${APP_DIR}/export/share/metainfo/releases/${APP_ID}.rel
   '<release version="1.0.0" date="2026-06-14"/>'
 
 ok "install exported metainfo and releases"
+
+done_testing

@@ -198,3 +198,5 @@ while read fdpath; do
 done < hello_out
 
 ok "check no fd leak"
+
+done_testing

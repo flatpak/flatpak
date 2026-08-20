@@ -67,3 +67,5 @@ run org.test.Hello > hello_out
 assert_file_has_content hello_out '^Hello world, from a sandbox$'
 
 ok "install from auth-protected OCI registry"
+
+done_testing

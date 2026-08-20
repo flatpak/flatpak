@@ -126,3 +126,5 @@ for cmd in config make-current override remote-add repair; do
 done
 
 ok "ONE_DIR commands"
+
+done_testing

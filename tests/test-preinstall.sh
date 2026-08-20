@@ -291,3 +291,5 @@ ${FLATPAK} ${U} remote-modify --url="http://no.127.0.0.1:${port}/test" test2-rep
 ${FLATPAK} ${U} -vvvv preinstall -y --sideload-repo=${SIDELOAD_REPO} >&2
 
 ok "sideload with network failure"
+
+done_testing
