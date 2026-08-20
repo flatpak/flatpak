@@ -82,7 +82,7 @@ setup_repo test2
 make_updated_app test2 org.test.Collection.test2 master HELLO2_MASTER_C2 org.test.Hello2
 make_updated_app test2 org.test.Collection.test2 master HELLO2_MASTER_C3 org.test.Hello3
 
-echo "1..12"
+plan_tests 12
 
 # just checking that the test remote got added
 port=$(cat httpd-port)

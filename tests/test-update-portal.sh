@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..6"
+plan_tests 6
 
 setup_repo
 install_repo

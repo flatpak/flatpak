@@ -24,7 +24,7 @@ if ! journalctl --user --since="${HISTORY_START_TIME}" | grep -q "${MESSAGE}"; t
     skip "Cannot read back from Journal with journalctl"
 fi
 
-echo "1..1"
+plan_tests 1
 
 mkdir -p ${TEST_DATA_DIR}/system-history-installation
 mkdir -p ${FLATPAK_CONFIG_DIR}/installations.d

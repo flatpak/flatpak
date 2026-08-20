@@ -27,7 +27,7 @@ USE_COLLECTIONS_IN_CLIENT=yes
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..9"
+plan_tests 9
 
 #Regular repo
 setup_repo

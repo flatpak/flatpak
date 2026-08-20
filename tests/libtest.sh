@@ -42,7 +42,19 @@ if [ -e "$test_srcdir/installed-tests.sh" ]; then
     . "$test_srcdir/installed-tests.sh"
 fi
 
+planned_tests=
 test_number=0
+
+plan_tests () {
+    { { local BASH_XTRACEFD=3; } 2> /dev/null
+    if [ -n "$planned_tests" ]; then
+        echo "Bail out! plan_tests called more than once"
+        exit 1
+    fi
+    planned_tests="$1"
+    echo "1..$planned_tests"
+    } 3> /dev/null
+}
 
 # All the asserts and ok functions below are wrapped such that they
 # don't output any set -x traces of their internals (but still echo
@@ -568,6 +580,9 @@ have_working_bwrap() {
 
 # Use to skip all of these tests
 skip() {
+    if [ -n "$planned_tests" ]; then
+        assert_not_reached "Cannot call skip after plan_tests"
+    fi
     echo "1..0 # SKIP" "$@"
     exit 0
 }

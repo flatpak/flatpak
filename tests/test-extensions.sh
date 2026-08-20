@@ -23,7 +23,7 @@ set -euo pipefail
 
 skip_without_bwrap
 
-echo "1..2"
+plan_tests 2
 
 make_extension () {
     local ID=$1

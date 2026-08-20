@@ -27,7 +27,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..3"
+plan_tests 3
 
 # Configure a repository without a collection ID and pull it locally.
 setup_repo
