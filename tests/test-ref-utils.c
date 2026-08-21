@@ -5,10 +5,13 @@
 
 #include "config.h"
 
+#include <locale.h>
+
 #include <glib.h>
 
 #include "flatpak.h"
 #include "flatpak-ref-utils-private.h"
+#include "flatpak-utils-private.h"
 
 #include "tests/testlib.h"
 
@@ -33,6 +36,7 @@ test_valid_arch (void)
     "path/../traversal",
     "path_traversal/..",
     "\xc3\xa1",   /* U+00E1 LATIN SMALL LETTER A WITH ACUTE */
+    "\xff",       /* not valid UTF-8 */
     "a\xc3\xa1",
   };
   static const struct
@@ -75,11 +79,13 @@ test_valid_arch (void)
   for (size_t i = 0; i < G_N_ELEMENTS (bad); i++)
     {
       g_autoptr(GError) local_error = NULL;
+      g_autofree char *escaped = flatpak_escape_string (bad[i], FLATPAK_ESCAPE_DO_NOT_QUOTE);
       gboolean ok = flatpak_is_valid_arch (bad[i], -1, &local_error);
 
       g_test_message ("bad architecture \"%s\" -> %s",
-                      bad[i], ok ? "wrongly accepted" : local_error->message);
+                      escaped, ok ? "wrongly accepted" : local_error->message);
       g_assert_nonnull (local_error);
+      g_assert_true (g_utf8_validate (local_error->message, -1, NULL));
       g_assert_false (ok);
     }
 
@@ -90,6 +96,7 @@ test_valid_arch (void)
       g_test_message ("empty architecture -> %s",
                       ok ? "wrongly accepted" : local_error->message);
       g_assert_nonnull (local_error);
+      g_assert_true (g_utf8_validate (local_error->message, -1, NULL));
       g_assert_false (ok);
     }
 }
@@ -116,6 +123,7 @@ test_valid_branch (void)
     "path-traversal/..",
     "path/../traversal",
     "\xc3\xa1",   /* U+00E1 LATIN SMALL LETTER A WITH ACUTE */
+    "\xff",       /* not valid UTF-8 */
     "a\xc3\xa1",
   };
   static const struct
@@ -158,11 +166,13 @@ test_valid_branch (void)
   for (size_t i = 0; i < G_N_ELEMENTS (bad); i++)
     {
       g_autoptr(GError) local_error = NULL;
+      g_autofree char *escaped = flatpak_escape_string (bad[i], FLATPAK_ESCAPE_DO_NOT_QUOTE);
       gboolean ok = flatpak_is_valid_branch (bad[i], -1, &local_error);
 
       g_test_message ("bad branch \"%s\" -> %s",
-                      bad[i], ok ? "wrongly accepted" : local_error->message);
+                      escaped, ok ? "wrongly accepted" : local_error->message);
       g_assert_nonnull (local_error);
+      g_assert_true (g_utf8_validate (local_error->message, -1, NULL));
       g_assert_false (ok);
     }
 
@@ -173,6 +183,7 @@ test_valid_branch (void)
       g_test_message ("empty branch -> %s",
                       ok ? "wrongly accepted" : local_error->message);
       g_assert_nonnull (local_error);
+      g_assert_true (g_utf8_validate (local_error->message, -1, NULL));
       g_assert_false (ok);
     }
 }
@@ -201,6 +212,7 @@ test_valid_name (void)
     "org.7_zip.Archiver",
     "org._7-zip.Archiver",
     "\xc3\xa1",   /* U+00E1 LATIN SMALL LETTER A WITH ACUTE */
+    "\xff",       /* not valid UTF-8 */
     "a\xc3\xa1",
     NAME_CHAR_x256,
   };
@@ -244,11 +256,13 @@ test_valid_name (void)
   for (size_t i = 0; i < G_N_ELEMENTS (bad); i++)
     {
       g_autoptr(GError) local_error = NULL;
+      g_autofree char *escaped = flatpak_escape_string (bad[i], FLATPAK_ESCAPE_DO_NOT_QUOTE);
       gboolean ok = flatpak_is_valid_name (bad[i], -1, &local_error);
 
       g_test_message ("bad app name \"%s\" -> %s",
-                      bad[i], ok ? "wrongly accepted" : local_error->message);
+                      escaped, ok ? "wrongly accepted" : local_error->message);
       g_assert_nonnull (local_error);
+      g_assert_true (g_utf8_validate (local_error->message, -1, NULL));
       g_assert_false (ok);
     }
 
@@ -259,6 +273,7 @@ test_valid_name (void)
       g_test_message ("empty app name -> %s",
                       ok ? "wrongly accepted" : local_error->message);
       g_assert_nonnull (local_error);
+      g_assert_true (g_utf8_validate (local_error->message, -1, NULL));
       g_assert_false (ok);
     }
 }
@@ -285,6 +300,7 @@ test_valid_remote_name (void)
     "path/../traversal",
     "path-traversal/..",
     "\xc3\xa1",   /* U+00E1 LATIN SMALL LETTER A WITH ACUTE */
+    "\xff",       /* not valid UTF-8 */
     "a\xc3\xa1",
   };
   static const struct
@@ -327,11 +343,13 @@ test_valid_remote_name (void)
   for (size_t i = 0; i < G_N_ELEMENTS (bad); i++)
     {
       g_autoptr(GError) local_error = NULL;
+      g_autofree char *escaped = flatpak_escape_string (bad[i], FLATPAK_ESCAPE_DO_NOT_QUOTE);
       gboolean ok = flatpak_is_valid_remote_name (bad[i], -1, &local_error);
 
       g_test_message ("bad remote name \"%s\" -> %s",
-                      bad[i], ok ? "wrongly accepted" : local_error->message);
+                      escaped, ok ? "wrongly accepted" : local_error->message);
       g_assert_nonnull (local_error);
+      g_assert_true (g_utf8_validate (local_error->message, -1, NULL));
       g_assert_false (ok);
     }
 
@@ -342,6 +360,7 @@ test_valid_remote_name (void)
       g_test_message ("empty remote name -> %s",
                       ok ? "wrongly accepted" : local_error->message);
       g_assert_nonnull (local_error);
+      g_assert_true (g_utf8_validate (local_error->message, -1, NULL));
       g_assert_false (ok);
     }
 }
@@ -349,6 +368,8 @@ test_valid_remote_name (void)
 int
 main (int argc, char *argv[])
 {
+  setlocale (LC_ALL, "");
+
   g_test_init (&argc, &argv, NULL);
 
   g_test_add_func ("/ref-utils/valid-arch", test_valid_arch);
