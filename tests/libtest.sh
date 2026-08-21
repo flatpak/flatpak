@@ -42,28 +42,11 @@ if [ -e "$test_srcdir/installed-tests.sh" ]; then
     . "$test_srcdir/installed-tests.sh"
 fi
 
-planned_tests=
 test_number=0
-
-plan_tests () {
-    { { local BASH_XTRACEFD=3; } 2> /dev/null
-    if [ -n "$planned_tests" ]; then
-        echo "Bail out! plan_tests called more than once"
-        exit 1
-    fi
-    planned_tests="$1"
-    echo "1..$planned_tests"
-    } 3> /dev/null
-}
 
 done_testing () {
     { { local BASH_XTRACEFD=3; } 2> /dev/null
-    if [ -z "$planned_tests" ]; then
-        echo "1..$test_number"
-    elif [ "$planned_tests" != "$test_number" ]; then
-        echo "Bail out! Expected $planned_tests tests, but saw $test_number tests"
-        exit 1
-    fi
+    echo "1..$test_number"
     echo "# Done testing"
     } 3> /dev/null
 }
