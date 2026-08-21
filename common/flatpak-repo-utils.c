@@ -2900,8 +2900,8 @@ flatpak_parse_repofile (const char   *remote_name,
                                                           FLATPAK_REPO_COLLECTION_ID_KEY);
   if (collection_id != NULL)
     {
-      /* We don't support signatures for OCI remotes, but Collection ID's are
-       * still useful for preinstallation.
+      /* Collection ID's require GPG keys for non-OCI remotes. OCI remotes
+       * can use Collection ID's without GPG keys for preinstallation.
        */
       if (gpg_key == NULL && !g_str_has_prefix (uri, "oci+"))
         {
@@ -2913,7 +2913,7 @@ flatpak_parse_repofile (const char   *remote_name,
     }
 
   g_key_file_set_boolean (config, group, "gpg-verify-summary",
-                          (gpg_key != NULL));
+                          (gpg_key != NULL) && !g_str_has_prefix (uri, "oci+"));
 
   authenticator_name = g_key_file_get_string (keyfile, FLATPAK_REPO_GROUP,
                                               FLATPAK_REPO_AUTHENTICATOR_NAME_KEY, NULL);
