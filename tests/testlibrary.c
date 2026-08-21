@@ -66,6 +66,63 @@ test_library_version (void)
 }
 
 static void
+test_delete_app_data (void)
+{
+  g_autofree char *app_dir = NULL;
+  g_autofree char *data_dir = NULL;
+  g_autofree char *data_file = NULL;
+  g_autofree char *outside_file = NULL;
+  g_autofree char *permission_db = NULL;
+  g_autoptr(GCancellable) cancellable = NULL;
+  g_autoptr(GError) error = NULL;
+
+  app_dir = g_build_filename (g_get_home_dir (), ".var", "app",
+                              "org.test.AppData", NULL);
+  data_file = g_build_filename (app_dir, "data", "file", NULL);
+  data_dir = g_path_get_dirname (data_file);
+  g_assert_cmpint (g_mkdir_with_parents (data_dir, 0755), ==, 0);
+  g_assert_true (g_file_set_contents (data_file, "data", -1, &error));
+  g_assert_no_error (error);
+
+  g_assert_true (flatpak_app_data_delete ("org.test.AppData", NULL, &error));
+  g_assert_no_error (error);
+  g_assert_false (g_file_test (app_dir, G_FILE_TEST_EXISTS));
+
+  g_assert_cmpint (g_mkdir_with_parents (data_dir, 0755), ==, 0);
+  cancellable = g_cancellable_new ();
+  g_cancellable_cancel (cancellable);
+  g_assert_false (flatpak_app_data_delete ("org.test.AppData", cancellable,
+                                          &error));
+  g_assert_error (error, G_IO_ERROR, G_IO_ERROR_CANCELLED);
+  g_assert_true (g_file_test (app_dir, G_FILE_TEST_IS_DIR));
+  g_clear_error (&error);
+
+  g_assert_false (flatpak_app_data_delete ("org.test.Missing", cancellable,
+                                          &error));
+  g_assert_error (error, G_IO_ERROR, G_IO_ERROR_CANCELLED);
+  g_clear_error (&error);
+
+  outside_file = g_build_filename (g_get_home_dir (), ".var", "outside", NULL);
+  g_assert_true (g_file_set_contents (outside_file, "data", -1, &error));
+  g_assert_no_error (error);
+
+  g_assert_false (flatpak_app_data_delete ("../outside", NULL, &error));
+  g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_INVALID_NAME);
+  g_assert_true (g_file_test (outside_file, G_FILE_TEST_IS_REGULAR));
+  g_clear_error (&error);
+
+  permission_db = g_build_filename (g_get_user_data_dir (), "flatpak", "db",
+                                    NULL);
+  g_assert_true (g_file_set_contents (permission_db,
+                                      "not a directory", -1, &error));
+  g_assert_no_error (error);
+  g_assert_false (flatpak_app_data_delete ("org.test.AppData", NULL, &error));
+  g_assert_error (error, G_FILE_ERROR, G_FILE_ERROR_NOTDIR);
+  g_assert_false (g_file_test (app_dir, G_FILE_TEST_EXISTS));
+  g_assert_no_errno (unlink (permission_db));
+}
+
+static void
 test_library_types (void)
 {
   g_assert_true (g_type_is_a (FLATPAK_TYPE_REF, G_TYPE_OBJECT));
@@ -5122,6 +5179,7 @@ main (int argc, char *argv[])
   g_test_init (&argc, &argv, NULL);
 
   g_test_add_func ("/library/version", test_library_version);
+  g_test_add_func ("/library/delete-app-data", test_delete_app_data);
   g_test_add_func ("/library/types", test_library_types);
   g_test_add_func ("/library/user-installation", test_user_installation);
   g_test_add_func ("/library/system-installation", test_system_installation);

@@ -26,7 +26,6 @@
 #include "libglnx.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-dir-private.h"
-#include "flatpak-permission-dbus-generated.h"
 #include "flatpak-transaction.h"
 
 /* AS_CHECK_VERSION was introduced in 0.14.0; we still support 0.12.0, so
@@ -113,11 +112,6 @@ gboolean update_appstream (GPtrArray    *dirs,
                            gboolean      quiet,
                            GCancellable *cancellable,
                            GError      **error);
-
-char ** get_permission_tables (XdpDbusPermissionStore *store);
-gboolean reset_permissions_for_app (const char *app_id,
-                                    GError    **error);
-
 
 /* --columns handling */
 

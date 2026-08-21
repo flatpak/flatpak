@@ -27,6 +27,7 @@
 
 #include <flatpak-version-macros.h>
 #include <flatpak-enum-types.h>
+#include <flatpak-app-data.h>
 #include <flatpak-error.h>
 #include <flatpak-portal-error.h>
 #include <flatpak-ref.h>
