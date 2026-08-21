@@ -361,6 +361,8 @@ char * flatpak_escape_string (const char        *s,
 gboolean flatpak_validate_path_characters (const char *path,
                                            GError    **error);
 
+char *flatpak_describe_invalid_first_char (const char *s);
+
 gboolean running_under_sudo_root (void);
 
 void flatpak_set_debugging (gboolean debugging);
