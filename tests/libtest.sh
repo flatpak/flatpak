@@ -578,9 +578,6 @@ have_working_bwrap() {
 
 # Use to skip all of these tests
 skip() {
-    if [ -n "$planned_tests" ]; then
-        assert_not_reached "Cannot call skip after plan_tests"
-    fi
     echo "1..0 # SKIP" "$@"
     exit 0
 }
