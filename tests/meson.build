@@ -411,6 +411,7 @@ tests = {
   'repair': {},
   'extra-data': {'wrap': ['user', 'system']},
   'preinstall': {},
+  'pin': {},
   'run-custom': {'wrap': ['user', 'system']},
   'upgrade-from-header': {'wrap': ['user', 'system', 'system-norevokefs']},
   'metainfo-export': {},
