@@ -562,6 +562,10 @@ static const Filesystem filesystems[] =
   { "xdg-music/Stuff", FLATPAK_FILESYSTEM_MODE_READ_WRITE },
   { "xdg-pictures", FLATPAK_FILESYSTEM_MODE_READ_WRITE },
   { "xdg-pictures/Stuff", FLATPAK_FILESYSTEM_MODE_READ_WRITE },
+#if GLIB_CHECK_VERSION(2, 90, 0)
+  { "xdg-projects", FLATPAK_FILESYSTEM_MODE_READ_WRITE },
+  { "xdg-projects/Stuff", FLATPAK_FILESYSTEM_MODE_READ_WRITE },
+#endif
   { "xdg-public-share", FLATPAK_FILESYSTEM_MODE_READ_WRITE },
   { "xdg-public-share/Stuff", FLATPAK_FILESYSTEM_MODE_READ_WRITE },
   { "xdg-templates", FLATPAK_FILESYSTEM_MODE_READ_WRITE },
