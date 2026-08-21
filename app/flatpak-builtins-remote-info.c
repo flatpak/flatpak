@@ -227,6 +227,8 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
           installed_size = GUINT64_FROM_BE (var_metadata_lookup_uint64 (commit_metadata, "xa.installed-size", 0));
           download_size = GUINT64_FROM_BE (var_metadata_lookup_uint64 (commit_metadata, "xa.download-size", 0));
 
+          flatpak_commit_add_extra_data_sizes (commit_v, &installed_size, &download_size);
+
           formatted_installed_size = g_format_size (installed_size);
           formatted_download_size = g_format_size (download_size);
           formatted_timestamp = format_timestamp (timestamp);
