@@ -121,7 +121,13 @@ strip_last_element (const char *id,
 }
 
 static gboolean
-ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, Column *columns, GCancellable *cancellable, GError **error)
+ls_remote (GPtrArray   *dirs,
+           GHashTable  *refs_hash,
+           const char **arches,
+           const char  *app_runtime,
+           Column      *columns,
+           GCancellable *cancellable,
+           GError     **error)
 {
   g_autoptr(FlatpakTablePrinter) printer = NULL;
   guint n_keys;
@@ -232,6 +238,13 @@ ls_remote (GHashTable *refs_hash, const char **arches, const char *app_runtime, 
 
       if (need_appstream_data)
         {
+          if (!opt_cached)
+            {
+              g_autoptr(GError) appstream_error = NULL;
+              if (!update_appstream (dirs, remote, NULL, FLATPAK_APPSTREAM_TTL, TRUE, cancellable, &appstream_error))
+                g_info ("Failed to refresh AppStream data: %s", appstream_error->message);
+            }
+
           mdata = as_metadata_new ();
           flatpak_dir_load_appstream_data (dir, remote, NULL, mdata, NULL, NULL);
         }
@@ -501,7 +514,7 @@ flatpak_builtin_remote_ls (int argc, char **argv, GCancellable *cancellable, GEr
   if (columns == NULL)
     return FALSE;
 
-  return ls_remote (refs_hash, arches, opt_app_runtime, columns, cancellable, error);
+  return ls_remote (dirs, refs_hash, arches, opt_app_runtime, columns, cancellable, error);
 }
 
 gboolean
