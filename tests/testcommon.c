@@ -1,5 +1,6 @@
 #include "config.h"
 
+#include <locale.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -999,6 +1000,35 @@ test_dconf_paths (void)
 }
 
 static void
+test_describe_invalid_char (void)
+{
+  static const char * const inputs[] =
+  {
+    ".",
+    "-",
+    "abc",
+    "\n",
+    "\xc3\xa6",           /* U+00E6 LATIN SMALL LETTER AE */
+    "\xcc\x88",           /* U+0308 COMBINING DIAERESIS */
+    "\xef\xbb\xbf",       /* U+FEFF ZERO WIDTH NO-BREAK SPACE */
+    "\xf0\x9f\x98\xb9",   /* U+1F639 CAT FACE WITH TEARS OF JOY */
+    "\xf0\x9f",           /* truncated valid UTF-8 */
+    "\xff",               /* not valid UTF-8 */
+  };
+
+  for (size_t i = 0; i < G_N_ELEMENTS (inputs); i++)
+    {
+      g_autofree char *escaped = flatpak_escape_string (inputs[i], FLATPAK_ESCAPE_DO_NOT_QUOTE);
+      g_autofree char *output = flatpak_describe_invalid_first_char (inputs[i]);
+
+      g_test_message ("First character of \"%s\": \"%s\"", escaped, output);
+      g_assert_nonnull (output);
+      g_assert_true (g_utf8_validate (escaped, -1, NULL));
+      g_assert_true (g_utf8_validate (output, -1, NULL));
+    }
+}
+
+static void
 test_envp_cmp (void)
 {
   static const char * const unsorted[] =
@@ -1353,6 +1383,8 @@ main (int argc, char *argv[])
 {
   int res;
 
+  setlocale (LC_ALL, "");
+
   g_test_init (&argc, &argv, NULL);
 
   g_test_add_func ("/common/has-path-prefix", test_has_path_prefix);
@@ -1370,6 +1402,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/common/dconf-app-id", test_dconf_app_id);
   g_test_add_func ("/common/dconf-paths", test_dconf_paths);
   g_test_add_func ("/common/decompose-ref", test_decompose);
+  g_test_add_func ("/common/describe-invalid-char", test_describe_invalid_char);
   g_test_add_func ("/common/envp-cmp", test_envp_cmp);
   g_test_add_func ("/common/needs-quoting", test_needs_quoting);
   g_test_add_func ("/common/quote-argv", test_quote_argv);
