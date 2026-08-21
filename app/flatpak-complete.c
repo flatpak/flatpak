@@ -114,6 +114,50 @@ flatpak_complete_word (FlatpakCompletion *completion,
   g_print ("%s\n", rest);
 }
 
+void flatpak_complete_ref_id_flush (FlatpakCompletion *completion)
+{
+  GPtrArray *refs = completion->ref_scores;
+
+  int best = INT_MIN;
+  for (int i = 0; i < refs->len; ++i)
+    best = MAX(best, flatpak_decomposed_get_score (g_ptr_array_index (refs, i)));
+
+  for (int i = 0; i < refs->len; ++i)
+    {
+      FlatpakDecomposed *ref = g_ptr_array_index (refs, i);
+      size_t len;
+      const char *ref_id = flatpak_decomposed_peek_id (ref, &len);
+      fprintf(stderr, "%.*s pat=%s score=%i\n", (int)len, ref_id, completion->cur, flatpak_decomposed_get_score (ref));
+    }
+
+  fprintf(stderr, "best_score=%i\n", best);
+  fprintf(stderr, "----\n");
+
+  for (int i = refs->len; i > 0; --i)
+    if (flatpak_decomposed_get_score (g_ptr_array_index (refs, i - 1)) != best)
+      g_ptr_array_remove_index_fast(refs, i - 1);
+  g_ptr_array_sort (refs, (GCompareFunc)flatpak_decomposed_strcmp_p);
+
+  gboolean is_prefix = TRUE;
+  int count = 0;
+  for (int i = 0; i < refs->len; ++i) {
+    FlatpakDecomposed *ref = g_ptr_array_index (refs, i);
+
+    size_t len;
+    const char *ref_id = flatpak_decomposed_peek_id (ref, &len);
+    g_print ("%.*s \n", (int)len, ref_id);
+
+    count += 1;
+    if (is_prefix && !g_str_has_prefix (ref_id, completion->cur))
+      is_prefix = FALSE;
+  }
+
+  if (!is_prefix && count > 1)
+    g_print (" \n"); // a junk variant for bash not to attempt to coalesce a prefix
+
+  g_ptr_array_set_size (refs, 0);
+}
+
 void
 flatpak_complete_ref_id (FlatpakCompletion *completion,
                          GPtrArray         *refs)
@@ -121,12 +165,7 @@ flatpak_complete_ref_id (FlatpakCompletion *completion,
   if (refs == NULL)
     return;
 
-  for (int i = 0; i < refs->len; i++)
-    {
-      FlatpakDecomposed *ref = g_ptr_array_index (refs, i);
-      g_autofree char *id = flatpak_decomposed_dup_id (ref);
-      flatpak_complete_word (completion, "%s ", id);
-    }
+  g_ptr_array_extend (completion->ref_scores, refs, (GCopyFunc)flatpak_decomposed_ref, NULL);
 }
 
 void
@@ -222,6 +261,10 @@ flatpak_complete_partial_ref (FlatpakCompletion *completion,
   cur_parts[2] = arch ? arch : "";
   cur_parts[3] = branch ? branch : "";
 
+  FindMatchingRefsFlags flags = FIND_MATCHING_REFS_FLAGS_NONE;
+  if (element == 1)
+    flags |= FIND_MATCHING_REFS_FLAGS_FUZZY | FIND_MATCHING_REFS_FLAGS_FUZZY_SUBSEQ;
+
   if (remote)
     {
       g_autoptr(FlatpakRemoteState) state = get_remote_state (dir, remote, TRUE, FALSE,
@@ -229,23 +272,23 @@ flatpak_complete_partial_ref (FlatpakCompletion *completion,
                                                               NULL, &error);
       if (state != NULL)
         refs = flatpak_dir_find_remote_refs (dir, state,
-                                             (element > 1) ? id : NULL,
+                                             id,
                                              NULL, /* branch */
                                              NULL, /* default branch */
                                              (element > 2) ? arch : only_arch,
                                              NULL, /* default arch */
                                              matched_kinds,
-                                             FIND_MATCHING_REFS_FLAGS_NONE,
+                                             flags,
                                              NULL, &error);
     }
   else
     {
       refs = flatpak_dir_find_installed_refs (dir,
-                                              (element > 1) ? id : NULL,
+                                              id,
                                               NULL, /* branch */
                                               (element > 2) ? arch : only_arch,
                                               matched_kinds,
-                                              FIND_MATCHING_REFS_FLAGS_NONE,
+                                              flags,
                                               &error);
     }
   if (refs == NULL)
@@ -256,6 +299,14 @@ flatpak_complete_partial_ref (FlatpakCompletion *completion,
       FlatpakDecomposed *ref = g_ptr_array_index (refs, i);
       int j;
       g_autoptr(GString) comp = NULL;
+
+      if (element <= 1)
+        {
+          flatpak_decomposed_ref (ref);
+          g_ptr_array_add (completion->ref_scores, ref);
+          continue;
+        }
+
       g_auto(GStrv) parts = g_strsplit (flatpak_decomposed_get_ref (ref), "/", 0);
 
       if (!g_str_has_prefix (parts[element], cur_parts[element]))
@@ -639,6 +690,8 @@ flatpak_completion_new (const char *arg_line,
 
   flatpak_completion_debug ("----");
 
+  completion->ref_scores = g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_decomposed_unref);
+
   return completion;
 }
 
@@ -651,5 +704,6 @@ flatpak_completion_free (FlatpakCompletion *completion)
   g_free (completion->argv);
   g_free (completion->shell_cur);
   g_strfreev (completion->original_argv);
+  g_ptr_array_free (completion->ref_scores, TRUE);
   g_free (completion);
 }

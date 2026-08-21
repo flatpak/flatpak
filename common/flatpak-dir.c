@@ -14466,6 +14466,9 @@ find_matching_refs (GHashTable           *refs,
   gboolean found_default_branch_match = FALSE;
   gboolean found_default_arch_match = FALSE;
 
+  if (flags & FIND_MATCHING_REFS_FLAGS_FUZZY_SUBSEQ || flags & FIND_MATCHING_REFS_FLAGS_FUZZY_WITH_SUBREFS)
+    flags |= FIND_MATCHING_REFS_FLAGS_FUZZY;
+
   if (opt_name && !(flags & FIND_MATCHING_REFS_FLAGS_FUZZY) &&
       !flatpak_is_valid_name (opt_name, -1, &local_error))
     {
@@ -14488,10 +14491,39 @@ find_matching_refs (GHashTable           *refs,
 
       if (opt_name)
         {
-          if ((flags & FIND_MATCHING_REFS_FLAGS_FUZZY) && !flatpak_decomposed_id_is_subref (ref))
+          if (flags & FIND_MATCHING_REFS_FLAGS_FUZZY &&
+              (flags & FIND_MATCHING_REFS_FLAGS_FUZZY_WITH_SUBREFS || !flatpak_decomposed_id_is_subref (ref)))
             {
-              if (!flatpak_decomposed_is_id_fuzzy (ref, opt_name))
+              size_t opt_len = strlen (opt_name);
+              size_t ref_id_len;
+              const char *ref_id = flatpak_decomposed_peek_id (ref, &ref_id_len);
+
+              int score;
+              if (flatpak_decomposed_id_has_prefix (ref, opt_name))
+                score = INT_MAX;
+              // else if (flatpak_decomposed_id_has_substr (ref, opt_name))
+              //   score = INT_MAX - 1;
+              // else if (!(flags & FIND_MATCHING_REFS_FLAGS_FUZZY_SUBSEQ))
+              //   score = 2 - flatpak_levenshtein_distance (opt_name, opt_len, ref_id, ref_id_len);
+              else if (opt_len < 3 && flatpak_decomposed_id_part_has_subseq (ref, opt_name))
+                score = INT_MAX - 2;
+              else if ((score = flatpak_decomposed_id_fuzzy_trig (ref, opt_name)))
+                ;
+              // else if ((score = flatpak_decomposed_id_part_fuzzy_dist (ref, opt_name)) <= 1)
+              //   score = INT_MAX - 10 - score;
+              // else if (flatpak_decomposed_id_part_has_subseq (ref, opt_name))
+              //   score = INT_MAX - 20;
+              // else if (flatpak_decomposed_id_has_subseq (ref, opt_name))
+              //   score = INT_MAX - 21;
+              // else if (g_hash_table_size (refs) < 10000)
+              //   score = 1 + abs ((int)ref_id_len - (int)opt_len) - flatpak_levenshtein_distance (opt_name, opt_len, ref_id, ref_id_len);
+              else
+                score = INT_MIN;
+
+              if (score < 0)
                 continue;
+
+              flatpak_decomposed_set_score (ref, score);
             }
           else
             {

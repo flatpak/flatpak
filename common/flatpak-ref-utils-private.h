@@ -115,8 +115,18 @@ gboolean           flatpak_decomposed_id_has_suffix         (FlatpakDecomposed  
                                                              const char         *suffix);
 gboolean           flatpak_decomposed_id_has_prefix         (FlatpakDecomposed  *ref,
                                                              const char         *prefix);
+gboolean           flatpak_decomposed_id_has_substr         (FlatpakDecomposed  *ref,
+                                                             const char         *substr);
 gboolean           flatpak_decomposed_is_id_fuzzy           (FlatpakDecomposed  *ref,
                                                              const char         *id);
+gboolean           flatpak_decomposed_id_part_fuzzy_dist    (FlatpakDecomposed  *ref,
+                                                             const char         *pat);
+int                flatpak_decomposed_id_fuzzy_trig         (FlatpakDecomposed  *ref,
+                                                             const char         *id);
+gboolean           flatpak_decomposed_id_has_subseq         (FlatpakDecomposed  *ref,
+                                                             const char         *subseq);
+gboolean           flatpak_decomposed_id_part_has_subseq    (FlatpakDecomposed  *ref,
+                                                             const char         *subseq);
 gboolean           flatpak_decomposed_id_is_subref          (FlatpakDecomposed  *ref);
 gboolean           flatpak_decomposed_id_is_subref_of       (FlatpakDecomposed  *ref,
                                                              FlatpakDecomposed  *parent_ref);
@@ -134,6 +144,9 @@ const char *       flatpak_decomposed_get_branch            (FlatpakDecomposed  
 char *             flatpak_decomposed_dup_branch            (FlatpakDecomposed  *ref);
 gboolean           flatpak_decomposed_is_branch             (FlatpakDecomposed  *ref,
                                                              const char         *branch);
+int                flatpak_decomposed_get_score             (FlatpakDecomposed *ref);
+void               flatpak_decomposed_set_score             (FlatpakDecomposed *ref,
+                                                             int                score);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakDecomposed, flatpak_decomposed_unref)
 

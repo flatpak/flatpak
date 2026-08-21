@@ -859,6 +859,7 @@ flatpak_complete_create_usb (FlatpakCompletion *completion)
           FlatpakDir *dir = g_ptr_array_index (dirs, i);
           flatpak_complete_partial_ref (completion, kinds, opt_arch, dir, NULL);
         }
+      flatpak_complete_ref_id_flush (completion);
       break;
     }
 

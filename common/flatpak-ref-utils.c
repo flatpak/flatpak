@@ -540,6 +540,7 @@ struct _FlatpakDecomposed {
   guint16 id_offset;
   guint16 arch_offset;
   guint16 branch_offset;
+  int fuzzy_score;
   char *data;
 
   /* This is only used when we're directly manipulating sideload repos, by giving
@@ -729,6 +730,7 @@ _flatpak_decomposed_new (char            *ref,
   decomposed->id_offset = (guint16)id_offset;
   decomposed->arch_offset = (guint16)arch_offset;
   decomposed->branch_offset = (guint16)branch_offset;
+  decomposed->fuzzy_score = INT_MIN;
 
   return decomposed;
 }
@@ -1357,6 +1359,15 @@ flatpak_decomposed_id_has_prefix (FlatpakDecomposed  *ref,
   return str_has_prefix (ref_id, id_len, prefix);
 }
 
+gboolean
+flatpak_decomposed_id_has_substr (FlatpakDecomposed  *ref,
+                                  const char         *substr)
+{
+  size_t ref_id_len;
+  const char *ref_id = flatpak_decomposed_peek_id (ref, &ref_id_len);
+  return slashed_str_strcasestr (ref_id, ref_id_len, substr);
+}
+
 
 /* See if the given id looks similar to this ref. The
  * Levenshtein distance constant was chosen pretty arbitrarily. */
@@ -1372,6 +1383,110 @@ flatpak_decomposed_is_id_fuzzy (FlatpakDecomposed  *ref,
 
   return flatpak_levenshtein_distance (id, -1, ref_id, ref_id_len) <= 2;
 }
+
+gboolean
+flatpak_decomposed_id_part_fuzzy_dist (FlatpakDecomposed  *ref,
+                                       const char         *pat)
+{
+  size_t pat_len = strlen (pat);
+  size_t ref_id_len;
+  const char *ref_id = flatpak_decomposed_peek_id (ref, &ref_id_len);
+  const char *end = ref_id + ref_id_len;
+
+  int res = INT_MAX;
+  const char *last = ref_id;
+  for (const char *next; (next = memchr (last, '.', end - last)); last = next + 1)
+    res = MIN(res, flatpak_levenshtein_distance (pat, pat_len, last, next - last));
+  res = MIN(res, flatpak_levenshtein_distance (pat, pat_len, last, end - last));
+
+  return res;
+}
+
+static inline char _trig_char (char c)
+{
+  return g_ascii_isalnum(c) ? g_ascii_tolower(c) : '.';
+}
+
+static inline void* _trig (char a,
+                           char b,
+                           char c)
+{
+  return (void*)((size_t)(_trig_char (a) << 16) | (_trig_char (b) << 8) | _trig_char (c));
+}
+
+static inline void* _trig_p (const char *a)
+{
+  return (void*)((size_t)(_trig_char (a[0]) << 16) | (_trig_char (a[1]) << 8) | _trig_char (a[2]));
+}
+
+int
+flatpak_decomposed_id_fuzzy_trig      (FlatpakDecomposed  *ref,
+                                       const char         *pat)
+{
+  g_autoptr(GHashTable) set = g_hash_table_new (g_direct_hash, g_direct_equal);
+  size_t ref_id_len;
+  const char *ref_id = flatpak_decomposed_peek_id (ref, &ref_id_len);
+
+  if (ref_id_len > 1)
+    g_hash_table_add (set, _trig ('.', ref_id[0], ref_id[1]));
+  for (int i = 0; i < ref_id_len - 2; ++i)
+    if (ref_id[i + 1] != '.')
+      g_hash_table_add (set, _trig_p (&ref_id[i]));
+  if (ref_id_len > 1)
+    g_hash_table_add (set, _trig (ref_id[ref_id_len-2], ref_id[ref_id_len-1], '.'));
+
+  int score = 0;
+  int pat_len = strlen(pat);
+  if (pat_len > 1)
+    score += g_hash_table_contains (set, _trig ('.', pat[0], pat[1]));
+  for (int i = 0; i < pat_len - 2; ++i)
+    score += g_hash_table_contains (set, _trig_p (&pat[i]));
+  if (pat_len > 1)
+    score += g_hash_table_contains (set, _trig (pat[pat_len-2], pat[pat_len-1], '.'));
+
+  return score;
+}
+
+static gboolean
+_flatpak_has_subseq (const char *ref_id,
+                     size_t      ref_id_len,
+                     const char *subseq)
+{
+  while (*subseq != '\0' && ref_id_len > 0) {
+    if (g_ascii_tolower (*subseq) == g_ascii_tolower (*ref_id))
+      subseq += 1;
+    ref_id_len -= 1;
+    ref_id += 1;
+  }
+  return *subseq == '\0';
+}
+
+gboolean
+flatpak_decomposed_id_has_subseq (FlatpakDecomposed  *ref,
+                                  const char         *subseq)
+{
+  size_t ref_id_len;
+  const char *ref_id = flatpak_decomposed_peek_id (ref, &ref_id_len);
+
+  return _flatpak_has_subseq (ref_id, ref_id_len, subseq);
+}
+
+gboolean
+flatpak_decomposed_id_part_has_subseq (FlatpakDecomposed  *ref,
+                                       const char         *subseq)
+{
+  size_t ref_id_len;
+  const char *ref_id = flatpak_decomposed_peek_id (ref, &ref_id_len);
+  const char *end = ref_id + ref_id_len;
+
+  const char *last = ref_id;
+  for (const char *next; (next = memchr (last, '.', end - last)); last = next + 1)
+    if (_flatpak_has_subseq (last, next - last, subseq))
+      return TRUE;
+
+  return _flatpak_has_subseq (last, end - last, subseq);
+}
+
 
 gboolean
 flatpak_decomposed_id_is_subref (FlatpakDecomposed  *ref)
@@ -1510,6 +1625,19 @@ flatpak_decomposed_is_branch (FlatpakDecomposed  *ref,
   const char *ref_branch = flatpak_decomposed_get_branch (ref);
 
   return strcmp (ref_branch, branch) == 0;
+}
+
+int
+flatpak_decomposed_get_score (FlatpakDecomposed  *ref)
+{
+  return ref->fuzzy_score;
+}
+
+void
+flatpak_decomposed_set_score (FlatpakDecomposed  *ref,
+                              int                 score)
+{
+  ref->fuzzy_score = score;
 }
 
 static const char *

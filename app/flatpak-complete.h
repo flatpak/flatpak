@@ -38,6 +38,7 @@ struct FlatpakCompletion
   char **original_argv;
   int    argc;
   int    original_argc;
+  GPtrArray *ref_scores;
 };
 
 void flatpak_completion_debug (const gchar *format,
@@ -53,6 +54,7 @@ void               flatpak_complete_ref (FlatpakCompletion *completion,
                                          OstreeRepo        *repo);
 void               flatpak_complete_ref_id (FlatpakCompletion *completion,
                                             GPtrArray         *refs);
+void               flatpak_complete_ref_id_flush (FlatpakCompletion *completion);
 void               flatpak_complete_ref_branch (FlatpakCompletion *completion,
                                                 GPtrArray         *refs);
 void               flatpak_complete_partial_ref (FlatpakCompletion *completion,
