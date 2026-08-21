@@ -6049,8 +6049,8 @@ msgstr "გლობში მეტისმეტად ბევრი სე
 
 #: common/flatpak-utils.c:777
 #, c-format
-msgid "Invalid glob character '%c'"
-msgstr "არასწორი გლობის სიმბოლო '%c'"
+msgid "Invalid glob character '%s'"
+msgstr "არასწორი გლობის სიმბოლო '%s'"
 
 #: common/flatpak-utils.c:831
 #, c-format

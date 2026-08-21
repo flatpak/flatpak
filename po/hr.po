@@ -6008,8 +6008,8 @@ msgstr "Previše segmenata u globalnoj naredbi"
 
 #: common/flatpak-utils.c:777
 #, c-format
-msgid "Invalid glob character '%c'"
-msgstr "Neispravan znak „%c” u globalnoj naredbi"
+msgid "Invalid glob character '%s'"
+msgstr "Neispravan znak „%s” u globalnoj naredbi"
 
 #: common/flatpak-utils.c:831
 #, c-format

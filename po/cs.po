@@ -5964,7 +5964,7 @@ msgstr ""
 
 #: common/flatpak-utils.c:777
 #, c-format
-msgid "Invalid glob character '%c'"
+msgid "Invalid glob character '%s'"
 msgstr ""
 
 #: common/flatpak-utils.c:831

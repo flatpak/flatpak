@@ -5955,8 +5955,8 @@ msgstr "Tro da segmentoj en globo"
 
 #: common/flatpak-utils.c:777
 #, c-format
-msgid "Invalid glob character '%c'"
-msgstr "Nevalida globa signo '%c'"
+msgid "Invalid glob character '%s'"
+msgstr "Nevalida globa signo '%s'"
 
 #: common/flatpak-utils.c:831
 #, c-format

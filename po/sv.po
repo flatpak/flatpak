@@ -6016,8 +6016,8 @@ msgstr "För många segment i matchning"
 
 #: common/flatpak-utils.c:777
 #, c-format
-msgid "Invalid glob character '%c'"
-msgstr "Ogiltigt matchningstecken ”%c”"
+msgid "Invalid glob character '%s'"
+msgstr "Ogiltigt matchningstecken ”%s”"
 
 #: common/flatpak-utils.c:831
 #, c-format

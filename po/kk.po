@@ -6036,8 +6036,8 @@ msgstr "Глобта сегменттер тым көп"
 
 #: common/flatpak-utils.c:777
 #, c-format
-msgid "Invalid glob character '%c'"
-msgstr "Глоб таңбасы жарамсыз: '%c'"
+msgid "Invalid glob character '%s'"
+msgstr "Глоб таңбасы жарамсыз: '%s'"
 
 #: common/flatpak-utils.c:831
 #, c-format

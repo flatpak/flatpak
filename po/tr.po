@@ -6010,8 +6010,8 @@ msgstr "Glob’da çok fazla bölüm"
 
 #: common/flatpak-utils.c:777
 #, c-format
-msgid "Invalid glob character '%c'"
-msgstr "Geçersiz glob karakter '%c'"
+msgid "Invalid glob character '%s'"
+msgstr "Geçersiz glob karakter '%s'"
 
 #: common/flatpak-utils.c:831
 #, c-format

@@ -6039,8 +6039,8 @@ msgstr "Слишком много частей в glob'е"
 
 #: common/flatpak-utils.c:777
 #, c-format
-msgid "Invalid glob character '%c'"
-msgstr "Недопустимый знак '%c' в glob'е"
+msgid "Invalid glob character '%s'"
+msgstr "Недопустимый знак '%s' в glob'е"
 
 #: common/flatpak-utils.c:831
 #, c-format

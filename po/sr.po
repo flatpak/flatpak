@@ -6005,8 +6005,8 @@ msgstr "Превише делова у глобу"
 
 #: common/flatpak-utils.c:777
 #, c-format
-msgid "Invalid glob character '%c'"
-msgstr "Неисправан знак глоба „%c“"
+msgid "Invalid glob character '%s'"
+msgstr "Неисправан знак глоба „%s“"
 
 #: common/flatpak-utils.c:831
 #, c-format

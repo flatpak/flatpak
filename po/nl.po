@@ -6032,8 +6032,8 @@ msgstr "Te veel segmenten in glob"
 
 #: common/flatpak-utils.c:777
 #, c-format
-msgid "Invalid glob character '%c'"
-msgstr "Ongeldig glob-teken ‘%c’"
+msgid "Invalid glob character '%s'"
+msgstr "Ongeldig glob-teken ‘%s’"
 
 #: common/flatpak-utils.c:831
 #, c-format

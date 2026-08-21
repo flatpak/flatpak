@@ -5984,7 +5984,7 @@ msgstr "Zu viele Argumente"
 
 #: common/flatpak-utils.c:777
 #, fuzzy, c-format
-msgid "Invalid glob character '%c'"
+msgid "Invalid glob character '%s'"
 msgstr "Ungültige Prozesskennung %s"
 
 #: common/flatpak-utils.c:831

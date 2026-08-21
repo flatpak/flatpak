@@ -6088,8 +6088,8 @@ msgstr "Za dużo segmentów we wzorcu"
 
 #: common/flatpak-utils.c:777
 #, c-format
-msgid "Invalid glob character '%c'"
-msgstr "Nieprawidłowy znak wzorca „%c”"
+msgid "Invalid glob character '%s'"
+msgstr "Nieprawidłowy znak wzorca „%s”"
 
 #: common/flatpak-utils.c:831
 #, c-format
