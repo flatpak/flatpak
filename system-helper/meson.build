@@ -14,7 +14,10 @@ executable(
   ],
   install : true,
   install_dir : get_option('libexecdir'),
-  sources : ['flatpak-system-helper.c'],
+  sources : [
+    'flatpak-system-helper.c',
+    'flatpak-system-helper-utils.c',
+  ],
 )
 
 configure_file(

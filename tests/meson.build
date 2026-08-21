@@ -124,6 +124,11 @@ c_tests = [
     ],
   }],
   ['test-locale-utils', {}],
+  ['test-system-helper', {
+    'extra_sources' : [
+      project_source_root / 'system-helper/flatpak-system-helper-utils.c',
+    ],
+  }],
   ['test-portal', {
     'extra_sources' : [
       portal_gdbus[0],

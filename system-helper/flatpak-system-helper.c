@@ -1953,7 +1953,10 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
         {
           g_autoptr(GError) error = NULL;
           g_autoptr(FlatpakDecomposed) ref = NULL;
-          gboolean is_app, is_install;
+          FlatpakRefKind ref_kind;
+          FlatpakSystemHelperDeployAction deploy_action;
+          FlatpakSystemHelperDeployAuthorization deploy_authorization;
+          FlatpakSystemHelperRefState ref_state = FLATPAK_SYSTEM_HELPER_REF_NOT_INSTALLED;
 
           ref = flatpak_decomposed_new_from_ref (ref_str, &error);
           if (ref == NULL)
@@ -1976,14 +1979,12 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
            */
 
           if ((flags & FLATPAK_HELPER_DEPLOY_FLAGS_APP_HINT) != 0)
-            is_app = TRUE;
+            ref_kind = FLATPAK_REF_KIND_APP;
           else
-            is_app = flatpak_decomposed_is_app (ref);
+            ref_kind = flatpak_decomposed_get_kind (ref);
 
-          if ((flags & FLATPAK_HELPER_DEPLOY_FLAGS_INSTALL_HINT) != 0 ||
-              (flags & FLATPAK_HELPER_DEPLOY_FLAGS_REINSTALL) != 0)
-            is_install = TRUE;
-          else
+          if ((flags & (FLATPAK_HELPER_DEPLOY_FLAGS_INSTALL_HINT |
+                        FLATPAK_HELPER_DEPLOY_FLAGS_REINSTALL)) == 0)
             {
               g_autoptr(FlatpakDir) system = dir_get_system (installation,
                                                              invocation,
@@ -1997,37 +1998,24 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
                   return FALSE;
                 }
 
-              is_install = !dir_ref_is_installed (system, ref);
+              if (dir_ref_is_installed (system, ref))
+                ref_state = FLATPAK_SYSTEM_HELPER_REF_INSTALLED;
             }
 
-          if (!is_install)
-            g_object_set_data (G_OBJECT (invocation),
-                               "authorized-as-update",
-                               GINT_TO_POINTER (TRUE));
+          deploy_action = flatpak_system_helper_get_deploy_action (flags, ref_kind,
+                                                                   ref_state);
+          action = flatpak_system_helper_deploy_action_to_polkit_action (deploy_action);
+          deploy_authorization = flatpak_system_helper_get_deploy_authorization (deploy_action);
 
-          if (is_install)
+          switch (deploy_authorization)
             {
-              if (is_app)
-                action = "org.freedesktop.Flatpak.app-install";
-              else
-                action = "org.freedesktop.Flatpak.runtime-install";
-            }
-          else
-            {
-              if (is_app)
-                {
-                  if ((flags & FLATPAK_HELPER_DEPLOY_FLAGS_ALLOW_DOWNGRADE) != 0)
-                    action = "org.freedesktop.Flatpak.app-downgrade";
-                  else
-                    action = "org.freedesktop.Flatpak.app-update";
-                }
-              else
-                {
-                  if ((flags & FLATPAK_HELPER_DEPLOY_FLAGS_ALLOW_DOWNGRADE) != 0)
-                    action = "org.freedesktop.Flatpak.runtime-downgrade";
-                  else
-                    action = "org.freedesktop.Flatpak.runtime-update";
-                }
+            case FLATPAK_SYSTEM_HELPER_DEPLOY_AUTHORIZATION_INSTALL:
+              break;
+            case FLATPAK_SYSTEM_HELPER_DEPLOY_AUTHORIZATION_UPDATE:
+              g_object_set_data (G_OBJECT (invocation),
+                                 "authorized-as-update",
+                                 GINT_TO_POINTER (TRUE));
+              break;
             }
         }
 

@@ -15867,6 +15867,7 @@ gboolean
 flatpak_dir_create_remote_for_ref_file (FlatpakDir         *self,
                                         GKeyFile           *keyfile,
                                         const char         *default_arch,
+                                        gboolean            allow_installed,
                                         char              **remote_name_out,
                                         char              **collection_id_out,
                                         FlatpakDecomposed **ref_out,
@@ -15891,7 +15892,7 @@ flatpak_dir_create_remote_for_ref_file (FlatpakDir         *self,
     return FALSE;
 
   deploy_dir = flatpak_dir_get_if_deployed (self, ref, NULL, NULL);
-  if (deploy_dir != NULL)
+  if (deploy_dir != NULL && !allow_installed)
     {
       g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
                    is_runtime ? _("Runtime %s, branch %s is already installed") :

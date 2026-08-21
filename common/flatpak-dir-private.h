@@ -870,6 +870,7 @@ void                  flatpak_dir_prune_origin_remote                       (Fla
 gboolean              flatpak_dir_create_remote_for_ref_file                (FlatpakDir                    *self,
                                                                              GKeyFile                      *keyfile,
                                                                              const char                    *default_arch,
+                                                                             gboolean                       allow_installed,
                                                                              char                         **remote_name_out,
                                                                              char                         **collection_id_out,
                                                                              FlatpakDecomposed            **ref_out,

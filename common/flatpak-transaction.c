@@ -4887,7 +4887,7 @@ flatpak_transaction_resolve_flatpakrefs (FlatpakTransaction *self,
                                                   cancellable, error))
         return FALSE;
 
-      if (!flatpak_dir_create_remote_for_ref_file (priv->dir, flatpakref, priv->default_arch,
+      if (!flatpak_dir_create_remote_for_ref_file (priv->dir, flatpakref, priv->default_arch, priv->reinstall,
                                                    &remote, NULL, &ref, error))
         return FALSE;
 
