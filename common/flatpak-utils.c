@@ -742,7 +742,6 @@ flatpak_filter_glob_to_regexp (const char  *glob,
   while (*glob != 0)
     {
       char c = *glob;
-      glob++;
 
       if (c == '/')
         {
@@ -774,9 +773,14 @@ flatpak_filter_glob_to_regexp (const char  *glob,
         }
       else
         {
-          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid glob character '%c'"), c);
+          g_autofree char *first = flatpak_describe_invalid_first_char (glob);
+
+          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid glob character '%s'"),
+                              first);
           return NULL;
         }
+
+      glob++;
     }
 
   while (parts < 3)
