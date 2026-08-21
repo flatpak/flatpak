@@ -5914,8 +5914,8 @@ msgstr "glob 中的區段過多"
 
 #: common/flatpak-utils.c:777
 #, c-format
-msgid "Invalid glob character '%c'"
-msgstr "「%c」glob 字元無效"
+msgid "Invalid glob character '%s'"
+msgstr "「%s」glob 字元無效"
 
 #: common/flatpak-utils.c:831
 #, c-format

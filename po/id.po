@@ -5989,8 +5989,8 @@ msgstr "Terlalu banyak segmen pada glob"
 
 #: common/flatpak-utils.c:777
 #, c-format
-msgid "Invalid glob character '%c'"
-msgstr "Karakter glob tidak valid '%c'"
+msgid "Invalid glob character '%s'"
+msgstr "Karakter glob tidak valid '%s'"
 
 #: common/flatpak-utils.c:831
 #, c-format

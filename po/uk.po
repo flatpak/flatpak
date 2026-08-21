@@ -6065,8 +6065,8 @@ msgstr "Забагато аргументів у виразі-заміннику
 
 #: common/flatpak-utils.c:777
 #, c-format
-msgid "Invalid glob character '%c'"
-msgstr "Некоректний символ у виразі-заміннику, «%c»"
+msgid "Invalid glob character '%s'"
+msgstr "Некоректний символ у виразі-заміннику, «%s»"
 
 #: common/flatpak-utils.c:831
 #, c-format

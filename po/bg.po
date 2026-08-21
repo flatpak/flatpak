@@ -6097,8 +6097,8 @@ msgstr "Твърде много части в шаблона по Unix"
 
 #: common/flatpak-utils.c:777
 #, c-format
-msgid "Invalid glob character '%c'"
-msgstr "Неправилен знак „%c“ в шаблона по Unix"
+msgid "Invalid glob character '%s'"
+msgstr "Неправилен знак „%s“ в шаблона по Unix"
 
 #: common/flatpak-utils.c:831
 #, c-format
