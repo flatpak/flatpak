@@ -6074,8 +6074,8 @@ msgstr "Demasiados argumentos en el glob"
 
 #: common/flatpak-utils.c:777
 #, c-format
-msgid "Invalid glob character '%c'"
-msgstr "Caracter de glob «%c» no válido"
+msgid "Invalid glob character '%s'"
+msgstr "Caracter de glob «%s» no válido"
 
 #: common/flatpak-utils.c:831
 #, c-format
