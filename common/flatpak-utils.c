@@ -2533,6 +2533,37 @@ flatpak_validate_path_characters (const char *path,
   return TRUE;
 }
 
+/*
+ * Describe the first character of @s in a way that is useful for
+ * error messages about invalid strings.
+ */
+char *
+flatpak_describe_invalid_first_char (const char *s)
+{
+  gunichar c = g_utf8_get_char_validated (s, -1);
+
+  /* If s starts with valid UTF-8 and the character is printable,
+   * represent it as itself, for example:
+   * Branch can't contain "x" */
+  if (c > 0 && g_unichar_isprint (c) && !g_unichar_iszerowidth (c))
+    {
+      char buf[7] = { 0 };
+
+      g_unichar_to_utf8 (c, buf);
+      return g_strdup (buf);
+    }
+
+  /* If s starts with valid UTF-8 but the character is unprintable,
+   * represent it in Unicode codepoint notation, for example:
+   * Branch can't contain "U+000A" */
+  if (c != (gunichar) -1 && c != (gunichar) -2)
+    return g_strdup_printf ("U+%04X", c);
+
+  /* If it wasn't even valid UTF-8, resort to representing the byte:
+   * Branch can't contain "\xFF" */
+  return g_strdup_printf ("\\x%02X", (unsigned char) *s);
+}
+
 gboolean
 running_under_sudo_root (void)
 {
