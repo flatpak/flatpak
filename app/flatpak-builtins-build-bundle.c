@@ -234,6 +234,8 @@ build_bundle (OstreeRepo *repo, const char *commit_checksum, GFile *file,
   g_autoptr(GVariant) params = NULL;
   g_autoptr(GVariant) metadata = NULL;
   const char *collection_id;
+  GKeyFile *config = NULL;
+  g_autofree char *gpg_keys_url = NULL;
 
   if (!ostree_repo_read_commit (repo, commit_checksum, &root, NULL, NULL, error))
     return FALSE;
@@ -315,6 +317,12 @@ build_bundle (OstreeRepo *repo, const char *commit_checksum, GFile *file,
                                                         g_bytes_get_size (gpg_data),
                                                         1));
     }
+
+  config = ostree_repo_get_config (repo);
+  gpg_keys_url = g_key_file_get_string (config, "flatpak", "gpg-keys-url", NULL);
+  if (gpg_keys_url != NULL)
+    g_variant_builder_add (&metadata_builder, "{sv}", "gpg-keys-url",
+                           g_variant_new_string (gpg_keys_url));
 
   g_variant_builder_init (&param_builder, G_VARIANT_TYPE ("a{sv}"));
   g_variant_builder_add (&param_builder, "{sv}", "min-fallback-size", g_variant_new_uint32 (0));
