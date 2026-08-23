@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2026-08-19 14:31+0000\n"
-"PO-Revision-Date: 2026-08-20 09:15+0800\n"
+"POT-Creation-Date: 2026-08-21 16:07+0000\n"
+"PO-Revision-Date: 2026-08-23 08:41+0800\n"
 "Last-Translator: lumingzh <lumingzh@qq.com>\n"
 "Language-Team: Chinese (China) <i18n-zh@googlegroups.com>\n"
 "Language: zh_CN\n"
@@ -35,11 +35,11 @@ msgstr "要打包的架构"
 #: app/flatpak-builtins-run.c:158 app/flatpak-builtins-search.c:37
 #: app/flatpak-builtins-uninstall.c:54 app/flatpak-builtins-update.c:56
 msgid "ARCH"
-msgstr "架构"
+msgstr "ARCH"
 
 #: app/flatpak-builtins-build-bundle.c:61
 msgid "URL for repo"
-msgstr "仓库网址"
+msgstr "仓库 URL"
 
 #: app/flatpak-builtins-build-bundle.c:61
 #: app/flatpak-builtins-build-bundle.c:62
@@ -54,11 +54,11 @@ msgstr "仓库网址"
 #: app/flatpak-builtins-remote-modify.c:86
 #: app/flatpak-builtins-remote-modify.c:90
 msgid "URL"
-msgstr "网址"
+msgstr "URL"
 
 #: app/flatpak-builtins-build-bundle.c:62
 msgid "URL for runtime flatpakrepo file"
-msgstr "运行时 flatpakrepo 文件的网址"
+msgstr "运行时 flatpakrepo 文件的 URL"
 
 #: app/flatpak-builtins-build-bundle.c:63
 msgid "Add GPG key from FILE (- for stdin)"
@@ -71,7 +71,7 @@ msgstr "从文件添加 GPG 密钥（- 用于 stdin）"
 #: app/flatpak-builtins-remote-add.c:86 app/flatpak-builtins-remote-modify.c:89
 #: app/flatpak-builtins-remote-modify.c:92
 msgid "FILE"
-msgstr "文件"
+msgstr "FILE"
 
 #: app/flatpak-builtins-build-bundle.c:64
 msgid "GPG Key ID to sign the OCI image with"
@@ -102,7 +102,7 @@ msgstr "查找密钥环时使用的 GPG 主目录"
 #: app/flatpak-builtins-build-sign.c:45
 #: app/flatpak-builtins-build-update-repo.c:85
 msgid "HOMEDIR"
-msgstr "主目录"
+msgstr "HOMEDIR"
 
 #: app/flatpak-builtins-build-bundle.c:66
 msgid "OSTree commit to create a delta bundle from"
@@ -111,7 +111,7 @@ msgstr "创建增量包使用的 OSTree 提交"
 #: app/flatpak-builtins-build-bundle.c:66 app/flatpak-builtins-remote-info.c:55
 #: app/flatpak-builtins-update.c:57
 msgid "COMMIT"
-msgstr "提交"
+msgstr "COMMIT"
 
 #: app/flatpak-builtins-build-bundle.c:67
 msgid "Export oci image instead of flatpak bundle"
@@ -125,7 +125,7 @@ msgstr "压缩 OCI 映像层的方式（默认：gzip）"
 msgid ""
 "LOCATION FILENAME NAME [BRANCH] - Create a single file bundle from a local "
 "repository"
-msgstr "位置 文件名 名称 [分支] - 从本地仓库创建单文件捆绑包"
+msgstr "LOCATION FILENAME NAME [BRANCH] - 从本地仓库创建单文件捆绑包"
 
 #: app/flatpak-builtins-build-bundle.c:641
 msgid "LOCATION, FILENAME and NAME must be specified"
@@ -211,7 +211,7 @@ msgstr "在该目录开始构建"
 #: app/flatpak-builtins-build.c:52 app/flatpak-builtins-build.c:53
 #: app/flatpak-builtins-build-init.c:64 app/flatpak-builtins-run.c:160
 msgid "DIR"
-msgstr "目录"
+msgstr "DIR"
 
 #: app/flatpak-builtins-build.c:53
 msgid "Where to look for custom sdk dir (defaults to 'usr')"
@@ -239,7 +239,7 @@ msgstr "日志系统总线调用"
 
 #: app/flatpak-builtins-build.c:262
 msgid "DIRECTORY [COMMAND [ARGUMENT…]] - Build in directory"
-msgstr "目录 [命令 [参数…]] - 在目录中构建"
+msgstr "DIRECTORY [COMMAND [ARGUMENT…]] - 在目录中构建"
 
 #: app/flatpak-builtins-build.c:285 app/flatpak-builtins-build-finish.c:655
 msgid "DIRECTORY must be specified"
@@ -292,7 +292,7 @@ msgstr "单行主题"
 #: app/flatpak-builtins-build-commit-from.c:64
 #: app/flatpak-builtins-build-export.c:60
 msgid "SUBJECT"
-msgstr "主题"
+msgstr "SUBJECT"
 
 #: app/flatpak-builtins-build-commit-from.c:65
 #: app/flatpak-builtins-build-export.c:61
@@ -302,7 +302,7 @@ msgstr "完整描述"
 #: app/flatpak-builtins-build-commit-from.c:65
 #: app/flatpak-builtins-build-export.c:61
 msgid "BODY"
-msgstr "正文"
+msgstr "BODY"
 
 #: app/flatpak-builtins-build-commit-from.c:66
 #: app/flatpak-builtins-build-export.c:64
@@ -332,7 +332,7 @@ msgstr "将构建标记为寿命完结"
 #: app/flatpak-builtins-build-commit-from.c:70
 #: app/flatpak-builtins-build-export.c:73
 msgid "REASON"
-msgstr "原因"
+msgstr "REASON"
 
 #: app/flatpak-builtins-build-commit-from.c:71
 msgid ""
@@ -352,7 +352,7 @@ msgstr "设置安装该提交需要的令牌类型"
 #: app/flatpak-builtins-build-commit-from.c:72
 #: app/flatpak-builtins-build-export.c:75
 msgid "VAL"
-msgstr "值"
+msgstr "VAL"
 
 #: app/flatpak-builtins-build-commit-from.c:73
 msgid "Override the timestamp of the commit (NOW for current time)"
@@ -361,7 +361,7 @@ msgstr "覆盖提交的时间戳（NOW 为当前时间）"
 #: app/flatpak-builtins-build-commit-from.c:73
 #: app/flatpak-builtins-build-export.c:76
 msgid "TIMESTAMP"
-msgstr "时间戳"
+msgstr "TIMESTAMP"
 
 #: app/flatpak-builtins-build-commit-from.c:75
 #: app/flatpak-builtins-build-export.c:80
@@ -431,7 +431,7 @@ msgstr "为文件使用替代目录"
 
 #: app/flatpak-builtins-build-export.c:66
 msgid "SUBDIR"
-msgstr "子目录"
+msgstr "SUBDIR"
 
 #: app/flatpak-builtins-build-export.c:69
 msgid "Files to exclude"
@@ -441,7 +441,7 @@ msgstr "要排除的文件"
 #: app/flatpak-builtins-build-export.c:70
 #: app/flatpak-builtins-build-update-repo.c:90
 msgid "PATTERN"
-msgstr "匹配模式"
+msgstr "PATTERN"
 
 #: app/flatpak-builtins-build-export.c:70
 msgid "Excluded files to include"
@@ -506,7 +506,7 @@ msgstr "警告：桌面文件中引用的图标未导出：%s\n"
 #: app/flatpak-builtins-build-export.c:719
 #, c-format
 msgid "Invalid uri type %s, only http/https supported"
-msgstr "无效的网址类型 %s，仅支持 http/https"
+msgstr "无效的 URI 类型 %s，仅支持 http/https"
 
 #: app/flatpak-builtins-build-export.c:737
 #, c-format
@@ -529,7 +529,7 @@ msgstr "不支持零的额外数据大小"
 #: app/flatpak-builtins-build-export.c:830
 msgid ""
 "LOCATION DIRECTORY [BRANCH] - Create a repository from a build directory"
-msgstr "位置 目录 [分支] - 从构建目录创建仓库"
+msgstr "LOCATION DIRECTORY [BRANCH] - 从构建目录创建仓库"
 
 #: app/flatpak-builtins-build-export.c:838
 msgid "LOCATION and DIRECTORY must be specified"
@@ -582,7 +582,7 @@ msgstr "要设置的命令"
 #: app/flatpak-builtins-build-finish.c:52 app/flatpak-builtins-run.c:159
 #: app/flatpak-main.c:209
 msgid "COMMAND"
-msgstr "命令"
+msgstr "COMMAND"
 
 #: app/flatpak-builtins-build-finish.c:53
 msgid "Flatpak version to require"
@@ -617,7 +617,7 @@ msgstr "移除扩展点信息"
 #: app/flatpak-builtins-remote-add.c:88 app/flatpak-builtins-remote-modify.c:94
 #: app/flatpak-main.c:182
 msgid "NAME"
-msgstr "名称"
+msgstr "NAME"
 
 #: app/flatpak-builtins-build-finish.c:58
 msgid "Set extension priority (only for extensions)"
@@ -625,7 +625,7 @@ msgstr "设置扩展优先级（仅用于扩展）"
 
 #: app/flatpak-builtins-build-finish.c:58
 msgid "VALUE"
-msgstr "值"
+msgstr "VALUE"
 
 #: app/flatpak-builtins-build-finish.c:59
 msgid "Change the sdk used for the app"
@@ -643,7 +643,7 @@ msgstr "更改用于应用的运行时"
 #: app/flatpak-builtins-list.c:53 app/flatpak-builtins-remote-ls.c:58
 #: app/flatpak-builtins-run.c:163
 msgid "RUNTIME"
-msgstr "运行时"
+msgstr "RUNTIME"
 
 #: app/flatpak-builtins-build-finish.c:61
 msgid "Set generic metadata option"
@@ -651,7 +651,7 @@ msgstr "设置常规元数据选项"
 
 #: app/flatpak-builtins-build-finish.c:61
 msgid "GROUP=KEY[=VALUE]"
-msgstr "组=密钥[=值]"
+msgstr "GROUP=KEY[=VALUE]"
 
 #: app/flatpak-builtins-build-finish.c:62
 msgid "Don't inherit permissions from runtime"
@@ -720,7 +720,7 @@ msgstr "无效的扩展名称 %s"
 
 #: app/flatpak-builtins-build-finish.c:645
 msgid "DIRECTORY - Finalize a build directory"
-msgstr "目录 - 完成构建目录"
+msgstr "DIRECTORY - 完成构建目录"
 
 #: app/flatpak-builtins-build-finish.c:667
 #, c-format
@@ -742,7 +742,7 @@ msgstr "覆盖用于导入包的引用"
 
 #: app/flatpak-builtins-build-import-bundle.c:47
 msgid "REF"
-msgstr "引用"
+msgstr "REF"
 
 #: app/flatpak-builtins-build-import-bundle.c:48
 msgid "Import oci image instead of flatpak bundle"
@@ -756,7 +756,7 @@ msgstr "正在导入 %s（%s）\n"
 
 #: app/flatpak-builtins-build-import-bundle.c:126
 msgid "LOCATION FILENAME - Import a file bundle into a local repository"
-msgstr "位置 文件名 - 导入文件捆绑包至本地仓库"
+msgstr "LOCATION FILENAME - 导入文件捆绑包至本地仓库"
 
 #: app/flatpak-builtins-build-import-bundle.c:133
 msgid "LOCATION and FILENAME must be specified"
@@ -777,7 +777,7 @@ msgstr "从已命名的应用初始化应用"
 
 #: app/flatpak-builtins-build-init.c:55
 msgid "APP"
-msgstr "应用"
+msgstr "APP"
 
 #: app/flatpak-builtins-build-init.c:56
 msgid "Specify version for --base"
@@ -785,7 +785,7 @@ msgstr "为 --base 指定版本"
 
 #: app/flatpak-builtins-build-init.c:56 app/flatpak-builtins-run.c:164
 msgid "VERSION"
-msgstr "版本"
+msgstr "VERSION"
 
 #: app/flatpak-builtins-build-init.c:57
 msgid "Include this base extension"
@@ -793,7 +793,7 @@ msgstr "包含该基础扩展"
 
 #: app/flatpak-builtins-build-init.c:57 app/flatpak-builtins-build-init.c:62
 msgid "EXTENSION"
-msgstr "扩展"
+msgstr "EXTENSION"
 
 #: app/flatpak-builtins-build-init.c:58
 msgid "Extension tag to use if building extension"
@@ -813,7 +813,7 @@ msgstr "指定构建类型（app, runtime, extension）"
 
 #: app/flatpak-builtins-build-init.c:60
 msgid "TYPE"
-msgstr "类型"
+msgstr "TYPE"
 
 #: app/flatpak-builtins-build-init.c:61
 msgid "Add a tag"
@@ -821,7 +821,7 @@ msgstr "添加标签"
 
 #: app/flatpak-builtins-build-init.c:61
 msgid "TAG"
-msgstr "标签"
+msgstr "TAG"
 
 #: app/flatpak-builtins-build-init.c:62
 msgid "Include this sdk extension in /usr"
@@ -848,7 +848,7 @@ msgstr "请求的扩展 %s/%s/%s 未安装"
 #: app/flatpak-builtins-build-init.c:225
 msgid ""
 "DIRECTORY APPNAME SDK RUNTIME [BRANCH] - Initialize a directory for building"
-msgstr "目录 应用名称 SDK 运行时 [分支] - 为构建初始化目录"
+msgstr "DIRECTORY APPNAME SDK RUNTIME [BRANCH] - 为构建初始化目录"
 
 #: app/flatpak-builtins-build-init.c:232
 msgid "RUNTIME must be specified"
@@ -882,7 +882,7 @@ msgstr "使用指定名称查找运行时"
 
 #: app/flatpak-builtins-build-sign.c:66
 msgid "LOCATION [ID [BRANCH]] - Sign an application or runtime"
-msgstr "位置 [身份标识 [分支]] - 签名应用或运行时"
+msgstr "LOCATION [ID [BRANCH]] - 签名应用或运行时"
 
 #: app/flatpak-builtins-build-sign.c:73
 #: app/flatpak-builtins-build-update-repo.c:499
@@ -896,7 +896,7 @@ msgstr "未指定 GPG 密钥身份标识"
 
 #: app/flatpak-builtins-build-update-repo.c:68
 msgid "Redirect this repo to a new URL"
-msgstr "将该仓库重定向至新网址"
+msgstr "将该仓库重定向至新 URL"
 
 #: app/flatpak-builtins-build-update-repo.c:69
 msgid "A nice name to use for this repository"
@@ -905,7 +905,7 @@ msgstr "用于该仓库的好名字"
 #: app/flatpak-builtins-build-update-repo.c:69
 #: app/flatpak-builtins-remote-add.c:77 app/flatpak-builtins-remote-modify.c:82
 msgid "TITLE"
-msgstr "标题"
+msgstr "TITLE"
 
 #: app/flatpak-builtins-build-update-repo.c:70
 msgid "A one-line comment for this repository"
@@ -914,7 +914,7 @@ msgstr "用于该仓库的单行注释"
 #: app/flatpak-builtins-build-update-repo.c:70
 #: app/flatpak-builtins-remote-add.c:78 app/flatpak-builtins-remote-modify.c:83
 msgid "COMMENT"
-msgstr "注释"
+msgstr "COMMENT"
 
 #: app/flatpak-builtins-build-update-repo.c:71
 msgid "A full-paragraph description for this repository"
@@ -923,15 +923,15 @@ msgstr "用于该仓库的完整分段描述"
 #: app/flatpak-builtins-build-update-repo.c:71
 #: app/flatpak-builtins-remote-add.c:79 app/flatpak-builtins-remote-modify.c:84
 msgid "DESCRIPTION"
-msgstr "描述"
+msgstr "DESCRIPTION"
 
 #: app/flatpak-builtins-build-update-repo.c:72
 msgid "URL for a website for this repository"
-msgstr "用于该仓库的网站网址"
+msgstr "用于该仓库的网站 URL"
 
 #: app/flatpak-builtins-build-update-repo.c:73
 msgid "URL for an icon for this repository"
-msgstr "用于该仓库的图标网址"
+msgstr "用于该仓库的图标 URL"
 
 #: app/flatpak-builtins-build-update-repo.c:74
 msgid "Default branch to use for this repository"
@@ -942,7 +942,7 @@ msgstr "用于该仓库的默认分支"
 #: app/flatpak-builtins-repo.c:713 app/flatpak-builtins-repo.c:714
 #: app/flatpak-builtins-run.c:161
 msgid "BRANCH"
-msgstr "分支"
+msgstr "BRANCH"
 
 #: app/flatpak-builtins-build-update-repo.c:75
 #: app/flatpak-builtins-remote-add.c:83 app/flatpak-builtins-remote-modify.c:88
@@ -1020,11 +1020,11 @@ msgstr "修剪但并不真正移除任何东西"
 
 #: app/flatpak-builtins-build-update-repo.c:93
 msgid "Only traverse DEPTH parents for each commit (default: -1=infinite)"
-msgstr "为每次提交仅遍历的上级深度（默认：-1=infinite）"
+msgstr "为每次提交仅遍历的父级深度（默认：-1=infinite）"
 
 #: app/flatpak-builtins-build-update-repo.c:93
 msgid "DEPTH"
-msgstr "深度"
+msgstr "DEPTH"
 
 #: app/flatpak-builtins-build-update-repo.c:223
 #, c-format
@@ -1048,7 +1048,7 @@ msgstr "生成增量 %s 失败（%.10s-%.10s）："
 
 #: app/flatpak-builtins-build-update-repo.c:492
 msgid "LOCATION - Update repository metadata"
-msgstr "位置 - 更新仓库元数据"
+msgstr "LOCATION - 更新仓库元数据"
 
 #: app/flatpak-builtins-build-update-repo.c:609
 msgid "Updating appstream branch\n"
@@ -1134,7 +1134,7 @@ msgstr "--unset 的参数过多"
 
 #: app/flatpak-builtins-config.c:383
 msgid "[KEY [VALUE]] - Manage configuration"
-msgstr "[键 [值]] - 管理配置"
+msgstr "[KEY [VALUE]] - 管理配置"
 
 #: app/flatpak-builtins-config.c:394
 msgid "Can only use one of --list, --get, --set or --unset"
@@ -1156,7 +1156,7 @@ msgstr "要复制的架构"
 
 #: app/flatpak-builtins-create-usb.c:47
 msgid "DEST"
-msgstr "目标"
+msgstr "DEST"
 
 #: app/flatpak-builtins-create-usb.c:49
 msgid "Allow partial commits in the created repo"
@@ -1200,11 +1200,11 @@ msgstr "警告：由于引用“%s”（“%s”的运行时）是额外数据�
 
 #: app/flatpak-builtins-create-usb.c:484
 msgid "MOUNT-PATH [REF…] - Copy apps or runtimes onto removable media"
-msgstr "MOUNT-PATH [引用…] - 将应用或运行时复制到可移动媒体上"
+msgstr "MOUNT-PATH [REF…] - 将应用或运行时复制到可移动媒体上"
 
 #: app/flatpak-builtins-create-usb.c:493
 msgid "MOUNT-PATH and REF must be specified"
-msgstr "必须指定 MOUNT-PATH 和引用"
+msgstr "必须指定挂载路径和引用"
 
 #: app/flatpak-builtins-create-usb.c:607
 #, c-format
@@ -1301,11 +1301,11 @@ msgstr "为此应用添加权限"
 
 #: app/flatpak-builtins-document-export.c:73
 msgid "APPID"
-msgstr "应用标识"
+msgstr "APPID"
 
 #: app/flatpak-builtins-document-export.c:100
 msgid "FILE - Export a file to apps"
-msgstr "文件 - 导出文件到应用"
+msgstr "FILE - 导出文件到应用"
 
 #: app/flatpak-builtins-document-export.c:109
 #: app/flatpak-builtins-document-info.c:72
@@ -1315,7 +1315,7 @@ msgstr "必须指定文件"
 
 #: app/flatpak-builtins-document-info.c:63
 msgid "FILE - Get information about an exported file"
-msgstr "文件 - 获取关于导出文件的信息"
+msgstr "FILE - 获取关于导出文件的信息"
 
 #: app/flatpak-builtins-document-info.c:100
 #: app/flatpak-builtins-document-unexport.c:94
@@ -1334,7 +1334,7 @@ msgstr "显示什么信息"
 #: app/flatpak-builtins-remote-list.c:45 app/flatpak-builtins-remote-ls.c:59
 #: app/flatpak-builtins-search.c:38
 msgid "FIELD,…"
-msgstr "领域,…"
+msgstr "FIELD,…"
 
 #: app/flatpak-builtins-document-list.c:44 app/flatpak-builtins-history.c:54
 #: app/flatpak-builtins-list.c:52 app/flatpak-builtins-permission-list.c:43
@@ -1387,7 +1387,7 @@ msgstr "未找到文档\n"
 
 #: app/flatpak-builtins-document-list.c:180
 msgid "[APPID] - List exported files"
-msgstr "[应用标识] - 列出导出的文件"
+msgstr "[APPID] - 列出导出的文件"
 
 #: app/flatpak-builtins-document-unexport.c:43
 msgid "Specify the document ID"
@@ -1395,11 +1395,11 @@ msgstr "指定文档标识"
 
 #: app/flatpak-builtins-document-unexport.c:58
 msgid "FILE - Unexport a file to apps"
-msgstr "文件 - 取消导出文件到应用"
+msgstr "FILE - 取消导出文件到应用"
 
 #: app/flatpak-builtins-enter.c:88
 msgid "INSTANCE COMMAND [ARGUMENT…] - Run a command inside a running sandbox"
-msgstr "实例 命令 [参数…] - 在正在运行的沙箱中运行命令"
+msgstr "INSTANCE COMMAND [ARGUMENT…] - 在正在运行的沙箱中运行命令"
 
 #: app/flatpak-builtins-enter.c:111
 msgid "INSTANCE and COMMAND must be specified"
@@ -1473,7 +1473,7 @@ msgstr "仅显示该时间之后的更改"
 
 #: app/flatpak-builtins-history.c:50 app/flatpak-builtins-history.c:51
 msgid "TIME"
-msgstr "时间"
+msgstr "TIME"
 
 #: app/flatpak-builtins-history.c:51
 msgid "Only show changes before TIME"
@@ -1493,7 +1493,7 @@ msgstr "显示发生更改的时间"
 
 #: app/flatpak-builtins-history.c:60
 msgid "Change"
-msgstr "修改"
+msgstr "更改"
 
 #: app/flatpak-builtins-history.c:60
 msgid "Show the kind of change"
@@ -1570,7 +1570,7 @@ msgstr "显示上一次提交"
 
 #: app/flatpak-builtins-history.c:69
 msgid "Show the remote URL"
-msgstr "显示远程仓库网址"
+msgstr "显示远程仓库 URL"
 
 #: app/flatpak-builtins-history.c:70 app/flatpak-cli-transaction.c:697
 msgid "User"
@@ -1677,7 +1677,7 @@ msgstr "查询文件访问"
 #: app/flatpak-builtins-run.c:182 app/flatpak-builtins-run.c:184
 #: app/flatpak-builtins-update.c:67 app/flatpak-builtins-update.c:71
 msgid "PATH"
-msgstr "路径"
+msgstr "PATH"
 
 #: app/flatpak-builtins-info.c:68
 msgid "Show extensions"
@@ -1689,7 +1689,7 @@ msgstr "显示位置"
 
 #: app/flatpak-builtins-info.c:116
 msgid "NAME [BRANCH] - Get info about an installed app or runtime"
-msgstr "名称 [分支] - 获取关于已安装应用或运行时的信息"
+msgstr "NAME [BRANCH] - 获取关于已安装应用或运行时的信息"
 
 #: app/flatpak-builtins-info.c:123 app/flatpak-builtins-remote-add.c:317
 #: app/flatpak-builtins-remote-delete.c:63
@@ -1802,7 +1802,7 @@ msgstr "提交："
 #: app/flatpak-builtins-remote-info.c:261
 #: app/flatpak-builtins-remote-info.c:303
 msgid "Parent:"
-msgstr "上级："
+msgstr "父级："
 
 #: app/flatpak-builtins-info.c:248 app/flatpak-builtins-info.c:321
 msgid "Alt-id:"
@@ -1936,7 +1936,7 @@ msgstr "不支持远程捆绑包"
 
 #: app/flatpak-builtins-install.c:231
 msgid "Filename or uri must be specified"
-msgstr "必须指定文件名或网址"
+msgstr "必须指定文件名或 URI"
 
 #: app/flatpak-builtins-install.c:295
 msgid "Image location must be specified"
@@ -1944,7 +1944,7 @@ msgstr "必须指定映像位置"
 
 #: app/flatpak-builtins-install.c:345
 msgid "[LOCATION/REMOTE] [REF…] - Install applications or runtimes"
-msgstr "[位置/远程] [引用…] - 安装应用程序或运行时"
+msgstr "[LOCATION/REMOTE] [REF…] - 安装应用程序或运行时"
 
 #: app/flatpak-builtins-install.c:378
 msgid "At least one REF must be specified"
@@ -1960,7 +1960,7 @@ msgid "No remote refs found for ‘%s’"
 msgstr "未发现用于“%s”的远程引用"
 
 #: app/flatpak-builtins-install.c:573 app/flatpak-builtins-uninstall.c:405
-#: common/flatpak-ref-utils.c:706 common/flatpak-ref-utils.c:1612
+#: common/flatpak-ref-utils.c:730 common/flatpak-ref-utils.c:1636
 #, c-format
 msgid "Invalid branch %s: %s"
 msgstr "无效的分支 %s：%s"
@@ -1987,7 +1987,7 @@ msgstr "%s 未在运行"
 
 #: app/flatpak-builtins-kill.c:136
 msgid "INSTANCE - Stop a running application"
-msgstr "实例 - 停止正在运行的应用"
+msgstr "INSTANCE - 停止正在运行的应用程序"
 
 #: app/flatpak-builtins-kill.c:144 app/flatpak-builtins-ps.c:256
 msgid "Extra arguments given"
@@ -2127,7 +2127,7 @@ msgstr "要使之成为当前运行的架构"
 
 #: app/flatpak-builtins-make-current.c:58
 msgid "APP BRANCH - Make branch of application current"
-msgstr "应用 分支 - 使指定分支的应用成为当前运行的"
+msgstr "APP BRANCH - 使指定分支的应用成为当前运行的"
 
 #: app/flatpak-builtins-make-current.c:69 app/flatpak-builtins-run.c:260
 msgid "APP must be specified"
@@ -2149,7 +2149,7 @@ msgstr "移除匹配项屏蔽"
 #: app/flatpak-builtins-mask.c:54
 msgid ""
 "[PATTERN…] - disable updates and automatic installation matching patterns"
-msgstr "[匹配模式…] - 禁用更新和自动安装匹配模式"
+msgstr "[PATTERN…] - 禁用更新和自动安装匹配模式"
 
 #: app/flatpak-builtins-mask.c:73
 msgid "No masked patterns\n"
@@ -2169,11 +2169,11 @@ msgstr "显示现存覆盖"
 
 #: app/flatpak-builtins-override.c:59
 msgid "[APP] - Override settings [for application]"
-msgstr "[应用] - 覆盖设置 [用于应用]"
+msgstr "[APP] - 覆盖设置 [用于应用]"
 
 #: app/flatpak-builtins-permission-list.c:143
 msgid "[TABLE] [ID] - List permissions"
-msgstr "[表格] [标识] - 列出权限"
+msgstr "[TABLE] [ID] - 列出权限"
 
 #: app/flatpak-builtins-permission-list.c:179
 #: app/flatpak-builtins-permission-show.c:142
@@ -2197,7 +2197,7 @@ msgstr "数据"
 
 #: app/flatpak-builtins-permission-remove.c:120
 msgid "TABLE ID [APP_ID] - Remove item from permission store"
-msgstr "表格 标识 [应用标识] - 从权限存储中移除项目"
+msgstr "TABLE ID [APP_ID] - 从权限存储中移除项目"
 
 #: app/flatpak-builtins-permission-remove.c:129
 #: app/flatpak-builtins-permission-set.c:120
@@ -2210,7 +2210,7 @@ msgstr "重置所有权限"
 
 #: app/flatpak-builtins-permission-reset.c:144
 msgid "APP_ID - Reset permissions for an app"
-msgstr "应用标识 - 重置指定应用的权限"
+msgstr "APP_ID - 重置指定应用的权限"
 
 #: app/flatpak-builtins-permission-reset.c:153
 #: app/flatpak-builtins-permission-show.c:124
@@ -2223,11 +2223,11 @@ msgstr "将数据与条目相关联"
 
 #: app/flatpak-builtins-permission-set.c:42
 msgid "DATA"
-msgstr "数据"
+msgstr "DATA"
 
 #: app/flatpak-builtins-permission-set.c:111
 msgid "TABLE ID APP_ID [PERMISSION...] - Set permissions"
-msgstr "表格 标识 应用标识 [权限…] - 设置权限"
+msgstr "TABLE ID APP_ID [PERMISSION...] - 设置权限"
 
 #: app/flatpak-builtins-permission-set.c:132
 #, c-format
@@ -2236,7 +2236,7 @@ msgstr "将“%s”作为 GVariant 解析失败："
 
 #: app/flatpak-builtins-permission-show.c:115
 msgid "APP_ID - Show permissions for an app"
-msgstr "应用标识 - 显示指定应用的权限"
+msgstr "APP_ID - 显示指定应用的权限"
 
 #: app/flatpak-builtins-pin.c:44
 msgid "Remove matching pins"
@@ -2244,7 +2244,7 @@ msgstr "移除匹配的置顶"
 
 #: app/flatpak-builtins-pin.c:56
 msgid "[PATTERN…] - disable automatic removal of runtimes matching patterns"
-msgstr "[匹配模式…] - 禁用对匹配匹配模式的运行时的自动移除"
+msgstr "[PATTERN…] - 禁用对匹配匹配模式的运行时的自动移除"
 
 #: app/flatpak-builtins-pin.c:75
 msgid "No pinned patterns\n"
@@ -2360,7 +2360,7 @@ msgstr "设置优先级（默认 1，越高越优先）"
 
 #: app/flatpak-builtins-remote-add.c:75 app/flatpak-builtins-remote-modify.c:81
 msgid "PRIORITY"
-msgstr "优先级"
+msgstr "PRIORITY"
 
 #: app/flatpak-builtins-remote-add.c:76
 msgid "The named subset to use for this remote"
@@ -2368,7 +2368,7 @@ msgstr "用于该远程仓库的已命名子集"
 
 #: app/flatpak-builtins-remote-add.c:76 app/flatpak-builtins-remote-modify.c:71
 msgid "SUBSET"
-msgstr "子集"
+msgstr "SUBSET"
 
 #: app/flatpak-builtins-remote-add.c:77 app/flatpak-builtins-remote-modify.c:82
 msgid "A nice name to use for this remote"
@@ -2384,11 +2384,11 @@ msgstr "用于该远程仓库的完整分段描述"
 
 #: app/flatpak-builtins-remote-add.c:80 app/flatpak-builtins-remote-modify.c:85
 msgid "URL for a website for this remote"
-msgstr "用于该远程仓库的网站地址"
+msgstr "用于该远程仓库的网站 URL"
 
 #: app/flatpak-builtins-remote-add.c:81 app/flatpak-builtins-remote-modify.c:86
 msgid "URL for an icon for this remote"
-msgstr "用于该远程仓库的图标网址"
+msgstr "用于该远程仓库的图标 URL"
 
 #: app/flatpak-builtins-remote-add.c:82 app/flatpak-builtins-remote-modify.c:87
 msgid "Default branch to use for this remote"
@@ -2429,7 +2429,7 @@ msgstr "不要跟随摘要文件中设置的重定向"
 #: app/flatpak-builtins-remote-add.c:261 app/flatpak-builtins-remote-add.c:268
 #, c-format
 msgid "Can't load uri %s: %s\n"
-msgstr "无法加载网址 %s：%s\n"
+msgstr "无法加载 URI %s：%s\n"
 
 #: app/flatpak-builtins-remote-add.c:276 common/flatpak-dir.c:4694
 #, c-format
@@ -2438,7 +2438,7 @@ msgstr "无法加载文件 %s：%s\n"
 
 #: app/flatpak-builtins-remote-add.c:304
 msgid "NAME LOCATION - Add a remote repository"
-msgstr "名称 位置 - 添加远程仓库"
+msgstr "NAME LOCATION - 添加远程仓库"
 
 #: app/flatpak-builtins-remote-add.c:331
 msgid "GPG verification is required if collections are enabled"
@@ -2466,7 +2466,7 @@ msgstr "即使在使用中也要移除远程仓库"
 
 #: app/flatpak-builtins-remote-delete.c:53
 msgid "NAME - Delete a remote repository"
-msgstr "名称 - 删除远程仓库"
+msgstr "NAME - 删除远程仓库"
 
 #: app/flatpak-builtins-remote-delete.c:100
 #, c-format
@@ -2492,7 +2492,7 @@ msgstr "显示日志"
 
 #: app/flatpak-builtins-remote-info.c:61
 msgid "Show parent"
-msgstr "显示上级"
+msgstr "显示父级"
 
 #: app/flatpak-builtins-remote-info.c:65 app/flatpak-builtins-remote-ls.c:60
 msgid "Use local caches even if they are stale"
@@ -2506,7 +2506,7 @@ msgstr "仅列出作为侧载可用的引用"
 #: app/flatpak-builtins-remote-info.c:114
 msgid ""
 " REMOTE REF - Show information about an application or runtime in a remote"
-msgstr " 远程仓库 引用 - 显示远程仓库中应用或运行时的有关信息"
+msgstr " REMOTE REF - 显示远程仓库中应用或运行时的有关信息"
 
 #: app/flatpak-builtins-remote-info.c:125
 msgid "REMOTE and REF must be specified"
@@ -2557,7 +2557,7 @@ msgstr "显示标题"
 
 #: app/flatpak-builtins-remote-list.c:53
 msgid "Show the URL"
-msgstr "显示网址"
+msgstr "显示 URL"
 
 #: app/flatpak-builtins-remote-list.c:54
 msgid "Show the collection ID"
@@ -2653,7 +2653,7 @@ msgstr "显示下载大小"
 
 #: app/flatpak-builtins-remote-ls.c:391
 msgid " [REMOTE or URI] - Show available runtimes and applications"
-msgstr " [远程仓库或网址] - 显示可用的运行时和应用程序"
+msgstr " [REMOTE 或 URI] - 显示可用的运行时和应用程序"
 
 #: app/flatpak-builtins-remote-modify.c:67
 msgid "Enable GPG verification"
@@ -2669,7 +2669,7 @@ msgstr "将该远程仓库标记为用于依赖"
 
 #: app/flatpak-builtins-remote-modify.c:70
 msgid "Set a new URL"
-msgstr "设置新网址"
+msgstr "设置新 URL"
 
 #: app/flatpak-builtins-remote-modify.c:71
 msgid "Set a new subset to use"
@@ -2697,7 +2697,7 @@ msgstr "跟随摘要文件中的重定向设置"
 
 #: app/flatpak-builtins-remote-modify.c:306
 msgid "NAME - Modify a remote repository"
-msgstr "名称 - 编辑远程仓库"
+msgstr "NAME - 编辑远程仓库"
 
 #: app/flatpak-builtins-remote-modify.c:316
 msgid "Remote NAME must be specified"
@@ -2867,12 +2867,12 @@ msgstr "索引的摘要：%s\n"
 #: app/flatpak-builtins-repo.c:113 app/flatpak-builtins-repo.c:139
 #: app/flatpak-builtins-repo.c:172
 msgid "true"
-msgstr "正确的"
+msgstr "真"
 
 #: app/flatpak-builtins-repo.c:113 app/flatpak-builtins-repo.c:139
 #: app/flatpak-builtins-repo.c:172
 msgid "false"
-msgstr "失败的"
+msgstr "假"
 
 #: app/flatpak-builtins-repo.c:121
 msgid "Subsummaries: "
@@ -2926,7 +2926,7 @@ msgstr "默认分支：%s\n"
 #: app/flatpak-builtins-repo.c:163
 #, c-format
 msgid "Redirect URL: %s\n"
-msgstr "重定向网址：%s\n"
+msgstr "重定向 URL：%s\n"
 
 #: app/flatpak-builtins-repo.c:166
 #, c-format
@@ -3000,7 +3000,7 @@ msgstr "限制为带有该前缀的子集的信息"
 
 #: app/flatpak-builtins-repo.c:732
 msgid "LOCATION - Repository maintenance"
-msgstr "位置 - 仓库维护"
+msgstr "LOCATION - 仓库维护"
 
 #: app/flatpak-builtins-run.c:159
 msgid "Command to run"
@@ -3068,15 +3068,15 @@ msgstr "完全沙盒运行"
 
 #: app/flatpak-builtins-run.c:178
 msgid "Use PID as parent pid for sharing namespaces"
-msgstr "使用 PID 作为共享命名空间的上级进程标识"
+msgstr "使用 PID 作为共享命名空间的父级进程标识"
 
 #: app/flatpak-builtins-run.c:179
 msgid "Make processes visible in parent namespace"
-msgstr "使进程在上级命名空间中可见"
+msgstr "使进程在父级命名空间中可见"
 
 #: app/flatpak-builtins-run.c:180
 msgid "Share process ID namespace with parent"
-msgstr "与上级共享进程标识命名空间"
+msgstr "与父级共享进程标识命名空间"
 
 #: app/flatpak-builtins-run.c:181
 msgid "Write the instance ID to the given file descriptor"
@@ -3121,7 +3121,7 @@ msgstr "将 FD 所指的文件或目录以只读方式绑定挂载到其自身�
 
 #: app/flatpak-builtins-run.c:219
 msgid "APP [ARGUMENT…] - Run an app"
-msgstr "应用 [参数…] - 运行应用"
+msgstr "APP [ARGUMENT…] - 运行应用"
 
 #: app/flatpak-builtins-run.c:370
 #, c-format
@@ -3150,11 +3150,11 @@ msgstr "显示远程仓库"
 
 #: app/flatpak-builtins-search.c:244
 msgid "TEXT - Search remote apps/runtimes for text"
-msgstr "文字 - 搜索含指定文字的远程应用/运行时"
+msgstr "TEXT - 搜索含指定文本的远程应用/运行时"
 
 #: app/flatpak-builtins-search.c:255
 msgid "TEXT must be specified"
-msgstr "必须指定文字"
+msgstr "必须指定文本"
 
 #: app/flatpak-builtins-search.c:338
 msgid "No matches found"
@@ -3209,7 +3209,7 @@ msgstr "确定移除吗？"
 
 #: app/flatpak-builtins-uninstall.c:255
 msgid "[REF…] - Uninstall applications or runtimes"
-msgstr "[引用…] - 卸载应用程序或运行时"
+msgstr "[REF…] - 卸载应用程序或运行时"
 
 #: app/flatpak-builtins-uninstall.c:264
 msgid "Must specify at least one REF, --unused, --all or --delete-data"
@@ -3245,12 +3245,12 @@ msgstr "未找到用于“%s”的已安装引用"
 #: app/flatpak-builtins-uninstall.c:447
 #, c-format
 msgid " with arch ‘%s’"
-msgstr "‘%s’ 架构"
+msgstr "“%s”架构"
 
 #: app/flatpak-builtins-uninstall.c:449
 #, c-format
 msgid " with branch ‘%s’"
-msgstr "‘%s’ 分支"
+msgstr "“%s”分支"
 
 #: app/flatpak-builtins-uninstall.c:456
 #, c-format
@@ -3295,7 +3295,7 @@ msgstr "仅更新此子路径"
 
 #: app/flatpak-builtins-update.c:90
 msgid "[REF…] - Update applications or runtimes"
-msgstr "[引用…] - 更新应用程序或运行时"
+msgstr "[REF…] - 更新应用程序或运行时"
 
 #: app/flatpak-builtins-update.c:121
 msgid "With --commit, only one REF may be specified"
@@ -3967,7 +3967,7 @@ msgstr "列出所有已配置的远程仓库"
 
 #: app/flatpak-main.c:127
 msgid "Add a new remote repository (by URL)"
-msgstr "添加新的远程仓库（通过网址）"
+msgstr "添加新的远程仓库（通过 URL）"
 
 #: app/flatpak-main.c:128
 msgid "Modify properties of a configured remote"
@@ -4335,7 +4335,7 @@ msgstr "与主机共享"
 
 #: common/flatpak-context.c:2698 common/flatpak-context.c:2699
 msgid "SHARE"
-msgstr "共享"
+msgstr "SHARE"
 
 #: common/flatpak-context.c:2699
 msgid "Unshare with host"
@@ -4347,7 +4347,7 @@ msgstr "子系统共享需要相匹配的条件"
 
 #: common/flatpak-context.c:2700
 msgid "SHARE:CONDITION"
-msgstr "共享:条件"
+msgstr "SHARE:CONDITION"
 
 #: common/flatpak-context.c:2701
 msgid "Expose socket to app"
@@ -4355,7 +4355,7 @@ msgstr "将套接字暴露给应用"
 
 #: common/flatpak-context.c:2701 common/flatpak-context.c:2702
 msgid "SOCKET"
-msgstr "套接字"
+msgstr "SOCKET"
 
 #: common/flatpak-context.c:2702
 msgid "Don't expose socket to app"
@@ -4367,7 +4367,7 @@ msgstr "要暴露的套接字需要相匹配的条件"
 
 #: common/flatpak-context.c:2703
 msgid "SOCKET:CONDITION"
-msgstr "套接字:条件"
+msgstr "SOCKET:CONDITION"
 
 #: common/flatpak-context.c:2704
 msgid "Expose device to app"
@@ -4375,7 +4375,7 @@ msgstr "将设备暴露给应用"
 
 #: common/flatpak-context.c:2704 common/flatpak-context.c:2705
 msgid "DEVICE"
-msgstr "设备"
+msgstr "DEVICE"
 
 #: common/flatpak-context.c:2705
 msgid "Don't expose device to app"
@@ -4387,7 +4387,7 @@ msgstr "要暴露的设备需要相匹配的条件"
 
 #: common/flatpak-context.c:2706
 msgid "DEVICE:CONDITION"
-msgstr "设备:条件"
+msgstr "DEVICE:CONDITION"
 
 #: common/flatpak-context.c:2707
 msgid "Allow feature"
@@ -4395,7 +4395,7 @@ msgstr "允许功能"
 
 #: common/flatpak-context.c:2707 common/flatpak-context.c:2708
 msgid "FEATURE"
-msgstr "功能"
+msgstr "FEATURE"
 
 #: common/flatpak-context.c:2708
 msgid "Don't allow feature"
@@ -4407,7 +4407,7 @@ msgstr "允许某功能需要相匹配的条件"
 
 #: common/flatpak-context.c:2709
 msgid "FEATURE:CONDITION"
-msgstr "功能:条件"
+msgstr "FEATURE:CONDITION"
 
 #: common/flatpak-context.c:2710
 msgid "Expose filesystem to app (:ro for read-only)"
@@ -4415,7 +4415,7 @@ msgstr "将文件系统暴露给应用（:ro 为只读）"
 
 #: common/flatpak-context.c:2710
 msgid "FILESYSTEM[:ro]"
-msgstr "文件系统[:ro]"
+msgstr "FILESYSTEM[:ro]"
 
 #: common/flatpak-context.c:2711
 msgid "Don't expose filesystem to app"
@@ -4423,7 +4423,7 @@ msgstr "不要将文件系统暴露给应用"
 
 #: common/flatpak-context.c:2711
 msgid "FILESYSTEM"
-msgstr "文件系统"
+msgstr "FILESYSTEM"
 
 #: common/flatpak-context.c:2712
 msgid "Set environment variable"
@@ -4443,7 +4443,7 @@ msgstr "从环境中移除变量"
 
 #: common/flatpak-context.c:2714
 msgid "VAR"
-msgstr "变量"
+msgstr "VAR"
 
 #: common/flatpak-context.c:2715
 msgid "Allow app to own name on the session bus"
@@ -4510,7 +4510,7 @@ msgstr "可枚举的 USB 设备列表"
 
 #: common/flatpak-context.c:2726
 msgid "LIST"
-msgstr "列表"
+msgstr "LIST"
 
 #: common/flatpak-context.c:2727
 msgid "File containing a list of USB devices to make enumerable"
@@ -4518,7 +4518,7 @@ msgstr "包含可使其枚举的 USB 设备列表的文件"
 
 #: common/flatpak-context.c:2727 common/flatpak-context.c:2728
 msgid "FILENAME"
-msgstr "文件名"
+msgstr "FILENAME"
 
 #: common/flatpak-context.c:2728
 msgid "Persist home directory subpath"
@@ -4599,7 +4599,7 @@ msgstr "不支持用于远程仓库 %2$s 的摘要版本 %1$d"
 
 #: common/flatpak-dir.c:1247
 msgid "Remote OCI index has no registry uri"
-msgstr "远程 OCI 索引没有注册网址"
+msgstr "远程 OCI 索引没有注册 URI"
 
 #: common/flatpak-dir.c:1308
 #, c-format
@@ -4690,7 +4690,7 @@ msgstr "无 GPG 校验的本地系统级安装不支持额外数据"
 #: common/flatpak-dir.c:6467 common/flatpak-dir.c:6837
 #, c-format
 msgid "Invalid checksum for extra data uri %s"
-msgstr "额外数据网址 %s 校验和无效"
+msgstr "额外数据 URI %s 校验和无效"
 
 #: common/flatpak-dir.c:6479
 #, c-format
@@ -4967,8 +4967,8 @@ msgid ""
 "Remote listing for %s not available; server has no summary file. Check the "
 "URL passed to remote-add was valid."
 msgstr ""
-"%s 的远程列表不可用；服务器没有摘要文件。请检查传递给 remote-add 的网址是否有"
-"效。"
+"%s 的远程列表不可用；服务器没有摘要文件。请检查传递给 remote-add 的 URL 是否"
+"有效。"
 
 #: common/flatpak-dir.c:13875
 #, c-format
@@ -5278,149 +5278,149 @@ msgstr "名称不能超过 255 个字符"
 msgid "Name can't start with a period"
 msgstr "名称不能以句号开头"
 
-#: common/flatpak-ref-utils.c:148
+#: common/flatpak-ref-utils.c:150
 #, c-format
-msgid "Name can't start with %c"
-msgstr "名称不能以 %c 开头"
+msgid "Name can't start with \"%s\""
+msgstr "名称不能以“%s”开头"
 
-#: common/flatpak-ref-utils.c:164
+#: common/flatpak-ref-utils.c:167
 msgid "Name can't end with a period"
 msgstr "名称不能以句号结尾"
 
-#: common/flatpak-ref-utils.c:171 common/flatpak-ref-utils.c:183
+#: common/flatpak-ref-utils.c:176 common/flatpak-ref-utils.c:191
 msgid "Only last name segment can contain -"
 msgstr "只有姓氏段可以包含 -"
 
-#: common/flatpak-ref-utils.c:174
+#: common/flatpak-ref-utils.c:179
 #, c-format
-msgid "Name segment can't start with %c"
-msgstr "名称段不能以 %c 开头"
+msgid "Name segment can't start with \"%s\""
+msgstr "名称段不能以“%s”开头"
 
-#: common/flatpak-ref-utils.c:186
+#: common/flatpak-ref-utils.c:194
 #, c-format
-msgid "Name can't contain %c"
-msgstr "名称不能包含 %c"
+msgid "Name can't contain \"%s\""
+msgstr "名称不能包含“%s”"
 
-#: common/flatpak-ref-utils.c:195
+#: common/flatpak-ref-utils.c:204
 msgid "Names must contain at least 2 periods"
 msgstr "名称必须包含至少两个句点"
 
-#: common/flatpak-ref-utils.c:312
+#: common/flatpak-ref-utils.c:321
 msgid "Arch can't be empty"
 msgstr "架构不能为空"
 
-#: common/flatpak-ref-utils.c:323
+#: common/flatpak-ref-utils.c:334
 #, c-format
-msgid "Arch can't contain %c"
-msgstr "架构不能包含 %c"
+msgid "Arch can't contain \"%s\""
+msgstr "架构不能包含“%s”"
 
-#: common/flatpak-ref-utils.c:385
+#: common/flatpak-ref-utils.c:397
 msgid "Branch can't be empty"
 msgstr "分支不能为空"
 
-#: common/flatpak-ref-utils.c:395
+#: common/flatpak-ref-utils.c:409
 #, c-format
-msgid "Branch can't start with %c"
-msgstr "分支不能以 %c 开头"
+msgid "Branch can't start with \"%s\""
+msgstr "分支不能以“%s”开头"
 
-#: common/flatpak-ref-utils.c:405
+#: common/flatpak-ref-utils.c:422
 #, c-format
-msgid "Branch can't contain %c"
-msgstr "分支不能包含 %c"
+msgid "Branch can't contain \"%s\""
+msgstr "分支不能包含“%s”"
 
-#: common/flatpak-ref-utils.c:583
+#: common/flatpak-ref-utils.c:601
 msgid "Remote name can't be empty"
 msgstr "远程仓库名称不能为空"
 
-#: common/flatpak-ref-utils.c:592
+#: common/flatpak-ref-utils.c:612
 #, c-format
-msgid "Remote name can't start with %c"
-msgstr "远程仓库名称不能以 %c 开头"
+msgid "Remote name can't start with \"%s\""
+msgstr "远程仓库名称不能以“%s”开头"
 
-#: common/flatpak-ref-utils.c:602
+#: common/flatpak-ref-utils.c:625
 #, c-format
-msgid "Remote name can't contain %c"
-msgstr "远程仓库名称不能包含 %c"
+msgid "Remote name can't contain \"%s\""
+msgstr "远程仓库名称不能包含“%s”"
 
-#: common/flatpak-ref-utils.c:632 common/flatpak-ref-utils.c:882
+#: common/flatpak-ref-utils.c:656 common/flatpak-ref-utils.c:906
 msgid "Ref too long"
 msgstr "引用太长了"
 
-#: common/flatpak-ref-utils.c:644
+#: common/flatpak-ref-utils.c:668
 msgid "Invalid remote name"
 msgstr "无效的远程仓库名称"
 
-#: common/flatpak-ref-utils.c:658
+#: common/flatpak-ref-utils.c:682
 #, c-format
 msgid "%s is not application or runtime"
 msgstr "%s 不是应用程序或运行时"
 
-#: common/flatpak-ref-utils.c:667 common/flatpak-ref-utils.c:684
-#: common/flatpak-ref-utils.c:700
+#: common/flatpak-ref-utils.c:691 common/flatpak-ref-utils.c:708
+#: common/flatpak-ref-utils.c:724
 #, c-format
 msgid "Wrong number of components in %s"
 msgstr "%s 中组件数量错误"
 
-#: common/flatpak-ref-utils.c:673
+#: common/flatpak-ref-utils.c:697
 #, c-format
 msgid "Invalid name %.*s: %s"
 msgstr "无效名称 %.*s: %s"
 
-#: common/flatpak-ref-utils.c:690
+#: common/flatpak-ref-utils.c:714
 #, c-format
 msgid "Invalid arch: %.*s: %s"
 msgstr "无效架构：%.*s: %s"
 
-#: common/flatpak-ref-utils.c:833
+#: common/flatpak-ref-utils.c:857
 #, c-format
 msgid "Invalid name %s: %s"
 msgstr "无效名称 %s: %s"
 
-#: common/flatpak-ref-utils.c:851
+#: common/flatpak-ref-utils.c:875
 #, c-format
 msgid "Invalid arch: %s: %s"
 msgstr "无效架构：%s: %s"
 
-#: common/flatpak-ref-utils.c:870
+#: common/flatpak-ref-utils.c:894
 #, c-format
 msgid "Invalid branch: %s: %s"
 msgstr "无效分支：%s: %s"
 
-#: common/flatpak-ref-utils.c:979 common/flatpak-ref-utils.c:987
-#: common/flatpak-ref-utils.c:995
+#: common/flatpak-ref-utils.c:1003 common/flatpak-ref-utils.c:1011
+#: common/flatpak-ref-utils.c:1019
 #, c-format
 msgid "Wrong number of components in partial ref %s"
 msgstr "部分引用 %s 中组件数量错误"
 
-#: common/flatpak-ref-utils.c:1315
+#: common/flatpak-ref-utils.c:1339
 msgid " development platform"
 msgstr " 开发平台"
 
-#: common/flatpak-ref-utils.c:1317
+#: common/flatpak-ref-utils.c:1341
 msgid " platform"
 msgstr " 平台"
 
-#: common/flatpak-ref-utils.c:1319
+#: common/flatpak-ref-utils.c:1343
 msgid " application base"
 msgstr " 应用程序基础"
 
-#: common/flatpak-ref-utils.c:1322
+#: common/flatpak-ref-utils.c:1346
 msgid " debug symbols"
 msgstr " 调试符号"
 
-#: common/flatpak-ref-utils.c:1324
+#: common/flatpak-ref-utils.c:1348
 msgid " sourcecode"
 msgstr " 源代码"
 
-#: common/flatpak-ref-utils.c:1326
+#: common/flatpak-ref-utils.c:1350
 msgid " translations"
 msgstr " 翻译"
 
-#: common/flatpak-ref-utils.c:1328
+#: common/flatpak-ref-utils.c:1352
 msgid " docs"
 msgstr " 文档"
 
-#: common/flatpak-ref-utils.c:1595
+#: common/flatpak-ref-utils.c:1619
 #, c-format
 msgid "Invalid id %s: %s"
 msgstr "无效标识 %s: %s"
@@ -5432,7 +5432,7 @@ msgstr "不好的远程仓库名称：%s"
 
 #: common/flatpak-remote.c:1220
 msgid "No URL specified"
-msgstr "未指定网址"
+msgstr "未指定 URL"
 
 #: common/flatpak-remote.c:1266
 msgid "GPG verification must be enabled when a collection ID is set"
@@ -5690,7 +5690,7 @@ msgstr "未发现用于来自 %2$s 应用 %1$s 的处理操作"
 #: common/flatpak-transaction.c:4729
 #, c-format
 msgid "Flatpakrepo URL %s not file, HTTP or HTTPS"
-msgstr "Flatpakrepo 网址 %s 不是文件、HTTP 或 HTTPS"
+msgstr "Flatpakrepo URL %s 不是文件、HTTP 或 HTTPS"
 
 #: common/flatpak-transaction.c:4735
 #, c-format
@@ -5825,41 +5825,41 @@ msgstr "Glob 无法匹配应用"
 msgid "Empty glob"
 msgstr "空白 glob"
 
-#: common/flatpak-utils.c:756
+#: common/flatpak-utils.c:755
 msgid "Too many segments in glob"
 msgstr "Glob 中太多分段"
 
-#: common/flatpak-utils.c:777
+#: common/flatpak-utils.c:778
 #, c-format
 msgid "Invalid glob character '%s'"
 msgstr "无效的 glob 字符“%s”"
 
-#: common/flatpak-utils.c:831
+#: common/flatpak-utils.c:835
 #, c-format
 msgid "Missing glob on line %d"
 msgstr "第 %d 行缺失 glob"
 
-#: common/flatpak-utils.c:835
+#: common/flatpak-utils.c:839
 #, c-format
 msgid "Trailing text on line %d"
 msgstr "第 %d 行的拖尾文字"
 
-#: common/flatpak-utils.c:839
+#: common/flatpak-utils.c:843
 #, c-format
 msgid "on line %d"
 msgstr "在第 %d 行"
 
-#: common/flatpak-utils.c:861
+#: common/flatpak-utils.c:865
 #, c-format
 msgid "Unexpected word '%s' on line %d"
 msgstr "第 %2$d 行的意外词语“%1$s”"
 
-#: common/flatpak-utils.c:2077
+#: common/flatpak-utils.c:2081
 #, c-format
 msgid "Invalid require-flatpak argument %s"
 msgstr "无效的 require-flatpak 参数 %s"
 
-#: common/flatpak-utils.c:2087 common/flatpak-utils.c:2106
+#: common/flatpak-utils.c:2091 common/flatpak-utils.c:2110
 #, c-format
 msgid "%s needs a later flatpak version (%s)"
 msgstr "%s 需要更新的 flatpak 版本（%s）"
