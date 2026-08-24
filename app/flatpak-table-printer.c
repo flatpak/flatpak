@@ -505,6 +505,13 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
         }
     }
 
+  /* Decimal-aligned cells are laid out as lwidths[i] characters before the
+   * decimal point and rwidths[i] after it, which can need more room than
+   * the widest cell on its own.
+   */
+  for (i = 0; i < printer->n_columns; i++)
+    widths[i] = MAX (widths[i], lwidths[i] + rwidths[i]);
+
   width = printer->n_columns - 1;
   for (i = 0; i < printer->n_columns; i++)
     width += widths[i];
@@ -700,7 +707,7 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
                 {
                   string_add_spaces (row_s, lwidths[j] - cell->align);
                   g_string_append (row_s, text);
-                  string_add_spaces (row_s, widths[j] - (lwidths[j] - cell->align)  - cell_width (text));
+                  string_add_spaces (row_s, len - (lwidths[j] - cell->align)  - cell_width (text));
                 }
             }
           else
