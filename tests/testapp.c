@@ -367,6 +367,87 @@ test_table (void)
 }
 
 static void
+test_table_decimal (void)
+{
+  GPrintFunc print_func;
+  FlatpakTablePrinter *printer;
+  int rows, cols;
+
+  g_assert_null (g_print_buffer);
+  g_print_buffer = g_string_new ("");
+  print_func = g_set_print_handler (my_print_func);
+  flatpak_enable_fancy_output ();
+
+  printer = flatpak_table_printer_new ();
+
+  flatpak_table_printer_set_column_title (printer, 0, "Size");
+  flatpak_table_printer_set_column_title (printer, 1, "Name");
+
+  flatpak_table_printer_add_decimal_column (printer, "197.5 MB");
+  flatpak_table_printer_add_column (printer, "text1");
+  flatpak_table_printer_finish_row (printer);
+
+  flatpak_table_printer_add_decimal_column (printer, "5.4 MB");
+  flatpak_table_printer_add_column (printer, "text2");
+  flatpak_table_printer_finish_row (printer);
+
+  /* A cell with no decimal point must get the same width as the others */
+  flatpak_table_printer_add_decimal_column (printer, "512 bytes");
+  flatpak_table_printer_add_column (printer, "text3");
+  flatpak_table_printer_finish_row (printer);
+
+  flatpak_table_printer_set_column_expand (printer, 0, TRUE);
+
+  flatpak_table_printer_print_full (printer, 0, 40, &rows, &cols);
+
+  g_assert_cmpint (rows, ==, 4);
+  g_assert_cmpint (cols, ==, 22);
+  g_assert_cmpstr (g_print_buffer->str, ==,
+                   FLATPAK_ANSI_BOLD_ON
+                   "Size             Name" FLATPAK_ANSI_BOLD_OFF "\n"
+                   "197.5 MB         text1" "\n"
+                   "  5.4 MB         text2" "\n"
+                   "512 bytes        text3");
+  g_string_truncate (g_print_buffer, 0);
+
+  flatpak_table_printer_free (printer);
+
+  /* The decimal point splits the column, so it can need more room
+   * than the widest cell on its own
+   */
+  printer = flatpak_table_printer_new ();
+
+  flatpak_table_printer_set_column_title (printer, 0, "Size");
+  flatpak_table_printer_set_column_title (printer, 1, "Name");
+
+  flatpak_table_printer_add_decimal_column (printer, "1234.5");
+  flatpak_table_printer_add_column (printer, "text1");
+  flatpak_table_printer_finish_row (printer);
+
+  flatpak_table_printer_add_decimal_column (printer, "1.2345");
+  flatpak_table_printer_add_column (printer, "text2");
+  flatpak_table_printer_finish_row (printer);
+
+  flatpak_table_printer_print_full (printer, 0, 40, &rows, &cols);
+
+  g_assert_cmpint (rows, ==, 3);
+  g_assert_cmpint (cols, ==, 15);
+  g_assert_cmpstr (g_print_buffer->str, ==,
+                   FLATPAK_ANSI_BOLD_ON
+                   "Size      Name" FLATPAK_ANSI_BOLD_OFF "\n"
+                   "1234.5    text1" "\n"
+                   "   1.2345 text2");
+  g_string_truncate (g_print_buffer, 0);
+
+  flatpak_table_printer_free (printer);
+
+  flatpak_disable_fancy_output ();
+  g_set_print_handler (print_func);
+  g_string_free (g_print_buffer, TRUE);
+  g_print_buffer = NULL;
+}
+
+static void
 test_table_expand (void)
 {
   GPrintFunc print_func;
@@ -577,6 +658,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/app/parse-numbers", test_parse_numbers);
   g_test_add_func ("/app/string-ellipsize", test_string_ellipsize);
   g_test_add_func ("/app/table", test_table);
+  g_test_add_func ("/app/table-decimal", test_table_decimal);
   g_test_add_func ("/app/table-expand", test_table_expand);
   g_test_add_func ("/app/table-shrink", test_table_shrink);
   g_test_add_func ("/app/table-shrink-more", test_table_shrink_more);
