@@ -6,8 +6,10 @@ int
 main (int argc, char *argv[])
 {
   gboolean opt_compressed = FALSE;
+  gboolean opt_force_expired = FALSE;
   GOptionEntry entries[] = {
     { "compressed", 0, 0, G_OPTION_ARG_NONE, &opt_compressed, "Compress the cached file", NULL },
+    { "force-expired", 0, 0, G_OPTION_ARG_NONE, &opt_force_expired, "Force time-based expiration of the cache", NULL },
     { NULL }
   };
 
@@ -28,7 +30,7 @@ main (int argc, char *argv[])
 
   if (argc != 3)
     {
-      g_printerr ("Usage: %s [--compressed] URL DEST\n", argv[0]);
+      g_printerr ("Usage: %s [--compressed] [--force-expired] URL DEST\n", argv[0]);
       return 1;
     }
 
@@ -37,6 +39,8 @@ main (int argc, char *argv[])
 
   if (opt_compressed)
     flags |= FLATPAK_HTTP_FLAGS_STORE_COMPRESSED;
+  if (opt_force_expired)
+      flags |= FLATPAK_HTTP_FLAGS_FORCE_EXPIRED;
 
   if (!flatpak_cache_http_uri (session,
                                url, NULL,

@@ -48,12 +48,21 @@ void flatpak_certificates_free (FlatpakCertificates *certificates);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(FlatpakCertificates, flatpak_certificates_free)
 
+/**
+ * FlatpakHTTPFlags:
+ * @FLATPAK_HTTP_FLAGS_FORCE_EXPIRED: Force the expiry of any max-age related cache
+ *   data when making a request, so the server is definitely queried
+ *   (potentially still with an ETag)
+ *
+ * Flags affecting the behaviour of HTTP requests.
+ */
 typedef enum {
   FLATPAK_HTTP_FLAGS_NONE = 0,
   FLATPAK_HTTP_FLAGS_ACCEPT_OCI = 1 << 0,
   FLATPAK_HTTP_FLAGS_STORE_COMPRESSED = 1 << 1,
   FLATPAK_HTTP_FLAGS_NOCHECK_STATUS = 1 << 2,
   FLATPAK_HTTP_FLAGS_HEAD = 1 << 3,
+  FLATPAK_HTTP_FLAGS_FORCE_EXPIRED = 1 << 4,
 } FlatpakHTTPFlags;
 
 typedef void (*FlatpakLoadUriProgress) (guint64  downloaded_bytes,

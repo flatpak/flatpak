@@ -1259,7 +1259,8 @@ flatpak_cache_http_uri (FlatpakHttpSession    *http_session,
 
   if (cache_data->uri)
     {
-      if (cache_data->expires > (g_get_real_time () / G_USEC_PER_SEC))
+      if (!(flags & FLATPAK_HTTP_FLAGS_FORCE_EXPIRED) &&
+          cache_data->expires > (g_get_real_time () / G_USEC_PER_SEC))
         {
           g_set_error (error, FLATPAK_HTTP_ERROR,
                        FLATPAK_HTTP_ERROR_NOT_CHANGED,
