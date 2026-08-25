@@ -188,8 +188,10 @@ static gboolean flatpak_dir_lookup_remote_filter (FlatpakDir *self,
 static char *flatpak_dir_get_remote_signature_lookaside (FlatpakDir *self,
                                                          const char *remote_name);
 
+static gboolean error_indicates_should_update_gpg_keys (const GError *error);
 static gboolean flatpak_dir_update_gpg_keys (FlatpakDir    *self,
                                              const char    *remote_name,
+                                             gboolean       force_refresh,
                                              GCancellable  *cancellable,
                                              GError       **error);
 
@@ -7345,14 +7347,35 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
   if (!flatpak_repo_resolve_rev (src_repo, NULL, remote_name, ref, FALSE, &checksum, NULL, error))
     return FALSE;
 
-  if (gpg_verify)
+  gboolean tried_updating_gpg_keys = FALSE;
+
+  while (gpg_verify)
     {
       gpg_result = ostree_repo_verify_commit_for_remote (src_repo, checksum, remote_name, cancellable, error);
       if (gpg_result == NULL)
         return FALSE;
 
       if (ostree_gpg_verify_result_count_valid (gpg_result) == 0)
-        return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("GPG signatures found, but none are in trusted keyring"));
+        {
+          if (!tried_updating_gpg_keys)
+            {
+              g_autoptr(GError) gpg_update_error = NULL;
+
+              /* Signature verification error. Try grabbing the latest keyring
+               * if we haven’t already, then try the fetch again. */
+              g_info ("Failed to verify commit GPG signature, will try to update keyring");
+              tried_updating_gpg_keys = TRUE;
+              if (flatpak_dir_update_gpg_keys (self, remote_name, TRUE, cancellable, &gpg_update_error))
+                continue;
+              else
+                g_info ("Failed to update GPG keyring: %s", gpg_update_error->message);
+                /* fall through to the error handling for the fetch below */
+            }
+
+          return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED, _("GPG signatures found, but none are in trusted keyring"));
+        }
+
+      break;
     }
 
   g_clear_object (&gpg_result);
@@ -14016,8 +14039,10 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
         }
     }
 
+  gboolean tried_updating_gpg_keys = FALSE;
+
   /* Then look for an indexed summary on disk/network */
-  if (!got_summary)
+  while (!got_summary)
     {
       g_autoptr(GError) local_error = NULL;
 
@@ -14025,9 +14050,27 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
                                                   cancellable, &local_error))
         {
           got_summary = TRUE;
+          break;
         }
       else
         {
+          if (!tried_updating_gpg_keys &&
+              error_indicates_should_update_gpg_keys (local_error))
+            {
+              g_autoptr(GError) gpg_update_error = NULL;
+
+              /* Signature verification error. Try grabbing the latest keyring
+               * if we haven’t already, then try the fetch again. */
+              g_info ("Failed to verify summary index GPG signature, will try to update keyring: %s",
+                      local_error->message);
+              tried_updating_gpg_keys = TRUE;
+              if (flatpak_dir_update_gpg_keys (self, state->remote_name, TRUE, cancellable, &gpg_update_error))
+                continue;
+              else
+                g_info ("Failed to update GPG keyring: %s", gpg_update_error->message);
+                /* fall through to the error handling for the fetch below */
+            }
+
           if (!g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND) &&
               !g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_CACHED))
             {
@@ -14044,10 +14087,12 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
                   return NULL;
                 }
             }
+
+          break;
         }
     }
 
-  if (!got_summary)
+  while (!got_summary)
     {
       /* No index, fall back to full summary */
       g_autoptr(GError) local_error = NULL;
@@ -14056,9 +14101,27 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
                                             cancellable, &local_error))
         {
           got_summary = TRUE;
+          break;
         }
       else
         {
+          if (!tried_updating_gpg_keys &&
+              error_indicates_should_update_gpg_keys (local_error))
+            {
+              g_autoptr(GError) gpg_update_error = NULL;
+
+              /* Signature verification error. Try grabbing the latest keyring
+               * if we haven’t already, then try the fetch again. */
+              g_info ("Failed to verify summary GPG signature, will try to update keyring: %s",
+                      local_error->message);
+              tried_updating_gpg_keys = TRUE;
+              if (flatpak_dir_update_gpg_keys (self, state->remote_name, TRUE, cancellable, &gpg_update_error))
+                continue;
+              else
+                g_info ("Failed to update GPG keyring: %s", gpg_update_error->message);
+                /* fall through to the error handling for the fetch below */
+            }
+
           if (optional && !g_cancellable_is_cancelled (cancellable))
             {
               g_info ("Failed to download optional summary: %s", local_error->message);
@@ -14069,6 +14132,8 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
               g_propagate_error (error, g_steal_pointer (&local_error));
               return NULL;
             }
+
+          break;
         }
     }
 
@@ -14143,7 +14208,7 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
 
   /* If we have a GPG keys URL configured, or if the summary just gave us one
    * which we didn’t know about before, check for (and apply) updates to that. */
-  if (!flatpak_dir_update_gpg_keys (self, state->remote_name, cancellable, &my_error))
+  if (!flatpak_dir_update_gpg_keys (self, state->remote_name, FALSE, cancellable, &my_error))
     {
       g_info ("Error when updating GPG keys from server, ignoring: %s", my_error->message);
       g_clear_error (&my_error);
@@ -16798,6 +16863,16 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
   return TRUE;
 }
 
+static gboolean
+error_indicates_should_update_gpg_keys (const GError *error)
+{
+  return (g_error_matches (error, OSTREE_GPG_ERROR, OSTREE_GPG_ERROR_MISSING_KEY) ||
+          g_error_matches (error, OSTREE_GPG_ERROR, OSTREE_GPG_ERROR_REVOKED_KEY) ||
+          g_error_matches (error, OSTREE_GPG_ERROR, OSTREE_GPG_ERROR_EXPIRED_KEY) ||
+          g_error_matches (error, OSTREE_GPG_ERROR, OSTREE_GPG_ERROR_EXPIRED_SIGNATURE) ||
+          g_error_matches (error, OSTREE_GPG_ERROR, OSTREE_GPG_ERROR_INVALID_SIGNATURE));
+}
+
 /* Potentially download an updated GPG keyring for @remote_name, if a
  * gpg-keys-url is configured, GPG is enabled for the remote, and the cached
  * copy of the keyring at gpg-keys-url is out of date.
@@ -16808,12 +16883,17 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
  * broadly only subkeys of existing trusted keys, and new primary keys which are
  * cross-signed by existing trusted keys, are imported.
  *
+ * If @force_refresh is set, the cache will be revalidated against the server
+ * copy using its ETag. Otherwise, the server may not be queried if the cached
+ * copy is newer than the cache max-age.
+ *
  * Returns FALSE on failure (with @error set), and TRUE on success (keys were
  * imported, or no keys needed to be imported).
  */
 static gboolean
 flatpak_dir_update_gpg_keys (FlatpakDir    *self,
                              const char    *remote_name,
+                             gboolean       force_refresh,
                              GCancellable  *cancellable,
                              GError       **error)
 {
@@ -16848,7 +16928,7 @@ flatpak_dir_update_gpg_keys (FlatpakDir    *self,
       if (flatpak_cache_http_uri (self->http_session,
                                   gpg_keys_url,
                                   NULL,
-                                  FLATPAK_HTTP_FLAGS_NONE,
+                                  force_refresh ? FLATPAK_HTTP_FLAGS_FORCE_EXPIRED : FLATPAK_HTTP_FLAGS_NONE,
                                   AT_FDCWD,
                                   flatpak_file_get_path_cached (cached_gpg_keys_path),
                                   NULL,
