@@ -29,13 +29,13 @@ fi
 if [ -n "${G_TEST_SRCDIR:-}" ]; then
     test_srcdir="${G_TEST_SRCDIR}"
 else
-    test_srcdir=$(dirname $0)
+    test_srcdir="$(dirname "$0")"
 fi
 
 if [ -n "${G_TEST_BUILDDIR:-}" ]; then
     test_builddir="${G_TEST_BUILDDIR}"
 else
-    test_builddir=$(dirname $0)
+    test_builddir="$(dirname "$0")"
 fi
 
 if [ -e "$test_srcdir/installed-tests.sh" ]; then
@@ -314,8 +314,8 @@ export FL_GPG_HOMEDIR2=${TEST_DATA_DIR}/gpghome2
 mkdir -p ${FL_GPG_HOMEDIR}
 mkdir -p ${FL_GPG_HOMEDIR2}
 # This need to be writable, so copy the keys
-cp $(dirname $0)/test-keyring/*.gpg ${FL_GPG_HOMEDIR}/
-cp $(dirname $0)/test-keyring2/*.gpg ${FL_GPG_HOMEDIR2}/
+cp "$(dirname "$0")"/test-keyring/*.gpg ${FL_GPG_HOMEDIR}/
+cp "$(dirname "$0")"/test-keyring2/*.gpg ${FL_GPG_HOMEDIR2}/
 
 export FL_GPG_ID=7B0961FD
 export FL_GPG_FINGERPRINT=3718EEBEB5740A7AB3D651B7138B31E07B0961FD
@@ -366,7 +366,7 @@ make_runtime () {
         (
             flock -s 200
             if [ ! -f "${RUNTIME_REPO}/refs/heads/${RUNTIME_REF}" ]; then
-                $(dirname $0)/make-test-runtime.sh ${RUNTIME_REPO} org.test.Platform ${BRANCH} "" "" > /dev/null
+                "$(dirname "$0")"/make-test-runtime.sh ${RUNTIME_REPO} org.test.Platform ${BRANCH} "" "" > /dev/null
             fi
         ) 200>${TEST_DATA_DIR}/runtime-repo-lock
     fi
@@ -394,7 +394,7 @@ httpd () {
 
     rm -f httpd-pipe
     mkfifo httpd-pipe
-    PYTHONUNBUFFERED=1 $(dirname $0)/$COMMAND "$@" 3> httpd-pipe 2>&1 | tee -a httpd-log >&2 &
+    PYTHONUNBUFFERED=1 "$(dirname "$0")"/$COMMAND "$@" 3> httpd-pipe 2>&1 | tee -a httpd-log >&2 &
     read < httpd-pipe
 }
 
@@ -412,7 +412,7 @@ setup_repo_no_add () {
     BRANCH=${3:-master}
 
     make_runtime "${REPONAME}" "${COLLECTION_ID}" "${BRANCH}" "${GPGARGS:-${FL_GPGARGS}}"
-    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" $(dirname $0)/make-test-app.sh repos/${REPONAME} "" "${BRANCH}" "${COLLECTION_ID}" > /dev/null
+    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" "$(dirname "$0")"/make-test-app.sh repos/${REPONAME} "" "${BRANCH}" "${COLLECTION_ID}" > /dev/null
     update_repo $REPONAME "${COLLECTION_ID}"
     if [ $REPONAME == "test" ]; then
         httpd
@@ -502,7 +502,7 @@ make_updated_app () {
     APP_ID=${5:-""}
     RUNTIME_BRANCH=${6:-$BRANCH}
 
-    RUNTIME_BRANCH=$RUNTIME_BRANCH GPGARGS="${GPGARGS:-${FL_GPGARGS}}" $(dirname $0)/make-test-app.sh repos/${REPONAME} "${APP_ID}" "${BRANCH}" "${COLLECTION_ID}" "${TEXT}" > /dev/null
+    RUNTIME_BRANCH=$RUNTIME_BRANCH GPGARGS="${GPGARGS:-${FL_GPGARGS}}" "$(dirname "$0")"/make-test-app.sh repos/${REPONAME} "${APP_ID}" "${BRANCH}" "${COLLECTION_ID}" "${TEXT}" > /dev/null
     update_repo $REPONAME "${COLLECTION_ID}"
 }
 
@@ -516,7 +516,7 @@ make_updated_runtime () {
     BRANCH=${3:-master}
     TEXT=${4:-UPDATED}
 
-    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" $(dirname $0)/make-test-runtime.sh repos/${REPONAME} org.test.Platform "${BRANCH}" "${COLLECTION_ID}" "${TEXT}" > /dev/null
+    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" "$(dirname "$0")"/make-test-runtime.sh repos/${REPONAME} org.test.Platform "${BRANCH}" "${COLLECTION_ID}" "${TEXT}" > /dev/null
     update_repo $REPONAME "${COLLECTION_ID}"
 }
 
@@ -529,7 +529,7 @@ setup_sdk_repo () {
     fi
     BRANCH=${3:-master}
 
-    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-runtime.sh repos/${REPONAME} org.test.Sdk "${BRANCH}" "${COLLECTION_ID}" "" make mkdir cp touch > /dev/null
+    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . "$(dirname "$0")"/make-test-runtime.sh repos/${REPONAME} org.test.Sdk "${BRANCH}" "${COLLECTION_ID}" "" make mkdir cp touch > /dev/null
     update_repo $REPONAME "${COLLECTION_ID}"
 }
 
@@ -732,8 +732,8 @@ push_gpg_homedir () {
     export OLD_FL_GPG_HOMEDIR="${FL_GPG_HOMEDIR}"
     export FL_GPG_HOMEDIR="${TEST_DATA_DIR}/gpghome-pushed"
     mkdir -p "${FL_GPG_HOMEDIR}"
-    cp $(dirname $0)/test-keyring/*.gpg "${FL_GPG_HOMEDIR}"
-    cp -r $(dirname $0)/test-keyring/openpgp-revocs.d/ "${FL_GPG_HOMEDIR}"
+    cp "$(dirname "$0")"/test-keyring/*.gpg "${FL_GPG_HOMEDIR}"
+    cp -r "$(dirname "$0")"/test-keyring/openpgp-revocs.d/ "${FL_GPG_HOMEDIR}"
 
     # Force gpg to update the storage format for secret keys before we end up
     # doing it as part of a random command in a test
