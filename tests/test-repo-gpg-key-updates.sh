@@ -1305,4 +1305,167 @@ unset REPONAME
 pop_gpg_homedir
 ok "new keyring not processed if it’s too large"
 
+
+# Test: Set up repo with a gpg-keys-url=; install an app as normal; time passes
+# and the signing key expires and the server publishes a new signing subkey; try
+# to update from the repo and reactively pull updated GPG keys in order to
+# verify the summary; update successfully
+# The key part of this test is that we’re testing the reactive behaviour of the
+# client updating keys out-of-band in response to a commit signature failing
+# verification.
+push_gpg_homedir
+export REPONAME=test-new-subkeys-reactive
+export COLLECTION_ID=org.test.Collection.NewSubkeysReactive
+setup_repo_no_add $REPONAME $COLLECTION_ID
+${GPG} --homedir "${FL_GPG_HOMEDIR}" --output repos/${REPONAME}.published.gpg --armor --export "${FL_GPG_FINGERPRINT}"
+port=$(cat httpd-port)
+GPG_KEYS_URL="http://127.0.0.1:${port}/${REPONAME}.published.gpg"
+${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} ${FL_GPGARGS} --gpg-keys-url="${GPG_KEYS_URL}" repos/${REPONAME} >&2
+${FLATPAK} ${U} remote-add --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg $REPONAME-repo "http://127.0.0.1:${port}/${REPONAME}" >&2
+ORIGINAL_SUBKEY_FINGERPRINT="$(${GPG} --homedir "${FL_GPG_HOMEDIR}" --list-keys --fingerprint | grep fpr | tail -1 | cut -d : -f 10)"
+
+# Build an app and sign it with the original subkey, then install it.
+make_updated_app "${REPONAME}" "${COLLECTION_ID}"
+${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} ${FL_GPGARGS} --gpg-keys-url="${GPG_KEYS_URL}" repos/${REPONAME} >&2
+${FLATPAK} ${U} install -y "${REPONAME}-repo" org.test.Hello >&2
+
+# The client should have ended up with the out-of-band update mechanism configured.
+assert_remote_has_config "${REPONAME}-repo" xa.gpg-keys-url "${GPG_KEYS_URL}"
+
+# Mark the subkey as expired on the server, in the published keyring, in the
+# client’s cached downloaded copy of the published keyring, and in the client’s
+# locally configured copy. This obviously isn’t what would happen in real life,
+# but trying to mock the system clock to create a key which expires at the right
+# time part-way through this test is a recipe for race condition bingo.
+# We cannot simply copy the published keyring to the client’s locally configured
+# copy, as the formats are different; we have to import it instead.
+${GPG} --homedir "${FL_GPG_HOMEDIR}" --quick-set-expire "${FL_GPG_FINGERPRINT}" "20260101T000000" "*"
+rm "repos/${REPONAME}.published.gpg"
+${GPG} --homedir "${FL_GPG_HOMEDIR}" --output "repos/${REPONAME}.published.gpg" --armor --export "${FL_GPG_FINGERPRINT}"
+[[ ! -f "${FL_CACHE_DIR}/${REPONAME}.trustedkeys.gpg" ]] || cp "repos/${REPONAME}.published.gpg" "${FL_CACHE_DIR}/${REPONAME}.trustedkeys.gpg"
+
+temp_homedir="$(mktemp -d "${test_tmpdir}/gnupgXXXXXX")"
+touch "${temp_homedir}/pubring.gpg"  # force use of the gpg format rather than kbx
+${GPG} --homedir "${temp_homedir}" --import "repos/${REPONAME}.published.gpg" >&2
+cp "${temp_homedir}/pubring.gpg" "${FL_DIR}/repo/${REPONAME}-repo.trustedkeys.gpg"
+rm -rf "${temp_homedir}"
+
+# Add a new (non-expired) signing subkey to the keyring and publish it on the
+# web server
+${GPG} --homedir "${FL_GPG_HOMEDIR}" --passphrase "" --quick-add-key "${FL_GPG_FINGERPRINT}" default sign
+rm "repos/${REPONAME}.published.gpg"
+${GPG} --homedir "${FL_GPG_HOMEDIR}" --output "repos/${REPONAME}.published.gpg" --armor --export "${FL_GPG_FINGERPRINT}"
+
+# Grab the fingerprint of the new subkey; this assumes that subkeys are listed in creation order, so the new one will be listed last
+NEW_SUBKEY_FINGERPRINT="$(${GPG} --homedir "${FL_GPG_HOMEDIR}" --list-keys --fingerprint | grep fpr | tail -1 | cut -d : -f 10)"
+
+# Build an app and sign it (and the repo) only with the new subkey, to guarantee
+# that the client fails to verify signatures on installation. Then try to
+# install the update, which should succeed as the client can grab the updated
+# keyring from GPGKeysUrl.
+GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${NEW_SUBKEY_FINGERPRINT}!" make_updated_app "${REPONAME}" "${COLLECTION_ID}"
+${FLATPAK} ${U} update -y org.test.Hello >&2
+
+# Check that the new subkey has been imported locally and that the old one is
+# correctly marked as expired
+temp_homedir="$(mktemp -d "${test_tmpdir}/gnupgXXXXXX")"
+${GPG} --homedir "${temp_homedir}" --import-options show-only --import "$FL_DIR/repo/${REPONAME}-repo.trustedkeys.gpg" > updated-local-keyring 2>&1
+assert_file_has_content updated-local-keyring "^sub:e:2048:1:${ORIGINAL_SUBKEY_FINGERPRINT: -16}:[^:]*:[^:]*:::::s::::::23:$"
+assert_file_has_content updated-local-keyring "^fpr:::::::::${NEW_SUBKEY_FINGERPRINT}:$"
+rm -rf "${temp_homedir}"
+
+# Cleanup
+${FLATPAK} ${U} uninstall -y org.test.Hello org.test.Platform >&2
+${FLATPAK} ${U} remote-delete ${REPONAME}-repo >&2
+unset ORIGINAL_SUBKEY_FINGERPRINT
+unset NEW_SUBKEY_FINGERPRINT
+unset GPG_KEYS_URL
+unset COLLECTION_ID
+unset REPONAME
+pop_gpg_homedir
+ok "new subkey propagation reactively using gpg-keys-url="
+
+
+# Test: Set up repo with a gpg-keys-url=; install an app as normal; time passes
+# and the signing key expires and the server publishes a new signing primary
+# key; try to update from the repo and reactively pull updated GPG keys in order
+# to verify the summary; update successfully
+# The key part of this test is that we’re testing the reactive behaviour of the
+# client updating keys out-of-band in response to a commit signature failing
+# verification.
+push_gpg_homedir
+export REPONAME=test-new-primary-reactive
+export COLLECTION_ID=org.test.Collection.NewPrimaryReactive
+setup_repo_no_add $REPONAME $COLLECTION_ID
+${GPG} --homedir "${FL_GPG_HOMEDIR}" --output repos/${REPONAME}.published.gpg --armor --export "${FL_GPG_FINGERPRINT}"
+port=$(cat httpd-port)
+GPG_KEYS_URL="http://127.0.0.1:${port}/${REPONAME}.published.gpg"
+${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} ${FL_GPGARGS} --gpg-keys-url="${GPG_KEYS_URL}" repos/${REPONAME} >&2
+${FLATPAK} ${U} remote-add --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg $REPONAME-repo "http://127.0.0.1:${port}/${REPONAME}" >&2
+ORIGINAL_KEY_FINGERPRINT="$(${GPG} --homedir "${FL_GPG_HOMEDIR}" --list-keys --fingerprint | grep fpr | head -1 | cut -d : -f 10)"
+
+# Build an app and sign it with the original key, then install it.
+make_updated_app "${REPONAME}" "${COLLECTION_ID}"
+${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} ${FL_GPGARGS} --gpg-keys-url="${GPG_KEYS_URL}" repos/${REPONAME} >&2
+${FLATPAK} ${U} install -y "${REPONAME}-repo" org.test.Hello >&2
+
+# The client should have ended up with the out-of-band update mechanism configured.
+assert_remote_has_config "${REPONAME}-repo" xa.gpg-keys-url "${GPG_KEYS_URL}"
+
+# Generate a new primary key and sign it with the old one.
+${GPG} --homedir "${FL_GPG_HOMEDIR}" --passphrase "" --quick-gen-key "New primary" default sign >&2
+NEW_KEY_FINGERPRINT="$(${GPG} --homedir "${FL_GPG_HOMEDIR}" --list-keys --fingerprint | grep fpr | tail -1 | cut -d : -f 10)"
+${GPG} --homedir "${FL_GPG_HOMEDIR}" --passphrase "" --local-user "${ORIGINAL_KEY_FINGERPRINT}" --quick-sign-key "${NEW_KEY_FINGERPRINT}" >&2
+
+# Mark the primary key as expired on the server, in the published keyring, in
+# the client’s cached downloaded copy of the published keyring, and in the
+# client’s locally configured copy. This obviously isn’t what would happen in
+# real life, but trying to mock the system clock to create a key which expires
+# at the right time part-way through this test is a recipe for race condition
+# bingo.
+# We cannot simply copy the published keyring to the client’s locally configured
+# copy, as the formats are different; we have to import it instead.
+${GPG} --homedir "${FL_GPG_HOMEDIR}" --quick-set-expire "${ORIGINAL_KEY_FINGERPRINT}" "20260101T000000"
+rm "repos/${REPONAME}.published.gpg"
+${GPG} --homedir "${FL_GPG_HOMEDIR}" --output "repos/${REPONAME}.published.gpg" --armor --export "${ORIGINAL_KEY_FINGERPRINT}"
+[[ ! -f "${FL_CACHE_DIR}/${REPONAME}.trustedkeys.gpg" ]] || cp "repos/${REPONAME}.published.gpg" "${FL_CACHE_DIR}/${REPONAME}.trustedkeys.gpg"
+
+temp_homedir="$(mktemp -d "${test_tmpdir}/gnupgXXXXXX")"
+touch "${temp_homedir}/pubring.gpg"  # force use of the gpg format rather than kbx
+${GPG} --homedir "${temp_homedir}" --import "repos/${REPONAME}.published.gpg" >&2
+cp "${temp_homedir}/pubring.gpg" "${FL_DIR}/repo/${REPONAME}-repo.trustedkeys.gpg"
+rm -rf "${temp_homedir}"
+
+# Add a new (non-expired) primary key to the keyring, cross-sign it from the old
+# one and publish it on the web server
+rm "repos/${REPONAME}.published.gpg"
+${GPG} --homedir "${FL_GPG_HOMEDIR}" --output "repos/${REPONAME}.published.gpg" --armor --export "${ORIGINAL_KEY_FINGERPRINT}" "${NEW_KEY_FINGERPRINT}"
+
+# Build an app and sign it (and the repo) only with the new primary key, to
+# guarantee that the client fails to verify signatures on installation. Then try
+# to install the update, which should succeed as the client can grab the updated
+# keyring from GPGKeysUrl.
+GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${NEW_KEY_FINGERPRINT}!" make_updated_app "${REPONAME}" "${COLLECTION_ID}"
+${FLATPAK} ${U} update -y org.test.Hello >&2
+
+# Check that the new primary key has been imported locally and that the old one
+# is correctly marked as expired
+temp_homedir="$(mktemp -d "${test_tmpdir}/gnupgXXXXXX")"
+${GPG} --homedir "${temp_homedir}" --import-options show-only --import "$FL_DIR/repo/${REPONAME}-repo.trustedkeys.gpg" > updated-local-keyring 2>&1
+assert_file_has_content updated-local-keyring "^pub:e:2048:1:${ORIGINAL_KEY_FINGERPRINT: -16}:[^:]*:[^:]*::-:::c::::::23::0:$"
+assert_file_has_content updated-local-keyring "^fpr:::::::::${NEW_KEY_FINGERPRINT}:$"
+rm -rf "${temp_homedir}"
+
+# Cleanup
+${FLATPAK} ${U} uninstall -y org.test.Hello org.test.Platform >&2
+${FLATPAK} ${U} remote-delete ${REPONAME}-repo >&2
+unset ORIGINAL_KEY_FINGERPRINT
+unset NEW_KEY_FINGERPRINT
+unset GPG_KEYS_URL
+unset COLLECTION_ID
+unset REPONAME
+pop_gpg_homedir
+ok "new primary key propagation reactively using gpg-keys-url="
+
+
 done_testing
