@@ -305,6 +305,10 @@ assert_fail () {
     fi
 }
 
+# Try and make GPG use more stable from scripts. --status-fd is also recommended
+# for this, but we don’t have a need for parsing status messages at the moment.
+export GPG="gpg --batch --with-colons"
+
 export FL_GPG_HOMEDIR=${TEST_DATA_DIR}/gpghome
 export FL_GPG_HOMEDIR2=${TEST_DATA_DIR}/gpghome2
 mkdir -p ${FL_GPG_HOMEDIR}
@@ -321,8 +325,8 @@ export FL_GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${FL_GPG_ID}"
 export FL_GPGARGS2="--gpg-homedir=${FL_GPG_HOMEDIR2} --gpg-sign=${FL_GPG_ID2}"
 export FL_GPGCMDARGS="--homedir ${FL_GPG_HOMEDIR} -u ${FL_GPG_ID}"
 export FL_GPGCMDARGS2="--homedir ${FL_GPG_HOMEDIR2} -u ${FL_GPG_ID2}"
-FL_GPG_BASE64="$(gpg --homedir "${FL_GPG_HOMEDIR}" --export "${FL_GPG_ID}" | base64 --wrap 0)"
-FL_GPG_BASE642="$(gpg --homedir "${FL_GPG_HOMEDIR2}" --export "${FL_GPG_ID2}" | base64 --wrap 0)"
+FL_GPG_BASE64="$(${GPG} --homedir "${FL_GPG_HOMEDIR}" --export "${FL_GPG_ID}" | base64 --wrap 0)"
+FL_GPG_BASE642="$(${GPG} --homedir "${FL_GPG_HOMEDIR2}" --export "${FL_GPG_ID2}" | base64 --wrap 0)"
 export FL_GPG_BASE64 FL_GPG_BASE642
 
 make_oci_signature () {
@@ -330,7 +334,7 @@ make_oci_signature () {
     REFERENCE="$2"
     GPGARGS="${3:-${FL_GPGCMDARGS}}"
 
-    gpg ${GPGARGS} --sign - <<EOF
+    ${GPG} ${GPGARGS} --sign - <<EOF
 {
     "critical": {
         "type": "atomic container signature",
