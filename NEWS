@@ -1,8 +1,27 @@
 Changes in 1.18.2
 ~~~~~~~~~~~~~~~~~
-Released: not yet
+Released: 2026-08-27
 
-...
+Bug fixes:
+
+* Validate GVariant structure of summaries before using generated variant
+  readers (#6779)
+
+* Fix crash in system helper when iterating cache directories (#6780)
+
+* Avoid corrupted output from non-UTF-8 characters in error messages (#6795)
+
+* Fix portal passing wrong file descriptor when sandbox-expose-fd-ro
+  triggers fd remapping collision (#6785)
+
+* Fix system helper tracking wrong D-Bus sender for pulls (#6781)
+
+* Fix extensions not being populated in the sandbox due to unhandled
+  EAGAIN from openat2 (#6787)
+
+* Fix build failure with GLib versions older than 2.72 (#6777)
+
+* Test infrastructure improvements (#6794, #6796)
 
 Changes in 1.18.1
 ~~~~~~~~~~~~~~~~~~
