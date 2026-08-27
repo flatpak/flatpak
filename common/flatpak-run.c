@@ -3883,16 +3883,26 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
                           "--symlink", "/usr/lib/debug/source", "/run/build-runtime",
                           NULL);
 
+  /* Expose fds from the portal's Spawn sandbox-expose-fd mechanism.
+   * The fd path becomes the mount destination inside the sandbox.
+   *
+   * Reject /.flatpak-info as a defense-in-depth measure. Forging it
+   * would allow portal impersonation. This path is not currently
+   * reachable: the sandbox's /.flatpak-info is set up via
+   * --ro-bind-data from a deleted temp file, so any fd referring to
+   * it resolves with a "(deleted)" suffix that flatpak_get_path_for_fd
+   * already rejects. But guard against future changes that might
+   * remove that protection. */
   for (i = 0; bind_fds && i < bind_fds->len; i++)
     {
       int fd = g_array_index (bind_fds, int, i);
       g_autofree char *path = NULL;
-
-      /* We get the path the fd refers to, to determine to mount point
-       * destination inside the sandbox */
       path = flatpak_get_path_for_fd (fd, error);
       if (!path)
         return FALSE;
+
+      if (g_str_equal (path, "/.flatpak-info"))
+        return flatpak_fail (error, "Not allowed to mount over /.flatpak-info");
 
       if (!flatpak_bwrap_add_args_data_fd_dup (bwrap,
                                                "--bind-fd", fd, path,
@@ -3910,6 +3920,9 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
       path = flatpak_get_path_for_fd (fd, error);
       if (!path)
         return FALSE;
+
+      if (g_str_equal (path, "/.flatpak-info"))
+        return flatpak_fail (error, "Not allowed to mount over /.flatpak-info");
 
       if (!flatpak_bwrap_add_args_data_fd_dup (bwrap,
                                                "--ro-bind-fd", fd, path,
