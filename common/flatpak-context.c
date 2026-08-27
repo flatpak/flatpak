@@ -4237,14 +4237,17 @@ flatpak_context_append_bwrap_filesystem (FlatpakContext  *context,
                                          const char      *xdg_dirs_conf,
                                          gboolean         home_access)
 {
-  GHashTableIter iter;
-  gpointer key, value;
+  glnx_autofd int xdg_app_id_dir_fd = -1;
+  g_autofree char *app_dir_path = NULL;
 
   if (app_id_dir != NULL)
     flatpak_context_apply_env_appid (bwrap, app_id_dir);
 
   if (!home_access)
     {
+      GHashTableIter iter;
+      gpointer key;
+
       /* Enable persistent mapping only if no access to real home dir */
 
       g_hash_table_iter_init (&iter, context->persistent);
@@ -4309,52 +4312,158 @@ flatpak_context_append_bwrap_filesystem (FlatpakContext  *context,
    */
   if (app_id_dir)
     {
+      g_autoptr(GError) local_error = NULL;
+
+      xdg_app_id_dir_fd = glnx_chaseat (AT_FDCWD,
+                                        flatpak_file_get_path_cached (app_id_dir),
+                                        GLNX_CHASE_MUST_BE_DIRECTORY,
+                                        &local_error);
+      if (xdg_app_id_dir_fd < 0 &&
+          !g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        {
+          g_warning ("Unable to open app dir, skipping XDG overrides: %s",
+                     local_error->message);
+        }
+    }
+
+  if (xdg_app_id_dir_fd >= 0)
+    {
+      GHashTableIter iter;
+      gpointer key, value;
+      app_dir_path = flatpak_get_path_for_fd (xdg_app_id_dir_fd, NULL);
+
+      if (app_dir_path == NULL)
+        g_warning ("Unable to resolve app dir path, skipping XDG overrides");
+
       g_hash_table_iter_init (&iter, context->filesystems);
-      while (g_hash_table_iter_next (&iter, &key, &value))
+      while (app_dir_path != NULL &&
+             g_hash_table_iter_next (&iter, &key, &value))
         {
           const char *filesystem = key;
           FlatpakFilesystemMode mode = GPOINTER_TO_INT (value);
           g_autofree char *xdg_path = NULL;
           const char *rest, *where;
+          g_autofree char *subpath = NULL;
+          g_autofree char *subpath_parent = NULL;
+          g_autofree char *dest = NULL;
+          g_autoptr(GError) local_error = NULL;
+          glnx_autofd int parent_fd = -1;
+          glnx_autofd int src_fd = -1;
 
           xdg_path = get_xdg_dir_from_string (filesystem, &rest, &where);
 
-          if (xdg_path != NULL && *rest != 0 &&
-              mode >= FLATPAK_FILESYSTEM_MODE_READ_ONLY)
-            {
-              g_autoptr(GFile) app_version = g_file_get_child (app_id_dir, where);
-              g_autoptr(GFile) app_version_subdir = g_file_resolve_relative_path (app_version, rest);
+          if (xdg_path == NULL || *rest == 0 ||
+              mode < FLATPAK_FILESYSTEM_MODE_READ_ONLY)
+            continue;
 
-              if (g_file_test (xdg_path, G_FILE_TEST_IS_DIR) ||
-                  g_file_test (xdg_path, G_FILE_TEST_IS_REGULAR))
+          src_fd = glnx_chaseat (AT_FDCWD, xdg_path, GLNX_CHASE_DEFAULT, NULL);
+          if (src_fd < 0)
+            continue;
+
+          subpath = g_build_filename (where, rest, NULL);
+          subpath_parent = g_path_get_dirname (subpath);
+
+          /*
+          * The mount destination is resolved using RESOLVE_BENEATH to prevent
+          * a sandboxed app from planting a symlink (e.g. data/escape -> /)
+          * that would redirect the mount to an arbitrary location. This
+          * closes the static symlink attack but a TOCTOU remains: between
+          * resolving the destination here and bwrap mounting at that path,
+          * the directory could be swapped for a symlink. Closing this
+          * properly would require bwrap to support fd-based mount
+          * destinations. The mount source is passed as an fd to avoid a
+          * similar TOCTOU on the source side.
+          *
+          * The primary protection for /.flatpak-info (the only target that
+          * enables sandbox escape via portal impersonation) remains bwrap's
+          * --ro-bind-data, which mounts from a deleted temp file that
+          * prevents additional bind mounts from stacking on top.
+          */
+          parent_fd = glnx_chaseat (xdg_app_id_dir_fd, subpath_parent,
+                                    GLNX_CHASE_RESOLVE_BENEATH |
+                                    GLNX_CHASE_MUST_BE_DIRECTORY,
+                                    &local_error);
+          if (parent_fd < 0)
+            {
+              if (!g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
                 {
-                  g_autofree char *xdg_path_in_app = g_file_get_path (app_version_subdir);
-                  flatpak_bwrap_add_bind_arg (bwrap,
-                                              mode == FLATPAK_FILESYSTEM_MODE_READ_ONLY ? "--ro-bind" : "--bind",
-                                              xdg_path, xdg_path_in_app);
+                  g_warning ("Unable to safely resolve XDG override destination parent %s: %s",
+                             subpath_parent, local_error->message);
                 }
+              continue;
+            }
+
+          dest = g_build_filename (app_dir_path, subpath, NULL);
+          if (!flatpak_bwrap_add_args_data_fd_dup (bwrap,
+                                                   mode == FLATPAK_FILESYSTEM_MODE_READ_ONLY ?
+                                                     "--ro-bind-fd" : "--bind-fd",
+                                                   src_fd, dest,
+                                                   &local_error))
+            {
+              g_warning ("Unable to add XDG override bind fd for %s: %s",
+                         xdg_path, local_error->message);
+              continue;
             }
         }
     }
 
+  /* Bind user-dirs.dirs into the app's config dir. Same RESOLVE_BENEATH
+   * + TOCTOU situation as the XDG override loop above. */
   if (home_access && app_id_dir != NULL)
     {
       g_autofree char *src_path = g_build_filename (g_get_user_config_dir (),
                                                     "user-dirs.dirs",
                                                     NULL);
-      g_autofree char *path = g_build_filename (flatpak_file_get_path_cached (app_id_dir),
-                                                "config/user-dirs.dirs", NULL);
+
       if (g_file_test (src_path, G_FILE_TEST_EXISTS))
-        flatpak_bwrap_add_bind_arg (bwrap, "--ro-bind", src_path, path);
+        {
+          glnx_autofd int config_fd = -1;
+
+          if (xdg_app_id_dir_fd >= 0)
+            {
+              config_fd = glnx_chaseat (xdg_app_id_dir_fd, "config",
+                                        GLNX_CHASE_RESOLVE_BENEATH |
+                                        GLNX_CHASE_MUST_BE_DIRECTORY,
+                                        NULL);
+            }
+
+          if (config_fd >= 0 && app_dir_path != NULL)
+            {
+              g_autofree char *dest = g_build_filename (app_dir_path,
+                                                        "config/user-dirs.dirs",
+                                                        NULL);
+              flatpak_bwrap_add_args (bwrap, "--ro-bind", src_path, dest, NULL);
+            }
+          else
+            {
+              g_warning ("Unable to safely resolve user-dirs.dirs destination, skipping");
+            }
+        }
     }
   else if (xdg_dirs_conf != NULL && xdg_dirs_conf[0] != '\0' && app_id_dir != NULL)
     {
-      g_autofree char *path =
-        g_build_filename (flatpak_file_get_path_cached (app_id_dir),
-                          "config/user-dirs.dirs", NULL);
+      glnx_autofd int config_fd = -1;
 
-      flatpak_bwrap_add_args_data (bwrap, "xdg-config-dirs",
-                                   xdg_dirs_conf, strlen (xdg_dirs_conf), path, NULL);
+      if (xdg_app_id_dir_fd >= 0)
+        {
+          config_fd = glnx_chaseat (xdg_app_id_dir_fd, "config",
+                                    GLNX_CHASE_RESOLVE_BENEATH |
+                                    GLNX_CHASE_MUST_BE_DIRECTORY,
+                                    NULL);
+        }
+
+      if (config_fd >= 0 && app_dir_path != NULL)
+        {
+          g_autofree char *path = g_build_filename (app_dir_path,
+                                                    "config/user-dirs.dirs",
+                                                    NULL);
+          flatpak_bwrap_add_args_data (bwrap, "xdg-config-dirs",
+                                       xdg_dirs_conf, strlen (xdg_dirs_conf), path, NULL);
+        }
+      else
+        {
+          g_warning ("Unable to safely resolve xdg-dirs-conf destination, skipping");
+        }
     }
 }
 
