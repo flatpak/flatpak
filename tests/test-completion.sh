@@ -30,6 +30,27 @@ export LC_ALL=C
 setup_repo
 install_repo
 
+for point in -1 -42 nope 1x 9999999999999999999999999999999999999999 2147483648; do
+  if ${FLATPAK} complete "flatpak b" "$point" "b" > complete_out 2> complete_err; then
+    assert_not_reached "Invalid completion cursor '$point' was accepted"
+  fi
+  assert_file_empty complete_out
+  assert_file_empty complete_err
+done
+
+${FLATPAK} complete "flatpak b" 9 "b" | sort > complete_end
+for point in 9 42; do
+  ${FLATPAK} complete "flatpak b" "$point" "b" | sort > complete_out
+  diff -u complete_end complete_out
+done
+
+${FLATPAK} complete "flatpak b" 0 "b" > complete_out 2> complete_err || :
+assert_file_empty complete_out
+assert_file_empty complete_err
+${FLATPAK} complete "flatpak b" 8 "b" > complete_out
+
+ok "validate completion cursor"
+
 ${FLATPAK} complete "flatpak a" 9 "a" | sort > complete_out
 (diff -u complete_out - || exit 1) <<EOF
 EOF
