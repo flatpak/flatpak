@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak main\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2026-08-10 23:30+0200\n"
+"POT-Creation-Date: 2026-08-27 20:53+0200\n"
 "PO-Revision-Date: 2026-03-29 22:26+0500\n"
 "Last-Translator: Baurzhan Muftakhidinov <baurthefirst@gmail.com>\n"
 "Language-Team: Kazakh\n"
@@ -167,14 +167,14 @@ msgid "'%s' is not a valid repository: "
 msgstr "'%s' жарамды репозиторий емес: "
 
 #: app/flatpak-builtins-build-bundle.c:674 app/flatpak-builtins-build-sign.c:88
-#: common/flatpak-dir.c:14421
+#: common/flatpak-dir.c:14471
 #, c-format
 msgid "'%s' is not a valid name: %s"
 msgstr "'%s' жарамды атау емес: %s"
 
 #: app/flatpak-builtins-build-bundle.c:677
 #: app/flatpak-builtins-build-export.c:865 app/flatpak-builtins-build-sign.c:91
-#: common/flatpak-dir.c:14427
+#: common/flatpak-dir.c:14477
 #, c-format
 msgid "'%s' is not a valid branch name: %s"
 msgstr "'%s' жарамды тармақ атауы емес: %s"
@@ -267,7 +267,7 @@ msgstr "%2$s ішінде %1$s сәйкес келетін кеңейту нүк
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "'%s' байланыстырылған тіркеу опциясында '=' жоқ"
 
-#: app/flatpak-builtins-build.c:679 common/flatpak-run.c:4059
+#: app/flatpak-builtins-build.c:679 common/flatpak-run.c:4064
 #, c-format
 msgid "Unable to start app"
 msgstr "Қолданбаны іске қосу мүмкін емес"
@@ -2035,7 +2035,7 @@ msgid "No remote refs found for ‘%s’"
 msgstr "‘%s’ үшін қашықтағы сілтемелер табылмады"
 
 #: app/flatpak-builtins-install.c:573 app/flatpak-builtins-uninstall.c:405
-#: common/flatpak-ref-utils.c:706 common/flatpak-ref-utils.c:1612
+#: common/flatpak-ref-utils.c:730 common/flatpak-ref-utils.c:1636
 #, c-format
 msgid "Invalid branch %s: %s"
 msgstr "Жарамсыз тармақ %s: %s"
@@ -2518,7 +2518,7 @@ msgstr "Жиынтық файлында орнатылған қайта бағы
 msgid "Can't load uri %s: %s\n"
 msgstr "%s uri-ін жүктеу мүмкін емес: %s\n"
 
-#: app/flatpak-builtins-remote-add.c:276 common/flatpak-dir.c:4643
+#: app/flatpak-builtins-remote-add.c:276 common/flatpak-dir.c:4691
 #, c-format
 msgid "Can't load file %s: %s\n"
 msgstr "%s файлын жүктеу мүмкін емес: %s\n"
@@ -4344,14 +4344,14 @@ msgstr "Ескерту: %s өшіру сәтсіз аяқталды: %s\n"
 msgid "Error: Failed to uninstall %s: %s\n"
 msgstr "Қате: %s өшіру сәтсіз аяқталды: %s\n"
 
-#: app/flatpak-quiet-transaction.c:166 common/flatpak-dir.c:11557
+#: app/flatpak-quiet-transaction.c:166 common/flatpak-dir.c:11605
 #, c-format
 msgid "%s already installed"
 msgstr "%s қазірдің өзінде орнатылған"
 
-#: app/flatpak-quiet-transaction.c:168 common/flatpak-dir.c:3622
-#: common/flatpak-dir.c:4321 common/flatpak-dir.c:17096
-#: common/flatpak-dir.c:17386 common/flatpak-dir-utils.c:167
+#: app/flatpak-quiet-transaction.c:168 common/flatpak-dir.c:3670
+#: common/flatpak-dir.c:4369 common/flatpak-dir.c:17146
+#: common/flatpak-dir.c:17436 common/flatpak-dir-utils.c:167
 #: common/flatpak-dir-utils.c:260 common/flatpak-transaction.c:2736
 #: common/flatpak-transaction.c:2791
 #, c-format
@@ -4714,421 +4714,429 @@ msgstr "Құмсалғыш ішінде уақытша үй бумасын қа�
 msgid "Configured collection ID ‘%s’ not in summary file"
 msgstr "Конфигурацияланған ‘%s’ коллекция ID-і жиынтық файлында жоқ"
 
-#: common/flatpak-dir.c:587
+#: common/flatpak-dir.c:459
+msgid "Summary has invalid or corrupted data"
+msgstr ""
+
+#: common/flatpak-dir.c:478
+msgid "Summary index has invalid or corrupted data"
+msgstr ""
+
+#: common/flatpak-dir.c:632
 #, c-format
 msgid "Unable to load summary from remote %s: %s"
 msgstr "%s қашықтағы репозиторийден жиынтықты жүктеу мүмкін емес: %s"
 
-#: common/flatpak-dir.c:764 common/flatpak-dir.c:800 common/flatpak-dir.c:906
+#: common/flatpak-dir.c:812 common/flatpak-dir.c:848 common/flatpak-dir.c:954
 #, c-format
 msgid "No such ref '%s' in remote %s"
 msgstr "%2$s қашықтағы репозиторийінде '%1$s' сілтемесі жоқ"
 
-#: common/flatpak-dir.c:891 common/flatpak-dir.c:1051 common/flatpak-dir.c:1080
-#: common/flatpak-dir.c:1092
+#: common/flatpak-dir.c:939 common/flatpak-dir.c:1099 common/flatpak-dir.c:1128
+#: common/flatpak-dir.c:1140
 #, c-format
 msgid "No entry for %s in remote %s summary flatpak cache"
 msgstr "%2$s қашықтағы жиынтығының flatpak кэшінде %1$s үшін жазба жоқ"
 
-#: common/flatpak-dir.c:1069
+#: common/flatpak-dir.c:1117
 #, c-format
 msgid "No summary or Flatpak cache available for remote %s"
 msgstr ""
 "%s қашықтағы репозиторийі үшін ешқандай жиынтық немесе Flatpak кэші "
 "қолжетімді емес"
 
-#: common/flatpak-dir.c:1097
+#: common/flatpak-dir.c:1145
 #, c-format
 msgid "Missing xa.data in summary for remote %s"
 msgstr "%s қашықтағы репозиторийдің жиынтығында xa.data жоқ"
 
-#: common/flatpak-dir.c:1103 common/flatpak-dir.c:1546
+#: common/flatpak-dir.c:1151 common/flatpak-dir.c:1594
 #, c-format
 msgid "Unsupported summary version %d for remote %s"
 msgstr ""
 "%2$s қашықтағы репозиторийі үшін қолдау көрсетілмейтін жиынтық нұсқасы %1$d"
 
-#: common/flatpak-dir.c:1200
+#: common/flatpak-dir.c:1248
 msgid "Remote OCI index has no registry uri"
 msgstr "Қашықтағы OCI индексінде тіркеу uri-і жоқ"
 
-#: common/flatpak-dir.c:1261
+#: common/flatpak-dir.c:1309
 #, c-format
 msgid "Couldn't find ref %s in remote %s"
 msgstr "%2$s қашықтағы репозиторийден %1$s сілтемесі табылмады"
 
-#: common/flatpak-dir.c:1288 common/flatpak-dir.c:1381
+#: common/flatpak-dir.c:1336 common/flatpak-dir.c:1429
 #, fuzzy, c-format
 msgid "Commit has no requested ref ‘%s’ in ref binding metadata (found: ‘%s’)"
 msgstr ""
 "Коммиттің сілтемелерді байланыстыру метадеректерінде сұралған ‘%s’ сілтемесі "
 "жоқ"
 
-#: common/flatpak-dir.c:1413
+#: common/flatpak-dir.c:1461
 #, c-format
 msgid "Configured collection ID ‘%s’ not in binding metadata"
 msgstr ""
 "Байланыстыру метадеректерінде конфигурацияланған ‘%s’ коллекция ID-і жоқ"
 
-#: common/flatpak-dir.c:1449 common/flatpak-dir.c:5645
+#: common/flatpak-dir.c:1497 common/flatpak-dir.c:5693
 #, c-format
 msgid "Couldn't find latest checksum for ref %s in remote %s"
 msgstr ""
 "%2$s қашықтағы репозиторийден %1$s сілтемесі үшін соңғы бақылау сомасы "
 "табылмады"
 
-#: common/flatpak-dir.c:1516 common/flatpak-dir.c:1552
+#: common/flatpak-dir.c:1564 common/flatpak-dir.c:1600
 #, c-format
 msgid "No entry for %s in remote %s summary flatpak sparse cache"
 msgstr "%2$s қашықтағы жиынтығының flatpak сирек кэшінде %1$s үшін жазба жоқ"
 
-#: common/flatpak-dir.c:2540
+#: common/flatpak-dir.c:2588
 #, c-format
 msgid "Commit metadata for %s not matching expected metadata"
 msgstr "%s үшін коммит метадеректері күтілген метадеректерге сәйкес келмейді"
 
-#: common/flatpak-dir.c:2823
+#: common/flatpak-dir.c:2871
 msgid "Unable to connect to system bus"
 msgstr "Жүйелік шинаға қосылу мүмкін емес"
 
-#: common/flatpak-dir.c:3419
+#: common/flatpak-dir.c:3467
 msgid "User installation"
 msgstr "Пайдаланушы орнатылымы"
 
-#: common/flatpak-dir.c:3426
+#: common/flatpak-dir.c:3474
 #, c-format
 msgid "System (%s) installation"
 msgstr "Жүйелік (%s) орнатылым"
 
-#: common/flatpak-dir.c:3472
+#: common/flatpak-dir.c:3520
 #, c-format
 msgid "No overrides found for %s"
 msgstr "%s үшін қайта анықтаулар табылмады"
 
-#: common/flatpak-dir.c:3625
+#: common/flatpak-dir.c:3673
 #, c-format
 msgid "%s (commit %s) not installed"
 msgstr "%s (%s коммиті) орнатылмаған"
 
-#: common/flatpak-dir.c:4650
+#: common/flatpak-dir.c:4698
 #, c-format
 msgid "Error parsing system flatpakrepo file for %s: %s"
 msgstr "%s үшін жүйелік flatpakrepo файлын өңдеу қатесі: %s"
 
-#: common/flatpak-dir.c:4735
+#: common/flatpak-dir.c:4783
 #, c-format
 msgid "While opening repository %s: "
 msgstr "%s репозиторийін ашу кезінде: "
 
-#: common/flatpak-dir.c:5004
+#: common/flatpak-dir.c:5052
 #, c-format
 msgid "The config key %s is not set"
 msgstr "%s конфигурация кілті орнатылмаған"
 
-#: common/flatpak-dir.c:5140
+#: common/flatpak-dir.c:5188
 #, c-format
 msgid "No current %s pattern matching %s"
 msgstr "%2$s-ге сәйкес келетін ағымдағы %1$s шаблоны жоқ"
 
-#: common/flatpak-dir.c:5422
+#: common/flatpak-dir.c:5470
 msgid "No appstream commit to deploy"
 msgstr "Орналастыратын appstream коммиті жоқ"
 
-#: common/flatpak-dir.c:5941 common/flatpak-dir.c:7269
-#: common/flatpak-dir.c:10963 common/flatpak-dir.c:11700
+#: common/flatpak-dir.c:5989 common/flatpak-dir.c:7317
+#: common/flatpak-dir.c:11011 common/flatpak-dir.c:11748
 msgid "Can't pull from untrusted non-gpg verified remote"
 msgstr ""
 "Сенімсіз, gpg арқылы тексерілмеген қашықтағы репозиторийден тарту мүмкін емес"
 
-#: common/flatpak-dir.c:6376 common/flatpak-dir.c:6594
+#: common/flatpak-dir.c:6424 common/flatpak-dir.c:6642
 msgid "Extra data not supported for non-gpg-verified local system installs"
 msgstr ""
 "gpg-тексерілмеген жергілікті жүйелік орнатылымдар үшін қосымша деректерге "
 "қолдау көрсетілмейді"
 
-#: common/flatpak-dir.c:6415 common/flatpak-dir.c:6785
+#: common/flatpak-dir.c:6463 common/flatpak-dir.c:6833
 #, c-format
 msgid "Invalid checksum for extra data uri %s"
 msgstr "%s қосымша деректер uri-і үшін бақылау сомасы жарамсыз"
 
-#: common/flatpak-dir.c:6427
+#: common/flatpak-dir.c:6475
 #, fuzzy, c-format
 msgid "Invalid extra data name '%s'"
 msgstr "Кеңейту атауы жарамсыз: %s"
 
-#: common/flatpak-dir.c:6435
+#: common/flatpak-dir.c:6483
 #, c-format
 msgid "Unsupported extra data uri %s"
 msgstr "Қолдау көрсетілмейтін %s қосымша деректер uri-і"
 
-#: common/flatpak-dir.c:6464
+#: common/flatpak-dir.c:6512
 #, c-format
 msgid "Failed to load local extra-data %s: %s"
 msgstr "Жергілікті %s қосымша деректерін жүктеу мүмкін емес: %s"
 
-#: common/flatpak-dir.c:6472
+#: common/flatpak-dir.c:6520
 #, c-format
 msgid "Wrong size for extra-data %s"
 msgstr "%s қосымша деректерінің өлшемі қате"
 
-#: common/flatpak-dir.c:6491
+#: common/flatpak-dir.c:6539
 #, c-format
 msgid "While downloading %s: "
 msgstr "%s жүктеп алу кезінде: "
 
-#: common/flatpak-dir.c:6501
+#: common/flatpak-dir.c:6549
 #, c-format
 msgid "Wrong size for extra data %s"
 msgstr "%s қосымша деректері үшін қате өлшем"
 
-#: common/flatpak-dir.c:6510
+#: common/flatpak-dir.c:6558
 #, c-format
 msgid "Invalid checksum for extra data %s"
 msgstr "%s қосымша деректері үшін бақылау сомасы жарамсыз"
 
-#: common/flatpak-dir.c:7099 common/flatpak-dir.c:7364
+#: common/flatpak-dir.c:7147 common/flatpak-dir.c:7412
 #, c-format
 msgid "While pulling %s from remote %s: "
 msgstr "%2$s қашықтағы репозиторийден %1$s тарту кезінде: "
 
-#: common/flatpak-dir.c:7305 common/flatpak-repo-utils.c:3886
+#: common/flatpak-dir.c:7353 common/flatpak-repo-utils.c:3886
 msgid "GPG signatures found, but none are in trusted keyring"
 msgstr ""
 "GPG қолтаңбалары табылды, бірақ олардың ешқайсысы сенімді кілттер жинағында "
 "жоқ"
 
-#: common/flatpak-dir.c:7322
+#: common/flatpak-dir.c:7370
 #, c-format
 msgid "Commit for ‘%s’ has no ref binding"
 msgstr "‘%s’ коммитінде сілтеме байланысы жоқ"
 
-#: common/flatpak-dir.c:7327
+#: common/flatpak-dir.c:7375
 #, c-format
 msgid "Commit for ‘%s’ is not in expected bound refs: %s"
 msgstr "‘%s’ коммиті күтілген байланысты сілтемелерде жоқ: %s"
 
-#: common/flatpak-dir.c:7503
+#: common/flatpak-dir.c:7551
 msgid "Only applications can be made current"
 msgstr "Тек қолданбаларды ағымдағы етуге болады"
 
-#: common/flatpak-dir.c:8207
+#: common/flatpak-dir.c:8255
 msgid "Not enough memory"
 msgstr "Жад жеткіліксіз"
 
-#: common/flatpak-dir.c:8226
+#: common/flatpak-dir.c:8274
 msgid "Failed to read from exported file"
 msgstr "Экспортталған файлдан оқу сәтсіз аяқталды"
 
-#: common/flatpak-dir.c:8416
+#: common/flatpak-dir.c:8464
 msgid "Error reading mimetype xml file"
 msgstr "mimetype xml файлын оқу қатесі"
 
-#: common/flatpak-dir.c:8421
+#: common/flatpak-dir.c:8469
 msgid "Invalid mimetype xml file"
 msgstr "mimetype xml файлы жарамсыз"
 
-#: common/flatpak-dir.c:8507
+#: common/flatpak-dir.c:8555
 #, c-format
 msgid "D-Bus service file '%s' has wrong name"
 msgstr "'%s' D-Bus қызмет файлының атауы қате"
 
-#: common/flatpak-dir.c:8662
+#: common/flatpak-dir.c:8710
 #, c-format
 msgid "Invalid Exec argument %s"
 msgstr "Exec аргументі жарамсыз: %s"
 
-#: common/flatpak-dir.c:9130
+#: common/flatpak-dir.c:9178
 msgid "While getting detached metadata: "
 msgstr "Бөлінген метадеректерді алу кезінде: "
 
-#: common/flatpak-dir.c:9135 common/flatpak-dir.c:9140
-#: common/flatpak-dir.c:9144
+#: common/flatpak-dir.c:9183 common/flatpak-dir.c:9188
+#: common/flatpak-dir.c:9192
 msgid "Extra data missing in detached metadata"
 msgstr "Бөлінген метадеректерде қосымша деректер жоқ"
 
-#: common/flatpak-dir.c:9151
+#: common/flatpak-dir.c:9199
 msgid "While creating extradir: "
 msgstr "extradir жасау кезінде: "
 
-#: common/flatpak-dir.c:9172 common/flatpak-dir.c:9211
+#: common/flatpak-dir.c:9220 common/flatpak-dir.c:9259
 msgid "Invalid checksum for extra data"
 msgstr "Қосымша деректер үшін бақылау сомасы жарамсыз"
 
-#: common/flatpak-dir.c:9201
+#: common/flatpak-dir.c:9249
 #, fuzzy, c-format
 msgid "Invalid extra data filename '%s'"
 msgstr "'%s' қосымша деректер файлын жазу кезінде: "
 
-#: common/flatpak-dir.c:9207
+#: common/flatpak-dir.c:9255
 msgid "Wrong size for extra data"
 msgstr "Қосымша деректер өлшемі қате"
 
-#: common/flatpak-dir.c:9218
+#: common/flatpak-dir.c:9266
 #, c-format
 msgid "While writing extra data file '%s': "
 msgstr "'%s' қосымша деректер файлын жазу кезінде: "
 
-#: common/flatpak-dir.c:9226
+#: common/flatpak-dir.c:9274
 #, c-format
 msgid "Extra data %s missing in detached metadata"
 msgstr "Бөлінген метадеректерде %s қосымша деректері жоқ"
 
-#: common/flatpak-dir.c:9332
+#: common/flatpak-dir.c:9380
 #, c-format
 msgid "Unable to get runtime key from metadata"
 msgstr "Метадеректерден орындалу ортасы кілтін алу мүмкін емес"
 
-#: common/flatpak-dir.c:9466
+#: common/flatpak-dir.c:9514
 #, c-format
 msgid "apply_extra script failed, exit status %d"
 msgstr "apply_extra скрипті сәтсіз аяқталды, шығу күйі %d"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-dir.c:9659
+#: common/flatpak-dir.c:9707
 #, c-format
 msgid "Installing %s is not allowed by the policy set by your administrator"
 msgstr "%s орнатуға әкімші орнатқан саясатпен рұқсат берілмеген"
 
-#: common/flatpak-dir.c:9758
+#: common/flatpak-dir.c:9806
 #, c-format
 msgid "While trying to resolve ref %s: "
 msgstr "%s сілтемесін шешу кезінде: "
 
-#: common/flatpak-dir.c:9770
+#: common/flatpak-dir.c:9818
 #, c-format
 msgid "%s is not available"
 msgstr "%s қолжетімді емес"
 
-#: common/flatpak-dir.c:9782 common/flatpak-dir.c:11577
+#: common/flatpak-dir.c:9830 common/flatpak-dir.c:11625
 #, c-format
 msgid "%s commit %s already installed"
 msgstr "%s %s коммиті қазірдің өзінде орнатылған"
 
-#: common/flatpak-dir.c:9789
+#: common/flatpak-dir.c:9837
 msgid "Can't create deploy directory"
 msgstr "Орналастыру бумасын жасау мүмкін емес"
 
-#: common/flatpak-dir.c:9797
+#: common/flatpak-dir.c:9845
 #, c-format
 msgid "Failed to read commit %s: "
 msgstr "%s коммитін оқу сәтсіз аяқталды: "
 
-#: common/flatpak-dir.c:9818
+#: common/flatpak-dir.c:9866
 #, c-format
 msgid "While trying to checkout %s into %s: "
 msgstr "%s-ді %s ішіне тексеріп шығу (checkout) кезінде: "
 
-#: common/flatpak-dir.c:9837
+#: common/flatpak-dir.c:9885
 msgid "While trying to checkout metadata subpath: "
 msgstr "Метадеректердің ішкі жолын тексеріп шығу (checkout) кезінде: "
 
-#: common/flatpak-dir.c:9868
+#: common/flatpak-dir.c:9916
 #, c-format
 msgid "While trying to checkout subpath ‘%s’: "
 msgstr "‘%s’ ішкі жолын тексеріп шығу (checkout) кезінде: "
 
-#: common/flatpak-dir.c:9887
+#: common/flatpak-dir.c:9935
 msgid "While trying to remove existing extra dir: "
 msgstr "Бар қосымша буманы өшіру кезінде: "
 
-#: common/flatpak-dir.c:9898
+#: common/flatpak-dir.c:9946
 msgid "While trying to apply extra data: "
 msgstr "Қосымша деректерді қолдану кезінде: "
 
-#: common/flatpak-dir.c:9925
+#: common/flatpak-dir.c:9973
 #, c-format
 msgid "Invalid commit ref %s: "
 msgstr "%s коммит сілтемесі жарамсыз: "
 
-#: common/flatpak-dir.c:9933 common/flatpak-dir.c:9945
+#: common/flatpak-dir.c:9981 common/flatpak-dir.c:9993
 #, c-format
 msgid "Deployed ref %s does not match commit (%s)"
 msgstr "Орналастырылған %s сілтемесі коммитке (%s) сәйкес келмейді"
 
-#: common/flatpak-dir.c:9939
+#: common/flatpak-dir.c:9987
 #, c-format
 msgid "Deployed ref %s branch does not match commit (%s)"
 msgstr "Орналастырылған %s сілтеме тармағы коммитке (%s) сәйкес келмейді"
 
-#: common/flatpak-dir.c:10207 common/flatpak-installation.c:1911
+#: common/flatpak-dir.c:10255 common/flatpak-installation.c:1911
 #, c-format
 msgid "%s branch %s already installed"
 msgstr "%s %s тармағы қазірдің өзінде орнатылған"
 
-#: common/flatpak-dir.c:11067
+#: common/flatpak-dir.c:11115
 #, c-format
 msgid "Could not unmount revokefs-fuse filesystem at %s: "
 msgstr "%s орнындағы revokefs-fuse файлдық жүйесін ажырату мүмкін болмады: "
 
-#: common/flatpak-dir.c:11371
+#: common/flatpak-dir.c:11419
 #, c-format
 msgid "This version of %s is already installed"
 msgstr "%s осы нұсқасы қазірдің өзінде орнатылған"
 
-#: common/flatpak-dir.c:11384
+#: common/flatpak-dir.c:11432
 #, c-format
 msgid "Can't change remote during bundle install"
 msgstr "Дестені орнату кезінде қашықтағы репозиторийді өзгерту мүмкін емес"
 
-#: common/flatpak-dir.c:11653
+#: common/flatpak-dir.c:11701
 msgid "Can't update to a specific commit without root permissions"
 msgstr "root рұқсатынсыз арнайы коммитке жаңарту мүмкін емес"
 
-#: common/flatpak-dir.c:11934
+#: common/flatpak-dir.c:11982
 #, c-format
 msgid "Can't remove %s, it is needed for: %s"
 msgstr "%s өшіру мүмкін емес, ол мынау үшін қажет: %s"
 
-#: common/flatpak-dir.c:11994 common/flatpak-installation.c:2067
+#: common/flatpak-dir.c:12042 common/flatpak-installation.c:2067
 #, c-format
 msgid "%s branch %s is not installed"
 msgstr "%s %s тармағы орнатылмаған"
 
-#: common/flatpak-dir.c:12246
+#: common/flatpak-dir.c:12294
 #, c-format
 msgid "%s commit %s not installed"
 msgstr "%s %s коммиті орнатылмаған"
 
-#: common/flatpak-dir.c:12505
+#: common/flatpak-dir.c:12553
 #, c-format
 msgid "%s is currently deployed, you need to uninstall it first"
 msgstr ""
 
-#: common/flatpak-dir.c:12629
+#: common/flatpak-dir.c:12677
 #, c-format
 msgid "Pruning repo failed: %s"
 msgstr "Репозиторийді тазалау сәтсіз аяқталды: %s"
 
-#: common/flatpak-dir.c:12797 common/flatpak-dir.c:12803
+#: common/flatpak-dir.c:12845 common/flatpak-dir.c:12851
 #, c-format
 msgid "Failed to load filter '%s'"
 msgstr "'%s' сүзгісін жүктеу сәтсіз аяқталды"
 
-#: common/flatpak-dir.c:12809
+#: common/flatpak-dir.c:12857
 #, c-format
 msgid "Failed to parse filter '%s'"
 msgstr "'%s' сүзгісін өңдеу сәтсіз аяқталды"
 
-#: common/flatpak-dir.c:13091
+#: common/flatpak-dir.c:13139
 msgid "Failed to write summary cache: "
 msgstr "Жиынтық кэшін жазу сәтсіз аяқталды: "
 
-#: common/flatpak-dir.c:13110
+#: common/flatpak-dir.c:13158
 #, c-format
 msgid "No oci summary cached for remote '%s'"
 msgstr "'%s' қашықтағы репозиторийі үшін ешқандай oci жиынтығы кэштелмеген"
 
-#: common/flatpak-dir.c:13335
+#: common/flatpak-dir.c:13383
 #, c-format
 msgid "No cached summary for remote '%s'"
 msgstr "'%s' қашықтағы репозиторийі үшін ешқандай кэштелген жиынтық жоқ"
 
-#: common/flatpak-dir.c:13376
+#: common/flatpak-dir.c:13424
 #, c-format
 msgid "Invalid checksum for indexed summary %s read from %s"
 msgstr "%2$s-ден оқылған индекстелген %1$s жиынтығының бақылау сомасы жарамсыз"
 
-#: common/flatpak-dir.c:13449
+#: common/flatpak-dir.c:13497
 #, c-format
 msgid ""
 "Remote listing for %s not available; server has no summary file. Check the "
@@ -5137,101 +5145,101 @@ msgstr ""
 "%s үшін қашықтағы тізім қолжетімді емес; серверде жиынтық файлы жоқ. remote-"
 "add үшін берілген URL дұрыстығын тексеріңіз."
 
-#: common/flatpak-dir.c:13826
+#: common/flatpak-dir.c:13874
 #, c-format
 msgid "Invalid checksum for indexed summary %s for remote '%s'"
 msgstr ""
 "'%2$s' қашықтағы репозиторийі үшін индекстелген %1$s жиынтығының бақылау "
 "сомасы жарамсыз"
 
-#: common/flatpak-dir.c:14516
+#: common/flatpak-dir.c:14566
 #, c-format
 msgid "Multiple branches available for %s, you must specify one of: "
 msgstr ""
 "%s үшін бірнеше тармақ қолжетімді, сіз мыналардың біреуін көрсетуіңіз керек: "
 
-#: common/flatpak-dir.c:14582
+#: common/flatpak-dir.c:14632
 #, c-format
 msgid "Nothing matches %s"
 msgstr "%s-ге сәйкес келетін ештеңе жоқ"
 
-#: common/flatpak-dir.c:14690
+#: common/flatpak-dir.c:14740
 #, c-format
 msgid "Can't find ref %s%s%s%s%s"
 msgstr "%s%s%s%s%s сілтемесі табылмады"
 
-#: common/flatpak-dir.c:14733
+#: common/flatpak-dir.c:14783
 #, c-format
 msgid "Error searching remote %s: %s"
 msgstr "%s қашықтағы репозиторийден іздеу қатесі: %s"
 
-#: common/flatpak-dir.c:14830
+#: common/flatpak-dir.c:14880
 #, c-format
 msgid "Error searching local repository: %s"
 msgstr "Жергілікті репозиторийден іздеу қатесі: %s"
 
-#: common/flatpak-dir.c:14967
+#: common/flatpak-dir.c:15017
 #, c-format
 msgid "%s/%s/%s not installed"
 msgstr "%s/%s/%s орнатылмаған"
 
-#: common/flatpak-dir.c:15170
+#: common/flatpak-dir.c:15220
 #, c-format
 msgid "Could not find installation %s"
 msgstr "%s орнатылымы табылмады"
 
-#: common/flatpak-dir.c:15740
+#: common/flatpak-dir.c:15790
 #, c-format
 msgid "Invalid file format, no %s group"
 msgstr "Файл пішімі жарамсыз, %s тобы жоқ"
 
-#: common/flatpak-dir.c:15745 common/flatpak-repo-utils.c:2836
+#: common/flatpak-dir.c:15795 common/flatpak-repo-utils.c:2836
 #, c-format
 msgid "Invalid version %s, only 1 supported"
 msgstr "Жарамсыз нұсқа %s, тек 1 қолдау көрсетіледі"
 
-#: common/flatpak-dir.c:15750 common/flatpak-dir.c:15755
+#: common/flatpak-dir.c:15800 common/flatpak-dir.c:15805
 #, c-format
 msgid "Invalid file format, no %s specified"
 msgstr "Файл пішімі жарамсыз, %s көрсетілмеген"
 
 #. Check some minimal size so we don't get crap
-#: common/flatpak-dir.c:15775
+#: common/flatpak-dir.c:15825
 msgid "Invalid file format, gpg key invalid"
 msgstr "Файл пішімі жарамсыз, gpg кілті жарамсыз"
 
-#: common/flatpak-dir.c:15803 common/flatpak-repo-utils.c:2917
+#: common/flatpak-dir.c:15853 common/flatpak-repo-utils.c:2917
 msgid "Collection ID requires GPG key to be provided"
 msgstr "Коллекция ID-і GPG кілтінің берілуін талап етеді"
 
-#: common/flatpak-dir.c:15846
+#: common/flatpak-dir.c:15896
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "%s орындалу ортасының %s тармағы қазірдің өзінде орнатылған"
 
-#: common/flatpak-dir.c:15847
+#: common/flatpak-dir.c:15897
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "%s қолданбасының %s тармағы қазірдің өзінде орнатылған"
 
-#: common/flatpak-dir.c:16081
+#: common/flatpak-dir.c:16131
 #, c-format
 msgid "Can't remove remote '%s' with installed ref %s (at least)"
 msgstr ""
 "Орнатылған %s сілтемесі (кем дегенде) болғандықтан, '%s' қашықтағы "
 "репозиторийін өшіру мүмкін емес"
 
-#: common/flatpak-dir.c:16186
+#: common/flatpak-dir.c:16236
 #, c-format
 msgid "Invalid character '/' in remote name: %s"
 msgstr "Қашықтағы репозиторий атауында жарамсыз '/' таңбасы бар: %s"
 
-#: common/flatpak-dir.c:16192
+#: common/flatpak-dir.c:16242
 #, c-format
 msgid "No configuration for remote %s specified"
 msgstr "%s қашықтағы репозиторийі үшін ешқандай конфигурация көрсетілмеген"
 
-#: common/flatpak-dir.c:17725
+#: common/flatpak-dir.c:17775
 #, c-format
 msgid "Skipping deletion of mirror ref (%s, %s)…\n"
 msgstr "Айна сілтемесін (%s, %s) өшіру өткізіліп жіберілуде…\n"
@@ -5452,150 +5460,150 @@ msgstr "Атау 255 таңбадан ұзын болмауы тиіс"
 msgid "Name can't start with a period"
 msgstr "Атау нүктеден басталмауы тиіс"
 
-#: common/flatpak-ref-utils.c:148
-#, c-format
-msgid "Name can't start with %c"
+#: common/flatpak-ref-utils.c:150
+#, fuzzy, c-format
+msgid "Name can't start with \"%s\""
 msgstr "Атау %c таңбасынан басталмауы тиіс"
 
-#: common/flatpak-ref-utils.c:164
+#: common/flatpak-ref-utils.c:167
 msgid "Name can't end with a period"
 msgstr "Атау нүктемен аяқталмауы тиіс"
 
-#: common/flatpak-ref-utils.c:171 common/flatpak-ref-utils.c:183
+#: common/flatpak-ref-utils.c:176 common/flatpak-ref-utils.c:191
 msgid "Only last name segment can contain -"
 msgstr "Тек соңғы атау сегментінде - болуы мүмкін"
 
-#: common/flatpak-ref-utils.c:174
-#, c-format
-msgid "Name segment can't start with %c"
+#: common/flatpak-ref-utils.c:179
+#, fuzzy, c-format
+msgid "Name segment can't start with \"%s\""
 msgstr "Атау сегменті %c таңбасынан басталмауы тиіс"
 
-#: common/flatpak-ref-utils.c:186
-#, c-format
-msgid "Name can't contain %c"
+#: common/flatpak-ref-utils.c:194
+#, fuzzy, c-format
+msgid "Name can't contain \"%s\""
 msgstr "Атауда %c болмауы тиіс"
 
-#: common/flatpak-ref-utils.c:195
+#: common/flatpak-ref-utils.c:204
 msgid "Names must contain at least 2 periods"
 msgstr "Атауларда кем дегенде 2 нүкте болуы тиіс"
 
-#: common/flatpak-ref-utils.c:312
+#: common/flatpak-ref-utils.c:321
 msgid "Arch can't be empty"
 msgstr "Архитектура бос болмауы тиіс"
 
-#: common/flatpak-ref-utils.c:323
-#, c-format
-msgid "Arch can't contain %c"
+#: common/flatpak-ref-utils.c:334
+#, fuzzy, c-format
+msgid "Arch can't contain \"%s\""
 msgstr "Архитектурада %c болмауы тиіс"
 
-#: common/flatpak-ref-utils.c:385
+#: common/flatpak-ref-utils.c:397
 msgid "Branch can't be empty"
 msgstr "Тармақ бос болмауы тиіс"
 
-#: common/flatpak-ref-utils.c:395
-#, c-format
-msgid "Branch can't start with %c"
+#: common/flatpak-ref-utils.c:409
+#, fuzzy, c-format
+msgid "Branch can't start with \"%s\""
 msgstr "Тармақ %c таңбасынан басталмауы тиіс"
 
-#: common/flatpak-ref-utils.c:405
-#, c-format
-msgid "Branch can't contain %c"
+#: common/flatpak-ref-utils.c:422
+#, fuzzy, c-format
+msgid "Branch can't contain \"%s\""
 msgstr "Тармақта %c болмауы тиіс"
 
-#: common/flatpak-ref-utils.c:583
+#: common/flatpak-ref-utils.c:601
 #, fuzzy
 msgid "Remote name can't be empty"
 msgstr "Атау бос болмауы тиіс"
 
-#: common/flatpak-ref-utils.c:592
+#: common/flatpak-ref-utils.c:612
 #, fuzzy, c-format
-msgid "Remote name can't start with %c"
+msgid "Remote name can't start with \"%s\""
 msgstr "Атау %c таңбасынан басталмауы тиіс"
 
-#: common/flatpak-ref-utils.c:602
+#: common/flatpak-ref-utils.c:625
 #, fuzzy, c-format
-msgid "Remote name can't contain %c"
+msgid "Remote name can't contain \"%s\""
 msgstr "Атауда %c болмауы тиіс"
 
-#: common/flatpak-ref-utils.c:632 common/flatpak-ref-utils.c:882
+#: common/flatpak-ref-utils.c:656 common/flatpak-ref-utils.c:906
 msgid "Ref too long"
 msgstr "Сілтеме тым ұзын"
 
-#: common/flatpak-ref-utils.c:644
+#: common/flatpak-ref-utils.c:668
 msgid "Invalid remote name"
 msgstr "Қашықтағы репозиторий атауы жарамсыз"
 
-#: common/flatpak-ref-utils.c:658
+#: common/flatpak-ref-utils.c:682
 #, c-format
 msgid "%s is not application or runtime"
 msgstr "%s қолданба немесе орындалу ортасы емес"
 
-#: common/flatpak-ref-utils.c:667 common/flatpak-ref-utils.c:684
-#: common/flatpak-ref-utils.c:700
+#: common/flatpak-ref-utils.c:691 common/flatpak-ref-utils.c:708
+#: common/flatpak-ref-utils.c:724
 #, c-format
 msgid "Wrong number of components in %s"
 msgstr "%s ішіндегі компоненттер саны қате"
 
-#: common/flatpak-ref-utils.c:673
+#: common/flatpak-ref-utils.c:697
 #, c-format
 msgid "Invalid name %.*s: %s"
 msgstr "Жарамсыз атау %.*s: %s"
 
-#: common/flatpak-ref-utils.c:690
+#: common/flatpak-ref-utils.c:714
 #, c-format
 msgid "Invalid arch: %.*s: %s"
 msgstr "Жарамсыз архитектура: %.*s: %s"
 
-#: common/flatpak-ref-utils.c:833
+#: common/flatpak-ref-utils.c:857
 #, c-format
 msgid "Invalid name %s: %s"
 msgstr "Жарамсыз атау %s: %s"
 
-#: common/flatpak-ref-utils.c:851
+#: common/flatpak-ref-utils.c:875
 #, c-format
 msgid "Invalid arch: %s: %s"
 msgstr "Жарамсыз архитектура: %s: %s"
 
-#: common/flatpak-ref-utils.c:870
+#: common/flatpak-ref-utils.c:894
 #, c-format
 msgid "Invalid branch: %s: %s"
 msgstr "Жарамсыз тармақ: %s: %s"
 
-#: common/flatpak-ref-utils.c:979 common/flatpak-ref-utils.c:987
-#: common/flatpak-ref-utils.c:995
+#: common/flatpak-ref-utils.c:1003 common/flatpak-ref-utils.c:1011
+#: common/flatpak-ref-utils.c:1019
 #, c-format
 msgid "Wrong number of components in partial ref %s"
 msgstr "Жартылай %s сілтемесіндегі компоненттер саны қате"
 
-#: common/flatpak-ref-utils.c:1315
+#: common/flatpak-ref-utils.c:1339
 msgid " development platform"
 msgstr " әзірлеу платформасы"
 
-#: common/flatpak-ref-utils.c:1317
+#: common/flatpak-ref-utils.c:1341
 msgid " platform"
 msgstr " платформа"
 
-#: common/flatpak-ref-utils.c:1319
+#: common/flatpak-ref-utils.c:1343
 msgid " application base"
 msgstr " қолданба негізі"
 
-#: common/flatpak-ref-utils.c:1322
+#: common/flatpak-ref-utils.c:1346
 msgid " debug symbols"
 msgstr " жөндеу таңбалары"
 
-#: common/flatpak-ref-utils.c:1324
+#: common/flatpak-ref-utils.c:1348
 msgid " sourcecode"
 msgstr " бастапқы код"
 
-#: common/flatpak-ref-utils.c:1326
+#: common/flatpak-ref-utils.c:1350
 msgid " translations"
 msgstr " аудармалар"
 
-#: common/flatpak-ref-utils.c:1328
+#: common/flatpak-ref-utils.c:1352
 msgid " docs"
 msgstr " құжаттама"
 
-#: common/flatpak-ref-utils.c:1595
+#: common/flatpak-ref-utils.c:1619
 #, c-format
 msgid "Invalid id %s: %s"
 msgstr "Жарамсыз id %s: %s"
@@ -5667,87 +5675,87 @@ msgstr ""
 msgid "Metadata in header and app are inconsistent"
 msgstr "Тақырыптама және қолданбадағы метадеректер сәйкес емес"
 
-#: common/flatpak-run.c:985
+#: common/flatpak-run.c:990
 msgid "No systemd user session available, cgroups not available"
 msgstr "systemd пайдаланушы сессиясы қолжетімді емес, cgroups қолжетімді емес"
 
-#: common/flatpak-run.c:1530
+#: common/flatpak-run.c:1535
 msgid "Unable to allocate instance id"
 msgstr "Инстанция id-ін бөлу мүмкін емес"
 
-#: common/flatpak-run.c:1666 common/flatpak-run.c:1675
+#: common/flatpak-run.c:1671 common/flatpak-run.c:1680
 #, c-format
 msgid "Failed to open flatpak-info file: %s"
 msgstr "flatpak-info файлын ашу сәтсіз аяқталды: %s"
 
-#: common/flatpak-run.c:1702
+#: common/flatpak-run.c:1707
 #, c-format
 msgid "Failed to open bwrapinfo.json file: %s"
 msgstr "bwrapinfo.json файлын ашу сәтсіз аяқталды: %s"
 
-#: common/flatpak-run.c:1723
+#: common/flatpak-run.c:1728
 #, c-format
 msgid "Failed to write to instance id fd: %s"
 msgstr "Инстанция id fd-ге жазу сәтсіз аяқталды: %s"
 
-#: common/flatpak-run.c:2130
+#: common/flatpak-run.c:2135
 msgid "Initialize seccomp failed"
 msgstr "Seccomp инициализациясы сәтсіз аяқталды"
 
-#: common/flatpak-run.c:2169
+#: common/flatpak-run.c:2174
 #, c-format
 msgid "Failed to add architecture to seccomp filter: %s"
 msgstr "Архитектураны seccomp сүзгісіне қосу сәтсіз аяқталды: %s"
 
-#: common/flatpak-run.c:2177
+#: common/flatpak-run.c:2182
 #, c-format
 msgid "Failed to add multiarch architecture to seccomp filter: %s"
 msgstr "Мультиархитектураны seccomp сүзгісіне қосу сәтсіз аяқталды: %s"
 
-#: common/flatpak-run.c:2209 common/flatpak-run.c:2226
-#: common/flatpak-run.c:2248
+#: common/flatpak-run.c:2214 common/flatpak-run.c:2231
+#: common/flatpak-run.c:2253
 #, c-format
 msgid "Failed to block syscall %d: %s"
 msgstr "%d жүйелік шақыруын бөгеу сәтсіз аяқталды: %s"
 
-#: common/flatpak-run.c:2281
+#: common/flatpak-run.c:2286
 #, c-format
 msgid "Failed to export bpf: %s"
 msgstr "bpf экспорттау сәтсіз аяқталды: %s"
 
-#: common/flatpak-run.c:2642
+#: common/flatpak-run.c:2647
 #, c-format
 msgid "Failed to open ‘%s’"
 msgstr "‘%s’ ашу мүмкін болмады"
 
-#: common/flatpak-run.c:2652
+#: common/flatpak-run.c:2657
 #, c-format
 msgid ""
 "Directory forwarding needs version 4 of the document portal (have version %d)"
 msgstr ""
 "Буманы қайта бағыттау үшін құжат порталының 4-нұсқасы қажет (%d нұсқасы бар)"
 
-#: common/flatpak-run.c:2784
+#: common/flatpak-run.c:2789
 #, fuzzy, c-format
 msgid "Invalid path ‘%s’"
 msgstr "Жарамсыз %s: ‘%s’ тобы жоқ"
 
-#: common/flatpak-run.c:3016
+#: common/flatpak-run.c:3021
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "ldconfig сәтсіз аяқталды, шығу күйі %d"
 
-#: common/flatpak-run.c:3022
+#: common/flatpak-run.c:3027
 msgid "Can't open generated ld.so.cache"
 msgstr "Жасалған ld.so.cache файлын ашу мүмкін емес"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-run.c:3143
+#: common/flatpak-run.c:3148
 #, c-format
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr "%s орындауға әкімші орнатқан саясатпен рұқсат берілмеген"
 
-#: common/flatpak-run.c:3300
+#: common/flatpak-run.c:3305
 msgid ""
 "\"flatpak run\" is not intended to be run as `sudo flatpak run`. Use `sudo "
 "-i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell."
@@ -5756,18 +5764,18 @@ msgstr ""
 "Оның орнына `sudo -i` немесе `su -l` қолданыңыз және жаңа қоршам ішінен "
 "\"flatpak run\" шақырыңыз."
 
-#: common/flatpak-run.c:3511
+#: common/flatpak-run.c:3516
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "%s-ден көшіру сәтсіз аяқталды: %s"
 
-#: common/flatpak-run.c:3532
+#: common/flatpak-run.c:3537
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr ""
 "Ескі қолданба деректер бумасын %s жаңа %s атауына көшіру сәтсіз аяқталды: %s"
 
-#: common/flatpak-run.c:3541
+#: common/flatpak-run.c:3546
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "%s көшіру кезінде символдық сілтеме жасау сәтсіз аяқталды: %s"
@@ -6030,41 +6038,41 @@ msgstr "Глоб қолданбаларға сәйкес келе алмайды
 msgid "Empty glob"
 msgstr "Глоб бос"
 
-#: common/flatpak-utils.c:756
+#: common/flatpak-utils.c:755
 msgid "Too many segments in glob"
 msgstr "Глобта сегменттер тым көп"
 
-#: common/flatpak-utils.c:777
+#: common/flatpak-utils.c:778
 #, c-format
 msgid "Invalid glob character '%s'"
 msgstr "Глоб таңбасы жарамсыз: '%s'"
 
-#: common/flatpak-utils.c:831
+#: common/flatpak-utils.c:835
 #, c-format
 msgid "Missing glob on line %d"
 msgstr "%d жолында глоб жоқ"
 
-#: common/flatpak-utils.c:835
+#: common/flatpak-utils.c:839
 #, c-format
 msgid "Trailing text on line %d"
 msgstr "%d жолының соңында артық мәтін бар"
 
-#: common/flatpak-utils.c:839
+#: common/flatpak-utils.c:843
 #, c-format
 msgid "on line %d"
 msgstr "%d жолында"
 
-#: common/flatpak-utils.c:861
+#: common/flatpak-utils.c:865
 #, c-format
 msgid "Unexpected word '%s' on line %d"
 msgstr "%2$d жолында күтілмеген '%1$s' сөзі"
 
-#: common/flatpak-utils.c:2077
+#: common/flatpak-utils.c:2081
 #, c-format
 msgid "Invalid require-flatpak argument %s"
 msgstr "require-flatpak аргументі жарамсыз: %s"
 
-#: common/flatpak-utils.c:2087 common/flatpak-utils.c:2106
+#: common/flatpak-utils.c:2091 common/flatpak-utils.c:2110
 #, c-format
 msgid "%s needs a later flatpak version (%s)"
 msgstr "%s үшін кейінгі flatpak нұсқасы қажет (%s)"
@@ -6081,46 +6089,46 @@ msgstr "OCI қашықтағы репозиторийі емес"
 msgid "Invalid token"
 msgstr "Токен жарамсыз"
 
-#: portal/flatpak-portal.c:2287
+#: portal/flatpak-portal.c:2293
 #, c-format
 msgid "No portal support found"
 msgstr "Портал қолдауы табылмады"
 
-#: portal/flatpak-portal.c:2293
+#: portal/flatpak-portal.c:2299
 msgid "Deny"
 msgstr "Тыйым салу"
 
-#: portal/flatpak-portal.c:2295
+#: portal/flatpak-portal.c:2301
 msgid "Update"
 msgstr "Жаңарту"
 
-#: portal/flatpak-portal.c:2300
+#: portal/flatpak-portal.c:2306
 #, c-format
 msgid "Update %s?"
 msgstr "%s жаңарту керек пе?"
 
-#: portal/flatpak-portal.c:2312
+#: portal/flatpak-portal.c:2318
 msgid "The application wants to update itself."
 msgstr "Қолданба өз-өзін жаңартқысы келеді."
 
-#: portal/flatpak-portal.c:2313
+#: portal/flatpak-portal.c:2319
 msgid "Update access can be changed any time from the privacy settings."
 msgstr ""
 "Жаңарту рұқсатын кез келген уақытта жекелік баптауларынан өзгертуге болады."
 
-#: portal/flatpak-portal.c:2338
+#: portal/flatpak-portal.c:2344
 #, c-format
 msgid "Application update not allowed"
 msgstr "Қолданбаны жаңартуға рұқсат жоқ"
 
-#: portal/flatpak-portal.c:2499
+#: portal/flatpak-portal.c:2505
 #, c-format
 msgid "Self update not supported, new version requires new permissions"
 msgstr ""
 "Өзін-өзі жаңартуға қолдау көрсетілмейді, жаңа нұсқа жаңа рұқсаттарды талап "
 "етеді"
 
-#: portal/flatpak-portal.c:2682 portal/flatpak-portal.c:2700
+#: portal/flatpak-portal.c:2688 portal/flatpak-portal.c:2706
 #, c-format
 msgid "Update ended unexpectedly"
 msgstr "Жаңарту күтпеген жерден аяқталды"
