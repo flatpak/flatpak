@@ -139,6 +139,18 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--gpg-keys-url=URL</option></term>
+
+                <listitem><para>
+                    URL for an out-of-band update location for the repository’s
+                    keyring. The URL is stored in the repository summary, and
+                    clients can download an updated repository keyring from it,
+                    which will be imported into their local keyring if
+                    cross-signed by an existing trusted key.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--collection-id=COLLECTION-ID</option></term>
 
                 <listitem><para>

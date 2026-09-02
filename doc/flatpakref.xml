@@ -136,6 +136,10 @@
                     <listitem><para>The base64-encoded gpg key for the remote.</para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>GPGKeysUrl</option> (string)</term>
+                    <listitem><para>A URL for GPG key updates and rotation for the remote.</para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>SignatureLookaside</option> (string)</term>
                     <listitem><para>URL to use to look up signatures (OCI remotes only)</para></listitem>
                 </varlistentry>

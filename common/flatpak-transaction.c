@@ -2726,6 +2726,7 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
                                                         flatpak_decomposed_get_ref (ref),
                                                         NULL,
                                                         NULL,
+                                                        NULL,
                                                         &changed_config,
                                                         NULL, error);
       if (origin_remote == NULL)
@@ -4686,7 +4687,8 @@ handle_suggested_remote_name (FlatpakTransaction *self,
 
       /* In case the runtime repo is the same repo, use its title, comment,
        * description, etc. since flatpakref files don't have those fields. */
-      runtime_repo_url = g_key_file_get_string (runtime_repo_keyfile, FLATPAK_REPO_GROUP, FLATPAK_REPO_URL_KEY, NULL);
+      if (runtime_repo_keyfile != NULL)
+        runtime_repo_url = g_key_file_get_string (runtime_repo_keyfile, FLATPAK_REPO_GROUP, FLATPAK_REPO_URL_KEY, NULL);
       if (runtime_repo_url != NULL && flatpak_uri_equal (runtime_repo_url, url))
         config = flatpak_parse_repofile (suggested_name, FALSE, runtime_repo_keyfile, &gpg_key, NULL, error);
       else
@@ -4929,6 +4931,7 @@ handle_runtime_repo_deps_from_bundle (FlatpakTransaction *self,
                                   NULL,
                                   NULL,
                                   NULL,
+                                  NULL,
                                   NULL);
 
   if (metadata == NULL || dep_url == NULL || ref == NULL)
@@ -5031,7 +5034,9 @@ flatpak_transaction_resolve_images (FlatpakTransaction *self,
 
           remote = flatpak_dir_create_origin_remote (priv->dir, NULL /* url */, id,
                                                      NULL /* title */, ref_label,
-                                                     NULL /* gpg_data */, NULL /* collection_id */,
+                                                     NULL /* gpg_data */,
+                                                     NULL /* gpg_keys_url */,
+                                                     NULL /* collection_id */,
                                                      &created_remote,
                                                      cancellable, error);
           if (!remote)
