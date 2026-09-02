@@ -89,6 +89,122 @@
         </variablelist>
 
         <para>
+            Flatpak also supports central, system-managed configuration in
+            <filename>/etc/flatpak/config</filename> and
+            <filename>/etc/flatpak/config.d/*.conf</filename>.
+            These files use an ini-style format with a <literal>[core]</literal> group.
+            The following central keys are supported:
+        </para>
+
+        <variablelist>
+            <varlistentry>
+                <term><varname>config-lockdown</varname></term>
+                <listitem><para>
+                    If set to <literal>true</literal>, central repository policy is enforced,
+                    and user-controlled directory overrides via <envar>FLATPAK_*_DIR</envar>
+                    environment variables are ignored with a warning.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><varname>allow-user-remotes</varname></term>
+                <listitem><para>
+                    If set to <literal>false</literal> while <varname>config-lockdown</varname>
+                    is enabled, users cannot add or modify user-defined remotes.
+                    Centrally configured remotes remain available.
+                </para></listitem>
+            </varlistentry>
+        </variablelist>
+
+        <para>
+            When central lockdown is enabled, remote definitions from
+            <filename>/etc/flatpak/user.remotes.d/*.flatpakrepo</filename> are applied to
+            user installations as centrally managed remotes.
+        </para>
+
+        <para>
+            To add a centrally managed remote, create a
+            <filename>.flatpakrepo</filename> file in
+            <filename>/etc/flatpak/user.remotes.d/</filename>.
+            Each file must contain an exact
+            <literal>[Flatpak Repo]</literal> group header.
+            The group name is fixed and must not be replaced with a per-remote name.
+            The file should contain the remote URL and, when GPG verification is enabled,
+            either the public key material for the remote using the <literal>GPGKey</literal> field,
+            or a path to a key file using the <literal>GPGKeyFile</literal> field.
+            Flatpak imports that key into each installation when the remote is first applied,
+            so clients pick up both the remote definition and its trust root automatically.
+        </para>
+
+        <para>
+            A typical workflow is:
+        </para>
+
+        <orderedlist>
+            <listitem><para>
+                Export the remote's ASCII-armored public key.
+            </para></listitem>
+            <listitem><para>
+                Either base64-encode the exported key and place the result in the
+                <literal>GPGKey</literal> field of a
+                <filename>/etc/flatpak/user.remotes.d/NAME.flatpakrepo</filename> file,
+                or store the key on disk and reference it with <literal>GPGKeyFile</literal>,
+                together with the <literal>Url</literal> and any desired metadata.
+            </para></listitem>
+            <listitem><para>
+                Ensure <filename>/etc/flatpak/config</filename> or a file in
+                <filename>/etc/flatpak/config.d/</filename> enables
+                <literal>[core] config-lockdown=true</literal> and configures
+                <literal>allow-user-remotes=false</literal> if users must not add their own remotes.
+            </para></listitem>
+            <listitem><para>
+                Ask users to run any Flatpak command that opens their installation,
+                such as <command>flatpak remotes</command>.
+                On first access, Flatpak loads the central remote into the local repository
+                configuration and imports the bundled GPG key.
+            </para></listitem>
+        </orderedlist>
+
+        <para>
+            When central lockdown is enabled, Flatpak re-checks centrally managed remotes
+            whenever the user installation is opened. If a user has manually changed the
+            local remote URL, GPG verification settings, or similar repository configuration
+            in their home directory, Flatpak overwrites those local changes from the
+            corresponding <filename>/etc/flatpak/user.remotes.d/*.flatpakrepo</filename> file.
+            If <varname>allow-user-remotes</varname> is <literal>false</literal>, user-defined
+            remotes that are not present in <filename>/etc/flatpak/user.remotes.d/</filename>
+            are removed at the same time.
+        </para>
+
+        <para>
+            To update a centrally managed remote, edit the corresponding
+            <filename>/etc/flatpak/user.remotes.d/NAME.flatpakrepo</filename> file and
+            update its <literal>GPGKey</literal> or <literal>GPGKeyFile</literal> if the
+            trust root changes. Existing users pick up the new values the next time a
+            Flatpak command opens their installation.
+        </para>
+
+        <para>
+            For example:
+        </para>
+
+        <programlisting><![CDATA[[Flatpak Repo]
+Title=Example Central Remote
+Url=https://example.invalid/repo/
+GPGKey=mQINBGexample...
+]]></programlisting>
+
+        <para>
+            Alternatively, a key file can be referenced directly:
+        </para>
+
+        <programlisting><![CDATA[[Flatpak Repo]
+    Title=Example Central Remote
+    Url=https://example.invalid/repo/
+    GPGKeyFile=/etc/flatpak/keys/example-remote.asc
+    ]]></programlisting>
+
+        <para>
             For configuration of individual remotes, see
             <citerefentry><refentrytitle>flatpak-remote-modify</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
             For configuration of individual applications, see
