@@ -57,6 +57,16 @@ working on. This can be accomplished with a command like:
 meson test -C _build test-info@user.wrap test-info@system.wrap
 ```
 
+## Commit messages
+
+Start the subject with the affected component when practical, for example
+`run:`, `tests:`, or `dir:`, followed by a capitalized, imperative summary.
+Keep subjects and body text to 72 characters per line where possible so they
+remain readable in an 80-column terminal.
+
+Use the body to explain why the change is needed and any behavior that is not
+obvious from the diff.
+
 ## More info
 Dependencies you will need include: meson, bison,
 gettext, gtk-doc, gobject-introspection, libcap, libarchive, libxml2, libcurl,
