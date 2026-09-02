@@ -561,6 +561,46 @@ test_parse_datetime (void)
   g_assert_false (ret);
 }
 
+static void
+test_format_progress_remaining_time (void)
+{
+  g_autofree char *remaining = NULL;
+
+  remaining = format_progress_remaining_time (50, 100, 12, TRUE);
+  g_assert_null (remaining);
+
+  remaining = format_progress_remaining_time (50, 100, 12, FALSE);
+  g_assert_cmpstr (remaining, ==, "00:04");
+  g_clear_pointer (&remaining, g_free);
+
+  remaining = format_progress_remaining_time (50, 0, 12, FALSE);
+  g_assert_null (remaining);
+  g_clear_pointer (&remaining, g_free);
+
+  remaining = format_progress_remaining_time (50, 100, 0, FALSE);
+  g_assert_null (remaining);
+  g_clear_pointer (&remaining, g_free);
+
+  remaining = format_progress_remaining_time (99, 100, 2, FALSE);
+  g_assert_null (remaining);
+  g_clear_pointer (&remaining, g_free);
+
+  remaining = format_progress_remaining_time (99, 100, 1, FALSE);
+  g_assert_cmpstr (remaining, ==, "00:01");
+  g_clear_pointer (&remaining, g_free);
+
+  remaining = format_progress_remaining_time (100, 100, 12, FALSE);
+  g_assert_null (remaining);
+  g_clear_pointer (&remaining, g_free);
+
+  remaining = format_progress_remaining_time (101, 100, 12, FALSE);
+  g_assert_null (remaining);
+  g_clear_pointer (&remaining, g_free);
+
+  remaining = format_progress_remaining_time (0, 7322, 2, FALSE);
+  g_assert_cmpstr (remaining, ==, "01:01:01");
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -571,6 +611,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/app/columns", test_columns);
   g_test_add_func ("/app/fancy-output", test_fancy_output);
   g_test_add_func ("/app/format-choices", test_format_choices);
+  g_test_add_func ("/app/format-progress-remaining-time", test_format_progress_remaining_time);
   g_test_add_func ("/app/looks-like-branch", test_looks_like_branch);
   g_test_add_func ("/app/number-prompt", test_number_prompt);
   g_test_add_func ("/app/parse-datetime", test_parse_datetime);

@@ -112,7 +112,8 @@ struct _FlatpakProgress
 
   /* Self-progress-reporting fields, not from OSTree */
   guint   progress;
-  guint   last_total;
+  guint64 last_total;
+  guint64 bytes_total;
   guint64 bytes_per_second;
 
   guint32 update_interval;
@@ -191,6 +192,7 @@ update_status_progress_and_estimating (FlatpakProgress *self)
      extra data, so ignore those */
   if (self->requested == 0)
     {
+      self->bytes_total = 0;
       self->bytes_per_second = 0;
       return;
     }
@@ -319,6 +321,8 @@ update_status_progress_and_estimating (FlatpakProgress *self)
     }
 
 out:
+  self->bytes_total = total;
+
   if (new_progress < self->progress && self->last_total == total)
     new_progress = self->progress;
   self->last_total = total;
@@ -349,6 +353,7 @@ flatpak_progress_init_extra_data (FlatpakProgress *self,
   self->total_extra_data = n_extra_data;
   self->transferred_extra_data_bytes = 0;
   self->total_extra_data_bytes = total_download_size;
+  self->extra_data_previous_dl = 0;
   self->downloading_extra_data = FALSE;
   self->progress = 0;
   update_status_progress_and_estimating (self);
@@ -422,7 +427,9 @@ flatpak_progress_start_oci_pull (FlatpakProgress *self)
   self->metadata_fetched = 0;
   self->outstanding_extra_data = 0;
   self->total_extra_data = 0;
+  self->transferred_extra_data_bytes = 0;
   self->total_extra_data_bytes = 0;
+  self->extra_data_previous_dl = 0;
   self->downloading_extra_data = FALSE;
   self->fetched_delta_parts = 0;
   self->total_delta_parts = 0;
@@ -486,6 +493,12 @@ guint64
 flatpak_progress_get_transferred_extra_data_bytes (FlatpakProgress *self)
 {
   return self->transferred_extra_data_bytes;
+}
+
+guint64
+flatpak_progress_get_bytes_total (FlatpakProgress *self)
+{
+  return self->bytes_total;
 }
 
 guint64
