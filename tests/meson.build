@@ -247,6 +247,17 @@ executable(
 )
 
 executable(
+  'test-extension-portal',
+  sources : [
+    'test-extension-portal.c',
+  ] + portal_gdbus,
+  dependencies : base_deps,
+  include_directories : [common_include_directories],
+  install : get_option('installed_tests'),
+  install_dir : installed_testdir,
+)
+
+executable(
   'test-portal-impl',
   'test-portal-impl.c',
   dependencies : base_deps,
@@ -403,6 +414,7 @@ tests = {
   'update-remote-configuration': {'wrap': ['newsummary', 'oldsummary']},
   'override': {},
   'update-portal': {'wrap': ['user', 'system']},
+  'extension-portal': {'wrap': ['user', 'system']},
   'auth': {},
   'unused': {},
   'summaries': {'wrap': ['user', 'system']},
@@ -446,10 +458,12 @@ foreach testcase : wrapped_tests
     'test-summaries.sh' : 60,
     'test-unused.sh' : 90,
     'test-update-portal.sh' : 90,
+    'test-extension-portal.sh' : 90,
     'test-extra-data.sh' : 90,
   }.get(script, 30)
 
   is_parallel = {
+    'test-extension-portal.sh' : false,
     'test-history.sh' : false,
   }.get(script, true)
 
