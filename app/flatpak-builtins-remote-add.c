@@ -110,8 +110,10 @@ get_config_from_opts (GKeyFile *config,
 
   if (opt_do_gpg_verify)
     {
+      gboolean is_oci = opt_url && g_str_has_prefix (opt_url, "oci+");
+
       g_key_file_set_boolean (config, group, "gpg-verify", TRUE);
-      g_key_file_set_boolean (config, group, "gpg-verify-summary", TRUE);
+      g_key_file_set_boolean (config, group, "gpg-verify-summary", !is_oci);
     }
 
   if (opt_url)
@@ -342,8 +344,6 @@ flatpak_builtin_remote_add (int argc, char **argv,
     }
   else
     {
-      gboolean is_oci;
-
       config = g_key_file_new ();
       file = g_file_new_for_commandline_arg (location);
       if (g_file_is_native (file))
@@ -352,9 +352,7 @@ flatpak_builtin_remote_add (int argc, char **argv,
         remote_url = g_strdup (location);
       opt_url = remote_url;
 
-      /* Default to gpg verify, except for OCI registries */
-      is_oci = opt_url && g_str_has_prefix (opt_url, "oci+");
-      if (!opt_no_gpg_verify && !is_oci)
+      if (!opt_no_gpg_verify)
         opt_do_gpg_verify = TRUE;
     }
 
