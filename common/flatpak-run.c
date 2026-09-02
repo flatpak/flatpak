@@ -387,6 +387,7 @@ flatpak_run_add_environment_args (FlatpakBwrap           *bwrap,
                                   int                     per_app_dir_lock_fd,
                                   const char             *instance_id,
                                   FlatpakExports        **exports_out,
+                                  const char             *custom_slice,
                                   GCancellable           *cancellable,
                                   GError                **error)
 {
@@ -635,7 +636,7 @@ flatpak_run_add_environment_args (FlatpakBwrap           *bwrap,
      ends up in the app cgroup */
   if (instance_id)
     {
-      if (!flatpak_run_in_transient_unit (app_id, instance_id, &my_error))
+      if (!flatpak_run_in_transient_unit (app_id, instance_id, custom_slice, &my_error))
         {
           /* We still run along even if we don't get a cgroup, as nothing
              really depends on it. Its just nice to have */
@@ -961,6 +962,7 @@ systemd_unit_name_escape (const gchar *in)
 gboolean
 flatpak_run_in_transient_unit (const char  *app_id,
                                const char  *instance_id,
+                               const char  *custom_slice,
                                GError     **error)
 {
   g_autoptr(GDBusConnection) conn = NULL;
@@ -970,6 +972,7 @@ flatpak_run_in_transient_unit (const char  *app_id,
   g_autofree char *app_id_escaped = NULL;
   g_autofree char *instance_id_escaped = NULL;
   g_autofree char *job = NULL;
+  g_autofree char *slice = NULL;
   SystemdManager *manager = NULL;
   GVariantBuilder builder;
   GVariant *properties = NULL;
@@ -1022,6 +1025,15 @@ flatpak_run_in_transient_unit (const char  *app_id,
                          "PIDs",
                          g_variant_new_fixed_array (G_VARIANT_TYPE ("u"),
                                                     &pid, 1, sizeof (guint32)));
+
+  if (custom_slice)
+    {
+      slice = g_strdup_printf ("app-flatpak-%s.slice",
+                              custom_slice);
+      g_variant_builder_add (&builder, "(sv)",
+                             "Slice",
+                             g_variant_new_string (slice));
+    }
 
   properties = g_variant_builder_end (&builder);
 
@@ -3222,6 +3234,7 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
                  char               **instance_dir_out,
                  GArray              *bind_fds,
                  GArray              *ro_bind_fds,
+                 const char          *custom_slice,
                  GCancellable        *cancellable,
                  GError             **error)
 {
@@ -3851,7 +3864,8 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
                                          shares, devices, sockets, features,
                                          app_id_dir, previous_app_id_dirs,
                                          per_app_dir_lock_fd, instance_id,
-                                         &exports, cancellable, error))
+                                         &exports, custom_slice, cancellable,
+                                         error))
     return FALSE;
 
   if (per_app_dir_lock_path != NULL)
