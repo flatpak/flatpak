@@ -225,6 +225,8 @@ typedef struct _FlatpakTransactionPrivate
 
   gboolean                     needs_resolve;
   gboolean                     needs_tokens;
+
+  GDBusConnection             *auth_connection;
 } FlatpakTransactionPrivate;
 
 enum {
@@ -270,7 +272,6 @@ static gboolean request_required_tokens (FlatpakTransaction *self,
                                          const char         *optional_remote,
                                          GCancellable       *cancellable,
                                          GError            **error);
-
 
 static BundleData *
 bundle_data_new (GFile  *file,
@@ -1107,6 +1108,8 @@ flatpak_transaction_finalize (GObject *object)
   g_ptr_array_free (priv->extra_dependency_dirs, TRUE);
   g_ptr_array_free (priv->extra_sideload_repos, TRUE);
   g_ptr_array_free (priv->sideload_image_collections, TRUE);
+
+  g_clear_pointer (&priv->auth_connection, flatpak_auth_connection_close);
 
   G_OBJECT_CLASS (flatpak_transaction_parent_class)->finalize (object);
 }
@@ -4207,7 +4210,6 @@ copy_summary_data (GVariantBuilder *builder, GVariant *summary, const char *key)
     g_variant_builder_add (builder, "{s@v}", key, g_variant_new_variant (value));
 }
 
-
 static gboolean
 request_tokens_for_remote (FlatpakTransaction *self,
                            const char         *remote,
@@ -4294,9 +4296,16 @@ request_tokens_for_remote (FlatpakTransaction *self,
   if (flatpak_dir_get_no_interaction (priv->dir))
     g_variant_builder_add (extra_builder, "{sv}", "no-interaction", g_variant_new_boolean (TRUE));
 
+  if (priv->auth_connection == NULL)
+    {
+      priv->auth_connection = flatpak_auth_connection_new (cancellable, error);
+      if (priv->auth_connection == NULL)
+        return FALSE;
+    }
+
   context = flatpak_main_context_new_default ();
 
-  authenticator = flatpak_auth_new_for_remote (priv->dir, remote, cancellable, error);
+  authenticator = flatpak_auth_new_for_remote (priv->dir, remote, priv->auth_connection, cancellable, error);
   if (authenticator == NULL)
     return FALSE;
 
