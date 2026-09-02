@@ -2125,7 +2125,7 @@ dist (const char *s, int ls, const char *t, int lt, int i, int j, int *d)
     x = lt - j;
   else if (j == lt)
     x = ls - i;
-  else if (s[i] == t[j])
+  else if (g_ascii_tolower (s[i]) == g_ascii_tolower (t[j]))
     x = dist (s, ls, t, lt, i + 1, j + 1, d);
   else
     {
@@ -2134,6 +2134,13 @@ dist (const char *s, int ls, const char *t, int lt, int i, int j, int *d)
       if (y < x)
         x = y;
       y = dist (s, ls, t, lt, i + 1, j, d);
+      if (y < x)
+        x = y;
+      if (i + 1 != ls &&
+          j + 1 != lt &&
+          g_ascii_tolower (s[i]) == g_ascii_tolower (t[j + 1]) &&
+          g_ascii_tolower (s[i + 1]) == g_ascii_tolower (t[j]))
+        y = dist (s, ls, t, lt, i + 2, j + 2, d);
       if (y < x)
         x = y;
       x++;

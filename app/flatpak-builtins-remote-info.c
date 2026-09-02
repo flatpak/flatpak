@@ -502,6 +502,8 @@ flatpak_complete_remote_info (FlatpakCompletion *completion)
           flatpak_complete_partial_ref (completion, kinds, opt_arch, dir, completion->argv[1]);
         }
 
+      flatpak_complete_ref_id_flush (completion);
+
       break;
     }
 

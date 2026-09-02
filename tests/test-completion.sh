@@ -144,10 +144,76 @@ ok "complete ref"
 
 ${FLATPAK} complete "flatpak permission-reset o" 26 "o" | sort > complete_out
 (diff -u complete_out - || exit 1) <<EOF
-org.test.Hello
+org.test.Hello 
 EOF
 
 ok "complete partial ref"
+
+${FLATPAK} complete "flatpak info pl" 100 "" > complete_out
+(diff -u complete_out - || exit 1) <<EOF
+org.test.Platform 
+EOF
+
+${FLATPAK} complete "flatpak info hello" 100 "" > complete_out
+(diff -u complete_out - || exit 1) <<EOF
+org.test.Hello 
+org.test.Hello.Locale 
+EOF
+
+ok "complete ref order"
+
+# flatpak CMD ... APP
+for cmd in \
+    "run" \
+    "update --app" \
+    "uninstall --app" \
+    "make-current --user" \
+    "override --user" \
+    "permission-show" \
+    "permission-reset" \
+    "permission-remove background background" \
+    "permission-set background background"
+do
+  ${FLATPAK} complete "flatpak $cmd " 100 "" | sort > complete_out
+  (diff -u complete_out - || exit 1) <<EOF
+org.test.Hello 
+EOF
+
+  ${FLATPAK} complete "flatpak $cmd helo" 100 "helo" | sort > complete_out
+  (diff -u complete_out - || exit 1) <<EOF
+org.test.Hello 
+EOF
+
+  ${FLATPAK} complete "flatpak $cmd non.existent" 100 "non.existent" | sort > complete_out
+  (diff -u complete_out - || exit 1) <<EOF
+EOF
+
+  ok "complete $cmd"
+done
+
+# flatpak CMD REMOTE REF
+for cmd in install remote-info; do
+  cmd="$cmd --user test-repo"
+
+  ${FLATPAK} complete "flatpak $cmd " 100 "" | sort > complete_out
+  (diff -u complete_out - || exit 1) <<EOF
+org.test.Hello 
+org.test.Hello.Plugin.fun 
+org.test.Platform 
+EOF
+
+  ${FLATPAK} complete "flatpak $cmd hello" 100 "hello" | sort > complete_out
+  (diff -u complete_out - || exit 1) <<EOF
+org.test.Hello 
+org.test.Hello.Plugin.fun 
+EOF
+
+  ${FLATPAK} complete "flatpak $cmd non.existent" 100 "non.existent" | sort > complete_out
+  (diff -u complete_out - || exit 1) <<EOF
+EOF
+
+  ok "complete $cmd"
+done
 
 for cmd in build-bundle build-commit-from build-export build-finish \
            build-import-bundle build-init build-sign build-update-repo \
