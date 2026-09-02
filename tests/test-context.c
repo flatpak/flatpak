@@ -132,26 +132,23 @@ static void context_parse_args (FlatpakContext *context,
                                 GError        **error,
                                 ...) G_GNUC_NULL_TERMINATED;
 
+/* Parse @arg_array, which does not include argv[0], as command-line
+ * options. */
 static void
-context_parse_args (FlatpakContext *context,
+context_parse_argv (FlatpakContext *context,
                     GError        **error,
-                    ...)
+                    GPtrArray      *arg_array)
 {
   g_autoptr(GOptionContext) oc = NULL;
   g_autoptr(GOptionGroup) group = NULL;
   g_autoptr(GPtrArray) args = g_ptr_array_new_with_free_func (g_free);
   g_auto(GStrv) argv = NULL;
-  const char *arg;
-  va_list ap;
+  guint i;
 
   g_ptr_array_add (args, g_strdup ("argv[0]"));
 
-  va_start (ap, error);
-
-  while ((arg = va_arg (ap, const char *)) != NULL)
-    g_ptr_array_add (args, g_strdup (arg));
-
-  va_end (ap);
+  for (i = 0; i < arg_array->len; i++)
+    g_ptr_array_add (args, g_strdup (g_ptr_array_index (arg_array, i)));
 
   g_ptr_array_add (args, NULL);
   argv = (GStrv) g_ptr_array_free (g_steal_pointer (&args), FALSE);
@@ -160,6 +157,25 @@ context_parse_args (FlatpakContext *context,
   group = flatpak_context_get_options (context);
   g_option_context_add_group (oc, g_steal_pointer (&group));
   g_option_context_parse_strv (oc, &argv, error);
+}
+
+static void
+context_parse_args (FlatpakContext *context,
+                    GError        **error,
+                    ...)
+{
+  g_autoptr(GPtrArray) args = g_ptr_array_new_with_free_func (g_free);
+  const char *arg;
+  va_list ap;
+
+  va_start (ap, error);
+
+  while ((arg = va_arg (ap, const char *)) != NULL)
+    g_ptr_array_add (args, g_strdup (arg));
+
+  va_end (ap);
+
+  context_parse_argv (context, error, args);
 }
 
 static void
@@ -440,6 +456,60 @@ test_context_merge_fs (void)
       g_assert_true (g_ptr_array_find_with_equal_func (args, "--filesystem=/three", g_str_equal, NULL));
       g_assert_true (g_ptr_array_find_with_equal_func (args, "--filesystem=/four", g_str_equal, NULL));
     }
+}
+
+/* flatpak_context_to_args() is used to serialize the command-line options
+ * of flatpak-run(1) into the [Instance] extra-args of /.flatpak-info, from
+ * where they are given back to flatpak-run(1) when a sandboxed app uses
+ * flatpak-spawn(1), so everything it produces has to be a valid option. */
+static void
+test_context_bus_policy_args (void)
+{
+  g_autoptr(FlatpakContext) context = flatpak_context_new ();
+  g_autoptr(FlatpakContext) reparsed = flatpak_context_new ();
+  g_autoptr(GPtrArray) args = g_ptr_array_new_with_free_func (g_free);
+  g_autoptr(GError) local_error = NULL;
+  gpointer value;
+  guint i;
+
+  context_parse_args (context, &local_error,
+                      "--own-name=org.example.Own",
+                      "--talk-name=org.example.Talk",
+                      "--no-talk-name=org.example.NoTalk",
+                      "--system-own-name=org.example.SystemOwn",
+                      "--system-talk-name=org.example.SystemTalk",
+                      "--system-no-talk-name=org.example.SystemNoTalk",
+                      NULL);
+  g_assert_no_error (local_error);
+
+  flatpak_context_to_args (context, args);
+
+  for (i = 0; i < args->len; i++)
+    g_test_message ("%s", (const char *) g_ptr_array_index (args, i));
+
+  context_parse_argv (reparsed, &local_error, args);
+  g_assert_no_error (local_error);
+
+  /* Serialized in arbitrary order */
+  g_assert_true (g_ptr_array_find_with_equal_func (args, "--own-name=org.example.Own", g_str_equal, NULL));
+  g_assert_true (g_ptr_array_find_with_equal_func (args, "--talk-name=org.example.Talk", g_str_equal, NULL));
+  g_assert_true (g_ptr_array_find_with_equal_func (args, "--no-talk-name=org.example.NoTalk", g_str_equal, NULL));
+  g_assert_true (g_ptr_array_find_with_equal_func (args, "--system-own-name=org.example.SystemOwn", g_str_equal, NULL));
+  g_assert_true (g_ptr_array_find_with_equal_func (args, "--system-talk-name=org.example.SystemTalk", g_str_equal, NULL));
+  g_assert_true (g_ptr_array_find_with_equal_func (args, "--system-no-talk-name=org.example.SystemNoTalk", g_str_equal, NULL));
+
+  g_assert_true (g_hash_table_lookup_extended (reparsed->session_bus_policy, "org.example.Own", NULL, &value));
+  g_assert_cmpint (GPOINTER_TO_INT (value), ==, FLATPAK_POLICY_OWN);
+  g_assert_true (g_hash_table_lookup_extended (reparsed->session_bus_policy, "org.example.Talk", NULL, &value));
+  g_assert_cmpint (GPOINTER_TO_INT (value), ==, FLATPAK_POLICY_TALK);
+  g_assert_true (g_hash_table_lookup_extended (reparsed->session_bus_policy, "org.example.NoTalk", NULL, &value));
+  g_assert_cmpint (GPOINTER_TO_INT (value), ==, FLATPAK_POLICY_NONE);
+  g_assert_true (g_hash_table_lookup_extended (reparsed->system_bus_policy, "org.example.SystemOwn", NULL, &value));
+  g_assert_cmpint (GPOINTER_TO_INT (value), ==, FLATPAK_POLICY_OWN);
+  g_assert_true (g_hash_table_lookup_extended (reparsed->system_bus_policy, "org.example.SystemTalk", NULL, &value));
+  g_assert_cmpint (GPOINTER_TO_INT (value), ==, FLATPAK_POLICY_TALK);
+  g_assert_true (g_hash_table_lookup_extended (reparsed->system_bus_policy, "org.example.SystemNoTalk", NULL, &value));
+  g_assert_cmpint (GPOINTER_TO_INT (value), ==, FLATPAK_POLICY_NONE);
 }
 
 const char *invalid_path_args[] = {
@@ -1031,6 +1101,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/context/env", test_context_env);
   g_test_add_func ("/context/env-fd", test_context_env_fd);
   g_test_add_func ("/context/merge-fs", test_context_merge_fs);
+  g_test_add_func ("/context/bus-policy-args", test_context_bus_policy_args);
   g_test_add_func ("/context/validate-path-args", test_validate_path_args);
   g_test_add_func ("/context/validate-path-meta", test_validate_path_meta);
   g_test_add_func ("/context/devices", test_devices);
