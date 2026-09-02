@@ -557,7 +557,7 @@ operation_error (FlatpakTransaction            *transaction,
   else
     text = g_strdup ("(internal error, please report)");
 
-  if (!non_fatal && self->first_operation_error == NULL)
+  if (self->first_operation_error == NULL)
     {
       /* Here we go to great lengths not to split the sentences. See
        * https://wiki.gnome.org/TranslationProject/DevGuidelines/Never%20split%20sentences
