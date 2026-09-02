@@ -24,6 +24,9 @@
 #include "flatpak-installation.h"
 #include "flatpak-utils-private.h"
 
+#include <errno.h>
+#include <limits.h>
+
 /* Uncomment to get debug traces in /tmp/flatpak-completion-debug.txt (nice
  * to not have it interfere with stdout/stderr)
  */
@@ -571,22 +574,24 @@ flatpak_completion_new (const char *arg_line,
 {
   FlatpakCompletion *completion;
   g_autofree char *initial_completion_line = NULL;
-  int _point;
+  long point;
   char *endp;
   int cur_begin;
   int i;
 
-  _point = strtol (arg_point, &endp, 10);
-  if (endp == arg_point || *endp != '\0')
+  errno = 0;
+  point = strtol (arg_point, &endp, 10);
+  if (errno == ERANGE || endp == arg_point || *endp != '\0' ||
+      point < 0 || point > INT_MAX)
     return NULL;
 
   /* Ensure we're not going oob if we got weird arguments. */
-  _point = MIN (_point, strlen (arg_line));
+  point = MIN ((size_t) point, strlen (arg_line));
 
   completion = g_new0 (FlatpakCompletion, 1);
   completion->line = g_strdup (arg_line);
   completion->shell_cur = g_strdup (arg_cur);
-  completion->point = _point;
+  completion->point = (int) point;
 
   flatpak_completion_debug ("========================================");
   flatpak_completion_debug ("completion_point=%d", completion->point);
