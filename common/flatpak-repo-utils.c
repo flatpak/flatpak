@@ -497,17 +497,16 @@ flatpak_repo_collect_sizes (OstreeRepo   *repo,
   return _flatpak_repo_collect_sizes (repo, root, NULL, installed_size, download_size, cancellable, error);
 }
 
-static void
-flatpak_repo_collect_extra_data_sizes (OstreeRepo *repo,
-                                       const char *rev,
-                                       guint64    *installed_size,
-                                       guint64    *download_size)
+void
+flatpak_commit_add_extra_data_sizes (GVariant *commitv,
+                                         guint64  *installed_size,
+                                         guint64  *download_size)
 {
   g_autoptr(GVariant) extra_data_sources = NULL;
   gsize n_extra_data;
   int i;
 
-  extra_data_sources = flatpak_repo_get_extra_data_sources (repo, rev, NULL, NULL);
+  extra_data_sources = flatpak_commit_get_extra_data_sources (commitv, NULL);
   if (extra_data_sources == NULL)
     return;
 
@@ -530,6 +529,22 @@ flatpak_repo_collect_extra_data_sizes (OstreeRepo *repo,
       if (download_size)
         *download_size += extra_download_size;
     }
+}
+
+static void
+flatpak_repo_collect_extra_data_sizes (OstreeRepo *repo,
+                                       const char *rev,
+                                       guint64    *installed_size,
+                                       guint64    *download_size)
+{
+  g_autoptr(GVariant) commitv = NULL;
+
+  if (!ostree_repo_load_variant (repo,
+                                 OSTREE_OBJECT_TYPE_COMMIT,
+                                 rev, &commitv, NULL))
+    return;
+
+  flatpak_commit_add_extra_data_sizes (commitv, installed_size, download_size);
 }
 
 /* Loads the old compat summary file from a local repo */
