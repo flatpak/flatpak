@@ -34,6 +34,7 @@
 #include "flatpak-builtins.h"
 #include "flatpak-builtins-utils.h"
 #include "flatpak-table-printer.h"
+#include "flatpak-permission-utils-private.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-run-private.h"
 
@@ -186,7 +187,7 @@ flatpak_complete_permission_remove (FlatpakCompletion *completion)
       flatpak_complete_options (completion, options);
 
       {
-        g_auto(GStrv) tables = get_permission_tables (store);
+        g_auto(GStrv) tables = get_permission_tables (NULL);
         for (i = 0; tables != NULL && tables[i] != NULL; i++)
           {
             flatpak_complete_word (completion, "%s ", tables[i]);

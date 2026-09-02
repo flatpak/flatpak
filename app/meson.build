@@ -23,15 +23,6 @@ parse_datetime = custom_target(
   ],
 )
 
-flatpak_permission_gdbus = gnome.gdbus_codegen(
-  'flatpak-permission-dbus-generated',
-  sources: [
-    '../data/org.freedesktop.impl.portal.PermissionStore.xml',
-  ],
-  interface_prefix : 'org.freedesktop.impl.portal',
-  namespace : 'XdpDbus',
-)
-
 libflatpak_app = static_library(
   'libflatpak-app',
   sources : sources + [parse_datetime[0]],
@@ -141,5 +132,5 @@ flatpak_exe = executable(
   ],
   install : true,
   install_dir : get_option('bindir'),
-  sources : sources + flatpak_gdbus + flatpak_permission_gdbus,
+  sources : sources + flatpak_gdbus,
 )

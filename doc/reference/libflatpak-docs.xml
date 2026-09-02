@@ -15,6 +15,7 @@
 
   <chapter>
     <title>Flatpak</title>
+    <xi:include href="xml/flatpak-app-data.xml"/>
     <xi:include href="xml/flatpak-installation.xml"/>
     <xi:include href="xml/flatpak-remote.xml"/>
     <xi:include href="xml/flatpak-transaction-operation.xml"/>
