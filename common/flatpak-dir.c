@@ -4806,6 +4806,9 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
   if (self->repo != NULL)
     return TRUE;
 
+  if (g_cancellable_set_error_if_cancelled (cancellable, error))
+    return FALSE;
+
   /* Don't trigger polkit prompts if we are just doing this opportunistically */
   if (allow_empty)
     ensure_flags |= FLATPAK_HELPER_ENSURE_REPO_FLAGS_NO_INTERACTION;
@@ -4831,6 +4834,9 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
         }
     }
 
+  if (g_cancellable_set_error_if_cancelled (cancellable, error))
+    return FALSE;
+
   repodir = g_file_get_child (self->basedir, "repo");
 
   repo = ostree_repo_new (repodir);
@@ -4840,6 +4846,9 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
       /* We always use bare-user-only these days, except old installations
          that still user bare-user */
       OstreeRepoMode mode = OSTREE_REPO_MODE_BARE_USER_ONLY;
+
+      if (g_cancellable_set_error_if_cancelled (cancellable, error))
+        return FALSE;
 
       if (flatpak_dir_use_system_helper (self, NULL))
         {
@@ -4859,6 +4868,8 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
         }
       else
         {
+          g_autoptr(GFile) changed_file = NULL;
+
           if (!ostree_repo_create (repo, mode, cancellable, &my_error))
             {
               const char *repo_path = flatpak_file_get_path_cached (repodir);
@@ -4882,8 +4893,11 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
               return FALSE;
             }
 
+          changed_file = flatpak_dir_get_changed_path (self);
+
           /* Create .changed file early to avoid polling non-existing file in monitor */
-          if (!flatpak_dir_mark_changed (self, &my_error))
+          if (!g_file_test (g_file_peek_path (changed_file), G_FILE_TEST_IS_REGULAR) &&
+              !flatpak_dir_mark_changed (self, &my_error))
             {
               g_warning ("Error marking directory as changed: %s", my_error->message);
               g_clear_error (&my_error);
@@ -4915,6 +4929,9 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
                                       cancellable, error))
         return FALSE;
     }
+
+  if (g_cancellable_set_error_if_cancelled (cancellable, error))
+    return FALSE;
 
   /* Earlier flatpak used to reset min-free-space-percent to 0 every time, but now we
    * favor min-free-space-size instead of it (See below).
@@ -4967,6 +4984,9 @@ _flatpak_dir_ensure_repo (FlatpakDir   *self,
             return FALSE;
         }
     }
+
+  if (g_cancellable_set_error_if_cancelled (cancellable, error))
+    return FALSE;
 
   flatpakrepos = _flatpak_dir_find_new_flatpakrepos (self, repo);
   if (flatpakrepos)
