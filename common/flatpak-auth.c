@@ -29,6 +29,7 @@
 FlatpakAuthenticator *
 flatpak_auth_new_for_remote (FlatpakDir *dir,
                              const char *remote,
+                             GDBusConnection *connection,
                              GCancellable *cancellable,
                              GError **error)
 {
@@ -82,11 +83,11 @@ flatpak_auth_new_for_remote (FlatpakDir *dir,
 
   auth_options = g_variant_ref_sink (g_variant_builder_end (auth_options_builder));
 
-  authenticator = flatpak_authenticator_proxy_new_for_bus_sync (G_BUS_TYPE_SESSION,
-                                                                G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES | G_DBUS_PROXY_FLAGS_DO_NOT_CONNECT_SIGNALS,
-                                                                name,
-                                                                FLATPAK_AUTHENTICATOR_OBJECT_PATH,
-                                                                cancellable, error);
+  authenticator = flatpak_authenticator_proxy_new_sync (connection,
+                                                        G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES | G_DBUS_PROXY_FLAGS_DO_NOT_CONNECT_SIGNALS,
+                                                        name,
+                                                        FLATPAK_AUTHENTICATOR_OBJECT_PATH,
+                                                        cancellable, error);
   if (authenticator == NULL)
     return NULL;
 
@@ -126,22 +127,22 @@ flatpak_auth_create_request (FlatpakAuthenticator *authenticator,
 {
   static int next_token = 0;
   g_autofree char *request_path = NULL;
-  GDBusConnection *bus;
+  GDBusConnection *connection;
   FlatpakAuthenticatorRequest *request;
   g_autofree char *token = NULL;
 
   token = g_strdup_printf ("%d", ++next_token);
-  bus = g_dbus_proxy_get_connection (G_DBUS_PROXY (authenticator));
+  connection = g_dbus_proxy_get_connection (G_DBUS_PROXY (authenticator));
 
-  request_path = flatpak_auth_create_request_path (g_dbus_connection_get_unique_name (bus), token, error);
+  request_path = flatpak_auth_create_request_path (g_dbus_connection_get_unique_name (connection), token, error);
   if (request_path == NULL)
     return NULL;
 
-  request = flatpak_authenticator_request_proxy_new_for_bus_sync (G_BUS_TYPE_SESSION,
-                                                                  G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES,
-                                                                  g_dbus_proxy_get_name (G_DBUS_PROXY (authenticator)),
-                                                                  request_path,
-                                                                  cancellable, error);
+  request = flatpak_authenticator_request_proxy_new_sync (connection,
+                                                          G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES,
+                                                          g_dbus_proxy_get_name (G_DBUS_PROXY (authenticator)),
+                                                          request_path,
+                                                          cancellable, error);
   if (request == NULL)
     return NULL;
 
@@ -180,4 +181,38 @@ flatpak_auth_request_ref_tokens (FlatpakAuthenticator *authenticator,
     }
 
   return TRUE;
+}
+
+GDBusConnection *
+flatpak_auth_connection_new (GCancellable *cancellable,
+                             GError **error)
+{
+  g_autofree char *address = NULL;
+  GDBusConnection *connection;
+
+  address = g_dbus_address_get_for_bus_sync (G_BUS_TYPE_SESSION, NULL, error);
+  if (address == NULL)
+    return NULL;
+
+  connection = g_dbus_connection_new_for_address_sync (address,
+                                                       G_DBUS_CONNECTION_FLAGS_AUTHENTICATION_CLIENT |
+                                                       G_DBUS_CONNECTION_FLAGS_MESSAGE_BUS_CONNECTION,
+                                                       NULL,
+                                                       cancellable, error);
+  if (connection == NULL)
+    return NULL;
+
+  return connection;
+}
+
+void
+flatpak_auth_connection_close (GDBusConnection *connection)
+{
+  if (connection == NULL)
+    return;
+
+  if (!g_dbus_connection_is_closed (connection))
+    g_dbus_connection_close_sync (connection, NULL, NULL);
+
+  g_object_unref (connection);
 }
