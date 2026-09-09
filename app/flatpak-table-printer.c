@@ -845,7 +845,8 @@ flatpak_table_printer_append_cell_with_comma_unique (FlatpakTablePrinter *printe
       const char *match = cell->text;
       while ((match = strstr (match, text)) != NULL)
         {
-          if (match[len] == 0 || match[len] == ',' )
+          if ((match == cell->text || match[-1] == ',') &&
+              (match[len] == 0 || match[len] == ',' ))
             return; /* Already in string, do nothing */
           /* Look for next match */
           match = match + len;
