@@ -380,6 +380,73 @@ test_copy_symlink (void)
 }
 
 static void
+test_copy_symlink_xattrs (void)
+{
+  /* Intentionally not UTF-8 or a valid bytestring */
+  static const char value[] = { '\xff', '\x00', '\x55', '\xaa' };
+  char *buf[16];
+  _GLNX_TEST_DECLARE_ERROR(local_error, error);
+  struct stat stbuf;
+  g_autofree char *target = NULL;
+  g_autofree char *tmpdir_path = NULL;
+  g_autofree char *srclink_path = NULL;
+  g_autofree char *dstlink_path = NULL;
+  g_auto(GLnxTmpDir) tmpdir = { 0, };
+  gssize len;
+
+  tmpdir_path = g_strdup_printf ("%s/libglnx-xattrs-XXXXXX",
+                                 getenv ("TMPDIR") ?: "/var/tmp");
+
+  if (!glnx_mkdtempat (AT_FDCWD, tmpdir_path, 0700, &tmpdir, error))
+    return;
+
+  g_assert_no_errno (symlinkat ("sometarget", tmpdir.fd, "srclink"));
+  srclink_path = g_strdup_printf ("/proc/self/fd/%d/srclink", tmpdir.fd);
+
+  /* A limitation of xattrs on Linux is that symlinks cannot have user.
+   * extended attributes, only trusted., system. or security.,
+   * so we can only test this if we are root. */
+  if (lsetxattr (srclink_path, "trusted.test", value, sizeof (value), 0) < 0)
+    {
+      g_test_skip_printf ("could not set xattr trusted.test on symlink: %s",
+                          g_strerror (errno));
+      return;
+    }
+
+  g_test_message ("Copying srclink to dstlink...");
+
+  if (!glnx_file_copy_at (tmpdir.fd, "srclink", NULL, tmpdir.fd, "dstlink",
+                          0,  /* note absence of GLNX_FILE_COPY_NOXATTRS */
+                          NULL, error))
+    return;
+
+  g_test_message ("Checking results...");
+
+  if (!glnx_fstatat (tmpdir.fd, "dstlink", &stbuf, AT_SYMLINK_NOFOLLOW, error))
+    return;
+
+  g_assert_true (S_ISLNK (stbuf.st_mode));
+
+  target = glnx_readlinkat_malloc (tmpdir.fd, "dstlink", NULL, error);
+
+  if (!target)
+    return;
+
+  g_assert_cmpstr (target, ==, "sometarget");
+
+  dstlink_path = g_strdup_printf ("/proc/self/fd/%d/dstlink", tmpdir.fd);
+  len = lgetxattr (dstlink_path, "trusted.test", buf, sizeof (buf));
+
+  if (len < 0)
+    {
+      glnx_throw_errno_prefix (error, "lgetxattr(dstlink)");
+      return;
+    }
+
+  g_assert_cmpmem (buf, len, value, sizeof (value));
+}
+
+static void
 test_filecopy_procfs (void)
 {
   const char * const pseudo_files[] =
@@ -699,6 +766,7 @@ int main (int argc, char **argv)
   g_test_add_func ("/stdio-file", test_stdio_file);
   g_test_add_func ("/filecopy", test_filecopy);
   g_test_add_func ("/copy-symlink", test_copy_symlink);
+  g_test_add_func ("/copy-symlink/xattrs", test_copy_symlink_xattrs);
   g_test_add_func ("/filecopy-procfs", test_filecopy_procfs);
   g_test_add_func ("/renameat2-noreplace", test_renameat2_noreplace);
   g_test_add_func ("/renameat2-exchange", test_renameat2_exchange);
