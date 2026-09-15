@@ -121,6 +121,15 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>-b</option></term>
+                <term><option>--bytes</option></term>
+
+                <listitem><para>
+                    Show sizes in bytes.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--app</option></term>
 
                 <listitem><para>

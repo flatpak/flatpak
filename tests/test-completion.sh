@@ -84,6 +84,7 @@ ${FLATPAK} complete "flatpak list --" 15 "--" | sort > complete_out
 --app 
 --app-runtime=
 --arch=
+--bytes 
 --columns=
 --help 
 --installation=

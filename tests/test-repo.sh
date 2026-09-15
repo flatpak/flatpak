@@ -658,6 +658,15 @@ assert_file_has_content list-log "org\.test\.Platform/"
 
 ok "flatpak list --arch --columns works"
 
+${FLATPAK} ${U} list --columns=size --bytes > list-log
+assert_file_has_content list-log "^[0-9][0-9]*$"
+assert_not_file_has_content list-log "[[:alpha:]]"
+
+${FLATPAK} ${U} list --columns=size > list-log
+assert_file_has_content list-log "[[:alpha:]]"
+
+ok "flatpak list --bytes works"
+
 if ${FLATPAK} ${INVERT_U} uninstall -y org.test.Hello >&2; then
     assert_not_reached "Should not be able to uninstall ${INVERT_U} when installed ${U}"
 fi
