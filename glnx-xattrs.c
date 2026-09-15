@@ -70,12 +70,20 @@ canonicalize_xattrs (char    *xattr_string,
 
 static gboolean
 read_xattr_name_array (const char *path,
+                       int         fd,
                        const char *xattrs,
                        size_t      len,
                        GVariantBuilder *builder,
                        GError  **error)
 {
+  gboolean ret = FALSE;
   const char *p;
+  int r;
+  const char *funcstr;
+
+  g_assert (path != NULL || fd != -1);
+
+  funcstr = fd != -1 ? "fgetxattr" : "lgetxattr";
 
   for (p = xattrs; p < xattrs+len; p = p + strlen (p) + 1)
     {
@@ -84,20 +92,27 @@ read_xattr_name_array (const char *path,
       g_autoptr(GBytes) bytes = NULL;
 
     again:
-      bytes_read = lgetxattr (path, p, NULL, 0);
+      if (fd != -1)
+        bytes_read = fgetxattr (fd, p, NULL, 0);
+      else
+        bytes_read = lgetxattr (path, p, NULL, 0);
       if (bytes_read < 0)
         {
           if (errno == ENODATA)
             continue;
 
-          glnx_set_prefix_error_from_errno (error, "%s", "lgetxattr");
-          return FALSE;
+          glnx_set_prefix_error_from_errno (error, "%s", funcstr);
+          goto out;
         }
       if (bytes_read == 0)
         continue;
 
       buf = g_malloc (bytes_read);
-      if (lgetxattr (path, p, buf, bytes_read) < 0)
+      if (fd != -1)
+        r = fgetxattr (fd, p, buf, bytes_read);
+      else
+        r = lgetxattr (path, p, buf, bytes_read);
+      if (r < 0)
         {
           if (errno == ERANGE)
             {
@@ -107,8 +122,8 @@ read_xattr_name_array (const char *path,
           else if (errno == ENODATA)
             continue;
 
-          glnx_set_prefix_error_from_errno (error, "%s", "lgetxattr");
-          return FALSE;
+          glnx_set_prefix_error_from_errno (error, "%s", funcstr);
+          goto out;
         }
 
       bytes = g_bytes_new_take (g_steal_pointer (&buf), bytes_read);
@@ -117,25 +132,36 @@ read_xattr_name_array (const char *path,
                              variant_new_ay_bytes (bytes));
     }
 
-  return TRUE;
+  ret = TRUE;
+ out:
+  return ret;
 }
 
 static gboolean
 get_xattrs_impl (const char      *path,
+                 int              fd,
                  GVariant       **out_xattrs,
                  G_GNUC_UNUSED GCancellable *cancellable,
                  GError         **error)
 {
+  gboolean ret = FALSE;
   ssize_t bytes_read, real_size;
   g_autofree char *xattr_names = NULL;
   g_autofree char *xattr_names_canonical = NULL;
   GVariantBuilder builder;
+  gboolean builder_initialized = FALSE;
   g_autoptr(GVariant) ret_xattrs = NULL;
 
+  g_assert (path != NULL || fd != -1);
+
   g_variant_builder_init (&builder, G_VARIANT_TYPE ("a(ayay)"));
+  builder_initialized = TRUE;
 
  again:
-  bytes_read = llistxattr (path, NULL, 0);
+  if (path)
+    bytes_read = llistxattr (path, NULL, 0);
+  else
+    bytes_read = flistxattr (fd, NULL, 0);
 
   if (bytes_read < 0)
     {
@@ -148,7 +174,10 @@ get_xattrs_impl (const char      *path,
   else if (bytes_read > 0)
     {
       xattr_names = g_malloc (bytes_read);
-      real_size = llistxattr (path, xattr_names, bytes_read);
+      if (path)
+        real_size = llistxattr (path, xattr_names, bytes_read);
+      else
+        real_size = flistxattr (fd, xattr_names, bytes_read);
       if (real_size < 0)
         {
           if (errno == ERANGE)
@@ -163,21 +192,22 @@ get_xattrs_impl (const char      *path,
         {
           xattr_names_canonical = canonicalize_xattrs (xattr_names, real_size);
 
-          if (!read_xattr_name_array (path, xattr_names_canonical, real_size, &builder, error))
+          if (!read_xattr_name_array (path, fd, xattr_names_canonical, real_size, &builder, error))
             goto out;
         }
     }
 
   ret_xattrs = g_variant_builder_end (&builder);
+  builder_initialized = FALSE;
   g_variant_ref_sink (ret_xattrs);
-
+  
+  ret = TRUE;
   if (out_xattrs)
     *out_xattrs = g_steal_pointer (&ret_xattrs);
-  return TRUE;
-
  out:
-  g_variant_builder_clear (&builder);
-  return FALSE;
+  if (!builder_initialized)
+    g_variant_builder_clear (&builder);
+  return ret;
 }
 
 /**
@@ -201,7 +231,7 @@ glnx_fd_get_all_xattrs (int            fd,
 {
   char buf[PATH_MAX];
   snprintf (buf, sizeof (buf), "/proc/self/fd/%d", fd);
-  return get_xattrs_impl (buf, out_xattrs, cancellable, error);
+  return get_xattrs_impl (buf, -1, out_xattrs, cancellable, error);
 }
 
 /**
@@ -224,7 +254,7 @@ glnx_dfd_name_get_all_xattrs (int            dfd,
 {
   if (G_IN_SET(dfd, AT_FDCWD, -1))
     {
-      return get_xattrs_impl (name, out_xattrs, cancellable, error);
+      return get_xattrs_impl (name, -1, out_xattrs, cancellable, error);
     }
   else
     {
@@ -233,7 +263,7 @@ glnx_dfd_name_get_all_xattrs (int            dfd,
        * https://mail.gnome.org/archives/ostree-list/2014-February/msg00017.html
        */
       snprintf (buf, sizeof (buf), "/proc/self/fd/%d/%s", dfd, name);
-      return get_xattrs_impl (buf, out_xattrs, cancellable, error);
+      return get_xattrs_impl (buf, -1, out_xattrs, cancellable, error);
     }
 }
 
