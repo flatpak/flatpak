@@ -745,9 +745,12 @@ copy_symlink_at (int                   src_dfd,
         return FALSE;
     }
 
-  if (TEMP_FAILURE_RETRY (fchownat (fd, "", src_stbuf->st_uid, src_stbuf->st_gid,
-                                    AT_EMPTY_PATH)) != 0)
-    return glnx_throw_errno_prefix (error, "fchownat");
+  if (!(copyflags & GLNX_FILE_COPY_NOCHOWN))
+    {
+      if (TEMP_FAILURE_RETRY (fchownat (fd, "", src_stbuf->st_uid, src_stbuf->st_gid,
+                                        AT_EMPTY_PATH)) != 0)
+        return glnx_throw_errno_prefix (error, "fchownat");
+    }
 
   return TRUE;
 }
