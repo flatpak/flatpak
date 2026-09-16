@@ -33,6 +33,9 @@ gboolean flatpak_is_valid_branch (const char *string,
 gboolean flatpak_is_valid_arch (const char *string,
                                 gssize      len,
                                 GError    **error);
+gboolean flatpak_is_valid_remote_name (const char *string,
+                                       gssize      len,
+                                       GError    **error);
 gboolean flatpak_has_name_prefix (const char *string,
                                   const char *name);
 gboolean flatpak_name_matches_one_wildcard_prefix (const char         *string,

@@ -23,8 +23,6 @@ set -euo pipefail
 
 skip_without_bwrap
 
-echo "1..4"
-
 setup_repo_no_add oci
 
 mkdir -p oci
@@ -108,3 +106,5 @@ ${FLATPAK} --user remotes --show-disabled > remotes-list
 assert_file_has_content remotes-list '^platform-origin'
 
 ok "install oci archive"
+
+done_testing

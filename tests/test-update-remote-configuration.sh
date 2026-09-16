@@ -27,8 +27,6 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..3"
-
 # Configure a repository without a collection ID and pull it locally.
 setup_repo
 install_repo
@@ -111,3 +109,5 @@ assert_file_has_content ${FL_DIR}/repo/config '^collection-id=org\.test\.Collect
 assert_not_file_has_content ${FL_DIR}/repo/config '^collection-id=net\.malicious\.NewCollection$'
 
 ok "3 update repo config with different collection ID"
+
+done_testing

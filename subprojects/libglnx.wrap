@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: LGPL-2.1-or-later
+# SPDX-FileCopyrightText: Copyright 2026 Red Hat, Inc.
+
+[wrap-git]
+url = https://gitlab.gnome.org/GNOME/libglnx.git
+revision = c18b9671443c4098ee734f04184808632ece154c
+depth = 1
+
+[provide]
+libglnx=libglnx_dep

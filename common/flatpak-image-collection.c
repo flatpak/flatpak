@@ -100,7 +100,7 @@ flatpak_image_collection_new (const char   *location,
   if (index == NULL)
     return NULL;
 
-  for (i = 0; index->manifests[i] != NULL; i++)
+  for (i = 0; index->manifests != NULL && index->manifests[i] != NULL; i++)
     {
       g_autoptr(GError) local_error = NULL;
       FlatpakOciManifestDescriptor *descriptor = index->manifests[i];

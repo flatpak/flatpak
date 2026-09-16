@@ -8,8 +8,6 @@ set -euo pipefail
 
 . $(dirname $0)/libtest.sh
 
-echo "1..7"
-
 setup_repo
 
 COUNTER=1
@@ -156,3 +154,5 @@ assert_not_has_dir $FL_DIR/app/org.test.Malicious/current/active
 cleanup_repo
 
 ok "app with mismatched metadata (in summary) can't be installed"
+
+done_testing

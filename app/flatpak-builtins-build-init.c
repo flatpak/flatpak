@@ -72,7 +72,7 @@ static GOptionEntry options[] = {
 
 static gboolean
 ensure_extensions (FlatpakDeploy *src_deploy, const char *default_arch, const char *default_branch,
-                   char *src_extensions[], GFile *top_dir, GCancellable *cancellable, GError **error)
+                   char *src_extensions[], int top_dfd, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GKeyFile) metakey = flatpak_deploy_get_metadata (src_deploy);
   GList *extensions = NULL, *l;
@@ -118,22 +118,47 @@ ensure_extensions (FlatpakDeploy *src_deploy, const char *default_arch, const ch
                     return flatpak_fail (error, _("Requested extension %s/%s/%s is only partially installed"), ext->installed_id, default_arch, default_branch);
                 }
 
-              if (top_dir)
+              if (top_dfd >= 0)
                 {
-                  g_autoptr(GFile) target = g_file_resolve_relative_path (top_dir, ext->directory);
-                  g_autoptr(GFile) target_parent = g_file_get_parent (target);
-                  g_autoptr(GFile) ext_deploy_files = g_file_new_for_path (ext->files_path);
+                  glnx_autofd int ext_src_dfd = -1;
+                  glnx_autofd int parent_dfd = -1;
+                  g_autofree char *dir_parent = g_path_get_dirname (ext->directory);
+                  const char *dir_basename = glnx_basename (ext->directory);
 
-                  if (!flatpak_mkdir_p (target_parent, cancellable, error))
-                    return FALSE;
+                  if (strcmp (dir_parent, ".") != 0)
+                    {
+                      glnx_autofd int parent_opath_fd = -1;
+
+                      parent_opath_fd = glnx_chase_and_mkdirat (top_dfd, dir_parent,
+                                                                GLNX_CHASE_RESOLVE_BENEATH |
+                                                                GLNX_CHASE_RESOLVE_NO_SYMLINKS,
+                                                                0755, error);
+                      if (parent_opath_fd < 0)
+                        return FALSE;
+
+                      parent_dfd = glnx_fd_reopen (parent_opath_fd,
+                                                   O_RDONLY | O_DIRECTORY | O_CLOEXEC,
+                                                   error);
+                      if (parent_dfd < 0)
+                        return FALSE;
+                    }
+                  else
+                    {
+                      parent_dfd = dup (top_dfd);
+                      if (parent_dfd < 0)
+                        return glnx_throw_errno_prefix (error, "dup");
+                    }
 
                   /* An extension overrides whatever is there before, so we clean up first */
-                  if (!flatpak_rm_rf (target, cancellable, error))
+                  if (!glnx_shutil_rm_rf_at (parent_dfd, dir_basename, cancellable, error))
                     return FALSE;
 
-                  if (!flatpak_cp_a (ext_deploy_files, target,
-                                     FLATPAK_CP_FLAGS_NO_CHOWN,
-                                     cancellable, error))
+                  if (!glnx_opendirat (AT_FDCWD, ext->files_path, FALSE, &ext_src_dfd, error))
+                    return FALSE;
+
+                  if (!flatpak_cp_a_at (ext_src_dfd, parent_dfd, dir_basename,
+                                        FLATPAK_CP_FLAGS_NO_CHOWN,
+                                        cancellable, error))
                     return FALSE;
                 }
 
@@ -170,15 +195,8 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GFile) var_deploy_files = NULL;
   g_autoptr(GFile) base = NULL;
-  g_autoptr(GFile) files_dir = NULL;
-  g_autoptr(GFile) usr_dir = NULL;
-  g_autoptr(GFile) var_dir = NULL;
-  g_autoptr(GFile) var_tmp_dir = NULL;
-  g_autoptr(GFile) var_run_dir = NULL;
-  g_autoptr(GFile) metadata_file = NULL;
-  g_autoptr(GFile) gitignore_file = NULL;
+  glnx_autofd int base_dfd = -1;
   g_autoptr(GString) metadata_contents = NULL;
-  g_autoptr(GError) my_error = NULL;
   g_autoptr(FlatpakDeploy) runtime_deploy = NULL;
   g_autoptr(FlatpakDeploy) sdk_deploy = NULL;
   const char *app_id;
@@ -237,8 +255,12 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   else
     is_app = TRUE;
 
-  if (!flatpak_is_valid_name (app_id, -1, &my_error))
-    return flatpak_fail (error, _("'%s' is not a valid application name: %s"), app_id, my_error->message);
+  {
+    g_autoptr(GError) my_error = NULL;
+
+    if (!flatpak_is_valid_name (app_id, -1, &my_error))
+      return flatpak_fail (error, _("'%s' is not a valid application name: %s"), app_id, my_error->message);
+  }
 
 
   kinds = FLATPAK_KINDS_RUNTIME;
@@ -283,16 +305,18 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   if (!flatpak_mkdir_p (base, cancellable, error))
     return FALSE;
 
-  files_dir = g_file_get_child (base, "files");
-  var_dir = g_file_get_child (base, "var");
-  var_tmp_dir = g_file_get_child (var_dir, "tmp");
-  var_run_dir = g_file_get_child (var_dir, "run");
-  metadata_file = g_file_get_child (base, "metadata");
-  gitignore_file = g_file_get_child (base, ".gitignore");
+  if (!glnx_opendirat (AT_FDCWD, flatpak_file_get_path_cached (base), FALSE, &base_dfd, error))
+    return FALSE;
 
-  if (!opt_update &&
-      g_file_query_exists (files_dir, cancellable))
-    return flatpak_fail (error, _("Build directory %s already initialized"), directory);
+  {
+    struct stat stbuf;
+
+    if (!glnx_fstatat_allow_noent (base_dfd, "files", &stbuf, AT_SYMLINK_NOFOLLOW, error))
+      return FALSE;
+
+    if (!opt_update && errno == 0)
+      return flatpak_fail (error, _("Build directory %s already initialized"), directory);
+  }
 
   sdk_deploy = flatpak_dir_load_deployed (sdk_dir, sdk_ref, NULL, cancellable, error);
   if (sdk_deploy == NULL)
@@ -300,36 +324,41 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
 
   if (opt_writable_sdk || is_runtime)
     {
+      const char *usr_dir_name = opt_sdk_dir ? opt_sdk_dir : "usr";
       g_autoptr(GFile) sdk_deploy_files = NULL;
+      glnx_autofd int sdk_dfd = -1;
 
-      if (opt_sdk_dir)
-        usr_dir = g_file_get_child (base, opt_sdk_dir);
-      else
-        usr_dir = g_file_get_child (base, "usr");
-
-      if (!flatpak_rm_rf (usr_dir, NULL, &my_error))
-        {
-          if (!g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
-            {
-              g_propagate_error (error, g_steal_pointer (&my_error));
-              return FALSE;
-            }
-
-          g_clear_error (&my_error);
-        }
+      if (!glnx_shutil_rm_rf_at (base_dfd, usr_dir_name, cancellable, error))
+        return FALSE;
 
       sdk_deploy_files = flatpak_deploy_get_files (sdk_deploy);
-      if (!flatpak_cp_a (sdk_deploy_files, usr_dir, FLATPAK_CP_FLAGS_NO_CHOWN, cancellable, error))
+      if (!glnx_opendirat (AT_FDCWD, flatpak_file_get_path_cached (sdk_deploy_files),
+                           FALSE, &sdk_dfd, error))
+        return FALSE;
+      if (!flatpak_cp_a_at (sdk_dfd, base_dfd, usr_dir_name,
+                            FLATPAK_CP_FLAGS_NO_CHOWN, cancellable, error))
         return FALSE;
     }
 
   sdk_branch = flatpak_decomposed_dup_branch (sdk_ref);
   sdk_arch = flatpak_decomposed_dup_arch (sdk_ref);
 
-  if (opt_sdk_extensions &&
-      !ensure_extensions (sdk_deploy, sdk_arch, sdk_branch,
-                          opt_sdk_extensions, usr_dir, cancellable, error))
-    return FALSE;
+  if (opt_sdk_extensions)
+    {
+      glnx_autofd int usr_dfd = -1;
+
+      if (opt_writable_sdk || is_runtime)
+        {
+          const char *usr_dir_name = opt_sdk_dir ? opt_sdk_dir : "usr";
+
+          if (!glnx_opendirat (base_dfd, usr_dir_name, FALSE, &usr_dfd, error))
+            return FALSE;
+        }
+
+      if (!ensure_extensions (sdk_deploy, sdk_arch, sdk_branch,
+                              opt_sdk_extensions, usr_dfd, cancellable, error))
+        return FALSE;
+    }
 
   if (opt_var)
     {
@@ -345,14 +374,15 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   if (opt_update)
     return TRUE;
 
-  if (!g_file_make_directory (files_dir, cancellable, error))
-    return FALSE;
+  if (TEMP_FAILURE_RETRY (mkdirat (base_dfd, "files", 0777)) != 0)
+    return glnx_throw_errno_prefix (error, "mkdirat(files)");
 
   if (opt_base)
     {
       const char *base_branch;
       g_autoptr(GFile) base_deploy_files = NULL;
       g_autoptr(FlatpakDeploy) base_deploy = NULL;
+      glnx_autofd int base_src_dfd = -1;
 
       base_branch = opt_base_version ? opt_base_version : "master";
       base_ref = flatpak_build_app_ref (opt_base, base_branch, opt_arch);
@@ -361,35 +391,55 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
         return FALSE;
 
       base_deploy_files = flatpak_deploy_get_files (base_deploy);
-      if (!flatpak_cp_a (base_deploy_files, files_dir,
-                         FLATPAK_CP_FLAGS_MERGE | FLATPAK_CP_FLAGS_NO_CHOWN,
-                         cancellable, error))
+      if (!glnx_opendirat (AT_FDCWD, flatpak_file_get_path_cached (base_deploy_files),
+                           FALSE, &base_src_dfd, error))
+        return FALSE;
+      if (!flatpak_cp_a_at (base_src_dfd, base_dfd, "files",
+                            FLATPAK_CP_FLAGS_MERGE | FLATPAK_CP_FLAGS_NO_CHOWN,
+                            cancellable, error))
         return FALSE;
 
-
-      if (opt_base_extensions &&
-          !ensure_extensions (base_deploy, opt_arch, base_branch,
-                              opt_base_extensions, files_dir, cancellable, error))
-        return FALSE;
+      if (opt_base_extensions)
+        {
+          glnx_autofd int files_dfd = -1;
+          if (!glnx_opendirat (base_dfd, "files", FALSE, &files_dfd, error))
+            return FALSE;
+          if (!ensure_extensions (base_deploy, opt_arch, base_branch,
+                                  opt_base_extensions, files_dfd, cancellable, error))
+            return FALSE;
+        }
     }
 
-  if (var_deploy_files)
-    {
-      if (!flatpak_cp_a (var_deploy_files, var_dir, FLATPAK_CP_FLAGS_NONE, cancellable, error))
-        return FALSE;
-    }
-  else
-    {
-      if (!g_file_make_directory (var_dir, cancellable, error))
-        return FALSE;
-    }
+  {
+    glnx_autofd int var_dfd = -1;
 
-  if (!flatpak_mkdir_p (var_tmp_dir, cancellable, error))
-    return FALSE;
+    if (var_deploy_files)
+      {
+        glnx_autofd int var_src_dfd = -1;
 
-  if (!g_file_query_exists (var_run_dir, cancellable) &&
-      !g_file_make_symbolic_link (var_run_dir, "/run", cancellable, error))
-    return FALSE;
+        if (!glnx_opendirat (AT_FDCWD, flatpak_file_get_path_cached (var_deploy_files),
+                             FALSE, &var_src_dfd, error))
+          return FALSE;
+
+        if (!flatpak_cp_a_at (var_src_dfd, base_dfd, "var",
+                              FLATPAK_CP_FLAGS_NONE, cancellable, error))
+          return FALSE;
+      }
+    else
+      {
+        if (TEMP_FAILURE_RETRY (mkdirat (base_dfd, "var", 0777)) != 0)
+          return glnx_throw_errno_prefix (error, "mkdirat(var)");
+      }
+
+    if (!glnx_opendirat (base_dfd, "var", FALSE, &var_dfd, error))
+      return FALSE;
+
+    if (!glnx_shutil_mkdir_p_at (var_dfd, "tmp", 0777, cancellable, error))
+      return FALSE;
+
+    if (TEMP_FAILURE_RETRY (symlinkat ("/run", var_dfd, "run")) != 0 && errno != EEXIST)
+      return glnx_throw_errno_prefix (error, "symlinkat(var/run)");
+  }
 
 
   metadata_contents = g_string_new ("");
@@ -468,17 +518,17 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
 
   keyfile_data = g_key_file_to_data (keyfile, &keyfile_data_len, NULL);
 
-  if (!g_file_replace_contents (metadata_file,
-                                keyfile_data, keyfile_data_len, NULL, FALSE,
-                                G_FILE_CREATE_REPLACE_DESTINATION,
-                                NULL, cancellable, error))
+  if (!glnx_file_replace_contents_at (base_dfd, "metadata",
+                                      (const guint8 *) keyfile_data, keyfile_data_len,
+                                      GLNX_FILE_REPLACE_NODATASYNC,
+                                      cancellable, error))
     return FALSE;
 
-  if (!g_file_replace_contents (gitignore_file,
-                                GIT_IGNORE_FILE, sizeof (GIT_IGNORE_FILE),
-                                NULL, FALSE,
-                                G_FILE_CREATE_REPLACE_DESTINATION,
-                                NULL, cancellable, error))
+  if (!glnx_file_replace_contents_at (base_dfd, ".gitignore",
+                                      (const guint8 *) GIT_IGNORE_FILE,
+                                      sizeof (GIT_IGNORE_FILE),
+                                      GLNX_FILE_REPLACE_NODATASYNC,
+                                      cancellable, error))
     return FALSE;
 
   return TRUE;

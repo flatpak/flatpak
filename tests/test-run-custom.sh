@@ -24,8 +24,6 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..12"
-
 # Use stable rather than master as the branch so we can test that the run
 # command automatically finds the branch correctly
 setup_repo "" "" stable
@@ -198,3 +196,5 @@ while read fdpath; do
 done < hello_out
 
 ok "check no fd leak"
+
+done_testing

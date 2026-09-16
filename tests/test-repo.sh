@@ -24,8 +24,6 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..47"
-
 #Regular repo
 setup_repo
 
@@ -1085,3 +1083,5 @@ ${FLATPAK} ${U} remote-add --if-not-exists new-repo test.flatpakrepo >&2
 assert_remote_has_no_config new-repo xa.filter
 
 ok "flatpakrepo"
+
+done_testing

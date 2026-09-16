@@ -73,7 +73,7 @@ systemd_gdbus = gnome.gdbus_codegen(
 )
 
 variant_schema_compiler_command = [
-  global_source_root / 'subprojects' / 'variant-schema-compiler' / 'variant-schema-compiler',
+  variant_schema_compiler,
 ]
 
 if get_option('internal_checks')

@@ -529,6 +529,9 @@ unpack_archive (GFile   *archive,
   flags = 0;
   flags |= ARCHIVE_EXTRACT_SECURE_NODOTDOT;
   flags |= ARCHIVE_EXTRACT_SECURE_SYMLINKS;
+  /* ARCHIVE_EXTRACT_SECURE_NOABSOLUTEPATHS is not needed because we manually
+   * build paths, where absolute archive entry paths and hardlink targets are
+   * treated as relative to the destination. */
 
   a = archive_read_new ();
   archive_read_support_format_all (a);
@@ -545,7 +548,6 @@ unpack_archive (GFile   *archive,
 
   while (TRUE)
     {
-      g_autofree char *target_path = NULL;
       struct archive_entry *entry;
 
       r = archive_read_next_header (a, &entry);
@@ -555,8 +557,29 @@ unpack_archive (GFile   *archive,
       if (r != ARCHIVE_OK)
         return propagate_libarchive_error (error, a);
 
-      target_path = g_build_filename (destination, archive_entry_pathname (entry), NULL);
-      archive_entry_set_pathname (entry, target_path);
+      {
+        g_autofree char *target_path = NULL;
+
+        /* It's OK if archive_entry_pathname() returns absolute: we'll append it
+         * to destination as though it was relative. We know that with
+         * ARCHIVE_EXTRACT_SECURE_NODOTDOT, it cannot return anything with `..`
+         * path segments, so it can't escape from destination. */
+        target_path = g_build_filename (destination, archive_entry_pathname (entry), NULL);
+        archive_entry_set_pathname (entry, target_path);
+      }
+
+      /* Similar to the pathname above, the hardlink target gets the same
+       * treatment. ARCHIVE_EXTRACT_SECURE_NODOTDOT also applies to the result
+       * of archive_entry_hardlink(). */
+      if (archive_entry_hardlink (entry) != NULL)
+        {
+          g_autofree char *target_hardlink = NULL;
+
+          target_hardlink = g_build_filename (destination,
+                                              archive_entry_hardlink (entry),
+                                              NULL);
+          archive_entry_set_hardlink (entry, target_hardlink);
+        }
 
       r = archive_write_header (ext, entry);
       if (r != ARCHIVE_OK)
@@ -1110,7 +1133,7 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
       if (!flatpak_download_http_uri (source_registry->http_session,
                                       uri_s, source_registry->certificates,
                                       FLATPAK_HTTP_FLAGS_ACCEPT_OCI, out_stream,
-                                      self->token,
+                                      source_registry->token,
                                       progress_cb, user_data,
                                       cancellable, error))
         return FALSE;
@@ -1926,7 +1949,7 @@ delta_read_byte (GInputStream   *in,
 
 static gboolean
 delta_read_varuint (GInputStream   *in,
-                    guint64        *out,
+                    gsize          *out,
                     GCancellable   *cancellable,
                     GError        **error)
 {
@@ -1950,6 +1973,9 @@ delta_read_varuint (GInputStream   *in,
     }
   while (more_data);
 
+  if (res > G_MAXSIZE)
+    return flatpak_fail (error, _("Invalid delta file format"));
+
   *out = res;
   return TRUE;
 }
@@ -1957,7 +1983,7 @@ delta_read_varuint (GInputStream   *in,
 static gboolean
 delta_copy_data (GInputStream   *in,
                  GOutputStream  *out,
-                 guint64         size,
+                 gsize           size,
                  guchar         *buffer,
                  GCancellable   *cancellable,
                  GError        **error)
@@ -1985,7 +2011,7 @@ static gboolean
 delta_add_data (GInputStream   *in1,
                 GInputStream   *in2,
                 GOutputStream  *out,
-                guint64         size,
+                gsize           size,
                 guchar         *buffer1,
                 guchar         *buffer2,
                 GCancellable   *cancellable,
@@ -2018,11 +2044,16 @@ delta_add_data (GInputStream   *in1,
 
 static guchar *
 delta_read_data (GInputStream   *in,
-                 guint64         size,
+                 gsize           size,
                  GCancellable   *cancellable,
                  GError        **error)
 {
-  g_autofree guchar *buf = g_malloc (size+1);
+  g_autofree guchar *buf = NULL;
+
+  if (size > SIZE_MAX - 1)
+    return glnx_null_throw (error, _("Invalid delta file format"));
+
+  buf = g_malloc (size + 1);
 
   if (!g_input_stream_read_all (in, buf, size, NULL, cancellable, error))
     return NULL;
@@ -2119,9 +2150,7 @@ flatpak_oci_registry_apply_delta_stream (FlatpakOciRegistry    *self,
   while (TRUE)
     {
       guint8 op;
-      guint64 size;
-      g_autofree char *path = NULL;
-      g_autofree char *clean_path = NULL;
+      gsize size;
       g_autoptr(GError) local_error = NULL;
       gboolean eof;
 
@@ -2144,22 +2173,29 @@ flatpak_oci_registry_apply_delta_stream (FlatpakOciRegistry    *self,
           break;
 
         case DELTA_OP_OPEN:
-          path = (char *)delta_read_data (in, size, cancellable, error);
-          if (path == NULL)
-            return FALSE;
-          clean_path = delta_clean_path (path);
-
-          g_clear_object (&content_file);
-
           {
-            g_autoptr(GFile) child = g_file_resolve_relative_path (content_dir, clean_path);
+            g_autofree char *path = NULL;
+            g_autofree char *clean_path = NULL;
+            g_autoptr(GFile) child = NULL;
             g_autoptr(GFileInputStream) child_in = NULL;
+
+            if (size > PATH_MAX)
+              return flatpak_fail (error, _("Invalid delta file format"));
+
+            path = (char *) delta_read_data (in, size, cancellable, error);
+            if (path == NULL)
+              return FALSE;
+
+            clean_path = delta_clean_path (path);
+
+            child = g_file_resolve_relative_path (content_dir, clean_path);
 
             child_in = g_file_read (child, cancellable, error);
             if (child_in == NULL)
               return FALSE;
 
             /* We can't seek in the ostree repo file, so copy it to temp file */
+            g_clear_object (&content_file);
             content_file = copy_stream_to_file (self, G_INPUT_STREAM (child_in), cancellable, error);
             if (content_file == NULL)
               return FALSE;

@@ -19,7 +19,7 @@ Read documentation for Flatpak [here](https://docs.flatpak.org/en/latest/index.h
 
 Flatpak welcomes contributions from anyone! Here are some ways you can help:
 * Fix [one of the issues](https://github.com/flatpak/flatpak/issues/) and submit a PR
-* Update flatpak's translations and submit a PR
+* Update flatpak's [translations](https://l10n.gnome.org/module/flatpak/)
 * Improve flatpak's documentation, hosted at http://docs.flatpak.org and developed over in [flatpak-docs](https://github.com/flatpak/flatpak-docs)
 * Find a bug and [submit a detailed report](https://github.com/flatpak/flatpak/issues/new) including your OS, flatpak version, and the steps to reproduce
 * Add your favorite application to [Flathub](https://flathub.org) by writing a flatpak-builder manifest and [submitting it](https://github.com/flathub/flathub/wiki/App-Submission)
@@ -33,3 +33,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md)
 Here are some notable projects in the Flatpak ecosystem:
 * [Flatseal](https://github.com/tchx84/flatseal): An app for managing permissions of Flatpak apps without using the CLI
 * [Flat-manager](https://github.com/flatpak/flat-manager): A tool for managing Flatpak repositories
+
+# Host Requirements
+
+Flatpak aims to run on a wide variety of systems. It is therefore conservative
+with required dependency versions and kernel features.
+
+Currently, the main branch requires at least kernel version 5.8 (for
+`statx` `STATX_MNT_ID`).

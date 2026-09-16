@@ -144,8 +144,11 @@ flatpak_is_valid_name (const char *string,
     }
   else if (G_UNLIKELY (!is_valid_initial_name_character (*s, last_element)))
     {
+      g_autofree char *first = flatpak_describe_invalid_first_char (s);
+
       flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME,
-                          _("Name can't start with %c"), *s);
+                          _("Name can't start with \"%s\""),
+                          first);
       goto out;
     }
 
@@ -166,24 +169,30 @@ flatpak_is_valid_name (const char *string,
             }
           if (!is_valid_initial_name_character (*s, last_element))
             {
+              g_autofree char *first = flatpak_describe_invalid_first_char (s);
+
               if (*s == '-')
                 flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME,
                                     _("Only last name segment can contain -"));
               else
                 flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME,
-                                    _("Name segment can't start with %c"), *s);
+                                    _("Name segment can't start with \"%s\""),
+                                    first);
               goto out;
             }
           dot_count++;
         }
       else if (G_UNLIKELY (!is_valid_name_character (*s, last_element)))
         {
+          g_autofree char *first = flatpak_describe_invalid_first_char (s);
+
           if (*s == '-')
             flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME,
                                 _("Only last name segment can contain -"));
           else
             flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME,
-                                _("Name can't contain %c"), *s);
+                                _("Name can't contain \"%s\""),
+                                first);
           goto out;
         }
       s += 1;
@@ -319,8 +328,11 @@ flatpak_is_valid_arch (const char *string,
     {
       if (G_UNLIKELY (!is_valid_arch_character (*string)))
         {
+          g_autofree char *first = flatpak_describe_invalid_first_char (string);
+
           flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME,
-                              _("Arch can't contain %c"), *string);
+                              _("Arch can't contain \"%s\""),
+                              first);
           return FALSE;
         }
       string += 1;
@@ -391,8 +403,11 @@ flatpak_is_valid_branch (const char *string,
   s = string;
   if (G_UNLIKELY (!is_valid_initial_branch_character (*s)))
     {
+      g_autofree char *first = flatpak_describe_invalid_first_char (s);
+
       flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME,
-                          _("Branch can't start with %c"), *s);
+                          _("Branch can't start with \"%s\""),
+                          first);
       goto out;
     }
 
@@ -401,8 +416,11 @@ flatpak_is_valid_branch (const char *string,
     {
       if (G_UNLIKELY (!is_valid_branch_character (*s)))
         {
+          g_autofree char *first = flatpak_describe_invalid_first_char (s);
+
           flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME,
-                              _("Branch can't contain %c"), *s);
+                              _("Branch can't contain \"%s\""),
+                              first);
           goto out;
         }
       s += 1;
@@ -567,25 +585,48 @@ is_valid_remote_name_character (gint c)
     c == '.';
 }
 
-static gboolean
-is_valid_remote_name (const char *remote,
-                      gsize len)
+gboolean
+flatpak_is_valid_remote_name (const char *string,
+                              gssize      len,
+                              GError    **error)
 {
   const char *end;
 
-  if (len == 0)
-    return FALSE;
+  if (len < 0)
+    len = strlen (string);
 
-  end = remote + len;
-
-  if (!is_valid_initial_remote_name_character (*remote++))
-    return FALSE;
-
-  while (remote < end)
+  if (G_UNLIKELY (len == 0))
     {
-      char c = *remote++;
-      if (!is_valid_remote_name_character (c))
-        return FALSE;
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME,
+                          _("Remote name can't be empty"));
+      return FALSE;
+    }
+
+  end = string + len;
+
+  if (G_UNLIKELY (!is_valid_initial_remote_name_character (*string)))
+    {
+      g_autofree char *first = flatpak_describe_invalid_first_char (string);
+
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME,
+                          _("Remote name can't start with \"%s\""),
+                          first);
+      return FALSE;
+    }
+  string++;
+
+  while (string < end)
+    {
+      if (G_UNLIKELY (!is_valid_remote_name_character (*string)))
+        {
+          g_autofree char *first = flatpak_describe_invalid_first_char (string);
+
+          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_NAME,
+                              _("Remote name can't contain \"%s\""),
+                              first);
+          return FALSE;
+        }
+      string++;
     }
 
   return TRUE;
@@ -622,7 +663,7 @@ _flatpak_decomposed_new (char            *ref,
       const char *colon = strchr (p, ':');
       if (colon != NULL)
         {
-          if (!is_valid_remote_name (ref, colon - ref))
+          if (!flatpak_is_valid_remote_name (ref, colon - ref, NULL))
             {
               flatpak_fail_error (error, FLATPAK_ERROR_INVALID_REF, _("Invalid remote name"));
               return NULL;

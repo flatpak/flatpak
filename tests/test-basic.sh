@@ -24,8 +24,6 @@ set -euo pipefail
 # This test looks for specific localized strings.
 export LC_ALL=C
 
-echo "1..11"
-
 ${FLATPAK} --version > version_out
 
 VERSION=`cat "$test_builddir/package_version.txt"`
@@ -126,3 +124,5 @@ for cmd in config make-current override remote-add repair; do
 done
 
 ok "ONE_DIR commands"
+
+done_testing

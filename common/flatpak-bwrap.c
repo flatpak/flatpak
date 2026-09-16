@@ -310,6 +310,10 @@ flatpak_bwrap_add_bind_arg (FlatpakBwrap *bwrap,
       g_autofree char *dest_real = g_build_filename (dest_dirname_real, dest_basename, NULL);
       flatpak_bwrap_add_args (bwrap, type, src, dest_real, NULL);
     }
+  else
+    {
+      g_warning ("Unable to resolve bind mount destination parent directory %s, skipping mount", dest_dirname);
+    }
 }
 
 /*

@@ -82,8 +82,6 @@ setup_repo test2
 make_updated_app test2 org.test.Collection.test2 master HELLO2_MASTER_C2 org.test.Hello2
 make_updated_app test2 org.test.Collection.test2 master HELLO2_MASTER_C3 org.test.Hello3
 
-echo "1..12"
-
 # just checking that the test remote got added
 port=$(cat httpd-port)
 assert_remote_has_config test-repo url "http://127.0.0.1:${port}/test"
@@ -291,3 +289,5 @@ ${FLATPAK} ${U} remote-modify --url="http://no.127.0.0.1:${port}/test" test2-rep
 ${FLATPAK} ${U} -vvvv preinstall -y --sideload-repo=${SIDELOAD_REPO} >&2
 
 ok "sideload with network failure"
+
+done_testing

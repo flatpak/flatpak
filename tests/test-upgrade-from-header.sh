@@ -7,8 +7,6 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..6"
-
 # Override the httpd function to enable header logging before setup_repo calls
 # it. The web-server.py will log Flatpak-Ref and Flatpak-Upgrade-From headers
 # to httpd-headers-log.
@@ -88,3 +86,5 @@ ok "Flatpak-Upgrade-From header sent when remote tracking ref is missing"
 assert_file_has_content httpd-headers-log "Flatpak-Ref: ${APP_REF}"
 
 ok "Flatpak-Ref header sent when remote tracking ref is missing"
+
+done_testing

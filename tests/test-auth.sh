@@ -22,8 +22,6 @@ set -euo pipefail
 . $(dirname $0)/libtest.sh
 
 
-echo "1..4"
-
 setup_repo
 
 commit_to_obj () {
@@ -176,3 +174,5 @@ ${FLATPAK} ${U} install --noninteractive test-repo org.test.Hello master >&2
 assert_file_has_content ${XDG_RUNTIME_DIR}/request "no-interaction"
 
 ok "--noninteractive sends no-interaction to the authenticator"
+
+done_testing

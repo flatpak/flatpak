@@ -4,7 +4,7 @@
 project(
   'flatpak',
   'c',
-  version : '1.19.0',
+  version : '1.19.1',
   default_options: [
     'warning_level=2',
   ],
@@ -13,7 +13,7 @@ project(
 
 flatpak_major_version = 1
 flatpak_minor_version = 19
-flatpak_micro_version = 0
+flatpak_micro_version = 1
 flatpak_extra_version = ''
 
 flatpak_interface_age = 0
@@ -156,6 +156,7 @@ endif
 libglnx = subproject(
   'libglnx',
   default_options : [
+    'default_library=static',
     'warning_level=1',
     'tests=false',
   ],
@@ -165,7 +166,7 @@ not_found = dependency('', required : false)
 threads_dep = dependency('threads')
 bison = find_program('bison')
 libcap_dep = dependency('libcap')
-libglnx_dep = libglnx.get_variable('libglnx_dep')
+libglnx_dep = dependency('libglnx')
 libglnx_testlib_dep = libglnx.get_variable('libglnx_testlib_dep')
 libarchive_dep = dependency('libarchive', version : '>=2.8.0')
 glib_dep = dependency('glib-2.0', version : '>=' + required_glib)
@@ -179,6 +180,7 @@ libsystemd_dep = dependency('libsystemd', required : get_option('systemd'))
 malcontent_dep = dependency('malcontent-0', version : '>=0.5.0', required : get_option('malcontent'))
 polkit_agent_dep = dependency('polkit-agent-1', version : '>=0.98', required : get_option('system_helper'))
 build_system_helper = polkit_agent_dep.found()
+variant_schema_compiler = find_program('variant-schema-compiler')
 
 fuse_dep = dependency('fuse3', version : '>=3.1.1', required : false)
 if fuse_dep.found()

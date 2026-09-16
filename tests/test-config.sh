@@ -24,8 +24,6 @@ set -euo pipefail
 # This test looks for specific localized strings.
 export LC_ALL=C
 
-echo "1..5"
-
 ${FLATPAK} config --list > list_out
 assert_file_has_content list_out "^languages:"
 
@@ -54,3 +52,5 @@ ${FLATPAK} config --get languages > get_out
 assert_file_has_content get_out "^[*]unset[*]"
 
 ok "config unset"
+
+done_testing

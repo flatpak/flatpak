@@ -8,8 +8,6 @@ set -euo pipefail
 
 skip_without_bwrap
 
-echo "1..1"
-
 setup_repo () {
     mkdir -p repos
     ostree init --repo=repos/test --mode=archive-z2
@@ -105,3 +103,5 @@ else
 fi
 
 ok "extension branch follow"
+
+done_testing

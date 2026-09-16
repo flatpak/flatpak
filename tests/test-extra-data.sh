@@ -45,8 +45,6 @@ curl "${EXTRA_DATA_URL}" -o "${DOWNLOADED_EXTRA_DATA}"
 EXTRA_DATA_SIZE=$(stat --printf="%s" "${DOWNLOADED_EXTRA_DATA}")
 EXTRA_DATA_SHA256=$(sha256sum "${DOWNLOADED_EXTRA_DATA}" | cut -f1 -d' ')
 
-echo "1..3"
-
 # build the app with the extra data
 EXTRA_DATA="--extra-data=test:${EXTRA_DATA_SHA256}:${EXTRA_DATA_SIZE}:${EXTRA_DATA_SIZE}:${EXTRA_DATA_URL}"
 BUILD_FINISH_ARGS=${EXTRA_DATA} make_updated_app ${REPONAME} ${COLLECTION_ID} ${BRANCH} UPDATE1
@@ -137,3 +135,5 @@ if test -f "${G_TEST_BUILDDIR}/apply-extra-static"; then
 else
     ok "# SKIP install+run extra data app with NoRuntime apply-extra-static not found"
 fi
+
+done_testing

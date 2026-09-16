@@ -65,8 +65,6 @@ have_xattrs() {
     setfattr -n user.testvalue -v somevalue $1/test-xattrs > /dev/null 2>&1
 }
 
-echo "1..6"
-
 # Without anything else, cached for 30 minutes
 assert_ok "/" $test_tmpdir/output
 assert_cached "/" $test_tmpdir/output
@@ -158,3 +156,5 @@ if command -v setfattr >/dev/null &&
 else
     ok "xattrs # skip No setfattr or /var/tmp has user no xattr support"
 fi
+
+done_testing

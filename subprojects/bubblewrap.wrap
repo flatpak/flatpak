@@ -1,5 +1,5 @@
 [wrap-git]
 url = https://github.com/containers/bubblewrap.git
-# v0.11.0
-revision = 9ca3b05ec787acfb4b17bed37db5719fa777834f
+# v0.12.0
+revision = 2a76602a8c71f36c1527cf9fc3417d9149822e0c
 depth = 1
