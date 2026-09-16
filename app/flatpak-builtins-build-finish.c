@@ -39,6 +39,7 @@
 static char *opt_command;
 static char *opt_require_version;
 static char **opt_extra_data;
+static char **opt_extra_data_scripts;
 static char **opt_extensions;
 static char **opt_remove_extensions;
 static char **opt_metadata;
@@ -53,6 +54,7 @@ static GOptionEntry options[] = {
   { "require-version", 0, 0, G_OPTION_ARG_STRING, &opt_require_version, N_("Flatpak version to require"), N_("MAJOR.MINOR.MICRO") },
   { "no-exports", 0, 0, G_OPTION_ARG_NONE, &opt_no_exports, N_("Don't process exports"), NULL },
   { "extra-data", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_extra_data, N_("Extra data info") },
+  { "extra-data-script", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_extra_data_scripts, N_("Extra data script info") },
   { "extension", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_extensions, N_("Add extension point info"),  N_("NAME=VARIABLE[=VALUE]") },
   { "remove-extension", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_remove_extensions, N_("Remove extension point info"),  N_("NAME") },
   { "extension-priority", 0, 0, G_OPTION_ARG_INT, &opt_extension_prio, N_("Set extension priority (only for extensions)"), N_("VALUE") },
@@ -563,6 +565,60 @@ update_metadata (GFile *base, FlatpakContext *arg_context, gboolean is_runtime, 
                                installed_size_key, elements[3]);
       g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_EXTRA_DATA,
                              uri_key, elements[4]);
+    }
+
+  for (i = 0; opt_extra_data_scripts != NULL && opt_extra_data_scripts[i] != NULL; i++)
+    {
+      char *extra_data_script = opt_extra_data_scripts[i];
+      g_auto(GStrv) elements = NULL;
+      g_autofree char *suffix = NULL;
+      g_autofree char *script_key = NULL;
+      g_autofree char *name_key = NULL;
+      g_autofree char *size_key = NULL;
+      g_autofree char *installed_size_key = NULL;
+      g_autofree char *checksum_key = NULL;
+
+      /* Use same index space as opt_extra_data so indices don't collide */
+      int script_index = i;
+      if (opt_extra_data != NULL)
+        {
+          int j;
+          for (j = 0; opt_extra_data[j] != NULL; j++)
+            script_index++;
+        }
+
+      if (script_index == 0)
+        suffix = g_strdup ("");
+      else
+        suffix = g_strdup_printf ("%d", script_index);
+
+      elements = g_strsplit (extra_data_script, ":", 5);
+      if (g_strv_length (elements) != 5)
+        {
+          flatpak_fail (error, _("Too few elements in --extra-data-script argument %s"), extra_data_script);
+          goto out;
+        }
+
+      script_key = g_strconcat (FLATPAK_METADATA_KEY_EXTRA_DATA_SCRIPT, suffix, NULL);
+      name_key = g_strconcat (FLATPAK_METADATA_KEY_EXTRA_DATA_NAME, suffix, NULL);
+      checksum_key = g_strconcat (FLATPAK_METADATA_KEY_EXTRA_DATA_CHECKSUM,
+                                  suffix, NULL);
+      size_key = g_strconcat (FLATPAK_METADATA_KEY_EXTRA_DATA_SIZE, suffix, NULL);
+      installed_size_key = g_strconcat (FLATPAK_METADATA_KEY_EXTRA_DATA_INSTALLED_SIZE,
+                                        suffix, NULL);
+
+      if (strlen (elements[0]) > 0)
+        g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_EXTRA_DATA,
+                               name_key, elements[0]);
+      g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_EXTRA_DATA,
+                             checksum_key, elements[1]);
+      g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_EXTRA_DATA,
+                             size_key, elements[2]);
+      if (strlen (elements[3]) > 0)
+        g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_EXTRA_DATA,
+                               installed_size_key, elements[3]);
+      g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_EXTRA_DATA,
+                             script_key, elements[4]);
     }
 
   for (i = 0; opt_metadata != NULL && opt_metadata[i] != NULL; i++)

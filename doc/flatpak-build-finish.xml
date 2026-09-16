@@ -633,6 +633,26 @@ key=v1;v2;
             </varlistentry>
 
             <varlistentry>
+                <term><option>--extra-data-script=NAME:SHA256:DOWNLOAD-SIZE:INSTALL-SIZE:SCRIPT</option></term>
+
+                <listitem><para>
+                    Like <option>--extra-data</option>, but instead of a fixed
+                    <arg choice="plain">URL</arg>, gives the path to a
+                    <arg choice="plain">SCRIPT</arg> in the build directory (relative to its
+                    <filename>files</filename> subdirectory) that generates the download
+                    <uri>URI</uri> at install time. The script is executed on the client when
+                    the app is installed and must print a JSON object to stdout, e.g.
+                    <literal>{ "url": "https://example.com/data.zip" }</literal>. The value of
+                    the <literal>url</literal> member is used as the download URI, which is then
+                    verified against the given <arg choice="plain">SHA256</arg> checksum and
+                    installed-size and placed in the <filename>/app/extra</filename> directory.
+                    This allows the download location to be discovered dynamically (for example
+                    when it is only known after a redirect or login), and future members may
+                    be added to configure the download (e.g. cookies, user-agent).
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--no-exports</option></term>
 
                 <listitem><para>

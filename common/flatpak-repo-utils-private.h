@@ -145,12 +145,20 @@ GVariant *flatpak_repo_get_extra_data_sources (OstreeRepo   *repo,
                                                GCancellable *cancellable,
                                                GError      **error);
 void flatpak_repo_parse_extra_data_sources (GVariant      *extra_data_sources,
+                                             int            index,
+                                             const char   **name,
+                                             guint64       *download_size,
+                                             guint64       *installed_size,
+                                             const guchar **sha256,
+                                             const char   **uri);
+GVariant *flatpak_repo_get_extra_data_scripts (OstreeRepo   *repo,
+                                               const char   *rev,
+                                               GCancellable *cancellable,
+                                               GError      **error);
+void flatpak_repo_parse_extra_data_scripts (GVariant      *extra_data_scripts,
                                             int            index,
-                                            const char   **name,
-                                            guint64       *download_size,
-                                            guint64       *installed_size,
-                                            const guchar **sha256,
-                                            const char   **uri);
+                                            int           *source_index,
+                                            const char   **script_content);
 GVariant *flatpak_repo_load_summary (OstreeRepo *repo,
                                      GError    **error);
 GVariant *flatpak_repo_load_summary_index (OstreeRepo *repo,

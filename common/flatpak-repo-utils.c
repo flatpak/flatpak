@@ -391,6 +391,46 @@ flatpak_repo_parse_extra_data_sources (GVariant      *extra_data_sources,
     *sha256 = ostree_checksum_bytes_peek (sha256_v);
 }
 
+GVariant *
+flatpak_repo_get_extra_data_scripts (OstreeRepo   *repo,
+                                     const char   *rev,
+                                     GCancellable *cancellable,
+                                     GError      **error)
+{
+  g_autoptr(GVariant) commitv = NULL;
+  g_autoptr(GVariant) commit_metadata = NULL;
+  g_autoptr(GVariant) extra_data_scripts = NULL;
+
+  if (!ostree_repo_load_variant (repo,
+                                 OSTREE_OBJECT_TYPE_COMMIT,
+                                 rev, &commitv, error))
+    return NULL;
+
+  commit_metadata = g_variant_get_child_value (commitv, 0);
+  extra_data_scripts = g_variant_lookup_value (commit_metadata,
+                                                "xa.extra-data-scripts",
+                                                G_VARIANT_TYPE ("a(is)"));
+
+  return g_steal_pointer (&extra_data_scripts);
+}
+
+void
+flatpak_repo_parse_extra_data_scripts (GVariant      *extra_data_scripts,
+                                       int            index,
+                                       int           *source_index,
+                                       const char   **script_content)
+{
+  gint32 sindex = 0;
+  const char *script = NULL;
+  g_variant_get_child (extra_data_scripts, index, "(i&s)",
+                       &sindex,
+                       &script);
+  if (source_index)
+    *source_index = sindex;
+  if (script_content)
+    *script_content = script;
+}
+
 #define OSTREE_GIO_FAST_QUERYINFO ("standard::name,standard::type,standard::size,standard::is-symlink,standard::symlink-target," \
                                    "unix::device,unix::inode,unix::mode,unix::uid,unix::gid,unix::rdev")
 

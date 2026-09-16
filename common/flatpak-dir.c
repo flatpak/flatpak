@@ -41,6 +41,7 @@
 
 #include <gio/gio.h>
 #include <gio/gunixsocketaddress.h>
+#include <json-glib/json-glib.h>
 #include <ostree.h>
 
 #ifdef USE_SYSTEM_HELPER
@@ -6436,6 +6437,7 @@ static gboolean
 flatpak_dir_pull_extra_data_to_bytes (FlatpakDir       *self,
                                       GVariant         *extra_data_sources,
                                       int               extra_data_index,
+                                      const char       *script_content,
                                       FlatpakProgress  *progress,
                                       GBytes          **bytes_out,
                                       const char      **name_out,
@@ -6452,6 +6454,7 @@ flatpak_dir_pull_extra_data_to_bytes (FlatpakDir       *self,
   g_autoptr(GBytes) bytes = NULL;
   g_autoptr(GFile) extra_local_file = NULL;
   g_autoptr(GFile) base_dir = NULL;
+  g_autofree char *resolved_uri = NULL;
 
   flatpak_repo_parse_extra_data_sources (extra_data_sources,
                                          extra_data_index,
@@ -6477,6 +6480,104 @@ flatpak_dir_pull_extra_data_to_bytes (FlatpakDir       *self,
     {
       return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
                                  _("Invalid extra data name '%s'"), name);
+    }
+
+  /* If this source uses a script, run it to generate the URL */
+  if (script_content != NULL)
+    {
+      g_autofree char *script_path = NULL;
+      g_autofree char *stdout_contents = NULL;
+      g_autofree char *stderr_contents = NULL;
+      g_autoptr(GError) spawn_error = NULL;
+      gint exit_status;
+      int outfd = -1;
+
+      /* Write script to a temp file and execute it */
+      script_path = g_strdup_printf ("%s/flatpak-extra-data-script-XXXXXX", g_get_tmp_dir ());
+      outfd = g_mkstemp (script_path);
+      if (outfd < 0)
+        {
+          return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                     _("Failed to create temp file for extra data script"));
+        }
+
+      if (fchmod (outfd, 0700) != 0 ||
+          write (outfd, script_content, strlen (script_content)) < 0)
+        {
+          close (outfd);
+          unlink (script_path);
+          return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                     _("Failed to write extra data script to temp file"));
+        }
+      close (outfd);
+
+      g_info ("Running extra-data script %s", script_path);
+
+      if (!g_spawn_command_line_sync (script_path,
+                                      &stdout_contents,
+                                      &stderr_contents,
+                                      &exit_status,
+                                      &spawn_error))
+        {
+          unlink (script_path);
+          return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                     _("Failed to run extra data script: %s"),
+                                     spawn_error->message);
+        }
+
+      unlink (script_path);
+
+      if (!g_spawn_check_wait_status (exit_status, error))
+        {
+          if (stderr_contents != NULL && *stderr_contents != '\0')
+            g_prefix_error (error, _("Extra data script failed: %s"), stderr_contents);
+          else
+            g_prefix_error (error, _("Extra data script failed: "));
+          return FALSE;
+        }
+
+      if (stdout_contents == NULL || *stdout_contents == '\0')
+        {
+          return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                     _("Extra data script produced no JSON output"));
+        }
+
+      /* The script is expected to print a JSON object, e.g.
+       * { "url": "https://example.com/data.zip" }.  The "url" member is
+       * required; additional members may be added in the future to configure
+       * the download (e.g. "cookies", "user-agent"). */
+      {
+        g_autoptr(JsonParser) parser = json_parser_new ();
+        g_autoptr(GError) local_error = NULL;
+        JsonNode *root = NULL;
+        JsonObject *obj = NULL;
+        JsonNode *url_node = NULL;
+        const char *url_str;
+
+        if (!json_parser_load_from_data (parser, stdout_contents, -1, &local_error))
+          return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                     _("Invalid JSON output from extra data script: %s"),
+                                     local_error->message);
+
+        root = json_parser_get_root (parser);
+        if (json_node_get_node_type (root) != JSON_NODE_OBJECT)
+          return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                     _("Extra data script did not produce a JSON object"));
+        obj = json_node_get_object (root);
+
+        url_node = json_object_get_member (obj, "url");
+        if (url_node == NULL)
+          return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                     _("Extra data script JSON is missing a \"url\" member"));
+
+        url_str = json_node_get_string (url_node);
+        if (url_str == NULL || *url_str == '\0')
+          return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                     _("Extra data script JSON has an empty \"url\" member"));
+
+        resolved_uri = g_strdup (url_str);
+        uri = resolved_uri;
+      }
     }
 
   /* Don't allow file uris here as that could read local files based on remote data */
@@ -6572,6 +6673,7 @@ flatpak_dir_pull_extra_data_to_bytes (FlatpakDir       *self,
 static gboolean
 flatpak_dir_pull_extra_data (FlatpakDir       *self,
                              GVariant         *extra_data_sources,
+                             GVariant         *extra_data_scripts,
                              FlatpakProgress  *progress,
                              GPtrArray        *extra_data_out,
                              GPtrArray        *names_out,
@@ -6591,10 +6693,32 @@ flatpak_dir_pull_extra_data (FlatpakDir       *self,
     {
       g_autoptr(GBytes) bytes = NULL;
       const char *name = NULL;
+      const char *script_content = NULL;
+
+      /* Find if this source index has a script */
+      if (extra_data_scripts != NULL)
+        {
+          gsize n_scripts = g_variant_n_children (extra_data_scripts);
+
+          for (size_t s = 0; s < n_scripts; s++)
+            {
+              int source_index = -1;
+
+              flatpak_repo_parse_extra_data_scripts (extra_data_scripts, s,
+                                                     &source_index, NULL);
+              if (source_index == (int) i)
+                {
+                  flatpak_repo_parse_extra_data_scripts (extra_data_scripts, s,
+                                                         NULL, &script_content);
+                  break;
+                }
+            }
+        }
 
       if (!flatpak_dir_pull_extra_data_to_bytes (self,
                                                  extra_data_sources,
                                                  i,
+                                                 script_content,
                                                  progress,
                                                  &bytes,
                                                  &name,
@@ -6628,6 +6752,7 @@ flatpak_dir_pull_ostree_extra_data (FlatpakDir        *self,
                                     GError           **error)
 {
   g_autoptr(GVariant) extra_data_sources = NULL;
+  g_autoptr(GVariant) extra_data_scripts = NULL;
   g_autoptr(GPtrArray) extra_data = NULL;
   g_autoptr(GPtrArray) names = NULL;
   g_autoptr(GVariantBuilder) extra_data_builder = NULL;
@@ -6640,6 +6765,9 @@ flatpak_dir_pull_ostree_extra_data (FlatpakDir        *self,
   if (extra_data_sources == NULL)
     return TRUE;
 
+  extra_data_scripts = flatpak_repo_get_extra_data_scripts (repo, rev,
+                                                            cancellable, NULL);
+
   if ((flatpak_flags & FLATPAK_PULL_FLAGS_DOWNLOAD_EXTRA_DATA) == 0)
     {
       return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED,
@@ -6651,6 +6779,7 @@ flatpak_dir_pull_ostree_extra_data (FlatpakDir        *self,
 
   if (!flatpak_dir_pull_extra_data (self,
                                     extra_data_sources,
+                                    extra_data_scripts,
                                     progress,
                                     extra_data,
                                     names,
@@ -6738,6 +6867,7 @@ flatpak_dir_mirror_oci_extra_data (FlatpakDir          *self,
     g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
   g_autoptr(GVariant) commit_metadata = NULL;
   g_autoptr(GVariant) extra_data_sources = NULL;
+  g_autoptr(GVariant) extra_data_scripts = NULL;
   g_autoptr(GPtrArray) extra_data = NULL;
 
   flatpak_image_source_build_commit_metadata (image_source, metadata_builder);
@@ -6747,6 +6877,10 @@ flatpak_dir_mirror_oci_extra_data (FlatpakDir          *self,
                                                G_VARIANT_TYPE ("a(ayttays)"));
   if (extra_data_sources == NULL)
     return TRUE;
+
+  extra_data_scripts = g_variant_lookup_value (commit_metadata,
+                                               "xa.extra-data-scripts",
+                                               G_VARIANT_TYPE ("a(is)"));
 
   {
     guint64 n_extra_data = 0;
@@ -6764,6 +6898,7 @@ flatpak_dir_mirror_oci_extra_data (FlatpakDir          *self,
 
   if (!flatpak_dir_pull_extra_data (self,
                                     extra_data_sources,
+                                    extra_data_scripts,
                                     progress,
                                     extra_data,
                                     NULL,

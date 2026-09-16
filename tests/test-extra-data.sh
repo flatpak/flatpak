@@ -60,6 +60,44 @@ ${FLATPAK} ${U} uninstall -y org.test.Hello >&2
 
 ok "install extra data app with ostree"
 
+build_extra_data_script_app() {
+    local repo="$1"
+    local branch="$2"
+
+    DIR="$(mktemp -d)"
+    ARCH="$(flatpak --default-arch)"
+
+    mkdir -p "${DIR}/files/bin"
+
+    cat > "${DIR}/files/bin/generate-extra-data-url.sh" <<EOF
+#!/bin/sh
+echo "{\"url\": \"${EXTRA_DATA_URL}\"}"
+EOF
+    chmod +x "${DIR}/files/bin/generate-extra-data-url.sh"
+
+    cat > "${DIR}/metadata" <<EOF
+[Application]
+name=org.test.HelloScript
+runtime=org.test.Platform/${ARCH}/${branch}
+EOF
+
+    flatpak build-finish --extra-data-script=test:${EXTRA_DATA_SHA256}:${EXTRA_DATA_SIZE}:${EXTRA_DATA_SIZE}:bin/generate-extra-data-url.sh "${DIR}" >&2
+    flatpak build-export ${FL_GPGARGS} "${repo}" "${DIR}" "${branch}" >&2
+    rm -rf "${DIR}"
+}
+
+build_extra_data_script_app repos/test ${BRANCH}
+update_repo ${REPONAME} ${COLLECTION_ID}
+${FLATPAK} ${U} install -y ${REPONAME}-repo org.test.HelloScript ${BRANCH} >&2
+
+# ensure the right extra-data got downloaded via the script-generated URL
+${FLATPAK} run --command=sh org.test.HelloScript -c "cat /app/extra/test" > out
+assert_file_has_content out "extra-data-test-content"
+
+${FLATPAK} ${U} uninstall -y org.test.HelloScript >&2
+
+ok "install extra data app with script-generated URL"
+
 # Start the fake registry server
 
 httpd oci-registry-server.py --dir=.

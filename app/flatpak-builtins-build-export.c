@@ -674,18 +674,22 @@ validate_exports (GFile *export, GFile *files, const char *app_id, GError **erro
 }
 
 static gboolean
-collect_extra_data (GKeyFile *metakey, GVariantDict *metadata_dict, GError **error)
+collect_extra_data (GKeyFile *metakey, GFile *files_dir, GVariantDict *metadata_dict, GError **error)
 {
   g_auto(GStrv) keys = NULL;
   g_autoptr(GVariantBuilder) extra_data_sources_builder = NULL;
+  g_autoptr(GVariantBuilder) extra_data_scripts_builder = NULL;
   g_autoptr(GVariant) extra_data_sources = NULL;
+  g_autoptr(GVariant) extra_data_scripts = NULL;
   int i;
+  int source_count = 0;
 
   keys = g_key_file_get_keys (metakey, "Extra Data", NULL, NULL);
   if (keys == NULL)
     return TRUE;
 
   extra_data_sources_builder = g_variant_builder_new (G_VARIANT_TYPE ("a(ayttays)"));
+  extra_data_scripts_builder = g_variant_builder_new (G_VARIANT_TYPE ("a(is)"));
 
   for (i = 0; keys[i] != NULL; i++)
     {
@@ -775,11 +779,108 @@ collect_extra_data (GKeyFile *metakey, GVariantDict *metadata_dict, GError **err
                                  "(^aytt@ay&s)",
                                  name, GUINT64_TO_BE (size), GUINT64_TO_BE (installed_size),
                                  ostree_checksum_to_bytes_v (checksum), uri);
+          source_count++;
+        }
+      else if (g_str_has_prefix (key, "script"))
+        {
+          const char *suffix = key + 6;
+          g_autofree char *script_path = NULL;
+          g_autofree char *checksum_key = NULL;
+          g_autofree char *size_key = NULL;
+          g_autofree char *installed_size_key = NULL;
+          g_autofree char *name_key = NULL;
+          g_autofree char *checksum = NULL;
+          g_autofree char *name = NULL;
+          g_autoptr(GFile) script_file = NULL;
+          g_autofree char *script_content = NULL;
+          gsize script_content_size = 0;
+          guint64 size, installed_size;
+          int current_source_index = source_count;
+
+          checksum_key = g_strconcat ("checksum", suffix, NULL);
+          size_key = g_strconcat ("size", suffix, NULL);
+          installed_size_key = g_strconcat ("installed-size", suffix, NULL);
+          name_key = g_strconcat ("name", suffix, NULL);
+
+          script_path = g_key_file_get_string (metakey, "Extra Data", key, error);
+          if (script_path == NULL)
+            return FALSE;
+
+          if (g_key_file_has_key (metakey, "Extra Data", name_key, NULL))
+            {
+              name = g_key_file_get_string (metakey, "Extra Data", name_key, error);
+              if (name == NULL)
+                return FALSE;
+            }
+          else
+            {
+              g_set_error (error, G_KEY_FILE_ERROR,
+                           G_KEY_FILE_ERROR_INVALID_VALUE,
+                           _("A name must be specified for script-based extra data"));
+              return FALSE;
+            }
+
+          if (strchr (name, '/') != NULL)
+            {
+              g_set_error (error, G_KEY_FILE_ERROR,
+                           G_KEY_FILE_ERROR_INVALID_VALUE,
+                           _("No slashes allowed in extra data name"));
+              return FALSE;
+            }
+
+          checksum = g_key_file_get_string (metakey, "Extra Data", checksum_key, error);
+          if (checksum == NULL)
+            return FALSE;
+
+          if (!ostree_validate_checksum_string (checksum, NULL))
+            {
+              g_set_error (error, G_KEY_FILE_ERROR,
+                           G_KEY_FILE_ERROR_INVALID_VALUE,
+                           _("Invalid format for sha256 checksum: '%s'"), checksum);
+              return FALSE;
+            }
+
+          size = g_key_file_get_uint64 (metakey, "Extra Data", size_key, error);
+          if (size == 0)
+            {
+              if (error != NULL && *error == NULL)
+                g_set_error (error, G_KEY_FILE_ERROR,
+                             G_KEY_FILE_ERROR_INVALID_VALUE,
+                             _("Extra data sizes of zero not supported"));
+              return FALSE;
+            }
+
+          installed_size = g_key_file_get_uint64 (metakey, "Extra Data", installed_size_key, NULL);
+
+          /* Read the script file from the files directory */
+          script_file = g_file_resolve_relative_path (files_dir, script_path);
+          if (!g_file_load_contents (script_file, NULL, &script_content, &script_content_size, NULL, error))
+            {
+              g_prefix_error (error, _("Failed to load extra-data script %s: "), script_path);
+              return FALSE;
+            }
+
+          /* Add to extra-data-sources with an empty URI (script will generate it) */
+          g_variant_builder_add (extra_data_sources_builder,
+                                 "(^aytt@ay&s)",
+                                 name, GUINT64_TO_BE (size), GUINT64_TO_BE (installed_size),
+                                 ostree_checksum_to_bytes_v (checksum), "");
+          source_count++;
+
+          /* Add to extra-data-scripts */
+          g_variant_builder_add (extra_data_scripts_builder,
+                                 "(is)",
+                                 current_source_index,
+                                 script_content);
         }
     }
 
   extra_data_sources = g_variant_ref_sink (g_variant_builder_end (extra_data_sources_builder));
   g_variant_dict_insert_value (metadata_dict, "xa.extra-data-sources", extra_data_sources);
+
+  extra_data_scripts = g_variant_ref_sink (g_variant_builder_end (extra_data_scripts_builder));
+  if (g_variant_n_children (extra_data_scripts) > 0)
+    g_variant_dict_insert_value (metadata_dict, "xa.extra-data-scripts", extra_data_scripts);
 
   return TRUE;
 }
@@ -918,7 +1019,7 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
 
   g_variant_dict_init (&metadata_dict, NULL);
 
-  if (!collect_extra_data (metakey, &metadata_dict, error))
+  if (!collect_extra_data (metakey, files, &metadata_dict, error))
     goto out;
 
   if (!(opt_runtime || is_runtime) &&
