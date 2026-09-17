@@ -12,6 +12,7 @@ project(
 )
 
 add_project_arguments('-D_GNU_SOURCE', language: 'c')
+add_project_arguments('-Wno-missing-field-initializers', language: 'c')
 add_project_arguments('-Wno-unused-local-typedefs', language: 'c')
 
 # We are intentionally using non-ISO features in this (sub)project,
