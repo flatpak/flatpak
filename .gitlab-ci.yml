@@ -15,7 +15,7 @@ stages:
   stage: build
   before_script: *deps_fedora
   script:
-    - meson _build .
+    - meson setup _build .
     - ninja -C _build
     - meson test -C _build
     # Run it again! This previously did not work.
@@ -25,7 +25,7 @@ stages:
     - meson dist -C _build
     - mkdir -p tests/use-as-subproject/subprojects/libglnx
     - tar --strip-components=1 -C tests/use-as-subproject/subprojects/libglnx -xf _build/meson-dist/*.tar.xz
-    - meson tests/use-as-subproject/_build tests/use-as-subproject
+    - meson setup tests/use-as-subproject/_build tests/use-as-subproject
     - ninja -C tests/use-as-subproject/_build
     - meson test -C tests/use-as-subproject/_build
   artifacts:
