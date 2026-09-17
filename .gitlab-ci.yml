@@ -55,6 +55,14 @@ build:fedora-rawhide:
   extends: .build
   image: registry.fedoraproject.org/fedora:rawhide
 
+# Linux 4.19 headers, glibc 2.28, GLib 2.58, Python 3.7, Meson 0.49
+build:debian10:
+  extends: .build
+  image: debian/eol:buster
+  before_script: *deps_debian
+  variables:
+    CAN_MESON_DIST: no
+
 build:debian-stable:
   extends: .build
   image: debian:stable
