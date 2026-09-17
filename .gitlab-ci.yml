@@ -1,16 +1,19 @@
 # Copyright 2019 Endless OS Foundation LLC
 # SPDX-License-Identifier: LGPL-2.0-or-later
 
-image: registry.fedoraproject.org/fedora:30
-
 stages:
   - build
 
-before_script:
+.deps_fedora: &deps_fedora
   - dnf install -y gcc git meson ninja-build "pkgconfig(gio-2.0)" "pkgconfig(gio-unix-2.0)" "pkgconfig(glib-2.0)" xz
 
-build:
+.deps_debian: &deps_debian
+  - apt-get update
+  - apt-get install -y build-essential git meson ninja-build pkg-config libglib2.0-dev xz-utils
+
+.build:
   stage: build
+  before_script: *deps_fedora
   script:
     - meson _build .
     - ninja -C _build
@@ -30,6 +33,28 @@ build:
     name: "libglnx-${CI_COMMIT_REF_NAME}-${CI_JOB_NAME}"
     paths:
       - "${CI_PROJECT_DIR}/_build/meson-logs"
+
+build:fedora30:
+  extends: .build
+  image: registry.fedoraproject.org/fedora:30
+
+build:fedora-latest:
+  extends: .build
+  image: registry.fedoraproject.org/fedora:latest
+
+build:fedora-rawhide:
+  extends: .build
+  image: registry.fedoraproject.org/fedora:rawhide
+
+build:debian-stable:
+  extends: .build
+  image: debian:stable
+  before_script: *deps_debian
+
+build:debian-unstable:
+  extends: .build
+  image: debian:unstable
+  before_script: *deps_debian
 
 reuse:
   stage: build
