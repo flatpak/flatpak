@@ -51,9 +51,9 @@ build:debian-stable:
   image: debian:stable
   before_script: *deps_debian
 
-build:debian-unstable:
+build:debian-testing:
   extends: .build
-  image: debian:unstable
+  image: debian:testing
   before_script: *deps_debian
 
 reuse:
