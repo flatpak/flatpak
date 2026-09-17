@@ -62,10 +62,6 @@ stages:
     paths:
       - "${CI_PROJECT_DIR}/_build/meson-logs"
 
-build:fedora30:
-  extends: .build
-  image: registry.fedoraproject.org/fedora:30
-
 build:fedora-latest:
   extends: .build
   image: registry.fedoraproject.org/fedora:latest
