@@ -39,6 +39,8 @@
 
 G_BEGIN_DECLS
 
+struct file_handle;
+
 /* Irritatingly, g_basename() which is what we want
  * is deprecated.
  */
