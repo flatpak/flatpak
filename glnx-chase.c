@@ -371,6 +371,7 @@ chase_manual (int                 dirfd,
       callback == NULL)
     {
       GlnxChaseFlags open_tree_flags =
+        GLNX_CHASE_NO_AUTOMOUNT |
         (flags & (GLNX_CHASE_NOFOLLOW | GLNX_CHASE_ALL_DEBUG_FLAGS));
 
       return chase_open_tree (dirfd, path, open_tree_flags, error);
