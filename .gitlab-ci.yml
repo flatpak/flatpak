@@ -1,6 +1,9 @@
 # Copyright 2019 Endless OS Foundation LLC
 # SPDX-License-Identifier: LGPL-2.0-or-later
 
+variables:
+  CAN_MESON_DIST: "yes"
+
 stages:
   - build
 
@@ -22,7 +25,13 @@ stages:
     - meson test -C _build
     # Ensure that we can build as a subproject
     - rm -fr _build/meson-dist
-    - meson dist -C _build
+    - |
+      if [ "$CAN_MESON_DIST" = yes ]; then
+        meson dist -C _build
+      else
+        mkdir -p _build/meson-dist
+        git archive --prefix=libglnx/ HEAD | xz > _build/meson-dist/libglnx.tar.xz
+      fi
     - mkdir -p tests/use-as-subproject/subprojects/libglnx
     - tar --strip-components=1 -C tests/use-as-subproject/subprojects/libglnx -xf _build/meson-dist/*.tar.xz
     - meson setup tests/use-as-subproject/_build tests/use-as-subproject
