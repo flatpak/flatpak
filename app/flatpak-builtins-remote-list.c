@@ -60,6 +60,7 @@ static Column all_columns[] = {
   { "description", N_("Description"),  N_("Show description"),       0, FLATPAK_ELLIPSIZE_MODE_END,  1, 0 },
   { "homepage",   N_("Homepage"),      N_("Show homepage"),          0, FLATPAK_ELLIPSIZE_MODE_NONE,  1, 0 },
   { "icon",       N_("Icon"),          N_("Show icon"),              0, FLATPAK_ELLIPSIZE_MODE_NONE,  1, 0 },
+  { "gpg-keys-url", N_("GPG keys URL"), N_("Show the GPG keys URL"), 0, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 0 },
   { NULL }
 };
 
@@ -176,6 +177,14 @@ list_remotes (GPtrArray *dirs, Column *columns, GCancellable *cancellable, GErro
                   int prio = flatpak_dir_get_remote_prio (dir, remote_name);
                   g_autofree char *prio_as_string = g_strdup_printf ("%d", prio);
                   flatpak_table_printer_add_column (printer, prio_as_string);
+                }
+              else if (strcmp (columns[k].name, "gpg-keys-url") == 0)
+                {
+                  g_autofree char *url = flatpak_dir_get_remote_gpg_keys_url (dir, remote_name);
+                  if (url != NULL)
+                    flatpak_table_printer_add_column (printer, url);
+                  else
+                    flatpak_table_printer_add_column (printer, "-");
                 }
               else if (strcmp (columns[k].name, "options") == 0)
                 {

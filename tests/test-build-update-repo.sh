@@ -66,4 +66,10 @@ assert_file_has_content repos/test/config '^default-branch=no-such-branch$'
 
 ok "can update default branch"
 
+${FLATPAK} build-update-repo --gpg-keys-url=https://gpg.keys repos/test >&2
+
+assert_file_has_content repos/test/config '^gpg-keys-url=https://gpg.keys$'
+
+ok "can update GPG keys URL"
+
 done_testing

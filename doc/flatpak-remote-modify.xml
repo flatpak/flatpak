@@ -280,6 +280,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--gpg-keys-url=URL</option></term>
+
+                <listitem><para>
+                    Set a URL to download new GPG keys from, for key updates and rotation.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--signature-lookaside=URL</option></term>
 
                 <listitem><para>
