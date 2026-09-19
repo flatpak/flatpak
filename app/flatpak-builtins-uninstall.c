@@ -632,6 +632,8 @@ flatpak_complete_uninstall (FlatpakCompletion *completion)
           flatpak_complete_partial_ref (completion, kinds, opt_arch, dir, NULL);
         }
 
+      flatpak_complete_ref_id_flush (completion);
+
       break;
     }
 
