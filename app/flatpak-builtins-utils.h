@@ -150,6 +150,10 @@ Column *handle_column_args (Column      *all_columns,
                             GError     **error);
 
 char *  format_timestamp (guint64 timestamp);
+char *  format_progress_remaining_time (guint64 bytes_transferred,
+                                        guint64 bytes_total,
+                                        guint64 bytes_per_second,
+                                        gboolean estimating);
 
 
 char *  ellipsize_string (const char *text,

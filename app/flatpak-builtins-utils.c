@@ -1001,6 +1001,43 @@ format_timestamp (guint64 timestamp)
   return str;
 }
 
+static char *
+format_duration (guint64 duration)
+{
+  int h, m, s;
+
+  m = duration / 60;
+  s = duration % 60;
+  h = m / 60;
+  m = m % 60;
+
+  if (h > 0)
+    return g_strdup_printf ("%02d:%02d:%02d", h, m, s);
+  else
+    return g_strdup_printf ("%02d:%02d", m, s);
+}
+
+char *
+format_progress_remaining_time (guint64 bytes_transferred,
+                                guint64 bytes_total,
+                                guint64 bytes_per_second,
+                                gboolean estimating)
+{
+  guint64 bytes_remaining;
+  double remaining_seconds;
+
+  if (estimating || bytes_total == 0 || bytes_per_second == 0 || bytes_transferred >= bytes_total)
+    return NULL;
+
+  bytes_remaining = bytes_total - bytes_transferred;
+  remaining_seconds = bytes_remaining / (double) bytes_per_second;
+
+  if (remaining_seconds < 1.0)
+    return NULL;
+
+  return format_duration ((guint64) remaining_seconds);
+}
+
 char *
 ellipsize_string (const char *text, int len)
 {
