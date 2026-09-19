@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak git\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2026-08-27 19:12+0000\n"
-"PO-Revision-Date: 2026-09-18 15:57+0200\n"
+"POT-Creation-Date: 2026-09-18 15:48+0000\n"
+"PO-Revision-Date: 2026-09-19 06:28+0200\n"
 "Last-Translator: Ekaterine Papava <papava.e@gtu.ge>\n"
 "Language-Team: Georgian <(nothing)>\n"
 "Language: ka\n"
@@ -30,7 +30,7 @@ msgstr "ასაგების პაკეტის არქიტექტ�
 #: app/flatpak-builtins-build-export.c:62 app/flatpak-builtins-build-init.c:53
 #: app/flatpak-builtins-build-sign.c:42 app/flatpak-builtins-create-usb.c:46
 #: app/flatpak-builtins-info.c:55 app/flatpak-builtins-install.c:67
-#: app/flatpak-builtins-list.c:50 app/flatpak-builtins-make-current.c:38
+#: app/flatpak-builtins-list.c:51 app/flatpak-builtins-make-current.c:38
 #: app/flatpak-builtins-remote-info.c:54 app/flatpak-builtins-remote-ls.c:56
 #: app/flatpak-builtins-run.c:158 app/flatpak-builtins-search.c:37
 #: app/flatpak-builtins-uninstall.c:54 app/flatpak-builtins-update.c:56
@@ -143,7 +143,7 @@ msgstr "მდებარეობის, ფაილის სახელი
 #: app/flatpak-builtins-document-unexport.c:70
 #: app/flatpak-builtins-history.c:482 app/flatpak-builtins-info.c:130
 #: app/flatpak-builtins-install.c:181 app/flatpak-builtins-install.c:234
-#: app/flatpak-builtins-install.c:298 app/flatpak-builtins-list.c:419
+#: app/flatpak-builtins-install.c:298 app/flatpak-builtins-list.c:424
 #: app/flatpak-builtins-make-current.c:72 app/flatpak-builtins-override.c:73
 #: app/flatpak-builtins-permission-list.c:162
 #: app/flatpak-builtins-permission-remove.c:132
@@ -658,7 +658,7 @@ msgid "Change the runtime used for the app"
 msgstr "აპისთვის გამოყენებული გაშვების გარემოს შეცვლა"
 
 #: app/flatpak-builtins-build-finish.c:60 app/flatpak-builtins-build-init.c:54
-#: app/flatpak-builtins-list.c:53 app/flatpak-builtins-remote-ls.c:58
+#: app/flatpak-builtins-list.c:55 app/flatpak-builtins-remote-ls.c:58
 #: app/flatpak-builtins-run.c:163
 msgid "RUNTIME"
 msgstr "RUNTIME"
@@ -1383,21 +1383,21 @@ msgid "Not exported\n"
 msgstr "გატანილი არაა\n"
 
 #: app/flatpak-builtins-document-list.c:43 app/flatpak-builtins-history.c:53
-#: app/flatpak-builtins-list.c:54 app/flatpak-builtins-ps.c:43
+#: app/flatpak-builtins-list.c:56 app/flatpak-builtins-ps.c:43
 #: app/flatpak-builtins-remote-list.c:45 app/flatpak-builtins-remote-ls.c:59
 #: app/flatpak-builtins-search.c:38
 msgid "What information to show"
 msgstr "რა ინფორმაცია ვაჩვენო"
 
 #: app/flatpak-builtins-document-list.c:43 app/flatpak-builtins-history.c:53
-#: app/flatpak-builtins-list.c:54 app/flatpak-builtins-ps.c:43
+#: app/flatpak-builtins-list.c:56 app/flatpak-builtins-ps.c:43
 #: app/flatpak-builtins-remote-list.c:45 app/flatpak-builtins-remote-ls.c:59
 #: app/flatpak-builtins-search.c:38
 msgid "FIELD,…"
 msgstr "FIELD,…"
 
 #: app/flatpak-builtins-document-list.c:44 app/flatpak-builtins-history.c:54
-#: app/flatpak-builtins-list.c:52 app/flatpak-builtins-permission-list.c:43
+#: app/flatpak-builtins-list.c:53 app/flatpak-builtins-permission-list.c:43
 #: app/flatpak-builtins-permission-show.c:43 app/flatpak-builtins-ps.c:44
 #: app/flatpak-builtins-remote-list.c:46 app/flatpak-builtins-remote-ls.c:63
 #: app/flatpak-builtins-repo.c:717 app/flatpak-builtins-search.c:39
@@ -1417,7 +1417,7 @@ msgstr "მისამართი"
 msgid "Show the document path"
 msgstr "დოკუმენტის ბილიკის ჩვენება"
 
-#: app/flatpak-builtins-document-list.c:51 app/flatpak-builtins-list.c:66
+#: app/flatpak-builtins-document-list.c:51 app/flatpak-builtins-list.c:68
 #: app/flatpak-builtins-remote-ls.c:74
 msgid "Origin"
 msgstr "საწყისი"
@@ -1565,12 +1565,12 @@ msgstr "შეცვლა"
 msgid "Show the kind of change"
 msgstr "ცვლილების ტიპის ჩვენება"
 
-#: app/flatpak-builtins-history.c:61 app/flatpak-builtins-list.c:68
+#: app/flatpak-builtins-history.c:61 app/flatpak-builtins-list.c:70
 #: app/flatpak-builtins-remote-ls.c:75 app/flatpak-builtins-repo.c:335
 msgid "Ref"
 msgstr "ბმა"
 
-#: app/flatpak-builtins-history.c:61 app/flatpak-builtins-list.c:68
+#: app/flatpak-builtins-history.c:61 app/flatpak-builtins-list.c:70
 #: app/flatpak-builtins-remote-ls.c:75
 msgid "Show the ref"
 msgstr "მიმართვის ჩვენება"
@@ -1579,29 +1579,29 @@ msgstr "მიმართვის ჩვენება"
 msgid "Show the application/runtime ID"
 msgstr "აპლიკაციის/გაშვების გარემოს ID-ის ჩვენება"
 
-#: app/flatpak-builtins-history.c:63 app/flatpak-builtins-list.c:64
+#: app/flatpak-builtins-history.c:63 app/flatpak-builtins-list.c:66
 #: app/flatpak-builtins-ps.c:53 app/flatpak-builtins-remote-ls.c:73
 #: app/flatpak-cli-transaction.c:1432
 msgid "Arch"
 msgstr "არქიტექტურა"
 
-#: app/flatpak-builtins-history.c:63 app/flatpak-builtins-list.c:64
+#: app/flatpak-builtins-history.c:63 app/flatpak-builtins-list.c:66
 #: app/flatpak-builtins-ps.c:53 app/flatpak-builtins-remote-ls.c:73
 msgid "Show the architecture"
 msgstr "არქიტექტურის ჩვენება"
 
-#: app/flatpak-builtins-history.c:64 app/flatpak-builtins-list.c:63
+#: app/flatpak-builtins-history.c:64 app/flatpak-builtins-list.c:65
 #: app/flatpak-builtins-ps.c:54 app/flatpak-builtins-remote-ls.c:72
 #: app/flatpak-builtins-search.c:48 app/flatpak-cli-transaction.c:1435
 msgid "Branch"
 msgstr "ბრენჩი"
 
-#: app/flatpak-builtins-history.c:64 app/flatpak-builtins-list.c:63
+#: app/flatpak-builtins-history.c:64 app/flatpak-builtins-list.c:65
 #: app/flatpak-builtins-remote-ls.c:72
 msgid "Show the branch"
 msgstr "ბრენჩის ჩვენება"
 
-#: app/flatpak-builtins-history.c:65 app/flatpak-builtins-list.c:67
+#: app/flatpak-builtins-history.c:65 app/flatpak-builtins-list.c:69
 msgid "Installation"
 msgstr "დაყენება"
 
@@ -1654,7 +1654,7 @@ msgstr "ხელსაწყო"
 msgid "Show the tool that was used"
 msgstr "გამოყენებული პროგრამის ჩვენება"
 
-#: app/flatpak-builtins-history.c:72 app/flatpak-builtins-list.c:62
+#: app/flatpak-builtins-history.c:72 app/flatpak-builtins-list.c:64
 #: app/flatpak-builtins-remote-ls.c:71 app/flatpak-builtins-search.c:47
 msgid "Version"
 msgstr "ვერსია"
@@ -2072,127 +2072,131 @@ msgstr "მიწოდებული დამატებითი არგ�
 msgid "Must specify the app to kill"
 msgstr "მოსაკლავი აპლიკაციის მითითება აუცილებელია"
 
-#: app/flatpak-builtins-list.c:47
+#: app/flatpak-builtins-list.c:48
 msgid "Show extra information"
 msgstr "დამატებითი ინფორმაციის ჩვენება"
 
-#: app/flatpak-builtins-list.c:48
+#: app/flatpak-builtins-list.c:49
 msgid "List installed runtimes"
 msgstr "დაყენებული გაშვების გარემოების ჩვენება"
 
-#: app/flatpak-builtins-list.c:49
+#: app/flatpak-builtins-list.c:50
 msgid "List installed applications"
 msgstr "დაყენებული აპლიკაციების სია"
 
-#: app/flatpak-builtins-list.c:50
+#: app/flatpak-builtins-list.c:51
 msgid "Arch to show"
 msgstr "საჩვენებელი არქიტექტურა"
 
-#: app/flatpak-builtins-list.c:51 app/flatpak-builtins-remote-ls.c:57
+#: app/flatpak-builtins-list.c:52 app/flatpak-builtins-remote-ls.c:57
 msgid "List all refs (including locale/debug)"
 msgstr "ყველა მიმართვის სია (ლოკალის/გამართვის ჩათვლით)"
 
-#: app/flatpak-builtins-list.c:53 app/flatpak-builtins-remote-ls.c:58
+#: app/flatpak-builtins-list.c:54
+msgid "Show sizes in bytes"
+msgstr "ზომის ბაიტებში ჩვენება"
+
+#: app/flatpak-builtins-list.c:55 app/flatpak-builtins-remote-ls.c:58
 msgid "List all applications using RUNTIME"
 msgstr "აპლიკაციების სია, რომლებიც ამ გაშვების გარემოს იყენებენ"
 
-#: app/flatpak-builtins-list.c:59 app/flatpak-builtins-remote-list.c:51
+#: app/flatpak-builtins-list.c:61 app/flatpak-builtins-remote-list.c:51
 #: app/flatpak-builtins-remote-ls.c:68 app/flatpak-builtins-search.c:44
 msgid "Name"
 msgstr "სახელი"
 
-#: app/flatpak-builtins-list.c:59 app/flatpak-builtins-remote-list.c:51
+#: app/flatpak-builtins-list.c:61 app/flatpak-builtins-remote-list.c:51
 #: app/flatpak-builtins-remote-ls.c:68 app/flatpak-builtins-search.c:44
 msgid "Show the name"
 msgstr "სახელის ჩვენება"
 
-#: app/flatpak-builtins-list.c:60 app/flatpak-builtins-remote-list.c:60
+#: app/flatpak-builtins-list.c:62 app/flatpak-builtins-remote-list.c:60
 #: app/flatpak-builtins-remote-ls.c:69 app/flatpak-builtins-search.c:45
 msgid "Description"
 msgstr "აღწერა"
 
-#: app/flatpak-builtins-list.c:60 app/flatpak-builtins-remote-ls.c:69
+#: app/flatpak-builtins-list.c:62 app/flatpak-builtins-remote-ls.c:69
 #: app/flatpak-builtins-search.c:45
 msgid "Show the description"
 msgstr "აღწერის ჩვენება"
 
-#: app/flatpak-builtins-list.c:61 app/flatpak-builtins-remote-ls.c:70
+#: app/flatpak-builtins-list.c:63 app/flatpak-builtins-remote-ls.c:70
 #: app/flatpak-builtins-search.c:46
 msgid "Application ID"
 msgstr "აპლიკაციის ID"
 
-#: app/flatpak-builtins-list.c:61 app/flatpak-builtins-ps.c:52
+#: app/flatpak-builtins-list.c:63 app/flatpak-builtins-ps.c:52
 #: app/flatpak-builtins-remote-ls.c:70 app/flatpak-builtins-search.c:46
 msgid "Show the application ID"
 msgstr "აპლიკაციის ID-ის ჩვენება"
 
-#: app/flatpak-builtins-list.c:62 app/flatpak-builtins-remote-ls.c:71
+#: app/flatpak-builtins-list.c:64 app/flatpak-builtins-remote-ls.c:71
 #: app/flatpak-builtins-search.c:47
 msgid "Show the version"
 msgstr "ვერსიის ჩვენება"
 
-#: app/flatpak-builtins-list.c:65 app/flatpak-builtins-ps.c:56
+#: app/flatpak-builtins-list.c:67 app/flatpak-builtins-ps.c:56
 #: app/flatpak-builtins-remote-ls.c:77
 msgid "Runtime"
 msgstr "აქტივობა"
 
-#: app/flatpak-builtins-list.c:65
+#: app/flatpak-builtins-list.c:67
 msgid "Show the used runtime"
 msgstr "გამოყენებული გაშვების გარემოს ჩვენება"
 
-#: app/flatpak-builtins-list.c:66 app/flatpak-builtins-remote-ls.c:74
+#: app/flatpak-builtins-list.c:68 app/flatpak-builtins-remote-ls.c:74
 msgid "Show the origin remote"
 msgstr "საწყისი დაშორებულის ჩვენება"
 
-#: app/flatpak-builtins-list.c:67
+#: app/flatpak-builtins-list.c:69
 msgid "Show the installation"
 msgstr "დაყენების ჩვენება"
 
-#: app/flatpak-builtins-list.c:69
+#: app/flatpak-builtins-list.c:71
 msgid "Active commit"
 msgstr "აქტიური კომიტი"
 
-#: app/flatpak-builtins-list.c:69 app/flatpak-builtins-remote-ls.c:76
+#: app/flatpak-builtins-list.c:71 app/flatpak-builtins-remote-ls.c:76
 msgid "Show the active commit"
 msgstr "აქტიური კომიტის ჩვენება"
 
-#: app/flatpak-builtins-list.c:70
+#: app/flatpak-builtins-list.c:72
 msgid "Latest commit"
 msgstr "უახლესი კომიტი"
 
-#: app/flatpak-builtins-list.c:70
+#: app/flatpak-builtins-list.c:72
 msgid "Show the latest commit"
 msgstr "უახლესი კომიტის ჩვენება"
 
-#: app/flatpak-builtins-list.c:71 app/flatpak-builtins-remote-ls.c:78
+#: app/flatpak-builtins-list.c:73 app/flatpak-builtins-remote-ls.c:78
 msgid "Installed size"
 msgstr "დაყენებული ზომა"
 
-#: app/flatpak-builtins-list.c:71 app/flatpak-builtins-remote-ls.c:78
+#: app/flatpak-builtins-list.c:73 app/flatpak-builtins-remote-ls.c:78
 msgid "Show the installed size"
 msgstr "დაყენებული ზომის ჩვენება"
 
-#: app/flatpak-builtins-list.c:72 app/flatpak-builtins-remote-list.c:58
+#: app/flatpak-builtins-list.c:74 app/flatpak-builtins-remote-list.c:58
 #: app/flatpak-builtins-remote-ls.c:80 app/flatpak-builtins-repo.c:340
 msgid "Options"
 msgstr "მორგება"
 
-#: app/flatpak-builtins-list.c:72 app/flatpak-builtins-remote-list.c:58
+#: app/flatpak-builtins-list.c:74 app/flatpak-builtins-remote-list.c:58
 #: app/flatpak-builtins-remote-ls.c:80
 msgid "Show options"
 msgstr "პარამეტრების ჩვენება"
 
-#: app/flatpak-builtins-list.c:180
+#: app/flatpak-builtins-list.c:182
 #, c-format
 msgid "Unable to load details of %s: %s"
 msgstr "%s-ის დეტალების ჩატვირთვა შეუძლებელია: %s"
 
-#: app/flatpak-builtins-list.c:190
+#: app/flatpak-builtins-list.c:192
 #, c-format
 msgid "Unable to inspect current version of %s: %s"
 msgstr "%s-ის მიმდინარე ვერსიის ინსპექტირება შეუძლებელია: %s"
 
-#: app/flatpak-builtins-list.c:408
+#: app/flatpak-builtins-list.c:413
 msgid " - List installed apps and/or runtimes"
 msgstr " - დაყენებული აპებისა და გაშვების გარემოების სია"
 
@@ -3182,7 +3186,7 @@ msgstr "FD-ის გამოყენება აპის /app-ის მა
 
 #: app/flatpak-builtins-run.c:183 app/flatpak-builtins-run.c:185
 #: app/flatpak-builtins-run.c:187 app/flatpak-builtins-run.c:188
-#: common/flatpak-context.c:2713
+#: common/flatpak-context.c:2737
 msgid "FD"
 msgstr "FD"
 
@@ -4389,39 +4393,39 @@ msgstr "გაზიარებულის უცნობი ტიპი %s.
 msgid "Unknown policy type %s, valid types are: %s"
 msgstr "პოლიტიკის უცნობი ტიპი %s. სწორი ტიპებია %s"
 
-#: common/flatpak-context.c:1307
+#: common/flatpak-context.c:1331
 #, c-format
 msgid "Invalid dbus name %s"
 msgstr "არასწორი dbus სახელი %s"
 
-#: common/flatpak-context.c:1320
+#: common/flatpak-context.c:1344
 #, c-format
 msgid "Unknown socket type %s, valid types are: %s"
 msgstr "სოკეტის უცნობი ტიპი %s. სწორი ტიპებია %s"
 
-#: common/flatpak-context.c:1335
+#: common/flatpak-context.c:1359
 #, c-format
 msgid "Unknown device type %s, valid types are: %s"
 msgstr "მოწყობილობის უცნობი ტიპი %s. სწორი ტიპებია %s"
 
-#: common/flatpak-context.c:1349
+#: common/flatpak-context.c:1373
 #, c-format
 msgid "Unknown feature type %s, valid types are: %s"
 msgstr "თვისების უცნობი ტიპი %s. სწორი ტიპებია %s"
 
-#: common/flatpak-context.c:1881
+#: common/flatpak-context.c:1905
 #, c-format
 msgid "Filesystem location \"%s\" contains \"..\""
 msgstr "ფაილური სისტემის ბილიკი \"%s\" \"..\"-ს შეიცავს"
 
-#: common/flatpak-context.c:1923
+#: common/flatpak-context.c:1947
 msgid ""
 "--filesystem=/ is not available, use --filesystem=host for a similar result"
 msgstr ""
 "--filesystem=/ ხელმისაწვდომი არაა. მსგავსი შედეგისთვის გამოიყენეთ --"
 "filesystem=host"
 
-#: common/flatpak-context.c:1957
+#: common/flatpak-context.c:1981
 #, c-format
 msgid ""
 "Unknown filesystem location %s, valid locations are: host, host-os, host-"
@@ -4430,252 +4434,252 @@ msgstr ""
 "უცნობი ფაილური სისტემის მდებარეობა %s. სწორი მდებარეობებია: host, host-os, "
 "host-etc, host-root, home, xdg-*[/…], ~/dir, /dir"
 
-#: common/flatpak-context.c:2056
+#: common/flatpak-context.c:2080
 #, c-format
 msgid "Invalid syntax for %s: %s"
 msgstr "არასწორი სინტაქსი %s-ისთვის: %s"
 
-#: common/flatpak-context.c:2183
+#: common/flatpak-context.c:2207
 msgid "fallback-x11 can not be conditional"
 msgstr "fallback-x11 პირობის შემცველი ვერ იქნება"
 
-#: common/flatpak-context.c:2359
+#: common/flatpak-context.c:2383
 #, c-format
 msgid "Invalid env format %s"
 msgstr "არასწორი გარემოს ფორმატი %s"
 
-#: common/flatpak-context.c:2440
+#: common/flatpak-context.c:2464
 #, c-format
 msgid "Environment variable name must not contain '=': %s"
 msgstr "გარემოს ცვლადის სახელი \"=\" -ს არ შეიძლება შეიცავდეს: %s"
 
-#: common/flatpak-context.c:2568 common/flatpak-context.c:2576
+#: common/flatpak-context.c:2592 common/flatpak-context.c:2600
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 "--add-policy პარამეტრის არგუმენტები ქვესისტემა.პარამეტრი=მნიშვნელობა "
 "ფორმატში უნდა იყოს"
 
-#: common/flatpak-context.c:2583
+#: common/flatpak-context.c:2607
 msgid "--add-policy values can't start with \"!\""
 msgstr "--add-policy-ის მნიშვნელობები \"!\"-ით არ შეიძლება, იწყებოდეს"
 
-#: common/flatpak-context.c:2608 common/flatpak-context.c:2616
+#: common/flatpak-context.c:2632 common/flatpak-context.c:2640
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 "--remove-policy-ის არგუმენტები ქვესისტემა.პარამეტრი=მნიშვნელობა ფორმატში "
 "უნდა იყოს"
 
-#: common/flatpak-context.c:2623
+#: common/flatpak-context.c:2647
 msgid "--remove-policy values can't start with \"!\""
 msgstr "--remove-policy-ის მნიშვნელობები \"!\"-ით არ შეიძლება, იწყებოდეს"
 
-#: common/flatpak-context.c:2698
+#: common/flatpak-context.c:2722
 msgid "Share with host"
 msgstr "ჰოსტთან გაზიარება"
 
-#: common/flatpak-context.c:2698 common/flatpak-context.c:2699
+#: common/flatpak-context.c:2722 common/flatpak-context.c:2723
 msgid "SHARE"
 msgstr "გაზიარება"
 
-#: common/flatpak-context.c:2699
+#: common/flatpak-context.c:2723
 msgid "Unshare with host"
 msgstr "ჰოსტთან გაზიარების მოხსნა"
 
-#: common/flatpak-context.c:2700
+#: common/flatpak-context.c:2724
 msgid "Require conditions to be met for a subsystem to get shared"
 msgstr "პირობების შესრულების მოთხოვნა ქვესისტემის გასაზიარებლად"
 
-#: common/flatpak-context.c:2700
+#: common/flatpak-context.c:2724
 msgid "SHARE:CONDITION"
 msgstr "გაზიარებული:პირობა"
 
-#: common/flatpak-context.c:2701
+#: common/flatpak-context.c:2725
 msgid "Expose socket to app"
 msgstr "სოკეტის გამოჩენა აპისთვის"
 
-#: common/flatpak-context.c:2701 common/flatpak-context.c:2702
+#: common/flatpak-context.c:2725 common/flatpak-context.c:2726
 msgid "SOCKET"
 msgstr "სოკეტი"
 
-#: common/flatpak-context.c:2702
+#: common/flatpak-context.c:2726
 msgid "Don't expose socket to app"
 msgstr "აპი სოკეტს  ვერ დაინახავს"
 
-#: common/flatpak-context.c:2703
+#: common/flatpak-context.c:2727
 msgid "Require conditions to be met for a socket to get exposed"
 msgstr "პირობების შესრულების მოთხოვნა სოკეტის გასაზიარებლად"
 
-#: common/flatpak-context.c:2703
+#: common/flatpak-context.c:2727
 msgid "SOCKET:CONDITION"
 msgstr "სოკეტი:პირობა"
 
-#: common/flatpak-context.c:2704
+#: common/flatpak-context.c:2728
 msgid "Expose device to app"
 msgstr "მოწყობილობის გამოჩენა აპისთვის"
 
-#: common/flatpak-context.c:2704 common/flatpak-context.c:2705
+#: common/flatpak-context.c:2728 common/flatpak-context.c:2729
 msgid "DEVICE"
 msgstr "მოწყობილობა"
 
-#: common/flatpak-context.c:2705
+#: common/flatpak-context.c:2729
 msgid "Don't expose device to app"
 msgstr "აპი მოწყობილობას ვერ დაინახავს"
 
-#: common/flatpak-context.c:2706
+#: common/flatpak-context.c:2730
 msgid "Require conditions to be met for a device to get exposed"
 msgstr "პირობების შესრულების მოთხოვნა მოწყობილობის გასაზიარებლად"
 
-#: common/flatpak-context.c:2706
+#: common/flatpak-context.c:2730
 msgid "DEVICE:CONDITION"
 msgstr "მოწყობილობა:პირობა"
 
-#: common/flatpak-context.c:2707
+#: common/flatpak-context.c:2731
 msgid "Allow feature"
 msgstr "ფუნქციის დაშვება"
 
-#: common/flatpak-context.c:2707 common/flatpak-context.c:2708
+#: common/flatpak-context.c:2731 common/flatpak-context.c:2732
 msgid "FEATURE"
 msgstr "თვისება"
 
-#: common/flatpak-context.c:2708
+#: common/flatpak-context.c:2732
 msgid "Don't allow feature"
 msgstr "ფუნქციის არ-დაშვება"
 
-#: common/flatpak-context.c:2709
+#: common/flatpak-context.c:2733
 msgid "Require conditions to be met for a feature to get allowed"
 msgstr "პირობების შესრულების მოთხოვნა თვისების გასაზიარებლად"
 
-#: common/flatpak-context.c:2709
+#: common/flatpak-context.c:2733
 msgid "FEATURE:CONDITION"
 msgstr "თვისება:პირობა"
 
-#: common/flatpak-context.c:2710
+#: common/flatpak-context.c:2734
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr "აპისთვის ფაილური სისტემის დანახება (მხოლოდ-კითხვისთვის :ro)"
 
-#: common/flatpak-context.c:2710
+#: common/flatpak-context.c:2734
 msgid "FILESYSTEM[:ro]"
 msgstr "FILESYSTEM[:ro]"
 
-#: common/flatpak-context.c:2711
+#: common/flatpak-context.c:2735
 msgid "Don't expose filesystem to app"
 msgstr "აპი ფაილურ სისტემას ვერ დაინახავს"
 
-#: common/flatpak-context.c:2711
+#: common/flatpak-context.c:2735
 msgid "FILESYSTEM"
 msgstr "FILESYSTEM"
 
-#: common/flatpak-context.c:2712
+#: common/flatpak-context.c:2736
 msgid "Set environment variable"
 msgstr "გარემოს ცვლადის დაყენება"
 
-#: common/flatpak-context.c:2712
+#: common/flatpak-context.c:2736
 msgid "VAR=VALUE"
 msgstr "VAR=VALUE"
 
-#: common/flatpak-context.c:2713
+#: common/flatpak-context.c:2737
 msgid "Read environment variables in env -0 format from FD"
 msgstr "გარემოს ცვლადების წაკითხვა გარემოში -0 ფორმატით FD-დან"
 
-#: common/flatpak-context.c:2714
+#: common/flatpak-context.c:2738
 msgid "Remove variable from environment"
 msgstr "გარემოდან ცვლადის წაშლა"
 
-#: common/flatpak-context.c:2714
+#: common/flatpak-context.c:2738
 msgid "VAR"
 msgstr "VAR"
 
-#: common/flatpak-context.c:2715
+#: common/flatpak-context.c:2739
 msgid "Allow app to own name on the session bus"
 msgstr "აპისთვის სესიის მატარებელზე საკუთარი სახელის ქონის ნების დართვა"
 
-#: common/flatpak-context.c:2715 common/flatpak-context.c:2716
-#: common/flatpak-context.c:2717 common/flatpak-context.c:2718
-#: common/flatpak-context.c:2719 common/flatpak-context.c:2720
-#: common/flatpak-context.c:2721
+#: common/flatpak-context.c:2739 common/flatpak-context.c:2740
+#: common/flatpak-context.c:2741 common/flatpak-context.c:2742
+#: common/flatpak-context.c:2743 common/flatpak-context.c:2744
+#: common/flatpak-context.c:2745
 msgid "DBUS_NAME"
 msgstr "DBUS_NAME"
 
-#: common/flatpak-context.c:2716
+#: common/flatpak-context.c:2740
 msgid "Allow app to talk to name on the session bus"
 msgstr "აპისთვის სესიის მატარებელზე სახელთან ლაპარაკის ნების დართვა"
 
-#: common/flatpak-context.c:2717
+#: common/flatpak-context.c:2741
 msgid "Don't allow app to talk to name on the session bus"
 msgstr "აპისთვის სესიის მატარებელზე სახელთან ლაპარაკის აკრძალვა"
 
-#: common/flatpak-context.c:2718
+#: common/flatpak-context.c:2742
 msgid "Allow app to own name on the system bus"
 msgstr "აპისთვის სისტემურ მატარებელზე საკუთარი სახელის ქონის ნების დართვა"
 
-#: common/flatpak-context.c:2719
+#: common/flatpak-context.c:2743
 msgid "Allow app to talk to name on the system bus"
 msgstr "აპისთვის სესიის მატარებელზე სახელთან ლაპარაკის ნების დართვა"
 
-#: common/flatpak-context.c:2720
+#: common/flatpak-context.c:2744
 msgid "Don't allow app to talk to name on the system bus"
 msgstr "აპისთვის სისტემურ მატარებელზე სახელთან ლაპარაკის აკრძალვა"
 
-#: common/flatpak-context.c:2721
+#: common/flatpak-context.c:2745
 msgid "Allow app to own name on the a11y bus"
 msgstr "აპისთვის a11y მატარებელზე საკუთარი სახელის ქონის ნების დართვა"
 
-#: common/flatpak-context.c:2722
+#: common/flatpak-context.c:2746
 msgid "Add generic policy option"
 msgstr "ზოგადი პოლიტიკის პარამეტრის დამატება"
 
-#: common/flatpak-context.c:2722 common/flatpak-context.c:2723
+#: common/flatpak-context.c:2746 common/flatpak-context.c:2747
 msgid "SUBSYSTEM.KEY=VALUE"
 msgstr "ქვესისტემა.პარამეტრი=მნიშვნელობა"
 
-#: common/flatpak-context.c:2723
+#: common/flatpak-context.c:2747
 msgid "Remove generic policy option"
 msgstr "ზოგადი პოლიტიკის პარამეტრის წაშლა"
 
-#: common/flatpak-context.c:2724
+#: common/flatpak-context.c:2748
 msgid "Add USB device to enumerables"
 msgstr "USB მოწყობილობის დამატება ჩამოთვლადებსი"
 
-#: common/flatpak-context.c:2724 common/flatpak-context.c:2725
+#: common/flatpak-context.c:2748 common/flatpak-context.c:2749
 msgid "VENDOR_ID:PRODUCT_ID"
 msgstr "VENDOR_ID:PRODUCT_ID"
 
-#: common/flatpak-context.c:2725
+#: common/flatpak-context.c:2749
 msgid "Add USB device to hidden list"
 msgstr "USB მოწყობილობის დამატება დამალულების სიაში"
 
-#: common/flatpak-context.c:2726
+#: common/flatpak-context.c:2750
 msgid "A list of USB devices that are enumerable"
 msgstr "USB მოწყობილობების სია, რომლებიც ჩამოთვლადია"
 
-#: common/flatpak-context.c:2726
+#: common/flatpak-context.c:2750
 msgid "LIST"
 msgstr "სია"
 
-#: common/flatpak-context.c:2727
+#: common/flatpak-context.c:2751
 msgid "File containing a list of USB devices to make enumerable"
 msgstr ""
 "ფაილი, რომელიც შეიცავს USB მოწყობილობების სიას ჩამოთვლადების შესაქმნელად"
 
-#: common/flatpak-context.c:2727 common/flatpak-context.c:2728
+#: common/flatpak-context.c:2751 common/flatpak-context.c:2752
 msgid "FILENAME"
 msgstr "ფაილის სახელი"
 
-#: common/flatpak-context.c:2728
+#: common/flatpak-context.c:2752
 msgid "Persist home directory subpath"
 msgstr "მუდმივი ბილიკი საწყის საქაღალდემდე"
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-context.c:2730
+#: common/flatpak-context.c:2754
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "გაშვებული სესია მოთხოვნილი არ იქნება (cgroup-ები არ შეიქმნება)"
 
-#: common/flatpak-context.c:3763
+#: common/flatpak-context.c:3789
 #, c-format
 msgid "Not replacing \"%s\" with tmpfs: %s"
 msgstr "\"%s\" tmpfs-ით არ ჩანაცვლდება: %s"
 
-#: common/flatpak-context.c:3771
+#: common/flatpak-context.c:3797
 #, c-format
 msgid "Not sharing \"%s\" with sandbox: %s"
 msgstr "\"%s\" სენდბოქსთან არ გაზიარდება: %s"
@@ -4684,12 +4688,12 @@ msgstr "\"%s\" სენდბოქსთან არ გაზიარდე
 #. * the path not existing, it seems reasonable to make more of a fuss
 #. * about the home directory not existing or otherwise being unusable,
 #. * so this is intentionally not using cannot_export()
-#: common/flatpak-context.c:3873
+#: common/flatpak-context.c:3899
 #, c-format
 msgid "Not allowing home directory access: %s"
 msgstr "საწყის საქაღალდესთან წვდომა მინიჭებული არ იქნება: %s"
 
-#: common/flatpak-context.c:4107
+#: common/flatpak-context.c:4133
 #, c-format
 msgid "Unable to provide a temporary home directory in the sandbox: %s"
 msgstr "დროებითი საწყისი საქაღალდის მიწოდება შეუძლებელია სენდბოქსში: %s"
