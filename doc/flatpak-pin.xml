@@ -62,6 +62,15 @@ org.some.Runtime/arm
         </para>
         <para>
           To list the current set of pins, run this command without any patterns.
+          When writing to an interactive terminal, the list includes the number
+          of installed runtimes matched by each pattern. When output is not
+          interactive, each configured pattern is printed on its own line
+          without match counts.
+        </para>
+        <para>
+          When shell completion is available, completion after
+          <option>--remove</option> offers the configured patterns from the
+          selected installation.
         </para>
     </refsect1>
 
