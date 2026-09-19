@@ -2781,6 +2781,7 @@ flatpak_parse_repofile (const char   *remote_name,
   g_autofree char *uri = NULL;
   g_autofree char *title = NULL;
   g_autofree char *gpg_key = NULL;
+  g_autofree char *gpg_key_file = NULL;
   g_autofree char *signature_lookaside = NULL;
   g_autofree char *collection_id = NULL;
   g_autofree char *default_branch = NULL;
@@ -2854,6 +2855,18 @@ flatpak_parse_repofile (const char   *remote_name,
 
   gpg_key = g_key_file_get_string (keyfile, source_group,
                                    FLATPAK_REPO_GPGKEY_KEY, NULL);
+  gpg_key_file = g_key_file_get_string (keyfile, source_group,
+                                        FLATPAK_REPO_GPGKEY_FILE_KEY, NULL);
+  if (gpg_key != NULL && gpg_key_file != NULL)
+    {
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                          _("Invalid %s: Only one of ‘%s’ or ‘%s’ may be set"),
+                          from_ref ? ".flatpakref" : ".flatpakrepo",
+                          FLATPAK_REPO_GPGKEY_KEY,
+                          FLATPAK_REPO_GPGKEY_FILE_KEY);
+      return NULL;
+    }
+
   if (gpg_key != NULL)
     {
       guchar *decoded;
@@ -2869,6 +2882,37 @@ flatpak_parse_repofile (const char   *remote_name,
         }
 
       gpg_data = g_bytes_new_take (decoded, decoded_len);
+      g_key_file_set_boolean (config, group, "gpg-verify", TRUE);
+    }
+  else if (gpg_key_file != NULL)
+    {
+      g_autofree char *contents = NULL;
+      gsize contents_len = 0;
+
+      gpg_key_file = g_strstrip (gpg_key_file);
+
+      if (*gpg_key_file == '\0')
+        {
+          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                              _("Invalid gpg key file"));
+          return NULL;
+        }
+
+      if (!g_file_get_contents (gpg_key_file, &contents, &contents_len, error))
+        {
+          g_prefix_error (error, _("Invalid %s: Unable to read gpg key file '%s': "),
+                          from_ref ? ".flatpakref" : ".flatpakrepo",
+                          gpg_key_file);
+          return NULL;
+        }
+
+      if (contents_len < 10)
+        {
+          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid gpg key file"));
+          return NULL;
+        }
+
+      gpg_data = g_bytes_new (contents, contents_len);
       g_key_file_set_boolean (config, group, "gpg-verify", TRUE);
     }
   else
