@@ -140,6 +140,9 @@ gboolean flatpak_repo_collect_sizes (OstreeRepo   *repo,
                                      GError      **error);
 GVariant *flatpak_commit_get_extra_data_sources (GVariant *commitv,
                                                  GError  **error);
+void flatpak_commit_add_extra_data_sizes (GVariant *commitv,
+                                              guint64  *installed_size,
+                                              guint64  *download_size);
 GVariant *flatpak_repo_get_extra_data_sources (OstreeRepo   *repo,
                                                const char   *rev,
                                                GCancellable *cancellable,

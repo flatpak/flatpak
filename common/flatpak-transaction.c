@@ -3656,9 +3656,13 @@ resolve_op_from_commit (FlatpakTransaction *self,
   metadata_bytes = g_bytes_new (xa_metadata, strlen (xa_metadata));
 
   if (g_variant_lookup (commit_metadata, "xa.download-size", "t", &download_size))
-    op->download_size = GUINT64_FROM_BE (download_size);
+    download_size = GUINT64_FROM_BE (download_size);
   if (g_variant_lookup (commit_metadata, "xa.installed-size", "t", &installed_size))
-    op->installed_size = GUINT64_FROM_BE (installed_size);
+    installed_size = GUINT64_FROM_BE (installed_size);
+
+  flatpak_commit_add_extra_data_sizes (commit_data, &installed_size, &download_size);
+  op->download_size = download_size;
+  op->installed_size = installed_size;
 
   g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE, "s", &op->eol);
   g_variant_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE_REBASE, "s", &op->eol_rebase);
