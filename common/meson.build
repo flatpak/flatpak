@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 public_headers = [
+  'flatpak-app-data.h',
   'flatpak-bundle-ref.h',
   'flatpak-error.h',
   'flatpak-installation.h',
@@ -63,6 +64,15 @@ flatpak_document_gdbus = gnome.gdbus_codegen(
   namespace : 'XdpDbus',
 )
 
+flatpak_permission_gdbus = gnome.gdbus_codegen(
+  'flatpak-permission-dbus-generated',
+  sources: [
+    '../data/org.freedesktop.impl.portal.PermissionStore.xml',
+  ],
+  interface_prefix : 'org.freedesktop.impl.portal',
+  namespace : 'XdpDbus',
+)
+
 systemd_gdbus = gnome.gdbus_codegen(
   'flatpak-systemd-dbus-generated',
   sources: [
@@ -112,6 +122,7 @@ built_headers = [
   flatpak_version_macros,
   flatpak_gdbus[1],
   flatpak_document_gdbus[1],
+  flatpak_permission_gdbus[1],
   systemd_gdbus[1],
   flatpak_variant[1],
 ]
@@ -177,6 +188,7 @@ libflatpak_common_base_dep = declare_dependency(
 )
 
 sources = [
+  'flatpak-app-data-delete.c',
   'flatpak-appdata.c',
   'flatpak-auth.c',
   'flatpak-bundle-ref.c',
@@ -200,6 +212,7 @@ sources = [
   'flatpak-oci-registry.c',
   'flatpak-oci-signatures.c',
   'flatpak-portal-error.c',
+  'flatpak-permission-utils.c',
   'flatpak-progress.c',
   'flatpak-prune.c',
   'flatpak-ref-utils.c',
@@ -235,7 +248,7 @@ libflatpak_common = static_library(
   gnu_symbol_visibility : 'hidden',
   include_directories : [common_include_directories],
   install : false,
-  sources : enums + public_headers + sources + built_sources + systemd_gdbus + [
+  sources : enums + public_headers + sources + built_sources + flatpak_permission_gdbus + systemd_gdbus + [
     flatpak_variant[0],
     flatpak_variant[1],
   ],

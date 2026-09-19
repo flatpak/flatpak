@@ -1,4 +1,10 @@
 <SECTION>
+<FILE>flatpak-app-data</FILE>
+<TITLE>App Data</TITLE>
+flatpak_app_data_delete
+</SECTION>
+
+<SECTION>
 <FILE>flatpak-installation</FILE>
 <TITLE>FlatpakInstallation</TITLE>
 FlatpakInstallation
