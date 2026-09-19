@@ -109,6 +109,8 @@ typedef struct
   GLnxTmpfile           *out_tmpfile;
   int                    out_tmpfile_parent_dfd;
 
+  guint64                max_downloaded_bytes;
+
   /* Used during operation */
 
   char                   buffer[16 * 1024];
@@ -446,6 +448,9 @@ _write_cb (void *content_data,
   LoadUriData *data = (LoadUriData *)userp;
   gsize n_written = 0;
 
+  /* Returning a short write makes curl report CURLE_WRITE_ERROR.
+   * That error gets propagated, or data->error if set. */
+
   /* If first write to tmpfile, initiate if needed */
   if (data->content == NULL && data->out == NULL &&
       data->out_tmpfile != NULL)
@@ -458,7 +463,7 @@ _write_cb (void *content_data,
                                           &tmp_error))
         {
           g_warning ("Failed to open http tmpfile: %s\n", tmp_error->message);
-          return 0; /* This short read will make curl report an error */
+          return 0;
         }
 
       out = g_unix_output_stream_new (data->out_tmpfile->fd, FALSE);
@@ -476,7 +481,17 @@ _write_cb (void *content_data,
 
   /* Check for cancellation */
   if (g_cancellable_is_cancelled (data->cancellable))
-    return 0; /* Returning 0 (short read) makes curl abort the transfer */
+    return 0;
+
+  data->downloaded_bytes += realsize;
+
+  if (data->max_downloaded_bytes > 0 &&
+      data->downloaded_bytes > data->max_downloaded_bytes)
+    {
+      flatpak_fail_error (&data->error, FLATPAK_ERROR_INVALID_DATA,
+                          _("Download exceeds maximum size"));
+      return 0;
+    }
 
   if (data->content)
     {
@@ -485,13 +500,10 @@ _write_cb (void *content_data,
     }
   else if (data->out)
     {
-      /* Returning a short write makes curl report CURLE_WRITE_ERROR. */
       if (!g_output_stream_write_all (data->out, content_data, realsize,
                                       &n_written, NULL, NULL))
         return n_written;
     }
-
-  data->downloaded_bytes += realsize;
 
   if (g_get_monotonic_time () - data->last_progress_time > 1 * G_USEC_PER_SEC)
     {
@@ -694,7 +706,10 @@ flatpak_download_http_uri_once (FlatpakHttpSession    *session,
 
   if (res != CURLE_OK)
     {
-      set_error_from_curl (error, uri, res, data->cancellable);
+      if (data->error)
+        g_propagate_error (error, g_steal_pointer (&data->error));
+      else
+        set_error_from_curl (error, uri, res, data->cancellable);
 
       /* Make sure we clear the tmpfile stream we possible created during the request */
       if (data->out_tmpfile && data->out)
@@ -871,6 +886,7 @@ flatpak_download_http_uri (FlatpakHttpSession    *http_session,
                            FlatpakHTTPFlags       flags,
                            GOutputStream         *out,
                            const char            *token,
+                           guint64                max_size,
                            FlatpakLoadUriProgress progress,
                            gpointer               user_data,
                            GCancellable          *cancellable,
@@ -892,6 +908,7 @@ flatpak_download_http_uri (FlatpakHttpSession    *http_session,
   data.certificates = certificates;
   data.flags = flags;
   data.token = token;
+  data.max_downloaded_bytes = max_size;
 
   data.out = out;
 
@@ -1227,6 +1244,7 @@ flatpak_cache_http_uri (FlatpakHttpSession    *http_session,
                         FlatpakHTTPFlags       flags,
                         int                    dest_dfd,
                         const char            *dest_subpath,
+                        guint64                max_size,
                         FlatpakLoadUriProgress progress,
                         gpointer               user_data,
                         GCancellable          *cancellable,
@@ -1282,6 +1300,7 @@ flatpak_cache_http_uri (FlatpakHttpSession    *http_session,
   data.cancellable = cancellable;
   data.flags = flags;
   data.certificates = certificates;
+  data.max_downloaded_bytes = max_size;
 
   data.cache_data = cache_data;
 
