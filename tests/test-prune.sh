@@ -21,8 +21,6 @@ set -euo pipefail
 
 . $(dirname $0)/libtest.sh
 
-echo "1..5"
-
 create_commit() {
     # Wrap this to avoid set -x showing the commands
     { { local BASH_XTRACEFD=3; } 2> /dev/null
@@ -299,3 +297,5 @@ rm -rf repo/objects/*/*.commitmeta2
 diff -r repo ostree-repo >&2
 
 ok "Compare with ostree prune"
+
+done_testing

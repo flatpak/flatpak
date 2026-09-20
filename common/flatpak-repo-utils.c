@@ -318,7 +318,7 @@ flatpak_repo_get_summary_history_length (OstreeRepo *repo)
   GKeyFile *config = ostree_repo_get_config (repo);
   int length;
 
-  length = g_key_file_get_integer (config, "flatpak", "sumary-history-length", NULL);
+  length = g_key_file_get_integer (config, "flatpak", "summary-history-length", NULL);
 
   if (length <= 0)
     return FLATPAK_SUMMARY_HISTORY_LENGTH_DEFAULT;
@@ -1250,46 +1250,37 @@ typedef struct {
   gsize last_new_offset;
 } DiffData;
 
-static gsize
-match_bytes_at_start (const guchar *data1,
-                      gsize data1_len,
-                      const guchar *data2,
-                      gsize data2_len)
+static size_t
+match_bytes_at_start (const unsigned char *data1,
+                      size_t               data1_len,
+                      const unsigned char *data2,
+                      size_t               data2_len)
 {
-  gsize len = 0;
-  gsize max_len = MIN (data1_len, data2_len);
+  size_t len;
 
-  while (len < max_len)
+  for (len = 0; len < MIN (data1_len, data2_len); len++)
     {
-      if (*data1 != *data2)
+      if (data1[len] != data2[len])
         break;
-      data1++;
-      data2++;
-      len++;
     }
+
   return len;
 }
 
-static gsize
-match_bytes_at_end (const guchar *data1,
-                    gsize data1_len,
-                    const guchar *data2,
-                    gsize data2_len)
+static size_t
+match_bytes_at_end (const unsigned char *data1,
+                    size_t               data1_len,
+                    const unsigned char *data2,
+                    size_t               data2_len)
 {
-  gsize len = 0;
-  gsize max_len = MIN (data1_len, data2_len);
+  size_t len;
 
-  data1 += data1_len - 1;
-  data2 += data2_len - 1;
-
-  while (len < max_len)
+  for (len = 0; len < MIN (data1_len, data2_len); len++)
     {
-      if (*data1 != *data2)
+      if (data1[data1_len - len - 1] != data2[data2_len - len - 1])
         break;
-      data1--;
-      data2--;
-      len++;
     }
+
   return len;
 }
 
@@ -3919,7 +3910,7 @@ flatpak_pull_from_bundle (OstreeRepo   *repo,
   if (!metadata_valid)
     {
       /* Immediately remove this broken commit */
-      ostree_repo_set_ref_immediate (repo, remote, ref, NULL, cancellable, error);
+      ostree_repo_set_ref_immediate (repo, remote, ref, NULL, cancellable, NULL);
       return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Metadata in header and app are inconsistent"));
     }
 

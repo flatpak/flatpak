@@ -22,8 +22,6 @@ set -euo pipefail
 . $(dirname $0)/libtest.sh
 
 
-echo "1..3"
-
 setup_repo
 
 commit_to_obj () {
@@ -90,6 +88,8 @@ assert_file_has_content ${XDG_RUNTIME_DIR}/request "^uri: http://127.0.0.1:${por
 if [ x${USE_COLLECTIONS_IN_CLIENT-} == xyes ] ; then
     assert_file_has_content ${XDG_RUNTIME_DIR}/request "^options: .*'collection-id': <'org.test.Collection.test'>"
 fi
+# -y/--assumeyes should not send no-interaction to the authenticator (only --noninteractive should)
+assert_not_file_has_content ${XDG_RUNTIME_DIR}/request "no-interaction"
 
 EXPORT_ARGS="--token-type=2" make_updated_app test "" master UPDATE2
 mark_need_token app/org.test.Hello/$ARCH/master the-secret
@@ -159,3 +159,20 @@ EXPORT_ARGS="--token-type=2" make_updated_app test "" master UPDATE5
 mark_need_token app/org.test.Hello/$ARCH/master the-secret
 
 ok "update with webflow"
+
+rm -f ${XDG_RUNTIME_DIR}/request-webflow
+rm -f ${XDG_RUNTIME_DIR}/require-webflow
+
+${FLATPAK} ${U} uninstall -y org.test.Hello//master org.test.Hello//copy >&2
+
+EXPORT_ARGS="--token-type=2" make_updated_app test "" master UPDATE6
+mark_need_token app/org.test.Hello/$ARCH/master the-secret
+echo -n the-secret > ${XDG_RUNTIME_DIR}/required-token
+
+${FLATPAK} ${U} install --noninteractive test-repo org.test.Hello master >&2
+
+assert_file_has_content ${XDG_RUNTIME_DIR}/request "no-interaction"
+
+ok "--noninteractive sends no-interaction to the authenticator"
+
+done_testing

@@ -24,8 +24,6 @@ if ! journalctl --user --since="${HISTORY_START_TIME}" | grep -q "${MESSAGE}"; t
     skip "Cannot read back from Journal with journalctl"
 fi
 
-echo "1..1"
-
 mkdir -p ${TEST_DATA_DIR}/system-history-installation
 mkdir -p ${FLATPAK_CONFIG_DIR}/installations.d
 cat << EOF > ${FLATPAK_CONFIG_DIR}/installations.d/history-installation.conf
@@ -48,6 +46,10 @@ EXPORT_ARGS="" make_updated_app
 ${FLATPAK} --installation=history-installation update -y org.test.Hello >&2
 ${FLATPAK} --installation=history-installation uninstall -y org.test.Platform org.test.Hello >&2
 ${FLATPAK} --installation=history-installation remote-delete test-repo >&2
+
+# Temporarily disable coverage warnings from libgcov so they don’t affect
+# comparing the whole process’ output to the expected-log.
+export GCOV_ERROR_FILE=/dev/null
 
 # need --since and --columns here to make the test idempotent
 if ! ${FLATPAK} --installation=history-installation history --since="${HISTORY_START_TIME}" \
@@ -83,6 +85,8 @@ if ! ${FLATPAK} --installation=history-installation history --since="${HISTORY_S
     echo "Bail out! 'flatpak history' failed"
     exit 1
 fi
+
+unset GCOV_ERROR_FILE
 
 cat > expected-log << 'EOF'
 [
@@ -200,3 +204,5 @@ rm -f ${FLATPAK_CONFIG_DIR}/installations.d/history-inst.conf
 rm -rf ${TEST_DATA_DIR}/system-history-installation
 
 ok "history looks correct"
+
+done_testing

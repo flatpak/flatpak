@@ -6,8 +6,6 @@ set -euo pipefail
 
 skip_revokefs_without_fuse
 
-echo "1..9"
-
 INCLUDE_SPECIAL_CHARACTER=1 setup_repo
 install_repo
 
@@ -68,3 +66,5 @@ ${FLATPAK} info org.test.Hello > info
 assert_file_has_content info "^Hello world test app: org\.test\.Hello - Print a greeting$"
 
 ok "info (name header)"
+
+done_testing

@@ -27,8 +27,6 @@ skip_revokefs_without_fuse
 # This test looks for specific localized strings.
 export LC_ALL=C
 
-echo "1..17"
-
 setup_repo
 install_repo
 
@@ -86,6 +84,7 @@ ${FLATPAK} complete "flatpak list --" 15 "--" | sort > complete_out
 --app 
 --app-runtime=
 --arch=
+--bytes 
 --columns=
 --help 
 --installation=
@@ -231,3 +230,4 @@ EOF
 
 ok "complete list --columns=arch,"
 
+done_testing

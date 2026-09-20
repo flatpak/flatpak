@@ -27,8 +27,6 @@ USE_COLLECTIONS_IN_CLIENT=yes
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..9"
-
 #Regular repo
 setup_repo
 
@@ -208,3 +206,5 @@ assert_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=true$'
 assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=false$'
 
 ok "migrate to gpg-verify-summary"
+
+done_testing

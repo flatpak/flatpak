@@ -21,8 +21,6 @@ set -euo pipefail
 
 . $(dirname $0)/libtest.sh
 
-echo "1..2"
-
 setup_repo
 
 sha256() {
@@ -261,3 +259,5 @@ assert_not_file_has_content httpd-log summaries/${ACTIVE_SUBSET}.gz
 assert_not_file_has_content httpd-log summaries/${OLD_ACTIVE_SUBSET}-${ACTIVE_SUBSET}.delta
 
 ok subsummary fetching and caching
+
+done_testing

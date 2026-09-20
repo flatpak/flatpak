@@ -24,8 +24,6 @@ set -euo pipefail
 
 skip_without_bwrap
 
-echo "1..1"
-
 # Start the fake OCI registry server
 
 httpd oci-registry-server.py --dir=.
@@ -67,3 +65,5 @@ run org.test.Hello > hello_out
 assert_file_has_content hello_out '^Hello world, from a sandbox$'
 
 ok "install from auth-protected OCI registry"
+
+done_testing

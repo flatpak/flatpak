@@ -27,8 +27,6 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..5"
-
 # Configure a repository, then set a collection ID on it and check that the ID
 # is saved in the config file.
 setup_repo
@@ -67,3 +65,5 @@ ${FLATPAK} build-update-repo --default-branch=no-such-branch repos/test >&2
 assert_file_has_content repos/test/config '^default-branch=no-such-branch$'
 
 ok "can update default branch"
+
+done_testing

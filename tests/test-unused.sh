@@ -27,8 +27,6 @@ export USE_SYSTEMDIR=yes
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..3"
-
 setup_empty_repo &> /dev/null
 
 # Manually add the user remote too
@@ -432,3 +430,5 @@ if [ $(cat newly-unused.txt | wc -l) -ne 10 ]; then
 fi
 
 ok "list unused exclude"
+
+done_testing

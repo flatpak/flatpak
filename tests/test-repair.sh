@@ -8,8 +8,6 @@ set -euo pipefail
 
 . $(dirname $0)/libtest.sh
 
-echo "1..2"
-
 setup_repo
 ${FLATPAK} ${U} install -y test-repo org.test.Hello >&2
 
@@ -51,3 +49,5 @@ ${FLATPAK} ${U} uninstall -y org.test.Platform org.test.Hello >&2
 ${FLATPAK} ${U} remote-delete test-repo >&2
 
 ok "repair --reinstall-all preserves pin state"
+
+done_testing

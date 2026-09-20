@@ -24,8 +24,6 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..6"
-
 setup_repo
 install_repo
 
@@ -127,3 +125,5 @@ make_updated_app test "" master UPDATE45
 run_with_sandboxed_bus ${test_builddir}/test-update-portal update monitor.pid >&2
 
 ok "update with changed permissions"
+
+done_testing

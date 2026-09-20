@@ -160,7 +160,8 @@ flatpak_run_add_extension_args (FlatpakBwrap      *bwrap,
       g_autofree char *directory = g_build_filename (target_path, ext->directory, NULL);
       g_autofree char *full_directory = g_build_filename (directory, ext->subdir_suffix, NULL);
       g_autofree char *ref_file = g_build_filename (full_directory, ".ref", NULL);
-      g_autofree char *real_ref = g_build_filename (ext->files_path, ext->directory, ".ref", NULL);
+      g_autofree char *ref_subpath = g_build_filename (ext->directory, ".ref", NULL);
+      glnx_autofd int ext_files_dfd = -1;
 
       if (ext->needs_tmpfs)
         {
@@ -179,10 +180,16 @@ flatpak_run_add_extension_args (FlatpakBwrap      *bwrap,
                               "--ro-bind", ext->files_path, full_directory,
                               NULL);
 
-      if (g_file_test (real_ref, G_FILE_TEST_EXISTS))
-        flatpak_bwrap_add_args (bwrap,
-                                "--lock-file", ref_file,
-                                NULL);
+      if (glnx_opendirat (AT_FDCWD, ext->files_path, FALSE, &ext_files_dfd, NULL))
+        {
+          glnx_autofd int ref_fd = glnx_chaseat (ext_files_dfd, ref_subpath,
+                                                 GLNX_CHASE_RESOLVE_BENEATH,
+                                                 NULL);
+          if (ref_fd >= 0)
+            flatpak_bwrap_add_args (bwrap,
+                                    "--lock-file", ref_file,
+                                    NULL);
+        }
     }
 
   g_list_free (path_sorted_extensions);
@@ -194,7 +201,15 @@ flatpak_run_add_extension_args (FlatpakBwrap      *bwrap,
       FlatpakExtension *ext = l->data;
       g_autofree char *directory = g_build_filename (target_path, ext->directory, NULL);
       g_autofree char *full_directory = g_build_filename (directory, ext->subdir_suffix, NULL);
+      glnx_autofd int files_dfd = -1;
       int i;
+
+      if (!glnx_opendirat (AT_FDCWD, ext->files_path, FALSE, &files_dfd, NULL))
+        {
+          return flatpak_fail_error (error, FLATPAK_ERROR,
+                                     "Failed to open extension %s files",
+                                     ext->installed_id);
+        }
 
       if (used_extensions->len > 0)
         g_string_append (used_extensions, ";");
@@ -232,11 +247,30 @@ flatpak_run_add_extension_args (FlatpakBwrap      *bwrap,
         {
           g_autofree char *parent = g_path_get_dirname (directory);
           g_autofree char *merge_dir = g_build_filename (parent, ext->merge_dirs[i], NULL);
-          g_autofree char *source_dir = g_build_filename (ext->files_path, ext->merge_dirs[i], NULL);
+          glnx_autofd int source_dfd = -1;
+          glnx_autofd int source_read_dfd = -1;
           g_auto(GLnxDirFdIterator) source_iter = { 0 };
           struct dirent *dent;
 
-          if (glnx_dirfd_iterator_init_at (AT_FDCWD, source_dir, TRUE, &source_iter, NULL))
+          source_dfd = glnx_chaseat (files_dfd, ext->merge_dirs[i],
+                                     GLNX_CHASE_RESOLVE_BENEATH |
+                                     GLNX_CHASE_MUST_BE_DIRECTORY,
+                                     NULL);
+          if (source_dfd < 0)
+            {
+              if (errno == ENOENT || errno == ENOTDIR)
+                continue;
+
+              return flatpak_fail_error (error, FLATPAK_ERROR,
+                                         "Extension %s has invalid merge-dirs",
+                                         ext->installed_id);
+            }
+
+          source_read_dfd = glnx_fd_reopen (source_dfd, O_RDONLY, error);
+          if (source_read_dfd < 0)
+            return FALSE;
+
+          if (glnx_dirfd_iterator_init_take_fd (&source_read_dfd, &source_iter, NULL))
             {
               while (glnx_dirfd_iterator_next_dent (&source_iter, &dent, NULL, NULL) && dent != NULL)
                 {
@@ -857,30 +891,35 @@ flatpak_ensure_data_dir (GFile        *app_id_dir,
                          GCancellable *cancellable,
                          GError      **error)
 {
-  g_autoptr(GFile) data_dir = g_file_get_child (app_id_dir, "data");
-  g_autoptr(GFile) cache_dir = g_file_get_child (app_id_dir, "cache");
-  g_autoptr(GFile) fontconfig_cache_dir = g_file_get_child (cache_dir, "fontconfig");
-  g_autoptr(GFile) tmp_dir = g_file_get_child (cache_dir, "tmp");
-  g_autoptr(GFile) config_dir = g_file_get_child (app_id_dir, "config");
-  g_autoptr(GFile) state_dir = g_file_get_child (app_id_dir, ".local/state");
+  glnx_autofd int app_id_dir_fd = -1;
+  static const char *const subdirs[] = {
+    "data",
+    "cache",
+    "cache/fontconfig",
+    "cache/tmp",
+    "config",
+    ".local/state",
+  };
 
-  if (!flatpak_mkdir_p (data_dir, cancellable, error))
+  app_id_dir_fd = glnx_chase_and_mkdirat (AT_FDCWD,
+                                          flatpak_file_get_path_cached (app_id_dir),
+                                          GLNX_CHASE_DEFAULT,
+                                          0755,
+                                          error);
+  if (app_id_dir_fd < 0)
     return FALSE;
 
-  if (!flatpak_mkdir_p (cache_dir, cancellable, error))
-    return FALSE;
+  for (size_t i = 0; i < G_N_ELEMENTS (subdirs); i++)
+    {
+      glnx_autofd int fd = -1;
 
-  if (!flatpak_mkdir_p (fontconfig_cache_dir, cancellable, error))
-    return FALSE;
-
-  if (!flatpak_mkdir_p (tmp_dir, cancellable, error))
-    return FALSE;
-
-  if (!flatpak_mkdir_p (config_dir, cancellable, error))
-    return FALSE;
-
-  if (!flatpak_mkdir_p (state_dir, cancellable, error))
-    return FALSE;
+      fd = glnx_chase_and_mkdirat (app_id_dir_fd, subdirs[i],
+                                   GLNX_CHASE_RESOLVE_BENEATH,
+                                   0755,
+                                   error);
+      if (fd < 0)
+        return FALSE;
+    }
 
   return TRUE;
 }
@@ -1660,7 +1699,7 @@ flatpak_run_add_app_info_args (FlatpakBwrap           *bwrap,
     return FALSE;
 
   bwrapinfo_path = g_build_filename (instance_id_host_dir, "bwrapinfo.json", NULL);
-  fd3 = open (bwrapinfo_path, O_RDWR | O_CREAT, 0644);
+  fd3 = open (bwrapinfo_path, O_RDWR | O_CREAT | O_CLOEXEC, 0644);
   if (fd3 == -1)
     {
       int errsv = errno;
@@ -2526,18 +2565,39 @@ flatpak_run_setup_base_argv (FlatpakBwrap   *bwrap,
 
   if (app_id_dir != NULL)
     {
-      g_autoptr(GFile) app_cache_dir = g_file_get_child (app_id_dir, "cache");
-      g_autoptr(GFile) app_tmp_dir = g_file_get_child (app_cache_dir, "tmp");
-      g_autoptr(GFile) app_data_dir = g_file_get_child (app_id_dir, "data");
-      g_autoptr(GFile) app_config_dir = g_file_get_child (app_id_dir, "config");
+      glnx_autofd int app_id_dir_fd = -1;
+      static const struct
+        {
+          const char *src;
+          const char *dst;
+        }
+      mounts[] = {
+        { "cache", "/var/cache" },
+        { "data", "/var/data" },
+        { "config", "/var/config" },
+        { "cache/tmp", "/var/tmp" },
+      };
 
-      flatpak_bwrap_add_args (bwrap,
-                              /* These are nice to have as a fixed path */
-                              "--bind", flatpak_file_get_path_cached (app_cache_dir), "/var/cache",
-                              "--bind", flatpak_file_get_path_cached (app_data_dir), "/var/data",
-                              "--bind", flatpak_file_get_path_cached (app_config_dir), "/var/config",
-                              "--bind", flatpak_file_get_path_cached (app_tmp_dir), "/var/tmp",
-                              NULL);
+      app_id_dir_fd = glnx_chaseat (AT_FDCWD,
+                                    flatpak_file_get_path_cached (app_id_dir),
+                                    GLNX_CHASE_MUST_BE_DIRECTORY,
+                                    error);
+      if (app_id_dir_fd < 0)
+        return FALSE;
+
+      for (i = 0; i < G_N_ELEMENTS (mounts); i++)
+        {
+          glnx_autofd int fd = -1;
+
+          fd = glnx_chase_and_mkdirat (app_id_dir_fd, mounts[i].src,
+                                       GLNX_CHASE_RESOLVE_BENEATH,
+                                       0755, error);
+          if (fd < 0)
+            return FALSE;
+
+          flatpak_bwrap_add_args_data_fd (bwrap, "--bind-fd",
+                                          g_steal_fd (&fd), mounts[i].dst);
+        }
     }
 
   flatpak_run_setup_usr_links (bwrap, runtime_fd, NULL);
@@ -2574,7 +2634,8 @@ forward_file (XdpDbusDocuments *documents,
               char            **out_doc_id,
               GError          **error)
 {
-  int fd, fd_id;
+  glnx_autofd int fd = -1;
+  int fd_id;
   struct stat stbuf;
   guint portal_version;
   gboolean is_dir = FALSE;
@@ -2586,11 +2647,13 @@ forward_file (XdpDbusDocuments *documents,
   if (fd == -1)
     return flatpak_fail (error, _("Failed to open ‘%s’"), file);
 
-  fd_list = g_unix_fd_list_new ();
-  fd_id = g_unix_fd_list_append (fd_list, fd, error);
   if (fstat (fd, &stbuf) == 0 && S_ISDIR (stbuf.st_mode))
     is_dir = TRUE;
-  close (fd);
+
+  fd_list = g_unix_fd_list_new ();
+  fd_id = g_unix_fd_list_append (fd_list, fd, error);
+  if (fd_id == -1)
+    return FALSE;
 
   portal_version = xdp_dbus_documents_get_version (documents);
   if (portal_version < 4 && is_dir)
@@ -2823,33 +2886,72 @@ regenerate_ld_cache (GPtrArray    *base_argv_array,
 {
   g_autoptr(FlatpakBwrap) bwrap = NULL;
   g_autoptr(GArray) combined_fd_array = NULL;
-  g_autoptr(GFile) ld_so_cache = NULL;
-  g_autoptr(GFile) ld_so_cache_tmp = NULL;
   g_autofree char *sandbox_cache_path = NULL;
   g_autofree char *tmp_basename = NULL;
   g_auto(GStrv) minimal_envp = NULL;
   g_autofree char *commandline = NULL;
   int exit_status;
   glnx_autofd int ld_so_fd = -1;
-  g_autoptr(GFile) ld_so_dir = NULL;
+  glnx_autofd int ld_so_dir_fd = -1;
+  g_autofree char *ld_so_dir_path = NULL;
 
   if (app_id_dir)
-    ld_so_dir = g_file_get_child (app_id_dir, ".ld.so");
+    {
+      glnx_autofd int app_id_dir_fd = -1;
+
+      app_id_dir_fd = glnx_chase_and_mkdirat (AT_FDCWD,
+                                              flatpak_file_get_path_cached (app_id_dir),
+                                              GLNX_CHASE_DEFAULT,
+                                              0700, error);
+      if (app_id_dir_fd < 0)
+        {
+          g_prefix_error (error, "cannot open %s: ",
+                          flatpak_file_get_path_cached (app_id_dir));
+          return -1;
+        }
+
+      ld_so_dir_fd = glnx_chase_and_mkdirat (app_id_dir_fd, ".ld.so",
+                                             GLNX_CHASE_RESOLVE_NO_SYMLINKS,
+                                             0755, error);
+
+      ld_so_dir_path = g_build_filename (flatpak_file_get_path_cached (app_id_dir),
+                                         ".ld.so",
+                                         NULL);
+    }
   else
     {
-      g_autoptr(GFile) base_dir = g_file_new_for_path (g_get_user_cache_dir ());
-      ld_so_dir = g_file_resolve_relative_path (base_dir, "flatpak/ld.so");
+      glnx_autofd int cache_dir_fd = -1;
+
+      cache_dir_fd = glnx_chase_and_mkdirat (AT_FDCWD,
+                                             g_get_user_cache_dir (),
+                                             GLNX_CHASE_DEFAULT,
+                                             0700, error);
+      if (cache_dir_fd < 0)
+        {
+          g_prefix_error (error, "cannot open %s: ",
+                          g_get_user_cache_dir ());
+          return -1;
+        }
+
+      ld_so_dir_fd = glnx_chase_and_mkdirat (cache_dir_fd, "flatpak/ld.so",
+                                             GLNX_CHASE_RESOLVE_NO_SYMLINKS,
+                                             0755, error);
+
+      ld_so_dir_path = g_build_filename (g_get_user_cache_dir (),
+                                         "flatpak/ld.so",
+                                         NULL);
     }
 
-  ld_so_cache = g_file_get_child (ld_so_dir, checksum);
-  ld_so_fd = open (flatpak_file_get_path_cached (ld_so_cache), O_RDONLY);
-  if (ld_so_fd >= 0)
+  if (ld_so_dir_fd < 0)
+    {
+      g_prefix_error (error, "cannot open %s: ", ld_so_dir_path);
+      return -1;
+    }
+
+  if (glnx_openat_rdonly (ld_so_dir_fd, checksum, FALSE, &ld_so_fd, NULL))
     return g_steal_fd (&ld_so_fd);
 
-  g_info ("Regenerating ld.so.cache %s", flatpak_file_get_path_cached (ld_so_cache));
-
-  if (!flatpak_mkdir_p (ld_so_dir, cancellable, error))
-    return FALSE;
+  g_info ("Regenerating ld.so.cache %s/%s", ld_so_dir_path, checksum);
 
   minimal_envp = flatpak_run_get_minimal_env (FALSE, FALSE);
   bwrap = flatpak_bwrap_new (minimal_envp);
@@ -2872,7 +2974,6 @@ regenerate_ld_cache (GPtrArray    *base_argv_array,
   glnx_gen_temp_name (tmp_basename);
 
   sandbox_cache_path = g_build_filename ("/run/ld-so-cache-dir", tmp_basename, NULL);
-  ld_so_cache_tmp = g_file_get_child (ld_so_dir, tmp_basename);
 
   flatpak_bwrap_add_args (bwrap,
                           "--unshare-pid",
@@ -2880,8 +2981,13 @@ regenerate_ld_cache (GPtrArray    *base_argv_array,
                           "--unshare-net",
                           "--proc", "/proc",
                           "--dev", "/dev",
-                          "--bind", flatpak_file_get_path_cached (ld_so_dir), "/run/ld-so-cache-dir",
                           NULL);
+
+  if (!flatpak_bwrap_add_args_data_fd_dup (bwrap, "--bind-fd",
+                                           ld_so_dir_fd, "/run/ld-so-cache-dir",
+                                           error))
+    return -1;
+
   flatpak_bwrap_sort_envp (bwrap);
   flatpak_bwrap_envp_to_args (bwrap);
 
@@ -2919,8 +3025,7 @@ regenerate_ld_cache (GPtrArray    *base_argv_array,
       return -1;
     }
 
-  ld_so_fd = open (flatpak_file_get_path_cached (ld_so_cache_tmp), O_RDONLY);
-  if (ld_so_fd < 0)
+  if (!glnx_openat_rdonly (ld_so_dir_fd, tmp_basename, FALSE, &ld_so_fd, NULL))
     {
       flatpak_fail_error (error, FLATPAK_ERROR_SETUP_FAILED, _("Can't open generated ld.so.cache"));
       return -1;
@@ -2929,22 +3034,20 @@ regenerate_ld_cache (GPtrArray    *base_argv_array,
   if (app_id_dir == NULL)
     {
       /* For runs without an app id dir we always regenerate the ld.so.cache */
-      unlink (flatpak_file_get_path_cached (ld_so_cache_tmp));
+      unlinkat (ld_so_dir_fd, tmp_basename, 0);
     }
   else
     {
-      g_autoptr(GFile) active = g_file_get_child (ld_so_dir, "active");
-
       /* For app-dirs we keep one checksum alive, by pointing the active symlink to it */
 
       /* Rename to known name, possibly overwriting existing ref if race */
-      if (rename (flatpak_file_get_path_cached (ld_so_cache_tmp), flatpak_file_get_path_cached (ld_so_cache)) == -1)
+      if (renameat (ld_so_dir_fd, tmp_basename, ld_so_dir_fd, checksum) == -1)
         {
           glnx_set_error_from_errno (error);
           return -1;
         }
 
-      if (!flatpak_switch_symlink_and_remove (flatpak_file_get_path_cached (active),
+      if (!flatpak_switch_symlink_and_remove (ld_so_dir_fd, "active",
                                               checksum, error))
         return -1;
     }
@@ -3885,6 +3988,7 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
       GPid child_pid;
       char pid_str[64];
       g_autofree char *pid_path = NULL;
+      g_autoptr(GError) local_error = NULL;
       GSpawnFlags spawn_flags;
       GSpawnChildSetupFunc child_setup;
 
@@ -3920,7 +4024,11 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
 
       g_snprintf (pid_str, sizeof (pid_str), "%d", child_pid);
       pid_path = g_build_filename (instance_id_host_dir, "pid", NULL);
-      g_file_set_contents (pid_path, pid_str, -1, NULL);
+      if (!g_file_set_contents (pid_path, pid_str, -1, &local_error))
+        {
+          g_warning ("Failed to write pid file: %s", local_error->message);
+          g_clear_error (&local_error);
+        }
 
       if ((flags & (FLATPAK_RUN_FLAG_BACKGROUND)) == 0)
         {
@@ -3942,10 +4050,15 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
     {
       char pid_str[64];
       g_autofree char *pid_path = NULL;
+      g_autoptr(GError) local_error = NULL;
 
       g_snprintf (pid_str, sizeof (pid_str), "%d", getpid ());
       pid_path = g_build_filename (instance_id_host_dir, "pid", NULL);
-      g_file_set_contents (pid_path, pid_str, -1, NULL);
+      if (!g_file_set_contents (pid_path, pid_str, -1, &local_error))
+        {
+          g_warning ("Failed to write pid file: %s", local_error->message);
+          g_clear_error (&local_error);
+        }
 
       /* Ensure we unset O_CLOEXEC for marked fds and rewind fds as needed.
        * Note that this does not close fds that are not already marked O_CLOEXEC, because

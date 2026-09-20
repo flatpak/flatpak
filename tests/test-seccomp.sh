@@ -9,8 +9,6 @@ set -euo pipefail
 skip_without_seccomp
 skip_without_bwrap
 
-echo "1..18"
-
 setup_repo
 install_repo
 
@@ -75,7 +73,7 @@ for extra_argv in "" "--allow=multiarch"; do
   e=0
   try_syscall "ioctl TIOCSTI CVE-2019-10063" || e="$?"
   if test "$e" = "$ENOENT"; then
-    echo "ok # SKIP Cannot replicate CVE-2019-10063 on 32-bit architecture"
+    ok "# SKIP Cannot replicate CVE-2019-10063 on 32-bit architecture"
   else
     assert_streq "$e" "$EPERM"
     ok "ioctl TIOCSTI with high bits blocked (CVE-2019-10063)"
@@ -99,3 +97,5 @@ for extra_argv in "" "--allow=multiarch"; do
   assert_streq "$e" "$EFAULT"
   ok "prctl not blocked"
 done
+
+done_testing

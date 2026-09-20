@@ -104,8 +104,14 @@ flatpak_zstd_compressor_reset (GConverter *converter)
 {
 #ifdef HAVE_ZSTD
   FlatpakZstdCompressor *compressor = FLATPAK_ZSTD_COMPRESSOR (converter);
+  size_t res;
 
-  ZSTD_initCStream(compressor->cstream, compressor->level);
+  res = ZSTD_initCStream (compressor->cstream, compressor->level);
+  if (ZSTD_isError (res))
+    {
+      g_error ("FlatpakZstdCompressor: failed to reset zstd stream: %s",
+               ZSTD_getErrorName (res));
+    }
 #endif
 }
 

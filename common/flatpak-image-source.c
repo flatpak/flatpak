@@ -496,8 +496,8 @@ flatpak_image_source_make_fake_commit (FlatpakImageSource *self)
                                        metadata_v,
                                        parent ? ostree_checksum_to_bytes_v (parent) :  g_variant_new_from_data (G_VARIANT_TYPE ("ay"), NULL, 0, FALSE, NULL, NULL),
                                        g_variant_new_array (G_VARIANT_TYPE ("(say)"), NULL, 0),
-                                       flatpak_image_source_get_commit_subject (self),
-                                       flatpak_image_source_get_commit_body (self),
+                                       flatpak_image_source_get_commit_subject (self) ?: "",
+                                       flatpak_image_source_get_commit_body (self) ?: "",
                                        GUINT64_TO_BE (flatpak_image_source_get_commit_timestamp (self)),
                                        ostree_checksum_to_bytes_v ("0000000000000000000000000000000000000000000000000000000000000000"),
                                        ostree_checksum_to_bytes_v ("0000000000000000000000000000000000000000000000000000000000000000")));

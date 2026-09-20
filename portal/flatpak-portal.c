@@ -64,6 +64,7 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (PortalFlatpakUpdateMonitorSkeleton, g_object_unre
 /* Should be roughly 2 seconds */
 #define CHILD_STATUS_CHECK_ATTEMPTS 20
 
+static GStrv original_environ = NULL;
 static GHashTable *client_pid_data_hash = NULL;
 static GDBusConnection *session_bus = NULL;
 static GNetworkMonitor *network_monitor = NULL;
@@ -120,6 +121,9 @@ typedef struct {
   char *reported_local_commit;
   char *reported_remote_commit;
 } UpdateMonitorData;
+
+static void update_monitor_data_free (gpointer data);
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (UpdateMonitorData, update_monitor_data_free)
 
 static gboolean           check_all_for_updates_cb (void                       *data);
 static gboolean           has_update_monitors      (void);
@@ -459,7 +463,13 @@ instance_id_read_finish (GObject      *source,
 
   data->buffer[bytes_read] = 0;
 
-  instance = flatpak_instance_new_for_id (data->buffer);
+  instance = flatpak_instance_new_for_id (data->buffer, &error);
+  if (!instance)
+    {
+      g_warning ("Failed to create instance for id %s: %s",
+                 data->buffer, error->message);
+      return;
+    }
 
   watcher_data = g_new0 (BwrapinfoWatcherData, 1);
   watcher_data->instance = g_steal_pointer (&instance);
@@ -618,7 +628,13 @@ fd_map_remap_fd (GArray *fd_map,
   FdMapEntry fd_map_entry;
 
   /* Use a fd that hasn't been used yet. We might have to reshuffle
-   * fd_map_entry.to, a bit later. */
+   * fd_map_entry.to a bit later during conflict resolution, which
+   * assigns ++max_fd as replacement values. Account for the source fd
+   * in max_fd so those replacements can never collide with any source
+   * fd in the map. */
+  if (fd > *max_fd_in_out)
+    *max_fd_in_out = fd;
+
   fd_map_entry.from = fd;
   fd_map_entry.to = ++(*max_fd_in_out);
   fd_map_entry.final = fd_map_entry.to;
@@ -798,7 +814,7 @@ handle_spawn (PortalFlatpak         *object,
   if ((sandbox_flags & ~FLATPAK_SPAWN_SANDBOX_FLAGS_ALL) != 0)
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
-                                             "Unsupported sandbox flags enabled: 0x%x", arg_flags & ~FLATPAK_SPAWN_SANDBOX_FLAGS_ALL);
+                                             "Unsupported sandbox flags enabled: 0x%x", sandbox_flags & ~FLATPAK_SPAWN_SANDBOX_FLAGS_ALL);
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
@@ -888,24 +904,56 @@ handle_spawn (PortalFlatpak         *object,
       instance_id = g_key_file_get_string (app_info,
                                            FLATPAK_METADATA_GROUP_INSTANCE,
                                            FLATPAK_METADATA_KEY_INSTANCE_ID, NULL);
+      if (!instance_id)
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
+                                                 G_DBUS_ERROR_INVALID_ARGS,
+                                                 "Caller has no instance id");
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
+        }
+
+      instance = flatpak_instance_new_for_id (instance_id, &error);
+      if (!instance)
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
+                                                 G_DBUS_ERROR_FAILED,
+                                                 "Could not access caller instance: %s",
+                                                 error->message);
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
+        }
     }
 
-  if (!instance_id)
-    {
-      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
-                                             G_DBUS_ERROR_INVALID_ARGS,
-                                             "Caller has no instance id");
-      return G_DBUS_METHOD_INVOCATION_HANDLED;
-    }
+  /* Pass the calling instance's run-environ as the envp for spawning
+   * flatpak run, so it can make host-level decisions (DISPLAY, GL drivers,
+   * XDG_RUNTIME_DIR, etc.) based on the original environment. This must NOT
+   * go into --env-fd, because run-environ is host-like and --env-fd injects
+   * into the sandbox payload environment.
+   */
+  {
+    static const char * const mock_run_environ[] = { "FOO=bar", NULL };
 
-  instance = flatpak_instance_new_for_id (instance_id);
-  if (!instance)
-    {
-      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
-                                             G_DBUS_ERROR_FAILED,
-                                             "Could not access caller instance");
-      return G_DBUS_METHOD_INVOCATION_HANDLED;
-    }
+    if (testing)
+      env = g_strdupv ((GStrv) mock_run_environ);
+    else
+      env = flatpak_instance_get_run_environ (instance, &error);
+
+    if (env == NULL)
+      {
+        if (!g_error_matches (error, G_FILE_ERROR, G_FILE_ERROR_NOENT))
+          {
+            g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
+                                                   G_DBUS_ERROR_INVALID_ARGS,
+                                                   "Could not load environment for \"flatpak run\": %s",
+                                                   error->message);
+            return G_DBUS_METHOD_INVOCATION_HANDLED;
+          }
+
+        g_clear_error (&error);
+        g_warning ("Environment for \"flatpak run\" was not found, "
+                   "falling back to current environment");
+        env = g_strdupv (original_environ);
+      }
+  }
 
   if ((flatpak = g_getenv ("FLATPAK_PORTAL_MOCK_FLATPAK")) != NULL)
     g_ptr_array_add (flatpak_argv, g_strdup (flatpak));
@@ -916,46 +964,8 @@ handle_spawn (PortalFlatpak         *object,
 
   g_ptr_array_add (flatpak_argv, g_strdup ("run"));
 
-  /* If we don't clear the env, the flatpak portal service environment would
-   * leak into the flatpak instance. By default we reuse the environment of
-   * the calling instance by passing it as arguments after the --clear-env.
-   */
-  g_ptr_array_add (flatpak_argv, g_strdup ("--clear-env"));
-
-  if (!(arg_flags & FLATPAK_SPAWN_FLAGS_CLEAR_ENV))
-    {
-      static const char * const mock_run_environ[] = { "FOO=bar", NULL };
-
-      if (testing)
-        env = g_strdupv ((GStrv) mock_run_environ);
-      else
-        env = flatpak_instance_get_run_environ (instance, &error);
-
-      if (env == NULL)
-        {
-          if (g_error_matches (error, G_FILE_ERROR, G_FILE_ERROR_NOENT))
-            {
-              g_warning ("Environment for \"flatpak run\" was not found, "
-                         "falling back to a clean environment");
-            }
-          else
-            {
-              g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
-                                                     G_DBUS_ERROR_INVALID_ARGS,
-                                                     "Could not load environment for \"flatpak run\": %s",
-                                                     error->message);
-              return G_DBUS_METHOD_INVOCATION_HANDLED;
-            }
-        }
-      else
-        {
-          for (i = 0; env != NULL && env[i] != NULL; i++)
-            {
-              g_string_append (env_string, env[i]);
-              g_string_append_c (env_string, '\0');
-            }
-        }
-    }
+  if (arg_flags & FLATPAK_SPAWN_FLAGS_CLEAR_ENV)
+    g_ptr_array_add (flatpak_argv, g_strdup ("--clear-env"));
 
   sandboxed = (arg_flags & FLATPAK_SPAWN_FLAGS_SANDBOX) != 0;
 
@@ -1507,7 +1517,7 @@ handle_spawn (PortalFlatpak         *object,
    * to work around a deadlock in GLib < 2.60 */
   if (!g_spawn_async_with_pipes (NULL,
                                  (char **) flatpak_argv->pdata,
-                                 NULL,
+                                 env,
                                  G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD | G_SPAWN_LEAVE_DESCRIPTORS_OPEN,
                                  child_setup_func, &child_setup_data,
                                  &pid,
@@ -1723,7 +1733,7 @@ create_update_monitor (GDBusMethodInvocation *invocation,
                        GError               **error)
 {
   PortalFlatpakUpdateMonitor *monitor;
-  UpdateMonitorData *m;
+  g_autoptr(UpdateMonitorData) m = NULL;
   g_autoptr(GKeyFile) app_info = NULL;
   g_autofree char *name = NULL;
 
@@ -1762,15 +1772,23 @@ create_update_monitor (GDBusMethodInvocation *invocation,
                                        FLATPAK_METADATA_GROUP_INSTANCE,
                                        "app-path", NULL);
 
+  if (m->branch == NULL || m->commit == NULL || m->app_path == NULL)
+    {
+      g_set_error (error, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                   "Incomplete instance info for update monitor");
+      return NULL;
+    }
+
   m->reported_local_commit = g_strdup (m->commit);
   m->reported_remote_commit = g_strdup (m->commit);
 
   monitor = portal_flatpak_update_monitor_skeleton_new ();
 
-  g_object_set_data_full (G_OBJECT (monitor), "update-monitor-data", m, update_monitor_data_free);
-  g_object_set_data_full (G_OBJECT (monitor), "required-sender", g_strdup (m->sender), g_free);
-
   g_info ("created UpdateMonitor for %s/%s at %s", m->name, m->branch, obj_path);
+
+  g_object_set_data_full (G_OBJECT (monitor), "required-sender", g_strdup (m->sender), g_free);
+  g_object_set_data_full (G_OBJECT (monitor), "update-monitor-data",
+                          g_steal_pointer (&m), update_monitor_data_free);
 
   return monitor;
 }
@@ -3017,6 +3035,10 @@ main (int    argc,
     { NULL }
   };
 
+  /* Save the enviroment before changing anything, so that subprocesses
+   * can get the unchanged version */
+  original_environ = g_get_environ ();
+
   setlocale (LC_ALL, "");
 
   g_setenv ("GIO_USE_VFS", "local", TRUE);
@@ -3119,5 +3141,6 @@ main (int    argc,
   main_loop = g_main_loop_new (NULL, FALSE);
   g_main_loop_run (main_loop);
 
+  g_strfreev (original_environ);
   return 0;
 }

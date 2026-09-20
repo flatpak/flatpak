@@ -13,3 +13,8 @@ install_data(
   'flatpak.fish',
   install_dir : get_option('datadir') / 'fish' / 'vendor_completions.d',
 )
+
+install_data(
+  'flatpak-coredumpctl',
+  install_dir : get_option('datadir') / 'bash-completion' / 'completions',
+)

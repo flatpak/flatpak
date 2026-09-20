@@ -742,7 +742,6 @@ flatpak_filter_glob_to_regexp (const char  *glob,
   while (*glob != 0)
     {
       char c = *glob;
-      glob++;
 
       if (c == '/')
         {
@@ -774,9 +773,14 @@ flatpak_filter_glob_to_regexp (const char  *glob,
         }
       else
         {
-          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid glob character '%c'"), c);
+          g_autofree char *first = flatpak_describe_invalid_first_char (glob);
+
+          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Invalid glob character '%s'"),
+                              first);
           return NULL;
         }
+
+      glob++;
     }
 
   while (parts < 3)
@@ -982,34 +986,38 @@ flatpak_str_is_alphanumeric (const char *arg)
   return TRUE;
 }
 
-/* This atomically replaces a symlink with a new value, removing the
- * existing symlink target, if it exstis and is different from
- * @target. This is atomic in the sense that we're guaranteed to
- * remove any existing symlink target (once), independent of how many
- * processes do the same operation in parallele. However, it is still
- * possible that we remove the old and then fail to create the new
- * symlink for some reason, ending up with neither the old or the new
- * target. That is fine if the reason for the symlink is keeping a
- * cache though.
- * The target shall only be a file in the same directory as the symlink, and
- * shall only contain the characters a-zA-Z0-9. This is so that the target of
- * the symlink that gets removed is in the same directory as the link.
+/* Atomically replace the @symlink_name symlink in @dir_fd with one
+ * pointing to @target, removing the previous target file (if it
+ * exists and differs from @target).
+ *
+ * This is atomic in the sense that we're guaranteed to remove any
+ * existing symlink target (once), independent of how many processes
+ * do the same operation in parallel. However, it is still possible
+ * that we remove the old and then fail to create the new symlink for
+ * some reason, ending up with neither the old or the new target.
+ * That is fine if the reason for the symlink is keeping a cache
+ * though.
+ *
+ * All filesystem operations go through @dir_fd so the caller can
+ * guarantee the directory identity even if the path to it is
+ * attacker-controlled.
+ *
+ * @target shall only contain the characters a-zA-Z0-9 so that the
+ * old target file to be removed is always in the same directory.
  */
 gboolean
-flatpak_switch_symlink_and_remove (const char *symlink_path,
+flatpak_switch_symlink_and_remove (int         dir_fd,
+                                   const char *symlink_name,
                                    const char *target,
                                    GError    **error)
 {
-  g_autofree char *symlink_dir = g_path_get_dirname (symlink_path);
-  int try;
-
-  for (try = 0; try < 100; try++)
+  for (size_t try = 0; try < 100; try++)
     {
-      g_autofree char *tmp_path = NULL;
-      int fd;
+      g_autofree char *tmp_name = NULL;
+      glnx_autofd int fd = -1;
 
       /* Try to atomically create the symlink */
-      if (TEMP_FAILURE_RETRY (symlink (target, symlink_path)) == 0)
+      if (TEMP_FAILURE_RETRY (symlinkat (target, dir_fd, symlink_name)) == 0)
         return TRUE;
 
       if (errno != EEXIST)
@@ -1019,48 +1027,52 @@ flatpak_switch_symlink_and_remove (const char *symlink_path,
           return FALSE;
         }
 
-      /* The symlink existed, move it to a temporary name atomically, and remove target
-         if that succeeded. */
-      tmp_path = g_build_filename (symlink_dir, ".switched-symlink-XXXXXX", NULL);
+      /* The symlink existed, move it to a temporary name atomically,
+       * and remove its target if that succeeded.
+       * This generated filename doesn't need to be securely unique:
+       * we're only protecting against accidental collisions if two
+       * processes try to regenerate ld.so.cache at the same time. */
+      tmp_name = g_strdup_printf (".switched-symlink-%08X", g_random_int ());
 
-      fd = g_mkstemp_full (tmp_path, O_RDWR, 0644);
+      fd = openat (dir_fd, tmp_name,
+                   O_CREAT | O_WRONLY | O_EXCL | O_CLOEXEC | O_NOFOLLOW, 0644);
       if (fd == -1)
         {
+          if (errno == EEXIST)
+            continue;
+
           glnx_set_error_from_errno (error);
           return FALSE;
         }
-      close (fd);
+      g_clear_fd (&fd, NULL);
 
-      if (TEMP_FAILURE_RETRY (rename (symlink_path, tmp_path)) == 0)
+      if (TEMP_FAILURE_RETRY (renameat (dir_fd, symlink_name,
+                                        dir_fd, tmp_name)) == 0)
         {
           /* The move succeeded, now we can remove the old target */
-          g_autofree char *old_target = flatpak_readlink (tmp_path, error);
+          g_autofree char *old_target = NULL;
+
+          old_target = glnx_readlinkat_malloc (dir_fd, tmp_name, NULL, error);
           if (old_target == NULL)
             return FALSE;
 
-          /* Don't remove old file if its the same as the new one */
+          /* Don't remove old file if it's the same as the new one */
           if (strcmp (old_target, target) != 0)
             {
               if (flatpak_str_is_alphanumeric (old_target))
-                {
-                  g_autofree char *old_target_path = NULL;
-
-                  old_target_path = g_build_filename (symlink_dir, old_target, NULL);
-                  unlink (old_target_path);
-                }
+                unlinkat (dir_fd, old_target, 0);
               else
-                {
-                  g_warning ("Refusing to delete old link target %s", old_target);
-                }
+                g_warning ("Refusing to delete old link target %s", old_target);
             }
         }
       else if (errno != ENOENT)
         {
           glnx_set_error_from_errno (error);
-          unlink (tmp_path);
-          return -1;
+          unlinkat (dir_fd, tmp_name, 0);
+          return FALSE;
         }
-      unlink (tmp_path);
+
+      unlinkat (dir_fd, tmp_name, 0);
 
       /* An old target was removed, try again */
     }
@@ -1218,131 +1230,82 @@ flatpak_openat_noatime (int           dfd,
 }
 
 gboolean
-flatpak_cp_a (GFile         *src,
-              GFile         *dest,
-              FlatpakCpFlags flags,
-              GCancellable  *cancellable,
-              GError       **error)
+flatpak_cp_a_at (int            src_dfd,
+                 int            dest_parent_dfd,
+                 const char    *dest_name,
+                 FlatpakCpFlags flags,
+                 GCancellable  *cancellable,
+                 GError       **error)
 {
-  gboolean ret = FALSE;
-  GFileEnumerator *enumerator = NULL;
-  GFileInfo *src_info = NULL;
-  GFile *dest_child = NULL;
-  int dest_dfd = -1;
   gboolean merge = (flags & FLATPAK_CP_FLAGS_MERGE) != 0;
   gboolean no_chown = (flags & FLATPAK_CP_FLAGS_NO_CHOWN) != 0;
-  gboolean move = (flags & FLATPAK_CP_FLAGS_MOVE) != 0;
-  g_autoptr(GFileInfo) child_info = NULL;
-  GError *temp_error = NULL;
-  int r;
+  struct stat src_stbuf;
+  glnx_autofd int dest_dfd = -1;
+  g_auto(GLnxDirFdIterator) src_iter = { 0, };
 
-  enumerator = g_file_enumerate_children (src, "standard::type,standard::name,unix::uid,unix::gid,unix::mode",
-                                          G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
-                                          cancellable, error);
-  if (!enumerator)
-    goto out;
+  if (fstat (src_dfd, &src_stbuf) != 0)
+    return glnx_throw_errno_prefix (error, "fstat");
 
-  src_info = g_file_query_info (src, "standard::name,unix::mode,unix::uid,unix::gid," \
-                                     "time::modified,time::modified-usec,time::access,time::access-usec",
-                                G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
-                                cancellable, error);
-  if (!src_info)
-    goto out;
-
-  do
-    r = mkdir (flatpak_file_get_path_cached (dest), 0755);
-  while (G_UNLIKELY (r == -1 && errno == EINTR));
-  if (r == -1 &&
+  if (TEMP_FAILURE_RETRY (mkdirat (dest_parent_dfd, dest_name, 0755)) != 0 &&
       (!merge || errno != EEXIST))
-    {
-      glnx_set_error_from_errno (error);
-      goto out;
-    }
+    return glnx_throw_errno_prefix (error, "mkdirat(%s)", dest_name);
 
-  if (!glnx_opendirat (AT_FDCWD, flatpak_file_get_path_cached (dest), TRUE,
-                       &dest_dfd, error))
-    goto out;
+  if (!glnx_opendirat (dest_parent_dfd, dest_name, FALSE, &dest_dfd, error))
+    return FALSE;
 
   if (!no_chown)
     {
-      do
-        r = fchown (dest_dfd,
-                    g_file_info_get_attribute_uint32 (src_info, "unix::uid"),
-                    g_file_info_get_attribute_uint32 (src_info, "unix::gid"));
-      while (G_UNLIKELY (r == -1 && errno == EINTR));
-      if (r == -1)
-        {
-          glnx_set_error_from_errno (error);
-          goto out;
-        }
+      if (TEMP_FAILURE_RETRY (fchown (dest_dfd, src_stbuf.st_uid, src_stbuf.st_gid)) != 0)
+        return glnx_throw_errno_prefix (error, "fchown");
     }
 
-  do
-    r = fchmod (dest_dfd, g_file_info_get_attribute_uint32 (src_info, "unix::mode"));
-  while (G_UNLIKELY (r == -1 && errno == EINTR));
+  if (TEMP_FAILURE_RETRY (fchmod (dest_dfd, src_stbuf.st_mode & 07777)) != 0)
+    return glnx_throw_errno_prefix (error, "fchmod");
 
-  if (dest_dfd != -1)
+  if (!glnx_dirfd_iterator_init_at (src_dfd, ".", FALSE, &src_iter, error))
+    return FALSE;
+
+  while (TRUE)
     {
-      (void) close (dest_dfd);
-      dest_dfd = -1;
-    }
+      struct dirent *dent;
+      const char *name;
 
-  while ((child_info = g_file_enumerator_next_file (enumerator, cancellable, &temp_error)))
-    {
-      const char *name = g_file_info_get_name (child_info);
-      g_autoptr(GFile) src_child = g_file_get_child (src, name);
+      if (!glnx_dirfd_iterator_next_dent_ensure_dtype (&src_iter, &dent,
+                                                       cancellable, error))
+        return FALSE;
 
-      if (dest_child)
-        g_object_unref (dest_child);
-      dest_child = g_file_get_child (dest, name);
+      if (dent == NULL)
+        break;
 
-      if (g_file_info_get_file_type (child_info) == G_FILE_TYPE_DIRECTORY)
+      name = dent->d_name;
+
+      if (dent->d_type == DT_DIR)
         {
-          if (!flatpak_cp_a (src_child, dest_child, flags,
-                             cancellable, error))
-            goto out;
+          glnx_autofd int child_src_dfd = -1;
+
+          if (!glnx_opendirat (src_iter.fd, name, FALSE, &child_src_dfd, error))
+            return FALSE;
+
+          if (!flatpak_cp_a_at (child_src_dfd, dest_dfd,
+                                name, flags, cancellable, error))
+            return FALSE;
         }
       else
         {
-          (void) unlink (flatpak_file_get_path_cached (dest_child));
-          GFileCopyFlags copyflags = G_FILE_COPY_OVERWRITE | G_FILE_COPY_NOFOLLOW_SYMLINKS;
-          if (!no_chown)
-            copyflags |= G_FILE_COPY_ALL_METADATA;
-          if (move)
-            {
-              if (!g_file_move (src_child, dest_child, copyflags,
-                                cancellable, NULL, NULL, error))
-                goto out;
-            }
-          else
-            {
-              if (!g_file_copy (src_child, dest_child, copyflags,
-                                cancellable, NULL, NULL, error))
-                goto out;
-            }
+          GLnxFileCopyFlags copyflags = GLNX_FILE_COPY_OVERWRITE;
+          if (no_chown)
+            copyflags |= GLNX_FILE_COPY_NOCHOWN;
+
+          (void) unlinkat (dest_dfd, name, 0);
+
+          if (!glnx_file_copy_at (src_iter.fd, name, NULL,
+                                  dest_dfd, name, copyflags,
+                                  cancellable, error))
+            return FALSE;
         }
-
-      g_clear_object (&child_info);
     }
 
-  if (temp_error != NULL)
-    {
-      g_propagate_error (error, temp_error);
-      goto out;
-    }
-
-  if (move &&
-      !g_file_delete (src, NULL, error))
-    goto out;
-
-  ret = TRUE;
-out:
-  if (dest_dfd != -1)
-    (void) close (dest_dfd);
-  g_clear_object (&src_info);
-  g_clear_object (&enumerator);
-  g_clear_object (&dest_child);
-  return ret;
+  return TRUE;
 }
 
 static gboolean
@@ -2572,6 +2535,37 @@ flatpak_validate_path_characters (const char *path,
     }
 
   return TRUE;
+}
+
+/*
+ * Describe the first character of @s in a way that is useful for
+ * error messages about invalid strings.
+ */
+char *
+flatpak_describe_invalid_first_char (const char *s)
+{
+  gunichar c = g_utf8_get_char_validated (s, -1);
+
+  /* If s starts with valid UTF-8 and the character is printable,
+   * represent it as itself, for example:
+   * Branch can't contain "x" */
+  if (c > 0 && g_unichar_isprint (c) && !g_unichar_iszerowidth (c))
+    {
+      char buf[7] = { 0 };
+
+      g_unichar_to_utf8 (c, buf);
+      return g_strdup (buf);
+    }
+
+  /* If s starts with valid UTF-8 but the character is unprintable,
+   * represent it in Unicode codepoint notation, for example:
+   * Branch can't contain "U+000A" */
+  if (c != (gunichar) -1 && c != (gunichar) -2)
+    return g_strdup_printf ("U+%04X", c);
+
+  /* If it wasn't even valid UTF-8, resort to representing the byte:
+   * Branch can't contain "\xFF" */
+  return g_strdup_printf ("\\x%02X", (unsigned char) *s);
 }
 
 gboolean

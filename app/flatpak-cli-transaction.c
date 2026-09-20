@@ -37,7 +37,7 @@ struct _FlatpakCliTransaction
 {
   FlatpakTransaction   parent;
 
-  gboolean             disable_interaction;
+  gboolean             assume_yes;
   gboolean             stop_on_first_error;
   gboolean             non_default_arch;
   GError              *first_operation_error;
@@ -91,7 +91,7 @@ choose_remote_for_ref (FlatpakTransaction *transaction,
 
   self->did_interaction = TRUE;
 
-  if (self->disable_interaction)
+  if (self->assume_yes)
     {
       g_print (_("Required runtime for %s (%s) found in remote %s\n"),
                pref, runtime_ref, remotes[0]);
@@ -127,7 +127,7 @@ add_new_remote (FlatpakTransaction            *transaction,
 
   self->did_interaction = TRUE;
 
-  if (self->disable_interaction)
+  if (self->assume_yes)
     {
       g_print (_("Configuring %s as new remote '%s'\n"), url, remote_name);
       return TRUE;
@@ -173,7 +173,7 @@ install_authenticator (FlatpakTransaction            *old_transaction,
 
   old_cli->did_interaction = TRUE;
 
-  transaction2 = flatpak_cli_transaction_new (dir, old_cli->disable_interaction, TRUE, FALSE, &local_error);
+  transaction2 = flatpak_cli_transaction_new (dir, old_cli->assume_yes, TRUE, FALSE, &local_error);
   if (transaction2 == NULL)
     {
       g_printerr ("Unable to install authenticator: %s\n", local_error->message);
@@ -637,7 +637,7 @@ webflow_start (FlatpakTransaction *transaction,
 
   self->did_interaction = TRUE;
 
-  if (!self->disable_interaction)
+  if (!self->assume_yes)
     {
       g_print (_("Authentication required for remote '%s'\n"), remote);
       if (!flatpak_yes_no_prompt (TRUE, _("Open browser?")))
@@ -687,9 +687,6 @@ basic_auth_start (FlatpakTransaction *transaction,
 {
   FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
   char *user, *password, *previous_error = NULL;
-
-  if (self->disable_interaction)
-    return FALSE;
 
   self->did_interaction = TRUE;
 
@@ -980,10 +977,10 @@ end_of_lifed_with_rebase (FlatpakTransaction *transaction,
       if (rebased_to_ref && remote)
         {
           /* The context for this prompt is in print_eol_info_message() */
-          if (self->disable_interaction ||
+          if (self->assume_yes ||
               flatpak_yes_no_prompt (TRUE, _("Replace?")))
             {
-              if (self->disable_interaction)
+              if (self->assume_yes)
                 g_print (_("Updating to rebased version\n"));
 
               action = EOL_REBASE;
@@ -1519,7 +1516,7 @@ transaction_ready_pre_auth (FlatpakTransaction *transaction)
 
   g_print ("\n");
 
-  if (!self->disable_interaction)
+  if (!self->assume_yes)
     {
       g_autoptr(FlatpakInstallation) installation = flatpak_transaction_get_installation (transaction);
       const char *name;
@@ -1657,7 +1654,7 @@ flatpak_cli_transaction_class_init (FlatpakCliTransactionClass *klass)
 
 FlatpakTransaction *
 flatpak_cli_transaction_new (FlatpakDir *dir,
-                             gboolean    disable_interaction,
+                             gboolean    assume_yes,
                              gboolean    stop_on_first_error,
                              gboolean    non_default_arch,
                              GError    **error)
@@ -1676,11 +1673,10 @@ flatpak_cli_transaction_new (FlatpakDir *dir,
   if (self == NULL)
     return NULL;
 
-  self->disable_interaction = disable_interaction;
+  self->assume_yes = assume_yes;
   self->stop_on_first_error = stop_on_first_error;
   self->non_default_arch = non_default_arch;
 
-  flatpak_transaction_set_no_interaction (FLATPAK_TRANSACTION (self), disable_interaction);
   flatpak_transaction_add_default_dependency_sources (FLATPAK_TRANSACTION (self));
 
   return (FlatpakTransaction *) g_steal_pointer (&self);

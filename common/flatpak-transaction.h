@@ -59,7 +59,7 @@ typedef enum {
  * The details for #FlatpakTransaction::operation-error.
  */
 typedef enum {
-  FLATPAK_TRANSACTION_ERROR_DETAILS_NON_FATAL = 1 << 0,
+  FLATPAK_TRANSACTION_ERROR_DETAILS_NON_FATAL = 1 << 0, /*< nick=non-fatal >*/
 } FlatpakTransactionErrorDetails;
 
 /**
@@ -69,7 +69,7 @@ typedef enum {
  * The details for #FlatpakTransaction::operation-done.
  */
 typedef enum {
-  FLATPAK_TRANSACTION_RESULT_NO_CHANGE = 1 << 0,
+  FLATPAK_TRANSACTION_RESULT_NO_CHANGE = 1 << 0, /*< nick=no-change >*/
 } FlatpakTransactionResult;
 
 /**

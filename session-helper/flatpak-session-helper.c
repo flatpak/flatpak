@@ -25,12 +25,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include <sys/file.h>
 #include <sys/ioctl.h>
 #include <gio/gio.h>
 #include <gio/gunixfdlist.h>
 #include "flatpak-dbus-generated.h"
 #include "flatpak-session-helper.h"
 #include "flatpak-utils-base-private.h"
+#include "libglnx.h"
 
 static GStrv original_environ = NULL;
 static char *monitor_dir;
@@ -775,6 +777,7 @@ main (int    argc,
   GBusNameOwnerFlags flags;
   g_autofree char *pk11_program = NULL;
   g_autofree char *flatpak_dir = NULL;
+  glnx_autofd int flatpak_dir_fd = -1;
   g_autoptr(GError) error = NULL;
   const GOptionEntry options[] = {
     { "replace", 'r', 0, G_OPTION_ARG_NONE, &replace,  "Replace old daemon.", NULL },
@@ -851,7 +854,16 @@ main (int    argc,
   flatpak_dir = g_build_filename (g_get_user_runtime_dir (), ".flatpak-helper", NULL);
   if (g_mkdir_with_parents (flatpak_dir, 0700) != 0)
     {
-      g_print ("Can't create %s\n", monitor_dir);
+      g_print ("Can't create %s\n", flatpak_dir);
+      exit (1);
+    }
+
+  /* Prevent age-based cleanup via systemd-tmpfiles by taking a shared lock */
+  flatpak_dir_fd = glnx_opendirat_with_errno (AT_FDCWD, flatpak_dir, TRUE);
+  if (flatpak_dir_fd < 0 || flock (flatpak_dir_fd, LOCK_SH | LOCK_NB) != 0)
+    {
+      g_printerr ("Unable to lock %s to prevent tmpfiles cleanup: %s\n",
+                  flatpak_dir, g_strerror (errno));
       exit (1);
     }
 

@@ -198,44 +198,96 @@ request_path_path (int writer_socket, RevokefsOps op, const char *path1, const c
   return request_path_data (writer_socket, op, path1, path2, strlen(path2), 0);
 }
 
-static gboolean
-validate_path (char *path)
+/* Return an fd to the parent directory of path guaranteed to be under
+ * basefd, and set *out_name to the final path component. */
+static int
+chase_parent (guchar *data, size_t len, char **out_name)
 {
-  char *end_segment;
+  g_autofree char *path = g_strndup ((const char *) data, len);
+  g_autofree char *parent = NULL;
+  g_autofree char *name = NULL;
+  const char *last_slash;
+  int fd;
 
-  /* No absolute or empty paths */
   if (*path == '/' || *path == 0)
-    return FALSE;
-
-  while (*path != 0)
     {
-      end_segment = strchr (path, '/');
-      if (end_segment == NULL)
-        end_segment = path + strlen (path);
-
-      if (strncmp (path, "..", 2) == 0)
-        return FALSE;
-
-      path = end_segment;
-      while (*path == '/')
-        path++;
-    }
-
-  return TRUE;
-}
-
-static char *
-get_valid_path (guchar *data, size_t len)
-{
-  char *path = g_strndup ((const char *) data, len);
-
-  if (!validate_path (path))
-    {
-      g_printerr ("Invalid path argument %s\n", path);
+      g_printerr ("Invalid path: %s\n", path);
       exit (1);
     }
 
-  return path;
+  last_slash = strrchr (path, '/');
+  if (last_slash)
+    {
+      parent = g_strndup (path, last_slash - path);
+      name = g_strdup (last_slash + 1);
+    }
+  else
+    {
+      parent = g_strdup (".");
+      name = g_strdup (path);
+    }
+
+  if (name[0] == 0 || strcmp (name, ".") == 0 || strcmp (name, "..") == 0)
+    {
+      g_printerr ("Invalid path: %s\n", path);
+      exit (1);
+    }
+
+  fd = glnx_chaseat (basefd, parent,
+                      GLNX_CHASE_RESOLVE_BENEATH |
+                      GLNX_CHASE_MUST_BE_DIRECTORY,
+                      NULL);
+  if (fd < 0)
+    {
+      g_printerr ("Path escapes base directory: %s\n", path);
+      exit (1);
+    }
+
+  if (out_name != NULL)
+    *out_name = g_steal_pointer (&name);
+  return fd;
+}
+
+static int
+chase_request_path (RevokefsRequest *request,
+                    gsize data_size,
+                    char **out_name)
+{
+  return chase_parent (request->data, data_size, out_name);
+}
+
+static void
+chase_request_2path (RevokefsRequest *request,
+                     gsize data_size,
+                     int *out_fd1, char **out_name1,
+                     int *out_fd2, char **out_name2)
+{
+  if (request->arg1 >= data_size)
+    {
+      g_printerr ("Invalid path1 size\n");
+      exit (1);
+    }
+
+  *out_fd1 = chase_parent (request->data, request->arg1, out_name1);
+  *out_fd2 = chase_parent (request->data + request->arg1,
+                           data_size - request->arg1, out_name2);
+}
+
+static void
+chase_request_any_and_path (RevokefsRequest *request,
+                            gsize data_size,
+                            char **out_any_path,
+                            int *out_fd, char **out_name)
+{
+  if (request->arg1 >= data_size)
+    {
+      g_printerr ("Invalid path1 size\n");
+      exit (1);
+    }
+
+  *out_any_path = g_strndup ((const char *) request->data, request->arg1);
+  *out_fd = chase_parent (request->data + request->arg1,
+                          data_size - request->arg1, out_name);
 }
 
 static int
@@ -245,47 +297,16 @@ mask_mode (int mode)
   return mode & ~S_ISUID & ~S_ISGID & ~(S_IWGRP | S_IWOTH);
 }
 
-static void
-get_any_path_and_valid_path (RevokefsRequest *request,
-                             gsize data_size,
-                             char **any_path1,
-                             char **valid_path2)
-{
-  if (request->arg1 >= data_size)
-    {
-      g_printerr ("Invalid path1 size\n");
-      exit (1);
-    }
-
-  *any_path1 = g_strndup ((const char *) request->data, request->arg1);
-  *valid_path2 = get_valid_path (request->data + request->arg1, data_size - request->arg1);
-}
-
-static void
-get_valid_2path (RevokefsRequest *request,
-                 gsize data_size,
-                 char **path1,
-                 char **path2)
-{
-  if (request->arg1 >= data_size)
-    {
-      g_printerr ("Invalid path1 size\n");
-      exit (1);
-    }
-
-  *path1 = get_valid_path (request->data, request->arg1);
-  *path2 = get_valid_path (request->data + request->arg1, data_size - request->arg1);
-}
-
 static ssize_t
 handle_mkdir (RevokefsRequest *request,
               gsize data_size,
               RevokefsResponse *response)
 {
-  g_autofree char *path = get_valid_path (request->data, data_size);
+  g_autofree char *name = NULL;
+  glnx_autofd int parent_fd = chase_request_path (request, data_size, &name);
   int mode = request->arg1;
 
-  if (mkdirat (basefd, path, mask_mode (mode)) == -1)
+  if (mkdirat (parent_fd, name, mask_mode (mode)) == -1)
     response->result = -errno;
   else
     response->result = 0;
@@ -304,9 +325,10 @@ handle_rmdir (RevokefsRequest *request,
               gsize data_size,
               RevokefsResponse *response)
 {
-  g_autofree char *path = get_valid_path (request->data, data_size);
+  g_autofree char *name = NULL;
+  glnx_autofd int parent_fd = chase_request_path (request, data_size, &name);
 
-  if (unlinkat (basefd, path, AT_REMOVEDIR) == -1)
+  if (unlinkat (parent_fd, name, AT_REMOVEDIR) == -1)
     response->result = -errno;
   else
     response->result = 0;
@@ -325,9 +347,10 @@ handle_unlink (RevokefsRequest *request,
               gsize data_size,
               RevokefsResponse *response)
 {
-  g_autofree char *path = get_valid_path (request->data, data_size);
+  g_autofree char *name = NULL;
+  glnx_autofd int parent_fd = chase_request_path (request, data_size, &name);
 
-  if (unlinkat (basefd, path, 0) == -1)
+  if (unlinkat (parent_fd, name, 0) == -1)
     response->result = -errno;
   else
     response->result = 0;
@@ -347,12 +370,13 @@ handle_symlink (RevokefsRequest *request,
                 RevokefsResponse *response)
 {
   g_autofree char *from = NULL;
-  g_autofree char *to = NULL;
+  g_autofree char *to_name = NULL;
+  glnx_autofd int to_parent_fd = -1;
 
-  /* from doesn't have to be a valid path, it can be absolute or whatever */
-  get_any_path_and_valid_path (request, data_size,  &from, &to);
+  chase_request_any_and_path (request, data_size,
+                              &from, &to_parent_fd, &to_name);
 
-  if (symlinkat (from, basefd, to) == -1)
+  if (symlinkat (from, to_parent_fd, to_name) == -1)
     response->result = -errno;
   else
     response->result = 0;
@@ -371,12 +395,16 @@ handle_link (RevokefsRequest *request,
              gsize data_size,
              RevokefsResponse *response)
 {
-  g_autofree char *from = NULL;
-  g_autofree char *to = NULL;
+  g_autofree char *from_name = NULL;
+  g_autofree char *to_name = NULL;
+  glnx_autofd int from_parent_fd = -1;
+  glnx_autofd int to_parent_fd = -1;
 
-  get_valid_2path (request, data_size,  &from, &to);
+  chase_request_2path (request, data_size,
+                       &from_parent_fd, &from_name,
+                       &to_parent_fd, &to_name);
 
-  if (linkat (basefd, from, basefd, to, 0) == -1)
+  if (linkat (from_parent_fd, from_name, to_parent_fd, to_name, 0) == -1)
     response->result = -errno;
   else
     response->result = 0;
@@ -395,14 +423,18 @@ handle_rename (RevokefsRequest *request,
              gsize data_size,
              RevokefsResponse *response)
 {
-  g_autofree char *from = NULL;
-  g_autofree char *to = NULL;
+  g_autofree char *from_name = NULL;
+  g_autofree char *to_name = NULL;
+  glnx_autofd int from_parent_fd = -1;
+  glnx_autofd int to_parent_fd = -1;
   unsigned int flags;
 
-  get_valid_2path (request, data_size,  &from, &to);
+  chase_request_2path (request, data_size,
+                       &from_parent_fd, &from_name,
+                       &to_parent_fd, &to_name);
   flags = (unsigned int)request->arg2;
 
-  if (renameat2 (basefd, from, basefd, to, flags) == -1)
+  if (renameat2 (from_parent_fd, from_name, to_parent_fd, to_name, flags) == -1)
     response->result = -errno;
   else
     response->result = 0;
@@ -424,17 +456,30 @@ handle_chmod (RevokefsRequest *request,
               gsize data_size,
               RevokefsResponse *response)
 {
-  g_autofree char *path = get_valid_path (request->data, data_size);
+  g_autofree char *name = NULL;
+  glnx_autofd int parent_fd = chase_request_path (request, data_size, &name);
+  glnx_autofd int fd = -1;
   int mode = request->arg1;
 
-  /* Note we can't use AT_SYMLINK_NOFOLLOW yet;
-   * https://marc.info/?l=linux-kernel&m=148830147803162&w=2
-   * https://marc.info/?l=linux-fsdevel&m=149193779929561&w=2
-   */
-  if (fchmodat (basefd, path, mask_mode (mode), 0) != 0)
-    response->result = -errno;
+  if (fchmodat (parent_fd, name, mask_mode (mode), AT_SYMLINK_NOFOLLOW) == 0)
+    {
+      response->result = 0;
+    }
+  else if (errno == ENOTSUP)
+    {
+      /* Linux < 6.6 didn't implement fchmodat() with AT_SYMLINK_NOFOLLOW */
+      fd = openat (parent_fd, name, O_RDONLY | O_NOFOLLOW | O_NONBLOCK | O_CLOEXEC);
+      if (fd == -1)
+        response->result = -errno;
+      else if (fchmod (fd, mask_mode (mode)) != 0)
+        response->result = -errno;
+      else
+        response->result = 0;
+    }
   else
-    response->result = 0;
+    {
+      response->result = -errno;
+    }
 
   return 0;
 }
@@ -450,11 +495,12 @@ handle_chown (RevokefsRequest *request,
               gsize data_size,
               RevokefsResponse *response)
 {
-  g_autofree char *path = get_valid_path (request->data, data_size);
+  g_autofree char *name = NULL;
+  glnx_autofd int parent_fd = chase_request_path (request, data_size, &name);
   uid_t uid = request->arg1;
   gid_t gid = request->arg2;
 
-  if (fchownat (basefd, path, uid, gid, AT_SYMLINK_NOFOLLOW) != 0)
+  if (fchownat (parent_fd, name, uid, gid, AT_SYMLINK_NOFOLLOW) != 0)
     response->result = -errno;
   else
     response->result = 0;
@@ -473,10 +519,12 @@ handle_truncate (RevokefsRequest *request,
                  gsize data_size,
                  RevokefsResponse *response)
 {
-  g_autofree char *path = get_valid_path (request->data, data_size);
+  g_autofree char *name = NULL;
+  glnx_autofd int parent_fd = chase_request_path (request, data_size, &name);
   off_t size = request->arg1;
+  glnx_autofd int fd = -1;
 
-  glnx_autofd int fd = openat (basefd, path, O_NOFOLLOW|O_WRONLY);
+  fd = openat (parent_fd, name, O_NOFOLLOW | O_WRONLY);
   if (fd == -1)
     response->result = -errno;
   else
@@ -501,7 +549,8 @@ handle_utimens (RevokefsRequest *request,
                 gsize data_size,
                 RevokefsResponse *response)
 {
-  g_autofree char *path = NULL;
+  g_autofree char *name = NULL;
+  glnx_autofd int parent_fd = -1;
   struct timespec *tv;
 
   if (request->arg1 + sizeof (struct timespec) * 2 != data_size)
@@ -510,10 +559,10 @@ handle_utimens (RevokefsRequest *request,
       exit (1);
     }
 
-  path = get_valid_path (request->data, request->arg1);
+  parent_fd = chase_request_path (request, request->arg1, &name);
   tv = (struct timespec *)(request->data + request->arg1);
 
-  if (utimensat (basefd, path, tv, AT_SYMLINK_NOFOLLOW) == -1)
+  if (utimensat (parent_fd, name, tv, AT_SYMLINK_NOFOLLOW) == -1)
     response->result = -errno;
   else
     response->result = 0;
@@ -533,16 +582,14 @@ handle_open (RevokefsRequest *request,
              gsize data_size,
              RevokefsResponse *response)
 {
-  g_autofree char *path = get_valid_path (request->data, data_size);
+  g_autofree char *name = NULL;
+  glnx_autofd int parent_fd = chase_request_path (request, data_size, &name);
   int mode = request->arg1;
   int flags = request->arg2;
   int fd;
 
-
-  /* We need to specially handle O_TRUNC. Also, Fuse should have already
-   * resolved symlinks, but use O_NOFOLLOW to be safe to avoid following
-   * symlinks to some other filesystem. */
-  fd = openat (basefd, path, (flags & ~O_TRUNC) | O_NOFOLLOW, mask_mode (mode));
+  /* We handle O_TRUNC separately, a bit later */
+  fd = openat (parent_fd, name, (flags & ~O_TRUNC) | O_NOFOLLOW, mask_mode (mode));
   if (fd == -1)
     response->result = -errno;
   else
@@ -747,14 +794,15 @@ handle_access (RevokefsRequest *request,
                gsize data_size,
                RevokefsResponse *response)
 {
-  g_autofree char *path = get_valid_path (request->data, data_size);
+  g_autofree char *name = NULL;
+  glnx_autofd int parent_fd = chase_request_path (request, data_size, &name);
   int mode = request->arg1;
 
   /* Apparently at least GNU coreutils rm calls `faccessat(W_OK)`
    * before trying to do an unlink.  So...we'll just lie about
    * writable access here.
    */
-  if (faccessat (basefd, path, mode, AT_SYMLINK_NOFOLLOW) == -1)
+  if (faccessat (parent_fd, name, mode, AT_SYMLINK_NOFOLLOW) == -1)
     response->result = -errno;
   else
     response->result = 0;

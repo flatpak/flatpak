@@ -24,8 +24,6 @@ set -euo pipefail
 skip_without_bwrap
 skip_revokefs_without_fuse
 
-echo "1..9"
-
 mkdir bundles
 
 setup_repo
@@ -185,3 +183,5 @@ run org.test.Hello &> hello_out
 assert_file_has_content hello_out '^Hello world, from a sandboxUPDATED2$'
 
 ok "update as bundle"
+
+done_testing

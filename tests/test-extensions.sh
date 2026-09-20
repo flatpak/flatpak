@@ -23,8 +23,6 @@ set -euo pipefail
 
 skip_without_bwrap
 
-echo "1..2"
-
 make_extension () {
     local ID=$1
     local VERSION=$2
@@ -176,3 +174,5 @@ assert_has_extension_file /app multiversion/master/extension-org.test.Multiversi
 assert_has_extension_file /app multiversion/notmaster/extension-org.test.Multiversion.notmaster:not-master
 
 ok "app extensions"
+
+done_testing

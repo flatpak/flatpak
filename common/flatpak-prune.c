@@ -130,7 +130,7 @@ _ostree_object_name_equal (gconstpointer a,
                            gconstpointer b)
 {
   VarObjectNameRef ref_a = var_object_name_from_gvariant ((GVariant *)a);
-  VarObjectNameRef ref_b = var_object_name_from_gvariant ((GVariant *)a);
+  VarObjectNameRef ref_b = var_object_name_from_gvariant ((GVariant *)b);
 
   return
     g_str_equal (var_object_name_get_checksum (ref_a), var_object_name_get_checksum (ref_b)) &&

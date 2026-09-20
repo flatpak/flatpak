@@ -23,8 +23,6 @@ set -euo pipefail
 
 skip_without_bwrap
 
-echo "1..18"
-
 # Start the fake registry server
 
 if [ x${USE_HTTPS} = xyes ] ; then
@@ -424,3 +422,5 @@ $client add-signature hello "${digest}" "$(pwd)/oci/app-image-signature-2"
 ${FLATPAK} ${U} install -y oci-registry-sig org.test.Hello >&2
 
 ok "signed images"
+
+done_testing

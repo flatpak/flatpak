@@ -38,8 +38,6 @@ Homepage=https://the.homepage/
 Icon=https://the.icon/
 EOF
 
-echo "1..5"
-
 mkdir -p $FLATPAK_CONFIG_DIR/remotes.d
 
 ${FLATPAK} -vv --system  remotes > remotes
@@ -131,3 +129,5 @@ assert_file_has_content remotes "added-default"
 assert_remote_has_no_config added-default xa.filter
 
 ok "override default filter"
+
+done_testing

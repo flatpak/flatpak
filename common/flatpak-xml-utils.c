@@ -165,9 +165,12 @@ flatpak_xml_to_string (FlatpakXml *node, GString *res)
             {
               for (i = 0; node->attribute_names[i] != NULL; i++)
                 {
+                  g_autofree char *value = NULL;
+
+                  value = g_markup_escape_text (node->attribute_values[i], -1);
                   g_string_append_printf (res, " %s=\"%s\"",
                                           node->attribute_names[i],
-                                          node->attribute_values[i]);
+                                          value);
                 }
             }
           if (node->first_child == NULL)

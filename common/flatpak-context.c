@@ -375,7 +375,7 @@ flatpak_permission_merge (FlatpakPermission *permission,
       if (g_ptr_array_find_with_equal_func (permission->conditionals,
                                             conditional,
                                             g_str_equal, NULL))
-        return;
+        continue;
 
       g_ptr_array_add (permission->conditionals, g_strdup (conditional));
     }
@@ -412,8 +412,12 @@ flatpak_permission_compute_allowed (FlatpakPermission                *permission
         continue;
 
       /* Conditions which are always true in this version of flatpak */
-      if ((condition & flatpak_context_true_conditions) && !negated)
-        return TRUE;
+      if (condition & flatpak_context_true_conditions)
+        {
+          if (!negated)
+            return TRUE;
+          continue;
+        }
 
       /* Conditions which need runtime evaluation */
       if (evaluator && evaluator (condition) == !negated)
@@ -430,26 +434,23 @@ flatpak_permission_adds_permissions (FlatpakPermission *old,
 {
   size_t i = 0, j = 0;
 
+  /* Already unconditionally allowed, can't add more */
   if (old->allowed)
     return FALSE;
 
+  /* Upgrading from conditional to unconditional */
   if (new->allowed)
     return TRUE;
 
+  /* More conditionals means more ways to grant the permission (OR) */
   if (new->conditionals->len > old->conditionals->len)
     return TRUE;
 
-  while (TRUE)
+  while (i < old->conditionals->len && j < new->conditionals->len)
     {
       const char *old_cond = old->conditionals->pdata[i];
       const char *new_cond = new->conditionals->pdata[j];
       int res;
-
-      if (old_cond == NULL)
-        return new_cond != NULL;
-
-      if (new_cond == NULL)
-        return FALSE;
 
       res = strcmp (old_cond, new_cond);
       if (res == 0) /* Same conditional */
@@ -461,13 +462,14 @@ flatpak_permission_adds_permissions (FlatpakPermission *old,
         {
           i++;
         }
-      else /* new conditional */
+      else /* New conditional not in old — adds permissions */
         {
-          return FALSE;
+          return TRUE;
         }
     }
 
-  return FALSE;
+  /* New conditionals remain that weren't matched in old */
+  return j < new->conditionals->len;
 }
 
 static GHashTable *
@@ -1280,6 +1282,30 @@ flatpak_policy_to_string (FlatpakPolicy policy)
     return "own";
 
   return "none";
+}
+
+/* Returns the command-line option that gives a name the given @policy on
+ * the session bus. The system bus equivalent is the same option with a
+ * "system-" prefix. There is no option for FLATPAK_POLICY_SEE, which like
+ * FLATPAK_POLICY_NONE does not let the app talk to the name. */
+static const char *
+flatpak_policy_to_name_option (FlatpakPolicy policy)
+{
+  switch (policy)
+    {
+    case FLATPAK_POLICY_TALK:
+      return "talk-name";
+
+    case FLATPAK_POLICY_OWN:
+      return "own-name";
+
+    case FLATPAK_POLICY_NONE:
+    case FLATPAK_POLICY_SEE:
+      return "no-talk-name";
+
+    default:
+      g_return_val_if_reached ("no-talk-name");
+    }
 }
 
 static gboolean
@@ -3489,6 +3515,10 @@ flatpak_context_adds_permissions (FlatpakContext *old,
   if (adds_usb_device (old, new))
     return TRUE;
 
+  /* env_vars and persistent are intentionally not checked here.
+   * They only affect the sandbox-internal environment and layout,
+   * not the app's access to host resources. */
+
   return FALSE;
 }
 
@@ -3547,8 +3577,9 @@ flatpak_context_to_args (FlatpakContext *context,
     {
       const char *name = key;
       FlatpakPolicy policy = GPOINTER_TO_INT (value);
+      const char *option = flatpak_policy_to_name_option (policy);
 
-      g_ptr_array_add (args, g_strdup_printf ("--%s-name=%s", flatpak_policy_to_string (policy), name));
+      g_ptr_array_add (args, g_strdup_printf ("--%s=%s", option, name));
     }
 
   g_hash_table_iter_init (&iter, context->system_bus_policy);
@@ -3556,8 +3587,9 @@ flatpak_context_to_args (FlatpakContext *context,
     {
       const char *name = key;
       FlatpakPolicy policy = GPOINTER_TO_INT (value);
+      const char *option = flatpak_policy_to_name_option (policy);
 
-      g_ptr_array_add (args, g_strdup_printf ("--system-%s-name=%s", flatpak_policy_to_string (policy), name));
+      g_ptr_array_add (args, g_strdup_printf ("--system-%s=%s", option, name));
     }
 
   /* Serialize host-reset first, because order can matter in
@@ -4477,8 +4509,7 @@ FlatpakContextSockets
 flatpak_context_compute_allowed_sockets (FlatpakContext                   *context,
                                          FlatpakContextConditionEvaluator  evaluator)
 {
-  g_autoptr(GHashTable) permissions =
-    g_hash_table_new_similar (context->socket_permissions);
+  g_autoptr(GHashTable) permissions = flatpak_permissions_new ();
   GHashTableIter iter;
   gpointer key, value;
   FlatpakPermission *fallback_x11;

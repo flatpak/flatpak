@@ -56,7 +56,7 @@ struct _FlatpakChainInputStreamClass
   void (*_g_reserved5) (void);
 };
 
-GType          flatpak_chain_input_stream_get_type (void) G_GNUC_CONST;
+GType          flatpak_chain_input_stream_get_type (void);
 
 FlatpakChainInputStream * flatpak_chain_input_stream_new (GPtrArray *streams);
 

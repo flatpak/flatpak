@@ -165,7 +165,7 @@ parse_vnd_usb_rule (FlatpakUsbRule  *dest,
       return FALSE;
     }
 
-  if (!validate_hex_uint16 (data[1], 4, &dest->d.product.id))
+  if (!validate_hex_uint16 (data[1], 4, &dest->d.vendor.id))
     {
       g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
                    _("USB query rule 'vnd' must have a valid 4-digit hexadecimal vendor id"));

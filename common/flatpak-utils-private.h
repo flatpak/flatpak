@@ -161,7 +161,8 @@ flatpak_auto_lock_helper (GMutex *mutex)
   return mutex;
 }
 
-gboolean flatpak_switch_symlink_and_remove (const char *symlink_path,
+gboolean flatpak_switch_symlink_and_remove (int         dir_fd,
+                                            const char *symlink_name,
                                             const char *target,
                                             GError    **error);
 
@@ -202,14 +203,14 @@ typedef enum {
   FLATPAK_CP_FLAGS_NONE = 0,
   FLATPAK_CP_FLAGS_MERGE = 1 << 0,
   FLATPAK_CP_FLAGS_NO_CHOWN = 1 << 1,
-  FLATPAK_CP_FLAGS_MOVE = 1 << 2,
 } FlatpakCpFlags;
 
-gboolean   flatpak_cp_a (GFile         *src,
-                         GFile         *dest,
-                         FlatpakCpFlags flags,
-                         GCancellable  *cancellable,
-                         GError       **error);
+gboolean   flatpak_cp_a_at (int            src_dfd,
+                            int            dest_parent_dfd,
+                            const char    *dest_name,
+                            FlatpakCpFlags flags,
+                            GCancellable  *cancellable,
+                            GError       **error);
 
 gboolean flatpak_mkdir_p (GFile        *dir,
                           GCancellable *cancellable,
@@ -359,6 +360,8 @@ char * flatpak_escape_string (const char        *s,
 
 gboolean flatpak_validate_path_characters (const char *path,
                                            GError    **error);
+
+char *flatpak_describe_invalid_first_char (const char *s);
 
 gboolean running_under_sudo_root (void);
 
