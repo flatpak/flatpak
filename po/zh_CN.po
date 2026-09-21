@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2026-08-21 16:07+0000\n"
-"PO-Revision-Date: 2026-08-23 08:41+0800\n"
+"POT-Creation-Date: 2026-09-18 15:48+0000\n"
+"PO-Revision-Date: 2026-09-21 08:01+0800\n"
 "Last-Translator: lumingzh <lumingzh@qq.com>\n"
 "Language-Team: Chinese (China) <i18n-zh@googlegroups.com>\n"
 "Language: zh_CN\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Gtranslator 50.0\n"
+"X-Generator: Gtranslator 51.0\n"
 
 #: app/flatpak-builtins-build-bundle.c:59
 msgid "Export runtime instead of app"
@@ -30,7 +30,7 @@ msgstr "要打包的架构"
 #: app/flatpak-builtins-build-export.c:62 app/flatpak-builtins-build-init.c:53
 #: app/flatpak-builtins-build-sign.c:42 app/flatpak-builtins-create-usb.c:46
 #: app/flatpak-builtins-info.c:55 app/flatpak-builtins-install.c:67
-#: app/flatpak-builtins-list.c:50 app/flatpak-builtins-make-current.c:38
+#: app/flatpak-builtins-list.c:51 app/flatpak-builtins-make-current.c:38
 #: app/flatpak-builtins-remote-info.c:54 app/flatpak-builtins-remote-ls.c:56
 #: app/flatpak-builtins-run.c:158 app/flatpak-builtins-search.c:37
 #: app/flatpak-builtins-uninstall.c:54 app/flatpak-builtins-update.c:56
@@ -141,7 +141,7 @@ msgstr "必须指定位置、文件名和名称"
 #: app/flatpak-builtins-document-unexport.c:70
 #: app/flatpak-builtins-history.c:482 app/flatpak-builtins-info.c:130
 #: app/flatpak-builtins-install.c:181 app/flatpak-builtins-install.c:234
-#: app/flatpak-builtins-install.c:298 app/flatpak-builtins-list.c:419
+#: app/flatpak-builtins-install.c:298 app/flatpak-builtins-list.c:424
 #: app/flatpak-builtins-make-current.c:72 app/flatpak-builtins-override.c:73
 #: app/flatpak-builtins-permission-list.c:162
 #: app/flatpak-builtins-permission-remove.c:132
@@ -264,7 +264,7 @@ msgstr "在 %2$s 中没有匹配 %1$s 的扩展点"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "在绑定挂载选项“%s”中缺少“=”"
 
-#: app/flatpak-builtins-build.c:679 common/flatpak-run.c:4086
+#: app/flatpak-builtins-build.c:679 common/flatpak-run.c:4077
 msgid "Unable to start app"
 msgstr "无法启动应用"
 
@@ -640,7 +640,7 @@ msgid "Change the runtime used for the app"
 msgstr "更改用于应用的运行时"
 
 #: app/flatpak-builtins-build-finish.c:60 app/flatpak-builtins-build-init.c:54
-#: app/flatpak-builtins-list.c:53 app/flatpak-builtins-remote-ls.c:58
+#: app/flatpak-builtins-list.c:55 app/flatpak-builtins-remote-ls.c:58
 #: app/flatpak-builtins-run.c:163
 msgid "RUNTIME"
 msgstr "RUNTIME"
@@ -1323,21 +1323,21 @@ msgid "Not exported\n"
 msgstr "未导出\n"
 
 #: app/flatpak-builtins-document-list.c:43 app/flatpak-builtins-history.c:53
-#: app/flatpak-builtins-list.c:54 app/flatpak-builtins-ps.c:43
+#: app/flatpak-builtins-list.c:56 app/flatpak-builtins-ps.c:43
 #: app/flatpak-builtins-remote-list.c:45 app/flatpak-builtins-remote-ls.c:59
 #: app/flatpak-builtins-search.c:38
 msgid "What information to show"
 msgstr "显示什么信息"
 
 #: app/flatpak-builtins-document-list.c:43 app/flatpak-builtins-history.c:53
-#: app/flatpak-builtins-list.c:54 app/flatpak-builtins-ps.c:43
+#: app/flatpak-builtins-list.c:56 app/flatpak-builtins-ps.c:43
 #: app/flatpak-builtins-remote-list.c:45 app/flatpak-builtins-remote-ls.c:59
 #: app/flatpak-builtins-search.c:38
 msgid "FIELD,…"
 msgstr "FIELD,…"
 
 #: app/flatpak-builtins-document-list.c:44 app/flatpak-builtins-history.c:54
-#: app/flatpak-builtins-list.c:52 app/flatpak-builtins-permission-list.c:43
+#: app/flatpak-builtins-list.c:53 app/flatpak-builtins-permission-list.c:43
 #: app/flatpak-builtins-permission-show.c:43 app/flatpak-builtins-ps.c:44
 #: app/flatpak-builtins-remote-list.c:46 app/flatpak-builtins-remote-ls.c:63
 #: app/flatpak-builtins-repo.c:717 app/flatpak-builtins-search.c:39
@@ -1357,7 +1357,7 @@ msgstr "路径"
 msgid "Show the document path"
 msgstr "显示文档路径"
 
-#: app/flatpak-builtins-document-list.c:51 app/flatpak-builtins-list.c:66
+#: app/flatpak-builtins-document-list.c:51 app/flatpak-builtins-list.c:68
 #: app/flatpak-builtins-remote-ls.c:74
 msgid "Origin"
 msgstr "来源"
@@ -1499,12 +1499,12 @@ msgstr "更改"
 msgid "Show the kind of change"
 msgstr "显示更改的类型"
 
-#: app/flatpak-builtins-history.c:61 app/flatpak-builtins-list.c:68
+#: app/flatpak-builtins-history.c:61 app/flatpak-builtins-list.c:70
 #: app/flatpak-builtins-remote-ls.c:75 app/flatpak-builtins-repo.c:335
 msgid "Ref"
 msgstr "引用"
 
-#: app/flatpak-builtins-history.c:61 app/flatpak-builtins-list.c:68
+#: app/flatpak-builtins-history.c:61 app/flatpak-builtins-list.c:70
 #: app/flatpak-builtins-remote-ls.c:75
 msgid "Show the ref"
 msgstr "显示引用"
@@ -1513,29 +1513,29 @@ msgstr "显示引用"
 msgid "Show the application/runtime ID"
 msgstr "显示应用/运行时标识"
 
-#: app/flatpak-builtins-history.c:63 app/flatpak-builtins-list.c:64
+#: app/flatpak-builtins-history.c:63 app/flatpak-builtins-list.c:66
 #: app/flatpak-builtins-ps.c:53 app/flatpak-builtins-remote-ls.c:73
 #: app/flatpak-cli-transaction.c:1432
 msgid "Arch"
 msgstr "架构"
 
-#: app/flatpak-builtins-history.c:63 app/flatpak-builtins-list.c:64
+#: app/flatpak-builtins-history.c:63 app/flatpak-builtins-list.c:66
 #: app/flatpak-builtins-ps.c:53 app/flatpak-builtins-remote-ls.c:73
 msgid "Show the architecture"
 msgstr "显示架构"
 
-#: app/flatpak-builtins-history.c:64 app/flatpak-builtins-list.c:63
+#: app/flatpak-builtins-history.c:64 app/flatpak-builtins-list.c:65
 #: app/flatpak-builtins-ps.c:54 app/flatpak-builtins-remote-ls.c:72
 #: app/flatpak-builtins-search.c:48 app/flatpak-cli-transaction.c:1435
 msgid "Branch"
 msgstr "分支"
 
-#: app/flatpak-builtins-history.c:64 app/flatpak-builtins-list.c:63
+#: app/flatpak-builtins-history.c:64 app/flatpak-builtins-list.c:65
 #: app/flatpak-builtins-remote-ls.c:72
 msgid "Show the branch"
 msgstr "显示分支"
 
-#: app/flatpak-builtins-history.c:65 app/flatpak-builtins-list.c:67
+#: app/flatpak-builtins-history.c:65 app/flatpak-builtins-list.c:69
 msgid "Installation"
 msgstr "安装"
 
@@ -1588,7 +1588,7 @@ msgstr "工具"
 msgid "Show the tool that was used"
 msgstr "显示曾经使用的工具"
 
-#: app/flatpak-builtins-history.c:72 app/flatpak-builtins-list.c:62
+#: app/flatpak-builtins-history.c:72 app/flatpak-builtins-list.c:64
 #: app/flatpak-builtins-remote-ls.c:71 app/flatpak-builtins-search.c:47
 msgid "Version"
 msgstr "版本"
@@ -1997,127 +1997,131 @@ msgstr "给出的额外参数"
 msgid "Must specify the app to kill"
 msgstr "必须指定要杀死的应用"
 
-#: app/flatpak-builtins-list.c:47
+#: app/flatpak-builtins-list.c:48
 msgid "Show extra information"
 msgstr "显示额外信息"
 
-#: app/flatpak-builtins-list.c:48
+#: app/flatpak-builtins-list.c:49
 msgid "List installed runtimes"
 msgstr "列出已安装的运行时"
 
-#: app/flatpak-builtins-list.c:49
+#: app/flatpak-builtins-list.c:50
 msgid "List installed applications"
 msgstr "列出已安装的应用"
 
-#: app/flatpak-builtins-list.c:50
+#: app/flatpak-builtins-list.c:51
 msgid "Arch to show"
 msgstr "要显示的架构"
 
-#: app/flatpak-builtins-list.c:51 app/flatpak-builtins-remote-ls.c:57
+#: app/flatpak-builtins-list.c:52 app/flatpak-builtins-remote-ls.c:57
 msgid "List all refs (including locale/debug)"
 msgstr "列出所有引用（包括本地化/调试）"
 
-#: app/flatpak-builtins-list.c:53 app/flatpak-builtins-remote-ls.c:58
+#: app/flatpak-builtins-list.c:54
+msgid "Show sizes in bytes"
+msgstr "显示大小（字节）"
+
+#: app/flatpak-builtins-list.c:55 app/flatpak-builtins-remote-ls.c:58
 msgid "List all applications using RUNTIME"
 msgstr "列出所有使用指定运行时的应用"
 
-#: app/flatpak-builtins-list.c:59 app/flatpak-builtins-remote-list.c:51
+#: app/flatpak-builtins-list.c:61 app/flatpak-builtins-remote-list.c:51
 #: app/flatpak-builtins-remote-ls.c:68 app/flatpak-builtins-search.c:44
 msgid "Name"
 msgstr "名称"
 
-#: app/flatpak-builtins-list.c:59 app/flatpak-builtins-remote-list.c:51
+#: app/flatpak-builtins-list.c:61 app/flatpak-builtins-remote-list.c:51
 #: app/flatpak-builtins-remote-ls.c:68 app/flatpak-builtins-search.c:44
 msgid "Show the name"
 msgstr "显示名字"
 
-#: app/flatpak-builtins-list.c:60 app/flatpak-builtins-remote-list.c:60
+#: app/flatpak-builtins-list.c:62 app/flatpak-builtins-remote-list.c:60
 #: app/flatpak-builtins-remote-ls.c:69 app/flatpak-builtins-search.c:45
 msgid "Description"
 msgstr "描述"
 
-#: app/flatpak-builtins-list.c:60 app/flatpak-builtins-remote-ls.c:69
+#: app/flatpak-builtins-list.c:62 app/flatpak-builtins-remote-ls.c:69
 #: app/flatpak-builtins-search.c:45
 msgid "Show the description"
 msgstr "显示说明"
 
-#: app/flatpak-builtins-list.c:61 app/flatpak-builtins-remote-ls.c:70
+#: app/flatpak-builtins-list.c:63 app/flatpak-builtins-remote-ls.c:70
 #: app/flatpak-builtins-search.c:46
 msgid "Application ID"
 msgstr "应用程序 ID"
 
-#: app/flatpak-builtins-list.c:61 app/flatpak-builtins-ps.c:52
+#: app/flatpak-builtins-list.c:63 app/flatpak-builtins-ps.c:52
 #: app/flatpak-builtins-remote-ls.c:70 app/flatpak-builtins-search.c:46
 msgid "Show the application ID"
 msgstr "显示应用程序标识"
 
-#: app/flatpak-builtins-list.c:62 app/flatpak-builtins-remote-ls.c:71
+#: app/flatpak-builtins-list.c:64 app/flatpak-builtins-remote-ls.c:71
 #: app/flatpak-builtins-search.c:47
 msgid "Show the version"
 msgstr "显示版本"
 
-#: app/flatpak-builtins-list.c:65 app/flatpak-builtins-ps.c:56
+#: app/flatpak-builtins-list.c:67 app/flatpak-builtins-ps.c:56
 #: app/flatpak-builtins-remote-ls.c:77
 msgid "Runtime"
 msgstr "运行时"
 
-#: app/flatpak-builtins-list.c:65
+#: app/flatpak-builtins-list.c:67
 msgid "Show the used runtime"
 msgstr "显示使用的运行时"
 
-#: app/flatpak-builtins-list.c:66 app/flatpak-builtins-remote-ls.c:74
+#: app/flatpak-builtins-list.c:68 app/flatpak-builtins-remote-ls.c:74
 msgid "Show the origin remote"
 msgstr "显示来源的远程仓库"
 
-#: app/flatpak-builtins-list.c:67
+#: app/flatpak-builtins-list.c:69
 msgid "Show the installation"
 msgstr "显示安装"
 
-#: app/flatpak-builtins-list.c:69
+#: app/flatpak-builtins-list.c:71
 msgid "Active commit"
 msgstr "激活提交"
 
-#: app/flatpak-builtins-list.c:69 app/flatpak-builtins-remote-ls.c:76
+#: app/flatpak-builtins-list.c:71 app/flatpak-builtins-remote-ls.c:76
 msgid "Show the active commit"
 msgstr "显示激活的提交"
 
-#: app/flatpak-builtins-list.c:70
+#: app/flatpak-builtins-list.c:72
 msgid "Latest commit"
 msgstr "最新提交"
 
-#: app/flatpak-builtins-list.c:70
+#: app/flatpak-builtins-list.c:72
 msgid "Show the latest commit"
 msgstr "显示最新的提交"
 
-#: app/flatpak-builtins-list.c:71 app/flatpak-builtins-remote-ls.c:78
+#: app/flatpak-builtins-list.c:73 app/flatpak-builtins-remote-ls.c:78
 msgid "Installed size"
 msgstr "安装大小"
 
-#: app/flatpak-builtins-list.c:71 app/flatpak-builtins-remote-ls.c:78
+#: app/flatpak-builtins-list.c:73 app/flatpak-builtins-remote-ls.c:78
 msgid "Show the installed size"
 msgstr "显示安装后的大小"
 
-#: app/flatpak-builtins-list.c:72 app/flatpak-builtins-remote-list.c:58
+#: app/flatpak-builtins-list.c:74 app/flatpak-builtins-remote-list.c:58
 #: app/flatpak-builtins-remote-ls.c:80 app/flatpak-builtins-repo.c:340
 msgid "Options"
 msgstr "选项"
 
-#: app/flatpak-builtins-list.c:72 app/flatpak-builtins-remote-list.c:58
+#: app/flatpak-builtins-list.c:74 app/flatpak-builtins-remote-list.c:58
 #: app/flatpak-builtins-remote-ls.c:80
 msgid "Show options"
 msgstr "显示选项"
 
-#: app/flatpak-builtins-list.c:180
+#: app/flatpak-builtins-list.c:182
 #, c-format
 msgid "Unable to load details of %s: %s"
 msgstr "无法加载 %s 的详情：%s"
 
-#: app/flatpak-builtins-list.c:190
+#: app/flatpak-builtins-list.c:192
 #, c-format
 msgid "Unable to inspect current version of %s: %s"
 msgstr "无法检查 %s 的当前版本：%s"
 
-#: app/flatpak-builtins-list.c:408
+#: app/flatpak-builtins-list.c:413
 msgid " - List installed apps and/or runtimes"
 msgstr " - 列出已安装的应用和/或运行时"
 
@@ -3092,7 +3096,7 @@ msgstr "使用 FD 替代应用的 /app"
 
 #: app/flatpak-builtins-run.c:183 app/flatpak-builtins-run.c:185
 #: app/flatpak-builtins-run.c:187 app/flatpak-builtins-run.c:188
-#: common/flatpak-context.c:2713
+#: common/flatpak-context.c:2737
 msgid "FD"
 msgstr "FD"
 
@@ -4255,37 +4259,37 @@ msgstr "未知共享类型 %s，有效的类型为：%s"
 msgid "Unknown policy type %s, valid types are: %s"
 msgstr "未知策略类型 %s，有效的类型为：%s"
 
-#: common/flatpak-context.c:1307
+#: common/flatpak-context.c:1331
 #, c-format
 msgid "Invalid dbus name %s"
 msgstr "无效的 dbus 名称 %s"
 
-#: common/flatpak-context.c:1320
+#: common/flatpak-context.c:1344
 #, c-format
 msgid "Unknown socket type %s, valid types are: %s"
 msgstr "未知套接字类型 %s，有效的类型为：%s"
 
-#: common/flatpak-context.c:1335
+#: common/flatpak-context.c:1359
 #, c-format
 msgid "Unknown device type %s, valid types are: %s"
 msgstr "未知设备类型 %s，有效的类型为：%s"
 
-#: common/flatpak-context.c:1349
+#: common/flatpak-context.c:1373
 #, c-format
 msgid "Unknown feature type %s, valid types are: %s"
 msgstr "未知功能类型 %s，有效的类型为：%s"
 
-#: common/flatpak-context.c:1881
+#: common/flatpak-context.c:1905
 #, c-format
 msgid "Filesystem location \"%s\" contains \"..\""
 msgstr "文件系统位置“%s”包含“..”"
 
-#: common/flatpak-context.c:1923
+#: common/flatpak-context.c:1947
 msgid ""
 "--filesystem=/ is not available, use --filesystem=host for a similar result"
 msgstr "--filesystem=/ 不可用，使用 --filesystem=host 获得相似结果"
 
-#: common/flatpak-context.c:1957
+#: common/flatpak-context.c:1981
 #, c-format
 msgid ""
 "Unknown filesystem location %s, valid locations are: host, host-os, host-"
@@ -4294,247 +4298,247 @@ msgstr ""
 "未知文件系统位置 %s，有效的位置为：host、host-os、host-etc、host-root、home、"
 "xdg-*[/…]、~/dir、/dir"
 
-#: common/flatpak-context.c:2056
+#: common/flatpak-context.c:2080
 #, c-format
 msgid "Invalid syntax for %s: %s"
 msgstr "无效的 %s 语法：%s"
 
-#: common/flatpak-context.c:2183
+#: common/flatpak-context.c:2207
 msgid "fallback-x11 can not be conditional"
 msgstr "fallback-x11 无法成为条件性的"
 
-#: common/flatpak-context.c:2359
+#: common/flatpak-context.c:2383
 #, c-format
 msgid "Invalid env format %s"
 msgstr "无效的环境格式 %s"
 
-#: common/flatpak-context.c:2440
+#: common/flatpak-context.c:2464
 #, c-format
 msgid "Environment variable name must not contain '=': %s"
 msgstr "环境变量名称不能包含“=”：%s"
 
-#: common/flatpak-context.c:2568 common/flatpak-context.c:2576
+#: common/flatpak-context.c:2592 common/flatpak-context.c:2600
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr "--add-policy 参数的格式必须为 SUBSYSTEM.KEY=VALUE"
 
-#: common/flatpak-context.c:2583
+#: common/flatpak-context.c:2607
 msgid "--add-policy values can't start with \"!\""
 msgstr "--add-policy 值不能以“!”开头"
 
-#: common/flatpak-context.c:2608 common/flatpak-context.c:2616
+#: common/flatpak-context.c:2632 common/flatpak-context.c:2640
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr "--remove-policy 参数的格式必须为 SUBSYSTEM.KEY=VALUE"
 
-#: common/flatpak-context.c:2623
+#: common/flatpak-context.c:2647
 msgid "--remove-policy values can't start with \"!\""
 msgstr "--remove-policy 值不能以“!”开头"
 
-#: common/flatpak-context.c:2698
+#: common/flatpak-context.c:2722
 msgid "Share with host"
 msgstr "与主机共享"
 
-#: common/flatpak-context.c:2698 common/flatpak-context.c:2699
+#: common/flatpak-context.c:2722 common/flatpak-context.c:2723
 msgid "SHARE"
 msgstr "SHARE"
 
-#: common/flatpak-context.c:2699
+#: common/flatpak-context.c:2723
 msgid "Unshare with host"
 msgstr "取消与主机共享"
 
-#: common/flatpak-context.c:2700
+#: common/flatpak-context.c:2724
 msgid "Require conditions to be met for a subsystem to get shared"
 msgstr "子系统共享需要相匹配的条件"
 
-#: common/flatpak-context.c:2700
+#: common/flatpak-context.c:2724
 msgid "SHARE:CONDITION"
 msgstr "SHARE:CONDITION"
 
-#: common/flatpak-context.c:2701
+#: common/flatpak-context.c:2725
 msgid "Expose socket to app"
 msgstr "将套接字暴露给应用"
 
-#: common/flatpak-context.c:2701 common/flatpak-context.c:2702
+#: common/flatpak-context.c:2725 common/flatpak-context.c:2726
 msgid "SOCKET"
 msgstr "SOCKET"
 
-#: common/flatpak-context.c:2702
+#: common/flatpak-context.c:2726
 msgid "Don't expose socket to app"
 msgstr "不要将套接字暴露给应用"
 
-#: common/flatpak-context.c:2703
+#: common/flatpak-context.c:2727
 msgid "Require conditions to be met for a socket to get exposed"
 msgstr "要暴露的套接字需要相匹配的条件"
 
-#: common/flatpak-context.c:2703
+#: common/flatpak-context.c:2727
 msgid "SOCKET:CONDITION"
 msgstr "SOCKET:CONDITION"
 
-#: common/flatpak-context.c:2704
+#: common/flatpak-context.c:2728
 msgid "Expose device to app"
 msgstr "将设备暴露给应用"
 
-#: common/flatpak-context.c:2704 common/flatpak-context.c:2705
+#: common/flatpak-context.c:2728 common/flatpak-context.c:2729
 msgid "DEVICE"
 msgstr "DEVICE"
 
-#: common/flatpak-context.c:2705
+#: common/flatpak-context.c:2729
 msgid "Don't expose device to app"
 msgstr "不要将设备暴露给应用"
 
-#: common/flatpak-context.c:2706
+#: common/flatpak-context.c:2730
 msgid "Require conditions to be met for a device to get exposed"
 msgstr "要暴露的设备需要相匹配的条件"
 
-#: common/flatpak-context.c:2706
+#: common/flatpak-context.c:2730
 msgid "DEVICE:CONDITION"
 msgstr "DEVICE:CONDITION"
 
-#: common/flatpak-context.c:2707
+#: common/flatpak-context.c:2731
 msgid "Allow feature"
 msgstr "允许功能"
 
-#: common/flatpak-context.c:2707 common/flatpak-context.c:2708
+#: common/flatpak-context.c:2731 common/flatpak-context.c:2732
 msgid "FEATURE"
 msgstr "FEATURE"
 
-#: common/flatpak-context.c:2708
+#: common/flatpak-context.c:2732
 msgid "Don't allow feature"
 msgstr "不允许功能"
 
-#: common/flatpak-context.c:2709
+#: common/flatpak-context.c:2733
 msgid "Require conditions to be met for a feature to get allowed"
 msgstr "允许某功能需要相匹配的条件"
 
-#: common/flatpak-context.c:2709
+#: common/flatpak-context.c:2733
 msgid "FEATURE:CONDITION"
 msgstr "FEATURE:CONDITION"
 
-#: common/flatpak-context.c:2710
+#: common/flatpak-context.c:2734
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr "将文件系统暴露给应用（:ro 为只读）"
 
-#: common/flatpak-context.c:2710
+#: common/flatpak-context.c:2734
 msgid "FILESYSTEM[:ro]"
 msgstr "FILESYSTEM[:ro]"
 
-#: common/flatpak-context.c:2711
+#: common/flatpak-context.c:2735
 msgid "Don't expose filesystem to app"
 msgstr "不要将文件系统暴露给应用"
 
-#: common/flatpak-context.c:2711
+#: common/flatpak-context.c:2735
 msgid "FILESYSTEM"
 msgstr "FILESYSTEM"
 
-#: common/flatpak-context.c:2712
+#: common/flatpak-context.c:2736
 msgid "Set environment variable"
 msgstr "设置环境变量"
 
-#: common/flatpak-context.c:2712
+#: common/flatpak-context.c:2736
 msgid "VAR=VALUE"
 msgstr "VAR=VALUE"
 
-#: common/flatpak-context.c:2713
+#: common/flatpak-context.c:2737
 msgid "Read environment variables in env -0 format from FD"
 msgstr "以 env -0 格式从 FD 读取环境变量"
 
-#: common/flatpak-context.c:2714
+#: common/flatpak-context.c:2738
 msgid "Remove variable from environment"
 msgstr "从环境中移除变量"
 
-#: common/flatpak-context.c:2714
+#: common/flatpak-context.c:2738
 msgid "VAR"
 msgstr "VAR"
 
-#: common/flatpak-context.c:2715
+#: common/flatpak-context.c:2739
 msgid "Allow app to own name on the session bus"
 msgstr "允许应用在会话总线上拥有名称"
 
-#: common/flatpak-context.c:2715 common/flatpak-context.c:2716
-#: common/flatpak-context.c:2717 common/flatpak-context.c:2718
-#: common/flatpak-context.c:2719 common/flatpak-context.c:2720
-#: common/flatpak-context.c:2721
+#: common/flatpak-context.c:2739 common/flatpak-context.c:2740
+#: common/flatpak-context.c:2741 common/flatpak-context.c:2742
+#: common/flatpak-context.c:2743 common/flatpak-context.c:2744
+#: common/flatpak-context.c:2745
 msgid "DBUS_NAME"
 msgstr "DBUS_NAME"
 
-#: common/flatpak-context.c:2716
+#: common/flatpak-context.c:2740
 msgid "Allow app to talk to name on the session bus"
 msgstr "允许应用与会话总线上的名字对话"
 
-#: common/flatpak-context.c:2717
+#: common/flatpak-context.c:2741
 msgid "Don't allow app to talk to name on the session bus"
 msgstr "不允许应用与会话总线上的名字对话"
 
-#: common/flatpak-context.c:2718
+#: common/flatpak-context.c:2742
 msgid "Allow app to own name on the system bus"
 msgstr "允许应用在系统总线上拥有自己的名称"
 
-#: common/flatpak-context.c:2719
+#: common/flatpak-context.c:2743
 msgid "Allow app to talk to name on the system bus"
 msgstr "允许应用与系统总线上的名字对话"
 
-#: common/flatpak-context.c:2720
+#: common/flatpak-context.c:2744
 msgid "Don't allow app to talk to name on the system bus"
 msgstr "不允许应用与系统总线上的名字对话"
 
-#: common/flatpak-context.c:2721
+#: common/flatpak-context.c:2745
 msgid "Allow app to own name on the a11y bus"
 msgstr "允许应用在无障碍总线上拥有名称"
 
-#: common/flatpak-context.c:2722
+#: common/flatpak-context.c:2746
 msgid "Add generic policy option"
 msgstr "添加常规策略选项"
 
-#: common/flatpak-context.c:2722 common/flatpak-context.c:2723
+#: common/flatpak-context.c:2746 common/flatpak-context.c:2747
 msgid "SUBSYSTEM.KEY=VALUE"
 msgstr "SUBSYSTEM.KEY=VALUE"
 
-#: common/flatpak-context.c:2723
+#: common/flatpak-context.c:2747
 msgid "Remove generic policy option"
 msgstr "移除常规策略选项"
 
-#: common/flatpak-context.c:2724
+#: common/flatpak-context.c:2748
 msgid "Add USB device to enumerables"
 msgstr "添加 USB 设备至可枚举列表"
 
-#: common/flatpak-context.c:2724 common/flatpak-context.c:2725
+#: common/flatpak-context.c:2748 common/flatpak-context.c:2749
 msgid "VENDOR_ID:PRODUCT_ID"
 msgstr "VENDOR_ID:PRODUCT_ID"
 
-#: common/flatpak-context.c:2725
+#: common/flatpak-context.c:2749
 msgid "Add USB device to hidden list"
 msgstr "添加 USB 设备至隐藏列表"
 
-#: common/flatpak-context.c:2726
+#: common/flatpak-context.c:2750
 msgid "A list of USB devices that are enumerable"
 msgstr "可枚举的 USB 设备列表"
 
-#: common/flatpak-context.c:2726
+#: common/flatpak-context.c:2750
 msgid "LIST"
 msgstr "LIST"
 
-#: common/flatpak-context.c:2727
+#: common/flatpak-context.c:2751
 msgid "File containing a list of USB devices to make enumerable"
 msgstr "包含可使其枚举的 USB 设备列表的文件"
 
-#: common/flatpak-context.c:2727 common/flatpak-context.c:2728
+#: common/flatpak-context.c:2751 common/flatpak-context.c:2752
 msgid "FILENAME"
 msgstr "FILENAME"
 
-#: common/flatpak-context.c:2728
+#: common/flatpak-context.c:2752
 msgid "Persist home directory subpath"
 msgstr "保留主目录子路径"
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-context.c:2730
+#: common/flatpak-context.c:2754
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "不要求正在运行的会话（不创建 cgroups）"
 
-#: common/flatpak-context.c:3763
+#: common/flatpak-context.c:3789
 #, c-format
 msgid "Not replacing \"%s\" with tmpfs: %s"
 msgstr "不用 tmpfs 替代“%s”：%s"
 
-#: common/flatpak-context.c:3771
+#: common/flatpak-context.c:3797
 #, c-format
 msgid "Not sharing \"%s\" with sandbox: %s"
 msgstr "不与沙盒共享“%s”：%s"
@@ -4543,12 +4547,12 @@ msgstr "不与沙盒共享“%s”：%s"
 #. * the path not existing, it seems reasonable to make more of a fuss
 #. * about the home directory not existing or otherwise being unusable,
 #. * so this is intentionally not using cannot_export()
-#: common/flatpak-context.c:3873
+#: common/flatpak-context.c:3899
 #, c-format
 msgid "Not allowing home directory access: %s"
 msgstr "不允许访问主目录：%s"
 
-#: common/flatpak-context.c:4107
+#: common/flatpak-context.c:4133
 #, c-format
 msgid "Unable to provide a temporary home directory in the sandbox: %s"
 msgstr "无法在沙盒中提供临时主目录：%s"
@@ -5532,43 +5536,43 @@ msgstr "将多体系结构添加到 seccomp 筛选器失败：%s"
 msgid "Failed to block syscall %d: %s"
 msgstr "封锁系统调用 %d 失败：%s"
 
-#: common/flatpak-run.c:2295
+#: common/flatpak-run.c:2286
 #, c-format
 msgid "Failed to export bpf: %s"
 msgstr "导出 bpf 失败：%s"
 
-#: common/flatpak-run.c:2657
+#: common/flatpak-run.c:2648
 #, c-format
 msgid "Failed to open ‘%s’"
 msgstr "打开“%s”失败"
 
-#: common/flatpak-run.c:2669
+#: common/flatpak-run.c:2660
 #, c-format
 msgid ""
 "Directory forwarding needs version 4 of the document portal (have version %d)"
 msgstr "目录转发需要版本 4 的文档门户（拥有版本 %d）"
 
-#: common/flatpak-run.c:2801
+#: common/flatpak-run.c:2792
 #, c-format
 msgid "Invalid path ‘%s’"
 msgstr "无效路径“%s”"
 
-#: common/flatpak-run.c:3033
+#: common/flatpak-run.c:3024
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "ldconfig 失败，退出状态为 %d"
 
-#: common/flatpak-run.c:3039
+#: common/flatpak-run.c:3030
 msgid "Can't open generated ld.so.cache"
 msgstr "无法打开生成的 ld.so.cache"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-run.c:3160
+#: common/flatpak-run.c:3151
 #, c-format
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr "您的管理员设置的策略不允许运行 %s"
 
-#: common/flatpak-run.c:3317
+#: common/flatpak-run.c:3308
 msgid ""
 "\"flatpak run\" is not intended to be run as `sudo flatpak run`. Use `sudo "
 "-i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell."
@@ -5576,17 +5580,17 @@ msgstr ""
 "“flatpak run”不是设计为以“sudo flatpak run”运行的。使用“sudo -i”或者“su -l”代"
 "替且从新的 shell 内部调用“flatpak run”。"
 
-#: common/flatpak-run.c:3528
+#: common/flatpak-run.c:3519
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "从 %s 迁移失败：%s"
 
-#: common/flatpak-run.c:3549
+#: common/flatpak-run.c:3540
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr "将旧应用数据目录 %s 迁移至新名称 %s 失败：%s"
 
-#: common/flatpak-run.c:3558
+#: common/flatpak-run.c:3549
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "迁移 %s 时创建符号链接失败：%s"
