@@ -37,8 +37,5 @@ flatpak_user_data_delete (const char  *app_id,
         return FALSE;
     }
 
-  if (!flatpak_reset_permissions_for_app (app_id, error))
-    return FALSE;
-
-  return TRUE;
+  return flatpak_reset_permissions_for_app (app_id, error);
 }
