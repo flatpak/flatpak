@@ -20,22 +20,53 @@
 
 #include "config.h"
 
-#include "flatpak-user-data-utils-private.h"
+#include "flatpak-user-data-utils.h"
 #include "flatpak-permission-utils-private.h"
+#include "flatpak-ref-utils-private.h"
 #include "flatpak-utils-private.h"
 
+/**
+ * flatpak_user_data_delete:
+ * @app_id: the application ID
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Deletes the data directory for @app_id in the current user's
+ * <filename>~/.var/app</filename> and resets its permissions in the current
+ * user's permission store. This affects only the calling user, regardless
+ * of whether the application is installed per-user or system-wide. The
+ * application does not need to be installed.
+ *
+ * If resetting permissions fails after the data directory has been removed,
+ * the function returns %FALSE. It can be called again to retry the permission
+ * reset.
+ *
+ * Returns: %TRUE on success, %FALSE on failure
+ *
+ * Since: 1.19
+ */
 gboolean
-flatpak_user_data_delete (const char  *app_id,
-                         GError     **error)
+flatpak_user_data_delete (const char   *app_id,
+                          GCancellable *cancellable,
+                          GError      **error)
 {
-  g_autofree char *path = g_build_filename (g_get_home_dir (), ".var", "app", app_id, NULL);
-  g_autoptr(GFile) file = g_file_new_for_path (path);
+  g_autofree char *path = NULL;
+  g_autoptr(GFile) file = NULL;
 
-  if (g_file_query_exists (file, NULL))
-    {
-      if (!flatpak_rm_rf (file, NULL, error))
-        return FALSE;
-    }
+  g_return_val_if_fail (app_id != NULL, FALSE);
 
-  return flatpak_reset_permissions_for_app (app_id, error);
+  if (!flatpak_is_valid_name (app_id, -1, error))
+    return FALSE;
+
+  if (g_cancellable_set_error_if_cancelled (cancellable, error))
+    return FALSE;
+
+  /* The validated app ID cannot introduce path separators or parent traversal. */
+  path = g_build_filename (g_get_home_dir (), ".var", "app", app_id, NULL);
+  file = g_file_new_for_path (path);
+
+  if (!flatpak_rm_rf (file, cancellable, error))
+    return FALSE;
+
+  return flatpak_reset_permissions_for_app (app_id, cancellable, error);
 }
