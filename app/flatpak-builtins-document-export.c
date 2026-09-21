@@ -237,7 +237,7 @@ flatpak_builtin_document_export (int argc, char **argv,
   if (reply == NULL)
     return FALSE;
 
-  if (is_directory)
+  if (is_directory && !opt_noexist)
     {
       g_autofree char **doc_ids = NULL;
       g_variant_get (reply, "(^a&s@a{sv})", &doc_ids, NULL);
