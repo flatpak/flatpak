@@ -269,7 +269,7 @@ static void
 bundle_data_free (BundleData *data)
 {
   g_clear_object (&data->file);
-  g_clear_object (&data->gpg_data);
+  g_clear_pointer (&data->gpg_data, g_bytes_unref);
   g_free (data);
 }
 
