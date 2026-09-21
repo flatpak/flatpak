@@ -1,4 +1,10 @@
 <SECTION>
+<FILE>flatpak-user-data-utils</FILE>
+<TITLE>User Data</TITLE>
+flatpak_user_data_delete
+</SECTION>
+
+<SECTION>
 <FILE>flatpak-installation</FILE>
 <TITLE>FlatpakInstallation</TITLE>
 FlatpakInstallation

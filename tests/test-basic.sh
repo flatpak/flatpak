@@ -125,4 +125,14 @@ done
 
 ok "ONE_DIR commands"
 
+mkdir -p "$HOME/.var/app/not-an-app/data"
+mkdir -p "$HOME/.var/app/org.test.Orphan/data"
+
+${FLATPAK} uninstall --delete-data -y
+
+assert_has_dir "$HOME/.var/app/not-an-app"
+assert_not_has_dir "$HOME/.var/app/org.test.Orphan"
+
+ok "skip invalid orphan app data"
+
 done_testing
