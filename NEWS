@@ -2,7 +2,62 @@ Changes in 1.19.1
 ~~~~~~~~~~~~~~~~~
 Released: not yet
 
-...
+Build-system changes:
+
+* libglnx and variant-schema-compiler are now Meson wrap subprojects,
+  not git subtrees.
+  Official source release tarballs include a matching version of these
+  subprojects.
+  If building from git in an environment where subprojects cannot be
+  downloaded automatically, please refer to Meson documentation.
+
+New features:
+
+* `flatpak list --bytes`, `-b` lists sizes in bytes
+
+Bug fixes:
+
+* Update Meson wrap subprojects for projects that are normally taken from
+  the host system:
+  - bubblewrap 0.12.0 (CVE-2026-87766)
+  - xdg-dbus-proxy 0.1.8 (CVE-2026-93676)
+
+* Validate GVariant structure of summaries before using generated variant
+  readers (#6779)
+
+* Fix crash in system helper when iterating cache directories (#6780)
+
+* Avoid corrupted output from non-UTF-8 characters in error messages (#6795)
+
+* Fix portal passing wrong file descriptor when sandbox-expose-fd-ro
+  triggers fd remapping collision (#6785)
+
+* Fix system helper tracking wrong D-Bus sender for pulls (#6781)
+
+* Fix extensions not being populated in the sandbox due to unhandled
+  EAGAIN from openat2 (#6787)
+
+* Fix build failure with GLib versions older than 2.72 (#6775)
+
+* Fix alignment of columns next to a decimal column (#4917)
+
+* Fix subsandbox startup (`flatpak-spawn`) when run from an app that
+  was configured with `--no-talk-name` or `--system-no-talk-name` (#6776)
+
+* Fix a crash when a bundle is installed with explicit key bytes (#6842)
+
+* Validate cursor position when emitting bash/zsh completions (#6761)
+
+* Test infrastructure improvements (#6794, #6796)
+
+* Documentation updates (code of conduct, contributor guidelines)
+
+* Translation updates: ka, pt_BR, zh_CN
+
+Internal changes:
+
+* Translation updates should now be contributed through GNOME's l10n
+  platform, not as direct pull requests on Github.
 
 Changes in 1.19.0
 ~~~~~~~~~~~~~~~~~
