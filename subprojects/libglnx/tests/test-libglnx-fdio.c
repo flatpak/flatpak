@@ -355,11 +355,17 @@ test_filecopy (void)
   g_assert (S_ISREG (stbuf.st_mode));
 }
 
+/* uid/gid 5 is normally 'tty', e.g. <https://systemd.io/UIDS-GIDS/>,
+ * which is a reasonably harmless one to use */
+const uid_t not_root_uid = 5;
+const gid_t not_root_gid = 5;
+
 static void
 test_copy_symlink (void)
 {
   _GLNX_TEST_DECLARE_ERROR(local_error, error);
   struct stat stbuf;
+  g_autofree char *expected_target = NULL;
   g_autofree char *target = NULL;
 
   if (symlinkat ("sometarget", AT_FDCWD, "srclink") < 0)
@@ -377,6 +383,151 @@ test_copy_symlink (void)
   if (!target)
     return;
   g_assert_cmpstr (target, ==, "sometarget");
+
+  /* /dev/stderr is a convenient example of a symlink that will often exist,
+   * and is often owned by root. This means that unprivileged users will
+   * not be able to set the copy's ownership to equal the original's. */
+  expected_target = glnx_readlinkat_malloc (AT_FDCWD, "/dev/stderr", NULL, error);
+
+  if (expected_target != NULL)
+    {
+      g_autofree char *actual_target = NULL;
+
+      if (!glnx_file_copy_at (AT_FDCWD, "/dev/stderr", NULL,
+                              AT_FDCWD, "stderr",
+                              GLNX_FILE_COPY_NOCHOWN | GLNX_FILE_COPY_NOXATTRS,
+                              NULL, error))
+        return;
+
+      actual_target = glnx_readlinkat_malloc (AT_FDCWD, "stderr", NULL, error);
+
+      if (!actual_target)
+        return;
+
+      g_assert_cmpstr (actual_target, ==, expected_target);
+    }
+  else
+    {
+      g_test_message ("Not testing /dev/stderr: %s", local_error->message);
+      g_clear_error (&local_error);
+    }
+
+  /* If we're running the test as root, we expect that copying /dev/stderr
+   * would have succeeded even if we incorrectly changed its ownership.
+   * However, if we're root, we can construct a symlink owned by someone else
+   * on-demand, and use that. */
+  if (symlinkat ("sometarget", AT_FDCWD, "owned-by-other") < 0)
+    return (void) glnx_throw_errno_prefix (error, "symlinkat");
+
+  if (geteuid () != 0)
+    {
+      g_test_message ("Not testing symlink owned by another user: not root");
+    }
+  else if (lchown ("owned-by-other", not_root_uid, not_root_gid) < 0)
+    {
+      g_test_message ("Not testing symlink owned by another user: %s",
+                      g_strerror (errno));
+    }
+  else
+    {
+      g_autofree char *actual_target = NULL;
+
+      if (!glnx_fstatat (AT_FDCWD, "owned-by-other", &stbuf,
+                         AT_SYMLINK_NOFOLLOW, error))
+        return;
+
+      g_assert_cmpint (stbuf.st_uid, ==, not_root_uid);
+      g_assert_cmpint (stbuf.st_gid, ==, not_root_gid);
+
+      if (!glnx_file_copy_at (AT_FDCWD, "owned-by-other", NULL,
+                              AT_FDCWD, "owned-by-other-copy",
+                              GLNX_FILE_COPY_NOCHOWN | GLNX_FILE_COPY_NOXATTRS,
+                              NULL, error))
+        return;
+
+      if (!glnx_fstatat (AT_FDCWD, "owned-by-other-copy", &stbuf,
+                         AT_SYMLINK_NOFOLLOW, error))
+        return;
+
+      g_assert_true (S_ISLNK (stbuf.st_mode));
+      g_assert_cmpint (stbuf.st_uid, !=, not_root_uid);
+      g_assert_cmpint (stbuf.st_gid, !=, not_root_gid);
+
+      actual_target = glnx_readlinkat_malloc (AT_FDCWD, "owned-by-other-copy",
+                                              NULL, error);
+
+      if (!actual_target)
+        return;
+
+      g_assert_cmpstr (actual_target, ==, "sometarget");
+    }
+}
+
+static void
+test_copy_symlink_xattrs (void)
+{
+  /* Intentionally not UTF-8 or a valid bytestring */
+  static const char value[] = { '\xff', '\x00', '\x55', '\xaa' };
+  char *buf[16];
+  _GLNX_TEST_DECLARE_ERROR(local_error, error);
+  struct stat stbuf;
+  g_autofree char *target = NULL;
+  g_autofree char *tmpdir_path = NULL;
+  g_autofree char *srclink_path = NULL;
+  g_autofree char *dstlink_path = NULL;
+  g_auto(GLnxTmpDir) tmpdir = { 0, };
+  gssize len;
+
+  tmpdir_path = g_strdup_printf ("%s/libglnx-xattrs-XXXXXX",
+                                 getenv ("TMPDIR") ?: "/var/tmp");
+
+  if (!glnx_mkdtempat (AT_FDCWD, tmpdir_path, 0700, &tmpdir, error))
+    return;
+
+  g_assert_no_errno (symlinkat ("sometarget", tmpdir.fd, "srclink"));
+  srclink_path = g_strdup_printf ("/proc/self/fd/%d/srclink", tmpdir.fd);
+
+  /* A limitation of xattrs on Linux is that symlinks cannot have user.
+   * extended attributes, only trusted., system. or security.,
+   * so we can only test this if we are root. */
+  if (lsetxattr (srclink_path, "trusted.test", value, sizeof (value), 0) < 0)
+    {
+      g_test_skip_printf ("could not set xattr trusted.test on symlink: %s",
+                          g_strerror (errno));
+      return;
+    }
+
+  g_test_message ("Copying srclink to dstlink...");
+
+  if (!glnx_file_copy_at (tmpdir.fd, "srclink", NULL, tmpdir.fd, "dstlink",
+                          0,  /* note absence of GLNX_FILE_COPY_NOXATTRS */
+                          NULL, error))
+    return;
+
+  g_test_message ("Checking results...");
+
+  if (!glnx_fstatat (tmpdir.fd, "dstlink", &stbuf, AT_SYMLINK_NOFOLLOW, error))
+    return;
+
+  g_assert_true (S_ISLNK (stbuf.st_mode));
+
+  target = glnx_readlinkat_malloc (tmpdir.fd, "dstlink", NULL, error);
+
+  if (!target)
+    return;
+
+  g_assert_cmpstr (target, ==, "sometarget");
+
+  dstlink_path = g_strdup_printf ("/proc/self/fd/%d/dstlink", tmpdir.fd);
+  len = lgetxattr (dstlink_path, "trusted.test", buf, sizeof (buf));
+
+  if (len < 0)
+    {
+      glnx_throw_errno_prefix (error, "lgetxattr(dstlink)");
+      return;
+    }
+
+  g_assert_cmpmem (buf, len, value, sizeof (value));
 }
 
 static void
@@ -699,6 +850,7 @@ int main (int argc, char **argv)
   g_test_add_func ("/stdio-file", test_stdio_file);
   g_test_add_func ("/filecopy", test_filecopy);
   g_test_add_func ("/copy-symlink", test_copy_symlink);
+  g_test_add_func ("/copy-symlink/xattrs", test_copy_symlink_xattrs);
   g_test_add_func ("/filecopy-procfs", test_filecopy_procfs);
   g_test_add_func ("/renameat2-noreplace", test_renameat2_noreplace);
   g_test_add_func ("/renameat2-exchange", test_renameat2_exchange);

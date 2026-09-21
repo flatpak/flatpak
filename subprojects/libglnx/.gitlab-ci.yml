@@ -1,28 +1,59 @@
 # Copyright 2019 Endless OS Foundation LLC
 # SPDX-License-Identifier: LGPL-2.0-or-later
 
-image: registry.fedoraproject.org/fedora:30
+variables:
+  CAN_MESON_DIST: "yes"
 
 stages:
   - build
 
-before_script:
+.deps_fedora: &deps_fedora
   - dnf install -y gcc git meson ninja-build "pkgconfig(gio-2.0)" "pkgconfig(gio-unix-2.0)" "pkgconfig(glib-2.0)" xz
 
-build:
+.deps_debian: &deps_debian
+  - apt-get update
+  - apt-get install -y build-essential git meson ninja-build pkg-config libglib2.0-dev xz-utils
+
+.deps_ubuntu_oldlts: &deps_ubuntu_oldlts
+  - apt-get update
+  - |
+    apt-get install -y \
+      build-essential \
+      git \
+      libglib2.0-dev \
+      ninja-build \
+      pkg-config \
+      python3 \
+      python3-pip \
+      python3-setuptools \
+      python3-wheel \
+      xz-utils \
+      ${NULL+}
+  # Modern versions of Meson need a modern version of Python,
+  # and we still aim to support building with 0.49
+  - pip3 install meson==0.49
+
+.build:
   stage: build
+  before_script: *deps_fedora
   script:
-    - meson _build .
+    - meson setup _build .
     - ninja -C _build
     - meson test -C _build
     # Run it again! This previously did not work.
     - meson test -C _build
     # Ensure that we can build as a subproject
     - rm -fr _build/meson-dist
-    - meson dist -C _build
+    - |
+      if [ "$CAN_MESON_DIST" = yes ]; then
+        meson dist -C _build
+      else
+        mkdir -p _build/meson-dist
+        git archive --prefix=libglnx/ HEAD | xz > _build/meson-dist/libglnx.tar.xz
+      fi
     - mkdir -p tests/use-as-subproject/subprojects/libglnx
     - tar --strip-components=1 -C tests/use-as-subproject/subprojects/libglnx -xf _build/meson-dist/*.tar.xz
-    - meson tests/use-as-subproject/_build tests/use-as-subproject
+    - meson setup tests/use-as-subproject/_build tests/use-as-subproject
     - ninja -C tests/use-as-subproject/_build
     - meson test -C tests/use-as-subproject/_build
   artifacts:
@@ -30,6 +61,54 @@ build:
     name: "libglnx-${CI_COMMIT_REF_NAME}-${CI_JOB_NAME}"
     paths:
       - "${CI_PROJECT_DIR}/_build/meson-logs"
+
+build:fedora-latest:
+  extends: .build
+  image: registry.fedoraproject.org/fedora:latest
+
+build:fedora-rawhide:
+  extends: .build
+  image: registry.fedoraproject.org/fedora:rawhide
+
+# Linux 3.2 headers, glibc 2.15, Python 3.5 backport, GLib 2.58 backport
+build:steam-runtime1:
+  extends: .build
+  image: registry.gitlab.steamos.cloud/steamrt/scout/sdk:latest
+  before_script: *deps_debian
+
+# Linux 4.19 headers, glibc 2.28, GLib 2.58, Python 3.7, Meson 0.49
+build:debian10:
+  extends: .build
+  image: debian/eol:buster
+  before_script: *deps_debian
+  variables:
+    CAN_MESON_DIST: no
+
+build:debian-stable:
+  extends: .build
+  image: debian:stable
+  before_script: *deps_debian
+
+build:debian-testing:
+  extends: .build
+  image: debian:testing
+  before_script: *deps_debian
+
+# Linux 4.4 headers, glibc 2.23, GLib 2.48, Python 3.5, Meson 0.49 from pip
+build:ubuntu1604:
+  extends: .build
+  image: ubuntu:xenial
+  before_script: *deps_ubuntu_oldlts
+  variables:
+    CAN_MESON_DIST: no
+
+# Linux 4.15 headers, glibc 2.27, GLib 2.56, Python 3.6, Meson 0.49 from pip
+build:ubuntu1804:
+  extends: .build
+  image: ubuntu:bionic
+  before_script: *deps_ubuntu_oldlts
+  variables:
+    CAN_MESON_DIST: no
 
 reuse:
   stage: build

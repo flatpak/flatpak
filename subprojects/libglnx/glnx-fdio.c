@@ -735,19 +735,28 @@ copy_symlink_at (int                   src_dfd,
 
   if (!(copyflags & GLNX_FILE_COPY_NOXATTRS))
     {
+      /* The only way to do set xattrs on a symlink is via lsetxattr. An O_PATH
+       * is just not enough proof to modify the file (such as setting the
+       * xattrs) but it's the only non-racy reference to a symlink. So setting
+       * the xattrs on a symlink will be racy.
+       */
       g_autoptr(GVariant) xattrs = NULL;
 
       if (!glnx_dfd_name_get_all_xattrs (src_dfd, src_subpath, &xattrs,
                                          cancellable, error))
         return FALSE;
 
-      if (!glnx_fd_set_all_xattrs (fd, xattrs, cancellable, error))
+      if (!glnx_dfd_name_set_all_xattrs (dest_dfd, dest_subpath, xattrs,
+                                         cancellable, error))
         return FALSE;
     }
 
-  if (TEMP_FAILURE_RETRY (fchownat (fd, "", src_stbuf->st_uid, src_stbuf->st_gid,
-                                    AT_EMPTY_PATH)) != 0)
-    return glnx_throw_errno_prefix (error, "fchownat");
+  if (!(copyflags & GLNX_FILE_COPY_NOCHOWN))
+    {
+      if (TEMP_FAILURE_RETRY (fchownat (fd, "", src_stbuf->st_uid, src_stbuf->st_gid,
+                                        AT_EMPTY_PATH)) != 0)
+        return glnx_throw_errno_prefix (error, "fchownat");
+    }
 
   return TRUE;
 }

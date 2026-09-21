@@ -231,9 +231,9 @@ chase_open_tree (int              dirfd,
           if (errno != ENOTDIR)
             return glnx_fd_throw_errno_prefix (error, "openat(O_DIRECTORY) in autofs mount open_tree fallback");
 
-          /* The automount is a directory, so let's try to open the file,
-           * which can fail because we are missing permissions, but that's
-           * okay, we only need to trigger automount. */
+          /* The automount is not a directory, so let's try to open the
+           * file, which can fail because we are missing permissions, but
+           * that's okay, we only need to trigger automount. */
           new_fd = openat (fd, ".", (openat_flags & ~O_PATH) |
                                     O_RDONLY | O_NONBLOCK | O_CLOEXEC | O_NOCTTY);
           glnx_close_fd (&new_fd);
@@ -371,6 +371,7 @@ chase_manual (int                 dirfd,
       callback == NULL)
     {
       GlnxChaseFlags open_tree_flags =
+        GLNX_CHASE_NO_AUTOMOUNT |
         (flags & (GLNX_CHASE_NOFOLLOW | GLNX_CHASE_ALL_DEBUG_FLAGS));
 
       return chase_open_tree (dirfd, path, open_tree_flags, error);
