@@ -2,7 +2,23 @@ Changes in 1.18.3
 ~~~~~~~~~~~~~~~~~
 Released: not yet
 
-...
+Bug fixes:
+
+* Update Meson wrap subprojects for projects that are normally taken from
+  the host system:
+  - bubblewrap 0.12.0 (CVE-2026-87766)
+  - xdg-dbus-proxy 0.1.8 (CVE-2026-93676)
+
+* Fix regressions in 1.18.2 when building apps/runtimes, especially on
+  SELinux systems or when the runtime is not installed per-user
+  (#6818)
+
+* Fix subsandbox startup (`flatpak-spawn`) when run from an app that
+  was configured with `--no-talk-name` or `--system-no-talk-name` (#6776)
+
+* Fix a crash when a bundle is installed with explicit key bytes (#6842)
+
+* Documentation updates (code of conduct, contributor guidelines)
 
 Changes in 1.18.2
 ~~~~~~~~~~~~~~~~~
