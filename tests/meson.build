@@ -367,6 +367,7 @@ tests = {
   'basic': {},
   'completion': {},
   'config': {},
+  'documents': {},
   'build-update-repo': {},
   'http-utils': {},
   'run': {'wrap': [
