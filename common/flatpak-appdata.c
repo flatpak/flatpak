@@ -179,7 +179,7 @@ start_element (GMarkupParseContext *context,
                 {
                   int d, m, y;
 
-                  if (sscanf (date, "%u-%u-%u", &d, &m, &y) == 3)
+                  if (sscanf (date, "%d-%d-%d", &d, &m, &y) == 3)
                     dt = g_date_time_new_utc (d, m, y, 0, 0, 0);
                 }
               if (dt)
