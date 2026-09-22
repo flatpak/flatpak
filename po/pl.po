@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2026-08-27 20:53+0200\n"
+"POT-Creation-Date: 2026-09-21 18:00+0100\n"
 "PO-Revision-Date: 2025-08-27 18:42+0200\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
@@ -3237,7 +3237,7 @@ msgstr "Używa ŚCIEŻKI zamiast /app programu"
 
 #: app/flatpak-builtins-run.c:183 app/flatpak-builtins-run.c:185
 #: app/flatpak-builtins-run.c:187 app/flatpak-builtins-run.c:188
-#: common/flatpak-context.c:2672
+#: common/flatpak-context.c:2696
 msgid "FD"
 msgstr "FD"
 
@@ -4440,32 +4440,32 @@ msgstr "Nieznany typ udziału %s, prawidłowe typy: %s"
 msgid "Unknown policy type %s, valid types are: %s"
 msgstr "Nieznany typ polityki %s, prawidłowe typy: %s"
 
-#: common/flatpak-context.c:1266
+#: common/flatpak-context.c:1290
 #, c-format
 msgid "Invalid dbus name %s"
 msgstr "Nieprawidłowa nazwa D-Bus %s"
 
-#: common/flatpak-context.c:1279
+#: common/flatpak-context.c:1303
 #, c-format
 msgid "Unknown socket type %s, valid types are: %s"
 msgstr "Nieznany typ gniazda %s, prawidłowe typy: %s"
 
-#: common/flatpak-context.c:1294
+#: common/flatpak-context.c:1318
 #, c-format
 msgid "Unknown device type %s, valid types are: %s"
 msgstr "Nieznany typ urządzenia %s, prawidłowe typy: %s"
 
-#: common/flatpak-context.c:1308
+#: common/flatpak-context.c:1332
 #, c-format
 msgid "Unknown feature type %s, valid types are: %s"
 msgstr "Nieznany typ funkcji %s, prawidłowe typy: %s"
 
-#: common/flatpak-context.c:1840
+#: common/flatpak-context.c:1864
 #, c-format
 msgid "Filesystem location \"%s\" contains \"..\""
 msgstr "Położenie w systemie plików „%s” zawiera „..”"
 
-#: common/flatpak-context.c:1882
+#: common/flatpak-context.c:1906
 #, c-format
 msgid ""
 "--filesystem=/ is not available, use --filesystem=host for a similar result"
@@ -4473,7 +4473,7 @@ msgstr ""
 "--filesystem=/ jest niedostępne, należy użyć --filesystem=host, aby osiągnąć "
 "podobny efekt"
 
-#: common/flatpak-context.c:1916
+#: common/flatpak-context.c:1940
 #, fuzzy, c-format
 msgid ""
 "Unknown filesystem location %s, valid locations are: host, host-os, host-"
@@ -4482,252 +4482,252 @@ msgstr ""
 "Nieznane położenie systemu plików %s, prawidłowe położenia: host, host-os, "
 "host-etc, home, xdg-*[/…], ~/dir, /dir"
 
-#: common/flatpak-context.c:2015
+#: common/flatpak-context.c:2039
 #, fuzzy, c-format
 msgid "Invalid syntax for %s: %s"
 msgstr "Nieprawidłowa nazwa %s: %s"
 
-#: common/flatpak-context.c:2142
+#: common/flatpak-context.c:2166
 #, c-format
 msgid "fallback-x11 can not be conditional"
 msgstr ""
 
-#: common/flatpak-context.c:2318
+#: common/flatpak-context.c:2342
 #, c-format
 msgid "Invalid env format %s"
 msgstr "Nieznany format środowiska %s"
 
-#: common/flatpak-context.c:2399
+#: common/flatpak-context.c:2423
 #, c-format
 msgid "Environment variable name must not contain '=': %s"
 msgstr "Nazwa zmiennej środowiskowej nie może zawierać „=”: %s"
 
-#: common/flatpak-context.c:2527 common/flatpak-context.c:2535
+#: common/flatpak-context.c:2551 common/flatpak-context.c:2559
 #, c-format
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr "Parametry --add-policy muszą być w formacie PODSYSTEM.KLUCZ=WARTOŚĆ"
 
-#: common/flatpak-context.c:2542
+#: common/flatpak-context.c:2566
 #, c-format
 msgid "--add-policy values can't start with \"!\""
 msgstr "Wartości --add-policy nie mogą zaczynać się od znaku „!”"
 
-#: common/flatpak-context.c:2567 common/flatpak-context.c:2575
+#: common/flatpak-context.c:2591 common/flatpak-context.c:2599
 #, c-format
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr "Parametry --remove-policy muszą być w formacie PODSYSTEM.KLUCZ=WARTOŚĆ"
 
-#: common/flatpak-context.c:2582
+#: common/flatpak-context.c:2606
 #, c-format
 msgid "--remove-policy values can't start with \"!\""
 msgstr "Wartości --remove-policy nie mogą zaczynać się od znaku „!”"
 
-#: common/flatpak-context.c:2657
+#: common/flatpak-context.c:2681
 msgid "Share with host"
 msgstr "Udostępnia temu komputerowi"
 
-#: common/flatpak-context.c:2657 common/flatpak-context.c:2658
+#: common/flatpak-context.c:2681 common/flatpak-context.c:2682
 msgid "SHARE"
 msgstr "UDZIAŁ"
 
-#: common/flatpak-context.c:2658
+#: common/flatpak-context.c:2682
 msgid "Unshare with host"
 msgstr "Przestaje udostępniać temu komputerowi"
 
-#: common/flatpak-context.c:2659
+#: common/flatpak-context.c:2683
 msgid "Require conditions to be met for a subsystem to get shared"
 msgstr ""
 
-#: common/flatpak-context.c:2659
+#: common/flatpak-context.c:2683
 msgid "SHARE:CONDITION"
 msgstr ""
 
-#: common/flatpak-context.c:2660
+#: common/flatpak-context.c:2684
 msgid "Expose socket to app"
 msgstr "Udostępnia gniazdo programowi"
 
-#: common/flatpak-context.c:2660 common/flatpak-context.c:2661
+#: common/flatpak-context.c:2684 common/flatpak-context.c:2685
 msgid "SOCKET"
 msgstr "GNIAZDO"
 
-#: common/flatpak-context.c:2661
+#: common/flatpak-context.c:2685
 msgid "Don't expose socket to app"
 msgstr "Nie udostępnia gniazda programowi"
 
-#: common/flatpak-context.c:2662
+#: common/flatpak-context.c:2686
 msgid "Require conditions to be met for a socket to get exposed"
 msgstr ""
 
-#: common/flatpak-context.c:2662
+#: common/flatpak-context.c:2686
 msgid "SOCKET:CONDITION"
 msgstr ""
 
-#: common/flatpak-context.c:2663
+#: common/flatpak-context.c:2687
 msgid "Expose device to app"
 msgstr "Udostępnia urządzenie programowi"
 
-#: common/flatpak-context.c:2663 common/flatpak-context.c:2664
+#: common/flatpak-context.c:2687 common/flatpak-context.c:2688
 msgid "DEVICE"
 msgstr "URZĄDZENIE"
 
-#: common/flatpak-context.c:2664
+#: common/flatpak-context.c:2688
 msgid "Don't expose device to app"
 msgstr "Nie udostępnia urządzenia programowi"
 
-#: common/flatpak-context.c:2665
+#: common/flatpak-context.c:2689
 msgid "Require conditions to be met for a device to get exposed"
 msgstr ""
 
-#: common/flatpak-context.c:2665
+#: common/flatpak-context.c:2689
 msgid "DEVICE:CONDITION"
 msgstr ""
 
-#: common/flatpak-context.c:2666
+#: common/flatpak-context.c:2690
 msgid "Allow feature"
 msgstr "Zezwala na funkcję"
 
-#: common/flatpak-context.c:2666 common/flatpak-context.c:2667
+#: common/flatpak-context.c:2690 common/flatpak-context.c:2691
 msgid "FEATURE"
 msgstr "FUNKCJA"
 
-#: common/flatpak-context.c:2667
+#: common/flatpak-context.c:2691
 msgid "Don't allow feature"
 msgstr "Bez zezwolenia na funkcję"
 
-#: common/flatpak-context.c:2668
+#: common/flatpak-context.c:2692
 msgid "Require conditions to be met for a feature to get allowed"
 msgstr ""
 
-#: common/flatpak-context.c:2668
+#: common/flatpak-context.c:2692
 msgid "FEATURE:CONDITION"
 msgstr ""
 
-#: common/flatpak-context.c:2669
+#: common/flatpak-context.c:2693
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr "Udostępnia system plików programowi (:ro dla tylko do odczytu)"
 
-#: common/flatpak-context.c:2669
+#: common/flatpak-context.c:2693
 msgid "FILESYSTEM[:ro]"
 msgstr "SYSTEM-PLIKÓW[:ro]"
 
-#: common/flatpak-context.c:2670
+#: common/flatpak-context.c:2694
 msgid "Don't expose filesystem to app"
 msgstr "Nie udostępnia systemu plików programowi"
 
-#: common/flatpak-context.c:2670
+#: common/flatpak-context.c:2694
 msgid "FILESYSTEM"
 msgstr "SYSTEM-PLIKÓW"
 
-#: common/flatpak-context.c:2671
+#: common/flatpak-context.c:2695
 msgid "Set environment variable"
 msgstr "Ustawia zmienną środowiskową"
 
-#: common/flatpak-context.c:2671
+#: common/flatpak-context.c:2695
 msgid "VAR=VALUE"
 msgstr "ZMIENNA=WARTOŚĆ"
 
-#: common/flatpak-context.c:2672
+#: common/flatpak-context.c:2696
 msgid "Read environment variables in env -0 format from FD"
 msgstr "Odczytuje zmienne środowiskowe w formacie env -0 z FD"
 
-#: common/flatpak-context.c:2673
+#: common/flatpak-context.c:2697
 msgid "Remove variable from environment"
 msgstr "Usuwa zmienną ze środowiska"
 
-#: common/flatpak-context.c:2673
+#: common/flatpak-context.c:2697
 msgid "VAR"
 msgstr "ZMIENNA"
 
-#: common/flatpak-context.c:2674
+#: common/flatpak-context.c:2698
 msgid "Allow app to own name on the session bus"
 msgstr "Zezwala programowi na posiadanie nazwy na magistrali sesji"
 
-#: common/flatpak-context.c:2674 common/flatpak-context.c:2675
-#: common/flatpak-context.c:2676 common/flatpak-context.c:2677
-#: common/flatpak-context.c:2678 common/flatpak-context.c:2679
-#: common/flatpak-context.c:2680
+#: common/flatpak-context.c:2698 common/flatpak-context.c:2699
+#: common/flatpak-context.c:2700 common/flatpak-context.c:2701
+#: common/flatpak-context.c:2702 common/flatpak-context.c:2703
+#: common/flatpak-context.c:2704
 msgid "DBUS_NAME"
 msgstr "NAZWA_D-BUS"
 
-#: common/flatpak-context.c:2675
+#: common/flatpak-context.c:2699
 msgid "Allow app to talk to name on the session bus"
 msgstr "Umożliwia programowi rozmawianie z nazwą na magistrali sesji"
 
-#: common/flatpak-context.c:2676
+#: common/flatpak-context.c:2700
 msgid "Don't allow app to talk to name on the session bus"
 msgstr "Bez zezwolenia programowi na rozmawianie z nazwą na magistrali sesji"
 
-#: common/flatpak-context.c:2677
+#: common/flatpak-context.c:2701
 msgid "Allow app to own name on the system bus"
 msgstr "Zezwala programowi na posiadanie nazwy na magistrali systemu"
 
-#: common/flatpak-context.c:2678
+#: common/flatpak-context.c:2702
 msgid "Allow app to talk to name on the system bus"
 msgstr "Umożliwia programowi rozmawianie z nazwą na magistrali systemu"
 
-#: common/flatpak-context.c:2679
+#: common/flatpak-context.c:2703
 msgid "Don't allow app to talk to name on the system bus"
 msgstr "Bez zezwolenia programowi na rozmawianie z nazwą na magistrali systemu"
 
-#: common/flatpak-context.c:2680
+#: common/flatpak-context.c:2704
 msgid "Allow app to own name on the a11y bus"
 msgstr "Zezwala programowi na posiadanie nazwy na magistrali ułatwień dostępu"
 
-#: common/flatpak-context.c:2681
+#: common/flatpak-context.c:2705
 msgid "Add generic policy option"
 msgstr "Dodaje ogólną opcję polityki"
 
-#: common/flatpak-context.c:2681 common/flatpak-context.c:2682
+#: common/flatpak-context.c:2705 common/flatpak-context.c:2706
 msgid "SUBSYSTEM.KEY=VALUE"
 msgstr "PODSYSTEM.KLUCZ=WARTOŚĆ"
 
-#: common/flatpak-context.c:2682
+#: common/flatpak-context.c:2706
 msgid "Remove generic policy option"
 msgstr "Usuwa ogólną opcję polityki"
 
-#: common/flatpak-context.c:2683
+#: common/flatpak-context.c:2707
 msgid "Add USB device to enumerables"
 msgstr "Dodaje urządzenie USB do wyliczeń"
 
-#: common/flatpak-context.c:2683 common/flatpak-context.c:2684
+#: common/flatpak-context.c:2707 common/flatpak-context.c:2708
 msgid "VENDOR_ID:PRODUCT_ID"
 msgstr "IDENTYFIKATOR_PRODUCENTA:IDENTYFIKATOR_PRODUKTU"
 
-#: common/flatpak-context.c:2684
+#: common/flatpak-context.c:2708
 msgid "Add USB device to hidden list"
 msgstr "Dodaje urządzenie USB do listy ukrytych"
 
-#: common/flatpak-context.c:2685
+#: common/flatpak-context.c:2709
 msgid "A list of USB devices that are enumerable"
 msgstr "Lista urządzeń USB, które można wyliczać"
 
-#: common/flatpak-context.c:2685
+#: common/flatpak-context.c:2709
 msgid "LIST"
 msgstr "LISTA"
 
-#: common/flatpak-context.c:2686
+#: common/flatpak-context.c:2710
 msgid "File containing a list of USB devices to make enumerable"
 msgstr "Plik zawierający listę urządzeń USB, które będzie można wyliczać"
 
-#: common/flatpak-context.c:2686 common/flatpak-context.c:2687
+#: common/flatpak-context.c:2710 common/flatpak-context.c:2711
 msgid "FILENAME"
 msgstr "NAZWA-PLIKU"
 
-#: common/flatpak-context.c:2687
+#: common/flatpak-context.c:2711
 msgid "Persist home directory subpath"
 msgstr "Trwała podścieżka katalogu domowego"
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-context.c:2689
+#: common/flatpak-context.c:2713
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "Bez wymagania działającej sesji (bez tworzenia cgroups)"
 
-#: common/flatpak-context.c:3718
+#: common/flatpak-context.c:3744
 #, c-format
 msgid "Not replacing \"%s\" with tmpfs: %s"
 msgstr "„%s” nie zostanie zastąpione tmpfs: %s"
 
-#: common/flatpak-context.c:3726
+#: common/flatpak-context.c:3752
 #, c-format
 msgid "Not sharing \"%s\" with sandbox: %s"
 msgstr "„%s” nie będzie udostępniane piaskownicy: %s"
@@ -4736,12 +4736,12 @@ msgstr "„%s” nie będzie udostępniane piaskownicy: %s"
 #. * the path not existing, it seems reasonable to make more of a fuss
 #. * about the home directory not existing or otherwise being unusable,
 #. * so this is intentionally not using cannot_export()
-#: common/flatpak-context.c:3828
+#: common/flatpak-context.c:3854
 #, c-format
 msgid "Not allowing home directory access: %s"
 msgstr "Dostęp do katalogu domowego nie zostanie udzielony: %s"
 
-#: common/flatpak-context.c:4062
+#: common/flatpak-context.c:4088
 #, c-format
 msgid "Unable to provide a temporary home directory in the sandbox: %s"
 msgstr "Nie można dostarczyć tymczasowego katalogu domowego w piaskownicy: %s"

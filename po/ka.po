@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak git\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2026-08-27 20:53+0200\n"
+"POT-Creation-Date: 2026-09-21 18:00+0100\n"
 "PO-Revision-Date: 2025-04-03 10:16+0200\n"
 "Last-Translator: Ekaterine Papava <papava.e@gtu.ge>\n"
 "Language-Team: Georgian <(nothing)>\n"
@@ -3216,7 +3216,7 @@ msgstr "აპის /app-ის მაგიერ მითითებულ�
 
 #: app/flatpak-builtins-run.c:183 app/flatpak-builtins-run.c:185
 #: app/flatpak-builtins-run.c:187 app/flatpak-builtins-run.c:188
-#: common/flatpak-context.c:2672
+#: common/flatpak-context.c:2696
 msgid "FD"
 msgstr "FD"
 
@@ -4424,32 +4424,32 @@ msgstr "გაზიარებულის უცნობი ტიპი %s.
 msgid "Unknown policy type %s, valid types are: %s"
 msgstr "პოლიტიკის უცნობი ტიპი %s. სწორი ტიპებია %s"
 
-#: common/flatpak-context.c:1266
+#: common/flatpak-context.c:1290
 #, c-format
 msgid "Invalid dbus name %s"
 msgstr "არასწორი dbus სახელი %s"
 
-#: common/flatpak-context.c:1279
+#: common/flatpak-context.c:1303
 #, c-format
 msgid "Unknown socket type %s, valid types are: %s"
 msgstr "სოკეტის უცნობი ტიპი %s. სწორი ტიპებია %s"
 
-#: common/flatpak-context.c:1294
+#: common/flatpak-context.c:1318
 #, c-format
 msgid "Unknown device type %s, valid types are: %s"
 msgstr "მოწყობილობის უცნობი ტიპი %s. სწორი ტიპებია %s"
 
-#: common/flatpak-context.c:1308
+#: common/flatpak-context.c:1332
 #, c-format
 msgid "Unknown feature type %s, valid types are: %s"
 msgstr "თვისების უცნობი ტიპი %s. სწორი ტიპებია %s"
 
-#: common/flatpak-context.c:1840
+#: common/flatpak-context.c:1864
 #, c-format
 msgid "Filesystem location \"%s\" contains \"..\""
 msgstr "ფაილური სისტემის ბილიკი \"%s\" \"..\"-ს შეიცავს"
 
-#: common/flatpak-context.c:1882
+#: common/flatpak-context.c:1906
 #, c-format
 msgid ""
 "--filesystem=/ is not available, use --filesystem=host for a similar result"
@@ -4457,7 +4457,7 @@ msgstr ""
 "--filesystem=/ ხელმისაწვდომი არაა. მსგავსი შედეგისთვის გამოიყენეთ --"
 "filesystem=host"
 
-#: common/flatpak-context.c:1916
+#: common/flatpak-context.c:1940
 #, fuzzy, c-format
 msgid ""
 "Unknown filesystem location %s, valid locations are: host, host-os, host-"
@@ -4466,257 +4466,257 @@ msgstr ""
 "ფაილური სისტემის უცნობი მდებარეობა %s, სწორი მდებარეობებია: host, host-os, "
 "host-etc, home, xdg-*[/…], ~/dir, /dir"
 
-#: common/flatpak-context.c:2015
+#: common/flatpak-context.c:2039
 #, fuzzy, c-format
 msgid "Invalid syntax for %s: %s"
 msgstr "არასწორი სახელი %s: %s"
 
-#: common/flatpak-context.c:2142
+#: common/flatpak-context.c:2166
 #, c-format
 msgid "fallback-x11 can not be conditional"
 msgstr ""
 
-#: common/flatpak-context.c:2318
+#: common/flatpak-context.c:2342
 #, c-format
 msgid "Invalid env format %s"
 msgstr "არასწორი გარემოს ფორმატი %s"
 
-#: common/flatpak-context.c:2399
+#: common/flatpak-context.c:2423
 #, c-format
 msgid "Environment variable name must not contain '=': %s"
 msgstr "გარემოს ცვლადის სახელი \"=\" -ს არ შეიძლება შეიცავდეს: %s"
 
-#: common/flatpak-context.c:2527 common/flatpak-context.c:2535
+#: common/flatpak-context.c:2551 common/flatpak-context.c:2559
 #, c-format
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 "--add-policy პარამეტრის არგუმენტები ქვესისტემა.პარამეტრი=მნიშვნელობა "
 "ფორმატში უნდა იყოს"
 
-#: common/flatpak-context.c:2542
+#: common/flatpak-context.c:2566
 #, c-format
 msgid "--add-policy values can't start with \"!\""
 msgstr "--add-policy-ის მნიშვნელობები \"!\"-ით არ შეიძლება, იწყებოდეს"
 
-#: common/flatpak-context.c:2567 common/flatpak-context.c:2575
+#: common/flatpak-context.c:2591 common/flatpak-context.c:2599
 #, c-format
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 "--remove-policy-ის არგუმენტები ქვესისტემა.პარამეტრი=მნიშვნელობა ფორმატში "
 "უნდა იყოს"
 
-#: common/flatpak-context.c:2582
+#: common/flatpak-context.c:2606
 #, c-format
 msgid "--remove-policy values can't start with \"!\""
 msgstr "--remove-policy-ის მნიშვნელობები \"!\"-ით არ შეიძლება, იწყებოდეს"
 
-#: common/flatpak-context.c:2657
+#: common/flatpak-context.c:2681
 msgid "Share with host"
 msgstr "ჰოსტთან გაზიარება"
 
-#: common/flatpak-context.c:2657 common/flatpak-context.c:2658
+#: common/flatpak-context.c:2681 common/flatpak-context.c:2682
 msgid "SHARE"
 msgstr "გაზიარება"
 
-#: common/flatpak-context.c:2658
+#: common/flatpak-context.c:2682
 msgid "Unshare with host"
 msgstr "ჰოსტთან გაზიარების მოხსნა"
 
-#: common/flatpak-context.c:2659
+#: common/flatpak-context.c:2683
 msgid "Require conditions to be met for a subsystem to get shared"
 msgstr ""
 
-#: common/flatpak-context.c:2659
+#: common/flatpak-context.c:2683
 msgid "SHARE:CONDITION"
 msgstr ""
 
-#: common/flatpak-context.c:2660
+#: common/flatpak-context.c:2684
 msgid "Expose socket to app"
 msgstr "სოკეტის გამოჩენა აპისთვის"
 
-#: common/flatpak-context.c:2660 common/flatpak-context.c:2661
+#: common/flatpak-context.c:2684 common/flatpak-context.c:2685
 msgid "SOCKET"
 msgstr "სოკეტი"
 
-#: common/flatpak-context.c:2661
+#: common/flatpak-context.c:2685
 msgid "Don't expose socket to app"
 msgstr "აპი სოკეტს  ვერ დაინახავს"
 
-#: common/flatpak-context.c:2662
+#: common/flatpak-context.c:2686
 msgid "Require conditions to be met for a socket to get exposed"
 msgstr ""
 
-#: common/flatpak-context.c:2662
+#: common/flatpak-context.c:2686
 msgid "SOCKET:CONDITION"
 msgstr ""
 
-#: common/flatpak-context.c:2663
+#: common/flatpak-context.c:2687
 msgid "Expose device to app"
 msgstr "მოწყობილობის გამოჩენა აპისთვის"
 
-#: common/flatpak-context.c:2663 common/flatpak-context.c:2664
+#: common/flatpak-context.c:2687 common/flatpak-context.c:2688
 msgid "DEVICE"
 msgstr "მოწყობილობა"
 
-#: common/flatpak-context.c:2664
+#: common/flatpak-context.c:2688
 msgid "Don't expose device to app"
 msgstr "აპი მოწყობილობას ვერ დაინახავს"
 
-#: common/flatpak-context.c:2665
+#: common/flatpak-context.c:2689
 msgid "Require conditions to be met for a device to get exposed"
 msgstr ""
 
-#: common/flatpak-context.c:2665
+#: common/flatpak-context.c:2689
 msgid "DEVICE:CONDITION"
 msgstr ""
 
-#: common/flatpak-context.c:2666
+#: common/flatpak-context.c:2690
 msgid "Allow feature"
 msgstr "ფუნქციის დაშვება"
 
-#: common/flatpak-context.c:2666 common/flatpak-context.c:2667
+#: common/flatpak-context.c:2690 common/flatpak-context.c:2691
 msgid "FEATURE"
 msgstr "თვისება"
 
-#: common/flatpak-context.c:2667
+#: common/flatpak-context.c:2691
 msgid "Don't allow feature"
 msgstr "ფუნქციის არ-დაშვება"
 
-#: common/flatpak-context.c:2668
+#: common/flatpak-context.c:2692
 msgid "Require conditions to be met for a feature to get allowed"
 msgstr ""
 
-#: common/flatpak-context.c:2668
+#: common/flatpak-context.c:2692
 msgid "FEATURE:CONDITION"
 msgstr ""
 
-#: common/flatpak-context.c:2669
+#: common/flatpak-context.c:2693
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr "აპისთვის ფაილური სისტემის დანახება (მხოლოდ-კითხვისთვის :ro)"
 
-#: common/flatpak-context.c:2669
+#: common/flatpak-context.c:2693
 msgid "FILESYSTEM[:ro]"
 msgstr "FILESYSTEM[:ro]"
 
-#: common/flatpak-context.c:2670
+#: common/flatpak-context.c:2694
 msgid "Don't expose filesystem to app"
 msgstr "აპი ფაილურ სისტემას ვერ დაინახავს"
 
-#: common/flatpak-context.c:2670
+#: common/flatpak-context.c:2694
 msgid "FILESYSTEM"
 msgstr "FILESYSTEM"
 
-#: common/flatpak-context.c:2671
+#: common/flatpak-context.c:2695
 msgid "Set environment variable"
 msgstr "გარემოს ცვლადის დაყენება"
 
-#: common/flatpak-context.c:2671
+#: common/flatpak-context.c:2695
 msgid "VAR=VALUE"
 msgstr "VAR=VALUE"
 
-#: common/flatpak-context.c:2672
+#: common/flatpak-context.c:2696
 msgid "Read environment variables in env -0 format from FD"
 msgstr "გარემოს ცვლადების წაკითხვა გარემოში -0 ფორმატით FD-დან"
 
-#: common/flatpak-context.c:2673
+#: common/flatpak-context.c:2697
 msgid "Remove variable from environment"
 msgstr "გარემოდან ცვლადის წაშლა"
 
-#: common/flatpak-context.c:2673
+#: common/flatpak-context.c:2697
 msgid "VAR"
 msgstr "VAR"
 
-#: common/flatpak-context.c:2674
+#: common/flatpak-context.c:2698
 msgid "Allow app to own name on the session bus"
 msgstr "აპისთვის სესიის მატარებელზე საკუთარი სახელის ქონის ნების დართვა"
 
-#: common/flatpak-context.c:2674 common/flatpak-context.c:2675
-#: common/flatpak-context.c:2676 common/flatpak-context.c:2677
-#: common/flatpak-context.c:2678 common/flatpak-context.c:2679
-#: common/flatpak-context.c:2680
+#: common/flatpak-context.c:2698 common/flatpak-context.c:2699
+#: common/flatpak-context.c:2700 common/flatpak-context.c:2701
+#: common/flatpak-context.c:2702 common/flatpak-context.c:2703
+#: common/flatpak-context.c:2704
 msgid "DBUS_NAME"
 msgstr "DBUS_NAME"
 
-#: common/flatpak-context.c:2675
+#: common/flatpak-context.c:2699
 msgid "Allow app to talk to name on the session bus"
 msgstr "აპისთვის სესიის მატარებელზე სახელთან ლაპარაკის ნების დართვა"
 
-#: common/flatpak-context.c:2676
+#: common/flatpak-context.c:2700
 msgid "Don't allow app to talk to name on the session bus"
 msgstr "აპისთვის სესიის მატარებელზე სახელთან ლაპარაკის აკრძალვა"
 
-#: common/flatpak-context.c:2677
+#: common/flatpak-context.c:2701
 msgid "Allow app to own name on the system bus"
 msgstr "აპისთვის სისტემურ მატარებელზე საკუთარი სახელის ქონის ნების დართვა"
 
-#: common/flatpak-context.c:2678
+#: common/flatpak-context.c:2702
 msgid "Allow app to talk to name on the system bus"
 msgstr "აპისთვის სესიის მატარებელზე სახელთან ლაპარაკის ნების დართვა"
 
-#: common/flatpak-context.c:2679
+#: common/flatpak-context.c:2703
 msgid "Don't allow app to talk to name on the system bus"
 msgstr "აპისთვის სისტემურ მატარებელზე სახელთან ლაპარაკის აკრძალვა"
 
-#: common/flatpak-context.c:2680
+#: common/flatpak-context.c:2704
 msgid "Allow app to own name on the a11y bus"
 msgstr "აპისთვის a11y მატარებელზე საკუთარი სახელის ქონის ნების დართვა"
 
-#: common/flatpak-context.c:2681
+#: common/flatpak-context.c:2705
 msgid "Add generic policy option"
 msgstr "ზოგადი პოლიტიკის პარამეტრის დამატება"
 
-#: common/flatpak-context.c:2681 common/flatpak-context.c:2682
+#: common/flatpak-context.c:2705 common/flatpak-context.c:2706
 msgid "SUBSYSTEM.KEY=VALUE"
 msgstr "ქვესისტემა.პარამეტრი=მნიშვნელობა"
 
-#: common/flatpak-context.c:2682
+#: common/flatpak-context.c:2706
 msgid "Remove generic policy option"
 msgstr "ზოგადი პოლიტიკის პარამეტრის წაშლა"
 
-#: common/flatpak-context.c:2683
+#: common/flatpak-context.c:2707
 msgid "Add USB device to enumerables"
 msgstr "USB მოწყობილობის დამატება ჩამოთვლადებსი"
 
-#: common/flatpak-context.c:2683 common/flatpak-context.c:2684
+#: common/flatpak-context.c:2707 common/flatpak-context.c:2708
 msgid "VENDOR_ID:PRODUCT_ID"
 msgstr "VENDOR_ID:PRODUCT_ID"
 
-#: common/flatpak-context.c:2684
+#: common/flatpak-context.c:2708
 msgid "Add USB device to hidden list"
 msgstr "USB მოწყობილობის დამატება დამალულების სიაში"
 
-#: common/flatpak-context.c:2685
+#: common/flatpak-context.c:2709
 msgid "A list of USB devices that are enumerable"
 msgstr "USB მოწყობილობების სია, რომლებიც ჩამოთვლადია"
 
-#: common/flatpak-context.c:2685
+#: common/flatpak-context.c:2709
 msgid "LIST"
 msgstr "სია"
 
-#: common/flatpak-context.c:2686
+#: common/flatpak-context.c:2710
 msgid "File containing a list of USB devices to make enumerable"
 msgstr ""
 "ფაილი, რომელიც შეიცავს USB მოწყობილობების სიას ჩამოთვლადების შესაქმნელად"
 
-#: common/flatpak-context.c:2686 common/flatpak-context.c:2687
+#: common/flatpak-context.c:2710 common/flatpak-context.c:2711
 msgid "FILENAME"
 msgstr "ფაილის სახელი"
 
-#: common/flatpak-context.c:2687
+#: common/flatpak-context.c:2711
 msgid "Persist home directory subpath"
 msgstr "მუდმივი ბილიკი საწყის საქაღალდემდე"
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-context.c:2689
+#: common/flatpak-context.c:2713
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "გაშვებული სესია მოთხოვნილი არ იქნება (cgroup-ები არ შეიქმნება)"
 
-#: common/flatpak-context.c:3718
+#: common/flatpak-context.c:3744
 #, c-format
 msgid "Not replacing \"%s\" with tmpfs: %s"
 msgstr "\"%s\" tmpfs-ით არ ჩანაცვლდება: %s"
 
-#: common/flatpak-context.c:3726
+#: common/flatpak-context.c:3752
 #, c-format
 msgid "Not sharing \"%s\" with sandbox: %s"
 msgstr "\"%s\" სენდბოქსთან არ გაზიარდება: %s"
@@ -4725,12 +4725,12 @@ msgstr "\"%s\" სენდბოქსთან არ გაზიარდე
 #. * the path not existing, it seems reasonable to make more of a fuss
 #. * about the home directory not existing or otherwise being unusable,
 #. * so this is intentionally not using cannot_export()
-#: common/flatpak-context.c:3828
+#: common/flatpak-context.c:3854
 #, c-format
 msgid "Not allowing home directory access: %s"
 msgstr "საწყის საქაღალდესთან წვდომა მინიჭებული არ იქნება: %s"
 
-#: common/flatpak-context.c:4062
+#: common/flatpak-context.c:4088
 #, c-format
 msgid "Unable to provide a temporary home directory in the sandbox: %s"
 msgstr "დროებითი საწყისი საქაღალდის მიწოდება შეუძლებელია სენდბოქსში: %s"

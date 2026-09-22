@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2026-08-27 20:53+0200\n"
+"POT-Creation-Date: 2026-09-21 18:00+0100\n"
 "PO-Revision-Date: 2024-06-08 20:21+0530\n"
 "Last-Translator: Scrambled777 <weblate.scrambled777@simplelogin.com>\n"
 "Language-Team: Hindi <indlinux-hindi@lists.sourceforge.net>\n"
@@ -3145,7 +3145,7 @@ msgstr "ऐप के /app के बजाय पथ का प्रयोग 
 
 #: app/flatpak-builtins-run.c:183 app/flatpak-builtins-run.c:185
 #: app/flatpak-builtins-run.c:187 app/flatpak-builtins-run.c:188
-#: common/flatpak-context.c:2672
+#: common/flatpak-context.c:2696
 msgid "FD"
 msgstr "FD"
 
@@ -4326,39 +4326,39 @@ msgstr "अज्ञात साझा प्रकार %s, मान्य �
 msgid "Unknown policy type %s, valid types are: %s"
 msgstr "अज्ञात नीति प्रकार %s, मान्य प्रकार हैं: %s"
 
-#: common/flatpak-context.c:1266
+#: common/flatpak-context.c:1290
 #, c-format
 msgid "Invalid dbus name %s"
 msgstr "अमान्य डी-बस नाम %s"
 
-#: common/flatpak-context.c:1279
+#: common/flatpak-context.c:1303
 #, c-format
 msgid "Unknown socket type %s, valid types are: %s"
 msgstr "अज्ञात सॉकेट प्रकार %s, मान्य प्रकार हैं: %s"
 
-#: common/flatpak-context.c:1294
+#: common/flatpak-context.c:1318
 #, c-format
 msgid "Unknown device type %s, valid types are: %s"
 msgstr "अज्ञात डिवाइस प्रकार %s, मान्य प्रकार हैं: %s"
 
-#: common/flatpak-context.c:1308
+#: common/flatpak-context.c:1332
 #, c-format
 msgid "Unknown feature type %s, valid types are: %s"
 msgstr "अज्ञात विशेषता प्रकार %s, मान्य प्रकार हैं: %s"
 
-#: common/flatpak-context.c:1840
+#: common/flatpak-context.c:1864
 #, c-format
 msgid "Filesystem location \"%s\" contains \"..\""
 msgstr "फाइलप्रणाली स्थान \"%s\" में \"..\" शामिल है"
 
-#: common/flatpak-context.c:1882
+#: common/flatpak-context.c:1906
 #, c-format
 msgid ""
 "--filesystem=/ is not available, use --filesystem=host for a similar result"
 msgstr ""
 "--filesystem=/ उपलब्ध नहीं है, समान परिणाम के लिए --filesystem=host का प्रयोग करें"
 
-#: common/flatpak-context.c:1916
+#: common/flatpak-context.c:1940
 #, fuzzy, c-format
 msgid ""
 "Unknown filesystem location %s, valid locations are: host, host-os, host-"
@@ -4367,253 +4367,253 @@ msgstr ""
 "अज्ञात फाइलप्रणाली स्थान %s, मान्य स्थान हैं: host, host-os, host-etc, home, xdg-"
 "*[/…], ~/dir, /dir"
 
-#: common/flatpak-context.c:2015
+#: common/flatpak-context.c:2039
 #, fuzzy, c-format
 msgid "Invalid syntax for %s: %s"
 msgstr "अमान्य नाम %s: %s"
 
-#: common/flatpak-context.c:2142
+#: common/flatpak-context.c:2166
 #, c-format
 msgid "fallback-x11 can not be conditional"
 msgstr ""
 
-#: common/flatpak-context.c:2318
+#: common/flatpak-context.c:2342
 #, c-format
 msgid "Invalid env format %s"
 msgstr "अमान्य वातावरण प्रारूप %s"
 
-#: common/flatpak-context.c:2399
+#: common/flatpak-context.c:2423
 #, c-format
 msgid "Environment variable name must not contain '=': %s"
 msgstr "वातावरण चर नाम में '=' नहीं होना चाहिए: %s"
 
-#: common/flatpak-context.c:2527 common/flatpak-context.c:2535
+#: common/flatpak-context.c:2551 common/flatpak-context.c:2559
 #, c-format
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr "--add-policy तर्क SUBSYSTEM.KEY=VALUE के रूप में होने चाहिए"
 
-#: common/flatpak-context.c:2542
+#: common/flatpak-context.c:2566
 #, c-format
 msgid "--add-policy values can't start with \"!\""
 msgstr "--add-policy मान \"!\" से प्रारंभ नहीं हो सकते"
 
-#: common/flatpak-context.c:2567 common/flatpak-context.c:2575
+#: common/flatpak-context.c:2591 common/flatpak-context.c:2599
 #, c-format
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr "--remove-policy तर्क SUBSYSTEM.KEY=VALUE के रूप में होने चाहिए"
 
-#: common/flatpak-context.c:2582
+#: common/flatpak-context.c:2606
 #, c-format
 msgid "--remove-policy values can't start with \"!\""
 msgstr "--remove-policy मान \"!\" से प्रारंभ नहीं हो सकते"
 
-#: common/flatpak-context.c:2657
+#: common/flatpak-context.c:2681
 msgid "Share with host"
 msgstr "होस्ट के साथ साझा करें"
 
-#: common/flatpak-context.c:2657 common/flatpak-context.c:2658
+#: common/flatpak-context.c:2681 common/flatpak-context.c:2682
 msgid "SHARE"
 msgstr "साझा करें"
 
-#: common/flatpak-context.c:2658
+#: common/flatpak-context.c:2682
 msgid "Unshare with host"
 msgstr "होस्ट के साथ साझाकरण रद्द करें"
 
-#: common/flatpak-context.c:2659
+#: common/flatpak-context.c:2683
 msgid "Require conditions to be met for a subsystem to get shared"
 msgstr ""
 
-#: common/flatpak-context.c:2659
+#: common/flatpak-context.c:2683
 msgid "SHARE:CONDITION"
 msgstr ""
 
-#: common/flatpak-context.c:2660
+#: common/flatpak-context.c:2684
 msgid "Expose socket to app"
 msgstr "सॉकेट को ऐप के संपर्क में लाएं"
 
-#: common/flatpak-context.c:2660 common/flatpak-context.c:2661
+#: common/flatpak-context.c:2684 common/flatpak-context.c:2685
 msgid "SOCKET"
 msgstr "सॉकेट"
 
-#: common/flatpak-context.c:2661
+#: common/flatpak-context.c:2685
 msgid "Don't expose socket to app"
 msgstr "सॉकेट को ऐप के संपर्क में लाएं"
 
-#: common/flatpak-context.c:2662
+#: common/flatpak-context.c:2686
 msgid "Require conditions to be met for a socket to get exposed"
 msgstr ""
 
-#: common/flatpak-context.c:2662
+#: common/flatpak-context.c:2686
 msgid "SOCKET:CONDITION"
 msgstr ""
 
-#: common/flatpak-context.c:2663
+#: common/flatpak-context.c:2687
 msgid "Expose device to app"
 msgstr "डिवाइस को ऐप के संपर्क में लाएं"
 
-#: common/flatpak-context.c:2663 common/flatpak-context.c:2664
+#: common/flatpak-context.c:2687 common/flatpak-context.c:2688
 msgid "DEVICE"
 msgstr "उपकरण"
 
-#: common/flatpak-context.c:2664
+#: common/flatpak-context.c:2688
 msgid "Don't expose device to app"
 msgstr "डिवाइस को ऐप के संपर्क में न लाएं"
 
-#: common/flatpak-context.c:2665
+#: common/flatpak-context.c:2689
 msgid "Require conditions to be met for a device to get exposed"
 msgstr ""
 
-#: common/flatpak-context.c:2665
+#: common/flatpak-context.c:2689
 msgid "DEVICE:CONDITION"
 msgstr ""
 
-#: common/flatpak-context.c:2666
+#: common/flatpak-context.c:2690
 msgid "Allow feature"
 msgstr "विशेषता को अनुमति दें"
 
-#: common/flatpak-context.c:2666 common/flatpak-context.c:2667
+#: common/flatpak-context.c:2690 common/flatpak-context.c:2691
 msgid "FEATURE"
 msgstr "विशेषता"
 
-#: common/flatpak-context.c:2667
+#: common/flatpak-context.c:2691
 msgid "Don't allow feature"
 msgstr "विशेषता को अनुमति न दें"
 
-#: common/flatpak-context.c:2668
+#: common/flatpak-context.c:2692
 msgid "Require conditions to be met for a feature to get allowed"
 msgstr ""
 
-#: common/flatpak-context.c:2668
+#: common/flatpak-context.c:2692
 msgid "FEATURE:CONDITION"
 msgstr ""
 
-#: common/flatpak-context.c:2669
+#: common/flatpak-context.c:2693
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr "फाइलप्रणाली को ऐप में उजागर करें (: केवल पढ़ने के लिए ro)"
 
-#: common/flatpak-context.c:2669
+#: common/flatpak-context.c:2693
 msgid "FILESYSTEM[:ro]"
 msgstr "फाइलप्रणाली[:ro]"
 
-#: common/flatpak-context.c:2670
+#: common/flatpak-context.c:2694
 msgid "Don't expose filesystem to app"
 msgstr "ऐप के सामने फाइलप्रणाली को उजागर न करें"
 
-#: common/flatpak-context.c:2670
+#: common/flatpak-context.c:2694
 msgid "FILESYSTEM"
 msgstr "फाइलप्रणाली"
 
-#: common/flatpak-context.c:2671
+#: common/flatpak-context.c:2695
 msgid "Set environment variable"
 msgstr "वातावरण चर निर्धारित करें"
 
-#: common/flatpak-context.c:2671
+#: common/flatpak-context.c:2695
 msgid "VAR=VALUE"
 msgstr "चर=मान"
 
-#: common/flatpak-context.c:2672
+#: common/flatpak-context.c:2696
 msgid "Read environment variables in env -0 format from FD"
 msgstr "FD से env -0 प्रारूप में वातावरण चर पढ़ें"
 
-#: common/flatpak-context.c:2673
+#: common/flatpak-context.c:2697
 msgid "Remove variable from environment"
 msgstr "वातावरण से चर हटाएं"
 
-#: common/flatpak-context.c:2673
+#: common/flatpak-context.c:2697
 msgid "VAR"
 msgstr "चर"
 
-#: common/flatpak-context.c:2674
+#: common/flatpak-context.c:2698
 msgid "Allow app to own name on the session bus"
 msgstr "ऐप को सत्र बस में अपना नाम रखने की अनुमति दें"
 
-#: common/flatpak-context.c:2674 common/flatpak-context.c:2675
-#: common/flatpak-context.c:2676 common/flatpak-context.c:2677
-#: common/flatpak-context.c:2678 common/flatpak-context.c:2679
-#: common/flatpak-context.c:2680
+#: common/flatpak-context.c:2698 common/flatpak-context.c:2699
+#: common/flatpak-context.c:2700 common/flatpak-context.c:2701
+#: common/flatpak-context.c:2702 common/flatpak-context.c:2703
+#: common/flatpak-context.c:2704
 msgid "DBUS_NAME"
 msgstr "DBUS_NAME"
 
-#: common/flatpak-context.c:2675
+#: common/flatpak-context.c:2699
 msgid "Allow app to talk to name on the session bus"
 msgstr "ऐप को सत्र बस में नाम से बात करने की अनुमति दें"
 
-#: common/flatpak-context.c:2676
+#: common/flatpak-context.c:2700
 msgid "Don't allow app to talk to name on the session bus"
 msgstr "ऐप को सत्र बस में नाम से बात करने की अनुमति न दें"
 
-#: common/flatpak-context.c:2677
+#: common/flatpak-context.c:2701
 msgid "Allow app to own name on the system bus"
 msgstr "ऐप को सिस्टम बस पर अपना नाम रखने की अनुमति दें"
 
-#: common/flatpak-context.c:2678
+#: common/flatpak-context.c:2702
 msgid "Allow app to talk to name on the system bus"
 msgstr "ऐप को सिस्टम बस पर नाम से बात करने की अनुमति दें"
 
-#: common/flatpak-context.c:2679
+#: common/flatpak-context.c:2703
 msgid "Don't allow app to talk to name on the system bus"
 msgstr "ऐप को सिस्टम बस पर नाम से बात करने की अनुमति न दें"
 
-#: common/flatpak-context.c:2680
+#: common/flatpak-context.c:2704
 #, fuzzy
 msgid "Allow app to own name on the a11y bus"
 msgstr "ऐप को सिस्टम बस पर अपना नाम रखने की अनुमति दें"
 
-#: common/flatpak-context.c:2681
+#: common/flatpak-context.c:2705
 msgid "Add generic policy option"
 msgstr "सामान्य नीति विकल्प जोड़ें"
 
-#: common/flatpak-context.c:2681 common/flatpak-context.c:2682
+#: common/flatpak-context.c:2705 common/flatpak-context.c:2706
 msgid "SUBSYSTEM.KEY=VALUE"
 msgstr "SUBSYSTEM.KEY=VALUE"
 
-#: common/flatpak-context.c:2682
+#: common/flatpak-context.c:2706
 msgid "Remove generic policy option"
 msgstr "सामान्य नीति विकल्प हटाएं"
 
-#: common/flatpak-context.c:2683
+#: common/flatpak-context.c:2707
 msgid "Add USB device to enumerables"
 msgstr ""
 
-#: common/flatpak-context.c:2683 common/flatpak-context.c:2684
+#: common/flatpak-context.c:2707 common/flatpak-context.c:2708
 msgid "VENDOR_ID:PRODUCT_ID"
 msgstr ""
 
-#: common/flatpak-context.c:2684
+#: common/flatpak-context.c:2708
 msgid "Add USB device to hidden list"
 msgstr ""
 
-#: common/flatpak-context.c:2685
+#: common/flatpak-context.c:2709
 msgid "A list of USB devices that are enumerable"
 msgstr ""
 
-#: common/flatpak-context.c:2685
+#: common/flatpak-context.c:2709
 msgid "LIST"
 msgstr ""
 
-#: common/flatpak-context.c:2686
+#: common/flatpak-context.c:2710
 msgid "File containing a list of USB devices to make enumerable"
 msgstr ""
 
-#: common/flatpak-context.c:2686 common/flatpak-context.c:2687
+#: common/flatpak-context.c:2710 common/flatpak-context.c:2711
 msgid "FILENAME"
 msgstr "फाइलनाम"
 
-#: common/flatpak-context.c:2687
+#: common/flatpak-context.c:2711
 msgid "Persist home directory subpath"
 msgstr "गृह निर्देशिका उपपथ जारी रखें"
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-context.c:2689
+#: common/flatpak-context.c:2713
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "किसी चालू सत्र की आवश्यकता नहीं है (कोई cgroups निर्माण नहीं)"
 
-#: common/flatpak-context.c:3718
+#: common/flatpak-context.c:3744
 #, c-format
 msgid "Not replacing \"%s\" with tmpfs: %s"
 msgstr "\"%s\" को tmpfs से प्रतिस्थापित नहीं किया जा रहा है: %s"
 
-#: common/flatpak-context.c:3726
+#: common/flatpak-context.c:3752
 #, c-format
 msgid "Not sharing \"%s\" with sandbox: %s"
 msgstr "सैंडबॉक्स के साथ \"%s\" साझा नहीं किया जा रहा: %s"
@@ -4622,12 +4622,12 @@ msgstr "सैंडबॉक्स के साथ \"%s\" साझा नह�
 #. * the path not existing, it seems reasonable to make more of a fuss
 #. * about the home directory not existing or otherwise being unusable,
 #. * so this is intentionally not using cannot_export()
-#: common/flatpak-context.c:3828
+#: common/flatpak-context.c:3854
 #, c-format
 msgid "Not allowing home directory access: %s"
 msgstr "गृह निर्देशिका तक पहुंच की अनुमति नहीं: %s"
 
-#: common/flatpak-context.c:4062
+#: common/flatpak-context.c:4088
 #, c-format
 msgid "Unable to provide a temporary home directory in the sandbox: %s"
 msgstr "सैंडबॉक्स में अस्थायी गृह निर्देशिका प्रदान करने में असमर्थ: %s"

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak main\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2026-08-27 20:53+0200\n"
+"POT-Creation-Date: 2026-09-21 18:00+0100\n"
 "PO-Revision-Date: 2026-03-20 00:01+0100\n"
 "Last-Translator: Марко М. Костић <marko.m.kostic@gmail.com>\n"
 "Language-Team: Serbian <Serbian>\n"
@@ -3188,7 +3188,7 @@ msgstr "Користи ПУТАЊУ уместо „/app“ програма"
 
 #: app/flatpak-builtins-run.c:183 app/flatpak-builtins-run.c:185
 #: app/flatpak-builtins-run.c:187 app/flatpak-builtins-run.c:188
-#: common/flatpak-context.c:2672
+#: common/flatpak-context.c:2696
 msgid "FD"
 msgstr "ОД"
 
@@ -4382,39 +4382,39 @@ msgstr "Непозната врста дељења %s, исправне врст
 msgid "Unknown policy type %s, valid types are: %s"
 msgstr "Непозната врста политике %s, исправне врсте су: %s"
 
-#: common/flatpak-context.c:1266
+#: common/flatpak-context.c:1290
 #, c-format
 msgid "Invalid dbus name %s"
 msgstr "Неисправан д-сабирница назив %s"
 
-#: common/flatpak-context.c:1279
+#: common/flatpak-context.c:1303
 #, c-format
 msgid "Unknown socket type %s, valid types are: %s"
 msgstr "Непозната врста утичнице %s, исправне врсте су: %s"
 
-#: common/flatpak-context.c:1294
+#: common/flatpak-context.c:1318
 #, c-format
 msgid "Unknown device type %s, valid types are: %s"
 msgstr "Непозната врста уређаја %s, исправне врсте су: %s"
 
-#: common/flatpak-context.c:1308
+#: common/flatpak-context.c:1332
 #, c-format
 msgid "Unknown feature type %s, valid types are: %s"
 msgstr "Непозната врста функције %s, исправне врсте су: %s"
 
-#: common/flatpak-context.c:1840
+#: common/flatpak-context.c:1864
 #, c-format
 msgid "Filesystem location \"%s\" contains \"..\""
 msgstr "Место система датотека „%s“ садржи „..“"
 
-#: common/flatpak-context.c:1882
+#: common/flatpak-context.c:1906
 #, c-format
 msgid ""
 "--filesystem=/ is not available, use --filesystem=host for a similar result"
 msgstr ""
 "--filesystem=/ није доступно, користите --filesystem=host за сличан резултат"
 
-#: common/flatpak-context.c:1916
+#: common/flatpak-context.c:1940
 #, c-format
 msgid ""
 "Unknown filesystem location %s, valid locations are: host, host-os, host-"
@@ -4423,254 +4423,254 @@ msgstr ""
 "Непознато место система датотека %s, исправна места су: host, host-os, host-"
 "etc, host-root, home, xdg-*[/…], ~/dir, /dir"
 
-#: common/flatpak-context.c:2015
+#: common/flatpak-context.c:2039
 #, c-format
 msgid "Invalid syntax for %s: %s"
 msgstr "Неисправна синтакса за %s: %s"
 
-#: common/flatpak-context.c:2142
+#: common/flatpak-context.c:2166
 #, c-format
 msgid "fallback-x11 can not be conditional"
 msgstr "fallback-x11 не може бити условно"
 
-#: common/flatpak-context.c:2318
+#: common/flatpak-context.c:2342
 #, c-format
 msgid "Invalid env format %s"
 msgstr "Неисправан формат окружења %s"
 
-#: common/flatpak-context.c:2399
+#: common/flatpak-context.c:2423
 #, c-format
 msgid "Environment variable name must not contain '=': %s"
 msgstr "Име променљиве окружења не сме да садржи „=“: %s"
 
-#: common/flatpak-context.c:2527 common/flatpak-context.c:2535
+#: common/flatpak-context.c:2551 common/flatpak-context.c:2559
 #, c-format
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 "Аргументи за „--add-policy“ морају бити у облику ПОДСИСТЕМ.КЉУЧ=ВРЕДНОСТ"
 
-#: common/flatpak-context.c:2542
+#: common/flatpak-context.c:2566
 #, c-format
 msgid "--add-policy values can't start with \"!\""
 msgstr "Вредности за „--add-policy“ не могу почињати са „!“"
 
-#: common/flatpak-context.c:2567 common/flatpak-context.c:2575
+#: common/flatpak-context.c:2591 common/flatpak-context.c:2599
 #, c-format
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 "Аргументи за „--remove-policy“ морају бити у облику ПОДСИСТЕМ.КЉУЧ=ВРЕДНОСТ"
 
-#: common/flatpak-context.c:2582
+#: common/flatpak-context.c:2606
 #, c-format
 msgid "--remove-policy values can't start with \"!\""
 msgstr "Вредности за „--remove-policy“ не могу почињати са „!“"
 
-#: common/flatpak-context.c:2657
+#: common/flatpak-context.c:2681
 msgid "Share with host"
 msgstr "Дели са домаћином"
 
-#: common/flatpak-context.c:2657 common/flatpak-context.c:2658
+#: common/flatpak-context.c:2681 common/flatpak-context.c:2682
 msgid "SHARE"
 msgstr "ДЕЛИ"
 
-#: common/flatpak-context.c:2658
+#: common/flatpak-context.c:2682
 msgid "Unshare with host"
 msgstr "Престани да делиш са домаћином"
 
-#: common/flatpak-context.c:2659
+#: common/flatpak-context.c:2683
 msgid "Require conditions to be met for a subsystem to get shared"
 msgstr "Захтевај испуњење услова да би се подсистем делио"
 
-#: common/flatpak-context.c:2659
+#: common/flatpak-context.c:2683
 msgid "SHARE:CONDITION"
 msgstr "ДЕЛИ:УСЛОВ"
 
-#: common/flatpak-context.c:2660
+#: common/flatpak-context.c:2684
 msgid "Expose socket to app"
 msgstr "Изложи прикључницу програму"
 
-#: common/flatpak-context.c:2660 common/flatpak-context.c:2661
+#: common/flatpak-context.c:2684 common/flatpak-context.c:2685
 msgid "SOCKET"
 msgstr "ПРИКЉУЧНИЦА"
 
-#: common/flatpak-context.c:2661
+#: common/flatpak-context.c:2685
 msgid "Don't expose socket to app"
 msgstr "Не излажи прикључницу програму"
 
-#: common/flatpak-context.c:2662
+#: common/flatpak-context.c:2686
 msgid "Require conditions to be met for a socket to get exposed"
 msgstr "Захтевај испуњење услова да би се прикључница изложила"
 
-#: common/flatpak-context.c:2662
+#: common/flatpak-context.c:2686
 msgid "SOCKET:CONDITION"
 msgstr "ПРИКЉУЧНИЦА:УСЛОВ"
 
-#: common/flatpak-context.c:2663
+#: common/flatpak-context.c:2687
 msgid "Expose device to app"
 msgstr "Изложи уређај програму"
 
-#: common/flatpak-context.c:2663 common/flatpak-context.c:2664
+#: common/flatpak-context.c:2687 common/flatpak-context.c:2688
 msgid "DEVICE"
 msgstr "УРЕЂАЈ"
 
-#: common/flatpak-context.c:2664
+#: common/flatpak-context.c:2688
 msgid "Don't expose device to app"
 msgstr "Не излажи уређај програму"
 
-#: common/flatpak-context.c:2665
+#: common/flatpak-context.c:2689
 msgid "Require conditions to be met for a device to get exposed"
 msgstr "Захтевај испуњење услова да би се уређај изложио"
 
-#: common/flatpak-context.c:2665
+#: common/flatpak-context.c:2689
 msgid "DEVICE:CONDITION"
 msgstr "УРЕЂАЈ:УСЛОВ"
 
-#: common/flatpak-context.c:2666
+#: common/flatpak-context.c:2690
 msgid "Allow feature"
 msgstr "Дозволи функцију"
 
-#: common/flatpak-context.c:2666 common/flatpak-context.c:2667
+#: common/flatpak-context.c:2690 common/flatpak-context.c:2691
 msgid "FEATURE"
 msgstr "ФУНКЦИЈА"
 
-#: common/flatpak-context.c:2667
+#: common/flatpak-context.c:2691
 msgid "Don't allow feature"
 msgstr "Не дозволи функцију"
 
-#: common/flatpak-context.c:2668
+#: common/flatpak-context.c:2692
 msgid "Require conditions to be met for a feature to get allowed"
 msgstr "Захтевај испуњавање услова да би функција била дозвољена"
 
-#: common/flatpak-context.c:2668
+#: common/flatpak-context.c:2692
 msgid "FEATURE:CONDITION"
 msgstr "ФУНКЦИЈА:УСЛОВ"
 
-#: common/flatpak-context.c:2669
+#: common/flatpak-context.c:2693
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr "Изложи систем датотека програму (:ro за само за читање)"
 
-#: common/flatpak-context.c:2669
+#: common/flatpak-context.c:2693
 msgid "FILESYSTEM[:ro]"
 msgstr "СИСТЕМ_ДАТОТЕКА[:ro]"
 
-#: common/flatpak-context.c:2670
+#: common/flatpak-context.c:2694
 msgid "Don't expose filesystem to app"
 msgstr "Не излажи систем датотека програму"
 
-#: common/flatpak-context.c:2670
+#: common/flatpak-context.c:2694
 msgid "FILESYSTEM"
 msgstr "СИСТЕМ_ДАТОТЕКА"
 
-#: common/flatpak-context.c:2671
+#: common/flatpak-context.c:2695
 msgid "Set environment variable"
 msgstr "Постави променљиву окружења"
 
-#: common/flatpak-context.c:2671
+#: common/flatpak-context.c:2695
 msgid "VAR=VALUE"
 msgstr "ПРОМ=ВРЕДНОСТ"
 
-#: common/flatpak-context.c:2672
+#: common/flatpak-context.c:2696
 msgid "Read environment variables in env -0 format from FD"
 msgstr "Читај променљиве окружења у формату „env -0“ из ОД-а"
 
-#: common/flatpak-context.c:2673
+#: common/flatpak-context.c:2697
 msgid "Remove variable from environment"
 msgstr "Уклони променљиву из окружења"
 
-#: common/flatpak-context.c:2673
+#: common/flatpak-context.c:2697
 msgid "VAR"
 msgstr "ПРОМ"
 
-#: common/flatpak-context.c:2674
+#: common/flatpak-context.c:2698
 msgid "Allow app to own name on the session bus"
 msgstr "Дозволи програму да поседује име на сесијској сабирници"
 
-#: common/flatpak-context.c:2674 common/flatpak-context.c:2675
-#: common/flatpak-context.c:2676 common/flatpak-context.c:2677
-#: common/flatpak-context.c:2678 common/flatpak-context.c:2679
-#: common/flatpak-context.c:2680
+#: common/flatpak-context.c:2698 common/flatpak-context.c:2699
+#: common/flatpak-context.c:2700 common/flatpak-context.c:2701
+#: common/flatpak-context.c:2702 common/flatpak-context.c:2703
+#: common/flatpak-context.c:2704
 msgid "DBUS_NAME"
 msgstr "DBUS_ИМЕ"
 
-#: common/flatpak-context.c:2675
+#: common/flatpak-context.c:2699
 msgid "Allow app to talk to name on the session bus"
 msgstr "Дозволи програму да комуницира са именом на сесијској сабирници"
 
-#: common/flatpak-context.c:2676
+#: common/flatpak-context.c:2700
 msgid "Don't allow app to talk to name on the session bus"
 msgstr "Не дозволи програму да комуницира са именом на сесијској сабирници"
 
-#: common/flatpak-context.c:2677
+#: common/flatpak-context.c:2701
 msgid "Allow app to own name on the system bus"
 msgstr "Дозволи програму да поседује име на системској сабирници"
 
-#: common/flatpak-context.c:2678
+#: common/flatpak-context.c:2702
 msgid "Allow app to talk to name on the system bus"
 msgstr "Дозволи програму да комуницира са називом на системској сабирници"
 
-#: common/flatpak-context.c:2679
+#: common/flatpak-context.c:2703
 msgid "Don't allow app to talk to name on the system bus"
 msgstr "Не дозволи програму да комуницира са називом на системској сабирници"
 
-#: common/flatpak-context.c:2680
+#: common/flatpak-context.c:2704
 msgid "Allow app to own name on the a11y bus"
 msgstr "Дозволи програму да поседује назив на a11y сабирници"
 
-#: common/flatpak-context.c:2681
+#: common/flatpak-context.c:2705
 msgid "Add generic policy option"
 msgstr "Додај општу опцију смернице"
 
-#: common/flatpak-context.c:2681 common/flatpak-context.c:2682
+#: common/flatpak-context.c:2705 common/flatpak-context.c:2706
 msgid "SUBSYSTEM.KEY=VALUE"
 msgstr "ПОДСИСТЕМ.КЉУЧ=ВРЕДНОСТ"
 
-#: common/flatpak-context.c:2682
+#: common/flatpak-context.c:2706
 msgid "Remove generic policy option"
 msgstr "Уклони општу опцију смернице"
 
-#: common/flatpak-context.c:2683
+#: common/flatpak-context.c:2707
 msgid "Add USB device to enumerables"
 msgstr "Додај УСБ уређај у набројиве"
 
-#: common/flatpak-context.c:2683 common/flatpak-context.c:2684
+#: common/flatpak-context.c:2707 common/flatpak-context.c:2708
 msgid "VENDOR_ID:PRODUCT_ID"
 msgstr "ИД_ПРОДАВЦА:ИД_ПРОИЗВОДА"
 
-#: common/flatpak-context.c:2684
+#: common/flatpak-context.c:2708
 msgid "Add USB device to hidden list"
 msgstr "Додај УСБ уређај на списак скривених"
 
-#: common/flatpak-context.c:2685
+#: common/flatpak-context.c:2709
 msgid "A list of USB devices that are enumerable"
 msgstr "Списак УСБ уређаја који се могу набројати"
 
-#: common/flatpak-context.c:2685
+#: common/flatpak-context.c:2709
 msgid "LIST"
 msgstr "СПИСАК"
 
-#: common/flatpak-context.c:2686
+#: common/flatpak-context.c:2710
 msgid "File containing a list of USB devices to make enumerable"
 msgstr "Датотека која садржи списак УСБ уређаја за набрајање"
 
-#: common/flatpak-context.c:2686 common/flatpak-context.c:2687
+#: common/flatpak-context.c:2710 common/flatpak-context.c:2711
 msgid "FILENAME"
 msgstr "НАЗИВ_ДАТОТЕКЕ"
 
-#: common/flatpak-context.c:2687
+#: common/flatpak-context.c:2711
 msgid "Persist home directory subpath"
 msgstr "Задржи подпутању личног директоријума"
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-context.c:2689
+#: common/flatpak-context.c:2713
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "Не захтевај покренуту сесију (без стварања ц-група)"
 
-#: common/flatpak-context.c:3718
+#: common/flatpak-context.c:3744
 #, c-format
 msgid "Not replacing \"%s\" with tmpfs: %s"
 msgstr "Не замењујем „%s“ са tmpfs-ом: %s"
 
-#: common/flatpak-context.c:3726
+#: common/flatpak-context.c:3752
 #, c-format
 msgid "Not sharing \"%s\" with sandbox: %s"
 msgstr "Не делим „%s“ са изолацијом (sandbox): %s"
@@ -4679,12 +4679,12 @@ msgstr "Не делим „%s“ са изолацијом (sandbox): %s"
 #. * the path not existing, it seems reasonable to make more of a fuss
 #. * about the home directory not existing or otherwise being unusable,
 #. * so this is intentionally not using cannot_export()
-#: common/flatpak-context.c:3828
+#: common/flatpak-context.c:3854
 #, c-format
 msgid "Not allowing home directory access: %s"
 msgstr "Не дозвољавам приступ личном директоријуму: %s"
 
-#: common/flatpak-context.c:4062
+#: common/flatpak-context.c:4088
 #, c-format
 msgid "Unable to provide a temporary home directory in the sandbox: %s"
 msgstr "Нисам успео да обезбедим привремени лични директоријум у изолацији: %s"
