@@ -181,7 +181,7 @@ flatpak_oci_verify_signature (OstreeRepo *repo,
                               GBytes     *signed_data,
                               GError    **error)
 {
-  gpgme_ctx_t context;
+  g_auto(gpgme_ctx_t) context = NULL;
   gpgme_error_t gpg_error;
   g_auto(gpgme_data_t) signed_data_buffer = NULL;
   g_auto(gpgme_data_t) plain_buffer = NULL;
