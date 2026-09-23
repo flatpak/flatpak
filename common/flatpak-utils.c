@@ -1834,7 +1834,7 @@ flatpak_allocate_tmpdir (int           tmpdir_dfd,
       g_auto(GLnxTmpDir) new_tmpdir = { 0, };
       /* No existing tmpdir found, create a new */
 
-      if (!glnx_mkdtempat (dfd_iter.fd, tmpdir_name_template, 0777,
+      if (!glnx_mkdtempat (dfd_iter.fd, tmpdir_name_template, 0755,
                            &new_tmpdir, error))
         return FALSE;
 
