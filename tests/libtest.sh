@@ -617,6 +617,54 @@ skip_revokefs_without_fuse () {
     fi
 }
 
+setup_document_portal () {
+    local libexec version_reply document_portal='' permission_store=''
+
+    command -v gdbus >/dev/null || skip "no gdbus"
+    skip_without_fuse
+
+    for libexec in /usr/libexec /usr/lib/xdg-desktop-portal; do
+        if [ -x "$libexec/xdg-document-portal" ] && [ -x "$libexec/xdg-permission-store" ]; then
+            document_portal="$libexec/xdg-document-portal"
+            permission_store="$libexec/xdg-permission-store"
+            break
+        fi
+    done
+    [ -n "$document_portal" ] || skip "no document portal and permission store"
+
+    # The EXIT trap stops these background jobs.
+    G_DEBUG='' "$permission_store" > permission-store.log 2>&1 &
+    if ! gdbus wait --session --timeout=10 org.freedesktop.impl.portal.PermissionStore; then
+        cat permission-store.log >&2
+        assert_not_reached "Permission store did not acquire its bus name"
+    fi
+    G_DEBUG='' "$document_portal" > document-portal.log 2>&1 &
+    if ! gdbus wait --session --timeout=10 org.freedesktop.portal.Documents; then
+        cat permission-store.log document-portal.log >&2
+        assert_not_reached "Document portal did not acquire its bus name"
+    fi
+    # Owning the bus name does not imply that the FUSE mount is ready.
+    # GetMountPoint replies only after FUSE initialization has completed.
+    if ! gdbus call --session --timeout=10 --dest org.freedesktop.portal.Documents \
+        --object-path /org/freedesktop/portal/documents \
+        --method org.freedesktop.portal.Documents.GetMountPoint > /dev/null; then
+        cat document-portal.log >&2
+        assert_not_reached "Document portal did not become ready"
+    fi
+    if ! mountpoint -q "$XDG_RUNTIME_DIR/doc"; then
+        cat document-portal.log >&2
+        assert_not_reached "Document portal did not mount its filesystem"
+    fi
+
+    version_reply=$(gdbus call --session --timeout=10 --dest org.freedesktop.portal.Documents \
+        --object-path /org/freedesktop/portal/documents \
+        --method org.freedesktop.DBus.Properties.Get org.freedesktop.portal.Documents version)
+    if [[ ! "$version_reply" =~ uint32[[:space:]]+([0-9]+) ]]; then
+        assert_not_reached "Unexpected document portal version: $version_reply"
+    fi
+    export DOCUMENT_PORTAL_VERSION="${BASH_REMATCH[1]}"
+}
+
 skip_without_p2p () {
     if [ x${USE_COLLECTIONS_IN_CLIENT-} == xyes ] ; then
         return 0
