@@ -152,15 +152,17 @@ flatpak_complete_override (FlatpakCompletion *completion)
       for (i = 0; i < dirs->len; i++)
         {
           FlatpakDir *dir = g_ptr_array_index (dirs, i);
-          g_autoptr(GPtrArray) refs = flatpak_dir_find_installed_refs (dir, NULL, NULL, NULL,
+          g_autoptr(GPtrArray) refs = flatpak_dir_find_installed_refs (dir, completion->cur, NULL, NULL,
                                                                        FLATPAK_KINDS_APP,
-                                                                       FIND_MATCHING_REFS_FLAGS_NONE,
+                                                                       FIND_MATCHING_REFS_FLAGS_FUZZY_SUBSEQ,
                                                                        &error);
           if (refs == NULL)
             flatpak_completion_debug ("find local refs error: %s", error->message);
 
           flatpak_complete_ref_id (completion, refs);
         }
+
+      flatpak_complete_ref_id_flush (completion);
 
       break;
     }

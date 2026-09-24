@@ -524,9 +524,9 @@ flatpak_complete_run (FlatpakCompletion *completion)
 
       user_dir = flatpak_dir_get_user ();
       {
-        g_autoptr(GPtrArray) refs = flatpak_dir_find_installed_refs (user_dir, NULL, NULL, opt_arch,
+        g_autoptr(GPtrArray) refs = flatpak_dir_find_installed_refs (user_dir, completion->cur, NULL, opt_arch,
                                                                      FLATPAK_KINDS_APP,
-                                                                     FIND_MATCHING_REFS_FLAGS_NONE,
+                                                                     FIND_MATCHING_REFS_FLAGS_FUZZY_SUBSEQ,
                                                                      &error);
         if (refs == NULL)
           flatpak_completion_debug ("find local refs error: %s", error->message);
@@ -544,15 +544,17 @@ flatpak_complete_run (FlatpakCompletion *completion)
       for (i = 0; i < system_dirs->len; i++)
         {
           FlatpakDir *dir = g_ptr_array_index (system_dirs, i);
-          g_autoptr(GPtrArray) refs = flatpak_dir_find_installed_refs (dir, NULL, NULL, opt_arch,
+          g_autoptr(GPtrArray) refs = flatpak_dir_find_installed_refs (dir, completion->cur, NULL, opt_arch,
                                                                        FLATPAK_KINDS_APP,
-                                                                       FIND_MATCHING_REFS_FLAGS_NONE,
+                                                                       FIND_MATCHING_REFS_FLAGS_FUZZY_SUBSEQ,
                                                                        &error);
           if (refs == NULL)
             flatpak_completion_debug ("find local refs error: %s", error->message);
 
           flatpak_complete_ref_id (completion, refs);
         }
+
+      flatpak_complete_ref_id_flush (completion);
 
       break;
     }
