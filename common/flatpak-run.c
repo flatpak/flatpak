@@ -70,6 +70,7 @@
 #include "session-helper/flatpak-session-helper.h"
 
 #define DEFAULT_SHELL "/bin/sh"
+#define DOCUMENT_PORTAL_SANDBOX_PATH "/run/flatpak/doc"
 
 typedef FlatpakSessionHelper AutoFlatpakSessionHelper;
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (AutoFlatpakSessionHelper, g_object_unref)
@@ -1893,13 +1894,11 @@ add_monitor_path_args (gboolean      use_session_helper,
     }
 }
 
-static void
-add_document_portal_args (FlatpakBwrap *bwrap,
-                          const char   *app_id,
-                          char        **out_mount_path)
+static gboolean
+try_add_document_portal_args (FlatpakBwrap *bwrap,
+                              const char   *app_id)
 {
   g_autoptr(GDBusConnection) session_bus = NULL;
-  g_autofree char *doc_mount_path = NULL;
 
   session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, NULL);
   if (session_bus)
@@ -1930,20 +1929,22 @@ add_document_portal_args (FlatpakBwrap *bwrap,
             }
           else
             {
-              static const char dst_path[] = "/run/flatpak/doc";
+              const char *host_mount_path = NULL;
               g_autofree char *src_path = NULL;
               g_variant_get (g_dbus_message_get_body (reply),
-                             "(^ay)", &doc_mount_path);
+                             "(^&ay)", &host_mount_path);
 
               src_path = g_strdup_printf ("%s/by-app/%s",
-                                          doc_mount_path, app_id);
-              flatpak_bwrap_add_args (bwrap, "--bind", src_path, dst_path, NULL);
+                                          host_mount_path, app_id);
+              flatpak_bwrap_add_args (bwrap, "--bind", src_path, DOCUMENT_PORTAL_SANDBOX_PATH, NULL);
               flatpak_bwrap_add_runtime_dir_member (bwrap, "doc");
+
+              return TRUE;
             }
         }
     }
 
-  *out_mount_path = g_steal_pointer (&doc_mount_path);
+  return FALSE;
 }
 
 #ifdef ENABLE_SECCOMP
@@ -2731,7 +2732,7 @@ add_rest_args (FlatpakBwrap   *bwrap,
                const char     *app_id,
                FlatpakExports *exports,
                gboolean        file_forwarding,
-               const char     *doc_mount_path,
+               gboolean        document_portal_available,
                char           *args[],
                int             n_args,
                GError        **error)
@@ -2742,7 +2743,7 @@ add_rest_args (FlatpakBwrap   *bwrap,
   gboolean can_forward = TRUE;
   int i;
 
-  if (file_forwarding && doc_mount_path == NULL)
+  if (file_forwarding && !document_portal_available)
     {
       g_message ("Can't get document portal mount path");
       can_forward = FALSE;
@@ -2803,7 +2804,7 @@ add_rest_args (FlatpakBwrap   *bwrap,
             return FALSE;
 
           basename = g_file_get_basename (file);
-          doc_path = g_build_filename (doc_mount_path, doc_id, basename, NULL);
+          doc_path = g_build_filename (DOCUMENT_PORTAL_SANDBOX_PATH, doc_id, basename, NULL);
 
           if (forwarding_uri)
             {
@@ -3252,7 +3253,7 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
   g_autoptr(FlatpakContext) overrides = NULL;
   g_autoptr(FlatpakExports) exports = NULL;
   g_autofree char *commandline = NULL;
-  g_autofree char *doc_mount_path = NULL;
+  gboolean document_portal_available = FALSE;
   g_autofree char *app_extensions = NULL;
   g_autofree char *runtime_extensions = NULL;
   g_autofree char *runtime_ld_path = NULL;
@@ -3844,7 +3845,7 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
     return FALSE;
 
   if (!sandboxed && !(flags & FLATPAK_RUN_FLAG_NO_DOCUMENTS_PORTAL))
-    add_document_portal_args (bwrap, app_id, &doc_mount_path);
+    document_portal_available = try_add_document_portal_args (bwrap, app_id);
 
   if (!flatpak_run_add_environment_args (bwrap, app_info_path, flags,
                                          app_id, app_context,
@@ -3970,7 +3971,7 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
 
   if (!add_rest_args (bwrap, app_id,
                       exports, (flags & FLATPAK_RUN_FLAG_FILE_FORWARDING) != 0,
-                      doc_mount_path,
+                      document_portal_available,
                       args, n_args, error))
     return FALSE;
 
