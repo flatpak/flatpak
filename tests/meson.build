@@ -412,6 +412,7 @@ tests = {
   'repair': {},
   'extra-data': {'wrap': ['user', 'system']},
   'preinstall': {},
+  'pin': {},
   'run-custom': {'wrap': ['user', 'system']},
   'file-forwarding': {'wrap': ['user']},
   'upgrade-from-header': {'wrap': ['user', 'system', 'system-norevokefs']},
