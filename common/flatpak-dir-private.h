@@ -861,6 +861,7 @@ char      *           flatpak_dir_create_origin_remote                      (Fla
                                                                              const char                    *title,
                                                                              const char                    *main_ref,
                                                                              GBytes                        *gpg_data,
+                                                                             const char                    *gpg_keys_url,
                                                                              const char                    *collection_id,
                                                                              gboolean                      *changed_config,
                                                                              GCancellable                  *cancellable,
@@ -920,6 +921,8 @@ char      *           flatpak_dir_get_remote_icon                           (Fla
 char      *           flatpak_dir_get_remote_collection_id                  (FlatpakDir                    *self,
                                                                              const char                    *remote_name);
 char      *           flatpak_dir_get_remote_main_ref                       (FlatpakDir                    *self,
+                                                                             const char                    *remote_name);
+char      *           flatpak_dir_get_remote_gpg_keys_url                   (FlatpakDir                    *self,
                                                                              const char                    *remote_name);
 gboolean              flatpak_dir_get_remote_oci                            (FlatpakDir                    *self,
                                                                              const char                    *remote_name);

@@ -71,6 +71,10 @@ man5 = [
   'flatpak-installation',
 ]
 
+man7 = [
+  'flatpak-key-rotation',
+]
+
 man_compat_symlinks = [
    ['flatpak-flatpakrepo', 'flatpakrepo', '5'],
    ['flatpak-flatpakref', 'flatpakref', '5'],
@@ -78,7 +82,7 @@ man_compat_symlinks = [
 
 xml_files = []
 
-foreach pair : [[man1, '1'], [man5, '5']]
+foreach pair : [[man1, '1'], [man5, '5'], [man7, '7']]
   pages = pair[0]
   section = pair[1]
 
