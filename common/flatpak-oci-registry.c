@@ -42,6 +42,9 @@
 #include "flatpak-zstd-compressor-private.h"
 #include "flatpak-zstd-decompressor-private.h"
 
+#define MAX_DOWNLOADED_INDEX_SIZE (1024 * 1024 * 1024)
+#define MAX_DOWNLOADED_ICON_SIZE (1024 * 1024 * 1024)
+
 typedef struct archive FlatpakAutoArchiveWrite;
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakAutoArchiveWrite, archive_write_free)
 
@@ -1042,6 +1045,7 @@ flatpak_oci_registry_download_blob (FlatpakOciRegistry    *self,
                                       FLATPAK_HTTP_FLAGS_ACCEPT_OCI,
                                       out_stream,
                                       self->token,
+                                      0,
                                       progress_cb, user_data,
                                       cancellable, error))
         return -1;
@@ -1134,6 +1138,7 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
                                       uri_s, source_registry->certificates,
                                       FLATPAK_HTTP_FLAGS_ACCEPT_OCI, out_stream,
                                       source_registry->token,
+                                      0,
                                       progress_cb, user_data,
                                       cancellable, error))
         return FALSE;
@@ -2620,6 +2625,7 @@ flatpak_oci_index_ensure_cached (FlatpakHttpSession *http_session,
                                     certificates,
                                     FLATPAK_HTTP_FLAGS_STORE_COMPRESSED,
                                     AT_FDCWD, index_path,
+                                    MAX_DOWNLOADED_INDEX_SIZE,
                                     NULL, NULL,
                                     cancellable, &local_error);
 
@@ -2908,6 +2914,7 @@ add_icon_image (FlatpakHttpSession  *http_session,
       if (!flatpak_cache_http_uri (http_session, icon_uri_s, certificates,
                                    0 /* flags */,
                                    icons_dfd, icon_path,
+                                   MAX_DOWNLOADED_ICON_SIZE,
                                    NULL, NULL,
                                    cancellable, &local_error) &&
           !g_error_matches (local_error, FLATPAK_HTTP_ERROR, FLATPAK_HTTP_ERROR_NOT_CHANGED))
