@@ -59,5 +59,6 @@ typedef struct _FlatpakImageSource    FlatpakImageSource;
 typedef struct FlatpakOciRegistry     FlatpakOciRegistry;
 typedef struct _FlatpakOciManifest    FlatpakOciManifest;
 typedef struct _FlatpakOciImage       FlatpakOciImage;
+typedef struct _FlatpakTokenProvider  FlatpakTokenProvider;
 
 #endif /* __FLATPAK_COMMON_TYPES_H__ */

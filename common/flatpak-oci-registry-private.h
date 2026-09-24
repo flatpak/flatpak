@@ -59,8 +59,9 @@ FlatpakOciRegistry  *  flatpak_oci_registry_new (const char    *uri,
 FlatpakOciRegistry *   flatpak_oci_registry_new_for_archive (GFile        *archive,
                                                              GCancellable *cancellable,
                                                              GError      **error);
-void                   flatpak_oci_registry_set_token (FlatpakOciRegistry *self,
-                                                       const char *token);
+void                   flatpak_oci_registry_set_token_provider (FlatpakOciRegistry  *self,
+                                                               FlatpakTokenProvider *provider);
+const char          *  flatpak_oci_registry_get_token (FlatpakOciRegistry *self);
 void                   flatpak_oci_registry_set_signature_lookaside (FlatpakOciRegistry *self,
                                                                      const char         *signature_lookaside);
 gboolean               flatpak_oci_registry_is_local (FlatpakOciRegistry *self);
@@ -81,12 +82,12 @@ int                    flatpak_oci_registry_download_blob (FlatpakOciRegistry   
                                                            gpointer               user_data,
                                                            GCancellable          *cancellable,
                                                            GError               **error);
-char *                 flatpak_oci_registry_get_token (FlatpakOciRegistry *self,
-                                                       const char         *repository,
-                                                       const char         *digest,
-                                                       const char         *basic_auth,
-                                                       GCancellable       *cancellable,
-                                                       GError            **error);
+char *                 flatpak_oci_registry_fetch_token (FlatpakOciRegistry *self,
+                                                         const char         *repository,
+                                                         const char         *digest,
+                                                         const char         *basic_auth,
+                                                         GCancellable       *cancellable,
+                                                         GError            **error);
 GBytes             *   flatpak_oci_registry_load_blob (FlatpakOciRegistry *self,
                                                        const char         *repository,
                                                        gboolean            manifest,
