@@ -1516,15 +1516,39 @@ flatpak_context_add_usb_list_from_file (FlatpakContext *context,
                                      context->hidden_usb_devices, error);
 }
 
+/* Strip trailing slashes from PATH. Returns a newly allocated string,
+ * or NULL if the result would be empty. */
+static char *
+strip_trailing_slashes (const char *path)
+{
+  size_t len = strlen (path);
+
+  while (len > 0 && path[len - 1] == '/')
+    len--;
+
+  if (len == 0)
+    return NULL;
+
+  return g_strndup (path, len);
+}
+
 static gboolean
 flatpak_context_set_persistent (FlatpakContext *context,
                                 const char     *path,
                                 GError        **error)
 {
-  if (!flatpak_validate_path_characters (path, error))
+  g_autofree char *normalized = NULL;
+
+  /* Normalize the key by stripping trailing slashes, so that
+   * --persist=folder/ and --persist=folder map to the same entry. */
+  normalized = strip_trailing_slashes (path);
+  if (normalized == NULL)
+    return TRUE;
+
+  if (!flatpak_validate_path_characters (normalized, error))
     return FALSE;
 
-  g_hash_table_insert (context->persistent, g_strdup (path), GINT_TO_POINTER (1));
+  g_hash_table_insert (context->persistent, g_steal_pointer (&normalized), GINT_TO_POINTER (1));
   return TRUE;
 }
 
@@ -4185,6 +4209,14 @@ mkdir_p_open_nofollow_at (int          base_fd,
 {
   glnx_autofd int parent_fd = -1;
 
+  /* Strip trailing slashes. Without this, g_path_get_dirname("folder/")
+   * returns "folder" instead of ".", causing a duplicate directory level
+   * to be created (e.g. appdir/folder/folder instead of appdir/folder). */
+  {
+    g_autofree char *stripped_subdir = strip_trailing_slashes (subdir);
+    if (stripped_subdir != NULL)
+      subdir = stripped_subdir;
+  }
   if (g_path_is_absolute (subdir))
     {
       const char *skipped_prefix = subdir;
