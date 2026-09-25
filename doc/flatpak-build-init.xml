@@ -57,8 +57,12 @@
             Initializes a directory as build directory which can be used as 
             target directory of <command>flatpak build</command>. It
             creates a <filename>metadata</filename> inside the given directory. 
-            Additionally, empty <filename>files</filename> and <filename>var</filename>
-            subdirectories are created.
+            By default, it creates an empty <filename>files</filename> subdirectory
+            and a <filename>var</filename> subdirectory containing a
+            <filename>tmp</filename> directory and a <filename>run</filename>
+            symlink to <filename>/run</filename>. The <option>--base</option> and
+            <option>--var</option> options can populate <filename>files</filename>
+            and <filename>var</filename>, respectively.
         </para>
         <para>
             It is an error to run build-init on a directory that has already
