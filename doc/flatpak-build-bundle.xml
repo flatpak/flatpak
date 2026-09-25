@@ -139,6 +139,20 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>-j</option></term>
+                <term><option>--jobs=NUM-JOBS</option></term>
+
+                <listitem><para>
+                    Limit the number of parallel jobs when compressing Flatpak bundle parts.
+                    The default is <literal>auto</literal>, which uses the available CPUs.
+                    Use <literal>1</literal> to compress serially. Parallel compression
+                    uses more memory; lower the thread count if memory is limited.
+                    This option requires a libostree with parallel static-delta support
+                    and does not affect OCI images.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--oci</option></term>
 
                 <listitem><para>
