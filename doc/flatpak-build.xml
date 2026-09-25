@@ -46,11 +46,15 @@
         </para>
         <para>
             The sdk that is specified in the <filename>metadata</filename> file
-            in the directory is mounted at <filename>/usr</filename> and the
-            <filename>files</filename> and <filename>var</filename> subdirectories
-            are mounted at <filename>/app</filename> and <filename>/var</filename>,
-            respectively. They are writable, and their contents are preserved between
-            build commands, to allow accumulating build artifacts there.
+            in the directory is mounted at <filename>/usr</filename> by default.
+            For application builds, the <filename>files</filename> subdirectory
+            is mounted at <filename>/app</filename>. The <filename>var/lib</filename>
+            and <filename>var/tmp</filename> subdirectories are mounted at
+            <filename>/var/lib</filename> and <filename>/var/tmp</filename>,
+            respectively, and are created if needed. These directories are writable
+            by default, and their contents are preserved between build commands,
+            to allow accumulating build artifacts there. Other parts of
+            <filename>/var</filename> are not mounted in the build directory.
         </para>
     </refsect1>
 
