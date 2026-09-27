@@ -2323,6 +2323,8 @@ add_related (FlatpakTransaction          *self,
              GError                     **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  g_autoptr(FlatpakInstallation) installation = flatpak_transaction_get_installation (self);
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (installation, NULL);
   g_autoptr(GPtrArray) related = NULL;
   int i;
 
@@ -2342,7 +2344,7 @@ add_related (FlatpakTransaction          *self,
           FlatpakRelated *rel = g_ptr_array_index (related, i);
           FlatpakTransactionOperation *related_op;
 
-          if (!rel->delete)
+          if (!rel->delete || flatpak_dir_ref_is_pinned (dir, flatpak_decomposed_get_ref (rel->ref)))
             continue;
 
           if (priv->no_deploy)
