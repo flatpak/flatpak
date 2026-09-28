@@ -201,7 +201,7 @@ Enhancements:
 
 * Improve startup time for fish shell integration (#6635)
 
-* Translation updates: ‎zh_CN (#6671)
+* Translation updates: zh_CN (#6671)
 
 Bug fixes:
 
@@ -239,7 +239,7 @@ Enhancements:
 
 * Improve various tests (#6604, #6606, #6619, #6617, #6605, #6625)
 
-* Translation updates: tr (#6629), ‎zh_CN (#6630)
+* Translation updates: tr (#6629), zh_CN (#6630)
 
 Bug fixes:
 
