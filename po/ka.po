@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak git\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2026-09-21 18:00+0100\n"
+"POT-Creation-Date: 2026-09-25 15:09+0100\n"
 "PO-Revision-Date: 2025-04-03 10:16+0200\n"
 "Last-Translator: Ekaterine Papava <papava.e@gtu.ge>\n"
 "Language-Team: Georgian <(nothing)>\n"
@@ -169,14 +169,14 @@ msgid "'%s' is not a valid repository: "
 msgstr "'%s' არასწორი რეპოზიტორიაა: "
 
 #: app/flatpak-builtins-build-bundle.c:674 app/flatpak-builtins-build-sign.c:88
-#: common/flatpak-dir.c:14471
+#: common/flatpak-dir.c:14827
 #, c-format
 msgid "'%s' is not a valid name: %s"
 msgstr "'%s' არასწორი სახელია: %s"
 
 #: app/flatpak-builtins-build-bundle.c:677
 #: app/flatpak-builtins-build-export.c:865 app/flatpak-builtins-build-sign.c:91
-#: common/flatpak-dir.c:14477
+#: common/flatpak-dir.c:14833
 #, c-format
 msgid "'%s' is not a valid branch name: %s"
 msgstr "'%s' ბრენჩის არასწორი სახელია: %s"
@@ -271,7 +271,7 @@ msgstr "%2$s-ში %1$s-ს გაფართოების წერტი�
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "მიბმული მიმაგრების პარამეტრში '%s' '=' მითითებული არაა"
 
-#: app/flatpak-builtins-build.c:679 common/flatpak-run.c:4064
+#: app/flatpak-builtins-build.c:679 common/flatpak-run.c:4069
 #, c-format
 msgid "Unable to start app"
 msgstr "აპის გასვების შეცდომა"
@@ -2536,7 +2536,7 @@ msgstr "შეჯამების ფაილში გადამისა�
 msgid "Can't load uri %s: %s\n"
 msgstr "URI %s-ის ჩატვირთვის შეცდომა: %s\n"
 
-#: app/flatpak-builtins-remote-add.c:276 common/flatpak-dir.c:4691
+#: app/flatpak-builtins-remote-add.c:276 common/flatpak-dir.c:4867
 #, c-format
 msgid "Can't load file %s: %s\n"
 msgstr "ფაილის %s ჩატვირთვის შეცდომა: %s\n"
@@ -4366,14 +4366,14 @@ msgstr ""
 "შეცდომა: %s-ის წაშლა ჩავარდა: %s\n"
 "\n"
 
-#: app/flatpak-quiet-transaction.c:166 common/flatpak-dir.c:11605
+#: app/flatpak-quiet-transaction.c:166 common/flatpak-dir.c:11952
 #, c-format
 msgid "%s already installed"
 msgstr "%s უკვე დაყენებულია"
 
-#: app/flatpak-quiet-transaction.c:168 common/flatpak-dir.c:3670
-#: common/flatpak-dir.c:4369 common/flatpak-dir.c:17146
-#: common/flatpak-dir.c:17436 common/flatpak-dir-utils.c:167
+#: app/flatpak-quiet-transaction.c:168 common/flatpak-dir.c:3846
+#: common/flatpak-dir.c:4545 common/flatpak-dir.c:17502
+#: common/flatpak-dir.c:17792 common/flatpak-dir-utils.c:167
 #: common/flatpak-dir-utils.c:260 common/flatpak-transaction.c:2736
 #: common/flatpak-transaction.c:2791
 #, c-format
@@ -4735,427 +4735,447 @@ msgstr "საწყის საქაღალდესთან წვდო�
 msgid "Unable to provide a temporary home directory in the sandbox: %s"
 msgstr "დროებითი საწყისი საქაღალდის მიწოდება შეუძლებელია სენდბოქსში: %s"
 
-#: common/flatpak-dir.c:442
+#: common/flatpak-dir.c:618
 #, c-format
 msgid "Configured collection ID ‘%s’ not in summary file"
 msgstr "მორგებული კოლექციის ID '%s' შეჯამების ფაილი არაა"
 
-#: common/flatpak-dir.c:459
+#: common/flatpak-dir.c:635
 msgid "Summary has invalid or corrupted data"
 msgstr ""
 
-#: common/flatpak-dir.c:478
+#: common/flatpak-dir.c:654
 msgid "Summary index has invalid or corrupted data"
 msgstr ""
 
-#: common/flatpak-dir.c:632
+#: common/flatpak-dir.c:808
 #, c-format
 msgid "Unable to load summary from remote %s: %s"
 msgstr "დაშორებულიდან '%s' შეჯამების ჩატვირთვა შეუძლებელია: %s"
 
-#: common/flatpak-dir.c:812 common/flatpak-dir.c:848 common/flatpak-dir.c:954
+#: common/flatpak-dir.c:988 common/flatpak-dir.c:1024 common/flatpak-dir.c:1130
 #, c-format
 msgid "No such ref '%s' in remote %s"
 msgstr "მიმართვა '%s' დაშორებულში %s არ არსებობს"
 
-#: common/flatpak-dir.c:939 common/flatpak-dir.c:1099 common/flatpak-dir.c:1128
-#: common/flatpak-dir.c:1140
+#: common/flatpak-dir.c:1115 common/flatpak-dir.c:1275
+#: common/flatpak-dir.c:1304 common/flatpak-dir.c:1316
 #, c-format
 msgid "No entry for %s in remote %s summary flatpak cache"
 msgstr "ჩანაწერი %s არ არსებობს დაშორებულში '%s' შეჯამების flatpak კეშში"
 
-#: common/flatpak-dir.c:1117
+#: common/flatpak-dir.c:1293
 #, c-format
 msgid "No summary or Flatpak cache available for remote %s"
 msgstr "დაშორებულისთვის %s შეჯამება ან Flatpak-ის კეში მიუწვდომელია"
 
-#: common/flatpak-dir.c:1145
+#: common/flatpak-dir.c:1321
 #, c-format
 msgid "Missing xa.data in summary for remote %s"
 msgstr "დაშორებულისთვის %s შეჯამებაში xa.data აღმოჩენილი არაა"
 
-#: common/flatpak-dir.c:1151 common/flatpak-dir.c:1594
+#: common/flatpak-dir.c:1327 common/flatpak-dir.c:1770
 #, c-format
 msgid "Unsupported summary version %d for remote %s"
 msgstr "მხარდაუჭერელი შეჯამების ვერსია %d დაშორებულისთვის %s"
 
-#: common/flatpak-dir.c:1248
+#: common/flatpak-dir.c:1424
 msgid "Remote OCI index has no registry uri"
 msgstr "დაშორებულ OCI ინდექსს რეესტრის URI არ გააჩნია"
 
-#: common/flatpak-dir.c:1309
+#: common/flatpak-dir.c:1485
 #, c-format
 msgid "Couldn't find ref %s in remote %s"
 msgstr "მიმართვა %s დაშორებულში %s აღმოჩენილი არაა"
 
-#: common/flatpak-dir.c:1336 common/flatpak-dir.c:1429
+#: common/flatpak-dir.c:1512 common/flatpak-dir.c:1605
 #, fuzzy, c-format
 msgid "Commit has no requested ref ‘%s’ in ref binding metadata (found: ‘%s’)"
 msgstr ""
 "კომიტს მიმართვის მიბმის მეტამონაცემებში მოთხოვნილი მიმართვა '%s' არ გააჩნია"
 
-#: common/flatpak-dir.c:1461
+#: common/flatpak-dir.c:1637
 #, c-format
 msgid "Configured collection ID ‘%s’ not in binding metadata"
 msgstr "მიმაგრების მეტამონაცემებში მორგებული კოლექციის ID '%s' არაა"
 
-#: common/flatpak-dir.c:1497 common/flatpak-dir.c:5693
+#: common/flatpak-dir.c:1673 common/flatpak-dir.c:5869
 #, c-format
 msgid "Couldn't find latest checksum for ref %s in remote %s"
 msgstr "მიმართვისთვის %s დაშორებულში %s უახლესი საკონტროლო ჯამი ვერ ვიპოვე"
 
-#: common/flatpak-dir.c:1564 common/flatpak-dir.c:1600
+#: common/flatpak-dir.c:1740 common/flatpak-dir.c:1776
 #, c-format
 msgid "No entry for %s in remote %s summary flatpak sparse cache"
 msgstr ""
 "%s-სთვის ჩანაწერი დაშორებული %s-ის შეჯამების flatpak-ის იშვიათ კეშში არ "
 "არსებობს"
 
-#: common/flatpak-dir.c:2588
+#: common/flatpak-dir.c:2764
 #, c-format
 msgid "Commit metadata for %s not matching expected metadata"
 msgstr "კომიტის მეტამონაცემები %s-სთვის მოსალოდნელ მეტამონაცემებს არ ემთხვევა"
 
-#: common/flatpak-dir.c:2871
+#: common/flatpak-dir.c:3047
 msgid "Unable to connect to system bus"
 msgstr "სისტემურ მატარებელთან მიერთება შეუძლებელია"
 
-#: common/flatpak-dir.c:3467
+#: common/flatpak-dir.c:3643
 msgid "User installation"
 msgstr "მომხმარებლისთვის დაყენება"
 
-#: common/flatpak-dir.c:3474
+#: common/flatpak-dir.c:3650
 #, c-format
 msgid "System (%s) installation"
 msgstr "სისტემაში (%s) დაყენება"
 
-#: common/flatpak-dir.c:3520
+#: common/flatpak-dir.c:3696
 #, c-format
 msgid "No overrides found for %s"
 msgstr "%s-სთვის გადაფარვები ვერ ვიპოვე"
 
-#: common/flatpak-dir.c:3673
+#: common/flatpak-dir.c:3849
 #, c-format
 msgid "%s (commit %s) not installed"
 msgstr "%s (კომიტი %s) დაყენებული არაა"
 
-#: common/flatpak-dir.c:4698
+#: common/flatpak-dir.c:4874
 #, c-format
 msgid "Error parsing system flatpakrepo file for %s: %s"
 msgstr "%s-სთვის სისტემური flatpakrepo ფაილის დამუშავების შეცდომა: %s"
 
-#: common/flatpak-dir.c:4783
+#: common/flatpak-dir.c:4959
 #, c-format
 msgid "While opening repository %s: "
 msgstr "რეპოზიტორიის (%s) გახსნისას: "
 
-#: common/flatpak-dir.c:5052
+#: common/flatpak-dir.c:5228
 #, c-format
 msgid "The config key %s is not set"
 msgstr "კონფიგურაციის პარამეტრი %s დაყენებული არაა"
 
-#: common/flatpak-dir.c:5188
+#: common/flatpak-dir.c:5364
 #, c-format
 msgid "No current %s pattern matching %s"
 msgstr "მიმდინარე %s ნიმუში, რომელიც %s-ს ემთხვევა, აღმოჩენილი არაა"
 
-#: common/flatpak-dir.c:5470
+#: common/flatpak-dir.c:5646
 msgid "No appstream commit to deploy"
 msgstr "გასალაგებელი appstream-ის კომიტის გარეშე"
 
-#: common/flatpak-dir.c:5989 common/flatpak-dir.c:7317
-#: common/flatpak-dir.c:11011 common/flatpak-dir.c:11748
+#: common/flatpak-dir.c:6165 common/flatpak-dir.c:7493
+#: common/flatpak-dir.c:11358 common/flatpak-dir.c:12095
 msgid "Can't pull from untrusted non-gpg verified remote"
 msgstr "არა-gpg-ით გადამოწმებული დაშორებულიდან პული შეუძლებელია"
 
-#: common/flatpak-dir.c:6424 common/flatpak-dir.c:6642
+#: common/flatpak-dir.c:6600 common/flatpak-dir.c:6818
 msgid "Extra data not supported for non-gpg-verified local system installs"
 msgstr ""
 "არა-GPG-ით-გადამოწმებული ლოკალური სისტემური დაყენებებისთვის დამატებითი "
 "მონაცემები მხარდაჭერილი არაა"
 
-#: common/flatpak-dir.c:6463 common/flatpak-dir.c:6833
+#: common/flatpak-dir.c:6639 common/flatpak-dir.c:7009
 #, c-format
 msgid "Invalid checksum for extra data uri %s"
 msgstr "არასწორი საონტროლო ჯამი დამატებითი მონაცემები URI-სთვის %s"
 
-#: common/flatpak-dir.c:6475
+#: common/flatpak-dir.c:6651
 #, fuzzy, c-format
 msgid "Invalid extra data name '%s'"
 msgstr "გაფართოების არასწორი სახელი: %s"
 
-#: common/flatpak-dir.c:6483
+#: common/flatpak-dir.c:6659
 #, c-format
 msgid "Unsupported extra data uri %s"
 msgstr "მხარდაუჭერელი დამატებითი მონაცემების URI %s"
 
-#: common/flatpak-dir.c:6512
+#: common/flatpak-dir.c:6688
 #, c-format
 msgid "Failed to load local extra-data %s: %s"
 msgstr "ლოკალური დამატებითი მონაცემის %s ჩატვირთვის შეცდომა: %s"
 
-#: common/flatpak-dir.c:6520
+#: common/flatpak-dir.c:6696
 #, c-format
 msgid "Wrong size for extra-data %s"
 msgstr "არასწორი ზომა დამატებითი-მონაცემებისთვის %s"
 
-#: common/flatpak-dir.c:6539
+#: common/flatpak-dir.c:6715
 #, c-format
 msgid "While downloading %s: "
 msgstr "%s-ის გადმოწერისას: "
 
-#: common/flatpak-dir.c:6549
+#: common/flatpak-dir.c:6725
 #, c-format
 msgid "Wrong size for extra data %s"
 msgstr "დამატებითი მონაცემების (%s) არასწორი ზომა"
 
-#: common/flatpak-dir.c:6558
+#: common/flatpak-dir.c:6734
 #, c-format
 msgid "Invalid checksum for extra data %s"
 msgstr "დამატებითი მონაცემების (%s) არასწორი საკონტროლო ჯამი"
 
-#: common/flatpak-dir.c:7147 common/flatpak-dir.c:7412
+#: common/flatpak-dir.c:7323 common/flatpak-dir.c:7588
 #, c-format
 msgid "While pulling %s from remote %s: "
 msgstr "%s-ის პულისას დაშორებულიდან %s: "
 
-#: common/flatpak-dir.c:7353 common/flatpak-repo-utils.c:3886
+#: common/flatpak-dir.c:7529 common/flatpak-repo-utils.c:3886
 msgid "GPG signatures found, but none are in trusted keyring"
 msgstr "აღმოჩენილია GPG ხელმოწერები, მაგრამ სანდო ბრელოკში არც ერთი არაა"
 
-#: common/flatpak-dir.c:7370
+#: common/flatpak-dir.c:7546
 #, c-format
 msgid "Commit for ‘%s’ has no ref binding"
 msgstr "კომიტს '%s'-სთვის მიმართვის მიმაგრება არ გააჩნია"
 
-#: common/flatpak-dir.c:7375
+#: common/flatpak-dir.c:7551
 #, c-format
 msgid "Commit for ‘%s’ is not in expected bound refs: %s"
 msgstr "'%s'-ის კომიტი მოსალოდნელ მიბმულ მიმართვებში არაა: %s"
 
-#: common/flatpak-dir.c:7551
+#: common/flatpak-dir.c:7727
 msgid "Only applications can be made current"
 msgstr "მიმდინარედ მხოლოდ აპლიკაციების დაყენება შეგიძლიათ"
 
-#: common/flatpak-dir.c:8255
+#: common/flatpak-dir.c:8431
 msgid "Not enough memory"
 msgstr "მეხსიერება საკმარისი არ არის"
 
-#: common/flatpak-dir.c:8274
+#: common/flatpak-dir.c:8450
 msgid "Failed to read from exported file"
 msgstr "გატანილი ფაილიდან წაკითხვის შეცდომა"
 
-#: common/flatpak-dir.c:8464
+#: common/flatpak-dir.c:8640
 msgid "Error reading mimetype xml file"
 msgstr "MIMtype XML ფაილის წაკითხვის შეცდომა"
 
-#: common/flatpak-dir.c:8469
+#: common/flatpak-dir.c:8645
 msgid "Invalid mimetype xml file"
 msgstr "არასწორი mimetype xml ფაილი"
 
-#: common/flatpak-dir.c:8555
+#: common/flatpak-dir.c:8732
 #, c-format
 msgid "D-Bus service file '%s' has wrong name"
 msgstr "D-Bus-ის სერვისის ფაილის სახელი '%s' არასწორია"
 
-#: common/flatpak-dir.c:8710
+#: common/flatpak-dir.c:8760
+#, c-format
+msgid "Desktop Entry '%s' neither has Type=Application nor Type=Service"
+msgstr ""
+
+#: common/flatpak-dir.c:8952
 #, c-format
 msgid "Invalid Exec argument %s"
 msgstr "არასწორი გაშვების არგუმენტი %s"
 
-#: common/flatpak-dir.c:9178
+#: common/flatpak-dir.c:9400
 msgid "While getting detached metadata: "
 msgstr "მოხსნილი მეტამონაცემების მიღებისას: "
 
-#: common/flatpak-dir.c:9183 common/flatpak-dir.c:9188
-#: common/flatpak-dir.c:9192
+#: common/flatpak-dir.c:9405 common/flatpak-dir.c:9410
+#: common/flatpak-dir.c:9414
 msgid "Extra data missing in detached metadata"
 msgstr "მოხსნილ მეტამონაცემებში დამატებთი მონაცემები აღმოჩენილი არაა"
 
-#: common/flatpak-dir.c:9199
+#: common/flatpak-dir.c:9421
 msgid "While creating extradir: "
 msgstr "დამატებითი საქაღალდის შექმნისას: "
 
-#: common/flatpak-dir.c:9220 common/flatpak-dir.c:9259
+#: common/flatpak-dir.c:9442 common/flatpak-dir.c:9481
 msgid "Invalid checksum for extra data"
 msgstr "დამატებითი მონაცემების არასწორი საკონტროლო ჯამი"
 
-#: common/flatpak-dir.c:9249
+#: common/flatpak-dir.c:9471
 #, fuzzy, c-format
 msgid "Invalid extra data filename '%s'"
 msgstr "დამატებითი მონაცემების ფაილის '%s' ჩაწერისას: "
 
-#: common/flatpak-dir.c:9255
+#: common/flatpak-dir.c:9477
 msgid "Wrong size for extra data"
 msgstr "დამატებითი მონაცემების არასწორი ზომა"
 
-#: common/flatpak-dir.c:9266
+#: common/flatpak-dir.c:9488
 #, c-format
 msgid "While writing extra data file '%s': "
 msgstr "დამატებითი მონაცემების ფაილის '%s' ჩაწერისას: "
 
-#: common/flatpak-dir.c:9274
+#: common/flatpak-dir.c:9496
 #, c-format
 msgid "Extra data %s missing in detached metadata"
 msgstr "მოხსნილ მეტამონაცემებში დამატებითი მონაცემი %s აღმოჩენილი არაა"
 
-#: common/flatpak-dir.c:9380
+#: common/flatpak-dir.c:9524 common/flatpak-dir.c:9535
+#, fuzzy, c-format
+msgid "Failed to open %s: "
+msgstr "'%s'-ის გახსნის შეცდომა"
+
+#: common/flatpak-dir.c:9546
+#, fuzzy, c-format
+msgid "Failed to open %s/%s: "
+msgstr "%s%s%s-ის განახლება ჩავარდა: "
+
+#: common/flatpak-dir.c:9585 common/flatpak-dir.c:9591
+#, fuzzy
+msgid "Failed to open metadata: "
+msgstr "ჟურნალის გახსნის შეცდომა: %s"
+
+#: common/flatpak-dir.c:9682
 #, fuzzy, c-format
 msgid "Unable to get runtime key from metadata"
 msgstr "მეტამონაცემების სხვა ფაილის გამოყენება"
 
-#: common/flatpak-dir.c:9514
+#: common/flatpak-dir.c:9815
 #, c-format
 msgid "apply_extra script failed, exit status %d"
 msgstr "apply_extra სკრიპტის შეცდომა. გამოსვლს სტატუსია %d"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-dir.c:9707
+#: common/flatpak-dir.c:10008
 #, c-format
 msgid "Installing %s is not allowed by the policy set by your administrator"
 msgstr "%s-ის დაყენება აკრძალულია თქვენი ადმინისტრატორის წესების მიერ"
 
-#: common/flatpak-dir.c:9806
+#: common/flatpak-dir.c:10103
 #, c-format
 msgid "While trying to resolve ref %s: "
 msgstr "მიმართვის %s ამოხსნის მცდელობისას: "
 
-#: common/flatpak-dir.c:9818
+#: common/flatpak-dir.c:10115
 #, c-format
 msgid "%s is not available"
 msgstr "%s ხელმიუწვდომელია"
 
-#: common/flatpak-dir.c:9830 common/flatpak-dir.c:11625
+#: common/flatpak-dir.c:10127 common/flatpak-dir.c:11972
 #, c-format
 msgid "%s commit %s already installed"
 msgstr "%s (კომიტი %s) უკვე დაყენებულია"
 
-#: common/flatpak-dir.c:9837
+#: common/flatpak-dir.c:10134
 msgid "Can't create deploy directory"
 msgstr "გაშლის საქაღალდის შექმნის შეცდომა"
 
-#: common/flatpak-dir.c:9845
+#: common/flatpak-dir.c:10142
 #, c-format
 msgid "Failed to read commit %s: "
 msgstr "კომიტის '%s' წაკითხვის შეცდომა: "
 
-#: common/flatpak-dir.c:9866
+#: common/flatpak-dir.c:10163
 #, c-format
 msgid "While trying to checkout %s into %s: "
 msgstr "%s-ის %s-ში გამოთხოვისას: "
 
-#: common/flatpak-dir.c:9885
+#: common/flatpak-dir.c:10182
 msgid "While trying to checkout metadata subpath: "
 msgstr "მეტამონაცემების ქვებილიკში გამოთხოვისას: "
 
-#: common/flatpak-dir.c:9916
+#: common/flatpak-dir.c:10213
 #, c-format
 msgid "While trying to checkout subpath ‘%s’: "
 msgstr "ქვებილიკის '%s' გამოთხოვისას: "
 
-#: common/flatpak-dir.c:9935
+#: common/flatpak-dir.c:10229
 msgid "While trying to remove existing extra dir: "
 msgstr "არსებული დამატებითი საქაღალდის წაშლის მცდელობისას: "
 
-#: common/flatpak-dir.c:9946
+#: common/flatpak-dir.c:10240
 msgid "While trying to apply extra data: "
 msgstr "დამატებითი მონაცემების გადატარების მცდელობისას: "
 
-#: common/flatpak-dir.c:9973
+#: common/flatpak-dir.c:10267
 #, c-format
 msgid "Invalid commit ref %s: "
 msgstr "არასწორი კომიტის მიმართვა %s: "
 
-#: common/flatpak-dir.c:9981 common/flatpak-dir.c:9993
+#: common/flatpak-dir.c:10275 common/flatpak-dir.c:10287
 #, c-format
 msgid "Deployed ref %s does not match commit (%s)"
 msgstr "გაშლილი მიმართვა %s კომიტს (%s) არ ემთხვევა"
 
-#: common/flatpak-dir.c:9987
+#: common/flatpak-dir.c:10281
 #, c-format
 msgid "Deployed ref %s branch does not match commit (%s)"
 msgstr "გაშლილი მიმართვა %s ბრენჩი კომიტს (%s) არ ემთხვევა"
 
-#: common/flatpak-dir.c:10255 common/flatpak-installation.c:1911
+#: common/flatpak-dir.c:10602 common/flatpak-installation.c:1911
 #, c-format
 msgid "%s branch %s already installed"
 msgstr "%s ბრენჩი %s უკვე დაყენებულია"
 
-#: common/flatpak-dir.c:11115
+#: common/flatpak-dir.c:11462
 #, c-format
 msgid "Could not unmount revokefs-fuse filesystem at %s: "
 msgstr "შეცდომა revokefs-fuse ფაილური სისტემის მოხსნისას მისამართზე %s: "
 
-#: common/flatpak-dir.c:11419
+#: common/flatpak-dir.c:11766
 #, c-format
 msgid "This version of %s is already installed"
 msgstr "%s-ის ეს ვერსია უკვე დაყენებულია"
 
-#: common/flatpak-dir.c:11432
+#: common/flatpak-dir.c:11779
 #, c-format
 msgid "Can't change remote during bundle install"
 msgstr "პაკეტის დაყენებისას დაშორებულის შეცვლა შეუძლებელია"
 
-#: common/flatpak-dir.c:11701
+#: common/flatpak-dir.c:12048
 msgid "Can't update to a specific commit without root permissions"
 msgstr "მითითებული კომიტის განახლება root-ის წვდომების გარეშე შეუძლებელია"
 
-#: common/flatpak-dir.c:11982
+#: common/flatpak-dir.c:12329
 #, c-format
 msgid "Can't remove %s, it is needed for: %s"
 msgstr "%s-ის წაშლა შეუძლებელია. ის %s-ს სჭირდება"
 
-#: common/flatpak-dir.c:12042 common/flatpak-installation.c:2067
+#: common/flatpak-dir.c:12389 common/flatpak-installation.c:2067
 #, c-format
 msgid "%s branch %s is not installed"
 msgstr "%s ბრენჩი %s დაყენებული არაა"
 
-#: common/flatpak-dir.c:12294
+#: common/flatpak-dir.c:12650
 #, c-format
 msgid "%s commit %s not installed"
 msgstr "%s კომიტი %s დაყენებული არაა"
 
-#: common/flatpak-dir.c:12553
+#: common/flatpak-dir.c:12909
 #, c-format
 msgid "%s is currently deployed, you need to uninstall it first"
 msgstr ""
 
-#: common/flatpak-dir.c:12677
+#: common/flatpak-dir.c:13033
 #, c-format
 msgid "Pruning repo failed: %s"
 msgstr "რეპოზიტორიის წაკვეთის შეცდომა: %s"
 
-#: common/flatpak-dir.c:12845 common/flatpak-dir.c:12851
+#: common/flatpak-dir.c:13201 common/flatpak-dir.c:13207
 #, c-format
 msgid "Failed to load filter '%s'"
 msgstr "შეცდომა ფილტრის '%s' ჩატვირთვისას"
 
-#: common/flatpak-dir.c:12857
+#: common/flatpak-dir.c:13213
 #, c-format
 msgid "Failed to parse filter '%s'"
 msgstr "შეცდომა ფილტრის '%s' დამუშავებისას"
 
-#: common/flatpak-dir.c:13139
+#: common/flatpak-dir.c:13495
 msgid "Failed to write summary cache: "
 msgstr "შეჯამების კეშის ჩაწერის შეცდომა: "
 
-#: common/flatpak-dir.c:13158
+#: common/flatpak-dir.c:13514
 #, c-format
 msgid "No oci summary cached for remote '%s'"
 msgstr "OCI შეჯამება დაშორებულისთვის '%s' დაკეშილი არაა"
 
-#: common/flatpak-dir.c:13383
+#: common/flatpak-dir.c:13739
 #, c-format
 msgid "No cached summary for remote '%s'"
 msgstr "დაკეშილი შეჯამება დაშორებულისთვის '%s' ვერ ვიპოვე"
 
-#: common/flatpak-dir.c:13424
+#: common/flatpak-dir.c:13780
 #, c-format
 msgid "Invalid checksum for indexed summary %s read from %s"
 msgstr ""
 "არასწორი საკონტროლო ჯამი დაინდექსებული შეჯამებისთვის %s. წაკითხულია %s-დან"
 
-#: common/flatpak-dir.c:13497
+#: common/flatpak-dir.c:13853
 #, c-format
 msgid ""
 "Remote listing for %s not available; server has no summary file. Check the "
@@ -5164,99 +5184,99 @@ msgstr ""
 "%s-სთვის დაშორებული ჩამონათვალი ხელმისაწვდომი არაა, რადგან სერვერს შეჯამების "
 "ფაილი არ გააჩნია. გადაამოწმეთ remote-add-ისთვის გადაცემული URL-ის სისწორე."
 
-#: common/flatpak-dir.c:13874
+#: common/flatpak-dir.c:14230
 #, c-format
 msgid "Invalid checksum for indexed summary %s for remote '%s'"
 msgstr ""
 "არასწორი საკონტროლო ჯამი დაინდექსებული შეჯამებისთვის %s დაშორებულისთვის '%s'"
 
-#: common/flatpak-dir.c:14566
+#: common/flatpak-dir.c:14922
 #, c-format
 msgid "Multiple branches available for %s, you must specify one of: "
 msgstr ""
 "%s-სთვის ხელმისაწვდომია ერთზე მეტი ბრენჩი. ანუ, უნდა მიუთითოთ ერთ-ერთი "
 "სიიდან: "
 
-#: common/flatpak-dir.c:14632
+#: common/flatpak-dir.c:14988
 #, c-format
 msgid "Nothing matches %s"
 msgstr "%s-ს არაფერი ემთხვევა"
 
-#: common/flatpak-dir.c:14740
+#: common/flatpak-dir.c:15096
 #, c-format
 msgid "Can't find ref %s%s%s%s%s"
 msgstr "ვერ ვიპოვე მიმართვა %s%s%s%s%s"
 
-#: common/flatpak-dir.c:14783
+#: common/flatpak-dir.c:15139
 #, c-format
 msgid "Error searching remote %s: %s"
 msgstr "დაშორებული %s-ის მოძებნის შეცდომა: %s"
 
-#: common/flatpak-dir.c:14880
+#: common/flatpak-dir.c:15236
 #, c-format
 msgid "Error searching local repository: %s"
 msgstr "ლოკალურ რეპოზიტორიაშ ძებნის შეცდომა: %s"
 
-#: common/flatpak-dir.c:15017
+#: common/flatpak-dir.c:15373
 #, c-format
 msgid "%s/%s/%s not installed"
 msgstr "%s/%s/%s დაყენებული არაა"
 
-#: common/flatpak-dir.c:15220
+#: common/flatpak-dir.c:15576
 #, c-format
 msgid "Could not find installation %s"
 msgstr "%s-ის დაყენებულებში მოძებნის შეცდომა"
 
-#: common/flatpak-dir.c:15790
+#: common/flatpak-dir.c:16146
 #, c-format
 msgid "Invalid file format, no %s group"
 msgstr "არასწორი ფაილის ფორმატი. %s ჯგუფის გარეშე"
 
-#: common/flatpak-dir.c:15795 common/flatpak-repo-utils.c:2836
+#: common/flatpak-dir.c:16151 common/flatpak-repo-utils.c:2836
 #, c-format
 msgid "Invalid version %s, only 1 supported"
 msgstr "არასწორი ვერსია %s. მხარდაჭერილია მხოლოდ 1"
 
-#: common/flatpak-dir.c:15800 common/flatpak-dir.c:15805
+#: common/flatpak-dir.c:16156 common/flatpak-dir.c:16161
 #, c-format
 msgid "Invalid file format, no %s specified"
 msgstr "არასწორი ფაილის ფორმატი. %s მითითებული არაა"
 
 #. Check some minimal size so we don't get crap
-#: common/flatpak-dir.c:15825
+#: common/flatpak-dir.c:16181
 msgid "Invalid file format, gpg key invalid"
 msgstr "არასწორი ფაილის ფორმატი.  GPG გასაღები არასწორია"
 
-#: common/flatpak-dir.c:15853 common/flatpak-repo-utils.c:2917
+#: common/flatpak-dir.c:16209 common/flatpak-repo-utils.c:2917
 msgid "Collection ID requires GPG key to be provided"
 msgstr "კოლექციის ID-სთვის GPG გასაღების მითითება აუცილებელია"
 
-#: common/flatpak-dir.c:15896
+#: common/flatpak-dir.c:16252
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "გაშვების გარემო %s, ბრენჩი %s უკვე დაყენებულია"
 
-#: common/flatpak-dir.c:15897
+#: common/flatpak-dir.c:16253
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "აპი %s, ბრენჩი %s უკვე დაყენებულია"
 
-#: common/flatpak-dir.c:16131
+#: common/flatpak-dir.c:16487
 #, c-format
 msgid "Can't remove remote '%s' with installed ref %s (at least)"
 msgstr "დაშორებულის '%s' წაშლა დაყენებული მიმართვის (სულ ცოტა) %s"
 
-#: common/flatpak-dir.c:16236
+#: common/flatpak-dir.c:16592
 #, c-format
 msgid "Invalid character '/' in remote name: %s"
 msgstr "არასწორი სიმბოლო '/' დაშორებულის სახელში: %s"
 
-#: common/flatpak-dir.c:16242
+#: common/flatpak-dir.c:16598
 #, c-format
 msgid "No configuration for remote %s specified"
 msgstr "დაშორებულისთვის %s კონფიგურაცია მითითებული არაა"
 
-#: common/flatpak-dir.c:17775
+#: common/flatpak-dir.c:18131
 #, c-format
 msgid "Skipping deletion of mirror ref (%s, %s)…\n"
 msgstr "ასლის მიმართვის (%s, %s) წაშლის გამოტოვება...\n"
@@ -5383,64 +5403,64 @@ msgstr "ფაილის შექმნის შეცდომა (%s)"
 msgid "Unable to update symbolic link %s/%s"
 msgstr "სიმბმულის (%s/%s) განახლების შეცდომა"
 
-#: common/flatpak-oci-registry.c:1220
+#: common/flatpak-oci-registry.c:1206
 msgid "Only Bearer authentication supported"
 msgstr "მხარდაჭერილია მხოლოდ Bearer ავთენტიკაცია"
 
-#: common/flatpak-oci-registry.c:1229
+#: common/flatpak-oci-registry.c:1215
 msgid "Only realm in authentication request"
 msgstr "ავთენტიკაციის მოთხოვნაში მხოლოდ რეალმია"
 
-#: common/flatpak-oci-registry.c:1236
+#: common/flatpak-oci-registry.c:1222
 msgid "Invalid realm in authentication request"
 msgstr "არასწორი რეალმი ავთენტიკაციის მოთხოვნაში"
 
-#: common/flatpak-oci-registry.c:1306
+#: common/flatpak-oci-registry.c:1292
 #, c-format
 msgid "Authorization failed: %s"
 msgstr "ავტორიზაციის შეცდომა: %s"
 
-#: common/flatpak-oci-registry.c:1308
+#: common/flatpak-oci-registry.c:1294
 msgid "Authorization failed"
 msgstr "ავტორიზაციის შეცდომა"
 
-#: common/flatpak-oci-registry.c:1312
+#: common/flatpak-oci-registry.c:1298
 #, c-format
 msgid "Unexpected response status %d when requesting token: %s"
 msgstr "მოულოდნელი საპასუხო სტატუსი %d კოდის გამოთხოვისას: %s"
 
-#: common/flatpak-oci-registry.c:1323
+#: common/flatpak-oci-registry.c:1309
 msgid "Invalid authentication request response"
 msgstr "არასწორი პასუხი ავთენტიკაციის მოთხოვნაზე"
 
-#: common/flatpak-oci-registry.c:1754
+#: common/flatpak-oci-registry.c:1740
 #, c-format
 msgid "Flatpak was compiled without zstd support"
 msgstr ""
 
-#: common/flatpak-oci-registry.c:1946 common/flatpak-oci-registry.c:1979
-#: common/flatpak-oci-registry.c:2001 common/flatpak-oci-registry.c:2030
-#: common/flatpak-oci-registry.c:2056 common/flatpak-oci-registry.c:2090
-#: common/flatpak-oci-registry.c:2146 common/flatpak-oci-registry.c:2185
-#: common/flatpak-oci-registry.c:2229
+#: common/flatpak-oci-registry.c:1932 common/flatpak-oci-registry.c:1965
+#: common/flatpak-oci-registry.c:1987 common/flatpak-oci-registry.c:2016
+#: common/flatpak-oci-registry.c:2042 common/flatpak-oci-registry.c:2076
+#: common/flatpak-oci-registry.c:2132 common/flatpak-oci-registry.c:2171
+#: common/flatpak-oci-registry.c:2215
 msgid "Invalid delta file format"
 msgstr "არასწორი დელტა ფაილის ფორმატი"
 
-#: common/flatpak-oci-registry.c:3249 common/flatpak-oci-registry.c:3428
+#: common/flatpak-oci-registry.c:3235 common/flatpak-oci-registry.c:3414
 msgid "Invalid OCI image config"
 msgstr "არასწორი OCI ასლის კონფიგურაცია"
 
-#: common/flatpak-oci-registry.c:3311 common/flatpak-oci-registry.c:3577
+#: common/flatpak-oci-registry.c:3297 common/flatpak-oci-registry.c:3563
 #, c-format
 msgid "Wrong layer checksum, expected %s, was %s"
 msgstr "არასწორი ფენის საკონტროლო ჯამი. მოველოდი %s, აღმოჩნდა %s"
 
-#: common/flatpak-oci-registry.c:3405
+#: common/flatpak-oci-registry.c:3391
 #, c-format
 msgid "No ref specified for OCI image %s"
 msgstr "OCI ასლისთვის %s მიმართვა მითითებული არაა"
 
-#: common/flatpak-oci-registry.c:3415
+#: common/flatpak-oci-registry.c:3401
 #, c-format
 msgid "Wrong ref (%s) specified for OCI image %s, expected %s"
 msgstr ""
@@ -5773,7 +5793,7 @@ msgstr "გენერირებული ld.so.cache ფაილის გ�
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr "%s-ის გაშვება აკრძალულია თქვენი ადმინისტრატორის წესების მიერ"
 
-#: common/flatpak-run.c:3305
+#: common/flatpak-run.c:3306
 msgid ""
 "\"flatpak run\" is not intended to be run as `sudo flatpak run`. Use `sudo "
 "-i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell."
@@ -5781,18 +5801,18 @@ msgstr ""
 "\"flatpak run\"-ის გაშვება ბრძანებით `sudo flatpak run` შეუძლებელია. "
 "გამოიყენეთ `sudo -i` ან `su -l` და \"flatpak run\" ახალი გარსიდან გაუშვით."
 
-#: common/flatpak-run.c:3516
+#: common/flatpak-run.c:3521
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "%s-დან მიგრაცის შეცდომა: %s"
 
-#: common/flatpak-run.c:3537
+#: common/flatpak-run.c:3542
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr ""
 "ძველი აპის მონაცემების საქაღალდის %s ახალი სახელით %s მიგრაციის შეცდომა: %s"
 
-#: common/flatpak-run.c:3546
+#: common/flatpak-run.c:3551
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "%s-ის მიგრაციისას სიმბმულის შექმნის შეცდომა: %s"
