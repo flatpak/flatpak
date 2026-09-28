@@ -15,12 +15,25 @@ New features:
 
 * `flatpak list --bytes`, `-b` lists sizes in bytes
 
+* `flatpak remote-info` and `flatpak remote-ls --updates` update the local
+  AppStream cache before showing information, unless the `--cached` option
+  is used (#5974)
+
+* When displaying download size estimates for apps or runtimes that use
+  the extra-data mechanism to download non-redistributable data out-of-band
+  (such as Google Chrome), include the size of the extra data in the estimate
+  (#5947)
+
+* Add new API `flatpak_user_data_delete()` so that app management UIs
+  can implement the equivalent of `flatpak uninstall --delete-data`
+  (#6728)
+
 Bug fixes:
 
 * Update Meson wrap subprojects for projects that are normally taken from
   the host system:
   - bubblewrap 0.12.0 (CVE-2026-87766)
-  - xdg-dbus-proxy 0.1.8 (CVE-2026-93676)
+  - xdg-dbus-proxy 0.1.9 (CVE-2026-93676, CVE-2026-94422)
 
 * Validate GVariant structure of summaries before using generated variant
   readers (#6779)
@@ -46,13 +59,29 @@ Bug fixes:
 
 * Fix a crash when a bundle is installed with explicit key bytes (#6842)
 
+* Fix a crash in `flatpak document-export --noexist` (#6847)
+
+* Make `flatpak remote-add --no-follow-redirect`,
+  `flatpak remote-modify --no-follow-redirect`,
+  `flatpak remote-modify --follow-redirect` work as intended (#6844)
+
 * Validate cursor position when emitting bash/zsh completions (#6761)
+
+* When listing subsets in `flatpak repo --branches`, correctly de-duplicate
+  subsets whose names end with the name of a different subset (#6825)
+
+* Fix the ability to pass arguments via file forwarding if the host system
+  uses an `$XDG_RUNTIME_DIR` that is not the conventional
+  `/run/user/$(id -u)` (#6848)
+
+* Fix compiler warnings (#6849)
 
 * Test infrastructure improvements (#6794, #6796)
 
-* Documentation updates (code of conduct, contributor guidelines)
+* Documentation updates (manual page fixes, code of conduct,
+  contributor guidelines)
 
-* Translation updates: ka, pt_BR, zh_CN
+* Translation updates: ka, nn, pt_BR, sl, zh_CN
 
 Internal changes:
 
