@@ -1,6 +1,10 @@
 Changes in 1.19.1
 ~~~~~~~~~~~~~~~~~
-Released: not yet
+
+Released: 2026-09-28
+
+This is a development prerelease from the 1.19.x series.
+The first stable release from this branch will be 1.20.0.
 
 Security fixes:
 
@@ -128,6 +132,9 @@ Internal changes:
 Changes in 1.19.0
 ~~~~~~~~~~~~~~~~~
 Released: 2026-08-11
+
+This is a development prerelease from the 1.19.x series.
+The first stable release from this branch will be 1.20.0.
 
 Security fixes:
 
