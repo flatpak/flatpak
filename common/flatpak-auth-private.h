@@ -42,8 +42,13 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (AutoFlatpakAuthenticator, g_object_unref)
 typedef FlatpakAuthenticatorRequest AutoFlatpakAuthenticatorRequest;
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (AutoFlatpakAuthenticatorRequest, g_object_unref)
 
+GDBusConnection *            flatpak_auth_connection_new            (GCancellable                 *cancellable,
+                                                                     GError                      **error);
+void                         flatpak_auth_connection_close          (GDBusConnection              *connection);
+
 FlatpakAuthenticator *       flatpak_auth_new_for_remote            (FlatpakDir                   *dir,
                                                                      const char                   *remote,
+                                                                     GDBusConnection              *connection,
                                                                      GCancellable                 *cancellable,
                                                                      GError                      **error);
 FlatpakAuthenticatorRequest *flatpak_auth_create_request            (FlatpakAuthenticator         *authenticator,

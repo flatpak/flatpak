@@ -71,7 +71,6 @@ struct FlatpakOciRegistry
   char    *uri;
   GFile   *archive;
   int      tmp_dfd;
-  char    *token;
   char    *signature_lookaside;
 
   /* Local repos */
@@ -82,6 +81,7 @@ struct FlatpakOciRegistry
   FlatpakHttpSession *http_session;
   GUri *base_uri;
   FlatpakCertificates *certificates;
+  FlatpakTokenProvider *token_provider;
 };
 
 typedef struct
@@ -135,7 +135,7 @@ flatpak_oci_registry_finalize (GObject *object)
   g_clear_pointer (&self->http_session, flatpak_http_session_free);
   g_clear_pointer (&self->base_uri, g_uri_unref);
   g_clear_pointer (&self->uri, g_free);
-  g_clear_pointer (&self->token, g_free);
+  g_clear_object (&self->token_provider);
   g_clear_object (&self->archive);
   g_clear_pointer (&self->tmp_dir, glnx_tmpdir_free);
   g_clear_pointer (&self->certificates, flatpak_certificates_free);
@@ -276,17 +276,77 @@ flatpak_oci_registry_get_uri (FlatpakOciRegistry *self)
 }
 
 void
-flatpak_oci_registry_set_token (FlatpakOciRegistry *self,
-                                const char *token)
+flatpak_oci_registry_set_token_provider (FlatpakOciRegistry   *self,
+                                         FlatpakTokenProvider *provider)
 {
-  g_free (self->token);
-  self->token = g_strdup (token);
+  g_set_object (&self->token_provider, provider);
+}
 
-  if (self->token)
-    (void)glnx_file_replace_contents_at (self->dfd, ".token",
-                                         (guchar *)self->token,
-                                         strlen (self->token),
-                                         0, NULL, NULL);
+static gboolean
+flatpak_oci_registry_try_refresh_token (FlatpakOciRegistry *self,
+                                        GCancellable       *cancellable)
+{
+  if (self->token_provider == NULL)
+    return FALSE;
+
+  g_info ("Refreshing token for registry %s", self->uri);
+
+  if (!flatpak_token_provider_refresh_token (self->token_provider, cancellable))
+    return FALSE;
+
+  return TRUE;
+}
+
+const char *
+flatpak_oci_registry_get_token (FlatpakOciRegistry *self)
+{
+  if (self->token_provider)
+    return flatpak_token_provider_get_token (self->token_provider);
+
+  return NULL;
+}
+
+static gboolean
+flatpak_oci_registry_download_with_retry (FlatpakOciRegistry     *self,
+                                          const char             *uri,
+                                          GOutputStream          *out_stream,
+                                          FlatpakLoadUriProgress  progress_cb,
+                                          gpointer                user_data,
+                                          GCancellable           *cancellable,
+                                          GError                **error)
+{
+  g_autoptr(GError) local_error = NULL;
+
+  gboolean ok = flatpak_download_http_uri (self->http_session, uri,
+                                           self->certificates,
+                                           FLATPAK_HTTP_FLAGS_ACCEPT_OCI,
+                                           out_stream,
+                                           flatpak_oci_registry_get_token(self),
+                                           progress_cb, user_data,
+                                           cancellable, &local_error);
+  if (!ok
+      && g_error_matches (local_error, FLATPAK_HTTP_ERROR, FLATPAK_HTTP_ERROR_UNAUTHORIZED)
+      && flatpak_oci_registry_try_refresh_token (self, cancellable))
+    {
+      int fd = g_unix_output_stream_get_fd (G_UNIX_OUTPUT_STREAM (out_stream));
+
+      g_clear_error (&local_error);
+      ftruncate (fd, 0);
+      lseek (fd, 0, SEEK_SET);
+
+      ok = flatpak_download_http_uri (self->http_session, uri,
+                                      self->certificates,
+                                      FLATPAK_HTTP_FLAGS_ACCEPT_OCI,
+                                      out_stream,
+                                      flatpak_oci_registry_get_token(self),
+                                      progress_cb, user_data,
+                                      cancellable, &local_error);
+    }
+
+  if (local_error)
+    g_propagate_error (error, g_steal_pointer (&local_error));
+
+  return ok;
 }
 
 void
@@ -367,6 +427,7 @@ remote_load_file (FlatpakOciRegistry *self,
                   GError            **error)
 {
   g_autoptr(GBytes) bytes = NULL;
+  g_autoptr(GError) local_error = NULL;
   g_autofree char *uri_s = NULL;
 
   uri_s = choose_alt_uri (self->base_uri, alt_uris);
@@ -378,10 +439,27 @@ remote_load_file (FlatpakOciRegistry *self,
     }
 
   bytes = flatpak_load_uri_full (self->http_session,
-                                 uri_s, self->certificates, FLATPAK_HTTP_FLAGS_ACCEPT_OCI,
-                                 NULL, self->token,
+                                 uri_s, self->certificates,
+                                 FLATPAK_HTTP_FLAGS_ACCEPT_OCI, NULL,
+                                 flatpak_oci_registry_get_token(self),
                                  NULL, NULL, NULL, out_content_type, NULL,
-                                 cancellable, error);
+                                 cancellable, &local_error);
+  if (bytes == NULL
+      && g_error_matches (local_error, FLATPAK_HTTP_ERROR, FLATPAK_HTTP_ERROR_UNAUTHORIZED)
+      && flatpak_oci_registry_try_refresh_token (self, cancellable))
+    {
+      g_clear_error (&local_error);
+      bytes = flatpak_load_uri_full (self->http_session,
+                                     uri_s, self->certificates,
+                                     FLATPAK_HTTP_FLAGS_ACCEPT_OCI, NULL,
+                                     flatpak_oci_registry_get_token(self),
+                                     NULL, NULL, NULL, out_content_type, NULL,
+                                     cancellable, &local_error);
+    }
+
+  if (local_error)
+    g_propagate_error (error, g_steal_pointer (&local_error));
+
   if (bytes == NULL)
     return NULL;
 
@@ -727,13 +805,6 @@ flatpak_oci_registry_ensure_local (FlatpakOciRegistry *self,
   else if (!verify_oci_version (oci_layout_bytes, &not_json, cancellable, error))
     return FALSE;
 
-  if (self->dfd != -1)
-    {
-      token_bytes = flatpak_load_file_at (self->dfd, ".token", cancellable, NULL);
-      if (token_bytes != NULL)
-        self->token = g_strndup (g_bytes_get_data (token_bytes, NULL), g_bytes_get_size (token_bytes));
-    }
-
   if (self->dfd == -1)
     {
       self->dfd = g_steal_fd (&local_dfd);
@@ -1037,13 +1108,10 @@ flatpak_oci_registry_download_blob (FlatpakOciRegistry    *self,
       if (fd == -1)
         return -1;
 
-      if (!flatpak_download_http_uri (self->http_session, uri_s,
-                                      self->certificates,
-                                      FLATPAK_HTTP_FLAGS_ACCEPT_OCI,
-                                      out_stream,
-                                      self->token,
-                                      progress_cb, user_data,
-                                      cancellable, error))
+      if (!flatpak_oci_registry_download_with_retry (self,
+                                                     uri_s, out_stream,
+                                                     progress_cb, user_data,
+                                                     cancellable, error))
         return -1;
 
       if (!g_output_stream_close (out_stream, cancellable, error))
@@ -1130,12 +1198,11 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
 
       out_stream = g_unix_output_stream_new (tmpf.fd, FALSE);
 
-      if (!flatpak_download_http_uri (source_registry->http_session,
-                                      uri_s, source_registry->certificates,
-                                      FLATPAK_HTTP_FLAGS_ACCEPT_OCI, out_stream,
-                                      source_registry->token,
-                                      progress_cb, user_data,
-                                      cancellable, error))
+
+      if (!flatpak_oci_registry_download_with_retry (source_registry,
+                                                     uri_s, out_stream,
+                                                     progress_cb, user_data,
+                                                     cancellable, error))
         return FALSE;
 
       if (!g_output_stream_close (out_stream, cancellable, error))
@@ -1326,12 +1393,12 @@ get_token_for_www_auth (FlatpakOciRegistry *self,
 }
 
 char *
-flatpak_oci_registry_get_token (FlatpakOciRegistry *self,
-                                const char         *repository,
-                                const char         *digest,
-                                const char         *basic_auth,
-                                GCancellable       *cancellable,
-                                GError            **error)
+flatpak_oci_registry_fetch_token (FlatpakOciRegistry *self,
+                                  const char         *repository,
+                                  const char         *digest,
+                                  const char         *basic_auth,
+                                  GCancellable       *cancellable,
+                                  GError            **error)
 {
   g_autofree char *subpath = NULL;
   g_autofree char *uri_s = NULL;
@@ -2326,8 +2393,9 @@ flatpak_oci_registry_find_delta_manifest (FlatpakOciRegistry    *registry,
 
       if (uri_s != NULL)
         bytes = flatpak_load_uri_full (registry->http_session,
-                                       uri_s, registry->certificates, FLATPAK_HTTP_FLAGS_ACCEPT_OCI,
-                                       NULL, registry->token,
+                                       uri_s, registry->certificates,
+                                       FLATPAK_HTTP_FLAGS_ACCEPT_OCI, NULL,
+                                       flatpak_oci_registry_get_token(registry),
                                        NULL, NULL, NULL, NULL, NULL,
                                        cancellable, NULL);
       if (bytes != NULL)

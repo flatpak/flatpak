@@ -2,6 +2,7 @@
 
 import argparse
 import base64
+import fnmatch
 import hashlib
 import json
 import os
@@ -15,7 +16,13 @@ repositories = {}
 icons = {}
 signatures = {}
 
-required_token = None
+token_config = {
+    "token": None,
+    "expire_on_path": None,
+    "next_token": None,
+    "update_file": None,
+    "basic_auth": None,
+}
 
 
 def get_index():
@@ -85,12 +92,38 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
 
     def check_auth(self):
         """Return True if auth is not required or the Authorization: Bearer header matches the required token."""
-        if required_token is None:
+        cfg = token_config
+        if cfg["token"] is None:
             return True
+
+        if cfg["expire_on_path"] is not None:
+            path = self.path.split("?", 1)[0]
+            if fnmatch.fnmatch(path, cfg["expire_on_path"]):
+                cfg["token"] = cfg["next_token"]
+                cfg["expire_on_path"] = None
+                if cfg["update_file"]:
+                    with open(cfg["update_file"], "w") as f:
+                        f.write(cfg["next_token"])
+                return False
+
         auth_header = self.headers.get("Authorization", "")
         if not auth_header.startswith("Bearer "):
             return False
-        return auth_header[len("Bearer "):] == required_token
+        if auth_header[len("Bearer "):] != cfg["token"]:
+            return False
+
+        return True
+
+    def send_auth_required(self):
+        """Send a 401 with WWW-Authenticate header pointing to the /token endpoint."""
+        host, port = self.server.server_address[:2]
+        realm = "http://{}:{}/token".format(host, port)
+        self.send_response(401)
+        self.send_header(
+            "WWW-Authenticate",
+            'Bearer realm="{}",service="test-registry"'.format(realm),
+        )
+        self.end_headers()
 
     def do_GET(self):
         response = 404
@@ -109,20 +142,33 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
 
         if self.check_route("/v2/@repo_name/blobs/@digest"):
             if not self.check_auth():
-                self.send_response(401)
-                self.end_headers()
+                self.send_auth_required()
                 return
             repo_name = self.matches["repo_name"]
             digest = self.matches["digest"]
             response, response_string = get_file_contents(repo_name, "blobs", digest)
         elif self.check_route("/v2/@repo_name/manifests/@ref"):
             if not self.check_auth():
-                self.send_response(401)
-                self.end_headers()
+                self.send_auth_required()
                 return
             repo_name = self.matches["repo_name"]
             ref = self.matches["ref"]
             response, response_string = get_file_contents(repo_name, "manifests", ref)
+        elif self.check_route("/token"):
+            cfg = token_config
+            auth_header = self.headers.get("Authorization", "")
+            expected_auth = "Basic " + cfg["basic_auth"] if cfg["basic_auth"] else None
+            if expected_auth is not None and auth_header != expected_auth:
+                response = 401
+                response_string = json.dumps(
+                    {"errors": [{"message": "unauthorized"}]}
+                ).encode("UTF-8")
+            else:
+                response = 200
+                response_string = json.dumps(
+                    {"token": cfg["token"]}
+                ).encode("UTF-8")
+            response_content_type = "application/json"
         elif self.check_route("/index/static") or self.check_route("/index/dynamic"):
             etag = get_etag()
             add_headers["Etag"] = etag
@@ -255,9 +301,12 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
             sigs.append(signature_bytes)
             self.send_response(200)
             self.end_headers()
-        elif self.check_route("/testing-auth/configure"):
-            global required_token
-            required_token = self.query.get("token", [None])[0]
+        elif self.check_route("/testing-auth"):
+            token_config["token"] = self.query.get("token", [None])[0]
+            token_config["expire_on_path"] = self.query.get("expire-on-path", [None])[0]
+            token_config["next_token"] = self.query.get("next-token", [None])[0]
+            token_config["update_file"] = self.query.get("token-update-file", [None])[0]
+            token_config["basic_auth"] = self.query.get("basic-auth", [None])[0]
 
             self.send_response(200)
             self.end_headers()
@@ -300,6 +349,15 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
             digest = digest.replace(":", "=")
             ref = f"{repo_name}@{digest}"
             signatures[ref] = list()
+            self.send_response(200)
+            self.end_headers()
+            return
+        elif self.check_route("/testing-auth"):
+            token_config["token"] = None
+            token_config["expire_on_path"] = None
+            token_config["next_token"] = None
+            token_config["update_file"] = None
+            token_config["basic_auth"] = None
             self.send_response(200)
             self.end_headers()
             return
