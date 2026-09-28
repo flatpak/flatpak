@@ -2,6 +2,36 @@ Changes in 1.19.1
 ~~~~~~~~~~~~~~~~~
 Released: not yet
 
+Security fixes:
+
+* Prevent privileged overwrite of arbitrary files with an empty file or a
+  symlink to /run/host/monitor/resolv.conf when a malicious app is installed
+  (CVE-2026-97024, GHSA-8xgq-v545-vgvf; thanks to Sebastian Wick)
+
+* Prevent privileged deletion of arbitrary files when a malicious app
+  is installed
+  (CVE-2026-97023, GHSA-5p67-xh8x-rq54; thanks to Sebastian Wick)
+
+* When downloading apps or runtimes from an OCI repository that requires
+  authentication, don't make the authentication token visible to other users
+  (CVE-2026-97025, GHSA-7rvf-rqr3-43j4; thanks to AISLE in cooperation
+  with Red Hat)
+
+* Restrict permissions on temporary repository directories in
+  /var/tmp/flatpak-cache-*
+  (CVE-2026-97026, GHSA-r9w3-qx54-qvc8; thanks to AISLE in cooperation
+  with Red Hat)
+
+* Filter .desktop and D-Bus .service files against an allowlist of fields,
+  preventing denial of service and unintended interactions with host services
+  (CVE-2026-97027, GHSA-v64f-hrwr-j4vh; thanks to Markus Göllnitz)
+
+* Prevent apps from sending signals to a process group that includes a
+  parent process outside the app, causing denial of service by killing
+  the desktop environment
+  (CVE-2026-97029, GHSA-f3p8-vr7v-gxf2; thanks to Guthrie Armstrong,
+  Coalition, Inc.)
+
 Build-system changes:
 
 * libglnx and variant-schema-compiler are now Meson wrap subprojects,
