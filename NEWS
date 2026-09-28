@@ -11,7 +11,7 @@ Build-system changes:
   If building from git in an environment where subprojects cannot be
   downloaded automatically, please refer to Meson documentation.
 
-New features:
+Enhancements:
 
 * `flatpak list --bytes`, `-b` lists sizes in bytes
 
