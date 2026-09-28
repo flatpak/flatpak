@@ -1,3 +1,15 @@
+Changes in 1.19.2
+~~~~~~~~~~~~~~~~~
+
+Released: 2026-09-28
+
+This is a development prerelease from the 1.19.x series.
+The first stable release from this branch will be 1.20.0.
+
+Bug fixes:
+
+* Use bubblewrap from our PPA in the CI pipeline for creating releases
+
 Changes in 1.19.1
 ~~~~~~~~~~~~~~~~~
 
