@@ -118,6 +118,10 @@ Internal changes:
 * Translation updates should now be contributed through GNOME's l10n
   platform, not as direct pull requests on Github.
 
+* Add CVE IDs and reporter credits to 1.19.0's NEWS entry
+
+* Remove unnecessary U+200E LEFT-TO-RIGHT MARK from some older NEWS entries
+
 Changes in 1.19.0
 ~~~~~~~~~~~~~~~~~
 Released: 2026-08-11
