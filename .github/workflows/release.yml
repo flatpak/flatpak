@@ -18,6 +18,8 @@ jobs:
           head -v -n-0 /etc/apt/sources.list.d/* || :
           # Workaround for https://github.com/orgs/community/discussions/120966
           sudo rm -f /etc/apt/sources.list.d/microsoft-prod.list
+          # The bubblewrap in Ubuntu is too old
+          sudo add-apt-repository ppa:flatpak/stable
           # Workaround for apparmor breaking bwrap by disabling unpriv userns
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
           sudo systemctl reload apparmor
