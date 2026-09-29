@@ -51,6 +51,7 @@ static char *opt_generate_delta_from;
 static char *opt_generate_delta_to;
 static char *opt_generate_delta_ref;
 static char *opt_gpg_homedir;
+static char *opt_gpg_keys_url = NULL;
 static char **opt_gpg_key_ids;
 static gboolean opt_prune;
 static gboolean opt_prune_dry_run;
@@ -83,6 +84,7 @@ static GOptionEntry options[] = {
   { "gpg-import", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_import, N_("Import new default GPG public key from FILE"), N_("FILE") },
   { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_key_ids, N_("GPG Key ID to sign the summary with"), N_("KEY-ID") },
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, N_("GPG Homedir to use when looking for keyrings"), N_("HOMEDIR") },
+  { "gpg-keys-url", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_keys_url, N_("URL for out-of-band GPG keyring updates"), N_("URL") },
   { "generate-static-deltas", 0, 0, G_OPTION_ARG_NONE, &opt_generate_deltas, N_("Generate delta files"), NULL },
   { "no-update-summary", 0, 0, G_OPTION_ARG_NONE, &opt_no_update_summary, N_("Don't update the summary"), NULL },
   { "no-update-appstream", 0, 0, G_OPTION_ARG_NONE, &opt_no_update_appstream, N_("Don't update the appstream branch"), NULL },
@@ -603,6 +605,10 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
       if (!flatpak_repo_set_gpg_keys (repo, gpg_data, error))
         return FALSE;
     }
+
+  if (opt_gpg_keys_url &&
+      !flatpak_repo_set_gpg_keys_url (repo, opt_gpg_keys_url, error))
+    return FALSE;
 
   if (!opt_no_update_appstream)
     {

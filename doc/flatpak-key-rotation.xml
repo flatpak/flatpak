@@ -1,0 +1,297 @@
+<?xml version='1.0'?> <!--*-nxml-*-->
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+    "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+
+<refentry id="flatpak-key-rotation">
+
+    <refentryinfo>
+        <title>flatpak key rotation</title>
+        <productname>flatpak</productname>
+
+        <authorgroup>
+            <author>
+                <contrib>Developer</contrib>
+                <firstname>Philip</firstname>
+                <surname>Withnall</surname>
+                <email>philip@tecnocode.co.uk</email>
+            </author>
+        </authorgroup>
+    </refentryinfo>
+
+    <refmeta>
+        <refentrytitle>flatpak key rotation</refentrytitle>
+        <manvolnum>7</manvolnum>
+    </refmeta>
+
+    <refnamediv>
+        <refname>flatpak-key-rotation</refname>
+        <refpurpose>Information about rotation of GPG keys and subkeys for flatpak repositories</refpurpose>
+    </refnamediv>
+
+    <refsect1>
+        <title>Description</title>
+
+        <para>
+            Flatpak encourages the commits and summary metadata for a repository
+            to be cryptographically signed with a GPG key which is known to all
+            clients using the repository. This allows the clients to verify the
+            authenticity and integrity of data from the repository.
+        </para>
+
+        <para>
+            Since flatpak 1.20, it additionally supports an out-of-band key
+            update mechanism, to allow the repository to publish updates to its
+            signing key in a way which can be picked up by clients. This is
+            needed to allow key rotation, for example. Prior to flatpak 1.20
+            this would only have been possible by manually updating the key in
+            the repository configuration of each client.
+        </para>
+
+        <para>
+            This out-of-band key update mechanism has two parts: a standard GPG
+            keyring served over HTTP, which contains the latest copy of the
+            public keys from the repository’s signing keyring; and a
+            <literal>xa.gpg-keys-url</literal> entry in the repository’s summary
+            file, which points to it. Clients download and cache a copy of the
+            keyring and, whenever it has changed, verify and import keys from it
+            into their local keyring
+            (<filename>repo/<replaceable>${remote}</replaceable>.trustedkeys.gpg</filename>),
+            which is then used to verify repository signatures as normal.
+        </para>
+
+    </refsect1>
+
+    <refsect1>
+        <title>Security Model</title>
+
+        <para>
+            The out-of-band update mechanism is only used on repositories which
+            have GPG signing (and GPG signed summary files) enabled. This gives
+            authenticity and integrity guarantees on the URI stored in the
+            <literal>xa.gpg-keys-url</literal> summary entry.
+        </para>
+
+        <para>
+            It is recommended that the <literal>xa.gpg-keys-url</literal> is a
+            HTTPS URI, which gives authenticity and integrity guarantees on its
+            downloaded content (assuming its origin is under the control of the
+            repository owner).
+        </para>
+
+        <para>
+            Keys are conditionally imported from the downloaded keyring into the
+            local keyring which forms the trust root for verification of
+            repository signatures. When importing, the current contents of the
+            local keyring form the initial trust root. During the import, the
+            trust root grows as new keys pass validation; this allows for
+            signature chains between new keys.
+        </para>
+
+        <para>
+            New subkeys of keys in the trust root are always imported, as by
+            construction they are already signed by a key in the trust root
+            (their primary key).
+        </para>
+
+        <para>
+            Each new primary key is imported if all the following conditions are
+            met:
+        </para>
+
+        <itemizedlist>
+            <listitem><para>
+                It is not revoked, disabled or invalid.
+            </para></listitem>
+            <listitem><para>
+                It contains at least one UID which is not revoked or invalid.
+            </para></listitem>
+            <listitem><para>
+                That UID is signed by a key already in the trust root, and that
+                signature is more recent than any revoked signatures, and is not
+                expired or invalid.
+            </para></listitem>
+            <listitem><para>
+                <!-- The limit is defined as MAX_N_KEYS_TO_PROCESS -->
+                The import limit (of 20 new keys) has not been reached.
+            </para></listitem>
+        </itemizedlist>
+
+        <para>
+            New revocation certificates and revocation signatures are always
+            imported if they pertain to a key in the trust root.
+        </para>
+
+        <para>
+            New primary keys which have expired <emphasis>are</emphasis>
+            imported (if they meet all the other criteria), as they may have
+            been used to sign other new primary keys before expiry. They will be
+            marked as expired in the local keyring after import. This can happen
+            in situations where a client has not updated from the repository
+            across multiple key rotations, so their current local trust root
+            only contains keys which are great-ancestors of the current signing
+            key. The model here can be thought of as GPG forbidding new
+            signatures to be created with an expired key, but continuing to
+            allow verification of signatures using that key (unless it has been
+            revoked).
+        </para>
+
+        <para>
+            GPG has various web-of-trust and trust-on-first-use (TOFU) features
+            for determining whether to trust a key. Because each flatpak
+            repository is a trusted centralised point for key distribution,
+            these features are not needed and are not used in the import
+            process. These features include the local trust database
+            (<filename>trustdb.gpg</filename>) and ‘ownertrust’.
+        </para>
+
+        <para>
+            The downloaded keyring is assumed to be non-malicious to the extent
+            that this is required by GPG’s code which handles loading an unknown
+            external keyring. Risks from injected malicious (malformed) keyrings
+            can be mitigated by providing a HTTPS
+            <literal>xa.gpg-keys-url</literal>, rather than a HTTP one.
+        </para>
+
+    </refsect1>
+
+    <refsect1>
+        <title>System Administration</title>
+
+        <para>
+            The out-of-band update mechanism has been designed for the main
+            purpose of allowing key rotation. A typical GPG key setup for a
+            secure flatpak repository is to have a master key KM (stored offline
+            and airgapped), and a signing subkey KS1 (stored in a hardware
+            security module on the server which builds commits and pushes them
+            to the repository). KM has no expiry date and is closely guarded.
+            KS1 has an expiry date on the order of months to years, to reduce
+            the fallout if its private key were to become public. At the time of
+            generating KS1, it is signed by KM (which makes it a subkey). The
+            public key material for both keys is published as the repository’s
+            keyring, and configured in the local keyring of all clients when
+            they add the remote.
+        </para>
+
+        <para>
+            Before KS1 expires, a new signing subkey KS2 must be generated,
+            signed by KM, its private key put onto a hardware security module on
+            the server, and its public key distributed to all clients which use
+            the repository. Equivalently, the metadata of KS1 could be updated
+            to extend its expiry date if there is confidence that it has not
+            been compromised. The former approach is more conventional as it
+            eliminates the risk of KS1 having been compromised. Both approaches
+            equivalently require the distribution of new public key material to
+            clients.
+        </para>
+
+        <para>
+            Another possible approach is to generate a new master key K'M, a new
+            signing subkey K'S1, and then sign K'M with KM. This approach might
+            be preferred to allow changing key parameters (such as algorithm or
+            key size) if needed. It is equivalent to both approaches above in as
+            much as it also requires the distribution of new public key material
+            to clients.
+        </para>
+
+        <para>
+            From a system administration point of view, this process requires
+            several steps:
+        </para>
+
+        <orderedlist>
+            <listitem><para>
+                Months in advance of the key expiry date, generate the new
+                signing subkey KS2 on the server’s hardware security module,
+                alongside the existing KS1. Sign it with KM, ensuring that KM
+                stays offline and airgapped. For example (on an airgapped
+                machine):
+            </para><para>
+<programlisting>
+# Copy the master key (including private key) into $TEMP_HOMEDIR, then
+gpg --homedir "${TEMP_HOMEDIR}" --edit-key "${KM_FINGERPRINT}"
+  addkey
+  change-usage
+  expire
+  cross-certify
+  save
+# Use hardware security module specific commands to copy the new KS2 onto the
+# server’s HSM, then
+# Copy the updated "${TEMP_HOMEDIR}" to its airgapped offline storage location
+# for future use, then
+shred --remove "${TEMP_HOMEDIR}"
+</programlisting>
+            </para></listitem>
+
+            <listitem><para>
+                Export the public keyring for the server, containing the public
+                keys of KM, KS1 and KS2. Publish this <filename>.gpg</filename>
+                file over HTTPS on the flatpak repository server, and configure
+                aggressive caching for it. HTTP ETag support plus a max-age on
+                the order of weeks or months is recommended, as the cache policy
+                set by the server will affect how often
+                <emphasis>every</emphasis> client using the repository downloads
+                the keyring. For example:
+            </para><para>
+<programlisting>
+gpg --homedir "${HOMEDIR}" --output "www/repos/${REPO}.published.gpg" --armor --export "${KM_FINGERPRINT}" "${KS1_FINGERPRINT}" "${KS2_FINGERPRINT}"
+  # Add appropriate server-specific caching configuration
+</programlisting>
+            </para></listitem>
+
+            <listitem><para>
+                Configure the server process which publishes flatpaks to the
+                repository to sign them with both KS1 and KS2, instead of just
+                with KS1, from now on. For example:
+            </para><para>
+<programlisting>
+flatpak build-export … --gpg-sign "${KS1_FINGERPRINT}!" --gpg-sign "${KS2_FINGERPRINT}!"
+</programlisting>
+            </para><para>
+                Note the trailing <literal>!</literal> on the fingerprints. This
+                is required to force GPG to use the given subkey, instead of
+                potentially choosing a different signing subkey from the same
+                primary key.
+            </para></listitem>
+
+            <listitem><para>
+                Set the <literal>xa.gpg-keys-url</literal> entry in the
+                repository’s summary file to point to the newly published
+                keyring. For example:
+            </para><para>
+<programlisting>
+flatpak build-update-repo … --gpg-keys-url "https://example.com/repos/${REPO}.published.gpg" --gpg-sign "…"
+</programlisting>
+            </para></listitem>
+
+            <listitem><para>
+                Sign the repository’s summary file with KS1 and KS2, instead of
+                just with KS1, from now on. For example:
+            </para><para>
+<programlisting>
+flatpak build-update-repo … --gpg-keys-url "…" --gpg-sign "${KS1_FINGERPRINT}!" --gpg-sign "${KS2_FINGERPRINT}!"
+</programlisting>
+            </para><para>
+                Note the trailing <literal>!</literal> on the fingerprints as
+                above.
+            </para></listitem>
+
+            <listitem><para>
+                After KS1 expires, it can be removed from the server’s hardware
+                security module and commits and the summary file no longer need
+                to be signed with it; only with KS2 from now on. Key rotation is
+                complete.
+            </para></listitem>
+        </orderedlist>
+
+    </refsect1>
+
+    <refsect1>
+        <title>See also</title>
+
+        <para>
+            <citerefentry><refentrytitle>flatpak-build-update-repo</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+        </para>
+
+    </refsect1>
+
+</refentry>
