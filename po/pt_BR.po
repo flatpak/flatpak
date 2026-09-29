@@ -6,23 +6,23 @@
 # Matheus Barbosa <mdpb.matheus@gmail.com>, 2022.
 # Álvaro Burns <>, 2025.
 # Miguel Peçanha <pecanhamiguel@gmail.com>, 2026.
-# Rafael Fontenelle <rafaelff@gnome.org>, 2017-2026.
 # Rafael Coelho Costa <coelho38r@proton.me>, 2026.
+# Rafael Fontenelle <rafaelff@gnome.org>, 2017-2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: flatpak main\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2026-09-28 09:44+0100\n"
-"PO-Revision-Date: 2026-08-26 17:47-0300\n"
-"Last-Translator: Rafael Coelho Costa <coelho38r@proton.me>\n"
+"POT-Creation-Date: 2026-09-28 08:44+0000\n"
+"PO-Revision-Date: 2026-09-28 21:34-0300\n"
+"Last-Translator: Rafael Fontenelle <rafaelff@gnome.org>\n"
 "Language-Team: Brazilian Portuguese <https://br.gnome.org/traducao/>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Gtranslator 50.0\n"
+"X-Generator: Gtranslator 51.0\n"
 "X-DL-VCS-Web: https://github.com/flatpak/flatpak\n"
 "X-DL-Lang: pt_BR\n"
 "X-DL-Module: flatpak\n"
@@ -279,7 +279,6 @@ msgid "Missing '=' in bind mount option '%s'"
 msgstr "Faltando “=” na opção de montagem associativa “%s”"
 
 #: app/flatpak-builtins-build.c:679 common/flatpak-run.c:4083
-#, c-format
 msgid "Unable to start app"
 msgstr "Não foi possível iniciar o aplicativo"
 
@@ -539,7 +538,6 @@ msgstr ""
 "nome base"
 
 #: app/flatpak-builtins-build-export.c:746
-#, c-format
 msgid "No slashes allowed in extra data name"
 msgstr "Nenhuma barra permitida no nome de dados extras"
 
@@ -549,7 +547,6 @@ msgid "Invalid format for sha256 checksum: '%s'"
 msgstr "Formato inválido para a soma de verificação sha256: “%s”"
 
 #: app/flatpak-builtins-build-export.c:768
-#, c-format
 msgid "Extra data sizes of zero not supported"
 msgstr "Tamanhos zerado de dados extras sem suporte"
 
@@ -601,7 +598,6 @@ msgid "Content Written: %u\n"
 msgstr "Conteúdo escrito: %u\n"
 
 #: app/flatpak-builtins-build-export.c:1171
-#, c-format
 msgid "Content Bytes Written:"
 msgstr "Conteúdo de bytes escritos:"
 
@@ -703,7 +699,6 @@ msgid "Exporting %s\n"
 msgstr "Exportando %s\n"
 
 #: app/flatpak-builtins-build-finish.c:439
-#, c-format
 msgid "More than one executable found\n"
 msgstr "Mais de um executável localizado\n"
 
@@ -713,7 +708,6 @@ msgid "Using %s as command\n"
 msgstr "Usando %s como comando\n"
 
 #: app/flatpak-builtins-build-finish.c:455
-#, c-format
 msgid "No executable found\n"
 msgstr "Nenhum executável localizado\n"
 
@@ -767,7 +761,6 @@ msgid "Build directory %s already finalized"
 msgstr "Diretório de compilação %s já finalizado"
 
 #: app/flatpak-builtins-build-finish.c:701
-#, c-format
 msgid "Please review the exported files and the metadata\n"
 msgstr "Por favor, reveja os arquivos exportados e os metadados\n"
 
@@ -1094,12 +1087,10 @@ msgid "LOCATION - Update repository metadata"
 msgstr "LOCALIZAÇÃO – Atualiza metadados de um repositório"
 
 #: app/flatpak-builtins-build-update-repo.c:609
-#, c-format
 msgid "Updating appstream branch\n"
 msgstr "Atualizando ramo do appstream\n"
 
 #: app/flatpak-builtins-build-update-repo.c:638
-#, c-format
 msgid "Updating summary\n"
 msgstr "Atualizando resumo\n"
 
@@ -1109,7 +1100,6 @@ msgid "Total objects: %u\n"
 msgstr "Objetos totais: %u\n"
 
 #: app/flatpak-builtins-build-update-repo.c:666
-#, c-format
 msgid "No unreachable objects\n"
 msgstr "Nenhum objeto alcançável\n"
 
@@ -1382,7 +1372,6 @@ msgstr "ARQUIVO – Obtém informações sobre um arquivo exportado"
 
 #: app/flatpak-builtins-document-info.c:100
 #: app/flatpak-builtins-document-unexport.c:94
-#, c-format
 msgid "Not exported\n"
 msgstr "Não exportado\n"
 
@@ -1446,7 +1435,6 @@ msgid "Show permissions for applications"
 msgstr "Mostra permissões para aplicativos"
 
 #: app/flatpak-builtins-document-list.c:161
-#, c-format
 msgid "No documents found\n"
 msgstr "Nenhum documento localizado\n"
 
@@ -1687,12 +1675,10 @@ msgid " - Show history"
 msgstr " – Mostra histórico"
 
 #: app/flatpak-builtins-history.c:490
-#, c-format
 msgid "Failed to parse the --since option"
 msgstr "Falha ao analisar a opção --since"
 
 #: app/flatpak-builtins-history.c:501
-#, c-format
 msgid "Failed to parse the --until option"
 msgstr "Falha ao analisar a opção --until"
 
@@ -1774,7 +1760,6 @@ msgid "ref not present in origin"
 msgstr "ref não presente na origem"
 
 #: app/flatpak-builtins-info.c:211 app/flatpak-builtins-remote-info.c:226
-#, c-format
 msgid "Warning: Commit has no flatpak metadata\n"
 msgstr "Aviso: O commit tem nenhum metadado de flatpak\n"
 
@@ -2029,7 +2014,6 @@ msgid "At least one REF must be specified"
 msgstr "Pelo menos um REF deve ser especificado"
 
 #: app/flatpak-builtins-install.c:392
-#, c-format
 msgid "Looking for matches…\n"
 msgstr "Procurando por correspondências…\n"
 
@@ -2097,9 +2081,8 @@ msgid "List all refs (including locale/debug)"
 msgstr "Lista todos as refs (incluindo localidade/depuração)"
 
 #: app/flatpak-builtins-list.c:54
-#, fuzzy
 msgid "Show sizes in bytes"
-msgstr "Mostra o tamanho"
+msgstr "Mostra tamanhos em bytes"
 
 #: app/flatpak-builtins-list.c:55 app/flatpak-builtins-remote-ls.c:58
 msgid "List all applications using RUNTIME"
@@ -2238,12 +2221,10 @@ msgstr ""
 "padrões"
 
 #: app/flatpak-builtins-mask.c:73
-#, c-format
 msgid "No masked patterns\n"
 msgstr "Nenhum padrão mascarado\n"
 
 #: app/flatpak-builtins-mask.c:78
-#, c-format
 msgid "Masked patterns:\n"
 msgstr "Padrões mascarados:\n"
 
@@ -2337,12 +2318,10 @@ msgstr ""
 "padrões"
 
 #: app/flatpak-builtins-pin.c:75
-#, c-format
 msgid "No pinned patterns\n"
 msgstr "Nenhum padrão fixado\n"
 
 #: app/flatpak-builtins-pin.c:80
-#, c-format
 msgid "Pinned patterns:\n"
 msgstr "Padrões fixados:\n"
 
@@ -2351,7 +2330,6 @@ msgid "- Install flatpaks that are part of the operating system"
 msgstr "- Instalar flatpaks que são parte do sistema operacional"
 
 #: app/flatpak-builtins-preinstall.c:118
-#, c-format
 msgid "Nothing to do.\n"
 msgstr "Nada para fazer.\n"
 
@@ -2891,7 +2869,6 @@ msgid "[%d/%d] Verifying %s…\n"
 msgstr "[%d/%d] Verificando %s…\n"
 
 #: app/flatpak-builtins-repair.c:435
-#, c-format
 msgid "Dry run: "
 msgstr "Simulação: "
 
@@ -2911,7 +2888,6 @@ msgid "Deleting ref %s due to %d\n"
 msgstr "Excluindo ref %s devido a %d\n"
 
 #: app/flatpak-builtins-repair.c:464
-#, c-format
 msgid "Checking remotes...\n"
 msgstr "Verificando remotos...\n"
 
@@ -2926,22 +2902,18 @@ msgid "Remote %s for ref %s is disabled\n"
 msgstr "O remoto %s para ref %s está desabilitado\n"
 
 #: app/flatpak-builtins-repair.c:490
-#, c-format
 msgid "Pruning objects\n"
 msgstr "Suprimindo objetos\n"
 
 #: app/flatpak-builtins-repair.c:498
-#, c-format
 msgid "Erasing .removed\n"
 msgstr "Apagando .removed\n"
 
 #: app/flatpak-builtins-repair.c:524
-#, c-format
 msgid "Reinstalling refs\n"
 msgstr "Reinstalando refs\n"
 
 #: app/flatpak-builtins-repair.c:526
-#, c-format
 msgid "Reinstalling removed refs\n"
 msgstr "Reinstalando refs removidas\n"
 
@@ -2976,7 +2948,6 @@ msgid "false"
 msgstr "falso"
 
 #: app/flatpak-builtins-repo.c:121
-#, c-format
 msgid "Subsummaries: "
 msgstr "Sub-resumos: "
 
@@ -3345,7 +3316,6 @@ msgstr ""
 "flatpak-pin(1):\n"
 
 #: app/flatpak-builtins-uninstall.c:364
-#, c-format
 msgid "Nothing unused to uninstall\n"
 msgstr "Nada não usado para desinstalar\n"
 
@@ -3370,12 +3340,10 @@ msgid "Warning: %s is not installed\n"
 msgstr "Aviso: %s não está instalado\n"
 
 #: app/flatpak-builtins-uninstall.c:484
-#, c-format
 msgid "None of the specified refs are installed"
 msgstr "Nenhuma das refs especificadas estão instaladas"
 
 #: app/flatpak-builtins-uninstall.c:596
-#, c-format
 msgid "No app data to delete\n"
 msgstr "Nenhum dado de aplicativo para excluir\n"
 
@@ -3416,7 +3384,6 @@ msgid "With --commit, only one REF may be specified"
 msgstr "Com --commit, apenas um REF pode ser especificado"
 
 #: app/flatpak-builtins-update.c:162
-#, c-format
 msgid "Looking for updates…\n"
 msgstr "Procurando por atualizações…\n"
 
@@ -3426,7 +3393,6 @@ msgid "Unable to update %s: %s\n"
 msgstr "Não foi possível atualizar %s: %s\n"
 
 #: app/flatpak-builtins-update.c:274
-#, c-format
 msgid "Nothing to update.\n"
 msgstr "Nada para atualizar.\n"
 
@@ -3513,7 +3479,6 @@ msgid "Found installed ref ‘%s’ (%s). Is this correct?"
 msgstr "Localizada ref instalada “%s” (%s). Isso está correto?"
 
 #: app/flatpak-builtins-utils.c:534
-#, c-format
 msgid "All of the above"
 msgstr "Todas acima"
 
@@ -3850,12 +3815,10 @@ msgstr ""
 "Info: o aplicativo %s%s%s ramo %s%s%s chegou ao fim de vida, com motivo:\n"
 
 #: app/flatpak-cli-transaction.c:960
-#, c-format
 msgid "Info: applications using this extension:\n"
 msgstr "Info: aplicativos que usam este runtime:\n"
 
 #: app/flatpak-cli-transaction.c:962
-#, c-format
 msgid "Info: applications using this runtime:\n"
 msgstr "Info: aplicativos que usam este runtime:\n"
 
@@ -3864,7 +3827,6 @@ msgid "Replace?"
 msgstr "Substituir?"
 
 #: app/flatpak-cli-transaction.c:984 app/flatpak-quiet-transaction.c:247
-#, c-format
 msgid "Updating to rebased version\n"
 msgstr "Atualizando para a versão após rebase\n"
 
@@ -4423,7 +4385,6 @@ msgid "Filesystem location \"%s\" contains \"..\""
 msgstr "A localização do sistema de arquivos “%s” contém “..”"
 
 #: common/flatpak-context.c:1947
-#, c-format
 msgid ""
 "--filesystem=/ is not available, use --filesystem=host for a similar result"
 msgstr ""
@@ -4445,7 +4406,6 @@ msgid "Invalid syntax for %s: %s"
 msgstr "Sintaxe inválida para %s: %s"
 
 #: common/flatpak-context.c:2207
-#, c-format
 msgid "fallback-x11 can not be conditional"
 msgstr "fallback-x11 não pode ser condicional"
 
@@ -4460,25 +4420,21 @@ msgid "Environment variable name must not contain '=': %s"
 msgstr "O nome de variável de ambiente não pode conter “=”: %s"
 
 #: common/flatpak-context.c:2592 common/flatpak-context.c:2600
-#, c-format
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 "Os argumentos de --add-policy devem estar no formato SUBSISTEMA.CHAVE=VALOR"
 
 #: common/flatpak-context.c:2607
-#, c-format
 msgid "--add-policy values can't start with \"!\""
 msgstr "os valores de --add-policy não podem iniciar com “!”"
 
 #: common/flatpak-context.c:2632 common/flatpak-context.c:2640
-#, c-format
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 "Os argumentos de --remove-policy devem estar no formato "
 "SUBSISTEMA.CHAVE=VALOR"
 
 #: common/flatpak-context.c:2647
-#, c-format
 msgid "--remove-policy values can't start with \"!\""
 msgstr "Os valores de --remove-policy não podem iniciar com “!”"
 
@@ -4938,7 +4894,7 @@ msgstr "O arquivo de serviço D-Bus “%s” tem um nome errado"
 #: common/flatpak-dir.c:8763
 #, c-format
 msgid "Desktop Entry '%s' neither has Type=Application nor Type=Service"
-msgstr ""
+msgstr "A entrada desktop “%s” não tem Type=Application nem Type=Service"
 
 #: common/flatpak-dir.c:8955
 #, c-format
@@ -4982,22 +4938,20 @@ msgid "Extra data %s missing in detached metadata"
 msgstr "Dados extras %s faltando nos metadados destacados"
 
 #: common/flatpak-dir.c:9527 common/flatpak-dir.c:9538
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to open %s: "
-msgstr "Falha ao abrir “%s”"
+msgstr "Falha ao abrir %s: "
 
 #: common/flatpak-dir.c:9549
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to open %s/%s: "
-msgstr "Falha ao atualizar %s%s%s: "
+msgstr "Falha ao abrir %s/%s: "
 
 #: common/flatpak-dir.c:9588 common/flatpak-dir.c:9594
-#, fuzzy
 msgid "Failed to open metadata: "
-msgstr "Falha ao abrir journal: %s"
+msgstr "Falha ao abrir metadados: "
 
 #: common/flatpak-dir.c:9685
-#, c-format
 msgid "Unable to get runtime key from metadata"
 msgstr "Não foi possível obter a chave da runtime pelos metadados"
 
@@ -5089,7 +5043,6 @@ msgid "This version of %s is already installed"
 msgstr "Essa versão de %s já está instalada"
 
 #: common/flatpak-dir.c:11782
-#, c-format
 msgid "Can't change remote during bundle install"
 msgstr "Não é possível alterar remoto durante instalação de pacote"
 
@@ -5252,7 +5205,6 @@ msgid "Skipping deletion of mirror ref (%s, %s)…\n"
 msgstr "Ignorando exclusão de ref espelho (%s, %s)…\n"
 
 #: common/flatpak-exports.c:942
-#, c-format
 msgid "An absolute path is required"
 msgstr "Um caminho absoluto é exigido"
 
@@ -5405,7 +5357,6 @@ msgid "Invalid authentication request response"
 msgstr "Resposta inválida à solicitação de autenticação"
 
 #: common/flatpak-oci-registry.c:1738
-#, c-format
 msgid "Flatpak was compiled without zstd support"
 msgstr "Flatpak foi compilado sem suporte a zstd"
 
@@ -5630,7 +5581,6 @@ msgstr ""
 "Verificação GPG deve estar habilitada quando um ID de coleção for definido"
 
 #: common/flatpak-repo-utils.c:344
-#, c-format
 msgid "No extra data sources"
 msgstr "Nenhuma fonte de dados extras"
 
@@ -5973,43 +5923,36 @@ msgid "URI is not absolute, and no base URI was provided"
 msgstr "A URI não é absoluta e nenhuma URI base foi fornecida"
 
 #: common/flatpak-usb.c:83
-#, c-format
 msgid "USB device query 'all' must not have data"
 msgstr "A consulta de dispositivo USB 'all' não deve ter dados"
 
 #: common/flatpak-usb.c:102
-#, c-format
 msgid "USB query rule 'cls' must be in the form CLASS:SUBCLASS or CLASS:*"
 msgstr ""
 "A regra de consulta USB 'cls' deve estar no formato CLASSE:SUBCLASSE ou "
 "CLASSE:*"
 
 #: common/flatpak-usb.c:111
-#, c-format
 msgid "Invalid USB class"
 msgstr "Classe USB inválida"
 
 #: common/flatpak-usb.c:125
-#, c-format
 msgid "Invalid USB subclass"
 msgstr "Subclasse USB inválida"
 
 #: common/flatpak-usb.c:141 common/flatpak-usb.c:148
-#, c-format
 msgid "USB query rule 'dev' must have a valid 4-digit hexadecimal product id"
 msgstr ""
 "A regra de consulta USB 'dev' deve ter um ID de produto válido hexadecimal "
 "de 4 dígitos"
 
 #: common/flatpak-usb.c:164 common/flatpak-usb.c:171
-#, c-format
 msgid "USB query rule 'vnd' must have a valid 4-digit hexadecimal vendor id"
 msgstr ""
 "A regra de consulta USB 'vnd' deve ter um ID de fornecedor válido "
 "hexadecimal de 4 dígitos"
 
 #: common/flatpak-usb.c:205
-#, c-format
 msgid "USB device queries must be in the form TYPE:DATA"
 msgstr "As consultas de dispositivos USB devem estar no formato TIPO:DADOS"
 
@@ -6019,22 +5962,18 @@ msgid "Unknown USB query rule %s"
 msgstr "Regra de consulta USB desconhecida %s"
 
 #: common/flatpak-usb.c:248
-#, c-format
 msgid "Empty USB query"
 msgstr "Consulta USB vazia"
 
 #: common/flatpak-usb.c:274
-#, c-format
 msgid "Multiple USB query rules of the same type is not supported"
 msgstr "Várias regras de consulta USB do mesmo tipo não são suportadas"
 
 #: common/flatpak-usb.c:283
-#, c-format
 msgid "'all' must not contain extra query rules"
 msgstr "'all' não deve conter regras de consulta extras"
 
 #: common/flatpak-usb.c:291
-#, c-format
 msgid "USB queries with 'dev' must also specify vendors"
 msgstr "Consultas USB com 'dev' também devem especificar fornecedores"
 
@@ -6098,7 +6037,6 @@ msgid "Invalid token"
 msgstr "Token inválido"
 
 #: portal/flatpak-portal.c:2310
-#, c-format
 msgid "No portal support found"
 msgstr "Não foi localizado suporte a portal"
 
@@ -6126,17 +6064,14 @@ msgstr ""
 "configurações de privacidade."
 
 #: portal/flatpak-portal.c:2361
-#, c-format
 msgid "Application update not allowed"
 msgstr "Atualização de aplicativo não permitida"
 
 #: portal/flatpak-portal.c:2522
-#, c-format
 msgid "Self update not supported, new version requires new permissions"
 msgstr "Sem suporte à autoatualização, nova versão requer novas permissões"
 
 #: portal/flatpak-portal.c:2705 portal/flatpak-portal.c:2723
-#, c-format
 msgid "Update ended unexpectedly"
 msgstr "Atualização encerrada inesperadamente"
 
