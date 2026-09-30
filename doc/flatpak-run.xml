@@ -942,6 +942,12 @@ key=v1;v2;
                 </para></listitem>
             </varlistentry>
 
+            <varlistentry>
+                <term><option>--custom-slice=<replaceable>SLICE</replaceable></option></term>
+                <listitem><para>
+                    The app will be put under the slice app-flatpak-<replaceable>SLICE</replaceable>.slice.
+                </para></listitem>
+            </varlistentry>
         </variablelist>
 
     </refsect1>
