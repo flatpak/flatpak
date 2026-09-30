@@ -251,7 +251,10 @@ executable(
   sources : [
     'test-spawn.c',
   ] + portal_gdbus,
-  dependencies : base_deps,
+  dependencies : [
+    base_deps,
+    libglnx_dep,
+  ],
   include_directories : [common_include_directories],
   install : get_option('installed_tests'),
   install_dir : installed_testdir,

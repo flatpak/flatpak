@@ -69,7 +69,8 @@ add_bin() {
     fi
 }
 
-for i in $@ bash ls cat echo readlink socat; do
+# shellcheck disable=SC2068
+for i in $@ bash ls cat echo head readlink socat; do
     I=$(type -P "$i")
     add_bin "$I"
 done
