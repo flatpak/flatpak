@@ -246,6 +246,8 @@ flatpak_complete_document_list (FlatpakCompletion *completion)
         flatpak_complete_ref_id (completion, refs);
       }
 
+      flatpak_complete_ref_id_flush (completion);
+
       break;
     }
 

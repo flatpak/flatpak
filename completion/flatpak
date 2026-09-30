@@ -44,4 +44,4 @@ __flatpak() {
 
 ####################################################################################################
 
-complete -o nospace -F __flatpak flatpak
+complete -o nospace -o nosort -F __flatpak flatpak
