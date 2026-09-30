@@ -94,11 +94,11 @@ export G_DEBUG=fatal-warnings
 unset TAR_OPTIONS
 
 if test -n "${FLATPAK_TESTS_VALGRIND:-}"; then
-    CMD_PREFIX="env G_SLICE=always-malloc valgrind -q --leak-check=no --error-exitcode=1 --gen-suppressions=all --num-callers=30 --suppressions=${test_srcdir}/flatpak.supp --suppressions=${test_srcdir}/glib.supp"
+    export FLATPAK_CMD_PREFIX="env G_SLICE=always-malloc valgrind -q --leak-check=no --error-exitcode=1 --gen-suppressions=all --num-callers=30 --suppressions=${test_srcdir}/flatpak.supp --suppressions=${test_srcdir}/glib.supp"
 elif test -n "${FLATPAK_TESTS_VALGRIND_LEAKS:-}"; then
-    CMD_PREFIX="env G_SLICE=always-malloc valgrind -q --leak-check=full  --errors-for-leak-kinds=definite --error-exitcode=1 --gen-suppressions=all --num-callers=30 --suppressions=${test_srcdir}/flatpak.supp --suppressions=${test_srcdir}/glib.supp"
+    export FLATPAK_CMD_PREFIX="env G_SLICE=always-malloc valgrind -q --leak-check=full  --errors-for-leak-kinds=definite --error-exitcode=1 --gen-suppressions=all --num-callers=30 --suppressions=${test_srcdir}/flatpak.supp --suppressions=${test_srcdir}/glib.supp"
 else
-    CMD_PREFIX=""
+    export FLATPAK_CMD_PREFIX=""
 fi
 unset OSTREE_DEBUG_HTTP
 
@@ -168,7 +168,7 @@ if [ x${USE_DELTAS-} == xyes ] ; then
     export UPDATE_REPO_ARGS="--generate-static-deltas"
 fi
 
-export FLATPAK="${CMD_PREFIX} flatpak"
+export FLATPAK=$test_srcdir/flatpak-wrapper.sh
 
 assert_streq () {
     { { local BASH_XTRACEFD=3; } 2> /dev/null
@@ -540,7 +540,7 @@ install_sdk_repo () {
 }
 
 run () {
-    ${CMD_PREFIX} flatpak run "$@"
+    ${FLATPAK_CMD_PREFIX} flatpak run "$@"
 
 }
 
@@ -555,7 +555,7 @@ run_with_sandboxed_bus () {
 run_sh () {
     ID=${1:-org.test.Hello}
     shift
-    ${CMD_PREFIX} flatpak run --command=bash ${ARGS-} ${ID} -c "$*"
+    ${FLATPAK_CMD_PREFIX} flatpak run --command=bash ${ARGS-} ${ID} -c "$*"
 }
 
 # true, false, or empty for indeterminate

@@ -326,6 +326,7 @@ if get_option('installed_tests')
   subdir('installed-services')
 
   install_data(
+    'flatpak-wrapper.sh',
     'http-utils-test-server.py',
     'make-multi-collection-id-repo.sh',
     'make-test-app.sh',
