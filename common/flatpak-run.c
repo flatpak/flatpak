@@ -1503,7 +1503,6 @@ flatpak_run_add_app_info_args (FlatpakBwrap           *bwrap,
                                gboolean                build,
                                gboolean                devel,
                                char                  **app_info_path_out,
-                               int                     instance_id_fd_arg,
                                char                  **instance_id_host_dir_out,
                                char                  **instance_id_host_private_dir_out,
                                char                  **instance_id_out,
@@ -1515,7 +1514,6 @@ flatpak_run_add_app_info_args (FlatpakBwrap           *bwrap,
   glnx_autofd int fd2 = -1;
   glnx_autofd int fd3 = -1;
   int info_fd;
-  glnx_autofd int instance_id_fd = instance_id_fd_arg;
   g_autoptr(GKeyFile) keyfile = NULL;
   g_autofree char *runtime_path = NULL;
   const char *group;
@@ -1707,35 +1705,6 @@ flatpak_run_add_app_info_args (FlatpakBwrap           *bwrap,
       g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errsv),
                    _("Failed to open bwrapinfo.json file: %s"), g_strerror (errsv));
       return FALSE;
-    }
-
-  /* NOTE: It is important that this takes place after bwrapinfo.json is created,
-     otherwise start notifications in the portal may not work. */
-  if (instance_id_fd != -1)
-    {
-      gsize instance_id_position = 0;
-      gsize instance_id_size = strlen (instance_id);
-
-      while (instance_id_size > 0)
-        {
-          gssize bytes_written = write (instance_id_fd, instance_id + instance_id_position, instance_id_size);
-          if (G_UNLIKELY (bytes_written <= 0))
-            {
-              int errsv = bytes_written == -1 ? errno : ENOSPC;
-              if (errsv == EINTR)
-                continue;
-
-              g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errsv),
-                           _("Failed to write to instance id fd: %s"), g_strerror (errsv));
-              return FALSE;
-            }
-
-          instance_id_position += bytes_written;
-          instance_id_size -= bytes_written;
-        }
-
-      /* explicitly close this as soon as we're done to notify the other side */
-      g_clear_fd (&instance_id_fd, NULL);
     }
 
   flatpak_bwrap_add_args_data_fd (bwrap, "--info-fd", g_steal_fd (&fd3), NULL);
@@ -3203,6 +3172,39 @@ flatpak_run_compute_allowed_features (FlatpakContext *context)
                                                    flatpak_run_evaluate_conditions);
 }
 
+static void
+finalize_instance_dir (const char *instance_id,
+                       const char *instance_id_host_dir,
+                       int         instance_id_fd_arg,
+                       GPid        pid)
+{
+  char pid_str[64];
+  g_autofree char *pid_path = NULL;
+  /* Take *ownership* of the fd, so it can be closed on scope exit, to signal
+     to the other end that we're done with it. */
+  glnx_autofd int instance_id_fd = instance_id_fd_arg;
+  g_autoptr(GError) error = NULL;
+
+  g_snprintf (pid_str, sizeof (pid_str), "%d", pid);
+  pid_path = g_build_filename (instance_id_host_dir, "pid", NULL);
+  if (!g_file_set_contents (pid_path, pid_str, -1, &error))
+    {
+      g_warning ("Failed to write pid file: %s", error->message);
+      return;
+    }
+
+  /* NOTE: It is important that this takes place after the pid is written,
+     otherwise start notifications in the portal may not work. */
+  if (instance_id_fd != -1)
+    {
+      if (glnx_loop_write (instance_id_fd, instance_id, strlen (instance_id)) == -1)
+        {
+          int errsv = errno;
+          g_warning ("Failed to write to instance id fd: %s", g_strerror (errsv));
+        }
+    }
+}
+
 gboolean
 flatpak_run_app (FlatpakDecomposed   *app_ref,
                  FlatpakDeploy       *app_deploy,
@@ -3218,7 +3220,7 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
                  const char          *custom_command,
                  char                *args[],
                  int                  n_args,
-                 int                  instance_id_fd,
+                 int                  instance_id_fd_arg,
                  const char * const  *run_environ,
                  char               **instance_dir_out,
                  GArray              *bind_fds,
@@ -3248,6 +3250,7 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
   g_autofree char *app_ld_path = NULL;
   g_autofree char *instance_id_host_dir = NULL;
   g_autofree char *instance_id_host_private_dir = NULL;
+  glnx_autofd int instance_id_fd = instance_id_fd_arg;
   g_autofree char *instance_id = NULL;
   g_autoptr(FlatpakContext) app_context = NULL;
   g_autoptr(FlatpakContext) overrides = NULL;
@@ -3816,7 +3819,6 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
                                       app_context, extra_context, sockets,
                                       sandboxed, FALSE, flags & FLATPAK_RUN_FLAG_DEVEL,
                                       &app_info_path,
-                                      g_steal_fd (&instance_id_fd),
                                       &instance_id_host_dir, &instance_id_host_private_dir,
                                       &instance_id, error))
     return FALSE;
@@ -3992,9 +3994,6 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
       g_getenv ("FLATPAK_TEST_COVERAGE") != NULL)
     {
       GPid child_pid;
-      char pid_str[64];
-      g_autofree char *pid_path = NULL;
-      g_autoptr(GError) local_error = NULL;
       GSpawnFlags spawn_flags;
       GSpawnChildSetupFunc child_setup;
 
@@ -4028,13 +4027,10 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
                           error))
         return FALSE;
 
-      g_snprintf (pid_str, sizeof (pid_str), "%d", child_pid);
-      pid_path = g_build_filename (instance_id_host_dir, "pid", NULL);
-      if (!g_file_set_contents (pid_path, pid_str, -1, &local_error))
-        {
-          g_warning ("Failed to write pid file: %s", local_error->message);
-          g_clear_error (&local_error);
-        }
+      finalize_instance_dir (instance_id,
+                             instance_id_host_dir,
+                             g_steal_fd (&instance_id_fd),
+                             child_pid);
 
       if ((flags & (FLATPAK_RUN_FLAG_BACKGROUND)) == 0)
         {
@@ -4054,17 +4050,10 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
     }
   else
     {
-      char pid_str[64];
-      g_autofree char *pid_path = NULL;
-      g_autoptr(GError) local_error = NULL;
-
-      g_snprintf (pid_str, sizeof (pid_str), "%d", getpid ());
-      pid_path = g_build_filename (instance_id_host_dir, "pid", NULL);
-      if (!g_file_set_contents (pid_path, pid_str, -1, &local_error))
-        {
-          g_warning ("Failed to write pid file: %s", local_error->message);
-          g_clear_error (&local_error);
-        }
+      finalize_instance_dir (instance_id,
+                             instance_id_host_dir,
+                             g_steal_fd (&instance_id_fd),
+                             getpid ());
 
       /* Ensure we unset O_CLOEXEC for marked fds and rewind fds as needed.
        * Note that this does not close fds that are not already marked O_CLOEXEC, because
