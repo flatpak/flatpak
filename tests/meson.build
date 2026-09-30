@@ -247,6 +247,20 @@ executable(
 )
 
 executable(
+  'test-spawn',
+  sources : [
+    'test-spawn.c',
+  ] + portal_gdbus,
+  dependencies : [
+    base_deps,
+    libglnx_dep,
+  ],
+  include_directories : [common_include_directories],
+  install : get_option('installed_tests'),
+  install_dir : installed_testdir,
+)
+
+executable(
   'test-portal-impl',
   'test-portal-impl.c',
   dependencies : base_deps,
@@ -326,6 +340,7 @@ if get_option('installed_tests')
   subdir('installed-services')
 
   install_data(
+    'flatpak-wrapper.sh',
     'http-utils-test-server.py',
     'make-multi-collection-id-repo.sh',
     'make-test-app.sh',
@@ -404,6 +419,7 @@ tests = {
   'update-remote-configuration': {'wrap': ['newsummary', 'oldsummary']},
   'override': {},
   'update-portal': {'wrap': ['user', 'system']},
+  'spawn': {'wrap': ['user']},
   'auth': {},
   'unused': {},
   'summaries': {'wrap': ['user', 'system']},
@@ -448,6 +464,7 @@ foreach testcase : wrapped_tests
     'test-summaries.sh' : 60,
     'test-unused.sh' : 90,
     'test-update-portal.sh' : 90,
+    'test-spawn.sh' : 60,
     'test-extra-data.sh' : 90,
   }.get(script, 30)
 

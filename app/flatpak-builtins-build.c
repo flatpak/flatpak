@@ -613,7 +613,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
                                       app_id_dir, app_context, NULL,
                                       sockets,
                                       FALSE, TRUE, TRUE,
-                                      &app_info_path, -1,
+                                      &app_info_path,
                                       &instance_id_host_dir, NULL,
                                       &instance_id,
                                       error))
