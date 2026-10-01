@@ -360,6 +360,11 @@ static const char * const allowed_desktop_entry_keys[] = {
   /* Exported, because they are deemed harmless: */
   "X-AppInstall-Keywords",
   "X-AppStream-Ignore",
+  "X-CosmicApplet",
+  "X-CosmicHoverPopup",
+  "X-CosmicOverflowMinSize",
+  "X-CosmicOverflowPriority",
+  "X-CosmicShrinkable",
   "X-GNOME-FullName",
   "X-GNOME-Gettext-Domain",
   "X-GNOME-UsesNotifications",
