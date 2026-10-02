@@ -84,6 +84,10 @@ assert_file_has_content hello_out '^Hello world, from a sandbox$'
 
 ok "hello"
 
+ARGS=--clear-env BLACKBOX_HOST=inherited run_sh org.test.Hello \
+    'test -z "${BLACKBOX_HOST:-}"'
+ok "clear-env does not inherit host variables"
+
 # This should try and fail to run e.g. /usr/bin/--tmpfs, which will
 # exit with a nonzero status because there is no such executable.
 # It should not pass "--tmpfs /blah hello.sh" as bwrap options.

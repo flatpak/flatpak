@@ -3319,7 +3319,7 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
     return FALSE;
 
   /* Construct the bwrap context. */
-  bwrap = flatpak_bwrap_new (NULL);
+  bwrap = flatpak_bwrap_new ((flags & FLATPAK_RUN_FLAG_CLEAR_ENV) ? flatpak_bwrap_empty_env : NULL);
   flatpak_bwrap_add_arg (bwrap, flatpak_get_bwrap ());
 
   if (app_deploy == NULL)
