@@ -406,6 +406,7 @@ tests = {
   'update-portal': {'wrap': ['user', 'system']},
   'auth': {},
   'unused': {},
+  'lockdown': {},
   'summaries': {'wrap': ['user', 'system']},
   'subset': {'wrap': ['user', 'system']},
   'prune': {},

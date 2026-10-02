@@ -648,6 +648,10 @@
                       The location of flatpak site configuration. If this is not set,
                       <filename>/etc/flatpak</filename> is used (unless overridden at build
                       time by --sysconfdir).
+                                            If central lockdown (<literal>[core] config-lockdown=true</literal> in
+                                            <filename>/etc/flatpak/config</filename> or
+                                            <filename>/etc/flatpak/config.d/*.conf</filename>) is enabled,
+                                            this environment variable is ignored.
                     </para></listitem>
                 </varlistentry>
 
@@ -660,6 +664,8 @@
                         <filename>/usr/share/flatpak</filename> is used,
                         unless overridden at build time by
                         <option>--datadir</option>.
+                        If central lockdown is enabled,
+                        this environment variable is ignored.
                     </para></listitem>
                 </varlistentry>
 
@@ -762,6 +768,8 @@
                     <listitem><para>
                       The location of flatpak runtime global files. If this is not set,
                       <filename>/run/flatpak</filename> is used.
+                                            If central lockdown is enabled,
+                                            this environment variable is ignored.
                     </para></listitem>
                 </varlistentry>
 
@@ -786,6 +794,8 @@
                       <filename>/var/lib/flatpak</filename> is used (unless overridden at build
                       time by <option>--localstatedir</option> or
                       <option>-Dsystem_install_dir</option>).
+                                            If central lockdown is enabled,
+                                            this environment variable is ignored.
                     </para></listitem>
                 </varlistentry>
 
@@ -817,6 +827,8 @@
                     <listitem><para>
                       The location of the per-user installation. If this is not set,
                       <filename>$XDG_DATA_HOME/flatpak</filename> is used.
+                                            If central lockdown is enabled,
+                                            this environment variable is ignored.
                     </para></listitem>
                 </varlistentry>
 

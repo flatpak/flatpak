@@ -373,6 +373,8 @@ GQuark       flatpak_dir_error_quark (void);
 GPtrArray *flatpak_get_system_base_dir_locations        (GCancellable  *cancellable,
                                                          GError       **error);
 GFile *    flatpak_get_system_default_base_dir_location (void);
+gboolean   flatpak_is_config_lockdown_enabled            (void);
+gboolean   flatpak_allow_user_remotes_in_lockdown        (void);
 
 GKeyFile *      flatpak_load_override_keyfile   (const char  *app_id,
                                                  gboolean     user,
