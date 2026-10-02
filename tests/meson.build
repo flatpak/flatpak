@@ -432,6 +432,7 @@ tests = {
   'pin': {},
   'run-custom': {'wrap': ['user', 'system']},
   'file-forwarding': {'wrap': ['user']},
+  'run-installations': {},
   'upgrade-from-header': {'wrap': ['user', 'system', 'system-norevokefs']},
   'metainfo-export': {},
 }

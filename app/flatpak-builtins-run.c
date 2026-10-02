@@ -189,6 +189,52 @@ static GOptionEntry options[] = {
   { NULL }
 };
 
+static FlatpakDecomposed *
+find_current_ref_in (GPtrArray    *dirs,
+                     const char   *id,
+                     GCancellable *cancellable,
+                     GError      **error)
+{
+  g_autoptr(GHashTable) selected_system_ids = g_hash_table_new (g_str_hash, g_str_equal);
+  g_autoptr(GPtrArray) system_dirs = NULL;
+
+  if (dirs->len == 1)
+    return flatpak_dir_current_ref (g_ptr_array_index (dirs, 0), id, cancellable);
+
+  for (size_t i = 0; i < dirs->len; i++)
+    {
+      FlatpakDir *dir = g_ptr_array_index (dirs, i);
+
+      if (flatpak_dir_is_user (dir))
+        {
+          FlatpakDecomposed *ref = flatpak_dir_current_ref (dir, id, cancellable);
+          if (ref != NULL)
+            return ref;
+        }
+      else
+        g_hash_table_add (selected_system_ids, (gpointer) flatpak_dir_get_id (dir));
+    }
+
+  /* Search the selected system installations in priority order. */
+  system_dirs = flatpak_dir_get_system_list (cancellable, error);
+  if (system_dirs == NULL)
+    return NULL;
+
+  for (size_t i = 0; i < system_dirs->len; i++)
+    {
+      FlatpakDir *dir = g_ptr_array_index (system_dirs, i);
+
+      if (g_hash_table_contains (selected_system_ids, flatpak_dir_get_id (dir)))
+        {
+          FlatpakDecomposed *ref = flatpak_dir_current_ref (dir, id, cancellable);
+          if (ref != NULL)
+            return ref;
+        }
+    }
+
+  return NULL;
+}
+
 gboolean
 flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
@@ -270,7 +316,12 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
   if (branch == NULL || arch == NULL)
     {
-      g_autoptr(FlatpakDecomposed) current_ref = flatpak_find_current_ref (id, NULL, NULL);
+      g_autoptr(FlatpakDecomposed) current_ref = find_current_ref_in (dirs, id, cancellable, &local_error);
+      if (local_error != NULL)
+        {
+          g_propagate_error (error, g_steal_pointer (&local_error));
+          return FALSE;
+        }
       if (current_ref)
         {
           if (branch == NULL)
