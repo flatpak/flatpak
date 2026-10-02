@@ -381,6 +381,25 @@ flatpak_transaction_progress_get_bytes_transferred (FlatpakTransactionProgress *
 }
 
 /**
+ * flatpak_transaction_progress_get_bytes_total:
+ * @self: a #FlatpakTransactionProgress
+ *
+ * Gets the current estimate for the total number of bytes that will be
+ * transferred.
+ *
+ * Returns 0 while the progress is estimating or the total is otherwise
+ * unknown.
+ *
+ * Returns: the estimated total number of bytes to transfer
+ * Since: 1.19.0
+ */
+guint64
+flatpak_transaction_progress_get_bytes_total (FlatpakTransactionProgress *self)
+{
+  return flatpak_progress_get_bytes_total (self->progress_obj);
+}
+
+/**
  * flatpak_transaction_progress_get_start_time:
  * @self: a #FlatpakTransactionProgress
  *

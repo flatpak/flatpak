@@ -23,6 +23,7 @@
 #include "config.h"
 
 #include "flatpak-cli-transaction.h"
+#include "flatpak-builtins-utils.h"
 #include "flatpak-transaction-private.h"
 #include "flatpak-installation-private.h"
 #include "flatpak-run-private.h"
@@ -262,22 +263,6 @@ spin_op_progress (FlatpakCliTransaction       *self,
   set_op_progress (self, op, p[self->op_progress++ % G_N_ELEMENTS (p)]);
 }
 
-static char *
-format_duration (guint64 duration)
-{
-  int h, m, s;
-
-  m = duration / 60;
-  s = duration % 60;
-  h = m / 60;
-  m = m % 60;
-
-  if (h > 0)
-    return g_strdup_printf ("%02d:%02d:%02d", h, m, s);
-  else
-    return g_strdup_printf ("%02d:%02d", m, s);
-}
-
 static void
 progress_changed_cb (FlatpakTransactionProgress *progress,
                      gpointer                    data)
@@ -306,17 +291,16 @@ progress_changed_cb (FlatpakTransactionProgress *progress,
   guint64 start_time = flatpak_transaction_progress_get_start_time (progress);
   guint64 elapsed_time = (g_get_monotonic_time () - start_time) / G_USEC_PER_SEC;
   guint64 transferred = flatpak_transaction_progress_get_bytes_transferred (progress);
+  guint64 total = flatpak_transaction_progress_get_bytes_total (progress);
+  guint64 bytes_per_second = flatpak_transaction_progress_get_bytes_per_second (progress);
   guint64 max = flatpak_transaction_operation_get_download_size (op);
 
   if (elapsed_time > 0)
     {
-      g_autofree char *formatted_bytes_sec = g_format_size (transferred / elapsed_time);
+      g_autofree char *formatted_bytes_sec = g_format_size (bytes_per_second);
       g_autofree char *remaining = NULL;
-      if (elapsed_time > 3 && percent > 0)
-        {
-          guint64 total_time = elapsed_time * 100 / (double) percent;
-          remaining = format_duration (total_time - elapsed_time);
-        }
+      remaining = format_progress_remaining_time (transferred, total, bytes_per_second,
+                                                  flatpak_transaction_progress_get_is_estimating (progress));
       /* Formatted size/remaining time in seconds */
       speed = g_strdup_printf (_("%s/s%s%s"), formatted_bytes_sec, remaining ? "  " : "", remaining ? remaining : "");
       cli->speed_len = MAX (cli->speed_len, strlen (speed) + 2);
