@@ -7,3 +7,34 @@ Environment=XDG_DATA_DIRS=@localstatedir@/lib/flatpak/exports/share/:/usr/local/
 ExecStart=@libexecdir@/flatpak-system-helper
 Type=dbus
 IOSchedulingClass=idle
+
+# PrivateTmp cannot be used: the client creates a child repo under
+# /var/tmp/flatpak-cache-* and passes that path via D-Bus.
+# PrivateNetwork cannot be used: needs network for OCI remote operations.
+# PrivateUsers cannot be used: needs real root identity for chown and polkit.
+# RestrictNamespaces cannot be used: bubblewrap triggers need namespaces.
+
+ProtectHome=yes
+# full, not strict: needs write access to /var/lib/flatpak
+ProtectSystem=full
+# revokefs-fuse uses a socket, not /dev/fuse
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+LockPersonality=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+SystemCallArchitectures=native
+# revokefs-fuse drops privileges via direct setuid()/setgid() syscalls,
+# which are unaffected; this only blocks setuid/setgid binary execution
+NoNewPrivileges=yes
+MemoryDenyWriteExecute=yes
+SystemCallFilter=~@clock @debug @module @obsolete @raw-io @reboot @swap @cpu-emulation
+# SETUID/SETGID: revokefs-fuse drops to unprivileged user
+# KILL: terminate revokefs-fuse children on cancellation
+# MKNOD, SYS_ADMIN: bubblewrap for sandboxed triggers
+CapabilityBoundingSet=CAP_CHOWN CAP_DAC_OVERRIDE CAP_DAC_READ_SEARCH CAP_FOWNER CAP_FSETID CAP_SETUID CAP_SETGID CAP_KILL CAP_MKNOD CAP_SYS_ADMIN

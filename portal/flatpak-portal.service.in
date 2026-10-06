@@ -6,3 +6,9 @@ PartOf=graphical-session.target
 BusName=org.freedesktop.portal.Flatpak
 ExecStart=@libexecdir@/flatpak-portal
 Type=dbus
+
+# No hardening: the useful options (ProtectHome, PrivateNetwork, etc.)
+# cannot be used because mount namespaces and seccomp filters are inherited
+# by flatpak instances spawned via the Spawn interface. The options that
+# could safely be enabled (ProtectKernel*, ProtectClock, etc.) only restrict
+# operations that already require root capabilities.

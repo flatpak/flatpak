@@ -4,5 +4,23 @@
 Type=oneshot
 ExecStart=@libexecdir@/flatpak-create-sideload-symlinks.sh @media_dir@/%u
 
+# PrivateUsers cannot be used: the script checks file ownership via stat
+# against $UID, which requires the real user identity.
+
+ProtectHome=yes
+ProtectSystem=strict
+ReadWritePaths=/run/flatpak/sideload-repos
+PrivateTmp=yes
+PrivateDevices=yes
+PrivateNetwork=yes
+LockPersonality=yes
+RestrictRealtime=yes
+RestrictNamespaces=yes
+RestrictSUIDSGID=yes
+SystemCallArchitectures=native
+NoNewPrivileges=yes
+MemoryDenyWriteExecute=yes
+SystemCallFilter=~@debug @mount @obsolete @privileged @cpu-emulation
+
 [Install]
 WantedBy=default.target

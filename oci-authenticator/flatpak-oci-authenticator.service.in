@@ -5,3 +5,21 @@ Description=flatpak oci authenticator
 BusName=org.flatpak.Authenticator.Oci
 ExecStart=@libexecdir@/flatpak-oci-authenticator
 Type=dbus
+
+# PrivateNetwork and PrivateUsers cannot be used: the service needs network
+# access for OCI registry HTTP requests and the real user identity for
+# credential stores.
+
+# read-only: needs to read user credential stores
+ProtectHome=read-only
+ProtectSystem=strict
+PrivateTmp=yes
+PrivateDevices=yes
+LockPersonality=yes
+RestrictRealtime=yes
+RestrictNamespaces=yes
+RestrictSUIDSGID=yes
+SystemCallArchitectures=native
+NoNewPrivileges=yes
+MemoryDenyWriteExecute=yes
+SystemCallFilter=~@debug @mount @obsolete @privileged @cpu-emulation
