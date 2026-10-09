@@ -192,7 +192,9 @@ ls_remote (GPtrArray     *dirs,
               if (g_strcmp0 (flatpak_deploy_data_get_origin (deploy_data), remote) != 0)
                 continue;
 
-              if (g_strcmp0 (flatpak_deploy_data_get_commit (deploy_data), checksum) == 0)
+              /* OCI remotes identify commits by their alternative image digest. */
+              if (g_strcmp0 (flatpak_deploy_data_get_commit (deploy_data), checksum) == 0 ||
+                  g_strcmp0 (flatpak_deploy_data_get_alt_id (deploy_data), checksum) == 0)
                 continue;
             }
 

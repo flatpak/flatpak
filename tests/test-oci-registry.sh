@@ -161,11 +161,21 @@ assert_file_has_content hello_out '^Hello world, from a sandbox$'
 
 ok "install"
 
+updates=$(${FLATPAK} remote-ls ${U} --updates --columns=app oci-registry)
+assert_streq "$updates" ""
+
+ok "no updates after OCI install"
+
 make_updated_app oci
 
 ${FLATPAK} build-bundle --oci $FL_GPGARGS repos/oci oci/app-image org.test.Hello >&2
 
 $client add hello latest $(pwd)/oci/app-image
+
+updates=$(${FLATPAK} remote-ls ${U} --updates --columns=app oci-registry)
+assert_streq "$updates" "org.test.Hello"
+
+ok "list OCI update"
 
 OLD_COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Hello`
 
@@ -179,6 +189,11 @@ run org.test.Hello &> hello_out
 assert_file_has_content hello_out '^Hello world, from a sandboxUPDATED$'
 
 ok "update"
+
+updates=$(${FLATPAK} remote-ls ${U} --updates --columns=app oci-registry)
+assert_streq "$updates" ""
+
+ok "no updates after OCI update"
 
 # Remove the app from the registry, check that things were removed properly
 
