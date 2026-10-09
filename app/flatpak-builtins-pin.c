@@ -112,12 +112,29 @@ flatpak_complete_pin (FlatpakCompletion *completion)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GPtrArray) dirs = NULL;
+  FlatpakDir *dir;
 
   context = g_option_context_new ("");
   if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv,
                                      FLATPAK_BUILTIN_FLAG_ONE_DIR | FLATPAK_BUILTIN_FLAG_OPTIONAL_REPO,
                                      &dirs, NULL, NULL))
     return FALSE;
+
+  dir = g_ptr_array_index (dirs, 0);
+
+  if (opt_remove)
+    {
+      g_autoptr(GPtrArray) patterns = flatpak_dir_get_config_patterns (dir, "pinned");
+
+      for (size_t pattern_index = 0; pattern_index < patterns->len; pattern_index++)
+        flatpak_complete_word (completion, "%s ",
+                               (const char *) g_ptr_array_index (patterns, pattern_index));
+
+      flatpak_complete_options (completion, global_entries);
+      flatpak_complete_options (completion, options);
+      flatpak_complete_options (completion, user_entries);
+      return TRUE;
+    }
 
   switch (completion->argc)
     {
