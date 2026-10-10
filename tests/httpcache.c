@@ -32,6 +32,7 @@ main (int argc, char *argv[])
                                url, NULL,
                                flags,
                                AT_FDCWD, dest,
+                               0,
                                NULL, NULL, NULL, &error))
     {
       g_print ("%s\n", error->message);
