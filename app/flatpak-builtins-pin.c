@@ -66,23 +66,61 @@ flatpak_builtin_pin (int argc, char **argv, GCancellable *cancellable, GError **
   if (argc == 1)
     {
       g_autoptr(GPtrArray) patterns = NULL;
+      gboolean fancy_output = flatpak_fancy_output ();
 
       patterns = flatpak_dir_get_config_patterns (dir, "pinned");
 
       if (patterns->len == 0)
         {
-          if (flatpak_fancy_output ())
+          if (fancy_output)
             g_print (_("No pinned patterns\n"));
+        }
+      else if (fancy_output)
+        {
+          g_autoptr(GPtrArray) refs = NULL;
+          size_t pattern_width = 0;
+
+          refs = flatpak_dir_list_refs (dir, FLATPAK_KINDS_RUNTIME,
+                                       cancellable, error);
+          if (refs == NULL)
+            return FALSE;
+
+          for (size_t pattern_index = 0; pattern_index < patterns->len; pattern_index++)
+            pattern_width = MAX (pattern_width,
+                                 strlen (g_ptr_array_index (patterns, pattern_index)));
+
+          g_print (_("Pinned patterns:\n"));
+
+          for (size_t pattern_index = 0; pattern_index < patterns->len; pattern_index++)
+            {
+              const char *pattern = g_ptr_array_index (patterns, pattern_index);
+              g_autofree char *filter = g_strdup_printf ("deny %s", pattern);
+              g_autoptr(GRegex) allow_refs = NULL;
+              g_autoptr(GRegex) deny_refs = NULL;
+              guint matches = 0;
+
+              if (!flatpak_parse_filters (filter, &allow_refs, &deny_refs, error))
+                return FALSE;
+
+              for (size_t ref_index = 0; ref_index < refs->len; ref_index++)
+                {
+                  FlatpakDecomposed *ref = g_ptr_array_index (refs, ref_index);
+
+                  if (!flatpak_filters_allow_ref (allow_refs, deny_refs,
+                                                  flatpak_decomposed_get_ref (ref)))
+                    matches++;
+                }
+
+              g_print ("  %-*s  ", (int) pattern_width, pattern);
+              g_print (ngettext ("%u match\n", "%u matches\n", matches), matches);
+            }
         }
       else
         {
-          if (flatpak_fancy_output ())
-            g_print (_("Pinned patterns:\n"));
-
-          for (i = 0; i < patterns->len; i++)
+          for (size_t pattern_index = 0; pattern_index < patterns->len; pattern_index++)
             {
-              const char *old = g_ptr_array_index (patterns, i);
-              g_print ("  %s\n", old);
+              const char *pattern = g_ptr_array_index (patterns, pattern_index);
+              g_print ("  %s\n", pattern);
             }
         }
     }
@@ -112,12 +150,29 @@ flatpak_complete_pin (FlatpakCompletion *completion)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GPtrArray) dirs = NULL;
+  FlatpakDir *dir;
 
   context = g_option_context_new ("");
   if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv,
                                      FLATPAK_BUILTIN_FLAG_ONE_DIR | FLATPAK_BUILTIN_FLAG_OPTIONAL_REPO,
                                      &dirs, NULL, NULL))
     return FALSE;
+
+  dir = g_ptr_array_index (dirs, 0);
+
+  if (opt_remove)
+    {
+      g_autoptr(GPtrArray) patterns = flatpak_dir_get_config_patterns (dir, "pinned");
+
+      for (size_t pattern_index = 0; pattern_index < patterns->len; pattern_index++)
+        flatpak_complete_word (completion, "%s ",
+                               (const char *) g_ptr_array_index (patterns, pattern_index));
+
+      flatpak_complete_options (completion, global_entries);
+      flatpak_complete_options (completion, options);
+      flatpak_complete_options (completion, user_entries);
+      return TRUE;
+    }
 
   switch (completion->argc)
     {
