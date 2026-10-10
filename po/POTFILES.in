@@ -59,6 +59,7 @@ common/flatpak-image-source.c
 common/flatpak-installation.c
 common/flatpak-instance.c
 common/flatpak-oci-registry.c
+common/flatpak-oci-signatures.c
 common/flatpak-progress.c
 common/flatpak-ref-utils.c
 common/flatpak-remote.c
