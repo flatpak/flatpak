@@ -599,6 +599,14 @@ set_error_from_curl (GError        **error,
     case CURLE_OPERATION_TIMEDOUT:
       code = G_IO_ERROR_TIMED_OUT;
       break;
+    case CURLE_PARTIAL_FILE:
+      code = G_IO_ERROR_PARTIAL_INPUT;
+      break;
+    case CURLE_GOT_NOTHING:
+    case CURLE_RECV_ERROR:
+    case CURLE_SEND_ERROR:
+      code = G_IO_ERROR_CONNECTION_CLOSED;
+      break;
     default:
       code =  G_IO_ERROR_FAILED;
     }

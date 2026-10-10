@@ -23,6 +23,8 @@ def parse_http_date(date):
         return None
 
 class RequestHandler(http_server.BaseHTTPRequestHandler):
+    attempts = {}
+
     def do_GET(self):
         parts = self.path.split('?', 1)
         path = parts[0]
@@ -33,6 +35,19 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
 
         response = 200
         add_headers = {}
+
+        attempt = self.attempts.get(self.path, 0)
+        self.attempts[self.path] = attempt + 1
+        if attempt == 0 and path == '/empty-reply':
+            self.close_connection = True
+            return
+        if attempt == 0 and path == '/partial-reply':
+            self.send_response(200)
+            self.send_header('Content-Length', '100')
+            self.end_headers()
+            self.wfile.write(b'incomplete')
+            self.close_connection = True
+            return
 
         if 'modified-time' in query:
             modified_since = self.headers.get("If-Modified-Since")

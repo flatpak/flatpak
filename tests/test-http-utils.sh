@@ -124,6 +124,21 @@ rm -f $test_tmpdir/output*
 
 ok 'compress after download'
 
+# A dropped response must be retried without retaining its partial contents.
+for path in /empty-reply /partial-reply; do
+    assert_ok "$path" $test_tmpdir/output
+    contents=$(cat $test_tmpdir/output)
+    assert_streq "$contents" "path=$path"
+    rm -f $test_tmpdir/output*
+done
+
+assert_ok --compressed "/partial-reply?compressed" $test_tmpdir/output
+contents=$(gunzip -c < $test_tmpdir/output)
+assert_streq "$contents" "path=/partial-reply?compressed"
+rm -f $test_tmpdir/output*
+
+ok 'retry dropped responses'
+
 # Testing that things work without xattr support
 
 if command -v setfattr >/dev/null &&
