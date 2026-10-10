@@ -126,12 +126,27 @@ flatpak_builtin_enter (int           argc,
       FlatpakInstance *instance = (FlatpakInstance *) g_ptr_array_index (instances, j);
 
       if (pid == flatpak_instance_get_pid (instance) ||
-          g_strcmp0 (pid_s, flatpak_instance_get_app (instance)) == 0 ||
           strcmp (pid_s, flatpak_instance_get_id (instance)) == 0)
         {
           pid = flatpak_instance_get_child_pid (instance);
           break;
         }
+    }
+
+  if (pid <= 0)
+    {
+      int min_child_pid = -1;
+      for (j = 0; j < instances->len; j++)
+        {
+          FlatpakInstance *instance = (FlatpakInstance *) g_ptr_array_index (instances, j);
+          if (g_strcmp0 (pid_s, flatpak_instance_get_app (instance)) == 0)
+            {
+              int child_pid = flatpak_instance_get_child_pid (instance);
+              if (min_child_pid == -1 || child_pid < min_child_pid)
+                min_child_pid = child_pid;
+            }
+        }
+      pid = min_child_pid;
     }
 
   if (pid <= 0)
