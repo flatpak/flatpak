@@ -27,13 +27,10 @@
 #include "libglnx.h"
 #include <gpgme.h>
 
+#include "flatpak-gpg-keys-private.h"
 #include "flatpak-oci-signatures-private.h"
 #include "flatpak-uri-private.h"
 #include "flatpak-utils-private.h"
-
-G_DEFINE_AUTO_CLEANUP_FREE_FUNC (gpgme_data_t, gpgme_data_release, NULL)
-G_DEFINE_AUTO_CLEANUP_FREE_FUNC (gpgme_ctx_t, gpgme_release, NULL)
-G_DEFINE_AUTO_CLEANUP_FREE_FUNC (gpgme_key_t, gpgme_key_unref, NULL)
 
 gboolean
 flatpak_remote_has_gpg_key (OstreeRepo   *repo,
@@ -46,38 +43,6 @@ flatpak_remote_has_gpg_key (OstreeRepo   *repo,
   keyring_file = g_file_get_child (ostree_repo_get_path (repo), keyring_name);
 
   return g_file_query_exists (keyring_file, NULL);
-}
-
-static void
-flatpak_gpgme_error_to_gio_error (gpgme_error_t gpg_error,
-                                  GError      **error)
-{
-  GIOErrorEnum errcode;
-
-  /* XXX This list is incomplete.  Add cases as needed. */
-
-  switch (gpgme_err_code (gpg_error))
-    {
-    /* special case - shouldn't be here */
-    case GPG_ERR_NO_ERROR:
-      g_return_if_reached ();
-
-    /* special case - abort on out-of-memory */
-    case GPG_ERR_ENOMEM:
-      g_error ("%s: out of memory",
-               gpgme_strsource (gpg_error));
-
-    case GPG_ERR_INV_VALUE:
-      errcode = G_IO_ERROR_INVALID_ARGUMENT;
-      break;
-
-    default:
-      errcode = G_IO_ERROR_FAILED;
-      break;
-    }
-
-  g_set_error (error, G_IO_ERROR, errcode, "%s: error code %d",
-               gpgme_strsource (gpg_error), gpgme_err_code (gpg_error));
 }
 
 static gboolean
@@ -118,57 +83,6 @@ read_gpg_buffer (gpgme_data_t buffer, GError **error)
     }
 
   return g_steal_pointer (&res);
-}
-
-static gboolean
-flatpak_gpgme_ctx_tmp_home_dir (gpgme_ctx_t   gpgme_ctx,
-                                GLnxTmpDir   *tmpdir,
-                                OstreeRepo   *repo,
-                                const char   *remote_name,
-                                GCancellable *cancellable,
-                                GError      **error)
-{
-  g_autofree char *tmp_home_dir_pattern = NULL;
-  gpgme_error_t gpg_error;
-  g_autoptr(GFile) keyring_file = NULL;
-  g_autofree char *keyring_name = NULL;
-
-  g_return_val_if_fail (gpgme_ctx != NULL, FALSE);
-
-  /* GPGME has no API for using multiple keyrings (aka, gpg --keyring),
-   * so we create a temporary directory and tell GPGME to use it as the
-   * home directory.  Then (optionally) create a pubring.gpg file there
-   * and hand the caller an open output stream to concatenate necessary
-   * keyring files. */
-
-  tmp_home_dir_pattern = g_build_filename (g_get_tmp_dir (), "flatpak-gpg-XXXXXX", NULL);
-
-  if (!glnx_mkdtempat (AT_FDCWD, tmp_home_dir_pattern, 0700,
-                       tmpdir, error))
-    return FALSE;
-
-  /* Not documented, but gpgme_ctx_set_engine_info() accepts NULL for
-   * the executable file name, which leaves the old setting unchanged. */
-  gpg_error = gpgme_ctx_set_engine_info (gpgme_ctx,
-                                         GPGME_PROTOCOL_OpenPGP,
-                                         NULL, tmpdir->path);
-  if (gpg_error != GPG_ERR_NO_ERROR)
-    {
-      flatpak_gpgme_error_to_gio_error (gpg_error, error);
-      return FALSE;
-    }
-
-  keyring_name = g_strdup_printf ("%s.trustedkeys.gpg", remote_name);
-  keyring_file = g_file_get_child (ostree_repo_get_path (repo), keyring_name);
-
-  if (g_file_query_exists (keyring_file, NULL) &&
-      !glnx_file_copy_at (AT_FDCWD, flatpak_file_get_path_cached (keyring_file), NULL,
-                          tmpdir->fd, "pubring.gpg",
-                          GLNX_FILE_COPY_OVERWRITE | GLNX_FILE_COPY_NOXATTRS,
-                          cancellable, error))
-    return FALSE;
-
-  return TRUE;
 }
 
 /* WARNING: This verifies that the data is signed with the correct key, but

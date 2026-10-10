@@ -103,6 +103,9 @@ FLATPAK_EXTERN void          flatpak_remote_set_default_branch (FlatpakRemote *s
 FLATPAK_EXTERN char *        flatpak_remote_get_main_ref (FlatpakRemote *self);
 FLATPAK_EXTERN void          flatpak_remote_set_main_ref (FlatpakRemote *self,
                                                           const char    *main_ref);
+FLATPAK_EXTERN char *        flatpak_remote_get_gpg_keys_url (FlatpakRemote *self);
+FLATPAK_EXTERN void          flatpak_remote_set_gpg_keys_url (FlatpakRemote *self,
+                                                              const char    *gpg_keys_url);
 FLATPAK_EXTERN gboolean      flatpak_remote_get_gpg_verify (FlatpakRemote *self);
 FLATPAK_EXTERN void          flatpak_remote_set_gpg_verify (FlatpakRemote *self,
                                                             gboolean       gpg_verify);

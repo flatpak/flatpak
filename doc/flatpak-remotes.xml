@@ -237,6 +237,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term>gpg-keys-url</term>
+
+                <listitem><para>
+                    Show the GPG keys update URL of the remote
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term>all</term>
 
                 <listitem><para>

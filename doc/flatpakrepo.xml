@@ -90,6 +90,10 @@
                     <listitem><para>The base64-encoded gpg key for the remote.</para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>GPGKeysUrl</option> (string)</term>
+                    <listitem><para>A URL for GPG key updates and rotation for the remote.</para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>DefaultBranch</option> (string)</term>
                     <listitem><para>The default branch to use for this remote.</para></listitem>
                 </varlistentry>

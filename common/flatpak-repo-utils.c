@@ -256,6 +256,18 @@ flatpak_repo_set_gpg_keys (OstreeRepo *repo,
 }
 
 gboolean
+flatpak_repo_set_gpg_keys_url (OstreeRepo  *repo,
+                               const char  *gpg_keys_url,
+                               GError     **error)
+{
+  g_autoptr(GKeyFile) config = NULL;
+
+  config = ostree_repo_copy_config (repo);
+  g_key_file_set_string (config, "flatpak", "gpg-keys-url", gpg_keys_url);
+  return ostree_repo_write_config (repo, config, error);
+}
+
+gboolean
 flatpak_repo_set_default_branch (OstreeRepo *repo,
                                  const char *branch,
                                  GError    **error)
@@ -1704,6 +1716,7 @@ add_summary_metadata (OstreeRepo   *repo,
   g_autofree char *remote_mode_str = NULL;
   g_autofree char *authenticator_name = NULL;
   g_autofree char *gpg_keys = NULL;
+  g_autofree char *gpg_keys_url = NULL;
   g_auto(GStrv) config_keys = NULL;
   int authenticator_install = -1;
   const char *collection_id;
@@ -1725,6 +1738,7 @@ add_summary_metadata (OstreeRepo   *repo,
       icon = g_key_file_get_string (config, "flatpak", "icon", NULL);
       default_branch = g_key_file_get_string (config, "flatpak", "default-branch", NULL);
       gpg_keys = g_key_file_get_string (config, "flatpak", "gpg-keys", NULL);
+      gpg_keys_url = g_key_file_get_string (config, "flatpak", "gpg-keys-url", NULL);
       redirect_url = g_key_file_get_string (config, "flatpak", "redirect-url", NULL);
       deploy_sideload_collection_id = g_key_file_get_boolean (config, "flatpak", "deploy-sideload-collection-id", NULL);
       deploy_collection_id = g_key_file_get_boolean (config, "flatpak", "deploy-collection-id", NULL);
@@ -1786,6 +1800,10 @@ add_summary_metadata (OstreeRepo   *repo,
                            g_variant_new_string (collection_id));
   else if (deploy_collection_id)
     g_info ("Ignoring deploy-collection-id=true because no collection ID is set.");
+
+  if (gpg_keys_url)
+    g_variant_builder_add (metadata_builder, "{sv}", "xa.gpg-keys-url",
+                           g_variant_new_string (gpg_keys_url));
 
   if (authenticator_name)
     g_variant_builder_add (metadata_builder, "{sv}", "xa.authenticator-name",
@@ -2796,6 +2814,7 @@ flatpak_parse_repofile (const char   *remote_name,
   g_autofree char *uri = NULL;
   g_autofree char *title = NULL;
   g_autofree char *gpg_key = NULL;
+  g_autofree char *gpg_keys_url = NULL;
   g_autofree char *signature_lookaside = NULL;
   g_autofree char *collection_id = NULL;
   g_autofree char *default_branch = NULL;
@@ -2890,6 +2909,11 @@ flatpak_parse_repofile (const char   *remote_name,
     {
       g_key_file_set_boolean (config, group, "gpg-verify", FALSE);
     }
+
+  gpg_keys_url = g_key_file_get_string (keyfile, source_group,
+                                        FLATPAK_REPO_GPGKEYSURL_KEY, NULL);
+  if (gpg_keys_url != NULL)
+    g_key_file_set_string (config, group, "xa.gpg-keys-url", gpg_keys_url);
 
   signature_lookaside = g_key_file_get_string (keyfile, source_group,
                                                FLATPAK_REPO_SIGNATURE_LOOKASIDE_KEY, NULL);
@@ -3686,6 +3710,7 @@ flatpak_bundle_load (GFile              *file,
                      char              **app_metadata,
                      guint64            *installed_size,
                      GBytes            **gpg_keys,
+                     char              **gpg_keys_url,
                      char              **collection_id,
                      GError             **error)
 {
@@ -3771,6 +3796,12 @@ flatpak_bundle_load (GFile              *file,
         *runtime_repo = NULL;
     }
 
+  if (gpg_keys_url != NULL)
+    {
+      if (!g_variant_lookup (metadata, "gpg-keys-url", "s", gpg_keys_url))
+        *gpg_keys_url = NULL;
+    }
+
   if (collection_id != NULL)
     {
       if (!g_variant_lookup (metadata, "collection-id", "s", collection_id))
@@ -3836,7 +3867,7 @@ flatpak_pull_from_bundle (OstreeRepo   *repo,
   g_autofree char *remote_collection_id = NULL;
   g_autofree char *collection_id = NULL;
 
-  metadata = flatpak_bundle_load (file, &to_checksum, NULL, NULL, NULL, &metadata_contents, NULL, NULL, &collection_id, error);
+  metadata = flatpak_bundle_load (file, &to_checksum, NULL, NULL, NULL, &metadata_contents, NULL, NULL, NULL, &collection_id, error);
   if (metadata == NULL)
     return FALSE;
 

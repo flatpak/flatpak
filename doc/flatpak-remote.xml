@@ -100,6 +100,13 @@
                     </listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>gpg-keys-url</option> (string)</term>
+                    <listitem>
+                        <para>The URL for GPG key updates.</para>
+                        <para>This is ignored if <option>gpg-verify</option> and <option>gpg-verify-summary</option> are both false</para>
+                    </listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>collection-id</option> (string)</term>
                     <listitem><para>The globally unique identifier for the upstream collection repository, to allow mirrors to be grouped.</para></listitem>
                 </varlistentry>

@@ -131,6 +131,21 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--gpg-keys-url=URL</option></term>
+
+                <listitem><para>
+                    URL for an out-of-band update location for the keyring used
+                    to sign this bundle. The URL is stored in the bundle
+                    summary, and will be set as the
+                    <literal>gpg-keys-url</literal> for the repository created
+                    when a client installs the bundle. It can later be used to
+                    download an updated keyring, which will be imported into
+                    their local keyring if cross-signed by an existing trusted
+                    key.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--from-commit=COMMIT</option></term>
 
                 <listitem><para>
