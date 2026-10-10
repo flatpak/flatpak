@@ -683,6 +683,7 @@ flatpak_complete_install (FlatpakCompletion *completion)
 
     default: /* REF */
       flatpak_complete_partial_ref (completion, kinds, opt_arch, dir, completion->argv[1]);
+      flatpak_complete_ref_id_flush (completion);
       break;
     }
 
