@@ -36,7 +36,7 @@
       bus name org.freedesktop.portal.Flatpak and the object path
       /org/freedesktop/portal/Flatpak.
 
-      This documentation describes version 8 of this interface.
+      This documentation describes version 9 of this interface.
   -->
   <interface name='org.freedesktop.portal.Flatpak'>
     <property name="version" type="u" access="read"/>
@@ -438,6 +438,33 @@
       <arg type="a{sv}" name="options" direction="in"/>
       <arg type="o" name="handle" direction="out"/>
     </method>
+
+    <!--
+        CreateExtensionManager:
+        @options: Vardict with optional further information
+        @handle: Object path for the #org.freedesktop.portal.Flatpak.ExtensionManager object
+
+        Creates an extension manager object that can be used to
+        list, install, update, and uninstall extensions (sub-refs)
+        belonging to the calling application.
+
+        Only refs whose name starts with the caller's app ID followed
+        by a dot are considered valid extensions. For example, an app
+        with ID org.example.App can manage org.example.App.Plugin.Foo.
+
+        The handle will be of the form /org/freedesktop/portal/Flatpak/extension_manager/SENDER/TOKEN,
+        where SENDER is the caller's unique name, with the initial ':' removed and
+        all '.' replaced by '_', and TOKEN is a unique token that the caller can optionally provide
+        with the 'handle_token' key in the options vardict.
+
+        Currently, no other options are accepted.
+
+        This was added in version 9 of this interface.
+    -->
+    <method name="CreateExtensionManager">
+      <arg type="a{sv}" name="options" direction="in"/>
+      <arg type="o" name="handle" direction="out"/>
+    </method>
   </interface>
 
   <interface name="org.freedesktop.portal.Flatpak.UpdateMonitor">
@@ -573,6 +600,227 @@
              </para></listitem>
            </varlistentry>
          </variablelist>
+    -->
+    <signal name="Progress">
+      <arg type="a{sv}" name="info" direction="out"/>
+    </signal>
+
+  </interface>
+
+  <interface name="org.freedesktop.portal.Flatpak.ExtensionManager">
+    <property name="version" type="u" access="read"/>
+
+    <!--
+        Close:
+
+        Ends the extension manager session and cancels any ongoing
+        operations.
+    -->
+    <method name="Close">
+    </method>
+
+    <!--
+        ListExtensions:
+        @options: Vardict with optional further information
+        @extensions: An array of dictionaries, one per extension
+
+        Lists extensions belonging to the calling application.
+        This includes both installed extensions and extensions
+        available from configured remotes.
+
+        Each extension dictionary may contain the following keys:
+        <variablelist>
+          <varlistentry>
+            <term>name s</term>
+            <listitem><para>
+              The name of the extension ref (e.g. org.example.App.Plugin.Foo).
+            </para></listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>arch s</term>
+            <listitem><para>
+              The architecture of the extension.
+            </para></listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>branch s</term>
+            <listitem><para>
+              The branch of the extension.
+            </para></listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>commit s</term>
+            <listitem><para>
+              The installed commit, or an empty string if not installed.
+            </para></listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>origin s</term>
+            <listitem><para>
+              The remote name where the extension is available.
+            </para></listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>installed b</term>
+            <listitem><para>
+              Whether the extension is currently installed.
+            </para></listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>download-size t</term>
+            <listitem><para>
+              The download size in bytes, or 0 if unknown.
+            </para></listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>installed-size t</term>
+            <listitem><para>
+              The installed size in bytes, or 0 if unknown.
+            </para></listitem>
+          </varlistentry>
+        </variablelist>
+
+        Currently, no options are accepted.
+
+        This was added in version 1 of this interface.
+    -->
+    <method name="ListExtensions">
+      <arg type="a{sv}" name="options" direction="in"/>
+      <arg type="aa{sv}" name="extensions" direction="out"/>
+    </method>
+
+    <!--
+        Install:
+        @ref: The full ref name to install (e.g. org.example.App.Plugin.Foo)
+        @options: Vardict with optional further information
+
+        Installs an extension from a configured remote.
+        The portal auto-resolves which remote has the ref,
+        preferring the parent app's origin remote.
+
+        During the installation,
+        #org.freedesktop.portal.Flatpak.ExtensionManager::Progress
+        signals will be emitted to communicate the status and progress.
+
+        The ref must start with the caller's application ID followed
+        by a dot. Attempting to install other refs will fail.
+
+        Currently, no options are accepted.
+
+        This was added in version 1 of this interface.
+    -->
+    <method name="Install">
+      <arg type="s" name="ref" direction="in"/>
+      <arg type="a{sv}" name="options" direction="in"/>
+    </method>
+
+    <!--
+        Update:
+        @ref: The full ref name to update (e.g. org.example.App.Plugin.Foo)
+        @options: Vardict with optional further information
+
+        Updates an installed extension.
+
+        During the update,
+        #org.freedesktop.portal.Flatpak.ExtensionManager::Progress
+        signals will be emitted to communicate the status and progress.
+
+        The ref must start with the caller's application ID followed
+        by a dot. Attempting to update other refs will fail.
+
+        Currently, no options are accepted.
+
+        This was added in version 1 of this interface.
+    -->
+    <method name="Update">
+      <arg type="s" name="ref" direction="in"/>
+      <arg type="a{sv}" name="options" direction="in"/>
+    </method>
+
+    <!--
+        Uninstall:
+        @ref: The full ref name to uninstall (e.g. org.example.App.Plugin.Foo)
+        @options: Vardict with optional further information
+
+        Uninstalls an installed extension.
+
+        During the uninstall,
+        #org.freedesktop.portal.Flatpak.ExtensionManager::Progress
+        signals will be emitted to communicate the status and progress.
+
+        The ref must start with the caller's application ID followed
+        by a dot. Attempting to uninstall other refs will fail.
+
+        Currently, no options are accepted.
+
+        This was added in version 1 of this interface.
+    -->
+    <method name="Uninstall">
+      <arg type="s" name="ref" direction="in"/>
+      <arg type="a{sv}" name="options" direction="in"/>
+    </method>
+
+    <!--
+      Progress:
+      @info: More information about the operation progress
+
+      Gets emitted to indicate progress of an install, update, or
+      uninstall operation. It's undefined exactly how often this is
+      sent, but it will be emitted at least once at the end with
+      non-zero status field. For each successful operation we're
+      also guaranteed to send one (and only one) signal with
+      progress 100.
+
+      The following fields may be included in the info:
+         <variablelist>
+           <varlistentry>
+             <term>n_ops u</term>
+             <listitem><para>
+               The number of operations that the transaction
+               consists of.
+             </para></listitem>
+           </varlistentry>
+           <varlistentry>
+             <term>op u</term>
+             <listitem><para>
+               The position of the currently active
+               operation.
+             </para></listitem>
+           </varlistentry>
+           <varlistentry>
+             <term>progress u</term>
+             <listitem><para>
+               The progress of the currently active
+               operation, as a number between 0 and 100.
+             </para></listitem>
+           </varlistentry>
+           <varlistentry>
+             <term>status u</term>
+             <listitem><para>
+               The overall status of the operation.
+               <simplelist>
+                 <member>0: Running</member>
+                 <member>1: Empty. No operation to perform</member>
+                 <member>2: Done</member>
+                 <member>3: Failed</member>
+               </simplelist>
+             </para></listitem>
+           </varlistentry>
+           <varlistentry>
+             <term>error s</term>
+             <listitem><para>
+               The error name, sent when status is Failed
+             </para></listitem>
+           </varlistentry>
+           <varlistentry>
+             <term>error_message s</term>
+             <listitem><para>
+               The error message, sent when status is Failed
+             </para></listitem>
+           </varlistentry>
+         </variablelist>
+
+      This was added in version 1 of this interface.
     -->
     <signal name="Progress">
       <arg type="a{sv}" name="info" direction="out"/>
