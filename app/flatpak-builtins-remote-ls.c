@@ -139,6 +139,14 @@ ls_remote (GPtrArray     *dirs,
   g_autofree char *match_branch = NULL;
   gboolean need_cache_data = FALSE;
   gboolean need_appstream_data = FALSE;
+  const char *appstream_arch = NULL;
+
+  /* AppStream data is stored per architecture. When the user asks for a
+   * specific architecture we must look up that arch's data, otherwise fields
+   * such as name/description stay empty for foreign architectures.
+   * "--arch=*" means "all architectures" so keep the host default there. */
+  if (opt_arch != NULL && strcmp (opt_arch, "*") != 0)
+    appstream_arch = opt_arch;
 
   printer = flatpak_table_printer_new ();
 
@@ -244,13 +252,13 @@ ls_remote (GPtrArray     *dirs,
             {
               g_autoptr(GError) appstream_error = NULL;
 
-              if (!update_appstream (dirs, remote, NULL, FLATPAK_APPSTREAM_TTL,
+              if (!update_appstream (dirs, remote, appstream_arch, FLATPAK_APPSTREAM_TTL,
                                      TRUE, cancellable, &appstream_error))
                 g_info ("Failed to refresh AppStream data: %s", appstream_error->message);
             }
 
           mdata = as_metadata_new ();
-          flatpak_dir_load_appstream_data (dir, remote, NULL, mdata, NULL, NULL);
+          flatpak_dir_load_appstream_data (dir, remote, appstream_arch, mdata, NULL, NULL);
         }
 
       keys = (FlatpakDecomposed **) g_hash_table_get_keys_as_array (names, &n_keys);
