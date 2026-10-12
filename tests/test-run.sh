@@ -183,6 +183,21 @@ diff -u expected container-manager >&2
 
 ok "host container-manager"
 
+# Both XDG fonts and legacy ~/.fonts should be exposed (#6869)
+mkdir -p "$XDG_DATA_HOME/fonts" "$HOME/.fonts"
+echo xdg-font > "$XDG_DATA_HOME/fonts/xdg.ttf"
+echo legacy-font > "$HOME/.fonts/legacy.ttf"
+run_sh org.test.Hello 'cat /run/host/user-fonts/xdg.ttf; cat /run/host/user-fonts-legacy/legacy.ttf; cat /run/host/font-dirs.xml' > fonts_out
+assert_file_has_content fonts_out "^xdg-font$"
+assert_file_has_content fonts_out "^legacy-font$"
+assert_file_has_content fonts_out "user-fonts-legacy"
+assert_file_has_content fonts_out "\.fonts"
+rm -rf "$XDG_DATA_HOME/fonts" "$HOME/.fonts"
+
+ok "both XDG and legacy user fonts are mounted"
+
+
+
 if run org.test.Nonexistent 2> run-error-log >&2; then
     assert_not_reached "Unexpectedly able to run non-existent runtime"
 fi

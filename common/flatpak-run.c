@@ -1124,6 +1124,11 @@ add_font_path_args (FlatpakBwrap *bwrap)
   user_font2 = g_file_new_for_path (path_build_tmp);
   g_clear_pointer (&path_build_tmp, g_free);
 
+  /* Prefer XDG fonts at the historical /run/host/user-fonts path. Also expose
+   * ~/.fonts when present: previously we skipped it whenever the XDG fonts
+   * directory existed, which dropped fonts still installed under the legacy
+   * location (common after desktop environments changed the default).
+   */
   if (g_file_query_exists (user_font1, NULL))
     {
       flatpak_bwrap_add_args (bwrap,
@@ -1133,14 +1138,20 @@ add_font_path_args (FlatpakBwrap *bwrap)
                               "\t<remap-dir as-path=\"%s\">/run/host/user-fonts</remap-dir>\n",
                               flatpak_file_get_path_cached (user_font1));
     }
-  else if (g_file_query_exists (user_font2, NULL))
+
+  if (g_file_query_exists (user_font2, NULL))
     {
+      const char *dest = g_file_query_exists (user_font1, NULL)
+                         ? "/run/host/user-fonts-legacy"
+                         : "/run/host/user-fonts";
+
       flatpak_bwrap_add_args (bwrap,
-                              "--ro-bind", flatpak_file_get_path_cached (user_font2), "/run/host/user-fonts",
+                              "--ro-bind", flatpak_file_get_path_cached (user_font2), dest,
                               NULL);
       g_string_append_printf (xml_snippet,
-                              "\t<remap-dir as-path=\"%s\">/run/host/user-fonts</remap-dir>\n",
-                              flatpak_file_get_path_cached (user_font2));
+                              "\t<remap-dir as-path=\"%s\">%s</remap-dir>\n",
+                              flatpak_file_get_path_cached (user_font2),
+                              dest);
     }
 
   path_build_tmp = g_build_filename (g_get_user_cache_dir (), "fontconfig", NULL);
