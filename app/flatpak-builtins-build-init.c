@@ -588,6 +588,8 @@ flatpak_complete_build_init (FlatpakCompletion *completion)
         flatpak_complete_ref_id (completion, refs);
       }
 
+      flatpak_complete_ref_id_flush (completion);
+
       break;
 
     case 5: /* BRANCH */

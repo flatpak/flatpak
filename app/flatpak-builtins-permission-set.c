@@ -217,6 +217,7 @@ flatpak_complete_permission_set (FlatpakCompletion *completion)
     case 3:
       flatpak_complete_partial_ref (completion, FLATPAK_KINDS_APP, FALSE, flatpak_dir_get_user (), NULL);
       flatpak_complete_partial_ref (completion, FLATPAK_KINDS_APP, FALSE, flatpak_dir_get_system_default (), NULL);
+      flatpak_complete_ref_id_flush (completion);
       break;
 
     default:
