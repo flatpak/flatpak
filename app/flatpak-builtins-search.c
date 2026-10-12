@@ -190,8 +190,14 @@ print_app (Column *columns, MatchResult *res, FlatpakTablePrinter *printer)
   const char *version = component_get_version_latest (res->app);
   g_autofree char *id = component_get_flatpak_id (res->app);
   const char *name = as_component_get_name (res->app);
-  const char *comment = as_component_get_summary (res->app);
+  const char *summary = as_component_get_summary (res->app);
+  g_autofree char *comment = NULL;
   guint i;
+
+  /* AppStream summaries are allowed to contain line breaks, but embedded
+   * newlines/tabs would break the table layout, so flatten them. */
+  comment = g_strdup (summary != NULL ? summary : "");
+  g_strdelimit (comment, "\r\n\t", ' ');
 
   for (i = 0; columns[i].name; i++)
     {
