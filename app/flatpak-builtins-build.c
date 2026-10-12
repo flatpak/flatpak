@@ -568,12 +568,13 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
    * from the host to work. For example the /home -> /var/home on atomic.
    * The interesting things to contain during the build is /var/tmp (for tempfiles shared during builds)
    * and things like /var/lib/rpm, if the installation uses packages.
+   * When --readonly is used, mount these read-only too so the build cannot change them.
    */
   flatpak_bwrap_add_args (bwrap,
-                          "--bind", flatpak_file_get_path_cached (var_lib), "/var/lib",
+                          opt_readonly ? "--ro-bind" : "--bind", flatpak_file_get_path_cached (var_lib), "/var/lib",
                           NULL);
   flatpak_bwrap_add_args (bwrap,
-                          "--bind", flatpak_file_get_path_cached (var_tmp), "/var/tmp",
+                          opt_readonly ? "--ro-bind" : "--bind", flatpak_file_get_path_cached (var_tmp), "/var/tmp",
                           NULL);
 
   flatpak_run_apply_env_vars (bwrap, app_context);
