@@ -7653,7 +7653,7 @@ flatpak_dir_current_ref (FlatpakDir   *self,
   file_info = g_file_query_info (current_link, OSTREE_GIO_FAST_QUERYINFO,
                                  G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
                                  cancellable, NULL);
-  if (file_info == NULL)
+  if (file_info == NULL || !g_file_info_get_is_symlink (file_info))
     return NULL;
 
   ref = g_strconcat ("app/", name, "/", g_file_info_get_symlink_target (file_info), NULL);
@@ -8218,7 +8218,7 @@ flatpak_dir_read_active (FlatpakDir        *self,
   file_info = g_file_query_info (active_link, OSTREE_GIO_FAST_QUERYINFO,
                                  G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
                                  cancellable, NULL);
-  if (file_info == NULL)
+  if (file_info == NULL || !g_file_info_get_is_symlink (file_info))
     return NULL;
 
   return g_strdup (g_file_info_get_symlink_target (file_info));
@@ -13117,11 +13117,18 @@ flatpak_dir_get_if_deployed (FlatpakDir        *self,
       const char *target;
 
       info = g_file_query_info (active_link,
-                                G_FILE_ATTRIBUTE_STANDARD_TYPE "," G_FILE_ATTRIBUTE_STANDARD_SYMLINK_TARGET,
+                                G_FILE_ATTRIBUTE_STANDARD_TYPE ","
+                                G_FILE_ATTRIBUTE_STANDARD_IS_SYMLINK ","
+                                G_FILE_ATTRIBUTE_STANDARD_SYMLINK_TARGET,
                                 G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
                                 NULL,
                                 NULL);
       if (info == NULL)
+        return NULL;
+
+      /* GIO only populates standard::symlink-target for actual symlinks, so
+       * make sure "active" really is one before reading it. */
+      if (!g_file_info_get_is_symlink (info))
         return NULL;
 
       target = g_file_info_get_symlink_target (info);
