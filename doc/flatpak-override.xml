@@ -51,16 +51,44 @@
             <command>flatpak override</command>.
         </para>
         <para>
-            The application overrides are saved in text files residing in $XDG_DATA_HOME/flatpak/overrides in user mode. 
+            Overrides are stored as text files in an <filename>overrides</filename>
+            directory in each installation:
+            <filename>$XDG_DATA_HOME/flatpak/overrides</filename> for the
+            per-user installation (typically
+            <filename>~/.local/share/flatpak/overrides</filename>), and
+            <filename>/var/lib/flatpak/overrides</filename> for the default
+            system-wide installation. Within such a directory, a file named
+            after an application ID holds the overrides for that application,
+            and a file named <filename>global</filename> holds overrides that
+            apply to all applications.
         </para>
         <para>
             If the application ID <arg choice="plain">APP</arg> is not specified
-            then the overrides affect all applications,
-            but the per-application overrides can override the global overrides.
+            then this command updates the <filename>global</filename> overrides,
+            otherwise it updates the per-application overrides for
+            <arg choice="plain">APP</arg>. Unless overridden with the
+            <option>--user</option>, <option>--system</option> or
+            <option>--installation</option> options, the default system-wide
+            installation is used, so for example
+            <command>flatpak override --user --unshare=network org.example.App</command>
+            updates the per-user overrides for that application.
         </para>
         <para>
-            Unless overridden with the <option>--user</option> or <option>--installation</option> options, this command
-            changes the default system-wide installation.
+            When an application is started, Flatpak merges the overrides from
+            the system-wide and per-user installations, with each subsequent
+            layer taking precedence over the previous one:
+            <orderedlist>
+              <listitem><para>System-wide <filename>global</filename></para></listitem>
+              <listitem><para>System-wide per-application</para></listitem>
+              <listitem><para>Per-user <filename>global</filename></para></listitem>
+              <listitem><para>Per-user per-application</para></listitem>
+            </orderedlist>
+            System-wide overrides only apply to applications in a system-wide
+            installation, while per-user overrides always apply, including to
+            system-installed applications. Conflicting settings are resolved by
+            these layers, so for example <option>--unshare=network</option> in a
+            per-user override takes precedence over
+            <option>--share=network</option> in a system-wide one.
         </para>
 
     </refsect1>
