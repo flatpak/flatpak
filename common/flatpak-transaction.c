@@ -566,13 +566,15 @@ flatpak_transaction_add_sideload_repo (FlatpakTransaction  *self,
  * flatpak_transaction_add_sideload_image_collection:
  * @self: a #FlatpakTransaction
  * @location: source of images for installation
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
  *
  * Adds a set of images to be used as source for installation. This is similar
  * to flatpak_transaction_add_sideload_repo(), but the Flatpaks are stored
  * as OCI images rather than ostree commits, and the images are used for
  * all OCI remotes without regard to collection ID.
  *
- * Currently @location should be either 'oci:<path>' or 'oci-archive:<path>'.
+ * Currently @location should be either `oci:&lt;path&gt;` or `oci-archive:&lt;path&gt;`.
  * Additional schemes may be added in the future.
  *
  * Since: 1.7.1
@@ -2931,7 +2933,7 @@ flatpak_transaction_add_install (FlatpakTransaction *self,
  * See flatpak_transaction_add_install() for a description of @remote.
  *
  * Returns: %TRUE on success; %FALSE with @error set on failure.
- * Since: 1.3.3.
+ * Since: 1.3.3
  */
 gboolean
 flatpak_transaction_add_rebase (FlatpakTransaction *self,
