@@ -109,6 +109,59 @@ assert_file_has_content search-results "Print a greeting"
 
 ok "search"
 
+# Check that merging duplicate refs preserves result order and the first component.
+(
+    export FLATPAK_USER_DIR="$TEST_DATA_DIR/search"
+    ${FLATPAK} remote-add --user --no-gpg-verify --prio=2 search-first "$(pwd)/repos/test" >&2
+    ${FLATPAK} remote-add --user --no-gpg-verify --prio=1 search-second "$(pwd)/repos/test" >&2
+
+    other_arch=aarch64
+    if [ "$ARCH" = "$other_arch" ]; then
+        other_arch=x86_64
+    fi
+
+    search_component () {
+        cat <<EOF
+<component type="desktop-application">
+  <id>$1</id>
+  <name>SearchFixture $2</name>
+  <bundle type="flatpak">$3</bundle>
+</component>
+EOF
+    }
+
+    for remote in search-first search-second; do
+        appstream="$FLATPAK_USER_DIR/appstream/$remote/$ARCH"
+        mkdir -p "$appstream/active"
+        {
+            echo '<components version="0.14">'
+            if [ "$remote" = search-first ]; then
+                search_component org.test.SearchAlpha Alpha "app/org.test.SearchAlpha/$ARCH/stable"
+                search_component org.test.SearchOtherArch OtherArch "app/org.test.SearchAlpha/$other_arch/stable"
+                search_component org.test.SearchBeta Beta "app/org.test.SearchBeta/$ARCH/stable"
+            else
+                search_component org.test.SearchDuplicate Duplicate "app/org.test.SearchAlpha/$ARCH/stable"
+                search_component org.test.SearchBranch Branch "app/org.test.SearchAlpha/$ARCH/beta"
+                search_component org.test.SearchRuntime Runtime "runtime/org.test.SearchAlpha/$ARCH/stable"
+            fi
+            echo '</components>'
+        } | gzip > "$appstream/active/appstream.xml.gz"
+        touch "$appstream/.timestamp"
+    done
+
+    ${FLATPAK} search --user --columns=application,name,branch,remotes SearchFixture > search-results
+    # New equal-score results precede older ones, but duplicates must retain
+    # the first component and collect remotes without moving the result.
+    diff -u search-results - >&2 <<EOF
+org.test.SearchAlpha	SearchFixture Runtime	stable	search-second
+org.test.SearchAlpha	SearchFixture Branch	beta	search-second
+org.test.SearchBeta	SearchFixture Beta	stable	search-first
+org.test.SearchAlpha	SearchFixture Alpha	stable	search-first,search-second
+EOF
+)
+
+ok "search duplicate refs and result ordering"
+
 if [ x${USE_COLLECTIONS_IN_CLIENT-} != xyes ] ; then
     install_repo test-no-gpg
     ok "install without gpg key"
