@@ -38,6 +38,9 @@
 gboolean flatpak_run_in_transient_unit (const char *app_id,
                                         const char *instance_id,
                                         GError    **error);
+gboolean flatpak_register_with_appd    (const char  *app_id,
+                                        const char  *instance_id,
+                                        GError     **error);
 
 void     flatpak_run_extend_ld_path       (FlatpakBwrap       *bwrap,
                                            const char         *prepend,

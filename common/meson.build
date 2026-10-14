@@ -143,6 +143,7 @@ libflatpak_common_deps = [
   malcontent_dep,
   polkit_agent_dep,
   xau_dep,
+  gvarlink_dep,
 ]
 built_sources = []
 
@@ -317,6 +318,7 @@ if gir_dep.found()
       public_headers,
       sources,
     ],
+    dependencies: [ libflatpak_dep ],
     symbol_prefix : 'flatpak',
   )
 endif

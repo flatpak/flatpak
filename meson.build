@@ -162,6 +162,9 @@ libglnx = subproject(
   ],
 )
 
+#subproject('libdex') # what the fuck
+subproject('varlink-glib')
+
 not_found = dependency('', required : false)
 threads_dep = dependency('threads')
 bison = find_program('bison')
@@ -179,6 +182,8 @@ dconf_dep = dependency('dconf', version : '>=0.26', required : get_option('dconf
 libsystemd_dep = dependency('libsystemd', required : get_option('systemd'))
 malcontent_dep = dependency('malcontent-0', version : '>=0.5.0', required : get_option('malcontent'))
 polkit_agent_dep = dependency('polkit-agent-1', version : '>=0.98', required : get_option('system_helper'))
+gvarlink_dep = dependency('varlink-glib-1')
+dex_dep = dependency('libdex-1')
 build_system_helper = polkit_agent_dep.found()
 variant_schema_compiler = find_program('variant-schema-compiler')
 

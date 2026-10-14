@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: LGPL-2.1-or-later
+# SPDX-FileCopyrightText: Copyright 2026 Red Hat, Inc.
+
+[wrap-git]
+url = https://gitlab.gnome.org/chergert/varlink-glib.git
+revision = 9bbe0b153f9d137755a4ee3e53e66909b6e9a27a
+depth = 1

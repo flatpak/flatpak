@@ -52,8 +52,10 @@
 
 #include <glib/gi18n-lib.h>
 
+#include <libdex.h>
 #include <gio/gio.h>
 #include "libglnx.h"
+#include <varlink-glib.h>
 
 #include "flatpak-dbus-generated.h"
 #include "flatpak-run-dbus-private.h"
@@ -636,13 +638,8 @@ flatpak_run_add_environment_args (FlatpakBwrap           *bwrap,
      ends up in the app cgroup */
   if (instance_id)
     {
-      if (!flatpak_run_in_transient_unit (app_id, instance_id, &my_error))
-        {
-          /* We still run along even if we don't get a cgroup, as nothing
-             really depends on it. Its just nice to have */
-          g_info ("Failed to run in transient scope: %s", my_error->message);
-          g_clear_error (&my_error);
-        }
+      if (!flatpak_register_with_appd (app_id, instance_id, error))
+        return FALSE;
     }
 
   if (!flatpak_run_maybe_start_dbus_proxy (bwrap, proxy_arg_bwrap,
@@ -1012,7 +1009,7 @@ flatpak_run_in_transient_unit (const char  *app_id,
 
   app_id_escaped = systemd_unit_name_escape (app_id);
   instance_id_escaped = systemd_unit_name_escape (instance_id);
-  name = g_strdup_printf ("app-flatpak-%s-%s.scope",
+  name = g_strdup_printf ("app-%s-%s.scope",
                           app_id_escaped,
                           instance_id_escaped);
 
@@ -1053,6 +1050,67 @@ out:
     g_object_unref (manager);
 
   return res;
+}
+
+gboolean
+flatpak_register_with_appd(const char  *app_id,
+                           const char  *instance_id,
+                           GError     **error)
+{
+  g_autofree char *socket_path = NULL;
+  g_autoptr (GSocketClient) client = NULL;
+  g_autoptr (GSocketConnectable) address = NULL;
+  g_autoptr (GSocketConnection) connection = NULL;
+  g_autoptr (GError) my_error = NULL;
+  g_autoptr (VarlinkClientProtocol) vl = NULL;
+  g_autoptr (VarlinkMessage) message = NULL;
+  g_autoptr (VarlinkClientMethodCall) call = NULL;
+  g_autoptr (DexFuture) future = NULL;
+
+  dex_init (); // Fuck you
+
+  socket_path = g_build_filename (g_get_user_runtime_dir(),
+                                  "systemd/io.systemd.AppInstance",
+                                  NULL);
+
+  client = g_socket_client_new ();
+  address = G_SOCKET_CONNECTABLE (g_unix_socket_address_new (socket_path));
+  connection = g_socket_client_connect (client, address, NULL, &my_error);
+  if (connection == NULL)
+    {
+      if (!g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        {
+          g_propagate_error (error, g_steal_pointer (&my_error));
+          return FALSE;
+        }
+
+      /* If appd doesn't exist on the system, fall back to our previous behavior:
+       * try to create a cgroup, and if it fails we're not really losing anything */
+      g_clear_error (&my_error);
+      if (!flatpak_run_in_transient_unit (app_id, instance_id, &my_error))
+        g_info ("Failed to run in transient scope, ignoring: %s", my_error->message);
+      return TRUE;
+    }
+
+  vl = varlink_client_protocol_new (G_IO_STREAM (connection));
+
+  message = varlink_message_new_va ("id", VARLINK_MESSAGE_PUT_STRING (app_id),
+                                    ",", "sandbox", "flatpak",
+                                    NULL);
+
+  call = varlink_client_protocol_call (vl, "io.systemd.AppInstance.Register",
+                                       message, VARLINK_METHOD_CALL_DEFAULT,
+                                       NULL, NULL, NULL);
+
+  future = varlink_client_method_call_invoke (call);
+
+  while (dex_future_is_pending (future))
+    g_main_context_iteration (NULL, TRUE);
+
+  if (!dex_await_boolean (g_steal_pointer (&future), error))
+    return FALSE;
+
+  return TRUE;
 }
 
 static void

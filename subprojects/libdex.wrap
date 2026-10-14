@@ -1,0 +1,10 @@
+[wrap-git]
+directory=libdex
+url=https://gitlab.gnome.org/GNOME/libdex.git
+push-url=ssh://git@ssh.gitlab.gnome.org:GNOME/libdex.git
+revision=main
+depth=1
+
+[provide]
+dependency_names=libdex-1
+libdex-1=libdex_dep
