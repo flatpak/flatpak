@@ -55,6 +55,7 @@ static char *opt_icon;
 static char *opt_subset;
 static char *opt_default_branch;
 static char *opt_url;
+static char *opt_gpg_keys_url;
 static char *opt_collection_id = NULL;
 static char *opt_authenticator_name = NULL;
 static char **opt_authenticator_options = NULL;
@@ -68,6 +69,7 @@ static GOptionEntry modify_options[] = {
   { "enumerate", 0, 0, G_OPTION_ARG_NONE, &opt_do_enumerate, N_("Mark the remote as enumerate"), NULL },
   { "use-for-deps", 0, 0, G_OPTION_ARG_NONE, &opt_do_deps, N_("Mark the remote as used for dependencies"), NULL },
   { "url", 0, 0, G_OPTION_ARG_STRING, &opt_url, N_("Set a new URL"), N_("URL") },
+  { "gpg-keys-url", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_keys_url, N_("Set a URL for GPG key updates/rotation"), N_("URL") },
   { "subset", 0, 0, G_OPTION_ARG_STRING, &opt_subset, N_("Set a new subset to use"), N_("SUBSET") },
   { "enable", 0, 0, G_OPTION_ARG_NONE, &opt_enable, N_("Enable the remote"), NULL },
   { "update-metadata", 0, 0, G_OPTION_ARG_NONE, &opt_update_metadata, N_("Update extra metadata from the summary file"), NULL },
@@ -136,6 +138,12 @@ get_config_from_opts (FlatpakDir *dir, const char *remote_name, gboolean *change
           g_key_file_set_string (config, group, "url", opt_url);
           g_key_file_set_boolean (config, group, "url-is-set", TRUE);
         }
+      *changed = TRUE;
+    }
+
+  if (opt_gpg_keys_url)
+    {
+      g_key_file_set_string (config, group, "xa.gpg-keys-url", opt_gpg_keys_url);
       *changed = TRUE;
     }
 

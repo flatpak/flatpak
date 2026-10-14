@@ -53,6 +53,7 @@ static char *opt_icon;
 static char *opt_subset;
 static char *opt_default_branch;
 static char *opt_url;
+static char *opt_gpg_keys_url;
 static char *opt_collection_id = NULL;
 static gboolean opt_from;
 static char **opt_gpg_import;
@@ -65,6 +66,7 @@ static gboolean opt_no_follow_redirect;
 static GOptionEntry add_options[] = {
   { "if-not-exists", 0, 0, G_OPTION_ARG_NONE, &opt_if_not_exists, N_("Do nothing if the provided remote exists"), NULL },
   { "from", 0, 0, G_OPTION_ARG_NONE, &opt_from, N_("LOCATION specifies a configuration file, not the repo location"), NULL },
+  { "gpg-keys-url", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_keys_url, N_("Set a URL for GPG key updates/rotation"), N_("URL") },
   { NULL }
 };
 
@@ -121,6 +123,9 @@ get_config_from_opts (GKeyFile *config,
       else
         g_key_file_set_string (config, group, "url", opt_url);
     }
+
+  if (opt_gpg_keys_url)
+    g_key_file_set_string (config, group, "xa.gpg-keys-url", opt_gpg_keys_url);
 
   if (opt_collection_id)
     g_key_file_set_string (config, group, "collection-id", opt_collection_id);
