@@ -106,9 +106,20 @@ char **flatpak_strv_merge (char   **strv1,
 char **flatpak_subpaths_merge (char **subpaths1,
                                char **subpaths2);
 
-GBytes * flatpak_read_stream (GInputStream * in,
-                              gboolean null_terminate,
-                              GError      **error);
+GBytes * flatpak_read_stream (GInputStream  *in,
+                              gboolean       null_terminate,
+                              GError       **error);
+
+GBytes * flatpak_read_stream_limited (GInputStream  *in,
+                                      gboolean       null_terminate,
+                                      size_t         max_size,
+                                      GError       **error);
+
+gssize flatpak_splice_stream_limited (GOutputStream  *out,
+                                      GInputStream   *in,
+                                      size_t          max_size,
+                                      GCancellable   *cancellable,
+                                      GError        **error);
 
 gboolean flatpak_bytes_save (GFile        *dest,
                              GBytes       *bytes,
@@ -175,6 +186,9 @@ GBytes *flatpak_zlib_compress_bytes   (GBytes  *bytes,
                                        GError **error);
 GBytes *flatpak_zlib_decompress_bytes (GBytes  *bytes,
                                        GError **error);
+GBytes *flatpak_zlib_decompress_bytes_limited (GBytes  *bytes,
+                                               size_t   max_decompressed_size,
+                                               GError **error);
 
 void flatpak_parse_extension_with_tag (const char *extension,
                                        char      **name,
