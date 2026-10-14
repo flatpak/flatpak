@@ -451,6 +451,7 @@ summary(
 if get_option('system_bubblewrap') == ''
   subproject(
     'bubblewrap',
+    version : '>=' + required_bwrap,
     default_options : [
       'program_prefix=flatpak-',
       'tests=false',
