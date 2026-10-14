@@ -25,7 +25,7 @@ jobs:
           sudo systemctl reload apparmor
           # Dependencies
           sudo apt-get update
-          sudo apt-get install -y libglib2.0-dev attr gettext bison  dbus gtk-doc-tools \
+          sudo apt-get install -y libglib2.0-dev attr gettext bison  dbus gi-docgen \
           libfuse3-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
           libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
           libseccomp-dev libcurl4-openssl-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \

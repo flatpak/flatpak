@@ -297,7 +297,7 @@ test_libflatpak = executable(
 )
 
 if gir_dep.found()
-  gnome.generate_gir(
+  flatpak_gir = gnome.generate_gir(
     libflatpak,
     export_packages : 'flatpak',
     extra_args : [

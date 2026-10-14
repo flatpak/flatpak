@@ -50,9 +50,9 @@ option(
   value : 'auto',
 )
 option(
-  'gtkdoc',
+  'api_docs',
   type : 'feature',
-  description : 'build API reference documentation with gtk-doc',
+  description : 'build API reference documentation with gi-docgen',
   value : 'auto',
 )
 option(

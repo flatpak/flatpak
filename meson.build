@@ -211,8 +211,11 @@ appstream_dep = dependency('appstream', version : '>=0.12.0')
 gdk_pixbuf_dep = dependency('gdk-pixbuf-2.0')
 libseccomp_dep = dependency('libseccomp', required : get_option('seccomp'))
 gir_dep = dependency('gobject-introspection-1.0', version : '>=1.40.0', required : get_option('gir'))
-gtkdoc_dep = dependency('gtk-doc', required : get_option('gtkdoc'), native : true)
-build_gtk_doc = gtkdoc_dep.found()
+gidocgen_dep = dependency('gi-docgen', required : get_option('api_docs'), native : true)
+build_api_docs = gidocgen_dep.found() and gir_dep.found()
+if build_api_docs
+  gidocgen = find_program('gi-docgen', native : true)
+endif
 
 wayland_client = dependency('wayland-client', required : get_option('wayland_security_context'))
 wayland_scanner = dependency('wayland-scanner', version : '>= 1.15', required : get_option('wayland_security_context'), native : true)
