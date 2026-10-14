@@ -1,7 +1,7 @@
 # Copyright 2022 Collabora Ltd.
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
-if build_gtk_doc
+if build_api_docs
   subdir('reference')
 endif
 

@@ -32,7 +32,7 @@ jobs:
         sudo systemctl reload apparmor
         # Dependencies
         sudo apt-get update
-        sudo apt-get install -y libglib2.0-dev attr gettext bison  dbus gtk-doc-tools \
+        sudo apt-get install -y libglib2.0-dev attr gettext bison  dbus gi-docgen \
         libfuse3-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
         libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
         libseccomp-dev libcurl4-openssl-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
@@ -47,13 +47,13 @@ jobs:
     - name: Create logs dir
       run: mkdir test-logs
     - name: configure
-      # We don't do gtk-doc or GObject-Introspection here, because they can
+      # We don't do api-docs or GObject-Introspection here, because they can
       # clash with AddressSanitizer. Instead, the clang build enables those.
       run: |
         meson setup \
           -Db_sanitize=address,undefined \
           -Dgir=disabled \
-          -Dgtkdoc=disabled \
+          -Dapi_docs=disabled \
           -Dinternal_checks=true \
           -Dinternal_tests=true \
           -Dsystem_dbus_proxy=xdg-dbus-proxy \
@@ -92,7 +92,7 @@ jobs:
       run: |
         sudo add-apt-repository ppa:flatpak/stable
         sudo apt-get update
-        sudo apt-get install -y libglib2.0-dev attr gettext bison dbus gtk-doc-tools \
+        sudo apt-get install -y libglib2.0-dev attr gettext bison dbus gi-docgen \
         libfuse-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
         libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
         libseccomp-dev libcurl4-openssl-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
@@ -112,7 +112,7 @@ jobs:
       run: |
         meson setup \
           -Dgir=disabled \
-          -Dgtkdoc=disabled \
+          -Dapi_docs=disabled \
           -Dinternal_checks=true \
           -Dinternal_tests=true \
           _build
@@ -164,7 +164,7 @@ jobs:
       run: |
         sudo add-apt-repository ppa:flatpak/stable
         sudo apt-get update
-        sudo apt-get install -y libglib2.0-dev attr gettext bison dbus gtk-doc-tools \
+        sudo apt-get install -y libglib2.0-dev attr gettext bison dbus gi-docgen \
         libfuse-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
         libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
         libseccomp-dev libcurl4-openssl-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
@@ -178,7 +178,7 @@ jobs:
       run: |
         meson setup \
           -Dgir=enabled \
-          -Dgtkdoc=enabled \
+          -Dapi_docs=enabled \
           _build
       env:
         CC: clang
@@ -207,7 +207,7 @@ jobs:
       run: |
         sudo add-apt-repository ppa:flatpak/stable
         sudo apt-get update
-        sudo apt-get install -y libglib2.0-dev attr gettext bison dbus gtk-doc-tools \
+        sudo apt-get install -y libglib2.0-dev attr gettext bison dbus gi-docgen \
         libfuse-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
         libjson-glib-dev shared-mime-info desktop-file-utils libpolkit-agent-1-dev libpolkit-gobject-1-dev \
         libseccomp-dev libcurl4-openssl-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
@@ -223,7 +223,7 @@ jobs:
       run: |
         meson setup \
           -Dgir=enabled \
-          -Dgtkdoc=enabled \
+          -Dapi_docs=enabled \
           _build
       env:
         CFLAGS: -O2
