@@ -124,7 +124,13 @@
                 <term><option>--subset=SUBSET</option></term>
 
                 <listitem><para>
-                  Limit the refs available from the remote to those that are part of the named subset.
+                  Limit the refs available from the remote to those that are
+                  part of the named subset. Some remotes publish named subsets
+                  (for example a verified-only filter); setting a subset can
+                  leave installed apps whose refs are no longer advertised.
+                  To clear a previously configured subset and use the full
+                  remote again, pass an empty value:
+                  <command>flatpak remote-modify --subset= REMOTE</command>.
                 </para></listitem>
             </varlistentry>
 
