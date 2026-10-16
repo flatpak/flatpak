@@ -125,7 +125,12 @@
                 <term><option>--bytes</option></term>
 
                 <listitem><para>
-                    Show sizes in bytes.
+                    Show sizes in bytes, without a unit suffix.
+                    This is useful when piping to tools such as
+                    <command>sort -n</command>, because the default
+                    human-readable sizes (for example
+                    <literal>1.2 GB</literal>) are not ordered correctly
+                    by ordinary numeric sort.
                 </para></listitem>
             </varlistentry>
 
@@ -347,6 +352,14 @@ org.gnome.Builder
 org.freedesktop.glxgears
 org.gnome.MyApp
 org.gnome.gedit
+</programlisting>
+
+        <para>
+            List apps ordered by installed size (largest last), using
+            machine-readable byte sizes:
+        </para>
+<programlisting>
+$ flatpak list --app --columns=size,application --bytes | sort -n -k1
 </programlisting>
 
     </refsect1>
