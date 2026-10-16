@@ -58,6 +58,26 @@
             and <filename>app/</filename> subdirectories.
         </para>
 
+        <para>
+            Do not prefix ordinary Flatpak commands with
+            <command>sudo</command>. Installing or updating system-wide
+            apps and runtimes as a normal user uses
+            <citerefentry><refentrytitle>polkit</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+            to request privilege when needed. Running
+            <command>sudo flatpak …</command> can put files under the wrong
+            installation or ownership. Use <command>sudo</command> only for
+            the few commands that must run as root to write system
+            configuration or repair the system installation, notably
+            <command>flatpak override --system</command> and
+            <command>flatpak repair --system</command>
+            (see
+            <citerefentry><refentrytitle>flatpak-override</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+            and
+            <citerefentry><refentrytitle>flatpak-repair</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
+            Prefer <option>--user</option> when a per-user installation is
+            enough.
+        </para>
+
        <para>
             System-wide remotes can be statically preconfigured by dropping
             <citerefentry><refentrytitle>flatpakrepo</refentrytitle><manvolnum>5</manvolnum></citerefentry>
