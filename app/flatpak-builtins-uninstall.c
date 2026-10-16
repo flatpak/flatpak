@@ -132,6 +132,30 @@ uninstall_dir_ensure (GHashTable *uninstall_dirs,
 }
 
 static gboolean
+flatpak_delete_user_override (const char *app_id,
+                              GError    **error)
+{
+  g_autoptr(FlatpakDir) dir = flatpak_dir_get_user ();
+  g_autoptr(GFile) override_dir = NULL;
+  g_autoptr(GFile) file = NULL;
+  g_autoptr(GError) local_error = NULL;
+
+  override_dir = g_file_get_child (flatpak_dir_get_path (dir), "overrides");
+  file = g_file_get_child (override_dir, app_id);
+
+  if (!g_file_delete (file, NULL, &local_error))
+    {
+      if (g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        return TRUE;
+
+      g_propagate_error (error, g_steal_pointer (&local_error));
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+static gboolean
 flatpak_delete_data (gboolean      yes_opt,
                      const char   *app_id,
                      GCancellable *cancellable,
@@ -142,6 +166,11 @@ flatpak_delete_data (gboolean      yes_opt,
     return TRUE;
 
   if (!flatpak_user_data_delete (app_id, cancellable, error))
+    return FALSE;
+
+  /* Also drop per-user override files (e.g. from Flatseal) so a later
+   * reinstall does not inherit leftover permissions (#4718). */
+  if (!flatpak_delete_user_override (app_id, error))
     return FALSE;
 
   return TRUE;
