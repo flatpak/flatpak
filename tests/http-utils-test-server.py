@@ -24,6 +24,7 @@ def parse_http_date(date):
 
 class RequestHandler(http_server.BaseHTTPRequestHandler):
     attempts = {}
+    retry_deadlines = {}
 
     def do_GET(self):
         parts = self.path.split('?', 1)
@@ -48,6 +49,22 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
             self.wfile.write(b'incomplete')
             self.close_connection = True
             return
+        if attempt == 0 and path in ('/status-502', '/status-503', '/status-504'):
+            response = int(path[-3:])
+        if path == '/always-unavailable':
+            response = 503
+        if path == '/retry-after':
+            mode = query.get('mode', ['seconds'])[0]
+            delay = {'seconds': 1, 'date': 2, 'cancel': 59, 'long': 60}.get(mode, 0)
+            deadline = self.retry_deadlines.setdefault(self.path, int(time.time()) + delay + 1)
+            if attempt == 0 or (delay > 0 and time.time() < deadline):
+                response = 503
+                if mode == 'date':
+                    add_headers['Retry-After'] = format_date_time(deadline)
+                elif delay > 0:
+                    add_headers['Retry-After'] = str(delay + 1)
+                else:
+                    add_headers['Retry-After'] = 'invalid'
 
         if 'modified-time' in query:
             modified_since = self.headers.get("If-Modified-Since")
