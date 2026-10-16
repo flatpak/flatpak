@@ -395,12 +395,46 @@ EOF
     ok "extension follows runtime branch change (target installed: ${target_installed})"
 done
 
-# Dependency transitions must preserve selections for SDKs and runtime families.
-for scenario in sdk runtime-family sdk-family; do
+# Parent deployments must retain a pending selection across later updates,
+# but removing the old extension must cancel that pending selection.
+for keep_selected in yes no; do
+    id=org.test.DelayedExtension.${keep_selected}
+    make_extension "${id}.Extension" 1.0
+    make_app "${id}" "org.test.Platform/${ARCH}/master" "$(extension_metadata "${id}.Extension" '1.0;')"
+    ${FLATPAK} ${U} install -y test-repo "${id}" master >&2
+    ${FLATPAK} ${U} install -y test-repo "${id}.Extension" 1.0 >&2
+    for _ in 1 2; do
+        make_app "${id}" "org.test.Platform/${ARCH}/master" "$(extension_metadata "${id}.Extension" '2.0;')"
+        ${FLATPAK} ${U} update -y "${id}" master >&2
+    done
+    if [ "${keep_selected}" = no ]; then
+        ${FLATPAK} ${U} uninstall -y "${id}.Extension" 1.0 >&2
+    fi
+    make_extension "${id}.Extension" 2.0
+    ${FLATPAK} ${U} update -y "${id}" master >&2
+    if [ "${keep_selected}" = yes ]; then
+        ${FLATPAK} ${U} info "runtime/${id}.Extension/${ARCH}/2.0" >&2
+    elif ${FLATPAK} ${U} info "runtime/${id}.Extension/${ARCH}/2.0" >&2; then
+        assert_not_reached "Removing the previous selection did not cancel branch following"
+    fi
+    ok "delayed extension publication (previous selection retained: ${keep_selected})"
+done
+
+# SDK dependencies need the same branch-following behavior as runtime
+# dependencies. Also exercise publication after the app and dependency update.
+for scenario in sdk-immediate sdk-delayed runtime-delayed sdk-merged-delayed \
+                sdk-deferred runtime-family-immediate runtime-family-delayed \
+                sdk-family-immediate sdk-family-delayed sdk-family-deferred \
+                runtime-family-unselected sdk-family-unselected \
+                sdk-direct-delayed runtime-direct-delayed \
+                sdk-family-direct-delayed runtime-family-direct-delayed \
+                sdk-direct-deferred sdk-family-direct-deferred \
+                runtime-family-direct-unselected sdk-family-direct-unselected \
+                sdk-direct-cancelled runtime-direct-cancelled; do
     id=org.test.DependencyFollow.${scenario//-/_}
     for version in 1.0 2.0; do
         platform_id="${id}.Platform"
-        if [[ ${scenario} = *-family ]] && [ "${version}" = 2.0 ]; then
+        if [[ ${scenario} = *-family-* ]] && [ "${version}" = 2.0 ]; then
             platform_id="${id}.NewPlatform"
         fi
         dir=$(mktemp -d)
@@ -413,25 +447,77 @@ $(extension_metadata "${id}.Extension" "${version};")
 EOF
         ${FLATPAK} build-export --no-update-summary --disable-sandbox --runtime repos/test "${dir}" "${version}" >&2
         rm -rf "${dir}"
-        make_extension "${id}.Extension" "${version}"
     done
+    make_extension "${id}.Extension" 1.0
+    if [[ ${scenario} = *-unselected ]]; then
+        make_extension "${id}.Extension" 3.0
+    fi
     for version in 1.0 2.0; do
         dependency="${id}.Platform/${ARCH}/${version}"
-        if [[ ${scenario} = *-family ]] && [ "${version}" = 2.0 ]; then
+        if [[ ${scenario} = *-family-* ]] && [ "${version}" = 2.0 ]; then
             dependency="${id}.NewPlatform/${ARCH}/${version}"
         fi
-        if [[ ${scenario} = sdk* ]]; then
-            make_app "${id}" "org.test.Platform/${ARCH}/master" "" "${dependency}"
+        if [[ ${scenario} = sdk-* ]]; then
+            runtime="org.test.Platform/${ARCH}/master"
+            if [ "${scenario}" = sdk-merged-delayed ]; then
+                runtime="${id}.Platform/${ARCH}/2.0"
+            fi
+            make_app "${id}" "${runtime}" "" "${dependency}"
+        else
+            make_app "${id}" "${dependency}"
+        fi
+        if [[ ${scenario} = *-immediate ]] && [ "${version}" = 2.0 ]; then
+            make_extension "${id}.Extension" 2.0
+        fi
+        if [[ ${scenario} = *-deferred ]] && [ "${version}" = 2.0 ]; then
+            # Ordinary app updates do not install the newly named SDK. Its
+            # pending selections must survive until --include-sdk is used.
+            ${FLATPAK} ${U} update -y "${id}" master >&2
+            if ${FLATPAK} ${U} info "runtime/${dependency}" >&2; then
+                assert_not_reached "Deferred SDK was installed by an ordinary app update"
+            fi
+        else
+            ${FLATPAK} ${U} install -y --or-update --include-sdk test-repo "${id}" master >&2
+        fi
+        if [ "${version}" = 1.0 ]; then
+            selected_version=1.0
+            if [[ ${scenario} = *-unselected ]]; then
+                # An unrelated installed branch is not a selection for the
+                # old dependency, even when the app changes runtime families.
+                selected_version=3.0
+            fi
+            ${FLATPAK} ${U} install -y test-repo "${id}.Extension" "${selected_version}" >&2
+        fi
+    done
+    if [[ ${scenario} != *-immediate ]]; then
+        # Exercise carrying the pending dependency selection through another
+        # parent deployment before the extension becomes available.
+        if [[ ${scenario} = sdk-* ]]; then
+            make_app "${id}" "${runtime}" "" "${dependency}"
         else
             make_app "${id}" "${dependency}"
         fi
         ${FLATPAK} ${U} install -y --or-update --include-sdk test-repo "${id}" master >&2
-        if [ "${version}" = 1.0 ]; then
-            ${FLATPAK} ${U} install -y test-repo "${id}.Extension" 1.0 >&2
+        if [[ ${scenario} = *-cancelled ]]; then
+            ${FLATPAK} ${U} uninstall -y "${id}.Extension" 1.0 >&2
         fi
-    done
-    ${FLATPAK} ${U} info "runtime/${id}.Extension/${ARCH}/2.0" >&2
-    ok "extension follows dependency transition (${scenario})"
+        make_extension "${id}.Extension" 2.0
+        if [[ ${scenario} = *-direct-* ]]; then
+            # The dependency must find its pending selections even when the
+            # app is not part of this transaction.
+            ${FLATPAK} ${U} update -y "runtime/${dependency}" >&2
+        else
+            ${FLATPAK} ${U} install -y --or-update --include-sdk test-repo "${id}" master >&2
+        fi
+    fi
+    if [[ ${scenario} = *-unselected || ${scenario} = *-cancelled ]]; then
+        if ${FLATPAK} ${U} info "runtime/${id}.Extension/${ARCH}/2.0" >&2; then
+            assert_not_reached "Dependency update followed an unselected or removed extension"
+        fi
+    else
+        ${FLATPAK} ${U} info "runtime/${id}.Extension/${ARCH}/2.0" >&2
+    fi
+    ok "extension follows dependency branch change (${scenario})"
 done
 
 done_testing

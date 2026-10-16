@@ -2277,15 +2277,16 @@ run_operation_last (FlatpakTransactionOperation *op)
 
 static GPtrArray *
 op_get_extension_selections (FlatpakTransaction          *self,
-                             FlatpakTransactionOperation *op)
+                             FlatpakTransactionOperation *op,
+                             GHashTable                  *pending_extensions)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
-  g_autoptr(GPtrArray) selections = flatpak_dir_find_extension_selections (priv->dir, op->ref);
+  g_autoptr(GPtrArray) selections = flatpak_dir_find_extension_selections (priv->dir, op->ref, pending_extensions);
   const char *dependency_keys[] = { "runtime", "sdk" };
 
   /* Dependency branch changes install a new ref. Use the selections of the
-   * old runtime/SDK of an app being updated rather than unrelated installed
-   * branches. */
+   * old runtime/SDK of an app being updated, including pending migrations
+   * saved when the app was deployed before its extensions were published. */
   for (size_t i = 0; op->related_to_ops != NULL && i < op->related_to_ops->len; i++)
     {
       FlatpakTransactionOperation *app_op = g_ptr_array_index (op->related_to_ops, i);
@@ -2313,7 +2314,7 @@ op_get_extension_selections (FlatpakTransaction          *self,
 
           /* The same app can change runtime families. Only selections with
            * a matching extension ID and arch will be applied to the new ref. */
-          old_selections = flatpak_dir_find_extension_selections (priv->dir, old_ref);
+          old_selections = flatpak_dir_find_extension_selections (priv->dir, old_ref, pending_extensions);
           for (size_t k = 0; k < old_selections->len; k++)
             {
               FlatpakDecomposed *selected = g_ptr_array_index (old_selections, k);
@@ -2330,6 +2331,7 @@ op_get_extension_selections (FlatpakTransaction          *self,
 static gboolean
 op_get_related (FlatpakTransaction           *self,
                 FlatpakTransactionOperation  *op,
+                GHashTable                   *pending_extensions,
                 GPtrArray                   **out_related,
                 GError                      **error)
 {
@@ -2363,7 +2365,7 @@ op_get_related (FlatpakTransaction           *self,
 
   if (related != NULL && op->kind != FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
     {
-      selections = op_get_extension_selections (self, op);
+      selections = op_get_extension_selections (self, op, pending_extensions);
       flatpak_dir_apply_extension_selections (priv->dir, op->ref, op->resolved_metakey, related, selections);
     }
 
@@ -2379,6 +2381,7 @@ op_get_related (FlatpakTransaction           *self,
 static gboolean
 add_related (FlatpakTransaction          *self,
              FlatpakTransactionOperation *op,
+             GHashTable                  *pending_extensions,
              GError                     **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
@@ -2388,7 +2391,7 @@ add_related (FlatpakTransaction          *self,
   if (priv->disable_related)
     return TRUE;
 
-  if (!op_get_related (self, op, &related, error))
+  if (!op_get_related (self, op, pending_extensions, &related, error))
     return FALSE;
 
   if (related == NULL)
@@ -5542,6 +5545,7 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
                               GError            **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  g_autoptr(GHashTable) pending_extensions = NULL;
   GList *l;
   gboolean succeeded = TRUE;
   gboolean needs_prune = FALSE;
@@ -5628,11 +5632,13 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
     }
 
   /* Add all related extensions */
+  if (!priv->disable_related)
+    pending_extensions = flatpak_dir_get_pending_extensions (priv->dir, NULL);
   for (l = priv->ops; l != NULL; l = l->next)
     {
       FlatpakTransactionOperation *op = l->data;
 
-      if (!op->skip && !add_related (self, op, error))
+      if (!op->skip && !add_related (self, op, pending_extensions, error))
         {
           g_assert (error == NULL || *error != NULL);
           return FALSE;

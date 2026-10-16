@@ -4403,13 +4403,157 @@ add_metadata_to_deploy_data (GVariantDict *metadata_dict,
                                  g_variant_new_string (extension_of));
 }
 
+/* Whether this extension point still exists, independently of its branches
+ * and of what is currently published in the remote. */
+static gboolean
+metadata_has_extension (GKeyFile          *metadata,
+                        FlatpakDecomposed *ref)
+{
+  g_auto(GStrv) groups = g_key_file_get_groups (metadata, NULL);
+  g_autofree char *id = flatpak_decomposed_dup_id (ref);
+
+  for (size_t i = 0; groups[i] != NULL; i++)
+    {
+      g_autofree char *extension = NULL;
+
+      if (!g_str_has_prefix (groups[i], FLATPAK_METADATA_GROUP_PREFIX_EXTENSION))
+        continue;
+
+      flatpak_parse_extension_with_tag (groups[i] + strlen (FLATPAK_METADATA_GROUP_PREFIX_EXTENSION),
+                                         &extension, NULL);
+      if (g_str_equal (id, extension) ||
+          (g_key_file_get_boolean (metadata, groups[i], FLATPAK_METADATA_KEY_SUBDIRECTORIES, NULL) &&
+           g_str_has_prefix (id, extension) && id[strlen (extension)] == '.'))
+        return TRUE;
+    }
+
+  return FALSE;
+}
+
+static void
+add_pending_extensions (FlatpakDir        *self,
+                        GHashTable        *pending_map,
+                        FlatpakDecomposed *ref,
+                        GKeyFile          *metadata,
+                        GPtrArray         *selections)
+{
+  g_autoptr(GPtrArray) installed = NULL;
+  g_autofree char *arch = flatpak_decomposed_dup_arch (ref);
+  GPtrArray *pending = g_hash_table_lookup (pending_map, flatpak_decomposed_get_ref (ref));
+
+  if (metadata != NULL)
+    {
+      installed = flatpak_dir_find_local_related_for_metadata (self, ref, NULL, metadata, NULL, NULL);
+      if (installed == NULL)
+        return;
+    }
+
+  for (size_t i = 0; i < selections->len; i++)
+    {
+      FlatpakDecomposed *selected = g_ptr_array_index (selections, i);
+      gboolean supported = FALSE;
+
+      if (!flatpak_decomposed_is_arch (selected, arch) ||
+          (metadata != NULL && !metadata_has_extension (metadata, selected)))
+        continue;
+
+      for (size_t j = 0; installed != NULL && j < installed->len; j++)
+        {
+          FlatpakRelated *rel = g_ptr_array_index (installed, j);
+
+          if (flatpak_decomposed_equal_except_branch (selected, rel->ref))
+            {
+              supported = TRUE;
+              break;
+            }
+        }
+
+      if (!supported)
+        {
+          const char *selected_ref = flatpak_decomposed_get_ref (selected);
+
+          if (pending == NULL)
+            {
+              pending = g_ptr_array_new_with_free_func (g_free);
+              g_hash_table_insert (pending_map, g_strdup (flatpak_decomposed_get_ref (ref)), pending);
+            }
+          if (!g_ptr_array_find_with_equal_func (pending, selected_ref, g_str_equal, NULL))
+            g_ptr_array_add (pending, g_strdup (selected_ref));
+        }
+    }
+}
+
+static void
+add_extension_selections_to_deploy_data (FlatpakDir        *self,
+                                        GVariantDict      *metadata_dict,
+                                        FlatpakDecomposed *ref,
+                                        GKeyFile          *metadata)
+{
+  g_autoptr(GPtrArray) selections = flatpak_dir_find_extension_selections (self, ref, NULL);
+  g_autoptr(GHashTable) old_pending = flatpak_dir_get_pending_extensions (self, ref);
+  g_autoptr(GHashTable) pending_map = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, (GDestroyNotify) g_ptr_array_unref);
+  g_auto(GVariantBuilder) builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
+  g_autoptr(FlatpakDeploy) old_deploy = NULL;
+  const char *dependency_keys[] = { "runtime", "sdk" };
+
+  g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sas}"));
+
+  /* Save only displaced selections. A new supported installation supersedes
+   * the pending selection; uninstalling the selected ref cancels it. Keeping
+   * this in deploy data makes it atomic with the parent update and lets the
+   * privileged deployment path handle system installations too. */
+  add_pending_extensions (self, pending_map, ref, metadata, selections);
+
+  if (flatpak_decomposed_is_app (ref))
+    old_deploy = flatpak_dir_load_deployed (self, ref, NULL, NULL, NULL);
+
+  /* App updates can install a new runtime/SDK branch before its extensions
+   * exist. Remember those selections under the new dependency ref, so that a
+   * subsequent update can retry even though the app now uses that branch. */
+  for (size_t i = 0; old_deploy != NULL && i < G_N_ELEMENTS (dependency_keys); i++)
+    {
+      GKeyFile *old_metadata = flatpak_deploy_get_metadata (old_deploy);
+      g_autofree char *old_pref = g_key_file_get_string (old_metadata, "Application", dependency_keys[i], NULL);
+      g_autofree char *new_pref = g_key_file_get_string (metadata, "Application", dependency_keys[i], NULL);
+      g_autoptr(FlatpakDecomposed) old_ref = NULL;
+      g_autoptr(FlatpakDecomposed) new_ref = NULL;
+      g_autoptr(FlatpakDeploy) new_deploy = NULL;
+      g_autoptr(GPtrArray) dependency_selections = NULL;
+
+      if (old_pref == NULL || new_pref == NULL)
+        continue;
+
+      old_ref = flatpak_decomposed_new_from_pref (FLATPAK_KINDS_RUNTIME, old_pref, NULL);
+      new_ref = flatpak_decomposed_new_from_pref (FLATPAK_KINDS_RUNTIME, new_pref, NULL);
+      if (old_ref == NULL || new_ref == NULL)
+        continue;
+
+      new_deploy = flatpak_dir_load_deployed (self, new_ref, NULL, NULL, NULL);
+
+      /* The app's dependency transition establishes the relationship even
+       * when the runtime/SDK ID changes. If the new SDK isn't installed yet,
+       * retain the selection and validate its extension point when available. */
+      dependency_selections = flatpak_dir_find_extension_selections (self, old_ref, old_pending);
+      add_pending_extensions (self, pending_map, new_ref,
+                              new_deploy != NULL ? flatpak_deploy_get_metadata (new_deploy) : NULL,
+                              dependency_selections);
+    }
+
+  GLNX_HASH_TABLE_FOREACH_KV (pending_map, const char *, parent_ref, GPtrArray *, pending)
+    g_variant_builder_add (&builder, "{s@as}", parent_ref,
+                           g_variant_new_strv ((const char * const *) pending->pdata, pending->len));
+
+  if (g_hash_table_size (pending_map) > 0)
+    g_variant_dict_insert_value (metadata_dict, "pending-extensions", g_variant_builder_end (&builder));
+}
+
 static GBytes *
 flatpak_dir_new_deploy_data (FlatpakDir         *self,
                              GFile              *deploy_dir,
                              GVariant           *commit_data,
                              GVariant           *commit_metadata,
                              GKeyFile           *metadata,
-                             const char         *id,
+                             FlatpakDecomposed  *ref,
                              const char         *origin,
                              const char         *commit,
                              char              **subpaths,
@@ -4417,6 +4561,7 @@ flatpak_dir_new_deploy_data (FlatpakDir         *self,
                              const char * const *previous_ids)
 {
   char *empty_subpaths[] = {NULL};
+  g_autofree char *id = flatpak_decomposed_dup_id (ref);
   g_auto(GVariantDict) metadata_dict = FLATPAK_VARIANT_DICT_INITIALIZER;
   g_autoptr(GVariant) res = NULL;
 
@@ -4432,6 +4577,7 @@ flatpak_dir_new_deploy_data (FlatpakDir         *self,
 
   add_commit_metadata_to_deploy_data (&metadata_dict, commit_metadata);
   add_metadata_to_deploy_data (&metadata_dict, metadata);
+  add_extension_selections_to_deploy_data (self, &metadata_dict, ref, metadata);
   add_appdata_to_deploy_data (&metadata_dict, deploy_dir, id);
 
   res = g_variant_ref_sink (g_variant_new ("(ss^ast@a{sv})",
@@ -10482,7 +10628,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
                                              commit_data,
                                              commit_metadata,
                                              keyfile,
-                                             ref_id,
+                                             ref,
                                              origin,
                                              checksum,
                                              (char **) subpaths,
@@ -17526,9 +17672,12 @@ flatpak_dir_find_remote_related (FlatpakDir         *self,
       related = flatpak_dir_find_remote_related_for_metadata (self, state, ref, metakey, cancellable, error);
       if (related != NULL)
         {
+          g_autoptr(GHashTable) pending = NULL;
           g_autoptr(GPtrArray) selections = NULL;
 
-          selections = flatpak_dir_find_extension_selections (self, ref);
+          if (flatpak_decomposed_is_runtime (ref))
+            pending = flatpak_dir_get_pending_extensions (self, NULL);
+          selections = flatpak_dir_find_extension_selections (self, ref, pending);
           flatpak_dir_apply_extension_selections (self, ref, metakey, related, selections);
         }
     }
@@ -17836,14 +17985,96 @@ flatpak_dir_find_local_related (FlatpakDir        *self,
   return g_steal_pointer (&related);
 }
 
-/* Resolve previous selections locally, including branches no longer available
- * in the remote. Only installed refs declared by the old parent count. */
+static void
+collect_pending_extensions (FlatpakDir        *self,
+                            FlatpakDecomposed *source_ref,
+                            GHashTable        *pending_extensions)
+{
+  g_autoptr(GBytes) deploy_data = NULL;
+  g_autoptr(GVariant) metadata = NULL;
+  g_autoptr(GVariant) pending_map = NULL;
+  GVariantIter iter;
+
+  deploy_data = flatpak_dir_get_deploy_data (self, source_ref, FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
+  if (deploy_data != NULL)
+    {
+      VarDeployDataRef deploy_ref = var_deploy_data_from_bytes (deploy_data);
+
+      metadata = g_variant_ref_sink (var_metadata_peek_as_gvariant (var_deploy_data_get_metadata (deploy_ref)));
+      pending_map = g_variant_lookup_value (metadata, "pending-extensions", G_VARIANT_TYPE ("a{sas}"));
+    }
+
+  if (pending_map == NULL)
+    return;
+
+  g_variant_iter_init (&iter, pending_map);
+  while (TRUE)
+    {
+      g_autoptr(GVariant) entry = g_variant_iter_next_value (&iter);
+      g_autoptr(GVariant) refs = NULL;
+      const char *parent_ref;
+      GPtrArray *selections;
+
+      if (entry == NULL)
+        break;
+
+      g_variant_get (entry, "{&s@as}", &parent_ref, &refs);
+      selections = g_hash_table_lookup (pending_extensions, parent_ref);
+      if (selections == NULL)
+        {
+          selections = g_ptr_array_new_with_free_func ((GDestroyNotify) flatpak_decomposed_unref);
+          g_hash_table_insert (pending_extensions, g_strdup (parent_ref), selections);
+        }
+
+      for (size_t i = 0; i < g_variant_n_children (refs); i++)
+        {
+          const char *ref_string;
+          g_autoptr(FlatpakDecomposed) selected = NULL;
+
+          g_variant_get_child (refs, i, "&s", &ref_string);
+          selected = flatpak_decomposed_new_from_ref (ref_string, NULL);
+          if (selected != NULL &&
+              !g_ptr_array_find_with_equal_func (selections, selected, (GEqualFunc) flatpak_decomposed_equal, NULL))
+            g_ptr_array_add (selections, g_steal_pointer (&selected));
+        }
+    }
+}
+
+/* Index pending migrations by their target parent, not by the app storing
+ * them. A transaction builds this once, so standalone runtime/SDK updates can
+ * resume migrations without rescanning every app for every operation. A
+ * specific source_ref limits deployment-time reads to the app being updated. */
+GHashTable *
+flatpak_dir_get_pending_extensions (FlatpakDir        *self,
+                                    FlatpakDecomposed *source_ref)
+{
+  g_autoptr(GHashTable) pending = g_hash_table_new_full (g_str_hash, g_str_equal, g_free,
+                                                       (GDestroyNotify) g_ptr_array_unref);
+
+  if (source_ref != NULL)
+    collect_pending_extensions (self, source_ref, pending);
+  else
+    {
+      g_autoptr(GPtrArray) apps = flatpak_dir_list_refs (self, FLATPAK_KINDS_APP, NULL, NULL);
+
+      for (size_t i = 0; apps != NULL && i < apps->len; i++)
+        collect_pending_extensions (self, g_ptr_array_index (apps, i), pending);
+    }
+
+  return g_steal_pointer (&pending);
+}
+
+/* Return installed selections and pending selections whose original ref is
+ * still installed. Removing that ref cancels its pending migration. */
 GPtrArray *
 flatpak_dir_find_extension_selections (FlatpakDir        *self,
-                                      FlatpakDecomposed *ref)
+                                      FlatpakDecomposed *ref,
+                                      GHashTable        *pending_extensions)
 {
   g_autoptr(GPtrArray) selections = g_ptr_array_new_with_free_func ((GDestroyNotify) flatpak_decomposed_unref);
   g_autoptr(GPtrArray) related = flatpak_dir_find_local_related (self, ref, NULL, TRUE, NULL, NULL);
+  g_autoptr(GHashTable) own_pending = flatpak_dir_get_pending_extensions (self, ref);
+  GHashTable *pending_maps[] = { own_pending, pending_extensions };
 
   for (size_t i = 0; related != NULL && i < related->len; i++)
     {
@@ -17851,6 +18082,25 @@ flatpak_dir_find_extension_selections (FlatpakDir        *self,
 
       if (!g_ptr_array_find_with_equal_func (selections, rel->ref, (GEqualFunc) flatpak_decomposed_equal, NULL))
         g_ptr_array_add (selections, flatpak_decomposed_ref (rel->ref));
+    }
+
+  for (size_t i = 0; i < G_N_ELEMENTS (pending_maps); i++)
+    {
+      GPtrArray *pending = pending_maps[i] != NULL ?
+        g_hash_table_lookup (pending_maps[i], flatpak_decomposed_get_ref (ref)) : NULL;
+
+      for (size_t j = 0; pending != NULL && j < pending->len; j++)
+        {
+          FlatpakDecomposed *selected = g_ptr_array_index (pending, j);
+          g_autoptr(GBytes) deploy_data = NULL;
+
+          if (g_ptr_array_find_with_equal_func (selections, selected, (GEqualFunc) flatpak_decomposed_equal, NULL))
+            continue;
+
+          deploy_data = flatpak_dir_get_deploy_data (self, selected, FLATPAK_DEPLOY_VERSION_ANY, NULL, NULL);
+          if (deploy_data != NULL)
+            g_ptr_array_add (selections, flatpak_decomposed_ref (selected));
+        }
     }
 
   return g_steal_pointer (&selections);

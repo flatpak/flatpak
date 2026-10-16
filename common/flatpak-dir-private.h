@@ -1035,8 +1035,11 @@ GPtrArray *           flatpak_dir_find_local_related                        (Fla
                                                                              gboolean                       deployed,
                                                                              GCancellable                  *cancellable,
                                                                              GError                       **error);
+GHashTable *          flatpak_dir_get_pending_extensions                    (FlatpakDir                    *self,
+                                                                             FlatpakDecomposed             *source_ref);
 GPtrArray *           flatpak_dir_find_extension_selections                 (FlatpakDir                    *self,
-                                                                             FlatpakDecomposed             *ref);
+                                                                             FlatpakDecomposed             *ref,
+                                                                             GHashTable                    *pending_extensions);
 void                  flatpak_dir_apply_extension_selections                (FlatpakDir                    *self,
                                                                              FlatpakDecomposed             *ref,
                                                                              GKeyFile                      *metadata,
