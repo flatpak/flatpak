@@ -43,7 +43,7 @@ static GOptionEntry options[] = {
 static Column all_columns[] = {
   { "name",        N_("Name"),        N_("Show the name"),               1, FLATPAK_ELLIPSIZE_MODE_END, 1, 1 },
   { "description", N_("Description"), N_("Show the description"),        1, FLATPAK_ELLIPSIZE_MODE_END, 1, 1 },
-  { "application", N_("Application ID"), N_("Show the application ID"),     1, FLATPAK_ELLIPSIZE_MODE_START, 1, 1 },
+  { "application", N_("Application ID"), N_("Show the application ID"),     1, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
   { "version",     N_("Version"),     N_("Show the version"),            1, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
   { "branch",      N_("Branch"),      N_("Show the application branch"), 1, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
   { "remotes",     N_("Remotes"),     N_("Show the remotes"),            1, FLATPAK_ELLIPSIZE_MODE_NONE, 1, 1 },
