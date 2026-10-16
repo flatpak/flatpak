@@ -172,4 +172,11 @@ else
     ok "xattrs # skip No setfattr or /var/tmp has user no xattr support"
 fi
 
+# Cancellation must not wait for the low-speed timeout when no body arrives.
+out=$(timeout 4 "${test_builddir}/httpcache" --cancel "http://localhost:$port/stall" $test_tmpdir/output)
+assert_streq "$out" "Cancelled"
+assert_not_has_file $test_tmpdir/output
+
+ok 'cancel stalled download'
+
 done_testing
