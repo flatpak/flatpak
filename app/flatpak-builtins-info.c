@@ -33,6 +33,7 @@
 #include "flatpak-utils-private.h"
 #include "flatpak-builtins-utils.h"
 #include "flatpak-run-private.h"
+#include "flatpak-repo-utils-private.h"
 #include "flatpak-variant-impl-private.h"
 
 static gboolean opt_user;
@@ -78,6 +79,114 @@ maybe_print_space (gboolean *first)
     *first = FALSE;
   else
     g_print (" ");
+}
+
+static gboolean
+print_bundle_info (const char *filename,
+                   GError    **error)
+{
+  g_autoptr(GFile) file = g_file_new_for_commandline_arg (filename);
+  g_autoptr(GVariant) metadata = NULL;
+  g_autoptr(FlatpakDecomposed) ref = NULL;
+  g_autofree char *commit = NULL;
+  g_autofree char *origin = NULL;
+  g_autofree char *runtime_repo = NULL;
+  g_autofree char *app_metadata = NULL;
+  g_autofree char *formatted_size = NULL;
+  g_autoptr(GKeyFile) metakey = NULL;
+  g_autofree char *runtime = NULL;
+  g_autofree char *sdk = NULL;
+  guint64 installed_size = 0;
+
+  metadata = flatpak_bundle_load (file, &commit, &ref, &origin, &runtime_repo,
+                                  &app_metadata, &installed_size, NULL, NULL, error);
+  if (metadata == NULL)
+    return FALSE;
+
+  formatted_size = g_format_size (installed_size);
+
+  if (opt_show_ref || opt_show_origin || opt_show_commit || opt_show_size ||
+      opt_show_metadata || opt_show_runtime || opt_show_sdk)
+    {
+      gboolean first = TRUE;
+
+      if (opt_show_ref)
+        {
+          maybe_print_space (&first);
+          g_print ("%s", flatpak_decomposed_get_ref (ref));
+        }
+      if (opt_show_commit)
+        {
+          maybe_print_space (&first);
+          g_print ("%s", commit ? commit : "-");
+        }
+      if (opt_show_origin)
+        {
+          maybe_print_space (&first);
+          g_print ("%s", origin ? origin : "-");
+        }
+      if (opt_show_size)
+        {
+          maybe_print_space (&first);
+          g_print ("%" G_GUINT64_FORMAT, installed_size);
+        }
+      if (opt_show_metadata)
+        {
+          maybe_print_space (&first);
+          g_print ("%s", app_metadata ? app_metadata : "");
+        }
+      if ((opt_show_runtime || opt_show_sdk) && app_metadata)
+        {
+          metakey = g_key_file_new ();
+          if (g_key_file_load_from_data (metakey, app_metadata, -1, 0, NULL))
+            {
+              runtime = g_key_file_get_string (metakey, "Application", "runtime", NULL);
+              if (runtime == NULL)
+                runtime = g_key_file_get_string (metakey, "Runtime", "runtime", NULL);
+              sdk = g_key_file_get_string (metakey, "Application", "sdk", NULL);
+              if (sdk == NULL)
+                sdk = g_key_file_get_string (metakey, "Runtime", "sdk", NULL);
+            }
+        }
+      if (opt_show_runtime)
+        {
+          maybe_print_space (&first);
+          g_print ("%s", runtime ? runtime : "-");
+        }
+      if (opt_show_sdk)
+        {
+          maybe_print_space (&first);
+          g_print ("%s", sdk ? sdk : "-");
+        }
+      g_print ("\n");
+      return TRUE;
+    }
+
+  {
+    g_autofree char *id = flatpak_decomposed_dup_id (ref);
+    g_autofree char *arch = flatpak_decomposed_dup_arch (ref);
+
+    g_print ("%s: %s\n", _("Ref"), flatpak_decomposed_get_ref (ref));
+    g_print ("%s: %s\n", _("ID"), id);
+    g_print ("%s: %s\n", _("Arch"), arch);
+    g_print ("%s: %s\n", _("Branch"), flatpak_decomposed_get_branch (ref));
+  }
+  if (commit)
+    g_print ("%s: %s\n", _("Commit"), commit);
+  g_print ("%s: %s\n", _("Installed size"), formatted_size);
+  if (origin && *origin)
+    g_print ("%s: %s\n", _("Origin"), origin);
+  if (runtime_repo && *runtime_repo)
+    g_print ("%s: %s\n", _("Runtime repo"), runtime_repo);
+  if (app_metadata && *app_metadata)
+    {
+      g_print ("%s:\n", _("Metadata"));
+      g_print ("%s", app_metadata);
+      if (!g_str_has_suffix (app_metadata, "\n"))
+        g_print ("\n");
+    }
+
+  return TRUE;
 }
 
 gboolean
@@ -128,6 +237,14 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
 
   if (argc > 3)
     return usage_error (context, _("Too many arguments"), error);
+
+  /* Local single-file bundles: inspect without installing (#6659). */
+  if (flatpak_file_arg_has_suffix (pref, ".flatpak"))
+    {
+      if (default_branch != NULL)
+        return usage_error (context, _("BRANCH cannot be specified for local bundles"), error);
+      return print_bundle_info (pref, error);
+    }
 
   kinds = FLATPAK_KINDS_APP | FLATPAK_KINDS_RUNTIME;
 
