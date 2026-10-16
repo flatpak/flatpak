@@ -61,6 +61,10 @@
         <para>
             Unless overridden with the <option>--user</option> or <option>--installation</option> options, this command
             changes the default system-wide installation.
+            Writing system-wide overrides requires root privileges
+            (for example <command>sudo flatpak override --system …</command>).
+            Prefer <option>--user</option> when a per-user override is enough;
+            do not use <command>sudo</command> with <option>--user</option>.
         </para>
 
     </refsect1>
