@@ -2284,6 +2284,7 @@ op_get_related (FlatpakTransaction           *self,
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   g_autoptr(FlatpakRemoteState) state = NULL;
   g_autoptr(GPtrArray) related = NULL;
+  g_autoptr(GPtrArray) selections = NULL;
   g_autoptr(GError) related_error = NULL;
 
   if (op->kind != FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
@@ -2307,6 +2308,12 @@ op_get_related (FlatpakTransaction           *self,
   else
     related = flatpak_dir_find_remote_related_for_metadata (priv->dir, state, op->ref,
                                                             op->resolved_metakey, NULL, &related_error);
+
+  if (related != NULL && op->kind != FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
+    {
+      selections = flatpak_dir_find_extension_selections (priv->dir, op->ref);
+      flatpak_dir_apply_extension_selections (priv->dir, op->ref, op->resolved_metakey, related, selections);
+    }
 
   if (related_error != NULL)
     g_message (_("Warning: Problem looking for related refs: %s"), related_error->message);

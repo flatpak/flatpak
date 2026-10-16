@@ -17153,6 +17153,7 @@ add_related (FlatpakDir        *self,
   g_auto(GStrv) subpaths = NULL;
   FlatpakRelated *rel;
   gboolean download;
+  gboolean can_follow_branch;
   gboolean delete = autodelete;
   gboolean auto_prune = FALSE;
   g_autoptr(GFile) unmaintained_path = NULL;
@@ -17176,26 +17177,7 @@ add_related (FlatpakDir        *self,
   download =
     flatpak_extension_matches_reason (id, download_if, !no_autodownload) ||
     deploy_data != NULL;
-
-  /* Automatic branch following: if this extension wouldn't normally be
-   * auto-downloaded, still download it if there's already an installed branch
-   * of the same extension for this arch. This handles the case where an app
-   * updates its extension version requirement. */
-  if (!download)
-    {
-      g_autoptr(GPtrArray) installed_branches =
-        flatpak_dir_list_refs_for_name (self, FLATPAK_KINDS_RUNTIME, id, NULL, NULL);
-
-      for (size_t i = 0; installed_branches && i < installed_branches->len; i++)
-        {
-          FlatpakDecomposed *installed_ref = g_ptr_array_index (installed_branches, i);
-          if (flatpak_decomposed_is_arch (installed_ref, arch))
-            {
-              download = TRUE;
-              break;
-            }
-        }
-    }
+  can_follow_branch = !download;
 
   if (!flatpak_extension_matches_reason (id, autoprune_unless, TRUE))
     auto_prune = TRUE;
@@ -17212,13 +17194,17 @@ add_related (FlatpakDir        *self,
               "installed as an unmaintained extension in ‘%s’.",
               id, flatpak_file_get_path_cached (unmaintained_path));
       download = FALSE;
+      can_follow_branch = FALSE;
     }
 
   if (g_str_has_suffix (extension, ".Debug"))
     {
       /* debug files only updated if already installed */
       if (deploy_data == NULL)
-        download = FALSE;
+        {
+          download = FALSE;
+          can_follow_branch = FALSE;
+        }
 
       /* Always remove debug */
       delete = TRUE;
@@ -17243,6 +17229,7 @@ add_related (FlatpakDir        *self,
   rel->commit = g_strdup (checksum);
   rel->subpaths = g_steal_pointer (&subpaths);
   rel->download = download;
+  rel->can_follow_branch = can_follow_branch;
   rel->delete = delete;
   rel->auto_prune = auto_prune;
 
@@ -17537,6 +17524,13 @@ flatpak_dir_find_remote_related (FlatpakDir         *self,
     {
       g_ptr_array_unref (related);
       related = flatpak_dir_find_remote_related_for_metadata (self, state, ref, metakey, cancellable, error);
+      if (related != NULL)
+        {
+          g_autoptr(GPtrArray) selections = NULL;
+
+          selections = flatpak_dir_find_extension_selections (self, ref);
+          flatpak_dir_apply_extension_selections (self, ref, metakey, related, selections);
+        }
     }
 
   return g_steal_pointer (&related);
@@ -17840,6 +17834,79 @@ flatpak_dir_find_local_related (FlatpakDir        *self,
     related = g_ptr_array_new_with_free_func ((GDestroyNotify) flatpak_related_free);
 
   return g_steal_pointer (&related);
+}
+
+/* Resolve previous selections locally, including branches no longer available
+ * in the remote. Only installed refs declared by the old parent count. */
+GPtrArray *
+flatpak_dir_find_extension_selections (FlatpakDir        *self,
+                                      FlatpakDecomposed *ref)
+{
+  g_autoptr(GPtrArray) selections = g_ptr_array_new_with_free_func ((GDestroyNotify) flatpak_decomposed_unref);
+  g_autoptr(GPtrArray) related = flatpak_dir_find_local_related (self, ref, NULL, TRUE, NULL, NULL);
+
+  for (size_t i = 0; related != NULL && i < related->len; i++)
+    {
+      FlatpakRelated *rel = g_ptr_array_index (related, i);
+
+      if (!g_ptr_array_find_with_equal_func (selections, rel->ref, (GEqualFunc) flatpak_decomposed_equal, NULL))
+        g_ptr_array_add (selections, flatpak_decomposed_ref (rel->ref));
+    }
+
+  return g_steal_pointer (&selections);
+}
+
+/* Apply the same branch-following policy to transactions and related-ref API
+ * queries. Both the old selection and any still-supported selection must be
+ * discovered locally, independently of remote availability. */
+void
+flatpak_dir_apply_extension_selections (FlatpakDir        *self,
+                                       FlatpakDecomposed *ref,
+                                       GKeyFile          *metadata,
+                                       GPtrArray         *related,
+                                       GPtrArray         *selections)
+{
+  g_autoptr(GPtrArray) installed = NULL;
+
+  if (selections->len == 0)
+    return;
+
+  installed = flatpak_dir_find_local_related_for_metadata (self, ref, NULL, metadata, NULL, NULL);
+  if (installed == NULL)
+    return;
+
+  for (size_t i = 0; i < related->len; i++)
+    {
+      FlatpakRelated *rel = g_ptr_array_index (related, i);
+      gboolean supported = FALSE;
+
+      if (rel->download || !rel->can_follow_branch)
+        continue;
+
+      for (size_t j = 0; j < installed->len; j++)
+        {
+          FlatpakRelated *installed_rel = g_ptr_array_index (installed, j);
+
+          if (flatpak_decomposed_equal_except_branch (installed_rel->ref, rel->ref))
+            {
+              supported = TRUE;
+              break;
+            }
+        }
+      if (supported)
+        continue;
+
+      for (size_t j = 0; j < selections->len; j++)
+        {
+          FlatpakDecomposed *selected = g_ptr_array_index (selections, j);
+
+          if (flatpak_decomposed_equal_except_branch (selected, rel->ref))
+            {
+              rel->download = TRUE;
+              break;
+            }
+        }
+    }
 }
 
 FlatpakDecomposed *
