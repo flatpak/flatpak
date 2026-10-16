@@ -1557,6 +1557,38 @@ get_xdg_dir_from_prefix (const char  *prefix,
         *dir = g_get_user_config_dir ();
       return TRUE;
     }
+  if (strcmp (prefix, "xdg-state") == 0)
+    {
+      /* Match the on-disk layout under the app dir (.local/state), not a
+       * sibling "state" directory, so --persist=.local/state stays
+       * compatible with older Flatpak that lacked XDG_STATE_HOME. */
+      if (where)
+        *where = ".local/state";
+      if (dir)
+        {
+#if GLIB_CHECK_VERSION (2, 72, 0)
+          *dir = g_get_user_state_dir ();
+#else
+          {
+            static const char *cached;
+
+            if (cached == NULL)
+              {
+                const char *env = g_getenv ("XDG_STATE_HOME");
+
+                if (env != NULL && *env != '\0')
+                  cached = g_strdup (env);
+                else
+                  cached = g_build_filename (g_get_home_dir (),
+                                            ".local", "state", NULL);
+              }
+
+            *dir = cached;
+          }
+#endif
+        }
+      return TRUE;
+    }
   return FALSE;
 }
 
