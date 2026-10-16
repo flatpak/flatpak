@@ -141,27 +141,6 @@ compare_by_score (MatchResult *a, MatchResult *b, gpointer user_data)
   return (int) b->score - (int) a->score;
 }
 
-static gboolean
-as_app_equal (AsComponent *app1, AsComponent *app2)
-{
-  if (app1 == app2)
-    return TRUE;
-
-  FlatpakDecomposed *app1_decomposed = g_object_get_data (G_OBJECT (app1), "decomposed");
-  FlatpakDecomposed *app2_decomposed = g_object_get_data (G_OBJECT (app2), "decomposed");
-
-  /* Ignore arch when comparing since it's not shown in the search output and
-   * we don't want duplicate results for the same app with different arches.
-   */
-  return flatpak_decomposed_equal_except_arch (app1_decomposed, app2_decomposed);
-}
-
-static int
-compare_apps (MatchResult *a, AsComponent *b)
-{
-  return !as_app_equal (a->app, b);
-}
-
 /* as_component_get_id() returns the appstream component ID which doesn't
  * necessarily match the flatpak app ID (e.g. sometimes there's a .desktop
  * suffix on the appstream ID) so this gets the flatpak app ID via the bundle
@@ -269,6 +248,8 @@ flatpak_builtin_search (int argc, char **argv, GCancellable *cancellable, GError
 
   const char *search_text = argv[1];
   GSList *matches = NULL;
+  g_autoptr(GHashTable) matches_by_ref = g_hash_table_new_full (g_str_hash, g_str_equal,
+                                                             g_free, NULL);
   guint j;
 
   // We want a store for each remote so we keep the remote information
@@ -318,17 +299,20 @@ flatpak_builtin_search (int argc, char **argv, GCancellable *cancellable, GError
                 continue;
             }
 
-          // Avoid duplicate entries, but show multiple remotes
-          GSList *list_entry = g_slist_find_custom (matches, app,
-                                                    (GCompareFunc) compare_apps);
-          MatchResult *result = NULL;
-          if (list_entry != NULL)
-            result = list_entry->data;
-          else
+          /* Merge refs across remotes and arches; arch is not shown in the output. */
+          FlatpakDecomposed *app_ref = g_object_get_data (G_OBJECT (app), "decomposed");
+          g_autofree char *id = flatpak_decomposed_dup_id (app_ref);
+          g_autofree char *key = g_strdup_printf ("%s/%s/%s",
+                                                flatpak_decomposed_get_kind_str (app_ref),
+                                                id,
+                                                flatpak_decomposed_get_branch (app_ref));
+          MatchResult *result = g_hash_table_lookup (matches_by_ref, key);
+          if (result == NULL)
             {
               result = match_result_new (app, score);
               matches = g_slist_insert_sorted_with_data (matches, result,
                                                          (GCompareDataFunc) compare_by_score, NULL);
+              g_hash_table_insert (matches_by_ref, g_steal_pointer (&key), result);
             }
           match_result_add_remote (result, remote_name);
         }
