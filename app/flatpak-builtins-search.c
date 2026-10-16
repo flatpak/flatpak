@@ -32,11 +32,15 @@
 static char *opt_arch;
 static const char **opt_cols;
 static gboolean opt_json;
+static gboolean opt_app;
+static gboolean opt_runtime;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to search for"), N_("ARCH") },
   { "columns", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_cols, N_("What information to show"), N_("FIELD,…") },
   { "json", 'j', 0, G_OPTION_ARG_NONE, &opt_json, N_("Show output in JSON format"), NULL },
+  { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, N_("Only look for applications"), NULL },
+  { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, N_("Only look for runtimes"), NULL },
   { NULL}
 };
 
@@ -260,6 +264,12 @@ flatpak_builtin_search (int argc, char **argv, GCancellable *cancellable, GError
   if (argc < 2)
     return usage_error (context, _("TEXT must be specified"), error);
 
+  if (!opt_app && !opt_runtime)
+    {
+      opt_app = TRUE;
+      opt_runtime = TRUE;
+    }
+
   columns = handle_column_args (all_columns, FALSE, opt_cols, error);
   if (columns == NULL)
     return FALSE;
@@ -303,6 +313,10 @@ flatpak_builtin_search (int argc, char **argv, GCancellable *cancellable, GError
                       as_component_get_id (app), remote_name);
               continue;
             }
+
+          if ((!opt_app && flatpak_decomposed_is_app (decomposed)) ||
+              (!opt_runtime && flatpak_decomposed_is_runtime (decomposed)))
+            continue;
 
           g_object_set_data_full (G_OBJECT (app), "decomposed", g_steal_pointer (&decomposed),
                                   (GDestroyNotify) flatpak_decomposed_unref);
