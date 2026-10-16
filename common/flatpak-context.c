@@ -1687,6 +1687,27 @@ get_xdg_user_dir_from_string (const char  *filesystem,
         *dir = g_strdup (g_get_user_special_dir (G_USER_DIRECTORY_VIDEOS));
       return TRUE;
     }
+  if (strcmp (prefix, "xdg-projects") == 0)
+    {
+      if (config_key)
+        *config_key = "XDG_PROJECTS_DIR";
+      if (dir)
+        {
+#if GLIB_CHECK_VERSION (2, 90, 0)
+          *dir = g_strdup (g_get_user_special_dir (G_USER_DIRECTORY_PROJECTS));
+#else
+          /* GLib < 2.90 has no G_USER_DIRECTORY_PROJECTS. Honour the
+           * variable set by xdg-user-dirs ≥ 0.20, else the usual default. */
+          const char *env = g_getenv ("XDG_PROJECTS_DIR");
+
+          if (env != NULL && *env != '\0')
+            *dir = g_strdup (env);
+          else
+            *dir = g_build_filename (g_get_home_dir (), "Projects", NULL);
+#endif
+        }
+      return TRUE;
+    }
   if (get_xdg_dir_from_prefix (prefix, NULL, &dir_out))
     {
       if (config_key)
