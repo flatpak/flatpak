@@ -43,7 +43,14 @@
         </para>
 
         <para>
-          Preinstalled flatpaks are defined by dropping .preinstall files into the directories <filename>/usr/share/flatpak/preinstall.d/</filename> and <filename>/etc/flatpak/preinstall.d/</filename>. The OS runs <command>flatpak preinstall -y</command> (or its GUI equivalent) on system startup, which then does the actual installation.
+          Preinstalled flatpaks are defined by dropping .preinstall files into the directories <filename>/usr/share/flatpak/preinstall.d/</filename> and <filename>/etc/flatpak/preinstall.d/</filename>. The OS runs <command>flatpak preinstall -y</command> (or its GUI equivalent) so that those flatpaks are actually installed.
+          Flatpak ships a reference systemd unit named
+          <filename>flatpak-preinstall.service</filename> that runs once on
+          first boot when enabled; distributions can enable it or ship
+          drop-ins that adjust ordering and failure handling. Later changes
+          to the preinstall list still require the OS to run
+          <command>flatpak preinstall</command> again (for example from a
+          package script or a separate timer).
         </para>
 
         <para>

@@ -474,6 +474,7 @@ endif
 
 # Used for .service files in multiple subdirectories
 service_conf_data = configuration_data()
+service_conf_data.set('bindir', get_option('prefix') / get_option('bindir'))
 service_conf_data.set('libexecdir', get_option('prefix') / get_option('libexecdir'))
 service_conf_data.set('localstatedir', get_option('prefix') / get_option('localstatedir'))
 service_conf_data.set('media_dir', get_option('prefix') / get_option('run_media_dir'))
@@ -491,6 +492,7 @@ subdir('portal')
 subdir('revokefs')
 subdir('session-helper')
 subdir('scripts')
+subdir('systemd')
 
 subdir('completion')
 subdir('doc')

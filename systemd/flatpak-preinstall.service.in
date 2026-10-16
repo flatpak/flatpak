@@ -1,0 +1,18 @@
+[Unit]
+Description=Preinstall Flatpaks
+Documentation=man:flatpak-preinstall(1)
+After=network-online.target
+Wants=network-online.target
+# Once per OS installation (first boot), not once per ordinary reboot.
+# Type=oneshot alone would still run on every boot when enabled.
+ConditionFirstBoot=yes
+
+[Service]
+Type=oneshot
+ExecStart=@bindir@/flatpak preinstall -y
+RemainAfterExit=true
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target
