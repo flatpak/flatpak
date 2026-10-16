@@ -4297,6 +4297,19 @@ flatpak_context_append_bwrap_filesystem (FlatpakContext  *context,
               continue;
             }
 
+          /* flatpak_bwrap_add_bind_arg() realpath()s the destination parent.
+           * For --persist=foo/bar that parent is ~/foo; create it so nested
+           * persist paths work when the host parent does not exist yet (#6075). */
+          {
+            g_autofree char *dest_parent = g_path_get_dirname (dest);
+
+            if (g_mkdir_with_parents (dest_parent, 0755) != 0)
+              {
+                g_warning ("Unable to create directory %s", dest_parent);
+                continue;
+              }
+          }
+
           g_autofree char *src_via_proc = g_strdup_printf ("%d", src_fd);
 
           flatpak_bwrap_add_fd (bwrap, g_steal_fd (&src_fd));

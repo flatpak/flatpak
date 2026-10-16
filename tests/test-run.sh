@@ -591,6 +591,14 @@ assert_file_has_content "$HOME/.var/app/org.test.Hello/.persist/rc" "can-persist
 
 ok "--persist=.persist persists a directory"
 
+# Nested persist paths must create missing host parents (#6075)
+rm -fr "$HOME/.var/app/org.test.Hello" "$HOME/nested"
+mkdir -p "$HOME/.var/app/org.test.Hello"
+run --command=sh --persist=nested/persist org.test.Hello -c 'echo nested-ok > nested/persist/rc'
+assert_file_has_content "$HOME/.var/app/org.test.Hello/nested/persist/rc" "^nested-ok$"
+rm -fr "$HOME/nested"
+ok "--persist=nested/persist creates host parents"
+
 rm -fr "$HOME/.var/app/org.test.Hello"
 mkdir -p "$HOME/.var/app/org.test.Hello"
 # G_DEBUG='' to avoid the deprecation warning being fatal
