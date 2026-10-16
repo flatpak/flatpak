@@ -366,4 +366,72 @@ if ${FLATPAK} ${U} info "runtime/${id}.Plugins.Unselected/${ARCH}/2.0" >&2; then
 fi
 ok "subdirectory extensions follow only selected plugins"
 
+# Runtime extension points migrate through the old runtime used by an updated
+# app, including when the target runtime is already installed for another app.
+for target_installed in no yes; do
+    id=org.test.RuntimeFollow.${target_installed}
+    for version in 1.0 2.0; do
+        dir=$(mktemp -d)
+        mkdir -p "${dir}/usr/ext" "${dir}/files"
+        cat > "${dir}/metadata" <<EOF
+[Runtime]
+name=${id}.Platform
+
+$(extension_metadata "${id}.Extension" "${version};")
+EOF
+        ${FLATPAK} build-export --no-update-summary --disable-sandbox --runtime repos/test "${dir}" "${version}" >&2
+        rm -rf "${dir}"
+        make_extension "${id}.Extension" "${version}"
+    done
+    make_app "${id}" "${id}.Platform/${ARCH}/1.0"
+    ${FLATPAK} ${U} install -y test-repo "${id}" master >&2
+    ${FLATPAK} ${U} install -y test-repo "${id}.Extension" 1.0 >&2
+    if [ "${target_installed}" = yes ]; then
+        ${FLATPAK} ${U} install -y test-repo "${id}.Platform" 2.0 >&2
+    fi
+    make_app "${id}" "${id}.Platform/${ARCH}/2.0"
+    ${FLATPAK} ${U} update -y "${id}" master >&2
+    ${FLATPAK} ${U} info "runtime/${id}.Extension/${ARCH}/2.0" >&2
+    ok "extension follows runtime branch change (target installed: ${target_installed})"
+done
+
+# Dependency transitions must preserve selections for SDKs and runtime families.
+for scenario in sdk runtime-family sdk-family; do
+    id=org.test.DependencyFollow.${scenario//-/_}
+    for version in 1.0 2.0; do
+        platform_id="${id}.Platform"
+        if [[ ${scenario} = *-family ]] && [ "${version}" = 2.0 ]; then
+            platform_id="${id}.NewPlatform"
+        fi
+        dir=$(mktemp -d)
+        mkdir -p "${dir}/usr/ext" "${dir}/files"
+        cat > "${dir}/metadata" <<EOF
+[Runtime]
+name=${platform_id}
+
+$(extension_metadata "${id}.Extension" "${version};")
+EOF
+        ${FLATPAK} build-export --no-update-summary --disable-sandbox --runtime repos/test "${dir}" "${version}" >&2
+        rm -rf "${dir}"
+        make_extension "${id}.Extension" "${version}"
+    done
+    for version in 1.0 2.0; do
+        dependency="${id}.Platform/${ARCH}/${version}"
+        if [[ ${scenario} = *-family ]] && [ "${version}" = 2.0 ]; then
+            dependency="${id}.NewPlatform/${ARCH}/${version}"
+        fi
+        if [[ ${scenario} = sdk* ]]; then
+            make_app "${id}" "org.test.Platform/${ARCH}/master" "" "${dependency}"
+        else
+            make_app "${id}" "${dependency}"
+        fi
+        ${FLATPAK} ${U} install -y --or-update --include-sdk test-repo "${id}" master >&2
+        if [ "${version}" = 1.0 ]; then
+            ${FLATPAK} ${U} install -y test-repo "${id}.Extension" 1.0 >&2
+        fi
+    done
+    ${FLATPAK} ${U} info "runtime/${id}.Extension/${ARCH}/2.0" >&2
+    ok "extension follows dependency transition (${scenario})"
+done
+
 done_testing

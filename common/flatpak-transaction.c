@@ -2275,6 +2275,58 @@ run_operation_last (FlatpakTransactionOperation *op)
   op->run_last = TRUE;
 }
 
+static GPtrArray *
+op_get_extension_selections (FlatpakTransaction          *self,
+                             FlatpakTransactionOperation *op)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  g_autoptr(GPtrArray) selections = flatpak_dir_find_extension_selections (priv->dir, op->ref);
+  const char *dependency_keys[] = { "runtime", "sdk" };
+
+  /* Dependency branch changes install a new ref. Use the selections of the
+   * old runtime/SDK of an app being updated rather than unrelated installed
+   * branches. */
+  for (size_t i = 0; op->related_to_ops != NULL && i < op->related_to_ops->len; i++)
+    {
+      FlatpakTransactionOperation *app_op = g_ptr_array_index (op->related_to_ops, i);
+
+      if (app_op->skip || !flatpak_decomposed_is_app (app_op->ref) ||
+          app_op->resolved_old_metakey == NULL)
+        continue;
+
+      for (size_t j = 0; j < G_N_ELEMENTS (dependency_keys); j++)
+        {
+          g_autofree char *old_pref = g_key_file_get_string (app_op->resolved_old_metakey, "Application", dependency_keys[j], NULL);
+          g_autofree char *new_pref = g_key_file_get_string (app_op->resolved_metakey, "Application", dependency_keys[j], NULL);
+          g_autoptr(FlatpakDecomposed) old_ref = NULL;
+          g_autoptr(FlatpakDecomposed) new_ref = NULL;
+          g_autoptr(GPtrArray) old_selections = NULL;
+
+          if (old_pref == NULL || new_pref == NULL)
+            continue;
+
+          old_ref = flatpak_decomposed_new_from_pref (FLATPAK_KINDS_RUNTIME, old_pref, NULL);
+          new_ref = flatpak_decomposed_new_from_pref (FLATPAK_KINDS_RUNTIME, new_pref, NULL);
+          if (old_ref == NULL || new_ref == NULL ||
+              !flatpak_decomposed_equal (new_ref, op->ref))
+            continue;
+
+          /* The same app can change runtime families. Only selections with
+           * a matching extension ID and arch will be applied to the new ref. */
+          old_selections = flatpak_dir_find_extension_selections (priv->dir, old_ref);
+          for (size_t k = 0; k < old_selections->len; k++)
+            {
+              FlatpakDecomposed *selected = g_ptr_array_index (old_selections, k);
+
+              if (!g_ptr_array_find_with_equal_func (selections, selected, (GEqualFunc) flatpak_decomposed_equal, NULL))
+                g_ptr_array_add (selections, flatpak_decomposed_ref (selected));
+            }
+        }
+    }
+
+  return g_steal_pointer (&selections);
+}
+
 static gboolean
 op_get_related (FlatpakTransaction           *self,
                 FlatpakTransactionOperation  *op,
@@ -2311,7 +2363,7 @@ op_get_related (FlatpakTransaction           *self,
 
   if (related != NULL && op->kind != FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
     {
-      selections = flatpak_dir_find_extension_selections (priv->dir, op->ref);
+      selections = op_get_extension_selections (self, op);
       flatpak_dir_apply_extension_selections (priv->dir, op->ref, op->resolved_metakey, related, selections);
     }
 
