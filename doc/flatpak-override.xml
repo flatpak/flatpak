@@ -543,6 +543,43 @@ key=v1;v2;
             Grant X11 socket access only when not running in a Wayland session.
         </para>
 
+        <para>
+            Start from a restrictive baseline for an application (a common
+            “deny most host access” pattern), then re-add only what is needed
+            with further <command>flatpak override</command> invocations:
+        </para>
+<programlisting>
+$ flatpak override --user \
+    --nofilesystem=host:reset \
+    --unshare=network \
+    --unshare=ipc \
+    --nosocket=x11 \
+    --nosocket=fallback-x11 \
+    --nosocket=wayland \
+    --nosocket=pulseaudio \
+    --nosocket=session-bus \
+    --nosocket=system-bus \
+    --nosocket=ssh-auth \
+    --nosocket=pcsc \
+    --nosocket=cups \
+    --nodevice=dri \
+    --disallow=devel \
+    --disallow=multiarch \
+    org.example.App
+</programlisting>
+        <para>
+            <option>--nofilesystem=host:reset</option> clears filesystem
+            permissions inherited from the app manifest. Other
+            <option>--unshare</option>, <option>--nosocket</option>,
+            <option>--nodevice</option> and <option>--disallow</option>
+            options remove the usual shared subsystems. This list is not a
+            security guarantee: portals, optional sockets added in later
+            Flatpak versions, and per-app D-Bus names may still need extra
+            overrides. Prefer granting specific paths with
+            <option>--filesystem=</option> rather than re-enabling
+            <option>host</option> or <option>home</option> wholesale.
+        </para>
+
     </refsect1>
 
     <refsect1>
