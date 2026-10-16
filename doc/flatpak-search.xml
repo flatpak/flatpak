@@ -118,6 +118,22 @@
                 </para></listitem>
             </varlistentry>
 
+            <varlistentry>
+                <term><option>--app</option></term>
+
+                <listitem><para>
+                    Only match applications, not runtimes.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--runtime</option></term>
+
+                <listitem><para>
+                    Only match runtimes, not applications.
+                </para></listitem>
+            </varlistentry>
+
         </variablelist>
     </refsect1>
 
