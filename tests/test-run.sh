@@ -751,4 +751,24 @@ else
     ok "file-forwarding empty path # SKIP (no document portal)"
 fi
 
+# --readonly should make persisted /var/lib and /var/tmp read-only (#6857)
+rm -rf readonly-test
+${FLATPAK} build-init readonly-test org.test.Readonly \
+  org.test.Platform org.test.Platform stable >&2
+${FLATPAK} build readonly-test sh -c '
+  echo original > /var/lib/marker
+  echo original > /var/tmp/marker
+' >&2
+# Writes may not fail the outer shell when redirection fails; assert markers
+# stay unchanged.
+${FLATPAK} build --readonly readonly-test sh -c '
+  echo changed > /var/lib/marker || true
+  echo changed > /var/tmp/marker || true
+' >&2
+assert_file_has_content readonly-test/var/lib/marker "^original$"
+assert_file_has_content readonly-test/var/tmp/marker "^original$"
+rm -rf readonly-test
+
+ok "build --readonly keeps /var/lib and /var/tmp read-only"
+
 done_testing
