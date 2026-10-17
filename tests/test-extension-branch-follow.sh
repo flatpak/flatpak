@@ -16,6 +16,7 @@ setup_repo () {
 make_extension () {
     local ID=$1
     local VERSION=$2
+    local CONTENT=${3:-$ID:$VERSION}
 
     local DIR
     DIR=$(mktemp -d)
@@ -26,7 +27,7 @@ name=${ID}
 EOF
     mkdir -p "${DIR}/usr"
     mkdir -p "${DIR}/files"
-    touch "${DIR}/usr/extension-$ID:$VERSION"
+    printf "%s\n" "${CONTENT}" > "${DIR}/usr/extension-$ID:$VERSION"
 
     # shellcheck disable=SC2086
     ${FLATPAK} build-export --no-update-summary --runtime ${GPGARGS-} repos/test "${DIR}" "${VERSION}" >&2
@@ -60,12 +61,12 @@ update_repo
 make_extension org.test.Extension 1.0
 
 # Install app and extension 1.0
-${FLATPAK} remote-add --user --no-gpg-verify test-repo repos/test >&2
-${FLATPAK} --user install -y test-repo org.test.Hello master >&2
-${FLATPAK} --user install -y test-repo org.test.Extension 1.0 >&2
+${FLATPAK} ${U} remote-add --no-gpg-verify test-repo repos/test >&2
+${FLATPAK} ${U} install -y test-repo org.test.Hello master >&2
+${FLATPAK} ${U} install -y test-repo org.test.Extension 1.0 >&2
 
-if ! ${FLATPAK} --user list --runtime | grep -q "org.test.Extension.*1.0"; then
-    ${FLATPAK} --user list --runtime >&2
+if ! ${FLATPAK} ${U} list --runtime | grep -q "org.test.Extension.*1.0"; then
+    ${FLATPAK} ${U} list --runtime >&2
     assert_not_reached "Extension 1.0 not installed"
 fi
 echo "# Extension 1.0 installed successfully" >&2
@@ -92,16 +93,431 @@ update_repo
 make_extension org.test.Extension 2.0
 
 # Update the app
-${FLATPAK} --user update -y --verbose org.test.Hello master >&2
+${FLATPAK} ${U} update -y --verbose org.test.Hello master >&2
 
 # Check if extension 2.0 was installed
-${FLATPAK} --user list --runtime >&2
-if ${FLATPAK} --user list --runtime | grep -q "org.test.Extension.*2.0"; then
+${FLATPAK} ${U} list --runtime >&2
+if ${FLATPAK} ${U} list --runtime | grep -q "org.test.Extension.*2.0"; then
     echo "# Success: Extension 2.0 installed automatically after branch follow"
 else
     assert_not_reached "Extension 2.0 NOT installed automatically"
 fi
 
 ok "extension branch follow"
+
+# Create app version 1 with a versions list containing the installed branch.
+mkdir -p versions-follow
+cat > versions-follow/metadata <<EOF
+[Application]
+name=org.test.VersionsFollow
+runtime=org.test.Platform/$(uname -m)/master
+sdk=org.test.Platform/$(uname -m)/master
+
+[Extension org.test.VersionsFollow.Extension]
+directory=files/ext
+versions=1.0;
+no-autodownload=true
+EOF
+mkdir -p versions-follow/files/ext
+${FLATPAK} build-finish --no-inherit-permissions versions-follow >&2
+${FLATPAK} build-export --no-update-summary --disable-sandbox repos/test versions-follow master >&2
+update_repo
+
+make_extension org.test.VersionsFollow.Extension 1.0
+
+${FLATPAK} ${U} install -y test-repo org.test.VersionsFollow master >&2
+${FLATPAK} ${U} install -y test-repo org.test.VersionsFollow.Extension 1.0 >&2
+
+# Create app version 2 with an added extension branch in versions=.
+mkdir -p versions-follow2
+cat > versions-follow2/metadata <<EOF
+[Application]
+name=org.test.VersionsFollow
+runtime=org.test.Platform/$(uname -m)/master
+sdk=org.test.Platform/$(uname -m)/master
+
+[Extension org.test.VersionsFollow.Extension]
+directory=files/ext
+versions=1.0;2.0;
+no-autodownload=true
+EOF
+mkdir -p versions-follow2/files/ext
+touch versions-follow2/files/update-marker
+${FLATPAK} build-finish --no-inherit-permissions versions-follow2 >&2
+${FLATPAK} build-export --no-update-summary --disable-sandbox repos/test versions-follow2 master >&2
+update_repo
+
+make_extension org.test.VersionsFollow.Extension 2.0
+
+${FLATPAK} ${U} update -y --verbose org.test.VersionsFollow master >&2
+${FLATPAK} ${U} list --runtime >&2
+
+if ${FLATPAK} ${U} list --runtime | grep -q "org.test.VersionsFollow.Extension.*2.0"; then
+    assert_not_reached "Extension 2.0 installed while selected 1.0 is still supported"
+fi
+
+ok "extension branch follow retains a supported selected branch"
+
+# Create app version 1 with multiple allowed extension versions
+mkdir -p multi-version
+cat > multi-version/metadata <<EOF
+[Application]
+name=org.test.MultiVersion
+runtime=org.test.Platform/$(uname -m)/master
+sdk=org.test.Platform/$(uname -m)/master
+
+[Extension org.test.MultiVersion.Extension]
+directory=files/ext
+versions=1.0;2.0;
+no-autodownload=true
+EOF
+mkdir -p multi-version/files/ext
+${FLATPAK} build-finish --no-inherit-permissions multi-version >&2
+${FLATPAK} build-export --no-update-summary --disable-sandbox repos/test multi-version master >&2
+update_repo
+
+# Create both extension branches, but only install the newer branch.
+make_extension org.test.MultiVersion.Extension 1.0
+make_extension org.test.MultiVersion.Extension 2.0
+
+${FLATPAK} ${U} install -y test-repo org.test.MultiVersion master >&2
+${FLATPAK} ${U} install -y test-repo org.test.MultiVersion.Extension 2.0 >&2
+
+if ${FLATPAK} ${U} list --runtime | grep -q "org.test.MultiVersion.Extension.*1.0"; then
+    ${FLATPAK} ${U} list --runtime >&2
+    assert_not_reached "Extension 1.0 installed before update"
+fi
+
+# Create app version 2 with the same extension metadata, so updating the app
+# checks related refs while branch 2.0 is already installed.
+mkdir -p multi-version2
+cat > multi-version2/metadata <<EOF
+[Application]
+name=org.test.MultiVersion
+runtime=org.test.Platform/$(uname -m)/master
+sdk=org.test.Platform/$(uname -m)/master
+
+[Extension org.test.MultiVersion.Extension]
+directory=files/ext
+versions=1.0;2.0;
+no-autodownload=true
+EOF
+mkdir -p multi-version2/files/ext
+touch multi-version2/files/update-marker
+${FLATPAK} build-finish --no-inherit-permissions multi-version2 >&2
+${FLATPAK} build-export --no-update-summary --disable-sandbox repos/test multi-version2 master >&2
+update_repo
+
+${FLATPAK} ${U} update -y --verbose org.test.MultiVersion master >&2
+${FLATPAK} ${U} list --runtime >&2
+
+if ${FLATPAK} ${U} list --runtime | grep -q "org.test.MultiVersion.Extension.*1.0"; then
+    assert_not_reached "Extension 1.0 should not be installed when only 2.0 was selected"
+fi
+
+ok "extension branch follow does not install unselected branch"
+
+# Updating an already-installed selected branch should not install another
+# branch from the same versions list.
+mkdir -p selected-branch-update
+cat > selected-branch-update/metadata <<EOF
+[Application]
+name=org.test.SelectedBranchUpdate
+runtime=org.test.Platform/$(uname -m)/master
+sdk=org.test.Platform/$(uname -m)/master
+
+[Extension org.test.SelectedBranchUpdate.Extension]
+directory=files/ext
+versions=1.0;2.0;
+no-autodownload=true
+EOF
+mkdir -p selected-branch-update/files/ext
+${FLATPAK} build-finish --no-inherit-permissions selected-branch-update >&2
+${FLATPAK} build-export --no-update-summary --disable-sandbox repos/test selected-branch-update master >&2
+update_repo
+
+make_extension org.test.SelectedBranchUpdate.Extension 1.0
+make_extension org.test.SelectedBranchUpdate.Extension 2.0 old
+
+${FLATPAK} ${U} install -y test-repo org.test.SelectedBranchUpdate master >&2
+${FLATPAK} ${U} install -y test-repo org.test.SelectedBranchUpdate.Extension 2.0 >&2
+
+old_commit=$(${FLATPAK} ${U} info --show-commit runtime/org.test.SelectedBranchUpdate.Extension/${ARCH}/2.0)
+
+make_extension org.test.SelectedBranchUpdate.Extension 2.0 new
+
+mkdir -p selected-branch-update2
+cat > selected-branch-update2/metadata <<EOF
+[Application]
+name=org.test.SelectedBranchUpdate
+runtime=org.test.Platform/$(uname -m)/master
+sdk=org.test.Platform/$(uname -m)/master
+
+[Extension org.test.SelectedBranchUpdate.Extension]
+directory=files/ext
+versions=1.0;2.0;
+no-autodownload=true
+EOF
+mkdir -p selected-branch-update2/files/ext
+touch selected-branch-update2/files/update-marker
+${FLATPAK} build-finish --no-inherit-permissions selected-branch-update2 >&2
+${FLATPAK} build-export --no-update-summary --disable-sandbox repos/test selected-branch-update2 master >&2
+update_repo
+
+${FLATPAK} ${U} update -y --verbose org.test.SelectedBranchUpdate master >&2
+${FLATPAK} ${U} list --runtime >&2
+
+new_commit=$(${FLATPAK} ${U} info --show-commit runtime/org.test.SelectedBranchUpdate.Extension/${ARCH}/2.0)
+assert_not_streq "${old_commit}" "${new_commit}"
+
+if ${FLATPAK} ${U} list --runtime | grep -q "org.test.SelectedBranchUpdate.Extension.*1.0"; then
+    assert_not_reached "Extension 1.0 should not be installed while updating selected 2.0 branch"
+fi
+
+ok "extension branch follow updates selected branch only"
+
+app_revision=0
+make_app () {
+    local id=$1
+    local runtime=$2
+    local extension_metadata=${3-}
+    local dir
+    dir=$(mktemp -d)
+    mkdir -p "${dir}/files"
+    app_revision=$((app_revision + 1))
+    printf '%s\n' "${app_revision}" > "${dir}/files/revision"
+    cat > "${dir}/metadata" <<EOF
+[Application]
+name=${id}
+runtime=${runtime}
+sdk=${4:-${runtime}}
+
+${extension_metadata}
+EOF
+    ${FLATPAK} build-finish --no-inherit-permissions "${dir}" >&2
+    ${FLATPAK} build-export --no-update-summary --disable-sandbox repos/test "${dir}" master >&2
+    rm -rf "${dir}"
+    update_repo
+}
+
+extension_metadata () {
+    cat <<EOF
+[Extension $1]
+directory=ext
+versions=$2
+no-autodownload=true
+EOF
+}
+
+# A branch listed by the old metadata can still be the required replacement
+# when the selected branch is removed. The old ref need not exist remotely.
+id=org.test.RetiredBranch
+make_extension "${id}.Extension" 1.0
+make_extension "${id}.Extension" 2.0
+make_app "${id}" "org.test.Platform/${ARCH}/master" "$(extension_metadata "${id}.Extension" '1.0;2.0;')"
+${FLATPAK} ${U} install -y test-repo "${id}" master >&2
+${FLATPAK} ${U} install -y test-repo "${id}.Extension" 1.0 >&2
+ostree refs --repo=repos/test --delete "runtime/${id}.Extension/${ARCH}/1.0"
+make_app "${id}" "org.test.Platform/${ARCH}/master" "$(extension_metadata "${id}.Extension" '1.0;2.0;')"
+${FLATPAK} ${U} update -y "${id}" master >&2
+if ${FLATPAK} ${U} info "runtime/${id}.Extension/${ARCH}/2.0" >&2; then
+    assert_not_reached "Supported installed branch ignored because it disappeared remotely"
+fi
+ok "extension retains a supported branch which disappeared remotely"
+
+make_app "${id}" "org.test.Platform/${ARCH}/master" "$(extension_metadata "${id}.Extension" '2.0;')"
+${FLATPAK} ${U} update -y "${id}" master >&2
+${FLATPAK} ${U} info "runtime/${id}.Extension/${ARCH}/2.0" >&2
+ok "extension follows a replacement already listed in old metadata after remote retirement"
+
+# Installing a different branch for an unrelated parent is not an opt-in for
+# an app which never supported that branch.
+id=org.test.UnselectedExtension
+make_extension "${id}.Extension" 1.0
+make_extension "${id}.Extension" 2.0
+make_app "${id}" "org.test.Platform/${ARCH}/master" "$(extension_metadata "${id}.Extension" '1.0;')"
+${FLATPAK} ${U} install -y test-repo "${id}" master >&2
+${FLATPAK} ${U} install -y test-repo "${id}.Extension" 2.0 >&2
+make_extension "${id}.Extension" 3.0
+make_app "${id}" "org.test.Platform/${ARCH}/master" "$(extension_metadata "${id}.Extension" '3.0;')"
+${FLATPAK} ${U} update -y "${id}" master >&2
+if ${FLATPAK} ${U} info "runtime/${id}.Extension/${ARCH}/3.0" >&2; then
+    assert_not_reached "Unrelated installed extension branch triggered branch following"
+fi
+ok "extension branch follow requires a previous selection for the parent"
+
+# Subdirectory extensions follow only the plugins that the user selected, not
+# every plugin available under the extension point's prefix.
+id=org.test.PluginFollow
+for plugin in Selected Unselected; do
+    make_extension "${id}.Plugins.${plugin}" 1.0
+    make_extension "${id}.Plugins.${plugin}" 2.0
+done
+make_app "${id}" "org.test.Platform/${ARCH}/master" "$(extension_metadata "${id}.Plugins" '1.0;')
+subdirectories=true"
+${FLATPAK} ${U} install -y test-repo "${id}" master >&2
+${FLATPAK} ${U} install -y test-repo "${id}.Plugins.Selected" 1.0 >&2
+make_app "${id}" "org.test.Platform/${ARCH}/master" "$(extension_metadata "${id}.Plugins" '2.0;')
+subdirectories=true"
+${FLATPAK} ${U} update -y "${id}" master >&2
+${FLATPAK} ${U} info "runtime/${id}.Plugins.Selected/${ARCH}/2.0" >&2
+if ${FLATPAK} ${U} info "runtime/${id}.Plugins.Unselected/${ARCH}/2.0" >&2; then
+    assert_not_reached "Unselected subdirectory extension installed during branch following"
+fi
+ok "subdirectory extensions follow only selected plugins"
+
+# Runtime extension points migrate through the old runtime used by an updated
+# app, including when the target runtime is already installed for another app.
+for target_installed in no yes; do
+    id=org.test.RuntimeFollow.${target_installed}
+    for version in 1.0 2.0; do
+        dir=$(mktemp -d)
+        mkdir -p "${dir}/usr/ext" "${dir}/files"
+        cat > "${dir}/metadata" <<EOF
+[Runtime]
+name=${id}.Platform
+
+$(extension_metadata "${id}.Extension" "${version};")
+EOF
+        ${FLATPAK} build-export --no-update-summary --disable-sandbox --runtime repos/test "${dir}" "${version}" >&2
+        rm -rf "${dir}"
+        make_extension "${id}.Extension" "${version}"
+    done
+    make_app "${id}" "${id}.Platform/${ARCH}/1.0"
+    ${FLATPAK} ${U} install -y test-repo "${id}" master >&2
+    ${FLATPAK} ${U} install -y test-repo "${id}.Extension" 1.0 >&2
+    if [ "${target_installed}" = yes ]; then
+        ${FLATPAK} ${U} install -y test-repo "${id}.Platform" 2.0 >&2
+    fi
+    make_app "${id}" "${id}.Platform/${ARCH}/2.0"
+    ${FLATPAK} ${U} update -y "${id}" master >&2
+    ${FLATPAK} ${U} info "runtime/${id}.Extension/${ARCH}/2.0" >&2
+    ok "extension follows runtime branch change (target installed: ${target_installed})"
+done
+
+# Parent deployments must retain a pending selection across later updates,
+# but removing the old extension must cancel that pending selection.
+for keep_selected in yes no; do
+    id=org.test.DelayedExtension.${keep_selected}
+    make_extension "${id}.Extension" 1.0
+    make_app "${id}" "org.test.Platform/${ARCH}/master" "$(extension_metadata "${id}.Extension" '1.0;')"
+    ${FLATPAK} ${U} install -y test-repo "${id}" master >&2
+    ${FLATPAK} ${U} install -y test-repo "${id}.Extension" 1.0 >&2
+    for _ in 1 2; do
+        make_app "${id}" "org.test.Platform/${ARCH}/master" "$(extension_metadata "${id}.Extension" '2.0;')"
+        ${FLATPAK} ${U} update -y "${id}" master >&2
+    done
+    if [ "${keep_selected}" = no ]; then
+        ${FLATPAK} ${U} uninstall -y "${id}.Extension" 1.0 >&2
+    fi
+    make_extension "${id}.Extension" 2.0
+    ${FLATPAK} ${U} update -y "${id}" master >&2
+    if [ "${keep_selected}" = yes ]; then
+        ${FLATPAK} ${U} info "runtime/${id}.Extension/${ARCH}/2.0" >&2
+    elif ${FLATPAK} ${U} info "runtime/${id}.Extension/${ARCH}/2.0" >&2; then
+        assert_not_reached "Removing the previous selection did not cancel branch following"
+    fi
+    ok "delayed extension publication (previous selection retained: ${keep_selected})"
+done
+
+# SDK dependencies need the same branch-following behavior as runtime
+# dependencies. Also exercise publication after the app and dependency update.
+for scenario in sdk-immediate sdk-delayed runtime-delayed sdk-merged-delayed \
+                sdk-deferred runtime-family-immediate runtime-family-delayed \
+                sdk-family-immediate sdk-family-delayed sdk-family-deferred \
+                runtime-family-unselected sdk-family-unselected \
+                sdk-direct-delayed runtime-direct-delayed \
+                sdk-family-direct-delayed runtime-family-direct-delayed \
+                sdk-direct-deferred sdk-family-direct-deferred \
+                runtime-family-direct-unselected sdk-family-direct-unselected \
+                sdk-direct-cancelled runtime-direct-cancelled; do
+    id=org.test.DependencyFollow.${scenario//-/_}
+    for version in 1.0 2.0; do
+        platform_id="${id}.Platform"
+        if [[ ${scenario} = *-family-* ]] && [ "${version}" = 2.0 ]; then
+            platform_id="${id}.NewPlatform"
+        fi
+        dir=$(mktemp -d)
+        mkdir -p "${dir}/usr/ext" "${dir}/files"
+        cat > "${dir}/metadata" <<EOF
+[Runtime]
+name=${platform_id}
+
+$(extension_metadata "${id}.Extension" "${version};")
+EOF
+        ${FLATPAK} build-export --no-update-summary --disable-sandbox --runtime repos/test "${dir}" "${version}" >&2
+        rm -rf "${dir}"
+    done
+    make_extension "${id}.Extension" 1.0
+    if [[ ${scenario} = *-unselected ]]; then
+        make_extension "${id}.Extension" 3.0
+    fi
+    for version in 1.0 2.0; do
+        dependency="${id}.Platform/${ARCH}/${version}"
+        if [[ ${scenario} = *-family-* ]] && [ "${version}" = 2.0 ]; then
+            dependency="${id}.NewPlatform/${ARCH}/${version}"
+        fi
+        if [[ ${scenario} = sdk-* ]]; then
+            runtime="org.test.Platform/${ARCH}/master"
+            if [ "${scenario}" = sdk-merged-delayed ]; then
+                runtime="${id}.Platform/${ARCH}/2.0"
+            fi
+            make_app "${id}" "${runtime}" "" "${dependency}"
+        else
+            make_app "${id}" "${dependency}"
+        fi
+        if [[ ${scenario} = *-immediate ]] && [ "${version}" = 2.0 ]; then
+            make_extension "${id}.Extension" 2.0
+        fi
+        if [[ ${scenario} = *-deferred ]] && [ "${version}" = 2.0 ]; then
+            # Ordinary app updates do not install the newly named SDK. Its
+            # pending selections must survive until --include-sdk is used.
+            ${FLATPAK} ${U} update -y "${id}" master >&2
+            if ${FLATPAK} ${U} info "runtime/${dependency}" >&2; then
+                assert_not_reached "Deferred SDK was installed by an ordinary app update"
+            fi
+        else
+            ${FLATPAK} ${U} install -y --or-update --include-sdk test-repo "${id}" master >&2
+        fi
+        if [ "${version}" = 1.0 ]; then
+            selected_version=1.0
+            if [[ ${scenario} = *-unselected ]]; then
+                # An unrelated installed branch is not a selection for the
+                # old dependency, even when the app changes runtime families.
+                selected_version=3.0
+            fi
+            ${FLATPAK} ${U} install -y test-repo "${id}.Extension" "${selected_version}" >&2
+        fi
+    done
+    if [[ ${scenario} != *-immediate ]]; then
+        # Exercise carrying the pending dependency selection through another
+        # parent deployment before the extension becomes available.
+        if [[ ${scenario} = sdk-* ]]; then
+            make_app "${id}" "${runtime}" "" "${dependency}"
+        else
+            make_app "${id}" "${dependency}"
+        fi
+        ${FLATPAK} ${U} install -y --or-update --include-sdk test-repo "${id}" master >&2
+        if [[ ${scenario} = *-cancelled ]]; then
+            ${FLATPAK} ${U} uninstall -y "${id}.Extension" 1.0 >&2
+        fi
+        make_extension "${id}.Extension" 2.0
+        if [[ ${scenario} = *-direct-* ]]; then
+            # The dependency must find its pending selections even when the
+            # app is not part of this transaction.
+            ${FLATPAK} ${U} update -y "runtime/${dependency}" >&2
+        else
+            ${FLATPAK} ${U} install -y --or-update --include-sdk test-repo "${id}" master >&2
+        fi
+    fi
+    if [[ ${scenario} = *-unselected || ${scenario} = *-cancelled ]]; then
+        if ${FLATPAK} ${U} info "runtime/${id}.Extension/${ARCH}/2.0" >&2; then
+            assert_not_reached "Dependency update followed an unselected or removed extension"
+        fi
+    else
+        ${FLATPAK} ${U} info "runtime/${id}.Extension/${ARCH}/2.0" >&2
+    fi
+    ok "extension follows dependency branch change (${scenario})"
+done
 
 done_testing

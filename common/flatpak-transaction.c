@@ -2275,15 +2275,70 @@ run_operation_last (FlatpakTransactionOperation *op)
   op->run_last = TRUE;
 }
 
+static GPtrArray *
+op_get_extension_selections (FlatpakTransaction          *self,
+                             FlatpakTransactionOperation *op,
+                             GHashTable                  *pending_extensions)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  g_autoptr(GPtrArray) selections = flatpak_dir_find_extension_selections (priv->dir, op->ref, pending_extensions);
+  const char *dependency_keys[] = { "runtime", "sdk" };
+
+  /* Dependency branch changes install a new ref. Use the selections of the
+   * old runtime/SDK of an app being updated, including pending migrations
+   * saved when the app was deployed before its extensions were published. */
+  for (size_t i = 0; op->related_to_ops != NULL && i < op->related_to_ops->len; i++)
+    {
+      FlatpakTransactionOperation *app_op = g_ptr_array_index (op->related_to_ops, i);
+
+      if (app_op->skip || !flatpak_decomposed_is_app (app_op->ref) ||
+          app_op->resolved_old_metakey == NULL)
+        continue;
+
+      for (size_t j = 0; j < G_N_ELEMENTS (dependency_keys); j++)
+        {
+          g_autofree char *old_pref = g_key_file_get_string (app_op->resolved_old_metakey, "Application", dependency_keys[j], NULL);
+          g_autofree char *new_pref = g_key_file_get_string (app_op->resolved_metakey, "Application", dependency_keys[j], NULL);
+          g_autoptr(FlatpakDecomposed) old_ref = NULL;
+          g_autoptr(FlatpakDecomposed) new_ref = NULL;
+          g_autoptr(GPtrArray) old_selections = NULL;
+
+          if (old_pref == NULL || new_pref == NULL)
+            continue;
+
+          old_ref = flatpak_decomposed_new_from_pref (FLATPAK_KINDS_RUNTIME, old_pref, NULL);
+          new_ref = flatpak_decomposed_new_from_pref (FLATPAK_KINDS_RUNTIME, new_pref, NULL);
+          if (old_ref == NULL || new_ref == NULL ||
+              !flatpak_decomposed_equal (new_ref, op->ref))
+            continue;
+
+          /* The same app can change runtime families. Only selections with
+           * a matching extension ID and arch will be applied to the new ref. */
+          old_selections = flatpak_dir_find_extension_selections (priv->dir, old_ref, pending_extensions);
+          for (size_t k = 0; k < old_selections->len; k++)
+            {
+              FlatpakDecomposed *selected = g_ptr_array_index (old_selections, k);
+
+              if (!g_ptr_array_find_with_equal_func (selections, selected, (GEqualFunc) flatpak_decomposed_equal, NULL))
+                g_ptr_array_add (selections, flatpak_decomposed_ref (selected));
+            }
+        }
+    }
+
+  return g_steal_pointer (&selections);
+}
+
 static gboolean
 op_get_related (FlatpakTransaction           *self,
                 FlatpakTransactionOperation  *op,
+                GHashTable                   *pending_extensions,
                 GPtrArray                   **out_related,
                 GError                      **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
   g_autoptr(FlatpakRemoteState) state = NULL;
   g_autoptr(GPtrArray) related = NULL;
+  g_autoptr(GPtrArray) selections = NULL;
   g_autoptr(GError) related_error = NULL;
 
   if (op->kind != FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
@@ -2308,6 +2363,12 @@ op_get_related (FlatpakTransaction           *self,
     related = flatpak_dir_find_remote_related_for_metadata (priv->dir, state, op->ref,
                                                             op->resolved_metakey, NULL, &related_error);
 
+  if (related != NULL && op->kind != FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
+    {
+      selections = op_get_extension_selections (self, op, pending_extensions);
+      flatpak_dir_apply_extension_selections (priv->dir, op->ref, op->resolved_metakey, related, selections);
+    }
+
   if (related_error != NULL)
     g_message (_("Warning: Problem looking for related refs: %s"), related_error->message);
 
@@ -2320,6 +2381,7 @@ op_get_related (FlatpakTransaction           *self,
 static gboolean
 add_related (FlatpakTransaction          *self,
              FlatpakTransactionOperation *op,
+             GHashTable                  *pending_extensions,
              GError                     **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
@@ -2329,7 +2391,7 @@ add_related (FlatpakTransaction          *self,
   if (priv->disable_related)
     return TRUE;
 
-  if (!op_get_related (self, op, &related, error))
+  if (!op_get_related (self, op, pending_extensions, &related, error))
     return FALSE;
 
   if (related == NULL)
@@ -5483,6 +5545,7 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
                               GError            **error)
 {
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  g_autoptr(GHashTable) pending_extensions = NULL;
   GList *l;
   gboolean succeeded = TRUE;
   gboolean needs_prune = FALSE;
@@ -5569,11 +5632,13 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
     }
 
   /* Add all related extensions */
+  if (!priv->disable_related)
+    pending_extensions = flatpak_dir_get_pending_extensions (priv->dir, NULL);
   for (l = priv->ops; l != NULL; l = l->next)
     {
       FlatpakTransactionOperation *op = l->data;
 
-      if (!op->skip && !add_related (self, op, error))
+      if (!op->skip && !add_related (self, op, pending_extensions, error))
         {
           g_assert (error == NULL || *error != NULL);
           return FALSE;

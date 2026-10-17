@@ -1606,6 +1606,16 @@ test_list_remote_related_refs_for_installed (void)
   ref = g_ptr_array_index (refs, 1);
   g_assert_cmpstr (flatpak_ref_get_name (FLATPAK_REF (ref)), ==, "org.test.Hello.Plugin.fun");
   g_assert_cmpstr (flatpak_ref_get_branch (FLATPAK_REF (ref)), ==, "v1");
+  g_assert_false (flatpak_related_ref_should_download (ref));
+
+  /* The user opts into this plugin before the app requires its new branch. */
+  g_clear_object (&iref);
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+  iref = flatpak_installation_install (inst, repo_name, FLATPAK_REF_KIND_RUNTIME,
+                                      "org.test.Hello.Plugin.fun", NULL, "v1", NULL, NULL, NULL, &error);
+  G_GNUC_END_IGNORE_DEPRECATIONS
+  g_assert_no_error (error);
+  g_assert_nonnull (iref);
 
   /* Update the app on the server so its extension version is v2 */
   update_test_app_extension_version ();
@@ -1644,6 +1654,7 @@ test_list_remote_related_refs_for_installed (void)
   ref = g_ptr_array_index (refs, 1);
   g_assert_cmpstr (flatpak_ref_get_name (FLATPAK_REF (ref)), ==, "org.test.Hello.Plugin.fun");
   g_assert_cmpstr (flatpak_ref_get_branch (FLATPAK_REF (ref)), ==, "v2");
+  g_assert_true (flatpak_related_ref_should_download (ref));
 
   /* Reset things */
   empty_installation (inst);
