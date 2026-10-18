@@ -265,6 +265,9 @@ install_from (FlatpakDir *dir,
   if (transaction == NULL)
     return FALSE;
 
+  if (opt_or_update)
+    flatpak_transaction_set_flatpakref_or_update (transaction, TRUE);
+
   if (!flatpak_transaction_add_install_flatpakref (transaction, file_data, error))
     return FALSE;
 

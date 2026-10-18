@@ -1849,7 +1849,8 @@ flatpak_installation_install_ref_file (FlatpakInstallation *self,
                                   0, error))
     return FALSE;
 
-  if (!flatpak_dir_create_remote_for_ref_file (dir, keyfile, NULL, &remote, &collection_id, &ref, error))
+  if (!flatpak_dir_create_remote_for_ref_file (dir, keyfile, NULL, FALSE,
+                                               &remote, &collection_id, &ref, error))
     return NULL;
 
   if (!flatpak_installation_drop_caches (self, cancellable, error))
