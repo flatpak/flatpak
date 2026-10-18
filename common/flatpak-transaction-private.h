@@ -32,6 +32,9 @@ FlatpakRemoteState *flatpak_transaction_ensure_remote_state (FlatpakTransaction 
 
 FlatpakDecomposed * flatpak_transaction_operation_get_decomposed (FlatpakTransactionOperation *self);
 
+void flatpak_transaction_set_flatpakref_or_update (FlatpakTransaction *self,
+                                                   gboolean            or_update);
+
 #include "flatpak-dir-private.h"
 
 #endif /* __FLATPAK_TRANSACTION_PRIVATE_H__ */
