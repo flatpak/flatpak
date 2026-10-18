@@ -2976,9 +2976,9 @@ flatpak_transaction_add_rebase (FlatpakTransaction *self,
  * @new_ref: the ref to rebase to
  * @old_ref: the ref to uninstall
  * @subpaths: (nullable): the subpaths to include, or %NULL to install the complete ref
- * @previous_ids: (nullable) (array zero-terminated=1): Previous ids to add to the
+ * @previous_ids: (array zero-terminated=1): Previous ids to add to the
  *     given ref. These should simply be the ids, not the full ref names (e.g. org.foo.Bar,
- *     not org.foo.Bar/x86_64/master).
+ *     not org.foo.Bar/x86_64/master). Must not be %NULL.
  * @error: return location for a #GError
  *
  * Adds updating the @previous_ids of the given @new_ref to this transaction,
