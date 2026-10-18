@@ -3979,6 +3979,534 @@ test_transaction_deps (void)
   g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ABORTED);
 }
 
+typedef enum
+{
+  PARALLEL_DOWNLOAD,
+  PARALLEL_CANCEL_DONE,
+  PARALLEL_CANCEL_NEW,
+  PARALLEL_CANCEL_DONE_DEPLOY,
+  PARALLEL_CANCEL_NEW_DEPLOY,
+  PARALLEL_REJECT,
+  PARALLEL_CONTINUE,
+  PARALLEL_ABORT,
+  PARALLEL_PARENT,
+  PARALLEL_PARENT_READY,
+  PARALLEL_CHANGED_REF
+} ParallelMode;
+
+typedef struct
+{
+  ParallelMode mode;
+  GThread *caller;
+  FlatpakTransaction *transaction;
+  GCancellable *cancel;
+  OstreeRepo *repo;
+  const char *path;
+  GList *operations;
+  FlatpakTransactionOperation *active;
+  size_t started;
+  size_t done;
+  size_t errors;
+  size_t changes;
+  guint64 bytes;
+  gboolean no_pull;
+} ParallelCheck;
+
+static gboolean
+parallel_has_parent (ParallelCheck *check)
+{
+  return check->mode == PARALLEL_PARENT || check->mode == PARALLEL_PARENT_READY;
+}
+
+static void
+parallel_add_parent (ParallelCheck *check)
+{
+  g_autofree char *parent_path = g_build_filename (check->path, "parent", NULL);
+  g_autofree char *config_path = g_build_filename (check->path, "repo", "config", NULL);
+  g_autoptr(GFile) file = g_file_new_for_path (parent_path);
+  g_autoptr(OstreeRepo) parent = ostree_repo_new (file);
+  g_autoptr(GKeyFile) config = ostree_repo_copy_config (check->repo);
+  g_autoptr(GError) error = NULL;
+
+  g_assert_true (ostree_repo_create (parent, OSTREE_REPO_MODE_BARE_USER_ONLY, NULL, &error));
+  g_assert_no_error (error);
+  /* Existing repo objects keep their config when the file changes. */
+  g_key_file_set_string (config, "core", "parent", parent_path);
+  g_assert_true (g_key_file_save_to_file (config, config_path, &error));
+  g_assert_no_error (error);
+}
+
+static gboolean
+parallel_inject_failure (ParallelCheck *check)
+{
+  return check->mode == PARALLEL_CONTINUE || check->mode == PARALLEL_ABORT;
+}
+
+static gboolean
+parallel_deploy (ParallelCheck *check)
+{
+  return parallel_inject_failure (check) ||
+         check->mode == PARALLEL_CANCEL_DONE_DEPLOY ||
+         check->mode == PARALLEL_CANCEL_NEW_DEPLOY ||
+         check->mode == PARALLEL_CHANGED_REF;
+}
+
+static char *
+parallel_payload_checksum (const char *name,
+                           const char *path)
+{
+  g_autoptr(GFile) file = g_file_new_for_path ("repos/test");
+  g_autoptr(OstreeRepo) repo = ostree_repo_new (file);
+  g_autoptr(GFile) root = NULL;
+  g_autoptr(GFile) payload = NULL;
+  g_autoptr(GError) error = NULL;
+  g_autofree char *ref = g_strdup_printf ("runtime/%s/%s/master", name, flatpak_get_default_arch ());
+
+  g_assert_true (ostree_repo_open (repo, NULL, &error));
+  g_assert_true (ostree_repo_read_commit (repo, ref, &root, NULL, NULL, &error));
+  payload = g_file_resolve_relative_path (root, path);
+  g_assert_true (ostree_repo_file_ensure_resolved (OSTREE_REPO_FILE (payload), &error));
+  g_assert_no_error (error);
+  return g_strdup (ostree_repo_file_get_checksum (OSTREE_REPO_FILE (payload)));
+}
+
+static void
+parallel_check_current (FlatpakTransaction *transaction,
+                        ParallelCheck *check)
+{
+  g_autoptr(FlatpakTransactionOperation) current = NULL;
+
+  g_assert_true (g_thread_self () == check->caller);
+  current = flatpak_transaction_get_current_operation (transaction);
+  g_assert_true (current == check->active);
+}
+
+static void
+parallel_check_lock (ParallelCheck *check,
+                     gboolean held)
+{
+  g_autofree char *path = g_build_filename (check->path, "repo-lock", NULL);
+  g_auto(GLnxLockFile) lock = { 0 };
+  g_autoptr(GError) error = NULL;
+  gboolean acquired;
+
+  /* A separately opened file description must conflict even in this process. */
+  acquired = glnx_make_lock_file (AT_FDCWD, path, LOCK_EX | LOCK_NB, &lock, &error);
+  if (held)
+    {
+      g_assert_false (acquired);
+      g_assert_error (error, G_IO_ERROR, G_IO_ERROR_WOULD_BLOCK);
+    }
+  else
+    {
+      g_assert_true (acquired);
+      g_assert_no_error (error);
+    }
+}
+
+static gboolean
+parallel_ready (FlatpakTransaction *transaction,
+                gpointer data)
+{
+  ParallelCheck *check = data;
+
+  parallel_check_current (transaction, check);
+  check->operations = flatpak_transaction_get_operations (transaction);
+  g_assert_cmpuint (g_list_length (check->operations), ==, parallel_inject_failure (check) ? 3 : 2);
+  if (check->mode == PARALLEL_PARENT_READY)
+    {
+      g_autoptr(OstreeRepo) reopened = ostree_repo_new (ostree_repo_get_path (check->repo));
+      g_autoptr(GError) error = NULL;
+
+      g_assert_null (ostree_repo_get_parent (check->repo));
+      parallel_add_parent (check);
+      g_assert_true (ostree_repo_open (reopened, NULL, &error));
+      g_assert_no_error (error);
+      g_assert_nonnull (ostree_repo_get_parent (reopened));
+      g_assert_null (ostree_repo_get_parent (check->repo));
+    }
+  return check->mode != PARALLEL_REJECT;
+}
+
+static void
+parallel_progress (FlatpakTransactionProgress *progress,
+                   gpointer data)
+{
+  ParallelCheck *check = data;
+  guint64 bytes = flatpak_transaction_progress_get_bytes_transferred (progress);
+
+  parallel_check_current (check->transaction, check);
+  g_assert_nonnull (check->active);
+  g_assert_cmpuint (bytes, >=, check->bytes);
+  check->bytes = bytes;
+  check->changes++;
+}
+
+static void
+parallel_new_operation (FlatpakTransaction *transaction,
+                        FlatpakTransactionOperation *operation,
+                        FlatpakTransactionProgress *progress,
+                        gpointer data)
+{
+  ParallelCheck *check = data;
+
+  g_assert_null (check->active);
+  g_assert_true (operation == g_list_nth_data (check->operations, check->done + check->errors));
+  check->active = operation;
+  check->bytes = 0;
+  check->started++;
+  parallel_check_current (transaction, check);
+  g_signal_connect (progress, "changed", G_CALLBACK (parallel_progress), check);
+  /* The previous job is gone. The next job must hold its own prune lock. */
+  if (!check->no_pull && !parallel_inject_failure (check) && check->started == 2)
+    parallel_check_lock (check, !parallel_has_parent (check));
+  if ((check->mode == PARALLEL_CANCEL_NEW || check->mode == PARALLEL_CANCEL_NEW_DEPLOY) && check->started == 2)
+    g_cancellable_cancel (check->cancel);
+}
+
+static void
+parallel_wait_for_lookahead (ParallelCheck *check)
+{
+  FlatpakTransactionOperation *next = check->operations->next->data;
+  g_autofree char *refspec = g_strconcat ("parallel-test:", flatpak_transaction_operation_get_ref (next), NULL);
+  int64_t deadline = g_get_monotonic_time () + 10 * G_TIME_SPAN_SECOND;
+
+  /* A serial implementation times out here. Poll because OSTree has no
+   * ref-change notification between repo instances. */
+  for (;;)
+    {
+      g_autoptr(GError) error = NULL;
+      g_autofree char *commit = NULL;
+
+      g_assert_true (ostree_repo_resolve_rev (check->repo, refspec, TRUE, &commit, &error));
+      g_assert_no_error (error);
+      if (commit != NULL)
+        {
+          g_assert_cmpstr (commit, ==, flatpak_transaction_operation_get_commit (next));
+          break;
+        }
+      g_assert_cmpint (g_get_monotonic_time (), <, deadline);
+      g_usleep (10000);
+    }
+}
+
+static void
+parallel_operation_done (FlatpakTransaction *transaction,
+                         FlatpakTransactionOperation *operation,
+                         const char *commit,
+                         int details,
+                         gpointer data)
+{
+  ParallelCheck *check = data;
+
+  parallel_check_current (transaction, check);
+  g_assert_true (operation == check->active);
+  g_assert_cmpstr (commit, ==, flatpak_transaction_operation_get_commit (operation));
+  if (parallel_has_parent (check))
+    {
+      parallel_check_lock (check, FALSE);
+      if (check->done == 0)
+        {
+          FlatpakTransactionOperation *next = check->operations->next->data;
+          g_autofree char *refspec = g_strconcat ("parallel-test:", flatpak_transaction_operation_get_ref (next), NULL);
+          g_autofree char *next_commit = NULL;
+          g_autoptr(GError) error = NULL;
+
+          g_assert_true (ostree_repo_resolve_rev (check->repo, refspec, TRUE, &next_commit, &error));
+          g_assert_no_error (error);
+          g_assert_null (next_commit);
+        }
+    }
+  else if (!check->no_pull)
+    {
+      parallel_check_lock (check, TRUE);
+      if (check->done == 0 && !parallel_inject_failure (check))
+        {
+          parallel_wait_for_lookahead (check);
+          /* Completed downloads still need prune protection. */
+          parallel_check_lock (check, TRUE);
+          if (check->mode == PARALLEL_CANCEL_DONE || check->mode == PARALLEL_CANCEL_DONE_DEPLOY)
+            g_cancellable_cancel (check->cancel);
+          if (check->mode == PARALLEL_CHANGED_REF)
+            {
+              FlatpakTransactionOperation *next = check->operations->next->data;
+              const char *expected = flatpak_transaction_operation_get_commit (next);
+              g_autoptr(GVariant) commit_data = NULL;
+              g_autoptr(GVariant) metadata = NULL;
+              g_autoptr(GFile) root = NULL;
+              g_autofree char *replacement = NULL;
+              g_autoptr(GError) error = NULL;
+
+              /* Simulate another transaction replacing the downloaded ref. */
+              g_assert_true (ostree_repo_load_commit (check->repo, expected, &commit_data, NULL, &error));
+              metadata = g_variant_get_child_value (commit_data, 0);
+              g_assert_true (ostree_repo_read_commit (check->repo, expected, &root, NULL, NULL, &error));
+              g_assert_true (ostree_repo_prepare_transaction (check->repo, NULL, NULL, &error));
+              g_assert_true (ostree_repo_write_commit (check->repo, expected, "Replacement tracking commit", NULL,
+                                                      metadata, OSTREE_REPO_FILE (root), &replacement, NULL, &error));
+              g_assert_cmpstr (replacement, !=, expected);
+              ostree_repo_transaction_set_ref (check->repo, "parallel-test",
+                                               flatpak_transaction_operation_get_ref (next), replacement);
+              g_assert_true (ostree_repo_commit_transaction (check->repo, NULL, NULL, &error));
+              g_assert_no_error (error);
+            }
+        }
+    }
+  check->done++;
+  check->active = NULL;
+}
+
+static gboolean
+parallel_operation_error (FlatpakTransaction *transaction,
+                          FlatpakTransactionOperation *operation,
+                          GError *error,
+                          int details,
+                          gpointer data)
+{
+  ParallelCheck *check = data;
+
+  /* A dependent skip has no new-operation signal. */
+  if (parallel_inject_failure (check) && check->active == NULL)
+    {
+      g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_SKIPPED);
+      g_assert_cmpuint (check->errors, ==, 1);
+      check->active = operation;
+    }
+  parallel_check_current (transaction, check);
+  g_assert_true (operation == check->active);
+  g_assert_true (operation == g_list_nth_data (check->operations, check->done + check->errors));
+  if (parallel_inject_failure (check))
+    {
+      const char *ref = flatpak_transaction_operation_get_ref (operation);
+
+      if (check->errors == 0)
+        {
+          g_assert_true (g_str_has_prefix (ref, "runtime/org.test.Platform/"));
+          g_assert_false (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED));
+          g_assert_false (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_SKIPPED));
+        }
+      else
+        {
+          g_assert_true (g_str_has_prefix (ref, "app/org.test.Hello/"));
+          g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_SKIPPED);
+        }
+    }
+  else
+    g_assert_error (error, G_IO_ERROR, G_IO_ERROR_CANCELLED);
+  g_assert_cmpuint (check->done, ==, 1);
+  check->errors++;
+  check->active = NULL;
+  return check->mode == PARALLEL_CONTINUE;
+}
+
+static FlatpakTransaction *
+parallel_transaction_new (FlatpakInstallation *inst,
+                          ParallelCheck *check)
+{
+  g_autoptr(GError) error = NULL;
+  FlatpakTransaction *transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
+  const char *names[] = { "org.test.Platform", "org.test.Hello.Locale" };
+
+  g_assert_no_error (error);
+  flatpak_transaction_set_disable_dependencies (transaction, TRUE);
+  flatpak_transaction_set_disable_related (transaction, TRUE);
+  flatpak_transaction_set_disable_static_deltas (transaction, TRUE);
+  flatpak_transaction_set_no_deploy (transaction, !check->no_pull && !parallel_deploy (check));
+  flatpak_transaction_set_no_pull (transaction, check->no_pull);
+  if (parallel_inject_failure (check))
+    {
+      g_autofree char *ref = g_strdup_printf ("app/org.test.Hello/%s/master", flatpak_get_default_arch ());
+
+      flatpak_transaction_set_disable_dependencies (transaction, FALSE);
+      flatpak_transaction_set_disable_related (transaction, FALSE);
+      g_assert_true (flatpak_transaction_add_install (transaction, "parallel-test", ref, NULL, &error));
+      g_assert_no_error (error);
+    }
+  else
+    {
+      for (size_t i = 0; i < G_N_ELEMENTS (names); i++)
+        {
+          g_autofree char *ref = g_strdup_printf ("runtime/%s/%s/master", names[i], flatpak_get_default_arch ());
+
+          g_assert_true (flatpak_transaction_add_install (transaction, "parallel-test", ref, NULL, &error));
+          g_assert_no_error (error);
+        }
+    }
+  g_signal_connect (transaction, "ready", G_CALLBACK (parallel_ready), check);
+  g_signal_connect (transaction, "new-operation", G_CALLBACK (parallel_new_operation), check);
+  g_signal_connect (transaction, "operation-done", G_CALLBACK (parallel_operation_done), check);
+  g_signal_connect (transaction, "operation-error", G_CALLBACK (parallel_operation_error), check);
+  check->transaction = transaction;
+  return transaction;
+}
+
+/* Use fresh installations so cached downloads cannot satisfy the assertions. */
+static void
+test_transaction_parallel (gconstpointer data)
+{
+  g_autofree char *path = NULL;
+  g_autofree char *repo_path = NULL;
+  g_autofree char *payload_checksum = NULL;
+  g_autofree char *missing_path = NULL;
+  g_autofree char *saved_path = NULL;
+  g_autoptr(GFile) file = NULL;
+  g_autoptr(GFile) repo_file = NULL;
+  g_autoptr(OstreeRepo) repo = NULL;
+  g_autoptr(FlatpakInstallation) inst = NULL;
+  g_autoptr(FlatpakRemote) remote = flatpak_remote_new ("parallel-test");
+  g_autoptr(FlatpakTransaction) transaction = NULL;
+  g_autoptr(GCancellable) cancel = g_cancellable_new ();
+  g_autoptr(GError) error = NULL;
+  g_autoptr(GPtrArray) installed = NULL;
+  g_autofree char *url = g_strdup_printf ("http://127.0.0.1:%s/test", httpd_port);
+  ParallelCheck check = { .mode = GPOINTER_TO_INT (data), .caller = g_thread_self (), .cancel = cancel };
+  gboolean result;
+
+  if (g_getenv ("FLATPAK_DISABLE_PARALLEL_DOWNLOADS") != NULL)
+    {
+      g_test_skip ("Parallel downloads are disabled");
+      return;
+    }
+
+  path = g_strdup_printf ("%s/parallel-%d", testdir, check.mode);
+  file = g_file_new_for_path (path);
+  inst = flatpak_installation_new_for_path (file, TRUE, NULL, &error);
+  g_assert_no_error (error);
+  flatpak_remote_set_url (remote, url);
+  flatpak_remote_set_gpg_verify (remote, FALSE);
+  g_assert_true (flatpak_installation_modify_remote (inst, remote, NULL, &error));
+  g_assert_no_error (error);
+  repo_path = g_build_filename (path, "repo", NULL);
+  repo_file = g_file_new_for_path (repo_path);
+  repo = ostree_repo_new (repo_file);
+  g_assert_true (ostree_repo_open (repo, NULL, &error));
+  g_assert_no_error (error);
+  check.repo = repo;
+  check.path = path;
+  if (check.mode == PARALLEL_PARENT)
+    {
+      parallel_add_parent (&check);
+      g_assert_true (flatpak_installation_drop_caches (inst, NULL, &error));
+      g_assert_no_error (error);
+      g_clear_object (&repo);
+      repo = ostree_repo_new (repo_file);
+      g_assert_true (ostree_repo_open (repo, NULL, &error));
+      g_assert_no_error (error);
+      g_assert_nonnull (ostree_repo_get_parent (repo));
+      check.repo = repo;
+    }
+
+  payload_checksum = parallel_payload_checksum ("org.test.Platform", "files/bin/runtime_hello.sh");
+  if (parallel_inject_failure (&check))
+    {
+      /* Removing a payload object lets resolution succeed but makes the pull fail. */
+      missing_path = g_strdup_printf ("repos/test/objects/%.2s/%s.filez", payload_checksum, payload_checksum + 2);
+      saved_path = g_strconcat (missing_path, ".saved", NULL);
+      g_assert_cmpint (rename (missing_path, saved_path), ==, 0);
+    }
+  transaction = parallel_transaction_new (inst, &check);
+  result = flatpak_transaction_run (transaction, cancel, &error);
+  if (missing_path != NULL)
+    g_assert_cmpint (rename (saved_path, missing_path), ==, 0);
+  g_assert_null (flatpak_transaction_get_current_operation (transaction));
+  parallel_check_lock (&check, FALSE);
+  if (check.mode == PARALLEL_REJECT)
+    {
+      gboolean have_payload = TRUE;
+      g_autofree char *locale_checksum = parallel_payload_checksum ("org.test.Hello.Locale", "files/de/share/de/LC_MESSAGES/helloworld.mo");
+
+      g_assert_false (result);
+      g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ABORTED);
+      g_assert_cmpuint (check.started, ==, 0);
+      g_assert_true (ostree_repo_has_object (repo, OSTREE_OBJECT_TYPE_FILE, payload_checksum, &have_payload, NULL, NULL));
+      g_assert_false (have_payload);
+      g_assert_true (ostree_repo_has_object (repo, OSTREE_OBJECT_TYPE_FILE, locale_checksum, &have_payload, NULL, NULL));
+      g_assert_false (have_payload);
+      for (GList *l = check.operations; l; l = l->next)
+        {
+          g_autofree char *refspec = g_strconcat ("parallel-test:", flatpak_transaction_operation_get_ref (l->data), NULL);
+          g_autofree char *commit = NULL;
+
+          g_assert_true (ostree_repo_resolve_rev (repo, refspec, TRUE, &commit, NULL));
+          g_assert_null (commit);
+        }
+    }
+  else if (check.mode == PARALLEL_DOWNLOAD || parallel_has_parent (&check) ||
+           check.mode == PARALLEL_CHANGED_REF)
+    {
+      g_assert_true (result);
+      g_assert_no_error (error);
+      g_assert_cmpuint (check.done, ==, 2);
+      g_assert_cmpuint (check.errors, ==, 0);
+      g_assert_cmpuint (check.changes, >, 0);
+    }
+  else if (parallel_inject_failure (&check))
+    {
+      if (check.mode == PARALLEL_CONTINUE)
+        {
+          g_assert_true (result);
+          g_assert_no_error (error);
+          g_assert_cmpuint (check.errors, ==, 2);
+        }
+      else
+        {
+          g_assert_false (result);
+          g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ABORTED);
+          g_assert_cmpuint (check.errors, ==, 1);
+        }
+      g_assert_cmpuint (check.done, ==, 1);
+      g_assert_cmpuint (check.started, ==, 2);
+    }
+  else
+    {
+      g_assert_false (result);
+      g_assert_error (error, G_IO_ERROR, G_IO_ERROR_CANCELLED);
+      g_assert_cmpuint (check.done, ==, 1);
+      g_assert_cmpuint (check.errors, ==, 1);
+    }
+  g_clear_error (&error);
+  installed = flatpak_installation_list_installed_refs (inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_cmpuint (installed->len, ==, check.mode == PARALLEL_CHANGED_REF ? 2 : parallel_deploy (&check) ? 1 : 0);
+  if (parallel_deploy (&check) && check.mode != PARALLEL_CHANGED_REF)
+    g_assert_cmpstr (flatpak_ref_get_name (g_ptr_array_index (installed, 0)), ==, "org.test.Hello.Locale");
+  g_list_free_full (check.operations, g_object_unref);
+  check.operations = NULL;
+  g_clear_object (&transaction);
+
+  if (check.mode == PARALLEL_DOWNLOAD)
+    {
+      flatpak_remote_set_url (remote, "http://127.0.0.1:1/unreachable");
+      g_assert_true (flatpak_installation_modify_remote (inst, remote, NULL, &error));
+      g_assert_no_error (error);
+      check.no_pull = TRUE;
+      check.started = check.done = check.changes = 0;
+      transaction = parallel_transaction_new (inst, &check);
+      g_assert_true (flatpak_transaction_run (transaction, NULL, &error));
+      g_assert_no_error (error);
+      g_assert_cmpuint (check.done, ==, 2);
+      g_clear_pointer (&installed, g_ptr_array_unref);
+      installed = flatpak_installation_list_installed_refs (inst, NULL, &error);
+      g_assert_no_error (error);
+      g_assert_cmpuint (installed->len, ==, 2);
+      for (GList *l = check.operations; l; l = l->next)
+        {
+          g_autoptr(FlatpakRef) ref = flatpak_ref_parse (flatpak_transaction_operation_get_ref (l->data), &error);
+          g_autoptr(FlatpakInstalledRef) deployed = NULL;
+
+          g_assert_no_error (error);
+          deployed = flatpak_installation_get_installed_ref (inst, flatpak_ref_get_kind (ref),
+                                                            flatpak_ref_get_name (ref), flatpak_ref_get_arch (ref),
+                                                            flatpak_ref_get_branch (ref), NULL, &error);
+          g_assert_no_error (error);
+          g_assert_cmpstr (flatpak_ref_get_commit (FLATPAK_REF (deployed)), ==,
+                           flatpak_transaction_operation_get_commit (l->data));
+        }
+      g_list_free_full (check.operations, g_object_unref);
+      parallel_check_lock (&check, FALSE);
+    }
+}
+
 /* install from a local repository */
 static void
 test_transaction_install_local (void)
@@ -5212,6 +5740,17 @@ main (int argc, char *argv[])
   g_test_add_func ("/library/transaction-flatpakref-origin-remote-creation", test_transaction_flatpakref_origin_remote_creation);
   g_test_add_func ("/library/transaction-deps", test_transaction_deps);
   g_test_add_func ("/library/transaction-install-local", test_transaction_install_local);
+  g_test_add_data_func ("/library/transaction-parallel/download-offline", GINT_TO_POINTER (PARALLEL_DOWNLOAD), test_transaction_parallel);
+  g_test_add_data_func ("/library/transaction-parallel/cancel-done", GINT_TO_POINTER (PARALLEL_CANCEL_DONE), test_transaction_parallel);
+  g_test_add_data_func ("/library/transaction-parallel/cancel-new", GINT_TO_POINTER (PARALLEL_CANCEL_NEW), test_transaction_parallel);
+  g_test_add_data_func ("/library/transaction-parallel/cancel-done-deploy", GINT_TO_POINTER (PARALLEL_CANCEL_DONE_DEPLOY), test_transaction_parallel);
+  g_test_add_data_func ("/library/transaction-parallel/cancel-new-deploy", GINT_TO_POINTER (PARALLEL_CANCEL_NEW_DEPLOY), test_transaction_parallel);
+  g_test_add_data_func ("/library/transaction-parallel/reject", GINT_TO_POINTER (PARALLEL_REJECT), test_transaction_parallel);
+  g_test_add_data_func ("/library/transaction-parallel/continue", GINT_TO_POINTER (PARALLEL_CONTINUE), test_transaction_parallel);
+  g_test_add_data_func ("/library/transaction-parallel/abort", GINT_TO_POINTER (PARALLEL_ABORT), test_transaction_parallel);
+  g_test_add_data_func ("/library/transaction-parallel/parent", GINT_TO_POINTER (PARALLEL_PARENT), test_transaction_parallel);
+  g_test_add_data_func ("/library/transaction-parallel/parent-ready", GINT_TO_POINTER (PARALLEL_PARENT_READY), test_transaction_parallel);
+  g_test_add_data_func ("/library/transaction-parallel/changed-ref", GINT_TO_POINTER (PARALLEL_CHANGED_REF), test_transaction_parallel);
   g_test_add_func ("/library/transaction-app-runtime-same-remote", test_transaction_app_runtime_same_remote);
   g_test_add_func ("/library/transaction-update-related-from-different-remote", test_transaction_update_related_from_different_remote);
   g_test_add_func ("/library/remote-nodeps-option", test_remote_nodeps_option);

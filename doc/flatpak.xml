@@ -679,6 +679,18 @@
                     </para></listitem>
                 </varlistentry>
 
+                <varlistentry>
+                    <term><envar>FLATPAK_DISABLE_PARALLEL_DOWNLOADS</envar></term>
+                    <listitem><para>
+                        If set, download transaction operations sequentially.
+                        Otherwise, eligible OSTree installs and updates can download
+                        up to four refs concurrently, while deployment remains ordered.
+                        Downloads using the system helper and other unsupported
+                        operations remain sequential. OSTree can still fetch multiple
+                        objects concurrently within each ref.
+                    </para></listitem>
+                </varlistentry>
+
                 <!-- FLATPAK_DISABLE_REVOKEFS intentionally not documented:
                      it is intended for testing and development only
                      (it forces use of the code path we would use if

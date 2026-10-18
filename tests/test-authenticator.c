@@ -58,10 +58,15 @@ token_request_data_new (FlatpakAuthenticatorRequest *request,
 }
 
 static char *
-get_required_token (void)
+get_required_token (const char *ref)
 {
+  g_autofree char *ref_token_file = NULL;
   g_autofree char *required_token_file = NULL;
   g_autofree char *required_token = NULL;
+
+  ref_token_file = g_build_filename (g_get_user_runtime_dir (), "required-tokens", ref, NULL);
+  if (g_file_get_contents (ref_token_file, &required_token, NULL, NULL))
+    return g_steal_pointer (&required_token);
 
   required_token_file = g_build_filename (g_get_user_runtime_dir (), "required-token", NULL);
   if (!g_file_get_contents (required_token_file, &required_token, NULL, NULL))
@@ -98,16 +103,38 @@ request_webflow (void)
 static void
 finish_request_ref_tokens (TokenRequestData *data)
 {
-  g_autofree char *required_token = NULL;
+  g_autoptr(GHashTable) token_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free,
+                                                         (GDestroyNotify) g_ptr_array_unref);
   GVariantBuilder tokens;
   GVariantBuilder results;
+  GHashTableIter iter;
+  void *key, *value;
 
   g_assert_true (data->request != NULL);
 
-  required_token = get_required_token ();
-
   g_variant_builder_init (&tokens, G_VARIANT_TYPE ("a{sas}"));
-  g_variant_builder_add (&tokens, "{s^as}", required_token, data->arg_refs);
+  for (size_t i = 0; data->arg_refs[i] != NULL; i++)
+    {
+      g_autofree char *token = get_required_token (data->arg_refs[i]);
+      GPtrArray *refs = g_hash_table_lookup (token_refs, token);
+
+      if (refs == NULL)
+        {
+          refs = g_ptr_array_new ();
+          g_hash_table_insert (token_refs, g_steal_pointer (&token), refs);
+        }
+      g_ptr_array_add (refs, data->arg_refs[i]);
+    }
+
+  g_hash_table_iter_init (&iter, token_refs);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+      const char *token = key;
+      GPtrArray *refs = value;
+
+      g_ptr_array_add (refs, NULL);
+      g_variant_builder_add (&tokens, "{s^as}", token, refs->pdata);
+    }
 
   g_variant_builder_init (&results, G_VARIANT_TYPE ("a{sv}"));
   g_variant_builder_add (&results, "{sv}", "tokens", g_variant_builder_end (&tokens));
