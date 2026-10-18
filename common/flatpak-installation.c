@@ -1312,8 +1312,8 @@ flatpak_installation_list_remotes_by_type (FlatpakInstallation     *self,
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * Lists the static remotes, in priority (highest first) order. For same
- * priority, an earlier added remote comes before a later added one.
+ * Lists the static remotes, in priority (highest first) order. Remotes with
+ * the same priority are ordered by name in ascending order.
  *
  * Returns: (transfer container) (element-type FlatpakRemote): a GPtrArray of
  *   #FlatpakRemote instances
