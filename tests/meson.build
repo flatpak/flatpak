@@ -422,6 +422,7 @@ tests = {
   'spawn': {'wrap': ['user']},
   'auth': {},
   'unused': {},
+  'lockdown': {},
   'summaries': {'wrap': ['user', 'system']},
   'subset': {'wrap': ['user', 'system']},
   'prune': {},

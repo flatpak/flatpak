@@ -90,6 +90,10 @@
                     <listitem><para>The base64-encoded gpg key for the remote.</para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>GPGKeyFile</option> (string)</term>
+                    <listitem><para>A path to a file containing the GPG public key for the remote. This can be used instead of <option>GPGKey</option>.</para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>DefaultBranch</option> (string)</term>
                     <listitem><para>The default branch to use for this remote.</para></listitem>
                 </varlistentry>
