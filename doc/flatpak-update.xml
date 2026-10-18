@@ -260,13 +260,6 @@
             </varlistentry>
 
             <varlistentry>
-                <term><option>--force-remove</option></term>
-                <listitem><para>
-                    Remove old files even if they're in use by a running application.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--verbose</option></term>
 
