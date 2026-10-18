@@ -217,6 +217,23 @@ httpcache_exe = executable(
   install_dir : installed_testdir,
 )
 
+http_session_exe = executable(
+  'http-session',
+  'http-session.c',
+  dependencies : [
+    base_deps,
+    json_glib_dep,
+    libflatpak_common_dep,
+    libflatpak_common_base_dep,
+    libglnx_dep,
+    libostree_dep,
+    libcurl_dep,
+  ],
+  include_directories : [common_include_directories],
+  install : get_option('installed_tests'),
+  install_dir : installed_testdir,
+)
+
 executable(
   'mock-flatpak',
   'mock-flatpak.c',
@@ -342,6 +359,7 @@ if get_option('installed_tests')
   install_data(
     'flatpak-wrapper.sh',
     'http-utils-test-server.py',
+    'http-session-test-server.py',
     'make-multi-collection-id-repo.sh',
     'make-test-app.sh',
     'make-test-runtime.sh',
@@ -384,7 +402,7 @@ tests = {
   'config': {},
   'documents': {},
   'build-update-repo': {},
-  'http-utils': {'depends': [httpcache_exe]},
+  'http-utils': {'depends': [httpcache_exe, http_session_exe, flatpak_exe]},
   'run': {'timeout': 90, 'wrap': [
     'user,nodeltas',
     'user,deltas',
