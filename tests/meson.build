@@ -201,7 +201,7 @@ executable(
   install_dir : installed_testdir,
 )
 
-executable(
+httpcache_exe = executable(
   'httpcache',
   'httpcache.c',
   dependencies : [
@@ -384,7 +384,7 @@ tests = {
   'config': {},
   'documents': {},
   'build-update-repo': {},
-  'http-utils': {},
+  'http-utils': {'depends': [httpcache_exe]},
   'run': {'timeout': 90, 'wrap': [
     'user,nodeltas',
     'user,deltas',
@@ -495,7 +495,7 @@ foreach testcase : wrapped_tests
       name,
       tap_test,
       args : [meson.current_source_dir() / name],
-      depends : runtime_repo,
+      depends : [runtime_repo] + testcase.get('depends', []),
       env : test_env,
       is_parallel : testcase.get('is_parallel', true),
       protocol : 'tap',
