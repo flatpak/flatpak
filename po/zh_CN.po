@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2026-10-14 12:11+0000\n"
-"PO-Revision-Date: 2026-10-15 08:04+0800\n"
+"POT-Creation-Date: 2026-10-16 14:00+0000\n"
+"PO-Revision-Date: 2026-10-19 08:12+0800\n"
 "Last-Translator: lumingzh <lumingzh@qq.com>\n"
 "Language-Team: Chinese (China) <i18n-zh@googlegroups.com>\n"
 "Language: zh_CN\n"
@@ -32,7 +32,7 @@ msgstr "要打包的架构"
 #: app/flatpak-builtins-info.c:55 app/flatpak-builtins-install.c:67
 #: app/flatpak-builtins-list.c:51 app/flatpak-builtins-make-current.c:38
 #: app/flatpak-builtins-remote-info.c:54 app/flatpak-builtins-remote-ls.c:56
-#: app/flatpak-builtins-run.c:158 app/flatpak-builtins-search.c:37
+#: app/flatpak-builtins-run.c:158 app/flatpak-builtins-search.c:39
 #: app/flatpak-builtins-uninstall.c:56 app/flatpak-builtins-update.c:56
 msgid "ARCH"
 msgstr "ARCH"
@@ -1325,14 +1325,14 @@ msgstr "未导出\n"
 #: app/flatpak-builtins-document-list.c:43 app/flatpak-builtins-history.c:53
 #: app/flatpak-builtins-list.c:56 app/flatpak-builtins-ps.c:43
 #: app/flatpak-builtins-remote-list.c:45 app/flatpak-builtins-remote-ls.c:59
-#: app/flatpak-builtins-search.c:38
+#: app/flatpak-builtins-search.c:40
 msgid "What information to show"
 msgstr "显示什么信息"
 
 #: app/flatpak-builtins-document-list.c:43 app/flatpak-builtins-history.c:53
 #: app/flatpak-builtins-list.c:56 app/flatpak-builtins-ps.c:43
 #: app/flatpak-builtins-remote-list.c:45 app/flatpak-builtins-remote-ls.c:59
-#: app/flatpak-builtins-search.c:38
+#: app/flatpak-builtins-search.c:40
 msgid "FIELD,…"
 msgstr "FIELD,…"
 
@@ -1340,7 +1340,7 @@ msgstr "FIELD,…"
 #: app/flatpak-builtins-list.c:53 app/flatpak-builtins-permission-list.c:44
 #: app/flatpak-builtins-permission-show.c:44 app/flatpak-builtins-ps.c:44
 #: app/flatpak-builtins-remote-list.c:46 app/flatpak-builtins-remote-ls.c:63
-#: app/flatpak-builtins-repo.c:717 app/flatpak-builtins-search.c:39
+#: app/flatpak-builtins-repo.c:717 app/flatpak-builtins-search.c:41
 msgid "Show output in JSON format"
 msgstr "以 JSON 格式显示输出"
 
@@ -1526,7 +1526,7 @@ msgstr "显示架构"
 
 #: app/flatpak-builtins-history.c:64 app/flatpak-builtins-list.c:65
 #: app/flatpak-builtins-ps.c:54 app/flatpak-builtins-remote-ls.c:72
-#: app/flatpak-builtins-search.c:48 app/flatpak-cli-transaction.c:1419
+#: app/flatpak-builtins-search.c:52 app/flatpak-cli-transaction.c:1419
 msgid "Branch"
 msgstr "分支"
 
@@ -1589,7 +1589,7 @@ msgid "Show the tool that was used"
 msgstr "显示曾经使用的工具"
 
 #: app/flatpak-builtins-history.c:72 app/flatpak-builtins-list.c:64
-#: app/flatpak-builtins-remote-ls.c:71 app/flatpak-builtins-search.c:47
+#: app/flatpak-builtins-remote-ls.c:71 app/flatpak-builtins-search.c:51
 msgid "Version"
 msgstr "版本"
 
@@ -2026,37 +2026,37 @@ msgid "List all applications using RUNTIME"
 msgstr "列出所有使用指定运行时的应用"
 
 #: app/flatpak-builtins-list.c:61 app/flatpak-builtins-remote-list.c:51
-#: app/flatpak-builtins-remote-ls.c:68 app/flatpak-builtins-search.c:44
+#: app/flatpak-builtins-remote-ls.c:68 app/flatpak-builtins-search.c:48
 msgid "Name"
 msgstr "名称"
 
 #: app/flatpak-builtins-list.c:61 app/flatpak-builtins-remote-list.c:51
-#: app/flatpak-builtins-remote-ls.c:68 app/flatpak-builtins-search.c:44
+#: app/flatpak-builtins-remote-ls.c:68 app/flatpak-builtins-search.c:48
 msgid "Show the name"
 msgstr "显示名字"
 
 #: app/flatpak-builtins-list.c:62 app/flatpak-builtins-remote-list.c:60
-#: app/flatpak-builtins-remote-ls.c:69 app/flatpak-builtins-search.c:45
+#: app/flatpak-builtins-remote-ls.c:69 app/flatpak-builtins-search.c:49
 msgid "Description"
 msgstr "描述"
 
 #: app/flatpak-builtins-list.c:62 app/flatpak-builtins-remote-ls.c:69
-#: app/flatpak-builtins-search.c:45
+#: app/flatpak-builtins-search.c:49
 msgid "Show the description"
 msgstr "显示说明"
 
 #: app/flatpak-builtins-list.c:63 app/flatpak-builtins-remote-ls.c:70
-#: app/flatpak-builtins-search.c:46
+#: app/flatpak-builtins-search.c:50
 msgid "Application ID"
 msgstr "应用程序 ID"
 
 #: app/flatpak-builtins-list.c:63 app/flatpak-builtins-ps.c:52
-#: app/flatpak-builtins-remote-ls.c:70 app/flatpak-builtins-search.c:46
+#: app/flatpak-builtins-remote-ls.c:70 app/flatpak-builtins-search.c:50
 msgid "Show the application ID"
 msgstr "显示应用程序标识"
 
 #: app/flatpak-builtins-list.c:64 app/flatpak-builtins-remote-ls.c:71
-#: app/flatpak-builtins-search.c:47
+#: app/flatpak-builtins-search.c:51
 msgid "Show the version"
 msgstr "显示版本"
 
@@ -2296,7 +2296,7 @@ msgstr "子-PID"
 msgid "Show the PID of the sandbox process"
 msgstr "显示沙盒进程的进程标识"
 
-#: app/flatpak-builtins-ps.c:54 app/flatpak-builtins-search.c:48
+#: app/flatpak-builtins-ps.c:54 app/flatpak-builtins-search.c:52
 msgid "Show the application branch"
 msgstr "显示应用程序分支"
 
@@ -3146,27 +3146,35 @@ msgstr "无法同时使用 app-fd 和 app-path"
 msgid "usr-fd and usr-path cannot both be used"
 msgstr "无法同时使用 usr-fd 和 usr-path"
 
-#: app/flatpak-builtins-search.c:37
+#: app/flatpak-builtins-search.c:39
 msgid "Arch to search for"
 msgstr "要搜索的架构"
 
-#: app/flatpak-builtins-search.c:49
+#: app/flatpak-builtins-search.c:42
+msgid "Only look for applications"
+msgstr "仅查找应用程序"
+
+#: app/flatpak-builtins-search.c:43
+msgid "Only look for runtimes"
+msgstr "仅查找运行时"
+
+#: app/flatpak-builtins-search.c:53
 msgid "Remotes"
 msgstr "远程仓库"
 
-#: app/flatpak-builtins-search.c:49
+#: app/flatpak-builtins-search.c:53
 msgid "Show the remotes"
 msgstr "显示远程仓库"
 
-#: app/flatpak-builtins-search.c:250
+#: app/flatpak-builtins-search.c:254
 msgid "TEXT - Search remote apps/runtimes for text"
 msgstr "TEXT - 搜索含指定文本的远程应用/运行时"
 
-#: app/flatpak-builtins-search.c:261
+#: app/flatpak-builtins-search.c:265
 msgid "TEXT must be specified"
 msgstr "必须指定文本"
 
-#: app/flatpak-builtins-search.c:344
+#: app/flatpak-builtins-search.c:358
 msgid "No matches found"
 msgstr "找不到匹配项"
 
@@ -4215,8 +4223,8 @@ msgstr "%s 已安装"
 #: app/flatpak-quiet-transaction.c:168 common/flatpak-dir.c:3854
 #: common/flatpak-dir.c:4553 common/flatpak-dir.c:17515
 #: common/flatpak-dir.c:17805 common/flatpak-dir-utils.c:167
-#: common/flatpak-dir-utils.c:260 common/flatpak-transaction.c:2771
-#: common/flatpak-transaction.c:2826
+#: common/flatpak-dir-utils.c:260 common/flatpak-transaction.c:2773
+#: common/flatpak-transaction.c:2828
 #, c-format
 msgid "%s not installed"
 msgstr "%s 未安装"
@@ -5627,125 +5635,125 @@ msgstr "无法创建同步管道"
 msgid "Failed to sync with dbus proxy"
 msgstr "与 dbus 代理同步失败"
 
-#: common/flatpak-transaction.c:2310
+#: common/flatpak-transaction.c:2312
 #, c-format
 msgid "Warning: Problem looking for related refs: %s"
 msgstr "警告：查找相关引用时遇到问题：%s"
 
-#: common/flatpak-transaction.c:2528
+#: common/flatpak-transaction.c:2530
 #, c-format
 msgid "The application %s requires the runtime %s which was not found"
 msgstr "应用程序 %s 需要的运行时 %s 未找到"
 
-#: common/flatpak-transaction.c:2544
+#: common/flatpak-transaction.c:2546
 #, c-format
 msgid "The application %s requires the runtime %s which is not installed"
 msgstr "应用程序 %s 需要的运行时 %s 未安装"
 
-#: common/flatpak-transaction.c:2676
+#: common/flatpak-transaction.c:2678
 #, c-format
 msgid "Can't uninstall %s which is needed by %s"
 msgstr "无法卸载 %2$s 需要的 %1$s"
 
-#: common/flatpak-transaction.c:2775
+#: common/flatpak-transaction.c:2777
 #, c-format
 msgid "Remote %s disabled, ignoring %s update"
 msgstr "远程仓库 %s 被禁用，将忽略 %s 更新"
 
-#: common/flatpak-transaction.c:2808
+#: common/flatpak-transaction.c:2810
 #, c-format
 msgid "%s is already installed"
 msgstr "%s 已安装"
 
-#: common/flatpak-transaction.c:2811
+#: common/flatpak-transaction.c:2813
 #, c-format
 msgid "%s is already installed from remote %s"
 msgstr "已经从远程仓库 %2$s 安装了 %1$s"
 
-#: common/flatpak-transaction.c:3155
+#: common/flatpak-transaction.c:3157
 #, c-format
 msgid "Invalid .flatpakref: %s"
 msgstr "无效的 .flatpakref：%s"
 
-#: common/flatpak-transaction.c:3196
+#: common/flatpak-transaction.c:3198
 msgid "Warning: Could not mark already installed apps as preinstalled"
 msgstr "警告：无法将已经安装的应用标记为预安装的"
 
-#: common/flatpak-transaction.c:3417
+#: common/flatpak-transaction.c:3419
 #, c-format
 msgid "Error updating remote metadata for '%s': %s"
 msgstr "更新“%s”的远程仓库元数据时出错：%s"
 
-#: common/flatpak-transaction.c:3924
+#: common/flatpak-transaction.c:3926
 #, c-format
 msgid ""
 "Warning: Treating remote fetch error as non-fatal since %s is already "
 "installed: %s"
 msgstr "警告：既然 %s 已经安装将把远程获取错误作为非致命性错误处理：%s"
 
-#: common/flatpak-transaction.c:4248
+#: common/flatpak-transaction.c:4250
 #, c-format
 msgid "No authenticator installed for remote '%s'"
 msgstr "没有为远程仓库“%s”安装身份验证器"
 
-#: common/flatpak-transaction.c:4352 common/flatpak-transaction.c:4359
+#: common/flatpak-transaction.c:4354 common/flatpak-transaction.c:4361
 #, c-format
 msgid "Failed to get tokens for ref: %s"
 msgstr "为引用获取令牌失败：%s"
 
-#: common/flatpak-transaction.c:4354 common/flatpak-transaction.c:4361
+#: common/flatpak-transaction.c:4356 common/flatpak-transaction.c:4363
 msgid "Failed to get tokens for ref"
 msgstr "为引用获取令牌失败"
 
-#: common/flatpak-transaction.c:4619
+#: common/flatpak-transaction.c:4621
 #, c-format
 msgid "Ref %s from %s matches more than one transaction operation"
 msgstr "来自 %2$s 的引用 %1$s 匹配了多于一个处理操作"
 
-#: common/flatpak-transaction.c:4620 common/flatpak-transaction.c:4630
+#: common/flatpak-transaction.c:4622 common/flatpak-transaction.c:4632
 msgid "any remote"
 msgstr "任何远程仓库"
 
-#: common/flatpak-transaction.c:4629
+#: common/flatpak-transaction.c:4631
 #, c-format
 msgid "No transaction operation found for ref %s from %s"
 msgstr "未发现用于来自 %2$s 应用 %1$s 的处理操作"
 
-#: common/flatpak-transaction.c:4752
+#: common/flatpak-transaction.c:4754
 #, c-format
 msgid "Flatpakrepo URL %s not file, HTTP or HTTPS"
 msgstr "Flatpakrepo URL %s 不是文件、HTTP 或 HTTPS"
 
-#: common/flatpak-transaction.c:4758
+#: common/flatpak-transaction.c:4760
 #, c-format
 msgid "Can't load dependent file %s: "
 msgstr "无法加载依赖文件 %s："
 
-#: common/flatpak-transaction.c:4766
+#: common/flatpak-transaction.c:4768
 #, c-format
 msgid "Invalid .flatpakrepo: %s"
 msgstr "无效的 .flatpakrepo：%s"
 
-#: common/flatpak-transaction.c:5493
+#: common/flatpak-transaction.c:5495
 msgid "Transaction already executed"
 msgstr "事务已被执行"
 
-#: common/flatpak-transaction.c:5508
+#: common/flatpak-transaction.c:5510
 msgid ""
 "Refusing to operate on a user installation as root! This can lead to "
 "incorrect file ownership and permission errors."
 msgstr "拒绝以 root 执行用户级安装！这会导致错误的文件归属和权限错误。"
 
-#: common/flatpak-transaction.c:5606 common/flatpak-transaction.c:5619
+#: common/flatpak-transaction.c:5608 common/flatpak-transaction.c:5621
 msgid "Aborted by user"
 msgstr "被用户中止"
 
-#: common/flatpak-transaction.c:5644
+#: common/flatpak-transaction.c:5646
 #, c-format
 msgid "Skipping %s due to previous error"
 msgstr "由于先前的错误，正在跳过 %s"
 
-#: common/flatpak-transaction.c:5698
+#: common/flatpak-transaction.c:5700
 #, c-format
 msgid "Aborted due to failure (%s)"
 msgstr "因失败而中止（%s）"
