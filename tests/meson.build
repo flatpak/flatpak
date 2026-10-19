@@ -385,7 +385,7 @@ tests = {
   'documents': {},
   'build-update-repo': {},
   'http-utils': {},
-  'run': {'wrap': [
+  'run': {'timeout': 90, 'wrap': [
     'user,nodeltas',
     'user,deltas',
     'system,nodeltas',
@@ -394,22 +394,22 @@ tests = {
     'system-norevokefs,deltas',
   ]},
   'info': {'wrap': ['user', 'system']},
-  'repo': {'wrap': [
+  'repo': {'timeout': 300, 'wrap': [
     'user',
     'system',
     'system-norevokefs',
     'user,oldsummary',
     'system,oldsummary',
   ]},
-  'history': {},
+  'history': {'is_parallel': false},
   'sideload': {'wrap': ['user', 'system']},
   'default-remotes': {},
   'metadata-validation': {},
   'extensions': {},
   'extension-branch-follow': {},
-  'bundle': {'wrap': ['user', 'system', 'system-norevokefs']},
+  'bundle': {'timeout': 60, 'wrap': ['user', 'system', 'system-norevokefs']},
   'oci': {},
-  'oci-registry': {'wrap': [
+  'oci-registry': {'timeout': 60, 'wrap': [
     'user,http',
     'user,https',
     'system,http',
@@ -418,16 +418,16 @@ tests = {
   'oci-auth': {'wrap': ['user', 'system']},
   'update-remote-configuration': {'wrap': ['newsummary', 'oldsummary']},
   'override': {},
-  'update-portal': {'wrap': ['user', 'system']},
-  'spawn': {'wrap': ['user']},
+  'update-portal': {'timeout': 90, 'wrap': ['user', 'system']},
+  'spawn': {'timeout': 60, 'wrap': ['user']},
   'auth': {},
-  'unused': {},
-  'summaries': {'wrap': ['user', 'system']},
+  'unused': {'timeout': 90},
+  'summaries': {'timeout': 60, 'wrap': ['user', 'system']},
   'subset': {'wrap': ['user', 'system']},
   'prune': {},
   'seccomp': {},
   'repair': {},
-  'extra-data': {'wrap': ['user', 'system']},
+  'extra-data': {'timeout': 90, 'wrap': ['user', 'system']},
   'preinstall': {},
   'pin': {},
   'run-custom': {'wrap': ['user', 'system']},
@@ -441,12 +441,12 @@ foreach name, testcase : tests
   script = 'test-@0@.sh'.format(name)
 
   if not testcase.has_key('wrap')
-    wrapped_tests += {'name': script, 'script': script}
+    wrapped_tests += testcase + {'name': script, 'script': script}
     continue
   endif
 
   foreach wrap : testcase['wrap']
-    wrapped_tests += {
+    wrapped_tests += testcase + {
       'name': 'test-@0@@@1@.wrap'.format(name, wrap),
       'script': script,
     }
@@ -456,22 +456,6 @@ endforeach
 foreach testcase : wrapped_tests
   name = testcase['name']
   script = testcase.get('script', name)
-
-  timeout = {
-    'test-bundle.sh' : 60,
-    'test-oci-registry.sh' : 60,
-    'test-repo.sh' : 300,
-    'test-run.sh' : 90,
-    'test-summaries.sh' : 60,
-    'test-unused.sh' : 90,
-    'test-update-portal.sh' : 90,
-    'test-spawn.sh' : 60,
-    'test-extra-data.sh' : 90,
-  }.get(script, 30)
-
-  is_parallel = {
-    'test-history.sh' : false,
-  }.get(script, true)
 
   if get_option('installed_tests')
     if name == script
@@ -513,9 +497,9 @@ foreach testcase : wrapped_tests
       args : [meson.current_source_dir() / name],
       depends : runtime_repo,
       env : test_env,
-      is_parallel : is_parallel,
+      is_parallel : testcase.get('is_parallel', true),
       protocol : 'tap',
-      timeout : timeout,
+      timeout : testcase.get('timeout', 30),
     )
   endif
 endforeach
