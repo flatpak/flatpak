@@ -1243,6 +1243,362 @@ _ostree_repo_static_delta_superblock_digest (OstreeRepo    *repo,
                                   FALSE, g_free, data);
 }
 
+static GVariant *
+load_cache_file (OstreeRepo *repo,
+                 const char *path,
+                 const char *type_string,
+                 const char *version)
+{
+  g_autoptr(GError) local_error = NULL;
+  g_autoptr(GBytes) bytes = NULL;
+  g_autoptr(GVariant) cache_v = NULL;
+  glnx_autofd int fd = -1;
+  const char *cache_version;
+
+  if (!glnx_openat_rdonly (ostree_repo_get_dfd (repo), path, TRUE, &fd, &local_error) ||
+      (bytes = glnx_fd_readall_bytes (fd, NULL, &local_error)) == NULL)
+    {
+      if (!g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        g_info ("Ignoring %s: %s", path, local_error->message);
+      return NULL;
+    }
+
+  cache_v = g_variant_ref_sink (g_variant_new_from_bytes (G_VARIANT_TYPE (type_string), bytes, FALSE));
+  g_variant_get_child (cache_v, 0, "&s", &cache_version);
+  if (strcmp (cache_version, version) != 0)
+    return NULL;
+
+  return g_steal_pointer (&cache_v);
+}
+
+static gboolean
+save_cache_file (OstreeRepo   *repo,
+                 const char   *path,
+                 GVariant     *cache_v,
+                 GCancellable *cancellable,
+                 GError      **error)
+{
+  g_autoptr(GVariant) owned_cache_v = g_variant_ref_sink (cache_v);
+
+  if (!glnx_shutil_mkdir_p_at (ostree_repo_get_dfd (repo), "tmp/cache", 0755, cancellable, error))
+    return FALSE;
+
+  return glnx_file_replace_contents_at (ostree_repo_get_dfd (repo), path,
+                                        g_variant_get_data (owned_cache_v), g_variant_get_size (owned_cache_v),
+                                        GLNX_FILE_REPLACE_NODATASYNC, cancellable, error);
+}
+
+#define DELTA_CACHE_PATH "tmp/cache/flatpak-delta-cache"
+#define DELTA_CACHE_VERSION "flatpak-delta-cache-1-" PACKAGE_VERSION
+#define DELTA_CACHE_STRING "(sa{s(tttay)}a{sas})"
+
+typedef struct {
+  guint64 ino;
+  guint64 size;
+  guint64 mtime;
+  guint8  digest[OSTREE_SHA256_DIGEST_LEN];
+} DeltaDigest;
+
+typedef struct {
+  gboolean    loaded;
+  gboolean    changed;
+  GHashTable *digests;
+  GHashTable *indexes;
+  GHashTable *checked;
+} DeltaCache;
+
+static void
+delta_cache_free (DeltaCache *cache)
+{
+  g_hash_table_unref (cache->digests);
+  g_hash_table_unref (cache->indexes);
+  g_hash_table_unref (cache->checked);
+  g_free (cache);
+}
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (DeltaCache, delta_cache_free)
+
+static DeltaCache *
+delta_cache_load (OstreeRepo *repo)
+{
+  g_autoptr(DeltaCache) cache = g_new0 (DeltaCache, 1);
+  g_autoptr(GVariant) cache_v = NULL;
+  g_autoptr(GVariant) digests_v = NULL;
+  g_autoptr(GVariant) indexes_v = NULL;
+  GVariantIter iter;
+  const char *name;
+  guint64 ino, size, mtime;
+  GVariant *digest_v;
+  char **delta_names;
+
+  cache->digests = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+  cache->indexes = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, (GDestroyNotify) g_strfreev);
+  cache->checked = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+
+  cache_v = load_cache_file (repo, DELTA_CACHE_PATH, DELTA_CACHE_STRING, DELTA_CACHE_VERSION);
+  if (cache_v == NULL)
+    return g_steal_pointer (&cache);
+
+  g_variant_get (cache_v, "(&s@a{s(tttay)}@a{sas})", NULL, &digests_v, &indexes_v);
+
+  g_variant_iter_init (&iter, digests_v);
+  while (g_variant_iter_next (&iter, "{&s(ttt@ay)}", &name, &ino, &size, &mtime, &digest_v))
+    {
+      DeltaDigest *entry = g_new0 (DeltaDigest, 1);
+      gsize len = 0;
+      const guint8 *digest = g_variant_get_fixed_array (digest_v, &len, 1);
+
+      entry->ino = ino;
+      entry->size = size;
+      entry->mtime = mtime;
+      if (len == OSTREE_SHA256_DIGEST_LEN)
+        {
+          memcpy (entry->digest, digest, len);
+          g_hash_table_insert (cache->digests, g_strdup (name), entry);
+        }
+      else
+        g_free (entry);
+      g_variant_unref (digest_v);
+    }
+
+  g_variant_iter_init (&iter, indexes_v);
+  while (g_variant_iter_next (&iter, "{&s^as}", &name, &delta_names))
+    g_hash_table_insert (cache->indexes, g_strdup (name), delta_names);
+
+  cache->loaded = TRUE;
+
+  return g_steal_pointer (&cache);
+}
+
+static gboolean
+delta_cache_save (OstreeRepo   *repo,
+                  DeltaCache   *cache,
+                  GCancellable *cancellable,
+                  GError      **error)
+{
+  g_auto(GVariantBuilder) digests_builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
+  g_auto(GVariantBuilder) indexes_builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
+
+  g_variant_builder_init (&digests_builder, G_VARIANT_TYPE ("a{s(tttay)}"));
+  GLNX_HASH_TABLE_FOREACH_KV (cache->digests, const char *, name, DeltaDigest *, entry)
+    g_variant_builder_add (&digests_builder, "{s(ttt@ay)}", name, entry->ino, entry->size, entry->mtime,
+                           g_variant_new_fixed_array (G_VARIANT_TYPE_BYTE, entry->digest, OSTREE_SHA256_DIGEST_LEN, 1));
+
+  g_variant_builder_init (&indexes_builder, G_VARIANT_TYPE ("a{sas}"));
+  GLNX_HASH_TABLE_FOREACH_KV (cache->indexes, const char *, to, char **, delta_names)
+    g_variant_builder_add (&indexes_builder, "{s^as}", to, delta_names);
+
+  return save_cache_file (repo, DELTA_CACHE_PATH,
+                          g_variant_new ("(s@a{s(tttay)}@a{sas})", DELTA_CACHE_VERSION,
+                                         g_variant_builder_end (&digests_builder),
+                                         g_variant_builder_end (&indexes_builder)),
+                          cancellable, error);
+}
+
+static GVariant *
+delta_cache_get_digest (DeltaCache   *cache,
+                        OstreeRepo   *repo,
+                        const char   *delta_name,
+                        GCancellable *cancellable,
+                        GError      **error)
+{
+  DeltaDigest *entry = g_hash_table_lookup (cache->digests, delta_name);
+
+  if (!g_hash_table_contains (cache->checked, delta_name))
+    {
+      g_autofree char *from = NULL;
+      g_autofree char *to = NULL;
+      g_autofree char *superblock = NULL;
+      struct stat stbuf;
+      guint64 mtime;
+      gboolean recomputed = FALSE;
+
+      _ostree_parse_delta_name (delta_name, &from, &to);
+      superblock = _ostree_get_relative_static_delta_superblock_path ((from && from[0]) ? from : NULL, to);
+
+      if (!glnx_fstatat (ostree_repo_get_dfd (repo), superblock, &stbuf, 0, error))
+        return NULL;
+
+      mtime = (guint64) stbuf.st_mtim.tv_sec * G_GUINT64_CONSTANT (1000000000) + stbuf.st_mtim.tv_nsec;
+
+      if (entry == NULL || entry->ino != stbuf.st_ino || entry->size != stbuf.st_size || entry->mtime != mtime)
+        {
+          g_autoptr(GVariant) digest = NULL;
+
+          digest = _ostree_repo_static_delta_superblock_digest (repo, (from && from[0]) ? from : NULL, to,
+                                                                cancellable, error);
+          if (digest == NULL)
+            return NULL;
+          g_variant_ref_sink (digest);
+
+          entry = g_new0 (DeltaDigest, 1);
+          entry->ino = stbuf.st_ino;
+          entry->size = stbuf.st_size;
+          entry->mtime = mtime;
+          memcpy (entry->digest, g_variant_get_data (digest), OSTREE_SHA256_DIGEST_LEN);
+          g_hash_table_replace (cache->digests, g_strdup (delta_name), entry);
+          recomputed = TRUE;
+          cache->changed = TRUE;
+        }
+
+      g_hash_table_insert (cache->checked, g_strdup (delta_name), GINT_TO_POINTER (recomputed));
+    }
+
+  return g_variant_new_fixed_array (G_VARIANT_TYPE_BYTE, entry->digest, OSTREE_SHA256_DIGEST_LEN, 1);
+}
+
+static gboolean
+write_delta_index (OstreeRepo   *repo,
+                   DeltaCache   *cache,
+                   const char   *to,
+                   GPtrArray    *delta_names,
+                   GCancellable *cancellable,
+                   GError      **error)
+{
+  g_auto(GVariantDict) deltas_builder = FLATPAK_VARIANT_DICT_INITIALIZER;
+  g_auto(GVariantDict) index_builder = FLATPAK_VARIANT_DICT_INITIALIZER;
+  g_autoptr(GVariant) index = NULL;
+  g_autoptr(GString) index_path = static_delta_path_base ("delta-indexes/", NULL, to);
+  g_autofree char *index_dirname = NULL;
+
+  g_string_append (index_path, ".index");
+
+  g_variant_dict_init (&deltas_builder, NULL);
+  for (guint i = 0; i < delta_names->len; i++)
+    {
+      const char *delta_name = g_ptr_array_index (delta_names, i);
+      GVariant *digest = delta_cache_get_digest (cache, repo, delta_name, cancellable, error);
+
+      if (digest == NULL)
+        return FALSE;
+
+      g_variant_dict_insert_value (&deltas_builder, delta_name, digest);
+    }
+
+  g_variant_dict_init (&index_builder, NULL);
+  g_variant_dict_insert_value (&index_builder, "ostree.static-deltas", g_variant_dict_end (&deltas_builder));
+  index = g_variant_ref_sink (g_variant_dict_end (&index_builder));
+
+  index_dirname = g_path_get_dirname (index_path->str);
+  if (!glnx_shutil_mkdir_p_at (ostree_repo_get_dfd (repo), index_dirname, 0755, cancellable, error))
+    return FALSE;
+
+  return glnx_file_replace_contents_at (ostree_repo_get_dfd (repo), index_path->str,
+                                        g_variant_get_data (index), g_variant_get_size (index),
+                                        0, cancellable, error);
+}
+
+static gboolean
+delta_names_equal (GPtrArray   *delta_names,
+                   char       **old_delta_names)
+{
+  if (old_delta_names == NULL || g_strv_length (old_delta_names) != delta_names->len)
+    return FALSE;
+
+  for (guint i = 0; i < delta_names->len; i++)
+    {
+      if (strcmp (g_ptr_array_index (delta_names, i), old_delta_names[i]) != 0)
+        return FALSE;
+    }
+
+  return TRUE;
+}
+
+static gboolean
+reindex_deltas (OstreeRepo   *repo,
+                GPtrArray    *delta_names,
+                DeltaCache   *cache,
+                GCancellable *cancellable,
+                GError      **error)
+{
+  g_autoptr(GHashTable) new_indexes = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, (GDestroyNotify) g_ptr_array_unref);
+#if OSTREE_CHECK_VERSION (2021, 3)
+  g_autoptr(OstreeRepoAutoLock) lock = NULL;
+
+  lock = ostree_repo_auto_lock_push (repo, OSTREE_REPO_LOCK_SHARED, cancellable, error);
+  if (!lock)
+    return FALSE;
+#endif
+
+  if (!cache->loaded &&
+      !ostree_repo_static_delta_reindex (repo, 0, NULL, cancellable, error))
+    return FALSE;
+
+  for (guint i = 0; i < delta_names->len; i++)
+    {
+      const char *delta_name = g_ptr_array_index (delta_names, i);
+      g_autofree char *from = NULL;
+      g_autofree char *to = NULL;
+      GPtrArray *target_deltas;
+
+      _ostree_parse_delta_name (delta_name, &from, &to);
+
+      target_deltas = g_hash_table_lookup (new_indexes, to);
+      if (target_deltas == NULL)
+        {
+          target_deltas = g_ptr_array_new ();
+          g_hash_table_insert (new_indexes, g_steal_pointer (&to), target_deltas);
+        }
+      g_ptr_array_add (target_deltas, (char *) delta_name);
+    }
+
+  GLNX_HASH_TABLE_FOREACH_KV (new_indexes, const char *, to, GPtrArray *, target_deltas)
+    {
+      gboolean dirty;
+
+      g_ptr_array_sort (target_deltas, flatpak_strcmp0_ptr);
+
+      dirty = !delta_names_equal (target_deltas, g_hash_table_lookup (cache->indexes, to));
+      for (guint i = 0; i < target_deltas->len; i++)
+        {
+          const char *delta_name = g_ptr_array_index (target_deltas, i);
+          g_autoptr(GVariant) digest = delta_cache_get_digest (cache, repo, delta_name, cancellable, error);
+
+          if (digest == NULL)
+            return FALSE;
+
+          g_variant_ref_sink (digest);
+          if (GPOINTER_TO_INT (g_hash_table_lookup (cache->checked, delta_name)))
+            dirty = TRUE;
+        }
+
+      if (dirty)
+        {
+          cache->changed = TRUE;
+          if (cache->loaded &&
+              !write_delta_index (repo, cache, to, target_deltas, cancellable, error))
+            return FALSE;
+        }
+    }
+
+  GLNX_HASH_TABLE_FOREACH (cache->indexes, const char *, to)
+    {
+      g_autoptr(GString) index_path = NULL;
+
+      if (g_hash_table_contains (new_indexes, to))
+        continue;
+
+      cache->changed = TRUE;
+      index_path = static_delta_path_base ("delta-indexes/", NULL, to);
+      g_string_append (index_path, ".index");
+      if (unlinkat (ostree_repo_get_dfd (repo), index_path->str, 0) < 0 && errno != ENOENT)
+        return glnx_throw_errno_prefix (error, "unlinkat(%s)", index_path->str);
+    }
+
+  g_hash_table_remove_all (cache->indexes);
+  GLNX_HASH_TABLE_FOREACH_KV (new_indexes, const char *, to, GPtrArray *, target_deltas)
+    {
+      char **names = g_new0 (char *, target_deltas->len + 1);
+
+      for (guint i = 0; i < target_deltas->len; i++)
+        names[i] = g_strdup (g_ptr_array_index (target_deltas, i));
+
+      g_hash_table_insert (cache->indexes, g_strdup (to), names);
+    }
+
+  return TRUE;
+}
+
 typedef enum {
   DIFF_OP_KIND_RESUSE_OLD,
   DIFF_OP_KIND_SKIP_OLD,
@@ -1853,6 +2209,7 @@ generate_summary (OstreeRepo   *repo,
                   GHashTable   *refs,
                   GHashTable   *commit_data_cache,
                   GPtrArray    *delta_names,
+                  DeltaCache   *delta_cache,
                   const char   *subset,
                   const char  **summary_arches,
                   GCancellable *cancellable,
@@ -2024,9 +2381,7 @@ generate_summary (OstreeRepo   *repo,
           if (!g_hash_table_contains (commits, to))
             continue;
 
-          digest = _ostree_repo_static_delta_superblock_digest (repo,
-                                                                (from && from[0]) ? from : NULL,
-                                                                to, cancellable, error);
+          digest = delta_cache_get_digest (delta_cache, repo, delta_names->pdata[i], cancellable, error);
           if (digest == NULL)
             return FALSE;
 
@@ -2341,6 +2696,7 @@ flatpak_repo_update (OstreeRepo   *repo,
   g_autoptr(GVariant) summary_index = NULL;
   g_autoptr(GVariant) old_index = NULL;
   g_autoptr(GPtrArray) delta_names = NULL;
+  g_autoptr(DeltaCache) delta_cache = NULL;
   g_auto(GStrv) summary_arches = NULL;
   g_autoptr(GHashTable) refs = NULL;
   g_autoptr(GHashTable) arches = NULL;
@@ -2416,7 +2772,9 @@ flatpak_repo_update (OstreeRepo   *repo,
         }
     }
 
-  compat_summary = generate_summary (repo, TRUE, refs, commit_data_cache, delta_names,
+  delta_cache = delta_cache_load (repo);
+
+  compat_summary = generate_summary (repo, TRUE, refs, commit_data_cache, delta_names, delta_cache,
                                      "", (const char **)summary_arches,
                                      cancellable, error);
   if (compat_summary == NULL)
@@ -2437,7 +2795,7 @@ flatpak_repo_update (OstreeRepo   *repo,
               else
                 name = g_strconcat (subset, "-", arch, NULL);
 
-              g_autoptr(GVariant) arch_summary = generate_summary (repo, FALSE, refs, commit_data_cache, NULL, subset, arch_v,
+              g_autoptr(GVariant) arch_summary = generate_summary (repo, FALSE, refs, commit_data_cache, NULL, NULL, subset, arch_v,
                                                                    cancellable, error);
               if (arch_summary == NULL)
                 return FALSE;
@@ -2460,8 +2818,16 @@ flatpak_repo_update (OstreeRepo   *repo,
         return FALSE;
     }
 
-  if (!ostree_repo_static_delta_reindex (repo, 0, NULL, cancellable, error))
+  if (!reindex_deltas (repo, delta_names, delta_cache, cancellable, error))
     return FALSE;
+
+  if (delta_cache->changed)
+    {
+      g_autoptr(GError) cache_error = NULL;
+
+      if (!delta_cache_save (repo, delta_cache, cancellable, &cache_error))
+        g_warning ("Failed to save delta cache: %s", cache_error->message);
+    }
 
   if (summary_index && gpg_key_ids)
     {
