@@ -3474,41 +3474,229 @@ flatpak_mtree_ensure_dir_metadata (OstreeRepo        *repo,
   return TRUE;
 }
 
-static gboolean
-copy_icon (const char        *id,
-           GFile             *icons_dir,
-           OstreeRepo        *repo,
-           OstreeMutableTree *size_mtree,
-           const char        *size,
-           GError           **error)
-{
-  g_autofree char *icon_name = g_strconcat (id, ".png", NULL);
-  g_autoptr(GFile) size_dir = g_file_get_child (icons_dir, size);
-  g_autoptr(GFile) icon_file = g_file_get_child (size_dir, icon_name);
-  const char *checksum;
+#define APPSTREAM_CACHE_PATH "tmp/cache/flatpak-appstream-cache"
+#define APPSTREAM_CACHE_VERSION "flatpak-appstream-cache-1-" PACKAGE_VERSION
+#define APPSTREAM_CACHE_ENTRY_STRING "(sbassbayasa{ss}a{ss})"
+#define APPSTREAM_CACHE_STRING "(sa{s" APPSTREAM_CACHE_ENTRY_STRING "})"
 
-  if (!ostree_repo_file_ensure_resolved (OSTREE_REPO_FILE(icon_file), NULL))
+static const char *appstream_icon_sizes[] = { "64x64", "128x128" };
+
+typedef struct {
+  char       *commit;
+  gboolean    eol;
+  char      **subsets;
+  char       *error;
+  gboolean    cacheable;
+  gboolean    migrated;
+  GBytes     *xml;
+  char      **ids;
+  GHashTable *icons[G_N_ELEMENTS (appstream_icon_sizes)];
+} AppstreamRefData;
+
+static void
+appstream_ref_data_free (AppstreamRefData *data)
+{
+  g_free (data->commit);
+  g_strfreev (data->subsets);
+  g_free (data->error);
+  g_clear_pointer (&data->xml, g_bytes_unref);
+  g_strfreev (data->ids);
+  for (gsize i = 0; i < G_N_ELEMENTS (data->icons); i++)
+    g_clear_pointer (&data->icons[i], g_hash_table_unref);
+  g_free (data);
+}
+
+static AppstreamRefData *
+appstream_ref_data_new (const char *commit)
+{
+  AppstreamRefData *data = g_new0 (AppstreamRefData, 1);
+
+  data->commit = g_strdup (commit);
+  data->cacheable = TRUE;
+  for (gsize i = 0; i < G_N_ELEMENTS (data->icons); i++)
+    data->icons[i] = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+
+  return data;
+}
+
+static void
+icons_from_variant (GVariant   *v,
+                    GHashTable *icons)
+{
+  GVariantIter iter;
+  const char *name, *checksum;
+
+  g_variant_iter_init (&iter, v);
+  while (g_variant_iter_next (&iter, "{&s&s}", &name, &checksum))
+    g_hash_table_insert (icons, g_strdup (name), g_strdup (checksum));
+}
+
+static GVariant *
+icons_to_variant (GHashTable *icons)
+{
+  g_auto(GVariantBuilder) builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
+
+  g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{ss}"));
+  GLNX_HASH_TABLE_FOREACH_KV (icons, const char *, name, const char *, checksum)
+    g_variant_builder_add (&builder, "{ss}", name, checksum);
+
+  return g_variant_builder_end (&builder);
+}
+
+static AppstreamRefData *
+appstream_ref_data_from_variant (GVariant *v)
+{
+  const char *commit;
+  const char *error;
+  g_autoptr(GVariant) xml_v = NULL;
+  g_autoptr(GVariant) size1_icons_v = NULL;
+  g_autoptr(GVariant) size2_icons_v = NULL;
+  AppstreamRefData *data;
+  gboolean eol, migrated;
+  char **subsets, **ids;
+
+  g_variant_get (v, "(&sb^as&sb@ay^as@a{ss}@a{ss})",
+                 &commit, &eol, &subsets, &error, &migrated, &xml_v, &ids,
+                 &size1_icons_v, &size2_icons_v);
+
+  data = appstream_ref_data_new (commit);
+  data->eol = eol;
+  data->subsets = subsets;
+  data->error = *error != 0 ? g_strdup (error) : NULL;
+  data->migrated = migrated;
+  data->xml = g_variant_get_data_as_bytes (xml_v);
+  data->ids = ids;
+  icons_from_variant (size1_icons_v, data->icons[0]);
+  icons_from_variant (size2_icons_v, data->icons[1]);
+
+  return data;
+}
+
+static GVariant *
+appstream_ref_data_to_variant (AppstreamRefData *data)
+{
+  const char * const empty_strv[] = { NULL };
+
+  return g_variant_new ("(sb^assb@ay^as@a{ss}@a{ss})",
+                        data->commit,
+                        data->eol,
+                        data->subsets ? (const char * const *) data->subsets : empty_strv,
+                        data->error ? data->error : "",
+                        data->migrated,
+                        data->xml ?
+                          g_variant_new_from_bytes (G_VARIANT_TYPE_BYTESTRING, data->xml, TRUE) :
+                          g_variant_new_fixed_array (G_VARIANT_TYPE_BYTE, NULL, 0, 1),
+                        data->ids ? (const char * const *) data->ids : empty_strv,
+                        icons_to_variant (data->icons[0]),
+                        icons_to_variant (data->icons[1]));
+}
+
+static GHashTable *
+appstream_cache_load (OstreeRepo *repo)
+{
+  g_autoptr(GHashTable) cache = g_hash_table_new_full (g_str_hash, g_str_equal, g_free,
+                                                       (GDestroyNotify) appstream_ref_data_free);
+  g_autoptr(GVariant) cache_v = NULL;
+  g_autoptr(GVariant) entries = NULL;
+  GVariantIter iter;
+  const char *ref;
+  GVariant *entry;
+
+  cache_v = load_cache_file (repo, APPSTREAM_CACHE_PATH, APPSTREAM_CACHE_STRING, APPSTREAM_CACHE_VERSION);
+  if (cache_v == NULL)
+    return g_steal_pointer (&cache);
+
+  entries = g_variant_get_child_value (cache_v, 1);
+  g_variant_iter_init (&iter, entries);
+  while (g_variant_iter_next (&iter, "{&s@" APPSTREAM_CACHE_ENTRY_STRING "}", &ref, &entry))
     {
-      g_info ("No icon at size %s for %s", size, id);
-      return TRUE;
+      g_hash_table_insert (cache, g_strdup (ref), appstream_ref_data_from_variant (entry));
+      g_variant_unref (entry);
     }
 
-  checksum = ostree_repo_file_get_checksum (OSTREE_REPO_FILE(icon_file));
-  if (!ostree_mutable_tree_replace_file (size_mtree, icon_name, checksum, error))
+  return g_steal_pointer (&cache);
+}
+
+static gboolean
+appstream_cache_save (OstreeRepo   *repo,
+                      GHashTable   *ref_data,
+                      GCancellable *cancellable,
+                      GError      **error)
+{
+  g_auto(GVariantBuilder) entries = FLATPAK_VARIANT_BUILDER_INITIALIZER;
+
+  g_variant_builder_init (&entries, G_VARIANT_TYPE ("a{s" APPSTREAM_CACHE_ENTRY_STRING "}"));
+  GLNX_HASH_TABLE_FOREACH_KV (ref_data, FlatpakDecomposed *, ref, AppstreamRefData *, data)
+    {
+      if (data->cacheable)
+        g_variant_builder_add (&entries, "{s@" APPSTREAM_CACHE_ENTRY_STRING "}",
+                               flatpak_decomposed_get_ref (ref),
+                               appstream_ref_data_to_variant (data));
+    }
+
+  return save_cache_file (repo, APPSTREAM_CACHE_PATH,
+                          g_variant_new ("(s@a{s" APPSTREAM_CACHE_ENTRY_STRING "})",
+                                         APPSTREAM_CACHE_VERSION,
+                                         g_variant_builder_end (&entries)),
+                          cancellable, error);
+}
+
+static gboolean
+appstream_error_is_cacheable (const GError *error)
+{
+  return error->domain == G_MARKUP_ERROR ||
+         error->domain == G_KEY_FILE_ERROR ||
+         g_error_matches (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND) ||
+         g_error_matches (error, G_IO_ERROR, G_IO_ERROR_NOT_DIRECTORY) ||
+         g_error_matches (error, G_IO_ERROR, G_IO_ERROR_INVALID_DATA);
+}
+
+static gboolean
+list_icons (GFile        *icons_dir,
+            const char   *size,
+            GHashTable   *icons,
+            GCancellable *cancellable,
+            GError      **error)
+{
+  g_autoptr(GFile) size_dir = g_file_get_child (icons_dir, size);
+  g_autoptr(GFileEnumerator) enumerator = NULL;
+
+  enumerator = g_file_enumerate_children (size_dir,
+                                          G_FILE_ATTRIBUTE_STANDARD_NAME "," G_FILE_ATTRIBUTE_STANDARD_TYPE,
+                                          G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                          cancellable, error);
+  if (enumerator == NULL)
     return FALSE;
+
+  while (TRUE)
+    {
+      GFileInfo *info;
+      GFile *child;
+
+      if (!g_file_enumerator_iterate (enumerator, &info, &child, cancellable, error))
+        return FALSE;
+      if (info == NULL)
+        break;
+
+      if (g_file_info_get_file_type (info) == G_FILE_TYPE_DIRECTORY)
+        continue;
+
+      if (!ostree_repo_file_ensure_resolved (OSTREE_REPO_FILE (child), error))
+        return FALSE;
+
+      g_hash_table_insert (icons, g_strdup (g_file_info_get_name (info)),
+                           g_strdup (ostree_repo_file_get_checksum (OSTREE_REPO_FILE (child))));
+    }
 
   return TRUE;
 }
 
 static gboolean
 extract_appstream (OstreeRepo        *repo,
-                   FlatpakXml        *appstream_root,
                    FlatpakDecomposed *ref,
-                   const char        *id,
-                   OstreeMutableTree *size1_mtree,
-                   OstreeMutableTree *size2_mtree,
-                   GCancellable       *cancellable,
-                   GError            **error)
+                   AppstreamRefData  *data,
+                   GCancellable      *cancellable,
+                   GError           **error)
 {
   g_autoptr(GFile) root = NULL;
   g_autoptr(GFile) app_info_dir = NULL;
@@ -3516,12 +3704,16 @@ extract_appstream (OstreeRepo        *repo,
   g_autoptr(GFile) icons_dir = NULL;
   g_autoptr(GFile) appstream_file = NULL;
   g_autoptr(GFile) metadata = NULL;
+  g_autofree char *id = flatpak_decomposed_dup_id (ref);
   g_autofree char *appstream_basename = NULL;
   g_autoptr(GInputStream) in = NULL;
   g_autoptr(FlatpakXml) xml_root = NULL;
+  g_autoptr(FlatpakXml) appstream_root = NULL;
   g_autoptr(GKeyFile) keyfile = NULL;
+  g_autoptr(GString) components = NULL;
+  g_autoptr(GPtrArray) ids = NULL;
 
-  if (!ostree_repo_read_commit (repo, flatpak_decomposed_get_ref (ref), &root, NULL, NULL, error))
+  if (!ostree_repo_read_commit (repo, data->commit, &root, NULL, NULL, error))
     return FALSE;
 
   keyfile = g_key_file_new ();
@@ -3554,62 +3746,114 @@ extract_appstream (OstreeRepo        *repo,
   if (xml_root == NULL)
     return FALSE;
 
-  if (flatpak_appstream_xml_migrate (xml_root, appstream_root,
-                                     flatpak_decomposed_get_ref (ref), id, keyfile))
+  appstream_root = flatpak_appstream_xml_new ();
+  data->migrated = flatpak_appstream_xml_migrate (xml_root, appstream_root,
+                                                  flatpak_decomposed_get_ref (ref), id, keyfile);
+  if (!data->migrated)
+    return TRUE;
+
+  components = g_string_new ("");
+  flatpak_appstream_xml_components_to_string (appstream_root, components);
+  data->xml = g_string_free_to_bytes (g_steal_pointer (&components));
+
+  ids = g_ptr_array_new ();
+  for (FlatpakXml *component = appstream_root->first_child->first_child;
+       component != NULL;
+       component = component->next_sibling)
     {
-      g_autoptr(GError) my_error = NULL;
-      FlatpakXml *components = appstream_root->first_child;
-      FlatpakXml *component = components->first_child;
+      FlatpakXml *component_id, *component_id_text_node;
 
-      while (component != NULL)
+      if (g_strcmp0 (component->element_name, "component") != 0)
+        continue;
+
+      component_id = flatpak_xml_find (component, "id", NULL);
+      component_id_text_node = flatpak_xml_find (component_id, NULL, NULL);
+      g_ptr_array_add (ids, g_strstrip (g_strdup (component_id_text_node->text)));
+    }
+  g_ptr_array_add (ids, NULL);
+  data->ids = (char **) g_ptr_array_free (g_steal_pointer (&ids), FALSE);
+
+  for (gsize i = 0; i < G_N_ELEMENTS (appstream_icon_sizes); i++)
+    {
+      g_autoptr(GError) icon_error = NULL;
+
+      if (!list_icons (icons_dir, appstream_icon_sizes[i], data->icons[i], cancellable, &icon_error) &&
+          !g_error_matches (icon_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND) &&
+          !g_error_matches (icon_error, G_IO_ERROR, G_IO_ERROR_NOT_DIRECTORY))
         {
-          FlatpakXml *component_id, *component_id_text_node;
-          g_autofree char *component_id_text = NULL;
-          char *component_id_suffix;
-
-          if (g_strcmp0 (component->element_name, "component") != 0)
-            {
-              component = component->next_sibling;
-              continue;
-            }
-
-          component_id = flatpak_xml_find (component, "id", NULL);
-          component_id_text_node = flatpak_xml_find (component_id, NULL, NULL);
-
-          component_id_text = g_strstrip (g_strdup (component_id_text_node->text));
-
-          /* We're looking for a component that matches the app-id (id), but it
-             may have some further elements (separated by dot) and can also have
-             ".desktop" at the end which we need to strip out. Further complicating
-             things, some actual app ids ends in .desktop, such as org.telegram.desktop. */
-
-          component_id_suffix = component_id_text + strlen (id); /* Don't deref before we check for prefix match! */
-          if (!g_str_has_prefix (component_id_text, id) ||
-              (component_id_suffix[0] != 0 && component_id_suffix[0] != '.'))
-            {
-              component = component->next_sibling;
-              continue;
-            }
-
-          if (!copy_icon (component_id_text, icons_dir, repo, size1_mtree, "64x64", &my_error))
-            {
-              g_print (_("Error copying 64x64 icon for component %s: %s\n"), component_id_text, my_error->message);
-              g_clear_error (&my_error);
-            }
-
-          if (!copy_icon (component_id_text, icons_dir, repo, size2_mtree, "128x128", &my_error))
-             {
-               g_print (_("Error copying 128x128 icon for component %s: %s\n"), component_id_text, my_error->message);
-               g_clear_error (&my_error);
-             }
-
-
-          /* We might match other prefixes, so keep on going */
-          component = component->next_sibling;
+          g_print (_("Error listing %s icons for %s: %s\n"), appstream_icon_sizes[i],
+                   flatpak_decomposed_get_ref (ref), icon_error->message);
+          data->cacheable = FALSE;
         }
     }
 
   return TRUE;
+}
+
+static AppstreamRefData *
+appstream_ref_data_load (OstreeRepo        *repo,
+                         FlatpakDecomposed *ref,
+                         const char        *commit,
+                         GVariant          *commit_v,
+                         GCancellable      *cancellable)
+{
+  AppstreamRefData *data = appstream_ref_data_new (commit);
+  VarMetadataRef commit_metadata = var_commit_get_metadata (var_commit_from_gvariant (commit_v));
+  VarVariantRef xa_subsets_v;
+  g_autoptr(GError) local_error = NULL;
+
+  data->eol = var_metadata_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE, NULL, NULL) ||
+              var_metadata_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE_REBASE, NULL, NULL);
+
+  if (var_metadata_lookup (commit_metadata, "xa.subsets", NULL, &xa_subsets_v))
+    {
+      VarArrayofstringRef xa_subsets = var_arrayofstring_from_variant (xa_subsets_v);
+      gsize len = var_arrayofstring_get_length (xa_subsets);
+
+      data->subsets = g_new0 (char *, len + 1);
+      for (gsize j = 0; j < len; j++)
+        data->subsets[j] = g_strdup (var_arrayofstring_get_at (xa_subsets, j));
+    }
+
+  if (data->eol)
+    return data;
+
+  if (!extract_appstream (repo, ref, data, cancellable, &local_error))
+    {
+      data->migrated = FALSE;
+      data->error = g_strdup (local_error->message);
+      data->cacheable = appstream_error_is_cacheable (local_error);
+    }
+
+  return data;
+}
+
+static void
+add_component_id (GHashTable *seen_ids,
+                  GHashTable *ids_by_prefix,
+                  const char *component_id)
+{
+  if (!g_hash_table_add (seen_ids, (char *) component_id))
+    return;
+
+  for (const char *p = component_id; ; p++)
+    {
+      if (*p == '.' || *p == 0)
+        {
+          g_autofree char *prefix = g_strndup (component_id, p - component_id);
+          GPtrArray *ids = g_hash_table_lookup (ids_by_prefix, prefix);
+
+          if (ids == NULL)
+            {
+              ids = g_ptr_array_new ();
+              g_hash_table_insert (ids_by_prefix, g_steal_pointer (&prefix), ids);
+            }
+          g_ptr_array_add (ids, (char *) component_id);
+        }
+
+      if (*p == 0)
+        break;
+    }
 }
 
 /* This is similar to ostree_repo_list_refs(), but returns only valid flatpak
@@ -3655,7 +3899,7 @@ _flatpak_repo_generate_appstream (OstreeRepo   *repo,
                                   const char   *gpg_homedir,
                                   FlatpakDecomposed **all_refs_keys,
                                   guint         n_keys,
-                                  GHashTable   *all_commits,
+                                  GHashTable   *ref_data,
                                   GHashTable   *collection_refs,
                                   const char   *arch,
                                   const char   *subset,
@@ -3663,7 +3907,11 @@ _flatpak_repo_generate_appstream (OstreeRepo   *repo,
                                   GCancellable *cancellable,
                                   GError      **error)
 {
-  g_autoptr(FlatpakXml) appstream_root = NULL;
+  g_autoptr(GString) components = g_string_new ("");
+  g_autoptr(GHashTable) seen_ids = g_hash_table_new (g_str_hash, g_str_equal);
+  g_autoptr(GHashTable) ids_by_prefix = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, (GDestroyNotify) g_ptr_array_unref);
+  g_autoptr(GHashTable) size1_icons = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  g_autoptr(GHashTable) size2_icons = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   g_autoptr(GBytes) xml_data = NULL;
   g_autoptr(GBytes) xml_gz_data = NULL;
   g_autoptr(OstreeMutableTree) mtree = ostree_mutable_tree_new ();
@@ -3708,15 +3956,12 @@ _flatpak_repo_generate_appstream (OstreeRepo   *repo,
   if (!flatpak_mtree_create_symlink (repo, icons_flatpak_mtree, "128x128", "../128x128", error))
     return FALSE;
 
-  appstream_root = flatpak_appstream_xml_new ();
-
   for (int i = 0; i < n_keys; i++)
     {
       FlatpakDecomposed *ref = all_refs_keys[i];
-      GVariant *commit_v = NULL;
-      VarMetadataRef commit_metadata;
-      g_autoptr(GError) my_error = NULL;
+      AppstreamRefData *data;
       g_autofree char *id = NULL;
+      GPtrArray *matching_ids;
 
       if (!flatpak_decomposed_is_arch (ref, arch))
         {
@@ -3728,58 +3973,73 @@ _flatpak_repo_generate_appstream (OstreeRepo   *repo,
             main_ref = flatpak_decomposed_new_from_decomposed (ref, 0, NULL, compat_arch, NULL, NULL);
 
           if (main_ref == NULL ||
-              g_hash_table_lookup (all_commits, main_ref))
+              g_hash_table_contains (ref_data, main_ref))
             continue;
         }
 
-      commit_v = g_hash_table_lookup (all_commits, ref);
-      g_assert (commit_v != NULL);
+      data = g_hash_table_lookup (ref_data, ref);
+      g_assert (data != NULL);
 
-      commit_metadata = var_commit_get_metadata (var_commit_from_gvariant (commit_v));
-      if (var_metadata_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE, NULL, NULL) ||
-          var_metadata_lookup (commit_metadata, OSTREE_COMMIT_META_KEY_ENDOFLIFE_REBASE, NULL, NULL))
+      if (data->eol)
         {
           g_info (_("%s is end-of-life, ignoring for appstream"), flatpak_decomposed_get_ref (ref));
           continue;
         }
 
-      if (*subset != 0)
-        {
-          VarVariantRef xa_subsets_v;
-          gboolean in_subset = FALSE;
+      if (*subset != 0 &&
+          (data->subsets == NULL || !g_strv_contains ((const char * const *) data->subsets, subset)))
+        continue;
 
-          if (var_metadata_lookup (commit_metadata, "xa.subsets", NULL, &xa_subsets_v))
-            {
-              VarArrayofstringRef xa_subsets = var_arrayofstring_from_variant (xa_subsets_v);
-              gsize len = var_arrayofstring_get_length (xa_subsets);
-
-              for (gsize j = 0; j < len; j++)
-                {
-                  const char *xa_subset = var_arrayofstring_get_at (xa_subsets, j);
-                  if (strcmp (subset, xa_subset) == 0)
-                    {
-                      in_subset = TRUE;
-                      break;
-                    }
-                }
-            }
-
-          if (!in_subset)
-            continue;
-        }
-
-      id = flatpak_decomposed_dup_id (ref);
-      if (!extract_appstream (repo, appstream_root,
-                              ref, id, size1_mtree, size2_mtree,
-                              cancellable, &my_error))
+      if (data->error != NULL)
         {
           if (flatpak_decomposed_is_app (ref))
-            g_print (_("No appstream data for %s: %s\n"), flatpak_decomposed_get_ref (ref), my_error->message);
+            g_print (_("No appstream data for %s: %s\n"), flatpak_decomposed_get_ref (ref), data->error);
           continue;
+        }
+
+      if (!data->migrated)
+        continue;
+
+      g_string_append_len (components, g_bytes_get_data (data->xml, NULL), g_bytes_get_size (data->xml));
+
+      for (int j = 0; data->ids[j] != NULL; j++)
+        add_component_id (seen_ids, ids_by_prefix, data->ids[j]);
+
+      id = flatpak_decomposed_dup_id (ref);
+      matching_ids = g_hash_table_lookup (ids_by_prefix, id);
+      for (guint j = 0; matching_ids != NULL && j < matching_ids->len; j++)
+        {
+          g_autofree char *icon_name = g_strconcat (g_ptr_array_index (matching_ids, j), ".png", NULL);
+          const char *checksum;
+
+          checksum = g_hash_table_lookup (data->icons[0], icon_name);
+          if (checksum != NULL)
+            g_hash_table_replace (size1_icons, g_strdup (icon_name), (char *) checksum);
+
+          checksum = g_hash_table_lookup (data->icons[1], icon_name);
+          if (checksum != NULL)
+            g_hash_table_replace (size2_icons, g_strdup (icon_name), (char *) checksum);
         }
     }
 
-  if (!flatpak_appstream_xml_root_to_data (appstream_root, &xml_data, &xml_gz_data, error))
+  GLNX_HASH_TABLE_FOREACH_KV (size1_icons, const char *, icon_name, const char *, checksum)
+    {
+      g_autoptr(GError) my_error = NULL;
+
+      if (!ostree_mutable_tree_replace_file (size1_mtree, icon_name, checksum, &my_error))
+        g_print (_("Error copying 64x64 icon %s: %s\n"), icon_name, my_error->message);
+    }
+
+  GLNX_HASH_TABLE_FOREACH_KV (size2_icons, const char *, icon_name, const char *, checksum)
+    {
+      g_autoptr(GError) my_error = NULL;
+
+      if (!ostree_mutable_tree_replace_file (size2_mtree, icon_name, checksum, &my_error))
+        g_print (_("Error copying 128x128 icon %s: %s\n"), icon_name, my_error->message);
+    }
+
+  if (!flatpak_appstream_xml_components_to_data (components->str, components->len,
+                                                 &xml_data, &xml_gz_data, error))
     return FALSE;
 
   for (int i = 0; i < G_N_ELEMENTS (branch_names); i++)
@@ -3915,9 +4175,11 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
                                  GError      **error)
 {
   g_autoptr(GHashTable) all_refs = NULL;
-  g_autoptr(GHashTable) all_commits = NULL;
+  g_autoptr(GHashTable) cache = NULL;
+  g_autoptr(GHashTable) ref_data = NULL;
   g_autoptr(GHashTable) collection_refs = NULL;
   const char *collection_id = ostree_repo_get_collection_id (repo);
+  gboolean cache_changed = FALSE;
   g_autofree FlatpakDecomposed **all_refs_keys = NULL;
   guint n_keys;
   g_autoptr(GPtrArray) arches = NULL;  /* (element-type utf8 utf8) */
@@ -3940,37 +4202,45 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
                                          cancellable, error))
     return FALSE;
 
-  all_commits = g_hash_table_new_full ((GHashFunc)flatpak_decomposed_hash, (GEqualFunc)flatpak_decomposed_equal, (GDestroyNotify)flatpak_decomposed_unref, (GDestroyNotify)g_variant_unref);
+  cache = appstream_cache_load (repo);
+  ref_data = g_hash_table_new_full ((GHashFunc)flatpak_decomposed_hash, (GEqualFunc)flatpak_decomposed_equal, (GDestroyNotify)flatpak_decomposed_unref, (GDestroyNotify)appstream_ref_data_free);
 
   GLNX_HASH_TABLE_FOREACH_KV (all_refs, FlatpakDecomposed *, ref, const char *, commit)
     {
-      VarMetadataRef commit_metadata;
-      VarVariantRef xa_subsets_v;
       const char *reverse_compat_arch;
       char *new_arch = NULL;
-      g_autoptr(GVariant) commit_v = NULL;
+      AppstreamRefData *data = NULL;
+      gpointer cached_ref, cached_data;
 
-      if (!ostree_repo_load_variant (repo, OSTREE_OBJECT_TYPE_COMMIT, commit, &commit_v, NULL))
+      if (g_hash_table_steal_extended (cache, flatpak_decomposed_get_ref (ref), &cached_ref, &cached_data))
         {
-          g_warning ("Couldn't load commit %s (ref %s)", commit, flatpak_decomposed_get_ref (ref));
-          continue;
+          g_free (cached_ref);
+          data = cached_data;
+          if (strcmp (data->commit, commit) != 0)
+            g_clear_pointer (&data, appstream_ref_data_free);
         }
 
-      g_hash_table_insert (all_commits, flatpak_decomposed_ref (ref), g_variant_ref (commit_v));
+      if (data == NULL)
+        {
+          g_autoptr(GVariant) commit_v = NULL;
+
+          if (!ostree_repo_load_variant (repo, OSTREE_OBJECT_TYPE_COMMIT, commit, &commit_v, NULL))
+            {
+              g_warning ("Couldn't load commit %s (ref %s)", commit, flatpak_decomposed_get_ref (ref));
+              continue;
+            }
+
+          data = appstream_ref_data_load (repo, ref, commit, commit_v, cancellable);
+          cache_changed = TRUE;
+        }
+
+      g_hash_table_insert (ref_data, flatpak_decomposed_ref (ref), data);
 
       /* Compute list of subsets */
-      commit_metadata = var_commit_get_metadata (var_commit_from_gvariant (commit_v));
-      if (var_metadata_lookup (commit_metadata, "xa.subsets", NULL, &xa_subsets_v))
+      for (int j = 0; data->subsets != NULL && data->subsets[j] != NULL; j++)
         {
-          VarArrayofstringRef xa_subsets = var_arrayofstring_from_variant (xa_subsets_v);
-          gsize len = var_arrayofstring_get_length (xa_subsets);
-          for (gsize j = 0; j < len; j++)
-            {
-              const char *subset = var_arrayofstring_get_at (xa_subsets, j);
-
-              if (!flatpak_g_ptr_array_contains_string (subsets, subset))
-                g_ptr_array_add (subsets, g_strdup (subset));
-            }
+          if (!flatpak_g_ptr_array_contains_string (subsets, data->subsets[j]))
+            g_ptr_array_add (subsets, g_strdup (data->subsets[j]));
         }
 
       /* Compute list of arches */
@@ -3986,6 +4256,9 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
             g_ptr_array_add (arches, g_strdup (reverse_compat_arch));
         }
     }
+
+  if (g_hash_table_size (cache) > 0)
+    cache_changed = TRUE;
 
   g_ptr_array_sort (subsets, flatpak_strcmp0_ptr);
   g_ptr_array_sort (arches, flatpak_strcmp0_ptr);
@@ -4013,7 +4286,7 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
                                                  gpg_homedir,
                                                  all_refs_keys,
                                                  n_keys,
-                                                 all_commits,
+                                                 ref_data,
                                                  collection_refs,
                                                  arch,
                                                  subset,
@@ -4026,6 +4299,14 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
 
   if (!ostree_repo_commit_transaction (repo, &stats, cancellable, error))
     return FALSE;
+
+  if (cache_changed)
+    {
+      g_autoptr(GError) cache_error = NULL;
+
+      if (!appstream_cache_save (repo, ref_data, cancellable, &cache_error))
+        g_warning ("Failed to save appstream cache: %s", cache_error->message);
+    }
 
   return TRUE;
 }

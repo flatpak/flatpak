@@ -66,6 +66,19 @@ assert_file_has_content repos/test/config '^default-branch=no-such-branch$'
 
 ok "can update default branch"
 
+${FLATPAK} build-update-repo repos/test >&2
+assert_has_file repos/test/tmp/cache/flatpak-appstream-cache
+appstream_rev=$(ostree --repo=repos/test rev-parse appstream2/${ARCH})
+
+${FLATPAK} build-update-repo repos/test >&2
+assert_streq "$(ostree --repo=repos/test rev-parse appstream2/${ARCH})" "${appstream_rev}"
+
+rm repos/test/tmp/cache/flatpak-appstream-cache
+${FLATPAK} build-update-repo repos/test >&2
+assert_streq "$(ostree --repo=repos/test rev-parse appstream2/${ARCH})" "${appstream_rev}"
+
+ok "cached appstream matches regenerated appstream"
+
 make_updated_app test "" master UPDATED
 ${FLATPAK} build-update-repo --generate-static-deltas repos/test >&2
 assert_has_file repos/test/tmp/cache/flatpak-delta-cache
