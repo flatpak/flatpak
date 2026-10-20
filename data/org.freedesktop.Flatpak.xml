@@ -269,6 +269,13 @@
       <arg type='s' name='installation' direction='in'/>
     </method>
 
+    <method name="Override">
+      <arg type='u' name='flags' direction='in'/>
+      <arg type='s' name='app_id' direction='in'/>
+      <arg type='s' name='keyfile_data' direction='in'/>
+      <arg type='s' name='installation' direction='in'/>
+    </method>
+
     <method name="UpdateRemote">
       <arg type='u' name='flags' direction='in'/>
       <arg type='s' name='remote' direction='in'/>
