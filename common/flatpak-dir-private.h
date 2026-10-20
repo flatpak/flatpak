@@ -380,12 +380,12 @@ GKeyFile *      flatpak_load_override_keyfile   (const char  *app_id,
 FlatpakContext *flatpak_load_override_file      (const char  *app_id,
                                                  gboolean     user,
                                                  GError     **error);
-gboolean        flatpak_save_override_keyfile   (GKeyFile    *metakey,
-                                                 const char  *app_id,
-                                                 gboolean     user,
-                                                 GError     **error);
+gboolean        flatpak_save_override_keyfile   (FlatpakContext *overrides,
+                                                 const char     *app_id,
+                                                 FlatpakDir     *dir,
+                                                 GError        **error);
 gboolean        flatpak_remove_override_keyfile (const char  *app_id,
-                                                 gboolean     user,
+                                                 FlatpakDir  *dir,
                                                  GError     **error);
 
 typedef struct
