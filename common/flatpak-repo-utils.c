@@ -3283,6 +3283,7 @@ _flatpak_repo_generate_appstream (OstreeRepo   *repo,
                                   FlatpakDecomposed **all_refs_keys,
                                   guint         n_keys,
                                   GHashTable   *all_commits,
+                                  GHashTable   *collection_refs,
                                   const char   *arch,
                                   const char   *subset,
                                   guint64       timestamp,
@@ -3425,7 +3426,15 @@ _flatpak_repo_generate_appstream (OstreeRepo   *repo,
       else
         branch = g_strdup_printf ("%s/%s", branch_prefix, arch);
 
-      if (!flatpak_repo_resolve_rev (repo, collection_id, NULL, branch, TRUE,
+      if (collection_refs != NULL)
+        {
+          const OstreeCollectionRef collection_ref = { (char *) collection_id, branch };
+
+          parent = g_strdup (g_hash_table_lookup (collection_refs, &collection_ref));
+        }
+
+      if (parent == NULL &&
+          !flatpak_repo_resolve_rev (repo, collection_id, NULL, branch, TRUE,
                                      &parent, cancellable, error))
         return FALSE;
 
@@ -3534,6 +3543,8 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
 {
   g_autoptr(GHashTable) all_refs = NULL;
   g_autoptr(GHashTable) all_commits = NULL;
+  g_autoptr(GHashTable) collection_refs = NULL;
+  const char *collection_id = ostree_repo_get_collection_id (repo);
   g_autofree FlatpakDecomposed **all_refs_keys = NULL;
   guint n_keys;
   g_autoptr(GPtrArray) arches = NULL;  /* (element-type utf8 utf8) */
@@ -3548,6 +3559,12 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
 
   all_refs = flatpak_repo_list_flatpak_refs (repo, cancellable, error);
   if (all_refs == NULL)
+    return FALSE;
+
+  if (collection_id != NULL &&
+      !ostree_repo_list_collection_refs (repo, collection_id, &collection_refs,
+                                         OSTREE_REPO_LIST_REFS_EXT_EXCLUDE_REMOTES | OSTREE_REPO_LIST_REFS_EXT_EXCLUDE_MIRRORS,
+                                         cancellable, error))
     return FALSE;
 
   all_commits = g_hash_table_new_full ((GHashFunc)flatpak_decomposed_hash, (GEqualFunc)flatpak_decomposed_equal, (GDestroyNotify)flatpak_decomposed_unref, (GDestroyNotify)g_variant_unref);
@@ -3624,6 +3641,7 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
                                                  all_refs_keys,
                                                  n_keys,
                                                  all_commits,
+                                                 collection_refs,
                                                  arch,
                                                  subset,
                                                  timestamp,
