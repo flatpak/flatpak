@@ -3056,16 +3056,23 @@ flatpak_mtree_add_file_from_bytes (OstreeRepo *repo,
 
   memstream = g_memory_input_stream_new_from_bytes (bytes);
 
+  if (!ostree_checksum_file_from_input (info, NULL, memstream, OSTREE_OBJECT_TYPE_FILE,
+                                        &raw_checksum, cancellable, error))
+    return FALSE;
+
+  checksum = ostree_checksum_from_bytes (raw_checksum);
+
+  g_clear_object (&memstream);
+  memstream = g_memory_input_stream_new_from_bytes (bytes);
+
   if (!ostree_raw_file_to_content_stream (memstream, info, NULL,
                                           &content_stream, &length,
                                           cancellable, error))
     return FALSE;
 
-  if (!ostree_repo_write_content (repo, NULL, content_stream, length,
-                                  &raw_checksum, cancellable, error))
+  if (!ostree_repo_write_content (repo, checksum, content_stream, length,
+                                  NULL, cancellable, error))
     return FALSE;
-
-  checksum = ostree_checksum_from_bytes (raw_checksum);
 
   if (!ostree_mutable_tree_replace_file (parent, filename, checksum, error))
     return FALSE;
