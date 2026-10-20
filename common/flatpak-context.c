@@ -1521,10 +1521,16 @@ flatpak_context_set_persistent (FlatpakContext *context,
                                 const char     *path,
                                 GError        **error)
 {
-  if (!flatpak_validate_path_characters (path, error))
+  g_autofree char *normalized = NULL;
+
+  normalized = flatpak_strip_trailing_slashes (path);
+  if (normalized == NULL)
+    return TRUE;
+
+  if (!flatpak_validate_path_characters (normalized, error))
     return FALSE;
 
-  g_hash_table_insert (context->persistent, g_strdup (path), GINT_TO_POINTER (1));
+  g_hash_table_insert (context->persistent, g_steal_pointer (&normalized), GINT_TO_POINTER (1));
   return TRUE;
 }
 
