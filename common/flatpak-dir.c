@@ -3241,6 +3241,31 @@ flatpak_dir_system_helper_call_configure (FlatpakDir   *self,
 }
 
 static gboolean
+flatpak_dir_system_helper_call_override (FlatpakDir   *self,
+                                         guint         arg_flags,
+                                         const char   *arg_app_id,
+                                         const char   *arg_keyfile_data,
+                                         const char   *arg_installation,
+                                         GCancellable *cancellable,
+                                         GError      **error)
+{
+  g_autoptr(GVariant) ret = NULL;
+
+  if (flatpak_dir_get_no_interaction (self))
+    arg_flags |= FLATPAK_HELPER_OVERRIDE_FLAGS_NO_INTERACTION;
+
+  ret = flatpak_dir_system_helper_call (self, "Override",
+                                        g_variant_new ("(usss)",
+                                                       arg_flags,
+                                                       arg_app_id,
+                                                       arg_keyfile_data,
+                                                       arg_installation),
+                                        G_VARIANT_TYPE ("()"), NULL,
+                                        cancellable, error);
+  return ret != NULL;
+}
+
+static gboolean
 flatpak_dir_system_helper_call_update_remote (FlatpakDir   *self,
                                               guint         arg_flags,
                                               const gchar  *arg_remote,
@@ -3761,6 +3786,7 @@ gboolean
 flatpak_save_override_keyfile (FlatpakContext  *overrides,
                                const char      *app_id,
                                FlatpakDir      *dir,
+                               GCancellable    *cancellable,
                                GError         **error)
 {
   g_autoptr(GKeyFile) metakey = g_key_file_new ();
@@ -3770,6 +3796,23 @@ flatpak_save_override_keyfile (FlatpakContext  *overrides,
   g_autofree char *parent = NULL;
 
   flatpak_context_save_metadata (overrides, FALSE, metakey);
+
+  if (flatpak_dir_use_system_helper (dir, NULL))
+    {
+      FlatpakHelperOverrideFlags flags = 0;
+      const char *installation = flatpak_dir_get_id (dir);
+      g_autofree char *data = g_key_file_to_data (metakey, NULL, error);
+
+      if (data == NULL)
+        return FALSE;
+
+      return flatpak_dir_system_helper_call_override (dir,
+                                                      flags,
+                                                      app_id ? app_id : "",
+                                                      data,
+                                                      installation ? installation : "",
+                                                      cancellable, error);
+    }
 
   override_dir = g_file_get_child (flatpak_dir_get_path (dir), "overrides");
 
@@ -3790,13 +3833,27 @@ flatpak_save_override_keyfile (FlatpakContext  *overrides,
 }
 
 gboolean
-flatpak_remove_override_keyfile (const char *app_id,
-                                 FlatpakDir *dir,
-                                 GError    **error)
+flatpak_remove_override_keyfile (const char    *app_id,
+                                 FlatpakDir    *dir,
+                                 GCancellable  *cancellable,
+                                 GError       **error)
 {
   g_autoptr(GFile) override_dir = NULL;
   g_autoptr(GFile) file = NULL;
   g_autoptr(GError) local_error = NULL;
+
+  if (flatpak_dir_use_system_helper (dir, NULL))
+    {
+      FlatpakHelperOverrideFlags flags = FLATPAK_HELPER_OVERRIDE_FLAGS_RESET;
+      const char *installation = flatpak_dir_get_id (dir);
+
+      return flatpak_dir_system_helper_call_override (dir,
+                                                      flags,
+                                                      app_id ? app_id : "",
+                                                      "",
+                                                      installation ? installation : "",
+                                                      cancellable, error);
+    }
 
   override_dir = g_file_get_child (flatpak_dir_get_path (dir), "overrides");
 

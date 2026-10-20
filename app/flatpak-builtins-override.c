@@ -82,7 +82,7 @@ flatpak_builtin_override (int argc, char **argv, GCancellable *cancellable, GErr
     app = NULL;
 
   if (opt_reset)
-    return flatpak_remove_override_keyfile (app, dir, error);
+    return flatpak_remove_override_keyfile (app, dir, cancellable, error);
 
   metakey = flatpak_load_override_keyfile (app, dir, &my_error);
   if (metakey == NULL)
@@ -113,7 +113,7 @@ flatpak_builtin_override (int argc, char **argv, GCancellable *cancellable, GErr
 
   flatpak_context_merge (overrides, arg_context);
 
-  if (!flatpak_save_override_keyfile (overrides, app, dir, error))
+  if (!flatpak_save_override_keyfile (overrides, app, dir, cancellable, error))
     return FALSE;
 
   return TRUE;
