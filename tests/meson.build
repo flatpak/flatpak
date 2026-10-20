@@ -417,7 +417,7 @@ tests = {
   ]},
   'oci-auth': {'wrap': ['user', 'system']},
   'update-remote-configuration': {'wrap': ['newsummary', 'oldsummary']},
-  'override': {},
+  'override': {'wrap': ['user', 'system']},
   'update-portal': {'wrap': ['user', 'system']},
   'spawn': {'wrap': ['user']},
   'auth': {},
