@@ -113,6 +113,7 @@ gboolean flatpak_run_add_app_info_args (FlatpakBwrap           *bwrap,
 
 gboolean flatpak_run_app (FlatpakDecomposed   *app_ref,
                           FlatpakDeploy       *app_deploy,
+                          FlatpakDeploy       *selected_runtime_deploy,
                           int                  custom_app_fd,
                           FlatpakContext      *extra_context,
                           const char          *custom_runtime,

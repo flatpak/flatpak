@@ -241,6 +241,7 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   g_auto(GStrv) run_environ = NULL;
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(FlatpakDeploy) app_deploy = NULL;
+  g_autoptr(FlatpakDeploy) runtime_deploy = NULL;
   g_autoptr(FlatpakDecomposed) app_ref = NULL;
   g_autoptr(FlatpakDecomposed) runtime_ref = NULL;
   const char *pref;
@@ -351,7 +352,6 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
   if (app_deploy == NULL)
     {
-      g_autoptr(FlatpakDeploy) runtime_deploy = NULL;
       g_autoptr(GError) local_error2 = NULL;
       g_autoptr(GPtrArray) ref_dir_pairs = NULL;
       RefDirPair *chosen_pair = NULL;
@@ -399,9 +399,8 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
           g_assert (chosen_pairs->len == 1);
           chosen_pair = g_ptr_array_index (chosen_pairs, 0);
 
-          /* For runtimes we don't need to pass a FlatpakDeploy object to
-           * flatpak_run_app(), but get it anyway because we don't want to run
-           * something that's not deployed */
+          /* Pass this deployment to flatpak_run_app() to keep the selected
+           * installation and commit. */
           chosen_dir_array = g_ptr_array_new ();
           g_ptr_array_add (chosen_dir_array, chosen_pair->dir);
           runtime_deploy = flatpak_find_deploy_for_ref_in (chosen_dir_array, flatpak_decomposed_get_ref (chosen_pair->ref),
@@ -519,6 +518,7 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
   if (!flatpak_run_app (app_deploy ? app_ref : runtime_ref,
                         app_deploy,
+                        runtime_deploy,
                         app_fd,
                         arg_context,
                         opt_runtime,

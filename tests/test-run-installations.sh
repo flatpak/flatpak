@@ -51,4 +51,32 @@ assert_streq "$(run --system --installation=alt org.test.Hello)" "$stable_output
 assert_streq "$(run --user --system org.test.Hello)" "$master_output"
 ok "app launches respect system installation priority and explicit selectors"
 
+# Install different commits of the same runtime ref in each installation.
+system_commit=$($FLATPAK info --system --show-commit org.test.Platform//master)
+make_updated_runtime test "" master USER
+$FLATPAK update --user -y org.test.Platform//master >&2
+user_commit=$($FLATPAK info --user --show-commit org.test.Platform//master)
+make_updated_runtime test "" master ALT
+$FLATPAK install --installation=alt -y test-repo org.test.Platform//master >&2
+alt_commit=$($FLATPAK info --installation=alt --show-commit org.test.Platform//master)
+
+runtime_output='Hello world, from a runtime'
+assert_streq "$(run --system --command=runtime_hello.sh org.test.Platform//master)" "$runtime_output"
+assert_streq "$(run --user --command=runtime_hello.sh org.test.Platform//master)" "${runtime_output}USER"
+assert_streq "$(run --system --commit="$system_commit" --command=runtime_hello.sh org.test.Platform//master)" "$runtime_output"
+assert_streq "$(run --user --commit="$user_commit" --command=runtime_hello.sh org.test.Platform//master)" "${runtime_output}USER"
+assert_streq "$(run --installation=alt --command=runtime_hello.sh org.test.Platform//master)" "${runtime_output}ALT"
+assert_streq "$(run --installation=alt --commit="$alt_commit" --command=runtime_hello.sh org.test.Platform//master)" "${runtime_output}ALT"
+assert_streq "$(run --system --runtime-commit="$system_commit" --command=runtime_hello.sh org.test.Platform//master)" "$runtime_output"
+ok "runtime launches use the selected installation and commit"
+
+# An application's runtime still uses the normal global lookup.
+assert_streq "$(run --system --command=runtime_hello.sh org.test.Hello)" "${runtime_output}USER"
+ok "application launches can use a runtime from another installation"
+
+if run --system --commit="$user_commit" --command=runtime_hello.sh org.test.Platform//master >run-output 2>run-error; then
+    assert_not_reached "runtime launch accepted a commit from another installation"
+fi
+ok "runtime launches reject commits from other installations"
+
 done_testing
