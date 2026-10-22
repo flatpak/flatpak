@@ -78,7 +78,7 @@ $client add hello latest "$(pwd)/oci/app-image"
 
 # Add an OCI remote
 
-${FLATPAK} remote-add ${U} oci-registry "oci+${scheme}://127.0.0.1:${port}" >&2
+${FLATPAK} remote-add ${U} --no-gpg-verify oci-registry "oci+${scheme}://127.0.0.1:${port}" >&2
 
 # Check that the images we expect are listed
 
