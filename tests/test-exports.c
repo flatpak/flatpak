@@ -576,6 +576,8 @@ static const Filesystem filesystems[] =
   { "xdg-config/Stuff", FLATPAK_FILESYSTEM_MODE_READ_WRITE },
   { "xdg-config/././///.///././.", FLATPAK_FILESYSTEM_MODE_READ_WRITE, "xdg-config" },
   { "xdg-config/////", FLATPAK_FILESYSTEM_MODE_READ_WRITE, "xdg-config" },
+  { "xdg-state", FLATPAK_FILESYSTEM_MODE_READ_WRITE },
+  { "xdg-state/Stuff", FLATPAK_FILESYSTEM_MODE_READ_WRITE },
   { "xdg-run/dbus", FLATPAK_FILESYSTEM_MODE_READ_WRITE },
   { "~", FLATPAK_FILESYSTEM_MODE_READ_WRITE, "home" },
   { "~/.", FLATPAK_FILESYSTEM_MODE_READ_WRITE, "home" },
