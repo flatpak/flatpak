@@ -131,18 +131,46 @@ GBytes *
 flatpak_zlib_decompress_bytes (GBytes *bytes,
                                GError **error)
 {
+  return flatpak_zlib_decompress_bytes_limited (bytes, 0, error);
+}
+
+GBytes *
+flatpak_zlib_decompress_bytes_limited (GBytes  *bytes,
+                                       size_t   max_decompressed_size,
+                                       GError **error)
+{
   g_autoptr(GZlibDecompressor) decompressor = NULL;
   g_autoptr(GOutputStream) out = NULL;
   g_autoptr(GOutputStream) mem = NULL;
+  const uint8_t *data = g_bytes_get_data (bytes, NULL);
+  size_t len = g_bytes_get_size (bytes);
+  size_t written = 0;
 
   mem = g_memory_output_stream_new_resizable ();
-
   decompressor = g_zlib_decompressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP);
   out = g_converter_output_stream_new (mem, G_CONVERTER (decompressor));
 
-  if (!g_output_stream_write_all (out, g_bytes_get_data (bytes, NULL), g_bytes_get_size (bytes),
-                                  NULL, NULL, error))
-    return NULL;
+  if (max_decompressed_size == 0)
+    max_decompressed_size = G_MAXSIZE;
+
+  while (written < len)
+    {
+      size_t n;
+
+      if (!g_output_stream_write_all (out, data + written,
+                                      MIN (len - written, 8 * 1024),
+                                      &n, NULL, error))
+        return NULL;
+
+      written += n;
+
+      if (g_memory_output_stream_get_data_size (G_MEMORY_OUTPUT_STREAM (mem)) > max_decompressed_size)
+        {
+          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                              _("Decompressed data exceeds maximum size"));
+          return NULL;
+        }
+    }
 
   if (!g_output_stream_close (out, NULL, error))
     return NULL;
@@ -155,11 +183,38 @@ flatpak_read_stream (GInputStream *in,
                      gboolean      null_terminate,
                      GError      **error)
 {
+  return flatpak_read_stream_limited (in, null_terminate, 0, error);
+}
+
+GBytes *
+flatpak_read_stream_limited (GInputStream  *in,
+                             gboolean       null_terminate,
+                             size_t         max_size,
+                             GError       **error)
+{
   g_autoptr(GOutputStream) mem_stream = NULL;
+  uint8_t buf[8192];
+  ssize_t n;
+
+  if (max_size == 0)
+    max_size = G_MAXSIZE;
 
   mem_stream = g_memory_output_stream_new_resizable ();
-  if (g_output_stream_splice (mem_stream, in,
-                              0, NULL, error) < 0)
+
+  while ((n = g_input_stream_read (in, buf, sizeof buf, NULL, error)) > 0)
+    {
+      if (!g_output_stream_write_all (mem_stream, buf, n, NULL, NULL, error))
+        return NULL;
+
+      if (g_memory_output_stream_get_data_size (G_MEMORY_OUTPUT_STREAM (mem_stream)) > max_size)
+        {
+          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                              _("Stream exceeds maximum size"));
+          return NULL;
+        }
+    }
+
+  if (n < 0)
     return NULL;
 
   if (null_terminate)
@@ -172,6 +227,40 @@ flatpak_read_stream (GInputStream *in,
     return NULL;
 
   return g_memory_output_stream_steal_as_bytes (G_MEMORY_OUTPUT_STREAM (mem_stream));
+}
+
+gssize
+flatpak_splice_stream_limited (GOutputStream *out,
+                               GInputStream  *in,
+                               size_t         max_size,
+                               GCancellable  *cancellable,
+                               GError       **error)
+{
+  uint8_t buf[8192];
+  ssize_t n;
+  size_t total = 0;
+
+  if (max_size == 0)
+    max_size = G_MAXSIZE;
+
+  while ((n = g_input_stream_read (in, buf, sizeof buf, cancellable, error)) > 0)
+    {
+      total += n;
+      if (total > max_size)
+        {
+          flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                              _("Stream exceeds maximum size"));
+          return -1;
+        }
+
+      if (!g_output_stream_write_all (out, buf, n, NULL, cancellable, error))
+        return -1;
+    }
+
+  if (n < 0)
+    return -1;
+
+  return (ssize_t) total;
 }
 
 gint
