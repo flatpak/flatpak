@@ -12,6 +12,8 @@
 #include "flatpak-progress-private.h"
 #include "flatpak-run-private.h"
 #include "flatpak-run-x11-private.h"
+#include "flatpak-metadata-private.h"
+#include "flatpak-xml-utils-private.h"
 
 static void
 test_has_path_prefix (void)
@@ -1435,6 +1437,52 @@ test_progress_bytes_total (void)
   g_assert_cmpuint (flatpak_progress_get_bytes_total (progress), ==, 0);
 }
 
+static void
+test_appstream_components_to_data (void)
+{
+  const char *source_xml =
+    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+    "<components version=\"0.8\">\n"
+    "  <component type=\"desktop\">\n"
+    "    <id>org.test.App.desktop</id>\n"
+    "    <name>A &amp; B &lt;C&gt;</name>\n"
+    "    <bundle type=\"flatpak\">app/org.test.App/x86_64/old</bundle>\n"
+    "  </component>\n"
+    "  <component type=\"addon\">\n"
+    "    <id>org.test.App.Plugin</id>\n"
+    "    <summary xml:lang=\"x&quot;y\">s</summary>\n"
+    "  </component>\n"
+    "</components>\n";
+  g_autoptr(GInputStream) in = g_memory_input_stream_new_from_data (source_xml, -1, NULL);
+  g_autoptr(GError) error = NULL;
+  g_autoptr(FlatpakXml) source = NULL;
+  g_autoptr(FlatpakXml) root = flatpak_appstream_xml_new ();
+  g_autoptr(GKeyFile) metadata = g_key_file_new ();
+  g_autoptr(GString) components = g_string_new ("");
+  g_autoptr(GBytes) expected = NULL;
+  g_autoptr(GBytes) expected_gz = NULL;
+  g_autoptr(GBytes) actual = NULL;
+  g_autoptr(GBytes) actual_gz = NULL;
+
+  source = flatpak_xml_parse (in, FALSE, NULL, &error);
+  g_assert_no_error (error);
+
+  g_key_file_set_string (metadata, FLATPAK_METADATA_GROUP_APPLICATION, FLATPAK_METADATA_KEY_TAGS, "tag1;tag2;");
+  g_key_file_set_string (metadata, FLATPAK_METADATA_GROUP_APPLICATION, FLATPAK_METADATA_KEY_RUNTIME, "org.test.Platform/x86_64/1");
+  g_assert_true (flatpak_appstream_xml_migrate (source, root, "app/org.test.App/x86_64/stable", "org.test.App", metadata));
+
+  flatpak_appstream_xml_components_to_string (root, components);
+  g_assert_true (flatpak_appstream_xml_components_to_data (components->str, components->len,
+                                                           &actual, &actual_gz, &error));
+  g_assert_no_error (error);
+
+  g_assert_true (flatpak_appstream_xml_root_to_data (root, &expected, &expected_gz, &error));
+  g_assert_no_error (error);
+
+  g_assert_true (g_bytes_equal (actual, expected));
+  g_assert_true (g_bytes_equal (actual_gz, expected_gz));
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -1468,6 +1516,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/common/string-escape", test_string_escape);
   g_test_add_func ("/common/validate-path-characters", test_validate_path_characters);
   g_test_add_func ("/common/progress-bytes-total", test_progress_bytes_total);
+  g_test_add_func ("/common/appstream-components-to-data", test_appstream_components_to_data);
 
   res = g_test_run ();
 
