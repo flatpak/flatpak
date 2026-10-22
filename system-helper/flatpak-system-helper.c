@@ -1258,6 +1258,7 @@ handle_remove_local_ref (FlatpakSystemHelper   *object,
   g_autoptr(FlatpakDir) system = NULL;
   g_autoptr(FlatpakDecomposed) ref = NULL;
   g_autoptr(GError) error = NULL;
+  g_autoptr(FlatpakDecomposed) ref = NULL;
 
   g_info ("RemoveLocalRef %u %s %s %s", arg_flags, arg_remote, arg_ref, arg_installation);
 
@@ -1276,6 +1277,13 @@ handle_remove_local_ref (FlatpakSystemHelper   *object,
     }
 
   if (!flatpak_is_valid_remote_name (arg_remote, -1, &error))
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  ref = flatpak_decomposed_new_from_ref (arg_ref, &error);
+  if (ref == NULL)
     {
       g_dbus_method_invocation_return_gerror (invocation, error);
       return G_DBUS_METHOD_INVOCATION_HANDLED;
