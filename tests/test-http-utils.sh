@@ -19,10 +19,12 @@
 
 set -euo pipefail
 
+# shellcheck source=tests/libtest.sh
 . $(dirname $0)/libtest.sh
 
 httpd http-utils-test-server.py .
 port=$(cat httpd-port)
+httpcache=("${test_builddir}/httpcache")
 
 assert_result() {
     test_string=$1
@@ -34,7 +36,7 @@ assert_result() {
     remote=$2
     local=$3
 
-    out=`${test_builddir}/httpcache $compressed "http://localhost:$port$remote" $local || :`
+    out=`"${httpcache[@]}" $compressed "http://localhost:$port$remote" $local || :`
 
     case "$out" in
 	$test_string*)
@@ -139,18 +141,14 @@ rm -f $test_tmpdir/output*
 
 ok 'retry dropped responses'
 
-# Testing that things work without xattr support
-
-if command -v setfattr >/dev/null &&
-   ! have_xattrs $test_tmpdir ; then
-    assert_ok "/?etag&no-cache" $test_tmpdir/output
-    assert_has_file $test_tmpdir/output.flatpak.http
-    assert_304 "/?etag&no-cache" $test_tmpdir/output
-    rm -f $test_tmpdir/output*
-    ok "no-xattrs"
-else
-    ok "no-xattrs # skip No setfattr or /tmp doesn't have user xattr support"
-fi
+# Make httpcache reject xattrs even when the filesystem supports them.
+httpcache=(env FLATPAK_TEST_NO_XATTRS=1 "${test_builddir}/httpcache")
+assert_ok "/?etag&no-cache" $test_tmpdir/output
+assert_has_file $test_tmpdir/output.flatpak.http
+assert_304 "/?etag&no-cache" $test_tmpdir/output
+rm -f $test_tmpdir/output*
+httpcache=("${test_builddir}/httpcache")
+ok "no-xattrs"
 
 # Testing with xattr support
 

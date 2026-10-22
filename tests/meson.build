@@ -204,6 +204,8 @@ executable(
 httpcache_exe = executable(
   'httpcache',
   'httpcache.c',
+  'httpcache-xattrs.c',
+  link_args : ['-Wl,--wrap=lgetxattr', '-Wl,--wrap=fsetxattr'],
   dependencies : [
     base_deps,
     json_glib_dep,
