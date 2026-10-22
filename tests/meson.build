@@ -364,6 +364,7 @@ if get_option('installed_tests')
     'session.conf.in',
     'test.filter',
     'test.portal.in',
+    'test-ostree-utils.sh',
 
     install_dir : installed_testdir,
     install_mode : 'rw-r--r--',
