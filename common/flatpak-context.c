@@ -949,7 +949,6 @@ static void flatpak_permissions_test_backwards_compat (void)
 static void flatpak_permissions_test_fallback_x11 (void)
 {
   g_autoptr(GHashTable) perms = NULL;
-  g_autoptr(GHashTable) res_perms = NULL;
 
   {
     FlatpakPermission *fallback_x11;
@@ -981,6 +980,7 @@ static void flatpak_permissions_test_fallback_x11 (void)
 
   /* If we only add a conditional, we don't reset fallback-x11 */
   {
+    g_autoptr(GHashTable) res_perms = NULL;
     g_autoptr(GHashTable) perms2 = NULL;
     FlatpakPermission *x11;
     FlatpakPermission *fallback_x11;
@@ -1032,6 +1032,7 @@ static void flatpak_permissions_test_fallback_x11 (void)
 
   /* If we set x11, we reset conditionals *and* fallback-x11 */
   {
+    g_autoptr(GHashTable) res_perms = NULL;
     g_autoptr(GHashTable) perms2 = NULL;
     FlatpakPermission *x11;
     FlatpakPermission *wayland;
@@ -1073,6 +1074,7 @@ static void flatpak_permissions_test_fallback_x11 (void)
 
   /* Only add a conditional and nosocket fallback-x11, gives nosocket fallback-x11 */
   {
+    g_autoptr(GHashTable) res_perms = NULL;
     g_autoptr(GHashTable) perms2 = NULL;
     FlatpakPermission *x11;
     FlatpakPermission *fallback_x11;
