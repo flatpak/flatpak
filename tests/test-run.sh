@@ -329,12 +329,9 @@ ok "overrides"
 
 OLD_COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Hello`
 
-# TODO: For weird reasons this breaks in the system case. Needs debugging
-if [ x${USE_SYSTEMDIR-} != xyes ] ; then
-    ${FLATPAK} ${U} update -y -v org.test.Hello stable >&2
-    ALSO_OLD_COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Hello`
-    assert_streq "$OLD_COMMIT" "$ALSO_OLD_COMMIT"
-fi
+${FLATPAK} ${U} update -y -v org.test.Hello stable >&2
+ALSO_OLD_COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Hello`
+assert_streq "$OLD_COMMIT" "$ALSO_OLD_COMMIT"
 
 ok "null update"
 
