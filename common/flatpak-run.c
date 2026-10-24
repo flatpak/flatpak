@@ -161,7 +161,6 @@ flatpak_run_add_extension_args (FlatpakBwrap      *bwrap,
       g_autofree char *directory = g_build_filename (target_path, ext->directory, NULL);
       g_autofree char *full_directory = g_build_filename (directory, ext->subdir_suffix, NULL);
       g_autofree char *ref_file = g_build_filename (full_directory, ".ref", NULL);
-      g_autofree char *ref_subpath = g_build_filename (ext->directory, ".ref", NULL);
       glnx_autofd int ext_files_dfd = -1;
 
       if (ext->needs_tmpfs)
@@ -183,7 +182,7 @@ flatpak_run_add_extension_args (FlatpakBwrap      *bwrap,
 
       if (glnx_opendirat (AT_FDCWD, ext->files_path, FALSE, &ext_files_dfd, NULL))
         {
-          glnx_autofd int ref_fd = glnx_chaseat (ext_files_dfd, ref_subpath,
+          glnx_autofd int ref_fd = glnx_chaseat (ext_files_dfd, ".ref",
                                                  GLNX_CHASE_RESOLVE_BENEATH,
                                                  NULL);
           if (ref_fd >= 0)
