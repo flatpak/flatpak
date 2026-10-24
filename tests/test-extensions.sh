@@ -177,4 +177,22 @@ assert_has_extension_file /app multiversion/notmaster/extension-org.test.Multive
 
 ok "app extensions"
 
+# Extensions which are in use by a running app are locked, so uninstalling
+# them must not remove their files until the app has exited
+mkfifo "${test_tmpdir}/ext-started" "${test_tmpdir}/ext-continue"
+ARGS="--filesystem=${test_tmpdir}" run_sh org.test.Hello \
+    "echo > ${test_tmpdir}/ext-started; head -1 ${test_tmpdir}/ext-continue; test -f /usr/foo/ext1/exists && test -f /app/foo/ext1/exists" >&2 &
+RUN_PID=$!
+head -1 "${test_tmpdir}/ext-started" >&2
+
+${FLATPAK} --user uninstall -y org.test.Extension1 master >&2
+
+echo > "${test_tmpdir}/ext-continue"
+wait "$RUN_PID"
+
+assert_not_has_extension_file /usr ext1/exists
+assert_not_has_extension_file /app ext1/exists
+
+ok "extensions are locked while in use"
+
 done_testing
