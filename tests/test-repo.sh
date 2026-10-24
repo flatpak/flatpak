@@ -289,6 +289,104 @@ fi
 
 ok "install flatpakref sets collection-id on remote if available"
 
+setup_repo_no_add flatpakref-update org.test.Collection.Flatpakref
+make_updated_app flatpakref-update org.test.Collection.Flatpakref master FLATPAKREF_UPDATE
+
+cat << EOF > org.test.Hello-update.flatpakref
+[Flatpak Ref]
+Name=org.test.Hello
+Branch=master
+Url=http://127.0.0.1:$(cat httpd-port)/flatpakref-update
+SuggestRemoteName=alltheupdates
+GPGKey=${FL_GPG_BASE64}
+RuntimeRepo=http://127.0.0.1:$(cat httpd-port)/flatpakref/flatpakref-repo.flatpakrepo
+EOF
+
+if [ x${USE_COLLECTIONS_IN_CLIENT-} == xyes ]; then
+    echo "DeploySideloadCollectionID=org.test.Collection.Flatpakref" >> org.test.Hello-update.flatpakref
+fi
+
+ORIGINAL_COMMIT=$(${FLATPAK} ${U} info --show-commit org.test.Hello)
+ORIGINAL_ORIGIN=$(${FLATPAK} ${U} info --show-origin org.test.Hello)
+UPDATED_COMMIT=$(ostree rev-parse --repo=repos/flatpakref-update app/org.test.Hello/${ARCH}/master)
+assert_not_streq "$ORIGINAL_COMMIT" "$UPDATED_COMMIT"
+
+if ${FLATPAK} ${U} install -y org.test.Hello-update.flatpakref &> install-error-log; then
+    assert_not_reached "Should not replace a flatpakref install without --or-update"
+fi
+assert_file_has_content install-error-log "already installed"
+assert_streq "$(${FLATPAK} ${U} info --show-commit org.test.Hello)" "$ORIGINAL_COMMIT"
+assert_streq "$(${FLATPAK} ${U} info --show-origin org.test.Hello)" "$ORIGINAL_ORIGIN"
+
+${FLATPAK} ${U} install -y --or-update org.test.Hello-update.flatpakref >&2
+assert_streq "$(${FLATPAK} ${U} info --show-commit org.test.Hello)" "$UPDATED_COMMIT"
+assert_streq "$(${FLATPAK} ${U} info --show-origin org.test.Hello)" "alltheupdates"
+
+ok "flatpakref --or-update replaces from new remote"
+
+cp org.test.Hello-update.flatpakref repos/org.test.Hello-update.flatpakref
+for option in --or-update --reinstall; do
+    for transport in local http; do
+        if [ "$transport" = local ]; then
+            description=org.test.Hello-update.flatpakref
+        else
+            description=http://127.0.0.1:$(cat httpd-port)/org.test.Hello-update.flatpakref
+        fi
+
+        ORIGINAL_COMMIT=$(${FLATPAK} ${U} info --show-commit org.test.Hello)
+        ORIGINAL_RUNTIME=$(${FLATPAK} ${U} info --show-runtime org.test.Hello)
+        ORIGINAL_REFS=$(${FLATPAK} ${U} list --columns=ref | sort)
+        for tip in same advanced; do
+            EXPECTED_COMMIT=$ORIGINAL_COMMIT
+            if [ "$tip" = advanced ]; then
+                make_updated_app flatpakref-update org.test.Collection.Flatpakref master "${option}-${transport}"
+                EXPECTED_COMMIT=$(ostree rev-parse --repo=repos/flatpakref-update app/org.test.Hello/${ARCH}/master)
+                assert_not_streq "$ORIGINAL_COMMIT" "$EXPECTED_COMMIT"
+            fi
+
+            if ${FLATPAK} ${U} install -y "$description" &> install-error-log; then
+                assert_not_reached "Should not replace a flatpakref install without a replacement option"
+            fi
+            assert_file_has_content install-error-log "already installed"
+            assert_streq "$(${FLATPAK} ${U} info --show-commit org.test.Hello)" "$ORIGINAL_COMMIT"
+            assert_streq "$(${FLATPAK} ${U} info --show-origin org.test.Hello)" "alltheupdates"
+            assert_streq "$(${FLATPAK} ${U} info --show-runtime org.test.Hello)" "$ORIGINAL_RUNTIME"
+            assert_streq "$(${FLATPAK} ${U} list --columns=ref | sort)" "$ORIGINAL_REFS"
+
+            httpd_clear_log
+            ${FLATPAK} ${U} install -y "$option" "$description" >&2
+            assert_streq "$(${FLATPAK} ${U} info --show-commit org.test.Hello)" "$EXPECTED_COMMIT"
+            assert_streq "$(${FLATPAK} ${U} info --show-origin org.test.Hello)" "alltheupdates"
+            assert_streq "$(${FLATPAK} ${U} info --show-runtime org.test.Hello)" "$ORIGINAL_RUNTIME"
+            assert_streq "$(${FLATPAK} ${U} list --columns=ref | sort)" "$ORIGINAL_REFS"
+            if [ "$transport" = http ]; then
+                assert_file_has_content httpd-log 'GET /org.test.Hello-update.flatpakref'
+            fi
+
+            ok "flatpakref $option with $transport description at $tip tip"
+        done
+    done
+done
+
+make_updated_app flatpakref-update org.test.Collection.Flatpakref beta BETA org.test.Hello master
+${FLATPAK} ${U} install -y alltheupdates org.test.Hello//beta >&2
+${FLATPAK} ${U} make-current org.test.Hello beta
+for tip in same advanced; do
+    if [ "$tip" = advanced ]; then
+        make_updated_app flatpakref-update org.test.Collection.Flatpakref master CURRENT_BRANCH_UPDATE
+    fi
+    EXPECTED_COMMIT=$(ostree rev-parse --repo=repos/flatpakref-update app/org.test.Hello/${ARCH}/master)
+    ${FLATPAK} ${U} install -y --or-update org.test.Hello-update.flatpakref >&2
+    assert_streq "$(readlink "$FL_DIR/app/org.test.Hello/current")" "$ARCH/beta"
+    assert_streq "$(${FLATPAK} ${U} info --show-commit org.test.Hello//master)" "$EXPECTED_COMMIT"
+    ok "flatpakref --or-update preserves current branch at $tip tip"
+done
+
+${FLATPAK} ${U} install -y --reinstall org.test.Hello-update.flatpakref >&2
+assert_streq "$(readlink "$FL_DIR/app/org.test.Hello/current")" "$ARCH/master"
+ok "flatpakref --reinstall still makes the installed branch current"
+
+${FLATPAK} ${U} uninstall -y org.test.Hello//beta >&2
 ${FLATPAK} ${U} uninstall -y org.test.Platform org.test.Hello >&2
 
 if ${FLATPAK} ${U} install -y test-missing-gpg-repo org.test.Platform &> install-error-log; then
