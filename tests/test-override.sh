@@ -17,6 +17,13 @@ reset_overrides () {
     assert_file_empty info
 }
 
+mkdir -p ${FLATPAK_CONFIG_DIR}/installations.d
+mkdir -p ${TEST_DATA_DIR}/extra-installation
+cat > ${FLATPAK_CONFIG_DIR}/installations.d/extra.conf <<EOF
+[Installation "extra"]
+Path=${TEST_DATA_DIR}/extra-installation
+EOF
+
 setup_repo
 install_repo
 
@@ -498,5 +505,15 @@ if ! skip_one_without_bwrap "runtime override --nofilesystem=host:reset"; then
 
   ok "runtime override --nofilesystem=host:reset"
 fi
+
+${FLATPAK} override --installation=extra --env=OVERRIDE_PROBE=1 org.test.Hello
+${FLATPAK} override --installation=extra --show org.test.Hello > override
+assert_file_has_content override "^OVERRIDE_PROBE=1$"
+
+${FLATPAK} override --installation=extra --reset org.test.Hello
+${FLATPAK} override --installation=extra --show org.test.Hello > override
+assert_file_empty override
+
+ok "override with custom installation"
 
 done_testing
