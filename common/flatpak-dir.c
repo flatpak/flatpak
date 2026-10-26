@@ -3758,15 +3758,18 @@ flatpak_load_override_file (const char *app_id, FlatpakDir *dir, GError **error)
 }
 
 gboolean
-flatpak_save_override_keyfile (GKeyFile   *metakey,
-                               const char *app_id,
-                               FlatpakDir *dir,
-                               GError    **error)
+flatpak_save_override_keyfile (FlatpakContext  *overrides,
+                               const char      *app_id,
+                               FlatpakDir      *dir,
+                               GError         **error)
 {
+  g_autoptr(GKeyFile) metakey = g_key_file_new ();
   g_autoptr(GFile) override_dir = NULL;
   g_autoptr(GFile) file = NULL;
   g_autofree char *filename = NULL;
   g_autofree char *parent = NULL;
+
+  flatpak_context_save_metadata (overrides, FALSE, metakey);
 
   override_dir = g_file_get_child (flatpak_dir_get_path (dir), "overrides");
 
