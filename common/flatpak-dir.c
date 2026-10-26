@@ -3712,15 +3712,12 @@ flatpak_dir_load_override (FlatpakDir *self,
 }
 
 GKeyFile *
-flatpak_load_override_keyfile (const char *app_id, gboolean user, GError **error)
+flatpak_load_override_keyfile (const char *app_id, FlatpakDir *dir, GError **error)
 {
   g_autofree char *metadata_contents = NULL;
   gsize metadata_size;
   g_autoptr(GFile) file = NULL;
   g_autoptr(GKeyFile) metakey = g_key_file_new ();
-  g_autoptr(FlatpakDir) dir = NULL;
-
-  dir = user ? flatpak_dir_get_user () : flatpak_dir_get_system_default ();
 
   metadata_contents = flatpak_dir_load_override (dir, app_id, &metadata_size, &file, error);
   if (metadata_contents == NULL)
@@ -3736,13 +3733,13 @@ flatpak_load_override_keyfile (const char *app_id, gboolean user, GError **error
 }
 
 FlatpakContext *
-flatpak_load_override_file (const char *app_id, gboolean user, GError **error)
+flatpak_load_override_file (const char *app_id, FlatpakDir *dir, GError **error)
 {
   g_autoptr(FlatpakContext) overrides = flatpak_context_new ();
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(GError) my_error = NULL;
 
-  metakey = flatpak_load_override_keyfile (app_id, user, &my_error);
+  metakey = flatpak_load_override_keyfile (app_id, dir, &my_error);
   if (metakey == NULL)
     {
       if (!g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
@@ -3763,21 +3760,15 @@ flatpak_load_override_file (const char *app_id, gboolean user, GError **error)
 gboolean
 flatpak_save_override_keyfile (GKeyFile   *metakey,
                                const char *app_id,
-                               gboolean    user,
+                               FlatpakDir *dir,
                                GError    **error)
 {
-  g_autoptr(GFile) base_dir = NULL;
   g_autoptr(GFile) override_dir = NULL;
   g_autoptr(GFile) file = NULL;
   g_autofree char *filename = NULL;
   g_autofree char *parent = NULL;
 
-  if (user)
-    base_dir = flatpak_get_user_base_dir_location ();
-  else
-    base_dir = flatpak_get_system_default_base_dir_location ();
-
-  override_dir = g_file_get_child (base_dir, "overrides");
+  override_dir = g_file_get_child (flatpak_dir_get_path (dir), "overrides");
 
   if (app_id)
     file = g_file_get_child (override_dir, app_id);
@@ -3797,20 +3788,14 @@ flatpak_save_override_keyfile (GKeyFile   *metakey,
 
 gboolean
 flatpak_remove_override_keyfile (const char *app_id,
-                                 gboolean    user,
+                                 FlatpakDir *dir,
                                  GError    **error)
 {
-  g_autoptr(GFile) base_dir = NULL;
   g_autoptr(GFile) override_dir = NULL;
   g_autoptr(GFile) file = NULL;
   g_autoptr(GError) local_error = NULL;
 
-  if (user)
-    base_dir = flatpak_get_user_base_dir_location ();
-  else
-    base_dir = flatpak_get_system_default_base_dir_location ();
-
-  override_dir = g_file_get_child (base_dir, "overrides");
+  override_dir = g_file_get_child (flatpak_dir_get_path (dir), "overrides");
 
   if (app_id)
     file = g_file_get_child (override_dir, app_id);
@@ -3843,6 +3828,7 @@ flatpak_dir_load_deployed (FlatpakDir        *self,
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(GFile) metadata = NULL;
   g_autofree char *metadata_contents = NULL;
+  g_autoptr(FlatpakDir) user_dir = flatpak_dir_get_user ();
   FlatpakDeploy *deploy;
   gsize metadata_size;
 
@@ -3874,13 +3860,13 @@ flatpak_dir_load_deployed (FlatpakDir        *self,
   /* Only load system global overrides for system installed apps */
   if (!self->user)
     {
-      deploy->system_overrides = flatpak_load_override_file (NULL, FALSE, error);
+      deploy->system_overrides = flatpak_load_override_file (NULL, self, error);
       if (deploy->system_overrides == NULL)
         return NULL;
     }
 
   /* Always load user global overrides */
-  deploy->user_overrides = flatpak_load_override_file (NULL, TRUE, error);
+  deploy->user_overrides = flatpak_load_override_file (NULL, user_dir, error);
   if (deploy->user_overrides == NULL)
     return NULL;
 
@@ -3892,13 +3878,13 @@ flatpak_dir_load_deployed (FlatpakDir        *self,
       /* Only load system overrides for system installed apps */
       if (!self->user)
         {
-          deploy->system_app_overrides = flatpak_load_override_file (id, FALSE, error);
+          deploy->system_app_overrides = flatpak_load_override_file (id, self, error);
           if (deploy->system_app_overrides == NULL)
             return NULL;
         }
 
       /* Always load user overrides */
-      deploy->user_app_overrides = flatpak_load_override_file (id, TRUE, error);
+      deploy->user_app_overrides = flatpak_load_override_file (id, user_dir, error);
       if (deploy->user_app_overrides == NULL)
         return NULL;
     }

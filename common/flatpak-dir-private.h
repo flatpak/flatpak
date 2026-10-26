@@ -375,17 +375,17 @@ GPtrArray *flatpak_get_system_base_dir_locations        (GCancellable  *cancella
 GFile *    flatpak_get_system_default_base_dir_location (void);
 
 GKeyFile *      flatpak_load_override_keyfile   (const char  *app_id,
-                                                 gboolean     user,
+                                                 FlatpakDir  *dir,
                                                  GError     **error);
 FlatpakContext *flatpak_load_override_file      (const char  *app_id,
-                                                 gboolean     user,
+                                                 FlatpakDir  *dir,
                                                  GError     **error);
 gboolean        flatpak_save_override_keyfile   (GKeyFile    *metakey,
                                                  const char  *app_id,
-                                                 gboolean     user,
+                                                 FlatpakDir  *dir,
                                                  GError     **error);
 gboolean        flatpak_remove_override_keyfile (const char  *app_id,
-                                                 gboolean     user,
+                                                 FlatpakDir  *dir,
                                                  GError     **error);
 
 typedef struct
