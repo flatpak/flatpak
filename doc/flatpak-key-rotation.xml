@@ -153,6 +153,20 @@
             <literal>xa.gpg-keys-url</literal>, rather than a HTTP one.
         </para>
 
+        <para>
+            If the repository signing key becomes compromised, it’s possible for
+            an attacker to push malicious versions of all apps in the
+            repository, to change the repository URL in all clients (using
+            <literal>xa.redirect-url</literal>) and to change the GPG keys URL
+            in all clients (using <literal>xa.gpg-keys-url</literal>). Automatic
+            recovery from this situation is not in scope for the key rotation
+            mechanism, as it’s not part of the wider security model for flatpak.
+            If the repository has an airgapped master key (referred to below as
+            KM) then it should be possible to manually re-bootstrap a chain of
+            trust in clients using a new subkey signed by KM, but it would
+            require manual (or scripted) configuration changes to the client
+            configuration to fix repository URLs and GPG key URLs.
+        </para>
     </refsect1>
 
     <refsect1>
