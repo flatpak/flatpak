@@ -417,6 +417,19 @@ if cc.has_function(
   cdata.set('HAVE_ARCHIVE_READ_SUPPORT_FILTER_ALL', 1)
 endif
 
+# This is only available after gpgme 2.2.0
+# FIXME: Change this to a version dependency once it’s in a released version of gpgme
+if cc.has_member(
+  'struct _gpgme_key_sig',
+  'fpr',
+  dependencies : gpgme_dep,
+  prefix : '#include <gpgme.h>',
+)
+  cdata.set('HAVE_GPGME_KEY_SIG_T_FPR', 1)
+elif gpgme_dep.found()
+  warning('GPGME found, but gpgme_key_sig_t.fpr not found; key rotation may be vulnerable to collision attacks')
+endif
+
 if build_system_helper
   cdata.set('USE_SYSTEM_HELPER', '1')
 endif

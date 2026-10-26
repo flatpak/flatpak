@@ -136,6 +136,7 @@ flatpak_gpgme_ctx_tmp_home_dir (gpgme_ctx_t   gpgme_ctx,
   return TRUE;
 }
 
+#ifndef HAVE_GPGME_KEY_SIG_T_FPR
 /* Convert a GPG key fingerprint (40-digit hex string) to a key ID (16-digit
  * hex string), which is its suffix. It would be nice if we could do all key
  * operations in terms of fingerprints, but the GPGME API doesn’t quite allow
@@ -151,6 +152,7 @@ fpr_to_keyid (const char *fpr)
 
   return g_steal_pointer (&keyid);
 }
+#endif  /* !HAVE_GPGME_KEY_SIG_T_FPR */
 
 static int
 sort_signatures_cb (const void *a,
@@ -278,9 +280,10 @@ flatpak_gpg_keys_validate_binding (OstreeRepo    *repo,
 
   /* Before we import the new keys, build a set of the existing keys which forms
    * our trust root. Ideally this would just contain fingerprints (40-digit hex)
-   * but unfortunately we need to compare against gpgme_key_sig_t.keyid, which
-   * is a key ID (16-digit hex), so insert that too. Key IDs are suffixes of
-   * fingerprints. */
+   * but unfortunately we need to compare against gpgme_key_sig_t.keyid until
+   * support for gpgme_key_sig_t.fpr is widespread (see
+   * HAVE_GPGME_KEY_SIG_T_FPR), so insert that too. Key IDs (16-digit hex) are
+   * suffixes of fingerprints. */
   trust_root = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 
   gpg_error = gpgme_set_keylist_mode (context, GPGME_KEYLIST_MODE_LOCAL);
@@ -318,7 +321,9 @@ flatpak_gpg_keys_validate_binding (OstreeRepo    *repo,
         continue;
 
       g_hash_table_add (trust_root, g_strdup (key->fpr));
+#ifndef HAVE_GPGME_KEY_SIG_T_FPR
       g_hash_table_add (trust_root, fpr_to_keyid (key->fpr));
+#endif
       g_debug ("  %s%s", key->fpr, key->expired ? " (expired)" : "");
     }
 
@@ -403,7 +408,9 @@ flatpak_gpg_keys_validate_binding (OstreeRepo    *repo,
             {
               g_ptr_array_add (successfully_imported_fingerprints, g_strdup (import_status->fpr));
               g_hash_table_add (trust_root, g_strdup (import_status->fpr));
+#ifndef HAVE_GPGME_KEY_SIG_T_FPR
               g_hash_table_add (trust_root, fpr_to_keyid (import_status->fpr));
+#endif
             }
         }
       else
@@ -566,7 +573,11 @@ flatpak_gpg_keys_validate_binding (OstreeRepo    *repo,
                                "Signature details: revoked %u, expired %u, invalid %u, "
                                "exportable %u, trust depth %u, trust value %u, algo %u, "
                                "timestamp %lu, expires %lu (now %lu), status %u",
+#ifdef HAVE_GPGME_KEY_SIG_T_FPR
+                               (signature->fpr != NULL) ? signature->fpr : signature->keyid,
+#else
                                signature->keyid,
+#endif
                                signature->uid,
                                uid->uid,
                                key->fpr,
@@ -597,6 +608,13 @@ flatpak_gpg_keys_validate_binding (OstreeRepo    *repo,
                           trust_this_uid = FALSE;
                           continue;
                         }
+#ifdef HAVE_GPGME_KEY_SIG_T_FPR
+                      else if (signature->fpr == NULL)
+                        {
+                          g_debug ("    Skipping signature as fingerprint unknown, and we can’t compare by key IDs only due to collisions");
+                          continue;
+                        }
+#endif
                       else if (signature->expired ||
                                (signature->expires != 0 && signature->expires < now_secs) ||
                                signature->invalid || signature->status != GPG_ERR_NO_ERROR)
@@ -605,7 +623,11 @@ flatpak_gpg_keys_validate_binding (OstreeRepo    *repo,
                           continue;
                         }
 
+#ifdef HAVE_GPGME_KEY_SIG_T_FPR
+                      if (g_hash_table_contains (trust_root, signature->fpr))
+#else
                       if (g_hash_table_contains (trust_root, signature->keyid))
+#endif
                         {
                           g_debug ("    Signing key is in trusted root");
                           trust_this_uid = TRUE;
@@ -621,7 +643,9 @@ flatpak_gpg_keys_validate_binding (OstreeRepo    *repo,
                     {
                       g_ptr_array_add (successfully_imported_fingerprints, g_strdup (key->fpr));
                       g_hash_table_add (trust_root, g_strdup (key->fpr));
+#ifndef HAVE_GPGME_KEY_SIG_T_FPR
                       g_hash_table_add (trust_root, fpr_to_keyid (key->fpr));
+#endif
                       g_hash_table_iter_remove (&iter);
                       key = NULL;  /* @key is not valid after this point */
                       break;
