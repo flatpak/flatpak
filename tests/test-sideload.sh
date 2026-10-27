@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2154
 #
 # Copyright (C) 2011 Colin Walters <walters@verbum.org>
 #
@@ -19,10 +20,13 @@
 
 set -euo pipefail
 
+# shellcheck disable=SC2034
 USE_COLLECTIONS_IN_SERVER=yes
+# shellcheck disable=SC2034
 USE_COLLECTIONS_IN_CLIENT=yes
 
-. $(dirname $0)/libtest.sh
+# shellcheck source=tests/libtest.sh
+. "$(dirname "$0")/libtest.sh"
 
 skip_without_bwrap
 skip_revokefs_without_fuse
