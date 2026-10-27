@@ -19,10 +19,13 @@
 
 set -euo pipefail
 
+# shellcheck disable=SC2034
 USE_COLLECTIONS_IN_SERVER=yes
+# shellcheck disable=SC2034
 USE_COLLECTIONS_IN_CLIENT=yes
 
-. $(dirname $0)/libtest.sh
+# shellcheck source=tests/libtest.sh
+. "$(dirname "$0")/libtest.sh"
 
 mkdir -p $FLATPAK_DATA_DIR/preinstall.d
 mkdir -p $FLATPAK_CONFIG_DIR/preinstall.d
