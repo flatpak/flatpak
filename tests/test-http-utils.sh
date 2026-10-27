@@ -20,7 +20,7 @@
 set -euo pipefail
 
 # shellcheck source=tests/libtest.sh
-. $(dirname $0)/libtest.sh
+. "$(dirname "$0")/libtest.sh"
 
 httpd http-utils-test-server.py .
 port=$(cat httpd-port)
@@ -50,15 +50,15 @@ assert_result() {
 }
 
 assert_cached() {
-    assert_result "Reusing cached value" $@
+    assert_result "Reusing cached value" "$@"
 }
 
 assert_304() {
-    assert_result "Server returned status 304" $@
+    assert_result "Server returned status 304" "$@"
 }
 
 assert_ok() {
-    assert_result "Server returned status 200" $@
+    assert_result "Server returned status 200" "$@"
 }
 
 
