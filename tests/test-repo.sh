@@ -19,7 +19,8 @@
 
 set -euo pipefail
 
-. $(dirname $0)/libtest.sh
+# shellcheck source=tests/libtest.sh
+. "$(dirname "$0")/libtest.sh"
 
 skip_without_bwrap
 skip_revokefs_without_fuse
@@ -54,7 +55,7 @@ else
     GPGPUBKEY="" GPGARGS="" setup_repo test-no-gpg
 fi
 
-${FLATPAK} remote-add ${U} --no-gpg-verify local-test-no-gpg-repo `pwd`/repos/test-no-gpg >&2
+${FLATPAK} remote-add ${U} --no-gpg-verify local-test-no-gpg-repo "$(pwd)/repos/test-no-gpg" >&2
 
 #alternative gpg key repo
 GPGPUBKEY="${FL_GPG_HOMEDIR2}/pubring.gpg" GPGARGS="${FL_GPGARGS2}" setup_repo test-gpg2 org.test.Collection.Gpg2
@@ -324,11 +325,11 @@ make_required_version_app () {
         CID=""
     fi
 
-    REQUIRED_VERSION="${VERSION}" GPGARGS="${FL_GPGARGS}" $(dirname $0)/make-test-app.sh repos/test ${APP_ID} master "${CID}" > /dev/null
+    REQUIRED_VERSION="${VERSION}" GPGARGS="${FL_GPGARGS}" "$(dirname "$0")/make-test-app.sh" repos/test "${APP_ID}" master "${CID}" > /dev/null
 }
 
-CURRENT_VERSION=`cat "$test_builddir/package_version.txt"`
-V=( ${CURRENT_VERSION//./ } )  # Split parts to array
+CURRENT_VERSION=$(cat "$test_builddir/package_version.txt")
+read -ra V <<< "${CURRENT_VERSION//./ }"
 
 make_required_version_app org.test.SameVersion "${V[0]}.${V[1]}.${V[2]}"
 make_required_version_app org.test.NeedNewerMicro "${V[0]}.${V[1]}.$(expr ${V[2]} + 1)"
@@ -474,7 +475,7 @@ assert_has_dir $HOME/.var/app/org.test.Hello
 assert_has_file $HOME/.var/app/org.test.Hello/data/a-file
 
 ${FLATPAK} build-commit-from --no-update-summary --end-of-life-rebase=org.test.Hello=org.test.NewHello --src-repo=repos/test ${FL_GPGARGS} repos/test-rebase app/org.test.Hello/$ARCH/master runtime/org.test.Hello.Locale/$ARCH/master >&2
-GPGARGS="${FL_GPGARGS}" $(dirname $0)/make-test-app.sh repos/test-rebase org.test.NewHello master "${REBASE_COLLECTION_ID}" "NEW" > /dev/null
+GPGARGS="${FL_GPGARGS}" "$(dirname "$0")/make-test-app.sh" repos/test-rebase org.test.NewHello master "${REBASE_COLLECTION_ID}" "NEW" > /dev/null
 update_repo test-rebase
 
 # Temporarily set the minimum free space to something astronomical to make the
@@ -837,7 +838,7 @@ ok "remote-ls"
 
 # Test that remote-ls can take a file:// URI
 ${FLATPAK} build-update-repo  ${BUILD_UPDATE_REPO_FLAGS-} --no-update-appstream repos/test >&2
-${FLATPAK} remote-ls --columns=ref file://`pwd`/repos/test > repo-list
+${FLATPAK} remote-ls --columns=ref "file://$(pwd)/repos/test" > repo-list
 assert_file_has_content repo-list "org\.test\.Hello/"
 
 ok "remote-ls URI"
@@ -972,8 +973,8 @@ ${FLATPAK} ${U} update --appstream test-repo >&2
 assert_file_has_content $FL_DIR/appstream/test-repo/$ARCH/active/appstream.xml "app/org\.test\.Hello/"
 
 # Make a copy so we can remove it later
-cp ${test_srcdir}/test.filter test.filter
-${FLATPAK} ${U} remote-modify test-repo --filter $(pwd)/test.filter >&2
+cp "${test_srcdir}/test.filter" test.filter
+${FLATPAK} ${U} remote-modify test-repo --filter "$(pwd)/test.filter" >&2
 
 ${FLATPAK} ${U} remote-ls --columns=ref -a test-repo > remote-ls-log
 
