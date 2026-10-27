@@ -19,7 +19,8 @@
 
 set -euo pipefail
 
-. $(dirname $0)/libtest.sh
+# shellcheck source=tests/libtest.sh
+. "$(dirname "$0")/libtest.sh"
 
 skip_without_bwrap
 skip_revokefs_without_fuse
@@ -79,7 +80,7 @@ make_updated_app test "" master UPDATE3
 
 # Break the repo so that the update fails
 cp -r repos/test/objects repos/test/orig-objects
-find repos/test/objects -name "*.filez" | xargs  -I FILENAME mv FILENAME FILENAME.broken
+find repos/test/objects -name "*.filez" -exec mv {} {}.broken \;
 
 run_with_sandboxed_bus ${test_builddir}/test-update-portal update-fail monitor.pid >&2
 
