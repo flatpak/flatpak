@@ -19,7 +19,8 @@
 
 set -euo pipefail
 
-. $(dirname $0)/libtest.sh
+# shellcheck source=tests/libtest.sh
+. "$(dirname "$0")/libtest.sh"
 
 skip_without_bwrap
 
@@ -33,7 +34,7 @@ assert_has_dir oci/image/blobs/sha256
 assert_has_file oci/image/index.json
 
 for i in oci/image/blobs/sha256/*; do
-     echo $(basename $i) $i >> sums
+     echo "$(basename "$i") $i" >> sums
 done
 sha256sum -c sums >&2
 
