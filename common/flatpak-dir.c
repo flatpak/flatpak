@@ -17609,7 +17609,42 @@ local_match_prefix (FlatpakDir        *self,
   return matches;
 }
 
-/* Finds all the locally installed ref related to ref, if remote_name is set it is limited to refs from that remote */
+static gboolean
+resolve_local_related_ref (FlatpakDir         *self,
+                           FlatpakDecomposed  *ref,
+                           const char         *remote_name,
+                           char              **out_remote,
+                           char              **out_checksum)
+{
+  g_autoptr(GBytes) deploy_data = NULL;
+  const char *origin = remote_name;
+  g_autofree char *checksum = NULL;
+
+  deploy_data = flatpak_dir_get_deploy_data (self, ref,
+                                             FLATPAK_DEPLOY_VERSION_ANY,
+                                             NULL, NULL);
+  if (deploy_data != NULL)
+    origin = flatpak_deploy_data_get_origin (deploy_data);
+
+  if (remote_name == NULL ||
+      !flatpak_repo_resolve_rev (self->repo, NULL, origin,
+                                 flatpak_decomposed_get_ref (ref),
+                                 FALSE, &checksum, NULL, NULL))
+    {
+      if (deploy_data == NULL)
+        return FALSE;
+
+      /* A deployment can remain without a ref after remote-delete --force. */
+      checksum = g_strdup (flatpak_deploy_data_get_commit (deploy_data));
+    }
+
+  *out_remote = g_strdup (origin);
+  *out_checksum = g_steal_pointer (&checksum);
+  return TRUE;
+}
+
+/* Finds locally deployed refs related to ref, regardless of their origin.
+ * If remote_name is set, also include undeployed refs pulled from that remote. */
 GPtrArray *
 flatpak_dir_find_local_related_for_metadata (FlatpakDir        *self,
                                              FlatpakDecomposed *ref,
@@ -17676,7 +17711,7 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir        *self,
             {
               g_autoptr(FlatpakDecomposed) extension_ref = NULL;
               g_autofree char *checksum = NULL;
-              g_autoptr(GBytes) deploy_data = NULL;
+              g_autofree char *extension_remote = NULL;
               const char *branch = branches[branch_i];
 
               extension_ref = flatpak_decomposed_new_from_parts (FLATPAK_KINDS_RUNTIME,
@@ -17684,33 +17719,11 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir        *self,
               if (extension_ref == NULL)
                 continue;
 
-              if (remote_name != NULL &&
-                  flatpak_repo_resolve_rev (self->repo,
-                                            NULL,
-                                            remote_name,
-                                            flatpak_decomposed_get_ref (extension_ref),
-                                            FALSE,
-                                            &checksum,
-                                            NULL,
-                                            NULL))
+              if (resolve_local_related_ref (self, extension_ref, remote_name,
+                                              &extension_remote, &checksum))
                 {
-                  add_related (self, related, remote_name, extension, extension_ref,
+                  add_related (self, related, extension_remote, extension, extension_ref,
                                checksum, no_autodownload, download_if, autoprune_unless, autodelete, locale_subset);
-                }
-              else if ((deploy_data = flatpak_dir_get_deploy_data (self, extension_ref,
-                                                                   FLATPAK_DEPLOY_VERSION_ANY,
-                                                                   NULL, NULL)) != NULL &&
-                       (remote_name == NULL || g_strcmp0 (flatpak_deploy_data_get_origin (deploy_data), remote_name) == 0))
-                {
-                  /* Here we're including extensions that are deployed but might
-                   * not have a ref in the repo, as happens with remote-delete
-                   * --force
-                   */
-                  checksum = g_strdup (flatpak_deploy_data_get_commit (deploy_data));
-                  add_related (self, related,
-                               flatpak_deploy_data_get_origin (deploy_data),
-                               extension, extension_ref, checksum,
-                               no_autodownload, download_if, autoprune_unless, autodelete, locale_subset);
                 }
               else if (subdirectories)
                 {
@@ -17738,9 +17751,14 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir        *self,
                           while (g_hash_table_iter_next (&iter, &key, NULL))
                             {
                               const char *refspec = key;
+                              g_autofree char *ref_name = NULL;
                               g_autoptr(FlatpakDecomposed) decomposed = NULL;
 
-                              decomposed = flatpak_decomposed_new_from_refspec (refspec, NULL);
+                              /* Match deployed refs by ref, not by refspec, so
+                               * a pulled and deployed extension is listed once. */
+                              if (!ostree_parse_refspec (refspec, NULL, &ref_name, NULL))
+                                continue;
+                              decomposed = flatpak_decomposed_new_from_ref (ref_name, NULL);
                               if (decomposed != NULL)
                                 g_hash_table_add (all_decomposed_for_remote, g_steal_pointer (&decomposed));
                             }
@@ -17751,33 +17769,12 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir        *self,
                   GLNX_HASH_TABLE_FOREACH (matches, FlatpakDecomposed *, match)
                     {
                       g_autofree char *match_checksum = NULL;
-                      g_autoptr(GBytes) match_deploy_data = NULL;
+                      g_autofree char *match_remote = NULL;
 
-                      if (remote_name != NULL &&
-                          flatpak_repo_resolve_rev (self->repo,
-                                                    NULL,
-                                                    remote_name,
-                                                    flatpak_decomposed_get_ref (match),
-                                                    FALSE,
-                                                    &match_checksum,
-                                                    NULL,
-                                                    NULL))
+                      if (resolve_local_related_ref (self, match, remote_name,
+                                                      &match_remote, &match_checksum))
                         {
-                          add_related (self, related, remote_name, extension, match, match_checksum,
-                                       no_autodownload, download_if, autoprune_unless, autodelete, locale_subset);
-                        }
-                      else if ((match_deploy_data = flatpak_dir_get_deploy_data (self, match,
-                                                                                 FLATPAK_DEPLOY_VERSION_ANY,
-                                                                                 NULL, NULL)) != NULL &&
-                               (remote_name == NULL || g_strcmp0 (flatpak_deploy_data_get_origin (match_deploy_data), remote_name) == 0))
-                        {
-                          /* Here again we're including extensions that are deployed but might
-                           * not have a ref in the repo
-                           */
-                          match_checksum = g_strdup (flatpak_deploy_data_get_commit (match_deploy_data));
-                          add_related (self, related,
-                                       flatpak_deploy_data_get_origin (match_deploy_data),
-                                       extension, match, match_checksum,
+                          add_related (self, related, match_remote, extension, match, match_checksum,
                                        no_autodownload, download_if, autoprune_unless, autodelete, locale_subset);
                         }
                     }
