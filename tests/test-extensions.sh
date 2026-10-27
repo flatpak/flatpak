@@ -19,7 +19,8 @@
 
 set -euo pipefail
 
-. $(dirname $0)/libtest.sh
+# shellcheck source=tests/libtest.sh
+. "$(dirname "$0")/libtest.sh"
 
 skip_without_bwrap
 
@@ -27,7 +28,8 @@ make_extension () {
     local ID=$1
     local VERSION=$2
 
-    local DIR=`mktemp -d`
+    local DIR
+    DIR=$(mktemp -d)
 
     cat > ${DIR}/metadata <<EOF
 [Runtime]
@@ -94,8 +96,8 @@ EOF
 
 mkdir -p repos
 ostree init --repo=repos/test --mode=archive-z2
-$(dirname $0)/make-test-runtime.sh repos/test org.test.Platform master "" "" bash ls cat echo readlink > /dev/null
-$(dirname $0)/make-test-app.sh repos/test "" master "" > /dev/null
+"$(dirname "$0")/make-test-runtime.sh" repos/test org.test.Platform master "" "" bash ls cat echo readlink > /dev/null
+"$(dirname "$0")/make-test-app.sh" repos/test "" master "" > /dev/null
 
 # Modify platform metadata
 ostree checkout -U --repo=repos/test runtime/org.test.Platform/${ARCH}/master platform >&2
