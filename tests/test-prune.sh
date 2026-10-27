@@ -19,7 +19,8 @@
 
 set -euo pipefail
 
-. $(dirname $0)/libtest.sh
+# shellcheck source=tests/libtest.sh
+. "$(dirname "$0")/libtest.sh"
 
 create_commit() {
     # Wrap this to avoid set -x showing the commands
@@ -28,7 +29,8 @@ create_commit() {
         local APP=${2}
         local DEPTH=${3}
 
-        local F=$(mktemp -d files.XXXXXX)
+        local F
+        F=$(mktemp -d files.XXXXXX)
 
         # Each commit has:
         #  * 2 unique file objects
