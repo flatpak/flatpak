@@ -18,6 +18,8 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 
+# shellcheck shell=bash
+
 # Under Autotools, redirect stderr to stdout, otherwise the log will have
 # command output out of order with xtrace output.
 # Under Meson, we need stdout to be in strict TAP format, so we'll
@@ -29,16 +31,17 @@ fi
 if [ -n "${G_TEST_SRCDIR:-}" ]; then
     test_srcdir="${G_TEST_SRCDIR}"
 else
-    test_srcdir=$(dirname $0)
+    test_srcdir=$(dirname "$0")
 fi
 
 if [ -n "${G_TEST_BUILDDIR:-}" ]; then
     test_builddir="${G_TEST_BUILDDIR}"
 else
-    test_builddir=$(dirname $0)
+    test_builddir=$(dirname "$0")
 fi
 
 if [ -e "$test_srcdir/installed-tests.sh" ]; then
+    # shellcheck source=tests/installed-tests.sh
     . "$test_srcdir/installed-tests.sh"
 fi
 
@@ -58,7 +61,7 @@ done_testing () {
 
 assert_not_reached () {
     { { local BASH_XTRACEFD=3; } 2> /dev/null
-    echo $@ 1>&2; exit 1
+    echo "$@" 1>&2; exit 1
     } 3> /dev/null
 }
 
@@ -66,7 +69,7 @@ ok () {
     { { local BASH_XTRACEFD=3; } 2> /dev/null
         test_number=$(( test_number + 1 ))
         echo "ok $test_number - $*";
-        echo "================ $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]} - $@ ================" >&2;
+        echo "================ $(basename "${BASH_SOURCE[1]}"):${BASH_LINENO[0]} - $* ================" >&2;
     } 3> /dev/null
 }
 
@@ -103,100 +106,101 @@ fi
 unset OSTREE_DEBUG_HTTP
 
 export MALLOC_CHECK_=3
-export MALLOC_PERTURB_=$(($RANDOM % 255 + 1))
+export MALLOC_PERTURB_=$((RANDOM % 255 + 1))
 
-TEST_DATA_DIR=`mktemp -d /tmp/test-flatpak-XXXXXX`
-mkdir -p ${TEST_DATA_DIR}/home
-mkdir -p ${TEST_DATA_DIR}/runtime
-mkdir -p ${TEST_DATA_DIR}/system
-mkdir -p ${TEST_DATA_DIR}/config
-mkdir -p ${TEST_DATA_DIR}/run
-export FLATPAK_SYSTEM_DIR=${TEST_DATA_DIR}/system
-export FLATPAK_SYSTEM_CACHE_DIR=${TEST_DATA_DIR}/system-cache
+TEST_DATA_DIR=$(mktemp -d /tmp/test-flatpak-XXXXXX)
+mkdir -p "${TEST_DATA_DIR}/home"
+mkdir -p "${TEST_DATA_DIR}/runtime"
+mkdir -p "${TEST_DATA_DIR}/system"
+mkdir -p "${TEST_DATA_DIR}/config"
+mkdir -p "${TEST_DATA_DIR}/run"
+export FLATPAK_SYSTEM_DIR="${TEST_DATA_DIR}/system"
+export FLATPAK_SYSTEM_CACHE_DIR="${TEST_DATA_DIR}/system-cache"
 export FLATPAK_SYSTEM_HELPER_ON_SESSION=1
-export FLATPAK_CONFIG_DIR=${TEST_DATA_DIR}/config
-export FLATPAK_DATA_DIR=${TEST_DATA_DIR}/datadir
-export FLATPAK_RUN_DIR=${TEST_DATA_DIR}/run
+export FLATPAK_CONFIG_DIR="${TEST_DATA_DIR}/config"
+export FLATPAK_DATA_DIR="${TEST_DATA_DIR}/datadir"
+export FLATPAK_RUN_DIR="${TEST_DATA_DIR}/run"
 export FLATPAK_FANCY_OUTPUT=0
 export FLATPAK_FORCE_ALLOW_FUZZY_MATCHING=1
 
-export HOME=${TEST_DATA_DIR}/home
-export XDG_CACHE_HOME=${TEST_DATA_DIR}/home/cache
-export XDG_CONFIG_HOME=${TEST_DATA_DIR}/home/config
-export XDG_DATA_HOME=${TEST_DATA_DIR}/home/share
-export XDG_STATE_HOME=${TEST_DATA_DIR}/home/state
-export XDG_RUNTIME_DIR=${TEST_DATA_DIR}/runtime
+export HOME="${TEST_DATA_DIR}/home"
+export XDG_CACHE_HOME="${TEST_DATA_DIR}/home/cache"
+export XDG_CONFIG_HOME="${TEST_DATA_DIR}/home/config"
+export XDG_DATA_HOME="${TEST_DATA_DIR}/home/share"
+export XDG_STATE_HOME="${TEST_DATA_DIR}/home/state"
+export XDG_RUNTIME_DIR="${TEST_DATA_DIR}/runtime"
 
-export XDG_DESKTOP_PORTAL_DIR=${test_builddir}/share/xdg-desktop-portal/portals
+export XDG_DESKTOP_PORTAL_DIR="${test_builddir}/share/xdg-desktop-portal/portals"
 export XDG_CURRENT_DESKTOP=test
 
 # On Debian derivatives, /usr/sbin and /sbin aren't in ordinary users'
 # PATHs, but ldconfig and capsh are kept in /sbin
 PATH="$PATH:/usr/sbin:/sbin"
 
-export USERDIR=${TEST_DATA_DIR}/home/share/flatpak
-export SYSTEMDIR=${TEST_DATA_DIR}/system
-export ARCH=`flatpak --default-arch`
+export USERDIR="${TEST_DATA_DIR}/home/share/flatpak"
+export SYSTEMDIR="${TEST_DATA_DIR}/system"
+ARCH=$(flatpak --default-arch)
+export ARCH
 
-if [ x${SUMMARY_FORMAT-} == xold ] ; then
+if [ "${SUMMARY_FORMAT-}" == old ] ; then
     export BUILD_UPDATE_REPO_FLAGS="--no-summary-index"
 fi
 
-if [ x${USE_SYSTEMDIR-} == xyes ] ; then
-    export FL_DIR=${SYSTEMDIR}
+if [ "${USE_SYSTEMDIR-}" == yes ] ; then
+    export FL_DIR="${SYSTEMDIR}"
     export U=
     export INVERT_U=--user
-    if [ x${HAVE_SYSTEM_HELPER-} == x1 ] && [ x${UID} != x0 ] ; then
+    if [ "${HAVE_SYSTEM_HELPER-}" == 1 ] && [ "${UID}" != 0 ] ; then
         # If system helper is compiled during build and will actually be
         # used at runtime eg. UID != 0, Flatpak stores summary caches
         # in the user's XDG cache directory
-        export FL_CACHE_DIR=${XDG_CACHE_HOME}/flatpak/system-cache
+        export FL_CACHE_DIR="${XDG_CACHE_HOME}/flatpak/system-cache"
     else
         # If the system helper is unavailable at build time, or it
         # cannot be used eg. UID == 0 Flatpak uses the repo-local cache
         # directory.
-        export FL_CACHE_DIR=$FL_DIR/repo/tmp/cache
+        export FL_CACHE_DIR="$FL_DIR/repo/tmp/cache"
     fi
 else
-    export FL_DIR=${USERDIR}
+    export FL_DIR="${USERDIR}"
     export U="--user"
     export INVERT_U=--system
-    export FL_CACHE_DIR=$FL_DIR/repo/tmp/cache
+    export FL_CACHE_DIR="$FL_DIR/repo/tmp/cache"
 fi
 
-if [ x${USE_DELTAS-} == xyes ] ; then
+if [ "${USE_DELTAS-}" == yes ] ; then
     export UPDATE_REPO_ARGS="--generate-static-deltas"
 fi
 
-export FLATPAK=$test_srcdir/flatpak-wrapper.sh
+export FLATPAK="$test_srcdir/flatpak-wrapper.sh"
 
 assert_streq () {
     { { local BASH_XTRACEFD=3; } 2> /dev/null
-    test "$1" = "$2" || (echo 1>&2 "$1 != $2 at $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]}"; exit 1)
+    test "$1" = "$2" || (echo 1>&2 "$1 != $2 at $(basename "${BASH_SOURCE[1]}"):${BASH_LINENO[0]}"; exit 1)
     } 3> /dev/null
 }
 
 assert_not_streq () {
     { { local BASH_XTRACEFD=3; } 2> /dev/null
-    (! test "$1" = "$2") || (echo 1>&2 "$1 == $2 at $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]}"; exit 1)
+    { ! test "$1" = "$2"; } || (echo 1>&2 "$1 == $2 at $(basename "${BASH_SOURCE[1]}"):${BASH_LINENO[0]}"; exit 1)
     } 3> /dev/null
 }
 
 assert_has_file () {
     { { local BASH_XTRACEFD=3; } 2> /dev/null
-    test -f "$1" || (echo 1>&2 "Couldn't find '$1' at $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]}"; exit 1)
+    test -f "$1" || (echo 1>&2 "Couldn't find '$1' at $(basename "${BASH_SOURCE[1]}"):${BASH_LINENO[0]}"; exit 1)
     } 3> /dev/null
 }
 
 assert_has_symlink () {
     { { local BASH_XTRACEFD=3; } 2> /dev/null
-    test -L "$1" || (echo 1>&2 "Couldn't find '$1' at $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]}"; exit 1)
+    test -L "$1" || (echo 1>&2 "Couldn't find '$1' at $(basename "${BASH_SOURCE[1]}"):${BASH_LINENO[0]}"; exit 1)
     } 3> /dev/null
 }
 
 assert_has_dir () {
     { { local BASH_XTRACEFD=3; } 2> /dev/null
-    test -d "$1" || (echo 1>&2 "Couldn't find '$1' at $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]}"; exit 1)
+    test -d "$1" || (echo 1>&2 "Couldn't find '$1' at $(basename "${BASH_SOURCE[1]}"):${BASH_LINENO[0]}"; exit 1)
     } 3> /dev/null
 }
 
@@ -204,7 +208,7 @@ assert_not_has_file () {
     { { local BASH_XTRACEFD=3; } 2> /dev/null
     if test -f "$1"; then
         sed -e 's/^/# /' < "$1" >&2
-        echo 1>&2 "File '$1' exists at $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]}"
+        echo 1>&2 "File '$1' exists at $(basename "${BASH_SOURCE[1]}"):${BASH_LINENO[0]}"
         exit 1
     fi
     } 3> /dev/null
@@ -214,7 +218,7 @@ assert_not_file_has_content () {
     { { local BASH_XTRACEFD=3; } 2> /dev/null
     if grep -q -e "$2" "$1"; then
         sed -e 's/^/# /' < "$1" >&2
-        echo 1>&2 "File '$1' incorrectly matches regexp '$2' at $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]}"
+        echo 1>&2 "File '$1' incorrectly matches regexp '$2' at $(basename "${BASH_SOURCE[1]}"):${BASH_LINENO[0]}"
         exit 1
     fi
     } 3> /dev/null
@@ -222,9 +226,9 @@ assert_not_file_has_content () {
 
 assert_file_has_mode () {
     { { local BASH_XTRACEFD=3; } 2> /dev/null
-    mode=$(stat -c '%a' $1)
+    mode=$(stat -c '%a' "$1")
     if [ "$mode" != "$2" ]; then
-        echo 1>&2 "File '$1' has wrong mode: expected $2, but got $mode at $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]}"
+        echo 1>&2 "File '$1' has wrong mode: expected $2, but got $mode at $(basename "${BASH_SOURCE[1]}"):${BASH_LINENO[0]}"
         exit 1
     fi
     } 3> /dev/null
@@ -233,7 +237,7 @@ assert_file_has_mode () {
 assert_not_has_dir () {
     { { local BASH_XTRACEFD=3; } 2> /dev/null
     if test -d "$1"; then
-        echo 1>&2 "Directory '$1' exists at $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]}"; exit 1
+        echo 1>&2 "Directory '$1' exists at $(basename "${BASH_SOURCE[1]}"):${BASH_LINENO[0]}"; exit 1
     fi
     } 3> /dev/null
 }
@@ -242,7 +246,7 @@ assert_file_has_content () {
     { { local BASH_XTRACEFD=3; } 2> /dev/null
     if ! grep -q -e "$2" "$1"; then
         sed -e 's/^/# /' < "$1" >&2
-        echo 1>&2 "File '$1' doesn't match regexp '$2' at $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]}"
+        echo 1>&2 "File '$1' doesn't match regexp '$2' at $(basename "${BASH_SOURCE[1]}"):${BASH_LINENO[0]}"
         exit 1
     fi
     } 3> /dev/null
@@ -253,7 +257,7 @@ assert_log_has_gpg_signature_error () {
     if ! grep -q -e "GPG signatures found, but none are in trusted keyring" "$1"; then
         if ! grep -q -e "Can't check signature: public key not found" "$1"; then
             sed -e 's/^/# /' < "$1" >&2
-            echo 1>&2 "File '$1' doesn't have gpg signature error at $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]}"
+            echo 1>&2 "File '$1' doesn't have gpg signature error at $(basename "${BASH_SOURCE[1]}"):${BASH_LINENO[0]}"
             exit 1
         fi
     fi
@@ -264,7 +268,7 @@ assert_symlink_has_content () {
     { { local BASH_XTRACEFD=3; } 2> /dev/null
     if ! readlink "$1" | grep -q -e "$2"; then
         readlink "$1" |sed -e 's/^/# /' >&2
-        echo 1>&2 "Symlink '$1' doesn't match regexp '$2' at $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]}"
+        echo 1>&2 "Symlink '$1' doesn't match regexp '$2' at $(basename "${BASH_SOURCE[1]}"):${BASH_LINENO[0]}"
         exit 1
     fi
     } 3> /dev/null
@@ -274,7 +278,7 @@ assert_file_empty() {
     { { local BASH_XTRACEFD=3; } 2> /dev/null
     if test -s "$1"; then
         sed -e 's/^/# /' < "$1" >&2
-        echo 1>&2 "File '$1' is not empty at $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]}"
+        echo 1>&2 "File '$1' is not empty at $(basename "${BASH_SOURCE[1]}"):${BASH_LINENO[0]}"
         exit 1
     fi
     } 3> /dev/null
@@ -282,15 +286,15 @@ assert_file_empty() {
 
 assert_remote_has_config () {
     { { local BASH_XTRACEFD=3; } 2> /dev/null
-    ostree config --repo=$FL_DIR/repo get --group 'remote "'"$1"'"' "$2" > key-output
+    ostree config --repo="$FL_DIR/repo" get --group 'remote "'"$1"'"' "$2" > key-output
     assert_file_has_content key-output "$3"
     } 3> /dev/null
 }
 
 assert_remote_has_no_config () {
     { { local BASH_XTRACEFD=3; } 2> /dev/null
-    if ostree config --repo=$FL_DIR/repo get --group 'remote "'"$1"'"' "$2" &> /dev/null; then
-        echo 1>&2 "Remote '$1' unexpectedly has key '$2' at $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]}"
+    if ostree config --repo="$FL_DIR/repo" get --group 'remote "'"$1"'"' "$2" &> /dev/null; then
+        echo 1>&2 "Remote '$1' unexpectedly has key '$2' at $(basename "${BASH_SOURCE[1]}"):${BASH_LINENO[0]}"
         exit 1
     fi
     } 3> /dev/null
@@ -299,19 +303,19 @@ assert_remote_has_no_config () {
 assert_fail () {
     if "$@"; then
         { { local BASH_XTRACEFD=3; } 2> /dev/null
-            echo "Command '$*' should not have succeeded at $(basename ${BASH_SOURCE[1]}):${BASH_LINENO[0]}" >&2
+            echo "Command '$*' should not have succeeded at $(basename "${BASH_SOURCE[1]}"):${BASH_LINENO[0]}" >&2
             exit 1
         } 3> /dev/null
     fi
 }
 
-export FL_GPG_HOMEDIR=${TEST_DATA_DIR}/gpghome
-export FL_GPG_HOMEDIR2=${TEST_DATA_DIR}/gpghome2
-mkdir -p ${FL_GPG_HOMEDIR}
-mkdir -p ${FL_GPG_HOMEDIR2}
+export FL_GPG_HOMEDIR="${TEST_DATA_DIR}/gpghome"
+export FL_GPG_HOMEDIR2="${TEST_DATA_DIR}/gpghome2"
+mkdir -p "${FL_GPG_HOMEDIR}"
+mkdir -p "${FL_GPG_HOMEDIR2}"
 # This need to be writable, so copy the keys
-cp $(dirname $0)/test-keyring/*.gpg ${FL_GPG_HOMEDIR}/
-cp $(dirname $0)/test-keyring2/*.gpg ${FL_GPG_HOMEDIR2}/
+cp "$(dirname "$0")"/test-keyring/*.gpg "${FL_GPG_HOMEDIR}/"
+cp "$(dirname "$0")"/test-keyring2/*.gpg "${FL_GPG_HOMEDIR2}/"
 
 export FL_GPG_ID=7B0961FD
 export FL_GPG_ID2=B2314EFC
@@ -327,6 +331,7 @@ make_oci_signature () {
     REFERENCE="$2"
     GPGARGS="${3:-${FL_GPGCMDARGS}}"
 
+    # shellcheck disable=SC2086
     gpg ${GPGARGS} --sign - <<EOF
 {
     "critical": {
@@ -350,31 +355,33 @@ make_runtime () {
     GPGARGS="$4"
 
     RUNTIME_REF="runtime/org.test.Platform/$(flatpak --default-arch)/${BRANCH}"
-    if [ ! -z "${SRC_RUNTIME_REPO:-}" ]; then
-        RUNTIME_REPO=repos/${SRC_RUNTIME_REPO}
-    elif [ -f ${test_builddir}/runtime-repo/refs/heads/${RUNTIME_REF} ]; then
-        RUNTIME_REPO=${test_builddir}/runtime-repo
+    if [ -n "${SRC_RUNTIME_REPO:-}" ]; then
+        RUNTIME_REPO="repos/${SRC_RUNTIME_REPO}"
+    elif [ -f "${test_builddir}/runtime-repo/refs/heads/${RUNTIME_REF}" ]; then
+        RUNTIME_REPO="${test_builddir}/runtime-repo"
     else
-        RUNTIME_REPO=${TEST_DATA_DIR}/runtime-repo
+        RUNTIME_REPO="${TEST_DATA_DIR}/runtime-repo"
         (
             flock -s 200
             if [ ! -f "${RUNTIME_REPO}/refs/heads/${RUNTIME_REF}" ]; then
-                $(dirname $0)/make-test-runtime.sh ${RUNTIME_REPO} org.test.Platform ${BRANCH} "" "" > /dev/null
+                "$(dirname "$0")/make-test-runtime.sh" "${RUNTIME_REPO}" org.test.Platform "${BRANCH}" "" "" > /dev/null
             fi
-        ) 200>${TEST_DATA_DIR}/runtime-repo-lock
+        ) 200>"${TEST_DATA_DIR}/runtime-repo-lock"
     fi
 
-    if [ ! -d repos/${REPONAME} ]; then
-        if [ "x${COLLECTION_ID}" != "x" ]; then
-            collection_args=--collection-id=${COLLECTION_ID}
+    if [ ! -d "repos/${REPONAME}" ]; then
+        if [ -n "${COLLECTION_ID}" ]; then
+            collection_args="--collection-id=${COLLECTION_ID}"
         else
             collection_args=
         fi
         mkdir -p repos
-        ostree --repo=repos/${REPONAME} init --mode=archive-z2 ${collection_args} >&2
+        # shellcheck disable=SC2086
+        ostree --repo="repos/${REPONAME}" init --mode=archive-z2 ${collection_args} >&2
     fi
 
-    flatpak build-commit-from --disable-fsync --no-update-summary --src-repo=${RUNTIME_REPO} --force ${GPGARGS} ${EXPORT_ARGS-}  repos/${REPONAME}  ${RUNTIME_REF} >&2
+    # shellcheck disable=SC2086
+    flatpak build-commit-from --disable-fsync --no-update-summary --src-repo="${RUNTIME_REPO}" --force ${GPGARGS} ${EXPORT_ARGS-} "repos/${REPONAME}" "${RUNTIME_REF}" >&2
 }
 
 httpd () {
@@ -387,8 +394,8 @@ httpd () {
 
     rm -f httpd-pipe
     mkfifo httpd-pipe
-    PYTHONUNBUFFERED=1 $(dirname $0)/$COMMAND "$@" 3> httpd-pipe 2>&1 | tee -a httpd-log >&2 &
-    read < httpd-pipe
+    PYTHONUNBUFFERED=1 "$(dirname "$0")/$COMMAND" "$@" 3> httpd-pipe 2>&1 | tee -a httpd-log >&2 &
+    read -r < httpd-pipe
 }
 
 httpd_clear_log () {
@@ -397,7 +404,7 @@ httpd_clear_log () {
 
 setup_repo_no_add () {
     REPONAME=${1:-test}
-    if [ x${USE_COLLECTIONS_IN_SERVER-} == xyes ] ; then
+    if [ "${USE_COLLECTIONS_IN_SERVER-}" == yes ] ; then
         COLLECTION_ID=${2:-org.test.Collection.${REPONAME}}
     else
         COLLECTION_ID=
@@ -405,9 +412,9 @@ setup_repo_no_add () {
     BRANCH=${3:-master}
 
     make_runtime "${REPONAME}" "${COLLECTION_ID}" "${BRANCH}" "${GPGARGS:-${FL_GPGARGS}}"
-    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" $(dirname $0)/make-test-app.sh repos/${REPONAME} "" "${BRANCH}" "${COLLECTION_ID}" > /dev/null
-    update_repo $REPONAME "${COLLECTION_ID}"
-    if [ $REPONAME == "test" ]; then
+    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" "$(dirname "$0")/make-test-app.sh" "repos/${REPONAME}" "" "${BRANCH}" "${COLLECTION_ID}" > /dev/null
+    update_repo "$REPONAME" "${COLLECTION_ID}"
+    if [ "$REPONAME" == "test" ]; then
         httpd
     fi
 }
@@ -419,73 +426,76 @@ setup_repo () {
     setup_repo_no_add "$@"
 
     port=$(cat httpd-port)
-    if [ x${GPGPUBKEY:-${FL_GPG_HOMEDIR}/pubring.gpg} != x ]; then
-        import_args=--gpg-import=${GPGPUBKEY:-${FL_GPG_HOMEDIR}/pubring.gpg}
+    if [ -n "${GPGPUBKEY:-${FL_GPG_HOMEDIR}/pubring.gpg}" ]; then
+        import_args="--gpg-import=${GPGPUBKEY:-${FL_GPG_HOMEDIR}/pubring.gpg}"
     else
         import_args=
     fi
-    if [ x${USE_COLLECTIONS_IN_CLIENT-} == xyes ] ; then
-        collection_args=--collection-id=${COLLECTION_ID}
+    if [ "${USE_COLLECTIONS_IN_CLIENT-}" == yes ] ; then
+        collection_args="--collection-id=${COLLECTION_ID}"
     else
         collection_args=
     fi
 
-    flatpak remote-add ${U} ${collection_args} ${import_args} ${REPONAME}-repo "http://127.0.0.1:${port}/$REPONAME" >&2
+    # shellcheck disable=SC2086
+    flatpak remote-add ${U} ${collection_args} ${import_args} "${REPONAME}-repo" "http://127.0.0.1:${port}/$REPONAME" >&2
 }
 
 setup_empty_repo () {
     REPONAME=${1:-test}
     COLLECTION_ID=${2:-org.test.Collection.${REPONAME}}
 
-    if [ x${USE_COLLECTIONS_IN_SERVER-} == xyes ] ; then
+    if [ "${USE_COLLECTIONS_IN_SERVER-}" == yes ] ; then
         COLLECTION_ID=${2:-org.test.Collection.${REPONAME}}
     else
         COLLECTION_ID=
     fi
 
     mkdir -p repos
-    ostree --repo=repos/${REPONAME} init --mode=archive-z2 >&2
-    update_repo $REPONAME "${COLLECTION_ID}"
-    if [ $REPONAME == "test" ]; then
+    ostree --repo="repos/${REPONAME}" init --mode=archive-z2 >&2
+    update_repo "$REPONAME" "${COLLECTION_ID}"
+    if [ "$REPONAME" == "test" ]; then
         httpd
     fi
 
     port=$(cat httpd-port)
-    if [ x${GPGPUBKEY:-${FL_GPG_HOMEDIR}/pubring.gpg} != x ]; then
-        import_args=--gpg-import=${GPGPUBKEY:-${FL_GPG_HOMEDIR}/pubring.gpg}
+    if [ -n "${GPGPUBKEY:-${FL_GPG_HOMEDIR}/pubring.gpg}" ]; then
+        import_args="--gpg-import=${GPGPUBKEY:-${FL_GPG_HOMEDIR}/pubring.gpg}"
     else
         import_args=
     fi
-    if [ x${USE_COLLECTIONS_IN_CLIENT-} == xyes ] ; then
-        collection_args=--collection-id=${COLLECTION_ID}
+    if [ "${USE_COLLECTIONS_IN_CLIENT-}" == yes ] ; then
+        collection_args="--collection-id=${COLLECTION_ID}"
     else
         collection_args=
     fi
 
-    flatpak remote-add ${U} ${collection_args} ${import_args} ${REPONAME}-repo "http://127.0.0.1:${port}/$REPONAME" >&2
+    # shellcheck disable=SC2086
+    flatpak remote-add ${U} ${collection_args} ${import_args} "${REPONAME}-repo" "http://127.0.0.1:${port}/$REPONAME" >&2
 }
 
 update_repo () {
     REPONAME=${1:-test}
     COLLECTION_ID=${2:-org.test.Collection.${REPONAME}}
 
-    if [ x${USE_COLLECTIONS_IN_SERVER-} == xyes ] ; then
-        collection_args=--collection-id=${COLLECTION_ID}
+    if [ "${USE_COLLECTIONS_IN_SERVER-}" == yes ] ; then
+        collection_args="--collection-id=${COLLECTION_ID}"
     else
         collection_args=
     fi
 
-    ${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} ${collection_args} ${GPGARGS:-${FL_GPGARGS}} ${UPDATE_REPO_ARGS-} repos/${REPONAME} >&2
-    if [ x${SUMMARY_FORMAT-} == xold ] ; then
-        assert_not_has_file repos/${REPONAME}/summary.idx
+    # shellcheck disable=SC2086
+    ${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} ${collection_args} ${GPGARGS:-${FL_GPGARGS}} ${UPDATE_REPO_ARGS-} "repos/${REPONAME}" >&2
+    if [ "${SUMMARY_FORMAT-}" == old ] ; then
+        assert_not_has_file "repos/${REPONAME}/summary.idx"
     else
-        assert_has_file repos/${REPONAME}/summary.idx
+        assert_has_file "repos/${REPONAME}/summary.idx"
     fi
 }
 
 make_updated_app () {
     REPONAME=${1:-test}
-    if [ x${USE_COLLECTIONS_IN_SERVER-} == xyes ] ; then
+    if [ "${USE_COLLECTIONS_IN_SERVER-}" == yes ] ; then
         COLLECTION_ID=${2:-org.test.Collection.${REPONAME}}
     else
         COLLECTION_ID=""
@@ -495,13 +505,13 @@ make_updated_app () {
     APP_ID=${5:-""}
     RUNTIME_BRANCH=${6:-$BRANCH}
 
-    RUNTIME_BRANCH=$RUNTIME_BRANCH GPGARGS="${GPGARGS:-${FL_GPGARGS}}" $(dirname $0)/make-test-app.sh repos/${REPONAME} "${APP_ID}" "${BRANCH}" "${COLLECTION_ID}" "${TEXT}" > /dev/null
-    update_repo $REPONAME "${COLLECTION_ID}"
+    RUNTIME_BRANCH=$RUNTIME_BRANCH GPGARGS="${GPGARGS:-${FL_GPGARGS}}" "$(dirname "$0")/make-test-app.sh" "repos/${REPONAME}" "${APP_ID}" "${BRANCH}" "${COLLECTION_ID}" "${TEXT}" > /dev/null
+    update_repo "$REPONAME" "${COLLECTION_ID}"
 }
 
 make_updated_runtime () {
     REPONAME=${1:-test}
-    if [ x${USE_COLLECTIONS_IN_SERVER-} == xyes ] ; then
+    if [ "${USE_COLLECTIONS_IN_SERVER-}" == yes ] ; then
         COLLECTION_ID=${2:-org.test.Collection.${REPONAME}}
     else
         COLLECTION_ID=""
@@ -509,53 +519,58 @@ make_updated_runtime () {
     BRANCH=${3:-master}
     TEXT=${4:-UPDATED}
 
-    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" $(dirname $0)/make-test-runtime.sh repos/${REPONAME} org.test.Platform "${BRANCH}" "${COLLECTION_ID}" "${TEXT}" > /dev/null
-    update_repo $REPONAME "${COLLECTION_ID}"
+    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" "$(dirname "$0")/make-test-runtime.sh" "repos/${REPONAME}" org.test.Platform "${BRANCH}" "${COLLECTION_ID}" "${TEXT}" > /dev/null
+    update_repo "$REPONAME" "${COLLECTION_ID}"
 }
 
 setup_sdk_repo () {
     REPONAME=${1:-test}
-    if [ x${USE_COLLECTIONS_IN_SERVER-} == xyes ] ; then
+    if [ "${USE_COLLECTIONS_IN_SERVER-}" == yes ] ; then
         COLLECTION_ID=${2:-org.test.Collection.${REPONAME}}
     else
         COLLECTION_ID=""
     fi
     BRANCH=${3:-master}
 
-    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-runtime.sh repos/${REPONAME} org.test.Sdk "${BRANCH}" "${COLLECTION_ID}" "" make mkdir cp touch > /dev/null
-    update_repo $REPONAME "${COLLECTION_ID}"
+    # shellcheck source=tests/make-test-runtime.sh
+    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . "$(dirname "$0")/make-test-runtime.sh" "repos/${REPONAME}" org.test.Sdk "${BRANCH}" "${COLLECTION_ID}" "" make mkdir cp touch > /dev/null
+    update_repo "$REPONAME" "${COLLECTION_ID}"
 }
 
 install_repo () {
     REPONAME=${1:-test}
     BRANCH=${2:-master}
-    ${FLATPAK} ${U} install -y ${REPONAME}-repo org.test.Platform ${BRANCH} >&2
-    ${FLATPAK} ${U} install -y ${REPONAME}-repo org.test.Hello ${BRANCH} >&2
+    # shellcheck disable=SC2086
+    ${FLATPAK} ${U} install -y "${REPONAME}-repo" org.test.Platform "${BRANCH}" >&2
+    # shellcheck disable=SC2086
+    ${FLATPAK} ${U} install -y "${REPONAME}-repo" org.test.Hello "${BRANCH}" >&2
 }
 
 install_sdk_repo () {
     REPONAME=${1:-test}
     BRANCH=${2:-master}
-    ${FLATPAK} ${U} install -y ${REPONAME}-repo org.test.Sdk ${BRANCH} >&2
+    # shellcheck disable=SC2086
+    ${FLATPAK} ${U} install -y "${REPONAME}-repo" org.test.Sdk "${BRANCH}" >&2
 }
 
 run () {
+    # shellcheck disable=SC2086
     ${FLATPAK_CMD_PREFIX} flatpak run "$@"
-
 }
 
 run_with_sandboxed_bus () {
-    BUSSOCK=$(mktemp ${test_tmpdir}/bus.XXXXXX)
-    rm -rf ${BUSSOCK}
-    run --command=socat --filesystem=${test_tmpdir} org.test.Hello unix-listen:${BUSSOCK} unix-connect:/run/user/`id -u`/bus &
-    while [ ! -e ${BUSSOCK} ]; do sleep 1; done
+    BUSSOCK=$(mktemp "${test_tmpdir}/bus.XXXXXX")
+    rm -rf "${BUSSOCK}"
+    run --command=socat --filesystem="${test_tmpdir}" org.test.Hello unix-listen:"${BUSSOCK}" unix-connect:/run/user/"$(id -u)"/bus &
+    while [ ! -e "${BUSSOCK}" ]; do sleep 1; done
     DBUS_SESSION_BUS_ADDRESS="unix:path=${BUSSOCK}" "$@"
 }
 
 run_sh () {
     ID=${1:-org.test.Hello}
     shift
-    ${FLATPAK_CMD_PREFIX} flatpak run --command=bash ${ARGS-} ${ID} -c "$*"
+    # shellcheck disable=SC2086
+    ${FLATPAK_CMD_PREFIX} flatpak run --command=bash ${ARGS-} "${ID}" -c "$*"
 }
 
 # true, false, or empty for indeterminate
@@ -612,7 +627,7 @@ skip_without_fuse () {
 }
 
 skip_revokefs_without_fuse () {
-    if [ "x${USE_SYSTEMDIR-}" = xyes ] && [ "x${FLATPAK_DISABLE_REVOKEFS-}" != xyes ]; then
+    if [ "${USE_SYSTEMDIR-}" = yes ] && [ "${FLATPAK_DISABLE_REVOKEFS-}" != yes ]; then
         skip_without_fuse
     fi
 }
@@ -666,7 +681,7 @@ setup_document_portal () {
 }
 
 skip_without_p2p () {
-    if [ x${USE_COLLECTIONS_IN_CLIENT-} == xyes ] ; then
+    if [ "${USE_COLLECTIONS_IN_CLIENT-}" == yes ] ; then
         return 0
     else
         skip "No P2P support enabled"
@@ -702,7 +717,7 @@ skip_without_seccomp () {
 FLATPAK_SYSTEM_CERTS_D=$(pwd)/certs.d
 export FLATPAK_SYSTEM_CERTS_D
 
-sed s#@testdir@#${test_builddir}# ${test_srcdir}/session.conf.in > session.conf
+sed "s#@testdir@#${test_builddir}#" "${test_srcdir}/session.conf.in" > session.conf
 dbus-daemon --fork --config-file=session.conf --print-address=3 --print-pid=4 \
     3> dbus-session-bus-address 4> dbus-session-bus-pid
 
@@ -721,18 +736,19 @@ gdb_bt () {
 commit_to_path () {
     COMMIT=$1
     EXT=$2
-    echo "objects/$(echo $COMMIT | cut -b 1-2)/$(echo $COMMIT | cut -b 3-)".${EXT}
+    echo "objects/$(echo "$COMMIT" | cut -b 1-2)/$(echo "$COMMIT" | cut -b 3-).${EXT}"
 }
 
 cleanup () {
-    /bin/kill -9 $DBUS_SESSION_BUS_PID
+    /bin/kill -9 "$DBUS_SESSION_BUS_PID"
     gpg-connect-agent --homedir "${FL_GPG_HOMEDIR}" killagent /bye >&2 || true
-    "${FUSERMOUNT}" -u $XDG_RUNTIME_DIR/doc >&2 || :
+    "${FUSERMOUNT}" -u "$XDG_RUNTIME_DIR/doc" >&2 || :
+    # shellcheck disable=SC2046
     kill $(jobs -p) &> /dev/null || true
     if test -n "${TEST_SKIP_CLEANUP:-}"; then
         echo "# Skipping cleanup of ${TEST_DATA_DIR}"
     else
-        rm -rf $TEST_DATA_DIR
+        rm -rf "$TEST_DATA_DIR"
     fi
 }
 trap cleanup EXIT
