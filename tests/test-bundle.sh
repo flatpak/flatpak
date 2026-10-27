@@ -19,7 +19,8 @@
 
 set -euo pipefail
 
-. $(dirname $0)/libtest.sh
+# shellcheck source=tests/libtest.sh
+. "$(dirname "$0")/libtest.sh"
 
 skip_without_bwrap
 skip_revokefs_without_fuse
@@ -28,17 +29,17 @@ mkdir bundles
 
 setup_repo
 
-${FLATPAK} build-bundle repos/test --repo-url=file://`pwd`/repos/test --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/hello.flatpak org.test.Hello >&2
+${FLATPAK} build-bundle repos/test --repo-url="file://$(pwd)/repos/test" --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/hello.flatpak org.test.Hello >&2
 assert_has_file bundles/hello.flatpak
 
-${FLATPAK} build-bundle repos/test --runtime --repo-url=file://`pwd`/repos/test --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/platform.flatpak org.test.Platform >&2
+${FLATPAK} build-bundle repos/test --runtime --repo-url="file://$(pwd)/repos/test" --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/platform.flatpak org.test.Platform >&2
 assert_has_file bundles/platform.flatpak
 
 ok "create bundles server-side"
 
 rm bundles/hello.flatpak
 ${FLATPAK} ${U} install -y test-repo org.test.Hello >&2
-${FLATPAK} build-bundle $FL_DIR/repo --repo-url=file://`pwd`/repos/test --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/hello.flatpak org.test.Hello >&2
+${FLATPAK} build-bundle $FL_DIR/repo --repo-url="file://$(pwd)/repos/test" --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/hello.flatpak org.test.Hello >&2
 assert_has_file bundles/hello.flatpak
 
 ok "create bundles client-side"
@@ -55,9 +56,9 @@ ${FLATPAK} install ${U} -y --bundle bundles/hello.flatpak --reinstall >&2
 assert_has_file $FL_DIR/repo/refs/remotes/test-repo/runtime/org.test.Platform/$ARCH/master
 
 assert_has_file $FL_DIR/repo/refs/remotes/hello-origin/app/org.test.Hello/$ARCH/master
-APP_COMMIT=`cat $FL_DIR/repo/refs/remotes/hello-origin/app/org.test.Hello/$ARCH/master`
-assert_has_file $FL_DIR/repo/objects/$(echo $APP_COMMIT | cut -b 1-2)/$(echo $APP_COMMIT | cut -b 3-).commit
-assert_has_file $FL_DIR/repo/objects/$(echo $APP_COMMIT | cut -b 1-2)/$(echo $APP_COMMIT | cut -b 3-).commitmeta
+APP_COMMIT=$(cat "$FL_DIR/repo/refs/remotes/hello-origin/app/org.test.Hello/$ARCH/master")
+assert_has_file "$FL_DIR/repo/objects/$(echo "$APP_COMMIT" | cut -b 1-2)/$(echo "$APP_COMMIT" | cut -b 3-).commit"
+assert_has_file "$FL_DIR/repo/objects/$(echo "$APP_COMMIT" | cut -b 1-2)/$(echo "$APP_COMMIT" | cut -b 3-).commitmeta"
 
 assert_has_dir $FL_DIR/app/org.test.Hello
 assert_has_symlink $FL_DIR/app/org.test.Hello/current
@@ -112,9 +113,9 @@ assert_not_has_file $FL_DIR/repo/refs/remotes/platform-origin/runtime/org.test.P
 ${FLATPAK} install -y ${U} --bundle bundles/platform.flatpak >&2
 
 assert_has_file $FL_DIR/repo/refs/remotes/platform-origin/runtime/org.test.Platform/$ARCH/master
-RUNTIME_COMMIT=`cat $FL_DIR/repo/refs/remotes/platform-origin/runtime/org.test.Platform/$ARCH/master`
-assert_has_file $FL_DIR/repo/objects/$(echo $RUNTIME_COMMIT | cut -b 1-2)/$(echo $RUNTIME_COMMIT | cut -b 3-).commit
-assert_has_file $FL_DIR/repo/objects/$(echo $RUNTIME_COMMIT | cut -b 1-2)/$(echo $RUNTIME_COMMIT | cut -b 3-).commitmeta
+RUNTIME_COMMIT=$(cat "$FL_DIR/repo/refs/remotes/platform-origin/runtime/org.test.Platform/$ARCH/master")
+assert_has_file "$FL_DIR/repo/objects/$(echo "$RUNTIME_COMMIT" | cut -b 1-2)/$(echo "$RUNTIME_COMMIT" | cut -b 3-).commit"
+assert_has_file "$FL_DIR/repo/objects/$(echo "$RUNTIME_COMMIT" | cut -b 1-2)/$(echo "$RUNTIME_COMMIT" | cut -b 3-).commitmeta"
 
 assert_has_dir $FL_DIR/runtime/org.test.Platform
 assert_has_dir $FL_DIR/runtime/org.test.Platform/$ARCH/master
@@ -167,7 +168,7 @@ ok "update"
 
 make_updated_app test org.test.Collection.test master UPDATED2
 
-${FLATPAK} build-bundle repos/test --repo-url=file://`pwd`/repos/test --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/hello2.flatpak org.test.Hello >&2
+${FLATPAK} build-bundle repos/test --repo-url="file://$(pwd)/repos/test" --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/hello2.flatpak org.test.Hello >&2
 assert_has_file bundles/hello2.flatpak
 
 ${FLATPAK} install ${U} -y --bundle bundles/hello2.flatpak >&2
