@@ -225,7 +225,7 @@ app_add_autoprune_extension() {
     { set +x; } 2>/dev/null
     local APP="org.app.${1}"
     local EXT="org.extension.${2}"
-    finish_args["$RUNTIME"]="${finish_args[$APP]:-} --extension=${EXT}=directory=/ext --extension=${EXT}=autoprune-unless=active-gl-driver"
+    finish_args["$APP"]="${finish_args[$APP]:-} --extension=${EXT}=directory=/ext --extension=${EXT}=autoprune-unless=active-gl-driver"
     set -x
 }
 
