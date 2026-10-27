@@ -3,7 +3,6 @@
 set -euo pipefail
 
 # shellcheck source=tests/libtest.sh
-# shellcheck disable=SC1091
 . "$(dirname "$0")/libtest.sh"
 
 skip_without_bwrap
