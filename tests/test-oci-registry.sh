@@ -142,14 +142,14 @@ ok "search"
 
 # Replace with the app image with detached icons, check that the icons work
 
-old_icon_hash=(md5sum "$icondir/64x64/org.test.Hello.png")
+old_icon_hash=$(md5sum "$icondir/64x64/org.test.Hello.png")
 rm "$icondir/64x64/org.test.Hello.png"
 $client delete hello latest
 $client  add --detach-icons hello latest "$(pwd)/oci/app-image"
 ${FLATPAK} update ${U} --appstream oci-registry >&2
 assert_has_file "$icondir/64x64/org.test.Hello.png"
-new_icon_hash=(md5sum "$icondir/64x64/org.test.Hello.png")
-assert_streq "${old_icon_hash[*]}" "${new_icon_hash[*]}"
+new_icon_hash=$(md5sum "$icondir/64x64/org.test.Hello.png")
+assert_streq "$old_icon_hash" "$new_icon_hash"
 
 ok "detached icons"
 
