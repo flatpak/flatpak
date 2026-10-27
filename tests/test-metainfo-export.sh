@@ -19,6 +19,7 @@
 
 set -euo pipefail
 
+# shellcheck source=tests/libtest.sh
 source "$(dirname "$0")/libtest.sh"
 
 setup_repo
@@ -65,6 +66,7 @@ REPO="$(mktemp -d)"
 
 $FLATPAK build-export "$REPO" "$APP_DIR" >&2
 
+# shellcheck disable=SC2086
 $FLATPAK ${U} install -y "$REPO" "$APP_ID" >&2
 
 assert_has_file "${FL_DIR}/exports/share/metainfo/${APP_ID}.metainfo.xml"
