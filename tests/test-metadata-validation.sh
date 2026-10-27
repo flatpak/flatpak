@@ -6,7 +6,8 @@
 
 set -euo pipefail
 
-. $(dirname $0)/libtest.sh
+# shellcheck source=tests/libtest.sh
+. "$(dirname "$0")/libtest.sh"
 
 setup_repo
 
@@ -14,7 +15,8 @@ COUNTER=1
 
 create_app () {
     local OPTIONS="$1"
-    local DIR=`mktemp -d`
+    local DIR
+    DIR=$(mktemp -d)
 
     mkdir ${DIR}/files
     echo $COUNTER > ${DIR}/files/counter
@@ -39,7 +41,8 @@ EOF
         echo -ne "\0" >> ${DIR}/metadata
         echo -e "\nfilesystems=home;" >> ${DIR}/metadata
     fi
-    local XA_METADATA=--add-metadata-string=xa.metadata="$(head -n6 ${DIR}/metadata)"$'\n'
+    local XA_METADATA
+    XA_METADATA=--add-metadata-string=xa.metadata="$(head -n6 "${DIR}/metadata")"$'\n'
     if [[ $OPTIONS =~ "no-xametadata" ]]; then
         XA_METADATA="--add-metadata-string=xa.nometadata=1"
     fi
