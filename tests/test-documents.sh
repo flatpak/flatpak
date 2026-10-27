@@ -3,6 +3,7 @@
 
 set -euo pipefail
 
+# shellcheck source=tests/libtest.sh
 . "$(dirname "$0")/libtest.sh"
 
 setup_document_portal
@@ -23,7 +24,7 @@ document=$($FLATPAK document-export --app=org.test.Hello "$directory")
 assert_streq "$(cat "$document/child.txt")" "directory content"
 ok "export an existing directory"
 
-assert_fail $FLATPAK document-export --app=org.test.Hello "$missing" > missing.out 2> missing.err
+assert_fail "$FLATPAK" document-export --app=org.test.Hello "$missing" > missing.out 2> missing.err
 assert_not_has_file "$missing"
 ok "ordinary export rejects a missing file"
 
