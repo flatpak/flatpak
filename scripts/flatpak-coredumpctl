@@ -95,6 +95,7 @@ def debug_dump(args: DebugDumpArgs) -> int:
         if not executable.startswith(("/newroot/", "/app/")):
             print(f"Executable {executable} doesn't seem to be a flatpaked application.",
                 file=sys.stderr)
+            return 1
         executable = executable.replace("/newroot", "", 1)
         flatpak_command.extend([executable, coredump.name])
         flatpak_command.extend(shlex.split(args.gdb_arguments))
