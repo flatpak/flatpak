@@ -20,7 +20,8 @@
 set -euo pipefail
 
 #FLATPAK=flatpak
-. $(dirname $0)/libtest.sh
+# shellcheck source=tests/libtest.sh
+. "$(dirname "$0")/libtest.sh"
 
 skip_revokefs_without_fuse
 
@@ -201,7 +202,7 @@ for cmd in build-bundle build-commit-from build-export build-finish \
            enter kill permission-list permission-remove permission-reset \
            permission-show ps repo; do
   len=$(awk '{ print length($0) }' <<< "flatpak $cmd --")
-  ${FLATPAK} complete "flatpak $cmd --" $len "--"  > complete_out
+  ${FLATPAK} complete "flatpak $cmd --" "$len" "--"  > complete_out
   assert_not_file_has_content complete_out "^--system "
   assert_not_file_has_content complete_out "^--user "
   assert_not_file_has_content complete_out "^--installation="
@@ -214,7 +215,7 @@ for cmd in history info list run update mask \
            create-usb remote-delete remote-info remote-list remote-ls \
            remote-modify search uninstall update; do
   len=$(awk '{ print length($0) }' <<< "flatpak $cmd --")
-  ${FLATPAK} complete "flatpak $cmd --" $len "--"  > complete_out
+  ${FLATPAK} complete "flatpak $cmd --" "$len" "--"  > complete_out
   assert_file_has_content complete_out "^--system "
   assert_file_has_content complete_out "^--user "
   assert_file_has_content complete_out "^--installation="
