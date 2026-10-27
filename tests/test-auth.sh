@@ -19,13 +19,14 @@
 
 set -euo pipefail
 
-. $(dirname $0)/libtest.sh
+# shellcheck source=tests/libtest.sh
+. "$(dirname "$0")/libtest.sh"
 
 
 setup_repo
 
 commit_to_obj () {
-    echo objects/$(echo $1 | cut -b 1-2)/$(echo $1 | cut -b 3-).commit
+    echo "objects/$(echo "$1" | cut -b 1-2)/$(echo "$1" | cut -b 3-).commit"
 }
 
 mark_need_token () {
@@ -34,7 +35,7 @@ mark_need_token () {
     REPO=${3:-test}
 
     COMMIT=$(cat repos/$REPO/refs/heads/$REF)
-    echo -n $TOKEN > repos/$REPO/$(commit_to_obj $COMMIT).need_token
+    echo -n "$TOKEN" > "repos/$REPO/$(commit_to_obj "$COMMIT").need_token"
 }
 
 assert_failed_with_401 () {
