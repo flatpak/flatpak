@@ -63,6 +63,22 @@ SIDELOAD_REPO_LINK2=$FLATPAK_RUN_DIR/sideload-repos/sideload1
 
 SIDELOAD_REPO=$(realpath usb_dir/repo)
 
+APP_REF=app/org.test.Hello/${ARCH}/master
+APP_COMMIT=$(ostree --repo=repos/test rev-parse "$APP_REF")
+ostree --repo=native-repo init --mode=bare-user --collection-id=org.test.Collection.test
+ostree --repo=native-repo pull-local repos/test "$APP_REF" >&2
+${FLATPAK} build-update-repo native-repo >&2
+ostree --repo=native-repo create-usb --destination-repo=app-repo usb_dir org.test.Collection.test "$APP_REF" >&2
+
+for repo in native-repo usb_dir/app-repo; do
+    ln -s "$(realpath "$repo")" "$SIDELOAD_REPO_LINK"
+    REFS=$(${FLATPAK} ${U} remote-ls --sideloaded --columns=ref,commit test-repo)
+    assert_streq "$REFS" "$(printf '%s\t%s' "$APP_REF" "${APP_COMMIT:0:12}")"
+    rm "$SIDELOAD_REPO_LINK"
+done
+
+ok "listed native and USB sideloaded refs"
+
 # This one uses the sideload repo in /run, the rest in the flatpak dir
 ln -s $SIDELOAD_REPO $SIDELOAD_REPO_LINK2
 

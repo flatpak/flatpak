@@ -14785,15 +14785,9 @@ flatpak_dir_list_all_remote_refs (FlatpakDir         *self,
               FlatpakSideloadState *ss = g_ptr_array_index (state->sideload_repos, i);
 
               summary = var_summary_from_gvariant (ss->summary);
-              exts = var_summary_get_metadata (summary);
 
-              if (var_metadata_lookup (exts, "ostree.summary.collection-map", NULL, &v))
-                {
-                  VarCollectionMapRef map = var_collection_map_from_variant (v);
-
-                  if (var_collection_map_lookup (map, state->collection_id, NULL, &ref_map))
-                    populate_hash_table_from_refs_map (ret_all_refs, ref_mtimes, ref_map, NULL, state);
-                }
+              if (flatpak_summary_find_ref_map (summary, state->collection_id, &ref_map))
+                populate_hash_table_from_refs_map (ret_all_refs, ref_mtimes, ref_map, NULL, state);
             }
         }
 
