@@ -317,7 +317,8 @@ flatpak_builtin_search (int argc, char **argv, GCancellable *cancellable, GError
             {
               g_autofree char *app_id = component_get_flatpak_id (app);
               const char *app_name = as_component_get_name (app);
-              if (strcasestr (app_id, search_text) != NULL || strcasestr (app_name, search_text) != NULL)
+              if (strcasestr (app_id, search_text) != NULL ||
+                  (app_name != NULL && strcasestr (app_name, search_text) != NULL))
                 score = 50;
               else
                 continue;
