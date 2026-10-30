@@ -295,12 +295,12 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
         print_aligned (len, _("Installed Size:"), formatted_installed_size);
       if (flatpak_decomposed_is_app (ref) && metakey != NULL)
         {
-          g_autofree char *runtime = g_key_file_get_string (metakey, "Application", "runtime", error);
+          g_autofree char *runtime = g_key_file_get_string (metakey, "Application", "runtime", NULL);
           print_aligned (len, _("Runtime:"), runtime ? runtime : "-");
         }
       if (flatpak_decomposed_is_app (ref) && metakey != NULL)
         {
-          g_autofree char *sdk = g_key_file_get_string (metakey, "Application", "sdk", error);
+          g_autofree char *sdk = g_key_file_get_string (metakey, "Application", "sdk", NULL);
           print_aligned (len, _("Sdk:"), sdk ? sdk : "-");
         }
       g_print ("\n");
