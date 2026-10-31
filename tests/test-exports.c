@@ -568,6 +568,8 @@ static const Filesystem filesystems[] =
   { "xdg-templates/Stuff", FLATPAK_FILESYSTEM_MODE_READ_WRITE },
   { "xdg-videos", FLATPAK_FILESYSTEM_MODE_READ_WRITE },
   { "xdg-videos/Stuff", FLATPAK_FILESYSTEM_MODE_READ_WRITE },
+  { "xdg-projects", FLATPAK_FILESYSTEM_MODE_READ_WRITE },
+  { "xdg-projects/Stuff", FLATPAK_FILESYSTEM_MODE_READ_WRITE },
   { "xdg-data", FLATPAK_FILESYSTEM_MODE_READ_WRITE },
   { "xdg-data/Stuff", FLATPAK_FILESYSTEM_MODE_READ_WRITE },
   { "xdg-cache", FLATPAK_FILESYSTEM_MODE_READ_WRITE },
