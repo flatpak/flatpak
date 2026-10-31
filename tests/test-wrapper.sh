@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for feature in $(echo $1 | sed "s/^.*@\(.*\).wrap/\1/" | tr "," "\n"); do
+for feature in $(echo "$1" | sed "s/^.*@\(.*\).wrap/\1/" | tr "," "\n"); do
     case $feature in
         system)
             export USE_SYSTEMDIR=yes
@@ -37,10 +37,11 @@ for feature in $(echo $1 | sed "s/^.*@\(.*\).wrap/\1/" | tr "," "\n"); do
             export USE_HTTPS=no
             ;;
         *)
-            echo unsupported test feature $feature
+            echo "unsupported test feature $feature"
             exit 1
     esac
 done
 
-WRAPPED=$(echo $1 | sed "s/@.*/\.sh/")
-. $WRAPPED "$@"
+WRAPPED="${1/@*/\.sh}"
+# shellcheck disable=SC1090
+. "$WRAPPED" "$@"

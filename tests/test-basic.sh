@@ -19,14 +19,15 @@
 
 set -euo pipefail
 
-. $(dirname $0)/libtest.sh
+# shellcheck source=tests/libtest.sh
+. "$(dirname "$0")/libtest.sh"
 
 # This test looks for specific localized strings.
 export LC_ALL=C
 
 ${FLATPAK} --version > version_out
 
-VERSION=`cat "$test_builddir/package_version.txt"`
+VERSION=$(cat "$test_builddir/package_version.txt")
 assert_file_has_content version_out "^Flatpak $VERSION$"
 
 ok "version"
@@ -41,7 +42,7 @@ ${FLATPAK} --default-arch > arch
 
 ${FLATPAK} --supported-arches > arches
 
-assert_streq `head -1 arches` `cat arch`
+assert_streq "$(head -1 arches)" "$(cat arch)"
 
 ok "default arch"
 

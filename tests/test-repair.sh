@@ -6,7 +6,8 @@
 
 set -euo pipefail
 
-. $(dirname $0)/libtest.sh
+# shellcheck source=tests/libtest.sh
+. "$(dirname "$0")/libtest.sh"
 
 setup_repo
 ${FLATPAK} ${U} install -y test-repo org.test.Hello >&2

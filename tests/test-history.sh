@@ -4,9 +4,10 @@
 
 set -euo pipefail
 
-USE_SYSTEMDIR=yes
+export USE_SYSTEMDIR=yes
 
-. $(dirname $0)/libtest.sh
+# shellcheck source=tests/libtest.sh
+. "$(dirname "$0")/libtest.sh"
 
 skip_without_bwrap
 skip_revokefs_without_fuse
