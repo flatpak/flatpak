@@ -2505,6 +2505,20 @@ flatpak_escape_string (const char        *s,
   return g_string_free (g_steal_pointer (&res), FALSE);
 }
 
+char *
+flatpak_strip_trailing_slashes (const char *path)
+{
+  size_t len = strlen (path);
+
+  while (len > 0 && path[len - 1] == '/')
+    len--;
+
+  if (len == 0)
+    return NULL;
+
+  return g_strndup (path, len);
+}
+
 gboolean
 flatpak_validate_path_characters (const char *path,
                                   GError    **error)
