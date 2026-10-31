@@ -197,6 +197,7 @@ typedef struct _FlatpakTransactionPrivate
   gboolean                     disable_deps;
   gboolean                     disable_related;
   gboolean                     reinstall;
+  gboolean                     flatpakref_or_update;
   gboolean                     force_uninstall;
   gboolean                     can_run;
   gboolean                     include_unused_uninstall_ops;
@@ -1865,6 +1866,15 @@ flatpak_transaction_set_reinstall (FlatpakTransaction *self,
   FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
 
   priv->reinstall = reinstall;
+}
+
+void
+flatpak_transaction_set_flatpakref_or_update (FlatpakTransaction *self,
+                                              gboolean            or_update)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+
+  priv->flatpakref_or_update = or_update;
 }
 
 /**
@@ -4915,6 +4925,7 @@ flatpak_transaction_resolve_flatpakrefs (FlatpakTransaction *self,
         return FALSE;
 
       if (!flatpak_dir_create_remote_for_ref_file (priv->dir, flatpakref, priv->default_arch,
+                                                   priv->reinstall || priv->flatpakref_or_update,
                                                    &remote, NULL, &ref, error))
         return FALSE;
 
@@ -4923,6 +4934,25 @@ flatpak_transaction_resolve_flatpakrefs (FlatpakTransaction *self,
         return FALSE;
 
       flatpak_installation_drop_caches (priv->installation, NULL, NULL);
+
+      if (priv->flatpakref_or_update && !priv->reinstall)
+        {
+          g_autofree char *origin = NULL;
+
+          if (dir_ref_is_installed (priv->dir, ref, &origin, NULL))
+            {
+              if (g_strcmp0 (origin, remote) == 0)
+                {
+                  if (!flatpak_transaction_add_update (self, flatpak_decomposed_get_ref (ref), NULL, NULL, error))
+                    return FALSE;
+
+                  continue;
+                }
+
+              /* Switching the source of an installed ref requires a reinstall. */
+              priv->reinstall = TRUE;
+            }
+        }
 
       if (!flatpak_transaction_add_install (self, remote, flatpak_decomposed_get_ref (ref), NULL, error))
         return FALSE;
