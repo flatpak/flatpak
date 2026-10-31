@@ -12,19 +12,26 @@ fi
 skip_revokefs_without_fuse
 
 reset_overrides () {
-    ${FLATPAK} override --user --reset org.test.Hello
-    ${FLATPAK} override --user --show org.test.Hello > info
+    ${FLATPAK} override ${U} --reset org.test.Hello
+    ${FLATPAK} override ${U} --show org.test.Hello > info
     assert_file_empty info
 }
+
+mkdir -p ${FLATPAK_CONFIG_DIR}/installations.d
+mkdir -p ${TEST_DATA_DIR}/extra-installation
+cat > ${FLATPAK_CONFIG_DIR}/installations.d/extra.conf <<EOF
+[Installation "extra"]
+Path=${TEST_DATA_DIR}/extra-installation
+EOF
 
 setup_repo
 install_repo
 
 reset_overrides
 
-${FLATPAK} override --user --socket=wayland org.test.Hello
-${FLATPAK} override --user --nosocket=ssh-auth org.test.Hello
-${FLATPAK} override --user --show org.test.Hello > override
+${FLATPAK} override ${U} --socket=wayland org.test.Hello
+${FLATPAK} override ${U} --nosocket=ssh-auth org.test.Hello
+${FLATPAK} override ${U} --show org.test.Hello > override
 
 assert_file_has_content override "^\[Context\]$"
 assert_file_has_content override "^sockets=!ssh-auth;wayland;$"
@@ -33,9 +40,9 @@ ok "override --socket"
 
 reset_overrides
 
-${FLATPAK} override --user --socket-if=wayland:!has-wayland org.test.Hello
-${FLATPAK} override --user --socket-if=wayland:true org.test.Hello
-${FLATPAK} override --user --show org.test.Hello > override
+${FLATPAK} override ${U} --socket-if=wayland:!has-wayland org.test.Hello
+${FLATPAK} override ${U} --socket-if=wayland:true org.test.Hello
+${FLATPAK} override ${U} --show org.test.Hello > override
 
 assert_file_has_content override "^\[Context\]$"
 assert_file_has_content override "^sockets=wayland;if:wayland:!has-wayland;if:wayland:true;$"
@@ -43,9 +50,9 @@ ok "override --socket-if"
 
 reset_overrides
 
-${FLATPAK} override --user --device=dri org.test.Hello
-${FLATPAK} override --user --nodevice=kvm org.test.Hello
-${FLATPAK} override --user --show org.test.Hello > override
+${FLATPAK} override ${U} --device=dri org.test.Hello
+${FLATPAK} override ${U} --nodevice=kvm org.test.Hello
+${FLATPAK} override ${U} --show org.test.Hello > override
 
 assert_file_has_content override "^\[Context\]$"
 assert_file_has_content override "^devices=dri;!kvm;$"
@@ -54,9 +61,9 @@ ok "override --device"
 
 reset_overrides
 
-${FLATPAK} override --user --share=network org.test.Hello
-${FLATPAK} override --user --unshare=ipc org.test.Hello
-${FLATPAK} override --user --show org.test.Hello > override
+${FLATPAK} override ${U} --share=network org.test.Hello
+${FLATPAK} override ${U} --unshare=ipc org.test.Hello
+${FLATPAK} override ${U} --show org.test.Hello > override
 
 assert_file_has_content override "^\[Context\]$"
 assert_file_has_content override "^shared=!ipc;network;$"
@@ -65,10 +72,10 @@ ok "override --share"
 
 reset_overrides
 
-${FLATPAK} override --user --device-if=dri:a org.test.Hello
-${FLATPAK} override --user --device-if=kvm:x --device-if=dri:b org.test.Hello
-${FLATPAK} override --user --device-if=dri:!c --device-if=dri:!d org.test.Hello
-${FLATPAK} override --user --show org.test.Hello > override
+${FLATPAK} override ${U} --device-if=dri:a org.test.Hello
+${FLATPAK} override ${U} --device-if=kvm:x --device-if=dri:b org.test.Hello
+${FLATPAK} override ${U} --device-if=dri:!c --device-if=dri:!d org.test.Hello
+${FLATPAK} override ${U} --show org.test.Hello > override
 
 assert_file_has_content override "^\[Context\]$"
 assert_file_has_content override "^devices=dri;if:dri:!c;if:dri:!d;if:dri:a;if:dri:b;kvm;if:kvm:x;$"
@@ -78,9 +85,9 @@ reset_overrides
 
 reset_overrides
 
-${FLATPAK} override --user --allow=multiarch org.test.Hello
-${FLATPAK} override --user --disallow=bluetooth org.test.Hello
-${FLATPAK} override --user --show org.test.Hello > override
+${FLATPAK} override ${U} --allow=multiarch org.test.Hello
+${FLATPAK} override ${U} --disallow=bluetooth org.test.Hello
+${FLATPAK} override ${U} --show org.test.Hello > override
 
 assert_file_has_content override "^\[Context\]$"
 assert_file_has_content override "^features=!bluetooth;multiarch;$"
@@ -89,9 +96,9 @@ ok "override --allow"
 
 reset_overrides
 
-${FLATPAK} override --user --env=FOO=BAR org.test.Hello
-${FLATPAK} override --user --env=BAR= org.test.Hello
-${FLATPAK} override --user --unset-env=CLEARME org.test.Hello
+${FLATPAK} override ${U} --env=FOO=BAR org.test.Hello
+${FLATPAK} override ${U} --env=BAR= org.test.Hello
+${FLATPAK} override ${U} --unset-env=CLEARME org.test.Hello
 # --env-fd with terminating \0 (strictly as documented).
 printf '%s\0' "SECRET_TOKEN=3047225e-5e38-4357-b21c-eac83b7e8ea6" > env.3
 # --env-fd without terminating \0 (which we also accept).
@@ -100,9 +107,9 @@ printf '%s\0' "SECRET_TOKEN=3047225e-5e38-4357-b21c-eac83b7e8ea6" > env.3
 # a setuid bwrap (without special-casing them, as we previously did for
 # TMPDIR).
 printf '%s\0%s' "TMPDIR=/nonexistent/tmp" "TZDIR=/nonexistent/tz" > env.4
-${FLATPAK} override --user --env-fd=3 --env-fd=4 org.test.Hello \
+${FLATPAK} override ${U} --env-fd=3 --env-fd=4 org.test.Hello \
     3<env.3 4<env.4
-${FLATPAK} override --user --show org.test.Hello > override
+${FLATPAK} override ${U} --show org.test.Hello > override
 
 assert_file_has_content override "^\[Environment\]$"
 assert_file_has_content override "^FOO=BAR$"
@@ -139,13 +146,13 @@ reset_overrides
 if skip_one_without_bwrap "temporary environment variables"; then
   :
 else
-  ${FLATPAK} override --user --env=FOO=wrong org.test.Hello
-  ${FLATPAK} override --user --unset-env=BAR org.test.Hello
-  ${FLATPAK} override --user --env=SECRET_TOKEN=wrong org.test.Hello
-  ${FLATPAK} override --user --env=TMPDIR=/nonexistent/wrong org.test.Hello
-  ${FLATPAK} override --user --env=TZDIR=/nonexistent/wrong org.test.Hello
-  ${FLATPAK} override --user --env=CLEARME=wrong org.test.Hello
-  ${FLATPAK} override --user --show org.test.Hello > override
+  ${FLATPAK} override ${U} --env=FOO=wrong org.test.Hello
+  ${FLATPAK} override ${U} --unset-env=BAR org.test.Hello
+  ${FLATPAK} override ${U} --env=SECRET_TOKEN=wrong org.test.Hello
+  ${FLATPAK} override ${U} --env=TMPDIR=/nonexistent/wrong org.test.Hello
+  ${FLATPAK} override ${U} --env=TZDIR=/nonexistent/wrong org.test.Hello
+  ${FLATPAK} override ${U} --env=CLEARME=wrong org.test.Hello
+  ${FLATPAK} override ${U} --show org.test.Hello > override
 
   CLEARME=also-wrong ${FLATPAK} run --command=bash \
       --filesystem="${test_tmpdir}" \
@@ -186,12 +193,12 @@ fi
 
 reset_overrides
 
-${FLATPAK} override --user --filesystem=home org.test.Hello
-${FLATPAK} override --user --filesystem=xdg-desktop/foo:create org.test.Hello
-${FLATPAK} override --user --filesystem=xdg-config:ro org.test.Hello
-${FLATPAK} override --user --filesystem=/media org.test.Hello
-${FLATPAK} override --user --nofilesystem=xdg-documents org.test.Hello
-${FLATPAK} override --user --show org.test.Hello > override
+${FLATPAK} override ${U} --filesystem=home org.test.Hello
+${FLATPAK} override ${U} --filesystem=xdg-desktop/foo:create org.test.Hello
+${FLATPAK} override ${U} --filesystem=xdg-config:ro org.test.Hello
+${FLATPAK} override ${U} --filesystem=/media org.test.Hello
+${FLATPAK} override ${U} --nofilesystem=xdg-documents org.test.Hello
+${FLATPAK} override ${U} --show org.test.Hello > override
 
 assert_file_has_content override "^\[Context\]$"
 filesystems="$(sed -ne 's/^filesystems=//p' override)"
@@ -208,8 +215,8 @@ assert_semicolon_list_contains "$filesystems" "xdg-config:ro"
 assert_not_semicolon_list_contains "$filesystems" "!xdg-config"
 assert_not_semicolon_list_contains "$filesystems" "!xdg-config:ro"
 
-${FLATPAK} override --user --nofilesystem=host:reset org.test.Hello
-${FLATPAK} override --user --show org.test.Hello > override
+${FLATPAK} override ${U} --nofilesystem=host:reset org.test.Hello
+${FLATPAK} override ${U} --show org.test.Hello > override
 filesystems="$(sed -ne 's/^filesystems=//p' override)"
 assert_not_semicolon_list_contains "$filesystems" "host"
 assert_not_semicolon_list_contains "$filesystems" "host:reset"
@@ -219,8 +226,8 @@ assert_not_semicolon_list_contains "$filesystems" "host-reset"
 assert_not_semicolon_list_contains "$filesystems" "!host-reset"
 
 # !host-reset is the same as !host:reset, and serializes as !host:reset
-${FLATPAK} override --user --nofilesystem=host-reset org.test.Hello
-${FLATPAK} override --user --show org.test.Hello > override
+${FLATPAK} override ${U} --nofilesystem=host-reset org.test.Hello
+${FLATPAK} override ${U} --show org.test.Hello > override
 filesystems="$(sed -ne 's/^filesystems=//p' override)"
 assert_not_semicolon_list_contains "$filesystems" "host"
 assert_not_semicolon_list_contains "$filesystems" "host:reset"
@@ -231,46 +238,46 @@ assert_not_semicolon_list_contains "$filesystems" "!host-reset"
 
 # --filesystem=...:reset => error
 e=0
-${FLATPAK} override --user --filesystem=host:reset org.test.Hello 2>log || e=$?
+${FLATPAK} override ${U} --filesystem=host:reset org.test.Hello 2>log || e=$?
 assert_file_has_content log "Filesystem suffix \"reset\" only applies to --nofilesystem"
 assert_not_streq "$e" 0
 
 # --filesystem=host-reset => error
 e=0
-${FLATPAK} override --user --filesystem=host-reset org.test.Hello 2>log || e=$?
+${FLATPAK} override ${U} --filesystem=host-reset org.test.Hello 2>log || e=$?
 assert_file_has_content log "Filesystem token \"host-reset\" is only applicable for --nofilesystem"
 assert_not_streq "$e" 0
 
 # --filesystem=host-reset:suffix => error
 e=0
-${FLATPAK} override --user --nofilesystem=host-reset:suffix org.test.Hello 2>log || e=$?
+${FLATPAK} override ${U} --nofilesystem=host-reset:suffix org.test.Hello 2>log || e=$?
 assert_file_has_content log "Filesystem token \"host-reset\" cannot be used with a suffix"
 assert_not_streq "$e" 0
 
 # --nofilesystem=/foo:reset => error
 e=0
-${FLATPAK} override --user --nofilesystem=/foo:reset org.test.Hello 2>log || e=$?
+${FLATPAK} override ${U} --nofilesystem=/foo:reset org.test.Hello 2>log || e=$?
 assert_file_has_content log "Filesystem suffix \"reset\" can only be applied to --nofilesystem=host"
 assert_not_streq "$e" 0
 
 # --nofilesystem=...:rw => warning
 # Warnings need to be made temporarily non-fatal here.
 e=0
-G_DEBUG= ${FLATPAK} override --user --nofilesystem=/foo:rw org.test.Hello 2>log || e=$?
+G_DEBUG='' ${FLATPAK} override ${U} --nofilesystem=/foo:rw org.test.Hello 2>log || e=$?
 assert_file_has_content log "Filesystem suffix \"rw\" is not applicable for --nofilesystem"
 assert_streq "$e" 0
 
 # --filesystem=...:bar => warning
 # Warnings need to be made temporarily non-fatal here.
 e=0
-G_DEBUG= ${FLATPAK} override --user --filesystem=/foo:bar org.test.Hello 2>log || e=$?
+G_DEBUG='' ${FLATPAK} override ${U} --filesystem=/foo:bar org.test.Hello 2>log || e=$?
 assert_file_has_content log "Unexpected filesystem suffix bar, ignoring"
 assert_streq "$e" 0
 
 # --nofilesystem=...:bar => warning
 # Warnings need to be made temporarily non-fatal here.
 e=0
-G_DEBUG= ${FLATPAK} override --user --nofilesystem=/foo:bar org.test.Hello 2>log || e=$?
+G_DEBUG='' ${FLATPAK} override ${U} --nofilesystem=/foo:bar org.test.Hello 2>log || e=$?
 assert_file_has_content log "Unexpected filesystem suffix bar, ignoring"
 assert_streq "$e" 0
 
@@ -278,11 +285,11 @@ ok "override --filesystem"
 
 reset_overrides
 
-${FLATPAK} override --user --own-name=org.foo.Own org.test.Hello
-${FLATPAK} override --user --talk-name=org.foo.Talk org.test.Hello
-${FLATPAK} override --user --talk-name=org.foo.NoTalk org.test.Hello
-${FLATPAK} override --user --no-talk-name=org.foo.NoTalk org.test.Hello
-${FLATPAK} override --user --show org.test.Hello > override
+${FLATPAK} override ${U} --own-name=org.foo.Own org.test.Hello
+${FLATPAK} override ${U} --talk-name=org.foo.Talk org.test.Hello
+${FLATPAK} override ${U} --talk-name=org.foo.NoTalk org.test.Hello
+${FLATPAK} override ${U} --no-talk-name=org.foo.NoTalk org.test.Hello
+${FLATPAK} override ${U} --show org.test.Hello > override
 
 assert_file_has_content override "^\[Session Bus Policy\]$"
 assert_file_has_content override "^org\.foo\.Own=own$"
@@ -293,11 +300,11 @@ ok "override session bus names"
 
 reset_overrides
 
-${FLATPAK} override --user --system-own-name=org.foo.Own.System org.test.Hello
-${FLATPAK} override --user --system-talk-name=org.foo.Talk.System org.test.Hello
-${FLATPAK} override --user --system-talk-name=org.foo.NoTalk.System org.test.Hello
-${FLATPAK} override --user --system-no-talk-name=org.foo.NoTalk.System org.test.Hello
-${FLATPAK} override --user --show org.test.Hello > override
+${FLATPAK} override ${U} --system-own-name=org.foo.Own.System org.test.Hello
+${FLATPAK} override ${U} --system-talk-name=org.foo.Talk.System org.test.Hello
+${FLATPAK} override ${U} --system-talk-name=org.foo.NoTalk.System org.test.Hello
+${FLATPAK} override ${U} --system-no-talk-name=org.foo.NoTalk.System org.test.Hello
+${FLATPAK} override ${U} --show org.test.Hello > override
 
 assert_file_has_content override "^\[System Bus Policy\]$"
 assert_file_has_content override "^org\.foo\.Own\.System=own$"
@@ -311,11 +318,11 @@ reset_overrides
 if skip_one_without_bwrap "sandbox wayland socket"; then
   :
 elif [ -S "${XDG_RUNTIME_DIR}/wayland-0" ]; then
-  ${FLATPAK} override --user --socket=wayland org.test.Hello
+  ${FLATPAK} override ${U} --socket=wayland org.test.Hello
   ${FLATPAK} run --command=ls org.test.Hello -- /run/user/1000 > out
   assert_file_has_content out "wayland-0"
 
-  ${FLATPAK} override --user --nosocket=wayland org.test.Hello
+  ${FLATPAK} override ${U} --nosocket=wayland org.test.Hello
   ${FLATPAK} run --command=ls org.test.Hello -- /run/user/1000 > out
   assert_not_file_has_content out "wayland-0"
 
@@ -329,11 +336,11 @@ reset_overrides
 if skip_one_without_bwrap "sandbox dri device"; then
   :
 elif [ -d "/dev/dri" ]; then
-  ${FLATPAK} override --user --device=dri org.test.Hello
+  ${FLATPAK} override ${U} --device=dri org.test.Hello
   ${FLATPAK} run --command=ls org.test.Hello -- /dev > out
   assert_file_has_content out "dri"
 
-  ${FLATPAK} override --user --nodevice=dri org.test.Hello
+  ${FLATPAK} override ${U} --nodevice=dri org.test.Hello
   ${FLATPAK} run --command=ls org.test.Hello -- /dev > out
   assert_not_file_has_content out "dri"
 
@@ -345,7 +352,7 @@ fi
 reset_overrides
 
 if ! skip_one_without_bwrap "sandbox dri device"; then
-  ${FLATPAK} override --user --env=FOO=BAR org.test.Hello
+  ${FLATPAK} override ${U} --env=FOO=BAR org.test.Hello
 
   ${FLATPAK} run --command=sh org.test.Hello -c 'echo $FOO' > out
   assert_file_has_content out "BAR"
@@ -360,7 +367,7 @@ reset_overrides
 if ! skip_one_without_bwrap "sandbox filesystem"; then
   echo "hello" > $HOME/example
 
-  ${FLATPAK} override --user --filesystem=home:ro org.test.Hello
+  ${FLATPAK} override ${U} --filesystem=home:ro org.test.Hello
 
   ${FLATPAK} run --command=ls org.test.Hello $HOME > out
   assert_file_has_content out example
@@ -376,7 +383,7 @@ fi
 reset_overrides
 
 if ! skip_one_without_bwrap "persist"; then
-  ${FLATPAK} override --user --persist=example org.test.Hello
+  ${FLATPAK} override ${U} --persist=example org.test.Hello
   ${FLATPAK} run --command=sh org.test.Hello -c "echo goodbye > $HOME/example/bye"
   assert_file_has_content $HOME/.var/app/org.test.Hello/example/bye goodbye
 
@@ -394,9 +401,9 @@ if ! skip_one_without_bwrap "runtime override --nofilesystem=home"; then
   echo "hello" > "$TEST_DATA_DIR/dir1/example"
   echo "hello" > "$TEST_DATA_DIR/dir2/example"
 
-  ${FLATPAK} override --user --filesystem=home org.test.Hello
-  ${FLATPAK} override --user --filesystem='~/dir' org.test.Hello
-  ${FLATPAK} override --user --filesystem="$TEST_DATA_DIR/dir1" org.test.Hello
+  ${FLATPAK} override ${U} --filesystem=home org.test.Hello
+  ${FLATPAK} override ${U} --filesystem='~/dir' org.test.Hello
+  ${FLATPAK} override ${U} --filesystem="$TEST_DATA_DIR/dir1" org.test.Hello
 
   ${FLATPAK} run --env=TEST_DATA_DIR="$TEST_DATA_DIR" \
     --command=sh --nofilesystem=home org.test.Hello -c '
@@ -434,9 +441,9 @@ if ! skip_one_without_bwrap "runtime override --nofilesystem=host"; then
   echo "hello" > "$TEST_DATA_DIR/dir1/example"
   echo "hello" > "$TEST_DATA_DIR/dir2/example"
 
-  ${FLATPAK} override --user --filesystem=host org.test.Hello
-  ${FLATPAK} override --user --filesystem='~/dir' org.test.Hello
-  ${FLATPAK} override --user --filesystem="$TEST_DATA_DIR/dir1" org.test.Hello
+  ${FLATPAK} override ${U} --filesystem=host org.test.Hello
+  ${FLATPAK} override ${U} --filesystem='~/dir' org.test.Hello
+  ${FLATPAK} override ${U} --filesystem="$TEST_DATA_DIR/dir1" org.test.Hello
 
   ${FLATPAK} run --env=TEST_DATA_DIR="$TEST_DATA_DIR" \
     --command=sh --nofilesystem=host org.test.Hello -c '
@@ -473,9 +480,9 @@ if ! skip_one_without_bwrap "runtime override --nofilesystem=host:reset"; then
   echo "hello" > "$TEST_DATA_DIR/dir1/example"
   echo "hello" > "$TEST_DATA_DIR/dir2/example"
 
-  ${FLATPAK} override --user --filesystem=host org.test.Hello
-  ${FLATPAK} override --user --filesystem='~/dir' org.test.Hello
-  ${FLATPAK} override --user --filesystem="$TEST_DATA_DIR/dir1" org.test.Hello
+  ${FLATPAK} override ${U} --filesystem=host org.test.Hello
+  ${FLATPAK} override ${U} --filesystem='~/dir' org.test.Hello
+  ${FLATPAK} override ${U} --filesystem="$TEST_DATA_DIR/dir1" org.test.Hello
 
   ${FLATPAK} run --env=TEST_DATA_DIR="$TEST_DATA_DIR" \
     --command=sh --nofilesystem=host:reset org.test.Hello -c '
@@ -498,5 +505,15 @@ if ! skip_one_without_bwrap "runtime override --nofilesystem=host:reset"; then
 
   ok "runtime override --nofilesystem=host:reset"
 fi
+
+${FLATPAK} override --installation=extra --env=OVERRIDE_PROBE=1 org.test.Hello
+${FLATPAK} override --installation=extra --show org.test.Hello > override
+assert_file_has_content override "^OVERRIDE_PROBE=1$"
+
+${FLATPAK} override --installation=extra --reset org.test.Hello
+${FLATPAK} override --installation=extra --show org.test.Hello > override
+assert_file_empty override
+
+ok "override with custom installation"
 
 done_testing

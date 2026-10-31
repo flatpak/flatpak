@@ -243,6 +243,15 @@ typedef enum {
                                             FLATPAK_HELPER_CONFIGURE_FLAGS_NO_INTERACTION)
 
 typedef enum {
+  FLATPAK_HELPER_OVERRIDE_FLAGS_NONE = 0,
+  FLATPAK_HELPER_OVERRIDE_FLAGS_RESET = 1 << 0,
+  FLATPAK_HELPER_OVERRIDE_FLAGS_NO_INTERACTION = 1 << 1,
+} FlatpakHelperOverrideFlags;
+
+#define FLATPAK_HELPER_OVERRIDE_FLAGS_ALL (FLATPAK_HELPER_OVERRIDE_FLAGS_RESET | \
+                                           FLATPAK_HELPER_OVERRIDE_FLAGS_NO_INTERACTION)
+
+typedef enum {
   FLATPAK_HELPER_UPDATE_REMOTE_FLAGS_NONE = 0,
   FLATPAK_HELPER_UPDATE_REMOTE_FLAGS_NO_INTERACTION = 1 << 0,
   FLATPAK_HELPER_UPDATE_REMOTE_FLAGS_SUMMARY_IS_INDEX = 1 << 1,
@@ -375,18 +384,20 @@ GPtrArray *flatpak_get_system_base_dir_locations        (GCancellable  *cancella
 GFile *    flatpak_get_system_default_base_dir_location (void);
 
 GKeyFile *      flatpak_load_override_keyfile   (const char  *app_id,
-                                                 gboolean     user,
+                                                 FlatpakDir  *dir,
                                                  GError     **error);
 FlatpakContext *flatpak_load_override_file      (const char  *app_id,
-                                                 gboolean     user,
+                                                 FlatpakDir  *dir,
                                                  GError     **error);
-gboolean        flatpak_save_override_keyfile   (GKeyFile    *metakey,
-                                                 const char  *app_id,
-                                                 gboolean     user,
-                                                 GError     **error);
-gboolean        flatpak_remove_override_keyfile (const char  *app_id,
-                                                 gboolean     user,
-                                                 GError     **error);
+gboolean        flatpak_save_override_keyfile   (FlatpakContext  *overrides,
+                                                 const char      *app_id,
+                                                 FlatpakDir      *dir,
+                                                 GCancellable    *cancellable,
+                                                 GError         **error);
+gboolean        flatpak_remove_override_keyfile (const char    *app_id,
+                                                 FlatpakDir    *dir,
+                                                 GCancellable  *cancellable,
+                                                 GError       **error);
 
 typedef struct
 {
