@@ -98,6 +98,11 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
 
         self.end_headers()
 
+        if path == '/stall':
+            self.wfile.flush()
+            time.sleep(10)
+            return
+
         if response == 200:
             if isinstance(contents, bytes):
                 self.wfile.write(contents)
