@@ -60,7 +60,9 @@
         </itemizedlist>
         <para>
           Note that <command>flatpak repair</command> has to be run with root privileges to
-          operate on the system installation.
+          operate on the system installation. Without root, Flatpak continues as a
+          dry run (reporting what would change but not writing), unless
+          <option>--user</option> or <option>--dry-run</option> is used.
         </para>
         <para>
           An alternative command for repairing OSTree repositories is ostree fsck.
