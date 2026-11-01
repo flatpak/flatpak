@@ -253,6 +253,42 @@ test_multiple_system_installations (void)
 }
 
 static void
+test_system_installation_unavailable_path (void)
+{
+  g_autofree char *path = NULL;
+  g_autofree char *conffile_path = NULL;
+  g_autofree char *contents = NULL;
+  g_autoptr(GPtrArray) installations = NULL;
+  g_autoptr(GError) error = NULL;
+  int i;
+
+  path = g_build_filename (testdir, "system-unavailable", NULL);
+  conffile_path = g_build_filename (flatpak_installationsdir,
+                                    "unavailable.conf", NULL);
+  contents = g_strdup_printf ("[Installation \"unavailable\"]\n"
+                              "Path=%s",
+                              path);
+
+  g_assert_true (g_file_set_contents (path, "not an installation", -1, &error));
+  g_assert_no_error (error);
+  g_assert_true (g_file_set_contents (conffile_path, contents, -1, &error));
+  g_assert_no_error (error);
+
+  installations = flatpak_get_system_installations (NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (installations);
+
+  for (i = 0; i < installations->len; i++)
+    {
+      FlatpakInstallation *installation = g_ptr_array_index (installations, i);
+      g_assert_cmpstr (flatpak_installation_get_id (installation), !=, "unavailable");
+    }
+
+  g_assert_cmpint (g_unlink (conffile_path), ==, 0);
+  g_assert_cmpint (g_unlink (path), ==, 0);
+}
+
+static void
 test_installation_config (void)
 {
   g_autoptr(FlatpakInstallation) inst = NULL;
@@ -5184,6 +5220,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/library/user-installation", test_user_installation);
   g_test_add_func ("/library/system-installation", test_system_installation);
   g_test_add_func ("/library/multiple-system-installation", test_multiple_system_installations);
+  g_test_add_func ("/library/system-installation-unavailable-path", test_system_installation_unavailable_path);
   g_test_add_func ("/library/installation-config", test_installation_config);
   g_test_add_func ("/library/languages-config", test_languages_config);
   g_test_add_func ("/library/arches", test_arches);

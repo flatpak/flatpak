@@ -245,6 +245,11 @@ flatpak_get_system_installations (GCancellable *cancellable,
       FlatpakDir *install_dir = g_ptr_array_index (system_dirs, i);
       g_autoptr(FlatpakInstallation) installation = NULL;
 
+      if (g_file_query_file_type (flatpak_dir_get_path (install_dir),
+                                   G_FILE_QUERY_INFO_NONE,
+                                   cancellable) != G_FILE_TYPE_DIRECTORY)
+        continue;
+
       installation = flatpak_installation_new_for_dir (install_dir,
                                                        cancellable,
                                                        &local_error);
