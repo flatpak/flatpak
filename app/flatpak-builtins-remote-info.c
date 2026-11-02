@@ -183,6 +183,7 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
       g_autoptr(AsMetadata) mdata = as_metadata_new ();
       AsComponent *cpt = NULL;
       const char *version = NULL;
+      g_autofree char *metadata_version = NULL;
       const char *license = NULL;
       g_autofree char *arch = flatpak_decomposed_dup_arch (ref);
 
@@ -229,6 +230,18 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
               metakey = g_key_file_new ();
               if (!g_key_file_load_from_data (metakey, xa_metadata, -1, 0, error))
                 return FALSE;
+            }
+
+          /* When a specific commit was requested the AppStream data may
+           * describe a newer release, so prefer the version from the
+           * commit metadata. */
+          if (opt_commit != NULL && metakey != NULL)
+            {
+              metadata_version = g_key_file_get_string (metakey,
+                                                        flatpak_decomposed_get_kind_metadata_group (ref),
+                                                        "version", NULL);
+              if (metadata_version != NULL)
+                version = metadata_version;
             }
 
           collection_id = var_metadata_lookup_string (commit_metadata, "ostree.collection-binding", NULL);
