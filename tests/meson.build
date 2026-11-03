@@ -432,6 +432,7 @@ tests = {
   'extra-data': {'timeout': 90, 'wrap': ['user', 'system']},
   'preinstall': {},
   'pin': {},
+  'permissions-output': {},
   'run-custom': {'wrap': ['user', 'system']},
   'file-forwarding': {'wrap': ['user']},
   'upgrade-from-header': {'wrap': ['user', 'system', 'system-norevokefs']},
