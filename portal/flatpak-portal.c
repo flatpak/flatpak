@@ -697,6 +697,8 @@ handle_spawn (PortalFlatpak         *object,
   gboolean notify_start;
   gboolean devel;
   gboolean empty_app;
+  gboolean runtime_caller;
+  const char *metadata_group;
   g_autoptr(GString) env_string = g_string_new ("");
   const char *flatpak;
   gboolean testing = FALSE;
@@ -715,8 +717,11 @@ handle_spawn (PortalFlatpak         *object,
   app_info = g_object_get_data (G_OBJECT (invocation), "app-info");
   g_assert (app_info != NULL);
 
+  runtime_caller = !g_key_file_has_group (app_info, FLATPAK_METADATA_GROUP_APPLICATION);
+  metadata_group = runtime_caller ? FLATPAK_METADATA_GROUP_RUNTIME : FLATPAK_METADATA_GROUP_APPLICATION;
+
   app_id = g_key_file_get_string (app_info,
-                                  FLATPAK_METADATA_GROUP_APPLICATION,
+                                  metadata_group,
                                   FLATPAK_METADATA_KEY_NAME, NULL);
   g_assert (app_id != NULL);
 
@@ -757,11 +762,20 @@ handle_spawn (PortalFlatpak         *object,
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
+  /* Runtime callers have no application deployment whose permissions can be
+   * reproduced. Only allow the restricted sandbox path for these callers. */
+  if (runtime_caller && (arg_flags & FLATPAK_SPAWN_FLAGS_SANDBOX) == 0)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_NOT_SUPPORTED,
+                                             "Runtime callers must use a sandbox");
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
   if (testing)
     runtime_ref = g_strdup ("runtime/com.example.Runtime/m68k/1.0");
   else
     runtime_ref = g_key_file_get_string (app_info,
-                                         FLATPAK_METADATA_GROUP_APPLICATION,
+                                         metadata_group,
                                          FLATPAK_METADATA_KEY_RUNTIME, NULL);
 
   if (runtime_ref == NULL)
@@ -769,6 +783,19 @@ handle_spawn (PortalFlatpak         *object,
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
                                              "No runtime found");
       return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  if (runtime_caller)
+    {
+      g_autoptr(FlatpakDecomposed) runtime_decomposed = NULL;
+
+      runtime_decomposed = flatpak_decomposed_new_from_ref (runtime_ref, NULL);
+      if (runtime_decomposed == NULL || !flatpak_decomposed_is_runtime (runtime_decomposed))
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                                                 "Invalid runtime reference");
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
+        }
     }
 
   runtime_parts = g_strsplit (runtime_ref, "/", -1);
@@ -1463,7 +1490,12 @@ handle_spawn (PortalFlatpak         *object,
   if (arg_argv[0][0] != 0)
     g_ptr_array_add (flatpak_argv, g_strdup_printf ("--command=%s", arg_argv[0]));
 
-  g_ptr_array_add (flatpak_argv, g_strdup_printf ("%s/%s/%s", app_id, arch ? arch : "", branch ? branch : ""));
+  /* Keep the runtime/ prefix: an application with the same ID must not be
+   * selected instead. Use the runtime actually mounted at the caller's /usr. */
+  if (runtime_caller)
+    g_ptr_array_add (flatpak_argv, g_strdup (runtime_ref));
+  else
+    g_ptr_array_add (flatpak_argv, g_strdup_printf ("%s/%s/%s", app_id, arch ? arch : "", branch ? branch : ""));
   for (i = 1; arg_argv[i] != NULL; i++)
     g_ptr_array_add (flatpak_argv, g_strdup (arg_argv[i]));
   g_ptr_array_add (flatpak_argv, NULL);
@@ -1602,6 +1634,8 @@ authorize_method_handler (GDBusInterfaceSkeleton *interface,
   g_autoptr(GKeyFile) keyfile = NULL;
   g_autofree char *app_id = NULL;
   const char *required_sender;
+  const char *metadata_group = FLATPAK_METADATA_GROUP_APPLICATION;
+  const char *method_name = g_dbus_method_invocation_get_method_name (invocation);
 
   /* Ensure we don't idle exit */
   schedule_idle_callback ();
@@ -1628,8 +1662,15 @@ authorize_method_handler (GDBusInterfaceSkeleton *interface,
       return FALSE;
     }
 
+  /* Recognize bare runtimes only for process spawning and signalling.
+   * Do not give them an application identity or access to update monitors. */
+  if (!g_key_file_has_group (keyfile, FLATPAK_METADATA_GROUP_APPLICATION) &&
+      g_strcmp0 (g_dbus_method_invocation_get_interface_name (invocation), FLATPAK_PORTAL_INTERFACE) == 0 &&
+      (strcmp (method_name, "Spawn") == 0 || strcmp (method_name, "SpawnSignal") == 0))
+    metadata_group = FLATPAK_METADATA_GROUP_RUNTIME;
+
   app_id = g_key_file_get_string (keyfile,
-                                  FLATPAK_METADATA_GROUP_APPLICATION,
+                                  metadata_group,
                                   FLATPAK_METADATA_KEY_NAME, &error);
   if (app_id == NULL)
     {
