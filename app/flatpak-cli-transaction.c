@@ -1151,36 +1151,17 @@ append_tags (GPtrArray *tags_array,
 }
 
 static void
-print_perm_line (int        idx,
-                 GPtrArray *items,
-                 int        cols)
+append_permission_details (GPtrArray  *permissions,
+                           const char *label,
+                           GPtrArray  *items)
 {
-  g_autoptr(GString) res = g_string_new (NULL);
-  g_autofree char *escaped_first_perm = NULL;
-  int i;
-
-  escaped_first_perm = flatpak_escape_string (items->pdata[0], FLATPAK_ESCAPE_DEFAULT);
-  g_string_append_printf (res, "    [%d] %s", idx, escaped_first_perm);
-
-  for (i = 1; i < items->len; i++)
+  for (guint i = 0; i < items->len; i++)
     {
       g_autofree char *escaped = flatpak_escape_string (items->pdata[i],
                                                         FLATPAK_ESCAPE_DEFAULT);
-      char *p;
-      int len;
 
-      p = strrchr (res->str, '\n');
-      if (!p)
-        p = res->str;
-
-      len = (res->str + strlen (res->str)) - p;
-      if (len + strlen (escaped) + 2 >= cols)
-        g_string_append_printf (res, ",\n        %s", escaped);
-      else
-        g_string_append_printf (res, ", %s", escaped);
+      g_ptr_array_add (permissions, g_strdup_printf ("%s: %s", label, escaped));
     }
-
-  g_print ("%s\n", res->str);
 }
 
 static void
@@ -1198,12 +1179,7 @@ print_permissions (FlatpakCliTransaction *self,
   g_autoptr(GPtrArray) system_bus_talk = g_ptr_array_new_with_free_func (g_free);
   g_autoptr(GPtrArray) system_bus_own = g_ptr_array_new_with_free_func (g_free);
   g_autoptr(GPtrArray) tags = g_ptr_array_new_with_free_func (g_free);
-  g_autoptr(FlatpakTablePrinter) printer = NULL;
-  int max_permission_width;
-  int n_permission_cols;
-  int i, j;
-  int rows, cols;
-  int table_rows, table_cols;
+  int i;
   const char *on = "";
   const char *off = "";
 
@@ -1232,21 +1208,13 @@ print_permissions (FlatpakCliTransaction *self,
               metadata, old_metadata, FLATPAK_METADATA_GROUP_SYSTEM_BUS_POLICY);
   append_tags (tags, metadata, old_metadata);
 
-  j = 1;
-  if (files->len > 0)
-    g_ptr_array_add (permissions, g_strdup_printf ("file access [%d]", j++));
-  if (session_bus_talk->len > 0)
-    g_ptr_array_add (permissions, g_strdup_printf ("dbus access [%d]", j++));
-  if (session_bus_own->len > 0)
-    g_ptr_array_add (permissions, g_strdup_printf ("bus ownership [%d]", j++));
-  if (system_bus_talk->len > 0)
-    g_ptr_array_add (permissions, g_strdup_printf ("system dbus access [%d]", j++));
-  if (system_bus_own->len > 0)
-    g_ptr_array_add (permissions, g_strdup_printf ("system bus ownership [%d]", j++));
-  if (usb->len > 0)
-    g_ptr_array_add (permissions, g_strdup_printf ("USB portal access [%d]", j++));
-  if (tags->len > 0)
-    g_ptr_array_add (permissions, g_strdup_printf ("tags [%d]", j++));
+  append_permission_details (permissions, "file access", files);
+  append_permission_details (permissions, "dbus access", session_bus_talk);
+  append_permission_details (permissions, "bus ownership", session_bus_own);
+  append_permission_details (permissions, "system dbus access", system_bus_talk);
+  append_permission_details (permissions, "system bus ownership", system_bus_own);
+  append_permission_details (permissions, "USB portal access", usb);
+  append_permission_details (permissions, "tags", tags);
 
   /* Early exit if no (or no new) permissions */
   if (permissions->len == 0)
@@ -1261,55 +1229,12 @@ print_permissions (FlatpakCliTransaction *self,
 
   g_print ("\n");
 
-  flatpak_get_window_size (&rows, &cols);
-  max_permission_width = 0;
-  for (i = 0; i < permissions->len; i++)
-    max_permission_width = MAX (max_permission_width, strlen (g_ptr_array_index (permissions, i)));
-
-  /* At least 4 columns, but more if we're guaranteed to fit */
-  n_permission_cols =  MAX (4, cols / (max_permission_width + 4));
-
-  printer = flatpak_table_printer_new ();
   for (i = 0; i < permissions->len; i++)
     {
       char *perm = g_ptr_array_index (permissions, i);
-      if (i % n_permission_cols == 0)
-        {
-          g_autofree char *text = NULL;
 
-          if (i > 0)
-            flatpak_table_printer_finish_row (printer);
-
-          text = g_strdup_printf ("    %s", perm);
-          flatpak_table_printer_add_column (printer, text);
-        }
-      else
-        flatpak_table_printer_add_column (printer, perm);
+      g_print ("  %s\n", perm);
     }
-  flatpak_table_printer_finish_row (printer);
-
-  for (i = 0; i < n_permission_cols; i++)
-    flatpak_table_printer_set_column_expand (printer, i, TRUE);
-
-  flatpak_table_printer_print_full (printer, 0, cols, &table_rows, &table_cols);
-
-  g_print ("\n\n");
-
-  j = 1;
-  if (files->len > 0)
-    print_perm_line (j++, files, cols);
-  if (session_bus_talk->len > 0)
-    print_perm_line (j++, session_bus_talk, cols);
-  if (session_bus_own->len > 0)
-    print_perm_line (j++, session_bus_own, cols);
-  if (system_bus_talk->len > 0)
-    print_perm_line (j++, system_bus_talk, cols);
-  if (system_bus_own->len > 0)
-    print_perm_line (j++, system_bus_own, cols);
-  if (usb->len > 0)
-    print_perm_line (j++, usb, cols);
-  if (tags->len > 0)
-    print_perm_line (j++, tags, cols);
 }
 
 static void
