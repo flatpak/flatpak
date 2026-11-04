@@ -503,6 +503,25 @@ _write_cb (void *content_data,
   return realsize;
 }
 
+static int
+_progress_cb (void *userp,
+#if CURL_AT_LEAST_VERSION(7, 32, 0)
+              curl_off_t dltotal,
+              curl_off_t dlnow,
+              curl_off_t ultotal,
+              curl_off_t ulnow)
+#else
+              double dltotal,
+              double dlnow,
+              double ultotal,
+              double ulnow)
+#endif
+{
+  LoadUriData *data = userp;
+
+  return g_cancellable_is_cancelled (data->cancellable) ? 1 : 0;
+}
+
 FlatpakHttpSession *
 flatpak_create_http_session (const char *user_agent)
 {
@@ -549,6 +568,13 @@ flatpak_create_http_session (const char *user_agent)
 
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, _write_cb);
   curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, _header_cb);
+  /* Check cancellation even while waiting for headers or body data. */
+#if CURL_AT_LEAST_VERSION(7, 32, 0)
+  curl_easy_setopt (curl, CURLOPT_XFERINFOFUNCTION, _progress_cb);
+#else
+  curl_easy_setopt (curl, CURLOPT_PROGRESSFUNCTION, _progress_cb);
+#endif
+  curl_easy_setopt (curl, CURLOPT_NOPROGRESS, 0L);
 
   /* Abort the connection if connecting to the server takes too long. This
    * timeout has no effect after a connection is established. */
@@ -585,6 +611,7 @@ set_error_from_curl (GError        **error,
   switch (res)
     {
     case CURLE_WRITE_ERROR:
+    case CURLE_ABORTED_BY_CALLBACK:
       /* Check if this was due to cancellation */
       if (g_cancellable_is_cancelled (cancellable))
         code = G_IO_ERROR_CANCELLED;
@@ -630,11 +657,15 @@ flatpak_download_http_uri_once (FlatpakHttpSession    *session,
   long response;
   CURL *curl = session->curl;
 
+  if (g_cancellable_set_error_if_cancelled (data->cancellable, error))
+    return FALSE;
+
   g_info ("Loading %s using curl", uri);
 
   curl_easy_setopt (curl, CURLOPT_URL, uri);
   curl_easy_setopt (curl, CURLOPT_WRITEDATA, (void *)data);
   curl_easy_setopt (curl, CURLOPT_HEADERDATA, (void *)data);
+  curl_easy_setopt (curl, CURLOPT_PROGRESSDATA, (void *)data);
 
   if (data->certificates)
     {
@@ -699,6 +730,7 @@ flatpak_download_http_uri_once (FlatpakHttpSession    *session,
   res = curl_easy_perform (session->curl);
 
   curl_easy_setopt (session->curl, CURLOPT_HTTPHEADER, NULL); /* Don't point to freed list */
+  curl_easy_setopt (session->curl, CURLOPT_PROGRESSDATA, NULL);
 
   if (res != CURLE_OK)
     {
