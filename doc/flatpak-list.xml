@@ -260,7 +260,10 @@
                 <term>ref</term>
 
                 <listitem><para>
-                    Show the ref
+                    Show the full ref in the form
+                    <literal>app|runtime/ID/ARCH/BRANCH</literal>
+                    (same layout as
+                    <command>flatpak remote-ls --columns=ref</command>).
                 </para></listitem>
             </varlistentry>
 
