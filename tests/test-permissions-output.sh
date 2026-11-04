@@ -5,7 +5,7 @@
 
 set -euo pipefail
 
-. $(dirname $0)/libtest.sh
+. "$(dirname "$0")/libtest.sh"
 
 export LC_ALL=C
 
