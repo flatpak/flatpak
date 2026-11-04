@@ -61,6 +61,7 @@ static char **opt_authenticator_options = NULL;
 static gboolean opt_authenticator_install = -1;
 static char **opt_gpg_import;
 static char *opt_signature_lookaside = NULL;
+static char *opt_rename;
 
 
 static GOptionEntry modify_options[] = {
@@ -71,6 +72,7 @@ static GOptionEntry modify_options[] = {
   { "subset", 0, 0, G_OPTION_ARG_STRING, &opt_subset, N_("Set a new subset to use"), N_("SUBSET") },
   { "enable", 0, 0, G_OPTION_ARG_NONE, &opt_enable, N_("Enable the remote"), NULL },
   { "update-metadata", 0, 0, G_OPTION_ARG_NONE, &opt_update_metadata, N_("Update extra metadata from the summary file"), NULL },
+  { "rename", 0, 0, G_OPTION_ARG_STRING, &opt_rename, N_("Rename the remote to NEWNAME"), N_("NEWNAME") },
   { NULL }
 };
 
@@ -348,7 +350,71 @@ flatpak_builtin_remote_modify (int argc, char **argv, GCancellable *cancellable,
         return FALSE;
       changed = TRUE;
     }
+    if(opt_rename)
+      {
+        g_autofree char *new_group = g_strdup_printf ("remote \"%s\"", opt_rename);
+        g_autoptr(GKeyFile) new_config = g_key_file_new ();
 
+        if(flatpak_dir_has_remote(preferred_dir, opt_rename, NULL))
+          return flatpak_fail (error, _("Remote '%s' already exists"), opt_rename);
+
+        g_autofree char *old_group = g_strdup_printf ("remote \"%s\"", remote_name);
+        OstreeRepo *repo = flatpak_dir_get_repo (preferred_dir);
+        g_autoptr(GKeyFile) repo_config = NULL;
+        g_auto(GStrv) keys = NULL;
+        gsize len = 0;
+
+        if(repo != NULL)
+          repo_config = ostree_repo_copy_config (repo);
+        else
+          repo_config = g_key_file_new ();
+
+        keys = g_key_file_get_keys(repo_config, old_group, &len, NULL);
+        if(keys != NULL)
+          {
+            for(gsize i = 0; i < len; i++)
+              {
+                g_autofree char *value = g_key_file_get_value (repo_config, old_group, keys[i], NULL);
+                if(value != NULL)
+                  g_key_file_set_value (new_config, new_group, keys[i], value);
+              }
+          }
+
+        g_auto(GStrv) groups = g_key_file_get_groups (repo_config, NULL);
+        if(groups != NULL)
+          {
+            for(gsize i = 0; groups[i] != NULL; i++)
+              {
+                if(g_strcmp0 (groups[i], old_group) != 0)
+                  {
+                    g_key_file_set_comment (new_config, groups[i], NULL,
+                                          g_key_file_get_comment (repo_config, groups[i], NULL, NULL), NULL);
+                    g_auto(GStrv) group_keys = g_key_file_get_keys (repo_config, groups[i], NULL, NULL);
+                    if (group_keys != NULL)
+                      {
+                        for (gsize j = 0; group_keys[j] != NULL; j++)
+                          {
+                            g_autofree char *value = g_key_file_get_value (repo_config, groups[i], group_keys[j], NULL);
+                            if (value != NULL)
+                              g_key_file_set_value (new_config, groups[i], group_keys[j], value);
+                          }
+                      }
+                  }
+              }
+          }
+        if (!flatpak_dir_modify_remote (preferred_dir, opt_rename, new_config, gpg_data, cancellable, error))
+          return FALSE;
+
+        if(!flatpak_dir_remove_remote (preferred_dir, TRUE, remote_name, cancellable, error))
+          {
+            flatpak_dir_remove_remote (preferred_dir, TRUE, opt_rename, NULL, NULL);
+            return FALSE;
+          }
+        
+        g_print (_("Renamed remote '%s' to '%s'\n"), remote_name, opt_rename);
+
+        return TRUE;
+      }
   if (!changed)
     return TRUE;
 
