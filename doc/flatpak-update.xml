@@ -188,6 +188,7 @@
 
                 <listitem><para>
                     Don't download the latest version, deploy whatever is locally available.
+                    This also prevents the appstream info from being updated.
                 </para></listitem>
             </varlistentry>
 
