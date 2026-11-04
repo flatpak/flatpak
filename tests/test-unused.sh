@@ -22,7 +22,8 @@ set -euo pipefail
 # We default to use systemdir, so we can also test shadowing from the user dir
 export USE_SYSTEMDIR=yes
 
-. $(dirname $0)/libtest.sh
+# shellcheck source=tests/libtest.sh
+. "$(dirname "$0")/libtest.sh"
 
 skip_without_bwrap
 skip_revokefs_without_fuse
@@ -65,25 +66,28 @@ create_runtime () {
     local SDK="${2}"
 
     local BRANCH=stable
-    local DIR=`mktemp -d`
+    local DIR
+    DIR=$(mktemp -d)
 
-    mkdir ${DIR}/files
-    mkdir ${DIR}/usr
-    cat > ${DIR}/metadata <<EOF
+    mkdir "${DIR}/files"
+    mkdir "${DIR}/usr"
+    cat > "${DIR}/metadata" <<EOF
 [Runtime]
 name=${ID}
 runtime=${ID}/$ARCH/$BRANCH
 EOF
 
-    if test x$SDK != "x"; then
-       cat >> ${DIR}/metadata <<EOF
+    if test -n "$SDK"; then
+       cat >> "${DIR}/metadata" <<EOF
 sdk=${SDK}/$ARCH/$BRANCH
 EOF
     fi
 
-    $FLATPAK build-finish $DIR ${finish_args[$ID]:-} &> /dev/null
-    $FLATPAK build-export -v ${FL_GPGARGS} --disable-sandbox --runtime repos/test ${DIR} ${BRANCH} &> /dev/null
-    rm -rf ${DIR}
+    # shellcheck disable=SC2086
+    $FLATPAK build-finish "$DIR" ${finish_args[$ID]:-} &> /dev/null
+    # shellcheck disable=SC2086
+    $FLATPAK build-export -v ${FL_GPGARGS} --disable-sandbox --runtime repos/test "$DIR" "${BRANCH}" &> /dev/null
+    rm -rf "${DIR}"
 }
 
 create_app () {
@@ -92,26 +96,29 @@ create_app () {
     local SDK="${3}"
 
     local BRANCH=stable
-    local DIR=`mktemp -d`
+    local DIR
+    DIR=$(mktemp -d)
 
-    mkdir ${DIR}/files
-    cat > ${DIR}/metadata <<EOF
+    mkdir "${DIR}/files"
+    cat > "${DIR}/metadata" <<EOF
 [Application]
 name=${ID}
 runtime=${RUNTIME}/$ARCH/$BRANCH
 EOF
 
-    if test x$SDK != "x"; then
-       cat >> ${DIR}/metadata <<EOF
+    if test -n "$SDK"; then
+       cat >> "${DIR}/metadata" <<EOF
 sdk=${SDK}/$ARCH/$BRANCH
 EOF
     fi
 
     set -x
-    $FLATPAK build-finish ${DIR}  ${finish_args[$ID]:-} &> /dev/null
+    # shellcheck disable=SC2086
+    $FLATPAK build-finish "${DIR}" ${finish_args[$ID]:-} &> /dev/null
 
-    $FLATPAK build-export ${FL_GPGARGS} --disable-sandbox repos/test ${DIR} ${BRANCH} &> /dev/null > /dev/null
-    rm -rf ${DIR}
+    # shellcheck disable=SC2086
+    $FLATPAK build-export ${FL_GPGARGS} --disable-sandbox repos/test "${DIR}" "${BRANCH}" &> /dev/null
+    rm -rf "${DIR}"
 }
 
 declare -a runtimes
@@ -129,7 +136,7 @@ make_runtime() {
     { set +x; } 2>/dev/null
     local ID="org.runtime.${1}"
     local SDK="${2:-}"
-    if test x$SDK != x; then
+    if test -n "$SDK"; then
         SDK=org.runtime.$SDK
     fi
     runtimes+=( "$ID" )
@@ -218,7 +225,7 @@ app_add_autoprune_extension() {
     { set +x; } 2>/dev/null
     local APP="org.app.${1}"
     local EXT="org.extension.${2}"
-    finish_args["$RUNTIME"]="${finish_args[$APP]:-} --extension=${EXT}=directory=/ext --extension=${EXT}=autoprune-unless=active-gl-driver"
+    finish_args["$APP"]="${finish_args[$APP]:-} --extension=${EXT}=directory=/ext --extension=${EXT}=autoprune-unless=active-gl-driver"
     set -x
 }
 
@@ -227,11 +234,11 @@ make_app() {
     local ID="org.app.${1}"
     local RUNTIME="org.runtime.${2}"
     local SDK="${3:-}"
-    if test x$SDK != x; then
+    if test -n "$SDK"; then
         SDK=org.runtime.$SDK
     fi
 
-    apps+=( $ID )
+    apps+=( "$ID" )
     apps_runtime[$ID]="$RUNTIME"
     apps_sdk[$ID]="$SDK"
     set -x
@@ -425,7 +432,7 @@ assert_file_has_content unused.txt "org.runtime.USED_A_SDK2/"
 assert_file_has_content unused.txt "org.runtime.USED_A_SDK3/"
 
 comm -13 old-unused.txt unused.txt > newly-unused.txt
-if [ $(cat newly-unused.txt | wc -l) -ne 10 ]; then
+if [ "$(wc -l < newly-unused.txt)" -ne 10 ]; then
     assert_not_reached "Unexpected unused ref"
 fi
 

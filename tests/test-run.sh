@@ -19,7 +19,8 @@
 
 set -euo pipefail
 
-. $(dirname $0)/libtest.sh
+# shellcheck source=tests/libtest.sh
+. "$(dirname "$0")/libtest.sh"
 
 skip_without_bwrap
 skip_revokefs_without_fuse
@@ -215,20 +216,20 @@ assert_file_has_content run-error-log "error: runtime/org\.test\.Nonexistent/\*u
 
 ok "error handling for invalid refs"
 
-run_sh org.test.Hello cat /run/user/`id -u`/flatpak-info > fpi
+run_sh org.test.Hello cat "/run/user/$(id -u)/flatpak-info" > fpi
 assert_file_has_content fpi '^name=org\.test\.Hello$'
 
 ok "flatpak-info"
 
 run_sh org.test.Hello readlink /proc/self/ns/net > unshared_net_ns
 ARGS="--share=network" run_sh org.test.Hello readlink /proc/self/ns/net > shared_net_ns
-assert_not_streq `cat unshared_net_ns` `readlink /proc/self/ns/net`
-assert_streq `cat shared_net_ns` `readlink /proc/self/ns/net`
+assert_not_streq "$(cat unshared_net_ns)" "$(readlink /proc/self/ns/net)"
+assert_streq "$(cat shared_net_ns)" "$(readlink /proc/self/ns/net)"
 
 run_sh org.test.Hello readlink /proc/self/ns/ipc > unshared_ipc_ns
 ARGS="--share=ipc" run_sh org.test.Hello readlink /proc/self/ns/ipc > shared_ipc_ns
-assert_not_streq `cat unshared_ipc_ns` `readlink /proc/self/ns/ipc`
-assert_streq `cat shared_ipc_ns` `readlink /proc/self/ns/ipc`
+assert_not_streq "$(cat unshared_ipc_ns)" "$(readlink /proc/self/ns/ipc)"
+assert_streq "$(cat shared_ipc_ns)" "$(readlink /proc/self/ns/ipc)"
 
 # We try the filesystem namespace tests several times with different
 # shared-or-not directories, because:

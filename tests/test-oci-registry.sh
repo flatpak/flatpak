@@ -19,7 +19,8 @@
 
 set -euo pipefail
 
-. $(dirname $0)/libtest.sh
+# shellcheck source=tests/libtest.sh
+. "$(dirname "$0")/libtest.sh"
 
 skip_without_bwrap
 
@@ -98,10 +99,10 @@ setup_repo_no_add oci
 # Add OCI bundles to it
 
 ${FLATPAK} build-bundle --runtime --oci $FL_GPGARGS repos/oci oci/platform-image org.test.Platform >&2
-$client add platform latest $(pwd)/oci/platform-image
+$client add platform latest "$(pwd)/oci/platform-image"
 
 ${FLATPAK} build-bundle --oci $FL_GPGARGS repos/oci oci/app-image org.test.Hello >&2
-$client add hello latest $(pwd)/oci/app-image
+$client add hello latest "$(pwd)/oci/app-image"
 
 # Add an OCI remote
 
@@ -141,14 +142,14 @@ ok "search"
 
 # Replace with the app image with detached icons, check that the icons work
 
-old_icon_hash=(md5sum $icondir/64x64/org.test.Hello.png)
-rm $icondir/64x64/org.test.Hello.png
+old_icon_hash=$(md5sum "$icondir/64x64/org.test.Hello.png")
+rm "$icondir/64x64/org.test.Hello.png"
 $client delete hello latest
-$client  add --detach-icons hello latest $(pwd)/oci/app-image
+$client  add --detach-icons hello latest "$(pwd)/oci/app-image"
 ${FLATPAK} update ${U} --appstream oci-registry >&2
-assert_has_file $icondir/64x64/org.test.Hello.png
-new_icon_hash=(md5sum $icondir/64x64/org.test.Hello.png)
-assert_streq $old_icon_hash $new_icon_hash
+assert_has_file "$icondir/64x64/org.test.Hello.png"
+new_icon_hash=$(md5sum "$icondir/64x64/org.test.Hello.png")
+assert_streq "$old_icon_hash" "$new_icon_hash"
 
 ok "detached icons"
 
@@ -170,7 +171,7 @@ make_updated_app oci
 
 ${FLATPAK} build-bundle --oci $FL_GPGARGS repos/oci oci/app-image org.test.Hello >&2
 
-$client add hello latest $(pwd)/oci/app-image
+$client add hello latest "$(pwd)/oci/app-image"
 
 updates=$(${FLATPAK} remote-ls ${U} --updates --columns=app oci-registry)
 assert_streq "$updates" "org.test.Hello"
