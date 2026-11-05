@@ -278,6 +278,11 @@
                 </para></listitem>
             </varlistentry>
             <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-clean</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+                <listitem><para>Remove cached extra-data installers for deployed apps and runtimes.</para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><citerefentry><refentrytitle>flatpak-repair</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
