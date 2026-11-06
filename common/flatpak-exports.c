@@ -474,10 +474,21 @@ flatpak_exports_append_bwrap_args (FlatpakExports *exports,
                 {
                   g_autofree char *parent = g_path_get_dirname (path);
                   g_autofree char *relative = make_relative (parent, resolved);
+                  g_autofree char *runtime_dir_prefix = g_strdup_printf ("/run/user/%d/", getuid ());
 
                   g_debug ("Resolved \"%s\" to \"%s\" in host", path, resolved);
                   g_debug ("Creating \"%s\" -> \"%s\" in sandbox", path, relative);
-                  flatpak_bwrap_add_args (bwrap, "--symlink", relative, path,  NULL);
+
+                  if (g_str_has_prefix (path, runtime_dir_prefix))
+                    {
+                      flatpak_bwrap_add_runtime_dir_export_symlink (bwrap,
+                                                                    path + strlen (runtime_dir_prefix),
+                                                                    relative);
+                    }
+                  else
+                    {
+                      flatpak_bwrap_add_args (bwrap, "--symlink", relative, path, NULL);
+                    }
                 }
               else
                 {
