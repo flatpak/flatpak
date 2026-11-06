@@ -441,28 +441,35 @@ static void
 expect_symlink (const char *host_path,
                 const char *target)
 {
-  /* This shouldn't fail in practice, so there's not much point in
-   * translating the warning */
-  if (symlink (target, host_path) < 0 && errno != EEXIST)
+  g_autoptr(GError) local_error = NULL;
+  g_autofree char *got = NULL;
+
+  if (symlink (target, host_path) == 0)
+    return;
+
+  if (errno != EEXIST)
     {
       g_warning ("Unable to create symlink at %s: %s",
                  host_path, g_strerror (errno));
+      return;
     }
-  else
-    {
-      g_autoptr(GError) local_error = NULL;
-      g_autofree char *got = glnx_readlinkat_malloc (AT_FDCWD,
-                                                     host_path,
-                                                     NULL,
-                                                     &local_error);
 
-      if (got == NULL)
-        g_warning ("%s is not a symlink to \"%s\" as expected: %s",
-                   host_path, target, local_error->message);
-      else if (strcmp (got, target) != 0)
-        g_warning ("%s is a symlink to \"%s\", not \"%s\" as expected",
-                   host_path, got, target);
+  got = glnx_readlinkat_malloc (AT_FDCWD, host_path, NULL, &local_error);
+
+  if (got == NULL)
+    {
+      g_warning ("%s exists but is not a symlink to \"%s\" as expected: %s",
+                 host_path, target, local_error->message);
+      return;
     }
+
+  if (strcmp (got, target) == 0)
+    return;
+
+  if (unlink (host_path) < 0 ||
+      symlink (target, host_path) < 0)
+    g_warning ("Unable to replace symlink at %s: %s",
+               host_path, g_strerror (errno));
 }
 
 void
