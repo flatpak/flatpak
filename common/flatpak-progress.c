@@ -170,6 +170,20 @@ flatpak_progress_new (FlatpakProgressCallback callback,
   return retval;
 }
 
+void
+flatpak_progress_copy_state (FlatpakProgress *dest, FlatpakProgress *source)
+{
+  g_free (dest->status);
+  dest->status = g_strdup (source->status);
+  dest->progress = source->progress;
+  dest->estimating = source->estimating;
+  dest->start_time = source->start_time;
+  dest->bytes_transferred = source->bytes_transferred;
+  dest->transferred_extra_data_bytes = source->transferred_extra_data_bytes;
+  dest->bytes_total = source->bytes_total;
+  dest->bytes_per_second = source->bytes_per_second;
+}
+
 static inline guint
 get_write_progress (guint outstanding_writes)
 {

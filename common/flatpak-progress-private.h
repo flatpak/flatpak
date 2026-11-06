@@ -48,6 +48,8 @@ G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC (FlatpakMainContext, flatpak_main_context_finis
 
 FlatpakProgress *flatpak_progress_new (FlatpakProgressCallback callback,
                                        gpointer                user_data);
+/* Caller synchronizes access; copies only the public progress view. */
+void flatpak_progress_copy_state (FlatpakProgress *dest, FlatpakProgress *source);
 
 void flatpak_progress_init_extra_data (FlatpakProgress *self,
                                        guint64          n_extra_data,

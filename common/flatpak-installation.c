@@ -1941,6 +1941,7 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
 
   if (!flatpak_dir_install (dir_clone,
                             (flags & FLATPAK_INSTALL_FLAGS_NO_PULL) != 0,
+                            FALSE,
                             (flags & FLATPAK_INSTALL_FLAGS_NO_DEPLOY) != 0,
                             (flags & FLATPAK_INSTALL_FLAGS_NO_STATIC_DELTAS) != 0,
                             FALSE, FALSE, FALSE, FALSE, state,
@@ -2112,7 +2113,7 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
                            (flags & FLATPAK_UPDATE_FLAGS_NO_STATIC_DELTAS) != 0,
                            FALSE, FALSE, FALSE, state,
                            ref, target_commit,
-                           (const char **) subpaths, NULL, NULL, NULL, NULL, NULL,
+                           (const char **) subpaths, NULL, NULL, NULL, NULL, NULL, NULL,
                            progress, cancellable, error))
     return NULL;
 

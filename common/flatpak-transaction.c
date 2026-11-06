@@ -21,6 +21,7 @@
 #include "config.h"
 
 #include <stdio.h>
+#include <sys/file.h>
 #include <glib/gi18n-lib.h>
 
 #include "flatpak-auth-private.h"
@@ -5107,10 +5108,254 @@ flatpak_transaction_run (FlatpakTransaction *transaction,
   return FLATPAK_TRANSACTION_GET_CLASS (transaction)->run (transaction, cancellable, error);
 }
 
+/* Workers own their inputs and repo handles. The caller owns operations and
+ * emits signals in order. Jobs hold prune locks until the caller frees them. */
+#define MAX_PARALLEL_PULLS 4
+
+typedef struct
+{
+  FlatpakDir *dir;
+  FlatpakRemoteState *state;
+  char *ref;
+  char *commit;
+  char *token;
+  GBytes *metadata;
+  char **subpaths;
+  GLnxLockFile repo_lock;
+  FlatpakProgress *worker_progress;
+  FlatpakProgress *snapshot;
+  FlatpakPullFlags flags;
+  GCancellable *cancel;
+  GCancellable *parent_cancel;
+  gulong cancel_handler;
+  GThread *thread;
+  GMutex mutex;
+  GCond condition;
+  GError *error;
+  gboolean done;
+  gboolean changed;
+} PullJob;
+
+static void
+pull_job_progress (const char *status, guint percent, gboolean estimating, gpointer data)
+{
+  PullJob *job = data;
+  g_mutex_lock (&job->mutex);
+  flatpak_progress_copy_state (job->snapshot, job->worker_progress);
+  job->changed = TRUE;
+  g_cond_signal (&job->condition);
+  g_mutex_unlock (&job->mutex);
+}
+
+static gpointer
+pull_job_run (gpointer data)
+{
+  PullJob *job = data;
+  g_assert (flatpak_dir_get_repo (job->dir) != NULL);
+  flatpak_dir_pull (job->dir, job->state, job->ref,
+                   job->commit, (const char **) job->subpaths,
+                   NULL, NULL, job->metadata, job->token,
+                   NULL, job->flags, OSTREE_REPO_PULL_FLAGS_NONE,
+                   job->worker_progress, job->cancel, &job->error);
+  g_mutex_lock (&job->mutex);
+  flatpak_progress_copy_state (job->snapshot, job->worker_progress);
+  job->changed = TRUE;
+  job->done = TRUE;
+  g_cond_signal (&job->condition);
+  g_mutex_unlock (&job->mutex);
+  g_debug ("Background pull completed for %s (%s)",
+           job->ref, job->error ? "error" : "success");
+  return NULL;
+}
+
+static void
+pull_job_cancel (GCancellable *parent, gpointer data)
+{
+  g_cancellable_cancel (data);
+}
+
+static void
+pull_job_free (gpointer data)
+{
+  PullJob *job = data;
+  g_cancellable_cancel (job->cancel);
+  if (job->thread)
+    g_thread_join (job->thread);
+  glnx_release_lock_file (&job->repo_lock);
+  if (job->parent_cancel)
+    g_cancellable_disconnect (job->parent_cancel, job->cancel_handler);
+  g_clear_object (&job->parent_cancel);
+  g_object_unref (job->cancel);
+  g_object_unref (job->dir);
+  flatpak_remote_state_unref (job->state);
+  g_free (job->ref);
+  g_free (job->commit);
+  g_free (job->token);
+  g_clear_pointer (&job->metadata, g_bytes_unref);
+  g_strfreev (job->subpaths);
+  g_object_unref (job->worker_progress);
+  g_object_unref (job->snapshot);
+  g_clear_error (&job->error);
+  g_mutex_clear (&job->mutex);
+  g_cond_clear (&job->condition);
+  g_free (job);
+}
+
+static void
+pull_job_maybe_start (FlatpakTransaction *self, FlatpakTransactionOperation *op,
+                      GHashTable *jobs, GCancellable *cancellable)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  g_autoptr(FlatpakRemoteState) state = NULL;
+  g_auto(GStrv) subpaths = NULL;
+  FlatpakRemoteState *snapshot;
+  PullJob *job;
+
+  if (priv->no_pull ||
+      (!flatpak_dir_is_user (priv->dir) && getuid () != 0) || op->skip || priv->reinstall ||
+      (op->kind != FLATPAK_TRANSACTION_OPERATION_INSTALL &&
+       op->kind != FLATPAK_TRANSACTION_OPERATION_UPDATE) || op->update_only_deploy ||
+      op->resolved_sideload_path || op->resolved_image_source ||
+      g_hash_table_contains (jobs, op) || g_cancellable_is_cancelled (cancellable))
+    return;
+  if (op->resolved_metakey &&
+      !flatpak_check_required_version (flatpak_decomposed_get_ref (op->ref),
+                                       op->resolved_metakey, NULL))
+    return;
+  state = flatpak_transaction_ensure_remote_state (self, op->kind, op->remote, NULL, NULL);
+  if (!state)
+    return;
+  /* Match flatpak_dir_update's default subpaths. */
+  subpaths = g_strdupv (op->subpaths);
+  if (op->kind == FLATPAK_TRANSACTION_OPERATION_UPDATE && subpaths == NULL)
+    {
+      g_autoptr(GBytes) deploy_data = flatpak_dir_get_deploy_data (priv->dir, op->ref,
+                                                                 FLATPAK_DEPLOY_VERSION_ANY,
+                                                                 cancellable, NULL);
+      g_autofree const char **old_subpaths = NULL;
+      if (deploy_data == NULL)
+        return;
+      old_subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
+      subpaths = old_subpaths ? g_strdupv ((char **) old_subpaths) : g_new0 (char *, 1);
+    }
+  snapshot = flatpak_remote_state_snapshot_for_pull (state,
+                                                     flatpak_decomposed_get_ref (op->ref),
+                                                     op->resolved_commit);
+  if (!snapshot)
+    return;
+  job = g_new0 (PullJob, 1);
+  g_mutex_init (&job->mutex);
+  g_cond_init (&job->condition);
+  job->dir = flatpak_dir_clone (priv->dir);
+  job->state = snapshot;
+  job->ref = g_strdup (flatpak_decomposed_get_ref (op->ref));
+  job->commit = g_strdup (op->resolved_commit);
+  job->token = g_strdup (op->resolved_token);
+  job->metadata = op->resolved_metadata ? g_bytes_ref (op->resolved_metadata) : NULL;
+  job->subpaths = g_steal_pointer (&subpaths);
+  /* Forbid extra data even if the summary omitted it. */
+  job->flags = FLATPAK_PULL_FLAGS_NONE;
+  if (priv->disable_static_deltas)
+    job->flags |= FLATPAK_PULL_FLAGS_NO_STATIC_DELTAS;
+  if (op->kind == FLATPAK_TRANSACTION_OPERATION_UPDATE && op->commit != NULL)
+    job->flags |= FLATPAK_PULL_FLAGS_ALLOW_DOWNGRADE;
+  job->cancel = g_cancellable_new ();
+  job->worker_progress = flatpak_progress_new (pull_job_progress, job);
+  job->snapshot = flatpak_progress_new (NULL, NULL);
+  /* OSTree reads this once. The caller applies the public update interval. */
+  flatpak_progress_set_update_interval (job->worker_progress, 10);
+  if (cancellable)
+    {
+      job->parent_cancel = g_object_ref (cancellable);
+      job->cancel_handler = g_cancellable_connect (cancellable, G_CALLBACK (pull_job_cancel), job->cancel, NULL);
+    }
+  /* Opening can rewrite config, so do it before deployment can write pins. */
+  if (flatpak_dir_ensure_repo (job->dir, job->cancel, &job->error))
+    {
+      g_autofree char *expected_config = NULL;
+      g_autofree char *worker_config = NULL;
+
+      /* Check the URL and verification policy before using the token.
+       * Comparing repo configs does not cover parent configuration. */
+      expected_config = g_key_file_to_data (ostree_repo_get_config (flatpak_dir_get_repo (priv->dir)), NULL, NULL);
+      worker_config = g_key_file_to_data (ostree_repo_get_config (flatpak_dir_get_repo (job->dir)), NULL, NULL);
+      if (ostree_repo_get_parent (flatpak_dir_get_repo (priv->dir)) != NULL ||
+          ostree_repo_get_parent (flatpak_dir_get_repo (job->dir)) != NULL ||
+          g_strcmp0 (expected_config, worker_config) != 0 ||
+          flatpak_dir_get_remote_oci (job->dir, job->state->remote_name))
+        {
+          pull_job_free (job);
+          return;
+        }
+
+      /* Protect downloaded objects until deployment, even if another update
+       * deletes mirror refs before pruning. */
+      if (flatpak_dir_repo_lock (job->dir, &job->repo_lock, LOCK_SH, job->cancel, &job->error))
+        job->thread = g_thread_try_new ("flatpak-pull", pull_job_run, job, &job->error);
+    }
+  if (job->thread == NULL)
+    job->done = TRUE; /* Deliver the initialization error in operation order. */
+  g_hash_table_insert (jobs, op, job);
+}
+
+static gboolean
+pull_job_wait (PullJob *job, FlatpakTransactionProgress *progress, GError **error)
+{
+  g_autoptr(GMainContext) context = g_main_context_ref_thread_default ();
+  gboolean done;
+  int64_t last_emission = 0;
+
+  /* new-operation can cancel a completed download. */
+  if (g_cancellable_set_error_if_cancelled (job->cancel, error))
+    return FALSE;
+
+  /* Wait between context iterations even if another thread owns the context. */
+  do
+    {
+      gboolean changed;
+      g_main_context_iteration (context, FALSE);
+      int64_t now = g_get_monotonic_time ();
+      int64_t interval = (int64_t) flatpak_progress_get_update_interval (progress->progress_obj) * G_TIME_SPAN_MILLISECOND;
+      g_mutex_lock (&job->mutex);
+      if (!job->done && (!job->changed || (last_emission != 0 && now < last_emission + interval)))
+        {
+          int64_t deadline = now + 25 * G_TIME_SPAN_MILLISECOND;
+          if (job->changed)
+            deadline = MIN (deadline, last_emission + interval);
+          g_cond_wait_until (&job->condition, &job->mutex, deadline);
+          now = g_get_monotonic_time ();
+        }
+      done = job->done;
+      changed = job->changed && (done || last_emission == 0 || now >= last_emission + interval);
+      if (changed)
+        {
+          flatpak_progress_copy_state (progress->progress_obj, job->snapshot);
+          job->changed = FALSE;
+        }
+      g_mutex_unlock (&job->mutex);
+      if (changed)
+        {
+          last_emission = now;
+          g_signal_emit (progress, progress_signals[CHANGED], 0);
+        }
+    }
+  while (!done);
+  /* Catch cancellation from the last progress callback, including no-deploy. */
+  if (g_cancellable_set_error_if_cancelled (job->cancel, error))
+    return FALSE;
+  if (job->error)
+    {
+      g_propagate_error (error, g_error_copy (job->error));
+      return FALSE;
+    }
+  return TRUE;
+}
+
 static gboolean
 _run_op_kind (FlatpakTransaction           *self,
               FlatpakTransactionOperation  *op,
               FlatpakRemoteState           *remote_state, /* nullable */
+              PullJob                      *pull_job,
               gboolean                     *out_needs_prune,
               gboolean                     *out_needs_triggers,
               gboolean                     *out_needs_cache_drop,
@@ -5135,9 +5380,12 @@ _run_op_kind (FlatpakTransaction           *self,
       if (op->resolved_metakey && !flatpak_check_required_version (flatpak_decomposed_get_ref (op->ref),
                                                                    op->resolved_metakey, &local_error))
         res = FALSE;
+      else if (pull_job && !pull_job_wait (pull_job, progress, &local_error))
+        res = FALSE;
       else
         res = flatpak_dir_install (priv->dir,
                                    priv->no_pull,
+                                   pull_job != NULL,
                                    priv->no_deploy,
                                    priv->disable_static_deltas,
                                    priv->reinstall,
@@ -5209,6 +5457,8 @@ _run_op_kind (FlatpakTransaction           *self,
                                              (const char **) op->subpaths,
                                              (const char **) op->previous_ids,
                                              cancellable, &local_error);
+          else if (pull_job && !pull_job_wait (pull_job, progress, &local_error))
+            res = FALSE;
           else
             res = flatpak_dir_update (priv->dir,
                                       priv->no_pull,
@@ -5221,6 +5471,7 @@ _run_op_kind (FlatpakTransaction           *self,
                                       op->ref,
                                       op->resolved_commit,
                                       (const char **) op->subpaths,
+                                      (const char **) (pull_job ? pull_job->subpaths : NULL),
                                       (const char **) op->previous_ids,
                                       op->resolved_sideload_path,
                                       op->resolved_image_source,
@@ -5491,6 +5742,9 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
   gboolean needs_triggers = FALSE;
   gboolean needs_cache_drop = FALSE;
   gboolean ready_res = FALSE;
+  /* Callbacks must not change scheduling mid-transaction. */
+  gboolean parallel_pulls = g_getenv ("FLATPAK_DISABLE_PARALLEL_DOWNLOADS") == NULL;
+  g_autoptr(GHashTable) pull_jobs = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, pull_job_free);
   int i;
 
   if (!priv->can_run)
@@ -5631,7 +5885,10 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
       g_autoptr(FlatpakRemoteState) state = NULL;
 
       if (op->skip)
-        continue;
+        {
+          g_hash_table_remove (pull_jobs, op);
+          continue;
+        }
 
       priv->current_op = op;
 
@@ -5655,10 +5912,25 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
         }
 
       /* Here we execute the operation in a helper function */
-      if (res && !_run_op_kind (self, op, state,
+      if (res && parallel_pulls)
+        {
+          GList *next = l;
+
+          /* Completed jobs count towards the limit. Stop at skipped or
+           * unsupported operations to preserve execution order. */
+          for (size_t n = 0; next != NULL && n < MAX_PARALLEL_PULLS; n++, next = next->next)
+            {
+              pull_job_maybe_start (self, next->data, pull_jobs, cancellable);
+              if (!g_hash_table_contains (pull_jobs, next->data))
+                break;
+            }
+        }
+      if (res && !_run_op_kind (self, op, state, g_hash_table_lookup (pull_jobs, op),
                                 &needs_prune, &needs_triggers, &needs_cache_drop,
                                 cancellable, &local_error))
         res = FALSE;
+
+      g_hash_table_remove (pull_jobs, op);
 
       if (res)
         {
@@ -5706,6 +5978,17 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
         }
     }
   priv->current_op = NULL;
+
+  /* Cancel all jobs before joining any of them. */
+  {
+    GHashTableIter iter;
+    gpointer value;
+
+    g_hash_table_iter_init (&iter, pull_jobs);
+    while (g_hash_table_iter_next (&iter, NULL, &value))
+      g_cancellable_cancel (((PullJob *) value)->cancel);
+  }
+  g_hash_table_remove_all (pull_jobs);
 
   if (needs_triggers)
     flatpak_dir_run_triggers (priv->dir, cancellable, NULL);

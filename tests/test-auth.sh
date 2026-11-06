@@ -175,4 +175,41 @@ assert_file_has_content ${XDG_RUNTIME_DIR}/request "no-interaction"
 
 ok "--noninteractive sends no-interaction to the authenticator"
 
+# Protect payload objects because resolution can fetch commits before workers start.
+for branch in auth-one auth-two; do
+    EXPORT_ARGS="--token-type=2" make_updated_app test "" "$branch" "$branch" org.test.Hello master
+    ref="app/org.test.Hello/$ARCH/$branch"
+    checksum=$(ostree --repo=repos/test ls -C "$ref" /files/bin/hello.sh | awk '{print $5}')
+    object="objects/${checksum:0:2}/${checksum:2}.filez"
+    assert_has_file "repos/test/$object"
+    printf %s "$branch-secret" > "repos/test/$object.need_token"
+    mkdir -p "${XDG_RUNTIME_DIR}/required-tokens/app/org.test.Hello/$ARCH"
+done
+
+# Swap the tokens to check that each ref gets its own token.
+printf %s auth-two-secret > "${XDG_RUNTIME_DIR}/required-tokens/app/org.test.Hello/$ARCH/auth-one"
+printf %s auth-one-secret > "${XDG_RUNTIME_DIR}/required-tokens/app/org.test.Hello/$ARCH/auth-two"
+if G_MESSAGES_DEBUG=all ${FLATPAK} ${U} install -v -y --no-related test-repo org.test.Hello//auth-one org.test.Hello//auth-two &> parallel-auth-wrong-log; then
+    assert_not_reached "Should not be able to install payloads with swapped tokens"
+fi
+assert_failed_with_401 parallel-auth-wrong-log
+for branch in auth-one auth-two; do
+    if [ -z "${FLATPAK_DISABLE_PARALLEL_DOWNLOADS+x}" ]; then
+        assert_file_has_content parallel-auth-wrong-log "Background pull completed for app/org.test.Hello/$ARCH/$branch (error)"
+    fi
+    assert_not_has_dir "$FL_DIR/app/org.test.Hello/$ARCH/$branch/active/files"
+    printf %s "$branch-secret" > "${XDG_RUNTIME_DIR}/required-tokens/app/org.test.Hello/$ARCH/$branch"
+done
+
+G_MESSAGES_DEBUG=all ${FLATPAK} ${U} install -v -y --no-related test-repo org.test.Hello//auth-one org.test.Hello//auth-two &> parallel-auth-valid-log
+for branch in auth-one auth-two; do
+    if [ -z "${FLATPAK_DISABLE_PARALLEL_DOWNLOADS+x}" ]; then
+        assert_file_has_content parallel-auth-valid-log "Background pull completed for app/org.test.Hello/$ARCH/$branch (success)"
+    fi
+    assert_file_has_content "$FL_DIR/app/org.test.Hello/$ARCH/$branch/active/files/bin/hello.sh" "$branch"
+done
+rm -rf "${XDG_RUNTIME_DIR}/required-tokens"
+
+ok "parallel pulls use separate per-ref tokens for payload objects"
+
 done_testing
