@@ -5243,6 +5243,24 @@ flatpak_dir_get_config (FlatpakDir *self,
   return g_key_file_get_string (config, "core", ostree_key, error);
 }
 
+gboolean
+flatpak_dir_check_required_metadata (FlatpakDir  *self,
+                                     const char *ref,
+                                     GKeyFile   *metakey,
+                                     GError    **error)
+{
+  g_autofree char *check_cpu_features = NULL;
+
+  if (!flatpak_check_required_version (ref, metakey, error))
+    return FALSE;
+
+  check_cpu_features = flatpak_dir_get_config (self, "check-cpu-features", NULL);
+  if (g_strcmp0 (check_cpu_features, "false") == 0)
+    return TRUE;
+
+  return flatpak_check_required_cpu_features (ref, metakey, error);
+}
+
 GPtrArray *
 flatpak_dir_get_config_patterns (FlatpakDir *dir, const char *key)
 {
@@ -10332,7 +10350,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
                                       0, error))
         return FALSE;
 
-      if (!flatpak_check_required_version (flatpak_decomposed_get_ref (ref), keyfile, error))
+      if (!flatpak_dir_check_required_metadata (self, flatpak_decomposed_get_ref (ref), keyfile, error))
         return FALSE;
     }
 

@@ -229,7 +229,7 @@ get_lang_default (FlatpakDir *dir)
 }
 
 static char *
-get_report_os_info_default (FlatpakDir *dir)
+get_true_default (FlatpakDir *dir)
 {
   return g_strdup ("true");
 }
@@ -245,7 +245,8 @@ typedef struct
 ConfigKey keys[] = {
   { "languages", parse_lang, print_lang, get_lang_default },
   { "extra-languages", parse_locale, print_locale, NULL },
-  { "report-os-info", parse_boolean, print_boolean, get_report_os_info_default },
+  { "report-os-info", parse_boolean, print_boolean, get_true_default },
+  { "check-cpu-features", parse_boolean, print_boolean, get_true_default },
 };
 
 static ConfigKey *
