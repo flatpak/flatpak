@@ -4,10 +4,12 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/auxv.h>
 
 #include <glib.h>
 #include "flatpak.h"
 #include "flatpak-utils-private.h"
+#include "cpuinfo-fixtures.h"
 #include "flatpak-appdata-private.h"
 #include "flatpak-progress-private.h"
 #include "flatpak-run-private.h"
@@ -1435,10 +1437,207 @@ test_progress_bytes_total (void)
   g_assert_cmpuint (flatpak_progress_get_bytes_total (progress), ==, 0);
 }
 
+static void
+test_cpu_features (void)
+{
+  const struct {
+    const char *cpuinfo;
+    const char *expected;
+    const char *absent;
+  } cases[] = {
+    { "processor : 0\nflags\t: fpu avx avx2\n\nprocessor : 1\nflags : fpu avx\n",
+      "fpu;avx;cpuinfo:flags:avx", "avx2;cpuinfo:flags:avx2;cpuinfo:processor=0" },
+    { "Features\t: fp asimd aes\n", "fp;asimd;aes;cpuinfo:Features:asimd", "avx" },
+    { "flags : \tfpu  avx\tavx2\r\n", "fpu;avx;avx2", "av" },
+    { "flags : avx avx\n", "avx", "avx2" },
+    { "flags : avx\nflags :\n", "", "avx;cpuinfo:flags:avx" },
+    { "flags : avx\nflags : aes\n", "", "avx;aes" },
+    { "model name : avx\notherflags : avx\n", "cpuinfo:model name=avx", "avx" },
+    { "flags : vmx xsave constant_tsc\nvmx flags : ept vpid\npower management : hwp\n",
+      "vmx;xsave;constant_tsc;ept;vpid;hwp;cpuinfo:vmx flags:ept;cpuinfo:power management:hwp", "svm" },
+    { "features : esan3 zarch stfle edat\nfacilities : 0 1 2 129\n",
+      "esan3;zarch;stfle;edat;cpuinfo:facilities:129", "129;avx" },
+    { "ISA : loongarch64\nFeatures : cpucfg lam lvz\n",
+      "cpucfg;lam;lvz;cpuinfo:ISA:loongarch64", "avx" },
+    { "isa : rv64imafdc_zicsr_zifencei_sstc\nisa : rv64imac_zicsr_zifencei\n",
+      "i;m;a;c;zicsr;zifencei;cpuinfo:isa:zicsr;cpuinfo:isa:c", "f;d;sstc" },
+    { "isa : mips32 mips32r2\nASEs implemented : dsp mt\n",
+      "dsp;mt;cpuinfo:isa:mips32r2", "avx" },
+    { "cpu : POWER9, altivec supported\nMMU : Radix\n",
+      "cpuinfo:cpu:altivec;cpuinfo:MMU=Radix", "cpuinfo:MMU=Hash" },
+    { "cpucaps : flush,vis3,hpc,fjfmau,ASIBlkInit,aes,montmul\n",
+      "flush;vis3;hpc;fjfmau;ASIBlkInit;aes;montmul;cpuinfo:cpucaps:fjfmau", "vis2;asibblkinit" },
+    { "cpucaps : vis3,fjfmau\ncpucaps : vis3,hpc\n",
+      "vis3;cpuinfo:cpucaps:vis3", "fjfmau;hpc;cpuinfo:cpucaps:fjfmau" },
+    { "arbitrary register : 0x8000000000000001\n",
+      "cpuinfo:arbitrary register#0;cpuinfo:arbitrary register#63", "cpuinfo:arbitrary register#1;cpuinfo:arbitrary register#64" },
+    { "arbitrary register : 18446744073709551615\n",
+      "cpuinfo:arbitrary register#63", "cpuinfo:arbitrary register#64" },
+    { "arbitrary register : 0x31\narbitrary register : 0x23\n",
+      "cpuinfo:arbitrary register#0;cpuinfo:arbitrary register#5", "cpuinfo:arbitrary register#1;cpuinfo:arbitrary register#4" },
+    { "arbitrary register : 0\n",
+      "cpuinfo:arbitrary register=0", "cpuinfo:arbitrary register#0" },
+    { "arbitrary register : -1\n",
+      "cpuinfo:arbitrary register=-1", "cpuinfo:arbitrary register#0" },
+    { "arbitrary register : 0x10000000000000001\n",
+      "cpuinfo:arbitrary register=0x10000000000000001", "cpuinfo:arbitrary register#0" },
+    { "arbitrary register : 1 trailing-junk\n",
+      "cpuinfo:arbitrary register:trailing-junk", "cpuinfo:arbitrary register#0" },
+    { "future capabilities : new_feature,another_feature\n",
+      "cpuinfo:future capabilities:new_feature;cpuinfo:future capabilities:another_feature", "another_feature" },
+    { "future capabilities : new_feature\nfuture capabilities : new_feature another\n",
+      "cpuinfo:future capabilities:new_feature", "cpuinfo:future capabilities:another" },
+    { "", "", "avx" },
+  };
+  gsize i;
+
+  for (i = 0; i < G_N_ELEMENTS (cases); i++)
+    {
+      g_auto(GStrv) features = flatpak_get_cpu_features (cases[i].cpuinfo, NULL);
+      g_auto(GStrv) expected = g_strsplit (cases[i].expected, ";", -1);
+      g_auto(GStrv) absent = g_strsplit (cases[i].absent, ";", -1);
+      gsize j;
+
+      for (j = 0; expected[j] != NULL; j++)
+        g_assert_true (g_strv_contains ((const char * const *) features, expected[j]));
+      for (j = 0; absent[j] != NULL; j++)
+        g_assert_false (g_strv_contains ((const char * const *) features, absent[j]));
+    }
+}
+
+static void
+test_cpu_architecture (gconstpointer data)
+{
+  gsize fixture = GPOINTER_TO_SIZE (data);
+  const unsigned long no_hwcaps[4] = { 0 };
+  g_auto(GStrv) available = flatpak_get_cpu_features (cpuinfo_arch_fixtures[fixture].cpuinfo, no_hwcaps);
+  g_auto(GStrv) present = g_strsplit (cpuinfo_arch_fixtures[fixture].present, ";", -1);
+  g_auto(GStrv) absent = g_strsplit (cpuinfo_arch_fixtures[fixture].absent, ";", -1);
+  gsize i;
+
+  g_test_message ("Linux 7.3 source: arch/%s", cpuinfo_arch_fixtures[fixture].source);
+  for (i = 0; present[i] != NULL; i++)
+    g_assert_true (g_strv_contains ((const char * const *) available, present[i]));
+  for (i = 0; absent[i] != NULL; i++)
+    g_assert_false (g_strv_contains ((const char * const *) available, absent[i]));
+}
+
+static void
+test_cpu_hwcaps (void)
+{
+  unsigned long hwcaps[] = { 1UL << 0, 1UL << 1, 1UL << 2, 1UL << (sizeof (unsigned long) * 8 - 1) };
+  g_auto(GStrv) features = flatpak_get_cpu_features ("", hwcaps);
+  g_autofree char *highest = g_strdup_printf ("hwcap4:%u", (unsigned int) (sizeof (unsigned long) * 8 - 1));
+
+  g_assert_cmpuint (g_strv_length (features), ==, 4);
+  g_assert_true (g_strv_contains ((const char * const *) features, "hwcap:0"));
+  g_assert_true (g_strv_contains ((const char * const *) features, "hwcap2:1"));
+  g_assert_true (g_strv_contains ((const char * const *) features, "hwcap3:2"));
+  g_assert_true (g_strv_contains ((const char * const *) features, highest));
+  g_assert_false (g_strv_contains ((const char * const *) features, "hwcap:1"));
+}
+
+static void
+test_required_cpu_features (void)
+{
+  const char *refs[] = { "app/org.test.App/x86_64/master", "runtime/org.test.Platform/x86_64/master" };
+  const char *groups[] = { "Application", "Runtime" };
+  gsize i;
+
+  for (i = 0; i < G_N_ELEMENTS (refs); i++)
+    {
+      g_autoptr(GKeyFile) metadata = g_key_file_new ();
+      g_autoptr(GError) error = NULL;
+      g_autofree char *cpuinfo = NULL;
+      g_auto(GStrv) available = NULL;
+
+      g_assert_true (flatpak_check_required_cpu_features (refs[i], metadata, &error));
+      g_assert_no_error (error);
+      g_key_file_set_value (metadata, groups[i], "required-cpu-features", "");
+      g_assert_true (flatpak_check_required_cpu_features (refs[i], metadata, &error));
+      g_assert_no_error (error);
+
+      g_key_file_set_value (metadata, groups[i], "required-cpu-features", "flatpak-test-missing-feature;");
+      g_assert_false (flatpak_check_required_cpu_features (refs[i], metadata, &error));
+      g_assert_nonnull (error);
+      g_assert_nonnull (strstr (error->message, refs[i]));
+      g_clear_error (&error);
+
+      g_key_file_set_value (metadata, groups[i], "required-cpu-features", "invalid\\q;");
+      g_assert_false (flatpak_check_required_cpu_features (refs[i], metadata, &error));
+      g_assert_error (error, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_INVALID_VALUE);
+      g_clear_error (&error);
+
+      g_key_file_set_value (metadata, groups[i], "required-cpu-features", "hwcap:999;");
+      g_assert_false (flatpak_check_required_cpu_features (refs[i], metadata, &error));
+      g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_UNSUPPORTED_CPU);
+      g_clear_error (&error);
+
+      /* libc may mask hardware capabilities, but any bit it exposes must
+       * also be accepted from the kernel's auxiliary vector.
+       */
+      if (getauxval (AT_HWCAP2) != 0)
+        {
+          unsigned long caps = getauxval (AT_HWCAP2);
+          gsize bit = 0;
+          g_autofree char *requirement = NULL;
+
+          while ((caps & 1UL) == 0)
+            {
+              caps >>= 1;
+              bit++;
+            }
+          requirement = g_strdup_printf ("hwcap2:%" G_GSIZE_FORMAT, bit);
+          g_key_file_set_value (metadata, groups[i], "required-cpu-features", requirement);
+          g_assert_true (flatpak_check_required_cpu_features (refs[i], metadata, &error));
+          g_assert_no_error (error);
+        }
+
+      /* Also exercise a requirement supported by the actual running CPU. */
+      if (g_file_get_contents ("/proc/cpuinfo", &cpuinfo, NULL, NULL))
+        {
+          gsize j;
+
+          available = flatpak_get_cpu_features (cpuinfo, NULL);
+
+          for (j = 0; available[j] != NULL; j++)
+            if (!g_str_has_prefix (available[j], "cpuinfo:"))
+              break;
+          if (available[j] != NULL)
+            {
+              const char *required[] = { available[j], "flatpak-test-missing-feature" };
+              g_autofree char *suffix = g_strconcat (":", available[j], NULL);
+              gsize k;
+
+              g_key_file_set_string_list (metadata, groups[i], "required-cpu-features", required, 1);
+              g_assert_true (flatpak_check_required_cpu_features (refs[i], metadata, &error));
+              g_assert_no_error (error);
+
+              for (k = 0; available[k] != NULL; k++)
+                if (g_str_has_prefix (available[k], "cpuinfo:") && g_str_has_suffix (available[k], suffix))
+                  {
+                    const char *qualified[] = { available[k] };
+
+                    g_key_file_set_string_list (metadata, groups[i], "required-cpu-features", qualified, 1);
+                    g_assert_true (flatpak_check_required_cpu_features (refs[i], metadata, &error));
+                    g_assert_no_error (error);
+                    break;
+                  }
+
+              g_key_file_set_string_list (metadata, groups[i], "required-cpu-features", required, 2);
+              g_assert_false (flatpak_check_required_cpu_features (refs[i], metadata, &error));
+              g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_UNSUPPORTED_CPU);
+              g_clear_error (&error);
+            }
+        }
+    }
+}
+
 int
 main (int argc, char *argv[])
 {
   int res;
+  gsize i;
 
   setlocale (LC_ALL, "");
 
@@ -1447,6 +1646,15 @@ main (int argc, char *argv[])
   g_test_add_func ("/common/has-path-prefix", test_has_path_prefix);
   g_test_add_func ("/common/path-match-prefix", test_path_match_prefix);
   g_test_add_func ("/common/arches", test_arches);
+  g_test_add_func ("/common/cpu-features", test_cpu_features);
+  g_test_add_func ("/common/cpu-hwcaps", test_cpu_hwcaps);
+  for (i = 0; i < G_N_ELEMENTS (cpuinfo_arch_fixtures); i++)
+    {
+      g_autofree char *name = g_strconcat ("/common/cpu-architecture/", cpuinfo_arch_fixtures[i].arch, NULL);
+
+      g_test_add_data_func (name, GSIZE_TO_POINTER (i), test_cpu_architecture);
+    }
+  g_test_add_func ("/common/required-cpu-features", test_required_cpu_features);
   g_test_add_func ("/common/extension-matches", test_extension_matches);
   g_test_add_func ("/common/valid-name", test_valid_name);
   g_test_add_func ("/common/string-to-unsigned", test_string_to_unsigned);

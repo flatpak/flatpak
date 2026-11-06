@@ -318,6 +318,13 @@ GBytes *flatpak_load_file_at (int           dfd,
                               GCancellable *cancellable,
                               GError      **error);
 
+char **flatpak_get_cpu_features (const char          *cpuinfo,
+                                  const unsigned long hwcaps[4]);
+
+gboolean flatpak_check_required_cpu_features (const char *ref,
+                                              GKeyFile   *metakey,
+                                              GError    **error);
+
 gboolean flatpak_check_required_version (const char *ref,
                                          GKeyFile   *metakey,
                                          GError    **error);

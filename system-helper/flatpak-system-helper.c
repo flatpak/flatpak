@@ -1132,6 +1132,7 @@ handle_configure (FlatpakSystemHelper   *object,
 
   if ((strcmp (arg_key, "languages") != 0) &&
       (strcmp (arg_key, "extra-languages") != 0) &&
+      (strcmp (arg_key, "check-cpu-features") != 0) &&
       (strcmp (arg_key, "masked") != 0) &&
       (strcmp (arg_key, "pinned") != 0))
     {
