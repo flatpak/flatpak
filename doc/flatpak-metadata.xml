@@ -185,6 +185,21 @@
                         For example, <literal>required-cpu-features=vmx;ept;</literal>
                         requires both Intel virtualization and extended page tables.
                     </para><para>
+                        Detected selectors are cached persistently in
+                        <filename>$XDG_CACHE_HOME/flatpak/cpu-features-ARCH-BITSENDIAN.txt</filename>,
+                        where <literal>ARCH</literal> is Flatpak's native architecture,
+                        <literal>BITS</literal> is its native word size (32 or 64),
+                        and <literal>ENDIAN</literal> is <literal>le</literal> or
+                        <literal>be</literal>. For example, an x86-64 process uses
+                        <filename>cpu-features-x86_64-64le.txt</filename>.
+                        If <envar>XDG_CACHE_HOME</envar> is unset, the cache directory
+                        defaults to <filename>~/.cache</filename>. The file is sorted
+                        text with one literal selector per line and no header.
+                        Blank lines are ignored. The cache is never automatically
+                        invalidated or refreshed: delete the file to discover CPU
+                        features again on the next requirement check. If the cache
+                        cannot be written, checks still use live detection.
+                    </para><para>
                         Flatpak checks these requirements when installing or updating,
                         including applications, runtimes, extensions, and bundles.
                         The installation configuration key

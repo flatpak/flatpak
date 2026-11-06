@@ -1638,6 +1638,15 @@ main (int argc, char *argv[])
 {
   int res;
   gsize i;
+  g_autofree char *cache_dir = NULL;
+  g_autoptr(GError) error = NULL;
+
+  /* CPU requirement checks now persist their host snapshot. Isolate it before
+   * GLib first reads XDG_CACHE_HOME so this suite cannot modify a user's cache.
+   */
+  cache_dir = g_dir_make_tmp ("flatpak-testcommon-cache-XXXXXX", &error);
+  g_assert_no_error (error);
+  g_assert_true (g_setenv ("XDG_CACHE_HOME", cache_dir, TRUE));
 
   setlocale (LC_ALL, "");
 
@@ -1679,5 +1688,7 @@ main (int argc, char *argv[])
 
   res = g_test_run ();
 
+  g_assert_true (glnx_shutil_rm_rf_at (-1, cache_dir, NULL, &error));
+  g_assert_no_error (error);
   return res;
 }

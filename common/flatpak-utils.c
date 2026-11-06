@@ -2163,6 +2163,143 @@ flatpak_get_cpu_features (const char          *cpuinfo,
   return (char **) g_ptr_array_free (g_steal_pointer (&result), FALSE);
 }
 
+/* The native ABI is part of the filename because HWCAP bit meanings and word
+ * widths describe this process, not just its physical CPU. This is a namespace,
+ * not an invalidation key: no timestamp, kernel version, or CPU ID is checked.
+ */
+static char *
+flatpak_cpu_features_cache_path (void)
+{
+  g_autofree char *name = g_strdup_printf ("cpu-features-%s-%u%s.txt",
+                                          flatpak_get_arch (),
+                                          (unsigned int) (sizeof (unsigned long) * CHAR_BIT),
+                                          G_BYTE_ORDER == G_LITTLE_ENDIAN ? "le" : "be");
+
+  return g_build_filename (g_get_user_cache_dir (), "flatpak", name, NULL);
+}
+
+/* A readable file is authoritative forever, including an empty feature set.
+ * Each nonempty line is a literal selector: do not trim spaces inside field
+ * names/values, parse comments, or reinterpret '#' register-bit selectors.
+ */
+static char **
+flatpak_load_cached_cpu_features (const char *path)
+{
+  g_autofree char *contents = NULL;
+  g_auto(GStrv) lines = NULL;
+  g_autoptr(GPtrArray) features = g_ptr_array_new_with_free_func (g_free);
+  gsize i;
+
+  if (!g_file_get_contents (path, &contents, NULL, NULL))
+    return NULL;
+
+  lines = g_strsplit (contents, "\n", -1);
+  for (i = 0; lines[i] != NULL; i++)
+    if (lines[i][0] != '\0')
+      g_ptr_array_add (features, g_strdup (lines[i]));
+  g_ptr_array_add (features, NULL);
+  return (char **) g_ptr_array_free (g_steal_pointer (&features), FALSE);
+}
+
+/* Persistence is an optimization. A read-only/missing cache directory must
+ * not prevent checks against capabilities we successfully discovered live.
+ * GLib writes via a temporary file and rename, so readers see complete text.
+ */
+static void
+flatpak_save_cpu_features (const char         *path,
+                           const char * const *features)
+{
+  g_autofree char *directory = g_path_get_dirname (path);
+  g_autoptr(GString) contents = g_string_new (NULL);
+  g_autoptr(GError) error = NULL;
+  gsize i;
+
+  for (i = 0; features[i] != NULL; i++)
+    g_string_append_printf (contents, "%s\n", features[i]);
+
+  if (g_mkdir_with_parents (directory, 0700) != 0)
+    g_debug ("Unable to create CPU feature cache directory %s: %s", directory, g_strerror (errno));
+  else if (!g_file_set_contents (path, contents->str, contents->len, &error))
+    g_debug ("Unable to write CPU feature cache %s: %s", path, error->message);
+}
+
+/* On a cache miss try both interfaces, regardless of the first package's
+ * requirements: a persisted snapshot must contain CPU-info AND HWCAP selectors.
+ * If an optional interface cannot be read, keep the old live-check behavior
+ * but do not persist an incomplete snapshot that could reject later packages.
+ */
+static char **
+flatpak_load_cpu_features (gboolean   needs_cpuinfo,
+                           gboolean   needs_auxv,
+                           GError   **error)
+{
+  g_autofree char *path = flatpak_cpu_features_cache_path ();
+  g_auto(GStrv) available = flatpak_load_cached_cpu_features (path);
+  g_autofree char *cpuinfo = NULL;
+  g_autofree char *auxv = NULL;
+  g_autoptr(GError) local_error = NULL;
+  unsigned long hwcaps[4] = { 0 };
+  gboolean complete = TRUE;
+  gsize length = 0, offset, i;
+  /* Linux UAPI values for AT_HWCAP3/4 also work with older libc headers. */
+  const unsigned long types[] = { AT_HWCAP, AT_HWCAP2, 29, 30 };
+
+  if (available != NULL)
+    return g_steal_pointer (&available);
+
+  if (!g_file_get_contents ("/proc/cpuinfo", &cpuinfo, NULL, &local_error))
+    {
+      if (needs_cpuinfo)
+        {
+          g_propagate_error (error, g_steal_pointer (&local_error));
+          return NULL;
+        }
+      complete = FALSE;
+      g_clear_error (&local_error);
+    }
+
+  /* Read kernel values directly; some libcs mask getauxval(AT_HWCAP). */
+  if (!g_file_get_contents ("/proc/self/auxv", &auxv, &length, &local_error))
+    {
+      if (needs_auxv)
+        {
+          g_propagate_error (error, g_steal_pointer (&local_error));
+          return NULL;
+        }
+      complete = FALSE;
+      g_clear_error (&local_error);
+    }
+
+  /* The auxiliary vector uses this process's native word size and byte order.
+   * memcpy avoids alignment assumptions; only complete pairs are inspected.
+   * An unavailable optional vector has length zero and skips this loop.
+   */
+  for (offset = 0; length - offset >= 2 * sizeof (unsigned long); offset += 2 * sizeof (unsigned long))
+    {
+      unsigned long entry[2];
+
+      memcpy (entry, auxv + offset, sizeof (entry));
+      if (entry[0] == AT_NULL)
+        break;
+      for (i = 0; i < G_N_ELEMENTS (types); i++)
+        if (entry[0] == types[i])
+          hwcaps[i] = entry[1];
+    }
+
+  available = flatpak_get_cpu_features (cpuinfo != NULL ? cpuinfo : "", hwcaps);
+  /* Stable sorting makes the plain-text snapshot easy to inspect and diff.
+   * Loading it never compares its contents with freshly detected CPU features.
+   */
+  qsort (available, g_strv_length (available), sizeof (char *), flatpak_strcmp0_ptr);
+  if (complete)
+    flatpak_save_cpu_features (path, (const char * const *) available);
+
+  return g_steal_pointer (&available);
+}
+
+/* Apply the requirements to the persistent snapshot, discovering it only if
+ * no readable cache exists. Installation policy/opt-out remains in FlatpakDir.
+ */
 gboolean
 flatpak_check_required_cpu_features (const char *ref,
                                      GKeyFile   *metakey,
@@ -2172,12 +2309,11 @@ flatpak_check_required_cpu_features (const char *ref,
     FLATPAK_METADATA_GROUP_APPLICATION : FLATPAK_METADATA_GROUP_RUNTIME;
   g_auto(GStrv) required = NULL;
   g_auto(GStrv) available = NULL;
-  g_autofree char *cpuinfo = NULL;
-  unsigned long hwcaps[4] = { 0 };
   gboolean needs_cpuinfo = FALSE;
   gboolean needs_auxv = FALSE;
   gsize i;
 
+  /* Missing/empty requirements impose no check and do not create a cache. */
   if (!g_key_file_has_key (metakey, group, FLATPAK_METADATA_KEY_REQUIRED_CPU_FEATURES, NULL))
     return TRUE;
 
@@ -2189,6 +2325,9 @@ flatpak_check_required_cpu_features (const char *ref,
   if (required[0] == NULL)
     return TRUE;
 
+  /* Required sources matter only if a cache miss needs live discovery and
+   * one of the host interfaces is unavailable. Cached selectors need neither.
+   */
   for (i = 0; required[i] != NULL; i++)
     {
       if (g_str_has_prefix (required[i], "hwcap:") ||
@@ -2200,42 +2339,16 @@ flatpak_check_required_cpu_features (const char *ref,
         needs_cpuinfo = TRUE;
     }
 
-  if (needs_cpuinfo && !g_file_get_contents ("/proc/cpuinfo", &cpuinfo, NULL, error))
+  available = flatpak_load_cpu_features (needs_cpuinfo, needs_auxv, error);
+  if (available == NULL)
     {
       g_prefix_error (error, _("Unable to check CPU requirements for %s: "), ref);
       return FALSE;
     }
 
-  if (needs_auxv)
-    {
-      g_autofree char *auxv = NULL;
-      gsize length, offset;
-      /* AT_HWCAP3 and AT_HWCAP4 were added after some supported libc headers.
-       * Their Linux UAPI numbers are 29 and 30 on every architecture.
-       */
-      const unsigned long types[] = { AT_HWCAP, AT_HWCAP2, 29, 30 };
-
-      /* Read the kernel values directly: some libcs mask getauxval(AT_HWCAP). */
-      if (!g_file_get_contents ("/proc/self/auxv", &auxv, &length, error))
-        {
-          g_prefix_error (error, _("Unable to check CPU requirements for %s: "), ref);
-          return FALSE;
-        }
-
-      for (offset = 0; length - offset >= 2 * sizeof (unsigned long); offset += 2 * sizeof (unsigned long))
-        {
-          unsigned long entry[2];
-
-          memcpy (entry, auxv + offset, sizeof (entry));
-          if (entry[0] == AT_NULL)
-            break;
-          for (i = 0; i < G_N_ELEMENTS (types); i++)
-            if (entry[0] == types[i])
-              hwcaps[i] = entry[1];
-        }
-    }
-
-  available = flatpak_get_cpu_features (cpuinfo != NULL ? cpuinfo : "", hwcaps);
+  /* Every declared selector must match. Unknown/missing capabilities retain
+   * the same CPU-specific error and diagnostic as live discovery did.
+   */
   for (i = 0; required[i] != NULL; i++)
     if (!g_strv_contains ((const char * const *) available, required[i]))
       return flatpak_fail_error (error, FLATPAK_ERROR_UNSUPPORTED_CPU,
