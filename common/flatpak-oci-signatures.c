@@ -391,11 +391,38 @@ flatpak_oci_signatures_verify (FlatpakOciSignatures *self,
   int port;
   g_autofree char *port_prefix = NULL;
   g_autofree char *expected_identity = NULL;
+  g_autofree char *group = NULL;
+  GKeyFile *config;
 
-  if (!flatpak_remote_has_gpg_key (repo, remote_name))
+  if (remote_name == NULL)
+    return TRUE;
+
+  group = g_strdup_printf ("remote \"%s\"", remote_name);
+  config = ostree_repo_get_config (repo);
+
+  if (!g_key_file_has_key (config, group, "gpg-verify", NULL))
     {
-      g_info ("%s: no GPG key, skipping verification", remote_name);
-      return TRUE;
+      /* Legacy path: we don't look at gpg-verify but only the gpg key file */
+      if (!flatpak_remote_has_gpg_key (repo, remote_name))
+        return TRUE;
+    }
+  else
+    {
+      gboolean gpg_verify;
+
+      if (!ostree_repo_remote_get_gpg_verify (repo, remote_name, &gpg_verify, error))
+        return FALSE;
+
+      if (!gpg_verify)
+        return TRUE;
+
+      if (!flatpak_remote_has_gpg_key (repo, remote_name))
+        {
+          return flatpak_fail_error (error, FLATPAK_ERROR_UNTRUSTED,
+                                     _("GPG verification is required for remote '%s', "
+                                       "but no GPG key is configured"),
+                                     remote_name);
+        }
     }
 
   uri = g_uri_parse (registry_url, FLATPAK_HTTP_URI_FLAGS | G_URI_FLAGS_PARSE_RELAXED, error);
