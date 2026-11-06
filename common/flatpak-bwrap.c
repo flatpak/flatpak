@@ -74,6 +74,7 @@ flatpak_bwrap_free (FlatpakBwrap *bwrap)
   g_array_unref (bwrap->fds);
   g_strfreev (bwrap->envp);
   g_clear_pointer (&bwrap->runtime_dir_members, g_ptr_array_unref);
+  g_clear_pointer (&bwrap->runtime_dir_export_symlinks, g_ptr_array_unref);
   g_free (bwrap);
 }
 
@@ -248,6 +249,16 @@ flatpak_bwrap_append_bwrap (FlatpakBwrap *bwrap,
       for (i = 0; i < other->runtime_dir_members->len; i++)
         g_ptr_array_add (bwrap->runtime_dir_members,
                          g_strdup (g_ptr_array_index (other->runtime_dir_members, i)));
+    }
+
+  if (other->runtime_dir_export_symlinks != NULL)
+    {
+      if (bwrap->runtime_dir_export_symlinks == NULL)
+        bwrap->runtime_dir_export_symlinks = g_ptr_array_new_with_free_func (g_free);
+
+      for (i = 0; i < other->runtime_dir_export_symlinks->len; i++)
+        g_ptr_array_add (bwrap->runtime_dir_export_symlinks,
+                         g_strdup (g_ptr_array_index (other->runtime_dir_export_symlinks, i)));
     }
 }
 
@@ -437,32 +448,51 @@ flatpak_bwrap_add_runtime_dir_member (FlatpakBwrap *bwrap,
   g_ptr_array_add (bwrap->runtime_dir_members, g_strdup (name));
 }
 
+void
+flatpak_bwrap_add_runtime_dir_export_symlink (FlatpakBwrap *bwrap,
+                                              const char   *member,
+                                              const char   *target)
+{
+  if (bwrap->runtime_dir_export_symlinks == NULL)
+    bwrap->runtime_dir_export_symlinks = g_ptr_array_new_with_free_func (g_free);
+
+  g_ptr_array_add (bwrap->runtime_dir_export_symlinks, g_strdup (member));
+  g_ptr_array_add (bwrap->runtime_dir_export_symlinks, g_strdup (target));
+}
+
 static void
 expect_symlink (const char *host_path,
                 const char *target)
 {
-  /* This shouldn't fail in practice, so there's not much point in
-   * translating the warning */
-  if (symlink (target, host_path) < 0 && errno != EEXIST)
+  g_autoptr(GError) local_error = NULL;
+  g_autofree char *got = NULL;
+
+  if (symlink (target, host_path) == 0)
+    return;
+
+  if (errno != EEXIST)
     {
       g_warning ("Unable to create symlink at %s: %s",
                  host_path, g_strerror (errno));
+      return;
     }
-  else
-    {
-      g_autoptr(GError) local_error = NULL;
-      g_autofree char *got = glnx_readlinkat_malloc (AT_FDCWD,
-                                                     host_path,
-                                                     NULL,
-                                                     &local_error);
 
-      if (got == NULL)
-        g_warning ("%s is not a symlink to \"%s\" as expected: %s",
-                   host_path, target, local_error->message);
-      else if (strcmp (got, target) != 0)
-        g_warning ("%s is a symlink to \"%s\", not \"%s\" as expected",
-                   host_path, got, target);
+  got = glnx_readlinkat_malloc (AT_FDCWD, host_path, NULL, &local_error);
+
+  if (got == NULL)
+    {
+      g_warning ("%s exists but is not a symlink to \"%s\" as expected: %s",
+                 host_path, target, local_error->message);
+      return;
     }
+
+  if (strcmp (got, target) == 0)
+    return;
+
+  if (unlink (host_path) < 0 ||
+      symlink (target, host_path) < 0)
+    g_warning ("Unable to replace symlink at %s: %s",
+               host_path, g_strerror (errno));
 }
 
 void
@@ -491,6 +521,31 @@ flatpak_bwrap_populate_runtime_dir (FlatpakBwrap *bwrap,
         {
           const char *member = g_ptr_array_index (bwrap->runtime_dir_members, i);
           g_autofree char *target = g_strdup_printf ("../../flatpak/%s", member);
+
+          if (shared_xdg_runtime_dir != NULL)
+            {
+              g_autofree char *host_path = g_build_filename (shared_xdg_runtime_dir,
+                                                             member, NULL);
+
+              expect_symlink (host_path, target);
+            }
+          else
+            {
+              flatpak_bwrap_add_arg (bwrap, "--symlink");
+              flatpak_bwrap_add_arg (bwrap, target);
+              flatpak_bwrap_add_arg_printf (bwrap, "/run/user/%d/%s", getuid (), member);
+            }
+        }
+    }
+
+  if (bwrap->runtime_dir_export_symlinks != NULL)
+    {
+      gsize i;
+
+      for (i = 0; i < bwrap->runtime_dir_export_symlinks->len; i += 2)
+        {
+          const char *member = g_ptr_array_index (bwrap->runtime_dir_export_symlinks, i);
+          const char *target = g_ptr_array_index (bwrap->runtime_dir_export_symlinks, i + 1);
 
           if (shared_xdg_runtime_dir != NULL)
             {
