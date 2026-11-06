@@ -1,0 +1,69 @@
+<?xml version='1.0'?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+    "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+<refentry id="flatpak-clean">
+    <refentryinfo>
+        <title>flatpak clean</title>
+        <productname>flatpak</productname>
+    </refentryinfo>
+    <refmeta>
+        <refentrytitle>flatpak clean</refentrytitle>
+        <manvolnum>1</manvolnum>
+    </refmeta>
+    <refnamediv>
+        <refname>flatpak-clean</refname>
+        <refpurpose>Remove cached installers for deployed refs</refpurpose>
+    </refnamediv>
+    <refsynopsisdiv>
+        <cmdsynopsis>
+            <command>flatpak clean</command>
+            <arg choice="opt" rep="repeat">OPTION</arg>
+        </cmdsynopsis>
+    </refsynopsisdiv>
+    <refsect1>
+        <title>Description</title>
+        <para>
+            Remove cached extra-data installers for deployed apps and runtimes.
+            Keep installed files, app data, commit signatures and other detached
+            metadata. Keep installers for commits downloaded but not deployed.
+        </para>
+        <para>
+            To redeploy a cleaned commit, install or update without
+            <option>--no-pull</option> to download its extra data again.
+            Reinstalling with <option>--no-pull</option> fails and keeps the
+            existing deployment. Cleaning is never automatic.
+        </para>
+        <para>
+            The command fails if another operation is pulling or deploying into
+            the installation. Cleaning a system installation requires root
+            privileges, even with <option>--dry-run</option>.
+        </para>
+    </refsect1>
+    <refsect1>
+        <title>Options</title>
+        <variablelist>
+            <varlistentry>
+                <term><option>--user</option></term>
+                <listitem><para>Clean the per-user installation.</para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><option>--system</option></term>
+                <listitem><para>Clean the default system installation. This is the default.</para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><option>--installation=NAME</option></term>
+                <listitem><para>Clean the named system installation.</para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><option>--dry-run</option></term>
+                <listitem><para>Report cached installers without removing them.</para></listitem>
+            </varlistentry>
+        </variablelist>
+    </refsect1>
+    <refsect1>
+        <title>Examples</title>
+        <para><command>flatpak clean --user --dry-run</command></para>
+        <para><command>flatpak clean --user</command></para>
+        <para><command>sudo flatpak clean --system</command></para>
+    </refsect1>
+</refentry>

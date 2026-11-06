@@ -58,6 +58,7 @@ man1 = [
   'flatpak-search',
   'flatpak-create-usb',
   'flatpak-repair',
+  'flatpak-clean',
   'flatpak-kill',
   'flatpak-history',
   'flatpak-spawn',

@@ -372,6 +372,7 @@ handle_deploy (FlatpakSystemHelper   *object,
   gboolean allow_downgrade;
   g_autofree char *url = NULL;
   g_autoptr(OngoingPull) ongoing_pull = NULL;
+  g_auto(GLnxLockFile) oci_repo_lock = { 0, };
   g_autofree gchar *src_dir = NULL;
   g_autoptr(FlatpakDecomposed) ref = NULL;
 
@@ -585,6 +586,14 @@ handle_deploy (FlatpakSystemHelper   *object,
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
                                                  "Can't get the OCI registry URI");
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
+        }
+
+      /* Keep cached installers alive from import through deployment. Unlike
+       * the OSTree pull path, the OCI importer does not take this lock itself. */
+      if (!flatpak_dir_repo_lock (system, &oci_repo_lock, LOCK_SH, NULL, &error))
+        {
+          flatpak_invocation_return_error (invocation, error, "Can't lock system repo for OCI import");
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 

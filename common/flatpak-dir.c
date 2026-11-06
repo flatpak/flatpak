@@ -6797,6 +6797,42 @@ flatpak_dir_pull_extra_data (FlatpakDir       *self,
   return TRUE;
 }
 
+/* The caller must hold the repo lock while checking and consuming the cache. */
+static gboolean
+has_cached_extra_data (OstreeRepo   *repo,
+                       const char   *checksum,
+                       gboolean     *out_cached,
+                       GCancellable *cancellable,
+                       GError      **error)
+{
+  g_autoptr(GVariant) sources = NULL;
+  g_autoptr(GVariant) metadata = NULL;
+  g_autoptr(GVariant) extra_data = NULL;
+  g_autoptr(GError) local_error = NULL;
+
+  *out_cached = TRUE;
+  sources = flatpak_repo_get_extra_data_sources (repo, checksum, cancellable, &local_error);
+  if (sources == NULL)
+    {
+      if (g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        return TRUE;
+
+      g_propagate_error (error, g_steal_pointer (&local_error));
+      return FALSE;
+    }
+  if (g_variant_n_children (sources) == 0)
+    return TRUE;
+
+  if (!ostree_repo_read_commit_detached_metadata (repo, checksum, &metadata, cancellable, error))
+    return FALSE;
+  if (metadata != NULL)
+    extra_data = g_variant_lookup_value (metadata, "xa.extra-data", G_VARIANT_TYPE ("a(ayay)"));
+
+  *out_cached = extra_data != NULL &&
+                g_variant_n_children (extra_data) >= g_variant_n_children (sources);
+  return TRUE;
+}
+
 static gboolean
 flatpak_dir_pull_ostree_extra_data (FlatpakDir        *self,
                                     OstreeRepo        *repo,
@@ -7133,7 +7169,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   const char *oci_digest = NULL;
   g_autofree char *checksum = NULL;
   g_autofree char *latest_alt_commit = NULL;
-  G_GNUC_UNUSED g_autofree char *latest_commit =
+  g_autofree char *latest_commit =
     flatpak_dir_read_latest (self, state->remote_name, ref, &latest_alt_commit, cancellable, NULL);
   g_autofree char *name = NULL;
 
@@ -7151,24 +7187,36 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
 
   oci_digest = flatpak_image_source_get_digest (image_source);
 
-  /* Short circuit if we've already got this commit */
-  if (latest_alt_commit != NULL && strcmp (oci_digest + strlen ("sha256:"), latest_alt_commit) == 0)
-    return TRUE;
-
   if (repo == NULL)
     repo = self->repo;
 
-  flatpak_progress_start_oci_pull (progress);
+  /* Cleaning removes extra data without removing the image. */
+  if (repo == self->repo && latest_alt_commit != NULL &&
+      strcmp (oci_digest + strlen ("sha256:"), latest_alt_commit) == 0)
+    {
+      gboolean cached;
 
-  g_info ("Pulling OCI image %s", oci_digest);
+      if (!has_cached_extra_data (repo, latest_commit, &cached, cancellable, error))
+        return FALSE;
+      if (cached)
+        return TRUE;
 
-  checksum = flatpak_pull_from_oci (repo, image_source, NULL, NULL,
-                                    state->remote_name, ref, flatpak_flags, oci_pull_progress_cb, progress, cancellable, error);
+      checksum = g_strdup (latest_commit);
+    }
+  else
+    {
+      flatpak_progress_start_oci_pull (progress);
 
-  if (checksum == NULL)
-    return FALSE;
+      g_info ("Pulling OCI image %s", oci_digest);
 
-  g_info ("Imported OCI image as checksum %s", checksum);
+      checksum = flatpak_pull_from_oci (repo, image_source, NULL, NULL,
+                                        state->remote_name, ref, flatpak_flags, oci_pull_progress_cb, progress, cancellable, error);
+
+      if (checksum == NULL)
+        return FALSE;
+
+      g_info ("Imported OCI image as checksum %s", checksum);
+    }
 
   if (!flatpak_dir_setup_extra_data (self, state, repo,
                                      ref, checksum, token,
@@ -10564,6 +10612,7 @@ flatpak_dir_deploy_install (FlatpakDir        *self,
                             GError           **error)
 {
   g_auto(GLnxLockFile) lock = { 0, };
+  g_auto(GLnxLockFile) repo_lock = { 0, };
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(GFile) old_deploy_dir = NULL;
   gboolean created_deploy_base = FALSE;
@@ -10572,6 +10621,7 @@ flatpak_dir_deploy_install (FlatpakDir        *self,
   g_autofree char *remove_ref_from_remote = NULL;
   g_autofree char *commit = NULL;
   g_autofree char *old_active = NULL;
+  g_autofree char *target_commit = NULL;
 
   if (!flatpak_dir_lock (self, &lock,
                          cancellable, error))
@@ -10586,6 +10636,24 @@ flatpak_dir_deploy_install (FlatpakDir        *self,
         {
           g_autoptr(GBytes) old_deploy = NULL;
           const char *old_origin;
+          gboolean cached;
+
+          /* Reject cleaned installers before removing the working deployment.
+           * Hold the shared lock through deployment so cleaning cannot remove
+           * the cache between this check and extraction. */
+          if (!flatpak_dir_repo_lock (self, &repo_lock, LOCK_SH, cancellable, error))
+            goto out;
+          target_commit = flatpak_dir_read_latest (self, origin, flatpak_decomposed_get_ref (ref),
+                                                   NULL, cancellable, error);
+          if (target_commit == NULL ||
+              !has_cached_extra_data (self->repo, target_commit, &cached, cancellable, error))
+            goto out;
+          if (!cached)
+            {
+              flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                                  _("Extra data missing in detached metadata; download it again without --no-pull"));
+              goto out;
+            }
 
           old_deploy = flatpak_load_deploy_data (old_deploy_dir, ref, self->repo, FLATPAK_DEPLOY_VERSION_ANY, cancellable, error);
           if (old_deploy == NULL)
@@ -10625,7 +10693,7 @@ flatpak_dir_deploy_install (FlatpakDir        *self,
   /* After we create the deploy base we must goto out on errors */
   created_deploy_base = TRUE;
 
-  if (!flatpak_dir_deploy (self, origin, ref, NULL, (const char * const *) subpaths,
+  if (!flatpak_dir_deploy (self, origin, ref, target_commit, (const char * const *) subpaths,
                            previous_ids,
                            "org.freedesktop.Flatpak.override-parental-controls",
                            cancellable, error))
@@ -10652,6 +10720,7 @@ flatpak_dir_deploy_install (FlatpakDir        *self,
     }
 
   /* Release lock before doing possibly slow prune */
+  glnx_release_lock_file (&repo_lock);
   glnx_release_lock_file (&lock);
 
   flatpak_dir_cleanup_removed (self, cancellable, NULL);
