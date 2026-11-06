@@ -74,6 +74,7 @@ flatpak_bwrap_free (FlatpakBwrap *bwrap)
   g_array_unref (bwrap->fds);
   g_strfreev (bwrap->envp);
   g_clear_pointer (&bwrap->runtime_dir_members, g_ptr_array_unref);
+  g_clear_pointer (&bwrap->runtime_dir_export_symlinks, g_ptr_array_unref);
   g_free (bwrap);
 }
 
@@ -248,6 +249,16 @@ flatpak_bwrap_append_bwrap (FlatpakBwrap *bwrap,
       for (i = 0; i < other->runtime_dir_members->len; i++)
         g_ptr_array_add (bwrap->runtime_dir_members,
                          g_strdup (g_ptr_array_index (other->runtime_dir_members, i)));
+    }
+
+  if (other->runtime_dir_export_symlinks != NULL)
+    {
+      if (bwrap->runtime_dir_export_symlinks == NULL)
+        bwrap->runtime_dir_export_symlinks = g_ptr_array_new_with_free_func (g_free);
+
+      for (i = 0; i < other->runtime_dir_export_symlinks->len; i++)
+        g_ptr_array_add (bwrap->runtime_dir_export_symlinks,
+                         g_strdup (g_ptr_array_index (other->runtime_dir_export_symlinks, i)));
     }
 }
 
@@ -437,6 +448,18 @@ flatpak_bwrap_add_runtime_dir_member (FlatpakBwrap *bwrap,
   g_ptr_array_add (bwrap->runtime_dir_members, g_strdup (name));
 }
 
+void
+flatpak_bwrap_add_runtime_dir_export_symlink (FlatpakBwrap *bwrap,
+                                              const char   *member,
+                                              const char   *target)
+{
+  if (bwrap->runtime_dir_export_symlinks == NULL)
+    bwrap->runtime_dir_export_symlinks = g_ptr_array_new_with_free_func (g_free);
+
+  g_ptr_array_add (bwrap->runtime_dir_export_symlinks, g_strdup (member));
+  g_ptr_array_add (bwrap->runtime_dir_export_symlinks, g_strdup (target));
+}
+
 static void
 expect_symlink (int         dirfd,
                 const char *member,
@@ -537,6 +560,28 @@ flatpak_bwrap_populate_runtime_dir (FlatpakBwrap *bwrap,
         {
           const char *member = g_ptr_array_index (bwrap->runtime_dir_members, i);
           g_autofree char *target = g_strdup_printf ("../../flatpak/%s", member);
+
+          if (runtime_dir_fd >= 0)
+            {
+              expect_symlink (runtime_dir_fd, member, target);
+            }
+          else
+            {
+              flatpak_bwrap_add_arg (bwrap, "--symlink");
+              flatpak_bwrap_add_arg (bwrap, target);
+              flatpak_bwrap_add_arg_printf (bwrap, "/run/user/%d/%s", getuid (), member);
+            }
+        }
+    }
+
+  if (bwrap->runtime_dir_export_symlinks != NULL)
+    {
+      gsize i;
+
+      for (i = 0; i < bwrap->runtime_dir_export_symlinks->len; i += 2)
+        {
+          const char *member = g_ptr_array_index (bwrap->runtime_dir_export_symlinks, i);
+          const char *target = g_ptr_array_index (bwrap->runtime_dir_export_symlinks, i + 1);
 
           if (runtime_dir_fd >= 0)
             {
