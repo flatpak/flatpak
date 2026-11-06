@@ -37,4 +37,28 @@ assert_file_has_content "${test_tmpdir}/spawn-output-notify" "ok"
 
 ok "spawn with notify-start"
 
+# Use a real runtime caller so the portal reads [Runtime] metadata through
+# /proc, rather than the mock application identity used by test-portal.
+if run_with_sandboxed_bus_for "runtime/org.test.Platform/${ARCH}/master" \
+    "${test_builddir}/test-spawn" bash -c 'exit 0' > runtime-spawn.out 2>&1; then
+    assert_not_reached "runtime spawn without --sandbox succeeded"
+fi
+assert_file_has_content runtime-spawn.out "Runtime callers must use a sandbox"
+ok "runtime spawn requires sandbox"
+
+touch "${test_tmpdir}/runtime-parent-only"
+parent_network_namespace=$(readlink /proc/self/ns/net)
+run_with_sandboxed_bus_for "runtime/org.test.Platform/${ARCH}/master" \
+    "${test_builddir}/test-spawn" --sandbox bash -ec "
+        case \"\$(cat /.flatpak-info)\" in
+            *'sandbox=true'*) ;;
+            *) exit 1 ;;
+        esac
+        test ! -e '${test_tmpdir}/runtime-parent-only'
+        test ! -S '/run/user/$(id -u)/bus'
+        test \"\$(readlink /proc/self/ns/net)\" != '${parent_network_namespace}'
+    " > runtime-spawn.out
+assert_file_has_content runtime-spawn.out "spawn-exited.*status=0$"
+ok "runtime spawn preserves sandbox isolation"
+
 done_testing

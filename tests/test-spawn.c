@@ -5,9 +5,12 @@
 #include "portal/flatpak-portal-dbus.h"
 
 static gboolean opt_notify_start;
+static gboolean opt_sandbox;
 static const char *opt_write_after_start;
 
 static GOptionEntry options[] = {
+  { "sandbox", 0, 0, G_OPTION_ARG_NONE, &opt_sandbox,
+    "Pass FLATPAK_SPAWN_FLAGS_SANDBOX", NULL },
   { "notify-start", 0, 0, G_OPTION_ARG_NONE, &opt_notify_start,
     "Pass FLATPAK_SPAWN_FLAGS_NOTIFY_START", NULL },
   { "write-after-start", 0, 0, G_OPTION_ARG_STRING, &opt_write_after_start,
@@ -93,6 +96,8 @@ main (int argc, char *argv[])
 
   if (opt_notify_start)
     flags |= FLATPAK_SPAWN_FLAGS_NOTIFY_START;
+  if (opt_sandbox)
+    flags |= FLATPAK_SPAWN_FLAGS_SANDBOX;
 
   connection = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, &error);
   if (connection == NULL)
