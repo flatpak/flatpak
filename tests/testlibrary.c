@@ -4746,6 +4746,130 @@ test_install_flatpakref (void)
 
 /* test the installation method to list installed related refs */
 static void
+test_list_installed_related_refs_origins (gconstpointer test_data)
+{
+  int flags = GPOINTER_TO_INT (test_data);
+  gboolean subdirectories = (flags & 1) != 0;
+  gboolean different_origin = (flags & 2) != 0;
+  const char *name = subdirectories ? "org.test.Hello.Plugin.fun" : "org.test.Hello.Locale";
+  const char *branch = subdirectories ? "v1" : "master";
+  const char *origin = different_origin ? "test-without-runtime-repo" : repo_name;
+  g_autoptr(FlatpakInstallation) inst = NULL;
+  g_autoptr(FlatpakTransaction) transaction = NULL;
+  g_autoptr(FlatpakInstalledRef) installed_ref = NULL;
+  g_autoptr(GPtrArray) refs = NULL;
+  g_autoptr(GError) error = NULL;
+  g_autofree char *app = g_strdup_printf ("app/org.test.Hello/%s/master", flatpak_get_default_arch ());
+  g_autofree char *extension = g_strdup_printf ("runtime/%s/%s/%s", name, flatpak_get_default_arch (), branch);
+  gboolean res;
+
+  inst = flatpak_installation_new_user (NULL, &error);
+  g_assert_no_error (error);
+  empty_installation (inst);
+  add_remote_user ("test-without-runtime", NULL);
+  flatpak_installation_drop_caches (inst, NULL, &error);
+  g_assert_no_error (error);
+
+  transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
+  g_assert_no_error (error);
+  flatpak_transaction_set_disable_related (transaction, TRUE);
+  res = flatpak_transaction_add_install (transaction, repo_name, app, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+  res = flatpak_transaction_run (transaction, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+  g_clear_object (&transaction);
+
+  refs = flatpak_installation_list_installed_related_refs_sync (inst, repo_name, app, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_cmpuint (refs->len, ==, 0);
+  g_clear_pointer (&refs, g_ptr_array_unref);
+
+  /* Preserve support for refs pulled from the parent's remote but not yet
+   * deployed, as used by NO_PULL callers. */
+  transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
+  g_assert_no_error (error);
+  flatpak_transaction_set_no_deploy (transaction, TRUE);
+  flatpak_transaction_set_disable_related (transaction, TRUE);
+  res = flatpak_transaction_add_install (transaction, origin, extension, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+  res = flatpak_transaction_run (transaction, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+  g_clear_object (&transaction);
+
+  refs = flatpak_installation_list_installed_related_refs_sync (inst, repo_name, app, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_cmpuint (refs->len, ==, different_origin ? 0 : 1);
+  g_clear_pointer (&refs, g_ptr_array_unref);
+
+  transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
+  g_assert_no_error (error);
+  flatpak_transaction_set_no_pull (transaction, TRUE);
+  flatpak_transaction_set_disable_related (transaction, TRUE);
+  res = flatpak_transaction_add_install (transaction, origin, extension, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+  res = flatpak_transaction_run (transaction, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_true (res);
+
+  installed_ref = flatpak_installation_get_installed_ref (inst, FLATPAK_REF_KIND_RUNTIME,
+                                                          name, NULL, branch, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_cmpstr (flatpak_installed_ref_get_origin (installed_ref), ==, origin);
+
+  for (size_t step = 0; step < (different_origin ? 3 : 1); step++)
+    {
+      FlatpakRelatedRef *related;
+      g_autofree char *related_ref = NULL;
+
+      if (step == 1)
+        {
+          /* A cached ref from the parent's remote must not override the
+           * extension's own origin, nor cause duplicate subdirectory refs. */
+          g_autoptr(GFile) installation_path = flatpak_installation_get_path (inst);
+          g_autofree char *repo_arg = g_strdup_printf ("--repo=%s/repo", g_file_peek_path (installation_path));
+          const char *argv[] = { "ostree", repo_arg, "pull", repo_name, extension, NULL };
+
+          run_test_subprocess ((char **) argv, RUN_TEST_SUBPROCESS_DEFAULT);
+        }
+      else if (step == 2)
+        {
+          const char *argv[] = { "flatpak", "remote-delete", "--user", "--force", origin, NULL };
+
+          run_test_subprocess ((char **) argv, RUN_TEST_SUBPROCESS_DEFAULT);
+        }
+
+      flatpak_installation_drop_caches (inst, NULL, &error);
+      g_assert_no_error (error);
+      refs = flatpak_installation_list_installed_related_refs_sync (inst, repo_name, app, NULL, &error);
+      g_assert_no_error (error);
+      g_assert_cmpuint (refs->len, ==, 1);
+      related = g_ptr_array_index (refs, 0);
+      related_ref = flatpak_ref_format_ref (FLATPAK_REF (related));
+      g_assert_cmpstr (related_ref, ==, extension);
+      g_assert_cmpstr (flatpak_ref_get_commit (FLATPAK_REF (related)), ==,
+                       flatpak_ref_get_commit (FLATPAK_REF (installed_ref)));
+      g_assert_true (flatpak_related_ref_should_download (related));
+      g_assert_true (flatpak_related_ref_should_delete (related));
+      g_clear_pointer (&refs, g_ptr_array_unref);
+    }
+
+  empty_installation (inst);
+  if (!different_origin)
+    remove_remote_user ("test-without-runtime-repo");
+  else
+    {
+      res = flatpak_installation_remove_local_ref_sync (inst, repo_name, extension, NULL, &error);
+      g_assert_no_error (error);
+      g_assert_true (res);
+    }
+}
+
+static void
 test_list_installed_related_refs (void)
 {
   g_autoptr(FlatpakInstallation) inst = NULL;
@@ -5222,6 +5346,10 @@ main (int argc, char *argv[])
   g_test_add_func ("/library/install-bundle", test_install_bundle);
   g_test_add_func ("/library/install-flatpakref", test_install_flatpakref);
   g_test_add_func ("/library/list-installed-related-refs", test_list_installed_related_refs);
+  g_test_add_data_func ("/library/list-installed-related-origins/same/exact", GINT_TO_POINTER (0), test_list_installed_related_refs_origins);
+  g_test_add_data_func ("/library/list-installed-related-origins/same/subdirectories", GINT_TO_POINTER (1), test_list_installed_related_refs_origins);
+  g_test_add_data_func ("/library/list-installed-related-origins/different/exact", GINT_TO_POINTER (2), test_list_installed_related_refs_origins);
+  g_test_add_data_func ("/library/list-installed-related-origins/different/subdirectories", GINT_TO_POINTER (3), test_list_installed_related_refs_origins);
   g_test_add_func ("/library/update-related-refs", test_update_related_refs);
   g_test_add_func ("/library/update-installed-ref-if-missing-runtime", test_update_installed_ref_if_missing_runtime);
   g_test_add_func ("/library/no-deploy", test_no_deploy);

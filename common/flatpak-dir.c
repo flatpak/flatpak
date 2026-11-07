@@ -17591,7 +17591,8 @@ local_match_prefix (FlatpakDir        *self,
   return matches;
 }
 
-/* Finds all the locally installed ref related to ref, if remote_name is set it is limited to refs from that remote */
+/* Finds locally deployed refs related to ref, regardless of their origin.
+ * If remote_name is set, also include undeployed refs pulled from that remote. */
 GPtrArray *
 flatpak_dir_find_local_related_for_metadata (FlatpakDir        *self,
                                              FlatpakDecomposed *ref,
@@ -17660,29 +17661,33 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir        *self,
               g_autofree char *checksum = NULL;
               g_autoptr(GBytes) deploy_data = NULL;
               const char *branch = branches[branch_i];
+              const char *extension_remote = remote_name;
 
               extension_ref = flatpak_decomposed_new_from_parts (FLATPAK_KINDS_RUNTIME,
                                                                  extension, ref_arch, branch, NULL);
               if (extension_ref == NULL)
                 continue;
 
+              deploy_data = flatpak_dir_get_deploy_data (self, extension_ref,
+                                                         FLATPAK_DEPLOY_VERSION_ANY,
+                                                         NULL, NULL);
+              if (deploy_data != NULL)
+                extension_remote = flatpak_deploy_data_get_origin (deploy_data);
+
               if (remote_name != NULL &&
                   flatpak_repo_resolve_rev (self->repo,
                                             NULL,
-                                            remote_name,
+                                            extension_remote,
                                             flatpak_decomposed_get_ref (extension_ref),
                                             FALSE,
                                             &checksum,
                                             NULL,
                                             NULL))
                 {
-                  add_related (self, related, remote_name, extension, extension_ref,
+                  add_related (self, related, extension_remote, extension, extension_ref,
                                checksum, no_autodownload, download_if, autoprune_unless, autodelete, locale_subset);
                 }
-              else if ((deploy_data = flatpak_dir_get_deploy_data (self, extension_ref,
-                                                                   FLATPAK_DEPLOY_VERSION_ANY,
-                                                                   NULL, NULL)) != NULL &&
-                       (remote_name == NULL || g_strcmp0 (flatpak_deploy_data_get_origin (deploy_data), remote_name) == 0))
+              else if (deploy_data != NULL)
                 {
                   /* Here we're including extensions that are deployed but might
                    * not have a ref in the repo, as happens with remote-delete
@@ -17720,9 +17725,14 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir        *self,
                           while (g_hash_table_iter_next (&iter, &key, NULL))
                             {
                               const char *refspec = key;
+                              g_autofree char *ref_name = NULL;
                               g_autoptr(FlatpakDecomposed) decomposed = NULL;
 
-                              decomposed = flatpak_decomposed_new_from_refspec (refspec, NULL);
+                              /* Match deployed refs by ref, not by refspec, so
+                               * a pulled and deployed extension is listed once. */
+                              if (!ostree_parse_refspec (refspec, NULL, &ref_name, NULL))
+                                continue;
+                              decomposed = flatpak_decomposed_new_from_ref (ref_name, NULL);
                               if (decomposed != NULL)
                                 g_hash_table_add (all_decomposed_for_remote, g_steal_pointer (&decomposed));
                             }
@@ -17734,24 +17744,28 @@ flatpak_dir_find_local_related_for_metadata (FlatpakDir        *self,
                     {
                       g_autofree char *match_checksum = NULL;
                       g_autoptr(GBytes) match_deploy_data = NULL;
+                      const char *match_remote = remote_name;
+
+                      match_deploy_data = flatpak_dir_get_deploy_data (self, match,
+                                                                       FLATPAK_DEPLOY_VERSION_ANY,
+                                                                       NULL, NULL);
+                      if (match_deploy_data != NULL)
+                        match_remote = flatpak_deploy_data_get_origin (match_deploy_data);
 
                       if (remote_name != NULL &&
                           flatpak_repo_resolve_rev (self->repo,
                                                     NULL,
-                                                    remote_name,
+                                                    match_remote,
                                                     flatpak_decomposed_get_ref (match),
                                                     FALSE,
                                                     &match_checksum,
                                                     NULL,
                                                     NULL))
                         {
-                          add_related (self, related, remote_name, extension, match, match_checksum,
+                          add_related (self, related, match_remote, extension, match, match_checksum,
                                        no_autodownload, download_if, autoprune_unless, autodelete, locale_subset);
                         }
-                      else if ((match_deploy_data = flatpak_dir_get_deploy_data (self, match,
-                                                                                 FLATPAK_DEPLOY_VERSION_ANY,
-                                                                                 NULL, NULL)) != NULL &&
-                               (remote_name == NULL || g_strcmp0 (flatpak_deploy_data_get_origin (match_deploy_data), remote_name) == 0))
+                      else if (match_deploy_data != NULL)
                         {
                           /* Here again we're including extensions that are deployed but might
                            * not have a ref in the repo
