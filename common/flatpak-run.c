@@ -3219,6 +3219,7 @@ finalize_instance_dir (const char *instance_id,
 gboolean
 flatpak_run_app (FlatpakDecomposed   *app_ref,
                  FlatpakDeploy       *app_deploy,
+                 FlatpakDeploy       *selected_runtime_deploy,
                  int                  custom_app_fd,
                  FlatpakContext      *extra_context,
                  const char          *custom_runtime,
@@ -3407,7 +3408,12 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
   else
     runtime_ref = flatpak_decomposed_ref (default_runtime);
 
-  runtime_deploy = flatpak_find_deploy_for_ref (flatpak_decomposed_get_ref (runtime_ref), custom_runtime_commit, NULL, cancellable, error);
+  /* Reuse the CLI's runtime deployment unless an override changes the ref. */
+  if (selected_runtime_deploy != NULL &&
+      flatpak_decomposed_equal (runtime_ref, default_runtime))
+    runtime_deploy = g_object_ref (selected_runtime_deploy);
+  else
+    runtime_deploy = flatpak_find_deploy_for_ref (flatpak_decomposed_get_ref (runtime_ref), custom_runtime_commit, NULL, cancellable, error);
   if (runtime_deploy == NULL)
     return FALSE;
 

@@ -707,6 +707,7 @@ flatpak_installation_launch_full (FlatpakInstallation *self,
 
   if (!flatpak_run_app (app_ref,
                         app_deploy,
+                        NULL,
                         FLATPAK_RUN_APP_DEPLOY_APP_ORIGINAL,
                         NULL,
                         NULL, NULL, NULL,
