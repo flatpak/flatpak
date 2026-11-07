@@ -34,6 +34,9 @@
 
 #define FLATPAK_ANSI_ROW_N "\x1b[%d;1H"
 #define FLATPAK_ANSI_CLEAR "\x1b[0J"
+/* DEC private mode 2026 */
+#define FLATPAK_ANSI_SYNC_START "\x1b[?2026h"
+#define FLATPAK_ANSI_SYNC_END "\x1b[?2026l"
 
 gboolean flatpak_set_tty_echo (gboolean echo);
 void flatpak_get_window_size (int *rows,
