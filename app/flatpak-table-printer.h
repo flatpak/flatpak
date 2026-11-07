@@ -67,6 +67,14 @@ void                flatpak_table_printer_print_full (FlatpakTablePrinter *print
                                                       int                  columns,
                                                       int                 *table_height,
                                                       int                 *table_width);
+void                flatpak_table_printer_print_to_string (FlatpakTablePrinter *printer,
+                                                           GString             *out);
+void                flatpak_table_printer_print_full_to_string (FlatpakTablePrinter *printer,
+                                                                int                  skip,
+                                                                int                  columns,
+                                                                int                 *table_height,
+                                                                int                 *table_width,
+                                                                GString             *out);
 int                 flatpak_table_printer_get_current_row (FlatpakTablePrinter *printer);
 void                flatpak_table_printer_set_cell (FlatpakTablePrinter *printer,
                                                     int                  row,
