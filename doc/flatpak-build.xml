@@ -392,9 +392,12 @@ key=v1;v2;
                 <term><option>--readonly</option></term>
 
                 <listitem><para>
-                  Mount the normally writable destination directories read-only. This can
-                  be useful if you want to run something in the sandbox but guarantee that
-                  it doesn't affect the build results. For example tests.
+                  Mount the application's <filename>/app</filename> and any local SDK
+                  at <filename>/usr</filename> read-only. See <option>--sdk-dir</option>.
+                  The installed SDK is already read-only. Extension build destinations
+                  under <filename>/app</filename> or <filename>/usr</filename> and
+                  persistent <filename>/var/lib</filename> and <filename>/var/tmp</filename>
+                  remain writable.
                 </para></listitem>
             </varlistentry>
 
