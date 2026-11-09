@@ -129,7 +129,8 @@ flatpak_run_add_gpg_agent_args (FlatpakBwrap *bwrap)
 
   if (!agent_socket || gpgconf_error)
     {
-      g_info ("GPG-Agent directories: %s", gpgconf_error->message);
+      g_info ("GPG-Agent directories: %s",
+              gpgconf_error ? gpgconf_error->message : "No agent socket returned by gpgconf");
       return;
     }
 
