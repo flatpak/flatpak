@@ -220,6 +220,14 @@ assert_file_has_content fpi '^name=org\.test\.Hello$'
 
 ok "flatpak-info"
 
+assert_not_file_has_content fpi '^no-session-bus='
+assert_not_file_has_content fpi '^no-a11y-bus='
+ARGS="--no-session-bus --no-a11y-bus" run_sh org.test.Hello cat "/run/user/$(id -u)/flatpak-info" > fpi-no-bus
+assert_file_has_content fpi-no-bus '^no-session-bus=true$'
+assert_file_has_content fpi-no-bus '^no-a11y-bus=true$'
+
+ok "flatpak-info with --no-session-bus and --no-a11y-bus"
+
 run_sh org.test.Hello readlink /proc/self/ns/net > unshared_net_ns
 ARGS="--share=network" run_sh org.test.Hello readlink /proc/self/ns/net > shared_net_ns
 assert_not_streq `cat unshared_net_ns` `readlink /proc/self/ns/net`

@@ -1510,6 +1510,7 @@ flatpak_run_add_app_info_args (FlatpakBwrap           *bwrap,
                                FlatpakContext         *final_app_context,
                                FlatpakContext         *cmdline_context,
                                FlatpakContextSockets   sockets,
+                               FlatpakRunFlags         run_flags,
                                gboolean                sandbox,
                                gboolean                build,
                                gboolean                devel,
@@ -1633,6 +1634,15 @@ flatpak_run_add_app_info_args (FlatpakBwrap           *bwrap,
   if ((sockets & FLATPAK_CONTEXT_SOCKET_SYSTEM_BUS) == 0)
     g_key_file_set_boolean (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
                             FLATPAK_METADATA_KEY_SYSTEM_BUS_PROXY, TRUE);
+
+  if ((sockets & FLATPAK_CONTEXT_SOCKET_SESSION_BUS) == 0 &&
+      (run_flags & FLATPAK_RUN_FLAG_NO_SESSION_BUS_PROXY) != 0)
+    g_key_file_set_boolean (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
+                            FLATPAK_METADATA_KEY_NO_SESSION_BUS, TRUE);
+
+  if ((run_flags & FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY) != 0)
+    g_key_file_set_boolean (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
+                            FLATPAK_METADATA_KEY_NO_A11Y_BUS, TRUE);
 
   if (sandbox)
     g_key_file_set_boolean (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
@@ -3827,7 +3837,7 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
                                       runtime_files, original_runtime_files, runtime_deploy_data, runtime_extensions,
                                       app_id, flatpak_decomposed_get_branch (app_ref),
                                       runtime_ref, app_id_dir,
-                                      app_context, extra_context, sockets,
+                                      app_context, extra_context, sockets, flags,
                                       sandboxed, FALSE, flags & FLATPAK_RUN_FLAG_DEVEL,
                                       &app_info_path,
                                       &instance_id_host_dir, &instance_id_host_private_dir,
