@@ -4343,14 +4343,14 @@ test_instance (void)
   runtime = g_strdup_printf ("runtime/org.test.Platform/%s/master",
                              flatpak_get_default_arch ());
 
-  update_test_app ();
-  update_repo ("test");
-
   if (!check_bwrap_support ())
     {
       g_test_skip ("bwrap not supported");
       return;
     }
+
+  update_test_app ();
+  update_repo ("test");
 
   inst = flatpak_installation_new_user (NULL, &error);
   g_assert_no_error (error);
