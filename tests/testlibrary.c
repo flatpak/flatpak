@@ -4338,6 +4338,7 @@ test_instance (void)
   g_autofree char *app = NULL;
   g_autofree char *runtime = NULL;
   TestInstanceContext context = { NULL, 0, 0, FALSE };
+  int child_pid;
   g_autofree char *data_dir = NULL;
   g_autofree char *fifo = NULL;
 
@@ -4422,9 +4423,41 @@ test_instance (void)
   g_assert_cmpstr (flatpak_instance_get_runtime (instance), ==, runtime);
   g_assert_nonnull (flatpak_instance_get_runtime_commit (instance));
   g_assert_cmpint (flatpak_instance_get_pid (instance), >, 0);
-  while (flatpak_instance_get_child_pid (instance) == 0)
+  while ((child_pid = flatpak_instance_get_child_pid (instance)) == 0)
     g_usleep (10000);
-  g_assert_cmpint (flatpak_instance_get_child_pid (instance), >, 0);
+  g_assert_cmpint (child_pid, >, 0);
+  g_assert_cmpint (child_pid, !=, flatpak_instance_get_pid (instance));
+
+  {
+    g_autofree char *status_path = g_strdup_printf ("/proc/%d/status", child_pid);
+    g_autofree char *status = NULL;
+    g_auto(GStrv) lines = NULL;
+    gboolean found_nspid = FALSE;
+
+    g_file_get_contents (status_path, &status, NULL, &error);
+    g_assert_no_error (error);
+    lines = g_strsplit (status, "\n", -1);
+
+    for (size_t j = 0; lines[j] != NULL; j++)
+      {
+        if (g_str_has_prefix (lines[j], "NSpid:"))
+          {
+            g_auto(GStrv) pids = g_strsplit (g_strstrip (lines[j] + strlen ("NSpid:")), "\t", -1);
+            size_t n_pids = g_strv_length (pids);
+
+            /* This launch creates a PID namespace: the getter identifies its
+             * init process, not the application command that it supervises. */
+            g_assert_cmpuint (n_pids, >=, 2);
+            g_assert_cmpint (g_ascii_strtoll (pids[0], NULL, 10), ==, child_pid);
+            g_assert_cmpint (g_ascii_strtoll (pids[n_pids - 1], NULL, 10), ==, 1);
+            found_nspid = TRUE;
+            break;
+          }
+      }
+
+    if (!found_nspid)
+      g_test_skip ("Kernel does not expose NSpid in /proc/PID/status");
+  }
 
   context.loop = g_main_loop_new (NULL, FALSE);
 
