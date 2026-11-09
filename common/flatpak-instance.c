@@ -268,14 +268,19 @@ static int get_child_pid (const char *dir);
  * flatpak_instance_get_child_pid:
  * @self: a #FlatpakInstance
  *
- * Gets the PID of the application process in the sandbox.
+ * Gets the host PID of the sandbox's initial process. This is normally
+ * bubblewrap's supervisor process, not the application process.
  *
- * See flatpak_instance_get_pid().
+ * This process has PID 1 inside a dedicated PID namespace, but can have
+ * another PID in a shared namespace. This function always returns the host PID.
  *
- * Note that this function may return 0 immediately after launching
- * a sandbox, for a short amount of time.
+ * See flatpak_instance_get_pid() for the outer bubblewrap process.
  *
- * Returns: the application process PID
+ * Returns 0 if the PID is unavailable, such as during startup. A nonzero
+ * PID does not guarantee that the application has started or that the process
+ * is still running.
+ *
+ * Returns: the sandbox's initial process PID on the host, or 0 if unavailable
  *
  * Since: 1.1
  */
