@@ -81,6 +81,9 @@ echo "Hello world, from a sandbox$EXTRA"
 if [ "$EXTRA" = "SPIN" ]; then
   exec sh
 fi
+if [ "$EXTRA" = "INSTANCE" ]; then
+  exec cat /var/data/instance-fifo
+fi
 EOF
 chmod a+x ${DIR}/files/bin/hello.sh
 
