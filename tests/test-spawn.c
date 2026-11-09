@@ -6,12 +6,15 @@
 
 static gboolean opt_notify_start;
 static const char *opt_write_after_start;
+static gint opt_sandbox_flags = -1;
 
 static GOptionEntry options[] = {
   { "notify-start", 0, 0, G_OPTION_ARG_NONE, &opt_notify_start,
     "Pass FLATPAK_SPAWN_FLAGS_NOTIFY_START", NULL },
   { "write-after-start", 0, 0, G_OPTION_ARG_STRING, &opt_write_after_start,
     "Write 'done\\n' to the given path after SpawnStarted is received", NULL },
+  { "sandbox-flags", 0, 0, G_OPTION_ARG_INT, &opt_sandbox_flags,
+    "Pass FLATPAK_SPAWN_FLAGS_SANDBOX and these sandbox flags", "FLAGS" },
   { NULL }
 };
 
@@ -73,6 +76,7 @@ main (int argc, char *argv[])
   g_autoptr(GMainLoop) loop = NULL;
   g_autoptr(GError) error = NULL;
   guint flags = FLATPAK_SPAWN_FLAGS_NONE;
+  GVariant *spawn_options;
   SpawnData data = { NULL, FALSE };
   guint pid;
 
@@ -118,13 +122,24 @@ main (int argc, char *argv[])
   if (opt_notify_start)
     g_signal_connect (portal, "spawn-started", G_CALLBACK (spawn_started_cb), &data);
 
+  if (opt_sandbox_flags >= 0)
+    {
+      flags |= FLATPAK_SPAWN_FLAGS_SANDBOX;
+      spawn_options = g_variant_new_parsed ("{'sandbox-flags': <%u>}",
+                                            (guint32) opt_sandbox_flags);
+    }
+  else
+    {
+      spawn_options = g_variant_new ("a{sv}", NULL);
+    }
+
   if (!portal_flatpak_call_spawn_sync (portal,
                                        "/",   /* cwd */
                                        (const char * const *) &argv[1],
                                        g_variant_new ("a{uh}", NULL),
                                        g_variant_new ("a{ss}", NULL),
                                        flags,
-                                       g_variant_new ("a{sv}", NULL),
+                                       spawn_options,
                                        NULL, /* fd list */
                                        &pid,
                                        &fds_out,
