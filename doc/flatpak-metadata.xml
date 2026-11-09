@@ -894,6 +894,22 @@ sockets=!x11;x11;if:x11:!has-wayland;
                         intended? -->
                     </para></listitem>
                 </varlistentry>
+                <varlistentry>
+                    <term><option>no-session-bus</option> (boolean)</term>
+                    <listitem><para>
+                        True if the D-Bus session bus was disabled for this
+                        app, as with <option>--no-session-bus</option>.
+                        Available since 1.19.3.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>no-a11y-bus</option> (boolean)</term>
+                    <listitem><para>
+                        True if the accessibility bus was disabled for this
+                        app, as with <option>--no-a11y-bus</option>.
+                        Available since 1.19.3.
+                    </para></listitem>
+                </varlistentry>
             </variablelist>
         </refsect2>
         <refsect2 id="session-bus-policy-metadata">
