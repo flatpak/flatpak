@@ -1,6 +1,7 @@
 #include "config.h"
 
 #include <string.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
@@ -4337,6 +4338,8 @@ test_instance (void)
   g_autofree char *app = NULL;
   g_autofree char *runtime = NULL;
   TestInstanceContext context = { NULL, 0, 0, FALSE };
+  g_autofree char *data_dir = NULL;
+  g_autofree char *fifo = NULL;
 
   app = g_strdup_printf ("app/org.test.Hello/%s/master",
                          flatpak_get_default_arch ());
@@ -4349,8 +4352,18 @@ test_instance (void)
       return;
     }
 
-  update_test_app ();
-  update_repo ("test");
+  {
+    g_autofree char *script = g_test_build_filename (G_TEST_DIST, "make-test-app.sh", NULL);
+    char *argv[] = { script, "repos/test", "", "master", repo_collection_id, "INSTANCE", NULL };
+
+    run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
+    update_repo ("test");
+  }
+
+  data_dir = g_build_filename (g_get_home_dir (), ".var", "app", "org.test.Hello", "data", NULL);
+  g_assert_cmpint (g_mkdir_with_parents (data_dir, 0700), ==, 0);
+  fifo = g_build_filename (data_dir, "instance-fifo", NULL);
+  g_assert_no_errno (mkfifo (fifo, 0600));
 
   inst = flatpak_installation_new_user (NULL, &error);
   g_assert_no_error (error);
@@ -4434,6 +4447,7 @@ test_instance (void)
 
   g_assert_true (context.hello_dead);
   g_assert_false (flatpak_instance_is_running (instance));
+  g_assert_no_errno (unlink (fifo));
 
   transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
   g_assert_no_error (error);

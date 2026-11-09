@@ -12,15 +12,15 @@ setup_repo
 ${FLATPAK} ${U} install -y test-repo org.test.Hello >&2
 
 # delete the object for files/bin/hello.sh
-rm ${FL_DIR}/repo/objects/0d/30582c0ac8a2f89f23c0f62e548ba7853f5285d21848dd503460a567b5d253.file
+rm ${FL_DIR}/repo/objects/32/528a71363ad13e31c767c1a9fec19e0d26713dab1b577ede2c43d1cd977220.file
 
 # dry run repair shouldn't replace the missing file
 ${FLATPAK} ${U} repair --dry-run >&2
-assert_not_has_file ${FL_DIR}/repo/objects/0d/30582c0ac8a2f89f23c0f62e548ba7853f5285d21848dd503460a567b5d253.file
+assert_not_has_file ${FL_DIR}/repo/objects/32/528a71363ad13e31c767c1a9fec19e0d26713dab1b577ede2c43d1cd977220.file
 
 # normal repair should replace the missing file
 ${FLATPAK} ${U} repair >&2
-assert_has_file ${FL_DIR}/repo/objects/0d/30582c0ac8a2f89f23c0f62e548ba7853f5285d21848dd503460a567b5d253.file
+assert_has_file ${FL_DIR}/repo/objects/32/528a71363ad13e31c767c1a9fec19e0d26713dab1b577ede2c43d1cd977220.file
 
 # app should've been reinstalled
 ${FLATPAK} ${U} list -d > list-log
