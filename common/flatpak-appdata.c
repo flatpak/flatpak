@@ -43,7 +43,6 @@ typedef struct
   gboolean   in_text;
   gboolean   in_component;
   gboolean   in_content_rating;
-  gboolean   in_developer;
   char      *lang;
   guint64    timestamp;
   const char *id;  /* interned */
@@ -108,6 +107,8 @@ start_element (GMarkupParseContext *context,
                GError             **error)
 {
   ParserData *data = user_data;
+  const GSList *elements = g_markup_parse_context_get_element_stack (context);
+  const char *parent = elements->next ? elements->next->data : NULL;
 
   g_string_truncate (data->text, 0);
   g_clear_pointer (&data->lang, g_free);
@@ -120,7 +121,7 @@ start_element (GMarkupParseContext *context,
     {
       data->in_text = TRUE;
     }
-  else if ((!data->in_developer && g_str_equal (element_name, "name")) ||
+  else if ((g_strcmp0 (parent, "component") == 0 && g_str_equal (element_name, "name")) ||
            g_str_equal (element_name, "summary"))
     {
       const char *lang = NULL;
@@ -264,10 +265,6 @@ start_element (GMarkupParseContext *context,
           g_warning ("Ignoring content attribute missing id attribute");
         }
     }
-  else if (g_str_equal (element_name, "developer"))
-    {
-      data->in_developer = TRUE;
-    }
 }
 
 static void
@@ -304,7 +301,7 @@ end_element (GMarkupParseContext *context,
       if (parent != NULL && g_str_equal (parent, "component"))
         component->id = g_steal_pointer (&text);
     }
-  else if (!data->in_developer && g_str_equal (element_name, "name"))
+  else if (g_strcmp0 (parent, "component") == 0 && g_str_equal (element_name, "name"))
     {
       g_hash_table_insert (component->names, g_steal_pointer (&data->lang), g_steal_pointer (&text));
     }
@@ -325,10 +322,6 @@ end_element (GMarkupParseContext *context,
       /* https://www.freedesktop.org/software/appstream/docs/chap-Metadata.html#tag-content_rating */
       if (component->content_rating != NULL)
         g_hash_table_insert (component->content_rating, (gpointer) data->id, (gpointer) g_intern_string (text));
-    }
-  else if (g_str_equal (element_name, "developer"))
-    {
-      data->in_developer = FALSE;
     }
 }
 

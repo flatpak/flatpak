@@ -740,6 +740,55 @@ test_parse_appdata (void)
 }
 
 static void
+test_parse_appdata_nested_names (void)
+{
+  const char *cases[] = {
+    "<agreement type=\"eula\">"
+    "  <name>Agreement</name>"
+    "  <name xml:lang=\"de\">Vereinbarung</name>"
+    "</agreement>",
+    "<agreement type=\"eula\">"
+    "  <agreement_section>"
+    "    <name>Terms</name>"
+    "  </agreement_section>"
+    "  <agreement_section>"
+    "    <name>Usage data</name>"
+    "    <name xml:lang=\"de\">Nutzungsdaten</name>"
+    "    <name xml:lang=\"vi\">Dữ liệu sử dụng</name>"
+    "  </agreement_section>"
+    "</agreement>",
+    "<developer id=\"org.test\">"
+    "  <name>Developer</name>"
+    "  <name xml:lang=\"de\">Entwickler</name>"
+    "</developer>",
+  };
+
+  for (size_t i = 0; i < G_N_ELEMENTS (cases); i++)
+    {
+      g_autofree char *appdata = g_strdup_printf (
+        "<component type=\"desktop-application\">"
+        "  <id>org.test.Hello</id>"
+        "  %s"
+        "  <name>Hello</name>"
+        "  <name xml:lang=\"de\">Hallo</name>"
+        "  %s"
+        "  <summary>Print a greeting</summary>"
+        "</component>", cases[i], cases[i]);
+      g_autoptr(GHashTable) names = NULL;
+      g_autoptr(GHashTable) comments = NULL;
+      g_autofree char *version = NULL;
+      g_autofree char *license = NULL;
+
+      g_assert_true (flatpak_parse_appdata (appdata, "org.test.Hello", &names, &comments,
+                                          &version, &license, NULL, NULL));
+      g_assert_cmpstr (g_hash_table_lookup (names, "C"), ==, "Hello");
+      g_assert_cmpstr (g_hash_table_lookup (names, "de"), ==, "Hallo");
+      g_assert_cmpuint (g_hash_table_size (names), ==, 2);
+      g_assert_cmpstr (g_hash_table_lookup (comments, "C"), ==, "Print a greeting");
+    }
+}
+
+static void
 test_name_matching (void)
 {
   gboolean res;
@@ -1453,6 +1502,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/common/levenshtein", test_levenshtein);
   g_test_add_func ("/common/subpaths-merge", test_subpaths_merge);
   g_test_add_func ("/common/appdata", test_parse_appdata);
+  g_test_add_func ("/common/appdata-nested-names", test_parse_appdata_nested_names);
   g_test_add_func ("/common/name-matching", test_name_matching);
   g_test_add_func ("/common/filter_parser", test_filter_parser);
   g_test_add_func ("/common/filter", test_filter);
