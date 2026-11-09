@@ -696,6 +696,8 @@ handle_spawn (PortalFlatpak         *object,
   gboolean share_pids;
   gboolean notify_start;
   gboolean devel;
+  gboolean no_session_bus;
+  gboolean no_a11y_bus;
   gboolean empty_app;
   g_autoptr(GString) env_string = g_string_new ("");
   const char *flatpak;
@@ -800,6 +802,10 @@ handle_spawn (PortalFlatpak         *object,
 
   devel = g_key_file_get_boolean (app_info, FLATPAK_METADATA_GROUP_INSTANCE,
                                   FLATPAK_METADATA_KEY_DEVEL, NULL);
+  no_session_bus = g_key_file_get_boolean (app_info, FLATPAK_METADATA_GROUP_INSTANCE,
+                                           FLATPAK_METADATA_KEY_NO_SESSION_BUS, NULL);
+  no_a11y_bus = g_key_file_get_boolean (app_info, FLATPAK_METADATA_GROUP_INSTANCE,
+                                        FLATPAK_METADATA_KEY_NO_A11Y_BUS, NULL);
 
   g_variant_lookup (arg_options, "sandbox-expose", "^as", &sandbox_expose);
   g_variant_lookup (arg_options, "sandbox-expose-ro", "^as", &sandbox_expose_ro);
@@ -1031,10 +1037,10 @@ handle_spawn (PortalFlatpak         *object,
               (g_strv_contains ((const char * const *) devices, "all")))
             g_ptr_array_add (flatpak_argv, g_strdup ("--device=all"));
         }
-      if (sandbox_flags & FLATPAK_SPAWN_SANDBOX_FLAGS_ALLOW_DBUS)
+      if ((sandbox_flags & FLATPAK_SPAWN_SANDBOX_FLAGS_ALLOW_DBUS) && !no_session_bus)
         g_ptr_array_add (flatpak_argv, g_strdup ("--session-bus"));
 
-      if (sandbox_flags & FLATPAK_SPAWN_SANDBOX_FLAGS_ALLOW_A11Y)
+      if ((sandbox_flags & FLATPAK_SPAWN_SANDBOX_FLAGS_ALLOW_A11Y) && !no_a11y_bus)
         {
           g_ptr_array_add (flatpak_argv, g_strdup ("--a11y-bus"));
 
@@ -1070,6 +1076,15 @@ handle_spawn (PortalFlatpak         *object,
               g_ptr_array_add (flatpak_argv, g_strdup (extra_args[i]));
             }
         }
+
+      /* --no-session-bus alone does not remove the session-bus socket */
+      if (no_session_bus)
+        {
+          g_ptr_array_add (flatpak_argv, g_strdup ("--nosocket=session-bus"));
+          g_ptr_array_add (flatpak_argv, g_strdup ("--no-session-bus"));
+        }
+      if (no_a11y_bus)
+        g_ptr_array_add (flatpak_argv, g_strdup ("--no-a11y-bus"));
     }
 
   /* Let the environment variables given by the caller override the ones
