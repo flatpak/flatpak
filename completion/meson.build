@@ -9,10 +9,9 @@ install_data(
   '_flatpak',
   install_dir : get_option('datadir') / 'zsh' / 'site-functions',
 )
-install_data(
-  'flatpak.fish',
-  install_dir : get_option('datadir') / 'fish' / 'vendor_completions.d',
-)
+
+# Do not install a fish completion here: fish ships a maintained
+# share/completions/flatpak.fish that is preferred over vendor_completions.d.
 
 install_data(
   'flatpak-coredumpctl',
