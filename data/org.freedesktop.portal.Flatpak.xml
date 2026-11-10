@@ -73,6 +73,10 @@
          This method lets you start a new instance of your
          application, optionally enabling a tighter sandbox.
 
+         Callers running a bare runtime, without an application, can also
+         start a new instance of that runtime. They must set the sandbox
+         flag (4); spawning without it is not supported for runtime callers.
+
          The following flags values are supported:
          <variablelist>
            <varlistentry>
