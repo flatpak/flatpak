@@ -34,6 +34,8 @@
 
 #define FLATPAK_ANSI_ROW_N "\x1b[%d;1H"
 #define FLATPAK_ANSI_CLEAR "\x1b[0J"
+#define FLATPAK_ANSI_SYNC_START "\x1b[?2026h"
+#define FLATPAK_ANSI_SYNC_END "\x1b[?2026l"
 
 gboolean flatpak_set_tty_echo (gboolean echo);
 void flatpak_get_window_size (int *rows,
@@ -45,6 +47,8 @@ void flatpak_show_cursor (void);
 
 void flatpak_enable_raw_mode (void);
 void flatpak_disable_raw_mode (void);
+
+void flatpak_print_unbuffered (GString *frame);
 
 void     flatpak_disable_fancy_output (void);
 void     flatpak_enable_fancy_output (void);
