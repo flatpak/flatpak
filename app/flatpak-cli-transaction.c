@@ -202,6 +202,7 @@ install_authenticator (FlatpakTransaction            *old_transaction,
 static gboolean
 redraw (FlatpakCliTransaction *self)
 {
+  g_autoptr(GString) frame = NULL;
   int top;
   int row;
   int current_row;
@@ -227,10 +228,15 @@ redraw (FlatpakCliTransaction *self)
           skip = 1 - top;
         }
 
-      g_print (FLATPAK_ANSI_ROW_N FLATPAK_ANSI_CLEAR, row);
+      frame = g_string_new (FLATPAK_ANSI_SYNC_START);
+      g_string_append_printf (frame, FLATPAK_ANSI_ROW_N FLATPAK_ANSI_CLEAR, row);
       // we update table_height and end_row here, since we might have added to the table
-      flatpak_table_printer_print_full (self->printer, skip, self->cols,
-                                        &self->table_height, &self->table_width);
+      flatpak_table_printer_print_full_to_string (self->printer, skip, self->cols,
+                                                  &self->table_height, &self->table_width,
+                                                  frame);
+      g_string_append (frame, FLATPAK_ANSI_SYNC_END);
+
+      flatpak_print_unbuffered (frame);
       return TRUE;
     }
   return FALSE;

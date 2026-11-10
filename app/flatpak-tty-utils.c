@@ -69,6 +69,33 @@ flatpak_fancy_output (void)
   return fancy_output_once == FANCY_OUTPUT;
 }
 
+void
+flatpak_print_unbuffered (GString *frame)
+{
+  g_autofree char *converted = NULL;
+  const char *charset;
+  const char *buf = frame->str;
+  gsize len = frame->len;
+
+  if (!g_get_charset (&charset))
+    {
+      gsize converted_len = 0;
+
+      converted = g_convert_with_fallback (frame->str, frame->len, charset, "UTF-8", "?",
+                                           NULL, &converted_len, NULL);
+      if (converted != NULL)
+        {
+          buf = converted;
+          len = converted_len;
+        }
+    }
+
+  fflush (stdout);
+
+  if (glnx_loop_write (STDOUT_FILENO, buf, len) < 0)
+    g_warning ("write() failed: %s", g_strerror (errno));
+}
+
 gboolean
 flatpak_allow_fuzzy_matching (const char *term)
 {
