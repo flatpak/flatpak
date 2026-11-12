@@ -28,6 +28,7 @@
 #include <ostree-repo-finder-avahi.h>
 
 #include "flatpak-dir-private.h"
+#include "flatpak-dir-utils-private.h"
 #include "flatpak-enum-types.h"
 #include "flatpak-error.h"
 #include "flatpak-installation-private.h"
@@ -682,6 +683,8 @@ flatpak_installation_launch_full (FlatpakInstallation *self,
   g_autoptr(FlatpakDeploy) app_deploy = NULL;
   g_autoptr(FlatpakDecomposed) app_ref = NULL;
   g_autofree char *instance_dir = NULL;
+  g_autoptr(FlatpakDeploy) runtime_deploy = NULL;
+  g_autoptr(FlatpakDecomposed) runtime_ref = NULL;
   FlatpakRunFlags run_flags;
 
   run_environ = g_get_environ ();
@@ -701,15 +704,25 @@ flatpak_installation_launch_full (FlatpakInstallation *self,
   if (app_deploy == NULL)
     return FALSE;
 
+  runtime_ref = flatpak_deploy_get_runtime_ref (app_deploy, FALSE, error);
+  if (runtime_ref == NULL)
+    return FALSE;
+
+  runtime_deploy = flatpak_find_deploy_for_ref (flatpak_decomposed_get_ref (runtime_ref),
+                                                NULL, NULL, cancellable, error);
+  if (runtime_deploy == NULL)
+    return FALSE;
+
   run_flags = FLATPAK_RUN_FLAG_BACKGROUND;
   if (flags & FLATPAK_LAUNCH_FLAGS_DO_NOT_REAP)
     run_flags |= FLATPAK_RUN_FLAG_DO_NOT_REAP;
 
   if (!flatpak_run_app (app_ref,
                         app_deploy,
+                        runtime_ref,
+                        runtime_deploy,
                         FLATPAK_RUN_APP_DEPLOY_APP_ORIGINAL,
                         NULL,
-                        NULL, NULL, NULL,
                         FLATPAK_RUN_APP_DEPLOY_USR_ORIGINAL,
                         0,
                         run_flags,

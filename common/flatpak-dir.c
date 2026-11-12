@@ -1971,6 +1971,23 @@ flatpak_deploy_get_metadata (FlatpakDeploy *deploy)
   return g_key_file_ref (deploy->metadata);
 }
 
+FlatpakDecomposed *
+flatpak_deploy_get_runtime_ref (FlatpakDeploy *deploy,
+                                gboolean       use_sdk,
+                                GError       **error)
+{
+  const char *key = use_sdk ? FLATPAK_METADATA_KEY_SDK : FLATPAK_METADATA_KEY_RUNTIME;
+  g_autofree char *runtime_pref = NULL;
+
+  runtime_pref = g_key_file_get_string (deploy->metadata,
+                                        FLATPAK_METADATA_GROUP_APPLICATION,
+                                        key, error);
+  if (runtime_pref == NULL)
+    return NULL;
+
+  return flatpak_decomposed_new_from_pref (FLATPAK_KINDS_RUNTIME, runtime_pref, error);
+}
+
 static FlatpakDeploy *
 flatpak_deploy_new (GFile             *dir,
                     FlatpakDecomposed *ref,
