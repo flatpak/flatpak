@@ -428,11 +428,14 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
         return FALSE;
     }
 
-  g_clear_object (&runtime_deploy);
-  runtime_deploy = flatpak_find_deploy_for_ref (flatpak_decomposed_get_ref (runtime_ref),
-                                                opt_runtime_commit, NULL, cancellable, error);
-  if (runtime_deploy == NULL)
-    return FALSE;
+  if (runtime_deploy == NULL || !flatpak_decomposed_equal (runtime_ref, default_runtime))
+    {
+      g_clear_object (&runtime_deploy);
+      runtime_deploy = flatpak_find_deploy_for_ref (flatpak_decomposed_get_ref (runtime_ref),
+                                                    opt_runtime_commit, NULL, cancellable, error);
+      if (runtime_deploy == NULL)
+        return FALSE;
+    }
 
   /* Default to TRUE, unless sandboxed */
   if (opt_a11y_bus == -1)
