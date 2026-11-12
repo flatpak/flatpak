@@ -228,13 +228,58 @@ flatpak_find_unmaintained_extension_dir_if_exists (const char   *name,
 }
 
 FlatpakDecomposed *
+flatpak_find_current_ref_in (GPtrArray    *dirs,
+                             const char   *app_id,
+                             GCancellable *cancellable,
+                             GError      **error)
+{
+  g_autoptr(GHashTable) selected_system_ids = g_hash_table_new (g_str_hash, g_str_equal);
+  g_autoptr(GPtrArray) system_dirs = NULL;
+
+  if (dirs->len == 1)
+    return flatpak_dir_current_ref (g_ptr_array_index (dirs, 0), app_id, cancellable);
+
+  for (size_t i = 0; i < dirs->len; i++)
+    {
+      FlatpakDir *dir = g_ptr_array_index (dirs, i);
+
+      if (flatpak_dir_is_user (dir))
+        {
+          FlatpakDecomposed *ref = flatpak_dir_current_ref (dir, app_id, cancellable);
+          if (ref != NULL)
+            return ref;
+        }
+      else
+        g_hash_table_add (selected_system_ids, (gpointer) flatpak_dir_get_id (dir));
+    }
+
+  /* Search the selected system installations in priority order. */
+  system_dirs = flatpak_dir_get_system_list (cancellable, error);
+  if (system_dirs == NULL)
+    return NULL;
+
+  for (size_t i = 0; i < system_dirs->len; i++)
+    {
+      FlatpakDir *dir = g_ptr_array_index (system_dirs, i);
+
+      if (g_hash_table_contains (selected_system_ids, flatpak_dir_get_id (dir)))
+        {
+          FlatpakDecomposed *ref = flatpak_dir_current_ref (dir, app_id, cancellable);
+          if (ref != NULL)
+            return ref;
+        }
+    }
+
+  return NULL;
+}
+
+FlatpakDecomposed *
 flatpak_find_current_ref (const char   *app_id,
                           GCancellable *cancellable,
                           GError      **error)
 {
   g_autoptr(FlatpakDecomposed) current_ref = NULL;
   g_autoptr(FlatpakDir) user_dir = flatpak_dir_get_user ();
-  int i;
 
   current_ref = flatpak_dir_current_ref (user_dir, app_id, NULL);
   if (current_ref == NULL)
@@ -245,13 +290,9 @@ flatpak_find_current_ref (const char   *app_id,
       if (system_dirs == NULL)
         return NULL;
 
-      for (i = 0; i < system_dirs->len; i++)
-        {
-          FlatpakDir *dir = g_ptr_array_index (system_dirs, i);
-          current_ref = flatpak_dir_current_ref (dir, app_id, cancellable);
-          if (current_ref != NULL)
-            break;
-        }
+      current_ref = flatpak_find_current_ref_in (system_dirs, app_id, cancellable, error);
+      if (error != NULL && *error != NULL)
+        return NULL;
     }
 
   if (current_ref)
