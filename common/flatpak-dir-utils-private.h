@@ -41,6 +41,10 @@ typedef struct
 
 void flatpak_extension_free (FlatpakExtension *extension);
 
+FlatpakDecomposed *flatpak_find_current_ref_in (GPtrArray    *dirs,
+                                                const char   *app_id,
+                                                GCancellable *cancellable,
+                                                GError      **error);
 FlatpakDecomposed *flatpak_find_current_ref (const char   *app_id,
                                              GCancellable *cancellable,
                                              GError      **error);

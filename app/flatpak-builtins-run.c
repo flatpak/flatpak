@@ -270,7 +270,12 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
   if (branch == NULL || arch == NULL)
     {
-      g_autoptr(FlatpakDecomposed) current_ref = flatpak_find_current_ref (id, NULL, NULL);
+      g_autoptr(FlatpakDecomposed) current_ref = flatpak_find_current_ref_in (dirs, id, cancellable, &local_error);
+      if (local_error != NULL)
+        {
+          g_propagate_error (error, g_steal_pointer (&local_error));
+          return FALSE;
+        }
       if (current_ref)
         {
           if (branch == NULL)
