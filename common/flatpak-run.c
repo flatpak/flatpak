@@ -3229,11 +3229,10 @@ finalize_instance_dir (const char *instance_id,
 gboolean
 flatpak_run_app (FlatpakDecomposed   *app_ref,
                  FlatpakDeploy       *app_deploy,
+                 FlatpakDecomposed   *runtime_ref,
+                 FlatpakDeploy       *runtime_deploy,
                  int                  custom_app_fd,
                  FlatpakContext      *extra_context,
-                 const char          *custom_runtime,
-                 const char          *custom_runtime_version,
-                 const char          *custom_runtime_commit,
                  int                  custom_runtime_fd,
                  int                  parent_pid,
                  FlatpakRunFlags      flags,
@@ -3249,20 +3248,16 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
                  GCancellable        *cancellable,
                  GError             **error)
 {
-  g_autoptr(FlatpakDeploy) runtime_deploy = NULL;
   g_autoptr(GBytes) runtime_deploy_data = NULL;
   g_autoptr(GBytes) app_deploy_data = NULL;
   g_autoptr(GFile) app_id_dir = NULL;
   g_autoptr(GFile) real_app_id_dir = NULL;
-  g_autofree char *default_runtime_pref = NULL;
-  g_autoptr(FlatpakDecomposed) default_runtime = NULL;
   g_autofree char *default_command = NULL;
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(GKeyFile) runtime_metakey = NULL;
   g_autoptr(FlatpakBwrap) bwrap = NULL;
   const char *command = "/bin/sh";
   g_autoptr(GError) my_error = NULL;
-  g_autoptr(FlatpakDecomposed) runtime_ref = NULL;
   int i;
   g_autoptr(GPtrArray) previous_app_id_dirs = NULL;
   g_autofree char *app_id = NULL;
@@ -3316,6 +3311,8 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
   g_assert (run_environ != NULL);
 
   g_return_val_if_fail (app_ref != NULL, FALSE);
+  g_return_val_if_fail (runtime_ref != NULL, FALSE);
+  g_return_val_if_fail (runtime_deploy != NULL, FALSE);
 
   g_return_val_if_fail (custom_app_fd == FLATPAK_RUN_APP_DEPLOY_APP_ORIGINAL ||
                         custom_app_fd == FLATPAK_RUN_APP_DEPLOY_APP_EMPTY ||
@@ -3351,75 +3348,15 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
   if (app_deploy == NULL)
     {
       g_assert (flatpak_decomposed_is_runtime (app_ref));
-      default_runtime_pref = flatpak_decomposed_dup_pref (app_ref);
     }
   else
     {
-      const gchar *key;
-
       app_deploy_data = flatpak_deploy_get_deploy_data (app_deploy, FLATPAK_DEPLOY_VERSION_ANY, cancellable, error);
       if (app_deploy_data == NULL)
         return FALSE;
 
-      if ((flags & FLATPAK_RUN_FLAG_DEVEL) != 0)
-        key = FLATPAK_METADATA_KEY_SDK;
-      else
-        key = FLATPAK_METADATA_KEY_RUNTIME;
-
       metakey = flatpak_deploy_get_metadata (app_deploy);
-      default_runtime_pref = g_key_file_get_string (metakey,
-                                                    FLATPAK_METADATA_GROUP_APPLICATION,
-                                                    key, &my_error);
-      if (my_error)
-        {
-          g_propagate_error (error, g_steal_pointer (&my_error));
-          return FALSE;
-        }
     }
-
-  default_runtime = flatpak_decomposed_new_from_pref (FLATPAK_KINDS_RUNTIME, default_runtime_pref, error);
-  if (default_runtime == NULL)
-    return FALSE;
-
-  if (custom_runtime != NULL || custom_runtime_version != NULL)
-    {
-      g_auto(GStrv) custom_runtime_parts = NULL;
-      const char *custom_runtime_id = NULL;
-      const char *custom_runtime_arch = NULL;
-
-      if (custom_runtime)
-        {
-          custom_runtime_parts = g_strsplit (custom_runtime, "/", 0);
-          for (i = 0; i < 3 && custom_runtime_parts[i] != NULL; i++)
-            {
-              if (strlen (custom_runtime_parts[i]) > 0)
-                {
-                  if (i == 0)
-                    custom_runtime_id = custom_runtime_parts[i];
-                  if (i == 1)
-                    custom_runtime_arch = custom_runtime_parts[i];
-
-                  if (i == 2 && custom_runtime_version == NULL)
-                    custom_runtime_version = custom_runtime_parts[i];
-                }
-            }
-        }
-
-      runtime_ref = flatpak_decomposed_new_from_decomposed (default_runtime,
-                                                            FLATPAK_KINDS_RUNTIME,
-                                                            custom_runtime_id,
-                                                            custom_runtime_arch,
-                                                            custom_runtime_version,
-                                                            error);
-      if (runtime_ref == NULL)
-        return FALSE;
-    }
-  else
-    runtime_ref = flatpak_decomposed_ref (default_runtime);
-
-  runtime_deploy = flatpak_find_deploy_for_ref (flatpak_decomposed_get_ref (runtime_ref), custom_runtime_commit, NULL, cancellable, error);
-  if (runtime_deploy == NULL)
-    return FALSE;
 
   if (!glnx_opendirat (AT_FDCWD,
                        flatpak_file_get_path_cached (flatpak_deploy_get_dir (runtime_deploy)),

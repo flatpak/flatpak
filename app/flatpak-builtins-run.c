@@ -195,8 +195,10 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   g_auto(GStrv) run_environ = NULL;
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(FlatpakDeploy) app_deploy = NULL;
+  g_autoptr(FlatpakDeploy) runtime_deploy = NULL;
   g_autoptr(FlatpakDecomposed) app_ref = NULL;
   g_autoptr(FlatpakDecomposed) runtime_ref = NULL;
+  g_autoptr(FlatpakDecomposed) default_runtime = NULL;
   const char *pref;
   int i;
   int rest_argv_start = 0, rest_argc = 0;
@@ -305,7 +307,6 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
   if (app_deploy == NULL)
     {
-      g_autoptr(FlatpakDeploy) runtime_deploy = NULL;
       g_autoptr(GError) local_error2 = NULL;
       g_autoptr(GPtrArray) ref_dir_pairs = NULL;
       RefDirPair *chosen_pair = NULL;
@@ -353,8 +354,7 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
           g_assert (chosen_pairs->len == 1);
           chosen_pair = g_ptr_array_index (chosen_pairs, 0);
 
-          /* For runtimes we don't need to pass a FlatpakDeploy object to
-           * flatpak_run_app(), but get it anyway because we don't want to run
+          /* Get the deployment because we don't want to run
            * something that's not deployed */
           chosen_dir_array = g_ptr_array_new ();
           g_ptr_array_add (chosen_dir_array, chosen_pair->dir);
@@ -384,6 +384,55 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
       /* Clear app-kind error */
       g_clear_error (&local_error);
     }
+  else
+    {
+      runtime_ref = flatpak_deploy_get_runtime_ref (app_deploy, opt_devel, error);
+      if (runtime_ref == NULL)
+        return FALSE;
+    }
+
+  default_runtime = flatpak_decomposed_ref (runtime_ref);
+
+  if (opt_runtime != NULL || opt_runtime_version != NULL)
+    {
+      g_auto(GStrv) runtime_parts = NULL;
+      const char *runtime_id = NULL;
+      const char *runtime_arch = NULL;
+      const char *runtime_version = opt_runtime_version;
+
+      if (opt_runtime != NULL)
+        {
+          runtime_parts = g_strsplit (opt_runtime, "/", 0);
+          for (size_t j = 0; j < 3 && runtime_parts[j] != NULL; j++)
+            {
+              if (strlen (runtime_parts[j]) > 0)
+                {
+                  if (j == 0)
+                    runtime_id = runtime_parts[j];
+                  if (j == 1)
+                    runtime_arch = runtime_parts[j];
+                  if (j == 2 && runtime_version == NULL)
+                    runtime_version = runtime_parts[j];
+                }
+            }
+        }
+
+      g_clear_pointer (&runtime_ref, flatpak_decomposed_unref);
+      runtime_ref = flatpak_decomposed_new_from_decomposed (default_runtime,
+                                                            FLATPAK_KINDS_RUNTIME,
+                                                            runtime_id,
+                                                            runtime_arch,
+                                                            runtime_version,
+                                                            error);
+      if (runtime_ref == NULL)
+        return FALSE;
+    }
+
+  g_clear_object (&runtime_deploy);
+  runtime_deploy = flatpak_find_deploy_for_ref (flatpak_decomposed_get_ref (runtime_ref),
+                                                opt_runtime_commit, NULL, cancellable, error);
+  if (runtime_deploy == NULL)
+    return FALSE;
 
   /* Default to TRUE, unless sandboxed */
   if (opt_a11y_bus == -1)
@@ -471,13 +520,12 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
       usr_fd = FLATPAK_RUN_APP_DEPLOY_USR_ORIGINAL;
     }
 
-  if (!flatpak_run_app (app_deploy ? app_ref : runtime_ref,
+  if (!flatpak_run_app (app_deploy ? app_ref : default_runtime,
                         app_deploy,
+                        runtime_ref,
+                        runtime_deploy,
                         app_fd,
                         arg_context,
-                        opt_runtime,
-                        opt_runtime_version,
-                        opt_runtime_commit,
                         usr_fd,
                         opt_parent_pid,
                         flags,

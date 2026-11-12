@@ -437,6 +437,10 @@ GFile *         flatpak_deploy_get_files       (FlatpakDeploy      *deploy);
 FlatpakContext *flatpak_deploy_get_overrides   (FlatpakDeploy      *deploy);
 GKeyFile *      flatpak_deploy_get_metadata    (FlatpakDeploy      *deploy);
 
+FlatpakDecomposed *flatpak_deploy_get_runtime_ref (FlatpakDeploy *deploy,
+                                                   gboolean       use_sdk,
+                                                   GError       **error);
+
 int flatpak_deploy_get_files_fd    (int              deploy_dfd,
                                     const char      *subpath,
                                     GlnxChaseFlags   flags,
