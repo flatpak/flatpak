@@ -10555,6 +10555,7 @@ gboolean
 flatpak_dir_deploy_install (FlatpakDir        *self,
                             FlatpakDecomposed *ref,
                             const char        *origin,
+                            const char        *checksum_or_latest,
                             const char       **subpaths,
                             const char       **previous_ids,
                             gboolean           reinstall,
@@ -10625,7 +10626,7 @@ flatpak_dir_deploy_install (FlatpakDir        *self,
   /* After we create the deploy base we must goto out on errors */
   created_deploy_base = TRUE;
 
-  if (!flatpak_dir_deploy (self, origin, ref, NULL, (const char * const *) subpaths,
+  if (!flatpak_dir_deploy (self, origin, ref, checksum_or_latest, (const char * const *) subpaths,
                            previous_ids,
                            "org.freedesktop.Flatpak.override-parental-controls",
                            cancellable, error))
@@ -11271,6 +11272,7 @@ flatpak_dir_unmount_and_cancel_pull (FlatpakDir    *self,
 gboolean
 flatpak_dir_install (FlatpakDir          *self,
                      gboolean             no_pull,
+                     gboolean             already_pulled,
                      gboolean             no_deploy,
                      gboolean             no_static_deltas,
                      gboolean             reinstall,
@@ -11291,6 +11293,12 @@ flatpak_dir_install (FlatpakDir          *self,
                      GError             **error)
 {
   FlatpakPullFlags flatpak_flags;
+
+  /* already_pulled skips the download without changing no_pull cleanup. */
+  g_return_val_if_fail (!already_pulled ||
+                        (!no_pull && !flatpak_dir_use_system_helper (self, NULL) &&
+                         opt_commit != NULL && opt_image_source == NULL &&
+                         sideload_repo == NULL && !state->is_oci), FALSE);
 
   flatpak_flags = FLATPAK_PULL_FLAGS_DOWNLOAD_EXTRA_DATA;
   if (no_static_deltas)
@@ -11519,7 +11527,7 @@ flatpak_dir_install (FlatpakDir          *self,
       return TRUE;
     }
 
-  if (!no_pull)
+  if (!no_pull && !already_pulled)
     {
       if (!flatpak_dir_pull (self, state, flatpak_decomposed_get_ref (ref), opt_commit, opt_subpaths,
                              sideload_repo, opt_image_source, require_metadata, token, NULL,
@@ -11530,7 +11538,9 @@ flatpak_dir_install (FlatpakDir          *self,
 
   if (!no_deploy)
     {
-      if (!flatpak_dir_deploy_install (self, ref, state->remote_name, opt_subpaths,
+      /* A tracking ref may have changed since the prefetched pull completed. */
+      if (!flatpak_dir_deploy_install (self, ref, state->remote_name,
+                                       already_pulled ? opt_commit : NULL, opt_subpaths,
                                        opt_previous_ids, reinstall, pin_on_deploy,
                                        update_preinstalled_on_deploy,
                                        cancellable, error))
@@ -11848,7 +11858,7 @@ flatpak_dir_install_bundle (FlatpakDir         *self,
     }
   else
     {
-      if (!flatpak_dir_deploy_install (self, ref, remote, NULL, NULL, reinstall, FALSE, FALSE, cancellable, error))
+      if (!flatpak_dir_deploy_install (self, ref, remote, NULL, NULL, NULL, reinstall, FALSE, FALSE, cancellable, error))
         return FALSE;
     }
 
@@ -11993,6 +12003,7 @@ flatpak_dir_update (FlatpakDir                           *self,
                     FlatpakDecomposed                    *ref,
                     const char                           *commit,
                     const char                          **opt_subpaths,
+                    const char                          **pulled_subpaths,
                     const char                          **opt_previous_ids,
                     GFile                                *sideload_repo,
                     FlatpakImageSource                   *opt_image_source,
@@ -12013,6 +12024,11 @@ flatpak_dir_update (FlatpakDir                           *self,
   /* This is calculated in check_for_update */
   g_assert (commit != NULL);
 
+  g_return_val_if_fail (pulled_subpaths == NULL ||
+                        (!no_pull && !flatpak_dir_use_system_helper (self, NULL) &&
+                         opt_image_source == NULL && sideload_repo == NULL &&
+                         !state->is_oci), FALSE);
+
   flatpak_flags = FLATPAK_PULL_FLAGS_DOWNLOAD_EXTRA_DATA;
   if (allow_downgrade)
     flatpak_flags |= FLATPAK_PULL_FLAGS_ALLOW_DOWNGRADE;
@@ -12031,6 +12047,24 @@ flatpak_dir_update (FlatpakDir                           *self,
     subpaths = old_subpaths;
   else
     subpaths = empty_subpaths;
+
+  /* Another transaction may have deployed a newer commit since the pull. */
+  if (pulled_subpaths != NULL && deploy_data != NULL && !allow_downgrade)
+    {
+      g_autoptr(GVariant) old_commit = NULL;
+      g_autoptr(GVariant) new_commit = NULL;
+
+      if (!ostree_repo_load_commit (self->repo, flatpak_deploy_data_get_commit (deploy_data),
+                                    &old_commit, NULL, error) ||
+          !ostree_repo_load_commit (self->repo, commit, &new_commit, NULL, error))
+        return FALSE;
+
+      if (ostree_commit_get_timestamp (new_commit) < ostree_commit_get_timestamp (old_commit))
+        return flatpak_fail_error (error, FLATPAK_ERROR_DOWNGRADE, "Update is older than current version");
+    }
+
+  if (pulled_subpaths != NULL && !g_strv_equal (subpaths, pulled_subpaths))
+    pulled_subpaths = NULL;
 
   if (!ostree_repo_remote_get_url (self->repo, state->remote_name, &url, error))
     return FALSE;
@@ -12227,7 +12261,8 @@ flatpak_dir_update (FlatpakDir                           *self,
 
   if (!no_pull)
     {
-      if (!flatpak_dir_pull (self, state, flatpak_decomposed_get_ref (ref),
+      if (pulled_subpaths == NULL &&
+          !flatpak_dir_pull (self, state, flatpak_decomposed_get_ref (ref),
                              commit, subpaths, sideload_repo, opt_image_source, require_metadata, token,
                              NULL, flatpak_flags, OSTREE_REPO_PULL_FLAGS_NONE,
                              progress, cancellable, error))

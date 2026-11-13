@@ -670,7 +670,7 @@ handle_deploy (FlatpakSystemHelper   *object,
         }
       else
         {
-          if (!flatpak_dir_deploy_install (system, ref, arg_origin,
+          if (!flatpak_dir_deploy_install (system, ref, arg_origin, NULL,
                                            (const char **) arg_subpaths,
                                            (const char **) arg_previous_ids,
                                            reinstall, update_pinned, update_preinstalled,
