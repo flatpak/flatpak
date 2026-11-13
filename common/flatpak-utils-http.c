@@ -381,6 +381,7 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (auto_curl_slist, curl_slist_free_all)
 
 struct FlatpakHttpSession {
   CURL *curl;
+  char *user_agent;
   GMutex lock;
 };
 
@@ -503,19 +504,13 @@ _write_cb (void *content_data,
   return realsize;
 }
 
-FlatpakHttpSession *
-flatpak_create_http_session (const char *user_agent)
+static void
+configure_curl_handle (FlatpakHttpSession *session)
 {
-  FlatpakHttpSession *session = g_new0 (FlatpakHttpSession, 1);
   CURLcode rc;
-  CURL *curl;
+  CURL *curl = session->curl;
 
-  session->curl = curl = curl_easy_init();
-  g_assert (session->curl != NULL);
-
-  g_mutex_init (&session->lock);
-
-  curl_easy_setopt (curl, CURLOPT_USERAGENT, user_agent);
+  curl_easy_setopt (curl, CURLOPT_USERAGENT, session->user_agent);
 #if CURL_AT_LEAST_VERSION(7, 85, 0)
   rc = curl_easy_setopt (curl, CURLOPT_PROTOCOLS_STR, "http,https");
 #else
@@ -559,6 +554,20 @@ flatpak_create_http_session (const char *user_agent)
    * will mean it takes over 2.5 minutes to download just the summary file. */
   curl_easy_setopt(curl, CURLOPT_LOW_SPEED_TIME, (long)FLATPAK_HTTP_TIMEOUT_SECS);
   curl_easy_setopt(curl, CURLOPT_LOW_SPEED_LIMIT, 10000L);
+}
+
+FlatpakHttpSession *
+flatpak_create_http_session (const char *user_agent)
+{
+  FlatpakHttpSession *session = g_new0 (FlatpakHttpSession, 1);
+
+  session->curl = curl_easy_init();
+  g_assert (session->curl != NULL);
+
+  session->user_agent = g_strdup (user_agent);
+  g_mutex_init (&session->lock);
+
+  configure_curl_handle (session);
 
   return session;
 }
@@ -570,6 +579,7 @@ flatpak_http_session_free (FlatpakHttpSession* session)
   curl_easy_cleanup (session->curl);
   g_mutex_unlock (&session->lock);
   g_mutex_clear (&session->lock);
+  g_free (session->user_agent);
   g_free (session);
 }
 
@@ -631,6 +641,12 @@ flatpak_download_http_uri_once (FlatpakHttpSession    *session,
   CURL *curl = session->curl;
 
   g_info ("Loading %s using curl", uri);
+
+  /* Restore defaults between transfers without discarding connection, DNS or
+   * TLS session caches, then reapply Flatpak's session-wide configuration.
+   * Setting CAINFO to NULL would disable the built-in CA bundle instead. */
+  curl_easy_reset (curl);
+  configure_curl_handle (session);
 
   curl_easy_setopt (curl, CURLOPT_URL, uri);
   curl_easy_setopt (curl, CURLOPT_WRITEDATA, (void *)data);
