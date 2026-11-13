@@ -24,6 +24,8 @@
 #include <glib/gi18n-lib.h>
 
 #include "flatpak-auth-private.h"
+#include "flatpak-pull-job-private.h"
+#include "flatpak-download-tracker-private.h"
 #include "flatpak-dir-private.h"
 #include "flatpak-error.h"
 #include "flatpak-image-collection-private.h"
@@ -128,6 +130,7 @@ struct _FlatpakTransactionOperation
   char                           *resolved_token;
   gboolean                        requested_token; /* TRUE if we requested a token. value in resolved_token, but may be NULL if token not needed. */
   guint64                         download_size;
+  gboolean                        deployment_started;
   guint64                         installed_size;
   char                           *eol;
   char                           *eol_rebase;
@@ -187,6 +190,10 @@ typedef struct _FlatpakTransactionPrivate
   RequestData                 *active_request;
 
   FlatpakTransactionOperation *current_op;
+  GHashTable                  *pull_jobs; /* Borrowed while run() is executing. */
+  FlatpakDownloadTracker      *downloads; /* Borrowed while run() is executing. */
+  int64_t                      last_download_emission_us;
+  gboolean                     report_downloads;
 
   char                        *parent_window;
   gboolean                     no_pull;
@@ -223,6 +230,9 @@ enum {
   WEBFLOW_DONE,
   BASIC_AUTH_START,
   INSTALL_AUTHENTICATOR,
+  DOWNLOAD_PROGRESS,
+  OPERATION_DOWNLOAD_PROGRESS,
+  OPERATION_DEPLOYING,
   LAST_SIGNAL
 };
 
@@ -300,6 +310,9 @@ static guint progress_signals[LAST_SIGNAL] = { 0 };
  * FlatpakTransactionProgress is an object that represents the progress
  * of a single operation in a transaction. You obtain a FlatpakTransactionProgress
  * with the #FlatpakTransaction::new-operation signal.
+ * Downloads can begin before that signal. The first progress update may
+ * therefore report a partially or fully downloaded operation. For combined
+ * download activity, use #FlatpakTransaction::download-progress.
  */
 
 G_DEFINE_TYPE (FlatpakTransactionProgress, flatpak_transaction_progress, G_TYPE_OBJECT)
@@ -451,7 +464,8 @@ flatpak_transaction_progress_class_init (FlatpakTransactionProgressClass *klass)
    * FlatpakTransactionProgress::changed:
    * @object: A #FlatpakTransactionProgress
    *
-   * Emitted when some detail of the progress object changes, you can call the various methods to get the current status.
+   * Emitted when progress changes and periodically during deployment.
+   * Call the progress object's methods to get the current status.
    */
   progress_signals[CHANGED] =
     g_signal_new ("changed",
@@ -1264,6 +1278,9 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
    *
    * The ::new-operation signal gets emitted during the execution of
    * the transaction when a new operation is beginning.
+   * Operations and their completion signals remain in transaction order.
+   * A download may start or finish before this signal. Use
+   * #FlatpakTransaction::download-progress to track downloads across operations.
    */
   signals[NEW_OPERATION] =
     g_signal_new ("new-operation",
@@ -1273,6 +1290,107 @@ flatpak_transaction_class_init (FlatpakTransactionClass *klass)
                   NULL, NULL,
                   NULL,
                   G_TYPE_NONE, 2, FLATPAK_TYPE_TRANSACTION_OPERATION, FLATPAK_TYPE_TRANSACTION_PROGRESS);
+
+  /**
+   * FlatpakTransaction::download-progress:
+   * @object: A #FlatpakTransaction
+   * @active_downloads: Number of operation downloads still running
+   * @bytes_transferred: Bytes downloaded across all operations so far
+   * @bytes_total: Estimated total bytes to download, or 0 if unknown
+   * @bytes_per_second: Combined transfer rate of active downloads
+   *
+   * Reports download activity across the transaction, including operations
+   * whose #FlatpakTransaction::new-operation signal has not been emitted yet.
+   * Both serial and parallel operation downloads are included. Metadata fetched
+   * while resolving the transaction, local bundles and uninstalls are excluded.
+   * Use #FlatpakTransaction::operation-download-progress to identify which
+   * operations are downloading and track their individual byte counts.
+   *
+   * Signals run on the thread calling flatpak_transaction_run(), after
+   * #FlatpakTransaction::ready has been accepted. Updates are limited to about
+   * ten per second, with extra updates at operation boundaries. No updates are
+   * emitted while a signal handler blocks that thread.
+   *
+   * @bytes_transferred never decreases and includes failed or cancelled pulls.
+   * @bytes_total can change as cached objects and delta sizes become known.
+   * A final update after all downloads stop has zero active downloads and rate,
+   * and sets @bytes_total to the bytes actually transferred. Zero active
+   * downloads does not mean deployment is complete or the transaction succeeded.
+   * No signal is emitted for no-pull transactions or transactions containing
+   * only local bundles and uninstalls.
+   *
+   * Since: 1.19.3
+   */
+  signals[DOWNLOAD_PROGRESS] =
+    g_signal_new ("download-progress",
+                  G_TYPE_FROM_CLASS (object_class),
+                  G_SIGNAL_RUN_LAST,
+                  G_STRUCT_OFFSET (FlatpakTransactionClass, download_progress),
+                  NULL, NULL, NULL,
+                  G_TYPE_NONE, 4, G_TYPE_UINT, G_TYPE_UINT64, G_TYPE_UINT64, G_TYPE_UINT64);
+
+  /**
+   * FlatpakTransaction::operation-download-progress:
+   * @object: A #FlatpakTransaction
+   * @operation: The operation whose download activity changed
+   * @active: Whether the operation's download is still running
+   * @bytes_transferred: Bytes downloaded for this operation so far
+   * @bytes_total: Estimated total bytes for this download, or 0 if unknown
+   * @bytes_per_second: Transfer rate for this download, or 0 when inactive
+   *
+   * Reports per-operation download activity, including background downloads
+   * before #FlatpakTransaction::new-operation. Operations emit no notifications
+   * until their downloads start. A download that has already finished may be
+   * inactive in its first notification.
+   *
+   * Notifications run on the thread calling flatpak_transaction_run(), after
+   * #FlatpakTransaction::ready has been accepted, and before the corresponding
+   * #FlatpakTransaction::download-progress notification. Different operations'
+   * notifications can interleave. The ordered operation signals are unchanged.
+   *
+   * @bytes_transferred never decreases for an operation. The total is an
+   * estimate and can change. Failed and cancelled downloads also become
+   * inactive. Inactivity does not mean the operation succeeded or deployed. Use
+   * #FlatpakTransaction::operation-done and #FlatpakTransaction::operation-error
+   * for the operation's result. A download can become active again when it
+   * enters another phase, such as fetching extra data.
+   *
+   * All reported downloads are inactive before flatpak_transaction_run()
+   * returns. Resolution metadata, local bundles, uninstalls and no-pull
+   * transactions are excluded, as for #FlatpakTransaction::download-progress.
+   *
+   * Since: 1.19.3
+   */
+  signals[OPERATION_DOWNLOAD_PROGRESS] =
+    g_signal_new ("operation-download-progress",
+                  G_TYPE_FROM_CLASS (object_class),
+                  G_SIGNAL_RUN_LAST, 0,
+                  NULL, NULL, NULL,
+                  G_TYPE_NONE, 5, FLATPAK_TYPE_TRANSACTION_OPERATION, G_TYPE_BOOLEAN,
+                  G_TYPE_UINT64, G_TYPE_UINT64, G_TYPE_UINT64);
+
+  /**
+   * FlatpakTransaction::operation-deploying:
+   * @object: A #FlatpakTransaction
+   * @operation: The operation about to deploy its downloaded or local content
+   *
+   * Emitted on the thread calling flatpak_transaction_run(), after
+   * #FlatpakTransaction::new-operation and after the operation's downloads have
+   * ended, immediately before deployment begins. For system installations this
+   * includes handing local content to the system helper for verification and
+   * deployment. Other operations may still be downloading.
+   *
+   * This signal is emitted for installs, updates and local bundle installs,
+   * including no-pull operations. Installs and updates using no-deploy, and
+   * uninstalls, do not emit it. Deployment can still fail; use the operation result
+   * signals to determine success.
+   *
+   * Since: 1.19.3
+   */
+  signals[OPERATION_DEPLOYING] =
+    g_signal_new ("operation-deploying", G_TYPE_FROM_CLASS (object_class),
+                  G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,
+                  G_TYPE_NONE, 1, FLATPAK_TYPE_TRANSACTION_OPERATION);
 
   /**
    * FlatpakTransaction::operation-error:
@@ -3494,9 +3612,119 @@ flatpak_transaction_add_auto_install (FlatpakTransaction *self,
   return TRUE;
 }
 
+static gboolean
+operation_downloads (FlatpakTransactionOperation *op)
+{
+  return !op->skip && !op->update_only_deploy &&
+         (op->kind == FLATPAK_TRANSACTION_OPERATION_INSTALL ||
+          op->kind == FLATPAK_TRANSACTION_OPERATION_UPDATE);
+}
+
+static void
+update_download_counters (FlatpakTransaction          *self,
+                          FlatpakTransactionOperation *op,
+                          FlatpakProgress             *progress,
+                          gboolean                     done)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  uint64_t bytes = flatpak_progress_get_bytes_transferred (progress) +
+                  flatpak_progress_get_transferred_extra_data_bytes (progress);
+
+  flatpak_download_tracker_update (priv->downloads, op, bytes,
+                                   flatpak_progress_get_bytes_total (progress),
+                                   flatpak_progress_get_bytes_per_second (progress), !done);
+}
+
+static void
+emit_download_progress (FlatpakTransaction *self, gboolean force)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  g_autoptr(FlatpakProgress) progress = NULL;
+  g_autoptr(FlatpakDownloadSnapshot) snapshot = NULL;
+  GHashTableIter iter;
+  gpointer op, job;
+  int64_t now = g_get_monotonic_time ();
+
+  if (!priv->report_downloads ||
+      (!force && now - priv->last_download_emission_us < 100 * G_TIME_SPAN_MILLISECOND))
+    return;
+
+  progress = flatpak_progress_new (NULL, NULL);
+  g_hash_table_iter_init (&iter, priv->pull_jobs);
+  while (g_hash_table_iter_next (&iter, &op, &job))
+    {
+      gboolean done = flatpak_pull_job_snapshot (job, progress);
+
+      update_download_counters (self, op, progress, done);
+    }
+
+  snapshot = flatpak_download_tracker_take_snapshot (priv->downloads);
+  priv->last_download_emission_us = now;
+  for (size_t i = 0; i < snapshot->n_items; i++)
+    {
+      FlatpakDownloadItem *item = &snapshot->items[i];
+
+      if (item->changed)
+        g_signal_emit (self, signals[OPERATION_DOWNLOAD_PROGRESS], 0, item->operation,
+                       item->stats.active_downloads != 0, item->stats.bytes_transferred,
+                       item->stats.bytes_total, item->stats.bytes_per_second);
+    }
+  g_signal_emit (self, signals[DOWNLOAD_PROGRESS], 0, snapshot->aggregate.active_downloads,
+                 snapshot->aggregate.bytes_transferred, snapshot->aggregate.bytes_total,
+                 snapshot->aggregate.bytes_per_second);
+}
+
+static void
+operation_download_changed (FlatpakTransactionProgress *progress, gpointer data)
+{
+  FlatpakTransaction *self = data;
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  FlatpakTransactionOperation *op = priv->current_op;
+
+  if (!priv->report_downloads)
+    return;
+  if (operation_downloads (op) && !op->deployment_started &&
+      !g_hash_table_contains (priv->pull_jobs, op))
+    update_download_counters (self, op, progress->progress_obj, FALSE);
+  emit_download_progress (self, flatpak_transaction_progress_get_progress (progress) == 100);
+}
+
+static void
+finish_operation_download (FlatpakTransaction *self, FlatpakTransactionOperation *op)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  FlatpakPullJob *job = g_hash_table_lookup (priv->pull_jobs, op);
+
+  if (job != NULL)
+    {
+      g_autoptr(FlatpakProgress) snapshot = flatpak_progress_new (NULL, NULL);
+
+      flatpak_pull_job_cancel_and_join (job);
+      flatpak_pull_job_snapshot (job, snapshot);
+      update_download_counters (self, op, snapshot, TRUE);
+      g_hash_table_remove (priv->pull_jobs, op);
+    }
+  flatpak_download_tracker_retire (priv->downloads, op);
+}
+
+static void
+operation_deploying (FlatpakProgress *progress, gpointer data)
+{
+  FlatpakTransaction *self = data;
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  FlatpakTransactionOperation *op = priv->current_op;
+
+  op->deployment_started = TRUE;
+  update_download_counters (self, op, progress, TRUE);
+  emit_download_progress (self, TRUE);
+  g_signal_emit (self, signals[OPERATION_DEPLOYING], 0, op);
+}
+
 static void
 emit_new_op (FlatpakTransaction *self, FlatpakTransactionOperation *op, FlatpakTransactionProgress *progress)
 {
+  g_signal_connect_object (progress->progress_obj, "start-deployment", G_CALLBACK (operation_deploying), self, 0);
+  g_signal_connect_object (progress, "changed", G_CALLBACK (operation_download_changed), self, 0);
   g_signal_emit (self, signals[NEW_OPERATION], 0, op, progress);
 }
 
@@ -5105,10 +5333,126 @@ flatpak_transaction_run (FlatpakTransaction *transaction,
   return FLATPAK_TRANSACTION_GET_CLASS (transaction)->run (transaction, cancellable, error);
 }
 
+#define DEFAULT_MAX_PARALLEL_DOWNLOADS 4
+
+static void
+pull_job_maybe_start (FlatpakTransaction *self, FlatpakTransactionOperation *op,
+                      GHashTable *jobs, GCancellable *cancellable)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  g_autoptr(FlatpakRemoteState) state = NULL;
+  g_auto(GStrv) subpaths = NULL;
+  g_autofree char *summary_commit = NULL;
+  const char *ref = flatpak_decomposed_get_ref (op->ref);
+  VarMetadataRef metadata;
+  VarVariantRef extra;
+  FlatpakPullJob *job;
+  /* Reject extra data even if the summary omitted it. */
+  FlatpakPullFlags flags = FLATPAK_PULL_FLAGS_NONE;
+
+  if (priv->no_pull ||
+      (!flatpak_dir_is_user (priv->dir) && getuid () != 0) || op->skip || priv->reinstall ||
+      (op->kind != FLATPAK_TRANSACTION_OPERATION_INSTALL &&
+       op->kind != FLATPAK_TRANSACTION_OPERATION_UPDATE) || op->update_only_deploy ||
+      op->resolved_sideload_path || op->resolved_image_source ||
+      g_hash_table_contains (jobs, op) || g_cancellable_is_cancelled (cancellable))
+    return;
+  if (op->resolved_metakey &&
+      !flatpak_check_required_version (flatpak_decomposed_get_ref (op->ref),
+                                       op->resolved_metakey, NULL))
+    return;
+  state = flatpak_transaction_ensure_remote_state (self, op->kind, op->remote, NULL, NULL);
+  if (!state)
+    return;
+  if (state->is_oci || state->sideload_repos->len ||
+      state->sideload_image_collections->len ||
+      flatpak_remote_state_get_cache_version (state) < 1 ||
+      !flatpak_remote_state_lookup_ref (state, ref, &summary_commit, NULL, NULL, NULL, NULL, NULL) ||
+      g_strcmp0 (summary_commit, op->resolved_commit) != 0)
+    return;
+  if (flatpak_remote_state_lookup_sparse_cache (state, ref, &metadata, NULL) &&
+      var_metadata_lookup (metadata, FLATPAK_SPARSE_CACHE_KEY_EXTRA_DATA_SIZE, NULL, &extra))
+    return;
+  subpaths = g_strdupv (op->subpaths);
+  if (op->kind == FLATPAK_TRANSACTION_OPERATION_UPDATE && subpaths == NULL)
+    {
+      g_autoptr(GBytes) deploy_data = flatpak_dir_get_deploy_data (priv->dir, op->ref,
+                                                                   FLATPAK_DEPLOY_VERSION_ANY,
+                                                                   cancellable, NULL);
+      g_autofree const char **old_subpaths = NULL;
+      if (deploy_data == NULL)
+        return;
+      old_subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
+      subpaths = old_subpaths ? g_strdupv ((char **) old_subpaths) : g_new0 (char *, 1);
+    }
+  if (priv->disable_static_deltas)
+    flags |= FLATPAK_PULL_FLAGS_NO_STATIC_DELTAS;
+  if (op->kind == FLATPAK_TRANSACTION_OPERATION_UPDATE && op->commit != NULL)
+    flags |= FLATPAK_PULL_FLAGS_ALLOW_DOWNGRADE;
+  job = flatpak_pull_job_new (priv->dir, state, flatpak_decomposed_get_ref (op->ref),
+                              op->resolved_commit, (const char * const *) subpaths,
+                              op->resolved_metadata, op->resolved_token, flags, cancellable);
+  if (job != NULL)
+    g_hash_table_insert (jobs, op, job);
+}
+
+static void
+start_download_window (FlatpakTransaction *self,
+                       GList              *first,
+                       GHashTable         *jobs,
+                       size_t              limit,
+                       GCancellable       *cancellable)
+{
+  /* Completed jobs count towards the limit. Stop at skipped or
+   * unsupported operations to preserve execution order. */
+  for (size_t n = 0; first != NULL && n < limit; n++, first = first->next)
+    {
+      pull_job_maybe_start (self, first->data, jobs, cancellable);
+      if (!g_hash_table_contains (jobs, first->data))
+        break;
+    }
+}
+
+typedef struct
+{
+  FlatpakTransaction         *transaction;
+  FlatpakTransactionProgress *progress;
+  FlatpakProgress            *snapshot;
+  int64_t                     last_emission_us;
+} PullProgress;
+
+static void
+pull_progress_update (FlatpakPullJob *job, gpointer user_data)
+{
+  PullProgress *update = user_data;
+  FlatpakTransactionProgress *progress = update->progress;
+  int64_t now = g_get_monotonic_time ();
+  int64_t interval_us = (int64_t) flatpak_progress_get_update_interval (progress->progress_obj) * G_TIME_SPAN_MILLISECOND;
+  gboolean done = flatpak_pull_job_snapshot (job, update->snapshot);
+
+  if (done || update->last_emission_us == 0 || now >= update->last_emission_us + interval_us)
+    {
+      flatpak_progress_copy_state (progress->progress_obj, update->snapshot);
+      update->last_emission_us = now;
+      g_signal_emit (progress, progress_signals[CHANGED], 0);
+    }
+  emit_download_progress (update->transaction, done);
+}
+
+static gboolean
+pull_job_wait (FlatpakTransaction *self, FlatpakPullJob *job, FlatpakTransactionProgress *progress, GError **error)
+{
+  g_autoptr(FlatpakProgress) snapshot = flatpak_progress_new (NULL, NULL);
+  PullProgress update = { .transaction = self, .progress = progress, .snapshot = snapshot };
+
+  return flatpak_pull_job_wait (job, pull_progress_update, &update, error);
+}
+
 static gboolean
 _run_op_kind (FlatpakTransaction           *self,
               FlatpakTransactionOperation  *op,
               FlatpakRemoteState           *remote_state, /* nullable */
+              FlatpakPullJob                *pull_job,
               gboolean                     *out_needs_prune,
               gboolean                     *out_needs_triggers,
               gboolean                     *out_needs_cache_drop,
@@ -5133,10 +5477,12 @@ _run_op_kind (FlatpakTransaction           *self,
       if (op->resolved_metakey && !flatpak_check_required_version (flatpak_decomposed_get_ref (op->ref),
                                                                    op->resolved_metakey, &local_error))
         res = FALSE;
+      else if (pull_job && !pull_job_wait (self, pull_job, progress, &local_error))
+        res = FALSE;
       else
         res = flatpak_dir_install (priv->dir,
                                    priv->no_pull,
-                                   FALSE,
+                                   pull_job != NULL,
                                    priv->no_deploy,
                                    priv->disable_static_deltas,
                                    priv->reinstall,
@@ -5203,11 +5549,16 @@ _run_op_kind (FlatpakTransaction           *self,
                                                                        op->resolved_metakey, &local_error))
             res = FALSE;
           else if (op->update_only_deploy)
-            res = flatpak_dir_deploy_update (priv->dir, op->ref,
-                                             op->resolved_commit,
-                                             (const char **) op->subpaths,
-                                             (const char **) op->previous_ids,
-                                             cancellable, &local_error);
+            {
+              flatpak_progress_start_deployment (progress->progress_obj);
+              res = flatpak_dir_deploy_update (priv->dir, op->ref,
+                                               op->resolved_commit,
+                                               (const char **) op->subpaths,
+                                               (const char **) op->previous_ids,
+                                               progress->progress_obj, cancellable, &local_error);
+            }
+          else if (pull_job && !pull_job_wait (self, pull_job, progress, &local_error))
+            res = FALSE;
           else
             res = flatpak_dir_update (priv->dir,
                                       priv->no_pull,
@@ -5220,7 +5571,7 @@ _run_op_kind (FlatpakTransaction           *self,
                                       op->ref,
                                       op->resolved_commit,
                                       (const char **) op->subpaths,
-                                      NULL,
+                                      pull_job ? flatpak_pull_job_get_subpaths (pull_job) : NULL,
                                       (const char **) op->previous_ids,
                                       op->resolved_sideload_path,
                                       op->resolved_image_source,
@@ -5266,7 +5617,7 @@ _run_op_kind (FlatpakTransaction           *self,
         res = FALSE;
       else
         res = flatpak_dir_install_bundle (priv->dir, priv->reinstall, op->bundle,
-                                          op->remote, NULL,
+                                          op->remote, NULL, progress->progress_obj,
                                           cancellable, error);
       flatpak_transaction_progress_done (progress);
 
@@ -5491,7 +5842,19 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
   gboolean needs_triggers = FALSE;
   gboolean needs_cache_drop = FALSE;
   gboolean ready_res = FALSE;
+  const char *max_parallel_downloads_env = g_getenv ("FLATPAK_MAX_PARALLEL_DOWNLOADS");
+  size_t max_parallel_downloads = DEFAULT_MAX_PARALLEL_DOWNLOADS;
+  g_autoptr(GHashTable) pull_jobs = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, (GDestroyNotify) flatpak_pull_job_free);
+  g_autoptr(FlatpakDownloadTracker) downloads = flatpak_download_tracker_new ();
   int i;
+
+  if (max_parallel_downloads_env != NULL)
+    {
+      guint64 value;
+
+      if (g_ascii_string_to_unsigned (max_parallel_downloads_env, 10, 1, G_MAXUINT, &value, NULL))
+        max_parallel_downloads = value;
+    }
 
   if (!priv->can_run)
     return flatpak_fail (error, _("Transaction already executed"));
@@ -5622,6 +5985,17 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
   if (!ready_res)
     return flatpak_fail_error (error, FLATPAK_ERROR_ABORTED, _("Aborted by user"));
 
+  priv->pull_jobs = pull_jobs;
+  priv->downloads = downloads;
+  for (GList *pending = priv->ops; pending != NULL; pending = pending->next)
+    if (!priv->no_pull && operation_downloads (pending->data))
+      {
+        FlatpakTransactionOperation *op = pending->data;
+
+        flatpak_download_tracker_add (downloads, op, op->download_size);
+        priv->report_downloads = TRUE;
+      }
+
   for (l = priv->ops; l != NULL; l = l->next)
     {
       FlatpakTransactionOperation *op = l->data;
@@ -5631,7 +6005,10 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
       g_autoptr(FlatpakRemoteState) state = NULL;
 
       if (op->skip)
-        continue;
+        {
+          finish_operation_download (self, op);
+          continue;
+        }
 
       priv->current_op = op;
 
@@ -5654,11 +6031,16 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
           res = FALSE;
         }
 
-      /* Here we execute the operation in a helper function */
-      if (res && !_run_op_kind (self, op, state,
+      if (res)
+        start_download_window (self, l, pull_jobs, max_parallel_downloads, cancellable);
+      emit_download_progress (self, TRUE);
+      if (res && !_run_op_kind (self, op, state, g_hash_table_lookup (pull_jobs, op),
                                 &needs_prune, &needs_triggers, &needs_cache_drop,
                                 cancellable, &local_error))
         res = FALSE;
+
+      finish_operation_download (self, op);
+      emit_download_progress (self, TRUE);
 
       if (res)
         {
@@ -5706,6 +6088,21 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
         }
     }
   priv->current_op = NULL;
+
+  {
+    GHashTableIter iter;
+    gpointer value;
+
+    g_hash_table_iter_init (&iter, pull_jobs);
+    while (g_hash_table_iter_next (&iter, NULL, &value))
+      flatpak_pull_job_cancel (value);
+  }
+  for (GList *pending = priv->ops; pending != NULL; pending = pending->next)
+    finish_operation_download (self, pending->data);
+  emit_download_progress (self, TRUE);
+  priv->pull_jobs = NULL;
+  priv->downloads = NULL;
+  priv->report_downloads = FALSE;
 
   if (needs_triggers)
     flatpak_dir_run_triggers (priv->dir, cancellable, NULL);

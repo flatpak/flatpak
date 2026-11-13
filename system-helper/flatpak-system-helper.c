@@ -662,7 +662,7 @@ handle_deploy (FlatpakSystemHelper   *object,
           if (!flatpak_dir_deploy_update (system, ref, NULL,
                                           (const char **) arg_subpaths,
                                           (const char **) arg_previous_ids,
-                                          NULL, &error))
+                                          NULL, NULL, &error))
             {
               flatpak_invocation_return_error (invocation, error, "Error deploying");
               return G_DBUS_METHOD_INVOCATION_HANDLED;
@@ -674,7 +674,7 @@ handle_deploy (FlatpakSystemHelper   *object,
                                            (const char **) arg_subpaths,
                                            (const char **) arg_previous_ids,
                                            reinstall, update_pinned, update_preinstalled,
-                                           NULL, &error))
+                                           NULL, NULL, &error))
             {
               flatpak_invocation_return_error (invocation, error, "Error deploying");
               return G_DBUS_METHOD_INVOCATION_HANDLED;
@@ -1012,7 +1012,7 @@ handle_install_bundle (FlatpakSystemHelper   *object,
     }
 
   reinstall = (arg_flags & FLATPAK_HELPER_INSTALL_BUNDLE_FLAGS_REINSTALL) != 0;
-  if (!flatpak_dir_install_bundle (system, reinstall, bundle_file, arg_remote, &ref, NULL, &error))
+  if (!flatpak_dir_install_bundle (system, reinstall, bundle_file, arg_remote, &ref, NULL, NULL, &error))
     {
       flatpak_invocation_return_error (invocation, error, "Error installing bundle");
       return G_DBUS_METHOD_INVOCATION_HANDLED;

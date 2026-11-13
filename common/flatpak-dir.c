@@ -1244,7 +1244,7 @@ flatpak_remote_state_get_main_metadata (FlatpakRemoteState *self)
 
 
 /* 0 if not specified */
-static guint32
+guint32
 flatpak_remote_state_get_cache_version (FlatpakRemoteState *self)
 {
   VarMetadataRef meta;
@@ -3075,6 +3075,38 @@ flatpak_dir_system_helper_call (FlatpakDir         *self,
   return res;
 }
 
+typedef struct
+{
+  FlatpakDir         *dir;
+  const char         *method;
+  GVariant           *parameters;
+  const GVariantType *reply_type;
+  GVariant           *reply;
+} HelperDeployData;
+
+static gboolean
+helper_deploy_with_progress (gpointer data, GCancellable *cancellable, GError **error)
+{
+  HelperDeployData *call = data;
+
+  call->reply = flatpak_dir_system_helper_call (call->dir, call->method, call->parameters,
+                                                call->reply_type, NULL, cancellable, error);
+  return call->reply != NULL;
+}
+
+static GVariant *
+flatpak_dir_system_helper_deploy_with_progress (FlatpakDir *self, const char *method,
+                                                GVariant *parameters, const GVariantType *reply_type,
+                                                FlatpakProgress *progress, GCancellable *cancellable,
+                                                GError **error)
+{
+  g_autoptr(GVariant) owned_parameters = g_variant_ref_sink (parameters);
+  HelperDeployData call = { self, method, owned_parameters, reply_type, NULL };
+
+  flatpak_progress_run_deployment (progress, helper_deploy_with_progress, &call, cancellable, error);
+  return call.reply;
+}
+
 static gboolean
 flatpak_dir_system_helper_call_deploy (FlatpakDir         *self,
                                        const gchar        *arg_repo_path,
@@ -3084,6 +3116,7 @@ flatpak_dir_system_helper_call_deploy (FlatpakDir         *self,
                                        const gchar *const *arg_subpaths,
                                        const gchar *const *arg_previous_ids,
                                        const gchar        *arg_installation,
+                                       FlatpakProgress    *progress,
                                        GCancellable       *cancellable,
                                        GError            **error)
 {
@@ -3098,7 +3131,7 @@ flatpak_dir_system_helper_call_deploy (FlatpakDir         *self,
     arg_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_NO_INTERACTION;
 
   g_autoptr(GVariant) ret =
-    flatpak_dir_system_helper_call (self, "Deploy",
+    flatpak_dir_system_helper_deploy_with_progress (self, "Deploy",
                                     g_variant_new ("(^ayuss^as^ass)",
                                                    arg_repo_path,
                                                    arg_flags,
@@ -3107,7 +3140,7 @@ flatpak_dir_system_helper_call_deploy (FlatpakDir         *self,
                                                    arg_subpaths,
                                                    arg_previous_ids,
                                                    arg_installation),
-                                    G_VARIANT_TYPE ("()"), NULL,
+                                    G_VARIANT_TYPE ("()"), progress,
                                     cancellable, error);
   return ret != NULL;
 }
@@ -3167,6 +3200,7 @@ flatpak_dir_system_helper_call_install_bundle (FlatpakDir   *self,
                                                const gchar  *arg_remote,
                                                const gchar  *arg_installation,
                                                gchar       **out_ref,
+                                               FlatpakProgress *progress,
                                                GCancellable *cancellable,
                                                GError      **error)
 {
@@ -3174,13 +3208,13 @@ flatpak_dir_system_helper_call_install_bundle (FlatpakDir   *self,
     arg_flags |= FLATPAK_HELPER_INSTALL_BUNDLE_FLAGS_NO_INTERACTION;
 
   g_autoptr(GVariant) ret =
-    flatpak_dir_system_helper_call (self, "InstallBundle",
+    flatpak_dir_system_helper_deploy_with_progress (self, "InstallBundle",
                                     g_variant_new ("(^ayuss)",
                                                    arg_bundle_path,
                                                    arg_flags,
                                                    arg_remote,
                                                    arg_installation),
-                                    G_VARIANT_TYPE ("(s)"), NULL,
+                                    G_VARIANT_TYPE ("(s)"), progress,
                                     cancellable, error);
   if (ret == NULL)
     return FALSE;
@@ -6542,6 +6576,47 @@ compute_extra_data_download_size (GVariant *extra_data_sources,
 
   *out_n_extra_data = n_extra_data;
   *out_total_download_size = total_download_size;
+}
+
+FlatpakRemoteState *
+flatpak_remote_state_snapshot_for_pull (FlatpakRemoteState *state)
+{
+  GHashTableIter iter;
+  gpointer key, value;
+  FlatpakRemoteState *copy;
+
+  copy = flatpak_remote_state_new ();
+  copy->remote_name = g_strdup (state->remote_name);
+  copy->is_file_uri = state->is_file_uri;
+  copy->collection_id = g_strdup (state->collection_id);
+  copy->default_token_type = state->default_token_type;
+  if (state->index)
+    copy->index = g_variant_ref (state->index);
+  if (state->index_sig_bytes)
+    copy->index_sig_bytes = g_bytes_ref (state->index_sig_bytes);
+  if (state->summary)
+    copy->summary = g_variant_ref (state->summary);
+  if (state->summary_bytes)
+    copy->summary_bytes = g_bytes_ref (state->summary_bytes);
+  if (state->summary_sig_bytes)
+    copy->summary_sig_bytes = g_bytes_ref (state->summary_sig_bytes);
+  if (state->summary_fetch_error)
+    copy->summary_fetch_error = g_error_copy (state->summary_fetch_error);
+  if (state->allow_refs)
+    copy->allow_refs = g_regex_ref (state->allow_refs);
+  if (state->deny_refs)
+    copy->deny_refs = g_regex_ref (state->deny_refs);
+  if (state->index_ht)
+    {
+      copy->index_ht = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, (GDestroyNotify) g_variant_unref);
+      g_hash_table_iter_init (&iter, state->index_ht);
+      while (g_hash_table_iter_next (&iter, &key, &value))
+        g_hash_table_insert (copy->index_ht, g_strdup (key), g_variant_ref (value));
+    }
+  g_hash_table_iter_init (&iter, state->subsummaries);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    g_hash_table_insert (copy->subsummaries, g_strdup (key), value ? g_variant_ref (value) : NULL);
+  return copy;
 }
 
 static gboolean
@@ -10551,18 +10626,31 @@ flatpak_dir_prune_origin_remote (FlatpakDir *self,
     }
 }
 
-gboolean
-flatpak_dir_deploy_install (FlatpakDir        *self,
-                            FlatpakDecomposed *ref,
-                            const char        *origin,
-                            const char        *checksum_or_latest,
-                            const char       **subpaths,
-                            const char       **previous_ids,
-                            gboolean           reinstall,
-                            gboolean           pin_on_deploy,
-                            gboolean           update_preinstalled_on_deploy,
-                            GCancellable      *cancellable,
-                            GError           **error)
+typedef struct
+{
+  FlatpakDir        *dir;
+  FlatpakDecomposed *ref;
+  const char        *origin;
+  const char        *commit;
+  const char       **subpaths;
+  const char       **previous_ids;
+  gboolean           reinstall;
+  gboolean           pin;
+  gboolean           preinstalled;
+} DeployData;
+
+static gboolean
+deploy_install (FlatpakDir        *self,
+                FlatpakDecomposed *ref,
+                const char        *origin,
+                const char        *checksum_or_latest,
+                const char       **subpaths,
+                const char       **previous_ids,
+                gboolean           reinstall,
+                gboolean           pin_on_deploy,
+                gboolean           update_preinstalled_on_deploy,
+                GCancellable      *cancellable,
+                GError           **error)
 {
   g_auto(GLnxLockFile) lock = { 0, };
   g_autoptr(GFile) deploy_base = NULL;
@@ -10690,14 +10778,45 @@ out:
 }
 
 
+static gboolean
+run_install_deployment (gpointer data, GCancellable *cancellable, GError **error)
+{
+  DeployData *deploy = data;
+
+  return deploy_install (deploy->dir, deploy->ref, deploy->origin,
+                         deploy->commit, deploy->subpaths, deploy->previous_ids,
+                         deploy->reinstall, deploy->pin, deploy->preinstalled,
+                         cancellable, error);
+}
+
 gboolean
-flatpak_dir_deploy_update (FlatpakDir        *self,
-                           FlatpakDecomposed *ref,
-                           const char        *checksum_or_latest,
-                           const char       **opt_subpaths,
-                           const char       **opt_previous_ids,
-                           GCancellable      *cancellable,
-                           GError           **error)
+flatpak_dir_deploy_install (FlatpakDir        *self,
+                            FlatpakDecomposed *ref,
+                            const char        *origin,
+                            const char        *checksum_or_latest,
+                            const char       **subpaths,
+                            const char       **previous_ids,
+                            gboolean           reinstall,
+                            gboolean           pin_on_deploy,
+                            gboolean           update_preinstalled_on_deploy,
+                            FlatpakProgress   *progress,
+                            GCancellable      *cancellable,
+                            GError           **error)
+{
+  DeployData deploy = { self, ref, origin, checksum_or_latest, subpaths, previous_ids,
+                        reinstall, pin_on_deploy, update_preinstalled_on_deploy };
+
+  return flatpak_progress_run_deployment (progress, run_install_deployment, &deploy, cancellable, error);
+}
+
+static gboolean
+deploy_update (FlatpakDir        *self,
+               FlatpakDecomposed *ref,
+               const char        *checksum_or_latest,
+               const char       **opt_subpaths,
+               const char       **opt_previous_ids,
+               GCancellable      *cancellable,
+               GError           **error)
 {
   g_autoptr(GBytes) old_deploy_data = NULL;
   g_auto(GLnxLockFile) lock = { 0, };
@@ -10769,6 +10888,32 @@ flatpak_dir_deploy_update (FlatpakDir        *self,
                    "Updated %s from %s", flatpak_decomposed_get_ref (ref), old_origin);
 
   return TRUE;
+}
+
+static gboolean
+run_update_deployment (gpointer data, GCancellable *cancellable, GError **error)
+{
+  DeployData *deploy = data;
+
+  return deploy_update (deploy->dir, deploy->ref, deploy->commit,
+                        deploy->subpaths, deploy->previous_ids,
+                        cancellable, error);
+}
+
+gboolean
+flatpak_dir_deploy_update (FlatpakDir        *self,
+                           FlatpakDecomposed *ref,
+                           const char        *checksum_or_latest,
+                           const char       **opt_subpaths,
+                           const char       **opt_previous_ids,
+                           FlatpakProgress   *progress,
+                           GCancellable      *cancellable,
+                           GError           **error)
+{
+  DeployData deploy = { .dir = self, .ref = ref, .commit = checksum_or_latest,
+                        .subpaths = opt_subpaths, .previous_ids = opt_previous_ids };
+
+  return flatpak_progress_run_deployment (progress, run_update_deployment, &deploy, cancellable, error);
 }
 
 static void
@@ -11504,12 +11649,15 @@ flatpak_dir_install (FlatpakDir          *self,
 
       helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_INSTALL_HINT;
 
+      if (!no_deploy)
+        flatpak_progress_start_deployment (progress);
       if (!flatpak_dir_system_helper_call_deploy (self,
                                                   child_repo_path ? child_repo_path : "",
                                                   helper_flags, flatpak_decomposed_get_ref (ref), state->remote_name,
                                                   (const char * const *) subpaths,
                                                   (const char * const *) opt_previous_ids,
                                                   installation ? installation : "",
+                                                  no_deploy ? NULL : progress,
                                                   cancellable,
                                                   error))
         return FALSE;
@@ -11539,11 +11687,12 @@ flatpak_dir_install (FlatpakDir          *self,
   if (!no_deploy)
     {
       /* A tracking ref may have changed since the prefetched pull completed. */
+      flatpak_progress_start_deployment (progress);
       if (!flatpak_dir_deploy_install (self, ref, state->remote_name,
                                        already_pulled ? opt_commit : NULL, opt_subpaths,
                                        opt_previous_ids, reinstall, pin_on_deploy,
                                        update_preinstalled_on_deploy,
-                                       cancellable, error))
+                                       progress, cancellable, error))
         return FALSE;
 
       /* In case the app is being renamed, rewrite any launchers made by
@@ -11713,6 +11862,7 @@ flatpak_dir_install_bundle (FlatpakDir         *self,
                             GFile              *file,
                             const char         *remote,
                             FlatpakDecomposed **out_ref,
+                            FlatpakProgress    *progress,
                             GCancellable       *cancellable,
                             GError            **error)
 {
@@ -11735,12 +11885,14 @@ flatpak_dir_install_bundle (FlatpakDir         *self,
       if (reinstall)
         install_flags |= FLATPAK_HELPER_INSTALL_BUNDLE_FLAGS_REINSTALL;
 
+      flatpak_progress_start_deployment (progress);
       if (!flatpak_dir_system_helper_call_install_bundle (self,
                                                           flatpak_file_get_path_cached (file),
                                                           install_flags,
                                                           remote,
                                                           installation ? installation : "",
                                                           &ref_str,
+                                                          progress,
                                                           cancellable,
                                                           error))
         return FALSE;
@@ -11851,14 +12003,15 @@ flatpak_dir_install_bundle (FlatpakDir         *self,
         }
     }
 
+  flatpak_progress_start_deployment (progress);
   if (deploy_data)
     {
-      if (!flatpak_dir_deploy_update (self, ref, NULL, NULL, NULL, cancellable, error))
+      if (!flatpak_dir_deploy_update (self, ref, NULL, NULL, NULL, progress, cancellable, error))
         return FALSE;
     }
   else
     {
-      if (!flatpak_dir_deploy_install (self, ref, remote, NULL, NULL, NULL, reinstall, FALSE, FALSE, cancellable, error))
+      if (!flatpak_dir_deploy_install (self, ref, remote, NULL, NULL, NULL, reinstall, FALSE, FALSE, progress, cancellable, error))
         return FALSE;
     }
 
@@ -12237,11 +12390,14 @@ flatpak_dir_update (FlatpakDir                           *self,
       if (install_hint)
         helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_INSTALL_HINT;
 
+      if (!no_deploy)
+        flatpak_progress_start_deployment (progress);
       if (!flatpak_dir_system_helper_call_deploy (self,
                                                   child_repo_path ? child_repo_path : "",
                                                   helper_flags, flatpak_decomposed_get_ref (ref), state->remote_name,
                                                   subpaths, opt_previous_ids,
                                                   installation ? installation : "",
+                                                  no_deploy ? NULL : progress,
                                                   cancellable,
                                                   error))
         return FALSE;
@@ -12279,12 +12435,13 @@ flatpak_dir_update (FlatpakDir                           *self,
 
   if (!no_deploy)
     {
+      flatpak_progress_start_deployment (progress);
       if (!flatpak_dir_deploy_update (self, ref,
                                       /* We don't know the local commit id in the OCI case, and
                                          we only support one version anyway */
                                       is_oci ? NULL : commit,
                                       subpaths, opt_previous_ids,
-                                      cancellable, error))
+                                      progress, cancellable, error))
         return FALSE;
 
       /* In case the app is being renamed, rewrite any launchers made by

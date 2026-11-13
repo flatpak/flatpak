@@ -154,7 +154,13 @@ struct _FlatpakTransactionClass
 
   gboolean (*ready_pre_auth) (FlatpakTransaction *transaction);
 
-  gpointer padding[3];
+  void (*download_progress) (FlatpakTransaction *transaction,
+                             guint active_downloads,
+                             guint64 bytes_transferred,
+                             guint64 bytes_total,
+                             guint64 bytes_per_second);
+
+  gpointer padding[2];
 };
 
 FLATPAK_EXTERN

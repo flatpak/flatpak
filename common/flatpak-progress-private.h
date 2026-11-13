@@ -48,6 +48,9 @@ G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC (FlatpakMainContext, flatpak_main_context_finis
 
 FlatpakProgress *flatpak_progress_new (FlatpakProgressCallback callback,
                                        gpointer                user_data);
+/* Caller synchronizes access; copies only the public progress view. */
+void flatpak_progress_copy_state (FlatpakProgress *dest,
+                                  FlatpakProgress *source);
 
 void flatpak_progress_init_extra_data (FlatpakProgress *self,
                                        guint64          n_extra_data,
@@ -82,6 +85,20 @@ gboolean flatpak_progress_get_estimating (FlatpakProgress *self);
 
 gboolean flatpak_progress_is_done (FlatpakProgress *self);
 void flatpak_progress_done (FlatpakProgress *self);
+void flatpak_progress_start_deployment (FlatpakProgress *self);
+
+typedef gboolean (*FlatpakDeploymentFunc) (gpointer      data,
+                                           GCancellable *cancellable,
+                                           GError      **error);
+
+/* Runs inline without a progress callback, otherwise on a worker with progress
+ * callbacks on the caller thread. Borrows data until return and joins the worker
+ * even after cancellation. The deployment must not access self concurrently. */
+gboolean flatpak_progress_run_deployment (FlatpakProgress      *self,
+                                          FlatpakDeploymentFunc deploy,
+                                          gpointer              data,
+                                          GCancellable         *cancellable,
+                                          GError              **error);
 
 void flatpak_progress_init_main_context (FlatpakProgress *maybe_progress,
                                          FlatpakMainContext *context);
