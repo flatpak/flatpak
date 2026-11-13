@@ -583,6 +583,11 @@ gboolean              flatpak_dir_ensure_repo                               (Fla
 gboolean              flatpak_dir_maybe_ensure_repo                         (FlatpakDir                    *self,
                                                                              GCancellable                  *cancellable,
                                                                              GError                       **error);
+gboolean              flatpak_dir_check_required_metadata                   (FlatpakDir                    *self,
+                                                                             const char                    *ref,
+                                                                             GKeyFile                      *metakey,
+                                                                             GError                       **error);
+
 char *                flatpak_dir_get_config                                (FlatpakDir                    *self,
                                                                              const char                    *key,
                                                                              GError                       **error);

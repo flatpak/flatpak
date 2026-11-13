@@ -5159,8 +5159,8 @@ _run_op_kind (FlatpakTransaction           *self,
 
       g_assert (op->resolved_commit != NULL || op->resolved_image_source != NULL); /* We resolved this before */
 
-      if (op->resolved_metakey && !flatpak_check_required_version (flatpak_decomposed_get_ref (op->ref),
-                                                                   op->resolved_metakey, &local_error))
+      if (op->resolved_metakey && !flatpak_dir_check_required_metadata (priv->dir, flatpak_decomposed_get_ref (op->ref),
+                                                                        op->resolved_metakey, &local_error))
         res = FALSE;
       else
         res = flatpak_dir_install (priv->dir,
@@ -5227,8 +5227,8 @@ _run_op_kind (FlatpakTransaction           *self,
 
           emit_new_op (self, op, progress);
 
-          if (op->resolved_metakey && !flatpak_check_required_version (flatpak_decomposed_get_ref (op->ref),
-                                                                       op->resolved_metakey, &local_error))
+          if (op->resolved_metakey && !flatpak_dir_check_required_metadata (priv->dir, flatpak_decomposed_get_ref (op->ref),
+                                                                            op->resolved_metakey, &local_error))
             res = FALSE;
           else if (op->update_only_deploy)
             res = flatpak_dir_deploy_update (priv->dir, op->ref,
@@ -5288,8 +5288,8 @@ _run_op_kind (FlatpakTransaction           *self,
     {
       g_autoptr(FlatpakTransactionProgress) progress = flatpak_transaction_progress_new ();
       emit_new_op (self, op, progress);
-      if (op->resolved_metakey && !flatpak_check_required_version (flatpak_decomposed_get_ref (op->ref),
-                                                                   op->resolved_metakey, error))
+      if (op->resolved_metakey && !flatpak_dir_check_required_metadata (priv->dir, flatpak_decomposed_get_ref (op->ref),
+                                                                        op->resolved_metakey, error))
         res = FALSE;
       else
         res = flatpak_dir_install_bundle (priv->dir, priv->reinstall, op->bundle,
