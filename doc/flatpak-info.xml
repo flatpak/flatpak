@@ -42,6 +42,10 @@
 
         <para>
             Show info about an installed application or runtime.
+            <arg choice="plain">NAME</arg> may also be a path to a local
+            <filename>.flatpak</filename> single-file bundle; in that case
+            Flatpak prints the bundle’s ref, commit and embedded metadata
+            without installing it.
         </para>
         <para>
             By default, the output is formatted in a friendly format.
