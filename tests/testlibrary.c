@@ -3980,6 +3980,83 @@ test_transaction_deps (void)
   g_assert_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ABORTED);
 }
 
+typedef struct
+{
+  char *config_path;
+  GPtrArray *completed;
+} PinCheck;
+
+static void
+check_persistent_pins (FlatpakTransaction *transaction,
+                       FlatpakTransactionOperation *op,
+                       const char *commit, int result, gpointer data)
+{
+  PinCheck *check = data;
+  g_autoptr(GKeyFile) config = g_key_file_new ();
+  g_autoptr(GError) error = NULL;
+  g_autofree char *pins = NULL;
+  g_autofree char *preinstalled = NULL;
+
+  if (op)
+    g_ptr_array_add (check->completed, g_strdup (flatpak_transaction_operation_get_ref (op)));
+  g_assert_true (g_key_file_load_from_file (config, check->config_path, 0, &error));
+  pins = g_key_file_get_string (config, "core", "xa.pinned", &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (strstr (pins, "runtime/org.test.Keep/*"));
+  for (size_t i = 0; i < check->completed->len; i++)
+    g_assert_nonnull (strstr (pins, g_ptr_array_index (check->completed, i)));
+  preinstalled = g_key_file_get_string (config, "core", "xa.preinstalled", &error);
+  g_assert_no_error (error);
+  g_assert_cmpstr (preinstalled, ==, "runtime/org.test.Keep/*");
+  g_assert_cmpint (g_key_file_get_integer (config, "core", "min-free-space-percent", &error), ==, 5);
+  g_assert_no_error (error);
+  g_assert_false (g_key_file_has_key (config, "core", "min-free-space-size", NULL));
+}
+
+static void
+test_transaction_persistent_pins (void)
+{
+  g_autofree char *path = g_build_filename (testdir, "persistent-pins", NULL);
+  g_autoptr(GFile) file = g_file_new_for_path (path);
+  g_autoptr(GError) error = NULL;
+  g_autoptr(FlatpakInstallation) inst = flatpak_installation_new_for_path (file, TRUE, NULL, &error);
+  g_autoptr(FlatpakRemote) remote = flatpak_remote_new ("pins-test");
+  g_autofree char *url = g_strdup_printf ("http://127.0.0.1:%s/test", httpd_port);
+  g_autofree char *config_path = g_build_filename (path, "repo", "config", NULL);
+  g_autoptr(GKeyFile) config = g_key_file_new ();
+  g_autoptr(FlatpakTransaction) transaction = NULL;
+  g_autoptr(GPtrArray) completed = g_ptr_array_new_with_free_func (g_free);
+  PinCheck check = { config_path, completed };
+  const char *names[] = { "org.test.Platform", "org.test.Hello.Locale" };
+
+  g_assert_no_error (error);
+  flatpak_remote_set_url (remote, url);
+  flatpak_remote_set_gpg_verify (remote, FALSE);
+  g_assert_true (flatpak_installation_modify_remote (inst, remote, NULL, &error));
+  g_assert_no_error (error);
+  g_assert_true (g_key_file_load_from_file (config, config_path, 0, &error));
+  g_key_file_remove_key (config, "core", "min-free-space-size", NULL);
+  g_key_file_set_integer (config, "core", "min-free-space-percent", 5);
+  g_key_file_set_string (config, "core", "xa.pinned", "runtime/org.test.Keep/*");
+  g_key_file_set_string (config, "core", "xa.preinstalled", "runtime/org.test.Keep/*");
+  g_assert_true (g_key_file_save_to_file (config, config_path, &error));
+  g_assert_true (flatpak_installation_drop_caches (inst, NULL, &error));
+  transaction = flatpak_transaction_new_for_installation (inst, NULL, &error);
+  g_assert_no_error (error);
+  flatpak_transaction_set_disable_dependencies (transaction, TRUE);
+  flatpak_transaction_set_disable_related (transaction, TRUE);
+  for (size_t i = 0; i < G_N_ELEMENTS (names); i++)
+    {
+      g_autofree char *ref = g_strdup_printf ("runtime/%s/%s/master", names[i], flatpak_get_default_arch ());
+      g_assert_true (flatpak_transaction_add_install (transaction, "pins-test", ref, NULL, &error));
+    }
+  g_signal_connect (transaction, "operation-done", G_CALLBACK (check_persistent_pins), &check);
+  g_assert_true (flatpak_transaction_run (transaction, NULL, &error));
+  g_assert_no_error (error);
+  g_assert_cmpuint (completed->len, ==, 2);
+  check_persistent_pins (transaction, NULL, NULL, 0, &check);
+}
+
 /* install from a local repository */
 static void
 test_transaction_install_local (void)
@@ -5259,6 +5336,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/library/transaction-flatpakref-origin-remote-creation", test_transaction_flatpakref_origin_remote_creation);
   g_test_add_func ("/library/transaction-deps", test_transaction_deps);
   g_test_add_func ("/library/transaction-install-local", test_transaction_install_local);
+  g_test_add_func ("/library/transaction-persistent-pins", test_transaction_persistent_pins);
   g_test_add_func ("/library/transaction-app-runtime-same-remote", test_transaction_app_runtime_same_remote);
   g_test_add_func ("/library/transaction-update-related-from-different-remote", test_transaction_update_related_from_different_remote);
   g_test_add_func ("/library/remote-nodeps-option", test_remote_nodeps_option);
