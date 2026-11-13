@@ -21,6 +21,7 @@
 #ifndef FLATPAK_PROGRESS_H
 #define FLATPAK_PROGRESS_H
 
+#include <stdint.h>
 #include <glib-object.h>
 #include <ostree.h>
 
@@ -48,9 +49,13 @@ G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC (FlatpakMainContext, flatpak_main_context_finis
 
 FlatpakProgress *flatpak_progress_new (FlatpakProgressCallback callback,
                                        gpointer                user_data);
-/* Caller synchronizes access; copies only the public progress view. */
+/* Caller synchronizes access. Copies reported progress without changing
+ * callbacks or worker state. */
 void flatpak_progress_copy_state (FlatpakProgress *dest,
                                   FlatpakProgress *source);
+void flatpak_progress_update_from_snapshot (FlatpakProgress *self,
+                                            FlatpakProgress *snapshot,
+                                            uint64_t         previous_bytes);
 
 void flatpak_progress_init_extra_data (FlatpakProgress *self,
                                        guint64          n_extra_data,
@@ -86,6 +91,7 @@ gboolean flatpak_progress_get_estimating (FlatpakProgress *self);
 gboolean flatpak_progress_is_done (FlatpakProgress *self);
 void flatpak_progress_done (FlatpakProgress *self);
 void flatpak_progress_start_deployment (FlatpakProgress *self);
+void flatpak_progress_start_download (FlatpakProgress *self);
 
 typedef gboolean (*FlatpakDeploymentFunc) (gpointer      data,
                                            GCancellable *cancellable,

@@ -6,8 +6,21 @@
 #include "flatpak-progress-private.h"
 
 typedef struct _FlatpakPullJob FlatpakPullJob;
-typedef void (*FlatpakPullJobUpdate) (FlatpakPullJob *job,
+typedef void (*FlatpakPullJobUpdate) (gboolean        done,
                                       gpointer        user_data);
+typedef gboolean (*FlatpakPullJobFunc) (gpointer         data,
+                                        FlatpakProgress *progress,
+                                        GCancellable    *cancellable,
+                                        GError         **error);
+
+/* Borrows data exclusively until the worker has joined. Progress callbacks run
+ * on the caller thread; source-specific locks and cleanup stay with the caller. */
+gboolean flatpak_pull_job_run_serial (const char         *ref,
+                                     FlatpakPullJobFunc   pull,
+                                     gpointer             data,
+                                     FlatpakProgress     *progress,
+                                     GCancellable        *cancellable,
+                                     GError             **error);
 
 /* The caller checks remote/ref eligibility. Returns NULL if worker repository
  * verification requires a serial pull. */
@@ -28,7 +41,12 @@ const char **flatpak_pull_job_get_subpaths (FlatpakPullJob *self);
 /* Copies a synchronized progress snapshot and returns whether the pull ended. */
 gboolean flatpak_pull_job_snapshot (FlatpakPullJob  *self,
                                     FlatpakProgress *progress);
+/* Delivers progress on the caller thread at the recipient's update interval,
+ * including the first and final snapshot, adding to its existing byte counts.
+ * The optional update callback runs after each snapshot check, even when
+ * delivery is throttled, so callers can report other downloads too. */
 gboolean flatpak_pull_job_wait (FlatpakPullJob      *self,
+                                FlatpakProgress     *progress,
                                 FlatpakPullJobUpdate update,
                                 gpointer             user_data,
                                 GError             **error);

@@ -49,10 +49,29 @@ EXTRA_DATA_SHA256=$(sha256sum "${DOWNLOADED_EXTRA_DATA}" | cut -f1 -d' ')
 EXTRA_DATA="--extra-data=test:${EXTRA_DATA_SHA256}:${EXTRA_DATA_SIZE}:${EXTRA_DATA_SIZE}:${EXTRA_DATA_URL}"
 BUILD_FINISH_ARGS=${EXTRA_DATA} make_updated_app ${REPONAME} ${COLLECTION_ID} ${BRANCH} UPDATE1
 
+# Check that worker failures preserve checksum verification and do not deploy.
+${FLATPAK} ${U} install -y ${REPONAME}-repo org.test.Platform ${BRANCH} >&2
+echo "extra-data-TEST-content" > "${EXTRA_DATA_DIR}/${EXTRA_DATA_FILE}"
+if G_MESSAGES_DEBUG=all ${FLATPAK} ${U} install -v -y ${REPONAME}-repo org.test.Hello ${BRANCH} &> extra-data-error-log; then
+    assert_not_reached "Should reject extra data with the wrong checksum"
+fi
+assert_file_has_content extra-data-error-log "Invalid checksum for extra data"
+assert_file_has_content extra-data-error-log "Background pull completed for app/org.test.Hello/$ARCH/$BRANCH (error)"
+assert_not_has_dir "$FL_DIR/app/org.test.Hello/$ARCH/$BRANCH/active"
+cp "${DOWNLOADED_EXTRA_DATA}" "${EXTRA_DATA_DIR}/${EXTRA_DATA_FILE}"
+
 # ensure it installs correctly
-install_repo ${REPONAME} ${BRANCH}
+G_MESSAGES_DEBUG=all ${FLATPAK} ${U} install -v -y ${REPONAME}-repo org.test.Hello ${BRANCH} &> extra-data-install-log
+assert_file_has_content extra-data-install-log "Background pull completed for app/org.test.Hello/$ARCH/$BRANCH (success)"
 
 # ensure the right extra-data got downloaded
+${FLATPAK} run --command=sh org.test.Hello -c "cat /app/extra/test" > out
+assert_file_has_content out "extra-data-test-content"
+
+BUILD_FINISH_ARGS=${EXTRA_DATA} make_updated_app ${REPONAME} ${COLLECTION_ID} ${BRANCH} UPDATE2
+update_repo ${REPONAME} ${COLLECTION_ID}
+G_MESSAGES_DEBUG=all ${FLATPAK} ${U} update -v -y org.test.Hello &> extra-data-update-log
+assert_file_has_content extra-data-update-log "Background pull completed for app/org.test.Hello/$ARCH/$BRANCH (success)"
 ${FLATPAK} run --command=sh org.test.Hello -c "cat /app/extra/test" > out
 assert_file_has_content out "extra-data-test-content"
 
@@ -85,7 +104,8 @@ ${FLATPAK} remote-add ${U} oci-registry "oci+${scheme}://127.0.0.1:${port}" >&2
 images=$(${FLATPAK} remote-ls ${U} --columns=app oci-registry | sort | tr '\n' ' ' | sed 's/ $//')
 assert_streq "$images" "org.test.Hello org.test.Platform"
 
-${FLATPAK} ${U} install -y oci-registry org.test.Hello >&2
+G_MESSAGES_DEBUG=all ${FLATPAK} ${U} install -v -y oci-registry org.test.Hello &> extra-data-oci-log
+assert_file_has_content extra-data-oci-log "Background pull completed for app/org.test.Hello/$ARCH/$BRANCH (success)"
 
 # ensure the right extra-data got downloaded
 ${FLATPAK} run --command=sh org.test.Hello -c "cat /app/extra/test" > out

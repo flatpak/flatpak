@@ -82,7 +82,8 @@ ok "listed native and USB sideloaded refs"
 # This one uses the sideload repo in /run, the rest in the flatpak dir
 ln -s $SIDELOAD_REPO $SIDELOAD_REPO_LINK2
 
-${FLATPAK} ${U} install -y test-repo org.test.Hello >&2
+G_MESSAGES_DEBUG=all ${FLATPAK} ${U} install -v -y test-repo org.test.Hello &> sideload-install-log
+assert_file_has_content sideload-install-log "Background pull completed for app/org.test.Hello/$ARCH/master (success)"
 assert_has_file $FL_DIR/app/org.test.Hello/$ARCH/master/active/metadata
 assert_has_file $FL_DIR/repo/refs/remotes/test-repo/app/org.test.Hello/${ARCH}/master
 assert_not_has_file $FL_DIR/repo/refs/mirrors/org.test.Collection.test/app/org.test.Hello/${ARCH}/master
