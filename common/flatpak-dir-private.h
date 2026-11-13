@@ -731,6 +731,7 @@ gboolean              flatpak_dir_deploy_update                             (Fla
 gboolean              flatpak_dir_deploy_install                            (FlatpakDir                    *self,
                                                                              FlatpakDecomposed             *ref,
                                                                              const char                    *origin,
+                                                                             const char                    *checksum_or_latest,
                                                                              const char                   **subpaths,
                                                                              const char                   **previous_ids,
                                                                              gboolean                       reinstall,
@@ -738,8 +739,12 @@ gboolean              flatpak_dir_deploy_install                            (Fla
                                                                              gboolean                       update_preinstalled_on_deploy,
                                                                              GCancellable                  *cancellable,
                                                                              GError                       **error);
+/* If already_pulled is TRUE, opt_commit and the requested subpaths must have
+ * been pulled. The caller must hold the shared repo/prune lock until this
+ * function returns. */
 gboolean              flatpak_dir_install                                   (FlatpakDir                    *self,
                                                                              gboolean                       no_pull,
+                                                                             gboolean                       already_pulled,
                                                                              gboolean                       no_deploy,
                                                                              gboolean                       no_static_deltas,
                                                                              gboolean                       reinstall,
@@ -787,6 +792,9 @@ char *                flatpak_dir_check_for_update                          (Fla
                                                                              gboolean                       no_pull,
                                                                              GCancellable                  *cancellable,
                                                                              GError                       **error);
+/* pulled_subpaths is NULL unless @checksum_or_latest was already pulled with
+ * that selection. An empty vector means the entire ref was pulled. The caller
+ * must hold the shared repo/prune lock until this function returns. */
 gboolean              flatpak_dir_update                                    (FlatpakDir                    *self,
                                                                              gboolean                       no_pull,
                                                                              gboolean                       no_deploy,
@@ -798,6 +806,7 @@ gboolean              flatpak_dir_update                                    (Fla
                                                                              FlatpakDecomposed             *ref,
                                                                              const char                    *checksum_or_latest,
                                                                              const char                   **opt_subpaths,
+                                                                             const char                   **pulled_subpaths,
                                                                              const char                   **opt_previous_ids,
                                                                              GFile                         *sideload_repo,
                                                                              FlatpakImageSource            *opt_image_source,
