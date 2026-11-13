@@ -25,26 +25,29 @@
 
 set -e
 
-. $(dirname $0)/libtest.sh
+# shellcheck source=tests/libtest.sh
+. "$(dirname "$0")/libtest.sh"
 
 REPO_DIR=$1
-REPO_NAME=$(basename $REPO_DIR)
+# shellcheck disable=SC2034
+REPO_NAME=$(basename "$REPO_DIR")
 
 COLLECTION_ID_PREFIX=org.test.Collection
 
-ostree --repo=${REPO_DIR} init --mode=archive --collection-id=${COLLECTION_ID_PREFIX}1 >&2
+ostree --repo="${REPO_DIR}" init --mode=archive --collection-id="${COLLECTION_ID_PREFIX}1" >&2
 
 for i in {1..3}; do
-    APP_REPO=test${i}
-    APP_REPO_DIR=`pwd`/repos/${APP_REPO}
-    APP_ID=org.test.Hello${i}
-    COLLECTION_ID=${COLLECTION_ID_PREFIX}${i}
+    APP_REPO="test${i}"
+    APP_REPO_DIR="$(pwd)/repos/${APP_REPO}"
+    APP_ID="org.test.Hello${i}"
+    COLLECTION_ID="${COLLECTION_ID_PREFIX}${i}"
 
-    $(dirname $0)/make-test-app.sh repos/${APP_REPO} ${APP_ID} master ${COLLECTION_ID}
-    ref=$(ostree --repo=${APP_REPO_DIR} refs | grep ${APP_ID})
+    "$(dirname "$0")/make-test-app.sh" "repos/${APP_REPO}" "${APP_ID}" master "${COLLECTION_ID}"
+    ref=$(ostree --repo="${APP_REPO_DIR}" refs | grep "${APP_ID}")
 
-    ostree --repo=${REPO_DIR} remote add --no-gpg-verify --collection-id=${COLLECTION_ID} ${APP_REPO} file://${APP_REPO_DIR} >&2
-    ostree --repo=${REPO_DIR} pull ${APP_REPO} ${ref} >&2
+    ostree --repo="${REPO_DIR}" remote add --no-gpg-verify --collection-id="${COLLECTION_ID}" "${APP_REPO}" "file://${APP_REPO_DIR}" >&2
+    # shellcheck disable=SC2086
+    ostree --repo="${REPO_DIR}" pull "${APP_REPO}" ${ref} >&2
 done
 
-ostree --repo=${REPO_DIR} summary --update >&2
+ostree --repo="${REPO_DIR}" summary --update >&2

@@ -19,7 +19,8 @@
 
 set -euo pipefail
 
-. $(dirname $0)/libtest.sh
+# shellcheck source=tests/libtest.sh
+. "$(dirname "$0")/libtest.sh"
 
 setup_repo
 
@@ -66,7 +67,7 @@ EOF
   </component>
 </components>
 EOF
-    cp $(dirname $0)/org.test.Hello.png ${DIR}/files/share/app-info/icons/flatpak/64x64/${APP_ID}.png
+    cp "$(dirname "$0")/org.test.Hello.png" "${DIR}/files/share/app-info/icons/flatpak/64x64/${APP_ID}.png"
 
     $FLATPAK build-finish --command=hello.sh ${DIR} &> /dev/null
     $FLATPAK build-export --no-update-summary ${GPGARGS} --arch=$APPARCH --disable-sandbox  ${REPO} ${DIR} &> /dev/null
@@ -106,7 +107,8 @@ verify_subsummaries() {
     N_DELTAS=0
     for DELTA_FILE in $REPO/summaries/*.delta; do
         DELTA=$(basename $DELTA_FILE .delta)
-        FROM=$(echo $DELTA | cut -d "-" -f 1)
+        # shellcheck disable=SC2034
+        FROM=$(echo "$DELTA" | cut -d "-" -f 1)
         TO=$(echo $DELTA | cut -d "-" -f 2)
 
         # All TO should be in an active SUBSET
@@ -134,7 +136,7 @@ verify_subsummaries() {
 set +x
 
 # A non-default arch (that isn't compatible)
-if [ $ARCH == x86_64 -o $ARCH == i386 ]; then
+if [ "$ARCH" == x86_64 ] || [ "$ARCH" == i386 ]; then
     OTHER_ARCH=aarch64
 else
     OTHER_ARCH=x86_64
@@ -145,7 +147,7 @@ declare -A arches
 for A in x86_64 aarch64 arm $($FLATPAK --supported-arches); do
     arches[$A]=1
 done
-ARCHES=${!arches[@]}
+ARCHES=${!arches[*]}
 
 for A in $ARCHES; do
     # Create runtimes for all arches (based on $ARCH version)
@@ -220,7 +222,9 @@ assert_file_has_content httpd-log summaries/${OLD_ACTIVE_SUBSET}-${ACTIVE_SUBSET
 $FLATPAK build-commit-from ${GPGARGS} --src-ref=app/org.app.App1/$ARCH/master repos/test app/org.app.App1.NEW2/$ARCH/master >&2
 $FLATPAK build-commit-from ${GPGARGS} --src-ref=app/org.app.App1/$OTHER_ARCH/master repos/test app/org.app.App1.NEW2/$OTHER_ARCH/master >&2
 
+# shellcheck disable=SC2034
 OLD_OLD_ACTIVE_SUBSET=$OLD_ACTIVE_SUBSET
+# shellcheck disable=SC2034
 OLD_OLD_ACTIVE_SUBSET_OTHER=$OLD_ACTIVE_SUBSET_OTHER
 OLD_ACTIVE_SUBSET=$ACTIVE_SUBSET
 OLD_ACTIVE_SUBSET_OTHER=$ACTIVE_SUBSET_OTHER

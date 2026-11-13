@@ -1,8 +1,10 @@
 #!/bin/bash
+# shellcheck disable=SC2154
 
 set -euo pipefail
 
-. $(dirname $0)/libtest.sh
+# shellcheck source=tests/libtest.sh
+. "$(dirname "$0")/libtest.sh"
 if [ -e "${test_builddir}/.libs/libpreload.so" ]; then
     install "${test_builddir}/.libs/libpreload.so" "${test_tmpdir}"
 else
@@ -256,21 +258,21 @@ assert_not_streq "$e" 0
 # --nofilesystem=...:rw => warning
 # Warnings need to be made temporarily non-fatal here.
 e=0
-G_DEBUG= ${FLATPAK} override --user --nofilesystem=/foo:rw org.test.Hello 2>log || e=$?
+G_DEBUG='' ${FLATPAK} override --user --nofilesystem=/foo:rw org.test.Hello 2>log || e=$?
 assert_file_has_content log "Filesystem suffix \"rw\" is not applicable for --nofilesystem"
 assert_streq "$e" 0
 
 # --filesystem=...:bar => warning
 # Warnings need to be made temporarily non-fatal here.
 e=0
-G_DEBUG= ${FLATPAK} override --user --filesystem=/foo:bar org.test.Hello 2>log || e=$?
+G_DEBUG='' ${FLATPAK} override --user --filesystem=/foo:bar org.test.Hello 2>log || e=$?
 assert_file_has_content log "Unexpected filesystem suffix bar, ignoring"
 assert_streq "$e" 0
 
 # --nofilesystem=...:bar => warning
 # Warnings need to be made temporarily non-fatal here.
 e=0
-G_DEBUG= ${FLATPAK} override --user --nofilesystem=/foo:bar org.test.Hello 2>log || e=$?
+G_DEBUG='' ${FLATPAK} override --user --nofilesystem=/foo:bar org.test.Hello 2>log || e=$?
 assert_file_has_content log "Unexpected filesystem suffix bar, ignoring"
 assert_streq "$e" 0
 
