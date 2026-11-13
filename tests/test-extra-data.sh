@@ -56,6 +56,40 @@ install_repo ${REPONAME} ${BRANCH}
 ${FLATPAK} run --command=sh org.test.Hello -c "cat /app/extra/test" > out
 assert_file_has_content out "extra-data-test-content"
 
+if [ -n "${U}" ] || [ "$(id -u)" = 0 ]; then
+    COMMIT="$(${FLATPAK} ${U} info --show-commit org.test.Hello)"
+    ostree --repo="${FL_DIR}/repo" show --print-detached-metadata-key=ostree.gpgsigs "${COMMIT}" > signatures-before
+    ostree --repo="${FL_DIR}/repo" show --print-detached-metadata-key=xa.extra-data "${COMMIT}" > extra-data-before
+    ${FLATPAK} ${U} clean --dry-run > out
+    assert_file_has_content out "Would remove cached extra data for app/org.test.Hello/"
+    ostree --repo="${FL_DIR}/repo" show --print-detached-metadata-key=xa.extra-data "${COMMIT}" > extra-data-after
+    cmp extra-data-before extra-data-after
+    ${FLATPAK} ${U} clean > out
+    assert_file_has_content out "Removed cached extra data for app/org.test.Hello/"
+    ostree --repo="${FL_DIR}/repo" show --print-detached-metadata-key=ostree.gpgsigs "${COMMIT}" > signatures-after
+    cmp signatures-before signatures-after
+    if ostree --repo="${FL_DIR}/repo" show --print-detached-metadata-key=xa.extra-data "${COMMIT}" > out 2>&1; then
+        assert_not_reached "clean left cached extra data behind"
+    fi
+    ${FLATPAK} run --command=sh org.test.Hello -c "cat /app/extra/test" > out
+    assert_file_has_content out "extra-data-test-content"
+    if ${FLATPAK} ${U} install --reinstall --no-pull -y ${REPONAME}-repo org.test.Hello > out 2>&1; then
+        assert_not_reached "reinstalled cleaned extra data without pulling"
+    fi
+    assert_file_has_content out "Extra data missing"
+    ${FLATPAK} ${U} info --show-commit org.test.Hello > out
+    assert_file_has_content out "${COMMIT}"
+    ${FLATPAK} run --command=sh org.test.Hello -c "cat /app/extra/test" > out
+    assert_file_has_content out "extra-data-test-content"
+    ${FLATPAK} ${U} install --reinstall -y ${REPONAME}-repo org.test.Hello >&2
+    ${FLATPAK} run --command=sh org.test.Hello -c "cat /app/extra/test" > out
+    assert_file_has_content out "extra-data-test-content"
+
+    ok "clean preserves signatures and deployed extra data; reinstall downloads again"
+else
+    ok "# SKIP clean system installation requires root"
+fi
+
 ${FLATPAK} ${U} uninstall -y org.test.Hello >&2
 
 ok "install extra data app with ostree"
@@ -87,9 +121,46 @@ assert_streq "$images" "org.test.Hello org.test.Platform"
 
 ${FLATPAK} ${U} install -y oci-registry org.test.Hello >&2
 
+if [ -z "${U}" ] && [ "${HAVE_SYSTEM_HELPER:-0}" = 1 ] && [ "$(id -u)" != 0 ]; then
+    python3 "${test_srcdir}/check-oci-import-lock.py" "$(pwd)/oci/app-image" \
+        "${FL_DIR}/repo-lock" "${EXTRA_DATA_SHA256}" "${DOWNLOADED_EXTRA_DATA}" \
+        "app/org.test.Hello/${ARCH}/${BRANCH}"
+    ok "system-helper OCI import excludes concurrent cache cleanup"
+fi
+
 # ensure the right extra-data got downloaded
 ${FLATPAK} run --command=sh org.test.Hello -c "cat /app/extra/test" > out
 assert_file_has_content out "extra-data-test-content"
+
+if [ -n "${U}" ]; then
+    # An unchanged image must reuse intact cached extra data, even if its
+    # original download URL is no longer available.
+    mv "${EXTRA_DATA_DIR}/${EXTRA_DATA_FILE}" "${EXTRA_DATA_DIR}/${EXTRA_DATA_FILE}.saved"
+    ${FLATPAK} ${U} install --reinstall -y oci-registry org.test.Hello >&2
+    mv "${EXTRA_DATA_DIR}/${EXTRA_DATA_FILE}.saved" "${EXTRA_DATA_DIR}/${EXTRA_DATA_FILE}"
+    ${FLATPAK} run --command=sh org.test.Hello -c "cat /app/extra/test" > out
+    assert_file_has_content out "extra-data-test-content"
+    ok "reinstall OCI extra data with unavailable download URL"
+fi
+
+if [ -n "${U}" ] || [ "$(id -u)" = 0 ]; then
+    ${FLATPAK} ${U} clean > out
+    assert_file_has_content out "Removed cached extra data for app/org.test.Hello/"
+    ${FLATPAK} run --command=sh org.test.Hello -c "cat /app/extra/test" > out
+    assert_file_has_content out "extra-data-test-content"
+    if ${FLATPAK} ${U} install --reinstall --no-pull -y oci-registry org.test.Hello > out 2>&1; then
+        assert_not_reached "reinstalled cleaned OCI extra data without pulling"
+    fi
+    assert_file_has_content out "Extra data missing"
+    ${FLATPAK} run --command=sh org.test.Hello -c "cat /app/extra/test" > out
+    assert_file_has_content out "extra-data-test-content"
+    ${FLATPAK} ${U} install --reinstall -y oci-registry org.test.Hello >&2
+    ${FLATPAK} run --command=sh org.test.Hello -c "cat /app/extra/test" > out
+    assert_file_has_content out "extra-data-test-content"
+    ok "clean deployed OCI extra data and reinstall"
+else
+    ok "# SKIP clean system installation requires root"
+fi
 
 ${FLATPAK} ${U} uninstall -y org.test.Hello >&2
 

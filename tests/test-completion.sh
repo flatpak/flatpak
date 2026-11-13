@@ -80,6 +80,14 @@ EOF
 
 ok "complete i commands"
 
+${FLATPAK} complete "flatpak clean --" 16 "--" > complete_out
+assert_file_has_content complete_out '^--dry-run '
+assert_file_has_content complete_out '^--user '
+assert_file_has_content complete_out '^--system '
+assert_file_has_content complete_out '^--installation='
+
+ok "complete clean options"
+
 ${FLATPAK} complete "flatpak --" 10 "--" | sort > complete_out
 (diff -u complete_out - || exit 1) <<EOF
 --default-arch 
