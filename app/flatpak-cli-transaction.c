@@ -34,6 +34,27 @@
 #include <glib/gi18n.h>
 
 
+typedef enum {
+  OPERATION_PREPARING,
+  OPERATION_DOWNLOADING,
+  OPERATION_DEPLOYING,
+  OPERATION_UNINSTALLING,
+  OPERATION_DONE,
+  OPERATION_FAILED,
+  OPERATION_SKIPPED
+} OperationPhase;
+
+typedef struct
+{
+  OperationPhase phase;
+  int            row;
+  gboolean       has_download_progress;
+  gboolean       has_bytes;
+  uint64_t       bytes_transferred;
+  uint64_t       bytes_total;
+  uint64_t       bytes_per_second;
+} OperationDisplay;
+
 struct _FlatpakCliTransaction
 {
   FlatpakTransaction   parent;
@@ -64,10 +85,17 @@ struct _FlatpakCliTransaction
 
   FlatpakTablePrinter *printer;
   int                  progress_row;
+  int                  download_row;
+  gboolean             has_aggregate_download_progress;
+  unsigned int         taskbar_progress;
+  char                *download_msg;
   char                *progress_msg;
   int                  speed_len;
 
   gboolean             did_interaction;
+
+  FlatpakTransactionOperation *current_op;
+  GHashTable                  *operation_displays;
 };
 
 struct _FlatpakCliTransactionClass
@@ -236,6 +264,22 @@ redraw (FlatpakCliTransaction *self)
   return FALSE;
 }
 
+static void render_operation (FlatpakCliTransaction       *self,
+                              FlatpakTransactionOperation *op);
+
+static OperationDisplay *
+get_operation_display (FlatpakCliTransaction *self, FlatpakTransactionOperation *op)
+{
+  OperationDisplay *display = g_hash_table_lookup (self->operation_displays, op);
+
+  if (display == NULL)
+    {
+      display = g_new0 (OperationDisplay, 1);
+      g_hash_table_insert (self->operation_displays, op, display);
+    }
+  return display;
+}
+
 static void
 set_op_progress (FlatpakCliTransaction       *self,
                  FlatpakTransactionOperation *op,
@@ -243,7 +287,7 @@ set_op_progress (FlatpakCliTransaction       *self,
 {
   if (flatpak_fancy_output ())
     {
-      int row = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (op), "row"));
+      int row = get_operation_display (self, op)->row;
       g_autofree char *cell = g_strdup_printf ("[%s]", progress);
       flatpak_table_printer_set_cell (self->printer, row, 1, cell);
     }
@@ -264,12 +308,27 @@ spin_op_progress (FlatpakCliTransaction       *self,
 }
 
 static void
+update_taskbar_progress (FlatpakCliTransaction *self,
+                         unsigned int           operation_progress)
+{
+  unsigned int percent;
+
+  if (!flatpak_fancy_output () || self->n_ops == 0 || self->op == 0)
+    return;
+
+  percent = ((uint64_t) (self->op - 1) * 100 + operation_progress) / self->n_ops;
+  self->taskbar_progress = MAX (self->taskbar_progress, MIN (percent, 99));
+  flatpak_pty_set_progress (self->taskbar_progress);
+}
+
+static void
 progress_changed_cb (FlatpakTransactionProgress *progress,
                      gpointer                    data)
 {
   FlatpakCliTransaction *cli = data;
   FlatpakTransaction *self = FLATPAK_TRANSACTION (cli);
   g_autoptr(FlatpakTransactionOperation) op = flatpak_transaction_get_current_operation (self);
+  OperationDisplay *display = get_operation_display (cli, op);
   g_autoptr(GString) str = g_string_new ("");
   int i;
   int n_full, partial;
@@ -295,7 +354,15 @@ progress_changed_cb (FlatpakTransactionProgress *progress,
   guint64 bytes_per_second = flatpak_transaction_progress_get_bytes_per_second (progress);
   guint64 max = flatpak_transaction_operation_get_download_size (op);
 
-  if (elapsed_time > 0)
+  if (!display->has_download_progress)
+    {
+      display->has_bytes = TRUE;
+      display->bytes_transferred = transferred;
+      display->bytes_total = max;
+    }
+  render_operation (cli, op);
+
+  if (elapsed_time > 0 && !cli->has_aggregate_download_progress && bytes_per_second > 0)
     {
       g_autofree char *formatted_bytes_sec = g_format_size (bytes_per_second);
       g_autofree char *remaining = NULL;
@@ -306,7 +373,13 @@ progress_changed_cb (FlatpakTransactionProgress *progress,
       cli->speed_len = MAX (cli->speed_len, strlen (speed) + 2);
     }
 
-  spin_op_progress (cli, op);
+  if (display->phase == OPERATION_DEPLOYING)
+    {
+      if (flatpak_fancy_output ())
+        redraw (cli);
+      update_taskbar_progress (cli, percent);
+      return;
+    }
 
   bar_length = MIN (20, cli->table_width - (strlen (cli->progress_msg) + 6 + cli->speed_len));
 
@@ -344,28 +417,15 @@ progress_changed_cb (FlatpakTransactionProgress *progress,
 
   if (speed)
     g_string_append_printf (str, "  %s", speed);
+  if (!flatpak_fancy_output () && cli->download_msg != NULL)
+    g_string_append_printf (str, "  %s", cli->download_msg);
 
   if (flatpak_fancy_output ())
     {
       flatpak_table_printer_set_cell (cli->printer, cli->progress_row, 0, str->str);
-      if (flatpak_transaction_operation_get_operation_type (op) != FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
-        {
-          g_autofree char *formatted_max = NULL;
-          g_autofree char *formatted = NULL;
-          g_autofree char *text = NULL;
-          int row;
-
-          // avoid "bytes"
-          formatted = transferred < 1000 ? g_format_size (1000) : g_format_size (transferred);
-          formatted_max = max < 1000 ? g_format_size (1000) : g_format_size (max);
-
-          text = g_strdup_printf ("%s / %s", formatted, formatted_max);
-          row = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (op), "row"));
-          flatpak_table_printer_set_decimal_cell (cli->printer, row, cli->download_col, text);
-        }
       if (!redraw (cli))
         g_print ("\r%s", str->str); /* redraw failed, just update the progress */
-      flatpak_pty_set_progress (percent);
+      update_taskbar_progress (cli, percent);
     }
   else
     g_print ("%s\n", str->str);
@@ -379,60 +439,230 @@ set_progress (FlatpakCliTransaction *self,
 }
 
 static void
-new_operation (FlatpakTransaction          *transaction,
-               FlatpakTransactionOperation *op,
-               FlatpakTransactionProgress  *progress)
+set_operation_message (FlatpakCliTransaction       *self,
+                       FlatpakTransactionOperation *op)
 {
-  FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
   FlatpakTransactionOperationType op_type = flatpak_transaction_operation_get_operation_type (op);
   g_autofree char *text = NULL;
+  OperationPhase phase = get_operation_display (self, op)->phase;
+  gboolean downloading = phase == OPERATION_DOWNLOADING;
+  gboolean deploying = phase == OPERATION_DEPLOYING;
 
-  self->op++;
-  self->op_progress = 0;
-
-  switch (op_type)
+  if (op_type != FLATPAK_TRANSACTION_OPERATION_UNINSTALL && !deploying)
     {
-    case FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE:
-    case FLATPAK_TRANSACTION_OPERATION_INSTALL:
-      if (self->n_ops == 1)
-        text = g_strdup (_("Installing…"));
+      if (downloading)
+        text = self->n_ops == 1 ? g_strdup (_("Downloading…")) :
+               g_strdup_printf (_("Downloading %d/%d…"), self->op, self->n_ops);
       else
-        text = g_strdup_printf (_("Installing %d/%d…"), self->op, self->n_ops);
-      break;
-
-    case FLATPAK_TRANSACTION_OPERATION_UPDATE:
-      if (self->n_ops == 1)
-        text = g_strdup (_("Updating…"));
-      else
-        text = g_strdup_printf (_("Updating %d/%d…"), self->op, self->n_ops);
-      break;
-
-    case FLATPAK_TRANSACTION_OPERATION_UNINSTALL:
-      if (self->n_ops == 1)
-        text = g_strdup (_("Uninstalling…"));
-      else
-        text = g_strdup_printf (_("Uninstalling %d/%d…"), self->op, self->n_ops);
-      break;
-
-    default:
-      g_assert_not_reached ();
-      break;
+        text = self->n_ops == 1 ? g_strdup (_("Preparing…")) :
+               g_strdup_printf (_("Preparing %d/%d…"), self->op, self->n_ops);
     }
+  else
+    {
+      switch (op_type)
+        {
+        case FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE:
+        case FLATPAK_TRANSACTION_OPERATION_INSTALL:
+          if (self->n_ops == 1)
+            text = g_strdup (_("Installing…"));
+          else
+            text = g_strdup_printf (_("Installing %d/%d…"), self->op, self->n_ops);
+          break;
+
+        case FLATPAK_TRANSACTION_OPERATION_UPDATE:
+          if (self->n_ops == 1)
+            text = g_strdup (_("Updating…"));
+          else
+            text = g_strdup_printf (_("Updating %d/%d…"), self->op, self->n_ops);
+          break;
+
+        case FLATPAK_TRANSACTION_OPERATION_UNINSTALL:
+          if (self->n_ops == 1)
+            text = g_strdup (_("Uninstalling…"));
+          else
+            text = g_strdup_printf (_("Uninstalling %d/%d…"), self->op, self->n_ops);
+          break;
+
+        default:
+          g_assert_not_reached ();
+          break;
+        }
+    }
+
+  if (g_strcmp0 (self->progress_msg, text) == 0)
+    return;
 
   if (flatpak_fancy_output ())
-    {
-      set_progress (self, text);
-      spin_op_progress (self, op);
-      redraw (self);
-    }
+    set_progress (self, text);
   else
     g_print ("%s\n", text);
 
   g_free (self->progress_msg);
   self->progress_msg = g_steal_pointer (&text);
+}
+
+static void
+render_operation (FlatpakCliTransaction *self, FlatpakTransactionOperation *op)
+{
+  OperationDisplay *display = get_operation_display (self, op);
+  FlatpakTransactionOperationType type = flatpak_transaction_operation_get_operation_type (op);
+
+  switch (display->phase)
+    {
+    case OPERATION_PREPARING:
+      set_op_progress (self, op, " ");
+      break;
+
+    case OPERATION_DOWNLOADING:
+      set_op_progress (self, op, "↓");
+      break;
+
+    case OPERATION_DEPLOYING:
+    case OPERATION_UNINSTALLING:
+      spin_op_progress (self, op);
+      break;
+
+    case OPERATION_DONE:
+      set_op_progress (self, op, type == FLATPAK_TRANSACTION_OPERATION_UNINSTALL ?
+                       FLATPAK_ANSI_GREEN "-" FLATPAK_ANSI_COLOR_RESET :
+                       FLATPAK_ANSI_GREEN "✓" FLATPAK_ANSI_COLOR_RESET);
+      break;
+
+    case OPERATION_FAILED:
+      set_op_progress (self, op, "✗");
+      break;
+
+    case OPERATION_SKIPPED:
+      set_op_progress (self, op, "⍻");
+      break;
+    }
+
+  if (flatpak_fancy_output () && display->has_bytes && type != FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
+    {
+      uint64_t bytes_transferred = display->has_download_progress ? display->bytes_transferred : MAX (display->bytes_transferred, 1000);
+      uint64_t bytes_total = display->has_download_progress ? display->bytes_total : MAX (display->bytes_total, 1000);
+      g_autofree char *formatted = g_format_size (bytes_transferred);
+      g_autofree char *formatted_total = bytes_total ? g_format_size (bytes_total) : NULL;
+      g_autoptr(GString) text = g_string_new (formatted);
+
+      if (bytes_total != 0)
+        g_string_append_printf (text, " / %s", formatted_total);
+      if (display->phase == OPERATION_DOWNLOADING && bytes_total != 0)
+        {
+          unsigned int percent = MIN (100.0 * bytes_transferred / bytes_total, 100.0);
+          g_autofree char *remaining = format_progress_remaining_time (bytes_transferred, bytes_total,
+                                                                       display->bytes_per_second, FALSE);
+
+          g_string_append_printf (text, " (%u%%)", percent);
+          if (remaining != NULL)
+            g_string_append_printf (text, " ~%s", remaining);
+        }
+
+      flatpak_table_printer_set_decimal_cell (self->printer, display->row, self->download_col, text->str);
+    }
+  if (self->current_op == op &&
+      display->phase != OPERATION_DONE &&
+      display->phase != OPERATION_FAILED &&
+      display->phase != OPERATION_SKIPPED)
+    set_operation_message (self, op);
+}
+
+static void
+new_operation (FlatpakTransaction          *transaction,
+               FlatpakTransactionOperation *op,
+               FlatpakTransactionProgress  *progress)
+{
+  FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
+
+  self->current_op = op;
+  self->op++;
+  self->op_progress = 0;
+  if (flatpak_transaction_operation_get_operation_type (op) == FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
+    get_operation_display (self, op)->phase = OPERATION_UNINSTALLING;
+  render_operation (self, op);
+  if (flatpak_fancy_output ())
+    redraw (self);
 
   g_signal_connect (progress, "changed", G_CALLBACK (progress_changed_cb), self);
   flatpak_transaction_progress_set_update_frequency (progress, FLATPAK_CLI_UPDATE_INTERVAL_MS);
+}
+
+static void
+operation_download_progress (FlatpakTransaction          *transaction,
+                             FlatpakTransactionOperation *op,
+                             gboolean                     active,
+                             guint64                      bytes_transferred,
+                             guint64                      bytes_total,
+                             guint64                      bytes_per_second,
+                             gpointer                     data)
+{
+  FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
+  OperationDisplay *display = get_operation_display (self, op);
+
+  display->has_download_progress = TRUE;
+  display->has_bytes = TRUE;
+  display->bytes_transferred = bytes_transferred;
+  display->bytes_total = bytes_total;
+  display->bytes_per_second = bytes_per_second;
+  if (display->phase == OPERATION_PREPARING || display->phase == OPERATION_DOWNLOADING)
+    display->phase = active ? OPERATION_DOWNLOADING : OPERATION_PREPARING;
+  render_operation (self, op);
+}
+
+static void
+operation_deploying (FlatpakTransaction          *transaction,
+                     FlatpakTransactionOperation *op,
+                     gpointer                     data)
+{
+  FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
+
+  get_operation_display (self, op)->phase = OPERATION_DEPLOYING;
+  render_operation (self, op);
+  if (flatpak_fancy_output ())
+    redraw (self);
+}
+
+static void
+download_progress (FlatpakTransaction *transaction,
+                   guint               active_downloads,
+                   guint64             bytes_transferred,
+                   guint64             bytes_total,
+                   guint64             bytes_per_second)
+{
+  FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
+  g_autofree char *transferred = g_format_size (bytes_transferred);
+  g_autofree char *total = bytes_total ? g_format_size (bytes_total) : NULL;
+  g_autoptr(GString) text = g_string_new ("");
+
+  self->has_aggregate_download_progress = TRUE;
+  self->speed_len = 0;
+  if (active_downloads > 0)
+    g_string_append_printf (text, ngettext ("Downloading %u item", "Downloading %u items", active_downloads), active_downloads);
+  else
+    g_string_append (text, _("Downloaded"));
+  g_string_append_printf (text, "  %s", transferred);
+  if (total != NULL && active_downloads > 0)
+    g_string_append_printf (text, " / %s", total);
+  if (bytes_per_second > 0)
+    {
+      g_autofree char *rate = g_format_size (bytes_per_second);
+      g_autofree char *remaining = format_progress_remaining_time (bytes_transferred, bytes_total,
+                                                                   bytes_per_second, FALSE);
+      g_string_append_printf (text, "  %s/s", rate);
+      if (remaining != NULL)
+        {
+          g_autofree char *estimate = g_strdup_printf (_("about %s remaining"), remaining);
+          g_string_append_printf (text, "  %s", estimate);
+        }
+    }
+
+  if (flatpak_fancy_output ())
+    {
+      flatpak_table_printer_set_cell (self->printer, self->download_row, 0, text->str);
+      redraw (self);
+    }
+  g_free (self->download_msg);
+  self->download_msg = g_string_free (g_steal_pointer (&text), FALSE);
 }
 
 static void
@@ -442,12 +672,10 @@ operation_done (FlatpakTransaction          *transaction,
                 FlatpakTransactionResult     details)
 {
   FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
-  FlatpakTransactionOperationType op_type = flatpak_transaction_operation_get_operation_type (op);
-
-  if (op_type == FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
-    set_op_progress (self, op, FLATPAK_ANSI_GREEN "-" FLATPAK_ANSI_COLOR_RESET);
-  else
-    set_op_progress (self, op, FLATPAK_ANSI_GREEN "✓" FLATPAK_ANSI_COLOR_RESET);
+  get_operation_display (self, op)->phase = OPERATION_DONE;
+  render_operation (self, op);
+  self->current_op = NULL;
+  update_taskbar_progress (self, 100);
 
   if (flatpak_fancy_output ())
     redraw (self);
@@ -468,6 +696,7 @@ operation_error (FlatpakTransaction            *transaction,
   const char *on = "";
   const char *off = "";
 
+  self->current_op = NULL;
   if (flatpak_fancy_output ())
     {
       on = FLATPAK_ANSI_BOLD_ON;
@@ -476,7 +705,8 @@ operation_error (FlatpakTransaction            *transaction,
 
   if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_SKIPPED))
     {
-      set_op_progress (self, op, "⍻");
+      get_operation_display (self, op)->phase = OPERATION_SKIPPED;
+      render_operation (self, op);
       text = g_strdup_printf (_("Info: %s was skipped"), flatpak_ref_get_name (rref));
       if (flatpak_fancy_output ())
         {
@@ -492,7 +722,8 @@ operation_error (FlatpakTransaction            *transaction,
       return TRUE;
     }
 
-  set_op_progress (self, op, "✗");
+  get_operation_display (self, op)->phase = OPERATION_FAILED;
+  render_operation (self, op);
 
   /* Here we go to great lengths not to split the sentences. See
    * https://wiki.gnome.org/TranslationProject/DevGuidelines/Never%20split%20sentences
@@ -1487,7 +1718,7 @@ transaction_ready_pre_auth (FlatpakTransaction *transaction)
           flatpak_table_printer_add_decimal_column (printer, text);
         }
 
-      g_object_set_data (G_OBJECT (op), "row", GINT_TO_POINTER (flatpak_table_printer_get_current_row (printer)));
+      get_operation_display (self, op)->row = flatpak_table_printer_get_current_row (printer);
       flatpak_table_printer_finish_row (printer);
     }
 
@@ -1554,7 +1785,7 @@ transaction_ready (FlatpakTransaction *transaction)
   for (l = ops; l; l = l->next)
     {
       FlatpakTransactionOperation *op = l->data;
-      set_op_progress (self, op, " ");
+      render_operation (self, op);
     }
 
   g_list_free_full (ops, g_object_unref);
@@ -1562,10 +1793,13 @@ transaction_ready (FlatpakTransaction *transaction)
   flatpak_table_printer_add_span (printer, "");
   flatpak_table_printer_finish_row (printer);
   flatpak_table_printer_add_span (printer, "");
+  self->download_row = flatpak_table_printer_get_current_row (printer);
+  flatpak_table_printer_finish_row (printer);
+  flatpak_table_printer_add_span (printer, "");
   self->progress_row = flatpak_table_printer_get_current_row (printer);
   flatpak_table_printer_finish_row (printer);
 
-  self->table_height += 3; /* 2 for the added lines and one for the newline from the user after the prompt */
+  self->table_height += 4; /* 3 added lines and the newline after the prompt */
 
   if (flatpak_fancy_output ())
     {
@@ -1588,6 +1822,9 @@ flatpak_cli_transaction_finalize (GObject *object)
     g_error_free (self->first_operation_error);
 
   g_free (self->progress_msg);
+  g_free (self->download_msg);
+
+  g_hash_table_unref (self->operation_displays);
 
   g_hash_table_unref (self->eol_actions);
 
@@ -1606,6 +1843,9 @@ flatpak_cli_transaction_finalize (GObject *object)
 static void
 flatpak_cli_transaction_init (FlatpakCliTransaction *self)
 {
+  self->operation_displays = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);
+  g_signal_connect (self, "operation-deploying", G_CALLBACK (operation_deploying), NULL);
+  g_signal_connect (self, "operation-download-progress", G_CALLBACK (operation_download_progress), NULL);
   self->eol_actions = g_hash_table_new_full ((GHashFunc)flatpak_decomposed_hash, (GEqualFunc)flatpak_decomposed_equal,
                                              (GDestroyNotify)flatpak_decomposed_unref, NULL);
 }
@@ -1626,6 +1866,7 @@ flatpak_cli_transaction_class_init (FlatpakCliTransactionClass *klass)
   transaction_class->ready_pre_auth = transaction_ready_pre_auth;
   transaction_class->new_operation = new_operation;
   transaction_class->operation_done = operation_done;
+  transaction_class->download_progress = download_progress;
   transaction_class->operation_error = operation_error;
   transaction_class->choose_remote_for_ref = choose_remote_for_ref;
   transaction_class->end_of_lifed_with_rebase = end_of_lifed_with_rebase;

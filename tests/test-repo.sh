@@ -567,12 +567,15 @@ make_updated_runtime "" "" "mainline" ""
 make_updated_app "" "" "" "UPDATED99" "" "mainline"
 
 # First update with --no-deploy and check the old runtime is still installed
-${FLATPAK} ${U} update -y --no-deploy org.test.Hello >&2
+${FLATPAK} ${U} update --noninteractive --no-deploy org.test.Hello > update-log
+assert_not_file_has_content update-log "Installing "
+assert_not_file_has_content update-log "Updating "
 
 assert_has_dir $FL_DIR/runtime/org.test.Platform/$ARCH/master/active/files
 assert_not_has_dir $FL_DIR/runtime/org.test.Platform/$ARCH/mainline/active/files
 
-${FLATPAK} ${U} update -y org.test.Hello >&2
+${FLATPAK} ${U} update --noninteractive org.test.Hello > update-log
+assert_file_has_content update-log "Updating app/org.test.Hello/"
 
 # The previous runtime should have been removed during the update
 assert_has_dir $FL_DIR/runtime/org.test.Platform/$ARCH/mainline/active/files
@@ -714,7 +717,8 @@ ${FLATPAK} ${U} uninstall -y org.test.Platform master >&2
 
 ok "install and uninstall support 'NAME BRANCH' syntax"
 
-${FLATPAK} ${U} install -y --no-deploy test-repo org.test.Hello >&2
+${FLATPAK} ${U} install --noninteractive --no-deploy test-repo org.test.Hello > install-log
+assert_not_file_has_content install-log "Installing "
 
 ${FLATPAK} ${U} list --columns=ref > list-log
 assert_not_file_has_content list-log "org\.test\.Hello/"
@@ -724,7 +728,8 @@ assert_not_file_has_content list-log "org\.test\.Platform/"
 port=$(cat httpd-port)
 ${FLATPAK} ${U} remote-modify --url="http://127.0.0.1:${port}/disable-test" test-repo
 
-${FLATPAK} ${U} install -y --no-pull test-repo org.test.Hello >&2
+${FLATPAK} ${U} install --noninteractive --no-pull test-repo org.test.Hello > install-log
+assert_file_has_content install-log "Installing app/org.test.Hello/"
 
 # re-enable remote
 ${FLATPAK} ${U} remote-modify --url="http://127.0.0.1:${port}/test" test-repo >&2

@@ -63,9 +63,9 @@ add_new_remote (FlatpakTransaction            *transaction,
 }
 
 static void
-new_operation (FlatpakTransaction          *transaction,
-               FlatpakTransactionOperation *op,
-               FlatpakTransactionProgress  *progress)
+operation_deploying (FlatpakTransaction          *transaction,
+                     FlatpakTransactionOperation *op,
+                     gpointer                     data)
 {
   FlatpakTransactionOperationType op_type = flatpak_transaction_operation_get_operation_type (op);
   const char *ref = flatpak_transaction_operation_get_ref (op);
@@ -81,14 +81,19 @@ new_operation (FlatpakTransaction          *transaction,
       g_print (_("Updating %s\n"), ref);
       break;
 
-    case FLATPAK_TRANSACTION_OPERATION_UNINSTALL:
-      g_print (_("Uninstalling %s\n"), ref);
-      break;
-
     default:
       g_assert_not_reached ();
       break;
     }
+}
+
+static void
+new_operation (FlatpakTransaction          *transaction,
+               FlatpakTransactionOperation *op,
+               FlatpakTransactionProgress  *progress)
+{
+  if (flatpak_transaction_operation_get_operation_type (op) == FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
+    g_print (_("Uninstalling %s\n"), flatpak_transaction_operation_get_ref (op));
 }
 
 static void
@@ -285,6 +290,7 @@ flatpak_quiet_transaction_run (FlatpakTransaction *transaction,
 static void
 flatpak_quiet_transaction_init (FlatpakQuietTransaction *transaction)
 {
+  g_signal_connect (transaction, "operation-deploying", G_CALLBACK (operation_deploying), NULL);
 }
 
 static void
