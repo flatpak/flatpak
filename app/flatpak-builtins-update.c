@@ -272,7 +272,7 @@ flatpak_builtin_update (int           argc,
       g_print (_("Nothing to update.\n"));
     }
 
-  if (n_prefs == 0)
+  if (n_prefs == 0 && !opt_no_pull)
     {
       if (!update_appstream (dirs, NULL, opt_arch, FLATPAK_APPSTREAM_TTL, opt_noninteractive, cancellable, error))
         return FALSE;
