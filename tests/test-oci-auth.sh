@@ -47,7 +47,7 @@ $client add hello latest "$(pwd)/oci/app-image"
 # we override it to use the mock authenticator that reads its token from
 # $XDG_RUNTIME_DIR/required-token on every call.
 
-${FLATPAK} remote-add ${U} oci-auth-registry "oci+http://127.0.0.1:${port}" \
+${FLATPAK} remote-add ${U} --no-gpg-verify oci-auth-registry "oci+http://127.0.0.1:${port}" \
     --authenticator-name org.flatpak.Authenticator.test >&2
 
 # Test: install from an auth-protected OCI registry
