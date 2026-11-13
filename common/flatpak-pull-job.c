@@ -26,6 +26,9 @@ struct _FlatpakPullJob
   GMutex              mutex;
   GCond               condition;
   GError             *error;
+  FlatpakPullJobFunc   pull;
+  gpointer            data;
+  gboolean            result;
   gboolean            done;
 };
 
@@ -45,11 +48,14 @@ pull_job_run (gpointer data)
 {
   FlatpakPullJob *self = data;
 
-  flatpak_dir_pull (self->dir, self->state, self->ref,
-                    self->commit, (const char **) self->subpaths,
-                    NULL, NULL, self->metadata, self->token,
-                    NULL, self->flags, OSTREE_REPO_PULL_FLAGS_NONE,
-                    self->worker_progress, self->cancel, &self->error);
+  if (self->pull != NULL)
+    self->result = self->pull (self->data, self->worker_progress, self->cancel, &self->error);
+  else
+    self->result = flatpak_dir_pull (self->dir, self->state, self->ref,
+                                     self->commit, (const char **) self->subpaths,
+                                     NULL, NULL, self->metadata, self->token,
+                                     NULL, self->flags, OSTREE_REPO_PULL_FLAGS_NONE,
+                                     self->worker_progress, self->cancel, &self->error);
   g_mutex_lock (&self->mutex);
   flatpak_progress_copy_state (self->snapshot, self->worker_progress);
   self->done = TRUE;
@@ -92,8 +98,8 @@ flatpak_pull_job_free (FlatpakPullJob *self)
     g_cancellable_disconnect (self->parent_cancel, self->cancel_handler);
   g_clear_object (&self->parent_cancel);
   g_object_unref (self->cancel);
-  g_object_unref (self->dir);
-  flatpak_remote_state_unref (self->state);
+  g_clear_object (&self->dir);
+  g_clear_pointer (&self->state, flatpak_remote_state_unref);
   g_free (self->ref);
   g_free (self->commit);
   g_free (self->token);
@@ -107,6 +113,26 @@ flatpak_pull_job_free (FlatpakPullJob *self)
   g_free (self);
 }
 
+static FlatpakPullJob *
+pull_job_new (const char *ref, GCancellable *cancellable)
+{
+  FlatpakPullJob *self = g_new0 (FlatpakPullJob, 1);
+
+  g_mutex_init (&self->mutex);
+  g_cond_init (&self->condition);
+  self->ref = g_strdup (ref);
+  self->cancel = g_cancellable_new ();
+  self->worker_progress = flatpak_progress_new (pull_job_progress, self);
+  self->snapshot = flatpak_progress_new (NULL, NULL);
+  flatpak_progress_set_update_interval (self->worker_progress, 10);
+  if (cancellable != NULL)
+    {
+      self->parent_cancel = g_object_ref (cancellable);
+      self->cancel_handler = g_cancellable_connect (cancellable, G_CALLBACK (pull_job_cancelled), self->cancel, NULL);
+    }
+  return self;
+}
+
 FlatpakPullJob *
 flatpak_pull_job_new (FlatpakDir         *dir,
                       FlatpakRemoteState *state,
@@ -118,27 +144,15 @@ flatpak_pull_job_new (FlatpakDir         *dir,
                       FlatpakPullFlags    flags,
                       GCancellable       *cancellable)
 {
-  g_autoptr(FlatpakPullJob) self = NULL;
-  self = g_new0 (FlatpakPullJob, 1);
-  g_mutex_init (&self->mutex);
-  g_cond_init (&self->condition);
+  g_autoptr(FlatpakPullJob) self = pull_job_new (ref, cancellable);
+
   self->dir = flatpak_dir_clone (dir);
   self->state = flatpak_remote_state_snapshot_for_pull (state);
-  self->ref = g_strdup (ref);
   self->commit = g_strdup (commit);
   self->token = g_strdup (token);
   self->metadata = metadata ? g_bytes_ref (metadata) : NULL;
   self->subpaths = g_strdupv ((char **) subpaths);
   self->flags = flags;
-  self->cancel = g_cancellable_new ();
-  self->worker_progress = flatpak_progress_new (pull_job_progress, self);
-  self->snapshot = flatpak_progress_new (NULL, NULL);
-  flatpak_progress_set_update_interval (self->worker_progress, 10);
-  if (cancellable != NULL)
-    {
-      self->parent_cancel = g_object_ref (cancellable);
-      self->cancel_handler = g_cancellable_connect (cancellable, G_CALLBACK (pull_job_cancelled), self->cancel, NULL);
-    }
 
   /* Opening can rewrite config, so do it before deployment can write pins. */
   if (flatpak_dir_ensure_repo (self->dir, self->cancel, &self->error))
@@ -207,5 +221,58 @@ flatpak_pull_job_wait (FlatpakPullJob *self, FlatpakPullJobUpdate update, gpoint
       g_propagate_error (error, g_error_copy (self->error));
       return FALSE;
     }
-  return TRUE;
+  return self->result;
+}
+
+gboolean
+flatpak_pull_job_update_progress (FlatpakPullJob *job, FlatpakPullProgress *update)
+{
+  gboolean done = flatpak_pull_job_snapshot (job, update->snapshot);
+  int64_t now = g_get_monotonic_time ();
+  int64_t interval_us;
+
+  if (update->progress == NULL)
+    return done;
+
+  interval_us = (int64_t) flatpak_progress_get_update_interval (update->progress) * G_TIME_SPAN_MILLISECOND;
+  if (done || update->last_emission_us == 0 || now >= update->last_emission_us + interval_us)
+    {
+      update->last_emission_us = now;
+      flatpak_progress_update_from_snapshot (update->progress, update->snapshot, update->previous_bytes);
+    }
+  return done;
+}
+
+static void
+serial_pull_progress (FlatpakPullJob *job, gpointer data)
+{
+  flatpak_pull_job_update_progress (job, data);
+}
+
+gboolean
+flatpak_pull_job_run_serial (const char         *ref,
+                             FlatpakPullJobFunc   pull,
+                             gpointer             data,
+                             FlatpakProgress     *progress,
+                             GCancellable        *cancellable,
+                             GError             **error)
+{
+  g_autoptr(FlatpakPullJob) job = pull_job_new (ref, cancellable);
+  g_autoptr(FlatpakProgress) snapshot = flatpak_progress_new (NULL, NULL);
+  FlatpakPullProgress update = { .progress = progress, .snapshot = snapshot };
+
+  if (g_cancellable_set_error_if_cancelled (cancellable, error))
+    return FALSE;
+
+  if (progress != NULL)
+    update.previous_bytes = flatpak_progress_get_bytes_transferred (progress) +
+                            flatpak_progress_get_transferred_extra_data_bytes (progress);
+  flatpak_progress_start_download (progress);
+  job->pull = pull;
+  job->data = data;
+  job->thread = g_thread_try_new ("flatpak-pull", pull_job_run, job, error);
+  if (job->thread == NULL)
+    return FALSE;
+
+  return flatpak_pull_job_wait (job, serial_pull_progress, &update, error);
 }

@@ -414,7 +414,8 @@ assert_file_has_content branches-log "^app/org\.test\.Hello/.*eol=Reason1"
 
 ok "eol build-commit-from"
 
-${FLATPAK} ${U} install -y test-repo org.test.Hello >&2
+G_MESSAGES_DEBUG=all ${FLATPAK} ${U} install -v -y test-repo org.test.Hello &> worker-install-log
+assert_file_has_content worker-install-log "Background pull completed for app/org.test.Hello/$ARCH/master (success)"
 
 EXPORT_ARGS="--end-of-life=Reason2" make_updated_app
 

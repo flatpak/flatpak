@@ -130,6 +130,7 @@ struct _FlatpakProgress
 G_DEFINE_TYPE (FlatpakProgress, flatpak_progress, G_TYPE_OBJECT);
 
 static guint start_deployment_signal;
+static guint start_download_signal;
 
 static void
 flatpak_progress_finalize (GObject *object)
@@ -150,6 +151,16 @@ flatpak_progress_class_init (FlatpakProgressClass *klass)
   start_deployment_signal = g_signal_new ("start-deployment", G_TYPE_FROM_CLASS (klass),
                                           G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,
                                           G_TYPE_NONE, 0);
+  start_download_signal = g_signal_new ("start-download", G_TYPE_FROM_CLASS (klass),
+                                        G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,
+                                        G_TYPE_NONE, 0);
+}
+
+void
+flatpak_progress_start_download (FlatpakProgress *self)
+{
+  if (self != NULL)
+    g_signal_emit (self, start_download_signal, 0);
 }
 
 void
@@ -256,6 +267,22 @@ flatpak_progress_copy_state (FlatpakProgress *dest, FlatpakProgress *source)
   dest->transferred_extra_data_bytes = source->transferred_extra_data_bytes;
   dest->bytes_total = source->bytes_total;
   dest->bytes_per_second = source->bytes_per_second;
+}
+
+void
+flatpak_progress_update_from_snapshot (FlatpakProgress *self, FlatpakProgress *snapshot,
+                                       uint64_t previous_bytes)
+{
+  guint previous_progress = self->progress;
+
+  flatpak_progress_copy_state (self, snapshot);
+  /* A supplemental pull starts a fresh worker, not a new operation. */
+  self->progress = MAX (previous_progress, self->progress);
+  self->bytes_transferred += previous_bytes;
+  if (self->bytes_total != 0)
+    self->bytes_total += previous_bytes;
+  if (self->callback != NULL)
+    self->callback (self->status, self->progress, self->estimating, self->user_data);
 }
 
 static inline guint

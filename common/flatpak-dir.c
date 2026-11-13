@@ -55,6 +55,7 @@
 #include "flatpak-image-collection-private.h"
 #include "flatpak-image-source-private.h"
 #include "flatpak-oci-registry-private.h"
+#include "flatpak-pull-job-private.h"
 #include "flatpak-ref.h"
 #include "flatpak-repo-utils-private.h"
 #include "flatpak-run-private.h"
@@ -11414,6 +11415,101 @@ flatpak_dir_unmount_and_cancel_pull (FlatpakDir    *self,
     g_warning ("Error cancelling ongoing pull at %s: %s", src_dir, error->message);
 }
 
+typedef struct
+{
+  FlatpakDir         *dir;
+  FlatpakRemoteState *state;
+  const char         *ref;
+  const char         *commit;
+  const char        **subpaths;
+  GFile              *sideload_repo;
+  FlatpakImageSource *image_source;
+  GBytes             *metadata;
+  const char         *token;
+  OstreeRepo         *repo;
+  FlatpakPullFlags    flags;
+  OstreeRepoPullFlags ostree_flags;
+} SerialPullData;
+
+static gboolean
+pull_serial (gpointer data, FlatpakProgress *progress, GCancellable *cancellable, GError **error)
+{
+  SerialPullData *pull = data;
+
+  return flatpak_dir_pull (pull->dir, pull->state, pull->ref, pull->commit,
+                           pull->subpaths, pull->sideload_repo, pull->image_source,
+                           pull->metadata, pull->token, pull->repo, pull->flags,
+                           pull->ostree_flags, progress, cancellable, error);
+}
+
+static gboolean
+flatpak_dir_pull_serial (FlatpakDir         *self,
+                         FlatpakRemoteState *state,
+                         const char         *ref,
+                         const char         *commit,
+                         const char        **subpaths,
+                         GFile              *sideload_repo,
+                         FlatpakImageSource *image_source,
+                         GBytes             *metadata,
+                         const char         *token,
+                         OstreeRepo         *repo,
+                         FlatpakPullFlags    flags,
+                         OstreeRepoPullFlags ostree_flags,
+                         FlatpakProgress    *progress,
+                         GCancellable       *cancellable,
+                         GError            **error)
+{
+  SerialPullData data = {
+    .dir = self, .state = state, .ref = ref, .commit = commit,
+    .subpaths = subpaths, .sideload_repo = sideload_repo, .image_source = image_source,
+    .metadata = metadata, .token = token, .repo = repo,
+    .flags = flags, .ostree_flags = ostree_flags,
+  };
+
+  return flatpak_pull_job_run_serial (ref, pull_serial, &data, progress, cancellable, error);
+}
+
+typedef struct
+{
+  FlatpakDir         *dir;
+  FlatpakOciRegistry *registry;
+  FlatpakRemoteState *state;
+  const char         *ref;
+  const char         *commit;
+  FlatpakImageSource *image_source;
+  const char         *token;
+} SerialMirrorData;
+
+static gboolean
+mirror_serial (gpointer data, FlatpakProgress *progress, GCancellable *cancellable, GError **error)
+{
+  SerialMirrorData *mirror = data;
+
+  return flatpak_dir_mirror_oci (mirror->dir, mirror->registry, mirror->state,
+                                 mirror->ref, mirror->commit, mirror->image_source,
+                                 mirror->token, progress, cancellable, error);
+}
+
+static gboolean
+flatpak_dir_mirror_oci_serial (FlatpakDir         *self,
+                               FlatpakOciRegistry *registry,
+                               FlatpakRemoteState *state,
+                               const char         *ref,
+                               const char         *commit,
+                               FlatpakImageSource *image_source,
+                               const char         *token,
+                               FlatpakProgress    *progress,
+                               GCancellable       *cancellable,
+                               GError            **error)
+{
+  SerialMirrorData data = {
+    .dir = self, .registry = registry, .state = state, .ref = ref,
+    .commit = commit, .image_source = image_source, .token = token,
+  };
+
+  return flatpak_pull_job_run_serial (ref, mirror_serial, &data, progress, cancellable, error);
+}
+
 gboolean
 flatpak_dir_install (FlatpakDir          *self,
                      gboolean             no_pull,
@@ -11501,8 +11597,8 @@ flatpak_dir_install (FlatpakDir          *self,
 
           child_repo_path = g_file_get_path (registry_file);
 
-          if (!flatpak_dir_mirror_oci (self, registry, state, flatpak_decomposed_get_ref (ref),
-                                       opt_commit, opt_image_source, token, progress, cancellable, error))
+          if (!flatpak_dir_mirror_oci_serial (self, registry, state, flatpak_decomposed_get_ref (ref),
+                                              opt_commit, opt_image_source, token, progress, cancellable, error))
             return FALSE;
         }
       else if (!gpg_verify_summary || !gpg_verify)
@@ -11596,11 +11692,10 @@ flatpak_dir_install (FlatpakDir          *self,
 
           flatpak_flags |= FLATPAK_PULL_FLAGS_SIDELOAD_EXTRA_DATA;
 
-          if (!flatpak_dir_pull (self, state, flatpak_decomposed_get_ref (ref), opt_commit, subpaths, sideload_repo, NULL, require_metadata, token,
-                                 child_repo,
-                                 flatpak_flags,
-                                 0,
-                                 progress, cancellable, error))
+          if (!flatpak_dir_pull_serial (self, state, flatpak_decomposed_get_ref (ref), opt_commit,
+                                        subpaths, sideload_repo, NULL, require_metadata, token,
+                                        child_repo, flatpak_flags, 0,
+                                        progress, cancellable, error))
             {
               if (is_revokefs_pull)
                 {
@@ -11677,10 +11772,10 @@ flatpak_dir_install (FlatpakDir          *self,
 
   if (!no_pull && !already_pulled)
     {
-      if (!flatpak_dir_pull (self, state, flatpak_decomposed_get_ref (ref), opt_commit, opt_subpaths,
-                             sideload_repo, opt_image_source, require_metadata, token, NULL,
-                             flatpak_flags, OSTREE_REPO_PULL_FLAGS_NONE,
-                             progress, cancellable, error))
+      if (!flatpak_dir_pull_serial (self, state, flatpak_decomposed_get_ref (ref), opt_commit, opt_subpaths,
+                                    sideload_repo, opt_image_source, require_metadata, token, NULL,
+                                    flatpak_flags, OSTREE_REPO_PULL_FLAGS_NONE,
+                                    progress, cancellable, error))
         return FALSE;
     }
 
@@ -12268,8 +12363,8 @@ flatpak_dir_update (FlatpakDir                           *self,
 
           child_repo_path = g_file_get_path (registry_file);
 
-          if (!flatpak_dir_mirror_oci (self, registry, state, flatpak_decomposed_get_ref (ref),
-                                       commit, opt_image_source, token, progress, cancellable, error))
+          if (!flatpak_dir_mirror_oci_serial (self, registry, state, flatpak_decomposed_get_ref (ref),
+                                              commit, opt_image_source, token, progress, cancellable, error))
             return FALSE;
         }
       else if (!gpg_verify_summary || !gpg_verify)
@@ -12348,11 +12443,11 @@ flatpak_dir_update (FlatpakDir                           *self,
             }
 
           flatpak_flags |= FLATPAK_PULL_FLAGS_SIDELOAD_EXTRA_DATA;
-          if (!flatpak_dir_pull (self, state, flatpak_decomposed_get_ref (ref),
-                                 commit, subpaths, sideload_repo, NULL, require_metadata, token,
-                                 child_repo,
-                                 flatpak_flags, 0,
-                                 progress, cancellable, error))
+          if (!flatpak_dir_pull_serial (self, state, flatpak_decomposed_get_ref (ref),
+                                        commit, subpaths, sideload_repo, NULL, require_metadata, token,
+                                        child_repo,
+                                        flatpak_flags, 0,
+                                        progress, cancellable, error))
             {
               if (is_revokefs_pull)
                 {
@@ -12418,10 +12513,10 @@ flatpak_dir_update (FlatpakDir                           *self,
   if (!no_pull)
     {
       if (pulled_subpaths == NULL &&
-          !flatpak_dir_pull (self, state, flatpak_decomposed_get_ref (ref),
-                             commit, subpaths, sideload_repo, opt_image_source, require_metadata, token,
-                             NULL, flatpak_flags, OSTREE_REPO_PULL_FLAGS_NONE,
-                             progress, cancellable, error))
+          !flatpak_dir_pull_serial (self, state, flatpak_decomposed_get_ref (ref),
+                                    commit, subpaths, sideload_repo, opt_image_source, require_metadata, token,
+                                    NULL, flatpak_flags, OSTREE_REPO_PULL_FLAGS_NONE,
+                                    progress, cancellable, error))
         return FALSE;
 
       /* Take this opportunity to clean up refs/mirrors/ since a prune will happen

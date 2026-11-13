@@ -154,7 +154,8 @@ ok "detached icons"
 
 # Try installing from the remote
 
-${FLATPAK} ${U} install -y oci-registry org.test.Hello >&2
+G_MESSAGES_DEBUG=all ${FLATPAK} ${U} install -v -y oci-registry org.test.Hello &> oci-install-log
+assert_file_has_content oci-install-log "Background pull completed for app/org.test.Hello/$ARCH/master (success)"
 
 run org.test.Hello &> hello_out
 assert_file_has_content hello_out '^Hello world, from a sandbox$'
@@ -179,7 +180,8 @@ ok "list OCI update"
 
 OLD_COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Hello`
 
-${FLATPAK} ${U} update -y -vv --ostree-verbose org.test.Hello >&2
+G_MESSAGES_DEBUG=all ${FLATPAK} ${U} update -y -vv --ostree-verbose org.test.Hello &> oci-update-log
+assert_file_has_content oci-update-log "Background pull completed for app/org.test.Hello/$ARCH/master (success)"
 
 NEW_COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Hello`
 

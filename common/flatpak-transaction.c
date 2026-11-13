@@ -131,6 +131,7 @@ struct _FlatpakTransactionOperation
   gboolean                        requested_token; /* TRUE if we requested a token. value in resolved_token, but may be NULL if token not needed. */
   guint64                         download_size;
   gboolean                        deployment_started;
+  gboolean                        download_from_progress;
   guint64                         installed_size;
   char                           *eol;
   char                           *eol_rebase;
@@ -3653,7 +3654,11 @@ emit_download_progress (FlatpakTransaction *self, gboolean force)
   g_hash_table_iter_init (&iter, priv->pull_jobs);
   while (g_hash_table_iter_next (&iter, &op, &job))
     {
-      gboolean done = flatpak_pull_job_snapshot (job, progress);
+      gboolean done;
+
+      if (((FlatpakTransactionOperation *) op)->download_from_progress)
+        continue;
+      done = flatpak_pull_job_snapshot (job, progress);
 
       update_download_counters (self, op, progress, done);
     }
@@ -3684,7 +3689,7 @@ operation_download_changed (FlatpakTransactionProgress *progress, gpointer data)
   if (!priv->report_downloads)
     return;
   if (operation_downloads (op) && !op->deployment_started &&
-      !g_hash_table_contains (priv->pull_jobs, op))
+      (op->download_from_progress || !g_hash_table_contains (priv->pull_jobs, op)))
     update_download_counters (self, op, progress->progress_obj, FALSE);
   emit_download_progress (self, flatpak_transaction_progress_get_progress (progress) == 100);
 }
@@ -3700,8 +3705,11 @@ finish_operation_download (FlatpakTransaction *self, FlatpakTransactionOperation
       g_autoptr(FlatpakProgress) snapshot = flatpak_progress_new (NULL, NULL);
 
       flatpak_pull_job_cancel_and_join (job);
-      flatpak_pull_job_snapshot (job, snapshot);
-      update_download_counters (self, op, snapshot, TRUE);
+      if (!op->download_from_progress)
+        {
+          flatpak_pull_job_snapshot (job, snapshot);
+          update_download_counters (self, op, snapshot, TRUE);
+        }
       g_hash_table_remove (priv->pull_jobs, op);
     }
   flatpak_download_tracker_retire (priv->downloads, op);
@@ -3721,8 +3729,23 @@ operation_deploying (FlatpakProgress *progress, gpointer data)
 }
 
 static void
+operation_downloading (FlatpakProgress *progress, gpointer data)
+{
+  FlatpakTransaction *self = data;
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+  FlatpakTransactionOperation *op = priv->current_op;
+
+  /* A supplementary pull supersedes the completed job's progress, but the job
+   * must retain its prune lock until the operation finishes. */
+  op->download_from_progress = TRUE;
+  update_download_counters (self, op, progress, FALSE);
+  emit_download_progress (self, TRUE);
+}
+
+static void
 emit_new_op (FlatpakTransaction *self, FlatpakTransactionOperation *op, FlatpakTransactionProgress *progress)
 {
+  g_signal_connect_object (progress->progress_obj, "start-download", G_CALLBACK (operation_downloading), self, 0);
   g_signal_connect_object (progress->progress_obj, "start-deployment", G_CALLBACK (operation_deploying), self, 0);
   g_signal_connect_object (progress, "changed", G_CALLBACK (operation_download_changed), self, 0);
   g_signal_emit (self, signals[NEW_OPERATION], 0, op, progress);
@@ -5415,27 +5438,16 @@ start_download_window (FlatpakTransaction *self,
 
 typedef struct
 {
-  FlatpakTransaction         *transaction;
-  FlatpakTransactionProgress *progress;
-  FlatpakProgress            *snapshot;
-  int64_t                     last_emission_us;
+  FlatpakTransaction *transaction;
+  FlatpakPullProgress progress;
 } PullProgress;
 
 static void
 pull_progress_update (FlatpakPullJob *job, gpointer user_data)
 {
   PullProgress *update = user_data;
-  FlatpakTransactionProgress *progress = update->progress;
-  int64_t now = g_get_monotonic_time ();
-  int64_t interval_us = (int64_t) flatpak_progress_get_update_interval (progress->progress_obj) * G_TIME_SPAN_MILLISECOND;
-  gboolean done = flatpak_pull_job_snapshot (job, update->snapshot);
+  gboolean done = flatpak_pull_job_update_progress (job, &update->progress);
 
-  if (done || update->last_emission_us == 0 || now >= update->last_emission_us + interval_us)
-    {
-      flatpak_progress_copy_state (progress->progress_obj, update->snapshot);
-      update->last_emission_us = now;
-      g_signal_emit (progress, progress_signals[CHANGED], 0);
-    }
   emit_download_progress (update->transaction, done);
 }
 
@@ -5443,7 +5455,10 @@ static gboolean
 pull_job_wait (FlatpakTransaction *self, FlatpakPullJob *job, FlatpakTransactionProgress *progress, GError **error)
 {
   g_autoptr(FlatpakProgress) snapshot = flatpak_progress_new (NULL, NULL);
-  PullProgress update = { .transaction = self, .progress = progress, .snapshot = snapshot };
+  PullProgress update = {
+    .transaction = self,
+    .progress = { .progress = progress->progress_obj, .snapshot = snapshot },
+  };
 
   return flatpak_pull_job_wait (job, pull_progress_update, &update, error);
 }
