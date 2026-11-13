@@ -105,6 +105,16 @@ else
     collection_args=
 fi
 
+# shellcheck source=test-ostree-utils.sh
+. "$(dirname "$0")/test-ostree-utils.sh"
+
 mkdir -p repos
+if [ ! -d "${REPO}/objects" ]; then
+    # shellcheck disable=SC2086
+    ostree_init_test_repo "${REPO}" ${collection_args}
+else
+    # Repo may pre-exist without the test free-space setting (#5373).
+    ostree --repo=${REPO} config set core.min-free-space-percent 0 >&2
+fi
 flatpak build-export ${collection_args} --no-update-summary --disable-sandbox --runtime ${GPGARGS-} ${EXPORT_ARGS-} ${REPO} ${DIR} ${BRANCH} >&2
 rm -rf ${DIR}
