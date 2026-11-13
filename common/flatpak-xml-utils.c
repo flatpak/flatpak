@@ -317,28 +317,23 @@ flatpak_appstream_xml_new (void)
   return appstream_root;
 }
 
-gboolean
-flatpak_appstream_xml_root_to_data (FlatpakXml *appstream_root,
-                                    GBytes    **uncompressed,
-                                    GBytes    **compressed,
-                                    GError    **error)
+static gboolean
+appstream_xml_string_to_data (GString   *xml,
+                              GBytes   **uncompressed,
+                              GBytes   **compressed,
+                              GError   **error)
 {
-  g_autoptr(GString) xml = NULL;
+  g_autoptr(GString) owned_xml = xml;
   g_autoptr(GZlibCompressor) compressor = NULL;
   g_autoptr(GOutputStream) out2 = NULL;
   g_autoptr(GOutputStream) out = NULL;
-
-  flatpak_xml_add (appstream_root->first_child, flatpak_xml_new_text ("\n"));
-
-  xml = g_string_new ("");
-  flatpak_xml_to_string (appstream_root, xml);
 
   if (compressed)
     {
       compressor = g_zlib_compressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP, -1);
       out = g_memory_output_stream_new_resizable ();
       out2 = g_converter_output_stream_new (out, G_CONVERTER (compressor));
-      if (!g_output_stream_write_all (out2, xml->str, xml->len,
+      if (!g_output_stream_write_all (out2, owned_xml->str, owned_xml->len,
                                       NULL, NULL, error))
         return FALSE;
       if (!g_output_stream_close (out2, NULL, error))
@@ -346,12 +341,56 @@ flatpak_appstream_xml_root_to_data (FlatpakXml *appstream_root,
     }
 
   if (uncompressed)
-    *uncompressed = g_string_free_to_bytes (g_steal_pointer (&xml));
+    *uncompressed = g_string_free_to_bytes (g_steal_pointer (&owned_xml));
 
   if (compressed)
     *compressed = g_memory_output_stream_steal_as_bytes (G_MEMORY_OUTPUT_STREAM (out));
 
   return TRUE;
+}
+
+gboolean
+flatpak_appstream_xml_root_to_data (FlatpakXml *appstream_root,
+                                    GBytes    **uncompressed,
+                                    GBytes    **compressed,
+                                    GError    **error)
+{
+  GString *xml;
+
+  flatpak_xml_add (appstream_root->first_child, flatpak_xml_new_text ("\n"));
+
+  xml = g_string_new ("");
+  flatpak_xml_to_string (appstream_root, xml);
+
+  return appstream_xml_string_to_data (xml, uncompressed, compressed, error);
+}
+
+void
+flatpak_appstream_xml_components_to_string (FlatpakXml *appstream_root,
+                                            GString    *res)
+{
+  FlatpakXml *child;
+
+  for (child = appstream_root->first_child->first_child->next_sibling;
+       child != NULL;
+       child = child->next_sibling)
+    flatpak_xml_to_string (child, res);
+}
+
+gboolean
+flatpak_appstream_xml_components_to_data (const char *components,
+                                          gsize       len,
+                                          GBytes    **uncompressed,
+                                          GBytes    **compressed,
+                                          GError    **error)
+{
+  GString *xml = g_string_new ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                               "<components version=\"0.8\" origin=\"flatpak\">\n  ");
+
+  g_string_append_len (xml, components, len);
+  g_string_append (xml, "\n</components>");
+
+  return appstream_xml_string_to_data (xml, uncompressed, compressed, error);
 }
 
 void
