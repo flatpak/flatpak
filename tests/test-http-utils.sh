@@ -127,7 +127,7 @@ rm -f $test_tmpdir/output*
 ok 'compress after download'
 
 # A dropped response must be retried without retaining its partial contents.
-for path in /empty-reply /partial-reply; do
+for path in /empty-reply /partial-reply /status-502 /status-503 /status-504; do
     assert_ok "$path" $test_tmpdir/output
     contents=$(cat $test_tmpdir/output)
     assert_streq "$contents" "path=$path"
@@ -139,7 +139,30 @@ contents=$(gunzip -c < $test_tmpdir/output)
 assert_streq "$contents" "path=/partial-reply?compressed"
 rm -f $test_tmpdir/output*
 
-ok 'retry dropped responses'
+ok 'retry dropped and transient responses'
+
+assert_result "Server returned status 503" "/always-unavailable" $test_tmpdir/output
+assert_not_has_file $test_tmpdir/output
+
+ok 'retry transient failures'
+
+for mode in seconds date invalid; do
+    assert_ok "/retry-after?mode=$mode" $test_tmpdir/output
+    rm -f $test_tmpdir/output*
+done
+ok 'respect Retry-After'
+
+out=$(timeout 4 "${test_builddir}/httpcache" "http://localhost:$port/retry-after?mode=long" $test_tmpdir/output || :)
+assert_streq "$out" "Server returned status 503"
+assert_not_has_file $test_tmpdir/output
+assert_streq "$(grep -c 'GET /retry-after?mode=long ' httpd-log)" "1"
+ok 'decline excessive Retry-After'
+
+out=$(timeout 4 "${test_builddir}/httpcache" --cancel "http://localhost:$port/retry-after?mode=cancel" $test_tmpdir/output)
+assert_streq "$out" "Cancelled"
+assert_not_has_file $test_tmpdir/output
+assert_streq "$(grep -c 'GET /retry-after?mode=cancel ' httpd-log)" "1"
+ok 'cancel Retry-After wait'
 
 # Make httpcache reject xattrs even when the filesystem supports them.
 httpcache=(env FLATPAK_TEST_NO_XATTRS=1 "${test_builddir}/httpcache")

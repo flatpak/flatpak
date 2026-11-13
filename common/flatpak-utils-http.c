@@ -101,6 +101,7 @@ typedef struct
   char                  *hdr_cache_control;
   char                  *hdr_expires;
   char                  *hdr_content_encoding;
+  char                  *hdr_retry_after;
 
   /* Data destination */
 
@@ -127,6 +128,7 @@ clear_load_uri_data_headers (LoadUriData *data)
   g_clear_pointer (&data->hdr_cache_control, g_free);
   g_clear_pointer (&data->hdr_expires, g_free);
   g_clear_pointer (&data->hdr_content_encoding, g_free);
+  g_clear_pointer (&data->hdr_retry_after, g_free);
 }
 
 /* Reset between requests retries */
@@ -204,6 +206,9 @@ check_http_status (guint status_code,
       break;
 
     case 500: /* Internal Server Error */
+    case 502: /* Bad Gateway */
+    case 503: /* Service Unavailable */
+    case 504: /* Gateway Timeout */
       /* The server did return something, but it was useless to us, so that’s basically equivalent to not returning */
       domain = G_IO_ERROR;
       code = G_IO_ERROR_HOST_UNREACHABLE;
@@ -432,6 +437,7 @@ _header_cb (char *buffer,
   check_header(&data->hdr_cache_control, "Cache-Control", buffer, realsize);
   check_header(&data->hdr_expires, "Expires", buffer, realsize);
   check_header(&data->hdr_content_encoding, "Content-Encoding", buffer, realsize);
+  check_header(&data->hdr_retry_after, "Retry-After", buffer, realsize);
 
   return realsize;
 }
@@ -745,26 +751,83 @@ flatpak_download_http_uri_once (FlatpakHttpSession    *session,
  * created, and must be decremented by the caller. (@n_retries_remaining == 0)
  * will always return %FALSE from this function.
  *
- * This code is copied from libostree's _ostree_fetcher_should_retry_request()
+ * Based on libostree's _ostree_fetcher_should_retry_request(), with a
+ * cancellable wait for Retry-After on service-unavailable responses.
  */
 static gboolean
-flatpak_http_should_retry_request (const GError *error,
-                                   guint         n_retries_remaining)
+flatpak_http_should_retry_request (GError      **error,
+                                   guint         n_retries_remaining,
+                                   LoadUriData  *data)
 {
-  if (error == NULL || n_retries_remaining == 0)
+  if (*error == NULL || n_retries_remaining == 0)
     return FALSE;
 
   /* Return TRUE for transient errors. */
-  if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_TIMED_OUT) ||
-      g_error_matches (error, G_IO_ERROR, G_IO_ERROR_HOST_NOT_FOUND) ||
-      g_error_matches (error, G_IO_ERROR, G_IO_ERROR_HOST_UNREACHABLE) ||
-      g_error_matches (error, G_IO_ERROR, G_IO_ERROR_PARTIAL_INPUT) ||
-      g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CONNECTION_CLOSED) ||
-      g_error_matches (error, G_RESOLVER_ERROR, G_RESOLVER_ERROR_NOT_FOUND) ||
-      g_error_matches (error, G_RESOLVER_ERROR, G_RESOLVER_ERROR_TEMPORARY_FAILURE))
+  if (g_error_matches (*error, G_IO_ERROR, G_IO_ERROR_TIMED_OUT) ||
+      g_error_matches (*error, G_IO_ERROR, G_IO_ERROR_HOST_NOT_FOUND) ||
+      g_error_matches (*error, G_IO_ERROR, G_IO_ERROR_HOST_UNREACHABLE) ||
+      g_error_matches (*error, G_IO_ERROR, G_IO_ERROR_PARTIAL_INPUT) ||
+      g_error_matches (*error, G_IO_ERROR, G_IO_ERROR_CONNECTION_CLOSED) ||
+      g_error_matches (*error, G_RESOLVER_ERROR, G_RESOLVER_ERROR_NOT_FOUND) ||
+      g_error_matches (*error, G_RESOLVER_ERROR, G_RESOLVER_ERROR_TEMPORARY_FAILURE))
     {
+      if (data->status == 503 && data->hdr_retry_after != NULL)
+        {
+          const char *header = data->hdr_retry_after;
+          guint64 delay = 0;
+
+          if (*header && strspn (header, "0123456789") == strlen (header))
+            delay = g_ascii_strtoull (header, NULL, 10);
+          else
+            {
+              g_autoptr(GDateTime) date = flatpak_parse_http_time (header);
+
+              if (date)
+                delay = MAX (0, g_date_time_to_unix (date) - g_get_real_time () / G_USEC_PER_SEC);
+            }
+
+          /* Do not retry earlier than requested, or wait indefinitely. */
+          if (delay > FLATPAK_HTTP_TIMEOUT_SECS)
+            return FALSE;
+
+          if (delay > 0)
+            {
+              gint64 deadline = g_get_monotonic_time () + delay * G_USEC_PER_SEC;
+              GPollFD pollfd;
+              gboolean have_pollfd = data->cancellable != NULL &&
+                                     g_cancellable_make_pollfd (data->cancellable, &pollfd);
+
+              while (!g_cancellable_is_cancelled (data->cancellable))
+                {
+                  gint64 remaining = deadline - g_get_monotonic_time ();
+                  int timeout_ms;
+
+                  if (remaining <= 0)
+                    break;
+
+                  /* If allocating the cancellation fd fails, still check it regularly. */
+                  timeout_ms = (remaining + 999) / 1000;
+                  if (data->cancellable != NULL && !have_pollfd)
+                    timeout_ms = MIN (timeout_ms, 100);
+                  if (g_poll (have_pollfd ? &pollfd : NULL, have_pollfd ? 1 : 0, timeout_ms) < 0 &&
+                      errno != EINTR)
+                    g_usleep (MIN (remaining, 100 * 1000));
+                }
+
+              if (have_pollfd)
+                g_cancellable_release_fd (data->cancellable);
+            }
+        }
+
+      if (g_cancellable_is_cancelled (data->cancellable))
+        {
+          g_clear_error (error);
+          g_cancellable_set_error_if_cancelled (data->cancellable, error);
+          return FALSE;
+        }
+
       g_info ("Should retry request (remaining: %u retries), due to transient error: %s",
-              n_retries_remaining, error->message);
+              n_retries_remaining, (*error)->message);
       return TRUE;
     }
 
@@ -834,7 +897,7 @@ flatpak_load_uri_full (FlatpakHttpSession    *http_session,
 
       g_assert (local_error != NULL);
     }
-  while (flatpak_http_should_retry_request (local_error, n_retries_remaining--));
+  while (flatpak_http_should_retry_request (&local_error, n_retries_remaining--, &data));
 
   if (success)
     {
@@ -923,7 +986,7 @@ flatpak_download_http_uri (FlatpakHttpSession    *http_session,
       if (data.downloaded_bytes > 0)
         break;
     }
-  while (flatpak_http_should_retry_request (local_error, n_retries_remaining--));
+  while (flatpak_http_should_retry_request (&local_error, n_retries_remaining--, &data));
 
   if (success)
     return TRUE;
@@ -1311,7 +1374,7 @@ flatpak_cache_http_uri (FlatpakHttpSession    *http_session,
 
       g_assert (local_error != NULL);
     }
-  while (flatpak_http_should_retry_request (local_error, n_retries_remaining--));
+  while (flatpak_http_should_retry_request (&local_error, n_retries_remaining--, &data));
 
   /* Update the cache data on success or cache-valid */
   if (success || g_error_matches (local_error, FLATPAK_HTTP_ERROR, FLATPAK_HTTP_ERROR_NOT_CHANGED))
