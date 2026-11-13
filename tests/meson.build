@@ -102,6 +102,8 @@ c_tests = [
     ],
   }],
   ['testcommon', {}],
+  ['test-download-tracker', {}],
+  ['test-progress', {}],
   ['testlibrary', {
     'dependencies' : [
       base_deps,
@@ -186,6 +188,37 @@ foreach testcase : c_tests
       protocol : 'tap',
       timeout : options.get('timeout', 30),
     )
+
+    if name == 'testlibrary'
+      foreach limit, expected : {'1': '1', '2': '2', '4': '4', '8': '8', '0': '4', 'invalid': '4', '4294967296': '4'}
+        limit_env = environment(tests_environment)
+        foreach k, v: tests_environment_prepend
+          limit_env.prepend(k, v)
+        endforeach
+        limit_env.set('FLATPAK_MAX_PARALLEL_DOWNLOADS', limit)
+        limit_env.set('FLATPAK_TEST_EXPECTED_PARALLEL_DOWNLOADS', expected)
+        test(
+          'testlibrary-parallel-limit-' + limit,
+          tap_test,
+          args : [exe, '-p', '/library/transaction-parallel/limit'],
+          depends : runtime_repo,
+          env : limit_env,
+          protocol : 'tap',
+          timeout : options.get('timeout', 30),
+        )
+        if limit == '1'
+          test(
+            'testlibrary-serial-downloads',
+            tap_test,
+            args : [exe, '-p', '/library/transaction-parallel'],
+            depends : runtime_repo,
+            env : limit_env,
+            protocol : 'tap',
+            timeout : options.get('timeout', 30),
+          )
+        endif
+      endforeach
+    endif
   endif
 endforeach
 
