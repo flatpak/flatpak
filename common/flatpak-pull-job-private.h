@@ -6,15 +6,7 @@
 #include "flatpak-progress-private.h"
 
 typedef struct _FlatpakPullJob FlatpakPullJob;
-typedef struct
-{
-  FlatpakProgress *progress;
-  FlatpakProgress *snapshot;
-  int64_t          last_emission_us;
-  uint64_t         previous_bytes;
-} FlatpakPullProgress;
-
-typedef void (*FlatpakPullJobUpdate) (FlatpakPullJob *job,
+typedef void (*FlatpakPullJobUpdate) (gboolean        done,
                                       gpointer        user_data);
 typedef gboolean (*FlatpakPullJobFunc) (gpointer         data,
                                         FlatpakProgress *progress,
@@ -49,11 +41,12 @@ const char **flatpak_pull_job_get_subpaths (FlatpakPullJob *self);
 /* Copies a synchronized progress snapshot and returns whether the pull ended. */
 gboolean flatpak_pull_job_snapshot (FlatpakPullJob  *self,
                                     FlatpakProgress *progress);
-/* Delivers snapshots at the recipient's update interval, always including the
- * first and final update. Returns whether the pull ended. */
-gboolean flatpak_pull_job_update_progress (FlatpakPullJob      *self,
-                                          FlatpakPullProgress *update);
+/* Delivers progress on the caller thread at the recipient's update interval,
+ * including the first and final snapshot, adding to its existing byte counts.
+ * The optional update callback runs after each snapshot check, even when
+ * delivery is throttled, so callers can report other downloads too. */
 gboolean flatpak_pull_job_wait (FlatpakPullJob      *self,
+                                FlatpakProgress     *progress,
                                 FlatpakPullJobUpdate update,
                                 gpointer             user_data,
                                 GError             **error);

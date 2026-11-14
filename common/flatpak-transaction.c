@@ -5436,31 +5436,16 @@ start_download_window (FlatpakTransaction *self,
     }
 }
 
-typedef struct
-{
-  FlatpakTransaction *transaction;
-  FlatpakPullProgress progress;
-} PullProgress;
-
 static void
-pull_progress_update (FlatpakPullJob *job, gpointer user_data)
+pull_progress_update (gboolean done, gpointer user_data)
 {
-  PullProgress *update = user_data;
-  gboolean done = flatpak_pull_job_update_progress (job, &update->progress);
-
-  emit_download_progress (update->transaction, done);
+  emit_download_progress (user_data, done);
 }
 
 static gboolean
 pull_job_wait (FlatpakTransaction *self, FlatpakPullJob *job, FlatpakTransactionProgress *progress, GError **error)
 {
-  g_autoptr(FlatpakProgress) snapshot = flatpak_progress_new (NULL, NULL);
-  PullProgress update = {
-    .transaction = self,
-    .progress = { .progress = progress->progress_obj, .snapshot = snapshot },
-  };
-
-  return flatpak_pull_job_wait (job, pull_progress_update, &update, error);
+  return flatpak_pull_job_wait (job, progress->progress_obj, pull_progress_update, self, error);
 }
 
 static gboolean

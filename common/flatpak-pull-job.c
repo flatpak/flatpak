@@ -195,22 +195,41 @@ flatpak_pull_job_snapshot (FlatpakPullJob *self, FlatpakProgress *progress)
 }
 
 gboolean
-flatpak_pull_job_wait (FlatpakPullJob *self, FlatpakPullJobUpdate update, gpointer user_data, GError **error)
+flatpak_pull_job_wait (FlatpakPullJob *self, FlatpakProgress *progress,
+                       FlatpakPullJobUpdate update, gpointer user_data, GError **error)
 {
   g_autoptr(GMainContext) context = g_main_context_ref_thread_default ();
+  g_autoptr(FlatpakProgress) snapshot = flatpak_progress_new (NULL, NULL);
+  int64_t last_emission_us = 0;
+  uint64_t previous_bytes = 0;
   gboolean done;
 
   if (g_cancellable_set_error_if_cancelled (self->cancel, error))
     return FALSE;
+  if (progress != NULL)
+    previous_bytes = flatpak_progress_get_bytes_transferred (progress) +
+                     flatpak_progress_get_transferred_extra_data_bytes (progress);
   do
     {
       g_main_context_iteration (context, FALSE);
       g_mutex_lock (&self->mutex);
       if (!self->done)
         g_cond_wait_until (&self->condition, &self->mutex, g_get_monotonic_time () + 25 * G_TIME_SPAN_MILLISECOND);
-      done = self->done;
       g_mutex_unlock (&self->mutex);
-      update (self, user_data);
+      done = flatpak_pull_job_snapshot (self, snapshot);
+      if (progress != NULL)
+        {
+          int64_t now = g_get_monotonic_time ();
+          int64_t interval_us = (int64_t) flatpak_progress_get_update_interval (progress) * G_TIME_SPAN_MILLISECOND;
+
+          if (done || last_emission_us == 0 || now >= last_emission_us + interval_us)
+            {
+              last_emission_us = now;
+              flatpak_progress_update_from_snapshot (progress, snapshot, previous_bytes);
+            }
+        }
+      if (update != NULL)
+        update (done, user_data);
     }
   while (!done);
   /* The last progress callback can cancel an already completed download. */
@@ -225,31 +244,6 @@ flatpak_pull_job_wait (FlatpakPullJob *self, FlatpakPullJobUpdate update, gpoint
 }
 
 gboolean
-flatpak_pull_job_update_progress (FlatpakPullJob *job, FlatpakPullProgress *update)
-{
-  gboolean done = flatpak_pull_job_snapshot (job, update->snapshot);
-  int64_t now = g_get_monotonic_time ();
-  int64_t interval_us;
-
-  if (update->progress == NULL)
-    return done;
-
-  interval_us = (int64_t) flatpak_progress_get_update_interval (update->progress) * G_TIME_SPAN_MILLISECOND;
-  if (done || update->last_emission_us == 0 || now >= update->last_emission_us + interval_us)
-    {
-      update->last_emission_us = now;
-      flatpak_progress_update_from_snapshot (update->progress, update->snapshot, update->previous_bytes);
-    }
-  return done;
-}
-
-static void
-serial_pull_progress (FlatpakPullJob *job, gpointer data)
-{
-  flatpak_pull_job_update_progress (job, data);
-}
-
-gboolean
 flatpak_pull_job_run_serial (const char         *ref,
                              FlatpakPullJobFunc   pull,
                              gpointer             data,
@@ -258,15 +252,10 @@ flatpak_pull_job_run_serial (const char         *ref,
                              GError             **error)
 {
   g_autoptr(FlatpakPullJob) job = pull_job_new (ref, cancellable);
-  g_autoptr(FlatpakProgress) snapshot = flatpak_progress_new (NULL, NULL);
-  FlatpakPullProgress update = { .progress = progress, .snapshot = snapshot };
 
   if (g_cancellable_set_error_if_cancelled (cancellable, error))
     return FALSE;
 
-  if (progress != NULL)
-    update.previous_bytes = flatpak_progress_get_bytes_transferred (progress) +
-                            flatpak_progress_get_transferred_extra_data_bytes (progress);
   flatpak_progress_start_download (progress);
   job->pull = pull;
   job->data = data;
@@ -274,5 +263,5 @@ flatpak_pull_job_run_serial (const char         *ref,
   if (job->thread == NULL)
     return FALSE;
 
-  return flatpak_pull_job_wait (job, serial_pull_progress, &update, error);
+  return flatpak_pull_job_wait (job, progress, NULL, NULL, error);
 }

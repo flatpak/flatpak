@@ -248,6 +248,70 @@ test_serial_pull (gconstpointer data)
   g_mutex_clear (&check.mutex);
 }
 
+typedef struct
+{
+  GThread *caller;
+  GMutex   mutex;
+  GCond    condition;
+  size_t   callbacks;
+} ThrottledPullCheck;
+
+static gboolean
+pull_with_frequent_updates (gpointer data, FlatpakProgress *progress,
+                            GCancellable *cancellable, GError **error)
+{
+  ThrottledPullCheck *check = data;
+  int64_t deadline = g_get_monotonic_time () + 5 * G_TIME_SPAN_SECOND;
+
+  g_assert_true (g_thread_self () != check->caller);
+  g_mutex_lock (&check->mutex);
+  while (check->callbacks == 0)
+    if (!g_cond_wait_until (&check->condition, &check->mutex, deadline))
+      break;
+  g_assert_cmpuint (check->callbacks, ==, 1);
+  g_mutex_unlock (&check->mutex);
+
+  flatpak_progress_start_oci_pull (progress);
+  for (size_t i = 1; i <= 100; i++)
+    {
+      flatpak_progress_update_oci_pull (progress, 100, i, 100, i);
+      g_usleep (G_TIME_SPAN_MILLISECOND);
+    }
+  return TRUE;
+}
+
+static void
+throttled_pull_progress (const char *status, guint percent, gboolean estimating, gpointer data)
+{
+  ThrottledPullCheck *check = data;
+
+  g_assert_true (g_thread_self () == check->caller);
+  g_mutex_lock (&check->mutex);
+  check->callbacks++;
+  g_cond_signal (&check->condition);
+  g_mutex_unlock (&check->mutex);
+}
+
+static void
+test_pull_throttling (void)
+{
+  ThrottledPullCheck check = { .caller = g_thread_self () };
+  g_autoptr(FlatpakProgress) progress = flatpak_progress_new (throttled_pull_progress, &check);
+  g_autoptr(GError) error = NULL;
+
+  g_mutex_init (&check.mutex);
+  g_cond_init (&check.condition);
+  /* The final snapshot must arrive without waiting for the next interval. */
+  flatpak_progress_set_update_interval (progress, 60000);
+  g_assert_true (flatpak_pull_job_run_serial ("test-ref", pull_with_frequent_updates,
+                                             &check, progress, NULL, &error));
+  g_assert_no_error (error);
+  g_assert_cmpuint (check.callbacks, ==, 2);
+  g_assert_cmpuint (flatpak_progress_get_bytes_transferred (progress), ==, 100);
+  g_cond_clear (&check.condition);
+  g_mutex_clear (&check.mutex);
+}
+
 int
 main (int argc, char **argv)
 {
@@ -267,6 +331,7 @@ main (int argc, char **argv)
   };
 
   g_test_init (&argc, &argv, NULL);
+  g_test_add_func ("/progress/pull/throttling", test_pull_throttling);
   for (size_t i = 0; i < G_N_ELEMENTS (scenarios); i++)
     g_test_add_data_func (scenarios[i].name, &scenarios[i], test_deployment);
   for (size_t i = 0; i < G_N_ELEMENTS (pull_scenarios); i++)
