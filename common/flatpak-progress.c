@@ -129,6 +129,9 @@ struct _FlatpakProgress
 
 G_DEFINE_TYPE (FlatpakProgress, flatpak_progress, G_TYPE_OBJECT);
 
+static guint start_deployment_signal;
+static guint start_download_signal;
+
 static void
 flatpak_progress_finalize (GObject *object)
 {
@@ -145,6 +148,88 @@ flatpak_progress_class_init (FlatpakProgressClass *klass)
 {
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
   gobject_class->finalize = flatpak_progress_finalize;
+  start_deployment_signal = g_signal_new ("start-deployment", G_TYPE_FROM_CLASS (klass),
+                                          G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,
+                                          G_TYPE_NONE, 0);
+  start_download_signal = g_signal_new ("start-download", G_TYPE_FROM_CLASS (klass),
+                                        G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,
+                                        G_TYPE_NONE, 0);
+}
+
+void
+flatpak_progress_start_download (FlatpakProgress *self)
+{
+  if (self != NULL)
+    g_signal_emit (self, start_download_signal, 0);
+}
+
+void
+flatpak_progress_start_deployment (FlatpakProgress *self)
+{
+  if (self != NULL)
+    g_signal_emit (self, start_deployment_signal, 0);
+}
+
+typedef struct
+{
+  FlatpakDeploymentFunc deploy;
+  gpointer              data;
+  GCancellable         *cancellable;
+  GMutex                mutex;
+  GCond                 condition;
+  gboolean              done;
+  gboolean              result;
+  GError               *error;
+} DeploymentTask;
+
+static gpointer
+run_deployment (gpointer data)
+{
+  DeploymentTask *task = data;
+
+  task->result = task->deploy (task->data, task->cancellable, &task->error);
+  g_mutex_lock (&task->mutex);
+  task->done = TRUE;
+  g_cond_signal (&task->condition);
+  g_mutex_unlock (&task->mutex);
+  return NULL;
+}
+
+gboolean
+flatpak_progress_run_deployment (FlatpakProgress *self, FlatpakDeploymentFunc deploy,
+                                 gpointer data, GCancellable *cancellable, GError **error)
+{
+  DeploymentTask task = { .deploy = deploy, .data = data, .cancellable = cancellable };
+  GThread *thread;
+
+  if (self == NULL || self->callback == NULL)
+    return deploy (data, cancellable, error);
+
+  g_mutex_init (&task.mutex);
+  g_cond_init (&task.condition);
+  thread = g_thread_try_new ("flatpak-deploy", run_deployment, &task, error);
+  if (thread != NULL)
+    {
+      g_mutex_lock (&task.mutex);
+      while (!task.done)
+        {
+          int64_t deadline = g_get_monotonic_time () + MAX (self->update_interval, 1) * G_TIME_SPAN_MILLISECOND;
+
+          if (!g_cond_wait_until (&task.condition, &task.mutex, deadline) && !task.done)
+            {
+              g_mutex_unlock (&task.mutex);
+              self->callback (self->status, self->progress, self->estimating, self->user_data);
+              g_mutex_lock (&task.mutex);
+            }
+        }
+      g_mutex_unlock (&task.mutex);
+      g_thread_join (thread);
+      if (task.error != NULL)
+        g_propagate_error (error, task.error);
+    }
+  g_mutex_clear (&task.mutex);
+  g_cond_clear (&task.condition);
+  return task.result;
 }
 
 static void
@@ -168,6 +253,36 @@ flatpak_progress_new (FlatpakProgressCallback callback,
   retval->user_data = user_data;
 
   return retval;
+}
+
+void
+flatpak_progress_copy_state (FlatpakProgress *dest, FlatpakProgress *source)
+{
+  g_free (dest->status);
+  dest->status = g_strdup (source->status);
+  dest->progress = source->progress;
+  dest->estimating = source->estimating;
+  dest->start_time = source->start_time;
+  dest->bytes_transferred = source->bytes_transferred;
+  dest->transferred_extra_data_bytes = source->transferred_extra_data_bytes;
+  dest->bytes_total = source->bytes_total;
+  dest->bytes_per_second = source->bytes_per_second;
+}
+
+void
+flatpak_progress_update_from_snapshot (FlatpakProgress *self, FlatpakProgress *snapshot,
+                                       uint64_t previous_bytes)
+{
+  guint previous_progress = self->progress;
+
+  flatpak_progress_copy_state (self, snapshot);
+  /* A supplemental pull starts a fresh worker, not a new operation. */
+  self->progress = MAX (previous_progress, self->progress);
+  self->bytes_transferred += previous_bytes;
+  if (self->bytes_total != 0)
+    self->bytes_total += previous_bytes;
+  if (self->callback != NULL)
+    self->callback (self->status, self->progress, self->estimating, self->user_data);
 }
 
 static inline guint
