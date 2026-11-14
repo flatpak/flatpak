@@ -530,6 +530,16 @@ sockets=!x11;x11;if:x11:!has-wayland;
                                 Available since 0.3.
                             </para></listitem></varlistentry>
 
+                            <varlistentry><term><option>xdg-projects</option>
+                            </term><listitem><para>
+                                The projects directory from
+                                <ulink url="https://www.freedesktop.org/wiki/Software/xdg-user-dirs/"
+                                  >xdg-user-dirs</ulink>
+                                (<envar>XDG_PROJECTS_DIR</envar>, typically
+                                <filename>~/Projects</filename>).
+                                Available since 1.19.3.
+                            </para></listitem></varlistentry>
+
                             <varlistentry><term><option>xdg-desktop/<replaceable>path</replaceable></option>,
                                 <option>xdg-documents/<replaceable>path</replaceable></option>,
                                 etc.
