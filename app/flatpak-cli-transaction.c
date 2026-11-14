@@ -49,7 +49,6 @@ typedef struct
   OperationPhase phase;
   int            row;
   gboolean       has_download_progress;
-  gboolean       has_bytes;
   uint64_t       bytes_transferred;
   uint64_t       bytes_total;
   uint64_t       bytes_per_second;
@@ -86,11 +85,9 @@ struct _FlatpakCliTransaction
   FlatpakTablePrinter *printer;
   int                  progress_row;
   int                  download_row;
-  gboolean             has_aggregate_download_progress;
   unsigned int         taskbar_progress;
   char                *download_msg;
   char                *progress_msg;
-  int                  speed_len;
 
   gboolean             did_interaction;
 
@@ -332,7 +329,6 @@ progress_changed_cb (FlatpakTransactionProgress *progress,
   g_autoptr(GString) str = g_string_new ("");
   int i;
   int n_full, partial;
-  g_autofree char *speed = NULL;
   int bar_length;
   const char *partial_blocks[] = {
     " ",
@@ -347,31 +343,8 @@ progress_changed_cb (FlatpakTransactionProgress *progress,
   const char *full_block = "█";
 
   guint percent = flatpak_transaction_progress_get_progress (progress);
-  guint64 start_time = flatpak_transaction_progress_get_start_time (progress);
-  guint64 elapsed_time = (g_get_monotonic_time () - start_time) / G_USEC_PER_SEC;
-  guint64 transferred = flatpak_transaction_progress_get_bytes_transferred (progress);
-  guint64 total = flatpak_transaction_progress_get_bytes_total (progress);
-  guint64 bytes_per_second = flatpak_transaction_progress_get_bytes_per_second (progress);
-  guint64 max = flatpak_transaction_operation_get_download_size (op);
 
-  if (!display->has_download_progress)
-    {
-      display->has_bytes = TRUE;
-      display->bytes_transferred = transferred;
-      display->bytes_total = max;
-    }
   render_operation (cli, op);
-
-  if (elapsed_time > 0 && !cli->has_aggregate_download_progress && bytes_per_second > 0)
-    {
-      g_autofree char *formatted_bytes_sec = g_format_size (bytes_per_second);
-      g_autofree char *remaining = NULL;
-      remaining = format_progress_remaining_time (transferred, total, bytes_per_second,
-                                                  flatpak_transaction_progress_get_is_estimating (progress));
-      /* Formatted size/remaining time in seconds */
-      speed = g_strdup_printf (_("%s/s%s%s"), formatted_bytes_sec, remaining ? "  " : "", remaining ? remaining : "");
-      cli->speed_len = MAX (cli->speed_len, strlen (speed) + 2);
-    }
 
   if (display->phase == OPERATION_DEPLOYING)
     {
@@ -381,7 +354,7 @@ progress_changed_cb (FlatpakTransactionProgress *progress,
       return;
     }
 
-  bar_length = MIN (20, cli->table_width - (strlen (cli->progress_msg) + 6 + cli->speed_len));
+  bar_length = MIN (20, cli->table_width - (strlen (cli->progress_msg) + 6));
 
   n_full = (bar_length * percent) / 100;
   partial = (((bar_length * percent) % 100) * G_N_ELEMENTS (partial_blocks)) / 100;
@@ -415,8 +388,6 @@ progress_changed_cb (FlatpakTransactionProgress *progress,
     percent format for your language */
   g_string_append_printf (str, _("%3d%%"), percent);
 
-  if (speed)
-    g_string_append_printf (str, "  %s", speed);
   if (!flatpak_fancy_output () && cli->download_msg != NULL)
     g_string_append_printf (str, "  %s", cli->download_msg);
 
@@ -537,10 +508,10 @@ render_operation (FlatpakCliTransaction *self, FlatpakTransactionOperation *op)
       break;
     }
 
-  if (flatpak_fancy_output () && display->has_bytes && type != FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
+  if (flatpak_fancy_output () && display->has_download_progress && type != FLATPAK_TRANSACTION_OPERATION_UNINSTALL)
     {
-      uint64_t bytes_transferred = display->has_download_progress ? display->bytes_transferred : MAX (display->bytes_transferred, 1000);
-      uint64_t bytes_total = display->has_download_progress ? display->bytes_total : MAX (display->bytes_total, 1000);
+      uint64_t bytes_transferred = display->bytes_transferred;
+      uint64_t bytes_total = display->bytes_total;
       g_autofree char *formatted = g_format_size (bytes_transferred);
       g_autofree char *formatted_total = bytes_total ? g_format_size (bytes_total) : NULL;
       g_autoptr(GString) text = g_string_new (formatted);
@@ -600,7 +571,6 @@ operation_download_progress (FlatpakTransaction          *transaction,
   OperationDisplay *display = get_operation_display (self, op);
 
   display->has_download_progress = TRUE;
-  display->has_bytes = TRUE;
   display->bytes_transferred = bytes_transferred;
   display->bytes_total = bytes_total;
   display->bytes_per_second = bytes_per_second;
@@ -634,8 +604,6 @@ download_progress (FlatpakTransaction *transaction,
   g_autofree char *total = bytes_total ? g_format_size (bytes_total) : NULL;
   g_autoptr(GString) text = g_string_new ("");
 
-  self->has_aggregate_download_progress = TRUE;
-  self->speed_len = 0;
   if (active_downloads > 0)
     g_string_append_printf (text, ngettext ("Downloading %u item", "Downloading %u items", active_downloads), active_downloads);
   else
