@@ -37,7 +37,7 @@ __flatpak() {
             readarray -t REPLIES < <(compgen "${COMPGEN_OPTS[@]}" -- "${CUR}")
             COMPREPLY+=("${REPLIES[@]}")
         else
-            COMPREPLY=("${COMPREPLY[@]}" "$res")
+            COMPREPLY+=("$res")
         fi
     done
 }
