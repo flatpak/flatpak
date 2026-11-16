@@ -423,6 +423,109 @@ test_fd_passing (Fixture *f,
 }
 
 static void
+test_fd_handle_duplicate (Fixture *f,
+                          gconstpointer context G_GNUC_UNUSED)
+{
+  g_autoptr(GError) error = NULL;
+  g_autoptr(GUnixFDList) fds_in = g_unix_fd_list_new ();
+  g_autoptr(GUnixFDList) fds_out = NULL;
+  g_auto(GVariantBuilder) fd_map_builder = {};
+  g_auto(GVariantBuilder) options_builder = {};
+  guint pid;
+  gboolean ok;
+  const char * const argv[] = { "hello", NULL };
+  glnx_autofd int null_fd = -1;
+  int handle;
+
+  fixture_start_portal (f);
+
+  null_fd = open ("/dev/null", O_RDONLY);
+  g_assert_no_errno (null_fd);
+
+  handle = g_unix_fd_list_append (fds_in, null_fd, &error);
+  g_assert_no_error (error);
+  g_assert_cmpint (handle, >=, 0);
+
+  g_variant_builder_init (&fd_map_builder, G_VARIANT_TYPE ("a{uh}"));
+  g_variant_builder_add (&fd_map_builder, "{uh}", 1, handle);
+  g_variant_builder_add (&fd_map_builder, "{uh}", 2, handle);
+  ok = portal_flatpak_call_spawn_sync (f->proxy,
+                                       "/",           /* cwd */
+                                       argv,          /* argv */
+                                       g_variant_builder_end (&fd_map_builder),
+                                       g_variant_new ("a{ss}", NULL),
+                                       FLATPAK_SPAWN_FLAGS_NONE,
+                                       g_variant_new ("a{sv}", NULL),
+                                       fds_in,
+                                       &pid,
+                                       &fds_out,
+                                       NULL,
+                                       &error);
+  g_test_message ("duplicates in fd map -> %s",
+                  error ? error->message : "(no error!)");
+  g_assert_error (error, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS);
+  g_assert_false (ok);
+  g_assert_nonnull (strstr (error->message, "already used"));
+  g_assert_null (fds_out);
+  g_clear_error (&error);
+
+  g_variant_builder_init (&options_builder, G_VARIANT_TYPE ("a{sv}"));
+  g_variant_builder_add (&options_builder, "{sv}",
+                         "usr-fd", g_variant_new_handle (handle));
+  g_variant_builder_add (&options_builder, "{sv}",
+                         "sandbox-expose-fd",
+                         g_variant_new_parsed ("[%h]", handle));
+  ok = portal_flatpak_call_spawn_sync (f->proxy,
+                                       "/",           /* cwd */
+                                       argv,          /* argv */
+                                       g_variant_new ("a{uh}", NULL),
+                                       g_variant_new ("a{ss}", NULL),
+                                       FLATPAK_SPAWN_FLAGS_NONE,
+                                       g_variant_builder_end (&options_builder),
+                                       fds_in,
+                                       &pid,
+                                       &fds_out,
+                                       NULL,
+                                       &error);
+  g_test_message ("usr-fd duplicates sandbox-expose-fd -> %s",
+                  error ? error->message : "(no error!)");
+  g_assert_error (error, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS);
+  g_assert_false (ok);
+  g_assert_nonnull (strstr (error->message, "already used"));
+  g_assert_null (fds_out);
+  g_clear_error (&error);
+
+  g_variant_builder_init (&options_builder, G_VARIANT_TYPE ("a{sv}"));
+  g_variant_builder_add (&options_builder, "{sv}",
+                         "app-fd", g_variant_new_handle (handle));
+  g_variant_builder_add (&options_builder, "{sv}",
+                         "sandbox-expose-fd-ro",
+                         g_variant_new_parsed ("[%h]", handle));
+  ok = portal_flatpak_call_spawn_sync (f->proxy,
+                                       "/",           /* cwd */
+                                       argv,          /* argv */
+                                       g_variant_new ("a{uh}", NULL),
+                                       g_variant_new ("a{ss}", NULL),
+                                       FLATPAK_SPAWN_FLAGS_NONE,
+                                       g_variant_builder_end (&options_builder),
+                                       fds_in,
+                                       &pid,
+                                       &fds_out,
+                                       NULL,
+                                       &error);
+  g_test_message ("app-fd duplicates sandbox-expose-fd-ro -> %s",
+                  error ? error->message : "(no error!)");
+  g_assert_error (error, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS);
+  g_assert_false (ok);
+  g_assert_nonnull (strstr (error->message, "already used"));
+  g_assert_null (fds_out);
+  g_clear_error (&error);
+
+  g_subprocess_send_signal (f->portal, SIGTERM);
+  g_subprocess_wait (f->portal, NULL, NULL);
+}
+
+static void
 test_replace (Fixture *f,
               gconstpointer context G_GNUC_UNUSED)
 {
@@ -478,6 +581,7 @@ main (int argc,
   g_test_add ("/help", Fixture, NULL, setup, test_help, teardown);
   g_test_add ("/basic", Fixture, NULL, setup, test_basic, teardown);
   g_test_add ("/fd-passing", Fixture, NULL, setup, test_fd_passing, teardown);
+  g_test_add ("/fd-handle-duplicate", Fixture, NULL, setup, test_fd_handle_duplicate, teardown);
   g_test_add ("/replace", Fixture, NULL, setup, test_replace, teardown);
 
   return g_test_run ();
