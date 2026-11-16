@@ -10126,6 +10126,8 @@ flatpak_dir_deploy (FlatpakDir          *self,
     return flatpak_fail_error (error, FLATPAK_ERROR_ALREADY_INSTALLED,
                                _("%s commit %s already installed"), flatpak_decomposed_get_ref (ref), checksum);
 
+  /* If you change how this directory is named, also update
+   * tests/test-extra-data-defang.sh */
   g_autofree char *template = g_strdup_printf (".%s-XXXXXX", checkout_basename);
 
   if (!glnx_mkdtempat (deploy_base_dfd, template, 0755, &tmp_dir_handle, NULL))
