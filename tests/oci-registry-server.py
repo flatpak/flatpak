@@ -16,6 +16,8 @@ icons = {}
 signatures = {}
 
 required_token = None
+registry_host = None
+server_port = None
 
 
 def get_index():
@@ -30,7 +32,12 @@ def get_index():
             }
         )
 
-    return json.dumps({"Registry": "/", "Results": results}, indent=4).encode("UTF-8")
+    if registry_host is not None:
+        registry = "http://{}:{}".format(registry_host, server_port)
+    else:
+        registry = "/"
+
+    return json.dumps({"Registry": registry, "Results": results}, indent=4).encode("UTF-8")
 
 
 def cache_icon(data_uri):
@@ -310,6 +317,9 @@ class RequestHandler(http_server.BaseHTTPRequestHandler):
 
 
 def run(args):
+    global registry_host, server_port
+
+    registry_host = args.registry_host
     RequestHandler.protocol_version = "HTTP/1.0"
     httpd = http_server.HTTPServer(("127.0.0.1", 0), RequestHandler)
 
@@ -326,6 +336,7 @@ def run(args):
         httpd.socket = context.wrap_socket(httpd.socket, server_side=True)
 
     host, port = httpd.socket.getsockname()[:2]
+    server_port = port
     with open("httpd-port", "w") as file:
         file.write("%d" % port)
     try:
@@ -347,6 +358,8 @@ if __name__ == "__main__":
     parser.add_argument("--cert")
     parser.add_argument("--key")
     parser.add_argument("--mtls-cacert")
+    parser.add_argument("--registry-host",
+                        help="Host to advertise as the OCI registry URI")
     args = parser.parse_args()
 
     run(args)

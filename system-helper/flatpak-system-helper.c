@@ -581,10 +581,11 @@ handle_deploy (FlatpakSystemHelper   *object,
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 
-      if (!ostree_repo_remote_get_url (flatpak_dir_get_repo (system), arg_origin, &sigcheck_registry_uri, NULL))
+      sigcheck_registry_uri = flatpak_remote_state_dup_oci_registry_uri (state, &error);
+      if (sigcheck_registry_uri == NULL)
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Can't get the OCI registry URI");
+                                                 "Can't get the OCI registry URI: %s", error->message);
           return G_DBUS_METHOD_INVOCATION_HANDLED;
         }
 

@@ -438,4 +438,39 @@ ${FLATPAK} ${U} install -y oci-registry-sig org.test.Hello >&2
 
 ok "signed images"
 
+# Test that the system helper checks signatures against the registry URI
+# advertised by the OCI index, not against the remote URL. The index is
+# fetched from 127.0.0.1 but advertises localhost as the registry, so the
+# two identities differ.
+if [ x${USE_HTTPS-} != xyes ]; then
+    ${FLATPAK} ${U} uninstall -y org.test.Hello >&2
+    ${FLATPAK} ${U} uninstall -y org.test.Platform >&2
+
+    httpd oci-registry-server.py --dir=. --registry-host=localhost
+    split_port=$(cat httpd-port)
+    split_client="python3 $test_srcdir/oci-registry-client.py --url=http://127.0.0.1:${split_port}"
+
+    ${FLATPAK} build-bundle --runtime --oci "${FL_GPGARGS}" repos/oci oci/platform-image org.test.Platform >&2
+    platform_digest=$(jq -r '.manifests[0].digest' "$(pwd)/oci/platform-image/index.json")
+    make_oci_signature "${platform_digest}" "localhost:${split_port}/platform:latest" > split-platform-signature
+    $split_client add platform latest "$(pwd)/oci/platform-image"
+    $split_client add-signature platform "${platform_digest}" "$(pwd)/split-platform-signature"
+
+    ${FLATPAK} build-bundle --oci "${FL_GPGARGS}" repos/oci oci/app-image org.test.Hello >&2
+    digest=$(jq -r '.manifests[0].digest' "$(pwd)/oci/app-image/index.json")
+    make_oci_signature "${digest}" "localhost:${split_port}/hello:latest" > split-app-signature
+    $split_client add hello latest "$(pwd)/oci/app-image"
+    $split_client add-signature hello "${digest}" "$(pwd)/split-app-signature"
+
+    ${FLATPAK} ${U} remote-add oci-registry-split "oci+http://127.0.0.1:${split_port}" \
+        --signature-lookaside "http://127.0.0.1:${split_port}/sig-lookaside" \
+        --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg >&2
+
+    ${FLATPAK} ${U} install -y oci-registry-split org.test.Hello >&2
+
+    ok "signed images with registry URI from summary"
+else
+    ok "signed images with registry URI from summary # skip  HTTPS variant"
+fi
+
 done_testing

@@ -172,6 +172,8 @@ void flatpak_remote_state_add_sideload_dir (FlatpakRemoteState *self,
                                             GFile              *path);
 void flatpak_remote_state_add_sideload_image_collection (FlatpakRemoteState     *self,
                                                          FlatpakImageCollection *image_collection);
+char *              flatpak_remote_state_dup_oci_registry_uri (FlatpakRemoteState *self,
+                                                               GError            **error);
 FlatpakImageSource * flatpak_remote_state_fetch_image_source (FlatpakRemoteState  *self,
                                                               FlatpakDir          *dir,
                                                               const char          *ref,

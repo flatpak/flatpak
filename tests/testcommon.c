@@ -4,9 +4,12 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <unistd.h>
 
 #include <glib.h>
 #include "flatpak.h"
+#include "flatpak-dir-private.h"
+#include "flatpak-oci-registry-private.h"
 #include "flatpak-utils-private.h"
 #include "flatpak-appdata-private.h"
 #include "flatpak-progress-private.h"
@@ -22,6 +25,45 @@ test_has_path_prefix (void)
   g_assert_true (flatpak_has_path_prefix ("/a/prefix/foo/bar", "/a/prefix//"));
   g_assert_true (flatpak_has_path_prefix ("/a/prefix/foo/bar", ""));
   g_assert_false (flatpak_has_path_prefix ("/a/prefixfoo/bar", "/a/prefix"));
+}
+
+static void
+test_oci_registry_uri (void)
+{
+  const char *index_json =
+    "{\n"
+    "  \"Registry\": \"https://registry.example.com\",\n"
+    "  \"Results\": []\n"
+    "}";
+  g_autofree char *path = NULL;
+  g_autoptr(GFile) index = NULL;
+  g_autoptr(GVariant) summary = NULL;
+  g_autoptr(GError) error = NULL;
+  g_autofree char *uri = NULL;
+  FlatpakRemoteState state = { 0 };
+  int fd;
+
+  fd = g_file_open_tmp ("flatpak-oci-index-XXXXXX", &path, &error);
+  g_assert_no_error (error);
+  g_assert_cmpint (fd, >=, 0);
+  close (fd);
+
+  g_assert_true (g_file_set_contents (path, index_json, -1, &error));
+  g_assert_no_error (error);
+
+  index = g_file_new_for_path (path);
+  summary = flatpak_oci_index_make_summary (index, "https://index.example.com/index/static",
+                                            NULL, &error);
+  g_assert_no_error (error);
+  g_assert_nonnull (summary);
+
+  state.summary = summary;
+  uri = flatpak_remote_state_dup_oci_registry_uri (&state, &error);
+  g_assert_no_error (error);
+  g_assert_cmpstr (uri, ==, "https://registry.example.com");
+
+  state.summary = NULL;
+  g_assert_cmpint (unlink (path), ==, 0);
 }
 
 static void
@@ -1494,6 +1536,7 @@ main (int argc, char *argv[])
   g_test_init (&argc, &argv, NULL);
 
   g_test_add_func ("/common/has-path-prefix", test_has_path_prefix);
+  g_test_add_func ("/common/oci-registry-uri", test_oci_registry_uri);
   g_test_add_func ("/common/path-match-prefix", test_path_match_prefix);
   g_test_add_func ("/common/arches", test_arches);
   g_test_add_func ("/common/extension-matches", test_extension_matches);

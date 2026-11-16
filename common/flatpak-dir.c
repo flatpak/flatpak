@@ -1416,20 +1416,41 @@ flatpak_remote_state_load_data (FlatpakRemoteState *self,
   return TRUE;
 }
 
-static char *
-lookup_oci_registry_uri_from_summary (GVariant *summary,
-                                      GError  **error)
+/**
+ * flatpak_remote_state_dup_oci_registry_uri:
+ * @self: a #FlatpakRemoteState
+ * @error: return location for a #GError
+ *
+ * Returns the OCI registry URI advertised by the remote's summary, or
+ * %NULL with @error set if it is not available.
+ *
+ * Returns: (transfer full) (nullable): the registry URI
+ */
+char *
+flatpak_remote_state_dup_oci_registry_uri (FlatpakRemoteState *self,
+                                           GError            **error)
 {
-  g_autoptr(GVariant) extensions = g_variant_get_child_value (summary, 1);
-  g_autofree char *registry_uri = NULL;
+  VarMetadataRef metadata;
+  const char *registry_uri;
 
-  if (!g_variant_lookup (extensions, "xa.oci-registry-uri", "s", &registry_uri))
+  g_return_val_if_fail (self != NULL, NULL);
+
+  if (!flatpak_remote_state_ensure_summary (self, error))
+    return NULL;
+
+  /* The registry URI is in the summary's main metadata. Depending on
+   * whether the remote uses an indexed summary, this is either the
+   * index metadata or the full summary metadata. */
+  metadata = flatpak_remote_state_get_main_metadata (self);
+  registry_uri = var_metadata_lookup_string (metadata, "xa.oci-registry-uri", NULL);
+  if (registry_uri == NULL)
     {
-      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Remote OCI index has no registry uri"));
+      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                          _("Remote OCI index has no registry uri"));
       return NULL;
     }
 
-  return g_steal_pointer (&registry_uri);
+  return g_strdup (registry_uri);
 }
 
 static FlatpakImageSource *
@@ -1445,10 +1466,7 @@ flatpak_remote_state_new_image_source (FlatpakRemoteState  *self,
   g_autoptr(FlatpakImageSource) image_source = NULL;
   g_autofree char *signature_lookaside = NULL;
 
-  if (!flatpak_remote_state_ensure_summary (self, error))
-    return NULL;
-
-  registry_uri = lookup_oci_registry_uri_from_summary (self->summary, error);
+  registry_uri = flatpak_remote_state_dup_oci_registry_uri (self, error);
   if (registry_uri == NULL)
     return NULL;
 
