@@ -1365,8 +1365,19 @@ _flatpak_canonicalize_permissions (int         parent_dfd,
             {
               struct dirent *dent;
 
-              if (!glnx_dirfd_iterator_next_dent (&dfd_iter, &dent, NULL, NULL) || dent == NULL)
-                break;
+              if (!glnx_dirfd_iterator_next_dent (&dfd_iter, &dent, NULL, error))
+                {
+                  /* Can't continue iteration, fail closed */
+                  error = NULL;
+                  res = FALSE;
+                  break;
+                }
+
+              if (dent == NULL)
+                {
+                  /* End of iteration, not an error */
+                  break;
+                }
 
               if (!_flatpak_canonicalize_permissions (dfd_iter.fd, dent->d_name, FALSE, uid, gid, error))
                 {
