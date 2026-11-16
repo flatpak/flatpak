@@ -128,8 +128,25 @@ if test -f "${G_TEST_BUILDDIR}/apply-extra-static"; then
     build_extra_data_noruntime_app repos/test ${BRANCH}
     update_repo ${REPONAME} ${COLLECTION_ID}
     ${FLATPAK} ${U} install --or-update -y ${REPONAME}-repo org.test.ExtraDataNoRuntime ${BRANCH} >&2
+
     DEPLOY_DIR="$(${FLATPAK} ${U} info --show-location org.test.ExtraDataNoRuntime)"
+    ( find "${DEPLOY_DIR}/files/extra" -not -type d -ls || true ) | sed -e 's/^/# /' >&2
+
     assert_file_has_content "${DEPLOY_DIR}/files/extra/ran" "^noruntime-extra-data$"
+
+    # Permissions of non-executable files are normalized to 0644
+    assert_file_has_mode "${DEPLOY_DIR}/files/extra/ran" 644
+
+    # A setuid and/or setgid executable file is normalized to 0755 to avoid
+    # becoming a privilege escalation vector
+    assert_file_has_mode "${DEPLOY_DIR}/files/extra/exe" 755
+
+    # There must not be any setuid or setgid files in the deploy dir
+    find "${DEPLOY_DIR}/files/extra" -type f -perm -4000 > setuid-files
+    assert_not_file_has_content setuid-files .
+    find "${DEPLOY_DIR}/files/extra" -type f -perm -2000 > setgid-files
+    assert_not_file_has_content setgid-files .
+
     ${FLATPAK} ${U} uninstall -y org.test.ExtraDataNoRuntime >&2
     ok "install+run extra data app with NoRuntime"
 else
