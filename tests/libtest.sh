@@ -42,6 +42,8 @@ if [ -e "$test_srcdir/installed-tests.sh" ]; then
     . "$test_srcdir/installed-tests.sh"
 fi
 
+. "$test_srcdir/test-ostree-utils.sh"
+
 test_number=0
 
 done_testing () {
@@ -371,7 +373,8 @@ make_runtime () {
             collection_args=
         fi
         mkdir -p repos
-        ostree --repo=repos/${REPONAME} init --mode=archive-z2 ${collection_args} >&2
+        # shellcheck disable=SC2086
+        ostree_init_test_repo repos/${REPONAME} ${collection_args}
     fi
 
     flatpak build-commit-from --disable-fsync --no-update-summary --src-repo=${RUNTIME_REPO} --force ${GPGARGS} ${EXPORT_ARGS-}  repos/${REPONAME}  ${RUNTIME_REF} >&2
@@ -444,7 +447,7 @@ setup_empty_repo () {
     fi
 
     mkdir -p repos
-    ostree --repo=repos/${REPONAME} init --mode=archive-z2 >&2
+    ostree_init_test_repo repos/${REPONAME}
     update_repo $REPONAME "${COLLECTION_ID}"
     if [ $REPONAME == "test" ]; then
         httpd
