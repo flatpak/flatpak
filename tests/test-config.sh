@@ -53,4 +53,18 @@ assert_file_has_content get_out "^[*]unset[*]"
 
 ok "config unset"
 
+${FLATPAK} config --list > list_out
+assert_file_has_content list_out "^check-cpu-features: [*]unset[*] (default: true)$"
+${FLATPAK} config --set check-cpu-features false
+${FLATPAK} config --get check-cpu-features > get_out
+assert_file_has_content get_out "^false$"
+if ${FLATPAK} config --set check-cpu-features invalid; then
+    assert_not_reached "Should reject invalid boolean"
+fi
+${FLATPAK} config --unset check-cpu-features
+${FLATPAK} config --list > list_out
+assert_file_has_content list_out "^check-cpu-features: [*]unset[*] (default: true)$"
+
+ok "CPU feature checking defaults to true and can be disabled"
+
 done_testing

@@ -77,6 +77,17 @@
                 </para></listitem>
             </varlistentry>
             <varlistentry>
+                <term><varname>check-cpu-features</varname></term>
+                <listitem><para>
+                   Check the <literal>required-cpu-features</literal> metadata when
+                   installing or updating applications and runtimes. The default is
+                   <literal>true</literal>. Set to <literal>false</literal> to allow
+                   installation even when the running CPU lacks required features,
+                   for example when preparing an installation for another machine.
+                   This does not make incompatible code runnable.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
                 <term><varname>report-os-info</varname></term>
                 <listitem><para>
                    If this key is set to <literal>false</literal> or the <filename>no-report-os-info</filename>

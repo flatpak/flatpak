@@ -66,6 +66,7 @@ G_BEGIN_DECLS
  * @FLATPAK_ERROR_NOT_AUTHORIZED: An operation tried to access a ref, or information about it that it
  *                                was not authorized. For example, when successfully authenticating with a
  *                                server but the user doesn't have permissions for a private ref. (Since: 1.7.3)
+ * @FLATPAK_ERROR_UNSUPPORTED_CPU: The CPU does not support features required by the App/Runtime.
  *
  * Error codes for library functions.
  */
@@ -95,6 +96,7 @@ typedef enum {
   FLATPAK_ERROR_PERMISSION_DENIED,
   FLATPAK_ERROR_AUTHENTICATION_FAILED,
   FLATPAK_ERROR_NOT_AUTHORIZED,
+  FLATPAK_ERROR_UNSUPPORTED_CPU,
 } FlatpakError;
 
 /**

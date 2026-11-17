@@ -38,11 +38,14 @@
 #include <sys/utsname.h>
 #include <sys/ioctl.h>
 #include <termios.h>
+#include <limits.h>
+#include <elf.h>
 
 #include <glib.h>
 #include <gio/gunixoutputstream.h>
 
 #include "flatpak-error.h"
+#include "flatpak-metadata-private.h"
 #include "flatpak-utils-base-private.h"
 #include "flatpak-utils-private.h"
 #include "libglnx.h"
@@ -75,6 +78,7 @@ static const GDBusErrorEntry flatpak_error_entries[] = {
   {FLATPAK_ERROR_PERMISSION_DENIED,     "org.freedesktop.Flatpak.Error.PermissionDenied"}, /* Since: 1.5.1 */
   {FLATPAK_ERROR_AUTHENTICATION_FAILED, "org.freedesktop.Flatpak.Error.AuthenticationFailed"}, /* Since: 1.7.3 */
   {FLATPAK_ERROR_NOT_AUTHORIZED,        "org.freedesktop.Flatpak.Error.NotAuthorized"}, /* Since: 1.7.3 */
+  {FLATPAK_ERROR_UNSUPPORTED_CPU,       "org.freedesktop.Flatpak.Error.UnsupportedCpu"},
 };
 
 GQuark
@@ -2030,6 +2034,328 @@ flatpak_g_ptr_array_contains_string (GPtrArray *array, const char *str)
         return TRUE;
     }
   return FALSE;
+}
+
+/* Each field is intersected separately across processors, then the fields are
+ * combined. In particular, x86 "flags", "vmx flags" and "power management"
+ * describe independent sets of capabilities, not alternative CPU lists.
+ * Qualified selectors work with arbitrary fields on any Linux architecture.
+ */
+char **
+flatpak_get_cpu_features (const char          *cpuinfo,
+                          const unsigned long hwcaps[4])
+{
+  g_auto(GStrv) lines = g_strsplit (cpuinfo, "\n", -1);
+  g_autoptr(GHashTable) fields = g_hash_table_new_full (g_str_hash, g_str_equal,
+                                                      g_free, (GDestroyNotify) g_hash_table_unref);
+  g_autoptr(GHashTable) features = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  GHashTableIter iter;
+  gpointer key, value;
+  g_autoptr(GPtrArray) result = g_ptr_array_new_with_free_func (g_free);
+  gsize i;
+
+  for (i = 0; lines[i] != NULL; i++)
+    {
+      char *colon = strchr (lines[i], ':');
+      char *field, *contents;
+      gboolean named_features;
+      gboolean riscv_isa;
+      g_auto(GStrv) words = NULL;
+      g_autoptr(GHashTable) current = NULL;
+      GHashTable *previous;
+      gsize j;
+
+      if (colon == NULL)
+        continue;
+      *colon = '\0';
+      field = g_strstrip (lines[i]);
+      contents = g_strstrip (colon + 1);
+      named_features = g_str_equal (field, "flags") ||
+        g_ascii_strcasecmp (field, "features") == 0 ||
+        g_str_equal (field, "cpucaps") ||
+        g_str_equal (field, "vmx flags") ||
+        g_str_equal (field, "power management") ||
+        g_str_equal (field, "ASEs implemented");
+      riscv_isa = g_str_equal (field, "isa") &&
+        (g_str_has_prefix (contents, "rv32") || g_str_has_prefix (contents, "rv64"));
+
+      current = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+      g_hash_table_add (current, g_strdup_printf ("cpuinfo:%s=%s", field, contents));
+      /* Some architectures expose capabilities as a scalar register instead
+       * of named flags (for example C-SKY). Test individual bits without any
+       * architecture-specific register or feature-name table.
+       */
+      if (g_ascii_isdigit (contents[0]))
+        {
+          char *end;
+          guint64 bits;
+          gsize bit;
+
+          errno = 0;
+          bits = g_ascii_strtoull (contents, &end,
+                                  g_str_has_prefix (contents, "0x") ||
+                                  g_str_has_prefix (contents, "0X") ? 16 : 10);
+          if (errno == 0 && *end == '\0')
+            for (bit = 0; bit < 64; bit++)
+              if (bits & (G_GUINT64_CONSTANT (1) << bit))
+                g_hash_table_add (current, g_strdup_printf ("cpuinfo:%s#%" G_GSIZE_FORMAT, field, bit));
+        }
+      words = g_strsplit_set (contents, riscv_isa ? "_" : " \t\r,", -1);
+      for (j = 0; words[j] != NULL; j++)
+        {
+          if (words[j][0] == '\0')
+            continue;
+          g_hash_table_add (current, g_strdup_printf ("cpuinfo:%s:%s", field, words[j]));
+          if (named_features || (riscv_isa && j > 0))
+            g_hash_table_add (current, g_strdup (words[j]));
+          if (riscv_isa && j == 0)
+            {
+              const char *extension;
+
+              /* Linux concatenates single-letter RISC-V extensions after rv32/rv64. */
+              for (extension = words[j] + 4; *extension != '\0'; extension++)
+                {
+                  g_autofree char *name = g_strndup (extension, 1);
+
+                  g_hash_table_add (current, g_strdup (name));
+                  g_hash_table_add (current, g_strdup_printf ("cpuinfo:%s:%s", field, name));
+                }
+            }
+        }
+
+      previous = g_hash_table_lookup (fields, field);
+      if (previous == NULL)
+        g_hash_table_insert (fields, g_strdup (field), g_steal_pointer (&current));
+      else
+        {
+          g_hash_table_iter_init (&iter, previous);
+          while (g_hash_table_iter_next (&iter, &key, NULL))
+            if (!g_hash_table_contains (current, key))
+              g_hash_table_iter_remove (&iter);
+        }
+    }
+
+  g_hash_table_iter_init (&iter, fields);
+  while (g_hash_table_iter_next (&iter, NULL, &value))
+    {
+      GHashTableIter field_iter;
+
+      g_hash_table_iter_init (&field_iter, value);
+      while (g_hash_table_iter_next (&field_iter, &key, NULL))
+        g_hash_table_add (features, g_strdup (key));
+    }
+
+  if (hwcaps != NULL)
+    {
+      const char *names[] = { "hwcap", "hwcap2", "hwcap3", "hwcap4" };
+      gsize bit;
+
+      for (i = 0; i < G_N_ELEMENTS (names); i++)
+        for (bit = 0; bit < sizeof (unsigned long) * CHAR_BIT; bit++)
+          if (hwcaps[i] & (1UL << bit))
+            g_hash_table_add (features, g_strdup_printf ("%s:%" G_GSIZE_FORMAT, names[i], bit));
+    }
+
+  g_hash_table_iter_init (&iter, features);
+  while (g_hash_table_iter_next (&iter, &key, NULL))
+    g_ptr_array_add (result, g_strdup (key));
+  g_ptr_array_add (result, NULL);
+  return (char **) g_ptr_array_free (g_steal_pointer (&result), FALSE);
+}
+
+/* The native ABI is part of the filename because HWCAP bit meanings and word
+ * widths describe this process, not just its physical CPU. This is a namespace,
+ * not an invalidation key: no timestamp, kernel version, or CPU ID is checked.
+ */
+static char *
+flatpak_cpu_features_cache_path (void)
+{
+  g_autofree char *name = g_strdup_printf ("cpu-features-%s-%u%s.txt",
+                                          flatpak_get_arch (),
+                                          (unsigned int) (sizeof (unsigned long) * CHAR_BIT),
+                                          G_BYTE_ORDER == G_LITTLE_ENDIAN ? "le" : "be");
+
+  return g_build_filename (g_get_user_cache_dir (), "flatpak", name, NULL);
+}
+
+/* A readable file is authoritative forever, including an empty feature set.
+ * Each nonempty line is a literal selector: do not trim spaces inside field
+ * names/values, parse comments, or reinterpret '#' register-bit selectors.
+ */
+static char **
+flatpak_load_cached_cpu_features (const char *path)
+{
+  g_autofree char *contents = NULL;
+  g_auto(GStrv) lines = NULL;
+  g_autoptr(GPtrArray) features = g_ptr_array_new_with_free_func (g_free);
+  gsize i;
+
+  if (!g_file_get_contents (path, &contents, NULL, NULL))
+    return NULL;
+
+  lines = g_strsplit (contents, "\n", -1);
+  for (i = 0; lines[i] != NULL; i++)
+    if (lines[i][0] != '\0')
+      g_ptr_array_add (features, g_strdup (lines[i]));
+  g_ptr_array_add (features, NULL);
+  return (char **) g_ptr_array_free (g_steal_pointer (&features), FALSE);
+}
+
+/* Persistence is an optimization. A read-only/missing cache directory must
+ * not prevent checks against capabilities we successfully discovered live.
+ * GLib writes via a temporary file and rename, so readers see complete text.
+ */
+static void
+flatpak_save_cpu_features (const char         *path,
+                           const char * const *features)
+{
+  g_autofree char *directory = g_path_get_dirname (path);
+  g_autoptr(GString) contents = g_string_new (NULL);
+  g_autoptr(GError) error = NULL;
+  gsize i;
+
+  for (i = 0; features[i] != NULL; i++)
+    g_string_append_printf (contents, "%s\n", features[i]);
+
+  if (g_mkdir_with_parents (directory, 0700) != 0)
+    g_debug ("Unable to create CPU feature cache directory %s: %s", directory, g_strerror (errno));
+  else if (!g_file_set_contents (path, contents->str, contents->len, &error))
+    g_debug ("Unable to write CPU feature cache %s: %s", path, error->message);
+}
+
+/* On a cache miss try both interfaces, regardless of the first package's
+ * requirements: a persisted snapshot must contain CPU-info AND HWCAP selectors.
+ * If an optional interface cannot be read, keep the old live-check behavior
+ * but do not persist an incomplete snapshot that could reject later packages.
+ */
+static char **
+flatpak_load_cpu_features (gboolean   needs_cpuinfo,
+                           gboolean   needs_auxv,
+                           GError   **error)
+{
+  g_autofree char *path = flatpak_cpu_features_cache_path ();
+  g_auto(GStrv) available = flatpak_load_cached_cpu_features (path);
+  g_autofree char *cpuinfo = NULL;
+  g_autofree char *auxv = NULL;
+  g_autoptr(GError) local_error = NULL;
+  unsigned long hwcaps[4] = { 0 };
+  gboolean complete = TRUE;
+  gsize length = 0, offset, i;
+  /* Linux UAPI values for AT_HWCAP3/4 also work with older libc headers. */
+  const unsigned long types[] = { AT_HWCAP, AT_HWCAP2, 29, 30 };
+
+  if (available != NULL)
+    return g_steal_pointer (&available);
+
+  if (!g_file_get_contents ("/proc/cpuinfo", &cpuinfo, NULL, &local_error))
+    {
+      if (needs_cpuinfo)
+        {
+          g_propagate_error (error, g_steal_pointer (&local_error));
+          return NULL;
+        }
+      complete = FALSE;
+      g_clear_error (&local_error);
+    }
+
+  /* Read kernel values directly; some libcs mask getauxval(AT_HWCAP). */
+  if (!g_file_get_contents ("/proc/self/auxv", &auxv, &length, &local_error))
+    {
+      if (needs_auxv)
+        {
+          g_propagate_error (error, g_steal_pointer (&local_error));
+          return NULL;
+        }
+      complete = FALSE;
+      g_clear_error (&local_error);
+    }
+
+  /* The auxiliary vector uses this process's native word size and byte order.
+   * memcpy avoids alignment assumptions; only complete pairs are inspected.
+   * An unavailable optional vector has length zero and skips this loop.
+   */
+  for (offset = 0; length - offset >= 2 * sizeof (unsigned long); offset += 2 * sizeof (unsigned long))
+    {
+      unsigned long entry[2];
+
+      memcpy (entry, auxv + offset, sizeof (entry));
+      if (entry[0] == AT_NULL)
+        break;
+      for (i = 0; i < G_N_ELEMENTS (types); i++)
+        if (entry[0] == types[i])
+          hwcaps[i] = entry[1];
+    }
+
+  available = flatpak_get_cpu_features (cpuinfo != NULL ? cpuinfo : "", hwcaps);
+  /* Stable sorting makes the plain-text snapshot easy to inspect and diff.
+   * Loading it never compares its contents with freshly detected CPU features.
+   */
+  qsort (available, g_strv_length (available), sizeof (char *), flatpak_strcmp0_ptr);
+  if (complete)
+    flatpak_save_cpu_features (path, (const char * const *) available);
+
+  return g_steal_pointer (&available);
+}
+
+/* Apply the requirements to the persistent snapshot, discovering it only if
+ * no readable cache exists. Installation policy/opt-out remains in FlatpakDir.
+ */
+gboolean
+flatpak_check_required_cpu_features (const char *ref,
+                                     GKeyFile   *metakey,
+                                     GError    **error)
+{
+  const char *group = g_str_has_prefix (ref, "app/") ?
+    FLATPAK_METADATA_GROUP_APPLICATION : FLATPAK_METADATA_GROUP_RUNTIME;
+  g_auto(GStrv) required = NULL;
+  g_auto(GStrv) available = NULL;
+  gboolean needs_cpuinfo = FALSE;
+  gboolean needs_auxv = FALSE;
+  gsize i;
+
+  /* Missing/empty requirements impose no check and do not create a cache. */
+  if (!g_key_file_has_key (metakey, group, FLATPAK_METADATA_KEY_REQUIRED_CPU_FEATURES, NULL))
+    return TRUE;
+
+  required = g_key_file_get_string_list (metakey, group,
+                                         FLATPAK_METADATA_KEY_REQUIRED_CPU_FEATURES,
+                                         NULL, error);
+  if (required == NULL)
+    return FALSE;
+  if (required[0] == NULL)
+    return TRUE;
+
+  /* Required sources matter only if a cache miss needs live discovery and
+   * one of the host interfaces is unavailable. Cached selectors need neither.
+   */
+  for (i = 0; required[i] != NULL; i++)
+    {
+      if (g_str_has_prefix (required[i], "hwcap:") ||
+          g_str_has_prefix (required[i], "hwcap2:") ||
+          g_str_has_prefix (required[i], "hwcap3:") ||
+          g_str_has_prefix (required[i], "hwcap4:"))
+        needs_auxv = TRUE;
+      else
+        needs_cpuinfo = TRUE;
+    }
+
+  available = flatpak_load_cpu_features (needs_cpuinfo, needs_auxv, error);
+  if (available == NULL)
+    {
+      g_prefix_error (error, _("Unable to check CPU requirements for %s: "), ref);
+      return FALSE;
+    }
+
+  /* Every declared selector must match. Unknown/missing capabilities retain
+   * the same CPU-specific error and diagnostic as live discovery did.
+   */
+  for (i = 0; required[i] != NULL; i++)
+    if (!g_strv_contains ((const char * const *) available, required[i]))
+      return flatpak_fail_error (error, FLATPAK_ERROR_UNSUPPORTED_CPU,
+                                 _("%s requires CPU feature %s, which is not available on this system"),
+                                 ref, required[i]);
+
+  return TRUE;
 }
 
 gboolean

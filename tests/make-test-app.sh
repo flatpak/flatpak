@@ -34,6 +34,12 @@ runtime=org.test.Platform/$ARCH/$RUNTIME_BRANCH
 sdk=org.test.Platform/$ARCH/$RUNTIME_BRANCH
 EOF
 
+if [ "${REQUIRED_CPU_FEATURES+x}" = x ]; then
+cat >> ${DIR}/metadata <<EOF
+required-cpu-features=$REQUIRED_CPU_FEATURES
+EOF
+fi
+
 if [ x${REQUIRED_VERSION-} != x ]; then
 cat >> ${DIR}/metadata <<EOF
 required-flatpak=$REQUIRED_VERSION

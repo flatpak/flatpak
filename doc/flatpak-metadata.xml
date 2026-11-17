@@ -116,6 +116,98 @@
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>required-cpu-features</option> (string list)</term>
+                    <listitem><para>
+                        CPU capabilities required by this application or runtime,
+                        separated by semicolons. This includes instruction sets,
+                        virtualization, memory-management, power-management, and
+                        other capabilities exposed by Linux. There is no fixed
+                        whitelist of feature names. Requirements can use:
+                    </para><itemizedlist>
+                      <listitem><para>
+                        Unqualified names from the kernel's <literal>flags</literal>,
+                        <literal>Features</literal>, <literal>features</literal>,
+                        <literal>cpucaps</literal>, <literal>vmx flags</literal>,
+                        <literal>power management</literal>,
+                        or <literal>ASEs implemented</literal> CPU-info fields,
+                        for example <literal>avx2</literal>, <literal>vmx</literal>,
+                        <literal>ept</literal>, <literal>edat</literal>, or the SPARC
+                        capability <literal>fjfmau</literal>.
+                        RISC-V extensions in the <literal>isa</literal> field can
+                        also be named individually, for example <literal>zicsr</literal>.
+                      </para></listitem>
+                      <listitem><para>
+                        <literal>cpuinfo:FIELD:TOKEN</literal> requires a token in
+                        any <filename>/proc/cpuinfo</filename> field, for example
+                        <literal>cpuinfo:facilities:129</literal> on s390 or
+                        <literal>cpuinfo:ISA:loongarch64</literal> on LoongArch.
+                        <literal>cpuinfo:FIELD=VALUE</literal> requires the complete
+                        field value, for example <literal>cpuinfo:MMU=Radix</literal>
+                        on PowerPC. Field names and values are case-sensitive;
+                        surrounding whitespace is ignored. Tokens are separated by
+                        whitespace or commas, except that RISC-V ISA extensions are decoded
+                        from the kernel's concatenated and underscore-separated form.
+                      </para></listitem>
+                      <listitem><para>
+                        <literal>cpuinfo:FIELD#BIT</literal> requires a set bit in
+                        a numeric CPU-info field, for example
+                        <literal>cpuinfo:hint (CPU funcs)#5</literal> on C-SKY.
+                        Values prefixed with <literal>0x</literal> are hexadecimal;
+                        other values are decimal. Bit indices start at zero and
+                        values up to 64 bits are supported.
+                      </para></listitem>
+                      <listitem><para>
+                        <literal>hwcap:BIT</literal>, <literal>hwcap2:BIT</literal>,
+                        <literal>hwcap3:BIT</literal>, and <literal>hwcap4:BIT</literal>
+                        require a bit in the kernel's <literal>AT_HWCAP</literal>,
+                        <literal>AT_HWCAP2</literal>, <literal>AT_HWCAP3</literal>, or
+                        <literal>AT_HWCAP4</literal> auxiliary-vector word.
+                        Bit indices are decimal and start at zero. Meanings depend
+                        on the architecture and native ABI of the Flatpak process;
+                        use the definitions in the corresponding Linux UAPI headers.
+                      </para></listitem>
+                    </itemizedlist><para>
+                        Qualified CPU-info selectors and HWCAP selectors work on
+                        every Linux architecture, without an architecture or
+                        feature-name whitelist. They also work on architectures
+                        with no named feature list or with zero HWCAP words.
+                        Unqualified names are convenience aliases for the fields
+                        listed above. Capabilities must be exposed by Linux in
+                        CPU info or the auxiliary vector to be checked; hardware
+                        capabilities that Linux does not publish cannot be detected
+                        by these selectors.
+                    </para><para>
+                        Every requirement must be satisfied. Repeated CPU-info
+                        fields are intersected across processors. Different fields
+                        contribute independent capabilities. Unknown features, or
+                        capabilities that cannot be detected, are treated as
+                        unavailable. An absent or empty list imposes no requirements.
+                        For example, <literal>required-cpu-features=vmx;ept;</literal>
+                        requires both Intel virtualization and extended page tables.
+                    </para><para>
+                        Detected selectors are cached persistently in
+                        <filename>$XDG_CACHE_HOME/flatpak/cpu-features-ARCH-BITSENDIAN.txt</filename>,
+                        where <literal>ARCH</literal> is Flatpak's native architecture,
+                        <literal>BITS</literal> is its native word size (32 or 64),
+                        and <literal>ENDIAN</literal> is <literal>le</literal> or
+                        <literal>be</literal>. For example, an x86-64 process uses
+                        <filename>cpu-features-x86_64-64le.txt</filename>.
+                        If <envar>XDG_CACHE_HOME</envar> is unset, the cache directory
+                        defaults to <filename>~/.cache</filename>. The file is sorted
+                        text with one literal selector per line and no header.
+                        Blank lines are ignored. The cache is never automatically
+                        invalidated or refreshed: delete the file to discover CPU
+                        features again on the next requirement check. If the cache
+                        cannot be written, checks still use live detection.
+                    </para><para>
+                        Flatpak checks these requirements when installing or updating,
+                        including applications, runtimes, extensions, and bundles.
+                        The installation configuration key
+                        <literal>check-cpu-features</literal> can disable this check.
+                        Older versions of Flatpak ignore this metadata key.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>tags</option> (string list)</term>
                     <listitem><para>
                         Tags to include in AppStream XML. Typical values

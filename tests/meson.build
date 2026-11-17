@@ -384,6 +384,7 @@ tests = {
   'basic': {},
   'completion': {},
   'config': {},
+  'cpu-features': {'timeout': 120, 'wrap': ['user', 'system']},
   'documents': {},
   'build-update-repo': {},
   'http-utils': {'depends': [httpcache_exe]},
