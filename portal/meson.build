@@ -39,6 +39,7 @@ executable(
     'flatpak-portal.c',
     'flatpak-portal-app-info.c',
     'portal-impl.c',
+    '../common/flatpak-dbus-utils.c',
     '../common/flatpak-portal-error.c',
   ] + permission_gdbus + portal_gdbus,
 )
