@@ -117,6 +117,11 @@ c_tests = [
     'timeout' : 150,
   }],
   ['test-context', {}],
+  ['test-dbus-utils', {
+    'extra_sources' : [
+      '../common/flatpak-dbus-utils.c',
+    ],
+  }],
   ['test-exports', {}],
   ['test-instance', {
     'extra_dependencies' : [
