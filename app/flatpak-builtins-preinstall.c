@@ -43,6 +43,7 @@
 
 static char **opt_sideload_repos;
 static gboolean opt_no_pull;
+static gboolean opt_no_network;
 static gboolean opt_no_deploy;
 static gboolean opt_no_related;
 static gboolean opt_no_deps;
@@ -55,6 +56,7 @@ static gboolean opt_noninteractive;
 
 static GOptionEntry options[] = {
   { "no-pull", 0, 0, G_OPTION_ARG_NONE, &opt_no_pull, N_("Don't pull, only install from local cache"), NULL },
+  { "no-network", 0, 0, G_OPTION_ARG_NONE, &opt_no_network, N_("Don't access the network, only use locally available data"), NULL },
   { "no-deploy", 0, 0, G_OPTION_ARG_NONE, &opt_no_deploy, N_("Don't deploy, only download to local cache"), NULL },
   { "no-related", 0, 0, G_OPTION_ARG_NONE, &opt_no_related, N_("Don't install related refs"), NULL },
   { "no-deps", 0, 0, G_OPTION_ARG_NONE, &opt_no_deps, N_("Don't verify/install runtime dependencies"), NULL },
@@ -99,6 +101,7 @@ flatpak_builtin_preinstall (int argc, char **argv, GCancellable *cancellable, GE
     return FALSE;
 
   flatpak_transaction_set_no_pull (transaction, opt_no_pull);
+  flatpak_transaction_set_no_network (transaction, opt_no_network);
   flatpak_transaction_set_no_deploy (transaction, opt_no_deploy);
   flatpak_transaction_set_disable_static_deltas (transaction, opt_no_static_deltas);
   flatpak_transaction_set_disable_dependencies (transaction, opt_no_deps);

@@ -19,6 +19,11 @@
 
 set -euo pipefail
 
+# shellcheck disable=SC2034
+USE_COLLECTIONS_IN_SERVER=yes
+# shellcheck disable=SC2034
+USE_COLLECTIONS_IN_CLIENT=yes
+
 . "$(dirname $0)/libtest.sh"
 
 skip_without_bwrap
@@ -135,5 +140,37 @@ if test -f "${G_TEST_BUILDDIR}/apply-extra-static"; then
 else
     ok "# SKIP install+run extra data app with NoRuntime apply-extra-static not found"
 fi
+
+# Test --no-network rejects extra-data apps
+${FLATPAK} ${U} uninstall -y --all >&2
+
+APP_REF=app/org.test.Hello/${ARCH}/${BRANCH}
+ostree --repo=sideload-extra-data init --mode=archive --collection-id=${COLLECTION_ID}
+ostree --repo=sideload-extra-data pull-local repos/${REPONAME} ${APP_REF} >&2
+ostree --repo=sideload-extra-data pull-local repos/${REPONAME} runtime/org.test.Platform/${ARCH}/${BRANCH} >&2
+${FLATPAK} build-update-repo sideload-extra-data >&2
+
+mkdir -p $FL_DIR/sideload-repos
+ln -sf "$(realpath sideload-extra-data)" $FL_DIR/sideload-repos/sideload-extra-data
+
+if ${FLATPAK} ${U} install --no-network -y ${REPONAME}-repo org.test.Hello &> install-extra-data-error-log; then
+    assert_not_reached "Should not be able to install extra-data app with --no-network"
+fi
+assert_file_has_content install-extra-data-error-log "extra data"
+
+rm $FL_DIR/sideload-repos/sideload-extra-data
+
+ok "install extra-data app with --no-network fails"
+
+# Test --no-network without sideload can't resolve the ref
+${FLATPAK} ${U} uninstall -y --all >&2
+
+${FLATPAK} ${U} install --no-deploy -y ${REPONAME}-repo org.test.Hello >&2
+
+if ${FLATPAK} ${U} install --no-network -y ${REPONAME}-repo org.test.Hello &> install-extra-data-nodeploy-error-log; then
+    assert_not_reached "Should not be able to install extra-data app with --no-network and no sideload"
+fi
+
+ok "install extra-data app with --no-network fails without sideload"
 
 done_testing

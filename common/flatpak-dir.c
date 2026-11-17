@@ -1659,6 +1659,7 @@ flatpak_remote_state_load_ref_commit (FlatpakRemoteState *self,
                                       const char         *ref,
                                       const char         *opt_commit,
                                       const char         *token,
+                                      gboolean            local_only,
                                       char              **out_commit,
                                       GCancellable       *cancellable,
                                       GError            **error)
@@ -1707,6 +1708,9 @@ flatpak_remote_state_load_ref_commit (FlatpakRemoteState *self,
             goto out;
         }
     }
+
+  if (local_only)
+    goto out;
 
   if (flatpak_dir_get_remote_oci (dir, self->remote_name))
     commit_data = flatpak_remote_state_fetch_commit_object_oci (self, dir, ref, commit, token,
@@ -6612,7 +6616,7 @@ flatpak_dir_setup_extra_data (FlatpakDir                           *self,
           g_autoptr(GVariant) extra_data_sources = NULL;
 
           commitv = flatpak_remote_state_load_ref_commit (state, self, ref, rev,
-                                                          token, NULL, cancellable, error);
+                                                          token, FALSE, NULL, cancellable, error);
           if (commitv == NULL)
             return FALSE;
 

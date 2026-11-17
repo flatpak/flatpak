@@ -223,4 +223,100 @@ assert_not_file_has_content ${FL_DIR}/repo/config '^gpg-verify-summary=false$'
 
 ok "migrate to gpg-verify-summary"
 
+# Test --no-network: install from sideload without any network access
+${FLATPAK} ${U} uninstall -y --all >&2
+
+ln -sf $SIDELOAD_REPO $SIDELOAD_REPO_LINK
+
+httpd_clear_log
+
+${FLATPAK} ${U} install --no-network -y test-repo org.test.Hello >&2
+assert_has_file $FL_DIR/app/org.test.Hello/$ARCH/master/active/metadata
+assert_not_file_has_content httpd-log "GET"
+
+ok "install with --no-network from sideload"
+
+# Test --no-network without sideload repo fails
+${FLATPAK} ${U} uninstall -y --all >&2
+rm $SIDELOAD_REPO_LINK
+
+if ${FLATPAK} ${U} install --no-network -y test-repo org.test.Hello &> /dev/null; then
+    assert_not_reached "Should not be able to install with --no-network and no sideload"
+fi
+
+ok "install with --no-network fails without sideload"
+
+# Test --no-network: update from sideload without any network access
+ln -sf "$(realpath usb_dir/repo.old)" $SIDELOAD_REPO_LINK
+
+httpd_clear_log
+
+${FLATPAK} ${U} install --no-network -y test-repo org.test.Hello >&2
+INSTALLED_COMMIT=$( ${FLATPAK} ${U} info --show-commit app/org.test.Hello/${ARCH}/master )
+assert_streq "$OLD_COMMIT" "$INSTALLED_COMMIT"
+
+rm $SIDELOAD_REPO_LINK
+ln -sf $SIDELOAD_REPO $SIDELOAD_REPO_LINK
+
+${FLATPAK} ${U} update --no-network -y >&2
+UPDATED_COMMIT=$( ${FLATPAK} ${U} info --show-commit app/org.test.Hello/${ARCH}/master )
+assert_streq "$NEW_COMMIT" "$UPDATED_COMMIT"
+assert_not_file_has_content httpd-log "GET"
+
+ok "update with --no-network from sideload"
+
+# Test --no-deploy --no-network: pull into cache without deploying
+${FLATPAK} ${U} uninstall -y --all >&2
+
+ln -sf $SIDELOAD_REPO $SIDELOAD_REPO_LINK
+
+httpd_clear_log
+
+${FLATPAK} ${U} install --no-deploy --no-network -y test-repo org.test.Hello >&2
+assert_not_has_file $FL_DIR/app/org.test.Hello/$ARCH/master/active/metadata
+assert_not_file_has_content httpd-log "GET"
+
+ok "install with --no-deploy --no-network from sideload"
+
+# Test --no-pull --no-network: should behave like --no-pull (no pulling at all)
+${FLATPAK} ${U} uninstall -y --all >&2
+
+ln -sf $SIDELOAD_REPO $SIDELOAD_REPO_LINK
+
+httpd_clear_log
+
+# Install first so we have a deployed commit to work with
+${FLATPAK} ${U} install --no-network -y test-repo org.test.Hello >&2
+assert_not_file_has_content httpd-log "GET"
+
+# Update with --no-pull --no-network should be a no-op (already at latest)
+httpd_clear_log
+${FLATPAK} ${U} update --no-pull --no-network -y >&2
+assert_not_file_has_content httpd-log "GET"
+UPDATED_COMMIT=$( ${FLATPAK} ${U} info --show-commit app/org.test.Hello/${ARCH}/master )
+assert_streq "$NEW_COMMIT" "$UPDATED_COMMIT"
+
+ok "update with --no-pull --no-network"
+
+# Test --no-pull --no-deploy --no-network: all three combined
+httpd_clear_log
+${FLATPAK} ${U} update --no-pull --no-deploy --no-network -y >&2
+assert_not_file_has_content httpd-log "GET"
+UPDATED_COMMIT=$( ${FLATPAK} ${U} info --show-commit app/org.test.Hello/${ARCH}/master )
+assert_streq "$NEW_COMMIT" "$UPDATED_COMMIT"
+
+ok "update with --no-pull --no-deploy --no-network"
+
+# Control: verify that without --no-network the httpd IS contacted
+${FLATPAK} ${U} uninstall -y --all >&2
+rm $SIDELOAD_REPO_LINK
+
+httpd_clear_log
+
+${FLATPAK} ${U} install -y test-repo org.test.Hello >&2
+assert_has_file $FL_DIR/app/org.test.Hello/$ARCH/master/active/metadata
+assert_file_has_content httpd-log "GET"
+
+ok "install without --no-network contacts the network"
+
 done_testing
