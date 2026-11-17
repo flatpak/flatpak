@@ -58,6 +58,15 @@
             and <filename>app/</filename> subdirectories.
         </para>
 
+        <para>
+            Do not use <command>sudo</command> with Flatpak commands.
+            System-wide operations use
+            <citerefentry><refentrytitle>polkit</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+            to request privileges when needed. The only exception is
+            <command>flatpak repair --system</command>, which must be run as root
+            (see <citerefentry><refentrytitle>flatpak-repair</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
+        </para>
+
        <para>
             System-wide remotes can be statically preconfigured by dropping
             <citerefentry><refentrytitle>flatpakrepo</refentrytitle><manvolnum>5</manvolnum></citerefentry>
