@@ -276,6 +276,12 @@
       <arg type='s' name='installation' direction='in'/>
     </method>
 
+    <method name="MakeCurrent">
+      <arg type='u' name='flags' direction='in'/>
+      <arg type='s' name='ref' direction='in'/>
+      <arg type='s' name='installation' direction='in'/>
+    </method>
+
     <method name="UpdateRemote">
       <arg type='u' name='flags' direction='in'/>
       <arg type='s' name='remote' direction='in'/>

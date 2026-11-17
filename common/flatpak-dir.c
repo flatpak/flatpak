@@ -3283,6 +3283,29 @@ flatpak_dir_system_helper_call_override (FlatpakDir   *self,
 }
 
 static gboolean
+flatpak_dir_system_helper_call_make_current (FlatpakDir   *self,
+                                             guint         arg_flags,
+                                             const char   *arg_ref,
+                                             const char   *arg_installation,
+                                             GCancellable *cancellable,
+                                             GError      **error)
+{
+  g_autoptr(GVariant) ret = NULL;
+
+  if (flatpak_dir_get_no_interaction (self))
+    arg_flags |= FLATPAK_HELPER_MAKE_CURRENT_FLAGS_NO_INTERACTION;
+
+  ret = flatpak_dir_system_helper_call (self, "MakeCurrent",
+                                        g_variant_new ("(uss)",
+                                                       arg_flags,
+                                                       arg_ref,
+                                                       arg_installation),
+                                        G_VARIANT_TYPE ("()"), NULL,
+                                        cancellable, error);
+  return ret != NULL;
+}
+
+static gboolean
 flatpak_dir_system_helper_call_update_remote (FlatpakDir   *self,
                                               guint         arg_flags,
                                               const gchar  *arg_remote,
@@ -7819,6 +7842,17 @@ flatpak_dir_make_current_app (FlatpakDir        *self,
 {
   g_auto(GLnxLockFile) lock = { 0, };
   g_autofree char *id = NULL;
+
+  if (flatpak_dir_use_system_helper (self, NULL))
+    {
+      const char *installation = flatpak_dir_get_id (self);
+
+      return flatpak_dir_system_helper_call_make_current (self,
+                                                          FLATPAK_HELPER_MAKE_CURRENT_FLAGS_NONE,
+                                                          flatpak_decomposed_get_ref (ref),
+                                                          installation ? installation : "",
+                                                          cancellable, error);
+    }
 
   if (!flatpak_dir_lock (self, &lock, cancellable, error))
     return FALSE;

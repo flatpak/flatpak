@@ -1247,6 +1247,84 @@ handle_override (FlatpakSystemHelper   *object,
 }
 
 static gboolean
+handle_make_current (FlatpakSystemHelper   *object,
+                     GDBusMethodInvocation *invocation,
+                     guint                  arg_flags,
+                     const char            *arg_ref,
+                     const char            *arg_installation)
+{
+  g_autoptr(FlatpakDir) system = NULL;
+  g_autoptr(FlatpakDecomposed) ref = NULL;
+  g_auto(GLnxLockFile) lock = { 0, };
+  g_autoptr(GError) error = NULL;
+  g_autofree char *id = NULL;
+
+  g_info ("MakeCurrent %u %s %s", arg_flags, arg_ref, arg_installation);
+
+  system = dir_get_system (arg_installation, invocation, (arg_flags & FLATPAK_HELPER_MAKE_CURRENT_FLAGS_NO_INTERACTION) != 0, &error);
+  if (system == NULL)
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  if ((arg_flags & ~FLATPAK_HELPER_MAKE_CURRENT_FLAGS_ALL) != 0)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                                             "Unsupported flags enabled: 0x%x", (arg_flags & ~FLATPAK_HELPER_MAKE_CURRENT_FLAGS_ALL));
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  ref = flatpak_decomposed_new_from_ref (arg_ref, &error);
+  if (ref == NULL)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                                             "Invalid ref: %s", error->message);
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  if (flatpak_dir_get_if_deployed (system, ref, NULL, NULL) == NULL)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                                             "Ref %s is not installed",
+                                             flatpak_decomposed_get_ref (ref));
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  if (!flatpak_dir_lock (system, &lock, NULL, &error))
+    {
+      flatpak_invocation_return_error (invocation, error, "Error getting lock");
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  if (!flatpak_dir_make_current_ref (system, ref, NULL, &error))
+    {
+      flatpak_invocation_return_error (invocation, error, "Error making current");
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  id = flatpak_decomposed_dup_id (ref);
+
+  if (!flatpak_dir_update_exports (system, id, NULL, &error))
+    {
+      flatpak_invocation_return_error (invocation, error, "Error updating exports");
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  glnx_release_lock_file (&lock);
+
+  if (!flatpak_dir_mark_changed (system, &error))
+    {
+      flatpak_invocation_return_error (invocation, error, "Error marking changed");
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  flatpak_system_helper_complete_make_current (object, invocation);
+
+  return G_DBUS_METHOD_INVOCATION_HANDLED;
+}
+
+static gboolean
 handle_update_remote (FlatpakSystemHelper   *object,
                       GDBusMethodInvocation *invocation,
                       guint                  arg_flags,
@@ -2247,6 +2325,19 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
       if (app_id[0] != '\0')
         polkit_details_insert (details, "app-id", app_id);
     }
+  else if (g_strcmp0 (method_name, "MakeCurrent") == 0)
+    {
+      const char *ref;
+      guint32 flags;
+
+      g_variant_get_child (parameters, 0, "u", &flags);
+      g_variant_get_child (parameters, 1, "&s", &ref);
+
+      action = "org.freedesktop.Flatpak.make-current";
+      no_interaction = (flags & FLATPAK_HELPER_MAKE_CURRENT_FLAGS_NO_INTERACTION) != 0;
+
+      polkit_details_insert (details, "ref", ref);
+    }
   else if (g_strcmp0 (method_name, "UpdateRemote") == 0)
     {
       const char *remote;
@@ -2350,6 +2441,7 @@ on_bus_acquired (GDBusConnection *connection,
   g_signal_connect (helper, "handle-configure-remote", G_CALLBACK (handle_configure_remote), NULL);
   g_signal_connect (helper, "handle-configure", G_CALLBACK (handle_configure), NULL);
   g_signal_connect (helper, "handle-override", G_CALLBACK (handle_override), NULL);
+  g_signal_connect (helper, "handle-make-current", G_CALLBACK (handle_make_current), NULL);
   g_signal_connect (helper, "handle-update-remote", G_CALLBACK (handle_update_remote), NULL);
   g_signal_connect (helper, "handle-remove-local-ref", G_CALLBACK (handle_remove_local_ref), NULL);
   g_signal_connect (helper, "handle-prune-local-repo", G_CALLBACK (handle_prune_local_repo), NULL);
