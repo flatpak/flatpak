@@ -7811,6 +7811,34 @@ flatpak_dir_make_current_ref (FlatpakDir        *self,
   return TRUE;
 }
 
+gboolean
+flatpak_dir_make_current_app (FlatpakDir        *self,
+                              FlatpakDecomposed *ref,
+                              GCancellable      *cancellable,
+                              GError           **error)
+{
+  g_auto(GLnxLockFile) lock = { 0, };
+  g_autofree char *id = NULL;
+
+  if (!flatpak_dir_lock (self, &lock, cancellable, error))
+    return FALSE;
+
+  if (!flatpak_dir_make_current_ref (self, ref, cancellable, error))
+    return FALSE;
+
+  id = flatpak_decomposed_dup_id (ref);
+
+  if (!flatpak_dir_update_exports (self, id, cancellable, error))
+    return FALSE;
+
+  glnx_release_lock_file (&lock);
+
+  if (!flatpak_dir_mark_changed (self, error))
+    return FALSE;
+
+  return TRUE;
+}
+
 static gboolean
 _flatpak_dir_list_refs_for_name (FlatpakDir   *self,
                                  GFile        *base_dir,

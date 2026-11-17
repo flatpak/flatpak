@@ -709,6 +709,10 @@ gboolean              flatpak_dir_make_current_ref                          (Fla
                                                                              FlatpakDecomposed             *ref,
                                                                              GCancellable                  *cancellable,
                                                                              GError                       **error);
+gboolean              flatpak_dir_make_current_app                           (FlatpakDir                    *self,
+                                                                             FlatpakDecomposed             *ref,
+                                                                             GCancellable                  *cancellable,
+                                                                             GError                       **error);
 gboolean              flatpak_dir_list_deployed                             (FlatpakDir                    *self,
                                                                              FlatpakDecomposed             *ref,
                                                                              char                        ***deployed_checksums,
