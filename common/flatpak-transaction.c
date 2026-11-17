@@ -29,6 +29,7 @@
 #include "flatpak-image-collection-private.h"
 #include "flatpak-image-source-private.h"
 #include "flatpak-installation-private.h"
+#include "flatpak-metadata-private.h"
 #include "flatpak-oci-registry-private.h"
 #include "flatpak-progress-private.h"
 #include "flatpak-repo-utils-private.h"
@@ -190,6 +191,7 @@ typedef struct _FlatpakTransactionPrivate
 
   char                        *parent_window;
   gboolean                     no_pull;
+  gboolean                     no_network;
   gboolean                     no_deploy;
   gboolean                     disable_auto_pin;
   gboolean                     disable_static_deltas;
@@ -1678,6 +1680,43 @@ flatpak_transaction_get_no_pull (FlatpakTransaction *self)
 }
 
 /**
+ * flatpak_transaction_set_no_network:
+ * @self: a #FlatpakTransaction
+ * @no_network: whether to avoid network access
+ *
+ * Sets whether the transaction should avoid all network access. Refs are
+ * resolved and objects are pulled from locally available data only.
+ *
+ * Since: 1.19.3
+ */
+void
+flatpak_transaction_set_no_network (FlatpakTransaction *self,
+                                    gboolean            no_network)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+
+  priv->no_network = no_network;
+}
+
+/**
+ * flatpak_transaction_get_no_network:
+ * @self: a #FlatpakTransaction
+ *
+ * Gets whether the transaction should avoid all network access.
+ *
+ * Returns: %TRUE if no_network is set, %FALSE otherwise
+ *
+ * Since: 1.19.3
+ */
+gboolean
+flatpak_transaction_get_no_network (FlatpakTransaction *self)
+{
+  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
+
+  return priv->no_network;
+}
+
+/**
  * flatpak_transaction_set_parent_window:
  * @self: a #FlatpakTransaction
  * @parent_window: whether to avoid pulls
@@ -2159,7 +2198,10 @@ flatpak_transaction_ensure_remote_state (FlatpakTransaction             *self,
     state = flatpak_remote_state_ref (cached_state);
   else
     {
-      state = flatpak_dir_get_remote_state_optional (priv->dir, remote, FALSE, NULL, error);
+      if (priv->no_network)
+        state = flatpak_dir_get_remote_state_local_only (priv->dir, remote, NULL, error);
+      else
+        state = flatpak_dir_get_remote_state_optional (priv->dir, remote, FALSE, NULL, error);
       if (state == NULL)
         return NULL;
 
@@ -2181,7 +2223,7 @@ flatpak_transaction_ensure_remote_state (FlatpakTransaction             *self,
     }
 
   if (opt_arch != NULL &&
-      !flatpak_remote_state_ensure_subsummary (state, priv->dir, opt_arch, FALSE, NULL, error))
+      !flatpak_remote_state_ensure_subsummary (state, priv->dir, opt_arch, priv->no_network, NULL, error))
     return FALSE;
 
   return g_steal_pointer (&state);
@@ -3946,6 +3988,8 @@ resolve_ops (FlatpakTransaction *self,
           /* First try to resolve via metadata (if remote is available and its metadata matches the commit version) */
           if (!try_resolve_op_from_metadata (self, op, checksum, sideload_path, image_source, state, &local_error))
             {
+              g_autoptr(GVariant) commit_data = NULL;
+
               if (local_error)
                 {
                   /* Actual error, not just missing from summary */
@@ -3956,7 +4000,6 @@ resolve_ops (FlatpakTransaction *self,
               /* Missing from summary, try to load the commit object.
                * Note, we don't have a token here, so this will not work for authenticated apps.
                * We handle this by catching the 401 http status and retrying. */
-              g_autoptr(GVariant) commit_data = NULL;
 
               /* OCI needs this to get the oci repository for the ref to request the token, so lets always set it here */
               if (op->summary_metadata == NULL)
@@ -3965,7 +4008,8 @@ resolve_ops (FlatpakTransaction *self,
 
               commit_data = flatpak_remote_state_load_ref_commit (state, priv->dir,
                                                                   flatpak_decomposed_get_ref (op->ref),
-                                                                  checksum, /* initially NULL */ op->resolved_token,
+                                                                  checksum, op->resolved_token,
+                                                                  priv->no_network,
                                                                   NULL, NULL, &local_error);
               if (commit_data == NULL)
                 {
@@ -4760,6 +4804,9 @@ load_flatpakrepo_file (FlatpakTransaction *self,
   if (priv->disable_deps)
     return TRUE;
 
+  if (priv->no_network)
+    return TRUE;
+
   if (!g_str_has_prefix (dep_url, "http:") &&
       !g_str_has_prefix (dep_url, "https:") &&
       !g_str_has_prefix (dep_url, "file:"))
@@ -4993,6 +5040,9 @@ handle_runtime_repo_deps_from_bundle (FlatpakTransaction *self,
   if (!load_flatpakrepo_file (self, dep_url, &runtime_repo_keyfile, cancellable, error))
     return FALSE;
 
+  if (runtime_repo_keyfile == NULL)
+    return TRUE;
+
   return handle_runtime_repo_deps (self, id, dep_url, runtime_repo_keyfile, cancellable, error);
 }
 
@@ -5149,11 +5199,20 @@ _run_op_kind (FlatpakTransaction           *self,
 
   g_return_val_if_fail (remote_state != NULL || op->kind == FLATPAK_TRANSACTION_OPERATION_UNINSTALL, FALSE);
 
+  if (priv->no_network &&
+      op->resolved_metakey &&
+      g_key_file_has_group (op->resolved_metakey, FLATPAK_METADATA_GROUP_EXTRA_DATA))
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
+                               _("Can't install %s with network disabled: extra data required"),
+                               flatpak_decomposed_get_pref (op->ref));
+
   if (op->kind == FLATPAK_TRANSACTION_OPERATION_INSTALL)
     {
       g_autoptr(FlatpakTransactionProgress) progress = flatpak_transaction_progress_new ();
       FlatpakTransactionResult result_details = 0;
       g_autoptr(GError) local_error = NULL;
+      gboolean op_no_pull = priv->no_pull ||
+        (priv->no_network && op->resolved_sideload_path == NULL && op->resolved_image_source == NULL);
 
       emit_new_op (self, op, progress);
 
@@ -5164,7 +5223,7 @@ _run_op_kind (FlatpakTransaction           *self,
         res = FALSE;
       else
         res = flatpak_dir_install (priv->dir,
-                                   priv->no_pull,
+                                   op_no_pull,
                                    priv->no_deploy,
                                    priv->disable_static_deltas,
                                    priv->reinstall,
@@ -5216,6 +5275,9 @@ _run_op_kind (FlatpakTransaction           *self,
     }
   else if (op->kind == FLATPAK_TRANSACTION_OPERATION_UPDATE)
     {
+      gboolean op_no_pull = priv->no_pull ||
+        (priv->no_network && op->resolved_sideload_path == NULL && op->resolved_image_source == NULL);
+
       g_assert (op->resolved_commit != NULL); /* We resolved this before */
 
       if (flatpak_dir_needs_update_for_commit_and_subpaths (priv->dir, op->remote, op->ref,
@@ -5238,7 +5300,7 @@ _run_op_kind (FlatpakTransaction           *self,
                                              cancellable, &local_error);
           else
             res = flatpak_dir_update (priv->dir,
-                                      priv->no_pull,
+                                      op_no_pull,
                                       priv->no_deploy,
                                       priv->disable_static_deltas,
                                       op->commit != NULL, /* Allow downgrade if we specify commit */
@@ -5540,7 +5602,7 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
                                      "This can lead to incorrect file ownership and permission errors."));
     }
 
-  if (!priv->no_pull &&
+  if (!priv->no_pull && !priv->no_network &&
       !flatpak_transaction_update_metadata (self, cancellable, error))
     {
       g_assert (error == NULL || *error != NULL);

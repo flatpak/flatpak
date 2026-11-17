@@ -216,6 +216,11 @@ void                flatpak_transaction_set_no_pull (FlatpakTransaction *self,
 FLATPAK_EXTERN
 gboolean            flatpak_transaction_get_no_pull (FlatpakTransaction *self);
 FLATPAK_EXTERN
+void                flatpak_transaction_set_no_network (FlatpakTransaction *self,
+                                                        gboolean            no_network);
+FLATPAK_EXTERN
+gboolean            flatpak_transaction_get_no_network (FlatpakTransaction *self);
+FLATPAK_EXTERN
 void                flatpak_transaction_set_no_deploy (FlatpakTransaction *self,
                                                        gboolean            no_deploy);
 FLATPAK_EXTERN

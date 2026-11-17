@@ -160,7 +160,7 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
   else
     {
       commit_v = flatpak_remote_state_load_ref_commit (state, preferred_dir, flatpak_decomposed_get_ref (ref),
-                                                       opt_commit, NULL, &commit, cancellable, error);
+                                                       opt_commit, NULL, FALSE, &commit, cancellable, error);
       if (commit_v == NULL)
         return FALSE;
     }
@@ -345,7 +345,7 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
               VarCommitRef p_commit;
 
               p_commit_v = flatpak_remote_state_load_ref_commit (state, preferred_dir, flatpak_decomposed_get_ref (ref),
-                                                                 p, NULL, NULL, cancellable, NULL);
+                                                                 p, NULL, FALSE, NULL, cancellable, NULL);
               if (p_commit_v == NULL)
                 break;
 
@@ -461,7 +461,7 @@ flatpak_builtin_remote_info (int argc, char **argv, GCancellable *cancellable, G
           if (c && opt_log)
             c_v = flatpak_remote_state_load_ref_commit (state, preferred_dir,
                                                         flatpak_decomposed_get_ref (ref),
-                                                        c, NULL, NULL, cancellable, NULL);
+                                                        c, NULL, FALSE, NULL, cancellable, NULL);
         }
       while (c_v != NULL);
     }

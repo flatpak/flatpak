@@ -46,6 +46,7 @@ static char **opt_gpg_file;
 static char **opt_subpaths;
 static char **opt_sideload_repos;
 static gboolean opt_no_pull;
+static gboolean opt_no_network;
 static gboolean opt_no_deploy;
 static gboolean opt_no_related;
 static gboolean opt_no_deps;
@@ -66,6 +67,7 @@ static gboolean opt_no_auto_pin;
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to install for"), N_("ARCH") },
   { "no-pull", 0, 0, G_OPTION_ARG_NONE, &opt_no_pull, N_("Don't pull, only install from local cache"), NULL },
+  { "no-network", 0, 0, G_OPTION_ARG_NONE, &opt_no_network, N_("Don't access the network, only use locally available data"), NULL },
   { "no-deploy", 0, 0, G_OPTION_ARG_NONE, &opt_no_deploy, N_("Don't deploy, only download to local cache"), NULL },
   { "no-related", 0, 0, G_OPTION_ARG_NONE, &opt_no_related, N_("Don't install related refs"), NULL },
   { "no-deps", 0, 0, G_OPTION_ARG_NONE, &opt_no_deps, N_("Don't verify/install runtime dependencies"), NULL },
@@ -147,6 +149,7 @@ create_install_transaction (FlatpakDir    *dir,
     return NULL;
 
   flatpak_transaction_set_no_pull (transaction, opt_no_pull);
+  flatpak_transaction_set_no_network (transaction, opt_no_network);
   flatpak_transaction_set_no_deploy (transaction, opt_no_deploy);
   flatpak_transaction_set_disable_static_deltas (transaction, opt_no_static_deltas);
   flatpak_transaction_set_disable_dependencies (transaction, opt_no_deps);

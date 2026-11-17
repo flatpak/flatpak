@@ -165,6 +165,7 @@ GVariant *flatpak_remote_state_load_ref_commit (FlatpakRemoteState *self,
                                                 const char         *ref,
                                                 const char         *opt_commit,
                                                 const char         *token,
+                                                gboolean            local_only,
                                                 char              **out_commit,
                                                 GCancellable       *cancellable,
                                                 GError            **error);
