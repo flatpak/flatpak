@@ -510,7 +510,8 @@ child_setup_func (gpointer user_data)
     {
       if (fd_map[i].from != fd_map[i].to)
         {
-          dup2 (fd_map[i].from, fd_map[i].to);
+          if (dup2 (fd_map[i].from, fd_map[i].to) == -1)
+            _exit (255);
           close (fd_map[i].from);
         }
     }
@@ -520,7 +521,8 @@ child_setup_func (gpointer user_data)
     {
       if (fd_map[i].to != fd_map[i].final)
         {
-          dup2 (fd_map[i].to, fd_map[i].final);
+          if (dup2 (fd_map[i].to, fd_map[i].final) == -1)
+            _exit (255);
           close (fd_map[i].to);
         }
 
