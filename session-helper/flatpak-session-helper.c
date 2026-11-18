@@ -29,6 +29,7 @@
 #include <gio/gio.h>
 #include <gio/gunixfdlist.h>
 #include "flatpak-dbus-generated.h"
+#include "flatpak-dbus-utils-private.h"
 #include "flatpak-session-helper.h"
 #include "flatpak-utils-base-private.h"
 
@@ -213,7 +214,7 @@ handle_host_command (FlatpakDevelopment    *object,
   GPid pid;
   PidData *pid_data;
   gsize i, j, n_fds, n_envs;
-  const gint *fds;
+  g_autoptr(FlatpakUniqueFDList) unique_fds = NULL;
   g_autofree FdMapEntry *fd_map = NULL;
   g_auto(GStrv) env = NULL;
   gint32 max_fd;
@@ -243,12 +244,19 @@ handle_host_command (FlatpakDevelopment    *object,
   g_info ("Running host command %s", arg_argv[0]);
 
   n_fds = 0;
-  fds = NULL;
+
   if (fd_list != NULL)
     {
       n_fds = g_variant_n_children (arg_fds);
-      fds = g_unix_fd_list_peek_fds (fd_list, NULL);
+      unique_fds = flatpak_unique_fd_list_new (fd_list, &error);
+
+      if (unique_fds == NULL)
+        {
+          g_dbus_method_invocation_return_gerror (invocation, error);
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
+        }
     }
+
   fd_map = g_new0 (FdMapEntry, n_fds);
 
   child_setup_data.fd_map = fd_map;
@@ -258,19 +266,29 @@ handle_host_command (FlatpakDevelopment    *object,
   for (i = 0; i < n_fds; i++)
     {
       gint32 handle, fd;
+      int from_fd;
       g_variant_get_child (arg_fds, i, "{uh}", &fd, &handle);
+
+      from_fd = flatpak_unique_fd_list_get (unique_fds, handle, &error);
+
+      if (from_fd < 0)
+        {
+          g_dbus_method_invocation_return_gerror (invocation, error);
+          return G_DBUS_METHOD_INVOCATION_HANDLED;
+        }
+
       fd_map[i].to = fd;
-      fd_map[i].from = fds[i];
+      fd_map[i].from = from_fd;
       fd_map[i].final = fd_map[i].to;
 
       /* If stdin/out/err is a tty we try to set it as the controlling
          tty for the app, this way we can use this to run in a terminal. */
       if ((fd == 0 || fd == 1 || fd == 2) &&
           !child_setup_data.set_tty &&
-          isatty (fds[i]))
+          isatty (from_fd))
         {
           child_setup_data.set_tty = TRUE;
-          child_setup_data.tty = fds[i];
+          child_setup_data.tty = from_fd;
         }
 
       max_fd = MAX (max_fd, fd_map[i].to);
