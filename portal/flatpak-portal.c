@@ -689,8 +689,8 @@ handle_spawn (PortalFlatpak         *object,
   g_autoptr(FlatpakInstance) instance = NULL;
   g_autoptr(GVariant) sandbox_expose_fd = NULL;
   g_autoptr(GVariant) sandbox_expose_fd_ro = NULL;
-  g_autoptr(GVariant) app_fd = NULL;
-  g_autoptr(GVariant) usr_fd = NULL;
+  g_autoptr(GVariant) app_fd_variant = NULL;
+  g_autoptr(GVariant) usr_fd_variant = NULL;
   g_autoptr(GOutputStream) instance_id_out_stream = NULL;
   guint sandbox_flags = 0;
   gboolean sandboxed;
@@ -816,8 +816,8 @@ handle_spawn (PortalFlatpak         *object,
   sandbox_expose_fd = g_variant_lookup_value (arg_options, "sandbox-expose-fd", G_VARIANT_TYPE ("ah"));
   sandbox_expose_fd_ro = g_variant_lookup_value (arg_options, "sandbox-expose-fd-ro", G_VARIANT_TYPE ("ah"));
   g_variant_lookup (arg_options, "unset-env", "^as", &unset_env);
-  app_fd = g_variant_lookup_value (arg_options, "app-fd", G_VARIANT_TYPE_HANDLE);
-  usr_fd = g_variant_lookup_value (arg_options, "usr-fd", G_VARIANT_TYPE_HANDLE);
+  app_fd_variant = g_variant_lookup_value (arg_options, "app-fd", G_VARIANT_TYPE_HANDLE);
+  usr_fd_variant = g_variant_lookup_value (arg_options, "usr-fd", G_VARIANT_TYPE_HANDLE);
 
   if ((sandbox_flags & ~FLATPAK_SPAWN_SANDBOX_FLAGS_ALL) != 0)
     {
@@ -1407,7 +1407,7 @@ handle_spawn (PortalFlatpak         *object,
 
   empty_app = (arg_flags & FLATPAK_SPAWN_FLAGS_EMPTY_APP) != 0;
 
-  if (empty_app && app_fd != NULL)
+  if (empty_app && app_fd_variant != NULL)
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
                                              G_DBUS_ERROR_INVALID_ARGS,
@@ -1415,10 +1415,10 @@ handle_spawn (PortalFlatpak         *object,
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
-  if (app_fd != NULL)
+  if (app_fd_variant != NULL)
     {
       int remapped_fd;
-      gint32 handle = g_variant_get_handle (app_fd);
+      gint32 handle = g_variant_get_handle (app_fd_variant);
 
       if (handle >= fds_len || handle < 0)
         {
@@ -1441,10 +1441,10 @@ handle_spawn (PortalFlatpak         *object,
       g_ptr_array_add (flatpak_argv, g_strdup ("--app-path="));
     }
 
-  if (usr_fd != NULL)
+  if (usr_fd_variant != NULL)
     {
       int remapped_fd;
-      gint32 handle = g_variant_get_handle (usr_fd);
+      gint32 handle = g_variant_get_handle (usr_fd_variant);
 
       if (handle >= fds_len || handle < 0)
         {
