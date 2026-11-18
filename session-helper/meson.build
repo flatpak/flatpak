@@ -11,7 +11,10 @@ executable(
   ],
   install : true,
   install_dir : get_option('libexecdir'),
-  sources : ['flatpak-session-helper.c'],
+  sources : [
+    'flatpak-session-helper.c',
+    '../common/flatpak-dbus-utils.c',
+  ],
 )
 
 configure_file(
