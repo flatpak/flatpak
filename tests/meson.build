@@ -303,6 +303,15 @@ if cc.links('#include <stdio.h>\nint main(void) { printf("test"); return 0; }',
     override_options : ['b_sanitize=none'],
     link_args : ['-static'],
   )
+
+  executable(
+    'apply-extra-deeply-nested-setuid',
+    'apply-extra-deeply-nested-setuid.c',
+    install : get_option('installed_tests'),
+    install_dir : installed_testdir,
+    override_options : ['b_sanitize=none'],
+    link_args : ['-static'],
+  )
 else
   warning('static libc not available, apply-extra-static will be skipped')
 endif
