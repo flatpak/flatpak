@@ -102,6 +102,7 @@ c_tests = [
     ],
   }],
   ['testcommon', {}],
+  ['test-clean', {}],
   ['testlibrary', {
     'dependencies' : [
       base_deps,
@@ -348,6 +349,7 @@ if get_option('installed_tests')
     'make-test-app.sh',
     'make-test-runtime.sh',
     'oci-registry-client.py',
+    'check-oci-import-lock.py',
     'oci-registry-server.py',
     'test-webserver.sh',
     'test-wrapper.sh',
