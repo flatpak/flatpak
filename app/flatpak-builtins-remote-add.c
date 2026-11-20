@@ -110,8 +110,10 @@ get_config_from_opts (GKeyFile *config,
 
   if (opt_do_gpg_verify)
     {
+      gboolean is_oci = opt_url && g_str_has_prefix (opt_url, "oci+");
+
       g_key_file_set_boolean (config, group, "gpg-verify", TRUE);
-      g_key_file_set_boolean (config, group, "gpg-verify-summary", TRUE);
+      g_key_file_set_boolean (config, group, "gpg-verify-summary", !is_oci);
     }
 
   if (opt_url)
@@ -352,7 +354,10 @@ flatpak_builtin_remote_add (int argc, char **argv,
         remote_url = g_strdup (location);
       opt_url = remote_url;
 
-      /* Default to gpg verify, except for OCI registries */
+      /* For ostree remotes we default to gpg-verify=true, but for OCI
+       * remotes we can't do that without breaking existing setups that
+       * add OCI remotes without a GPG key and without --no-gpg-verify.
+       * So GPG verification for OCI remains opt-in. */
       is_oci = opt_url && g_str_has_prefix (opt_url, "oci+");
       if (!opt_no_gpg_verify && !is_oci)
         opt_do_gpg_verify = TRUE;
