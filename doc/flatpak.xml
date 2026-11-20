@@ -679,6 +679,18 @@
                     </para></listitem>
                 </varlistentry>
 
+                <varlistentry>
+                    <term><envar>FLATPAK_MAX_PARALLEL_DOWNLOADS</envar></term>
+                    <listitem><para>
+                        Limits how many apps and runtimes Flatpak downloads at once
+                        during OSTree installs and updates. The default is 4.
+                        Set this to 1 to download them one at a time.
+                        Use a positive whole number. Invalid values fall back to
+                        the default.
+                        Some downloads run one at a time regardless of this setting.
+                    </para></listitem>
+                </varlistentry>
+
                 <!-- FLATPAK_DISABLE_REVOKEFS intentionally not documented:
                      it is intended for testing and development only
                      (it forces use of the code path we would use if

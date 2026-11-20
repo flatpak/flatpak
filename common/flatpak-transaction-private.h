@@ -31,6 +31,7 @@ FlatpakRemoteState *flatpak_transaction_ensure_remote_state (FlatpakTransaction 
                                                              GError                        **error);
 
 FlatpakDecomposed * flatpak_transaction_operation_get_decomposed (FlatpakTransactionOperation *self);
+uint64_t flatpak_transaction_get_download_size_estimate (FlatpakTransaction *self);
 
 void flatpak_transaction_set_flatpakref_or_update (FlatpakTransaction *self,
                                                    gboolean            or_update);

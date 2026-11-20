@@ -55,6 +55,7 @@
 #include "flatpak-image-collection-private.h"
 #include "flatpak-image-source-private.h"
 #include "flatpak-oci-registry-private.h"
+#include "flatpak-pull-job-private.h"
 #include "flatpak-ref.h"
 #include "flatpak-repo-utils-private.h"
 #include "flatpak-run-private.h"
@@ -1244,7 +1245,7 @@ flatpak_remote_state_get_main_metadata (FlatpakRemoteState *self)
 
 
 /* 0 if not specified */
-static guint32
+guint32
 flatpak_remote_state_get_cache_version (FlatpakRemoteState *self)
 {
   VarMetadataRef meta;
@@ -3092,6 +3093,38 @@ flatpak_dir_system_helper_call (FlatpakDir         *self,
   return res;
 }
 
+typedef struct
+{
+  FlatpakDir         *dir;
+  const char         *method;
+  GVariant           *parameters;
+  const GVariantType *reply_type;
+  GVariant           *reply;
+} HelperDeployData;
+
+static gboolean
+helper_deploy_with_progress (gpointer data, GCancellable *cancellable, GError **error)
+{
+  HelperDeployData *call = data;
+
+  call->reply = flatpak_dir_system_helper_call (call->dir, call->method, call->parameters,
+                                                call->reply_type, NULL, cancellable, error);
+  return call->reply != NULL;
+}
+
+static GVariant *
+flatpak_dir_system_helper_deploy_with_progress (FlatpakDir *self, const char *method,
+                                                GVariant *parameters, const GVariantType *reply_type,
+                                                FlatpakProgress *progress, GCancellable *cancellable,
+                                                GError **error)
+{
+  g_autoptr(GVariant) owned_parameters = g_variant_ref_sink (parameters);
+  HelperDeployData call = { self, method, owned_parameters, reply_type, NULL };
+
+  flatpak_progress_run_deployment (progress, helper_deploy_with_progress, &call, cancellable, error);
+  return call.reply;
+}
+
 static gboolean
 flatpak_dir_system_helper_call_deploy (FlatpakDir         *self,
                                        const gchar        *arg_repo_path,
@@ -3101,6 +3134,7 @@ flatpak_dir_system_helper_call_deploy (FlatpakDir         *self,
                                        const gchar *const *arg_subpaths,
                                        const gchar *const *arg_previous_ids,
                                        const gchar        *arg_installation,
+                                       FlatpakProgress    *progress,
                                        GCancellable       *cancellable,
                                        GError            **error)
 {
@@ -3115,7 +3149,7 @@ flatpak_dir_system_helper_call_deploy (FlatpakDir         *self,
     arg_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_NO_INTERACTION;
 
   g_autoptr(GVariant) ret =
-    flatpak_dir_system_helper_call (self, "Deploy",
+    flatpak_dir_system_helper_deploy_with_progress (self, "Deploy",
                                     g_variant_new ("(^ayuss^as^ass)",
                                                    arg_repo_path,
                                                    arg_flags,
@@ -3124,7 +3158,7 @@ flatpak_dir_system_helper_call_deploy (FlatpakDir         *self,
                                                    arg_subpaths,
                                                    arg_previous_ids,
                                                    arg_installation),
-                                    G_VARIANT_TYPE ("()"), NULL,
+                                    G_VARIANT_TYPE ("()"), progress,
                                     cancellable, error);
   return ret != NULL;
 }
@@ -3184,6 +3218,7 @@ flatpak_dir_system_helper_call_install_bundle (FlatpakDir   *self,
                                                const gchar  *arg_remote,
                                                const gchar  *arg_installation,
                                                gchar       **out_ref,
+                                               FlatpakProgress *progress,
                                                GCancellable *cancellable,
                                                GError      **error)
 {
@@ -3191,13 +3226,13 @@ flatpak_dir_system_helper_call_install_bundle (FlatpakDir   *self,
     arg_flags |= FLATPAK_HELPER_INSTALL_BUNDLE_FLAGS_NO_INTERACTION;
 
   g_autoptr(GVariant) ret =
-    flatpak_dir_system_helper_call (self, "InstallBundle",
+    flatpak_dir_system_helper_deploy_with_progress (self, "InstallBundle",
                                     g_variant_new ("(^ayuss)",
                                                    arg_bundle_path,
                                                    arg_flags,
                                                    arg_remote,
                                                    arg_installation),
-                                    G_VARIANT_TYPE ("(s)"), NULL,
+                                    G_VARIANT_TYPE ("(s)"), progress,
                                     cancellable, error);
   if (ret == NULL)
     return FALSE;
@@ -6559,6 +6594,47 @@ compute_extra_data_download_size (GVariant *extra_data_sources,
 
   *out_n_extra_data = n_extra_data;
   *out_total_download_size = total_download_size;
+}
+
+FlatpakRemoteState *
+flatpak_remote_state_snapshot_for_pull (FlatpakRemoteState *state)
+{
+  GHashTableIter iter;
+  gpointer key, value;
+  FlatpakRemoteState *copy;
+
+  copy = flatpak_remote_state_new ();
+  copy->remote_name = g_strdup (state->remote_name);
+  copy->is_file_uri = state->is_file_uri;
+  copy->collection_id = g_strdup (state->collection_id);
+  copy->default_token_type = state->default_token_type;
+  if (state->index)
+    copy->index = g_variant_ref (state->index);
+  if (state->index_sig_bytes)
+    copy->index_sig_bytes = g_bytes_ref (state->index_sig_bytes);
+  if (state->summary)
+    copy->summary = g_variant_ref (state->summary);
+  if (state->summary_bytes)
+    copy->summary_bytes = g_bytes_ref (state->summary_bytes);
+  if (state->summary_sig_bytes)
+    copy->summary_sig_bytes = g_bytes_ref (state->summary_sig_bytes);
+  if (state->summary_fetch_error)
+    copy->summary_fetch_error = g_error_copy (state->summary_fetch_error);
+  if (state->allow_refs)
+    copy->allow_refs = g_regex_ref (state->allow_refs);
+  if (state->deny_refs)
+    copy->deny_refs = g_regex_ref (state->deny_refs);
+  if (state->index_ht)
+    {
+      copy->index_ht = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, (GDestroyNotify) g_variant_unref);
+      g_hash_table_iter_init (&iter, state->index_ht);
+      while (g_hash_table_iter_next (&iter, &key, &value))
+        g_hash_table_insert (copy->index_ht, g_strdup (key), g_variant_ref (value));
+    }
+  g_hash_table_iter_init (&iter, state->subsummaries);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    g_hash_table_insert (copy->subsummaries, g_strdup (key), value ? g_variant_ref (value) : NULL);
+  return copy;
 }
 
 static gboolean
@@ -10568,17 +10644,31 @@ flatpak_dir_prune_origin_remote (FlatpakDir *self,
     }
 }
 
-gboolean
-flatpak_dir_deploy_install (FlatpakDir        *self,
-                            FlatpakDecomposed *ref,
-                            const char        *origin,
-                            const char       **subpaths,
-                            const char       **previous_ids,
-                            gboolean           reinstall,
-                            gboolean           pin_on_deploy,
-                            gboolean           update_preinstalled_on_deploy,
-                            GCancellable      *cancellable,
-                            GError           **error)
+typedef struct
+{
+  FlatpakDir        *dir;
+  FlatpakDecomposed *ref;
+  const char        *origin;
+  const char        *commit;
+  const char       **subpaths;
+  const char       **previous_ids;
+  gboolean           reinstall;
+  gboolean           pin;
+  gboolean           preinstalled;
+} DeployData;
+
+static gboolean
+deploy_install (FlatpakDir        *self,
+                FlatpakDecomposed *ref,
+                const char        *origin,
+                const char        *checksum_or_latest,
+                const char       **subpaths,
+                const char       **previous_ids,
+                gboolean           reinstall,
+                gboolean           pin_on_deploy,
+                gboolean           update_preinstalled_on_deploy,
+                GCancellable      *cancellable,
+                GError           **error)
 {
   g_auto(GLnxLockFile) lock = { 0, };
   g_autoptr(GFile) deploy_base = NULL;
@@ -10642,7 +10732,7 @@ flatpak_dir_deploy_install (FlatpakDir        *self,
   /* After we create the deploy base we must goto out on errors */
   created_deploy_base = TRUE;
 
-  if (!flatpak_dir_deploy (self, origin, ref, NULL, (const char * const *) subpaths,
+  if (!flatpak_dir_deploy (self, origin, ref, checksum_or_latest, (const char * const *) subpaths,
                            previous_ids,
                            "org.freedesktop.Flatpak.override-parental-controls",
                            cancellable, error))
@@ -10706,14 +10796,45 @@ out:
 }
 
 
+static gboolean
+run_install_deployment (gpointer data, GCancellable *cancellable, GError **error)
+{
+  DeployData *deploy = data;
+
+  return deploy_install (deploy->dir, deploy->ref, deploy->origin,
+                         deploy->commit, deploy->subpaths, deploy->previous_ids,
+                         deploy->reinstall, deploy->pin, deploy->preinstalled,
+                         cancellable, error);
+}
+
 gboolean
-flatpak_dir_deploy_update (FlatpakDir        *self,
-                           FlatpakDecomposed *ref,
-                           const char        *checksum_or_latest,
-                           const char       **opt_subpaths,
-                           const char       **opt_previous_ids,
-                           GCancellable      *cancellable,
-                           GError           **error)
+flatpak_dir_deploy_install (FlatpakDir        *self,
+                            FlatpakDecomposed *ref,
+                            const char        *origin,
+                            const char        *checksum_or_latest,
+                            const char       **subpaths,
+                            const char       **previous_ids,
+                            gboolean           reinstall,
+                            gboolean           pin_on_deploy,
+                            gboolean           update_preinstalled_on_deploy,
+                            FlatpakProgress   *progress,
+                            GCancellable      *cancellable,
+                            GError           **error)
+{
+  DeployData deploy = { self, ref, origin, checksum_or_latest, subpaths, previous_ids,
+                        reinstall, pin_on_deploy, update_preinstalled_on_deploy };
+
+  return flatpak_progress_run_deployment (progress, run_install_deployment, &deploy, cancellable, error);
+}
+
+static gboolean
+deploy_update (FlatpakDir        *self,
+               FlatpakDecomposed *ref,
+               const char        *checksum_or_latest,
+               const char       **opt_subpaths,
+               const char       **opt_previous_ids,
+               GCancellable      *cancellable,
+               GError           **error)
 {
   g_autoptr(GBytes) old_deploy_data = NULL;
   g_auto(GLnxLockFile) lock = { 0, };
@@ -10785,6 +10906,32 @@ flatpak_dir_deploy_update (FlatpakDir        *self,
                    "Updated %s from %s", flatpak_decomposed_get_ref (ref), old_origin);
 
   return TRUE;
+}
+
+static gboolean
+run_update_deployment (gpointer data, GCancellable *cancellable, GError **error)
+{
+  DeployData *deploy = data;
+
+  return deploy_update (deploy->dir, deploy->ref, deploy->commit,
+                        deploy->subpaths, deploy->previous_ids,
+                        cancellable, error);
+}
+
+gboolean
+flatpak_dir_deploy_update (FlatpakDir        *self,
+                           FlatpakDecomposed *ref,
+                           const char        *checksum_or_latest,
+                           const char       **opt_subpaths,
+                           const char       **opt_previous_ids,
+                           FlatpakProgress   *progress,
+                           GCancellable      *cancellable,
+                           GError           **error)
+{
+  DeployData deploy = { .dir = self, .ref = ref, .commit = checksum_or_latest,
+                        .subpaths = opt_subpaths, .previous_ids = opt_previous_ids };
+
+  return flatpak_progress_run_deployment (progress, run_update_deployment, &deploy, cancellable, error);
 }
 
 static void
@@ -11285,9 +11432,105 @@ flatpak_dir_unmount_and_cancel_pull (FlatpakDir    *self,
     g_warning ("Error cancelling ongoing pull at %s: %s", src_dir, error->message);
 }
 
+typedef struct
+{
+  FlatpakDir         *dir;
+  FlatpakRemoteState *state;
+  const char         *ref;
+  const char         *commit;
+  const char        **subpaths;
+  GFile              *sideload_repo;
+  FlatpakImageSource *image_source;
+  GBytes             *metadata;
+  const char         *token;
+  OstreeRepo         *repo;
+  FlatpakPullFlags    flags;
+  OstreeRepoPullFlags ostree_flags;
+} SerialPullData;
+
+static gboolean
+pull_serial (gpointer data, FlatpakProgress *progress, GCancellable *cancellable, GError **error)
+{
+  SerialPullData *pull = data;
+
+  return flatpak_dir_pull (pull->dir, pull->state, pull->ref, pull->commit,
+                           pull->subpaths, pull->sideload_repo, pull->image_source,
+                           pull->metadata, pull->token, pull->repo, pull->flags,
+                           pull->ostree_flags, progress, cancellable, error);
+}
+
+static gboolean
+flatpak_dir_pull_serial (FlatpakDir         *self,
+                         FlatpakRemoteState *state,
+                         const char         *ref,
+                         const char         *commit,
+                         const char        **subpaths,
+                         GFile              *sideload_repo,
+                         FlatpakImageSource *image_source,
+                         GBytes             *metadata,
+                         const char         *token,
+                         OstreeRepo         *repo,
+                         FlatpakPullFlags    flags,
+                         OstreeRepoPullFlags ostree_flags,
+                         FlatpakProgress    *progress,
+                         GCancellable       *cancellable,
+                         GError            **error)
+{
+  SerialPullData data = {
+    .dir = self, .state = state, .ref = ref, .commit = commit,
+    .subpaths = subpaths, .sideload_repo = sideload_repo, .image_source = image_source,
+    .metadata = metadata, .token = token, .repo = repo,
+    .flags = flags, .ostree_flags = ostree_flags,
+  };
+
+  return flatpak_pull_job_run_serial (ref, pull_serial, &data, progress, cancellable, error);
+}
+
+typedef struct
+{
+  FlatpakDir         *dir;
+  FlatpakOciRegistry *registry;
+  FlatpakRemoteState *state;
+  const char         *ref;
+  const char         *commit;
+  FlatpakImageSource *image_source;
+  const char         *token;
+} SerialMirrorData;
+
+static gboolean
+mirror_serial (gpointer data, FlatpakProgress *progress, GCancellable *cancellable, GError **error)
+{
+  SerialMirrorData *mirror = data;
+
+  return flatpak_dir_mirror_oci (mirror->dir, mirror->registry, mirror->state,
+                                 mirror->ref, mirror->commit, mirror->image_source,
+                                 mirror->token, progress, cancellable, error);
+}
+
+static gboolean
+flatpak_dir_mirror_oci_serial (FlatpakDir         *self,
+                               FlatpakOciRegistry *registry,
+                               FlatpakRemoteState *state,
+                               const char         *ref,
+                               const char         *commit,
+                               FlatpakImageSource *image_source,
+                               const char         *token,
+                               FlatpakProgress    *progress,
+                               GCancellable       *cancellable,
+                               GError            **error)
+{
+  SerialMirrorData data = {
+    .dir = self, .registry = registry, .state = state, .ref = ref,
+    .commit = commit, .image_source = image_source, .token = token,
+  };
+
+  return flatpak_pull_job_run_serial (ref, mirror_serial, &data, progress, cancellable, error);
+}
+
 gboolean
 flatpak_dir_install (FlatpakDir          *self,
                      gboolean             no_pull,
+                     gboolean             already_pulled,
                      gboolean             no_deploy,
                      gboolean             no_static_deltas,
                      gboolean             reinstall,
@@ -11308,6 +11551,12 @@ flatpak_dir_install (FlatpakDir          *self,
                      GError             **error)
 {
   FlatpakPullFlags flatpak_flags;
+
+  /* already_pulled skips the download without changing no_pull cleanup. */
+  g_return_val_if_fail (!already_pulled ||
+                        (!no_pull && !flatpak_dir_use_system_helper (self, NULL) &&
+                         opt_commit != NULL && opt_image_source == NULL &&
+                         sideload_repo == NULL && !state->is_oci), FALSE);
 
   flatpak_flags = FLATPAK_PULL_FLAGS_DOWNLOAD_EXTRA_DATA;
   if (no_static_deltas)
@@ -11365,8 +11614,8 @@ flatpak_dir_install (FlatpakDir          *self,
 
           child_repo_path = g_file_get_path (registry_file);
 
-          if (!flatpak_dir_mirror_oci (self, registry, state, flatpak_decomposed_get_ref (ref),
-                                       opt_commit, opt_image_source, token, progress, cancellable, error))
+          if (!flatpak_dir_mirror_oci_serial (self, registry, state, flatpak_decomposed_get_ref (ref),
+                                              opt_commit, opt_image_source, token, progress, cancellable, error))
             return FALSE;
         }
       else if (!gpg_verify_summary || !gpg_verify)
@@ -11460,11 +11709,10 @@ flatpak_dir_install (FlatpakDir          *self,
 
           flatpak_flags |= FLATPAK_PULL_FLAGS_SIDELOAD_EXTRA_DATA;
 
-          if (!flatpak_dir_pull (self, state, flatpak_decomposed_get_ref (ref), opt_commit, subpaths, sideload_repo, NULL, require_metadata, token,
-                                 child_repo,
-                                 flatpak_flags,
-                                 0,
-                                 progress, cancellable, error))
+          if (!flatpak_dir_pull_serial (self, state, flatpak_decomposed_get_ref (ref), opt_commit,
+                                        subpaths, sideload_repo, NULL, require_metadata, token,
+                                        child_repo, flatpak_flags, 0,
+                                        progress, cancellable, error))
             {
               if (is_revokefs_pull)
                 {
@@ -11513,12 +11761,15 @@ flatpak_dir_install (FlatpakDir          *self,
 
       helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_INSTALL_HINT;
 
+      if (!no_deploy)
+        flatpak_progress_start_deployment (progress);
       if (!flatpak_dir_system_helper_call_deploy (self,
                                                   child_repo_path ? child_repo_path : "",
                                                   helper_flags, flatpak_decomposed_get_ref (ref), state->remote_name,
                                                   (const char * const *) subpaths,
                                                   (const char * const *) opt_previous_ids,
                                                   installation ? installation : "",
+                                                  no_deploy ? NULL : progress,
                                                   cancellable,
                                                   error))
         return FALSE;
@@ -11536,21 +11787,24 @@ flatpak_dir_install (FlatpakDir          *self,
       return TRUE;
     }
 
-  if (!no_pull)
+  if (!no_pull && !already_pulled)
     {
-      if (!flatpak_dir_pull (self, state, flatpak_decomposed_get_ref (ref), opt_commit, opt_subpaths,
-                             sideload_repo, opt_image_source, require_metadata, token, NULL,
-                             flatpak_flags, OSTREE_REPO_PULL_FLAGS_NONE,
-                             progress, cancellable, error))
+      if (!flatpak_dir_pull_serial (self, state, flatpak_decomposed_get_ref (ref), opt_commit, opt_subpaths,
+                                    sideload_repo, opt_image_source, require_metadata, token, NULL,
+                                    flatpak_flags, OSTREE_REPO_PULL_FLAGS_NONE,
+                                    progress, cancellable, error))
         return FALSE;
     }
 
   if (!no_deploy)
     {
-      if (!flatpak_dir_deploy_install (self, ref, state->remote_name, opt_subpaths,
+      /* A tracking ref may have changed since the prefetched pull completed. */
+      flatpak_progress_start_deployment (progress);
+      if (!flatpak_dir_deploy_install (self, ref, state->remote_name,
+                                       already_pulled ? opt_commit : NULL, opt_subpaths,
                                        opt_previous_ids, reinstall, pin_on_deploy,
                                        update_preinstalled_on_deploy,
-                                       cancellable, error))
+                                       progress, cancellable, error))
         return FALSE;
 
       /* In case the app is being renamed, rewrite any launchers made by
@@ -11720,6 +11974,7 @@ flatpak_dir_install_bundle (FlatpakDir         *self,
                             GFile              *file,
                             const char         *remote,
                             FlatpakDecomposed **out_ref,
+                            FlatpakProgress    *progress,
                             GCancellable       *cancellable,
                             GError            **error)
 {
@@ -11742,12 +11997,14 @@ flatpak_dir_install_bundle (FlatpakDir         *self,
       if (reinstall)
         install_flags |= FLATPAK_HELPER_INSTALL_BUNDLE_FLAGS_REINSTALL;
 
+      flatpak_progress_start_deployment (progress);
       if (!flatpak_dir_system_helper_call_install_bundle (self,
                                                           flatpak_file_get_path_cached (file),
                                                           install_flags,
                                                           remote,
                                                           installation ? installation : "",
                                                           &ref_str,
+                                                          progress,
                                                           cancellable,
                                                           error))
         return FALSE;
@@ -11858,14 +12115,15 @@ flatpak_dir_install_bundle (FlatpakDir         *self,
         }
     }
 
+  flatpak_progress_start_deployment (progress);
   if (deploy_data)
     {
-      if (!flatpak_dir_deploy_update (self, ref, NULL, NULL, NULL, cancellable, error))
+      if (!flatpak_dir_deploy_update (self, ref, NULL, NULL, NULL, progress, cancellable, error))
         return FALSE;
     }
   else
     {
-      if (!flatpak_dir_deploy_install (self, ref, remote, NULL, NULL, reinstall, FALSE, FALSE, cancellable, error))
+      if (!flatpak_dir_deploy_install (self, ref, remote, NULL, NULL, NULL, reinstall, FALSE, FALSE, progress, cancellable, error))
         return FALSE;
     }
 
@@ -12010,6 +12268,7 @@ flatpak_dir_update (FlatpakDir                           *self,
                     FlatpakDecomposed                    *ref,
                     const char                           *commit,
                     const char                          **opt_subpaths,
+                    const char                          **pulled_subpaths,
                     const char                          **opt_previous_ids,
                     GFile                                *sideload_repo,
                     FlatpakImageSource                   *opt_image_source,
@@ -12030,6 +12289,11 @@ flatpak_dir_update (FlatpakDir                           *self,
   /* This is calculated in check_for_update */
   g_assert (commit != NULL);
 
+  g_return_val_if_fail (pulled_subpaths == NULL ||
+                        (!no_pull && !flatpak_dir_use_system_helper (self, NULL) &&
+                         opt_image_source == NULL && sideload_repo == NULL &&
+                         !state->is_oci), FALSE);
+
   flatpak_flags = FLATPAK_PULL_FLAGS_DOWNLOAD_EXTRA_DATA;
   if (allow_downgrade)
     flatpak_flags |= FLATPAK_PULL_FLAGS_ALLOW_DOWNGRADE;
@@ -12048,6 +12312,24 @@ flatpak_dir_update (FlatpakDir                           *self,
     subpaths = old_subpaths;
   else
     subpaths = empty_subpaths;
+
+  /* Another transaction may have deployed a newer commit since the pull. */
+  if (pulled_subpaths != NULL && deploy_data != NULL && !allow_downgrade)
+    {
+      g_autoptr(GVariant) old_commit = NULL;
+      g_autoptr(GVariant) new_commit = NULL;
+
+      if (!ostree_repo_load_commit (self->repo, flatpak_deploy_data_get_commit (deploy_data),
+                                    &old_commit, NULL, error) ||
+          !ostree_repo_load_commit (self->repo, commit, &new_commit, NULL, error))
+        return FALSE;
+
+      if (ostree_commit_get_timestamp (new_commit) < ostree_commit_get_timestamp (old_commit))
+        return flatpak_fail_error (error, FLATPAK_ERROR_DOWNGRADE, "Update is older than current version");
+    }
+
+  if (pulled_subpaths != NULL && !g_strv_equal (subpaths, pulled_subpaths))
+    pulled_subpaths = NULL;
 
   if (!ostree_repo_remote_get_url (self->repo, state->remote_name, &url, error))
     return FALSE;
@@ -12098,8 +12380,8 @@ flatpak_dir_update (FlatpakDir                           *self,
 
           child_repo_path = g_file_get_path (registry_file);
 
-          if (!flatpak_dir_mirror_oci (self, registry, state, flatpak_decomposed_get_ref (ref),
-                                       commit, opt_image_source, token, progress, cancellable, error))
+          if (!flatpak_dir_mirror_oci_serial (self, registry, state, flatpak_decomposed_get_ref (ref),
+                                              commit, opt_image_source, token, progress, cancellable, error))
             return FALSE;
         }
       else if (!gpg_verify_summary || !gpg_verify)
@@ -12178,11 +12460,11 @@ flatpak_dir_update (FlatpakDir                           *self,
             }
 
           flatpak_flags |= FLATPAK_PULL_FLAGS_SIDELOAD_EXTRA_DATA;
-          if (!flatpak_dir_pull (self, state, flatpak_decomposed_get_ref (ref),
-                                 commit, subpaths, sideload_repo, NULL, require_metadata, token,
-                                 child_repo,
-                                 flatpak_flags, 0,
-                                 progress, cancellable, error))
+          if (!flatpak_dir_pull_serial (self, state, flatpak_decomposed_get_ref (ref),
+                                        commit, subpaths, sideload_repo, NULL, require_metadata, token,
+                                        child_repo,
+                                        flatpak_flags, 0,
+                                        progress, cancellable, error))
             {
               if (is_revokefs_pull)
                 {
@@ -12220,11 +12502,14 @@ flatpak_dir_update (FlatpakDir                           *self,
       if (install_hint)
         helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_INSTALL_HINT;
 
+      if (!no_deploy)
+        flatpak_progress_start_deployment (progress);
       if (!flatpak_dir_system_helper_call_deploy (self,
                                                   child_repo_path ? child_repo_path : "",
                                                   helper_flags, flatpak_decomposed_get_ref (ref), state->remote_name,
                                                   subpaths, opt_previous_ids,
                                                   installation ? installation : "",
+                                                  no_deploy ? NULL : progress,
                                                   cancellable,
                                                   error))
         return FALSE;
@@ -12244,10 +12529,11 @@ flatpak_dir_update (FlatpakDir                           *self,
 
   if (!no_pull)
     {
-      if (!flatpak_dir_pull (self, state, flatpak_decomposed_get_ref (ref),
-                             commit, subpaths, sideload_repo, opt_image_source, require_metadata, token,
-                             NULL, flatpak_flags, OSTREE_REPO_PULL_FLAGS_NONE,
-                             progress, cancellable, error))
+      if (pulled_subpaths == NULL &&
+          !flatpak_dir_pull_serial (self, state, flatpak_decomposed_get_ref (ref),
+                                    commit, subpaths, sideload_repo, opt_image_source, require_metadata, token,
+                                    NULL, flatpak_flags, OSTREE_REPO_PULL_FLAGS_NONE,
+                                    progress, cancellable, error))
         return FALSE;
 
       /* Take this opportunity to clean up refs/mirrors/ since a prune will happen
@@ -12261,12 +12547,13 @@ flatpak_dir_update (FlatpakDir                           *self,
 
   if (!no_deploy)
     {
+      flatpak_progress_start_deployment (progress);
       if (!flatpak_dir_deploy_update (self, ref,
                                       /* We don't know the local commit id in the OCI case, and
                                          we only support one version anyway */
                                       is_oci ? NULL : commit,
                                       subpaths, opt_previous_ids,
-                                      cancellable, error))
+                                      progress, cancellable, error))
         return FALSE;
 
       /* In case the app is being renamed, rewrite any launchers made by
