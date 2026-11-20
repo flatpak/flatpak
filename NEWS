@@ -1,3 +1,17 @@
+Changes in 1.18.5
+~~~~~~~~~~~~~~~~~
+Released: not yet
+
+Security fixes:
+
+* Prevent a compromised or malicious app/runtime/extension with extra-data
+  from creating setuid root files on the host system when installed
+  (CVE-2026-133842, GHSA-p4mw-6jfq-r82r; thanks to RoyalOughtness)
+
+* Prevent a compromised or malicious app from escaping the sandbox by
+  manipulating file descriptor passing via flatpak-portal
+  (CVE-2026-133845, GHSA-5jrj-948r-2wx6; thanks to refi64)
+
 Changes in 1.18.4
 ~~~~~~~~~~~~~~~~~
 Released: 2026-09-28
