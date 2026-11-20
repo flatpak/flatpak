@@ -1451,6 +1451,150 @@ test_exports_unusual (void)
   g_assert_cmpuint (i, ==, bwrap->argv->len);
 }
 
+static void
+test_runtime_dir_export_symlinks (void)
+{
+  g_autoptr(GError) error = NULL;
+  g_autofree char *shared_dir = g_build_filename (isolated_test_dir,
+                                                  "runtime-dir-symlinks",
+                                                  NULL);
+  g_autofree char *link_path = NULL;
+  g_autofree char *got = NULL;
+  g_autofree char *expected_bwrap_path = NULL;
+  g_autofree char *expected_flatpak_info_path = NULL;
+
+  glnx_shutil_rm_rf_at (-1, shared_dir, NULL, &error);
+
+  if (error != NULL)
+    {
+      g_assert_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND);
+      g_clear_error (&error);
+    }
+
+  if (g_mkdir_with_parents (shared_dir, S_IRWXU) != 0)
+    g_error ("mkdir: %s", g_strerror (errno));
+
+  /* Test 1: with shared runtime dir, symlinks are created on disk */
+  {
+    g_autoptr(FlatpakBwrap) bwrap = flatpak_bwrap_new (NULL);
+
+    flatpak_bwrap_add_arg (bwrap, "bwrap");
+    flatpak_bwrap_add_runtime_dir_export_symlink (bwrap,
+                                                  "discord-ipc-0",
+                                                  "../some-socket");
+    flatpak_bwrap_populate_runtime_dir (bwrap, shared_dir);
+    flatpak_bwrap_finish (bwrap);
+
+    link_path = g_build_filename (shared_dir, "discord-ipc-0", NULL);
+    g_assert_true (g_file_test (link_path, G_FILE_TEST_IS_SYMLINK));
+
+    got = glnx_readlinkat_malloc (AT_FDCWD, link_path, NULL, &error);
+    g_assert_no_error (error);
+    g_assert_cmpstr (got, ==, "../some-socket");
+    g_clear_pointer (&got, g_free);
+
+    /* No --symlink args should have been added */
+    g_assert_cmpuint (bwrap->argv->len, ==, 2);
+    g_assert_cmpstr (bwrap->argv->pdata[0], ==, "bwrap");
+    g_assert_cmpstr (bwrap->argv->pdata[1], ==, NULL);
+  }
+
+  /* Test 2: second call with same symlink succeeds (the bug scenario) */
+  {
+    g_autoptr(FlatpakBwrap) bwrap = flatpak_bwrap_new (NULL);
+
+    flatpak_bwrap_add_arg (bwrap, "bwrap");
+    flatpak_bwrap_add_runtime_dir_export_symlink (bwrap,
+                                                  "discord-ipc-0",
+                                                  "../some-socket");
+    flatpak_bwrap_populate_runtime_dir (bwrap, shared_dir);
+    flatpak_bwrap_finish (bwrap);
+
+    g_assert_true (g_file_test (link_path, G_FILE_TEST_IS_SYMLINK));
+
+    got = glnx_readlinkat_malloc (AT_FDCWD, link_path, NULL, &error);
+    g_assert_no_error (error);
+    g_assert_cmpstr (got, ==, "../some-socket");
+    g_clear_pointer (&got, g_free);
+  }
+
+  /* Test 3: mismatched symlink gets replaced */
+  {
+    g_autoptr(FlatpakBwrap) bwrap = flatpak_bwrap_new (NULL);
+
+    flatpak_bwrap_add_arg (bwrap, "bwrap");
+    flatpak_bwrap_add_runtime_dir_export_symlink (bwrap,
+                                                  "discord-ipc-0",
+                                                  "../new-target");
+    flatpak_bwrap_populate_runtime_dir (bwrap, shared_dir);
+    flatpak_bwrap_finish (bwrap);
+
+    got = glnx_readlinkat_malloc (AT_FDCWD, link_path, NULL, &error);
+    g_assert_no_error (error);
+    g_assert_cmpstr (got, ==, "../new-target");
+    g_clear_pointer (&got, g_free);
+  }
+
+  /* Test 4: nested member path creates parent directory */
+  {
+    g_autoptr(FlatpakBwrap) bwrap = flatpak_bwrap_new (NULL);
+    g_autofree char *nested_link_path = NULL;
+    g_autofree char *nested_got = NULL;
+
+    flatpak_bwrap_add_arg (bwrap, "bwrap");
+    flatpak_bwrap_add_runtime_dir_export_symlink (bwrap,
+                                                  "subdir/nested-socket",
+                                                  "../../some-target");
+    flatpak_bwrap_populate_runtime_dir (bwrap, shared_dir);
+    flatpak_bwrap_finish (bwrap);
+
+    nested_link_path = g_build_filename (shared_dir, "subdir", "nested-socket", NULL);
+    g_assert_true (g_file_test (nested_link_path, G_FILE_TEST_IS_SYMLINK));
+
+    nested_got = glnx_readlinkat_malloc (AT_FDCWD, nested_link_path, NULL, &error);
+    g_assert_no_error (error);
+    g_assert_cmpstr (nested_got, ==, "../../some-target");
+  }
+
+  /* Test 5: without shared dir, --symlink bwrap args are generated */
+  {
+    g_autoptr(FlatpakBwrap) bwrap = flatpak_bwrap_new (NULL);
+    size_t i;
+
+    flatpak_bwrap_add_arg (bwrap, "bwrap");
+    flatpak_bwrap_add_runtime_dir_export_symlink (bwrap,
+                                                  "discord-ipc-0",
+                                                  "../some-socket");
+    flatpak_bwrap_populate_runtime_dir (bwrap, NULL);
+    flatpak_bwrap_finish (bwrap);
+
+    expected_bwrap_path = g_strdup_printf ("/run/user/%d/discord-ipc-0",
+                                           getuid ());
+
+    expected_flatpak_info_path = g_strdup_printf ("/run/user/%d/flatpak-info",
+                                                  getuid ());
+
+    i = 0;
+    g_assert_cmpstr (bwrap->argv->pdata[i++], ==, "bwrap");
+    g_assert_cmpstr (bwrap->argv->pdata[i++], ==, "--symlink");
+    g_assert_cmpstr (bwrap->argv->pdata[i++], ==, "../../../.flatpak-info");
+    g_assert_cmpstr (bwrap->argv->pdata[i++], ==, expected_flatpak_info_path);
+    g_assert_cmpstr (bwrap->argv->pdata[i++], ==, "--symlink");
+    g_assert_cmpstr (bwrap->argv->pdata[i++], ==, "../some-socket");
+    g_assert_cmpstr (bwrap->argv->pdata[i++], ==, expected_bwrap_path);
+    g_assert_cmpstr (bwrap->argv->pdata[i++], ==, NULL);
+    g_assert_cmpuint (i, ==, bwrap->argv->len);
+  }
+
+  glnx_shutil_rm_rf_at (-1, shared_dir, NULL, &error);
+
+  if (error != NULL)
+    {
+      g_assert_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND);
+      g_clear_error (&error);
+    }
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -1473,6 +1617,8 @@ main (int argc, char *argv[])
   g_test_add_func ("/exports/host/fedora", test_exports_fedora);
   g_test_add_func ("/exports/ignored", test_exports_ignored);
   g_test_add_func ("/exports/unusual", test_exports_unusual);
+  g_test_add_func ("/exports/runtime-dir-export-symlinks",
+                   test_runtime_dir_export_symlinks);
 
   res = g_test_run ();
 
