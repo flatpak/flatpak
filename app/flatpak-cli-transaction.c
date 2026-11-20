@@ -50,7 +50,8 @@ struct _FlatpakCliTransaction
   int                  rows;
   int                  cols;
   int                  table_width;
-  int                  table_height;
+  int                  preview_height;
+  int                  lines_after_preview;
 
   int                  n_ops;
   int                  op;
@@ -63,6 +64,7 @@ struct _FlatpakCliTransaction
   int                  download_col;
 
   FlatpakTablePrinter *printer;
+  char                *clear_and_up;
   int                  progress_row;
   char                *progress_msg;
   int                  speed_len;
@@ -199,47 +201,23 @@ install_authenticator (FlatpakTransaction            *old_transaction,
   return;
 }
 
-static gboolean
+static void
 redraw (FlatpakCliTransaction *self)
 {
-  g_autoptr(GString) frame = NULL;
-  int top;
-  int row;
-  int current_row;
-  int current_col;
-  int skip;
+  g_autoptr(GString) frame = g_string_new (FLATPAK_ANSI_SYNC_START);
+  int old_rows = self->rows;
+  int old_cols = self->cols;
 
-  /* We may have resized and thus repositioned the cursor since last redraw */
   flatpak_get_window_size (&self->rows, &self->cols);
-  if (flatpak_get_cursor_pos (&current_row, &current_col))
-    {
-      /* We're currently displaying the last row of the table, extept the
-         very first time where the user pressed return for the prompt causing us
-         to scroll down one extra row */
-      top = current_row - self->table_height + 1;
-      if (top > 0)
-        {
-          row = top;
-          skip = 0;
-        }
-      else
-        {
-          row = 1;
-          skip = 1 - top;
-        }
-
-      frame = g_string_new (FLATPAK_ANSI_SYNC_START);
-      g_string_append_printf (frame, FLATPAK_ANSI_ROW_N FLATPAK_ANSI_CLEAR, row);
-      // we update table_height and end_row here, since we might have added to the table
-      flatpak_table_printer_print_full_to_string (self->printer, skip, self->cols,
-                                                  &self->table_height, &self->table_width,
-                                                  frame);
-      g_string_append (frame, FLATPAK_ANSI_SYNC_END);
-
-      flatpak_print_unbuffered (frame);
-      return TRUE;
-    }
-  return FALSE;
+  if (self->lines_after_preview > 0 && !self->did_interaction &&
+      old_rows == self->rows && old_cols == self->cols)
+    flatpak_table_printer_resume_preview (self->printer, self->rows, self->cols,
+                                          self->preview_height, self->lines_after_preview);
+  self->lines_after_preview = 0;
+  flatpak_table_printer_redraw (self->printer, self->rows, self->cols,
+                                self->clear_and_up, &self->table_width, frame);
+  g_string_append (frame, FLATPAK_ANSI_SYNC_END);
+  flatpak_print_unbuffered (frame);
 }
 
 static void
@@ -369,8 +347,7 @@ progress_changed_cb (FlatpakTransactionProgress *progress,
           row = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (op), "row"));
           flatpak_table_printer_set_decimal_cell (cli->printer, row, cli->download_col, text);
         }
-      if (!redraw (cli))
-        g_print ("\r%s", str->str); /* redraw failed, just update the progress */
+      redraw (cli);
       flatpak_pty_set_progress (percent);
     }
   else
@@ -1350,6 +1327,7 @@ transaction_ready_pre_auth (FlatpakTransaction *transaction)
   int i;
   FlatpakTablePrinter *printer;
   const char *op_shorthand[] = { "i", "u", "i", "r", "i" };
+  gboolean show_preview = !self->assume_yes || !flatpak_fancy_output ();
 
   /* These caches may no longer be valid once the transaction runs */
   g_clear_pointer (&self->runtime_app_map, g_hash_table_unref);
@@ -1364,6 +1342,9 @@ transaction_ready_pre_auth (FlatpakTransaction *transaction)
     {
       FlatpakTransactionOperation *op = l->data;
       FlatpakTransactionOperationType type = flatpak_transaction_operation_get_operation_type (op);
+
+      if (flatpak_transaction_operation_get_requires_authentication (op))
+        show_preview = TRUE;
 
       switch (type)
         {
@@ -1501,17 +1482,22 @@ transaction_ready_pre_auth (FlatpakTransaction *transaction)
 
   g_print ("\n");
 
-  flatpak_table_printer_print_full (printer, 0, self->cols,
-                                    &self->table_height, &self->table_width);
-
-  g_print ("\n");
+  if (show_preview)
+    {
+      flatpak_table_printer_print_full (printer, 0, self->cols, &self->preview_height, &self->table_width);
+      g_print ("\n");
+      if (self->assume_yes)
+        self->lines_after_preview = 1;
+    }
 
   if (!self->assume_yes)
     {
       g_autoptr(FlatpakInstallation) installation = flatpak_transaction_get_installation (transaction);
       const char *name;
       const char *id;
-      gboolean ret;
+      g_autofree char *formatted = NULL;
+      const char *prompt;
+      int prompt_rows;
 
       g_print ("\n");
 
@@ -1519,16 +1505,18 @@ transaction_ready_pre_auth (FlatpakTransaction *transaction)
       id = flatpak_installation_get_id (installation);
 
       if (flatpak_installation_get_is_user (installation))
-        ret = flatpak_yes_no_prompt (TRUE, _("Proceed with these changes to the user installation?"));
+        prompt = _("Proceed with these changes to the user installation?");
       else if (g_strcmp0 (id, SYSTEM_DIR_DEFAULT_ID) == 0)
-        ret = flatpak_yes_no_prompt (TRUE, _("Proceed with these changes to the system installation?"));
+        prompt = _("Proceed with these changes to the system installation?");
       else
-        ret = flatpak_yes_no_prompt (TRUE, _("Proceed with these changes to the %s?"), name);
+        prompt = formatted = g_strdup_printf (_("Proceed with these changes to the %s?"), name);
 
-      if (!ret)
+      if (!flatpak_confirm_changes (prompt, self->cols, &prompt_rows))
         return FALSE;
+      if (prompt_rows > 0)
+        self->lines_after_preview = 2 + prompt_rows;
     }
-  else
+  else if (!flatpak_fancy_output ())
     g_print ("\n\n");
 
   self->did_interaction = FALSE;
@@ -1549,11 +1537,11 @@ transaction_ready (FlatpakTransaction *transaction)
 
   printer = self->printer;
 
-  if (self->did_interaction)
+  if (self->did_interaction && !flatpak_fancy_output ())
     {
       /* We did some interaction since ready_pre_auth which messes up the formatting, so re-print table */
       flatpak_table_printer_print_full (printer, 0, self->cols,
-                                        &self->table_height, &self->table_width);
+                                        NULL, &self->table_width);
       g_print ("\n\n");
     }
 
@@ -1570,8 +1558,6 @@ transaction_ready (FlatpakTransaction *transaction)
   flatpak_table_printer_add_span (printer, "");
   self->progress_row = flatpak_table_printer_get_current_row (printer);
   flatpak_table_printer_finish_row (printer);
-
-  self->table_height += 3; /* 2 for the added lines and one for the newline from the user after the prompt */
 
   if (flatpak_fancy_output ())
     {
@@ -1594,6 +1580,7 @@ flatpak_cli_transaction_finalize (GObject *object)
     g_error_free (self->first_operation_error);
 
   g_free (self->progress_msg);
+  g_free (self->clear_and_up);
 
   g_hash_table_unref (self->eol_actions);
 
@@ -1672,6 +1659,28 @@ flatpak_cli_transaction_new (FlatpakDir *dir,
   return (FlatpakTransaction *) g_steal_pointer (&self);
 }
 
+static char *
+get_clear_and_up (void)
+{
+  g_autoptr(GSubprocess) tput = NULL;
+  g_autofree char *output = NULL;
+
+  /* Read the cursor-up and erase-line capabilities without querying the tty. */
+  tput = g_subprocess_new (G_SUBPROCESS_FLAGS_STDIN_PIPE |
+                           G_SUBPROCESS_FLAGS_STDOUT_PIPE |
+                           G_SUBPROCESS_FLAGS_STDERR_SILENCE,
+                           NULL, "tput", "-S", NULL);
+  if (tput != NULL &&
+      g_subprocess_communicate_utf8 (tput, "el\ncuu1\n", NULL, &output, NULL, NULL) &&
+      g_subprocess_get_successful (tput) &&
+      (g_str_equal (output, FLATPAK_ANSI_CLEAR_TO_EOL "\033[A") ||
+       g_str_equal (output, FLATPAK_ANSI_CLEAR_TO_EOL "\033[1A") ||
+       g_str_equal (output, FLATPAK_ANSI_CLEAR_TO_EOL "\033M")))
+    return g_steal_pointer (&output);
+
+  return NULL;
+}
+
 static gboolean
 flatpak_cli_transaction_run (FlatpakTransaction *transaction,
                              GCancellable       *cancellable,
@@ -1679,6 +1688,13 @@ flatpak_cli_transaction_run (FlatpakTransaction *transaction,
 {
   FlatpakCliTransaction *self = FLATPAK_CLI_TRANSACTION (transaction);
   gboolean res;
+
+  if (flatpak_fancy_output ())
+    {
+      self->clear_and_up = get_clear_and_up ();
+      if (self->clear_and_up == NULL)
+        flatpak_disable_fancy_output ();
+    }
 
   res = FLATPAK_TRANSACTION_CLASS (flatpak_cli_transaction_parent_class)->run (transaction, cancellable, error);
 
@@ -1704,13 +1720,10 @@ flatpak_cli_transaction_run (FlatpakTransaction *transaction,
 
       if (flatpak_fancy_output ())
         {
-          set_progress (self, text);
+          set_progress (self, "");
           redraw (self);
         }
-      else
-        g_print ("%s", text);
-
-      g_print ("\n");
+      g_print ("%s\n", text);
     }
 
   if (self->first_operation_error)

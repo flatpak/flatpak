@@ -87,12 +87,18 @@ free_column (gpointer data)
 
 struct FlatpakTablePrinter
 {
-  GPtrArray *columns;
-  GPtrArray *rows;
+  GPtrArray  *columns;
+  GPtrArray  *rows;
   GHashTable *rows_ht;
-  char      *key;
-  GPtrArray *current;
-  int        n_columns;
+  char       *key;
+  GPtrArray  *current;
+  int         n_columns;
+  int         frame_columns;
+  int         frame_max_width;
+  int         frame_rows;
+  int         frame_height;
+  int         frame_last_row;
+  int         frame_skip;
 };
 
 FlatpakTablePrinter *
@@ -351,41 +357,57 @@ flatpak_table_printer_finish_row (FlatpakTablePrinter *printer)
  * The output is written to `out`, or printed if NULL.
  */
 static int
-print_row (GString *row_s, gboolean bold, int *skip, int columns, GString *out)
+print_row (GString *row_s, gboolean bold, int *skip, int columns, int *max_width, GString *out)
 {
-  int rows;
-  const char *p, *end;
-  int n_chars;
+  int rows = 0;
+  const char *p;
+  const char *next;
 
   g_strchomp (row_s->str);
-  n_chars = cell_width (row_s->str);
-  if (n_chars > 0)
-    rows = (n_chars + columns - 1) / columns;
-  else
-    rows = 1;
-
-  p = row_s->str;
-  end = row_s->str + strlen (row_s->str);
-  while (*skip > 0 && p <= end)
+  p = next = row_s->str;
+  do
     {
-      (*skip)--;
-      p = cell_advance (p, columns);
-    }
-
-  if (p < end || p == row_s->str)
-    {
-      if (out != NULL)
+      next = cell_next_line (next, columns, max_width);
+      rows++;
+      if (*skip > 0)
         {
-          if (bold)
-            g_string_append_printf (out, FLATPAK_ANSI_BOLD_ON "%s" FLATPAK_ANSI_BOLD_OFF, p);
-          else
-            g_string_append (out, p);
+          (*skip)--;
+          p = next;
+          if (!*p)
+            {
+              g_string_truncate (row_s, 0);
+              return rows;
+            }
         }
-      else if (bold)
-        g_print (FLATPAK_ANSI_BOLD_ON "%s" FLATPAK_ANSI_BOLD_OFF, p);
-      else
-        g_print ("%s", p);
     }
+  while (*next);
+
+  /* Only replay SGR from the skipped text. */
+  for (const char *esc = row_s->str; esc < p; esc++)
+    if (*esc == '\033' && esc[1] == '[')
+      {
+        const char *end = esc + 2 + strspn (esc + 2, "0123456789;");
+        if (*end == 'm' && end < p)
+          {
+            if (out != NULL)
+              g_string_append_len (out, esc, end + 1 - esc);
+            else
+              g_print ("%.*s", (int) (end + 1 - esc), esc);
+            esc = end;
+          }
+      }
+
+  if (out != NULL)
+    {
+      if (bold)
+        g_string_append_printf (out, FLATPAK_ANSI_BOLD_ON "%s" FLATPAK_ANSI_BOLD_OFF, p);
+      else
+        g_string_append (out, p);
+    }
+  else if (bold)
+    g_print (FLATPAK_ANSI_BOLD_ON "%s" FLATPAK_ANSI_BOLD_OFF, p);
+  else
+    g_print ("%s", p);
   g_string_truncate (row_s, 0);
 
   return rows;
@@ -426,7 +448,7 @@ column_is_unique (FlatpakTablePrinter *printer, int col)
 }
 
 /* Shared implementation of `flatpak_table_printer_print_full()` and
- * `flatpak_table_printer_print_full_to_string()`.
+ * `flatpak_table_printer_redraw()`.
  *
  * The output is written to `out`, or printed if NULL.
  */
@@ -436,6 +458,8 @@ print_full (FlatpakTablePrinter *printer,
             int                  columns,
             int                 *table_height,
             int                 *table_width,
+            int                 *max_width,
+            int                 *previous_status_start,
             GString             *out)
 {
   g_autofree int *widths = NULL;
@@ -452,6 +476,8 @@ print_full (FlatpakTablePrinter *printer,
   gboolean has_title;
   int expand_by, expand_extra;
 
+  if (max_width != NULL)
+    *max_width = 0;
   if (printer->current->len != 0)
     flatpak_table_printer_finish_row (printer);
 
@@ -656,7 +682,7 @@ print_full (FlatpakTablePrinter *printer,
           string_add_spaces (row_s, len - cell_width (title));
         }
 
-      rows += print_row (row_s, TRUE, &skip, columns, out);
+      rows += print_row (row_s, TRUE, &skip, columns, max_width, out);
     }
 
   for (i = 0; i < printer->rows->len; i++)
@@ -723,7 +749,9 @@ print_full (FlatpakTablePrinter *printer,
             g_string_append_printf (row_s, "%s%s", cell->text, (j < row->cells->len - 1) ? "\t" : "");
         }
 
-      rows += print_row (row_s, FALSE, &skip, columns, out);
+      if (previous_status_start != NULL && i == printer->frame_last_row)
+        *previous_status_start = rows;
+      rows += print_row (row_s, FALSE, &skip, columns, max_width, out);
     }
 
   if (table_width)
@@ -739,20 +767,68 @@ flatpak_table_printer_print_full (FlatpakTablePrinter *printer,
                                   int                 *table_height,
                                   int                 *table_width)
 {
-  print_full (printer, skip, columns, table_height, table_width, NULL);
+  print_full (printer, skip, columns, table_height, table_width, NULL, NULL, NULL);
 }
 
 void
-flatpak_table_printer_print_full_to_string (FlatpakTablePrinter *printer,
-                                            int                  skip,
-                                            int                  columns,
-                                            int                 *table_height,
-                                            int                 *table_width,
-                                            GString             *out)
+flatpak_table_printer_resume_preview (FlatpakTablePrinter *printer,
+                                      int                  rows,
+                                      int                  columns,
+                                      int                  preview_height,
+                                      int                  lines_after_preview)
 {
-  g_return_if_fail (out != NULL);
+  /* Prompt lines occupy screen space, but cannot hide more than the
+   * whole preview. The new progress rows have never been printed. */
+  printer->frame_height = preview_height + MIN (rows, lines_after_preview);
+  printer->frame_skip = MAX (0, printer->frame_height - rows);
+  printer->frame_rows = rows;
+  printer->frame_columns = columns;
+  printer->frame_last_row = (int) printer->rows->len - 1;
+}
 
-  print_full (printer, skip, columns, table_height, table_width, out);
+void
+flatpak_table_printer_redraw (FlatpakTablePrinter *printer,
+                              int                  rows,
+                              int                  columns,
+                              const char          *clear_and_up,
+                              int                 *table_width,
+                              GString             *out)
+{
+  int skip = MAX (printer->frame_skip, printer->frame_height - rows);
+  int visible = printer->frame_height - skip;
+  int previous_status_start = 0;
+  int old_height = printer->frame_height;
+  size_t content_start;
+
+  /* Start below the old table if its first visible row may have moved. */
+  if (printer->frame_columns == 0 ||
+      (printer->frame_columns != columns && printer->frame_max_width > MIN (columns, printer->frame_columns)) ||
+      (rows > printer->frame_rows && printer->frame_skip > 0))
+    {
+      g_string_append_c (out, '\n');
+      skip = 0;
+    }
+  else
+    {
+      g_string_append_c (out, '\r');
+      for (int i = 1; i < visible; i++)
+        g_string_append (out, clear_and_up);
+      g_string_append (out, FLATPAK_ANSI_CLEAR_TO_EOL);
+    }
+  content_start = out->len;
+  print_full (printer, skip, columns, &printer->frame_height, table_width,
+              &printer->frame_max_width, &previous_status_start, out);
+  if (printer->frame_height < old_height && skip > previous_status_start)
+    {
+      /* Keep the replacement status visible without repeating earlier rows. */
+      skip = MAX (previous_status_start, printer->frame_height - visible);
+      g_string_truncate (out, content_start);
+      print_full (printer, skip, columns, NULL, NULL, NULL, NULL, out);
+    }
+  printer->frame_columns = columns;
+  printer->frame_last_row = (int) printer->rows->len - 1;
+  printer->frame_rows = rows;
+  printer->frame_skip = MAX (skip, printer->frame_height - rows);
 }
 
 void

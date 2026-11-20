@@ -67,12 +67,17 @@ void                flatpak_table_printer_print_full (FlatpakTablePrinter *print
                                                       int                  columns,
                                                       int                 *table_height,
                                                       int                 *table_width);
-void                flatpak_table_printer_print_full_to_string (FlatpakTablePrinter *printer,
-                                                                int                  skip,
-                                                                int                  columns,
-                                                                int                 *table_height,
-                                                                int                 *table_width,
-                                                                GString             *out);
+void                flatpak_table_printer_redraw (FlatpakTablePrinter *printer,
+                                                  int                  rows,
+                                                  int                  columns,
+                                                  const char          *clear_and_up,
+                                                  int                 *table_width,
+                                                  GString             *out);
+void                flatpak_table_printer_resume_preview (FlatpakTablePrinter *printer,
+                                                          int                  rows,
+                                                          int                  columns,
+                                                          int                  preview_height,
+                                                          int                  lines_after_preview);
 int                 flatpak_table_printer_get_current_row (FlatpakTablePrinter *printer);
 void                flatpak_table_printer_set_cell (FlatpakTablePrinter *printer,
                                                     int                  row,

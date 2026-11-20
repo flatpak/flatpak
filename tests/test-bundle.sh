@@ -38,19 +38,81 @@ assert_has_file bundles/platform.flatpak
 ok "create bundles server-side"
 
 rm bundles/hello.flatpak
-${FLATPAK} ${U} install -y test-repo org.test.Hello >&2
+setup_progress_terminals
+install_on_tty () {
+    env -u G_MESSAGES_DEBUG PATH="$test_tmpdir/tty-bin:$PATH" LC_ALL=C FLATPAK_FANCY_OUTPUT=1 python3 -c '
+import os, pty, signal, sys, time
+pending = bytearray()
+early = os.getenv("EARLY_INPUT")
+interactive = "-y" not in sys.argv and early != "line"
+def timeout(signum, frame):
+    raise RuntimeError("waiting for confirmation prompt; last output: %r" % pending[-256:])
+signal.signal(signal.SIGALRM, timeout)
+if interactive or early:
+    signal.alarm(30)
+def read_output(fd):
+    data = os.read(fd, 4096)
+    pending.extend(data)
+    if early and b"ready-for-input" in pending:
+        os.write(fd, b"go\n" + (b"\n" if early == "line" else b" " * 240))
+        if not interactive:
+            signal.alarm(0)
+        pending.clear()
+    elif interactive and b"[Y/n]: " in pending:
+        # Wait for the prompt writer to block for input, so the reply is
+        # distinct from the typeahead case even under scheduler contention.
+        stat = "/proc/%d/stat" % os.tcgetpgrp(fd)
+        while open(stat).read().rsplit(")", 1)[1].split()[0] != "S":
+            time.sleep(0.001)
+        os.write(fd, b"\n")
+        signal.alarm(0)
+        pending.clear()
+    return data
+setup = "stty rows 5 cols 120; "
+if early:
+    setup += "echo ready-for-input; read -r gate; "
+status = pty.spawn(["sh", "-c", setup + "exec \"$@\"", "sh", *sys.argv[1:]], master_read=read_output)
+sys.exit(os.WEXITSTATUS(status) if os.WIFEXITED(status) else 1)
+' "$FLATPAK" install ${U} "$@" </dev/null
+}
+
+TERM=xterm install_on_tty test-repo org.test.Hello > install-output || { cat install-output >&2; exit 1; }
+assert_file_has_content install-output $'\033\\[K\033\\[1A'
+assert_not_file_has_content install-output $'\033\\[6n'
+assert_file_has_content install-output 'Installation complete\.'
+python3 -c '
+import re
+data = open("install-output", "rb").read()
+preview, progress = data.split(b"\033[?2026h", 1)
+assert b"org.test.Hello" in preview[:preview.index(b"[Y/n]: ")]
+first_frame = progress.split(b"\033[?2026l", 1)[0]
+operation = rb" *[0-9]+\. +(?:\[[^]]*\] +)?(org\.test\.[A-Za-z.]+)"
+ids = re.findall(operation, preview[preview.rindex(b"\033[1m"):])
+assert sorted(ids) == [b"org.test.Hello", b"org.test.Hello.Locale", b"org.test.Platform"], ids
+assert re.findall(operation, first_frame) == ids[-2:]
+'
 ${FLATPAK} build-bundle $FL_DIR/repo --repo-url="file://$(pwd)/repos/test" --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/hello.flatpak org.test.Hello >&2
 assert_has_file bundles/hello.flatpak
 
 ok "create bundles client-side"
 
 ${FLATPAK} uninstall ${U} -y org.test.Hello >&2
-${FLATPAK} install ${U} -y --bundle bundles/hello.flatpak >&2
+EARLY_INPUT=line TERM=xterm install_on_tty --bundle bundles/hello.flatpak > early-output
+EARLY_INPUT=partial TERM=xterm install_on_tty --reinstall --bundle bundles/hello.flatpak > partial-output
+python3 -c '
+for path in ("early-output", "partial-output"):
+    data = open(path, "rb").read()
+    preview, progress = data.split(b"\033[?2026h", 1)
+    assert b"[Y/n]: " in preview
+    assert progress.startswith((b"\r\n", b"\n")), "rewound after typeahead"
+'
 
 # Installing again without reinstall option should fail...
 assert_fail ${FLATPAK} install ${U} -y --bundle bundles/hello.flatpak >&2
 # Now with reinstall option it should pass...
-${FLATPAK} install ${U} -y --bundle bundles/hello.flatpak --reinstall >&2
+TERM=dumb install_on_tty -y --bundle bundles/hello.flatpak --reinstall > plain-output
+assert_file_has_content plain-output 'Installation complete\.'
+assert_not_file_has_content plain-output $'\033'
 
 # This should have installed the runtime dependency too
 assert_has_file $FL_DIR/repo/refs/remotes/test-repo/runtime/org.test.Platform/$ARCH/master

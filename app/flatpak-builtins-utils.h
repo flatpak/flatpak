@@ -175,8 +175,9 @@ gboolean    flatpak_dir_load_appstream_data (FlatpakDir   *self,
                                              GError      **error);
 
 int         cell_width (const char *text);
-const char *cell_advance (const char *text,
-                          int         num);
+const char *cell_next_line (const char *text,
+                            int         columns,
+                            int        *max_width);
 
 void print_wrapped (int         columns,
                     const char *text,

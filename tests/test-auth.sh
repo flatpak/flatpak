@@ -62,11 +62,19 @@ assert_not_has_dir $FL_DIR/app/org.flatpak.Authenticator.test/$ARCH/autoinstall/
 EXPORT_ARGS="--token-type=2" make_updated_app
 mark_need_token app/org.test.Hello/$ARCH/master the-secret
 
+setup_progress_terminals
+install_on_tty () {
+    env -u G_MESSAGES_DEBUG PATH="$test_tmpdir/tty-bin:$PATH" TERM=xterm LC_ALL=C FLATPAK_FANCY_OUTPUT=1 python3 -c \
+    'import os, pty, sys; s = pty.spawn(sys.argv[1:]); sys.exit(os.WEXITSTATUS(s) if os.WIFEXITED(s) else 1)' \
+    "$FLATPAK" ${U} install -y test-repo org.test.Hello master </dev/null
+}
+
 # Install with no authenticator
-if ${FLATPAK} ${U} install -y test-repo org.test.Hello master &> install-error-log; then
+if install_on_tty > install-error-log; then
     assert_not_reached "Should not be able to install without authenticator"
 fi
 assert_file_has_content install-error-log "No authenticator configured for remote"
+assert_file_has_content install-error-log 'org\.test\.Hello .*master'
 assert_not_has_dir $FL_DIR/app/org.flatpak.Authenticator.test/$ARCH/autoinstall/active/files
 
 ${FLATPAK} ${U} remote-modify test-repo --authenticator-name org.flatpak.Authenticator.test --authenticator-install >&2
@@ -83,7 +91,13 @@ assert_has_dir $FL_DIR/app/org.flatpak.Authenticator.test/$ARCH/autoinstall/acti
 
 # Install with right token
 echo -n the-secret > ${XDG_RUNTIME_DIR}/required-token
-${FLATPAK} ${U} install -y test-repo org.test.Hello master >&2
+install_on_tty > install-output
+python3 -c '
+data = open("install-output", "rb").read()
+preview, progress = data.split(b"\033[?2026h", 1)
+assert b"org.test.Hello" in preview and b"[Y/n]" not in preview
+assert progress.startswith(b"\r\033"), "silent authentication left a duplicate preview"
+'
 assert_file_has_content ${XDG_RUNTIME_DIR}/request "^remote: test-repo$"
 assert_file_has_content ${XDG_RUNTIME_DIR}/request "^uri: http://127.0.0.1:${port}/test$"
 if [ x${USE_COLLECTIONS_IN_CLIENT-} == xyes ] ; then

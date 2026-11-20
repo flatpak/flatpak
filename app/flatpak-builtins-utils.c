@@ -1285,19 +1285,20 @@ cell_width (const char *text)
   return width;
 }
 
-/* Advance text by num cells, skipping Escape sequences,
- * and taking character width into account
- */
 const char *
-cell_advance (const char *text,
-              int         num)
+cell_next_line (const char *text,
+                int         columns,
+                int        *max_width)
 {
   const char *p = text;
   gunichar c;
   int width = 0;
 
-  while (width < num)
+  while (*p)
     {
+      const char *prefix = p;
+      int cells;
+
       while (*p && *p == '\x1b')
         p = skip_escape_sequence (p);
 
@@ -1305,15 +1306,27 @@ cell_advance (const char *text,
         break;
 
       c = g_utf8_get_char (p);
+      if (c == '\n')
+        {
+          p++;
+          break;
+        }
 
-      if (g_unichar_iswide (c))
-        width += 2;
-      else if (!g_unichar_iszerowidth (c))
-        width += 1;
+      cells = g_unichar_iswide (c) ? 2 : !g_unichar_iszerowidth (c);
+      if (cells > 0 && width > 0 && width + cells > columns)
+        {
+          /* Record that the line exceeded the old width. */
+          width += cells;
+          p = prefix;
+          break;
+        }
+      width += cells;
 
       p = g_utf8_next_char (p);
     }
 
+  if (max_width != NULL)
+    *max_width = MAX (*max_width, width);
   return p;
 }
 

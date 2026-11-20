@@ -316,6 +316,44 @@ test_string_ellipsize (void)
 }
 
 static void
+test_table_redraw (void)
+{
+  FlatpakTablePrinter *printer = flatpak_table_printer_new ();
+  g_autoptr(GString) frame = g_string_new ("");
+
+  flatpak_enable_fancy_output ();
+  flatpak_table_printer_add_span (printer, "abcde");
+  flatpak_table_printer_finish_row (printer);
+  flatpak_table_printer_add_span (printer, "B");
+  flatpak_table_printer_finish_row (printer);
+  flatpak_table_printer_add_span (printer, "C");
+  flatpak_table_printer_finish_row (printer);
+
+  flatpak_table_printer_resume_preview (printer, 4, 5, 3, 2);
+  flatpak_table_printer_redraw (printer, 4, 5, "\033[K\033[A", NULL, frame);
+  g_assert_true (g_str_has_suffix (frame->str, "B\nC"));
+  g_assert_null (strstr (frame->str, "abcde"));
+  flatpak_table_printer_set_cell (printer, 0, 0, "ABCDE");
+  g_string_truncate (frame, 0);
+  flatpak_table_printer_redraw (printer, 4, 4, "\033[K\033[A", NULL, frame);
+  g_assert_cmpstr (frame->str, ==, "\nABCDE\nB\nC");
+
+  flatpak_table_printer_set_cell (printer, 2, 0, "very long status message");
+  g_string_truncate (frame, 0);
+  flatpak_table_printer_redraw (printer, 2, 4, "\033[K\033[A", NULL, frame);
+  flatpak_table_printer_set_cell (printer, 2, 0, "Warn");
+  flatpak_table_printer_add_span (printer, "");
+  flatpak_table_printer_finish_row (printer);
+  g_string_truncate (frame, 0);
+  flatpak_table_printer_redraw (printer, 2, 4, "\033[K\033[A", NULL, frame);
+  g_assert_true (g_str_has_suffix (frame->str, "Warn\n"));
+  g_assert_null (strstr (frame->str, "B"));
+
+  flatpak_table_printer_free (printer);
+  flatpak_disable_fancy_output ();
+}
+
+static void
 test_table (void)
 {
   GPrintFunc print_func;
@@ -345,6 +383,10 @@ test_table (void)
                    "Column1 Column2" FLATPAK_ANSI_BOLD_OFF "\n"
                    "text1   text2\n"
                    "text3   text4\n");
+  g_string_truncate (g_print_buffer, 0);
+
+  flatpak_table_printer_print_full (printer, 2, 80, NULL, NULL);
+  g_assert_cmpstr (g_print_buffer->str, ==, "text3   text4");
   g_string_truncate (g_print_buffer, 0);
 
   flatpak_table_printer_set_cell (printer, 0, 0, "newtext1");
@@ -691,6 +733,7 @@ main (int argc, char *argv[])
 
   g_test_add_func ("/app/columns", test_columns);
   g_test_add_func ("/app/fancy-output", test_fancy_output);
+  g_test_add_func ("/app/table-redraw", test_table_redraw);
   g_test_add_func ("/app/format-choices", test_format_choices);
   g_test_add_func ("/app/format-progress-remaining-time", test_format_progress_remaining_time);
   g_test_add_func ("/app/looks-like-branch", test_looks_like_branch);

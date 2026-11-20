@@ -34,14 +34,13 @@
 
 #define FLATPAK_ANSI_ROW_N "\x1b[%d;1H"
 #define FLATPAK_ANSI_CLEAR "\x1b[0J"
+#define FLATPAK_ANSI_CLEAR_TO_EOL "\x1b[K"
 #define FLATPAK_ANSI_SYNC_START "\x1b[?2026h"
 #define FLATPAK_ANSI_SYNC_END "\x1b[?2026l"
 
 gboolean flatpak_set_tty_echo (gboolean echo);
 void flatpak_get_window_size (int *rows,
                               int *cols);
-gboolean flatpak_get_cursor_pos (int *row,
-                                 int *col);
 void flatpak_hide_cursor (void);
 void flatpak_show_cursor (void);
 
@@ -66,6 +65,9 @@ char * flatpak_password_prompt (const char *prompt,
 gboolean flatpak_yes_no_prompt (gboolean    default_yes,
                                 const char *prompt,
                                 ...) G_GNUC_PRINTF (2, 3);
+gboolean flatpak_confirm_changes (const char *prompt,
+                                  int         columns,
+                                  int        *prompt_rows);
 
 long flatpak_number_prompt (gboolean    default_yes,
                             int         min,
