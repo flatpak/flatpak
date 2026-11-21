@@ -288,7 +288,8 @@ print_table_for_refs (gboolean      print_apps,
               else if (strcmp (columns[k].name, "runtime") == 0)
                 flatpak_table_printer_add_column (printer, runtime ? runtime : "");
               else if (strcmp (columns[k].name, "ref") == 0)
-                flatpak_table_printer_add_column (printer, partial_ref);
+                /* Match remote-ls / remote-info -r: kind/id/arch/branch (#6788). */
+                flatpak_table_printer_add_column (printer, flatpak_decomposed_get_ref (ref));
               else if (strcmp (columns[k].name, "application") == 0)
                 flatpak_table_printer_add_column (printer, ref_id);
               else if (strcmp (columns[k].name, "arch") == 0)
