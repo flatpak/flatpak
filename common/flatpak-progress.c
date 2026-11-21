@@ -415,6 +415,7 @@ flatpak_progress_start_oci_pull (FlatpakProgress *self)
   if (self == NULL)
     return;
 
+  self->progress = 0;
   self->start_time = g_get_monotonic_time () - 2;
   self->outstanding_fetches = 0;
   self->outstanding_writes = 0;
