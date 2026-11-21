@@ -344,7 +344,13 @@ flatpak_builtin_repair (int argc, char **argv, GCancellable *cancellable, GError
 
   if (!opt_dry_run && !flatpak_dir_is_user (dir) && geteuid () != 0)
     {
-      g_print ("Privileges are required to make changes; assuming --dry-run\n");
+      /* Without root we cannot rewrite the system installation; make that
+       * obvious instead of only showing translated "Dry run:" lines (#6113). */
+      g_printerr ("%s\n",
+                  _("System repairs need root privileges. Re-run as root "
+                    "(for example with sudo), use --user for the per-user "
+                    "installation, or pass --dry-run to only report problems. "
+                    "Continuing as a dry run."));
       opt_dry_run = TRUE;
     }
 
