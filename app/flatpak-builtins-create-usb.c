@@ -502,6 +502,13 @@ flatpak_builtin_create_usb (int argc, char **argv, GCancellable *cancellable, GE
   if (!glnx_fstat (mount_root_dfd, &mount_root_stbuf, error))
     return FALSE;
 
+  /* Other users on another machine may not share this uid; warn if the
+   * mount is not world-accessible (#2872). */
+  if ((mount_root_stbuf.st_mode & (S_IROTH | S_IXOTH)) != (S_IROTH | S_IXOTH))
+    g_printerr (_("Warning: the permissions on ‘%s’ may prevent other users "
+                  "from reading this USB repository on another computer\n"),
+                mount_root_path);
+
   prefs = &argv[2];
   n_prefs = argc - 2;
 
