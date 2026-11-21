@@ -372,15 +372,25 @@ sockets=!x11;x11;if:x11:!has-wayland;
 
                             <varlistentry><term><option>host</option></term>
                             <listitem><para>
-                                The entire host file system, except for
-                                directories that are handled specially by
-                                Flatpak.
-                                In particular, this shares
+                                Access to the host file system. Flatpak
+                                exports every top-level directory under
+                                <filename>/</filename> into the sandbox,
+                                except for a finite denylist of paths that
+                                Flatpak must control itself. Other
+                                top-level directories such as
                                 <filename>/home</filename>,
                                 <filename>/media</filename>,
-                                <filename>/opt</filename>,
-                                <filename>/run/media</filename> and
-                                <filename>/srv</filename> if they exist.
+                                <filename>/mnt</filename>,
+                                <filename>/opt</filename> and
+                                <filename>/srv</filename> are shared when
+                                they exist; they are not a special allowlist.
+                            </para>
+                            <para>
+                                Treat this permission as a sandbox escape,
+                                especially if it is read/write. Prefer a
+                                narrower path such as
+                                <option>--filesystem=/mnt/data</option>
+                                when that is enough.
                             </para>
                             <para>
                                 <filename>/dev</filename> is not shared:
@@ -390,6 +400,12 @@ sockets=!x11;x11;if:x11:!has-wayland;
                                 Parts of <filename>/sys</filename> are always
                                 shared. This option does not make additional
                                 files in /sys available.
+                            </para>
+                            <para>
+                                <filename>/run</filename> as a whole is not
+                                exported, but <filename>/run/media</filename>
+                                is shared as a special case so removable
+                                media remains reachable.
                             </para>
                             <para>
                                 Additionally, this keyword provides all of the
@@ -407,11 +423,12 @@ sockets=!x11;x11;if:x11:!has-wayland;
                                 equivalent to <code>host:rw;</code>.
                             </para>
                             <para>
-                                These other reserved directories are
-                                currently excluded:
+                                The directories currently excluded from the
+                                top-level export are:
                                 <filename>/app</filename>,
                                 <filename>/bin</filename>,
                                 <filename>/boot</filename>,
+                                <filename>/dev</filename>,
                                 <filename>/efi</filename>,
                                 <filename>/etc</filename>,
                                 <filename>/lib</filename>,
@@ -421,6 +438,7 @@ sockets=!x11;x11;if:x11:!has-wayland;
                                 <filename>/root</filename>,
                                 <filename>/run</filename>,
                                 <filename>/sbin</filename>,
+                                <filename>/sys</filename>,
                                 <filename>/tmp</filename>,
                                 <filename>/usr</filename>,
                                 <filename>/var</filename>.
