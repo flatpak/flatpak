@@ -35,6 +35,8 @@ extern char *flatpak_bwrap_empty_env[1];
 
 FlatpakBwrap *flatpak_bwrap_new (char **env);
 void          flatpak_bwrap_free (FlatpakBwrap *bwrap);
+char*         flatpak_bwrap_expand_env (FlatpakBwrap *bwrap,
+                                        const char   *value);
 void          flatpak_bwrap_set_env (FlatpakBwrap *bwrap,
                                      const char   *variable,
                                      const char   *value,
