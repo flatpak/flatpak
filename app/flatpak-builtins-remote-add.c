@@ -409,7 +409,11 @@ flatpak_builtin_remote_add (int argc, char **argv,
 
   /* Reload previously changed configuration */
   if (!flatpak_dir_recreate_repo (dir, cancellable, error))
-    return FALSE;
+    {
+      /* Avoid leaving a half-added remote behind (#4507). */
+      flatpak_dir_remove_remote (dir, FALSE, remote_name, cancellable, NULL);
+      return FALSE;
+    }
 
   /* We can't retrieve the extra metadata until the remote has been added locally, since
      ostree_repo_remote_fetch_summary() works with the repository's name, not its URL.
@@ -423,6 +427,8 @@ flatpak_builtin_remote_add (int argc, char **argv,
         }
       else
         {
+          /* Fatal configuration/GPG failures should not leave the remote around. */
+          flatpak_dir_remove_remote (dir, FALSE, remote_name, cancellable, NULL);
           g_propagate_error (error, g_steal_pointer (&local_error));
           return FALSE;
         }
