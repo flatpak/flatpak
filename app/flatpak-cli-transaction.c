@@ -346,7 +346,8 @@ progress_changed_cb (FlatpakTransactionProgress *progress,
   g_string_append (str, " ");
   /* Download progress percentage, use the appropriate
     percent format for your language */
-  g_string_append_printf (str, _("%3d%%"), percent);
+  g_autofree char *percentage = g_strdup_printf (_("%d%%"), percent);
+  g_string_append_printf (str, "%4s", percentage);
 
   if (speed)
     g_string_append_printf (str, "  %s", speed);
