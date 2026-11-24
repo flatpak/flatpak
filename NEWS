@@ -1,8 +1,11 @@
 Changes in 1.19.3
 ~~~~~~~~~~~~~~~~~
 
+Released: 2026-11-24
+
 This is a development prerelease from the 1.19.x series.
 The first stable release from this branch will be 1.20.0.
+Stable OS releases should use the 1.18.x series until 1.20.x is available.
 
 Security fixes:
 
@@ -14,9 +17,120 @@ Security fixes:
   manipulating file descriptor passing via flatpak-portal
   (CVE-2026-133845, GHSA-5jrj-948r-2wx6; thanks to refi64)
 
-Other changes:
+Incompatible command-line interface changes:
 
-* TODO: Not yet documented here
+* Remove `flatpak update --force-remove` option, which had no effect (#6915)
+
+Enhancements:
+
+* Allow apps to export .desktop fields used by COSMIC desktop environment
+  (#6865)
+
+* Make both ~/.local/share/fonts and legacy ~/.fonts available in the sandbox,
+  if both exist (#5675, #6869)
+
+* Improve estimates of time remaining during install (#6732)
+
+* Retry truncated and dropped http downloads (#6881)
+
+* In `flatpak enter`, choose the smallest process ID when matching by name,
+  making it more likely that the main instance will be chosen
+  (#6878)
+
+* Improve command-line completion (#6759) and completion performance (#6325)
+
+* Improve API documentation (#6890, #6914, #6912, #6963)
+
+* Document `flatpak override` precedence (#6478)
+
+* Improve documentation of `flatpak build --readonly` (#6966)
+
+* Add `flatpak search --app|--runtime` (#6718)
+
+* Document how to clear a remote subset filter (#5637)
+
+* Speed up searches with many matches (#6892)
+
+* `flatpak uninstall --unused` now avoids removing pinned
+  runtimes/extensions (#6859)
+
+* Avoid flickering in GPU-rendered terminal emulators (#6959)
+
+Non-security bug fixes:
+
+* When using OCI repositories, avoid reporting up-to-date refs
+  as having updates available (#6874)
+
+* Fix missing SpawnStarted signal from portal when SPAWN_NOTIFY is used
+  (#6864)
+
+* Avoid GIO warnings while accessing the system repository
+  (#6413, #6766)
+
+* Fix `flatpak remote-ls` with non-default `--arch` (#3805)
+
+* Don't ellipsize app IDs by default (#4719)
+
+* Fold AppStream summaries into one line (#6132)
+
+* Fix missing apps in native sideload repository listings (#6939)
+
+* Fix an assertion failure in `flatpak remote-info` if optional metadata
+  is missing (#6945)
+
+* Fix a crash in `flatpak search` for AppStream components with no name
+  (#6958)
+
+* Fix a crash in `flatpak run` if the GPG agent socket can't be found
+  (#6969)
+
+* Don't treat agreement titles as though they were the app's name
+  (#6965)
+
+* Fix handling of unusual `WAYLAND_DISPLAY` values (#6970)
+
+* `flatpak install --or-update`, `flatpak install --reinstall`
+  are no longer ignored when used with `.flatpakref` files
+  (5460)
+
+* If an app is started with `--no-session-bus` or `--no-a11y-bus` to
+  remove access that it would have by default, apply the same restrictions
+  to its subsandboxes (#6968)
+
+* When choosing the default branch for an app from a specific installation
+  (for example `flatpak run --system ...`), don't let the default branch
+  in other installations (for example the user installation) affect the
+  result (#6917)
+
+* When running a shell in a runtime, use the copy in the selected
+  installation (#6917)
+
+* In `flatpak-coredumpctl`, early-return if the selected process isn't
+  a Flatpak app (#6975)
+
+* `flatpak update --no-pull` no longer pulls updated AppStream metadata
+  (#5163)
+
+* Fix intended propagation of `gpg-verify` option so a `.flatpakrepo` file
+  can disable GPG verification (#6934)
+
+* Ignore trailing slashes in `--persist` paths so the persistent directory
+  is mounted in the intended location (#1469)
+
+* Memory leak fixes
+  (#6863, #6930)
+
+* Translation updates: pl, pt_BR, sl, zh_CN
+
+Internal changes:
+
+* Fix some test failures when bubblewrap is unavailable (#6963)
+
+* Fix a race condition in the tests (#6963)
+
+* Improve test coverage (#6931, #6932, #6938)
+
+* Internal improvements in automated tests (#6919, #6938, #6980)
 
 Changes in 1.19.2
 ~~~~~~~~~~~~~~~~~
