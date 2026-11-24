@@ -1,0 +1,78 @@
+name: Build release tarballs
+
+on:
+  workflow_call:
+    inputs:
+      publish:
+        description: Publish the tarballs as a GitHub release
+        type: boolean
+        default: false
+
+jobs:
+  release:
+    name: Build release tarballs
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v6
+
+      - name: Prepare runner
+        run: bash .github/workflows/prepare-runner.sh
+
+      - name: Install Dependencies
+        run: |
+          # The bubblewrap in Ubuntu is too old
+          sudo add-apt-repository ppa:flatpak/stable
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev attr gettext bison  dbus gi-docgen \
+          fuse3 libfuse3-dev ostree libostree-dev libarchive-dev libzstd-dev libcap-dev libattr1-dev libdw-dev libelf-dev python3-pyparsing \
+          libjson-glib-dev shared-mime-info desktop-file-utils polkitd libpolkit-agent-1-dev libpolkit-gobject-1-dev \
+          libseccomp-dev libcurl4-openssl-dev libsystemd-dev libxml2-utils libgpgme11-dev gobject-introspection \
+          libgirepository1.0-dev libappstream-dev libdconf-dev clang socat meson libdbus-1-dev e2fslibs-dev bubblewrap xdg-dbus-proxy \
+          ninja-build libyaml-dev libstemmer-dev gperf itstool libmalcontent-0-dev libxau-dev libgdk-pixbuf-2.0-dev openssl
+
+      - name: Build release tarballs
+        run: |
+          meson setup _build \
+            -Dsystem_bubblewrap=bwrap \
+            -Dsystem_dbus_proxy=xdg-dbus-proxy
+          meson dist -C _build --include-subprojects
+
+      - name: Extract release information
+        if: inputs.publish
+        run: |
+          # Extract the release version
+          releaseVersion=`meson introspect --projectinfo _build/ | jq -r .version`
+          echo "releaseVersion=$releaseVersion" | tee -a $GITHUB_ENV
+          echo $releaseVersion
+
+          # Extract the changelog
+          {
+            echo "releaseChangelog<<EOF"
+            perl -0777nE 'print $& if /(?<=\n\n).*?(?=\nChanges in)/sg' NEWS
+            echo ""
+            echo "EOF"
+          } | tee -a $GITHUB_ENV
+          echo $releaseChangelog
+
+          # Check if version is a pre-release
+          preRelease=$((`echo $releaseVersion | cut -d '.' -f2` % 2))
+          {
+            echo -n "preRelease="
+            if [ $preRelease = 1 ] || [ $preRelease = "true" ]; then
+              echo "true";
+            else
+              echo "false";
+            fi
+          } | tee -a $GITHUB_ENV
+          echo $preRelease
+
+      - name: Create release
+        if: inputs.publish
+        uses: ncipollo/release-action@v1.20.0
+        with:
+          tag: ${{ env.releaseVersion }}
+          body: ${{ env.releaseChangelog }}
+          prerelease: ${{ env.preRelease }}
+          artifacts: _build/meson-dist/*
+          immutableCreate: true
