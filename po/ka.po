@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak git\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2026-09-28 09:44+0100\n"
+"POT-Creation-Date: 2026-11-20 18:53+0000\n"
 "PO-Revision-Date: 2026-09-19 06:28+0200\n"
 "Last-Translator: Ekaterine Papava <papava.e@gtu.ge>\n"
 "Language-Team: Georgian <(nothing)>\n"
@@ -32,8 +32,8 @@ msgstr "ასაგების პაკეტის არქიტექტ�
 #: app/flatpak-builtins-info.c:55 app/flatpak-builtins-install.c:67
 #: app/flatpak-builtins-list.c:51 app/flatpak-builtins-make-current.c:38
 #: app/flatpak-builtins-remote-info.c:54 app/flatpak-builtins-remote-ls.c:56
-#: app/flatpak-builtins-run.c:158 app/flatpak-builtins-search.c:37
-#: app/flatpak-builtins-uninstall.c:56 app/flatpak-builtins-update.c:56
+#: app/flatpak-builtins-run.c:158 app/flatpak-builtins-search.c:39
+#: app/flatpak-builtins-uninstall.c:56 app/flatpak-builtins-update.c:55
 msgid "ARCH"
 msgstr "არქიტექტურა"
 
@@ -109,7 +109,7 @@ msgid "OSTree commit to create a delta bundle from"
 msgstr "OSTree-ის კომიტი დელტა პაკეტის შესაქმნელად"
 
 #: app/flatpak-builtins-build-bundle.c:66 app/flatpak-builtins-remote-info.c:55
-#: app/flatpak-builtins-update.c:57
+#: app/flatpak-builtins-update.c:56
 msgid "COMMIT"
 msgstr "COMMIT"
 
@@ -143,13 +143,13 @@ msgstr "მდებარეობის, ფაილის სახელი
 #: app/flatpak-builtins-document-unexport.c:70
 #: app/flatpak-builtins-history.c:482 app/flatpak-builtins-info.c:130
 #: app/flatpak-builtins-install.c:181 app/flatpak-builtins-install.c:234
-#: app/flatpak-builtins-install.c:298 app/flatpak-builtins-list.c:424
+#: app/flatpak-builtins-install.c:301 app/flatpak-builtins-list.c:424
 #: app/flatpak-builtins-make-current.c:72 app/flatpak-builtins-override.c:73
 #: app/flatpak-builtins-permission-list.c:163
 #: app/flatpak-builtins-permission-remove.c:133
 #: app/flatpak-builtins-remote-add.c:323
 #: app/flatpak-builtins-remote-delete.c:68
-#: app/flatpak-builtins-remote-list.c:241 app/flatpak-builtins-remote-ls.c:422
+#: app/flatpak-builtins-remote-list.c:241 app/flatpak-builtins-remote-ls.c:432
 msgid "Too many arguments"
 msgstr "მეტისმეტად ბევრი არგუმენტი"
 
@@ -167,14 +167,14 @@ msgid "'%s' is not a valid repository: "
 msgstr "'%s' არასწორი რეპოზიტორიაა: "
 
 #: app/flatpak-builtins-build-bundle.c:674 app/flatpak-builtins-build-sign.c:88
-#: common/flatpak-dir.c:14828
+#: common/flatpak-dir.c:14853
 #, c-format
 msgid "'%s' is not a valid name: %s"
 msgstr "'%s' არასწორი სახელია: %s"
 
 #: app/flatpak-builtins-build-bundle.c:677
 #: app/flatpak-builtins-build-export.c:865 app/flatpak-builtins-build-sign.c:91
-#: common/flatpak-dir.c:14834
+#: common/flatpak-dir.c:14859
 #, c-format
 msgid "'%s' is not a valid branch name: %s"
 msgstr "'%s' ბრენჩის არასწორი სახელია: %s"
@@ -269,7 +269,7 @@ msgstr "%2$s-ში %1$s-ს გაფართოების წერტი�
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "მიბმული მიმაგრების პარამეტრში '%s' '=' მითითებული არაა"
 
-#: app/flatpak-builtins-build.c:679 common/flatpak-run.c:4083
+#: app/flatpak-builtins-build.c:679 common/flatpak-run.c:4030
 #, c-format
 msgid "Unable to start app"
 msgstr "აპის გასვების შეცდომა"
@@ -469,7 +469,7 @@ msgstr ""
 "აგების მხარდაჭერის ვადაამოწურულად მონიშვნა, მითითებული ID-ით ჩანასანცვლებლად"
 
 #: app/flatpak-builtins-build-export.c:74
-#: app/flatpak-builtins-document-list.c:49 app/flatpak-cli-transaction.c:1424
+#: app/flatpak-builtins-document-list.c:49 app/flatpak-cli-transaction.c:1414
 msgid "ID"
 msgstr "ID"
 
@@ -906,7 +906,7 @@ msgstr "პროგრამები არქიტექტურისთ�
 
 #: app/flatpak-builtins-build-sign.c:43 app/flatpak-builtins-create-usb.c:48
 #: app/flatpak-builtins-install.c:74 app/flatpak-builtins-remote-info.c:56
-#: app/flatpak-builtins-uninstall.c:60 app/flatpak-builtins-update.c:64
+#: app/flatpak-builtins-uninstall.c:60 app/flatpak-builtins-update.c:62
 msgid "Look for runtime with the specified name"
 msgstr "მითითებული სახელის მქონე გაშვების გარემოს მოძებნა"
 
@@ -1188,7 +1188,7 @@ msgstr ""
 
 #: app/flatpak-builtins-create-usb.c:45 app/flatpak-builtins-install.c:75
 #: app/flatpak-builtins-remote-info.c:57 app/flatpak-builtins-uninstall.c:61
-#: app/flatpak-builtins-update.c:65
+#: app/flatpak-builtins-update.c:63
 msgid "Look for app with the specified name"
 msgstr "მითითებული სახელის მქონე აპის მოძებნა"
 
@@ -1396,14 +1396,14 @@ msgstr "გატანილი არაა\n"
 #: app/flatpak-builtins-document-list.c:43 app/flatpak-builtins-history.c:53
 #: app/flatpak-builtins-list.c:56 app/flatpak-builtins-ps.c:43
 #: app/flatpak-builtins-remote-list.c:45 app/flatpak-builtins-remote-ls.c:59
-#: app/flatpak-builtins-search.c:38
+#: app/flatpak-builtins-search.c:40
 msgid "What information to show"
 msgstr "რა ინფორმაცია ვაჩვენო"
 
 #: app/flatpak-builtins-document-list.c:43 app/flatpak-builtins-history.c:53
 #: app/flatpak-builtins-list.c:56 app/flatpak-builtins-ps.c:43
 #: app/flatpak-builtins-remote-list.c:45 app/flatpak-builtins-remote-ls.c:59
-#: app/flatpak-builtins-search.c:38
+#: app/flatpak-builtins-search.c:40
 msgid "FIELD,…"
 msgstr "FIELD,…"
 
@@ -1411,7 +1411,7 @@ msgstr "FIELD,…"
 #: app/flatpak-builtins-list.c:53 app/flatpak-builtins-permission-list.c:44
 #: app/flatpak-builtins-permission-show.c:44 app/flatpak-builtins-ps.c:44
 #: app/flatpak-builtins-remote-list.c:46 app/flatpak-builtins-remote-ls.c:63
-#: app/flatpak-builtins-repo.c:717 app/flatpak-builtins-search.c:39
+#: app/flatpak-builtins-repo.c:717 app/flatpak-builtins-search.c:41
 msgid "Show output in JSON format"
 msgstr "გამოტანის ჩვენება JSON ფორმატში"
 
@@ -1479,69 +1479,69 @@ msgstr ""
 msgid "INSTANCE and COMMAND must be specified"
 msgstr "გაშვებულიასლის და ბრძანების მითითება აუცილებელია"
 
-#: app/flatpak-builtins-enter.c:138
+#: app/flatpak-builtins-enter.c:153
 #, c-format
 msgid "%s is neither a pid nor an application or instance ID"
 msgstr "%s არც pid-ია, არც აპლიკაცია დაარც გაშვებული ასლის ID"
 
-#: app/flatpak-builtins-enter.c:144
+#: app/flatpak-builtins-enter.c:159
 msgid "entering not supported (need unprivileged user namespaces, or sudo -E)"
 msgstr ""
 "შესვლა მხარდაჭერილი არაა (საჭიროა არაპრივილეგირებული მომხმარებლის სახელების "
 "სივრცეები ან sudo -E)"
 
-#: app/flatpak-builtins-enter.c:145
+#: app/flatpak-builtins-enter.c:160
 #, c-format
 msgid "No such pid %s"
 msgstr "PID %s არ არსებობს"
 
-#: app/flatpak-builtins-enter.c:158
+#: app/flatpak-builtins-enter.c:173
 msgid "Can't read cwd"
 msgstr "CWD-ის წაკითხვა შეუძლებელია"
 
-#: app/flatpak-builtins-enter.c:163
+#: app/flatpak-builtins-enter.c:178
 msgid "Can't read root"
 msgstr "ROOT-ის წაკითხვა შეუძლებელია"
 
-#: app/flatpak-builtins-enter.c:191
+#: app/flatpak-builtins-enter.c:206
 #, c-format
 msgid "Invalid %s namespace for pid %d"
 msgstr "არასწორი %s სახელების სივრცე PID-სთვის %d"
 
-#: app/flatpak-builtins-enter.c:202
+#: app/flatpak-builtins-enter.c:217
 #, c-format
 msgid "Invalid %s namespace for self"
 msgstr "არასწორი %s სახელების სივრცე იგივე პროცესისთვის"
 
-#: app/flatpak-builtins-enter.c:216
+#: app/flatpak-builtins-enter.c:231
 #, c-format
 msgid "Can't open %s namespace: %s"
 msgstr "%s სახელების სივრცის გახსნის შეცდომა: %s"
 
-#: app/flatpak-builtins-enter.c:226
+#: app/flatpak-builtins-enter.c:241
 msgid "entering not supported (need unprivileged user namespaces)"
 msgstr ""
 "შესვლა მხარდაჭერილი არაა (საჭიროა არაპრივილეგირებული მომხმარებლის სახელების "
 "სივრცეები)"
 
-#: app/flatpak-builtins-enter.c:227
+#: app/flatpak-builtins-enter.c:242
 #, c-format
 msgid "Can't enter %s namespace: %s"
 msgstr "%s სახელების სივრცეში შესვლის შეცდომა: %s"
 
-#: app/flatpak-builtins-enter.c:234
+#: app/flatpak-builtins-enter.c:249
 msgid "Can't chdir"
 msgstr "Chdir-ის შეცდომა"
 
-#: app/flatpak-builtins-enter.c:237
+#: app/flatpak-builtins-enter.c:252
 msgid "Can't chroot"
 msgstr "Chroot-ის შეცდომა"
 
-#: app/flatpak-builtins-enter.c:240
+#: app/flatpak-builtins-enter.c:255
 msgid "Can't switch gid"
 msgstr "GID-ის გადართვის შეცდომა"
 
-#: app/flatpak-builtins-enter.c:243
+#: app/flatpak-builtins-enter.c:258
 msgid "Can't switch uid"
 msgstr "UID-ის გადართვის შეცდომა"
 
@@ -1593,7 +1593,7 @@ msgstr "აპლიკაციის/გაშვების გარემ�
 
 #: app/flatpak-builtins-history.c:63 app/flatpak-builtins-list.c:66
 #: app/flatpak-builtins-ps.c:53 app/flatpak-builtins-remote-ls.c:73
-#: app/flatpak-cli-transaction.c:1432
+#: app/flatpak-cli-transaction.c:1422
 msgid "Arch"
 msgstr "არქიტექტურა"
 
@@ -1604,7 +1604,7 @@ msgstr "არქიტექტურის ჩვენება"
 
 #: app/flatpak-builtins-history.c:64 app/flatpak-builtins-list.c:65
 #: app/flatpak-builtins-ps.c:54 app/flatpak-builtins-remote-ls.c:72
-#: app/flatpak-builtins-search.c:48 app/flatpak-cli-transaction.c:1435
+#: app/flatpak-builtins-search.c:52 app/flatpak-cli-transaction.c:1425
 msgid "Branch"
 msgstr "ბრენჩი"
 
@@ -1621,7 +1621,7 @@ msgstr "დაყენება"
 msgid "Show the affected installation"
 msgstr "მოყოლილი დაყენებების ჩვენება"
 
-#: app/flatpak-builtins-history.c:66 app/flatpak-cli-transaction.c:1449
+#: app/flatpak-builtins-history.c:66 app/flatpak-cli-transaction.c:1439
 msgid "Remote"
 msgstr "დაშორებული"
 
@@ -1650,7 +1650,7 @@ msgstr "წინა კომიტის ჩვენება"
 msgid "Show the remote URL"
 msgstr "დაშორებული URL-ის ჩვენება"
 
-#: app/flatpak-builtins-history.c:70 app/flatpak-cli-transaction.c:697
+#: app/flatpak-builtins-history.c:70 app/flatpak-cli-transaction.c:687
 msgid "User"
 msgstr "მომხმარებელი"
 
@@ -1667,7 +1667,7 @@ msgid "Show the tool that was used"
 msgstr "გამოყენებული პროგრამის ჩვენება"
 
 #: app/flatpak-builtins-history.c:72 app/flatpak-builtins-list.c:64
-#: app/flatpak-builtins-remote-ls.c:71 app/flatpak-builtins-search.c:47
+#: app/flatpak-builtins-remote-ls.c:71 app/flatpak-builtins-search.c:51
 msgid "Version"
 msgstr "ვერსია"
 
@@ -1755,7 +1755,7 @@ msgstr "ფაილის წვდომების გამოთხოვ�
 #: app/flatpak-builtins-info.c:67 app/flatpak-builtins-install.c:82
 #: app/flatpak-builtins-install.c:88 app/flatpak-builtins-preinstall.c:68
 #: app/flatpak-builtins-run.c:182 app/flatpak-builtins-run.c:184
-#: app/flatpak-builtins-update.c:67 app/flatpak-builtins-update.c:71
+#: app/flatpak-builtins-update.c:65 app/flatpak-builtins-update.c:69
 msgid "PATH"
 msgstr "PATH"
 
@@ -1934,7 +1934,7 @@ msgid "Don't pull, only install from local cache"
 msgstr "პულის გარეშე, მხოლოდ ლოკალური კეშიდან დაყენება"
 
 #: app/flatpak-builtins-install.c:69 app/flatpak-builtins-preinstall.c:58
-#: app/flatpak-builtins-update.c:60
+#: app/flatpak-builtins-update.c:58
 msgid "Don't deploy, only download to local cache"
 msgstr "გაშლის გარეშე, მხოლოდ ლოკალურ კეშში გადმოწერა"
 
@@ -1943,7 +1943,7 @@ msgid "Don't install related refs"
 msgstr "დაკავშირებული მიმართვები დაყენებული არ იქნება"
 
 #: app/flatpak-builtins-install.c:71 app/flatpak-builtins-preinstall.c:60
-#: app/flatpak-builtins-update.c:62
+#: app/flatpak-builtins-update.c:60
 msgid "Don't verify/install runtime dependencies"
 msgstr "გაშვების გარემოს დამოკიდებულებების შემოწმება/დაყენება არ მოხდება"
 
@@ -1952,7 +1952,7 @@ msgid "Don't automatically pin explicit installs"
 msgstr "ხელით მითითებული დაყენებები ავტომატურად მიმაგრებული არ იქნება"
 
 #: app/flatpak-builtins-install.c:73 app/flatpak-builtins-preinstall.c:61
-#: app/flatpak-builtins-update.c:63
+#: app/flatpak-builtins-update.c:61
 msgid "Don't use static deltas"
 msgstr "სტატიკური დელტები გამოყენებული არ იქნება"
 
@@ -1992,7 +1992,7 @@ msgid "Only install this subpath"
 msgstr "მხოლოდ ამ ქვებილიკის დაყენება"
 
 #: app/flatpak-builtins-install.c:83 app/flatpak-builtins-preinstall.c:64
-#: app/flatpak-builtins-uninstall.c:65 app/flatpak-builtins-update.c:68
+#: app/flatpak-builtins-uninstall.c:65 app/flatpak-builtins-update.c:66
 msgid "Automatically answer yes for all questions"
 msgstr "ყველა კითხვისთვის დადებითი პასუხის ავტომატური გაცემა"
 
@@ -2001,7 +2001,7 @@ msgid "Uninstall first if already installed"
 msgstr "ჯერ წაშლა, თუ უკვე დაყენებულია"
 
 #: app/flatpak-builtins-install.c:85 app/flatpak-builtins-preinstall.c:66
-#: app/flatpak-builtins-uninstall.c:66 app/flatpak-builtins-update.c:69
+#: app/flatpak-builtins-uninstall.c:66 app/flatpak-builtins-update.c:67
 msgid "Produce minimal output and don't ask questions"
 msgstr "მინიმალური ინფორმაციის გამოტანა და კითხვების არ-დასმა"
 
@@ -2011,7 +2011,7 @@ msgstr "განახლება, თუ პაკეტი უკვე დ�
 
 #. Translators: A sideload is when you install from a local USB drive rather than the Internet.
 #: app/flatpak-builtins-install.c:88 app/flatpak-builtins-preinstall.c:68
-#: app/flatpak-builtins-update.c:71
+#: app/flatpak-builtins-update.c:69
 msgid "Use this local repo for sideloads"
 msgstr "გვერდით ჩატვირთვებისთვის ამ ლოკალური რეპოზიტორიის გამოყენება"
 
@@ -2027,46 +2027,46 @@ msgstr "დაშორებული პაკეტები მხარდ�
 msgid "Filename or uri must be specified"
 msgstr "ფაილის სახელის ან URI-ის მითითება აუცილებელია"
 
-#: app/flatpak-builtins-install.c:295
+#: app/flatpak-builtins-install.c:298
 msgid "Image location must be specified"
 msgstr "გამოსახულების მდებარეობის მითითება აუცილებელია"
 
-#: app/flatpak-builtins-install.c:345
+#: app/flatpak-builtins-install.c:348
 msgid "[LOCATION/REMOTE] [REF…] - Install applications or runtimes"
 msgstr ""
 "[მდებარეობა/დაშორებული] [მიმართვა…] - აპლიკაციის ან გაშვების გარემოს დაყენება"
 
-#: app/flatpak-builtins-install.c:378
+#: app/flatpak-builtins-install.c:381
 msgid "At least one REF must be specified"
 msgstr "საჭიროა სულ ცოტა, ერთი მიმართვის მითთება"
 
-#: app/flatpak-builtins-install.c:392
+#: app/flatpak-builtins-install.c:395
 #, c-format
 msgid "Looking for matches…\n"
 msgstr "დამთხვევების ძებნა…\n"
 
-#: app/flatpak-builtins-install.c:513
+#: app/flatpak-builtins-install.c:516
 #, c-format
 msgid "No remote refs found for ‘%s’"
 msgstr "'%s'-სთვის დაშორებული მიმართვა ვერ ვიპოვე"
 
-#: app/flatpak-builtins-install.c:573 app/flatpak-builtins-uninstall.c:399
+#: app/flatpak-builtins-install.c:576 app/flatpak-builtins-uninstall.c:399
 #: common/flatpak-ref-utils.c:730 common/flatpak-ref-utils.c:1636
 #, c-format
 msgid "Invalid branch %s: %s"
 msgstr "არასწორი ბრენჩი %s: %s"
 
-#: app/flatpak-builtins-install.c:606
+#: app/flatpak-builtins-install.c:609
 #, c-format
 msgid "Nothing matches %s in local repository for remote %s"
 msgstr "%s-ს ლოკალურ რეპოზიტორიაში დაშორებული %s-სთვის არაფერი ემთხვევა"
 
-#: app/flatpak-builtins-install.c:608
+#: app/flatpak-builtins-install.c:611
 #, c-format
 msgid "Nothing matches %s in remote %s"
 msgstr "%s-ს დაშორებულ %s-ში არაფერი ემთხვევა"
 
-#: app/flatpak-builtins-install.c:629
+#: app/flatpak-builtins-install.c:632
 #, c-format
 msgid "Skipping: %s\n"
 msgstr "გამოტოვება: %s\n"
@@ -2117,37 +2117,37 @@ msgid "List all applications using RUNTIME"
 msgstr "აპლიკაციების სია, რომლებიც ამ გაშვების გარემოს იყენებენ"
 
 #: app/flatpak-builtins-list.c:61 app/flatpak-builtins-remote-list.c:51
-#: app/flatpak-builtins-remote-ls.c:68 app/flatpak-builtins-search.c:44
+#: app/flatpak-builtins-remote-ls.c:68 app/flatpak-builtins-search.c:48
 msgid "Name"
 msgstr "სახელი"
 
 #: app/flatpak-builtins-list.c:61 app/flatpak-builtins-remote-list.c:51
-#: app/flatpak-builtins-remote-ls.c:68 app/flatpak-builtins-search.c:44
+#: app/flatpak-builtins-remote-ls.c:68 app/flatpak-builtins-search.c:48
 msgid "Show the name"
 msgstr "სახელის ჩვენება"
 
 #: app/flatpak-builtins-list.c:62 app/flatpak-builtins-remote-list.c:60
-#: app/flatpak-builtins-remote-ls.c:69 app/flatpak-builtins-search.c:45
+#: app/flatpak-builtins-remote-ls.c:69 app/flatpak-builtins-search.c:49
 msgid "Description"
 msgstr "აღწერა"
 
 #: app/flatpak-builtins-list.c:62 app/flatpak-builtins-remote-ls.c:69
-#: app/flatpak-builtins-search.c:45
+#: app/flatpak-builtins-search.c:49
 msgid "Show the description"
 msgstr "აღწერის ჩვენება"
 
 #: app/flatpak-builtins-list.c:63 app/flatpak-builtins-remote-ls.c:70
-#: app/flatpak-builtins-search.c:46
+#: app/flatpak-builtins-search.c:50
 msgid "Application ID"
 msgstr "აპლიკაციის ID"
 
 #: app/flatpak-builtins-list.c:63 app/flatpak-builtins-ps.c:52
-#: app/flatpak-builtins-remote-ls.c:70 app/flatpak-builtins-search.c:46
+#: app/flatpak-builtins-remote-ls.c:70 app/flatpak-builtins-search.c:50
 msgid "Show the application ID"
 msgstr "აპლიკაციის ID-ის ჩვენება"
 
 #: app/flatpak-builtins-list.c:64 app/flatpak-builtins-remote-ls.c:71
-#: app/flatpak-builtins-search.c:47
+#: app/flatpak-builtins-search.c:51
 msgid "Show the version"
 msgstr "ვერსიის ჩვენება"
 
@@ -2224,7 +2224,7 @@ msgstr "მიმდინარედ დასაყენებელი ა�
 msgid "APP BRANCH - Make branch of application current"
 msgstr "აპის ბრენჩი - აპლიკაციის ბრენჩის მიმდინარედ დანიშვნა"
 
-#: app/flatpak-builtins-make-current.c:69 app/flatpak-builtins-run.c:260
+#: app/flatpak-builtins-make-current.c:69 app/flatpak-builtins-run.c:262
 msgid "APP must be specified"
 msgstr "აპის მითითება აუცილებელია"
 
@@ -2347,15 +2347,22 @@ msgstr ""
 "[ნიმუში...] - დამთხვეული ნიმუშებისთვის გაშვების გარემოების ავტომატური წაშლის "
 "გამორთვა"
 
-#: app/flatpak-builtins-pin.c:75
+#: app/flatpak-builtins-pin.c:76
 #, c-format
 msgid "No pinned patterns\n"
 msgstr "მიმაგრებული ნიმუშების გარეშე\n"
 
-#: app/flatpak-builtins-pin.c:80
+#: app/flatpak-builtins-pin.c:92
 #, c-format
 msgid "Pinned patterns:\n"
 msgstr "მიმაგრებული ნიმუშები:\n"
+
+#: app/flatpak-builtins-pin.c:115
+#, c-format
+msgid "%u match\n"
+msgid_plural "%u matches\n"
+msgstr[0] ""
+msgstr[1] ""
 
 #: app/flatpak-builtins-preinstall.c:80
 msgid "- Install flatpaks that are part of the operating system"
@@ -2390,7 +2397,7 @@ msgstr "შვილის-PID"
 msgid "Show the PID of the sandbox process"
 msgstr "სენდბოქსის პროცესის PID-ის ჩვენება"
 
-#: app/flatpak-builtins-ps.c:54 app/flatpak-builtins-search.c:48
+#: app/flatpak-builtins-ps.c:54 app/flatpak-builtins-search.c:52
 msgid "Show the application branch"
 msgstr "აპლიკაციის ბრენჩის ჩვენება"
 
@@ -2537,7 +2544,7 @@ msgstr "შეჯამების ფაილში გადამისა�
 msgid "Can't load uri %s: %s\n"
 msgstr "URI %s-ის ჩატვირთვის შეცდომა: %s\n"
 
-#: app/flatpak-builtins-remote-add.c:276 common/flatpak-dir.c:4870
+#: app/flatpak-builtins-remote-add.c:276 common/flatpak-dir.c:4892
 #, c-format
 msgid "Can't load file %s: %s\n"
 msgstr "ფაილის %s ჩატვირთვის შეცდომა: %s\n"
@@ -2760,7 +2767,7 @@ msgstr "გადმოწერის ზომა"
 msgid "Show the download size"
 msgstr "გადმოწერის ზომის ჩვენება"
 
-#: app/flatpak-builtins-remote-ls.c:406
+#: app/flatpak-builtins-remote-ls.c:416
 msgid " [REMOTE or URI] - Show available runtimes and applications"
 msgstr ""
 " [დაშორებული ან URI] - ხელმისაწვდომი გაშვების გარემოებისა და აპლიკაციების "
@@ -3076,7 +3083,7 @@ msgid "Installed"
 msgstr "დაყენებულია"
 
 #. Translators: Download is used here as a noun
-#: app/flatpak-builtins-repo.c:338 app/flatpak-cli-transaction.c:1459
+#: app/flatpak-builtins-repo.c:338 app/flatpak-cli-transaction.c:1449
 msgid "Download"
 msgstr "ჩამოტვირთვა"
 
@@ -3214,7 +3221,7 @@ msgstr "FD-ის გამოყენება აპის /app-ის მა
 
 #: app/flatpak-builtins-run.c:183 app/flatpak-builtins-run.c:185
 #: app/flatpak-builtins-run.c:187 app/flatpak-builtins-run.c:188
-#: common/flatpak-context.c:2737
+#: common/flatpak-context.c:2745
 msgid "FD"
 msgstr "FD"
 
@@ -3245,32 +3252,45 @@ msgstr ""
 "FD-ით მიმართული ფაილის, ან საქაღალდის მიბმული მიმაგრება მის კანონიკალიზებულ "
 "ბილიკზე მხოლოდ-წაკითხვად რეჟიმში"
 
-#: app/flatpak-builtins-run.c:219
+#: app/flatpak-builtins-run.c:221
 msgid "APP [ARGUMENT…] - Run an app"
 msgstr "აპი [არგუმენტი…] - აპის გაშვება"
 
-#: app/flatpak-builtins-run.c:370
+#: app/flatpak-builtins-run.c:375
 #, c-format
 msgid "runtime/%s/%s/%s not installed"
 msgstr "გაშვების გარემო/%s/%s/%s დაყენებული არაა"
 
-#: app/flatpak-builtins-run.c:419
+#: app/flatpak-builtins-run.c:476
 msgid "app-fd and app-path cannot both be used"
 msgstr "ორივეს, app-fd-ს და app-path-ს, ერთად, ვერ გამოიყენებთ"
 
-#: app/flatpak-builtins-run.c:449
+#: app/flatpak-builtins-run.c:506
 msgid "usr-fd and usr-path cannot both be used"
 msgstr "ორივეს, usr-fd-ს და usr-path-ს, ერთად, ვერ გამოიყენებთ"
 
-#: app/flatpak-builtins-search.c:37
+#: app/flatpak-builtins-search.c:39
 msgid "Arch to search for"
 msgstr "მოსაძებნი არქიტექტურა"
 
-#: app/flatpak-builtins-search.c:49
+#: app/flatpak-builtins-search.c:42
+#, fuzzy
+msgid "Only look for applications"
+msgstr ""
+"\n"
+"\n"
+" აპლიკაციების აგება"
+
+#: app/flatpak-builtins-search.c:43
+#, fuzzy
+msgid "Only look for runtimes"
+msgstr "მხოლოდ გაშვების გარემოების ჩვენება"
+
+#: app/flatpak-builtins-search.c:53
 msgid "Remotes"
 msgstr "დაშორებულები"
 
-#: app/flatpak-builtins-search.c:49
+#: app/flatpak-builtins-search.c:53
 msgid "Show the remotes"
 msgstr "დაშორებულების ჩვენება"
 
@@ -3282,7 +3302,7 @@ msgstr "ტექსტი - დაშორებულ აპებში/გ�
 msgid "TEXT must be specified"
 msgstr "TEXT -ის მითითება აუცილებელია"
 
-#: app/flatpak-builtins-search.c:338
+#: app/flatpak-builtins-search.c:350
 msgid "No matches found"
 msgstr "არაფერი მოიძებნა"
 
@@ -3400,53 +3420,49 @@ msgstr "მითითებული მიმართვებიდან �
 msgid "No app data to delete\n"
 msgstr "წასაშლელი აპის მონაცემების გარეშე\n"
 
-#: app/flatpak-builtins-update.c:56
+#: app/flatpak-builtins-update.c:55
 msgid "Arch to update for"
 msgstr "განსაახლებელი არქიტექტურა"
 
-#: app/flatpak-builtins-update.c:57
+#: app/flatpak-builtins-update.c:56
 msgid "Commit to deploy"
 msgstr "კომიტი განლაგებისთვის"
 
-#: app/flatpak-builtins-update.c:58
-msgid "Remove old files even if running"
-msgstr "ფაილები წაიშლება მაშინაც კი, თუ ისინი გაშვებულია"
-
-#: app/flatpak-builtins-update.c:59
+#: app/flatpak-builtins-update.c:57
 msgid "Don't pull, only update from local cache"
 msgstr "პულის გარეშე, მხოლოდ ლოკალური კეშიდან განახლება"
 
-#: app/flatpak-builtins-update.c:61
+#: app/flatpak-builtins-update.c:59
 msgid "Don't update related refs"
 msgstr "დაკავშირებული მიმართვებ არ განახლდება"
 
-#: app/flatpak-builtins-update.c:66
+#: app/flatpak-builtins-update.c:64
 msgid "Update appstream for remote"
 msgstr "დაშორებულისთვის appstream-ის განახლება"
 
-#: app/flatpak-builtins-update.c:67
+#: app/flatpak-builtins-update.c:65
 msgid "Only update this subpath"
 msgstr "მხოლოდ ამ ქვებილიკის განახლება"
 
-#: app/flatpak-builtins-update.c:90
+#: app/flatpak-builtins-update.c:88
 msgid "[REF…] - Update applications or runtimes"
 msgstr "[მიმართვა…] - აპლიკაციების ან გაშვების გარემოების განახლება"
 
-#: app/flatpak-builtins-update.c:121
+#: app/flatpak-builtins-update.c:119
 msgid "With --commit, only one REF may be specified"
 msgstr "--commit -თან ერთად მხოლოდ ერთი მიმართვის მითითება შეგიძლიათ"
 
-#: app/flatpak-builtins-update.c:162
+#: app/flatpak-builtins-update.c:160
 #, c-format
 msgid "Looking for updates…\n"
 msgstr "განახლებების ძებნა…\n"
 
-#: app/flatpak-builtins-update.c:215
+#: app/flatpak-builtins-update.c:213
 #, c-format
 msgid "Unable to update %s: %s\n"
 msgstr "%s-ის განახლების შეცდომა: %s\n"
 
-#: app/flatpak-builtins-update.c:274
+#: app/flatpak-builtins-update.c:272
 #, c-format
 msgid "Nothing to update.\n"
 msgstr "განსაახლებელი არაფერია.\n"
@@ -3625,36 +3641,36 @@ msgid "Append :s[tart], :m[iddle], :e[nd] or :f[ull] to change ellipsization"
 msgstr ""
 "ოვალიზაციის შესაცვლელად ბოლოში მიაწერეთ :s(დასაწყისი), m(შუა) ან f(სრული)"
 
-#: app/flatpak-builtins-utils.c:1457
+#: app/flatpak-builtins-utils.c:1494
 #, c-format
 msgid "Unknown scheme in sideload location %s"
 msgstr "უცნობი სქემა გვერდიდან ჩასატვირთ მდებარეობაში %s"
 
-#: app/flatpak-cli-transaction.c:96 app/flatpak-cli-transaction.c:102
+#: app/flatpak-cli-transaction.c:97 app/flatpak-cli-transaction.c:103
 #, c-format
 msgid "Required runtime for %s (%s) found in remote %s\n"
 msgstr "%s-სთვის (%s) აუცილებელი გაშვები გარემო აღმოჩენილია დაშორებულში %s\n"
 
-#: app/flatpak-cli-transaction.c:104
+#: app/flatpak-cli-transaction.c:105
 msgid "Do you want to install it?"
 msgstr "გნებავთ, დააყენოთ?"
 
-#: app/flatpak-cli-transaction.c:110
+#: app/flatpak-cli-transaction.c:111
 #, c-format
 msgid "Required runtime for %s (%s) found in remotes:"
 msgstr "%s-სთვის (%s) აუცილებელი გაშვების გარემო აღმოჩენილია დაშორებულებში:"
 
-#: app/flatpak-cli-transaction.c:112
+#: app/flatpak-cli-transaction.c:113
 msgid "Which do you want to install (0 to abort)?"
 msgstr "რომელი გნებავთ, დააყენოთ (0 გასაუქმებლად)?"
 
-#: app/flatpak-cli-transaction.c:132
+#: app/flatpak-cli-transaction.c:133
 #, c-format
 msgid "Configuring %s as new remote '%s'\n"
 msgstr "%s-ის მორგება, როგორც ახალი დაშორებული '%s'\n"
 
 #. default to yes on Enter
-#: app/flatpak-cli-transaction.c:139
+#: app/flatpak-cli-transaction.c:140
 #, c-format
 msgid ""
 "The remote '%s', referred to by '%s' at location %s contains additional "
@@ -3666,7 +3682,7 @@ msgstr ""
 "დავიტოვო ეს დაშორებული მომავალში გამოსაყენებლად?"
 
 #. default to yes on Enter
-#: app/flatpak-cli-transaction.c:147
+#: app/flatpak-cli-transaction.c:148
 #, c-format
 msgid ""
 "The application %s depends on runtimes from:\n"
@@ -3678,138 +3694,138 @@ msgstr ""
 "ამის ახალ დაშორებულად '%s' გამოყენება"
 
 #. Formatted size/remaining time in seconds
-#: app/flatpak-cli-transaction.c:321
+#: app/flatpak-cli-transaction.c:311
 #, c-format
 msgid "%s/s%s%s"
 msgstr "%s/წმ%s%s"
 
 #. Download progress percentage, use the appropriate
 #. percent format for your language
-#: app/flatpak-cli-transaction.c:359
+#: app/flatpak-cli-transaction.c:349
 #, c-format
 msgid "%3d%%"
 msgstr "%3d%%"
 
-#: app/flatpak-cli-transaction.c:414
+#: app/flatpak-cli-transaction.c:404
 msgid "Installing…"
 msgstr "დაყენება…"
 
-#: app/flatpak-cli-transaction.c:416
+#: app/flatpak-cli-transaction.c:406
 #, c-format
 msgid "Installing %d/%d…"
 msgstr "დაყენება %d/%d…"
 
-#: app/flatpak-cli-transaction.c:421
+#: app/flatpak-cli-transaction.c:411
 msgid "Updating…"
 msgstr "მიმდინარეობს განახლება…"
 
-#: app/flatpak-cli-transaction.c:423
+#: app/flatpak-cli-transaction.c:413
 #, c-format
 msgid "Updating %d/%d…"
 msgstr "განახლება %d/%d…"
 
-#: app/flatpak-cli-transaction.c:428
+#: app/flatpak-cli-transaction.c:418
 msgid "Uninstalling…"
 msgstr "წაშლა…"
 
-#: app/flatpak-cli-transaction.c:430
+#: app/flatpak-cli-transaction.c:420
 #, c-format
 msgid "Uninstalling %d/%d…"
 msgstr "%d/%d წაშლა…"
 
-#: app/flatpak-cli-transaction.c:496 app/flatpak-quiet-transaction.c:161
+#: app/flatpak-cli-transaction.c:486 app/flatpak-quiet-transaction.c:161
 #, c-format
 msgid "Info: %s was skipped"
 msgstr "ინფორმაცია: %s გამოტოვებულია"
 
-#: app/flatpak-cli-transaction.c:519
+#: app/flatpak-cli-transaction.c:509
 #, c-format
 msgid "Warning: %s%s%s already installed"
 msgstr "გაფრთხილება: %s%s%s უკვე დაყენებულია"
 
-#: app/flatpak-cli-transaction.c:522
+#: app/flatpak-cli-transaction.c:512
 #, c-format
 msgid "Error: %s%s%s already installed"
 msgstr "შეცდომა: %s%s%s უკვე დაყენებულია"
 
-#: app/flatpak-cli-transaction.c:528
+#: app/flatpak-cli-transaction.c:518
 #, c-format
 msgid "Warning: %s%s%s not installed"
 msgstr "გაფრთხილება: %s%s%s დაყენებული არაა"
 
-#: app/flatpak-cli-transaction.c:531
+#: app/flatpak-cli-transaction.c:521
 #, c-format
 msgid "Error: %s%s%s not installed"
 msgstr "შეცდომა: %s%s%s დაყენებული არაა"
 
-#: app/flatpak-cli-transaction.c:537
+#: app/flatpak-cli-transaction.c:527
 #, c-format
 msgid "Warning: %s%s%s needs a later flatpak version"
 msgstr "გაფრთხილება: %s%s%s-ს flatpak-ის უფრო ახალი ვერსია სჭირდება"
 
-#: app/flatpak-cli-transaction.c:540
+#: app/flatpak-cli-transaction.c:530
 #, c-format
 msgid "Error: %s%s%s needs a later flatpak version"
 msgstr "შეცდომა: %s%s%s-ს flatpak-ის უფრო ახალი ვერსია სჭირდება"
 
-#: app/flatpak-cli-transaction.c:546
+#: app/flatpak-cli-transaction.c:536
 msgid "Warning: Not enough disk space to complete this operation"
 msgstr "გაფრთხილება: ოპერაციის დასასრულებლად დისკზე საკმარისი ადგილი არაა"
 
-#: app/flatpak-cli-transaction.c:548
+#: app/flatpak-cli-transaction.c:538
 msgid "Error: Not enough disk space to complete this operation"
 msgstr "შეცდომა: ოპერაციის დასასრულებლად დისკზე საკმარისი ადგილი არაა"
 
-#: app/flatpak-cli-transaction.c:553
+#: app/flatpak-cli-transaction.c:543
 #, c-format
 msgid "Warning: %s"
 msgstr "გაფრთხილება: %s"
 
-#: app/flatpak-cli-transaction.c:555
+#: app/flatpak-cli-transaction.c:545
 #, c-format
 msgid "Error: %s"
 msgstr "შეცდომა:%s"
 
-#: app/flatpak-cli-transaction.c:570
+#: app/flatpak-cli-transaction.c:560
 #, c-format
 msgid "Failed to install %s%s%s: "
 msgstr "%s%s%s-ის დაყენება ჩავარდა: "
 
-#: app/flatpak-cli-transaction.c:577
+#: app/flatpak-cli-transaction.c:567
 #, c-format
 msgid "Failed to update %s%s%s: "
 msgstr "%s%s%s-ის განახლება ჩავარდა: "
 
-#: app/flatpak-cli-transaction.c:584
+#: app/flatpak-cli-transaction.c:574
 #, c-format
 msgid "Failed to install bundle %s%s%s: "
 msgstr "ჩავარდა დაყენება პაკეტისთვის %s%s%s: "
 
-#: app/flatpak-cli-transaction.c:591
+#: app/flatpak-cli-transaction.c:581
 #, c-format
 msgid "Failed to uninstall %s%s%s: "
 msgstr "%s%s%s-ის წაშლა ჩავარდა: "
 
-#: app/flatpak-cli-transaction.c:642
+#: app/flatpak-cli-transaction.c:632
 #, c-format
 msgid "Authentication required for remote '%s'\n"
 msgstr "დაშორებული '%s'-ისთვის ავთენტიკაცია გჭირდებათ\n"
 
-#: app/flatpak-cli-transaction.c:643
+#: app/flatpak-cli-transaction.c:633
 msgid "Open browser?"
 msgstr "გავხსნა ბრაუზერში?"
 
-#: app/flatpak-cli-transaction.c:696
+#: app/flatpak-cli-transaction.c:686
 #, c-format
 msgid "Login required remote %s (realm %s)\n"
 msgstr "დაშორებულის %s (რეალმი %s) გამოსაყენებლად შესვლა დაგჭირდებათ\n"
 
-#: app/flatpak-cli-transaction.c:701
+#: app/flatpak-cli-transaction.c:691
 msgid "Password"
 msgstr "პაროლი"
 
 #. Only runtimes can be pinned
-#: app/flatpak-cli-transaction.c:756
+#: app/flatpak-cli-transaction.c:746
 #, c-format
 msgid ""
 "\n"
@@ -3820,7 +3836,7 @@ msgstr ""
 "ინფორმაცია: (მიმაგრებული) გაშვების გარემოს %s%s%s ბრენჩის %s%s%s მხარდაჭერა "
 "ამოწურულია. გამოიყენეთ %s%s%s ბრენჩი %s%s%s\n"
 
-#: app/flatpak-cli-transaction.c:762
+#: app/flatpak-cli-transaction.c:752
 #, c-format
 msgid ""
 "\n"
@@ -3831,7 +3847,7 @@ msgstr ""
 "ინფორმაცია: გაშვების გარემოს %s%s%s ბრენჩის %s%s%s მხარდაჭერა ამოწურულია. "
 "გამოიყენეთ %s%s%s ბრენჩი %s%s%s\n"
 
-#: app/flatpak-cli-transaction.c:765
+#: app/flatpak-cli-transaction.c:755
 #, c-format
 msgid ""
 "\n"
@@ -3843,7 +3859,7 @@ msgstr ""
 "%s%s%s ბრენჩი %s%s%s\n"
 
 #. Only runtimes can be pinned
-#: app/flatpak-cli-transaction.c:777
+#: app/flatpak-cli-transaction.c:767
 #, c-format
 msgid ""
 "\n"
@@ -3853,7 +3869,7 @@ msgstr ""
 "ინფორმაცია: (მიმაგრებული) გაშვების გარემოს %s%s%s ბრენჩის %s%s%s მხარდაჭერა "
 "ამოწურულია მიზეზით:\n"
 
-#: app/flatpak-cli-transaction.c:783
+#: app/flatpak-cli-transaction.c:773
 #, c-format
 msgid ""
 "\n"
@@ -3863,7 +3879,7 @@ msgstr ""
 "ინფორმაცია: გაშვების გარემოს %s%s%s ბრენჩის %s%s%s მხარდაჭერა ამოწურულია "
 "მიზეზით:\n"
 
-#: app/flatpak-cli-transaction.c:786
+#: app/flatpak-cli-transaction.c:776
 #, c-format
 msgid ""
 "\n"
@@ -3872,88 +3888,88 @@ msgstr ""
 "\n"
 "ინფორმაცია: აპის %s%s%s ბრენჩის %s%s%s მხარდაჭერა ამოწურულია მიზეზით:\n"
 
-#: app/flatpak-cli-transaction.c:960
+#: app/flatpak-cli-transaction.c:950
 #, c-format
 msgid "Info: applications using this extension:\n"
 msgstr "ინფორმაცია: აპლიკაციები, რომლებიც ამ გაფართოებას იყენებენ:\n"
 
-#: app/flatpak-cli-transaction.c:962
+#: app/flatpak-cli-transaction.c:952
 #, c-format
 msgid "Info: applications using this runtime:\n"
 msgstr "ინფორმაცია: აპლიკაციები, რომლებიც ამ გაშვების გარემოს იყენებენ:\n"
 
-#: app/flatpak-cli-transaction.c:981
+#: app/flatpak-cli-transaction.c:971
 msgid "Replace?"
 msgstr "ჩავანაცვლო?"
 
-#: app/flatpak-cli-transaction.c:984 app/flatpak-quiet-transaction.c:247
+#: app/flatpak-cli-transaction.c:974 app/flatpak-quiet-transaction.c:247
 #, c-format
 msgid "Updating to rebased version\n"
 msgstr "რებაზირებულ ვერსიაზე განახლება\n"
 
-#: app/flatpak-cli-transaction.c:1008
+#: app/flatpak-cli-transaction.c:998
 #, c-format
 msgid "Failed to rebase %s to %s: "
 msgstr "%s-ის %s-ზე რებაზირების შეცდომა: "
 
-#: app/flatpak-cli-transaction.c:1274
+#: app/flatpak-cli-transaction.c:1264
 #, c-format
 msgid "New %s%s%s permissions:"
 msgstr "ახალი %s%s%s წვდომები:"
 
-#: app/flatpak-cli-transaction.c:1276
+#: app/flatpak-cli-transaction.c:1266
 #, c-format
 msgid "%s%s%s permissions:"
 msgstr "%s%s%s წვდომები:"
 
-#: app/flatpak-cli-transaction.c:1340
+#: app/flatpak-cli-transaction.c:1330
 msgid "Warning: "
 msgstr "გაფრთხილება: "
 
 #. translators: This is short for operation, the title of a one-char column
-#: app/flatpak-cli-transaction.c:1439
+#: app/flatpak-cli-transaction.c:1429
 msgid "Op"
 msgstr "ოპი"
 
 #. Avoid resizing the download column too much,
 #. * by making the title as long as typical content
 #.
-#: app/flatpak-cli-transaction.c:1455 app/flatpak-cli-transaction.c:1500
+#: app/flatpak-cli-transaction.c:1445 app/flatpak-cli-transaction.c:1490
 msgid "partial"
 msgstr "ნაწილობრივ"
 
-#: app/flatpak-cli-transaction.c:1532
+#: app/flatpak-cli-transaction.c:1522
 msgid "Proceed with these changes to the user installation?"
 msgstr "გადავატარო ეს ცვლილებები მომხმარებლის დაყენებულ პროგრამას?"
 
-#: app/flatpak-cli-transaction.c:1534
+#: app/flatpak-cli-transaction.c:1524
 msgid "Proceed with these changes to the system installation?"
 msgstr "გადავატარო ეს ცვლილებები სისტემაში დაყენებულ პროგრამას?"
 
-#: app/flatpak-cli-transaction.c:1536
+#: app/flatpak-cli-transaction.c:1526
 #, c-format
 msgid "Proceed with these changes to the %s?"
 msgstr "გადავატარო ეს ცვლილებები %s-ს?"
 
-#: app/flatpak-cli-transaction.c:1707
+#: app/flatpak-cli-transaction.c:1697
 msgid "Changes complete."
 msgstr "ცვლილებები დასრულებულია."
 
-#: app/flatpak-cli-transaction.c:1709
+#: app/flatpak-cli-transaction.c:1699
 msgid "Uninstall complete."
 msgstr "წაშლა დასრულებულია."
 
-#: app/flatpak-cli-transaction.c:1711
+#: app/flatpak-cli-transaction.c:1701
 msgid "Installation complete."
 msgstr "დაყენება დასრულებულია."
 
-#: app/flatpak-cli-transaction.c:1713
+#: app/flatpak-cli-transaction.c:1703
 msgid "Updates complete."
 msgstr "განახლება დასრულდა."
 
 #. For updates/!stop_on_first_error we already printed all errors so we make up
 #. a different one.
-#: app/flatpak-cli-transaction.c:1746
+#: app/flatpak-cli-transaction.c:1736
 msgid "There were one or more errors"
 msgstr "მოხდა ერთ ან მეტი შეცდომა"
 
@@ -4372,16 +4388,16 @@ msgstr ""
 "შეცდომა: %s-ის წაშლა ჩავარდა: %s\n"
 "\n"
 
-#: app/flatpak-quiet-transaction.c:166 common/flatpak-dir.c:11955
+#: app/flatpak-quiet-transaction.c:166 common/flatpak-dir.c:11979
 #, c-format
 msgid "%s already installed"
 msgstr "%s უკვე დაყენებულია"
 
-#: app/flatpak-quiet-transaction.c:168 common/flatpak-dir.c:3849
-#: common/flatpak-dir.c:4548 common/flatpak-dir.c:17503
-#: common/flatpak-dir.c:17793 common/flatpak-dir-utils.c:167
-#: common/flatpak-dir-utils.c:260 common/flatpak-transaction.c:2752
-#: common/flatpak-transaction.c:2807
+#: app/flatpak-quiet-transaction.c:168 common/flatpak-dir.c:3871
+#: common/flatpak-dir.c:4570 common/flatpak-dir.c:17529
+#: common/flatpak-dir.c:17819 common/flatpak-dir-utils.c:167
+#: common/flatpak-dir-utils.c:301 common/flatpak-transaction.c:2785
+#: common/flatpak-transaction.c:2840
 #, c-format
 msgid "%s not installed"
 msgstr "%s დაყენებული არაა"
@@ -4420,42 +4436,42 @@ msgstr "დაშორებულისთვის '%s' ავთენტი
 msgid "Invalid permission syntax: %s"
 msgstr "არასწორი წვდომის სინტაქსი: %s"
 
-#: common/flatpak-context.c:1248
+#: common/flatpak-context.c:1250
 #, c-format
 msgid "Unknown share type %s, valid types are: %s"
 msgstr "გაზიარებულის უცნობი ტიპი %s. სწორი ტიპებია %s"
 
-#: common/flatpak-context.c:1269
+#: common/flatpak-context.c:1271
 #, c-format
 msgid "Unknown policy type %s, valid types are: %s"
 msgstr "პოლიტიკის უცნობი ტიპი %s. სწორი ტიპებია %s"
 
-#: common/flatpak-context.c:1331
+#: common/flatpak-context.c:1333
 #, c-format
 msgid "Invalid dbus name %s"
 msgstr "არასწორი dbus სახელი %s"
 
-#: common/flatpak-context.c:1344
+#: common/flatpak-context.c:1346
 #, c-format
 msgid "Unknown socket type %s, valid types are: %s"
 msgstr "სოკეტის უცნობი ტიპი %s. სწორი ტიპებია %s"
 
-#: common/flatpak-context.c:1359
+#: common/flatpak-context.c:1361
 #, c-format
 msgid "Unknown device type %s, valid types are: %s"
 msgstr "მოწყობილობის უცნობი ტიპი %s. სწორი ტიპებია %s"
 
-#: common/flatpak-context.c:1373
+#: common/flatpak-context.c:1375
 #, c-format
 msgid "Unknown feature type %s, valid types are: %s"
 msgstr "თვისების უცნობი ტიპი %s. სწორი ტიპებია %s"
 
-#: common/flatpak-context.c:1905
+#: common/flatpak-context.c:1913
 #, c-format
 msgid "Filesystem location \"%s\" contains \"..\""
 msgstr "ფაილური სისტემის ბილიკი \"%s\" \"..\"-ს შეიცავს"
 
-#: common/flatpak-context.c:1947
+#: common/flatpak-context.c:1955
 #, c-format
 msgid ""
 "--filesystem=/ is not available, use --filesystem=host for a similar result"
@@ -4463,7 +4479,7 @@ msgstr ""
 "--filesystem=/ ხელმისაწვდომი არაა. მსგავსი შედეგისთვის გამოიყენეთ --"
 "filesystem=host"
 
-#: common/flatpak-context.c:1981
+#: common/flatpak-context.c:1989
 #, c-format
 msgid ""
 "Unknown filesystem location %s, valid locations are: host, host-os, host-"
@@ -4472,257 +4488,257 @@ msgstr ""
 "უცნობი ფაილური სისტემის მდებარეობა %s. სწორი მდებარეობებია: host, host-os, "
 "host-etc, host-root, home, xdg-*[/…], ~/dir, /dir"
 
-#: common/flatpak-context.c:2080
+#: common/flatpak-context.c:2088
 #, c-format
 msgid "Invalid syntax for %s: %s"
 msgstr "არასწორი სინტაქსი %s-ისთვის: %s"
 
-#: common/flatpak-context.c:2207
+#: common/flatpak-context.c:2215
 #, c-format
 msgid "fallback-x11 can not be conditional"
 msgstr "fallback-x11 პირობის შემცველი ვერ იქნება"
 
-#: common/flatpak-context.c:2383
+#: common/flatpak-context.c:2391
 #, c-format
 msgid "Invalid env format %s"
 msgstr "არასწორი გარემოს ფორმატი %s"
 
-#: common/flatpak-context.c:2464
+#: common/flatpak-context.c:2472
 #, c-format
 msgid "Environment variable name must not contain '=': %s"
 msgstr "გარემოს ცვლადის სახელი \"=\" -ს არ შეიძლება შეიცავდეს: %s"
 
-#: common/flatpak-context.c:2592 common/flatpak-context.c:2600
+#: common/flatpak-context.c:2600 common/flatpak-context.c:2608
 #, c-format
 msgid "--add-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 "--add-policy პარამეტრის არგუმენტები ქვესისტემა.პარამეტრი=მნიშვნელობა "
 "ფორმატში უნდა იყოს"
 
-#: common/flatpak-context.c:2607
+#: common/flatpak-context.c:2615
 #, c-format
 msgid "--add-policy values can't start with \"!\""
 msgstr "--add-policy-ის მნიშვნელობები \"!\"-ით არ შეიძლება, იწყებოდეს"
 
-#: common/flatpak-context.c:2632 common/flatpak-context.c:2640
+#: common/flatpak-context.c:2640 common/flatpak-context.c:2648
 #, c-format
 msgid "--remove-policy arguments must be in the form SUBSYSTEM.KEY=VALUE"
 msgstr ""
 "--remove-policy-ის არგუმენტები ქვესისტემა.პარამეტრი=მნიშვნელობა ფორმატში "
 "უნდა იყოს"
 
-#: common/flatpak-context.c:2647
+#: common/flatpak-context.c:2655
 #, c-format
 msgid "--remove-policy values can't start with \"!\""
 msgstr "--remove-policy-ის მნიშვნელობები \"!\"-ით არ შეიძლება, იწყებოდეს"
 
-#: common/flatpak-context.c:2722
+#: common/flatpak-context.c:2730
 msgid "Share with host"
 msgstr "ჰოსტთან გაზიარება"
 
-#: common/flatpak-context.c:2722 common/flatpak-context.c:2723
+#: common/flatpak-context.c:2730 common/flatpak-context.c:2731
 msgid "SHARE"
 msgstr "გაზიარება"
 
-#: common/flatpak-context.c:2723
+#: common/flatpak-context.c:2731
 msgid "Unshare with host"
 msgstr "ჰოსტთან გაზიარების მოხსნა"
 
-#: common/flatpak-context.c:2724
+#: common/flatpak-context.c:2732
 msgid "Require conditions to be met for a subsystem to get shared"
 msgstr "პირობების შესრულების მოთხოვნა ქვესისტემის გასაზიარებლად"
 
-#: common/flatpak-context.c:2724
+#: common/flatpak-context.c:2732
 msgid "SHARE:CONDITION"
 msgstr "გაზიარებული:პირობა"
 
-#: common/flatpak-context.c:2725
+#: common/flatpak-context.c:2733
 msgid "Expose socket to app"
 msgstr "სოკეტის გამოჩენა აპისთვის"
 
-#: common/flatpak-context.c:2725 common/flatpak-context.c:2726
+#: common/flatpak-context.c:2733 common/flatpak-context.c:2734
 msgid "SOCKET"
 msgstr "სოკეტი"
 
-#: common/flatpak-context.c:2726
+#: common/flatpak-context.c:2734
 msgid "Don't expose socket to app"
 msgstr "აპი სოკეტს  ვერ დაინახავს"
 
-#: common/flatpak-context.c:2727
+#: common/flatpak-context.c:2735
 msgid "Require conditions to be met for a socket to get exposed"
 msgstr "პირობების შესრულების მოთხოვნა სოკეტის გასაზიარებლად"
 
-#: common/flatpak-context.c:2727
+#: common/flatpak-context.c:2735
 msgid "SOCKET:CONDITION"
 msgstr "სოკეტი:პირობა"
 
-#: common/flatpak-context.c:2728
+#: common/flatpak-context.c:2736
 msgid "Expose device to app"
 msgstr "მოწყობილობის გამოჩენა აპისთვის"
 
-#: common/flatpak-context.c:2728 common/flatpak-context.c:2729
+#: common/flatpak-context.c:2736 common/flatpak-context.c:2737
 msgid "DEVICE"
 msgstr "მოწყობილობა"
 
-#: common/flatpak-context.c:2729
+#: common/flatpak-context.c:2737
 msgid "Don't expose device to app"
 msgstr "აპი მოწყობილობას ვერ დაინახავს"
 
-#: common/flatpak-context.c:2730
+#: common/flatpak-context.c:2738
 msgid "Require conditions to be met for a device to get exposed"
 msgstr "პირობების შესრულების მოთხოვნა მოწყობილობის გასაზიარებლად"
 
-#: common/flatpak-context.c:2730
+#: common/flatpak-context.c:2738
 msgid "DEVICE:CONDITION"
 msgstr "მოწყობილობა:პირობა"
 
-#: common/flatpak-context.c:2731
+#: common/flatpak-context.c:2739
 msgid "Allow feature"
 msgstr "ფუნქციის დაშვება"
 
-#: common/flatpak-context.c:2731 common/flatpak-context.c:2732
+#: common/flatpak-context.c:2739 common/flatpak-context.c:2740
 msgid "FEATURE"
 msgstr "თვისება"
 
-#: common/flatpak-context.c:2732
+#: common/flatpak-context.c:2740
 msgid "Don't allow feature"
 msgstr "ფუნქციის არ-დაშვება"
 
-#: common/flatpak-context.c:2733
+#: common/flatpak-context.c:2741
 msgid "Require conditions to be met for a feature to get allowed"
 msgstr "პირობების შესრულების მოთხოვნა თვისების გასაზიარებლად"
 
-#: common/flatpak-context.c:2733
+#: common/flatpak-context.c:2741
 msgid "FEATURE:CONDITION"
 msgstr "თვისება:პირობა"
 
-#: common/flatpak-context.c:2734
+#: common/flatpak-context.c:2742
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr "აპისთვის ფაილური სისტემის დანახება (მხოლოდ-კითხვისთვის :ro)"
 
-#: common/flatpak-context.c:2734
+#: common/flatpak-context.c:2742
 msgid "FILESYSTEM[:ro]"
 msgstr "FILESYSTEM[:ro]"
 
-#: common/flatpak-context.c:2735
+#: common/flatpak-context.c:2743
 msgid "Don't expose filesystem to app"
 msgstr "აპი ფაილურ სისტემას ვერ დაინახავს"
 
-#: common/flatpak-context.c:2735
+#: common/flatpak-context.c:2743
 msgid "FILESYSTEM"
 msgstr "FILESYSTEM"
 
-#: common/flatpak-context.c:2736
+#: common/flatpak-context.c:2744
 msgid "Set environment variable"
 msgstr "გარემოს ცვლადის დაყენება"
 
-#: common/flatpak-context.c:2736
+#: common/flatpak-context.c:2744
 msgid "VAR=VALUE"
 msgstr "VAR=VALUE"
 
-#: common/flatpak-context.c:2737
+#: common/flatpak-context.c:2745
 msgid "Read environment variables in env -0 format from FD"
 msgstr "გარემოს ცვლადების წაკითხვა გარემოში -0 ფორმატით FD-დან"
 
-#: common/flatpak-context.c:2738
+#: common/flatpak-context.c:2746
 msgid "Remove variable from environment"
 msgstr "გარემოდან ცვლადის წაშლა"
 
-#: common/flatpak-context.c:2738
+#: common/flatpak-context.c:2746
 msgid "VAR"
 msgstr "VAR"
 
-#: common/flatpak-context.c:2739
+#: common/flatpak-context.c:2747
 msgid "Allow app to own name on the session bus"
 msgstr "აპისთვის სესიის მატარებელზე საკუთარი სახელის ქონის ნების დართვა"
 
-#: common/flatpak-context.c:2739 common/flatpak-context.c:2740
-#: common/flatpak-context.c:2741 common/flatpak-context.c:2742
-#: common/flatpak-context.c:2743 common/flatpak-context.c:2744
-#: common/flatpak-context.c:2745
+#: common/flatpak-context.c:2747 common/flatpak-context.c:2748
+#: common/flatpak-context.c:2749 common/flatpak-context.c:2750
+#: common/flatpak-context.c:2751 common/flatpak-context.c:2752
+#: common/flatpak-context.c:2753
 msgid "DBUS_NAME"
 msgstr "DBUS_NAME"
 
-#: common/flatpak-context.c:2740
+#: common/flatpak-context.c:2748
 msgid "Allow app to talk to name on the session bus"
 msgstr "აპისთვის სესიის მატარებელზე სახელთან ლაპარაკის ნების დართვა"
 
-#: common/flatpak-context.c:2741
+#: common/flatpak-context.c:2749
 msgid "Don't allow app to talk to name on the session bus"
 msgstr "აპისთვის სესიის მატარებელზე სახელთან ლაპარაკის აკრძალვა"
 
-#: common/flatpak-context.c:2742
+#: common/flatpak-context.c:2750
 msgid "Allow app to own name on the system bus"
 msgstr "აპისთვის სისტემურ მატარებელზე საკუთარი სახელის ქონის ნების დართვა"
 
-#: common/flatpak-context.c:2743
+#: common/flatpak-context.c:2751
 msgid "Allow app to talk to name on the system bus"
 msgstr "აპისთვის სესიის მატარებელზე სახელთან ლაპარაკის ნების დართვა"
 
-#: common/flatpak-context.c:2744
+#: common/flatpak-context.c:2752
 msgid "Don't allow app to talk to name on the system bus"
 msgstr "აპისთვის სისტემურ მატარებელზე სახელთან ლაპარაკის აკრძალვა"
 
-#: common/flatpak-context.c:2745
+#: common/flatpak-context.c:2753
 msgid "Allow app to own name on the a11y bus"
 msgstr "აპისთვის a11y მატარებელზე საკუთარი სახელის ქონის ნების დართვა"
 
-#: common/flatpak-context.c:2746
+#: common/flatpak-context.c:2754
 msgid "Add generic policy option"
 msgstr "ზოგადი პოლიტიკის პარამეტრის დამატება"
 
-#: common/flatpak-context.c:2746 common/flatpak-context.c:2747
+#: common/flatpak-context.c:2754 common/flatpak-context.c:2755
 msgid "SUBSYSTEM.KEY=VALUE"
 msgstr "ქვესისტემა.პარამეტრი=მნიშვნელობა"
 
-#: common/flatpak-context.c:2747
+#: common/flatpak-context.c:2755
 msgid "Remove generic policy option"
 msgstr "ზოგადი პოლიტიკის პარამეტრის წაშლა"
 
-#: common/flatpak-context.c:2748
+#: common/flatpak-context.c:2756
 msgid "Add USB device to enumerables"
 msgstr "USB მოწყობილობის დამატება ჩამოთვლადებსი"
 
-#: common/flatpak-context.c:2748 common/flatpak-context.c:2749
+#: common/flatpak-context.c:2756 common/flatpak-context.c:2757
 msgid "VENDOR_ID:PRODUCT_ID"
 msgstr "VENDOR_ID:PRODUCT_ID"
 
-#: common/flatpak-context.c:2749
+#: common/flatpak-context.c:2757
 msgid "Add USB device to hidden list"
 msgstr "USB მოწყობილობის დამატება დამალულების სიაში"
 
-#: common/flatpak-context.c:2750
+#: common/flatpak-context.c:2758
 msgid "A list of USB devices that are enumerable"
 msgstr "USB მოწყობილობების სია, რომლებიც ჩამოთვლადია"
 
-#: common/flatpak-context.c:2750
+#: common/flatpak-context.c:2758
 msgid "LIST"
 msgstr "სია"
 
-#: common/flatpak-context.c:2751
+#: common/flatpak-context.c:2759
 msgid "File containing a list of USB devices to make enumerable"
 msgstr ""
 "ფაილი, რომელიც შეიცავს USB მოწყობილობების სიას ჩამოთვლადების შესაქმნელად"
 
-#: common/flatpak-context.c:2751 common/flatpak-context.c:2752
+#: common/flatpak-context.c:2759 common/flatpak-context.c:2760
 msgid "FILENAME"
 msgstr "ფაილის სახელი"
 
-#: common/flatpak-context.c:2752
+#: common/flatpak-context.c:2760
 msgid "Persist home directory subpath"
 msgstr "მუდმივი ბილიკი საწყის საქაღალდემდე"
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-context.c:2754
+#: common/flatpak-context.c:2762
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "გაშვებული სესია მოთხოვნილი არ იქნება (cgroup-ები არ შეიქმნება)"
 
-#: common/flatpak-context.c:3789
+#: common/flatpak-context.c:3797
 #, c-format
 msgid "Not replacing \"%s\" with tmpfs: %s"
 msgstr "\"%s\" tmpfs-ით არ ჩანაცვლდება: %s"
 
-#: common/flatpak-context.c:3797
+#: common/flatpak-context.c:3805
 #, c-format
 msgid "Not sharing \"%s\" with sandbox: %s"
 msgstr "\"%s\" სენდბოქსთან არ გაზიარდება: %s"
@@ -4731,454 +4747,454 @@ msgstr "\"%s\" სენდბოქსთან არ გაზიარდე
 #. * the path not existing, it seems reasonable to make more of a fuss
 #. * about the home directory not existing or otherwise being unusable,
 #. * so this is intentionally not using cannot_export()
-#: common/flatpak-context.c:3899
+#: common/flatpak-context.c:3907
 #, c-format
 msgid "Not allowing home directory access: %s"
 msgstr "საწყის საქაღალდესთან წვდომა მინიჭებული არ იქნება: %s"
 
-#: common/flatpak-context.c:4133
+#: common/flatpak-context.c:4141
 #, c-format
 msgid "Unable to provide a temporary home directory in the sandbox: %s"
 msgstr "დროებითი საწყისი საქაღალდის მიწოდება შეუძლებელია სენდბოქსში: %s"
 
-#: common/flatpak-dir.c:617
+#: common/flatpak-dir.c:622
 #, c-format
 msgid "Configured collection ID ‘%s’ not in summary file"
 msgstr "მორგებული კოლექციის ID '%s' შეჯამების ფაილი არაა"
 
-#: common/flatpak-dir.c:634
+#: common/flatpak-dir.c:639
 msgid "Summary has invalid or corrupted data"
 msgstr "შეჯამება არასწორ, ან დაზიანებულ მონაცემებს შეიცავს"
 
-#: common/flatpak-dir.c:653
+#: common/flatpak-dir.c:658
 msgid "Summary index has invalid or corrupted data"
 msgstr "შეჯამების ინდექსი არასწორ, ან დაზიანებულ მონაცემებს შეიცავს"
 
-#: common/flatpak-dir.c:807
+#: common/flatpak-dir.c:812
 #, c-format
 msgid "Unable to load summary from remote %s: %s"
 msgstr "დაშორებულიდან '%s' შეჯამების ჩატვირთვა შეუძლებელია: %s"
 
-#: common/flatpak-dir.c:987 common/flatpak-dir.c:1023 common/flatpak-dir.c:1129
+#: common/flatpak-dir.c:992 common/flatpak-dir.c:1028 common/flatpak-dir.c:1134
 #, c-format
 msgid "No such ref '%s' in remote %s"
 msgstr "მიმართვა '%s' დაშორებულში %s არ არსებობს"
 
-#: common/flatpak-dir.c:1114 common/flatpak-dir.c:1274
-#: common/flatpak-dir.c:1303 common/flatpak-dir.c:1315
+#: common/flatpak-dir.c:1119 common/flatpak-dir.c:1279
+#: common/flatpak-dir.c:1308 common/flatpak-dir.c:1320
 #, c-format
 msgid "No entry for %s in remote %s summary flatpak cache"
 msgstr "ჩანაწერი %s არ არსებობს დაშორებულში '%s' შეჯამების flatpak კეშში"
 
-#: common/flatpak-dir.c:1292
+#: common/flatpak-dir.c:1297
 #, c-format
 msgid "No summary or Flatpak cache available for remote %s"
 msgstr "დაშორებულისთვის %s შეჯამება ან Flatpak-ის კეში მიუწვდომელია"
 
-#: common/flatpak-dir.c:1320
+#: common/flatpak-dir.c:1325
 #, c-format
 msgid "Missing xa.data in summary for remote %s"
 msgstr "დაშორებულისთვის %s შეჯამებაში xa.data აღმოჩენილი არაა"
 
-#: common/flatpak-dir.c:1326 common/flatpak-dir.c:1769
+#: common/flatpak-dir.c:1331 common/flatpak-dir.c:1774
 #, c-format
 msgid "Unsupported summary version %d for remote %s"
 msgstr "მხარდაუჭერელი შეჯამების ვერსია %d დაშორებულისთვის %s"
 
-#: common/flatpak-dir.c:1423
+#: common/flatpak-dir.c:1428
 msgid "Remote OCI index has no registry uri"
 msgstr "დაშორებულ OCI ინდექსს რეესტრის URI არ გააჩნია"
 
-#: common/flatpak-dir.c:1484
+#: common/flatpak-dir.c:1489
 #, c-format
 msgid "Couldn't find ref %s in remote %s"
 msgstr "მიმართვა %s დაშორებულში %s აღმოჩენილი არაა"
 
-#: common/flatpak-dir.c:1511 common/flatpak-dir.c:1604
+#: common/flatpak-dir.c:1516 common/flatpak-dir.c:1609
 #, c-format
 msgid "Commit has no requested ref ‘%s’ in ref binding metadata (found: ‘%s’)"
 msgstr ""
 "კომიტს არ აქვს მოთხოვნილი მიმართვა '%s' მიმართვის მიმაგრების მეტამონაცემებში "
 "(აღმოჩენილია: '%s')"
 
-#: common/flatpak-dir.c:1636
+#: common/flatpak-dir.c:1641
 #, c-format
 msgid "Configured collection ID ‘%s’ not in binding metadata"
 msgstr "მიმაგრების მეტამონაცემებში მორგებული კოლექციის ID '%s' არაა"
 
-#: common/flatpak-dir.c:1672 common/flatpak-dir.c:5872
+#: common/flatpak-dir.c:1677 common/flatpak-dir.c:5894
 #, c-format
 msgid "Couldn't find latest checksum for ref %s in remote %s"
 msgstr "მიმართვისთვის %s დაშორებულში %s უახლესი საკონტროლო ჯამი ვერ ვიპოვე"
 
-#: common/flatpak-dir.c:1739 common/flatpak-dir.c:1775
+#: common/flatpak-dir.c:1744 common/flatpak-dir.c:1780
 #, c-format
 msgid "No entry for %s in remote %s summary flatpak sparse cache"
 msgstr ""
 "%s-სთვის ჩანაწერი დაშორებული %s-ის შეჯამების flatpak-ის იშვიათ კეშში არ "
 "არსებობს"
 
-#: common/flatpak-dir.c:2763
+#: common/flatpak-dir.c:2785
 #, c-format
 msgid "Commit metadata for %s not matching expected metadata"
 msgstr "კომიტის მეტამონაცემები %s-სთვის მოსალოდნელ მეტამონაცემებს არ ემთხვევა"
 
-#: common/flatpak-dir.c:3050
+#: common/flatpak-dir.c:3072
 msgid "Unable to connect to system bus"
 msgstr "სისტემურ მატარებელთან მიერთება შეუძლებელია"
 
-#: common/flatpak-dir.c:3646
+#: common/flatpak-dir.c:3668
 msgid "User installation"
 msgstr "მომხმარებლისთვის დაყენება"
 
-#: common/flatpak-dir.c:3653
+#: common/flatpak-dir.c:3675
 #, c-format
 msgid "System (%s) installation"
 msgstr "სისტემაში (%s) დაყენება"
 
-#: common/flatpak-dir.c:3699
+#: common/flatpak-dir.c:3721
 #, c-format
 msgid "No overrides found for %s"
 msgstr "%s-სთვის გადაფარვები ვერ ვიპოვე"
 
-#: common/flatpak-dir.c:3852
+#: common/flatpak-dir.c:3874
 #, c-format
 msgid "%s (commit %s) not installed"
 msgstr "%s (კომიტი %s) დაყენებული არაა"
 
-#: common/flatpak-dir.c:4877
+#: common/flatpak-dir.c:4899
 #, c-format
 msgid "Error parsing system flatpakrepo file for %s: %s"
 msgstr "%s-სთვის სისტემური flatpakrepo ფაილის დამუშავების შეცდომა: %s"
 
-#: common/flatpak-dir.c:4962
+#: common/flatpak-dir.c:4984
 #, c-format
 msgid "While opening repository %s: "
 msgstr "რეპოზიტორიის (%s) გახსნისას: "
 
-#: common/flatpak-dir.c:5231
+#: common/flatpak-dir.c:5253
 #, c-format
 msgid "The config key %s is not set"
 msgstr "კონფიგურაციის პარამეტრი %s დაყენებული არაა"
 
-#: common/flatpak-dir.c:5367
+#: common/flatpak-dir.c:5389
 #, c-format
 msgid "No current %s pattern matching %s"
 msgstr "მიმდინარე %s ნიმუში, რომელიც %s-ს ემთხვევა, აღმოჩენილი არაა"
 
-#: common/flatpak-dir.c:5649
+#: common/flatpak-dir.c:5671
 msgid "No appstream commit to deploy"
 msgstr "გასალაგებელი appstream-ის კომიტის გარეშე"
 
-#: common/flatpak-dir.c:6169 common/flatpak-dir.c:7489
-#: common/flatpak-dir.c:11361 common/flatpak-dir.c:12097
+#: common/flatpak-dir.c:6191 common/flatpak-dir.c:7511
+#: common/flatpak-dir.c:11385 common/flatpak-dir.c:12121
 msgid "Can't pull from untrusted non-gpg verified remote"
 msgstr "არა-gpg-ით გადამოწმებული დაშორებულიდან პული შეუძლებელია"
 
-#: common/flatpak-dir.c:6604 common/flatpak-dir.c:6822
+#: common/flatpak-dir.c:6626 common/flatpak-dir.c:6844
 msgid "Extra data not supported for non-gpg-verified local system installs"
 msgstr ""
 "არა-GPG-ით-გადამოწმებული ლოკალური სისტემური დაყენებებისთვის დამატებითი "
 "მონაცემები მხარდაჭერილი არაა"
 
-#: common/flatpak-dir.c:6643 common/flatpak-dir.c:7013
+#: common/flatpak-dir.c:6665 common/flatpak-dir.c:7035
 #, c-format
 msgid "Invalid checksum for extra data uri %s"
 msgstr "არასწორი საონტროლო ჯამი დამატებითი მონაცემები URI-სთვის %s"
 
-#: common/flatpak-dir.c:6655
+#: common/flatpak-dir.c:6677
 #, c-format
 msgid "Invalid extra data name '%s'"
 msgstr "არასწორი დამატებითი მონაცემების სახელი '%s'"
 
-#: common/flatpak-dir.c:6663
+#: common/flatpak-dir.c:6685
 #, c-format
 msgid "Unsupported extra data uri %s"
 msgstr "მხარდაუჭერელი დამატებითი მონაცემების URI %s"
 
-#: common/flatpak-dir.c:6692
+#: common/flatpak-dir.c:6714
 #, c-format
 msgid "Failed to load local extra-data %s: %s"
 msgstr "ლოკალური დამატებითი მონაცემის %s ჩატვირთვის შეცდომა: %s"
 
-#: common/flatpak-dir.c:6700
+#: common/flatpak-dir.c:6722
 #, c-format
 msgid "Wrong size for extra-data %s"
 msgstr "არასწორი ზომა დამატებითი-მონაცემებისთვის %s"
 
-#: common/flatpak-dir.c:6719
+#: common/flatpak-dir.c:6741
 #, c-format
 msgid "While downloading %s: "
 msgstr "%s-ის გადმოწერისას: "
 
-#: common/flatpak-dir.c:6729
+#: common/flatpak-dir.c:6751
 #, c-format
 msgid "Wrong size for extra data %s"
 msgstr "დამატებითი მონაცემების (%s) არასწორი ზომა"
 
-#: common/flatpak-dir.c:6738
+#: common/flatpak-dir.c:6760
 #, c-format
 msgid "Invalid checksum for extra data %s"
 msgstr "დამატებითი მონაცემების (%s) არასწორი საკონტროლო ჯამი"
 
-#: common/flatpak-dir.c:7326 common/flatpak-dir.c:7584
+#: common/flatpak-dir.c:7348 common/flatpak-dir.c:7606
 #, c-format
 msgid "While pulling %s from remote %s: "
 msgstr "%s-ის პულისას დაშორებულიდან %s: "
 
-#: common/flatpak-dir.c:7525 common/flatpak-repo-utils.c:3892
+#: common/flatpak-dir.c:7547 common/flatpak-repo-utils.c:3892
 msgid "GPG signatures found, but none are in trusted keyring"
 msgstr "აღმოჩენილია GPG ხელმოწერები, მაგრამ სანდო ბრელოკში არც ერთი არაა"
 
-#: common/flatpak-dir.c:7542
+#: common/flatpak-dir.c:7564
 #, c-format
 msgid "Commit for ‘%s’ has no ref binding"
 msgstr "კომიტს '%s'-სთვის მიმართვის მიმაგრება არ გააჩნია"
 
-#: common/flatpak-dir.c:7547
+#: common/flatpak-dir.c:7569
 #, c-format
 msgid "Commit for ‘%s’ is not in expected bound refs: %s"
 msgstr "'%s'-ის კომიტი მოსალოდნელ მიბმულ მიმართვებში არაა: %s"
 
-#: common/flatpak-dir.c:7723
+#: common/flatpak-dir.c:7745
 msgid "Only applications can be made current"
 msgstr "მიმდინარედ მხოლოდ აპლიკაციების დაყენება შეგიძლიათ"
 
-#: common/flatpak-dir.c:8422 common/flatpak-dir.c:8434
+#: common/flatpak-dir.c:8444 common/flatpak-dir.c:8456
 msgid "Not enough memory"
 msgstr "მეხსიერება საკმარისი არ არის"
 
-#: common/flatpak-dir.c:8453
+#: common/flatpak-dir.c:8475
 msgid "Failed to read from exported file"
 msgstr "გატანილი ფაილიდან წაკითხვის შეცდომა"
 
-#: common/flatpak-dir.c:8643
+#: common/flatpak-dir.c:8665
 msgid "Error reading mimetype xml file"
 msgstr "MIMtype XML ფაილის წაკითხვის შეცდომა"
 
-#: common/flatpak-dir.c:8648
+#: common/flatpak-dir.c:8670
 msgid "Invalid mimetype xml file"
 msgstr "არასწორი mimetype xml ფაილი"
 
-#: common/flatpak-dir.c:8735
+#: common/flatpak-dir.c:8757
 #, c-format
 msgid "D-Bus service file '%s' has wrong name"
 msgstr "D-Bus-ის სერვისის ფაილის სახელი '%s' არასწორია"
 
-#: common/flatpak-dir.c:8763
+#: common/flatpak-dir.c:8785
 #, c-format
 msgid "Desktop Entry '%s' neither has Type=Application nor Type=Service"
 msgstr ""
 
-#: common/flatpak-dir.c:8955
+#: common/flatpak-dir.c:8977
 #, c-format
 msgid "Invalid Exec argument %s"
 msgstr "არასწორი გაშვების არგუმენტი %s"
 
-#: common/flatpak-dir.c:9403
+#: common/flatpak-dir.c:9425
 msgid "While getting detached metadata: "
 msgstr "მოხსნილი მეტამონაცემების მიღებისას: "
 
-#: common/flatpak-dir.c:9408 common/flatpak-dir.c:9413
-#: common/flatpak-dir.c:9417
+#: common/flatpak-dir.c:9430 common/flatpak-dir.c:9435
+#: common/flatpak-dir.c:9439
 msgid "Extra data missing in detached metadata"
 msgstr "მოხსნილ მეტამონაცემებში დამატებთი მონაცემები აღმოჩენილი არაა"
 
-#: common/flatpak-dir.c:9424
+#: common/flatpak-dir.c:9446
 msgid "While creating extradir: "
 msgstr "დამატებითი საქაღალდის შექმნისას: "
 
-#: common/flatpak-dir.c:9445 common/flatpak-dir.c:9484
+#: common/flatpak-dir.c:9467 common/flatpak-dir.c:9506
 msgid "Invalid checksum for extra data"
 msgstr "დამატებითი მონაცემების არასწორი საკონტროლო ჯამი"
 
-#: common/flatpak-dir.c:9474
+#: common/flatpak-dir.c:9496
 #, c-format
 msgid "Invalid extra data filename '%s'"
 msgstr "არასწორი დამატებითი მონაცემების ფაილის სახელი '%s'"
 
-#: common/flatpak-dir.c:9480
+#: common/flatpak-dir.c:9502
 msgid "Wrong size for extra data"
 msgstr "დამატებითი მონაცემების არასწორი ზომა"
 
-#: common/flatpak-dir.c:9491
+#: common/flatpak-dir.c:9513
 #, c-format
 msgid "While writing extra data file '%s': "
 msgstr "დამატებითი მონაცემების ფაილის '%s' ჩაწერისას: "
 
-#: common/flatpak-dir.c:9499
+#: common/flatpak-dir.c:9521
 #, c-format
 msgid "Extra data %s missing in detached metadata"
 msgstr "მოხსნილ მეტამონაცემებში დამატებითი მონაცემი %s აღმოჩენილი არაა"
 
-#: common/flatpak-dir.c:9527 common/flatpak-dir.c:9538
+#: common/flatpak-dir.c:9549 common/flatpak-dir.c:9560
 #, fuzzy, c-format
 msgid "Failed to open %s: "
 msgstr "'%s'-ის გახსნის შეცდომა"
 
-#: common/flatpak-dir.c:9549
+#: common/flatpak-dir.c:9571
 #, fuzzy, c-format
 msgid "Failed to open %s/%s: "
 msgstr "%s%s%s-ის განახლება ჩავარდა: "
 
-#: common/flatpak-dir.c:9588 common/flatpak-dir.c:9594
+#: common/flatpak-dir.c:9610 common/flatpak-dir.c:9616
 #, fuzzy
 msgid "Failed to open metadata: "
 msgstr "ჟურნალის გახსნის შეცდომა: %s"
 
-#: common/flatpak-dir.c:9685
+#: common/flatpak-dir.c:9707
 #, c-format
 msgid "Unable to get runtime key from metadata"
 msgstr "მეტამონაცემებიდან გაშვების გარემოს გასაღების მიღება შეუძლებელია"
 
-#: common/flatpak-dir.c:9818
+#: common/flatpak-dir.c:9840
 #, c-format
 msgid "apply_extra script failed, exit status %d"
 msgstr "apply_extra სკრიპტის შეცდომა. გამოსვლს სტატუსია %d"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-dir.c:10011
+#: common/flatpak-dir.c:10033
 #, c-format
 msgid "Installing %s is not allowed by the policy set by your administrator"
 msgstr "%s-ის დაყენება აკრძალულია თქვენი ადმინისტრატორის წესების მიერ"
 
-#: common/flatpak-dir.c:10106
+#: common/flatpak-dir.c:10128
 #, c-format
 msgid "While trying to resolve ref %s: "
 msgstr "მიმართვის %s ამოხსნის მცდელობისას: "
 
-#: common/flatpak-dir.c:10118
+#: common/flatpak-dir.c:10140
 #, c-format
 msgid "%s is not available"
 msgstr "%s ხელმიუწვდომელია"
 
-#: common/flatpak-dir.c:10130 common/flatpak-dir.c:11975
+#: common/flatpak-dir.c:10152 common/flatpak-dir.c:11999
 #, c-format
 msgid "%s commit %s already installed"
 msgstr "%s (კომიტი %s) უკვე დაყენებულია"
 
-#: common/flatpak-dir.c:10137
+#: common/flatpak-dir.c:10161
 msgid "Can't create deploy directory"
 msgstr "გაშლის საქაღალდის შექმნის შეცდომა"
 
-#: common/flatpak-dir.c:10145
+#: common/flatpak-dir.c:10169
 #, c-format
 msgid "Failed to read commit %s: "
 msgstr "კომიტის '%s' წაკითხვის შეცდომა: "
 
-#: common/flatpak-dir.c:10166
+#: common/flatpak-dir.c:10190
 #, c-format
 msgid "While trying to checkout %s into %s: "
 msgstr "%s-ის %s-ში გამოთხოვისას: "
 
-#: common/flatpak-dir.c:10185
+#: common/flatpak-dir.c:10209
 msgid "While trying to checkout metadata subpath: "
 msgstr "მეტამონაცემების ქვებილიკში გამოთხოვისას: "
 
-#: common/flatpak-dir.c:10216
+#: common/flatpak-dir.c:10240
 #, c-format
 msgid "While trying to checkout subpath ‘%s’: "
 msgstr "ქვებილიკის '%s' გამოთხოვისას: "
 
-#: common/flatpak-dir.c:10232
+#: common/flatpak-dir.c:10256
 msgid "While trying to remove existing extra dir: "
 msgstr "არსებული დამატებითი საქაღალდის წაშლის მცდელობისას: "
 
-#: common/flatpak-dir.c:10243
+#: common/flatpak-dir.c:10267
 msgid "While trying to apply extra data: "
 msgstr "დამატებითი მონაცემების გადატარების მცდელობისას: "
 
-#: common/flatpak-dir.c:10270
+#: common/flatpak-dir.c:10294
 #, c-format
 msgid "Invalid commit ref %s: "
 msgstr "არასწორი კომიტის მიმართვა %s: "
 
-#: common/flatpak-dir.c:10278 common/flatpak-dir.c:10290
+#: common/flatpak-dir.c:10302 common/flatpak-dir.c:10314
 #, c-format
 msgid "Deployed ref %s does not match commit (%s)"
 msgstr "გაშლილი მიმართვა %s კომიტს (%s) არ ემთხვევა"
 
-#: common/flatpak-dir.c:10284
+#: common/flatpak-dir.c:10308
 #, c-format
 msgid "Deployed ref %s branch does not match commit (%s)"
 msgstr "გაშლილი მიმართვა %s ბრენჩი კომიტს (%s) არ ემთხვევა"
 
-#: common/flatpak-dir.c:10605 common/flatpak-installation.c:1926
+#: common/flatpak-dir.c:10629 common/flatpak-installation.c:1940
 #, c-format
 msgid "%s branch %s already installed"
 msgstr "%s ბრენჩი %s უკვე დაყენებულია"
 
-#: common/flatpak-dir.c:11465
+#: common/flatpak-dir.c:11489
 #, c-format
 msgid "Could not unmount revokefs-fuse filesystem at %s: "
 msgstr "შეცდომა revokefs-fuse ფაილური სისტემის მოხსნისას მისამართზე %s: "
 
-#: common/flatpak-dir.c:11769
+#: common/flatpak-dir.c:11793
 #, c-format
 msgid "This version of %s is already installed"
 msgstr "%s-ის ეს ვერსია უკვე დაყენებულია"
 
-#: common/flatpak-dir.c:11782
+#: common/flatpak-dir.c:11806
 #, c-format
 msgid "Can't change remote during bundle install"
 msgstr "პაკეტის დაყენებისას დაშორებულის შეცვლა შეუძლებელია"
 
-#: common/flatpak-dir.c:12331
+#: common/flatpak-dir.c:12355
 #, c-format
 msgid "Can't remove %s, it is needed for: %s"
 msgstr "%s-ის წაშლა შეუძლებელია. ის %s-ს სჭირდება"
 
-#: common/flatpak-dir.c:12391 common/flatpak-installation.c:2082
+#: common/flatpak-dir.c:12415 common/flatpak-installation.c:2096
 #, c-format
 msgid "%s branch %s is not installed"
 msgstr "%s ბრენჩი %s დაყენებული არაა"
 
-#: common/flatpak-dir.c:12652
+#: common/flatpak-dir.c:12676
 #, c-format
 msgid "%s commit %s not installed"
 msgstr "%s კომიტი %s დაყენებული არაა"
 
-#: common/flatpak-dir.c:12911
+#: common/flatpak-dir.c:12935
 #, c-format
 msgid "%s is currently deployed, you need to uninstall it first"
 msgstr "%s ამჟამად გაშლილია. ჯერ ის უნდა წაშალოთ"
 
-#: common/flatpak-dir.c:13035
+#: common/flatpak-dir.c:13059
 #, c-format
 msgid "Pruning repo failed: %s"
 msgstr "რეპოზიტორიის წაკვეთის შეცდომა: %s"
 
-#: common/flatpak-dir.c:13203 common/flatpak-dir.c:13209
+#: common/flatpak-dir.c:13234 common/flatpak-dir.c:13240
 #, c-format
 msgid "Failed to load filter '%s'"
 msgstr "შეცდომა ფილტრის '%s' ჩატვირთვისას"
 
-#: common/flatpak-dir.c:13215
+#: common/flatpak-dir.c:13246
 #, c-format
 msgid "Failed to parse filter '%s'"
 msgstr "შეცდომა ფილტრის '%s' დამუშავებისას"
 
-#: common/flatpak-dir.c:13496
+#: common/flatpak-dir.c:13527
 msgid "Failed to write summary cache: "
 msgstr "შეჯამების კეშის ჩაწერის შეცდომა: "
 
-#: common/flatpak-dir.c:13515
+#: common/flatpak-dir.c:13546
 #, c-format
 msgid "No oci summary cached for remote '%s'"
 msgstr "OCI შეჯამება დაშორებულისთვის '%s' დაკეშილი არაა"
 
-#: common/flatpak-dir.c:13740
+#: common/flatpak-dir.c:13771
 #, c-format
 msgid "No cached summary for remote '%s'"
 msgstr "დაკეშილი შეჯამება დაშორებულისთვის '%s' ვერ ვიპოვე"
 
-#: common/flatpak-dir.c:13781
+#: common/flatpak-dir.c:13812
 #, c-format
 msgid "Invalid checksum for indexed summary %s read from %s"
 msgstr ""
 "არასწორი საკონტროლო ჯამი დაინდექსებული შეჯამებისთვის %s. წაკითხულია %s-დან"
 
-#: common/flatpak-dir.c:13854
+#: common/flatpak-dir.c:13885
 #, c-format
 msgid ""
 "Remote listing for %s not available; server has no summary file. Check the "
@@ -5187,99 +5203,99 @@ msgstr ""
 "%s-სთვის დაშორებული ჩამონათვალი ხელმისაწვდომი არაა, რადგან სერვერს შეჯამების "
 "ფაილი არ გააჩნია. გადაამოწმეთ remote-add-ისთვის გადაცემული URL-ის სისწორე."
 
-#: common/flatpak-dir.c:14231
+#: common/flatpak-dir.c:14262
 #, c-format
 msgid "Invalid checksum for indexed summary %s for remote '%s'"
 msgstr ""
 "არასწორი საკონტროლო ჯამი დაინდექსებული შეჯამებისთვის %s დაშორებულისთვის '%s'"
 
-#: common/flatpak-dir.c:14923
+#: common/flatpak-dir.c:14948
 #, c-format
 msgid "Multiple branches available for %s, you must specify one of: "
 msgstr ""
 "%s-სთვის ხელმისაწვდომია ერთზე მეტი ბრენჩი. ანუ, უნდა მიუთითოთ ერთ-ერთი "
 "სიიდან: "
 
-#: common/flatpak-dir.c:14989
+#: common/flatpak-dir.c:15014
 #, c-format
 msgid "Nothing matches %s"
 msgstr "%s-ს არაფერი ემთხვევა"
 
-#: common/flatpak-dir.c:15097
+#: common/flatpak-dir.c:15122
 #, c-format
 msgid "Can't find ref %s%s%s%s%s"
 msgstr "ვერ ვიპოვე მიმართვა %s%s%s%s%s"
 
-#: common/flatpak-dir.c:15140
+#: common/flatpak-dir.c:15165
 #, c-format
 msgid "Error searching remote %s: %s"
 msgstr "დაშორებული %s-ის მოძებნის შეცდომა: %s"
 
-#: common/flatpak-dir.c:15237
+#: common/flatpak-dir.c:15262
 #, c-format
 msgid "Error searching local repository: %s"
 msgstr "ლოკალურ რეპოზიტორიაშ ძებნის შეცდომა: %s"
 
-#: common/flatpak-dir.c:15374
+#: common/flatpak-dir.c:15399
 #, c-format
 msgid "%s/%s/%s not installed"
 msgstr "%s/%s/%s დაყენებული არაა"
 
-#: common/flatpak-dir.c:15577
+#: common/flatpak-dir.c:15602
 #, c-format
 msgid "Could not find installation %s"
 msgstr "%s-ის დაყენებულებში მოძებნის შეცდომა"
 
-#: common/flatpak-dir.c:16147
+#: common/flatpak-dir.c:16172
 #, c-format
 msgid "Invalid file format, no %s group"
 msgstr "არასწორი ფაილის ფორმატი. %s ჯგუფის გარეშე"
 
-#: common/flatpak-dir.c:16152 common/flatpak-repo-utils.c:2842
+#: common/flatpak-dir.c:16177 common/flatpak-repo-utils.c:2842
 #, c-format
 msgid "Invalid version %s, only 1 supported"
 msgstr "არასწორი ვერსია %s. მხარდაჭერილია მხოლოდ 1"
 
-#: common/flatpak-dir.c:16157 common/flatpak-dir.c:16162
+#: common/flatpak-dir.c:16182 common/flatpak-dir.c:16187
 #, c-format
 msgid "Invalid file format, no %s specified"
 msgstr "არასწორი ფაილის ფორმატი. %s მითითებული არაა"
 
 #. Check some minimal size so we don't get crap
-#: common/flatpak-dir.c:16182
+#: common/flatpak-dir.c:16207
 msgid "Invalid file format, gpg key invalid"
 msgstr "არასწორი ფაილის ფორმატი.  GPG გასაღები არასწორია"
 
-#: common/flatpak-dir.c:16210 common/flatpak-repo-utils.c:2923
+#: common/flatpak-dir.c:16235 common/flatpak-repo-utils.c:2923
 msgid "Collection ID requires GPG key to be provided"
 msgstr "კოლექციის ID-სთვის GPG გასაღების მითითება აუცილებელია"
 
-#: common/flatpak-dir.c:16253
+#: common/flatpak-dir.c:16279
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "გაშვების გარემო %s, ბრენჩი %s უკვე დაყენებულია"
 
-#: common/flatpak-dir.c:16254
+#: common/flatpak-dir.c:16280
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "აპი %s, ბრენჩი %s უკვე დაყენებულია"
 
-#: common/flatpak-dir.c:16488
+#: common/flatpak-dir.c:16514
 #, c-format
 msgid "Can't remove remote '%s' with installed ref %s (at least)"
 msgstr "დაშორებულის '%s' წაშლა დაყენებული მიმართვის (სულ ცოტა) %s"
 
-#: common/flatpak-dir.c:16593
+#: common/flatpak-dir.c:16619
 #, c-format
 msgid "Invalid character '/' in remote name: %s"
 msgstr "არასწორი სიმბოლო '/' დაშორებულის სახელში: %s"
 
-#: common/flatpak-dir.c:16599
+#: common/flatpak-dir.c:16625
 #, c-format
 msgid "No configuration for remote %s specified"
 msgstr "დაშორებულისთვის %s კონფიგურაცია მითითებული არაა"
 
-#: common/flatpak-dir.c:18132
+#: common/flatpak-dir.c:18158
 #, c-format
 msgid "Skipping deletion of mirror ref (%s, %s)…\n"
 msgstr "ასლის მიმართვის (%s, %s) წაშლის გამოტოვება...\n"
@@ -5360,48 +5376,48 @@ msgstr "მიმართვა '%s' რეესტრში აღმოჩ�
 msgid "Multiple images in registry, specify a ref with --ref"
 msgstr "რეესტრი ერთზე მეტ ასლს შეიცვს. მიმართვა --ref-ით მიუთითეთ"
 
-#: common/flatpak-installation.c:849
+#: common/flatpak-installation.c:862
 #, c-format
 msgid "Ref %s not installed"
 msgstr "მიმართვა %s დაყენებული არაა"
 
-#: common/flatpak-installation.c:890
+#: common/flatpak-installation.c:903
 #, c-format
 msgid "App %s not installed"
 msgstr "აპი %s დაყენებული არაა"
 
-#: common/flatpak-installation.c:1410
+#: common/flatpak-installation.c:1423
 #, c-format
 msgid "Remote '%s' already exists"
 msgstr "დაშორებული '%s' უკვე არსებობს"
 
-#: common/flatpak-installation.c:1961
+#: common/flatpak-installation.c:1975
 #, c-format
 msgid "As requested, %s was only pulled, but not installed"
 msgstr "მოთხოვნის მიხედვით, მოხდა %s-ის მხოლოდ პული, მაგრამ არა დაყენება"
 
-#: common/flatpak-instance.c:546 common/flatpak-instance.c:700
-#: common/flatpak-instance.c:741
+#: common/flatpak-instance.c:551 common/flatpak-instance.c:705
+#: common/flatpak-instance.c:746
 #, c-format
 msgid "Unable to create directory %s"
 msgstr "საქაღალდის (%s) შექმნა შეუძლებელია"
 
-#: common/flatpak-instance.c:567
+#: common/flatpak-instance.c:572
 #, c-format
 msgid "Unable to lock %s"
 msgstr "%s-ის ჩაკეტვის შეცდომა"
 
-#: common/flatpak-instance.c:640
+#: common/flatpak-instance.c:645
 #, c-format
 msgid "Unable to create temporary directory in %s"
 msgstr "%s-ში დროებითი საქაღალდის შექმნის შეცდომა"
 
-#: common/flatpak-instance.c:652
+#: common/flatpak-instance.c:657
 #, c-format
 msgid "Unable to create file %s"
 msgstr "ფაილის შექმნის შეცდომა (%s)"
 
-#: common/flatpak-instance.c:659
+#: common/flatpak-instance.c:664
 #, c-format
 msgid "Unable to update symbolic link %s/%s"
 msgstr "სიმბმულის (%s/%s) განახლების შეცდომა"
@@ -5469,22 +5485,22 @@ msgid "Wrong ref (%s) specified for OCI image %s, expected %s"
 msgstr ""
 "მითითებული მიმართვა (%s) OCI გამოსახულებისთვის %s არასწორია. მოველოდი:%s"
 
-#: common/flatpak-progress.c:239
+#: common/flatpak-progress.c:241
 #, c-format
 msgid "Downloading metadata: %u/(estimating) %s"
 msgstr "მეტამონაცემების გადმოწერა: %u/(დაახლოებით) %s"
 
-#: common/flatpak-progress.c:266
+#: common/flatpak-progress.c:268
 #, c-format
 msgid "Downloading: %s/%s"
 msgstr "გადმოწერა: %s/%s"
 
-#: common/flatpak-progress.c:286
+#: common/flatpak-progress.c:288
 #, c-format
 msgid "Downloading extra data: %s/%s"
 msgstr "დამატებითი ინფორმაციის გადმოწერა: %s/%s"
 
-#: common/flatpak-progress.c:291
+#: common/flatpak-progress.c:293
 #, c-format
 msgid "Downloading files: %d/%d %s"
 msgstr "ფაილების გადმოწერა: %d/%d %s"
@@ -5719,83 +5735,78 @@ msgstr ""
 "Systemd-ის მომხმარებლის სესია ხელმისაწვდომი არაა. cgroup-ები ხელმისაწვდომი "
 "არაა"
 
-#: common/flatpak-run.c:1536
+#: common/flatpak-run.c:1546
 msgid "Unable to allocate instance id"
 msgstr "გაშვებული ასლის ID-ის გამოყოფის შეცდომა"
 
-#: common/flatpak-run.c:1672 common/flatpak-run.c:1681
+#: common/flatpak-run.c:1691 common/flatpak-run.c:1700
 #, c-format
 msgid "Failed to open flatpak-info file: %s"
 msgstr "შეცდომა flatpak-info ფაილის გახსნისას: %s"
 
-#: common/flatpak-run.c:1708
+#: common/flatpak-run.c:1727
 #, c-format
 msgid "Failed to open bwrapinfo.json file: %s"
 msgstr "შეცდომა bwrapinfo.json ფაილის გახსნისას: %s"
 
-#: common/flatpak-run.c:1729
-#, c-format
-msgid "Failed to write to instance id fd: %s"
-msgstr "გაშვებული ასლის ID-ის ფაილის დესკრიპტორის ჩაწერის შეცდომა: %s"
-
-#: common/flatpak-run.c:2136
+#: common/flatpak-run.c:2126
 msgid "Initialize seccomp failed"
 msgstr "Seccomp-ის ინიციალიზაციის შეცდომა"
 
-#: common/flatpak-run.c:2175
+#: common/flatpak-run.c:2165
 #, c-format
 msgid "Failed to add architecture to seccomp filter: %s"
 msgstr "Seccomp ფილტრში არქიტექტურის დამატების შეცდომა: %s"
 
-#: common/flatpak-run.c:2183
+#: common/flatpak-run.c:2173
 #, c-format
 msgid "Failed to add multiarch architecture to seccomp filter: %s"
 msgstr "Seccomp ფილტრში multiarch არქიტექტურის დამატების შეცდომა: %s"
 
-#: common/flatpak-run.c:2215 common/flatpak-run.c:2232
-#: common/flatpak-run.c:2254
+#: common/flatpak-run.c:2205 common/flatpak-run.c:2222
+#: common/flatpak-run.c:2244
 #, c-format
 msgid "Failed to block syscall %d: %s"
 msgstr "სისტემური გამოძახების %d დაბლოკვის შეცდომა: %s"
 
-#: common/flatpak-run.c:2287
+#: common/flatpak-run.c:2277
 #, c-format
 msgid "Failed to export bpf: %s"
 msgstr "BPF_ის გატანის შეცდომა: %s"
 
-#: common/flatpak-run.c:2649
+#: common/flatpak-run.c:2639
 #, c-format
 msgid "Failed to open ‘%s’"
 msgstr "'%s'-ის გახსნის შეცდომა"
 
-#: common/flatpak-run.c:2661
+#: common/flatpak-run.c:2651
 #, c-format
 msgid ""
 "Directory forwarding needs version 4 of the document portal (have version %d)"
 msgstr ""
 "საქაღალდის გადამისამართებას დოკუმენტის ვერსია 4 სჭირდება (გაქვთ ვერსია %d)"
 
-#: common/flatpak-run.c:2793
+#: common/flatpak-run.c:2783
 #, c-format
 msgid "Invalid path ‘%s’"
 msgstr "არასწორი ბილიკი '%s'"
 
-#: common/flatpak-run.c:3025
+#: common/flatpak-run.c:3015
 #, c-format
 msgid "ldconfig failed, exit status %d"
 msgstr "ldconfig-ის შეცდომა. გამოსვლის სტატუსი %d"
 
-#: common/flatpak-run.c:3031
+#: common/flatpak-run.c:3021
 msgid "Can't open generated ld.so.cache"
 msgstr "გენერირებული ld.so.cache ფაილის გახსნა შეუძლებელია"
 
 #. Translators: The placeholder is for an app ref.
-#: common/flatpak-run.c:3152
+#: common/flatpak-run.c:3142
 #, c-format
 msgid "Running %s is not allowed by the policy set by your administrator"
 msgstr "%s-ის გაშვება აკრძალულია თქვენი ადმინისტრატორის წესების მიერ"
 
-#: common/flatpak-run.c:3310
+#: common/flatpak-run.c:3331
 msgid ""
 "\"flatpak run\" is not intended to be run as `sudo flatpak run`. Use `sudo "
 "-i` or `su -l` instead and invoke \"flatpak run\" from inside the new shell."
@@ -5803,18 +5814,18 @@ msgstr ""
 "\"flatpak run\"-ის გაშვება ბრძანებით `sudo flatpak run` შეუძლებელია. "
 "გამოიყენეთ `sudo -i` ან `su -l` და \"flatpak run\" ახალი გარსიდან გაუშვით."
 
-#: common/flatpak-run.c:3525
+#: common/flatpak-run.c:3486
 #, c-format
 msgid "Failed to migrate from %s: %s"
 msgstr "%s-დან მიგრაცის შეცდომა: %s"
 
-#: common/flatpak-run.c:3546
+#: common/flatpak-run.c:3507
 #, c-format
 msgid "Failed to migrate old app data directory %s to new name %s: %s"
 msgstr ""
 "ძველი აპის მონაცემების საქაღალდის %s ახალი სახელით %s მიგრაციის შეცდომა: %s"
 
-#: common/flatpak-run.c:3555
+#: common/flatpak-run.c:3516
 #, c-format
 msgid "Failed to create symlink while migrating %s: %s"
 msgstr "%s-ის მიგრაციისას სიმბმულის შექმნის შეცდომა: %s"
@@ -5831,57 +5842,57 @@ msgstr "სინქრონიზაციის ფაიფის შექ�
 msgid "Failed to sync with dbus proxy"
 msgstr "D-Bus-ის პროქსისთან სინქრონიზაციის შეცდომა"
 
-#: common/flatpak-transaction.c:2291
+#: common/flatpak-transaction.c:2322
 #, c-format
 msgid "Warning: Problem looking for related refs: %s"
 msgstr "გაფრთხილება: შესაბამისი მიმართვების მოძებნის შეცდომა: %s"
 
-#: common/flatpak-transaction.c:2509
+#: common/flatpak-transaction.c:2542
 #, c-format
 msgid "The application %s requires the runtime %s which was not found"
 msgstr "აპლიკაცია %s მოითხოვს გაშვების გარემოს %s, რომელიც ვერ ვიპოვე"
 
-#: common/flatpak-transaction.c:2525
+#: common/flatpak-transaction.c:2558
 #, c-format
 msgid "The application %s requires the runtime %s which is not installed"
 msgstr "აპლიკაცია %s მოითხოვს გაშვების გარემოს %s, რომელიც დაყენებული არაა"
 
-#: common/flatpak-transaction.c:2657
+#: common/flatpak-transaction.c:2690
 #, c-format
 msgid "Can't uninstall %s which is needed by %s"
 msgstr "%s-ის წაშლა შეუძლებელია. ის %s-ს სჭირდება"
 
-#: common/flatpak-transaction.c:2756
+#: common/flatpak-transaction.c:2789
 #, c-format
 msgid "Remote %s disabled, ignoring %s update"
 msgstr "დაშორებული %s გამორთულია. %s განახლება გამოტოვებულია"
 
-#: common/flatpak-transaction.c:2789
+#: common/flatpak-transaction.c:2822
 #, c-format
 msgid "%s is already installed"
 msgstr "%s უკვე დაყენებულია"
 
-#: common/flatpak-transaction.c:2792
+#: common/flatpak-transaction.c:2825
 #, c-format
 msgid "%s is already installed from remote %s"
 msgstr "%s უკვე დაყენებულია დაშორებულიდან %s"
 
-#: common/flatpak-transaction.c:3136
+#: common/flatpak-transaction.c:3169
 #, c-format
 msgid "Invalid .flatpakref: %s"
 msgstr "არასწორი .flatpakref: %s"
 
-#: common/flatpak-transaction.c:3177
+#: common/flatpak-transaction.c:3210
 msgid "Warning: Could not mark already installed apps as preinstalled"
 msgstr ""
 "გაფრთხილება: უკვე დაყენებული პროგრამების დაყენებულად მონიშვნა შეუძლებელია"
 
-#: common/flatpak-transaction.c:3398
+#: common/flatpak-transaction.c:3431
 #, c-format
 msgid "Error updating remote metadata for '%s': %s"
 msgstr "დაშორებული მეტამონაცემების განახლების შეცდომა '%s'-სთვის: %s"
 
-#: common/flatpak-transaction.c:3905
+#: common/flatpak-transaction.c:3938
 #, c-format
 msgid ""
 "Warning: Treating remote fetch error as non-fatal since %s is already "
@@ -5890,54 +5901,54 @@ msgstr ""
 "გაფრთხილება: დაშორებულის გამოთხოვის შეცდომის არაფატალურად ჩათვლა, რადგან %s "
 "უკვე დაყენებულია: %s"
 
-#: common/flatpak-transaction.c:4229
+#: common/flatpak-transaction.c:4262
 #, c-format
 msgid "No authenticator installed for remote '%s'"
 msgstr "დაშორებულისთვის '%s' ავთენტიკატორი დაყენებული არაა"
 
-#: common/flatpak-transaction.c:4333 common/flatpak-transaction.c:4340
+#: common/flatpak-transaction.c:4366 common/flatpak-transaction.c:4373
 #, c-format
 msgid "Failed to get tokens for ref: %s"
 msgstr "მიმართვისთვის კოდების მიღების შეცდომა: %s"
 
-#: common/flatpak-transaction.c:4335 common/flatpak-transaction.c:4342
+#: common/flatpak-transaction.c:4368 common/flatpak-transaction.c:4375
 msgid "Failed to get tokens for ref"
 msgstr "მიმართვისთვის კოდების მიღების შეცდომა"
 
-#: common/flatpak-transaction.c:4600
+#: common/flatpak-transaction.c:4633
 #, c-format
 msgid "Ref %s from %s matches more than one transaction operation"
 msgstr "მიმართვა %s %s-დან ერთზე მეტ ტრანზაქციის ოპერაციას ემთხვევა"
 
-#: common/flatpak-transaction.c:4601 common/flatpak-transaction.c:4611
+#: common/flatpak-transaction.c:4634 common/flatpak-transaction.c:4644
 msgid "any remote"
 msgstr "ნებისმიერი დაშორებული"
 
-#: common/flatpak-transaction.c:4610
+#: common/flatpak-transaction.c:4643
 #, c-format
 msgid "No transaction operation found for ref %s from %s"
 msgstr "მიმართვისთვის '%s' '%s'-დან ტრანზაქციის ოპერაცია აღმოჩენილი არაა"
 
-#: common/flatpak-transaction.c:4733
+#: common/flatpak-transaction.c:4766
 #, c-format
 msgid "Flatpakrepo URL %s not file, HTTP or HTTPS"
 msgstr "Flatpakrepo-ის URL %s არც ფაილია, არც HTTP და არც HTTPS"
 
-#: common/flatpak-transaction.c:4739
+#: common/flatpak-transaction.c:4772
 #, c-format
 msgid "Can't load dependent file %s: "
 msgstr "დამოკიდებული ფაილის '%s' ჩატვირთვა შეუძლებელია: "
 
-#: common/flatpak-transaction.c:4747
+#: common/flatpak-transaction.c:4780
 #, c-format
 msgid "Invalid .flatpakrepo: %s"
 msgstr "არასწორი .flatpakrepo: %s"
 
-#: common/flatpak-transaction.c:5474
+#: common/flatpak-transaction.c:5524
 msgid "Transaction already executed"
 msgstr "ტრანაქცია უკვე შესრულებულია"
 
-#: common/flatpak-transaction.c:5489
+#: common/flatpak-transaction.c:5539
 msgid ""
 "Refusing to operate on a user installation as root! This can lead to "
 "incorrect file ownership and permission errors."
@@ -5946,16 +5957,16 @@ msgstr ""
 "ამას არასწორი ფაილების მფლობელობამდე და წვდომების შეცდომებამდე შეუძლია, "
 "მიგვიყვანოს."
 
-#: common/flatpak-transaction.c:5587 common/flatpak-transaction.c:5600
+#: common/flatpak-transaction.c:5637 common/flatpak-transaction.c:5650
 msgid "Aborted by user"
 msgstr "გაუქმდა მომხმარებლის მოთხოვნით"
 
-#: common/flatpak-transaction.c:5625
+#: common/flatpak-transaction.c:5675
 #, c-format
 msgid "Skipping %s due to previous error"
 msgstr "%s-ს გამოტოვება წინა შეცდომის გამო"
 
-#: common/flatpak-transaction.c:5679
+#: common/flatpak-transaction.c:5729
 #, c-format
 msgid "Aborted due to failure (%s)"
 msgstr "შეწყდა შეცდომის გამო (%s)"
@@ -6103,12 +6114,12 @@ msgstr "ხაზზე %d"
 msgid "Unexpected word '%s' on line %d"
 msgstr "მოულოდნელი სიტყვა '%s' ხაზზე %d"
 
-#: common/flatpak-utils.c:2081
+#: common/flatpak-utils.c:2103
 #, c-format
 msgid "Invalid require-flatpak argument %s"
 msgstr "არასწორი require-flatpak-ის არგუმენტი %s"
 
-#: common/flatpak-utils.c:2091 common/flatpak-utils.c:2110
+#: common/flatpak-utils.c:2113 common/flatpak-utils.c:2132
 #, c-format
 msgid "%s needs a later flatpak version (%s)"
 msgstr "%s-ს flatpak-ის უფრო ახალი ვერსია სჭირდება (%s)"
@@ -6126,46 +6137,46 @@ msgstr "არ წარმოადგენს OCI დაშორებულ
 msgid "Invalid token"
 msgstr "არასწორი კოდი"
 
-#: portal/flatpak-portal.c:2310
+#: portal/flatpak-portal.c:2327
 #, c-format
 msgid "No portal support found"
 msgstr "პორტალის მხარდაჭერა ვერ ვიპოვე"
 
-#: portal/flatpak-portal.c:2316
+#: portal/flatpak-portal.c:2333
 msgid "Deny"
 msgstr "უარყოფა"
 
-#: portal/flatpak-portal.c:2318
+#: portal/flatpak-portal.c:2335
 msgid "Update"
 msgstr "განახლება"
 
-#: portal/flatpak-portal.c:2323
+#: portal/flatpak-portal.c:2340
 #, c-format
 msgid "Update %s?"
 msgstr "განვაახლო %s?"
 
-#: portal/flatpak-portal.c:2335
+#: portal/flatpak-portal.c:2352
 msgid "The application wants to update itself."
 msgstr "აპლიკაცია თავისი თავის განახლებას აპირებს."
 
-#: portal/flatpak-portal.c:2336
+#: portal/flatpak-portal.c:2353
 msgid "Update access can be changed any time from the privacy settings."
 msgstr ""
 "განახლების წვდომა ნებისმიერ დროს კონფიდენციალობის პარამეტრებიდან შეიძლება "
 "შეიცვალოს."
 
-#: portal/flatpak-portal.c:2361
+#: portal/flatpak-portal.c:2378
 #, c-format
 msgid "Application update not allowed"
 msgstr "აპლიკაცის განახლება დაშვებული არაა"
 
-#: portal/flatpak-portal.c:2522
+#: portal/flatpak-portal.c:2539
 #, c-format
 msgid "Self update not supported, new version requires new permissions"
 msgstr ""
 "თვით-განახლება მხარდაჭერილი არაა, რადგან ახალ ვერსიას ახალი წვდომები სჭირდება"
 
-#: portal/flatpak-portal.c:2705 portal/flatpak-portal.c:2723
+#: portal/flatpak-portal.c:2722 portal/flatpak-portal.c:2740
 #, c-format
 msgid "Update ended unexpectedly"
 msgstr "განახლება მოულოდნელად დასრულდა"
@@ -6447,6 +6458,13 @@ msgid ""
 msgstr ""
 "თქვენი მშობლების საკონტროლო პოლიტიკის მიერ შეზღუდული პროგრამის "
 "განახლებისთვის საჭიროა ავთენტიკაცია"
+
+#~ msgid "Remove old files even if running"
+#~ msgstr "ფაილები წაიშლება მაშინაც კი, თუ ისინი გაშვებულია"
+
+#, c-format
+#~ msgid "Failed to write to instance id fd: %s"
+#~ msgstr "გაშვებული ასლის ID-ის ფაილის დესკრიპტორის ჩაწერის შეცდომა: %s"
 
 #, c-format
 #~ msgid "Empty name for extra data uri %s"
