@@ -1,4 +1,4 @@
-Changes in 1.19.3
+Changes in 1.19.4
 ~~~~~~~~~~~~~~~~~
 
 Released: 2026-11-24
@@ -131,6 +131,11 @@ Internal changes:
 * Improve test coverage (#6931, #6932, #6938)
 
 * Internal improvements in automated tests (#6919, #6938, #6980)
+
+Changes in 1.19.3
+~~~~~~~~~~~~~~~~~
+
+This version was not released.
 
 Changes in 1.19.2
 ~~~~~~~~~~~~~~~~~
