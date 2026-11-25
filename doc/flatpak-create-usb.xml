@@ -59,6 +59,9 @@
             <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
             Flatpak also includes systemd units to automatically sideload from hot-plugged USB drives,
             but these may or may not be enabled depending on your Linux distribution.
+            Ensure the mount point is readable by other users if the drive will be used on another
+            computer with a different user ID; Flatpak warns when the mount lacks world
+            read and execute permission.
         </para>
         <para>
             Each <arg choice="plain">REF</arg> argument is a full or partial identifier in the
