@@ -14072,7 +14072,8 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
         }
       else
         {
-          if (!tried_updating_gpg_keys &&
+          if (!only_cached &&
+              !tried_updating_gpg_keys &&
               error_indicates_should_update_gpg_keys (local_error))
             {
               g_autoptr(GError) gpg_update_error = NULL;
@@ -14123,7 +14124,8 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
         }
       else
         {
-          if (!tried_updating_gpg_keys &&
+          if (!only_cached &&
+              !tried_updating_gpg_keys &&
               error_indicates_should_update_gpg_keys (local_error))
             {
               g_autoptr(GError) gpg_update_error = NULL;
