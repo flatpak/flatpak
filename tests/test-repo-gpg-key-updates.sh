@@ -25,15 +25,58 @@ skip_without_bwrap
 skip_revokefs_without_fuse
 skip_without_ostree_version 2026 5  # need https://github.com/ostreedev/ostree/pull/3633
 
+# Set up HTTPS for the GPG keys URLs, and start two web servers. We want to test
+# serving the OSTree repos and the GPG key URLs from different servers, on HTTP
+# and HTTPS, respectively. For convenience they happen to both serve the same
+# directory, but that’s just a convenience.
+cat > openssl.config <<EOF
+[req]
+distinguished_name=default_dn
+
+[v3_ca]
+basicConstraints=critical,CA:TRUE,pathlen:0
+
+[server_cert]
+basicConstraints=CA:FALSE
+subjectAltName=DNS:example.com,IP:127.0.0.1
+
+[default_dn]
+CN=Unused
+EOF
+
+openssl req -x509 -newkey rsa:4096 -sha256 -days 3650 \
+    -nodes -keyout example.com.ca.key -out example.com.ca.crt \
+    -subj="/CN=Example CA/O=example.com/emailAddress=nomail@example.com" \
+    -config openssl.config -extensions v3_ca
+
+openssl req -newkey rsa:4096 -sha256 \
+    -nodes -keyout example.com.key -out example.com.csr \
+    -subj "/CN=example.com"
+
+openssl x509 -req -in example.com.csr -days 3650 \
+    -CA example.com.ca.crt -CAkey example.com.ca.key -CAcreateserial \
+    -extfile openssl.config -extensions server_cert \
+    -out example.com.crt
+
+# HTTPS server
 mkdir -p repos
-httpd
+httpd web-server.py --dir=repos --cert=example.com.crt --key=example.com.key
+https_port=$(cat httpd-port)
+
+# Expose the HTTPS CA certificate to the client so it can trust the server.
+hostdir="${FLATPAK_SYSTEM_CERTS_D}/127.0.0.1:${https_port}"
+mkdir -p "${hostdir}"
+cp example.com.ca.crt "${hostdir}"
+
+# HTTP server
+httpd web-server.py --dir=repos
+port=$(cat httpd-port)
 
 # Test: Can’t update from a repo which has an expired key.
 push_gpg_homedir
 export REPONAME=test-expired-gpg
 export COLLECTION_ID=org.test.Collection.ExpiredGpg
 setup_repo_no_add $REPONAME $COLLECTION_ID
-port=$(cat httpd-port)
 ${FLATPAK} ${U} remote-add --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg $REPONAME-repo "http://127.0.0.1:${port}/${REPONAME}" >&2
 
 # Update the repo metadata then expire the key by setting its expiry date to a
@@ -60,14 +103,13 @@ push_gpg_homedir
 export REPONAME=test-new-subkeys
 export COLLECTION_ID=org.test.Collection.NewSubkeys
 setup_repo_no_add $REPONAME $COLLECTION_ID
-port=$(cat httpd-port)
 ${FLATPAK} ${U} remote-add --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg $REPONAME-repo "http://127.0.0.1:${port}/${REPONAME}" >&2
 ORIGINAL_SUBKEY_FINGERPRINT="$(${GPG} --homedir "${FL_GPG_HOMEDIR}" --list-keys --fingerprint | grep fpr | tail -1 | cut -d : -f 10)"
 
 # Add a new signing subkey to the keyring and publish it on the web server
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --passphrase "" --quick-add-key "${FL_GPG_FINGERPRINT}" default sign
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --output repos/${REPONAME}.published.gpg --armor --export "${FL_GPG_FINGERPRINT}"
-GPG_KEYS_URL="http://127.0.0.1:${port}/${REPONAME}.published.gpg"
+GPG_KEYS_URL="https://127.0.0.1:${https_port}/${REPONAME}.published.gpg"
 
 # Grab the fingerprint of the new subkey; this assumes that subkeys are listed in creation order, so the new one will be listed last
 NEW_SUBKEY_FINGERPRINT="$(${GPG} --homedir "${FL_GPG_HOMEDIR}" --list-keys --fingerprint | grep fpr | tail -1 | cut -d : -f 10)"
@@ -120,14 +162,13 @@ push_gpg_homedir
 export REPONAME=test-gpg-verify-false
 export COLLECTION_ID=org.test.Collection.GpgVerifyFalse
 setup_repo_no_add $REPONAME $COLLECTION_ID
-port=$(cat httpd-port)
 ${FLATPAK} ${U} remote-add --no-gpg-verify --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg $REPONAME-repo "http://127.0.0.1:${port}/${REPONAME}" >&2
 ORIGINAL_SUBKEY_FINGERPRINT="$(${GPG} --homedir "${FL_GPG_HOMEDIR}" --list-keys --fingerprint | grep fpr | tail -1 | cut -d : -f 10)"
 
 # Add a new signing subkey to the keyring and publish it on the web server
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --passphrase "" --quick-add-key "${FL_GPG_FINGERPRINT}" default sign
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --output repos/${REPONAME}.published.gpg --armor --export "${FL_GPG_FINGERPRINT}"
-GPG_KEYS_URL="http://127.0.0.1:${port}/${REPONAME}.published.gpg"
+GPG_KEYS_URL="https://127.0.0.1:${https_port}/${REPONAME}.published.gpg"
 
 # Grab the fingerprint of the new subkey; this assumes that subkeys are listed in creation order, so the new one will be listed last
 NEW_SUBKEY_FINGERPRINT="$(${GPG} --homedir "${FL_GPG_HOMEDIR}" --list-keys --fingerprint | grep fpr | tail -1 | cut -d : -f 10)"
@@ -177,7 +218,6 @@ push_gpg_homedir
 export REPONAME=test-new-subkey-revoked
 export COLLECTION_ID=org.test.Collection.NewSubkeyRevoked
 setup_repo_no_add $REPONAME $COLLECTION_ID
-port=$(cat httpd-port)
 ${FLATPAK} ${U} remote-add --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg $REPONAME-repo "http://127.0.0.1:${port}/${REPONAME}" >&2
 ORIGINAL_SUBKEY_FINGERPRINT="$(${GPG} --homedir "${FL_GPG_HOMEDIR}" --list-keys --fingerprint | grep fpr | head -1 | cut -d : -f 10)"
 
@@ -195,7 +235,7 @@ GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${NEW_SUBKEY_FINGERPRINT}" m
 # --edit-key command, which is an exercise in suffering.
 echo -e "uid 1\nkey 2\nrevkey\ny\n0\nTest subkey revocation\n\ny\nsave\n" | ${GPG} --homedir "${FL_GPG_HOMEDIR}" --passphrase "" --command-fd 0 --edit-key "${NEW_SUBKEY_FINGERPRINT}" >&2
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --output repos/${REPONAME}.published.gpg --armor --export "${ORIGINAL_SUBKEY_FINGERPRINT}" "${NEW_SUBKEY_FINGERPRINT}"
-GPG_KEYS_URL="http://127.0.0.1:${port}/${REPONAME}.published.gpg"
+GPG_KEYS_URL="https://127.0.0.1:${https_port}/${REPONAME}.published.gpg"
 ${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} ${FL_GPGARGS} --gpg-keys-url="${GPG_KEYS_URL}" repos/${REPONAME} >&2
 
 # Try to install the app; this should fail due to only being signed with the revoked subkey.
@@ -227,11 +267,10 @@ push_gpg_homedir
 export REPONAME=test-bundle
 export COLLECTION_ID=org.test.Collection.Bundle
 setup_repo_no_add $REPONAME $COLLECTION_ID
-port=$(cat httpd-port)
 
 # Configure the repo with a public keyring advertised via gpg-keys-url=
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --output repos/${REPONAME}.published.gpg --armor --export "${FL_GPG_FINGERPRINT}"
-GPG_KEYS_URL="http://127.0.0.1:${port}/${REPONAME}.published.gpg"
+GPG_KEYS_URL="https://127.0.0.1:${https_port}/${REPONAME}.published.gpg"
 ${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} ${FL_GPGARGS} --gpg-keys-url="${GPG_KEYS_URL}" repos/${REPONAME} >&2
 
 # Build a bundle from the repo; use a runtime bundle since then we don’t run
@@ -259,11 +298,10 @@ push_gpg_homedir
 export REPONAME=test-flatpakrepo
 export COLLECTION_ID=org.test.Collection.Flatpakrepo
 setup_repo_no_add $REPONAME $COLLECTION_ID
-port=$(cat httpd-port)
 
 # Configure the repo with a public keyring advertised via gpg-keys-url=
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --output repos/${REPONAME}.published.gpg --armor --export "${FL_GPG_FINGERPRINT}"
-GPG_KEYS_URL="http://127.0.0.1:${port}/${REPONAME}.published.gpg"
+GPG_KEYS_URL="https://127.0.0.1:${https_port}/${REPONAME}.published.gpg"
 ${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} ${FL_GPGARGS} --gpg-keys-url="${GPG_KEYS_URL}" repos/${REPONAME} >&2
 
 # Build a flatpakrepo file
@@ -299,11 +337,10 @@ push_gpg_homedir
 export REPONAME=test-flatpakref
 export COLLECTION_ID=org.test.Collection.Flatpakref
 setup_repo_no_add $REPONAME $COLLECTION_ID
-port=$(cat httpd-port)
 
 # Configure the repo with a public keyring advertised via gpg-keys-url=
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --output repos/${REPONAME}.published.gpg --armor --export "${FL_GPG_FINGERPRINT}"
-GPG_KEYS_URL="http://127.0.0.1:${port}/${REPONAME}.published.gpg"
+GPG_KEYS_URL="https://127.0.0.1:${https_port}/${REPONAME}.published.gpg"
 ${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} ${FL_GPGARGS} --gpg-keys-url="${GPG_KEYS_URL}" repos/${REPONAME} >&2
 
 # Build a .flatpakref file; we also need to build a .flatpakrepo file as that’s
@@ -351,12 +388,11 @@ push_gpg_homedir
 export REPONAME=test-remote-add
 export COLLECTION_ID=org.test.Collection.RemoteAdd
 setup_repo_no_add $REPONAME $COLLECTION_ID
-port=$(cat httpd-port)
 
 # Publish the keys, but don’t update the repo to add gpg-keys-url= to its
 # summary yet.
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --output repos/${REPONAME}.published.gpg --armor --export "${FL_GPG_FINGERPRINT}"
-GPG_KEYS_URL="http://127.0.0.1:${port}/${REPONAME}.published.gpg"
+GPG_KEYS_URL="https://127.0.0.1:${https_port}/${REPONAME}.published.gpg"
 
 # Add the repo, but explicitly set its gpg-keys-url= configuration. Updating
 # metadata should work after this.
@@ -384,12 +420,11 @@ push_gpg_homedir
 export REPONAME=test-remote-modify
 export COLLECTION_ID=org.test.Collection.RemoteModify
 setup_repo_no_add $REPONAME $COLLECTION_ID
-port=$(cat httpd-port)
 
 # Publish the keys, but don’t update the repo to add gpg-keys-url= to its
 # summary yet.
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --output repos/${REPONAME}.published.gpg --armor --export "${FL_GPG_FINGERPRINT}"
-GPG_KEYS_URL="http://127.0.0.1:${port}/${REPONAME}.published.gpg"
+GPG_KEYS_URL="https://127.0.0.1:${https_port}/${REPONAME}.published.gpg"
 
 # Add the repo, but don’t yet set its gpg-keys-url= configuration. Updating
 # metadata should work after this, but should not set up the gpg-keys-url= config.
@@ -426,11 +461,10 @@ push_gpg_homedir
 export REPONAME=test-remote-add-immediate
 export COLLECTION_ID=org.test.Collection.RemoteAddImmediate
 setup_repo_no_add $REPONAME $COLLECTION_ID
-port=$(cat httpd-port)
 
 # Publish the keys and update the repo to add gpg-keys-url= to its summary.
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --output repos/${REPONAME}.published.gpg --armor --export "${FL_GPG_FINGERPRINT}"
-GPG_KEYS_URL="http://127.0.0.1:${port}/${REPONAME}.published.gpg"
+GPG_KEYS_URL="https://127.0.0.1:${https_port}/${REPONAME}.published.gpg"
 ${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} ${FL_GPGARGS} --gpg-keys-url="${GPG_KEYS_URL}" repos/${REPONAME} >&2
 
 # Add the repo but don’t set its gpg-keys-url= configuration. Updating
@@ -460,7 +494,6 @@ push_gpg_homedir
 export REPONAME=test-new-primary
 export COLLECTION_ID=org.test.Collection.NewPrimary
 setup_repo_no_add $REPONAME $COLLECTION_ID
-port=$(cat httpd-port)
 ${FLATPAK} ${U} remote-add --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg $REPONAME-repo "http://127.0.0.1:${port}/${REPONAME}" >&2
 ORIGINAL_KEY_FINGERPRINT="$(${GPG} --homedir "${FL_GPG_HOMEDIR}" --list-keys --fingerprint | grep fpr | head -1 | cut -d : -f 10)"
 
@@ -472,7 +505,7 @@ NEW_KEY_FINGERPRINT="$(${GPG} --homedir "${FL_GPG_HOMEDIR}" --list-keys --finger
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --passphrase "" --local-user "${ORIGINAL_KEY_FINGERPRINT}" --quick-sign-key "${NEW_KEY_FINGERPRINT}" >&2
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --passphrase "" --local-user "${NEW_KEY_FINGERPRINT}" --quick-sign-key "${ORIGINAL_KEY_FINGERPRINT}" >&2
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --output repos/${REPONAME}.published.gpg --armor --export "${ORIGINAL_KEY_FINGERPRINT}" "${NEW_KEY_FINGERPRINT}"
-GPG_KEYS_URL="http://127.0.0.1:${port}/${REPONAME}.published.gpg"
+GPG_KEYS_URL="https://127.0.0.1:${https_port}/${REPONAME}.published.gpg"
 
 # Build an app and sign it with both keys, re-sign the repo with both keys,
 # then try to install the new app (but without publishing the new keyring yet).
@@ -524,7 +557,6 @@ push_gpg_homedir
 export REPONAME=test-new-primary-invalid-keyring
 export COLLECTION_ID=org.test.Collection.NewPrimaryInvalidKeyring
 setup_repo_no_add $REPONAME $COLLECTION_ID
-port=$(cat httpd-port)
 ${FLATPAK} ${U} remote-add --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg $REPONAME-repo "http://127.0.0.1:${port}/${REPONAME}" >&2
 ORIGINAL_KEY_FINGERPRINT="$(${GPG} --homedir "${FL_GPG_HOMEDIR}" --list-keys --fingerprint | grep fpr | head -1 | cut -d : -f 10)"
 
@@ -536,7 +568,7 @@ NEW_KEY_FINGERPRINT="$(${GPG} --homedir "${FL_GPG_HOMEDIR}" --list-keys --finger
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --passphrase "" --local-user "${ORIGINAL_KEY_FINGERPRINT}" --quick-sign-key "${NEW_KEY_FINGERPRINT}" >&2
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --passphrase "" --local-user "${NEW_KEY_FINGERPRINT}" --quick-sign-key "${ORIGINAL_KEY_FINGERPRINT}" >&2
 echo "oh no" > repos/${REPONAME}.published.gpg
-GPG_KEYS_URL="http://127.0.0.1:${port}/${REPONAME}.published.gpg"
+GPG_KEYS_URL="https://127.0.0.1:${https_port}/${REPONAME}.published.gpg"
 
 # Build an app and sign it with both keys, re-sign the repo with both keys,
 # then try to install the new app (but without publishing the new keyring yet).
@@ -600,7 +632,6 @@ push_gpg_homedir
 export REPONAME=test-new-primary-unsigned
 export COLLECTION_ID=org.test.Collection.NewPrimaryUnsigned
 setup_repo_no_add $REPONAME $COLLECTION_ID
-port=$(cat httpd-port)
 ${FLATPAK} ${U} remote-add --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg $REPONAME-repo "http://127.0.0.1:${port}/${REPONAME}" >&2
 ORIGINAL_KEY_FINGERPRINT="$(${GPG} --homedir "${FL_GPG_HOMEDIR}" --list-keys --fingerprint | grep fpr | head -1 | cut -d : -f 10)"
 
@@ -612,7 +643,7 @@ ${GPG} --homedir "${FL_GPG_HOMEDIR}" --passphrase "" --quick-gen-key "New primar
 NEW_KEY_FINGERPRINT="$(${GPG} --homedir "${FL_GPG_HOMEDIR}" --list-keys --fingerprint | grep fpr | tail -1 | cut -d : -f 10)"
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --passphrase "" --local-user "${NEW_KEY_FINGERPRINT}" --quick-sign-key "${ORIGINAL_KEY_FINGERPRINT}" >&2
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --output repos/${REPONAME}.published.gpg --armor --export "${ORIGINAL_KEY_FINGERPRINT}" "${NEW_KEY_FINGERPRINT}"
-GPG_KEYS_URL="http://127.0.0.1:${port}/${REPONAME}.published.gpg"
+GPG_KEYS_URL="https://127.0.0.1:${https_port}/${REPONAME}.published.gpg"
 ${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} ${FL_GPGARGS} --gpg-keys-url="${GPG_KEYS_URL}" repos/${REPONAME} >&2
 
 # Build an app and sign it with both keys, re-sign the repo with both keys,
@@ -656,7 +687,6 @@ push_gpg_homedir
 export REPONAME=test-new-primary-unsigned-chain
 export COLLECTION_ID=org.test.Collection.NewPrimaryUnsignedChain
 setup_repo_no_add $REPONAME $COLLECTION_ID
-port=$(cat httpd-port)
 ${FLATPAK} ${U} remote-add --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg $REPONAME-repo "http://127.0.0.1:${port}/${REPONAME}" >&2
 ORIGINAL_KEY_FINGERPRINT="$(${GPG} --homedir "${FL_GPG_HOMEDIR}" --list-keys --fingerprint | grep fpr | head -1 | cut -d : -f 10)"
 
@@ -683,7 +713,7 @@ ${GPG} --homedir "${FL_GPG_HOMEDIR}" --passphrase "" --local-user "${NEW_KEY_FIN
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --passphrase "" --local-user "${NEW_KEY_FINGERPRINT3}" --quick-sign-key "${NEW_KEY_FINGERPRINT2}" >&2
 
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --output repos/${REPONAME}.published.gpg --armor --export "${ORIGINAL_KEY_FINGERPRINT}" "${NEW_KEY_FINGERPRINT1}" "${NEW_KEY_FINGERPRINT2}" "${NEW_KEY_FINGERPRINT3}"
-GPG_KEYS_URL="http://127.0.0.1:${port}/${REPONAME}.published.gpg"
+GPG_KEYS_URL="https://127.0.0.1:${https_port}/${REPONAME}.published.gpg"
 ${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} ${FL_GPGARGS} --gpg-keys-url="${GPG_KEYS_URL}" repos/${REPONAME} >&2
 
 # Build an app and sign it with all keys, re-sign the repo with all keys,
@@ -731,7 +761,6 @@ push_gpg_homedir
 export REPONAME=test-new-primary-chain
 export COLLECTION_ID=org.test.Collection.NewPrimaryChain
 setup_repo_no_add $REPONAME $COLLECTION_ID
-port=$(cat httpd-port)
 ${FLATPAK} ${U} remote-add --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg $REPONAME-repo "http://127.0.0.1:${port}/${REPONAME}" >&2
 ORIGINAL_KEY_FINGERPRINT="$(${GPG} --homedir "${FL_GPG_HOMEDIR}" --list-keys --fingerprint | grep fpr | head -1 | cut -d : -f 10)"
 
@@ -750,7 +779,7 @@ ${GPG} --homedir "${FL_GPG_HOMEDIR}" --passphrase "" --local-user "${NEW_KEY_FIN
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --passphrase "" --local-user "${NEW_KEY_FINGERPRINT2}" --quick-sign-key "${NEW_KEY_FINGERPRINT3}" >&2
 
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --output repos/${REPONAME}.published.gpg --armor --export "${ORIGINAL_KEY_FINGERPRINT}" "${NEW_KEY_FINGERPRINT1}" "${NEW_KEY_FINGERPRINT2}" "${NEW_KEY_FINGERPRINT3}"
-GPG_KEYS_URL="http://127.0.0.1:${port}/${REPONAME}.published.gpg"
+GPG_KEYS_URL="https://127.0.0.1:${https_port}/${REPONAME}.published.gpg"
 ${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} ${FL_GPGARGS} --gpg-keys-url="${GPG_KEYS_URL}" repos/${REPONAME} >&2
 
 # Build an app and sign it with the final new key, and re-sign the repo with
@@ -790,7 +819,6 @@ push_gpg_homedir
 export REPONAME=test-new-primary-and-revocation
 export COLLECTION_ID=org.test.Collection.NewPrimaryAndRevocation
 setup_repo_no_add $REPONAME $COLLECTION_ID
-port=$(cat httpd-port)
 ${FLATPAK} ${U} remote-add --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg $REPONAME-repo "http://127.0.0.1:${port}/${REPONAME}" >&2
 ORIGINAL_KEY_FINGERPRINT="$(${GPG} --homedir "${FL_GPG_HOMEDIR}" --list-keys --fingerprint | grep fpr | head -1 | cut -d : -f 10)"
 
@@ -830,7 +858,7 @@ rev_file="${FL_GPG_HOMEDIR}/openpgp-revocs.d/${ORIGINAL_KEY_FINGERPRINT}.rev"
 sed -i 's/^:-----BEGIN PGP PUBLIC KEY BLOCK-----/-----BEGIN PGP PUBLIC KEY BLOCK-----/' "${rev_file}"
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --import "${rev_file}"
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --output repos/${REPONAME}.published.gpg --armor --export "${ORIGINAL_KEY_FINGERPRINT}" "${NEW_KEY_FINGERPRINT}"
-GPG_KEYS_URL="http://127.0.0.1:${port}/${REPONAME}.published.gpg"
+GPG_KEYS_URL="https://127.0.0.1:${https_port}/${REPONAME}.published.gpg"
 ${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} ${FL_GPGARGS} --gpg-keys-url="${GPG_KEYS_URL}" repos/${REPONAME} >&2
 
 # Try to install the app; this should succeed.
@@ -878,7 +906,6 @@ push_gpg_homedir
 export REPONAME=test-new-primary-expired
 export COLLECTION_ID=org.test.Collection.NewPrimaryExpired
 setup_repo_no_add $REPONAME $COLLECTION_ID
-port=$(cat httpd-port)
 ${FLATPAK} ${U} remote-add --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg $REPONAME-repo "http://127.0.0.1:${port}/${REPONAME}" >&2
 ORIGINAL_KEY_FINGERPRINT="$(${GPG} --homedir "${FL_GPG_HOMEDIR}" --list-keys --fingerprint | grep fpr | head -1 | cut -d : -f 10)"
 
@@ -907,7 +934,7 @@ GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${ORIGINAL_KEY_FINGERPRINT} 
 # Expire the key and publish it
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --quick-set-expire "${NEW_KEY_FINGERPRINT}" "20260101T000000"
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --output repos/${REPONAME}.published.gpg --armor --export "${ORIGINAL_KEY_FINGERPRINT}" "${NEW_KEY_FINGERPRINT}"
-GPG_KEYS_URL="http://127.0.0.1:${port}/${REPONAME}.published.gpg"
+GPG_KEYS_URL="https://127.0.0.1:${https_port}/${REPONAME}.published.gpg"
 ${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} ${FL_GPGARGS} --gpg-keys-url="${GPG_KEYS_URL}" repos/${REPONAME} >&2
 
 # Installation of the updated app should now fail.
@@ -940,7 +967,6 @@ push_gpg_homedir
 export REPONAME=test-new-primary-revoked
 export COLLECTION_ID=org.test.Collection.NewPrimaryRevoked
 setup_repo_no_add $REPONAME $COLLECTION_ID
-port=$(cat httpd-port)
 ${FLATPAK} ${U} remote-add --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg $REPONAME-repo "http://127.0.0.1:${port}/${REPONAME}" >&2
 ORIGINAL_KEY_FINGERPRINT="$(${GPG} --homedir "${FL_GPG_HOMEDIR}" --list-keys --fingerprint | grep fpr | head -1 | cut -d : -f 10)"
 
@@ -972,7 +998,7 @@ rev_file="${FL_GPG_HOMEDIR}/openpgp-revocs.d/${NEW_KEY_FINGERPRINT}.rev"
 sed -i 's/^:-----BEGIN PGP PUBLIC KEY BLOCK-----/-----BEGIN PGP PUBLIC KEY BLOCK-----/' "${rev_file}"
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --import "${rev_file}"
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --output repos/${REPONAME}.published.gpg --armor --export "${ORIGINAL_KEY_FINGERPRINT}" "${NEW_KEY_FINGERPRINT}"
-GPG_KEYS_URL="http://127.0.0.1:${port}/${REPONAME}.published.gpg"
+GPG_KEYS_URL="https://127.0.0.1:${https_port}/${REPONAME}.published.gpg"
 ${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} ${FL_GPGARGS} --gpg-keys-url="${GPG_KEYS_URL}" repos/${REPONAME} >&2
 
 # Installation of the updated app should now fail.
@@ -1006,7 +1032,6 @@ push_gpg_homedir
 export REPONAME=test-new-primary-revoked-sig
 export COLLECTION_ID=org.test.Collection.NewPrimaryRevokedSig
 setup_repo_no_add $REPONAME $COLLECTION_ID
-port=$(cat httpd-port)
 ${FLATPAK} ${U} remote-add --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg $REPONAME-repo "http://127.0.0.1:${port}/${REPONAME}" >&2
 ORIGINAL_KEY_FINGERPRINT="$(${GPG} --homedir "${FL_GPG_HOMEDIR}" --list-keys --fingerprint | grep fpr | head -1 | cut -d : -f 10)"
 
@@ -1035,7 +1060,7 @@ GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${ORIGINAL_KEY_FINGERPRINT} 
 # Revoke the key’s signature and publish it.
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --quick-revoke-sig "${NEW_KEY_FINGERPRINT}" "${ORIGINAL_KEY_FINGERPRINT}"
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --output repos/${REPONAME}.published.gpg --armor --export "${ORIGINAL_KEY_FINGERPRINT}" "${NEW_KEY_FINGERPRINT}"
-GPG_KEYS_URL="http://127.0.0.1:${port}/${REPONAME}.published.gpg"
+GPG_KEYS_URL="https://127.0.0.1:${https_port}/${REPONAME}.published.gpg"
 ${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} ${FL_GPGARGS} --gpg-keys-url="${GPG_KEYS_URL}" repos/${REPONAME} >&2
 
 # Installation of the updated app should now fail.
@@ -1068,7 +1093,6 @@ push_gpg_homedir
 export REPONAME=test-new-primary-expired-sig
 export COLLECTION_ID=org.test.Collection.NewPrimaryExpiredSig
 setup_repo_no_add $REPONAME $COLLECTION_ID
-port=$(cat httpd-port)
 ${FLATPAK} ${U} remote-add --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg $REPONAME-repo "http://127.0.0.1:${port}/${REPONAME}" >&2
 ORIGINAL_KEY_FINGERPRINT="$(${GPG} --homedir "${FL_GPG_HOMEDIR}" --list-keys --fingerprint | grep fpr | head -1 | cut -d : -f 10)"
 
@@ -1098,7 +1122,7 @@ GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${ORIGINAL_KEY_FINGERPRINT} 
 
 # Publish the key.
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --output repos/${REPONAME}.published.gpg --armor --export "${ORIGINAL_KEY_FINGERPRINT}" "${NEW_KEY_FINGERPRINT}"
-GPG_KEYS_URL="http://127.0.0.1:${port}/${REPONAME}.published.gpg"
+GPG_KEYS_URL="https://127.0.0.1:${https_port}/${REPONAME}.published.gpg"
 ${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} ${FL_GPGARGS} --gpg-keys-url="${GPG_KEYS_URL}" repos/${REPONAME} >&2
 
 # Installation of the updated app should now fail.
@@ -1132,7 +1156,6 @@ push_gpg_homedir
 export REPONAME=test-new-primary-expired-key-sig
 export COLLECTION_ID=org.test.Collection.NewPrimaryExpiredKeySig
 setup_repo_no_add $REPONAME $COLLECTION_ID
-port=$(cat httpd-port)
 ${FLATPAK} ${U} remote-add --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg $REPONAME-repo "http://127.0.0.1:${port}/${REPONAME}" >&2
 ORIGINAL_KEY_FINGERPRINT="$(${GPG} --homedir "${FL_GPG_HOMEDIR}" --list-keys --fingerprint | grep fpr | head -1 | cut -d : -f 10)"
 
@@ -1158,7 +1181,7 @@ GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${ORIGINAL_KEY_FINGERPRINT} 
 # Now we can expire the original key and publish the keyring.
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --quick-set-expire "${FL_GPG_FINGERPRINT}" "20260101T000000"
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --output repos/${REPONAME}.published.gpg --armor --export "${ORIGINAL_KEY_FINGERPRINT}" "${NEW_KEY_FINGERPRINT}"
-GPG_KEYS_URL="http://127.0.0.1:${port}/${REPONAME}.published.gpg"
+GPG_KEYS_URL="https://127.0.0.1:${https_port}/${REPONAME}.published.gpg"
 ${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} ${FL_GPGARGS} --gpg-keys-url="${GPG_KEYS_URL}" repos/${REPONAME} >&2
 
 # Installation of the updated app should succeed.
@@ -1192,7 +1215,6 @@ push_gpg_homedir
 export REPONAME=test-new-primary-revoked-uid
 export COLLECTION_ID=org.test.Collection.NewPrimaryRevokedUid
 setup_repo_no_add $REPONAME $COLLECTION_ID
-port=$(cat httpd-port)
 ${FLATPAK} ${U} remote-add --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg $REPONAME-repo "http://127.0.0.1:${port}/${REPONAME}" >&2
 ORIGINAL_KEY_FINGERPRINT="$(${GPG} --homedir "${FL_GPG_HOMEDIR}" --list-keys --fingerprint | grep fpr | head -1 | cut -d : -f 10)"
 
@@ -1223,7 +1245,7 @@ GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${ORIGINAL_KEY_FINGERPRINT} 
 # a key requires at least one valid UID) but with no signatures on it. Publish it.
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --quick-revoke-uid "${NEW_KEY_FINGERPRINT}" "New primary"
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --output repos/${REPONAME}.published.gpg --armor --export "${ORIGINAL_KEY_FINGERPRINT}" "${NEW_KEY_FINGERPRINT}"
-GPG_KEYS_URL="http://127.0.0.1:${port}/${REPONAME}.published.gpg"
+GPG_KEYS_URL="https://127.0.0.1:${https_port}/${REPONAME}.published.gpg"
 ${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} ${FL_GPGARGS} --gpg-keys-url="${GPG_KEYS_URL}" repos/${REPONAME} >&2
 
 # Installation of the updated app should now fail.
@@ -1249,6 +1271,69 @@ pop_gpg_homedir
 ok "new primary key ignored if it has a revoked UID"
 
 
+# Test: Set up repo as normal; then update and find it’s acquired a HTTP (not
+# HTTPS) gpg-keys-url=; can’t update from that so don’t get new subkeys, so
+# can’t update an app
+push_gpg_homedir
+export REPONAME=test-http-gpg-keys-url
+export COLLECTION_ID=org.test.Collection.HttpGpgKeysUrl
+setup_repo_no_add $REPONAME $COLLECTION_ID
+${FLATPAK} ${U} remote-add --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg $REPONAME-repo "http://127.0.0.1:${port}/${REPONAME}" >&2
+ORIGINAL_SUBKEY_FINGERPRINT="$(${GPG} --homedir "${FL_GPG_HOMEDIR}" --list-keys --fingerprint | grep fpr | tail -1 | cut -d : -f 10)"
+
+# Add a new signing subkey to the keyring and publish it on the web server
+${GPG} --homedir "${FL_GPG_HOMEDIR}" --passphrase "" --quick-add-key "${FL_GPG_FINGERPRINT}" default sign
+${GPG} --homedir "${FL_GPG_HOMEDIR}" --output repos/${REPONAME}.published.gpg --armor --export "${FL_GPG_FINGERPRINT}"
+GPG_KEYS_URL="http://127.0.0.1:${https_port}/${REPONAME}.published.gpg"
+
+# Grab the fingerprint of the new subkey; this assumes that subkeys are listed in creation order, so the new one will be listed last
+NEW_SUBKEY_FINGERPRINT="$(${GPG} --homedir "${FL_GPG_HOMEDIR}" --list-keys --fingerprint | grep fpr | tail -1 | cut -d : -f 10)"
+
+# Build an app and sign it with both subkeys, re-sign the repo with both subkeys,
+# then try to install the new app (but without publishing the new keyring yet).
+# This should succeed due to being signed by the old key too.
+GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${ORIGINAL_SUBKEY_FINGERPRINT}! --gpg-sign=${NEW_SUBKEY_FINGERPRINT}!" make_updated_app "${REPONAME}" "${COLLECTION_ID}"
+${FLATPAK} ${U} install -y "${REPONAME}-repo" org.test.Hello >&2
+
+# Now update the app but only sign it with the new subkey; installation should
+# now fail.
+GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${NEW_SUBKEY_FINGERPRINT}!" make_updated_app "${REPONAME}" "${COLLECTION_ID}"
+GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${ORIGINAL_SUBKEY_FINGERPRINT}! --gpg-sign=${NEW_SUBKEY_FINGERPRINT}!" update_repo "${REPONAME}" "${COLLECTION_ID}"
+if ${FLATPAK} ${U} update -y org.test.Hello >&2; then
+    assert_not_reached "Installing an app signed with a new subkey which the client doesn’t yet have should not work"
+fi
+
+# Now publish the updated keyring: add a gpg-keys-url= to the repo; but make it
+# HTTP so no clients should use it
+${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} ${FL_GPGARGS} --gpg-keys-url="${GPG_KEYS_URL}" repos/${REPONAME} >&2
+
+# Update the app again as previously, then try to install it again. It still
+# shouldn’t work, even though the new subkey has been published, because the
+# GPG keys URL is HTTP not HTTPS.
+GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${NEW_SUBKEY_FINGERPRINT}!" make_updated_app "${REPONAME}" "${COLLECTION_ID}"
+GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${ORIGINAL_SUBKEY_FINGERPRINT}! --gpg-sign=${NEW_SUBKEY_FINGERPRINT}!" update_repo "${REPONAME}" "${COLLECTION_ID}"
+if ${FLATPAK} ${U} update -y org.test.Hello >&2; then
+    assert_not_reached "Installing an app signed with a new subkey which the client can’t get as the GPG keys URL is HTTP should not work"
+fi
+
+# Check that the new subkey has *not* been imported locally
+temp_homedir="$(mktemp -d "${test_tmpdir}/gnupgXXXXXX")"
+${GPG} --homedir "${temp_homedir}" --import-options show-only --import "$FL_DIR/repo/${REPONAME}-repo.trustedkeys.gpg" > updated-local-keyring 2>&1
+assert_not_file_has_content updated-local-keyring "^fpr:::::::::${NEW_SUBKEY_FINGERPRINT}:$"
+rm -rf "${temp_homedir}"
+
+# Cleanup
+${FLATPAK} ${U} uninstall -y org.test.Hello org.test.Platform >&2
+${FLATPAK} ${U} remote-delete ${REPONAME}-repo >&2
+unset ORIGINAL_SUBKEY_FINGERPRINT
+unset NEW_SUBKEY_FINGERPRINT
+unset GPG_KEYS_URL
+unset COLLECTION_ID
+unset REPONAME
+pop_gpg_homedir
+ok "HTTP gpg-keys-url= not allowed"
+
+
 # Test: Set up repo with a gpg-keys-url=; update from that, but find it contains
 # too many new keys and bail out; local keyring is not updated
 push_gpg_homedir
@@ -1256,7 +1341,6 @@ export REPONAME=test-too-many-new-primaries
 export COLLECTION_ID=org.test.Collection.TooManyNewPrimaries
 export MAX_N_KEYS_TO_PROCESS=20  # keep this in sync with flatpak-gpg-keys.c
 setup_repo_no_add $REPONAME $COLLECTION_ID
-port=$(cat httpd-port)
 ${FLATPAK} ${U} remote-add --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg $REPONAME-repo "http://127.0.0.1:${port}/${REPONAME}" >&2
 ORIGINAL_KEY_FINGERPRINT="$(${GPG} --homedir "${FL_GPG_HOMEDIR}" --list-keys --fingerprint | grep fpr | head -1 | cut -d : -f 10)"
 NEW_KEY_FINGERPRINTS=""
@@ -1278,7 +1362,7 @@ GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${ORIGINAL_KEY_FINGERPRINT} 
 
 # Publish the keyring.
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --output repos/${REPONAME}.published.gpg --armor --export "${ORIGINAL_KEY_FINGERPRINT}" ${NEW_KEY_FINGERPRINTS}
-GPG_KEYS_URL="http://127.0.0.1:${port}/${REPONAME}.published.gpg"
+GPG_KEYS_URL="https://127.0.0.1:${https_port}/${REPONAME}.published.gpg"
 ${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} ${FL_GPGARGS} --gpg-keys-url="${GPG_KEYS_URL}" repos/${REPONAME} >&2
 
 # Installation of the new app should fail.
