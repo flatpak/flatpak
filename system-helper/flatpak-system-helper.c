@@ -1833,6 +1833,56 @@ handle_update_summary (FlatpakSystemHelper   *object,
 }
 
 static gboolean
+handle_update_gpg_keys (FlatpakSystemHelper   *object,
+                        GDBusMethodInvocation *invocation,
+                        unsigned int           arg_flags,
+                        const char            *arg_remote_name,
+                        gboolean               arg_force_refresh,
+                        const char            *arg_installation)
+{
+  g_autoptr(FlatpakDir) system = NULL;
+  g_autoptr(GError) error = NULL;
+
+  g_info ("UpdateGpgKeys %u %s %u %s", arg_flags, arg_remote_name, arg_force_refresh, arg_installation);
+
+  system = dir_get_system (arg_installation, invocation, (arg_flags & FLATPAK_HELPER_UPDATE_GPG_KEYS_FLAGS_NO_INTERACTION) != 0, &error);
+  if (system == NULL)
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  if ((arg_flags & ~FLATPAK_HELPER_UPDATE_GPG_KEYS_FLAGS_ALL) != 0)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                                             "Unsupported flags enabled: 0x%x", (arg_flags & ~FLATPAK_HELPER_UPDATE_GPG_KEYS_FLAGS_ALL));
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  if (!flatpak_is_valid_remote_name (arg_remote_name, -1, &error))
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  if (!flatpak_dir_ensure_repo (system, NULL, &error))
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  if (!flatpak_dir_update_gpg_keys (system, arg_remote_name, arg_force_refresh, NULL, &error))
+    {
+      flatpak_invocation_return_error (invocation, error, "Error updating GPG keys");
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  flatpak_system_helper_complete_update_gpg_keys (object, invocation);
+
+  return G_DBUS_METHOD_INVOCATION_HANDLED;
+}
+
+static gboolean
 handle_generate_oci_summary (FlatpakSystemHelper   *object,
                              GDBusMethodInvocation *invocation,
                              guint                  arg_flags,
@@ -2176,6 +2226,7 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
       no_interaction = (flags & (1 << 0)) != 0;
     }
   else if (g_strcmp0 (method_name, "UpdateSummary") == 0 ||
+           g_strcmp0 (method_name, "UpdateGpgKeys") == 0 ||
            g_strcmp0 (method_name, "GenerateOciSummary") == 0)
     {
       guint32 flags;
@@ -2255,6 +2306,7 @@ on_bus_acquired (GDBusConnection *connection,
   g_signal_connect (helper, "handle-ensure-repo", G_CALLBACK (handle_ensure_repo), NULL);
   g_signal_connect (helper, "handle-run-triggers", G_CALLBACK (handle_run_triggers), NULL);
   g_signal_connect (helper, "handle-update-summary", G_CALLBACK (handle_update_summary), NULL);
+  g_signal_connect (helper, "handle-update-gpg-keys", G_CALLBACK (handle_update_gpg_keys), NULL);
   g_signal_connect (helper, "handle-generate-oci-summary", G_CALLBACK (handle_generate_oci_summary), NULL);
   g_signal_connect (helper, "handle-get-revokefs-fd", G_CALLBACK (handle_get_revokefs_fd), NULL);
   g_signal_connect (helper, "handle-cancel-pull", G_CALLBACK (handle_cancel_pull), NULL);

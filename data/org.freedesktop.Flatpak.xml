@@ -304,6 +304,13 @@
       <arg type='s' name='installation' direction='in'/>
     </method>
 
+    <method name="UpdateGpgKeys">
+      <arg type='u' name='flags' direction='in'/>
+      <arg type='s' name='remote_name' direction='in'/>
+      <arg type='b' name='force_refresh' direction='in'/>
+      <arg type='s' name='installation' direction='in'/>
+    </method>
+
     <method name="GenerateOciSummary">
       <arg type='u' name='flags' direction='in'/>
       <arg type='s' name='origin' direction='in'/>

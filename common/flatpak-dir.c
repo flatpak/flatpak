@@ -189,11 +189,6 @@ static char *flatpak_dir_get_remote_signature_lookaside (FlatpakDir *self,
                                                          const char *remote_name);
 
 static gboolean error_indicates_should_update_gpg_keys (const GError *error);
-static gboolean flatpak_dir_update_gpg_keys (FlatpakDir    *self,
-                                             const char    *remote_name,
-                                             gboolean       force_refresh,
-                                             GCancellable  *cancellable,
-                                             GError       **error);
 
 static void ensure_http_session (FlatpakDir *self);
 
@@ -3257,6 +3252,30 @@ flatpak_dir_system_helper_call_update_summary (FlatpakDir   *self,
                                     g_variant_new ("(us)",
                                                    arg_flags,
                                                    arg_installation),
+                                    G_VARIANT_TYPE ("()"), NULL,
+                                    cancellable, error);
+  return ret != NULL;
+}
+
+static gboolean
+flatpak_dir_system_helper_call_update_gpg_keys (FlatpakDir    *self,
+                                                unsigned int   flags,
+                                                const char    *remote_name,
+                                                gboolean       force_refresh,
+                                                const char    *installation,
+                                                GCancellable  *cancellable,
+                                                GError       **error)
+{
+  if (flatpak_dir_get_no_interaction (self))
+    flags |= FLATPAK_HELPER_UPDATE_GPG_KEYS_FLAGS_NO_INTERACTION;
+
+  g_autoptr(GVariant) ret =
+    flatpak_dir_system_helper_call (self, "UpdateGpgKeys",
+                                    g_variant_new ("(usbs)",
+                                                   flags,
+                                                   remote_name,
+                                                   force_refresh,
+                                                   installation),
                                     G_VARIANT_TYPE ("()"), NULL,
                                     cancellable, error);
   return ret != NULL;
@@ -16876,6 +16895,9 @@ error_indicates_should_update_gpg_keys (const GError *error)
  * gpg-keys-url is configured, GPG is enabled for the remote, and the cached
  * copy of the keyring at gpg-keys-url is out of date.
  *
+ * This will make a system helper call if necessary, so the key imports are done
+ * by an appropriately privileged process.
+ *
  * If the cache gets updated, the new keyring will be validated and imported
  * into the existing `${remote_name}.trustedkeys.gpg` local keyring. The details
  * of validation are documented in flatpak_gpg_keys_validate_binding(), but
@@ -16889,7 +16911,7 @@ error_indicates_should_update_gpg_keys (const GError *error)
  * Returns FALSE on failure (with @error set), and TRUE on success (keys were
  * imported, or no keys needed to be imported).
  */
-static gboolean
+gboolean
 flatpak_dir_update_gpg_keys (FlatpakDir    *self,
                              const char    *remote_name,
                              gboolean       force_refresh,
@@ -16918,8 +16940,26 @@ flatpak_dir_update_gpg_keys (FlatpakDir    *self,
 
   if (gpg_keys_url != NULL)
     {
-      g_autofree char *filename = g_strconcat (remote_name, ".trustedkeys.gpg", NULL);
-      g_autoptr(GFile) cached_gpg_keys_path = g_file_get_child (self->cache_dir, filename);
+      g_autofree char *filename = NULL;
+      g_autoptr(GFile) cached_gpg_keys_path = NULL;
+
+      /* If we’re operating on a system installation, the trusted system helper
+       * needs to make the trust decisions about importing keys. */
+      if (flatpak_dir_use_system_helper (self, NULL))
+        {
+          const char *installation = flatpak_dir_get_id (self);
+
+          return flatpak_dir_system_helper_call_update_gpg_keys (self,
+                                                                 FLATPAK_HELPER_UPDATE_GPG_KEYS_FLAGS_NONE,
+                                                                 remote_name,
+                                                                 force_refresh,
+                                                                 installation,
+                                                                 cancellable,
+                                                                 error);
+        }
+
+      filename = g_strconcat (remote_name, ".trustedkeys.gpg", NULL);
+      cached_gpg_keys_path = g_file_get_child (self->cache_dir, filename);
 
       ensure_http_session (self);
 
