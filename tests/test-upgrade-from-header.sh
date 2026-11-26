@@ -47,7 +47,19 @@ INSTALLED_COMMIT=$(${FLATPAK} ${U} info --show-commit org.test.Hello)
 make_updated_app
 truncate -s 0 httpd-headers-log
 
+MIRROR_REF_FILE="${FL_DIR}/repo/refs/mirrors/org.test.Cleanup/${APP_REF}"
+mkdir -p "$(dirname "${MIRROR_REF_FILE}")"
+printf '%s\n' "${INSTALLED_COMMIT}" > "${MIRROR_REF_FILE}"
+
 ${FLATPAK} ${U} update -y org.test.Hello >&2
+
+UPDATED_COMMIT=$(${FLATPAK} ${U} info --show-commit org.test.Hello)
+test "${UPDATED_COMMIT}" != "${INSTALLED_COMMIT}"
+assert_not_file_has_content httpd-headers-log "Flatpak-Upgrade-From: ${UPDATED_COMMIT}"
+ok "update does not pull again from the new commit"
+
+assert_not_has_file "${MIRROR_REF_FILE}"
+ok "update removes stale mirror refs"
 
 assert_file_has_content httpd-headers-log "Flatpak-Upgrade-From: ${INSTALLED_COMMIT}"
 
