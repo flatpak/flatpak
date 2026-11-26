@@ -137,6 +137,17 @@ export XDG_CURRENT_DESKTOP=test
 # PATHs, but ldconfig and capsh are kept in /sbin
 PATH="$PATH:/usr/sbin:/sbin"
 
+setup_progress_terminals () {
+    mkdir -p "$test_tmpdir/tty-bin"
+    cat > "$test_tmpdir/tty-bin/tput" <<'EOF'
+#!/bin/sh
+[ "$TERM" = xterm ] && [ "$1" = -S ] || exit 1
+read -r erase && read -r up && [ "$erase" = el ] && [ "$up" = cuu1 ] || exit 1
+printf '\033[K\033[1A'
+EOF
+    chmod +x "$test_tmpdir/tty-bin/tput"
+}
+
 export USERDIR="${TEST_DATA_DIR}/home/share/flatpak"
 export SYSTEMDIR="${TEST_DATA_DIR}/system"
 ARCH=$(flatpak --default-arch)

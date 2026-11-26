@@ -20,9 +20,11 @@
  */
 
 #include "config.h"
+#include "flatpak-builtins-utils.h"
 #include "flatpak-tty-utils-private.h"
 
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 #include <termios.h>
 #include <unistd.h>
 
@@ -183,21 +185,15 @@ flatpak_password_prompt (const char *prompt, ...)
 }
 
 
-gboolean
-flatpak_yes_no_prompt (gboolean default_yes, const char *prompt, ...)
+static gboolean
+yes_no_prompt (gboolean default_yes, const char *s, int columns, int *prompt_rows)
 {
   char buf[512];
-  va_list var_args;
-  g_autofree char *s = NULL;
-
-
-  va_start (var_args, prompt);
-  s = g_strdup_vprintf (prompt, var_args);
-  va_end (var_args);
+  g_autofree char *label = g_strdup_printf ("%s %s: ", s, default_yes ? "[Y/n]" : "[y/n]");
 
   while (TRUE)
     {
-      g_print ("%s %s: ", s, default_yes ? "[Y/n]" : "[y/n]");
+      g_print ("%s", label);
 
       if (!isatty (STDIN_FILENO) || !isatty (STDOUT_FILENO))
         {
@@ -205,8 +201,51 @@ flatpak_yes_no_prompt (gboolean default_yes, const char *prompt, ...)
           return FALSE;
         }
 
+      if (prompt_rows != NULL)
+        {
+          int pending;
+
+          /* A queued answer may already have been echoed above the prompt. */
+          if (ioctl (STDIN_FILENO, FIONREAD, &pending) != 0 || pending > 0)
+            prompt_rows = NULL;
+        }
+
       if (fgets (buf, sizeof (buf), stdin) == NULL)
         return FALSE;
+
+      if (prompt_rows != NULL)
+        {
+          struct termios term;
+          struct stat input, output;
+          int pending;
+
+          if (buf[strspn (buf, "yYeEsS ")] == '\n' &&
+              ioctl (STDIN_FILENO, FIONREAD, &pending) == 0 && pending == 0 &&
+              fstat (STDIN_FILENO, &input) == 0 && fstat (STDOUT_FILENO, &output) == 0 &&
+              input.st_rdev == output.st_rdev &&
+              tcgetattr (STDIN_FILENO, &term) == 0 &&
+              (term.c_lflag & (ICANON | ECHO)) == (ICANON | ECHO) &&
+              (term.c_oflag & (OPOST | ONLCR)) == (OPOST | ONLCR))
+            {
+              g_autofree char *line = g_strconcat (label, buf, NULL);
+              const char *answer = line + strlen (label);
+              const char *p = line;
+
+              do
+                {
+                  (*prompt_rows)++;
+                  p = cell_next_line (p, columns, NULL);
+                  /* An unfinished canonical input line might have been echoed
+                   * before the prompt. Only count rows the label itself needs. */
+                  if (*p && p >= answer)
+                    {
+                      *prompt_rows = 0;
+                      break;
+                    }
+                }
+              while (*p);
+            }
+        }
 
       g_strstrip (buf);
 
@@ -220,7 +259,32 @@ flatpak_yes_no_prompt (gboolean default_yes, const char *prompt, ...)
       if (g_ascii_strcasecmp (buf, "n") == 0 ||
           g_ascii_strcasecmp (buf, "no") == 0)
         return FALSE;
+
+      if (prompt_rows != NULL)
+        {
+          *prompt_rows = 0;
+          prompt_rows = NULL;
+        }
     }
+}
+
+gboolean
+flatpak_yes_no_prompt (gboolean default_yes, const char *prompt, ...)
+{
+  va_list args;
+  g_autofree char *s = NULL;
+
+  va_start (args, prompt);
+  s = g_strdup_vprintf (prompt, args);
+  va_end (args);
+  return yes_no_prompt (default_yes, s, 0, NULL);
+}
+
+gboolean
+flatpak_confirm_changes (const char *prompt, int columns, int *prompt_rows)
+{
+  *prompt_rows = 0;
+  return yes_no_prompt (TRUE, prompt, columns, prompt_rows);
 }
 
 static gboolean
@@ -461,36 +525,6 @@ flatpak_set_tty_echo (gboolean echo)
   tcsetattr (STDIN_FILENO, TCSANOW, &term);
 
   return was;
-}
-
-gboolean
-flatpak_get_cursor_pos (int * row, int *col)
-{
-  fd_set readset;
-  struct timeval time;
-  struct termios term, initial_term;
-  int res = 0;
-
-  tcgetattr (STDIN_FILENO, &initial_term);
-  term = initial_term;
-  term.c_lflag &= ~ICANON;
-  term.c_lflag &= ~ECHO;
-  tcsetattr (STDIN_FILENO, TCSAFLUSH, &term);
-
-  printf ("\033[6n");
-  fflush (stdout);
-
-  FD_ZERO (&readset);
-  FD_SET (STDIN_FILENO, &readset);
-  time.tv_sec = 0;
-  time.tv_usec = 100000;
-
-  if (select (STDIN_FILENO + 1, &readset, NULL, NULL, &time) == 1)
-    res = scanf ("\033[%d;%dR", row, col);
-
-  tcsetattr (STDIN_FILENO, TCSAFLUSH, &initial_term);
-
-  return res == 2;
 }
 
 void
