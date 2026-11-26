@@ -14228,7 +14228,8 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
 
   /* If we have a GPG keys URL configured, or if the summary just gave us one
    * which we didn’t know about before, check for (and apply) updates to that. */
-  if (!flatpak_dir_update_gpg_keys (self, state->remote_name, FALSE, cancellable, &my_error))
+  if (!only_cached &&
+      !flatpak_dir_update_gpg_keys (self, state->remote_name, FALSE, cancellable, &my_error))
     {
       g_info ("Error when updating GPG keys from server, ignoring: %s", my_error->message);
       g_clear_error (&my_error);
