@@ -36,7 +36,7 @@ mkdir -p "${EXTRA_DATA_DIR}"
 echo "extra-data-test-content" > "${EXTRA_DATA_DIR}/${EXTRA_DATA_FILE}"
 
 # serve the extra data
-httpd web-server.py "${EXTRA_DATA_DIR}"
+httpd web-server.py --dir="${EXTRA_DATA_DIR}"
 EXTRA_DATA_URL="http://127.0.0.1:$(cat httpd-port)/${EXTRA_DATA_FILE}"
 
 # download to get the size and sha256 sum

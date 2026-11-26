@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import argparse
 from wsgiref.handlers import format_date_time
 from email.utils import parsedate
 from calendar import timegm
@@ -53,9 +54,9 @@ class RequestHandler(http_server.SimpleHTTPRequestHandler):
         self.headers.__delitem__("If-Modified-Since")
         return super().do_GET()
 
-def run(dir, headers_log=None):
+def run(args):
     RequestHandler.protocol_version = "HTTP/1.0"
-    RequestHandler.headers_log_file = headers_log
+    RequestHandler.headers_log_file = args.headers_log
     httpd = http_server.HTTPServer( ("127.0.0.1", 0), RequestHandler)
     host, port = httpd.socket.getsockname()[:2]
     with open("httpd-port", 'w') as file:
@@ -67,16 +68,14 @@ def run(dir, headers_log=None):
     except:
         pass
     print("Serving HTTP on port %d" % port);
-    if dir:
-        os.chdir(dir)
+    if args.dir:
+        os.chdir(args.dir)
     httpd.serve_forever()
 
 if __name__ == '__main__':
-    dir = None
-    headers_log = None
-    if len(sys.argv) >= 2 and len(sys.argv[1]) > 0:
-        dir = sys.argv[1]
-    if len(sys.argv) >= 3 and len(sys.argv[2]) > 0:
-        headers_log = sys.argv[2]
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dir")
+    parser.add_argument("--headers-log")
+    args = parser.parse_args()
 
-    run(dir, headers_log)
+    run(args)

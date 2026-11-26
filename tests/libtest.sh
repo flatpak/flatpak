@@ -386,7 +386,7 @@ make_runtime () {
 
 httpd () {
     if [ $# -eq 0 ] ; then
-        set web-server.py repos
+        set web-server.py --dir=repos
     fi
 
     COMMAND=$1

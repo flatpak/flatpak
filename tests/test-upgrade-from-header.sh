@@ -12,7 +12,7 @@ skip_revokefs_without_fuse
 # to httpd-headers-log.
 httpd () {
     if [ $# -eq 0 ] ; then
-        set web-server.py repos "$(pwd)"/httpd-headers-log
+        set web-server.py --dir=repos --headers-log="$(pwd)"/httpd-headers-log
     fi
 
     COMMAND=$1
