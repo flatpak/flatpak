@@ -156,60 +156,67 @@ pop_gpg_homedir
 ok "new subkey propagation using gpg-keys-url="
 
 
-# Test: Set up repo as normal; then update and find it’s acquired a gpg-keys-url=;
-# update from that, get new subkeys, update successfully
-push_gpg_homedir
-export REPONAME=test-gpg-verify-false
-export COLLECTION_ID=org.test.Collection.GpgVerifyFalse
-setup_repo_no_add $REPONAME $COLLECTION_ID
-${FLATPAK} ${U} remote-add --no-gpg-verify --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg $REPONAME-repo "http://127.0.0.1:${port}/${REPONAME}" >&2
-ORIGINAL_SUBKEY_FINGERPRINT="$(${GPG} --homedir "${FL_GPG_HOMEDIR}" --list-keys --fingerprint | grep fpr | tail -1 | cut -d : -f 10)"
+if [ x${USE_SYSTEMDIR-} == xno ]; then
+    # Test: Set up repo as normal; then update and find it’s acquired a gpg-keys-url=;
+    # update from that, get new subkeys, update successfully
+    push_gpg_homedir
+    export REPONAME=test-gpg-verify-false
+    export COLLECTION_ID=org.test.Collection.GpgVerifyFalse
+    setup_repo_no_add $REPONAME $COLLECTION_ID
+    ${FLATPAK} ${U} remote-add --no-gpg-verify --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg $REPONAME-repo "http://127.0.0.1:${port}/${REPONAME}" >&2
+    ORIGINAL_SUBKEY_FINGERPRINT="$(${GPG} --homedir "${FL_GPG_HOMEDIR}" --list-keys --fingerprint | grep fpr | tail -1 | cut -d : -f 10)"
 
-# Add a new signing subkey to the keyring and publish it on the web server
-${GPG} --homedir "${FL_GPG_HOMEDIR}" --passphrase "" --quick-add-key "${FL_GPG_FINGERPRINT}" default sign
-${GPG} --homedir "${FL_GPG_HOMEDIR}" --output repos/${REPONAME}.published.gpg --armor --export "${FL_GPG_FINGERPRINT}"
-GPG_KEYS_URL="https://127.0.0.1:${https_port}/${REPONAME}.published.gpg"
+    # Add a new signing subkey to the keyring and publish it on the web server
+    ${GPG} --homedir "${FL_GPG_HOMEDIR}" --passphrase "" --quick-add-key "${FL_GPG_FINGERPRINT}" default sign
+    ${GPG} --homedir "${FL_GPG_HOMEDIR}" --output repos/${REPONAME}.published.gpg --armor --export "${FL_GPG_FINGERPRINT}"
+    GPG_KEYS_URL="https://127.0.0.1:${https_port}/${REPONAME}.published.gpg"
 
-# Grab the fingerprint of the new subkey; this assumes that subkeys are listed in creation order, so the new one will be listed last
-NEW_SUBKEY_FINGERPRINT="$(${GPG} --homedir "${FL_GPG_HOMEDIR}" --list-keys --fingerprint | grep fpr | tail -1 | cut -d : -f 10)"
+    # Grab the fingerprint of the new subkey; this assumes that subkeys are listed in creation order, so the new one will be listed last
+    NEW_SUBKEY_FINGERPRINT="$(${GPG} --homedir "${FL_GPG_HOMEDIR}" --list-keys --fingerprint | grep fpr | tail -1 | cut -d : -f 10)"
 
-# Build an app and sign it with both subkeys, re-sign the repo with both subkeys,
-# then try to install the new app (but without publishing the new keyring yet).
-# This should succeed due to being signed by the old key too.
-GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${ORIGINAL_SUBKEY_FINGERPRINT}! --gpg-sign=${NEW_SUBKEY_FINGERPRINT}!" make_updated_app "${REPONAME}" "${COLLECTION_ID}"
-${FLATPAK} ${U} install -y "${REPONAME}-repo" org.test.Hello >&2
+    # Build an app and sign it with both subkeys, re-sign the repo with both subkeys,
+    # then try to install the new app (but without publishing the new keyring yet).
+    # This should succeed due to being signed by the old key too.
+    GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${ORIGINAL_SUBKEY_FINGERPRINT}! --gpg-sign=${NEW_SUBKEY_FINGERPRINT}!" make_updated_app "${REPONAME}" "${COLLECTION_ID}"
+    ${FLATPAK} ${U} install -y "${REPONAME}-repo" org.test.Hello >&2
 
-# Now update the app but only sign it with the new subkey. Installation should
-# still succeed because the remote has --no-gpg-verify.
-GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${NEW_SUBKEY_FINGERPRINT}!" make_updated_app "${REPONAME}" "${COLLECTION_ID}"
-GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${ORIGINAL_SUBKEY_FINGERPRINT}! --gpg-sign=${NEW_SUBKEY_FINGERPRINT}!" update_repo "${REPONAME}" "${COLLECTION_ID}"
-${FLATPAK} ${U} update -y org.test.Hello >&2
+    # Now update the app but only sign it with the new subkey. Installation should
+    # still succeed because the remote has --no-gpg-verify.
+    GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${NEW_SUBKEY_FINGERPRINT}!" make_updated_app "${REPONAME}" "${COLLECTION_ID}"
+    GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${ORIGINAL_SUBKEY_FINGERPRINT}! --gpg-sign=${NEW_SUBKEY_FINGERPRINT}!" update_repo "${REPONAME}" "${COLLECTION_ID}"
+    ${FLATPAK} ${U} update -y org.test.Hello >&2
 
-# Now publish the updated keyring: add a gpg-keys-url= to the repo
-${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} ${FL_GPGARGS} --gpg-keys-url="${GPG_KEYS_URL}" repos/${REPONAME} >&2
+    # Now publish the updated keyring: add a gpg-keys-url= to the repo
+    ${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} ${FL_GPGARGS} --gpg-keys-url="${GPG_KEYS_URL}" repos/${REPONAME} >&2
 
-# Update the app again as previously, then try to install it again. It should
-# still work this time because the repo still has --no-gpg-verify.
-GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${NEW_SUBKEY_FINGERPRINT}!" make_updated_app "${REPONAME}" "${COLLECTION_ID}"
-GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${ORIGINAL_SUBKEY_FINGERPRINT}! --gpg-sign=${NEW_SUBKEY_FINGERPRINT}!" update_repo "${REPONAME}" "${COLLECTION_ID}"
-${FLATPAK} ${U} update -y org.test.Hello >&2
+    # Update the app again as previously, then try to install it again. It should
+    # still work this time because the repo still has --no-gpg-verify.
+    GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${NEW_SUBKEY_FINGERPRINT}!" make_updated_app "${REPONAME}" "${COLLECTION_ID}"
+    GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${ORIGINAL_SUBKEY_FINGERPRINT}! --gpg-sign=${NEW_SUBKEY_FINGERPRINT}!" update_repo "${REPONAME}" "${COLLECTION_ID}"
+    ${FLATPAK} ${U} update -y org.test.Hello >&2
 
-# Check that the new subkey has *not* been imported locally because of --no-gpg-verify
-temp_homedir="$(mktemp -d "${test_tmpdir}/gnupgXXXXXX")"
-${GPG} --homedir "${temp_homedir}" --import-options show-only --import "$FL_DIR/repo/${REPONAME}-repo.trustedkeys.gpg" > updated-local-keyring 2>&1
-assert_not_file_has_content updated-local-keyring "^fpr:::::::::${NEW_SUBKEY_FINGERPRINT}:$"
-rm -rf "${temp_homedir}"
+    # Check that the new subkey has *not* been imported locally because of --no-gpg-verify
+    temp_homedir="$(mktemp -d "${test_tmpdir}/gnupgXXXXXX")"
+    ${GPG} --homedir "${temp_homedir}" --import-options show-only --import "$FL_DIR/repo/${REPONAME}-repo.trustedkeys.gpg" > updated-local-keyring 2>&1
+    assert_not_file_has_content updated-local-keyring "^fpr:::::::::${NEW_SUBKEY_FINGERPRINT}:$"
+    rm -rf "${temp_homedir}"
 
-# Cleanup
-${FLATPAK} ${U} uninstall -y org.test.Hello org.test.Platform >&2
-${FLATPAK} ${U} remote-delete ${REPONAME}-repo >&2
-unset ORIGINAL_SUBKEY_FINGERPRINT
-unset NEW_SUBKEY_FINGERPRINT
-unset GPG_KEYS_URL
-unset COLLECTION_ID
-unset REPONAME
-pop_gpg_homedir
-ok "new subkey propagation disabled by --no-gpg-verify"
+    # Cleanup
+    ${FLATPAK} ${U} uninstall -y org.test.Hello org.test.Platform >&2
+    ${FLATPAK} ${U} remote-delete ${REPONAME}-repo >&2
+    unset ORIGINAL_SUBKEY_FINGERPRINT
+    unset NEW_SUBKEY_FINGERPRINT
+    unset GPG_KEYS_URL
+    unset COLLECTION_ID
+    unset REPONAME
+    pop_gpg_homedir
+    ok "new subkey propagation disabled by --no-gpg-verify"
+else
+    # The system helper requires all downloads to be GPG verified as they’re
+    # cached in the (untrusted) user’s home directory during download, so GPG
+    # allows them to be verified when pulled into the system repo.
+    ok "new subkey propagation disabled by --no-gpg-verify # skip not supported with the system-helper"
+fi
 
 
 # Test: Set up repo with a gpg-keys-url=; update from that, get new subkey
