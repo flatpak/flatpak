@@ -1409,8 +1409,7 @@ export REPONAME=test-new-subkeys-reactive
 export COLLECTION_ID=org.test.Collection.NewSubkeysReactive
 setup_repo_no_add $REPONAME $COLLECTION_ID
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --output repos/${REPONAME}.published.gpg --armor --export "${FL_GPG_FINGERPRINT}"
-port=$(cat httpd-port)
-GPG_KEYS_URL="http://127.0.0.1:${port}/${REPONAME}.published.gpg"
+GPG_KEYS_URL="https://127.0.0.1:${https_port}/${REPONAME}.published.gpg"
 ${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} ${FL_GPGARGS} --gpg-keys-url="${GPG_KEYS_URL}" repos/${REPONAME} >&2
 ${FLATPAK} ${U} remote-add --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg $REPONAME-repo "http://127.0.0.1:${port}/${REPONAME}" >&2
 ORIGINAL_SUBKEY_FINGERPRINT="$(${GPG} --homedir "${FL_GPG_HOMEDIR}" --list-keys --fingerprint | grep fpr | tail -1 | cut -d : -f 10)"
@@ -1489,8 +1488,7 @@ export REPONAME=test-new-primary-reactive
 export COLLECTION_ID=org.test.Collection.NewPrimaryReactive
 setup_repo_no_add $REPONAME $COLLECTION_ID
 ${GPG} --homedir "${FL_GPG_HOMEDIR}" --output repos/${REPONAME}.published.gpg --armor --export "${FL_GPG_FINGERPRINT}"
-port=$(cat httpd-port)
-GPG_KEYS_URL="http://127.0.0.1:${port}/${REPONAME}.published.gpg"
+GPG_KEYS_URL="https://127.0.0.1:${https_port}/${REPONAME}.published.gpg"
 ${FLATPAK} build-update-repo ${BUILD_UPDATE_REPO_FLAGS-} ${FL_GPGARGS} --gpg-keys-url="${GPG_KEYS_URL}" repos/${REPONAME} >&2
 ${FLATPAK} ${U} remote-add --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg $REPONAME-repo "http://127.0.0.1:${port}/${REPONAME}" >&2
 ORIGINAL_KEY_FINGERPRINT="$(${GPG} --homedir "${FL_GPG_HOMEDIR}" --list-keys --fingerprint | grep fpr | head -1 | cut -d : -f 10)"
