@@ -16941,10 +16941,17 @@ flatpak_dir_update_gpg_keys (FlatpakDir    *self,
   if (g_strcmp0 (gpg_keys_url, "") == 0)
     g_clear_pointer (&gpg_keys_url, g_free);
 
+  /* Require HTTPS so that we get transport integrity. */
+  if (gpg_keys_url != NULL &&
+      !g_str_has_prefix (gpg_keys_url, "https:"))
+    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("xa.gpg-keys-url must be HTTPS: %s"),
+                               gpg_keys_url);
+
   if (gpg_keys_url != NULL)
     {
       g_autofree char *filename = NULL;
       g_autoptr(GFile) cached_gpg_keys_path = NULL;
+      g_autoptr(FlatpakCertificates) certificates = NULL;
 
       /* If we’re operating on a system installation, the trusted system helper
        * needs to make the trust decisions about importing keys. */
@@ -16966,12 +16973,19 @@ flatpak_dir_update_gpg_keys (FlatpakDir    *self,
 
       ensure_http_session (self);
 
+      certificates = flatpak_get_certificates_for_uri (gpg_keys_url, &local_error);
+      if (local_error)
+        {
+          g_propagate_error (error, g_steal_pointer (&local_error));
+          return FALSE;
+        }
+
       /* This will only do a HTTP request if the cached copy doesn’t exist or is
        * out of date (wrt the max-age specified by the server when it was last
        * requested). */
       if (flatpak_cache_http_uri (self->http_session,
                                   gpg_keys_url,
-                                  NULL,
+                                  certificates,
                                   force_refresh ? FLATPAK_HTTP_FLAGS_FORCE_EXPIRED : FLATPAK_HTTP_FLAGS_NONE,
                                   AT_FDCWD,
                                   flatpak_file_get_path_cached (cached_gpg_keys_path),
