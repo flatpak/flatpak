@@ -214,6 +214,8 @@ sources = [
   'flatpak-portal-error.c',
   'flatpak-permission-utils.c',
   'flatpak-progress.c',
+  'flatpak-download-tracker.c',
+  'flatpak-pull-job.c',
   'flatpak-prune.c',
   'flatpak-ref-utils.c',
   'flatpak-ref.c',
