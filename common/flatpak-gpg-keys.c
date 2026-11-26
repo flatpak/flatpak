@@ -406,6 +406,8 @@ flatpak_gpg_keys_validate_binding (OstreeRepo    *repo,
             }
           else
             {
+              g_assert (!g_hash_table_contains (keys_to_check_trust, import_status->fpr));
+
               g_ptr_array_add (successfully_imported_fingerprints, g_strdup (import_status->fpr));
               g_hash_table_add (trust_root, g_strdup (import_status->fpr));
 #ifndef HAVE_GPGME_KEY_SIG_T_FPR
