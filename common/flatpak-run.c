@@ -971,6 +971,7 @@ flatpak_run_in_transient_unit (const char  *app_id,
   g_autofree char *app_id_escaped = NULL;
   g_autofree char *instance_id_escaped = NULL;
   g_autofree char *job = NULL;
+  g_autofree char *slice_name = NULL;
   SystemdManager *manager = NULL;
   GVariantBuilder builder;
   GVariant *properties = NULL;
@@ -1023,6 +1024,13 @@ flatpak_run_in_transient_unit (const char  *app_id,
                          "PIDs",
                          g_variant_new_fixed_array (G_VARIANT_TYPE ("u"),
                                                     &pid, 1, sizeof (guint32)));
+
+  slice_name = g_strdup_printf ("app-flatpak.%s.slice",
+                                app_id_escaped);
+
+  g_variant_builder_add (&builder, "(sv)",
+                         "Slice",
+                         g_variant_new_string (slice_name));
 
   properties = g_variant_builder_end (&builder);
 
