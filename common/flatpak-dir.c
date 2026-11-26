@@ -17002,7 +17002,16 @@ flatpak_dir_update_gpg_keys (FlatpakDir    *self,
            * and then potentially import it into the OSTree repository configuration.
            * Do all this under an exclusive lock, so we’re not potentially racing
            * with another process, which could jeopardise the validation of the
-           * new keyring. */
+           * new keyring.
+           *
+           * FIXME: It would be better if we could split flatpak_cache_http_uri()
+           * in two: downloading to a temporary file (if the cached file is out
+           * of date), validating that temporary file with
+           * flatpak_gpg_keys_validate_binding(), importing it to the actual
+           * keyring, then renaming the temporary file over the cached file if
+           * validation succeeds. That fixes the races inherent here between
+           * downloading and importing the cache vs crashing at some point
+           * between the two. */
           if (!glnx_make_lock_file (AT_FDCWD, lock_path, LOCK_EX, &lock, error))
             return FALSE;
 
