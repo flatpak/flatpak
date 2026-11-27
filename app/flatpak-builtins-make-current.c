@@ -27,8 +27,6 @@
 
 #include <glib/gi18n.h>
 
-#include "libglnx.h"
-
 #include "flatpak-builtins.h"
 #include "flatpak-utils-private.h"
 
@@ -48,7 +46,6 @@ flatpak_builtin_make_current_app (int argc, char **argv, GCancellable *cancellab
   g_autoptr(GFile) deploy_base = NULL;
   const char *pref;
   const char *default_branch = NULL;
-  g_auto(GLnxLockFile) lock = { 0, };
   g_autofree char *id = NULL;
   g_autofree char *arch = NULL;
   g_autofree char *branch = NULL;
@@ -88,23 +85,11 @@ flatpak_builtin_make_current_app (int argc, char **argv, GCancellable *cancellab
   if (ref == NULL)
     return FALSE;
 
-  if (!flatpak_dir_lock (dir, &lock,
-                         cancellable, error))
-    return FALSE;
-
   deploy_base = flatpak_dir_get_deploy_dir (dir, ref);
   if (!g_file_query_exists (deploy_base, cancellable))
     return flatpak_fail (error, _("App %s branch %s is not installed"), id, branch);
 
-  if (!flatpak_dir_make_current_ref (dir, ref, cancellable, error))
-    return FALSE;
-
-  if (!flatpak_dir_update_exports (dir, id, cancellable, error))
-    return FALSE;
-
-  glnx_release_lock_file (&lock);
-
-  if (!flatpak_dir_mark_changed (dir, error))
+  if (!flatpak_dir_make_current_app (dir, ref, cancellable, error))
     return FALSE;
 
   return TRUE;
