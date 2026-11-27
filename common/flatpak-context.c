@@ -4193,6 +4193,9 @@ mkdir_p_open_nofollow_at (int          base_fd,
 {
   glnx_autofd int parent_fd = -1;
 
+  g_autofree char *stripped_subdir = flatpak_strip_trailing_slashes (subdir);
+  if (stripped_subdir != NULL)
+    subdir = stripped_subdir;
   if (g_path_is_absolute (subdir))
     {
       const char *skipped_prefix = subdir;
