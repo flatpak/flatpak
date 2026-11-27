@@ -2180,6 +2180,13 @@ append_locations_from_config_file (GPtrArray    *locations,
           g_autofree char *storage_type = NULL;
           gint64 priority_val = 0;
 
+          if (g_file_test (path, G_FILE_TEST_EXISTS) &&
+              !g_file_test (path, G_FILE_TEST_IS_DIR))
+            {
+              g_info ("While reading '%s': Path '%s' of installation '%s' is not a directory. Ignoring", file_path, path, id);
+              continue;
+            }
+
           display_name = g_key_file_get_string (keyfile, groups[i], "DisplayName", NULL);
           priority = g_key_file_get_string (keyfile, groups[i], "Priority", NULL);
           storage_type = g_key_file_get_string (keyfile, groups[i], "StorageType", NULL);
