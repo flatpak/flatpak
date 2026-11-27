@@ -372,6 +372,41 @@ flatpak_resolve_duplicate_remotes (GPtrArray    *dirs,
   return TRUE;
 }
 
+static int
+compare_install_choices (gconstpointer a,
+                         gconstpointer b)
+{
+  FlatpakDecomposed *ref_a = *(FlatpakDecomposed * const *) a;
+  FlatpakDecomposed *ref_b = *(FlatpakDecomposed * const *) b;
+  size_t id_len, arch_len;
+  const char *id_a = flatpak_decomposed_peek_id (ref_a, &id_len);
+  const char *id_b = flatpak_decomposed_peek_id (ref_b, NULL);
+  const char *arch_a = flatpak_decomposed_peek_arch (ref_a, &arch_len);
+  const char *arch_b = flatpak_decomposed_peek_arch (ref_b, NULL);
+  const char *branch_a = flatpak_decomposed_get_branch (ref_a);
+  const char *branch_b = flatpak_decomposed_get_branch (ref_b);
+  g_autofree char *key_a = NULL;
+  g_autofree char *key_b = NULL;
+  int cmp;
+
+  cmp = strcmp (flatpak_decomposed_get_kind_str (ref_a), flatpak_decomposed_get_kind_str (ref_b));
+  if (cmp != 0)
+    return cmp;
+
+  cmp = strncmp (id_a, id_b, id_len + 1);
+  if (cmp != 0)
+    return cmp;
+
+  cmp = strncmp (arch_a, arch_b, arch_len + 1);
+  if (cmp != 0)
+    return cmp;
+
+  key_a = g_utf8_collate_key_for_filename (branch_a, -1);
+  key_b = g_utf8_collate_key_for_filename (branch_b, -1);
+  cmp = strcmp (key_b, key_a);
+  return cmp != 0 ? cmp : strcmp (branch_b, branch_a);
+}
+
 static char **
 decomposed_refs_to_strv (GPtrArray *decomposed)
 {
@@ -435,7 +470,10 @@ flatpak_resolve_matching_refs (const char *remote_name,
         }
       else
         {
-          g_auto(GStrv) refs_str = decomposed_refs_to_strv (refs);
+          g_auto(GStrv) refs_str = NULL;
+
+          g_ptr_array_sort (refs, compare_install_choices);
+          refs_str = decomposed_refs_to_strv (refs);
           flatpak_format_choices ((const char **) refs_str,
                                   _("Similar refs found for ‘%s’ in remote ‘%s’ (%s):"),
                                   opt_search_ref, remote_name, dir_name);
