@@ -28,6 +28,7 @@ typedef struct
   GArray    *fds;
   GStrv      envp;
   GPtrArray *runtime_dir_members;
+  GPtrArray *runtime_dir_export_symlinks; /* (member, target) pairs */
   int        sync_fds[2];
 } FlatpakBwrap;
 
@@ -91,6 +92,9 @@ gboolean      flatpak_bwrap_bundle_args (FlatpakBwrap *bwrap,
                                          GError      **error);
 void          flatpak_bwrap_add_runtime_dir_member (FlatpakBwrap *bwrap,
                                                     const char *name);
+void          flatpak_bwrap_add_runtime_dir_export_symlink (FlatpakBwrap *bwrap,
+                                                            const char   *member,
+                                                            const char   *target);
 void          flatpak_bwrap_populate_runtime_dir (FlatpakBwrap *bwrap,
                                                   const char *shared_xdg_runtime_dir);
 
