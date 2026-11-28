@@ -136,4 +136,35 @@ assert_not_has_dir "$HOME/.var/app/org.test.Orphan"
 
 ok "skip invalid orphan app data"
 
+mkdir -p runtime/usr runtime/files
+printf '[Runtime]\nname=org.test.Choices\n' > runtime/metadata
+for branch in 9 11 10; do
+    ${FLATPAK} build-export --disable-sandbox --runtime --no-update-summary repo runtime "$branch" >&2
+done
+printf '[Runtime]\nname=org.test.ChoicesExtra\n' > runtime/metadata
+${FLATPAK} build-export --disable-sandbox --runtime --no-update-summary repo runtime 11 >&2
+printf '[Runtime]\nname=org.test.Channels\n' > runtime/metadata
+for branch in beta nightly stable; do
+    ${FLATPAK} build-export --disable-sandbox --runtime --no-update-summary repo runtime "$branch" >&2
+done
+${FLATPAK} build-update-repo --no-update-appstream repo >&2
+${FLATPAK} remote-add --user --no-gpg-verify test-choices "$(pwd)/repo"
+
+printf '2\n' | socat -t 30 - EXEC:"${FLATPAK} install --user -y test-choices Choices",pty,raw,echo=0 > choices
+assert_file_has_content choices " 1) runtime/org.test.Choices/$ARCH/11$"
+assert_file_has_content choices " 2) runtime/org.test.Choices/$ARCH/10$"
+assert_file_has_content choices " 3) runtime/org.test.Choices/$ARCH/9$"
+assert_file_has_content choices " 4) runtime/org.test.ChoicesExtra/$ARCH/11$"
+assert_streq "$(${FLATPAK} info --user --show-ref org.test.Choices)" "runtime/org.test.Choices/$ARCH/10"
+
+ok "install numbers branches in descending numeric order"
+
+printf '2\n' | socat -t 30 - EXEC:"${FLATPAK} install --user -y test-choices org.test.Channels",pty,raw,echo=0 > channels
+assert_file_has_content channels " 1) runtime/org.test.Channels/$ARCH/stable$"
+assert_file_has_content channels " 2) runtime/org.test.Channels/$ARCH/nightly$"
+assert_file_has_content channels " 3) runtime/org.test.Channels/$ARCH/beta$"
+assert_streq "$(${FLATPAK} info --user --show-ref org.test.Channels)" "runtime/org.test.Channels/$ARCH/nightly"
+
+ok "install lists named branches in descending alphabetical order"
+
 done_testing
